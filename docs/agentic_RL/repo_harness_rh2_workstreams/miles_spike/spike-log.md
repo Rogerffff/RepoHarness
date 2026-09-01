@@ -20,6 +20,8 @@
 | 2026-08-27 | **F1 修法拍板**：按长期正确架构修——根因=身份在树→叶线性化被丢弃、内容反推非单射;修复=rh2_record_turn commit 时刻绑定 capture_id↔turn、叶侧树走查导出身份 span、token 相等降级为校验断言;不采用 fail-closed 挡板方案 | 用户决策 + 本线程根因分析 |
 | 2026-08-25 | **T0-C1 承载形态调整为 A′**（用户指示"核实成立即调整",已核实成立）：C1 不再自建 plumbing——上游 stacked PR #2595（transport,已获 code-owner approval）/#2596（bounded top-p capture+actor replay,待评审+E2E CI）已覆盖接线表 ④→⑪ 全部。integration base = pin f2b7c7929 + cherry-pick 两 PR commit + rh2 最小 downstream delta（faithful DIS custom loss/双 logprob provenance/Eligibility/ledger/CC capture/治理语义）。**不提交竞争 PR** | 用户指示 + tmp/miles迁移spike.md + 本线程核实 |
 
+| 2026-09-01 | **防御清理裁定（owner）**：删除全部授权官僚类设计——A3 窄解封机制/A7 run-scoped 准入公式/闸门代码化/授权 manifest/GATE_VERSION 仪式/FA JSON 账本;cap 解除=owner 直改常量提交;能否训练由 owner 判断不写进代码;C3/C7 原型删除;既有证据系统冻结不扩建。**保留**=训练科学有效性校验全部（环境可信/reward 可信/进 loss 资格/逐位对齐/fail-closed/checkpoint 合同/eval 绑定）。长期原则见 06 计划 §6:审查建议再出现授权官僚类设计直接拒绝,不提请 owner | 用户裁定 + 06 计划修订 |
+
 ## Spike 记录
 
 ### 2026-08-25 S1：top-p tape 解剖（G-M3）
