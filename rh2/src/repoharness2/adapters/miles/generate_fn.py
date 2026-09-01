@@ -29,6 +29,10 @@ from repoharness2.adapters.miles.attempt_assignment import (
     stamp_assignment_on_outputs,
 )
 from repoharness2.adapters.miles.canonicalize import canonicalize_group
+from repoharness2.adapters.miles.group_admission import (
+    GROUP_ADMISSION_FILTER_PATH,
+    AdmissionWiringError,
+)
 from repoharness2.adapters.miles.identity import (
     MilesIdentityError,
     mint_attempt_identity,
@@ -38,6 +42,10 @@ from repoharness2.adapters.slime.generate import rh2_custom_generate
 from repoharness2.envpack.termination_facts import (
     TERMINATION_FACTS_METADATA_KEY,
     resolve_termination_facts,
+)
+from repoharness2.governance.admission import (
+    ADMISSION_METADATA_KEY,
+    resolve_admission_payload,
 )
 
 
@@ -53,6 +61,38 @@ def _verify_termination_facts_binding(output: Any) -> None:
     meta = getattr(output, "metadata", None)
     if isinstance(meta, dict) and TERMINATION_FACTS_METADATA_KEY in meta:
         resolve_termination_facts(meta)
+
+
+def _verify_admission_binding(output: Any) -> None:
+    """W1b 第二段交付面自检：交付面盖上的 admission 载荷（若在场）必须能按叶自身的
+    attempt/execution/分派身份 join 回来（身份与分派三元组在 canonicalize 后才盖到 miles 叶上，
+    所以这一步只能在两者之后做）。无载荷的叶放行（abort 形状 / s1）。"""
+
+    if isinstance(output, list):
+        for item in output:
+            _verify_admission_binding(item)
+        return
+    meta = getattr(output, "metadata", None)
+    if isinstance(meta, dict) and ADMISSION_METADATA_KEY in meta:
+        resolve_admission_payload(meta)
+
+
+def _assert_group_admission_filter_wired(args: Any, execution_mode: str) -> None:
+    """非 s1_compat 的 miles 派发链必须挂 rh2 复合 group filter（配置真实性，A8 同纪律）。
+
+    交付面自 W1b 第二段起把不合格但完整的成员**真实交付**（remove_sample=False），准入完全
+    依赖 miles `--dynamic-sampling-filter-path` 指向 `rh2_group_admission_filter`；没挂 filter
+    的 formal 运行会把不合格成员直接送进训练——这是接线 bug，必须在首个派发前 fail-fast。
+    """
+
+    configured = getattr(args, "dynamic_sampling_filter_path", None)
+    if configured != GROUP_ADMISSION_FILTER_PATH:
+        raise AdmissionWiringError(
+            "group_admission_filter_not_wired",
+            f"execution_mode={execution_mode} 要求 args.dynamic_sampling_filter_path == "
+            f"{GROUP_ADMISSION_FILTER_PATH!r}，实际 {configured!r}——组准入 filter 未接线，"
+            "不合格成员会绕过准入进入训练，拒绝派发。",
+        )
 
 
 class Rh2MilesGenerateFn:
@@ -103,6 +143,8 @@ class Rh2MilesGenerateFn:
         execution_mode = getattr(binding_config, "execution_mode", "s1_compat")
         minted_identity = None
         if execution_mode != "s1_compat":
+            # W1b 第二段：先验接线——复合 group filter 未挂即拒绝派发（见函数 docstring）。
+            _assert_group_admission_filter_wired(input.args, execution_mode)
             minted_identity = mint_attempt_identity(
                 input.sample,
                 n_samples_per_prompt=getattr(input.args, "n_samples_per_prompt", None),
@@ -163,6 +205,10 @@ class Rh2MilesGenerateFn:
                 # 分派三元组（task_id + 两个 digest）同样不会自动传播到输出叶：
                 # 第二段 filter 的环境身份 join 要在交付样本上读到它。
                 stamp_assignment_on_outputs(samples, assignment)
+            if minted_identity is not None:
+                # W1b 第二段：admission 载荷必须按叶自身身份/分派 join 得回来（在身份与
+                # 分派三元组都盖章之后才能核对）。
+                _verify_admission_binding(samples)
             return GenerateFnOutput(samples=samples)
         finally:
             if assignment is not None and registry is not None:

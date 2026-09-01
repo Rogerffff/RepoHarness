@@ -15,6 +15,17 @@
   security 强制 audit / 派生视图互检这五连锁由 schema 校验器再执行一遍
   （gate 层与 schema 层双保险）。
 
+A3（06 计划 §1，D1 已批，2026-09-02 W1b 第二段落地）：**资格只由轨迹事实决定**
+——七维全过自然得到 online。此前的 S1 全程封顶（`S1_TIER_CAP` /
+`s1_default_ceiling_offline` / cap 应用分支）已整体删除；与之同批，security 维
+从"无 findings 即过"改为"**正向 sandbox 能力事实在场且无违规**"
+（`SandboxCapabilityFacts`）：能力事实缺失 = 非 online（fail-closed，reason_code
+`sandbox_capability_facts_missing`）。W3b 产出能力事实之前，formal 路径的样本因此
+自然拿不到 online——这是预期的时序防护，不是 bug（cap 删除与语义切换同批，
+不存在 findings=() 假过窗口）。s1_compat（冻结的 bring-up 路径，无准入消费者）
+由调用方显式声明 `sandbox_capability_facts_required=False`，本维保持旧语义并在
+evidence 里如实记 `sandbox_capability_facts:not_required`。
+
 三档结论的降级地板（_DIMENSION_DEGRADE_FLOOR，S1-5 定案）：
 
   维度失败只说明"不能进 online"，落到哪一档取决于失败摧毁的是什么——
@@ -42,7 +53,7 @@ from collections.abc import Sequence
 from datetime import datetime
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import AwareDatetime, Field, model_validator
 
 from repoharness2.contracts import (
     AntiCheatFinding,
@@ -63,27 +74,34 @@ from repoharness2.grading.queue import BackpressureEvent
 
 __all__ = [
     "GATE_VERSION",
-    "S1_TIER_CAP",
-    "S1_CEILING_REASON_CODE",
+    "REQUIRED_SANDBOX_CAPABILITIES",
+    "SandboxCapabilityFacts",
     "GateInputError",
     "GroupRepairSignal",
     "GateOutcome",
 ]
 
 # gate 实现版本（§16.11 eligibility_gate_version）：改判定逻辑必须升版本号，
-# 让两份不同逻辑产出的 EligibilityReport 永远可区分。
-GATE_VERSION = "rh2.gate.s1.v1"
+# 让两份不同逻辑产出的 EligibilityReport 永远可区分。这是**被动版本号**
+# （机械升版），不是任何解锁/闸门（06 计划 A3）。
+# 版本史：rh2.gate.s1.v1 = S1 封顶时代；rh2.gate.w1b.v2 = A3 落地
+# （删 S1_TIER_CAP + security 维要求正向 sandbox 能力事实）。
+GATE_VERSION = "rh2.gate.w1b.v2"
 
-# S1 全程资格封顶（fail-closed 上限）：S2 的安全加固（非 root / cap-drop /
-# seccomp / 全量 anti-cheat 过滤）尚未完成，在那之前**任何**样本——包括
-# 七维全过的完美样本——最高只发 offline_or_sft_candidate，不发
-# online_policy_loss_eligible。解除方式：S2 安全验收通过后由验收流程
-# 显式修改本常量（并升 GATE_VERSION），不允许任何运行期开关绕过。
-S1_TIER_CAP: TrainingEligibilityClass = "offline_or_sft_candidate"
-
-# 封顶生效时写入 reason_codes 的显式理由码（eligibility.py 校验器要求
-# 非 online 结论必须有理由——"静默降级"不可表示）。
-S1_CEILING_REASON_CODE = "s1_default_ceiling_offline"
+# A3 / W3b 接缝：security 维要求在场且已核实的正向 sandbox 能力事实清单
+# （名字取自 06 计划 W3b 行的能力项；W3b 的 producer 若改名/增项，须同步
+# 改本清单并机械升 GATE_VERSION——这是消费契约，不是授权清单）。
+REQUIRED_SANDBOX_CAPABILITIES: tuple[str, ...] = (
+    "non_root_user",  # 容器内以非 root 身份运行
+    "linux_capabilities_dropped",  # Linux capabilities 已丢弃到最小集
+    "pids_limit_enforced",  # 进程数上限生效
+    "cpu_limit_enforced",  # CPU 配额生效
+    "memory_limit_enforced",  # 内存上限生效
+    "writable_mounts_allowlisted_with_quota",  # 可写挂载点在白名单内且带配额
+    "network_model_proxy_only",  # 网络只可达模型代理端点
+    "hidden_and_grader_assets_not_mounted",  # hidden/grader 资产不在任何挂载点
+    "git_future_refs_reflog_remotes_cleared",  # git 未来引用/reflog/remotes 已清
+)
 
 # 三档严重度：数值越小越受限。min() 取最严。
 _CLASS_SEVERITY: dict[TrainingEligibilityClass, int] = {
@@ -124,6 +142,46 @@ class GateInputError(ValueError):
     """
 
 
+class SandboxCapabilityFacts(StrictModel):
+    """一次 rollout sandbox 的正向能力事实（A3：security 维的事实输入）。
+
+    producer = W3b（sandbox 创建后直接核实并记录；本切片尚无生产 producer）；
+    consumer = gate 的 security_and_leakage 维。语义：`verified_capabilities`
+    是**已核实生效**的能力项名（必须覆盖 `REQUIRED_SANDBOX_CAPABILITIES`
+    全部），`violations` 是核实过程中发现的违规项——任一 required 项未核实
+    = 非 online（DROP 面），任一违规 = 环境隔离失效（A4 run-fatal 面，映射见
+    governance/admission.py）。这是"本次实际能力"的被动记录（06 §6 保留项），
+    不是授权 manifest。
+    """
+
+    schema_id: Literal["rh2.sandbox_capability_facts.v1"] = Field(
+        default="rh2.sandbox_capability_facts.v1", description="schema 判别字段。"
+    )
+    trajectory_id: NonEmptyStr = Field(description="被核实 sandbox 所属轨迹 id（gate 接线校验用）。")
+    lease_id: NonEmptyStr = Field(description="SandboxLease.lease_id（能力事实锚到具体容器租约）。")
+    verified_capabilities: list[SafeIdentifier] = Field(
+        default_factory=list, description="已核实生效的能力项名（须覆盖 REQUIRED_SANDBOX_CAPABILITIES）。"
+    )
+    violations: list[SafeIdentifier] = Field(
+        default_factory=list, description="核实时发现的违规项名（非空即环境隔离失效）。"
+    )
+    evidence_refs: list[NonEmptyStr] = Field(
+        default_factory=list, description="核实证据引用（探针输出 artifact 等）。"
+    )
+    verified_at_utc: AwareDatetime = Field(description="核实时间（必须带时区）。")
+
+    @model_validator(mode="after")
+    def _check_capability_facts(self) -> "SandboxCapabilityFacts":
+        if len(set(self.verified_capabilities)) != len(self.verified_capabilities):
+            raise ValueError("verified_capabilities 含重复项（事实清单必须无歧义）。")
+        if len(set(self.violations)) != len(self.violations):
+            raise ValueError("violations 含重复项（事实清单必须无歧义）。")
+        overlap = sorted(set(self.verified_capabilities) & set(self.violations))
+        if overlap:
+            raise ValueError(f"同一能力项既声称已核实又列为违规：{overlap}（矛盾事实不可表示）。")
+        return self
+
+
 class GroupRepairSignal(StrictModel):
     """组修复信号（S1-5 定案的结构化表示，gate 返回值中一等暴露）。
 
@@ -135,12 +193,10 @@ class GroupRepairSignal(StrictModel):
     `degrade_visible_before_assembly=True` 的事实来源就是这次转发。
 
     语义要点：
-    - `degraded` 按**七维事实**判定（任一维 ok=False 即 True），**不含**
-      S1 封顶——封顶是政策上限不是样本缺陷；若把封顶也算降级，S1 期间
-      每组全员"degraded"，组修复会把所有组整组丢弃，S1-7a 的 debug
-      training step 一个样本都拿不到。具体数值例：n=4 的组里 1 条 infra
-      失败、3 条七维全过（被封顶为 offline），正确账目是 degraded=1、
-      可交付=3，而不是 degraded=4；
+    - `degraded` 按**七维事实**判定（任一维 ok=False 即 True）。A3 之后
+      不再有"封顶"这类政策上限：七维全过 = online、degraded=False。具体
+      数值例：n=4 的组里 1 条 infra 失败、3 条七维全过，账目是
+      degraded=1、可交付=3；
     - `group_id=None` 表示非组式算法形态（PPO 单条 rollout，算法无关原则），
       此时降级即单样本剔除，无组账目可修。
 
@@ -169,10 +225,10 @@ class GroupRepairSignal(StrictModel):
         description="对应 EligibilityReport.report_id（信号可回链到完整判定依据）。"
     )
     eligibility_class: TrainingEligibilityClass = Field(
-        description="最终三档结论（含 S1 封顶后的值，与 EligibilityReport 一致）。"
+        description="最终三档结论（与 EligibilityReport 一致）。"
     )
     degraded: bool = Field(
-        description="七维任一失败即 True（按事实判定，不含 S1 封顶——见类 docstring）。"
+        description="七维任一失败即 True（按事实判定——见类 docstring）。"
     )
     failed_dimensions: list[SafeIdentifier] = Field(
         default_factory=list,
@@ -377,17 +433,27 @@ def _dim_security_and_leakage(
     grading_report: GradingReport,
     scan_result: ProjectionScanResult,
     findings: Sequence[AntiCheatFinding],
+    sandbox_capability_facts: SandboxCapabilityFacts | None,
+    *,
+    capability_facts_required: bool,
 ) -> DimensionFact:
     """维度 5：安全与泄漏（§16.1 条 5+7 合并，executed 级即失败）。
 
-    三类事实源：
-    1. AntiCheatFinding：enforcement=executed 即失败；attempted_blocked
+    四类事实源：
+    1. **正向 sandbox 能力事实（A3）**：`capability_facts_required=True`（非
+       s1_compat 的一切路径）时，`SandboxCapabilityFacts` 必须在场、
+       `REQUIRED_SANDBOX_CAPABILITIES` 全部已核实、且无违规——缺席即
+       `sandbox_capability_facts_missing`，缺项即
+       `sandbox_capability_unverified_<name>`，违规即
+       `sandbox_capability_violation_<name>`。**缺事实 = 非 online**（fail-closed）；
+       不再存在"没有 findings 就算安全"的假过窗口；
+    2. AntiCheatFinding：enforcement=executed 即失败；attempted_blocked
        （拦截成功）不扣分——agent 学到"此路不通"是合法训练信号，但留痕；
-    2. patch hygiene 的 executed 级篡改事实：test_files_modified /
+    3. patch hygiene 的 executed 级篡改事实：test_files_modified /
        forbidden_path_touched 说明篡改/污染已落盘在最终 patch 里
        （eligibility schema 对本维的定义明说"泄漏/权限/**篡改**"，
        findings 缺席时 hygiene 是同一事实的评分期证据）；
-    3. public projection 扫描：marker 命中即失败。
+    4. public projection 扫描：marker 命中即失败。
 
     本维失败时 schema 层强制结论 audit_only_or_rejected（gate 地板同为
     audit，双保险）。
@@ -395,6 +461,23 @@ def _dim_security_and_leakage(
 
     reasons: list[str] = []
     evidence: list[str] = []
+    if capability_facts_required:
+        if sandbox_capability_facts is None:
+            reasons.append("sandbox_capability_facts_missing")
+            evidence.append("sandbox_capability_facts:absent")
+        else:
+            verified = set(sandbox_capability_facts.verified_capabilities)
+            for name in REQUIRED_SANDBOX_CAPABILITIES:
+                if name not in verified:
+                    reasons.append(f"sandbox_capability_unverified_{name}")
+            for name in sandbox_capability_facts.violations:
+                reasons.append(f"sandbox_capability_violation_{name}")
+            evidence.append(f"sandbox_capability_facts:{sandbox_capability_facts.lease_id}")
+            evidence.extend(sandbox_capability_facts.evidence_refs)
+    else:
+        # 调用方显式声明本路径不要求能力事实（s1_compat 冻结路径）——如实留痕，
+        # 让"没核实"与"核实过且干净"在 evidence 里永远可区分。
+        evidence.append("sandbox_capability_facts:not_required")
     for finding in findings:
         if finding.enforcement == "executed":
             reasons.append(f"anti_cheat_executed_{finding.category}")
@@ -503,10 +586,16 @@ def _check_wiring(
     scan_result: ProjectionScanResult,
     findings: Sequence[AntiCheatFinding],
     handshake: BackendHandshake | None,
+    sandbox_capability_facts: SandboxCapabilityFacts | None = None,
 ) -> dict[str, GenerationCaptureRecord]:
     """gate 输入的接线一致性检查（不一致 = 编排 bug，抛 GateInputError）。"""
 
     traj = projection.trajectory_id
+    if sandbox_capability_facts is not None and sandbox_capability_facts.trajectory_id != traj:
+        raise GateInputError(
+            f"SandboxCapabilityFacts.trajectory_id({sandbox_capability_facts.trajectory_id}) "
+            f"与投影({traj}) 不一致（别的 sandbox 的能力事实接错了线）。"
+        )
     if grading_report.trajectory_id != traj:
         raise GateInputError(
             f"GradingReport.trajectory_id({grading_report.trajectory_id}) 与投影({traj}) 不一致。"
@@ -549,6 +638,8 @@ def _evaluate(
     findings: Sequence[AntiCheatFinding] = (),
     handshake: BackendHandshake | None = None,
     backpressure_events: Sequence[BackpressureEvent] = (),
+    sandbox_capability_facts: SandboxCapabilityFacts | None = None,
+    sandbox_capability_facts_required: bool = True,
     report_id: str,
     created_at_utc: datetime,
 ) -> GateOutcome:
@@ -556,6 +647,10 @@ def _evaluate(
 
     返回 GateOutcome：EligibilityReport（权威载体）+ GroupRepairSignal
     （一等暴露的组修复信号，S1-6 在组装配前转发后端）。
+
+    `sandbox_capability_facts` / `sandbox_capability_facts_required`（A3）：
+    默认**要求**能力事实（fail-closed）；只有 s1_compat 冻结路径显式传
+    required=False。
     """
 
     records_by_id = _check_wiring(
@@ -565,6 +660,7 @@ def _evaluate(
         scan_result=scan_result,
         findings=findings,
         handshake=handshake,
+        sandbox_capability_facts=sandbox_capability_facts,
     )
     # 反压事件是全局观测流（GradingQueue.events 混着所有轨迹），按轨迹过滤，
     # 非本轨迹的事件不属于本样本的事实，直接忽略（不算接线错误）。
@@ -577,7 +673,13 @@ def _evaluate(
         logprob_alignment=_dim_logprob_alignment(projection),
         loss_mask_integrity=_dim_loss_mask_integrity(projection),
         reward_scope=_dim_reward_scope(projection, grading_report),
-        security_and_leakage=_dim_security_and_leakage(grading_report, scan_result, findings),
+        security_and_leakage=_dim_security_and_leakage(
+            grading_report,
+            scan_result,
+            findings,
+            sandbox_capability_facts,
+            capability_facts_required=sandbox_capability_facts_required,
+        ),
         clean_grading=_dim_clean_grading(grading_report, own_backpressure),
         policy_staleness=_dim_policy_staleness(handshake, projection),
     )
@@ -599,28 +701,19 @@ def _evaluate(
         if not fact.ok
     ]
 
-    # 七维合取 -> 事实档位（merit）：全过 = online；有失败 = 各失败维地板取最严。
+    # 七维合取 -> 资格档位：全过 = online（A3：资格只由轨迹事实决定，无封顶）；
+    # 有失败 = 各失败维地板取最严。
     if failed:
-        merit: TrainingEligibilityClass = min(
+        final: TrainingEligibilityClass = min(
             (_DIMENSION_DEGRADE_FLOOR[name] for name, _ in failed),
             key=lambda cls: _CLASS_SEVERITY[cls],
         )
     else:
-        merit = "online_policy_loss_eligible"
-
-    # S1 封顶：事实档位再好也不越过 S1_TIER_CAP（封顶只降不升——audit 不会被"抬"到 offline）。
-    if _CLASS_SEVERITY[merit] > _CLASS_SEVERITY[S1_TIER_CAP]:
-        final: TrainingEligibilityClass = S1_TIER_CAP
-        cap_applied = True
-    else:
-        final = merit
-        cap_applied = False
+        final = "online_policy_loss_eligible"
 
     reason_codes: list[str] = []
     for _, fact in failed:
         reason_codes.extend(fact.reason_codes)
-    if cap_applied:
-        reason_codes.append(S1_CEILING_REASON_CODE)
     for event in own_backpressure:
         # queue.py 明说该理由码可直接写进 EligibilityReport.reason_codes
         # （观测事实，不构成降级）。

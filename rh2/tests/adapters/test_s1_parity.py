@@ -31,7 +31,7 @@ def test_parity_core_token_bitwise_and_audit_gate(tmp_path):
         assert chain["logprobs_bitwise_equal"] is True
         assert chain["reward_facts_bitwise_equal"] is True
         assert chain["idempotent_reexport"] is True
-        assert chain["eligibility_class"] == "offline_or_sft_candidate"  # S1 封顶
+        assert chain["eligibility_class"] == "online_policy_loss_eligible"  # A3：无封顶（T1 oracle 改动）
     by_label = {chain["label"]: chain for chain in result["chains"]}
     assert by_label["dense_2turn"]["token_count"] == 35  # 12+10+5+8
     assert by_label["dense_2turn"]["trainable_token_count"] == 18  # 10+8
@@ -49,7 +49,7 @@ def test_parity_cross_governance_facts():
         "loss_mask_integrity": ["no_trainable_tokens"],
         "policy_staleness": ["staleness_facts_missing"],
     }
-    assert result["slime_class"] == "offline_or_sft_candidate"
+    assert result["slime_class"] == "online_policy_loss_eligible"  # A3：无封顶（T1 oracle 改动）
     assert result["verifiers_class"] == "audit_only_or_rejected"
     assert result["verifiers_export_refused"] is True
 

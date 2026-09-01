@@ -342,8 +342,13 @@ class _FakeOrchestrator:
 
 def _mk_input(orchestrator, sample, **args_over):
     from miles.rollout.base_types import GenerateFnInput
+    from repoharness2.adapters.miles.group_admission import GROUP_ADMISSION_FILTER_PATH
 
-    args = Namespace(rh2_orchestrator=orchestrator, **args_over)
+    # W1b 第二段：非 s1 模式派发要求复合 group filter 已接线（generate_fn 守卫）；
+    # s1_compat 用例带上也无影响（守卫只在非 s1 生效）。
+    args = Namespace(
+        rh2_orchestrator=orchestrator, dynamic_sampling_filter_path=GROUP_ADMISSION_FILTER_PATH, **args_over
+    )
     return GenerateFnInput(
         state=SimpleNamespace(args=args),
         sample=sample,

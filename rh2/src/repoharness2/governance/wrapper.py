@@ -59,6 +59,7 @@ from repoharness2.governance.gate import (
     GateInputError,
     GateOutcome,
     GroupRepairSignal,
+    SandboxCapabilityFacts,
     _evaluate,
 )
 from repoharness2.governance.projection_scan import (
@@ -141,6 +142,8 @@ async def finalize_rollout(
     handshake: BackendHandshake | None,
     findings: Sequence[AntiCheatFinding] = (),
     backpressure_events: Sequence[BackpressureEvent] = (),
+    sandbox_capability_facts: SandboxCapabilityFacts | None = None,
+    sandbox_capability_facts_required: bool = True,
     report_id: str | None = None,
     created_at_utc: datetime | None = None,
 ) -> FinalizedRollout:
@@ -161,6 +164,11 @@ async def finalize_rollout(
     - findings：本轨迹的反作弊 finding（executed 级触发 security 维失败）。
     - backpressure_events：评分队列反压事件流（可以混含其他轨迹的事件，
       gate 只取本轨迹的；理由码写进报告，不构成降级）。
+    - sandbox_capability_facts / sandbox_capability_facts_required（A3，W1b
+      第二段）：security 维的正向 sandbox 能力事实。默认 **required=True**
+      （fail-closed：事实缺席 = `sandbox_capability_facts_missing`，非 online）；
+      只有 s1_compat 冻结路径显式传 required=False（evidence 如实记
+      not_required）。W3b 落地前 formal 路径传 None 是预期形态。
     - report_id / created_at_utc：EligibilityReport 的 id 与时间戳；缺省时
       自动生成（id 形如 elig_1a2b3c4d5e6f，时间取当前 UTC）。需要逐字节
       可复现的报告（如 parity 对照）时由调用方显式传入。
@@ -180,6 +188,8 @@ async def finalize_rollout(
         findings=findings,
         handshake=handshake,
         backpressure_events=backpressure_events,
+        sandbox_capability_facts=sandbox_capability_facts,
+        sandbox_capability_facts_required=sandbox_capability_facts_required,
         report_id=report_id if report_id is not None else f"elig_{uuid.uuid4().hex[:12]}",
         created_at_utc=(
             created_at_utc if created_at_utc is not None else datetime.now(timezone.utc)

@@ -24,8 +24,8 @@ def test_governance_public_api_is_exact():
 
     assert set(governance.__all__) == {
         "GATE_VERSION",
-        "S1_CEILING_REASON_CODE",
-        "S1_TIER_CAP",
+        "REQUIRED_SANDBOX_CAPABILITIES",
+        "SandboxCapabilityFacts",
         "FinalizedRollout",
         "GateInputError",
         "GateOutcome",
@@ -34,6 +34,27 @@ def test_governance_public_api_is_exact():
         "ProjectionScanResult",
         "finalize_rollout",
     }
+
+
+def test_admission_module_public_functions_pinned():
+    """W1b 第二段：governance/admission.py 消费 gate 产物（不是 gate 绕行路径）——其公开函数
+    精确钉死，且不经包级 __init__ 转出（消费方按模块路径 import）。"""
+
+    from repoharness2.governance import admission
+
+    public_functions = {
+        name
+        for name, obj in vars(admission).items()
+        if not name.startswith("_") and inspect.isfunction(obj) and obj.__module__ == admission.__name__
+    }
+    assert public_functions == {
+        "decide_member_disposition",
+        "derive_admission_payload",
+        "resolve_admission_payload",
+        "stamp_admission_payload",
+        "truncation_slot",
+    }
+    assert not any(name in governance.__all__ for name in public_functions)
 
 
 def test_finalize_rollout_is_the_only_public_callable():

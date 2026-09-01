@@ -134,6 +134,7 @@ def _build_prepared_chain(world, *, face, registry, leaf_factory, docker=None) -
         template_hash=SHA_TEMPLATE, adapter_url="http://10.0.0.1:18001", harness_name="mock_harness",
         expect_moe_routing=False, execution_mode="fa_formal", policy_version=POLICY_VERSION,
         require_real_weight_versions=True, reject_context_shrink=True, reject_on_nonzero_harness_exit=True,
+        staleness_threshold=4,  # W1b 第二段：显式传入（禁止隐式默认；数值归 B）
     )
     adapter_ref: dict[str, Any] = {}
 
@@ -208,6 +209,17 @@ def _dispatch_groups(fx, *, n: int):
     return src.get_samples(len(ds))
 
 
+def _args(chain, registry) -> Namespace:
+    """miles args 替身：W1b 第二段起非 s1 模式派发要求复合 group filter 已接线。"""
+
+    from repoharness2.adapters.miles.group_admission import GROUP_ADMISSION_FILTER_PATH
+
+    return Namespace(
+        rh2_orchestrator=chain.orchestrator, n_samples_per_prompt=2, rh2_attempt_assignments=registry,
+        dynamic_sampling_filter_path=GROUP_ADMISSION_FILTER_PATH,
+    )
+
+
 def _gi(world, args, sample):
     from miles.rollout.base_types import GenerateFnInput
 
@@ -263,7 +275,7 @@ async def test_w1b_prepared_chain_real_shape_prompt_to_sandbox_and_delivery(worl
 
     chain = _build_prepared_chain(world, face=face, registry=registry,
                                   leaf_factory=lambda: [_mk_leaf(world, index=3, group_index=1)])
-    args = Namespace(rh2_orchestrator=chain.orchestrator, n_samples_per_prompt=2, rh2_attempt_assignments=registry)
+    args = _args(chain, registry)
     out = await world.Rh2MilesGenerateFn()(_gi(world, args, sample))
 
     # ① resolver 只走 attempt 绑定：任务 = host 分派（TID2），source-qualified id 贯穿 audit/评分
@@ -341,7 +353,7 @@ async def test_w1b_prepared_chain_never_calls_full_loader_and_graph_has_no_golde
     sample = _dispatch_groups(fx, n=2)[0][0]
     chain = _build_prepared_chain(world, face=face, registry=registry,
                                   leaf_factory=lambda: [_mk_leaf(world, index=0, group_index=0)])
-    args = Namespace(rh2_orchestrator=chain.orchestrator, n_samples_per_prompt=2, rh2_attempt_assignments=registry)
+    args = _args(chain, registry)
     out = await world.Rh2MilesGenerateFn()(_gi(world, args, sample))
     assert chain.orchestrator.audits[0].steps[-1] == "step9_samples_delivered"
 
@@ -370,7 +382,7 @@ async def test_w1b_dispatch_pair_swap_and_missing_keys_rejected_at_bind(world, t
     sample = _dispatch_groups(fx, n=2)[0][0]
     sample.metadata["environment_package_digest"] = fx.manifest.record(TID2).environment_package_digest
     chain = _build_prepared_chain(world, face=face, registry=registry, leaf_factory=list)
-    args = Namespace(rh2_orchestrator=chain.orchestrator, n_samples_per_prompt=2, rh2_attempt_assignments=registry)
+    args = _args(chain, registry)
     with pytest.raises(AttemptAssignmentError, match="dispatch_not_authoritative"):
         await fn(_gi(world, args, sample))
     assert chain.orchestrator.audits == [] and len(registry) == 0  # 从未进入生产链、无残留绑定
@@ -467,7 +479,7 @@ async def test_w1b_retry_replaces_stale_termination_facts_on_passthrough_sample(
     fn = world.Rh2MilesGenerateFn()
 
     chain1 = _build_prepared_chain(world, face=face, registry=registry, leaf_factory=list, docker=_NoDocker())
-    args1 = Namespace(rh2_orchestrator=chain1.orchestrator, n_samples_per_prompt=2, rh2_attempt_assignments=registry)
+    args1 = _args(chain1, registry)
     (aborted1,) = (await fn(_gi(world, args1, sample))).samples
     assert aborted1 is sample and aborted1.status is world.MS.Status.ABORTED
     paid1 = sample.metadata[idm.ATTEMPT_ID_KEY]
@@ -480,7 +492,7 @@ async def test_w1b_retry_replaces_stale_termination_facts_on_passthrough_sample(
     # miles 真实回收路径：reset_for_retry 保留 metadata（旧事实 + 旧身份在场）→ 重派发
     sample.reset_for_retry()
     chain2 = _build_prepared_chain(world, face=face, registry=registry, leaf_factory=list, docker=_NoDocker())
-    args2 = Namespace(rh2_orchestrator=chain2.orchestrator, n_samples_per_prompt=2, rh2_attempt_assignments=registry)
+    args2 = _args(chain2, registry)
     (aborted2,) = (await fn(_gi(world, args2, sample))).samples
     paid2 = sample.metadata[idm.ATTEMPT_ID_KEY]
     assert paid2 != paid1 and sample.metadata[idm.ATTEMPT_SEQ_KEY] == 2

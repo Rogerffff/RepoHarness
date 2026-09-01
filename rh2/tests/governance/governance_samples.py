@@ -26,7 +26,12 @@ from repoharness2.contracts import (
     GradingReport,
     TrajectoryProjection,
 )
-from repoharness2.governance import FinalizedRollout, finalize_rollout
+from repoharness2.governance import (
+    REQUIRED_SANDBOX_CAPABILITIES,
+    FinalizedRollout,
+    SandboxCapabilityFacts,
+    finalize_rollout,
+)
 from repoharness2.grading.queue import BackpressureEvent
 
 # 固定 id 与时间戳：同输入两次 finalize 的报告可逐字节比对（确定性测试用）。
@@ -111,7 +116,23 @@ def backpressure_event(
     )
 
 
-_DEFAULT = object()  # handshake 参数的哨兵：区分"用默认样例"与"显式传 None"
+_DEFAULT = object()  # handshake / 能力事实参数的哨兵：区分"用默认样例"与"显式传 None"
+
+
+def valid_sandbox_capability_facts(**overrides: Any) -> dict[str, Any]:
+    """A3：全部 required 能力项已核实、无违规的正向 sandbox 能力事实（security 维正例输入）。"""
+
+    payload = {
+        "schema_id": "rh2.sandbox_capability_facts.v1",
+        "trajectory_id": "traj_0001",
+        "lease_id": "lease_0001",
+        "verified_capabilities": list(REQUIRED_SANDBOX_CAPABILITIES),
+        "violations": [],
+        "evidence_refs": ["sandbox_probe_0001"],
+        "verified_at_utc": "2026-07-07T09:30:25Z",
+    }
+    payload.update(overrides)
+    return payload
 
 
 async def run_finalize(
@@ -122,10 +143,16 @@ async def run_finalize(
     findings: Sequence[Any] = (),
     handshake: Any = _DEFAULT,
     backpressure: Sequence[BackpressureEvent] = (),
+    sandbox_capability_facts: Any = _DEFAULT,
+    sandbox_capability_facts_required: bool = True,
     report_id: str = FIXED_REPORT_ID,
     created_at: datetime = FIXED_CREATED_AT,
 ) -> FinalizedRollout:
-    """以生产入口 finalize_rollout 执行一次完整 finalize（测试唯一执行路径）。"""
+    """以生产入口 finalize_rollout 执行一次完整 finalize（测试唯一执行路径）。
+
+    A3 起默认显式传入一份合法的 SandboxCapabilityFacts（正例基线 = 七维全过 → online）；
+    传 None 即"能力事实缺席"（security 维 fail-closed）。
+    """
 
     projection_obj = _as(TrajectoryProjection, projection, valid_trajectory_projection)
     grading_obj = _as(GradingReport, grading, valid_grading_report)
@@ -139,6 +166,12 @@ async def run_finalize(
         handshake_obj = None
     else:
         handshake_obj = _as(BackendHandshake, handshake, None)
+    if sandbox_capability_facts is _DEFAULT:
+        facts_obj = SandboxCapabilityFacts.model_validate(valid_sandbox_capability_facts())
+    elif sandbox_capability_facts is None:
+        facts_obj = None
+    else:
+        facts_obj = _as(SandboxCapabilityFacts, sandbox_capability_facts, None)
     return await finalize_rollout(
         grade=lambda: grading_obj,
         project=lambda report: projection_obj,
@@ -146,6 +179,8 @@ async def run_finalize(
         handshake=handshake_obj,
         findings=finding_objs,
         backpressure_events=list(backpressure),
+        sandbox_capability_facts=facts_obj,
+        sandbox_capability_facts_required=sandbox_capability_facts_required,
         report_id=report_id,
         created_at_utc=created_at,
     )

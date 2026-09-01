@@ -117,6 +117,7 @@ from repoharness2.contracts import (
     WorkspaceHandle,
     canonical_json_digest,
 )
+from repoharness2.contracts.fa_runtime import RolloutAttemptOutcomeV2
 from repoharness2.contracts.finalization import (
     CleanupFailureFact,
     CleanupResultAppendV1,
@@ -131,7 +132,17 @@ from repoharness2.envpack.termination_facts import (
     stamp_termination_facts,
     termination_facts_payload,
 )
-from repoharness2.governance import FinalizedRollout, GroupRepairSignal, finalize_rollout
+from repoharness2.governance import (
+    FinalizedRollout,
+    GroupRepairSignal,
+    SandboxCapabilityFacts,
+    finalize_rollout,
+)
+from repoharness2.governance.admission import (
+    AdmissionError,
+    derive_admission_payload,
+    stamp_admission_payload,
+)
 from repoharness2.grading.manager import (
     BASE_UNTRACKED_MANIFEST,
     BASE_UNTRACKED_SNAPSHOT_SCRIPT,
@@ -1630,6 +1641,18 @@ def validate_execution_config(
                 "——屏障缺位时正式模式禁止启动；探针用 execution_mode="
                 "fa_audit_only（audit-only，产物不可训）。",
             )
+        threshold = config.staleness_threshold
+        if (
+            threshold is None
+            or isinstance(threshold, bool)
+            or not isinstance(threshold, int)
+            or threshold < 0
+        ):
+            raise StartupCheckError(
+                "staleness_threshold_required_in_formal_chain",
+                f"fa_formal 要求显式 staleness_threshold（非负 int），得到 {threshold!r}——"
+                "D1-4：finalize-time 阈值只定参数化接口、禁止继承隐式默认；数值归决策包 B。",
+            )
     if config.require_real_weight_versions:
         version = config.policy_version
         if version is None or version == "step_0":
@@ -1812,6 +1835,13 @@ def rollout_task_from_bundle_pair(
 TaskResolver = Callable[[Any], RolloutTaskSpec]
 
 
+# s1_compat 冻结路径的 staleness 阈值（S1 时代的历史值，**只**在 execution_mode=s1_compat
+# 且 config.staleness_threshold=None 时使用）。W1b 第二段（D1-4）起 formal 路径禁止继承任何
+# 隐式默认：fa_formal 构造 orchestrator 即要求显式 staleness_threshold（数值归决策包 B），
+# 非 s1 模式在握手构造时刻缺阈值 = run-fatal。本常量不是"默认值"，是被冻结的 S1 事实。
+S1_COMPAT_LEGACY_STALENESS_THRESHOLD = 4
+
+
 @dataclass(frozen=True)
 class SlimeBindingConfig:
     """绑定级 serving/治理事实（capture 记录、投影、握手的参数来源）。"""
@@ -1831,7 +1861,11 @@ class SlimeBindingConfig:
     moe_num_layers: int | None = None
     moe_router_topk: int | None = None
     policy_version: str | None = "step_0"  # None = 无 staleness 事实（gate 将 fail-closed 降级）
-    staleness_threshold: int = 4
+    # finalize-time staleness 阈值（D1-4 参数化接口）：**无隐式默认**。fa_formal 必须显式给出
+    # （validate_execution_config 启动即拒）；非 s1 模式握手构造时刻为 None = run-fatal；
+    # s1_compat 为 None 时回退 S1_COMPAT_LEGACY_STALENESS_THRESHOLD（冻结路径零改变）。
+    # 数值由决策包 B 确认；复合 group filter 消费时与本字段逐值比对（同一权威配置）。
+    staleness_threshold: int | None = None
     # FA-0（05 计划 D-FA-1/FA-0.3）：正式链开关。True 时：
     #   1. 构造 orchestrator 即断言 policy_version 不是静态哨兵值（step_0/None）
     #      且可解析为十进制整数（引擎 update_weights 计数器语义）；
@@ -2207,7 +2241,13 @@ class RolloutOrchestrator:
         finalization_store: "FinalizationStore | None" = None,
         session_drain_owner: Callable[[str], Awaitable[Any]] | None = None,
         grading_spec_resolver: Callable[[Any], GradingEnvSpec] | None = None,
+        sandbox_capability_facts_provider: Callable[["RolloutAudit"], SandboxCapabilityFacts | None] | None = None,
     ) -> None:
+        # W1b 第二段（A3 / W3b 接缝）：sandbox 正向能力事实的取数口。W3b 落地后由 bringup
+        # 注入（sandbox 创建后核实并记录，按 audit/lease 取回）；None = 无事实 → security 维
+        # `sandbox_capability_facts_missing`，formal 样本自然非 online（预期时序防护）。
+        # s1_compat 不消费本口（该路径显式声明不要求能力事实）。
+        self._sandbox_capability_facts_provider = sandbox_capability_facts_provider
         # W1b 第一集成切片（F4/F6）：评分材料取数口。非 None = prepared 链
         # （bringup 注入：样本 → attempt 绑定 → host grading 视图 → actor 内构造
         # spec），此时任务面对象不内嵌评分材料；None = legacy v1 八题链/测试
@@ -2305,11 +2345,46 @@ class RolloutOrchestrator:
             except TerminationFactsError as exc:
                 # 交付叶与本次 receipt 的 attempt/execution 对不上 = 账实矛盾
                 # （与 B4 baseline 矛盾同通道 run-halt），不许带着错事实交付。
-                raise FatalExecutionInfrastructureError(
+                fatal = FatalExecutionInfrastructureError(
                     "termination_facts_stamp_conflict",
                     f"交付面盖章失败：{exc}",
-                ) from exc
+                )
+                # W1b 第二段（codex 硬要求）：本 fatal 发生在 receipt/audit 已落盘之后，磁盘
+                # 证据（receipt=delivery_prepared、首条审计记录）仍显示成功——经**现有**审计
+                # 通道追加一条 attempt-bound 的 fatal 事实（append-only 第二条记录），不建
+                # 恢复平台；追加失败只记 secondary fact，不掩盖首因。
+                self._append_post_receipt_fatal_fact(audit_slot[0], fatal, stage="deliver")
+                self._notify_fatal_halt(fatal)
+                raise fatal from exc
         return delivered
+
+    def _append_post_receipt_fatal_fact(
+        self, audit: "RolloutAudit", fatal: FatalExecutionInfrastructureError, *, stage: str
+    ) -> None:
+        """receipt/首条审计已 durable 之后才发生的 fatal：把事实追加进同一 audit 并再走一次
+        audit sink（bringup 的 jsonl 是 append-only，第二条记录携带 physical_attempt_id +
+        failure_records，磁盘上"成功"与"其后 fatal"两条事实并存、按 attempt 可关联）。"""
+
+        audit.failure_records.append(
+            RolloutFailureRecord(
+                stage=stage,
+                error_type=fatal.reason_code,
+                detail=str(fatal)[:500],
+            )
+        )
+        audit.mark(fatal.reason_code)
+        if self._audit_sink is None:
+            return
+        try:
+            self._audit_sink(audit)
+        except Exception as exc:  # noqa: BLE001 - 追加失败不掩盖首因 fatal
+            audit.failure_records.append(
+                RolloutFailureRecord(
+                    stage=stage,
+                    error_type="post_receipt_fatal_audit_append_failed",
+                    detail=f"{type(exc).__name__}: {exc}"[:500],
+                )
+            )
 
     def _grading_spec_for(self, task: RolloutTaskSpec, sample: Any) -> GradingEnvSpec:
         """评分材料取数口（W1b 第一集成切片）。
@@ -2834,7 +2909,8 @@ class RolloutOrchestrator:
                 )
                 audit.mark("formal_chain_audit_only_pre_barrier")
                 return self._abort_result(
-                    sample, reason="rh2_runtime_barrier_unavailable", task=task, top_p=tape_top_p
+                    sample, reason="rh2_runtime_barrier_unavailable", task=task, top_p=tape_top_p,
+                    audit=audit,
                 )
             grading_workspace = sandbox.workspace  # s1_compat 既有语义
             barrier_evidence: list[str] = []
@@ -2944,9 +3020,13 @@ class RolloutOrchestrator:
                                     f":{exc.object_type or 'unknown'}",
                                 ],
                             )
-                            return self._abort_result(
-                                sample, reason="rh2_unsafe_artifact_rejected",
-                                task=task, top_p=tape_top_p,
+                            # W1b 第二段（三终态 ③ / 附录 A 契约豁免集）：unsafe 是
+                            # present_complete + 永久拒绝——不再压成 ABORTED（ABORTED 只
+                            # 给 completion=missing），而是真实交付 + admission 载荷（无
+                            # EligibilityReport），由复合 filter 整组 DROP。
+                            return self._deliver_present_member(
+                                task=task, raw_meta=raw_meta, samples=samples,
+                                finalized=None, audit=audit,
                             )
                         raise SlimeBindingError(exc.reason_code, str(exc)) from exc
                     audit.frozen_patch_digest = compute_frozen_patch_digest(frozen_patch)
@@ -3069,9 +3149,11 @@ class RolloutOrchestrator:
                                 *unsafe_reasons,
                             ],
                         )
-                        return self._abort_result(
-                            sample, reason="rh2_unsafe_artifact_rejected",
-                            task=task, top_p=tape_top_p,
+                        # W1b 第二段（三终态 ③）：同上——present + 永久拒绝走真实交付
+                        # + 载荷（无报告），filter 按契约封闭豁免集 DROP_GROUP。
+                        return self._deliver_present_member(
+                            task=task, raw_meta=raw_meta, samples=samples,
+                            finalized=None, audit=audit,
                         )
                     audit.scoring_projection_entry_count = len(
                         projection.included_entry_paths
@@ -3103,7 +3185,7 @@ class RolloutOrchestrator:
                     audit.mark("runtime_quiescence_failed")
                     return self._abort_result(
                         sample, reason="rh2_runtime_quiescence_failed",
-                        task=task, top_p=tape_top_p,
+                        task=task, top_p=tape_top_p, audit=audit,
                     )
                 else:
                     audit.failure_records.append(
@@ -3192,7 +3274,7 @@ class RolloutOrchestrator:
                     audit.mark("snapshot_integrity_mismatch")
                     return self._abort_result(
                         sample, reason="rh2_snapshot_integrity_mismatch",
-                        task=task, top_p=tape_top_p,
+                        task=task, top_p=tape_top_p, audit=audit,
                     )
 
             # F2-2 producer（成功收口）：termination=completed；评分三态
@@ -3297,9 +3379,15 @@ class RolloutOrchestrator:
                     # 外层 Fatal 分支不会再次分派——手动通知 halt 后传播。
                     self._notify_fatal_halt(fatal)
                     raise
-            return self._abort_result(
-                sample, reason=f"rh2_{stage}_failed:{type(exc).__name__}", task=task, top_p=tape_top_p
-            )
+            try:
+                return self._abort_result(
+                    sample, reason=f"rh2_{stage}_failed:{type(exc).__name__}", task=task, top_p=tape_top_p,
+                    audit=audit,
+                )
+            except FatalExecutionInfrastructureError as fatal:
+                # present 成员被压成 abort 形状 = 交付面接线矛盾（在 except 子句内，手动通知 halt）
+                self._notify_fatal_halt(fatal)
+                raise
         finally:
             # ---- B5（A-prime 第 7 条）：cleanup 只许发生在 finalization
             # receipt 原子持久化**之后**。receipt 持久化失败 = T0 失败表
@@ -3782,6 +3870,18 @@ class RolloutOrchestrator:
                     "fail-closed（不得 clamp 成 staleness=0 伪装健康）。",
                 )
             staleness_steps = current - min(seen_numeric)
+        # D1-4：finalize-time 阈值只定参数化接口——非 s1 模式必须显式配置（fa_formal 已在
+        # 启动校验拒绝缺失；此处是握手构造时刻的第二道 fail-fast），s1_compat 冻结路径
+        # 回退 S1 历史值。禁止在此处发明任何"默认 4"。
+        threshold = self.config.staleness_threshold
+        if threshold is None:
+            if self._mode != "s1_compat":
+                raise FatalExecutionInfrastructureError(
+                    "staleness_threshold_unconfigured",
+                    f"execution_mode={self._mode} 的握手构造缺显式 staleness_threshold——"
+                    "finalize-time staleness 判定无阈值可依，run-halt（数值归决策包 B）。",
+                )
+            threshold = S1_COMPAT_LEGACY_STALENESS_THRESHOLD
         return BackendHandshake(
             handshake_id=f"hs_{trajectory_id}",
             trajectory_id=trajectory_id,
@@ -3789,8 +3889,8 @@ class RolloutOrchestrator:
             policy_version=current_version,
             weight_versions_seen=seen or [current_version],
             staleness_steps=staleness_steps,
-            staleness_threshold=self.config.staleness_threshold,
-            staleness_within_threshold=staleness_steps <= self.config.staleness_threshold,
+            staleness_threshold=threshold,
+            staleness_within_threshold=staleness_steps <= threshold,
             group_signal=None,
             accepted=True,
             handshaked_at_utc=_now_utc(),
@@ -3965,6 +4065,12 @@ class RolloutOrchestrator:
             audit.step("step7_projection_completed")
             return projection
 
+        # A3（W1b 第二段）：security 维要求正向 sandbox 能力事实。非 s1 模式一律要求
+        # （provider 缺席/返回 None → `sandbox_capability_facts_missing` → 非 online，
+        # W3b 落地前的预期形态）；s1_compat 冻结路径显式声明不要求（evidence 记 not_required）。
+        capability_facts: SandboxCapabilityFacts | None = None
+        if self._mode != "s1_compat" and self._sandbox_capability_facts_provider is not None:
+            capability_facts = self._sandbox_capability_facts_provider(audit)
         return await finalize_rollout(
             grade=_grade,
             project=_project,
@@ -3972,6 +4078,8 @@ class RolloutOrchestrator:
             handshake=handshake,
             findings=(),
             backpressure_events=list(self._backpressure_events_source()),
+            sandbox_capability_facts=capability_facts,
+            sandbox_capability_facts_required=self._mode != "s1_compat",
         )
 
     # ------------------------------------------------------------------ 步骤 9
@@ -4029,9 +4137,9 @@ class RolloutOrchestrator:
             ) from exc
 
         report = finalized.eligibility_report
-        if signal.degraded:
-            # 降级判据 = 七维事实（S1 封顶不算降级，S1-5 定案），样本以 slime
-            # abort 形状剔除；完整判定依据在 sidecar（artifact 旁路已落盘）。
+        if signal.degraded and self._mode == "s1_compat":
+            # s1_compat 冻结路径（slime FA 回退面 / miles GPU spike bring-up，无组级准入
+            # 消费者）：降级样本仍以 slime abort 形状剔除，行为逐字不变。
             audit.step("step9_degraded_signal_forwarded")
             return self._abort_result(
                 base_sample, reason="rh2_gate_degraded", task=task, report=report, top_p=top_p
@@ -4063,6 +4171,17 @@ class RolloutOrchestrator:
             audit.step("step9_samples_delivered")
             return [base_sample]
 
+        if self._mode != "s1_compat":
+            # W1b 第二段（三终态 ③，D1 已批）：完整 finalize 的成员——七维全过或任一维
+            # 不合格——**一律真实交付**（token/mask/logprob/provenance 真实，remove_sample=False）
+            # 并携带 typed admission 载荷；准入由 miles 复合 group filter 按 A2 全员合取
+            # 整组裁决（不合格 → keep=False 固定丢弃）。degraded 不再压成 abort 形状：
+            # 那会让 filter 永远看不到这些组，把 failed_to_grade 等 present 事实改写成 ABORTED。
+            raw_meta = getattr(base_sample, "metadata", None)
+            return self._deliver_present_member(
+                task=task, raw_meta=raw_meta, samples=samples, finalized=finalized, audit=audit
+            )
+
         for leaf in samples:
             leaf.reward = grading_reward
             # 宿主 metadata 只写两个白名单派生视图键（S1-5 派生视图定案），
@@ -4072,6 +4191,103 @@ class RolloutOrchestrator:
                 "eligibility_report_ref": report.derived_view_report_ref,
                 "training_eligibility_class": report.derived_view_class,
             }
+        audit.delivered_sample_count = len(samples)
+        audit.step("step9_samples_delivered")
+        return list(samples)
+
+    def _deliver_present_member(
+        self,
+        *,
+        task: RolloutTaskSpec,
+        raw_meta: Any,
+        samples: Sequence[Any],
+        finalized: FinalizedRollout | None,
+        audit: RolloutAudit,
+    ) -> list[Any]:
+        """三终态 ③ 的交付面（非 s1 模式）：present_* 成员真实交付 + typed admission 载荷。
+
+        适用两类成员：
+        - 完整 finalize（`finalized` 在场）：合格与不合格都走这里——载荷内嵌 EligibilityReport
+          与 Outcome v2，filter 按七维 reason_code 裁决；
+        - 契约封闭豁免集（`finalized=None`：unsafe artifact 永久拒绝——present_complete、
+          reward 不可得、无 EligibilityReport）：载荷只内嵌 Outcome v2，filter 按豁免集 DROP。
+
+        reward 不可得（failed_to_grade / unsafe）时 miles Sample.reward 用 **NaN** 占位：
+        - 不用 None——miles `generate_and_rm` 会对 reward=None 的样本调 rm hub，而 rh2 链
+          没有配置 rm_type/custom_rm_path，会在 `async_rm` 里 AttributeError 炸掉整组任务；
+        - 不用 0.0——P4 红线：infra/未评分绝不伪装成 reward=0 的负样本；
+        - NaN 若因接线错误绕过 filter 进入训练，会在 advantage 计算里 loud-fail 而不是静默污染。
+        typed 载荷里 `outcome.reward_unavailable=True` 是权威事实，filter 会核对二者一致。
+        """
+
+        meta = raw_meta if isinstance(raw_meta, Mapping) else {}
+        if audit.outcome_v2 is None:
+            raise FatalExecutionInfrastructureError(
+                "admission_payload_without_outcome",
+                f"attempt {audit.physical_attempt_id or audit.trajectory_id} 走到交付面却没有 Outcome v2"
+                "——非 s1 模式的 present 成员必带执行结果权威，run-halt。",
+            )
+        report = finalized.eligibility_report if finalized is not None else None
+        grading_report = finalized.grading_report if finalized is not None else None
+        try:
+            outcome = RolloutAttemptOutcomeV2.model_validate(audit.outcome_v2)
+            payload = derive_admission_payload(
+                outcome=outcome,
+                eligibility_report=report,
+                grading_report=grading_report,
+                handshake=audit.handshake,
+                task_id=task.task_id,
+                public_bundle_digest=task.public_bundle_digest,
+                environment_package_digest=(
+                    str(meta["environment_package_digest"])
+                    if meta.get("environment_package_digest")
+                    else None
+                ),
+            )
+        except (AdmissionError, ValidationError) as exc:
+            # 载荷派生失败 = 交付面各权威对象互相矛盾（账实矛盾），run-halt，不许伪装成缺员。
+            audit.failure_records.append(
+                RolloutFailureRecord(
+                    stage="deliver",
+                    error_type="admission_payload_build_failed",
+                    detail=f"{type(exc).__name__}: {exc}"[:500],
+                )
+            )
+            audit.mark("admission_payload_build_failed")
+            raise FatalExecutionInfrastructureError(
+                "admission_payload_build_failed",
+                f"admission 载荷派生失败：{type(exc).__name__}: {exc}——交付面账实矛盾，run-halt。",
+            ) from exc
+        grading_reward = grading_report.reward if grading_report is not None else None
+        delivered_reward = float("nan") if grading_reward is None else float(grading_reward)
+        for leaf in samples:
+            leaf.reward = delivered_reward
+            leaf.remove_sample = False
+            leaf_meta = dict(getattr(leaf, "metadata", None) or {})
+            if report is not None:
+                # 宿主 metadata 的两个白名单派生视图键（S1-5 载体定案），值逐字取 report。
+                leaf_meta["eligibility_report_ref"] = report.derived_view_report_ref
+                leaf_meta["training_eligibility_class"] = report.derived_view_class
+            leaf.metadata = leaf_meta
+        try:
+            stamp_admission_payload(list(samples), payload)
+        except AdmissionError as exc:
+            audit.failure_records.append(
+                RolloutFailureRecord(
+                    stage="deliver",
+                    error_type="admission_payload_stamp_conflict",
+                    detail=str(exc)[:500],
+                )
+            )
+            audit.mark("admission_payload_stamp_conflict")
+            raise FatalExecutionInfrastructureError(
+                "admission_payload_stamp_conflict",
+                f"admission 载荷盖章冲突：{exc}——交付叶身份与本次 attempt 不符，run-halt。",
+            ) from exc
+        if report is None:
+            audit.mark("present_member_delivered_without_report")
+        elif not finalized.eligibility_report.facts.all_ok():
+            audit.mark("degraded_member_delivered_for_group_admission")
         audit.delivered_sample_count = len(samples)
         audit.step("step9_samples_delivered")
         return list(samples)
@@ -4287,8 +4503,14 @@ class RolloutOrchestrator:
         task: RolloutTaskSpec,
         report: Any | None = None,
         top_p: float | None = None,
+        audit: "RolloutAudit | None" = None,
     ) -> list[Any]:
         """slime 例程 _abort_result 的同形收口：标记剔除并保持 fan-out 列表形状。
+
+        W1b 第二段（三终态 ②）：非 s1 模式下 abort 形状（ABORTED，交 miles unused handler）
+        **只**允许给 completion_class=missing 的 attempt（未形成 present 对象的已归因 task-local
+        故障）或尚无 Outcome 的结构化拒绝（身份不全）；已产出 present_* Outcome 的成员被压成
+        abort 形状 = 交付面接线矛盾（"事实说评分完整但样本是 abort 形状"），run-halt。
 
         top-p 补充（S1-7a 源码核对推翻差异假设 7 的"逐字段照抄即可"）：
         `rollout_top_p != 1.0` 时 slime `_convert_samples_to_train_data` 对
@@ -4300,6 +4522,19 @@ class RolloutOrchestrator:
         （此时 slime 反过来要求字段**不在场**，混填会让 batch 收集分叉）。
         """
 
+        if (
+            audit is not None
+            and self._mode != "s1_compat"
+            and audit.outcome_v2 is not None
+            and audit.outcome_v2.get("completion_class") != "missing"
+        ):
+            audit.mark("abort_shape_for_present_outcome")
+            raise FatalExecutionInfrastructureError(
+                "abort_shape_for_present_outcome",
+                f"attempt {audit.physical_attempt_id or audit.trajectory_id} 的 Outcome 是 "
+                f"{audit.outcome_v2.get('completion_class')}，却要以 abort 形状（{reason}）交付——"
+                "ABORTED 只给 completion=missing，present 成员必须真实交付由组级 filter 裁决。",
+            )
         sample.tokens = [0, 0]
         sample.response = ""
         sample.response_length = 1

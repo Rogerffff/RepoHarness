@@ -359,7 +359,10 @@ async def test_e2e_unsupported_object_present_rejected_no_grader():
         _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     audit = chain.orchestrator.audits[0]
     assert chain.grading.calls == []
-    assert all(getattr(x, "remove_sample", False) for x in delivered)
+    # W1b 第二段（三终态 ③，T1 oracle 改动）：present + 永久拒绝真实交付 + admission 载荷
+    # （无 EligibilityReport），由复合 filter 整组 DROP——不再 remove_sample/ABORTED。
+    assert all(getattr(x, "remove_sample", True) is False for x in delivered)
+    assert all("rh2_admission" in x.metadata for x in delivered)
     assert audit.outcome_v2["completion_class"] == "present_complete"
     assert audit.outcome_v2["reason_code"] == "unsafe_artifact_permanent_rejection"
     # oracle 2 一并：真实 generate → JSONL 的 disposition 回归（阻塞 4）
@@ -440,9 +443,11 @@ async def test_e2e_unsafe_artifact_present_rejected_no_grader(tmp_path):
         _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     audit = chain.orchestrator.audits[0]
     assert chain.grading.calls == []  # unsafe 不运行 grader
-    assert all(getattr(x, "remove_sample", False) for x in delivered)  # 剔除
+    # W1b 第二段（三终态 ③，T1 oracle 改动）：真实交付 + 载荷，准入由 filter 整组 DROP
+    assert all(getattr(x, "remove_sample", True) is False for x in delivered)
+    assert all("rh2_admission" in x.metadata for x in delivered)
     ov2 = audit.outcome_v2
-    assert ov2["completion_class"] == "present_complete"  # 事实完整，禁止训练
+    assert ov2["completion_class"] == "present_complete"  # 事实完整，禁止训练（filter 层 DROP）
     assert ov2["reason_code"] == "unsafe_artifact_permanent_rejection"
     assert ov2["reward_unavailable"] is True
     assert any("unsafe_symlink_escape" in r for r in audit.unsafe_artifact_reasons)
@@ -606,7 +611,9 @@ async def test_e2e_test_tampering_is_permanent_rejection_no_grader(tmp_path):
         _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     audit = chain.orchestrator.audits[0]
     assert chain.grading.calls == []  # 不运行 grader
-    assert all(getattr(x, "remove_sample", False) for x in delivered)  # 剔除
+    # W1b 第二段（三终态 ③，T1 oracle 改动）：真实交付 + 载荷，准入由 filter 整组 DROP
+    assert all(getattr(x, "remove_sample", True) is False for x in delivered)
+    assert all("rh2_admission" in x.metadata for x in delivered)
     ov2 = audit.outcome_v2
     assert ov2["completion_class"] == "present_complete"
     assert ov2["reason_code"] == "unsafe_artifact_permanent_rejection"

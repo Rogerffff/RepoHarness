@@ -1,4 +1,4 @@
-"""finalize_rollout（唯一关口）的行为测试：顺序、封顶、接线校验、确定性。"""
+"""finalize_rollout（唯一关口）的行为测试：顺序、A3 无封顶、接线校验、确定性。"""
 
 from __future__ import annotations
 
@@ -28,8 +28,6 @@ from repoharness2.contracts import (
 )
 from repoharness2.governance import (
     GATE_VERSION,
-    S1_CEILING_REASON_CODE,
-    S1_TIER_CAP,
     GateInputError,
     finalize_rollout,
 )
@@ -43,16 +41,15 @@ def _default_handshake() -> BackendHandshake:
     return BackendHandshake.model_validate(valid_backend_handshake())
 
 
-async def test_happy_path_all_dimensions_ok_but_capped_to_offline():
-    """七维全过的完美样本：S1 封顶为 offline_or_sft_candidate + 显式理由码。"""
+async def test_happy_path_all_dimensions_ok_is_online():
+    """七维全过（含正向 sandbox 能力事实在场）的完美样本：A3 起无封顶 → online、零理由码。"""
 
     final = await run_finalize()
     report = final.eligibility_report
 
     assert report.facts.all_ok()
-    # S1 cap：全维通过也拿不到 online 档
-    assert report.eligibility_class == "offline_or_sft_candidate" == S1_TIER_CAP
-    assert report.reason_codes == [S1_CEILING_REASON_CODE]
+    assert report.eligibility_class == "online_policy_loss_eligible"
+    assert report.reason_codes == []
     # 自证字段：digest 重算一致、派生视图互检字段已填好
     assert report.facts_digest == compute_facts_digest(report.facts)
     assert report.derived_view_report_ref == report.report_id == FIXED_REPORT_ID
@@ -69,7 +66,7 @@ async def test_happy_path_all_dimensions_ok_but_capped_to_offline():
 
 
 async def test_group_repair_signal_first_class_on_happy_path():
-    """组修复信号一等暴露：全过样本 degraded=False（封顶不算降级），组账目可用。"""
+    """组修复信号一等暴露：全过样本 degraded=False，组账目可用。"""
 
     final = await run_finalize()
     signal = final.group_repair_signal
@@ -81,11 +78,17 @@ async def test_group_repair_signal_first_class_on_happy_path():
     assert signal.eligibility_class == final.eligibility_report.eligibility_class
 
 
-async def test_s1_tier_cap_constant_pinned():
-    """S1 封顶常量本身钉死：offline_or_sft_candidate（解除须改常量并升 GATE_VERSION）。"""
+def test_s1_tier_cap_deleted_and_gate_version_bumped():
+    """A3（D1 已批）：S1_TIER_CAP / ceiling reason code / cap 分支整体删除；GATE_VERSION 机械升版
+    （被动版本号，不是解锁）。"""
 
-    assert S1_TIER_CAP == "offline_or_sft_candidate"
-    assert S1_CEILING_REASON_CODE == "s1_default_ceiling_offline"
+    import repoharness2.governance as governance
+    from repoharness2.governance import gate
+
+    assert not hasattr(gate, "S1_TIER_CAP") and not hasattr(gate, "S1_CEILING_REASON_CODE")
+    assert not hasattr(governance, "S1_TIER_CAP") and not hasattr(governance, "S1_CEILING_REASON_CODE")
+    assert "s1_default_ceiling_offline" not in gate.__dict__.values()
+    assert GATE_VERSION == "rh2.gate.w1b.v2"
 
 
 async def test_wrapper_fixes_call_order_grade_then_project():
@@ -138,7 +141,7 @@ async def test_async_grade_and_project_callables_supported():
         report_id=FIXED_REPORT_ID,
         created_at_utc=FIXED_CREATED_AT,
     )
-    assert final.eligibility_report.eligibility_class == "offline_or_sft_candidate"
+    assert final.eligibility_report.eligibility_class == "audit_only_or_rejected"  # 未传能力事实 → security 失败
 
 
 async def test_grade_callable_returning_wrong_type_rejected():
@@ -199,9 +202,9 @@ async def test_backpressure_events_recorded_but_not_degrading():
     final = await run_finalize(backpressure=[own, foreign])
     report = final.eligibility_report
 
-    assert "grading_backpressure_queue_full" in report.reason_codes
-    assert S1_CEILING_REASON_CODE in report.reason_codes
+    assert report.reason_codes == ["grading_backpressure_queue_full"]  # 只有观测理由码，无封顶
     assert report.facts.all_ok()  # 不降级
+    assert report.eligibility_class == "online_policy_loss_eligible"
     assert final.group_repair_signal.degraded is False
     assert "bp_0001" in report.facts.clean_grading.evidence_refs
     assert "bp_foreign" not in report.facts.clean_grading.evidence_refs

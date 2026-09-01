@@ -40,7 +40,7 @@ from repoharness2.contracts._base import (
 
 TrainingEligibilityClass = Literal[
     "online_policy_loss_eligible",  # 七维全过，可进 online policy loss
-    "offline_or_sft_candidate",  # 有 warm-start/SFT/分析价值，但不够 online 门槛（S1 全程的上限档）
+    "offline_or_sft_candidate",  # 有 warm-start/SFT/分析价值，但不够 online 门槛
     "audit_only_or_rejected",  # 只可审计或直接丢弃，禁止进入任何训练
 ]
 
@@ -137,8 +137,8 @@ class EligibilityReport(StrictModel):
     2. eligibility_class=online_policy_loss_eligible 要求七维全部 ok；
     3. security_and_leakage 失败时结论必须是 audit_only_or_rejected
        （executed 级泄漏内容已进模型上下文，连 SFT 候选都会污染——从严取舍）；
-    4. 结论不是 online 档时 reason_codes 必须非空（包括 S1 的默认封顶：
-       全过也要写 s1_default_ceiling_offline 这类理由码，显式可审计）；
+    4. 结论不是 online 档时 reason_codes 必须非空（降级必须显式可审计；
+       A3 起 gate 不再有封顶，非 online 只可能来自维度失败）；
     5. 派生视图字段必须与本报告自身一致（report_ref==report_id，class==结论）。
     """
 
@@ -160,7 +160,7 @@ class EligibilityReport(StrictModel):
     eligibility_class: TrainingEligibilityClass = Field(description="三档资格结论。")
     reason_codes: list[SafeIdentifier] = Field(
         default_factory=list,
-        description="结论级理由码。非 online 结论必须至少一条（含 S1 默认封顶的显式声明）。",
+        description="结论级理由码。非 online 结论必须至少一条。",
     )
     derived_view_report_ref: NonEmptyStr = Field(
         description="宿主对象派生视图应写入的 eligibility_report_ref 值（必须 == report_id，互检用）。"
@@ -207,8 +207,7 @@ class EligibilityReport(StrictModel):
         # 4. 非 online 结论必须给理由
         if self.eligibility_class != "online_policy_loss_eligible" and not self.reason_codes:
             raise ValueError(
-                "非 online 档结论必须携带 reason_codes（例如 S1 默认封顶要写 "
-                "s1_default_ceiling_offline），降级不可无理由。"
+                "非 online 档结论必须携带 reason_codes，降级不可无理由。"
             )
         # 5. 派生视图互检
         if self.derived_view_report_ref != self.report_id:

@@ -294,6 +294,7 @@ def _build_formal_chain(world, leaf_samples) -> _Chain:
         require_real_weight_versions=True,
         reject_context_shrink=True,
         reject_on_nonzero_harness_exit=True,
+        staleness_threshold=4,  # W1b 第二段：显式传入（禁止隐式默认；数值归 B）
     )
     adapter_ref: dict[str, Any] = {}
     turns = _dense_turns()
@@ -363,8 +364,13 @@ def _mk_leaf(world, *, index, group_index):
 
 def _mk_generate_input(world, orchestrator, sample):
     from miles.rollout.base_types import GenerateFnInput
+    from repoharness2.adapters.miles.group_admission import GROUP_ADMISSION_FILTER_PATH
 
-    args = Namespace(rh2_orchestrator=orchestrator, n_samples_per_prompt=2)
+    # W1b 第二段：非 s1 模式派发要求复合 group filter 已接线（generate_fn 守卫）
+    args = Namespace(
+        rh2_orchestrator=orchestrator, n_samples_per_prompt=2,
+        dynamic_sampling_filter_path=GROUP_ADMISSION_FILTER_PATH,
+    )
     return GenerateFnInput(
         state=SimpleNamespace(args=args),
         sample=sample,
@@ -479,7 +485,7 @@ async def test_w1a_formal_chain_unminted_identity_rejected(world):
     miles_input = world.mk_miles_input(index=7, group_index=3)
     chain = _build_formal_chain(world, [_mk_leaf(world, index=7, group_index=3)])
 
-    args = Namespace(rh2_orchestrator=chain.orchestrator)
+    args = Namespace(rh2_orchestrator=chain.orchestrator)  # 直接调 rh2 入口，不经 generate_fn 守卫
     delivered = await rh2_custom_generate(args, miles_input, dict(SAMPLING_PARAMS))
 
     audit = chain.orchestrator.audits[0]

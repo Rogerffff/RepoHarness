@@ -449,7 +449,7 @@ def test_fa_formal_startup_gates():
         build_dense_chain(config=_formal_config(
             policy_version="5", execution_mode="fa_formal"))
     with pytest.raises(Exception, match="fa_formal_requires_real_weight_versions"):
-        build_dense_chain(config=dense_config(execution_mode="fa_formal"))
+        build_dense_chain(config=dense_config(execution_mode="fa_formal", staleness_threshold=4))
 
     class _GrantBarrier:
         async def establish(self, *, workspace, audit):

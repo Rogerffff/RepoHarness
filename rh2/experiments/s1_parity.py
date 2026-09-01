@@ -505,7 +505,8 @@ def _core_compare_one(chain: Chain, out_dir: Path, label: str) -> dict[str, Any]
     # --- 宿主派生视图键与导出记录互检 ---
     assert leaf.metadata["eligibility_report_ref"] == record["eligibility_report_ref"]
     assert leaf.metadata["training_eligibility_class"] == record["training_eligibility_class"]
-    assert record["training_eligibility_class"] == "offline_or_sft_candidate"  # S1 封顶
+    # A3（W1b 第二段）：S1 封顶已删除，s1_compat 七维全过 = online（T1 oracle 改动）
+    assert record["training_eligibility_class"] == "online_policy_loss_eligible"
 
     # --- manifest digest 全部重算命中 ---
     line = (out_dir / "records.jsonl").read_text().splitlines()[0]
@@ -611,6 +612,10 @@ async def _finalize_verifiers_trace(trace: dict[str, Any], model_name: str):
         ),
         capture_records=(),  # 文本中继没有 GenerationCaptureRecord——这就是被比对的事实
         handshake=None,  # 无训练后端握手事实：policy_staleness 维按 fail-closed 失败
+        # A3（W1b 第二段）：verifiers 文本中继是冻结的 S0/S1 对照路径（无准入消费者），
+        # 与 s1_compat 同口径**显式**声明不要求 sandbox 能力事实（evidence 记 not_required）；
+        # formal 路径默认 required=True。
+        sandbox_capability_facts_required=False,
     )
 
 
@@ -676,9 +681,10 @@ def run_parity_cross() -> dict[str, Any]:
     assert v_proj.renderer_cls_name == EVAL_RELAY_RENDERER_CLS_NAME
     assert v_proj.tokenizer_name.startswith("eval_relay_untokenized:")
 
-    # 6. 资格结论：slime = S1 封顶 offline；verifiers = audit（并被导出拒收）。
-    assert s_rep.eligibility_class == "offline_or_sft_candidate"
-    assert "s1_default_ceiling_offline" in s_rep.reason_codes
+    # 6. 资格结论：slime = online（A3 起无封顶，s1_compat 不要求能力事实）；verifiers = audit
+    #    （并被导出拒收）。
+    assert s_rep.eligibility_class == "online_policy_loss_eligible"
+    assert s_rep.reason_codes == []
     assert v_rep.eligibility_class == "audit_only_or_rejected"
     try:
         export_rollouts(

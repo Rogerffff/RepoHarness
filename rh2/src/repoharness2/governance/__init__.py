@@ -2,8 +2,14 @@
 
 模块分工：
 
-- gate.py             TrainingEligibilityGate 本体：七维事实合取 -> 三档资格，
-                      S1 封顶（S1_TIER_CAP）、组修复信号（GroupRepairSignal）。
+- gate.py             TrainingEligibilityGate 本体：七维事实合取 -> 三档资格
+                      （A3 起无封顶：七维全过即 online）、security 维的正向
+                      sandbox 能力事实输入（SandboxCapabilityFacts）、组修复信号
+                      （GroupRepairSignal）。
+- admission.py        W1b 第二段：交付面 typed admission 载荷（AdmissionPayloadV1）
+                      + 三终态薄处置边界纯函数（decide_member_disposition）。
+                      它**消费** gate 的产物（EligibilityReport），不是 gate 的
+                      绕行路径——其公开函数由 API 面测试单独钉死。
 - projection_scan.py  public projection 泄漏扫描（marker 名单复用
                       contracts/constants.py，确定性排序）。
 - wrapper.py          唯一公开入口 `finalize_rollout`：把
@@ -20,11 +26,11 @@ from __future__ import annotations
 
 from repoharness2.governance.gate import (
     GATE_VERSION,
-    S1_CEILING_REASON_CODE,
-    S1_TIER_CAP,
+    REQUIRED_SANDBOX_CAPABILITIES,
     GateInputError,
     GateOutcome,
     GroupRepairSignal,
+    SandboxCapabilityFacts,
 )
 from repoharness2.governance.projection_scan import (
     ProjectionMarkerHit,
@@ -34,13 +40,13 @@ from repoharness2.governance.wrapper import FinalizedRollout, finalize_rollout
 
 __all__ = [
     "GATE_VERSION",
-    "S1_CEILING_REASON_CODE",
-    "S1_TIER_CAP",
+    "REQUIRED_SANDBOX_CAPABILITIES",
     "FinalizedRollout",
     "GateInputError",
     "GateOutcome",
     "GroupRepairSignal",
     "ProjectionMarkerHit",
     "ProjectionScanResult",
+    "SandboxCapabilityFacts",
     "finalize_rollout",
 ]

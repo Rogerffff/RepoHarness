@@ -500,6 +500,8 @@ def build_dense_chain(
     harness_exit_code: int = 0,
     runtime_quiescence_barrier=None,
     finalization_store: FakeFinalizationStore | None = None,
+    sandbox_capability_facts_provider=None,  # W1b 第二段（A3 / W3b 接缝）：测试注入能力事实取数口
+    audit_sink=None,
 ) -> Chain:
     docker = docker if docker is not None else FakeRolloutDocker(rm_fail=rm_fail)
     grading = GradingSubmitStub(infra=infra_grading)
@@ -558,6 +560,8 @@ def build_dense_chain(
         session_drain_owner=(
             fake_drain_owner if the_config.execution_mode != "s1_compat" else None
         ),
+        sandbox_capability_facts_provider=sandbox_capability_facts_provider,
+        audit_sink=audit_sink,
     )
     base_sample = FixtureSlimeSample(index=0)
     chain = Chain(orchestrator, docker, driver, adapter_ref, grading, repair_signals,
@@ -598,11 +602,14 @@ async def test_normal_path_nine_step_order():
     report = audit.finalized.eligibility_report
     assert leaf.metadata == {
         "eligibility_report_ref": report.report_id,
-        "training_eligibility_class": "offline_or_sft_candidate",  # S1 封顶
+        # A3（W1b 第二段，T1 oracle 改动）：S1 封顶已删除——七维全过即 online；s1_compat
+        # 显式声明不要求 sandbox 能力事实（evidence 记 not_required），标签由 offline 改为 online，
+        # 交付行为不变（s1 从未按标签做准入）。
+        "training_eligibility_class": "online_policy_loss_eligible",
     }
-    # S1 封顶不算降级：七维全过 -> 可交付（S1-7a debug step 的样本来源）
     assert audit.finalized.group_repair_signal.degraded is False
-    assert "s1_default_ceiling_offline" in report.reason_codes
+    assert report.reason_codes == []  # 无封顶理由码
+    assert "sandbox_capability_facts:not_required" in report.facts.security_and_leakage.evidence_refs
 
     # 容器清理（Q7）：run 一次、rm 一次、租约记为已释放
     run_calls = [c for c in chain.docker.calls if c[0] == "run"]
@@ -1378,7 +1385,8 @@ async def test_evaluation_mode_returns_eval_placeholder():
     assert placeholder is chain.base_sample
     assert placeholder.reward == 1.0 and placeholder.remove_sample is True
     assert placeholder.status == "completed"
-    assert placeholder.metadata["training_eligibility_class"] == "offline_or_sft_candidate"
+    # A3：无封顶，s1_compat 七维全过 = online（T1 oracle 改动）
+    assert placeholder.metadata["training_eligibility_class"] == "online_policy_loss_eligible"
     # eval 同样走完整条治理链（评分/投影/gate 都有 evidence）
     assert chain.orchestrator.audits[0].finalized is not None
 
@@ -1417,7 +1425,7 @@ async def test_disaggregated_topology_args_mock_smoke():
     assert audit.steps == list(LIFECYCLE_STEPS)  # 与 colocate mock 逐步一致
     assert audit.failure_records == [] and audit.cleanup_failures == []
     assert len(result) == 1 and result[0].reward == 1.0
-    assert result[0].metadata["training_eligibility_class"] == "offline_or_sft_candidate"
+    assert result[0].metadata["training_eligibility_class"] == "online_policy_loss_eligible"  # A3：无封顶
     assert len(chain.docker.removed) == 1 and audit.lease_released is True
     # H-1 顺带核对：分离形态下 staleness 记账照常落在投影 handshake
     projection = audit.finalized.projection
@@ -1581,6 +1589,9 @@ def _formal_config(**overrides: Any) -> SlimeBindingConfig:
         policy_version="5",
         reject_context_shrink=True,
         reject_on_nonzero_harness_exit=True,  # codex 轮次 9 P0-3：正式链强制
+        # W1b 第二段（D1-4）：finalize-time staleness 阈值必须显式传入（禁止继承隐式默认）；
+        # 4 只是测试夹具的显式值，数值归决策包 B。
+        staleness_threshold=4,
         # F2-2 复核四轮：版本契约（require_real_weight_versions）与运行
         # 模式正交——本夹具测版本契约语义，模式保持 s1_compat 即可
     )

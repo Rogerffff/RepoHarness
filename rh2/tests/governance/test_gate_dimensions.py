@@ -266,7 +266,7 @@ async def test_attempted_blocked_finding_does_not_fail_security():
     fact = final.eligibility_report.facts.security_and_leakage
     assert fact.ok is True
     assert "attempted_blocked:finding_exec_0001" in fact.evidence_refs
-    assert final.eligibility_report.eligibility_class == "offline_or_sft_candidate"
+    assert final.eligibility_report.eligibility_class == "online_policy_loss_eligible"  # A3：无封顶
 
 
 async def test_facts_digest_tampering_rejected_on_revalidation():

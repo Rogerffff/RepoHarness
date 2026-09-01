@@ -65,7 +65,7 @@ def test_export_writes_records_artifacts_and_manifest(tmp_path):
     line = (tmp_path / "records.jsonl").read_text().splitlines()[0]
     payload = json.loads(line)
     record = SCHEMA_REGISTRY[payload["schema_id"]].model_validate(payload)
-    assert record.training_eligibility_class == "offline_or_sft_candidate"
+    assert record.training_eligibility_class == "online_policy_loss_eligible"  # A3：无封顶（T1 oracle 改动）
     assert record.exporter_version == "rh2.offline_export.s1.v1"
     assert record.offline_filter_report_ref is None  # §2：导出时挂点为空
 

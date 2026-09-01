@@ -196,15 +196,21 @@ async def test_abort_path_still_gets_receipt():
         runtime_quiescence_barrier=_TamperBarrier(), turns=turns, task=task)
     _stamp_fa_identity(chain.base_sample)
     _log_docker_rm(chain)
-    await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    delivered = await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     store = chain.finalization
     receipt = store.receipts[0]
-    assert receipt.attempt_disposition == "aborted"  # 软失败收口
-    assert receipt.terminal_reason_code == "unsafe_artifact_permanent_rejection"
+    # W1b 第二段（三终态 ③，T1 oracle 改动）：unsafe = present_complete + 永久拒绝，不再压成
+    # ABORTED——真实交付（remove_sample=False）+ admission 载荷（无 EligibilityReport），由复合
+    # filter 按契约封闭豁免集 DROP_GROUP；receipt 因此是 delivery_prepared（样本备好交回 miles，
+    # 不代表进入训练），权威归因仍在 outcome_v2.reason_code。
+    assert receipt.attempt_disposition == "delivery_prepared"
+    assert all(getattr(x, "remove_sample", True) is False for x in delivered)
+    assert all("rh2_admission" in x.metadata for x in delivered)
     # B5 复核 P1-2（T0 第 9 条 retention）：unsafe 拒绝也保留 artifact 本体
     assert store.bodies, "unsafe 分支必须先持久化本体再返回"
     assert receipt.artifact_bodies_persisted is True
     assert receipt.outcome_v2.reason_code == "unsafe_artifact_permanent_rejection"
+    assert receipt.eligibility_report_id is None
     assert store.call_order.index("persist_receipt") < store.call_order.index("docker_rm")
 
 
@@ -471,9 +477,12 @@ async def test_unsupported_object_rejection_evidence_survives_in_receipt():
     _stamp_fa_identity(chain.base_sample)
     delivered = await chain.orchestrator.generate(
         _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
-    assert all(getattr(x, "remove_sample", False) for x in delivered)
+    # W1b 第二段（三终态 ③，T1 oracle 改动）：unsupported 对象 = present + 永久拒绝，真实交付
+    # + 载荷（无报告）而不是 ABORTED；receipt=delivery_prepared，拒绝证据照旧内嵌。
+    assert all(getattr(x, "remove_sample", True) is False for x in delivered)
+    assert all("rh2_admission" in x.metadata for x in delivered)
     receipt = chain.finalization.receipts[0]
-    assert receipt.attempt_disposition == "aborted"
+    assert receipt.attempt_disposition == "delivery_prepared"
     assert receipt.rejection_evidence is not None
     assert receipt.rejection_evidence.reason_code == "unsupported_object_in_patch"
     assert receipt.rejection_evidence.object_path == "evil_pipe"
