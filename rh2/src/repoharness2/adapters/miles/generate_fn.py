@@ -24,12 +24,35 @@ from __future__ import annotations
 
 from typing import Any
 
+from repoharness2.adapters.miles.attempt_assignment import (
+    assignment_from_dispatch,
+    stamp_assignment_on_outputs,
+)
 from repoharness2.adapters.miles.canonicalize import canonicalize_group
 from repoharness2.adapters.miles.identity import (
+    MilesIdentityError,
     mint_attempt_identity,
     stamp_identity_on_outputs,
 )
 from repoharness2.adapters.slime.generate import rh2_custom_generate
+from repoharness2.envpack.termination_facts import (
+    TERMINATION_FACTS_METADATA_KEY,
+    resolve_termination_facts,
+)
+
+
+def _verify_termination_facts_binding(output: Any) -> None:
+    """F5 交付面自检：编排层盖上的 termination 事实（若在场）必须能按叶自身的
+    attempt/execution 身份 join 回来（六字段在 canonicalize 后才盖到 miles 叶上，
+    所以这一步只能在身份盖章之后做）。无载荷的叶放行（第二段 filter 决定）。"""
+
+    if isinstance(output, list):
+        for item in output:
+            _verify_termination_facts_binding(item)
+        return
+    meta = getattr(output, "metadata", None)
+    if isinstance(meta, dict) and TERMINATION_FACTS_METADATA_KEY in meta:
+        resolve_termination_facts(meta)
 
 
 class Rh2MilesGenerateFn:
@@ -85,35 +108,62 @@ class Rh2MilesGenerateFn:
                 n_samples_per_prompt=getattr(input.args, "n_samples_per_prompt", None),
             )
 
-        # rh2 legacy 入口自己会从 args.rh2_orchestrator 取编排本体并 fail-closed
-        # 校验；GenerateFnInput.args 即 state.args（miles base_types 的 property）。
-        raw = await rh2_custom_generate(
-            input.args,
-            input.sample,
-            input.sampling_params,
-            evaluation=input.evaluation,
-        )
-        # C1′-b mask 闸透传：miles 配置 rollout_top_p<1.0 即开 sampling-support
-        # replay（上游严格开关），此时 slime->miles 构造分支必须带装配 mask，
-        # 缺失由 canonicalize fail-closed 拒绝。args 无该属性（老测试面/非
-        # miles args）时传 None，闸不生效。
-        #
-        # F4（R3 routing tape）：moe_num_layers/moe_router_topk 从 orchestrator
-        # 的 SlimeBindingConfig 透传——与 backfill_leaf_sample 产生 tape 用的是
-        # **同一份配置**（单一事实源），canonicalize 据此做 (len(tokens)-1,
-        # layers, topk) 的终检转换。R3-off（config 未配 / tape 为 None）时两参
-        # 不被消费，行为零改变；tape 在场而期望缺失由 canonicalize fail-closed。
-        samples = canonicalize_group(
-            raw,
-            miles_input_sample=input.sample,
-            rollout_top_p=getattr(input.args, "rollout_top_p", None),
-            moe_num_layers=getattr(binding_config, "moe_num_layers", None),
-            moe_router_topk=getattr(binding_config, "moe_router_topk", None),
-        )
-        # W1a round-trip 收口：vendor 叶链 metadata 由 to_sample 从
-        # extra_metadata 重建（不继承输入 metadata），六字段不会自动传播——
-        # canonicalize 之后统一把本次 attempt 的铸造结果盖回全部输出叶；
-        # fan-out 各叶共享同一身份，叶上已带不同值即伪造，fail-closed。
-        if minted_identity is not None:
-            stamp_identity_on_outputs(samples, minted_identity)
-        return GenerateFnOutput(samples=samples)
+        # W1b 第一集成切片（F4）：attempt → host 原始分派的 authoritative join。
+        # prepared 链（bringup 把有界绑定表挂在 args.rh2_attempt_assignments）在
+        # 进入生产链之前把本次 attempt 绑定到 prepared prompt metadata 的分派
+        # 三元组（bind 时用 prep manifest 核对，不是回显自洽就算）；编排层的
+        # task 解析与评分材料查找只按 attempt 查绑定。attempt 结束（含异常）
+        # 即 release——旧 retry attempt 的 id 随之失效。legacy 链无绑定表。
+        registry = getattr(input.args, "rh2_attempt_assignments", None)
+        assignment = None
+        if registry is not None:
+            if minted_identity is None:
+                raise MilesIdentityError(
+                    "assignment_requires_identity",
+                    "prepared 链在场但本次派发未铸造身份（s1_compat）——attempt 绑定"
+                    "无键可用，fail-closed。",
+                )
+            assignment = assignment_from_dispatch(input.sample.metadata, minted_identity)
+            registry.bind(assignment)
+        try:
+            # rh2 legacy 入口自己会从 args.rh2_orchestrator 取编排本体并 fail-closed
+            # 校验；GenerateFnInput.args 即 state.args（miles base_types 的 property）。
+            raw = await rh2_custom_generate(
+                input.args,
+                input.sample,
+                input.sampling_params,
+                evaluation=input.evaluation,
+            )
+            # C1′-b mask 闸透传：miles 配置 rollout_top_p<1.0 即开 sampling-support
+            # replay（上游严格开关），此时 slime->miles 构造分支必须带装配 mask，
+            # 缺失由 canonicalize fail-closed 拒绝。args 无该属性（老测试面/非
+            # miles args）时传 None，闸不生效。
+            #
+            # F4（R3 routing tape）：moe_num_layers/moe_router_topk 从 orchestrator
+            # 的 SlimeBindingConfig 透传——与 backfill_leaf_sample 产生 tape 用的是
+            # **同一份配置**（单一事实源），canonicalize 据此做 (len(tokens)-1,
+            # layers, topk) 的终检转换。R3-off（config 未配 / tape 为 None）时两参
+            # 不被消费，行为零改变；tape 在场而期望缺失由 canonicalize fail-closed。
+            samples = canonicalize_group(
+                raw,
+                miles_input_sample=input.sample,
+                rollout_top_p=getattr(input.args, "rollout_top_p", None),
+                moe_num_layers=getattr(binding_config, "moe_num_layers", None),
+                moe_router_topk=getattr(binding_config, "moe_router_topk", None),
+            )
+            # W1a round-trip 收口：vendor 叶链 metadata 由 to_sample 从
+            # extra_metadata 重建（不继承输入 metadata），六字段不会自动传播——
+            # canonicalize 之后统一把本次 attempt 的铸造结果盖回全部输出叶；
+            # fan-out 各叶共享同一身份，叶上已带不同值即伪造，fail-closed。
+            if minted_identity is not None:
+                stamp_identity_on_outputs(samples, minted_identity)
+                # F5：编排层盖上的 termination 事实必须按本叶身份 join 得回来。
+                _verify_termination_facts_binding(samples)
+            if assignment is not None:
+                # 分派三元组（task_id + 两个 digest）同样不会自动传播到输出叶：
+                # 第二段 filter 的环境身份 join 要在交付样本上读到它。
+                stamp_assignment_on_outputs(samples, assignment)
+            return GenerateFnOutput(samples=samples)
+        finally:
+            if assignment is not None and registry is not None:
+                registry.release(assignment.physical_attempt_id)

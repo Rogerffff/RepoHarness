@@ -174,6 +174,39 @@ INJECT_INFRA_INSTANCE = os.environ.get("RH2_INJECT_INFRA_INSTANCE", "")
 EXPECT_MOE_ROUTING = os.environ.get("RH2_EXPECT_MOE_ROUTING", "0") == "1"
 MOE_NUM_LAYERS = int(os.environ["RH2_MOE_NUM_LAYERS"]) if os.environ.get("RH2_MOE_NUM_LAYERS") else None
 MOE_ROUTER_TOPK = int(os.environ["RH2_MOE_ROUTER_TOPK"]) if os.environ.get("RH2_MOE_ROUTER_TOPK") else None
+# W1b 第一集成切片（F6）：prepared artifact 链的三个启动旋钮——只携带 opaque 路径与
+# 期望 digest（私有内容不进 env/args）。RH2_PREPARED_TASKS_DIR 未设 = legacy v1 八题
+# 任务面（s1_compat/fa_audit_only 的 bring-up 路径）；fa_formal 缺它 = 拒绝，不回退。
+PREPARED_TASKS_DIR = os.environ.get("RH2_PREPARED_TASKS_DIR") or None
+HOST_GRADING_ARTIFACT_PATH = os.environ.get("RH2_HOST_GRADING_ARTIFACT_PATH") or None
+HOST_GRADING_ARTIFACT_SHA256 = os.environ.get("RH2_HOST_GRADING_ARTIFACT_SHA256") or None
+
+
+def select_task_face_mode(execution_mode: str, prepared_dir: str | None) -> str:
+    """任务面选择（纯函数，单测钉死；W1b 第一集成切片 F6）。
+
+    - prepared 目录在场：只在 fa_audit_only/fa_formal 允许（F4 attempt 绑定依赖六字段
+      身份，s1_compat 不铸造）→ ``"prepared"``；
+    - prepared 目录缺席：fa_formal 直接拒绝——**formal 入口不得静默回退 v1 BundlePair**
+      （v1 私有面内嵌 golden_patch）；s1_compat/fa_audit_only → ``"legacy_v1"``。
+    """
+
+    if prepared_dir:
+        if execution_mode == "s1_compat":
+            raise RuntimeError(
+                "RH2_PREPARED_TASKS_DIR 已设但 RH2_EXECUTION_MODE=s1_compat：prepared 链依赖六字段"
+                "身份（attempt 绑定），s1_compat 不铸造——拒绝启动（改 fa_audit_only/fa_formal，"
+                "或去掉 prepared 目录走 v1 八题 bring-up）。"
+            )
+        return "prepared"
+    if execution_mode == "fa_formal":
+        raise RuntimeError(
+            "fa_formal 缺 RH2_PREPARED_TASKS_DIR：formal 入口不得静默回退 v1 BundlePair 八题"
+            "（v1 私有面含 golden_patch）——先在 host 侧运行一次性 trusted-prep"
+            "（python -m repoharness2.envpack.trusted_prep）。"
+        )
+    return "legacy_v1"
+
 
 _INJECTED_EVAL_SCRIPT = (
     "#!/bin/bash\n"
@@ -713,6 +746,38 @@ class BringupService:
                 "fa_formal 暂禁：开闸前置未全清（联合终核/B6/writer-scope/"
                 "barrier git-free），详见 fa/implementation-notes.md 文末。"
             )
+        # -- 任务面（W1b 第一集成切片 F6；纯配置/文件校验，仍在资源型副作用之前）：
+        #    prepared 链 = 只读 trusted-prep 产物并复核（本 actor 进程不调完整 loader，
+        #    对象图里没有 golden/validation 面），或 legacy v1 八题 bring-up；
+        #    fa_formal 缺 prepared 产物 = 拒绝，不回退（select_task_face_mode）。
+        self.prepared_face = None
+        self.attempt_assignments = None
+        self.pairs = None
+        if select_task_face_mode(EXECUTION_MODE, PREPARED_TASKS_DIR) == "prepared":
+            from repoharness2.adapters.miles.attempt_assignment import AttemptAssignmentRegistry
+            from repoharness2.adapters.slime.prepared_task_face import PreparedTaskFace
+
+            self.prepared_face = PreparedTaskFace.load(
+                prepared_dir=PREPARED_TASKS_DIR,
+                host_grading_path=HOST_GRADING_ARTIFACT_PATH,
+                host_grading_sha256=HOST_GRADING_ARTIFACT_SHA256,
+                time_budget_seconds=AGENT_TIME_BUDGET_SEC,
+                # miles RolloutDataSource 读的必须就是 prep 的 prompts.jsonl（按内容 digest 绑定）
+                prompt_data_path=getattr(args, "prompt_data", None),
+            )
+            self.attempt_assignments = AttemptAssignmentRegistry(
+                verify_dispatch=self.prepared_face.verify_dispatch
+            )
+            self.task_specs = {
+                tid: self.prepared_face.rollout_spec(tid) for tid in self.prepared_face.task_ids()
+            }
+        else:
+            # 冻结 8 题（防漂移校验开启）。v1 私有面内嵌 golden_patch——只许 bring-up。
+            self.pairs = {pair.instance_id: pair for pair in bundles.load_bundle_pairs()}
+            self.task_specs = {
+                iid: rollout_task_from_bundle_pair(pair, time_budget_seconds=AGENT_TIME_BUDGET_SEC)
+                for iid, pair in self.pairs.items()
+            }
         self.app_handle = run_app_in_thread(
             self.adapter.app,
             host=ADAPTER_BIND_HOST,
@@ -724,13 +789,6 @@ class BringupService:
             },
         )
         self.adapter_url = f"http://{ADAPTER_PUBLIC_HOST}:{self.app_handle.port}"
-
-        # -- 任务面：冻结 8 题（防漂移校验开启）
-        self.pairs = {pair.instance_id: pair for pair in bundles.load_bundle_pairs()}
-        self.task_specs = {
-            iid: rollout_task_from_bundle_pair(pair, time_budget_seconds=AGENT_TIME_BUDGET_SEC)
-            for iid, pair in self.pairs.items()
-        }
 
         # -- 评分面：manager + F5 队列（并发 4 / 队列 8 默认）
         eval_log_dir = ARTIFACT_DIR / "eval_logs"
@@ -949,6 +1007,11 @@ class BringupService:
             runtime_quiescence_barrier=runtime_barrier,
             config=config,
             task_resolver=self._resolve_task,
+            # W1b 第一集成切片（F4/F6）：prepared 链的评分材料按 attempt 绑定在本
+            # actor 内查找/构造；legacy 链为 None（任务面内嵌 v1 spec）。
+            grading_spec_resolver=(
+                self._resolve_grading_spec if self.prepared_face is not None else None
+            ),
             adapter_factory=self._adapter_factory,
             harness_driver=driver,
             grading_submit=self._grading_submit,
@@ -1166,10 +1229,23 @@ class BringupService:
 
     def _resolve_task(self, sample: Any):
         metadata = getattr(sample, "metadata", None) or {}
+        if self.prepared_face is not None:
+            # prepared 链（F4）：只按样本自带的 attempt 绑定解析——样本回显的
+            # task_id/digest 只用来与 host 原始分派逐字比对，不一致即拒绝。
+            assignment = self.attempt_assignments.resolve_for_sample(metadata)
+            return self.prepared_face.rollout_spec(assignment.task_id)
         iid = metadata.get("instance_id") or getattr(sample, "label", None)
         if iid not in self.task_specs:
             raise ValueError(f"样本没有可识别的 instance_id（metadata/label 均未命中）: {iid!r}")
         return self.task_specs[iid]
+
+    def _resolve_grading_spec(self, sample: Any):
+        """prepared 链评分材料取数口（orchestrator 的 grading_spec_resolver）：
+        attempt 绑定 → host grading 视图（消费时刻 revalidated）→ 本进程内构造 spec。"""
+
+        metadata = getattr(sample, "metadata", None) or {}
+        assignment = self.attempt_assignments.resolve_for_sample(metadata)
+        return self.prepared_face.grading_spec(assignment)
 
     def _write_execution_audit(self, audit) -> None:
         write_execution_audit_record(
@@ -1372,6 +1448,10 @@ async def ensure_fa_started(args: Any) -> None:
         args.rh2_orchestrator = service.orchestrator
     if getattr(args, "rh2_sampling_params", None) is None:
         args.rh2_sampling_params = build_fa_sampling_params(args)
+    # W1b 第一集成切片（F4）：prepared 链把有界 attempt 绑定表挂到 args，
+    # Rh2MilesGenerateFn 在铸造身份后 bind、结束后 release。legacy 链为 None。
+    if getattr(args, "rh2_attempt_assignments", None) is None and service.attempt_assignments is not None:
+        args.rh2_attempt_assignments = service.attempt_assignments
 
 
 async def generate(args: Any, sample: Any, sampling_params: dict, evaluation: bool = False):

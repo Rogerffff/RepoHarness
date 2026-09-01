@@ -126,6 +126,11 @@ from repoharness2.contracts.finalization import (
     SessionDrainReceiptV1,
 )
 from repoharness2.envpack import bundles, materialize
+from repoharness2.envpack.termination_facts import (
+    TerminationFactsError,
+    stamp_termination_facts,
+    termination_facts_payload,
+)
 from repoharness2.governance import FinalizedRollout, GroupRepairSignal, finalize_rollout
 from repoharness2.grading.manager import (
     BASE_UNTRACKED_MANIFEST,
@@ -1747,10 +1752,16 @@ def default_leaf_facts(
 
 @dataclass(frozen=True)
 class RolloutTaskSpec:
-    """一次 rollout 的任务面（public 半区事实 + 评分 spec 引用）。
+    """一次 rollout 的任务面（public 半区事实 + 可选的 v1 评分 spec 引用）。
 
     评分私有材料**不在本对象上**：grading_spec 内嵌的 eval 脚本/parser 闭包
     只进评分容器（S1-4 通道），永不写入 rollout 容器（A6/Q6）。
+
+    W1b 第一集成切片（W2a T1 落地）：prepared 链的任务面 ``grading_spec=None``
+    ——rollout 侧只携带 public 面与 digest 锚，评分材料由同一 actor 内的 host
+    侧按 attempt 绑定查找（`RolloutOrchestrator(grading_spec_resolver=...)`）。
+    内嵌形态只保留给 v1 八题 bring-up 路径（`rollout_task_from_bundle_pair`）
+    与既有测试夹具。
     """
 
     task_id: str
@@ -1759,7 +1770,7 @@ class RolloutTaskSpec:
     prompt: str
     public_bundle_payload: bytes  # 写入 rollout 容器的 public bundle JSON 字节流
     public_bundle_digest: str  # sha256:<hex>（BundleMount 记账）
-    grading_spec: GradingEnvSpec
+    grading_spec: GradingEnvSpec | None = None
     workdir: str = "/testbed"
     time_budget_seconds: int = 1800
     # 运行期镜像 digest 比对（S1-7a 前置修复，codex#1，与 GradingEnvSpec 同纪律）：
@@ -2014,6 +2025,10 @@ class RolloutAudit:
     # F2-3 批 1：typed session-plane drain receipt（session_plane_drained
     # bool 的升级形态；finalization receipt 内嵌 durable）
     session_drain_receipt: Any | None = None
+    # W1b 第一集成切片（F5）：receipt 持久化后派生的中立 termination 事实载荷
+    # （TerminationFactsPayloadV1；generate() 返回前盖到交付面 metadata）。
+    # 无 outcome_v2 的 attempt（s1 兼容/身份不全）为 None。
+    termination_facts_payload: Any | None = None
 
     def step(self, name: str) -> None:
         self.steps.append(name)
@@ -2191,7 +2206,13 @@ class RolloutOrchestrator:
         runtime_quiescence_barrier: "RuntimeQuiescenceBarrier | None" = None,
         finalization_store: "FinalizationStore | None" = None,
         session_drain_owner: Callable[[str], Awaitable[Any]] | None = None,
+        grading_spec_resolver: Callable[[Any], GradingEnvSpec] | None = None,
     ) -> None:
+        # W1b 第一集成切片（F4/F6）：评分材料取数口。非 None = prepared 链
+        # （bringup 注入：样本 → attempt 绑定 → host grading 视图 → actor 内构造
+        # spec），此时任务面对象不内嵌评分材料；None = legacy v1 八题链/测试
+        # 夹具，用 task.grading_spec。见 `_grading_spec_for`。
+        self._grading_spec_resolver = grading_spec_resolver
         # F2-2 复核四轮：集中校验（模式合法性/fa_formal 组合/正交版本契约
         # ——bringup 在副作用前已先调过一次，此处防绕过）
         validate_execution_config(config, runtime_quiescence_barrier)
@@ -2265,6 +2286,70 @@ class RolloutOrchestrator:
     async def generate(
         self, args: Any, sample: Any, sampling_params: dict[str, Any], evaluation: bool = False
     ) -> list[Any]:
+        """custom_generate 入口：一次 physical attempt 的执行 + 交付面盖章。
+
+        W1b 第一集成切片（F5）：`_generate_attempt` 的 finally 段在 finalization
+        receipt 持久化之后派生 termination 事实载荷（挂 audit）；交付面（成功叶
+        链或 abort 形状）在返回给调用方之前统一盖章——载荷以 physical_attempt_id
+        为键进入 Sample.metadata（键 `rh2_termination_facts`），供第二段复合
+        filter 消费。Fatal/取消原样传播（无交付面可盖）。
+        """
+
+        audit_slot: list[RolloutAudit] = []
+        delivered = await self._generate_attempt(
+            args, sample, sampling_params, evaluation, audit_slot=audit_slot
+        )
+        if audit_slot and audit_slot[0].termination_facts_payload is not None:
+            try:
+                stamp_termination_facts(delivered, audit_slot[0].termination_facts_payload)
+            except TerminationFactsError as exc:
+                # 交付叶与本次 receipt 的 attempt/execution 对不上 = 账实矛盾
+                # （与 B4 baseline 矛盾同通道 run-halt），不许带着错事实交付。
+                raise FatalExecutionInfrastructureError(
+                    "termination_facts_stamp_conflict",
+                    f"交付面盖章失败：{exc}",
+                ) from exc
+        return delivered
+
+    def _grading_spec_for(self, task: RolloutTaskSpec, sample: Any) -> GradingEnvSpec:
+        """评分材料取数口（W1b 第一集成切片）。
+
+        prepared 链：`grading_spec_resolver`（bringup 注入 = 样本 attempt 绑定 →
+        host grading 视图 → actor 内构造 spec）——任务面对象上不内嵌评分材料。
+        legacy v1 链（八题 bring-up）/测试夹具：`task.grading_spec`。两者都没有 =
+        配置矛盾；resolver 失败 = 本 actor 自己的绑定表与正在处理的样本对不上
+        ——与 B4 BaselineIntegrityError 同通道 run-halt，不许伪装成
+        failed_to_grade 当成员损耗继续。
+        """
+
+        if self._grading_spec_resolver is not None:
+            try:
+                return self._grading_spec_resolver(sample)
+            except FatalExecutionInfrastructureError:
+                raise
+            except Exception as exc:  # noqa: BLE001 - 绑定/材料查找失败一律 run-halt
+                raise FatalExecutionInfrastructureError(
+                    "grading_materials_join_failed",
+                    f"评分材料按 attempt 绑定查找失败：{type(exc).__name__}: {exc}"
+                    "——按 A-prime 失败表 run-halt，不得作为成员损耗继续。",
+                ) from exc
+        if task.grading_spec is not None:
+            return task.grading_spec
+        raise FatalExecutionInfrastructureError(
+            "grading_spec_unavailable",
+            f"task {task.task_id} 既无内嵌 grading_spec 也未注入 grading_spec_resolver"
+            "——评分材料来源缺失，配置矛盾。",
+        )
+
+    async def _generate_attempt(
+        self,
+        args: Any,
+        sample: Any,
+        sampling_params: dict[str, Any],
+        evaluation: bool = False,
+        *,
+        audit_slot: list["RolloutAudit"],
+    ) -> list[Any]:
         """custom_generate 本体。任何异常都收口为 slime abort 形状 + 清理执行。"""
 
         # 注意：evaluation=True 是 S1 既有正式面（E10 定案：训练与评测同链路，
@@ -2312,6 +2397,7 @@ class RolloutOrchestrator:
             physical_attempt_id=physical_attempt_id,
         )
         self.audits.append(audit)
+        audit_slot.append(audit)
         audit.step("step1_custom_generate_invoked")
 
         hook = GenerationCaptureHook(
@@ -2354,6 +2440,15 @@ class RolloutOrchestrator:
             sampling_params.get("top_k") if use_mask_wire and top_p < 1.0 else None
         )
         adapter = self._adapter_factory(hook, session_defaults)
+
+        # W1b 第一集成切片：评分材料按 attempt 惰性取一次（hygiene 判定与评分
+        # 提交共用同一份），取数失败按 `_grading_spec_for` 的 run-halt 语义传播。
+        grading_spec_cell: list[GradingEnvSpec] = []
+
+        def grading_spec_for_attempt() -> GradingEnvSpec:
+            if not grading_spec_cell:
+                grading_spec_cell.append(self._grading_spec_for(task, sample))
+            return grading_spec_cell[0]
 
         stage = "identity"
         sandbox: _MaterializedSandbox | None = None
@@ -2939,7 +3034,7 @@ class RolloutOrchestrator:
                         )
 
                         plan = screen_frozen_entries(
-                            list(frozen_patch.entries), task.grading_spec.hygiene
+                            list(frozen_patch.entries), grading_spec_for_attempt().hygiene
                         )
                         if plan.verdict != "clean":
                             unsafe_reasons = [
@@ -3040,6 +3135,7 @@ class RolloutOrchestrator:
                 handshake=handshake,
                 audit=audit,
                 sampler_support_top_k=mask_top_k,  # B2：mask 链投影替换开关
+                grading_spec=grading_spec_for_attempt(),
             )
             audit.finalized = finalized
             audit.step("step8_gate_finalized")
@@ -3148,6 +3244,20 @@ class RolloutOrchestrator:
                     stage, ("harness_crash", "harness_crash")
                 )
             term_kind, fail_cat = mapped
+            if audit.finalized is not None and audit.outcome_v2 is None:
+                # W1b 第一集成切片（F5 登记边界，已证实可达：step8 之后、成功
+                # Outcome 产出之前的异常，如 verify_integrity 的 docker 通道
+                # 抛错）。按 P1-1 先例（:3057）整体处理：① 静止事实撤销——
+                # 评分后完整性复核没有完成，冻结副本未被证实，completion 只能
+                # 推导为 missing（否则 present_* + capture_incomplete 在 Outcome
+                # v2 契约上不可表示，下方 producer 会以 ValidationError 裸逃）；
+                # ② 清 finalized 引用——missing 收口不得与 finalized 引用并存，
+                # receipt 与 Outcome 的 grading/eligibility 引用才对称（否则
+                # termination 事实派生 fail-closed）。Outcome 已产出（CAS）时
+                # 不动：引用两侧同源，deliver 阶段失败只记 failure_record。
+                audit.runtime_quiescence_confirmed = False
+                audit.finalized = None
+                audit.mark("finalized_refs_cleared_on_exception")
             if self._mode != "s1_compat":
                 self._produce_outcome_v2(
                     audit=audit,
@@ -3213,6 +3323,30 @@ class RolloutOrchestrator:
                     if sandbox is not None:
                         self.cleanup_quarantine.append(sandbox.container_name)
                     audit.mark("finalization_receipt_write_failed")
+            # W1b 第一集成切片（F5 producer）：receipt 持久化成功后立刻派生
+            # termination 事实载荷（只读派生，fail-closed）。只对形成了 Outcome
+            # v2 的 attempt 派生——没有 Outcome 的 attempt（s1 兼容/身份不全的
+            # 结构化拒绝）没有 termination 权威，如实记跳过，不伪造事实。派生
+            # 失败 = receipt 与 outcome 账实矛盾：异常在途时只记 secondary
+            # fact，否则在 finally 末尾 run-halt（与 receipt 写失败同纪律）。
+            termination_facts_failed = False
+            if receipt is not None and not receipt_persist_failed:
+                if audit.outcome_v2 is None:
+                    audit.mark("termination_facts_skipped_no_outcome")
+                else:
+                    try:
+                        audit.termination_facts_payload = termination_facts_payload(receipt)
+                        audit.mark("termination_facts_derived")
+                    except TerminationFactsError as exc:
+                        termination_facts_failed = True
+                        audit.failure_records.append(
+                            RolloutFailureRecord(
+                                stage="finalization_receipt",
+                                error_type="termination_facts_underivable",
+                                detail=f"{type(exc).__name__}: {exc}"[:500],
+                            )
+                        )
+                        audit.mark("termination_facts_underivable")
             cleanup_exception = False
             cleanup_skipped = receipt_persist_failed and self._mode != "s1_compat"
             if cleanup_skipped:
@@ -3343,6 +3477,15 @@ class RolloutOrchestrator:
                     "finalization_receipt_write_failed",
                     "finalization receipt 持久化失败——workspace 已保留、"
                     "容器入隔离队列；继续 top-up 会产生无终局记录的 attempt。",
+                )
+            if termination_facts_failed and in_flight is None:
+                # F5：receipt 已 durable，但其 outcome/引用账实矛盾到无法派生
+                # 事实——继续 top-up 会积累无法 join 的 attempt。首因优先：
+                # 异常在途时上方只记 secondary fact，不在此覆盖。
+                raise FatalExecutionInfrastructureError(
+                    "termination_facts_underivable",
+                    "finalization receipt 与 outcome 的引用账实矛盾，termination 事实"
+                    "无法派生——receipt 已持久化，run-halt 待人工核对。",
                 )
 
     # ------------------------------------------------------------------ 步骤 2
@@ -3697,8 +3840,12 @@ class RolloutOrchestrator:
         handshake: BackendHandshake | None,
         audit: RolloutAudit,
         sampler_support_top_k: Any | None = None,
+        grading_spec: GradingEnvSpec,
     ) -> FinalizedRollout:
         """步骤 6~8：只准调 finalize_rollout（治理层唯一关口，顺序已被 wrapper 固化）。
+
+        ``grading_spec``（W1b 第一集成切片）：本次 attempt 的评分材料，由调用方经
+        `_grading_spec_for` 取得（prepared 链 = attempt 绑定查找；legacy = 任务面内嵌）。
 
         ``sampler_support_top_k``（B2，R6-ext）：非 None = 本次 generate 走
         miles sampling-mask 链路（generate() 按 args.rh2_engine_sampling_mask
@@ -3727,7 +3874,7 @@ class RolloutOrchestrator:
                     # B4：frozen_delta 在场时 grader 不读 workspace（传 None，
                     # 契约级保证"不回读 rollout workspace"）
                     workspace=None if frozen_delta is not None else workspace,
-                    spec=task.grading_spec,
+                    spec=grading_spec,
                     **({"frozen_delta": frozen_delta} if frozen_delta is not None else {}),
                 )
             except BaselineIntegrityError as exc:
