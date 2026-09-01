@@ -251,6 +251,16 @@ class CaptureRegistry:
         # 绑定了 token 的 internal sid 集合：这些会话**只能**经 token 认证
         # 进入——internal sid 非秘密（进日志/审计），直接当 bearer 必须拒
         self._capability_required: set[str] = set()
+        # W5a 关停：整表关闭标志。close() 后 register 抛 typed ServiceClosedError，
+        # guard 对任何请求 403（rh2_service_closed）——"关闭后禁 submit"的 HTTP 面。
+        self.closed = False
+
+    def close(self) -> int:
+        """关停链调用：置 closed（幂等）。返回此刻仍注册的 hook 数（应为 0；非 0 = 残留）。"""
+
+        with self._lock:
+            self.closed = True
+            return len(self.hooks)
 
     def register(
         self,
@@ -268,6 +278,10 @@ class CaptureRegistry:
         # 轮次 11 身份兜底：中毒 SID（含归档）不得复用注册
         self.poison.check(sid)
         with self._lock:
+            if self.closed:
+                from repoharness2.shutdown.chain import ServiceClosedError
+
+                raise ServiceClosedError("capture_register", f"registry 已关闭，拒绝注册 session {sid}")
             if sid in self.hooks:
                 raise DuplicateActiveSessionError(sid)  # 任何状态修改前拒绝
             self.hooks[sid] = hook
@@ -762,6 +776,14 @@ def build_session_guard_middleware(registry: "CaptureRegistry"):
     async def session_guard(request: "aiohttp_web.Request", handler):
         if request.path in ("/healthz", "/v1/models"):
             return await handler(request)
+        if registry.closed:
+            # W5a：关停链已把 registry 关闭——任何模型调用都拒绝（不分已知/未知
+            # 会话），且明确告诉 CC 不要重试。
+            return aiohttp_web.json_response(
+                {"error": {"type": "rh2_service_closed", "message": "service is shutting down"}},
+                status=403,
+                headers={"x-should-retry": "false"},
+            )
         auth = request.headers.get("Authorization", "")
         token = auth.removeprefix("Bearer ").strip() if auth.startswith("Bearer ") else None
         # F2-2 复核 P0-3：capability token 只做认证。命中 token 映射 →

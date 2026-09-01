@@ -58,7 +58,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from fnmatch import fnmatch
 from pathlib import Path
-from typing import Literal, Protocol
+from typing import Any, Literal, Protocol
 
 from repoharness2.contracts import (
     ArtifactRef,
@@ -706,6 +706,35 @@ class SWEGradingManager:
         self.prepare_failures: list[str] = []  # prepare 失败只记录不外抛（P5：grade 不受连累）
         self.cleanup_failures: list[str] = []  # Q8：清理失败必须留痕（S1-6 收口为 finding）
         self.leases: list[SandboxLease] = []  # 评分容器租约 evidence（P9 deny_all 由 schema 锁死）
+        self._closed = False  # W5a：close() 后 grade 走 typed 拒绝
+
+    # ------------------------------------------------------------------ W5a 关停
+    async def close(self) -> dict[str, Any]:
+        """关停（幂等）：取消预热任务 → 回收全部记账容器（gc 全量）→ 置 closed。
+
+        只处理**本实例记过账**的容器（`_records`）；不按 label 扫别人的容器
+        （那是 launch trap 的 run-label 兜底，见 shutdown/run_residue.py）。清理
+        失败照旧进 `cleanup_failures`（Q8 留痕），本方法不抛——关停链按返回的
+        `containers_open` 判残留。
+        """
+
+        pending = [t for t in self._prepare_tasks if not t.done()]
+        for task in pending:
+            task.cancel()
+        if pending:
+            await asyncio.gather(*pending, return_exceptions=True)
+        removed = await self.gc()
+        self._closed = True
+        return {
+            "prepare_cancelled": len(pending),
+            "containers_removed": removed,
+            "containers_open": [r.name for r in self._records if not r.removed],
+            "cleanup_failures": list(self.cleanup_failures),
+        }
+
+    @property
+    def closed(self) -> bool:
+        return self._closed
 
     # ------------------------------------------------------------------ P1
     async def startup(self) -> list[str]:
@@ -783,6 +812,12 @@ class SWEGradingManager:
         直接调用（不经队列）时保持默认值即可。
         """
 
+        if self._closed:
+            # W5a：关停后不再起任何评分容器。typed 拒绝（不是 failed_to_grade 报告：
+            # 那会被当成一次真实的评分基建失败计数）。
+            from repoharness2.shutdown.chain import ServiceClosedError
+
+            raise ServiceClosedError("grading_manager_grade", f"评分管理器已关停，拒绝 {trajectory_id}")
         total_start = time.monotonic()
         nonce = uuid.uuid4().hex[:8]
         timing_parts = {"image_pull": 0.0, "env_reset": 0.0, "prep": 0.0, "test": 0.0}

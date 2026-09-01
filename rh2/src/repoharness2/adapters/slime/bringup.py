@@ -73,6 +73,21 @@ from repoharness2.adapters.slime.capture_wire import (
     make_threadsafe_session_drain_owner,
 )
 from repoharness2.adapters.slime.docker_sandbox import DockerSandbox
+from repoharness2.shutdown import (
+    LifecycleState,
+    MemoryBoundInputs,
+    ServiceClosedError,
+    ShutdownReport,
+    ShutdownStep,
+    ShutdownTimeouts,
+    Skipped,
+    close_inflight_executions,
+    collect_growth_facts,
+    install_signal_shutdown,
+    resource_closure_facts,
+    run_shutdown_chain,
+    write_resource_closure_facts,
+)
 
 # ---------------------------------------------------------------------------
 # 环境旋钮（全部有默认值；训练脚本统一显式设置）
@@ -183,6 +198,10 @@ PREPARED_TASKS_DIR = os.environ.get("RH2_PREPARED_TASKS_DIR") or None
 PREPARED_TASKS_MANIFEST_SHA256 = os.environ.get("RH2_PREPARED_TASKS_MANIFEST_SHA256") or None
 HOST_GRADING_ARTIFACT_PATH = os.environ.get("RH2_HOST_GRADING_ARTIFACT_PATH") or None
 HOST_GRADING_ARTIFACT_SHA256 = os.environ.get("RH2_HOST_GRADING_ARTIFACT_SHA256") or None
+# W5a 关停：SIGTERM 是否接到关停链上。默认 "0"（opt-in）——Ray worker 进程自带
+# SIGTERM 处置，无条件覆盖等于改变运行边界；launch/集成者显式置 "1" 才安装
+# （install 只在有运行中 loop 的主线程可行，见 shutdown.chain.install_signal_shutdown）。
+SHUTDOWN_ON_SIGTERM = os.environ.get("RH2_SHUTDOWN_ON_SIGTERM", "0") == "1"
 
 
 def select_task_face_mode(execution_mode: str, prepared_dir: str | None) -> str:
@@ -692,6 +711,16 @@ class BringupService:
         from slime.agent.aiohttp_threaded import FilteredAccessLogger, run_app_in_thread
         from slime.utils.processing_utils import load_tokenizer
 
+        # W5a 关停面（纯配置，先于任何资源型副作用）：超时上界从环境读（非法值
+        # 在起线程之前就炸）；LifecycleState 是"关闭后禁 submit/resolve"与在飞
+        # 执行登记的唯一状态位；run-fatal 通道接到 _on_run_fatal。
+        self.shutdown_timeouts = ShutdownTimeouts.from_env(os.environ)
+        self.lifecycle = LifecycleState()
+        self.lifecycle.on_fatal = self._on_run_fatal
+        self._close_task: asyncio.Task[ShutdownReport] | None = None
+        self.shutdown_report: ShutdownReport | None = None
+        self._uninstall_signal_shutdown: Any = None
+        self._profile_args = args  # 资源闭包上界估算读 miles/slime 的并发与长度参数
         ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
         self.registry = CaptureRegistry()
         self.tokenizer = load_tokenizer(args.hf_checkpoint, trust_remote_code=True)
@@ -1233,6 +1262,11 @@ class BringupService:
 
     def _resolve_task(self, sample: Any):
         metadata = getattr(sample, "metadata", None) or {}
+        # W5a：任务面的第一件事——关停后 typed 拒绝（ServiceClosedError，不是 abort
+        # 形状），未关停则把当前执行 task 登记进在飞表并挂 run-fatal 通知器。
+        # 这里是 orchestrator 9 步生命周期的 step1 之前（generate.py 先解析任务再建
+        # audit），所以被拒的执行不会留下任何 audit/receipt——只在关停报告里计数。
+        self.lifecycle.enter_execution(metadata)
         if self.prepared_face is not None:
             # prepared 链（F4）：只按样本自带的 attempt 绑定解析——样本回显的
             # task_id/digest 只用来与 host 原始分派逐字比对，不一致即拒绝。
@@ -1252,14 +1286,22 @@ class BringupService:
         return self.prepared_face.grading_spec(assignment)
 
     def _write_execution_audit(self, audit) -> None:
-        write_execution_audit_record(
-            self.registry.model_call_proxy, audit, ARTIFACT_DIR / "fa_execution_audit.jsonl"
-        )
+        try:
+            write_execution_audit_record(
+                self.registry.model_call_proxy, audit, ARTIFACT_DIR / "fa_execution_audit.jsonl"
+            )
+        finally:
+            # W5a：audit sink 在 generate.py 的 finally 里（receipt→cleanup 之后）被调，
+            # 是每次执行的最后一个 bringup 注入点——在此注销在飞登记。
+            self.lifecycle.exit_execution()
 
     def _adapter_factory(self, hook, session_defaults):
         return make_per_rollout_adapter(self.registry, self.adapter, hook)
 
     async def _grading_submit(self, *, trajectory_id, workspace, spec, frozen_delta=None):
+        # W5a：评分面在关停链的 grading_queue 步之后关闭（比停收新执行晚——在飞
+        # 执行在宽限期内仍要把评分提交完）；关闭后 typed 拒绝。
+        self.lifecycle.require_grading_open("grading_submit")
         # frozen_delta 透传（B4 tracer 发现的潜伏缺口）：bringup 今日硬拒
         # fa_formal（唯一会组装 frozen_delta 的模式），但签名若不同步，
         # fa_formal 解禁时 _grade 传 kwarg 会 TypeError 塌成 per-member
@@ -1358,14 +1400,287 @@ class BringupService:
         with self.events_path.open("a", encoding="utf-8") as fh:
             fh.write(json.dumps(event, ensure_ascii=False, default=str) + "\n")
 
+    # -- W5a 关停链 -------------------------------------------------------------
+    #
+    # 顺序（就绪稿 §2.6 的 rh2 侧；miles producer/RolloutManager.dispose 是只读代码，
+    # 由集成者在 dispose 里调 close_bringup_service() 一行接上）：
+    #   intake_stop → evidence_begin → inflight_executions（先等后取消再等）
+    #   → grading_queue（有界 drain，超时改 cancel）→ grading_manager（gc 全部记账容器）
+    #   → capture_sessions（残留 session 撤销/drop/注销）→ capture_registry_close（registry 关闭）
+    #   → adapter_http（aiohttp 线程停）→ container_residue（只记事实）
+    #   → resource_closure（一次性取数）→ [链外] shutdown_report.json + 完成事件
+    # 每步有界超时；首因（触发异常或第一个失败步）保留，其后失败记次生；普通
+    # evidence 写失败不阻止任何 cleanup 步；close() 幂等（同一 task/同一报告）。
+
+    def _append_event(self, event: dict[str, Any]) -> None:
+        """往 bringup_events.jsonl 追加一行（与 record_event 同文件、同格式）。失败抛。"""
+
+        with self.events_path.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps({"ts": time.time(), **event}, ensure_ascii=False, default=str) + "\n")
+
+    def _memory_bound_inputs(self) -> tuple[MemoryBoundInputs | None, list[str]]:
+        """从 miles/slime args + bringup 旋钮装配上界估算输入；缺项如实返回（不猜）。"""
+
+        args = self._profile_args
+        missing: list[str] = []
+
+        def need(name: str) -> Any:
+            value = getattr(args, name, None)
+            if value is None:
+                missing.append(name)
+            return value
+
+        batch = need("rollout_batch_size")
+        n_per_prompt = need("n_samples_per_prompt")
+        steps = need("num_rollout")
+        max_new = need("rollout_max_response_len")
+        top_k: Any = 1
+        if self.engine_sampling_mask:
+            top_k = getattr(args, "rollout_top_k", None)
+            if not isinstance(top_k, int) or top_k < 1:
+                missing.append("rollout_top_k")
+        if missing:
+            return None, missing
+        concurrent = getattr(args, "async_max_concurrent_samples", None) or int(batch) * int(n_per_prompt)
+        return (
+            MemoryBoundInputs(
+                max_concurrent_executions=int(concurrent),
+                grading_concurrency=int(self.grading_queue.config.concurrency),
+                model_call_limit=int(os.environ.get("RH2_FA_LIMIT_MODEL_CALL", "32")),
+                max_turns_per_execution=int(MAX_TURNS_PER_SID),
+                max_new_tokens_per_turn=int(max_new),
+                max_context_tokens=int(self.max_context_len or 0),
+                top_k_support=int(top_k),
+                # 整个 run 的 attempt 总数上界：steps × batch × n × 2（×2 = retry 余量）
+                max_attempts_retained=int(steps) * int(batch) * int(n_per_prompt) * 2,
+            ),
+            [],
+        )
+
+    def _build_shutdown_steps(self) -> list[ShutdownStep]:
+        t = self.shutdown_timeouts
+
+        async def intake_stop() -> dict[str, Any]:
+            self.lifecycle.stop_intake()
+            return {"inflight_at_stop": self.lifecycle.inflight_count}
+
+        async def evidence_begin() -> dict[str, Any]:
+            self._append_event({"event": "shutdown_started", "inflight": self.lifecycle.inflight_count})
+            return {"events_path": str(self.events_path)}
+
+        async def inflight_executions() -> dict[str, Any]:
+            return await close_inflight_executions(
+                self.lifecycle,
+                grace_seconds=t.inflight_grace,
+                cancel_wait_seconds=t.inflight_cancel_wait,
+            )
+
+        async def grading_queue() -> Any:
+            self.lifecycle.close_grading()
+            if not getattr(self, "_queue_started", False):
+                return Skipped("grading queue never started")
+            drained = True
+            try:
+                await asyncio.wait_for(self.grading_queue.close(drain=True), timeout=t.grading_drain)
+            except (TimeoutError, asyncio.TimeoutError):
+                drained = False
+                await self.grading_queue.close(drain=False)  # 超时：撤 worker（worker 的 finally 会删自己的容器）
+            self._queue_started = False
+            return {"drained_within_timeout": drained, "backpressure_events": len(self.grading_queue.events)}
+
+        async def grading_manager() -> dict[str, Any]:
+            return await self.grading_manager.close()
+
+        async def capture_sessions() -> dict[str, Any]:
+            with self.registry._lock:
+                sids = list(self.registry.hooks)
+            dropped: list[str] = []
+            failed: dict[str, str] = {}
+            for sid in sids:
+                self.registry.revoke(sid)  # HTTP 层先拒新请求
+                try:
+                    await asyncio.wait_for(self.adapter.drop_session(sid, wait_timeout=5.0), timeout=10.0)
+                    dropped.append(sid)
+                except Exception as exc:  # noqa: BLE001 —— 单个 session 失败不阻断其余
+                    failed[sid] = f"{type(exc).__name__}: {exc}"[:200]
+                finally:
+                    self.registry.unregister(sid)
+            return {"sessions_dropped": dropped, "sessions_drop_failed": failed}
+
+        async def capture_registry_close() -> dict[str, Any]:
+            # 独立小步（同步、瞬时）：即使上一步 drop 超时被取消，registry 也必须关——
+            # 关闭后 HTTP guard 对一切请求 403、register 拒绝，是"关闭后禁 submit"的 HTTP 面。
+            hooks_left = self.registry.close()
+            return {"hooks_left_after_close": hooks_left}
+
+        async def adapter_http() -> Any:
+            handle = getattr(self, "app_handle", None)
+            if handle is None:
+                return Skipped("adapter app never started")
+            if not handle.thread.is_alive():
+                return Skipped("adapter thread already stopped")
+            await asyncio.to_thread(handle.stop)  # AppHandle.stop 是阻塞调用（runner.cleanup + join）
+            return {"thread_alive_after_stop": handle.thread.is_alive()}
+
+        async def container_residue() -> dict[str, Any]:
+            orchestrator = self.orchestrator
+            return {
+                "quarantined_containers": list(orchestrator.cleanup_quarantine) if orchestrator is not None else [],
+                "grading_containers_open": [r.name for r in self.grading_manager.container_records if not r.removed],
+                "grading_cleanup_failures": list(self.grading_manager.cleanup_failures),
+            }
+
+        async def resource_closure() -> dict[str, Any]:
+            inputs, missing = self._memory_bound_inputs()
+            growth = collect_growth_facts(
+                orchestrator=self.orchestrator,
+                grading_manager=self.grading_manager,
+                grading_queue=self.grading_queue,
+                registry=self.registry,
+            )
+            facts = await asyncio.to_thread(
+                resource_closure_facts,
+                phase="shutdown",
+                memory_inputs=inputs,
+                fsync_dir=ARTIFACT_DIR,
+                growth=growth,
+            )
+            if missing:
+                facts["memory_upper_bound"]["missing_inputs"] = missing
+            path = write_resource_closure_facts(ARTIFACT_DIR / "resource_closure.json", facts)
+            return {
+                "path": str(path),
+                "upper_bound_bytes": facts["memory_upper_bound"].get("upper_bound_bytes"),
+                "fsync_p95_ms": facts["fsync_latency"].get("p95_ms"),
+                "missing_inputs": missing,
+            }
+
+        return [
+            ShutdownStep("intake_stop", intake_stop, 1.0, kind="control"),
+            ShutdownStep("evidence_begin", evidence_begin, t.evidence, kind="evidence"),
+            ShutdownStep(
+                "inflight_executions", inflight_executions, t.inflight_grace + t.inflight_cancel_wait + 5.0
+            ),
+            ShutdownStep("grading_queue", grading_queue, t.grading_drain + 15.0),
+            ShutdownStep("grading_manager", grading_manager, t.grading_manager),
+            ShutdownStep("capture_sessions", capture_sessions, t.capture_sessions),
+            ShutdownStep("capture_registry_close", capture_registry_close, 1.0, kind="control"),
+            ShutdownStep("adapter_http", adapter_http, t.adapter_http),
+            ShutdownStep("container_residue", container_residue, t.container_residue),
+            ShutdownStep("resource_closure", resource_closure, t.resource_closure, kind="evidence"),
+        ]
+
+    async def _run_close(self, reason: str, trigger: str, first_cause: BaseException | None) -> ShutdownReport:
+        report = await run_shutdown_chain(
+            self._build_shutdown_steps(), reason=reason, trigger=trigger, first_cause=first_cause
+        )
+        # 残留汇总（H9 判据的输入：任一非空 = 残留）
+        def facts_of(name: str) -> dict[str, Any]:
+            step = report.step(name)
+            return dict(step.facts) if step is not None and step.facts else {}
+
+        inflight = facts_of("inflight_executions")
+        sessions = facts_of("capture_sessions")
+        registry_close = facts_of("capture_registry_close")
+        containers = facts_of("container_residue")
+        http = facts_of("adapter_http")
+        report.residue = {
+            "unfinished_executions": inflight.get("unfinished_after_cancel_wait", []),
+            "quarantined_containers": containers.get("quarantined_containers", []),
+            "grading_containers_open": containers.get("grading_containers_open", []),
+            "sessions_drop_failed": sessions.get("sessions_drop_failed", {}),
+            "hooks_left_after_close": registry_close.get("hooks_left_after_close", 0),
+            "adapter_thread_alive": bool(http.get("thread_alive_after_stop", False)),
+        }
+        report.rejected_after_close = dict(self.lifecycle.rejected_after_close)
+        self.lifecycle.mark_closed()
+        if type(self)._instance is self:
+            type(self)._startup_state = "CLOSED"
+        if self._uninstall_signal_shutdown is not None:
+            try:
+                self._uninstall_signal_shutdown()  # 关停完成后第二个 SIGTERM 按默认处置（真退出）
+            finally:
+                self._uninstall_signal_shutdown = None
+        # 链外 evidence flush：报告本体 + 完成事件。失败只记 evidence 失败（cleanup 已做完）。
+        report_path = ARTIFACT_DIR / "shutdown_report.json"
+        try:
+            tmp = report_path.with_suffix(".json.tmp")
+            with tmp.open("w", encoding="utf-8") as fh:
+                json.dump(report.to_dict(), fh, ensure_ascii=False, indent=1, default=str)
+                fh.flush()
+                os.fsync(fh.fileno())
+            os.replace(tmp, report_path)
+        except Exception as exc:  # noqa: BLE001
+            report.note_evidence_failure("evidence:shutdown_report", f"{type(exc).__name__}: {exc}"[:300])
+        try:
+            self._append_event(
+                {"event": "shutdown_completed", "ok": report.ok, "first_cause": report.first_cause,
+                 "residue": report.residue}
+            )
+        except Exception as exc:  # noqa: BLE001
+            report.note_evidence_failure("evidence:shutdown_completed_event", f"{type(exc).__name__}: {exc}"[:300])
+        self.shutdown_report = report
+        print(f"[rh2-bringup] shutdown {'ok' if report.ok else 'NOT ok'}: trigger={trigger} reason={reason} "
+              f"first_cause={report.first_cause!r} residue={report.residue}")
+        return report
+
+    async def close(
+        self,
+        *,
+        reason: str = "owner_close",
+        trigger: str = "owner_close",
+        first_cause: BaseException | None = None,
+    ) -> ShutdownReport:
+        """显式关停（幂等）：首次调用创建关停 task，后续调用（含并发调用）等待同一
+        task 并拿到**同一个**报告对象；调用方被取消不会取消关停链（shield）。
+        永不抛异常——通常在 finally 里调，抛出会顶掉真正的首因。"""
+
+        if self._close_task is None:
+            self._close_task = asyncio.get_running_loop().create_task(
+                self._run_close(reason, trigger, first_cause), name="rh2-bringup-shutdown"
+            )
+        return await asyncio.shield(self._close_task)
+
+    def _on_run_fatal(self, exc: BaseException) -> None:
+        """run-fatal 通道（generate.py `_notify_fatal_halt` 经 task-local 通知器同步调）：
+        首次 fatal 即调度关停链（首因 = 该 fatal）。在飞的 fatal 执行自己会先把 receipt
+        持久化再清理（B5），关停链的 inflight 步只是等它跑完。"""
+
+        if self._close_task is not None:
+            return  # 已在关停：只让 lifecycle.fatal_seen 记账
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return
+        code = getattr(exc, "reason_code", None) or type(exc).__name__
+        self._close_task = loop.create_task(
+            self._run_close(f"run_fatal:{code}", "run_fatal", exc), name="rh2-bringup-shutdown"
+        )
+
+    def install_sigterm_shutdown(self) -> None:
+        """把 SIGTERM 接到关停链（幂等；需在主线程、有运行中 loop）。opt-in，见 SHUTDOWN_ON_SIGTERM。"""
+
+        if self._uninstall_signal_shutdown is not None:
+            return
+
+        async def _on_signal(name: str) -> ShutdownReport:
+            return await self.close(reason=f"signal:{name}", trigger="signal")
+
+        self._uninstall_signal_shutdown = install_signal_shutdown(asyncio.get_running_loop(), _on_signal)
+
     # -- 单例接口 --------------------------------------------------------------
 
-    _startup_state: str = "NEW"  # NEW -> STARTING -> RUNNING | FAILED（sticky）
+    _startup_state: str = "NEW"  # NEW -> STARTING -> RUNNING | FAILED（sticky）| CLOSED（sticky，W5a）
     _startup_error: BaseException | None = None
 
     @classmethod
     async def get(cls, args: Any) -> "BringupService":
         async with _SERVICE_LOCK:
+            if cls._startup_state == "CLOSED":
+                # W5a：关停后 sticky——同进程不再有第二代服务，也不再接任何 rollout
+                raise ServiceClosedError(
+                    "bringup_get", "BringupService 已关停（同进程单代语义，不重建第二代）"
+                )
             if cls._startup_state == "FAILED":
                 # 勘误 4：FAILED sticky——同进程绝不创建第二代（首因重抛）
                 raise cls._startup_error  # type: ignore[misc]
@@ -1440,6 +1755,22 @@ def build_fa_sampling_params(args: Any) -> dict[str, Any]:
     return params
 
 
+async def close_bringup_service(
+    *, reason: str = "external_close", trigger: str = "owner_close"
+) -> ShutdownReport | None:
+    """W5a 关停入口（进程级）：关掉本进程的 BringupService 单例；从未启动则返回 None。
+
+    集成接缝：miles 侧 `RolloutManager.dispose()` / train driver 的 finally 加一行
+    `await close_bringup_service(reason="rollout_manager_dispose")`；不需要拿到
+    service 对象、不需要 args。幂等（重复调用拿同一份报告）。
+    """
+
+    service = BringupService._instance
+    if service is None:
+        return None
+    return await service.close(reason=reason, trigger=trigger)
+
+
 async def ensure_fa_started(args: Any) -> None:
     """FA rollout 入口的启动引导（codex 轮次 7 P0-2）。
 
@@ -1448,6 +1779,8 @@ async def ensure_fa_started(args: Any) -> None:
     """
 
     service = await BringupService.get(args)
+    if SHUTDOWN_ON_SIGTERM:
+        service.install_sigterm_shutdown()  # 幂等；RH2_SHUTDOWN_ON_SIGTERM=1 才装
     if getattr(args, "rh2_orchestrator", None) is None:
         args.rh2_orchestrator = service.orchestrator
     if getattr(args, "rh2_sampling_params", None) is None:
