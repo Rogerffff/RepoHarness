@@ -174,7 +174,7 @@ INJECT_INFRA_INSTANCE = os.environ.get("RH2_INJECT_INFRA_INSTANCE", "")
 EXPECT_MOE_ROUTING = os.environ.get("RH2_EXPECT_MOE_ROUTING", "0") == "1"
 MOE_NUM_LAYERS = int(os.environ["RH2_MOE_NUM_LAYERS"]) if os.environ.get("RH2_MOE_NUM_LAYERS") else None
 MOE_ROUTER_TOPK = int(os.environ["RH2_MOE_ROUTER_TOPK"]) if os.environ.get("RH2_MOE_ROUTER_TOPK") else None
-# W1b 第一集成切片（F6）：prepared artifact 链的三个启动旋钮——只携带 opaque 路径与
+# W1b 第一集成切片（F6）：prepared artifact 链的四个启动旋钮（目录/manifest 外部 SHA/private artifact 路径/期望 digest）——只携带 opaque 路径与
 # 期望 digest（私有内容不进 env/args）。RH2_PREPARED_TASKS_DIR 未设 = legacy v1 八题
 # 任务面（s1_compat/fa_audit_only 的 bring-up 路径）；fa_formal 缺它 = 拒绝，不回退。
 PREPARED_TASKS_DIR = os.environ.get("RH2_PREPARED_TASKS_DIR") or None
