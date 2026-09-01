@@ -277,3 +277,117 @@ F5 五类 join 反例（`test_termination_facts_join_negatives_five_classes_and_
 `assert_payload_dereferences` 对别的 attempt 的 receipt 拒绝（唯一解引用）；合法覆盖只在"同一样本对象 reset_for_retry 后
 新 attempt 盖章"这一形态（`test_w1b_retry_replaces_stale_termination_facts_on_passthrough_sample` 在真实 miles
 `reset_for_retry` 路径上验证）。
+
+---
+
+## 8. 追加修正节（2026-09-02，codex 聚焦复核后；append-only，本节口径覆盖上文冲突处）
+
+### 8.0 T0 口径修正（引用 06 计划 A9）
+
+上文 §4 末与 §5 ① 的"T0 升级项：无"**不成立**。owner 2026-09-02 事后拍板 **A9**：RolloutManager 被定义为
+**可信 host control-plane 进程**，可以加载并长期持有剥离后的 `HostGradingView`（含 `PrivateGradingBundleV2`：
+test_patch/F2P/P2P/eval_cmd），并在 actor 内构造 grading spec/parser；模型执行始终在隔离 sandbox；private 内容
+不得进入 prompt、mount、`Sample`、adapter response、公共 evidence、export；**本项目不承诺 RolloutManager 进程自身
+被攻破后的内存隔离**。切片一的"同一可信 actor 内共址"与 D0-3 原文"private 仅进入 host grader"是不同的所有权边界，
+属事后批准的 T0（不需要改架构；本节所有注释/口径按 A9 写）。
+
+### 8.1 必修 1：post-finalize 失败域五分流（取代上文 §2 第 8 条与 §3.2 的"P1-1 处理"）
+
+**被否决并已删除的行为**：切片一初版在通用 `except` 里对 `audit.finalized is not None and audit.outcome_v2 is None`
+撤销 quiescence + 清 finalized，再由 producer 第二次产出 missing Outcome 返回 ABORTED（producer 调用 2 次、
+`remove_sample=True`、receipt aborted、completion=missing、reason_code=unmapped_failure_code）——把 Outcome
+schema/producer bug、docker 完整性检查异常、核心 sidecar 磁盘失败洗成普通缺员，miles 丢弃并补采，掩盖系统性故障。
+
+**新分流**（`rh2/src/repoharness2/adapters/slime/generate.py`）：
+
+| 失败域 | 处置 | reason_code / 标记 | 测试（tests/adapters/test_w1b_termination_facts_producer.py） |
+|---|---|---|---|
+| ① `verify_integrity()` 返回 False | 明确的完整性不匹配：既有 P1-1 路径（撤销静止事实、清 finalized）→ missing / ABORTED；producer 恰一次 | `snapshot_integrity_mismatch` | `test_split_1_verify_integrity_false_is_missing_abort_producer_once` |
+| ② `verify_integrity()` 抛未知异常 | run-fatal（P0-1 独立通道），不撤销 finalized、不产 Outcome、不返回 ABORTED | `integrity_recheck_failed` | `test_split_2_verify_integrity_exception_is_run_fatal` |
+| ③ Outcome producer / 契约异常 | run-fatal；producer **只允许调用一次**（二次调用本身 run-fatal） | `outcome_producer_failed` / `outcome_producer_called_twice` | `test_split_3_outcome_producer_exception_is_run_fatal_and_called_once`（断言恰一次）、`test_split_3b_producer_second_call_itself_is_run_fatal` |
+| ④ 核心 admission sidecar 写失败（`_write_artifacts`：eligibility_report / grading_report / trajectory_projection / group_repair_signal / capture_records / tapes） | run-fatal（A4：样本不交付 + run-fatal，finally 的 cleanup 仍执行） | `admission_artifact_write_failed` | `test_split_4_core_admission_sidecar_write_failure_is_run_fatal_cleanup_still_runs`（真实文件系统失败：artifact_dir 位置被普通文件占住；断言 cleanup_completed、lease_released） |
+| ⑤ finalize 之前的 task-local 故障 | 仍是普通 ABORTED（missing Outcome，miles 补采） | 既有映射（如 `harness_crash`） | `test_split_5_pre_finalize_task_local_failure_stays_aborted` |
+| 可选 telemetry：`repair_signal_sink` 写失败 | 记录 failure_record 后**照常交付**，不改写样本处置；`audit.repair_signal_forwarded=False` | `repair_signal_sink_failed` | `test_telemetry_repair_signal_sink_failure_records_and_still_delivers` |
+| 通用 except 里发现 `audit.finalized is not None`（未分类 post-finalize 异常） | 不该到达的状态：升 fatal，**不**撤销 finalized、不二次产出 | `post_finalize_failure_unclassified` | `test_post_finalize_unclassified_exception_is_run_fatal_not_laundered` |
+
+实现要点：
+- `_produce_outcome_v2` 改为**守卫入口**（once-only → `outcome_producer_called_twice`；构造异常 → `outcome_producer_failed`，
+  failure_record stage=`outcome_producer`），原实现改名 `_produce_outcome_v2_unguarded`；P0-2 的静默 compare-and-set **删除**。
+- 新增 `_notify_fatal_halt`：联合终核 P1-1 的 task-local halt 通知在 except 子句内抛出的 Fatal 上同样生效（外层 Fatal 分支不会二次分派）。
+- 顺手加固：mismatch 分支的 `snapshot:` 证据引用先于 audit 改写取得——取值失败时 finalized 仍在场，按未分类 post-finalize 故障升 fatal。
+- receipt disposition：in-flight Fatal → `fatal_run_halt`（`build_finalization_receipt` 既有逻辑）；②③④与未分类四个 fatal 测试各自断言
+  `attempt_disposition == "fatal_run_halt"` 与 `terminal_reason_code`。
+- **分类判断（T1）**：`_write_artifacts` 六类 sidecar = 核心 admission 记录及其引用 → fatal；`repair_signal_sink` = 可选 telemetry
+  （miles 路径无生产消费者——组准入由第二段 filter 按交付面 typed 载荷判定，FA-2 assembler 按 06 §2 不做）。owner 若认为组修复
+  信号转发应视为核心，改 `_deliver` 一处分类即可（登记为可翻转项）。
+
+**oracle 改动（T1 登记）**：
+1. 上文 §6 的 `test_exception_after_finalize_is_reachable_and_handled_per_p1_1` / `test_deliver_failure_after_outcome_keeps_symmetric_refs`
+   **已删除**（编码的是被否决行为），由上表七个测试取代；
+2. `tests/adapters/test_f2_2_capability.py::test_outcome_terminal_cas_single_write` 的 oracle 从"第二次产出静默不改写"改为
+   "第二次调用 run-fatal `outcome_producer_called_twice`，首次 Outcome 不变"（docstring 注明修订来源）。
+
+§3.2 的判定结论修正：可达性结论不变（verify_integrity 走 docker 通道可抛异常），处置改为 run-fatal；P1-1 只保留给
+"verify_integrity 返回 False"这一明确的完整性不匹配。
+
+### 8.2 顺手修 2：公开 manifest 的外部 sha256（输入身份，不是授权闸门）
+
+- trusted-prep stdout 增 `prepared_manifest_sha256`（`prepared_tasks.manifest_file_sha256(prepared_dir)`）；启动方经环境变量
+  **`RH2_PREPARED_TASKS_MANIFEST_SHA256`** 传给 actor；bringup 读为 `PREPARED_TASKS_MANIFEST_SHA256` →
+  `PreparedTaskFace.load(manifest_sha256=…)` → `load_prepared_manifest(prepared_dir, expected_sha256=…)`：缺失/非法/不符
+  一律 fail-closed。性质 = 06 §6 允许的"本次实际输入被动 digest"；不做签名系统、不建 ledger。
+- 测试（tests/test_w1b_prepared_tasks.py）：`test_external_manifest_sha_is_the_trust_root_against_coordinated_tampering`
+  ——缺失/非法/不符各拒；**协调篡改三件套**（新题面重算 problem_statement 自证 sha + 视图 public digest、重渲染 prompt、
+  manifest 记录同步）后目录内互检全部自洽、旧 grader 原样配对（证明漏洞真实存在），外部 sha 未变 → `load_prepared_manifest`
+  与 `PreparedTaskFace.load` 均拒；`test_prepared_face_requires_private_ref_and_digest` 增"manifest_sha256=None → 拒"。
+  既有篡改测试改为交回**重算后的**外部 sha 以继续覆盖目录内互检。
+
+### 8.3 顺手修 3：AttemptAssignmentRegistry 生命周期
+
+- `resolve_for_sample` 在生产有调用者（bringup `_resolve_task` / `_resolve_grading_spec`，均在 GenerateFn 调用栈内）→ **保留**；
+  docstring 改为"仅在飞（GenerateFn 返回前）可用，release 之后一律 `attempt_not_bound`"；类 docstring 写明生命周期 = 一次
+  GenerateFn 调用，**不延长**。
+- 上文 §4 接缝 2 修正：第二段 buffer/filter 阶段**不能**用 registry 对账（绑定已 release）。那一层以 miles `DataBufferInput` 的
+  原始 `prompt_group` 与生成结果 `group` 对账；交付样本上已带六字段身份 + 分派三元组 + `rh2_termination_facts`，
+  `resolve_termination_facts` / `assert_payload_dereferences` 仍是 join 原语。
+
+### 8.4 顺手修 4：解引用 = 全字段核对
+
+`assert_payload_dereferences(payload, receipt)` 改为用 `termination_facts_payload(receipt)` 重新派生并与传入载荷**全字段**比对，
+不一致列出字段名 fail-closed；receipt 无 outcome → 不可解引用。核对字段（14）：`schema_id`、`physical_attempt_id`、
+`rollout_execution_id`、`task_id`、`receipt_id`、`outcome_id`、`termination_kind`、`triggered_by_policy_horizon`、
+`triggered_by_hard_wall`、`execution_scope_quiescent`、`canonical_frozen_patch_formed`、`fresh_grading_complete`、
+`grading_report_id`、`eligibility_report_id`。测试 `test_dereference_compares_every_field_not_only_ids`（八类非 ID 改写各拒，
+字段集合钉死）。仍不建 durable ledger。
+
+### 8.5 登记不修
+
+`termination_facts_stamp_conflict` 在 receipt/audit 已落盘之后触发、磁盘证据显示成功——已登记为解除 formal 挡板 / GPU 验收前的
+审计追加项（06 计划 W1b 第二段须知），本轮不做。
+
+### 8.6 测试/证据（2026-09-02 实跑）
+
+```
+cd rh2
+uv run pytest tests/adapters/test_w1b_termination_facts_producer.py tests/adapters/test_f2_2_capability.py -q   # 44 passed
+uv run pytest tests/test_w1b_prepared_tasks.py tests/adapters_miles/test_w1b_prepared_chain.py -q             # 23 passed
+uv run pytest tests/ -q                                                    # 1430 passed, 232 skipped, 3 warnings in 30.00s
+RH2_MILES_PATH=$REPO/reference/miles-rh2-integration uv run pytest tests/adapters_miles/ -q   # 502 passed
+bash scripts/miles_integration_lanes.sh   # lane A 285 passed/217 skipped、lane B 502 passed/0 skipped → C5 双 lane 全部通过
+uv run ruff check <全部改动文件>            # All checks passed!
+```
+
+**两条 lane 精确新计数**：lane A = **285 passed / 217 skipped**，lane B = **502 passed / 0 skipped**——与集成者已同步的 manifest
+（f7f3b8d7）一致，本轮未增删 adapters_miles 测试。本轮净增 +8 例都在 lane 之外：producer 分流套件 7→13、envpack 套件 14→16。
+
+改动文件：`generate.py`（分流/守卫/notifier）、`prepared_tasks.py`、`prepared_task_face.py`、`trusted_prep.py`、`bringup.py`
+（外部 sha）、`termination_facts.py`（全字段核对）、`attempt_assignment.py`（仅 docstring）、测试 4 个 + `test_f2_2_capability.py`
+oracle。未 commit / 未 stash；`bringup.py:705` 挡板、`contracts/`、`reference/`、`identity.py`、`training_view.py` 未动。
+
+**T0**：无新增；A9 已由 owner 落账（§8.0）。
+
+### 8.7 本轮没有改变哪些已定案语义
+
+verify_integrity 返回 False 的 P1-1 路径（missing/ABORTED）逐字未动；finalize 之前的 task-local 收口（映射表/stage 兜底/abort 形状）
+未动；A5 disposition / 三终态 / 组准入仍未实现；eligibility 契约、W1a 铸造规则、W2a 视图/controller、`contracts/` 零改动；
+lane 测试集合无增减。

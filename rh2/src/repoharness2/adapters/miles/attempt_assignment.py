@@ -111,6 +111,13 @@ def assignment_from_dispatch(sample_metadata: Any, minted_identity: Mapping[str,
 class AttemptAssignmentRegistry:
     """有界进程内映射：physical_attempt_id → AttemptAssignment（attempt 存活期内有效）。
 
+    **生命周期 = 一次 GenerateFn 调用**：`Rh2MilesGenerateFn` 在铸造身份之后 bind、在返回
+    之前（finally）release。`resolve_for_sample` 因此**只在在飞期间可用**——生产调用者是
+    bringup 的 `_resolve_task` / `_resolve_grading_spec`（编排层在 GenerateFn 调用栈内）。
+    GenerateFn 返回后绑定已消失，buffer/filter 阶段（第二段）**不能**用本表对账；那一层
+    以 miles `DataBufferInput` 的原始 `prompt_group` 与生成结果 `group` 对账（交付样本上
+    已盖分派三元组 + 六字段身份 + termination 事实）。不延长本表生命周期（W1b 切片一复核 顺手修 3）。
+
     ``verify_dispatch`` 由 prepared task face 提供：用 prep manifest 核对分派三元组
     （task_id ↔ 两个 digest 必须是 manifest 记录的同一行），失败抛任意异常即拒绝绑定。
     """
@@ -155,7 +162,10 @@ class AttemptAssignmentRegistry:
         return assignment
 
     def resolve_for_sample(self, sample_metadata: Any) -> AttemptAssignment:
-        """按样本自带的 attempt id 取绑定，再把样本回显的身份/分派键与绑定逐字比对。"""
+        """按样本自带的 attempt id 取绑定，再把样本回显的身份/分派键与绑定逐字比对。
+
+        仅在飞（GenerateFn 返回前）可用：release 之后同一 attempt id 一律 `attempt_not_bound`。
+        """
 
         if not isinstance(sample_metadata, Mapping):
             raise AttemptAssignmentError("attempt_id_missing", "样本 metadata 不是 Mapping——无法按 attempt 查找分派。")

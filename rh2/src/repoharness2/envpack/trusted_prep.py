@@ -11,11 +11,14 @@
 随后启动参数：
     miles:   --prompt-data /root/run/prepared_tasks/prompts.jsonl --input-key prompt --label-key label --metadata-key metadata
     bringup: RH2_PREPARED_TASKS_DIR=/root/run/prepared_tasks
+             RH2_PREPARED_TASKS_MANIFEST_SHA256=<本命令 stdout 打印的 prepared_manifest_sha256>
              RH2_HOST_GRADING_ARTIFACT_PATH=/root/run/private/host_grading/host_grading_views.jsonl
              RH2_HOST_GRADING_ARTIFACT_SHA256=<本命令 stdout 打印的 host_grading_artifact_sha256>
 
-只有本进程调用完整 loader（TrustedTaskController.from_repo_root）；RolloutManager actor
-只读产物。stdout 打印的 JSON 只含路径、计数与 digest，不含任何私有内容。
+`prepared_manifest_sha256` 是公开 manifest 文件的**外部**输入身份（06 §6 的被动 digest，
+不是授权闸门）：actor 启动时核验 manifest 文件 digest 与之相等，目录内三件套协调篡改
+在此 fail-closed。只有本进程调用完整 loader（TrustedTaskController.from_repo_root）；
+RolloutManager actor 只读产物。stdout 打印的 JSON 只含路径、计数与 digest，不含任何私有内容。
 """
 
 from __future__ import annotations
@@ -25,7 +28,13 @@ import json
 import sys
 from pathlib import Path
 
-from repoharness2.envpack.prepared_tasks import HOST_GRADING_FILE, MANIFEST_FILE, PROMPTS_FILE, prepare_tasks
+from repoharness2.envpack.prepared_tasks import (
+    HOST_GRADING_FILE,
+    MANIFEST_FILE,
+    PROMPTS_FILE,
+    manifest_file_sha256,
+    prepare_tasks,
+)
 from repoharness2.envpack.training_view import TrustedTaskController
 
 
@@ -52,6 +61,7 @@ def main(argv: list[str] | None = None) -> int:
     summary = {
         "prepared_dir": str(Path(ns.out_dir).resolve()),
         "manifest": str((Path(ns.out_dir) / MANIFEST_FILE).resolve()),
+        "prepared_manifest_sha256": manifest_file_sha256(Path(ns.out_dir)),
         "prompt_data": str((Path(ns.out_dir) / PROMPTS_FILE).resolve()),
         "host_grading_artifact_path": str((Path(ns.private_dir) / HOST_GRADING_FILE).resolve()),
         "host_grading_artifact_sha256": manifest.host_grading_artifact_sha256,

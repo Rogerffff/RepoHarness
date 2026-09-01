@@ -180,7 +180,7 @@ def _load_face_and_registry(fx):
     from repoharness2.adapters.slime.prepared_task_face import PreparedTaskFace
 
     face = PreparedTaskFace.load(
-        prepared_dir=fx.prepared_dir, host_grading_path=fx.host_path,
+        prepared_dir=fx.prepared_dir, manifest_sha256=fx.manifest_sha256, host_grading_path=fx.host_path,
         host_grading_sha256=fx.manifest.host_grading_artifact_sha256,
         time_budget_seconds=600, prompt_data_path=fx.prompts_path,
     )
@@ -534,6 +534,7 @@ def test_w1b_bringup_builds_prepared_face_without_v1_loader(world, monkeypatch, 
         monkeypatch.setattr(bringup, "ADAPTER_PORT", 0)
         monkeypatch.setattr(bringup, "EXECUTION_MODE", "fa_audit_only")
         monkeypatch.setattr(bringup, "PREPARED_TASKS_DIR", str(fx.prepared_dir))
+        monkeypatch.setattr(bringup, "PREPARED_TASKS_MANIFEST_SHA256", fx.manifest_sha256)
         monkeypatch.setattr(bringup, "HOST_GRADING_ARTIFACT_PATH", str(fx.host_path))
         monkeypatch.setattr(bringup, "HOST_GRADING_ARTIFACT_SHA256", fx.manifest.host_grading_artifact_sha256)
         monkeypatch.setenv("HF_HUB_OFFLINE", "1")

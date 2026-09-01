@@ -3145,10 +3145,35 @@ class RolloutOrchestrator:
             if self._mode == "fa_formal" and hasattr(
                 grading_workspace, "verify_integrity"
             ):
-                if not await grading_workspace.verify_integrity():
-                    # 复核证伪静止事实：先撤销，completion 由事实推导 missing；
-                    # 评分产物一并作废（P1-1：missing 不得与 disposition=
-                    # finalized 并存——finalized 引用先清）
+                try:
+                    snapshot_intact = await grading_workspace.verify_integrity()
+                except Exception as exc:  # noqa: BLE001 - 复核通道自身故障 ≠ 完整性不匹配
+                    # W1b 切片一复核（必修 1）分流：完整性复核**没有完成**（docker
+                    # 通道 OSError 等）既不是"复核证伪"也不是 task-local 缺员——
+                    # 评分产物已成、静止事实未被证伪也未被证实，是未知基建故障，
+                    # 走 run-fatal 独立通道（与 P0-1 一致），不得洗成 missing/
+                    # ABORTED 让 miles 当普通缺员丢弃后补采。
+                    audit.failure_records.append(
+                        RolloutFailureRecord(
+                            stage="finalize",
+                            error_type="integrity_recheck_failed",
+                            detail=f"{type(exc).__name__}: {exc}"[:500],
+                        )
+                    )
+                    audit.mark("integrity_recheck_failed")
+                    raise FatalExecutionInfrastructureError(
+                        "integrity_recheck_failed",
+                        f"评分后冻结完整性复核无法完成：{type(exc).__name__}: {exc}"
+                        "——既非证伪也非证实，按未知基建故障 run-halt。",
+                    ) from exc
+                if not snapshot_intact:
+                    # 复核证伪静止事实（明确的完整性不匹配）：先撤销，completion
+                    # 由事实推导 missing；评分产物一并作废（P1-1：missing 不得与
+                    # disposition=finalized 并存——finalized 引用先清）。证据引用
+                    # 先于 audit 改写取得：取值失败时 finalized 仍在场，通用
+                    # except 会按 post-finalize 未分类故障升 fatal，而不是在
+                    # "已清引用"的状态下被当成普通缺员。
+                    snapshot_evidence = [f"snapshot:{grading_workspace.snapshot_ref}"]
                     audit.runtime_quiescence_confirmed = False
                     audit.finalized = None
                     self._produce_outcome_v2(
@@ -3162,9 +3187,7 @@ class RolloutOrchestrator:
                         turn_weight_versions=None,
                         current_version_at_finalize=None,
                         eligibility_report_id=None,
-                        extra_evidence=[
-                            f"snapshot:{grading_workspace.snapshot_ref}"
-                        ],
+                        extra_evidence=snapshot_evidence,
                     )
                     audit.mark("snapshot_integrity_mismatch")
                     return self._abort_result(
@@ -3217,13 +3240,7 @@ class RolloutOrchestrator:
             # 的异步 cleanup（drop_session/容器清理）会推迟异常到达
             # worker——在此**同步**经 task-local notifier 先置 halt，
             # cleanup 窗口内好组即被 collect_batch 拒绝交付。
-            from repoharness2.adapters.slime.async_worker import (
-                fatal_halt_notifier,
-            )
-
-            notifier = fatal_halt_notifier.get()
-            if notifier is not None:
-                notifier(exc)
+            self._notify_fatal_halt(exc)
             raise
         except Exception as exc:  # noqa: BLE001 - 收口为 abort，归因进 audit
             audit.failure_records.append(
@@ -3244,33 +3261,42 @@ class RolloutOrchestrator:
                     stage, ("harness_crash", "harness_crash")
                 )
             term_kind, fail_cat = mapped
-            if audit.finalized is not None and audit.outcome_v2 is None:
-                # W1b 第一集成切片（F5 登记边界，已证实可达：step8 之后、成功
-                # Outcome 产出之前的异常，如 verify_integrity 的 docker 通道
-                # 抛错）。按 P1-1 先例（:3057）整体处理：① 静止事实撤销——
-                # 评分后完整性复核没有完成，冻结副本未被证实，completion 只能
-                # 推导为 missing（否则 present_* + capture_incomplete 在 Outcome
-                # v2 契约上不可表示，下方 producer 会以 ValidationError 裸逃）；
-                # ② 清 finalized 引用——missing 收口不得与 finalized 引用并存，
-                # receipt 与 Outcome 的 grading/eligibility 引用才对称（否则
-                # termination 事实派生 fail-closed）。Outcome 已产出（CAS）时
-                # 不动：引用两侧同源，deliver 阶段失败只记 failure_record。
-                audit.runtime_quiescence_confirmed = False
-                audit.finalized = None
-                audit.mark("finalized_refs_cleared_on_exception")
-            if self._mode != "s1_compat":
-                self._produce_outcome_v2(
-                    audit=audit,
-                    raw_meta=raw_meta,
-                    termination_kind=term_kind,
-                    failure_category=fail_cat,
-                    reason_code=code or "unmapped_failure_code",
-                    failed_component=stage,
-                    task_resolved=None,
-                    turn_weight_versions=None,
-                    current_version_at_finalize=None,
-                    eligibility_report_id=None,
+            if audit.finalized is not None:
+                # W1b 切片一复核（必修 1）：成功 finalization（step8）之后的失败域
+                # 已各自 typed 分流——verify_integrity 通道异常 / Outcome producer
+                # 异常 / 核心 admission sidecar 写失败 → run-fatal；可选 telemetry
+                # 写失败 → 记录后照常交付。还能走到通用 except 的 post-finalize
+                # 异常 = 未分类故障，是不该到达的状态：升 fatal，**不**撤销
+                # finalized、不产 missing Outcome、不返回 ABORTED（那会让 miles
+                # 当普通缺员丢弃并补采，掩盖 Outcome schema/producer bug、docker
+                # 完整性检查异常、核心 sidecar 磁盘失败这类系统性故障）。
+                audit.mark("post_finalize_failure_unclassified")
+                fatal = FatalExecutionInfrastructureError(
+                    "post_finalize_failure_unclassified",
+                    f"step8 之后出现未分类异常（stage={stage}，{type(exc).__name__}: "
+                    f"{str(exc)[:200]}）——post-finalize 失败域不许洗成 ABORTED，run-halt。",
                 )
+                self._notify_fatal_halt(fatal)  # 已在 except 子句内，外层 Fatal 分支不再分派
+                raise fatal from exc
+            if self._mode != "s1_compat":
+                try:
+                    self._produce_outcome_v2(
+                        audit=audit,
+                        raw_meta=raw_meta,
+                        termination_kind=term_kind,
+                        failure_category=fail_cat,
+                        reason_code=code or "unmapped_failure_code",
+                        failed_component=stage,
+                        task_resolved=None,
+                        turn_weight_versions=None,
+                        current_version_at_finalize=None,
+                        eligibility_report_id=None,
+                    )
+                except FatalExecutionInfrastructureError as fatal:
+                    # producer 异常已在守卫入口升 fatal；这里在 except 子句内，
+                    # 外层 Fatal 分支不会再次分派——手动通知 halt 后传播。
+                    self._notify_fatal_halt(fatal)
+                    raise
             return self._abort_result(
                 sample, reason=f"rh2_{stage}_failed:{type(exc).__name__}", task=task, top_p=tape_top_p
             )
@@ -3964,10 +3990,43 @@ class RolloutOrchestrator:
         """步骤 9：先透传组修复信号（P4：组装配前可见），再决定交付或剔除。"""
 
         signal = finalized.group_repair_signal
+        forwarded = True
         if self._repair_signal_sink is not None:
-            self._repair_signal_sink(signal)
-        audit.repair_signal_forwarded = True
-        self._write_artifacts(audit, hook, finalized)
+            try:
+                self._repair_signal_sink(signal)
+            except Exception as exc:  # noqa: BLE001 - 可选 telemetry：记录后继续
+                # W1b 切片一复核（必修 1）分流：组修复信号的转发通道在 miles 路径
+                # 没有生产消费者（组准入由第二段 filter 按交付面 typed 载荷判定；
+                # FA-2 assembler 按 06 §2 不做），属可选 telemetry——写失败只记
+                # failure_record，样本处置不变（不得把样本改写成 ABORTED）。
+                forwarded = False
+                audit.failure_records.append(
+                    RolloutFailureRecord(
+                        stage="deliver",
+                        error_type="repair_signal_sink_failed",
+                        detail=f"{type(exc).__name__}: {exc}"[:500],
+                    )
+                )
+                audit.mark("repair_signal_sink_failed")
+        audit.repair_signal_forwarded = forwarded
+        try:
+            self._write_artifacts(audit, hook, finalized)
+        except Exception as exc:  # noqa: BLE001 - 核心 admission 记录写失败 = run-fatal
+            # A4 run-fatal 面：eligibility/grading report、projection、capture 记录
+            # 与 tape 是核心 admission record 及其引用——持久化失败时样本不交付
+            # + run-halt（finally 的 cleanup 仍照常执行），不得当成员损耗继续。
+            audit.failure_records.append(
+                RolloutFailureRecord(
+                    stage="deliver",
+                    error_type="admission_artifact_write_failed",
+                    detail=f"{type(exc).__name__}: {exc}"[:500],
+                )
+            )
+            audit.mark("admission_artifact_write_failed")
+            raise FatalExecutionInfrastructureError(
+                "admission_artifact_write_failed",
+                f"核心 admission sidecar 写失败：{type(exc).__name__}: {exc}——样本不交付，run-halt。",
+            ) from exc
 
         report = finalized.eligibility_report
         if signal.degraded:
@@ -4085,7 +4144,54 @@ class RolloutOrchestrator:
             return
         audit.lease_released = True  # release_lease 步骤 = 记账翻转
 
-    def _produce_outcome_v2(
+    @staticmethod
+    def _notify_fatal_halt(exc: FatalExecutionInfrastructureError) -> None:
+        """联合终核 P1-1 的同步 halt 通知：finally 的异步 cleanup 会推迟 Fatal 到达
+        worker，先经 task-local notifier 置 halt（无 notifier 时是 no-op）。"""
+
+        from repoharness2.adapters.slime.async_worker import fatal_halt_notifier
+
+        notifier = fatal_halt_notifier.get()
+        if notifier is not None:
+            notifier(exc)
+
+    def _produce_outcome_v2(self, *, audit: "RolloutAudit", **facts: Any) -> None:
+        """Outcome v2 producer 的守卫入口（W1b 切片一复核 必修 1）。
+
+        - **只允许调用一次**：每个 physical attempt 只有一条终态 Outcome。此前是
+          compare-and-set 静默返回，会把"deliver 失败后通用 except 再次产出"这类
+          流程掩盖成普通 ABORTED；现在二次调用本身即 run-fatal（程序错误可见）。
+        - **构造失败 = run-fatal**：validator 拒绝/契约矛盾是 producer 或事实层的
+          bug，不是单个成员损耗——不许从 except 子句裸逃成 ValidationError，也不许
+          洗成 ABORTED。
+        """
+
+        if audit.outcome_v2 is not None:
+            audit.mark("outcome_producer_called_twice")
+            raise FatalExecutionInfrastructureError(
+                "outcome_producer_called_twice",
+                f"attempt {audit.physical_attempt_id or audit.trajectory_id} 的 Outcome v2 "
+                "已产出，producer 被二次调用——终态只允许一条，run-halt。",
+            )
+        try:
+            self._produce_outcome_v2_unguarded(audit=audit, **facts)
+        except FatalExecutionInfrastructureError:
+            raise
+        except Exception as exc:  # noqa: BLE001 - producer/契约异常一律 run-fatal
+            audit.failure_records.append(
+                RolloutFailureRecord(
+                    stage="outcome_producer",
+                    error_type=type(exc).__name__,
+                    detail=str(exc)[:500],
+                )
+            )
+            audit.mark("outcome_producer_failed")
+            raise FatalExecutionInfrastructureError(
+                "outcome_producer_failed",
+                f"Outcome v2 构造失败：{type(exc).__name__}: {exc}——事实层/契约矛盾，run-halt。",
+            ) from exc
+
+    def _produce_outcome_v2_unguarded(
         self,
         *,
         audit: "RolloutAudit",
@@ -4107,10 +4213,8 @@ class RolloutOrchestrator:
         构造失败 = 事实矛盾（validator 拒绝），fail-loud 不吞。
         """
 
-        # P0-2：终态 compare-and-set——每个 physical attempt 只允许一条
-        # 终态 Outcome（成功写入后 deliver 再失败也不得改写/追加）
-        if audit.outcome_v2 is not None:
-            return
+        # P0-2 终态唯一性由守卫入口 `_produce_outcome_v2` 强制（二次调用 = fatal，
+        # 不再静默 compare-and-set）。
         meta = raw_meta if isinstance(raw_meta, Mapping) else {}
         seq_raw = meta.get("rh2_physical_attempt_seq")
         slot_raw = meta.get("rh2_member_slot")

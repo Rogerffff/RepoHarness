@@ -12,7 +12,13 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from repoharness2.envpack.ingest_swegym_lite import IngestResult, build_task
-from repoharness2.envpack.prepared_tasks import HOST_GRADING_FILE, PROMPTS_FILE, PreparedTasksManifest, prepare_tasks
+from repoharness2.envpack.prepared_tasks import (
+    HOST_GRADING_FILE,
+    PROMPTS_FILE,
+    PreparedTasksManifest,
+    manifest_file_sha256,
+    prepare_tasks,
+)
 from repoharness2.envpack.training_view import TrustedTaskController
 
 IMG_DIG = "sha256:" + "b" * 64
@@ -86,6 +92,12 @@ class PreparedFixture:
     @property
     def host_path(self) -> Path:
         return self.private_dir / HOST_GRADING_FILE
+
+    @property
+    def manifest_sha256(self) -> str:
+        """外部 manifest 输入身份（每次从文件现算——篡改测试重写 manifest 后取到的是新值）。"""
+
+        return manifest_file_sha256(self.prepared_dir)
 
 
 def prepare_synthetic(root: Path, iids: tuple[str, ...] = IIDS) -> PreparedFixture:

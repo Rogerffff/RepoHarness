@@ -178,6 +178,9 @@ MOE_ROUTER_TOPK = int(os.environ["RH2_MOE_ROUTER_TOPK"]) if os.environ.get("RH2_
 # 期望 digest（私有内容不进 env/args）。RH2_PREPARED_TASKS_DIR 未设 = legacy v1 八题
 # 任务面（s1_compat/fa_audit_only 的 bring-up 路径）；fa_formal 缺它 = 拒绝，不回退。
 PREPARED_TASKS_DIR = os.environ.get("RH2_PREPARED_TASKS_DIR") or None
+# 公开 manifest 的外部输入身份（trusted-prep stdout 的 prepared_manifest_sha256）：目录内
+# 三件套协调篡改在 actor 启动时 fail-closed。被动 digest（06 §6），不是授权闸门。
+PREPARED_TASKS_MANIFEST_SHA256 = os.environ.get("RH2_PREPARED_TASKS_MANIFEST_SHA256") or None
 HOST_GRADING_ARTIFACT_PATH = os.environ.get("RH2_HOST_GRADING_ARTIFACT_PATH") or None
 HOST_GRADING_ARTIFACT_SHA256 = os.environ.get("RH2_HOST_GRADING_ARTIFACT_SHA256") or None
 
@@ -759,6 +762,7 @@ class BringupService:
 
             self.prepared_face = PreparedTaskFace.load(
                 prepared_dir=PREPARED_TASKS_DIR,
+                manifest_sha256=PREPARED_TASKS_MANIFEST_SHA256,
                 host_grading_path=HOST_GRADING_ARTIFACT_PATH,
                 host_grading_sha256=HOST_GRADING_ARTIFACT_SHA256,
                 time_budget_seconds=AGENT_TIME_BUDGET_SEC,

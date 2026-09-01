@@ -269,21 +269,26 @@ def termination_facts_payload(receipt: FinalizationReceiptV1) -> TerminationFact
 
 
 def assert_payload_dereferences(payload: TerminationFactsPayloadV1, receipt: FinalizationReceiptV1) -> None:
-    """一个 termination 事实只能解引用到唯一 outcome/receipt：四个锚必须逐字相等。"""
+    """一个 termination 事实只能解引用到唯一 outcome/receipt——**全字段**核对（W1b 切片一复核
+    顺手修 4）：用同一 receipt 重新派生载荷，与传入载荷逐字段比对（不只四个 ID）；任一字段
+    不一致即 fail-closed。仍不建 durable ledger：receipt 由调用方交回。"""
 
-    if receipt.outcome_v2 is None:
-        raise TerminationFactsError(f"{receipt.receipt_id}: receipt 无 outcome_v2——载荷无法解引用到 outcome，fail-closed。")
-    pairs = (
-        ("physical_attempt_id", payload.physical_attempt_id, receipt.physical_attempt_id),
-        ("receipt_id", payload.receipt_id, receipt.receipt_id),
-        ("outcome_id", payload.outcome_id, receipt.outcome_v2.outcome_id),
-        ("rollout_execution_id", payload.rollout_execution_id, receipt.trajectory_id),
-    )
-    for label, mine, theirs in pairs:
-        if mine != theirs:
-            raise TerminationFactsError(
-                f"载荷 {label}={mine!r} 与 receipt 的 {theirs!r} 不一致——事实解引用到别的 attempt/receipt，fail-closed。"
-            )
+    try:
+        expected = termination_facts_payload(receipt)
+    except TerminationFactsError as exc:
+        raise TerminationFactsError(
+            f"{receipt.receipt_id}: receipt 无法派生 termination 事实，载荷无法解引用：{exc}"
+        ) from exc
+    if payload != expected:
+        diffs = [
+            name
+            for name in TerminationFactsPayloadV1.model_fields
+            if getattr(payload, name) != getattr(expected, name)
+        ]
+        raise TerminationFactsError(
+            f"载荷与 receipt 重新派生结果不一致（字段 {diffs}）——事实解引用到别的 attempt/receipt "
+            "或载荷被改写，fail-closed。"
+        )
 
 
 def stamp_termination_facts(output: Any, payload: TerminationFactsPayloadV1) -> None:

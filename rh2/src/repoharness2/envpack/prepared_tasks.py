@@ -23,6 +23,13 @@ F1"输入数据不得携带身份历史"的第二道边界（第一道在 identi
 私有产物允许跨且只跨 "prep → actor" 这一次 runtime-private 文件边界；读取口除 digest 外还
 检查 POSIX 权限位（group/other 任一可读即拒），路径与期望 digest 由启动参数携带，内容
 不进任何 args/env/公共 evidence。
+
+信任根（W1b 切片一复核 顺手修 2）：公开 manifest 本身若只由目录内文件互相引用，协调篡改
+prompt + rollout 视图 + manifest 三件套可以让"新题面"与"旧 grader"静默配对。因此
+trusted-prep 额外输出 **manifest 文件的外部 sha256**（stdout / 返回值），由启动方经
+`RH2_PREPARED_TASKS_MANIFEST_SHA256` 传给 actor，`load_prepared_manifest` 必须交回它并核验
+——缺失/不符 fail-closed。这是 06 §6 允许的"本次实际输入被动 digest"（输入身份），不是
+owner 授权闸门：不做签名系统、不建 ledger。
 """
 
 from __future__ import annotations
@@ -30,6 +37,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import stat
 from collections.abc import Iterable, Mapping
 from datetime import datetime, timezone
@@ -304,12 +312,36 @@ def prepare_tasks(
 # ---------------------------------------------------------------------------
 
 
-def load_prepared_manifest(prepared_dir: Path | str) -> PreparedTasksManifest:
+def manifest_file_sha256(prepared_dir: Path | str) -> str:
+    """prepared manifest 文件内容的 sha256（trusted-prep 输出给启动方的外部输入身份）。"""
+
     path = Path(prepared_dir) / MANIFEST_FILE
     if not path.is_file():
         raise PreparedTasksError(f"prepared manifest 缺失: {path}")
+    return _sha256(path.read_bytes())
+
+
+def load_prepared_manifest(prepared_dir: Path | str, *, expected_sha256: Any) -> PreparedTasksManifest:
+    """读 manifest：必须交回 trusted-prep 输出的外部 sha256（`RH2_PREPARED_TASKS_MANIFEST_SHA256`），
+    文件 digest 与之不符即拒——目录内三件套协调篡改在这里 fail-closed。"""
+
+    if not isinstance(expected_sha256, str) or not re.fullmatch(r"[0-9a-f]{64}", expected_sha256):
+        raise PreparedTasksError(
+            "prepared manifest 的外部 sha256 缺失/非法（RH2_PREPARED_TASKS_MANIFEST_SHA256 = trusted-prep "
+            "stdout 的 prepared_manifest_sha256）——没有外部输入身份，拒绝加载"
+        )
+    path = Path(prepared_dir) / MANIFEST_FILE
+    if not path.is_file():
+        raise PreparedTasksError(f"prepared manifest 缺失: {path}")
+    data = path.read_bytes()
+    actual = _sha256(data)
+    if actual != expected_sha256:
+        raise PreparedTasksError(
+            f"prepared manifest sha256 与外部输入身份不符（actual {actual[:16]}… != expected "
+            f"{expected_sha256[:16]}…）——manifest 被改/换，拒绝加载"
+        )
     try:
-        return PreparedTasksManifest.model_validate_json(path.read_bytes())
+        return PreparedTasksManifest.model_validate_json(data)
     except ValidationError as exc:
         raise PreparedTasksError(f"prepared manifest 非法: {exc}") from exc
 
@@ -475,6 +507,7 @@ __all__ = [
     "load_host_grading_views",
     "load_prepared_manifest",
     "load_prepared_rollout_views",
+    "manifest_file_sha256",
     "prepare_tasks",
     "verify_prompt_data_binding",
 ]

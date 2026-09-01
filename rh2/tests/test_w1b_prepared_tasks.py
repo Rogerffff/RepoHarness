@@ -118,7 +118,7 @@ def test_prepare_artifacts_shape_permissions_and_no_private_leak(prepared):
 
     m = fx.manifest
     assert m.task_count == 2 and m.task_ids() == (TID1, TID2)
-    assert pt.load_prepared_manifest(fx.prepared_dir) == m
+    assert pt.load_prepared_manifest(fx.prepared_dir, expected_sha256=fx.manifest_sha256) == m
     assert m.host_grading_artifact_sha256 == hashlib.sha256(fx.host_path.read_bytes()).hexdigest()
     for name in (pt.PROMPTS_FILE, pt.ROLLOUT_VIEWS_FILE):
         assert m.files[name].sha256 == hashlib.sha256((fx.prepared_dir / name).read_bytes()).hexdigest()
@@ -169,7 +169,7 @@ def test_reader_rejects_reserved_keys_even_when_digest_consistent(prepared):
     rows[0]["metadata"]["rh2_physical_attempt_id"] = "miles_g0_m0#p1-deadbeef"
     _rewrite_public(fx, pt.PROMPTS_FILE, rows)
     with pytest.raises(pt.PreparedTasksError, match="保留键"):
-        pt.load_prepared_rollout_views(fx.prepared_dir, pt.load_prepared_manifest(fx.prepared_dir))
+        pt.load_prepared_rollout_views(fx.prepared_dir, pt.load_prepared_manifest(fx.prepared_dir, expected_sha256=fx.manifest_sha256))
     with pytest.raises(pt.PreparedTasksError, match="保留键"):
         pt.assert_no_reserved_keys({"task_id": TID1, "rh2_termination_facts": {}}, where="t")
     pt.assert_no_reserved_keys({"task_id": TID1}, where="t")
@@ -189,14 +189,14 @@ def test_reader_rejects_public_tampering(prepared):
     rows[0]["prompt"] += "\n(ignore the tests)"
     _rewrite_public(fx, pt.PROMPTS_FILE, rows)
     with pytest.raises(pt.PreparedTasksError, match="prompt 文本"):
-        pt.load_prepared_rollout_views(fx.prepared_dir, pt.load_prepared_manifest(fx.prepared_dir))
+        pt.load_prepared_rollout_views(fx.prepared_dir, pt.load_prepared_manifest(fx.prepared_dir, expected_sha256=fx.manifest_sha256))
     _rewrite_public(fx, pt.PROMPTS_FILE, _rows_reset(original))
     # (c) 题面漂移（rollout 视图行）+ manifest 同步 → 视图 validator 拒
     vrows = _rows(fx.prepared_dir / pt.ROLLOUT_VIEWS_FILE)
     vrows[0]["public"]["problem_statement"] = "drifted statement"
     _rewrite_public(fx, pt.ROLLOUT_VIEWS_FILE, vrows)
     with pytest.raises(pt.PreparedTasksError, match="视图行非法"):
-        pt.load_prepared_rollout_views(fx.prepared_dir, pt.load_prepared_manifest(fx.prepared_dir))
+        pt.load_prepared_rollout_views(fx.prepared_dir, pt.load_prepared_manifest(fx.prepared_dir, expected_sha256=fx.manifest_sha256))
 
 
 def _rows_reset(original: bytes) -> list[dict]:
@@ -283,7 +283,7 @@ def test_v2_grading_spec_built_in_actor_from_safe_view_without_golden(prepared):
 
     fx = prepared
     face = PreparedTaskFace.load(
-        prepared_dir=fx.prepared_dir, host_grading_path=fx.host_path,
+        prepared_dir=fx.prepared_dir, manifest_sha256=fx.manifest_sha256, host_grading_path=fx.host_path,
         host_grading_sha256=fx.manifest.host_grading_artifact_sha256,
         time_budget_seconds=600, prompt_data_path=fx.prompts_path,
     )
@@ -342,8 +342,12 @@ def test_prepared_face_requires_private_ref_and_digest(prepared):
 
     fx = prepared
     with pytest.raises(pt.PreparedTasksError, match="opaque 路径与期望"):
-        PreparedTaskFace.load(prepared_dir=fx.prepared_dir, host_grading_path=None, host_grading_sha256=None,
-                              time_budget_seconds=600)
+        PreparedTaskFace.load(prepared_dir=fx.prepared_dir, manifest_sha256=fx.manifest_sha256,
+                              host_grading_path=None, host_grading_sha256=None, time_budget_seconds=600)
+    with pytest.raises(pt.PreparedTasksError, match="外部 sha256"):
+        PreparedTaskFace.load(prepared_dir=fx.prepared_dir, manifest_sha256=None,
+                              host_grading_path=fx.host_path,
+                              host_grading_sha256=fx.manifest.host_grading_artifact_sha256, time_budget_seconds=600)
 
 
 # ---------------------------------------------------------------------------
@@ -360,7 +364,7 @@ def test_trusted_prep_cli_real_assets_then_actor_loads_without_full_loader(tmp_p
     assert rc == 0
     summary = json.loads(capsys.readouterr().out)
     assert set(summary) == {
-        "prepared_dir", "manifest", "prompt_data", "host_grading_artifact_path",
+        "prepared_dir", "manifest", "prepared_manifest_sha256", "prompt_data", "host_grading_artifact_path",
         "host_grading_artifact_sha256", "task_count",
     }
     assert summary["task_count"] == 216
@@ -378,7 +382,7 @@ def test_trusted_prep_cli_real_assets_then_actor_loads_without_full_loader(tmp_p
     monkeypatch.setattr(tv.TrustedTaskController, "_build", classmethod(lambda cls, *a, **k: _boom()))
     monkeypatch.setattr(tv.TrustedTaskController, "from_repo_root", classmethod(lambda cls, *a, **k: _boom()))
 
-    m = pt.load_prepared_manifest(out)
+    m = pt.load_prepared_manifest(out, expected_sha256=summary["prepared_manifest_sha256"])
     views = pt.load_prepared_rollout_views(out, m)
     hosts = pt.load_host_grading_views(
         summary["host_grading_artifact_path"], expected_sha256=summary["host_grading_artifact_sha256"], manifest=m
@@ -514,3 +518,106 @@ def test_synthetic_controller_still_holds_no_golden():
         if isinstance(obj, str):
             for iid in IIDS:
                 assert golden_content(iid) not in obj
+
+
+# ---------------------------------------------------------------------------
+# 顺手修 2：外部 manifest sha256 是信任根（协调篡改三件套在此拦截）
+# ---------------------------------------------------------------------------
+
+
+def test_external_manifest_sha_is_the_trust_root_against_coordinated_tampering(prepared):
+    from repoharness2.envpack.bundles import sha256_of_text
+
+    fx = prepared
+    original_sha = fx.manifest_sha256
+    # 缺失 / 非法 / 不符 → 拒
+    for bad in (None, "", "not-a-digest", "1" * 64):
+        with pytest.raises(pt.PreparedTasksError, match="外部|不符"):
+            pt.load_prepared_manifest(fx.prepared_dir, expected_sha256=bad)
+    assert pt.load_prepared_manifest(fx.prepared_dir, expected_sha256=original_sha) == fx.manifest
+
+    # 协调篡改三件套：新题面（public bundle 重算自证 sha + 视图 digest）+ 重渲染 prompt + manifest 记录同步。
+    # 目录内互检（视图 validator / prompt 渲染比对 / 记录比对）全部自洽——"新题面配旧 grader"。
+    views = pt.load_prepared_rollout_views(fx.prepared_dir, fx.manifest)
+    old_view = views[TID1]
+    new_public = old_view.public.model_copy(
+        update={"problem_statement": "Tampered statement", "problem_statement_sha256": sha256_of_text("Tampered statement")}
+    )
+    new_public = type(new_public).model_validate(new_public.model_dump(mode="python"))
+    new_view = RolloutTaskView(
+        task_id=old_view.task_id, source=old_view.source, instance_id=old_view.instance_id,
+        environment_package_digest=old_view.environment_package_digest,
+        public_bundle_digest=new_public.digest(), public=new_public,
+    )
+    vrows = _rows(fx.prepared_dir / pt.ROLLOUT_VIEWS_FILE)
+    vrows[0] = new_view.model_dump(mode="json")
+    _rewrite_public(fx, pt.ROLLOUT_VIEWS_FILE, vrows)
+    from repoharness2.envpack.bundles import render_user_prompt
+
+    prows = _rows(fx.prompts_path)
+    prows[0]["prompt"] = render_user_prompt(new_public)
+    prows[0]["metadata"]["public_bundle_digest"] = new_public.digest()
+    _rewrite_public(fx, pt.PROMPTS_FILE, prows)
+    mpath = fx.prepared_dir / pt.MANIFEST_FILE
+    doc = json.loads(mpath.read_text())
+    doc["tasks"][0]["public_bundle_digest"] = new_public.digest()
+    mpath.write_text(json.dumps(doc, ensure_ascii=False, indent=2))
+
+    # 目录内互检确实全部通过（这正是漏洞：没有外部信任根时"新题面 + 旧 grader"静默配对）
+    tampered_sha = fx.manifest_sha256
+    assert tampered_sha != original_sha
+    m_tampered = pt.load_prepared_manifest(fx.prepared_dir, expected_sha256=tampered_sha)
+    assert pt.load_prepared_rollout_views(fx.prepared_dir, m_tampered)[TID1].public.problem_statement == "Tampered statement"
+    hosts = pt.load_host_grading_views(fx.host_path, expected_sha256=m_tampered.host_grading_artifact_sha256, manifest=m_tampered)
+    assert judge_content(IIDS[0]) in hosts[TID1].grading.test_patch  # 旧 grader 原样
+
+    # 外部 sha256 未变（启动方拿的是 trusted-prep 当时打印的值）→ 拒绝加载
+    with pytest.raises(pt.PreparedTasksError, match="外部输入身份不符"):
+        pt.load_prepared_manifest(fx.prepared_dir, expected_sha256=original_sha)
+    from repoharness2.adapters.slime.prepared_task_face import PreparedTaskFace
+
+    with pytest.raises(pt.PreparedTasksError, match="外部输入身份不符"):
+        PreparedTaskFace.load(
+            prepared_dir=fx.prepared_dir, manifest_sha256=original_sha, host_grading_path=fx.host_path,
+            host_grading_sha256=fx.manifest.host_grading_artifact_sha256, time_budget_seconds=600,
+        )
+
+
+# ---------------------------------------------------------------------------
+# 顺手修 4：解引用 = 全字段核对
+# ---------------------------------------------------------------------------
+
+
+def test_dereference_compares_every_field_not_only_ids():
+    receipt = _receipt_for(trajectory="miles_g0_m0", pa=PA1, seq=1, slot=0, outcome_id="ov2_1", receipt_id="rcpt_1")
+    payload = termination_facts_payload(receipt)
+    assert_payload_dereferences(payload, receipt)
+    # 四个 ID 全部原样、只改非 ID 字段（保持模型自洽）→ 每一处都被拒
+    variants = {
+        "task_id": {"task_id": TID2},
+        "execution_scope_quiescent": {"execution_scope_quiescent": False},
+        "canonical_frozen_patch_formed": {"canonical_frozen_patch_formed": False},
+        "fresh_grading_complete+grading_report_id": {"fresh_grading_complete": False, "grading_report_id": None},
+        "grading_report_id": {"grading_report_id": "gr_other"},
+        "eligibility_report_id": {"eligibility_report_id": "er_other"},
+        "termination_kind+flags": {"termination_kind": "task_token_budget_exhausted", "triggered_by_policy_horizon": True},
+        "termination_kind+hard_wall": {"termination_kind": "hard_wall_timeout", "triggered_by_hard_wall": True},
+    }
+    for label, update in variants.items():
+        forged = TerminationFactsPayloadV1.model_validate({**payload.model_dump(mode="json"), **update})
+        with pytest.raises(TerminationFactsError, match="不一致"):
+            assert_payload_dereferences(forged, receipt)
+        assert label
+    # 全部 14 个字段都参与比对（ID 四个 + 事实十个）
+    assert set(TerminationFactsPayloadV1.model_fields) == {
+        "schema_id", "physical_attempt_id", "rollout_execution_id", "task_id", "receipt_id", "outcome_id",
+        "termination_kind", "triggered_by_policy_horizon", "triggered_by_hard_wall", "execution_scope_quiescent",
+        "canonical_frozen_patch_formed", "fresh_grading_complete", "grading_report_id", "eligibility_report_id",
+    }
+    # receipt 无 outcome → 无法解引用
+    with pytest.raises(TerminationFactsError, match="无法解引用"):
+        assert_payload_dereferences(
+            payload,
+            receipt.model_copy(update={"outcome_v2": None, "attempt_disposition": "aborted",
+                                       "drain_receipt": None, "drain_receipt_ref": None}),
+        )

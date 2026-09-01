@@ -319,9 +319,14 @@ async def test_e2e_failure_path_produces_missing_outcome():
 
 
 async def test_outcome_terminal_cas_single_write():
-    """复核 P0-2：终态 CAS——同一 audit 第二次生产不追加不改写（屏障
-    落地恢复交付后，deliver 失败路径靠它保持 Outcome 恒一条）。"""
+    """复核 P0-2：终态唯一——同一 audit 第二次生产不追加不改写。
 
+    oracle 修订（W1b 切片一 codex 复核 必修 1，T1 登记）：此前第二次调用静默
+    compare-and-set 返回，会把"deliver 失败后通用 except 再次产出 missing"洗成普通
+    ABORTED；现在二次调用本身 = run-fatal `outcome_producer_called_twice`，首次
+    Outcome 原样不动。"""
+
+    from repoharness2.adapters.slime.async_worker import FatalExecutionInfrastructureError
     from repoharness2.adapters.slime.generate import RolloutAudit, RolloutOrchestrator
 
     orch = RolloutOrchestrator.__new__(RolloutOrchestrator)  # 只用 producer 面
@@ -342,10 +347,12 @@ async def test_outcome_terminal_cas_single_write():
     orch._produce_outcome_v2(termination_kind="completed", **kw)
     first = audit.outcome_v2
     assert first is not None and len(orch.outcomes) == 1
-    # 第二次（如 deliver 失败后的异常收口）尝试改写为 harness_crash → 拒
-    orch._produce_outcome_v2(termination_kind="harness_crash", **kw)
-    assert audit.outcome_v2 is first  # CAS：未被改写
+    # 第二次尝试改写为 harness_crash → 二次调用本身 run-fatal，首次 Outcome 未被改写
+    with pytest.raises(FatalExecutionInfrastructureError, match="outcome_producer_called_twice"):
+        orch._produce_outcome_v2(termination_kind="harness_crash", **kw)
+    assert audit.outcome_v2 is first
     assert len(orch.outcomes) == 1
+    assert any(e.step == "outcome_producer_called_twice" for e in audit.timeline)
 
 
 async def test_hard_wall_exit_records_trigger_not_crash():

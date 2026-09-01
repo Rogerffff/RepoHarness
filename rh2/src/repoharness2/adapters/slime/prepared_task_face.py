@@ -176,20 +176,23 @@ class PreparedTaskFace:
         cls,
         *,
         prepared_dir: Path | str,
+        manifest_sha256: str | None,
         host_grading_path: Path | str | None,
         host_grading_sha256: str | None,
         time_budget_seconds: int,
         prompt_data_path: Any = None,
     ) -> "PreparedTaskFace":
-        """从两份产物加载（全部复核）；``prompt_data_path`` 非 None 时把 miles 数据源读的
-        文件与 prep 的 prompts.jsonl 按内容 digest 绑定。"""
+        """从两份产物加载（全部复核）。``manifest_sha256`` = trusted-prep 输出的外部 manifest
+        digest（`RH2_PREPARED_TASKS_MANIFEST_SHA256`，输入身份而非授权闸门），缺失/不符即拒；
+        ``prompt_data_path`` 非 None 时把 miles 数据源读的文件与 prep 的 prompts.jsonl 按内容
+        digest 绑定。"""
 
         if not host_grading_path or not host_grading_sha256:
             raise PreparedTasksError(
                 "prepared 链要求同时给出 runtime-private 产物的 opaque 路径与期望 sha256"
                 "（RH2_HOST_GRADING_ARTIFACT_PATH / RH2_HOST_GRADING_ARTIFACT_SHA256）"
             )
-        manifest = load_prepared_manifest(prepared_dir)
+        manifest = load_prepared_manifest(prepared_dir, expected_sha256=manifest_sha256)
         rollout_views = load_prepared_rollout_views(prepared_dir, manifest)
         host_views = load_host_grading_views(host_grading_path, expected_sha256=host_grading_sha256, manifest=manifest)
         if prompt_data_path is not None:
