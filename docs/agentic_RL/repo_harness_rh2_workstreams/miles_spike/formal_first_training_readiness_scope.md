@@ -4,6 +4,13 @@
 
 状态：**讨论稿，待 Owner 确认；不修改任何现有闸门或启动语义**
 
+> **2026-09-01 显著提示**：后续执行以
+> `docs/agentic_RL/repo_harness_rh2_workstreams/06-first-training-local-execution-plan.md`
+> 为准——06 是**待 Owner 批准的替代提案**（Claude 起草 + codex 三轮复核）。06 的 §6 防御清理
+> 提议删除本文 §0.2/§5.1 的授权公式、qualification manifest 与闸门代码化方案（owner 拍板
+> 06 决策包 A 后生效）；本文其余缺口分析（四个实现级缺口、campaign 分段、"明确不做"清单）
+> 已被 06 收编为 W 包。本文保留作范围论证的历史依据，不再单独执行。
+
 本文回答一个比 `gpu_spike_scope.md` 更强的问题：
 
 > 在不继续建设 Slime 自有异步流水线的前提下，当前 RH2 + Miles 还要完成
