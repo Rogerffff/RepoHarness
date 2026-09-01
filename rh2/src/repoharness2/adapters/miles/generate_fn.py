@@ -117,11 +117,10 @@ class Rh2MilesGenerateFn:
         # 一实例。启动失败按 BringupService 的 sticky FAILED 语义传播（同进
         # 程不静默重试第二代）。
         #
-        # 关闭 hook 说明（有意留给进程退出路径）：BringupService 持有的
-        # adapter HTTP 线程 / 评分队列没有 per-rollout 的 close 面，miles
-        # stock FullyAsyncRolloutFn 也没有 dispose 回调（spike R5-ext B5 已
-        # 登记）；CPU/首轮 GPU spike 按 run-fatal + 进程退出回收处理，正式
-        # 关停语义归硬件段的 close/dispose seam。
+        # 关闭 hook 说明（W5a 已落地生产关停链）：BringupService 持有的
+        # 资源由 repoharness2.shutdown + BringupService.close() 有界关闭；
+        # 集成接缝 = miles RolloutManager.dispose()（或 train_async finally）
+        # 调 `await close_bringup_service(reason=...)` 一行,本函数不挂钩子。
         if getattr(input.args, "rh2_orchestrator", None) is None:
             from repoharness2.adapters.slime.bringup import ensure_fa_started
 
