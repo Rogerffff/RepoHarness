@@ -76,32 +76,36 @@
 
 ---
 
-## §3 工作包 W0~W7（范围/依赖/验收；每包 = 实现 agent 批 + codex 聚焦复核，进度落 spike-log）
+## §3 工作包 W0~W8（范围/依赖/验收；每包 = 实现 agent 批 + codex 聚焦复核，进度落 spike-log）
 
-**并行波次**：Wave1（A 批后）= W0 ∥ W1a ∥ W2 → Wave2 = W1b ∥ W5a → Wave3（B 批后）= W3 ∥ W4 ∥ W5b → Wave4 = W6 → Wave5（C 批后）= W7。粗量级：全程 2~3 周现行节奏。
+> 映射完备性说明（2026-09-01 穷举核对）：本表与就绪稿 §5.1 十三条租前硬门逐条对映——第 11 条（eval 运输链）与 A5 实现归属为本次修订补入（W8、W2 扩项）；第 8 条后半（run-label 兜底清理）补入 W5a；W3 因体量与依赖差异拆为 W3a/W3b。profile 冻结时点澄清：**结构性骨架在 A（A1/A5/A6），数值在 C**——W6 的拒绝面机制只依赖结构。
+
+**并行波次**：Wave1（A 批后）= W0 ∥ W1a ∥ W2 → Wave2 = W1b ∥ W5a → Wave3（B 批后）= W3a ∥ W3b ∥ W4 ∥ W5b → Wave4 = W6 ∥ W8 → Wave5（C 批后）= W7。粗量级：全程 2~3 周现行节奏。
 
 | 包 | 范围 | 依赖 | 验收要点 |
 |---|---|---|---|
-| **W0 算法/config 核对** | E2 全部算法旋钮的 miles 消费路径逐一核对（std normalization/dynamic filter/rewards_normalization/max staleness 消费点）；**首项=A6 前提验证**（miles stock remove_sample 的组内基线+零分母行为实测）；"参数存在但当前 loss 不消费"一律 fail-closed 或从配置删除 | A | 每旋钮一个消费点证据+正反例；A6 验证结论回写决策记录 |
+| **W0 算法/config 核对** | E2 全部算法旋钮的 miles 消费路径逐一核对（std normalization/dynamic filter/rewards_normalization/max staleness 消费点）；**首项=A6 前提验证**（miles stock remove_sample 的组内基线+零分母行为实测）；"参数存在但当前 loss 不消费"即 fail-closed 或从配置删除——**范围限定 E2 旋钮清单，不建通用未消费配置检测器** | A | 每旋钮一个消费点证据+正反例；A6 验证结论回写决策记录 |
 | **W1a 身份铸造** | miles submit/generate 边界铸造六字段（组身份+物理 attempt 两级，对照旧 async_worker+fa_bringup 的分工）；retry 换新 physical attempt/seq、不复用 session capability | A | 缺失/复用/retry/fan-out/canonicalize round-trip 负例；fa_formal 身份校验在真实路径通过 |
 | **W1b eligibility 真准入** | 唯一 group admission 点（A2 合取）；拒绝原因+数量进事件流；A3 窄解封机制（gate 侧）＋ GATE_VERSION 升版 | W1a | 单 member offline/cap 未解/metadata 缺失→整组零样本进 conversion；补采补满 batch；解封 fail-closed 负例 |
-| **W2 trusted 任务入口** | 去 8 题固定表；接 S2-1 可信 manifest resolver（216 题三分包）；`EnvironmentPackageV1.digest()` 贯穿 TaskSpec/baseline/patch/receipt/run manifest；四门 runner 最小闭环（T2-d/e：empty/golden/已知错误 patch/确定性门真实执行）；资格 taskset 冻结机制（题单内容 owner 后定） | A | unknown task/漏包/digest mismatch fail-closed；四门对小集实跑；8 题探针在 formal preflight 被拒 |
-| **W3 formal 评分冻结+最小安全链** | W3a：runtime owner 停止 execution scope 替换 NO-GO 屏障；git-free census/exporter；fresh grader 不读 live workspace；**formal B6 组合测试**（正常写完/后台/root 迟写/Git 注入/binary/symlink/mode）。W3b：A4 安全集落地（sandbox 加固+隔离网+hidden mount 防线+git sanitizer 最小+CommandFilter 拦截+findings 真进 gate）；正反例（作弊不改 reward、正常轨迹不误拒） | W1b、W2 | B6 清单全绿；拦截 attempted/executed 记账；task-local vs run-fatal 分界测试 |
-| **W4 JIT/staleness** | publish 后 drain（miles 侧窄 commit）；持续 producer 保留；H5 硬门读取的最小计时事件（修剪后子集） | B | B-ready/B-not-ready/publish/zero-signal/fresh-stale refill/事件配对负例 |
-| **W5a shutdown** | 就绪稿 §2.6 关闭链（producer 停→cancel/await→grading/capture/HTTP/容器→evidence flush→dispose）；有界超时保首因 | A | 正常/异常关闭、关闭后禁 submit、无残留三分支 |
+| **W2 trusted 任务入口 + timeout 落地** | 去 8 题固定表；接 S2-1 可信 manifest resolver（216 题三分包）；`EnvironmentPackageV1.digest()` 贯穿 TaskSpec/baseline/patch/receipt/run manifest；四门 runner 最小闭环（T2-d/e：empty/golden/已知错误 patch/确定性门真实执行）；资格 taskset 冻结机制（题单内容 owner 后定）；**A5 三层 timeout 实现**（setup deadline、episode 计时起点改为资源占用、run 总墙钟——数值留占位待 C） | A | unknown task/漏包/digest mismatch fail-closed；四门对小集实跑；8 题探针在 formal preflight 被拒；timeout 三层各一正反例 |
+| **W3a formal 评分冻结** | runtime owner 停止 execution scope 替换 NO-GO 屏障；git-free census/exporter；fresh grader 不读 live workspace；**formal B6 组合测试**（正常写完/后台/root 迟写/Git 注入/binary/symlink/mode/grader 隔离） | W2（真实环境包）；与 W3b 可并行 | B6 清单全绿；task-local vs run-fatal 分界测试 |
+| **W3b 最小安全链** | A4 安全集落地：sandbox 加固（非 root/cap/pids/内存）+隔离网仅放行模型代理+hidden mount 防线+git sanitizer 最小+CommandFilter 拦截（block+dummy 观测+attempted/executed 记账）+findings 真进 EligibilityGate | W1b（gate 接线面） | 作弊不改 reward、正常轨迹不误拒正反例；出网/remote git 拒绝实测 |
+| **W4 JIT/staleness** | publish 后 drain（miles 侧窄 commit）；持续 producer 保留；H5 硬门读取的最小计时事件（修剪后子集）；**一次性 CPU materialization benchmark**（真实 RH2 shape，为 H5 阈值提供量级参照） | B | B-ready/B-not-ready/publish/zero-signal/fresh-stale refill/事件配对负例 |
+| **W5a shutdown** | 就绪稿 §2.6 关闭链（producer 停→cancel/await→grading/capture/HTTP/容器→evidence flush→dispose）；有界超时保首因；**campaign supervisor 按 run label 的有界兜底清理与残留核对** | A | 正常/异常关闭、关闭后禁 submit、无残留三分支；兜底清理幂等 |
 | **W5b checkpoint 冷恢复** | 就绪稿 §2.7 合同：published-boundary 联合提交、COMMITTED manifest、frontier-discard receipt、空 buffer 新 segment、复合 version 身份、恢复 bootstrap 发布原版本号；**crash matrix 本地全做** | B | 各提交点 crash/坏 manifest/shard/digest fail-closed；Adam/scheduler/RNG/版本不混代 |
 | **W6 gate/evidence** | A7 公式落 inspector/preflight+FA JSON 账本；qualification manifest 机制；formal preflight 拒绝面全套（就绪稿 §2.1 清单）；证据最小集（§2.8 修剪后）+资源闭包一次性取数 | W1~W3 主体 | 每拒绝面一个负例；缺授权/过期/漂移/越界全拒 |
-| **W7 实验包** | 从范围反向生成 launch/collector/judge/thresholds（不继承未审文件）；洗绿反例全套 | C、W1~W6 | 双 base 全绿+self-test+preflight 正反例 |
+| **W8 eval 运输链**（本次穷举核对补入,就绪稿 §2.9/§5.1 第 11 条） | 标准非 FA before/after eval 本地链：接同一 source/model/tokenizer/环境解析器；eval taskset 身份分离断言；eval 前 producer/grading/update 停止断言；结果绑定显式 checkpoint digest（拒绝 latest）；小模型/fixture 验证 base 与 post-update 双 checkpoint 全流程与失败传播 | W2（环境解析器）；checkpoint digest 约定对齐 W5b | 身份分离/producer 未停/latest 回退三负例；双 checkpoint fixture 正例 |
+| **W7 实验包** | 从范围反向生成 launch/collector/judge/thresholds（不继承未审文件）；洗绿反例全套 | C、W1~W6、W8 | 双 base 全绿+self-test+preflight 正反例 |
 
 **界外（本计划不含,另行排期）**：GPU pass-rate 预筛与 pre-RL 行为诊断（单卡作业或租期尾项,C 包定载体）；held-out 冻结与题单选定（数据线,依赖四门+预筛）；R2E ingestion（D3 闭环档下首训不做）。
 
 ## §4 决策包 B/C（内容冻结,时点后置）
 
 **B（Wave3 前）**：提前 drain 关闭落账（已口头批准）；正常 shutdown 硬门落账（已口头批准）；`max_weight_staleness` 在线硬拒语义；W5b checkpoint 合同（published-boundary/新 segment/frontier discard）；明确不做 pending replay/精确 cursor/exactly-once；`update_weights_interval` 支持口径（推荐首版=1）。
-**C（W7/租卡前）**：精确 GPU profile 或 qualified envelope；staleness/成本/连续更新（≥3+≥3）/资源阈值；qualification taskset digest；H1~H10 预算与停止规则；D3 闭环档确认与预筛载体；launch/judge/thresholds 最终形态。
+**C（W7/租卡前）**：精确 GPU profile 或 qualified envelope（含 A5 timeout 数值、staleness/buffer/并发值）；staleness/成本/连续更新（≥3+≥3）/资源阈值；qualification taskset digest；H1~H10 预算与停止规则；D3 闭环档确认与预筛载体；**首训 harness 工具面（subagent/compaction/fork 开闭）及 fanout 覆盖判定项的去留**（就绪稿 §4.11 条件句的显式化）；launch/judge/thresholds 最终形态。
 
 ## §5 下一步
 
 1. codex 对 §1/§2 做写码前审查 → owner 一次拍板 A；
-2. 拍板即回写 05/04/00-status 修订注记（单独提交）；
+2. 拍板即回写 05/04/00-status 修订注记 + E 系定案（E2/E7/E10/附录 A）迁移修订注记（单独提交）；
 3. Wave1 三包并行开工（W0 ∥ W1a ∥ W2），照现行节奏：agent 批实现 → codex 聚焦复核 → spike-log 落账。
