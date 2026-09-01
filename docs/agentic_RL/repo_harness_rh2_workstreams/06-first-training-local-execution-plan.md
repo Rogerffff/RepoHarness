@@ -176,18 +176,20 @@
 | 4 reward_scope | `reward_scope_none` 且与 grading infra failure 一致（present_* + reward_unavailable） | ③ DROP_GROUP,按 infra 计数 | 无可信 reward,非损坏 |
 | 4 reward_scope | `reward_value_mismatch` / `reward_event_ref_missing` | ① FATAL | 账实矛盾 |
 | 4 reward_scope | formal 路径 `credit_assignment_unknown` | ① FATAL | 不是普通样本降级（**勘误**:原草案写"scope=unknown"——`reward_scope` 的缺失形态是 `none`,`unknown` 属 `credit_assignment_strategy`,`contracts/trajectory.py:512-539`） |
-| 5 security_and_leakage | sandbox 能力事实全局未接线 / 必填事实缺失（formal 路径） | ① FATAL | 系统未就绪;非 formal 路径记非 online（A3 口径） |
+| 5 security_and_leakage | 能力 producer/消费面**全局未接线**（formal 路径） | ① FATAL（启动/preflight 级） | 系统未就绪,不是单样本问题 |
+| 5 security_and_leakage | **单条**合法报告缺正向能力事实 | ③ DROP_GROUP | A3 已批:缺事实=非 online（快速复核勘误:此前与全局未接线混判 FATAL） |
 | 5 security_and_leakage | 单个 sandbox 在 rollout 前探针失败并安全销毁 | ② ABORTED | task-local |
 | 5 security_and_leakage | hidden/grader 确实可见、隔离未生效 | ① FATAL | 环境失效（A4 run-fatal 面） |
 | 5 security_and_leakage | `public_projection_marker_hit` | ③ DROP_GROUP 默认;证实为环境泄漏则 ① FATAL | |
-| 5/6 | `executed` 级 agent 违规 / `patch_test_tampering` / `patch_forbidden_contamination`（clean grader 可信） | ③ DROP_GROUP（首训默认,见下"剩余训练语义"） | A4 |
+| 5/6 | `executed` 级 agent 违规 / `patch_test_tampering` / `patch_forbidden_contamination` | **pending（D2/A4）**——W1b 不固定该分支:要求显式注入 disposition,未注入 fail-fast（与 A5 同纪律） | 训练分布选择,见下"剩余训练语义";**注意**当前 unsafe 形状无可信 reward（见下一行豁免集） |
 | 6 clean_grading | `failed_to_grade`（单次 grading infra/parser 失败） | 保持 `present_*`,③ DROP_GROUP,进 infra/no-progress 计数 | **不得改写为 ABORTED**（`fa_runtime.py:547-549,603`） |
+| 契约豁免集 | `present_* + eligibility_report_id=None` 的**封闭豁免集**:`failure_category=grading_infra_failure` 或 `reason_code=unsafe_artifact_permanent_rejection`（均 reward_unavailable,`fa_runtime.py:606-620`） | ③ DROP_GROUP（显式） | 两者当前都没有可信 reward;**除此之外任何 present_* 缺 EligibilityReport 引用 → ① FATAL**。若 D2 决定把测试篡改轨迹当负样本,必须先改 producer 让 clean grader 真正评分并出 EligibilityReport,不能把现在无 reward 的 unsafe 形状直接 KEEP |
 | 6 clean_grading | `not_replayed_on_clean_checkout` | ① FATAL | grader 未在 clean checkout 重放=评分链失效 |
 | 6 clean_grading | GradingReport 身份/引用矛盾 | ① FATAL | 账实矛盾 |
 | 7 policy_staleness | `staleness_facts_missing`（formal 路径） | ① FATAL | 版本事实缺失=系统损坏 |
 | 7 policy_staleness | `staleness_exceeded`（finalize-time） | ③ DROP_GROUP | 合法过期;consume-time 超龄由 buffer.get()→handler（B 语义） |
 | — | 可信 `tests_failed` / `patch_apply_failed` | 正常 reward=0 成员 | 七维全过,A4 |
 
-**剩余的唯一训练语义（codex 复核指出,归 D2/A4）**：agent executed 违规 / hygiene 实锤篡改测试——当前表默认"整组排除"。这不是纯代码不变量而是训练分布选择：若 clean grader 已完全剥离测试修改并产出可信 reward=0,也可作为"作弊无收益"的负样本训练。**Claude 建议首训保持排除**（理由:hygiene 命中轨迹的 reward 语义含糊——agent 可能既改了测试又真修了代码,clean grader 会给出 reward=1,把"篡改测试"训成中性行为;且排除更简单）,代价=该成员所在整组丢弃（预期频率低）。owner 在 D2 确认 A4 时一并裁定。
+**剩余的唯一训练语义（codex 复核指出,归 D2/A4）**：agent executed 违规 / hygiene 实锤篡改测试——表中标 pending,W1b 不固定该分支。这不是纯代码不变量而是训练分布选择：若 clean grader 已完全剥离测试修改并产出可信 reward=0,也可作为"作弊无收益"的负样本训练。**Claude 建议首训保持排除**（理由:hygiene 命中轨迹的 reward 语义含糊——agent 可能既改了测试又真修了代码,clean grader 会给出 reward=1,把"篡改测试"训成中性行为;且排除更简单）,代价=该成员所在整组丢弃（预期频率低）。owner 在 D2 确认 A4 时一并裁定。
 
 **不在本附录的**：timeout/truncation disposition（A5 归 C）;staleness 阈值数值（B）;retry/drop handler 选择（B）。
