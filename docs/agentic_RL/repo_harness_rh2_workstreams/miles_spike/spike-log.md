@@ -21,6 +21,7 @@
 | 2026-08-25 | **T0-C1 承载形态调整为 A′**（用户指示"核实成立即调整",已核实成立）：C1 不再自建 plumbing——上游 stacked PR #2595（transport,已获 code-owner approval）/#2596（bounded top-p capture+actor replay,待评审+E2E CI）已覆盖接线表 ④→⑪ 全部。integration base = pin f2b7c7929 + cherry-pick 两 PR commit + rh2 最小 downstream delta（faithful DIS custom loss/双 logprob provenance/Eligibility/ledger/CC capture/治理语义）。**不提交竞争 PR** | 用户指示 + tmp/miles迁移spike.md + 本线程核实 |
 
 | 2026-09-01 | **防御清理提案（Claude,待 owner 确认——2026-09-01 codex 复审纠正归因:owner 尚未批准此具体方案）**：删除全部授权官僚类设计——A3 窄解封机制/A7 run-scoped 准入公式/闸门代码化/授权 manifest/GATE_VERSION 仪式/FA JSON 账本;cap 机制整套删除（06 A3:含常量与解封路径,不保留"owner 直改常量"仪式）;能否训练由 owner 判断不写进代码;C3/C7 原型删除解耦为独立清理项（非 Wave1 前置）;既有证据系统冻结不扩建。**保留**=训练科学有效性校验全部（环境可信/reward 可信/进 loss 资格/逐位对齐/fail-closed/checkpoint 合同/eval 绑定）。长期原则见 06 计划 §6:审查建议再出现授权官僚类设计直接拒绝,不提请 owner | Claude 提案 + codex 复审,待 owner 确认（06 决策包 A 拍板生效） |
+| 2026-09-02 | **owner 拍板三项 + wave1_决策1 收编**：① faithful DIS CP 归约必做（CP=2 显存候选,数值临场定,新增 W9,挂 Wave2 由 Claude 定——T1）;② 七维降级原因→三终态映射表须在 D1 拍板时确认（06 附录 A 草案已备,待 owner+codex 确认）;③ 原 §2.2 配置真实性并入 W0/A8。同轮按 codex wave1 建议改 06:决策分时点 D0/D1/D2/B/C、A1 剥离运行支持面、A2 修正双排出路径作用域（filter drop 不进 handler,`fully_async_data_buffer.py:126-164` 核实）、A5 移出 D0 且删 baseline-only masked 终态、A8 条件式、W1b 三终态+两阶段 staleness+薄处置边界（现状 `generate.py:3830` degraded 一律 abort 须改）、W3a/W3b 改等 D2 不等 B、隐式 staleness=4（`generate.py:1823`）禁止继承 | owner 口头拍板（①②③）+ Claude 落稿,结构修订待 D0 一并确认 |
 
 ## Spike 记录
 
