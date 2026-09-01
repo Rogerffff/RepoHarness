@@ -214,6 +214,23 @@ def test_eligibility_ref_mismatch_rejected():
 
     with pytest.raises(TerminationFactsError, match="eligibility_report_id"):
         derive_termination_facts(_receipt(eligibility_report_id="er_other"))
+    # 快速复核补的反方向：receipt 为 None 而 outcome 有引用，同样是不对称
+    with pytest.raises(TerminationFactsError, match="eligibility_report_id"):
+        derive_termination_facts(_receipt(eligibility_report_id=None))
+    # 双方都为 None 合法（missing 类 / 豁免集合）
+    facts = derive_termination_facts(
+        _receipt(attempt_disposition="aborted", frozen_patch_digest=None,
+                 grading_report_id=None, runtime_quiescence_confirmed=False,
+                 eligibility_report_id=None,
+                 outcome=_outcome(kind="harness_crash", completion_class="missing",
+                                  failure_category="harness_crash",
+                                  task_outcome="unknown", reward_unavailable=True,
+                                  turn_weight_versions=[],
+                                  intra_execution_version_span=None,
+                                  current_version_at_finalize=None,
+                                  eligibility_report_id=None))
+    )
+    assert facts.eligibility_report_id is None
     # outcome 无引用（missing 类）而 receipt 声称有 → 同样拒绝
     with pytest.raises(TerminationFactsError, match="eligibility_report_id"):
         derive_termination_facts(

@@ -87,11 +87,13 @@ class TerminationFactsView:
                 f"physical_attempt_id={opa!r} 不一致——错 attempt 的事实拼装，"
                 "fail-closed。"
             )
-        # 4) 账实一致（二轮复核）：receipt 与 outcome 各自携带的 eligibility
-        #    引用必须指向同一份报告；outcome 无引用（missing 类）时 receipt
-        #    也不得凭空声称有。
+        # 4) 账实一致（二轮复核 + 快速复核修正为严格对称）：receipt 与 outcome
+        #    各自携带的 eligibility 引用必须**逐字相等**（含双方都为 None）。
+        #    生产链两者同源（generate.py 的 receipt 与 outcome 都取
+        #    audit.finalized.eligibility_report.report_id，或同为 None），任何
+        #    不对称都是账实矛盾——不区分方向。
         rer, oer = receipt.eligibility_report_id, outcome.eligibility_report_id
-        if (rer is not None and oer is not None and rer != oer) or (oer is None and rer is not None):
+        if rer != oer:
             raise TerminationFactsError(
                 f"{pa}: receipt.eligibility_report_id={rer!r} 与 outcome."
                 f"eligibility_report_id={oer!r} 不一致——账实矛盾，fail-closed。"
