@@ -569,7 +569,12 @@ def test_experimental_ft_trainer_locked_fail_closed(dis, monkeypatch):
     assert bool(torch.isfinite(loss))
 
 
-def test_cp_not_supported_fail_closed(dis):
+def test_cp1_shaped_batch_under_cp2_rejected_before_reducer(dis):
+    """W9 后的语义继承（原 test_cp_not_supported_fail_closed,oracle 改动按 T1 报告,
+    见 miles_spike/wave1/w9_report.md）：cp.size=2 声明下送入 CP=1 形态的 batch
+    不再有笼统的 cp_not_supported,但仍在触达 reducer 之前拒绝（缺 get_batch 的
+    本 rank token 流,无法证明 logits 布局是本 rank 分片）——绝不按 CP=1 口径静默
+    计算。CP=2 的真实切分语义见 test_w9_cp_faithful_dis.py。"""
     torch = dis.torch
     args = _mk_args()
     batch, logits = _mk_case(torch)
@@ -577,7 +582,7 @@ def test_cp_not_supported_fail_closed(dis):
     try:
         with pytest.raises(dis.module.FaithfulDisLossError) as exc:
             dis.module.faithful_dis_loss_function(args, batch, logits, _boom_reducer)
-        assert exc.value.reason_code == "cp_not_supported"
+        assert exc.value.reason_code == "cp_token_stream_missing"
     finally:
         dis.mk_state(cp_size=1)
 
