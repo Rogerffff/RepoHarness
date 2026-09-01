@@ -2,7 +2,7 @@
 
 日期：2026-09-01。状态：**草案——决策包 A 与 §2 替换条款经 codex 写码前审查、owner 拍板后，本文升为权威计划并回写 05**。输入文档（历史草案,冲突以本 06 提案处理,owner 批准前均为提案）：`miles_spike/formal_first_training_readiness_scope.md`（codex 就绪稿）、`miles_spike/first_training_readiness_alignment_claude.md`（Claude 对齐意见书）、`tmp/租卡前本地工作.md`（codex 分批建议）。进度权威沿用 `miles_spike/spike-log.md` 按批追加。
 
-分批原则（协作协议 §近期冻结,2026-09-02 按 codex wave1 建议细化为分时点）：**D0 = 现在拍板的最小集**（§1,允许 W0/W1a/W2a 开工）；**D1 在 W1b 写码前**（三终态映射表 + staleness 显式阈值 + A5 disposition,见 §4）；**D2 = W3a/W3b 开工确认点**（A4/评分正链无变化则不新增决策）；决策包 B 在 W4/W5b 开工前、决策包 C 在 W7/租卡前分别拍板。
+分批原则（协作协议 §近期冻结,2026-09-02 按 codex wave1 建议细化为分时点）：**D0 = 现在拍板的最小集**（§1,允许 W0/W1a/W2a 开工）；**D1 在 W1b 写码前**（三终态高层原则 + A2/A3/A6 + staleness 参数化接口;映射表细目由契约/代码审查收口,阈值数值归 B,A5 disposition 归 C——**2026-09-02 已拍板**,见 §4）；**D2 = W3a/W3b 开工确认点**（A4/评分正链无变化则不新增决策）；决策包 B 在 W4/W5b 开工前、决策包 C 在 W7/租卡前分别拍板。
 
 ---
 
@@ -17,7 +17,7 @@
 - **CP 语义（owner 2026-09-02 拍板）**：目标链路必须**同时支持 CP=1 与 CP>1**（CP=2 是显存不足时的现实候选）,实际 CP 数值到 GPU 实测临场决定,**不在任何本地决策包冻结**。当前 `faithful_dis_loss.py:338-342` 对 cp.size≠1 fail-closed——CP 归约实现列为必做工作项 **W9**（见 §3）。
 - **方案**：(i) 条件式 Miles-only 候选（两位审查者推荐）；(ii) 现在宣布永久迁移——预支 GPU 实验要回答的问题，否决；(iii) Slime/Miles 双线开发——重复建设，否决。**状态：建议，待 owner 决策。**
 
-### A2 组准入 = 全员合取（批准时点=D1）
+### A2 组准入 = 全员合取（D1 已批准 2026-09-02）
 
 - **要决定什么**（2026-09-02 codex 修正精确表述——eligibility class 只是输入之一）：**组内全部 member 的 final admission 结论 = KEEP_FULL（= eligibility facts ∧ termination disposition ∧ finalize-time staleness 合取,W1b 薄处置边界产出）且 consume-time staleness 通过,整组才进 conversion/loss**；任一 member 非 KEEP_FULL → 整组拒绝 + producer 补采（不拆组、不 branch 充数——与 FA-3 既有"禁止拆组"定案一致）。
 - **代码事实**（已核实）：当前 miles 链零 eligibility 消费者；tier cap 封顶不触发 remove_sample（`generate.py:3827`），offline 样本今天照常进 loss——正确性级缺口。
@@ -28,7 +28,7 @@
 - **dynamic filter `keep=False`（W1b 复合 filter 的合法排除,含 eligibility 不合格组/零方差组）→ 固定丢弃,不进 unused handler,没有 retry 选项**。持续 producer 用后续 prompt 补足 buffer——"整组拒绝 + 补采"精确含义即此,不是同 prompt 重试；
 - **`async_unused_samples_handler` 只作用于两类**：put-time ABORTED 组、get-time 超龄组。handler 可选 `retry`（同 prompt 回数据源,无有界重试,确定性失败 prompt 会反复回队）或 `drop`（miles 默认值）。**该选择归决策包 B**；建议首版也用 `drop`（明确接受超龄 prompt 同样放弃,覆盖率影响记遥测）。未来真有 transient retry 需求再设计 typed、bounded retry。
 
-### A3 S1_TIER_CAP 整体删除（批准时点=D1;codex 复审修正，取代"owner 改常量"方案）
+### A3 S1_TIER_CAP 整体删除（D1 已批准 2026-09-02;codex 复审修正，取代"owner 改常量"方案）
 
 - **要决定什么**：eligibility 只由轨迹事实决定——七维全过自然得到 online；`S1_TIER_CAP`/ceiling reason code/cap 应用分支/W1b"cap 未解"负例**全部删除**。`GATE_VERSION` 保留为被动的 eligibility 逻辑版本号（机械升版，非任何解锁）。
 - **时序窗口防护（Claude 精化）**：cap 删除与 security 维度语义切换**必须同批**（W1b）——security 维从"无 findings 即过"改为"**正向能力事实在场且无违规**"（能力事实缺失 = 非 online，fail-closed）。W3b 落地前该维度自然拦截，不存在 findings=() 假过窗口。
@@ -42,7 +42,7 @@
 - **run-fatal 面**：grader 隔离失效、hidden 资产可见、跨 execution 身份错接、execution scope 无法终止、核心 admission record（identity/patch/GradingReport/EligibilityReport 及引用）持久化失败（样本不交付 + run-fatal，但**仍** revoke session/终止 scope/清容器）；timeline/telemetry 写失败不阻止 cleanup。
 - **明确不做**：microVM、透明通用代理、LLM claim-check、完整展示型红队（原样）。
 
-### A5 timeout / truncation 决策矩阵（2026-09-02 按 wave1 建议移出 D0——**决策时点 = D1 或 C,Wave1 只实现 termination 事实**；全部为建议,状态 pending_owner_decision）
+### A5 timeout / truncation 决策矩阵（owner 2026-09-02 裁定:**决策时点 = C**,Wave1/W1b 只实现 termination 事实与 fail-fast 边界；全部为建议,状态 pending_owner_decision）
 
 **A5-a 确定性 policy horizon**（`task_token_budget_exhausted`/`max_turns_exhausted`/`context_limit_reached`；前提 = capture/quiescence/frozen snapshot/grading 完整 ⇒ `present_truncated`）：
 
@@ -59,7 +59,7 @@
 
 **批准前边界**：代码只实现 termination 事实与观测；A5 未拍板前不实现任何新的 admission/gradient mask/补采语义。
 
-### A6 成员语义（批准时点=D1;codex 复审修正——推翻 Claude 原方案，Claude 复核后同意）
+### A6 成员语义（D1 已批准 2026-09-02;codex 复审修正——推翻 Claude 原方案，Claude 复核后同意）
 
 - **要决定什么**：两类对象严格分开——
   - **可信 reward=0 成员**（present+unresolved，真实 token/mask/provenance，remove_sample=False）→ **完整参与** group/GBS/advantage/loss。`[1,0,0,0,0,0,0,0]` 中 0 成员携带负 advantage 是 GRPO 关键训练信号，不得清零；
@@ -107,7 +107,7 @@
 |---|---|---|---|
 | **W0 算法/config 核对** | E2 全部算法旋钮的 miles 消费路径逐一核对（std normalization/dynamic filter/rewards_normalization/max staleness 消费点）；**首项=A6 前提验证**（miles stock remove_sample 的组内基线+零分母行为实测）；"参数存在但当前 loss 不消费"即 fail-closed 或从配置删除——**范围限定 E2 旋钮清单，不建通用未消费配置检测器** | A | 每旋钮一个消费点证据+正反例；A6 验证结论回写决策记录 |
 | **W1a 身份铸造** | miles submit/generate 边界铸造六字段（组身份+物理 attempt 两级，对照旧 async_worker+fa_bringup 的分工）；retry 换新 physical attempt/seq、不复用 session capability | A(D0) | 缺失/复用/retry/fan-out/canonicalize round-trip 负例；**临时启动挡板以下的**真实 generate/canonicalize 生产链通过（完整入口现状被 bringup.py:705 拒绝,挡板保留至 W1b+W3a+W3b+W4） |
-| **W1b eligibility 真准入 + A3 落地**（2026-09-02 wave1 收编:三终态+两阶段 staleness+薄处置边界） | **三终态**（附录 A 映射表,D1 拍板确认）:① **结构性矛盾 → typed raise（run-fatal,不得压成 ABORTED 或 drop,须在编码为 ABORTED 之前抛出——ABORTED 在 put() 先于 filter 处理）**——slots/组形状错、fa_formal 身份缺失/跨组错配/重复/复用、fan-out 叶冒充新 member、EligibilityReport 与 trajectory/execution/environment 绑定错位、声称 online 却 remove_sample=True/零可训 provenance、reward/grading/eligibility 引用互相矛盾;② **已归因 task-local 失败 → 真实 ABORTED**（无可信完整轨迹:setup/API/tool/container 局部失败、capture 未闭合、grading infra 失败）,由 unused handler 处理;③ **完整 finalize 但不合格 → 保留真实 COMPLETED/TRUNCATED 样本 + typed admission payload,由复合 filter keep=False 整组排除**（现状 `generate.py:3830` 把 degraded 一律压成 abort 形状,须改——否则 filter 永远看不到这些组）。**薄处置边界（D1-1a）**:纯函数 `base eligibility facts ∧ termination disposition ∧ finalize-time staleness → KEEP_FULL/DROP_GROUP/FATAL`;**不设 MASK_MEMBER**;A5 未拍板时对 disposition 未显式注入即 fail-fast,本地测试对同一 present_truncated fixture 双注入 KEEP_FULL/DROP_GROUP 证明链路中立。**staleness 两阶段（D1-4）**:finalize-time 用 EligibilityReport 已有 policy_staleness 维（不忽略）,consume-time 由 buffer.get() 复查（归 W4）;两处引用**同一权威阈值配置,实现与测试要求显式传入,禁止继承隐式默认 4**（`generate.py:1823`）,数值由 B 确认后 W1b 才正式启用。**authoritative join 不变量**:filter 同步取得由 typed EligibilityReport 派生的最小 admission payload,核对 report id/facts digest/trajectory id/execution id/environment identity（载体=紧凑 metadata 或有界进程内映射,选择属 T1;不建 durable ledger,不热路径扫盘）。同批:删 S1_TIER_CAP 全套 + security 维切正向能力事实（A3,cap 删除与语义切换同批防假过窗口） | D1、W1a、W2a（task/environment identity 消费契约） | 结构类逐项 typed raise 负例;②③ 分流正反例（degraded 不再一律 abort）;disposition 未注入 fail-fast+双注入中立性;显式阈值缺失即拒;security 维缺能力事实=非 online |
+| **W1b eligibility 真准入 + A3 落地**（2026-09-02 wave1 收编:三终态+两阶段 staleness+薄处置边界） | **三终态**（附录 A 映射表,D1 拍板确认）:① **结构性矛盾 → typed raise（run-fatal,不得压成 ABORTED 或 drop,须在编码为 ABORTED 之前抛出——ABORTED 在 put() 先于 filter 处理）**——slots/组形状错、fa_formal 身份缺失/跨组错配/重复/复用、fan-out 叶冒充新 member、EligibilityReport 与 trajectory/execution/environment 绑定错位、声称 online 却 remove_sample=True/零可训 provenance、reward/grading/eligibility 引用互相矛盾;② **已归因 task-local 失败 → 真实 ABORTED**（未形成可信 present 对象:setup/API/tool/container 局部失败、capture 未闭合——**grading infra 失败不在此列**,Outcome v2 契约要求其保持 `present_* + reward_unavailable`,走 ③）,由 unused handler 处理;③ **完整 finalize 但不合格 → 保留真实 COMPLETED/TRUNCATED 样本 + typed admission payload,由复合 filter keep=False 整组排除**（现状 `generate.py:3830` 把 degraded 一律压成 abort 形状,须改——否则 filter 永远看不到这些组）。**薄处置边界（D1-1a）**:纯函数 `base eligibility facts ∧ termination disposition ∧ finalize-time staleness → KEEP_FULL/DROP_GROUP/FATAL`;**不设 MASK_MEMBER**;A5 未拍板时对 disposition 未显式注入即 fail-fast,本地测试对同一 present_truncated fixture 双注入 KEEP_FULL/DROP_GROUP 证明链路中立。**staleness 两阶段（D1-4）**:finalize-time 用 EligibilityReport 已有 policy_staleness 维（不忽略）,consume-time 由 buffer.get() 复查（归 W4）;两处引用**同一权威阈值配置,实现与测试要求显式传入,禁止继承隐式默认 4**（`generate.py:1823`）,数值由 B 确认后 W1b 才正式启用。**authoritative join 不变量**:filter 同步取得由 typed EligibilityReport 派生的最小 admission payload,核对 report id/facts digest/trajectory id/execution id/environment identity（载体=紧凑 metadata 或有界进程内映射,选择属 T1;不建 durable ledger,不热路径扫盘）。同批:删 S1_TIER_CAP 全套 + security 维切正向能力事实（A3,cap 删除与语义切换同批防假过窗口） | D1、W1a、W2a（task/environment identity 消费契约） | 结构类逐项 typed raise 负例;②③ 分流正反例（degraded 不再一律 abort）;disposition 未注入 fail-fast+双注入中立性;显式阈值缺失即拒;security 维缺能力事实=非 online |
 | **W2a runtime 通用消费链 + timeout 事实**（codex 终核:与题单/GPU 数据选择解耦） | 与数据集规模无关的消费与身份传播。**最小所有权架构（2026-09-02 codex 四点复核:rollout actor 不得直调完整 loader——`ingest_swegym_lite.py:483-488` 无条件反序列化含 ValidationOnlyBundle 的全部四面）**:trusted ingest/controller 调完整 loader 并核对四面关系,构造 **training-only typed view**——rollout actor 只拿 public task + identity/digest,host grader 只拿 private grading ref/bundle;`ValidationOnlyBundle` 不发送到 rollout actor/sandbox/模型/正式 grader（剥离后 typed view + 泄漏负测试,不建新服务/权限平台）。入口 = `load_trusted_ingest_outputs`（不收未核可信 pins 的 caller objects）;解析并核对 package↔public↔grading 的 task/repo/base/image/digest 关系（运行输入一致性检查,非授权门）;模型可见面（prompt/mount/Sample metadata/projection）只含 public projection,`PrivateGradingBundleV2` 仅 host 侧 grading 控制面消费（RolloutTaskSpec 内嵌密封 spec 还是 opaque ref = T1,须有"private 内容绝不进模型侧"正反测试）;`ValidationOnlyBundle/golden_patch` 永不进 rollout/正式 grader;`EnvironmentPackageV1.digest()` 贯穿 baseline/grading/eligibility join 或等强 typed payload（不能只在入口核一次后丢失）;synthetic fixture 测消费/错误传播/泄漏边界;A5 未批部分只落 termination 事实记录。**注**:EnvironmentPackageV1 仅身份+digest（无 prompt/test_patch/eval_cmd）,完整 v2 评分链归 T2-d/W3a——W2a 不宣称单独产出可评分链（此两条代码事实为 codex 终核补充,实现批已复核属实）。**2026-09-02 Wave1 复核判定:contract slice complete / runtime closure pending（F6）**——生产接线（trusted-prep→prepared artifact→datasource/bringup 复核→generate 消费,formal 不得回退 v1）并入 W1b 第一集成切片 | A;若数据线程在做 T2-d/e 先切文件/接口 ownership | unknown task/漏包/digest mismatch fail-closed;泄漏边界正反例;timeout 事实各一例 |
 | **T2-d / T2-e**（数据线承接,非 Wave1） | v2 grader 正链（clean checkout→agent frozen patch→**official test_patch 后写**→vendor 复核 eval_cmd→SWE-Gym parser→GradingReport;grader 永不回读 live workspace;归 T2-d/W3a 串行）与四门 runner（T2-e）——由既有数据线程继续,RH2 Wave1 不重复造 | T2-c 已完成（216 bundle 稳定,事实纠正:非"未生成"） | — |
 | **W2b 真实数据集成**（条件式,非 Wave1） | 真实资格数据进训练 runtime/GPU campaign 的集成层。**启动条件 = T2-d/e 完成且 owner 在 C 包确认 GPU spike 数据目标**（216 题是否进 GPU 未决,不预绑定） | T2-d/e ∧ C | — |
@@ -125,7 +125,7 @@
 
 ## §4 决策包 D1/D2/B/C（内容冻结,时点后置）
 
-**D1（W1b 写码前）**：① **附录 A 七维降级原因 → 三终态映射表确认**（草案已备,owner+codex 确认——它决定哪些失败走静默排出、哪些停训,属拒绝路径/样本偏置 T0）；② **staleness 只定参数化接口**（2026-09-02 codex 修正:不许 D1/B/C 三次决策——D1 只确认"显式传入、finalize-time 与 consume-time 引用同一权威配置、禁止继承隐式默认 4"的接口形状;**唯一语义与阈值数值归 B**;C 只引用不再改）；③ A5-a/A5-b disposition 可在 D1 定,也可留 C——未定时 W1b 按 fail-fast+双注入中立实现。
+**D1（W1b 写码前）——owner 2026-09-02 按 wave1_决策1 §3 拍板 D1-1~D1-5 + A2/A3/A6**：① **三终态高层原则已批**（FATAL>ABORTED>DROP;ABORTED 只来自未形成 present 对象的已归因 task-local 故障;完整合法不合格走 DROP_GROUP;身份/引用/reward/mask/logprob 账实矛盾走 FATAL;timeout/truncation 不由附录 A 决定）——附录 A 的 reason-code 细目按 codex 复核改为**两层判定**,由契约/代码审查收口（T1,不逐条消耗 owner 精力）；② **staleness 只定参数化接口**（2026-09-02 codex 修正:不许 D1/B/C 三次决策——D1 只确认"显式传入、finalize-time 与 consume-time 引用同一权威配置、禁止继承隐式默认 4"的接口形状;**唯一语义与阈值数值归 B**;C 只引用不再改）；③ A5-a/A5-b disposition **归 C**（owner 裁定）——W1b 按 fail-fast+双注入中立实现。
 
 **D2（W3a/W3b 开工确认点）**：评分正链（A4+W3a 的 clean checkout→frozen patch→official test_patch 后写→vendor eval_cmd→parser 链）与最小安全边界（A4/W3b 内容）——**若 D0 批准的 A4 无变化,D2 只是开工确认,不新增决策项**。
 
@@ -134,9 +134,9 @@
 
 ## §5 下一步
 
-1. **D0 已拍板（2026-09-02,owner 按 wave1_决策1 §8 草案批准）**：A1 + A7/§6 + A8 + W1a 身份边界 + W2a 所有权边界;A2/A3/A6 内容冻结、批准归 D1;A4 归 D2;A5/loss/pause mode/拓扑后置。W0/W1a/W2a 即时开工；
+1. **D0 已拍板（2026-09-02,owner 按 wave1_决策1 §8 草案批准）;D1 已拍板（同日,按 wave1_决策1 §3;A5 归 C）**：A1 + A7/§6 + A8 + W1a 身份边界 + W2a 所有权边界;A2/A3/A6 内容冻结、批准归 D1;A4 归 D2;A5/loss/pause mode/拓扑后置。W0/W1a/W2a 即时开工；
 2. 拍板即回写 05/04/00-status 修订注记 + E 系定案（E2/E7/E10/附录 A）迁移修订注记 + 以 append-only 注记结清 fa2a 决策包 D1b（仅限首训 profile 范围,不改写旧批准史）+ A4 注明取代旧 scope 的 CommandFilter/attempted-executed 方案（单独提交）；
-3. Wave1 三包并行开工（W0 ∥ W1a ∥ W2a;T2-d/e 由数据线并行）,照现行节奏：agent 批实现 → codex 聚焦复核 → spike-log 落账;**Wave1 期间完成 D1 拍板**（附录 A 确认 + staleness 接口确认）,随后 Wave2 分两段:**W1b 第一集成切片**（Wave1 复核裁定:F4 attempt-assignment join + F5 termination 派生 producer + F6 prepared-artifact→datasource→generate→bringup 真实链,**不启用 admission/filter**,聚焦复核通过后才写三终态/组准入）→ W1b 第二段（三终态+组准入）∥ W5a ∥ W9；
+3. Wave1 三包已完成并经 codex 两轮复核（F1~F6 全部闭合,commits 00457891/7a799a66）;D1 已拍板。**下一步 = codex 对二轮窄修复做只针对反例的快速复核 → W1b 第一集成切片开工**。Wave2 分两段:**W1b 第一集成切片**（Wave1 复核裁定:F4 attempt-assignment join + F5 termination 派生 producer + F6 prepared-artifact→datasource→generate→bringup 真实链,**不启用 admission/filter**,聚焦复核通过后才写三终态/组准入）→ W1b 第二段（三终态+组准入）∥ W5a ∥ W9；
 4. 防御清理落地项：C3/C7 governed buffer/ledger 未接线原型**可保留为 spike-only 代码或日后单独清理**——其删除不是 Wave1 前置,且不得与生产链改动混同一 commit（codex 终核）;既有 lanes/证据系统冻结不扩建。**bringup.py:705-715 的临时无条件拒绝只能在 W1b+W3a+W3b+W4 完成后删除**（2026-09-02 codex 补:consume-time staleness 与 publish→drain 顺序到 W4 才闭合）（不在 Wave1 提前删,且不得误删 fa_formal 的真实 version/barrier/security/config capability 检查——那些是本体不是仪式）。
 
 ## §6 防御清理原则（2026-09-01 Claude 提案,待 owner 确认;长期有效）
@@ -145,23 +145,49 @@
 **保留**:本次实际输入（taskset/env/grader/model/config digest 被动记录）、本次实际能力（sandbox 正向能力事实）、进入 loss 的逐层事实（身份/eligibility/分母/mask 对齐/reward 可信）、恢复代际（segment/version)。
 今后任何 W 包或审查建议中出现授权官僚类设计,直接按本条拒绝,不再提请 owner 决策。
 
-## 附录 A · 七维降级原因 → 三终态映射表（草案,D1 拍板确认;owner 2026-09-02 要求编制）
+## 附录 A · 终态判定：两层判定 + reason-code 映射（2026-09-02 按 codex 复核重写;owner 已批高层原则,细目 T1 由契约/代码审查收口）
 
-> 三终态定义见 W1b 行：① typed raise/run-fatal（系统损坏,停训）；② 真实 ABORTED（无可信完整轨迹,unused handler 处理）；③ completed-ineligible（完整 finalize,复合 filter keep=False 整组排除）。判据原则：**事实说明"系统/接线坏了" → ①；事实说明"这次执行没产出可信对象" → ②；事实完整可信、只是不合格 → ③**。现状 `generate.py:3830` 把全部 degraded 压成 abort 形状,本表即其替代语义。
+**owner 批准的高层原则（2026-09-02）**：FATAL 优先于 ABORTED，ABORTED 优先于普通 DROP；ABORTED 只能来自没有形成 present 对象的已归因 task-local 故障；完整但合法的不合格对象走 DROP_GROUP；身份、引用、reward、mask、logprob 等账实矛盾走 FATAL；timeout/truncation 不由本附录决定（A5 归 C）。
 
-| 维度 | 失败情形（reason_code 级） | 终态 | 依据 |
+初版草案（单表按七维反推）被 codex 指出把 Outcome 生命周期、Eligibility 与运行故障混在一张表里（例如从"capture 未闭合"直接反推 ABORTED）。改为**先判 Outcome 是否形成，再判 admission**：
+
+```text
+第一层：Outcome / 对象生命周期（权威 = RolloutAttemptOutcomeV2.completion_class）
+  结构、身份、引用矛盾                               → FATAL
+  已归因 task-local 故障,completion_class=missing   → ABORTED（miles unused handler,语义归 B）
+  present_complete / present_truncated              → 进入第二层
+
+第二层：Eligibility / Admission（权威 = EligibilityReport 七维 reason_code）
+  合法、完整,但不满足 online 条件                    → completed-ineligible / DROP_GROUP（filter keep=False）
+  账实矛盾、formal 必需能力缺失                       → FATAL
+  七维全过                                          → 再应用显式 termination disposition（A5,C 决定;未注入即 fail-fast）
+```
+
+**reason-code 映射细目**（code 名来自 `governance/gate.py` 实际发出的 reason_code,已核实存在）：
+
+| 维度 | reason_code / 情形 | 终态 | 依据 |
 |---|---|---|---|
-| 1 token_provenance | capture 未闭合/记录缺失（本次执行局部故障） | ② ABORTED | 无可信完整轨迹,已归因 task-local |
-| 1 token_provenance | provenance 与 execution/身份矛盾（token 声称来自别的执行） | ① fatal | 身份错接=接线 bug |
-| 2 logprob_alignment | 完整轨迹上 logprob 缺失/长度错位/NaN | ① fatal | 协议/装配 bug,不是样本属性（NaN parity 定案同向） |
-| 3 loss_mask_integrity | mask=1 覆盖非采样或禁止角色 token | ① fatal | mask 由我方装配,违规=装配 bug |
-| 4 reward_scope | scope=unknown/归属矛盾 | ① fatal | 评分归因矛盾,wave1 D1-1 明列 |
-| 5 security_and_leakage | hidden/grader 资产可见、grader 隔离破坏（环境侧失效） | ① fatal | A4 run-fatal 面 |
-| 5 security_and_leakage | agent executed 级违规/hygiene 实锤篡改（环境完好,agent 行为） | ③ ineligible | A4:成员无 online 资格,整组排除 |
-| 5 security_and_leakage | 正向能力事实缺失（W3b 未产出或采集失败） | ③ ineligible | A3 fail-closed:缺事实=非 online,非系统损坏 |
-| 6 clean_grading | grading infra 失败（评分容器/checkout 故障,无可信 reward） | ③ ineligible | **2026-09-02 codex 纠正**:公共契约要求保持 `present_* + grading_infra_failure`（⇒ reward_unavailable,`fa_runtime.py:547-549,603`）,不得改写为 ABORTED;由准入整组排除,训练结果与 drop 等价 |
-| 6 clean_grading | hygiene 拒绝（可信检出污染,评分链本身完好） | ③ ineligible | 与维度 5 agent 侧违规同类 |
-| 6 clean_grading | GradingReport 与 grading 身份/引用矛盾 | ① fatal | 归属矛盾 |
-| 7 policy_staleness | finalize-time 超阈值 | ③ ineligible | 样本完整可信只是过期;consume-time 超龄另由 buffer.get() → handler（B 语义） |
+| 1 token_provenance | `capture_record_missing` / `capture_record_not_complete` 且 outcome=missing（task-local 故障） | ② ABORTED | 未形成 present 对象 |
+| 1 token_provenance | 已声称 present/finalized 却 capture 丢失或跨 execution | ① FATAL | 账实矛盾 |
+| 2 logprob_alignment | formal miles 路径 `logprob_missing` / `logprob_partial_or_mismatch` / NaN | ① FATAL | 协议/装配 bug（NaN parity 定案同向） |
+| 3 loss_mask_integrity | 合法完整但 `no_trainable_tokens` | ③ DROP_GROUP | 不合格非损坏 |
+| 3 loss_mask_integrity | 声称 KEEP/online 却零可训 token | ① FATAL | 账实矛盾（W1b 结构层已列） |
+| 3 loss_mask_integrity | 非法 mask / `loss_denominator_mismatch` | ① FATAL | 装配 bug |
+| 4 reward_scope | `reward_scope_none` 且与 grading infra failure 一致（present_* + reward_unavailable） | ③ DROP_GROUP,按 infra 计数 | 无可信 reward,非损坏 |
+| 4 reward_scope | `reward_value_mismatch` / `reward_event_ref_missing` | ① FATAL | 账实矛盾 |
+| 4 reward_scope | formal 路径 `credit_assignment_unknown` | ① FATAL | 不是普通样本降级（**勘误**:原草案写"scope=unknown"——`reward_scope` 的缺失形态是 `none`,`unknown` 属 `credit_assignment_strategy`,`contracts/trajectory.py:512-539`） |
+| 5 security_and_leakage | sandbox 能力事实全局未接线 / 必填事实缺失（formal 路径） | ① FATAL | 系统未就绪;非 formal 路径记非 online（A3 口径） |
+| 5 security_and_leakage | 单个 sandbox 在 rollout 前探针失败并安全销毁 | ② ABORTED | task-local |
+| 5 security_and_leakage | hidden/grader 确实可见、隔离未生效 | ① FATAL | 环境失效（A4 run-fatal 面） |
+| 5 security_and_leakage | `public_projection_marker_hit` | ③ DROP_GROUP 默认;证实为环境泄漏则 ① FATAL | |
+| 5/6 | `executed` 级 agent 违规 / `patch_test_tampering` / `patch_forbidden_contamination`（clean grader 可信） | ③ DROP_GROUP（首训默认,见下"剩余训练语义"） | A4 |
+| 6 clean_grading | `failed_to_grade`（单次 grading infra/parser 失败） | 保持 `present_*`,③ DROP_GROUP,进 infra/no-progress 计数 | **不得改写为 ABORTED**（`fa_runtime.py:547-549,603`） |
+| 6 clean_grading | `not_replayed_on_clean_checkout` | ① FATAL | grader 未在 clean checkout 重放=评分链失效 |
+| 6 clean_grading | GradingReport 身份/引用矛盾 | ① FATAL | 账实矛盾 |
+| 7 policy_staleness | `staleness_facts_missing`（formal 路径） | ① FATAL | 版本事实缺失=系统损坏 |
+| 7 policy_staleness | `staleness_exceeded`（finalize-time） | ③ DROP_GROUP | 合法过期;consume-time 超龄由 buffer.get()→handler（B 语义） |
+| — | 可信 `tests_failed` / `patch_apply_failed` | 正常 reward=0 成员 | 七维全过,A4 |
 
-**存疑项（codex 复核重点）**：维度 2/3 一律 ① 是否过严（也可论证为 ② task-local——我方立场:完整轨迹上出现即 bug,静默排出会掩盖系统性错位）。维度 6 infra 失败原草案归 ②,经 codex 以 `fa_runtime.py` 契约事实纠正为 ③（已核实,见表内）。普通 `tests_failed`/可信 `patch_apply_failed` **不在本表**——它们是 reward=0 负样本,七维全过,正常进组（A4）。
+**剩余的唯一训练语义（codex 复核指出,归 D2/A4）**：agent executed 违规 / hygiene 实锤篡改测试——当前表默认"整组排除"。这不是纯代码不变量而是训练分布选择：若 clean grader 已完全剥离测试修改并产出可信 reward=0,也可作为"作弊无收益"的负样本训练。**Claude 建议首训保持排除**（理由:hygiene 命中轨迹的 reward 语义含糊——agent 可能既改了测试又真修了代码,clean grader 会给出 reward=1,把"篡改测试"训成中性行为;且排除更简单）,代价=该成员所在整组丢弃（预期频率低）。owner 在 D2 确认 A4 时一并裁定。
+
+**不在本附录的**：timeout/truncation disposition（A5 归 C）;staleness 阈值数值（B）;retry/drop handler 选择（B）。
