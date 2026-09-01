@@ -1,5 +1,7 @@
 # 04 — S2 执行计划：SWE-Safety 加固 + 数据 ingestion（草案，G 系列定案后去掉草案标注）
 
+> **2026-09-02 修订注记（06 D0 拍板）**：`S1_TIER_CAP` 解除机制、红队/闸门类退出判据按 06 §1 A3/§6 防御清理**改判**——cap 整套删除（W1b 同批切换 security 维为正向能力事实）,不再存在"解除 cap"这一动作;`rh2_s2_signal_trusted` 等闸门代码化形态废止,安全最小集缩为 06 A4/W3b 范围（评分正链+sandbox 正向能力事实,删 CommandFilter/attempted-executed 平台）。数据线 T2-d/T2-e 继续推进（06 §3）,S2-6 及 G 系列按就绪稿 §7 与 06 的注记了结。本文保留为历史计划。
+
 输入：S1 全部产物（闸门 `rh2_s1_closed_loop=true` 已确认）、设计文档 2 §5.1/§5.3/§5.4 定案、data_freeze v0 交接面（strip_spec / labels 216 存活 / freeze_manifest / image runbook）、`s1/s2_blockers.md`（导出器阻塞项）、fully_async 升级设计 I-1。退出闸门：`rh2_s2_signal_trusted = true`。
 
 S2 的一句话目标：**把 S1 闭环从"链路正确"加固到"训练信号可信"**——退出判据 = 红队环境包全部被正确拦截/降级 + `S1_TIER_CAP` 解除（gate 可发放 `online_policy_loss_eligible`）+ bring-up 数据 ingestion 完成（F3 收尾）。

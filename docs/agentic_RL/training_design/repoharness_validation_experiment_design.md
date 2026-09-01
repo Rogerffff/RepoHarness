@@ -1,5 +1,7 @@
 # RepoHarness 验证实验设计（决策底稿）
 
+> **2026-09-02 miles 迁移修订注记（06 计划 §2 条款 9,T1 实施）**：训练后端载体由 slime 自建 FA 线改为 miles 候选链（`06-first-training-local-execution-plan.md` 为当前执行权威）。逐条影响：**E2** 的 clip 0.2/0.28 条款改为条件式配置真实性规则（06 A8——faithful DIS profile 下 `--eps-clip*` 无消费者不得填,loss 终选归 C 包）;**E7/E10** 的 slime 绑定条款（形态载体、pin 对象、top-p 可用条件、回退梯）按 `miles_spike/first_training_readiness_alignment_claude.md` §2.2 清单改写为 miles 载体——top-p 可用条件 = miles router + spans 引擎（`--use-miles-router`,SGLANG_COMMIT=4e230c3d）;**附录 A** 的 slime 组件对照随 06 §2 条款 1~7 替换。`--max-weight-staleness` 在线语义与阈值归 06 决策包 B。E 系其余实验语义（GRPO n=8、评测口径、D3/D5 数据决策）不变,D3 闭环档建议见对齐意见书 §2.1（待 owner）。
+
 本文是 `repo_harness_final_review_before_implementation.md` §5.1-D5 与 §6.3 定案的独立实验设计文档。当前处于**决策底稿阶段**：先列出全部待决事项与依赖关系，用技术报告调查校准候选项，再逐项定案。定稿后本文回答一个问题：**用什么最小可信实验证明 RepoHarness 这套环境与训练治理设施有效**。
 
 与其他文档的关系：

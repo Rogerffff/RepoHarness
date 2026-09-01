@@ -1,5 +1,7 @@
 # rh2 项目进度总览（状态快照：2026-07-12）
 
+> **2026-09-02 注记**：训练后端已由 slime 自建 FA 线转为 **miles 唯一候选链**（Migration-Go 待 GPU 资格作业）;当前权威执行计划 = `06-first-training-local-execution-plan.md`（D0 已拍板,Wave1 = W0∥W1a∥W2a 开工）,进度权威 = `miles_spike/spike-log.md`。本文其余内容为 2026-07-12 快照,阅读时以上述两文为准。
+
 > **本文档的用途**：给项目所有者和任何新接手的 agent 一份"当前我们在哪、已经完成什么、证据在哪、接下来做什么"的单一入口。每个结论都标注了证据文件路径，可以直接点开核对。
 >
 > **维护约定**：每个阶段收口时更新本文（与 `AGENTS.md` 的阶段状态区同步）；两者不一致时，以 `git log --oneline` 和各阶段 acceptance summary（JSON 账本）为准。

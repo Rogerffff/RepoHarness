@@ -530,3 +530,8 @@ run_halt 归因。
 回复：`D1=A/B`（A = D1a 现在批 + D1b 延后）、`D2=A/B/C`、`D3=A/B`、
 `D4=A/备选`（或"X 但改 Y"）。拍板后：05 计划按本文回写（引用式）→
 codex 复审计划 → F2-0 起批。
+
+---
+
+> **2026-09-02 D1b 结清注记（append-only,仅限首训 profile 范围,不改写上文批准史）**：D1b 延后清单中的 timeout/truncation 训练语义,由 06 计划 A5 决策矩阵承接（A5-a 二选项/A5-b 二选项——baseline-only masked 与 policy-owned 计时选项已从选择面删除,决策时点 = D1 或 C）;masked/reward-only member 的 GBS/分母问题随之收敛为"组内全员 KEEP_FULL 才进 loss"（06 A2/A6,批准时点 D1）,首训 profile 不存在 masked member。episode deadline 起点统一（P1-5）继续有效,数值归 06 C 包。
+

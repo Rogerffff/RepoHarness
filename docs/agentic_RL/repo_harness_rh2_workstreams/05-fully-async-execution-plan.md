@@ -1,5 +1,7 @@
 # 05 — FA 独立工作流执行计划：version-aware fully async 训练链
 
+> **2026-09-02 权威转移注记（D0 拍板）**：本计划的剩余未完成面（FA-1 剩余/FA-2/FA-2B/FA-3 接线/F2-4~F2-6/FA-5）**由 `06-first-training-local-execution-plan.md` §2 九条替换条款逐条取代**,不再按本文推进——miles 承担通用异步层,W1b 取代 assembler/合格组队列,W5b 取代 F2-4 恢复语义,GPU 资格作业取代 FA-5 短租。已完成部分（FA-0/FA-1 已交付组件、F2-1~F2-3、faithful DIS 对拍）保留为冻结回退面与证据。退出闸门 `rh2_fully_async_training_path_verified` 的代码化形态随 06 §6 防御清理废止（既有账本冻结为历史记录）;就绪与否由 owner 依 06 §3 完成清单直接判断。**D-FA-3 proxy 内部重生成不再是正式面**（06 §2 条款 1:已归因 task-local → ABORTED+handler,不可归因 → run-fatal）;D-FA-6 compaction 硬事实要求继续有效,载体迁移至 miles 路径（06 C 包工具面决策项）。本文其余文字保留为历史设计记录,不再更新。
+
 日期：2026-07-12（状态更新 2026-08-25）。状态：**执行中**——FA-0、FA-1 已完成；FA-2A 已推进至 F2-3 关闭（F2-2b B1~B5 与 F2-3 已完成，下一步是 B6 真实组合验证，随后继续 F2-4~F2-6）；FA-3 离线/FA-4 对拍完成（接线未做）；闸门 `rh2_fully_async_training_path_verified` 仍 false。
 
 输入：P3 收口结论（`preflight/preflight_report.md`：wait_time_ratio=0.82、尾闲 26~28% > 25% 阈值）、FA 设计讨论稿（`fully_async_rollout_pipeline_design_discussion.md`，codex，2026-07-12——**机制分析与对象模型的权威出处，本计划不复述其论证**）、fully_async 升级设计（`preflight/slime_fully_async_upgrade_design.md`：四缺口 + slime 机制知识）、原 S2-0b 硬化规格（问题 A~E，自 `04-s2-execution-plan.md` 迁入并废止原节）、算法分析（`../training_design/repoharness_sao_dis_grpo_ppo_analysis.md`：GRPO 保持首训、faithful DIS 为正确性组件）、orchestrator 审查（2026-07-12：proxy 边界、eval 路径、契约测试先行、reward 广播语义核实）。
