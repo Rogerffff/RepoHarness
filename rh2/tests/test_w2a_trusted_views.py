@@ -282,3 +282,81 @@ def test_from_repo_root_real_assets_end_to_end():
     assert gv.grading.test_patch
     with pytest.raises(TrustedViewError, match="digest 不符"):
         controller.grading_view(tids[0], environment_package_digest="sha256:" + "9" * 64)
+
+
+# ---------------------------------------------------------------------------
+# Wave1 复核 F3/F4：构造后污染与 Controller 配对旁路（对抗性反例）
+# ---------------------------------------------------------------------------
+
+
+def test_f4_direct_constructor_cross_key_rejected(controller):
+    """F4 codex 复现：map key 是任务 A、value 是任务 B —— 直接构造也必须拒绝。"""
+
+    tids = controller.task_ids()
+    a, b = tids[0], tids[1]
+    rv_b = controller.rollout_view(b)
+    gv_b = controller.grading_view(b, environment_package_digest=rv_b.environment_package_digest)
+    with pytest.raises(TrustedViewError, match="task_id"):
+        TrustedTaskController(rollout_views={a: rv_b}, grading_views={a: gv_b})
+
+
+def test_f4_key_set_mismatch_rejected(controller):
+    tids = controller.task_ids()
+    a, b = tids[0], tids[1]
+    rv_a = controller.rollout_view(a)
+    gv_b = controller.grading_view(
+        b, environment_package_digest=controller.rollout_view(b).environment_package_digest
+    )
+    with pytest.raises(TrustedViewError, match="集合不一致"):
+        TrustedTaskController(rollout_views={a: rv_a}, grading_views={b: gv_b})
+
+
+def test_f4_cross_pairing_identity_mismatch_rejected(controller):
+    """两侧 key 都对但把 A 的 rollout 视图和 B 的 grading 视图硬配对——身份/
+    digest 逐任务比对必须拒绝（key 单独一致不足以证明配对正确）。"""
+
+    tids = controller.task_ids()
+    a, b = tids[0], tids[1]
+    rv_a, rv_b = controller.rollout_view(a), controller.rollout_view(b)
+    gv_a = controller.grading_view(a, environment_package_digest=rv_a.environment_package_digest)
+    gv_b = controller.grading_view(b, environment_package_digest=rv_b.environment_package_digest)
+    forged_gv = gv_b.model_copy(update={"task_id": a, "instance_id": gv_a.instance_id})
+    with pytest.raises(TrustedViewError):
+        TrustedTaskController(rollout_views={a: rv_a, b: rv_b},
+                              grading_views={a: forged_gv, b: gv_b})
+
+
+def test_f3_consumer_mutation_is_isolated(controller):
+    """F3：取数口返回深拷贝隔离副本——一个消费者篡改嵌套 list 不污染
+    controller 权威份与后续消费者。"""
+
+    dirty = controller.rollout_view(TID)
+    dirty.public.allowed_tools.append("golden_patch")  # codex 复现载荷
+    fresh = controller.rollout_view(TID)
+    assert "golden_patch" not in fresh.public.allowed_tools
+    dirty_gv = controller.grading_view(TID, environment_package_digest=fresh.environment_package_digest)
+    dirty_gv.grading.fail_to_pass.append("forged::test")
+    fresh_gv = controller.grading_view(TID, environment_package_digest=fresh.environment_package_digest)
+    assert "forged::test" not in fresh_gv.grading.fail_to_pass
+
+
+def test_f3_dirty_rollout_copy_fails_revalidation(controller):
+    """F3：被污染的副本在消费时刻 revalidated() 被泄漏扫描拒绝；干净副本
+    round-trip 等值通过。"""
+
+    clean = controller.rollout_view(TID)
+    assert clean.revalidated() == clean
+    dirty = controller.rollout_view(TID)
+    dirty.public.allowed_tools.append("golden_patch")
+    with pytest.raises(ValueError, match="泄漏扫描|golden"):
+        dirty.revalidated()
+
+
+def test_f3_dirty_grading_copy_fails_revalidation(controller):
+    epd = controller.rollout_view(TID).environment_package_digest
+    clean = controller.grading_view(TID, environment_package_digest=epd)
+    assert clean.revalidated() == clean
+    dirty = controller.grading_view(TID, environment_package_digest=epd)
+    dirty.grading.fail_to_pass.append("forged::test")
+    with pytest.raises(ValueError, match="digest 不符"):
+        dirty.revalidated()

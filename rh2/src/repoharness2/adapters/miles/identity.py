@@ -159,25 +159,54 @@ def mint_attempt_identity(sample: Any, *, n_samples_per_prompt: Any) -> dict[str
                 "（该字段跨 retry 恒定，差异即结构性污染）。",
             )
 
-    prev_attempt_id = meta.get(ATTEMPT_ID_KEY)
-    prev_seq = meta.get(ATTEMPT_SEQ_KEY)
-    # attempt id 与 seq 同现同缺（对照 contracts/fa_runtime.py 的成对约束）：
-    # 只剩一半说明上一轮身份记录被部分改写，不可作为续铸依据。
-    if (prev_attempt_id is None) != (prev_seq is None):
+    # 六个 rh2 身份键是 system-reserved（Wave1 复核 F1）：miles 数据集会把
+    # 输入 JSON 的 metadata 原样放进 Sample（data.py 直传 + data_source
+    # deepcopy），所以"metadata 里已有 attempt 历史"不能直接当真。判定规则：
+    # - 六键**全缺** = fresh 派发，seq 从 1 起铸；
+    # - 六键**全在** = 上一轮本模块铸造的续铸载体（reset_for_retry 保留
+    #   metadata），但必须通过下面的历史真实性校验才允许续铸；
+    # - **部分在** = 保留键被外部输入/损坏路径污染，结构性 fail-closed
+    #   （不得实现成 sample drop——静默丢弃会掩盖数据污染）。
+    present_keys = [k for k in IDENTITY_KEYS if k in meta]
+    if present_keys and len(present_keys) != len(IDENTITY_KEYS):
         raise MilesIdentityError(
-            "attempt_history_corrupt",
-            f"metadata 的 attempt 身份对半缺失（{ATTEMPT_ID_KEY}="
-            f"{prev_attempt_id!r} / {ATTEMPT_SEQ_KEY}={prev_seq!r}）——"
-            "上一 attempt 记录损坏，fail-closed。",
+            "reserved_identity_keys_polluted",
+            f"metadata 只带了部分 rh2 保留身份键 {present_keys}（六键必须全缺"
+            "=fresh 或全在=真实 retry 历史）——输入数据污染了 system-reserved "
+            "键，fail-closed。",
         )
-    if prev_seq is None:
+
+    if not present_keys:
         seq = 1
     else:
+        # 续铸路径的历史真实性校验：稳定四键与推导一致（上面已查）；
+        # attempt 两键必须像"本 execution 上一次真实铸造"——旧 id 是
+        # 非空字符串、前缀 = 本 execution、#pN 与旧 seq 一致、uuid 后缀
+        # 形制完整。伪造外部历史（foreign execution / 편造 seq）在此拒绝。
+        # 残余面（如实登记）：与推导完全自洽的整套六键理论上仍可由输入
+        # JSON 伪造——正式链的 fresh prompt 在 trusted-prep 边界另行拒绝
+        # 任何保留键（W1b 第一集成切片落地）。
+        prev_seq = meta[ATTEMPT_SEQ_KEY]
         if isinstance(prev_seq, bool) or not isinstance(prev_seq, int) or prev_seq < 1:
             raise MilesIdentityError(
                 "attempt_history_corrupt",
                 f"metadata[{ATTEMPT_SEQ_KEY!r}]={prev_seq!r} 不是 >=1 的 int——"
                 "无法在其上单调续铸，fail-closed。",
+            )
+        prev_attempt_id = meta[ATTEMPT_ID_KEY]
+        expected_prefix = f"{derived_stable[EXECUTION_ID_KEY]}#p{prev_seq}-"
+        if (
+            not isinstance(prev_attempt_id, str)
+            or not prev_attempt_id.startswith(expected_prefix)
+            or len(prev_attempt_id) != len(expected_prefix) + 8
+            or any(c not in "0123456789abcdef" for c in prev_attempt_id[len(expected_prefix):])
+        ):
+            raise MilesIdentityError(
+                "attempt_history_forged",
+                f"metadata[{ATTEMPT_ID_KEY!r}]={prev_attempt_id!r} 不符合本 "
+                f"execution 的铸造形制 {expected_prefix!r}+uuid8——外部输入"
+                "伪造/篡改 attempt 历史（foreign execution、#pN 与 seq 不符、"
+                "空/异型 id 均在此拒绝），fail-closed。",
             )
         seq = prev_seq + 1
 

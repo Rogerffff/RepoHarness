@@ -151,22 +151,78 @@ def test_mint_conflicting_stable_identity_fail_closed(world):
         idm.mint_attempt_identity(s2, n_samples_per_prompt=1)
 
 
+def _full_history(idm, *, attempt_id: object, seq: object) -> dict:
+    """构造一套"六键齐全"的 retry 历史种子（稳定四键与推导一致，attempt
+    两键由参数指定）——用于把校验推进到历史真实性层。"""
+
+    return {
+        idm.GROUP_ID_KEY: "miles_g0",
+        idm.GROUP_INDEX_KEY: 0,
+        idm.EXECUTION_ID_KEY: "miles_g0_m0",
+        idm.MEMBER_SLOT_KEY: 0,
+        idm.ATTEMPT_ID_KEY: attempt_id,
+        idm.ATTEMPT_SEQ_KEY: seq,
+    }
+
+
 @pytest.mark.parametrize(
-    "seed",
+    "seed_keys",
     [
-        {"rh2_physical_attempt_seq": 1},  # 只有 seq 没有 attempt id
-        {"rh2_physical_attempt_id": "miles_g0_m0#p1-deadbeef"},  # 只有 id 没有 seq
-        {"rh2_physical_attempt_id": "x", "rh2_physical_attempt_seq": "1"},  # seq 非 int
-        {"rh2_physical_attempt_id": "x", "rh2_physical_attempt_seq": 0},  # seq < 1
-        {"rh2_physical_attempt_id": "x", "rh2_physical_attempt_seq": True},  # bool 污染
+        {"rh2_physical_attempt_seq": 1},  # 只有 seq
+        {"rh2_physical_attempt_id": "miles_g0_m0#p1-deadbeef"},  # 只有 id
+        # F1 codex 复现原型：外部输入只带 attempt 两键伪造历史（稳定四键缺）
+        {"rh2_physical_attempt_id": "belongs-to-another-execution",
+         "rh2_physical_attempt_seq": 41},
+        {"rh2_prompt_group_id": "miles_g0"},  # 只带一个稳定键（值哪怕正确）
     ],
 )
-def test_mint_attempt_history_corrupt_fail_closed(world, seed):
+def test_mint_reserved_keys_polluted_fail_closed(world, seed_keys):
+    """F1：六个身份键是 system-reserved——部分在场即输入污染，结构性拒绝
+    （不是 drop）。fresh 样本预置任何保留键子集都到不了续铸。"""
+
     idm = _idm()
     s = world.mk_miles_input(index=0, group_index=0)
-    s.metadata.update(seed)
-    with pytest.raises(idm.MilesIdentityError, match="attempt_history_corrupt"):
+    s.metadata.update(seed_keys)
+    with pytest.raises(idm.MilesIdentityError, match="reserved_identity_keys_polluted"):
         idm.mint_attempt_identity(s, n_samples_per_prompt=1)
+
+
+@pytest.mark.parametrize(
+    "attempt_id, seq, reason",
+    [
+        ("x", "1", "attempt_history_corrupt"),  # seq 非 int
+        ("x", 0, "attempt_history_corrupt"),  # seq < 1
+        ("x", True, "attempt_history_corrupt"),  # bool 污染
+        # F1 历史真实性（六键齐全也不许伪造）：
+        ("belongs-to-another-execution#p41-deadbeef", 41, "attempt_history_forged"),  # foreign execution
+        ("miles_g0_m0#p40-deadbeef", 41, "attempt_history_forged"),  # #pN 与 seq 不符
+        ("", 41, "attempt_history_forged"),  # 空 id
+        (41, 41, "attempt_history_forged"),  # 非字符串 id
+        ("miles_g0_m0#p41-ZZZZZZZZ", 41, "attempt_history_forged"),  # 后缀非 hex
+        ("miles_g0_m0#p41-dead", 41, "attempt_history_forged"),  # 后缀长度不对
+    ],
+)
+def test_mint_attempt_history_corrupt_or_forged_fail_closed(world, attempt_id, seq, reason):
+    idm = _idm()
+    s = world.mk_miles_input(index=0, group_index=0)
+    s.metadata.update(_full_history(idm, attempt_id=attempt_id, seq=seq))
+    with pytest.raises(idm.MilesIdentityError, match=reason):
+        idm.mint_attempt_identity(s, n_samples_per_prompt=1)
+
+
+def test_mint_forged_seq41_rejected_even_with_consistent_shape(world):
+    """F1 验收：codex 复现的"fresh 样本伪称第 41 次重试"在两个层面都被拒——
+    两键裸伪造 = 污染；补齐六键但 id 非本链铸造形制 = forged。合法续铸
+    （真实 mint 产物）不受影响。"""
+
+    idm = _idm()
+    s = world.mk_miles_input(index=0, group_index=0)
+    first = idm.mint_attempt_identity(s, n_samples_per_prompt=1)
+    assert first[idm.ATTEMPT_SEQ_KEY] == 1
+    # 真实历史续铸仍然成立（metadata 里是上一次 mint 的产物）
+    second = idm.mint_attempt_identity(s, n_samples_per_prompt=1)
+    assert second[idm.ATTEMPT_SEQ_KEY] == 2
+    assert second[idm.ATTEMPT_ID_KEY].startswith("miles_g0_m0#p2-")
 
 
 # ---------------------------------------------------------------------------

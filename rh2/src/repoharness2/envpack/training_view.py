@@ -116,6 +116,16 @@ class RolloutTaskView(StrictModel):
             raise ValueError(f"{self.instance_id}: rollout 视图泄漏扫描命中 {len(hits)} 处：{detail}")
         return self
 
+    def revalidated(self) -> "RolloutTaskView":
+        """消费时刻重验（Wave1 复核 F3）：`frozen=True` 只挡字段重赋值，
+        嵌套 list（如 `public.allowed_tools`）构造后仍可变——validator 只在
+        构造时跑一次，"通过泄漏扫描"因此不是终身属性。**真正序列化进
+        prompt/actor payload 或进入评分 join 之前必须调用本方法**：round-trip
+        重跑全部 validator（身份一致性 + 泄漏扫描），构造后被污染的副本在
+        此被拒。"""
+
+        return type(self).model_validate(self.model_dump(mode="python"))
+
 
 class HostGradingView(StrictModel):
     """仅 host 侧 grading 控制面消费的评分视图（**永不**发往 rollout actor/
@@ -154,6 +164,13 @@ class HostGradingView(StrictModel):
         if self.grading_bundle_digest != self.grading.digest():
             raise ValueError("grading_bundle_digest 与内嵌 grading bundle 重算 digest 不符")
         return self
+
+    def revalidated(self) -> "HostGradingView":
+        """消费时刻重验（Wave1 复核 F3，与 RolloutTaskView.revalidated 同义务）：
+        评分材料在真正进入 grader/构造 grading spec 之前必须过这里——嵌套
+        list（如 fail_to_pass）被构造后篡改时，digest 重算比对在此拒绝。"""
+
+        return type(self).model_validate(self.model_dump(mode="python"))
 
 
 # ---------------------------------------------------------------------------
@@ -195,8 +212,34 @@ class TrustedTaskController:
 
     def __init__(self, *, rollout_views: dict[str, RolloutTaskView],
                  grading_views: dict[str, HostGradingView]) -> None:
-        # 内部构造器：只应由下面两个 classmethod 调用（Python 不做硬拦截，
-        # 但绕过 classmethod 就绕过了四面关系检查，审查按此约定把关）。
+        # Wave1 复核 F4：构造器不再只靠注释约束——直接构造仍然要过两侧
+        # 配对校验（key 集合一致、map key == view.task_id、两侧身份与
+        # environment digest 逐任务一致），"key 是任务 A、value 是任务 B"
+        # 的旁路在此 fail-closed。注意这只挡结构性错配；把 reward 绑定到
+        # host 原始分派的 attempt（authoritative join）归 W1b 第一集成切片。
+        if set(rollout_views) != set(grading_views):
+            only_r = sorted(set(rollout_views) - set(grading_views))[:3]
+            only_g = sorted(set(grading_views) - set(rollout_views))[:3]
+            raise TrustedViewError(
+                f"controller 两侧 task 集合不一致（rollout 独有 {only_r}，"
+                f"grading 独有 {only_g}）——拒绝构造"
+            )
+        for key, rv in rollout_views.items():
+            gv = grading_views[key]
+            if rv.task_id != key or gv.task_id != key:
+                raise TrustedViewError(
+                    f"map key {key!r} 与视图 task_id（rollout={rv.task_id!r} / "
+                    f"grading={gv.task_id!r}）不一致——拒绝构造"
+                )
+            if (rv.source, rv.instance_id) != (gv.source, gv.instance_id):
+                raise TrustedViewError(
+                    f"{key}: 两侧身份不一致（rollout={rv.source}::{rv.instance_id} / "
+                    f"grading={gv.source}::{gv.instance_id}）——拒绝构造"
+                )
+            if rv.environment_package_digest != gv.environment_package_digest:
+                raise TrustedViewError(
+                    f"{key}: 两侧 environment_package_digest 不一致——拒绝构造"
+                )
         self._rollout_views = dict(rollout_views)
         self._grading_views = dict(grading_views)
 
@@ -290,11 +333,15 @@ class TrustedTaskController:
         return tuple(sorted(self._rollout_views))
 
     def rollout_view(self, task_id: str) -> RolloutTaskView:
-        """rollout 侧唯一取数口。unknown task → fail-closed。"""
+        """rollout 侧唯一取数口。unknown task → fail-closed。
+
+        返回**深拷贝隔离副本**（Wave1 复核 F3）：一个消费者对副本嵌套
+        容器的修改不会污染 controller 权威份或其它消费者；副本自身的
+        篡改由消费时刻的 `revalidated()` 拒绝。"""
         view = self._rollout_views.get(task_id)
         if view is None:
             raise TrustedViewError(f"unknown task_id（rollout 视图不存在）: {task_id!r}")
-        return view
+        return view.model_copy(deep=True)
 
     def grading_view(self, task_id: str, *,
                      environment_package_digest: str) -> HostGradingView:
@@ -313,7 +360,8 @@ class TrustedTaskController:
                 f"{environment_package_digest[:23]}…，期望 "
                 f"{view.environment_package_digest[:23]}…）——拒绝评分 join"
             )
-        return view
+        # 深拷贝隔离（F3）：评分消费方拿副本，进入 grader 前过 revalidated()。
+        return view.model_copy(deep=True)
 
     def verify_environment_package_digest(self, task_id: str, digest: str) -> None:
         """给 baseline/eligibility 等 join 消费方的锚核对口（不返回内容）。"""

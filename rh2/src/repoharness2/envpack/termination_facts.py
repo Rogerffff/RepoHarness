@@ -1,131 +1,171 @@
-"""W2a 中立 termination 事实记录（A5 未拍板前的唯一实现面）。
+"""W2a termination 事实的只读派生视图（Wave1 复核 F5 后的形态）。
 
-06 计划 A5 的"批准前边界"（2026-09-02 D0 拍板原文）：**代码只实现
-termination 事实与观测；A5 未拍板前不实现任何新的 admission / gradient
-mask / 补采语义**。本模块就是那条边界的落点：
+历史：本模块初版是独立的 `TerminationFactsV1` 记录——自带 task/digest 锚与
+一组可由任意调用方填写的布尔事实。Wave1 复核（F5）指出两个结构问题并经
+核实成立：
 
-- 只记**事实**（发生了什么、何时、哪些收尾条件成立），不做 disposition
-  （该不该训练/该不该补采/记不记负样本——那些是 D1/C 的决策，未注入前
-  下游按 W1b 的 fail-fast 纪律处理）。
-- 计时是**粗粒度单区间**（资源占用起点 → 终止时刻，A5-c"episode 计时起点
-  改为资源占用"），刻意不建计时归因系统——A5-b 复核已裁定：粗粒度计时
-  无法区分"590s 排队 + 10s 行动"与"600s 真实行动"，不为无实验需求的
-  选项建设归因基建。
-- `termination_kind` 复用 contracts/fa_runtime.py 的五族封闭枚举（D1a
-  已批语义，本模块不新增枚举值）；"触发者是 policy-owned horizon 还是
-  hard wall"以布尔事实冗余存储，validator 钉死与 kind 五族划分一致——
-  矛盾事实（如 hard_wall_timeout 却声称 policy horizon 触发）不可表示。
-- `environment_package_digest` + `task_id` 作 join 锚随记录走（与
-  training_view.py 的 digest 贯穿同一纪律），后续 eligibility/baseline
-  join 用它对账，不靠隐式上下文。
+1. **缺 attempt 身份**：只带 task_id + environment_package_digest，同题 n=8
+   的成员、同 member 的多次 retry 共享这两个值——W1b 无法把终止事实唯一
+   归属到一次 physical execution；
+2. **重复事实 owner**：capture/quiescence/patch/grading 完成状态在既有权威
+   对象里已经存在（`RolloutAttemptOutcomeV2` 带 termination_kind/completion
+   事实层，`FinalizationReceiptV1` 带 physical_attempt_id、frozen_patch/
+   grading/eligibility 引用、quiescence 与时间事实）——再开一个可独立填写
+   的记录 = 第二事实 owner，调用方可以构造互相矛盾的布尔值。
+
+修复采用 codex 建议的首选方案：**删除独立事实 owner**。本模块现在只提供
+`derive_termination_facts(receipt)`——从既有 `FinalizationReceiptV1`（内嵌
+`RolloutAttemptOutcomeV2`）派生一个**只读**视图，所有"事实"都是对权威对象
+的派生属性，没有任何可独立注入的存储字段。A5 的"批准前边界"不变：这里
+仍然只有事实，没有 disposition/admission/reward/mask 语义。
+
+刻意不提供的东西（与 F5 修复清单一致）：
+
+- **capture_closed**：capture 闭合事实的 owner 是 eligibility 事实层
+  （EligibilityFacts.token_provenance 维）与 execution audit——不在这里
+  复制第三份；W1b 从 EligibilityReport 读。
+- **粗粒度时长**：receipt 的 `started_epoch_seconds`/`finalized_at_utc` 是
+  wall-clock，只用于关联排序；时长正确性由 attempt 级 monotonic timeline
+  （execution audit）承担，本视图不给出任何 duration 结论。
+- **environment_package_digest**：receipt 不携带它；join 消费方拿本视图的
+  task_id 走 `TrustedTaskController.verify_environment_package_digest`
+  对锚（digest 贯穿纪律不变，只是不在这里复制）。
+
+生产 producer（谁在何时调 derive）归 W1b 第一集成切片；本轮只收窄接口。
 """
 
 from __future__ import annotations
 
-from typing import Literal
+from datetime import datetime
 
-from pydantic import Field, model_validator
-
-from repoharness2.contracts._base import (
-    NonEmptyStr,
-    Sha256Digest,
-    StrictModel,
-)
 from repoharness2.contracts.fa_runtime import (
     TERMINATION_KINDS_POLICY_HORIZON,
     TERMINATION_KINDS_WATCHDOG,
+    RolloutAttemptOutcomeV2,
     TerminationKind,
 )
+from repoharness2.contracts.finalization import FinalizationReceiptV1
 
 
-class TerminationFactsV1(StrictModel):
-    """一次 rollout 尝试的终止事实（中立、record-only）。
+class TerminationFactsError(ValueError):
+    """派生输入不满足唯一归属约束（缺 attempt 身份 / 缺 outcome 权威 /
+    receipt 与 outcome 身份错接）时 fail-closed。"""
 
-    字段全部是"已发生的可观测事实"：布尔收尾条件 + 粗粒度计时区间 +
-    终止 trigger。**没有** disposition / admission / reward / mask 字段，
-    也没有任何计算处置的方法——A5 拍板后处置逻辑在别的模块消费本记录。
+
+class TerminationFactsView:
+    """一次 physical attempt 的终止事实只读视图（无独立存储，全部派生）。
+
+    不可变性：`__slots__` 只存对 receipt 的引用，无公开 setter；底层
+    `FinalizationReceiptV1`/`RolloutAttemptOutcomeV2` 本身是 frozen
+    StrictModel。构造只经 `derive_termination_facts`。
     """
 
-    schema_id: Literal["rh2.termination_facts.v1"] = Field(
-        default="rh2.termination_facts.v1", description="schema 判别字段。"
-    )
-    task_id: NonEmptyStr = Field(
-        description='source-qualified 任务主键（"<source>::<instance_id>"，join 锚之一）。'
-    )
-    environment_package_digest: Sha256Digest = Field(
-        description="EnvironmentPackageV1.digest()——与 typed view 同一贯穿锚。"
-    )
-    termination_kind: TerminationKind = Field(
-        description="终止 trigger（contracts/fa_runtime.py 五族封闭枚举，不新增值）。"
-    )
-    resource_occupancy_started_unix_s: float = Field(
-        ge=0.0,
-        description="粗粒度计时区间起点：episode 开始占用资源的 unix 秒"
-        "（A5-c：计时起点 = 资源占用，不是首 token）。",
-    )
-    terminated_unix_s: float = Field(
-        ge=0.0,
-        description="粗粒度计时区间终点：终止时刻的 unix 秒。只此一个区间，"
-        "不做排队/推理/沙箱的分段归因。",
-    )
-    capture_closed: bool = Field(
-        description="轨迹 capture 是否闭合（终止后无未落账的模型调用/工具事件）。"
-    )
-    execution_scope_quiescent: bool = Field(
-        description="execution scope 是否 quiescent（沙箱内无残留写手，屏障已过）。"
-    )
-    canonical_frozen_patch_formed: bool = Field(
-        description="canonical frozen patch 是否已形成（评分消费的不可变 delta）。"
-    )
-    fresh_grading_complete: bool = Field(
-        description="fresh grading 是否完整跑完（评分产物齐全；不含结果好坏判断）。"
-    )
-    triggered_by_policy_horizon: bool = Field(
-        description="触发者是否 policy-owned horizon（token/turn/context 三种确定性 "
-        "horizon）。冗余布尔事实，validator 钉死 == kind ∈ policy horizon 族。"
-    )
-    triggered_by_hard_wall: bool = Field(
-        description="触发者是否 hard wall 看门狗（墙钟超时，可能混入 infra 抖动，"
-        "事实完整只证可评分不证归因于 policy）。validator 钉死 == kind ∈ 看门狗族。"
-    )
+    __slots__ = ("_receipt",)
 
-    @model_validator(mode="after")
-    def _check_facts_consistency(self) -> "TerminationFactsV1":
-        if self.terminated_unix_s < self.resource_occupancy_started_unix_s:
-            raise ValueError(
-                f"计时区间倒挂：terminated={self.terminated_unix_s} < "
-                f"started={self.resource_occupancy_started_unix_s}"
+    def __init__(self, receipt: FinalizationReceiptV1) -> None:
+        # 唯一归属校验（F5 验收面）：
+        # 1) receipt 必须带 physical_attempt_id（终止事实必须锚到一次物理执行）；
+        # 2) receipt 必须内嵌 outcome_v2（termination_kind 的唯一权威）；
+        # 3) 两者的 attempt 身份必须逐字一致（错 attempt 的 receipt/outcome
+        #    拼装在此拒绝，不产出可用视图）。
+        pa = receipt.physical_attempt_id
+        if not isinstance(pa, str) or not pa:
+            raise TerminationFactsError(
+                "receipt 缺 physical_attempt_id——终止事实必须唯一归属到一次"
+                "物理执行，fail-closed。"
             )
-        expect_policy = self.termination_kind in TERMINATION_KINDS_POLICY_HORIZON
-        if self.triggered_by_policy_horizon != expect_policy:
-            raise ValueError(
-                f"triggered_by_policy_horizon={self.triggered_by_policy_horizon} 与 "
-                f"termination_kind={self.termination_kind}（policy horizon 族成员判定 "
-                f"{expect_policy}）矛盾——矛盾事实不可表示"
+        outcome = receipt.outcome_v2
+        if outcome is None:
+            raise TerminationFactsError(
+                f"{pa}: receipt 未内嵌 outcome_v2——termination_kind 的权威"
+                "缺失，不得由调用方另行填写，fail-closed。"
             )
-        expect_wall = self.termination_kind in TERMINATION_KINDS_WATCHDOG
-        if self.triggered_by_hard_wall != expect_wall:
-            raise ValueError(
-                f"triggered_by_hard_wall={self.triggered_by_hard_wall} 与 "
-                f"termination_kind={self.termination_kind}（看门狗族成员判定 "
-                f"{expect_wall}）矛盾——矛盾事实不可表示"
+        opa = outcome.identity.physical_attempt_id
+        if opa != pa:
+            raise TerminationFactsError(
+                f"receipt.physical_attempt_id={pa!r} 与 outcome.identity."
+                f"physical_attempt_id={opa!r} 不一致——错 attempt 的事实拼装，"
+                "fail-closed。"
             )
-        return self
+        self._receipt = receipt
+
+    # ------------------------------------------------------------- 身份锚
+    @property
+    def physical_attempt_id(self) -> str:
+        return self._receipt.physical_attempt_id  # type: ignore[return-value]
 
     @property
-    def coarse_duration_s(self) -> float:
-        """粗粒度占用时长（秒）。只是区间差，不是归因结论。"""
-        return self.terminated_unix_s - self.resource_occupancy_started_unix_s
+    def task_id(self) -> str:
+        return self._receipt.task_id
+
+    @property
+    def trajectory_id(self) -> str:
+        return self._receipt.trajectory_id
+
+    @property
+    def outcome(self) -> RolloutAttemptOutcomeV2:
+        """底层权威对象（frozen）；引用其 outcome_id/eligibility_report_id
+        等即是 F5 要求的 exact ref。"""
+        return self._receipt.outcome_v2  # type: ignore[return-value]
+
+    @property
+    def receipt_id(self) -> str:
+        return self._receipt.receipt_id
+
+    # --------------------------------------------------------- 终止事实（派生）
+    @property
+    def termination_kind(self) -> TerminationKind:
+        return self.outcome.termination_kind
+
+    @property
+    def triggered_by_policy_horizon(self) -> bool:
+        return self.outcome.termination_kind in TERMINATION_KINDS_POLICY_HORIZON
+
+    @property
+    def triggered_by_hard_wall(self) -> bool:
+        return self.outcome.termination_kind in TERMINATION_KINDS_WATCHDOG
+
+    @property
+    def execution_scope_quiescent(self) -> bool:
+        return self._receipt.runtime_quiescence_confirmed
+
+    @property
+    def canonical_frozen_patch_formed(self) -> bool:
+        return self._receipt.frozen_patch_digest is not None
+
+    @property
+    def fresh_grading_complete(self) -> bool:
+        return self._receipt.grading_report_id is not None
+
+    @property
+    def grading_report_id(self) -> str | None:
+        return self._receipt.grading_report_id
+
+    @property
+    def eligibility_report_id(self) -> str | None:
+        return self._receipt.eligibility_report_id
+
+    # ------------------------------------------------- wall-clock（仅关联用）
+    @property
+    def started_epoch_seconds(self) -> float:
+        """wall-clock 起点，只用于跨记录关联/排序——不承担时长正确性
+        （monotonic 时长归 execution audit timeline）。"""
+        return self._receipt.started_epoch_seconds
+
+    @property
+    def finalized_at_utc(self) -> datetime:
+        """wall-clock 终点，同上只用于关联。"""
+        return self._receipt.finalized_at_utc
 
 
-# 中立性导入断言：字段名里不许出现处置类词根。谁往这个记录里加
-# disposition/admission/reward/mask/train 字段，import 即炸——那属于
-# A5/D1 拍板后的**另一个**模块，不属于事实记录。
-_DISPOSITION_TOKENS = ("disposition", "admission", "reward", "mask", "train", "penal", "sample")
-_violations = [
-    name for name in TerminationFactsV1.model_fields
-    if any(tok in name.lower() for tok in _DISPOSITION_TOKENS)
+def derive_termination_facts(receipt: FinalizationReceiptV1) -> TerminationFactsView:
+    """唯一构造入口：从既有 finalization 权威派生只读终止事实视图。"""
+
+    return TerminationFactsView(receipt)
+
+
+__all__ = [
+    "TerminationFactsError",
+    "TerminationFactsView",
+    "derive_termination_facts",
 ]
-assert not _violations, f"TerminationFactsV1 出现处置类字段名（违反 A5 批准前边界）：{_violations}"
-
-__all__ = ["TerminationFactsV1"]
