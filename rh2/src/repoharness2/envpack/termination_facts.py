@@ -87,6 +87,15 @@ class TerminationFactsView:
                 f"physical_attempt_id={opa!r} 不一致——错 attempt 的事实拼装，"
                 "fail-closed。"
             )
+        # 4) 账实一致（二轮复核）：receipt 与 outcome 各自携带的 eligibility
+        #    引用必须指向同一份报告；outcome 无引用（missing 类）时 receipt
+        #    也不得凭空声称有。
+        rer, oer = receipt.eligibility_report_id, outcome.eligibility_report_id
+        if (rer is not None and oer is not None and rer != oer) or (oer is None and rer is not None):
+            raise TerminationFactsError(
+                f"{pa}: receipt.eligibility_report_id={rer!r} 与 outcome."
+                f"eligibility_report_id={oer!r} 不一致——账实矛盾，fail-closed。"
+            )
         self._receipt = receipt
 
     # ------------------------------------------------------------- 身份锚
@@ -104,9 +113,14 @@ class TerminationFactsView:
 
     @property
     def outcome(self) -> RolloutAttemptOutcomeV2:
-        """底层权威对象（frozen）；引用其 outcome_id/eligibility_report_id
-        等即是 F5 要求的 exact ref。"""
-        return self._receipt.outcome_v2  # type: ignore[return-value]
+        """底层权威对象的**深拷贝**（二轮复核：frozen 只挡字段重赋值，直接
+        交出共享对象会让调用方改其嵌套 list 反向污染 receipt）；引用其
+        outcome_id/eligibility_report_id 等即是 F5 要求的 exact ref。"""
+        return self._receipt.outcome_v2.model_copy(deep=True)  # type: ignore[union-attr]
+
+    @property
+    def outcome_id(self) -> str:
+        return self._receipt.outcome_v2.outcome_id  # type: ignore[union-attr]
 
     @property
     def receipt_id(self) -> str:
@@ -115,15 +129,15 @@ class TerminationFactsView:
     # --------------------------------------------------------- 终止事实（派生）
     @property
     def termination_kind(self) -> TerminationKind:
-        return self.outcome.termination_kind
+        return self._receipt.outcome_v2.termination_kind  # type: ignore[union-attr]
 
     @property
     def triggered_by_policy_horizon(self) -> bool:
-        return self.outcome.termination_kind in TERMINATION_KINDS_POLICY_HORIZON
+        return self.termination_kind in TERMINATION_KINDS_POLICY_HORIZON
 
     @property
     def triggered_by_hard_wall(self) -> bool:
-        return self.outcome.termination_kind in TERMINATION_KINDS_WATCHDOG
+        return self.termination_kind in TERMINATION_KINDS_WATCHDOG
 
     @property
     def execution_scope_quiescent(self) -> bool:

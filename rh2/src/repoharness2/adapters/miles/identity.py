@@ -31,10 +31,13 @@ submit 钩子（`fully_async_rollout._submit_one_group` 是 miles 只读代码�
   `slot = index - group_index * n`，越界（不在 0..n-1）即 fail-closed
   拒绝——自定义数据源若打破该算术，这里当场炸而不是静默产出错组身份；
 - retry 语义（`Sample.reset_for_retry()` 已核实保留 identity 字段与
-  metadata）：group/member 四字段跨 retry 不变；physical attempt 两字段
-  每次派发**必换新**——seq 从 metadata 里上一次的值 +1（metadata 随
-  retry 保留，正是天然的 per-member 计数载体），attempt id 带 uuid 后缀
-  保证跨进程也不撞。session capability 由 generate.py 按 attempt id 每次
+  metadata，并把 status 置为 ABORTED；fresh 样本 status=PENDING）：group/
+  member 四字段跨 retry 不变；physical attempt 两字段每次派发**必换新**——
+  seq 从 metadata 里上一次的值 +1（metadata 随 retry 保留，正是天然的
+  per-member 计数载体），attempt id 带 uuid 后缀保证跨进程也不撞。
+  **fresh（PENDING）样本不得携带任何保留身份键**（输入 JSON 伪造历史在此
+  fail-closed）；只有 ABORTED 回收样本才允许在完整、形制正确的旧身份上
+  续铸。session capability 由 generate.py 按 attempt id 每次
   重新铸造（128-bit 随机），attempt 换新即 capability 不复用；
 - fan-out 语义：一次 generate 的多个输出叶只是**同一 member 同一
   attempt** 的分支——六字段整组相同地盖到每片叶上；叶上若已带不同值
@@ -42,7 +45,7 @@ submit 钩子（`fully_async_rollout._submit_one_group` 是 miles 只读代码�
 
 本模块只做中立身份事实（D0-2）：不夹带任何 admission/loss/timeout/
 staleness 决定；eligibility 消费归 W1b。零 miles/slime import（鸭子类型：
-只要求样本有 group_index/index/metadata 三个属性），CPU 任意环境可导。
+只要求样本有 group_index/index/metadata/status 四个属性），CPU 任意环境可导。
 """
 
 from __future__ import annotations
@@ -90,6 +93,21 @@ def _require_index_fact(value: Any, *, name: str) -> int:
             "样本没走正常派发链，fail-closed 拒绝铸造。",
         )
     return value
+
+
+def _dispatch_status(sample: Any) -> str:
+    """读样本派发状态并归一成小写字符串（鸭子类型：miles `Sample.Status`
+    枚举取 `.value`；裸字符串直接用）。缺失即视为非法派发形态。"""
+
+    raw = getattr(sample, "status", None)
+    value = getattr(raw, "value", raw)
+    if not isinstance(value, str) or not value:
+        raise MilesIdentityError(
+            "identity_facts_missing",
+            f"样本没有可读的派发状态（status={raw!r}）——不是 miles 派发链的"
+            "样本形态，fail-closed 拒绝铸造。",
+        )
+    return value.lower()
 
 
 def mint_attempt_identity(sample: Any, *, n_samples_per_prompt: Any) -> dict[str, Any]:
@@ -159,33 +177,43 @@ def mint_attempt_identity(sample: Any, *, n_samples_per_prompt: Any) -> dict[str
                 "（该字段跨 retry 恒定，差异即结构性污染）。",
             )
 
-    # 六个 rh2 身份键是 system-reserved（Wave1 复核 F1）：miles 数据集会把
-    # 输入 JSON 的 metadata 原样放进 Sample（data.py 直传 + data_source
-    # deepcopy），所以"metadata 里已有 attempt 历史"不能直接当真。判定规则：
-    # - 六键**全缺** = fresh 派发，seq 从 1 起铸；
-    # - 六键**全在** = 上一轮本模块铸造的续铸载体（reset_for_retry 保留
-    #   metadata），但必须通过下面的历史真实性校验才允许续铸；
-    # - **部分在** = 保留键被外部输入/损坏路径污染，结构性 fail-closed
-    #   （不得实现成 sample drop——静默丢弃会掩盖数据污染）。
+    # 六个 rh2 身份键是 system-reserved（Wave1 复核 F1，二轮复核闭合）：
+    # miles 数据集会把输入 JSON 的 metadata 原样放进 Sample（data.py 直传 +
+    # data_source deepcopy），所以"metadata 里已有 attempt 历史"不能直接当真。
+    # 判定用 miles 自己的可信派发状态（types.py 已核实：fresh 样本
+    # `status=PENDING` 默认值；`reset_for_retry()` 把 status 置为 ABORTED 且
+    # 保留 metadata）：
+    # - PENDING（fresh 派发）：**任一**保留键在场 = 输入污染 → 结构性
+    #   fail-closed（哪怕六键齐全且与推导自洽——fresh 输入没有资格携带
+    #   历史）；seq 从 1 起铸；
+    # - ABORTED（unused handler retry 回收）：六键必须齐全且通过历史真实性
+    #   校验才允许续铸；
+    # - 其它状态：不是本铸造边界认识的派发形态 → 拒绝（自定义数据源要接
+    #   入必须显式对齐这两种状态，不猜）。
+    # 不得实现成 sample drop——静默丢弃会掩盖数据污染。
+    status = _dispatch_status(sample)
     present_keys = [k for k in IDENTITY_KEYS if k in meta]
-    if present_keys and len(present_keys) != len(IDENTITY_KEYS):
-        raise MilesIdentityError(
-            "reserved_identity_keys_polluted",
-            f"metadata 只带了部分 rh2 保留身份键 {present_keys}（六键必须全缺"
-            "=fresh 或全在=真实 retry 历史）——输入数据污染了 system-reserved "
-            "键，fail-closed。",
-        )
-
-    if not present_keys:
+    if status == "pending":
+        if present_keys:
+            raise MilesIdentityError(
+                "reserved_identity_keys_polluted",
+                f"fresh 派发（status=PENDING）的样本 metadata 带 rh2 保留身份键 "
+                f"{present_keys}——输入数据不得携带系统身份历史（含完整自洽的"
+                "六键伪造），fail-closed。",
+            )
         seq = 1
-    else:
+    elif status == "aborted":
+        if len(present_keys) != len(IDENTITY_KEYS):
+            raise MilesIdentityError(
+                "reserved_identity_keys_polluted",
+                f"retry 回收（status=ABORTED）的样本 metadata 保留键不齐全 "
+                f"{present_keys}——真实 retry 历史必须六键齐全（reset_for_retry "
+                "保留 metadata），残缺即污染/损坏，fail-closed。",
+            )
         # 续铸路径的历史真实性校验：稳定四键与推导一致（上面已查）；
         # attempt 两键必须像"本 execution 上一次真实铸造"——旧 id 是
         # 非空字符串、前缀 = 本 execution、#pN 与旧 seq 一致、uuid 后缀
-        # 形制完整。伪造外部历史（foreign execution / 편造 seq）在此拒绝。
-        # 残余面（如实登记）：与推导完全自洽的整套六键理论上仍可由输入
-        # JSON 伪造——正式链的 fresh prompt 在 trusted-prep 边界另行拒绝
-        # 任何保留键（W1b 第一集成切片落地）。
+        # 形制完整。伪造外部历史（foreign execution / 编造 seq）在此拒绝。
         prev_seq = meta[ATTEMPT_SEQ_KEY]
         if isinstance(prev_seq, bool) or not isinstance(prev_seq, int) or prev_seq < 1:
             raise MilesIdentityError(
@@ -209,6 +237,13 @@ def mint_attempt_identity(sample: Any, *, n_samples_per_prompt: Any) -> dict[str
                 "空/异型 id 均在此拒绝），fail-closed。",
             )
         seq = prev_seq + 1
+    else:
+        raise MilesIdentityError(
+            "dispatch_status_unexpected",
+            f"样本派发状态 {status!r} 不是 pending（fresh）/aborted（retry 回收）"
+            "——铸造边界只认识 miles 这两种派发形态，其它状态不猜身份历史，"
+            "fail-closed。",
+        )
 
     minted = dict(derived_stable)
     minted[ATTEMPT_SEQ_KEY] = seq

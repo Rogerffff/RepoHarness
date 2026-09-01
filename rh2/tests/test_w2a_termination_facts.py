@@ -125,6 +125,7 @@ def test_derive_incomplete_closure_facts_are_false_not_error():
 
     facts = derive_termination_facts(
         _receipt(frozen_patch_digest=None, grading_report_id=None,
+                 eligibility_report_id=None,  # outcome missing 类无 eligibility 引用，receipt 亦不得声称
                  runtime_quiescence_confirmed=False,
                  attempt_disposition="aborted",
                  outcome=_outcome(kind="harness_crash", completion_class="missing",
@@ -194,3 +195,37 @@ def test_view_is_read_only():
     with pytest.raises(AttributeError):
         facts.injected = True  # type: ignore[attr-defined]
     assert isinstance(facts, TerminationFactsView)
+
+
+def test_outcome_property_is_isolated_copy():
+    """二轮复核：`outcome` 交出深拷贝——改副本的嵌套 list 不得反向污染 receipt。"""
+
+    receipt = _receipt()
+    facts = derive_termination_facts(receipt)
+    copy = facts.outcome
+    copy.turn_weight_versions.append("999")
+    assert receipt.outcome_v2.turn_weight_versions == ["1"]
+    assert facts.outcome.turn_weight_versions == ["1"]
+    assert facts.outcome_id == "o1"
+
+
+def test_eligibility_ref_mismatch_rejected():
+    """二轮复核：receipt 与 outcome 各自携带的 eligibility 引用必须一致。"""
+
+    with pytest.raises(TerminationFactsError, match="eligibility_report_id"):
+        derive_termination_facts(_receipt(eligibility_report_id="er_other"))
+    # outcome 无引用（missing 类）而 receipt 声称有 → 同样拒绝
+    with pytest.raises(TerminationFactsError, match="eligibility_report_id"):
+        derive_termination_facts(
+            _receipt(attempt_disposition="aborted", frozen_patch_digest=None,
+                     grading_report_id=None, runtime_quiescence_confirmed=False,
+                     eligibility_report_id="er_1",
+                     outcome=_outcome(kind="harness_crash", completion_class="missing",
+                                      failure_category="harness_crash",
+                                      task_outcome="unknown", reward_unavailable=True,
+                                      turn_weight_versions=[],
+                                      intra_execution_version_span=None,
+                                      current_version_at_finalize=None,
+                                      eligibility_report_id=None))
+        )
+

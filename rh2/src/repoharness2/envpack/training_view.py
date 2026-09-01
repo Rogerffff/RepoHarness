@@ -97,6 +97,11 @@ class RolloutTaskView(StrictModel):
         description="EnvironmentPackageV1.digest()——贯穿 rollout→grading→"
         "baseline/eligibility join 的一致性锚，不只在入口核一次。"
     )
+    public_bundle_digest: Sha256Digest = Field(
+        description="PublicTaskBundle.digest()——来源是 EnvironmentPackageV1 记录的"
+        "绑定值；validator 重算比对。二轮复核补：只靠泄漏 marker 扫描发现不了"
+        "合法内容漂移（如追加一个普通工具），内容摘要才能钉住模型可见面。"
+    )
     public: PublicTaskBundle = Field(description="模型可见面全量（题面/镜像/工具/公开提示）。")
 
     @model_validator(mode="after")
@@ -107,6 +112,11 @@ class RolloutTaskView(StrictModel):
             raise ValueError(
                 f"视图 instance_id={self.instance_id} 与 public bundle "
                 f"{self.public.instance_id} 不一致"
+            )
+        if self.public_bundle_digest != self.public.digest():
+            raise ValueError(
+                f"{self.instance_id}: public_bundle_digest 与 public bundle 重算 "
+                "digest 不符——模型可见面内容漂移（构造后被改/与包记录不一致）"
             )
         # 视图级泄漏扫描（validator 内建）：即使 public bundle 单独扫过，
         # 视图整树再扫一次——防止将来加字段时绕开 bundle 级防线。
@@ -121,8 +131,8 @@ class RolloutTaskView(StrictModel):
         嵌套 list（如 `public.allowed_tools`）构造后仍可变——validator 只在
         构造时跑一次，"通过泄漏扫描"因此不是终身属性。**真正序列化进
         prompt/actor payload 或进入评分 join 之前必须调用本方法**：round-trip
-        重跑全部 validator（身份一致性 + 泄漏扫描），构造后被污染的副本在
-        此被拒。"""
+        重跑全部 validator（身份一致性 + 泄漏扫描 + public 内容 digest 重算），
+        构造后被污染的副本——无论是塞 marker 还是合法内容漂移——在此被拒。"""
 
         return type(self).model_validate(self.model_dump(mode="python"))
 
@@ -192,6 +202,10 @@ assert not set(PrivateGradingBundleV2.model_fields) & GOLDEN_FIELD_NAMES, (
 )
 
 
+# 构造令牌：只有本模块的 `_build` 能拿到；raw-map 直接构造被拒（二轮复核 F4）。
+_CONSTRUCTION_TOKEN = object()
+
+
 class TrustedTaskController:
     """host 侧 trusted controller：调完整 loader → 四面关系检查 → 剥离视图。
 
@@ -207,16 +221,28 @@ class TrustedTaskController:
     正式入口 = `from_repo_root`（走 `load_trusted_ingest_outputs` 全链验证 +
     controller 内逐包 strict 重验）。合成夹具单测用显式命名的
     `build_for_tests_from_ingest_result`（非权威关系检查，产物不进正式链，
-    与 `write_ingest_outputs_for_tests` 同一命名纪律）。
+    与 `write_ingest_outputs_for_tests` 同一命名纪律）。**raw-map 直接构造
+    没有入口**（构造令牌），入库对象经 `revalidated()` 重验并与调用方引用
+    隔离；取数口返回深拷贝副本，消费方在真正序列化/评分前再 `revalidated()`。
     """
 
     def __init__(self, *, rollout_views: dict[str, RolloutTaskView],
-                 grading_views: dict[str, HostGradingView]) -> None:
-        # Wave1 复核 F4：构造器不再只靠注释约束——直接构造仍然要过两侧
-        # 配对校验（key 集合一致、map key == view.task_id、两侧身份与
-        # environment digest 逐任务一致），"key 是任务 A、value 是任务 B"
-        # 的旁路在此 fail-closed。注意这只挡结构性错配；把 reward 绑定到
-        # host 原始分派的 attempt（authoritative join）归 W1b 第一集成切片。
+                 grading_views: dict[str, HostGradingView],
+                 _token: object = None) -> None:
+        # Wave1 二轮复核 F4：raw-map 构造改为内部入口——只有 `_build`
+        # 持有 `_CONSTRUCTION_TOKEN`。正式代码只许 `from_repo_root`，测试只
+        # 许 `build_for_tests_from_ingest_result`；两条路径都经过四面关系
+        # 检查（package 记录把内容 digest 绑到身份上），"外层身份 A、内部
+        # 评分材料 B"的重新封装对象没有入口。
+        if _token is not _CONSTRUCTION_TOKEN:
+            raise TrustedViewError(
+                "TrustedTaskController 不接受直接构造——正式代码用 from_repo_root，"
+                "测试用 build_for_tests_from_ingest_result（四面关系检查是入口的一部分）"
+            )
+        # 第二道防线（F4 一轮修复保留）：两侧配对校验——key 集合一致、
+        # map key == view.task_id、两侧身份与 environment digest 逐任务一致。
+        # 这只挡结构性错配；把 reward 绑定到 host 原始分派的 attempt
+        # （authoritative join）归 W1b 第一集成切片。
         if set(rollout_views) != set(grading_views):
             only_r = sorted(set(rollout_views) - set(grading_views))[:3]
             only_g = sorted(set(grading_views) - set(rollout_views))[:3]
@@ -240,8 +266,11 @@ class TrustedTaskController:
                 raise TrustedViewError(
                     f"{key}: 两侧 environment_package_digest 不一致——拒绝构造"
                 )
-        self._rollout_views = dict(rollout_views)
-        self._grading_views = dict(grading_views)
+        # 入库前重验 + 隔离（二轮复核 F4）：`revalidated()` 走 model_validate
+        # 产出全新对象树——调用方保留的任何嵌套引用都不再指向库内对象，
+        # 且入库对象在此刻通过了全部 validator。
+        self._rollout_views = {k: v.revalidated() for k, v in rollout_views.items()}
+        self._grading_views = {k: v.revalidated() for k, v in grading_views.items()}
 
     # ------------------------------------------------------------------ 构建
 
@@ -312,6 +341,7 @@ class TrustedTaskController:
                 source=pkg.source,
                 instance_id=pkg.instance_id,
                 environment_package_digest=epd,
+                public_bundle_digest=pkg.public_bundle_digest,  # 包记录的绑定值，validator 重算比对
                 public=public,
             )
             grading_views[pkg.task_id] = HostGradingView(
@@ -324,7 +354,8 @@ class TrustedTaskController:
             )
             # ValidationOnlyBundle 到此为止：参与了关系检查，然后被丢弃。
             del validation
-        return cls(rollout_views=rollout_views, grading_views=grading_views)
+        return cls(rollout_views=rollout_views, grading_views=grading_views,
+                   _token=_CONSTRUCTION_TOKEN)
 
     # ------------------------------------------------------------------ 消费
 

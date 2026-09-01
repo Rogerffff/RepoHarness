@@ -205,21 +205,56 @@ def test_mint_reserved_keys_polluted_fail_closed(world, seed_keys):
 def test_mint_attempt_history_corrupt_or_forged_fail_closed(world, attempt_id, seq, reason):
     idm = _idm()
     s = world.mk_miles_input(index=0, group_index=0)
+    s.reset_for_retry()  # 真实回收形态（status=ABORTED），才进入历史真实性校验层
     s.metadata.update(_full_history(idm, attempt_id=attempt_id, seq=seq))
     with pytest.raises(idm.MilesIdentityError, match=reason):
+        idm.mint_attempt_identity(s, n_samples_per_prompt=1)
+
+
+def test_mint_fresh_pending_with_fully_consistent_history_rejected(world):
+    """F1 二轮闭合（codex 残余面）：fresh（PENDING）样本即便携带**完整且与推导
+    自洽**的六键、id 形制也正确，也不得续铸成第 42 次——fresh 输入没有资格
+    携带系统身份历史。区分依据 = miles 可信派发状态，不是 metadata 内容。"""
+
+    idm = _idm()
+    s = world.mk_miles_input(index=0, group_index=0)
+    s.metadata.update(_full_history(idm, attempt_id="miles_g0_m0#p41-deadbeef", seq=41))
+    assert s.status.value == "pending"
+    with pytest.raises(idm.MilesIdentityError, match="reserved_identity_keys_polluted"):
+        idm.mint_attempt_identity(s, n_samples_per_prompt=1)
+
+
+def test_mint_aborted_without_history_rejected(world):
+    """回收形态（ABORTED）却没有任何身份历史 = 不是本链铸造过的样本，拒绝。"""
+
+    idm = _idm()
+    s = world.mk_miles_input(index=0, group_index=0)
+    s.reset_for_retry()
+    with pytest.raises(idm.MilesIdentityError, match="reserved_identity_keys_polluted"):
+        idm.mint_attempt_identity(s, n_samples_per_prompt=1)
+
+
+def test_mint_unexpected_dispatch_status_rejected(world):
+    """铸造边界只认识 PENDING（fresh）/ABORTED（retry 回收）两种派发形态。"""
+
+    idm = _idm()
+    s = world.mk_miles_input(index=0, group_index=0)
+    s.status = world.MS.Status.COMPLETED
+    with pytest.raises(idm.MilesIdentityError, match="dispatch_status_unexpected"):
         idm.mint_attempt_identity(s, n_samples_per_prompt=1)
 
 
 def test_mint_forged_seq41_rejected_even_with_consistent_shape(world):
     """F1 验收：codex 复现的"fresh 样本伪称第 41 次重试"在两个层面都被拒——
     两键裸伪造 = 污染；补齐六键但 id 非本链铸造形制 = forged。合法续铸
-    （真实 mint 产物）不受影响。"""
+    （真实 reset_for_retry 后的 mint 产物）不受影响。"""
 
     idm = _idm()
     s = world.mk_miles_input(index=0, group_index=0)
     first = idm.mint_attempt_identity(s, n_samples_per_prompt=1)
     assert first[idm.ATTEMPT_SEQ_KEY] == 1
-    # 真实历史续铸仍然成立（metadata 里是上一次 mint 的产物）
+    # 真实历史续铸仍然成立（metadata 里是上一次 mint 的产物 + 回收状态）
+    s.reset_for_retry()
     second = idm.mint_attempt_identity(s, n_samples_per_prompt=1)
     assert second[idm.ATTEMPT_SEQ_KEY] == 2
     assert second[idm.ATTEMPT_ID_KEY].startswith("miles_g0_m0#p2-")

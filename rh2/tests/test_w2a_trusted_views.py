@@ -155,6 +155,7 @@ def test_rollout_view_leak_scan_rejects_marker_content():
             source="swe_gym_lite",
             instance_id="getmoto__moto-1",
             environment_package_digest=D,
+            public_bundle_digest=public.digest(),
             public=public,
         )
 
@@ -289,18 +290,43 @@ def test_from_repo_root_real_assets_end_to_end():
 # ---------------------------------------------------------------------------
 
 
-def test_f4_direct_constructor_cross_key_rejected(controller):
-    """F4 codex 复现：map key 是任务 A、value 是任务 B —— 直接构造也必须拒绝。"""
+def test_f4_raw_constructor_has_no_entry(controller):
+    """F4 二轮：raw-map 直接构造没有入口（构造令牌）——正式代码只许
+    from_repo_root，测试只许 build_for_tests_from_ingest_result。codex 复现的
+    "外层身份 A、内部评分材料 B"重新封装对象因此无处进入。"""
+
+    tids = controller.task_ids()
+    a, b = tids[0], tids[1]
+    rv_a = controller.rollout_view(a)
+    gv_a = controller.grading_view(a, environment_package_digest=rv_a.environment_package_digest)
+    gv_b = controller.grading_view(b, environment_package_digest=controller.rollout_view(b).environment_package_digest)
+    rewrapped = gv_a.model_copy(update={"grading": gv_b.grading,
+                                        "grading_bundle_digest": gv_b.grading.digest()})
+    with pytest.raises(TrustedViewError, match="不接受直接构造"):
+        TrustedTaskController(rollout_views={a: rv_a}, grading_views={a: rewrapped})
+    with pytest.raises(TrustedViewError, match="不接受直接构造"):
+        TrustedTaskController(rollout_views={a: rv_a}, grading_views={a: gv_a})
+
+
+def _raw(rollout_views, grading_views):
+    """测试专用：用模块内部令牌绕过入口门，只为验证第二道防线（配对校验）。"""
+    from repoharness2.envpack import training_view as tv
+    return TrustedTaskController(rollout_views=rollout_views, grading_views=grading_views,
+                                 _token=tv._CONSTRUCTION_TOKEN)
+
+
+def test_f4_second_line_cross_key_rejected(controller):
+    """F4 codex 复现：map key 是任务 A、value 是任务 B —— 即便持有令牌也拒绝。"""
 
     tids = controller.task_ids()
     a, b = tids[0], tids[1]
     rv_b = controller.rollout_view(b)
     gv_b = controller.grading_view(b, environment_package_digest=rv_b.environment_package_digest)
     with pytest.raises(TrustedViewError, match="task_id"):
-        TrustedTaskController(rollout_views={a: rv_b}, grading_views={a: gv_b})
+        _raw({a: rv_b}, {a: gv_b})
 
 
-def test_f4_key_set_mismatch_rejected(controller):
+def test_f4_second_line_key_set_mismatch_rejected(controller):
     tids = controller.task_ids()
     a, b = tids[0], tids[1]
     rv_a = controller.rollout_view(a)
@@ -308,10 +334,10 @@ def test_f4_key_set_mismatch_rejected(controller):
         b, environment_package_digest=controller.rollout_view(b).environment_package_digest
     )
     with pytest.raises(TrustedViewError, match="集合不一致"):
-        TrustedTaskController(rollout_views={a: rv_a}, grading_views={b: gv_b})
+        _raw({a: rv_a}, {b: gv_b})
 
 
-def test_f4_cross_pairing_identity_mismatch_rejected(controller):
+def test_f4_second_line_cross_pairing_identity_mismatch_rejected(controller):
     """两侧 key 都对但把 A 的 rollout 视图和 B 的 grading 视图硬配对——身份/
     digest 逐任务比对必须拒绝（key 单独一致不足以证明配对正确）。"""
 
@@ -322,8 +348,24 @@ def test_f4_cross_pairing_identity_mismatch_rejected(controller):
     gv_b = controller.grading_view(b, environment_package_digest=rv_b.environment_package_digest)
     forged_gv = gv_b.model_copy(update={"task_id": a, "instance_id": gv_a.instance_id})
     with pytest.raises(TrustedViewError):
-        TrustedTaskController(rollout_views={a: rv_a, b: rv_b},
-                              grading_views={a: forged_gv, b: gv_b})
+        _raw({a: rv_a, b: rv_b}, {a: forged_gv, b: gv_b})
+
+
+def test_f4_ingest_side_isolation_and_revalidation(controller):
+    """入库前重验 + 隔离：build 后修改 IngestResult 里的 public bundle，
+    controller 已入库视图不受影响；持令牌但塞入脏视图也在入库重验被拒。"""
+
+    result = make_result()
+    ctl = TrustedTaskController.build_for_tests_from_ingest_result(result)
+    before = ctl.rollout_view(TID).public.allowed_tools[:]
+    result.public_bundles[0].allowed_tools.append("late_tool")
+    assert ctl.rollout_view(TID).public.allowed_tools == before
+    dirty = controller.rollout_view(TID)
+    dirty.public.allowed_tools.append("late_tool")
+    tids = controller.task_ids()
+    gv = controller.grading_view(tids[0], environment_package_digest=dirty.environment_package_digest)
+    with pytest.raises(ValueError, match="public_bundle_digest"):
+        _raw({tids[0]: dirty}, {tids[0]: gv})
 
 
 def test_f3_consumer_mutation_is_isolated(controller):
@@ -348,7 +390,8 @@ def test_f3_dirty_rollout_copy_fails_revalidation(controller):
     assert clean.revalidated() == clean
     dirty = controller.rollout_view(TID)
     dirty.public.allowed_tools.append("golden_patch")
-    with pytest.raises(ValueError, match="泄漏扫描|golden"):
+    # 二轮后 digest 重算先于泄漏扫描触发；两道防线任一命中都算拒绝
+    with pytest.raises(ValueError, match="public_bundle_digest|泄漏扫描|golden"):
         dirty.revalidated()
 
 
@@ -360,3 +403,23 @@ def test_f3_dirty_grading_copy_fails_revalidation(controller):
     dirty.grading.fail_to_pass.append("forged::test")
     with pytest.raises(ValueError, match="digest 不符"):
         dirty.revalidated()
+
+
+@pytest.mark.parametrize("mutate", ["add", "delete", "replace"])
+def test_f3_legit_content_drift_fails_revalidation(controller, mutate):
+    """F3 二轮：合法内容漂移（追加/删除/替换一个普通工具，不含 marker）只靠
+    泄漏扫描发现不了——public_bundle_digest 重算必须抓住。"""
+
+    view = controller.rollout_view(TID)
+    tools = view.public.allowed_tools
+    if mutate == "add":
+        tools.append("ordinary_tool")
+    elif mutate == "delete":
+        assert tools, "夹具需至少一个工具才能测删除"
+        tools.pop()
+    else:
+        assert tools, "夹具需至少一个工具才能测替换"
+        tools[0] = "ordinary_tool_replacement"
+    with pytest.raises(ValueError, match="public_bundle_digest"):
+        view.revalidated()
+
