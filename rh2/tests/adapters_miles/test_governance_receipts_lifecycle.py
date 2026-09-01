@@ -7,8 +7,9 @@
    调度测试（按真顺序驱动治理件）；
 3. UNCERTAIN_TRAINED 崩溃窗口（train 成功但回执未持久化）——at-least-once
    语义，不伪造 FINALIZED，迟到回执不翻转终态；
-4. Rh2RolloutLifecycle.shutdown()：停新 submission → cancel 并 await 在飞
-   task → 三类分别记账 → 幂等。
+4. （已删除，W5a 2026-09-02）原型 Rh2RolloutLifecycle.shutdown() 绑定未采用的
+   governed ledger；生产关停链改为 repoharness2.shutdown +
+   bringup.BringupService.close()，测试见 tests/adapters/test_w5a_shutdown_chain.py。
 """
 
 from __future__ import annotations
@@ -242,114 +243,4 @@ async def test_uncertain_trained_window(world):
     assert ledger.after_train_success("bu") == []
     assert ledger.state(aid) == S.UNCERTAIN_TRAINED
     assert ("RECEIPT_IGNORED_TERMINAL", {"batch_id": "bu", "state": S.UNCERTAIN_TRAINED}) in ledger.history(aid)
-    ledger.assert_books_balanced()
-
-
-# =====================================================================
-# 4. Rh2RolloutLifecycle.shutdown()（B5 修复面）
-# =====================================================================
-
-
-async def _naked_producer(ledger, pg):
-    """无 CancelledError 记账分支的生产 task——模拟"在 dispatch 与 put 之间
-    被关停打断且自身没有兜底"的最坏情况，账由 shutdown 扫尾补记。"""
-
-    ledger.dispatch(pg)
-    await asyncio.Event().wait()  # 永不完成
-
-
-async def test_shutdown_accounts_three_categories(world):
-    """shutdown 的三类记账（模块 docstring 第 3 步）：
-    - 未入 buffer（DISPATCHED）→ CRASHED_BEFORE_PUT(kind="shutdown")；
-    - buffer 内（ADMITTED）→ RETIRED(reason="shutdown")；
-    - 已 handed-off 未回执（HANDED_OFF）→ UNCERTAIN_TRAINED——关停时无法
-      证明 drain 出去的批是否已训练，不伪造 FINALIZED。
-    task 层已自记的 crash（run_attempt 的 CancelledError 分支）不被双记。"""
-
-    S = world.ledger_states
-    buf, ledger, _clock, _recycled = world.mk_governed_buffer()
-    lifecycle = world.Rh2RolloutLifecycle(ledger)
-    gate_open = asyncio.Event()
-    gate_open.set()
-    gate_stuck = asyncio.Event()  # 永不放行
-
-    # ① 未入 buffer：一个裸生产 task（无自记账）+ 一个 run_attempt（有自记账）
-    pg_naked = world.mk_gov_prompt_group("sd-naked")
-    lifecycle.spawn(_naked_producer(ledger, pg_naked))
-    pg_self = world.mk_gov_prompt_group("sd-self")
-    lifecycle.spawn(world.run_attempt(ledger, buf, pg_self, gate_stuck))
-    await asyncio.sleep(0.01)  # 两个 task 都跑到挂起点
-    aid_naked = pg_naked[0].metadata[world.ATTEMPT_KEY]
-    aid_self = pg_self[0].metadata[world.ATTEMPT_KEY]
-
-    # ③ 已 handed-off：先入队先取走（FIFO），无回执
-    pg_hand = world.mk_gov_prompt_group("sd-hand")
-    aid_hand = await world.run_attempt(ledger, buf, pg_hand, gate_open)
-    await buf.get(current_version=2)
-
-    # ② buffer 内：入队后不取
-    pg_buf = world.mk_gov_prompt_group("sd-buf")
-    aid_buf = await world.run_attempt(ledger, buf, pg_buf, gate_open)
-
-    closed_hooks: list[str] = []
-
-    async def close_adapter():
-        closed_hooks.append("adapter")
-
-    lifecycle.register_close_hook(close_adapter)
-
-    report = await lifecycle.shutdown()
-
-    # 三类账各归各位
-    assert ledger.state(aid_naked) == S.CRASHED_BEFORE_PUT
-    assert ledger.state(aid_self) == S.CRASHED_BEFORE_PUT  # task 自记（kind="cancelled"）
-    assert ledger.state(aid_buf) == S.RETIRED
-    assert ledger.state(aid_hand) == S.UNCERTAIN_TRAINED
-    # 报告只含扫尾补记的那笔 crash——task 自记的不双记
-    assert report["crashed_before_put"] == [aid_naked]
-    assert report["retired_in_buffer"] == [aid_buf]
-    assert report["uncertain_trained"] == [aid_hand]
-    assert report["cancelled_tasks"] == 2
-    assert report["close_hook_errors"] == []
-    assert closed_hooks == ["adapter"]
-    # 自记的 crash 只有一次转移痕（无 DUPLICATE_CRASH_MARK 之外的双记）
-    assert sum(1 for k, _ in ledger.history(aid_self) if k == S.CRASHED_BEFORE_PUT) == 1
-    # 账实一致：终态占位全部被 release 清空
-    assert buf.audit_inventory() == []
-    assert buf.handed_off_unreceipted() == []
-    assert ledger.trained_attempts == []
-    ledger.assert_books_balanced()
-
-
-async def test_shutdown_is_idempotent_and_refuses_new_work(world):
-    """幂等（模块 docstring 第 4 步）：第二次 shutdown 返回第一次的报告
-    对象，不产生新转移、close hook 不重跑、无新错误；关闭后 spawn 与
-    register_close_hook 均被拒绝。"""
-
-    buf, ledger, _clock, _recycled = world.mk_governed_buffer()
-    lifecycle = world.Rh2RolloutLifecycle(ledger)
-    gate = asyncio.Event()
-    gate.set()
-    aid = await world.run_attempt(ledger, buf, world.mk_gov_prompt_group("idem"), gate)
-
-    hook_calls: list[int] = []
-
-    async def hook():
-        hook_calls.append(1)
-
-    lifecycle.register_close_hook(hook)
-
-    report1 = await lifecycle.shutdown()
-    history_len = len(ledger.history(aid))
-
-    report2 = await lifecycle.shutdown()  # 二次调用：无新错误
-    assert report2 is report1  # 同一份报告
-    assert len(ledger.history(aid)) == history_len  # 无新转移
-    assert hook_calls == [1]  # close hook 只跑一次
-
-    assert not lifecycle.accepting
-    with pytest.raises(world.LifecycleClosedError):
-        lifecycle.spawn(_naked_producer(ledger, world.mk_gov_prompt_group("late")))
-    with pytest.raises(world.LifecycleClosedError):
-        lifecycle.register_close_hook(hook)
     ledger.assert_books_balanced()

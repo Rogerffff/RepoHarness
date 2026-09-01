@@ -17,19 +17,16 @@ from repoharness2.adapters.miles.identity import (
     mint_attempt_identity,
     stamp_identity_on_outputs,
 )
-from repoharness2.adapters.miles.lifecycle import LifecycleClosedError, Rh2RolloutLifecycle
 
 __all__ = [
     "IDENTITY_KEYS",
     "CanonicalizationError",
     "LedgerError",
-    "LifecycleClosedError",
     "MilesIdentityError",
     "Rh2AttemptLedger",
     "Rh2GovernanceConfig",
     "Rh2GovernedBuffer",
     "Rh2MilesGenerateFn",
-    "Rh2RolloutLifecycle",
     "canonicalize_group",
     "canonicalize_sample",
     "mint_attempt_identity",

@@ -229,7 +229,6 @@ class _World:
         )
         from repoharness2.adapters.miles import attempt_ledger as attempt_ledger_mod
         from repoharness2.adapters.miles import governed_buffer as governed_buffer_mod
-        from repoharness2.adapters.miles import lifecycle as lifecycle_mod
 
         self.MS = MilesSample
         self.SS = SlimeSample
@@ -241,15 +240,12 @@ class _World:
         # -- 治理件（C3/C7）：模块对象直挂，状态常量经 world.ledger_states 取用
         self.ledger_states = attempt_ledger_mod
         self.governed_buffer_mod = governed_buffer_mod
-        self.lifecycle_mod = lifecycle_mod
         self.Rh2AttemptLedger = attempt_ledger_mod.Rh2AttemptLedger
         self.LedgerError = attempt_ledger_mod.LedgerError
         self.ATTEMPT_KEY = attempt_ledger_mod.ATTEMPT_KEY
         self.Rh2GovernedBuffer = governed_buffer_mod.Rh2GovernedBuffer
         self.Rh2GovernanceConfig = governed_buffer_mod.Rh2GovernanceConfig
         self.GovernedBufferError = governed_buffer_mod.GovernedBufferError
-        self.Rh2RolloutLifecycle = lifecycle_mod.Rh2RolloutLifecycle
-        self.LifecycleClosedError = lifecycle_mod.LifecycleClosedError
         self.FakeClock = FakeClock
         # 工具转发：测试模块不 `import conftest`（tests/ 下多目录同名
         # conftest.py，按 sys.path 裸 import 会撞名），统一走 world。
@@ -386,8 +382,9 @@ class _World:
 
         crash 记账放在这里（而非 buffer 内）——put 之前的失败到不了 buffer，
         "从未提交"这笔账只能由 put 的调用方（rollout function 层）来记；
-        mark_crashed_before_put 幂等，与 governed put 的背压 cancel 记账、
-        lifecycle 关停扫尾不双记。
+        mark_crashed_before_put 幂等，与 governed put 的背压 cancel 记账不双记
+        （原型 lifecycle.py 的关停扫尾已随 W5a 删除，生产关停链见
+        repoharness2.shutdown + bringup.BringupService.close）。
         """
 
         aid = ledger.dispatch(prompt_group)
