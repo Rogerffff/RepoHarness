@@ -388,7 +388,305 @@ ActorHandle 传给 trainer、恢复 DataSource 状态；随后回到 `train_asyn
 
 ### 4.3 RH2 rollout entry、持续 worker 与调度
 
-待记录。
+本节记录从 `RolloutManager.generate()` 进入 RH2，到单个 member 被交给
+`RolloutOrchestrator.generate()` 之前的真实运行路径。这里先说明运行位置、
+对象所有权和并发形态；`collect_batch()` 内部的队列、反压、组收齐和停机协议
+尚未逐行学习，留给下一段补充。
+
+#### 4.3.1 从同步 Ray Actor 方法进入异步 RH2 链路
+
+Driver 通过 Ray RPC 调用：
+
+```python
+rollout_manager.generate.remote(rollout_id)
+```
+
+真正执行 `RolloutManager.generate()` 的是独立 CPU Ray Actor 进程。该方法经
+`call_rollout_fn(...)` 调用 RH2 注册的同步入口：
+
+```text
+reference/slime/slime/ray/rollout.py::RolloutManager.generate
+  -> RolloutManager._get_rollout_data
+  -> call_rollout_fn(self.generate_rollout, ...)
+  -> rh2/experiments/fa_bringup/rollout_entry.py::generate_rollout
+```
+
+`generate_rollout()` 必须是同步函数，因为 slime 的 `call_rollout_fn()` 不会
+`await` 它。该同步入口用 `slime.utils.async_utils.run(...)` 把
+`generate_rollout_async(...)` 提交给同一 Actor 进程中的持久
+`AsyncLoopThread`，Actor 主线程在 `.result()` 处等待结果：
+
+```text
+RolloutManager Ray Actor 进程
+  ├─ Actor 主线程
+  │    generate_rollout(...)
+  │      -> 把 coroutine 提交到后台 loop
+  │      -> 同步等待本次 batch 返回
+  │
+  └─ AsyncLoopThread
+       └─ asyncio event loop
+            └─ generate_rollout_async(...)
+```
+
+这里没有创建新的 Ray Actor。`AsyncLoopThread` 只是当前 Actor 进程中的普通
+后台线程，它拥有一个长期运行的 asyncio event loop。
+
+#### 4.3.2 两个进程内单例与一个实际唯一的 orchestrator
+
+当前生产路径中存在两个不同的进程内单例：
+
+| 对象 | 单例实现 | 主要职责 |
+|---|---|---|
+| `BringupService` | 类变量 `BringupService._instance` + `_SERVICE_LOCK` | 一次性装配 tokenizer、renderer、adapter、capture、评分和单 execution 编排能力 |
+| `FaRolloutService` | `rollout_entry.py` 模块变量 `_SERVICE` | 持续取任务、维持并发 execution、接收完成结果并为调用方收集 batch |
+
+它们都是**当前 `RolloutManager` Python 进程内**的单例，不是 Ray 集群全局
+单例。另一个 Actor 进程会有自己的 Python 解释器、模块变量和类变量；当前
+Actor 崩溃重启后，这些对象也会重新初始化。
+
+首次调用 `generate_rollout_async(...)` 时：
+
+```text
+generate_rollout_async
+  -> _bootstrap_via_glue(args, data_buffer)
+  -> BringupService.get(args)
+       -> 首次：构造 BringupService
+       -> await service.async_start(args)
+       -> 保存到 BringupService._instance
+  -> args.rh2_orchestrator = service.orchestrator
+  -> args.rh2_sampling_params = 显式采样配方
+  -> _build_service(args, data_buffer)
+  -> 保存到 rollout_entry._SERVICE
+```
+
+`RolloutOrchestrator` 类本身没有 singleton pattern，理论上仍可直接创建多个
+实例。但是当前生产装配路径只在 `BringupService.async_start()` 中创建一次：
+
+```text
+BringupService 单例
+  └─ self.orchestrator = RolloutOrchestrator(...)
+       └─ 同一个引用写入 args.rh2_orchestrator
+            └─ FaRolloutService 的 execute_member 闭包调用它
+```
+
+因此准确说法是：**每个当前 `RolloutManager` 进程在这条装配路径上实际使用
+一个 orchestrator；不是该类从语言层面禁止创建第二个对象。**
+
+#### 4.3.3 当前进程中的线程、event loop、Task 和外部进程
+
+当前已经确认的执行拓扑是：
+
+```text
+RolloutManager Ray Actor 进程（CPU 控制面）
+│
+├─ 线程 T0：Ray Actor 主线程
+│    └─ 同步进入 generate_rollout，并等待异步 batch 结果
+│
+├─ 线程 T1：slime AsyncLoopThread，event loop L1
+│    ├─ BringupService / FaRolloutService
+│    ├─ ContinuousExecutionWorker（一个长期 asyncio Task）
+│    ├─ 多个 RolloutOrchestrator.generate execution Task
+│    ├─ Docker CLI 异步子进程管理
+│    └─ GradingQueue 的多个 asyncio worker Task
+│
+└─ 线程 T2：Anthropic adapter 线程，event loop L2
+     ├─ aiohttp HTTP handler Task
+     ├─ ModelCallProxy
+     ├─ capture stage / commit
+     └─ 到 SGLang 的 HTTP 请求
+
+宿主机 Docker daemon 管理：
+  ├─ 多个 rollout 容器
+  │    └─ 每个容器内的 Claude Code 进程及其 bash/test 子进程
+  └─ clean grading 容器
+
+rollout GPU 侧：
+  └─ SGLang router / server（由 slime 管理，不在 orchestrator 进程中做模型前向）
+```
+
+`ContinuousExecutionWorker` 不是线程池。它在 L1 中通过
+`asyncio.create_task(...)` 维持最多 `rh2_fa_concurrency` 个 execution Task。
+每个 execution Task 调用同一个：
+
+```python
+await orchestrator.generate(args, member, sampling_params)
+```
+
+如果并发上限是 8，运行时可能同时存在 8 个 `generate()` 协程、8 个 rollout
+容器和 8 个 Claude Code 进程，但仍只有一个 `RolloutOrchestrator` 对象。
+
+每次 `generate()` 调用拥有独立的协程帧和局部变量，例如各自的 `task`、
+`sid`、`sandbox`、`hook` 和 `audit`；`orchestrator.config`、`audits` 以及注入的
+共享服务引用则由这些调用共同访问。共享可变状态必须由明确 owner、锁或消息
+传递保护。特别是 T1 与 T2 会共同接触 capture/proxy 状态，不能因为它们位于
+同一 Python 进程就假设并发访问天然安全。
+
+#### 4.3.4 三个服务对象的职责边界
+
+```text
+BringupService
+  负责“把执行一条 member 所需的长期基础设施装配好”
+  持有 tokenizer、renderer、CaptureRegistry、ModelCallProxy、
+  AnthropicAdapter、GradingQueue、SWEGradingManager 和 RolloutOrchestrator。
+
+FaRolloutService
+  负责“持续派发多个 member，并收集可返回给 slime 的完整组/batch”
+  持有 task source、ContinuousExecutionWorker、BoundedDeliveryQueue、
+  group collector 和 completed backlog。
+
+RolloutOrchestrator
+  负责“把一个 member 从任务解析执行到训练资格结果”
+  单次调用覆盖任务解析、rollout 容器、harness、capture 收口、评分、
+  projection、EligibilityGate、交付/拒绝、清理和 execution audit。
+```
+
+这里的关键边界是：orchestrator 只处理一个 execution/member，不负责判断一个
+PromptGroup 是否收齐，也不负责从 ready groups 中选择满足训练 batch schedule
+的组合。这些属于外层 assembler、queue 和 batch admission。
+
+#### 4.3.5 RolloutOrchestrator 的依赖注入接线
+
+`BringupService.async_start()` 创建 orchestrator 时，把真实执行能力作为函数或
+对象传入，而不是让 orchestrator 在内部自行寻找全局组件：
+
+| orchestrator 字段 | 生产接线 | 含义 |
+|---|---|---|
+| `_task_resolver` | `BringupService._resolve_task` | `Sample` 转为冻结 `RolloutTaskSpec` |
+| `_adapter_factory` | `BringupService._adapter_factory` | 为本 execution 创建绑定 capture hook 的 session adapter |
+| `_harness_driver` | `ClaudeCodeDriver` | 在 rollout 容器内安装并运行 Claude Code |
+| `_grading_submit` | `BringupService._grading_submit` | 把评分请求提交给 `GradingQueue` |
+| `_docker` | 默认 `run_docker` | 启动、检查和清理 Docker 容器 |
+| `_leaf_facts_fn` | `bringup_leaf_facts` | 描述叶链与模型调用 capture 的回链关系 |
+| `_mount_planner` | 默认实现 | 只允许 public bundle 进入 rollout 容器 |
+
+例如传入的 `self._grading_submit` 是 Python 绑定方法：它同时引用
+`BringupService._grading_submit` 这个函数和当前 `BringupService` 实例。
+orchestrator 以后调用该字段时，方法仍能通过绑定实例访问真正由
+`BringupService` 持有的 `grading_queue`。这表示 orchestrator 获得了“提交
+评分”这一项窄能力，并没有取得 `GradingQueue` 的生命周期所有权。
+
+绑定方法、对象引用和依赖注入的通用 Python 解释见
+`python_async_concurrency_foundations.md` 的 4.3.13、4.3.14 和 4.3.16。
+
+#### 4.3.6 `_build_service` 的闭包接线与设计取舍
+
+`_build_service(args, data_buffer)` 没有创建新的 orchestrator。真正的
+`RolloutOrchestrator` 已由 `BringupService.async_start()` 创建，随后
+`ensure_fa_started()` 把同一个对象引用挂到 slime 的 `args`：
+
+```python
+args.rh2_orchestrator = service.orchestrator
+```
+
+这里的 `args` 是 slime 使用的、可动态挂属性的 Namespace 类对象，不是普通
+`dict`。当前它同时承载两类内容：
+
+```text
+静态训练/rollout 配置
+  rollout_batch_size、rollout_temperature、rollout_top_p 等。
+
+RH2 运行期接线
+  rh2_orchestrator、rh2_sampling_params。
+```
+
+`_build_service()` 取回已挂载对象，并定义两个闭包：
+
+```python
+def group_source():
+    groups = data_buffer.get_samples(1)
+    ...
+
+async def execute_member(member):
+    return await orchestrator.generate(
+        args,
+        member,
+        dict(sampling_params),
+    )
+```
+
+因此真实引用图是：
+
+```text
+BringupService._instance.orchestrator --+
+                                       +-> 同一个 RolloutOrchestrator 实例
+args.rh2_orchestrator -----------------+
+                                       |
+execute_member 闭包 ------------------+
+
+FaRolloutService
+  -> group_source 闭包
+       -> data_buffer
+  -> execute_member 闭包
+       -> orchestrator、args、sampling_params
+```
+
+把含有 `rh2_orchestrator` 属性的 `args` 再传给
+`orchestrator.generate(args, ...)` 不会自动递归。Python 只是传递对象引用；
+只有 `generate()` 的方法体主动再次调用 `args.rh2_orchestrator.generate()` 才会
+递归，当前实现没有这样做。
+
+这种接线让 `FaRolloutService` 只依赖两个窄能力：
+
+```text
+group_source()
+  给出下一个 PromptGroup 的成员。
+
+execute_member(member)
+  执行一个 RolloutExecution 并返回叶链结果。
+```
+
+它不需要 import slime 的 `DataSource` 类型，也不需要理解
+`BringupService`、Claude Code、SGLang 或评分系统如何构造。本地测试可以注入
+假 `group_source` 和假 `execute_member`，只验证持续 worker、队列与组装逻辑。
+
+三个对象没有合并成一个大 service，主要是因为它们负责不同时间尺度：
+
+| 对象 | 生命周期与职责 |
+|---|---|
+| `BringupService` | 当前进程长期基础设施的创建、启动和接线 |
+| `RolloutOrchestrator` | 一个 member/execution 从任务解析到清理的生命周期 |
+| `FaRolloutService` | 跨许多 execution 和 batch 的持续派发、缓冲与收集 |
+
+技术上也可以让 `FaRolloutService` 直接保存 `data_buffer`、`orchestrator`、`args`
+和 `sampling_params` 字段，或者把全部逻辑并入 `BringupService`。当前闭包方案不是
+Python 或 fully async 的强制要求；它选择的是更窄的依赖表面和更容易替换的测试
+接口。全部并入 `BringupService` 会让一个类同时负责 HTTP adapter 线程、模型
+捕获、评分基础设施、单 execution 生命周期和持续 batch 调度，容易演化成难以
+独立测试和维护的 God Object（职责过多的巨型对象）。
+
+当前实现也有需要诚实记录的过渡债务：
+
+1. `args` 混合了静态配置与运行期服务引用，类型和 ownership 不够明确；
+2. `BringupService._instance` 与模块变量 `_SERVICE` 构成两套进程内单例机制；
+3. 闭包让真实依赖不如显式构造字段容易从类型签名发现；
+4. `_SERVICE` 捕获首次调用时的 `args`、`data_buffer` 和采样参数，因此依赖
+   “一个 RolloutManager 进程只服务一个训练 run/数据源”的当前运行假设；
+5. `BringupService` 已经持有长期 runtime 基础设施，名称仍带有历史 bring-up
+   色彩，低估了实际职责。
+
+这些问题说明当前接线仍带有 slime 集成胶水性质，但不推翻职责拆分本身。未来
+若要收敛接口，更清晰的方向是引入显式、带类型的 runtime dependencies/factory，
+而不是把所有 ownership 重新并回一个巨型 service。闭包、浅拷贝、绑定方法和
+可调用对象的通用解释见 `python_async_concurrency_foundations.md` 的 4.3.17。
+
+#### 4.3.7 当前阅读断点
+
+目前已经确认入口、对象装配、运行拓扑和并发单位。下一段从
+`FaRolloutService.collect_batch()` 开始，逐行学习：
+
+```text
+_ensure_worker
+  -> ContinuousExecutionWorker.run
+  -> _task_source / member backlog
+  -> in_flight execution Task
+  -> BoundedDeliveryQueue
+  -> interim/final PromptGroup collector
+  -> completed backlog
+  -> starvation、drain 与账目守恒
+```
+
+在读完这部分前，不把当前过渡 collector 的行为误写成最终 FA-2 assembler
+契约，也不提前扩写本笔记的队列和反压结论。
 
 ### 4.4 环境物化、Docker sandbox 与 Claude Code harness
 

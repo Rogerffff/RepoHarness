@@ -1059,6 +1059,44 @@ _SERVICE = service
 赋值改变的是名字指向哪个对象，不是把完整对象内容复制进变量。多个名字可以
 同时指向同一个可变对象；通过任一引用修改该对象，其他引用之后也会看到修改。
 
+类变量可以用来保存当前 Python 进程中的共享实例。RH2 的
+`BringupService` 是一个具体例子：
+
+```python
+class BringupService:
+    _instance = None
+
+    @classmethod
+    async def get(cls, args):
+        async with _SERVICE_LOCK:
+            if cls._instance is None:
+                service = BringupService(args)
+                await service.async_start(args)
+                cls._instance = service
+            return cls._instance
+```
+
+第一次调用 `await BringupService.get(args)` 时，`_instance` 是 `None`，所以
+创建并启动一个实例；后续调用直接返回同一个对象引用。`@classmethod` 表示
+第一个参数是类 `cls`，这里的 `cls` 就是 `BringupService`，所以
+`cls._instance` 修改的是类变量，而不是某个实例自己的字段。
+
+`_SERVICE_LOCK` 保护首次初始化的临界区。假设两个协程几乎同时第一次调用
+`get()`，锁保证只有一个协程进入创建流程；第二个协程取得锁后会看到
+`_instance` 已存在，从而避免重复启动两个 adapter 服务并争抢端口。
+
+这个模式的边界是：
+
+```text
+它只保证当前 Python 进程中，经 get() 入口取得的是同一个实例；
+它不是 Ray 集群全局单例；
+Actor 进程重启后会重新初始化；
+直接调用 BringupService(args) 仍然可以绕过 get() 创建第二个实例。
+```
+
+因此“单例”在这里是项目代码维持的构造约定，不是 Python 语言禁止第二次
+实例化。
+
 #### 4.3.14 进程隔离、线程共享与 event loop 所有权
 
 操作系统进程默认拥有独立地址空间。普通 Python 对象不能被另一个进程直接
@@ -1113,9 +1151,109 @@ asyncio Task
   由该 event loop 调度，不是新的线程或进程
 ```
 
+一个普通 Python 实例可以同时被同一 event loop 中的多个 Task 调用：
+
+```python
+orchestrator = RolloutOrchestrator(...)
+
+task_a = asyncio.create_task(orchestrator.generate(sample_a))
+task_b = asyncio.create_task(orchestrator.generate(sample_b))
+```
+
+这里仍然只有一个 `orchestrator` 实例，但有两个独立的 `generate()` 协程帧。
+两次调用的参数和局部变量彼此独立：
+
+```text
+调用 A：sample_a、sid_a、sandbox_a、audit_a
+调用 B：sample_b、sid_b、sandbox_b、audit_b
+```
+
+二者访问 `orchestrator.config`、`orchestrator.audits` 等实例字段时，访问的却是
+同一份共享状态。因此：
+
+```text
+“一个对象”不等于“只能串行调用一次”；
+“多个 asyncio Task”也不等于“多个线程”；
+局部变量独立不等于实例字段天然并发安全。
+```
+
+如果任务只在同一 event loop 上运行，它们通常在 `await` 边界协作切换；如果
+另一个线程也访问同一对象，就必须额外考虑线程锁、`call_soon_threadsafe()`
+或单 owner 消息传递。
+
 模块级服务对象若主要在一个 event loop 中使用，最清晰的规则通常是明确
 **单 owner**：只允许所属 loop 的线程修改服务状态，其他线程通过线程安全回调
 或消息传递请求操作，而不是直接修改内部字段。
+
+##### 对象由哪个线程创建，不决定它只能被哪个线程使用
+
+普通 Python 对象位于所属进程的内存中。函数里的变量名通常只是指向对象的
+引用：
+
+```python
+def create_registry():
+    registry = CaptureRegistry()
+    return registry
+```
+
+可以近似理解为：
+
+```text
+当前函数栈帧中的局部名字 registry
+  -> 指向进程堆内存中的 CaptureRegistry 实例
+```
+
+局部名字不会自动出现在其他线程的作用域中，但对象也不天然属于创建它的线程。
+其他线程只要通过以下方式之一取得同一个引用，就能访问同一个实例：
+
+```text
+作为线程函数参数传递
+保存到双方都能取得的实例属性或模块变量
+放入线程安全 Queue / Future
+被回调或闭包捕获
+作为返回值交给共享服务
+```
+
+例如：
+
+```python
+registry = CaptureRegistry()
+thread = threading.Thread(target=worker, args=(registry,))
+thread.start()
+```
+
+主线程的 `registry` 与 `worker` 参数是两个不同作用域中的名字，但指向同一个
+对象；两边的 `id(registry)` 相同。对象引用被共享不代表对象自动线程安全，
+多个线程修改它时仍要使用锁、线程安全队列或者单 owner 消息传递。
+
+还要区分“修改对象”和“重新绑定变量”：
+
+```python
+shared.append("A")  # 修改同一个 list，其他持有该 list 的线程之后可以看到
+shared = ["new"]    # 只让当前作用域中的名字改指向另一个 list
+```
+
+RH2 的 `CaptureRegistry` 是具体例子。它在 RolloutManager 进程的
+`AsyncLoopThread` 中随 `BringupService` 创建：
+
+```python
+self.registry = CaptureRegistry()
+```
+
+随后同一个引用被交给 capture wire、HTTP session guard、per-rollout adapter、
+`ModelCallProxy` 和 `RolloutOrchestrator` 的注入回调。于是形成：
+
+```text
+RolloutManager Actor 进程
+  ├─ AsyncLoopThread
+  │    register / unregister / session 边界检查
+  ├─ aiohttp adapter 线程
+  │    capability 解析 / stage / commit
+  └─ 进程堆内存中的同一个 CaptureRegistry
+```
+
+它只是这个 RolloutManager 进程内共享。另一个 Ray Actor 进程即使也创建名为
+`registry` 的变量，得到的仍是另一个内存空间中的另一个对象。
 
 #### 4.3.15 进程启动方不等于组件实现方
 
@@ -1162,6 +1300,384 @@ PostgreSQL 时，应用程序并没有因此变成 HTTP 路由或数据库的实
 - 把“slime 选择 routing policy”误解为“slime 在每次请求时选择
   server”。slime 配置策略，运行中的 Router 执行每次 worker 选择。
 
+#### 4.3.16 实例方法、绑定方法与依赖注入
+
+定义实例方法时，第一个参数通常写作 `self`：
+
+```python
+class Counter:
+    def __init__(self, name):
+        self.name = name
+        self.value = 0
+
+    def add(self, amount):
+        self.value += amount
+```
+
+调用：
+
+```python
+counter = Counter("A")
+counter.add(3)
+```
+
+可以近似理解为：
+
+```python
+Counter.add(counter, 3)
+```
+
+当代码只读取方法而不立刻调用时：
+
+```python
+callback = counter.add
+```
+
+`callback` 是一个**绑定方法（bound method）**。它同时保存：
+
+```text
+原始函数：Counter.add
+绑定实例：counter
+```
+
+可以用 Python 提供的属性观察：
+
+```python
+callback.__func__ is Counter.add  # True
+callback.__self__ is counter      # True
+```
+
+以后执行：
+
+```python
+callback(5)
+```
+
+Python 会自动把已经绑定的 `counter` 作为 `self`，近似执行：
+
+```python
+Counter.add(counter, 5)
+```
+
+绑定方法只保存对实例的引用，不会复制整个实例。两个实例的方法可以共享同一个
+原始函数，但绑定不同对象：
+
+```python
+counter_a = Counter("A")
+counter_b = Counter("B")
+
+callback_a = counter_a.add
+callback_b = counter_b.add
+
+callback_a.__func__ is callback_b.__func__  # True
+callback_a.__self__ is counter_a             # True
+callback_b.__self__ is counter_b             # True
+```
+
+RH2 的依赖注入使用了这个机制：
+
+```python
+class BringupService:
+    async def _grading_submit(self, *, trajectory_id, workspace, spec):
+        return await self.grading_queue.submit(
+            trajectory_id=trajectory_id,
+            workspace=workspace,
+            spec=spec,
+        )
+
+    async def async_start(self, args):
+        self.orchestrator = RolloutOrchestrator(
+            grading_submit=self._grading_submit,
+        )
+```
+
+`self._grading_submit` 是绑定到当前 `BringupService` 实例的方法。进入
+`RolloutOrchestrator.__init__()` 后：
+
+```python
+self._grading_submit = grading_submit
+```
+
+左侧的 `self` 是 `RolloutOrchestrator` 实例；右侧保存的绑定方法中，
+`__self__` 仍然是原来的 `BringupService` 实例。以后 orchestrator 调用：
+
+```python
+await self._grading_submit(
+    trajectory_id=trajectory_id,
+    workspace=workspace,
+    spec=spec,
+)
+```
+
+近似等价于：
+
+```python
+await BringupService._grading_submit(
+    bringup_service_instance,
+    trajectory_id=trajectory_id,
+    workspace=workspace,
+    spec=spec,
+)
+```
+
+所以 `_grading_submit()` 仍然能够通过自己的 `self` 访问
+`bringup_service_instance.grading_queue`。
+
+这同时展示了**依赖注入（dependency injection）**：组件不在内部自行创建或
+查找依赖，而由外部构造者把所需能力传进来。这里 orchestrator 只获得“提交一次
+评分请求”的窄接口，没有获得 `GradingQueue` 的启动、关闭和配置所有权。
+
+要区分两个概念：
+
+```text
+绑定方法
+  是 Python 表达“原始函数 + 已绑定实例”的语言机制。
+
+依赖注入
+  是组件依赖由外部提供的设计方式；注入值可以是绑定方法、普通函数或对象。
+```
+
+项目中的真实接线表见 `repo_harness_code_walkthrough.md` 的 4.3.5。
+
+#### 4.3.17 嵌套函数、自由变量与闭包
+
+闭包（closure）可以先记成：
+
+```text
+闭包 = 函数对象 + 该函数从外层词法作用域捕获的变量
+```
+
+这里的“词法作用域”是按源码嵌套位置确定的作用域。下面的 `read()` 定义在
+`make_reader()` 内部，并使用了外层参数 `data`：
+
+```python
+def make_reader(data):
+    def read():
+        return data
+
+    return read
+
+
+reader = make_reader("hello")
+print(reader())  # hello
+```
+
+`make_reader()` 已经返回，`read()` 却仍然能够访问当时的 `data`。原因不是
+Python 把整个外层函数调用永久保存下来，而是编译器发现 `data` 被内层函数
+使用后，将它放进闭包单元（closure cell）。对象引用关系可以近似理解为：
+
+```text
+reader
+  -> read 函数对象
+       -> closure cell
+            -> 字符串对象 "hello"
+```
+
+只要 `reader` 仍然引用 `read`，`read` 就仍然引用 closure cell，cell 中的对象
+也就仍然可达。等这些引用都消失后，相应对象才可能被垃圾回收。可以用 Python
+提供的属性观察这个关系：
+
+```python
+reader.__code__.co_freevars
+# ('data',)
+
+reader.__closure__[0].cell_contents
+# 'hello'
+```
+
+其中，“自由变量（free variable）”是当前函数使用、但没有在当前函数中定义的
+外层局部变量。模块全局变量通常在模块命名空间中按名字查找，不属于这种闭包
+单元捕获。
+
+##### 闭包捕获的是对象引用，不是对象快照
+
+闭包默认不会复制被捕获对象：
+
+```python
+def make_reader(data):
+    def read():
+        return data
+
+    return read
+
+
+items = [1, 2]
+reader = make_reader(items)
+items.append(3)
+print(reader())  # [1, 2, 3]
+```
+
+`items` 和闭包单元同时指向同一个列表：
+
+```text
+外部名字 items -------+
+                      +-> 同一个列表对象 [1, 2, 3]
+闭包中的 data --------+
+```
+
+因此，闭包既能延长对象的可达生命周期，也可能把可变状态带入更长的运行期。
+如果多个协程或线程通过闭包访问同一个可变对象，仍然要单独设计 owner、锁或
+消息传递；“使用了闭包”不代表并发安全。
+
+##### RH2 的两个真实闭包
+
+`rh2/experiments/fa_bringup/rollout_entry.py::_build_service` 定义了：
+
+```python
+def _build_service(args, data_buffer):
+    orchestrator = args.rh2_orchestrator
+    sampling_params = args.rh2_sampling_params
+
+    def group_source():
+        groups = data_buffer.get_samples(1)
+        ...
+
+    async def execute_member(member):
+        return await orchestrator.generate(
+            args,
+            member,
+            dict(sampling_params),
+        )
+
+    return FaRolloutService(
+        group_source=group_source,
+        execute_member=execute_member,
+        ...,
+    )
+```
+
+两组捕获关系分别是：
+
+```text
+group_source
+  -> data_buffer
+
+execute_member
+  -> orchestrator
+  -> args
+  -> sampling_params
+```
+
+`FaRolloutService` 保存这两个函数对象，因此 `_build_service()` 返回后，被它们
+捕获的引用仍然存活。`group_source()` 每次消费的还是同一个 `data_buffer`，并非
+创建 service 时冻结的数据快照；`execute_member()` 调用的也是
+`BringupService` 已经创建并挂到 `args` 的同一个 orchestrator 实例。
+
+`async def` 与闭包是两个正交概念：
+
+```text
+闭包
+  说明函数如何取得并保留外层变量。
+
+async def
+  说明调用函数会产生 coroutine，需要由 event loop await/调度。
+```
+
+所以 `execute_member` 同时是异步函数和闭包，但不是所有异步函数都是闭包，也
+不是所有闭包都是异步函数。
+
+##### `dict(sampling_params)` 是调用时浅拷贝
+
+闭包本身不会自动复制 `sampling_params`。这里发生复制，是因为代码每次调用
+`execute_member()` 时显式执行：
+
+```python
+copied = dict(sampling_params)
+```
+
+这会创建新的最外层字典：
+
+```python
+copied is sampling_params  # False
+```
+
+修改新的最外层键不会改动原字典：
+
+```python
+copied["temperature"] = 0.8
+```
+
+但如果值本身是可变对象，浅拷贝不会递归复制该对象：
+
+```python
+original = {"stop": ["END"]}
+copied = dict(original)
+
+copied["stop"] is original["stop"]  # True
+copied["stop"].append("DONE")
+print(original["stop"])  # ["END", "DONE"]
+```
+
+可以把两者画成：
+
+```text
+original -> 外层字典 A --+
+                         +-> 同一个内部列表
+copied   -> 外层字典 B --+
+```
+
+深拷贝需要显式使用 `copy.deepcopy()`，并且不一定适合所有资源对象。当前
+`build_fa_sampling_params()` 只生成 `temperature`、`top_p` 和
+`max_new_tokens` 等数字值，因此最外层浅拷贝已经能隔离每次调用对参数字典的
+直接修改。如果以后加入嵌套列表或字典，需要重新检查共享修改风险。
+
+“调用时”还意味着：如果原 `sampling_params` 在闭包创建后、实际调用前发生
+变化，`dict(sampling_params)` 会复制调用时看到的最新内容，而不是闭包创建时的
+内容。
+
+##### 普通函数、闭包、绑定方法与可调用对象
+
+这四种对象都可以作为 callback 或依赖注入值，但保存状态的方式不同：
+
+| 机制 | 保存的主要内容 | RH2 例子 |
+|---|---|---|
+| 普通函数 | 函数代码；没有某次外层调用的捕获环境 | `rollout_entry._member_ok` |
+| 闭包 | 函数代码 + 外层变量 closure cells | `group_source`、`execute_member` |
+| 绑定方法 | 实例方法函数 + 已绑定的实例 `self` | `BringupService._grading_submit` |
+| 可调用对象 | 对象实例状态 + 类定义的 `__call__` | `experiments/s1_parity.py::FakeDocker` |
+
+闭包与可调用对象经常可以互相改写。闭包版本：
+
+```python
+def make_group_source(data_buffer):
+    def group_source():
+        return data_buffer.get_samples(1)
+
+    return group_source
+```
+
+近似的可调用对象版本：
+
+```python
+class GroupSource:
+    def __init__(self, data_buffer):
+        self.data_buffer = data_buffer
+
+    def __call__(self):
+        return self.data_buffer.get_samples(1)
+```
+
+选择通常取决于状态和生命周期复杂度：
+
+```text
+普通函数
+  不需要某次构造产生的状态。
+
+闭包
+  依赖较少，逻辑局部，只需轻量保存几个外层引用。
+
+绑定方法
+  所需能力本来就属于一个已有实例。
+
+可调用对象
+  需要更多显式字段、计数器、配置、辅助方法或生命周期管理。
+```
+
+这些语言机制本身不等于依赖注入。依赖注入是一种设计方式：组件不自行创建或
+寻找依赖，而由外部把所需能力传入；传入值可以恰好由普通函数、闭包、绑定方法
+或可调用对象来表达。RH2 为什么选择两个闭包连接 `FaRolloutService`，以及这种
+设计的代价，见 `repo_harness_code_walkthrough.md` 的 4.3.6。
+
 ### 4.4 跨线程调用与 `call_soon_threadsafe`
 
 待记录。
@@ -1191,6 +1707,43 @@ with lock:
 
 这些线程共享同一块进程内存，所以可以共同看到同一个 `lock` 对象。不同
 Ray Actor 是不同操作系统进程，甚至可能位于不同机器，不能共享这个对象。
+
+`with lock:` 是程序员显式划定的临界区，等价于：
+
+```python
+lock.acquire()
+try:
+    update_shared_dict()
+finally:
+    lock.release()
+```
+
+推荐使用 `with`，因为临界区内即使抛出异常，`__exit__` 仍会释放锁。锁不会
+自动保护某个 dict；程序员必须把需要形成一个不可分割整体的检查和修改放进
+同一个 `with`。
+
+RH2 在 `CaptureRegistry.__init__()` 中创建：
+
+```python
+self._lock = threading.Lock()
+```
+
+例如 `register()` 要同时建立多组关联：
+
+```python
+with self._lock:
+    if sid in self.hooks:
+        raise DuplicateActiveSessionError(sid)
+    self.hooks[sid] = hook
+    self.pending.setdefault(sid, [])
+    self.weight_versions[sid] = []
+    self._physical_attempt_ids[sid] = physical_attempt_id
+```
+
+锁保护的重点不是一次 `dict.__setitem__`，而是这些容器必须一起变化，其他线程
+不能看到“`hooks` 已注册但 `pending` 尚未建立”之类的中间状态。锁内只应执行
+短小的内存操作；磁盘、网络、复杂回调和 `await` 应尽量放在锁外，避免阻塞
+整个 adapter event loop 或造成死锁。
 
 #### 4.7.2 用 Ray Actor 实现跨进程协调点
 
@@ -1313,9 +1866,62 @@ owner_loop.call_soon_threadsafe(callback)
 asyncio.run_coroutine_threadsafe(coro, owner_loop)
 ```
 
-不能因为 CPython 有 GIL 就认为多步业务操作自动具有原子性。GIL 主要约束
-同一解释器内 Python 字节码的执行，并不会把“检查条件、执行 I/O、修改多个
-容器、写入证据”自动合成一个不可分割事务。
+#### 4.7.5 GIL 不是业务状态锁
+
+项目使用的普通 CPython 构建带有 GIL（Global Interpreter Lock，全局解释器
+锁）。同一进程中的线程要执行 Python 字节码，通常同时需要：
+
+```text
+被操作系统调度到 CPU
+并且
+取得当前 CPython 解释器的 GIL
+```
+
+可以把三层职责区分为：
+
+```text
+操作系统线程调度
+  决定哪个原生线程何时获得 CPU 时间。
+
+CPython GIL
+  保护解释器内部对象管理，限制同一时刻执行 Python 字节码的线程。
+
+threading.Lock
+  由项目代码定义，保护 CaptureRegistry 等业务状态的不变量。
+```
+
+GIL 不会让一段 Python 源码或一个业务操作自动变成不可分割事务。例如：
+
+```python
+if sid not in self.hooks:
+    self.hooks[sid] = hook
+    self.pending[sid] = []
+```
+
+可能发生如下交替：
+
+```text
+线程 A：检查 sid 不存在
+线程切换
+线程 B：检查 sid 不存在并写入 hook_B
+线程切换
+线程 A：继续写入 hook_A，静默覆盖 B
+```
+
+在当前带 GIL 的 CPython 中，单次字典写入通常不会把 dict 的内部结构写坏；
+真正危险的是多个操作之间的业务竞态，例如：
+
+```text
+重复注册覆盖 hook
+hooks / pending / weight_versions 只更新了一部分
+unregister 与 stage 交错后留下孤立 pending
+token、logprob 或 weight version 被归到错误 rollout
+```
+
+线程还可能在网络或文件 I/O、等待锁、`sleep`、解释器周期性切换以及主动释放
+GIL 的 C 扩展中交出执行权。因此不能依赖“通常只有一个线程执行 Python”推断
+业务状态安全。需要形成原子业务步骤时，仍应使用 `threading.Lock`；长期状态
+天然属于某个 event loop 时，更清晰的终局通常是单 owner + 消息传递。
 
 ### 4.8 cancellation、timeout、deadline 与资源清理
 
