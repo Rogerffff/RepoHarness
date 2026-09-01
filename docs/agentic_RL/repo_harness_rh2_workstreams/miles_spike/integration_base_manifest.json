@@ -53,9 +53,9 @@
  "miles_source_tree_digest_note": "miles.utils.rh2_event_log.miles_tree_digest() 对 v3 integration tree 的实算值（P0-4 去自我背书：launch preflight 的 expected digest 以本字段为准,RH2_MILES_ROOT 指向别的树立即红;与 expected_tree 一起构成运行目标的双重身份钉死）",
  "expected_counts": {
   "_comment": "两条 lane 的精确 pytest 计数（tests/adapters_miles/,-q 尾行）。测试增删必须同步改这里,否则脚本红——删测试保绿的口子由此关死。本轮变更（vendor refresh 复核 P2 #1 收口,2026-08-31）：lane A 235->236 + skip 147->167、lane B 382->403。+1 双 lane = parser 负例净增（test_weight_version_spans.py：原正例 test_parse_int_version_coerced_to_str 改为 version_not_string 负例并新增 null 负例——键在场值 null 从'当缺失回退单数'改为 fail-closed）;+20 integration_base = miles stock update_from_meta_info 严格校验测试（§6:4 正例 + 16 负例,只在 lane B 的 patch 0009 树上有被测语义,lane A 记 skip）;历次计数演变记录见 git 历史中本文件的旧版本。",
-  "lane_a_passed": 236,
-  "lane_a_skipped": 167,
-  "lane_b_passed": 403,
+  "lane_a_passed": 278,
+  "lane_a_skipped": 185,
+  "lane_b_passed": 463,
   "lane_b_skipped": 0
  },
  "rebuild": "clone -> git fetch origin && git fetch origin pull/2596/head -> checkout -b rh2-integration-v3 f2b7c7929 -> cherry-pick 29c2c3aee 3ac3adce3 cd464a1c4 dbbab1566 -> 依序 git am patches/0001-*.patch ... patches/0009-*.patch -> 校验 rev-parse HEAD^{tree} == expected_tree 且各 sha256(patch) == 本文件八张 patch 表",
