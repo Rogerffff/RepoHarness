@@ -416,6 +416,9 @@ class ShutdownReport:
     evidence_failures: list[str] = field(default_factory=list)
     residue: dict[str, Any] = field(default_factory=dict)
     rejected_after_close: dict[str, int] = field(default_factory=dict)
+    # patch 0013：关停开始之后（进行中或已完成）后到的原因/残留的并入记录——
+    # 报告所有权在此，不建旁路 marker；每次并入一条 {phase, trigger, first_cause, ...}
+    late_merges: list[dict[str, Any]] = field(default_factory=list)
     schema_id: str = "rh2.shutdown_report.v1"
 
     # ---- 记账口 -------------------------------------------------------------
@@ -475,6 +478,7 @@ class ShutdownReport:
             "evidence_failures": list(self.evidence_failures),
             "residue": dict(self.residue),
             "rejected_after_close": dict(self.rejected_after_close),
+            "late_merges": [dict(m) for m in self.late_merges],
             "steps": [s.to_dict() for s in self.steps],
         }
 

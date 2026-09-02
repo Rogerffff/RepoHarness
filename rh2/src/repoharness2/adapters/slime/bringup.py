@@ -39,6 +39,7 @@ from __future__ import annotations
 import asyncio
 import dataclasses
 import hashlib
+from datetime import datetime, timezone
 import json
 import os
 import re
@@ -723,6 +724,9 @@ class BringupService:
         # W5a 复核 #3b：关停进行中到达的 run-fatal 先排队，落盘前全部吸收进报告
         self._fatals_during_close: list[BaseException] = []
         self._closing_report: ShutdownReport | None = None
+        # patch 0013：close 进行中后到的原因/残留（pending，落盘前吸收）；residue 只能在链后并入
+        self._pending_late_facts: list[dict[str, Any]] = []
+        self._deferred_residues: list[dict[str, Any]] = []
         self._uninstall_signal_shutdown: Any = None
         self._profile_args = args  # 资源闭包上界估算读 miles/slime 的并发与长度参数
         ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
@@ -1603,19 +1607,23 @@ class BringupService:
     ) -> ShutdownReport:
         report = ShutdownReport(reason=reason, trigger=trigger)
         self._closing_report = report
-        if isinstance(first_cause, BaseException):
-            report.note_failure("trigger", describe_exception(first_cause))
-        elif first_cause:
-            report.note_failure("trigger", str(first_cause)[:400])
-        # patch 0012：调用方（miles dispose 闭包）已定优先级的次生原因（独立 worker 异常 /
-        # rollout fn 关停残留）——持久化进报告，不与首因混淆
-        for cause in secondary_causes:
-            report.note_failure("secondary", str(cause)[:400])
+        # 首次调用带的事实与后到事实走同一合并口（patch 0013）：首因/次生立即并入，残留
+        # 推迟到链后（此时 report.residue 还没装配）
+        self._merge_late_facts(
+            report,
+            first_cause=first_cause,
+            trigger=trigger,
+            secondary_causes=secondary_causes,
+            external_residue=external_residue,
+            phase="initial",
+        )
         self._absorb_fatals_during_close(report)
+        self._absorb_pending_late_facts(report)
         report = await run_shutdown_chain(
             self._build_shutdown_steps(), reason=reason, trigger=trigger, first_cause=None, report=report
         )
         self._absorb_fatals_during_close(report)
+        self._absorb_pending_late_facts(report)
         # 残留汇总（H9 判据的输入：任一非空 = 残留）
         def facts_of(name: str) -> dict[str, Any]:
             step = report.step(name)
@@ -1634,13 +1642,10 @@ class BringupService:
             "hooks_left_after_close": registry_close.get("hooks_left_after_close", 0),
             "adapter_thread_alive": bool(http.get("thread_alive_after_stop", False)),
         }
-        if external_residue:
-            # patch 0012：miles rollout fn 关停到期放弃的 worker/组（具体组标识 + 原因）并入
-            # 残留——任一非空即 residue_free=False → ok=False，不再假绿
-            report.residue["unfinished_executions"] = list(report.residue["unfinished_executions"]) + list(
-                external_residue.get("unfinished_executions", [])
-            )
-            report.residue["rollout_fn_shutdown_failure"] = external_residue.get("rollout_fn_shutdown_failure")
+        # patch 0012/0013：miles rollout fn 关停到期放弃的 worker/组（具体组标识 + 原因）并入
+        # 残留——任一非空即 residue_free=False → ok=False，不再假绿。链前到达的残留在此并入。
+        while self._deferred_residues:
+            self._merge_residue(report, self._deferred_residues.pop(0))
         report.rejected_after_close = dict(self.lifecycle.rejected_after_close)
         self.lifecycle.mark_closed()
         if type(self)._instance is self:
@@ -1663,16 +1668,11 @@ class BringupService:
         except Exception as exc:  # noqa: BLE001
             report.note_evidence_failure("evidence:shutdown_completed_event", f"{type(exc).__name__}: {exc}"[:300])
         self._absorb_fatals_during_close(report)
+        self._absorb_pending_late_facts(report)
         self.shutdown_report = report
-        self._closing_report = None  # 此后到达的 fatal 只进 lifecycle.fatal_seen（报告已定稿）
-        report_path = ARTIFACT_DIR / "shutdown_report.json"
+        self._closing_report = None  # 此后到达的 fatal 只进 lifecycle.fatal_seen；后到的 close() 事实走合并重写
         try:
-            tmp = report_path.with_suffix(".json.tmp")
-            with tmp.open("w", encoding="utf-8") as fh:
-                json.dump(report.to_dict(), fh, ensure_ascii=False, indent=1, default=str)
-                fh.flush()
-                os.fsync(fh.fileno())
-            os.replace(tmp, report_path)
+            self._write_report_to_disk(report)
         except Exception as exc:  # noqa: BLE001
             report.note_evidence_failure("evidence:shutdown_report", f"{type(exc).__name__}: {exc}"[:300])
         print(f"[rh2-bringup] shutdown {'ok' if report.ok else 'NOT ok'}: trigger={trigger} reason={reason} "
@@ -1688,16 +1688,145 @@ class BringupService:
         secondary_causes: tuple[str, ...] | list[str] = (),
         external_residue: dict[str, Any] | None = None,
     ) -> ShutdownReport:
-        """显式关停（幂等）：首次调用创建关停 task，后续调用（含并发调用）等待同一
-        task 并拿到**同一个**报告对象（后续调用带的 secondary/residue 不再并入）；
+        """显式关停（幂等：cleanup 只执行一次）。首次调用创建关停 task；后续调用（含并发）等待
+        同一 task 并拿到**同一个**报告对象。后到的事实（patch 0013，生产顺序 = filter fatal 提前
+        触发 close → driver finally → dispose/aclose 才发现 driver/worker 双因与未完成组）**不丢**：
+        - close 进行中：进 pending，落盘前吸收（原首因保留，后到首因按规则记 late_primary 次生）；
+        - close 已完成：并入同一 ShutdownReport 并**原子重写**同一路径的磁盘报告，ok/residue_free 随之重算。
         调用方被取消不会取消关停链（shield）。永不抛异常——通常在 finally 里调。"""
 
+        late = {
+            "trigger": trigger,
+            "first_cause": first_cause,
+            "secondary_causes": tuple(secondary_causes),
+            "external_residue": external_residue,
+        }
         if self._close_task is None:
             self._close_task = asyncio.get_running_loop().create_task(
                 self._run_close(reason, trigger, first_cause, tuple(secondary_causes), external_residue),
                 name="rh2-bringup-shutdown",
             )
+        elif first_cause is not None or secondary_causes or external_residue:
+            if self.shutdown_report is None:
+                self._pending_late_facts.append(late)  # 进行中：落盘前吸收
+            else:
+                self._amend_completed_report(**late)  # 已完成：合并 + 原子重写
         return await asyncio.shield(self._close_task)
+
+    # -- patch 0013：后到事实的合并（唯一所有者 = 本 report） --------------------------
+
+    def _merge_late_facts(
+        self,
+        report: ShutdownReport,
+        *,
+        first_cause: BaseException | str | None,
+        trigger: str,
+        secondary_causes: tuple[str, ...],
+        external_residue: dict[str, Any] | None,
+        phase: str,
+    ) -> None:
+        """优先级规则：报告已有首因则保留，后到首因记 `late_primary(<trigger>)` 次生；次生只做
+        **完全相同文本**去重（与既有首因或既有次生逐字相同才跳过——不猜同源，宁可重复）；
+        残留在 report.residue 装配之后并入，否则先推迟。每次并入记 late_merges 一条。"""
+
+        if isinstance(first_cause, BaseException):
+            desc: str | None = describe_exception(first_cause)
+        else:
+            desc = str(first_cause)[:400] if first_cause else None
+        added_secondary = 0
+        if desc:
+            if report.first_cause is None:
+                report.note_failure("trigger", desc)
+            elif desc != report.first_cause:
+                line = f"late_primary({trigger}): {desc}"
+                if line not in report.secondary_failures:  # 逐字重复的后到首因不叠加
+                    report.secondary_failures.append(line)
+                    added_secondary += 1
+        for cause in secondary_causes:
+            text = str(cause)[:400]
+            core = text.split(": ", 1)[1] if text.startswith("worker_fatal: ") else text
+            if core == report.first_cause or any(text in s for s in report.secondary_failures):
+                continue  # 逐字重复才跳过
+            report.secondary_failures.append(f"secondary: {text}")
+            added_secondary += 1
+        rows = 0
+        if external_residue:
+            if report.residue:
+                rows = self._merge_residue(report, external_residue)
+            else:
+                self._deferred_residues.append(external_residue)
+                rows = len(external_residue.get("unfinished_executions", []))
+        if desc or secondary_causes or external_residue:
+            report.late_merges.append(
+                {
+                    "phase": phase,
+                    "trigger": trigger,
+                    "first_cause": desc,
+                    "secondary_added": added_secondary,
+                    "residue_rows": rows,
+                    "at_utc": datetime.now(timezone.utc).isoformat(),
+                }
+            )
+
+    @staticmethod
+    def _merge_residue(report: ShutdownReport, external_residue: dict[str, Any]) -> int:
+        existing = list(report.residue.get("unfinished_executions", []))
+        added = 0
+        for row in external_residue.get("unfinished_executions", []):
+            if row not in existing:
+                existing.append(row)
+                added += 1
+        report.residue["unfinished_executions"] = existing
+        failure = external_residue.get("rollout_fn_shutdown_failure")
+        if failure is not None:
+            report.residue["rollout_fn_shutdown_failure"] = failure
+        elif "rollout_fn_shutdown_failure" not in report.residue:
+            report.residue["rollout_fn_shutdown_failure"] = None
+        return added
+
+    def _absorb_pending_late_facts(self, report: ShutdownReport) -> int:
+        absorbed = 0
+        while self._pending_late_facts:
+            late = self._pending_late_facts.pop(0)
+            self._merge_late_facts(report, phase="during_close", **late)
+            absorbed += 1
+        return absorbed
+
+    def _amend_completed_report(
+        self,
+        *,
+        trigger: str,
+        first_cause: BaseException | str | None,
+        secondary_causes: tuple[str, ...],
+        external_residue: dict[str, Any] | None,
+    ) -> None:
+        report = self.shutdown_report
+        assert report is not None
+        self._merge_late_facts(
+            report,
+            first_cause=first_cause,
+            trigger=trigger,
+            secondary_causes=secondary_causes,
+            external_residue=external_residue,
+            phase="after_close",
+        )
+        try:
+            self._write_report_to_disk(report)  # 同一路径原子重写：ok/residue_free 随之重算
+        except Exception as exc:  # noqa: BLE001
+            report.note_evidence_failure("evidence:shutdown_report_rewrite", f"{type(exc).__name__}: {exc}"[:300])
+        print(f"[rh2-bringup] shutdown report amended after close: ok={report.ok} first_cause={report.first_cause!r} "
+              f"secondary={report.secondary_failures} residue={report.residue}")
+
+    @staticmethod
+    def _write_report_to_disk(report: ShutdownReport) -> Path:
+        report_path = ARTIFACT_DIR / "shutdown_report.json"
+        tmp = report_path.with_suffix(".json.tmp")
+        with tmp.open("w", encoding="utf-8") as fh:
+            json.dump(report.to_dict(), fh, ensure_ascii=False, indent=1, default=str)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp, report_path)
+        return report_path
 
     def _on_run_fatal(self, exc: BaseException) -> None:
         """run-fatal 通道（generate.py `_notify_fatal_halt` 经 task-local 通知器同步调）：

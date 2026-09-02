@@ -158,6 +158,8 @@ def _assemble_rh2_service(monkeypatch) -> tuple:
     service.shutdown_report = None
     service._fatals_during_close = []
     service._closing_report = None
+    service._pending_late_facts = []
+    service._deferred_residues = []
     service._uninstall_signal_shutdown = None
     service._profile_args = SimpleNamespace(
         rollout_batch_size=2, n_samples_per_prompt=2, num_rollout=1, rollout_max_response_len=64,
@@ -522,6 +524,149 @@ async def test_dual_loop_driver_and_unrelated_worker_fatal_both_kept(world, monk
 
     report = await dispose_on_owner_loop(fn, driver_cause=driver_cause, timeout_seconds=10.0)
     assert report["trigger"] == "driver_error" and report["primary_cause"] == driver_cause
+    assert report["worker_fatal_same_origin"] is False
+    [secondary] = report["secondary_causes"]
+    assert secondary.startswith("worker_fatal: FakeGroupAdmissionFatal(identity_missing)")
+    disk = json.loads((tmp / "shutdown_report.json").read_text(encoding="utf-8"))
+    assert disk["first_cause"] == driver_cause and any("worker_fatal" in s for s in disk["secondary_failures"])
+
+
+# ---------------------------------------------------------------------------
+# patch 0013：真实 rh2_group_admission_filter → notify_run_fatal → 提前 close → dispose 后到事实
+# ---------------------------------------------------------------------------
+
+
+def _real_filter_stubborn_fn(world, monkeypatch, *, deadline: float):
+    """真实复合 group filter（无六字段身份 → GroupAdmissionFatal → notify_run_fatal）；第一个组瞬间完成
+    触发 filter fatal（worker 以它结束），第二个组吞掉取消（dispose 时到期成为未完成残留）。"""
+
+    from repoharness2.adapters.miles.group_admission import GROUP_ADMISSION_FILTER_PATH
+
+    count = [0]
+    stubborn_tasks: list[asyncio.Task] = []
+
+    async def generate(state, prompt_group, *, sampling_params, evaluation, sample_done_callback):
+        count[0] += 1
+        if count[0] == 1:
+            await asyncio.sleep(0)
+            return world.mk_gov_finished_group(prompt_group)
+        stubborn_tasks.append(asyncio.current_task())
+        try:
+            await asyncio.sleep(3600)
+        except asyncio.CancelledError:
+            await asyncio.sleep(3600)
+
+    args = _args(world, dynamic_sampling_filter_path=GROUP_ADMISSION_FILTER_PATH, rh2_shutdown_deadline_sec=deadline)
+    far, fn, source = _build_fn(world, monkeypatch, generate=generate, args=args)
+    return far, fn, stubborn_tasks
+
+
+def _assert_disk_matches_verdict(disk: dict, verdict: dict, *, driver_cause: str):
+    rh2 = verdict["rh2"]
+    assert disk["first_cause"] == rh2["first_cause"] and "GroupAdmissionFatal" in disk["first_cause"]  # 原首因 = 提前触发的 filter fatal
+    assert disk["first_cause_origin"] == "trigger"
+    assert f"late_primary(driver_error): {driver_cause}" in disk["secondary_failures"]  # driver 异常并入次生
+    assert any(s.startswith("secondary: shutdown_failure:") and "active_groups_unfinished" in s for s in disk["secondary_failures"])
+    assert disk["secondary_failures"] == rh2["secondary_failures"]
+    [row] = disk["residue"]["unfinished_executions"]  # 具体残留
+    assert row["reason"] == "active_group_unfinished_after_deadline" and row["sample_indices"] == [0, 1]
+    assert disk["residue"]["rollout_fn_shutdown_failure"]["kind"] == "rollout_fn_shutdown_incomplete"
+    assert disk["residue"] == rh2["residue"]
+    assert disk["ok"] is False and disk["residue_free"] is False and verdict["ok"] is False
+    assert verdict["secondary_causes"] and verdict["primary_cause"] == driver_cause
+
+
+async def test_dual_loop_real_filter_fatal_then_dispose_while_close_in_progress(world, monkeypatch):
+    from miles.utils.rh2_shutdown import dispose_on_owner_loop
+    from repoharness2.adapters.miles.group_admission import GroupAdmissionFatal
+
+    far, fn, stubborn_tasks = _real_filter_stubborn_fn(world, monkeypatch, deadline=0.3)
+    service, tmp = _assemble_rh2_service(monkeypatch)
+    service.adapter = _SlowAdapter(1.0)  # 提前 close 会停在 capture_sessions 步 ~1s
+    service.registry.register("s-slow", object())
+    owner = _owner_loop()
+
+    with pytest.raises(GroupAdmissionFatal) as drain_exc:  # 真实 filter 在 put() 内抛 → worker 以它结束
+        await _drain_like_production(fn)
+    assert service._close_task is not None and service._close_task.get_loop() is owner.loop  # notify 已提前触发 close
+    assert service.shutdown_report is None  # 仍在进行中
+    driver_cause = "RuntimeError: trainer failure (independent)"
+    verdict = await dispose_on_owner_loop(fn, driver_cause=driver_cause, timeout_seconds=10.0)
+    assert verdict["rollout_fn"]["active_groups_unfinished"] == 1 and verdict["worker_fatal_same_origin"] is False
+    report = service.shutdown_report
+    assert report is not None and [m["phase"] for m in report.late_merges] == ["initial", "during_close"]
+    disk = json.loads((tmp / "shutdown_report.json").read_text(encoding="utf-8"))
+    _assert_disk_matches_verdict(disk, verdict, driver_cause=driver_cause)
+    assert drain_exc.value.reason_code in disk["first_cause"]
+    for task in stubborn_tasks:
+        owner.loop.call_soon_threadsafe(task.cancel)
+    await asyncio.sleep(0.05)
+
+
+async def test_dual_loop_real_filter_fatal_then_dispose_after_close_completed(world, monkeypatch):
+    from miles.utils.rh2_shutdown import dispose_on_owner_loop
+    from repoharness2.adapters.miles.group_admission import GroupAdmissionFatal
+
+    far, fn, stubborn_tasks = _real_filter_stubborn_fn(world, monkeypatch, deadline=0.3)
+    service, tmp = _assemble_rh2_service(monkeypatch)
+    owner = _owner_loop()
+
+    with pytest.raises(GroupAdmissionFatal):
+        await _drain_like_production(fn)
+    await asyncio.wrap_future(asyncio.run_coroutine_threadsafe(service.close(), owner.loop))  # 等提前 close 完成
+    disk0 = json.loads((tmp / "shutdown_report.json").read_text(encoding="utf-8"))
+    assert disk0["residue_free"] is True and disk0["secondary_failures"] == []  # 提前报告：只有 filter fatal
+    driver_cause = "RuntimeError: trainer failure (independent)"
+    verdict = await dispose_on_owner_loop(fn, driver_cause=driver_cause, timeout_seconds=10.0)
+    report = service.shutdown_report
+    assert [m["phase"] for m in report.late_merges] == ["initial", "after_close"]
+    disk = json.loads((tmp / "shutdown_report.json").read_text(encoding="utf-8"))  # 已原子重写
+    _assert_disk_matches_verdict(disk, verdict, driver_cause=driver_cause)
+    assert not (tmp / "shutdown_report.json.tmp").exists()
+    for task in stubborn_tasks:
+        owner.loop.call_soon_threadsafe(task.cancel)
+    await asyncio.sleep(0.05)
+
+
+class _SlowAdapter:
+    def __init__(self, delay: float) -> None:
+        self.delay = delay
+        self.dropped: list[str] = []
+
+    async def drop_session(self, sid: str, *, wait_timeout: float = 5.0) -> None:
+        await asyncio.sleep(self.delay)
+        self.dropped.append(sid)
+
+
+# ---------------------------------------------------------------------------
+# patch 0013：同源判定 = 与 train_async 序列化格式严格全等；子串/空消息不再猜
+# ---------------------------------------------------------------------------
+
+
+def test_same_origin_requires_exact_serialization_match(world):
+    from miles.utils.rh2_shutdown import _same_origin, serialize_driver_cause
+
+    worker = RuntimeError("timeout")
+    assert _same_origin(worker, "RuntimeError: optimizer timeout after all-reduce") is False  # 子串不算同源
+    assert _same_origin(RuntimeError(""), "RuntimeError: anything") is False  # 空消息不匹配任意同类
+    assert _same_origin(worker, serialize_driver_cause(worker)) is True  # 真同源：严格全等
+    assert _same_origin(worker, "RuntimeError: timeout ") is False  # 多一个空格也不是
+    assert serialize_driver_cause(ValueError("x" * 500)) == "ValueError: " + "x" * 400
+
+
+async def test_dual_loop_substring_driver_cause_keeps_worker_as_secondary(world, monkeypatch):
+    """反例：driver 串包含 worker 消息为子串但不全等 → 两条原因都保留（宁可重复不静默删）。"""
+
+    from miles.utils.rh2_shutdown import dispose_on_owner_loop
+    from w5a_dispose_helpers import FakeGroupAdmissionFatal
+
+    far, fn, _source = _filter_fatal_fn(world, monkeypatch)
+    service, tmp = _assemble_rh2_service(monkeypatch)
+    with pytest.raises(FakeGroupAdmissionFatal) as drain_exc:
+        await _drain_like_production(fn)
+    driver_cause = f"FakeGroupAdmissionFatal: {drain_exc.value} (wrapped by the trainer)"  # 子串包含，非全等
+
+    report = await dispose_on_owner_loop(fn, driver_cause=driver_cause, timeout_seconds=10.0)
     assert report["worker_fatal_same_origin"] is False
     [secondary] = report["secondary_causes"]
     assert secondary.startswith("worker_fatal: FakeGroupAdmissionFatal(identity_missing)")

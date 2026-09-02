@@ -470,3 +470,67 @@ digest ≠ manifest；commit + 更新 manifest 后消失）；ruff All checks pa
 ① T0：无（退出语义与证据；不改训练语义、contracts、W1b 文件、挡板、vendored slime）。② T1：`ok` 与 `cleanup_ok` 分离
 （driver 失败时 cleanup 可能干净，judge 两者都看）；原有 dispose 步骤异常折进 verdict 不再跨 Ray 抛；同源判定用类型名 + 消息前缀。
 ③ 挡板：无新增。④ 推翻：§13 "stubborn 只断言报告存在"、§13 verdict 缺失。⑤ 见 14.6。
+
+## 15. 追加修正节（2026-09-02，codex 对 patch 0012 复核后；append-only，本节口径覆盖 §12~§14 冲突处）
+
+### 15.1 P1-A：幂等 close 冻结了后到的关停事实（rh2 侧，`bringup.py`）
+
+生产顺序：group filter fatal → `notify_run_fatal()` → BringupService **提前**启动/完成 close → driver `finally` → dispose/aclose
+才发现 driver/worker 双因与未完成组。§12 的 `close()` 在 `_close_task` 已存在时丢弃后到的 `secondary_causes`/`external_residue`，
+权威 `shutdown_report.json` 与 verdict 矛盾。修复（报告状态所有权 = 这一个 `ShutdownReport`，不加旁路 marker；cleanup 仍只执行一次）：
+
+- 新 `_merge_late_facts(report, first_cause, trigger, secondary_causes, external_residue, phase)`：首次调用与后到调用走同一合并口。
+  规则：报告已有首因则**保留**，后到首因记 `late_primary(<trigger>): …` 次生；次生只做**逐字相同**去重（与既有首因或既有
+  次生文本完全相同才跳过，`worker_fatal:` 前缀剥掉后比对——不猜同源，宁可重复）；残留并入 `residue.unfinished_executions`
+  （逐行去重）+ `residue.rollout_fn_shutdown_failure`；每次并入记 `late_merges[]`（新字段 `{phase, trigger, first_cause,
+  secondary_added, residue_rows, at_utc}`，phase ∈ initial / during_close / after_close）。
+- **close 进行中**：`close()` 把后到事实放进 `_pending_late_facts`；`_run_close` 在链前、链后、落盘前三处 `_absorb_pending_late_facts`
+  （残留因 `report.residue` 链后才装配，链前到达的进 `_deferred_residues`，装配后并入）。
+- **close 已完成**：`_amend_completed_report()` 并入同一对象并 `_write_report_to_disk()`——与首次同一路径、tmp+fsync+`os.replace`
+  原子重写；`ok`/`residue_free` 是属性，随之重算；重写失败记 `evidence:shutdown_report_rewrite`。
+- 闭包（`close_rollout_fn_and_rh2`）读到的 rh2 报告就是合并后的同一对象 → verdict 与磁盘一致。
+
+### 15.2 P1-B：`_same_origin` 子串猜同源（miles 侧，`miles/utils/rh2_shutdown.py`）
+
+新规则：`serialize_driver_cause(exc) = f"{type(exc).__name__}: {str(exc)[:400]}"`（train_async `finally` 改为调用同一函数），
+worker 异常按此序列化后与 `driver_cause` **严格全等**才算同源（只记一次）；子串/前缀/空消息一律不算——`RuntimeError("timeout")` 与
+`RuntimeError("optimizer timeout after all-reduce")` 是两条原因，都保留。
+
+### 15.3 顺手：vendor ruff
+
+`ruff check --fix`（miles 自身 pyproject 规则）修掉 `rh2_shutdown.py` 的 UP041×2（`except TimeoutError`）与 UP017（`datetime.UTC`）；
+五个改动文件（`rh2_shutdown.py`/`fully_async_rollout.py`/`fully_async_data_buffer.py`/`rollout_manager.py`/`train_async.py`）ruff 全绿。
+
+### 15.4 miles 侧改动清单（`reference/miles-rh2-integration` 工作树，未 commit；供 patch 0013 format-patch）
+
+| 文件 | 改动 |
+|---|---|
+| `miles/utils/rh2_shutdown.py` | 新 `serialize_driver_cause(exc)`；`_same_origin` 改严格全等；ruff 修复（`from datetime import datetime, UTC`、`except TimeoutError`）；`__all__` 增 `serialize_driver_cause` |
+| `train_async.py` | `driver_cause = serialize_driver_cause(driver_exc)`（与同源判定同一序列化）；import 同步 |
+
+rh2 侧：`shutdown/chain.py`（`ShutdownReport.late_merges` + `to_dict`）、`adapters/slime/bringup.py`（§15.1；`__init__` 增
+`_pending_late_facts`/`_deferred_residues`）。
+
+### 15.5 测试
+
+| 时序 / 反例 | 测试 |
+|---|---|
+| close 进行中后到事实（rh2 单元，slow drop 让 close 停在 capture_sessions） | `tests/adapters/test_w5a_shutdown_chain.py::test_late_facts_during_close_are_absorbed_before_disk_report` |
+| close 已完成后到事实（并入 + 原子重写 + 逐字重复不叠加 + cleanup 不二次） | `…::test_late_facts_after_close_amend_and_rewrite_disk_report` |
+| **真实** `rh2_group_admission_filter → notify_run_fatal → dispose`，close 进行中（双 loop） | `tests/adapters_miles/test_w5a_miles_dispose_chain.py::test_dual_loop_real_filter_fatal_then_dispose_while_close_in_progress` |
+| 同上，close 已完成 | `…::test_dual_loop_real_filter_fatal_then_dispose_after_close_completed` |
+| 同源反例：子串/空消息不去重；真同源严格全等去重一次 | `…::test_same_origin_requires_exact_serialization_match`、`…::test_dual_loop_substring_driver_cause_keeps_worker_as_secondary`（既有 `…_same_origin_deduplicated` 保留正例） |
+
+两条真实时序测试都断言：磁盘报告 `first_cause` = 提前触发的 filter fatal、`secondary_failures` 含 `late_primary(driver_error)`
+与 `shutdown_failure`、`residue.unfinished_executions` 含具体组行、`rollout_fn_shutdown_failure` 非空、`ok=false`，且与 verdict
+的 `rh2.{first_cause, secondary_failures, residue}` 逐字段相等。
+
+计数（2026-09-02 实跑）：`uv run pytest tests/ -q`（默认 pin）**1583 passed, 247 skipped**；lane A **322p/232s**（非 integration_base
+零 skip）；lane B **553 passed, 1 failed** —— 唯一失败仍是 `test_producer_tree_digest_matches_audit_manifest`（未提交 patch 0013 →
+树 digest ≠ manifest）；rh2 ruff 与 vendor 五文件 ruff 全绿；lanes 脚本未跑（预期红）。本节净变化：`tests/adapters` +2，miles 测试 11→15
+（lane B +4，lane A skip +4）。
+
+### 15.6 五段收尾（本节）
+① T0：无（证据一致性与去重规则；不改训练语义、contracts、W1b 文件、挡板、vendored slime）。② T1：后到首因不覆盖原首因而记
+`late_primary` 次生（原首因 = 时间上最早的事实）；去重只认逐字相同；已完成后的报告可被后到事实原子重写（`late_merges` 留痕）。
+③ 挡板：无。④ 推翻：§12 "后续调用带的 secondary/residue 不再并入"、§14 `_same_origin` 子串规则。⑤ 见 15.5。

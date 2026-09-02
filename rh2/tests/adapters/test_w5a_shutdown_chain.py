@@ -194,6 +194,8 @@ def _assemble_service(
     service.shutdown_report = None
     service._fatals_during_close = []
     service._closing_report = None
+    service._pending_late_facts = []
+    service._deferred_residues = []
     service._uninstall_signal_shutdown = None
     service._profile_args = profile_args or SimpleNamespace(
         rollout_batch_size=2,
@@ -717,6 +719,94 @@ async def test_close_bringup_service_forwards_first_cause_from_miles_dispose(tmp
     report = await bringup.close_bringup_service(reason="rollout_manager_dispose", first_cause=worker_exc)
     assert report is not None and report.trigger == "run_fatal" and report.reason == "rollout_manager_dispose"
     assert report.first_cause_origin == "trigger" and "identity_missing" in report.first_cause and not report.ok
+
+
+# ---------------------------------------------------------------------------
+# 5c. patch 0013：后到的关停事实不被幂等 close 冻结（进行中 → pending 吸收；已完成 → 合并重写）
+# ---------------------------------------------------------------------------
+
+_LATE_RESIDUE = {
+    "unfinished_executions": [
+        {"source": "miles_rollout_fn", "reason": "active_group_unfinished_after_deadline", "sample_indices": [0, 1], "prompt_id": "pg0"}
+    ],
+    "rollout_fn_shutdown_failure": {"schema_id": "rh2.rollout_fn_shutdown_failure.v1", "kind": "rollout_fn_shutdown_incomplete", "problems": [{"kind": "active_groups_unfinished", "count": 1}]},
+}
+
+
+def _assert_late_facts_landed(disk: dict, report, early_first_cause: str, driver_cause: str):
+    assert disk["first_cause"] == report.first_cause == early_first_cause  # 原首因保留
+    assert disk["first_cause_origin"] == "trigger"
+    assert f"late_primary(driver_error): {driver_cause}" in disk["secondary_failures"]  # 后到首因按规则记次生
+    assert any(s.startswith("secondary: shutdown_failure:") for s in disk["secondary_failures"])
+    assert not any("worker_fatal" in s for s in disk["secondary_failures"])  # 与首因逐字相同的 worker_fatal 不重复
+    [row] = disk["residue"]["unfinished_executions"]
+    assert row["reason"] == "active_group_unfinished_after_deadline" and row["sample_indices"] == [0, 1]
+    assert disk["residue"]["rollout_fn_shutdown_failure"]["kind"] == "rollout_fn_shutdown_incomplete"
+    assert disk["residue_free"] is False and disk["ok"] is False
+    assert disk["residue"] == report.residue and disk["secondary_failures"] == report.secondary_failures
+
+
+async def test_late_facts_during_close_are_absorbed_before_disk_report(tmp_path, monkeypatch):
+    """时序 1：filter fatal 经 notify_run_fatal 提前触发 close，close 进行中 dispose 才带来
+    driver/worker 双因 + 未完成组 → pending，落盘前吸收；磁盘报告 == 内存报告。"""
+
+    slow_adapter = _FakeSharedAdapter(drop_delay=0.5)  # 让 close 停在 capture_sessions 步
+    service, _docker = _assemble_service(tmp_path, monkeypatch, adapter=slow_adapter)
+    service.registry.register("s-slow", object())
+    monkeypatch.setattr(bringup.BringupService, "_instance", service)
+    fatal = FatalExecutionInfrastructureError("identity_missing", "filter fatal in put()")
+    assert bringup.notify_run_fatal(fatal) is True  # 提前 close 已开始
+    await asyncio.sleep(0.1)
+    assert service._close_task is not None and service.shutdown_report is None  # 进行中
+    early_first_cause = "FatalExecutionInfrastructureError(identity_missing): identity_missing: filter fatal in put()"
+    driver_cause = "RuntimeError: trainer failure"
+    report = await bringup.close_bringup_service(
+        reason="rollout_manager_dispose",
+        trigger="driver_error",
+        first_cause=driver_cause,
+        secondary_causes=[f"worker_fatal: {early_first_cause}", "shutdown_failure: {\"kind\": \"rollout_fn_shutdown_incomplete\"}"],
+        external_residue=_LATE_RESIDUE,
+    )
+    assert report is service.shutdown_report
+    assert [m["phase"] for m in report.late_merges] == ["initial", "during_close"]
+    disk = json.loads((bringup.ARTIFACT_DIR / "shutdown_report.json").read_text(encoding="utf-8"))
+    _assert_late_facts_landed(disk, report, early_first_cause, driver_cause)
+    assert service.app_handle.stop_calls == 1  # cleanup 仍只执行一次
+
+
+async def test_late_facts_after_close_amend_and_rewrite_disk_report(tmp_path, monkeypatch):
+    """时序 2：close 已完成、报告已落盘（ok=false 只因 filter fatal、无残留）→ 后到事实并入同一
+    报告并原子重写同一路径；ok/residue_free 重算；cleanup 不再执行。"""
+
+    service, _docker = _assemble_service(tmp_path, monkeypatch)
+    monkeypatch.setattr(bringup.BringupService, "_instance", service)
+    fatal = FatalExecutionInfrastructureError("identity_missing", "filter fatal in put()")
+    assert bringup.notify_run_fatal(fatal) is True
+    first = await service.close()
+    disk0 = json.loads((bringup.ARTIFACT_DIR / "shutdown_report.json").read_text(encoding="utf-8"))
+    assert disk0["residue_free"] is True and disk0["secondary_failures"] == [] and disk0["late_merges"][0]["phase"] == "initial"
+    early_first_cause = disk0["first_cause"]
+    driver_cause = "RuntimeError: trainer failure"
+    report = await bringup.close_bringup_service(
+        reason="rollout_manager_dispose",
+        trigger="driver_error",
+        first_cause=driver_cause,
+        secondary_causes=[f"worker_fatal: {early_first_cause}", "shutdown_failure: {\"kind\": \"rollout_fn_shutdown_incomplete\"}"],
+        external_residue=_LATE_RESIDUE,
+    )
+    assert report is first  # 同一 ShutdownReport 对象
+    assert [m["phase"] for m in report.late_merges] == ["initial", "after_close"]
+    disk = json.loads((bringup.ARTIFACT_DIR / "shutdown_report.json").read_text(encoding="utf-8"))
+    _assert_late_facts_landed(disk, report, early_first_cause, driver_cause)
+    assert not (bringup.ARTIFACT_DIR / "shutdown_report.json.tmp").exists()  # 原子重写无残留 tmp
+    assert service.app_handle.stop_calls == 1  # cleanup 没有第二次
+    # 再来一次完全相同的后到事实：逐字重复不叠加
+    again = await bringup.close_bringup_service(
+        reason="rollout_manager_dispose", trigger="driver_error", first_cause=driver_cause,
+        secondary_causes=[f"worker_fatal: {early_first_cause}"], external_residue=_LATE_RESIDUE,
+    )
+    assert again is first and len(report.residue["unfinished_executions"]) == 1
+    assert report.secondary_failures.count(f"late_primary(driver_error): {driver_cause}") == 1
 
 
 # ---------------------------------------------------------------------------
