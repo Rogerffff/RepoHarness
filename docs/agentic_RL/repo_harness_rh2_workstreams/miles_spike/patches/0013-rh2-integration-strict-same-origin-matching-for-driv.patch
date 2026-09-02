@@ -1,0 +1,113 @@
+From d66576aeace1d7f2bdf529056fc16e31d323ba9f Mon Sep 17 00:00:00 2001
+From: Codex <jufangjian@gmail.com>
+Date: Wed, 2 Sep 2026 17:26:49 +0800
+Subject: [PATCH] [rh2-integration] strict same-origin matching for
+ driver/worker causes; ruff cleanup
+
+serialize_driver_cause() is the single serialisation used by train_async
+and by _same_origin(): a worker exception is treated as the driver cause's
+own propagation only when the two serialisations are exactly equal
+(substring/prefix/empty-message matches no longer deduplicate, so an
+independent worker failure is never silently dropped). Ruff fixes in the
+rh2 shutdown helper.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ miles/utils/rh2_shutdown.py | 26 +++++++++++++++-----------
+ train_async.py              |  4 ++--
+ 2 files changed, 17 insertions(+), 13 deletions(-)
+
+diff --git a/miles/utils/rh2_shutdown.py b/miles/utils/rh2_shutdown.py
+index 869b13b9d..25b061c5d 100644
+--- a/miles/utils/rh2_shutdown.py
++++ b/miles/utils/rh2_shutdown.py
+@@ -37,8 +37,7 @@ import asyncio
+ import json
+ import logging
+ import os
+-import time
+-from datetime import datetime, timezone
++from datetime import datetime, UTC
+ from pathlib import Path
+ from typing import Any
+ 
+@@ -160,17 +159,21 @@ def unfinished_executions_from_failure(failure: dict[str, Any] | None) -> list[d
+     return rows
+ 
+ 
++def serialize_driver_cause(exc: BaseException) -> str:
++    """The exact serialization train_async's ``finally`` uses for the in-flight driver exception."""
++
++    return f"{type(exc).__name__}: {str(exc)[:400]}"
++
++
+ def _same_origin(worker_exc: BaseException | None, driver_cause: str | None) -> bool:
+-    """The driver exception is the worker fatal's own propagation (train_async formats it as
+-    ``f"{type(exc).__name__}: {str(exc)[:400]}"``): same type name and message prefix."""
++    """patch 0013: same origin only when the worker exception, serialized **exactly** like
++    train_async serializes the driver exception, equals ``driver_cause`` (the driver saw the
++    worker fatal itself propagate). No substring or prefix guessing: ``RuntimeError("timeout")``
++    vs ``RuntimeError("optimizer timeout after all-reduce")`` are two causes and both are kept."""
+ 
+     if worker_exc is None or not driver_cause:
+         return False
+-    name = type(worker_exc).__name__
+-    if not driver_cause.startswith(name + ":"):
+-        return False
+-    message = str(worker_exc)[:200]
+-    return message == "" or message in driver_cause
++    return serialize_driver_cause(worker_exc) == driver_cause
+ 
+ 
+ # ---------------------------------------------------------------------------
+@@ -315,7 +318,7 @@ async def dispose_on_owner_loop(
+     )
+     try:
+         return await asyncio.wait_for(asyncio.shield(asyncio.wrap_future(concurrent_future)), timeout=timeout)
+-    except (TimeoutError, asyncio.TimeoutError):
++    except TimeoutError:
+         logger.error("[rh2-integration] dispose closure did not finish within %.1fs", timeout)
+         return {
+             "schema_id": SHUTDOWN_VERDICT_SCHEMA_ID,
+@@ -349,7 +352,7 @@ def write_shutdown_failure_marker(verdict: dict[str, Any], *, driver_cause: str
+     path = directory / SHUTDOWN_FAILURE_MARKER
+     payload = {
+         "schema_id": "rh2.shutdown_failure_marker.v1",
+-        "written_at_utc": datetime.now(timezone.utc).isoformat(),
++        "written_at_utc": datetime.now(UTC).isoformat(),
+         "driver_cause": driver_cause,
+         "verdict": verdict,
+     }
+@@ -409,6 +412,7 @@ __all__ = [
+     "dispose_on_owner_loop",
+     "dispose_timeout_seconds",
+     "raise_if_shutdown_failed",
++    "serialize_driver_cause",
+     "shutdown_evidence_dir",
+     "shutdown_failure_from_aclose",
+     "unfinished_executions_from_failure",
+diff --git a/train_async.py b/train_async.py
+index 162a72275..f054d901f 100644
+--- a/train_async.py
++++ b/train_async.py
+@@ -14,7 +14,7 @@ from miles.utils.ft_utils.control_server.server import start_control_server
+ from miles.utils.ft_utils.mini_ft_controller import maybe_start_mini_ft_controller
+ from miles.utils.logging_utils import configure_logger
+ from miles.utils.misc import should_run_periodic_action
+-from miles.utils.rh2_shutdown import raise_if_shutdown_failed
++from miles.utils.rh2_shutdown import raise_if_shutdown_failed, serialize_driver_cause
+ from miles.utils.tracking_utils.tracking import finish_tracking, init_tracking
+ 
+ logger = logging.getLogger(__name__)
+@@ -194,7 +194,7 @@ async def train(args):
+         await eval_dispatcher.drain()
+     finally:
+         driver_exc = sys.exc_info()[1]
+-        driver_cause = f"{type(driver_exc).__name__}: {str(driver_exc)[:400]}" if driver_exc is not None else None
++        driver_cause = serialize_driver_cause(driver_exc) if driver_exc is not None else None
+         try:
+             verdict = await rollout_manager.dispose.remote(driver_cause=driver_cause)
+         except Exception as exc:  # noqa: BLE001 - the verdict carries it; policy below decides
+-- 
+2.50.1 (Apple Git-155)
+
