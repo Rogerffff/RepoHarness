@@ -396,3 +396,77 @@ commit + 更新 manifest 后消失）；ruff All checks passed；lanes 脚本未
 期限默认 60s/总超时 900s；worker 自身 fatal 优先于 driver cause；SIGTERM opt-in 在 miles 拓扑不可用（记录不炸）。
 ③ 挡板：无新增。④ 推翻：§12 单 loop 测试（删除）、§12.1 "dispose 直接 await" 形态。⑤ 见 13.4。
 未改变：B5 顺序、A5 无 disposition、fa_formal 挡板、`contracts/`、W1b 那组文件、`rh2/src/slime` vendored 文件（逐字节不动）。
+
+## 14. 追加修正节（2026-09-02，codex 对 patch 0011 聚焦复核后；append-only，本节口径覆盖 §13 冲突处）
+
+### 14.1 缺口：底层已发现关停失败，却没有上提成 run 失败
+
+(a) `aclose()` 报告 `deadline_exceeded / worker_unfinished / active_groups_unfinished / close_error / buffer_closed=false`
+时，§13 的闭包只读 `worker_exception`，最终 `shutdown_report.json` 仍 `ok=true`（§13 stubborn 测试只断言"报告存在"，假绿）；
+(b) 整体 900s 超时只记 `timed_out`，`dispose()` 正常返回，run 可能以成功退出；(c) driver 异常与 worker 异常同时发生时 worker
+覆盖 driver_cause。
+
+### 14.2 miles 侧改动（`reference/miles-rh2-integration` 工作树，未 commit；供 patch 0012 format-patch）
+
+| 文件 | 函数/符号 |
+|---|---|
+| `miles/utils/rh2_shutdown.py` | 新 `ShutdownFailure(verdict)`（typed run 失败）、`SHUTDOWN_FAILURE_SCHEMA_ID`/`SHUTDOWN_VERDICT_SCHEMA_ID`/`SHUTDOWN_FAILURE_MARKER`、`shutdown_failure_from_aclose(fn_report, aclose_error)`（残留 → typed 失败）、`unfinished_executions_from_failure`（→ rh2 残留行）、`_same_origin(worker_exc, driver_cause)`；`close_rollout_fn_and_rh2` 重写（优先级 + secondary + external_residue + `ok/cleanup_ok`）；`dispose_on_owner_loop` 超时返回失败 verdict；新 `shutdown_evidence_dir()`、`write_shutdown_failure_marker()`、`raise_if_shutdown_failed(verdict, driver_cause, evidence_dir)` |
+| `miles/rollout/fully_async_rollout.py` | 新 `_group_facts(prompt_group)`；`_submit_one_group` 把组标识挂到 task（`task.rh2_group_facts`）；`aclose` 报告新增 `active_groups_unfinished_facts`（未完成组的具体标识） |
+| `miles/ray/rollout/rollout_manager.py` | `dispose(driver_cause=None)` **返回可序列化 verdict** `{schema_id, ok, cleanup_ok, timed_out, errors, report, original_dispose_error}`；原有 dispose 步骤 try/except 进 verdict；仍不在 actor loop 上 await owner loop 对象 |
+| `train_async.py` | `finally`：`verdict = await dispose.remote(driver_cause=…)`（调用失败也折成 verdict）→ `raise_if_shutdown_failed(verdict, driver_cause=driver_cause)`；`import raise_if_shutdown_failed` |
+
+### 14.3 typed 关停失败的结构（`rh2.rollout_fn_shutdown_failure.v1`，可序列化）
+
+```json
+{"schema_id": "rh2.rollout_fn_shutdown_failure.v1", "kind": "rollout_fn_shutdown_incomplete",
+ "problems": [{"kind": "active_groups_unfinished", "count": 1, "reason": "...",
+               "groups": [{"group_index": null, "sample_indices": [0, 1], "instance_id": null, "prompt_id": "pg0", "rh2_prompt_group_id": null}]},
+              {"kind": "worker_unfinished" | "close_error" | "buffer_not_closed" | "aclose_raised" | "deadline_exceeded", "reason": "..."}],
+ "worker_state": "cancelled|failed|unfinished|returned|never_started", "deadline_seconds": 60.0, "elapsed_seconds": 60.01}
+```
+进 rh2 报告的形状：`first_cause = "shutdown_failure: {…}"`（trigger=`shutdown_failure`）或 `secondary_failures[] = "secondary: shutdown_failure: {…}"`；
+`residue.unfinished_executions[]` 追加 `{"source": "miles_rollout_fn", "reason": "active_group_unfinished_after_deadline"|"worker_unfinished_after_deadline", **组标识}`；
+`residue.rollout_fn_shutdown_failure` = 上述对象 → `residue_free=false` → `ok=false`。rh2 侧新增 `close()`/`close_bringup_service()`
+参数 `secondary_causes`、`external_residue`（`bringup.py`）。
+
+verdict（`rh2.rollout_shutdown_verdict.v1`）：`ok` = 无 error ∧ 无残留 ∧ rh2 报告 ok ∧ 无任何首因；`cleanup_ok` = 无 error ∧ 无残留 ∧
+rh2 清理步全绿/无残留/无 evidence 失败（不看首因）；`timed_out`、`errors`、`primary_cause`、`trigger`、`secondary_causes`、
+`worker_fatal_same_origin`、`rollout_fn`、`shutdown_failure`、`rh2{ok,cleanup_ok,first_cause,secondary_failures,residue,evidence_failures}`。
+
+### 14.4 首因 / 次生优先级规则
+
+1. **在途 driver 异常 = primary**（trigger `driver_error`）。
+2. worker 自身异常：无 driver 异常时 = primary（trigger `run_fatal`）；有 driver 异常且**同源**（driver 串 = `f"{type(worker_exc).__name__}: {str(worker_exc)[:400]}"`，
+   即 driver 看到的就是 worker fatal 的传播）→ 只记一次（`worker_fatal_same_origin=true`，`rollout_fn.worker_exception` 仍保留事实）；
+   不同源 → `secondary_causes += "worker_fatal: …"`。
+3. typed 关停失败：无其它首因 → primary（trigger `shutdown_failure`）；否则 `secondary_causes += "shutdown_failure: …"`。
+4. 全部进 rh2 报告（首因 + `secondary_failures` + 残留）；正常取消路径无任何首因 → `ok=true`。
+
+### 14.5 train_async 非成功退出的形式
+
+`finally` 里 `raise_if_shutdown_failed(verdict, driver_cause=…)`：verdict ok → 无事；**无 driver 异常且 verdict 不 ok → 写
+`shutdown_failure.json` 标记（`RH2_SHUTDOWN_EVIDENCE_DIR` → `MILES_RH2_EVENT_DIR` → cwd）+ `raise ShutdownFailure(verdict)`**（typed，
+进程退出码非 0）；有 driver 异常 → 只写标记 + 日志，原异常继续传播（cleanup failure 已作为 secondary 进 rh2 报告；报告因超时未产生时
+标记文件是唯一可读证据）。`dispose.remote()` 调用本身失败也折成不 ok 的 verdict。
+
+### 14.6 测试（`tests/adapters_miles/test_w5a_miles_dispose_chain.py`，真实双 loop，11 例）
+
+| 验收 | 测试 |
+|---|---|
+| ① stubborn active group → 最终报告 `ok=false` + 具体残留（sample_indices/prompt_id）+ `ShutdownFailure` + 标记 | `test_dual_loop_stubborn_active_group_fails_final_report_with_concrete_residue` |
+| ② worker unfinished → 同上 | `test_dual_loop_worker_unfinished_fails_final_report` |
+| ③ buffer close error → 同上（`close_error` + `buffer_not_closed`） | `test_dual_loop_buffer_close_error_fails_final_report` |
+| ④ 正常路径整体超时 / 闭包错误 → `ShutdownFailure`（非成功退出）+ 标记 | `test_dispose_timeout_or_closure_error_makes_run_exit_non_success` |
+| ⑤ 已有训练异常 + cleanup failure → driver primary、shutdown_failure secondary 持久化、标记文件、不抛新异常 | `test_dual_loop_driver_error_plus_cleanup_failure_keeps_driver_primary` |
+| ⑥ 正常取消 → `ok=true`、无标记、不抛 | `test_dual_loop_normal_dispose_completes_without_external_timer` |
+| ⑦ driver 与 worker fatal 同时：同源去重 / 不同源双保留 | `test_dual_loop_driver_and_worker_fatal_same_origin_deduplicated`、`test_dual_loop_driver_and_unrelated_worker_fatal_both_kept`（另 `test_dual_loop_worker_fatal_alone_is_primary_first_cause`） |
+| waiter 唤醒 / 源码事实 | `test_dual_loop_buffer_waiters_wake_with_typed_error`、`test_dispose_owner_loop_and_train_async_try_placement_source_facts`（dispose 返回 verdict、finally 走 `raise_if_shutdown_failed`） |
+
+计数（2026-09-02 实跑）：`uv run pytest tests/ -q`（默认 pin）**1581 passed, 243 skipped**；lane A **322p/228s**（非 integration_base 零 skip）；
+lane B **549 passed, 1 failed** —— 唯一失败仍是 `test_producer_tree_digest_matches_audit_manifest`（工作树含未提交 patch 0012，源码树
+digest ≠ manifest；commit + 更新 manifest 后消失）；ruff All checks passed；lanes 脚本未跑（预期红）。本节净变化：miles 测试 7→11（lane B +4，lane A skip +4）。
+
+### 14.7 五段收尾（本节）
+① T0：无（退出语义与证据；不改训练语义、contracts、W1b 文件、挡板、vendored slime）。② T1：`ok` 与 `cleanup_ok` 分离
+（driver 失败时 cleanup 可能干净，judge 两者都看）；原有 dispose 步骤异常折进 verdict 不再跨 Ray 抛；同源判定用类型名 + 消息前缀。
+③ 挡板：无新增。④ 推翻：§13 "stubborn 只断言报告存在"、§13 verdict 缺失。⑤ 见 14.6。

@@ -1594,14 +1594,23 @@ class BringupService:
         return absorbed
 
     async def _run_close(
-        self, reason: str, trigger: str, first_cause: BaseException | str | None
+        self,
+        reason: str,
+        trigger: str,
+        first_cause: BaseException | str | None,
+        secondary_causes: tuple[str, ...] = (),
+        external_residue: dict[str, Any] | None = None,
     ) -> ShutdownReport:
         report = ShutdownReport(reason=reason, trigger=trigger)
         self._closing_report = report
         if isinstance(first_cause, BaseException):
             report.note_failure("trigger", describe_exception(first_cause))
         elif first_cause:
-            report.note_failure("trigger", str(first_cause)[:300])
+            report.note_failure("trigger", str(first_cause)[:400])
+        # patch 0012：调用方（miles dispose 闭包）已定优先级的次生原因（独立 worker 异常 /
+        # rollout fn 关停残留）——持久化进报告，不与首因混淆
+        for cause in secondary_causes:
+            report.note_failure("secondary", str(cause)[:400])
         self._absorb_fatals_during_close(report)
         report = await run_shutdown_chain(
             self._build_shutdown_steps(), reason=reason, trigger=trigger, first_cause=None, report=report
@@ -1625,6 +1634,13 @@ class BringupService:
             "hooks_left_after_close": registry_close.get("hooks_left_after_close", 0),
             "adapter_thread_alive": bool(http.get("thread_alive_after_stop", False)),
         }
+        if external_residue:
+            # patch 0012：miles rollout fn 关停到期放弃的 worker/组（具体组标识 + 原因）并入
+            # 残留——任一非空即 residue_free=False → ok=False，不再假绿
+            report.residue["unfinished_executions"] = list(report.residue["unfinished_executions"]) + list(
+                external_residue.get("unfinished_executions", [])
+            )
+            report.residue["rollout_fn_shutdown_failure"] = external_residue.get("rollout_fn_shutdown_failure")
         report.rejected_after_close = dict(self.lifecycle.rejected_after_close)
         self.lifecycle.mark_closed()
         if type(self)._instance is self:
@@ -1669,14 +1685,17 @@ class BringupService:
         reason: str = "owner_close",
         trigger: str = "owner_close",
         first_cause: BaseException | str | None = None,
+        secondary_causes: tuple[str, ...] | list[str] = (),
+        external_residue: dict[str, Any] | None = None,
     ) -> ShutdownReport:
         """显式关停（幂等）：首次调用创建关停 task，后续调用（含并发调用）等待同一
-        task 并拿到**同一个**报告对象；调用方被取消不会取消关停链（shield）。
-        永不抛异常——通常在 finally 里调，抛出会顶掉真正的首因。"""
+        task 并拿到**同一个**报告对象（后续调用带的 secondary/residue 不再并入）；
+        调用方被取消不会取消关停链（shield）。永不抛异常——通常在 finally 里调。"""
 
         if self._close_task is None:
             self._close_task = asyncio.get_running_loop().create_task(
-                self._run_close(reason, trigger, first_cause), name="rh2-bringup-shutdown"
+                self._run_close(reason, trigger, first_cause, tuple(secondary_causes), external_residue),
+                name="rh2-bringup-shutdown",
             )
         return await asyncio.shield(self._close_task)
 
@@ -1809,6 +1828,8 @@ async def close_bringup_service(
     reason: str = "external_close",
     trigger: str = "owner_close",
     first_cause: BaseException | str | None = None,
+    secondary_causes: tuple[str, ...] | list[str] = (),
+    external_residue: dict[str, Any] | None = None,
 ) -> ShutdownReport | None:
     """W5a 关停入口（进程级）：关掉本进程的 BringupService 单例；从未启动则返回 None。
 
@@ -1824,7 +1845,13 @@ async def close_bringup_service(
         return None
     if first_cause is not None and trigger == "owner_close":
         trigger = "run_fatal"
-    return await service.close(reason=reason, trigger=trigger, first_cause=first_cause)
+    return await service.close(
+        reason=reason,
+        trigger=trigger,
+        first_cause=first_cause,
+        secondary_causes=secondary_causes,
+        external_residue=external_residue,
+    )
 
 
 def notify_run_fatal(exc: BaseException) -> bool:
