@@ -192,6 +192,8 @@ def _assemble_service(
     service.lifecycle.on_fatal = service._on_run_fatal
     service._close_task = None
     service.shutdown_report = None
+    service._fatals_during_close = []
+    service._closing_report = None
     service._uninstall_signal_shutdown = None
     service._profile_args = profile_args or SimpleNamespace(
         rollout_batch_size=2,
@@ -504,7 +506,8 @@ async def test_bringup_close_normal_closes_all_components_and_is_idempotent(tmp_
     written = json.loads((bringup.ARTIFACT_DIR / "shutdown_report.json").read_text(encoding="utf-8"))
     assert written["ok"] is True and written["schema_id"] == "rh2.shutdown_report.v1"
     closure = json.loads((bringup.ARTIFACT_DIR / "resource_closure.json").read_text(encoding="utf-8"))
-    assert closure["memory_upper_bound"]["upper_bound_bytes"] > 0
+    assert closure["memory_estimate"]["status"] == "unbounded_or_unknown"
+    assert closure["memory_estimate"]["estimate_bytes"] > 0
     assert closure["growth_collections"]["grading_manager_records"]["length"] == 1
     # 幂等：同一报告对象，组件不二次 stop
     report2 = await service.close(reason="again")
@@ -622,6 +625,98 @@ async def test_bringup_close_fatal_first_cause_kept_slow_component_timeout_secon
     assert report.step("adapter_http").status == "ok" and service.app_handle.stop_calls == 1
     assert not report.ok and service.lifecycle.fatal_seen == [fatal]
     assert service.shutdown_report is report
+
+
+# ---------------------------------------------------------------------------
+# 5b. codex W5a 复核 #3：两条假绿路径 + 执行外 fatal 的进程级通知入口
+# ---------------------------------------------------------------------------
+
+
+async def test_completed_event_write_failure_is_reflected_in_disk_report(tmp_path, monkeypatch):
+    """假绿 (a)：此前先落盘报告再写完成事件——事件写失败只留在内存报告，磁盘报告仍 ok。
+    现在磁盘报告最后生成，必须带上该失败且 ok=false。"""
+
+    service, _docker = _assemble_service(tmp_path, monkeypatch)
+    original = service._append_event
+
+    def flaky_append(event):
+        if event.get("event") == "shutdown_completed":
+            raise OSError("events file vanished between begin and completed")
+        return original(event)
+
+    service._append_event = flaky_append
+    report = await service.close(reason="completed_event_negative")
+    assert not report.ok
+    disk = json.loads((bringup.ARTIFACT_DIR / "shutdown_report.json").read_text(encoding="utf-8"))
+    assert disk["ok"] is False
+    assert any(f.startswith("evidence:shutdown_completed_event") for f in disk["evidence_failures"])
+    assert disk["first_cause_origin"] == "evidence:shutdown_completed_event"
+    assert disk["first_cause"] == report.first_cause
+    # 清理本身没少
+    assert report.cleanup_clean and service.registry.closed and service.app_handle.stop_calls == 1
+
+
+async def test_run_fatal_during_close_lands_in_final_report(tmp_path, monkeypatch):
+    """假绿 (b)：关停进行中到达的 run-fatal 此前被 `_on_run_fatal` 直接 return 丢掉，最终
+    报告可能 ok=true/first_cause=None。现在：首因为空则成为首因，否则记次生；磁盘报告一致。"""
+
+    slow_adapter = _FakeSharedAdapter(drop_delay=0.4)  # 让 capture_sessions 步停留 0.4s
+    service, _docker = _assemble_service(tmp_path, monkeypatch, adapter=slow_adapter)
+    service.registry.register("s-slow", object())
+    close_task = asyncio.create_task(service.close(reason="normal_dispose"))
+    await asyncio.sleep(0.1)
+    assert service._close_task is not None and not service._close_task.done()  # 关停进行中
+    fatal = FatalExecutionInfrastructureError("audit_store_down", "arrived mid-shutdown")
+    service._on_run_fatal(fatal)  # 执行内通知器 / notify_run_fatal 最终都走这里
+    second = FatalExecutionInfrastructureError("outcome_producer_failed", "second mid-shutdown")
+    service._on_run_fatal(second)
+    report = await close_task
+    assert not report.ok
+    assert report.first_cause_origin == "run_fatal_during_shutdown"
+    assert "audit_store_down" in report.first_cause
+    assert any("outcome_producer_failed" in s for s in report.secondary_failures)
+    disk = json.loads((bringup.ARTIFACT_DIR / "shutdown_report.json").read_text(encoding="utf-8"))
+    assert disk["ok"] is False and disk["first_cause"] == report.first_cause
+    assert disk["first_cause_origin"] == "run_fatal_during_shutdown"
+    # 报告定稿之后到达的 fatal：不再改动报告，只留 fatal_seen（进程已在退出）
+    late = FatalExecutionInfrastructureError("late", "after report")
+    service._on_run_fatal(late)
+    assert report.first_cause == disk["first_cause"] and not any("late" in s for s in report.secondary_failures)
+
+
+async def test_notify_run_fatal_triggers_close_chain_from_outside_execution(tmp_path, monkeypatch):
+    """复合 group filter 在 miles buffer.put() 内抛的 fatal 不经过 generate.py 的
+    `_notify_fatal_halt`：进程级入口 `notify_run_fatal` 必须触发同一条关停链（首因 = 该 fatal）。"""
+
+    service, _docker = _assemble_service(tmp_path, monkeypatch)
+    monkeypatch.setattr(bringup.BringupService, "_instance", service)
+
+    class FakeGroupAdmissionFatal(RuntimeError):  # 形状 = group_admission.GroupAdmissionFatal（reason_code 属性）
+        def __init__(self, reason_code: str, message: str) -> None:
+            self.reason_code = reason_code
+            super().__init__(f"{reason_code}: {message}")
+
+    fatal = FakeGroupAdmissionFatal("identity_missing", "交付样本缺六字段身份")
+    assert bringup.notify_run_fatal(fatal) is True
+    assert service._close_task is not None  # 已调度关停链
+    report = await service.close()
+    assert report.trigger == "run_fatal" and report.reason == "run_fatal:identity_missing"
+    assert report.first_cause_origin == "trigger" and "identity_missing" in report.first_cause
+    assert service.lifecycle.fatal_seen == [fatal]
+    monkeypatch.setattr(bringup.BringupService, "_instance", None)
+    assert bringup.notify_run_fatal(fatal) is False  # 无服务：调用方照常 raise，无可关
+
+
+async def test_close_bringup_service_forwards_first_cause_from_miles_dispose(tmp_path, monkeypatch):
+    """miles `RolloutManager.dispose()` 把 rollout fn aclose 报告里的 worker_exception 作为
+    first_cause 传入：trigger 记 run_fatal、首因 = 该异常。"""
+
+    service, _docker = _assemble_service(tmp_path, monkeypatch)
+    monkeypatch.setattr(bringup.BringupService, "_instance", service)
+    worker_exc = RuntimeError("group_admission_fatal: identity_missing")
+    report = await bringup.close_bringup_service(reason="rollout_manager_dispose", first_cause=worker_exc)
+    assert report is not None and report.trigger == "run_fatal" and report.reason == "rollout_manager_dispose"
+    assert report.first_cause_origin == "trigger" and "identity_missing" in report.first_cause and not report.ok
 
 
 # ---------------------------------------------------------------------------

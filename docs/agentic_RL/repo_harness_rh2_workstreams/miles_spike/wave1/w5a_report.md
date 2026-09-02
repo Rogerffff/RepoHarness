@@ -256,3 +256,72 @@ W7 judge 拿 `resource_closure.json` 判（本包只出事实与公式，不定�
 sidecar 写失败的 run-fatal 语义（切片一修复轮已定，未动）；A5 disposition（未实现，取消事实无处置字段）；W1a 六字段身份与 F4
 绑定；W2a 视图/controller；fa_formal 挡板；s1_compat 行为（关停面对三种模式一致，s1 无 finalization store 时 `grading_queue`
 等步按事实 skipped）；`contracts/`、`reference/`、`generate.py`、`generate_fn.py`、`gate.py` 零改动。
+
+## 12. 追加修正节（2026-09-02，codex 复核 #1 / #3 / #7 后；append-only，本节口径覆盖上文冲突处）
+
+### 12.1 #1：接入 miles 生产退出链（miles 侧窄 commit + rh2 接线）
+
+上文 §9 第 1 条"集成者一行 `close_bringup_service()`"**不成立**（codex 核实：`FullyAsyncRolloutFn` 无 close 面、
+`_worker_loop` 是 `while True`、`dispose()` 不碰 rollout fn、`train_async.py` 异常退出不调 dispose）。修复 = 只改
+`reference/miles-rh2-integration` 工作树（**未在该仓 commit**，由集成者 commit / format-patch / 更新 manifest）：
+
+| 文件 | 改动 |
+|---|---|
+| `miles/rollout/fully_async_data_buffer.py` | 新增 `DataBufferClosed(op)`；`DataBuffer.aclose()` 默认 no-op（custom buffer 不破）；`DefaultDataBuffer`：`_closed` 标志、`aclose()`（置位 + `notify_all`，幂等）、`closed` 属性；`put()` 入口/等待循环/被唤醒后、`get()` 循环顶/被唤醒后都检查 closed 并抛 `DataBufferClosed`（关闭后 buffer 内已有的组也不再交出） |
+| `miles/rollout/fully_async_rollout.py` | 新增 `RolloutFnClosed(op)`；`_active_groups`（worker 用同一 set 对象，`active.difference_update(done)` 取代重新赋值）、`_closed`、`_close_report`；`__call__`/`_submit_one_group`/`_next_group` 关闭后 typed 拒绝（`_next_group` 里 worker 被取消时报 `RolloutFnClosed` 而不是把 CancelledError 漏给调用方）；`aclose()`：置 closed → cancel+await `_worker` → cancel+await 全部 active group task → `buffer.aclose()`；报告 `worker_state/worker_exception/active_groups_cancelled/buffer_closed`，**worker 自己的异常对象保留**（filter fatal 在 put() 内抛 → worker 以它结束）；永不抛，幂等 |
+| `miles/ray/rollout/rollout_manager.py` | `dispose()` 改为 `async def`：先 `await generate_rollout.aclose()`（取 `worker_exception`）→ `await close_bringup_service(reason="rollout_manager_dispose", first_cause=worker_exception)`（`ImportError` = 无 rh2 则跳过）→ 原有 data_source/analyzer/metric/eval/monitor 关闭；每段 `except Exception` 记日志不掩盖首因，异常路径也走完 |
+| `train_async.py` | 训练循环 + `eval_dispatcher.drain()` 包进 `try`；`finally` 里 `await rollout_manager.dispose.remote()`（正常/异常路径都执行）；已在异常退出时 dispose 再失败只记日志（`sys.exc_info()` 判定），正常路径失败照抛；`import sys` |
+
+关停顺序最终形态：**train driver finally → `RolloutManager.dispose()` → ① `rollout_fn.aclose()`：停新提交 → cancel/await worker →
+cancel/await active group → `buffer.aclose()` 唤醒 put/get waiter（`DataBufferClosed`）→ ② `close_bringup_service(first_cause=worker_exception)`：
+§1 十步链（在飞执行等/取消 → 评分队列/容器 → capture 会话/registry → adapter HTTP → 残留事实 → 资源闭包）→ 完成事件 → 吸收
+关停期 fatal → 最后落盘 `shutdown_report.json` → ③ miles 原有 dispose → ④ launch trap run-label 兜底 + 检查。**
+关闭后 typed 拒绝面新增：`RolloutFnClosed`（train/eval/submit/get）、`DataBufferClosed`（put/get）。
+
+rh2 侧：`close_bringup_service(first_cause=...)` 接受异常或字符串；有 first_cause 且 trigger 未指定时记 `run_fatal`。
+
+### 12.2 #3：两条假绿路径 + 执行外 fatal 通道
+
+- (a) **完成事件写失败不进磁盘报告**：`_run_close` 顺序改为 完成事件 → 吸收关停期 fatal → **最后**原子写 `shutdown_report.json`；
+  报告文件自身写失败只能留在内存报告与 stdout（无法自证）。
+- (b) **关停期间的 run-fatal 被丢弃**：`_on_run_fatal` 在关停进行中把 fatal 排进 `_fatals_during_close`；`_run_close` 在链前、链后、
+  完成事件后三处 `_absorb_fatals_during_close`（首因为空则成为首因 `run_fatal_during_shutdown`，否则记次生；`ok` 必为 False）。
+  报告定稿后到达的 fatal 只留 `lifecycle.fatal_seen`。
+- **filter fatal 通道**：两条路径都接上——① 生产路径：`GroupAdmissionFatal` 在 miles `put()` 内抛 → worker 以它结束 → `aclose()`
+  保留为 `worker_exception` → `dispose` 作为 `first_cause` 传给 rh2 关停链（不需要改 group_admission.py）；② 进程内即时路径：
+  新增 `bringup.notify_run_fatal(exc)`（无服务返回 False），供复合 filter 在 `except GroupAdmissionFatal as exc: notify_run_fatal(exc); raise`
+  处调用——**这一行在 `adapters/miles/group_admission.py`，归另一 agent，本轮未改**；不接它时路径 ① 仍成立（差别只是关停由
+  driver finally 触发而非 put() 时刻）。
+- 测试：`test_completed_event_write_failure_is_reflected_in_disk_report`、`test_run_fatal_during_close_lands_in_final_report`、
+  `test_notify_run_fatal_triggers_close_chain_from_outside_execution`、`test_close_bringup_service_forwards_first_cause_from_miles_dispose`
+  （`tests/adapters/test_w5a_shutdown_chain.py`）；`test_rollout_fn_aclose_preserves_worker_exception_as_first_cause_for_rh2`
+  （`tests/adapters_miles/test_w5a_miles_dispose_chain.py`，真实 `DefaultDataBuffer.put()` 内 filter 抛 fatal → 端到端到 rh2 磁盘报告）。
+
+### 12.3 #7：`memory_upper_bound` → `memory_estimate`（口径修正，schema v2）
+
+上文 §5 的"保守上界"**不成立**：`num_rollout×batch×n×2` 限制不了 dynamic filter 持续拒绝后的补采总数、漏算已完成 buffer、
+Python 对象系数是假设值。修正（不加 attempt cap）：`resource_closure.json` schema_id → `rh2.resource_closure_facts.v2`；字段
+`memory_upper_bound` → `memory_estimate`，`status` 恒为 `unbounded_or_unknown`（输入不全为 `unavailable`），新增
+`unconstrained_sources`（attempt 无上限 / buffer 已完成组 / Python 系数假设 / 进程外内存）、`buffer_bytes`
+（`buffer_capacity_groups=capacity_factor×batch` × `samples_per_group` × 每样本）、`retained_planned_bytes`（`planned_attempts=steps×batch×n`
+是计划量非上限，去掉 ×2）、`estimate_bytes/estimate_gib`；`MemoryBoundInputs`/`estimate_memory_upper_bound` →
+`MemoryEstimateInputs`/`estimate_memory`。GPU 验收改看 `peak_rss_bytes`、`growth_collections.<name>.length`（已有字段保留）与增长趋势。
+
+### 12.4 测试/证据（2026-09-02 实跑，同一 worktree 含另一 agent 已提交的 W1b 第二段）
+
+- `uv run pytest tests/ -q`（默认 pin）：**1580 passed, 236 skipped**（含本节新增：`tests/adapters` +4，`tests/adapters_miles/test_w5a_miles_dispose_chain.py` 4 例 integration_base 在 pin 记 skip）。
+- lane A（pin）：**321 passed, 221 skipped**（`-m "not integration_base"` 零 skip；较 manifest 308p/217s：+13 = 另一 agent 本轮新增？——
+  以集成者实跑为准；本包净变化 = +0 lane A 通过、+4 skip）。
+- lane B（`RH2_MILES_PATH=reference/miles-rh2-integration`）：**541 passed, 1 failed** —— 唯一失败 =
+  `test_g1_acceptance_events::test_producer_tree_digest_matches_audit_manifest`（integration 工作树含本节未提交的 miles 改动，源码树
+  digest ≠ manifest；集成者 commit + 更新 manifest 后消失）。本包净变化 lane B = +4。
+- `bash scripts/miles_integration_lanes.sh`：未跑（集成树不干净，前置校验必红，预期）。
+- `uv run ruff check src tests scripts`：All checks passed。
+
+### 12.5 五段收尾（本节）
+
+① 待拍板 T0：无（miles 侧改动是关停/退出路径，不改训练语义；`DataBuffer.aclose` 默认 no-op 不破 custom buffer 契约；口径改名不改事实）。
+② T1：dispose 改 async（async actor，`train.py` 的 `await dispose.remote()` 同样可用）；`_next_group` 把 worker 取消映射为 `RolloutFnClosed`；
+关闭后 buffer 内已有组不再交出；`notify_run_fatal` 提供但 group_admission 侧一行未接（所有权）。③ 挡板：无新增。
+④ 推翻：§9 第 1 条"一行接线足够"、§5 "上界"口径、§1 表"链外报告先落盘"三处按本节修正。⑤ 见 12.4。
+未改变：B5 顺序、A5 无 disposition、fa_formal 挡板、`contracts/`、W1b 那组文件、`bringup.py:705` 挡板。

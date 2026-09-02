@@ -4,10 +4,12 @@
 `resource_closure.json`（schema_id `rh2.resource_closure_facts.v1`），供 W7 judge
 读取；不做采样循环、不做阈值判定、不建观测平台。两部分：
 
-1. **内存保守上界**（`estimate_memory_upper_bound`）：按"rollout 并发数 × 每执行
-   保守占用 + 进程级有界缓存 + 随 attempt 累积的集合 × 最大 attempt 数"三项相加。
-   每一项的系数都是**故意偏大的整数**并在输出里逐项列出，judge 拿到的是公式与
-   输入，不是一个黑盒数字。粗粒度是设计选择（06 W5a 行"允许粗粒度"）。
+1. **内存估计**（`estimate_memory`，状态恒为 `unbounded_or_unknown`）：按"rollout
+   并发数 × 每执行保守占用 + 进程级有界缓存 + buffer 容量 × 每样本 + 计划 attempt 数
+   × 每 attempt 累积"相加。它**不是上界**（codex W5a 复核 #7）：dynamic filter 持续拒绝
+   会让 producer 无限补采，rh2/miles 没有 attempt 总数上限，这里也不加 cap；Python
+   对象开销系数是假设值。因此输出同时列出 `unconstrained_sources`，GPU 验收改看
+   peak RSS、集合实测长度与增长趋势。系数逐项公开，judge 拿到的是公式与输入。
 
    这里最重要的不是数值，而是随 attempt 增长的集合清单（`GROWING_COLLECTIONS`）
    ——就绪稿 §2.8 第 1 条要求"盘点该生产路径上会随 attempt/group/turn 增长的
@@ -38,16 +40,18 @@ from typing import Any
 
 __all__ = [
     "GROWING_COLLECTIONS",
-    "MemoryBoundInputs",
+    "MEMORY_ESTIMATE_STATUS",
+    "MEMORY_ESTIMATE_UNCONSTRAINED_SOURCES",
+    "MemoryEstimateInputs",
     "collect_growth_facts",
-    "estimate_memory_upper_bound",
+    "estimate_memory",
     "measure_fsync_latency",
     "peak_rss_bytes",
     "resource_closure_facts",
     "write_resource_closure_facts",
 ]
 
-RESOURCE_CLOSURE_SCHEMA_ID = "rh2.resource_closure_facts.v1"
+RESOURCE_CLOSURE_SCHEMA_ID = "rh2.resource_closure_facts.v2"  # v2：memory_upper_bound → memory_estimate（W5a 复核 #7）
 
 # 随 attempt/group/turn 增长的进程内集合清单（就绪稿 §2.8 第 1 条的盘点结果）。
 # 键 = 报告字段名；值 = (所在对象, 属性路径, 是否有上界, 说明)。
@@ -81,8 +85,13 @@ GROWING_COLLECTIONS: dict[str, tuple[str, str, bool, str]] = {
 
 
 @dataclass(frozen=True)
-class MemoryBoundInputs:
-    """上界估算的输入（全部是显式 profile 参数，缺一个就不算——不猜默认）。"""
+class MemoryEstimateInputs:
+    """估算的输入（全部是显式 profile 参数；缺一个就不算——不猜默认）。
+
+    **不是上界的输入**：`planned_attempts` 是计划量（steps × batch × n），不是 cap——
+    dynamic filter 持续拒绝时 producer 会不断补采，rh2/miles 没有 attempt 总数上限
+    （codex W5a 复核 #7：本模块不加 cap，改口径为估计）。
+    """
 
     max_concurrent_executions: int  # rollout 并发执行数（miles: async_max_concurrent_samples 或 batch×n）
     grading_concurrency: int  # RH2_FA_LIMIT_GRADING
@@ -91,19 +100,37 @@ class MemoryBoundInputs:
     max_new_tokens_per_turn: int  # rollout_max_response_len
     max_context_tokens: int  # rollout_max_context_len（0 = 未知，按 max_new_tokens×max_turns 估）
     top_k_support: int  # sampling-mask 支持集宽度（dense top-p tape 传 1）
-    max_attempts_retained: int  # 整个 run 的 attempt 总数上界（steps × batch × n × (1+retry)）
+    planned_attempts: int  # 计划 attempt 数（steps × batch × n）——计划量，非上限
+    buffer_capacity_groups: int = 0  # DefaultDataBuffer 容量（capacity_factor × batch 组）；0 = 未知
+    samples_per_group: int = 1  # n_samples_per_prompt（buffer 项换算成样本数）
     max_audit_artifacts: int = 256  # ModelCallProxy 有界缓存
     audit_preview_bytes: int = 4096  # bringup audit sink 的 preview 上限
 
     def __post_init__(self) -> None:
         for name, value in asdict(self).items():
             if not isinstance(value, int) or isinstance(value, bool) or value < 0:
-                raise ValueError(f"MemoryBoundInputs.{name}={value!r} 必须是非负整数")
-        if self.max_concurrent_executions < 1 or self.max_attempts_retained < 1:
-            raise ValueError("max_concurrent_executions / max_attempts_retained 必须 >= 1")
+                raise ValueError(f"MemoryEstimateInputs.{name}={value!r} 必须是非负整数")
+        if self.max_concurrent_executions < 1:
+            raise ValueError("max_concurrent_executions 必须 >= 1")
         if self.top_k_support < 1:
             raise ValueError("top_k_support 必须 >= 1（dense top-p tape 传 1）")
+        if self.samples_per_group < 1:
+            raise ValueError("samples_per_group 必须 >= 1")
 
+
+# 估算的状态口径：rh2/miles 没有任何强制内存预算，估计值永远是 unbounded_or_unknown——
+# judge 看的是 peak RSS、集合长度与增长趋势（`growth_collections`），不是这个数。
+MEMORY_ESTIMATE_STATUS = "unbounded_or_unknown"
+
+# 估算没有约束住的来源（逐项列出，judge 与 owner 知道这个数为什么不是上界）。
+MEMORY_ESTIMATE_UNCONSTRAINED_SOURCES: tuple[str, ...] = (
+    "attempt_total_no_cap: dynamic filter 持续拒绝会让 producer 无限补采，rh2/miles 没有 attempt 总数上限；"
+    "planned_attempts 只是计划量",
+    "completed_groups_in_buffer: 已完成组在 DefaultDataBuffer 等待 drain，按 buffer_capacity_groups 计入；"
+    "为 0 表示未知，且 custom buffer 可能没有容量",
+    "python_object_overhead_factor_assumed: ×2 是假设系数，未实测（可能低估）",
+    "out_of_process_memory: CC 子进程 / docker 容器 / SGLang 引擎的内存不在本进程估算内",
+)
 
 # 每执行在飞期间的保守系数（字节）。全部偏大：
 #   - 每个 token 的 capture 事实：token id 4B + logprob 8B + 支持集 (id 4B + logprob 4B) × top_k，
@@ -113,17 +140,22 @@ class MemoryBoundInputs:
 _PY_OVERHEAD_FACTOR = 2
 _PER_TURN_FIXED_BYTES = 64 * 1024
 _PER_ATTEMPT_RETAINED_BYTES = 96 * 1024  # RolloutAudit + Outcome v2 dict + lease + record + 若干字符串
+_PER_BUFFERED_SAMPLE_BYTES = 96 * 1024  # buffer 里等待 drain 的完成样本（tokens/logprobs/metadata）
 _PER_GRADING_LIVE_BYTES = 8 * 1024 * 1024  # 评分容器日志/patch 文本在内存中的一次性副本（保守）
 
 
-def estimate_memory_upper_bound(inputs: MemoryBoundInputs) -> dict[str, Any]:
-    """返回逐项拆解的保守上界（字节）。公式：
+def estimate_memory(inputs: MemoryEstimateInputs) -> dict[str, Any]:
+    """返回逐项拆解的内存**估计**（字节），状态恒为 `unbounded_or_unknown`。公式：
 
         live_per_execution = turns × (tokens_per_turn × per_token + context × 4 × 2 + fixed)
         live_total         = concurrency × live_per_execution + grading_concurrency × grading_live
         process_bounded    = proxy 有界缓存（max_audit_artifacts × (preview + 512)）
-        retained_total     = max_attempts_retained × per_attempt_retained
-        upper_bound        = live_total + process_bounded + retained_total
+        buffer_bytes       = buffer_capacity_groups × samples_per_group × per_buffered_sample
+        retained_planned   = planned_attempts × per_attempt_retained（计划量，非上限）
+        estimate           = live_total + process_bounded + buffer_bytes + retained_planned
+
+    `unconstrained_sources` 列出估计没有约束住的来源；`unbounded_collections` 列出生产
+    代码里只增不裁的集合。GPU 验收看 peak RSS 与 `growth_collections` 的实测长度/趋势。
     """
 
     per_token = (4 + 8 + (4 + 4) * inputs.top_k_support) * _PY_OVERHEAD_FACTOR
@@ -139,14 +171,18 @@ def estimate_memory_upper_bound(inputs: MemoryBoundInputs) -> dict[str, Any]:
         + inputs.grading_concurrency * _PER_GRADING_LIVE_BYTES
     )
     process_bounded = inputs.max_audit_artifacts * (inputs.audit_preview_bytes + 512)
-    retained_total = inputs.max_attempts_retained * _PER_ATTEMPT_RETAINED_BYTES
-    upper = live_total + process_bounded + retained_total
+    buffer_bytes = inputs.buffer_capacity_groups * inputs.samples_per_group * _PER_BUFFERED_SAMPLE_BYTES
+    retained_planned = inputs.planned_attempts * _PER_ATTEMPT_RETAINED_BYTES
+    estimate = live_total + process_bounded + buffer_bytes + retained_planned
+    unconstrained = list(MEMORY_ESTIMATE_UNCONSTRAINED_SOURCES)
     return {
+        "status": MEMORY_ESTIMATE_STATUS,
         "inputs": asdict(inputs),
         "coefficients": {
             "per_token_bytes": per_token,
             "per_turn_fixed_bytes": _PER_TURN_FIXED_BYTES,
             "per_attempt_retained_bytes": _PER_ATTEMPT_RETAINED_BYTES,
+            "per_buffered_sample_bytes": _PER_BUFFERED_SAMPLE_BYTES,
             "per_grading_live_bytes": _PER_GRADING_LIVE_BYTES,
             "python_overhead_factor": _PY_OVERHEAD_FACTOR,
             "context_tokens_assumed": context,
@@ -154,9 +190,11 @@ def estimate_memory_upper_bound(inputs: MemoryBoundInputs) -> dict[str, Any]:
         "live_per_execution_bytes": live_per_execution,
         "live_total_bytes": live_total,
         "process_bounded_bytes": process_bounded,
-        "retained_total_bytes": retained_total,
-        "upper_bound_bytes": upper,
-        "upper_bound_gib": round(upper / (1024**3), 3),
+        "buffer_bytes": buffer_bytes,
+        "retained_planned_bytes": retained_planned,
+        "estimate_bytes": estimate,
+        "estimate_gib": round(estimate / (1024**3), 3),
+        "unconstrained_sources": unconstrained,
         "unbounded_collections": sorted(
             name for name, (_obj, _attr, bounded, _note) in GROWING_COLLECTIONS.items() if not bounded
         ),
@@ -285,12 +323,12 @@ def measure_fsync_latency(
 def resource_closure_facts(
     *,
     phase: str,
-    memory_inputs: MemoryBoundInputs | None,
+    memory_inputs: MemoryEstimateInputs | None,
     fsync_dir: Path | None,
     growth: dict[str, Any] | None = None,
     fsync_samples: int = 16,
 ) -> dict[str, Any]:
-    """组装一份完整事实（memory_inputs 为 None 时上界记 unavailable 并说明原因）。"""
+    """组装一份完整事实（memory_inputs 为 None 时估计记 unavailable 并说明原因）。"""
 
     facts: dict[str, Any] = {
         "schema_id": RESOURCE_CLOSURE_SCHEMA_ID,
@@ -299,10 +337,14 @@ def resource_closure_facts(
         "platform": platform.platform(),
         "pid": os.getpid(),
         "peak_rss_bytes": peak_rss_bytes(),
-        "memory_upper_bound": (
-            estimate_memory_upper_bound(memory_inputs)
+        "memory_estimate": (
+            estimate_memory(memory_inputs)
             if memory_inputs is not None
-            else {"status": "unavailable", "reason": "profile 输入不全（见 bringup 的 MemoryBoundInputs 装配）"}
+            else {
+                "status": "unavailable",
+                "reason": "profile 输入不全（见 bringup 的 MemoryEstimateInputs 装配）",
+                "unconstrained_sources": list(MEMORY_ESTIMATE_UNCONSTRAINED_SOURCES),
+            }
         ),
         "growth_collections": growth if growth is not None else {},
         "fsync_latency": (

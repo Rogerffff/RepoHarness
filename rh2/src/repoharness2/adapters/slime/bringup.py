@@ -75,7 +75,7 @@ from repoharness2.adapters.slime.capture_wire import (
 from repoharness2.adapters.slime.docker_sandbox import DockerSandbox
 from repoharness2.shutdown import (
     LifecycleState,
-    MemoryBoundInputs,
+    MemoryEstimateInputs,
     ServiceClosedError,
     ShutdownReport,
     ShutdownStep,
@@ -83,6 +83,7 @@ from repoharness2.shutdown import (
     Skipped,
     close_inflight_executions,
     collect_growth_facts,
+    describe_exception,
     install_signal_shutdown,
     resource_closure_facts,
     run_shutdown_chain,
@@ -719,6 +720,9 @@ class BringupService:
         self.lifecycle.on_fatal = self._on_run_fatal
         self._close_task: asyncio.Task[ShutdownReport] | None = None
         self.shutdown_report: ShutdownReport | None = None
+        # W5a 复核 #3b：关停进行中到达的 run-fatal 先排队，落盘前全部吸收进报告
+        self._fatals_during_close: list[BaseException] = []
+        self._closing_report: ShutdownReport | None = None
         self._uninstall_signal_shutdown: Any = None
         self._profile_args = args  # 资源闭包上界估算读 miles/slime 的并发与长度参数
         ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
@@ -1418,8 +1422,13 @@ class BringupService:
         with self.events_path.open("a", encoding="utf-8") as fh:
             fh.write(json.dumps({"ts": time.time(), **event}, ensure_ascii=False, default=str) + "\n")
 
-    def _memory_bound_inputs(self) -> tuple[MemoryBoundInputs | None, list[str]]:
-        """从 miles/slime args + bringup 旋钮装配上界估算输入；缺项如实返回（不猜）。"""
+    def _memory_estimate_inputs(self) -> tuple[MemoryEstimateInputs | None, list[str]]:
+        """从 miles/slime args + bringup 旋钮装配内存估计输入；缺项如实返回（不猜）。
+
+        口径（codex W5a 复核 #7）：这是**估计**不是上界——`planned_attempts` 是计划量
+        （steps × batch × n），不是 attempt cap（dynamic filter 持续拒绝时补采无上限）；
+        buffer 容量按 miles `async_data_buffer_capacity_factor × batch` 计入。
+        """
 
         args = self._profile_args
         missing: list[str] = []
@@ -1442,8 +1451,10 @@ class BringupService:
         if missing:
             return None, missing
         concurrent = getattr(args, "async_max_concurrent_samples", None) or int(batch) * int(n_per_prompt)
+        capacity_factor = getattr(args, "async_data_buffer_capacity_factor", None)
+        buffer_groups = int(float(capacity_factor) * int(batch)) if capacity_factor else 0  # 0 = 未知
         return (
-            MemoryBoundInputs(
+            MemoryEstimateInputs(
                 max_concurrent_executions=int(concurrent),
                 grading_concurrency=int(self.grading_queue.config.concurrency),
                 model_call_limit=int(os.environ.get("RH2_FA_LIMIT_MODEL_CALL", "32")),
@@ -1451,8 +1462,9 @@ class BringupService:
                 max_new_tokens_per_turn=int(max_new),
                 max_context_tokens=int(self.max_context_len or 0),
                 top_k_support=int(top_k),
-                # 整个 run 的 attempt 总数上界：steps × batch × n × 2（×2 = retry 余量）
-                max_attempts_retained=int(steps) * int(batch) * int(n_per_prompt) * 2,
+                planned_attempts=int(steps) * int(batch) * int(n_per_prompt),  # 计划量，非上限
+                buffer_capacity_groups=buffer_groups,
+                samples_per_group=int(n_per_prompt),
             ),
             [],
         )
@@ -1531,7 +1543,7 @@ class BringupService:
             }
 
         async def resource_closure() -> dict[str, Any]:
-            inputs, missing = self._memory_bound_inputs()
+            inputs, missing = self._memory_estimate_inputs()
             growth = collect_growth_facts(
                 orchestrator=self.orchestrator,
                 grading_manager=self.grading_manager,
@@ -1546,11 +1558,12 @@ class BringupService:
                 growth=growth,
             )
             if missing:
-                facts["memory_upper_bound"]["missing_inputs"] = missing
+                facts["memory_estimate"]["missing_inputs"] = missing
             path = write_resource_closure_facts(ARTIFACT_DIR / "resource_closure.json", facts)
             return {
                 "path": str(path),
-                "upper_bound_bytes": facts["memory_upper_bound"].get("upper_bound_bytes"),
+                "memory_estimate_status": facts["memory_estimate"].get("status"),
+                "memory_estimate_bytes": facts["memory_estimate"].get("estimate_bytes"),
                 "fsync_p95_ms": facts["fsync_latency"].get("p95_ms"),
                 "missing_inputs": missing,
             }
@@ -1570,10 +1583,30 @@ class BringupService:
             ShutdownStep("resource_closure", resource_closure, t.resource_closure, kind="evidence"),
         ]
 
-    async def _run_close(self, reason: str, trigger: str, first_cause: BaseException | None) -> ShutdownReport:
+    def _absorb_fatals_during_close(self, report: ShutdownReport) -> int:
+        """把关停进行中到达的 run-fatal 全部记进报告（首因为空则设为首因，否则次生）。"""
+
+        absorbed = 0
+        while self._fatals_during_close:
+            exc = self._fatals_during_close.pop(0)
+            report.note_failure("run_fatal_during_shutdown", describe_exception(exc))
+            absorbed += 1
+        return absorbed
+
+    async def _run_close(
+        self, reason: str, trigger: str, first_cause: BaseException | str | None
+    ) -> ShutdownReport:
+        report = ShutdownReport(reason=reason, trigger=trigger)
+        self._closing_report = report
+        if isinstance(first_cause, BaseException):
+            report.note_failure("trigger", describe_exception(first_cause))
+        elif first_cause:
+            report.note_failure("trigger", str(first_cause)[:300])
+        self._absorb_fatals_during_close(report)
         report = await run_shutdown_chain(
-            self._build_shutdown_steps(), reason=reason, trigger=trigger, first_cause=first_cause
+            self._build_shutdown_steps(), reason=reason, trigger=trigger, first_cause=None, report=report
         )
+        self._absorb_fatals_during_close(report)
         # 残留汇总（H9 判据的输入：任一非空 = 残留）
         def facts_of(name: str) -> dict[str, Any]:
             step = report.step(name)
@@ -1601,7 +1634,21 @@ class BringupService:
                 self._uninstall_signal_shutdown()  # 关停完成后第二个 SIGTERM 按默认处置（真退出）
             finally:
                 self._uninstall_signal_shutdown = None
-        # 链外 evidence flush：报告本体 + 完成事件。失败只记 evidence 失败（cleanup 已做完）。
+        # 链外 evidence flush（codex W5a 复核 #3a：磁盘报告必须**最后**生成，此前的一切失败——
+        # 含完成事件写失败、关停期间到达的 fatal——都要反映在落盘的那一份里）：
+        #   1. 追加 shutdown_completed 事件（失败 → evidence 失败进报告）；
+        #   2. 再次吸收关停期间到达的 fatal；
+        #   3. 最后原子写 shutdown_report.json（自身写失败只能留在内存报告与 stdout）。
+        try:
+            self._append_event(
+                {"event": "shutdown_completed", "ok": report.ok, "first_cause": report.first_cause,
+                 "residue": report.residue}
+            )
+        except Exception as exc:  # noqa: BLE001
+            report.note_evidence_failure("evidence:shutdown_completed_event", f"{type(exc).__name__}: {exc}"[:300])
+        self._absorb_fatals_during_close(report)
+        self.shutdown_report = report
+        self._closing_report = None  # 此后到达的 fatal 只进 lifecycle.fatal_seen（报告已定稿）
         report_path = ARTIFACT_DIR / "shutdown_report.json"
         try:
             tmp = report_path.with_suffix(".json.tmp")
@@ -1612,14 +1659,6 @@ class BringupService:
             os.replace(tmp, report_path)
         except Exception as exc:  # noqa: BLE001
             report.note_evidence_failure("evidence:shutdown_report", f"{type(exc).__name__}: {exc}"[:300])
-        try:
-            self._append_event(
-                {"event": "shutdown_completed", "ok": report.ok, "first_cause": report.first_cause,
-                 "residue": report.residue}
-            )
-        except Exception as exc:  # noqa: BLE001
-            report.note_evidence_failure("evidence:shutdown_completed_event", f"{type(exc).__name__}: {exc}"[:300])
-        self.shutdown_report = report
         print(f"[rh2-bringup] shutdown {'ok' if report.ok else 'NOT ok'}: trigger={trigger} reason={reason} "
               f"first_cause={report.first_cause!r} residue={report.residue}")
         return report
@@ -1629,7 +1668,7 @@ class BringupService:
         *,
         reason: str = "owner_close",
         trigger: str = "owner_close",
-        first_cause: BaseException | None = None,
+        first_cause: BaseException | str | None = None,
     ) -> ShutdownReport:
         """显式关停（幂等）：首次调用创建关停 task，后续调用（含并发调用）等待同一
         task 并拿到**同一个**报告对象；调用方被取消不会取消关停链（shield）。
@@ -1647,7 +1686,11 @@ class BringupService:
         持久化再清理（B5），关停链的 inflight 步只是等它跑完。"""
 
         if self._close_task is not None:
-            return  # 已在关停：只让 lifecycle.fatal_seen 记账
+            # codex W5a 复核 #3b：关停进行中的 fatal 不能丢——排队，落盘前吸收进报告
+            # （首因为空则成为首因，否则记次生；ok 必为 False）。报告已定稿则只留 fatal_seen。
+            if self._closing_report is not None:
+                self._fatals_during_close.append(exc)
+            return
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
@@ -1756,19 +1799,45 @@ def build_fa_sampling_params(args: Any) -> dict[str, Any]:
 
 
 async def close_bringup_service(
-    *, reason: str = "external_close", trigger: str = "owner_close"
+    *,
+    reason: str = "external_close",
+    trigger: str = "owner_close",
+    first_cause: BaseException | str | None = None,
 ) -> ShutdownReport | None:
     """W5a 关停入口（进程级）：关掉本进程的 BringupService 单例；从未启动则返回 None。
 
-    集成接缝：miles 侧 `RolloutManager.dispose()` / train driver 的 finally 加一行
-    `await close_bringup_service(reason="rollout_manager_dispose")`；不需要拿到
-    service 对象、不需要 args。幂等（重复调用拿同一份报告）。
+    生产接线（miles integration 分支 `RolloutManager.dispose()`，W5a 复核 #1）：
+    `await rollout_fn.aclose()`（停新提交→取消 worker/active group→唤醒 buffer waiter）
+    之后调本函数，并把 aclose 报告里的 `worker_exception`（例如在 buffer.put() 内抛出的
+    GroupAdmissionFatal）作为 `first_cause` 传入——它就成为关停报告的首因（trigger 记
+    `run_fatal`）。不需要 service 对象、不需要 args。幂等（重复调用拿同一份报告）。
     """
 
     service = BringupService._instance
     if service is None:
         return None
-    return await service.close(reason=reason, trigger=trigger)
+    if first_cause is not None and trigger == "owner_close":
+        trigger = "run_fatal"
+    return await service.close(reason=reason, trigger=trigger, first_cause=first_cause)
+
+
+def notify_run_fatal(exc: BaseException) -> bool:
+    """进程级 run-fatal 通知入口（W5a 复核 #3：不经过 generate.py `_notify_fatal_halt` 的
+    fatal 也要触发同一条关停链）。
+
+    典型调用者 = 复合 group filter（`adapters/miles/group_admission.py`，在 miles
+    `DefaultDataBuffer.put()` 内运行，与执行 task 不在同一 context，contextvar 通知器够不到）：
+    `except GroupAdmissionFatal as exc: notify_run_fatal(exc); raise`。语义与执行内 fatal 一致：
+    未在关停 → 调度关停链（首因 = exc）；关停进行中 → 吸收进报告；已定稿 → 只留 fatal_seen。
+    返回 False = 本进程没有 BringupService（无可关，调用方照常 raise）。
+    """
+
+    service = BringupService._instance
+    if service is None:
+        return False
+    service.lifecycle.fatal_seen.append(exc)
+    service._on_run_fatal(exc)
+    return True
 
 
 async def ensure_fa_started(args: Any) -> None:

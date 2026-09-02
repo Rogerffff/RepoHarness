@@ -1,4 +1,8 @@
-"""W5a：资源闭包一次性取数（内存保守上界 + 随 attempt 增长集合盘点 + fsync 延迟）。"""
+"""W5a：资源闭包一次性取数（内存估计 + 随 attempt 增长集合盘点 + fsync 延迟）。
+
+口径（codex W5a 复核 #7）：`memory_estimate` 是估计不是上界——状态恒为
+`unbounded_or_unknown`，并列出未被约束的来源；不加 attempt cap。
+"""
 
 from __future__ import annotations
 
@@ -10,15 +14,16 @@ import pytest
 
 from repoharness2.shutdown import (
     GROWING_COLLECTIONS,
-    MemoryBoundInputs,
+    MEMORY_ESTIMATE_UNCONSTRAINED_SOURCES,
+    MemoryEstimateInputs,
     collect_growth_facts,
-    estimate_memory_upper_bound,
+    estimate_memory,
     measure_fsync_latency,
     resource_closure_facts,
     write_resource_closure_facts,
 )
 
-BASE = MemoryBoundInputs(
+BASE = MemoryEstimateInputs(
     max_concurrent_executions=8,
     grading_concurrency=4,
     model_call_limit=32,
@@ -26,28 +31,42 @@ BASE = MemoryBoundInputs(
     max_new_tokens_per_turn=4096,
     max_context_tokens=32768,
     top_k_support=64,
-    max_attempts_retained=1000,
+    planned_attempts=1000,
+    buffer_capacity_groups=4,
+    samples_per_group=8,
 )
 
 
-def test_memory_upper_bound_breakdown_is_explicit_and_monotonic():
-    est = estimate_memory_upper_bound(BASE)
-    assert est["upper_bound_bytes"] == (
-        est["live_total_bytes"] + est["process_bounded_bytes"] + est["retained_total_bytes"]
+def test_memory_estimate_is_explicit_unbounded_or_unknown_and_lists_unconstrained_sources():
+    est = estimate_memory(BASE)
+    assert est["status"] == "unbounded_or_unknown"
+    assert "upper_bound_bytes" not in est  # 旧口径字段不再出现
+    assert est["estimate_bytes"] == (
+        est["live_total_bytes"] + est["process_bounded_bytes"] + est["buffer_bytes"] + est["retained_planned_bytes"]
     )
     assert est["live_total_bytes"] == 8 * est["live_per_execution_bytes"] + 4 * est["coefficients"]["per_grading_live_bytes"]
-    assert est["retained_total_bytes"] == 1000 * est["coefficients"]["per_attempt_retained_bytes"]
+    assert est["buffer_bytes"] == 4 * 8 * est["coefficients"]["per_buffered_sample_bytes"]  # 已完成 buffer 计入
+    assert est["retained_planned_bytes"] == 1000 * est["coefficients"]["per_attempt_retained_bytes"]
     assert est["inputs"] == dataclasses.asdict(BASE)
+    assert est["unconstrained_sources"] == list(MEMORY_ESTIMATE_UNCONSTRAINED_SOURCES)
+    assert any(src.startswith("attempt_total_no_cap") for src in est["unconstrained_sources"])
+    assert any(src.startswith("completed_groups_in_buffer") for src in est["unconstrained_sources"])
     assert est["unbounded_collections"] == sorted(
         name for name, (_o, _a, bounded, _n) in GROWING_COLLECTIONS.items() if not bounded
     )
-    assert "orchestrator_audits" in est["unbounded_collections"]  # generate.py:2279 只 append 不裁剪
-    more = estimate_memory_upper_bound(dataclasses.replace(BASE, max_concurrent_executions=16))
-    assert more["upper_bound_bytes"] > est["upper_bound_bytes"]
-    assert more["retained_total_bytes"] == est["retained_total_bytes"]  # 并发不影响累积项
-    longer = estimate_memory_upper_bound(dataclasses.replace(BASE, max_attempts_retained=5000))
-    assert longer["retained_total_bytes"] == 5 * est["retained_total_bytes"]
-    unknown_ctx = estimate_memory_upper_bound(dataclasses.replace(BASE, max_context_tokens=0))
+    assert "orchestrator_audits" in est["unbounded_collections"]  # generate.py 只 append 不裁剪
+
+
+def test_memory_estimate_terms_are_monotonic_in_their_inputs():
+    est = estimate_memory(BASE)
+    more_conc = estimate_memory(dataclasses.replace(BASE, max_concurrent_executions=16))
+    assert more_conc["estimate_bytes"] > est["estimate_bytes"]
+    assert more_conc["retained_planned_bytes"] == est["retained_planned_bytes"]  # 并发不影响计划累积项
+    more_planned = estimate_memory(dataclasses.replace(BASE, planned_attempts=5000))
+    assert more_planned["retained_planned_bytes"] == 5 * est["retained_planned_bytes"]
+    no_buffer = estimate_memory(dataclasses.replace(BASE, buffer_capacity_groups=0))
+    assert no_buffer["buffer_bytes"] == 0 and no_buffer["status"] == "unbounded_or_unknown"  # 未知仍是估计
+    unknown_ctx = estimate_memory(dataclasses.replace(BASE, max_context_tokens=0))
     assert unknown_ctx["coefficients"]["context_tokens_assumed"] == 4096 * 25  # 未知上下文按 tokens×turns 估
 
 
@@ -59,9 +78,12 @@ def test_memory_inputs_validation_rejects_non_ints_and_bad_ranges():
     with pytest.raises(ValueError):
         dataclasses.replace(BASE, grading_concurrency=-1)
     with pytest.raises(ValueError):
+        dataclasses.replace(BASE, samples_per_group=0)
+    with pytest.raises(ValueError):
         dataclasses.replace(BASE, max_new_tokens_per_turn=4096.0)  # type: ignore[arg-type]
     with pytest.raises(ValueError):
         dataclasses.replace(BASE, model_call_limit=True)  # type: ignore[arg-type]
+    assert estimate_memory(dataclasses.replace(BASE, planned_attempts=0))["retained_planned_bytes"] == 0  # 0 = 计划未知合法
 
 
 def test_fsync_latency_single_measurement_real_disk(tmp_path):
@@ -95,10 +117,13 @@ def test_resource_closure_facts_written_atomically(tmp_path):
     facts = resource_closure_facts(phase="startup", memory_inputs=None, fsync_dir=tmp_path, growth=None, fsync_samples=2)
     path = write_resource_closure_facts(tmp_path / "resource_closure.json", facts)
     loaded = json.loads(path.read_text(encoding="utf-8"))
-    assert loaded["schema_id"] == "rh2.resource_closure_facts.v1" and loaded["phase"] == "startup"
-    assert loaded["memory_upper_bound"]["status"] == "unavailable"  # 输入不全 = 如实，不猜
+    assert loaded["schema_id"] == "rh2.resource_closure_facts.v2" and loaded["phase"] == "startup"
+    assert "memory_upper_bound" not in loaded
+    assert loaded["memory_estimate"]["status"] == "unavailable"  # 输入不全 = 如实，不猜
+    assert loaded["memory_estimate"]["unconstrained_sources"] == list(MEMORY_ESTIMATE_UNCONSTRAINED_SOURCES)
     assert loaded["fsync_latency"]["samples"] == 2
     assert loaded["peak_rss_bytes"] is None or loaded["peak_rss_bytes"] > 0
     assert not (tmp_path / "resource_closure.json.tmp").exists()
     full = resource_closure_facts(phase="shutdown", memory_inputs=BASE, fsync_dir=None, growth={"x": {"length": 1}})
-    assert full["memory_upper_bound"]["upper_bound_bytes"] > 0 and full["fsync_latency"]["status"] == "unavailable"
+    assert full["memory_estimate"]["status"] == "unbounded_or_unknown"
+    assert full["memory_estimate"]["estimate_bytes"] > 0 and full["fsync_latency"]["status"] == "unavailable"

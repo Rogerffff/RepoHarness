@@ -83,8 +83,13 @@ async def test_w5a_real_bringup_service_close_stops_thread_and_rejects_get(world
         written = json.loads((artifacts / "shutdown_report.json").read_text(encoding="utf-8"))
         assert written["ok"] is True and written["trigger"] == "owner_close"
         closure = json.loads((artifacts / "resource_closure.json").read_text(encoding="utf-8"))
-        assert closure["memory_upper_bound"]["inputs"]["max_attempts_retained"] == 2 * 2 * 2 * 2
-        assert closure["memory_upper_bound"]["inputs"]["max_concurrent_executions"] == 4
+        assert closure["schema_id"] == "rh2.resource_closure_facts.v2"
+        estimate = closure["memory_estimate"]
+        assert estimate["status"] == "unbounded_or_unknown"  # 估计口径，不是上界（复核 #7）
+        assert estimate["inputs"]["planned_attempts"] == 2 * 2 * 2  # 计划量 steps×batch×n，无 ×2、无 cap
+        assert estimate["inputs"]["max_concurrent_executions"] == 4
+        assert estimate["inputs"]["buffer_capacity_groups"] == 0  # args 无 capacity_factor → 未知记 0
+        assert any(src.startswith("attempt_total_no_cap") for src in estimate["unconstrained_sources"])
         assert closure["fsync_latency"]["samples"] == 16
         assert closure["growth_collections"]["registry_hooks"]["length"] == 0
         events = [json.loads(line) for line in (artifacts / "bringup_events.jsonl").read_text(encoding="utf-8").splitlines()]

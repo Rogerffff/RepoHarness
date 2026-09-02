@@ -55,6 +55,7 @@ __all__ = [
     "ShutdownTimeouts",
     "Skipped",
     "close_inflight_executions",
+    "describe_exception",
     "install_signal_shutdown",
     "run_shutdown_chain",
 ]
@@ -478,7 +479,9 @@ class ShutdownReport:
         }
 
 
-def _describe(exc: BaseException) -> str:
+def describe_exception(exc: BaseException) -> str:
+    """异常 → 报告用的一行描述（类型 + reason_code + 前 300 字）。"""
+
     code = getattr(exc, "reason_code", None)
     head = f"{type(exc).__name__}({code})" if code else type(exc).__name__
     return f"{head}: {str(exc)[:300]}"
@@ -497,7 +500,7 @@ async def run_shutdown_chain(
 
     report = report if report is not None else ShutdownReport(reason=reason, trigger=trigger)
     if first_cause is not None:
-        report.note_failure("trigger", _describe(first_cause))
+        report.note_failure("trigger", describe_exception(first_cause))
     for step in steps:
         started = clock()
         try:
@@ -521,7 +524,7 @@ async def run_shutdown_chain(
             continue
         except Exception as exc:  # noqa: BLE001 —— 关停链收集而不扩散
             elapsed = clock() - started
-            detail = _describe(exc) + " | " + traceback.format_exc(limit=3).strip().splitlines()[-1][:200]
+            detail = describe_exception(exc) + " | " + traceback.format_exc(limit=3).strip().splitlines()[-1][:200]
             report.steps.append(ShutdownStepResult(step.name, step.kind, "failed", elapsed, detail=detail))
             if step.kind == "evidence":
                 report.note_evidence_failure(f"step:{step.name}", detail)
