@@ -1,0 +1,657 @@
+From 21261acf0d115573b11976852acee2d6308ac767 Mon Sep 17 00:00:00 2001
+From: Codex <jufangjian@gmail.com>
+Date: Wed, 2 Sep 2026 16:51:13 +0800
+Subject: [PATCH] [rh2-integration] promote rollout-fn shutdown residue to a
+ run failure verdict
+
+close_rollout_fn_and_rh2 now turns any aclose() residue (deadline exceeded,
+worker/active groups unfinished, close error, buffer not closed, aclose
+raised) into a typed ShutdownFailure that becomes the rh2 first cause when
+nothing else failed and a persisted secondary cause otherwise; concrete
+unfinished group facts flow into the rh2 report residue so ok=false.
+Cause precedence: in-flight driver exception is primary, worker/cleanup
+failures secondary, same-origin wrappers deduplicated. RolloutManager.
+dispose() returns a serialisable verdict (ok/cleanup_ok/timed_out/errors/
+causes); train_async raises ShutdownFailure on a non-ok verdict when no
+driver error is in flight (non-zero exit) and otherwise re-raises the
+original while persisting a shutdown_failure.json marker. Normal
+cancellation keeps ok=true.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ miles/ray/rollout/rollout_manager.py |  81 ++++--
+ miles/rollout/fully_async_rollout.py |  27 +-
+ miles/utils/rh2_shutdown.py          | 352 +++++++++++++++++++++++----
+ train_async.py                       |  15 +-
+ 4 files changed, 401 insertions(+), 74 deletions(-)
+
+diff --git a/miles/ray/rollout/rollout_manager.py b/miles/ray/rollout/rollout_manager.py
+index 1c5a01216..857fa981f 100644
+--- a/miles/ray/rollout/rollout_manager.py
++++ b/miles/ray/rollout/rollout_manager.py
+@@ -134,39 +134,68 @@ class RolloutManager:
+         return self.args.sglang_router_ip, self.args.sglang_router_port
+ 
+     async def dispose(self, driver_cause=None):
+-        # [rh2-integration] W5a (patch 0011): the rollout fn, its worker, the data buffer and
+-        # the rh2 BringupService all live on the shared background AsyncLoopThread
++        # [rh2-integration] W5a (patches 0011/0012): the rollout fn, its worker, the data
++        # buffer and the rh2 BringupService all live on the shared background AsyncLoopThread
+         # (_get_rollout_data -> asyncio.to_thread(call_rollout_function) -> async_utils.run),
+         # not on this actor's loop. Awaiting their objects here is undefined (a cross-loop
+         # future completing does not wake this loop), so the whole closure -- rollout fn
+-        # aclose (bounded cancel/await, buffer close in finally) -> first cause (worker's
+-        # own fatal, else the driver's ``driver_cause``) -> rh2 close_bringup_service -- is
+-        # posted back to that loop and awaited through a threadsafe future with a total
+-        # timeout (miles/utils/rh2_shutdown.py). The original dispose below runs afterwards
+-        # on every path; nothing here raises.
+-        from miles.utils.rh2_shutdown import dispose_on_owner_loop
+-
++        # aclose (bounded cancel/await, buffer close in finally) -> typed shutdown failure
++        # from its residue -> cause priority (driver primary, worker/residue secondary) ->
++        # rh2 close_bringup_service -- is posted back to that loop and awaited through a
++        # threadsafe future with a total timeout (miles/utils/rh2_shutdown.py). The original
++        # dispose below runs afterwards on every path. Nothing here raises: the method
++        # returns a serializable **verdict** (ok/cleanup_ok/timed_out/errors/report) and
++        # train_async decides how the run exits (raise_if_shutdown_failed).
++        from miles.utils.rh2_shutdown import SHUTDOWN_VERDICT_SCHEMA_ID, dispose_on_owner_loop
++
++        verdict = {
++            "schema_id": SHUTDOWN_VERDICT_SCHEMA_ID,
++            "ok": False,
++            "cleanup_ok": False,
++            "timed_out": False,
++            "errors": [],
++            "report": None,
++            "original_dispose_error": None,
++        }
+         try:
+-            close_report = await dispose_on_owner_loop(self.generate_rollout, driver_cause=driver_cause, args=self.args)
++            closure = await dispose_on_owner_loop(self.generate_rollout, driver_cause=driver_cause, args=self.args)
++            verdict.update(
++                ok=bool(closure.get("ok", False)),
++                cleanup_ok=bool(closure.get("cleanup_ok", False)),
++                timed_out=bool(closure.get("timed_out", False)),
++                errors=list(closure.get("errors", [])),
++                report=closure,
++            )
+             logger.info(
+-                "[rh2-integration] rollout fn + rh2 shutdown: trigger=%s first_cause=%s rollout_fn=%s rh2=%s errors=%s",
+-                close_report.get("trigger"),
+-                close_report.get("first_cause"),
+-                close_report.get("rollout_fn"),
+-                close_report.get("rh2"),
+-                close_report.get("errors"),
++                "[rh2-integration] rollout fn + rh2 shutdown: ok=%s cleanup_ok=%s timed_out=%s trigger=%s "
++                "primary=%s secondary=%s errors=%s",
++                verdict["ok"],
++                verdict["cleanup_ok"],
++                verdict["timed_out"],
++                closure.get("trigger"),
++                closure.get("primary_cause"),
++                closure.get("secondary_causes"),
++                closure.get("errors"),
+             )
+-        except Exception:  # noqa: BLE001 - shutdown continues; failure is logged, not masked
++        except Exception as exc:  # noqa: BLE001 - shutdown continues; failure lands in the verdict
++            verdict["errors"].append(f"dispose_on_owner_loop: {exc!r}")
+             logger.exception("[rh2-integration] dispose_on_owner_loop failed")
+-        if (close := getattr(self.data_source, "close", None)) is not None:
+-            close()
+-        event_analyzer.run_analysis_from_args(self.args)
+-        if self._metric_checker is not None:
+-            self._metric_checker.dispose()
+-        if isinstance(self.eval_generate_rollout, CheckpointEvalFn):
+-            self.eval_generate_rollout.dispose()
+-        for monitor in self._health_monitors:
+-            monitor.stop()
++        try:
++            if (close := getattr(self.data_source, "close", None)) is not None:
++                close()
++            event_analyzer.run_analysis_from_args(self.args)
++            if self._metric_checker is not None:
++                self._metric_checker.dispose()
++            if isinstance(self.eval_generate_rollout, CheckpointEvalFn):
++                self.eval_generate_rollout.dispose()
++            for monitor in self._health_monitors:
++                monitor.stop()
++        except Exception as exc:  # noqa: BLE001 - recorded in the verdict, not raised across Ray
++            verdict["original_dispose_error"] = repr(exc)
++            verdict["ok"] = False
++            verdict["cleanup_ok"] = False
++            logger.exception("[rh2-integration] original dispose steps failed")
++        return verdict
+ 
+     # -------------------------- data generation -----------------------------
+ 
+diff --git a/miles/rollout/fully_async_rollout.py b/miles/rollout/fully_async_rollout.py
+index fda830143..a1ad34927 100644
+--- a/miles/rollout/fully_async_rollout.py
++++ b/miles/rollout/fully_async_rollout.py
+@@ -70,6 +70,20 @@ def shutdown_deadline_seconds(args) -> float:
+     return value
+ 
+ 
++def _group_facts(prompt_group: list[Sample]) -> dict:
++    """[rh2-integration] W5a: serializable identity of a prompt group (for shutdown residue)."""
++    first = prompt_group[0] if prompt_group else None
++    meta = getattr(first, "metadata", None) if first is not None else None
++    meta = meta if isinstance(meta, dict) else {}
++    return {
++        "group_index": getattr(first, "group_index", None),
++        "sample_indices": [getattr(s, "index", None) for s in prompt_group],
++        "instance_id": meta.get("instance_id"),
++        "prompt_id": meta.get("prompt_id"),
++        "rh2_prompt_group_id": meta.get("rh2_prompt_group_id"),
++    }
++
++
+ class RolloutFnClosed(RuntimeError):
+     """[rh2-integration] W5a: the rollout fn was closed by aclose(); every later train /
+     eval call and every submission is rejected with this typed error (never silently
+@@ -155,7 +169,11 @@ class FullyAsyncRolloutFn:
+         samples = self.data_source.get_samples(1)
+         self._scheduler.on_submit(samples)
+         [prompt_group] = samples
+-        return asyncio.create_task(self._generate_group(prompt_group))
++        task = asyncio.create_task(self._generate_group(prompt_group))
++        # [rh2-integration] W5a (patch 0012): identity of the group this task carries, so a task
++        # abandoned at shutdown can be named in the rh2 residue (not just counted).
++        task.rh2_group_facts = _group_facts(prompt_group)
++        return task
+ 
+     async def _generate_group(self, prompt_group: list[Sample]) -> DataBufferInput:
+         result = await generate_and_rm_group(
+@@ -205,6 +223,7 @@ class FullyAsyncRolloutFn:
+             "worker_unfinished": False,
+             "active_groups_cancelled": 0,
+             "active_groups_unfinished": 0,
++            "active_groups_unfinished_facts": [],
+             "deadline_seconds": deadline,
+             "deadline_exceeded": False,
+             "buffer_closed": False,
+@@ -237,7 +256,11 @@ class FullyAsyncRolloutFn:
+             if active:
+                 await asyncio.wait(active, timeout=remaining())
+             report["active_groups_cancelled"] = len(active)
+-            report["active_groups_unfinished"] = sum(1 for task in active if not task.done())
++            unfinished = [task for task in active if not task.done()]
++            report["active_groups_unfinished"] = len(unfinished)
++            report["active_groups_unfinished_facts"] = [
++                getattr(task, "rh2_group_facts", None) or {"task": task.get_name()} for task in unfinished
++            ]
+             report["deadline_exceeded"] = bool(report["worker_unfinished"] or report["active_groups_unfinished"])
+             if report["deadline_exceeded"]:
+                 logger.error(
+diff --git a/miles/utils/rh2_shutdown.py b/miles/utils/rh2_shutdown.py
+index 822458c00..869b13b9d 100644
+--- a/miles/utils/rh2_shutdown.py
++++ b/miles/utils/rh2_shutdown.py
+@@ -1,4 +1,5 @@
+-"""[rh2-integration] W5a (patch 0011): run the rollout-fn / rh2 shutdown on the loop that owns them.
++"""[rh2-integration] W5a (patches 0011/0012): run the rollout-fn / rh2 shutdown on the loop that owns them,
++and turn every shutdown residue into a run-level failure verdict.
+ 
+ Production topology: ``RolloutManager._get_rollout_data`` calls the rollout fn through
+ ``asyncio.to_thread(call_rollout_function, ...)`` and ``compatibility.call_rollout_function``
+@@ -6,35 +7,68 @@ hands the coroutine to ``async_utils.run`` -> the global background ``AsyncLoopT
+ (``get_async_loop()``). So ``FullyAsyncRolloutFn``, its worker task, the ``DefaultDataBuffer``
+ and the rh2 ``BringupService`` (bootstrapped inside the first generate call) all live on
+ **that** loop, not on the Ray actor's loop. Awaiting their tasks/futures from the actor loop
+-is undefined: a cross-loop future completing does not wake the actor loop, so
+-``dispose.remote()`` can hang until some unrelated timer fires.
+-
+-``dispose_on_owner_loop`` therefore posts the whole closure (rollout fn ``aclose`` -> first
+-cause extraction -> rh2 ``close_bringup_service``) to the owner loop with
+-``run_coroutine_threadsafe`` and awaits the resulting concurrent future through
+-``asyncio.wrap_future`` (which wakes the calling loop via ``call_soon_threadsafe``) under a
+-total timeout. The rollout fn's own cancel-and-wait is bounded by
+-``shutdown_deadline_seconds`` (``RH2_MILES_SHUTDOWN_DEADLINE_SEC`` / ``args.rh2_shutdown_deadline_sec``);
+-the total dispose budget is ``RH2_MILES_DISPOSE_TIMEOUT_SEC`` / ``args.rh2_dispose_timeout_sec``.
++is undefined (a cross-loop future completing does not wake the actor loop), so
++``dispose_on_owner_loop`` posts the whole closure to the owner loop with
++``run_coroutine_threadsafe`` and awaits it through ``asyncio.wrap_future`` under a total timeout.
++
++Verdict (patch 0012): a shutdown that left anything behind is a **failed run**, never a quiet
++log line. ``close_rollout_fn_and_rh2`` turns the rollout fn's ``aclose`` residue
++(deadline exceeded, worker/active groups still running, buffer not closed, close error, aclose
++raising) into a typed, serializable *shutdown failure* and hands it to the rh2 shutdown report
++(primary cause when nothing else failed, secondary otherwise, plus the concrete unfinished
++group identities as residue). ``RolloutManager.dispose`` returns the verdict dict;
++``train_async``'s ``finally`` calls ``raise_if_shutdown_failed`` -> ``ShutdownFailure`` on a
++run that had no driver exception (non-zero exit), or a persisted marker file when the driver
++already failed (its own exception is re-raised).
++
++Cause priority: an in-flight driver exception is primary; an independent worker fatal or
++cleanup residue is secondary; a worker fatal that *is* the driver exception (same origin:
++the driver only saw the worker fatal propagate) is recorded once.
++
++Knobs: rollout fn cancel deadline ``RH2_MILES_SHUTDOWN_DEADLINE_SEC`` / ``args.rh2_shutdown_deadline_sec``
++(default 60s, see fully_async_rollout.py); total closure timeout ``RH2_MILES_DISPOSE_TIMEOUT_SEC`` /
++``args.rh2_dispose_timeout_sec`` (default 900s); marker directory ``RH2_SHUTDOWN_EVIDENCE_DIR``
++(falls back to ``MILES_RH2_EVENT_DIR``, then the working directory).
+ """
+ 
+ from __future__ import annotations
+ 
+ import asyncio
++import json
+ import logging
+ import os
++import time
++from datetime import datetime, timezone
++from pathlib import Path
+ from typing import Any
+ 
+ from miles.utils.async_utils import get_async_loop
+ 
+ logger = logging.getLogger(__name__)
+ 
+-# Total budget for the owner-loop closure: rollout fn deadline (default 60s) + the rh2
+-# shutdown chain, whose own per-step bounds sum to roughly 6 minutes with defaults
+-# (RH2_SHUTDOWN_*_SEC). Exceeding it logs, records ``timed_out`` and lets the original
+-# dispose continue; the closure task keeps running on the owner loop (the rh2 chain is
+-# internally shielded).
+ DEFAULT_DISPOSE_TIMEOUT_SEC = 900.0
++SHUTDOWN_FAILURE_SCHEMA_ID = "rh2.rollout_fn_shutdown_failure.v1"
++SHUTDOWN_VERDICT_SCHEMA_ID = "rh2.rollout_shutdown_verdict.v1"
++SHUTDOWN_FAILURE_MARKER = "shutdown_failure.json"
++
++
++class ShutdownFailure(RuntimeError):
++    """Typed run failure: the rollout shutdown did not complete cleanly (residue, closure error,
++    or total timeout) and no driver exception is in flight to carry the failure. Raised from
++    ``train_async``'s ``finally`` so the run exits non-zero instead of reporting success."""
++
++    def __init__(self, verdict: dict[str, Any]) -> None:
++        self.verdict = verdict
++        closure = verdict.get("report") if isinstance(verdict.get("report"), dict) else verdict
++        summary = {
++            "timed_out": verdict.get("timed_out"),
++            "errors": verdict.get("errors"),
++            "trigger": closure.get("trigger"),
++            "primary_cause": closure.get("primary_cause"),
++            "secondary_causes": closure.get("secondary_causes"),
++            "original_dispose_error": verdict.get("original_dispose_error"),
++        }
++        super().__init__(f"rollout shutdown failed: {json.dumps(summary, ensure_ascii=False, default=str)[:800]}")
+ 
+ 
+ def dispose_timeout_seconds(args: Any = None) -> float:
+@@ -59,47 +93,173 @@ def _describe(exc: BaseException | str | None) -> str | None:
+     return str(exc)[:400]
+ 
+ 
++# ---------------------------------------------------------------------------
++# typed shutdown failure (serializable)
++# ---------------------------------------------------------------------------
++
++
++def shutdown_failure_from_aclose(fn_report: dict[str, Any] | None, *, aclose_error: str | None = None) -> dict[str, Any] | None:
++    """Every residue of ``FullyAsyncRolloutFn.aclose()`` -> one typed failure, or None when clean.
++
++    ``problems`` kinds: ``aclose_raised`` / ``worker_unfinished`` / ``active_groups_unfinished``
++    (with the concrete group identities) / ``close_error`` / ``buffer_not_closed`` /
++    ``deadline_exceeded``.
++    """
++
++    problems: list[dict[str, Any]] = []
++    if aclose_error is not None:
++        problems.append({"kind": "aclose_raised", "reason": aclose_error})
++    report = fn_report or {}
++    if report.get("worker_unfinished"):
++        problems.append(
++            {"kind": "worker_unfinished", "reason": "worker task still running when the cancel deadline passed"}
++        )
++    unfinished = int(report.get("active_groups_unfinished") or 0)
++    if unfinished:
++        problems.append(
++            {
++                "kind": "active_groups_unfinished",
++                "count": unfinished,
++                "groups": list(report.get("active_groups_unfinished_facts") or []),
++                "reason": "active group tasks still running when the cancel deadline passed",
++            }
++        )
++    if report.get("close_error"):
++        problems.append({"kind": "close_error", "reason": str(report["close_error"])})
++    if fn_report is not None and not report.get("buffer_closed"):
++        problems.append(
++            {"kind": "buffer_not_closed", "reason": "data buffer aclose() did not complete; put/get waiters may hang"}
++        )
++    if not problems and report.get("deadline_exceeded"):
++        problems.append({"kind": "deadline_exceeded", "reason": "deadline exceeded without identified residue"})
++    if not problems:
++        return None
++    return {
++        "schema_id": SHUTDOWN_FAILURE_SCHEMA_ID,
++        "kind": "rollout_fn_shutdown_incomplete",
++        "problems": problems,
++        "worker_state": report.get("worker_state"),
++        "deadline_seconds": report.get("deadline_seconds"),
++        "elapsed_seconds": report.get("elapsed_seconds"),
++    }
++
++
++def unfinished_executions_from_failure(failure: dict[str, Any] | None) -> list[dict[str, Any]]:
++    """The rh2 report's ``residue.unfinished_executions`` rows for a shutdown failure."""
++
++    rows: list[dict[str, Any]] = []
++    if not failure:
++        return rows
++    for problem in failure.get("problems", []):
++        kind = problem.get("kind")
++        if kind == "active_groups_unfinished":
++            for facts in problem.get("groups") or [{}]:
++                rows.append({"source": "miles_rollout_fn", "reason": "active_group_unfinished_after_deadline", **facts})
++        elif kind == "worker_unfinished":
++            rows.append({"source": "miles_rollout_fn", "reason": "worker_unfinished_after_deadline"})
++    return rows
++
++
++def _same_origin(worker_exc: BaseException | None, driver_cause: str | None) -> bool:
++    """The driver exception is the worker fatal's own propagation (train_async formats it as
++    ``f"{type(exc).__name__}: {str(exc)[:400]}"``): same type name and message prefix."""
++
++    if worker_exc is None or not driver_cause:
++        return False
++    name = type(worker_exc).__name__
++    if not driver_cause.startswith(name + ":"):
++        return False
++    message = str(worker_exc)[:200]
++    return message == "" or message in driver_cause
++
++
++# ---------------------------------------------------------------------------
++# the closure (runs on the owner loop)
++# ---------------------------------------------------------------------------
++
++
+ async def close_rollout_fn_and_rh2(
+     generate_rollout: Any,
+     *,
+     driver_cause: str | None = None,
+     deadline_seconds: float | None = None,
+ ) -> dict[str, Any]:
+-    """The closure itself. **Runs on the owner loop** (post it with ``dispose_on_owner_loop``).
++    """**Runs on the owner loop** (post it with ``dispose_on_owner_loop``). Never raises.
+ 
+     Order: rollout fn ``aclose`` (stop submissions -> bounded cancel/await worker + active
+-    groups -> buffer close in finally) -> first cause = the worker's own exception if any,
+-    else ``driver_cause`` -> rh2 ``close_bringup_service`` with that first cause. Every stage
+-    swallows and records its failure so the next stage still runs. Never raises.
++    groups -> buffer close in finally) -> typed shutdown failure from its residue -> cause
++    priority (driver primary; independent worker fatal / shutdown failure secondary; same-origin
++    worker fatal deduplicated) -> rh2 ``close_bringup_service`` with primary, secondaries and the
++    concrete residue. ``ok`` = rh2 report ok (or nothing to close) and no residue/error.
+     """
+ 
+     report: dict[str, Any] = {
++        "schema_id": SHUTDOWN_VERDICT_SCHEMA_ID,
++        "ok": False,
++        "cleanup_ok": False,
++        "timed_out": False,
+         "rollout_fn": None,
+-        "first_cause": None,
++        "shutdown_failure": None,
++        "primary_cause": None,
+         "trigger": "owner_close",
++        "secondary_causes": [],
++        "worker_fatal_same_origin": False,
+         "rh2": None,
+         "errors": [],
+     }
+-    first_cause: BaseException | str | None = None
++    worker_exc: BaseException | None = None
++    fn_report: dict[str, Any] | None = None
++    aclose_error: str | None = None
+     aclose = getattr(generate_rollout, "aclose", None)
+     if aclose is not None:
+         try:
+             fn_report = await (aclose(deadline_seconds=deadline_seconds) if deadline_seconds is not None else aclose())
+-            first_cause = fn_report.get("worker_exception")
++            worker_exc = fn_report.get("worker_exception")
+             report["rollout_fn"] = {
+                 key: (_describe(value) if key == "worker_exception" else value) for key, value in fn_report.items()
+             }
+         except Exception as exc:  # noqa: BLE001
+-            report["errors"].append(f"aclose: {exc!r}")
++            aclose_error = repr(exc)
++            report["errors"].append(f"aclose: {aclose_error}")
+             logger.exception("[rh2-integration] rollout fn aclose() failed")
+-    if first_cause is not None:
+-        trigger = "run_fatal"  # the worker's own fatal is the most precise original cause
+-    elif driver_cause:
+-        first_cause, trigger = driver_cause, "driver_error"
+-    else:
+-        trigger = "owner_close"
+-    report["first_cause"] = _describe(first_cause)
++    failure = shutdown_failure_from_aclose(fn_report, aclose_error=aclose_error) if aclose is not None else None
++    report["shutdown_failure"] = failure
++
++    # ---- cause priority (patch 0012) ---------------------------------------------------
++    primary: BaseException | str | None = None
++    trigger = "owner_close"
++    secondary: list[str] = []
++    worker_desc = _describe(worker_exc)
++    if driver_cause:
++        primary, trigger = driver_cause, "driver_error"
++        if worker_exc is not None:
++            if _same_origin(worker_exc, driver_cause):
++                report["worker_fatal_same_origin"] = True  # recorded once, as the primary
++            else:
++                secondary.append(f"worker_fatal: {worker_desc}")
++    elif worker_exc is not None:
++        primary, trigger = worker_exc, "run_fatal"
++    if failure is not None:
++        failure_desc = "shutdown_failure: " + json.dumps(failure, ensure_ascii=False, default=str)[:400]
++        if primary is None:
++            primary, trigger = failure_desc, "shutdown_failure"
++        else:
++            secondary.append(failure_desc)
++    report["primary_cause"] = _describe(primary)
+     report["trigger"] = trigger
++    report["secondary_causes"] = list(secondary)
++    external_residue = (
++        {
++            "unfinished_executions": unfinished_executions_from_failure(failure),
++            "rollout_fn_shutdown_failure": failure,
++        }
++        if failure is not None
++        else None
++    )
++
++    # ---- rh2 shutdown chain -------------------------------------------------------------
++    rh2_ok: bool | None = None
++    rh2_cleanup_ok: bool | None = None
+     try:
+         from repoharness2.adapters.slime.bringup import close_bringup_service
+     except ImportError:  # rh2 not on the path (stock miles usage): nothing to close
+@@ -107,16 +267,30 @@ async def close_rollout_fn_and_rh2(
+     if close_bringup_service is not None:
+         try:
+             rh2_report = await close_bringup_service(
+-                reason="rollout_manager_dispose", trigger=trigger, first_cause=first_cause
+-            )
+-            report["rh2"] = (
+-                None
+-                if rh2_report is None
+-                else {"ok": rh2_report.ok, "first_cause": rh2_report.first_cause, "residue": dict(rh2_report.residue)}
++                reason="rollout_manager_dispose",
++                trigger=trigger,
++                first_cause=primary,
++                secondary_causes=secondary,
++                external_residue=external_residue,
+             )
++            if rh2_report is not None:
++                rh2_ok = bool(rh2_report.ok)
++                rh2_cleanup_ok = bool(
++                    rh2_report.cleanup_clean and rh2_report.residue_free and not rh2_report.evidence_failures
++                )
++                report["rh2"] = {
++                    "ok": rh2_ok,
++                    "cleanup_ok": rh2_cleanup_ok,
++                    "first_cause": rh2_report.first_cause,
++                    "secondary_failures": list(rh2_report.secondary_failures),
++                    "residue": dict(rh2_report.residue),
++                    "evidence_failures": list(rh2_report.evidence_failures),
++                }
+         except Exception as exc:  # noqa: BLE001
+             report["errors"].append(f"close_bringup_service: {exc!r}")
+             logger.exception("[rh2-integration] rh2 close_bringup_service() failed")
++    report["cleanup_ok"] = not report["errors"] and failure is None and (rh2_cleanup_ok is None or rh2_cleanup_ok)
++    report["ok"] = report["cleanup_ok"] and (rh2_ok is None or rh2_ok) and primary is None
+     return report
+ 
+ 
+@@ -130,8 +304,8 @@ async def dispose_on_owner_loop(
+ ) -> dict[str, Any]:
+     """Call this **from the actor loop**: posts ``close_rollout_fn_and_rh2`` to the shared
+     background loop and awaits it through a threadsafe future with a total timeout.
+-    Never raises; on timeout returns ``{"timed_out": True, ...}`` (the closure keeps running
+-    on the owner loop; the caller proceeds with the rest of dispose)."""
++    Never raises; on timeout returns a failed verdict (``ok=False, timed_out=True``) -- the
++    closure keeps running on the owner loop and the caller proceeds with the rest of dispose."""
+ 
+     timeout = dispose_timeout_seconds(args) if timeout_seconds is None else float(timeout_seconds)
+     owner = get_async_loop()
+@@ -142,5 +316,101 @@ async def dispose_on_owner_loop(
+     try:
+         return await asyncio.wait_for(asyncio.shield(asyncio.wrap_future(concurrent_future)), timeout=timeout)
+     except (TimeoutError, asyncio.TimeoutError):
+-        logger.error("[rh2-integration] dispose closure did not finish within %.1fs; continuing without it", timeout)
+-        return {"timed_out": True, "timeout_seconds": timeout, "first_cause": _describe(driver_cause), "errors": []}
++        logger.error("[rh2-integration] dispose closure did not finish within %.1fs", timeout)
++        return {
++            "schema_id": SHUTDOWN_VERDICT_SCHEMA_ID,
++            "ok": False,
++            "cleanup_ok": False,
++            "timed_out": True,
++            "timeout_seconds": timeout,
++            "primary_cause": _describe(driver_cause),
++            "trigger": "driver_error" if driver_cause else "shutdown_failure",
++            "secondary_causes": [],
++            "rh2": None,
++            "errors": [f"dispose closure timed out after {timeout}s (rh2 shutdown report may be missing)"],
++        }
++
++
++# ---------------------------------------------------------------------------
++# driver side: verdict -> non-success exit / marker file
++# ---------------------------------------------------------------------------
++
++
++def shutdown_evidence_dir() -> Path:
++    return Path(os.environ.get("RH2_SHUTDOWN_EVIDENCE_DIR") or os.environ.get("MILES_RH2_EVENT_DIR") or os.getcwd())
++
++
++def write_shutdown_failure_marker(verdict: dict[str, Any], *, driver_cause: str | None, evidence_dir: Path | None = None) -> Path:
++    """Persist a readable marker so a failed shutdown is visible even when the rh2 report
++    never got written (total timeout). Atomic write; returns the path."""
++
++    directory = Path(evidence_dir) if evidence_dir is not None else shutdown_evidence_dir()
++    directory.mkdir(parents=True, exist_ok=True)
++    path = directory / SHUTDOWN_FAILURE_MARKER
++    payload = {
++        "schema_id": "rh2.shutdown_failure_marker.v1",
++        "written_at_utc": datetime.now(timezone.utc).isoformat(),
++        "driver_cause": driver_cause,
++        "verdict": verdict,
++    }
++    tmp = path.with_suffix(".json.tmp")
++    with open(tmp, "w", encoding="utf-8") as fh:
++        json.dump(payload, fh, ensure_ascii=False, indent=1, default=str)
++        fh.flush()
++        os.fsync(fh.fileno())
++    os.replace(tmp, path)
++    return path
++
++
++def raise_if_shutdown_failed(
++    verdict: dict[str, Any] | None,
++    *,
++    driver_cause: str | None,
++    evidence_dir: Path | None = None,
++) -> Path | None:
++    """train_async ``finally`` policy. Returns the marker path when a failure was persisted.
++
++    - verdict ok -> nothing;
++    - not ok and **no** driver exception -> marker file + ``ShutdownFailure`` (run exits non-zero);
++    - not ok and a driver exception is in flight -> marker file + log only (the caller's own
++      exception keeps propagating; the cleanup failure is already a secondary in the rh2 report
++      when that report exists).
++    """
++
++    if verdict is None:
++        verdict = {"ok": False, "cleanup_ok": False, "timed_out": False, "errors": ["dispose returned no verdict"]}
++    if verdict.get("ok"):
++        return None
++    marker: Path | None = None
++    try:
++        marker = write_shutdown_failure_marker(verdict, driver_cause=driver_cause, evidence_dir=evidence_dir)
++    except Exception:  # noqa: BLE001 - the marker is best-effort; the exception below still fires
++        logger.exception("[rh2-integration] could not write the shutdown failure marker")
++    logger.error(
++        "[rh2-integration] rollout shutdown NOT ok (timed_out=%s errors=%s primary=%s) marker=%s driver_cause=%s",
++        verdict.get("timed_out"),
++        verdict.get("errors"),
++        (verdict.get("report") if isinstance(verdict.get("report"), dict) else verdict).get("primary_cause"),
++        marker,
++        driver_cause,
++    )
++    if driver_cause is None:
++        raise ShutdownFailure(verdict)
++    return marker
++
++
++__all__ = [
++    "DEFAULT_DISPOSE_TIMEOUT_SEC",
++    "SHUTDOWN_FAILURE_MARKER",
++    "SHUTDOWN_FAILURE_SCHEMA_ID",
++    "SHUTDOWN_VERDICT_SCHEMA_ID",
++    "ShutdownFailure",
++    "close_rollout_fn_and_rh2",
++    "dispose_on_owner_loop",
++    "dispose_timeout_seconds",
++    "raise_if_shutdown_failed",
++    "shutdown_evidence_dir",
++    "shutdown_failure_from_aclose",
++    "unfinished_executions_from_failure",
++    "write_shutdown_failure_marker",
++]
+diff --git a/train_async.py b/train_async.py
+index c8aa84db1..162a72275 100644
+--- a/train_async.py
++++ b/train_async.py
+@@ -14,6 +14,7 @@ from miles.utils.ft_utils.control_server.server import start_control_server
+ from miles.utils.ft_utils.mini_ft_controller import maybe_start_mini_ft_controller
+ from miles.utils.logging_utils import configure_logger
+ from miles.utils.misc import should_run_periodic_action
++from miles.utils.rh2_shutdown import raise_if_shutdown_failed
+ from miles.utils.tracking_utils.tracking import finish_tracking, init_tracking
+ 
+ logger = logging.getLogger(__name__)
+@@ -195,11 +196,15 @@ async def train(args):
+         driver_exc = sys.exc_info()[1]
+         driver_cause = f"{type(driver_exc).__name__}: {str(driver_exc)[:400]}" if driver_exc is not None else None
+         try:
+-            await rollout_manager.dispose.remote(driver_cause=driver_cause)
+-        except Exception:  # noqa: BLE001
+-            if driver_cause is None:
+-                raise
+-            logger.exception("[rh2-integration] rollout_manager.dispose() failed while exiting with an error (first cause preserved)")
++            verdict = await rollout_manager.dispose.remote(driver_cause=driver_cause)
++        except Exception as exc:  # noqa: BLE001 - the verdict carries it; policy below decides
++            verdict = {"ok": False, "cleanup_ok": False, "timed_out": False, "errors": [f"dispose call failed: {exc!r}"], "report": None}
++            logger.exception("[rh2-integration] rollout_manager.dispose() call failed")
++        # [rh2-integration] W5a (patch 0012): a shutdown that left residue / errored / timed out is a
++        # failed run. No driver exception in flight -> ShutdownFailure (non-zero exit); driver
++        # exception in flight -> it keeps propagating, the cleanup failure is persisted as a
++        # marker file (and as a secondary in the rh2 report when that report exists).
++        raise_if_shutdown_failed(verdict, driver_cause=driver_cause)
+ 
+ 
+ if __name__ == "__main__":
+-- 
+2.50.1 (Apple Git-155)
+
