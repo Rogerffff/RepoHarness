@@ -134,6 +134,7 @@ from repoharness2.envpack.termination_facts import (
 )
 from repoharness2.governance import (
     FinalizedRollout,
+    GateInputError,
     GroupRepairSignal,
     SandboxCapabilityFacts,
     finalize_rollout,
@@ -1841,6 +1842,11 @@ TaskResolver = Callable[[Any], RolloutTaskSpec]
 # 非 s1 模式在握手构造时刻缺阈值 = run-fatal。本常量不是"默认值"，是被冻结的 S1 事实。
 S1_COMPAT_LEGACY_STALENESS_THRESHOLD = 4
 
+# W1b 第二段复核修复 #2：在这些阶段由**我方事实**构造 RH2 契约对象时抛出的 pydantic
+# ValidationError = 我方接线/事实矛盾（不是任务数据问题）→ typed run-fatal；finalize 之前
+# （materialize/harness_run/assemble）的 ValidationError 仍按 stage fallback 归 missing/ABORTED。
+_STRUCTURAL_CONTRACT_STAGES: frozenset[str] = frozenset({"finalize", "deliver"})
+
 
 @dataclass(frozen=True)
 class SlimeBindingConfig:
@@ -3324,7 +3330,87 @@ class RolloutOrchestrator:
             # cleanup 窗口内好组即被 collect_batch 拒绝交付。
             self._notify_fatal_halt(exc)
             raise
+        # ---- W1b 第二段复核修复 #2：**结构契约类异常**显式提升为 run-fatal（白名单，
+        # 不靠 isinstance 猜）。这些异常表示我方接线/事实矛盾，不是任务数据问题——
+        # 经 stage fallback 洗成 missing/ABORTED 会被 miles 补采掩盖。
+        except GateInputError as exc:
+            # gate.py 明确定义：喂给 gate 的对象接错了线（别的轨迹/别的 lease 的事实）。
+            raise self._structural_contract_fatal(
+                audit, exc, stage=stage, reason_code="gate_wiring_error"
+            ) from exc
+        except AdmissionError as exc:
+            # 交付面 admission 载荷派生/盖章矛盾（_deliver_present_member 内已各自包装，
+            # 此处是防漏网的显式通道）。
+            raise self._structural_contract_fatal(
+                audit, exc, stage=stage, reason_code="admission_contract_error"
+            ) from exc
+        except ValidationError as exc:
+            # finalize/gate/交付面内由**我方自己的事实**构造 RH2 契约对象失败 = 接线矛盾；
+            # finalize 之前（materialize/harness_run/assemble）的 ValidationError 仍按
+            # stage fallback 归 missing/ABORTED（不扩大 fatal 面）。
+            if stage in _STRUCTURAL_CONTRACT_STAGES:
+                raise self._structural_contract_fatal(
+                    audit, exc, stage=stage, reason_code="rh2_contract_validation_failed"
+                ) from exc
+            return self._abort_after_task_local_exception(
+                exc, stage=stage, audit=audit, raw_meta=raw_meta, sample=sample, task=task,
+                tape_top_p=tape_top_p,
+            )
         except Exception as exc:  # noqa: BLE001 - 收口为 abort，归因进 audit
+            return self._abort_after_task_local_exception(
+                exc, stage=stage, audit=audit, raw_meta=raw_meta, sample=sample, task=task,
+                tape_top_p=tape_top_p,
+            )
+        finally:
+            # ---- B5（A-prime 第 7 条）：cleanup 只许发生在 finalization
+            # receipt 原子持久化**之后**。receipt 持久化失败 = T0 失败表
+            # 第 2 行"durable handoff 失败"→ 保留 workspace/容器（不清理、
+            # poison 不释放、容器进隔离队列）+ run halt（正常退出路径抛
+            # Fatal；异常在途时只落账不掩盖首因异常）。s1/audit-only 未注入
+            # store 时跳过 receipt（行为与 B5 前逐字一致）。
+            in_flight = sys.exc_info()[1]
+            await self._run_finally_section(
+                audit=audit, sandbox=sandbox, sid=sid, adapter=adapter, session_open=session_open,
+                in_flight=in_flight,
+            )
+
+    def _structural_contract_fatal(
+        self, audit: "RolloutAudit", exc: BaseException, *, stage: str, reason_code: str
+    ) -> FatalExecutionInfrastructureError:
+        """结构契约类异常 → typed run-fatal（在 except 子句内：先记 failure_record、再同步
+        通知 halt，返回 fatal 由调用方 raise）。不产 Outcome、不返回 ABORTED。"""
+
+        audit.failure_records.append(
+            RolloutFailureRecord(
+                stage=stage,
+                error_type=type(exc).__name__,
+                detail=str(exc)[:500],
+            )
+        )
+        audit.mark(reason_code)
+        fatal = FatalExecutionInfrastructureError(
+            reason_code,
+            f"结构契约异常（stage={stage}，{type(exc).__name__}: {str(exc)[:200]}）——"
+            "我方接线/事实矛盾不得洗成 ABORTED 让补采掩盖，run-halt。",
+        )
+        self._notify_fatal_halt(fatal)
+        return fatal
+
+    def _abort_after_task_local_exception(
+        self,
+        exc: BaseException,
+        *,
+        stage: str,
+        audit: "RolloutAudit",
+        raw_meta: Any,
+        sample: Any,
+        task: RolloutTaskSpec,
+        tape_top_p: float | None,
+    ) -> list[Any]:
+        """通用异常收口（task-local 故障 → missing Outcome + abort 形状）；post-finalize
+        未分类异常仍升 fatal（切片一复核 必修 1）。"""
+
+        if True:  # 保持原缩进层级不变，便于与历史 diff 对照
             audit.failure_records.append(
                 RolloutFailureRecord(
                     stage=stage,
@@ -3388,219 +3474,226 @@ class RolloutOrchestrator:
                 # present 成员被压成 abort 形状 = 交付面接线矛盾（在 except 子句内，手动通知 halt）
                 self._notify_fatal_halt(fatal)
                 raise
-        finally:
-            # ---- B5（A-prime 第 7 条）：cleanup 只许发生在 finalization
-            # receipt 原子持久化**之后**。receipt 持久化失败 = T0 失败表
-            # 第 2 行"durable handoff 失败"→ 保留 workspace/容器（不清理、
-            # poison 不释放、容器进隔离队列）+ run halt（正常退出路径抛
-            # Fatal；异常在途时只落账不掩盖首因异常）。s1/audit-only 未注入
-            # store 时跳过 receipt（行为与 B5 前逐字一致）。
-            in_flight = sys.exc_info()[1]
-            receipt: FinalizationReceiptV1 | None = None
-            receipt_persist_failed = False
-            if self._finalization_store is not None:
-                try:
-                    # B5 复核 P1-5：构造也在失败通道内——typed outcome_v2
-                    # 嵌入会复跑全量不变量，构造失败同样是 durable handoff
-                    # 失败，不许从 finally 裸逃（掩盖首因）。
-                    receipt = build_finalization_receipt(
-                        audit,
-                        in_flight_exception=in_flight,
-                        artifact_bodies_persisted=(
-                            "artifact_bodies_persisted" in audit.steps
-                            or any(
-                                e.step == "artifact_bodies_persisted"
-                                for e in audit.timeline
-                            )
-                        ),
+
+    async def _run_finally_section(
+        self,
+        *,
+        audit: "RolloutAudit",
+        sandbox: Any,
+        sid: str,
+        adapter: Any,
+        session_open: bool,
+        in_flight: BaseException | None,
+    ) -> None:
+        """`_generate_attempt` 的 finally 段本体（B5 receipt → F5 事实派生 → cleanup → 追加记录
+        → audit sink → 尾部 run-halt 判定）。逐字搬自原 finally 段，只为让 except 链可以拆成显式
+        分支而不复制这 200 行；语义零改变。"""
+
+        receipt: FinalizationReceiptV1 | None = None
+        receipt_persist_failed = False
+        if self._finalization_store is not None:
+            try:
+                # B5 复核 P1-5：构造也在失败通道内——typed outcome_v2
+                # 嵌入会复跑全量不变量，构造失败同样是 durable handoff
+                # 失败，不许从 finally 裸逃（掩盖首因）。
+                receipt = build_finalization_receipt(
+                    audit,
+                    in_flight_exception=in_flight,
+                    artifact_bodies_persisted=(
+                        "artifact_bodies_persisted" in audit.steps
+                        or any(
+                            e.step == "artifact_bodies_persisted"
+                            for e in audit.timeline
+                        )
+                    ),
+                )
+                self._finalization_store.persist_receipt(receipt)
+                audit.mark("finalization_receipt_persisted")
+            except Exception as exc:  # noqa: BLE001 —— 分路处置，绝不静默
+                receipt_persist_failed = True
+                audit.failure_records.append(
+                    RolloutFailureRecord(
+                        stage="finalization_receipt",
+                        error_type="finalization_receipt_write_failed",
+                        detail=f"{type(exc).__name__}: {exc}"[:500],
                     )
-                    self._finalization_store.persist_receipt(receipt)
-                    audit.mark("finalization_receipt_persisted")
-                except Exception as exc:  # noqa: BLE001 —— 分路处置，绝不静默
-                    receipt_persist_failed = True
+                )
+                audit.cleanup_failures.append(
+                    CleanupFailureRecord(
+                        lease_id=(
+                            sandbox.lease.lease_id if sandbox else f"lease_{sid}"
+                        ),
+                        step="finalization_receipt_write_failed",
+                        detail=f"{type(exc).__name__}: {exc}"[:300],
+                    )
+                )
+                if sandbox is not None:
+                    self.cleanup_quarantine.append(sandbox.container_name)
+                audit.mark("finalization_receipt_write_failed")
+        # W1b 第一集成切片（F5 producer）：receipt 持久化成功后立刻派生
+        # termination 事实载荷（只读派生，fail-closed）。只对形成了 Outcome
+        # v2 的 attempt 派生——没有 Outcome 的 attempt（s1 兼容/身份不全的
+        # 结构化拒绝）没有 termination 权威，如实记跳过，不伪造事实。派生
+        # 失败 = receipt 与 outcome 账实矛盾：异常在途时只记 secondary
+        # fact，否则在 finally 末尾 run-halt（与 receipt 写失败同纪律）。
+        termination_facts_failed = False
+        if receipt is not None and not receipt_persist_failed:
+            if audit.outcome_v2 is None:
+                audit.mark("termination_facts_skipped_no_outcome")
+            else:
+                try:
+                    audit.termination_facts_payload = termination_facts_payload(receipt)
+                    audit.mark("termination_facts_derived")
+                except TerminationFactsError as exc:
+                    termination_facts_failed = True
                     audit.failure_records.append(
                         RolloutFailureRecord(
                             stage="finalization_receipt",
-                            error_type="finalization_receipt_write_failed",
+                            error_type="termination_facts_underivable",
                             detail=f"{type(exc).__name__}: {exc}"[:500],
                         )
                     )
+                    audit.mark("termination_facts_underivable")
+        cleanup_exception = False
+        cleanup_skipped = receipt_persist_failed and self._mode != "s1_compat"
+        if cleanup_skipped:
+            # 保留现场：session 不 drop、容器不清、poison 不释放
+            # （s1_compat 容忍档与 audit sink 同口径：落账后照常清理）。
+            # B5 复核 P1-4：跳过就如实标注跳过——不写
+            # cleanup_started/cleanup_completed 假事件。
+            audit.mark("cleanup_skipped_receipt_failure")
+        else:
+            audit.mark("cleanup_started")
+            if session_open:
+                try:
+                    await adapter.drop_session(sid, wait_timeout=5.0)
+                except Exception as exc:  # noqa: BLE001 - 清理失败必须留痕（Q8）
                     audit.cleanup_failures.append(
                         CleanupFailureRecord(
-                            lease_id=(
-                                sandbox.lease.lease_id if sandbox else f"lease_{sid}"
-                            ),
-                            step="finalization_receipt_write_failed",
+                            lease_id=sandbox.lease.lease_id if sandbox else f"lease_{sid}",
+                            step="drop_session",
+                            detail=str(exc)[:300],
+                        )
+                    )
+            if sandbox is not None:
+                try:
+                    await self._cleanup_container(sandbox.lease, sandbox.container_name, audit)
+                except Exception as exc:  # noqa: BLE001 - 轮次 12 一般 1：不许无账
+                    # docker socket OSError 等意外异常：结构化落账 + 隔离队列，
+                    # 不让清理异常覆盖 rollout 结果
+                    cleanup_exception = True
+                    audit.cleanup_failures.append(
+                        CleanupFailureRecord(
+                            lease_id=sandbox.lease.lease_id,
+                            step="container_cleanup_exception",
                             detail=f"{type(exc).__name__}: {exc}"[:300],
                         )
                     )
-                    if sandbox is not None:
-                        self.cleanup_quarantine.append(sandbox.container_name)
-                    audit.mark("finalization_receipt_write_failed")
-            # W1b 第一集成切片（F5 producer）：receipt 持久化成功后立刻派生
-            # termination 事实载荷（只读派生，fail-closed）。只对形成了 Outcome
-            # v2 的 attempt 派生——没有 Outcome 的 attempt（s1 兼容/身份不全的
-            # 结构化拒绝）没有 termination 权威，如实记跳过，不伪造事实。派生
-            # 失败 = receipt 与 outcome 账实矛盾：异常在途时只记 secondary
-            # fact，否则在 finally 末尾 run-halt（与 receipt 写失败同纪律）。
-            termination_facts_failed = False
-            if receipt is not None and not receipt_persist_failed:
-                if audit.outcome_v2 is None:
-                    audit.mark("termination_facts_skipped_no_outcome")
+                    self.cleanup_quarantine.append(sandbox.container_name)
+        if not cleanup_skipped:
+            audit.mark("cleanup_completed")
+        poison_released = False
+        if (
+            receipt_persist_failed
+            or cleanup_exception
+            or (audit.cleanup_failures and not audit.lease_released)
+        ):
+            # 清理未确认成功：poison **不释放**（active 保持拒绝力），
+            # 容器进隔离队列等重试/人工——release 只在清理确认后发生
+            pass
+        elif self._session_poison_release is not None:
+            # 真正的 execution 清理 ACK：harness 终止 + 会话撤销 + 容器
+            # 清理都已完成，active poison 此刻才允许归档（轮次 11）
+            self._session_poison_release(sid)
+            poison_released = True
+        if (
+            self._finalization_store is not None
+            and receipt is not None
+            and not receipt_persist_failed
+        ):
+            # B5：cleanup 结果**追加**（独立记录，永不改写 receipt——
+            # "cleanup failure 附加不覆盖首因"）。receipt 没落盘就没有
+            # 追加对象（悬空 cleanup 记录禁止）。追加自身失败只落账。
+            try:
+                self._finalization_store.append_cleanup_result(
+                    CleanupResultAppendV1(
+                        receipt_id=receipt.receipt_id,
+                        cleanup_failures=[
+                            CleanupFailureFact(
+                                lease_id=f.lease_id, step=f.step, detail=f.detail
+                            )
+                            for f in audit.cleanup_failures
+                        ],
+                        quarantined_container=(
+                            sandbox.container_name
+                            if sandbox is not None
+                            and sandbox.container_name in self.cleanup_quarantine
+                            else None
+                        ),
+                        lease_released=audit.lease_released,
+                        poison_released=poison_released,
+                        completed_at_utc=_now_utc(),
+                    )
+                )
+            except Exception as exc:  # noqa: BLE001 —— 追加失败不掩盖首因
+                audit.cleanup_failures.append(
+                    CleanupFailureRecord(
+                        lease_id=(
+                            sandbox.lease.lease_id if sandbox else f"lease_{sid}"
+                        ),
+                        step="cleanup_result_append_failed",
+                        detail=f"{type(exc).__name__}: {exc}"[:300],
+                    )
+                )
+        if self._audit_sink is not None:
+            try:
+                self._audit_sink(audit)
+            except Exception as exc:  # noqa: BLE001 —— 分链路处置
+                if (
+                    receipt_persist_failed and self._mode != "s1_compat"
+                ) or in_flight is not None:
+                    # B5 复核 P1-4 + 三轮 P1-2：**首因优先**——receipt
+                    # 失败在前、或任何 Fatal/取消在途时，sink 失败只记
+                    # secondary fact；从 finally 抛新异常会**替换**在途
+                    # 异常，把 barrier fatal 等首因顶掉成
+                    # execution_audit_write_failed。
+                    audit.failure_records.append(
+                        RolloutFailureRecord(
+                            stage="finalization_receipt",
+                            error_type="audit_sink_failed_secondary",
+                            detail=f"{type(exc).__name__}: {exc}"[:500],
+                        )
+                    )
+                elif self._mode != "s1_compat" or self.config.require_real_weight_versions:
+                    # 轮次 14 仍需修正 3：裸 raise 会被 worker 当普通成员
+                    # 失败（failure_sink 成功就继续 top-up）——包装成基建
+                    # 级致命错误，worker 据此停机（真 run-halt）
+                    raise FatalExecutionInfrastructureError(
+                        "execution_audit_write_failed",
+                        f"审计存储不可用：{type(exc).__name__}: {exc}——"
+                        "继续 top-up 只会积累无审计依据的 rollout。",
+                    ) from exc
                 else:
-                    try:
-                        audit.termination_facts_payload = termination_facts_payload(receipt)
-                        audit.mark("termination_facts_derived")
-                    except TerminationFactsError as exc:
-                        termination_facts_failed = True
-                        audit.failure_records.append(
-                            RolloutFailureRecord(
-                                stage="finalization_receipt",
-                                error_type="termination_facts_underivable",
-                                detail=f"{type(exc).__name__}: {exc}"[:500],
-                            )
-                        )
-                        audit.mark("termination_facts_underivable")
-            cleanup_exception = False
-            cleanup_skipped = receipt_persist_failed and self._mode != "s1_compat"
-            if cleanup_skipped:
-                # 保留现场：session 不 drop、容器不清、poison 不释放
-                # （s1_compat 容忍档与 audit sink 同口径：落账后照常清理）。
-                # B5 复核 P1-4：跳过就如实标注跳过——不写
-                # cleanup_started/cleanup_completed 假事件。
-                audit.mark("cleanup_skipped_receipt_failure")
-            else:
-                audit.mark("cleanup_started")
-                if session_open:
-                    try:
-                        await adapter.drop_session(sid, wait_timeout=5.0)
-                    except Exception as exc:  # noqa: BLE001 - 清理失败必须留痕（Q8）
-                        audit.cleanup_failures.append(
-                            CleanupFailureRecord(
-                                lease_id=sandbox.lease.lease_id if sandbox else f"lease_{sid}",
-                                step="drop_session",
-                                detail=str(exc)[:300],
-                            )
-                        )
-                if sandbox is not None:
-                    try:
-                        await self._cleanup_container(sandbox.lease, sandbox.container_name, audit)
-                    except Exception as exc:  # noqa: BLE001 - 轮次 12 一般 1：不许无账
-                        # docker socket OSError 等意外异常：结构化落账 + 隔离队列，
-                        # 不让清理异常覆盖 rollout 结果
-                        cleanup_exception = True
-                        audit.cleanup_failures.append(
-                            CleanupFailureRecord(
-                                lease_id=sandbox.lease.lease_id,
-                                step="container_cleanup_exception",
-                                detail=f"{type(exc).__name__}: {exc}"[:300],
-                            )
-                        )
-                        self.cleanup_quarantine.append(sandbox.container_name)
-            if not cleanup_skipped:
-                audit.mark("cleanup_completed")
-            poison_released = False
-            if (
-                receipt_persist_failed
-                or cleanup_exception
-                or (audit.cleanup_failures and not audit.lease_released)
-            ):
-                # 清理未确认成功：poison **不释放**（active 保持拒绝力），
-                # 容器进隔离队列等重试/人工——release 只在清理确认后发生
-                pass
-            elif self._session_poison_release is not None:
-                # 真正的 execution 清理 ACK：harness 终止 + 会话撤销 + 容器
-                # 清理都已完成，active poison 此刻才允许归档（轮次 11）
-                self._session_poison_release(sid)
-                poison_released = True
-            if (
-                self._finalization_store is not None
-                and receipt is not None
-                and not receipt_persist_failed
-            ):
-                # B5：cleanup 结果**追加**（独立记录，永不改写 receipt——
-                # "cleanup failure 附加不覆盖首因"）。receipt 没落盘就没有
-                # 追加对象（悬空 cleanup 记录禁止）。追加自身失败只落账。
-                try:
-                    self._finalization_store.append_cleanup_result(
-                        CleanupResultAppendV1(
-                            receipt_id=receipt.receipt_id,
-                            cleanup_failures=[
-                                CleanupFailureFact(
-                                    lease_id=f.lease_id, step=f.step, detail=f.detail
-                                )
-                                for f in audit.cleanup_failures
-                            ],
-                            quarantined_container=(
-                                sandbox.container_name
-                                if sandbox is not None
-                                and sandbox.container_name in self.cleanup_quarantine
-                                else None
-                            ),
-                            lease_released=audit.lease_released,
-                            poison_released=poison_released,
-                            completed_at_utc=_now_utc(),
-                        )
-                    )
-                except Exception as exc:  # noqa: BLE001 —— 追加失败不掩盖首因
-                    audit.cleanup_failures.append(
-                        CleanupFailureRecord(
-                            lease_id=(
-                                sandbox.lease.lease_id if sandbox else f"lease_{sid}"
-                            ),
-                            step="cleanup_result_append_failed",
-                            detail=f"{type(exc).__name__}: {exc}"[:300],
-                        )
-                    )
-            if self._audit_sink is not None:
-                try:
-                    self._audit_sink(audit)
-                except Exception as exc:  # noqa: BLE001 —— 分链路处置
-                    if (
-                        receipt_persist_failed and self._mode != "s1_compat"
-                    ) or in_flight is not None:
-                        # B5 复核 P1-4 + 三轮 P1-2：**首因优先**——receipt
-                        # 失败在前、或任何 Fatal/取消在途时，sink 失败只记
-                        # secondary fact；从 finally 抛新异常会**替换**在途
-                        # 异常，把 barrier fatal 等首因顶掉成
-                        # execution_audit_write_failed。
-                        audit.failure_records.append(
-                            RolloutFailureRecord(
-                                stage="finalization_receipt",
-                                error_type="audit_sink_failed_secondary",
-                                detail=f"{type(exc).__name__}: {exc}"[:500],
-                            )
-                        )
-                    elif self._mode != "s1_compat" or self.config.require_real_weight_versions:
-                        # 轮次 14 仍需修正 3：裸 raise 会被 worker 当普通成员
-                        # 失败（failure_sink 成功就继续 top-up）——包装成基建
-                        # 级致命错误，worker 据此停机（真 run-halt）
-                        raise FatalExecutionInfrastructureError(
-                            "execution_audit_write_failed",
-                            f"审计存储不可用：{type(exc).__name__}: {exc}——"
-                            "继续 top-up 只会积累无审计依据的 rollout。",
-                        ) from exc
-                    else:
-                        print(f"[rh2] audit sink 落盘失败（bring-up 容忍）：{exc}")
-            if receipt_persist_failed and self._mode != "s1_compat" and in_flight is None:
-                # B5（T0 失败表第 2 行）：durable handoff 失败 → run halt
-                # （worker 停机）。现场已保留（上方跳过 cleanup + 隔离队列）。
-                # 异常在途时不抛——不许掩盖首因，Fatal/取消按原样传播，
-                # receipt 缺失由 F2-4 恢复端按"未终局"fail-closed 处理。
-                raise FatalExecutionInfrastructureError(
-                    "finalization_receipt_write_failed",
-                    "finalization receipt 持久化失败——workspace 已保留、"
-                    "容器入隔离队列；继续 top-up 会产生无终局记录的 attempt。",
-                )
-            if termination_facts_failed and in_flight is None:
-                # F5：receipt 已 durable，但其 outcome/引用账实矛盾到无法派生
-                # 事实——继续 top-up 会积累无法 join 的 attempt。首因优先：
-                # 异常在途时上方只记 secondary fact，不在此覆盖。
-                raise FatalExecutionInfrastructureError(
-                    "termination_facts_underivable",
-                    "finalization receipt 与 outcome 的引用账实矛盾，termination 事实"
-                    "无法派生——receipt 已持久化，run-halt 待人工核对。",
-                )
+                    print(f"[rh2] audit sink 落盘失败（bring-up 容忍）：{exc}")
+        if receipt_persist_failed and self._mode != "s1_compat" and in_flight is None:
+            # B5（T0 失败表第 2 行）：durable handoff 失败 → run halt
+            # （worker 停机）。现场已保留（上方跳过 cleanup + 隔离队列）。
+            # 异常在途时不抛——不许掩盖首因，Fatal/取消按原样传播，
+            # receipt 缺失由 F2-4 恢复端按"未终局"fail-closed 处理。
+            raise FatalExecutionInfrastructureError(
+                "finalization_receipt_write_failed",
+                "finalization receipt 持久化失败——workspace 已保留、"
+                "容器入隔离队列；继续 top-up 会产生无终局记录的 attempt。",
+            )
+        if termination_facts_failed and in_flight is None:
+            # F5：receipt 已 durable，但其 outcome/引用账实矛盾到无法派生
+            # 事实——继续 top-up 会积累无法 join 的 attempt。首因优先：
+            # 异常在途时上方只记 secondary fact，不在此覆盖。
+            raise FatalExecutionInfrastructureError(
+                "termination_facts_underivable",
+                "finalization receipt 与 outcome 的引用账实矛盾，termination 事实"
+                "无法派生——receipt 已持久化，run-halt 待人工核对。",
+            )
 
     # ------------------------------------------------------------------ 步骤 2
     def _default_mount_planner(self, task: RolloutTaskSpec) -> list[BundleMount]:
@@ -4071,6 +4164,9 @@ class RolloutOrchestrator:
         capability_facts: SandboxCapabilityFacts | None = None
         if self._mode != "s1_compat" and self._sandbox_capability_facts_provider is not None:
             capability_facts = self._sandbox_capability_facts_provider(audit)
+        # 复核修复 #5：显式传入本次 attempt 实际使用的 SandboxLease.lease_id（materialize 时挂在
+        # audit.lease 上的那份租约，不猜）——gate 要求能力事实的 lease_id 逐字相等，旧容器的
+        # 能力事实不能认证同一 trajectory 的新容器。
         return await finalize_rollout(
             grade=_grade,
             project=_project,
@@ -4080,6 +4176,7 @@ class RolloutOrchestrator:
             backpressure_events=list(self._backpressure_events_source()),
             sandbox_capability_facts=capability_facts,
             sandbox_capability_facts_required=self._mode != "s1_compat",
+            sandbox_lease_id=audit.lease.lease_id if audit.lease is not None else None,
         )
 
     # ------------------------------------------------------------------ 步骤 9

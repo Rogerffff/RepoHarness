@@ -144,6 +144,7 @@ async def finalize_rollout(
     backpressure_events: Sequence[BackpressureEvent] = (),
     sandbox_capability_facts: SandboxCapabilityFacts | None = None,
     sandbox_capability_facts_required: bool = True,
+    sandbox_lease_id: str | None = None,
     report_id: str | None = None,
     created_at_utc: datetime | None = None,
 ) -> FinalizedRollout:
@@ -169,6 +170,8 @@ async def finalize_rollout(
       （fail-closed：事实缺席 = `sandbox_capability_facts_missing`，非 online）；
       只有 s1_compat 冻结路径显式传 required=False（evidence 如实记
       not_required）。W3b 落地前 formal 路径传 None 是预期形态。
+    - sandbox_lease_id（复核修复 #5）：本次 attempt 实际使用的 SandboxLease.lease_id；
+      required=True 时必传，能力事实的 lease_id 必须逐字相等（GateInputError）。
     - report_id / created_at_utc：EligibilityReport 的 id 与时间戳；缺省时
       自动生成（id 形如 elig_1a2b3c4d5e6f，时间取当前 UTC）。需要逐字节
       可复现的报告（如 parity 对照）时由调用方显式传入。
@@ -190,6 +193,7 @@ async def finalize_rollout(
         backpressure_events=backpressure_events,
         sandbox_capability_facts=sandbox_capability_facts,
         sandbox_capability_facts_required=sandbox_capability_facts_required,
+        sandbox_lease_id=sandbox_lease_id,
         report_id=report_id if report_id is not None else f"elig_{uuid.uuid4().hex[:12]}",
         created_at_utc=(
             created_at_utc if created_at_utc is not None else datetime.now(timezone.utc)

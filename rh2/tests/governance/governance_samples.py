@@ -145,6 +145,7 @@ async def run_finalize(
     backpressure: Sequence[BackpressureEvent] = (),
     sandbox_capability_facts: Any = _DEFAULT,
     sandbox_capability_facts_required: bool = True,
+    sandbox_lease_id: str | None = "lease_0001",  # 复核修复 #5：默认与样例事实同一租约
     report_id: str = FIXED_REPORT_ID,
     created_at: datetime = FIXED_CREATED_AT,
 ) -> FinalizedRollout:
@@ -181,6 +182,7 @@ async def run_finalize(
         backpressure_events=list(backpressure),
         sandbox_capability_facts=facts_obj,
         sandbox_capability_facts_required=sandbox_capability_facts_required,
+        sandbox_lease_id=sandbox_lease_id,
         report_id=report_id,
         created_at_utc=created_at,
     )

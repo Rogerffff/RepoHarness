@@ -454,6 +454,18 @@ def test_stamp_then_resolve_round_trip_and_join_negatives():
             resolve_admission_payload({**good, **mutation})
     with pytest.raises(AdmissionError, match="admission_payload_missing"):
         resolve_admission_payload(_identity_meta())
+    # 复核修复 #6a：组准入（require_dispatch_identity=True）要求分派三键必须在场；legacy 自检模式只在键在场时比较
+    for key in ("task_id", "environment_package_digest", "public_bundle_digest"):
+        stripped = {k: v for k, v in good.items() if k != key}
+        assert resolve_admission_payload(stripped) == payload
+        with pytest.raises(AdmissionError, match="admission_dispatch_identity_missing"):
+            resolve_admission_payload(stripped, require_dispatch_identity=True)
+    no_env = _payload(env=None)
+    leaf2 = _leaf()
+    stamp_admission_payload(leaf2, no_env)
+    with pytest.raises(AdmissionError, match="admission_environment_identity_missing"):
+        resolve_admission_payload({**_identity_meta(), **leaf2.metadata, "environment_package_digest": ENV},
+                                  require_dispatch_identity=True)
     tampered = {**good, ADMISSION_METADATA_KEY: {**good[ADMISSION_METADATA_KEY]}}
     tampered[ADMISSION_METADATA_KEY]["eligibility_report"] = {
         **tampered[ADMISSION_METADATA_KEY]["eligibility_report"],

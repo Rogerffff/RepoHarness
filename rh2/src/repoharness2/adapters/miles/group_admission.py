@@ -266,6 +266,76 @@ def _check_leaf_shape_claims(leaf: Any, payload: AdmissionPayloadV1, *, reward: 
             )
 
 
+def _check_outcome_identity(ident: _Identity, payload: AdmissionPayloadV1) -> None:
+    """复核修复 #6b：Outcome 内部身份（identity 五字段 + member_slot）与外层六字段逐项对账。"""
+
+    oid = payload.outcome.identity
+    pairs = (
+        ("prompt_group_id", oid.prompt_group_id, ident.group_id),
+        ("group_index", oid.group_index, ident.group_index),
+        ("rollout_execution_id", oid.rollout_execution_id, ident.execution_id),
+        ("physical_attempt_id", oid.physical_attempt_id, ident.attempt_id),
+        ("physical_attempt_seq", oid.physical_attempt_seq, ident.attempt_seq),
+        ("member_slot", payload.outcome.member_slot, ident.slot),
+    )
+    mismatched = [(name, a, b) for name, a, b in pairs if a != b]
+    if mismatched:
+        raise GroupAdmissionFatal(
+            "outcome_identity_mismatch",
+            f"成员 {ident.execution_id} 的 Outcome 内部身份与六字段身份不一致：{mismatched}。",
+        )
+
+
+def _parse_version(value: Any, *, what: str, member: str) -> int:
+    try:
+        if isinstance(value, bool):
+            raise ValueError("bool")
+        return int(str(value), 10)
+    except (TypeError, ValueError):
+        raise GroupAdmissionFatal(
+            "version_not_numeric",
+            f"成员 {member} 的 {what}={value!r} 不能解析为十进制整数版本（formal 版本契约）。",
+        ) from None
+
+
+def _check_leaf_version_binding(leaf: Any, payload: AdmissionPayloadV1) -> None:
+    """复核修复 #4：叶版本事实必须与 Outcome 的版本事实合法相关（消费侧版本绑定）。
+
+    规则（现有版本投影语义）：叶 `weight_versions` 非空 ⟺ Outcome 有版本事实；每个叶版本可解析为
+    int 且 ∈ Outcome.turn_weight_versions（**子集**——fan-out 叶只回链自己的入训轮，不得要求集合
+    相等）；max(叶版本) ≤ Outcome.current_version_at_finalize。反例：叶被改成未来版本 999 而 Outcome
+    仍为 5——miles get() 的 staleness = current − oldest 会算成负数并"满足"任何阈值。consume-time
+    的负 lag 拒绝在 miles get() 侧（归 W4，不改 reference/），本函数在 finalize 事实层先钉死。
+    """
+
+    member = payload.physical_attempt_id
+    outcome = payload.outcome
+    leaf_versions = list(getattr(leaf, "weight_versions", None) or [])
+    outcome_versions = list(outcome.turn_weight_versions or [])
+    if bool(leaf_versions) != bool(outcome_versions):
+        raise GroupAdmissionFatal(
+            "version_facts_presence_mismatch",
+            f"成员 {member} 叶 weight_versions={leaf_versions!r} 与 Outcome.turn_weight_versions={outcome_versions!r} "
+            "在场性不一致（版本事实两处账目分家）。",
+        )
+    if not leaf_versions:
+        return
+    leaf_ints = {_parse_version(v, what="leaf weight_version", member=member) for v in leaf_versions}
+    outcome_ints = {_parse_version(v, what="Outcome.turn_weight_version", member=member) for v in outcome_versions}
+    current = _parse_version(outcome.current_version_at_finalize, what="Outcome.current_version_at_finalize", member=member)
+    if not leaf_ints <= outcome_ints:
+        raise GroupAdmissionFatal(
+            "leaf_version_not_in_outcome",
+            f"成员 {member} 叶版本 {sorted(leaf_ints)} 不是 Outcome 逐轮版本 {sorted(outcome_ints)} 的子集。",
+        )
+    if max(leaf_ints) > current:
+        raise GroupAdmissionFatal(
+            "leaf_version_ahead_of_finalize",
+            f"成员 {member} 叶版本 max={max(leaf_ints)} 超过 finalize 时刻 current_version={current}"
+            "（未来版本会让 consume-time staleness 变负并绕过阈值）。",
+        )
+
+
 def _check_facts_vs_payload(facts: TerminationFactsPayloadV1, payload: AdmissionPayloadV1) -> None:
     pairs = (
         ("physical_attempt_id", facts.physical_attempt_id, payload.physical_attempt_id),
@@ -318,7 +388,7 @@ def admit_group(
         meta0 = _meta(leaves[0])
         ident = _read_identity(meta0, n_samples_per_prompt=n_samples_per_prompt)
         try:
-            payload0 = resolve_admission_payload(meta0)
+            payload0 = resolve_admission_payload(meta0, require_dispatch_identity=True)
         except AdmissionError as exc:
             raise GroupAdmissionFatal(exc.reason_code, f"成员 {ident.execution_id}：{exc}") from exc
         try:
@@ -326,6 +396,7 @@ def admit_group(
         except TerminationFactsError as exc:
             raise GroupAdmissionFatal("termination_facts_unresolvable", f"成员 {ident.execution_id}：{exc}") from exc
         _check_facts_vs_payload(facts0, payload0)
+        _check_outcome_identity(ident, payload0)
         dispatch0 = tuple(meta0.get(k) for k in _DISPATCH_KEYS)
         member_reward: float | None = None
         for position, leaf in enumerate(leaves):
@@ -347,7 +418,7 @@ def admit_group(
                         f"成员 {ident.execution_id} 的 fan-out 叶携带不同身份 {leaf_ident}——叶冒充新 member/attempt。",
                     )
                 try:
-                    leaf_payload = resolve_admission_payload(meta)
+                    leaf_payload = resolve_admission_payload(meta, require_dispatch_identity=True)
                     leaf_facts = resolve_termination_facts(meta)
                 except (AdmissionError, TerminationFactsError) as exc:
                     raise GroupAdmissionFatal("fan_out_leaf_payload_unresolvable", f"成员 {ident.execution_id}：{exc}") from exc
@@ -370,6 +441,7 @@ def admit_group(
                     "（不是本 prompt group 派发出的样本）。",
                 )
             reward = _reward_scalar(reward_of(leaf))
+            _check_leaf_version_binding(leaf, payload0)  # 版本事实绑定先于形状声称（更具体的矛盾先报）
             _check_leaf_shape_claims(leaf, payload0, reward=reward)
             if position == 0:
                 member_reward = reward
@@ -475,11 +547,23 @@ def rh2_group_admission_filter(args: Any, samples: Any, **kwargs: Any):
         getter = getattr(leaf, "get_reward_value", None)
         return getter(args) if callable(getter) else getattr(leaf, "reward", None)
 
-    result = admit_group(
-        samples,
-        n_samples_per_prompt=n,
-        disposition_policy=_policy_from_args(args),
-        finalize_staleness_threshold=_threshold_from_args(args),
-        reward_of=_reward_of,
-    )
+    try:
+        result = admit_group(
+            samples,
+            n_samples_per_prompt=n,
+            disposition_policy=_policy_from_args(args),
+            finalize_staleness_threshold=_threshold_from_args(args),
+            reward_of=_reward_of,
+        )
+    except (GroupAdmissionFatal, AdmissionError) as exc:
+        # W5a 复核 #3 接缝：filter 在 miles put() 内运行，与执行 task 不同 context，
+        # generate.py 的 contextvar 通知器够不到——显式经进程级入口触发同一条
+        # 关停链（未在关停 → 调度；关停中 → 吸收进报告）。通知失败不得吞掉首因。
+        try:
+            from repoharness2.adapters.slime.bringup import notify_run_fatal  # 延迟 import,避免环
+
+            notify_run_fatal(exc)
+        except Exception:  # noqa: BLE001 - 通知只是附加动作,首因异常必须原样传播
+            pass
+        raise
     return DynamicFilterOutput(keep=result.keep, reason=result.reason)

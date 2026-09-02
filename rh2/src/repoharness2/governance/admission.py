@@ -370,12 +370,14 @@ def stamp_admission_payload(output: Any, payload: AdmissionPayloadV1) -> None:
     meta[ADMISSION_METADATA_KEY] = new
 
 
-def resolve_admission_payload(sample_metadata: Any) -> AdmissionPayloadV1:
+def resolve_admission_payload(sample_metadata: Any, *, require_dispatch_identity: bool = False) -> AdmissionPayloadV1:
     """consumer 侧 join：解出载荷（重跑全部契约校验）并与样本自身身份/分派/派生视图逐字核对。
 
-    核对项：attempt id、execution id、task_id（样本带该键时）、environment_package_digest /
-    public_bundle_digest（样本带该键时）、`eligibility_report_ref` / `training_eligibility_class`
-    派生视图（有报告时必须在场且相等；无报告时必须缺席）。
+    核对项：attempt id、execution id、task_id / environment_package_digest / public_bundle_digest
+    （`require_dispatch_identity=True`——组准入 filter 用——三键**必须在场**且与载荷逐字相等，且载荷的
+    environment_package_digest 必须非 None；False 时只在样本带该键时比较，供交付面自检/legacy 链）、
+    `eligibility_report_ref` / `training_eligibility_class` 派生视图（有报告时必须在场且相等；
+    无报告时必须缺席）。
     """
 
     if not isinstance(sample_metadata, Mapping):
@@ -406,12 +408,24 @@ def resolve_admission_payload(sample_metadata: Any) -> AdmissionPayloadV1:
             "admission_execution_mismatch",
             f"样本 execution {execution!r} 与载荷 execution {payload.rollout_execution_id!r} 不一致（错 trajectory）。",
         )
+    if require_dispatch_identity and payload.environment_package_digest is None:
+        raise AdmissionError(
+            "admission_environment_identity_missing",
+            "载荷无 environment_package_digest——组准入要求 prepared 链的完整分派三元组（legacy v1 链不可进正式准入）。",
+        )
     for key, expected, code in (
         (_TASK_ID_KEY, payload.task_id, "admission_task_mismatch"),
         (_ENV_DIGEST_KEY, payload.environment_package_digest, "admission_environment_mismatch"),
         (_PUBLIC_DIGEST_KEY, payload.public_bundle_digest, "admission_public_bundle_mismatch"),
     ):
-        if key in sample_metadata and sample_metadata[key] != expected:
+        if key not in sample_metadata:
+            if require_dispatch_identity:
+                raise AdmissionError(
+                    "admission_dispatch_identity_missing",
+                    f"样本缺分派键 {key}——组准入要求 task_id / environment_package_digest / public_bundle_digest 三键在场。",
+                )
+            continue
+        if sample_metadata[key] != expected:
             raise AdmissionError(
                 code, f"样本 {key}={sample_metadata[key]!r} 与载荷 {expected!r} 不一致（环境/分派身份错位）。"
             )

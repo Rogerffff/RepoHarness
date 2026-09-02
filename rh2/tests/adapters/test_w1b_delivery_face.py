@@ -272,6 +272,100 @@ async def test_admission_payload_build_failure_is_fatal(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
+# 复核修复 #2：结构契约类异常显式提升 run-fatal（白名单：GateInputError / AdmissionError /
+# finalize·deliver 阶段的 pydantic ValidationError）；task-local 故障仍 ABORTED
+# ---------------------------------------------------------------------------
+
+
+def _forced_validation_error():
+    from pydantic import ValidationError
+
+    from repoharness2.contracts import EligibilityReport
+
+    try:
+        EligibilityReport.model_validate({})
+    except ValidationError as exc:
+        return exc
+    raise AssertionError("unreachable")
+
+
+async def test_gate_input_error_in_finalize_is_run_fatal_not_aborted(monkeypatch):
+    from repoharness2.governance import GateInputError
+
+    chain = _formal_chain()
+
+    async def _wiring_boom(**kw):
+        raise GateInputError("forced: GradingReport.trajectory_id(traj_9999) 与投影不一致")
+
+    monkeypatch.setattr(generate_mod, "finalize_rollout", _wiring_boom)
+    with pytest.raises(FatalExecutionInfrastructureError, match="gate_wiring_error"):
+        await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    audit = chain.orchestrator.audits[0]
+    assert audit.outcome_v2 is None and chain.orchestrator.outcomes == []  # producer 未被调用产 missing
+    assert audit.delivered_sample_count == 0 and "step9_samples_delivered" not in audit.steps
+    assert any(f.stage == "finalize" and f.error_type == "GateInputError" for f in audit.failure_records)
+    assert "gate_wiring_error" in _steps(audit)
+    (receipt,) = chain.finalization.receipts
+    assert receipt.attempt_disposition == "fatal_run_halt" and receipt.terminal_reason_code == "gate_wiring_error"
+    assert receipt.outcome_v2 is None
+    assert "cleanup_completed" in _steps(audit)
+
+
+async def test_validation_error_inside_finalize_is_run_fatal(monkeypatch):
+    chain = _formal_chain()
+    err = _forced_validation_error()
+
+    async def _contract_boom(**kw):
+        raise err
+
+    monkeypatch.setattr(generate_mod, "finalize_rollout", _contract_boom)
+    with pytest.raises(FatalExecutionInfrastructureError, match="rh2_contract_validation_failed"):
+        await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    audit = chain.orchestrator.audits[0]
+    assert audit.outcome_v2 is None
+    (receipt,) = chain.finalization.receipts
+    assert receipt.attempt_disposition == "fatal_run_halt"
+
+
+async def test_stale_lease_capability_facts_are_run_fatal_via_gate_wiring():
+    """#5 + #2 合体：provider 交回同一 trajectory 但旧 lease 的能力事实 → GateInputError → fatal。"""
+
+    def _stale_provider(audit):
+        facts = _capability_facts_provider(audit)
+        return facts.model_copy(update={"lease_id": "lease_from_previous_container"})
+
+    chain = _formal_chain(sandbox_capability_facts_provider=_stale_provider)
+    with pytest.raises(FatalExecutionInfrastructureError, match="gate_wiring_error"):
+        await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    audit = chain.orchestrator.audits[0]
+    assert any("lease_from_previous_container" in f.detail for f in audit.failure_records)
+
+
+async def test_pre_finalize_validation_error_and_task_local_failure_stay_aborted(monkeypatch):
+    """对照：finalize 之前的 ValidationError 与真实 task-local 故障仍按 stage fallback 归 missing/ABORTED。"""
+
+    chain = _formal_chain()
+    err = _forced_validation_error()
+
+    async def _materialize_boom(*a, **kw):
+        raise err
+
+    monkeypatch.setattr(chain.orchestrator, "_materialize_rollout_sandbox", _materialize_boom)
+    (aborted,) = await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    assert aborted.remove_sample is True and aborted.status == "aborted"
+    audit = chain.orchestrator.audits[0]
+    assert audit.outcome_v2["completion_class"] == "missing"
+    assert any(f.stage == "materialize" and f.error_type == "ValidationError" for f in audit.failure_records)
+    (receipt,) = chain.finalization.receipts
+    assert receipt.attempt_disposition == "aborted"
+
+    crashed = _formal_chain(crash=RuntimeError("claude cli exploded"))
+    (aborted2,) = await crashed.orchestrator.generate(_Args(), crashed.base_sample, dict(SAMPLING_PARAMS))
+    assert aborted2.status == "aborted"
+    assert crashed.finalization.receipts[0].outcome_v2.failure_category == "harness_crash"
+
+
+# ---------------------------------------------------------------------------
 # stamp_conflict：receipt 落盘之后的 fatal 经现有审计追加 attempt-bound 事实
 # ---------------------------------------------------------------------------
 

@@ -316,3 +316,114 @@ W1a 六字段铸造规则；W2a 视图/controller；`contracts/` 全部 schema�
 s1_compat 的交付形状（degraded 仍 abort）、v1 八题 bring-up、eval 占位形状；A5 三个截断族与 A4 hygiene 的处置取值
 （代码零推荐值）；staleness 阈值数值与 `max_weight_staleness` 语义（B）；unused handler retry/drop（B）；consume-time
 staleness（W4）；faithful DIS loss；`bringup.py:705` 挡板；lane 测试集合除本切片 +24 外无增删。
+
+---
+
+## 12. 追加修正节（2026-09-02，codex 复核 #2/#4/#5/#6 后；append-only，本节口径覆盖上文冲突处）
+
+修复基线 = 已提交的 `37fc0d65`（+ 集成者 `4cff6de5`/`8df7f90c`）；本节改动未 commit / 未 stash；
+`bringup.py`、`shutdown/`、`reference/` 未触碰（并行 W5a agent 同 worktree 正在改 `bringup.py`/`shutdown/`/`test_w5a_*`）。
+
+### 12.1 #2 P1：结构契约类异常显式提升 run-fatal（`adapters/slime/generate.py`）
+
+原通用 `except Exception`（:3327）把 `GateInputError`（gate.py 明确定义为"编排接错线"）经 stage fallback 洗成 missing
+Outcome + ABORTED，之后被补采掩盖。现在 except 链为**显式分支**（不靠 isinstance 猜），白名单：
+
+| 异常类型 | 条件 | fatal reason_code | 落点 |
+|---|---|---|---|
+| `governance.GateInputError` | 任何阶段 | `gate_wiring_error` | :3336 |
+| `governance.admission.AdmissionError`（含 `DispositionNotInjectedError`） | 任何阶段（交付面内部已各自包装，此处为防漏网通道） | `admission_contract_error` | :3341 |
+| `pydantic.ValidationError` | **仅** `stage ∈ _STRUCTURAL_CONTRACT_STAGES = {"finalize", "deliver"}`（:1848）——由我方事实构造 RH2 契约对象失败 = 接线矛盾 | `rh2_contract_validation_failed` | :3347 |
+| 其它 `Exception`（含 finalize 之前的 ValidationError、`FAILURE_CODE_TERMINATION_MAP` 命中的 typed task-local 错误） | 不变 | 仍走 stage fallback → missing Outcome + ABORTED（`_abort_after_task_local_exception` :3399，逐字搬自原 except 体） | — |
+
+`_structural_contract_fatal`（:3377）：记 failure_record + 时间线标记 + `_notify_fatal_halt`，**不产 Outcome、不返回 ABORTED**；
+receipt 由既有 `build_finalization_receipt` 落为 `fatal_run_halt`（terminal_reason_code = 上表 code）。为让 except 链拆成显式分支而
+不复制 200 行 finally 体，原 finally 主体逐字搬入 `async _run_finally_section`（:3478）——语义零改变（切片一的分流测试全部原样通过）。
+测试：`test_gate_input_error_in_finalize_is_run_fatal_not_aborted`（receipt fatal_run_halt、`outcomes == []`、无 step9、cleanup 完成）、
+`test_validation_error_inside_finalize_is_run_fatal`、`test_stale_lease_capability_facts_are_run_fatal_via_gate_wiring`（#5 联动）、
+对照 `test_pre_finalize_validation_error_and_task_local_failure_stay_aborted`（materialize 阶段 ValidationError 与 harness 崩溃仍 ABORTED）。
+
+### 12.2 #4 P1：消费侧版本事实绑定（`adapters/miles/group_admission.py` `_check_leaf_version_binding` :301）
+
+对**每个**交付叶（不只 online 成员）按现有版本投影语义核对：
+1. 叶 `weight_versions` 非空 ⟺ `Outcome.turn_weight_versions` 非空（`version_facts_presence_mismatch`）；
+2. 叶每个版本可解析为十进制 int（`version_not_numeric`）；
+3. `set(叶版本) ⊆ set(Outcome.turn_weight_versions)`——**子集**，fan-out 叶只回链自己的入训轮，不要求集合相等（`leaf_version_not_in_outcome`）；
+4. `max(叶版本) ≤ int(Outcome.current_version_at_finalize)`（`leaf_version_ahead_of_finalize`）。
+执行顺序：版本绑定先于形状声称检查（更具体的矛盾先报）。codex 反例复现为测试
+`test_negative_consume_time_staleness_reproduction_is_closed_at_filter`：叶改成 999 时 miles `DefaultDataBuffer._staleness(group, 5) == −994`
+（`oldest_weight_version = min(叶 weight_versions)`），`max_weight_staleness=0` 也"满足"；本轮在 filter 侧（finalize 事实层）
+`put()` 即 FATAL，组进不了 buffer。**接缝（W4）**：consume-time 的负 lag 拒绝须在 miles `get()` 侧实现（不改 reference/，本轮不做）。
+其余测试：参数化 `[leaf_version_not_in_outcome]`、`[leaf_version_ahead_of_finalize]`（Outcome 版本 {5,9}、current 5、叶 9）、
+`[version_facts_presence_mismatch]`、`[version_not_numeric]`；`test_fan_out_leaves_share_identity_subset_versions_ok_but_forged_leaf_is_fatal`（子集通过）。
+
+### 12.3 #5 P1：SandboxCapabilityFacts 绑定本次真实 lease（`governance/gate.py` / `wrapper.py` / `generate.py`）
+
+- `finalize_rollout(..., sandbox_lease_id: str | None = None)` → `_evaluate` → `_check_wiring`（gate.py :591-616）：
+  `required=True` 且 `sandbox_lease_id is None` → `GateInputError`；facts 在场且 `facts.lease_id != sandbox_lease_id` → `GateInputError`
+  （按 #2 升 fatal `gate_wiring_error`）；`required=False`（s1_compat / verifiers 对照）路径不受影响。
+- **传入点**：`generate.py` `_finalize` :4179 `sandbox_lease_id=audit.lease.lease_id`——`audit.lease` 是 materialize 时刻挂上的本次
+  attempt 真实 `SandboxLease`（:3652 附近），显式传入、不猜。
+- 测试：`test_capability_facts_must_bind_to_this_attempts_lease`（同 trajectory 旧 lease 拒、正确 lease 过、required 缺 lease 拒、
+  required=False 不受影响）、`test_stale_lease_capability_facts_are_run_fatal_via_gate_wiring`（真实 fa_formal 链）。
+
+### 12.4 #6 P2：authoritative join 与组合测试
+
+- (a) `resolve_admission_payload(..., require_dispatch_identity=True)`（admission.py :373）：**必填键** `task_id` /
+  `environment_package_digest` / `public_bundle_digest` 三键在场且逐字等于载荷（缺 → `admission_dispatch_identity_missing`；载荷
+  `environment_package_digest=None` → `admission_environment_identity_missing`——legacy v1 链不可进正式准入）。filter 两处调用
+  （group_admission.py :391/:421）强制 True；交付面自检（generate_fn `_verify_admission_binding`）与切片一 legacy 夹具保持
+  默认 False（只在键在场时比较）。
+- (b) `_check_outcome_identity`（group_admission.py :269）：Outcome `identity.prompt_group_id / group_index / rollout_execution_id /
+  physical_attempt_id / physical_attempt_seq` + `member_slot` 与外层六字段逐项对账，不一致 `outcome_identity_mismatch`。
+- (c) e2e：`test_w1b_e2e_prepared_registry_group_admission_to_conversion`——经过的真实组件：trusted-prep 产物 + 外部 manifest SHA
+  （`PreparedTaskFace.load`）→ stock miles `Dataset` + `RolloutDataSource.get_samples` → `Rh2MilesGenerateFn`（接线守卫 → W1a 铸造 →
+  `registry.bind`，spy 断言 `face.verify_dispatch` 对 prep manifest 核对了两次 TID1 三元组）→ `RolloutOrchestrator(fa_formal)`
+  （task/评分材料只经 attempt 绑定）→ canonicalize → `registry.release`（`len(registry)==0`）→ `DefaultDataBuffer.put()`（复合
+  filter）→ `get()` → `postprocess_rollout_data` → `convert_samples_to_train_data`：合格组 2 行进 conversion（`raw_reward == [1.0, 0.0]`）；
+  含一个 failed_to_grade 成员的组零样本进 conversion（buffer/handler 均空，`drop_admission_reward_scope_none == 1`）。
+  同时 `test_w1b_group_admission.py` **全部**用例改走 prepared registry 链（不再用 legacy v1 任务面）。
+
+### 12.5 非 finding：present_truncated ≠ miles TRUNCATED（钉死，不"修复"）
+
+`test_present_truncated_and_miles_truncated_status_are_legally_distinct`：hard wall 成员 = Outcome present_truncated + 叶 `COMPLETED`；
+length 截断成员 = 叶 `TRUNCATED` + Outcome present_complete/termination=completed；两者都通过组准入（前者需注入 hard_wall 处置），
+`convert_samples_to_train_data` 的 `truncated == [0, 1]` 只反映生成截断事实。filter 不要求二者相等。
+
+### 12.6 T1 oracle / 夹具改动（本节）
+
+| 文件 | 改动 |
+|---|---|
+| `tests/governance/governance_samples.py` | `run_finalize(sandbox_lease_id="lease_0001")` 默认与样例事实同租约 |
+| `tests/governance/test_wrapper_finalize.py` | 三处直接调 `finalize_rollout` 的用例显式传 `sandbox_lease_id`（required 路径必传） |
+| `tests/governance/test_w1b_security_capability_facts.py` / `test_w1b_admission_disposition.py` | 新增 lease 绑定用例；strict 三键必填负例 |
+| `tests/adapters/test_w1b_delivery_face.py` | 新增 #2/#5 四例 |
+| `tests/adapters_miles/test_w1b_group_admission.py` | 整体改走 prepared registry 链（24 → 37 例：+e2e、+truncated 区别、+#4/#6 参数化 8 例、+负 staleness 复现） |
+
+### 12.7 测试证据（2026-09-02 实跑；工作树含并行 W5a agent 的**进行中**改动）
+
+```
+uv run pytest tests/governance tests/adapters tests/contracts -q                          # 871 passed（本切片相关目录）
+RH2_MILES_PATH=$REPO/reference/miles-rh2-integration uv run pytest tests/adapters_miles/test_w1b_group_admission.py -q   # 37 passed
+uv run pytest tests/ -q --ignore=tests/adapters/test_w5a_resource_closure.py               # 1574 passed, 236 skipped
+uv run pytest tests/adapters_miles/ -q                                                      # lane A: 321 passed / 221 skipped
+RH2_MILES_PATH=... uv run pytest tests/adapters_miles/ -q                                   # lane B: 541 passed, 1 failed（见下）
+bash scripts/miles_integration_lanes.sh                                                     # 前置 1 停止：integration checkout 工作树不干净（见下）
+uv run ruff check src/repoharness2 tests experiments/s1_parity.py                           # All checks passed!
+```
+
+**本节净增**：governance +1、adapters +4、adapters_miles +13（双 lane；`test_w1b_group_admission.py` 24 → 37）。
+
+**环境噪音（非本切片，须由集成者/相应 agent 处理）**：
+1. `tests/adapters/test_w5a_resource_closure.py` 当前 import `repoharness2.shutdown.MemoryBoundInputs` 失败（W5a agent 进行中的改动，
+   `shutdown/` 与 `test_w5a_*` 同时在改），全仓需 `--ignore` 该模块才能收集；lane A/B 总数含其新增/跳过的 W5a miles 用例
+   （`test_w5a_miles_dispose_chain.py` 未跟踪）。
+2. `reference/miles-rh2-integration` 工作树不干净（`rollout_manager.py` / `fully_async_data_buffer.py` / `fully_async_rollout.py` /
+   `train_async.py` 有未提交改动，非本切片所为）：`miles_integration_lanes.sh` 在前置 1 停止；lane B 的
+   `test_g1_acceptance_events.py::test_producer_tree_digest_matches_audit_manifest` 因树 digest 漂移失败；且 lane B 的
+   `DefaultDataBuffer.put()` 路径跑的是被改过的文件——本节 lane B 计数在该 checkout 恢复干净前**不构成 lane 资格**。
+
+**lane 精确新计数（相对 manifest 308/217、525/0，只计本切片）**：lane A = 308 + 13 = **321 passed**（skipped 不变 217 + W5a 的 4 = 221 观测），
+lane B = 525 + 13 = **538 passed**（观测 541 = 538 + W5a 进行中 +3；1 failed 为上述 g1 树 digest）。集成者按干净树重跑后以实测为准。
+
+**T0**：无新增。fatal 白名单只提升"我方接线/事实矛盾"类异常（停机不剔除样本，不产生系统性偏置）；task-local ABORTED 面未扩大也未缩小。

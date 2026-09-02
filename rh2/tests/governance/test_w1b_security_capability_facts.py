@@ -81,6 +81,23 @@ async def test_foreign_capability_facts_are_wiring_errors():
         await run_finalize(sandbox_capability_facts=facts)
 
 
+async def test_capability_facts_must_bind_to_this_attempts_lease():
+    """复核修复 #5：同一 trajectory 旧 lease 的能力事实不能认证新容器；正确 lease 通过；
+    required=True 路径缺 lease 也拒；required=False（s1_compat/verifiers 对照）路径不受影响。"""
+
+    stale = valid_sandbox_capability_facts(lease_id="lease_0000")  # 旧容器
+    with pytest.raises(GateInputError, match="lease_0000"):
+        await run_finalize(sandbox_capability_facts=stale, sandbox_lease_id="lease_0001")
+    ok = await run_finalize(sandbox_capability_facts=valid_sandbox_capability_facts(), sandbox_lease_id="lease_0001")
+    assert ok.eligibility_report.eligibility_class == "online_policy_loss_eligible"
+    with pytest.raises(GateInputError, match="sandbox_lease_id"):
+        await run_finalize(sandbox_lease_id=None)  # required=True 缺本次租约
+    with pytest.raises(GateInputError, match="sandbox_lease_id"):
+        await run_finalize(sandbox_capability_facts=None, sandbox_lease_id=None)
+    relaxed = await run_finalize(sandbox_capability_facts=None, sandbox_capability_facts_required=False, sandbox_lease_id=None)
+    assert relaxed.eligibility_report.facts.security_and_leakage.ok is True
+
+
 def test_capability_facts_model_rejects_duplicates_and_overlap():
     with pytest.raises(ValidationError, match="重复"):
         SandboxCapabilityFacts.model_validate(

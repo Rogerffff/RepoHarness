@@ -587,15 +587,34 @@ def _check_wiring(
     findings: Sequence[AntiCheatFinding],
     handshake: BackendHandshake | None,
     sandbox_capability_facts: SandboxCapabilityFacts | None = None,
+    sandbox_capability_facts_required: bool = True,
+    sandbox_lease_id: str | None = None,
 ) -> dict[str, GenerationCaptureRecord]:
-    """gate 输入的接线一致性检查（不一致 = 编排 bug，抛 GateInputError）。"""
+    """gate 输入的接线一致性检查（不一致 = 编排 bug，抛 GateInputError）。
+
+    `sandbox_lease_id`（W1b 第二段复核修复 #5）：本次 attempt 实际使用的 SandboxLease.lease_id，
+    由编排层显式传入。能力事实除 trajectory 外还必须**逐字绑定到这份租约**——同一 trajectory 的
+    旧容器（retry 前的 attempt、或被替换的 sandbox）产出的能力事实不能认证新容器。
+    required=True 的路径缺 lease id 同样是接线错误。
+    """
 
     traj = projection.trajectory_id
-    if sandbox_capability_facts is not None and sandbox_capability_facts.trajectory_id != traj:
+    if sandbox_capability_facts_required and sandbox_lease_id is None:
         raise GateInputError(
-            f"SandboxCapabilityFacts.trajectory_id({sandbox_capability_facts.trajectory_id}) "
-            f"与投影({traj}) 不一致（别的 sandbox 的能力事实接错了线）。"
+            "要求 sandbox 能力事实的路径未传入本次 attempt 的 sandbox_lease_id"
+            "（能力事实无租约可绑定，接线错误）。"
         )
+    if sandbox_capability_facts is not None:
+        if sandbox_capability_facts.trajectory_id != traj:
+            raise GateInputError(
+                f"SandboxCapabilityFacts.trajectory_id({sandbox_capability_facts.trajectory_id}) "
+                f"与投影({traj}) 不一致（别的 sandbox 的能力事实接错了线）。"
+            )
+        if sandbox_lease_id is None or sandbox_capability_facts.lease_id != sandbox_lease_id:
+            raise GateInputError(
+                f"SandboxCapabilityFacts.lease_id({sandbox_capability_facts.lease_id}) 与本次 attempt 的 "
+                f"sandbox_lease_id({sandbox_lease_id}) 不一致（旧容器的能力事实不能认证新容器）。"
+            )
     if grading_report.trajectory_id != traj:
         raise GateInputError(
             f"GradingReport.trajectory_id({grading_report.trajectory_id}) 与投影({traj}) 不一致。"
@@ -640,6 +659,7 @@ def _evaluate(
     backpressure_events: Sequence[BackpressureEvent] = (),
     sandbox_capability_facts: SandboxCapabilityFacts | None = None,
     sandbox_capability_facts_required: bool = True,
+    sandbox_lease_id: str | None = None,
     report_id: str,
     created_at_utc: datetime,
 ) -> GateOutcome:
@@ -661,6 +681,8 @@ def _evaluate(
         findings=findings,
         handshake=handshake,
         sandbox_capability_facts=sandbox_capability_facts,
+        sandbox_capability_facts_required=sandbox_capability_facts_required,
+        sandbox_lease_id=sandbox_lease_id,
     )
     # 反压事件是全局观测流（GradingQueue.events 混着所有轨迹），按轨迹过滤，
     # 非本轨迹的事件不属于本样本的事实，直接忽略（不算接线错误）。

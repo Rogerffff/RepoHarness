@@ -112,6 +112,7 @@ async def test_wrapper_fixes_call_order_grade_then_project():
         project=project,
         capture_records=_default_captures(),
         handshake=_default_handshake(),
+        sandbox_lease_id="lease_0001",  # 复核修复 #5：required 路径必传本次租约
         report_id=FIXED_REPORT_ID,
         created_at_utc=FIXED_CREATED_AT,
     )
@@ -138,6 +139,7 @@ async def test_async_grade_and_project_callables_supported():
         project=project,
         capture_records=_default_captures(),
         handshake=_default_handshake(),
+        sandbox_lease_id="lease_0001",  # 复核修复 #5：required 路径必传本次租约
         report_id=FIXED_REPORT_ID,
         created_at_utc=FIXED_CREATED_AT,
     )
@@ -228,6 +230,7 @@ async def test_default_report_id_and_timestamp_generated():
         ),
         capture_records=_default_captures(),
         handshake=_default_handshake(),
+        sandbox_lease_id="lease_0001",  # 复核修复 #5：required 路径必传本次租约
     )
     assert final.eligibility_report.report_id.startswith("elig_")
     assert final.eligibility_report.created_at_utc.tzinfo is not None
