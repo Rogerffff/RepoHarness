@@ -1,0 +1,533 @@
+From c3168e207a020e03d0e71d3d43e19353d7a87186 Mon Sep 17 00:00:00 2001
+From: Codex <jufangjian@gmail.com>
+Date: Wed, 2 Sep 2026 15:21:21 +0800
+Subject: [PATCH] [rh2-integration] run dispose on the rollout owner loop with
+ bounded deadlines
+
+Production rollout functions run on the shared background AsyncLoopThread
+(call_rollout_function -> async_utils.run), so awaiting aclose()/rh2 close
+from the Ray actor loop is a foreign-loop await that may never wake. New
+miles/utils/rh2_shutdown.py posts the whole close sequence (aclose ->
+first cause -> rh2 close_bringup_service) back onto the owner loop via
+run_coroutine_threadsafe and the actor awaits the wrapped future with a
+total timeout (default 900s, args.rh2_dispose_timeout_sec /
+RH2_MILES_DISPOSE_TIMEOUT_SEC). FullyAsyncRolloutFn.aclose() gains a
+shutdown deadline (default 60s, args.rh2_shutdown_deadline_sec /
+RH2_MILES_SHUTDOWN_DEADLINE_SEC) for cancelling worker and active groups,
+records unfinished counts, and closes the buffer in finally so blocked
+put/get waiters always wake. train_async wraps everything from
+create_rollout_manager onward in try/finally and passes a serialisable
+driver_cause to dispose; a worker fatal keeps precedence as first cause.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ miles/ray/rollout/rollout_manager.py |  56 +++++-----
+ miles/rollout/fully_async_rollout.py | 126 +++++++++++++++++------
+ miles/utils/rh2_shutdown.py          | 146 +++++++++++++++++++++++++++
+ train_async.py                       |  96 +++++++++---------
+ 4 files changed, 314 insertions(+), 110 deletions(-)
+ create mode 100644 miles/utils/rh2_shutdown.py
+
+diff --git a/miles/ray/rollout/rollout_manager.py b/miles/ray/rollout/rollout_manager.py
+index 63f1e7668..1c5a01216 100644
+--- a/miles/ray/rollout/rollout_manager.py
++++ b/miles/ray/rollout/rollout_manager.py
+@@ -133,39 +133,31 @@ class RolloutManager:
+     def get_router_address(self) -> tuple[str, int]:
+         return self.args.sglang_router_ip, self.args.sglang_router_port
+ 
+-    async def dispose(self):
+-        # [rh2-integration] W5a shutdown order (rh2 06 plan, readiness scope 2.6):
+-        #   1. rollout fn aclose(): stop new submissions -> cancel/await worker + active
+-        #      group tasks -> wake waiters blocked in buffer put()/get();
+-        #   2. rh2 BringupService close chain (in-flight executions, grading, capture
+-        #      wire, adapter HTTP thread, containers, evidence) with the worker's own
+-        #      exception (e.g. a group-admission fatal raised inside put()) as first cause;
+-        #   3. the original dispose (data source, analyzer, metric checker, eval, monitors).
+-        # Each stage swallows and logs its failure so the whole method also completes on
+-        # the error exit path (train_async.py finally); the first cause stays in the rh2
+-        # shutdown report, not in a masking exception.
+-        first_cause = None
+-        aclose = getattr(self.generate_rollout, "aclose", None)
+-        if aclose is not None:
+-            try:
+-                close_report = await aclose()
+-                first_cause = close_report.get("worker_exception")
+-                logger.info(
+-                    "[rh2-integration] rollout fn closed: worker_state=%s active_groups_cancelled=%s",
+-                    close_report.get("worker_state"),
+-                    close_report.get("active_groups_cancelled"),
+-                )
+-            except Exception:  # noqa: BLE001 - shutdown continues; failure is logged, not masked
+-                logger.exception("[rh2-integration] rollout fn aclose() failed")
++    async def dispose(self, driver_cause=None):
++        # [rh2-integration] W5a (patch 0011): the rollout fn, its worker, the data buffer and
++        # the rh2 BringupService all live on the shared background AsyncLoopThread
++        # (_get_rollout_data -> asyncio.to_thread(call_rollout_function) -> async_utils.run),
++        # not on this actor's loop. Awaiting their objects here is undefined (a cross-loop
++        # future completing does not wake this loop), so the whole closure -- rollout fn
++        # aclose (bounded cancel/await, buffer close in finally) -> first cause (worker's
++        # own fatal, else the driver's ``driver_cause``) -> rh2 close_bringup_service -- is
++        # posted back to that loop and awaited through a threadsafe future with a total
++        # timeout (miles/utils/rh2_shutdown.py). The original dispose below runs afterwards
++        # on every path; nothing here raises.
++        from miles.utils.rh2_shutdown import dispose_on_owner_loop
++
+         try:
+-            from repoharness2.adapters.slime.bringup import close_bringup_service
+-        except ImportError:  # rh2 not on the path (stock miles usage): nothing to close
+-            close_bringup_service = None
+-        if close_bringup_service is not None:
+-            try:
+-                await close_bringup_service(reason="rollout_manager_dispose", first_cause=first_cause)
+-            except Exception:  # noqa: BLE001
+-                logger.exception("[rh2-integration] rh2 close_bringup_service() failed")
++            close_report = await dispose_on_owner_loop(self.generate_rollout, driver_cause=driver_cause, args=self.args)
++            logger.info(
++                "[rh2-integration] rollout fn + rh2 shutdown: trigger=%s first_cause=%s rollout_fn=%s rh2=%s errors=%s",
++                close_report.get("trigger"),
++                close_report.get("first_cause"),
++                close_report.get("rollout_fn"),
++                close_report.get("rh2"),
++                close_report.get("errors"),
++            )
++        except Exception:  # noqa: BLE001 - shutdown continues; failure is logged, not masked
++            logger.exception("[rh2-integration] dispose_on_owner_loop failed")
+         if (close := getattr(self.data_source, "close", None)) is not None:
+             close()
+         event_analyzer.run_analysis_from_args(self.args)
+diff --git a/miles/rollout/fully_async_rollout.py b/miles/rollout/fully_async_rollout.py
+index 784daab55..fda830143 100644
+--- a/miles/rollout/fully_async_rollout.py
++++ b/miles/rollout/fully_async_rollout.py
+@@ -18,6 +18,8 @@ rollout engines, pausing producer submissions for the duration of the
+ 
+ import asyncio
+ import logging
++import os
++import time
+ 
+ from miles.rollout.base_types import (
+     RolloutFnConstructorInput,
+@@ -47,6 +49,26 @@ logger = logging.getLogger(__name__)
+ 
+ NO_PROGRESS_WARN_SECS = 30.0
+ 
++# [rh2-integration] W5a: total deadline for aclose() to cancel-and-await the worker and the
++# active group tasks. Cancellation may not be honoured by the harness/HTTP/SGLang paths
++# (rh2/src/slime/agent/adapters/common.py:225 gathers cancelled tasks without a bound), so the
++# wait is capped; whatever is still running afterwards is abandoned to the rh2 shutdown chain
++# (container/session cleanup) and reported as unfinished. Override per run with
++# args.rh2_shutdown_deadline_sec or RH2_MILES_SHUTDOWN_DEADLINE_SEC.
++DEFAULT_SHUTDOWN_DEADLINE_SEC = 60.0
++
++
++def shutdown_deadline_seconds(args) -> float:
++    value = getattr(args, "rh2_shutdown_deadline_sec", None)
++    if value is None:
++        value = os.environ.get("RH2_MILES_SHUTDOWN_DEADLINE_SEC")
++    if value is None or value == "":
++        return DEFAULT_SHUTDOWN_DEADLINE_SEC
++    value = float(value)
++    if value < 0:
++        raise ValueError(f"shutdown deadline must be >= 0, got {value}")
++    return value
++
+ 
+ class RolloutFnClosed(RuntimeError):
+     """[rh2-integration] W5a: the rollout fn was closed by aclose(); every later train /
+@@ -156,47 +178,89 @@ class FullyAsyncRolloutFn:
+             for task in done:
+                 await self._output.put(task.result())
+ 
+-    async def aclose(self) -> dict:
+-        """[rh2-integration] W5a: stop the producer and wake every waiter (idempotent).
+-
+-        Order (rh2 06 plan W5a): stop new submissions -> cancel and await the worker ->
+-        cancel and await the active group tasks -> close the data buffer so waiters blocked
+-        in put()/get() exit with DataBufferClosed. The worker's own exception (for example a
+-        group-admission fatal raised inside buffer.put()) is preserved as
+-        ``worker_exception`` so the caller can hand it to the rh2 shutdown report as the
+-        first cause. Never raises; returns the same report on repeated calls.
++    async def aclose(self, deadline_seconds: float | None = None) -> dict:
++        """[rh2-integration] W5a: stop the producer and wake every waiter (idempotent, bounded).
++
++        Must run on the loop that owns the worker (the shared AsyncLoopThread; see
++        miles/utils/rh2_shutdown.py for how RolloutManager.dispose() posts it there).
++
++        Order (rh2 06 plan W5a): stop new submissions -> cancel the worker and wait up to the
++        deadline -> cancel the active group tasks and wait for the remaining deadline ->
++        **always** (finally) close the data buffer so waiters blocked in put()/get() exit
++        with DataBufferClosed. Tasks still running when the deadline passes are abandoned
++        (``worker_unfinished`` / ``active_groups_unfinished``, ``deadline_exceeded=True``);
++        their containers/sessions are the rh2 shutdown chain's job. The worker's own
++        exception (for example a group-admission fatal raised inside buffer.put()) is
++        preserved as ``worker_exception`` for the rh2 shutdown report's first cause.
++        Never raises; returns the same report on repeated calls.
+         """
+         if self._close_report is not None:
+             return self._close_report
+         self._closed = True
++        deadline = shutdown_deadline_seconds(self.args) if deadline_seconds is None else float(deadline_seconds)
++        started = time.monotonic()
+         report: dict = {
+             "worker_state": "never_started",
+             "worker_exception": None,
++            "worker_unfinished": False,
+             "active_groups_cancelled": 0,
++            "active_groups_unfinished": 0,
++            "deadline_seconds": deadline,
++            "deadline_exceeded": False,
+             "buffer_closed": False,
++            "close_error": None,
++            "elapsed_seconds": 0.0,
+         }
+-        worker = self._worker
+-        if worker is not None:
+-            if not worker.done():
+-                worker.cancel()
+-                await asyncio.wait({worker})
+-            if worker.cancelled():
+-                report["worker_state"] = "cancelled"
+-            elif worker.exception() is not None:
+-                report["worker_state"] = "failed"
+-                report["worker_exception"] = worker.exception()
+-            else:
+-                report["worker_state"] = "returned"
+-        active = [task for task in self._active_groups if not task.done()]
+-        for task in active:
+-            task.cancel()
+-        if active:
+-            await asyncio.wait(active)
+-        report["active_groups_cancelled"] = len(active)
+-        if self._output is not None and (aclose := getattr(self._output, "aclose", None)) is not None:
+-            await aclose()
+-            report["buffer_closed"] = True
+-        self._close_report = report
++
++        def remaining() -> float:
++            return max(deadline - (time.monotonic() - started), 0.0)
++
++        try:
++            worker = self._worker
++            if worker is not None:
++                if not worker.done():
++                    worker.cancel()
++                    await asyncio.wait({worker}, timeout=remaining())
++                if not worker.done():
++                    report["worker_state"] = "unfinished"
++                    report["worker_unfinished"] = True
++                elif worker.cancelled():
++                    report["worker_state"] = "cancelled"
++                elif worker.exception() is not None:
++                    report["worker_state"] = "failed"
++                    report["worker_exception"] = worker.exception()
++                else:
++                    report["worker_state"] = "returned"
++            active = [task for task in self._active_groups if not task.done()]
++            for task in active:
++                task.cancel()
++            if active:
++                await asyncio.wait(active, timeout=remaining())
++            report["active_groups_cancelled"] = len(active)
++            report["active_groups_unfinished"] = sum(1 for task in active if not task.done())
++            report["deadline_exceeded"] = bool(report["worker_unfinished"] or report["active_groups_unfinished"])
++            if report["deadline_exceeded"]:
++                logger.error(
++                    "[rh2-integration] rollout fn aclose(): deadline %.1fs exceeded; abandoning worker_unfinished=%s "
++                    "active_groups_unfinished=%d to the rh2 shutdown chain",
++                    deadline,
++                    report["worker_unfinished"],
++                    report["active_groups_unfinished"],
++                )
++        except Exception as exc:  # noqa: BLE001 - shutdown must reach the buffer close and the rh2 chain
++            report["close_error"] = repr(exc)
++            logger.exception("[rh2-integration] rollout fn aclose() failed before the buffer close")
++        finally:
++            # Always wake put()/get() waiters, whatever happened above.
++            if self._output is not None and (aclose := getattr(self._output, "aclose", None)) is not None:
++                try:
++                    await aclose()
++                    report["buffer_closed"] = True
++                except Exception as exc:  # noqa: BLE001
++                    report["close_error"] = report["close_error"] or repr(exc)
++                    logger.exception("[rh2-integration] data buffer aclose() failed")
++            report["elapsed_seconds"] = round(time.monotonic() - started, 3)
++            self._close_report = report
+         return report
+ 
+     @property
+diff --git a/miles/utils/rh2_shutdown.py b/miles/utils/rh2_shutdown.py
+new file mode 100644
+index 000000000..822458c00
+--- /dev/null
++++ b/miles/utils/rh2_shutdown.py
+@@ -0,0 +1,146 @@
++"""[rh2-integration] W5a (patch 0011): run the rollout-fn / rh2 shutdown on the loop that owns them.
++
++Production topology: ``RolloutManager._get_rollout_data`` calls the rollout fn through
++``asyncio.to_thread(call_rollout_function, ...)`` and ``compatibility.call_rollout_function``
++hands the coroutine to ``async_utils.run`` -> the global background ``AsyncLoopThread``
++(``get_async_loop()``). So ``FullyAsyncRolloutFn``, its worker task, the ``DefaultDataBuffer``
++and the rh2 ``BringupService`` (bootstrapped inside the first generate call) all live on
++**that** loop, not on the Ray actor's loop. Awaiting their tasks/futures from the actor loop
++is undefined: a cross-loop future completing does not wake the actor loop, so
++``dispose.remote()`` can hang until some unrelated timer fires.
++
++``dispose_on_owner_loop`` therefore posts the whole closure (rollout fn ``aclose`` -> first
++cause extraction -> rh2 ``close_bringup_service``) to the owner loop with
++``run_coroutine_threadsafe`` and awaits the resulting concurrent future through
++``asyncio.wrap_future`` (which wakes the calling loop via ``call_soon_threadsafe``) under a
++total timeout. The rollout fn's own cancel-and-wait is bounded by
++``shutdown_deadline_seconds`` (``RH2_MILES_SHUTDOWN_DEADLINE_SEC`` / ``args.rh2_shutdown_deadline_sec``);
++the total dispose budget is ``RH2_MILES_DISPOSE_TIMEOUT_SEC`` / ``args.rh2_dispose_timeout_sec``.
++"""
++
++from __future__ import annotations
++
++import asyncio
++import logging
++import os
++from typing import Any
++
++from miles.utils.async_utils import get_async_loop
++
++logger = logging.getLogger(__name__)
++
++# Total budget for the owner-loop closure: rollout fn deadline (default 60s) + the rh2
++# shutdown chain, whose own per-step bounds sum to roughly 6 minutes with defaults
++# (RH2_SHUTDOWN_*_SEC). Exceeding it logs, records ``timed_out`` and lets the original
++# dispose continue; the closure task keeps running on the owner loop (the rh2 chain is
++# internally shielded).
++DEFAULT_DISPOSE_TIMEOUT_SEC = 900.0
++
++
++def dispose_timeout_seconds(args: Any = None) -> float:
++    value = getattr(args, "rh2_dispose_timeout_sec", None) if args is not None else None
++    if value is None:
++        value = os.environ.get("RH2_MILES_DISPOSE_TIMEOUT_SEC")
++    if value is None or value == "":
++        return DEFAULT_DISPOSE_TIMEOUT_SEC
++    value = float(value)
++    if value <= 0:
++        raise ValueError(f"dispose timeout must be > 0, got {value}")
++    return value
++
++
++def _describe(exc: BaseException | str | None) -> str | None:
++    if exc is None:
++        return None
++    if isinstance(exc, BaseException):
++        code = getattr(exc, "reason_code", None)
++        head = f"{type(exc).__name__}({code})" if code else type(exc).__name__
++        return f"{head}: {str(exc)[:300]}"
++    return str(exc)[:400]
++
++
++async def close_rollout_fn_and_rh2(
++    generate_rollout: Any,
++    *,
++    driver_cause: str | None = None,
++    deadline_seconds: float | None = None,
++) -> dict[str, Any]:
++    """The closure itself. **Runs on the owner loop** (post it with ``dispose_on_owner_loop``).
++
++    Order: rollout fn ``aclose`` (stop submissions -> bounded cancel/await worker + active
++    groups -> buffer close in finally) -> first cause = the worker's own exception if any,
++    else ``driver_cause`` -> rh2 ``close_bringup_service`` with that first cause. Every stage
++    swallows and records its failure so the next stage still runs. Never raises.
++    """
++
++    report: dict[str, Any] = {
++        "rollout_fn": None,
++        "first_cause": None,
++        "trigger": "owner_close",
++        "rh2": None,
++        "errors": [],
++    }
++    first_cause: BaseException | str | None = None
++    aclose = getattr(generate_rollout, "aclose", None)
++    if aclose is not None:
++        try:
++            fn_report = await (aclose(deadline_seconds=deadline_seconds) if deadline_seconds is not None else aclose())
++            first_cause = fn_report.get("worker_exception")
++            report["rollout_fn"] = {
++                key: (_describe(value) if key == "worker_exception" else value) for key, value in fn_report.items()
++            }
++        except Exception as exc:  # noqa: BLE001
++            report["errors"].append(f"aclose: {exc!r}")
++            logger.exception("[rh2-integration] rollout fn aclose() failed")
++    if first_cause is not None:
++        trigger = "run_fatal"  # the worker's own fatal is the most precise original cause
++    elif driver_cause:
++        first_cause, trigger = driver_cause, "driver_error"
++    else:
++        trigger = "owner_close"
++    report["first_cause"] = _describe(first_cause)
++    report["trigger"] = trigger
++    try:
++        from repoharness2.adapters.slime.bringup import close_bringup_service
++    except ImportError:  # rh2 not on the path (stock miles usage): nothing to close
++        close_bringup_service = None
++    if close_bringup_service is not None:
++        try:
++            rh2_report = await close_bringup_service(
++                reason="rollout_manager_dispose", trigger=trigger, first_cause=first_cause
++            )
++            report["rh2"] = (
++                None
++                if rh2_report is None
++                else {"ok": rh2_report.ok, "first_cause": rh2_report.first_cause, "residue": dict(rh2_report.residue)}
++            )
++        except Exception as exc:  # noqa: BLE001
++            report["errors"].append(f"close_bringup_service: {exc!r}")
++            logger.exception("[rh2-integration] rh2 close_bringup_service() failed")
++    return report
++
++
++async def dispose_on_owner_loop(
++    generate_rollout: Any,
++    *,
++    driver_cause: str | None = None,
++    deadline_seconds: float | None = None,
++    timeout_seconds: float | None = None,
++    args: Any = None,
++) -> dict[str, Any]:
++    """Call this **from the actor loop**: posts ``close_rollout_fn_and_rh2`` to the shared
++    background loop and awaits it through a threadsafe future with a total timeout.
++    Never raises; on timeout returns ``{"timed_out": True, ...}`` (the closure keeps running
++    on the owner loop; the caller proceeds with the rest of dispose)."""
++
++    timeout = dispose_timeout_seconds(args) if timeout_seconds is None else float(timeout_seconds)
++    owner = get_async_loop()
++    concurrent_future = asyncio.run_coroutine_threadsafe(
++        close_rollout_fn_and_rh2(generate_rollout, driver_cause=driver_cause, deadline_seconds=deadline_seconds),
++        owner.loop,
++    )
++    try:
++        return await asyncio.wait_for(asyncio.shield(asyncio.wrap_future(concurrent_future)), timeout=timeout)
++    except (TimeoutError, asyncio.TimeoutError):
++        logger.error("[rh2-integration] dispose closure did not finish within %.1fs; continuing without it", timeout)
++        return {"timed_out": True, "timeout_seconds": timeout, "first_cause": _describe(driver_cause), "errors": []}
+diff --git a/train_async.py b/train_async.py
+index 883559ae8..c8aa84db1 100644
+--- a/train_async.py
++++ b/train_async.py
+@@ -56,53 +56,54 @@ async def train(args):
+     # create the rollout manager, with sglang engines inside.
+     # need to initialize rollout manager first to calculate num_rollout
+     rollout_manager, num_rollout_per_epoch = create_rollout_manager(args, pgs["rollout"])
+-
+-    # create the actor and critic models
+-    actor_model, critic_model = await create_training_models(args, pgs, rollout_manager)
+-
+-    if args.control_server_port:
+-        start_control_server(
+-            actor_model=actor_model,
+-            rollout_manager=rollout_manager,
+-            port=args.control_server_port,
+-            ft_components=args.ft_components,
+-        )
+-
+-    maybe_start_mini_ft_controller(args)
+-
+-    # always update weight first so that sglang has the loaded weights from training.
+-    await actor_model.update_weights()
+-
+-    if args.check_weight_update_equal:
+-        await rollout_manager.check_weights.remote(
+-            action="compare",
+-            allow_quant_error=args.check_weight_update_allow_quant_error,
+-            selector=args.check_weight_update_selector,
+-            skip_list=args.check_weight_update_skip_list,
+-        )
+-
+-    eval_dispatcher = EvalDispatcher(args, actor_model, rollout_manager)
+-
+-    if args.eval_interval is not None and args.start_rollout_id == 0 and not args.skip_eval_before_train:
+-        await eval_dispatcher.dispatch(0, hf_dir=args.hf_checkpoint)
+-
+-    async def save_training_model(model, rollout_id, force_sync):
+-        if args.use_critic and args.offload_train:
+-            await model.onload()
+-        await model.save_model(rollout_id, force_sync=force_sync)
+-        if args.use_critic and args.offload_train:
+-            await model.offload()
+-
+-    # async train loop.
+-    # [rh2-integration] OR-accumulator over one publish interval: True as soon
+-    # as any rollout in the interval possibly applied a real optimizer update.
+-    # Reset only after an actual weight publish.
+-    # [rh2-integration] W5a: the training loop runs inside try/finally so that
+-    # RolloutManager.dispose() (rollout fn aclose -> rh2 shutdown chain -> original
+-    # dispose) executes on the error exit path too. eval_dispatcher.drain() stays on the
++    # [rh2-integration] W5a (patch 0011): everything after the RolloutManager exists runs
++    # inside try/finally -- model construction, the first weight publish, the before-train
++    # eval and the training loop -- so RolloutManager.dispose() (rollout fn aclose -> rh2
++    # shutdown chain -> original dispose) executes on every exit path, with the driver's
++    # own exception handed over as ``driver_cause``. eval_dispatcher.drain() stays on the
+     # normal path only. A dispose failure while already exiting with an error is logged
+     # rather than raised, so it cannot mask the first cause.
+     try:
++        # create the actor and critic models
++        actor_model, critic_model = await create_training_models(args, pgs, rollout_manager)
++
++        if args.control_server_port:
++            start_control_server(
++                actor_model=actor_model,
++                rollout_manager=rollout_manager,
++                port=args.control_server_port,
++                ft_components=args.ft_components,
++            )
++
++        maybe_start_mini_ft_controller(args)
++
++        # always update weight first so that sglang has the loaded weights from training.
++        await actor_model.update_weights()
++
++        if args.check_weight_update_equal:
++            await rollout_manager.check_weights.remote(
++                action="compare",
++                allow_quant_error=args.check_weight_update_allow_quant_error,
++                selector=args.check_weight_update_selector,
++                skip_list=args.check_weight_update_skip_list,
++            )
++
++        eval_dispatcher = EvalDispatcher(args, actor_model, rollout_manager)
++
++        if args.eval_interval is not None and args.start_rollout_id == 0 and not args.skip_eval_before_train:
++            await eval_dispatcher.dispatch(0, hf_dir=args.hf_checkpoint)
++
++        async def save_training_model(model, rollout_id, force_sync):
++            if args.use_critic and args.offload_train:
++                await model.onload()
++            await model.save_model(rollout_id, force_sync=force_sync)
++            if args.use_critic and args.offload_train:
++                await model.offload()
++
++        # async train loop.
++        # [rh2-integration] OR-accumulator over one publish interval: True as soon
++        # as any rollout in the interval possibly applied a real optimizer update.
++        # Reset only after an actual weight publish.
+         weights_dirty_since_publish = False
+         rollout_data_next_future = rollout_manager.generate.remote(args.start_rollout_id)
+         for rollout_id in range(args.start_rollout_id, args.num_rollout):
+@@ -191,11 +192,12 @@ async def train(args):
+ 
+         await eval_dispatcher.drain()
+     finally:
+-        exiting_with_error = sys.exc_info()[0] is not None
++        driver_exc = sys.exc_info()[1]
++        driver_cause = f"{type(driver_exc).__name__}: {str(driver_exc)[:400]}" if driver_exc is not None else None
+         try:
+-            await rollout_manager.dispose.remote()
++            await rollout_manager.dispose.remote(driver_cause=driver_cause)
+         except Exception:  # noqa: BLE001
+-            if not exiting_with_error:
++            if driver_cause is None:
+                 raise
+             logger.exception("[rh2-integration] rollout_manager.dispose() failed while exiting with an error (first cause preserved)")
+ 
+-- 
+2.50.1 (Apple Git-155)
+
