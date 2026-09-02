@@ -325,3 +325,74 @@ Python 对象系数是假设值。修正（不加 attempt cap）：`resource_clo
 关闭后 buffer 内已有组不再交出；`notify_run_fatal` 提供但 group_admission 侧一行未接（所有权）。③ 挡板：无新增。
 ④ 推翻：§9 第 1 条"一行接线足够"、§5 "上界"口径、§1 表"链外报告先落盘"三处按本节修正。⑤ 见 12.4。
 未改变：B5 顺序、A5 无 disposition、fa_formal 挡板、`contracts/`、W1b 那组文件、`bringup.py:705` 挡板。
+
+## 13. 追加修正节（2026-09-02，codex 对 patch 0010 + 修复轮终核后；append-only，本节口径覆盖 §12 冲突处）
+
+### 13.1 根因：关停在错误的 event loop 上执行
+
+生产拓扑（codex 核实）：`RolloutManager._get_rollout_data` → `asyncio.to_thread(call_rollout_function, …)` →
+`compatibility.call_rollout_function` → `async_utils.run(coro)` → 全局后台 `AsyncLoopThread`（`get_async_loop()`）。
+所以 `FullyAsyncRolloutFn`、worker task、`DefaultDataBuffer`、以及在首个 generate 内 bootstrap 的 RH2 `BringupService`
+**全部属于那个后台 owner loop**；Ray actor 自己的 loop 只是调用方。patch 0010 的 `dispose()` 在 actor loop 上直接
+`await aclose()` / `await close_bringup_service()`——跨 loop 的 Task/Future 完成不会唤醒 actor loop（codex 实测要靠外部
+0.4s timer 才醒），无 timer 时 `dispose.remote()` 可能永久卡住。§12 的四个单 loop 测试没有复现这个拓扑，**已删除**，
+换成 §13.4 的真实双 loop 重放。
+
+### 13.2 miles 侧改动（`reference/miles-rh2-integration` 工作树，未 commit；供 patch 0011 format-patch）
+
+| 文件 | 函数/符号 |
+|---|---|
+| `miles/utils/rh2_shutdown.py`（**新增**） | `DEFAULT_DISPOSE_TIMEOUT_SEC=900`、`dispose_timeout_seconds(args)`、`close_rollout_fn_and_rh2(generate_rollout, driver_cause, deadline_seconds)`（**在 owner loop 上跑**：`aclose` → 首因 = worker 自己的异常，否则 `driver_cause` → `close_bringup_service(reason="rollout_manager_dispose", trigger, first_cause)`；每段吞异常记 `errors`，永不抛）、`dispose_on_owner_loop(generate_rollout, driver_cause, deadline_seconds, timeout_seconds, args)`（**从 actor loop 调**：`asyncio.run_coroutine_threadsafe(closure, get_async_loop().loop)` → `asyncio.wait_for(asyncio.shield(asyncio.wrap_future(cfut)), timeout)`；超时不抛，返回 `{"timed_out": True, …}`，闭包在 owner loop 上继续跑） |
+| `miles/rollout/fully_async_rollout.py` | 新 `DEFAULT_SHUTDOWN_DEADLINE_SEC=60.0`、`shutdown_deadline_seconds(args)`（`args.rh2_shutdown_deadline_sec` → env `RH2_MILES_SHUTDOWN_DEADLINE_SEC` → 60）；`aclose(deadline_seconds=None)`：`asyncio.wait({worker}, timeout=剩余期限)` → `asyncio.wait(active, timeout=剩余期限)` → 报告新增 `worker_unfinished/active_groups_unfinished/deadline_seconds/deadline_exceeded/close_error/elapsed_seconds` → **`finally` 里 `buffer.aclose()`**（超时/异常都关并唤醒 waiter）；到期即放弃、不再等（被放弃的 task 交 RH2 关停链的容器/会话清理兜底）；`import os, time` |
+| `miles/ray/rollout/rollout_manager.py` | `dispose(self, driver_cause=None)`：只做 `await dispose_on_owner_loop(self.generate_rollout, driver_cause=driver_cause, args=self.args)`（try/except 记日志）→ 原有 data_source/analyzer/metric/eval/monitor 关闭；actor loop 上不再直接 await 属于 owner loop 的对象 |
+| `train_async.py` | `try:` 紧随 `create_rollout_manager(...)` 之后（模型构造、首次 `update_weights`、before-train eval、训练循环全在 try 内）；`finally`：`driver_cause = f"{type(exc).__name__}: {str(exc)[:400]}"`（无异常为 None）→ `await rollout_manager.dispose.remote(driver_cause=driver_cause)`；已带 driver 异常时 dispose 再失败只记日志，正常路径照抛 |
+| （不变）`miles/rollout/fully_async_data_buffer.py` | patch 0010 的 `DataBufferClosed` / `aclose()` 原样 |
+
+投回 owner loop 的机制 = 与 `call_rollout_function` 同一条：`get_async_loop()` 的 loop + `run_coroutine_threadsafe`；
+调用方用 `asyncio.wrap_future`（内部 `call_soon_threadsafe` 唤醒调用方 loop）+ `wait_for` 总超时等待。
+
+期限与覆盖：rollout fn 取消等待期限 **60s**（`args.rh2_shutdown_deadline_sec` / `RH2_MILES_SHUTDOWN_DEADLINE_SEC`）；
+整体闭包（aclose + RH2 关停链）总超时 **900s**（`args.rh2_dispose_timeout_sec` / `RH2_MILES_DISPOSE_TIMEOUT_SEC`；
+RH2 链自身各步上界之和约 6 分钟，见 §1）。
+
+driver cause 传递：train driver `finally` 把训练侧异常序列化成字符串 → `dispose(driver_cause=str)` → 闭包里
+`first_cause = worker_exception if worker_exception is not None else driver_cause`，`trigger = run_fatal | driver_error | owner_close`
+→ rh2 `close_bringup_service(first_cause=…)` → 报告 `ok=false`、`first_cause` = 该串（worker 健康 + 训练侧失败不再产
+`ok=true/first_cause=None`）。
+
+rh2 侧唯一改动：`BringupService.install_sigterm_shutdown` 在非主线程 loop（miles 拓扑下 bringup 就在后台 owner loop）
+`add_signal_handler` 会 `ValueError`——改为记录 `signal_shutdown_install_error` 不炸 rollout；`RH2_SHUTDOWN_ON_SIGTERM`
+opt-in 在 miles 拓扑下**不可用**（信号只能在主线程装；Ray actor 的信号处置归 Ray），登记为开放项。
+
+### 13.3 关停顺序最终形态（取代 §12.1 末段）
+
+train driver `finally`（try 从 RolloutManager 创建后立即开始）→ `RolloutManager.dispose(driver_cause)`（actor loop）→
+**投回 owner loop**：① `rollout_fn.aclose(deadline=60s)`：停新提交 → cancel worker 等 ≤ 期限 → cancel active group 等 ≤ 剩余期限 →
+到期放弃并记 unfinished → `finally` `buffer.aclose()` 唤醒 put/get waiter（`DataBufferClosed`）→ ② 首因 = worker 异常 ∥ driver cause →
+③ `close_bringup_service(trigger, first_cause)`：§1 十步链 → 完成事件 → 吸收关停期 fatal → 最后落盘 `shutdown_report.json`
+（全部在 owner loop）→ 调用方经 `wrap_future` 拿到结果（总超时 900s）→ ④ miles 原有 dispose → ⑤ launch trap run-label 兜底 + 检查。
+
+### 13.4 测试（`tests/adapters_miles/test_w5a_miles_dispose_chain.py`，integration_base；owner loop = miles 真实 `get_async_loop()`，调用方 = pytest loop；drain 走 `to_thread(call_rollout_function)`，dispose 走 `dispose_on_owner_loop`）
+
+| 路径 | 测试 |
+|---|---|
+| ① 正常 worker：dispose 近 0s 完成、无外部 timer | `test_dual_loop_normal_dispose_completes_without_external_timer`（断言 worker 在 owner loop、调用方是另一 loop、elapsed <1.5s、rh2 链 task 在 owner loop、drain 以 `RolloutFnClosed` 退出） |
+| ② 取消不响应的 active group | `test_dual_loop_stubborn_active_group_is_abandoned_after_deadline`（`args.rh2_shutdown_deadline_sec=0.5`，吞 CancelledError 的替身：0.4s≤elapsed<3s、`active_groups_unfinished=1`、`deadline_exceeded`、buffer 仍关、RH2 链仍执行） |
+| ②′ 整体闭包超时有界 | `test_dispose_on_owner_loop_total_timeout_is_bounded`（挂死 aclose → 0.2s 内返回 `timed_out`） |
+| ③ buffer put/get 阻塞 waiter | `test_dual_loop_buffer_waiters_wake_with_typed_error`（waiter 在 owner loop 上阻塞，aclose 后以 `DataBufferClosed(op)` 退出；关闭后已有组不交出） |
+| ④ filter fatal | `test_dual_loop_filter_fatal_becomes_first_cause_in_rh2_disk_report`（真实 `DefaultDataBuffer.put()` 内 filter 抛 fatal → worker failed → drain 经 `run().result()` 报 fatal → 首因优先于 driver cause → rh2 磁盘报告 `ok=false`、`trigger=run_fatal`） |
+| driver cause | `test_dual_loop_driver_cause_reaches_rh2_report_when_worker_is_healthy`（worker 健康 + driver cause → `trigger=driver_error`、磁盘报告 `ok=false`、`first_cause` = 该串） |
+| try/finally 覆盖初始化失败 + dispose 不再在 actor loop 上 await | `test_dispose_owner_loop_and_train_async_try_placement_source_facts`（`create_rollout_manager` 与 `try:` 之间只有注释/空行；`create_training_models`/`update_weights` 在 try 内；dispose 体内无 `await aclose()`/`await close_bringup_service(`；helper 含 `run_coroutine_threadsafe`/`wrap_future`/`wait_for`；`aclose` 的 `finally:` 先于 `await aclose()`） |
+
+计数（2026-09-02 实跑）：`uv run pytest tests/ -q`（默认 pin）**1581 passed, 239 skipped**；lane A **322p/224s**
+（`-m "not integration_base"` 零 skip）；lane B **545 passed, 1 failed** —— 唯一失败仍是
+`test_producer_tree_digest_matches_audit_manifest`（集成工作树含未提交的 patch 0011 改动，源码树 digest ≠ manifest；
+commit + 更新 manifest 后消失）；ruff All checks passed；lanes 脚本未跑（预期红）。本节净变化：miles 测试文件 4→7
+（lane B +3，lane A skip +3）。
+
+### 13.5 五段收尾（本节）
+① T0：无（退出路径与期限，不改训练语义；期限到期放弃的执行由 RH2 链清理并记残留，不做 disposition）。
+② T1：新增 `miles/utils/rh2_shutdown.py` 承载投回机制（RolloutManager 是 Ray actor，测试不可 import，helper 让真实机制可被双 loop 测试驱动）；
+期限默认 60s/总超时 900s；worker 自身 fatal 优先于 driver cause；SIGTERM opt-in 在 miles 拓扑不可用（记录不炸）。
+③ 挡板：无新增。④ 推翻：§12 单 loop 测试（删除）、§12.1 "dispose 直接 await" 形态。⑤ 见 13.4。
+未改变：B5 顺序、A5 无 disposition、fa_formal 挡板、`contracts/`、W1b 那组文件、`rh2/src/slime` vendored 文件（逐字节不动）。

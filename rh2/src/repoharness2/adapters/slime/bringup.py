@@ -1709,7 +1709,13 @@ class BringupService:
         async def _on_signal(name: str) -> ShutdownReport:
             return await self.close(reason=f"signal:{name}", trigger="signal")
 
-        self._uninstall_signal_shutdown = install_signal_shutdown(asyncio.get_running_loop(), _on_signal)
+        try:
+            self._uninstall_signal_shutdown = install_signal_shutdown(asyncio.get_running_loop(), _on_signal)
+        except (ValueError, RuntimeError, NotImplementedError) as exc:
+            # miles 生产拓扑：bringup 在共享后台 AsyncLoopThread（非主线程）上启动，
+            # loop.add_signal_handler 在此不可用——如实记录、不让 opt-in 旋钮炸掉 rollout。
+            self.signal_shutdown_install_error = f"{type(exc).__name__}: {exc}"
+            print(f"[rh2-bringup] SIGTERM 关停未安装（非主线程 loop）：{self.signal_shutdown_install_error}")
 
     # -- 单例接口 --------------------------------------------------------------
 
