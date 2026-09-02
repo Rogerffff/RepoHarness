@@ -1,0 +1,496 @@
+From 69696cd85f02b61fb00f6c77829fe81b65d1d4ce Mon Sep 17 00:00:00 2001
+From: Codex <jufangjian@gmail.com>
+Date: Wed, 2 Sep 2026 14:32:37 +0800
+Subject: [PATCH] [rh2-integration] close the fully-async rollout fn and data
+ buffer on dispose; always dispose in train_async finally
+
+FullyAsyncRolloutFn.aclose(): stop new submissions, cancel/await the worker
+and active group tasks (first cause preserved), then DefaultDataBuffer.aclose()
+wakes blocked put()/get() waiters with DataBufferClosed; closed instances
+reject train/eval/submit/get with RolloutFnClosed. RolloutManager.dispose()
+becomes async: rollout_fn.aclose() -> rh2 close_bringup_service(first_cause=
+worker_exception) -> existing teardown. train_async.train() runs the loop in
+try/finally so dispose executes on abnormal exit too. DataBuffer.aclose()
+defaults to a no-op so custom buffers keep their contract.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ miles/ray/rollout/rollout_manager.py     |  34 ++++-
+ miles/rollout/fully_async_data_buffer.py |  37 +++++
+ miles/rollout/fully_async_rollout.py     |  78 +++++++++-
+ train_async.py                           | 180 ++++++++++++-----------
+ 4 files changed, 243 insertions(+), 86 deletions(-)
+
+diff --git a/miles/ray/rollout/rollout_manager.py b/miles/ray/rollout/rollout_manager.py
+index be3c7b139..63f1e7668 100644
+--- a/miles/ray/rollout/rollout_manager.py
++++ b/miles/ray/rollout/rollout_manager.py
+@@ -133,7 +133,39 @@ class RolloutManager:
+     def get_router_address(self) -> tuple[str, int]:
+         return self.args.sglang_router_ip, self.args.sglang_router_port
+ 
+-    def dispose(self):
++    async def dispose(self):
++        # [rh2-integration] W5a shutdown order (rh2 06 plan, readiness scope 2.6):
++        #   1. rollout fn aclose(): stop new submissions -> cancel/await worker + active
++        #      group tasks -> wake waiters blocked in buffer put()/get();
++        #   2. rh2 BringupService close chain (in-flight executions, grading, capture
++        #      wire, adapter HTTP thread, containers, evidence) with the worker's own
++        #      exception (e.g. a group-admission fatal raised inside put()) as first cause;
++        #   3. the original dispose (data source, analyzer, metric checker, eval, monitors).
++        # Each stage swallows and logs its failure so the whole method also completes on
++        # the error exit path (train_async.py finally); the first cause stays in the rh2
++        # shutdown report, not in a masking exception.
++        first_cause = None
++        aclose = getattr(self.generate_rollout, "aclose", None)
++        if aclose is not None:
++            try:
++                close_report = await aclose()
++                first_cause = close_report.get("worker_exception")
++                logger.info(
++                    "[rh2-integration] rollout fn closed: worker_state=%s active_groups_cancelled=%s",
++                    close_report.get("worker_state"),
++                    close_report.get("active_groups_cancelled"),
++                )
++            except Exception:  # noqa: BLE001 - shutdown continues; failure is logged, not masked
++                logger.exception("[rh2-integration] rollout fn aclose() failed")
++        try:
++            from repoharness2.adapters.slime.bringup import close_bringup_service
++        except ImportError:  # rh2 not on the path (stock miles usage): nothing to close
++            close_bringup_service = None
++        if close_bringup_service is not None:
++            try:
++                await close_bringup_service(reason="rollout_manager_dispose", first_cause=first_cause)
++            except Exception:  # noqa: BLE001
++                logger.exception("[rh2-integration] rh2 close_bringup_service() failed")
+         if (close := getattr(self.data_source, "close", None)) is not None:
+             close()
+         event_analyzer.run_analysis_from_args(self.args)
+diff --git a/miles/rollout/fully_async_data_buffer.py b/miles/rollout/fully_async_data_buffer.py
+index 4c4bae347..29d4e5929 100644
+--- a/miles/rollout/fully_async_data_buffer.py
++++ b/miles/rollout/fully_async_data_buffer.py
+@@ -56,6 +56,16 @@ class DataBufferInput:
+     group: Group  # finished samples
+ 
+ 
++class DataBufferClosed(RuntimeError):
++    """[rh2-integration] W5a: raised to every waiter blocked in put()/get() once the
++    buffer is closed, and to any put()/get() attempted afterwards. A closed buffer
++    never hands out a group, so training cannot consume past shutdown."""
++
++    def __init__(self, op: str) -> None:
++        self.op = op
++        super().__init__(f"data buffer closed: {op} rejected")
++
++
+ class DataBuffer(ABC):
+     """Store for finished groups between rollout production and training consumption.
+ 
+@@ -80,6 +90,12 @@ class DataBuffer(ABC):
+     def get_metrics(self) -> dict[str, float]:
+         """Report fully-qualified metrics since the previous call (window counters reset here)."""
+ 
++    async def aclose(self) -> None:
++        """[rh2-integration] W5a: stop accepting groups and wake every blocked waiter with
++        DataBufferClosed. Default is a no-op so custom buffers without waiters keep working;
++        buffers that block in put()/get() must override it (see DefaultDataBuffer)."""
++        return None
++
+ 
+ class DefaultDataBuffer(DataBuffer):
+     """FIFO buffer of finished groups, filtering out what training should not see.
+@@ -117,6 +133,7 @@ class DefaultDataBuffer(DataBuffer):
+         self._dynamic_filter = load_function(args.dynamic_sampling_filter_path)
+         self._cond = asyncio.Condition()
+         self._current_version: int | None = None
++        self._closed = False  # [rh2-integration] W5a: set by aclose(); waiters exit with DataBufferClosed
+ 
+         self._metric_gatherer = MetricGatherer()
+         self._metric_aborted_groups = 0
+@@ -124,6 +141,8 @@ class DefaultDataBuffer(DataBuffer):
+         self._metric_consumed_staleness: list[int] = []
+ 
+     async def put(self, input: DataBufferInput) -> None:
++        if self._closed:
++            raise DataBufferClosed("put")
+         # filters at receiving sample: abort filter, dynamic filter
+         if any(s.status == Sample.Status.ABORTED for s in iter_samples(input.group)):
+             self._metric_aborted_groups += 1
+@@ -139,7 +158,11 @@ class DefaultDataBuffer(DataBuffer):
+ 
+         async with self._cond:
+             while len(self._buffer) >= self._capacity:
++                if self._closed:
++                    raise DataBufferClosed("put")
+                 await self._cond.wait()
++            if self._closed:  # [rh2-integration] W5a: woken by aclose(), not by consumption
++                raise DataBufferClosed("put")
+             self._buffer.append(input)
+             self._cond.notify_all()
+ 
+@@ -148,8 +171,12 @@ class DefaultDataBuffer(DataBuffer):
+             self._current_version = current_version
+         async with self._cond:
+             while True:
++                if self._closed:  # [rh2-integration] W5a: nothing leaves a closed buffer
++                    raise DataBufferClosed("get")
+                 while not self._buffer:
+                     await self._cond.wait()
++                    if self._closed:
++                        raise DataBufferClosed("get")
+                 entry = self._buffer.pop(0)
+                 self._cond.notify_all()  # wake producers blocked on a full buffer
+ 
+@@ -164,6 +191,16 @@ class DefaultDataBuffer(DataBuffer):
+                 self._metric_stale_groups += 1
+                 self._unused_handler_fn(entry.prompt_group)
+ 
++    async def aclose(self) -> None:
++        """[rh2-integration] W5a: close and wake every waiter (idempotent)."""
++        async with self._cond:
++            self._closed = True
++            self._cond.notify_all()
++
++    @property
++    def closed(self) -> bool:
++        return self._closed
++
+     def _emit_group_filtered(self, group: Group, reason: str) -> None:
+         """[rh2-integration] Rejection-path evidence for G1 acceptance.
+ 
+diff --git a/miles/rollout/fully_async_rollout.py b/miles/rollout/fully_async_rollout.py
+index 43bbdd546..784daab55 100644
+--- a/miles/rollout/fully_async_rollout.py
++++ b/miles/rollout/fully_async_rollout.py
+@@ -48,6 +48,16 @@ logger = logging.getLogger(__name__)
+ NO_PROGRESS_WARN_SECS = 30.0
+ 
+ 
++class RolloutFnClosed(RuntimeError):
++    """[rh2-integration] W5a: the rollout fn was closed by aclose(); every later train /
++    eval call and every submission is rejected with this typed error (never silently
++    hangs on a dead worker or an empty buffer)."""
++
++    def __init__(self, op: str) -> None:
++        self.op = op
++        super().__init__(f"fully-async rollout fn closed: {op} rejected")
++
++
+ class FullyAsyncRolloutFn:
+     """Continuous rollout generation decoupled from training steps.
+ 
+@@ -74,8 +84,16 @@ class FullyAsyncRolloutFn:
+         self._producer_resumed = asyncio.Event()
+         self._producer_resumed.set()
+         self._output: DataBuffer | None = None
++        # [rh2-integration] W5a shutdown seam: the worker keeps its in-flight group tasks in
++        # this set (same object for the worker's lifetime) so aclose() can cancel them;
++        # _closed gates every submission / call once aclose() has started.
++        self._active_groups: set[asyncio.Task] = set()
++        self._closed = False
++        self._close_report: dict | None = None
+ 
+     async def __call__(self, input: RolloutFnInput) -> RolloutFnOutput:
++        if self._closed:
++            raise RolloutFnClosed("eval" if input.evaluation else "train")
+         if input.evaluation:
+             return await self._call_eval(input)
+         if self._worker is None:
+@@ -110,6 +128,8 @@ class FullyAsyncRolloutFn:
+         return self.args.rollout_batch_size
+ 
+     def _submit_one_group(self) -> asyncio.Task:
++        if self._closed:  # [rh2-integration] W5a: no new submissions once closing
++            raise RolloutFnClosed("submit")
+         samples = self.data_source.get_samples(1)
+         self._scheduler.on_submit(samples)
+         [prompt_group] = samples
+@@ -126,18 +146,68 @@ class FullyAsyncRolloutFn:
+         return DataBufferInput(prompt_group=prompt_group, group=result)
+ 
+     async def _worker_loop(self):
+-        active: set[asyncio.Task] = set()
++        active = self._active_groups  # [rh2-integration] W5a: shared with aclose() (same set object)
+         while True:
+             await self._producer_resumed.wait()
+             while self._scheduler.has_capacity(pending_groups=len(active), group_budget=self._max_in_flight_groups()):
+                 active.add(self._submit_one_group())
+-            done, active = await self._scheduler.wait_for_progress(active)
++            done, _pending = await self._scheduler.wait_for_progress(active)
++            active.difference_update(done)
+             for task in done:
+                 await self._output.put(task.result())
+ 
++    async def aclose(self) -> dict:
++        """[rh2-integration] W5a: stop the producer and wake every waiter (idempotent).
++
++        Order (rh2 06 plan W5a): stop new submissions -> cancel and await the worker ->
++        cancel and await the active group tasks -> close the data buffer so waiters blocked
++        in put()/get() exit with DataBufferClosed. The worker's own exception (for example a
++        group-admission fatal raised inside buffer.put()) is preserved as
++        ``worker_exception`` so the caller can hand it to the rh2 shutdown report as the
++        first cause. Never raises; returns the same report on repeated calls.
++        """
++        if self._close_report is not None:
++            return self._close_report
++        self._closed = True
++        report: dict = {
++            "worker_state": "never_started",
++            "worker_exception": None,
++            "active_groups_cancelled": 0,
++            "buffer_closed": False,
++        }
++        worker = self._worker
++        if worker is not None:
++            if not worker.done():
++                worker.cancel()
++                await asyncio.wait({worker})
++            if worker.cancelled():
++                report["worker_state"] = "cancelled"
++            elif worker.exception() is not None:
++                report["worker_state"] = "failed"
++                report["worker_exception"] = worker.exception()
++            else:
++                report["worker_state"] = "returned"
++        active = [task for task in self._active_groups if not task.done()]
++        for task in active:
++            task.cancel()
++        if active:
++            await asyncio.wait(active)
++        report["active_groups_cancelled"] = len(active)
++        if self._output is not None and (aclose := getattr(self._output, "aclose", None)) is not None:
++            await aclose()
++            report["buffer_closed"] = True
++        self._close_report = report
++        return report
++
++    @property
++    def closed(self) -> bool:
++        return self._closed
++
+     # -------------------------- consumer --------------------------
+ 
+     async def _next_group(self, current_version: int | None) -> DataBufferInput:
++        if self._closed:
++            raise RolloutFnClosed("get")
+         queue_get = asyncio.create_task(self._output.get(current_version=current_version))
+         try:
+             while True:
+@@ -149,6 +219,10 @@ class FullyAsyncRolloutFn:
+                 # Checked before the queue: the worker loop never returns normally, so a
+                 # dead worker fails the step now instead of after its backlog drains.
+                 if self._worker in done:
++                    if self._closed:
++                        # [rh2-integration] W5a: the worker was cancelled by aclose(); report a
++                        # typed close instead of surfacing that CancelledError to the caller.
++                        raise RolloutFnClosed("get")
+                     self._worker.result()
+                     raise RuntimeError("fully-async rollout worker exited without an exception")
+                 if queue_get in done:
+diff --git a/train_async.py b/train_async.py
+index e20613a10..883559ae8 100644
+--- a/train_async.py
++++ b/train_async.py
+@@ -1,6 +1,7 @@
+ import asyncio
+ import logging
+ import os
++import sys
+ 
+ from miles.ray.placement_group import create_placement_groups, create_rollout_manager, create_training_models
+ from miles.ray.rollout.eval_dispatch import EvalDispatcher
+@@ -96,94 +97,107 @@ async def train(args):
+     # [rh2-integration] OR-accumulator over one publish interval: True as soon
+     # as any rollout in the interval possibly applied a real optimizer update.
+     # Reset only after an actual weight publish.
+-    weights_dirty_since_publish = False
+-    rollout_data_next_future = rollout_manager.generate.remote(args.start_rollout_id)
+-    for rollout_id in range(args.start_rollout_id, args.num_rollout):
+-        # Sync the last generation
+-        if rollout_data_next_future is not None:
+-            rollout_data_curr_ref = await rollout_data_next_future
+-
+-        # Start the next rollout early.
+-        if rollout_id + 1 < args.num_rollout:
+-            rollout_data_next_future = rollout_manager.generate.remote(rollout_id + 1)
+-
+-        # [rh2-integration] Keep the actor train results: they carry the
+-        # per-rollout weights_dirty fact used to gate weight publishing.
+-        # Rollouts without an actor train (critic-only warmup) stay None and
+-        # conservatively count as dirty via _any_weights_dirty's default.
+-        actor_train_results = None
+-        if args.use_critic:
+-            values = await critic_model.train(rollout_id, rollout_data_curr_ref)
+-            if args.offload_train:
+-                await critic_model.offload()
+-            if rollout_id >= args.num_critic_only_steps:
+-                actor_train_results = await actor_model.train(
+-                    rollout_id, rollout_data_curr_ref, external_data=values
+-                )
+-                if args.offload_train:
+-                    await actor_model.offload()
+-        else:
+-            actor_train_results = await actor_model.train(rollout_id, rollout_data_curr_ref)
+-        weights_dirty_since_publish |= _any_weights_dirty(actor_train_results)
+-        remove_rollout_data_refs(args, rollout_data_curr_ref)
+-
+-        external_save = args.save_trigger_sentinel is not None and os.path.exists(args.save_trigger_sentinel)
+-        if external_save or should_run_periodic_action(
+-            rollout_id, args.save_interval, num_rollout_per_epoch, args.num_rollout
+-        ):
+-            force_sync = external_save or rollout_id == args.num_rollout - 1
+-            await save_training_model(actor_model, rollout_id, force_sync)
++    # [rh2-integration] W5a: the training loop runs inside try/finally so that
++    # RolloutManager.dispose() (rollout fn aclose -> rh2 shutdown chain -> original
++    # dispose) executes on the error exit path too. eval_dispatcher.drain() stays on the
++    # normal path only. A dispose failure while already exiting with an error is logged
++    # rather than raised, so it cannot mask the first cause.
++    try:
++        weights_dirty_since_publish = False
++        rollout_data_next_future = rollout_manager.generate.remote(args.start_rollout_id)
++        for rollout_id in range(args.start_rollout_id, args.num_rollout):
++            # Sync the last generation
++            if rollout_data_next_future is not None:
++                rollout_data_curr_ref = await rollout_data_next_future
++
++            # Start the next rollout early.
++            if rollout_id + 1 < args.num_rollout:
++                rollout_data_next_future = rollout_manager.generate.remote(rollout_id + 1)
++
++            # [rh2-integration] Keep the actor train results: they carry the
++            # per-rollout weights_dirty fact used to gate weight publishing.
++            # Rollouts without an actor train (critic-only warmup) stay None and
++            # conservatively count as dirty via _any_weights_dirty's default.
++            actor_train_results = None
+             if args.use_critic:
+-                await save_training_model(critic_model, rollout_id, force_sync)
+-            await rollout_manager.save.remote(rollout_id)
+-            if external_save:
+-                os.remove(args.save_trigger_sentinel)
+-
+-        if (rollout_id + 1) % args.update_weights_interval == 0:
+-            # [rh2-integration] Publish only when at least one real optimizer
+-            # update happened since the last publish. If every step in the
+-            # interval was a zero-signal skip, the parameters are bit-identical
+-            # to the last published version: re-publishing would only increment
+-            # weight_version, inflating rollout staleness accounting and making
+-            # monitoring believe the model moved. Skipping the publish also
+-            # skips the generation sync, which is exactly the behavior of a
+-            # non-publish rollout.
+-            if weights_dirty_since_publish:
+-                # sync generate before update weights to prevent update weight in the middle of generation
+-                rollout_data_curr_ref = (await x) if (x := rollout_data_next_future) is not None else None
+-                rollout_data_next_future = None
+-                await actor_model.update_weights(rollout_id=rollout_id)
+-                weights_dirty_since_publish = False
+-                rh2_event_log.emit("weight_publish", rollout_id=rollout_id)
++                values = await critic_model.train(rollout_id, rollout_data_curr_ref)
++                if args.offload_train:
++                    await critic_model.offload()
++                if rollout_id >= args.num_critic_only_steps:
++                    actor_train_results = await actor_model.train(
++                        rollout_id, rollout_data_curr_ref, external_data=values
++                    )
++                    if args.offload_train:
++                        await actor_model.offload()
+             else:
++                actor_train_results = await actor_model.train(rollout_id, rollout_data_curr_ref)
++            weights_dirty_since_publish |= _any_weights_dirty(actor_train_results)
++            remove_rollout_data_refs(args, rollout_data_curr_ref)
++
++            external_save = args.save_trigger_sentinel is not None and os.path.exists(args.save_trigger_sentinel)
++            if external_save or should_run_periodic_action(
++                rollout_id, args.save_interval, num_rollout_per_epoch, args.num_rollout
++            ):
++                force_sync = external_save or rollout_id == args.num_rollout - 1
++                await save_training_model(actor_model, rollout_id, force_sync)
++                if args.use_critic:
++                    await save_training_model(critic_model, rollout_id, force_sync)
++                await rollout_manager.save.remote(rollout_id)
++                if external_save:
++                    os.remove(args.save_trigger_sentinel)
++
++            if (rollout_id + 1) % args.update_weights_interval == 0:
++                # [rh2-integration] Publish only when at least one real optimizer
++                # update happened since the last publish. If every step in the
++                # interval was a zero-signal skip, the parameters are bit-identical
++                # to the last published version: re-publishing would only increment
++                # weight_version, inflating rollout staleness accounting and making
++                # monitoring believe the model moved. Skipping the publish also
++                # skips the generation sync, which is exactly the behavior of a
++                # non-publish rollout.
++                if weights_dirty_since_publish:
++                    # sync generate before update weights to prevent update weight in the middle of generation
++                    rollout_data_curr_ref = (await x) if (x := rollout_data_next_future) is not None else None
++                    rollout_data_next_future = None
++                    await actor_model.update_weights(rollout_id=rollout_id)
++                    weights_dirty_since_publish = False
++                    rh2_event_log.emit("weight_publish", rollout_id=rollout_id)
++                else:
++                    logger.info(
++                        "skipping weight publish at rollout_id=%d: every optimizer step since the "
++                        "last publish was a zero-signal skip (weights unchanged, weight_version not "
++                        "incremented)",
++                        rollout_id,
++                    )
++                    # [rh2-integration] Structured counterpart of the log line: the
++                    # acceptance collector needs an explicit "publish skipped" fact
++                    # to tell an intentional version hold apart from missing
++                    # publish evidence.
++                    rh2_event_log.emit("weight_publish_skipped", rollout_id=rollout_id)
++
++            if should_run_periodic_action(rollout_id, args.eval_interval, num_rollout_per_epoch, args.num_rollout):
++                await eval_dispatcher.dispatch(rollout_id, force=rollout_id == args.num_rollout - 1)
++
++            if (
++                args.debug_exit_after_rollout is not None
++                and (rollout_id - args.start_rollout_id + 1) >= args.debug_exit_after_rollout
++            ):
+                 logger.info(
+-                    "skipping weight publish at rollout_id=%d: every optimizer step since the "
+-                    "last publish was a zero-signal skip (weights unchanged, weight_version not "
+-                    "incremented)",
++                    "debug_exit_after_rollout=%d reached at rollout_id=%d, exiting",
++                    args.debug_exit_after_rollout,
+                     rollout_id,
+                 )
+-                # [rh2-integration] Structured counterpart of the log line: the
+-                # acceptance collector needs an explicit "publish skipped" fact
+-                # to tell an intentional version hold apart from missing
+-                # publish evidence.
+-                rh2_event_log.emit("weight_publish_skipped", rollout_id=rollout_id)
+-
+-        if should_run_periodic_action(rollout_id, args.eval_interval, num_rollout_per_epoch, args.num_rollout):
+-            await eval_dispatcher.dispatch(rollout_id, force=rollout_id == args.num_rollout - 1)
+-
+-        if (
+-            args.debug_exit_after_rollout is not None
+-            and (rollout_id - args.start_rollout_id + 1) >= args.debug_exit_after_rollout
+-        ):
+-            logger.info(
+-                "debug_exit_after_rollout=%d reached at rollout_id=%d, exiting",
+-                args.debug_exit_after_rollout,
+-                rollout_id,
+-            )
+-            break
+-
+-    await eval_dispatcher.drain()
+-    await rollout_manager.dispose.remote()
++                break
++
++        await eval_dispatcher.drain()
++    finally:
++        exiting_with_error = sys.exc_info()[0] is not None
++        try:
++            await rollout_manager.dispose.remote()
++        except Exception:  # noqa: BLE001
++            if not exiting_with_error:
++                raise
++            logger.exception("[rh2-integration] rollout_manager.dispose() failed while exiting with an error (first cause preserved)")
+ 
+ 
+ if __name__ == "__main__":
+-- 
+2.50.1 (Apple Git-155)
+
