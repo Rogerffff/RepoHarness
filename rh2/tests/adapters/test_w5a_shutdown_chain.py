@@ -492,7 +492,9 @@ async def test_bringup_close_normal_closes_all_components_and_is_idempotent(tmp_
     assert all(s.status in ("ok", "skipped") for s in report.steps)
     assert [s.name for s in report.steps] == [
         "intake_stop", "evidence_begin", "inflight_executions", "grading_queue", "grading_manager",
-        "capture_sessions", "capture_registry_close", "adapter_http", "container_residue", "resource_closure",
+        "capture_sessions", "capture_registry_close", "adapter_http", "container_residue",
+        "egress_runtime",  # W3b：attempt 网络 + relay 清理（s1_compat 下如实 skipped）
+        "resource_closure",
     ]
     # 组件真关
     assert service.grading_queue._workers == []

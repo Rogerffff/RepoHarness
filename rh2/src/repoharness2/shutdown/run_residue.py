@@ -43,8 +43,10 @@ __all__ = [
     "check_residue",
     "cleanup_residue",
     "list_run_containers",
+    "list_run_networks",
     "main",
     "remove_containers",
+    "remove_networks",
     "tmp_residue",
 ]
 
@@ -95,6 +97,44 @@ def remove_containers(docker_bin: str, names: list[str], *, timeout: float = DOC
     return removed, failed
 
 
+def list_run_networks(docker_bin: str, run_id: str, *, timeout: float = DOCKER_TIMEOUT_SEC) -> tuple[list[str] | None, str | None]:
+    """`docker network ls --filter label=rh2.run_id=<run_id>`（W3b：每个 attempt 的私有 egress 网络也盖本 run label；
+    容器已删而网络残留 = 占着子网槽位，同样是残留）。返回 (names, error)，查询失败 names=None。"""
+
+    if not run_id:
+        return None, "run_id 为空：没有归属锚点，拒绝按空 label 查询"
+    try:
+        proc = subprocess.run(
+            [docker_bin, "network", "ls", "--filter", f"label={RUN_LABEL_KEY}={run_id}", "--format", "{{.Name}}"],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+    except Exception as exc:  # noqa: BLE001 —— 失败是显式事实，不是零
+        return None, f"docker network ls failed: {type(exc).__name__}: {exc}"
+    if proc.returncode != 0:
+        return None, f"docker network ls rc={proc.returncode}: {proc.stderr.strip()[-300:]}"
+    return sorted({line.strip() for line in proc.stdout.splitlines() if line.strip()}), None
+
+
+def remove_networks(docker_bin: str, names: list[str], *, timeout: float = DOCKER_TIMEOUT_SEC) -> tuple[list[str], dict[str, str]]:
+    """删网络（容器已在前一步 rm -f；仍挂着 relay 时 docker 会拒绝——记失败，不强拆别人的容器）。"""
+
+    removed: list[str] = []
+    failed: dict[str, str] = {}
+    for name in names:
+        try:
+            proc = subprocess.run([docker_bin, "network", "rm", name], capture_output=True, text=True, timeout=timeout)
+        except Exception as exc:  # noqa: BLE001
+            failed[name] = f"{type(exc).__name__}: {exc}"
+            continue
+        if proc.returncode == 0:
+            removed.append(name)
+        else:
+            failed[name] = f"rc={proc.returncode}: {proc.stderr.strip()[-300:]}"
+    return removed, failed
+
+
 def tmp_residue(globs: list[str]) -> list[str]:
     """显式 glob 命中的工作区/临时目录（空 glob 列表 = 该面不适用，返回空）。"""
 
@@ -123,6 +163,9 @@ def cleanup_residue(
         "containers_found": None,
         "containers_removed": [],
         "containers_failed": {},
+        "networks_found": None,
+        "networks_removed": [],
+        "networks_failed": {},
         "tmp_found": [],
         "tmp_removed": [],
         "tmp_failed": {},
@@ -137,6 +180,16 @@ def cleanup_residue(
         removed, failed = remove_containers(docker_bin, names, timeout=timeout)
         report["containers_removed"] = removed
         report["containers_failed"] = failed
+        # W3b：容器删完再删本 run 的 attempt 网络（relay 容器已在上一步被 rm -f，网络不再有端点）
+        nets, net_error = list_run_networks(docker_bin, run_id, timeout=timeout)
+        if nets is None:
+            report["docker_query_ok"] = False
+            report["detail"]["docker_network_error"] = net_error
+        else:
+            report["networks_found"] = nets
+            net_removed, net_failed = remove_networks(docker_bin, nets, timeout=timeout)
+            report["networks_removed"] = net_removed
+            report["networks_failed"] = net_failed
     found = tmp_residue(tmp_globs)
     report["tmp_found"] = found
     for path in found:
@@ -149,7 +202,10 @@ def cleanup_residue(
         except OSError as exc:
             report["tmp_failed"][path] = f"{type(exc).__name__}: {exc}"
     report["ok"] = bool(
-        report["docker_query_ok"] and not report["containers_failed"] and not report["tmp_failed"]
+        report["docker_query_ok"]
+        and not report["containers_failed"]
+        and not report["networks_failed"]
+        and not report["tmp_failed"]
     )
     return report
 
@@ -170,17 +226,22 @@ def check_residue(
         "taken_at_utc": _now(),
         "docker_query_ok": False,
         "containers": None,
+        "networks": None,
         "tmp": [],
         "detail": {},
     }
     names, error = list_run_containers(docker_bin, run_id, timeout=timeout)
+    nets, net_error = list_run_networks(docker_bin, run_id, timeout=timeout)
     if names is None:
         report["detail"]["docker_error"] = error
-    else:
+    if nets is None:
+        report["detail"]["docker_network_error"] = net_error
+    if names is not None and nets is not None:
         report["docker_query_ok"] = True
-        report["containers"] = names
+    report["containers"] = names
+    report["networks"] = nets
     report["tmp"] = tmp_residue(tmp_globs)
-    report["residue_count"] = (len(names) if names is not None else None)
+    report["residue_count"] = (len(names) + len(nets)) if (names is not None and nets is not None) else None
     if report["residue_count"] is not None:
         report["residue_count"] += len(report["tmp"])
     report["ok"] = bool(report["docker_query_ok"] and report["residue_count"] == 0)

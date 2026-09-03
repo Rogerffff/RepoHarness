@@ -40,6 +40,19 @@ if [ "$1" = "rm" ]; then
   echo "$name"
   exit 0
 fi
+# W3b：attempt 私有 egress 网络也按 run label 归属（状态文件 = "$STATE.networks"）
+if [ "$1" = "network" ] && [ "$2" = "ls" ]; then
+  if [ "{int(fail_ps)}" = "1" ]; then echo "Cannot connect to the Docker daemon" >&2; exit 1; fi
+  case "$*" in *"label=rh2.run_id={RUN_ID} "*) [ -f "$STATE.networks" ] && cat "$STATE.networks" ;; esac
+  exit 0
+fi
+if [ "$1" = "network" ] && [ "$2" = "rm" ]; then
+  name="$3"
+  grep -v "^$name$" "$STATE.networks" > "$STATE.networks.new" || true
+  mv "$STATE.networks.new" "$STATE.networks"
+  echo "$name"
+  exit 0
+fi
 exit 2
 """
     docker = bins / "docker"

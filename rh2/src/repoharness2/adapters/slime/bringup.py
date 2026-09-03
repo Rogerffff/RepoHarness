@@ -83,6 +83,21 @@ from repoharness2.adapters.slime.capture_wire import (
 )
 from repoharness2.adapters.slime.engine_router_client import MilesRouterWorkerClient
 from repoharness2.adapters.slime.docker_sandbox import DockerSandbox
+from repoharness2.adapters.slime.sandbox_profile import (
+    EgressRelayHandle,
+    GraderSandboxProfile,
+    RolloutSandboxProfile,
+    SandboxNetworkError,
+    grader_profile_from_env,
+    list_labeled_networks,
+    rollout_profile_from_env,
+    runtime_profile_digest,
+    start_egress_relay,
+    stop_egress_relay,
+    teardown_attempt_network,
+    verify_sandbox_profiles,
+    write_runtime_profile_record,
+)
 from repoharness2.shutdown import (
     LifecycleState,
     MemoryEstimateInputs,
@@ -111,6 +126,25 @@ ADAPTER_PORT = int(os.environ.get("ADAPTER_PORT", "18001"))
 # rollout 容器（bridge 网络）反连宿主侧 adapter 的地址：默认 docker0 网关
 ADAPTER_PUBLIC_HOST = os.environ.get("ADAPTER_PUBLIC_HOST", "172.17.0.1")
 ARTIFACT_DIR = Path(os.environ.get("RH2_BRINGUP_ARTIFACT_DIR", "/root/bringup/artifacts"))
+# W3b（D2-2）：唯一正式 rollout profile + 独立 grader profile 在 s1_compat 之外的模式**一律启用**，
+# 没有关闭它的 env 开关（s1_compat 是冻结回退面，改它的容器参数触 T0，所以不接）。
+# 启动前验证用的探针镜像缺省 = 任务面第一个任务的镜像（真实镜像最诚实）；可用 env 指定。
+SANDBOX_VERIFY_IMAGE = os.environ.get("RH2_SANDBOX_VERIFY_IMAGE") or None
+
+
+def sandbox_profile_enabled() -> bool:
+    """W3b profile 是否接入（按当前 EXECUTION_MODE 动态判断，测试可 monkeypatch 模式）。"""
+
+    return EXECUTION_MODE != "s1_compat"
+
+
+def _sandbox_docker():
+    """W3b sandbox 运行时（relay / verify / 残留网络）用的 docker 通道 = generate.run_docker
+    （测试替换 generate.run_docker 即同时替换这里）。"""
+
+    from repoharness2.adapters.slime import generate as _generate
+
+    return _generate.run_docker
 
 
 class FileFinalizationStore:
@@ -527,6 +561,12 @@ def write_execution_audit_record(proxy, audit, path) -> None:
         "runtime_private_pathset_changed": audit.runtime_private_pathset_changed,
         "unsafe_artifact_reasons": list(audit.unsafe_artifact_reasons),
         "scoring_projection_entry_count": audit.scoring_projection_entry_count,
+        # W3b：run 级 profile 摘要（join 键）+ 本 attempt 的 sandbox 创建期/启动前核对事实
+        # （不是每轨迹能力事实，不进 eligibility）
+        "runtime_profile_digest": getattr(audit, "runtime_profile_digest", None),
+        "egress_network": getattr(audit, "egress_network", None),
+        "sandbox_setup": getattr(audit, "sandbox_setup", None),
+        "prelaunch_check": getattr(audit, "prelaunch_check", None),
         "session_plane_drained": audit.session_plane_drained,
         "runtime_quiescence_confirmed": audit.runtime_quiescence_confirmed,
         "capture_closed": audit.capture_closed,
@@ -827,6 +867,18 @@ class BringupService:
                 "fa_formal 暂禁：开闸前置未全清（联合终核/B6/writer-scope/"
                 "barrier git-free），详见 fa/implementation-notes.md 文末。"
             )
+        # -- W3b：两个 profile 的参数在任何资源型副作用之前解析（非法即拒）。rollout profile 的
+        #    模型代理上游端口要等 adapter 线程起来才知道，这里先用占位端口验证其余参数。
+        self.grader_profile: GraderSandboxProfile | None = None
+        self.rollout_profile: RolloutSandboxProfile | None = None
+        self.egress_relay: EgressRelayHandle | None = None
+        self.runtime_profile_digest: str | None = None
+        self.runtime_profile_record: dict[str, Any] | None = None
+        if sandbox_profile_enabled():
+            self.grader_profile = grader_profile_from_env(os.environ)
+            rollout_profile_from_env(
+                os.environ, model_proxy_upstream_host=ADAPTER_PUBLIC_HOST, model_proxy_upstream_port=1
+            )
         # -- 任务面（W1b 第一集成切片 F6；纯配置/文件校验，仍在资源型副作用之前）：
         #    prepared 链 = 只读 trusted-prep 产物并复核（本 actor 进程不调完整 loader，
         #    对象图里没有 golden/validation 面），或 legacy v1 八题 bring-up；
@@ -871,12 +923,23 @@ class BringupService:
             },
         )
         self.adapter_url = f"http://{ADAPTER_PUBLIC_HOST}:{self.app_handle.port}"
+        # W3b：harness 看到的代理地址 = 本 run egress relay 的别名（每个 attempt 网络同名接入）；
+        # relay 的上游 = 宿主侧 adapter（ADAPTER_PUBLIC_HOST 现在的含义 = relay 视角的宿主地址）。
+        self.harness_adapter_url = self.adapter_url
+        if sandbox_profile_enabled():
+            self.rollout_profile = rollout_profile_from_env(
+                os.environ, model_proxy_upstream_host=ADAPTER_PUBLIC_HOST,
+                model_proxy_upstream_port=self.app_handle.port,
+            )
+            self.runtime_profile_digest = runtime_profile_digest(self.rollout_profile, self.grader_profile)
+            self.harness_adapter_url = self.rollout_profile.harness_adapter_url()
 
         # -- 评分面：manager + F5 队列（并发 4 / 队列 8 默认）
         eval_log_dir = ARTIFACT_DIR / "eval_logs"
         eval_log_dir.mkdir(parents=True, exist_ok=True)
         self.grading_manager = SWEGradingManager(
-            GradingManagerConfig(eval_log_dir=eval_log_dir)
+            # W3b：非 s1 模式注入独立 grader profile（deny_all + 非 root 候选执行 + 限额）
+            GradingManagerConfig(eval_log_dir=eval_log_dir, sandbox_profile=self.grader_profile)
         )
         # 轮次 13 P0-4：评分并发旋钮真实接线（此前 rh2_fa_limit_grading 是
         # 无消费者的假配置——评分并发一直由 GradingQueueConfig 独立管理）
@@ -926,6 +989,13 @@ class BringupService:
                     handle.stop()
                 except BaseException as _rb_exc:  # noqa: BLE001
                     self._startup_rollback_errors.append(f"app_stop: {_rb_exc}")
+            relay = getattr(self, "egress_relay", None)
+            if relay is not None:  # W3b：启动失败时 relay 容器不得遗留
+                try:
+                    await stop_egress_relay(_sandbox_docker(), relay)
+                except BaseException as _rb_exc:  # noqa: BLE001
+                    self._startup_rollback_errors.append(f"relay_stop: {_rb_exc}")
+                self.egress_relay = None
             if self._startup_rollback_errors:
                 print(f"[rh2-bringup] 启动回滚清理告警（首因照抛）：{self._startup_rollback_errors}")
             raise
@@ -943,6 +1013,9 @@ class BringupService:
 
             self.cc_compaction_guard_envs = ensure_claude_code_training_guards(os.environ)
         await self._run_startup_checks()
+        # W3b：起本 run 的 egress relay + 在真实容器上验证两个 profile（一次），记录写 run evidence；
+        # 任一必需项不符 → StartupCheckError，训练不启动（同 profile 补采不会修好它）。
+        await self._start_sandbox_runtime()
         await self.grading_queue.start()
         self._queue_started = True
 
@@ -967,7 +1040,7 @@ class BringupService:
             expected_renderer_cls_name=EXPECTED_RENDERER,
             tokenizer_name=MODEL_ID,
             template_hash=template_hash,
-            adapter_url=self.adapter_url,
+            adapter_url=self.harness_adapter_url,  # W3b：经 relay 别名（profile 关闭时 = 宿主地址）
             serving_precision="bfloat16",
             harness_name="claude_code" if HARNESS_KIND == "claude_code" else "mock_harness",
             expect_moe_routing=EXPECT_MOE_ROUTING,  # dense 默认 False；30B MoE 由 RH2_EXPECT_MOE_ROUTING=1 打开
@@ -1108,6 +1181,11 @@ class BringupService:
             current_policy_version_provider=self._observed_current_version,
             # W3a 接缝：grader 六段分段计时来源（manager 暂存,orchestrator 取走合并进 attempt 生命周期记录）
             grader_phase_timing_source=self.grading_manager.take_grader_phase_timing,
+            # W3b（D2-2）：唯一正式 rollout profile + 本 run egress relay + run 级 digest（fa_formal 必需；
+            # fa_audit_only 也接同一 profile，让 GPU 探针在开闸前就验证真实边界）。
+            sandbox_profile=self.rollout_profile,
+            egress_relay=self.egress_relay,
+            runtime_profile_digest=self.runtime_profile_digest,
             # P0-2（codex 轮次 8）：harness 返回后复检 session poison
             session_poison_check=self.registry.poison.is_poisoned,
             # P0-4（codex 轮次 9）：poison 即主动取消 harness task
@@ -1133,6 +1211,36 @@ class BringupService:
                 self.registry, self.app_handle.loop
             ),
         )
+
+    async def _start_sandbox_runtime(self) -> None:
+        """W3b：起本 run 的 egress relay，并用同一 verify 入口（W7 远端调用的也是它）在真实容器上核对
+        两个 profile。记录（digest + 参数 + 探针实际值）写 ARTIFACT_DIR/runtime_profile.json **一次**。"""
+
+        if not sandbox_profile_enabled():
+            return
+        assert self.rollout_profile is not None
+        docker = _sandbox_docker()
+        run_id = os.environ.get("MILES_RH2_RUN_ID") or f"local-{os.getpid()}"
+        labels = ("--label", f"rh2.run_id={run_id}")
+        try:
+            self.egress_relay = await start_egress_relay(docker, self.rollout_profile, run_id=run_id, labels=labels)
+        except SandboxNetworkError as exc:
+            raise StartupCheckError("egress_relay_start_failed", str(exc)) from exc
+        image = SANDBOX_VERIFY_IMAGE or next(iter(self.task_specs.values())).image
+        record = await verify_sandbox_profiles(
+            docker, rollout=self.rollout_profile, grader=self.grader_profile, image=image, run_id=run_id,
+            relay=self.egress_relay, labels=labels, expect_upstream_http=True,
+        )
+        record["adapter_url_host_side"] = self.adapter_url
+        record["harness_adapter_url"] = self.harness_adapter_url
+        record["execution_mode"] = EXECUTION_MODE
+        self.runtime_profile_record = record
+        write_runtime_profile_record(ARTIFACT_DIR / "runtime_profile.json", record)
+        if not record["ok"]:
+            raise StartupCheckError(
+                "sandbox_profile_verification_failed",
+                "W3b 启动前验证未通过（不启动训练）：" + "; ".join(record["failures"])[:800],
+            )
 
     def _observed_current_version(self) -> str:
         """finalize 握手 / proxy 窗口所用的 current version（W10 起**只用引擎一手回包**）。
@@ -1268,6 +1376,9 @@ class BringupService:
             evidence["router_workers"] = {"error": f"{type(exc).__name__}: {exc}"[:300]}
         evidence["adapter_url"] = self.adapter_url
         evidence["harness_kind"] = HARNESS_KIND
+        # W3b：run 级 profile 摘要（完整记录在 runtime_profile.json）与 harness 侧代理地址
+        evidence["runtime_profile_digest"] = self.runtime_profile_digest
+        evidence["harness_adapter_url"] = self.harness_adapter_url
         # D-FA-6 探针证据：合并进 CC 子进程环境的 extra-envs（async_start 急切
         # 合并；inspector 比对 DISABLE_COMPACT=1 在场，FA-5 短租对真实子进程验真）
         evidence["cc_compaction_guard_envs"] = getattr(
@@ -1558,6 +1669,41 @@ class BringupService:
                 "grading_cleanup_failures": list(self.grading_manager.cleanup_failures),
             }
 
+        async def egress_runtime() -> dict[str, Any]:
+            """W3b：删本 run 残留的 attempt 私有网络（先断开 relay），再删 relay 容器。
+            profile 未启用时如实 skipped。"""
+
+            relay = getattr(self, "egress_relay", None)  # 部分构造的 service（测试）也能走关停链
+            if relay is None and not sandbox_profile_enabled():
+                return {"skipped": "sandbox profile 未启用（s1_compat）"}
+            docker = _sandbox_docker()
+            run_id = relay.run_id if relay is not None else (
+                os.environ.get("MILES_RH2_RUN_ID") or f"local-{os.getpid()}"
+            )
+            facts: dict[str, Any] = {
+                "relay": relay.container_name if relay is not None else None,
+                "relay_removed": False,
+                "networks_removed": [],
+                "failures": [],
+            }
+            nets = await list_labeled_networks(docker, label=f"rh2.run_id={run_id}")
+            if nets is None:
+                facts["failures"].append("network_ls_failed")
+            else:
+                for net in nets:
+                    fails = await teardown_attempt_network(docker, network_name=net, relay=relay)
+                    if fails:
+                        facts["failures"] += [f"{net}:{f}" for f in fails]
+                    else:
+                        facts["networks_removed"].append(net)
+            if relay is not None:
+                fails = await stop_egress_relay(docker, relay)
+                facts["failures"] += fails
+                facts["relay_removed"] = not fails
+                if not fails:
+                    self.egress_relay = None
+            return facts
+
         async def resource_closure() -> dict[str, Any]:
             inputs, missing = self._memory_estimate_inputs()
             growth = collect_growth_facts(
@@ -1596,6 +1742,8 @@ class BringupService:
             ShutdownStep("capture_registry_close", capture_registry_close, 1.0, kind="control"),
             ShutdownStep("adapter_http", adapter_http, t.adapter_http),
             ShutdownStep("container_residue", container_residue, t.container_residue),
+            # W3b：容器面清完之后删 attempt 网络与 relay（网络必须没有端点才能删）
+            ShutdownStep("egress_runtime", egress_runtime, t.container_residue),
             ShutdownStep("resource_closure", resource_closure, t.resource_closure, kind="evidence"),
         ]
 

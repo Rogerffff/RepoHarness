@@ -58,7 +58,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from fnmatch import fnmatch
 from pathlib import Path
-from typing import Any, Literal, Protocol
+from typing import TYPE_CHECKING, Any, Literal, Protocol
 
 from repoharness2.contracts import (
     ArtifactRef,
@@ -69,6 +69,9 @@ from repoharness2.contracts import (
     SandboxLease,
 )
 from repoharness2.envpack import bundles, materialize, scoring
+
+if TYPE_CHECKING:  # W3b：profile 模块按需 import（模块级会经 adapters.slime 包 __init__ 绕回本模块，循环）
+    from repoharness2.adapters.slime.sandbox_profile import GraderSandboxProfile
 from repoharness2.grading.trusted_projection import expected_candidate_paths
 
 # ---------------------------------------------------------------------------
@@ -638,6 +641,9 @@ class GradingManagerConfig:
     orphan_min_age_seconds: float = 3600.0  # P1：startup 清扫只动超过此年龄的外来容器
     eval_log_dir: Path | None = None  # 非空时把 eval 原始日志落盘并出 ArtifactRef
     cleanup_timeout_seconds: int = 120
+    # W3b（D2-2）：独立 grader Docker profile。None = 旧参数（--network none、root、无限额）——
+    # 只给 s1_compat 冻结路径与既有单测；bringup 对非 s1 模式一律注入。
+    sandbox_profile: "GraderSandboxProfile | None" = None
 
 
 class GradingInfraError(RuntimeError):
@@ -670,6 +676,15 @@ class BaselineIntegrityError(RuntimeError):
         super().__init__(f"{reason_code}: {message}")
 
 
+class SandboxProfileViolation(BaselineIntegrityError):
+    """W3b：grader 容器创建后核对发现 profile 未生效（或 root 可信初始化失败）。
+
+    这是**系统性配置错误**而不是单次评分动作的故障：同 profile 的下一次评分同样不合格，
+    记 failed_to_grade 只会把"配置不合"洗成成员损耗并继续训练。因此与 BaselineIntegrityError
+    同通道——grade() 不捕获、穿队列上抛，generate.py 转 FatalExecutionInfrastructureError
+    （run-halt，cleanup 仍执行）。容器在抛出前已移除。"""
+
+
 @dataclass
 class _ContainerRecord:
     """per-容器记账条目（P1：TTL GC 与孤儿判定的数据底座）。"""
@@ -679,6 +694,8 @@ class _ContainerRecord:
     created_epoch: float
     created_monotonic: float
     removed: bool = False
+    # W3b：本容器的启动前核对摘要（profile 在场时必有；None = legacy 参数）
+    prelaunch: dict[str, Any] | None = None
 
 
 # W3a 生命周期计时：grader 内部六段（与 adapters/slime/attempt_timing.LIFECYCLE_SEGMENTS 同名）。
@@ -760,6 +777,8 @@ class SWEGradingManager:
         # W3a：grade() 内部分段计时暂存（record_id → GraderPhaseTiming），orchestrator 经
         # take_grader_phase_timing() 取走合并进 attempt 生命周期记录。
         self._phase_timings: dict[str, GraderPhaseTiming] = {}
+        # W3b：grader 容器启动前核对摘要（有界；run 记录/关停报告取数）
+        self.prelaunch_checks: list[dict[str, Any]] = []
 
     # ------------------------------------------------------------------ W3a 分段计时
     def take_grader_phase_timing(self, record_id: str) -> GraderPhaseTiming | None:
@@ -1162,6 +1181,7 @@ class SWEGradingManager:
 
         # 租约先行：网络策略唯一来源是 SandboxLease（purpose=grading 在 schema 层
         # 锁死 deny_all，P9），docker 参数由租约推导——想开网先得改契约。
+        profile = self.config.sandbox_profile
         image_id = await self._docker("image", "inspect", "-f", "{{.Id}}", spec.image)
         lease = SandboxLease(
             lease_id=f"lease_{name}",
@@ -1172,7 +1192,8 @@ class SWEGradingManager:
             network_policy_owner="grading_manager",
             network_policy="deny_all",
             permission_policy_owner="grading_manager",
-            run_as_user="root",
+            # W3b：profile 在场时候选代码（官方 eval 脚本）以非 root 候选执行用户运行；可信步骤仍 root。
+            run_as_user="root" if profile is None else profile.candidate_exec_user,
             cleanup=CleanupPolicy(
                 owner="grading_manager",
                 steps=["remove_container", "release_lease"],
@@ -1183,10 +1204,7 @@ class SWEGradingManager:
         )
         network_args = {"deny_all": ("--network", "none")}[lease.network_policy]
 
-        args: list[str] = [
-            "run",
-            "--detach",
-            *network_args,
+        labels: list[str] = [
             "--label",
             f"{prefix}.owner={self.run_id}",
             "--label",
@@ -1199,11 +1217,22 @@ class SWEGradingManager:
         # postrun_probes.py shutdown 探针按 label=rh2.run_id=<run_id> 精确归属；
         # 未设（单测/非 spike 链）时 docker 参数保持原样。
         if run_id := os.environ.get("MILES_RH2_RUN_ID"):
-            args += ["--label", f"rh2.run_id={run_id}"]
+            labels += ["--label", f"rh2.run_id={run_id}"]
+        declared_binds: list[tuple[str, str]] = []
         if spec.checkout_mode == "clone_from_readonly_snapshot":
             # P6：共享快照永远只读挂载，评分只在容器私有的 /testbed 副本上进行。
-            args += ["--volume", f"{spec.snapshot_host_path}:{spec.snapshot_mount_path}:ro"]
-        args += ["--name", name, spec.image, "sleep", "infinity"]
+            declared_binds.append((spec.snapshot_host_path, spec.snapshot_mount_path))
+        if profile is None:
+            args: list[str] = ["run", "--detach", *network_args, *labels]
+            for src, dst in declared_binds:
+                args += ["--volume", f"{src}:{dst}:ro"]
+            args += ["--name", name, spec.image, "sleep", "infinity"]
+        else:
+            # W3b：grader 容器参数只由独立 grader profile 组装（deny_all、cap-drop ALL + 可信初始化
+            # 能力、no-new-privileges、PID/CPU/memory+swap/tmpfs 限额、只读声明挂载）。
+            args = profile.docker_run_args(
+                name=name, image=spec.image, labels=labels, declared_readonly_binds=declared_binds
+            )
 
         run = await self._docker(*args)
         if run.exit_code != 0:
@@ -1218,7 +1247,47 @@ class SWEGradingManager:
             created_monotonic=time.monotonic(),
         )
         self._records.append(record)
+        if profile is not None:
+            await self._grader_prelaunch(record, profile, declared_binds)
         return record
+
+    async def _grader_prelaunch(
+        self, record: _ContainerRecord, profile: "GraderSandboxProfile", declared_binds: list[tuple[str, str]]
+    ) -> None:
+        """W3b：grader 容器创建后、任何评分步骤之前——root 可信初始化（建候选执行用户、safe.directory）
+        + 一次 inspect + 一次候选用户身份探针（断网只剩 loopback、非 root、CapEff=0、限额）。
+        不合格 → 先移除容器再抛 SandboxProfileViolation（run-halt 通道）。"""
+
+        from repoharness2.adapters.slime.sandbox_profile import (
+            grader_trusted_init_script,
+            run_grader_prelaunch_check,
+            run_trusted_init,
+        )
+
+        try:
+            init = await run_trusted_init(
+                self._docker, name=record.name, script=grader_trusted_init_script(profile),
+                timeout=profile.init_timeout_seconds,
+            )
+        except RuntimeError as exc:
+            await self._remove_container(record)
+            raise SandboxProfileViolation(
+                "grader_trusted_init_failed", f"{record.name}: {str(exc)[:400]}"
+            ) from exc
+        report = await run_grader_prelaunch_check(
+            self._docker, name=record.name, profile=profile, declared_readonly_binds=declared_binds
+        )
+        summary = report.to_dict()
+        summary["trusted_init"] = init
+        record.prelaunch = summary
+        self.prelaunch_checks.append(summary)
+        del self.prelaunch_checks[:-256]
+        if not report.ok:
+            await self._remove_container(record)
+            raise SandboxProfileViolation(
+                "grader_sandbox_profile_violation",
+                f"{record.name}: " + "; ".join(report.violations)[:600],
+            )
 
     async def _remove_container(self, record: _ContainerRecord) -> None:
         if record.removed:
@@ -1237,13 +1306,27 @@ class SWEGradingManager:
         return inspect.exit_code == 0 and inspect.stdout.strip() == "true"
 
     async def _exec_bash(
-        self, record: _ContainerRecord, script: str, *, input_bytes: bytes | None = None
+        self,
+        record: _ContainerRecord,
+        script: str,
+        *,
+        input_bytes: bytes | None = None,
+        user: str | None = None,
+        home: str | None = None,
     ) -> ExecResult:
+        # W3b：user/home 只在"执行候选代码"（官方 eval 脚本）时给出——以候选执行用户身份运行；
+        # 未给出时参数形状与 W3b 之前逐字相同（可信步骤仍 root）。
+        args: list[str] = ["exec"]
         if input_bytes is not None:
-            return await self._docker(
-                "exec", "-i", record.name, "bash", "-c", script, input_bytes=input_bytes
-            )
-        return await self._docker("exec", record.name, "bash", "-c", script)
+            args.append("-i")
+        if user is not None:
+            args += ["-u", user]
+        if home is not None:
+            args += ["-e", f"HOME={home}"]
+        args += [record.name, "bash", "-c", script]
+        if input_bytes is not None:
+            return await self._docker(*args, input_bytes=input_bytes)
+        return await self._docker(*args)
 
     async def _exec_bash_checked(
         self,
@@ -1253,13 +1336,15 @@ class SWEGradingManager:
         phase: str,
         timeout: float,
         input_bytes: bytes | None = None,
+        user: str | None = None,
+        home: str | None = None,
     ) -> ExecResult:
         """带分段超时（P3）与容器死亡检测（P4）的 exec：
         超时 -> infra；命令失败且容器已死 -> infra（killed）；其余交调用方定夺。"""
 
         try:
             result = await asyncio.wait_for(
-                self._exec_bash(record, script, input_bytes=input_bytes), timeout=timeout
+                self._exec_bash(record, script, input_bytes=input_bytes, user=user, home=home), timeout=timeout
             )
         except (TimeoutError, asyncio.TimeoutError):
             raise GradingInfraError(
@@ -1671,11 +1756,34 @@ class SWEGradingManager:
             )
         # 官方脚本自身 exit code 不作判据（测试失败常导致非零退出），
         # 死亡检测由 _exec_bash_checked 完成，结论一律交官方 parser。
+        profile = self.config.sandbox_profile
+        exec_user: str | None = None
+        exec_home: str | None = None
+        if profile is not None:
+            # W3b：候选代码执行前把 /testbed 交给候选执行用户（可信步骤写入的文件是 root 属主），
+            # 然后以该用户身份跑官方 eval 脚本。chown 失败 = 评分动作故障（infra，reward=None），
+            # 不是模型负样本。
+            from repoharness2.adapters.slime.sandbox_profile import grader_chown_before_eval_script
+
+            chown = await self._exec_bash_checked(
+                record,
+                grader_chown_before_eval_script(profile),
+                phase="testbed_chown",
+                timeout=spec.env_reset_timeout_seconds,
+            )
+            if chown.exit_code != 0 or "RH2_CHOWN_OK=1" not in chown.stdout:
+                raise GradingInfraError(
+                    f"grading_testbed_chown_failed:{chown.stderr.strip()[-300:]}"
+                )
+            exec_user = str(profile.candidate_exec_uid)
+            exec_home = f"/home/{profile.candidate_exec_user}"
         result = await self._exec_bash_checked(
             record,
             f"bash {script_path} 2>&1",
             phase="test",
             timeout=spec.test_timeout_seconds,
+            user=exec_user,
+            home=exec_home,
         )
         return result.stdout if result.stdout else result.stderr
 

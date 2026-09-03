@@ -23,6 +23,16 @@ from typing import Any
 import pytest
 from fixtures.common import FixtureSlimeSample, b64_int32, routing_flat, topp_offsets
 
+import sys as _sys
+
+_sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # tests/：W3b 共享夹具 sandbox_test_support
+from sandbox_test_support import (  # noqa: E402
+    ProfileFakeState,
+    formal_sandbox_kwargs,
+    make_grader_profile,
+    make_rollout_profile,
+)
+
 from repoharness2.adapters.slime import (
     LIFECYCLE_STEPS,
     GenerationCaptureHook,
@@ -83,12 +93,24 @@ class FakeRolloutDocker:
     removed: list[str] = field(default_factory=list)
     writes: dict[str, bytes] = field(default_factory=dict)  # 容器内路径 -> 写入内容
     rm_attempts: int = 0
+    # W3b：profile 路径命令（network/裸 inspect/带标记脚本）的分派状态 + 负例旋钮
+    profile_fake: ProfileFakeState = field(
+        default_factory=lambda: ProfileFakeState(
+            head=BASE_COMMIT, rollout_profile=make_rollout_profile(), grader_profile=make_grader_profile()
+        )
+    )
 
     async def __call__(self, *args: str, input_bytes: bytes | None = None) -> ExecResult:
         self.calls.append(args)
         cmd = args[0]
-        if cmd == "exec" and self.exec_after_rm_raises and args[1] in self.removed:
-            raise AssertionError(f"rollout 容器 {args[1]} 已释放，仍被 exec：{args[-1][:80]!r}")
+        if cmd == "exec" and self.exec_after_rm_raises:
+            # 容器名 = `bash` 前一个参数（W3b 起 exec 可带 -u/-e 前缀；无 bash 的裸 exec 仍取 args[1]）
+            target = args[args.index("bash") - 1] if "bash" in args else args[1]
+            if target in self.removed:
+                raise AssertionError(f"rollout 容器 {target} 已释放，仍被 exec：{args[-1][:80]!r}")
+        handled = self.profile_fake.dispatch(args, input_bytes)
+        if handled is not None:
+            return handled
         if cmd == "image":  # image inspect -f {{.Id}}|{{json .RepoDigests}} <image>
             if "RepoDigests" in " ".join(args):
                 import json as _json
@@ -525,6 +547,10 @@ def build_dense_chain(
 
     driver = MockClaudeCodeDriver(adapter_ref, crash=crash, exit_code=harness_exit_code)
     the_config = config or dense_config()
+    # W3b：fa_formal 在创建期强制唯一正式 rollout profile（+ relay + run 级 digest）；测试链默认注入
+    # 测试 profile（与 FakeRolloutDocker.profile_fake 同一份默认参数，探针罐头与核对一致）。
+    sandbox_kwargs = formal_sandbox_kwargs(docker.profile_fake.rollout_profile, docker.profile_fake.grader_profile) \
+        if the_config.execution_mode == "fa_formal" else {}
     # B5：fa_formal ctor 强制 finalization store；测试链默认自动配 fake
     # （s1_compat 不自动配——保持 store 缺省时行为逐字等于 B5 之前）。
     finalization = finalization_store
@@ -569,6 +595,7 @@ def build_dense_chain(
             fake_drain_owner if the_config.execution_mode != "s1_compat" else None
         ),
         audit_sink=audit_sink,
+        **sandbox_kwargs,
     )
     base_sample = FixtureSlimeSample(index=0)
     chain = Chain(orchestrator, docker, driver, adapter_ref, grading, repair_signals,

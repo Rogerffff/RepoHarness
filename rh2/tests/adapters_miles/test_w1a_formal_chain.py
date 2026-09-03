@@ -25,6 +25,12 @@ fa_formal 临时拒绝挡板只挡完整启动入口——本测试按 W1a 验�
 
 from __future__ import annotations
 
+import sys as _sys
+from pathlib import Path as _Path
+
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))  # tests/：W3b 共享夹具 sandbox_test_support
+from sandbox_test_support import formal_sandbox_kwargs  # noqa: E402
+
 from argparse import Namespace
 from dataclasses import dataclass, field
 from types import SimpleNamespace
@@ -138,15 +144,23 @@ class _MockDriver:
 
 def _make_fake_docker():
     from repoharness2.grading.manager import ExecResult
+    from sandbox_test_support import ProfileFakeState, make_grader_profile, make_rollout_profile
 
     class FakeRolloutDocker:
         def __init__(self):
             self.calls: list[tuple[str, ...]] = []
             self.writes: dict[str, bytes] = {}
             self.removed: list[str] = []
+            # W3b：profile 路径命令（network / 裸 inspect / 带标记脚本）的分派状态
+            self.profile_fake = ProfileFakeState(
+                head=BASE_COMMIT, rollout_profile=make_rollout_profile(), grader_profile=make_grader_profile()
+            )
 
         async def __call__(self, *args, input_bytes=None):
             self.calls.append(args)
+            handled = self.profile_fake.dispatch(args, input_bytes)
+            if handled is not None:
+                return handled
             cmd = args[0]
             if cmd == "image":
                 return ExecResult(0, "sha256:" + "ab" * 32 + "\n", "")
@@ -336,6 +350,7 @@ def _build_formal_chain(world, leaf_samples) -> _Chain:
         runtime_quiescence_barrier=_Barrier(),
         finalization_store=store,
         session_drain_owner=fake_drain_owner,
+        **formal_sandbox_kwargs(),  # W3b：fa_formal 创建期强制 profile（与替身同一份默认参数）
     )
     return _Chain(orchestrator, grading_calls, store, adapter_ref)
 

@@ -50,6 +50,7 @@ from test_w1b_prepared_chain import (  # noqa: E402
     _load_face_and_registry,
     _PreparedDocker,
 )
+from sandbox_test_support import formal_sandbox_kwargs  # noqa: E402
 from w1b_synthetic_tasks import TID1, prepare_synthetic  # noqa: E402
 
 N = 2
@@ -186,6 +187,7 @@ def _build_chain(world, tmp_path, *, grading_kinds: dict[str, str],
         harness_driver=_SequencedExitDriver(adapter_ref, exit_codes), grading_submit=grading_submit,
         docker=_PreparedDocker(), runtime_quiescence_barrier=_Barrier(), finalization_store=store,
         session_drain_owner=fake_drain_owner,
+        **formal_sandbox_kwargs(),  # W3b：fa_formal 创建期强制 profile
     )
     return _Chain(orchestrator, store, face, registry, fx, grading_calls, verify_calls)
 

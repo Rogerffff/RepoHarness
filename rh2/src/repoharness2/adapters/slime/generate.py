@@ -153,6 +153,22 @@ from repoharness2.grading.manager import (
     build_swe_grading_spec,
     run_docker,
 )
+from repoharness2.adapters.slime.sandbox_profile import (
+    RUNTIME_PROFILE_DIGEST_METADATA_KEY,
+    AttemptNetwork,
+    EgressRelayHandle,
+    EgressRelayUnavailable,
+    EgressSubnetPool,
+    RolloutSandboxProfile,
+    SandboxNetworkError,
+    connect_relay_to_network,
+    create_attempt_network,
+    rollout_trusted_init_script,
+    run_git_sanitize,
+    run_rollout_prelaunch_check,
+    run_trusted_init,
+    teardown_attempt_network,
+)
 from repoharness2.grading.queue import BackpressureEvent
 
 __all__ = [
@@ -2082,6 +2098,14 @@ class RolloutAudit:
     # 规则版本）；结构不安全 artifact 与未到投影阶段的 attempt 为 None。
     trusted_projection: dict[str, Any] | None = None
     ignored_validation_entry_count: int = 0
+    # W3b（D2-2）：run 级 profile 参数摘要——样本 metadata 盖同一个键供 join；**不是**每轨迹能力事实。
+    runtime_profile_digest: str | None = None
+    # W3b：本 attempt 的私有 egress 网络名（isolated internal；容器移除后一并删除）。
+    egress_network: str | None = None
+    # W3b：sandbox 创建期事实（网络/容器启动/git-sanitize/可信初始化的计时与自证值）。
+    sandbox_setup: dict[str, Any] | None = None
+    # W3b：启动前核对摘要（ok/violations/seconds；未通过时附完整 inspect/probe 事实）。
+    prelaunch_check: dict[str, Any] | None = None
 
     def step(self, name: str) -> None:
         self.steps.append(name)
@@ -2190,6 +2214,7 @@ class _MaterializedSandbox:
     lease: SandboxLease
     handle: WorkspaceHandle
     workspace: "RolloutContainerWorkspace"
+    network: AttemptNetwork | None = None  # W3b：attempt 私有 egress 网络（legacy 路径为 None）
 
 
 @dataclass(frozen=True)
@@ -2282,6 +2307,9 @@ class RolloutOrchestrator:
         session_drain_owner: Callable[[str], Awaitable[Any]] | None = None,
         grading_spec_resolver: Callable[[Any], GradingEnvSpec] | None = None,
         grader_phase_timing_source: Callable[[str], Any | None] | None = None,
+        sandbox_profile: RolloutSandboxProfile | None = None,
+        egress_relay: EgressRelayHandle | None = None,
+        runtime_profile_digest: str | None = None,
     ) -> None:
         # W3a：grader 内部分段计时取数口（record_id → GraderPhaseTiming | None）。
         self._grader_phase_timing_source = grader_phase_timing_source
@@ -2306,6 +2334,37 @@ class RolloutOrchestrator:
                 "durable handoff）；s1_compat/fa_audit_only 可缺省。",
             )
         self._finalization_store = finalization_store
+        # W3b（D2-2）：唯一正式 rollout Docker profile 在**创建期**强制。fa_formal 缺 profile =
+        # 启动失败、不创建 rollout（"正式 profile 缺必需配置 → 启动失败"）；给了 profile 就必须
+        # 同时给本 run 的 egress relay（网络 allowlist 的唯一出口）与 run 级 digest（样本盖章键）。
+        # s1_compat / fa_audit_only 允许不带 profile（冻结回退面 / 旧探针路径），bringup 对
+        # 非 s1 模式一律注入。
+        if config.execution_mode == "fa_formal" and sandbox_profile is None:
+            raise StartupCheckError(
+                "sandbox_profile_required_in_formal_chain",
+                "fa_formal 必须注入 RolloutSandboxProfile（唯一正式 rollout Docker profile）"
+                "——缺 profile 不创建任何 rollout 容器。",
+            )
+        if sandbox_profile is not None:
+            if egress_relay is None:
+                raise StartupCheckError(
+                    "egress_relay_required_with_sandbox_profile",
+                    "sandbox profile 的网络 allowlist 依赖本 run 的 egress relay，relay 句柄缺失。",
+                )
+            if not runtime_profile_digest:
+                raise StartupCheckError(
+                    "runtime_profile_digest_required_with_sandbox_profile",
+                    "run 级 runtime_profile_digest 缺失——样本/audit 无法与 run 记录 join。",
+                )
+        self._sandbox_profile = sandbox_profile
+        self._egress_relay = egress_relay
+        self._runtime_profile_digest = runtime_profile_digest if sandbox_profile is not None else None
+        self._egress_pool = (
+            EgressSubnetPool(sandbox_profile.egress_subnet_pool, sandbox_profile.egress_subnet_prefix)
+            if sandbox_profile is not None
+            else None
+        )
+        self._attempt_networks: dict[str, AttemptNetwork] = {}
         # F2-3 批 2a：adapter event-loop 单 owner drain（bringup 接
         # make_threadsafe_session_drain_owner(registry, app_handle.loop)）
         self._session_drain_owner = session_drain_owner
@@ -2511,6 +2570,7 @@ class RolloutOrchestrator:
             session_id=sid,  # internal sid 非秘密，直接落盘
             physical_attempt_id=physical_attempt_id,
         )
+        audit.runtime_profile_digest = self._runtime_profile_digest  # W3b：run 级摘要随 audit 落盘
         self.audits.append(audit)
         audit_slot.append(audit)
         audit.step("step1_custom_generate_invoked")
@@ -3751,7 +3811,19 @@ class RolloutOrchestrator:
                 f"rollout 镜像 {task.image} 不可用：{image_id.stderr.strip()[-300:]}",
             )
 
+        profile = self._sandbox_profile
         # 租约先行（与 S1-4 评分容器同纪律）：docker 参数从租约推导，A5 Q1/Q5/Q7/Q8。
+        # W3b：profile 在场时 run_as_user = 模型控制进程的实际身份（固定 uid 的非 root agent），
+        # allowlist 的实际实现 = 每 attempt 一张 isolated internal 网络 + 本 run 的 egress relay。
+        if profile is None:
+            justification = self.config.network_allowlist_justification
+        else:
+            justification = (
+                "W3b 正式 profile：每个 attempt 一张 isolated internal 网络（公网/云 metadata/宿主服务在路由层不可达），"
+                f"唯一出口是本 run 的 egress relay {profile.relay_alias}:{profile.model_proxy_listen_port} → 模型代理上游"
+                + (f"；另有 {len(profile.internal_services)} 个环境声明的内部服务" if profile.internal_services else "")
+                + "；启动前探针实测 direct-IP 不可达、relay 可达。"
+            )
         lease = SandboxLease(
             lease_id=f"lease_{name}",
             container_id=name,
@@ -3760,9 +3832,11 @@ class RolloutOrchestrator:
             created_by="slime_adapter",  # Q1
             network_policy_owner="slime_adapter",  # Q5a
             network_policy="allowlist",  # rollout 必须能反连模型代理端点
-            network_allowlist_justification=self.config.network_allowlist_justification,
+            network_allowlist_justification=justification,
             permission_policy_owner="slime_adapter",  # Q5b
-            run_as_user="root",  # S0 现状；harness 进程内降权归 slime ensure_agent_user
+            # legacy：S0 现状 root（harness 进程内降权归 slime ensure_agent_user）；
+            # profile：模型控制进程的实际身份 = 固定 uid 的非 root agent（探针核对）。
+            run_as_user="root" if profile is None else profile.agent_user,
             cleanup=CleanupPolicy(  # Q7/Q8
                 owner="slime_adapter",
                 steps=["remove_container", "release_lease"],
@@ -3772,9 +3846,6 @@ class RolloutOrchestrator:
             created_at_utc=_now_utc(),
         )
         audit.lease = lease
-        network_args = {"deny_all": ("--network", "none"), "allowlist": ("--network", "bridge")}[
-            lease.network_policy
-        ]
         prefix = self.config.label_prefix
         # 本 run owner label（miles GPU spike shutdown 探针的精确归属锚点）：
         # launch.sh 经 Ray runtime env 下发 MILES_RH2_RUN_ID，探针用
@@ -3783,26 +3854,49 @@ class RolloutOrchestrator:
         run_id_labels: tuple[str, ...] = ()
         if run_id := os.environ.get("MILES_RH2_RUN_ID"):
             run_id_labels = ("--label", f"rh2.run_id={run_id}")
-        run = await self._docker(
-            "run",
-            "--detach",
-            *network_args,
+        elif profile is not None:
+            # W3b：profile 路径下没有 MILES_RH2_RUN_ID 也要有 run 归属（= relay 的 run_id），
+            # 否则关停链 / launch trap 找不到本 run 残留的 attempt 网络。
+            run_id_labels = ("--label", f"rh2.run_id={self._egress_relay.run_id}")
+        common_labels: tuple[str, ...] = (
             "--label",
             f"{prefix}.trajectory={trajectory_id}",
             "--label",
             f"{prefix}.created_at_epoch={int(_now_utc().timestamp())}",
             *run_id_labels,
-            "--name",
-            name,
-            task.image,
-            "sleep",
-            "infinity",
         )
+        network: AttemptNetwork | None = None
+        setup: dict[str, Any] = {}
+        if profile is None:
+            network_args = {"deny_all": ("--network", "none"), "allowlist": ("--network", "bridge")}[
+                lease.network_policy
+            ]
+            run_args: list[str] = [
+                "run", "--detach", *network_args, *common_labels, "--name", name, task.image, "sleep", "infinity",
+            ]
+        else:
+            # W3b 步骤 A：attempt 私有网络 + relay 接入（relay 不在 = run-fatal；其余 = task-local）。
+            audit.sandbox_setup = setup
+            net_started = time.monotonic()
+            network = await self._create_attempt_network(name, labels=common_labels, audit=audit)
+            setup["network_seconds"] = round(time.monotonic() - net_started, 4)
+            setup["egress_network"] = network.name
+            setup["egress_subnet"] = network.subnet
+            # W3b 步骤 B：docker run 参数**只**由 profile 组装（没有可选安全开关）。
+            run_args = profile.docker_run_args(
+                name=name, network=network.name, image=task.image, labels=common_labels
+            )
+        start_started = time.monotonic()
+        run = await self._docker(*run_args)
         if run.exit_code != 0:
+            if network is not None:
+                await self._teardown_attempt_network(name, audit)
             raise SlimeBindingError(
                 "rollout_container_start_failed",
                 f"rollout 容器启动失败：{run.stderr.strip()[-300:]}",
             )
+        if profile is not None:
+            setup["container_start_seconds"] = round(time.monotonic() - start_started, 4)
 
         try:
             # 启动后镜像 digest 比对（codex#1 fail-closed）：先于任何写入/探针，
@@ -3822,6 +3916,31 @@ class RolloutOrchestrator:
                 raise SlimeBindingError(
                     "rollout_testbed_lineage_failed", check.failure_message()[:500]
                 )
+
+            if profile is not None:
+                # W3b 步骤 C（root 可信初始化）：先清 solution-bearing Git 状态（删远端/非祖先 ref/
+                # reflog，repack+prune 处理 dangling 未来对象，fsck 自证为零，HEAD 与历史计数不变），
+                # 再按固定 uid 预建 agent 用户并 chown -R workdir（repack 后的 pack 由 root 建，
+                # 这个顺序保证属主最终归 agent）。自证值与计时进 audit.sandbox_setup；失败 = 该
+                # attempt 的 task-local 故障（容器按 Q7 清理，其它任务不受影响）。
+                sanitize_started = time.monotonic()
+                try:
+                    setup["git_sanitize"] = await run_git_sanitize(
+                        self._docker, name=name, workdir=task.workdir, timeout=profile.sanitize_timeout_seconds
+                    )
+                except RuntimeError as exc:
+                    raise SlimeBindingError("rollout_git_sanitize_failed", str(exc)[:400]) from exc
+                setup["git_sanitize_seconds"] = round(time.monotonic() - sanitize_started, 4)
+                init_started = time.monotonic()
+                try:
+                    setup["trusted_init"] = await run_trusted_init(
+                        self._docker, name=name, script=rollout_trusted_init_script(profile),
+                        timeout=profile.init_timeout_seconds,
+                    )
+                except RuntimeError as exc:
+                    raise SlimeBindingError("rollout_trusted_init_failed", str(exc)[:400]) from exc
+                setup["trusted_init_seconds"] = round(time.monotonic() - init_started, 4)
+                audit.mark("sandbox_trusted_init_completed")
 
             # 基线未跟踪清单（S1-7a 远程回归发现）：部分官方镜像 /testbed 自带
             # 未跟踪构建残留（实测 psf__requests-1142 的 build/lib/**），必须在
@@ -3876,6 +3995,29 @@ class RolloutOrchestrator:
                 mounted_bundles=self._mount_planner(task),
                 materialized_at_utc=_now_utc(),
             )
+            if profile is not None:
+                # W3b 步骤 D（启动前核对）：一次 docker inspect（结构事实）+ 一次 agent 身份探针
+                # （实际事实：uid/CapEff/NoNewPrivs/cgroup/egress/隐藏路径/Git 远端与 reflog）。
+                # 任一必需项不符 → 不启动 harness、停止 run（typed fatal 走既有关停链）——同 profile
+                # 补采不会修好它，不许"先跑完再靠 eligibility 补救"。
+                assert network is not None
+                pre = await run_rollout_prelaunch_check(
+                    self._docker, name=name, profile=profile, network=network.name, expected_head=check.head,
+                )
+                audit.prelaunch_check = {
+                    "ok": pre.ok, "violations": list(pre.violations), "seconds": round(pre.seconds, 4),
+                }
+                if not pre.ok:
+                    audit.prelaunch_check["inspect_facts"] = pre.inspect_facts
+                    audit.prelaunch_check["probe_facts"] = pre.probe_facts
+                    audit.mark("sandbox_prelaunch_check_failed")
+                    raise FatalExecutionInfrastructureError(
+                        "sandbox_prelaunch_check_failed",
+                        f"rollout 容器 {name} 启动前核对未通过："
+                        + "; ".join(pre.violations)[:600]
+                        + "——不启动模型进程，run-halt（配置/实际未生效，补采无意义）。",
+                    )
+                audit.mark("sandbox_prelaunch_check_passed")
         except Exception:
             # 物化中途失败：容器已存在，立即按 Q7 清理（外层 finally 不再重复——
             # sandbox 尚未返回给调用方，这里是唯一知道容器名的位置）。
@@ -3886,8 +4028,64 @@ class RolloutOrchestrator:
             docker=self._docker, container_name=name, testbed_path=task.workdir
         )
         return _MaterializedSandbox(
-            container_name=name, lease=lease, handle=handle, workspace=workspace
+            container_name=name, lease=lease, handle=handle, workspace=workspace, network=network
         )
+
+    async def _create_attempt_network(
+        self, container_name: str, *, labels: Sequence[str], audit: RolloutAudit
+    ) -> AttemptNetwork:
+        """W3b：为一个 rollout 容器建 isolated internal 网络并把本 run 的 egress relay 以固定别名接入。
+
+        子网重叠自动换槽；创建/接入的瞬时失败 = task-local（SlimeBindingError，既有 infra 语义）；
+        relay 容器不存在/已死 = run-fatal（每个后续 attempt 都会失败，补采无意义）。"""
+
+        profile = self._sandbox_profile
+        relay = self._egress_relay
+        assert profile is not None and relay is not None and self._egress_pool is not None
+        net_name = f"rh2-egress-{container_name.removeprefix(self.config.name_prefix + '-')}"[:60]
+        try:
+            network = await create_attempt_network(
+                self._docker, profile=profile, pool=self._egress_pool, name=net_name, labels=labels
+            )
+        except SandboxNetworkError as exc:
+            raise SlimeBindingError("rollout_egress_network_failed", str(exc)[:300]) from exc
+        self._attempt_networks[container_name] = network
+        audit.egress_network = network.name
+        try:
+            await connect_relay_to_network(self._docker, relay=relay, network=network)
+        except EgressRelayUnavailable as exc:
+            await self._teardown_attempt_network(container_name, audit)
+            audit.mark("egress_relay_unavailable")
+            raise FatalExecutionInfrastructureError(
+                "egress_relay_unavailable",
+                f"本 run 的 egress relay 不可用（{exc}）——每个 attempt 都会失去模型代理出口，run-halt。",
+            ) from exc
+        except SandboxNetworkError as exc:
+            await self._teardown_attempt_network(container_name, audit)
+            raise SlimeBindingError("rollout_egress_relay_connect_failed", str(exc)[:300]) from exc
+        return network
+
+    async def _teardown_attempt_network(self, container_name: str, audit: RolloutAudit) -> None:
+        """W3b：容器已不存在后删除其私有网络（先断开 relay）。失败只落账（Q8），不抛。"""
+
+        network = self._attempt_networks.pop(container_name, None)
+        if network is None:
+            return
+        failures = await teardown_attempt_network(
+            self._docker, network_name=network.name, relay=self._egress_relay,
+            pool=self._egress_pool, subnet=network.subnet,
+        )
+        if failures:
+            audit.cleanup_failures.append(
+                CleanupFailureRecord(
+                    lease_id=audit.lease.lease_id if audit.lease is not None else f"lease_{container_name}",
+                    step="remove_egress_network",
+                    detail="; ".join(failures)[:300],
+                )
+            )
+            audit.mark("egress_network_remove_failed")
+        else:
+            audit.mark("egress_network_removed")
 
     async def _verify_rollout_image_digest(self, task: RolloutTaskSpec, name: str) -> None:
         """启动后镜像 digest 比对（codex#1，与评分容器同判据）：容器实际运行的
@@ -4455,6 +4653,8 @@ class RolloutOrchestrator:
                 # 宿主 metadata 的两个白名单派生视图键（S1-5 载体定案），值逐字取 report。
                 leaf_meta["eligibility_report_ref"] = report.derived_view_report_ref
                 leaf_meta["training_eligibility_class"] = report.derived_view_class
+            if self._runtime_profile_digest is not None:  # W3b：run 级 profile 摘要（唯一 join 键）
+                leaf_meta[RUNTIME_PROFILE_DIGEST_METADATA_KEY] = self._runtime_profile_digest
             leaf.metadata = leaf_meta
         try:
             stamp_admission_payload(list(samples), payload)
@@ -4563,6 +4763,8 @@ class RolloutOrchestrator:
         # W3a：容器确认移除 = rollout_container_hold_after_freeze 的终点（提前释放路径与
         # finally 兜底路径共用此处，段值只记一次）
         audit.note_rollout_container_released()
+        # W3b：容器没了才能删它的私有 egress 网络（relay 先断开）。
+        await self._teardown_attempt_network(name, audit)
 
     @staticmethod
     def _notify_fatal_halt(exc: FatalExecutionInfrastructureError) -> None:

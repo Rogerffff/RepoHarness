@@ -44,6 +44,7 @@ from test_w1a_formal_chain import (  # noqa: E402
     _mk_leaf,
     _MockSessionAdapter,
 )
+from sandbox_test_support import formal_sandbox_kwargs  # noqa: E402
 from w1b_synthetic_tasks import (  # noqa: E402
     IIDS,
     IMG_DIG,
@@ -172,6 +173,7 @@ def _build_prepared_chain(world, *, face, registry, leaf_factory, docker=None) -
         runtime_quiescence_barrier=_Barrier(),
         finalization_store=store,
         session_drain_owner=fake_drain_owner,
+        **formal_sandbox_kwargs(),  # W3b：fa_formal 创建期强制 profile
     )
     return _PreparedChain(orchestrator, grading_calls, store, docker, driver, adapter_ref)
 
