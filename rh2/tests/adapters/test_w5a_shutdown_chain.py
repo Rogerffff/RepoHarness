@@ -837,3 +837,47 @@ async def test_sigterm_triggers_shutdown_chain(tmp_path, monkeypatch):
     finally:
         if service._uninstall_signal_shutdown is not None:
             service._uninstall_signal_shutdown()
+
+
+async def test_late_secondary_dedupe_is_exact_entry_equality_during_close(tmp_path, monkeypatch):
+    """codex 复核 P1（去重反例，时序 1：close 进行中）：已记 "optimizer timeout after all-reduce"
+    时，后到的独立 "timeout" 不得被子串判断吞掉；逐字相同的重复仍只记一次。"""
+
+    slow_adapter = _FakeSharedAdapter(drop_delay=0.5)
+    service, _docker = _assemble_service(tmp_path, monkeypatch, adapter=slow_adapter)
+    service.registry.register("s-slow", object())
+    monkeypatch.setattr(bringup.BringupService, "_instance", service)
+    assert bringup.notify_run_fatal(FatalExecutionInfrastructureError("identity_missing", "filter fatal")) is True
+    await asyncio.sleep(0.1)
+    assert service._close_task is not None and service.shutdown_report is None
+    report = await bringup.close_bringup_service(
+        reason="rollout_manager_dispose",
+        trigger="driver_error",
+        first_cause="RuntimeError: trainer failure",
+        secondary_causes=["optimizer timeout after all-reduce", "timeout", "timeout"],
+    )
+    assert report.secondary_failures.count("secondary: optimizer timeout after all-reduce") == 1
+    assert report.secondary_failures.count("secondary: timeout") == 1
+    disk = json.loads((bringup.ARTIFACT_DIR / "shutdown_report.json").read_text(encoding="utf-8"))
+    assert disk["secondary_failures"] == report.secondary_failures
+
+
+async def test_late_secondary_dedupe_is_exact_entry_equality_after_close(tmp_path, monkeypatch):
+    """codex 复核 P1（去重反例，时序 2：close 已完成后的 amendment 重写）：同一包含关系反例。"""
+
+    service, _docker = _assemble_service(tmp_path, monkeypatch)
+    monkeypatch.setattr(bringup.BringupService, "_instance", service)
+    first = await service.close(secondary_causes=["optimizer timeout after all-reduce"])
+    assert "secondary: optimizer timeout after all-reduce" in first.secondary_failures
+    report = await bringup.close_bringup_service(
+        reason="rollout_manager_dispose",
+        trigger="driver_error",
+        first_cause="RuntimeError: trainer failure",
+        secondary_causes=["timeout", "optimizer timeout after all-reduce"],
+    )
+    assert report is first
+    assert report.secondary_failures.count("secondary: timeout") == 1
+    assert report.secondary_failures.count("secondary: optimizer timeout after all-reduce") == 1
+    disk = json.loads((bringup.ARTIFACT_DIR / "shutdown_report.json").read_text(encoding="utf-8"))
+    assert disk["secondary_failures"] == report.secondary_failures
+

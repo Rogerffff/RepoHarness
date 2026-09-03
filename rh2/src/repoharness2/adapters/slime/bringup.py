@@ -1745,9 +1745,12 @@ class BringupService:
         for cause in secondary_causes:
             text = str(cause)[:400]
             core = text.split(": ", 1)[1] if text.startswith("worker_fatal: ") else text
-            if core == report.first_cause or any(text in s for s in report.secondary_failures):
-                continue  # 逐字重复才跳过
-            report.secondary_failures.append(f"secondary: {text}")
+            line = f"secondary: {text}"
+            # 规范化后**完整条目相等**才算重复（codex 复核 P1：子串判断会让已记
+            # "optimizer timeout" 时后到的独立 "timeout" 被静默吞掉）。
+            if core == report.first_cause or line in report.secondary_failures or f"secondary: {core}" in report.secondary_failures:
+                continue
+            report.secondary_failures.append(line)
             added_secondary += 1
         rows = 0
         if external_residue:
