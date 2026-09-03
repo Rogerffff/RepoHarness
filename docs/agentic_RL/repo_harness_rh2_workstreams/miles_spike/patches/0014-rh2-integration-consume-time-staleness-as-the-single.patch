@@ -1,0 +1,621 @@
+From 5c5c45331129f61e28b8b912c6d7ad7e331e9be0 Mon Sep 17 00:00:00 2001
+From: Codex <jufangjian@gmail.com>
+Date: Fri, 4 Sep 2026 02:25:13 +0800
+Subject: [PATCH] [rh2-integration] consume-time staleness as the single
+ authority; drop events; no-progress limit; JIT drain after publish
+
+DefaultDataBuffer.get() is the only staleness judgement: a negative lag
+(oldest > current) or, for a group that claims formal admission, missing
+version facts raises WeightVersionAccountingError (run-fatal via the worker
+exception) instead of being filtered; --max-weight-staleness None still
+means no filtering. Every drop (put-time aborted, dynamic filter, consume-
+time stale) and every consumed group is recorded through one structured
+rh2 event with task/group identity, drop_stage, reason_code, member facts
+and the version numbers; drain_complete summarises run totals.
+--rh2-max-time-without-accepted-group SEC stops the run when the trainer
+has waited longer than SEC for a group that actually passes the staleness
+judgement (drops do not reset the clock). In fully-async mode train_async
+requests the next group after the publish of the previous step (JIT
+drain), so booked staleness equals the lag at real consumption.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ miles/rollout/fully_async_data_buffer.py | 210 +++++++++++++++++++++--
+ miles/rollout/fully_async_rollout.py     |  92 +++++++++-
+ miles/utils/arguments.py                 |  13 ++
+ miles/utils/rh2_event_log.py             |  37 ++++
+ train_async.py                           |  38 ++--
+ 5 files changed, 365 insertions(+), 25 deletions(-)
+
+diff --git a/miles/rollout/fully_async_data_buffer.py b/miles/rollout/fully_async_data_buffer.py
+index 29d4e5929..55a50a040 100644
+--- a/miles/rollout/fully_async_data_buffer.py
++++ b/miles/rollout/fully_async_data_buffer.py
+@@ -13,6 +13,7 @@ from abc import ABC, abstractmethod
+ from argparse import Namespace
+ from collections.abc import Callable, Iterator
+ from dataclasses import dataclass
++from typing import Any
+ 
+ from miles.rollout.filter_hub.base_types import MetricGatherer, call_dynamic_filter
+ from miles.utils import rh2_event_log
+@@ -44,6 +45,82 @@ def group_oldest_weight_version(group: Group) -> int | None:
+     return min(versions) if versions else None
+ 
+ 
++# [rh2-integration] W4：rh2 formal 交付链写在 Sample.metadata 上的键（来源是 rh2 源码，这里只是
++# 字面量镜像；rh2 侧 tests/adapters_miles/test_w4_consume_time_staleness.py 钉死两边一致）：
++#   rh2_admission            governance/admission.py ADMISSION_METADATA_KEY——完整 finalize 的 formal
++#                            成员必带的 admission 载荷。本 buffer 用"任一成员带它"判定"组声称 formal"：
++#                            对这样的组，版本事实缺失是账目矛盾（run-fatal），不是"不过滤"。
++#   rh2_prompt_group_id      adapters/miles/identity.py GROUP_ID_KEY（组身份）
++#   rh2_member_slot          identity.py MEMBER_SLOT_KEY（成员在组内的槽位）
++#   rh2_physical_attempt_id  identity.py ATTEMPT_ID_KEY（本次物理执行身份）
++RH2_ADMISSION_METADATA_KEY = "rh2_admission"
++RH2_PROMPT_GROUP_ID_KEY = "rh2_prompt_group_id"
++RH2_MEMBER_SLOT_KEY = "rh2_member_slot"
++RH2_PHYSICAL_ATTEMPT_ID_KEY = "rh2_physical_attempt_id"
++
++
++def _sample_meta(sample: Any) -> dict:
++    meta = getattr(sample, "metadata", None)
++    return meta if isinstance(meta, dict) else {}
++
++
++def group_claims_formal(group: Group) -> bool:
++    """[rh2-integration] W4：组是否声称来自 rh2 formal 交付链（任一成员带 admission 载荷）。"""
++    return any(RH2_ADMISSION_METADATA_KEY in _sample_meta(s) for s in iter_samples(group))
++
++
++def group_identity_facts(group: Group) -> dict[str, Any]:
++    """[rh2-integration] W4：组的可序列化身份事实（drop / consumed 事件与 fatal 消息共用）。
++
++    只取标识（task/instance/prompt id、组身份、成员 index），不取 prompt/response/patch 内容。
++    """
++    samples = list(iter_samples(group))
++    first = samples[0] if samples else None
++    meta = _sample_meta(first) if first is not None else {}
++    return {
++        "group_index": getattr(first, "group_index", None) if first is not None else None,
++        "sample_indices": [getattr(s, "index", None) for s in samples],
++        "member_count": len(group),
++        "task_id": meta.get("task_id"),
++        "instance_id": meta.get("instance_id"),
++        "prompt_id": meta.get("prompt_id"),
++        "rh2_prompt_group_id": meta.get(RH2_PROMPT_GROUP_ID_KEY),
++        "formal": group_claims_formal(group),
++    }
++
++
++class WeightVersionAccountingError(RuntimeError):
++    """[rh2-integration] W4（决策包 D2+B v2 B-1）：consume-time 版本账目矛盾——不是 stale，是 run-fatal。
++
++    ``reason_code``：
++      negative_consume_time_staleness  组最老行为版本 > 消费时刻已发布版本（current − oldest < 0）；
++                                       stale 判定的前提（行为版本不晚于已发布版本）被打破，"满足任何
++                                       阈值"是账目错误而不是新鲜；
++      weight_version_facts_missing     声称 formal 的组没有任何可解析的行为版本（oldest=None）；
++      current_version_missing          声称 formal 的组在消费时刻拿不到已发布版本事实（current=None）。
++
++    在 ``DefaultDataBuffer.get()`` 抛出：经 FullyAsyncRolloutFn._drain → RolloutManager.generate →
++    driver 的 train_async 循环异常 → finally dispose(driver_cause) → rh2 关停链，首因 = 本异常
++    （与 group filter 在 put() 内抛 GroupAdmissionFatal 走的是同一条关停链，只是入口在消费侧）。
++    非 formal 的组（无 admission 载荷，例如 s1_compat / mock 链）保持 stock 行为：无版本事实即不判定。
++    """
++
++    def __init__(
++        self,
++        reason_code: str,
++        message: str,
++        *,
++        oldest_weight_version: int | None,
++        current_weight_version: int | None,
++        group_facts: dict[str, Any],
++    ) -> None:
++        self.reason_code = reason_code
++        self.oldest_weight_version = oldest_weight_version
++        self.current_weight_version = current_weight_version
++        self.group_facts = group_facts
++        super().__init__(f"{reason_code}: {message} group={group_facts}")
++
++
+ @dataclass(frozen=True)
+ class DataBufferConstructorInput:
+     args: Namespace
+@@ -109,6 +186,12 @@ class DefaultDataBuffer(DataBuffer):
+ 
+     - groups beyond ``--max-weight-staleness``
+ 
++    [rh2-integration] W4（决策包 D2+B v2 B-1/B-2）：get() 是 consume-time staleness 的**唯一权威**
++    （staleness = current_version − min(全组每个成员/每轮的行为版本)）。三个丢弃分支各发一条结构化
++    事件（put ABORTED / dynamic filter keep=False / get 超阈），被消费的组发 ``group_consumed``
++    （字段见 miles/utils/rh2_event_log.py）。负 lag 与 formal 组的版本事实缺失不是 stale，而是
++    ``WeightVersionAccountingError``（run-fatal）。
++
+     Dataflow control options:
+ 
+     (1) capacity: ``--async-data-buffer-capacity-factor`` bounds the buffer at
+@@ -139,6 +222,15 @@ class DefaultDataBuffer(DataBuffer):
+         self._metric_aborted_groups = 0
+         self._metric_stale_groups = 0
+         self._metric_consumed_staleness: list[int] = []
++        # [rh2-integration] W4：run 级累计计数（不随 get_metrics 的窗口复位）。no-progress fatal
++        # 与 drain_complete 事件用它说明"最近没有组被接受"的期间到底丢了什么、接受了多少。
++        self.drop_totals: dict[str, int] = {stage: 0 for stage in rh2_event_log.DROP_STAGES}
++        self.consumed_total = 0
++
++    @property
++    def staleness_limit(self) -> int | None:
++        """[rh2-integration] W4：生效的 consume-time 阈值（None = 不过滤）。"""
++        return self._args.max_weight_staleness
+ 
+     async def put(self, input: DataBufferInput) -> None:
+         if self._closed:
+@@ -146,14 +238,31 @@ class DefaultDataBuffer(DataBuffer):
+         # filters at receiving sample: abort filter, dynamic filter
+         if any(s.status == Sample.Status.ABORTED for s in iter_samples(input.group)):
+             self._metric_aborted_groups += 1
+-            self._emit_group_filtered(input.group, reason="aborted")
++            self._record_drop(
++                input.group,
++                drop_stage=rh2_event_log.DROP_STAGE_PUT_ABORTED,
++                reason_code="aborted_member",
++                aborted_members=[
++                    {
++                        "index": getattr(s, "index", None),
++                        "member_slot": _sample_meta(s).get(RH2_MEMBER_SLOT_KEY),
++                        "physical_attempt_id": _sample_meta(s).get(RH2_PHYSICAL_ATTEMPT_ID_KEY),
++                    }
++                    for s in iter_samples(input.group)
++                    if s.status == Sample.Status.ABORTED
++                ],
++            )
+             self._unused_handler_fn(input.prompt_group)
+             return
+         filter_output = call_dynamic_filter(self._dynamic_filter, self._args, input.group)
+         if not filter_output.keep:
+             # Dropped, not recycled: no usable gradient signal.
+             self._metric_gatherer.on_dynamic_filter_drop(reason=filter_output.reason)
+-            self._emit_group_filtered(input.group, reason=filter_output.reason or "dynamic_filter")
++            self._record_drop(
++                input.group,
++                drop_stage=rh2_event_log.DROP_STAGE_DYNAMIC_FILTER,
++                reason_code=filter_output.reason or "dynamic_filter",
++            )
+             return
+ 
+         async with self._cond:
+@@ -181,14 +290,29 @@ class DefaultDataBuffer(DataBuffer):
+                 self._cond.notify_all()  # wake producers blocked on a full buffer
+ 
+                 # filters at retrieving sample: staleness filter
+-                staleness = self._staleness(entry.group, current_version)
++                # [rh2-integration] W4：唯一权威判定点。负 lag / formal 组版本缺失在这里抛
++                # WeightVersionAccountingError（run-fatal），不会被当成 stale 或放行。
++                oldest, staleness = self._judge_consume_time_staleness(entry.group, current_version)
+                 if staleness is None:
++                    self._record_consumed(entry.group, oldest=oldest, current_version=current_version, staleness=None)
+                     return entry
+                 self._metric_consumed_staleness.append(staleness)
+                 if self._args.max_weight_staleness is None or staleness <= self._args.max_weight_staleness:
++                    self._record_consumed(
++                        entry.group, oldest=oldest, current_version=current_version, staleness=staleness
++                    )
+                     return entry
+                 logger.info(f"Filtered stale group ({staleness=} > max={self._args.max_weight_staleness})")
+                 self._metric_stale_groups += 1
++                self._record_drop(
++                    entry.group,
++                    drop_stage=rh2_event_log.DROP_STAGE_CONSUME_STALE,
++                    reason_code="staleness_exceeded",
++                    oldest_weight_version=oldest,
++                    current_weight_version=current_version,
++                    staleness=staleness,
++                    staleness_limit=self._args.max_weight_staleness,
++                )
+                 self._unused_handler_fn(entry.prompt_group)
+ 
+     async def aclose(self) -> None:
+@@ -201,21 +325,21 @@ class DefaultDataBuffer(DataBuffer):
+     def closed(self) -> bool:
+         return self._closed
+ 
+-    def _emit_group_filtered(self, group: Group, reason: str) -> None:
+-        """[rh2-integration] Rejection-path evidence for G1 acceptance.
++    def _record_drop(self, group: Group, *, drop_stage: str, reason_code: str, **facts: Any) -> None:
++        """[rh2-integration] Rejection-path evidence for G1 acceptance（W4 起三分支同一入口）。
+ 
+         A dropped group never reaches training, so the trainer-side events
+         cannot account for it; this event is the judge's proof that e.g. a
+         zero-reward-variance group was excluded by the dynamic filter rather
+-        than silently trained.
++        than silently trained. 字段 schema 见 miles/utils/rh2_event_log.py；
++        ``reason`` 保留为旧字段名（= reason_code）供 G1 collect 兼容。
+         """
++        self.drop_totals[drop_stage] += 1
+         if not rh2_event_log.enabled():
+             return
+         samples = list(iter_samples(group))
+         if not samples:
+             return
+-        first = samples[0]
+-        meta = first.metadata or {}
+         rewards = []
+         for s in samples:
+             try:
+@@ -223,12 +347,29 @@ class DefaultDataBuffer(DataBuffer):
+             except Exception:  # noqa: BLE001 - aborted samples may carry no scalar reward
+                 rewards.append(None)
+         rh2_event_log.emit(
+-            "group_filtered",
+-            reason=reason,
+-            group_index=first.group_index,
+-            instance_id=meta.get("instance_id") if isinstance(meta, dict) else None,
+-            sample_indices=[int(s.index) for s in samples],
++            rh2_event_log.GROUP_DROP_EVENT,
++            reason=reason_code,
++            drop_stage=drop_stage,
++            reason_code=reason_code,
++            **group_identity_facts(group),
+             rewards=rewards,
++            **facts,
++        )
++
++    def _record_consumed(
++        self, group: Group, *, oldest: int | None, current_version: int | None, staleness: int | None
++    ) -> None:
++        """[rh2-integration] W4：一组被 trainer 真正消费（no-progress 的 progress 定义点）。"""
++        self.consumed_total += 1
++        if not rh2_event_log.enabled():
++            return
++        rh2_event_log.emit(
++            rh2_event_log.GROUP_CONSUMED_EVENT,
++            **group_identity_facts(group),
++            oldest_weight_version=oldest,
++            current_weight_version=current_version,
++            staleness=staleness,
++            staleness_limit=self._args.max_weight_staleness,
+         )
+ 
+     def get_metrics(self) -> dict[str, float]:
+@@ -256,7 +397,50 @@ class DefaultDataBuffer(DataBuffer):
+ 
+     @staticmethod
+     def _staleness(group: Group, current_version: int | None) -> int | None:
++        """纯算术（get_metrics 的 buffer 观测用）；消费判定走 _judge_consume_time_staleness。"""
+         oldest = group_oldest_weight_version(group)
+         if oldest is None or current_version is None:
+             return None
+         return current_version - oldest
++
++    @staticmethod
++    def _judge_consume_time_staleness(group: Group, current_version: int | None) -> tuple[int | None, int | None]:
++        """[rh2-integration] W4：consume-time 判定的事实层，返回 (oldest, staleness)。
++
++        - 非 formal 组且缺任一版本事实 → (oldest, None)：stock 语义，不判定、原样交出；
++        - formal 组缺版本事实 → WeightVersionAccountingError（weight_version_facts_missing /
++          current_version_missing）；
++        - current − oldest < 0 → WeightVersionAccountingError（negative_consume_time_staleness），
++          formal 与否都拒绝：负 lag 对任何组都是版本管道错乱，不存在"合法的未来行为版本"。
++        """
++        oldest = group_oldest_weight_version(group)
++        if oldest is None or current_version is None:
++            if group_claims_formal(group):
++                facts = group_identity_facts(group)
++                if oldest is None:
++                    raise WeightVersionAccountingError(
++                        "weight_version_facts_missing",
++                        "声称 formal 的组没有任何可解析的行为版本，consume-time staleness 无法判定",
++                        oldest_weight_version=oldest,
++                        current_weight_version=current_version,
++                        group_facts=facts,
++                    )
++                raise WeightVersionAccountingError(
++                    "current_version_missing",
++                    "消费时刻没有已发布版本事实（current_version=None），formal 组不得在无判定下交给 trainer",
++                    oldest_weight_version=oldest,
++                    current_weight_version=current_version,
++                    group_facts=facts,
++                )
++            return oldest, None
++        staleness = current_version - oldest
++        if staleness < 0:
++            raise WeightVersionAccountingError(
++                "negative_consume_time_staleness",
++                f"组最老行为版本 {oldest} 晚于消费时刻已发布版本 {current_version}"
++                f"（staleness={staleness} < 0）——版本账目矛盾，不是新鲜组",
++                oldest_weight_version=oldest,
++                current_weight_version=current_version,
++                group_facts=group_identity_facts(group),
++            )
++        return oldest, staleness
+diff --git a/miles/rollout/fully_async_rollout.py b/miles/rollout/fully_async_rollout.py
+index a1ad34927..e37e96164 100644
+--- a/miles/rollout/fully_async_rollout.py
++++ b/miles/rollout/fully_async_rollout.py
+@@ -42,6 +42,7 @@ from miles.rollout.generate_utils.sample_utils import reward_log_summary, sample
+ from miles.rollout.inference_rollout.inference_rollout_common import GenerateState, generate_and_rm_group
+ from miles.rollout.inference_rollout.inference_rollout_eval import run_eval_datasets
+ from miles.rollout.submission_scheduler import make_submission_scheduler
++from miles.utils import rh2_event_log
+ from miles.utils.misc import load_function
+ from miles.utils.types import Sample
+ 
+@@ -70,6 +71,46 @@ def shutdown_deadline_seconds(args) -> float:
+     return value
+ 
+ 
++def no_progress_limit_seconds(args) -> float | None:
++    """[rh2-integration] W4（决策包 D2+B v2 B-2）：``--rh2-max-time-without-accepted-group`` 的读取。
++
++    None（默认）= 不启用。数值归决策包 C，这里只做机制；非正数直接拒绝（0 会让第一次等待就停）。
++    用 getattr 读取：老的 Namespace 测试面没有这个属性时等价于未启用。
++    """
++    value = getattr(args, "rh2_max_time_without_accepted_group", None)
++    if value is None:
++        return None
++    value = float(value)
++    if not value > 0:
++        raise ValueError(f"rh2_max_time_without_accepted_group must be > 0 seconds, got {value}")
++    return value
++
++
++class NoProgressTimeout(RuntimeError):
++    """[rh2-integration] W4（决策包 D2+B v2 B-2 no-progress）：trainer 等待"最终可训练 group"超时。
++
++    语义："progress" = ``DefaultDataBuffer.get()`` 交出一个通过 consume-time staleness 判定的组
++    （被 put 拒绝、被 filter 拒绝、被 get 判 stale 的组**不是** progress——持续完成又持续丢弃不会
++    重置计时）。计时只在 trainer 等待下一组的期间累积：在 ``_drain`` 入口和每次接受一组时重置，
++    训练/eval 期间（没有人在等组）不计。累计等待超过 ``--rh2-max-time-without-accepted-group``
++    即抛出本异常（reason_code=no_accepted_group_within_limit）：它从 ``_drain`` 传到
++    RolloutManager.generate → driver 的 train_async 循环 → finally dispose(driver_cause) → rh2
++    关停链，首因就是本异常，消息里带 buffer 的累计接受/丢弃计数与队列深度，便于一眼区分
++    "producer 死了"与"producer 在产但全被 drop"。
++    """
++
++    reason_code = "no_accepted_group_within_limit"
++
++    def __init__(self, *, limit_seconds: float, waited_seconds: float, facts: dict) -> None:
++        self.limit_seconds = limit_seconds
++        self.waited_seconds = waited_seconds
++        self.facts = facts
++        super().__init__(
++            f"{self.reason_code}: no group passed the consume-time staleness verdict for "
++            f"{waited_seconds:.1f}s (limit {limit_seconds:.1f}s); facts={facts}"
++        )
++
++
+ def _group_facts(prompt_group: list[Sample]) -> dict:
+     """[rh2-integration] W5a: serializable identity of a prompt group (for shutdown residue)."""
+     first = prompt_group[0] if prompt_group else None
+@@ -126,6 +167,9 @@ class FullyAsyncRolloutFn:
+         self._active_groups: set[asyncio.Task] = set()
+         self._closed = False
+         self._close_report: dict | None = None
++        # [rh2-integration] W4 no-progress：等待计时的锚点（monotonic）；None = 当前没有人在等组。
++        self._no_progress_limit = no_progress_limit_seconds(input.args)
++        self._progress_anchor: float | None = None
+ 
+     async def __call__(self, input: RolloutFnInput) -> RolloutFnOutput:
+         if self._closed:
+@@ -292,16 +336,39 @@ class FullyAsyncRolloutFn:
+ 
+     # -------------------------- consumer --------------------------
+ 
++    def _seconds_without_accepted_group(self) -> float:
++        if self._progress_anchor is None:
++            self._progress_anchor = time.monotonic()
++        return time.monotonic() - self._progress_anchor
++
++    def _no_progress_timeout(self, current_version: int | None, waited: float) -> NoProgressTimeout:
++        facts = {
++            "current_weight_version": current_version,
++            "queue_size": len(getattr(self._output, "_buffer", ())),
++            "consumed_total": getattr(self._output, "consumed_total", None),
++            "drop_totals": dict(getattr(self._output, "drop_totals", {}) or {}),
++            "staleness_limit": getattr(self._output, "staleness_limit", None),
++            "worker_alive": self._worker is not None and not self._worker.done(),
++        }
++        return NoProgressTimeout(limit_seconds=self._no_progress_limit, waited_seconds=waited, facts=facts)
++
+     async def _next_group(self, current_version: int | None) -> DataBufferInput:
+         if self._closed:
+             raise RolloutFnClosed("get")
+         queue_get = asyncio.create_task(self._output.get(current_version=current_version))
+         try:
+             while True:
++                timeout = NO_PROGRESS_WARN_SECS
++                if self._no_progress_limit is not None:
++                    # [rh2-integration] W4：等待上限 = 距 no-progress 期限的剩余时间（不超过告警周期）。
++                    remaining = self._no_progress_limit - self._seconds_without_accepted_group()
++                    if remaining <= 0:
++                        raise self._no_progress_timeout(current_version, self._seconds_without_accepted_group())
++                    timeout = min(timeout, remaining)
+                 done, _ = await asyncio.wait(
+                     {queue_get, self._worker},
+                     return_when=asyncio.FIRST_COMPLETED,
+-                    timeout=NO_PROGRESS_WARN_SECS,
++                    timeout=timeout,
+                 )
+                 # Checked before the queue: the worker loop never returns normally, so a
+                 # dead worker fails the step now instead of after its backlog drains.
+@@ -314,7 +381,12 @@ class FullyAsyncRolloutFn:
+                     raise RuntimeError("fully-async rollout worker exited without an exception")
+                 if queue_get in done:
+                     return queue_get.result()
+-                logger.warning(f"No completed rollout groups for {NO_PROGRESS_WARN_SECS}s")
++                waited = self._seconds_without_accepted_group()
++                if self._no_progress_limit is not None and waited >= self._no_progress_limit:
++                    raise self._no_progress_timeout(current_version, waited)
++                logger.warning(
++                    "No completed rollout groups for %.0fs (%.0fs since the last accepted group)", timeout, waited
++                )
+         finally:
+             if not queue_get.done():
+                 queue_get.cancel()
+@@ -326,9 +398,13 @@ class FullyAsyncRolloutFn:
+         target_data_size = args.rollout_batch_size
+         data: list[Group] = []
+         do_print = True
++        # [rh2-integration] W4：no-progress 计时从本次 drain 开始等待起算；每接受一组重置。
++        drain_started = time.monotonic()
++        self._progress_anchor = drain_started
+ 
+         while len(data) < target_data_size:
+             entry = await self._next_group(input.weight_version)
++            self._progress_anchor = time.monotonic()
+             assert len(entry.group) == args.n_samples_per_prompt
+ 
+             if do_print:
+@@ -356,6 +432,18 @@ class FullyAsyncRolloutFn:
+         if self._sample_filter is not None:
+             self._sample_filter(args, data)
+ 
++        # [rh2-integration] W4：一次 drain 的最小计时事件（H5 读取面）；等待结束，计时锚点清空。
++        self._progress_anchor = None
++        if rh2_event_log.enabled():
++            rh2_event_log.emit(
++                rh2_event_log.DRAIN_COMPLETE_EVENT,
++                rollout_id=input.rollout_id,
++                current_weight_version=input.weight_version,
++                target_groups=target_data_size,
++                elapsed_seconds=round(time.monotonic() - drain_started, 3),
++                consumed_total=getattr(self._output, "consumed_total", None),
++                drop_totals=dict(getattr(self._output, "drop_totals", {}) or {}),
++            )
+         return RolloutFnTrainOutput(samples=data, metrics=self._output.get_metrics())
+ 
+     def _recycle(self, prompt_group: list[Sample]) -> None:
+diff --git a/miles/utils/arguments.py b/miles/utils/arguments.py
+index 9465cb5a8..dfa49abe1 100644
+--- a/miles/utils/arguments.py
++++ b/miles/utils/arguments.py
+@@ -740,6 +740,19 @@ def get_miles_extra_args_provider(add_custom_arguments=None):
+                     "--async-data-buffer-* args apply only if the custom class reads them."
+                 ),
+             )
++            parser.add_argument(
++                "--rh2-max-time-without-accepted-group",
++                type=float,
++                default=None,
++                help=(
++                    "[rh2-integration] W4 no-progress stop rule (fully async mode): stop the run with a "
++                    "typed NoProgressTimeout (first cause kept by the rh2 shutdown chain) once the trainer "
++                    "has waited more than this many seconds for a group that passes the consume-time "
++                    "staleness verdict. The clock runs only while the trainer waits for its next group "
++                    "(inside a drain) and is reset by an accepted group; groups that finish and are then "
++                    "dropped (aborted, dynamic filter, stale) are not progress. None (default) disables it."
++                ),
++            )
+             parser.add_argument(
+                 "--custom-generate-function-path",
+                 type=str,
+diff --git a/miles/utils/rh2_event_log.py b/miles/utils/rh2_event_log.py
+index d2626f4bd..abaf8ec38 100644
+--- a/miles/utils/rh2_event_log.py
++++ b/miles/utils/rh2_event_log.py
+@@ -42,6 +42,43 @@ EXPECTED_TREE_DIGEST_ENV = "RH2_EXPECTED_MILES_TREE_DIGEST"
+ # that leaked in from a different run sharing the same directory.
+ RUN_ID_ENV = "MILES_RH2_RUN_ID"
+ 
++# ---------------------------------------------------------------------------
++# [rh2-integration] W4（决策包 D2+B v2 B-2）：fully-async 数据 buffer 的组级结构化事件
++# ---------------------------------------------------------------------------
++# 每个 prompt group 在 DefaultDataBuffer 里恰有一个终局：三个丢弃分支之一，或被 trainer
++# 真正消费。四种终局各发一条事件（put/get 真正判定的那一行发出，不建 ledger/WAL）：
++#
++#   GROUP_DROP_EVENT（沿用 G1 验收已消费的 "group_filtered" 事件名，字段只增不改）：
++#     drop_stage        put_aborted | dynamic_filter | consume_stale（本文件 DROP_STAGES）
++#     reason_code       put_aborted → "aborted_member"；dynamic_filter → filter 的 reason
++#                       （复合 group filter 的 admission_<code> / zero_std_<r>）；
++#                       consume_stale → "staleness_exceeded"
++#     reason            = reason_code（G1 collect 的旧字段名，保持兼容）
++#     group_index / sample_indices / member_count / rewards
++#     task_id / instance_id / prompt_id / rh2_prompt_group_id / formal   组身份（只取标识，
++#                       不记 prompt/private/patch 内容；formal = 任一成员带 rh2_admission 载荷）
++#     aborted_members   仅 put_aborted：[{index, member_slot, physical_attempt_id}, ...]
++#     oldest_weight_version / current_weight_version / staleness / staleness_limit
++#                       仅 consume_stale：全组最老行为版本、消费时刻已发布版本、两者之差、
++#                       生效阈值（= --max-weight-staleness 的值；None 表示不过滤）
++#   GROUP_CONSUMED_EVENT（"group_consumed"）：get() 交出一组给 trainer（no-progress 的
++#     "progress" 定义点）；字段 = 组身份 + oldest/current/staleness/staleness_limit
++#     （非 formal 且无版本事实的组 staleness=None）。
++#   DRAIN_COMPLETE_EVENT（"drain_complete"）：一次 _drain 组装完整批（H5 最小计时事件）：
++#     rollout_id / current_weight_version / target_groups / elapsed_seconds /
++#     consumed_total / drop_totals（run 级累计快照）。
++#
++# 时间戳与 run_id 由 emit() 统一盖章（ts_unix / run_id）。run 结束汇总（各 reason 组数、
++# 总尝试/接受/丢弃、按 task 的尝试/丢弃分母）由 rh2 侧
++# repoharness2.adapters.miles.drop_events 从这些事件聚合，miles 侧不再建平台。
++GROUP_DROP_EVENT = "group_filtered"
++GROUP_CONSUMED_EVENT = "group_consumed"
++DRAIN_COMPLETE_EVENT = "drain_complete"
++DROP_STAGE_PUT_ABORTED = "put_aborted"
++DROP_STAGE_DYNAMIC_FILTER = "dynamic_filter"
++DROP_STAGE_CONSUME_STALE = "consume_stale"
++DROP_STAGES = (DROP_STAGE_PUT_ABORTED, DROP_STAGE_DYNAMIC_FILTER, DROP_STAGE_CONSUME_STALE)
++
+ _emit_lock = threading.Lock()
+ _emit_failure_logged = False
+ _tree_digest_cache: str | None = None
+diff --git a/train_async.py b/train_async.py
+index f054d901f..24871184d 100644
+--- a/train_async.py
++++ b/train_async.py
+@@ -106,15 +106,32 @@ async def train(args):
+         # as any rollout in the interval possibly applied a real optimizer update.
+         # Reset only after an actual weight publish.
+         weights_dirty_since_publish = False
+-        rollout_data_next_future = rollout_manager.generate.remote(args.start_rollout_id)
++        # [rh2-integration] W4 (decision package D2+B v2, B-1 / B-6 "提前 drain 关闭"): under
++        # --fully-async the trainer pulls each batch **just in time** -- at the top of its own
++        # iteration, i.e. after the previous iteration's weight publish. The stock prefetch
++        # (start generate(rollout_id+1) before train(rollout_id), then sync it right before
++        # update_weights) drained the next batch under the *pre-publish* version, so
++        # DefaultDataBuffer.get() judged consume-time staleness one publish too early and
++        # under-reported it by exactly one generation for every batch trained after a publish.
++        # The rollout worker keeps producing in the background either way (FullyAsyncRolloutFn);
++        # only the trainer-side pull moved. The plain (non fully-async) async driver keeps its
++        # one-step prefetch: there the prefetch *is* the rollout/train overlap.
++        jit_drain = bool(args.fully_async)
++        rollout_data_next_future = None
++        if not jit_drain:
++            rollout_data_next_future = rollout_manager.generate.remote(args.start_rollout_id)
+         for rollout_id in range(args.start_rollout_id, args.num_rollout):
+-            # Sync the last generation
+-            if rollout_data_next_future is not None:
+-                rollout_data_curr_ref = await rollout_data_next_future
++            if jit_drain:
++                # Drain after publish: the version get() judges against is the one this batch trains at.
++                rollout_data_curr_ref = await rollout_manager.generate.remote(rollout_id)
++            else:
++                # Sync the last generation
++                if rollout_data_next_future is not None:
++                    rollout_data_curr_ref = await rollout_data_next_future
+ 
+-            # Start the next rollout early.
+-            if rollout_id + 1 < args.num_rollout:
+-                rollout_data_next_future = rollout_manager.generate.remote(rollout_id + 1)
++                # Start the next rollout early.
++                if rollout_id + 1 < args.num_rollout:
++                    rollout_data_next_future = rollout_manager.generate.remote(rollout_id + 1)
+ 
+             # [rh2-integration] Keep the actor train results: they carry the
+             # per-rollout weights_dirty fact used to gate weight publishing.
+@@ -158,9 +175,10 @@ async def train(args):
+                 # skips the generation sync, which is exactly the behavior of a
+                 # non-publish rollout.
+                 if weights_dirty_since_publish:
+-                    # sync generate before update weights to prevent update weight in the middle of generation
+-                    rollout_data_curr_ref = (await x) if (x := rollout_data_next_future) is not None else None
+-                    rollout_data_next_future = None
++                    if not jit_drain:
++                        # sync generate before update weights to prevent update weight in the middle of generation
++                        rollout_data_curr_ref = (await x) if (x := rollout_data_next_future) is not None else None
++                        rollout_data_next_future = None
+                     await actor_model.update_weights(rollout_id=rollout_id)
+                     weights_dirty_since_publish = False
+                     rh2_event_log.emit("weight_publish", rollout_id=rollout_id)
+-- 
+2.50.1 (Apple Git-155)
+

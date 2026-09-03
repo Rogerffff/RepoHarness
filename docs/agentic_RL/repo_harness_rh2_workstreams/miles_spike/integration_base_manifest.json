@@ -55,8 +55,16 @@
   "patches/0012-rh2-integration-promote-rollout-fn-shutdown-residue-.patch": "70e7c6c74c8eac01faf1361b63a3ef9d61b9e786b9aadd00ed349301be0b8f6f",
   "patches/0013-rh2-integration-strict-same-origin-matching-for-driv.patch": "908f732bacaa44eac09648e531fa6bbc1a79f944058cd9e72283d3da29b93211"
  },
- "expected_tree": "773f22b0717fef9bde99122593f7fcb257cbeaa6",
- "miles_source_tree_digest": "95abf42b943e3cd0f6b3822f5e27fc2da91500c77a93db31bd2e738810bb81f8",
+ "rh2_patches_w4": {
+  "_comment": "W4（B-1/B-2/B-6,2026-09-04,v3 本地 SHA 5c5c45331）:consume-time staleness 唯一权威——DefaultDataBuffer.get() 负 lag 或 formal 组缺版本事实抛 WeightVersionAccountingError（run-fatal 经 worker 异常）,--max-weight-staleness None 仍不过滤;三分支 drop 事件与 group_consumed/drain_complete 结构化记录（task/group 身份、drop_stage、reason_code、member 事实、版本数）;--rh2-max-time-without-accepted-group（progress=真被消费的组）;fully-async 下 JIT drain（上一轮 publish 之后再取组,booked staleness=真实消费 lag）。在 0013 之后 git am。",
+  "patches/0014-rh2-integration-consume-time-staleness-as-the-single.patch": "40613d93d635f85f2f842e6cc36a48385c5405ecc75bab6fdfcb2c2a8164c216"
+ },
+ "rh2_patches_w10": {
+  "_comment": "W10（B-5b,2026-09-04,v3 本地 SHA c97d8c201）:publish 后经每个 engine actor 核对 weight version 收敛（RolloutManager.set_weight_version 改 async,不一致/不可达/超时抛 EngineWeightVersionMismatch 停 run,发 engine_versions_after_publish;indep_dp 跳过）;版本事实不再经 router 随机查一台（rh2 侧删 router 探测）。在 0014 之后 git am。",
+  "patches/0015-rh2-integration-verify-weight-version-convergence-on.patch": "f92ea917354f71d90388031834c237571e14ca911ed301656719f39f9bec1715"
+ },
+ "expected_tree": "290b724315ee3d1d3de3920bdffb445b02c0c217",
+ "miles_source_tree_digest": "9b8ee59a340f2b3da240a750c63da17affdcbf33f46821f44e4b5820745d1022",
  "miles_source_tree_digest_note": "miles.utils.rh2_event_log.miles_tree_digest() 对 v3 integration tree 的实算值（P0-4 去自我背书：launch preflight 的 expected digest 以本字段为准,RH2_MILES_ROOT 指向别的树立即红;与 expected_tree 一起构成运行目标的双重身份钉死）",
  "expected_counts": {
   "_comment": "两条 lane 的精确 pytest 计数（tests/adapters_miles/,-q 尾行）。测试增删必须同步改这里,否则脚本红——删测试保绿的口子由此关死。本轮变更（vendor refresh 复核 P2 #1 收口,2026-08-31）：lane A 235->236 + skip 147->167、lane B 382->403。+1 双 lane = parser 负例净增（test_weight_version_spans.py：原正例 test_parse_int_version_coerced_to_str 改为 version_not_string 负例并新增 null 负例——键在场值 null 从'当缺失回退单数'改为 fail-closed）;+20 integration_base = miles stock update_from_meta_info 严格校验测试（§6:4 正例 + 16 负例,只在 lane B 的 patch 0009 树上有被测语义,lane A 记 skip）;历次计数演变记录见 git 历史中本文件的旧版本。本轮变更（Wave1 W0/W1a + 复核修复,2026-09-02）：lane A 236->278 + skip 167->185、lane B 403->463。+42 lane A / +60 lane B = W1a 身份铸造测试（test_w1a_identity_minting.py 42 例含 F1 保留键/状态规则反例 + test_w1a_formal_chain.py 3 例,双 lane 都跑）;+18 仅 lane B = W0 旋钮消费点测试（test_w0_knob_consumption.py 整模块 integration_base 标记,lane A 记 skip）。Wave2 首批（2026-09-02）：lane A 278->285 + skip 185->217、lane B 463->502。+7 双 lane = W1b 第一集成切片 prepared 链测试（test_w1b_prepared_chain.py）;+32 仅 lane B（lane A 记 skip）= W9 CP 归约测试（test_w9_cp_faithful_dis.py 整模块 integration_base 标记）。Wave2 第二批（2026-09-02）：lane A 285->308、lane B 502->525。+24 双 lane = W1b 第二段复合 group filter 测试（test_w1b_group_admission.py）;-1 双 lane = W5a 删除 lifecycle.py 原型时摘除的 test_governance_receipts_lifecycle.py 关停段;+1 双 lane = W5a 真实 BringupService 关闭测试（test_w5a_bringup_close_vendor.py）。Wave2 复核修复轮（2026-09-02,patch 0010 同批）：lane A 308->322 + skip 217->221、lane B 525->543。+14 双 lane = W1b 第二段复核修复（版本绑定/lease 绑定/必填键/e2e prepared registry 链/filter fatal 通知接缝,test_w1b_group_admission.py 24->38）;+4 仅 lane B（lane A 记 skip）= W5a miles dispose 链测试（test_w5a_miles_dispose_chain.py,integration_base 标记,依赖 patch 0010）。W5a 最终复核修复（2026-09-02,patch 0011 同批）：lane A skip 221->224、lane B 543->546。+3 仅 lane B = 双 event-loop 关停测试（同文件,真实 AsyncLoopThread owner loop:期限放弃/总超时/driver cause/源码顺序事实;原四个单 loop 测试删除后净 +3）。W5a 关停残留上提修复（2026-09-02,patch 0012 同批）：lane A skip 224->228、lane B 546->550。+4 仅 lane B = 双 loop 失败上提测试（stubborn/worker unfinished/buffer close error 使报告 ok=false、总超时非成功退出、driver+cleanup 次生、driver 与 worker 同源去重;同文件）。W5a 后到事实并入修复（2026-09-02,patch 0013 同批）：lane A skip 228->232、lane B 550->554。+4 仅 lane B = 真实 filter fatal→notify_run_fatal→dispose 两种时序（close 进行中/已完成）+ 同源严格全等反例 ×2（同文件）。",
@@ -65,7 +73,7 @@
   "lane_b_passed": 554,
   "lane_b_skipped": 0
  },
- "rebuild": "clone -> git fetch origin && git fetch origin pull/2596/head -> checkout -b rh2-integration-v3 f2b7c7929 -> cherry-pick 29c2c3aee 3ac3adce3 cd464a1c4 dbbab1566 -> 依序 git am patches/0001-*.patch ... patches/0013-*.patch -> 校验 rev-parse HEAD^{tree} == expected_tree 且各 sha256(patch) == 本文件九张 patch 表",
+ "rebuild": "clone -> git fetch origin && git fetch origin pull/2596/head -> checkout -b rh2-integration-v3 f2b7c7929 -> cherry-pick 29c2c3aee 3ac3adce3 cd464a1c4 dbbab1566 -> 依序 git am patches/0001-*.patch ... patches/0015-*.patch -> 校验 rev-parse HEAD^{tree} == expected_tree 且各 sha256(patch) == 本文件十一张 patch 表",
  "previous_base": {
   "_comment": "v2 回退面（分支保留不删）。构造=pin f2b7c7929 + cherry-pick 9b6579a12(#2595 旧 head)+ee648b17d(#2596 旧 head) + 六个语义 commit（f6aab6542/620aa6924/51e3cd969/52040081a/2fff41c95/0853f027b）;patch 存档在 patches/v2/。",
   "branch": "rh2-integration-v2",

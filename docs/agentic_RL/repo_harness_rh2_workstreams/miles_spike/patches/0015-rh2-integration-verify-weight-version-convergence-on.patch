@@ -1,0 +1,198 @@
+From c97d8c20142fe0c5970728a2943011f9af333cef Mon Sep 17 00:00:00 2001
+From: Codex <jufangjian@gmail.com>
+Date: Fri, 4 Sep 2026 02:25:13 +0800
+Subject: [PATCH] [rh2-integration] verify weight-version convergence on every
+ engine actor after publish
+
+RolloutManager.set_weight_version becomes async and, unless indep_dp, asks
+each rollout engine actor for its weight version after a publish; a
+mismatch, unreachable engine or timeout raises EngineWeightVersionMismatch
+(stops the run) and emits engine_versions_after_publish. Version facts are
+never read through the router from an arbitrary worker (rh2 side removed
+its router probe).
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ miles/ray/rollout/rollout_manager.py |  24 +++++-
+ miles/utils/rh2_engine_versions.py   | 121 +++++++++++++++++++++++++++
+ 2 files changed, 144 insertions(+), 1 deletion(-)
+ create mode 100644 miles/utils/rh2_engine_versions.py
+
+diff --git a/miles/ray/rollout/rollout_manager.py b/miles/ray/rollout/rollout_manager.py
+index 857fa981f..ed6325309 100644
+--- a/miles/ray/rollout/rollout_manager.py
++++ b/miles/ray/rollout/rollout_manager.py
+@@ -42,6 +42,7 @@ from miles.utils.http_utils import init_http_client
+ from miles.utils.logging_utils import configure_logger
+ from miles.utils.metric_checker import MetricChecker
+ from miles.utils.misc import load_function
++from miles.utils.rh2_engine_versions import verify_engine_weight_versions
+ from miles.utils.timer import timer
+ from miles.utils.tracking_utils.tracking import init_tracking
+ 
+@@ -549,13 +550,34 @@ class RolloutManager:
+             action=action, allow_quant_error=allow_quant_error, selector=selector, skip_list=skip_list
+         )
+ 
+-    def set_weight_version(self, weight_version: int):
++    async def set_weight_version(self, weight_version: int):
+         # warning instead of assert when use indep_dp ft
+         if self.weight_version is not None and weight_version < self.weight_version:
+             message = f"Engine weight version went backwards: {self.weight_version} -> {weight_version}"
+             assert self.args.indep_dp, message
+             logger.warning(message)
+         self.weight_version = weight_version
++        # [rh2-integration] W10 (patch 0015): the trainer calls this right after the weight updater
++        # published `weight_version` to every updatable engine (pause -> update -> update_weight_version
++        # -> continue over `EnginesAndLock.rollout_engines`). Ask **every** node-0 engine, through its
++        # Ray actor handle (never through the router, which picks an arbitrary worker per request),
++        # which version it serves now, and stop the run if any engine disagrees or is unreachable: an
++        # engine that missed the publish would keep producing samples booked under a stale version
++        # while the buffer's consume-time staleness filter treats the published version as current.
++        # Async on purpose: this actor runs an asyncio loop, a blocking ray.get here would freeze it.
++        await self._verify_engine_weight_versions(weight_version)
++
++    async def _verify_engine_weight_versions(self, weight_version: int) -> None:
++        srv = self._get_updatable_server()
++        if srv is None or self.args.indep_dp:
++            return
++        handles = [e.actor_handle for e in srv.engines if e.is_allocated]
++        report = await verify_engine_weight_versions(handles, expected=weight_version)
++        logger.info(
++            "[rh2-integration] engine weight versions converged after publish: version=%s engines=%d",
++            report.expected,
++            len(report.versions),
++        )
+ 
+     def set_train_parallel_config(self, config: dict):
+         self.train_parallel_config = config
+diff --git a/miles/utils/rh2_engine_versions.py b/miles/utils/rh2_engine_versions.py
+new file mode 100644
+index 000000000..252c8adcb
+--- /dev/null
++++ b/miles/utils/rh2_engine_versions.py
+@@ -0,0 +1,121 @@
++"""[rh2-integration] W10 (patch 0015, decision package D2+B v2 B-5b): post-publish weight-version
++convergence across **all** rollout engines, asked through their Ray actor handles.
++
++Why this exists. rh2 used to learn the "current" weight version by sending ``GET /model_info``
++through the MilesRouter. The router picks an arbitrary least-loaded worker per request, so with
++two or more engines that probe reads whichever engine happened to be idle -- inside an update
++window it can answer with the *old* version while another engine already serves the new one
++(false "version pipeline broken" reds on the rh2 side). That probe is deleted; the only
++post-publish version fact rh2 keeps is produced here, from every engine, never via the router.
++
++Contract. ``RolloutManager.set_weight_version`` is invoked by the trainer right after the weight
++updater finished ``pause -> update -> update_weight_version -> continue`` over
++``EnginesAndLock.rollout_engines`` (every node-0 engine of the updatable server). We then ask each
++of those engines ``get_weight_version`` and require all of them to report the published version.
++Any disagreement or unreachable engine raises :class:`EngineWeightVersionMismatch`, which
++propagates through the trainer's ``ray.get(...)`` and stops the run (B-5b: an engine death is a
++run stop + cold restart per B-3, not an automatic recovery). The check is skipped under
++``indep_dp`` (replicas may legitimately serve different versions) and when there is no updatable
++server (``debug_train_only``).
++
++Evidence. One ``engine_versions_after_publish`` event (``rh2_event_log``) per publish with the
++per-engine versions, so the GPU multi-engine run can prove "publish reached every engine"
++without log scraping. The judge (``g1_acceptance.py``) does not consume it yet; it is read by the
++W10 GPU verification checklist.
++
++Timeout per engine: ``RH2_MILES_ENGINE_VERSION_TIMEOUT_SEC`` (default 60s, same budget as
++``RolloutServer.probe_and_mark_dead``).
++"""
++
++from __future__ import annotations
++
++import asyncio
++import os
++from dataclasses import dataclass
++from typing import Any
++
++from miles.utils import rh2_event_log
++
++ENGINE_VERSION_TIMEOUT_ENV = "RH2_MILES_ENGINE_VERSION_TIMEOUT_SEC"
++DEFAULT_ENGINE_VERSION_TIMEOUT_SEC = 60.0
++ENGINE_VERSIONS_EVENT = "engine_versions_after_publish"
++
++
++class EngineWeightVersionMismatch(RuntimeError):
++    """At least one rollout engine does not serve the just-published weight version (or is unreachable)."""
++
++    def __init__(self, report: EngineVersionReport) -> None:
++        self.report = report
++        super().__init__(
++            f"engine weight versions did not converge on published version {report.expected!r}: "
++            f"versions={report.versions} errors={report.errors}"
++        )
++
++
++@dataclass(frozen=True)
++class EngineVersionReport:
++    expected: str
++    versions: tuple[str | None, ...]  # per engine, None when the query failed
++    errors: tuple[str | None, ...]  # per engine, None when the query succeeded
++
++    @property
++    def converged(self) -> bool:
++        return bool(self.versions) and all(
++            err is None and version == self.expected for version, err in zip(self.versions, self.errors, strict=True)
++        )
++
++    def to_dict(self) -> dict[str, Any]:
++        return {
++            "expected": self.expected,
++            "versions": list(self.versions),
++            "errors": list(self.errors),
++            "num_engines": len(self.versions),
++            "converged": self.converged,
++        }
++
++
++def engine_version_timeout_sec() -> float:
++    raw = os.environ.get(ENGINE_VERSION_TIMEOUT_ENV)
++    if raw is None or raw == "":
++        return DEFAULT_ENGINE_VERSION_TIMEOUT_SEC
++    value = float(raw)
++    if value <= 0:
++        raise ValueError(f"{ENGINE_VERSION_TIMEOUT_ENV}={raw!r} must be a positive number of seconds")
++    return value
++
++
++async def collect_engine_weight_versions(
++    engine_handles: list[Any], *, timeout: float
++) -> tuple[list[str | None], list[str | None]]:
++    """Ask every engine actor for its weight version concurrently; never raises.
++
++    Returns ``(versions, errors)`` parallel to ``engine_handles``; a failed or timed-out query
++    yields ``versions[i] is None`` and a bounded error string in ``errors[i]``.
++    """
++
++    async def one(handle: Any) -> tuple[str | None, str | None]:
++        try:
++            value = await asyncio.wait_for(handle.get_weight_version.remote(), timeout=timeout)
++        except Exception as exc:  # noqa: BLE001 - reported per engine, decided by the caller
++            return None, f"{type(exc).__name__}: {exc}"[:300]
++        return (None if value is None else str(value)), None
++
++    results = await asyncio.gather(*(one(h) for h in engine_handles))
++    versions = [v for v, _ in results]
++    errors = [e for _, e in results]
++    return versions, errors
++
++
++async def verify_engine_weight_versions(
++    engine_handles: list[Any], *, expected: Any, timeout: float | None = None
++) -> EngineVersionReport:
++    """Collect all engine versions, emit the evidence event, raise on any disagreement."""
++
++    if timeout is None:
++        timeout = engine_version_timeout_sec()
++    versions, errors = await collect_engine_weight_versions(engine_handles, timeout=timeout)
++    report = EngineVersionReport(expected=str(expected), versions=tuple(versions), errors=tuple(errors))
++    rh2_event_log.emit(ENGINE_VERSIONS_EVENT, **report.to_dict())
++    if not report.converged:
++        raise EngineWeightVersionMismatch(report)
++    return report
+-- 
+2.50.1 (Apple Git-155)
+
