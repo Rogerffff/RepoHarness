@@ -126,19 +126,24 @@ async def test_receipt_surface_fail_closed(world):
 
 
 def test_train_async_prefetch_true_order_source_facts(world):
-    """固定 reference/miles/train_async.py:73-111 的真顺序（B2 证据源）：
+    """固定 train_async.py **非 fully-async 分支**（stock 一步预取）的真顺序（B2 证据源）：
 
-    ① 73 行：进循环前就发起 generate(start_rollout_id)（batch 0 的 drain）；
-    ② 76-78 行：循环第 N 轮先 await 上一次发起的 generate（batch N 完成）；
-    ③ 80-81 行：**随即发起 generate(N+1)**——batch N+1 的 drain 在
-       train(N) 之前启动；
-    ④ 92 行：await actor_model.train(N)——训练在预取之后；
-    ⑤ 107-111 行：update_weights 之前先 await 在飞的 generate(N+1)——
-       所以 batch N+1 是在**旧版本**下完成 drain（HANDED_OFF），权重版本
-       随后才前进；train(N+1) 要到下一轮循环才执行。
+    ① 进循环前就发起 generate(start_rollout_id)（batch 0 的 drain）；
+    ② 循环第 N 轮先 await 上一次发起的 generate（batch N 完成）；
+    ③ **随即发起 generate(N+1)**——batch N+1 的 drain 在 train(N) 之前启动；
+    ④ await actor_model.train(N)——训练在预取之后；
+    ⑤ update_weights 之前先 await 在飞的 generate(N+1)——所以 batch N+1 是在
+       **旧版本**下完成 drain（HANDED_OFF），权重版本随后才前进；train(N+1)
+       要到下一轮循环才执行。
 
     推论：存在真实窗口——get(version=V+1)（batch N+2 的 drain）已发生，
-    而 batch N+1 仍 HANDED_OFF 未训练。版本前进因此不能当训练回执。"""
+    而 batch N+1 仍 HANDED_OFF 未训练。版本前进因此不能当训练回执。
+
+    W4（决策包 D2+B v2 B-6"提前 drain 关闭"，2026-09-04）起：`--fully-async` 走 JIT 分支
+    （publish 之后才取下一批，⑤ 的预取 sync 不存在），上述顺序只对非 fully-async 的
+    stock 异步 driver 成立；JIT 分支的顺序事实由
+    test_w4_consume_time_staleness.py::test_train_async_jit_drain_source_facts 钉死。
+    本测试保留：pin 树与集成树上 stock 分支文本一致。"""
 
     src = (world.miles_root / "train_async.py").read_text(encoding="utf-8")
 
@@ -158,8 +163,9 @@ def test_train_async_prefetch_true_order_source_facts(world):
 
 
 async def test_two_batch_drain_follows_prefetch_order(world):
-    """连续 drain 两批的 CPU 调度测试，按 train_async 真顺序驱动治理件
-    （顺序依据见 test_train_async_prefetch_true_order_source_facts）：
+    """连续 drain 两批的 CPU 调度测试，按 train_async **stock 预取**顺序驱动治理件
+    （顺序依据见 test_train_async_prefetch_true_order_source_facts；W4 起 fully-async
+    生产路径改 JIT，本交错保留为账本对"预取 + 版本前进先于回执"的鲁棒性不变量）：
 
         drain(batch0)@v5 → seal → drain(batch1)@v5（预取，train(batch0)
         之前发起）→ seal → train(batch0) 回执 → 权重 v5→v6 →

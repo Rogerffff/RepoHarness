@@ -281,11 +281,12 @@ def test_screen_frozen_entries_priorities():
     assert plan.applied_entry_set_digest == clean.applied_entry_set_digest
 
 
-async def test_unscreened_tampering_entry_is_infra_belt():
-    """codex B4 复核 P1-1：篡改 delta 不得"剥掉违规文件评剩余 patch"。
-    判定权威在 generate（unsafe 永久拒绝、不提交 grader）；漏筛的 delta
-    到达 manager = 编排缺陷 → fail-closed infra（reward=None），grader
-    容器一个都不起、eval 一次都不跑。"""
+async def test_projection_including_control_plane_entry_is_binding_mismatch():
+    """W3a（D2-3，T1 oracle 改动，原 test_unscreened_tampering_entry_is_infra_belt）：
+    控制面路径（tests/*）不再是 unsafe，也不是"漏筛 → infra 成员损耗"——它根本不该出现在
+    投影里。projection 夹带了控制面 entry ⇒ 与 grader 按同一 HygieneRules 独立重算的
+    candidate_solution 路径集不等 ⇒ frozen_delta_binding_mismatch run-halt；grader 容器一个
+    都不起、eval 一次都不跑。"""
 
     b64, dg = _b64(b"broken oracle")
     delta = _delta([
@@ -294,16 +295,51 @@ async def test_unscreened_tampering_entry_is_infra_belt():
         PatchEntry(path="tests/test_hidden_behavior.py", operation="add",
                    object_type="regular", mode="100644",
                    content_b64=b64, content_digest=dg),
-    ])
+    ])  # _delta 的 projection = 全路径集（含控制面 entry）= 夹带
     fake = _fake_with_baseline(delta)
-    report = await make_manager(fake).grade(
-        trajectory_id="traj_tamp", workspace=None, spec=make_spec(),
-        frozen_delta=delta,
-    )
-    assert report.outcome == "failed_to_grade"
-    assert report.reward is None
-    assert "unscreened_hygiene_hit" in (report.infra_failure_detail or "")
+    with pytest.raises(BaselineIntegrityError) as exc_info:
+        await make_manager(fake).grade(
+            trajectory_id="traj_tamp", workspace=None, spec=make_spec(),
+            frozen_delta=delta,
+        )
+    assert exc_info.value.reason_code == "frozen_delta_binding_mismatch"
+    assert "candidate_solution" in str(exc_info.value)
     assert not any(c[0] == "run" for c in fake.calls)  # 容器都没起
+
+
+async def test_projection_excluding_control_plane_entry_grades_candidate_only():
+    """W3a（D2-3 正例）：artifact 同时含 src/fix.py 与 tests/test_x.py，投影只含 src/fix.py
+    （= 可信评分投影的 candidate 集）→ 正常评分；只重放 src/fix.py，测试文件一个字节都不写；
+    hygiene 描述的是已重放子集：clean、digest = 该子集 digest。"""
+
+    b64, dg = _b64(b"print('fixed')\n")
+    full = _delta([
+        PatchEntry(path="src/fix.py", operation="add", object_type="regular",
+                   mode="100644", content_b64=b64, content_digest=dg),
+        PatchEntry(path="tests/test_x.py", operation="add", object_type="regular",
+                   mode="100644", content_b64=b64, content_digest=dg),
+    ])
+    trusted = FrozenDeltaSource(
+        frozen_patch=full.frozen_patch,
+        baseline_manifest=full.baseline_manifest,
+        projection=full.projection.model_copy(update={"included_entry_paths": ("src/fix.py",)}),
+        frozen_patch_digest=full.frozen_patch_digest,
+    )
+    fake = _fake_with_baseline(trusted)
+    report = await make_manager(fake).grade(
+        trajectory_id="traj_trusted", workspace=None, spec=make_spec(),
+        frozen_delta=trusted,
+    )
+    assert report.outcome == "resolved" and report.reward == 1.0
+    assert report.patch_hygiene.verdict == "clean"
+    assert report.patch_hygiene.test_files_modified is False
+    assert report.patch_hygiene.cleaned_patch_digest == compute_applied_entry_set_digest(
+        [e for e in full.frozen_patch.entries if e.path == "src/fix.py"]
+    )
+    scripts = [c[-1] for c in fake.calls if c[0] == "exec" and isinstance(c[-1], str)]
+    joined = "\n".join(scripts)
+    assert "'./src/fix.py'" in joined
+    assert "test_x.py" not in joined  # 控制面 entry 未重放
 
 
 # ------------------------------------------------- P0 官方镜像 overlay HEAD
@@ -350,15 +386,17 @@ async def test_grader_head_differs_from_materialized_head_is_run_halt():
 
 
 # ------------------------------------------------- P1-2 三对象完整对账
-async def test_projection_omitting_entry_is_run_halt():
-    """codex 反例 (a)：raw delta 同时改源码和测试、projection 隐去测试
-    entry → 路径集不等 → run-halt（不再 resolved/reward=1）。"""
+async def test_projection_omitting_solution_entry_is_run_halt():
+    """codex 反例 (a) 的 W3a 形态（T1 oracle 改动）：raw delta 改了两个源码文件、projection
+    隐去其中一个 **solution** entry → 与重算的 candidate 集不等 → run-halt（拿不完整改动评分
+    不许发生）。旧版本用"隐去测试 entry"作反例——D2-3 起测试 entry 本来就该被排除，隐去它
+    不再是矛盾，见 test_projection_excluding_control_plane_entry_grades_candidate_only。"""
 
     b64, dg = _b64(b"x")
     good = _delta([
         PatchEntry(path="src/fix.py", operation="add", object_type="regular",
                    mode="100644", content_b64=b64, content_digest=dg),
-        PatchEntry(path="tests/test_evil.py", operation="add",
+        PatchEntry(path="src/other.py", operation="add",
                    object_type="regular", mode="100644",
                    content_b64=b64, content_digest=dg),
     ])
@@ -366,7 +404,7 @@ async def test_projection_omitting_entry_is_run_halt():
         frozen_patch=good.frozen_patch,
         baseline_manifest=good.baseline_manifest,
         projection=good.projection.model_copy(
-            update={"included_entry_paths": ("src/fix.py",)}  # 隐去测试 entry
+            update={"included_entry_paths": ("src/fix.py",)}  # 隐去 solution entry
         ),
         frozen_patch_digest=good.frozen_patch_digest,
     )
@@ -377,6 +415,28 @@ async def test_projection_omitting_entry_is_run_halt():
         )
     assert exc_info.value.reason_code == "frozen_delta_binding_mismatch"
     assert "路径集" in str(exc_info.value)
+
+
+async def test_projection_with_unknown_path_is_run_halt():
+    """投影引用 artifact 里不存在的路径 = 悬空引用（同样 run-halt，单独的错误文案）。"""
+
+    b64, dg = _b64(b"x")
+    good = _delta([PatchEntry(path="src/fix.py", operation="add", object_type="regular",
+                              mode="100644", content_b64=b64, content_digest=dg)])
+    dangling = FrozenDeltaSource(
+        frozen_patch=good.frozen_patch, baseline_manifest=good.baseline_manifest,
+        projection=good.projection.model_copy(
+            update={"included_entry_paths": ("src/fix.py", "src/ghost.py")}
+        ),
+        frozen_patch_digest=good.frozen_patch_digest,
+    )
+    with pytest.raises(BaselineIntegrityError) as exc_info:
+        await make_manager(_fake_with_baseline(good)).grade(
+            trajectory_id="traj_dangling", workspace=None, spec=make_spec(),
+            frozen_delta=dangling,
+        )
+    assert exc_info.value.reason_code == "frozen_delta_binding_mismatch"
+    assert "不存在" in str(exc_info.value)
 
 
 async def test_delete_of_path_absent_from_baseline_is_run_halt():

@@ -141,9 +141,83 @@ async def test_all_ok_without_any_sandbox_sidecar_is_online_and_keep_full():
     assert (d.verdict, d.reason_code) == ("KEEP_FULL", "all_dimensions_ok")
 
 
-async def test_unsafe_is_delivered_without_report_and_drops_by_exemption():
-    """附录 A 契约豁免集：present + unsafe 永久拒绝——真实交付、载荷无 EligibilityReport，
-    receipt=delivery_prepared，审计 disposition 仍派生 permanent_rejected。"""
+def _frozen_ws_with_entries(census_lines: str, *, regular: dict[str, str] | None = None,
+                            symlinks: dict[str, str] | None = None):
+    """构造导出 census/内容抓取罐头的 FrozenWorkspace 替身 + 屏障（W3a 起 verify_integrity 不被调用）。"""
+
+    from types import SimpleNamespace
+
+    from repoharness2.adapters.slime.generate import QuiescenceConfirmed as _QC
+
+    regular = regular or {}
+    symlinks = symlinks or {}
+
+    class _Ws:
+        snapshot_ref = "sha256:abc"
+
+        def __init__(self, underlying):
+            self._u = underlying
+
+        async def run_bash(self, script):
+            if "find ." in script:
+                return SimpleNamespace(exit_code=0, stdout=census_lines, stderr="")
+            if "base64 <" in script or "readlink" in script:
+                lines = [f"{p}\t{b}\n" for p, b in regular.items()] + [f"{p}\t{b}\n" for p, b in symlinks.items()]
+                return SimpleNamespace(exit_code=0, stdout="".join(lines), stderr="")
+            return await self._u.run_bash(script)
+
+        async def verify_integrity(self):
+            raise AssertionError("W3a：正式链不得再调用 verify_integrity")
+
+    class _Barrier:
+        async def establish(self, *, workspace, audit):
+            return _QC(frozen_grading_workspace=_Ws(workspace), snapshot_ref="sha256:abc", evidence_refs=("s",))
+
+    return _Barrier()
+
+
+async def test_test_path_change_is_projected_not_unsafe_and_keeps_full():
+    """W3a（D2-3，T1 oracle 改动）：只改测试文件的 artifact **不再是 unsafe**——控制面 entry 拆进
+    ignored_validation_delta（不重放），grader 正常出分（stub 给 resolved）、EligibilityReport 在场、
+    复合 filter KEEP_FULL；unsafe_artifact_permanent_rejection 从未出现。"""
+
+    import base64
+    import hashlib
+
+    from repoharness2.grading.manager import HygieneRules
+
+    content = b"def test_evil():\n    assert True\n"
+    b64 = base64.b64encode(content).decode()
+    sha = hashlib.sha256(content).hexdigest()
+    barrier = _frozen_ws_with_entries(
+        f"regular\t100644\t{sha}\ttests/test_evil.py\n", regular={"tests/test_evil.py": b64},
+    )
+    base_task = make_task(TASK_ID_DENSE)
+    task = dataclasses.replace(
+        base_task, grading_spec=dataclasses.replace(base_task.grading_spec, hygiene=HygieneRules(test_globs=("tests/*",)))
+    )
+    chain = _formal_chain(barrier=barrier, task=task)
+    delivered = await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    audit = chain.orchestrator.audits[0]
+    (call,) = chain.grading.calls
+    assert call["frozen_delta"].projection.included_entry_paths == ()
+    assert audit.finalized is not None and audit.unsafe_artifact_reasons == []
+    assert audit.trusted_projection["ignored_validation_counts_by_class"] == {
+        "official_test_file": 0, "test_glob": 1, "reserved_namespace": 0,
+    }
+    (leaf,) = delivered
+    assert leaf.remove_sample is False and leaf.reward == 1.0
+    payload = _resolve(leaf)
+    assert payload.outcome.reason_code is None and payload.eligibility_report is not None
+    assert "ignored_validation_delta:test_glob:add:tests/test_evil.py" in payload.outcome.evidence_refs
+    d = _decide(payload)
+    assert (d.verdict, d.reason_code) == ("KEEP_FULL", "all_dimensions_ok")
+
+
+async def test_structurally_unsafe_artifact_is_delivered_without_report_and_drops_by_exemption():
+    """附录 A 契约豁免集（W3a 起触发条件收窄为**结构不安全** artifact——此处 symlink 逃逸）：
+    present + unsafe 永久拒绝——真实交付、载荷无 EligibilityReport，receipt=delivery_prepared，
+    审计 disposition 仍派生 permanent_rejected；容器同样在本体持久化后释放。"""
 
     import base64
     import hashlib
@@ -151,43 +225,19 @@ async def test_unsafe_is_delivered_without_report_and_drops_by_exemption():
     import tempfile
 
     from repoharness2.adapters.slime.bringup import write_execution_audit_record
-    from repoharness2.adapters.slime.generate import QuiescenceConfirmed as _QC
-    from repoharness2.grading.manager import HygieneRules
 
-    content = b"def test_evil():\n    assert True\n"
-    b64 = base64.b64encode(content).decode()
-    sha = hashlib.sha256(content).hexdigest()  # census 行的 digest 列是裸 hex（与 test_b5 的 _TamperWs 同形）
-
-    class _TamperWs:
-        snapshot_ref = "sha256:abc"
-
-        def __init__(self, underlying):
-            self._u = underlying
-
-        async def run_bash(self, script):
-            from types import SimpleNamespace
-
-            if "find ." in script:
-                return SimpleNamespace(exit_code=0, stdout=f"regular\t100644\t{sha}\ttests/test_evil.py\n", stderr="")
-            if "base64 <" in script:
-                return SimpleNamespace(exit_code=0, stdout=f"tests/test_evil.py\t{b64}\n", stderr="")
-            return await self._u.run_bash(script)
-
-        async def verify_integrity(self):
-            return True
-
-    class _TamperBarrier:
-        async def establish(self, *, workspace, audit):
-            return _QC(frozen_grading_workspace=_TamperWs(workspace), snapshot_ref="sha256:abc", evidence_refs=("s",))
-
-    base_task = make_task(TASK_ID_DENSE)
-    task = dataclasses.replace(
-        base_task, grading_spec=dataclasses.replace(base_task.grading_spec, hygiene=HygieneRules(test_globs=("tests/*",)))
+    target = b"../../etc/passwd"
+    tb64 = base64.b64encode(target).decode()
+    tsha = hashlib.sha256(target).hexdigest()
+    barrier = _frozen_ws_with_entries(
+        f"symlink\t120000\t{tsha}\tsrc/escape\n", symlinks={"src/escape": tb64},
     )
-    chain = _formal_chain(barrier=_TamperBarrier(), task=task)
+    chain = _formal_chain(barrier=barrier)
     delivered = await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     audit = chain.orchestrator.audits[0]
     assert chain.grading.calls == [] and audit.finalized is None
+    assert audit.unsafe_artifact_reasons == ["unsafe_symlink_escape:src/escape"]
+    assert audit.rollout_container_released_before_grading is True
     (leaf,) = delivered
     assert leaf.remove_sample is False and leaf.status == "completed" and math.isnan(leaf.reward)
     assert "eligibility_report_ref" not in leaf.metadata and "training_eligibility_class" not in leaf.metadata

@@ -3,8 +3,10 @@
 覆盖：① scope 终止有界验证（残留进程 → termination_timeout）；② 双读
 指纹（写者注入 → active_writer_detected；读失败 → snapshot_freeze_failed；
 会话未排空 → late_model_request_detected）；③ 冻结出具（Confirmed 带
-snapshot_ref + FrozenWorkspace）与评分后完整性复核（漂移 →
-snapshot_integrity_mismatch，e2e 收口 missing + abort）。
+snapshot_ref + FrozenWorkspace）。**W3a（决策包 D2-1）起**：评分后不再回读
+workspace 复核指纹——FrozenWorkspace.verify_integrity() 只作为方法保留（调试
+探针，方法级测试保留），正式链在 artifact 持久化后立即释放容器，e2e 测试
+改为证明"评分后漂移"对结果无影响。
 """
 
 from __future__ import annotations
@@ -116,9 +118,11 @@ async def test_frozen_workspace_integrity_recheck():
     assert await confirmed2.frozen_grading_workspace.verify_integrity() is False
 
 
-async def test_e2e_integrity_drift_after_grading_closes_as_missing():
-    """③ e2e：屏障确认 → 评分正常 → 评分后指纹漂移 → 评分结果作废，
-    outcome = missing + snapshot_integrity_mismatch + abort 形状。"""
+async def test_e2e_drift_after_release_is_irrelevant_container_already_gone():
+    """③ e2e（W3a / D2-1，T1 oracle 改动，原 test_e2e_integrity_drift_after_grading_closes_as_missing：
+    评分后漂移 → missing + snapshot_integrity_mismatch + abort）：屏障确认 → artifact 持久化 →
+    **容器释放** → 评分。"评分后指纹漂移"的 FrozenWorkspace 替身从未被问到（verify_integrity
+    调用计数 0）；outcome present_complete，真实交付。"""
 
     import sys
     from pathlib import Path as _P
@@ -133,6 +137,8 @@ async def test_e2e_integrity_drift_after_grading_closes_as_missing():
         dense_turns,
     )
 
+    probe_calls: list[str] = []
+
     class _DriftingFrozen:
         snapshot_ref = "sha256:frozen0"
 
@@ -143,7 +149,8 @@ async def test_e2e_integrity_drift_after_grading_closes_as_missing():
             return await self._u.run_bash(script)
 
         async def verify_integrity(self):
-            return False  # 评分后复核：漂移
+            probe_calls.append("verify_integrity")
+            return False  # 若被问到：漂移
 
     class _Barrier:
         async def establish(self, *, workspace, audit):
@@ -166,13 +173,15 @@ async def test_e2e_integrity_drift_after_grading_closes_as_missing():
         _Args(), chain.base_sample, dict(SAMPLING_PARAMS)
     )
     audit = chain.orchestrator.audits[0]
-    assert chain.grading.calls  # 评分发生过（漂移在评分后才发现）
-    assert all(getattr(x, "remove_sample", False) for x in delivered)  # 作废
+    assert chain.grading.calls and probe_calls == []  # 评分发生过，探针从未被调用
+    assert all(not getattr(x, "remove_sample", False) for x in delivered)
     ov2 = audit.outcome_v2
-    assert ov2["completion_class"] == "missing"
-    assert ov2["failure_category"] == "runtime_quiescence_failure"
-    assert ov2["reason_code"] == "snapshot_integrity_mismatch"
+    assert ov2["completion_class"] == "present_complete"
+    assert ov2["failure_category"] is None and ov2["reason_code"] is None
     assert "snapshot:sha256:frozen0" in ov2["evidence_refs"]
+    assert audit.rollout_container_released_before_grading is True
+    # 释放发生在评分提交之前：docker rm 的调用序号 < 评分时 docker.removed 已含该容器
+    assert chain.docker.removed == [audit.lease.container_id]
 
 
 async def test_e2e_real_barrier_class_confirms_and_grades_frozen():

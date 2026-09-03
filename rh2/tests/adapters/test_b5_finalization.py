@@ -1,5 +1,8 @@
 """B5 验收（05 计划 5a 节）：
-① receipt 前 cleanup 不发生（正序 + persist 失败保留现场 run-halt）；
+① receipt 前 cleanup 不发生（正序 + persist 失败保留现场 run-halt）——**W3a（决策包 D2-1）
+   修订**：rollout 容器在 artifact 本体持久化成功后**立即释放**（早于评分、早于 receipt），
+   "receipt 之后才 cleanup"对容器移除只在**未冻结/未持久化**的 attempt 上仍成立；session drop /
+   poison release / cleanup 追加记录仍在 receipt 之后。两种形态各有测试。
 ② cleanup failure 追加、不覆盖首因（独立记录，receipt 不改写）；
 ③ F2-4 可复用 receipt 字段（outcome_v2 typed / delivery_prepared 定界 / digest 引用）；
 另：artifact 本体持久化失败 = T0 失败表第 1 行（missing 收口）；
@@ -72,25 +75,37 @@ def _log_docker_rm(chain):
     chain.orchestrator._docker = logging_docker
 
 
-# ------------------------------------------- ① receipt 前 cleanup 不发生
-async def test_receipt_persists_before_any_cleanup():
+# ------------------------------------------- ① 持久化 → 释放容器 → 评分 → receipt → 追加
+async def test_artifact_persist_then_release_then_grading_then_receipt_then_append():
+    """W3a（D2-1，T1 oracle 改动，原 test_receipt_persists_before_any_cleanup 断言
+    persist_receipt < docker_rm）：正式顺序 = put_artifact_bodies < docker_rm（释放 rollout
+    容器）< grading_submit < persist_receipt < append_cleanup_result。"""
+
     chain = _formal_chain()
     _log_docker_rm(chain)
+    orig_submit = chain.orchestrator._grading_submit
+
+    async def logging_submit(**kw):
+        chain.finalization.call_order.append("grading_submit")
+        return await orig_submit(**kw)
+
+    chain.orchestrator._grading_submit = logging_submit
     await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     order = chain.finalization.call_order
-    assert "persist_receipt" in order and "docker_rm" in order
-    assert order.index("persist_receipt") < order.index("docker_rm")
-    assert order.index("docker_rm") < order.index("append_cleanup_result")
-    # 本体持久化发生在 receipt 之前（组装时刻）
-    assert order.index("put_artifact_bodies") < order.index("persist_receipt")
+    assert order == [
+        "put_artifact_bodies", "docker_rm", "grading_submit", "persist_receipt", "append_cleanup_result",
+    ]
+    audit = chain.orchestrator.audits[0]
+    assert audit.rollout_container_released_before_grading is True and audit.lease_released is True
+    assert len(chain.docker.removed) == 1  # finally 的 cleanup 幂等，不再 rm 第二次
 
 
-async def test_receipt_persist_failure_retains_workspace_and_run_halts():
-    """T0 失败表第 2 行：durable handoff 失败 → 不清理（容器保留 + 隔离
-    队列）+ run halt；cleanup 追加记录也不发生。"""
+async def test_receipt_persist_failure_before_release_retains_workspace_and_run_halts():
+    """T0 失败表第 2 行（未冻结形态）：harness 崩溃 → 容器从未释放 → receipt 写失败 →
+    不清理（容器保留 + 隔离队列）+ run halt；cleanup 追加记录也不发生。"""
 
     store = FakeFinalizationStore(fail_persist_receipt=True)
-    chain = _formal_chain(store)
+    chain = _formal_chain(store, crash=RuntimeError("harness crashed mid-run"))
     _log_docker_rm(chain)
     with pytest.raises(FatalExecutionInfrastructureError,
                        match="finalization_receipt_write_failed"):
@@ -100,6 +115,29 @@ async def test_receipt_persist_failure_retains_workspace_and_run_halts():
     assert store.cleanup_results == []  # 无 receipt 就无追加
     assert chain.orchestrator.cleanup_quarantine  # 容器入隔离队列
     audit = chain.orchestrator.audits[0]
+    assert audit.rollout_container_released_before_grading is False
+    assert any(f.error_type == "finalization_receipt_write_failed"
+               for f in audit.failure_records)
+
+
+async def test_receipt_persist_failure_after_release_run_halts_without_quarantine():
+    """W3a（D2-1）：artifact 已 durable 且容器已释放后 receipt 写失败——仍 run halt、仍无
+    cleanup 追加；但没有容器可"保留现场"（隔离队列为空），证据 = 已持久化的本体。"""
+
+    store = FakeFinalizationStore(fail_persist_receipt=True)
+    chain = _formal_chain(store)
+    _log_docker_rm(chain)
+    with pytest.raises(FatalExecutionInfrastructureError,
+                       match="finalization_receipt_write_failed"):
+        await chain.orchestrator.generate(
+            _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    order = store.call_order
+    assert order.index("put_artifact_bodies") < order.index("docker_rm") < order.index("persist_receipt")
+    assert store.bodies and store.cleanup_results == []
+    assert chain.orchestrator.cleanup_quarantine == []  # 容器已不存在，无现场可隔离
+    audit = chain.orchestrator.audits[0]
+    assert audit.rollout_container_released_before_grading is True
+    assert "cleanup_skipped_receipt_failure" in [e.step for e in audit.timeline]
     assert any(f.error_type == "finalization_receipt_write_failed"
                for f in audit.failure_records)
 
@@ -149,9 +187,12 @@ async def test_receipt_fields_reusable_by_f2_4():
     assert compute_frozen_patch_digest(body) == receipt.frozen_patch_digest
 
 
-async def test_abort_path_still_gets_receipt():
-    """abort 路径同样出 receipt（disposition=aborted + outcome_v2 归因），
-    cleanup 仍在 receipt 之后。"""
+async def test_test_only_change_is_graded_normally_not_unsafe():
+    """W3a（D2-3，T1 oracle 改动，原 test_abort_path_still_gets_receipt：测试文件改动 →
+    unsafe 永久拒绝、不评分）：只改测试文件的 artifact 现在**正常评分**——控制面 entry 拆进
+    ignored_validation_delta（不重放、只记录），grader 收到的投影 candidate 集为空；真实交付 +
+    EligibilityReport；receipt=delivery_prepared；顺序 put_artifact_bodies < docker_rm <
+    persist_receipt。"""
 
     content = b"def test_x():\n    pass\n"
     sha = hashlib.sha256(content).hexdigest()
@@ -199,19 +240,27 @@ async def test_abort_path_still_gets_receipt():
     delivered = await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     store = chain.finalization
     receipt = store.receipts[0]
-    # W1b 第二段（三终态 ③，T1 oracle 改动）：unsafe = present_complete + 永久拒绝，不再压成
-    # ABORTED——真实交付（remove_sample=False）+ admission 载荷（无 EligibilityReport），由复合
-    # filter 按契约封闭豁免集 DROP_GROUP；receipt 因此是 delivery_prepared（样本备好交回 miles，
-    # 不代表进入训练），权威归因仍在 outcome_v2.reason_code。
+    audit = chain.orchestrator.audits[0]
     assert receipt.attempt_disposition == "delivery_prepared"
     assert all(getattr(x, "remove_sample", True) is False for x in delivered)
     assert all("rh2_admission" in x.metadata for x in delivered)
-    # B5 复核 P1-2（T0 第 9 条 retention）：unsafe 拒绝也保留 artifact 本体
-    assert store.bodies, "unsafe 分支必须先持久化本体再返回"
-    assert receipt.artifact_bodies_persisted is True
-    assert receipt.outcome_v2.reason_code == "unsafe_artifact_permanent_rejection"
-    assert receipt.eligibility_report_id is None
-    assert store.call_order.index("persist_receipt") < store.call_order.index("docker_rm")
+    # 完整 artifact（含测试文件改动）先持久化供审计
+    assert store.bodies and receipt.artifact_bodies_persisted is True
+    # D2-3：评分发生了，投影 candidate 集为空、ignored 记录了测试路径
+    (call,) = chain.grading.calls
+    assert call["workspace"] is None
+    assert call["frozen_delta"].projection.included_entry_paths == ()
+    assert audit.trusted_projection["ignored_validation_entries"] == [
+        {"path": "tests/test_x.py", "operation": "add", "object_type": "regular",
+         "control_plane_class": "test_glob"},
+    ]
+    assert audit.unsafe_artifact_reasons == []
+    assert receipt.outcome_v2.reason_code is None
+    assert receipt.outcome_v2.task_outcome in ("resolved", "unresolved")  # 由 grader 决定
+    assert receipt.eligibility_report_id is not None
+    assert "ignored_validation_delta:test_glob:add:tests/test_x.py" in receipt.outcome_v2.evidence_refs
+    order = store.call_order
+    assert order.index("put_artifact_bodies") < order.index("docker_rm") < order.index("persist_receipt")
 
 
 async def test_artifact_body_persist_failure_is_missing_abort():

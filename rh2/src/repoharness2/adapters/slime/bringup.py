@@ -1106,6 +1106,8 @@ class BringupService:
             # finalize 时刻的 current version 提供者（W10 起只用引擎一手回包的最大观测，
             # 无记录回退启动探针值；不再经 router 随机探测一台 engine——见方法 docstring）。
             current_policy_version_provider=self._observed_current_version,
+            # W3a 接缝：grader 六段分段计时来源（manager 暂存,orchestrator 取走合并进 attempt 生命周期记录）
+            grader_phase_timing_source=self.grading_manager.take_grader_phase_timing,
             # P0-2（codex 轮次 8）：harness 返回后复检 session poison
             session_poison_check=self.registry.poison.is_poisoned,
             # P0-4（codex 轮次 9）：poison 即主动取消 harness task

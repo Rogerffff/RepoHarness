@@ -16,6 +16,8 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import time
+from collections.abc import MutableMapping
 from typing import Any
 
 from repoharness2.adapters.slime.baseline_census import (
@@ -121,15 +123,26 @@ async def export_frozen_patch(
     *,
     rollout_execution_id: str,
     physical_attempt_id: str,
+    segment_sink: MutableMapping[str, float] | None = None,
 ) -> FrozenPatchArtifactV1:
+    """静止确认后导出 FrozenPatchArtifact。
+
+    ``segment_sink``（W3a 生命周期计时）：非 None 时写入两段 monotonic 秒数——
+    ``post_census``（census 脚本 + 解析）与 ``artifact_capture``（host 侧 diff + 内容抓取 +
+    一致性检查 + 组装）。失败路径同样写入已完成的段（异常前 sink 已更新），供审计定位慢在哪一步。
+    """
+
     # B2 closure P1-1：baseline digest 单一事实源——由 exporter 对实际
     # 消费的 baseline 对象内部重算，不接受调用方另填（B3 以此为身份锚）
     baseline_manifest_digest = compute_baseline_manifest_digest(baseline)
     # 1) post-run census（同 B1 脚本；无 git；UNSUPPORTED fail-closed）
+    census_started = time.monotonic()
     result = await workspace.run_bash(
         build_census_script(baseline.workdir, baseline.policy)
     )
     if getattr(result, "exit_code", 1) != 0:
+        if segment_sink is not None:
+            segment_sink["post_census"] = time.monotonic() - census_started
         raise PatchExportError(
             "post_census_failed",
             f"post census 失败（exit={result.exit_code}）：{result.stderr.strip()[-300:]}",
@@ -146,6 +159,8 @@ async def export_frozen_patch(
             policy=baseline.policy,
         )
     except BaselineCensusError as exc:
+        if segment_sink is not None:
+            segment_sink["post_census"] = time.monotonic() - census_started
         # 不支持对象（模型产出 FIFO 等）单列（B3 按 unsafe artifact 分类）
         if exc.reason_code == "unsupported_object_in_baseline":
             raise PatchExportError(
@@ -155,6 +170,32 @@ async def export_frozen_patch(
                 object_type=exc.object_type,
             ) from exc
         raise PatchExportError("post_census_parse_failed", str(exc)) from exc
+    if segment_sink is not None:
+        segment_sink["post_census"] = time.monotonic() - census_started
+    capture_started = time.monotonic()
+    try:
+        return await _capture_changes(
+            post, baseline, workspace,
+            baseline_manifest_digest=baseline_manifest_digest,
+            rollout_execution_id=rollout_execution_id,
+            physical_attempt_id=physical_attempt_id,
+        )
+    finally:
+        if segment_sink is not None:
+            segment_sink["artifact_capture"] = time.monotonic() - capture_started
+
+
+async def _capture_changes(
+    post: BaselineWorkspaceManifestV1,
+    baseline: BaselineWorkspaceManifestV1,
+    workspace: Any,
+    *,
+    baseline_manifest_digest: str,
+    rollout_execution_id: str,
+    physical_attempt_id: str,
+) -> FrozenPatchArtifactV1:
+    """exporter 第 2/3 步（host 侧 diff + 内容抓取 + 一致性检查 + 组装）——从 export_frozen_patch
+    拆出只为让 artifact_capture 段单独计时（W3a），逻辑逐字未动。"""
 
     post_by_path = {e.path: e for e in post.entries}
     changes = diff_census_against_baseline(baseline, post_by_path)

@@ -54,7 +54,7 @@ import re
 import time
 import uuid
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from fnmatch import fnmatch
 from pathlib import Path
@@ -69,6 +69,7 @@ from repoharness2.contracts import (
     SandboxLease,
 )
 from repoharness2.envpack import bundles, materialize, scoring
+from repoharness2.grading.trusted_projection import expected_candidate_paths
 
 # ---------------------------------------------------------------------------
 # docker CLI 薄层（可注入，P7）
@@ -367,7 +368,12 @@ class FrozenDeltaSource:
     BaselineIntegrityError（run-halt，不是成员损耗）；应用动作失败 →
     GradingInfraError（reward=None，不得记模型 reward 0——直接写入不存在
     "冲突"，S1 的 patch_apply_failed 不适用，模型坏 patch 只能在测试阶段
-    表现为 unresolved）。"""
+    表现为 unresolved）。
+
+    W3a（D2-1/D2-3）：`projection.included_entry_paths` = 可信评分投影的
+    candidate_solution 路径集（控制面路径已拆出、不重放）；三个对象都来自
+    持久化产物或可由持久化产物重建——rollout 容器在本源组装前已被释放，
+    grader 除本源外没有任何输入。"""
 
     frozen_patch: "object"  # FrozenPatchArtifactV1（避免 contracts 循环 import 用鸭子）
     baseline_manifest: "object"  # BaselineWorkspaceManifestV1
@@ -394,10 +400,11 @@ def _shq_rel(path: str) -> str:
 class FrozenApplyPlan:
     """B4 P1：task-aware hygiene 筛查 + 应用计划（对 S1 clean_patch 的镜像）。
 
-    S1 语义原样保留：test/forbidden 命中的 entry **剔除不应用**、事实如实
-    记入 PatchHygieneResult；剩余 entry 照常应用并跑测试；非 clean verdict
-    由既有"resolved 降级封顶"（grade 阶段 7 + contracts 校验器）保证拿不到
-    resolved——这是模型负样本（reward 0），不是训练面剔除。"""
+    W3a（D2-3）起在 FA frozen-delta 路径的角色：输入已经是可信评分投影的 candidate
+    子集（控制面路径在 producer 侧拆出、grader 侧独立重算核对），因此 verdict 恒为
+    clean、`applied_paths` == 投影路径集、`applied_entry_set_digest` = 实际重放子集
+    digest（PatchHygieneResult.digest_kind=applied_entry_set）。stripped/forbidden 非空只
+    可能来自程序错误（grade() 升 BaselineIntegrityError）。S1 diff 文本路径不经本类。"""
 
     applied_paths: tuple[str, ...]
     stripped_test_paths: tuple[str, ...]
@@ -674,6 +681,49 @@ class _ContainerRecord:
     removed: bool = False
 
 
+# W3a 生命周期计时：grader 内部六段（与 adapters/slime/attempt_timing.LIFECYCLE_SEGMENTS 同名）。
+GRADER_PHASE_SEGMENTS: tuple[str, ...] = (
+    "grader_start_and_verify",
+    "grader_baseline_rebuild",
+    "delta_apply",
+    "test",
+    "parser_and_report",
+    "grader_cleanup",
+)
+
+# manager 内暂存的分段记录上限：orchestrator 经 take_grader_phase_timing() 取走即删除；
+# 没有消费者（例如 bringup 尚未接线）时按 FIFO 淘汰最旧记录，防止长 run 无界增长。
+_GRADER_PHASE_TIMING_RETENTION = 1024
+
+
+@dataclass
+class GraderPhaseTiming:
+    """一次 grade() 的内部分段计时（进程内值对象，不是 contracts 记录——GradingTimingRecord 的
+    五类计时是冻结契约，本对象补齐 W3a 要求的更细分段；两者由 record_id 关联）。"""
+
+    record_id: str
+    trajectory_id: str
+    task_id: str
+    segments: dict[str, float | None] = field(
+        default_factory=lambda: {name: None for name in GRADER_PHASE_SEGMENTS}
+    )
+    frozen_delta_path: bool = False  # True = FA frozen-delta 路径；False = S1 diff 文本路径
+
+    def add(self, segment: str, seconds: float) -> None:
+        if segment not in self.segments:
+            raise KeyError(f"未知 grader 分段：{segment!r}")
+        self.segments[segment] = round((self.segments[segment] or 0.0) + max(seconds, 0.0), 6)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "record_id": self.record_id,
+            "trajectory_id": self.trajectory_id,
+            "task_id": self.task_id,
+            "frozen_delta_path": self.frozen_delta_path,
+            "segments_seconds": dict(self.segments),
+        }
+
+
 def _sanitize_for_name(text: str) -> str:
     cleaned = re.sub(r"[^a-zA-Z0-9_.-]", "-", text).strip("-.")
     return (cleaned or "traj")[:24]
@@ -707,6 +757,22 @@ class SWEGradingManager:
         self.cleanup_failures: list[str] = []  # Q8：清理失败必须留痕（S1-6 收口为 finding）
         self.leases: list[SandboxLease] = []  # 评分容器租约 evidence（P9 deny_all 由 schema 锁死）
         self._closed = False  # W5a：close() 后 grade 走 typed 拒绝
+        # W3a：grade() 内部分段计时暂存（record_id → GraderPhaseTiming），orchestrator 经
+        # take_grader_phase_timing() 取走合并进 attempt 生命周期记录。
+        self._phase_timings: dict[str, GraderPhaseTiming] = {}
+
+    # ------------------------------------------------------------------ W3a 分段计时
+    def take_grader_phase_timing(self, record_id: str) -> GraderPhaseTiming | None:
+        """取走（并删除）某次评分的内部分段计时；record_id = GradingReport.timings.record_id。
+        不存在（未评分 / 已取走 / 超出保留上限被淘汰）返回 None。"""
+
+        return self._phase_timings.pop(record_id, None)
+
+    def _retain_phase_timing(self, timing: GraderPhaseTiming) -> None:
+        self._phase_timings[timing.record_id] = timing
+        while len(self._phase_timings) > _GRADER_PHASE_TIMING_RETENTION:
+            oldest = next(iter(self._phase_timings))
+            del self._phase_timings[oldest]
 
     # ------------------------------------------------------------------ W5a 关停
     async def close(self) -> dict[str, Any]:
@@ -827,6 +893,13 @@ class SWEGradingManager:
         replay_started = False
         eval_log_text: str | None = None
         peak_memory_mb = 0.0
+        # W3a：grader 内部分段（与 timing_parts 并行记录；timing_parts 是冻结契约的五类口径）。
+        phase = GraderPhaseTiming(
+            record_id=f"timing_{nonce}", trajectory_id=trajectory_id, task_id=spec.task_id,
+            frozen_delta_path=frozen_delta is not None,
+        )
+        self._retain_phase_timing(phase)
+        phase_started = time.monotonic()  # grader_start_and_verify 从 grade() 入口起算
 
         def _timings() -> GradingTimingRecord:
             return GradingTimingRecord(
@@ -882,9 +955,9 @@ class SWEGradingManager:
         try:
             # 阶段 1+2（prep 前半）：B4 起两源互斥——frozen_delta（FA
             # formal，**不读 workspace**）或 S1 导出。FA 路径先做纯绑定
-            # 检查（source 内部一致 + source⟷spec，起容器前 fail-fast，
-            # 矛盾 = BaselineIntegrityError run-halt），再做 task-aware
-            # hygiene 筛查（P1：S1 clean_patch 的镜像，命中剔除不应用）。
+            # 检查（source 内部一致 + source⟷spec + **可信评分投影路径集
+            # 独立重算相等**，起容器前 fail-fast，矛盾 = BaselineIntegrityError
+            # run-halt）。
             prep_start = time.monotonic()
             if frozen_delta is not None:
                 cleaned = None  # FA 路径无 diff 文本
@@ -895,17 +968,16 @@ class SWEGradingManager:
                     spec.hygiene,
                 )
                 if fa_plan.verdict != "clean":
-                    # B4 P1-1 保险杠：task 级 hygiene 命中的 delta 按 T0
-                    # 失败表 unsafe 行在 generate 侧就该走永久拒绝（不
-                    # 提交 grader）。到达这里 = 编排层漏筛（缺陷），
-                    # fail-closed 记 infra（reward=None）——绝不"剥掉
-                    # 违规文件评剩余 patch"（gate 反正拒训，评了只会
-                    # 污染 reward/outcome/审计）。
-                    raise GradingInfraError(
-                        "unscreened_hygiene_hit:"
-                        + ",".join(
-                            (*fa_plan.stripped_test_paths, *fa_plan.forbidden_paths)
-                        )[:200]
+                    # W3a（D2-3）：绑定检查已证明 included == 按同一规则重算的
+                    # candidate_solution 路径集，其中不可能再有控制面路径；到达
+                    # 这里 = 同一进程内两次纯函数计算结果分家（程序错误），与
+                    # 其它绑定矛盾同通道 run-halt——不再是"漏筛 → infra 成员
+                    # 损耗"（旧 unscreened_hygiene_hit 保险杠随 D2-3 删除：控制面
+                    # 路径既不是 unsafe 也不该到 grader，判定权威在投影拆分）。
+                    raise BaselineIntegrityError(
+                        "scoring_projection_split_inconsistent",
+                        "candidate 子集经 hygiene 复筛仍命中控制面路径："
+                        + ",".join((*fa_plan.stripped_test_paths, *fa_plan.forbidden_paths))[:200],
                     )
             else:
                 if workspace is None:
@@ -929,26 +1001,34 @@ class SWEGradingManager:
             await self._verify_image_digest(record, spec)
             checkout_head = await self._clean_checkout(record, spec)
             timing_parts["env_reset"] = time.monotonic() - reset_start
+            phase.add("grader_start_and_verify", time.monotonic() - phase_started)
 
             # 阶段 4（prep 后半）：frozen delta 路径 = 先 exact-baseline
             # 重建比对（T0 第 2 条；mismatch → BaselineIntegrityError
-            # run-halt），再直接应用筛查后的子集；S1 路径 = 重放 cleaned patch
+            # run-halt），再直接应用 candidate_solution 子集；S1 路径 = 重放 cleaned patch
             prep_start = time.monotonic()
             replay_started = True
             if frozen_delta is not None:
+                rebuild_started = time.monotonic()
                 await self._verify_baseline_rebuild(
                     record, spec, frozen_delta, checkout_head
                 )
+                phase.add("grader_baseline_rebuild", time.monotonic() - rebuild_started)
                 assert fa_plan is not None  # 阶段 1 已构造
+                apply_started = time.monotonic()
                 await self._apply_frozen_delta(record, spec, frozen_delta, fa_plan)
+                phase.add("delta_apply", time.monotonic() - apply_started)
                 apply_ok = True  # 应用失败已作 infra 抛出（A-prime：非模型负样本）
             else:
+                apply_started = time.monotonic()
                 apply_ok = await self._replay_patch(record, spec, cleaned)
+                phase.add("delta_apply", time.monotonic() - apply_started)
             timing_parts["prep"] += time.monotonic() - prep_start
             if not apply_ok:
                 # A7 条 6 三分之一：cleaned patch 在 clean checkout 上 apply 失败 = 模型负样本
+                report_started = time.monotonic()
                 peak_memory_mb = await self._read_peak_memory_mb(record)
-                return GradingReport(
+                report = GradingReport(
                     **common,
                     outcome="unresolved",
                     failure_category="patch_apply_failed",
@@ -957,11 +1037,15 @@ class SWEGradingManager:
                     timings=_timings(),
                     graded_at_utc=_now_utc(),
                 )
+                phase.add("parser_and_report", time.monotonic() - report_started)
+                return report
 
             # 阶段 5：跑官方 eval（合并单流 2>&1，S1-2 提醒的日志形态）
             test_start = time.monotonic()
             eval_log_text = await self._run_eval(record, spec)
             timing_parts["test"] = time.monotonic() - test_start
+            phase.add("test", timing_parts["test"])
+            report_started = time.monotonic()
             peak_memory_mb = await self._read_peak_memory_mb(record)
 
             # 阶段 6：官方 parser 解析（A7 条 5）
@@ -974,13 +1058,15 @@ class SWEGradingManager:
             if hygiene.verdict != "clean" and fields["outcome"] == "resolved":
                 # A7 条 3/4 的"降级"落点：被拒 patch 即使测试全过也不得 resolved
                 # （contracts 校验器同样会拒绝 resolved+非 clean，这里是第一道闸）。
+                # W3a 注：FA frozen-delta 路径的 hygiene 描述的是**已重放的 candidate 子集**，
+                # 按可信评分投影构造恒为 clean；本分支只对 S1 diff 文本路径（冻结回退面）有效。
                 fields = {
                     **fields,
                     "outcome": "unresolved",
                     "failure_category": "tests_failed",
                     "reward": 0.0,
                 }
-            return GradingReport(
+            report = GradingReport(
                 **common,
                 **fields,
                 patch_hygiene=hygiene,
@@ -988,12 +1074,15 @@ class SWEGradingManager:
                 timings=_timings(),
                 graded_at_utc=_now_utc(),
             )
+            phase.add("parser_and_report", time.monotonic() - report_started)
+            return report
         except GradingInfraError as exc:
             # infra 族收口（P4）：本分支不存在 reward 取值——想给 infra 报告塞
             # reward 连参数都没有，schema 校验器是第二道锁。
+            report_started = time.monotonic()
             if record is not None:
                 peak_memory_mb = await self._read_peak_memory_mb(record)
-            return GradingReport(
+            report = GradingReport(
                 **common,
                 outcome="failed_to_grade",
                 failure_category=exc.category,
@@ -1008,9 +1097,13 @@ class SWEGradingManager:
                 timings=_timings(),
                 graded_at_utc=_now_utc(),
             )
+            phase.add("parser_and_report", time.monotonic() - report_started)
+            return report
         finally:
             if record is not None:
+                cleanup_started = time.monotonic()
                 await self._remove_container(record)
+                phase.add("grader_cleanup", time.monotonic() - cleanup_started)
 
     # ------------------------------------------------------------------ gc
     async def gc(
@@ -1301,16 +1394,27 @@ class SWEGradingManager:
                     f"identity {field_name}: projection={getattr(proj, field_name)!r} "
                     f"!= artifact={getattr(art, field_name)!r}",
                 )
-        # v1：clean artifact 的 projection 路径集必须**等于** artifact 路径集
-        # （只查"多出"会放过"隐去"——raw delta 同时改源码和测试、projection
-        # 隐去测试文件即可带着篡改事实拿 resolved）
+        # W3a（D2-3 可信评分投影）：projection 路径集必须**等于**按同一控制面规则
+        # （spec.hygiene）对 artifact 独立重算的 candidate_solution 路径集——既不能
+        # "隐去"solution 路径（少了 = 拿不完整改动评分），也不能"夹带"控制面路径
+        # （多了 = 控制面改动会影响 reward）。B4 v1 的"等于 artifact 全路径集"是本
+        # 检查在"控制面为空"时的特例。对称差即契约矛盾（run-halt）。
         entry_paths = {e.path for e in art.entries}
+        expected = expected_candidate_paths(list(art.entries), spec.hygiene)
         included = set(proj.included_entry_paths)
-        if included != entry_paths:
-            diff = sorted(included.symmetric_difference(entry_paths))[:5]
+        if not included <= entry_paths:
+            diff = sorted(included - entry_paths)[:5]
             raise BaselineIntegrityError(
                 "frozen_delta_binding_mismatch",
-                f"projection 路径集 != artifact 路径集（对称差示例：{diff}）",
+                f"projection 路径集含 artifact 不存在的路径（示例：{diff}）",
+            )
+        if included != expected:
+            diff = sorted(included.symmetric_difference(expected))[:5]
+            raise BaselineIntegrityError(
+                "frozen_delta_binding_mismatch",
+                "projection 路径集 != 可信评分投影重算的 candidate_solution 路径集"
+                f"（对称差示例：{diff}；artifact 路径数 {len(entry_paths)}，"
+                f"控制面路径数 {len(entry_paths) - len(expected)}）",
             )
         # 逐 entry 前置状态 vs baseline：add 必须原先不存在；modify/delete
         # 必须存在；delete 的对象类型必须与 baseline 一致（modify 允许类型

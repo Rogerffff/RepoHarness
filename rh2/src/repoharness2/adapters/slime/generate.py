@@ -85,6 +85,7 @@ from pathlib import Path
 from typing import Any, Literal, Protocol
 
 from repoharness2.adapters.slime.async_worker import FatalExecutionInfrastructureError
+from repoharness2.adapters.slime.attempt_timing import AttemptLifecycleTiming
 from repoharness2.adapters.slime.outcome_producer import (
     FAILURE_CODE_TERMINATION_MAP,
     STAGE_FALLBACK_TERMINATION_MAP,
@@ -2071,10 +2072,33 @@ class RolloutAudit:
     # （TerminationFactsPayloadV1；generate() 返回前盖到交付面 metadata）。
     # 无 outcome_v2 的 attempt（s1 兼容/身份不全）为 None。
     termination_facts_payload: Any | None = None
+    # W3a（D2-1 验收项）：attempt 生命周期十三段计时（bringup 经 timing_summary() 原样落盘）。
+    lifecycle_timing: AttemptLifecycleTiming = field(default_factory=AttemptLifecycleTiming)
+    # 静止确认（冻结）时刻的 monotonic 值：rollout_container_hold_after_freeze 的起点。
+    freeze_monotonic: float | None = None
+    # D2-1 状态所有权转移事实：artifact 本体持久化后、评分之前 rollout 容器已被移除。
+    rollout_container_released_before_grading: bool = False
+    # W3a（D2-3）：可信评分投影拆分记录（candidate_solution / ignored_validation 路径清单与计数，
+    # 规则版本）；结构不安全 artifact 与未到投影阶段的 attempt 为 None。
+    trusted_projection: dict[str, Any] | None = None
+    ignored_validation_entry_count: int = 0
 
     def step(self, name: str) -> None:
         self.steps.append(name)
         self.mark(name)
+
+    def note_rollout_container_released(self) -> None:
+        """rollout 容器确认移除时调用一次：若已冻结且尚未记 hold 段，记录
+        rollout_container_hold_after_freeze（冻结 → 容器移除）。"""
+
+        if (
+            self.freeze_monotonic is not None
+            and self.lifecycle_timing.get("rollout_container_hold_after_freeze") is None
+        ):
+            self.lifecycle_timing.set(
+                "rollout_container_hold_after_freeze",
+                max(time.monotonic() - self.freeze_monotonic, 0.0),
+            )
 
     def mark(
         self,
@@ -2114,7 +2138,7 @@ class RolloutAudit:
             for entry in self.timeline
         ]
 
-    def timing_summary(self) -> dict[str, float | None]:
+    def timing_summary(self) -> dict[str, Any]:
         last_by_step = {entry.step: entry.seconds_since_start for entry in self.timeline}
 
         def delta(start: str, end: str) -> float | None:
@@ -2151,6 +2175,10 @@ class RolloutAudit:
             else None,
             "cleanup_seconds": delta("cleanup_started", "cleanup_completed"),
             "total_audit_seconds": last,
+            # W3a：十三段生命周期计时 + 队列事实（嵌套记录；bringup 的 execution audit
+            # JSONL 原样写 timing_summary，因此无需改 bringup 即落盘；聚合见 attempt_timing）
+            "lifecycle_timing": self.lifecycle_timing.to_dict(),
+            "rollout_container_released_before_grading": self.rollout_container_released_before_grading,
         }
 
 
@@ -2221,6 +2249,10 @@ class RolloutOrchestrator:
       （该维 fail-closed 降级，S1-5 语义）。
     - ``repair_signal_sink``：组修复信号转发通道（P4：组装配前必须可见）。
     - ``backpressure_events_source``：评分队列反压事件流（GradingQueue.events）。
+    - ``grader_phase_timing_source``（W3a）：按 `GradingReport.timings.record_id` 取 grader 内部
+      分段计时（生产接线 = `SWEGradingManager.take_grader_phase_timing`，归 bringup）；缺省时
+      attempt 记录只填 GradingTimingRecord 能给的 test / 队列等待，其余 grader 段为 None 并在
+      时间线记 `grader_phase_timing_unavailable`。
     """
 
     def __init__(
@@ -2249,7 +2281,10 @@ class RolloutOrchestrator:
         finalization_store: "FinalizationStore | None" = None,
         session_drain_owner: Callable[[str], Awaitable[Any]] | None = None,
         grading_spec_resolver: Callable[[Any], GradingEnvSpec] | None = None,
+        grader_phase_timing_source: Callable[[str], Any | None] | None = None,
     ) -> None:
+        # W3a：grader 内部分段计时取数口（record_id → GraderPhaseTiming | None）。
+        self._grader_phase_timing_source = grader_phase_timing_source
         # 前置清理批（D2-2，2026-09-04）：曾有 `sandbox_capability_facts_provider` 注入位
         # （每轨迹 sandbox 能力事实 → security 维）。该证明系统整体删除：sandbox 合规由
         # W3b 在创建期强制配置 + 启动前探针保证，本编排不再逐轨迹取任何能力 sidecar。
@@ -2572,6 +2607,7 @@ class RolloutOrchestrator:
                         "baseline_head_unreadable",
                         f"materialized HEAD 读取失败：{head.stderr.strip()[-200:]}",
                     )
+                census_started = time.monotonic()
                 baseline_manifest = await generate_baseline_manifest(
                     sandbox.workspace,
                     task_id=task.task_id,
@@ -2584,6 +2620,7 @@ class RolloutOrchestrator:
                     materialized_head=head.stdout.strip(),
                     task_base_commit=task.base_commit,
                 )
+                audit.lifecycle_timing.set("baseline_census", time.monotonic() - census_started)
                 audit.baseline_manifest_digest = compute_baseline_manifest_digest(
                     baseline_manifest
                 )
@@ -2917,13 +2954,23 @@ class RolloutOrchestrator:
                     sample, reason="rh2_runtime_barrier_unavailable", task=task, top_p=tape_top_p,
                     audit=audit,
                 )
-            grading_workspace = sandbox.workspace  # s1_compat 既有语义
+            grading_workspace: Any | None = sandbox.workspace  # s1_compat 既有语义
             barrier_evidence: list[str] = []
+            projection_evidence: list[str] = []  # W3a（D2-3）：可信评分投影拆分事实
             frozen_delta = None  # B4：仅 fa_formal 屏障确认后组装
             if self._mode == "fa_formal":
                 # 复核四轮 P0-3：注入式屏障必须真实执行并出具带证据结果；
                 # 确认失败 → runtime_quiescence_failure（勘误 3 五码）+
                 # abort，绝不评分交付
+                # W3a（D2-1）状态所有权转移的正式顺序（本 if 块内自上而下）：
+                #   停止 execution scope（屏障①）→ post census 与变更抓取（exporter）
+                #   → FrozenPatchArtifact + baseline + 身份/digest 校验并**持久化成功**
+                #   → 冻结产物成为评分唯一权威 → **立即释放 rollout 容器**
+                #   → 结构 hygiene / 可信评分投影拆分 → 有界评分队列（_finalize）
+                #   → fresh grader 从 clean baseline 重建 + 重放 candidate delta + 评分。
+                # 评分之后**不再回读**原 workspace（旧 verify_integrity 主链依赖已删除，
+                # 容器此时早已不存在；FrozenWorkspace.verify_integrity 仅保留为方法）。
+                barrier_started = time.monotonic()
                 try:
                     result = await self._runtime_barrier.establish(
                         workspace=sandbox.workspace, audit=audit
@@ -2947,8 +2994,13 @@ class RolloutOrchestrator:
                         "未知屏障故障按 D4 run_halt，不得归因 capture。",
                     ) from exc
                 if isinstance(result, QuiescenceConfirmed):
+                    audit.lifecycle_timing.set(
+                        "runtime_quiescence", time.monotonic() - barrier_started
+                    )
                     audit.runtime_quiescence_confirmed = True
                     audit.mark("runtime_quiescence_confirmed")
+                    # 冻结时刻：rollout_container_hold_after_freeze 的起点
+                    audit.freeze_monotonic = time.monotonic()
                     grading_workspace = result.frozen_grading_workspace
                     barrier_evidence = [f"snapshot:{result.snapshot_ref}", *result.evidence_refs]
                     if audit.session_drain_receipt is not None:
@@ -2971,6 +3023,7 @@ class RolloutOrchestrator:
                         compute_frozen_patch_digest,
                     )
 
+                    export_segments: dict[str, float] = {}
                     try:
                         # B2 closure P1-4：exporter 消费屏障产出的冻结
                         # workspace（不绕回 live sandbox.workspace——当前
@@ -2984,8 +3037,10 @@ class RolloutOrchestrator:
                                 else trajectory_id
                             ),
                             physical_attempt_id=physical_attempt_id,
+                            segment_sink=export_segments,  # W3a：post_census / artifact_capture
                         )
                     except PatchExportError as exc:
+                        self._record_export_segments(audit, export_segments)
                         if exc.reason_code == "unsupported_object_in_patch":
                             # B3 兑现 B2 登记：模型产出不支持对象 = unsafe
                             # artifact（present + 永久拒绝，不评分）。
@@ -3034,6 +3089,7 @@ class RolloutOrchestrator:
                                 finalized=None, audit=audit,
                             )
                         raise SlimeBindingError(exc.reason_code, str(exc)) from exc
+                    self._record_export_segments(audit, export_segments)
                     audit.frozen_patch_digest = compute_frozen_patch_digest(frozen_patch)
                     audit.patch_entry_count = len(frozen_patch.entries)
                     audit.excluded_pathset_changed = frozen_patch.excluded_pathset_changed
@@ -3044,6 +3100,7 @@ class RolloutOrchestrator:
                     # 拒绝的 delta 随容器清理蒸发，digest 引用悬空）。
                     # 失败 = T0 失败表第 1 行"无法建立可信 artifact
                     # （持久化失败）"→ missing 收口。
+                    persist_started = time.monotonic()
                     try:
                         assert self._finalization_store is not None  # fa_formal ctor 已强制
                         self._finalization_store.put_artifact_bodies(
@@ -3065,11 +3122,25 @@ class RolloutOrchestrator:
                             "frozen_artifact_persist_failed",
                             f"artifact 本体持久化失败：{type(exc).__name__}: {exc}",
                         ) from exc
+                    audit.lifecycle_timing.set("artifact_persist", time.monotonic() - persist_started)
                     audit.mark("artifact_bodies_persisted")
+                    # W3a（D2-1 状态所有权转移）：artifact + baseline 已 durable、身份/digest
+                    # 已由 exporter 内部重算——冻结产物从此刻起是评分的**唯一权威**，rollout
+                    # 容器不再持有任何独有状态，**立即释放**（不等评分、不等 receipt）。
+                    # 之后任何评分/交付代码都拿不到它（grading_workspace 置 None；grader 只
+                    # 收 FrozenDeltaSource）。rm 失败只记 cleanup 事实并交 finally 重试/隔离，
+                    # 不阻塞评分（容器残留是资源问题，不改变 artifact 的权威性）。
+                    # B5 的"receipt 之后才 cleanup"对本路径的含义随之收窄为：finally 里的
+                    # session drop / poison release / cleanup 追加记录仍在 receipt 之后；
+                    # 容器本身的移除以"本体已持久化"为前提，而不再以 receipt 为前提。
+                    await self._release_rollout_container(sandbox, audit)
+                    grading_workspace = None
                     # B3：hygiene 分类必须先于 grader（A-prime 第 5/7 条）。
-                    # unsafe → present + 永久拒绝：不运行 grader、reward
-                    # 不可得、abort 形状（训练面剔除）；准入 verdict 记
-                    # audit（AdmissionReport 本体归 FA-2/F2-5）。
+                    # 结构不安全（symlink escape / 排除 namespace 内 entry / 非 UTF-8 target）
+                    # → unsafe = present + 永久拒绝：不运行 grader、reward 不可得，真实交付 +
+                    # 载荷由 filter 按契约封闭豁免集 DROP。
+                    # W3a（D2-3）：测试文件 / 测试通配 / 保留路径命中**不再是 unsafe**——它们是
+                    # 评分控制面，交给下方的可信评分投影拆分（不重放、只记录）。
                     from repoharness2.contracts.scoring_projection import (
                         classify_frozen_patch,
                     )
@@ -3079,7 +3150,7 @@ class RolloutOrchestrator:
                     )
 
                     try:
-                        hygiene, projection = classify_frozen_patch(
+                        hygiene, _full_projection = classify_frozen_patch(
                             frozen_patch, baseline_manifest
                         )
                     except ProjectionContractError as exc:
@@ -3105,29 +3176,8 @@ class RolloutOrchestrator:
                     )
                     unsafe_reasons: list[str] = []
                     if hygiene.verdict == "unsafe_artifact":
+                        # 仅结构不安全 artifact 走此路（D2-3：不进投影、typed 永久拒绝）。
                         unsafe_reasons = list(hygiene.reason_codes)
-                    else:
-                        # B4 P1-1（T0 失败表 unsafe 行逐字：不运行 grader、
-                        # reward=None）：task 级 hygiene（测试文件/禁区
-                        # 路径，规则与 grader 同一 HygieneRules 权威）在
-                        # grader 之前判定，命中即 unsafe 永久拒绝。不做
-                        # "剥掉违规 entry 评剩余 patch"——gate 对篡改事实
-                        # 反正拒训（gate.py executed 级），评了只会污染
-                        # reward/task_outcome/审计并白跑一次 grader。
-                        from repoharness2.grading.manager import (
-                            screen_frozen_entries,
-                        )
-
-                        plan = screen_frozen_entries(
-                            list(frozen_patch.entries), grading_spec_for_attempt().hygiene
-                        )
-                        if plan.verdict != "clean":
-                            unsafe_reasons = [
-                                *(f"test_file_modified:{p}"
-                                  for p in plan.stripped_test_paths),
-                                *(f"forbidden_path_touched:{p}"
-                                  for p in plan.forbidden_paths),
-                            ]
                     if unsafe_reasons:
                         audit.unsafe_artifact_reasons = unsafe_reasons
                         audit.mark("unsafe_artifact_rejected")
@@ -3160,10 +3210,27 @@ class RolloutOrchestrator:
                             task=task, raw_meta=raw_meta, samples=samples,
                             finalized=None, audit=audit,
                         )
-                    audit.scoring_projection_entry_count = len(
-                        projection.included_entry_paths
+                    # W3a（D2-3）可信评分投影：完整 artifact 已持久化供审计；这里按排除法
+                    # 拆成 candidate_solution_delta（重放）与 ignored_validation_delta（控制面
+                    # = 当前 SWE adapter HygieneRules：official test_patch 精确文件 + 测试
+                    # glob + 保留路径 .rh2*/rh2/*；**不重放**，路径清单与计数进审计/Outcome
+                    # evidence/sidecar）。grader 之后后写 official test_patch、跑可信 eval_cmd，
+                    # 正常产出 0/1 与 EligibilityReport——只改测试没修代码自然得 0，写测试且
+                    # 真修好得 1；不因控制面路径变化 DROP_GROUP，也不当 unsafe。
+                    from repoharness2.grading.trusted_projection import (
+                        build_trusted_scoring_projection,
                     )
+
+                    projection, split = build_trusted_scoring_projection(
+                        frozen_patch, grading_spec_for_attempt().hygiene
+                    )
+                    audit.trusted_projection = split.to_record()
+                    audit.scoring_projection_entry_count = len(split.candidate_entries)
+                    audit.ignored_validation_entry_count = len(split.ignored_entries)
+                    projection_evidence = split.evidence_refs()
                     audit.mark("scoring_projection_built")
+                    if split.ignored_entries:
+                        audit.mark("ignored_validation_delta_recorded")
                     # B4：组装 grader 消费源（不读 workspace 的评分路径）
                     from repoharness2.grading.manager import FrozenDeltaSource
 
@@ -3235,60 +3302,12 @@ class RolloutOrchestrator:
             audit.finalized = finalized
             audit.step("step8_gate_finalized")
 
-            # F2-2b ③：评分后复核冻结完整性——指纹漂移 = 评分读到过
-            # 非冻结状态，评分结果作废，execution 按 missing 收口
-            if self._mode == "fa_formal" and hasattr(
-                grading_workspace, "verify_integrity"
-            ):
-                try:
-                    snapshot_intact = await grading_workspace.verify_integrity()
-                except Exception as exc:  # noqa: BLE001 - 复核通道自身故障 ≠ 完整性不匹配
-                    # W1b 切片一复核（必修 1）分流：完整性复核**没有完成**（docker
-                    # 通道 OSError 等）既不是"复核证伪"也不是 task-local 缺员——
-                    # 评分产物已成、静止事实未被证伪也未被证实，是未知基建故障，
-                    # 走 run-fatal 独立通道（与 P0-1 一致），不得洗成 missing/
-                    # ABORTED 让 miles 当普通缺员丢弃后补采。
-                    audit.failure_records.append(
-                        RolloutFailureRecord(
-                            stage="finalize",
-                            error_type="integrity_recheck_failed",
-                            detail=f"{type(exc).__name__}: {exc}"[:500],
-                        )
-                    )
-                    audit.mark("integrity_recheck_failed")
-                    raise FatalExecutionInfrastructureError(
-                        "integrity_recheck_failed",
-                        f"评分后冻结完整性复核无法完成：{type(exc).__name__}: {exc}"
-                        "——既非证伪也非证实，按未知基建故障 run-halt。",
-                    ) from exc
-                if not snapshot_intact:
-                    # 复核证伪静止事实（明确的完整性不匹配）：先撤销，completion
-                    # 由事实推导 missing；评分产物一并作废（P1-1：missing 不得与
-                    # disposition=finalized 并存——finalized 引用先清）。证据引用
-                    # 先于 audit 改写取得：取值失败时 finalized 仍在场，通用
-                    # except 会按 post-finalize 未分类故障升 fatal，而不是在
-                    # "已清引用"的状态下被当成普通缺员。
-                    snapshot_evidence = [f"snapshot:{grading_workspace.snapshot_ref}"]
-                    audit.runtime_quiescence_confirmed = False
-                    audit.finalized = None
-                    self._produce_outcome_v2(
-                        audit=audit,
-                        raw_meta=raw_meta,
-                        termination_kind="completed",
-                        failure_category="runtime_quiescence_failure",
-                        reason_code="snapshot_integrity_mismatch",
-                        failed_component="runtime_barrier",
-                        task_resolved=None,
-                        turn_weight_versions=None,
-                        current_version_at_finalize=None,
-                        eligibility_report_id=None,
-                        extra_evidence=snapshot_evidence,
-                    )
-                    audit.mark("snapshot_integrity_mismatch")
-                    return self._abort_result(
-                        sample, reason="rh2_snapshot_integrity_mismatch",
-                        task=task, top_p=tape_top_p, audit=audit,
-                    )
+            # W3a（D2-1）：原 F2-2b ③"评分后回读原 workspace verify_integrity() 才承认
+            # reward"的主链依赖已删除——冻结产物在持久化那一刻就是唯一权威，rollout 容器
+            # 在评分之前已释放，评分之后没有任何 live 状态可复核；不可变性由
+            # 屏障双读 + exporter 逐文件 digest 一致性检查 + 持久化 digest 绑定证明。
+            # 随之不再发出 `snapshot_integrity_mismatch`（contracts 封闭集保留该码）与
+            # `integrity_recheck_failed`。
 
             # F2-2 producer（成功收口）：termination=completed；评分三态
             # 映射——resolved/unresolved 照实，failed_to_grade = 勘误 2 通道
@@ -3314,7 +3333,7 @@ class RolloutOrchestrator:
                     turn_weight_versions=list(handshake.weight_versions_seen),
                     current_version_at_finalize=handshake.policy_version,
                     eligibility_report_id=finalized.eligibility_report.report_id,
-                    extra_evidence=barrier_evidence,
+                    extra_evidence=[*barrier_evidence, *projection_evidence],
                 )
             stage = "deliver"
             return self._deliver(
@@ -3438,8 +3457,8 @@ class RolloutOrchestrator:
             term_kind, fail_cat = mapped
             if audit.finalized is not None:
                 # W1b 切片一复核（必修 1）：成功 finalization（step8）之后的失败域
-                # 已各自 typed 分流——verify_integrity 通道异常 / Outcome producer
-                # 异常 / 核心 admission sidecar 写失败 → run-fatal；可选 telemetry
+                # 已各自 typed 分流——Outcome producer 异常 / 核心 admission sidecar
+                # 写失败 → run-fatal（W3a 起不再有评分后完整性复核通道）；可选 telemetry
                 # 写失败 → 记录后照常交付。还能走到通用 except 的 post-finalize
                 # 异常 = 未分类故障，是不该到达的状态：升 fatal，**不**撤销
                 # finalized、不产 missing Outcome、不返回 ABORTED（那会让 miles
@@ -3534,7 +3553,9 @@ class RolloutOrchestrator:
                         detail=f"{type(exc).__name__}: {exc}"[:300],
                     )
                 )
-                if sandbox is not None:
+                if sandbox is not None and not audit.lease_released:
+                    # 保留现场只对**仍存在**的容器有意义；W3a 提前释放（artifact 已
+                    # durable）后的 receipt 失败没有容器可隔离，证据 = 已持久化的本体。
                     self.cleanup_quarantine.append(sandbox.container_name)
                 audit.mark("finalization_receipt_write_failed")
         # W1b 第一集成切片（F5 producer）：receipt 持久化成功后立刻派生
@@ -3596,7 +3617,8 @@ class RolloutOrchestrator:
                             detail=f"{type(exc).__name__}: {exc}"[:300],
                         )
                     )
-                    self.cleanup_quarantine.append(sandbox.container_name)
+                    if sandbox.container_name not in self.cleanup_quarantine:
+                        self.cleanup_quarantine.append(sandbox.container_name)
         if not cleanup_skipped:
             audit.mark("cleanup_completed")
         poison_released = False
@@ -4050,6 +4072,71 @@ class RolloutOrchestrator:
             )
         return drain_result
 
+    @staticmethod
+    def _record_export_segments(audit: RolloutAudit, segments: Mapping[str, float]) -> None:
+        """W3a：把 exporter 写回的 post_census / artifact_capture 段并入 attempt 计时。"""
+
+        for name in ("post_census", "artifact_capture"):
+            value = segments.get(name)
+            if value is not None:
+                audit.lifecycle_timing.set(name, value)
+
+    async def _release_rollout_container(
+        self, sandbox: "_MaterializedSandbox", audit: RolloutAudit
+    ) -> None:
+        """W3a（D2-1 状态所有权转移）：artifact 本体持久化成功后立即移除 rollout 容器。
+
+        成功 → `audit.lease_released=True`、`rollout_container_released_before_grading=True`、
+        记 rollout_container_hold_after_freeze（冻结 → 移除）；docker rm 失败/超时 →
+        `_cleanup_container` 已落 CleanupFailureRecord，finally 段照常再试一次（幂等）并按既有
+        规则隔离；docker 通道异常（OSError 等）→ 结构化落账 + 隔离队列。任何失败都**不**影响
+        评分：容器已不是任何事实的持有者。"""
+
+        audit.mark("rollout_container_release_started")
+        try:
+            await self._cleanup_container(sandbox.lease, sandbox.container_name, audit)
+        except Exception as exc:  # noqa: BLE001 - 释放异常不许覆盖评分主链
+            audit.cleanup_failures.append(
+                CleanupFailureRecord(
+                    lease_id=sandbox.lease.lease_id,
+                    step="container_release_exception",
+                    detail=f"{type(exc).__name__}: {exc}"[:300],
+                )
+            )
+            if sandbox.container_name not in self.cleanup_quarantine:
+                self.cleanup_quarantine.append(sandbox.container_name)
+            audit.mark("rollout_container_release_failed")
+            return
+        if audit.lease_released:
+            audit.rollout_container_released_before_grading = True
+            audit.mark("rollout_container_released")
+        else:
+            audit.mark("rollout_container_release_failed")
+
+    def _record_grader_timing(self, audit: RolloutAudit, report: GradingReport) -> None:
+        """W3a：评分返回后把队列等待 / grader 内部分段并入 attempt 计时。
+
+        grader 内部六段经注入的 `grader_phase_timing_source` 按 timings.record_id 取；未注入或
+        取不到时只填 GradingTimingRecord 能给出的 `test`，其余保持 None 并留痕
+        `grader_phase_timing_unavailable`（不用五类计时的 prep/env_reset 冒充细分段）。"""
+
+        timings = report.timings
+        if timings is None:
+            audit.mark("grader_phase_timing_unavailable")
+            return
+        lt = audit.lifecycle_timing
+        lt.set("grading_queue_wait", timings.queue_wait_seconds)
+        lt.grading_queue_depth_at_enqueue = timings.queue_depth_at_enqueue
+        lt.grading_backpressure_triggered = timings.backpressure_triggered
+        phase = None
+        if self._grader_phase_timing_source is not None:
+            phase = self._grader_phase_timing_source(timings.record_id)
+        if phase is not None:
+            lt.apply_grader_segments(phase.segments, origin="manager")
+        else:
+            lt.apply_grader_segments({"test": timings.test_seconds}, origin="report_only")
+            audit.mark("grader_phase_timing_unavailable")
+
     async def _finalize(
         self,
         *,
@@ -4060,13 +4147,16 @@ class RolloutOrchestrator:
         samples: Sequence[Any],
         leaf_facts: Sequence[LeafFacts],
         hook: GenerationCaptureHook,
-        workspace: RolloutContainerWorkspace,
+        workspace: Any | None,
         handshake: BackendHandshake | None,
         audit: RolloutAudit,
         sampler_support_top_k: Any | None = None,
         grading_spec: GradingEnvSpec,
     ) -> FinalizedRollout:
         """步骤 6~8：只准调 finalize_rollout（治理层唯一关口，顺序已被 wrapper 固化）。
+
+        ``workspace``：s1_compat 的 live workspace；fa_formal 恒为 None（W3a：rollout 容器在
+        artifact 持久化后已释放，grader 只收 ``frozen_delta``）。
 
         ``grading_spec``（W1b 第一集成切片）：本次 attempt 的评分材料，由调用方经
         `_grading_spec_for` 取得（prepared 链 = attempt 绑定查找；legacy = 任务面内嵌）。
@@ -4120,6 +4210,7 @@ class RolloutOrchestrator:
                     "run-halt，不得作为成员损耗继续。",
                 ) from exc
             audit.step("step6_grading_completed")
+            self._record_grader_timing(audit, report)  # W3a：队列等待 + grader 分段
             return report
 
         def _project(report: GradingReport):
@@ -4417,6 +4508,20 @@ class RolloutOrchestrator:
             encoding="utf-8",
         )
         audit.artifact_paths.append(captures_path)
+        # W3a：可信评分投影拆分记录（D2-3 审计/遥测）与 attempt 生命周期计时（D2-1 验收项）。
+        if audit.trusted_projection is not None:
+            projection_path = root / "trusted_scoring_projection.json"
+            projection_path.write_text(
+                json.dumps(audit.trusted_projection, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            audit.artifact_paths.append(projection_path)
+        timing_path = root / "attempt_lifecycle_timing.json"
+        timing_path.write_text(
+            json.dumps(audit.lifecycle_timing.to_dict(), ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        audit.artifact_paths.append(timing_path)
         tape_dir = root / "tapes"
         tape_dir.mkdir(exist_ok=True)
         for ref_id, payload in hook.artifact_store.items():
@@ -4455,6 +4560,9 @@ class RolloutOrchestrator:
             )
             return
         audit.lease_released = True  # release_lease 步骤 = 记账翻转
+        # W3a：容器确认移除 = rollout_container_hold_after_freeze 的终点（提前释放路径与
+        # finally 兜底路径共用此处，段值只记一次）
+        audit.note_rollout_container_released()
 
     @staticmethod
     def _notify_fatal_halt(exc: FatalExecutionInfrastructureError) -> None:

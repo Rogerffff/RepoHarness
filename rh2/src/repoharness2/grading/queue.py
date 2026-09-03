@@ -117,6 +117,20 @@ class GradingQueue:
         self.max_active_seen = 0  # F5 观测：实际并发峰值
         self.events: list[BackpressureEvent] = []  # P11 反压事实（gate/画像消费）
 
+    @property
+    def backpressure_count(self) -> int:
+        """W3a 计时验收项"评分队列打满次数"：submit() 时队列已满的次数（= 反压事件条数）。"""
+
+        return len(self.events)
+
+    @property
+    def active_grading_count(self) -> int:
+        return self._active
+
+    @property
+    def queue_depth(self) -> int:
+        return self._queue.qsize()
+
     # ------------------------------------------------------------------ 生命周期
     async def start(self) -> None:
         if self._workers:

@@ -72,15 +72,23 @@ class FakeRolloutDocker:
     base_commit: str = BASE_COMMIT
     run_fail: bool = False
     rm_fail: bool = False
+    # W3a：rm 只失败前 N 次（模拟提前释放时 docker rm 瞬时失败、finally 重试成功）。
+    rm_fail_times: int = 0
+    # W3a：容器已被 rm 之后再对它 exec = 真实 docker 会报 "No such container"；置 True 让替身
+    # 直接 raise，证明释放后没有任何代码（含 grader）再碰 rollout 容器。
+    exec_after_rm_raises: bool = False
     # 镜像 RepoDigests 罐头值（codex#1 运行期比对；json 序列化后返回）。
     repo_digests: tuple[str, ...] = ()
     calls: list[tuple[str, ...]] = field(default_factory=list)
     removed: list[str] = field(default_factory=list)
     writes: dict[str, bytes] = field(default_factory=dict)  # 容器内路径 -> 写入内容
+    rm_attempts: int = 0
 
     async def __call__(self, *args: str, input_bytes: bytes | None = None) -> ExecResult:
         self.calls.append(args)
         cmd = args[0]
+        if cmd == "exec" and self.exec_after_rm_raises and args[1] in self.removed:
+            raise AssertionError(f"rollout 容器 {args[1]} 已释放，仍被 exec：{args[-1][:80]!r}")
         if cmd == "image":  # image inspect -f {{.Id}}|{{json .RepoDigests}} <image>
             if "RepoDigests" in " ".join(args):
                 import json as _json
@@ -96,7 +104,8 @@ class FakeRolloutDocker:
             return ExecResult(0, "f00dfeedcafe\n", "")
         if cmd == "rm":
             name = args[-1]
-            if self.rm_fail:
+            self.rm_attempts += 1
+            if self.rm_fail or self.rm_attempts <= self.rm_fail_times:
                 return ExecResult(1, "", f"cannot remove {name}: fake failure")
             self.removed.append(name)
             return ExecResult(0, "", "")

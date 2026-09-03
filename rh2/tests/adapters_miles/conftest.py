@@ -353,13 +353,17 @@ class _World:
             out.append(s)
         return out
 
-    def mk_gov_finished_group(self, prompt_group: list, versions=(7, 7), rewards=None) -> list:
+    def mk_gov_finished_group(self, prompt_group: list, versions=(1, 1), rewards=None) -> list:
         """模拟 generate 完成：与 prompt 组同 attempt 身份的完成样本
         （metadata 继承 = attempt 盖章传播，生产链中由 rollout function 层保证）。
 
         默认 rewards=None 时逐样本 reward=float(i)（0.0/1.0，方差非零——
         stock check_reward_nonzero_std 会 keep）；传 rewards 可制造全同
         reward 触发 drop。
+
+        默认行为版本 (1, 1)（W4 起，原 (7, 7)）：治理/W5a 测试用 current_version=1..6 消费这些组，
+        旧默认 7 让 staleness=current−oldest 为负——W4 把负 lag 定为版本账目矛盾（typed run-fatal，
+        决策包 D2+B v2 B-1），fixture 必须自洽；要测 staleness 过滤的用例都显式传 versions。
         """
 
         out = []

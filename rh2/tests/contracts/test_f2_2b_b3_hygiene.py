@@ -2,6 +2,9 @@
 
 计划验收项：unsafe → present_* + permanent_rejection 不跑 grader；
 runtime 私有文件 = 记录事实而非 tamper。
+W3a（决策包 D2-3）起 unsafe 只指**结构不安全** artifact（symlink 逃逸 / 排除 namespace 内
+entry / 非 UTF-8 target）；测试文件与保留路径改动是评分控制面，由可信评分投影拆出（不重放、
+只记录），照常评分——文末 e2e 用例已按此改判。
 """
 
 from __future__ import annotations
@@ -540,10 +543,13 @@ async def test_baseline_integrity_error_goes_fatal_not_member_loss():
     )
 
 
-async def test_e2e_test_tampering_is_permanent_rejection_no_grader(tmp_path):
-    """codex B4 复核 P1-1（T0 失败表 unsafe 行）：修改测试文件的 delta 在
-    generate 侧永久拒绝——不运行 grader、reward 不可得、audit 落
-    test_file_modified 归因；绝不"剥掉违规文件评剩余 patch"。"""
+async def test_e2e_test_path_change_is_projected_and_graded_not_permanent_rejection(tmp_path):
+    """W3a（决策包 D2-3，T1 oracle 改动；原 test_e2e_test_tampering_is_permanent_rejection_no_grader
+    = 修改测试文件 → unsafe 永久拒绝、不跑 grader）：测试文件改动是**评分控制面**，不是 unsafe——
+    完整 artifact 保存供审计，控制面 entry 进 ignored_validation_delta（不重放、记路径与计数），
+    grader 正常运行（投影 candidate 为空）并给出 0/1；Outcome present_complete、无
+    unsafe_artifact_permanent_rejection、reward 可得。结构不安全 artifact 的 unsafe 路径见
+    test_symlink_escape_is_unsafe（本文件）与 tests/adapters/test_w3a_trusted_projection.py。"""
 
     import dataclasses
     import sys
@@ -610,14 +616,18 @@ async def test_e2e_test_tampering_is_permanent_rejection_no_grader(tmp_path):
     delivered = await chain.orchestrator.generate(
         _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     audit = chain.orchestrator.audits[0]
-    assert chain.grading.calls == []  # 不运行 grader
-    # W1b 第二段（三终态 ③，T1 oracle 改动）：真实交付 + 载荷，准入由 filter 整组 DROP
+    (call,) = chain.grading.calls  # grader 运行了：candidate 投影为空，控制面 entry 不重放
+    assert call["workspace"] is None
+    assert call["frozen_delta"].projection.included_entry_paths == ()
+    assert [e.path for e in call["frozen_delta"].frozen_patch.entries] == ["tests/test_evil.py"]  # 完整 artifact 保留
     assert all(getattr(x, "remove_sample", True) is False for x in delivered)
     assert all("rh2_admission" in x.metadata for x in delivered)
     ov2 = audit.outcome_v2
     assert ov2["completion_class"] == "present_complete"
-    assert ov2["reason_code"] == "unsafe_artifact_permanent_rejection"
-    assert ov2["reward_unavailable"] is True
-    assert ov2["task_outcome"] == "unknown"  # 没评分，不许伪装成 unresolved
-    assert any(r == "test_file_modified:tests/test_evil.py"
-               for r in audit.unsafe_artifact_reasons)
+    assert ov2["reason_code"] is None and ov2["failure_category"] is None
+    assert ov2["reward_unavailable"] is False
+    assert ov2["task_outcome"] == "resolved"  # 评分替身给 resolved；真实 grader 由 eval 决定 0/1
+    assert "ignored_validation_delta:test_glob:add:tests/test_evil.py" in ov2["evidence_refs"]
+    assert audit.unsafe_artifact_reasons == []
+    assert audit.trusted_projection["ignored_validation_counts_by_class"]["test_glob"] == 1
+    assert audit.finalized is not None and audit.finalized.eligibility_report.facts.all_ok()

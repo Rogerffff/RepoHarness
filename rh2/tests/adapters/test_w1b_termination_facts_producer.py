@@ -6,8 +6,10 @@
 - **post-finalize 失败域五分流**（W1b 切片一 codex 复核 必修 1，取代切片一初版"任意 post-finalize
   异常撤销 finalized 洗成 missing/ABORTED"的兜底——那会让 Outcome schema/producer bug、docker
   完整性检查异常、核心 sidecar 磁盘失败被 miles 当普通缺员丢弃并补采）：
-    ① verify_integrity() 返回 False   → 明确的完整性不匹配：missing / ABORTED（既有 P1-1 路径）；
-    ② verify_integrity() 抛未知异常   → run-fatal `integrity_recheck_failed`；
+    ①② **W3a（决策包 D2-1）起撤销**：评分后不再回读原 workspace 复核指纹（rollout 容器在
+       artifact 持久化后、评分之前已释放）——verify_integrity() 返回 False / 抛异常都**不再被
+       调用**，不再产生 `snapshot_integrity_mismatch` / `integrity_recheck_failed`；本文件保留
+       drifted / raising 两种 FrozenWorkspace 替身作反例，证明它们对正式链无影响；
     ③ Outcome producer / 契约异常     → run-fatal `outcome_producer_failed`，且 producer 只允许调用一次
                                         （二次调用本身 = run-fatal `outcome_producer_called_twice`）；
     ④ 核心 admission sidecar 写失败   → run-fatal `admission_artifact_write_failed`（cleanup 仍执行）；
@@ -130,56 +132,36 @@ def _spy_producer(orchestrator) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
-async def test_split_1_verify_integrity_false_is_missing_abort_producer_once():
-    """① 明确的完整性不匹配：既有 P1-1 路径（撤销静止事实、清 finalized）→ missing/ABORTED，
-    producer 恰好一次，事实可派生并盖到 abort 形状上。"""
+@pytest.mark.parametrize("barrier_cls", [_DriftedBarrier, _RaisingBarrier])
+async def test_split_1_2_frozen_workspace_probe_not_consulted_after_release(barrier_cls):
+    """①② W3a（D2-1，T1 oracle 改动，原 split_1 = 漂移 → missing/ABORTED、split_2 = 复核异常
+    → run-fatal）：评分后不再回读原 workspace——drifted / raising 的 verify_integrity 都不被调用，
+    attempt 正常 finalize、present_complete、真实交付；producer 恰好一次；receipt delivery_prepared；
+    容器在评分前已释放。"""
 
     store = FakeFinalizationStore()
-    chain = _formal_chain(store, barrier=_DriftedBarrier())
+    chain = _formal_chain(store, barrier=barrier_cls())
     calls = _spy_producer(chain.orchestrator)
     delivered = await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     audit = chain.orchestrator.audits[0]
 
-    assert "step8_gate_finalized" in audit.steps and "snapshot_integrity_mismatch" in _steps(audit)
-    assert audit.finalized is None and audit.runtime_quiescence_confirmed is False
+    assert "step8_gate_finalized" in audit.steps
+    assert "snapshot_integrity_mismatch" not in _steps(audit)
+    assert "integrity_recheck_failed" not in _steps(audit)
+    assert audit.finalized is not None and audit.runtime_quiescence_confirmed is True
+    assert audit.rollout_container_released_before_grading is True
     assert len(calls) == 1
     (receipt,) = store.receipts
-    assert receipt.attempt_disposition == "aborted"
-    assert receipt.outcome_v2.completion_class == "missing"
-    assert receipt.outcome_v2.reason_code == "snapshot_integrity_mismatch"
-    assert receipt.grading_report_id is None and receipt.eligibility_report_id is None
-    assert receipt.outcome_v2.eligibility_report_id is None
+    assert receipt.attempt_disposition == "delivery_prepared"
+    assert receipt.outcome_v2.completion_class == "present_complete"
+    assert receipt.outcome_v2.reason_code is None
+    assert receipt.grading_report_id is not None and receipt.eligibility_report_id is not None
     facts = derive_termination_facts(receipt)
-    assert facts.fresh_grading_complete is False
-    (aborted,) = delivered
-    assert aborted.remove_sample is True
-    payload = resolve_termination_facts(aborted.metadata)
-    assert payload.physical_attempt_id == PAID
+    assert facts.fresh_grading_complete is True
+    assert delivered and all(leaf.remove_sample is False for leaf in delivered)
+    payload = resolve_termination_facts({**delivered[0].metadata, "rh2_physical_attempt_id": PAID,
+                                         "rh2_rollout_execution_id": "exec_F22"})
     assert_payload_dereferences(payload, receipt)
-
-
-async def test_split_2_verify_integrity_exception_is_run_fatal():
-    """② 复核通道自身故障（OSError）：run-fatal，不撤销 finalized、不产 missing Outcome、
-    不返回 ABORTED；receipt disposition=fatal_run_halt；cleanup 照常。"""
-
-    store = FakeFinalizationStore()
-    chain = _formal_chain(store, barrier=_RaisingBarrier())
-    calls = _spy_producer(chain.orchestrator)
-    with pytest.raises(FatalExecutionInfrastructureError, match="integrity_recheck_failed"):
-        await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
-    audit = chain.orchestrator.audits[0]
-
-    assert "step8_gate_finalized" in audit.steps
-    assert audit.finalized is not None  # 不洗：评分产物保留在 audit 上
-    assert audit.outcome_v2 is None and calls == []
-    assert any(f.error_type == "integrity_recheck_failed" for f in audit.failure_records)
-    assert "finalized_refs_cleared_on_exception" not in _steps(audit)
-    (receipt,) = store.receipts
-    assert receipt.attempt_disposition == "fatal_run_halt"
-    assert receipt.terminal_reason_code == "integrity_recheck_failed"
-    assert receipt.outcome_v2 is None
-    assert "termination_facts_skipped_no_outcome" in _steps(audit)
-    assert "cleanup_completed" in _steps(audit)
 
 
 async def test_split_3_outcome_producer_exception_is_run_fatal_and_called_once(monkeypatch):
