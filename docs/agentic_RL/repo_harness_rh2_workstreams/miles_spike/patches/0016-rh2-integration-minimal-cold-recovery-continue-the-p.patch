@@ -1,0 +1,520 @@
+From 98a0272e4158b2c20e3a34d210c79b50159af0f6 Mon Sep 17 00:00:00 2001
+From: Codex <jufangjian@gmail.com>
+Date: Fri, 4 Sep 2026 03:03:15 +0800
+Subject: [PATCH] [rh2-integration] minimal cold recovery: continue the
+ published weight version across restart, fail on missing rollout state,
+ record run_restarted
+
+RolloutManager.save writes the currently published weight version next to
+the data-source state (one integer, same directory and rollout_id) and
+RolloutManager.load restores it; the Megatron/FSDP train actors initialise
+their updater counter from the restored value (p-1) so the bootstrap
+publish is labelled p and the first real update p+1, and the first publish
+after a restore is checked against the restored version before the
+monotonic/convergence checks. In a recovery context (--load with a
+rollout_id >= 0) a missing rollout state file raises RecoveryStateMissing
+instead of silently restarting from the head of the dataset. A
+run_restarted rh2 event records the restored checkpoint, rollout_id,
+published/bootstrap versions and data-source cursor. No joint commit,
+COMMITTED marker, replay or composite version identity.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ miles/backends/fsdp_utils/actor.py     |   6 +-
+ miles/backends/megatron_utils/actor.py |   9 +-
+ miles/ray/rollout/rollout_manager.py   |  25 +-
+ miles/rollout/data_source.py           |  12 +
+ miles/utils/rh2_event_log.py           |  16 ++
+ miles/utils/rh2_recovery.py            | 312 +++++++++++++++++++++++++
+ 6 files changed, 374 insertions(+), 6 deletions(-)
+ create mode 100644 miles/utils/rh2_recovery.py
+
+diff --git a/miles/backends/fsdp_utils/actor.py b/miles/backends/fsdp_utils/actor.py
+index a535c60b5..6d284ee67 100644
+--- a/miles/backends/fsdp_utils/actor.py
++++ b/miles/backends/fsdp_utils/actor.py
+@@ -23,7 +23,7 @@ from miles.backends.training_utils.loss import compute_advantages_and_returns, g
+ from miles.backends.training_utils.parallel import get_parallel_state, set_parallel_state
+ from miles.backends.training_utils.sampling_mask import get_rollout_sampling_masks
+ from miles.ray.train_actor import TrainRayActor
+-from miles.utils import train_dump_utils, train_metric_utils
++from miles.utils import rh2_recovery, train_dump_utils, train_metric_utils
+ from miles.utils.context_utils import with_defer
+ from miles.utils.distributed_utils import get_gloo_group
+ from miles.utils.flops_utils import flops_args_from_hf_config, fwd_tflops_per_gpu
+@@ -207,6 +207,10 @@ class FSDPTrainRayActor(TrainRayActor):
+         )
+ 
+         checkpoint.finalize_load(self, checkpoint_payload)
++        # [rh2-integration] W5b (B-3): same as the Megatron actor (see megatron_utils/actor.py). Here
++        # args.start_rollout_id is final only after finalize_load (it reads next_rollout_id from meta.json),
++        # so the restored checkpoint's rollout_id is resolved from it (start_rollout_id - 1).
++        self.weight_updater.weight_version = rh2_recovery.restore_updater_weight_version(self.args, loaded_rollout_id=None)
+ 
+         self.max_tokens_per_gpu = args.max_tokens_per_gpu
+ 
+diff --git a/miles/backends/megatron_utils/actor.py b/miles/backends/megatron_utils/actor.py
+index 278b0bccf..9070cad1e 100644
+--- a/miles/backends/megatron_utils/actor.py
++++ b/miles/backends/megatron_utils/actor.py
+@@ -28,7 +28,7 @@ from miles.utils.memory_utils import clear_memory, print_memory
+ from miles.utils.multi_lora import is_multi_lora_enabled
+ from miles.utils.processing_utils import load_tokenizer
+ from miles.utils.ray_utils import Box
+-from miles.utils import rh2_event_log
++from miles.utils import rh2_event_log, rh2_recovery
+ from miles.utils.logprob_compare import masked_compare_entries
+ from miles.utils.reloadable_process_group import destroy_process_groups, monkey_patch_torch_dist, reload_process_groups
+ from miles.utils.replay_base import all_replay_managers, replay_sample_digests, routing_replay_manager
+@@ -282,6 +282,13 @@ class MegatronTrainRayActor(TrainRayActor):
+             quantization_config=getattr(self.hf_config, "quantization_config", None),
+             is_lora=lora_rollout_enabled(args),
+         )
++        # [rh2-integration] W5b (decision package D2+B v2 B-3): every updater starts at weight_version = 0
++        # and increments before publishing, so on a cold restart the counter is restored here, at the
++        # single construction site, to (version published at the restored checkpoint) - 1: train_async's
++        # bootstrap publish then re-labels the restored weights p and the first real update is p+1
++        # (miles/utils/rh2_recovery.py). Fresh runs keep 0; a resumed run whose rollout-side state file
++        # is missing stops here with RecoveryStateMissing, before any publish.
++        self.weight_updater.weight_version = rh2_recovery.restore_updater_weight_version(self.args, loaded_rollout_id)
+ 
+         # Adapters currently loaded into Megatron slots on this rank.
+         self.loaded_adapters: dict[str, object] = {}
+diff --git a/miles/ray/rollout/rollout_manager.py b/miles/ray/rollout/rollout_manager.py
+index ed6325309..ef4d9e0b5 100644
+--- a/miles/ray/rollout/rollout_manager.py
++++ b/miles/ray/rollout/rollout_manager.py
+@@ -31,7 +31,7 @@ from miles.rollout.base_types import (
+ )
+ from miles.rollout.checkpoint_eval import CheckpointEvalFn, EvalSkip
+ from miles.rollout.inference_rollout.compatibility import call_rollout_function, load_rollout_function
+-from miles.utils import object_store, rh2_event_log
++from miles.utils import object_store, rh2_event_log, rh2_recovery
+ from miles.utils.audit_utils.event_analyzer import analyzer as event_analyzer
+ from miles.utils.audit_utils.event_logger import checkpoint as event_logger_checkpoint
+ from miles.utils.audit_utils.process_identity import RolloutManagerProcessIdentity
+@@ -68,6 +68,9 @@ class RolloutManager:
+         self.args = args
+         # set by the training actor after each weight update
+         self.weight_version: int | None = None
++        # [rh2-integration] W5b (B-3): version that was published to the engines at the checkpoint this
++        # run was restored from (None on a fresh run). The first set_weight_version of the run must equal it.
++        self._rh2_restored_published_weight_version: int | None = None
+         # TODO make args immutable
+         init_tracking(args, primary=False, router_addr=f"http://{args.sglang_router_ip}:{args.sglang_router_port}")
+         object_store.init_instance(args, contribute_segment=False)
+@@ -440,12 +443,20 @@ class RolloutManager:
+     # -------------------------- checkpointing -----------------------------
+ 
+     def save(self, rollout_id):
+-        if self.args.rollout_global_dataset:
+-            self.data_source.save(rollout_id)
++        # [rh2-integration] W5b (decision package D2+B v2 B-3): the data_source cursor and the version
++        # currently published to the engines (``self.weight_version``) are written by one call into the
++        # same ``<save>/rollout/`` directory under the same rollout_id as the Megatron checkpoint, so a
++        # cold restart from iteration rollout_id restores both (miles/utils/rh2_recovery.py). Not a joint
++        # commit: a crash between the checkpoint and this call is the accepted B-3 residue.
++        rh2_recovery.save_rollout_state(self.args, rollout_id, self.data_source, self.weight_version)
+         event_logger_checkpoint.snapshot(self.args, rollout_id)
+ 
+     def load(self, rollout_id=None):
+-        self.data_source.load(rollout_id)
++        # [rh2-integration] W5b (B-3): in a recovery context (--load and rollout_id >= 0) a missing state
++        # file is a typed RecoveryStateMissing (the run stops before any publish); a successful restore
++        # emits one ``run_restarted`` event. A fresh run (rollout_id = -1) keeps the stock silent path.
++        state = rh2_recovery.restore_rollout_state(self.args, rollout_id, self.data_source)
++        self._rh2_restored_published_weight_version = None if state is None else state["published_weight_version"]
+ 
+     # -------------------------- offload/onload -----------------------------
+ 
+@@ -551,6 +562,12 @@ class RolloutManager:
+         )
+ 
+     async def set_weight_version(self, weight_version: int):
++        # [rh2-integration] W5b (B-3): the first publish of a restarted run is train_async's bootstrap
++        # publish. The trainer restored its updater counter to p-1 from the same state file this actor
++        # restored p from, so that publish must carry exactly p; anything else means trainer and rollout
++        # side restored different points -> stop before any sample is booked under a wrong version.
++        if self.weight_version is None:
++            rh2_recovery.check_first_publish_after_restore(self._rh2_restored_published_weight_version, weight_version)
+         # warning instead of assert when use indep_dp ft
+         if self.weight_version is not None and weight_version < self.weight_version:
+             message = f"Engine weight version went backwards: {self.weight_version} -> {weight_version}"
+diff --git a/miles/rollout/data_source.py b/miles/rollout/data_source.py
+index 72a96f0e0..2498b3dab 100644
+--- a/miles/rollout/data_source.py
++++ b/miles/rollout/data_source.py
+@@ -6,6 +6,7 @@ from pathlib import Path
+ 
+ import torch
+ 
++from miles.utils import rh2_recovery
+ from miles.utils.data import Dataset
+ from miles.utils.misc import load_function
+ from miles.utils.processing_utils import load_processor, load_tokenizer
+@@ -145,6 +146,17 @@ class RolloutDataSource(DataSource):
+ 
+         path = os.path.join(self.args.load, f"rollout/global_dataset_state_dict_{rollout_id}.pt")
+         if not os.path.exists(path):
++            # [rh2-integration] W5b (decision package D2+B v2 B-3): a run resumed from a checkpoint
++            # (rollout_id >= 0, i.e. start_rollout_id > 0) must find the rollout state that was saved
++            # together with it; silently restarting the data cursor from scratch desynchronises it from
++            # the restored weights. A fresh run arrives here with rollout_id = -1 and keeps the stock path.
++            if rh2_recovery.is_recovery_context(self.args, rollout_id):
++                raise rh2_recovery.RecoveryStateMissing(
++                    kind=rh2_recovery.STATE_KIND_DATA_SOURCE,
++                    path=path,
++                    rollout_id=int(rollout_id),
++                    load_dir=self.args.load,
++                )
+             logger.info(f"Checkpoint {path} does not exist.")
+             return
+ 
+diff --git a/miles/utils/rh2_event_log.py b/miles/utils/rh2_event_log.py
+index abaf8ec38..5814265f6 100644
+--- a/miles/utils/rh2_event_log.py
++++ b/miles/utils/rh2_event_log.py
+@@ -79,6 +79,22 @@ DROP_STAGE_DYNAMIC_FILTER = "dynamic_filter"
+ DROP_STAGE_CONSUME_STALE = "consume_stale"
+ DROP_STAGES = (DROP_STAGE_PUT_ABORTED, DROP_STAGE_DYNAMIC_FILTER, DROP_STAGE_CONSUME_STALE)
+ 
++# ---------------------------------------------------------------------------
++# [rh2-integration] W5b（决策包 D2+B v2 B-3）：冷恢复的重启记录
++# ---------------------------------------------------------------------------
++# RUN_RESTARTED_EVENT（"run_restarted"）：RolloutManager.load 在恢复语境（有 --load 且
++# rollout_id >= 0，即 start_rollout_id > 0）下成功恢复 rollout 侧状态后发一条（全新 run 不发）：
++#     rollout_id / start_rollout_id     恢复自哪个 checkpoint 迭代（miles 里 iteration == rollout_id）
++#                                       与本 run 的起始 rollout_id（= rollout_id + 1）
++#     load_dir                          --load 目录
++#     published_weight_version          恢复点记录的"已发布给 engine 的版本" p（None = 恢复点之前从未 publish）
++#     bootstrap_weight_version          = p：本 run 的 bootstrap publish 给恢复权重打的标
++#     previous_run_id                   写下状态文件的旧 run 的 MILES_RH2_RUN_ID（None = 未设）
++#     published_version_state_path / data_source_state_path / data_source_state_present
++#     data_source_state                 恢复后的游标 {sample_offset, epoch_id, sample_group_index, sample_index}
++# 新 run_id 由 emit() 从 MILES_RH2_RUN_ID 盖章（run_id 字段）。实现见 miles/utils/rh2_recovery.py。
++RUN_RESTARTED_EVENT = "run_restarted"
++
+ _emit_lock = threading.Lock()
+ _emit_failure_logged = False
+ _tree_digest_cache: str | None = None
+diff --git a/miles/utils/rh2_recovery.py b/miles/utils/rh2_recovery.py
+new file mode 100644
+index 000000000..93e1ae7fc
+--- /dev/null
++++ b/miles/utils/rh2_recovery.py
+@@ -0,0 +1,312 @@
++"""[rh2-integration] W5b（决策包 D2+B v2 B-3，owner 2026-09-04 细化）：最小冷恢复合同。
++
++合同：job death 后从最近的 miles checkpoint 重启；buffer 与在飞组全部丢弃；不 replay、不精确
++cursor resume、不 optimizer exactly-once、不做 joint commit / COMMITTED marker /
++(segment_id, numeric_version) 复合身份。本模块只承载合同要求的三个正确性点：
++
++1. **updater 版本计数从恢复点继续。** 六个 weight updater（megatron 的 tensor / rdt / p2p /
++   broadcast / disk-delta 与 fsdp）构造时都是 ``weight_version = 0``，``update_weights()`` 先
++   ``+= 1`` 再把 ``str(weight_version)`` 发给 engine；train_async 启动即做一次 bootstrap publish。
++   不修的话恢复出来的旧权重会被标成 v1：RolloutManager.set_weight_version 的单调断言、
++   spans / staleness 账目在重启后全部失真。修法：checkpoint 保存时把"当时已发布给 engine 的
++   版本 p"作为一个整数写进 ``<save>/rollout/rh2_published_weight_version_<rollout_id>.json``
++   （与 data_source 状态文件同目录、同 rollout_id、同一次 ``RolloutManager.save`` 调用）；重启
++   时 trainer 每个 rank 在构造 updater 之后把计数器恢复为 **p-1**（:func:`restore_updater_weight_version`），
++   于是 bootstrap publish 标 p、首次真实更新标 p+1。RolloutManager 侧从同一文件恢复 p，
++   并要求本 run 的首次 ``set_weight_version`` 恰等于 p（:func:`check_first_publish_after_restore`）。
++2. **data_source 状态缺失显式报错。** ``RolloutDataSource.load`` 在恢复语境下找不到状态文件时抛
++   :class:`RecoveryStateMissing`（typed，run 在任何 publish 之前停止），不再静默从头；全新 run
++   （rollout_id = -1）无状态文件仍是正常路径。
++3. **重启记录。** ``RolloutManager.load`` 恢复成功后经 rh2_event_log 发一条 ``run_restarted``
++   事件：新 run_id（emit 自动盖章）、恢复自哪个 --load 目录 / rollout_id / 已发布版本、写状态
++   文件的旧 run_id、恢复后的 data_source 游标。
++
++**恢复语境**的唯一定义（:func:`is_recovery_context`）：有 ``--load`` 且 rollout_id >= 0。
++rollout_id 是 ``placement_group.create_training_models`` 传给 ``RolloutManager.load`` 的
++``start_rollout_id - 1``：全新 run 由 arguments.py 把 ``start_rollout_id`` 置 0（``--load`` 下没有
++``latest_checkpointed_iteration.txt``），这里得到 -1；只有 trainer 真的加载了 checkpoint 迭代 k
++（``start_rollout_id = k + 1``）或用户显式传 ``--start-rollout-id N>0`` 时才 >= 0。trainer 侧用
++同一公式（:func:`resolve_restore_rollout_id`）取同一个 rollout_id 的状态文件。
++
++**"已发布版本 p" 的定义**：``RolloutManager.weight_version``，即 trainer 上一次 publish 后经
++``set_weight_version`` 告知 rollout 侧的版本。train_async 循环里的顺序是
++``save_model(rollout_id) -> rollout_manager.save(rollout_id) -> update_weights``，所以 p 是
++rollout_id **之前**那次 publish 的版本，checkpoint 里的权重（rollout_id 训练后）在保存时尚未发布。
++接受的残余（B-3 原文）：重启后 bootstrap 把 checkpoint 权重按 p 重发；pre-crash 的 p+1、p+2…在
++新 run 里会被不同的权重复用——因为 buffer 与在飞组已全部丢弃，没有任何 pre-crash 样本会拿
++这些号与新样本比较，对训练正确性无影响，只损失 checkpoint 点之后到崩溃之间的样本。
++
++不是 joint commit：状态文件是 ``RolloutManager.save`` 里紧随 data_source 状态之后的第二个小文件
++（tmp + fsync + rename 原子写），与 Megatron checkpoint 之间没有事务；两者之间崩溃属于上述残余。
++
++Import-light on purpose（json / os / logging），driver、RolloutManager actor、trainer actor 都能用。
++"""
++
++from __future__ import annotations
++
++import json
++import logging
++import os
++import socket
++import time
++from typing import Any
++
++from miles.utils import rh2_event_log
++
++logger = logging.getLogger(__name__)
++
++PUBLISHED_VERSION_STATE_SCHEMA_ID = "rh2.published_weight_version_state.v1"
++# 与 RolloutDataSource.save/load 的 ``rollout/global_dataset_state_dict_{rollout_id}.pt`` 同目录。
++STATE_SUBDIR = "rollout"
++DATA_SOURCE_STATE_FILENAME = "global_dataset_state_dict_{rollout_id}.pt"
++PUBLISHED_VERSION_STATE_FILENAME = "rh2_published_weight_version_{rollout_id}.json"
++
++STATE_KIND_DATA_SOURCE = "data_source_state"
++STATE_KIND_PUBLISHED_VERSION = "published_weight_version_state"
++
++
++class RecoveryStateMissing(RuntimeError):
++    """恢复语境下必需的 rollout 侧状态文件缺失或不可用（typed run failure，在任何 publish 之前抛出）。
++
++    ``kind`` 是 :data:`STATE_KIND_DATA_SOURCE`（data_source 游标 .pt）或
++    :data:`STATE_KIND_PUBLISHED_VERSION`（已发布版本 .json）；``detail`` 非空表示文件存在但内容不可用。
++    """
++
++    def __init__(
++        self,
++        *,
++        kind: str,
++        path: str,
++        rollout_id: int,
++        load_dir: str | None,
++        detail: str | None = None,
++    ) -> None:
++        self.kind = kind
++        self.path = path
++        self.rollout_id = rollout_id
++        self.load_dir = load_dir
++        self.detail = detail
++        state = "unusable" if detail else "missing"
++        message = (
++            f"[rh2-integration] W5b cold recovery: required {kind} for rollout_id={rollout_id} is {state} "
++            f"at {path} (load_dir={load_dir!r})"
++        )
++        if detail:
++            message += f": {detail}"
++        message += (
++            ". A run resumed from a checkpoint must restore the rollout-side state saved together with it; "
++            "silently starting from scratch would desynchronise the data cursor / weight-version accounting "
++            "from the restored weights. To start a fresh run from these weights pass them via --ref-load "
++            "(no latest_checkpointed_iteration.txt under --load) instead of resuming."
++        )
++        super().__init__(message)
++
++
++class RecoveryVersionMismatch(RuntimeError):
++    """重启后本 run 的首次 publish 版本 != 恢复点记录的已发布版本（trainer 与 rollout 侧恢复到了不同的点）。"""
++
++    def __init__(self, *, restored: int, published: int) -> None:
++        self.restored = restored
++        self.published = published
++        super().__init__(
++            f"[rh2-integration] W5b cold recovery: the first weight publish of this run carries version "
++            f"{published}, but the restored checkpoint recorded published version {restored} (the trainer's "
++            f"updater counter must have been restored to {restored - 1} so that the bootstrap publish re-labels "
++            f"the restored weights {restored}). Trainer and rollout side restored different points; stopping "
++            "before any sample is booked under a wrong version."
++        )
++
++
++def is_recovery_context(args: Any, rollout_id: int | None) -> bool:
++    """恢复语境 = 有 --load 且 rollout_id >= 0（见模块说明）。None / 负数 = 全新 run。"""
++    if rollout_id is None or getattr(args, "load", None) is None:
++        return False
++    return int(rollout_id) >= 0
++
++
++def data_source_state_path(root: str, rollout_id: int) -> str:
++    """镜像 ``RolloutDataSource.save/load`` 的路径字面量（只用于报错与事件，不改 data_source 的实现）。"""
++    return os.path.join(root, STATE_SUBDIR, DATA_SOURCE_STATE_FILENAME.format(rollout_id=rollout_id))
++
++
++def published_version_state_path(root: str, rollout_id: int) -> str:
++    return os.path.join(root, STATE_SUBDIR, PUBLISHED_VERSION_STATE_FILENAME.format(rollout_id=rollout_id))
++
++
++def _validate_published_version(published_weight_version: Any) -> int | None:
++    """已发布版本要么是 None（恢复点之前从未 publish，例如 debug_train_only），要么是 >= 1 的整数
++    （updater 先 +1 再 publish，所以发布过的版本号不可能是 0）。"""
++    if published_weight_version is None:
++        return None
++    # 严格只收 int（bool 是 int 的子类、"7" 这类字符串都不是版本事实）：文件由 RolloutManager.weight_version
++    # （updater 的 int 计数器）写出，任何别的类型都意味着来源错了，不做静默转换。
++    if isinstance(published_weight_version, bool) or not isinstance(published_weight_version, int):
++        raise ValueError(f"published_weight_version must be an int or None, got {published_weight_version!r}")
++    if published_weight_version < 1:
++        raise ValueError(
++            f"published_weight_version must be >= 1 (an updater publishes 1 first), got {published_weight_version}"
++        )
++    return published_weight_version
++
++
++def save_published_weight_version(save_dir: str, rollout_id: int, published_weight_version: int | None) -> str:
++    """把"保存 checkpoint rollout_id 时已发布给 engine 的版本"原子写成一个小 JSON 文件；返回路径。"""
++    version = _validate_published_version(published_weight_version)
++    record = {
++        "schema_id": PUBLISHED_VERSION_STATE_SCHEMA_ID,
++        "rollout_id": int(rollout_id),
++        "published_weight_version": version,
++        # 写下本文件的 run（launcher 设 MILES_RH2_RUN_ID 时非空），恢复时作为 previous_run_id 记进事件。
++        "run_id": os.environ.get(rh2_event_log.RUN_ID_ENV) or None,
++        "saved_at_unix": round(time.time(), 3),
++        "host": socket.gethostname(),
++        "pid": os.getpid(),
++    }
++    path = published_version_state_path(save_dir, rollout_id)
++    os.makedirs(os.path.dirname(path), exist_ok=True)
++    tmp = f"{path}.tmp"
++    with open(tmp, "w", encoding="utf-8") as fh:
++        json.dump(record, fh, ensure_ascii=False, indent=2)
++        fh.write("\n")
++        fh.flush()
++        os.fsync(fh.fileno())
++    os.replace(tmp, path)
++    logger.info(
++        "[rh2-integration] W5b saved published weight version %s for rollout_id=%s at %s", version, rollout_id, path
++    )
++    return path
++
++
++def load_published_weight_version(load_dir: str, rollout_id: int, *, required: bool) -> dict[str, Any] | None:
++    """读回 :func:`save_published_weight_version` 写下的记录并校验；返回 dict（含 ``path``），或在
++    ``required=False`` 且文件不存在时返回 None。缺失（required）/ 损坏 / rollout_id 不匹配都抛
++    :class:`RecoveryStateMissing`。"""
++    path = published_version_state_path(load_dir, rollout_id)
++    if not os.path.exists(path):
++        if required:
++            raise RecoveryStateMissing(
++                kind=STATE_KIND_PUBLISHED_VERSION, path=path, rollout_id=int(rollout_id), load_dir=load_dir
++            )
++        return None
++    try:
++        with open(path, encoding="utf-8") as fh:
++            record = json.load(fh)
++        if not isinstance(record, dict):
++            raise ValueError(f"expected a JSON object, got {type(record).__name__}")
++        if record.get("schema_id") != PUBLISHED_VERSION_STATE_SCHEMA_ID:
++            raise ValueError(f"unexpected schema_id {record.get('schema_id')!r}")
++        if int(record.get("rollout_id")) != int(rollout_id):
++            raise ValueError(f"file records rollout_id={record.get('rollout_id')!r}, expected {int(rollout_id)}")
++        version = _validate_published_version(record.get("published_weight_version"))
++    except (ValueError, TypeError, OSError) as exc:
++        raise RecoveryStateMissing(
++            kind=STATE_KIND_PUBLISHED_VERSION,
++            path=path,
++            rollout_id=int(rollout_id),
++            load_dir=load_dir,
++            detail=repr(exc),
++        ) from exc
++    record["published_weight_version"] = version
++    record["path"] = path
++    return record
++
++
++def initial_updater_weight_version(published_weight_version: int | None) -> int:
++    """updater 计数器的恢复值 = p - 1（None → 0：恢复点之前从未 publish，保持 stock 起点）。"""
++    version = _validate_published_version(published_weight_version)
++    return 0 if version is None else version - 1
++
++
++def resolve_restore_rollout_id(args: Any, loaded_rollout_id: int | None) -> int:
++    """trainer 侧与 RolloutManager 侧必须用同一个 rollout_id 取状态文件。
++
++    镜像 ``placement_group.create_training_models``：``start_rollout_id`` = 用户显式传入的值，否则
++    ``loaded_rollout_id + 1``（trainer 实际加载的 checkpoint 迭代；miles 里 iteration == rollout_id）；随后
++    ``RolloutManager.load(start_rollout_id - 1)``。返回值 < 0 即非恢复语境。
++    """
++    explicit = getattr(args, "start_rollout_id", None)
++    if explicit is not None:
++        return int(explicit) - 1
++    if loaded_rollout_id is None:
++        return -1
++    return int(loaded_rollout_id)
++
++
++def restore_updater_weight_version(args: Any, loaded_rollout_id: int | None) -> int:
++    """trainer 每个 rank 在构造 weight updater 之后调用：返回 ``updater.weight_version`` 的初值。
++
++    非恢复语境 → 0（stock）。恢复语境 → 读状态文件（缺失 / 损坏抛 :class:`RecoveryStateMissing`，run 在
++    首次 publish 之前停止）→ p-1，使 train_async 的 bootstrap publish 标 p、首次真实更新标 p+1。
++    """
++    restore_rollout_id = resolve_restore_rollout_id(args, loaded_rollout_id)
++    if not is_recovery_context(args, restore_rollout_id):
++        return 0
++    state = load_published_weight_version(args.load, restore_rollout_id, required=True)
++    initial = initial_updater_weight_version(state["published_weight_version"])
++    logger.info(
++        "[rh2-integration] W5b cold recovery: restored checkpoint rollout_id=%s recorded published weight "
++        "version %s; updater counter starts at %s so the bootstrap publish re-labels the restored weights %s",
++        restore_rollout_id,
++        state["published_weight_version"],
++        initial,
++        state["published_weight_version"],
++    )
++    return initial
++
++
++def check_first_publish_after_restore(restored: int | None, published: int) -> None:
++    """RolloutManager 本 run 的首次 ``set_weight_version``：恢复点记录了 p 时必须恰为 p。"""
++    if restored is None:
++        return
++    if int(published) != int(restored):
++        raise RecoveryVersionMismatch(restored=int(restored), published=int(published))
++
++
++def save_rollout_state(args: Any, rollout_id: int, data_source: Any, published_weight_version: int | None) -> str | None:
++    """``RolloutManager.save`` 的实现：data_source 游标（stock，仅 ``rollout_global_dataset``）+ 已发布版本文件
++    （只要有 ``--save``），同目录、同 rollout_id、同一次调用。返回版本文件路径（无 ``--save`` 时 None）。"""
++    if getattr(args, "rollout_global_dataset", False):
++        data_source.save(rollout_id)
++    save_dir = getattr(args, "save", None)
++    if save_dir is None:
++        return None
++    return save_published_weight_version(save_dir, rollout_id, published_weight_version)
++
++
++def restore_rollout_state(args: Any, rollout_id: int | None, data_source: Any) -> dict[str, Any] | None:
++    """``RolloutManager.load`` 的实现：``data_source.load``（恢复语境缺文件即 typed 报错）→ 已发布版本文件
++    → ``run_restarted`` 事件。返回版本状态记录；非恢复语境返回 None（全新 run 不发事件）。"""
++    data_source.load(rollout_id)
++    if not is_recovery_context(args, rollout_id):
++        return None
++    rollout_id = int(rollout_id)
++    state = load_published_weight_version(args.load, rollout_id, required=True)
++    cursor = {
++        key: getattr(data_source, key, None)
++        for key in ("sample_offset", "epoch_id", "sample_group_index", "sample_index")
++    }
++    ds_path = data_source_state_path(args.load, rollout_id)
++    rh2_event_log.emit(
++        rh2_event_log.RUN_RESTARTED_EVENT,
++        rollout_id=rollout_id,
++        start_rollout_id=rollout_id + 1,
++        load_dir=args.load,
++        published_weight_version=state["published_weight_version"],
++        bootstrap_weight_version=state["published_weight_version"],
++        previous_run_id=state.get("run_id"),
++        published_version_state_path=state["path"],
++        data_source_state_path=ds_path,
++        data_source_state_present=os.path.exists(ds_path),
++        data_source_state=cursor,
++    )
++    logger.info(
++        "[rh2-integration] W5b cold recovery: restored rollout state for rollout_id=%s from %s (published weight "
++        "version %s, previous run_id %s, cursor %s); this run starts at rollout_id=%s",
++        rollout_id,
++        args.load,
++        state["published_weight_version"],
++        state.get("run_id"),
++        cursor,
++        rollout_id + 1,
++    )
++    return state
+-- 
+2.50.1 (Apple Git-155)
+
