@@ -89,6 +89,20 @@
 
 ---
 
+## §1.5 2026-09-04 owner 拍板：D2 + B（权威文本 = `miles_spike/decision_package_D2_B.md` v2；本节只记改判与落地后果）
+
+- **改判 A3 的实现机制**（目标不变）：删除每轨迹 `SandboxCapabilityFacts` 证明系统（provider / required / `sandbox_capability_facts_missing` / `sandbox_capability_unverified_*` / lease 绑定），改为**唯一正式 rollout profile + 独立 grader profile，创建期强制配置 + 启动前最小探针，不合即不启动/停 run**，只保留 run 级 `runtime_profile_digest` + 探针报告记录（§6 被动记录）。security 维只判执行级 reward 可信事实。
+- **改判 D1-4 两阶段同阈值**：staleness 以 miles consume-time（`DefaultDataBuffer.get()` + `--max-weight-staleness N`）为**唯一权威**；RH2 只传递/校验版本 provenance（W1b 叶版本绑定保留），finalize-time lag 只记观测；eligibility 第七维改"版本事实可用且合法"；N 是 profile 参数，改 N 不重走 B/T0（首 GPU spike 起始 N=2）。
+- **D2-3 可信评分投影**：不因改测试路径 DROP_GROUP；控制面改动不重放、solution delta 重放、官方 grader 正常出 0/1；首训按当前 SWE adapter 的 HygieneRules 作控制面（排除法），通用控制面定义等 taskset 定后再做。
+- **D2-4**：删除 `public_projection_marker_hit` 的资格语义（TrajectoryProjection 非模型可见面）；真实泄漏用 canary 反例验证真模型可见边界。
+- **B-3 最小冷恢复合同**：依赖 miles 既有 checkpoint + data_source 状态；buffer/在飞组丢弃；**不建 joint commit / COMMITTED marker / (segment_id, numeric_version) 复合身份**；只修 updater 版本从恢复点继续、data_source 状态缺失显式报错、重启记录三点（**取代 W5b 行原文**）。
+- **B-5b / 新增 W10**：租卡前闭合多 engine 最小正确性（abort 广播、版本不经 router 随机查、恢复 per-engine 参数删 engine_count==1、两假 engine 反例）；engine 数由 GPU matched comparison 决定。
+- B-1 语义/B-2 drop + 三分支 drop 事件 + `max_time_without_accepted_group`/B-4=1/B-5a retract/B-6 落账：按 v2。
+- **前置清理批**先于 W3/W4 开工（见 §5 3a）。
+
+
+---
+
 ## §2 05 计划替换条款（拍板后逐条回写 `05-fully-async-execution-plan.md`，原文保留删除线或"已由 06 取代"注记，不静默删）
 
 1. **FA-1（持续 worker/有界队列/proxy 边界/D-FA-3 内部重生成）**→ 由 miles `FullyAsyncRolloutFn + DefaultDataBuffer` 承担；pause mode（`retract | in_place`）与单/多 engine 支持面**归决策包 B**（W4 前）,具体卡数/TP/placement 归 C——retract 保持推荐（#2783 耦合、上游默认,spans 记录跨版本 token）但不在本条固定；**proxy 级 turn 重生成与 TrainingRuntimeCoordinator 不再是正式面**——**已归因的 task-local 失败** = 该 attempt/group 编码为 ABORTED,由 unused handler 按 B 包语义处理（建议 drop）;**不可归因/结构性损坏 = typed run-fatal,不补采**（2026-09-02 wave1 修正:静默补采会掩盖系统损坏）;不做更新窗口透明重试。已实现的 rh2 async_worker 保留为冻结回退面组件。
@@ -107,7 +121,7 @@
 
 > 映射完备性说明（2026-09-01 穷举核对）：本表与就绪稿 §5.1 十三条租前硬门逐条对映——第 11 条（eval 运输链）与 A5 实现归属为本次修订补入（W8、W2a 扩项）；第 8 条后半（run-label 兜底清理）补入 W5a；W3 因体量与依赖差异拆为 W3a/W3b。profile 冻结时点澄清：**结构性骨架在 A（A1/A5/A6），数值在 C**。（W6 已删除,旧"W6 拒绝面机制"表述作废。）
 
-**并行波次**（2026-09-02 按 wave1 建议改:W3a/W3b 不等决策包 B,只等 D2 确认点）：Wave1（D0 批后）= W0 ∥ W1a ∥ W2a（T2-d/e 由数据线并行,W2b 条件式非 Wave1）→ Wave2（D1 批后）= W1b ∥ W5a ∥ W9 → Wave3 = (D2 确认后 W3a→W3b 串行或切所有权) ∥ (B 批后 W4→W5b 串行,W4 先冻结 train/publish/drain 顺序) → Wave4 = W8 → Wave5（C 批后）= W7。W6 已删除。粗量级：全程 2~3 周现行节奏。
+**并行波次**（2026-09-02 按 wave1 建议改:W3a/W3b 不等决策包 B,只等 D2 确认点）：Wave1（D0 批后）= W0 ∥ W1a ∥ W2a（T2-d/e 由数据线并行,W2b 条件式非 Wave1）→ Wave2（D1 批后）= W1b ∥ W5a ∥ W9 → Wave3（D2/B 已批 2026-09-04）= **前置清理批** → (W3a→W3b 串行或切所有权) ∥ (W4→W5b 最小冷恢复,W4 先冻结 train/publish/drain 顺序) ∥ W10 → Wave4 = W8 → Wave5（C 批后）= W7。W6 已删除。粗量级：全程 2~3 周现行节奏。
 
 | 包 | 范围 | 依赖 | 验收要点 |
 |---|---|---|---|
@@ -121,9 +135,10 @@
 | **W3b 最小安全链**（codex 复审重构:正向能力事实,删 CommandFilter 平台） | 每个 sandbox 创建后**直接核实并记录正向能力事实**:non-root/capabilities/pids/CPU/内存/writable mount allowlist+quota/网络仅可达模型代理/hidden+grader 资产不在 mount/git future refs+reflog+remotes 已清——**缺任一项不产训练样本**,事实进 eligibility(接 W1b security 维)。**删除** CommandFilter+dummy 观测+attempted/executed 平台（python/subprocess 可绕;向量覆盖:出网→内核级网络隔离,reflog→镜像清理,改测试→patch hygiene,hidden→mount 隔离;被阻断操作返回真实工具错误）。H7 GPU 验收改形为真实 CC run 中的边界核实 | D2 确认、W1b;**不等决策包 B**;与 W3a 串行或所有权切分 | 每能力项一个"未生效即拦"负例;作弊向量逐条由保留机制覆盖的正反例;正常轨迹不误拒 |
 | **W4 JIT/staleness** | publish 后 drain（miles 侧窄 commit）;持续 producer 保留;H5 硬门读取的最小计时事件;一次性 CPU materialization benchmark。**先于 W5b 执行以冻结 train/publish/drain 顺序** | B | B-ready/B-not-ready/publish/zero-signal/fresh-stale refill/事件配对负例 |
 | **W5a shutdown + 资源闭包** | 就绪稿 §2.6 关闭链;有界超时保首因;campaign supervisor **缩为 launch trap + run-label 残留检查**;普通 evidence flush 失败不阻止 cleanup;承接原 W6 的资源闭包一次性取数（内存保守上界+fsync 延迟） | A | 正常/异常关闭、关闭后禁 submit、无残留三分支;flush 失败仍清理负例 |
-| **W5b checkpoint 冷恢复**（codex 复审瘦身+补全） | **保留**:published-boundary checkpoint;model/optimizer/scheduler/RNG/last-published-version 同代;薄 COMMITTED marker;空 buffer 新 segment;(segment_id, numeric_version) 复合身份;不恢复旧 cursor;冷恢复后完成 optimizer step。**补全（codex 终核修正 off-by-one）**:updater/rank 的 version bootstrap——train_async 启动即有一次 update_weights 且 updater 在 publish 前先 +1,故恢复到已发布版本 p 时 updater 内部计数器应恢复为 **p-1**（bootstrap 重发该 checkpoint 标记 p,首次真实更新才 p+1）;若选择绕过 bootstrap publish 直接 load/tag p,须显式实现另一条启动路径——**不得把所有对象无差别设为 p**（p2p.py:61/mixin.py:358,覆盖全部 updater 不只 rollout manager）。**删除**:独立 frontier-discard receipt（改普通恢复日志行）/evidence watermark/全量 crash matrix→只测未完成 checkpoint、损坏 checkpoint、完整冷恢复三场景 | B;**在 W4 之后**（同触 train/publish 顺序） | 三场景正反例;五元组不混代;恢复后版本 p→p+1 |
+| **W5b checkpoint 冷恢复**（**2026-09-04 owner 改判为最小合同,本行原文作废,以 decision_package_D2_B.md v2 B-3 为准**:依赖 miles 既有 checkpoint+data_source 状态;buffer/在飞组丢弃;不建 joint commit/COMMITTED/复合身份;只修 updater 版本从恢复点继续、状态缺失显式报错、重启记录） | **保留**:published-boundary checkpoint;model/optimizer/scheduler/RNG/last-published-version 同代;薄 COMMITTED marker;空 buffer 新 segment;(segment_id, numeric_version) 复合身份;不恢复旧 cursor;冷恢复后完成 optimizer step。**补全（codex 终核修正 off-by-one）**:updater/rank 的 version bootstrap——train_async 启动即有一次 update_weights 且 updater 在 publish 前先 +1,故恢复到已发布版本 p 时 updater 内部计数器应恢复为 **p-1**（bootstrap 重发该 checkpoint 标记 p,首次真实更新才 p+1）;若选择绕过 bootstrap publish 直接 load/tag p,须显式实现另一条启动路径——**不得把所有对象无差别设为 p**（p2p.py:61/mixin.py:358,覆盖全部 updater 不只 rollout manager）。**删除**:独立 frontier-discard receipt（改普通恢复日志行）/evidence watermark/全量 crash matrix→只测未完成 checkpoint、损坏 checkpoint、完整冷恢复三场景 | B;**在 W4 之后**（同触 train/publish 顺序） | 三场景正反例;五元组不混代;恢复后版本 p→p+1 |
 | ~~**W6**~~（codex 复审:整包删除,职责分流——训练事件由 W1~W5 就地产生;资源闭包→W5a;train/eval 分离→W8;W7 直接消费最小指标;"probe 题不训"属实验选择非 runtime 断言） | — | — |
 | **W9 faithful DIS CP 归约**（新增,owner 2026-09-02 拍板必做） | 目标链路必须同时支持 CP=1 与 CP>1（CP=2 是显存不足候选,数值临场定——A1）。当前 `faithful_dis_loss.py:338-342` 对 cp.size≠1 fail-closed:实现范围 = CP 切分下的**behavior logprob 对齐、advantage 广播、loss mask/sampling-support 的本地分片、逐 token 分子与 target∈support 断言**（不只笼统"归约";miles `math_utils` 已有 CP 感知模式可循,stock PPO 路径已用）,实现后移除该 fail-closed（改为真实语义）。**本地可测边界**:多进程 CPU process group / mock parallel_state 测归约逻辑与切分对齐;**真机 CP=2 端到端验证归 GPU spike**（C 包加一条 CP=2 短验证,W7 judge 覆盖 CP 语义） | D1 后（Wave2,独立于准入链,只触 faithful_dis_loss） | CP=1 结果与现实现逐位一致;CP=2 模拟切分下守恒/对齐正反例;fail-closed 移除后无 CP 静默降级路径 |
+| **W10 多 engine 最小正确性**（新增,B-5b owner 2026-09-04） | abort 定向/广播（仿 miles abort-all,`/list_workers` 全 worker 广播同 rid）;版本事实不经 router 随机查一台（删单 engine 随机版本探测;publish 收敛事实经 engine actor 查全部）;恢复 `rollout_num_gpus_per_engine` 普通配置,删 `engine_count == 1` 硬编码/preflight（只留整除/资源合法性）;**不做** dead-engine 恢复/弹性缩扩容/粘滞路由（任一 engine 死亡=停 run 按 B-3 重启） | B（已批）;与 W4 并行 | 两假 engine 本地反例:分发/rid abort 到达持有者/发布到全部 engine/版本不猜/单 engine 仍正常;GPU 真多 engine e2e 归 spike |
 | **W8 eval 运输链** | 标准非 FA before/after eval 本地链:接同一 source/model/tokenizer/环境解析器;eval taskset 身份分离断言;eval 前 producer/grading/update 停止断言;结果绑定显式 checkpoint digest（拒绝 latest）;小模型/fixture 验证 base 与 post-update 双 checkpoint 全流程与失败传播。**skip 不得洗绿（codex 终核补）**:miles EvalDispatcher 把 busy/export_failed/crashed 记 skip 而非失败——W8 验收必须要求两个显式 checkpoint 的 eval **真正完成并产出绑定结果**,任一 skip/failure = 首训就绪验收失败,不得以"已 dispatch/已 drain"充数 | W2a（环境解析器）、T2-d/W3a（eval 走同一可信评分链）、W5a（producer/shutdown 语义）、W5b（checkpoint identity） | 身份分离/producer 未停/latest 回退/skip 洗绿四负例;双 checkpoint fixture 正例 |
 | **W7 实验包** | 从范围反向生成 launch/collector/judge/thresholds（不继承未审文件）。**judge 覆盖 = 本计划声称合格的全部训练/系统正确性判定**（codex 终核纠正此前过窄口径）:parity/守恒/R3 消费/零信号 + fresh grading/eligibility + 安全正向能力事实 + consume-time staleness + optimizer→publish→version + 冷恢复 + 正常 shutdown + eval checkpoint 绑定;**不含**授权 manifest/阶段闸门类判定 | C、W0~W5、W8、W9（CP 语义进 judge 面）;**W2b 为条件依赖**（仅当 C 决定 GPU 用真实数据）（W6 已删除,旧依赖串作废） | 双 base 全绿+self-test+preflight 正反例 |
 
@@ -143,6 +158,7 @@
 1. **D0 已拍板（2026-09-02,owner 按 wave1_决策1 §8 草案批准）;D1 已拍板（同日,按 wave1_决策1 §3;A5 归 C）**：A1 + A7/§6 + A8 + W1a 身份边界 + W2a 所有权边界;A2/A3/A6 内容冻结、批准归 D1;A4 归 D2;A5/loss/pause mode/拓扑后置。W0/W1a/W2a 即时开工；
 2. 拍板即回写 05/04/00-status 修订注记 + E 系定案（E2/E7/E10/附录 A）迁移修订注记 + 以 append-only 注记结清 fa2a 决策包 D1b（仅限首训 profile 范围,不改写旧批准史）+ A4 注明取代旧 scope 的 CommandFilter/attempted-executed 方案（单独提交）；
 3. Wave1 三包已完成并经 codex 两轮复核（F1~F6 全部闭合,commits 00457891/7a799a66）;D1 已拍板。**下一步 = codex 对二轮窄修复做只针对反例的快速复核 → W1b 第一集成切片开工**。Wave2 分两段:**W1b 第一集成切片**（Wave1 复核裁定:F4 attempt-assignment join + F5 termination 派生 producer + F6 prepared-artifact→datasource→generate→bringup 真实链,**不启用 admission/filter**,聚焦复核通过后才写三终态/组准入）→ W1b 第二段（三终态+组准入;**第二段须知**（codex 切片一复核）:AttemptAssignmentRegistry 在 GenerateFn 返回前已释放、不得延长其生命周期——buffer/filter 阶段以 miles `DataBufferInput.prompt_group` 与生成结果对账;载荷 metadata 只作运输值,admission 时全量核对不建 durable ledger;`termination_facts_stamp_conflict` 发生在 receipt/audit 落盘之后、磁盘证据仍显示成功——解除 formal 挡板或 GPU 验收前经现有审计追加 attempt-bound fatal 事实,不建恢复平台）∥ W5a ∥ W9；
+3a. **Wave3 前置清理批（2026-09-04 D2/B 拍板后立即）**：删每轨迹能力事实分支（generate.py provider、wrapper/gate required·missing·unverified、admission 映射、lease 绑定）→ 删 finalize-time 阈值（SlimeBindingConfig.staleness_threshold 作为资格阈值、W1b "显式阈值必传/载荷阈值≠权威即 FATAL"）并把 eligibility 第七维改"版本事实可用且合法"→ 删 projection 扫描资格语义（wrapper 强依赖、gate/admission 映射、exporter 门槛;保留真模型可见面扫描）→ 附录 A/W1b 行同步 → 相关测试 oracle 逐条登记 T1;不与 W3/W4 新功能混同一 commit。
 4. 防御清理落地项：C3/C7 governed buffer/ledger 未接线原型**可保留为 spike-only 代码或日后单独清理**——其删除不是 Wave1 前置,且不得与生产链改动混同一 commit（codex 终核）;既有 lanes/证据系统冻结不扩建。**bringup.py:705-715 的临时无条件拒绝只能在 W1b+W3a+W3b+W4 完成后删除**（2026-09-02 codex 补:consume-time staleness 与 publish→drain 顺序到 W4 才闭合）（不在 Wave1 提前删,且不得误删 fa_formal 的真实 version/barrier/security/config capability 检查——那些是本体不是仪式）。
 
 ## §6 防御清理原则（2026-09-01 Claude 提案,待 owner 确认;长期有效）
