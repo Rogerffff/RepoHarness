@@ -427,3 +427,7 @@ uv run ruff check src/repoharness2 tests experiments/s1_parity.py               
 lane B = 525 + 13 = **538 passed**（观测 541 = 538 + W5a 进行中 +3；1 failed 为上述 g1 树 digest）。集成者按干净树重跑后以实测为准。
 
 **T0**：无新增。fatal 白名单只提升"我方接线/事实矛盾"类异常（停机不剔除样本，不产生系统性偏置）；task-local ABORTED 面未扩大也未缩小。
+
+---
+
+> **2026-09-04 前置清理批注记（append-only）**：本报告中的每轨迹 `SandboxCapabilityFacts` 机制（REQUIRED_SANDBOX_CAPABILITIES、provider、lease 绑定、missing/unverified 映射）、finalize-time staleness 阈值资格门（显式阈值必传、载荷阈值≠权威 FATAL、`staleness_exceeded`）与 `public_projection_marker_hit` 资格语义,已随 owner 2026-09-04 拍板的 D2/B v2 删除（决策包 §0 记录了这些机制为何是错误方向）。保留:三终态、薄处置边界、复合 filter、叶版本绑定、A3 的 S1_TIER_CAP 删除。删除清单与 T1 oracle 改动见 wave3_precleanup_report.md（commit b007c0d9）。

@@ -158,7 +158,7 @@
 1. **D0 已拍板（2026-09-02,owner 按 wave1_决策1 §8 草案批准）;D1 已拍板（同日,按 wave1_决策1 §3;A5 归 C）**：A1 + A7/§6 + A8 + W1a 身份边界 + W2a 所有权边界;A2/A3/A6 内容冻结、批准归 D1;A4 归 D2;A5/loss/pause mode/拓扑后置。W0/W1a/W2a 即时开工；
 2. 拍板即回写 05/04/00-status 修订注记 + E 系定案（E2/E7/E10/附录 A）迁移修订注记 + 以 append-only 注记结清 fa2a 决策包 D1b（仅限首训 profile 范围,不改写旧批准史）+ A4 注明取代旧 scope 的 CommandFilter/attempted-executed 方案（单独提交）；
 3. Wave1 三包已完成并经 codex 两轮复核（F1~F6 全部闭合,commits 00457891/7a799a66）;D1 已拍板。**下一步 = codex 对二轮窄修复做只针对反例的快速复核 → W1b 第一集成切片开工**。Wave2 分两段:**W1b 第一集成切片**（Wave1 复核裁定:F4 attempt-assignment join + F5 termination 派生 producer + F6 prepared-artifact→datasource→generate→bringup 真实链,**不启用 admission/filter**,聚焦复核通过后才写三终态/组准入）→ W1b 第二段（三终态+组准入;**第二段须知**（codex 切片一复核）:AttemptAssignmentRegistry 在 GenerateFn 返回前已释放、不得延长其生命周期——buffer/filter 阶段以 miles `DataBufferInput.prompt_group` 与生成结果对账;载荷 metadata 只作运输值,admission 时全量核对不建 durable ledger;`termination_facts_stamp_conflict` 发生在 receipt/audit 落盘之后、磁盘证据仍显示成功——解除 formal 挡板或 GPU 验收前经现有审计追加 attempt-bound fatal 事实,不建恢复平台）∥ W5a ∥ W9；
-3a. **Wave3 前置清理批（2026-09-04 D2/B 拍板后立即）**：删每轨迹能力事实分支（generate.py provider、wrapper/gate required·missing·unverified、admission 映射、lease 绑定）→ 删 finalize-time 阈值（SlimeBindingConfig.staleness_threshold 作为资格阈值、W1b "显式阈值必传/载荷阈值≠权威即 FATAL"）并把 eligibility 第七维改"版本事实可用且合法"→ 删 projection 扫描资格语义（wrapper 强依赖、gate/admission 映射、exporter 门槛;保留真模型可见面扫描）→ 附录 A/W1b 行同步 → 相关测试 oracle 逐条登记 T1;不与 W3/W4 新功能混同一 commit。
+3a. **Wave3 前置清理批（2026-09-04 D2/B 拍板后立即;已完成并提交 b007c0d9,报告 wave1/wave3_precleanup_report.md）**：删每轨迹能力事实分支（generate.py provider、wrapper/gate required·missing·unverified、admission 映射、lease 绑定）→ 删 finalize-time 阈值（SlimeBindingConfig.staleness_threshold 作为资格阈值、W1b "显式阈值必传/载荷阈值≠权威即 FATAL"）并把 eligibility 第七维改"版本事实可用且合法"→ 删 projection 扫描资格语义（wrapper 强依赖、gate/admission 映射、exporter 门槛;保留真模型可见面扫描）→ 附录 A/W1b 行同步 → 相关测试 oracle 逐条登记 T1;不与 W3/W4 新功能混同一 commit。
 4. 防御清理落地项：C3/C7 governed buffer/ledger 未接线原型**可保留为 spike-only 代码或日后单独清理**——其删除不是 Wave1 前置,且不得与生产链改动混同一 commit（codex 终核）;既有 lanes/证据系统冻结不扩建。**bringup.py:705-715 的临时无条件拒绝只能在 W1b+W3a+W3b+W4 完成后删除**（2026-09-02 codex 补:consume-time staleness 与 publish→drain 顺序到 W4 才闭合）（不在 Wave1 提前删,且不得误删 fa_formal 的真实 version/barrier/security/config capability 检查——那些是本体不是仪式）。
 
 ## §6 防御清理原则（2026-09-01 Claude 提案,待 owner 确认;长期有效）
@@ -168,6 +168,8 @@
 今后任何 W 包或审查建议中出现授权官僚类设计,直接按本条拒绝,不再提请 owner 决策。
 
 ## 附录 A · 终态判定：两层判定 + reason-code 映射（2026-09-02 按 codex 复核重写;owner 已批高层原则,细目 T1 由契约/代码审查收口）
+
+> **2026-09-04 前置清理批修订**：随 D2/B v2 拍板,本表中 **维度 5 的"能力 producer 全局未接线 / 单条缺正向能力事实 / 探针失败"三行、`public_projection_marker_hit` 行、维度 7 的 `staleness_exceeded` 行均已作废**（每轨迹能力事实证明系统与 projection 扫描资格语义已删除;finalize-time 阈值不再是资格门）。现行维度 5 = 只判执行级 reward 可信事实（executed finding、hygiene 落盘篡改、结构不安全 artifact）;维度 7 = 版本事实可用且合法:`staleness_facts_missing` → ① FATAL,新 `staleness_facts_invalid`（非数值/未来版本）→ ① FATAL,finalize-time lag 只记观测。sandbox 正确性改由 W3b 在创建期强制 + 启动前探针保证,不合即不启动/停 run（D2-2）;测试/控制面路径修改按 D2-3 投影处理,不再是 unsafe（W3a）。
 
 **owner 批准的高层原则（2026-09-02）**：FATAL 优先于 ABORTED，ABORTED 优先于普通 DROP；ABORTED 只能来自没有形成 present 对象的已归因 task-local 故障；完整但合法的不合格对象走 DROP_GROUP；身份、引用、reward、mask、logprob 等账实矛盾走 FATAL；timeout/truncation 不由本附录决定（A5 归 C）。
 
