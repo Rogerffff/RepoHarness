@@ -7,7 +7,7 @@
   同一个关口；任何绕过它把样本交给训练后端的实现路径都视为违规；
 - EnvServer 出站扫描只是 service_driven 拓扑的第二道防线，不是唯一防线。
 
-本函数把「grade -> project -> scan -> gate」四步固化为一次调用：
+本函数把「grade -> project -> gate」三步固化为一次调用：
 
     1. grade    执行传入的评分动作（S1-4 manager/queue 的一次 grade），
                 拿到 GradingReport；
@@ -15,19 +15,19 @@
                 project_from_slime 或 S1-8 project_from_verifiers），
                 拿到 TrajectoryProjection——投影必然晚于评分，因为
                 RewardFacts 要引用评分报告的 report_id；
-    3. scan     对投影做 public projection 泄漏扫描（projection_scan）；
-    4. gate     七维合取判定（gate._evaluate），扫描结论作为
-                security_and_leakage 维的事实输入进入报告。
+    3. gate     七维合取判定（gate._evaluate）。
 
-    顺序说明（S1-5 任务原文写作 grade->project->gate->scan；本实现为
-    grade->project->scan->gate）：EligibilityReport 是 frozen 的自证对象
-    （facts_digest 在构造时锁定），扫描结论要成为 security 维的事实
-    就必须先于 gate 装配产出——"先 gate 后 scan"在该 schema 下物理上
-    不可实现（事后写入 = 篡改 facts_digest = 校验拒收），故按更严的
-    "扫描先行、结论进报告"执行，已记 implementation-notes。
+    历史第 3 步"scan"（对投影做 public projection 泄漏扫描并作为 security 维事实）
+    已按决策包 D2-4（2026-09-04 owner 已批）删除：`TrajectoryProjection` 是 rollout
+    结束后的 trainer/offline-export 中立投影，不是模型可见输入，扫描发生在 rollout
+    与评分之后、不解引用 token/artifact 内容，测不到 prompt/mount/env/工具输出里的
+    泄漏，却会因 `fail_to_pass_bonus` 这类字段名误报丢整组。真模型可见面
+    （envpack 的 PublicTaskBundle / RolloutTaskView）的 `scan_for_forbidden_markers`
+    整树检查原样保留；hidden/grader 泄漏的主验证改为结构/数据流证据 + canary 反例
+    （W3b）。`projection_scan.py` 只留冻结兼容读路径。
 
-S1-6 编排纪律：**只准调本函数**，不准分别调用 gate / projection_scan 的
-内部函数（它们都是模块私有 `_` 前缀；tests/governance 的 API 面测试断言
+S1-6 编排纪律：**只准调本函数**，不准直接调用 gate 的内部函数
+（模块私有 `_` 前缀；tests/governance 的 API 面测试断言
 `repoharness2.governance` 里唯一公开可调用函数就是 finalize_rollout）。
 
 grade/project 以可调用形式注入而不是直接传对象，是为了把调用**顺序**也
@@ -59,12 +59,7 @@ from repoharness2.governance.gate import (
     GateInputError,
     GateOutcome,
     GroupRepairSignal,
-    SandboxCapabilityFacts,
     _evaluate,
-)
-from repoharness2.governance.projection_scan import (
-    ProjectionScanResult,
-    _scan_public_projection,
 )
 from repoharness2.grading.queue import BackpressureEvent
 
@@ -79,24 +74,26 @@ ProjectFn = Callable[[GradingReport], TrajectoryProjection | Awaitable[Trajector
 
 
 class FinalizedRollout(StrictModel):
-    """finalize_rollout 的完整产物：四步的全部 evidence + 资格结论。
+    """finalize_rollout 的完整产物：三步的全部 evidence + 资格结论。
 
     S1-6 消费方式：
     - `eligibility_report` 作为 sidecar 与 Sample 同键落盘，宿主对象只写
       两个白名单派生视图键（eligibility_report_ref / training_eligibility_class，
       值直接取 report.derived_view_*）；
     - `group_repair_signal` 在组装配前转发训练后端（P4）；
-    - `projection` / `grading_report` / `scan_result` 原样归档供审计与 parity。
+    - `projection` / `grading_report` 原样归档供审计与 parity。
+
+    本对象是进程内聚合值，不是落盘 schema（sidecar 按四类分别落盘）；历史字段
+    `scan_result`（ProjectionScanResult）已随 D2-4 删除，不留 Optional 占位。
     """
 
     grading_report: GradingReport = Field(description="第 1 步产物：评分报告。")
     projection: TrajectoryProjection = Field(description="第 2 步产物：中立投影。")
-    scan_result: ProjectionScanResult = Field(description="第 3 步产物：泄漏扫描结论。")
     eligibility_report: EligibilityReport = Field(
-        description="第 4 步产物：资格判定权威载体。"
+        description="第 3 步产物：资格判定权威载体。"
     )
     group_repair_signal: GroupRepairSignal = Field(
-        description="第 4 步产物：组修复信号（一等暴露，组装配前转发后端）。"
+        description="第 3 步产物：组修复信号（一等暴露，组装配前转发后端）。"
     )
 
     @model_validator(mode="after")
@@ -104,7 +101,6 @@ class FinalizedRollout(StrictModel):
         traj = self.projection.trajectory_id
         pairs = {
             "grading_report": self.grading_report.trajectory_id,
-            "scan_result": self.scan_result.trajectory_id,
             "eligibility_report": self.eligibility_report.trajectory_id,
             "group_repair_signal": self.group_repair_signal.trajectory_id,
         }
@@ -142,13 +138,11 @@ async def finalize_rollout(
     handshake: BackendHandshake | None,
     findings: Sequence[AntiCheatFinding] = (),
     backpressure_events: Sequence[BackpressureEvent] = (),
-    sandbox_capability_facts: SandboxCapabilityFacts | None = None,
-    sandbox_capability_facts_required: bool = True,
-    sandbox_lease_id: str | None = None,
+    require_real_weight_versions: bool = True,
     report_id: str | None = None,
     created_at_utc: datetime | None = None,
 ) -> FinalizedRollout:
-    """治理层唯一公开入口：grade -> project -> scan -> gate 一次走完。
+    """治理层唯一公开入口：grade -> project -> gate 一次走完。
 
     参数：
     - grade：无参回调，执行本轨迹的评分（通常包一层
@@ -159,19 +153,19 @@ async def finalize_rollout(
       RewardFacts.reward_event_refs 要引用评分报告 id。
     - capture_records：本轨迹全部 GenerationCaptureRecord（A4 sidecar，
       token_provenance 维的事实源）。
-    - handshake：staleness 事实（policy_staleness 维的事实源）。**必须显式
-      传参**：暂无事实就显式传 None（该维将 fail-closed 失败并降级），
-      不给默认值是为了防止编排层"忘了接"被静默当成"没有"。
+    - handshake：版本事实（policy_staleness 维的事实源：weight_versions_seen /
+      policy_version；staleness_steps 只作观测）。**必须显式传参**：暂无事实就
+      显式传 None（该维将 fail-closed 失败并降级），不给默认值是为了防止编排层
+      "忘了接"被静默当成"没有"。
     - findings：本轨迹的反作弊 finding（executed 级触发 security 维失败）。
     - backpressure_events：评分队列反压事件流（可以混含其他轨迹的事件，
       gate 只取本轨迹的；理由码写进报告，不构成降级）。
-    - sandbox_capability_facts / sandbox_capability_facts_required（A3，W1b
-      第二段）：security 维的正向 sandbox 能力事实。默认 **required=True**
-      （fail-closed：事实缺席 = `sandbox_capability_facts_missing`，非 online）；
-      只有 s1_compat 冻结路径显式传 required=False（evidence 如实记
-      not_required）。W3b 落地前 formal 路径传 None 是预期形态。
-    - sandbox_lease_id（复核修复 #5）：本次 attempt 实际使用的 SandboxLease.lease_id；
-      required=True 时必传，能力事实的 lease_id 必须逐字相等（GateInputError）。
+    - require_real_weight_versions：policy_staleness 维的版本契约开关（与
+      `SlimeBindingConfig.require_real_weight_versions` 同名同义）。默认 True
+      （fail-closed：版本必须全部可解析为十进制 int 且无未来版本，否则
+      `staleness_facts_invalid`）；只有 S1 兼容 / 测试路径按其配置传 False，
+      允许静态哨兵版本（evidence 如实记 legacy_sentinel_allowed）。formal 链的
+      启动校验强制该旗标为 True。
     - report_id / created_at_utc：EligibilityReport 的 id 与时间戳；缺省时
       自动生成（id 形如 elig_1a2b3c4d5e6f，时间取当前 UTC）。需要逐字节
       可复现的报告（如 parity 对照）时由调用方显式传入。
@@ -182,18 +176,14 @@ async def finalize_rollout(
 
     grading_report = await _resolve(grade(), "grade", GradingReport)
     projection = await _resolve(project(grading_report), "project", TrajectoryProjection)
-    scan_result = _scan_public_projection(projection)
     outcome: GateOutcome = _evaluate(
         projection=projection,
         grading_report=grading_report,
         capture_records=capture_records,
-        scan_result=scan_result,
         findings=findings,
         handshake=handshake,
         backpressure_events=backpressure_events,
-        sandbox_capability_facts=sandbox_capability_facts,
-        sandbox_capability_facts_required=sandbox_capability_facts_required,
-        sandbox_lease_id=sandbox_lease_id,
+        require_real_weight_versions=require_real_weight_versions,
         report_id=report_id if report_id is not None else f"elig_{uuid.uuid4().hex[:12]}",
         created_at_utc=(
             created_at_utc if created_at_utc is not None else datetime.now(timezone.utc)
@@ -202,7 +192,6 @@ async def finalize_rollout(
     return FinalizedRollout(
         grading_report=grading_report,
         projection=projection,
-        scan_result=scan_result,
         eligibility_report=outcome.report,
         group_repair_signal=outcome.group_repair_signal,
     )

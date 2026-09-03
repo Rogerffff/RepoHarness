@@ -294,7 +294,7 @@ def _build_formal_chain(world, leaf_samples) -> _Chain:
         require_real_weight_versions=True,
         reject_context_shrink=True,
         reject_on_nonzero_harness_exit=True,
-        staleness_threshold=4,  # W1b 第二段：显式传入（禁止隐式默认；数值归 B）
+        staleness_threshold=4,  # 前置清理批（B-1）起只是 consume-time 阈值的记录用镜像，不是资格门
     )
     adapter_ref: dict[str, Any] = {}
     turns = _dense_turns()

@@ -26,12 +26,7 @@ from repoharness2.contracts import (
     GradingReport,
     TrajectoryProjection,
 )
-from repoharness2.governance import (
-    REQUIRED_SANDBOX_CAPABILITIES,
-    FinalizedRollout,
-    SandboxCapabilityFacts,
-    finalize_rollout,
-)
+from repoharness2.governance import FinalizedRollout, finalize_rollout
 from repoharness2.grading.queue import BackpressureEvent
 
 # 固定 id 与时间戳：同输入两次 finalize 的报告可逐字节比对（确定性测试用）。
@@ -116,21 +111,20 @@ def backpressure_event(
     )
 
 
-_DEFAULT = object()  # handshake / 能力事实参数的哨兵：区分"用默认样例"与"显式传 None"
+_DEFAULT = object()  # handshake 参数的哨兵：区分"用默认样例"与"显式传 None"
 
 
-def valid_sandbox_capability_facts(**overrides: Any) -> dict[str, Any]:
-    """A3：全部 required 能力项已核实、无违规的正向 sandbox 能力事实（security 维正例输入）。"""
+def numeric_backend_handshake(**overrides: Any) -> dict[str, Any]:
+    """formal 版本契约下合法的握手样例：版本全部可解析为十进制 int、无未来版本。
 
-    payload = {
-        "schema_id": "rh2.sandbox_capability_facts.v1",
-        "trajectory_id": "traj_0001",
-        "lease_id": "lease_0001",
-        "verified_capabilities": list(REQUIRED_SANDBOX_CAPABILITIES),
-        "violations": [],
-        "evidence_refs": ["sandbox_probe_0001"],
-        "verified_at_utc": "2026-07-07T09:30:25Z",
-    }
+    contracts 层的 `valid_backend_handshake()` 用 `step_120` / `default` 这类哨兵串（契约
+    本身不关心数值语义）；前置清理批起 gate 第七维在 `require_real_weight_versions=True`
+    下要求十进制版本，所以 governance 测试的正例基线用本函数（current=120，seen=119/120，
+    finalize-time lag=1 只是观测值）。
+    """
+
+    payload = valid_backend_handshake()
+    payload.update({"policy_version": "120", "weight_versions_seen": ["119", "120"], "staleness_steps": 1})
     payload.update(overrides)
     return payload
 
@@ -143,16 +137,15 @@ async def run_finalize(
     findings: Sequence[Any] = (),
     handshake: Any = _DEFAULT,
     backpressure: Sequence[BackpressureEvent] = (),
-    sandbox_capability_facts: Any = _DEFAULT,
-    sandbox_capability_facts_required: bool = True,
-    sandbox_lease_id: str | None = "lease_0001",  # 复核修复 #5：默认与样例事实同一租约
+    require_real_weight_versions: bool = True,
     report_id: str = FIXED_REPORT_ID,
     created_at: datetime = FIXED_CREATED_AT,
 ) -> FinalizedRollout:
     """以生产入口 finalize_rollout 执行一次完整 finalize（测试唯一执行路径）。
 
-    A3 起默认显式传入一份合法的 SandboxCapabilityFacts（正例基线 = 七维全过 → online）；
-    传 None 即"能力事实缺席"（security 维 fail-closed）。
+    前置清理批（D2-2）起不再有任何 sandbox 能力事实参数：正例基线 = 七维全过 → online，
+    security 维只看 findings / hygiene。`require_real_weight_versions` 默认 True（formal 版本
+    契约：握手版本须为十进制 int 且无未来版本），S1 兼容语义的用例显式传 False。
     """
 
     projection_obj = _as(TrajectoryProjection, projection, valid_trajectory_projection)
@@ -162,17 +155,11 @@ async def run_finalize(
     capture_objs = [_as(GenerationCaptureRecord, item, None) for item in captures]
     finding_objs = [_as(AntiCheatFinding, item, None) for item in findings]
     if handshake is _DEFAULT:
-        handshake_obj = BackendHandshake.model_validate(valid_backend_handshake())
+        handshake_obj = BackendHandshake.model_validate(numeric_backend_handshake())
     elif handshake is None:
         handshake_obj = None
     else:
         handshake_obj = _as(BackendHandshake, handshake, None)
-    if sandbox_capability_facts is _DEFAULT:
-        facts_obj = SandboxCapabilityFacts.model_validate(valid_sandbox_capability_facts())
-    elif sandbox_capability_facts is None:
-        facts_obj = None
-    else:
-        facts_obj = _as(SandboxCapabilityFacts, sandbox_capability_facts, None)
     return await finalize_rollout(
         grade=lambda: grading_obj,
         project=lambda report: projection_obj,
@@ -180,9 +167,7 @@ async def run_finalize(
         handshake=handshake_obj,
         findings=finding_objs,
         backpressure_events=list(backpressure),
-        sandbox_capability_facts=facts_obj,
-        sandbox_capability_facts_required=sandbox_capability_facts_required,
-        sandbox_lease_id=sandbox_lease_id,
+        require_real_weight_versions=require_real_weight_versions,
         report_id=report_id,
         created_at_utc=created_at,
     )

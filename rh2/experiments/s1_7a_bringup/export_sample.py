@@ -6,8 +6,8 @@ rollout 的治理 sidecar（eligibility/projection/grading/signal + tape 字节�
 链路（token 从 capture 原始 artifact 重建 + 逐轮前缀校验 + digest 重算），
 产出 records.jsonl + artifacts/ + manifest.json。
 
-sidecar 没有 scan_result（编排旁路只落四类 + capture），扫描是投影的确定性
-纯函数，这里按 wrapper 同一实现重算（私有 import，实验脚本范围内可接受）。
+sidecar 只落四类 + capture；历史上这里还按 wrapper 同一实现重算 projection 扫描
+（`scan_result`），D2-4（2026-09-04）起 FinalizedRollout 已无该字段，不再重算。
 
 用法（容器内）::
 
@@ -25,7 +25,6 @@ from repoharness2.adapters.offline_export.exporter import OfflineExportInput, ex
 from repoharness2.contracts import GenerationCaptureRecord, GradingReport, TrajectoryProjection
 from repoharness2.contracts.eligibility import EligibilityReport
 from repoharness2.governance import FinalizedRollout, GroupRepairSignal
-from repoharness2.governance.projection_scan import _scan_public_projection
 
 
 def main() -> None:
@@ -43,7 +42,6 @@ def main() -> None:
             (root / "grading_report.json").read_text()
         ),
         projection=projection,
-        scan_result=_scan_public_projection(projection),  # 确定性重算（见 docstring）
         eligibility_report=EligibilityReport.model_validate_json(
             (root / "eligibility_report.json").read_text()
         ),

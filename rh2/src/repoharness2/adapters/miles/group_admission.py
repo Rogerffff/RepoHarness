@@ -29,10 +29,13 @@
               若竟然看到 ABORTED 成员，按接线矛盾 FATAL
     DROP    → keep=False（固定丢弃）
 
-staleness 两阶段：finalize-time 判定消费 EligibilityReport 的 policy_staleness 维（载荷内），
-阈值权威 = `args.rh2_orchestrator.config.staleness_threshold`（与 generate.py 交付面同一配置
-对象，禁止第二份配置；缺失即 FATAL，不继承隐式默认）；consume-time 由 miles `buffer.get()`
-按 `--max-weight-staleness` 复查（归 W4，本模块不做）。
+staleness（B-1 改判 D1-4，决策包 D2+B v2，owner 2026-09-04 已批）：本 filter **不做**任何
+staleness 阈值判定——finalize-time 阈值参数、`args.rh2_orchestrator.config.staleness_threshold`
+权威引用与 `staleness_threshold_authority_unreachable` / `_mismatch` 已删除。RH2 在这里只核对
+版本 provenance 的合法性（`_check_leaf_version_binding`：叶版本 ⊆ Outcome 逐轮版本、可解析 int、
+≤ finalize 时刻 current；违反即 FATAL）并消费 EligibilityReport 的 policy_staleness 维
+（"版本事实可用且合法"，缺失/非法 → FATAL）。**过期组的唯一裁决点**是 miles
+`DefaultDataBuffer.get()` 按 `--max-weight-staleness N`（W4 接线；N 是 profile 参数）。
 
 待拍板处置的注入位：`args.rh2_disposition_policy`（`governance.admission.DispositionPolicy`
 实例；缺席 = 四槽位全 None）。present_truncated / hygiene 违规成员在其它维度都通过、真正需要
@@ -360,7 +363,6 @@ def admit_group(
     *,
     n_samples_per_prompt: int,
     disposition_policy: DispositionPolicy,
-    finalize_staleness_threshold: int | None,
     reward_of: Callable[[Any], Any],
 ) -> GroupAdmissionResult:
     """组准入本体（与 miles 类型解耦，便于单测）。抛出即 FATAL；返回 keep=False 即 DROP。"""
@@ -473,9 +475,7 @@ def admit_group(
         seen_attempts.add(ident.attempt_id)
         seen_executions.add(ident.execution_id)
 
-        disposition = decide_member_disposition(
-            payload0, policy=disposition_policy, finalize_staleness_threshold=finalize_staleness_threshold
-        )
+        disposition = decide_member_disposition(payload0, policy=disposition_policy)
         if disposition.verdict == "FATAL":
             raise GroupAdmissionFatal(
                 disposition.reason_code,
@@ -512,19 +512,6 @@ def admit_group(
     return GroupAdmissionResult(keep=True, reason=None, members=tuple(members))
 
 
-def _threshold_from_args(args: Any) -> int | None:
-    """finalize-time staleness 阈值的唯一权威 = 交付面用的同一 SlimeBindingConfig。"""
-
-    orchestrator = getattr(args, "rh2_orchestrator", None)
-    config = getattr(orchestrator, "config", None)
-    if config is None:
-        raise GroupAdmissionFatal(
-            "staleness_threshold_authority_unreachable",
-            "args.rh2_orchestrator.config 不可达——filter 无法引用与交付面同一份 staleness 阈值配置。",
-        )
-    return getattr(config, "staleness_threshold", None)
-
-
 def _policy_from_args(args: Any) -> DispositionPolicy:
     policy = getattr(args, DISPOSITION_POLICY_ARGS_KEY, None)
     if policy is None:
@@ -552,7 +539,6 @@ def rh2_group_admission_filter(args: Any, samples: Any, **kwargs: Any):
             samples,
             n_samples_per_prompt=n,
             disposition_policy=_policy_from_args(args),
-            finalize_staleness_threshold=_threshold_from_args(args),
             reward_of=_reward_of,
         )
     except (GroupAdmissionFatal, AdmissionError) as exc:

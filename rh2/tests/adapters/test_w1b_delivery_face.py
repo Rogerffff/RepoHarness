@@ -1,15 +1,18 @@
 """W1b 第二段：三终态在交付面的落点（adapters/slime/generate.py，fa_formal 链）。
 
 被测事实：
-- ③ 完整 finalize 但不合格（failed_to_grade / 缺能力事实）→ **真实样本**交付（remove_sample=False、
+- ③ 完整 finalize 但不合格（failed_to_grade）→ **真实样本**交付（remove_sample=False、
   status 非 aborted）+ typed admission 载荷，不再压成 abort 形状（`rh2_gate_degraded` 在 fa_formal
   下消失）；unsafe（present + 永久拒绝，契约封闭豁免集）同样真实交付、载荷无 EligibilityReport；
 - ② 真实 ABORTED 只给 completion=missing（harness 崩溃）；
 - ① 结构矛盾 typed raise：present Outcome 却走 abort 形状、载荷派生矛盾；
 - termination_facts_stamp_conflict 发生在 receipt/审计落盘之后：经现有审计通道追加 attempt-bound
   fatal 事实（第二条 append-only 记录），receipt 仍显示 delivery_prepared；
-- staleness 阈值参数化接口：fa_formal 缺显式阈值启动即拒；非 s1 模式握手缺阈值 run-fatal；
-  s1_compat 回退冻结的 S1 历史值。
+- 前置清理批（决策包 D2+B v2，2026-09-04）：合格轨迹**不需要任何 sandbox 能力事实**即 online /
+  KEEP_FULL（D2-2：provider 注入位、required、lease 绑定全部删除）；fa_formal **不配置**
+  staleness_threshold 也能启动并完成 finalize（旧 `staleness_threshold_required_in_formal_chain` /
+  `staleness_threshold_unconfigured` fail-fast 已不存在），握手里的阈值只是 consume-time 阈值的
+  记录用镜像，finalize-time lag 超过镜像也不影响资格（B-1）；s1_compat 仍写冻结的 S1 历史值。
 """
 
 from __future__ import annotations
@@ -40,10 +43,9 @@ from repoharness2.adapters.slime import generate as generate_mod  # noqa: E402
 from repoharness2.adapters.slime.async_worker import FatalExecutionInfrastructureError  # noqa: E402
 from repoharness2.adapters.slime.generate import (  # noqa: E402
     S1_COMPAT_LEGACY_STALENESS_THRESHOLD,
-    StartupCheckError,
+    STALENESS_THRESHOLD_MIRROR_UNBOUNDED,
 )
 from repoharness2.envpack.termination_facts import resolve_termination_facts  # noqa: E402
-from repoharness2.governance import REQUIRED_SANDBOX_CAPABILITIES, SandboxCapabilityFacts  # noqa: E402
 from repoharness2.governance.admission import (  # noqa: E402
     ADMISSION_METADATA_KEY,
     DispositionPolicy,
@@ -56,23 +58,12 @@ EXEC = "exec_F22"
 IDENTITY = {"rh2_physical_attempt_id": PAID, "rh2_rollout_execution_id": EXEC}
 
 
-def _capability_facts_provider(audit):
-    return SandboxCapabilityFacts(
-        trajectory_id=audit.trajectory_id,
-        lease_id=audit.lease.lease_id if audit.lease is not None else "lease_test",
-        verified_capabilities=list(REQUIRED_SANDBOX_CAPABILITIES),
-        violations=[],
-        evidence_refs=["sandbox_probe_test"],
-        verified_at_utc=generate_mod._now_utc(),
-    )
-
-
-def _formal_chain(store=None, *, barrier=None, **kwargs):
+def _formal_chain(store=None, *, barrier=None, config_overrides=None, turn_weight_version="5", **kwargs):
     turns = dense_turns()
     for t in turns:
-        t.response["meta_info"]["weight_version"] = "5"
+        t.response["meta_info"]["weight_version"] = turn_weight_version
     chain = build_dense_chain(
-        config=_formal_config(policy_version="5", execution_mode="fa_formal"),
+        config=_formal_config(policy_version="5", execution_mode="fa_formal", **(config_overrides or {})),
         runtime_quiescence_barrier=barrier or _Barrier(), turns=turns,
         finalization_store=store or FakeFinalizationStore(), **kwargs,
     )
@@ -85,7 +76,7 @@ def _resolve(leaf):
 
 
 def _decide(payload, policy=None):
-    return decide_member_disposition(payload, policy=policy or DispositionPolicy(), finalize_staleness_threshold=4)
+    return decide_member_disposition(payload, policy=policy or DispositionPolicy())
 
 
 # ---------------------------------------------------------------------------
@@ -111,7 +102,7 @@ async def test_failed_to_grade_is_delivered_as_real_sample_not_aborted(tmp_path)
     assert payload.outcome.completion_class == "present_complete"
     assert payload.outcome.failure_category == "grading_infra_failure" and payload.outcome.reward_unavailable
     assert payload.grading_outcome == "failed_to_grade" and payload.grading_reward is None
-    assert payload.finalize_staleness_threshold == 4
+    assert payload.finalize_staleness_steps == 0  # 只是观测值（current 5 − min(seen) 5）
     assert leaf.metadata["eligibility_report_ref"] == payload.eligibility_report.report_id
     facts = resolve_termination_facts({**leaf.metadata, **IDENTITY})
     assert facts.eligibility_report_id == payload.eligibility_report.report_id
@@ -122,23 +113,17 @@ async def test_failed_to_grade_is_delivered_as_real_sample_not_aborted(tmp_path)
     assert (next(p for p in tmp_path.iterdir() if p.is_dir()) / "eligibility_report.json").exists()
 
 
-async def test_all_ok_without_capability_facts_is_delivered_but_drops_by_a3():
+async def test_all_ok_without_any_sandbox_sidecar_is_online_and_keep_full():
+    """D2-2：合格轨迹在没有任何 sandbox 能力事实（编排根本没有 provider 注入位）的情况下
+    直接 online / KEEP_FULL——证明交付面与 gate 都不再读 sidecar；security 维 evidence 为空
+    （本次轨迹没有执行级违规事实）。W1b 第二段的"缺能力事实 → DROP_GROUP"形态不可达。"""
+
+    import inspect
+
+    from repoharness2.adapters.slime.generate import RolloutOrchestrator
+
+    assert "sandbox_capability_facts_provider" not in inspect.signature(RolloutOrchestrator.__init__).parameters
     chain = _formal_chain()
-    delivered = await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
-    (leaf,) = delivered
-    assert leaf.remove_sample is False and leaf.reward == 1.0
-    payload = _resolve(leaf)
-    report = payload.eligibility_report
-    assert report.eligibility_class == "audit_only_or_rejected"
-    assert report.facts.security_and_leakage.reason_codes == ["sandbox_capability_facts_missing"]
-    assert all(getattr(report.facts, d).ok for d in (
-        "token_provenance", "logprob_alignment", "loss_mask_integrity", "reward_scope", "clean_grading", "policy_staleness"))
-    d = _decide(payload)
-    assert (d.verdict, d.reason_code) == ("DROP_GROUP", "sandbox_capability_facts_missing")
-
-
-async def test_all_ok_with_capability_facts_is_online_and_keep_full():
-    chain = _formal_chain(sandbox_capability_facts_provider=_capability_facts_provider)
     delivered = await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     audit = chain.orchestrator.audits[0]
     assert audit.finalized.group_repair_signal.degraded is False
@@ -147,8 +132,11 @@ async def test_all_ok_with_capability_facts_is_online_and_keep_full():
     assert leaf.remove_sample is False and leaf.reward == 1.0
     assert leaf.metadata["training_eligibility_class"] == "online_policy_loss_eligible"
     payload = _resolve(leaf)
-    assert payload.eligibility_report.facts.all_ok()
-    assert "sandbox_capability_facts:lease_" in " ".join(payload.eligibility_report.facts.security_and_leakage.evidence_refs)
+    report = payload.eligibility_report
+    assert report.facts.all_ok() and report.eligibility_class == "online_policy_loss_eligible"
+    security = report.facts.security_and_leakage
+    assert security.ok and security.reason_codes == [] and security.evidence_refs == []
+    assert "sandbox_capability" not in " ".join(report.reason_codes)
     d = _decide(payload)
     assert (d.verdict, d.reason_code) == ("KEEP_FULL", "all_dimensions_ok")
 
@@ -229,7 +217,7 @@ async def test_missing_outcome_stays_aborted_without_admission_payload():
 
 
 async def test_evaluation_placeholder_unchanged_in_formal_mode():
-    chain = _formal_chain(sandbox_capability_facts_provider=_capability_facts_provider)
+    chain = _formal_chain()
     (placeholder,) = await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS), evaluation=True)
     assert placeholder.remove_sample is True and placeholder.reward == 1.0
     assert ADMISSION_METADATA_KEY not in placeholder.metadata
@@ -327,20 +315,6 @@ async def test_validation_error_inside_finalize_is_run_fatal(monkeypatch):
     assert receipt.attempt_disposition == "fatal_run_halt"
 
 
-async def test_stale_lease_capability_facts_are_run_fatal_via_gate_wiring():
-    """#5 + #2 合体：provider 交回同一 trajectory 但旧 lease 的能力事实 → GateInputError → fatal。"""
-
-    def _stale_provider(audit):
-        facts = _capability_facts_provider(audit)
-        return facts.model_copy(update={"lease_id": "lease_from_previous_container"})
-
-    chain = _formal_chain(sandbox_capability_facts_provider=_stale_provider)
-    with pytest.raises(FatalExecutionInfrastructureError, match="gate_wiring_error"):
-        await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
-    audit = chain.orchestrator.audits[0]
-    assert any("lease_from_previous_container" in f.detail for f in audit.failure_records)
-
-
 async def test_pre_finalize_validation_error_and_task_local_failure_stay_aborted(monkeypatch):
     """对照：finalize 之前的 ValidationError 与真实 task-local 故障仍按 stage fallback 归 missing/ABORTED。"""
 
@@ -428,29 +402,64 @@ async def test_stamp_conflict_audit_append_failure_is_secondary(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# staleness 阈值参数化接口（D1-4）
+# staleness：finalize-time 阈值不再是资格门（B-1 改判 D1-4）
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("bad", [None, True, -1])
-def test_formal_chain_requires_explicit_staleness_threshold_at_startup(bad):
-    with pytest.raises(StartupCheckError, match="staleness_threshold_required_in_formal_chain"):
-        build_dense_chain(
-            config=_formal_config(policy_version="5", execution_mode="fa_formal", staleness_threshold=bad),
-            runtime_quiescence_barrier=_Barrier(),
-        )
+async def test_finalize_completes_without_staleness_threshold_and_records_mirror_sentinel():
+    """fa_formal 不配置 staleness_threshold：启动不拒（旧 `staleness_threshold_required_in_formal_chain`
+    已删）、握手构造不 run-fatal（旧 `staleness_threshold_unconfigured` 已删）；握手里写"未镜像 /
+    无上界"哨兵并在 audit 时间线留痕；样本照常 online / KEEP_FULL。"""
+
+    chain = _formal_chain(config_overrides={"staleness_threshold": None})  # 曾在此 StartupCheckError
+    delivered = await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    audit = chain.orchestrator.audits[0]
+    assert audit.handshake.staleness_threshold == STALENESS_THRESHOLD_MIRROR_UNBOUNDED
+    assert audit.handshake.staleness_within_threshold is True
+    assert "staleness_threshold_mirror_unconfigured" in _steps(audit)
+    assert not any(f.error_type.startswith("staleness_threshold") for f in audit.failure_records)
+    (leaf,) = delivered
+    assert leaf.remove_sample is False and leaf.metadata["training_eligibility_class"] == "online_policy_loss_eligible"
+    payload = _resolve(leaf)
+    assert payload.finalize_staleness_steps == 0
+    assert _decide(payload).verdict == "KEEP_FULL"
+    (receipt,) = chain.finalization.receipts
+    assert receipt.attempt_disposition == "delivery_prepared"
 
 
-def test_handshake_without_threshold_is_fatal_in_non_s1_and_legacy_pin_in_s1():
+async def test_finalize_lag_beyond_recorded_mirror_is_observation_only():
+    """turns 版本 3、current 5、镜像阈值 0：握手 lag=2 > 0（staleness_within_threshold=False）——
+    只是观测值：第七维通过（版本合法）、样本 online、KEEP_FULL；过期与否由 miles consume-time 判。"""
+
+    chain = _formal_chain(config_overrides={"staleness_threshold": 0}, turn_weight_version="3")
+    delivered = await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    audit = chain.orchestrator.audits[0]
+    assert audit.handshake.staleness_steps == 2 and audit.handshake.staleness_within_threshold is False
+    assert audit.handshake.staleness_threshold == 0
+    assert "staleness_threshold_mirror_unconfigured" not in _steps(audit)
+    (leaf,) = delivered
+    payload = _resolve(leaf)
+    fact = payload.eligibility_report.facts.policy_staleness
+    assert fact.ok is True and "finalize_lag_observed:2" in fact.evidence_refs
+    assert "staleness_exceeded" not in payload.eligibility_report.reason_codes
+    assert payload.eligibility_report.eligibility_class == "online_policy_loss_eligible"
+    assert payload.finalize_staleness_steps == 2
+    assert _decide(payload).verdict == "KEEP_FULL"
+
+
+def test_handshake_threshold_mirror_defaults_by_mode():
+    """镜像缺省：s1_compat 写冻结的 S1 历史值 4（冻结路径零改变）；非 s1 写无上界哨兵；
+    显式值原样写入（within 只是记录派生，不是判定）。"""
+
     from fixtures.common import FixtureSlimeSample
 
-    chain = _formal_chain()
-    orch = chain.orchestrator
-    orch.config = dataclasses.replace(orch.config, staleness_threshold=None)
-    with pytest.raises(FatalExecutionInfrastructureError, match="staleness_threshold_unconfigured"):
-        orch._build_handshake("traj_hs", [FixtureSlimeSample(weight_versions=["5"], index=0)])
     s1 = _dummy_orchestrator(_formal_config(staleness_threshold=None))  # execution_mode 缺省 = s1_compat
     handshake = s1._build_handshake("traj_hs", [FixtureSlimeSample(weight_versions=["3", "4"], index=0)])
     assert handshake.staleness_threshold == S1_COMPAT_LEGACY_STALENESS_THRESHOLD == 4
+    formal = _formal_chain(config_overrides={"staleness_threshold": None}).orchestrator
+    handshake2 = formal._build_handshake("traj_hs", [FixtureSlimeSample(weight_versions=["5"], index=0)])
+    assert handshake2.staleness_threshold == STALENESS_THRESHOLD_MIRROR_UNBOUNDED
+    assert handshake2.staleness_within_threshold is True
     explicit = _dummy_orchestrator(_formal_config(staleness_threshold=1))
-    assert explicit._build_handshake("traj_hs", [FixtureSlimeSample(weight_versions=["3", "4"], index=0)]).staleness_within_threshold is False
+    handshake3 = explicit._build_handshake("traj_hs", [FixtureSlimeSample(weight_versions=["3", "4"], index=0)])
+    assert handshake3.staleness_threshold == 1 and handshake3.staleness_within_threshold is False

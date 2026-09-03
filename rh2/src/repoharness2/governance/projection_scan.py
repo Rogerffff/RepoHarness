@@ -1,15 +1,27 @@
-"""public projection 扫描（S1-5）：TrajectoryProjection 出站前的 forbidden marker 检查。
+"""public projection 扫描（S1-5）——**冻结兼容读路径，不再是资格语义**。
 
-位置与职责（设计文档 2 §5.6"载体与执行位置"定案 3/4）：
+状态（Wave3 前置清理批，决策包 D2-4，owner 2026-09-04 已批）：
 
-- 本扫描运行在**双拓扑共享的唯一 finalize 关口**（`governance/wrapper.py` 的
-  `finalize_rollout`）内部，扫描对象是即将交给训练后端 / 离线导出的
-  `TrajectoryProjection`（public / 模型可见 / 训练可见的那一面）；
-- EnvServer 出站扫描只是 service_driven 拓扑的**第二道防线**，不是唯一防线——
-  trainer_native 直调路径不经过 EnvServer，但同样必须经过本关口；
-- marker 名单**复用** `contracts/constants.py` 的 `FORBIDDEN_PUBLIC_MARKERS`
-  （旧 L4/L5 + 补充条款 A6，共 23 项），本模块不自建第二份名单——
-  两份名单迟早漂移，漂移就是漏报。
+- 本模块曾运行在唯一 finalize 关口（`governance/wrapper.py`）内部，扫描
+  `TrajectoryProjection` 并把命中作为 security 维事实（理由码
+  `public_projection_marker_hit` → audit 档 / admission DROP_GROUP）。这条资格语义
+  已删除：`TrajectoryProjection` 是 rollout 结束后的 trainer / offline-export 中立投影
+  （token 计数 / span / mask / 引用 / reward facts / 版本握手），**不是模型可见输入**；
+  扫描发生在 rollout 与评分之后、不解引用 token/artifact 内容，测不到 prompt / mount /
+  env / 工具输出里的泄漏，却会因 `fail_to_pass_bonus` 这类字段名误报丢整组。
+- 现在 `finalize_rollout` 不再调用 `_scan_public_projection`，`FinalizedRollout` 没有
+  `scan_result` 字段，gate / admission / offline exporter 都不消费扫描结论。
+  `ProjectionScanResult` / `ProjectionMarkerHit` 保留为**冻结 schema**，供历史 S1
+  artifact（`experiments/s1_7a_bringup/export_sample.py` 之类的重算脚本）与 inspector
+  解析；`_scan_public_projection` 保留为同一确定性算法的只读实现。
+- 真模型可见面的 marker 扫描**原样保留且仍是拒绝面**：envpack 的
+  `PublicTaskBundle`（bundles.py）、`RolloutTaskView`（training_view.py）、prepared
+  任务公开产物（prepared_tasks.py）都对整树调 `contracts.scan_for_forbidden_markers`，
+  命中即拒。hidden / grader 泄漏的主验证改为结构与数据流证据 + canary 反例（W3b）。
+
+历史设计口径（保留供解读旧文档）：marker 名单**复用** `contracts/constants.py` 的
+`FORBIDDEN_PUBLIC_MARKERS`（旧 L4/L5 + 补充条款 A6，共 23 项），本模块不自建第二份
+名单——两份名单迟早漂移，漂移就是漏报。
 
 确定性（evidence 可复现比对的前提）：
 
@@ -18,16 +30,14 @@
    `ProjectionScanResult.hits`，且校验器强制该顺序——同一份投影在任何机器、
    任何 PYTHONHASHSEED 下扫描，结果逐字节相同。
 
-扫描结论如何进入资格判定：`ProjectionScanResult` 是 gate（`governance/gate.py`）
-`security_and_leakage` 维度的事实输入之一——命中即该维 `ok=False`
-（理由码 `public_projection_marker_hit`），schema 层再强制该结论只能落
-`audit_only_or_rejected`。具体例子：投影的 reward components 里出现
-key "fail_to_pass_bonus"，归一化后含 marker "fail_to_pass"，扫描产出
-`path="$.reward_facts.components.fail_to_pass_bonus", kind="key"` 的命中，
-该样本直接进 audit 档。
+扫描结论（历史）曾如何进入资格判定：命中即 security 维 `ok=False`（理由码
+`public_projection_marker_hit`），schema 层再强制该结论只能落 `audit_only_or_rejected`。
+具体例子：投影的 reward components 里出现 key "fail_to_pass_bonus"，归一化后含 marker
+"fail_to_pass"，扫描产出 `path="$.reward_facts.components.fail_to_pass_bonus", kind="key"`
+的命中——D2-4 之后这只是一条可复算的观测记录，**不再影响**资格、组准入与导出。
 
-本模块的扫描函数是模块私有（`_scan_public_projection`）：S1-6 与一切编排代码
-只准调 `finalize_rollout`，不准绕过 gate 单独"补扫"（见 wrapper 模块 docstring）。
+本模块的扫描函数保持模块私有（`_scan_public_projection`）：它不是新 formal 链的一环，
+只有历史 artifact 重算脚本按同一算法复算时才引用。
 """
 
 from __future__ import annotations
@@ -64,7 +74,7 @@ class ProjectionMarkerHit(StrictModel):
 
 
 class ProjectionScanResult(StrictModel):
-    """一次 public projection 扫描的完整结论（gate security 维度的事实输入）。
+    """一次 public projection 扫描的完整结论（冻结 schema；D2-4 起不再是 gate 事实输入）。
 
     fail-closed 校验清单：
     1. `clean` 是派生结论，必须等于 `len(hits) == 0` 的重算值
@@ -121,8 +131,8 @@ class ProjectionScanResult(StrictModel):
 def _scan_public_projection(projection: TrajectoryProjection) -> ProjectionScanResult:
     """扫描一个 TrajectoryProjection 的 JSON 形态，产出确定性排序的扫描结论。
 
-    模块私有：只允许 `governance/wrapper.py` 的 finalize_rollout 调用
-    （API 面测试钉住"wrapper 是唯一公开入口"）。
+    冻结兼容实现（D2-4）：新 formal 链不调用；保留给历史 artifact 的确定性重算
+    （API 面测试仍钉住它是模块私有、不经包级转出）。
     """
 
     raw_hits = scan_for_forbidden_markers(projection.model_dump(mode="json"))

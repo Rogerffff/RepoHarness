@@ -228,3 +228,34 @@ def test_duplicate_trajectory_in_batch_refused(tmp_path):
 def test_empty_batch_refused(tmp_path):
     with pytest.raises(OfflineExportError, match=r"^\[no_rollouts_to_export\]"):
         export_rollouts([], out_dir=tmp_path)
+
+
+# ---------------------------------------------------------------------------
+# D2-4（前置清理批）：projection marker 命中不再是导出门槛
+# ---------------------------------------------------------------------------
+
+
+def test_projection_marker_hit_no_longer_blocks_export(tmp_path):
+    """TrajectoryProjection 不是模型可见面——reward components 里出现 `fail_to_pass_bonus` 这类
+    字段名曾让导出器以 `projection_scan_not_clean` 拒绝（也让 gate 落 audit）；D2-4 删除了这道
+    重复门槛与 `FinalizedRollout.scan_result`。同一投影现在照常导出，记录里字段原样。"""
+
+    delivered, audit, hook = run_chain()
+    finalized = audit.finalized
+    assert "scan_result" not in type(finalized).model_fields
+    reward_facts = finalized.projection.reward_facts
+    marked_projection = finalized.projection.model_copy(
+        update={
+            "reward_facts": reward_facts.model_copy(
+                update={"components": {**reward_facts.components, "fail_to_pass_bonus": 0.25}}
+            )
+        }
+    )
+    marked = finalized.model_copy(update={"projection": marked_projection})
+    manifest = export_rollouts(
+        [export_input(audit, hook, finalized=marked)], out_dir=tmp_path, exported_at_utc=parity.EXPORT_STAMP
+    )
+    assert manifest.record_count == 1
+    record = json.loads((tmp_path / "records.jsonl").read_text().splitlines()[0])
+    assert record["reward_facts"]["components"]["fail_to_pass_bonus"] == 0.25
+    assert record["training_eligibility_class"] == "online_policy_loss_eligible"

@@ -5,9 +5,8 @@
 - gate **只消费上游事实、不生产事实**：capture 完成度来自
   `GenerationCaptureRecord`（步骤 4）、span/账目结论来自 `TrajectoryProjection`
   （步骤 7，schema 校验已在构造时执行）、评分与 hygiene 来自 `GradingReport`
-  （步骤 6）、staleness 来自 `BackendHandshake`（步骤 9 的事实回填）、
-  泄漏扫描来自 `projection_scan.ProjectionScanResult`、反作弊来自
-  `AntiCheatFinding`、反压来自 `grading.queue.BackpressureEvent`；
+  （步骤 6）、版本事实来自 `BackendHandshake`（步骤 9 的事实回填）、
+  反作弊来自 `AntiCheatFinding`、反压来自 `grading.queue.BackpressureEvent`；
 - gate 补的是 schema 看不见的**跨对象一致性**（例如投影申报 raw_reward=0.0
   而评分报告 reward=None 的"infra 伪装成负样本"形态，单个对象各自合法，
   对起账来才露馅）；
@@ -17,14 +16,27 @@
 
 A3（06 计划 §1，D1 已批，2026-09-02 W1b 第二段落地）：**资格只由轨迹事实决定**
 ——七维全过自然得到 online。此前的 S1 全程封顶（`S1_TIER_CAP` /
-`s1_default_ceiling_offline` / cap 应用分支）已整体删除；与之同批，security 维
-从"无 findings 即过"改为"**正向 sandbox 能力事实在场且无违规**"
-（`SandboxCapabilityFacts`）：能力事实缺失 = 非 online（fail-closed，reason_code
-`sandbox_capability_facts_missing`）。W3b 产出能力事实之前，formal 路径的样本因此
-自然拿不到 online——这是预期的时序防护，不是 bug（cap 删除与语义切换同批，
-不存在 findings=() 假过窗口）。s1_compat（冻结的 bring-up 路径，无准入消费者）
-由调用方显式声明 `sandbox_capability_facts_required=False`，本维保持旧语义并在
-evidence 里如实记 `sandbox_capability_facts:not_required`。
+`s1_default_ceiling_offline` / cap 应用分支）已整体删除。
+
+Wave3 前置清理批（决策包 D2+B v2，owner 2026-09-04 已批）在此基础上再删三样：
+
+- **D2-2 改判 A3 的实现机制**：W1b 第二段引入的每轨迹 `SandboxCapabilityFacts`
+  证明系统（provider / required / `sandbox_capability_facts_missing` /
+  `sandbox_capability_unverified_*` / lease 绑定 / `REQUIRED_SANDBOX_CAPABILITIES`
+  必需集）整体删除——它把"容器创建器是否正确"变成"每条样本是否带证明"，先跑完
+  昂贵 rollout 再 DROP_GROUP，补采还会重复失败。sandbox 合规改由 W3b 在创建期
+  强制配置 + 启动前探针保证（不合即不启动/停 run），本 gate 不再逐轨迹消费任何
+  sidecar。security 维回到"只判本次轨迹发生了影响 reward 可信的**执行级**事实"，
+  `findings=()` 且 hygiene 干净即通过——这是预期，不是假过窗口。旧类型保留为冻结
+  历史 schema（`governance/sandbox_capability_facts.py`），不进新 formal 链。
+- **D2-4**：`TrajectoryProjection` 的 forbidden marker 扫描不再是 security 维的事实
+  输入（`public_projection_marker_hit` 已删）——投影不是模型可见面，扫它测不到真实
+  泄漏，只会因 `fail_to_pass_bonus` 这类字段名误报丢整组。真模型可见面
+  （envpack 的 PublicTaskBundle / RolloutTaskView）的整树扫描原样保留。
+- **B-1 改判 D1-4**：policy_staleness 维不再用 finalize-time 阈值做资格门
+  （`staleness_exceeded` 已删）；改为"版本事实可用且合法"（`staleness_facts_missing`
+  / `staleness_facts_invalid`），consume-time staleness 的唯一权威是 miles
+  `DefaultDataBuffer.get()` + `--max-weight-staleness N`（W4 接线）。
 
 三档结论的降级地板（_DIMENSION_DEGRADE_FLOOR，S1-5 定案）：
 
@@ -49,11 +61,12 @@ tests/governance 的 API 面测试钉住这一点。
 
 from __future__ import annotations
 
+import re
 from collections.abc import Sequence
 from datetime import datetime
 from typing import Literal
 
-from pydantic import AwareDatetime, Field, model_validator
+from pydantic import Field, model_validator
 
 from repoharness2.contracts import (
     AntiCheatFinding,
@@ -69,13 +82,10 @@ from repoharness2.contracts import (
     TrainingEligibilityClass,
     TrajectoryProjection,
 )
-from repoharness2.governance.projection_scan import ProjectionScanResult
 from repoharness2.grading.queue import BackpressureEvent
 
 __all__ = [
     "GATE_VERSION",
-    "REQUIRED_SANDBOX_CAPABILITIES",
-    "SandboxCapabilityFacts",
     "GateInputError",
     "GroupRepairSignal",
     "GateOutcome",
@@ -85,23 +95,10 @@ __all__ = [
 # 让两份不同逻辑产出的 EligibilityReport 永远可区分。这是**被动版本号**
 # （机械升版），不是任何解锁/闸门（06 计划 A3）。
 # 版本史：rh2.gate.s1.v1 = S1 封顶时代；rh2.gate.w1b.v2 = A3 落地
-# （删 S1_TIER_CAP + security 维要求正向 sandbox 能力事实）。
-GATE_VERSION = "rh2.gate.w1b.v2"
-
-# A3 / W3b 接缝：security 维要求在场且已核实的正向 sandbox 能力事实清单
-# （名字取自 06 计划 W3b 行的能力项；W3b 的 producer 若改名/增项，须同步
-# 改本清单并机械升 GATE_VERSION——这是消费契约，不是授权清单）。
-REQUIRED_SANDBOX_CAPABILITIES: tuple[str, ...] = (
-    "non_root_user",  # 容器内以非 root 身份运行
-    "linux_capabilities_dropped",  # Linux capabilities 已丢弃到最小集
-    "pids_limit_enforced",  # 进程数上限生效
-    "cpu_limit_enforced",  # CPU 配额生效
-    "memory_limit_enforced",  # 内存上限生效
-    "writable_mounts_allowlisted_with_quota",  # 可写挂载点在白名单内且带配额
-    "network_model_proxy_only",  # 网络只可达模型代理端点
-    "hidden_and_grader_assets_not_mounted",  # hidden/grader 资产不在任何挂载点
-    "git_future_refs_reflog_remotes_cleared",  # git 未来引用/reflog/remotes 已清
-)
+# （删 S1_TIER_CAP + security 维要求正向 sandbox 能力事实）；
+# rh2.gate.w3pre.v3 = Wave3 前置清理批（删每轨迹能力事实 / 删 projection 扫描
+# 资格语义 / policy_staleness 改"版本事实可用且合法"，决策包 D2+B v2）。
+GATE_VERSION = "rh2.gate.w3pre.v3"
 
 # 三档严重度：数值越小越受限。min() 取最严。
 _CLASS_SEVERITY: dict[TrainingEligibilityClass, int] = {
@@ -140,46 +137,6 @@ class GateInputError(ValueError):
     不是"这条轨迹的事实不好"，而是调用方接错了线——此时产出任何
     EligibilityReport 都会掩盖 bug，唯一正确行为是抛异常让编排当场崩。
     """
-
-
-class SandboxCapabilityFacts(StrictModel):
-    """一次 rollout sandbox 的正向能力事实（A3：security 维的事实输入）。
-
-    producer = W3b（sandbox 创建后直接核实并记录；本切片尚无生产 producer）；
-    consumer = gate 的 security_and_leakage 维。语义：`verified_capabilities`
-    是**已核实生效**的能力项名（必须覆盖 `REQUIRED_SANDBOX_CAPABILITIES`
-    全部），`violations` 是核实过程中发现的违规项——任一 required 项未核实
-    = 非 online（DROP 面），任一违规 = 环境隔离失效（A4 run-fatal 面，映射见
-    governance/admission.py）。这是"本次实际能力"的被动记录（06 §6 保留项），
-    不是授权 manifest。
-    """
-
-    schema_id: Literal["rh2.sandbox_capability_facts.v1"] = Field(
-        default="rh2.sandbox_capability_facts.v1", description="schema 判别字段。"
-    )
-    trajectory_id: NonEmptyStr = Field(description="被核实 sandbox 所属轨迹 id（gate 接线校验用）。")
-    lease_id: NonEmptyStr = Field(description="SandboxLease.lease_id（能力事实锚到具体容器租约）。")
-    verified_capabilities: list[SafeIdentifier] = Field(
-        default_factory=list, description="已核实生效的能力项名（须覆盖 REQUIRED_SANDBOX_CAPABILITIES）。"
-    )
-    violations: list[SafeIdentifier] = Field(
-        default_factory=list, description="核实时发现的违规项名（非空即环境隔离失效）。"
-    )
-    evidence_refs: list[NonEmptyStr] = Field(
-        default_factory=list, description="核实证据引用（探针输出 artifact 等）。"
-    )
-    verified_at_utc: AwareDatetime = Field(description="核实时间（必须带时区）。")
-
-    @model_validator(mode="after")
-    def _check_capability_facts(self) -> "SandboxCapabilityFacts":
-        if len(set(self.verified_capabilities)) != len(self.verified_capabilities):
-            raise ValueError("verified_capabilities 含重复项（事实清单必须无歧义）。")
-        if len(set(self.violations)) != len(self.violations):
-            raise ValueError("violations 含重复项（事实清单必须无歧义）。")
-        overlap = sorted(set(self.verified_capabilities) & set(self.violations))
-        if overlap:
-            raise ValueError(f"同一能力项既声称已核实又列为违规：{overlap}（矛盾事实不可表示）。")
-        return self
 
 
 class GroupRepairSignal(StrictModel):
@@ -431,29 +388,26 @@ def _dim_reward_scope(
 
 def _dim_security_and_leakage(
     grading_report: GradingReport,
-    scan_result: ProjectionScanResult,
     findings: Sequence[AntiCheatFinding],
-    sandbox_capability_facts: SandboxCapabilityFacts | None,
-    *,
-    capability_facts_required: bool,
 ) -> DimensionFact:
-    """维度 5：安全与泄漏（§16.1 条 5+7 合并，executed 级即失败）。
+    """维度 5：安全与泄漏（§16.1 条 5+7 合并）——只判**本次轨迹**发生的、影响
+    reward 可信度的**执行级**事实（Wave3 前置清理批，决策包 D2-2/D2-4）。
 
-    四类事实源：
-    1. **正向 sandbox 能力事实（A3）**：`capability_facts_required=True`（非
-       s1_compat 的一切路径）时，`SandboxCapabilityFacts` 必须在场、
-       `REQUIRED_SANDBOX_CAPABILITIES` 全部已核实、且无违规——缺席即
-       `sandbox_capability_facts_missing`，缺项即
-       `sandbox_capability_unverified_<name>`，违规即
-       `sandbox_capability_violation_<name>`。**缺事实 = 非 online**（fail-closed）；
-       不再存在"没有 findings 就算安全"的假过窗口；
-    2. AntiCheatFinding：enforcement=executed 即失败；attempted_blocked
-       （拦截成功）不扣分——agent 学到"此路不通"是合法训练信号，但留痕；
-    3. patch hygiene 的 executed 级篡改事实：test_files_modified /
+    两类事实源：
+    1. AntiCheatFinding：enforcement=executed 即失败（`anti_cheat_executed_<category>`）；
+       attempted_blocked（拦截成功）不扣分——agent 学到"此路不通"是合法训练信号，但留痕；
+    2. patch hygiene 的 executed 级篡改事实：test_files_modified /
        forbidden_path_touched 说明篡改/污染已落盘在最终 patch 里
        （eligibility schema 对本维的定义明说"泄漏/权限/**篡改**"，
-       findings 缺席时 hygiene 是同一事实的评分期证据）；
-    4. public projection 扫描：marker 命中即失败。
+       findings 缺席时 hygiene 是同一事实的评分期证据）。这两条理由码在
+       admission 侧仍是 pending（显式注入 `agent_violation`）；"改测试路径不再自动
+       DROP_GROUP、控制面改动不重放"的可信评分投影归 D2-3/W3a，本维不预判。
+
+    **不再消费**（本批删除，理由见模块 docstring）：每轨迹 `SandboxCapabilityFacts`
+    sidecar（缺事实/未核实/违规三族理由码）与 `TrajectoryProjection` 的 marker 扫描
+    （`public_projection_marker_hit`）。因此 `findings=()` 且 hygiene 干净 ⇒ 本维通过，
+    evidence 可以为空——这是"本次轨迹没有执行级违规事实"的如实记录，不是假过窗口
+    （sandbox 合规由创建期强制 + 启动前探针在 rollout 之前保证，W3b）。
 
     本维失败时 schema 层强制结论 audit_only_or_rejected（gate 地板同为
     audit，双保险）。
@@ -461,23 +415,6 @@ def _dim_security_and_leakage(
 
     reasons: list[str] = []
     evidence: list[str] = []
-    if capability_facts_required:
-        if sandbox_capability_facts is None:
-            reasons.append("sandbox_capability_facts_missing")
-            evidence.append("sandbox_capability_facts:absent")
-        else:
-            verified = set(sandbox_capability_facts.verified_capabilities)
-            for name in REQUIRED_SANDBOX_CAPABILITIES:
-                if name not in verified:
-                    reasons.append(f"sandbox_capability_unverified_{name}")
-            for name in sandbox_capability_facts.violations:
-                reasons.append(f"sandbox_capability_violation_{name}")
-            evidence.append(f"sandbox_capability_facts:{sandbox_capability_facts.lease_id}")
-            evidence.extend(sandbox_capability_facts.evidence_refs)
-    else:
-        # 调用方显式声明本路径不要求能力事实（s1_compat 冻结路径）——如实留痕，
-        # 让"没核实"与"核实过且干净"在 evidence 里永远可区分。
-        evidence.append("sandbox_capability_facts:not_required")
     for finding in findings:
         if finding.enforcement == "executed":
             reasons.append(f"anti_cheat_executed_{finding.category}")
@@ -492,9 +429,6 @@ def _dim_security_and_leakage(
         if hygiene.forbidden_path_touched:
             reasons.append("patch_forbidden_contamination")
             evidence.append(f"patch_hygiene:{grading_report.report_id}")
-    if not scan_result.clean:
-        reasons.append("public_projection_marker_hit")
-    evidence.extend(scan_result.evidence_refs())
     return DimensionFact(ok=not reasons, reason_codes=_dedup(reasons), evidence_refs=_dedup(evidence))
 
 
@@ -529,20 +463,53 @@ def _dim_clean_grading(
     return DimensionFact(ok=not reasons, reason_codes=_dedup(reasons), evidence_refs=_dedup(evidence))
 
 
+_DECIMAL_VERSION = re.compile(r"[0-9]+")
+
+
+def _parse_decimal_version(value: str) -> int | None:
+    """权重版本的严格解析：只认 ASCII 十进制数字串（不认符号/空白/其它 Unicode 数字），
+    否则返回 None。与 generate.py 正式链 `int(v, 10)` 的口径一致但更严（不吞空白）。"""
+
+    if not isinstance(value, str) or _DECIMAL_VERSION.fullmatch(value) is None:
+        return None
+    return int(value, 10)
+
+
 def _dim_policy_staleness(
-    handshake: BackendHandshake | None, projection: TrajectoryProjection
+    handshake: BackendHandshake | None,
+    projection: TrajectoryProjection,
+    *,
+    require_real_weight_versions: bool,
 ) -> DimensionFact:
-    """维度 7：policy staleness 在阈值内（事实来自 BackendHandshake）。
+    """维度 7：**版本事实可用且合法**（B-1 改判 D1-4，决策包 D2+B v2，owner 2026-09-04 已批）。
 
-    - handshake 缺席即失败（fail-closed：没有 staleness 事实就当超阈值处理）；
-    - 刻意**不读** handshake.accepted——S1-1b 定案：accepted 仅表示后端物理
-      接收，不构成资格背书（后端有权按 H10 接收过期样本，但资格照降）。
+    本维**不再**用任何阈值做资格门：consume-time staleness 的唯一权威是 miles
+    `DefaultDataBuffer.get()` + `--max-weight-staleness N`（W4 接线），RH2 在 finalize
+    时刻只负责把每个可训练轮次的版本 provenance 完整、合法地传递下去：
 
-    staleness 分布记账（preflight §8 H-1，S1-9 落地）：projection.handshake
-    携带 Sample.weight_versions 的原始 list 与派生 max_lag，本维把分布
-    （列表长度 + 版本跨度）写进 evidence——**只记录不准入**：分布不改变
-    ok/reason 判定（准入界的设计留给升级档位，双缓冲的结构性上界 ≈ α=1）。
-    缺席也如实记 `weight_versions_unrecorded`（分不清"没混版本"和"没记账"）。
+    1. **可用**：BackendHandshake 在场。缺席 → `staleness_facts_missing`（fail-closed：
+       没有版本事实的样本无法参与 consume-time 判定；admission 侧映射 FATAL）。
+    2. **合法**（`require_real_weight_versions=True`，与 `SlimeBindingConfig` 同名旗标同义，
+       formal 链启动校验强制为 True）：`weight_versions_seen` 非空、`policy_version` 在场
+       （两者 schema 已保证，此处再钉一次）、全部可解析为十进制 int、且没有任何 seen 版本
+       比 `policy_version`（finalize 时刻 current）更新。违反 → `staleness_facts_invalid`
+       （非法/未来版本 = 版本账目矛盾；admission 侧映射 FATAL）。
+       只查 `min(seen) <= current` 会放过 seen=[3, 9] / current=5 这种形状，而消费侧 W1b
+       叶版本绑定对同一形状已判 FATAL（`leaf_version_ahead_of_finalize`），两处口径须一致，
+       故这里按"任一 seen 版本 > current 即未来版本"判。
+       `require_real_weight_versions=False`（S1 兼容 / 测试路径）时版本允许是静态哨兵
+       （如 `step_0`）：只要求握手在场，evidence 如实记 `weight_versions_contract:legacy_sentinel_allowed`。
+       不这样做的话，冻结的 s1_compat 路径（其握手按 S1 契约恒 lag=0、版本为哨兵）会因
+       本维失败被 s1_compat 的降级即剔除规则整体剔除——那是改写冻结路径，不是本批范围。
+
+    finalize-time lag（`handshake.staleness_steps`）**只作观测值**写进 evidence
+    （`finalize_lag_observed:<n>`），不参与 ok 判定；`staleness_exceeded` 理由码已删除，
+    握手里的 `staleness_threshold` 只是 consume-time 阈值的记录用镜像，本维不读它。
+    刻意**不读** handshake.accepted——S1-1b 定案：accepted 仅表示后端物理接收，不构成资格背书。
+
+    staleness 分布记账（preflight §8 H-1，S1-9 落地）照旧**只记录不准入**：projection.handshake
+    携带 Sample.weight_versions 的原始 list 与派生 max_lag，本维把分布（列表长度 + 版本跨度）
+    写进 evidence；缺席也如实记 `weight_versions_unrecorded`（分不清"没混版本"和"没记账"）。
     """
 
     distribution_evidence: list[str] = []
@@ -563,13 +530,29 @@ def _dim_policy_staleness(
         )
     evidence = [
         handshake.handshake_id,
-        f"staleness:{handshake.staleness_steps}/{handshake.staleness_threshold}",
+        f"finalize_lag_observed:{handshake.staleness_steps}",
         *distribution_evidence,
     ]
-    if not handshake.staleness_within_threshold:
-        return DimensionFact(
-            ok=False, reason_codes=["staleness_exceeded"], evidence_refs=evidence
+    if not handshake.weight_versions_seen or not handshake.policy_version:
+        # schema（min_length=1 / NonEmptyStr）已禁止这种形状；此处只是防御性重申。
+        evidence.append("weight_versions_seen:empty")
+        return DimensionFact(ok=False, reason_codes=["staleness_facts_missing"], evidence_refs=evidence)
+    if not require_real_weight_versions:
+        evidence.append("weight_versions_contract:legacy_sentinel_allowed")
+        return DimensionFact(ok=True, reason_codes=[], evidence_refs=evidence)
+    current = _parse_decimal_version(handshake.policy_version)
+    seen = [_parse_decimal_version(v) for v in handshake.weight_versions_seen]
+    if current is None or any(v is None for v in seen):
+        evidence.append(
+            f"weight_versions_not_numeric:policy_version={handshake.policy_version}:"
+            f"seen={','.join(handshake.weight_versions_seen)}"
         )
+        return DimensionFact(ok=False, reason_codes=["staleness_facts_invalid"], evidence_refs=evidence)
+    seen_ints = [v for v in seen if v is not None]
+    evidence.append(f"weight_versions_range:{min(seen_ints)}..{max(seen_ints)}:current:{current}")
+    if max(seen_ints) > current:
+        evidence.append("weight_version_ahead_of_current")
+        return DimensionFact(ok=False, reason_codes=["staleness_facts_invalid"], evidence_refs=evidence)
     return DimensionFact(ok=True, reason_codes=[], evidence_refs=evidence)
 
 
@@ -583,38 +566,12 @@ def _check_wiring(
     projection: TrajectoryProjection,
     grading_report: GradingReport,
     capture_records: Sequence[GenerationCaptureRecord],
-    scan_result: ProjectionScanResult,
     findings: Sequence[AntiCheatFinding],
     handshake: BackendHandshake | None,
-    sandbox_capability_facts: SandboxCapabilityFacts | None = None,
-    sandbox_capability_facts_required: bool = True,
-    sandbox_lease_id: str | None = None,
 ) -> dict[str, GenerationCaptureRecord]:
-    """gate 输入的接线一致性检查（不一致 = 编排 bug，抛 GateInputError）。
-
-    `sandbox_lease_id`（W1b 第二段复核修复 #5）：本次 attempt 实际使用的 SandboxLease.lease_id，
-    由编排层显式传入。能力事实除 trajectory 外还必须**逐字绑定到这份租约**——同一 trajectory 的
-    旧容器（retry 前的 attempt、或被替换的 sandbox）产出的能力事实不能认证新容器。
-    required=True 的路径缺 lease id 同样是接线错误。
-    """
+    """gate 输入的接线一致性检查（不一致 = 编排 bug，抛 GateInputError）。"""
 
     traj = projection.trajectory_id
-    if sandbox_capability_facts_required and sandbox_lease_id is None:
-        raise GateInputError(
-            "要求 sandbox 能力事实的路径未传入本次 attempt 的 sandbox_lease_id"
-            "（能力事实无租约可绑定，接线错误）。"
-        )
-    if sandbox_capability_facts is not None:
-        if sandbox_capability_facts.trajectory_id != traj:
-            raise GateInputError(
-                f"SandboxCapabilityFacts.trajectory_id({sandbox_capability_facts.trajectory_id}) "
-                f"与投影({traj}) 不一致（别的 sandbox 的能力事实接错了线）。"
-            )
-        if sandbox_lease_id is None or sandbox_capability_facts.lease_id != sandbox_lease_id:
-            raise GateInputError(
-                f"SandboxCapabilityFacts.lease_id({sandbox_capability_facts.lease_id}) 与本次 attempt 的 "
-                f"sandbox_lease_id({sandbox_lease_id}) 不一致（旧容器的能力事实不能认证新容器）。"
-            )
     if grading_report.trajectory_id != traj:
         raise GateInputError(
             f"GradingReport.trajectory_id({grading_report.trajectory_id}) 与投影({traj}) 不一致。"
@@ -622,10 +579,6 @@ def _check_wiring(
     if grading_report.task_id != projection.task_id:
         raise GateInputError(
             f"GradingReport.task_id({grading_report.task_id}) 与投影({projection.task_id}) 不一致。"
-        )
-    if scan_result.trajectory_id != traj:
-        raise GateInputError(
-            f"ProjectionScanResult.trajectory_id({scan_result.trajectory_id}) 与投影({traj}) 不一致。"
         )
     records_by_id: dict[str, GenerationCaptureRecord] = {}
     for record in capture_records:
@@ -653,13 +606,10 @@ def _evaluate(
     projection: TrajectoryProjection,
     grading_report: GradingReport,
     capture_records: Sequence[GenerationCaptureRecord],
-    scan_result: ProjectionScanResult,
     findings: Sequence[AntiCheatFinding] = (),
     handshake: BackendHandshake | None = None,
     backpressure_events: Sequence[BackpressureEvent] = (),
-    sandbox_capability_facts: SandboxCapabilityFacts | None = None,
-    sandbox_capability_facts_required: bool = True,
-    sandbox_lease_id: str | None = None,
+    require_real_weight_versions: bool = True,
     report_id: str,
     created_at_utc: datetime,
 ) -> GateOutcome:
@@ -668,21 +618,16 @@ def _evaluate(
     返回 GateOutcome：EligibilityReport（权威载体）+ GroupRepairSignal
     （一等暴露的组修复信号，S1-6 在组装配前转发后端）。
 
-    `sandbox_capability_facts` / `sandbox_capability_facts_required`（A3）：
-    默认**要求**能力事实（fail-closed）；只有 s1_compat 冻结路径显式传
-    required=False。
+    `require_real_weight_versions`：policy_staleness 维的版本契约开关（默认 True，
+    fail-closed；语义见 `_dim_policy_staleness`）。
     """
 
     records_by_id = _check_wiring(
         projection=projection,
         grading_report=grading_report,
         capture_records=capture_records,
-        scan_result=scan_result,
         findings=findings,
         handshake=handshake,
-        sandbox_capability_facts=sandbox_capability_facts,
-        sandbox_capability_facts_required=sandbox_capability_facts_required,
-        sandbox_lease_id=sandbox_lease_id,
     )
     # 反压事件是全局观测流（GradingQueue.events 混着所有轨迹），按轨迹过滤，
     # 非本轨迹的事件不属于本样本的事实，直接忽略（不算接线错误）。
@@ -695,15 +640,11 @@ def _evaluate(
         logprob_alignment=_dim_logprob_alignment(projection),
         loss_mask_integrity=_dim_loss_mask_integrity(projection),
         reward_scope=_dim_reward_scope(projection, grading_report),
-        security_and_leakage=_dim_security_and_leakage(
-            grading_report,
-            scan_result,
-            findings,
-            sandbox_capability_facts,
-            capability_facts_required=sandbox_capability_facts_required,
-        ),
+        security_and_leakage=_dim_security_and_leakage(grading_report, findings),
         clean_grading=_dim_clean_grading(grading_report, own_backpressure),
-        policy_staleness=_dim_policy_staleness(handshake, projection),
+        policy_staleness=_dim_policy_staleness(
+            handshake, projection, require_real_weight_versions=require_real_weight_versions
+        ),
     )
 
     failed: list[tuple[str, DimensionFact]] = [

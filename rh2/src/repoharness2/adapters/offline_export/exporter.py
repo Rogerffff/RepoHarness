@@ -2,9 +2,13 @@
 
 输入纪律（治理层唯一关口的下游）：本模块**只吃 gate 之后的 FinalizedRollout**
 （`governance.wrapper.finalize_rollout` 的返回值）——它内含 EligibilityReport /
-ProjectionScanResult / GradingReport / TrajectoryProjection 五件套且 trajectory_id
+GradingReport / TrajectoryProjection / GroupRepairSignal 四件套且 trajectory_id
 已互检。任何绕过 finalize_rollout 的裸投影都没有资格结论，本模块拒绝提供
 "补一份资格"的旁路。
+
+历史第二道门槛"`scan_result.clean` 否则 `projection_scan_not_clean`"已按决策包 D2-4
+（2026-09-04 owner 已批）删除：TrajectoryProjection 不是模型可见面，其 marker 扫描既不是
+资格语义也不该在导出侧重复把关（`FinalizedRollout` 已无 `scan_result`）。
 
 资格门（双道防线）：
 
@@ -307,8 +311,6 @@ def build_training_export_record(
     fail-closed 拒绝清单（reason_code）：
     - audit_tier_not_exportable：资格档为 audit_only_or_rejected（第一道防线；
       第二道在 schema——TrainingExportRecord 根本表示不了 audit 值）；
-    - projection_scan_not_clean：公开投影 marker 扫描有命中（这种样本 gate 已
-      强制 audit，这里是防御性双检）；
     - lineage_reconstruction_not_supported：compaction/分叉分支；
     - capture_record_missing_for_export / capture_record_not_complete_for_export；
     - artifact_payload_missing / artifact_digest_mismatch / token_reconstruction_mismatch
@@ -326,12 +328,6 @@ def build_training_export_record(
             f"（reason_codes={report.reason_codes}）——离线导出只接受 "
             "offline_or_sft_candidate 及以上（warm-start 文档 §2 的入口条件）。",
         )
-    if not finalized.scan_result.clean:
-        raise OfflineExportError(
-            "projection_scan_not_clean",
-            f"轨迹 {report.trajectory_id} 的公开投影 marker 扫描有命中，禁止导出。",
-        )
-
     records_by_id = {record.record_id: record for record in item.capture_records}
     branches: list[ExportBranchTokens] = []
     for branch in projection.branches:

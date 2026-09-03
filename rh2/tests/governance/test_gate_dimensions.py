@@ -6,7 +6,6 @@ from typing import Any
 
 import pytest
 from contract_samples import (
-    valid_backend_handshake,
     valid_eligibility_facts,
     valid_grading_report,
     valid_trajectory_projection,
@@ -15,6 +14,7 @@ from governance_samples import (
     executed_finding_payload,
     infra_grading_payload,
     infra_reward_facts,
+    numeric_backend_handshake,
     run_finalize,
     tampered_hygiene_grading_payload,
 )
@@ -73,11 +73,10 @@ def _variant_kwargs(dimension: str) -> tuple[dict[str, Any], str, str]:
         grading["patch_hygiene"]["replayed_on_clean_checkout"] = False
         return {"grading": grading}, "not_replayed_on_clean_checkout", "audit_only_or_rejected"
     if dimension == "policy_staleness":
-        handshake = valid_backend_handshake()
-        handshake["staleness_steps"] = 6  # 6 > 阈值 4
-        handshake["staleness_within_threshold"] = False
+        # B-1：第七维只判"版本事实可用且合法"——seen 含比 current(120) 更新的版本 = 未来版本
+        handshake = numeric_backend_handshake(weight_versions_seen=["119", "121"])
         handshake["accepted"] = True  # 后端物理接收救不回资格（S1-1b）
-        return {"handshake": handshake}, "staleness_exceeded", "offline_or_sft_candidate"
+        return {"handshake": handshake}, "staleness_facts_invalid", "offline_or_sft_candidate"
     raise AssertionError(f"未覆盖的维度 {dimension}")
 
 
@@ -125,7 +124,7 @@ def test_security_failure_forces_audit_only_schema_layer():
     facts = valid_eligibility_facts()
     facts["security_and_leakage"] = {
         "ok": False,
-        "reason_codes": ["public_projection_marker_hit"],
+        "reason_codes": ["anti_cheat_executed_test_tampering"],
         "evidence_refs": [],
     }
     digest = compute_facts_digest(EligibilityFacts.model_validate(facts))
@@ -137,7 +136,7 @@ def test_security_failure_forces_audit_only_schema_layer():
         "facts": facts,
         "facts_digest": digest,
         "eligibility_class": "offline_or_sft_candidate",  # 非 audit：必须被拒
-        "reason_codes": ["public_projection_marker_hit"],
+        "reason_codes": ["anti_cheat_executed_test_tampering"],
         "derived_view_report_ref": "elig_bad",
         "derived_view_class": "offline_or_sft_candidate",
         "created_at_utc": "2026-07-07T09:30:25Z",
@@ -214,9 +213,7 @@ async def test_all_seven_dimensions_can_fail_together():
     reward["credit_assignment_strategy"] = "unknown"
     reward["rollout_loss_denominator"] = 17  # 实际 16
     projection["reward_facts"] = reward
-    handshake = valid_backend_handshake()
-    handshake["staleness_steps"] = 6
-    handshake["staleness_within_threshold"] = False
+    handshake = numeric_backend_handshake(weight_versions_seen=["step_x"])  # 非法版本
 
     final = await run_finalize(
         projection=projection,
@@ -341,7 +338,7 @@ async def test_staleness_distribution_recorded_not_admitted():
     """H-1 正例：projection.handshake 的分布（长度+跨度）进 policy_staleness evidence。
 
     关键断言"只记录不准入"：max_lag=2（版本跨了两步）也**不**构成维度失败——
-    准入界的设计留给升级档位；本维 ok 仍完全由 BackendHandshake 阈值事实决定。
+    准入界的设计留给升级档位；本维 ok 只由 BackendHandshake 的版本事实是否合法决定。
     """
     projection = valid_trajectory_projection()
     projection["handshake"] = {"weight_versions": ["1", "1", "3"], "max_lag": 2}

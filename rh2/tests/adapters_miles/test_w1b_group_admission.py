@@ -112,18 +112,6 @@ def _grading_report(trajectory_id: str, task_id: str, *, kind: str):
     return GradingReport.model_validate(base)
 
 
-def _capability_facts_provider(audit):
-    from repoharness2.adapters.slime.generate import _now_utc
-    from repoharness2.governance import REQUIRED_SANDBOX_CAPABILITIES, SandboxCapabilityFacts
-
-    return SandboxCapabilityFacts(
-        trajectory_id=audit.trajectory_id,
-        lease_id=audit.lease.lease_id if audit.lease is not None else "lease_test",
-        verified_capabilities=list(REQUIRED_SANDBOX_CAPABILITIES),
-        violations=[], evidence_refs=["sandbox_probe_test"], verified_at_utc=_now_utc(),
-    )
-
-
 @dataclass
 class _Chain:
     orchestrator: Any
@@ -135,7 +123,7 @@ class _Chain:
     verify_dispatch_calls: list = field(default_factory=list)
 
 
-def _build_chain(world, tmp_path, *, grading_kinds: dict[str, str], capability_facts: bool = True,
+def _build_chain(world, tmp_path, *, grading_kinds: dict[str, str],
                  exit_codes: tuple[int, ...] = (0, 0), truncated_slots: tuple[int, ...] = ()) -> _Chain:
     """一条 fa_formal 编排本体服务整组（经 prepared face + registry）：评分结果按 trajectory id 查表。"""
 
@@ -159,7 +147,7 @@ def _build_chain(world, tmp_path, *, grading_kinds: dict[str, str], capability_f
         adapter_url="http://10.0.0.1:18001", harness_name="mock_harness", expect_moe_routing=False,
         execution_mode="fa_formal", policy_version=POLICY_VERSION, require_real_weight_versions=True,
         reject_context_shrink=True, reject_on_nonzero_harness_exit=True,
-        staleness_threshold=4,  # 显式传入（数值归 B）
+        staleness_threshold=4,  # 前置清理批（B-1）起只是 consume-time 阈值的记录用镜像，filter 不读它
     )
     adapter_ref: dict[str, Any] = {}
 
@@ -198,7 +186,6 @@ def _build_chain(world, tmp_path, *, grading_kinds: dict[str, str], capability_f
         harness_driver=_SequencedExitDriver(adapter_ref, exit_codes), grading_submit=grading_submit,
         docker=_PreparedDocker(), runtime_quiescence_barrier=_Barrier(), finalization_store=store,
         session_drain_owner=fake_drain_owner,
-        sandbox_capability_facts_provider=_capability_facts_provider if capability_facts else None,
     )
     return _Chain(orchestrator, store, face, registry, fx, grading_calls, verify_calls)
 
@@ -342,14 +329,26 @@ async def test_degraded_member_drops_whole_group_and_nothing_reaches_conversion(
     assert metrics["rollout/fully_async/aborted_groups_filtered"] == 0
 
 
-async def test_missing_capability_facts_drops_group_by_a3(world, tmp_path):
+async def test_group_without_any_sandbox_sidecar_is_admitted(world, tmp_path):
+    """D2-2（取代 W1b 的 `test_missing_capability_facts_drops_group_by_a3`）：整条 fa_formal 链没有
+    任何 sandbox 能力事实 provider，合格组照常 keep=True 进 buffer——载荷里的报告 security 维
+    通过、evidence 为空，没有 `sandbox_capability_*` 理由码；W1b 的
+    `drop_admission_sandbox_capability_facts_missing` 指标不再可达。"""
+
     world.install_sglang_stub()
-    chain = _build_chain(world, tmp_path, grading_kinds=BOTH_OK, capability_facts=False)
+    chain = _build_chain(world, tmp_path, grading_kinds=BOTH_OK)
     prompt_group, group = await _dispatch_group(world, chain)
+    for member in group:
+        (leaf,) = member
+        report = leaf.metadata["rh2_admission"]["eligibility_report"]
+        security = report["facts"]["security_and_leakage"]
+        assert security["ok"] is True and security["evidence_refs"] == []
+        assert not any(c.startswith("sandbox_capability") for c in report["reason_codes"])
+        assert report["eligibility_class"] == "online_policy_loss_eligible"
     buf, recycled = _buffer(world, _miles_args(world, chain))
     await buf.put(_entry(world, prompt_group, group))
-    assert buf._buffer == [] and recycled == []
-    assert buf.get_metrics()["rollout/dynamic_filter/drop_admission_sandbox_capability_facts_missing"] == 1
+    assert len(buf._buffer) == 1 and recycled == []
+    assert not any("sandbox_capability" in k for k in buf.get_metrics())
 
 
 async def test_zero_variance_group_dropped_by_composite_filter(world, tmp_path):
@@ -569,8 +568,7 @@ async def test_aborted_group_never_reaches_filter_and_filter_rejects_aborted_if_
     await buf.put(_entry(world, prompt_group, group))  # miles put() 先交 unused handler，filter 不被调用
     assert recycled == [prompt_group] and buf.get_metrics()["rollout/fully_async/aborted_groups_filtered"] == 1
     with pytest.raises(GroupAdmissionFatal, match="aborted_member_reached_filter"):
-        admit_group(group, n_samples_per_prompt=N, disposition_policy=DispositionPolicy(),
-                    finalize_staleness_threshold=4, reward_of=lambda s: s.reward)
+        admit_group(group, n_samples_per_prompt=N, disposition_policy=DispositionPolicy(), reward_of=lambda s: s.reward)
 
 
 # ---------------------------------------------------------------------------
@@ -595,19 +593,26 @@ async def test_generate_fn_refuses_dispatch_without_admission_filter_wired(world
     assert chain.orchestrator.audits == [] and len(chain.registry) == 0  # 守卫先于铸造、绑定与任何生成
 
 
-async def test_threshold_authority_must_be_reachable_and_consistent(world, tmp_path):
-    world.install_sglang_stub()
-    from repoharness2.adapters.miles.group_admission import GroupAdmissionFatal
+async def test_filter_has_no_threshold_authority_and_ignores_config_threshold(world, tmp_path):
+    """B-1（取代 W1b 的 `test_threshold_authority_must_be_reachable_and_consistent`）：filter 不再引用
+    `args.rh2_orchestrator.config.staleness_threshold`——args 上没有 orchestrator 也能准入；交付后把
+    配置镜像改成 8（曾经 `staleness_threshold_authority_mismatch` FATAL）同样准入。过期组只由 miles
+    `get()` 按 --max-weight-staleness 判。"""
 
+    world.install_sglang_stub()
+    from repoharness2.adapters.miles import group_admission as ga
+
+    assert not hasattr(ga, "_threshold_from_args")
     chain = _build_chain(world, tmp_path, grading_kinds=BOTH_OK)
     prompt_group, group = await _dispatch_group(world, chain)
-    buf, _ = _buffer(world, _miles_args(world, None))  # args 上无 rh2_orchestrator
-    with pytest.raises(GroupAdmissionFatal, match="staleness_threshold_authority_unreachable"):
-        await buf.put(_entry(world, prompt_group, group))
+    buf, recycled = _buffer(world, _miles_args(world, None))  # args 上无 rh2_orchestrator
+    await buf.put(_entry(world, prompt_group, group))
+    assert len(buf._buffer) == 1 and recycled == []
     chain.orchestrator.config = dataclasses.replace(chain.orchestrator.config, staleness_threshold=8)
-    buf2, _ = _buffer(world, _miles_args(world, chain))
-    with pytest.raises(GroupAdmissionFatal, match="staleness_threshold_authority_mismatch"):
-        await buf2.put(_entry(world, prompt_group, group))
+    buf2, recycled2 = _buffer(world, _miles_args(world, chain))
+    await buf2.put(_entry(world, prompt_group, group))
+    assert len(buf2._buffer) == 1 and recycled2 == []
+    assert "finalize_staleness_threshold" not in group[0][0].metadata["rh2_admission"]
 
 
 def test_filter_fatal_notifies_process_level_run_fatal(world, monkeypatch):

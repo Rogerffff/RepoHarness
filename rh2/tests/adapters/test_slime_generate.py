@@ -500,7 +500,6 @@ def build_dense_chain(
     harness_exit_code: int = 0,
     runtime_quiescence_barrier=None,
     finalization_store: FakeFinalizationStore | None = None,
-    sandbox_capability_facts_provider=None,  # W1b 第二段（A3 / W3b 接缝）：测试注入能力事实取数口
     audit_sink=None,
 ) -> Chain:
     docker = docker if docker is not None else FakeRolloutDocker(rm_fail=rm_fail)
@@ -560,7 +559,6 @@ def build_dense_chain(
         session_drain_owner=(
             fake_drain_owner if the_config.execution_mode != "s1_compat" else None
         ),
-        sandbox_capability_facts_provider=sandbox_capability_facts_provider,
         audit_sink=audit_sink,
     )
     base_sample = FixtureSlimeSample(index=0)
@@ -602,14 +600,17 @@ async def test_normal_path_nine_step_order():
     report = audit.finalized.eligibility_report
     assert leaf.metadata == {
         "eligibility_report_ref": report.report_id,
-        # A3（W1b 第二段，T1 oracle 改动）：S1 封顶已删除——七维全过即 online；s1_compat
-        # 显式声明不要求 sandbox 能力事实（evidence 记 not_required），标签由 offline 改为 online，
-        # 交付行为不变（s1 从未按标签做准入）。
+        # A3（W1b 第二段，T1 oracle 改动）：S1 封顶已删除——七维全过即 online，交付行为不变
+        # （s1 从未按标签做准入）。前置清理批（D2-2）起 security 维不再读任何 sandbox sidecar，
+        # 旧的 `sandbox_capability_facts:not_required` 留痕随之消失。
         "training_eligibility_class": "online_policy_loss_eligible",
     }
     assert audit.finalized.group_repair_signal.degraded is False
     assert report.reason_codes == []  # 无封顶理由码
-    assert "sandbox_capability_facts:not_required" in report.facts.security_and_leakage.evidence_refs
+    assert report.facts.security_and_leakage.evidence_refs == []  # 没有执行级违规事实，也没有 sidecar 留痕
+    # B-1：s1_compat 的版本是静态哨兵（step_0），按 S1 契约（require_real_weight_versions=False）
+    # 允许并留痕；formal 链在同一形状下会判 staleness_facts_invalid。
+    assert "weight_versions_contract:legacy_sentinel_allowed" in report.facts.policy_staleness.evidence_refs
 
     # 容器清理（Q7）：run 一次、rm 一次、租约记为已释放
     run_calls = [c for c in chain.docker.calls if c[0] == "run"]
@@ -1589,8 +1590,8 @@ def _formal_config(**overrides: Any) -> SlimeBindingConfig:
         policy_version="5",
         reject_context_shrink=True,
         reject_on_nonzero_harness_exit=True,  # codex 轮次 9 P0-3：正式链强制
-        # W1b 第二段（D1-4）：finalize-time staleness 阈值必须显式传入（禁止继承隐式默认）；
-        # 4 只是测试夹具的显式值，数值归决策包 B。
+        # 前置清理批（B-1）：finalize-time 阈值不再是资格门，本字段只是 consume-time 阈值
+        # （miles --max-weight-staleness N）的记录用镜像；4 只是夹具值，缺省也能启动。
         staleness_threshold=4,
         # F2-2 复核四轮：版本契约（require_real_weight_versions）与运行
         # 模式正交——本夹具测版本契约语义，模式保持 s1_compat 即可

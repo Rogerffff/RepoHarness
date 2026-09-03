@@ -594,7 +594,7 @@ def _load_dump(name: str) -> dict[str, Any]:
 
 
 async def _finalize_verifiers_trace(trace: dict[str, Any], model_name: str):
-    """verifiers Trace 走同一个治理关口（grade -> project -> scan -> gate）。"""
+    """verifiers Trace 走同一个治理关口（grade -> project -> gate）。"""
 
     trace_id = trace["id"]
     task_id = trace["task"]["name"]
@@ -612,10 +612,8 @@ async def _finalize_verifiers_trace(trace: dict[str, Any], model_name: str):
         ),
         capture_records=(),  # 文本中继没有 GenerationCaptureRecord——这就是被比对的事实
         handshake=None,  # 无训练后端握手事实：policy_staleness 维按 fail-closed 失败
-        # A3（W1b 第二段）：verifiers 文本中继是冻结的 S0/S1 对照路径（无准入消费者），
-        # 与 s1_compat 同口径**显式**声明不要求 sandbox 能力事实（evidence 记 not_required）；
-        # formal 路径默认 required=True。
-        sandbox_capability_facts_required=False,
+        # 前置清理批（D2-2，2026-09-04）：每轨迹 sandbox 能力事实证明系统已删，security 维
+        # 只判执行级事实——不再需要 s1/verifiers 对照路径显式声明"不要求能力事实"。
     )
 
 
@@ -638,11 +636,11 @@ def run_parity_cross() -> dict[str, Any]:
     s_rep, v_rep = slime_fin.eligibility_report, verif_fin.eligibility_report
     s_proj, v_proj = slime_fin.projection, verif_fin.projection
 
-    # 1. 治理层看到的是同一个契约：schema / 扫描器 / 关口产物结构完全一致。
+    # 1. 治理层看到的是同一个契约：schema / 关口产物结构完全一致。
+    #    （D2-4：projection 扫描已不是关口的一步，FinalizedRollout 无 scan_result。）
     assert s_proj.schema_id == v_proj.schema_id == "rh2.trajectory_projection.v1"
     assert s_proj.source_framework == "slime" and v_proj.source_framework == "verifiers"
-    assert slime_fin.scan_result.scanner == verif_fin.scan_result.scanner
-    assert slime_fin.scan_result.clean and verif_fin.scan_result.clean
+    assert not hasattr(slime_fin, "scan_result") and not hasattr(verif_fin, "scan_result")
     assert s_rep.gate_version == v_rep.gate_version  # 同一个 gate 实现判两路
 
     # 2. RewardFacts 语义一致（逐字段）：scope / 数值 / 出处规则 / 信用策略。

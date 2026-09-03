@@ -136,7 +136,6 @@ from repoharness2.governance import (
     FinalizedRollout,
     GateInputError,
     GroupRepairSignal,
-    SandboxCapabilityFacts,
     finalize_rollout,
 )
 from repoharness2.governance.admission import (
@@ -1642,18 +1641,9 @@ def validate_execution_config(
                 "——屏障缺位时正式模式禁止启动；探针用 execution_mode="
                 "fa_audit_only（audit-only，产物不可训）。",
             )
-        threshold = config.staleness_threshold
-        if (
-            threshold is None
-            or isinstance(threshold, bool)
-            or not isinstance(threshold, int)
-            or threshold < 0
-        ):
-            raise StartupCheckError(
-                "staleness_threshold_required_in_formal_chain",
-                f"fa_formal 要求显式 staleness_threshold（非负 int），得到 {threshold!r}——"
-                "D1-4：finalize-time 阈值只定参数化接口、禁止继承隐式默认；数值归决策包 B。",
-            )
+        # 前置清理批（B-1 改判 D1-4，2026-09-04）：曾在此要求 fa_formal 显式传
+        # staleness_threshold（`staleness_threshold_required_in_formal_chain`）。finalize-time
+        # 阈值不再是资格门，该字段只是 consume-time 阈值的记录用镜像，启动不再校验它。
     if config.require_real_weight_versions:
         version = config.policy_version
         if version is None or version == "step_0":
@@ -1836,11 +1826,21 @@ def rollout_task_from_bundle_pair(
 TaskResolver = Callable[[Any], RolloutTaskSpec]
 
 
-# s1_compat 冻结路径的 staleness 阈值（S1 时代的历史值，**只**在 execution_mode=s1_compat
-# 且 config.staleness_threshold=None 时使用）。W1b 第二段（D1-4）起 formal 路径禁止继承任何
-# 隐式默认：fa_formal 构造 orchestrator 即要求显式 staleness_threshold（数值归决策包 B），
-# 非 s1 模式在握手构造时刻缺阈值 = run-fatal。本常量不是"默认值"，是被冻结的 S1 事实。
+# s1_compat 冻结路径写进 BackendHandshake.staleness_threshold 的历史值（S1 时代的记录，
+# **只**在 execution_mode=s1_compat 且 config.staleness_threshold=None 时使用；冻结路径零改变）。
+# 本常量不是"默认值"，是被冻结的 S1 事实。
 S1_COMPAT_LEGACY_STALENESS_THRESHOLD = 4
+
+# 前置清理批（B-1 改判 D1-4，决策包 D2+B v2，owner 2026-09-04 已批）：finalize-time staleness
+# 阈值**不再是资格门**（gate 第七维只判"版本事实可用且合法"，consume-time 唯一权威 = miles
+# `DefaultDataBuffer.get()` + `--max-weight-staleness N`）。`BackendHandshake.staleness_threshold`
+# 是 contracts/ 的必填记录字段（不改 schema），语义改为 consume-time 阈值的**记录用镜像**：
+# 来源 = `SlimeBindingConfig.staleness_threshold`（由启动侧从 miles `--max-weight-staleness N`
+# 填入，W4 接线）。非 s1 模式且镜像未配置时写本哨兵——它表示"未镜像 / 无上界"，与 miles
+# `--max-weight-staleness` 缺省 None（不过滤）的语义一致，任何消费者都不得把它当成真实阈值
+# （gate 不读它；同时在 audit 时间线记 `staleness_threshold_mirror_unconfigured`）。
+# 不用 S1 历史值 4 冒充：那会让 formal evidence 谎称"后端声明阈值 = 4"。
+STALENESS_THRESHOLD_MIRROR_UNBOUNDED = 2**31 - 1
 
 # W1b 第二段复核修复 #2：在这些阶段由**我方事实**构造 RH2 契约对象时抛出的 pydantic
 # ValidationError = 我方接线/事实矛盾（不是任务数据问题）→ typed run-fatal；finalize 之前
@@ -1867,10 +1867,12 @@ class SlimeBindingConfig:
     moe_num_layers: int | None = None
     moe_router_topk: int | None = None
     policy_version: str | None = "step_0"  # None = 无 staleness 事实（gate 将 fail-closed 降级）
-    # finalize-time staleness 阈值（D1-4 参数化接口）：**无隐式默认**。fa_formal 必须显式给出
-    # （validate_execution_config 启动即拒）；非 s1 模式握手构造时刻为 None = run-fatal；
-    # s1_compat 为 None 时回退 S1_COMPAT_LEGACY_STALENESS_THRESHOLD（冻结路径零改变）。
-    # 数值由决策包 B 确认；复合 group filter 消费时与本字段逐值比对（同一权威配置）。
+    # consume-time staleness 阈值的**记录用镜像**（B-1，2026-09-04 起不再是任何资格门）：
+    # 只写进 BackendHandshake.staleness_threshold / staleness_within_threshold 供记录与事后
+    # 分析；gate、admission、复合 group filter 都不消费它。来源应为 miles
+    # `--max-weight-staleness N`（启动侧填入，W4 接线）。None 时：s1_compat 写冻结历史值
+    # S1_COMPAT_LEGACY_STALENESS_THRESHOLD，非 s1 写 STALENESS_THRESHOLD_MIRROR_UNBOUNDED
+    # 哨兵并在 audit 记 `staleness_threshold_mirror_unconfigured`（不再 run-fatal）。
     staleness_threshold: int | None = None
     # FA-0（05 计划 D-FA-1/FA-0.3）：正式链开关。True 时：
     #   1. 构造 orchestrator 即断言 policy_version 不是静态哨兵值（step_0/None）
@@ -2247,13 +2249,10 @@ class RolloutOrchestrator:
         finalization_store: "FinalizationStore | None" = None,
         session_drain_owner: Callable[[str], Awaitable[Any]] | None = None,
         grading_spec_resolver: Callable[[Any], GradingEnvSpec] | None = None,
-        sandbox_capability_facts_provider: Callable[["RolloutAudit"], SandboxCapabilityFacts | None] | None = None,
     ) -> None:
-        # W1b 第二段（A3 / W3b 接缝）：sandbox 正向能力事实的取数口。W3b 落地后由 bringup
-        # 注入（sandbox 创建后核实并记录，按 audit/lease 取回）；None = 无事实 → security 维
-        # `sandbox_capability_facts_missing`，formal 样本自然非 online（预期时序防护）。
-        # s1_compat 不消费本口（该路径显式声明不要求能力事实）。
-        self._sandbox_capability_facts_provider = sandbox_capability_facts_provider
+        # 前置清理批（D2-2，2026-09-04）：曾有 `sandbox_capability_facts_provider` 注入位
+        # （每轨迹 sandbox 能力事实 → security 维）。该证明系统整体删除：sandbox 合规由
+        # W3b 在创建期强制配置 + 启动前探针保证，本编排不再逐轨迹取任何能力 sidecar。
         # W1b 第一集成切片（F4/F6）：评分材料取数口。非 None = prepared 链
         # （bringup 注入：样本 → attempt 绑定 → host grading 视图 → actor 内构造
         # spec），此时任务面对象不内嵌评分材料；None = legacy v1 八题链/测试
@@ -3209,6 +3208,14 @@ class RolloutOrchestrator:
                     )
 
             stage = "finalize"
+            if (
+                self._handshake_builder is None
+                and self._mode != "s1_compat"
+                and self.config.staleness_threshold is None
+            ):
+                # B-1：consume-time 阈值未镜像进本配置——握手里写的是哨兵，不是真实 N
+                # （注入式 handshake_builder 自带阈值来源，不在此留痕）。
+                audit.mark("staleness_threshold_mirror_unconfigured")
             handshake = self._build_handshake(trajectory_id, samples)
             audit.handshake = handshake
             finalized = await self._finalize(
@@ -3963,18 +3970,16 @@ class RolloutOrchestrator:
                     "fail-closed（不得 clamp 成 staleness=0 伪装健康）。",
                 )
             staleness_steps = current - min(seen_numeric)
-        # D1-4：finalize-time 阈值只定参数化接口——非 s1 模式必须显式配置（fa_formal 已在
-        # 启动校验拒绝缺失；此处是握手构造时刻的第二道 fail-fast），s1_compat 冻结路径
-        # 回退 S1 历史值。禁止在此处发明任何"默认 4"。
+        # B-1（前置清理批）：握手里的阈值只是 consume-time 阈值的记录用镜像，不是资格门。
+        # 缺省不再 run-fatal：s1_compat 冻结路径写 S1 历史值（零改变），非 s1 写"未镜像 /
+        # 无上界"哨兵（调用方在 audit 时间线记 staleness_threshold_mirror_unconfigured）。
         threshold = self.config.staleness_threshold
         if threshold is None:
-            if self._mode != "s1_compat":
-                raise FatalExecutionInfrastructureError(
-                    "staleness_threshold_unconfigured",
-                    f"execution_mode={self._mode} 的握手构造缺显式 staleness_threshold——"
-                    "finalize-time staleness 判定无阈值可依，run-halt（数值归决策包 B）。",
-                )
-            threshold = S1_COMPAT_LEGACY_STALENESS_THRESHOLD
+            threshold = (
+                S1_COMPAT_LEGACY_STALENESS_THRESHOLD
+                if self._mode == "s1_compat"
+                else STALENESS_THRESHOLD_MIRROR_UNBOUNDED
+            )
         return BackendHandshake(
             handshake_id=f"hs_{trajectory_id}",
             trajectory_id=trajectory_id,
@@ -4158,15 +4163,11 @@ class RolloutOrchestrator:
             audit.step("step7_projection_completed")
             return projection
 
-        # A3（W1b 第二段）：security 维要求正向 sandbox 能力事实。非 s1 模式一律要求
-        # （provider 缺席/返回 None → `sandbox_capability_facts_missing` → 非 online，
-        # W3b 落地前的预期形态）；s1_compat 冻结路径显式声明不要求（evidence 记 not_required）。
-        capability_facts: SandboxCapabilityFacts | None = None
-        if self._mode != "s1_compat" and self._sandbox_capability_facts_provider is not None:
-            capability_facts = self._sandbox_capability_facts_provider(audit)
-        # 复核修复 #5：显式传入本次 attempt 实际使用的 SandboxLease.lease_id（materialize 时挂在
-        # audit.lease 上的那份租约，不猜）——gate 要求能力事实的 lease_id 逐字相等，旧容器的
-        # 能力事实不能认证同一 trajectory 的新容器。
+        # 前置清理批（D2-2）：不再向 gate 传每轨迹 sandbox 能力事实 / lease 绑定——security 维
+        # 只判执行级事实（findings / hygiene），sandbox 合规由 W3b 创建期强制 + 启动前探针保证。
+        # B-1：第七维的版本契约开关与本配置的 require_real_weight_versions 同名同义——
+        # formal 链启动校验强制 True（版本必须全部可解析 int 且无未来版本），s1_compat /
+        # 测试路径按配置传 False（允许 step_0 这类静态哨兵，冻结路径零改变）。
         return await finalize_rollout(
             grade=_grade,
             project=_project,
@@ -4174,9 +4175,7 @@ class RolloutOrchestrator:
             handshake=handshake,
             findings=(),
             backpressure_events=list(self._backpressure_events_source()),
-            sandbox_capability_facts=capability_facts,
-            sandbox_capability_facts_required=self._mode != "s1_compat",
-            sandbox_lease_id=audit.lease.lease_id if audit.lease is not None else None,
+            require_real_weight_versions=self.config.require_real_weight_versions,
         )
 
     # ------------------------------------------------------------------ 步骤 9

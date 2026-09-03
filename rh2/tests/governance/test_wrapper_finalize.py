@@ -6,7 +6,6 @@ from datetime import datetime, timezone
 
 import pytest
 from contract_samples import (
-    valid_backend_handshake,
     valid_capture_record,
     valid_grading_report,
     valid_trajectory_projection,
@@ -16,6 +15,7 @@ from governance_samples import (
     FIXED_REPORT_ID,
     backpressure_event,
     executed_finding_payload,
+    numeric_backend_handshake,
     run_finalize,
 )
 
@@ -38,11 +38,11 @@ def _default_captures() -> list[GenerationCaptureRecord]:
 
 
 def _default_handshake() -> BackendHandshake:
-    return BackendHandshake.model_validate(valid_backend_handshake())
+    return BackendHandshake.model_validate(numeric_backend_handshake())
 
 
 async def test_happy_path_all_dimensions_ok_is_online():
-    """七维全过（含正向 sandbox 能力事实在场）的完美样本：A3 起无封顶 → online、零理由码。"""
+    """七维全过的完美样本：A3 起无封顶 → online、零理由码（前置清理批起不需要任何 sandbox sidecar）。"""
 
     final = await run_finalize()
     report = final.eligibility_report
@@ -55,14 +55,13 @@ async def test_happy_path_all_dimensions_ok_is_online():
     assert report.derived_view_report_ref == report.report_id == FIXED_REPORT_ID
     assert report.derived_view_class == report.eligibility_class
     assert report.gate_version == GATE_VERSION
-    # 扫描留痕：干净也要在 security 维 evidence 里可见（区分"扫过且干净"与"没扫"）
-    assert final.scan_result.clean
-    assert (
-        "public_projection_scan:clean:rh2.trajectory_projection.v1"
-        in report.facts.security_and_leakage.evidence_refs
-    )
-    # staleness 维 evidence 回链 handshake
+    # D2-4：projection 扫描不再是关口的一步——产物没有 scan_result，security 维也没有扫描留痕
+    assert not hasattr(final, "scan_result")
+    assert "scan_result" not in type(final).model_fields
+    assert not any("public_projection_scan" in ref for ref in report.facts.security_and_leakage.evidence_refs)
+    # 版本事实维 evidence 回链 handshake，finalize-time lag 只作观测
     assert "hs_0001" in report.facts.policy_staleness.evidence_refs
+    assert "finalize_lag_observed:1" in report.facts.policy_staleness.evidence_refs
 
 
 async def test_group_repair_signal_first_class_on_happy_path():
@@ -79,8 +78,8 @@ async def test_group_repair_signal_first_class_on_happy_path():
 
 
 def test_s1_tier_cap_deleted_and_gate_version_bumped():
-    """A3（D1 已批）：S1_TIER_CAP / ceiling reason code / cap 分支整体删除；GATE_VERSION 机械升版
-    （被动版本号，不是解锁）。"""
+    """A3（D1 已批）：S1_TIER_CAP / ceiling reason code / cap 分支整体删除；前置清理批（D2+B）
+    再删每轨迹能力事实与 projection 扫描资格语义；GATE_VERSION 机械升版（被动版本号，不是解锁）。"""
 
     import repoharness2.governance as governance
     from repoharness2.governance import gate
@@ -88,7 +87,9 @@ def test_s1_tier_cap_deleted_and_gate_version_bumped():
     assert not hasattr(gate, "S1_TIER_CAP") and not hasattr(gate, "S1_CEILING_REASON_CODE")
     assert not hasattr(governance, "S1_TIER_CAP") and not hasattr(governance, "S1_CEILING_REASON_CODE")
     assert "s1_default_ceiling_offline" not in gate.__dict__.values()
-    assert GATE_VERSION == "rh2.gate.w1b.v2"
+    assert not hasattr(gate, "REQUIRED_SANDBOX_CAPABILITIES") and not hasattr(gate, "SandboxCapabilityFacts")
+    assert not hasattr(gate, "ProjectionScanResult")
+    assert GATE_VERSION == "rh2.gate.w3pre.v3"
 
 
 async def test_wrapper_fixes_call_order_grade_then_project():
@@ -112,7 +113,6 @@ async def test_wrapper_fixes_call_order_grade_then_project():
         project=project,
         capture_records=_default_captures(),
         handshake=_default_handshake(),
-        sandbox_lease_id="lease_0001",  # 复核修复 #5：required 路径必传本次租约
         report_id=FIXED_REPORT_ID,
         created_at_utc=FIXED_CREATED_AT,
     )
@@ -139,11 +139,10 @@ async def test_async_grade_and_project_callables_supported():
         project=project,
         capture_records=_default_captures(),
         handshake=_default_handshake(),
-        sandbox_lease_id="lease_0001",  # 复核修复 #5：required 路径必传本次租约
         report_id=FIXED_REPORT_ID,
         created_at_utc=FIXED_CREATED_AT,
     )
-    assert final.eligibility_report.eligibility_class == "audit_only_or_rejected"  # 未传能力事实 → security 失败
+    assert final.eligibility_report.eligibility_class == "online_policy_loss_eligible"  # 无 sidecar 要求
 
 
 async def test_grade_callable_returning_wrong_type_rejected():
@@ -230,7 +229,6 @@ async def test_default_report_id_and_timestamp_generated():
         ),
         capture_records=_default_captures(),
         handshake=_default_handshake(),
-        sandbox_lease_id="lease_0001",  # 复核修复 #5：required 路径必传本次租约
     )
     assert final.eligibility_report.report_id.startswith("elig_")
     assert final.eligibility_report.created_at_utc.tzinfo is not None

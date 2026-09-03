@@ -16,7 +16,7 @@ from repoharness2.governance import (
     ProjectionMarkerHit,
     ProjectionScanResult,
 )
-from repoharness2.governance import gate, projection_scan, wrapper
+from repoharness2.governance import gate, projection_scan, sandbox_capability_facts, wrapper
 
 
 def test_governance_public_api_is_exact():
@@ -24,8 +24,7 @@ def test_governance_public_api_is_exact():
 
     assert set(governance.__all__) == {
         "GATE_VERSION",
-        "REQUIRED_SANDBOX_CAPABILITIES",
-        "SandboxCapabilityFacts",
+        "SandboxCapabilityFacts",  # 冻结历史 schema（D2-2），只作兼容读路径
         "FinalizedRollout",
         "GateInputError",
         "GateOutcome",
@@ -58,11 +57,11 @@ def test_admission_module_public_functions_pinned():
 
 
 def test_finalize_rollout_is_the_only_public_callable():
-    """三个模块里本模块定义的公开函数只有 wrapper.finalize_rollout 一个——
+    """四个模块里本模块定义的公开函数只有 wrapper.finalize_rollout 一个——
     "直接调 gate/scan 绕过 wrapper"的路径不存在于公开 API 面。"""
 
     public_functions: set[str] = set()
-    for module in (gate, projection_scan, wrapper):
+    for module in (gate, projection_scan, sandbox_capability_facts, wrapper):
         for name, obj in vars(module).items():
             if name.startswith("_"):
                 continue
@@ -83,6 +82,18 @@ def test_gate_and_scan_execution_functions_are_module_private():
     assert not hasattr(governance, "evaluate")
 
 
+async def test_finalize_rollout_does_not_run_projection_scan(monkeypatch):
+    """D2-4：projection 扫描已不是关口的一步——把冻结实现换成炸弹，finalize 仍完整走通。"""
+
+    def _boom(projection):
+        raise AssertionError("finalize_rollout 不得再调用 _scan_public_projection")
+
+    monkeypatch.setattr(projection_scan, "_scan_public_projection", _boom)
+    final = await run_finalize()
+    assert final.eligibility_report.eligibility_class == "online_policy_loss_eligible"
+    assert "scan_result" not in FinalizedRollout.model_fields
+
+
 async def test_unknown_fields_rejected_on_governance_models():
     """未知字段拒收（宪法 extra=forbid 在 S1-5 新对象上逐一复证）。"""
 
@@ -98,7 +109,15 @@ async def test_unknown_fields_rejected_on_governance_models():
             },
         ),
         (GroupRepairSignal, final.group_repair_signal.model_dump(mode="json")),
-        (ProjectionScanResult, final.scan_result.model_dump(mode="json")),
+        (
+            ProjectionScanResult,  # 冻结 schema，样例手工构造（FinalizedRollout 已无 scan_result）
+            {
+                "trajectory_id": "traj_0001",
+                "scanned_schema_id": "rh2.trajectory_projection.v1",
+                "hits": [],
+                "clean": True,
+            },
+        ),
         (
             ProjectionMarkerHit,
             {"path": "$.task_id", "marker": "test_patch", "kind": "value"},
@@ -118,5 +137,8 @@ async def test_governance_models_are_frozen():
     final = await run_finalize()
     with pytest.raises(ValidationError):
         final.group_repair_signal.degraded = True  # type: ignore[misc]
+    frozen_scan = ProjectionScanResult.model_validate(
+        {"trajectory_id": "traj_0001", "scanned_schema_id": "rh2.trajectory_projection.v1", "hits": [], "clean": True}
+    )
     with pytest.raises(ValidationError):
-        final.scan_result.clean = False  # type: ignore[misc]
+        frozen_scan.clean = False  # type: ignore[misc]

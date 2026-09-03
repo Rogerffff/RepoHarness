@@ -6,14 +6,14 @@
    `AdmissionPayloadV1`——由 producer（`adapters/slime/generate.py` 的交付面）从既有权威对象
    派生：`RolloutAttemptOutcomeV2`（completion/termination/失败归因的权威）+
    `EligibilityReport`（七维事实与三档结论的权威，closed 豁免集下可为 None）+ GradingReport
-   摘要 + finalize-time staleness 事实 + 环境/分派身份锚。载荷以 `rh2_admission` 键盖到
+   摘要 + finalize-time lag 观测值 + 环境/分派身份锚。载荷以 `rh2_admission` 键盖到
    Sample.metadata，**只作运输值**：消费方（miles 复合 group filter）在消费时刻
    `model_validate` 重跑全部契约校验（EligibilityReport 的 facts_digest 重算、online⇒七维全过、
    security⇒audit、派生视图互检；Outcome v2 的全部不变量），再与样本自身的六字段身份、分派
    三元组、termination 事实逐字对账。不建 durable ledger，不在热路径扫盘。
 
 2. **一个成员的 final admission 结论是什么？**
-   纯函数 `decide_member_disposition(payload, policy=..., finalize_staleness_threshold=...)`
+   纯函数 `decide_member_disposition(payload, policy=...)`
    → `KEEP_FULL | DROP_GROUP | FATAL`（**不设 MASK_MEMBER**，D1-1a）。判定按附录 A 两层：
 
    第一层（Outcome / 对象生命周期，权威 = completion_class）：
@@ -26,7 +26,7 @@
                                                   unsafe_artifact_permanent_rejection，均 reward 不可得）
      无 EligibilityReport 且不在豁免集           → FATAL（Outcome v2 契约本身已不可表示，此处兜底）
      合法、完整但不满足 online 条件               → DROP_GROUP（filter keep=False，整组固定丢弃）
-     账实矛盾 / formal 必需能力缺失              → FATAL
+     账实矛盾（含版本事实缺失/非法）             → FATAL
      hygiene / agent executed 违规               → pending（D2/A4）：显式注入 disposition，未注入即 fail-fast
      七维全过                                    → 再应用显式 termination disposition（A5 归 C：
                                                   未注入即 fail-fast）→ KEEP_FULL / DROP_GROUP
@@ -41,11 +41,17 @@
 不捕获，让 miles 的 put() 当场失败而不是静默 keep/drop。本地测试对同一 present_truncated
 载荷分别注入 KEEP_FULL / DROP_GROUP，证明链路对 A5 的取值中立。
 
-staleness 两阶段（D1-4）：本函数消费 EligibilityReport **已有**的 policy_staleness 维
-（finalize-time 判定，不重算、不忽略），阈值只定**参数化接口**——`finalize_staleness_threshold`
-必须显式传入（None → `AdmissionError(staleness_threshold_not_configured)`），并与载荷记录的
-finalize 时刻阈值逐值相等（不等 = 两处引用了不同的权威配置 → FATAL）。consume-time staleness
-由 miles buffer.get() 负责（归 W4），本模块不做。阈值数值归决策包 B。
+staleness（B-1 改判 D1-4，决策包 D2+B v2，owner 2026-09-04 已批）：本函数只消费
+EligibilityReport **已有**的 policy_staleness 维（"版本事实可用且合法"：`staleness_facts_missing` /
+`staleness_facts_invalid` 都是版本账目错误 → FATAL），**不再有** finalize-time 阈值参数、
+`staleness_threshold_not_configured` / `staleness_threshold_authority_mismatch` 与 `staleness_exceeded`
+→ DROP_GROUP 映射。consume-time staleness 的唯一权威是 miles `DefaultDataBuffer.get()` +
+`--max-weight-staleness N`（W4 接线；N 是 profile 参数）。载荷里的 `finalize_staleness_steps`
+只是 finalize 时刻 lag 的观测值，本模块不用它做判定。
+
+security（D2-2 / D2-4 同批）：每轨迹 sandbox 能力事实三族理由码（missing / unverified_* /
+violation_*）与 `public_projection_marker_hit` 已随 gate 一起删除，不再登记——若旧报告仍带这些
+code，按"未登记 reason_code 一律 FATAL"处理（停机，不静默 DROP）。
 
 本模块零 miles/slime import（只依赖 contracts），CPU 任意环境可导；它消费 gate 的产物，不是
 gate 的绕行路径（governance 包"唯一公开可调用函数是 finalize_rollout"的纪律针对 gate/scan
@@ -203,9 +209,14 @@ class AdmissionPayloadV1(StrictModel):
     grading_report_id: NonEmptyStr | None = Field(default=None)
     grading_outcome: GradingOutcome | None = Field(default=None)
     grading_reward: float | None = Field(default=None, description="GradingReport.reward（不可得时 None）。")
-    finalize_staleness_steps: int | None = Field(default=None, ge=0)
-    finalize_staleness_threshold: int | None = Field(
-        default=None, ge=0, description="finalize 时刻握手记录的阈值（消费方与权威配置逐值比对）。"
+    finalize_staleness_steps: int | None = Field(
+        default=None,
+        ge=0,
+        description=(
+            "finalize 时刻握手记录的 lag（current − min(seen)）——**只作观测值**（B-1）：不参与"
+            "任何准入判定，consume-time staleness 由 miles buffer.get() 按 --max-weight-staleness 判。"
+            "None = 无握手事实（此时 report 的 policy_staleness 维必以 staleness_facts_missing 失败）。"
+        ),
     )
 
     @model_validator(mode="after")
@@ -274,20 +285,17 @@ class AdmissionPayloadV1(StrictModel):
                         f"grading_outcome={self.grading_outcome} 对应 task_outcome 应为 {expected_task_outcome}，"
                         f"得到 {oc.task_outcome!r}。"
                     )
-        if (self.finalize_staleness_steps is None) != (self.finalize_staleness_threshold is None):
-            raise ValueError("finalize_staleness_steps 与 finalize_staleness_threshold 必须同现同缺。")
         if report is not None:
+            # 观测值与报告互洽：握手缺席 ⟺ policy_staleness 维以 staleness_facts_missing 失败
+            # （只核对"在场性"，不核对任何阈值——阈值判定不在 RH2 finalize 面）。
             dim = report.facts.policy_staleness
-            if self.finalize_staleness_threshold is None:
-                if dim.ok or "staleness_facts_missing" not in dim.reason_codes:
-                    raise ValueError("无 finalize staleness 事实时，policy_staleness 维必须以 staleness_facts_missing 失败。")
-            else:
-                within = self.finalize_staleness_steps <= self.finalize_staleness_threshold
-                if within != dim.ok:
-                    raise ValueError(
-                        f"finalize staleness {self.finalize_staleness_steps}/{self.finalize_staleness_threshold} "
-                        f"（within={within}）与 policy_staleness.ok={dim.ok} 矛盾。"
-                    )
+            missing = (not dim.ok) and "staleness_facts_missing" in dim.reason_codes
+            if (self.finalize_staleness_steps is None) != missing:
+                raise ValueError(
+                    f"finalize_staleness_steps={self.finalize_staleness_steps!r} 与 policy_staleness 维"
+                    f"（ok={dim.ok}, reason_codes={dim.reason_codes}）矛盾：握手缺席当且仅当该维以 "
+                    "staleness_facts_missing 失败。"
+                )
         return self
 
 
@@ -318,7 +326,6 @@ def derive_admission_payload(
             grading_outcome=grading_report.outcome if grading_report is not None else None,
             grading_reward=grading_report.reward if grading_report is not None else None,
             finalize_staleness_steps=handshake.staleness_steps if handshake is not None else None,
-            finalize_staleness_threshold=handshake.staleness_threshold if handshake is not None else None,
         )
     except ValidationError as exc:
         raise AdmissionError("admission_payload_inconsistent", f"admission 载荷派生失败：{exc}") from exc
@@ -481,9 +488,9 @@ _DIMENSION_REASON_VERDICTS: dict[str, dict[str, str]] = {
         "credit_assignment_unknown": _FATAL,  # 行 4c
     },
     "security_and_leakage": {
-        "sandbox_capability_facts_missing": _DROP,  # 行 5b：单条报告缺正向能力事实 = 非 online
-        "public_projection_marker_hit": _DROP,  # 行 5e：默认 DROP（证实为环境泄漏须另行 FATAL，本层无法证实）
-        "patch_test_tampering": _PENDING,  # 行 5/6：pending（D2/A4）
+        # 前置清理批（D2-2 / D2-4）：行 5b `sandbox_capability_facts_missing`、行 5e
+        # `public_projection_marker_hit` 已随 gate 删除，不再登记（旧 code 落"未登记 → FATAL"）。
+        "patch_test_tampering": _PENDING,  # 行 5/6：pending（D2/A4；可信评分投影归 D2-3/W3a）
         "patch_forbidden_contamination": _PENDING,
     },
     "clean_grading": {
@@ -494,15 +501,15 @@ _DIMENSION_REASON_VERDICTS: dict[str, dict[str, str]] = {
         "hygiene_rejected_forbidden_contamination": _PENDING,
     },
     "policy_staleness": {
+        # B-1：版本事实缺失/非法/未来版本 = 版本账目错误（FATAL）；`staleness_exceeded`
+        # （finalize-time 合法过期 → DROP）已删除——过期组由 miles consume-time 按 B-2 drop。
         "staleness_facts_missing": _FATAL,  # 行 7a：formal 路径版本事实缺失 = 系统损坏
-        "staleness_exceeded": _DROP,  # 行 7b：合法过期
+        "staleness_facts_invalid": _FATAL,  # 行 7b（改判后）：非法/未来版本 = 版本账目矛盾
     },
 }
-# 前缀规则（reason_code 带动态后缀的三类）。
+# 前缀规则（reason_code 带动态后缀的一类；sandbox_capability_* 两条前缀已随 D2-2 删除）。
 _REASON_PREFIX_VERDICTS: tuple[tuple[str, str, str], ...] = (
     ("security_and_leakage", "anti_cheat_executed_", _PENDING),  # 行 5/6：executed 级 agent 违规 → pending
-    ("security_and_leakage", "sandbox_capability_unverified_", _DROP),  # 能力项未核实 = 非 online
-    ("security_and_leakage", "sandbox_capability_violation_", _FATAL),  # 行 5d：隔离未生效 = 环境失效（A4 run-fatal）
 )
 _DIMENSIONS: tuple[str, ...] = (
     "token_provenance",
@@ -543,29 +550,16 @@ def decide_member_disposition(
     payload: AdmissionPayloadV1,
     *,
     policy: DispositionPolicy,
-    finalize_staleness_threshold: int | None,
 ) -> MemberDisposition:
-    """薄处置边界：base eligibility facts ∧ termination disposition ∧ finalize-time staleness →
+    """薄处置边界：base eligibility facts ∧ termination disposition →
     KEEP_FULL | DROP_GROUP | FATAL（附录 A 两层判定；模块 docstring 有逐条说明）。
 
-    抛出（不是返回）的两类：`DispositionNotInjectedError`（槽位在决定结论时仍未注入）与
-    `AdmissionError(staleness_threshold_not_configured)`（显式阈值缺失）——两者都是配置缺口，
-    不是样本处置。
+    抛出（不是返回）的一类：`DispositionNotInjectedError`（槽位在决定结论时仍未注入）——
+    配置缺口，不是样本处置。finalize-time staleness 阈值参数已删（B-1）。
     """
 
     if not isinstance(policy, DispositionPolicy):
         raise AdmissionError("disposition_policy_invalid", f"policy 必须是 DispositionPolicy，得到 {type(policy).__name__}。")
-    if (
-        finalize_staleness_threshold is None
-        or isinstance(finalize_staleness_threshold, bool)
-        or not isinstance(finalize_staleness_threshold, int)
-        or finalize_staleness_threshold < 0
-    ):
-        raise AdmissionError(
-            "staleness_threshold_not_configured",
-            f"finalize-time staleness 阈值必须显式传入非负 int（得到 {finalize_staleness_threshold!r}）"
-            "——禁止继承隐式默认；数值归决策包 B。",
-        )
     outcome = payload.outcome
 
     # ---- 第一层：Outcome / 对象生命周期 ----
@@ -589,15 +583,6 @@ def decide_member_disposition(
         ):
             return MemberDisposition(_DROP, "unsafe_artifact_permanent_rejection", "eligibility", "契约封闭豁免集：unsafe artifact 永久拒绝")
         return MemberDisposition(_FATAL, "present_without_eligibility_report", "eligibility", "present_* 缺 EligibilityReport 且不在封闭豁免集")
-
-    # 阈值权威一致性：载荷记录的 finalize 阈值必须等于调用方显式传入的权威值。
-    if payload.finalize_staleness_threshold is not None and payload.finalize_staleness_threshold != finalize_staleness_threshold:
-        return MemberDisposition(
-            _FATAL,
-            "staleness_threshold_authority_mismatch",
-            "eligibility",
-            f"载荷阈值 {payload.finalize_staleness_threshold} != 权威阈值 {finalize_staleness_threshold}",
-        )
 
     fatal: list[str] = []
     drop: list[str] = []
@@ -624,7 +609,7 @@ def decide_member_disposition(
             else:  # pragma: no cover - 表内取值封闭
                 fatal.append(f"unmapped_reason_code:{dimension}:{code}")
     if fatal:
-        return MemberDisposition(_FATAL, fatal[0], "eligibility", f"账实矛盾/formal 必需能力缺失：{fatal}")
+        return MemberDisposition(_FATAL, fatal[0], "eligibility", f"账实矛盾：{fatal}")
     if drop:
         return MemberDisposition(_DROP, drop[0], "eligibility", f"合法不合格：{drop}")
     if pending:

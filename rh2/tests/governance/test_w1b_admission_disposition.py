@@ -4,7 +4,8 @@
 - 两层判定的 reason_code → 终态映射逐行钉死（含"未登记 code 一律 FATAL"）；
 - disposition 未注入即 fail-fast（A5 三个截断槽位 + A4 agent 违规槽位），同一
   present_truncated 载荷双注入 KEEP_FULL / DROP_GROUP 证明链路中立；
-- 显式 staleness 阈值缺失即拒、权威阈值不一致 FATAL；
+- （前置清理批 B-1 起）纯函数没有 staleness 阈值参数：`staleness_facts_missing` / `staleness_facts_invalid`
+  → FATAL，`staleness_exceeded` 与两条阈值错误码不复存在；载荷只带 finalize-time lag 观测值；
 - 契约封闭豁免集（无 EligibilityReport）→ DROP_GROUP，豁免集之外的形状在 Outcome v2 契约层不可表示；
 - 载荷派生/盖章/解引用的 fail-closed 面。
 """
@@ -145,8 +146,8 @@ def _payload(
     )
 
 
-def _decide(payload: AdmissionPayloadV1, policy: DispositionPolicy | None = None, threshold: int | None = 4):
-    return decide_member_disposition(payload, policy=policy or DispositionPolicy(), finalize_staleness_threshold=threshold)
+def _decide(payload: AdmissionPayloadV1, policy: DispositionPolicy | None = None):
+    return decide_member_disposition(payload, policy=policy or DispositionPolicy())
 
 
 # ---------------------------------------------------------------------------
@@ -204,7 +205,7 @@ def test_disposition_policy_rejects_mask_member_or_unknown_values():
     with pytest.raises(AdmissionError, match="disposition_choice_invalid"):
         DispositionPolicy(hard_wall_truncation="MASK_MEMBER")  # type: ignore[arg-type]
     with pytest.raises(AdmissionError, match="disposition_policy_invalid"):
-        decide_member_disposition(_payload(), policy=object(), finalize_staleness_threshold=4)  # type: ignore[arg-type]
+        decide_member_disposition(_payload(), policy=object())  # type: ignore[arg-type]
 
 
 # ---------------------------------------------------------------------------
@@ -224,18 +225,13 @@ def test_disposition_policy_rejects_mask_member_or_unknown_values():
         ("reward_scope", "credit_assignment_unknown", "FATAL"),
         ("reward_scope", "reward_value_mismatch", "FATAL"),
         ("reward_scope", "reward_event_ref_missing", "FATAL"),
-        ("security_and_leakage", "sandbox_capability_facts_missing", "DROP_GROUP"),
-        ("security_and_leakage", "sandbox_capability_unverified_non_root_user", "DROP_GROUP"),
-        ("security_and_leakage", "sandbox_capability_violation_hidden_and_grader_assets_not_mounted", "FATAL"),
-        ("security_and_leakage", "public_projection_marker_hit", "DROP_GROUP"),
         ("clean_grading", "not_replayed_on_clean_checkout", "FATAL"),
-        ("policy_staleness", "staleness_exceeded", "DROP_GROUP"),
+        ("policy_staleness", "staleness_facts_invalid", "FATAL"),  # B-1：非法/未来版本 = 版本账目错误
         ("security_and_leakage", "never_registered_code", "FATAL"),  # 未登记 code 一律 FATAL
     ],
 )
 def test_appendix_a_reason_code_rows(dimension: str, code: str, verdict: str):
-    handshake = _handshake(steps=6) if code == "staleness_exceeded" else _handshake()
-    payload = _payload(report=_report({dimension: [code]}), handshake=handshake)
+    payload = _payload(report=_report({dimension: [code]}))
     d = _decide(payload)
     assert d.verdict == verdict, d
     if code == "never_registered_code":
@@ -248,6 +244,36 @@ def test_staleness_facts_missing_is_fatal_in_formal_path():
     payload = _payload(report=_report({"policy_staleness": ["staleness_facts_missing"]}), handshake=None)
     d = _decide(payload)
     assert (d.verdict, d.reason_code) == ("FATAL", "staleness_facts_missing")
+
+
+@pytest.mark.parametrize(
+    ("dimension", "code"),
+    [
+        ("security_and_leakage", "sandbox_capability_facts_missing"),
+        ("security_and_leakage", "sandbox_capability_unverified_non_root_user"),
+        ("security_and_leakage", "sandbox_capability_violation_hidden_and_grader_assets_not_mounted"),
+        ("security_and_leakage", "public_projection_marker_hit"),
+        ("policy_staleness", "staleness_exceeded"),
+    ],
+)
+def test_deleted_reason_codes_are_now_unregistered_and_fatal(dimension: str, code: str):
+    """前置清理批删除的五个理由码不再登记：若旧报告仍带它们，按"未登记 → FATAL"停机，
+    不静默 DROP（静默 DROP 是系统性偏置的来源）。"""
+
+    d = _decide(_payload(report=_report({dimension: [code]})))
+    assert (d.verdict, d.reason_code) == ("FATAL", f"unmapped_reason_code:{dimension}:{code}")
+
+
+def test_policy_staleness_verdict_table_has_only_missing_and_invalid():
+    from repoharness2.governance import admission
+
+    assert set(admission._DIMENSION_REASON_VERDICTS["policy_staleness"]) == {
+        "staleness_facts_missing", "staleness_facts_invalid",
+    }
+    assert set(admission._DIMENSION_REASON_VERDICTS["security_and_leakage"]) == {
+        "patch_test_tampering", "patch_forbidden_contamination",
+    }
+    assert [prefix for _, prefix, _ in admission._REASON_PREFIX_VERDICTS] == ["anti_cheat_executed_"]
 
 
 def test_grading_infra_failure_with_report_is_drop_and_counts_as_infra():
@@ -334,13 +360,12 @@ def test_pending_not_consulted_when_another_dimension_drops():
         outcome=_outcome(task_outcome="unresolved"),
         report=_report({
             "security_and_leakage": ["patch_test_tampering"],
-            "policy_staleness": ["staleness_exceeded"],
+            "loss_mask_integrity": ["no_trainable_tokens"],
         }),
         grading=_grading(outcome="unresolved"),
-        handshake=_handshake(steps=6),
     )
-    d = _decide(payload)  # agent_violation 未注入也不 raise：结论已由 staleness 决定
-    assert (d.verdict, d.reason_code) == ("DROP_GROUP", "staleness_exceeded")
+    d = _decide(payload)  # agent_violation 未注入也不 raise：结论已由 loss_mask 维决定
+    assert (d.verdict, d.reason_code) == ("DROP_GROUP", "no_trainable_tokens")
 
 
 # ---------------------------------------------------------------------------
@@ -370,28 +395,32 @@ def test_present_without_report_outside_exemption_is_unrepresentable():
 
 
 # ---------------------------------------------------------------------------
-# 显式 staleness 阈值接口
+# finalize-time staleness：只剩观测值，没有阈值接口（B-1）
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("bad", [None, True, -1, "4"])
-def test_explicit_staleness_threshold_required(bad: Any):
-    with pytest.raises(AdmissionError, match="staleness_threshold_not_configured"):
-        _decide(_payload(), threshold=bad)
+def test_no_threshold_interface_remains_on_payload_or_pure_function():
+    import inspect
+
+    assert "finalize_staleness_threshold" not in AdmissionPayloadV1.model_fields
+    assert "finalize_staleness_steps" in AdmissionPayloadV1.model_fields
+    assert "finalize_staleness_threshold" not in inspect.signature(decide_member_disposition).parameters
 
 
-def test_staleness_threshold_authority_mismatch_is_fatal():
-    d = _decide(_payload(), threshold=8)  # 载荷记录的 finalize 阈值是 4
-    assert (d.verdict, d.reason_code) == ("FATAL", "staleness_threshold_authority_mismatch")
+def test_finalize_lag_is_observation_only_and_pinned_to_handshake_presence():
+    """载荷 validator 只核对"握手缺席 ⟺ policy_staleness 以 staleness_facts_missing 失败"：
+    lag 超过握手记录的阈值镜像（6 > 4）不再是矛盾，也不影响处置。"""
 
-
-def test_payload_pins_finalize_staleness_against_report_dimension():
-    """载荷 validator：finalize staleness 数值与 report 的 policy_staleness 维结论必须互洽。"""
-
+    payload = _payload(handshake=_handshake(steps=6))  # 曾经：6 > 4 却 report 说 ok → 矛盾
+    assert payload.finalize_staleness_steps == 6
+    assert _decide(payload).verdict == "KEEP_FULL"
     with pytest.raises(AdmissionError, match="admission_payload_inconsistent"):
-        _payload(handshake=_handshake(steps=6))  # 6 > 4 却 report 说 ok
+        _payload(handshake=None)  # 无握手却 report 说 policy_staleness ok
     with pytest.raises(AdmissionError, match="admission_payload_inconsistent"):
-        _payload(report=_report({"policy_staleness": ["staleness_exceeded"]}))  # 1 <= 4 却 report 说 exceeded
+        _payload(report=_report({"policy_staleness": ["staleness_facts_missing"]}))  # 有握手却 report 说 missing
+    invalid = _payload(report=_report({"policy_staleness": ["staleness_facts_invalid"]}))  # 有握手但版本非法：互洽
+    assert invalid.finalize_staleness_steps == 1
+    assert (_decide(invalid).verdict, _decide(invalid).reason_code) == ("FATAL", "staleness_facts_invalid")
 
 
 # ---------------------------------------------------------------------------

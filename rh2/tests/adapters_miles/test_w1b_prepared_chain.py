@@ -134,7 +134,7 @@ def _build_prepared_chain(world, *, face, registry, leaf_factory, docker=None) -
         template_hash=SHA_TEMPLATE, adapter_url="http://10.0.0.1:18001", harness_name="mock_harness",
         expect_moe_routing=False, execution_mode="fa_formal", policy_version=POLICY_VERSION,
         require_real_weight_versions=True, reject_context_shrink=True, reject_on_nonzero_harness_exit=True,
-        staleness_threshold=4,  # W1b 第二段：显式传入（禁止隐式默认；数值归 B）
+        staleness_threshold=4,  # 前置清理批（B-1）起只是 consume-time 阈值的记录用镜像，不是资格门
     )
     adapter_ref: dict[str, Any] = {}
 
