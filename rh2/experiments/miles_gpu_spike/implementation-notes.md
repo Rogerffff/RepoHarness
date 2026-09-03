@@ -675,3 +675,38 @@ gh api 拉取 sgl-project/sglang@4e230c3d 的 `weight_versions.py` +
   以新 expected_tree/digest/8 张 patch 表通过。
 - rh2 侧未 commit（按任务要求）；miles 侧一个 commit（63c7a94e7，
   patch 0009 已存档 + manifest 同步）。
+
+---
+
+# W10 多 engine 最小正确性（决策包 D2+B v2 B-5b，2026-09-04）
+
+规格权威：`docs/agentic_RL/repo_harness_rh2_workstreams/miles_spike/decision_package_D2_B.md`
+B-5a/B-5b、06 计划 §3 W10 行；完整报告
+`docs/agentic_RL/repo_harness_rh2_workstreams/miles_spike/wave1/w10_report.md`。
+
+## 本目录（未审实验文件）的改动
+
+- `launch.sh`：`ROLLOUT_GPUS_PER_ENGINE="${RH2_SPIKE_ROLLOUT_GPUS_PER_ENGINE:-2}"`（原
+  "覆盖位已作废设了即红 + per-engine := 全部 rollout 卡"删除）；P11(d) 改为正整数 / ≤ rollout
+  卡数 / 整除 / engine 数 ≥ 1 四项合法性检查，删 `ENGINE_COUNT -eq 1`；P11(c) 与 dry-run 拓扑
+  行去掉"钉死单 engine"措辞；文件头钉死组说明改为"engine 拓扑不再钉死"。
+- `launch_args.md`：`--use-miles-router` 配套限制段与 `--rollout-num-gpus-per-engine` 条目、
+  §4 (d) 改写为 W10 语义。
+- `thresholds.md`："拓扑限制登记"改为"拓扑登记"（engine 数普通配置、matched comparison
+  定首训 engine 数、`router_workers.count` 核对项、明确不做清单）。
+- `router_targeting_audit.md`：新增 §0 状态表（§5 前置 1/2 已关闭，3/4/5 首版不做，6/7 待
+  GPU），§3–§6 原文保留供对照。
+- `g1_acceptance.py` / `postrun_probes.py` / `custom_config.yaml`：无 engine 数约束，未改。
+
+## 与 rh2/src 的对应
+
+- abort 广播：`src/repoharness2/adapters/slime/engine_router_client.py`（新）+ capture_wire
+  `_abort_rid` 分支 + bringup `__init__` 接线 `registry.engine_abort`。
+- 版本探测删除：bringup `_latest_engine_version` / `_registry_max_version` →
+  `_observed_current_version`；startup_evidence 新增 `router_workers`。
+- W4 接缝：bringup `staleness_threshold_mirror_from_args(args)` →
+  `SlimeBindingConfig.staleness_threshold`。
+- miles 侧（integration tree 工作树，未 commit，待存档 patch 0015）：
+  `miles/utils/rh2_engine_versions.py`（新）+ `miles/ray/rollout/rollout_manager.py`
+  `set_weight_version` 改 async 并逐台核对版本。
+

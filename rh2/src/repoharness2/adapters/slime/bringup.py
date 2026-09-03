@@ -32,6 +32,14 @@ infra 注入（验收项"gate 拒绝路径真实触发一次"）：环境变量
 -> GradingReport(failed_to_grade/test_log_parse_failed, reward=None) ->
 gate clean_grading/reward_scope 维失败 -> GroupRepairSignal.degraded ->
 样本以 abort 形状剔除。注入靠 artifact 目录下的 marker 文件保证恰好一次。
+
+W10（决策包 D2+B v2 B-5b，多 engine 最小正确性）：本模块把 rid 级 abort 接到
+`MilesRouterWorkerClient.broadcast_abort`（router `/list_workers` 全部 worker 广播同一
+rid，绕过 MilesRouter 的逐请求最小负载选路），并**删除**了经 router 随机查一台 engine 的
+"权威版本探测"（旧 `_latest_engine_version`：GET `/model_info`）——finalize/proxy 所用的
+current 版本改为 `_observed_current_version`（引擎一手回包的最大观测，无记录回退启动探针
+值）。consume-time 阈值 `--max-weight-staleness` 以记录镜像形式填入
+`SlimeBindingConfig.staleness_threshold`（W4 接缝，B-1）。
 """
 
 from __future__ import annotations
@@ -73,6 +81,7 @@ from repoharness2.adapters.slime.capture_wire import (
     install_capture_wire,
     make_threadsafe_session_drain_owner,
 )
+from repoharness2.adapters.slime.engine_router_client import MilesRouterWorkerClient
 from repoharness2.adapters.slime.docker_sandbox import DockerSandbox
 from repoharness2.shutdown import (
     LifecycleState,
@@ -705,6 +714,30 @@ def make_per_rollout_adapter(registry, shared_adapter, hook):
     return PerRolloutAdapter()
 
 
+def staleness_threshold_mirror_from_args(args: Any) -> int | None:
+    """W4 接缝（B-1）：`SlimeBindingConfig.staleness_threshold` 记录镜像的唯一来源 = miles
+    `--max-weight-staleness N`（`args.max_weight_staleness`）。
+
+    - 未配置（属性缺失或 None）→ None：generate.py 按前置清理批的哨兵行为处理（非 s1 写
+      `STALENESS_THRESHOLD_MIRROR_UNBOUNDED` 并在 audit 时间线记
+      `staleness_threshold_mirror_unconfigured`；s1_compat 写冻结历史值）；
+    - 非负 int → 原值（bool 不算 int）；
+    - 其它（负数 / 非整数）→ RuntimeError：启动配置错误，在任何资源型副作用之前炸。
+
+    这是**记录镜像**，不是资格门：gate / admission / 复合 group filter 都不消费它（B-1，
+    consume-time 唯一权威 = miles `DefaultDataBuffer.get()` 的同一参数）。
+    """
+
+    value = getattr(args, "max_weight_staleness", None)
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise RuntimeError(
+            f"--max-weight-staleness={value!r} 不是非负整数——consume-time 阈值镜像无法记录，拒绝启动。"
+        )
+    return value
+
+
 class BringupService:
     _instance: "BringupService | None" = None
 
@@ -731,8 +764,16 @@ class BringupService:
         self._profile_args = args  # 资源闭包上界估算读 miles/slime 的并发与长度参数
         ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
         self.registry = CaptureRegistry()
+        # W4 接缝（B-1）：consume-time 阈值 `--max-weight-staleness N` 的记录用镜像——纯配置，
+        # 非法值在 tokenizer/线程等任何副作用之前就炸。
+        self.staleness_threshold_mirror = staleness_threshold_mirror_from_args(args)
         self.tokenizer = load_tokenizer(args.hf_checkpoint, trust_remote_code=True)
         self.sglang_url = f"http://{args.sglang_router_ip}:{args.sglang_router_port}"
+        # W10（B-5b）：rid 级 abort 广播客户端——问 router `/list_workers` 取全部 worker，
+        # 绕过 router 逐 worker 直发同一 rid（持有者终止、其余忽略）。接到 capture registry 的
+        # engine_abort 挂点后，wire 的 cancel/超时 abort 不再经 MilesRouter 最小负载错发。
+        self.router_workers = MilesRouterWorkerClient(self.sglang_url)
+        self.registry.engine_abort = self.router_workers.broadcast_abort
         self.max_context_len = int(getattr(args, "rollout_max_context_len", 0) or 0)
         # B2（R6-ext）请求侧引擎选择（与 generate.py session_defaults 同一
         # args 显式开关，不猜引擎）：True = sglang-miles 构建（原生
@@ -934,6 +975,8 @@ class BringupService:
             moe_router_topk=moe_router_topk,
             policy_version=self.policy_version,
             max_context_len=self.max_context_len,
+            # W4 接缝（B-1）：consume-time 阈值的记录镜像（None = 未配置 → generate.py 哨兵行为）
+            staleness_threshold=self.staleness_threshold_mirror,
             # FA-1 接线：正式链两旋钮（默认 0 = bring-up/S1 行为逐字不变；
             # FA-5 正式冒烟置 1——require 打开时启动断言会强制 reject 同开）。
             # 严格解析：只认 "0"/"1"，拼写错误直接炸（防静默关闭正式防线）
@@ -1026,7 +1069,7 @@ class BringupService:
         # await；worker 的 sandbox 类由 FA 入口另建——不跨 loop 共享。
         proxy = build_production_model_call_proxy(
             self.registry,
-            self._latest_engine_version,
+            self._observed_current_version,
             require_real=config.require_real_weight_versions,
             artifact_sink=audit_artifact_sink,
         )
@@ -1060,12 +1103,9 @@ class BringupService:
             repair_signal_sink=repair_signal_sink,
             backpressure_events_source=lambda: list(self.grading_queue.events),
             artifact_dir=ARTIFACT_DIR / "rollouts",
-            # FA-1 follow-up（codex 轮次 6）：finalize 时刻的 current version
-            # 提供者——取 capture wire 逐轮记录的引擎实测版本里的数值最大值
-            # （"截至目前引擎报告过的最新版本"），无记录时回退启动探针值。
-            # 权重更新后新轮次的 meta_info.weight_version 会推进该值，
-            # 多 step 链不再拿启动版本冒充 current。
-            current_policy_version_provider=self._latest_engine_version,
+            # finalize 时刻的 current version 提供者（W10 起只用引擎一手回包的最大观测，
+            # 无记录回退启动探针值；不再经 router 随机探测一台 engine——见方法 docstring）。
+            current_policy_version_provider=self._observed_current_version,
             # P0-2（codex 轮次 8）：harness 返回后复检 session poison
             session_poison_check=self.registry.poison.is_poisoned,
             # P0-4（codex 轮次 9）：poison 即主动取消 harness task
@@ -1092,10 +1132,30 @@ class BringupService:
             ),
         )
 
-    def _registry_max_version(self) -> int | None:
+    def _observed_current_version(self) -> str:
+        """finalize 握手 / proxy 窗口所用的 current version（W10 起**只用引擎一手回包**）。
+
+        = capture wire 逐轮记录的 `meta_info.weight_version`（含 spans 内全部版本）里的数值
+        最大值（锁内快照后遍历）；尚无记录时回退启动探针实测值 `self.policy_version`。
+
+        删除了什么：此前这里经 router 发 GET `/model_info`（fallback `/get_weight_version`）
+        问"权威版本"，再用 registry 最大观测做交叉检查（观测 > 权威即 RuntimeError）。多 engine
+        下 MilesRouter 把该 GET 随机落到任意一台 engine：更新窗口内探到未更新 engine、而 capture
+        已从已更新 engine 观测到新版本时，交叉检查把瞬态偏斜判成"版本管道错乱"**假红崩溃**
+        （router_targeting_audit.md §4）。B-1 改判后 finalize-time staleness 不再是任何资格门
+        （consume-time `--max-weight-staleness` 是唯一权威，current published 版本由 miles
+        buffer 持有），该探测已无资格用途，随 W10 删除（决策包 B-5b）。
+
+        本值的口径 = "截至目前引擎向本进程报告过的最新版本"这一**观测上界**：
+        - 一定 ≥ 本轨迹任何 turn 的 behavior 版本（同一 registry），所以 `_build_handshake` 的
+          "seen 比 current 新"矛盾检查不会因取数方式假红；
+        - 可能滞后于 trainer 刚发布、尚未服务过本进程任何请求的版本——只让 finalize-time lag
+          的**观测值**偏小，不影响任何准入判定（lag 只记观测）。
+        publish 后的版本收敛事实由 miles 侧经 engine actor 逐台核对（integration tree
+        `RolloutManager.set_weight_version`，patch 0015），不经 router。
+        """
+
         latest: int | None = None
-        # 轮次 14：锁内快照后遍历——并发 commit/unregister 下直接遍历会
-        # `dictionary changed size during iteration`（未归因 adapter 500）
         for versions in self.registry.snapshot_weight_versions().values():
             for version in versions:
                 try:
@@ -1103,67 +1163,8 @@ class BringupService:
                 except ValueError:
                     continue
                 latest = value if latest is None or value > latest else latest
-        return latest
-
-    def _latest_engine_version(self) -> str:
-        """finalize 时刻的 current version（codex 轮次 7 P0-5 权威化）。
-
-        权威来源 = 引擎版本端点，`/model_info` 优先、`/get_weight_version`
-        兜底（V3 审计移交收口，依据见方法体注释）——trainer 更新后即便还没有
-        新的成功响应，该端点也是新版本；capture registry 最大值只作**交叉
-        检查**（大于权威值 = 事实矛盾，fail-closed）。HTTP 失败时：正式链
-        fail-closed，bring-up 回退 registry 最大值/启动探针值（口径 =
-        "相对最近观测"，如实降级）。
-        """
-
-        # P1（codex 轮次 8）：不在 asyncio 请求路径同步阻塞——权威版本查询用
-        # requests 但**只在有运行 loop 时经线程池**（provider 由同步 build_
-        # handshake 调用，此处保持同步 API；真正的阻塞担忧在 wire 的 finalize
-        # 路径，那里 provider 已不在热路径——staleness 只在握手构造时算一次）。
-        import requests
-
-        authoritative: str | None = None
-        try:
-            # V3 审计移交收口（router_targeting_audit.md §3 登记项）：钉死的
-            # SGLANG_COMMIT=4e230c3d（v0.5.18 线，integration manifest 的
-            # sglang_commit）中 `/get_weight_version` 路由仍注册但 handler
-            # 无条件抛 HTTPException(404 deprecated)——单端点探测对钉死引擎
-            # 100% 失败；current 版本改由 `/model_info` 返回体的
-            # "weight_version" 键承载（该 commit 的 http_server.py 实测：值 =
-            # tokenizer_manager.config_value("weight_version")，权重更新成功
-            # 即推进，与旧端点同一事实源）。探测顺序对齐引擎侧
-            # sglang_engine.get_weight_version 的"先新后旧"双端点 fallback
-            # （miles/backends/sglang_utils/sglang_engine.py:578）；旧端点仅
-            # 为未更名的旧引擎保留。两端点经 MilesRouter catch-all 代理均可
-            # 达引擎（miles/router/router.py:71 `/{path:path}`）。
-            response: Any = None
-            for endpoint in ("/model_info", "/get_weight_version"):
-                response = requests.get(f"{self.sglang_url}{endpoint}", timeout=5)
-                if response.status_code == 200:
-                    break
-            else:
-                response.raise_for_status()  # 双端点全非 200：按末次响应抛错
-            authoritative = str(response.json()["weight_version"])
-        except Exception as exc:  # noqa: BLE001 —— 分链路处置
-            if self._require_real_weight_versions:
-                raise RuntimeError(
-                    "正式链取权威 weight_version 失败（/model_info 与 "
-                    f"/get_weight_version 双端点探测；{type(exc).__name__}: {exc}）"
-                    "——fail-closed，不许用历史观测冒充 current。"
-                ) from exc
-        registry_max = self._registry_max_version()
-        if authoritative is not None:
-            try:
-                if registry_max is not None and registry_max > int(authoritative, 10):
-                    raise RuntimeError(
-                        f"版本事实矛盾：capture 观测最大 {registry_max} > 引擎权威 "
-                        f"{authoritative}——版本管道错乱，fail-closed。"
-                    )
-            except ValueError:
-                pass  # 非数值权威版本：交叉检查不适用
-            return authoritative
-        if registry_max is not None:
-            return str(registry_max)
+        if latest is not None:
+            return str(latest)
         return self.policy_version
 
     async def _run_startup_checks(self) -> None:
@@ -1254,6 +1255,15 @@ class BringupService:
             self.policy_version = str(meta["weight_version"])  # 假设 4：引擎实测事实源
         evidence["engine_weight_version"] = meta.get("weight_version")
         evidence["sglang_url"] = self.sglang_url
+        # W10：router worker 池事实（engine 数的运行期一手证据，供 GPU 多 engine 验证核对
+        # `count == rollout_num_gpus // rollout_num_gpus_per_engine`）。取不到只记错误、不阻断
+        # 启动——上面的探针已证明至少一个 worker 可达；abort 广播在 worker 列表取不到时退回
+        # 经 router 单发（engine_router_client 模块 docstring）。
+        try:
+            worker_urls = await self.router_workers.list_workers()
+            evidence["router_workers"] = {"urls": worker_urls, "count": len(worker_urls)}
+        except Exception as exc:  # noqa: BLE001
+            evidence["router_workers"] = {"error": f"{type(exc).__name__}: {exc}"[:300]}
         evidence["adapter_url"] = self.adapter_url
         evidence["harness_kind"] = HARNESS_KIND
         # D-FA-6 探针证据：合并进 CC 子进程环境的 extra-envs（async_start 急切

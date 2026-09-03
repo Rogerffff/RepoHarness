@@ -45,10 +45,13 @@
 #   与 miles scripts/models/qwen3-30B-A3B.py、slime scripts/models/qwen3-30B-A3B.sh 一致）；
 #   MILES_EXPERIMENTAL_FT_TRAINER 必须不设（B6 锁定：实验 FT trainer 的 retry/部分失败
 #   继续语义会吞掉 faithful DIS 的 fail-stop；loss 侧已 fail-closed，这里在启动层就不设）；
-#   --use-miles-router + 单 engine 拓扑（V3 vendor refresh：#2596 最新 fail-closed 要求
-#   top_p<1 必须走 MilesRouter，而 MilesRouter 逐请求最小负载选 worker、忽略
-#   X-SMG-Routing-Key ⇒ engine 数钉死 1；见 topo 注释、SGLANG_ARGS 注释与
-#   同目录 router_targeting_audit.md）。
+#   --use-miles-router（V3 vendor refresh：#2596 最新 fail-closed 要求 top_p<1 必须走
+#   MilesRouter）。engine 拓扑**不再钉死**（W10 / 决策包 D2+B v2 B-5b，2026-09-04）：
+#   per-engine 卡数是普通启动配置 RH2_SPIKE_ROLLOUT_GPUS_PER_ENGINE（默认 2），engine 数
+#   = rollout 卡数 / per-engine；preflight 只做整除与资源合法性检查。多 engine 下的
+#   abort 错发 / 版本随机探测两处正确性缺口已由 W10 关闭（abort 改为 rid 级全 worker 广播、
+#   版本探测删除，见 router_targeting_audit.md §5 状态）；首训 engine 数由 GPU 上同
+#   rollout 卡数的 matched comparison（1×TP4 vs 2×TP2）决定，见 topo 注释。
 #
 # execution mode 说明（F3 §5.1，防"把 s1_compat 误称 formal FA"）：
 #   s1_compat = pre-formal 硬件算法探针模式。fa_audit_only 返回 abort 样本不交训练；
@@ -127,24 +130,21 @@ EVAL_SMOKE_SHA_EXPECTED="77e736d12fd3cf638c148ae9fa50361b5b01e03ecb1aa4cb6e01e3f
 # topo（默认 G1 的 6+2；G2 换 4+4 时经环境覆盖，cp 恒为 1——faithful_dis CP>1 fail-closed）
 ACTOR_GPUS="${RH2_SPIKE_ACTOR_GPUS:-6}"
 ROLLOUT_GPUS="${RH2_SPIKE_ROLLOUT_GPUS:-2}"
-# V3（vendor refresh 第三批）单 engine 钉死：per-engine 卡数 := 全部 rollout 卡
-# ⇒ engine 数恒为 1。miles 事实：engine 数 = rollout_num_gpus //
-# rollout_num_gpus_per_engine（miles/ray/rollout/rollout_server.py:49 实际按此
-# 建 engine；update_weight_from_distributed/p2p_transfer_utils.py:64 同式）。
-# 原因：本脚本启用 --use-miles-router（见 SGLANG_ARGS 注释）后，MilesRouter 对
-# 每个 HTTP 请求独立选最小负载 worker（miles/router/router.py:142 do_proxy →
-# :215 _use_url），忽略 rh2 capture wire 发送的 X-SMG-Routing-Key；多 engine 下
-# /abort_request、/get_weight_version 会被错发到任意 engine（逐端点判定与解锁
-# 前置清单：同目录 router_targeting_audit.md）。该清单关闭前不提供 per-engine
-# 覆盖位——旧 RH2_SPIKE_ROLLOUT_GPUS_PER_ENGINE 已作废，设了显式 FAIL（防旧
-# G2 配方静默改义）。语义后果要知道：sglang 推理 TP = per-engine 卡数
-# （miles/backends/sglang_utils/arguments.py:184 sglang_tp_size =
-# rollout_num_gpus_per_engine），因此 G2 覆盖 RH2_SPIKE_ROLLOUT_GPUS=4 时得到
-# 1 engine × TP4，而不是 2 engine × TP2。
-if [ -n "${RH2_SPIKE_ROLLOUT_GPUS_PER_ENGINE:-}" ]; then
-  die "RH2_SPIKE_ROLLOUT_GPUS_PER_ENGINE 覆盖位已移除（V3 router 定向限制：engine 数钉死 1，per-engine 恒等于 rollout 卡数=${ROLLOUT_GPUS}）。多 engine 解锁前置见 router_targeting_audit.md；确要改拓扑请改脚本留痕。"
-fi
-ROLLOUT_GPUS_PER_ENGINE="$ROLLOUT_GPUS"
+# engine 拓扑（W10 / B-5b，2026-09-04 恢复为普通启动配置）：per-engine 卡数由
+# RH2_SPIKE_ROLLOUT_GPUS_PER_ENGINE 决定，默认 2（= P3 J4 正式链的 2×TP2 形态；G1 默认
+# 6+2 下得到 1 engine × TP2，与此前钉死时的实际拓扑相同；G2 的 4+4 下得到 2 engine × TP2）。
+# miles 事实：engine 数 = rollout_num_gpus // rollout_num_gpus_per_engine
+# （miles/ray/rollout/rollout_server.py:49 实际按此建 engine；
+# update_weight_from_distributed/p2p_transfer_utils.py:64 同式）；sglang 推理 TP =
+# per-engine 卡数（miles/backends/sglang_utils/arguments.py:184 sglang_tp_size =
+# rollout_num_gpus_per_engine）。同 rollout 卡数的两种切法（如 4 卡：1×TP4 vs 2×TP2）
+# 吞吐口径不可直接对比，首训 engine 数按 GPU matched comparison 决定（W10 报告 GPU 清单）。
+# 此前"engine 数钉死 1"是绕开 MilesRouter 忽略 X-SMG-Routing-Key（abort/版本探测错发）
+# 的临时限制，B-5b 裁定不得转为正式资格语义；两处缺口已由 W10 关闭：rh2 abort 改为
+# `/list_workers` 全 worker 广播同一 rid（engine_router_client.py），经 router 随机探测
+# 版本的路径删除（bringup.py `_observed_current_version`），publish 后版本收敛经 engine
+# actor 逐台核对（integration tree RolloutManager.set_weight_version）。
+ROLLOUT_GPUS_PER_ENGINE="${RH2_SPIKE_ROLLOUT_GPUS_PER_ENGINE:-2}"
 TP="${RH2_SPIKE_TP:-1}"; PP="${RH2_SPIKE_PP:-3}"; EP="${RH2_SPIKE_EP:-2}"
 CP=1                                                  # 不提供覆盖位：CP>1 直接换实验
 NUM_ROLLOUT="${RH2_SPIKE_NUM_ROLLOUT:-3}"             # G1 最小：≥3 轮 rollout
@@ -554,19 +554,25 @@ for tok in "${MODEL_ARGS[@]}" "${ALL_ARGS[@]}"; do
     --prefill-num-servers|--prefill-num-servers=*)
       die "参数组混入 --prefill-num-servers：PD 模式已撤销 sampling-mask 支持（#2596），MilesRouter 亦不支持 PD（router_manager.py:41）" ;;
     --sglang-config|--sglang-config=*)
-      die "参数组混入 --sglang-config：server_groups 可引入 PD/多模型 worker（sglang_config.py:95），V3 钉死单模型单 engine，禁用该入口" ;;
+      die "参数组混入 --sglang-config：server_groups 可引入 PD/多模型 worker（sglang_config.py:95），首训钉死单模型 regular worker（engine 数只由 --rollout-num-gpus-per-engine 决定），禁用该入口" ;;
   esac
 done
-# (d) engine 数必须恰为 1：engine 数 = rollout_num_gpus //
-#     rollout_num_gpus_per_engine（rollout_server.py:49）。多 engine 解锁前提
-#     = router_targeting_audit.md 前置清单关闭（MilesRouter 忽略
-#     X-SMG-Routing-Key，/abort_request、/get_weight_version 逐请求最小负载
-#     错发面见该审计）。
+# (d) engine 拓扑合法性（W10 起只做整除与资源合法性，不再限制 engine 数）：
+#     engine 数 = rollout_num_gpus // rollout_num_gpus_per_engine（rollout_server.py:49，
+#     整数除法会静默丢余数卡）；per-engine 必须是正整数、不超过 rollout 卡数（单节点
+#     拓扑，多节点 engine 不在首训范围）。
+case "$ROLLOUT_GPUS_PER_ENGINE" in
+  ''|*[!0-9]*) die "RH2_SPIKE_ROLLOUT_GPUS_PER_ENGINE='$ROLLOUT_GPUS_PER_ENGINE' 不是正整数" ;;
+esac
+[ "$ROLLOUT_GPUS_PER_ENGINE" -ge 1 ] \
+  || die "per-engine 卡数必须 ≥ 1（当前 $ROLLOUT_GPUS_PER_ENGINE）"
+[ "$ROLLOUT_GPUS_PER_ENGINE" -le "$ROLLOUT_GPUS" ] \
+  || die "per-engine 卡数 $ROLLOUT_GPUS_PER_ENGINE 超过 rollout 卡数 $ROLLOUT_GPUS（单节点拓扑，一个 engine 不能跨出 rollout 卡集）"
 [ $((ROLLOUT_GPUS % ROLLOUT_GPUS_PER_ENGINE)) -eq 0 ] \
   || die "rollout 卡数 $ROLLOUT_GPUS 不能被 per-engine $ROLLOUT_GPUS_PER_ENGINE 整除（miles 会静默丢余数卡或建错 engine 数）"
 ENGINE_COUNT=$((ROLLOUT_GPUS / ROLLOUT_GPUS_PER_ENGINE))
-[ "$ENGINE_COUNT" -eq 1 ] \
-  || die "engine 数=$ENGINE_COUNT ≠ 1：MilesRouter 定向缺口未关闭前禁止多 engine（router_targeting_audit.md 前置清单）"
+[ "$ENGINE_COUNT" -ge 1 ] \
+  || die "engine 数=$ENGINE_COUNT 不合法"
 
 # P11 是 preflight 闭包的最后一段，成功宣告必须在它之后（P2 #2 排序修复）。
 say "preflight 全部通过"
@@ -586,7 +592,7 @@ if [ "$MODE" = "dry-run" ]; then
   echo "  $MODEL_ARGS_STR \\"
   printf '  %s\n' "${ALL_ARGS[@]}"
   say "（model args 共 ${#MODEL_ARGS[@]} 个 token，经 eval 解析后按数组传给进程）"
-  say "拓扑：${ACTOR_GPUS} train + ${ROLLOUT_GPUS} rollout（TP${TP}/PP${PP}/CP${CP}/EP${EP}；engine 数=${ENGINE_COUNT}（V3 钉死 1），per-engine=${ROLLOUT_GPUS_PER_ENGINE} 卡 ⇒ sglang TP${ROLLOUT_GPUS_PER_ENGINE}；router=miles）"
+  say "拓扑：${ACTOR_GPUS} train + ${ROLLOUT_GPUS} rollout（TP${TP}/PP${PP}/CP${CP}/EP${EP}；engine 数=${ENGINE_COUNT}，per-engine=${ROLLOUT_GPUS_PER_ENGINE} 卡 ⇒ sglang TP${ROLLOUT_GPUS_PER_ENGINE}；router=miles）"
   say "run 模式训练结束后将自动执行 post-run 闭环（identity 核对/checkpoint 存读删/shutdown 探针/collect/judge），退出码逐步记录在 $EV/postrun_status.json"
   exit 0
 fi

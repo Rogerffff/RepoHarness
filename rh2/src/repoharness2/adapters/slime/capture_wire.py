@@ -32,6 +32,7 @@ import asyncio
 import contextvars
 import dataclasses
 import uuid
+from collections.abc import Awaitable, Callable
 from typing import Any
 
 # F2-3 批 2b：per-HTTP-request 捕获归属键（guard middleware 进入时铸造，
@@ -218,6 +219,22 @@ class CaptureRegistry:
         }
         # FA-1 follow-up（codex 轮次 7/8）：proxy 接入真实 HTTP 链的挂点。
         self.model_call_proxy: ModelCallProxy | None = None
+        # W10（决策包 B-5b）：rid 级 abort 的投递函数。bringup 接线 =
+        # `MilesRouterWorkerClient.broadcast_abort`（问 router `/list_workers` 取全部 worker，
+        # 绕过 router 逐 worker 直发同一 rid：持有者终止、其余忽略）。None = 未接线（S1 mock
+        # 链 / 无 bringup 的测试面），wire 退回 stock 形状经 router 单发——MilesRouter 逐请求
+        # 最小负载选 worker，单发只在**单 worker 池**下语义正确，多 engine 下会错发。
+        self.engine_abort: Callable[[str], Awaitable[Any]] | None = None
+        # 最近的 abort 投递事实（有界环，锁域；bringup 关停/审计可读）
+        self.abort_results: list[dict[str, Any]] = []
+        self.stats.update(
+            {
+                "abort_requested": 0,  # wire 走到 abort 分支的次数（cancel/超时/连接错误）
+                "abort_broadcast": 0,  # 经 engine_abort 广播的次数
+                "abort_router_single_send": 0,  # 未接线或 worker 列表取不到 → 经 router 单发
+                "abort_delivery_failed": 0,  # 至少一个 worker 投递失败的次数
+            }
+        )
         self.poison = SessionPoisonRegistry()
         self.session_deadlines: dict[str, float] = {}
         self.default_session_budget_seconds: float | None = None
@@ -441,6 +458,22 @@ class CaptureRegistry:
     def is_revoked(self, sid: str) -> bool:
         with self._lock:
             return sid in self._revoked
+
+    def note_abort_result(self, result: Any) -> None:
+        """W10：记一次 rid abort 的投递事实（锁域）。``result`` 为
+        `AbortBroadcastResult`（有 to_dict）或 dict；环上限 256 条。"""
+
+        record = result.to_dict() if hasattr(result, "to_dict") else dict(result)
+        with self._lock:
+            if record.get("mode") == "broadcast":
+                self.stats["abort_broadcast"] += 1
+            else:
+                self.stats["abort_router_single_send"] += 1
+            if record.get("failed"):
+                self.stats["abort_delivery_failed"] += 1
+            self.abort_results.append(record)
+            if len(self.abort_results) > 256:
+                del self.abort_results[: len(self.abort_results) - 256]
 
     def note_revoked_rejection(self, sid: str) -> None:
         """guard 在 revoked 分支计一笔迟到请求（F2-3 drain receipt 证据）。"""
@@ -998,14 +1031,36 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
                         raise RuntimeError(f"sglang upstream {r.status}: {text[:400]}")
                     return await r.json(content_type=None)
             except (asyncio.CancelledError, aiohttp.ClientError, asyncio.TimeoutError):
-                try:  # stock 同款：eager abort **本 attempt 的 rid**，释放引擎槽位
-                    async with aiohttp.ClientSession(
-                        timeout=aiohttp.ClientTimeout(total=5)
-                    ) as s2:
-                        await s2.post(f"{adapter.sglang_url}/abort_request", json={"rid": rid})
+                # stock 同款：eager abort **本 attempt 的 rid**，释放引擎槽位。
+                # W10（B-5b）：投递方式改为 registry.engine_abort（bringup 接线的 rid 级广播：
+                # router `/list_workers` 全部 worker 各发一次同一 rid，持有者终止、其余忽略）；
+                # 未接线时退回 stock 形状经 router 单发（只在单 worker 池下语义正确）。
+                # 投递失败只记账不上抛（与 stock 一致：abort 是尽力释放，不改变本次失败的归因）。
+                with registry._lock:
+                    registry.stats["abort_requested"] += 1
+                try:
+                    await _abort_rid(rid)
                 except Exception:
                     pass
                 raise
+
+        async def _abort_rid(rid: str) -> None:
+            abort_fn = registry.engine_abort
+            if abort_fn is not None:
+                registry.note_abort_result(await abort_fn(rid))
+                return
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=5)) as s2:
+                async with s2.post(f"{adapter.sglang_url}/abort_request", json={"rid": rid}) as r:
+                    registry.note_abort_result(
+                        {
+                            "rid": rid,
+                            "mode": "router_single_send",
+                            "workers": [adapter.sglang_url],
+                            "delivered": [adapter.sglang_url] if r.status < 400 else [],
+                            "failed": ({} if r.status < 400 else {adapter.sglang_url: f"HTTP {r.status}"}),
+                            "list_error": "engine_abort_not_wired",
+                        }
+                    )
 
         proxy = registry.model_call_proxy
         proxy_result = None

@@ -105,25 +105,29 @@
 | `shutdown_orphan_workers_max` / `shutdown_finalization` / `queue_*` / `expected_dp_ranks` | 关停探针：docker/ray **查询失败显式 FAIL（无法观测 ≠ 观测为零，P0-3B）**，查询成功且孤儿=0 才 PASS；聚焦修复批 #4：孤儿容器面同时覆盖 rollout（rh2-rollout）与真实评分（rh2-grading）名前缀，并按本 run owner label `rh2.run_id=<run_id>` 精确归属（launch 传 --run-id；只查仍运行容器，`docker ps -a` 已退出未删容器留 P1）；finalization 在 s1_compat 如实 NOT_APPLICABLE（bringup 设计不建 store，不冒充零、不构成 F5 收口证据），fa_* 模式 store 必须在场且空。`queue_multiset_conservation`（P0-8 + 聚焦修复批 #1）：admitted **leaf** multiset == 消费 leaf multiset（少/多一个 FAIL；合法 fan-out 双叶不再假红，同一 leaf 双消费仍必红），filtered 按 sample_index 与训练/消费面不相交；`train_step_rank_coverage`：每 step 的 dp 分片 = 0..expected_dp_ranks-1 齐全 | evidence/shutdown_probe.json + step_records.jsonl + sample_records.jsonl |
 | `gpu_mem_peak_frac_max` / `throughput_min_tokens_per_sec` / `weight_update_seconds_max` | 显存峰值/吞吐/权重更新时间（train_step 另带 `zero_signal_scan_seconds` 独立计时，P1-2——scan 开销单独可见，阈值留待 GPU 实验设计轮） | dmon CSV + train_step/weight_update 事件 |
 
-## 拓扑限制登记（V3 vendor refresh：miles router 定向）
+## 拓扑登记（W10 / 决策包 D2+B v2 B-5b，2026-09-04：engine 数不再钉死）
 
 不进上方 json 表（judge 没有对应消费键，加死键违反"新配置指认消费者"纪律），
-但属于**开机前不可现场推翻**的限制，与 json 表同等效力：
+但属于开机前须明确的拓扑事实：
 
-- **rollout engine 数钉死 1**：launch.sh 钉 per-engine 卡数 := 全部 rollout 卡
-  （engine 数 = rollout_num_gpus // per_engine），preflight P11(d) 断言。原因：
-  `--use-miles-router`（#2596 fail-closed 强制，top_p<1 前提）启用的 MilesRouter
-  对每个 HTTP 请求独立取最小负载 worker、忽略 rh2 发送的 X-SMG-Routing-Key——
-  多 engine 下 `/abort_request` 与版本探测（`/model_info`，fallback
-  `/get_weight_version`，V3 审计移交收口后 bringup 双端点探测）会错发到任意
-  engine。
-  逐端点判定与解锁前置清单见同目录 `router_targeting_audit.md`；清单关闭前，
-  任何多 engine 配置 = 换实验（T0 级，不是现场可调项）。
-- 后果提示：sglang 推理 TP = per-engine 卡数。G2 换 4+4 时得到 1 engine × TP4，
-  吞吐口径与 2 engine × TP2 不可直接对比——`throughput_min_tokens_per_sec`
-  校准值绑定 engine 拓扑，若未来解锁多 engine 须重校准并留痕。
-- 既有 `g1_sglang_engines_stable_across_steps` 判定不受影响（它断言 engine
-  actor 身份集合跨 step 稳定，与 engine 数无关）；单 engine 下该集合恒为单元素。
+- **rollout engine 数 = rollout 卡数 / per-engine 卡数，是普通启动配置**：launch.sh 读
+  `RH2_SPIKE_ROLLOUT_GPUS_PER_ENGINE`（默认 2），preflight P11(d) 只做正整数 / 不超过
+  rollout 卡数 / 整除检查。此前"钉死 1"是绕开 MilesRouter 忽略 X-SMG-Routing-Key
+  （`/abort_request` 与版本探测逐请求最小负载错发）的临时限制，owner 裁定不得转为正式
+  资格语义；两处缺口已由 W10 关闭：rh2 的 rid 级 abort 改为 router `/list_workers` 全部
+  worker 广播（`engine_router_client.py`，绕过 router 选路），经 router 随机探测版本的路径
+  删除（bringup `_observed_current_version` 只用引擎回包观测），publish 后版本收敛经
+  engine actor 逐台核对（integration tree `RolloutManager.set_weight_version`，事件
+  `engine_versions_after_publish`）。逐端点状态见 `router_targeting_audit.md` §0。
+- **首训 engine 数由 GPU matched comparison 决定**（同 rollout 卡数的两种切法，如 4 卡
+  1×TP4 vs 2×TP2）：sglang 推理 TP = per-engine 卡数，两种切法的吞吐 / 更新窗口 / 重算
+  token 口径不同——`throughput_min_tokens_per_sec`、`weight_update_seconds_max` 等
+  calibrate 组绑定 engine 拓扑，比较结论与所选拓扑一并留痕后再定阈值。
+- 既有 `g1_sglang_engines_stable_across_steps` 判定不受影响（它断言 engine actor 身份
+  集合跨 step 稳定，与 engine 数无关）；多 engine 下该集合为 N 元素，同样要求跨 step 不变。
+  startup_evidence.json 的 `router_workers.count` 应等于 engine 数（W10 GPU 清单核对项）。
+- 明确不做（首版）：dead-engine 自动恢复、`/remove_worker` 弹性回收、在线缩扩容、FT 自动
+  恢复、会话粘滞路由；任一 engine 死亡 = 停当前 run，按 B-3 冷恢复重启。
 
 ## G1 最小规模摘录（范围建议 §5，供现场对照）
 

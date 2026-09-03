@@ -10,6 +10,26 @@
 > 结论一句话：**单 engine 首枪全部端点安全（一处 FT 路径缺口不在 G1 执行面）；
 > 多 engine 在 abort/版本探测两处有真实错发面，解锁前置清单见 §5。**
 
+## 0. W10 之后的状态（2026-09-04，决策包 D2+B v2 B-5b；本节覆盖下文与之冲突的结论）
+
+owner 裁定：单 engine 钉死是绕开 MilesRouter 错发的**临时限制，不得转为正式资格语义**；
+租卡前必须闭合多 engine 最小正确性。W10 对 §4 两处正确性错发面的处置与 §5 清单逐条状态：
+
+| §5 前置 | 状态 | 落点 |
+|---|---|---|
+| 1 abort 定向或广播 | **已关闭（广播）** | rh2 `adapters/slime/engine_router_client.py` `MilesRouterWorkerClient.broadcast_abort`：GET `/list_workers`（fallback `/workers`）取全部 worker，**绕过 router** 逐 worker 直发同一 rid（仿 miles `inference_rollout_train.abort` 的 abort-all 形状）；capture_wire 的 cancel/超时 abort 分支改经 `registry.engine_abort`（bringup `__init__` 接线），未接线时退回 stock 单发并记 `abort_router_single_send`。投递事实进 `registry.abort_results` / `stats`。测试：`tests/adapters_miles/test_w10_multi_engine.py`（含"旧路径单发错发到非持有者"反例） |
+| 2 版本探测去任意化 | **已关闭（删除）** | bringup `_latest_engine_version`（GET `/model_info` fallback `/get_weight_version` + registry 交叉检查）整体删除——B-1 后 finalize-time staleness 不是资格门，该探测无资格用途；finalize/proxy 的 current 版本改为 `_observed_current_version`（引擎回包观测最大值，无记录回退启动探针值，不发任何请求）。publish 后收敛事实经 engine actor 逐台核对：integration tree `RolloutManager.set_weight_version`（patch 0015，`miles/utils/rh2_engine_versions.py`），不一致或不可达 = 停 run |
+| 3 会话粘滞路由 | **不做（首版）** | 只影响 KV 前缀局部性（性能），非正确性前提；B-5b 明示不建通用粘滞路由 |
+| 4 `/remove_worker` + stop_engines | **不做（首版）** | 只在 FT / `stop_cell` / 健康恢复路径触发；首训无 FT；任一 engine 死亡 = 停 run 按 B-3 重启 |
+| 5 dead worker 回池 | **不做（首版）** | 同上；engine 死亡即停 run |
+| 6 阈值重校准 | **待 GPU** | engine 数由 matched comparison（如 1×TP4 vs 2×TP2）决定后，calibrate 组阈值随所选拓扑留痕（thresholds.md 拓扑登记） |
+| 7 上卡验证探针 | **待 GPU** | W10 报告 GPU 验证清单：多 engine abort 探针（cancel 后各 worker 运行中请求归零）、publish 后 `engine_versions_after_publish` 事件全 engine 一致、startup_evidence `router_workers.count == engine 数` |
+
+§6 对应关系更新：launch.sh 的 per-engine 覆盖位 `RH2_SPIKE_ROLLOUT_GPUS_PER_ENGINE`
+恢复（默认 2），P11(d) 只做正整数 / ≤ rollout 卡数 / 整除检查，engine 数不再限制。
+下文 §3–§6 是 W10 之前的审计原文，保留供对照；其中"engine=1 钉死 / P11(d) 断言 engine 数=1"
+的陈述已失效。
+
 ## 1. 请求平面拓扑（谁经过 router，谁不经过）
 
 rh2 侧经 router 的 HTTP 调用点恰有 3 个（`adapter.sglang_url =

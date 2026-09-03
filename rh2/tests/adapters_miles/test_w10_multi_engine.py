@@ -1,0 +1,671 @@
+"""W10（决策包 D2+B v2 B-5b，owner 2026-09-04 拍板）：两个假 engine + 假 MilesRouter 的本地反例。
+
+被测事实链（全部是生产代码，替身只有 HTTP 两端）::
+
+    真实 capture wire `rh2_call_sglang_generate`（install_capture_wire 后的模块级替换体）
+      -> 真 aiohttp 客户端 -> FakeMilesRouter（真 aiohttp server，镜像 miles/router/router.py 的
+         逐请求最小负载选路、不读 X-SMG-Routing-Key）-> FakeEngine ×2（真 aiohttp server，
+         /generate 挂起直到 rid 被 abort；/abort_request 只终止自己持有的 rid，不认识的 rid 忽略并 200）
+    cancel -> wire except 分支 -> registry.engine_abort（bringup 接线的
+      `MilesRouterWorkerClient.broadcast_abort`：router /list_workers 全部 worker 广播同一 rid）
+
+五个反例/正例与 B-5b 逐条对应：分发到不同 engine；rid abort 到达持有者（广播后非持有者忽略）
+——并附"旧路径经 router 单发会错发"的反例；权重发布到全部 engine（miles 侧 publish 路径
+源码事实 + patch 0015 的 engine actor 逐台收敛核对，fake actor handle 驱动）；版本不从任意
+worker 猜（bringup 的 current 版本只来自引擎一手回包的观测，两台 engine 都没收到探测）；
+单 engine 配置仍正常。另含 W4 接缝（staleness 阈值记录镜像）与 launch.sh 单 engine 硬约束
+删除的锚点。
+"""
+
+from __future__ import annotations
+
+import asyncio
+import json
+import logging
+import subprocess
+from pathlib import Path
+from types import SimpleNamespace
+
+import aiohttp
+import pytest
+from aiohttp import web
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+LAUNCH_SH = REPO_ROOT / "rh2" / "experiments" / "miles_gpu_spike" / "launch.sh"
+BRINGUP_PY = REPO_ROOT / "rh2" / "src" / "repoharness2" / "adapters" / "slime" / "bringup.py"
+
+
+async def _serve(app: web.Application) -> tuple[web.AppRunner, str]:
+    """起一个真 aiohttp server 并返回 (runner, base_url)。
+
+    有意不用 aiohttp.test_utils.TestServer：它强制 `handler_cancellation=True`（test_utils.py
+    `_make_runner(handler_cancellation=True)`），客户端断连会取消 handler——而生产的 MilesRouter
+    （uvicorn + httpx）与 SGLang HTTP server 在 rh2 断连后**不**取消：router 的代理请求继续挂在
+    engine 上、engine 里的 rid 继续占槽位直到自然完成或被 abort。这正是 abort 必须精确到达持有者
+    的原因，替身必须保留这一行为（AppRunner 缺省 handler_cancellation=False）。"""
+
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "127.0.0.1", 0)
+    await site.start()
+    port = site._server.sockets[0].getsockname()[1]  # noqa: SLF001 - aiohttp 未暴露已分配端口的公开属性
+    return runner, f"http://127.0.0.1:{port}"
+
+
+# ---------------------------------------------------------------------------
+# 替身：SGLang engine 与 MilesRouter（都是真 HTTP server）
+# ---------------------------------------------------------------------------
+
+
+class FakeEngine:
+    """SGLang engine 的最小替身：/generate 挂起直到该 rid 被 abort 或显式放行（模拟"客户端
+    断连后请求仍占 engine 槽位"）；/abort_request 只终止自己持有的 rid，不认识的 rid 记
+    ignored 并返回 200（SGLang 对未知 rid 静默无操作）；/model_info 记录版本探测命中。"""
+
+    def __init__(self, name: str, version: str) -> None:
+        self.name = name
+        self.version = version
+        self.inflight: dict[str, asyncio.Event] = {}
+        self.generate_rids: list[str] = []
+        self.abort_seen: list[str] = []
+        self.abort_ignored: list[str] = []
+        self.aborted: list[str] = []
+        self.version_probes: list[str] = []
+        self.app = web.Application()
+        self.app.router.add_post("/generate", self._generate)
+        self.app.router.add_post("/abort_request", self._abort)
+        self.app.router.add_get("/model_info", self._model_info)
+        self.app.router.add_get("/get_weight_version", self._deprecated)
+        self.app.router.add_get("/health", self._health)
+        self.runner: web.AppRunner | None = None
+        self.url = ""
+
+    async def start(self) -> None:
+        self.runner, self.url = await _serve(self.app)
+
+    async def close(self) -> None:
+        self.release_all()
+        if self.runner is not None:
+            await self.runner.cleanup()
+
+    async def _generate(self, request: web.Request) -> web.Response:
+        payload = await request.json()
+        rid = payload["rid"]
+        event = asyncio.Event()
+        self.inflight[rid] = event
+        self.generate_rids.append(rid)
+        try:
+            await event.wait()
+        finally:
+            self.inflight.pop(rid, None)
+        finish = "abort" if rid in self.aborted else "stop"
+        pairs = [] if finish == "abort" else [[-0.5, 11], [-0.25, 12]]
+        return web.json_response(
+            {
+                "text": "ok",
+                "meta_info": {
+                    "id": rid,
+                    "weight_version": self.version,
+                    "finish_reason": {"type": finish},
+                    "output_token_logprobs": pairs,
+                },
+            }
+        )
+
+    async def _abort(self, request: web.Request) -> web.Response:
+        payload = await request.json()
+        if payload.get("abort_all"):
+            for rid, event in list(self.inflight.items()):
+                self.aborted.append(rid)
+                event.set()
+            return web.json_response({})
+        rid = payload.get("rid")
+        self.abort_seen.append(rid)
+        event = self.inflight.get(rid)
+        if event is None:
+            self.abort_ignored.append(rid)
+        else:
+            self.aborted.append(rid)
+            event.set()
+        return web.json_response({})
+
+    async def _model_info(self, request: web.Request) -> web.Response:
+        self.version_probes.append("/model_info")
+        return web.json_response({"model_path": "fake", "weight_version": self.version})
+
+    async def _deprecated(self, request: web.Request) -> web.Response:
+        self.version_probes.append("/get_weight_version")
+        return web.json_response({"detail": "deprecated"}, status=404)
+
+    async def _health(self, request: web.Request) -> web.Response:
+        return web.json_response({"ok": True})
+
+    def release_all(self) -> None:
+        for event in list(self.inflight.values()):
+            event.set()
+
+    async def wait_until(self, predicate, timeout: float = 5.0) -> None:
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + timeout
+        while not predicate():
+            if loop.time() > deadline:
+                raise AssertionError(f"engine {self.name}: 等待条件超时")
+            await asyncio.sleep(0.01)
+
+
+class FakeMilesRouter:
+    """镜像 integration tree `miles/router/router.py` 的选路语义：显式路由只有 POST /add_worker、
+    GET /list_workers；其余一切路径 catch-all 代理到 `min(worker_request_counts)`（dict 插入序
+    平局取先注册者），请求进入 +1、返回 -1（do_proxy / _use_url / _finish_url）；不读任何业务
+    header（X-SMG-Routing-Key 是死字节）。客户端断连不取消代理中的请求（与 uvicorn+httpx 的
+    实际行为一致——rh2 cancel 后 router 侧计数仍挂在持有者上）。"""
+
+    def __init__(self) -> None:
+        self.worker_request_counts: dict[str, int] = {}
+        self.proxied: list[tuple[str, str]] = []  # (path, 选中的 worker)
+        self.app = web.Application()
+        self.app.router.add_post("/add_worker", self._add_worker)
+        self.app.router.add_get("/list_workers", self._list_workers)
+        self.app.router.add_route("*", "/{path:.*}", self._proxy)
+        self.runner: web.AppRunner | None = None
+        self.url = ""
+
+    async def start(self) -> None:
+        self.runner, self.url = await _serve(self.app)
+
+    async def close(self) -> None:
+        if self.runner is not None:
+            await self.runner.cleanup()
+
+    async def _add_worker(self, request: web.Request) -> web.Response:
+        url = request.query.get("url") or request.query.get("worker_url")
+        if url not in self.worker_request_counts:
+            self.worker_request_counts[url] = 0
+        return web.json_response({"status": "success", "worker_urls": self.worker_request_counts})
+
+    async def _list_workers(self, request: web.Request) -> web.Response:
+        return web.json_response({"urls": list(self.worker_request_counts)})
+
+    async def _proxy(self, request: web.Request) -> web.Response:
+        path = request.match_info["path"]
+        worker = min(self.worker_request_counts, key=self.worker_request_counts.get)
+        self.worker_request_counts[worker] += 1
+        self.proxied.append((path, worker))
+        body = await request.read()
+        headers = {
+            k: v
+            for k, v in request.headers.items()
+            if k.lower() not in ("content-length", "transfer-encoding", "host")
+        }
+        try:
+            async with aiohttp.ClientSession() as sess:
+                async with sess.request(request.method, f"{worker}/{path}", data=body, headers=headers) as r:
+                    content = await r.read()
+                    return web.Response(body=content, status=r.status, content_type="application/json")
+        finally:
+            self.worker_request_counts[worker] -= 1
+
+
+# ---------------------------------------------------------------------------
+# fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def wire(_vendor_slime_world):
+    from slime.agent.adapters import common as slime_common
+
+    from repoharness2.adapters.slime import capture_wire as cw
+    from repoharness2.adapters.slime.generate import GenerationCaptureHook
+
+    registry = cw.CaptureRegistry()
+    cw.install_capture_wire(registry)
+
+    def make_hook(sid: str):
+        # 真实 hook（commit 时按 contracts 构造 GenerationCaptureRecord，字段须合法形态）
+        return GenerationCaptureHook(
+            trajectory_id=f"traj_{sid}",
+            model_name="Qwen/Qwen3-4B",
+            backend_name="sglang",
+            backend_version="sglang-test",
+            renderer_cls_name="Qwen3Renderer",
+            tokenizer_name="Qwen/Qwen3-4B",
+            template_hash="sha256:" + "0" * 64,
+        )
+
+    return SimpleNamespace(registry=registry, slime_common=slime_common, cw=cw, make_hook=make_hook)
+
+
+async def _start_cluster(wire, engines: list[FakeEngine]):
+    router = FakeMilesRouter()
+    for engine in engines:
+        await engine.start()
+    await router.start()
+    async with aiohttp.ClientSession() as sess:
+        for engine in engines:  # engine 自注册（sglang_engine._init_normal 的 POST /add_worker 同形）
+            async with sess.post(f"{router.url}/add_worker", params={"url": engine.url}) as r:
+                assert r.status == 200
+    from repoharness2.adapters.slime.engine_router_client import MilesRouterWorkerClient
+
+    client = MilesRouterWorkerClient(router.url)
+    wire.registry.engine_abort = client.broadcast_abort  # bringup.__init__ 的同一接线
+    return SimpleNamespace(engines=engines, router=router, client=client)
+
+
+async def _stop_cluster(wire, cluster) -> None:
+    wire.registry.engine_abort = None
+    for engine in cluster.engines:
+        await engine.close()
+    await cluster.router.close()
+
+
+@pytest.fixture
+async def cluster(wire):
+    c = await _start_cluster(wire, [FakeEngine("A", "7"), FakeEngine("B", "9")])
+    c.a, c.b = c.engines
+    try:
+        yield c
+    finally:
+        await _stop_cluster(wire, c)
+
+
+@pytest.fixture
+async def single_engine_cluster(wire):
+    c = await _start_cluster(wire, [FakeEngine("only", "7")])
+    c.only = c.engines[0]
+    try:
+        yield c
+    finally:
+        await _stop_cluster(wire, c)
+
+
+class _Sessions:
+    """按 sid 登记/注销 capture hook（真 registry.register/unregister）。"""
+
+    def __init__(self, wire) -> None:
+        self.wire = wire
+        self.sids: list[str] = []
+
+    def open(self, sid: str) -> str:
+        self.wire.registry.register(sid, self.wire.make_hook(sid))
+        self.sids.append(sid)
+        return sid
+
+    def close_all(self) -> None:
+        for sid in self.sids:
+            self.wire.registry.unregister(sid)
+        self.sids.clear()
+
+
+@pytest.fixture
+def sessions(wire):
+    s = _Sessions(wire)
+    try:
+        yield s
+    finally:
+        s.close_all()
+
+
+async def _generate(wire, router_url: str, sid: str):
+    session = wire.slime_common.Session(
+        sampling_defaults={"temperature": 1.0, "top_p": 1.0, "max_new_tokens": 8}, max_context_tokens=0
+    )
+    adapter = SimpleNamespace(
+        logger=logging.getLogger("test_w10_multi_engine"),
+        max_token_keys=("max_tokens",),
+        stop_keys=("stop",),
+        sglang_url=router_url,
+    )
+    return await wire.slime_common.call_sglang_generate([101, 102, 103], session, {}, adapter=adapter, session_id=sid)
+
+
+def _stats(wire) -> dict[str, int]:
+    return dict(wire.registry.stats)
+
+
+# ---------------------------------------------------------------------------
+# 1. 分发：并发请求经 router 落到不同 engine
+# ---------------------------------------------------------------------------
+
+
+async def test_router_dispatches_concurrent_generates_to_different_engines(wire, cluster, sessions):
+    sid1, sid2 = sessions.open("sid-dispatch-1"), sessions.open("sid-dispatch-2")
+    t1 = asyncio.create_task(_generate(wire, cluster.router.url, sid1))
+    await cluster.a.wait_until(lambda: len(cluster.a.inflight) == 1)  # 先注册者先中（计数平局）
+    t2 = asyncio.create_task(_generate(wire, cluster.router.url, sid2))
+    await cluster.b.wait_until(lambda: len(cluster.b.inflight) == 1)  # A 已占 1 → 最小负载是 B
+    assert len(cluster.a.inflight) == 1 and len(cluster.b.inflight) == 1
+    cluster.a.release_all()
+    cluster.b.release_all()
+    r1, r2 = await asyncio.gather(t1, t2)
+    assert r1.output_ids == [11, 12] and r2.output_ids == [11, 12]
+    assert [p for p, _ in cluster.router.proxied] == ["generate", "generate"]
+    assert [w for _, w in cluster.router.proxied] == [cluster.a.url, cluster.b.url]
+    # 两条各自暂存了一轮（不同 rid 键，互不覆盖）
+    assert len(wire.registry.pending[sid1]) == 1 and len(wire.registry.pending[sid2]) == 1
+
+
+# ---------------------------------------------------------------------------
+# 2. abort 广播到达持有者；非持有者忽略；router 本身没收到 abort
+# ---------------------------------------------------------------------------
+
+
+async def test_abort_broadcast_reaches_holding_engine_and_other_engine_ignores(wire, cluster, sessions):
+    sid = sessions.open("sid-abort-broadcast")
+    before = _stats(wire)
+    task = asyncio.create_task(_generate(wire, cluster.router.url, sid))
+    await cluster.a.wait_until(lambda: len(cluster.a.inflight) == 1)
+    rid = cluster.a.generate_rids[-1]
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    await cluster.a.wait_until(lambda: rid in cluster.a.aborted)
+
+    assert cluster.a.abort_seen == [rid] and cluster.a.aborted == [rid]  # 持有者终止
+    assert cluster.b.abort_seen == [rid] and cluster.b.abort_ignored == [rid]  # 非持有者收到同一 rid 并忽略
+    assert cluster.a.inflight == {}  # 槽位真正释放
+    assert not any(p == "abort_request" for p, _ in cluster.router.proxied)  # 广播绕过 router
+    after = _stats(wire)
+    assert after["abort_requested"] - before["abort_requested"] == 1
+    assert after["abort_broadcast"] - before["abort_broadcast"] == 1
+    assert after["abort_router_single_send"] == before["abort_router_single_send"]
+    assert after["abort_delivery_failed"] == before["abort_delivery_failed"]
+    last = wire.registry.abort_results[-1]
+    assert last["mode"] == "broadcast" and last["rid"] == rid
+    assert last["workers"] == [cluster.a.url, cluster.b.url] == last["delivered"]
+    assert last["fully_delivered"] is True
+    assert wire.registry.pending.get(sid, {}) == {}  # 被取消的请求不留暂存
+
+
+# ---------------------------------------------------------------------------
+# 3. 反例：旧路径经 router 单发——最小负载把 abort 发给不持有 rid 的 engine
+# ---------------------------------------------------------------------------
+
+
+async def test_counterexample_single_send_via_router_misses_the_holder(wire, cluster, sessions):
+    wire.registry.engine_abort = None  # 未接线 = W10 之前的 stock 形状
+    sid = sessions.open("sid-abort-single-send")
+    before = _stats(wire)
+    task = asyncio.create_task(_generate(wire, cluster.router.url, sid))
+    await cluster.a.wait_until(lambda: len(cluster.a.inflight) == 1)
+    rid = cluster.a.generate_rids[-1]
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    await cluster.b.wait_until(lambda: rid in cluster.b.abort_seen)
+
+    # A 仍持有该 rid（router 侧 A 的计数仍为 1），最小负载把 abort 送到了 B：B 忽略，A 永远没收到
+    assert cluster.b.abort_ignored == [rid]
+    assert cluster.a.abort_seen == []
+    assert rid in cluster.a.inflight
+    assert ("abort_request", cluster.b.url) in cluster.router.proxied
+    after = _stats(wire)
+    assert after["abort_router_single_send"] - before["abort_router_single_send"] == 1
+    assert after["abort_broadcast"] == before["abort_broadcast"]
+    assert wire.registry.abort_results[-1]["list_error"] == "engine_abort_not_wired"
+    cluster.a.release_all()  # 清理：否则 A 的挂起请求只能等 server close
+
+
+# ---------------------------------------------------------------------------
+# 4. 单 engine 配置仍正常
+# ---------------------------------------------------------------------------
+
+
+async def test_single_engine_pool_still_works_with_broadcast(wire, single_engine_cluster, sessions):
+    c = single_engine_cluster
+    assert await c.client.list_workers() == [c.only.url]
+    sid = sessions.open("sid-single")
+    done = asyncio.create_task(_generate(wire, c.router.url, sid))
+    await c.only.wait_until(lambda: len(c.only.inflight) == 1)
+    c.only.release_all()
+    record = await done
+    assert record.output_ids == [11, 12]
+
+    task = asyncio.create_task(_generate(wire, c.router.url, sid))
+    await c.only.wait_until(lambda: len(c.only.inflight) == 1)
+    rid = c.only.generate_rids[-1]
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    await c.only.wait_until(lambda: rid in c.only.aborted)
+    assert c.only.abort_seen == [rid] and c.only.abort_ignored == []
+    last = wire.registry.abort_results[-1]
+    assert last["mode"] == "broadcast" and last["workers"] == [c.only.url] and last["fully_delivered"]
+
+
+# ---------------------------------------------------------------------------
+# 5. 版本不从任意 worker 猜：current 只来自引擎一手回包的观测，没有任何探测请求
+# ---------------------------------------------------------------------------
+
+
+async def test_current_version_is_observed_from_engine_replies_not_probed_from_any_worker(
+    wire, cluster, sessions
+):
+    import repoharness2.adapters.slime.bringup as bringup
+
+    class _Carrier:  # 绑定 BringupService 真实方法体的最小载体（完整构造需要 tokenizer 缓存）
+        _observed_current_version = bringup.BringupService._observed_current_version
+
+    carrier = _Carrier()
+    carrier.registry = wire.registry
+    carrier.policy_version = "step_0"
+    carrier.sglang_url = cluster.router.url  # 即使给了 router 地址也不许去问
+
+    sid_a, sid_b = sessions.open("sid-version-a"), sessions.open("sid-version-b")
+    # 尚无任何观测：回退启动探针值
+    assert carrier._observed_current_version() == "step_0"
+    t1 = asyncio.create_task(_generate(wire, cluster.router.url, sid_a))
+    await cluster.a.wait_until(lambda: len(cluster.a.inflight) == 1)
+    t2 = asyncio.create_task(_generate(wire, cluster.router.url, sid_b))
+    await cluster.b.wait_until(lambda: len(cluster.b.inflight) == 1)
+    cluster.a.release_all()
+    cluster.b.release_all()
+    await asyncio.gather(t1, t2)
+    # 提交暂存轮 → registry.weight_versions 记下各 engine 在回包里报的版本（A=7、B=9）
+    assert wire.registry.commit(sid_a) and wire.registry.commit(sid_b)
+    assert wire.registry.snapshot_weight_versions()[sid_a] == ["7"]
+    assert wire.registry.snapshot_weight_versions()[sid_b] == ["9"]
+
+    assert carrier._observed_current_version() == "9"  # 观测上界 = 引擎报过的最大版本
+    # 两台 engine 与 router 都没有收到任何版本探测（/model_info 或 /get_weight_version）
+    assert cluster.a.version_probes == [] and cluster.b.version_probes == []
+    assert all(p == "generate" for p, _ in cluster.router.proxied)
+
+
+def test_bringup_has_no_router_version_probe_left(wire):
+    import repoharness2.adapters.slime.bringup as bringup
+
+    assert not hasattr(bringup.BringupService, "_latest_engine_version")
+    assert not hasattr(bringup.BringupService, "_registry_max_version")
+    code = bringup.BringupService._observed_current_version.__code__
+    # 代码对象钉死：不 import requests、不拼任何端点路径、只读 registry 快照与 policy_version
+    assert "requests" not in code.co_names
+    assert not any(isinstance(c, str) and c.startswith("/") for c in code.co_consts)
+    assert {"snapshot_weight_versions", "policy_version"} <= set(code.co_names)
+    source = BRINGUP_PY.read_text(encoding="utf-8")
+    assert "import requests" not in source
+    # abort 广播接线在 __init__（registry.engine_abort = router_workers.broadcast_abort）
+    assert "self.registry.engine_abort = self.router_workers.broadcast_abort" in source
+    assert "current_policy_version_provider=self._observed_current_version" in source
+
+
+# ---------------------------------------------------------------------------
+# 6. 权重发布到全部 engine（miles 侧：publish 路径源码事实 + patch 0015 逐台收敛核对）
+# ---------------------------------------------------------------------------
+
+
+class _FakeActorHandle:
+    """SGLangEngine actor handle 的最小替身：`get_weight_version.remote()` 返回 awaitable。"""
+
+    def __init__(self, version=None, *, error: BaseException | None = None, delay: float = 0.0) -> None:
+        self._version = version
+        self._error = error
+        self._delay = delay
+        self.calls = 0
+        self.get_weight_version = SimpleNamespace(remote=self._remote)
+
+    async def _remote(self):
+        self.calls += 1
+        if self._delay:
+            await asyncio.sleep(self._delay)
+        if self._error is not None:
+            raise self._error
+        return self._version
+
+
+def _read_events(event_dir: Path) -> list[dict]:
+    rows: list[dict] = []
+    for path in sorted(event_dir.glob("rh2_events_*.jsonl")):
+        rows.extend(json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line)
+    return rows
+
+
+@pytest.mark.integration_base
+async def test_publish_convergence_check_queries_every_engine_actor(world, monkeypatch, tmp_path):
+    from miles.utils import rh2_engine_versions as ev
+
+    monkeypatch.setenv("MILES_RH2_EVENT_DIR", str(tmp_path))
+    handles = [_FakeActorHandle("8"), _FakeActorHandle(8)]  # 第二台回 int：按 str 比较
+    report = await ev.verify_engine_weight_versions(handles, expected=8, timeout=1.0)
+    assert report.converged and report.versions == ("8", "8") and report.errors == (None, None)
+    assert [h.calls for h in handles] == [1, 1]  # 每台恰好问一次，不经 router
+    events = [e for e in _read_events(tmp_path) if e["event"] == ev.ENGINE_VERSIONS_EVENT]
+    assert len(events) == 1
+    assert events[0]["expected"] == "8" and events[0]["versions"] == ["8", "8"] and events[0]["converged"] is True
+    assert events[0]["num_engines"] == 2
+
+
+@pytest.mark.integration_base
+@pytest.mark.parametrize(
+    ("handles_spec", "expect_versions", "expect_error_engine"),
+    [
+        ("mismatch", ("8", "7"), None),  # 一台没收到发布：版本不一致
+        ("unreachable", ("8", None), 1),  # 一台 actor 查询抛错：不可达
+        ("timeout", ("8", None), 1),  # 一台超时：不可达
+    ],
+)
+async def test_publish_convergence_mismatch_or_dead_engine_stops_the_run(
+    world, monkeypatch, tmp_path, handles_spec, expect_versions, expect_error_engine
+):
+    from miles.utils import rh2_engine_versions as ev
+
+    monkeypatch.setenv("MILES_RH2_EVENT_DIR", str(tmp_path))
+    if handles_spec == "mismatch":
+        handles = [_FakeActorHandle("8"), _FakeActorHandle("7")]
+    elif handles_spec == "unreachable":
+        handles = [_FakeActorHandle("8"), _FakeActorHandle(error=RuntimeError("actor died"))]
+    else:
+        handles = [_FakeActorHandle("8"), _FakeActorHandle("8", delay=1.0)]
+    with pytest.raises(ev.EngineWeightVersionMismatch) as exc:
+        await ev.verify_engine_weight_versions(handles, expected="8", timeout=0.05)
+    report = exc.value.report
+    assert report.versions == expect_versions and not report.converged
+    if expect_error_engine is not None:
+        assert report.errors[expect_error_engine] is not None
+        assert report.errors[1 - expect_error_engine] is None
+    # 事件在抛错**之前**落盘（不一致的事实必须留证）
+    events = [e for e in _read_events(tmp_path) if e["event"] == ev.ENGINE_VERSIONS_EVENT]
+    assert len(events) == 1 and events[0]["converged"] is False
+    assert events[0]["versions"] == list(expect_versions)
+
+
+@pytest.mark.integration_base
+def test_engine_version_timeout_env_knob(world, monkeypatch):
+    from miles.utils import rh2_engine_versions as ev
+
+    monkeypatch.delenv(ev.ENGINE_VERSION_TIMEOUT_ENV, raising=False)
+    assert ev.engine_version_timeout_sec() == ev.DEFAULT_ENGINE_VERSION_TIMEOUT_SEC
+    monkeypatch.setenv(ev.ENGINE_VERSION_TIMEOUT_ENV, "12.5")
+    assert ev.engine_version_timeout_sec() == 12.5
+    monkeypatch.setenv(ev.ENGINE_VERSION_TIMEOUT_ENV, "0")
+    with pytest.raises(ValueError):
+        ev.engine_version_timeout_sec()
+
+
+@pytest.mark.integration_base
+def test_miles_publish_paths_iterate_all_updatable_engines(world):
+    """源码事实锚定（integration tree）：pause/update_weight_version/continue 都对
+    `self.rollout_engines` 全量迭代；该列表 = 可更新 server 的全部 node-0 engine actor handle；
+    patch 0015 把 set_weight_version 改为 async 并对同一批 engine 逐台核对版本。"""
+
+    root = world.miles_root / "miles"
+    mixin = (root / "backends/megatron_utils/update_weight/update_weight_from_distributed/mixin.py").read_text()
+    tensor = (root / "backends/megatron_utils/update_weight/update_weight_from_tensor.py").read_text()
+    for src in (mixin, tensor):
+        assert "ray.get([engine.pause_generation.remote(mode=mode) for engine in self.rollout_engines])" in src
+        assert "ray.get([engine.continue_generation.remote() for engine in self.rollout_engines])" in src
+    assert "engine.update_weight_version.remote(weight_version=str(self.weight_version))" in mixin
+    assert "for engine in self.rollout_engines" in mixin
+
+    manager = (root / "ray/rollout/rollout_manager.py").read_text()
+    assert "rollout_engines=[e.actor_handle for e in srv.engines]" in manager
+    assert "async def set_weight_version(self, weight_version: int):" in manager
+    assert "await self._verify_engine_weight_versions(weight_version)" in manager
+    assert "handles = [e.actor_handle for e in srv.engines if e.is_allocated]" in manager
+    assert "if srv is None or self.args.indep_dp:" in manager  # indep_dp 下副本版本可合法不同
+    assert "verify_engine_weight_versions(handles, expected=weight_version)" in manager
+    server = (root / "ray/rollout/rollout_server.py").read_text()
+    assert "return [e for g in self.server_groups for e in g.engines]" in server
+
+
+@pytest.mark.integration_base
+def test_worker_base_urls_mirror_miles_semantics(world):
+    from repoharness2.adapters.slime.engine_router_client import worker_base_urls
+
+    src = (world.miles_root / "miles/utils/http_utils.py").read_text()
+    assert 'base, sep, rank = url.rpartition("@")' in src and "if sep and rank.isdigit():" in src
+    assert worker_base_urls(["http://a:1@0", "http://a:1@1", "http://b:2", "http://c:3@x"]) == [
+        "http://a:1",
+        "http://b:2",
+        "http://c:3@x",
+    ]
+
+
+# ---------------------------------------------------------------------------
+# 7. W4 接缝：staleness 阈值记录镜像
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("args", "expected"),
+    [
+        (SimpleNamespace(), None),
+        (SimpleNamespace(max_weight_staleness=None), None),
+        (SimpleNamespace(max_weight_staleness=0), 0),
+        (SimpleNamespace(max_weight_staleness=2), 2),
+    ],
+)
+def test_staleness_threshold_mirror_from_args(wire, args, expected):
+    from repoharness2.adapters.slime.bringup import staleness_threshold_mirror_from_args
+
+    assert staleness_threshold_mirror_from_args(args) == expected
+
+
+@pytest.mark.parametrize("bad", [-1, True, "2", 1.5])
+def test_staleness_threshold_mirror_rejects_illegal_values(wire, bad):
+    from repoharness2.adapters.slime.bringup import staleness_threshold_mirror_from_args
+
+    with pytest.raises(RuntimeError, match="max-weight-staleness"):
+        staleness_threshold_mirror_from_args(SimpleNamespace(max_weight_staleness=bad))
+
+
+def test_bringup_config_carries_staleness_mirror(wire):
+    source = BRINGUP_PY.read_text(encoding="utf-8")
+    assert "self.staleness_threshold_mirror = staleness_threshold_mirror_from_args(args)" in source
+    assert "staleness_threshold=self.staleness_threshold_mirror," in source
+
+
+# ---------------------------------------------------------------------------
+# 8. launch.sh：单 engine 硬约束已删，只留整除/资源合法性
+# ---------------------------------------------------------------------------
+
+
+def test_launch_script_has_no_single_engine_hard_constraint():
+    subprocess.run(["bash", "-n", str(LAUNCH_SH)], check=True)
+    text = LAUNCH_SH.read_text(encoding="utf-8")
+    assert '[ "$ENGINE_COUNT" -eq 1 ]' not in text
+    assert "覆盖位已移除" not in text
+    assert 'ROLLOUT_GPUS_PER_ENGINE="${RH2_SPIKE_ROLLOUT_GPUS_PER_ENGINE:-2}"' in text
+    assert "$((ROLLOUT_GPUS % ROLLOUT_GPUS_PER_ENGINE)) -eq 0" in text
+    assert '[ "$ROLLOUT_GPUS_PER_ENGINE" -le "$ROLLOUT_GPUS" ]' in text
+    assert "--rollout-num-gpus-per-engine \"$ROLLOUT_GPUS_PER_ENGINE\"" in text

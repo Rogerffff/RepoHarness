@@ -51,10 +51,15 @@
     # **不**进 custom_config.yaml（该文件纪律 = 只承载无一等旗标的 setattr 键）。
     # 消费链：router_manager.py:40 start_router 起 MilesRouter;engine 起动后
     # POST /add_worker 自注册（sglang_engine.py:317）;rh2 adapter 的 sglang_url
-    # 即 router 地址（bringup.py:662）,/generate、/abort_request、
-    # /get_weight_version 全部经 router catch-all 原样转发。
-    # ⚠️ 配套拓扑限制：MilesRouter 逐请求最小负载选 worker,忽略
-    # X-SMG-Routing-Key ⇒ engine 数钉死 1（见 §2 与 router_targeting_audit.md）。
+    # 即 router 地址（bringup.py）,/generate 经 router catch-all 原样转发。
+    # W10（B-5b,2026-09-04）起 rh2 的 rid 级 /abort_request **不再经 router**：
+    # bringup 把 capture registry 的 engine_abort 接到
+    # engine_router_client.MilesRouterWorkerClient.broadcast_abort（GET
+    # /list_workers 取全部 worker,逐 worker 直发同一 rid,持有者终止、其余忽略）;
+    # 经 router 的版本探测（GET /model_info）已删除,finalize 用的 current 版本只
+    # 来自引擎回包观测（bringup._observed_current_version）。MilesRouter 仍逐请求
+    # 最小负载选 worker、忽略 X-SMG-Routing-Key——这只影响 KV 前缀局部性（性能）,
+    # 不再是正确性限制,engine 数不再钉死（见 §2 与 router_targeting_audit.md §0）。
 
 --dynamic-sampling-filter-path miles.rollout.filter_hub.dynamic_sampling_filters.check_reward_nonzero_std
     # F2 零信号语义第 1 处接线：reward 全相等（组内零方差 ⇒ GRPO advantage
@@ -76,20 +81,19 @@ PYTHONPATH 须含 `<repo>/rh2/src`（repoharness2 + vendor slime 同一源树）
 --actor-num-nodes 1
 --actor-num-gpus-per-node 6            # 占位:先复现 6+2,再收 4+4(spike 目标)
 --rollout-num-gpus 2
---rollout-num-gpus-per-engine 2        # V3 起该值不再独立配置:launch.sh 钉死
-                                       # per-engine := rollout 卡数 ⇒ engine 数
-                                       # 恒 1（engine 数 = rollout_num_gpus //
-                                       # per_engine,rollout_server.py:49）。
-                                       # 原因:MilesRouter 忽略 X-SMG-Routing-Key,
-                                       # 多 engine 下 /abort_request、
-                                       # /get_weight_version 逐请求最小负载错发
-                                       # （审计+解锁前置清单 =
-                                       # router_targeting_audit.md;preflight
-                                       # P11(d) 断言 engine 数=1）。注意后果:
-                                       # sglang TP = per-engine 卡数,G2 改
-                                       # rollout 4 卡时是 1 engine × TP4。
-                                       # 旧环境覆盖位 RH2_SPIKE_ROLLOUT_GPUS_
-                                       # PER_ENGINE 已作废,设了 preflight 即红。
+--rollout-num-gpus-per-engine 2        # W10（B-5b,2026-09-04）起恢复为普通启动配置:
+                                       # launch.sh 读 RH2_SPIKE_ROLLOUT_GPUS_PER_ENGINE
+                                       # （默认 2 = P3 J4 的 2×TP2 形态）;engine 数 =
+                                       # rollout_num_gpus // per_engine
+                                       # （rollout_server.py:49）;preflight P11(d)
+                                       # 只做正整数/不超过 rollout 卡数/整除检查。
+                                       # 后果:sglang TP = per-engine 卡数——G1 6+2
+                                       # 得 1 engine × TP2,G2 4+4 得 2 engine × TP2;
+                                       # 覆盖 per-engine=4 得 1 engine × TP4。同卡数
+                                       # 两种切法吞吐口径不同,首训 engine 数由 GPU
+                                       # matched comparison（1×TP4 vs 2×TP2）决定。
+                                       # 此前"钉死 1"是绕开 MilesRouter abort/版本
+                                       # 探测错发的临时限制,两处缺口已由 W10 关闭。
 --tensor-model-parallel-size 1
 --sequence-parallel
 --pipeline-model-parallel-size 3       # 占位:4+4 下需重切(如 pp2)
@@ -162,7 +166,8 @@ custom-config setattr 是既有官方注入面）。
    `--use-miles-router` 在参数组、top-k 正有限、无 `--recompute-logprobs-via-
    prefill`（miles_validate_args 同判据,arguments.py:2931-2948）;(b)
    qkv_format 非 thd 即红（#2798 BSHD 排序修复未吸收）;(c) PD 两入口
-   （--prefill-num-servers/--sglang-config）出现即红;(d) engine 数恒 1。
+   （--prefill-num-servers/--sglang-config）出现即红;(d) engine 拓扑合法性
+   （per-engine 为正整数、≤ rollout 卡数、整除;engine 数不再限制——W10）。
 1. `rh2/scripts/miles_integration_lanes.sh` 全绿（资格 gate）。
 2. 启动后看 startup 探针日志:mask 分支断言（`rh2_engine_sampling_mask` 生效、
    请求带顶层 `return_sampling_mask`、旧 `custom_params` tape 约定关闭）。
