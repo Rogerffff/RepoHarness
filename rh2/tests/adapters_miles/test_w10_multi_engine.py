@@ -15,6 +15,11 @@
 worker 猜（bringup 的 current 版本只来自引擎一手回包的观测，两台 engine 都没收到探测）；
 单 engine 配置仍正常。另含 W4 接缝（staleness 阈值记录镜像）与 launch.sh 单 engine 硬约束
 删除的锚点。
+
+codex Wave3 F3 P1（§9 组）：投递结果三分 delivered / partial / undeliverable——实时列表取不到时
+对启动核对集合广播（不再经 router 单发）；partial / undeliverable / abort 机制自身异常 → 经
+`bringup.notify_run_fatal` 升级 typed run-fatal（本 attempt 归因不变）；无 BringupService 时留账
++ 打印，不静默。
 """
 
 from __future__ import annotations
@@ -71,6 +76,7 @@ class FakeEngine:
         self.abort_ignored: list[str] = []
         self.aborted: list[str] = []
         self.version_probes: list[str] = []
+        self.abort_status = 200  # 故障注入：≠200 时 /abort_request 直接返回该状态、不处理
         self.app = web.Application()
         self.app.router.add_post("/generate", self._generate)
         self.app.router.add_post("/abort_request", self._abort)
@@ -114,6 +120,9 @@ class FakeEngine:
 
     async def _abort(self, request: web.Request) -> web.Response:
         payload = await request.json()
+        if self.abort_status != 200:
+            self.abort_seen.append(payload.get("rid"))
+            return web.json_response({"error": "injected"}, status=self.abort_status)
         if payload.get("abort_all"):
             for rid, event in list(self.inflight.items()):
                 self.aborted.append(rid)
@@ -163,6 +172,9 @@ class FakeMilesRouter:
     def __init__(self) -> None:
         self.worker_request_counts: dict[str, int] = {}
         self.proxied: list[tuple[str, str]] = []  # (path, 选中的 worker)
+        self.list_workers_delay = 0.0  # 故障注入：/list_workers 挂起秒数（模拟 router 控制面卡死）
+        self.list_workers_status = 200  # 故障注入：≠200 时 /list_workers 返回该状态
+        self.list_workers_calls = 0
         self.app = web.Application()
         self.app.router.add_post("/add_worker", self._add_worker)
         self.app.router.add_get("/list_workers", self._list_workers)
@@ -184,6 +196,11 @@ class FakeMilesRouter:
         return web.json_response({"status": "success", "worker_urls": self.worker_request_counts})
 
     async def _list_workers(self, request: web.Request) -> web.Response:
+        self.list_workers_calls += 1
+        if self.list_workers_delay:
+            await asyncio.sleep(self.list_workers_delay)
+        if self.list_workers_status != 200:
+            return web.json_response({"error": "injected"}, status=self.list_workers_status)
         return web.json_response({"urls": list(self.worker_request_counts)})
 
     async def _proxy(self, request: web.Request) -> web.Response:
@@ -371,9 +388,10 @@ async def test_abort_broadcast_reaches_holding_engine_and_other_engine_ignores(w
     assert after["abort_router_single_send"] == before["abort_router_single_send"]
     assert after["abort_delivery_failed"] == before["abort_delivery_failed"]
     last = wire.registry.abort_results[-1]
-    assert last["mode"] == "broadcast" and last["rid"] == rid
-    assert last["workers"] == [cluster.a.url, cluster.b.url] == last["delivered"]
-    assert last["fully_delivered"] is True
+    assert last["outcome"] == "delivered" and last["proven"] is True and last["rid"] == rid
+    assert last["targets_source"] == "router_list" and last["list_error"] is None
+    assert last["targets"] == [cluster.a.url, cluster.b.url] == last["delivered"]
+    assert after["abort_unproven_fatal"] == before["abort_unproven_fatal"]  # 到达已证明，不升级
     assert wire.registry.pending.get(sid, {}) == {}  # 被取消的请求不留暂存
 
 
@@ -402,7 +420,9 @@ async def test_counterexample_single_send_via_router_misses_the_holder(wire, clu
     after = _stats(wire)
     assert after["abort_router_single_send"] - before["abort_router_single_send"] == 1
     assert after["abort_broadcast"] == before["abort_broadcast"]
-    assert wire.registry.abort_results[-1]["list_error"] == "engine_abort_not_wired"
+    last = wire.registry.abort_results[-1]
+    assert last["outcome"] == "router_single_send" and last["list_error"] == "engine_abort_not_wired"
+    assert last["proven"] is None  # 单发路径无法证明到达——这就是它只能留在无 bringup 测试面的原因
     cluster.a.release_all()  # 清理：否则 A 的挂起请求只能等 server close
 
 
@@ -430,7 +450,256 @@ async def test_single_engine_pool_still_works_with_broadcast(wire, single_engine
     await c.only.wait_until(lambda: rid in c.only.aborted)
     assert c.only.abort_seen == [rid] and c.only.abort_ignored == []
     last = wire.registry.abort_results[-1]
-    assert last["mode"] == "broadcast" and last["workers"] == [c.only.url] and last["fully_delivered"]
+    assert last["outcome"] == "delivered" and last["targets"] == [c.only.url] and last["proven"] is True
+
+
+# ---------------------------------------------------------------------------
+# 9. codex Wave3 F3 P1：控制面异常下的投递语义——核对集合回退、三分结果、run-fatal 升级
+# ---------------------------------------------------------------------------
+
+
+class _FatalRecorder:
+    """`bringup.notify_run_fatal` 的替身：记录被升级的异常并返回 True（"本进程有 BringupService"）。"""
+
+    def __init__(self) -> None:
+        self.calls: list[BaseException] = []
+
+    def __call__(self, exc: BaseException) -> bool:
+        self.calls.append(exc)
+        return True
+
+
+@pytest.fixture
+def fatal_recorder(monkeypatch):
+    import repoharness2.adapters.slime.bringup as bringup
+
+    rec = _FatalRecorder()
+    monkeypatch.setattr(bringup, "notify_run_fatal", rec)
+    return rec
+
+
+async def _cancel_inflight_on(wire, cluster, engine: FakeEngine, sid: str) -> str:
+    """起一条经 router 的 generate，等它落在 ``engine`` 上，然后 cancel（触发 wire 的 abort 分支）。"""
+
+    task = asyncio.create_task(_generate(wire, cluster.router.url, sid))
+    await engine.wait_until(lambda: len(engine.inflight) == 1)
+    rid = engine.generate_rids[-1]
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    return rid
+
+
+async def test_worker_list_timeout_broadcasts_to_verified_set_not_router_single_send(
+    wire, cluster, sessions, fatal_recorder
+):
+    """反例 ④-1：router `/list_workers` 卡死。此前的行为是退回经 router 单发（最小负载 → 非持有者 B）。
+    现在：对启动核对集合广播，持有者 A 终止；router 没有收到任何 abort；不升级 fatal。"""
+
+    from repoharness2.adapters.slime.engine_router_client import MilesRouterWorkerClient
+
+    client = MilesRouterWorkerClient(
+        cluster.router.url, verified_workers=[cluster.a.url, cluster.b.url], list_timeout_seconds=0.2
+    )
+    wire.registry.engine_abort = client.broadcast_abort
+    cluster.router.list_workers_delay = 1.0  # 超过 client 的列表超时（0.2s）
+    sid = sessions.open("sid-list-timeout")
+    before = _stats(wire)
+    rid = await _cancel_inflight_on(wire, cluster, cluster.a, sid)
+    await cluster.a.wait_until(lambda: rid in cluster.a.aborted)
+
+    assert cluster.a.aborted == [rid] and cluster.b.abort_ignored == [rid]
+    assert not any(p == "abort_request" for p, _ in cluster.router.proxied)  # 没有经 router 单发
+    after = _stats(wire)
+    assert after["abort_router_single_send"] == before["abort_router_single_send"]
+    assert after["abort_delivery_failed"] == before["abort_delivery_failed"]
+    assert after["abort_unproven_fatal"] == before["abort_unproven_fatal"]
+    assert fatal_recorder.calls == []
+    last = wire.registry.abort_results[-1]
+    assert last["outcome"] == "delivered" and last["targets_source"] == "verified_set"
+    assert last["targets"] == [cluster.a.url, cluster.b.url] == last["delivered"]
+    assert last["list_error"] and "Timeout" in last["list_error"]
+
+
+@pytest.mark.parametrize("list_fault", ["timeout", "http_500"])
+async def test_verified_set_unavailable_is_run_fatal_not_silent(wire, cluster, sessions, fatal_recorder, list_fault):
+    """反例 ④-2：实时列表不可用且没有核对集合 → undeliverable → typed run-fatal（不单发、不静默）；
+    本 attempt 仍以 CancelledError 归因。"""
+
+    from repoharness2.adapters.slime.engine_router_client import AbortDeliveryUnprovenError, MilesRouterWorkerClient
+
+    client = MilesRouterWorkerClient(cluster.router.url, list_timeout_seconds=0.2)  # 无核对集合
+    wire.registry.engine_abort = client.broadcast_abort
+    if list_fault == "timeout":
+        cluster.router.list_workers_delay = 1.0
+    else:
+        cluster.router.list_workers_status = 500
+    sid = sessions.open(f"sid-undeliverable-{list_fault}")
+    before = _stats(wire)
+    rid = await _cancel_inflight_on(wire, cluster, cluster.a, sid)
+
+    assert len(fatal_recorder.calls) == 1
+    exc = fatal_recorder.calls[0]
+    assert isinstance(exc, AbortDeliveryUnprovenError) and exc.reason_code == "abort_undeliverable"
+    assert exc.result.outcome == "undeliverable" and exc.result.targets_source == "none"
+    assert exc.result.targets == () and exc.result.list_error
+    assert cluster.a.abort_seen == [] and cluster.b.abort_seen == []  # 没有任何单发
+    assert rid in cluster.a.inflight  # 持有者仍占槽位——这正是必须停 run 的原因
+    assert not any(p == "abort_request" for p, _ in cluster.router.proxied)
+    after = _stats(wire)
+    assert after["abort_router_single_send"] == before["abort_router_single_send"]
+    assert after["abort_delivery_failed"] - before["abort_delivery_failed"] == 1
+    assert after["abort_unproven_fatal"] - before["abort_unproven_fatal"] == 1
+    assert after["abort_unproven_unnotified"] == before["abort_unproven_unnotified"]
+    fatal_row = wire.registry.abort_results[-1]
+    assert fatal_row["outcome"] == "run_fatal" and fatal_row["reason_code"] == "abort_undeliverable"
+    assert fatal_row["notified"] is True
+    cluster.a.release_all()
+
+
+@pytest.mark.parametrize(
+    ("fail_a", "fail_b", "expect_outcome", "expect_reason"),
+    [
+        (False, True, "partial", "abort_delivery_partial"),  # 持有者 A 收到了，但 B 投递失败：仍不能证明
+        (True, False, "partial", "abort_delivery_partial"),  # 持有者 A 投递失败，B 收到（忽略）
+        (True, True, "undeliverable", "abort_undeliverable"),  # 全部失败
+    ],
+)
+async def test_partial_or_total_delivery_failure_is_run_fatal(
+    wire, cluster, sessions, fatal_recorder, fail_a, fail_b, expect_outcome, expect_reason
+):
+    """反例 ④-3：部分/全部 worker 投递失败 → 不当成功，升级 run-fatal（reason_code 区分 partial/undeliverable）。"""
+
+    from repoharness2.adapters.slime.engine_router_client import AbortDeliveryUnprovenError
+
+    if fail_a:
+        cluster.a.abort_status = 500
+    if fail_b:
+        cluster.b.abort_status = 500
+    sid = sessions.open(f"sid-fail-{int(fail_a)}{int(fail_b)}")
+    before = _stats(wire)
+    rid = await _cancel_inflight_on(wire, cluster, cluster.a, sid)
+    await cluster.b.wait_until(lambda: rid in cluster.b.abort_seen)
+    await cluster.a.wait_until(lambda: rid in cluster.a.abort_seen)
+
+    assert len(fatal_recorder.calls) == 1
+    exc = fatal_recorder.calls[0]
+    assert isinstance(exc, AbortDeliveryUnprovenError) and exc.reason_code == expect_reason
+    assert exc.result.outcome == expect_outcome and exc.result.proven is False
+    expected_failed = {u for u, f in ((cluster.a.url, fail_a), (cluster.b.url, fail_b)) if f}
+    assert set(exc.result.failed) == expected_failed
+    assert set(exc.result.delivered) == {cluster.a.url, cluster.b.url} - expected_failed
+    after = _stats(wire)
+    assert after["abort_broadcast"] - before["abort_broadcast"] == 1
+    assert after["abort_delivery_failed"] - before["abort_delivery_failed"] == 1
+    assert after["abort_unproven_fatal"] - before["abort_unproven_fatal"] == 1
+    assert after["abort_router_single_send"] == before["abort_router_single_send"]
+    cluster.a.release_all()
+
+
+async def test_unproven_without_bringup_service_is_recorded_and_printed(wire, cluster, sessions, capsys):
+    """本进程没有 BringupService（真实 `notify_run_fatal` 返回 False）：不静默——留账 + 打印。"""
+
+    from repoharness2.adapters.slime.engine_router_client import MilesRouterWorkerClient
+
+    client = MilesRouterWorkerClient(cluster.router.url, list_timeout_seconds=0.2)
+    wire.registry.engine_abort = client.broadcast_abort
+    cluster.router.list_workers_status = 503
+    sid = sessions.open("sid-unnotified")
+    before = _stats(wire)
+    await _cancel_inflight_on(wire, cluster, cluster.a, sid)
+
+    after = _stats(wire)
+    assert after["abort_unproven_fatal"] - before["abort_unproven_fatal"] == 1
+    assert after["abort_unproven_unnotified"] - before["abort_unproven_unnotified"] == 1
+    row = wire.registry.abort_results[-1]
+    assert row["outcome"] == "run_fatal" and row["notified"] is False and row["reason_code"] == "abort_undeliverable"
+    out = capsys.readouterr().out
+    assert "abort 不能证明到达" in out and "abort_undeliverable" in out
+    cluster.a.release_all()
+
+
+async def test_abort_path_exception_is_escalated_not_swallowed(wire, cluster, sessions, fatal_recorder):
+    """abort 机制自身抛异常（不该发生）：此前 `except Exception: pass` 静默；现在按 undeliverable 升级。"""
+
+    from repoharness2.adapters.slime.engine_router_client import AbortDeliveryUnprovenError
+
+    async def broken(rid: str):
+        raise RuntimeError("router client exploded")
+
+    wire.registry.engine_abort = broken
+    sid = sessions.open("sid-abort-exception")
+    before = _stats(wire)
+    await _cancel_inflight_on(wire, cluster, cluster.a, sid)
+
+    assert len(fatal_recorder.calls) == 1
+    exc = fatal_recorder.calls[0]
+    assert isinstance(exc, AbortDeliveryUnprovenError) and exc.reason_code == "abort_undeliverable"
+    assert "router client exploded" in str(exc) and exc.result.list_error.startswith("abort_path_exception")
+    after = _stats(wire)
+    assert after["abort_unproven_fatal"] - before["abort_unproven_fatal"] == 1
+    cluster.a.release_all()
+
+
+async def test_single_engine_verified_set_with_router_list_failure_still_delivers(
+    wire, single_engine_cluster, sessions, fatal_recorder
+):
+    """③ 单 engine profile：核对集合恰一个 worker；实时列表失败时对它广播即到达，不升级。"""
+
+    from repoharness2.adapters.slime.engine_router_client import MilesRouterWorkerClient
+
+    c = single_engine_cluster
+    client = MilesRouterWorkerClient(c.router.url, list_timeout_seconds=0.2)
+    assert client.set_verified_workers([c.only.url + "/"]) == (c.only.url,)
+    wire.registry.engine_abort = client.broadcast_abort
+    c.router.list_workers_status = 500
+    sid = sessions.open("sid-single-verified")
+    rid = await _cancel_inflight_on(wire, c, c.only, sid)
+    await c.only.wait_until(lambda: rid in c.only.aborted)
+    assert fatal_recorder.calls == []
+    last = wire.registry.abort_results[-1]
+    assert last["outcome"] == "delivered" and last["targets_source"] == "verified_set"
+    assert last["targets"] == [c.only.url]
+
+
+async def test_verified_worker_missing_from_router_list_is_still_targeted(wire, sessions, fatal_recorder):
+    """核对集合里的 worker 缺席于 router 实时列表（router 重启后只剩部分注册）：并集投递、记 drift。"""
+
+    from repoharness2.adapters.slime.engine_router_client import MilesRouterWorkerClient
+
+    a, b = FakeEngine("A", "7"), FakeEngine("B", "9")
+    c = await _start_cluster(wire, [a])  # router 只知道 A
+    await b.start()
+    try:
+        client = MilesRouterWorkerClient(c.router.url, verified_workers=[a.url, b.url])
+        wire.registry.engine_abort = client.broadcast_abort
+        assert await client.list_workers() == [a.url]
+        targets, source, list_error, drift = await client.resolve_targets()
+        assert targets == [a.url, b.url] and source == "router_list+verified_set" and drift == [b.url]
+        assert list_error is None
+        sid = sessions.open("sid-drift")
+        rid = await _cancel_inflight_on(wire, c, a, sid)
+        await b.wait_until(lambda: rid in b.abort_seen)
+        assert a.aborted == [rid] and b.abort_ignored == [rid]
+        assert fatal_recorder.calls == []
+        last = wire.registry.abort_results[-1]
+        assert last["outcome"] == "delivered" and last["drift_missing_from_router"] == [b.url]
+    finally:
+        await b.close()
+        await _stop_cluster(wire, c)
+
+
+def test_set_verified_workers_normalizes_and_classify_outcome_three_way():
+    from repoharness2.adapters.slime.engine_router_client import MilesRouterWorkerClient, classify_outcome
+
+    client = MilesRouterWorkerClient("http://router:1/", verified_workers=["http://a:1@0", "http://a:1@1", "http://b:2/"])
+    assert client.router_url == "http://router:1"
+    assert client.verified_workers == ("http://a:1", "http://b:2")
+    assert client.set_verified_workers([]) == ()
+    assert classify_outcome([], [], {}) == "undeliverable"
+    assert classify_outcome(["a"], [], {"a": "boom"}) == "undeliverable"
+    assert classify_outcome(["a", "b"], ["a"], {"b": "boom"}) == "partial"
+    assert classify_outcome(["a", "b"], ["a", "b"], {}) == "delivered"
 
 
 # ---------------------------------------------------------------------------

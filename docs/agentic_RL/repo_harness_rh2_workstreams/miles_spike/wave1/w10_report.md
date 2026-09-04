@@ -170,3 +170,92 @@ W10 归属的计数变化（以 manifest 当前 322/232、554/0 为基线，不�
 **⑤ 测试 / 证据 / 账本状态**：§9。
 
 **本轮没有改变哪些已定案语义**：B-1 consume-time 唯一权威与叶版本绑定 / 负 lag FATAL；B-2 drop；B-3 最小冷恢复合同；B-4 `update_weights_interval=1`；B-5a `retract`；gate 第七维"版本事实可用且合法"与 `GATE_VERSION`；contracts/ 全部 schema；`generate.py` / `grading/*` / `governance/*` / `envpack/*` / vendored slime；miles buffer / rollout fn / train_async / event log（W4 所有）；MilesRouter 选路语义本身（仍最小负载、仍忽略 routing key——只是不再承载 abort 与版本探测两类正确性请求）。
+
+---
+
+## 10. codex Wave3 F3 P1 修复（append，2026-09-04）：abort 投递三分，不可证明到达即 run-fatal
+
+**finding**（`tmp/wave3检查.md` §2 F3，成立）：`broadcast_abort()` 在 router 列表失败时退回经 router 单发
+（类型自己注明只在单 worker 正确），部分 worker 投递失败只返回 `fully_delivered=False`；capture_wire 只
+记账不检查、并 `except Exception: pass` 吞掉 abort 异常——控制面异常时多 engine 退化回已被反例证明的错发路径，
+持有者 rid 继续占槽而无人升级。**accepted**。只改 `engine_router_client.py`、`capture_wire.py`、
+`test_w10_multi_engine.py` 与本节；未改 bringup.py / contracts / reference / vendored slime。
+
+### 10.1 新投递语义（`AbortBroadcastResult.outcome`，三种结果各自处置）
+
+目标集合：优先 router 实时列表（`GET /list_workers`，fallback `/workers`）；实时列表**失败或为空** → 用启动时
+已核对的 worker 集合 `verified_workers`；两者都有时取并集（核对集合里而实时列表缺席的 worker 记
+`drift_missing_from_router`，仍投递）。**经 router 单发的回退已从 client 删除**。
+
+| outcome | 判定 | 处置 |
+|---|---|---|
+| `delivered` | 目标集合非空且每个目标 `/abort_request` 都 2xx | 到达已证明（前提：目标集合 ⊇ 所有可能持有 rh2 rid 的 engine——首版 engine 数固定、MilesRouter 从不摘除 worker）；只记账 `abort_broadcast` |
+| `partial` | ≥1 目标 2xx 且 ≥1 目标失败 | **不能证明持有者收到**（router 不告诉谁持有 rid，SGLang 的 200 不区分持有/忽略）→ capture_wire 构造 typed `AbortDeliveryUnprovenError(reason_code="abort_delivery_partial")` 经 `bringup.notify_run_fatal` 升级 run-fatal（与 group filter fatal 同一通道：未关停 → 调度关停链、首因 = 该异常；关停中 → 吸收进报告）；`abort_delivery_failed +1`、`abort_unproven_fatal +1` |
+| `undeliverable` | 目标集合为空（实时列表失败/为空且无核对集合）或全部目标失败；abort 机制自身抛异常也归此类（`AbortDeliveryUnprovenError.from_exception`） | 同上，`reason_code="abort_undeliverable"` |
+
+不变量：本 attempt 的失败归因不变（wire 仍 raise 原 `CancelledError` / `ClientError` / `TimeoutError`，升级动作不 raise）；
+本进程无 BringupService（`notify_run_fatal` 返回 False，只可能是无 bringup 的测试面）时**不静默**：
+`abort_unproven_unnotified +1` + `abort_results` 留 `outcome="run_fatal"` 行 + 打印。未接线（`registry.engine_abort is None`，
+无 bringup 的 S1 mock 面）仍走 stock 单发并记 `abort_router_single_send`（`proven=None`）——正式 profile 由 10.3 判据钉死为 0。
+
+### 10.2 bringup 接缝（另一 agent 在 bringup 侧准备核对集合；集成者一行接线）
+
+- 构造器参数：`MilesRouterWorkerClient(router_url, verified_workers=<Iterable[str]>)`；或启动探针之后
+  `client.set_verified_workers(startup_evidence["router_workers"]["urls"])`（返回规整后的元组；空 = 无核对集合）。
+- 来源：bringup `_run_startup_checks` 取得并核对的 `startup_evidence.router_workers.urls`（数量 = engine 数、逐个可达——核对
+  逻辑归 bringup 侧）。client 只做 URL 规整（去 `@rank`、去重、去尾斜杠，镜像 miles `router_worker_base_urls`）。
+- 当前 bringup 仍是 `MilesRouterWorkerClient(self.sglang_url)`（无核对集合）：实时列表可用时行为与之前相同（广播）；
+  实时列表失败时不再单发而是 `undeliverable` → run-fatal。接线一行后才有核对集合回退。
+- `resolve_targets()` 公开（返回 `(targets, targets_source, list_error, drift)`），供 bringup 侧核对或诊断复用。
+
+### 10.3 GPU 资格 run 判据（写入 §6 B.4 的强化版）
+
+关停报告 / `bringup_events.jsonl` 的 `capture_stats`：**`abort_router_single_send == 0` 且 `abort_delivery_failed == 0`**
+（同时 `abort_unproven_fatal == 0`，`abort_unproven_unnotified == 0`）；任一非零 = 该 run 不具备多 engine 资格。
+`abort_broadcast` 应等于 `abort_requested`。事件 `engine_versions_after_publish` 与 `router_workers.count` 判据不变。
+
+### 10.4 反例 / 正例测试（`test_w10_multi_engine.py` §9 组，全部走生产 wire，`notify_run_fatal` 用替身记录）
+
+| 验收项 | 测试 |
+|---|---|
+| ④-1 worker 列表超时 + 此前会经 router 单发到非持有者 → 现在对核对集合广播成功、router 未收到 abort、不升级 | `test_worker_list_timeout_broadcasts_to_verified_set_not_router_single_send` |
+| ④-2 核对集合不可用（列表超时 / 500 且无核对集合）→ `abort_undeliverable` run-fatal，持有者仍占槽（停 run 的理由），无单发，原 CancelledError 仍传播 | `test_verified_set_unavailable_is_run_fatal_not_silent[timeout/http_500]` |
+| ④-2 部分/全部投递失败 → `abort_delivery_partial` / `abort_undeliverable` run-fatal（含"持有者已收到但另一台失败"也不算成功） | `test_partial_or_total_delivery_failure_is_run_fatal[3 组]` |
+| 无 BringupService 时不静默（留账 + 打印） | `test_unproven_without_bringup_service_is_recorded_and_printed` |
+| abort 机制自身异常不再被吞 | `test_abort_path_exception_is_escalated_not_swallowed` |
+| ③ 单 engine 核对集合 + 列表失败仍到达 | `test_single_engine_verified_set_with_router_list_failure_still_delivers` |
+| 核对集合 worker 缺席于实时列表 → 并集投递、记 drift | `test_verified_worker_missing_from_router_list_is_still_targeted` |
+| URL 规整 / 三分判定纯函数 | `test_set_verified_workers_normalizes_and_classify_outcome_three_way` |
+
+既有 4 例按新结果形状更新断言（`outcome` / `targets_source` / `targets` / `proven` 替代 `mode` / `workers` /
+`fully_delivered`）；legacy 反例 `test_counterexample_single_send_via_router_misses_the_holder` 保留（它证明的正是
+无 bringup 的 stock 单发为何不能进正式 profile）。
+
+### 10.5 T1（本节新增）
+
+1. **正式 profile 的 abort 不可证明到达 = run-fatal，而不是 warning**：与 B-5b"任一 engine 死亡 = 停 run"同一语义；
+   partial 也算——router 不告诉谁持有 rid，SGLang 对未知 rid 同样 200，任何"可能是持有者"的目标失败都不能证明。
+2. **核对集合与实时列表取并集而非二选一**：并集只会多投递（未知 rid 被忽略，幂等），却覆盖"router 重启后只剩部分注册"
+   的形态；不是 service discovery（集合来自启动核对，运行期不发现新 engine）。
+3. **legacy 单发只保留在"未接线"路径**（无 bringup 的 S1 mock 面），client 内不再有单发；判据 10.3 使正式 run 中任何
+   单发都可见。
+4. **升级路径永不 raise**：`escalate_abort_unproven` 自身异常只留账，不吞掉调用方正在传播的原异常。
+
+### 10.6 测试 / 证据（2026-09-04 复跑，含本节改动）
+
+| 命令 | 结果 |
+|---|---|
+| `RH2_MILES_PATH=… uv run pytest tests/adapters_miles/test_w10_multi_engine.py -q` | **34 passed**（lane A：27 passed / 7 skipped，skip 全部 integration_base） |
+| `uv run pytest tests/adapters_miles/ -q`（lane A） | 350 passed / 310 skipped；`-m "not integration_base"` → 350 passed / 0 skipped |
+| `RH2_MILES_PATH=… uv run pytest tests/adapters_miles/ -q`（lane B） | **660 passed / 0 failed**（此前红的树 digest 与 W4 在途测试已由并行线程收口） |
+| ruff：`capture_wire.py` / `engine_router_client.py` / `test_w10_multi_engine.py` | 全过 |
+
+W10 归属的 manifest 计数变化更新（基线 322/232、554/0；W10 模块 34 例 = 27 双 lane + 7 integration_base，删旧 4 例）：
+lane A **+23 passed / +7 skipped → 345/239**；lane B **+30 passed → 584/0**。当前观测总数（含并行线程在途新增）：
+lane A 350/310，lane B 660/0。
+
+**T0 停下项**：无（未改准入/reward/loss/schema/协议/状态所有权/恢复语义；新增的拒绝面是 run-fatal 而非样本级
+拒绝路径，且只在"abort 不能证明到达"这一基础设施事实上触发，与样本内容无关）。
+
+补记（§10.6 表续，同日复跑）：`uv run pytest tests/ -q`（默认全套，含 adapters_miles 的 pin base）= **1715 passed / 310 skipped / 0 failed**
+（此前 §9 记录的 W3a 在途 oracle 红已由并行线程收口）；`bash -n launch.sh` 过；`miles_integration_lanes.sh` 前置校验仍待 patch 0015 存档 + manifest 更新后复跑。

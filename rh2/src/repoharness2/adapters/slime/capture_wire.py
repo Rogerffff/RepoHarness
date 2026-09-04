@@ -48,6 +48,7 @@ from repoharness2.adapters.slime.async_worker import (
     ModelCallProxy,
     SessionPoisonRegistry,
 )
+from repoharness2.adapters.slime.engine_router_client import AbortDeliveryUnprovenError
 from repoharness2.adapters.slime.generate import (
     GenerationCaptureHook,
     parse_weight_version_spans,
@@ -220,19 +221,25 @@ class CaptureRegistry:
         # FA-1 follow-up（codex 轮次 7/8）：proxy 接入真实 HTTP 链的挂点。
         self.model_call_proxy: ModelCallProxy | None = None
         # W10（决策包 B-5b）：rid 级 abort 的投递函数。bringup 接线 =
-        # `MilesRouterWorkerClient.broadcast_abort`（问 router `/list_workers` 取全部 worker，
-        # 绕过 router 逐 worker 直发同一 rid：持有者终止、其余忽略）。None = 未接线（S1 mock
-        # 链 / 无 bringup 的测试面），wire 退回 stock 形状经 router 单发——MilesRouter 逐请求
-        # 最小负载选 worker，单发只在**单 worker 池**下语义正确，多 engine 下会错发。
+        # `MilesRouterWorkerClient.broadcast_abort`（router `/list_workers` 实时列表 ∪ 启动核对
+        # 集合，绕过 router 逐 worker 直发同一 rid：持有者终止、其余忽略）。返回
+        # `AbortBroadcastResult`，outcome ∈ delivered / partial / undeliverable；**只有 delivered
+        # 算到达**，其余两种由 wire 经 `bringup.notify_run_fatal` 升级为 typed run-fatal
+        # （codex Wave3 F3 P1：不得把部分投递当成功、不得静默吞掉未投递事实）。
+        # None = 未接线（S1 mock 链 / 无 bringup 的测试面）：wire 退回 stock 形状经 router 单发
+        # ——MilesRouter 逐请求最小负载选 worker，单发只在**单 worker 池**下语义正确；该退化
+        # 只可能出现在没有 bringup 的测试面，正式 profile 由 `abort_router_single_send == 0` 判据钉死。
         self.engine_abort: Callable[[str], Awaitable[Any]] | None = None
         # 最近的 abort 投递事实（有界环，锁域；bringup 关停/审计可读）
         self.abort_results: list[dict[str, Any]] = []
         self.stats.update(
             {
                 "abort_requested": 0,  # wire 走到 abort 分支的次数（cancel/超时/连接错误）
-                "abort_broadcast": 0,  # 经 engine_abort 广播的次数
-                "abort_router_single_send": 0,  # 未接线或 worker 列表取不到 → 经 router 单发
-                "abort_delivery_failed": 0,  # 至少一个 worker 投递失败的次数
+                "abort_broadcast": 0,  # 经 engine_abort 广播的次数（含 partial/undeliverable）
+                "abort_router_single_send": 0,  # 未接线 → 经 router 单发（正式 profile 必须为 0）
+                "abort_delivery_failed": 0,  # outcome ≠ delivered 的次数（正式 profile 必须为 0）
+                "abort_unproven_fatal": 0,  # 升级为 run-fatal 的次数（notify_run_fatal 已调用）
+                "abort_unproven_unnotified": 0,  # 升级时本进程无 BringupService（只留账 + 打印）
             }
         )
         self.poison = SessionPoisonRegistry()
@@ -461,17 +468,36 @@ class CaptureRegistry:
 
     def note_abort_result(self, result: Any) -> None:
         """W10：记一次 rid abort 的投递事实（锁域）。``result`` 为
-        `AbortBroadcastResult`（有 to_dict）或 dict；环上限 256 条。"""
+        `AbortBroadcastResult`（有 to_dict）或 dict（legacy 单发路径）；环上限 256 条。"""
 
         record = result.to_dict() if hasattr(result, "to_dict") else dict(result)
         with self._lock:
-            if record.get("mode") == "broadcast":
-                self.stats["abort_broadcast"] += 1
-            else:
+            if record.get("outcome") == "router_single_send":
                 self.stats["abort_router_single_send"] += 1
-            if record.get("failed"):
+            else:
+                self.stats["abort_broadcast"] += 1
+            if record.get("outcome") != "delivered" or record.get("failed"):
                 self.stats["abort_delivery_failed"] += 1
             self.abort_results.append(record)
+            if len(self.abort_results) > 256:
+                del self.abort_results[: len(self.abort_results) - 256]
+
+    def note_abort_unproven(self, exc: AbortDeliveryUnprovenError, *, notified: bool) -> None:
+        """W10（F3 P1）：一次"不能证明 abort 到达"的升级事实（锁域）。"""
+
+        with self._lock:
+            self.stats["abort_unproven_fatal"] += 1
+            if not notified:
+                self.stats["abort_unproven_unnotified"] += 1
+            self.abort_results.append(
+                {
+                    "rid": exc.result.rid,
+                    "outcome": "run_fatal",
+                    "reason_code": exc.reason_code,
+                    "notified": notified,
+                    "detail": str(exc)[:400],
+                }
+            )
             if len(self.abort_results) > 256:
                 del self.abort_results[: len(self.abort_results) - 256]
 
@@ -895,6 +921,29 @@ def assert_no_404_guard_installed(app: "aiohttp_web.Application") -> None:
         )
 
 
+def escalate_abort_unproven(registry: CaptureRegistry, exc: AbortDeliveryUnprovenError) -> bool:
+    """W10（codex Wave3 F3 P1）：把"不能证明 abort 到达持有者"升级为进程级 run-fatal。
+
+    通道 = `bringup.notify_run_fatal`（与 `adapters/miles/group_admission.py` 的 GroupAdmissionFatal
+    同一入口：未在关停 → 调度关停链，首因 = exc；关停进行中 → 吸收进报告；已定稿 → 只留 fatal_seen）。
+    本进程没有 BringupService（返回 False）时**不静默**：记 `abort_unproven_unnotified` + 打印；
+    事实无论如何都进 `registry.abort_results`。bringup 在模块级 import 本模块，所以这里延迟 import。
+    永不抛（升级路径自身出错也只能留账，不能反过来吞掉调用方正在传播的原异常）。
+    """
+
+    notified = False
+    try:
+        from repoharness2.adapters.slime import bringup as bringup_mod
+
+        notified = bool(bringup_mod.notify_run_fatal(exc))
+    except Exception as notify_exc:  # noqa: BLE001
+        print(f"[rh2-capture] abort run-fatal 通知失败（{type(notify_exc).__name__}: {notify_exc}）：{exc}")
+    registry.note_abort_unproven(exc, notified=notified)
+    if not notified:
+        print(f"[rh2-capture] abort 不能证明到达且本进程无 BringupService 可通知（只留账）：{exc}")
+    return notified
+
+
 def install_capture_wire(registry: CaptureRegistry) -> None:
     """安装两处接线：模块级 call_sglang_generate 替换 + record_turn 包装。
 
@@ -1040,25 +1089,38 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
                     registry.stats["abort_requested"] += 1
                 try:
                     await _abort_rid(rid)
-                except Exception:
-                    pass
+                except Exception as abort_exc:  # noqa: BLE001 —— abort 机制自身异常 = 同样不能证明到达
+                    # codex Wave3 F3 P1：不再静默吞掉。按 undeliverable 走同一 run-fatal 通道；
+                    # 本 attempt 的失败归因仍是下面 raise 出去的原异常（cancel/连接错误/超时）。
+                    escalate_abort_unproven(registry, AbortDeliveryUnprovenError.from_exception(rid, abort_exc))
                 raise
 
         async def _abort_rid(rid: str) -> None:
             abort_fn = registry.engine_abort
             if abort_fn is not None:
-                registry.note_abort_result(await abort_fn(rid))
+                result = await abort_fn(rid)
+                registry.note_abort_result(result)
+                if not getattr(result, "proven", False):
+                    # partial / undeliverable：router 不告诉我们谁持有 rid，SGLang 的 200 也不区分
+                    # 持有/忽略——只要有一个目标没收到，就不能证明持有者收到；被放弃的生成可能
+                    # 继续占 engine 槽位。升级为 typed run-fatal（与 group filter fatal 同一通道），
+                    # 不 raise：本 attempt 的失败归因不变。
+                    escalate_abort_unproven(registry, AbortDeliveryUnprovenError(result))
                 return
+            # 未接线（S1 mock 链 / 无 bringup 的测试面）：stock 形状经 router 单发。
+            # 只在单 worker 池下语义正确；如实记账为 router_single_send，正式 profile 判据 == 0。
             async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=5)) as s2:
                 async with s2.post(f"{adapter.sglang_url}/abort_request", json={"rid": rid}) as r:
                     registry.note_abort_result(
                         {
                             "rid": rid,
-                            "mode": "router_single_send",
-                            "workers": [adapter.sglang_url],
+                            "outcome": "router_single_send",
+                            "targets_source": "router",
+                            "targets": [adapter.sglang_url],
                             "delivered": [adapter.sglang_url] if r.status < 400 else [],
                             "failed": ({} if r.status < 400 else {adapter.sglang_url: f"HTTP {r.status}"}),
                             "list_error": "engine_abort_not_wired",
+                            "proven": None,
                         }
                     )
 

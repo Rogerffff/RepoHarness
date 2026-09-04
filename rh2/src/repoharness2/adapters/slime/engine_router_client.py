@@ -1,4 +1,5 @@
-"""W10（决策包 D2+B v2 B-5b）：MilesRouter worker 池的 rh2 侧客户端——rid 级 abort **广播**。
+"""W10（决策包 D2+B v2 B-5b）：MilesRouter worker 池的 rh2 侧客户端——rid 级 abort **广播**，
+投递结果三分（delivered / partial / undeliverable），不可证明到达即 run-fatal（codex Wave3 F3 P1）。
 
 为什么需要它（代码事实，integration tree `reference/miles-rh2-integration`）：
 
@@ -9,21 +10,35 @@
 - 因此 capture wire 在 cancel/超时后发的 `POST /abort_request {"rid": ...}` 若经 router
   单发，只有 1/N 概率落到真正持有该 rid 的 engine；错发时 SGLang 对不认识的 rid 静默无操作、
   router 照样 200——被放弃的生成继续占 engine 槽位直到自然完成（容量泄漏，非样本偏置）。
-  单 engine 下该问题结构性不存在，这正是此前把 engine 数钉死为 1 的原因；B-5b 裁定该钉死
-  不得转为正式资格语义。
 - miles 自己的 rollout abort（`miles/rollout/inference_rollout/inference_rollout_train.py`
   `abort` → `get_worker_urls`）就是"问 router `/list_workers` 拿全部 worker，**绕过 router**
   逐 worker 直发 `{"abort_all": true}`"。本模块照同一形状做 **rid 级**广播：每个 worker
   都收到同一个 rid，持有者终止，其余 worker 忽略（SGLang 语义），幂等安全。
 
-刻意不做（B-5b 明示，首版）：rid → worker 粘滞表、`X-SMG-Routing-Key` 定向路由、
-dead-engine 回池、`/remove_worker` 弹性回收——任一 engine 死亡 = 停 run 按 B-3 重启。
+投递语义（codex Wave3 F3 P1 修复后；`AbortBroadcastResult.outcome`）：
 
-worker 列表形状（与 miles `get_worker_urls` 双形态对齐，不依赖 sglang_router 版本号）：
-MilesRouter / 旧 sgl-router（<=0.2.1）`GET /list_workers` → `{"urls": [...]}`；
-新 sgl-router `GET /workers` → `{"workers": [{"url": ...}, ...]}`。URL 规整
-（去 `@<rank>` 后缀 + 去重）镜像 `miles.utils.http_utils.router_worker_base_urls`
-（本包不 import miles：`repoharness2.adapters.slime` 的 import 面必须零 miles 依赖）。
+1. **目标集合**：优先 router 实时列表（`GET /list_workers`，fallback 新 sgl-router 的
+   `/workers`）；实时列表取不到或为空 → 用**启动时已核对的 worker URL 集合**
+   （`verified_workers`，bringup 侧从 `startup_evidence.router_workers` 准备，见下"接缝"）；
+   两者都有时取并集（核对集合里而实时列表缺的 worker 记 `drift_missing_from_router`，仍投递）。
+   **不再有经 router 单发的回退**——那条路径只在单 worker 池下正确，已删除。
+2. **三种结果**：
+   - ``delivered``：目标集合非空且每个目标都 2xx → 到达已证明（前提：目标集合 ⊇ 所有可能持有
+     rh2 rid 的 engine；首版 profile engine 数固定、MilesRouter 从不摘除 worker，成立）；
+   - ``partial``：至少一个目标 2xx、至少一个失败 → **不能证明持有者收到**（router 不告诉我们谁持有
+     rid，SGLang 的 200 也不区分"持有/忽略"）→ 调用方（capture_wire）经
+     `bringup.notify_run_fatal` 升级为 typed run-fatal `abort_delivery_partial`；
+   - ``undeliverable``：目标集合为空（实时列表失败/为空且无核对集合）或全部目标失败 → 同样
+     run-fatal `abort_undeliverable`。
+   本类**永不抛**，只返回事实；升级动作在 capture_wire（本 attempt 的失败归因不变）。
+3. **接缝（bringup 侧，一行接线）**：`MilesRouterWorkerClient(router_url, verified_workers=<urls>)`
+   或启动探针之后 `client.set_verified_workers(startup_evidence["router_workers"]["urls"])`。
+   核对集合由 bringup 在启动探针阶段取得并核对（数量 = engine 数、逐个可达）；本模块只做 URL 规整
+   （去 `@<rank>` + 去重，镜像 `miles.utils.http_utils.router_worker_base_urls`）。
+
+刻意不做（B-5b 明示，首版）：rid → worker 粘滞表、`X-SMG-Routing-Key` 定向路由、
+dead-engine 回池、`/remove_worker` 弹性回收、service discovery——任一 engine 死亡 = 停 run
+按 B-3 重启。本包不 import miles：`repoharness2.adapters.slime` 的 import 面必须零 miles 依赖。
 """
 
 from __future__ import annotations
@@ -31,20 +46,31 @@ from __future__ import annotations
 import asyncio
 import dataclasses
 import logging
+from collections.abc import Iterable
 from typing import Any
 
 import aiohttp
 
 logger = logging.getLogger("rh2.engine_router_client")
 
+OUTCOME_DELIVERED = "delivered"
+OUTCOME_PARTIAL = "partial"
+OUTCOME_UNDELIVERABLE = "undeliverable"
 
-def worker_base_urls(urls: list[str]) -> list[str]:
+SOURCE_ROUTER_LIST = "router_list"
+SOURCE_VERIFIED_SET = "verified_set"
+SOURCE_UNION = "router_list+verified_set"
+SOURCE_NONE = "none"
+
+
+def worker_base_urls(urls: Iterable[str]) -> list[str]:
     """镜像 miles `router_worker_base_urls`：去掉 dp-aware 路由加的 `@<rank>` 后缀，
     同一 engine 的多个 rank 合并为一个地址；保持首次出现顺序。"""
 
     bases: list[str] = []
     for url in urls:
-        base, sep, rank = str(url).rpartition("@")
+        url = str(url).rstrip("/")
+        base, sep, rank = url.rpartition("@")
         if sep and rank.isdigit():
             url = base
         if url not in bases:
@@ -54,55 +80,128 @@ def worker_base_urls(urls: list[str]) -> list[str]:
 
 @dataclasses.dataclass(frozen=True)
 class AbortBroadcastResult:
-    """一次 rid abort 的投递事实（不抛异常，交调用方记账/打印）。
+    """一次 rid abort 的投递事实（本类不抛异常，交调用方记账/升级）。
 
-    - ``mode``：``"broadcast"`` = 已从 router 取到 worker 列表并逐 worker 直发；
-      ``"router_single_send"`` = worker 列表取不到（非 MilesRouter / router 不可达），退回
-      stock 形状经 router 单发——**只在单 worker 池下语义正确**，多 engine 下可能错发。
-    - ``delivered``：HTTP 2xx 的 worker；``failed``：worker → 错误摘要。
+    - ``outcome``：``delivered`` / ``partial`` / ``undeliverable``（模块 docstring 第 2 条）；
+    - ``targets_source``：目标集合来源 ``router_list`` / ``verified_set`` /
+      ``router_list+verified_set`` / ``none``；
+    - ``targets`` / ``delivered`` / ``failed``：目标、2xx 的目标、目标 → 错误摘要；
+    - ``list_error``：实时列表取不到/为空时的原因（有核对集合时只是事实，不是失败）；
+    - ``drift_missing_from_router``：核对集合里有、实时列表里没有的 worker（已一并投递）。
     """
 
     rid: str
-    mode: str
-    workers: tuple[str, ...]
+    outcome: str
+    targets_source: str
+    targets: tuple[str, ...]
     delivered: tuple[str, ...]
     failed: dict[str, str]
     list_error: str | None = None
+    drift_missing_from_router: tuple[str, ...] = ()
 
     @property
-    def fully_delivered(self) -> bool:
-        return self.mode == "broadcast" and not self.failed and bool(self.workers)
+    def proven(self) -> bool:
+        """到达已证明 ⟺ outcome == delivered。partial/undeliverable 都是"不能证明持有者收到"。"""
+
+        return self.outcome == OUTCOME_DELIVERED
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "rid": self.rid,
-            "mode": self.mode,
-            "workers": list(self.workers),
+            "outcome": self.outcome,
+            "targets_source": self.targets_source,
+            "targets": list(self.targets),
             "delivered": list(self.delivered),
             "failed": dict(self.failed),
             "list_error": self.list_error,
-            "fully_delivered": self.fully_delivered,
+            "drift_missing_from_router": list(self.drift_missing_from_router),
+            "proven": self.proven,
         }
 
 
+class AbortDeliveryUnprovenError(RuntimeError):
+    """typed run-fatal：rid abort 不能证明到达持有者（partial / undeliverable / abort 机制自身异常）。
+
+    `reason_code` 供 bringup `_on_run_fatal` 命名关停原因（`run_fatal:<reason_code>`）：
+    ``abort_delivery_partial`` / ``abort_undeliverable``。与 group filter fatal 走同一进程级通道
+    `bringup.notify_run_fatal`。
+    """
+
+    def __init__(self, result: AbortBroadcastResult, *, detail: str | None = None) -> None:
+        self.result = result
+        self.reason_code = "abort_delivery_partial" if result.outcome == OUTCOME_PARTIAL else "abort_undeliverable"
+        message = (
+            f"{self.reason_code}: rid={result.rid} targets_source={result.targets_source} "
+            f"targets={list(result.targets)} delivered={list(result.delivered)} failed={result.failed} "
+            f"list_error={result.list_error!r}"
+        )
+        if detail:
+            message = f"{message} detail={detail}"
+        super().__init__(message)
+
+    @classmethod
+    def from_exception(cls, rid: str, exc: BaseException) -> "AbortDeliveryUnprovenError":
+        """abort 机制自身抛出异常（不该发生）= 同样不能证明到达，按 undeliverable 升级，异常原文进 detail。"""
+
+        result = AbortBroadcastResult(
+            rid=rid,
+            outcome=OUTCOME_UNDELIVERABLE,
+            targets_source=SOURCE_NONE,
+            targets=(),
+            delivered=(),
+            failed={},
+            list_error=f"abort_path_exception: {type(exc).__name__}: {exc}"[:300],
+        )
+        return cls(result, detail=f"{type(exc).__name__}: {exc}"[:300])
+
+
+def classify_outcome(targets: Iterable[str], delivered: Iterable[str], failed: dict[str, str]) -> str:
+    targets = list(targets)
+    delivered = list(delivered)
+    if not targets or not delivered:
+        return OUTCOME_UNDELIVERABLE
+    if failed:
+        return OUTCOME_PARTIAL
+    return OUTCOME_DELIVERED
+
+
 class MilesRouterWorkerClient:
-    """router 地址（`http://{sglang_router_ip}:{sglang_router_port}`）上的 worker 池只读视图
-    + rid 级 abort 广播。无状态：每次广播都重新取 worker 列表（与 miles abort 同款；abort
-    只发生在 cancel/超时路径，不在采样热路径）。"""
+    """router 地址（`http://{sglang_router_ip}:{sglang_router_port}`）上的 worker 池视图 + rid 级
+    abort 广播。每次广播都重新取实时列表（与 miles abort 同款；abort 只发生在 cancel/超时路径，
+    不在采样热路径）；实时列表不可用时对启动核对集合广播。"""
 
     def __init__(
         self,
         router_url: str,
         *,
+        verified_workers: Iterable[str] | None = None,
         list_timeout_seconds: float = 5.0,
         abort_timeout_seconds: float = 5.0,
     ) -> None:
         self.router_url = router_url.rstrip("/")
         self._list_timeout = float(list_timeout_seconds)
         self._abort_timeout = float(abort_timeout_seconds)
+        self._verified_workers: tuple[str, ...] = ()
+        if verified_workers is not None:
+            self.set_verified_workers(verified_workers)
+
+    # -- 接缝：启动时已核对的 worker 集合 ---------------------------------------------
+
+    def set_verified_workers(self, urls: Iterable[str]) -> tuple[str, ...]:
+        """bringup 接线点：启动探针阶段核对过的 worker URL 集合（`startup_evidence.router_workers.urls`）。
+        规整（去 `@rank`、去重、去尾斜杠）后保存；返回保存的元组。空集合 = 无核对集合。"""
+
+        self._verified_workers = tuple(worker_base_urls(urls))
+        return self._verified_workers
+
+    @property
+    def verified_workers(self) -> tuple[str, ...]:
+        return self._verified_workers
+
+    # -- worker 列表 ----------------------------------------------------------------
 
     async def list_workers(self) -> list[str]:
-        """全部已注册 worker 的 base URL（规整后）。取不到即抛 RuntimeError（调用方决定处置）。"""
+        """router 实时注册的全部 worker base URL（规整后）。取不到即抛 RuntimeError（调用方决定处置）。"""
 
         timeout = aiohttp.ClientTimeout(total=self._list_timeout)
         async with aiohttp.ClientSession(timeout=timeout) as sess:
@@ -126,6 +225,34 @@ class MilesRouterWorkerClient:
                     f"router 不提供 worker 列表：/list_workers -> {first_status}，/workers -> {r.status}"
                 )
 
+    async def resolve_targets(self) -> tuple[list[str], str, str | None, list[str]]:
+        """决定本次广播的目标集合。返回 (targets, targets_source, list_error, drift_missing_from_router)。
+
+        - 实时列表非空：targets = 实时列表 ∪ 核对集合（核对集合里缺席于实时列表的 worker 记 drift，仍投递）；
+        - 实时列表失败或为空：targets = 核对集合（list_error 记原因）；
+        - 两者皆无：targets 空（source=none）→ 调用方按 undeliverable 处置。
+        """
+
+        live: list[str] = []
+        list_error: str | None = None
+        try:
+            live = await self.list_workers()
+            if not live:
+                list_error = "router_worker_list_empty"
+        except Exception as exc:  # noqa: BLE001 —— 记事实，退回核对集合（不是退回经 router 单发）
+            list_error = f"{type(exc).__name__}: {exc}"[:300]
+        verified = list(self._verified_workers)
+        if live:
+            drift = [w for w in verified if w not in live]
+            targets = live + drift
+            source = SOURCE_UNION if drift else SOURCE_ROUTER_LIST
+            return targets, source, list_error, drift
+        if verified:
+            return verified, SOURCE_VERIFIED_SET, list_error, []
+        return [], SOURCE_NONE, list_error, []
+
+    # -- 广播 ----------------------------------------------------------------------
+
     async def _post_abort(self, sess: aiohttp.ClientSession, url: str, rid: str) -> None:
         async with sess.post(f"{url}/abort_request", json={"rid": rid}) as r:
             if r.status >= 400:
@@ -133,49 +260,41 @@ class MilesRouterWorkerClient:
                 raise RuntimeError(f"HTTP {r.status}: {text[:200]}")
 
     async def broadcast_abort(self, rid: str) -> AbortBroadcastResult:
-        """对全部 worker 广播同一 rid 的 `/abort_request`。永不抛异常。"""
+        """对目标集合的每个 worker 直发同一 rid 的 `/abort_request`。永不抛异常；结果三分见模块 docstring。"""
 
-        try:
-            workers = await self.list_workers()
-        except Exception as exc:  # noqa: BLE001 —— 记事实，退回 stock 单发
-            list_error = f"{type(exc).__name__}: {exc}"[:300]
-            logger.warning("[rh2-router-client] list_workers 失败，退回经 router 单发 abort rid=%s：%s", rid, list_error)
-            failed: dict[str, str] = {}
-            delivered: tuple[str, ...] = ()
-            try:
-                async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=self._abort_timeout)) as sess:
-                    await self._post_abort(sess, self.router_url, rid)
-                delivered = (self.router_url,)
-            except Exception as exc2:  # noqa: BLE001
-                failed[self.router_url] = f"{type(exc2).__name__}: {exc2}"[:300]
-            return AbortBroadcastResult(
-                rid=rid,
-                mode="router_single_send",
-                workers=(self.router_url,),
-                delivered=delivered,
-                failed=failed,
-                list_error=list_error,
+        targets, source, list_error, drift = await self.resolve_targets()
+        if list_error is not None:
+            logger.warning(
+                "[rh2-router-client] router worker 列表不可用（%s），abort rid=%s 改对启动核对集合广播（%d 个）",
+                list_error,
+                rid,
+                len(targets),
             )
-
+        if drift:
+            logger.warning("[rh2-router-client] 核对集合里的 worker 缺席于 router 实时列表，仍投递：%s", drift)
         delivered_list: list[str] = []
         failed_map: dict[str, str] = {}
-        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=self._abort_timeout)) as sess:
-            results = await asyncio.gather(
-                *(self._post_abort(sess, url, rid) for url in workers), return_exceptions=True
-            )
-        for url, result in zip(workers, results, strict=True):
-            if isinstance(result, BaseException):
-                failed_map[url] = f"{type(result).__name__}: {result}"[:300]
-                logger.warning("[rh2-router-client] abort rid=%s 投递 worker %s 失败：%s", rid, url, failed_map[url])
-            else:
-                delivered_list.append(url)
-        if not workers:
-            logger.warning("[rh2-router-client] router worker 池为空，abort rid=%s 无处投递", rid)
+        if targets:
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=self._abort_timeout)) as sess:
+                results = await asyncio.gather(
+                    *(self._post_abort(sess, url, rid) for url in targets), return_exceptions=True
+                )
+            for url, result in zip(targets, results, strict=True):
+                if isinstance(result, BaseException):
+                    failed_map[url] = f"{type(result).__name__}: {result}"[:300]
+                    logger.warning("[rh2-router-client] abort rid=%s 投递 worker %s 失败：%s", rid, url, failed_map[url])
+                else:
+                    delivered_list.append(url)
+        else:
+            logger.error("[rh2-router-client] abort rid=%s 无目标可投递（实时列表：%s；核对集合为空）", rid, list_error)
+        outcome = classify_outcome(targets, delivered_list, failed_map)
         return AbortBroadcastResult(
             rid=rid,
-            mode="broadcast",
-            workers=tuple(workers),
+            outcome=outcome,
+            targets_source=source,
+            targets=tuple(targets),
             delivered=tuple(delivered_list),
             failed=failed_map,
-            list_error=None,
+            list_error=list_error,
+            drift_missing_from_router=tuple(drift),
         )
