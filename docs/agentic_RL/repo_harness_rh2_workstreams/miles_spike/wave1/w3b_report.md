@@ -201,3 +201,89 @@ python -m repoharness2.adapters.slime.sandbox_profile verify --image rh2-s14-gra
 **⑤ 测试/证据/账本状态**：§9；manifest 由集成者同步（本批不改）；spike-log 由集成者落账；本机 Docker 残留零（`docker ps -a` / `docker network ls` 无 `rh2-*`，fixture 镜像保留）。
 
 **本轮没有改变哪些已定案语义**：`contracts/` 全部 schema；W3a 的评分正链、可信评分投影、状态所有权转移与十三段计时（`generate.py` 评分/投影逻辑逐字未动，唯一改动是交付面盖一个 metadata 键）；前置清理批的 security 维/第七维语义；W1b 三终态交付面与 admission 载荷；`_exec_bash` 缺省参数形状；s1_compat 冻结路径（无 profile、旧 docker 参数、root grader）；`bringup.py` fa_formal 挡板；W5a 关停链既有步骤语义（只追加一步）；`reference/`、`rh2/src/slime`、lanes manifest 与 patch 表；faithful DIS loss。
+
+---
+
+## 12. codex Wave3 完整审查（`tmp/wave3检查.md`）修复批（2026-09-04，append-only）
+
+范围：F2 / F4 / P2-1 / R2 / P2-4 / F1（F3 归另一 agent，已作为 `1ba4996f` 落地；本批未碰 `engine_router_client.py` / `capture_wire.py`）。起点 = 已落地的 W3b commit `741a7570` 之后的 HEAD（写本节时 HEAD = `1ba4996f`）。工作树未 commit / 未 stash。
+
+### 12.1 F2（P1）：fresh grader 里 candidate 不能再改写 official tests / 控制面
+
+**根因**（codex 复核属实）：旧实现 `chown -R <candidate> /testbed` 后由候选用户跑整段 eval 脚本，official test files 及其父目录都归候选用户，候选 module 的 import/插件副作用可改写尚未执行的测试。
+
+**方案**（三步，`grading/manager.py::_run_eval` profile 分支）：
+
+| 步 | 身份 | 内容 |
+|---|---|---|
+| 1 trusted setup | root | `spec.trusted_setup_script`（prepared 链 = `render_v2_trusted_setup_script`：conda 激活、`git status/show/diff`、`git checkout <base> -- <official files>`、`git apply` official test_patch）。候选代码此时尚未运行。 |
+| 2 权限布置 | root | `sandbox_profile.grader_protect_control_surface_script(profile, hygiene.test_files)`：先 `chown -R <candidate> /testbed`（构建目录、`__pycache__`、缓存全可写），再把每个 official test file 收回 **root:root 0644**，把它们的**每一级祖先目录（含 /testbed 本身）**收回 **root:root 1777（sticky）**；脚本末尾 `stat` 自证（`RH2_PROTECT_OK=1`、`PROTECTED_FILES/DIRS`、`MISSING_FILES`、`TESTBED_STAT`），不达标 = `GradingInfraError("grading_control_surface_protect_failed")`。 |
+| 3 candidate eval | 候选 uid（`-u 54322 -e HOME=/home/rh2grader`） | `spec.candidate_test_script`（prepared 链 = `render_v2_candidate_test_script`：conda 激活 + `: '>>>>> Start Test Output'` + `eval_cmd <files>` + End 标记），脚本由 root 写在 root 属主目录（`/rh2`）或 sticky `/tmp`，候选进程无法在执行中改写。 |
+
+日志 = setup 段 + 测试段（形态与官方单脚本一致，parser 未改）。**为什么选 sticky 而不是 0755 或只读挂载**：0755 父目录会误伤要在测试目录里写 `__pycache__`/临时产物的任务；只读 bind mount 需要在 apply test_patch 之后再挂载一层，容器内没有可信挂载通道（cap-drop ALL）；sticky 位正好是"可新建、不可替换"的最小手段：root 0644 文件对候选 EACCES（截断写/chmod EPERM），sticky 目录里 root 属主条目 unlink/rename EPERM，祖先目录本身是 sticky 父目录里的 root 条目所以也 rename 不掉（同路径重建的前提被封）。`.git` 与其余文件仍归候选（评分后没有任何可信步骤再读仓库，无 reward 因果路径；候选测试常需 git 只读访问）。
+
+**评分材料形状**：`GradingEnvSpec` 新增 `trusted_setup_script` / `candidate_test_script`（`manager.py` 内 dataclass，非 contracts/）；prepared 链 `build_grading_spec_from_host_view` 同时给出完整 `eval_script`（记录/legacy）与两段（同一组行构成，`render_v2_eval_script` 文本逐字未变，既有 marker/judge oracle 原样通过）；profile 下缺拆分脚本 = `SandboxProfileViolation("grader_eval_split_required")` run-halt（environment adapter 侧系统性缺陷，不洗成成员损耗）。legacy（无 profile）路径仍 root 整段执行、参数形状逐字不变。
+
+**已知残余（登记不修，与 D2-3 已登记项同类）**：official 测试目录里**非 official** 的候选可写文件（测试数据、`conftest.py`、`pytest.ini` 等通用控制面）不在本 profile 保护面——D2-3 已把通用控制面定义交给最终 environment adapter；本 F2 只封 `hygiene.test_files` + eval 脚本本体。
+
+**测试**（`tests/grading/test_w3b_grader_profile_docker.py`，真实容器）：
+- 权限反例 `test_f2_candidate_cannot_truncate_unlink_rename_or_recreate_official_test_file`：official test patch 应用后，候选 uid 对 `tests/test_thing.py` 的截断写 / unlink / rename / 父目录 rename / 同路径重建 / chmod 六种改写全部 `DENIED`，同目录新建文件 `OK`，文件仍 `0 644` 非零长度，评分照常 resolved。
+- 行为反例 `test_f2_candidate_import_side_effect_cannot_rewrite_later_official_test`：顺序执行 A/Z 两个 official 测试，A 导入的候选 module 在 import 时六条路径试图改写 Z（write/unlink/rename/目录 rename//testbed rename/chmod）→ 全部 `DENIED:<errno>`，Z 仍 `PASSED`，parser 结果不受影响（resolved，`PROTECTED_FILES=2`）。
+- 正例 `test_f2_compile_cache_and_build_writes_still_allowed_for_candidate`（`compileall` 写 `tests/__pycache__` 与 `src/__pycache__`、`build/lib/out.o`、`/tmp`、`$HOME/.cache`、`src/generated.py` 全部 OK 且 resolved）+ 既有 resolved / tests_failed 正例（非 root、断网、限额断言保留）。
+- 替身（`tests/grading/test_w3b_grader_profile_unit.py`，3 例）：顺序 root setup → root 权限布置 → 候选 uid 测试；日志拼接；缺拆分脚本 run-halt 且容器已删；legacy 路径逐字不变。
+- **T1 oracle 改动**：`test_grader_profile_resolved_with_candidate_code_run_as_nonroot_and_deny_all` 原断言 `RH2_TESTBED_OWNER=<candidate>`（整个 /testbed 属候选用户——codex 指出这是错的）→ 改为 `/testbed` 与 `tests/` `0 1777`、`tests/test_thing.py` `0 644`、`src` 属候选用户。
+
+### 12.2 F4（P1）：egress 清理失败不再假绿
+
+- `BringupService.close()` 的 residue 新增 `egress_cleanup_failures`（`egress_runtime` 步 facts 里的 failures，含 `network_ls_failed`——查询失败 ≠ 零残留）与 `egress_relay_left`（relay 未删成时的容器名）→ `residue_free=False` → `ShutdownReport.ok=False`；step facts 仍保留（证据），不改 W5a 的 chain.py。
+- 启动回滚消费 `stop_egress_relay()` 返回值：删除失败时 **handle 保留**（`self.egress_relay` 不清空），错误并入 `_startup_rollback_errors`（`relay_stop: <name>: …`），首因异常照抛不被覆盖。
+- `start_egress_relay`：ready-timeout / 镜像 inspect 失败 / digest 不符时自行 `docker rm -f`，rm 失败 → `SandboxNetworkError(..., leftover_containers=(name,))`，消息含"残留"；bringup 把它记到 `service.sandbox_startup_leftovers`、`StartupCheckError` 消息与 rollback errors（`relay_leftover_containers`）。残留容器带 `rh2.run_id` label，launch trap / `run_residue` 的 label 查询可见。
+- 测试（`tests/adapters/test_w3b_bringup_sandbox_runtime.py`，替身 docker 的 `containers_with_label()` 模拟 label 残留查询）：`test_f4_attempt_network_remove_failure_marks_shutdown_not_ok_and_lists_failure`、`test_f4_network_list_failure_is_residue_not_zero`、`test_f4_relay_remove_failure_on_normal_shutdown_marks_not_ok_keeps_handle_and_is_label_visible`、`test_f4_relay_ready_timeout_remove_failure_at_startup_keeps_evidence_and_first_cause`、`test_f4_startup_rollback_relay_remove_failure_keeps_handle_and_does_not_mask_first_cause`；`tests/adapters/test_w3b_sandbox_profile.py::test_f4_relay_ready_timeout_with_remove_failure_leaves_leftover_evidence_visible_by_label`（+ rm 成功无残留的对照）。
+
+### 12.3 P2-1：agent 用户/uid 不再是假旋钮
+
+`RolloutSandboxProfile.validate` 显式拒绝非 `agent/54321`（`rollout_agent_identity_fixed_in_first_version`）；`rollout_profile_from_env` 删除 `RH2_SANDBOX_AGENT_USER/UID` 解析（vendored slime harness 与 `ClaudeCodeDriver` 写死用户名 `agent`，未改 vendored slime）。测试 `test_p2_1_agent_identity_is_fixed_and_env_has_no_user_knob` + 参数化负例。
+
+### 12.4 R2：relay 镜像 digest-pinned 并在 run 记录里核对实际镜像
+
+- `RELAY_IMAGE_DEFAULT = python@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea`（来源：本机 2026-09-04 `docker image inspect python:3.12-slim -f '{{index .RepoDigests 0}}'`，OCI image index digest，多架构；GPU 主机预拉 `docker pull python@sha256:…`）。`relay_image` 必须匹配 `name@sha256:<64hex>`（可变 tag 拒：`rollout_relay_image_not_digest_pinned`），env `RH2_SANDBOX_RELAY_IMAGE` 同规则。
+- `start_egress_relay` 就绪后 `docker inspect -f {{.Image}}` + `docker image inspect -f {{json .RepoDigests}}`，钉死引用不在 RepoDigests 里 → `egress_relay_image_digest_mismatch`（rm 容器）；`EgressRelayHandle.image_id / repo_digests` 进 `runtime_profile.json` 的 `relay`。
+- 负例 `test_r2_relay_image_id_drift_under_same_reference_is_rejected_and_container_removed`（引用文本不变、RepoDigests 漂移）；正例 `test_r2_relay_start_records_actual_image_id_and_repo_digests`、真实容器 `test_relay_container_is_hardened_and_zero_verify_residue` 断言 `.Image` 与 RepoDigests 含钉死值。
+
+### 12.5 P2-4：W3b 计时进聚合面
+
+`attempt_timing.LIFECYCLE_SEGMENTS` 追加六段（前十三段原样）：`sandbox_network_create` / `sandbox_container_start` / `sandbox_git_sanitize` / `sandbox_trusted_init` / `sandbox_prelaunch_probe` / `grader_trusted_setup`；`generate.py` 在 `sandbox_setup` 之外同时写 `audit.lifecycle_timing`（随 `timing_summary` 落 execution audit，`aggregate_lifecycle_timings` 自动出 p50/p95）；`GRADER_PHASE_SEGMENTS` 加 `grader_trusted_setup`，`GradingTimingRecord.test_seconds` 不再含 root setup。**T1 oracle**：`test_w3a_attempt_timing.py::test_segments_are_exactly_the_thirteen_from_the_decision_package` → `..._plus_w3b_setup_segments`（前十三段逐字钉死 + 六段追加）。
+
+### 12.6 F1（P1，最后做）：删除过期 fa_formal 挡板 + 真入口纵切
+
+- 删除 `bringup.BringupService.__init__` 中的无条件 `raise RuntimeError("fa_formal 暂禁…")`（原 `bringup.py:857-869`，含引用旧 FA 前置的注释），原位留注释说明保留的真实核对：`select_task_face_mode`（fa_formal 缺 `RH2_PREPARED_TASKS_DIR` 即拒，不回退 v1）、`validate_execution_config`（`require_real_weight_versions` + 数值 policy_version + 屏障）、`RolloutOrchestrator`（缺 profile/relay/digest 即拒）、finalization store、`_start_sandbox_runtime`（验证不过 StartupCheckError）。不新建 approval manifest / 新闸门。
+- 纵切 `tests/adapters_miles/test_w3b_formal_entry_vertical.py`（4 例，双 lane）：`test_fa_formal_entry_assembles_prepared_face_grader_profile_relay_and_orchestrator`——真实 `ensure_fa_started(args)`（miles 生产入口的启动引导）在 `RH2_EXECUTION_MODE=fa_formal` 下走通 prepared task face（attempt 绑定解析、评分材料已拆分）+ grader profile + relay + verify（`runtime_profile.json` / `startup_evidence.json`）+ `RolloutOrchestrator(fa_formal, profile, relay, digest, barrier, store)`，引擎实测版本 `7`，正常关停 ok；三条 typed 停止负例：`..._rejects_missing_prepared_artifacts_typed`、`..._rejects_version_contract_off_and_rolls_back_relay`（relay 已起又被回滚删掉）、`..._rejects_sandbox_verification_failure`。
+- **T1 oracle**：`test_w1b_prepared_chain.py::test_w1b_bringup_builds_prepared_face_without_v1_loader` 末段"挡板文本必须先于任务面选择"→ 改为"挡板文本不再出现、任务面选择仍在"。
+- F3 接缝（归集成者）：`BringupService.verified_router_workers`（`_run_startup_checks` 从 `startup_evidence.router_workers.urls` 填）→ 接 `MilesRouterWorkerClient.set_verified_workers(...)`（F3 commit `1ba4996f` 提供）。
+
+### 12.7 测试证据（2026-09-04 实跑，HEAD `1ba4996f` + 本批未提交改动）
+
+```
+uv run pytest tests/ -q                                                     # 1740 passed, 310 skipped
+uv run pytest tests/grading/test_w3b_grader_profile_docker.py -q            # 6 passed（真实容器）
+uv run pytest tests/adapters/test_w3b_sandbox_docker.py -q                  # 14 passed（真实容器）
+RH2_MILES_PATH=$REPO/reference/miles-rh2-integration uv run pytest tests/adapters_miles/ -q   # lane B: 664 passed, 0 skipped
+bash scripts/miles_integration_lanes.sh    # 前置校验全部通过；lane A 354 passed / 310 skipped（manifest 仍 339/310 → 脚本红）
+uv run ruff check src/repoharness2 tests experiments/s1_parity.py experiments/s1_7a_bringup/export_sample.py   # All checks passed!
+```
+
+计数归因：全仓 1704 → 1740（+36）= 本批新增：profile 单元 +10（P2-1/R2/F4/F2 脚本，含 3 条参数化行）、bringup F4 +5、grader 替身 +3、grader 真实容器 +3、fa_formal 纵切 +4、并行 F3 agent 的 `test_w10_multi_engine.py` +11。lane A 339→354 / lane B 649→664：+4 = 本批纵切（双 lane），+11 = F3（双 lane）；**manifest expected_counts 应同步为 lane A 354p/310s、lane B 664p/0s（集成者）**。本机 Docker 零残留（容器/网络无 `rh2-*`）。
+
+### 12.8 协作协议五段收尾（本批）
+
+**① 待拍板 T0**：无新增。codex 复核把本报告 §11 的两项"T0 候选"判为 false-positive T0（grader 非 root 已在 D2-2 批准——T2-e 用同一 grader profile 复验是数据资格实施；每 run 无状态 relay 是已批 allowlist 的实现组件）——接受该判定，不再列为待拍板；数据线仍需用同一 grader profile 复验最终题单（数据确定后）。
+
+**② T1 决策及理由**：F2 权限方案取 sticky 目录 + root 0644 文件（§12.1 理由）；`.git` 归候选用户（无 reward 因果路径）；profile 下缺拆分脚本升 run-halt；F4 残留经 `report.residue` 上提而非让 step 失败（facts 保留为证据）；R2 pin 到 OCI index digest（多架构）；P2-4 六段追加到 `LIFECYCLE_SEGMENTS` 尾部（十三段顺序不变）。
+
+**③ 临时挡板新增/命中/解除**：**解除** `bringup.py` 的 fa_formal 无条件挡板（F1）；无新增。
+
+**④ 推翻或修正了哪些旧结论**：§1.2"候选执行用户 chown -R /testbed"→ 改为 official 文件/祖先目录 root 属主 + sticky；§4"`grader-chown-before-eval`"脚本 → `grader-protect-control-surface`（`scripts/sandbox_probes` 已重新 dump）；§11 两项 T0 候选 → 撤回；W3a 报告 §9 的 `test` 段含义在 profile 路径下改为"只计候选测试"。
+
+**⑤ 测试/证据/账本状态**：§12.7；manifest expected_counts 由集成者同步；本机 Docker 零残留。
+
+**本轮没有改变哪些已定案语义**：`contracts/` 全部 schema；W3a 评分正链/可信评分投影（`render_v2_eval_script` 文本逐字未变）；legacy（无 profile）grader 路径与 s1_compat；W5a 关停链步骤顺序与 `chain.py`；F3 归另一 agent 的 `engine_router_client.py` / `capture_wire.py`；`reference/`、`rh2/src/slime`、lanes manifest 与 patch 表。

@@ -72,6 +72,7 @@ from typing import Any, Awaitable, Callable, Mapping, Sequence
 
 __all__ = [
     "GRADER_PROFILE_ID",
+    "RELAY_IMAGE_DEFAULT",
     "PROFILE_SCHEMA_ID",
     "ROLLOUT_PROFILE_ID",
     "RUNTIME_PROFILE_DIGEST_METADATA_KEY",
@@ -96,8 +97,8 @@ __all__ = [
     "create_attempt_network",
     "default_docker_runner",
     "git_sanitize_script",
-    "grader_chown_before_eval_script",
     "grader_prelaunch_probe_script",
+    "grader_protect_control_surface_script",
     "grader_profile_from_env",
     "grader_trusted_init_script",
     "list_probe_scripts",
@@ -138,6 +139,13 @@ _MIB = 1024**2
 _RUN_LABEL_KEY = "rh2.run_id"  # 与 shutdown/run_residue.RUN_LABEL_KEY 相同（本模块不 import 它，保持零依赖）
 _NAME_RE = re.compile(r"^[a-z][a-z0-9_-]{0,31}$")
 _CAP_RE = re.compile(r"^[A-Z_]+$")
+# R2：relay 镜像必须是 digest-pinned 引用（`name@sha256:<64hex>`）——可变 tag（如 python:3.12-slim）在两次
+# run 之间可指向不同镜像而 profile digest 不变；relay 能看到全部模型请求/回复，是真实运行边界。
+_DIGEST_REF_RE = re.compile(r"^[a-z0-9][a-z0-9._/-]*(?::[0-9]+)?(?:/[a-z0-9._-]+)*@sha256:[0-9a-f]{64}$")
+# 来源：本机 2026-09-04 `docker image inspect python:3.12-slim -f '{{index .RepoDigests 0}}'`（OCI image index
+# 的 digest，多架构；`docker pull python@sha256:…` 在 x86_64 GPU 主机上解析到同一 index 的 amd64 清单）。
+RELAY_IMAGE_DEFAULT = "python@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea"
+_RELAY_MISSING_CONTAINER_MARKERS = ("no such container", "is not running")
 
 
 class SandboxProfileError(RuntimeError):
@@ -149,10 +157,14 @@ class SandboxProfileError(RuntimeError):
 
 
 class SandboxNetworkError(RuntimeError):
-    """attempt 私有网络创建/连接失败（瞬时 Docker 故障 → 调用方按既有 task-local infra 语义收口）。"""
+    """attempt 私有网络创建/连接失败（瞬时 Docker 故障 → 调用方按既有 task-local infra 语义收口）。
 
-    def __init__(self, reason_code: str, message: str) -> None:
+    `leftover_containers`（F4）：抛错前自行清理失败、仍留在守护进程里的容器名（带本 run label，
+    launch trap / 残留检查可见）。调用方必须把它记进证据，不得当作"已清理"。"""
+
+    def __init__(self, reason_code: str, message: str, *, leftover_containers: Sequence[str] = ()) -> None:
         self.reason_code = reason_code
+        self.leftover_containers: tuple[str, ...] = tuple(leftover_containers)
         super().__init__(f"[{reason_code}] {message}")
 
 
@@ -317,7 +329,7 @@ class RolloutSandboxProfile:
     require_writable_layer_quota: bool = False
     egress_subnet_pool: str = "10.212.0.0/16"
     egress_subnet_prefix: int = 29
-    relay_image: str = "python:3.12-slim"
+    relay_image: str = RELAY_IMAGE_DEFAULT
     relay_alias: str = "rh2-egress-relay"
     model_proxy_listen_port: int = 18001
     internal_services: tuple[InternalService, ...] = ()
@@ -341,6 +353,15 @@ class RolloutSandboxProfile:
     def validate(self) -> None:
         if self.profile_id != ROLLOUT_PROFILE_ID:
             raise SandboxProfileError("rollout_profile_id_invalid", f"{self.profile_id!r}")
+        # P2-1（codex Wave3 复核）：ClaudeCodeDriver 与 vendored slime harness 把用户名写死为 `agent`
+        # （bringup.ClaudeCodeDriver.run / slime.agent.sandbox.ensure_agent_user / harness.common.run_agent），
+        # 首版不留"只改探针不改 harness"的假旋钮：身份固定为 agent/54321，其它值显式拒绝。
+        if (self.agent_user, self.agent_uid) != ("agent", 54321):
+            raise SandboxProfileError(
+                "rollout_agent_identity_fixed_in_first_version",
+                f"agent_user/agent_uid={self.agent_user!r}/{self.agent_uid!r}：首版固定为 agent/54321"
+                "（Claude Code harness 写死用户名 agent；uid 由可信初始化预建）。",
+            )
         _check_user("rollout", self.agent_user, self.agent_uid)
         _check_common_limits(
             "rollout", pids_limit=self.pids_limit, cpus=self.cpus, memory_bytes=self.memory_bytes,
@@ -364,8 +385,13 @@ class RolloutSandboxProfile:
                 "rollout_egress_subnet_prefix_invalid",
                 f"prefix={self.egress_subnet_prefix} 须大于 pool 前缀 {pool.prefixlen} 且 ≤30",
             )
-        if not self.relay_image or not _NAME_RE.match(self.relay_alias):
-            raise SandboxProfileError("rollout_relay_config_invalid", f"image={self.relay_image!r} alias={self.relay_alias!r}")
+        if not _NAME_RE.match(self.relay_alias):
+            raise SandboxProfileError("rollout_relay_config_invalid", f"alias={self.relay_alias!r}")
+        if not _DIGEST_REF_RE.match(self.relay_image):
+            raise SandboxProfileError(
+                "rollout_relay_image_not_digest_pinned",
+                f"relay_image={self.relay_image!r} 必须是 `name@sha256:<64hex>` 形式（可变 tag 不能被 profile digest 绑定）。",
+            )
         listen_ports = {self.model_proxy_listen_port}
         for svc in self.internal_services:
             svc.validate()
@@ -617,8 +643,7 @@ def rollout_profile_from_env(
     return RolloutSandboxProfile(
         model_proxy_upstream_host=model_proxy_upstream_host,
         model_proxy_upstream_port=int(model_proxy_upstream_port),
-        agent_user=env.get("RH2_SANDBOX_AGENT_USER") or "agent",
-        agent_uid=_env_int(env, "RH2_SANDBOX_AGENT_UID", 54321),
+        # P2-1：没有 RH2_SANDBOX_AGENT_USER/UID 旋钮（harness 写死 agent；见 RolloutSandboxProfile.validate）
         pids_limit=_env_int(env, "RH2_SANDBOX_PIDS_LIMIT", 512),
         cpus=_env_float(env, "RH2_SANDBOX_CPUS", 2.0),
         memory_bytes=_env_int(env, "RH2_SANDBOX_MEMORY_BYTES", 4 * _GIB),
@@ -628,7 +653,7 @@ def rollout_profile_from_env(
         require_writable_layer_quota=_env_bool(env, "RH2_SANDBOX_REQUIRE_WRITABLE_LAYER_QUOTA", False),
         egress_subnet_pool=env.get("RH2_SANDBOX_EGRESS_SUBNET_POOL") or "10.212.0.0/16",
         egress_subnet_prefix=_env_int(env, "RH2_SANDBOX_EGRESS_SUBNET_PREFIX", 29),
-        relay_image=env.get("RH2_SANDBOX_RELAY_IMAGE") or "python:3.12-slim",
+        relay_image=env.get("RH2_SANDBOX_RELAY_IMAGE") or RELAY_IMAGE_DEFAULT,  # 须 digest-pinned（validate 核对）
         model_proxy_listen_port=_env_int(env, "RH2_SANDBOX_RELAY_PORT", 18001),
         internal_services=_env_services(env, "RH2_SANDBOX_INTERNAL_SERVICES"),
     )
@@ -669,6 +694,9 @@ class EgressRelayHandle:
     listen_map: tuple[tuple[int, str, int], ...]
     image: str
     run_id: str
+    # R2：守护进程实际运行的镜像事实（`docker inspect -f {{.Image}}` 的 image ID 与其 RepoDigests）
+    image_id: str = ""
+    repo_digests: tuple[str, ...] = ()
 
 
 class EgressSubnetPool:
@@ -827,26 +855,50 @@ async def start_egress_relay(
     res = await _call(docker, *relay_run_args(profile, name=name, labels=labels), timeout=120.0)
     if res.exit_code != 0:
         raise SandboxNetworkError("egress_relay_start_failed", (res.stderr or res.stdout).strip()[-300:])
-    handle = EgressRelayHandle(
-        container_name=name, alias=profile.relay_alias, listen_map=profile.relay_listen_map(),
-        image=profile.relay_image, run_id=run_id,
-    )
     deadline = time.monotonic() + ready_timeout
     check = (
         "import socket,sys\n"
         f"s=socket.create_connection(('127.0.0.1',{profile.model_proxy_listen_port}),timeout=2)\n"
         "s.close()\nprint('RH2_RELAY_LISTENING')\n"
     )
+
+    async def _fail(reason_code: str, message: str) -> SandboxNetworkError:
+        # F4：自行清理失败的容器不能"忘掉"——它带本 run label，留在错误对象里供调用方记证据。
+        rm = await _call(docker, "rm", "-f", name, timeout=60.0)
+        leftovers: tuple[str, ...] = ()
+        if rm.exit_code != 0 and not any(m in (rm.stderr or "").lower() for m in _RELAY_MISSING_CONTAINER_MARKERS):
+            leftovers = (name,)
+            message += f"；且 relay 容器移除失败（残留 {name}，带 rh2.run_id label）：{(rm.stderr or rm.stdout).strip()[-200:]}"
+        return SandboxNetworkError(reason_code, message, leftover_containers=leftovers)
+
     while True:
         probe = await _call(docker, "exec", name, "python3", "-c", check, timeout=15.0)
         if probe.exit_code == 0 and "RH2_RELAY_LISTENING" in probe.stdout:
-            return handle
+            break
         if time.monotonic() > deadline:
-            await _call(docker, "rm", "-f", name, timeout=60.0)
-            raise SandboxNetworkError(
+            raise await _fail(
                 "egress_relay_not_ready", f"{name} 在 {ready_timeout}s 内未监听：{(probe.stderr or probe.stdout)[-200:]}"
             )
         await asyncio.sleep(0.25)
+    # R2：核对实际运行镜像 = profile 钉死的 digest（tag 文本不变但 image ID 漂移即拒）。
+    ref = await _call(docker, "inspect", "-f", "{{.Image}}", name, timeout=30.0)
+    image_id = ref.stdout.strip()
+    if ref.exit_code != 0 or not image_id:
+        raise await _fail("egress_relay_image_inspect_failed", (ref.stderr or ref.stdout).strip()[-200:])
+    digests_res = await _call(docker, "image", "inspect", "-f", "{{json .RepoDigests}}", image_id, timeout=30.0)
+    try:
+        repo_digests = tuple(str(x) for x in (json.loads(digests_res.stdout or "[]") or []))
+    except json.JSONDecodeError:
+        repo_digests = ()
+    if digests_res.exit_code != 0 or profile.relay_image not in repo_digests:
+        raise await _fail(
+            "egress_relay_image_digest_mismatch",
+            f"relay 实际镜像 {image_id} 的 RepoDigests={list(repo_digests)} 不含 profile 钉死的 {profile.relay_image}",
+        )
+    return EgressRelayHandle(
+        container_name=name, alias=profile.relay_alias, listen_map=profile.relay_listen_map(),
+        image=profile.relay_image, run_id=run_id, image_id=image_id, repo_digests=repo_digests,
+    )
 
 
 async def stop_egress_relay(docker: DockerRunner, relay: EgressRelayHandle, *, timeout: float = 60.0) -> list[str]:
@@ -1089,13 +1141,77 @@ def grader_trusted_init_script(profile: GraderSandboxProfile) -> str:
     )
 
 
-def grader_chown_before_eval_script(profile: GraderSandboxProfile) -> str:
-    """root：候选测试启动前把 /testbed 交给候选执行用户（可信步骤写入的文件是 root 属主）。"""
+def _validate_control_surface_paths(paths: Sequence[str]) -> list[str]:
+    out: list[str] = []
+    for raw in paths:
+        path = str(raw)
+        if not path or path.startswith("/") or any(seg in ("", ".", "..") for seg in path.split("/")):
+            raise SandboxProfileError("grader_control_surface_path_invalid", f"official test file 路径非法：{path!r}")
+        if "\n" in path or "\0" in path:
+            raise SandboxProfileError("grader_control_surface_path_invalid", f"official test file 路径含控制字符：{path!r}")
+        if path not in out:
+            out.append(path)
+    return out
 
+
+def grader_protect_control_surface_script(profile: GraderSandboxProfile, official_test_files: Sequence[str]) -> str:
+    """root：候选测试启动前的属主/权限布置（F2 = D2-3 不变量在 grader **运行期**的半边）。
+
+    1. `chown -R <candidate> /testbed`——候选代码真正需要写的位置（构建目录、`__pycache__`、缓存）全部可写；
+    2. official test files（本 profile 真正依赖的 evaluator 控制面 = `hygiene.test_files`）改回 root:root 0644
+       ——候选进程截断/改写失败（EACCES）；
+    3. 它们的**每一级祖先目录**（含 /testbed 本身）改 root:root 且 mode 1777（sticky）——候选仍能在这些目录
+       里新建文件（pytest 的 `__pycache__`/临时产物不误伤），但对 root 属主条目 unlink/rename 失败（EPERM），
+       也不能把祖先目录 rename 掉再同路径重建。只把文件改只读不够（父目录可写就能 replace）；把目录改 0755
+       又会误伤要在测试目录里写文件的任务——sticky 位正好是"可新建、不可替换"的最小手段。
+    自证：脚本末尾用 `stat` 复核每个受保护文件/目录的 uid 与 mode。输出 KEY=VALUE。
+    """
+
+    files = _validate_control_surface_paths(official_test_files)
+    uid = profile.candidate_exec_uid
+    tb = shlex.quote(profile.testbed_path)
+    quoted = " ".join(shlex.quote(f) for f in files)
     return (
-        _marker("grader-chown-before-eval") + "set -u\n"
-        f"chown -R {profile.candidate_exec_uid}:{profile.candidate_exec_uid} {shlex.quote(profile.testbed_path)} "
-        "|| { echo \"RH2_CHOWN_ERROR=1\"; exit 4; }\necho \"RH2_CHOWN_OK=1\"\n"
+        _marker("grader-protect-control-surface") + "set -u\n"
+        f"TB={tb}; UIDV={uid}\n"
+        "chown -R \"$UIDV:$UIDV\" \"$TB\" || { echo \"RH2_PROTECT_ERROR=chown_candidate_failed\"; exit 4; }\n"
+        "PROTECTED=0; DIRS=0; MISSING=\"\"\n"
+        "protect_dirs() {\n"
+        "  d=$(dirname -- \"$1\")\n"
+        "  while :; do\n"
+        "    case \"$d\" in \"$TB\"|\"$TB\"/*) ;; *) break ;; esac\n"
+        "    if [ -d \"$d\" ] && [ ! -L \"$d\" ]; then\n"
+        "      chown 0:0 -- \"$d\" && chmod 1777 -- \"$d\" || { echo \"RH2_PROTECT_ERROR=dir:$d\"; exit 4; }\n"
+        "      DIRS=$((DIRS+1))\n"
+        "    fi\n"
+        "    [ \"$d\" = \"$TB\" ] && break\n"
+        "    d=$(dirname -- \"$d\")\n"
+        "  done\n"
+        "}\n"
+        f"for f in {quoted}; do\n"
+        "  p=\"$TB/$f\"\n"
+        "  if [ -f \"$p\" ] && [ ! -L \"$p\" ]; then\n"
+        "    chown 0:0 -- \"$p\" && chmod 0644 -- \"$p\" || { echo \"RH2_PROTECT_ERROR=file:$f\"; exit 4; }\n"
+        "    PROTECTED=$((PROTECTED+1))\n"
+        "  else\n"
+        "    MISSING=\"$MISSING$f,\"\n"
+        "  fi\n"
+        "  protect_dirs \"$p\"\n"
+        "done\n"
+        "chown 0:0 -- \"$TB\" && chmod 1777 -- \"$TB\" || { echo \"RH2_PROTECT_ERROR=testbed_root\"; exit 4; }\n"
+        f"for f in {quoted}; do\n"
+        "  p=\"$TB/$f\"\n"
+        "  if [ -f \"$p\" ]; then st=$(stat -c '%u %a' -- \"$p\"); [ \"$st\" = \"0 644\" ] || { echo \"RH2_PROTECT_ERROR=verify_file:$f:$st\"; exit 4; }; fi\n"
+        "  d=$(dirname -- \"$p\")\n"
+        "  while :; do\n"
+        "    case \"$d\" in \"$TB\"|\"$TB\"/*) ;; *) break ;; esac\n"
+        "    if [ -d \"$d\" ]; then st=$(stat -c '%u %a' -- \"$d\"); [ \"$st\" = \"0 1777\" ] || { echo \"RH2_PROTECT_ERROR=verify_dir:$d:$st\"; exit 4; }; fi\n"
+        "    [ \"$d\" = \"$TB\" ] && break\n"
+        "    d=$(dirname -- \"$d\")\n"
+        "  done\n"
+        "done\n"
+        "echo \"RH2_PROTECT_OK=1\"; echo \"PROTECTED_FILES=$PROTECTED\"; echo \"PROTECTED_DIRS=$DIRS\"\n"
+        "echo \"MISSING_FILES=$MISSING\"; echo \"TESTBED_STAT=$(stat -c '%u %a' -- \"$TB\")\"\n"
     )
 
 
@@ -1123,7 +1239,9 @@ def list_probe_scripts(rollout: RolloutSandboxProfile, grader: GraderSandboxProf
     if grader is not None:
         scripts["grader-trusted-init"] = grader_trusted_init_script(grader)
         scripts["grader-prelaunch-probe"] = grader_prelaunch_probe_script(grader)
-        scripts["grader-chown-before-eval"] = grader_chown_before_eval_script(grader)
+        scripts["grader-protect-control-surface"] = grader_protect_control_surface_script(
+            grader, ("tests/test_example.py",)
+        )
     return scripts
 
 
@@ -1584,6 +1702,7 @@ async def verify_sandbox_profiles(
         "probe_image": image,
         "runtime_profile_digest": runtime_profile_digest(rollout, grader),
         "relay": {"container_name": relay.container_name, "alias": relay.alias, "image": relay.image,
+                  "image_id": relay.image_id, "repo_digests": list(relay.repo_digests),
                   "listen_map": [list(e) for e in relay.listen_map]},
         "rollout": {"profile_id": rollout.profile_id, "digest": rollout.digest(), "parameters": rollout.to_parameters(),
                     "checks": {}, "ok": False},

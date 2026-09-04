@@ -25,8 +25,10 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from sandbox_test_support import (  # noqa: E402
+    RELAY_FAKE_IMAGE_ID,
     TEST_RELAY,
     ProfileFakeState,
+    SandboxRuntimeFakeDocker,
     formal_sandbox_kwargs,
     grader_probe_output,
     make_grader_profile,
@@ -79,8 +81,11 @@ def test_profile_parameters_and_digest_are_deterministic():
 @pytest.mark.parametrize(
     "overrides, code",
     [
-        ({"agent_uid": 0}, "rollout_uid_invalid"),
-        ({"agent_user": "root"}, "rollout_user_invalid"),
+        ({"agent_uid": 0}, "rollout_agent_identity_fixed_in_first_version"),
+        ({"agent_user": "root"}, "rollout_agent_identity_fixed_in_first_version"),
+        ({"agent_uid": 1000}, "rollout_agent_identity_fixed_in_first_version"),  # P2-1：非默认 uid 也拒
+        ({"relay_image": "python:3.12-slim"}, "rollout_relay_image_not_digest_pinned"),  # R2：可变 tag 拒
+        ({"relay_image": "python@sha256:abc"}, "rollout_relay_image_not_digest_pinned"),
         ({"pids_limit": 4}, "rollout_pids_limit_invalid"),
         ({"cpus": 0.0}, "rollout_cpus_invalid"),
         ({"memory_bytes": 1024}, "rollout_memory_invalid"),
@@ -439,7 +444,7 @@ def test_probe_scripts_dir_matches_package_and_cli_lists_them():
     assert set(scripts) == {
         "rollout-trusted-init", "git-sanitize", "rollout-prelaunch-probe", "rollout-extended-probe",
         "git-future-probe", "storage-quota-probe", "grader-trusted-init", "grader-prelaunch-probe",
-        "grader-chown-before-eval",
+        "grader-protect-control-surface",
     }
     scripts_dir = REPO_RH2 / "scripts" / "sandbox_probes"
     for sid, text in scripts.items():
@@ -453,3 +458,91 @@ def test_probe_scripts_dir_matches_package_and_cli_lists_them():
     assert out.returncode == 0, out.stderr
     listed = dict(line.split("\t") for line in out.stdout.strip().splitlines())
     assert listed["git-sanitize"] == "sha256:" + hashlib.sha256(scripts["git-sanitize"].encode()).hexdigest()
+
+
+# ---------------------------------------------------------------------------
+# codex Wave3 复核：P2-1 / R2 / F4（relay 启动）/ F2（控制面权限脚本）
+# ---------------------------------------------------------------------------
+
+
+def test_p2_1_agent_identity_is_fixed_and_env_has_no_user_knob():
+    """P2-1：harness 写死 `agent`，profile 不留只改探针的假旋钮——env 里没有 RH2_SANDBOX_AGENT_USER/UID，
+    dataclass 上非默认值显式拒绝；默认值照常。"""
+
+    r = sp.rollout_profile_from_env(
+        {"RH2_SANDBOX_AGENT_USER": "other", "RH2_SANDBOX_AGENT_UID": "1000"},
+        model_proxy_upstream_host="h", model_proxy_upstream_port=1,
+    )
+    assert (r.agent_user, r.agent_uid) == ("agent", 54321)  # env 键被忽略（不存在这个旋钮）
+    import inspect as _inspect
+
+    src = _inspect.getsource(sp.rollout_profile_from_env)
+    assert "RH2_SANDBOX_AGENT_USER" not in src.replace("# P2-1：没有 RH2_SANDBOX_AGENT_USER/UID 旋钮", "")
+    with pytest.raises(sp.SandboxProfileError, match="rollout_agent_identity_fixed_in_first_version"):
+        make_rollout_profile(agent_user="agent2")
+
+
+def test_r2_relay_image_default_is_digest_pinned_and_env_must_be_too():
+    r = make_rollout_profile()
+    assert r.relay_image == sp.RELAY_IMAGE_DEFAULT and r.relay_image.startswith("python@sha256:")
+    assert len(r.relay_image.split("@sha256:")[1]) == 64
+    assert r.to_parameters()["network"]["relay_image"] == sp.RELAY_IMAGE_DEFAULT  # digest 进 profile 参数摘要
+    pinned = "ghcr.io/org/relay@sha256:" + "0" * 64
+    assert sp.rollout_profile_from_env(
+        {"RH2_SANDBOX_RELAY_IMAGE": pinned}, model_proxy_upstream_host="h", model_proxy_upstream_port=1,
+    ).relay_image == pinned
+    with pytest.raises(sp.SandboxProfileError, match="rollout_relay_image_not_digest_pinned"):
+        sp.rollout_profile_from_env(
+            {"RH2_SANDBOX_RELAY_IMAGE": "python:3.12-slim"}, model_proxy_upstream_host="h", model_proxy_upstream_port=1,
+        )
+    assert "--name" in sp.relay_run_args(r, name="x") and sp.RELAY_IMAGE_DEFAULT in sp.relay_run_args(r, name="x")
+
+
+async def test_r2_relay_image_id_drift_under_same_reference_is_rejected_and_container_removed():
+    """tag/引用文本不变，但守护进程实际起的镜像 RepoDigests 不含钉死 digest → 拒绝并 rm 掉 relay。"""
+
+    docker = SandboxRuntimeFakeDocker(relay_repo_digests=("python@sha256:" + "1" * 64,))
+    with pytest.raises(sp.SandboxNetworkError, match="egress_relay_image_digest_mismatch") as ei:
+        await sp.start_egress_relay(docker, make_rollout_profile(), run_id="r2", labels=("--label", "rh2.run_id=r2"))
+    assert ei.value.leftover_containers == ()  # 自行清理成功
+    assert any(c[0] == "rm" and c[-1].startswith("rh2-egress-relay-") for c in docker.calls)
+    assert docker.containers_with_label("rh2.run_id=r2") == []
+
+
+async def test_r2_relay_start_records_actual_image_id_and_repo_digests():
+    docker = SandboxRuntimeFakeDocker()
+    handle = await sp.start_egress_relay(docker, make_rollout_profile(), run_id="r2ok", labels=())
+    assert handle.image_id == RELAY_FAKE_IMAGE_ID and handle.repo_digests == (sp.RELAY_IMAGE_DEFAULT,)
+
+
+async def test_f4_relay_ready_timeout_with_remove_failure_leaves_leftover_evidence_visible_by_label():
+    """relay 起了但一直不监听，超时后 `rm -f` 也失败：错误对象带 leftover_containers，且 label 残留查询看得见它。"""
+
+    docker = SandboxRuntimeFakeDocker(relay_never_ready=True, relay_rm_fail=True)
+    with pytest.raises(sp.SandboxNetworkError, match="egress_relay_not_ready") as ei:
+        await sp.start_egress_relay(
+            docker, make_rollout_profile(), run_id="f4", labels=("--label", "rh2.run_id=f4"), ready_timeout=0.3,
+        )
+    assert ei.value.leftover_containers == ("rh2-egress-relay-f4",)
+    assert "残留" in str(ei.value)
+    assert docker.containers_with_label("rh2.run_id=f4") == ["rh2-egress-relay-f4"]
+
+
+async def test_f4_relay_ready_timeout_with_successful_remove_has_no_leftover():
+    docker = SandboxRuntimeFakeDocker(relay_never_ready=True)
+    with pytest.raises(sp.SandboxNetworkError, match="egress_relay_not_ready") as ei:
+        await sp.start_egress_relay(docker, make_rollout_profile(), run_id="f4b", labels=("--label", "rh2.run_id=f4b"), ready_timeout=0.3)
+    assert ei.value.leftover_containers == () and docker.containers_with_label("rh2.run_id=f4b") == []
+
+
+def test_f2_protect_script_covers_files_and_every_ancestor_and_rejects_bad_paths():
+    g = make_grader_profile()
+    script = sp.grader_protect_control_surface_script(g, ("tests/test_a.py", "pkg/sub/tests/test_b.py", "tests/test_a.py"))
+    assert sp.script_id_of(script) == "grader-protect-control-surface"
+    # 先整树交给候选用户，再把 official 文件收回 root 0644，祖先目录 root 1777（sticky），/testbed 本身也 sticky
+    assert script.index('chown -R "$UIDV:$UIDV" "$TB"') < script.index("chmod 0644") < script.index('chmod 1777 -- "$TB"')
+    assert "for f in tests/test_a.py pkg/sub/tests/test_b.py; do" in script  # 去重后逐文件
+    assert "chmod 1777 -- \"$d\"" in script and 'st=$(stat -c \'%u %a\' -- "$p"); [ "$st" = "0 644" ]' in script
+    for bad in ("../x.py", "/abs/test.py", "a//b.py", "", "a/./b.py"):
+        with pytest.raises(sp.SandboxProfileError, match="grader_control_surface_path_invalid"):
+            sp.grader_protect_control_surface_script(g, (bad,))

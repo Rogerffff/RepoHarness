@@ -41,11 +41,16 @@ from repoharness2.grading.manager import _GRADER_PHASE_TIMING_RETENTION  # noqa:
 BASE = "a" * 40
 
 
-def test_segments_are_exactly_the_thirteen_from_the_decision_package():
-    assert LIFECYCLE_SEGMENTS == (
+def test_segments_are_the_thirteen_from_the_decision_package_plus_w3b_setup_segments():
+    # D2-1 十三段原样在前；W3b / codex Wave3 P2-4 追加 sandbox 创建期五段 + grader root 可信 setup（与 test 分开）
+    assert LIFECYCLE_SEGMENTS[:13] == (
         "runtime_quiescence", "baseline_census", "post_census", "artifact_capture", "artifact_persist",
         "grading_queue_wait", "grader_start_and_verify", "grader_baseline_rebuild", "delta_apply", "test",
         "parser_and_report", "grader_cleanup", "rollout_container_hold_after_freeze",
+    )
+    assert LIFECYCLE_SEGMENTS[13:] == (
+        "sandbox_network_create", "sandbox_container_start", "sandbox_git_sanitize", "sandbox_trusted_init",
+        "sandbox_prelaunch_probe", "grader_trusted_setup",
     )
     assert set(GRADER_PHASE_SEGMENTS) < set(LIFECYCLE_SEGMENTS)
 

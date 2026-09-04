@@ -856,17 +856,13 @@ class BringupService:
         # 复核六轮 P0-2：纯配置校验在**任何资源启动之前**（线程未起）
         if EXECUTION_MODE not in ("s1_compat", "fa_audit_only", "fa_formal"):
             raise RuntimeError(f"RH2_EXECUTION_MODE={EXECUTION_MODE!r} 不在三值枚举内。")
-        if EXECUTION_MODE == "fa_formal":
-            # fa_formal 闸门（2026-08-19 现状）：A-prime T0 已拍板、B1~B5
-            # 与 F2-3 批 1/2a/2b 已落地；开闸剩余前置 = F2-3 批 1+2 联合
-            # 终核（含 §10.4 配对）、B6 真实组合验证、writer-scope T1
-            # 手段、barrier git-free 指纹替换（_digest_script 仍跑 git，
-            # diff.external RCE 面未除）。全清前保持 fail-stop；探针用
-            # fa_audit_only。
-            raise RuntimeError(
-                "fa_formal 暂禁：开闸前置未全清（联合终核/B6/writer-scope/"
-                "barrier git-free），详见 fa/implementation-notes.md 文末。"
-            )
+        # F1（codex Wave3 复核，2026-09-04）：此处曾有无条件 `raise RuntimeError("fa_formal 暂禁…")` 临时挡板
+        # （2026-08-19 设，移除条件 = W1b + W3a + W3b + W4 完成，已满足；D0-4 不建代码级 owner 闸门）。
+        # 现已删除。fa_formal 真正的必需核对全部保留且各自 typed 停止：prepared 任务面
+        # （select_task_face_mode：缺 RH2_PREPARED_TASKS_DIR 即拒，不回退 v1）、身份/版本契约
+        # （validate_execution_config：require_real_weight_versions + 数值 policy_version + 屏障）、
+        # sandbox profile（RolloutOrchestrator：缺 profile/relay/digest 即拒）、finalization store、
+        # 启动前验证（_start_sandbox_runtime：不过即 StartupCheckError）。
         # -- W3b：两个 profile 的参数在任何资源型副作用之前解析（非法即拒）。rollout profile 的
         #    模型代理上游端口要等 adapter 线程起来才知道，这里先用占位端口验证其余参数。
         self.grader_profile: GraderSandboxProfile | None = None
@@ -874,6 +870,11 @@ class BringupService:
         self.egress_relay: EgressRelayHandle | None = None
         self.runtime_profile_digest: str | None = None
         self.runtime_profile_record: dict[str, Any] | None = None
+        # F4：relay 启动失败且自行清理也失败时残留的容器名（带 rh2.run_id label；启动回滚把它并入
+        # rollback errors，launch trap 的 label 残留检查可见）。
+        self.sandbox_startup_leftovers: tuple[str, ...] = ()
+        # F3 接缝（归另一 agent）：启动探针核对过的 router worker URL 集合（_run_startup_checks 填）。
+        self.verified_router_workers: tuple[str, ...] = ()
         if sandbox_profile_enabled():
             self.grader_profile = grader_profile_from_env(os.environ)
             rollout_profile_from_env(
@@ -992,10 +993,20 @@ class BringupService:
             relay = getattr(self, "egress_relay", None)
             if relay is not None:  # W3b：启动失败时 relay 容器不得遗留
                 try:
-                    await stop_egress_relay(_sandbox_docker(), relay)
+                    relay_failures = await stop_egress_relay(_sandbox_docker(), relay)
                 except BaseException as _rb_exc:  # noqa: BLE001
-                    self._startup_rollback_errors.append(f"relay_stop: {_rb_exc}")
-                self.egress_relay = None
+                    relay_failures = [f"relay_stop_exception: {_rb_exc}"]
+                if relay_failures:
+                    # F4：删除失败不得忘记 handle（容器仍带本 run label，launch trap 残留检查可见）；
+                    # 错误并入 rollback errors，不覆盖启动首因。
+                    self._startup_rollback_errors.append(
+                        f"relay_stop: {relay.container_name}: " + "; ".join(relay_failures)
+                    )
+                else:
+                    self.egress_relay = None
+            leftovers = getattr(self, "sandbox_startup_leftovers", ())
+            if leftovers:
+                self._startup_rollback_errors.append(f"relay_leftover_containers: {list(leftovers)}")
             if self._startup_rollback_errors:
                 print(f"[rh2-bringup] 启动回滚清理告警（首因照抛）：{self._startup_rollback_errors}")
             raise
@@ -1225,7 +1236,13 @@ class BringupService:
         try:
             self.egress_relay = await start_egress_relay(docker, self.rollout_profile, run_id=run_id, labels=labels)
         except SandboxNetworkError as exc:
-            raise StartupCheckError("egress_relay_start_failed", str(exc)) from exc
+            # F4：relay 起了但未就绪/镜像 digest 不符且自行 rm 失败 → 容器残留，记进 service 证据
+            # （启动回滚并入 rollback errors；label 残留检查也能看到它）。
+            self.sandbox_startup_leftovers = tuple(exc.leftover_containers)
+            detail = str(exc)
+            if exc.leftover_containers:
+                detail += f"；残留容器：{list(exc.leftover_containers)}"
+            raise StartupCheckError("egress_relay_start_failed", detail) from exc
         image = SANDBOX_VERIFY_IMAGE or next(iter(self.task_specs.values())).image
         record = await verify_sandbox_profiles(
             docker, rollout=self.rollout_profile, grader=self.grader_profile, image=image, run_id=run_id,
@@ -1372,6 +1389,12 @@ class BringupService:
         try:
             worker_urls = await self.router_workers.list_workers()
             evidence["router_workers"] = {"urls": worker_urls, "count": len(worker_urls)}
+            # F3 接缝（abort 广播归另一 agent）：启动时核对过的 worker URL 集合，供 router client 在
+            # worker-list 查询失败时按这份集合广播而不是经 router 单发；集成者接线。
+            self.verified_router_workers = tuple(str(u) for u in worker_urls)
+            # F3 接缝：把启动核对过的 worker 集合交给 router client——实时列表失败时对该集合广播,
+            # 集合也拿不到则 abort 投递不可证明 → run-fatal（不再经 router 单发）。
+            self.router_workers.set_verified_workers(self.verified_router_workers)
         except Exception as exc:  # noqa: BLE001
             evidence["router_workers"] = {"error": f"{type(exc).__name__}: {exc}"[:300]}
         evidence["adapter_url"] = self.adapter_url
@@ -1794,6 +1817,7 @@ class BringupService:
         registry_close = facts_of("capture_registry_close")
         containers = facts_of("container_residue")
         http = facts_of("adapter_http")
+        egress = facts_of("egress_runtime")
         report.residue = {
             "unfinished_executions": inflight.get("unfinished_after_cancel_wait", []),
             "quarantined_containers": containers.get("quarantined_containers", []),
@@ -1801,6 +1825,12 @@ class BringupService:
             "sessions_drop_failed": sessions.get("sessions_drop_failed", {}),
             "hooks_left_after_close": registry_close.get("hooks_left_after_close", 0),
             "adapter_thread_alive": bool(http.get("thread_alive_after_stop", False)),
+            # F4（codex Wave3 复核）：egress relay / attempt 网络删除失败 = 残留（不是"步骤 ok 但 facts 里有失败"）
+            # → residue_free=False → ok=False。network ls 失败同样进这里（查询失败 ≠ 零残留）。
+            "egress_cleanup_failures": list(egress.get("failures", []) or []),
+            "egress_relay_left": (
+                egress.get("relay") if egress.get("relay") and not egress.get("relay_removed") else None
+            ),
         }
         # patch 0012/0013：miles rollout fn 关停到期放弃的 worker/组（具体组标识 + 原因）并入
         # 残留——任一非空即 residue_free=False → ok=False，不再假绿。链前到达的残留在此并入。

@@ -593,12 +593,13 @@ def test_w1b_bringup_builds_prepared_face_without_v1_loader(world, monkeypatch, 
         finally:
             service.app_handle.stop()
 
-        # fa_formal 既有挡板原样在前，不因 prepared 旋钮而放行（capture wire 进程级单代，
-        # 同进程不能再构造第二个 BringupService——用源码顺序钉死：挡板文本先于任务面选择）。
+        # F1（codex Wave3 复核，T1 oracle 翻转）：旧的无条件 `fa_formal 暂禁` 挡板已删除（移除条件
+        # W1b+W3a+W3b+W4 已满足）；fa_formal 的真实核对由 select_task_face_mode / validate_execution_config /
+        # sandbox profile 各自 typed 停止，真入口纵切见 test_w3b_formal_entry_vertical.py。这里只钉死旧挡板
+        # 文本不再出现、任务面选择仍在。
         src = Path(bringup.__file__).read_text(encoding="utf-8")
-        guard_at = src.index('raise RuntimeError(\n                "fa_formal 暂禁')
-        face_at = src.index("select_task_face_mode(EXECUTION_MODE, PREPARED_TASKS_DIR)")
-        assert 0 < guard_at < face_at
+        assert 'raise RuntimeError(\n                "fa_formal 暂禁' not in src
+        assert "select_task_face_mode(EXECUTION_MODE, PREPARED_TASKS_DIR)" in src
     finally:
         for p in removed:
             sys.path.append(p)

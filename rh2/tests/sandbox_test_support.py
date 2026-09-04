@@ -24,6 +24,8 @@ from repoharness2.grading.manager import ExecResult
 
 TEST_UPSTREAM_HOST = "10.0.0.1"
 TEST_UPSTREAM_PORT = 18001
+RELAY_FAKE_IMAGE_ID = "sha256:" + "re" * 32  # 替身里 relay 容器的 image ID（R2 digest 核对用）
+BASE_COMMIT_FOR_RUNTIME_FAKE = "a" * 40
 
 
 def make_rollout_profile(**overrides: Any) -> RolloutSandboxProfile:
@@ -221,6 +223,11 @@ class ProfileFakeState:
     network_create_overlap_times: int = 0  # 前 N 次报 "Pool overlaps"
     relay_missing: bool = False  # `network connect` 报 No such container
     trusted_init_fail: bool = False
+    # F4 负例旋钮
+    network_ls_fail: bool = False  # `network ls` 查询失败（守护进程不可达）
+    network_rm_fail_for: tuple[str, ...] = ()  # 这些网络（或 "*"）`network rm` 失败（active endpoints）
+    # R2 负例旋钮：relay 实际镜像的 RepoDigests（None = 恰好等于 profile 钉死值）
+    relay_repo_digests: tuple[str, ...] | None = None
     # 记录
     networks: dict[str, str] = field(default_factory=dict)  # name → subnet
     removed_networks: list[str] = field(default_factory=list)
@@ -240,6 +247,16 @@ class ProfileFakeState:
             name = args[args.index("--name") + 1]
             self.run_args_by_name[name] = tuple(args)
             return None  # 宿主替身决定成功/失败
+        if cmd == "inspect" and "{{.Image}}" in args and str(args[-1]).startswith("rh2-egress-relay"):
+            return ExecResult(0, RELAY_FAKE_IMAGE_ID + "\n", "")  # R2：relay 容器实际镜像 ID
+        if cmd == "image" and "RepoDigests" in " ".join(args) and args[-1] == RELAY_FAKE_IMAGE_ID:
+            import json as _json
+
+            digests = self.relay_repo_digests
+            if digests is None:
+                assert self.rollout_profile is not None
+                digests = (self.rollout_profile.relay_image,)
+            return ExecResult(0, _json.dumps(list(digests)) + "\n", "")
         if cmd == "inspect" and len(args) == 2:  # 裸 `inspect <name>`（{{.Image}} 形态归宿主替身）
             name = args[1]
             run_args = self.run_args_by_name.get(name)
@@ -290,12 +307,16 @@ class ProfileFakeState:
             return ExecResult(0, "", "")
         if sub == "rm":
             name = args[-1]
+            if "*" in self.network_rm_fail_for or name in self.network_rm_fail_for:
+                return ExecResult(1, "", f"Error response from daemon: error while removing network: network {name} has active endpoints")
             if name in self.networks:
                 del self.networks[name]
                 self.removed_networks.append(name)
                 return ExecResult(0, name + "\n", "")
             return ExecResult(1, "", f"Error response from daemon: network {name} not found")
         if sub == "ls":
+            if self.network_ls_fail:
+                return ExecResult(1, "", "Cannot connect to the Docker daemon at unix:///var/run/docker.sock")
             return ExecResult(0, "".join(n + "\n" for n in self.networks), "")
         raise AssertionError(f"ProfileFakeState 不认识的 network 子命令: {args}")
 
@@ -324,8 +345,8 @@ class ProfileFakeState:
         if sid == "grader-prelaunch-probe":
             assert gp is not None
             return ExecResult(0, grader_probe_output(gp, overrides=self.grader_probe_overrides), "")
-        if sid == "grader-chown-before-eval":
-            return ExecResult(0, "RH2_CHOWN_OK=1\n", "")
+        if sid == "grader-protect-control-surface":
+            return ExecResult(0, "RH2_PROTECT_OK=1\nPROTECTED_FILES=1\nPROTECTED_DIRS=2\nMISSING_FILES=\nTESTBED_STAT=0 1777\n", "")
         if sid == "storage-quota-probe":
             return ExecResult(0, "QUOTA_ENFORCED=0\n", "")
         if sid == "git-future-probe":
@@ -335,3 +356,89 @@ class ProfileFakeState:
                 "BASE_HISTORY=1\nHEAD_IS_BASE=1\nRH2_PROBE_OK=1\n"
             ), "")
         raise AssertionError(f"ProfileFakeState 不认识的脚本 id: {sid}")
+
+
+# ---------------------------------------------------------------------------
+# bringup 级替身：relay 启动/就绪、verify 全流程、关停清理、label 残留可见（tests/adapters 与 tests/adapters_miles 共用）
+# ---------------------------------------------------------------------------
+
+
+class SandboxRuntimeFakeDocker:
+    """relay 启动/就绪、verify 全流程、关停清理所需的最小 docker 面（其余交给 ProfileFakeState）。
+
+    F4 旋钮：`network_ls_fail` / `network_rm_fail_for` / `relay_rm_fail` / `relay_never_ready`；
+    `containers_with_label()` 模拟 launch trap 的 `docker ps -a --filter label=rh2.run_id=<id>`
+    （被 rm 失败的容器仍在，残留检查看得见）。
+    """
+
+    def __init__(
+        self,
+        *,
+        probe_overrides: dict[str, str] | None = None,
+        network_ls_fail: bool = False,
+        network_rm_fail_for: tuple[str, ...] = (),
+        relay_rm_fail: bool = False,
+        relay_never_ready: bool = False,
+        relay_repo_digests: tuple[str, ...] | None = None,
+    ) -> None:
+        self.state = ProfileFakeState(
+            head=BASE_COMMIT_FOR_RUNTIME_FAKE, rollout_profile=make_rollout_profile(), grader_profile=make_grader_profile(),
+            probe_overrides=probe_overrides or {}, network_ls_fail=network_ls_fail,
+            network_rm_fail_for=network_rm_fail_for, relay_repo_digests=relay_repo_digests,
+        )
+        self.relay_rm_fail = relay_rm_fail
+        self.relay_never_ready = relay_never_ready
+        self.calls: list[tuple[str, ...]] = []
+        self.removed: list[str] = []
+        self.containers: dict[str, dict[str, Any]] = {}  # name → {"labels": {...}, "removed": bool}
+
+    def bind_profiles(self, rollout, grader) -> None:
+        self.state.rollout_profile = rollout
+        self.state.grader_profile = grader
+
+    def containers_with_label(self, label: str) -> list[str]:
+        key, _, value = label.partition("=")
+        return sorted(
+            name for name, c in self.containers.items() if not c["removed"] and c["labels"].get(key) == value
+        )
+
+    async def __call__(self, *args: str, input_bytes: bytes | None = None) -> ExecResult:
+        self.calls.append(args)
+        handled = self.state.dispatch(args, input_bytes)
+        if handled is not None:
+            return handled
+        cmd = args[0]
+        if cmd == "run":
+            name = args[args.index("--name") + 1]
+            labels: dict[str, str] = {}
+            for i, a in enumerate(args):
+                if a == "--label" and i + 1 < len(args):
+                    k, _, v = args[i + 1].partition("=")
+                    labels[k] = v
+            self.containers[name] = {"labels": labels, "removed": False}
+            return ExecResult(0, "deadbeef\n", "")
+        if cmd == "rm":
+            name = args[-1]
+            if self.relay_rm_fail and name.startswith("rh2-egress-relay-"):
+                return ExecResult(1, "", f"Error response from daemon: cannot remove container {name}: device or resource busy")
+            self.removed.append(name)
+            if name in self.containers:
+                self.containers[name]["removed"] = True
+            return ExecResult(0, "", "")
+        if cmd == "ps":
+            label = ""
+            for i, a in enumerate(args):
+                if a == "--filter" and i + 1 < len(args) and args[i + 1].startswith("label="):
+                    label = args[i + 1][len("label="):]
+            names = self.containers_with_label(label) if label else [n for n, c in self.containers.items() if not c["removed"]]
+            return ExecResult(0, "".join(n + "\n" for n in names), "")
+        if cmd == "exec":
+            script = args[-1]
+            if "RH2_RELAY_LISTENING" in script:
+                if self.relay_never_ready:
+                    return ExecResult(1, "", "ConnectionRefusedError: [Errno 111] Connection refused")
+                return ExecResult(0, "RH2_RELAY_LISTENING\n", "")
+            if "test -d" in script and "/.git" in script:
+                return ExecResult(0, "", "")  # 探针镜像无 /testbed → sanitize 如实 skipped
+            return ExecResult(0, "", "")
+        raise AssertionError(f"SandboxRuntimeFakeDocker 不认识的命令: {args}")

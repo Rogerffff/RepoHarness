@@ -560,6 +560,12 @@ class GradingEnvSpec:
     parse_log: Callable[[str], scoring.EvalVerdict]  # 官方 parser 入口（绑定私有材料）
     grader_version: str
     hygiene: HygieneRules
+    # F2（codex Wave3 复核）：grader profile 路径下 eval 拆两步——
+    #   trusted_setup_script：root 执行（恢复 official test files、应用 official test_patch、git status/show/diff）；
+    #   candidate_test_script：候选执行用户执行（只跑测试命令，带官方 Start/End 标记）。
+    # 两者都在场才允许在 profile 下评分（缺失 = SandboxProfileViolation run-halt）；legacy（无 profile）路径仍只用 eval_script。
+    trusted_setup_script: str | None = None
+    candidate_test_script: str | None = None
     # 运行期镜像 digest 比对（S1-7a 前置修复，codex#1）：二选一、必选其一——
     # 要么给出 envpack 冻结的 manifest digest（评分容器启动后与实际镜像的
     # RepoDigests 比对，不符即 infra_failure），要么显式声明 image_local_build
@@ -696,6 +702,8 @@ class _ContainerRecord:
     removed: bool = False
     # W3b：本容器的启动前核对摘要（profile 在场时必有；None = legacy 参数）
     prelaunch: dict[str, Any] | None = None
+    # F2：候选测试前的控制面权限布置自证（PROTECTED_FILES/DIRS、MISSING_FILES、TESTBED_STAT）
+    control_surface: dict[str, str] | None = None
 
 
 # W3a 生命周期计时：grader 内部六段（与 adapters/slime/attempt_timing.LIFECYCLE_SEGMENTS 同名）。
@@ -703,6 +711,7 @@ GRADER_PHASE_SEGMENTS: tuple[str, ...] = (
     "grader_start_and_verify",
     "grader_baseline_rebuild",
     "delta_apply",
+    "grader_trusted_setup",  # F2/P2-4：root 可信 setup（恢复 official tests + 应用 test_patch + 权限布置），与 test 分开
     "test",
     "parser_and_report",
     "grader_cleanup",
@@ -1061,8 +1070,11 @@ class SWEGradingManager:
 
             # 阶段 5：跑官方 eval（合并单流 2>&1，S1-2 提醒的日志形态）
             test_start = time.monotonic()
-            eval_log_text = await self._run_eval(record, spec)
-            timing_parts["test"] = time.monotonic() - test_start
+            eval_log_text, trusted_setup_seconds = await self._run_eval(record, spec)
+            # F2/P2-4：`test` 只计候选测试本身；root 可信 setup（恢复 official tests / 应用 test_patch /
+            # 权限布置）单独记 grader_trusted_setup（legacy 路径恒 0）。
+            timing_parts["test"] = max(time.monotonic() - test_start - trusted_setup_seconds, 0.0)
+            phase.add("grader_trusted_setup", trusted_setup_seconds)
             phase.add("test", timing_parts["test"])
             report_started = time.monotonic()
             peak_memory_mb = await self._read_peak_memory_mb(record)
@@ -1739,53 +1751,97 @@ class SWEGradingManager:
         )
         return apply.exit_code == 0
 
-    async def _run_eval(self, record: _ContainerRecord, spec: GradingEnvSpec) -> str:
-        """写入官方 eval 脚本并以合并单流（2>&1）执行，返回原始日志文本。"""
+    async def _write_root_script(self, record: _ContainerRecord, path: str, text: str, *, timeout: float) -> None:
+        """root 写脚本（属主 root、umask 022 → 0644：候选用户可读不可改）。"""
 
-        script_path = spec.eval_script_path
         write = await self._exec_bash_checked(
             record,
-            f"mkdir -p $(dirname {script_path}) && cat > {script_path}",
+            f"mkdir -p $(dirname {path}) && cat > {path}",
             phase="eval_write",
-            timeout=spec.apply_timeout_seconds,
-            input_bytes=spec.eval_script.encode(),
+            timeout=timeout,
+            input_bytes=text.encode(),
         )
         if write.exit_code != 0:
             raise GradingInfraError(
                 f"grading_eval_script_write_failed:{write.stderr.strip()[-300:]}"
             )
-        # 官方脚本自身 exit code 不作判据（测试失败常导致非零退出），
-        # 死亡检测由 _exec_bash_checked 完成，结论一律交官方 parser。
-        profile = self.config.sandbox_profile
-        exec_user: str | None = None
-        exec_home: str | None = None
-        if profile is not None:
-            # W3b：候选代码执行前把 /testbed 交给候选执行用户（可信步骤写入的文件是 root 属主），
-            # 然后以该用户身份跑官方 eval 脚本。chown 失败 = 评分动作故障（infra，reward=None），
-            # 不是模型负样本。
-            from repoharness2.adapters.slime.sandbox_profile import grader_chown_before_eval_script
 
-            chown = await self._exec_bash_checked(
+    async def _run_eval(self, record: _ContainerRecord, spec: GradingEnvSpec) -> tuple[str, float]:
+        """跑官方 eval，返回 (合并日志文本, root 可信 setup 秒数)。
+
+        legacy（无 grader profile，S1 冻结路径）：写入完整 eval_script 并以 root 执行，setup 秒数恒 0。
+
+        grader profile（F2，D2-3 不变量的运行期半边）三步：
+          1. root：`trusted_setup_script`（恢复 official test files、应用 official test_patch、git status/show/diff）
+             ——候选代码此时尚未运行；
+          2. root：`grader_protect_control_surface_script`——/testbed 交给候选用户，但 official test files
+             root:root 0644、其全部祖先目录 root:root 1777（sticky）：候选进程不能改写/删除/重命名/同路径重建它们；
+          3. 候选执行用户：`candidate_test_script`（只跑测试命令，带官方 Start/End 标记）；脚本本身由 root 写在
+             root 属主目录/sticky /tmp 里，候选进程无法在执行中改写。
+        日志 = setup 输出 + 候选测试输出（形态与官方单脚本一致，parser 不变）。"""
+
+        script_path = spec.eval_script_path
+        profile = self.config.sandbox_profile
+        if profile is None:
+            await self._write_root_script(record, script_path, spec.eval_script, timeout=spec.apply_timeout_seconds)
+            # 官方脚本自身 exit code 不作判据（测试失败常导致非零退出），
+            # 死亡检测由 _exec_bash_checked 完成，结论一律交官方 parser。
+            result = await self._exec_bash_checked(
                 record,
-                grader_chown_before_eval_script(profile),
-                phase="testbed_chown",
-                timeout=spec.env_reset_timeout_seconds,
+                f"bash {script_path} 2>&1",
+                phase="test",
+                timeout=spec.test_timeout_seconds,
             )
-            if chown.exit_code != 0 or "RH2_CHOWN_OK=1" not in chown.stdout:
-                raise GradingInfraError(
-                    f"grading_testbed_chown_failed:{chown.stderr.strip()[-300:]}"
-                )
-            exec_user = str(profile.candidate_exec_uid)
-            exec_home = f"/home/{profile.candidate_exec_user}"
+            return (result.stdout if result.stdout else result.stderr), 0.0
+
+        if spec.trusted_setup_script is None or spec.candidate_test_script is None:
+            # 评分材料没有按 F2 拆分 = environment adapter 侧的系统性缺陷：同 profile 的每次评分都会撞上，
+            # 记 failed_to_grade 只会把它洗成成员损耗——run-halt。
+            raise SandboxProfileViolation(
+                "grader_eval_split_required",
+                f"{spec.task_id}: grader profile 要求 trusted_setup_script + candidate_test_script（拆分的 eval），"
+                "评分材料只有单一 eval_script。",
+            )
+        from repoharness2.adapters.slime.sandbox_profile import (
+            grader_protect_control_surface_script,
+            parse_key_value_output,
+        )
+
+        setup_started = time.monotonic()
+        setup_path = f"{script_path}.trusted_setup"
+        await self._write_root_script(record, setup_path, spec.trusted_setup_script, timeout=spec.apply_timeout_seconds)
+        setup = await self._exec_bash_checked(
+            record,
+            f"bash {setup_path} 2>&1",
+            phase="trusted_setup",
+            timeout=spec.env_reset_timeout_seconds,
+        )
+        setup_log = setup.stdout if setup.stdout else setup.stderr
+        protect = await self._exec_bash_checked(
+            record,
+            grader_protect_control_surface_script(profile, spec.hygiene.test_files),
+            phase="control_surface_protect",
+            timeout=spec.env_reset_timeout_seconds,
+        )
+        protect_facts = parse_key_value_output(protect.stdout)
+        if protect.exit_code != 0 or protect_facts.get("RH2_PROTECT_OK") != "1":
+            raise GradingInfraError(
+                "grading_control_surface_protect_failed:"
+                f"{protect_facts.get('RH2_PROTECT_ERROR', '')}:{protect.stderr.strip()[-300:]}"
+            )
+        record.control_surface = protect_facts
+        await self._write_root_script(record, script_path, spec.candidate_test_script, timeout=spec.apply_timeout_seconds)
+        trusted_setup_seconds = time.monotonic() - setup_started
         result = await self._exec_bash_checked(
             record,
             f"bash {script_path} 2>&1",
             phase="test",
             timeout=spec.test_timeout_seconds,
-            user=exec_user,
-            home=exec_home,
+            user=str(profile.candidate_exec_uid),
+            home=f"/home/{profile.candidate_exec_user}",
         )
-        return result.stdout if result.stdout else result.stderr
+        test_log = result.stdout if result.stdout else result.stderr
+        return setup_log + test_log, trusted_setup_seconds
 
     def _parse_eval_log(self, spec: GradingEnvSpec, log_text: str) -> scoring.EvalVerdict:
         """官方 parser 解析 + manager 级加严（test_log_parse_failed 的两个判据）。"""

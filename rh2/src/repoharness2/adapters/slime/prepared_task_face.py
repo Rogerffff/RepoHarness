@@ -68,9 +68,7 @@ class GradingMaterialsError(RuntimeError):
         super().__init__(f"[{reason_code}] {message}")
 
 
-def render_v2_eval_script(grading: PrivateGradingBundleV2, test_files: Sequence[str]) -> str:
-    """从 v2 评分面渲染 eval 脚本（形态对齐 swebench make_eval_script_list_py 尾段）。"""
-
+def _v2_eval_preconditions(grading: PrivateGradingBundleV2, test_files: Sequence[str]) -> str:
     verify_grading_eval_cmd(grading)  # eval_cmd 消费前互检（bundles_v2 第三道防线）
     if not test_files:
         raise GradingMaterialsError(
@@ -80,15 +78,22 @@ def render_v2_eval_script(grading: PrivateGradingBundleV2, test_files: Sequence[
         raise GradingMaterialsError(
             "v2_heredoc_delimiter_collision", f"{grading.instance_id}: test_patch 含 heredoc 定界符，拒绝构造 eval 脚本。"
         )
-    files = " ".join(shlex.quote(p) for p in test_files)
+    return " ".join(shlex.quote(p) for p in test_files)
+
+
+_V2_ENV_LINES = (
+    "#!/bin/bash",
+    "set -uxo pipefail",
+    "source /opt/miniconda3/bin/activate",
+    f"conda activate {V2_EVAL_CONDA_ENV}",
+    f"cd {V2_EVAL_TESTBED}",
+    f"git config --global --add safe.directory {V2_EVAL_TESTBED}",
+)
+
+
+def _v2_trusted_setup_lines(grading: PrivateGradingBundleV2, files: str) -> list[str]:
     reset = f"git checkout {grading.base_commit} {files}"
-    lines = [
-        "#!/bin/bash",
-        "set -uxo pipefail",
-        "source /opt/miniconda3/bin/activate",
-        f"conda activate {V2_EVAL_CONDA_ENV}",
-        f"cd {V2_EVAL_TESTBED}",
-        f"git config --global --add safe.directory {V2_EVAL_TESTBED}",
+    return [
         "git status",
         "git show",
         f"git -c core.fileMode=false diff {grading.base_commit}",
@@ -96,12 +101,43 @@ def render_v2_eval_script(grading: PrivateGradingBundleV2, test_files: Sequence[
         f"git apply -v - <<'{V2_EVAL_HEREDOC_DELIMITER}'",
         grading.test_patch,
         V2_EVAL_HEREDOC_DELIMITER,
+    ]
+
+
+def _v2_candidate_test_lines(grading: PrivateGradingBundleV2, files: str) -> list[str]:
+    return [
         f": '{V2_EVAL_START_MARKER}'",
         f"{grading.eval_cmd} {files}",
         f": '{V2_EVAL_END_MARKER}'",
-        reset,
     ]
+
+
+def render_v2_eval_script(grading: PrivateGradingBundleV2, test_files: Sequence[str]) -> str:
+    """从 v2 评分面渲染**完整** eval 脚本（形态对齐 swebench make_eval_script_list_py 尾段）。
+
+    legacy（无 grader profile）路径以 root 整段执行；grader profile 路径不执行它，而是执行下面两个
+    拆分脚本（F2）——三者由同一组行构成，不会分家。"""
+
+    files = _v2_eval_preconditions(grading, test_files)
+    reset = f"git checkout {grading.base_commit} {files}"
+    lines = [*_V2_ENV_LINES, *_v2_trusted_setup_lines(grading, files), *_v2_candidate_test_lines(grading, files), reset]
     return "\n".join(lines) + "\n"
+
+
+def render_v2_trusted_setup_script(grading: PrivateGradingBundleV2, test_files: Sequence[str]) -> str:
+    """F2：root 可信 setup 半段——git status/show/diff、恢复 official test files、应用 official test_patch。
+    候选代码在这一步之前不运行、之后再也改不了这些文件（manager 随后做属主/权限布置）。"""
+
+    files = _v2_eval_preconditions(grading, test_files)
+    return "\n".join([*_V2_ENV_LINES, *_v2_trusted_setup_lines(grading, files)]) + "\n"
+
+
+def render_v2_candidate_test_script(grading: PrivateGradingBundleV2, test_files: Sequence[str]) -> str:
+    """F2：候选执行用户半段——只跑 eval_cmd（带官方 Start/End 标记）。不含最后的 reset（official files 对候选
+    用户只读，reset 只是官方脚本的收尾整理，对 reward 无因果作用）。"""
+
+    files = _v2_eval_preconditions(grading, test_files)
+    return "\n".join([*_V2_ENV_LINES, *_v2_candidate_test_lines(grading, files)]) + "\n"
 
 
 def build_grading_spec_from_host_view(
@@ -121,6 +157,9 @@ def build_grading_spec_from_host_view(
         base_commit=grading.base_commit,
         image_manifest_digest=image_manifest_digest,
         eval_script=render_v2_eval_script(grading, test_files),
+        # F2：grader profile 路径按 root setup / 候选测试两步执行（与完整脚本同一组行）
+        trusted_setup_script=render_v2_trusted_setup_script(grading, test_files),
+        candidate_test_script=render_v2_candidate_test_script(grading, test_files),
         parse_log=_parse,
         grader_version=f"swebench-{scoring.swebench_version()}",
         hygiene=HygieneRules(
@@ -266,6 +305,8 @@ __all__ = [
     "GradingMaterialsError",
     "PreparedTaskFace",
     "build_grading_spec_from_host_view",
+    "render_v2_candidate_test_script",
     "render_v2_eval_script",
+    "render_v2_trusted_setup_script",
     "rollout_spec_from_view",
 ]

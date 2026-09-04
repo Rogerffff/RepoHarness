@@ -260,6 +260,7 @@ def test_verify_record_ok_and_digest_matches_profiles(verify_record, sandbox_run
     assert verify_record["runtime_profile_digest"] == sp.runtime_profile_digest(sandbox_runtime.profile, sandbox_runtime.grader)
     assert verify_record["rollout"]["ok"] and verify_record["grader"]["ok"]
     assert verify_record["schema_id"] == sp.RUNTIME_PROFILE_RECORD_SCHEMA_ID
+    assert verify_record["relay"]["repo_digests"] and sp.RELAY_IMAGE_DEFAULT in verify_record["relay"]["repo_digests"]
 
 
 def test_rollout_inspect_proves_user_caps_nnp_pids_memory_swap_tmpfs_mounts_network(verify_record, sandbox_runtime):
@@ -347,6 +348,9 @@ def test_relay_container_is_hardened_and_zero_verify_residue(sandbox_runtime):
     assert c["Config"]["User"] == "65534:65534" and hc["CapDrop"] == ["ALL"] and hc["ReadonlyRootfs"] is True
     assert hc["NetworkMode"] == "bridge" and "no-new-privileges" in hc["SecurityOpt"]
     assert hc["PidsLimit"] == 64 and hc["MemorySwap"] == hc["Memory"]
+    # R2：relay 实际镜像 = profile 钉死的 digest（run 记录里 image_id + RepoDigests 都有）
+    assert c["Image"] == sandbox_runtime.relay.image_id and sp.RELAY_IMAGE_DEFAULT in sandbox_runtime.relay.repo_digests
+    assert sandbox_runtime.profile.relay_image in sandbox_runtime.relay.repo_digests
     left = _sh("docker", "ps", "-a", "--filter", "name=rh2-sbverify", "--format", "{{.Names}}").stdout.strip()
     assert left == ""
 

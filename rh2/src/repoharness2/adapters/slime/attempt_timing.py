@@ -63,12 +63,22 @@ LIFECYCLE_SEGMENTS: tuple[str, ...] = (
     "parser_and_report",
     "grader_cleanup",
     "rollout_container_hold_after_freeze",
+    # W3b / P2-4（codex Wave3 复核）：sandbox 创建期五段 + grader root 可信 setup（与 test 分开）。
+    # 前十三段是 D2-1 验收清单原样；这六段是 W3b 引入的每 attempt 额外开销，GPU spike 报告需要一起看
+    # 才能判断每 attempt 建网络 / git repack+prune / 容器初始化 / 权限布置是否成为吞吐瓶颈。
+    "sandbox_network_create",
+    "sandbox_container_start",
+    "sandbox_git_sanitize",
+    "sandbox_trusted_init",
+    "sandbox_prelaunch_probe",
+    "grader_trusted_setup",
 )
 
 _GRADER_SEGMENTS: tuple[str, ...] = (
     "grader_start_and_verify",
     "grader_baseline_rebuild",
     "delta_apply",
+    "grader_trusted_setup",
     "test",
     "parser_and_report",
     "grader_cleanup",
@@ -77,7 +87,7 @@ _GRADER_SEGMENTS: tuple[str, ...] = (
 
 @dataclass
 class AttemptLifecycleTiming:
-    """一次 attempt 的十三段计时 + 队列事实。字段名 = 段名，值 = 秒（None 未发生）。"""
+    """一次 attempt 的分段计时（D2-1 十三段 + W3b 六段）+ 队列事实。字段名 = 段名，值 = 秒（None 未发生）。"""
 
     segments: dict[str, float | None] = field(
         default_factory=lambda: {name: None for name in LIFECYCLE_SEGMENTS}

@@ -3880,6 +3880,7 @@ class RolloutOrchestrator:
             net_started = time.monotonic()
             network = await self._create_attempt_network(name, labels=common_labels, audit=audit)
             setup["network_seconds"] = round(time.monotonic() - net_started, 4)
+            audit.lifecycle_timing.set("sandbox_network_create", setup["network_seconds"])  # P2-4：进聚合面
             setup["egress_network"] = network.name
             setup["egress_subnet"] = network.subnet
             # W3b 步骤 B：docker run 参数**只**由 profile 组装（没有可选安全开关）。
@@ -3897,6 +3898,7 @@ class RolloutOrchestrator:
             )
         if profile is not None:
             setup["container_start_seconds"] = round(time.monotonic() - start_started, 4)
+            audit.lifecycle_timing.set("sandbox_container_start", setup["container_start_seconds"])
 
         try:
             # 启动后镜像 digest 比对（codex#1 fail-closed）：先于任何写入/探针，
@@ -3931,6 +3933,7 @@ class RolloutOrchestrator:
                 except RuntimeError as exc:
                     raise SlimeBindingError("rollout_git_sanitize_failed", str(exc)[:400]) from exc
                 setup["git_sanitize_seconds"] = round(time.monotonic() - sanitize_started, 4)
+                audit.lifecycle_timing.set("sandbox_git_sanitize", setup["git_sanitize_seconds"])
                 init_started = time.monotonic()
                 try:
                     setup["trusted_init"] = await run_trusted_init(
@@ -3940,6 +3943,7 @@ class RolloutOrchestrator:
                 except RuntimeError as exc:
                     raise SlimeBindingError("rollout_trusted_init_failed", str(exc)[:400]) from exc
                 setup["trusted_init_seconds"] = round(time.monotonic() - init_started, 4)
+                audit.lifecycle_timing.set("sandbox_trusted_init", setup["trusted_init_seconds"])
                 audit.mark("sandbox_trusted_init_completed")
 
             # 基线未跟踪清单（S1-7a 远程回归发现）：部分官方镜像 /testbed 自带
@@ -4007,6 +4011,7 @@ class RolloutOrchestrator:
                 audit.prelaunch_check = {
                     "ok": pre.ok, "violations": list(pre.violations), "seconds": round(pre.seconds, 4),
                 }
+                audit.lifecycle_timing.set("sandbox_prelaunch_probe", pre.seconds)
                 if not pre.ok:
                     audit.prelaunch_check["inspect_facts"] = pre.inspect_facts
                     audit.prelaunch_check["probe_facts"] = pre.probe_facts

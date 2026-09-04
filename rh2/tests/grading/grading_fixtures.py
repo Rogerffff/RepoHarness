@@ -113,6 +113,26 @@ def make_eval_script(base_commit: str, *, extra_prelude: str = "") -> str:
     )
 
 
+def make_trusted_setup_script(base_commit: str) -> str:
+    """F2：root 可信 setup 半段（恢复 official 测试文件；fixture 没有 test_patch 需要 apply）。"""
+
+    return f"#!/bin/bash\nset -xo pipefail\ncd /testbed\ngit checkout {base_commit} -- tests/\n"
+
+
+def make_candidate_test_script(*, extra_prelude: str = "", test_cmd: str = "python tests/test_thing.py") -> str:
+    """F2：候选执行用户半段（只跑测试命令，带官方 Start/End 标记；prelude 供测试注入探针/攻击）。"""
+
+    return (
+        "#!/bin/bash\n"
+        "set -xo pipefail\n"
+        "cd /testbed\n"
+        f"{extra_prelude}"
+        "echo '>>>>> Start Test Output'\n"
+        f"{test_cmd}\n"
+        "echo '>>>>> End Test Output'\n"
+    )
+
+
 # 故障注入用 eval 脚本变体 -----------------------------------------------------
 
 # 标记齐全但中间是垃圾（官方 parser 解析出 0 条测试 -> test_log_parse_failed）。
@@ -171,6 +191,9 @@ def make_fixture_spec(
         image=image,
         base_commit=base_commit,
         eval_script=eval_script if eval_script is not None else private.eval_script,
+        # F2：grader profile 路径用拆分脚本（legacy 路径忽略它们）；测试可用 overrides 覆盖
+        trusted_setup_script=make_trusted_setup_script(base_commit),
+        candidate_test_script=make_candidate_test_script(),
         parse_log=_parse,
         grader_version=f"swebench-{scoring.swebench_version()}",
         hygiene=FIXTURE_HYGIENE,
