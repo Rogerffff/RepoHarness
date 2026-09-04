@@ -1,6 +1,6 @@
-# Agentic RL 外部技术报告第一批资料索引
+# Agentic RL 外部技术报告与参考代码索引
 
-本文记录 RepoHarness 重定位阶段第一批外部 paper、网页短报告、技术报告和参考代码库的本地组织方式、阅读重点和后续用途。它不是论文综述终稿，而是一个面向后续架构设计和代码实现的资料入口。
+本文持续记录 RepoHarness 重定位阶段使用的外部 paper、网页短报告、技术报告和参考代码库，以及它们的本地组织方式、阅读重点和后续用途。它不是论文综述终稿，而是一个面向后续架构设计和代码实现的资料入口。
 
 ## 1. 文件组织原则
 
@@ -36,7 +36,8 @@ docs/harness_improve/NVIDIA-Nemotron-3-Ultra-Technical-Report.pdf
 | R3 | Qwen3-Coder-Next Technical Report | `docs/harness_improve/external_paper_references/pdfs/R3_qwen3_coder_next_2603.00729.pdf` | coding-agent 数据、verifiable coding tasks、executable environments、SWE / Terminal-Bench 训练与评测、agentic training 对 RepoHarness taskset / environment 设计的启发。 |
 | R4 | MiniMax-M2 Series | `docs/harness_improve/external_paper_references/pdfs/R4_minimax_m2_series_2605.26494.pdf` | Forge、agent-driven data pipeline、verifiable trajectories、executable workspace、artifact-aligned reward、windowed-FIFO、prefix-tree merging、training / inference / agent 解耦。 |
 | R5 | GLM-5: from Vibe Coding to Agentic Engineering | `docs/harness_improve/external_paper_references/pdfs/R5_glm5_agentic_engineering_2602.15763.pdf` | 异步 agent RL、generation / training 解耦、slime 相关异步训练基础设施、多环境 agentic RL、从 vibe coding 到 agentic engineering 的定位。 |
-| R5b | GLM-5.2: Built for Long-Horizon Tasks | `docs/harness_improve/external_paper_references/pdfs/R5b_glm5_2_blog_zai.pdf`；来源：`https://z.ai/blog/glm-5.2`；辅助入口：`https://github.com/zai-org/GLM-5` 和 `https://docs.z.ai/guides/llm/glm-5.2` | 当前智谱最新网页短报告的本地 PDF 快照。重点关注长程工程任务、slime 的多种 rollout 形态、critic-PPO、CompactionRL、并行 OPD、anti-hack，以及 serving / rollout 配置复用。它不是完整可复现训练配方，具体算法需和 R14/R15 交叉核验。 |
+| R5b | GLM-5.2: Built for Long-Horizon Tasks | `docs/harness_improve/external_paper_references/pdfs/R5b_glm5_2_blog_zai.pdf`；来源：`https://z.ai/blog/glm-5.2`；辅助入口：`https://github.com/zai-org/GLM-5` 和 `https://docs.z.ai/guides/llm/glm-5.2` | GLM-5.2 网页短报告的本地 PDF 快照。重点关注长程工程任务、slime 的多种 rollout 形态、critic-PPO、CompactionRL、并行 OPD、anti-hack，以及 serving / rollout 配置复用。它不是完整可复现训练配方，具体算法需和 R14/R15 交叉核验。 |
+| R5c | GLM-5.3: Frontier Coding with Emergent Cyber Capabilities | 官方博客：`https://z.ai/blog/glm-5.3`（2026-08-14，URL 登记，未制作本地 PDF） | GLM-5.3 沿用 GLM-5.2 base model，官方将增益归因于扩大 post-training。重点关注：从真实工作模式合成长程可执行环境；judge agent 验证任务可解性；verifier 不接触 reference solution，并用 solver trajectory 查找 reward shortcut；`oracle / no-op / unsolved-state` 三类检查；继续使用 `SAO + compaction`；slime 的 Megatron / SGLang / data-buffer 单数据流；top-p mask、top-k / full-vocabulary OPD、R3-style 与 full numerical alignment；面向长尾 rollout 的 router/slime 联合调度和 workload-aware prefill/decode、并发参数选择。博客声称 logprob 差达到 `1e-7` 量级、长程 coding RL 吞吐提升超过 `2.3x`，但没有给出完整实验配置，必须视为官方报告值并结合 slime 代码和本项目实测核验。 |
 | R6a | DeepSeek-V3.2 | `docs/harness_improve/external_paper_references/pdfs/R6_deepseek_v3_2_2512.02556.pdf` | agentic task synthesis、large-scale tool-use data generation、scalable RL protocol、DeepSeek Sparse Attention、长上下文与 agent 性能结合。 |
 | R6b | DeepSeek-V4 | `docs/harness_improve/external_paper_references/pdfs/R6_deepseek_v4_pro_DeepSeek_V4.pdf` | million-token context、agentic coding、OPD / distillation / sandbox 相关线索、DSec 类 sandbox 基础设施参考。 |
 | R7a | Kimi K2 | `docs/harness_improve/external_paper_references/pdfs/R7_kimi_k2_2507.20534.pdf` | large-scale agentic data synthesis、joint RL、agentic intelligence、SWE-Bench / Tau2 / ACEBench 等 agentic benchmark 结果。 |
@@ -49,6 +50,26 @@ docs/harness_improve/NVIDIA-Nemotron-3-Ultra-Technical-Report.pdf
 | R13 | Kimi K3: Open Frontier Intelligence | `docs/harness_improve/external_paper_references/pdfs/k3_tech_report.pdf` | SFT 冷启动、九个 RL expert 与 MOPD、固定 `K` 的 partial rollout、跨迭代暂停恢复、reasoning-effort token budget、统一可组合 harness、AET verifier 隔离、AgentENV 和 rollout auto-throttling。注意 K3 未披露 PPO / GRPO / DIS 公式，partial rollout 也不是 wall-clock 截断评分。 |
 | R14 | CompactionRL | `docs/harness_improve/external_paper_references/pdfs/2607.05378v1.pdf` | context compaction 作为可训练策略、summary / execution segment、token-level loss normalization、cross-trajectory GAE，以及长轨迹切段后 reward 和 loss 分母如何保持一致。 |
 | R15 | Single-Rollout Asynchronous Optimization（SAO） | `docs/harness_improve/external_paper_references/pdfs/2607.07508v1.pdf` | 用 single-rollout sampling 解除异步训练中的同题组等待，结合 critic、Skip-Observation GAE 和 double-sided token clipping 处理 credit assignment 与 off-policy。它是 GRPO 之后的算法候选，不是当前首训链的开箱即用替代。 |
+
+### 2.0.1 环境层专项批次 E1-E8（2026-09-02，`env_discovery_20260902`）
+
+下面这批 PDF 是环境层第二阶段调查（`env_discovery_20260902/`）的承重来源，每篇配套一份 `knowledge/` 单篇精读。它们聚焦环境生产、资格化、第二可验证域和能力整合，不改变 R0-R15 的主线定位。
+
+| 编号 | 报告 | 本地文件 | 配套精读 | RepoHarness 阅读重点 |
+| --- | --- | --- | --- | --- |
+| E1 | The Interplay of Harness Design and Post-Training in LLM Agents（2606.25447） | `pdfs/E1_harness_interplay_2606.25447.pdf` | `knowledge/summary_harness_interplay_posttraining.md` | harness 信息量差距 post-training 抹不平、harness 必须训练时就位、ALFWorld 24 组受控配置、约 1800 H200-hours、单环境局限。B 线（多 harness）最直接受控证据。 |
+| E2 | CalibForge: Adversarial Solver Calibration（2608.06352） | `pdfs/E2_calibforge_solver_calibration_2608.06352.pdf` | `knowledge/summary_calibforge_solver_calibration.md`（另有旧版 `summary_calibforge.md`） | solver-relative 校准 single/multi/contrastive 四档、5431 任务、匹配 1300 消融、64×H20 全参 SFT（非 RL）、solver-style leakage 风险。A 线 learnability 探针参照。 |
+| E3 | Envs-FORGE: 合成动作策略（2608.14312） | `pdfs/E3_envs_forge_2608.14312.pdf` | `knowledge/summary_envs_forge_synthesis_policy.md` | verifier 通过率→逐 seed 六动作 MILP 合成策略、同步改写五件套、Qwen3.5-35B tb-core +9.2、DataArc-SynData-Toolkit 开源。E-Wave4 生成式合成最新参照。 |
+| E4 | Endless Terminals（2601.16443） | `pdfs/E4_endless_terminals_2601.16443.pdf` | `knowledge/summary_endless_terminals.md` | 四段全自动管线（描述→容器+precondition→completion→pass@16 可解性过滤）产 3255 terminal 任务、vanilla PPO 10.7%→53.3%、TB2.0 迁移有限。域 2 terminal 供给侧参照。 |
+| E5 | SWE-smith（2504.21798，NeurIPS 2025 D&B Spotlight） | `pdfs/E5_swe_smith_2504.21798.pdf` | `knowledge/summary_swe_smith.md` | 128 仓五策略注入 breaking 变更产 50137 实例、环境仅 295GB（约逐任务建环境 1/500）、SWE-agent-LM-32B 40.2%。E-Wave4 成本最低的注入式扩容路线。 |
+| E6 | Surge 办公 RL 跨域迁移（2608.01604） | `pdfs/E6_surge_office_rl_2608.01604.pdf` | `knowledge/summary_surge_office_rl_transfer.md` | 363 个零 SWE 办公 MCP 任务 SFT+GSPO、SWE-Bench Pro pass@1 +5.8pp 跨域迁移、无等预算对照。"第二域投入不是零和"直接证据。 |
+| E7 | MOPD: Multi-Teacher On-Policy Distillation（2606.30406） | `pdfs/E7_mopd_multi_teacher_2606.30406.pdf` | `knowledge/summary_mopd_multi_teacher_opd.md` | student 自采样 + 按域路由冻结 teacher 逐 token reverse-KL、同源约束（KL 0.04 vs 异源 0.19、异源 top-k 约 18 步发散）、Qwen3-30B-A3B 同底座、MiMo 309B 小回退。C 线 OPD/MOPD 核心。 |
+| E8 | ECHO: 改进 Endless Terminals 管线（2605.24517） | `pdfs/E8_echo_terminal_synthesis_2605.24517.pdf` | —（见 `env_discovery_20260902/analysis/external_env_increment` 更正注） | 用改进的 Endless Terminals 管线再产 6170 terminal 任务。登记它是为纠正外部增量分析里"6170 任务"曾误引为 2602.21193（实为 NVIDIA Nemotron-Terminal，SFT 路线）。 |
+| E9 | Qwen3.8-Flash-Next 架构报告（2026-08-26，GitHub PDF 非 arXiv） | `pdfs/E9_qwen3.8_flash_next_tech_report.pdf` | `knowledge/summary_qwen38_flash_next_architecture.md` | 125B-A6B + 51B 外置 n-gram 表；GDN 混合 + QSA 稀疏注意力 + Gated Residual + Muon。**无 post-training 配方**；对我们的价值 = 三个"预训练指标会骗人"实证（NoPE 后训练无终止生成率升高 / 稀疏 GR 读后训练退化 / n-gram loss 降但下游饱和）+ 结论自陈最紧瓶颈是"能预测 post-training 排序的廉价探针"；GDN+QSA 类底座对训推一致性（tape/logprob）的前瞻负担。 |
+| E10 | Intern-S2-Preview（上海 AI Lab，2608.13505，2026-08-20） | `pdfs/E10_intern_s2_preview_2608.13505.pdf` | `knowledge/summary_intern_s2_preview.md` | 2026-08 窗口内唯一"agentic RL + OPD 全链路"完整报告：SFT → 可扩展多任务 RL → **黑盒/白盒 agentic RL** → on-policy distillation，接多 agent 框架与沙箱环境。黑/白盒分工对口 B 线，OPD 段对口 C 线。 |
+| E11 | NVIDIA Nemotron-Cascade 2（2603.19220，v2 2026-03-22） | `pdfs/E11_nemotron_cascade2_2603.19220.pdf` | `knowledge/summary_nemotron_cascade2.md` | **30B-A3B MoE + GRPO 严格 on-policy + 多域 OPD——与本项目规模/算法/蒸馏三重精确命中**。Cascade RL 分域配方与训练预算披露。窗口外（3 月）定向补录。 |
+| E12 | MiniMax-M3 技术报告（2606.13392，2026-06-11） | `pdfs/E12_minimax_m3_2606.13392.pdf` | —（未精读） | 补录：库内此前只有 M1/M2 系。含 SWE-bench Pro 59 与 Long-Horizon-Terminal-Bench 结果。 |
+| E13 | MiMo-V2-Flash 技术报告（2601.02780，2025-12） | `pdfs/E13_mimo_v2_flash_2601.02780.pdf` | —（未精读） | 补录：**MOPD 术语出处**，此前只经 pro 分析文档与证据矩阵间接引用、PDF 未镜像。与 E7（MOPD 算法论文）配对。routing replay / partial rollout / stale-aware TIS / git hacking 能力回退。 |
 
 ## 2.1 参考代码库清单
 
@@ -85,6 +106,18 @@ docs/harness_improve/external_paper_references/agentic_rl_training_recipe_eviden
 需要判断训练参数或终止语义时，应先查矩阵，再回到原始 PDF / 代码位置；
 不要从本文的阅读重点反推外部团队使用了某个未公开算法或默认参数。
 
+### 2.2.1 已有本地二次分析入口
+
+下面这些文件是对一手报告或代码的项目内分析，不是新增的一手技术报告。单独
+列出它们是为了避免后续只看到原始 PDF，却遗漏已经完成的源码核验和边界分析：
+
+| 主题 | 本地分析 | 对应一手来源 |
+| --- | --- | --- |
+| Kimi K3 与 AgentENV | `docs/harness_improve/external_paper_references/k3_agentenv_relevance_notes.md` | R13、`reference/AgentEnv/` |
+| SA-SWE horizon masking | `docs/harness_improve/external_paper_references/sa_swe_horizon_masking_analysis.md` | SA-SWE / SkyRL-Agent 论文与代码 |
+| GLM-5.2 Agentic RL 摘录 | `docs/harness_improve/external_paper_references/pdfs/glm5.2_blog_RL.md` | R5b |
+| SAO、CompactionRL 与当前 PPO / GRPO / DIS 关系 | `docs/agentic_RL/training_design/repoharness_sao_dis_grpo_ppo_analysis.md` | R14、R15 |
+
 ## 2.3 在线专项论文、模型卡和代码
 
 以下来源本轮没有全部镜像成 PDF，但已经按统一字段登记进训练配方证据矩阵。
@@ -116,6 +149,48 @@ docs/harness_improve/external_paper_references/agentic_rl_training_recipe_eviden
 | The Bitter Lesson Behind Building Agentic RL in Terminal Environments | `https://www.notion.so/The-Bitter-Lesson-Behind-Building-Agentic-RL-in-Terminal-Environments-2eaddd45837f80c9ad2ed6a15ef3c1a1?pvs=21` | ROME / ALE 的博客入口。重点关注 terminal environment 中 agentic RL 的工程经验、环境构建和训练部署一致性。 |
 | iFlow-ROME 模型卡 | `https://huggingface.co/FutureLivingLab/iFlow-ROME` | ROME-30B-A3B 模型发布说明。重点关注 ALE full-stack infrastructure、IPA、Terminal-Bench 2.0、SWE-bench Verified 和生产级安全声明。 |
 
+## 2.5 在线登记增补（2026-09-02，方向发现与环境层两轮调查产出）
+
+以下来源按 URL 登记，未制作本地 PDF。承重结论所在的本地分析见
+`direction_discovery_20260818/` 与 `env_discovery_20260902/`。
+
+| 资料 | URL | 日期 | RepoHarness 阅读重点 |
+| --- | --- | --- | --- |
+| Prime Intellect: Multi-Agent Systems | `https://www.primeintellect.ai/blog/multi-agent-systems` | 2026-08-07 | Agent（`run(task)->Trace`）/ Env（`run(task,agents)`）两抽象、四类环境（Agentic Judging / Proposer-Solver / Kuhn-Poker / **User-Sim 冻结用户策略训助手**）、Hierarchical GRPO、角色条件优势估计 RAE。随 verifiers 0.3.0 / prime-rl 0.8.0 发布。**只有代码无训练曲线（C 级）**——多智能体维持远期定位的依据。 |
+| verifiers releases | `https://github.com/PrimeIntellect-ai/verifiers/releases` | 持续 | v0.2.0(07-10) v1 API / v0.2.1(07-20) Claude Code 外部 harness + OpenEnv / v0.3.0(08-07) 多智能体 + 沙箱网络隔离 / v0.3.1(08-24) 拦截改写 + 训练原生 episode artifacts。升级影响面见 `env_discovery_20260902/analysis/verifiers_v031_primerl_v090_impact_20260902.md`（结论：升级=T0，首训冻结期不升）。 |
+| prime-rl releases | `https://github.com/PrimeIntellect-ai/prime-rl/releases` | 持续 | v0.8.0(08-07) Hierarchical GRPO + RAE；**v0.9.0(08-25) composable curricula + task sampling + admission gates**（`AdvRangeGate` 极薄，与我们七维 EligibilityGate 正交互补：他们判"值不值得学"，我们判"有没有资格进 loss"）。硬依赖 verifiers>=0.3.1。 |
+| Prime Intellect: Environments Hub / scaling program | `https://www.primeintellect.ai/blog/environments`、`https://www.primeintellect.ai/blog/scaling-environments-program` | 2025-08-27 / 2025-10 | 环境分发平台（`prime env install org/name@ver`，第三方目录记 2500+ 环境）；质控 = 两档悬赏 + 人审，**无公开自动化资格化流水线**。 |
+| HF delta-weight-sync | `https://huggingface.co/blog/delta-weight-sync` | 2026-05-27 | RL 学习率下 bf16 相邻步约 99% 权重位不变 → 稀疏同步 30-130x。P3 实测我们权重同步仅占 step ~0.8%（瓶颈是 rollout），**当前非瓶颈，备查**；拓扑/规模变化后再评估。 |
+| Nemotron-SFT-SWE-v3.5 数据集 | `https://huggingface.co/datasets/nvidia/Nemotron-SFT-SWE-v3.5` | 2026-06-20 | 5115 条 OpenCode harness 生成的多文件 SWE 轨迹，CC BY 4.0 可商用。warm-start/SFT 候选；本身是"另一个 harness 的轨迹"，与多 harness 方向有交集。（注：官方数据卡确实存在——修正 codex 综合报告中"尚未核验到"的表述。） |
+| DeepSeek-V4-Pro-0813 接口敏感性事件 | `https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro-0813`、Zhihu Frontier 线程 `https://x.com/ZhihuFrontier/status/2088872677692076431` | 2026-08-13 | 官方 Code Agent 分数注明 "DeepSeek Harness Minimal mode"；社区分析认为核心是**接口敏感性**（特殊 token 原生 tool-call 协议在其他 harness 用普通消息模拟时激活不了）而非单纯记住 harness（mini-swe-agent 下仍 63%±6）。B 线动机案例：问题一半在 harness 多样性，一半在 chat template / tool 协议层 train-deploy 对齐。 |
+| 蚂蚁 AEnvironment | `https://github.com/inclusionAI/AEnvironment` | 2026 | "Everything as Environment"：扩展 MCP 的统一环境接口 + AReaL 集成，内置 TAU2 / Mini Terminal / TerminalBench，K8s 部署。配套：Ling 3.0 Flash 自称 10,000+ 交互式训练环境。 |
+| 字节 Seed + 清华 AIR CUDA-Agent | `https://arxiv.org/abs/2602.24286`、`https://github.com/BytedTsinghua-SIA/CUDA-Agent` | 2026-02 / 08-17 开源 | 训练数据 + 专家 SKILL.md + CUDA 开发环境整套开源，KernelBench 超 torch.compile 2.11x。"环境+技能包整体开源"的生产范式参照。 |
+| MiniMax M2.1 后训练博客 | `https://www.minimax.io/news/post-training-experience-and-insights-for-agent-models` | 2026-01-22 | 按 PR 建 Docker 环境、10+ 语言、**10,000+ runnable PRs / 140,000+ 任务**、F2P/P2P 校验、应用开发三层 reward（执行/交互/视觉）。环境生产硬数字。 |
+| OpenEnv | `https://github.com/meta-pytorch/OpenEnv` | 2026-06 起 PyTorch 基金会 | 环境发布/部署/消费互操作层（HTTP/WS + Docker），TRL/verl/TorchForge/SkyRL 已接入，仍自标实验阶段。互操作标准观察项。 |
+| Harbor / Harbor Hub | `https://github.com/harbor-framework/harbor`、`https://hub.harborframework.com` | 2026-01 起 | 统一任务格式（Terminal-Bench 系）；Hub 定位 "tasks for training and evaluation"。**miles 官方带 Harbor 集成（`harbor-miles-v0.20.0` 分支）**——我们域 2 terminal 的候选载体，两种接入形态审计见 `env_discovery_20260902/analysis/harbor_miles_integration_audit_20260902.md`。 |
+| SWE-rebench 经验谈 + Nebius 基建 | `https://www.sean-weldon.com/blog/2026-06-08-swe-rebench-lessons-from-evaluating-coding-agents-ibragim-badertdinov-nebius`、`https://nebius.com/blog/posts/infrastructure-behind-swe-rebench` | 2026-06-08 / 2025-11-07 | 环境生产真实成本对标锚：**153K 候选→21K 过执行验证（≈14% 存活）、人工核验 ~1 人日/任务**；reward hacking 实录（git 历史/GitHub 网页/curl 抓答案→剥离未来 git history，与 W3b 正向能力事实清单对上）；时间切分 = 唯一可靠去污染。 |
+| **Meta Muse Glimmer 30B**（无 arXiv） | `https://research.meta.ai/blog/introducing-muse-glimmer-open-agentic-model`、`https://huggingface.co/meta-models/Muse-Glimmer-30B` | 2026-08-10 | **与本项目同量级（30B）的开源 agent 模型对照物**，Apache 2.0：预训练自 Muse Spark logit 蒸馏、中期 agent 数据、后训练 SFT + OPD 与 RL 混合多域；SWE-bench Pro 51.2 / MCP-Atlas / τ3-Bench。博客+模型卡级证据（精读见 `knowledge/summary_muse_glimmer_30b.md`）。 |
+| Thinking Machines Inkling / Inkling-Small 模型卡 | `https://thinkingmachines.ai/model-card/inkling/` | 2026-07-15 / Small 权重 08-02 | 975B-A41B / 276B-A12B；模型卡披露大规模异步 RL（30M+ rollouts、合成+人造环境、开源模型合成数据 SFT 起步）。OPD 方法源头团队的首个模型，等正式报告再升级。 |
+| 腾讯 Hy4-preview 模型卡 | `https://huggingface.co/tencent/Hy4-preview` | 2026-08-28 | 770B-A49B、1M ctx、Apache 2.0；架构细节多（Gated DSA + IndexCache、iHC、原生 MTP 层），自评超 GLM-5.3/K3；**无后训练细节**，模型卡级。 |
+| Ling-3.0-flash / Tiny 模型卡 | `https://huggingface.co/inclusionAI/Ling-3.0-flash` | 2026-07-23 官宣 / 08-06 开权重 | 124B-A5.1B（35 层 KDA + 7 层 Gated MLA）；自称用 **10,000+ 交互训练环境**训 Coding/DeepResearch agent（与 AEnvironment 条目互证）；无论文。 |
+| Kimi K2.5 论文 08-07 更新版 | `https://arxiv.org/abs/2602.02276` | 2026-08-07 (vN) | 已入库 R7b 的更新版（含 Agent Swarm 增补），需要时 diff 新版即可。 |
+| QwenLM 新仓库观察项 | `https://github.com/QwenLM/E-CommerceBench`、`https://github.com/QwenLM/Qwen-MM-Plugins` | 2026-08-26 / 07-29 | E-CommerceBench（电商 agent 基准，暂空壳）；Qwen-MM-Plugins（"让任意 agent harness 多模态化"——与多 harness 议题相关的观察项）。 |
+
+**已确认无增量的检索负结果（2026-09-03 核，避免重复搜索）**：Qwen3.8-Max/27B 仍无技术报告；DeepSeek V4-Pro 无新配套（库内 R6b 即官方 V4 正式报告，来自 V4-Pro HF repo 托管 PDF，非 4 月 preview——已核 manifest source_url）；Kimi K3 后无新披露；GLM-5.4 确认跳号、5.5 未发布；Composer 3 未发布（仅 leak）；Seed2.1（06-23）后字节无新报告；StepFun/快手/美团/百度/Cohere/Ai2/IBM 窗口内无相关披露；AReaL v1.0 为 03-04。
+
+### 2.5.1 本地大型调研粘贴文档登记
+
+这两份是外部 Pro 会话的完整原始输出，信息密度高但尚未拆条消化，登记入口避免遗忘：
+
+| 文档 | 位置 | 内容 | 状态 |
+| --- | --- | --- | --- |
+| 外部pro探索回答粘贴.md | `pdfs/外部pro探索回答粘贴.md`（5214 行） | 五轮探索合集：①中国团队后训练路线（截止 2026-07-27，A/B/C 证据分级 + 材料束 A~J）②伴生证据审计（MOPD 集群四层结构 + 材料束 1~7）③ **Kimi K3 逐节深拆**（§十 白盒可组合 harness、§十一 知识图谱任务生产、§九 MOPD 逐 token 公式）④全球 Coding Agent 评测审计（SWE-bench Verified 弃用 2026-02-23、SWE-Bench Pro 撤回 2026-07-08）⑤全球 RL infra 生态审计（异步五档、可复现四档） | 未拆条进证据矩阵；`git status` 曾为 untracked，随本批登记纳入 |
+| 外部pro模型调查2.md | `../../agentic_RL/repo_harness_rh2_workstreams/tmp/外部pro模型调查2.md`（818 行） | 前沿模型 benchmark 图谱（截止 2026-09-01）：测评重心迁移八类、S_obs=F(M,H,T,C,B,E,V,J,R) 分解、P0/P1 能力优先级、三层评测架构（公共可比/内部辨识六轴/能力保持）、Eval Manifest 字段清单、两个测评研究候选 | ⚠️ 位于 tmp/（gitignored 只读参考区）；若要正式引用建议移出 tmp/ 并入库（owner 定） |
+
+### 2.5.2 仓库外 harness 审读材料指针
+
+仓库外 `external_harness_reference_workspace`（2026-08-15 审读）：Pi、DeepSeek Harness、Codex、Cordis 论文四份固定 SHA 的中文源码导读（各仓库内 `HARNESS_GUIDE.zh-CN.md`，总入口 `HARNESS_STUDY_GUIDE.zh-CN.md`），另有 prime-agent（未写导读）。B 线（多 harness）真实 harness 语义差异审计的现成素材。该工作区不随本仓库分发；需要复核时应按资料索引中的上游 URL 和固定 SHA 重新取得。注意其结论以各自 pin 的 SHA 为事实边界。
+
 ## 3. 按主题组织的阅读路线
 
 ### 3.1 RepoHarness 目标架构核心
@@ -129,6 +204,7 @@ R2 Nemotron 3 Ultra
 R4 MiniMax-M2
 R5 GLM-5
 R5b GLM-5.2
+R5c GLM-5.3
 R9 Composer 2
 R10 Let It Flow
 R11 RollArt
@@ -156,6 +232,7 @@ reference/prime-rl/
 R1 MAI-Thinking-1
 R3 Qwen3-Coder-Next
 R4 MiniMax-M2
+R5c GLM-5.3
 R6a DeepSeek-V3.2
 R9 Composer 2
 R10 Let It Flow
@@ -186,6 +263,7 @@ docs/harness_improve/environment_production_and_quality_pipeline_design.md
 ```text
 R1 MAI-Thinking-1
 R2 Nemotron 3 Ultra
+R5c GLM-5.3
 R6a DeepSeek-V3.2
 R6b DeepSeek-V4
 R10 Let It Flow
@@ -259,6 +337,7 @@ R2 NVIDIA Nemotron 3 Ultra
 R4 MiniMax-M2
 R5 GLM-5
 R5b GLM-5.2
+R5c GLM-5.3
 R11 RollArt
 R12 ROLL framework
 R13 Kimi K3
@@ -292,6 +371,7 @@ docs/harness_improve/external_paper_references/infra_mapping_for_repoharness_rl_
 ```text
 R5 GLM-5
 R5b GLM-5.2
+R5c GLM-5.3
 R9 Composer 2
 R10 Let It Flow
 reference/claude-code-typescript-src/
@@ -352,6 +432,7 @@ agentic_rl_training_recipe_evidence_matrix.md
 R2 Nemotron 3 Ultra
 R5 GLM-5
 R5b GLM-5.2
+R5c GLM-5.3
 R9 Composer 2
 R11 RollArt
 R13 Kimi K3
