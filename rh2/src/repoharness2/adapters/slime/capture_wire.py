@@ -239,7 +239,9 @@ class CaptureRegistry:
                 "abort_router_single_send": 0,  # 未接线 → 经 router 单发（正式 profile 必须为 0）
                 "abort_delivery_failed": 0,  # outcome ≠ delivered 的次数（正式 profile 必须为 0）
                 "abort_unproven_fatal": 0,  # 升级为 run-fatal 的次数（notify_run_fatal 已调用）
-                "abort_unproven_unnotified": 0,  # 升级时本进程无 BringupService（只留账 + 打印）
+                # 升级时通知**没送到** owner loop：本进程无 BringupService，或 owner loop
+                # 已关闭/不再接受回调（codex Wave3 §9.4）。只留账 + 打印，不当成已通知。
+                "abort_unproven_unnotified": 0,
             }
         )
         self.poison = SessionPoisonRegistry()
@@ -926,7 +928,11 @@ def escalate_abort_unproven(registry: CaptureRegistry, exc: AbortDeliveryUnprove
 
     通道 = `bringup.notify_run_fatal`（与 `adapters/miles/group_admission.py` 的 GroupAdmissionFatal
     同一入口：未在关停 → 调度关停链，首因 = exc；关停进行中 → 吸收进报告；已定稿 → 只留 fatal_seen）。
-    本进程没有 BringupService（返回 False）时**不静默**：记 `abort_unproven_unnotified` + 打印；
+
+    本函数几乎总是跑在 **adapter 的 aiohttp 线程/loop** 上（HTTP handler → `_send_once` → abort），
+    而 BringupService 属于 miles 共享后台 loop；`notify_run_fatal` 负责把记账与关停调度整体派回
+    owner loop（codex Wave3 §9.4）。它返回 False 的三种情形——本进程没有 BringupService、
+    owner loop 已关闭、派回失败——都**不算通知成功**：记 `abort_unproven_unnotified` + 打印，
     事实无论如何都进 `registry.abort_results`。bringup 在模块级 import 本模块，所以这里延迟 import。
     永不抛（升级路径自身出错也只能留账，不能反过来吞掉调用方正在传播的原异常）。
     """
@@ -940,7 +946,10 @@ def escalate_abort_unproven(registry: CaptureRegistry, exc: AbortDeliveryUnprove
         print(f"[rh2-capture] abort run-fatal 通知失败（{type(notify_exc).__name__}: {notify_exc}）：{exc}")
     registry.note_abort_unproven(exc, notified=notified)
     if not notified:
-        print(f"[rh2-capture] abort 不能证明到达且本进程无 BringupService 可通知（只留账）：{exc}")
+        print(
+            "[rh2-capture] abort 不能证明到达，且 run-fatal 未通知到 owner loop"
+            f"（无 BringupService / owner loop 已关闭 / 派回失败），只留账：{exc}"
+        )
     return notified
 
 

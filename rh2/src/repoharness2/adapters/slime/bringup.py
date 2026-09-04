@@ -47,6 +47,7 @@ from __future__ import annotations
 import asyncio
 import dataclasses
 import hashlib
+from collections.abc import Callable
 from datetime import datetime, timezone
 import json
 import os
@@ -81,7 +82,7 @@ from repoharness2.adapters.slime.capture_wire import (
     install_capture_wire,
     make_threadsafe_session_drain_owner,
 )
-from repoharness2.adapters.slime.engine_router_client import MilesRouterWorkerClient
+from repoharness2.adapters.slime.engine_router_client import MilesRouterWorkerClient, worker_base_urls
 from repoharness2.adapters.slime.docker_sandbox import DockerSandbox
 from repoharness2.adapters.slime.sandbox_profile import (
     EgressRelayHandle,
@@ -778,6 +779,46 @@ def staleness_threshold_mirror_from_args(args: Any) -> int | None:
     return value
 
 
+def expected_engine_count(args: Any) -> int | None:
+    """固定 topology 下预期的 SGLang engine 数（abort 广播核对集合完整性的唯一预期值来源）。
+
+    miles 代码事实：`miles/ray/rollout/rollout_server.py` 建 engine 的式子是
+    ``num_engines = group_cfg.num_gpus // min(num_gpus_per_engine, args.num_gpus_per_node)``；
+    首训由 `experiments/miles_gpu_spike/launch.sh` 钉死为**单节点、单 model group、无 PD**
+    （拒 `--sglang-config` / `--prefill-num-servers`），所以那条式子退化成
+
+        engine 数 = rollout_num_gpus // rollout_num_gpus_per_engine
+
+    两个参数都来自 BringupService 已持有的 miles args（`self._profile_args`，即 `get()` 传进来
+    的那份），不另外读环境变量、不猜默认值。
+
+    返回 ``None`` = **算不出来**，也就是"不能声称核对过"：
+    - 任一参数缺席 / 不是整数 / ≤ 0；
+    - 不整除（miles 的整数除法会静默丢余数卡，此时真实 engine 数与本式不一定一致）；
+    - 给了 `num_gpus_per_node` 且 per-engine 卡数超过它（engine 会按每节点卡数切，本式不成立）。
+    调用方（`_verify_router_worker_set`）在 fa_formal 下把 ``None`` 当作核对失败处理。
+    """
+
+    def _positive_int(name: str) -> int | None:
+        value = getattr(args, name, None)
+        if value is None or isinstance(value, bool):
+            return None
+        try:
+            value = int(value)
+        except (TypeError, ValueError):
+            return None
+        return value if value > 0 else None
+
+    gpus = _positive_int("rollout_num_gpus")
+    per_engine = _positive_int("rollout_num_gpus_per_engine")
+    if gpus is None or per_engine is None or gpus % per_engine != 0:
+        return None
+    per_node = _positive_int("num_gpus_per_node")
+    if per_node is not None and per_engine > per_node:
+        return None  # 多节点切法：miles 会按 min(per_engine, per_node) 建更多 engine，本式不成立
+    return gpus // per_engine
+
+
 class BringupService:
     _instance: "BringupService | None" = None
 
@@ -786,6 +827,16 @@ class BringupService:
         from slime.agent.aiohttp_threaded import FilteredAccessLogger, run_app_in_thread
         from slime.utils.processing_utils import load_tokenizer
 
+        # codex Wave3 §9.4：owner loop = **构造本服务的那个 event loop**。生产拓扑里
+        # `BringupService.get()` 由 miles 共享后台 AsyncLoopThread 上的 rollout fn await
+        # （`miles/ray/rollout/rollout_manager.py` 把 rollout fn / worker / buffer / bringup
+        # 都放在同一个后台 loop），所以这里取到的就是 owner loop。关停链、grading queue、
+        # 在飞执行表全部属于它；adapter 的 aiohttp 线程（`run_app_in_thread`，vendored）另有
+        # 自己的 loop，从那边来的 run-fatal 必须 `call_soon_threadsafe` 派回来，
+        # 不能就地 `create_task`（否则关停链跑在 adapter loop 上，await owner loop 的 Future 会
+        # 报 "attached to a different loop"）。绑定放在最前面：任何后续副作用出错都能正确关停。
+        self._owner_loop: asyncio.AbstractEventLoop | None = None
+        self._bind_owner_loop()
         # W5a 关停面（纯配置，先于任何资源型副作用）：超时上界从环境读（非法值
         # 在起线程之前就炸）；LifecycleState 是"关闭后禁 submit/resolve"与在飞
         # 执行登记的唯一状态位；run-fatal 通道接到 _on_run_fatal。
@@ -812,6 +863,8 @@ class BringupService:
         # W10（B-5b）：rid 级 abort 广播客户端——问 router `/list_workers` 取全部 worker，
         # 绕过 router 逐 worker 直发同一 rid（持有者终止、其余忽略）。接到 capture registry 的
         # engine_abort 挂点后，wire 的 cancel/超时 abort 不再经 MilesRouter 最小负载错发。
+        # 实时列表失败时的回退目标集合由 `_verify_router_worker_set()` 在启动核对通过后下发
+        # （核对不过就不下发，也不进入 RUNNING）；client 内已无"经 router 单发"的回退路径。
         self.router_workers = MilesRouterWorkerClient(self.sglang_url)
         self.registry.engine_abort = self.router_workers.broadcast_abort
         self.max_context_len = int(getattr(args, "rollout_max_context_len", 0) or 0)
@@ -873,7 +926,8 @@ class BringupService:
         # F4：relay 启动失败且自行清理也失败时残留的容器名（带 rh2.run_id label；启动回滚把它并入
         # rollback errors，launch trap 的 label 残留检查可见）。
         self.sandbox_startup_leftovers: tuple[str, ...] = ()
-        # F3 接缝（归另一 agent）：启动探针核对过的 router worker URL 集合（_run_startup_checks 填）。
+        # F3 接缝：启动探针阶段**数量核对通过**的 router worker URL 集合（`_verify_router_worker_set` 填；
+        # 核对不通过时保持空元组，fa_formal 下同时抛 StartupCheckError）。
         self.verified_router_workers: tuple[str, ...] = ()
         if sandbox_profile_enabled():
             self.grader_profile = grader_profile_from_env(os.environ)
@@ -966,6 +1020,9 @@ class BringupService:
     # -- 一次性异步启动（探针必须在事件循环里发）---------------------------------
 
     async def async_start(self, args: Any) -> None:
+        # codex Wave3 §9.4：owner loop 兜底绑定（__init__ 在同一个 loop 上跑，正常情况下这里是
+        # no-op；只有"构造时无 running loop"的装配方式才在这里补上）。首次绑定生效，不改绑。
+        self._bind_owner_loop()
         # D-FA-6 接线（FA-1）：启动即把 DISABLE_COMPACT=1 合并进
         # SLIME_AGENT_CC_EXTRA_ENVS（幂等；driver.run 内再合并一次是 no-op），
         # merged dict 进 startup evidence 供 inspector 比对。
@@ -1382,21 +1439,11 @@ class BringupService:
             self.policy_version = str(meta["weight_version"])  # 假设 4：引擎实测事实源
         evidence["engine_weight_version"] = meta.get("weight_version")
         evidence["sglang_url"] = self.sglang_url
-        # W10：router worker 池事实（engine 数的运行期一手证据，供 GPU 多 engine 验证核对
-        # `count == rollout_num_gpus // rollout_num_gpus_per_engine`）。取不到只记错误、不阻断
-        # 启动——上面的探针已证明至少一个 worker 可达；abort 广播在 worker 列表取不到时退回
-        # 经 router 单发（engine_router_client 模块 docstring）。
-        try:
-            worker_urls = await self.router_workers.list_workers()
-            evidence["router_workers"] = {"urls": worker_urls, "count": len(worker_urls)}
-            # F3 接缝（abort 广播归另一 agent）：启动时核对过的 worker URL 集合，供 router client 在
-            # worker-list 查询失败时按这份集合广播而不是经 router 单发；集成者接线。
-            self.verified_router_workers = tuple(str(u) for u in worker_urls)
-            # F3 接缝：把启动核对过的 worker 集合交给 router client——实时列表失败时对该集合广播,
-            # 集合也拿不到则 abort 投递不可证明 → run-fatal（不再经 router 单发）。
-            self.router_workers.set_verified_workers(self.verified_router_workers)
-        except Exception as exc:  # noqa: BLE001
-            evidence["router_workers"] = {"error": f"{type(exc).__name__}: {exc}"[:300]}
+        # W10 / codex Wave3 §9.3：router worker 池事实 + **精确数量核对**（见 _verify_router_worker_set）。
+        # 这份集合不只是证据：实时 `/list_workers` 失败时它就是 abort 广播的唯一目标集合，
+        # 集合不完整 = 只向部分 engine 投递却报 delivered，真正持有 rid 的 engine 继续占槽。
+        # 因此 fa_formal 下核对不过就不能进入 RUNNING（错误在本方法末尾、证据落盘之后抛出）。
+        worker_check_error = await self._verify_router_worker_set(evidence)
         evidence["adapter_url"] = self.adapter_url
         evidence["harness_kind"] = HARNESS_KIND
         # W3b：run 级 profile 摘要（完整记录在 runtime_profile.json）与 harness 侧代理地址
@@ -1411,6 +1458,77 @@ class BringupService:
         (ARTIFACT_DIR / "startup_evidence.json").write_text(
             json.dumps(evidence, indent=2, ensure_ascii=False)
         )
+        # 证据先落盘再拒绝启动：诊断需要 startup_evidence.json 里的 router_workers 段
+        # （expected_count / count / urls / verified）。fa_formal 之外只记录不阻断。
+        if worker_check_error is not None and EXECUTION_MODE == "fa_formal":
+            raise StartupCheckError("router_workers_unverified", worker_check_error)
+
+    async def _verify_router_worker_set(self, evidence: dict[str, Any]) -> str | None:
+        """核对 router 注册的 worker 集合是否 == 固定 topology 的全部 engine（codex Wave3 §9.3）。
+
+        为什么必须核对：abort 广播在实时 `/list_workers` 失败时会退回这份"启动核对集合"，
+        并且**只要集合里每个 URL 都返回 2xx 就报 delivered**。启动那一刻若只有 engine A 注册、
+        engine B 稍后才注册并持有 rid，未核对的集合就会让一次实际只到 A 的 abort 被记成"已证明到达"，
+        B 上的请求继续占 SGLang 生成槽位。
+
+        核对规则（首版不引入健康检查平台，也不做弹性 engine 管理）：
+
+        1. 预期数 = `expected_engine_count(self._profile_args)`（miles 固定 topology 的算式）；
+        2. 实际集合 = `/list_workers` 返回值经 `worker_base_urls()` **规范化 + 去重**（去 `@rank`
+           后缀与尾斜杠，与 miles `router_worker_base_urls` 同款）后的数量；
+        3. **精确相等**才算核对通过——多一个（陌生 worker，可能是别的 run 或 PD/多模型组）
+           与少一个（engine 未注册完）同样拒绝；
+        4. 预期数算不出来（args 缺参/不整除，见 helper）也算核对失败：不能声称核对过。
+
+        返回 ``None`` = 核对通过（此时、且仅此时把集合交给 router client 作 abort 回退集合）；
+        返回字符串 = 失败原因（调用方在 fa_formal 下据此抛 `StartupCheckError`；其余模式只记录）。
+        无论成败都把事实写进 ``evidence["router_workers"]``。
+        """
+
+        expected = expected_engine_count(self._profile_args)
+        try:
+            worker_urls = await self.router_workers.list_workers()
+        except Exception as exc:  # noqa: BLE001 —— 查询失败 ≠ 空集合：不能据此声称核对过
+            evidence["router_workers"] = {
+                "error": f"{type(exc).__name__}: {exc}"[:300],
+                "expected_count": expected,
+                "verified": False,
+            }
+            reason = (
+                f"router `/list_workers` 查询失败，无法核对 engine 集合完整性："
+                f"expected_count={expected} error={type(exc).__name__}: {exc}"
+            )[:400]
+            print(f"[rh2-bringup] {reason}")
+            return reason
+
+        normalized = tuple(worker_base_urls(worker_urls))  # 规范化 + 去重后才计数
+        evidence["router_workers"] = {
+            "urls": list(normalized),
+            "count": len(normalized),
+            "raw_count": len(worker_urls),
+            "expected_count": expected,
+            "verified": False,
+        }
+        if expected is None:
+            reason = (
+                "预期 engine 数算不出来（miles args 缺 rollout_num_gpus / "
+                "rollout_num_gpus_per_engine，或两者不整除 / per-engine 超过单节点卡数）："
+                f"router 实际登记 {len(normalized)} 个 worker，但没有可比对的预期值。"
+            )
+        elif len(normalized) != expected:
+            reason = (
+                f"router worker 数量与固定 topology 不符：预期 {expected} 个 engine"
+                f"（rollout_num_gpus // rollout_num_gpus_per_engine），实际登记 {len(normalized)} 个："
+                f"{list(normalized)}"
+            )[:400]
+        else:
+            # 只有精确相等才把集合标成 verified 并交给 router client——不完整集合绝不下发。
+            evidence["router_workers"]["verified"] = True
+            self.verified_router_workers = normalized
+            self.router_workers.set_verified_workers(normalized)
+            return None
+        print(f"[rh2-bringup] router worker 集合未通过核对：{reason}")
+        return reason
 
     # -- 编排可注入件 ----------------------------------------------------------
 
@@ -2021,21 +2139,109 @@ class BringupService:
         os.replace(tmp, report_path)
         return report_path
 
+    # -- codex Wave3 §9.4：owner loop 归属与 run-fatal 派发 ---------------------------
+
+    def _bind_owner_loop(self) -> asyncio.AbstractEventLoop | None:
+        """记住唯一 owner loop。**首次绑定生效**，之后重复调用不改绑（服务一生只属于一个 loop）。
+
+        构造与 `async_start` 都跑在 owner loop 上，所以直接取当前 running loop 即可。
+        没有 running loop（同步装配的测试面）则留 None，语义退回"就地执行"。
+        """
+
+        if getattr(self, "_owner_loop", None) is not None:
+            return self._owner_loop
+        try:
+            self._owner_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            self._owner_loop = None
+        return self._owner_loop
+
+    def _on_owner_loop(self) -> bool:
+        """当前调用是否已经在 owner loop 上（同 loop 内可直接执行，不必绕 call_soon_threadsafe）。"""
+
+        loop = getattr(self, "_owner_loop", None)
+        if loop is None:
+            return False
+        try:
+            return asyncio.get_running_loop() is loop
+        except RuntimeError:  # 当前线程没有运行中的 loop（纯同步线程）
+            return False
+
+    def _post_to_owner_loop(self, fn: Callable[..., Any], *args: Any) -> bool:
+        """把一个同步回调排到 owner loop 上执行（线程安全）。
+
+        返回 False = **没送到**（owner loop 未绑定 / 已关闭 / 没在跑 / 已停止接受回调）。调用方据此
+        如实上报"未通知"，绝不能把投递失败当成通知成功。
+
+        为什么连 `is_running()` 都要看：`call_soon_threadsafe` 只在 loop **已关闭**时抛
+        `RuntimeError`；对一个 `stop()` 过但还没 `close()` 的 loop 它会成功入队，而那个回调永远不会跑。
+        owner loop 在生产里是 `run_forever()` 直到关停，`is_running()` 为 False 只出现在
+        "还没起来"或"已经停了"两种状态——两种都不能声称通知成功。
+        """
+
+        loop = getattr(self, "_owner_loop", None)
+        if loop is None or loop.is_closed() or not loop.is_running():
+            return False
+        try:
+            loop.call_soon_threadsafe(fn, *args)
+        except RuntimeError:
+            # is_closed()/is_running() 与 call_soon_threadsafe 之间 loop 被关掉
+            return False
+        return True
+
+    def dispatch_run_fatal(self, exc: BaseException) -> bool:
+        """run-fatal 的**唯一**投递口：把记账与关停调度整体放到 owner loop 上执行。
+
+        为什么必须派回（codex Wave3 §9.4 的真实调用链）：capture wire 的 abort 升级发生在
+        adapter 的 aiohttp 线程（`run_app_in_thread` 建的独立 loop）里，若就地
+        `create_task(self._run_close(...))`，关停链会被建在 adapter loop 上——它随后要等
+        grading queue、owner loop 上的在飞执行 task，会直接撞 "Future attached to a different loop"，
+        而 abort 却已被记成 `notified=true`。
+
+        - 已经在 owner loop 上（在飞执行内的 fatal、owner 自己的调用）→ 就地同步执行，语义不变；
+        - 外来线程 / 外来 loop → `owner_loop.call_soon_threadsafe(...)` 整体派回；
+        - owner loop 未绑定（只可能是没走 `get()` 的装配）→ 就地执行（无别的 loop 可言）；
+        - **派回失败（loop 已关闭/已停）→ 返回 False**，调用侧记 `abort_unproven_unnotified`。
+        """
+
+        if self._on_owner_loop() or getattr(self, "_owner_loop", None) is None:
+            self._record_run_fatal(exc)
+            return True
+        return self._post_to_owner_loop(self._record_run_fatal, exc)
+
+    def _record_run_fatal(self, exc: BaseException) -> None:
+        """owner loop 上的 run-fatal 执行体：`fatal_seen` 记账 + 关停状态检查 + 关停链调度。"""
+
+        self.lifecycle.fatal_seen.append(exc)
+        self._on_run_fatal(exc)
+
     def _on_run_fatal(self, exc: BaseException) -> None:
         """run-fatal 通道（generate.py `_notify_fatal_halt` 经 task-local 通知器同步调）：
         首次 fatal 即调度关停链（首因 = 该 fatal）。在飞的 fatal 执行自己会先把 receipt
-        持久化再清理（B5），关停链的 inflight 步只是等它跑完。"""
+        持久化再清理（B5），关停链的 inflight 步只是等它跑完。
 
+        codex Wave3 §9.4：本函数体**必须跑在 owner loop 上**——关停状态检查（`_close_task` /
+        `_closing_report`）与 `_close_task` 创建是同一份状态的读改写，且创建出来的 task 必须属于
+        owner loop。外来线程/外来 loop 直接调进来时先派回 owner loop 再执行。
+        """
+
+        if getattr(self, "_owner_loop", None) is not None and not self._on_owner_loop():
+            # 兜底守卫（正常路径由 dispatch_run_fatal 派回；这里挡住直接调进来的外来线程）。
+            if not self._post_to_owner_loop(self._on_run_fatal, exc):
+                print(f"[rh2-bringup] run-fatal 无法派回 owner loop（已关闭/未运行），未调度关停链：{exc!r}")
+            return
         if self._close_task is not None:
             # codex W5a 复核 #3b：关停进行中的 fatal 不能丢——排队，落盘前吸收进报告
             # （首因为空则成为首因，否则记次生；ok 必为 False）。报告已定稿则只留 fatal_seen。
             if self._closing_report is not None:
                 self._fatals_during_close.append(exc)
             return
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            return
+        loop = getattr(self, "_owner_loop", None)
+        if loop is None:
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                return
         code = getattr(exc, "reason_code", None) or type(exc).__name__
         self._close_task = loop.create_task(
             self._run_close(f"run_fatal:{code}", "run_fatal", exc), name="rh2-bringup-shutdown"
@@ -2180,19 +2386,26 @@ def notify_run_fatal(exc: BaseException) -> bool:
     """进程级 run-fatal 通知入口（W5a 复核 #3：不经过 generate.py `_notify_fatal_halt` 的
     fatal 也要触发同一条关停链）。
 
-    典型调用者 = 复合 group filter（`adapters/miles/group_admission.py`，在 miles
-    `DefaultDataBuffer.put()` 内运行，与执行 task 不在同一 context，contextvar 通知器够不到）：
-    `except GroupAdmissionFatal as exc: notify_run_fatal(exc); raise`。语义与执行内 fatal 一致：
-    未在关停 → 调度关停链（首因 = exc）；关停进行中 → 吸收进报告；已定稿 → 只留 fatal_seen。
-    返回 False = 本进程没有 BringupService（无可关，调用方照常 raise）。
+    两类典型调用者，都不在 owner loop 的执行 context 里：
+
+    - 复合 group filter（`adapters/miles/group_admission.py`，在 miles `DefaultDataBuffer.put()`
+      内运行，与执行 task 不在同一 context，contextvar 通知器够不到）：
+      `except GroupAdmissionFatal as exc: notify_run_fatal(exc); raise`；
+    - capture wire 的 abort 升级（`capture_wire.escalate_abort_unproven`），它跑在 adapter 的
+      aiohttp 线程 / 独立 loop 上（`run_app_in_thread`）。
+
+    语义与执行内 fatal 一致：未在关停 → 调度关停链（首因 = exc）；关停进行中 → 吸收进报告；
+    已定稿 → 只留 fatal_seen。**记账与调度整体在 owner loop 上完成**（codex Wave3 §9.4，
+    见 `BringupService.dispatch_run_fatal`）。
+
+    返回 False = **没通知到**：本进程没有 BringupService，或 owner loop 已关闭/不再接受回调。
+    调用方不得据此声称"已通知"（capture_wire 会记 `abort_unproven_unnotified`）。
     """
 
     service = BringupService._instance
     if service is None:
         return False
-    service.lifecycle.fatal_seen.append(exc)
-    service._on_run_fatal(exc)
-    return True
+    return service.dispatch_run_fatal(exc)
 
 
 async def ensure_fa_started(args: Any) -> None:

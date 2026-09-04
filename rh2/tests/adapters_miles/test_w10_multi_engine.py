@@ -459,7 +459,14 @@ async def test_single_engine_pool_still_works_with_broadcast(wire, single_engine
 
 
 class _FatalRecorder:
-    """`bringup.notify_run_fatal` 的替身：记录被升级的异常并返回 True（"本进程有 BringupService"）。"""
+    """`bringup.notify_run_fatal` 的替身：记录被升级的异常并返回 True（"本进程有 BringupService"）。
+
+    边界（codex Wave3 §9.4）：本替身只证明"wire 在什么条件下调用了升级通道、带什么 typed 异常"，
+    **不能**用来证明关停链跑在哪个 event loop 上——它把真实的 owner-loop 派发整条换掉了。
+    run-fatal 的 loop 归属由 `tests/adapters/test_w5a_shutdown_chain.py` 的
+    `test_run_fatal_from_adapter_loop_schedules_shutdown_on_owner_loop`（真实双线程/双 loop，
+    不替换 `notify_run_fatal`）与 `test_run_fatal_is_not_reported_notified_when_owner_loop_is_gone` 证明。
+    """
 
     def __init__(self) -> None:
         self.calls: list[BaseException] = []

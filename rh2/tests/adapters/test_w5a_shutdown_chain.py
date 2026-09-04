@@ -187,6 +187,11 @@ def _assemble_service(
     artifact_dir.mkdir(parents=True, exist_ok=True)
     monkeypatch.setattr(bringup, "ARTIFACT_DIR", artifact_dir)
     service = object.__new__(bringup.BringupService)
+    # codex Wave3 §9.4：owner loop = 装配本服务的那个 loop（生产里 = miles 共享后台 loop）。
+    # 真实 __init__ 第一件事就是绑它；`object.__new__` 装配必须自己补上，否则 run-fatal 派发
+    # 会退回"就地执行"，双 loop 反例就测不到东西。
+    service._owner_loop = None
+    service._bind_owner_loop()
     service.shutdown_timeouts = timeouts
     service.lifecycle = LifecycleState()
     service.lifecycle.on_fatal = service._on_run_fatal
@@ -883,3 +888,178 @@ async def test_late_secondary_dedupe_is_exact_entry_equality_after_close(tmp_pat
     disk = json.loads((bringup.ARTIFACT_DIR / "shutdown_report.json").read_text(encoding="utf-8"))
     assert disk["secondary_failures"] == report.secondary_failures
 
+
+
+# ---------------------------------------------------------------------------
+# codex Wave3 §9.4：run-fatal 必须被调度到 **owner loop**，不是发起通知的那个 loop
+#
+# 真实拓扑（两个 loop、两个线程）：
+#   miles 共享后台 AsyncLoopThread ──> BringupService / rollout worker / grading queue（owner）
+#   slime `run_app_in_thread`（vendored，不可改）──> 独立 aiohttp adapter loop
+#     └─ HTTP handler → capture_wire `_send_once` → abort partial/undeliverable
+#          → bringup.notify_run_fatal（**本组反例不替换它**）
+#
+# 修复前 `_on_run_fatal` 用 `asyncio.get_running_loop()`，关停链会被建在 adapter loop 上：
+# 它随后要等 owner loop 上的在飞执行 task / grading queue，直接撞
+# "Future attached to a different loop"，而 abort 却已被记成 notified=true。
+# ---------------------------------------------------------------------------
+
+
+class _LoopThread:
+    """一个专属线程 + 专属 event loop（miles 后台 loop 与 adapter loop 的最小同形替身）。"""
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+        self.loop = asyncio.new_event_loop()
+        self.errors: list[dict[str, Any]] = []
+        self.loop.set_exception_handler(lambda _loop, ctx: self.errors.append(ctx))
+        self._ready = threading.Event()
+        self.thread = threading.Thread(target=self._run, name=name, daemon=True)
+
+    def _run(self) -> None:
+        asyncio.set_event_loop(self.loop)
+        self.loop.call_soon(self._ready.set)
+        self.loop.run_forever()
+
+    def start(self) -> "_LoopThread":
+        self.thread.start()
+        assert self._ready.wait(5), f"{self.name} 未在 5s 内就绪"
+        return self
+
+    def run(self, coro, timeout: float = 30.0):
+        """从**别的**线程把协程交给本 loop 跑完（asyncio.run_coroutine_threadsafe）。"""
+
+        return asyncio.run_coroutine_threadsafe(coro, self.loop).result(timeout)
+
+    def stop(self) -> None:
+        if self.loop.is_closed():
+            return
+        self.loop.call_soon_threadsafe(self.loop.stop)
+        self.thread.join(timeout=5)
+        self.loop.close()
+
+
+def _real_undeliverable_abort(rid: str):
+    """真实 `MilesRouterWorkerClient.broadcast_abort` 的 undeliverable 结果（不是手搓 dataclass）：
+    router 地址指向无人监听的端口 → 实时列表拿不到，又没有启动核对集合 → 目标集合为空。"""
+
+    from repoharness2.adapters.slime.engine_router_client import MilesRouterWorkerClient
+
+    client = MilesRouterWorkerClient(
+        "http://127.0.0.1:1", list_timeout_seconds=0.3, abort_timeout_seconds=0.3
+    )
+    return client.broadcast_abort(rid)
+
+
+async def _escalate_like_capture_wire(registry, rid: str) -> bool:
+    """capture_wire `_abort_rid` 的 unproven 分支逐句同形（三行都是生产函数）。"""
+
+    from repoharness2.adapters.slime.capture_wire import escalate_abort_unproven
+    from repoharness2.adapters.slime.engine_router_client import AbortDeliveryUnprovenError
+
+    result = await _real_undeliverable_abort(rid)
+    registry.note_abort_result(result)
+    assert result.proven is False and result.outcome == "undeliverable"
+    return escalate_abort_unproven(registry, AbortDeliveryUnprovenError(result))
+
+
+def test_run_fatal_from_adapter_loop_schedules_shutdown_on_owner_loop(tmp_path, monkeypatch):
+    """反例：abort undeliverable 在 **adapter loop / adapter 线程**上升级 run-fatal。
+
+    断言：关停 task 属于 owner loop（不是发起方 loop）；关停报告 trigger=run_fatal、ok=false；
+    两个 loop 都没有 cross-loop 异常；关停进行中到达的第二个 fatal 也在 owner loop 上并入同一份报告。
+    """
+
+    owner = _LoopThread("rh2-owner-loop").start()
+    adapter = _LoopThread("rh2-adapter-loop").start()
+    try:
+        async def _assemble():
+            # adapter_http 步 stop_delay=0.6s：给"关停进行中"留一个确定的窗口（上界 FAST=2.0s）
+            service, _docker = _assemble_service(
+                tmp_path, monkeypatch, app_handle=_FakeAppHandle(stop_delay=0.6)
+            )
+            return service
+
+        service = owner.run(_assemble())
+        assert service._owner_loop is owner.loop and owner.loop is not adapter.loop
+        monkeypatch.setattr(bringup.BringupService, "_instance", service)
+
+        # ① adapter loop 上跑真实 abort → 真实 escalate → 真实 notify_run_fatal（无替身）
+        notified = adapter.run(_escalate_like_capture_wire(service.registry, "rid-ghost-1"))
+        assert notified is True
+        assert service.registry.stats["abort_unproven_fatal"] == 1
+        assert service.registry.stats["abort_unproven_unnotified"] == 0  # 派回成功才算已通知
+
+        # ② 关停 task 必须建在 owner loop 上（修复前这里是 adapter loop）
+        async def _wait_for_close_task():
+            for _ in range(500):
+                if service._close_task is not None:
+                    return service._close_task
+                await asyncio.sleep(0.01)
+            raise AssertionError("owner loop 上没有出现关停 task")
+
+        close_task = owner.run(_wait_for_close_task())
+        assert close_task.get_loop() is owner.loop
+        assert close_task.get_loop() is not adapter.loop
+
+        # ③ 关停进行中，adapter loop 再来一个 fatal：也必须派回 owner loop 合并（W5a 后到事实路径）
+        async def _wait_until_closing():
+            for _ in range(500):
+                if service._closing_report is not None:
+                    return True
+                await asyncio.sleep(0.01)
+            raise AssertionError("关停链没有进入进行中状态")
+
+        assert owner.run(_wait_until_closing()) is True
+        assert adapter.run(_escalate_like_capture_wire(service.registry, "rid-ghost-2")) is True
+
+        report = owner.run(asyncio.wait_for(asyncio.shield(close_task), 30))
+        assert report.trigger == "run_fatal" and report.reason == "run_fatal:abort_undeliverable"
+        assert report.ok is False
+        assert report.first_cause_origin == "trigger"
+        assert "AbortDeliveryUnprovenError(abort_undeliverable)" in report.first_cause
+        assert "rid-ghost-1" in report.first_cause
+        # 第二个 fatal 在 owner loop 上并入同一份报告（次生，不是丢弃）
+        merged = [s for s in report.secondary_failures if s.startswith("run_fatal_during_shutdown")]
+        assert len(merged) == 1 and "rid-ghost-2" in merged[0]
+        assert [type(e).__name__ for e in service.lifecycle.fatal_seen] == [
+            "AbortDeliveryUnprovenError", "AbortDeliveryUnprovenError",
+        ]
+        assert service.registry.stats["abort_unproven_unnotified"] == 0
+        # 无 cross-loop 异常：两个 loop 的 exception handler 都没被调用，关停各步也没有失败
+        assert owner.errors == [] and adapter.errors == []
+        assert [s.name for s in report.steps if s.status == "failed"] == []
+        disk = json.loads((bringup.ARTIFACT_DIR / "shutdown_report.json").read_text(encoding="utf-8"))
+        assert disk["trigger"] == "run_fatal" and disk["ok"] is False
+    finally:
+        adapter.stop()
+        owner.stop()
+
+
+def test_run_fatal_is_not_reported_notified_when_owner_loop_is_gone(tmp_path, monkeypatch):
+    """反例：owner loop 已经关掉，从 adapter 线程通知 → **不得**返回"通知成功"。
+
+    capture_wire 侧必须如实记 `abort_unproven_unnotified`（否则 abort 未证明到达这件事会被
+    "已通知，等关停链处理"掩盖，而实际上没有任何关停链被调度）。"""
+
+    owner = _LoopThread("rh2-owner-loop-dead").start()
+    adapter = _LoopThread("rh2-adapter-loop-2").start()
+    try:
+        async def _assemble():
+            service, _docker = _assemble_service(tmp_path, monkeypatch)
+            return service
+
+        service = owner.run(_assemble())
+        monkeypatch.setattr(bringup.BringupService, "_instance", service)
+        owner.stop()  # owner loop 关闭（run 已结束/进程正在退出）
+        assert service._owner_loop.is_closed()
+
+        notified = adapter.run(_escalate_like_capture_wire(service.registry, "rid-ghost-3"))
+        assert notified is False  # 没送到就不能报"已通知"
+        assert service._close_task is None  # 也没有在 adapter loop 上偷偷建关停链
+        assert service.registry.stats["abort_unproven_fatal"] == 1
+        assert service.registry.stats["abort_unproven_unnotified"] == 1
+        assert adapter.errors == []
+    finally:
+        adapter.stop()
+        owner.stop()

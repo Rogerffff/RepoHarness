@@ -41,8 +41,13 @@ def _strip_reference_slime_paths():
     return removed
 
 
-def _make_fake_engine_app(requests_log: list):
-    """sglang-miles /generate 的最小 fake（真 aiohttp server，wire 形态应答）。"""
+def _make_fake_engine_app(requests_log: list, *, worker_urls: list[str] | None = None):
+    """sglang-miles /generate 的最小 fake（真 aiohttp server，wire 形态应答）。
+
+    ``worker_urls`` 非 None 时同时扮演 MilesRouter 的 `GET /list_workers`（返回该**可变**列表的
+    当前内容——server 起来才知道自己的端口，调用方启动后往里填）。留 None 则不挂该路由，
+    行为与此前一致：bringup 的 worker 列表查询拿到 404（s1_compat 只记录，不阻断启动）。
+    """
 
     from aiohttp import web
 
@@ -64,6 +69,11 @@ def _make_fake_engine_app(requests_log: list):
 
     app = web.Application()
     app.router.add_post("/generate", generate)
+    if worker_urls is not None:
+        async def list_workers(_request: "web.Request"):
+            return web.json_response({"urls": list(worker_urls)})
+
+        app.router.add_get("/list_workers", list_workers)
     return app
 
 

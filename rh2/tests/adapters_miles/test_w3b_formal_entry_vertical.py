@@ -61,25 +61,42 @@ def _prepare(bringup, monkeypatch, tmp_path, *, with_prepared: bool = True, real
     return fx
 
 
-def _args(port: int, fx) -> Namespace:
+def _args(port: int, fx, *, rollout_num_gpus: int = 2, rollout_num_gpus_per_engine: int = 2) -> Namespace:
+    """miles args 的最小面。
+
+    `rollout_num_gpus` / `rollout_num_gpus_per_engine` 是 abort 核对集合的**预期 engine 数**来源
+    （codex Wave3 §9.3：engine 数 = 前者 // 后者）；默认 2 // 2 = 1 个 engine，与 `_with_engine`
+    默认只登记一个 worker（fake server 自己）一致。多 engine 反例按需覆盖这两个值。"""
+
     return Namespace(
         hf_checkpoint="Qwen/Qwen3-8B", sglang_router_ip="127.0.0.1", sglang_router_port=port,
         rollout_max_context_len=0, sglang_tool_call_parser=None, sglang_reasoning_parser=None,
         rollout_temperature=1.0, rollout_top_p=0.95, rollout_max_response_len=64,
         rh2_engine_sampling_mask=True, rollout_top_k=20, prompt_data=str(fx.prompts_path),
         rollout_batch_size=2, n_samples_per_prompt=2, num_rollout=2,
+        rollout_num_gpus=rollout_num_gpus, rollout_num_gpus_per_engine=rollout_num_gpus_per_engine,
     )
 
 
-async def _with_engine(world, fn):
+async def _with_engine(world, fn, *, serve_worker_list: bool = True, extra_workers: tuple[str, ...] = ()):
+    """起 fake 引擎（同时扮演 router）并把 `(port, engine_requests)` 交给 ``fn``。
+
+    - ``serve_worker_list=True``：挂 `GET /list_workers`，默认只登记 fake server 自己（1 个 worker），
+      `extra_workers` 可追加"另外注册的 engine"地址（多 engine 拓扑反例用）；
+    - ``serve_worker_list=False``：不挂该路由 → 查询 404 → 启动核对拿不到集合（查询失败反例）。
+    """
+
     from aiohttp.test_utils import TestServer
 
     removed = _strip_reference_slime_paths()
     try:
         world.install_sglang_stub()
         engine_requests: list[dict] = []
-        server = TestServer(_make_fake_engine_app(engine_requests))
+        worker_urls: list[str] | None = [] if serve_worker_list else None
+        server = TestServer(_make_fake_engine_app(engine_requests, worker_urls=worker_urls))
         await server.start_server()
+        if worker_urls is not None:  # server 起来才知道端口：自己 + 追加的 engine
+            worker_urls[:] = [f"http://127.0.0.1:{server.port}", *extra_workers]
         try:
             return await fn(server.port, engine_requests)
         finally:
@@ -131,7 +148,14 @@ async def test_fa_formal_entry_assembles_prepared_face_grader_profile_relay_and_
             assert record["runtime_profile_digest"] == service.runtime_profile_digest
             evidence = json.loads((tmp_path / "artifacts" / "startup_evidence.json").read_text())
             assert evidence["runtime_profile_digest"] == service.runtime_profile_digest
-            assert isinstance(service.verified_router_workers, tuple)  # F3 接缝：启动核对过的 worker 集合
+            # F3 接缝（codex Wave3 §9.3）：核对集合必须与固定 topology 的 engine 数**精确相等**，
+            # 且已下发给 router client 作 abort 回退集合（下面 §7 组是专门的完整性反例）。
+            assert service.verified_router_workers == (f"http://127.0.0.1:{args.sglang_router_port}",)
+            assert service.router_workers.verified_workers == service.verified_router_workers
+            assert evidence["router_workers"] == {
+                "urls": list(service.verified_router_workers), "count": 1, "raw_count": 1,
+                "expected_count": 1, "verified": True,
+            }
             # ⑤ 真实 resolver 只认 attempt 绑定（prepared 链纪律仍在）
             rec = fx.manifest.record(TID1).model_dump(mode="json")
             identity = {
@@ -212,3 +236,116 @@ async def test_fa_formal_entry_rejects_sandbox_verification_failure(world, monke
         assert bringup.BringupService._startup_state == "FAILED"
 
     await _with_engine(world, body)
+
+
+# ---------------------------------------------------------------------------
+# codex Wave3 §9.3：abort 核对集合的完整性必须在**生产接缝**（真实 ensure_fa_started）上证明
+#
+# 为什么这些反例不能用 MilesRouterWorkerClient 的单元测试代替：client 只负责"对给定集合广播"，
+# 集合是否等于全部 engine 由 bringup 启动核对决定。集合不完整时 client 照样会对每个 URL 拿到
+# 2xx 并报 delivered——真正持有 rid 的那台 engine 却从没收到 abort，请求继续占 SGLang 槽位。
+# ---------------------------------------------------------------------------
+
+
+def _startup_evidence(tmp_path) -> dict:
+    return json.loads((tmp_path / "artifacts" / "startup_evidence.json").read_text())
+
+
+@pytest.mark.parametrize(
+    ("shape", "gpus", "per_engine", "extra_workers", "expected", "actual"),
+    [
+        # 预期 2 个 engine（4 卡 // 每 engine 2 卡），router 只登记 1 个：启动那刻另一台还没注册，
+        # 此后它注册并可能持有 rid——把这份集合当完整集合会误报 delivered。
+        ("too_few", 4, 2, (), 2, 1),
+        # 反方向同样拒绝：预期 1 个，router 却登记 2 个（陌生 worker，可能属于别的 run 或别的模型组）。
+        ("too_many", 2, 2, ("http://127.0.0.1:59999",), 1, 2),
+    ],
+    ids=["too_few", "too_many"],
+)
+async def test_fa_formal_startup_rejects_router_worker_count_mismatch(
+    world, monkeypatch, tmp_path, shape, gpus, per_engine, extra_workers, expected, actual
+):
+    """反例：worker 数量与固定 topology 不符（多或少）→ typed StartupCheckError，**不进入 RUNNING**，
+    且证据里那份集合必须是 `verified: false`（绝不当作 abort 回退集合下发）。"""
+
+    async def body(port, _requests):
+        import repoharness2.adapters.slime.bringup as bringup
+        import repoharness2.adapters.slime.generate as generate_mod
+
+        fx = _prepare(bringup, monkeypatch, tmp_path)
+        monkeypatch.setattr(generate_mod, "run_docker", SandboxRuntimeFakeDocker())
+        args = _args(port, fx, rollout_num_gpus=gpus, rollout_num_gpus_per_engine=per_engine)
+        try:
+            with pytest.raises(bringup.StartupCheckError, match="router_workers_unverified") as ei:
+                await bringup.ensure_fa_started(args)
+        except OSError as exc:
+            pytest.skip(f"本机无 Qwen3-8B tokenizer 缓存且离线，跳过：{exc}")
+        assert f"预期 {expected} 个 engine" in str(ei.value) and f"实际登记 {actual} 个" in str(ei.value)
+        assert bringup.BringupService._startup_state == "FAILED"  # 不进入 RUNNING
+        assert bringup.BringupService._instance is None
+        row = _startup_evidence(tmp_path)["router_workers"]
+        assert row["verified"] is False and row["count"] == actual and row["expected_count"] == expected
+
+    await _with_engine(world, body, extra_workers=extra_workers)
+
+
+async def test_fa_formal_startup_rejects_unavailable_router_worker_list(world, monkeypatch, tmp_path):
+    """反例：router 不回 worker 列表（`/list_workers` 与 `/workers` 都 404）→ 查询失败 ≠ 空集合，
+    不能声称核对过 → typed StartupCheckError，不进入 RUNNING。
+
+    这正是 §9.3 那条可达时序的入口：此前这里只把异常写进 evidence 就放行，abort 时实时列表再失败
+    就会退回一份**从未核对过**（甚至为空）的集合。"""
+
+    async def body(port, _requests):
+        import repoharness2.adapters.slime.bringup as bringup
+        import repoharness2.adapters.slime.generate as generate_mod
+
+        fx = _prepare(bringup, monkeypatch, tmp_path)
+        monkeypatch.setattr(generate_mod, "run_docker", SandboxRuntimeFakeDocker())
+        try:
+            with pytest.raises(bringup.StartupCheckError, match="router_workers_unverified") as ei:
+                await bringup.ensure_fa_started(_args(port, fx))
+        except OSError as exc:
+            pytest.skip(f"本机无 Qwen3-8B tokenizer 缓存且离线，跳过：{exc}")
+        assert "查询失败" in str(ei.value)
+        assert bringup.BringupService._startup_state == "FAILED"
+        assert bringup.BringupService._instance is None
+        row = _startup_evidence(tmp_path)["router_workers"]
+        assert row["verified"] is False and "404" in row["error"] and "urls" not in row
+
+    await _with_engine(world, body, serve_worker_list=False)
+
+
+async def test_fa_formal_startup_accepts_complete_two_engine_worker_set(world, monkeypatch, tmp_path):
+    """正例：预期 2 个 engine、router 也登记 2 个 → 进入 RUNNING，**且只有此时**才把这份集合
+    下发给 router client 作 abort 回退目标（`registry.engine_abort` 就是该 client 的广播函数）。
+
+    单 engine（预期 1、返回 1）的正常路径由本文件第一个纵切用例覆盖。"""
+
+    other = "http://127.0.0.1:59999"  # 第二台 engine 的登记地址（数量核对只看集合，不在启动时逐台探活）
+
+    async def body(port, _requests):
+        import repoharness2.adapters.slime.bringup as bringup
+        import repoharness2.adapters.slime.generate as generate_mod
+
+        fx = _prepare(bringup, monkeypatch, tmp_path)
+        monkeypatch.setattr(generate_mod, "run_docker", SandboxRuntimeFakeDocker())
+        args = _args(port, fx, rollout_num_gpus=4, rollout_num_gpus_per_engine=2)  # 预期 2 个 engine
+        try:
+            await bringup.ensure_fa_started(args)
+        except OSError as exc:
+            pytest.skip(f"本机无 Qwen3-8B tokenizer 缓存且离线，跳过：{exc}")
+        service = bringup.BringupService._instance
+        assert service is not None and bringup.BringupService._startup_state == "RUNNING"
+        try:
+            both = (f"http://127.0.0.1:{port}", other)
+            assert service.verified_router_workers == both
+            assert service.router_workers.verified_workers == both
+            assert service.registry.engine_abort.__self__ is service.router_workers
+            row = _startup_evidence(tmp_path)["router_workers"]
+            assert row == {"urls": list(both), "count": 2, "raw_count": 2, "expected_count": 2, "verified": True}
+        finally:
+            if bringup.BringupService._startup_state != "CLOSED":
+                await service.close(reason="w3b_worker_set_vertical")
+
+    await _with_engine(world, body, extra_workers=(other,))

@@ -202,10 +202,14 @@ W10 归属的计数变化（以 manifest 当前 322/232、554/0 为基线，不�
 
 - 构造器参数：`MilesRouterWorkerClient(router_url, verified_workers=<Iterable[str]>)`；或启动探针之后
   `client.set_verified_workers(startup_evidence["router_workers"]["urls"])`（返回规整后的元组；空 = 无核对集合）。
-- 来源：bringup `_run_startup_checks` 取得并核对的 `startup_evidence.router_workers.urls`（数量 = engine 数、逐个可达——核对
-  逻辑归 bringup 侧）。client 只做 URL 规整（去 `@rank`、去重、去尾斜杠，镜像 miles `router_worker_base_urls`）。
+- 来源：bringup `_run_startup_checks` 取得的 `startup_evidence.router_workers.urls`；核对逻辑归 bringup 侧。
+  client 只做 URL 规整（去 `@rank`、去重、去尾斜杠，镜像 miles `router_worker_base_urls`）。
+  **勘误（2026-09-04，见 §11.1）**：本节写作时 bringup 只是把某一次 `/list_workers` 返回值原样保存，
+  既没有与预期 engine 数比对，也没有"逐个可达"探活——"取得并核对（数量 = engine 数、逐个可达）"是错误描述。
+  真正的数量核对在 §11.1 补上；启动时**不做**逐台探活（也不需要：广播时每个目标是否 2xx 才是投递事实）。
 - 当前 bringup 仍是 `MilesRouterWorkerClient(self.sglang_url)`（无核对集合）：实时列表可用时行为与之前相同（广播）；
   实时列表失败时不再单发而是 `undeliverable` → run-fatal。接线一行后才有核对集合回退。
+  **已过时（见 §11.1）**：接线与数量核对都已在 bringup 侧完成，`fa_formal` 下核对不过不进入 RUNNING。
 - `resolve_targets()` 公开（返回 `(targets, targets_source, list_error, drift)`），供 bringup 侧核对或诊断复用。
 
 ### 10.3 GPU 资格 run 判据（写入 §6 B.4 的强化版）
@@ -259,3 +263,129 @@ lane A 350/310，lane B 660/0。
 
 补记（§10.6 表续，同日复跑）：`uv run pytest tests/ -q`（默认全套，含 adapters_miles 的 pin base）= **1715 passed / 310 skipped / 0 failed**
 （此前 §9 记录的 W3a 在途 oracle 红已由并行线程收口）；`bash -n launch.sh` 过；`miles_integration_lanes.sh` 前置校验仍待 patch 0015 存档 + manifest 更新后复跑。
+
+---
+
+## 11. codex Wave3 §9.3 / §9.4 修复（append，2026-09-04）：核对集合完整性 + run-fatal 的 owner loop 归属
+
+两个 finding 同属 abort 主题，都是"实现缺口"而不是训练语义变更；**无新增 T0**。改动面：
+`adapters/slime/bringup.py`、`adapters/slime/capture_wire.py`、`adapters/slime/engine_router_client.py`（只改文档串）、
+`tests/adapters_miles/test_w3b_formal_entry_vertical.py`、`tests/adapters/test_w5a_shutdown_chain.py`、
+`tests/adapters_miles/test_w10_multi_engine.py`（注释）、`tests/adapters_miles/test_b1_real_bootstrap.py`（fake 引擎多一个可选路由）与本节。
+未改 grading / sandbox_profile / prepared_task_face / contracts / reference / vendored slime / generate.py。
+
+### 11.1 §9.3：fallback 集合必须在生产接缝上证明完整
+
+**finding 成立**。§10 把回退集合接进了 client，但 bringup 只是把某一次 `/list_workers` 的返回值原样存成
+`verified_router_workers`，查询失败也只写进 evidence 就放行。可达时序：启动查询时只有 engine A 注册 →
+A 被存成"核对集合" → engine B 稍后注册并持有 rid → abort 时实时列表失败 → 只向 A 投递且 2xx →
+`outcome=delivered / proven=True`，B 上的请求继续占 SGLang 槽位，而 `abort_delivery_failed` 仍是 0。
+
+**修复**（首版不引入健康检查平台、不做弹性 engine 管理）：
+
+1. **预期值来源**：新增模块级 `bringup.expected_engine_count(args)`，只从 BringupService 已持有的 miles args
+   （`self._profile_args`，即 `BringupService.get()` 传进来的那份）算
+   `rollout_num_gpus // rollout_num_gpus_per_engine`。miles 代码事实：
+   `miles/ray/rollout/rollout_server.py` 用 `num_gpus // min(num_gpus_per_engine, num_gpus_per_node)` 建 engine，
+   而 `launch.sh` 已把首训钉死为单节点、单 model group、无 PD（拒 `--sglang-config` / `--prefill-num-servers`），
+   `min(...)` 退化掉。**算不出来就返回 `None`**：任一参数缺席/非正整数、两者不整除（miles 的整数除法会
+   静默丢余数卡）、或给了 `num_gpus_per_node` 而 per-engine 超过它——这些情况一律视为"不能声称核对过"。
+2. **拒绝点**：新增 `BringupService._verify_router_worker_set(evidence)`（由 `_run_startup_checks` 调）。
+   把 `/list_workers` 的返回值经 `worker_base_urls()` **规范化 + 去重**后与预期数做**精确相等**核对；
+   不等（多或少）、查询异常、预期数算不出来 → 返回失败原因。`_run_startup_checks` 先把
+   `startup_evidence.json` 落盘（诊断需要那一段），再在 `EXECUTION_MODE == "fa_formal"` 下抛
+   typed `StartupCheckError("router_workers_unverified", …)` → `async_start` 统一回滚 → `get()` 置 FAILED，
+   **不进入 RUNNING**。非 formal 模式（`s1_compat` / `fa_audit_only`）保持"只记录不阻断"。
+3. **不完整集合绝不下发**：只有精确相等这一条路径才写 `self.verified_router_workers` 并调
+   `router_workers.set_verified_workers(...)`；其余路径保持空元组。evidence 的
+   `router_workers` 段新增 `expected_count` / `raw_count` / `verified` 三个字段，`verified` 是这条判断的一手记录。
+
+「多一个也拒绝」的理由：陌生 worker 可能属于别的 run 或别的模型组，向它广播 rid 无害但说明拓扑认知已经错了；
+既然 abort 的正确性依赖"目标集合 ⊇ 所有可能持有该 rid 的 engine"，集合与预期不符时唯一诚实的结论是"不知道"。
+
+**备选实现**（实时 list 失败直接 run-fatal、不保留 fallback）没有采用：它把一次控制面抖动直接变成停 run，
+而核对过的固定集合在首版拓扑（engine 数固定、MilesRouter 从不摘除 worker）下是安全且更耐抖动的目标集合。
+两者都不需要 owner 决策。
+
+### 11.2 §9.4：run-fatal 必须被调度到 owner loop
+
+**finding 成立**。真实拓扑里 BringupService / rollout worker / grading queue 属于 miles 共享后台
+AsyncLoopThread 的 loop（owner loop），而 `slime/agent/aiohttp_threaded.py` 的 `run_app_in_thread`（vendored，
+不可改）另起线程与 loop 跑 adapter。abort 升级发生在 adapter loop 上，旧 `_on_run_fatal` 用
+`asyncio.get_running_loop()` 拿到的是 **adapter loop**，关停链 `_close_task` 因此被建在错误的 loop 上：
+它随后要等 owner loop 的在飞执行 task / grading queue，会撞 "Future attached to a different loop"，
+而 abort 已经被记成 `notified=true`。
+
+**修复**：
+
+1. **owner loop 保存位置**：`BringupService.__init__` 的**第一件事**（早于任何配置解析与资源型副作用）调
+   `self._bind_owner_loop()` 记下当时的 running loop——`get()` 是 async 的，构造发生在 owner loop 上；
+   `async_start` 开头再兜底调一次（首次绑定生效，一生只属于一个 loop，不改绑）。
+2. **派回机制**：新增 `dispatch_run_fatal(exc)` 作为 run-fatal 的唯一投递口。已在 owner loop 上（在飞执行内的
+   fatal、owner 自己的调用）就地同步执行，语义与此前一致；外来线程/外来 loop 则用
+   `owner_loop.call_soon_threadsafe(self._record_run_fatal, exc)` 把 `fatal_seen` 记账、关停状态检查
+   （`_close_task` / `_closing_report`）与 `_close_task` 创建**整体**派回 owner loop——三者是同一份状态的
+   读改写，拆开派会出竞态。`_on_run_fatal` 自身也加了同样的守卫（被直接调进来时先派回再执行）。
+3. **"通知失败不算成功"**：`_post_to_owner_loop` 在 owner loop 未绑定/已关闭/`call_soon_threadsafe` 抛
+   `RuntimeError` 时返回 False；`notify_run_fatal` 原样返回该值。capture_wire 的
+   `escalate_abort_unproven` 据此记 `abort_unproven_unnotified +1` 并打印（打印文案改成
+   "无 BringupService / owner loop 已关闭 / 派回失败"三种情形，不再只说"无 BringupService"）。
+   `abort_results` 里那一行的 `notified` 也如实为 false。
+
+`close()` 未改：它创建 `_close_task` 后要 `await asyncio.shield(...)`，创建 loop 必须与 await 方一致；
+生产调用方（miles `RolloutManager.dispose` → `close_bringup_service`、SIGTERM handler）本来就在 owner loop 上。
+
+### 11.3 反例 / 正例测试
+
+| 验收项 | 测试 | 结果 |
+|---|---|---|
+| §9.3 预期 2 个但只登记 1 个 → 不进入 RUNNING，证据里 `verified:false` | `test_w3b_formal_entry_vertical.py::test_fa_formal_startup_rejects_router_worker_count_mismatch[too_few]` | passed |
+| §9.3 预期 1 个却登记 2 个（陌生 worker）→ 同样拒绝 | 同上 `[too_many]` | passed |
+| §9.3 `/list_workers` 与 `/workers` 都 404（查询失败 ≠ 空集合）→ 不进入 RUNNING | `test_fa_formal_startup_rejects_unavailable_router_worker_list` | passed |
+| §9.3 完整 2 个才允许设置 fallback（进入 RUNNING，集合下发给 client） | `test_fa_formal_startup_accepts_complete_two_engine_worker_set` | passed |
+| §9.3 单 engine（预期 1、登记 1）正常，且 evidence 段逐字段核对 | `test_fa_formal_entry_assembles_prepared_face_grader_profile_relay_and_orchestrator`（既有纵切内加强断言） | passed |
+| §9.4 adapter loop 触发 abort undeliverable → `_close_task.get_loop() is owner_loop`、`trigger=run_fatal`、`ok=false`、两个 loop 无 cross-loop 异常、关停进行中到达的第二个 fatal 在 owner loop 并入同一报告 | `test_w5a_shutdown_chain.py::test_run_fatal_from_adapter_loop_schedules_shutdown_on_owner_loop` | passed |
+| §9.4 owner loop 已关闭 → `notify_run_fatal` 返回 False、不在 adapter loop 建关停链、`abort_unproven_unnotified +1` | `test_run_fatal_is_not_reported_notified_when_owner_loop_is_gone` | passed |
+
+§9.4 两条是**真实双线程/双 loop**：owner loop 与 adapter loop 各跑在自己的线程里（`_LoopThread`，
+形状同 miles 后台 loop 与 `run_app_in_thread` 的 adapter loop），BringupService 在 owner loop 上装配，
+abort 在 adapter loop 上发起，`notify_run_fatal` **不替换**，`AbortBroadcastResult` 来自真实
+`MilesRouterWorkerClient.broadcast_abort`（router 地址指向无人监听的端口 → 真 undeliverable），
+关停链是真实 `_run_close`（真实 `ShutdownReport` 落盘）。回归验真：把 `_on_run_fatal` 退回
+`asyncio.get_running_loop()` 后，第一条在 `close_task.get_loop() is owner.loop` 处失败
+（关停 task 落在 adapter loop 上，即 codex 的 `scheduled_on_caller_loop=True`），第二条在
+`notified is False` 处失败——两条都是真反例，不是恒真断言。
+
+`test_w10_multi_engine.py` 里把 `notify_run_fatal` monkeypatch 成 `_FatalRecorder` 的那组测试**保留**
+（它们证明的是"wire 在什么条件下带什么 typed 异常调用升级通道"），但已在 `_FatalRecorder` docstring 里
+写明边界：替身把 owner-loop 派发整条换掉了，不能作为 §9.4 的证据。
+
+### 11.4 T1 决策及理由（本节新增）
+
+1. **数量核对只在 `fa_formal` 强制**：`s1_compat` / `fa_audit_only` 没有多 engine 资格主张，也常在没有真 router
+   的替身环境跑；把它们一起 fail-closed 只会制造与训练无关的启动失败。正式模式则必须停——不完整集合会
+   静默把 ghost request 记成已释放。
+2. **"多一个 worker"与"少一个"同等拒绝**：见 §11.1 末段。
+3. **预期数算不出来 = 核对失败**（而不是"跳过核对照常启动"）：`verified_workers` 的全部价值就是"这份集合是完整的"
+   这个断言；没有预期值就没有断言，退回原样保存等于把 finding 原封不动留着。
+4. **证据先落盘、再抛错**：`startup_evidence.json` 的 `router_workers` 段是这条拒绝唯一的一手诊断材料
+   （expected/actual/urls），抛错前不写就等于让运维只看到一行异常。
+5. **`_on_run_fatal` 自身也带派回守卫**（不只在 `dispatch_run_fatal` 里派）：它是 public-ish 的既有入口
+   （`lifecycle.on_fatal` 与既有测试都直接调），只在一处派回会留下一条仍可能建错 loop 的路径。
+
+### 11.5 测试 / 证据（2026-09-04 实跑，HEAD `52a4818b` + 本节改动）
+
+| 命令 | 结果 |
+|---|---|
+| `RH2_MILES_PATH=… uv run pytest tests/adapters_miles/ -q` | **668 passed**（修复前同命令 661 passed / 3 failed —— 那 3 条正是纵切用例撞上新核对；本节 +4 用例） |
+| `uv run pytest tests/adapters/test_w5a_shutdown_chain.py tests/adapters/test_w3b_bringup_sandbox_runtime.py -q` | **34 passed**（`test_w5a_shutdown_chain.py` 由 23 → 25 = 本节 +2；`test_w3b_bringup_sandbox_runtime.py` 9，未改） |
+| `uv run pytest tests/ -q` | **1759 passed / 310 skipped / 0 failed**（连续两次实跑 1757 → 1759：本节固定 +6，其余增量与波动来自同一工作树里并行的 grader/F2 线程；中途曾观测到该线程在途的 2 条 `tests/grading/` 红，其收口后全绿） |
+| ruff：`bringup.py` / `capture_wire.py` / `engine_router_client.py` / 四个测试文件 | 全过 |
+
+**账本待办（不在本轮允许改动面内）**：`miles_integration_lanes.sh` 的 manifest `expected_counts`
+需要按本节 +6 用例（lane A/B 各 +4 adapters_miles、+2 adapters）更新后复跑；本轮未改 manifest。
+
+**T0 停下项**：无。未改样本准入 / reward / loss 权重 / 算法语义，未改公共 schema 或唯一事实来源，
+未改跨组件状态所有权（owner loop 归属是把既有所有权**落实**到调度上，不是转移所有权），
+未新增样本级拒绝路径（新增的两条拒绝都是 run 级：启动核对失败 = 不启动，abort 不可证明 = run-fatal，
+与样本内容无关），未降低安全边界，未引入新依赖或 GPU 成本。

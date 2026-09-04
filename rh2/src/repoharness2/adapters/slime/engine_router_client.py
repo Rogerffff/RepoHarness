@@ -31,10 +31,13 @@
    - ``undeliverable``：目标集合为空（实时列表失败/为空且无核对集合）或全部目标失败 → 同样
      run-fatal `abort_undeliverable`。
    本类**永不抛**，只返回事实；升级动作在 capture_wire（本 attempt 的失败归因不变）。
-3. **接缝（bringup 侧，一行接线）**：`MilesRouterWorkerClient(router_url, verified_workers=<urls>)`
-   或启动探针之后 `client.set_verified_workers(startup_evidence["router_workers"]["urls"])`。
-   核对集合由 bringup 在启动探针阶段取得并核对（数量 = engine 数、逐个可达）；本模块只做 URL 规整
-   （去 `@<rank>` + 去重，镜像 `miles.utils.http_utils.router_worker_base_urls`）。
+3. **接缝（bringup 侧，已接线）**：`BringupService._verify_router_worker_set()` 在启动探针阶段取
+   `/list_workers`，把规范化去重后的集合与固定 topology 的预期 engine 数
+   （`rollout_num_gpus // rollout_num_gpus_per_engine`）做**精确数量核对**；只有相等才调
+   `set_verified_workers(...)` 下发，`fa_formal` 下核对不过直接 `StartupCheckError`（不进入 RUNNING）。
+   核对的是**集合完整性**，不是逐台可达性——启动时不对每个 worker 单独探活；广播时每个目标
+   是否 2xx 才是投递事实。本模块只做 URL 规整（去 `@<rank>` + 去重，镜像
+   `miles.utils.http_utils.router_worker_base_urls`）。
 
 刻意不做（B-5b 明示，首版）：rid → worker 粘滞表、`X-SMG-Routing-Key` 定向路由、
 dead-engine 回池、`/remove_worker` 弹性回收、service discovery——任一 engine 死亡 = 停 run
@@ -188,8 +191,13 @@ class MilesRouterWorkerClient:
     # -- 接缝：启动时已核对的 worker 集合 ---------------------------------------------
 
     def set_verified_workers(self, urls: Iterable[str]) -> tuple[str, ...]:
-        """bringup 接线点：启动探针阶段核对过的 worker URL 集合（`startup_evidence.router_workers.urls`）。
-        规整（去 `@rank`、去重、去尾斜杠）后保存；返回保存的元组。空集合 = 无核对集合。"""
+        """bringup 接线点：启动探针阶段**数量核对已通过**的 worker URL 集合
+        （`startup_evidence.router_workers.urls`，且该段 `verified: true`）。规整（去 `@rank`、去重、
+        去尾斜杠）后保存；返回保存的元组。空集合 = 无核对集合。
+
+        调用方合同：**不得下发未核对/不完整的集合**——本类会把"集合里每个 URL 都 2xx"直接判成
+        `delivered`，集合缺一台 engine 就等于把一次实际没到持有者的 abort 报成已证明到达。
+        """
 
         self._verified_workers = tuple(worker_base_urls(urls))
         return self._verified_workers
