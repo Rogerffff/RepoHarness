@@ -229,9 +229,20 @@ async def test_f2_protect_reporting_zero_protected_and_missing_file_blocks_candi
     }
     manager, report = await _graded_with(tmp_path, docker)
     _assert_typed_infra_no_reward(
-        manager, report, docker, detail_contains="grading_control_surface_protect_failed:protected_count_mismatch"
+        manager, report, docker, detail_contains="grading_control_surface_protect_failed:official_test_file_missing"
     )
     assert manager.container_records[-1].control_surface["MISSING_FILES"] == "tests/test_thing.py,"
+
+
+async def test_f2_protect_claiming_more_protected_files_than_setup_saw_blocks_candidate_test(tmp_path):
+    """权限脚本报出的受保护数比可信 setup 数出的在位数还多（凭空多保护了一个）：两侧事实分家，拒。"""
+
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log=GOOD_FAKE_LOG)
+    docker.profile_fake.protect_facts_override = {"PROTECTED_FILES": "2"}
+    manager, report = await _graded_with(tmp_path, docker)
+    _assert_typed_infra_no_reward(
+        manager, report, docker, detail_contains="grading_control_surface_protect_failed:protected_count_mismatch"
+    )
 
 
 async def test_f2_protect_reporting_symlink_official_test_file_blocks_candidate_test(tmp_path):
@@ -258,9 +269,11 @@ async def test_f2_protect_expected_count_mismatch_blocks_candidate_test(tmp_path
     )
 
 
-async def test_f2_official_test_patch_deleting_a_test_file_still_grades(tmp_path):
-    """正例（不许新增系统性拒绝面）：official test_patch 删掉清单里的一个测试文件时，
-    "缺失数"由可信 setup 在 apply 成功之后如实数出，权限布置只需保护剩下那一个——照常评分。"""
+async def test_f2_official_test_path_missing_after_setup_blocks_candidate_test(tmp_path):
+    """codex Wave3 §10.2 纠正：official patch 删除/改名导致清单里某个路径在 setup 之后不在位时，
+    **不再放行**。理由是 sticky 祖先目录只挡"改写/删除已存在条目"，挡不住候选在这个缺失的名字上
+    新建文件，而候选测试命令又会把旧路径一起传给 runner——真 Docker 反例见
+    `test_w3b_grader_profile_docker.py::test_f2_missing_official_path_is_recreatable_by_candidate_so_grading_stops_first`。"""
 
     docker = ProfileGraderFakeDocker(
         base_commit=BASE_COMMIT, eval_log=GOOD_FAKE_LOG,
@@ -275,5 +288,7 @@ async def test_f2_official_test_patch_deleting_a_test_file_still_grades(tmp_path
         test_globs=FIXTURE_HYGIENE.test_globs, forbidden_globs=FIXTURE_HYGIENE.forbidden_globs,
     )
     manager, report = await _graded_with(tmp_path, docker, hygiene=hygiene)
-    assert report.outcome == "resolved" and report.reward == 1.0
-    assert _ran_candidate_test(docker)
+    _assert_typed_infra_no_reward(
+        manager, report, docker,
+        detail_contains="grading_trusted_setup_failed:official_test_file_missing_after_setup",
+    )

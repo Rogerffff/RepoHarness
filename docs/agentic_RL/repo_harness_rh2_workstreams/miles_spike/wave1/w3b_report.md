@@ -363,3 +363,71 @@ uv run ruff check <本批改动文件>               # All checks passed!
 - §12.1 "完整 eval_script 与两段拆分脚本**由同一组行构成**"在可信 setup 半段**不再成立**：profile 路径的 setup 脚本多了逐文件恢复循环、`RH2_APPLY_RC` 捕获与自证尾段。`render_v2_eval_script`（legacy 无 profile 路径执行的那份）与 `render_v2_candidate_test_script` **文本逐字未变**，W3a 冻结面与 s1_compat 不受影响。
 - §12.1 "不达标 = `GradingInfraError("grading_control_surface_protect_failed")`"仍成立，但判据从"只看 `RH2_PROTECT_OK`"扩到 §13.2 的六条，并新增了对称的 setup 判据。
 - **开放问题（本批不修，登记）**：候选测试命令是 `eval_cmd <hygiene.test_files 全部路径>`。若 official test_patch 删掉清单里的某个测试文件，该路径仍会被传给测试运行器（官方 swebench 脚本同样如此），可能让运行器报 usage error。本批的判据不会因此误判（缺失是合法的），但这类任务的**日志形态**是否被官方 parser 正确处理，需要在 T2-d/W3a 的真实镜像验证里覆盖。
+
+## 14. codex Wave3 最终窄复核 §10.2 的纠正（2026-09-04，append-only）
+
+**这一节纠正 §13.2 里那处"偏离 codex 建议"的 T1**——上一轮认为"official patch 删除/改名测试文件时，只要 setup 与权限布置数出的缺失数相等就可以继续评分"，**不成立，已撤回**。
+
+### 14.1 为什么原判据不安全（codex §10.2 实测）
+
+D2-3 不变量有两半：在位的 official test 内容对候选不可改，**并且**"official patch 规定为不存在的 official 路径必须保持不存在"。上一轮只保住了前一半：
+
+- 权限布置把 official test 文件的祖先目录设成 `root:root 1777`。**sticky 位只阻止候选删除/改名别人已存在的条目，不阻止它在一个原本缺失的名字上新建文件。**
+- 候选测试命令又把 `hygiene.test_files` 的**全部**路径（含被删除的旧路径）传给 runner。
+- codex 实测：按生产权限形状，候选 uid 54322 成功创建 `/testbed/tests/deleted_official_test.py`（644、属候选）；在真实 SWE 镜像 `swebench/sweb.eval.x86_64.scikit-learn_1776_scikit-learn-14629:latest` 里跑生产 `grader_protect_control_surface_script`，"一个在位 + 一个缺失"返回 rc=0 且 `RH2_PROTECT_OK=1`，候选随后重建了缺失路径；更强形状里 base `conftest.py` 在 pytest 初始化时导入候选模块、候选重建缺失的 official 文件，vendor pytest 真的收集并执行了它（`2 passed` / rc=0）。
+- 另一方面，常见 pytest 形状直接传入被删除的旧路径会 `ERROR: file or directory not found` → `no tests ran`。所以"删除/改名仍可评分"这个能力**本来也没实现**，只是没被证明安全。
+- 上一轮那条 FakeDocker 正例（手填 attest + `GOOD_FAKE_LOG`）不构成运行时证据：它没跑生产权限脚本、没用候选 uid、没跑 runner。
+
+### 14.2 fail-closed 判据的落点
+
+当前 SWE profile 要求 setup 与权限布置**两侧缺失数均为 0**：
+
+| 层 | 位置 | 判据 |
+|---|---|---|
+| 可信 setup 脚本 | `sandbox_profile.grader_trusted_setup_attest_lines` | `[ "$RH2_ABSENT" = "0" ]` 不成立 → 写 `RH2_SETUP_ERROR=official_test_file_missing_after_setup:<n>` 并 `exit 3`，不写 `RH2_SETUP_OK=1` |
+| manager 复核 setup | `manager._check_trusted_setup_attest` | `RH2_SETUP_ABSENT_TEST_FILES != 0` 或 `RH2_SETUP_TEST_FILES != 期望总数` → 原因码 `official_test_file_missing_after_setup` |
+| 权限脚本 | `sandbox_profile.grader_protect_control_surface_script` | `[ "$MISSING_N" = "0" ]` 不成立 → `RH2_PROTECT_ERROR=official_test_file_missing:<清单>` 并 `exit 5`；`[ "$PROTECTED" -eq "$EXPECTED" ]` 不成立 → `coverage_mismatch` 并 `exit 5`（原来是 `PROTECTED+MISSING_N == EXPECTED`） |
+| manager 复核权限 | `manager._check_control_surface_attest` | `MISSING_FILES_COUNT != 0` 或 setup 报的缺失数 `!= 0` → 原因码 `official_test_file_missing`；`PROTECTED_FILES` 必须同时等于 setup 数出的在位数**和**期望总数，否则 `protected_count_mismatch` |
+
+命中任意一条 → 既有 typed grading-infra 通道（`GradingInfraError` → `outcome=failed_to_grade`、`failure_category=infra_failure`、`reward=None`），**候选测试零执行**。未新增 reward 规则、未改 `contracts/`。official patch **新增**测试文件不受影响（apply 成功后已在位，`RH2_ABSENT` 仍是 0）。
+
+### 14.3 冻结 216 题的可评分性统计（本轮复核，与 codex 一致）
+
+对 `docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl` 逐条解析 `test_patch`（用生产的 `split_patch_segments`；新增 = 段内出现 `new file mode` 或 `--- /dev/null`，删除 = `deleted file mode` 或 `+++ /dev/null`，改名 = `rename from/to` 或段头 `a/`≠`b/`）：
+
+```
+题数 = 216
+新增文件的题数 = 8   （Project-MONAI__MONAI-2454 / MONAI-3690 / conan-io__conan-11594 /
+                      getmoto__moto-5885 / moto-7607 / iterative__dvc-3665 / dvc-6954 / python__mypy-15184）
+删除文件的题数 = 0
+改名的题数     = 0
+```
+
+因此"缺失即拒"对当前 216 题**零可评分性损失**；它只是诚实地暂不宣称支持尚未验证的删除/改名形状。
+
+### 14.4 反例测试（全部实跑通过）
+
+**真 Docker（新增 1 例）**：`tests/grading/test_w3b_grader_profile_docker.py::test_f2_missing_official_path_is_recreatable_by_candidate_so_grading_stops_first`，两半——
+
+- 上半（为什么必须 fail-closed）：真实容器里按**生产**权限脚本处理"一个在位 + 一个缺失"的 official 清单：脚本 rc≠0、不写 `RH2_PROTECT_OK`、如实给出 `MISSING_FILES=tests/deleted_official_test.py,` / `MISSING_FILES_COUNT=1` / `PROTECTED_FILES=1` / `TESTBED_STAT=0 1777`；随后以候选 uid 54322 **实际重建**该缺失路径并成功（`stat` = `54322 644`），而在位 official 文件的截断写仍被拒——直接坐实"sticky 目录保不住应缺路径"。
+- 下半（所以评分链先停）：同形状的真实 `grade()` → `failed_to_grade` / `reward=None`，`RecordingDocker` 断言以候选 uid 跑 eval 脚本的 exec 一次都没发生，日志无 `>>>>> Start Test Output`，含 `RH2_SETUP_ERROR=official_test_file_missing_after_setup:1`，`control_surface is None`。
+
+**改判的既有反例**：`test_f2_official_test_file_missing_after_setup_blocks_candidate_test` 的原因码从 `no_official_test_file_present` 改为 `official_test_file_missing_after_setup:1`；`test_f2_protect_step_rejects_missing_official_test_file_it_was_told_to_protect` 现在由**权限脚本自己** `exit 5`（`protect_exit_code` + `official_test_file_missing:tests/test_thing.py,`），不再出现 `RH2_PROTECT_OK=1`。
+
+**删除/改写的 FakeDocker 正例**：`test_f2_official_test_patch_deleting_a_test_file_still_grades` 已删除，改写为反例 `test_f2_official_test_path_missing_after_setup_blocks_candidate_test`（同一形状现在必须 typed 停止）；另新增 `test_f2_protect_claiming_more_protected_files_than_setup_saw_blocks_candidate_test`（权限脚本凭空多报一个受保护文件 → `protected_count_mismatch`）。
+
+**继续通过的既有用例**：setup apply 失败、缺自证、清单数量不符、symlink/目录、在位文件六路改写（截断/unlink/rename/目录 rename/同路径重建/chmod）、A/Z import 副作用改不了后执行的测试、编译缓存与构建目录写入不误伤、resolved / tests_failed 正常语义、`scripts/sandbox_probes` 副本与包内文本逐字一致。
+
+### 14.5 将来若真要支持删除/改名（本轮不建）
+
+由该 environment adapter 负责，而不是在这里做通用平台：① 明确声明"apply 后**实际执行**的路径集"，不再把旧路径传给 runner；② 用 root 属主 tombstone（例如 root:root 0000 占位条目）、只读挂载或等价机制，保证"应当不存在"的路径不可被候选重建；③ 用真实 runner 形状实测。§10.3 指出的相邻边界（只命中 `test_globs` 的测试辅助文件、`conftest.py` / `pytest.ini` 等通用 evaluator 控制面仍归候选所有）同样归最终 environment adapter，在 taskset 确定后声明并实测——本轮不越权重开，口径保持：Wave3 只能声称完成当前 **exact official-file** 边界。
+
+### 14.6 测试证据（2026-09-04 实跑）
+
+```
+uv run pytest tests/grading tests/adapters/test_w3b_sandbox_docker.py tests/adapters/test_w3b_sandbox_profile.py -q   # 169 passed
+uv run pytest tests/ -q                    # 1761 passed, 310 skipped
+uv run ruff check src/repoharness2 tests   # All checks passed!
+```
+
+全仓计数 1759 → 1761（+2 = 真 Docker 反例 +1、替身反例 +1；上一轮的 FakeDocker 正例改写成反例，数量不变）。本机 Docker 零残留（无 `rh2-*` 容器/网络；新反例自带 `docker rm -f` 的 finally 清理）。`scripts/sandbox_probes/grader-protect-control-surface.sh` 已重新 dump。

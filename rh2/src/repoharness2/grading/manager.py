@@ -785,13 +785,17 @@ def _check_trusted_setup_attest(
     3. `RH2_SETUP_APPLY_RC=0`（manager 侧独立复核 apply 结果，不只信 OK 行）；
     4. `RH2_SETUP_EXPECTED_TEST_FILES` 与 manager 按 `spec.hygiene.test_files` 去重后算出的数量相等
        ——脚本里内嵌的 official test 清单必须就是本次评分 spec 的那一份，两侧分家即拒；
-    5. 在位普通文件数 ≥ 1，且"在位 + 不存在 = 期望总数"（脚本的分类循环覆盖了整份清单，没有漏项）。
+    5. **缺失数为 0**，且在位普通文件数恰好等于期望总数（脚本的分类循环覆盖了整份清单，一个不缺）。
 
-    为什么"不存在"不当失败：`hygiene.test_files` 取自 `patch_touched_paths(test_patch)`，
-    也就是 `diff --git a/X b/Y` 两侧路径，因此被 official test_patch **删除**或**改名**掉的测试
-    文件也在清单里，正常任务跑完 setup 后本来就不该存在。可信来源是"official `git apply` 成功"，
-    加上"base 里存在的文件 checkout 失败即整段失败"——两条一起保证剩下的缺失只可能是 official
-    patch 自己规定的。反之，若把"缺一个就拒"当判据，会把这类正常任务系统性判成不可评分。"""
+    为什么"不存在"也算失败（codex Wave3 §10.2 对上一轮判据的纠正）：`hygiene.test_files` 取自
+    `patch_touched_paths(test_patch)`，也就是 `diff --git a/X b/Y` 两侧路径，因此被 official test_patch
+    **删除**或**改名**掉的测试文件也在清单里，apply 之后确实可能有路径不在位。上一轮曾按"setup 与
+    权限布置数出的缺失数相等就放行"，但那保不住不变量的另一半——**"official patch 规定为不存在的
+    路径必须保持不存在"**：权限布置把祖先目录设成 root:root 1777，sticky 位只阻止候选删除/改名
+    别人已存在的条目，不阻止它在缺失的名字上**新建**文件；候选测试命令又把含旧路径的整份清单传给
+    runner。codex 在真实 SWE 镜像里实测候选 uid 能重建缺失路径，并让 vendor pytest 真的收集执行它。
+    因此本 profile 直接要求缺失数为 0：official patch **新增**测试文件不受影响（apply 成功后已在位），
+    只是暂不支持"最终结果仍缺路径"的删除/改名形状（冻结的 216 题实测删除 0、改名 0，无可评分性损失）。"""
 
     if exit_code != 0:
         return "setup_exit_code"
@@ -803,10 +807,13 @@ def _check_trusted_setup_attest(
         return "official_test_file_list_mismatch"
     present = _count_field(facts, "RH2_SETUP_TEST_FILES")
     absent = _count_field(facts, "RH2_SETUP_ABSENT_TEST_FILES")
-    if present is None or absent is None or present < 1 or present + absent != expected_total:
+    if present is None or absent is None or present + absent != expected_total:
         return "official_test_files_not_accounted"
     if facts.get("RH2_SETUP_IRREGULAR_TEST_FILES", "?") != "":
         return "official_test_file_not_regular"
+    if absent != 0 or present != expected_total:
+        # 缺失即拒（§10.2）：sticky 目录挡不住候选在"应当不存在"的 official 路径上新建文件。
+        return "official_test_file_missing_after_setup"
     return None
 
 
@@ -822,11 +829,10 @@ def _check_control_surface_attest(
     2. `EXPECTED_FILES` 等于 manager 按 spec 算出的去重后 official test 文件数（脚本清单 = spec 清单）；
     3. `IRREGULAR_FILES` 为空——official test 路径上出现 symlink/目录一律拒（symlink 目标可被改写，
        "保护住了 symlink 本身"不等于保护住被执行的测试）；
-    4. `PROTECTED_FILES` 精确等于可信 setup 在 official patch 成功应用之后数出的在位普通文件数，
-       且 `MISSING_FILES_COUNT` 精确等于 setup 数出的缺失数。也就是说：本次真正要执行的每一个
-       official test 文件都已经是 root 属主只读普通文件，一个都不能少、也不能多出来源不明的一个。
-       正常任务（official patch 不删测试文件）下 setup 的缺失数为 0，这两条就退化成
-       "`PROTECTED_FILES == 去重后的 official test 文件数` 且 `MISSING_FILES` 为空"。"""
+    4. `MISSING_FILES_COUNT` 为 0（§10.2：缺失即拒），且 `PROTECTED_FILES` 精确等于去重后的
+       official test 文件数，同时与可信 setup 在 official patch 成功应用之后数出的在位普通文件数一致。
+       也就是说：清单里的每一个 official test 文件都已经是 root 属主只读普通文件，一个都不能少、
+       也不能多出来源不明的一个。"""
 
     if exit_code != 0:
         return "protect_exit_code"
@@ -842,7 +848,9 @@ def _check_control_surface_attest(
     absent_after_setup = _count_field(setup_facts, "RH2_SETUP_ABSENT_TEST_FILES")
     if protected is None or missing is None or present_after_setup is None or absent_after_setup is None:
         return "protect_counts_unreadable"
-    if protected != present_after_setup or missing != absent_after_setup:
+    if missing != 0 or absent_after_setup != 0:
+        return "official_test_file_missing"
+    if protected != present_after_setup or protected != expected_total:
         return "protected_count_mismatch"
     return None
 

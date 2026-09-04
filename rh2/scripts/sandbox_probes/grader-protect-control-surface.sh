@@ -43,5 +43,6 @@ echo "EXPECTED_FILES=$EXPECTED"; echo "PROTECTED_FILES=$PROTECTED"; echo "PROTEC
 echo "MISSING_FILES=$MISSING"; echo "MISSING_FILES_COUNT=$MISSING_N"; echo "IRREGULAR_FILES=$IRREGULAR"
 echo "TESTBED_STAT=$(stat -c '%u %a' -- "$TB")"
 [ -z "$IRREGULAR" ] || { echo "RH2_PROTECT_ERROR=official_test_file_not_regular:$IRREGULAR"; exit 5; }
-[ $((PROTECTED+MISSING_N)) -eq "$EXPECTED" ] || { echo "RH2_PROTECT_ERROR=coverage_mismatch:$PROTECTED+$MISSING_N!=$EXPECTED"; exit 5; }
+[ "$MISSING_N" = "0" ] || { echo "RH2_PROTECT_ERROR=official_test_file_missing:$MISSING"; exit 5; }
+[ "$PROTECTED" -eq "$EXPECTED" ] || { echo "RH2_PROTECT_ERROR=coverage_mismatch:$PROTECTED!=$EXPECTED"; exit 5; }
 echo "RH2_PROTECT_OK=1"

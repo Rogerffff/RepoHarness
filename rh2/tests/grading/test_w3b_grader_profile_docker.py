@@ -398,7 +398,8 @@ async def test_f2_official_test_patch_apply_failure_blocks_candidate_test(fixtur
 
 
 async def test_f2_official_test_file_missing_after_setup_blocks_candidate_test(fixture_repo, fixture_image, make_workspace, tmp_path):
-    """反例 (b1)：official test 文件在 setup 之后不在位（此处：唯一的一个被删掉）——拒。"""
+    """反例 (b1)：official test 文件在 setup 之后不在位（此处：唯一的一个被删掉）——拒。
+    codex Wave3 §10.2 之后"缺失"本身就是失败判据，不再要求"一个都不剩"才拒。"""
 
     ws = make_workspace()
     (ws / "src" / "thing.py").write_text(SRC_FIXED)
@@ -412,7 +413,7 @@ async def test_f2_official_test_file_missing_after_setup_blocks_candidate_test(f
     )
     log = _eval_log(manager, report)
     _assert_blocked(manager, report, docker, log, detail_contains="grading_trusted_setup_failed:setup_exit_code")
-    assert "RH2_SETUP_ERROR=no_official_test_file_present" in log
+    assert "RH2_SETUP_ERROR=official_test_file_missing_after_setup:1" in log
     _no_leftover(manager)
 
 
@@ -441,8 +442,9 @@ async def test_f2_official_test_file_symlink_is_rejected_by_protect_step(fixture
 
 
 async def test_f2_protect_step_rejects_missing_official_test_file_it_was_told_to_protect(fixture_repo, fixture_image, make_workspace, tmp_path):
-    """反例 (b3)：可信 setup 谎报"1 个 official test 在位"，实际文件不存在——权限脚本数出
-    `PROTECTED_FILES=0` / `MISSING_FILES=tests/test_thing.py,`，manager 与 setup 自证比对后拒绝。"""
+    """反例 (b3)：可信 setup 谎报"1 个 official test 在位"，实际文件不存在——真实权限脚本数出
+    `PROTECTED_FILES=0` / `MISSING_FILES=tests/test_thing.py,` 并自行 `exit 5`（§10.2：缺失即拒），
+    manager 随后也与 setup 自证比对不上。这是 codex 原样反例（`PROTECTED_FILES=0` 却给 reward）的生产路径版。"""
 
     ws = make_workspace()
     (ws / "src" / "thing.py").write_text(SRC_FIXED)
@@ -455,8 +457,89 @@ async def test_f2_protect_step_rejects_missing_official_test_file_it_was_told_to
     )
     log = _eval_log(manager, report)
     _assert_blocked(manager, report, docker, log,
-                    detail_contains="grading_control_surface_protect_failed:protected_count_mismatch")
+                    detail_contains="grading_control_surface_protect_failed:protect_exit_code")
+    assert "official_test_file_missing:tests/test_thing.py," in report.infra_failure_detail
     record = manager.container_records[-1]
     assert record.control_surface["PROTECTED_FILES"] == "0"
-    assert record.control_surface["MISSING_FILES"] == "tests/test_thing.py," and record.control_surface["RH2_PROTECT_OK"] == "1"
+    assert record.control_surface["MISSING_FILES"] == "tests/test_thing.py,"
+    assert "RH2_PROTECT_OK" not in record.control_surface  # 判据没过就不写 OK
+    _no_leftover(manager)
+
+
+async def test_f2_missing_official_path_is_recreatable_by_candidate_so_grading_stops_first(
+    fixture_repo, fixture_image, make_workspace, tmp_path
+):
+    """codex Wave3 §10.2 的纠正反例（真实容器，两半）：
+
+    上半（为什么必须 fail-closed）：按**生产权限脚本**处理"一个在位 + 一个缺失"的 official 清单——
+    脚本把祖先目录设成 root:root 1777 之后，候选 uid 依然能在那个**缺失的名字**上新建文件
+    （sticky 位只阻止删除/改名别人已存在的条目，不阻止新建）。也就是说"official patch 规定为不存在
+    的路径保持不存在"这半条不变量，靠 sticky 目录根本保不住。
+
+    下半（所以评分链在候选测试之前就停）：同样形状的一次真实 `grade()` 必须走 typed grading-infra
+    （`failed_to_grade` / `reward=None`），候选测试零执行——即使候选真能重建那个路径，也到不了 runner。
+    """
+
+    # —— 上半：生产权限形状下，候选 uid 能重建缺失路径 ——
+    name = f"rh2-f2-recreate-{tmp_path.name[:8]}"
+    subprocess.run(["docker", "rm", "-f", name], capture_output=True, timeout=60)
+    run = subprocess.run(
+        ["docker", "run", "-d", "--name", name, "--entrypoint", "sleep", fixture_image, "300"],
+        capture_output=True, text=True, timeout=120,
+    )
+    assert run.returncode == 0, run.stderr
+    try:
+        setup = (
+            "mkdir -p /testbed/tests && echo 'print(\"PASSED tests/present.py::t\")' > /testbed/tests/present.py"
+        )
+        assert subprocess.run(["docker", "exec", name, "bash", "-c", setup], capture_output=True, timeout=60).returncode == 0
+        protect = sandbox_profile_mod.grader_protect_control_surface_script(
+            GRADER, ("tests/present.py", "tests/deleted_official_test.py")
+        )
+        got = subprocess.run(["docker", "exec", name, "bash", "-c", protect], capture_output=True, text=True, timeout=120)
+        facts = sandbox_profile_mod.parse_key_value_output(got.stdout)
+        # 权限脚本现在自己就拒（§10.2）：缺失非 0 → 不写 RH2_PROTECT_OK=1
+        assert got.returncode != 0 and "RH2_PROTECT_OK" not in facts, got.stdout
+        assert facts["MISSING_FILES"] == "tests/deleted_official_test.py," and facts["MISSING_FILES_COUNT"] == "1"
+        assert facts["PROTECTED_FILES"] == "1" and facts["TESTBED_STAT"] == "0 1777"
+        # 但目录形状（root:root 1777）已经布置好了——候选 uid 仍能把缺失路径重建出来
+        stat = subprocess.run(
+            ["docker", "exec", "-u", str(UID), name, "bash", "-c",
+             "cd /testbed && echo 'print(\"PASSED x::y\")' > tests/deleted_official_test.py"
+             " && stat -c '%u %a' tests/deleted_official_test.py"],
+            capture_output=True, text=True, timeout=60,
+        )
+        assert stat.returncode == 0 and stat.stdout.strip() == f"{UID} 644", (stat.stdout, stat.stderr)
+        # 对照：在位的 official 文件仍然改不动（保护本身没退化）
+        deny = subprocess.run(
+            ["docker", "exec", "-u", str(UID), name, "bash", "-c", "cd /testbed && : > tests/present.py"],
+            capture_output=True, text=True, timeout=60,
+        )
+        assert deny.returncode != 0
+    finally:
+        subprocess.run(["docker", "rm", "-f", name], capture_output=True, timeout=60)
+
+    # —— 下半：同形状的真实评分必须在候选测试之前 typed 停止 ——
+    ws = make_workspace()
+    (ws / "src" / "thing.py").write_text(SRC_FIXED)
+    docker = RecordingDocker()
+    manager = _manager(tmp_path, docker)
+    hygiene = HygieneRules(
+        test_files=("tests/test_thing.py", "tests/deleted_official_test.py"),
+        test_globs=FIXTURE_HYGIENE.test_globs, forbidden_globs=FIXTURE_HYGIENE.forbidden_globs,
+    )
+    report = await manager.grade(
+        trajectory_id="w3b-missing-path", workspace=HostWorkspace(ws),
+        spec=_spec(fixture_repo, fixture_image, hygiene=hygiene,
+                   trusted_setup_script=make_trusted_setup_script(
+                       fixture_repo.base_commit,
+                       test_files=("tests/test_thing.py", "tests/deleted_official_test.py"))),
+    )
+    log = _eval_log(manager, report)
+    _assert_blocked(manager, report, docker, log,
+                    detail_contains="grading_trusted_setup_failed:setup_exit_code")
+    assert "RH2_SETUP_ERROR=official_test_file_missing_after_setup:1" in log
+    record = manager.container_records[-1]
+    assert record.trusted_setup["RH2_SETUP_ABSENT_TEST_FILES"] == "1"
+    assert "RH2_SETUP_OK" not in record.trusted_setup and record.control_surface is None
     _no_leftover(manager)

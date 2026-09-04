@@ -549,9 +549,9 @@ def test_f2_protect_script_covers_files_and_every_ancestor_and_rejects_bad_paths
 
 
 def test_f2_protect_script_self_attests_coverage_before_declaring_ok():
-    """codex Wave3 §9.2：权限脚本必须自证"覆盖面完整"才输出 RH2_PROTECT_OK=1——
+    """codex Wave3 §9.2 + §10.2：权限脚本必须自证"覆盖面完整"才输出 RH2_PROTECT_OK=1——
     去重后的期望数写死在脚本里；symlink/目录一律进 IRREGULAR_FILES 并直接失败；
-    受保护数 + 缺失数对不上期望数也失败。"""
+    **缺失数必须为 0**（sticky 目录挡不住候选在缺失的名字上新建文件），受保护数必须精确等于期望数。"""
 
     g = make_grader_profile()
     script = sp.grader_protect_control_surface_script(g, ("tests/test_a.py", "pkg/sub/tests/test_b.py", "tests/test_a.py"))
@@ -562,7 +562,8 @@ def test_f2_protect_script_self_attests_coverage_before_declaring_ok():
     # 判据在 RH2_PROTECT_OK=1 之前，且 OK 是脚本最后一行
     ok_at = script.index('echo "RH2_PROTECT_OK=1"')
     assert script.index('[ -z "$IRREGULAR" ]') < ok_at
-    assert script.index('[ $((PROTECTED+MISSING_N)) -eq "$EXPECTED" ]') < ok_at
+    assert script.index('[ "$MISSING_N" = "0" ]') < ok_at
+    assert script.index('[ "$PROTECTED" -eq "$EXPECTED" ]') < ok_at
     assert script.rstrip().endswith('echo "RH2_PROTECT_OK=1"')
     # 自证事实先落地（失败时也留证据）
     for key in ("EXPECTED_FILES=", "PROTECTED_FILES=", "MISSING_FILES=", "MISSING_FILES_COUNT=", "IRREGULAR_FILES="):
@@ -581,7 +582,8 @@ def test_f2_trusted_setup_attest_lines_gate_apply_result_and_file_shape():
     assert 'echo "RH2_SETUP_EXPECTED_TEST_FILES=1"' in text  # 去重后 1 个
     assert "for f in tests/test_a.py; do" in text
     ok_at = text.index('echo "RH2_SETUP_OK=1"')
-    for gate in ('[ "$RH2_APPLY_RC" = "0" ]', '[ -z "$RH2_IRREGULAR" ]', '[ "$RH2_PRESENT" -ge 1 ]'):
+    for gate in ('[ "$RH2_APPLY_RC" = "0" ]', '[ -z "$RH2_IRREGULAR" ]',
+                 '[ "$RH2_ABSENT" = "0" ]', '[ "$RH2_PRESENT" -ge 1 ]'):
         assert text.index(gate) < ok_at, gate
     # 缺省 fail-closed：调用方忘了给 apply 返回码时按失败算
     assert "RH2_APPLY_RC=${RH2_APPLY_RC:-1}" in text

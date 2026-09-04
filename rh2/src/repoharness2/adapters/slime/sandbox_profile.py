@@ -1187,12 +1187,18 @@ def grader_trusted_setup_attest_lines(official_test_files: Sequence[str]) -> lis
        manager 另起一条 root exec 读回判定；
     3. 必需判据不满足就 `exit 3`，且不输出 `RH2_SETUP_OK=1`——候选测试根本不会被启动。
 
-    为什么"文件不存在"不算失败：`hygiene.test_files` 来自 `patch_touched_paths(test_patch)`，
-    它取的是 `diff --git a/X b/Y` 两侧路径，因此 official test_patch **删除**或**改名**掉的测试文件
-    也在清单里，正常任务跑完 setup 后它们本来就不该存在。判据的可信来源是"official `git apply` 成功"：
-    恢复基线时 base 里存在的文件必须 checkout 成功（调用方硬失败），apply 又必须成功，这两条一起
-    保证剩下的缺失只可能是 official patch 自己规定的缺失。反过来，如果把"缺一个就拒"当判据，
-    会系统性地把这类正常任务全判成不可评分（新增系统性拒绝面）。"""
+    为什么"文件不存在"也算失败（codex Wave3 §10.2 纠正）：`hygiene.test_files` 来自
+    `patch_touched_paths(test_patch)`，取的是 `diff --git a/X b/Y` 两侧路径，因此 official test_patch
+    **删除**或**改名**掉的测试文件也在清单里，apply 之后确实可能有路径不在位。曾经放行过这种缺失
+    （只要 setup 与权限布置数出的缺失数相等），但那保不住"删除事实对候选不可改"：权限布置把祖先目录
+    设成 root:root 1777，sticky 位只阻止候选删除/改名**别人已存在**的条目，**不阻止它在原本缺失的
+    名字上新建文件**；候选测试命令又会把包含旧路径的整份清单传给 runner。codex 在真实 SWE 镜像里实测：
+    候选 uid 54322 能重建缺失的 official 路径，且在 `conftest.py` 早于参数处理加载 candidate 模块的
+    形状下，vendor pytest 会真的收集并执行这个由候选提供的文件。所以本 profile 直接要求
+    `RH2_SETUP_ABSENT_TEST_FILES = 0`：official patch **新增**文件不受影响（apply 成功后已在位），
+    只是暂不支持"最终结果仍缺路径"的删除/改名形状——对冻结的 216 题实测为删除 0 题、改名 0 题，
+    无可评分性损失。将来真要支持，由该 environment adapter 明确 apply 后的实际执行路径集（不向 runner
+    传旧路径）并用 root 属主 tombstone / 只读挂载保证应缺路径不可重建。"""
 
     files = _validate_control_surface_paths(official_test_files)
     quoted = " ".join(shlex.quote(f) for f in files)
@@ -1216,6 +1222,8 @@ def grader_trusted_setup_attest_lines(official_test_files: Sequence[str]) -> lis
         'cat "$RH2_ATTEST"',
         '[ "$RH2_APPLY_RC" = "0" ] || { echo "RH2_SETUP_ERROR=official_test_patch_apply_failed:$RH2_APPLY_RC" | tee -a "$RH2_ATTEST"; exit 3; }',
         '[ -z "$RH2_IRREGULAR" ] || { echo "RH2_SETUP_ERROR=official_test_file_not_regular:$RH2_IRREGULAR" | tee -a "$RH2_ATTEST"; exit 3; }',
+        # 缺失即拒（§10.2）：sticky 目录挡不住候选在"应当不存在"的名字上新建文件。
+        '[ "$RH2_ABSENT" = "0" ] || { echo "RH2_SETUP_ERROR=official_test_file_missing_after_setup:$RH2_ABSENT" | tee -a "$RH2_ATTEST"; exit 3; }',
         '[ "$RH2_PRESENT" -ge 1 ] || { echo "RH2_SETUP_ERROR=no_official_test_file_present" | tee -a "$RH2_ATTEST"; exit 3; }',
         'echo "RH2_SETUP_OK=1" | tee -a "$RH2_ATTEST"',
     ]
@@ -1231,7 +1239,10 @@ def grader_protect_control_surface_script(profile: GraderSandboxProfile, officia
        里新建文件（pytest 的 `__pycache__`/临时产物不误伤），但对 root 属主条目 unlink/rename 失败（EPERM），
        也不能把祖先目录 rename 掉再同路径重建。只把文件改只读不够（父目录可写就能 replace）；把目录改 0755
        又会误伤要在测试目录里写文件的任务——sticky 位正好是"可新建、不可替换"的最小手段。
-    自证：脚本末尾用 `stat` 复核每个受保护文件/目录的 uid 与 mode。输出 KEY=VALUE。
+    自证：脚本末尾用 `stat` 复核每个受保护文件/目录的 uid 与 mode，并要求"覆盖面完整"——
+    受保护数必须等于去重后的 official test 文件数、缺失数必须为 0、不能有 symlink/目录（codex Wave3 §10.2：
+    sticky 目录挡不住候选在缺失的名字上新建文件，所以缺失不能放行）。判据全过才输出 `RH2_PROTECT_OK=1`。
+    输出 KEY=VALUE。
     """
 
     files = _validate_control_surface_paths(official_test_files)
@@ -1287,7 +1298,10 @@ def grader_protect_control_surface_script(profile: GraderSandboxProfile, officia
         "echo \"MISSING_FILES=$MISSING\"; echo \"MISSING_FILES_COUNT=$MISSING_N\"; echo \"IRREGULAR_FILES=$IRREGULAR\"\n"
         "echo \"TESTBED_STAT=$(stat -c '%u %a' -- \"$TB\")\"\n"
         "[ -z \"$IRREGULAR\" ] || { echo \"RH2_PROTECT_ERROR=official_test_file_not_regular:$IRREGULAR\"; exit 5; }\n"
-        "[ $((PROTECTED+MISSING_N)) -eq \"$EXPECTED\" ] || { echo \"RH2_PROTECT_ERROR=coverage_mismatch:$PROTECTED+$MISSING_N!=$EXPECTED\"; exit 5; }\n"
+        # 缺失即拒（codex Wave3 §10.2）：本目录是 sticky 而不是只读，候选能在缺失的名字上新建文件，
+        # "保护住了剩下那些"不等于"应当不存在的路径保持不存在"。
+        "[ \"$MISSING_N\" = \"0\" ] || { echo \"RH2_PROTECT_ERROR=official_test_file_missing:$MISSING\"; exit 5; }\n"
+        "[ \"$PROTECTED\" -eq \"$EXPECTED\" ] || { echo \"RH2_PROTECT_ERROR=coverage_mismatch:$PROTECTED!=$EXPECTED\"; exit 5; }\n"
         "echo \"RH2_PROTECT_OK=1\"\n"
     )
 
