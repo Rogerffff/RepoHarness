@@ -24,7 +24,7 @@ P1 数据冻结包 v0.1       ✅ 已完成（即"训练数据预处理"，codex
 P3 八卡预实验            ✅ 已完成（2026-07-08/09 真机，机器已释放。准确口径：
                             训练后端与架构决策完成；formal J4 严格绿灯
                             留待 FA-3 batch 准入落地后随合并短租复验）
-FA fully async 训练链    🔨 进行中 ← ★ 第一实施工作流（05 计划，FA-0~5；
+FA fully async 训练链    ⏸ 自建线冻结（2026-09-02 起主线 = miles 候选链，权威 = 06 计划）← 原第一实施工作流（05 计划，FA-0~5；
                             用户 2026-07-12 定案 fully-async-first）。
                             FA-0 ✅（四契约+真实版本管道+D-FA-6，含 codex
                             审查 follow-up 12 项）；FA-3 离线部分 ✅（预检器
@@ -169,7 +169,7 @@ S1-7b 关闭：routing tape + top-p tape 首次真实进 loss（J4 replay + J5 o
 
 ## 6. 下一阶段：S2 概览与待决策项
 
-**FA 工作流（第一实施工作流，用户 2026-07-12 定案 fully-async-first）**：`05-fully-async-execution-plan.md`。正式训练链 = **version-aware fully async + faithful DIS**（P3 实测尾闲 26~28% 触发升级阈值；GRPO 保持首训算法，DIS 是正确性组件而非可选增量）。任务：FA-0 身份/版本/执行结果契约 → FA-1 持续 worker + proxy 边界（权重更新 abort → **proxy 级 turn 重生成**，用户已拍板）→ FA-2 PromptGroupAssembler + 合格组队列 → FA-3 SlimeBatchAssembler + `build_dp_schedule` 差分预检（原 S2-0b 问题 A~E 迁入，离线部分可先行）→ FA-4 faithful DIS + 逐 token 对拍 → FA-5 故障注入 + 短租集成验收。eval 首版定案：**训中不评，只 before/after**。退出闸门 `rh2_fully_async_training_path_verified`；估计 16~24 人日本地 + 1 次短租。设计依据：`fully_async_rollout_pipeline_design_discussion.md`（codex）+ `training_design/repoharness_sao_dis_grpo_ppo_analysis.md`（算法定案）。
+**FA 工作流（第一实施工作流，用户 2026-07-12 定案 fully-async-first；2026-09-02 起自建 worker/assembler/proxy 面冻结为回退面，主线改为 miles 候选链——见 06 计划 §2 替换条款）**：`05-fully-async-execution-plan.md`。正式训练链 = **version-aware fully async + faithful DIS**（P3 实测尾闲 26~28% 触发升级阈值；GRPO 保持首训算法，DIS 是正确性组件而非可选增量）。任务：FA-0 身份/版本/执行结果契约 → FA-1 持续 worker + proxy 边界（权重更新 abort → **proxy 级 turn 重生成**，用户已拍板）→ FA-2 PromptGroupAssembler + 合格组队列 → FA-3 SlimeBatchAssembler + `build_dp_schedule` 差分预检（原 S2-0b 问题 A~E 迁入，离线部分可先行）→ FA-4 faithful DIS + 逐 token 对拍 → FA-5 故障注入 + 短租集成验收。eval 首版定案：**训中不评，只 before/after**。退出闸门 `rh2_fully_async_training_path_verified`；估计 16~24 人日本地 + 1 次短租。设计依据：`fully_async_rollout_pipeline_design_discussion.md`（codex）+ `training_design/repoharness_sao_dis_grpo_ppo_analysis.md`（算法定案）。
 
 **S2 执行计划（草案，与 FA 并行）**：`04-s2-execution-plan.md`。目标不变：把 S1 闭环加固到"训练信号可信"。S2-0b 已迁出；S2 侧起点 = S2-6 导出器重建与 S2-1 数据 ingestion 并行 → S2-2 安全 Runtime → S2-3/4 anti-cheat → S2-5 红队环境包 → S2-7 TIER_CAP 解除 → S2-8 验收。S2 的 GPU 段（G4/G10）与 FA-5 合并为同一次短租。G1~G10 决策仍待下一轮。`rh2_formal_training_allowed` = FA 闸门 ∧ `rh2_s2_signal_trusted`。
 
