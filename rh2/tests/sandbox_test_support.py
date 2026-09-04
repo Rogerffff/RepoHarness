@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
@@ -223,6 +224,9 @@ class ProfileFakeState:
     network_create_overlap_times: int = 0  # 前 N 次报 "Pool overlaps"
     relay_missing: bool = False  # `network connect` 报 No such container
     trusted_init_fail: bool = False
+    # F2 负例旋钮（codex Wave3 §9.2）：让权限脚本"如实/不如实"地返回任意自证事实
+    protect_facts_override: dict[str, str] = field(default_factory=dict)
+    protect_exit_code: int = 0
     # F4 负例旋钮
     network_ls_fail: bool = False  # `network ls` 查询失败（守护进程不可达）
     network_rm_fail_for: tuple[str, ...] = ()  # 这些网络（或 "*"）`network rm` 失败（active endpoints）
@@ -278,7 +282,7 @@ class ProfileFakeState:
                 user = args[args.index("-u") + 1]
             name = args[args.index("bash") - 1]
             self.exec_scripts.append((name, user, sid))
-            return self._exec_script(sid, user)
+            return self._exec_script(sid, user, script)
         return None
 
     def _network(self, args: tuple[str, ...]) -> ExecResult:
@@ -320,7 +324,7 @@ class ProfileFakeState:
             return ExecResult(0, "".join(n + "\n" for n in self.networks), "")
         raise AssertionError(f"ProfileFakeState 不认识的 network 子命令: {args}")
 
-    def _exec_script(self, sid: str, user: str | None) -> ExecResult:
+    def _exec_script(self, sid: str, user: str | None, script: str = "") -> ExecResult:
         rp = self.rollout_profile
         gp = self.grader_profile
         if sid == "rollout-trusted-init":
@@ -346,7 +350,16 @@ class ProfileFakeState:
             assert gp is not None
             return ExecResult(0, grader_probe_output(gp, overrides=self.grader_probe_overrides), "")
         if sid == "grader-protect-control-surface":
-            return ExecResult(0, "RH2_PROTECT_OK=1\nPROTECTED_FILES=1\nPROTECTED_DIRS=2\nMISSING_FILES=\nTESTBED_STAT=0 1777\n", "")
+            # 期望数从脚本文本里的 `EXPECTED=<n>` 取，替身与真脚本口径一致（真脚本把它写死在头行）。
+            m = re.search(r"^TB=\S+; UIDV=\d+; EXPECTED=(\d+)$", script, re.M)
+            expected = m.group(1) if m else "1"
+            facts = {
+                "EXPECTED_FILES": expected, "PROTECTED_FILES": expected, "PROTECTED_DIRS": "2",
+                "MISSING_FILES": "", "MISSING_FILES_COUNT": "0", "IRREGULAR_FILES": "",
+                "TESTBED_STAT": "0 1777", "RH2_PROTECT_OK": "1",
+            }
+            facts.update(self.protect_facts_override)
+            return ExecResult(self.protect_exit_code, "".join(f"{k}={v}\n" for k, v in facts.items()), "")
         if sid == "storage-quota-probe":
             return ExecResult(0, "QUOTA_ENFORCED=0\n", "")
         if sid == "git-future-probe":

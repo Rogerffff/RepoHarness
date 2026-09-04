@@ -546,3 +546,44 @@ def test_f2_protect_script_covers_files_and_every_ancestor_and_rejects_bad_paths
     for bad in ("../x.py", "/abs/test.py", "a//b.py", "", "a/./b.py"):
         with pytest.raises(sp.SandboxProfileError, match="grader_control_surface_path_invalid"):
             sp.grader_protect_control_surface_script(g, (bad,))
+
+
+def test_f2_protect_script_self_attests_coverage_before_declaring_ok():
+    """codex Wave3 §9.2：权限脚本必须自证"覆盖面完整"才输出 RH2_PROTECT_OK=1——
+    去重后的期望数写死在脚本里；symlink/目录一律进 IRREGULAR_FILES 并直接失败；
+    受保护数 + 缺失数对不上期望数也失败。"""
+
+    g = make_grader_profile()
+    script = sp.grader_protect_control_surface_script(g, ("tests/test_a.py", "pkg/sub/tests/test_b.py", "tests/test_a.py"))
+    assert "EXPECTED=2\n" in script  # 去重后 2 个
+    # 三类分支：普通文件 → 保护并计数；存在但非普通文件 → IRREGULAR；不存在 → MISSING 且计数
+    assert 'elif [ -e "$p" ] || [ -L "$p" ]; then' in script and 'IRREGULAR="$IRREGULAR$f,"' in script
+    assert 'MISSING="$MISSING$f,"; MISSING_N=$((MISSING_N+1))' in script
+    # 判据在 RH2_PROTECT_OK=1 之前，且 OK 是脚本最后一行
+    ok_at = script.index('echo "RH2_PROTECT_OK=1"')
+    assert script.index('[ -z "$IRREGULAR" ]') < ok_at
+    assert script.index('[ $((PROTECTED+MISSING_N)) -eq "$EXPECTED" ]') < ok_at
+    assert script.rstrip().endswith('echo "RH2_PROTECT_OK=1"')
+    # 自证事实先落地（失败时也留证据）
+    for key in ("EXPECTED_FILES=", "PROTECTED_FILES=", "MISSING_FILES=", "MISSING_FILES_COUNT=", "IRREGULAR_FILES="):
+        assert script.index(key) < ok_at
+    assert sp.normalize_official_test_files(("tests/a.py", "tests/a.py", "tests/b.py")) == ("tests/a.py", "tests/b.py")
+
+
+def test_f2_trusted_setup_attest_lines_gate_apply_result_and_file_shape():
+    """codex Wave3 §9.2：可信 setup 的自证尾段——apply 必须成功、official test 路径不能是 symlink/目录、
+    至少一个在位；判据全过才写 RH2_SETUP_OK=1，且自证写进 root 属主文件（不靠 setup 标准输出）。"""
+
+    lines = sp.grader_trusted_setup_attest_lines(("tests/test_a.py", "tests/test_a.py"))
+    text = "\n".join(lines)
+    assert sp.GRADER_TRUSTED_SETUP_ATTEST_PATH == "/rh2/rh2_trusted_setup_attest"
+    assert f"RH2_ATTEST={sp.GRADER_TRUSTED_SETUP_ATTEST_PATH}" in text
+    assert 'echo "RH2_SETUP_EXPECTED_TEST_FILES=1"' in text  # 去重后 1 个
+    assert "for f in tests/test_a.py; do" in text
+    ok_at = text.index('echo "RH2_SETUP_OK=1"')
+    for gate in ('[ "$RH2_APPLY_RC" = "0" ]', '[ -z "$RH2_IRREGULAR" ]', '[ "$RH2_PRESENT" -ge 1 ]'):
+        assert text.index(gate) < ok_at, gate
+    # 缺省 fail-closed：调用方忘了给 apply 返回码时按失败算
+    assert "RH2_APPLY_RC=${RH2_APPLY_RC:-1}" in text
+    with pytest.raises(sp.SandboxProfileError, match="grader_control_surface_path_invalid"):
+        sp.grader_trusted_setup_attest_lines(("../x.py",))

@@ -72,6 +72,7 @@ from typing import Any, Awaitable, Callable, Mapping, Sequence
 
 __all__ = [
     "GRADER_PROFILE_ID",
+    "GRADER_TRUSTED_SETUP_ATTEST_PATH",
     "RELAY_IMAGE_DEFAULT",
     "PROFILE_SCHEMA_ID",
     "ROLLOUT_PROFILE_ID",
@@ -99,10 +100,12 @@ __all__ = [
     "git_sanitize_script",
     "grader_prelaunch_probe_script",
     "grader_protect_control_surface_script",
+    "grader_trusted_setup_attest_lines",
     "grader_profile_from_env",
     "grader_trusted_init_script",
     "list_probe_scripts",
     "main",
+    "normalize_official_test_files",
     "parse_key_value_output",
     "rollout_extended_probe_script",
     "rollout_prelaunch_probe_script",
@@ -1141,6 +1144,15 @@ def grader_trusted_init_script(profile: GraderSandboxProfile) -> str:
     )
 
 
+GRADER_TRUSTED_SETUP_ATTEST_PATH = "/rh2/rh2_trusted_setup_attest"
+"""root 可信 setup 的自证文件路径（容器内）。
+
+为什么不是"从 setup 的标准输出里认自证行"：可信 setup 会打印 `git -c core.fileMode=false diff <base>`，
+而那份 diff 就是**候选自己写的代码**——候选只要在源码里放一行 `RH2_SETUP_OK=1`，就能把自证行伪造进
+setup 日志。自证改写进 root 属主的独立文件、由 manager 用另一条 root exec 读回，候选代码在这一步之前
+根本没运行过，也就没有任何写入口。"""
+
+
 def _validate_control_surface_paths(paths: Sequence[str]) -> list[str]:
     out: list[str] = []
     for raw in paths:
@@ -1152,6 +1164,61 @@ def _validate_control_surface_paths(paths: Sequence[str]) -> list[str]:
         if path not in out:
             out.append(path)
     return out
+
+
+def normalize_official_test_files(paths: Sequence[str]) -> tuple[str, ...]:
+    """official test 文件路径规范化：去重保序 + 非法路径 fail-closed（绝对路径 / `..` / 控制字符）。
+
+    manager 用它算"本次应保护的 official test 文件期望数"，脚本渲染用的是同一个函数——
+    两侧不各算各的，数量对不上就一定是脚本与 spec 分家。"""
+
+    return tuple(_validate_control_surface_paths(paths))
+
+
+def grader_trusted_setup_attest_lines(official_test_files: Sequence[str]) -> list[str]:
+    """root 可信 setup 的**自证尾段**（shell 行；调用方在 `git apply` official test_patch 之后拼上）。
+
+    约定：调用方先把 official test_patch 的 `git apply` 返回码放进 `RH2_APPLY_RC`、把"恢复到基线"
+    成功的文件数放进 `RH2_RESTORED`（两者缺省按 fail-closed 取 1 / 0）。本段做三件事：
+
+    1. 按 official test 文件清单逐个分类——普通文件（可保护）/ 存在但不是普通文件（symlink、目录：一律拒）/
+       不存在（official test_patch 把它删掉或改名走了：合法，见下）；
+    2. 把结果写进 root 属主的自证文件 `GRADER_TRUSTED_SETUP_ATTEST_PATH`（同时打到标准输出留审计），
+       manager 另起一条 root exec 读回判定；
+    3. 必需判据不满足就 `exit 3`，且不输出 `RH2_SETUP_OK=1`——候选测试根本不会被启动。
+
+    为什么"文件不存在"不算失败：`hygiene.test_files` 来自 `patch_touched_paths(test_patch)`，
+    它取的是 `diff --git a/X b/Y` 两侧路径，因此 official test_patch **删除**或**改名**掉的测试文件
+    也在清单里，正常任务跑完 setup 后它们本来就不该存在。判据的可信来源是"official `git apply` 成功"：
+    恢复基线时 base 里存在的文件必须 checkout 成功（调用方硬失败），apply 又必须成功，这两条一起
+    保证剩下的缺失只可能是 official patch 自己规定的缺失。反过来，如果把"缺一个就拒"当判据，
+    会系统性地把这类正常任务全判成不可评分（新增系统性拒绝面）。"""
+
+    files = _validate_control_surface_paths(official_test_files)
+    quoted = " ".join(shlex.quote(f) for f in files)
+    attest = shlex.quote(GRADER_TRUSTED_SETUP_ATTEST_PATH)
+    return [
+        f"RH2_ATTEST={attest}",
+        'RH2_APPLY_RC=${RH2_APPLY_RC:-1}; RH2_RESTORED=${RH2_RESTORED:-0}',
+        'mkdir -p "$(dirname -- "$RH2_ATTEST")"',
+        'RH2_PRESENT=0; RH2_ABSENT=0; RH2_IRREGULAR=""',
+        f"for f in {quoted}; do",
+        '  if [ -f "$f" ] && [ ! -L "$f" ]; then RH2_PRESENT=$((RH2_PRESENT+1));',
+        '  elif [ -e "$f" ] || [ -L "$f" ]; then RH2_IRREGULAR="$RH2_IRREGULAR$f,";',
+        "  else RH2_ABSENT=$((RH2_ABSENT+1)); fi",
+        "done",
+        '{ echo "RH2_SETUP_APPLY_RC=$RH2_APPLY_RC"',
+        '  echo "RH2_SETUP_RESTORED=$RH2_RESTORED"',
+        f'  echo "RH2_SETUP_EXPECTED_TEST_FILES={len(files)}"',
+        '  echo "RH2_SETUP_TEST_FILES=$RH2_PRESENT"',
+        '  echo "RH2_SETUP_ABSENT_TEST_FILES=$RH2_ABSENT"',
+        '  echo "RH2_SETUP_IRREGULAR_TEST_FILES=$RH2_IRREGULAR"; } > "$RH2_ATTEST"',
+        'cat "$RH2_ATTEST"',
+        '[ "$RH2_APPLY_RC" = "0" ] || { echo "RH2_SETUP_ERROR=official_test_patch_apply_failed:$RH2_APPLY_RC" | tee -a "$RH2_ATTEST"; exit 3; }',
+        '[ -z "$RH2_IRREGULAR" ] || { echo "RH2_SETUP_ERROR=official_test_file_not_regular:$RH2_IRREGULAR" | tee -a "$RH2_ATTEST"; exit 3; }',
+        '[ "$RH2_PRESENT" -ge 1 ] || { echo "RH2_SETUP_ERROR=no_official_test_file_present" | tee -a "$RH2_ATTEST"; exit 3; }',
+        'echo "RH2_SETUP_OK=1" | tee -a "$RH2_ATTEST"',
+    ]
 
 
 def grader_protect_control_surface_script(profile: GraderSandboxProfile, official_test_files: Sequence[str]) -> str:
@@ -1173,9 +1240,9 @@ def grader_protect_control_surface_script(profile: GraderSandboxProfile, officia
     quoted = " ".join(shlex.quote(f) for f in files)
     return (
         _marker("grader-protect-control-surface") + "set -u\n"
-        f"TB={tb}; UIDV={uid}\n"
+        f"TB={tb}; UIDV={uid}; EXPECTED={len(files)}\n"
         "chown -R \"$UIDV:$UIDV\" \"$TB\" || { echo \"RH2_PROTECT_ERROR=chown_candidate_failed\"; exit 4; }\n"
-        "PROTECTED=0; DIRS=0; MISSING=\"\"\n"
+        "PROTECTED=0; DIRS=0; MISSING=\"\"; MISSING_N=0; IRREGULAR=\"\"\n"
         "protect_dirs() {\n"
         "  d=$(dirname -- \"$1\")\n"
         "  while :; do\n"
@@ -1193,15 +1260,20 @@ def grader_protect_control_surface_script(profile: GraderSandboxProfile, officia
         "  if [ -f \"$p\" ] && [ ! -L \"$p\" ]; then\n"
         "    chown 0:0 -- \"$p\" && chmod 0644 -- \"$p\" || { echo \"RH2_PROTECT_ERROR=file:$f\"; exit 4; }\n"
         "    PROTECTED=$((PROTECTED+1))\n"
+        "  elif [ -e \"$p\" ] || [ -L \"$p\" ]; then\n"
+        # 存在但不是普通文件（symlink / 目录）：保护不住（改 symlink 目标即改了被执行的测试），一律拒。
+        "    IRREGULAR=\"$IRREGULAR$f,\"\n"
         "  else\n"
-        "    MISSING=\"$MISSING$f,\"\n"
+        # 不存在：只有当可信 setup 在 official test_patch 成功应用后也报告同样数量的缺失时才允许
+        # （manager 侧比对），脚本自身只如实记数。
+        "    MISSING=\"$MISSING$f,\"; MISSING_N=$((MISSING_N+1))\n"
         "  fi\n"
         "  protect_dirs \"$p\"\n"
         "done\n"
         "chown 0:0 -- \"$TB\" && chmod 1777 -- \"$TB\" || { echo \"RH2_PROTECT_ERROR=testbed_root\"; exit 4; }\n"
         f"for f in {quoted}; do\n"
         "  p=\"$TB/$f\"\n"
-        "  if [ -f \"$p\" ]; then st=$(stat -c '%u %a' -- \"$p\"); [ \"$st\" = \"0 644\" ] || { echo \"RH2_PROTECT_ERROR=verify_file:$f:$st\"; exit 4; }; fi\n"
+        "  if [ -f \"$p\" ] && [ ! -L \"$p\" ]; then st=$(stat -c '%u %a' -- \"$p\"); [ \"$st\" = \"0 644\" ] || { echo \"RH2_PROTECT_ERROR=verify_file:$f:$st\"; exit 4; }; fi\n"
         "  d=$(dirname -- \"$p\")\n"
         "  while :; do\n"
         "    case \"$d\" in \"$TB\"|\"$TB\"/*) ;; *) break ;; esac\n"
@@ -1210,8 +1282,13 @@ def grader_protect_control_surface_script(profile: GraderSandboxProfile, officia
         "    d=$(dirname -- \"$d\")\n"
         "  done\n"
         "done\n"
-        "echo \"RH2_PROTECT_OK=1\"; echo \"PROTECTED_FILES=$PROTECTED\"; echo \"PROTECTED_DIRS=$DIRS\"\n"
-        "echo \"MISSING_FILES=$MISSING\"; echo \"TESTBED_STAT=$(stat -c '%u %a' -- \"$TB\")\"\n"
+        # 自证先落地（失败时也留证据），判据全部通过之后才输出 RH2_PROTECT_OK=1。
+        "echo \"EXPECTED_FILES=$EXPECTED\"; echo \"PROTECTED_FILES=$PROTECTED\"; echo \"PROTECTED_DIRS=$DIRS\"\n"
+        "echo \"MISSING_FILES=$MISSING\"; echo \"MISSING_FILES_COUNT=$MISSING_N\"; echo \"IRREGULAR_FILES=$IRREGULAR\"\n"
+        "echo \"TESTBED_STAT=$(stat -c '%u %a' -- \"$TB\")\"\n"
+        "[ -z \"$IRREGULAR\" ] || { echo \"RH2_PROTECT_ERROR=official_test_file_not_regular:$IRREGULAR\"; exit 5; }\n"
+        "[ $((PROTECTED+MISSING_N)) -eq \"$EXPECTED\" ] || { echo \"RH2_PROTECT_ERROR=coverage_mismatch:$PROTECTED+$MISSING_N!=$EXPECTED\"; exit 5; }\n"
+        "echo \"RH2_PROTECT_OK=1\"\n"
     )
 
 

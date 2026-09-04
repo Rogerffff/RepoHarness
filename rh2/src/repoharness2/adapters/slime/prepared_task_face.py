@@ -29,6 +29,7 @@ from pathlib import Path
 from typing import Any
 
 from repoharness2.adapters.slime.generate import RolloutTaskSpec
+from repoharness2.adapters.slime.sandbox_profile import grader_trusted_setup_attest_lines
 from repoharness2.envpack import scoring
 from repoharness2.envpack.bundles import render_user_prompt
 from repoharness2.envpack.bundles_v2 import PrivateGradingBundleV2
@@ -124,12 +125,48 @@ def render_v2_eval_script(grading: PrivateGradingBundleV2, test_files: Sequence[
     return "\n".join(lines) + "\n"
 
 
-def render_v2_trusted_setup_script(grading: PrivateGradingBundleV2, test_files: Sequence[str]) -> str:
-    """F2：root 可信 setup 半段——git status/show/diff、恢复 official test files、应用 official test_patch。
-    候选代码在这一步之前不运行、之后再也改不了这些文件（manager 随后做属主/权限布置）。"""
+def _v2_attested_trusted_setup_lines(grading: PrivateGradingBundleV2, test_files: Sequence[str]) -> list[str]:
+    """F2 + codex Wave3 §9.2：可信 setup 的**带成功判据**版本（只用于 grader profile 路径）。
+
+    与官方单脚本形态（`render_v2_eval_script` 里那份，逐字不变）有两处刻意的差别，都是为了让
+    "必需步骤是否成功"可判定，而不是给整段加 `set -e`：
+
+    1. **恢复到基线**拆成逐文件：`base_commit` 里存在的 official test 文件必须 `git checkout` 成功
+       （失败即整段 `exit 3`）；base 里不存在的路径（official test_patch 新增的测试文件、或改名的
+       目标侧）跳过并记数。官方那条一次性 `git checkout <base> <全部路径>` 只要清单里有一个新增
+       路径就会整条 pathspec 失败，把它当判据会把正常任务判成失败——这正是不能机械加 `set -e` 的原因。
+    2. **应用 official test_patch** 的 `git apply` 返回码单独捕获进 `RH2_APPLY_RC`，交给自证尾段
+       （`grader_trusted_setup_attest_lines`）判定并写进 root 属主自证文件，manager 读回后才允许
+       启动候选测试。
+    """
 
     files = _v2_eval_preconditions(grading, test_files)
-    return "\n".join([*_V2_ENV_LINES, *_v2_trusted_setup_lines(grading, files)]) + "\n"
+    base = grading.base_commit
+    return [
+        "git status",
+        "git show",
+        f"git -c core.fileMode=false diff {base}",
+        "RH2_RESTORED=0",
+        f"for f in {files}; do",
+        f'  if git cat-file -e {base}:"$f" 2>/dev/null; then',
+        f'    git checkout {base} -- "$f" || {{ echo "RH2_SETUP_ERROR=official_test_restore_failed:$f"; exit 3; }}',
+        "    RH2_RESTORED=$((RH2_RESTORED+1))",
+        "  fi",
+        "done",
+        f"git apply -v - <<'{V2_EVAL_HEREDOC_DELIMITER}'",
+        grading.test_patch,
+        V2_EVAL_HEREDOC_DELIMITER,
+        "RH2_APPLY_RC=$?",
+        *grader_trusted_setup_attest_lines(test_files),
+    ]
+
+
+def render_v2_trusted_setup_script(grading: PrivateGradingBundleV2, test_files: Sequence[str]) -> str:
+    """F2：root 可信 setup 半段——git status/show/diff、恢复 official test files、应用 official test_patch，
+    并把结果写进 root 属主的自证文件（manager 读回判定后才启动候选测试）。
+    候选代码在这一步之前不运行、之后再也改不了这些文件（manager 随后做属主/权限布置）。"""
+
+    return "\n".join([*_V2_ENV_LINES, *_v2_attested_trusted_setup_lines(grading, test_files)]) + "\n"
 
 
 def render_v2_candidate_test_script(grading: PrivateGradingBundleV2, test_files: Sequence[str]) -> str:

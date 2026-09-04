@@ -113,10 +113,41 @@ def make_eval_script(base_commit: str, *, extra_prelude: str = "") -> str:
     )
 
 
-def make_trusted_setup_script(base_commit: str) -> str:
-    """F2：root 可信 setup 半段（恢复 official 测试文件；fixture 没有 test_patch 需要 apply）。"""
+def make_trusted_setup_script(
+    base_commit: str,
+    *,
+    test_files: tuple[str, ...] = ("tests/test_thing.py",),
+    test_patch: str | None = None,
+    extra: str = "",
+) -> str:
+    """F2 + codex Wave3 §9.2：root 可信 setup 半段（恢复 official 测试文件 → 可选 apply official test_patch
+    → 自证）。自证尾段直接用生产函数 `grader_trusted_setup_attest_lines`，fixture 与生产同一套判据。
 
-    return f"#!/bin/bash\nset -xo pipefail\ncd /testbed\ngit checkout {base_commit} -- tests/\n"
+    负例旋钮：``test_patch`` 传入一份**打不上**的 patch（真跑 `git apply`，返回码非零）；
+    ``extra`` 在恢复之后插入任意 shell（例如把 official 测试文件删掉或换成 symlink）。"""
+
+    from repoharness2.adapters.slime.sandbox_profile import grader_trusted_setup_attest_lines
+
+    lines = [
+        "#!/bin/bash",
+        "set -xo pipefail",
+        "cd /testbed",
+        f'git checkout {base_commit} -- tests/ || {{ echo "RH2_SETUP_ERROR=official_test_restore_failed"; exit 3; }}',
+        "RH2_RESTORED=1",
+    ]
+    if extra:
+        lines.append(extra)
+    if test_patch is None:
+        lines.append("RH2_APPLY_RC=0")  # fixture 没有 official test_patch 要应用
+    else:
+        lines += [
+            "git apply -v - <<'EOF_RH2_FIXTURE_TEST_PATCH'",
+            test_patch.rstrip("\n"),
+            "EOF_RH2_FIXTURE_TEST_PATCH",
+            "RH2_APPLY_RC=$?",
+        ]
+    lines += grader_trusted_setup_attest_lines(test_files)
+    return "\n".join(lines) + "\n"
 
 
 def make_candidate_test_script(*, extra_prelude: str = "", test_cmd: str = "python tests/test_thing.py") -> str:

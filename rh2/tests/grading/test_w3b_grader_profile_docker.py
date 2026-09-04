@@ -36,12 +36,14 @@ from repoharness2.adapters.slime import sandbox_profile as sandbox_profile_mod  
 from repoharness2.envpack import scoring  # noqa: E402
 from repoharness2.envpack.bundles import PrivateGradingBundle  # noqa: E402
 from repoharness2.grading.manager import (  # noqa: E402
+    ExecResult,
     GradingEnvSpec,
     GradingManagerConfig,
     HostWorkspace,
     HygieneRules,
     SandboxProfileViolation,
     SWEGradingManager,
+    run_docker,
 )
 
 pytestmark = [pytest.mark.docker, requires_docker]
@@ -80,8 +82,31 @@ def _spec(fixture_repo: FixtureRepo, fixture_image: str, *, prelude: str = _PREL
     )
 
 
-def _manager(tmp_path: Path) -> SWEGradingManager:
-    return SWEGradingManager(GradingManagerConfig(eval_log_dir=tmp_path / "eval_logs", sandbox_profile=GRADER))
+class RecordingDocker:
+    """真实 docker CLI 的透明记录壳：反例里用来证明"候选 uid 的 exec 一次都没发生过"。"""
+
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, ...]] = []
+
+    async def __call__(self, *args: str, input_bytes: bytes | None = None) -> ExecResult:
+        self.calls.append(args)
+        return await run_docker(*args, input_bytes=input_bytes)
+
+    def candidate_test_execs(self) -> list[tuple[str, ...]]:
+        """以候选执行用户身份跑 eval 脚本的 exec（启动前探针也用候选 uid，但跑的是探针脚本文本，
+        不是 `bash <eval_script_path>`，按脚本形态区分）。"""
+
+        return [
+            a for a in self.calls
+            if a and a[0] == "exec" and "-u" in a and a[a.index("-u") + 1] == str(UID)
+            and str(a[-1]).startswith("bash ")
+        ]
+
+
+def _manager(tmp_path: Path, docker: RecordingDocker | None = None) -> SWEGradingManager:
+    return SWEGradingManager(
+        GradingManagerConfig(eval_log_dir=tmp_path / "eval_logs", sandbox_profile=GRADER), docker=docker,
+    )
 
 
 def _eval_log(manager: SWEGradingManager, report) -> str:
@@ -127,6 +152,13 @@ async def test_grader_profile_resolved_with_candidate_code_run_as_nonroot_and_de
     record = manager.container_records[-1]
     assert record.control_surface["RH2_PROTECT_OK"] == "1" and record.control_surface["PROTECTED_FILES"] == "1"
     assert record.control_surface["TESTBED_STAT"] == "0 1777"
+    # codex Wave3 §9.2：setup / 权限布置两段自证的原始事实都进审计面，且判据全部对得上
+    assert record.control_surface["EXPECTED_FILES"] == "1" and record.control_surface["MISSING_FILES_COUNT"] == "0"
+    assert record.control_surface["MISSING_FILES"] == "" and record.control_surface["IRREGULAR_FILES"] == ""
+    assert record.trusted_setup["RH2_SETUP_OK"] == "1" and record.trusted_setup["RH2_SETUP_APPLY_RC"] == "0"
+    assert record.trusted_setup["RH2_SETUP_TEST_FILES"] == "1"
+    assert record.trusted_setup["RH2_SETUP_EXPECTED_TEST_FILES"] == "1"
+    assert record.trusted_setup["RH2_SETUP_ABSENT_TEST_FILES"] == "0"
     # P2-4/F2：root 可信 setup 与候选测试时间分开记
     phase = manager.take_grader_phase_timing(report.timings.record_id)
     assert phase.segments["grader_trusted_setup"] is not None and phase.segments["grader_trusted_setup"] > 0.0
@@ -238,7 +270,9 @@ async def test_f2_candidate_import_side_effect_cannot_rewrite_later_official_tes
                              forbidden_globs=FIXTURE_HYGIENE.forbidden_globs),
         checkout_mode="clone_from_readonly_snapshot", snapshot_host_path=str(repo.path), eval_script_path="/rh2/eval.sh",
         image_local_build=True,
-        trusted_setup_script=make_trusted_setup_script(repo.base_commit),
+        trusted_setup_script=make_trusted_setup_script(
+            repo.base_commit, test_files=("tests/test_a.py", "tests/test_z.py")
+        ),
         candidate_test_script=make_candidate_test_script(test_cmd="python tests/test_a.py; python tests/test_z.py"),
     )
     manager = _manager(tmp_path)
@@ -295,4 +329,134 @@ async def test_grader_prelaunch_violation_is_run_halt_channel_and_removes_contai
         await manager.grade(trajectory_id="w3b-violation", workspace=HostWorkspace(ws), spec=_spec(fixture_repo, fixture_image))
     assert manager.prelaunch_checks[-1]["ok"] is False
     assert all(r.removed for r in manager.container_records)
+    _no_leftover(manager)
+
+
+# ---------------------------------------------------------------------------
+# codex Wave3 §9.2 反例（真实容器）：可信 setup / 权限布置任一判据不达标 → 候选测试不启动、无 0/1 reward
+# ---------------------------------------------------------------------------
+
+# 打不上的 official test_patch（上下文行在 fixture 仓库里不存在，`git apply` 必然失败）
+_UNAPPLIABLE_TEST_PATCH = (
+    "diff --git a/tests/test_thing.py b/tests/test_thing.py\n"
+    "--- a/tests/test_thing.py\n"
+    "+++ b/tests/test_thing.py\n"
+    "@@ -1 +1 @@\n"
+    "-# 这一行在 fixture 仓库里并不存在\n"
+    "+# golden\n"
+)
+
+
+def _lying_setup_script(base_commit: str, mutate: str) -> str:
+    """负例专用的可信 setup：手写一份"一切正常"的自证文件（绕开共享自证尾段），
+    但实际把 official test 文件改成 symlink / 删掉——用来单独验收**权限布置这一层**的判据。"""
+
+    return (
+        "#!/bin/bash\nset -xo pipefail\ncd /testbed\n"
+        f"git checkout {base_commit} -- tests/\n"
+        f"{mutate}\n"
+        "mkdir -p /rh2\n"
+        "{ echo 'RH2_SETUP_APPLY_RC=0'; echo 'RH2_SETUP_RESTORED=1'; echo 'RH2_SETUP_EXPECTED_TEST_FILES=1';"
+        " echo 'RH2_SETUP_TEST_FILES=1'; echo 'RH2_SETUP_ABSENT_TEST_FILES=0';"
+        " echo 'RH2_SETUP_IRREGULAR_TEST_FILES='; echo 'RH2_SETUP_OK=1'; } > /rh2/rh2_trusted_setup_attest\n"
+        "cat /rh2/rh2_trusted_setup_attest\n"
+    )
+
+
+def _assert_blocked(manager, report, docker, log, *, detail_contains: str) -> None:
+    assert report.outcome == "failed_to_grade" and report.reward is None
+    assert report.failure_category == "infra_failure"
+    assert detail_contains in report.infra_failure_detail, report.infra_failure_detail
+    assert docker.candidate_test_execs() == []  # 候选执行用户跑 eval 脚本的 exec 一次都没发生
+    assert ">>>>> Start Test Output" not in log and f"RH2_EVAL_UID={UID}" not in log
+    assert report.timings.test_seconds == 0.0
+    phase = manager.take_grader_phase_timing(report.timings.record_id)
+    assert phase.segments["grader_trusted_setup"] is not None and phase.segments["test"] is None
+
+
+async def test_f2_official_test_patch_apply_failure_blocks_candidate_test(fixture_repo, fixture_image, make_workspace, tmp_path):
+    """反例 (a)：official test_patch 应用失败，而候选代码本来会让测试全过（SRC_FIXED → 正常路径是
+    resolved / reward=1.0）——必须零候选测试执行、零 0/1 reward，走 typed grading-infra。"""
+
+    ws = make_workspace()
+    (ws / "src" / "thing.py").write_text(SRC_FIXED)
+    docker = RecordingDocker()
+    manager = _manager(tmp_path, docker)
+    report = await manager.grade(
+        trajectory_id="w3b-setup-apply-fail", workspace=HostWorkspace(ws),
+        spec=_spec(fixture_repo, fixture_image,
+                   trusted_setup_script=make_trusted_setup_script(
+                       fixture_repo.base_commit, test_patch=_UNAPPLIABLE_TEST_PATCH)),
+    )
+    log = _eval_log(manager, report)  # 候选测试没跑成，落盘的是 setup 段原始输出（证据面）
+    _assert_blocked(manager, report, docker, log, detail_contains="grading_trusted_setup_failed:setup_exit_code")
+    assert "RH2_SETUP_ERROR=official_test_patch_apply_failed" in log
+    record = manager.container_records[-1]
+    assert record.trusted_setup["RH2_SETUP_APPLY_RC"] != "0" and "RH2_SETUP_OK" not in record.trusted_setup
+    assert record.control_surface is None  # 权限布置根本没开始
+    _no_leftover(manager)
+
+
+async def test_f2_official_test_file_missing_after_setup_blocks_candidate_test(fixture_repo, fixture_image, make_workspace, tmp_path):
+    """反例 (b1)：official test 文件在 setup 之后不在位（此处：唯一的一个被删掉）——拒。"""
+
+    ws = make_workspace()
+    (ws / "src" / "thing.py").write_text(SRC_FIXED)
+    docker = RecordingDocker()
+    manager = _manager(tmp_path, docker)
+    report = await manager.grade(
+        trajectory_id="w3b-setup-missing", workspace=HostWorkspace(ws),
+        spec=_spec(fixture_repo, fixture_image,
+                   trusted_setup_script=make_trusted_setup_script(
+                       fixture_repo.base_commit, extra="rm -f tests/test_thing.py")),
+    )
+    log = _eval_log(manager, report)
+    _assert_blocked(manager, report, docker, log, detail_contains="grading_trusted_setup_failed:setup_exit_code")
+    assert "RH2_SETUP_ERROR=no_official_test_file_present" in log
+    _no_leftover(manager)
+
+
+async def test_f2_official_test_file_symlink_is_rejected_by_protect_step(fixture_repo, fixture_image, make_workspace, tmp_path):
+    """反例 (b2)：official test 文件是 symlink，且可信 setup 谎报"一切正常"——真实权限脚本自己发现
+    它不是普通文件（保护 symlink 本身挡不住改写目标），拒绝并阻止候选测试。"""
+
+    ws = make_workspace()
+    (ws / "src" / "thing.py").write_text(SRC_FIXED)
+    docker = RecordingDocker()
+    manager = _manager(tmp_path, docker)
+    mutate = "cp tests/test_thing.py /tmp/real_test.py && rm -f tests/test_thing.py && ln -s /tmp/real_test.py tests/test_thing.py"
+    report = await manager.grade(
+        trajectory_id="w3b-protect-symlink", workspace=HostWorkspace(ws),
+        spec=_spec(fixture_repo, fixture_image,
+                   trusted_setup_script=_lying_setup_script(fixture_repo.base_commit, mutate)),
+    )
+    log = _eval_log(manager, report)
+    _assert_blocked(manager, report, docker, log,
+                    detail_contains="grading_control_surface_protect_failed:protect_exit_code")
+    assert "official_test_file_not_regular" in report.infra_failure_detail
+    record = manager.container_records[-1]
+    assert record.control_surface["IRREGULAR_FILES"] == "tests/test_thing.py,"
+    assert record.control_surface["PROTECTED_FILES"] == "0" and "RH2_PROTECT_OK" not in record.control_surface
+    _no_leftover(manager)
+
+
+async def test_f2_protect_step_rejects_missing_official_test_file_it_was_told_to_protect(fixture_repo, fixture_image, make_workspace, tmp_path):
+    """反例 (b3)：可信 setup 谎报"1 个 official test 在位"，实际文件不存在——权限脚本数出
+    `PROTECTED_FILES=0` / `MISSING_FILES=tests/test_thing.py,`，manager 与 setup 自证比对后拒绝。"""
+
+    ws = make_workspace()
+    (ws / "src" / "thing.py").write_text(SRC_FIXED)
+    docker = RecordingDocker()
+    manager = _manager(tmp_path, docker)
+    report = await manager.grade(
+        trajectory_id="w3b-protect-missing", workspace=HostWorkspace(ws),
+        spec=_spec(fixture_repo, fixture_image,
+                   trusted_setup_script=_lying_setup_script(fixture_repo.base_commit, "rm -f tests/test_thing.py")),
+    )
+    log = _eval_log(manager, report)
+    _assert_blocked(manager, report, docker, log,
+                    detail_contains="grading_control_surface_protect_failed:protected_count_mismatch")
+    record = manager.container_records[-1]
+    assert record.control_surface["PROTECTED_FILES"] == "0"
+    assert record.control_surface["MISSING_FILES"] == "tests/test_thing.py," and record.control_surface["RH2_PROTECT_OK"] == "1"
     _no_leftover(manager)

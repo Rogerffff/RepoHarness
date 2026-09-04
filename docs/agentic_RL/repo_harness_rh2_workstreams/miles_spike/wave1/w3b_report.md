@@ -287,3 +287,79 @@ uv run ruff check src/repoharness2 tests experiments/s1_parity.py experiments/s1
 **⑤ 测试/证据/账本状态**：§12.7；manifest expected_counts 由集成者同步；本机 Docker 零残留。
 
 **本轮没有改变哪些已定案语义**：`contracts/` 全部 schema；W3a 评分正链/可信评分投影（`render_v2_eval_script` 文本逐字未变）；legacy（无 profile）grader 路径与 s1_compat；W5a 关停链步骤顺序与 `chain.py`；F3 归另一 agent 的 `engine_router_client.py` / `capture_wire.py`；`reference/`、`rh2/src/slime`、lanes manifest 与 patch 表。
+
+## 13. codex Wave3 聚焦复核 §9.2（F2 残留 P1）修复（2026-09-04，append-only）
+
+范围：只改 `grading/manager.py`、`adapters/slime/sandbox_profile.py` 的 grader 权限脚本、`adapters/slime/prepared_task_face.py` 的可信 setup 脚本渲染，以及对应测试与 `scripts/sandbox_probes` 的脚本副本。**未碰** `bringup.py` / `capture_wire.py` / `engine_router_client.py`（F3 归并行 agent）/ `contracts/` / `reference/` / `rh2/src/slime` / `generate.py`。工作树未 commit / 未 stash。
+
+### 13.1 两个缺口（codex 复核属实）
+
+1. `SWEGradingManager._run_eval()` 拿到 root 可信 setup 的结果后**完全不看退出码**，直接进权限布置并以候选 uid 跑测试。注入 `setup rc=17 / git apply failed` 后候选日志照样 PASS，产出 `outcome=resolved reward=1.0`——评分可能是在"没应用 official test_patch 的基线测试"上得出的。
+2. 权限脚本遇到缺失或非普通文件的 official test 只写 `MISSING_FILES=...`，最后仍输出 `RH2_PROTECT_OK=1`；manager 既不看 `MISSING_FILES`，也不核对 `PROTECTED_FILES`。`PROTECTED_FILES=0`、`MISSING_FILES=tests/test_thing.py,` 仍能出 `reward=1.0`。
+
+两条都是**已批 D2-3 不变量的实现缺口**，不改训练语义、不新增 reward 规则、无新 T0。
+
+### 13.2 成功判据（自证标记 + manager 比对）
+
+**为什么不给整段 setup 加 `set -e`**：official test_patch 可能新增测试文件，官方那条一次性 `git checkout <base> <全部路径>` 只要清单里有一个"base 里不存在"的路径就整条 pathspec 失败——用它当判据会把正常任务判成失败。所以把"恢复到基线"和"应用 official patch"拆成两个独立结果。
+
+**可信 setup（`prepared_task_face.render_v2_trusted_setup_script` + `sandbox_profile.grader_trusted_setup_attest_lines`）**
+
+- 恢复到基线：逐个 official test 文件，`git cat-file -e <base>:<path>` 命中才 `git checkout <base> -- <path>`，**checkout 失败即整段 `exit 3`**；base 里没有的路径跳过并记数（不是失败）。
+- 应用 official test_patch：`git apply -v` 的返回码单独捕获进 `RH2_APPLY_RC`。
+- 自证写进 **root 属主文件** `/rh2/rh2_trusted_setup_attest`（`GRADER_TRUSTED_SETUP_ATTEST_PATH`），同时打到标准输出留审计。**为什么不认标准输出里的自证行**：setup 会打印 `git -c core.fileMode=false diff <base>`，那份 diff 就是候选自己写的代码，候选只要在源码里放一行 `RH2_SETUP_OK=1` 就能伪造；自证文件在候选代码运行之前由 root 写出，候选没有任何写入口。
+- 自证字段：`RH2_SETUP_APPLY_RC` / `RH2_SETUP_RESTORED` / `RH2_SETUP_EXPECTED_TEST_FILES`（渲染时写死的去重后清单长度）/ `RH2_SETUP_TEST_FILES`（在位普通文件数）/ `RH2_SETUP_ABSENT_TEST_FILES` / `RH2_SETUP_IRREGULAR_TEST_FILES`（存在但不是普通文件，例如 symlink）；三条判据（apply rc=0、irregular 为空、在位数 ≥ 1）全过才写 `RH2_SETUP_OK=1`，否则写 `RH2_SETUP_ERROR=<原因>` 并 `exit 3`。
+- **manager 侧比对**（`_check_trusted_setup_attest`）：`setup.exit_code == 0` ∧ `RH2_SETUP_OK=1` ∧ `RH2_SETUP_APPLY_RC=0` ∧ `RH2_SETUP_EXPECTED_TEST_FILES == len(normalize_official_test_files(spec.hygiene.test_files))` ∧ 在位数 ≥ 1 ∧ 在位数 + 缺失数 == 期望总数 ∧ irregular 为空。任一不成立 → `GradingInfraError("grading_trusted_setup_failed:<原因码>...")`，**权限布置与候选测试都不启动**。
+
+**权限布置（`grader_protect_control_surface_script`）**
+
+- 三分支分类：普通文件 → 收回 root:root 0644 并计数；存在但非普通文件（symlink/目录）→ 进 `IRREGULAR_FILES`；不存在 → 进 `MISSING_FILES` 并记 `MISSING_FILES_COUNT`。
+- 自证字段先落地（失败时也留证据）：`EXPECTED_FILES`（渲染时写死）/ `PROTECTED_FILES` / `PROTECTED_DIRS` / `MISSING_FILES` / `MISSING_FILES_COUNT` / `IRREGULAR_FILES` / `TESTBED_STAT`；`IRREGULAR_FILES` 非空、或 `PROTECTED + MISSING_N != EXPECTED` 时 `exit 5` 且**不输出** `RH2_PROTECT_OK=1`（原来 OK 是第一行，现在是最后一行）。
+- **manager 侧比对**（`_check_control_surface_attest`）：`protect.exit_code == 0` ∧ `RH2_PROTECT_OK=1` ∧ `EXPECTED_FILES == 期望总数` ∧ `IRREGULAR_FILES` 为空 ∧ `PROTECTED_FILES == RH2_SETUP_TEST_FILES` ∧ `MISSING_FILES_COUNT == RH2_SETUP_ABSENT_TEST_FILES`。不达标 → `GradingInfraError("grading_control_surface_protect_failed:<原因码>...")`。
+- manager 传给权限脚本的清单改成 `normalize_official_test_files(spec.hygiene.test_files)`（去重保序、非法路径 fail-closed），与算期望值用的是同一个函数。
+
+**typed 处置**：两处都走既有 `GradingInfraError` 通道 → `outcome=failed_to_grade`、`failure_category=infra_failure`、`reward=None`（不是 `reward=0`）。没有新增 reward 规则、没有改 `contracts/`。
+
+**偏离 codex 建议的一处（T1，理由）**：codex 写的是"`MISSING_FILES` 必须为空、`PROTECTED_FILES` 必须精确等于去重后的 official test 文件数"。直接照做会**新增系统性拒绝面**：`hygiene.test_files = patch_touched_paths(test_patch)` 取的是 `diff --git a/X b/Y` 两侧路径，因此 official test_patch **删除**或**改名**掉的测试文件也在清单里，这类正常任务跑完 setup 后本来就有文件不在位，"缺一个就拒"会把它们全判成不可评分（按协作协议这属于 T0 级的样本偏置面）。改成：缺失的**权威判据是"official `git apply` 成功"**——base 里存在的文件 checkout 失败即整段失败、apply 又必须成功，两条一起保证剩下的缺失只可能是 official patch 自己规定的；权限布置只需与可信 setup 数出的在位/缺失数**逐一对齐**。正常任务（patch 不删测试文件）下缺失数为 0，这两条自动退化成 codex 原话的形式。symlink/目录则**无条件拒**（保护住 symlink 本身不等于保护住被执行的测试）。
+
+**新增的 run-halt（T1）**：profile 路径下 `hygiene.test_files` 为空 → `SandboxProfileViolation("grader_official_test_files_required")`。与既有 `grader_eval_split_required` 同类（environment adapter 侧系统性缺陷，不洗成成员损耗）；prepared 链本身已在构造评分材料时以 `v2_test_files_empty` 拒过，正常路径不可达。
+
+**审计/计时**：`record.trusted_setup`（setup 自证事实）与 `record.control_surface`（权限自证事实）在判定**之前**就写进容器记账条目，失败时看得到卡在哪一条；`record.eval_log_partial` 保存 setup + 权限布置的原始输出，`grade()` 的 infra 分支用它给 `eval_log_ref` 落盘（候选测试从未启动时故障现场不丢）。`grader_trusted_setup` 计时段改由 `_run_eval` 在 `finally` 里记，被判据挡下的那次同样有计时（legacy 无 profile 路径恒 0.0，口径不变）。
+
+### 13.3 反例测试（全部实跑通过）
+
+真实容器（`tests/grading/test_w3b_grader_profile_docker.py`，+4；用 `RecordingDocker` 记录真实 docker CLI 调用，断言"以候选 uid 跑 eval 脚本的 exec 一次都没发生"——启动前探针也用候选 uid，按脚本形态区分）：
+
+- `test_f2_official_test_patch_apply_failure_blocks_candidate_test`：official test_patch 真的打不上（上下文行不存在），而候选代码本来会让测试全过（`SRC_FIXED` → 正常路径 resolved/1.0）→ `failed_to_grade` / `reward=None` / 零候选测试 exec / 日志里没有 `>>>>> Start Test Output`，落盘日志含 `RH2_SETUP_ERROR=official_test_patch_apply_failed`，`control_surface is None`（权限布置根本没开始）。
+- `test_f2_official_test_file_missing_after_setup_blocks_candidate_test`：setup 后唯一的 official test 文件不在位 → `no_official_test_file_present` → 同上。
+- `test_f2_official_test_file_symlink_is_rejected_by_protect_step`：official test 文件被换成 symlink，且可信 setup **谎报**一切正常（手写自证文件绕过共享自证尾段）→ 真实权限脚本自己数出 `IRREGULAR_FILES=tests/test_thing.py,` 并 `exit 5` → 拒。
+- `test_f2_protect_step_rejects_missing_official_test_file_it_was_told_to_protect`：setup 谎报"1 个在位"、实际文件不存在 → 权限脚本如实给出 `PROTECTED_FILES=0` / `MISSING_FILES=tests/test_thing.py,` 且自身判据通过（0+1==1）→ manager 与 setup 自证比对后 `protected_count_mismatch` 拒。**这条就是 codex 原样反例的生产路径版本。**
+
+替身（`tests/grading/test_w3b_grader_profile_unit.py`，+7）：`test_f2_trusted_setup_nonzero_exit_blocks_candidate_test_and_is_typed_infra`（rc=17）、`test_f2_trusted_setup_attest_missing_blocks_candidate_test`（自证文件没写出）、`test_f2_trusted_setup_official_test_file_list_mismatch_blocks_candidate_test`、`test_f2_protect_reporting_zero_protected_and_missing_file_blocks_candidate_test`（codex 原样反例：脚本仍写 `RH2_PROTECT_OK=1`）、`test_f2_protect_reporting_symlink_official_test_file_blocks_candidate_test`、`test_f2_protect_expected_count_mismatch_blocks_candidate_test`、正例 `test_f2_official_test_patch_deleting_a_test_file_still_grades`（official patch 删掉清单里一个测试文件时照常评分——证明没新增系统性拒绝面）。
+
+脚本文本（`tests/adapters/test_w3b_sandbox_profile.py`，+2）：`test_f2_protect_script_self_attests_coverage_before_declaring_ok`、`test_f2_trusted_setup_attest_lines_gate_apply_result_and_file_shape`。
+
+既有 F2 正例全部原样通过（权限六路攻击 DENIED、A/Z import 副作用改不了后执行的测试、编译/缓存写入不误伤、resolved / tests_failed 正常语义）。
+
+**T1 oracle 改动**：
+- `tests/grading/grading_fixtures.py::make_trusted_setup_script` 从"一行 `git checkout`"改成"恢复（失败即 exit 3）→ 可选真跑 `git apply` → 共享自证尾段"，并新增 `test_files` / `test_patch` / `extra` 三个负例旋钮；fixture 与生产用**同一份**自证判据。
+- A/Z 行为反例的 `make_trusted_setup_script` 现在必须传 `test_files=("tests/test_a.py", "tests/test_z.py")`（否则自证清单与 spec 的 `hygiene.test_files` 不符，按新判据即拒——这正是判据在起作用）。
+- `test_grader_profile_resolved_with_candidate_code_run_as_nonroot_and_deny_all` 追加断言：`EXPECTED_FILES/MISSING_FILES_COUNT/IRREGULAR_FILES` 与 `record.trusted_setup` 各字段。
+- `tests/sandbox_test_support.py::ProfileFakeState` 新增 `protect_facts_override` / `protect_exit_code` 旋钮，权限脚本替身输出改为按脚本里的 `EXPECTED=<n>` 生成完整自证字段。
+
+### 13.4 测试证据（2026-09-04 实跑，工作树 = HEAD `52a4818b` + 本批改动 + 并行 F3 agent 未提交改动）
+
+```
+uv run pytest tests/grading tests/adapters/test_w3b_sandbox_docker.py tests/adapters/test_w3a_formal_grading_freeze.py -q   # 135 passed
+RH2_MILES_PATH=$PWD/../reference/miles-rh2-integration uv run pytest tests/adapters_miles/test_w3b_formal_entry_vertical.py tests/adapters_miles/test_w1b_prepared_chain.py -q   # 15 passed
+uv run pytest tests/ -q                       # 1759 passed, 310 skipped
+uv run ruff check <本批改动文件>               # All checks passed!
+```
+
+全仓计数：本批新增 13 例（grader 真实容器 +4、grader 替身 +7、profile 脚本文本 +2），其余为并行 F3 agent 的改动。本机 Docker 零残留（`docker ps -a` 无 `rh2-*` 容器、无 `rh2-*` 网络）。`scripts/sandbox_probes/grader-protect-control-surface.sh` 已按 `dump-probes` 重新落盘（与包内文本逐字一致的既有断言通过）。
+
+### 13.5 推翻或修正的旧结论 / 开放问题
+
+- §12.1 "完整 eval_script 与两段拆分脚本**由同一组行构成**"在可信 setup 半段**不再成立**：profile 路径的 setup 脚本多了逐文件恢复循环、`RH2_APPLY_RC` 捕获与自证尾段。`render_v2_eval_script`（legacy 无 profile 路径执行的那份）与 `render_v2_candidate_test_script` **文本逐字未变**，W3a 冻结面与 s1_compat 不受影响。
+- §12.1 "不达标 = `GradingInfraError("grading_control_surface_protect_failed")`"仍成立，但判据从"只看 `RH2_PROTECT_OK`"扩到 §13.2 的六条，并新增了对称的 setup 判据。
+- **开放问题（本批不修，登记）**：候选测试命令是 `eval_cmd <hygiene.test_files 全部路径>`。若 official test_patch 删掉清单里的某个测试文件，该路径仍会被传给测试运行器（官方 swebench 脚本同样如此），可能让运行器报 usage error。本批的判据不会因此误判（缺失是合法的），但这类任务的**日志形态**是否被官方 parser 正确处理，需要在 T2-d/W3a 的真实镜像验证里覆盖。

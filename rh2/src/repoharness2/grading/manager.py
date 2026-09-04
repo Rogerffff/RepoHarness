@@ -704,6 +704,12 @@ class _ContainerRecord:
     prelaunch: dict[str, Any] | None = None
     # F2：候选测试前的控制面权限布置自证（PROTECTED_FILES/DIRS、MISSING_FILES、TESTBED_STAT）
     control_surface: dict[str, str] | None = None
+    # F2 + codex Wave3 §9.2：root 可信 setup 的自证（apply 返回码、official test 文件在位数等）；
+    # 判定失败时也先记账再抛，审计里看得到"卡在哪一条判据"。
+    trusted_setup: dict[str, str] | None = None
+    # 可信 setup / 权限布置阶段的原始输出：候选测试从未启动时 grade() 拿不到 eval 日志，
+    # 用它给 infra 报告留 eval_log_ref（否则真实故障现场丢失）。
+    eval_log_partial: str | None = None
 
 
 # W3a 生命周期计时：grader 内部六段（与 adapters/slime/attempt_timing.LIFECYCLE_SEGMENTS 同名）。
@@ -757,6 +763,88 @@ def _sanitize_for_name(text: str) -> str:
 
 def _now_utc() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def _count_field(facts: dict[str, str], key: str) -> int | None:
+    """自证里的计数字段 → 非负整数；缺失/非十进制整数一律 None（判据按"取不到 = 不达标"处理）。"""
+
+    raw = facts.get(key, "")
+    return int(raw) if raw.isdigit() else None
+
+
+def _check_trusted_setup_attest(
+    exit_code: int, facts: dict[str, str], expected_total: int
+) -> str | None:
+    """root 可信 setup 的成功判据。返回 None = 通过；返回字符串 = 不通过的原因码。
+
+    判据（全部必须成立，任一不成立就不许启动候选测试）：
+
+    1. setup 脚本本身退出码为 0；
+    2. 自证文件里有 `RH2_SETUP_OK=1`——脚本只有在"official test_patch 的 `git apply` 成功
+       + 没有任何 official test 路径是 symlink/目录 + 至少一个 official test 文件在位"时才写这一行；
+    3. `RH2_SETUP_APPLY_RC=0`（manager 侧独立复核 apply 结果，不只信 OK 行）；
+    4. `RH2_SETUP_EXPECTED_TEST_FILES` 与 manager 按 `spec.hygiene.test_files` 去重后算出的数量相等
+       ——脚本里内嵌的 official test 清单必须就是本次评分 spec 的那一份，两侧分家即拒；
+    5. 在位普通文件数 ≥ 1，且"在位 + 不存在 = 期望总数"（脚本的分类循环覆盖了整份清单，没有漏项）。
+
+    为什么"不存在"不当失败：`hygiene.test_files` 取自 `patch_touched_paths(test_patch)`，
+    也就是 `diff --git a/X b/Y` 两侧路径，因此被 official test_patch **删除**或**改名**掉的测试
+    文件也在清单里，正常任务跑完 setup 后本来就不该存在。可信来源是"official `git apply` 成功"，
+    加上"base 里存在的文件 checkout 失败即整段失败"——两条一起保证剩下的缺失只可能是 official
+    patch 自己规定的。反之，若把"缺一个就拒"当判据，会把这类正常任务系统性判成不可评分。"""
+
+    if exit_code != 0:
+        return "setup_exit_code"
+    if facts.get("RH2_SETUP_OK") != "1":
+        return "setup_not_attested"
+    if facts.get("RH2_SETUP_APPLY_RC") != "0":
+        return "official_test_patch_apply_failed"
+    if facts.get("RH2_SETUP_EXPECTED_TEST_FILES") != str(expected_total):
+        return "official_test_file_list_mismatch"
+    present = _count_field(facts, "RH2_SETUP_TEST_FILES")
+    absent = _count_field(facts, "RH2_SETUP_ABSENT_TEST_FILES")
+    if present is None or absent is None or present < 1 or present + absent != expected_total:
+        return "official_test_files_not_accounted"
+    if facts.get("RH2_SETUP_IRREGULAR_TEST_FILES", "?") != "":
+        return "official_test_file_not_regular"
+    return None
+
+
+def _check_control_surface_attest(
+    exit_code: int, facts: dict[str, str], setup_facts: dict[str, str], expected_total: int
+) -> str | None:
+    """候选测试前控制面权限布置的成功判据。返回 None = 通过；否则是不通过的原因码。
+
+    判据：
+
+    1. 权限脚本退出码为 0 且写出 `RH2_PROTECT_OK=1`（脚本自身已复核每个受保护文件 `0 644`、
+       每级祖先目录 `0 1777`）；
+    2. `EXPECTED_FILES` 等于 manager 按 spec 算出的去重后 official test 文件数（脚本清单 = spec 清单）；
+    3. `IRREGULAR_FILES` 为空——official test 路径上出现 symlink/目录一律拒（symlink 目标可被改写，
+       "保护住了 symlink 本身"不等于保护住被执行的测试）；
+    4. `PROTECTED_FILES` 精确等于可信 setup 在 official patch 成功应用之后数出的在位普通文件数，
+       且 `MISSING_FILES_COUNT` 精确等于 setup 数出的缺失数。也就是说：本次真正要执行的每一个
+       official test 文件都已经是 root 属主只读普通文件，一个都不能少、也不能多出来源不明的一个。
+       正常任务（official patch 不删测试文件）下 setup 的缺失数为 0，这两条就退化成
+       "`PROTECTED_FILES == 去重后的 official test 文件数` 且 `MISSING_FILES` 为空"。"""
+
+    if exit_code != 0:
+        return "protect_exit_code"
+    if facts.get("RH2_PROTECT_OK") != "1":
+        return "protect_not_attested"
+    if facts.get("EXPECTED_FILES") != str(expected_total):
+        return "official_test_file_list_mismatch"
+    if facts.get("IRREGULAR_FILES", "?") != "":
+        return "official_test_file_not_regular"
+    protected = _count_field(facts, "PROTECTED_FILES")
+    missing = _count_field(facts, "MISSING_FILES_COUNT")
+    present_after_setup = _count_field(setup_facts, "RH2_SETUP_TEST_FILES")
+    absent_after_setup = _count_field(setup_facts, "RH2_SETUP_ABSENT_TEST_FILES")
+    if protected is None or missing is None or present_after_setup is None or absent_after_setup is None:
+        return "protect_counts_unreadable"
+    if protected != present_after_setup or missing != absent_after_setup:
+        return "protected_count_mismatch"
+    return None
 
 
 class SWEGradingManager:
@@ -947,6 +1035,14 @@ class SWEGradingManager:
                 backpressure_triggered=backpressure_triggered,
             )
 
+        def _infra_log_text() -> str | None:
+            """infra 报告要落盘的日志文本：完整 eval 日志优先；候选测试没跑成时退到
+            可信 setup / 权限布置阶段的原始输出（F2 判据的证据面）。"""
+
+            if eval_log_text is not None:
+                return eval_log_text
+            return record.eval_log_partial if record is not None else None
+
         def _hygiene() -> PatchHygieneResult | None:
             # 没走到重放阶段的 infra 报告不附 hygiene（附了反而暗示做过 clean 重放）。
             if not replay_started:
@@ -1070,11 +1166,11 @@ class SWEGradingManager:
 
             # 阶段 5：跑官方 eval（合并单流 2>&1，S1-2 提醒的日志形态）
             test_start = time.monotonic()
-            eval_log_text, trusted_setup_seconds = await self._run_eval(record, spec)
+            eval_log_text, trusted_setup_seconds = await self._run_eval(record, spec, phase)
             # F2/P2-4：`test` 只计候选测试本身；root 可信 setup（恢复 official tests / 应用 test_patch /
-            # 权限布置）单独记 grader_trusted_setup（legacy 路径恒 0）。
+            # 权限布置）单独记 grader_trusted_setup（由 _run_eval 记账——判据挡下、候选测试没跑成的那次
+            # 也要在计时里看得见；legacy 路径恒 0）。
             timing_parts["test"] = max(time.monotonic() - test_start - trusted_setup_seconds, 0.0)
-            phase.add("grader_trusted_setup", trusted_setup_seconds)
             phase.add("test", timing_parts["test"])
             report_started = time.monotonic()
             peak_memory_mb = await self._read_peak_memory_mb(record)
@@ -1120,9 +1216,11 @@ class SWEGradingManager:
                 reward=None,
                 infra_failure_detail=exc.detail,
                 patch_hygiene=_hygiene(),
+                # 候选测试从未启动时没有 eval 日志，但可信 setup / 权限布置的原始输出必须留下来
+                # （F2 判据挡下的那次，故障现场就在这段里）。
                 eval_log_ref=(
-                    self._persist_eval_log(nonce, trajectory_id, eval_log_text)
-                    if eval_log_text is not None
+                    self._persist_eval_log(nonce, trajectory_id, _infra_log_text())
+                    if _infra_log_text() is not None
                     else None
                 ),
                 timings=_timings(),
@@ -1766,7 +1864,9 @@ class SWEGradingManager:
                 f"grading_eval_script_write_failed:{write.stderr.strip()[-300:]}"
             )
 
-    async def _run_eval(self, record: _ContainerRecord, spec: GradingEnvSpec) -> tuple[str, float]:
+    async def _run_eval(
+        self, record: _ContainerRecord, spec: GradingEnvSpec, phase: GraderPhaseTiming
+    ) -> tuple[str, float]:
         """跑官方 eval，返回 (合并日志文本, root 可信 setup 秒数)。
 
         legacy（无 grader profile，S1 冻结路径）：写入完整 eval_script 并以 root 执行，setup 秒数恒 0。
@@ -1775,10 +1875,15 @@ class SWEGradingManager:
           1. root：`trusted_setup_script`（恢复 official test files、应用 official test_patch、git status/show/diff）
              ——候选代码此时尚未运行；
           2. root：`grader_protect_control_surface_script`——/testbed 交给候选用户，但 official test files
-             root:root 0644、其全部祖先目录 root:root 1777（sticky）：候选进程不能改写/删除/重命名/同路径重建它们；
+             root:root 0644、其全部祖先目录（含 /testbed）root:root 1777（sticky）：候选进程不能改写/删除/重命名/同路径重建它们；
           3. 候选执行用户：`candidate_test_script`（只跑测试命令，带官方 Start/End 标记）；脚本本身由 root 写在
              root 属主目录/sticky /tmp 里，候选进程无法在执行中改写。
-        日志 = setup 输出 + 候选测试输出（形态与官方单脚本一致，parser 不变）。"""
+        日志 = setup 输出 + 候选测试输出（形态与官方单脚本一致，parser 不变）。
+
+        codex Wave3 §9.2 收口：第 1、2 步各有明确成功判据，任一不达标立即走 typed grading-infra
+        （`GradingInfraError` → outcome=failed_to_grade、reward=None），**候选测试根本不启动**——
+        既不会产出 reward=0 也不会产出 reward=1。判据见 `_check_trusted_setup_attest` 与
+        `_check_control_surface_attest` 的注释。"""
 
         script_path = spec.eval_script_path
         profile = self.config.sandbox_profile
@@ -1792,6 +1897,7 @@ class SWEGradingManager:
                 phase="test",
                 timeout=spec.test_timeout_seconds,
             )
+            phase.add("grader_trusted_setup", 0.0)
             return (result.stdout if result.stdout else result.stderr), 0.0
 
         if spec.trusted_setup_script is None or spec.candidate_test_script is None:
@@ -1803,35 +1909,79 @@ class SWEGradingManager:
                 "评分材料只有单一 eval_script。",
             )
         from repoharness2.adapters.slime.sandbox_profile import (
+            GRADER_TRUSTED_SETUP_ATTEST_PATH,
             grader_protect_control_surface_script,
+            normalize_official_test_files,
             parse_key_value_output,
         )
 
-        setup_started = time.monotonic()
-        setup_path = f"{script_path}.trusted_setup"
-        await self._write_root_script(record, setup_path, spec.trusted_setup_script, timeout=spec.apply_timeout_seconds)
-        setup = await self._exec_bash_checked(
-            record,
-            f"bash {setup_path} 2>&1",
-            phase="trusted_setup",
-            timeout=spec.env_reset_timeout_seconds,
-        )
-        setup_log = setup.stdout if setup.stdout else setup.stderr
-        protect = await self._exec_bash_checked(
-            record,
-            grader_protect_control_surface_script(profile, spec.hygiene.test_files),
-            phase="control_surface_protect",
-            timeout=spec.env_reset_timeout_seconds,
-        )
-        protect_facts = parse_key_value_output(protect.stdout)
-        if protect.exit_code != 0 or protect_facts.get("RH2_PROTECT_OK") != "1":
-            raise GradingInfraError(
-                "grading_control_surface_protect_failed:"
-                f"{protect_facts.get('RH2_PROTECT_ERROR', '')}:{protect.stderr.strip()[-300:]}"
+        official_files = normalize_official_test_files(spec.hygiene.test_files)
+        if not official_files:
+            # 一个 official test 文件都没有：控制面无从保护，"本次要执行的 official test 全部是 root 只读
+            # 普通文件"这条不变量退化成空真。与 grader_eval_split_required 同类——environment adapter 侧的
+            # 系统性缺陷，不洗成成员损耗。
+            raise SandboxProfileViolation(
+                "grader_official_test_files_required",
+                f"{spec.task_id}: grader profile 要求 hygiene.test_files 给出 official test 文件精确清单，当前为空。",
             )
-        record.control_surface = protect_facts
-        await self._write_root_script(record, script_path, spec.candidate_test_script, timeout=spec.apply_timeout_seconds)
-        trusted_setup_seconds = time.monotonic() - setup_started
+
+        setup_started = time.monotonic()
+        try:
+            setup_path = f"{script_path}.trusted_setup"
+            await self._write_root_script(
+                record, setup_path, spec.trusted_setup_script, timeout=spec.apply_timeout_seconds
+            )
+            setup = await self._exec_bash_checked(
+                record,
+                f"bash {setup_path} 2>&1",
+                phase="trusted_setup",
+                timeout=spec.env_reset_timeout_seconds,
+            )
+            setup_log = setup.stdout if setup.stdout else setup.stderr
+            record.eval_log_partial = setup_log
+            # 自证不从 setup 的标准输出里认：那份输出含 `git diff <base>`，也就是候选自己写的代码，
+            # 候选只要在源码里放一行 `RH2_SETUP_OK=1` 就能伪造。改读 root 写的自证文件——
+            # 候选代码在这一步之前从未运行，没有任何写入口。
+            attest = await self._exec_bash_checked(
+                record,
+                f"cat {GRADER_TRUSTED_SETUP_ATTEST_PATH} 2>/dev/null",
+                phase="trusted_setup_attest",
+                timeout=spec.apply_timeout_seconds,
+            )
+            setup_facts = parse_key_value_output(attest.stdout)
+            record.trusted_setup = setup_facts
+            reason = _check_trusted_setup_attest(setup.exit_code, setup_facts, len(official_files))
+            if reason is not None:
+                raise GradingInfraError(
+                    f"grading_trusted_setup_failed:{reason}:rc={setup.exit_code}:"
+                    f"{setup_facts.get('RH2_SETUP_ERROR', '')}"
+                )
+
+            protect = await self._exec_bash_checked(
+                record,
+                grader_protect_control_surface_script(profile, official_files),
+                phase="control_surface_protect",
+                timeout=spec.env_reset_timeout_seconds,
+            )
+            protect_facts = parse_key_value_output(protect.stdout)
+            record.control_surface = protect_facts
+            record.eval_log_partial = setup_log + protect.stdout
+            reason = _check_control_surface_attest(
+                protect.exit_code, protect_facts, setup_facts, len(official_files)
+            )
+            if reason is not None:
+                raise GradingInfraError(
+                    f"grading_control_surface_protect_failed:{reason}:rc={protect.exit_code}:"
+                    f"{protect_facts.get('RH2_PROTECT_ERROR', '')}:{protect.stderr.strip()[-200:]}"
+                )
+            await self._write_root_script(
+                record, script_path, spec.candidate_test_script, timeout=spec.apply_timeout_seconds
+            )
+        finally:
+            # 成功与失败都记 grader_trusted_setup 段：被判据挡下的那次也要在计时/审计里看得见。
+            trusted_setup_seconds = time.monotonic() - setup_started
+            phase.add("grader_trusted_setup", trusted_setup_seconds)
+
         result = await self._exec_bash_checked(
             record,
             f"bash {script_path} 2>&1",
