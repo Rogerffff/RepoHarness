@@ -99,6 +99,7 @@
 - **B-5b / 新增 W10**：租卡前闭合多 engine 最小正确性（abort 广播、版本不经 router 随机查、恢复 per-engine 参数删 engine_count==1、两假 engine 反例）；engine 数由 GPU matched comparison 决定。
 - B-1 语义/B-2 drop + 三分支 drop 事件 + `max_time_without_accepted_group`/B-4=1/B-5a retract/B-6 落账：按 v2。
 - **前置清理批**先于 W3/W4 开工（见 §5 3a）。
+- **Wave3 闭合口径（codex §10.3,2026-09-04,Claude 接受）**：Wave3 只能声称完成**当前 exact official-file 边界**（official test 文件在位内容对候选不可改、应缺路径不可被重建——当前 SWE profile 对 official patch 删除/改名后仍缺失的路径 fail-closed,216 题冻结集为新增 8/删除 0/改名 0）,**不能声称"通用 pytest/SWE evaluator 控制面已完全不可控"**：fresh baseline 里只命中 test_glob 的辅助文件在 chown 后仍归候选、`conftest.py`/`pytest.ini`/plugin 等通用控制面尚未定义。**T2-d/W2b 在真实首训或 GPU 上使用某个 taskset 前,必须由该 environment adapter 声明并实测完整控制面**（含影响 runner 的 glob-only 文件、config/plugin/启动脚本）;在此之前不得据 Wave3 绿灯单独宣称真实首训 reward 已可信。
 - **W3b 提出的两项待拍板 T0（2026-09-04,owner 未决）**：(a) **grader 非 root 与 T2-e 验证身份一致性**——grader 候选执行改为非 root（rh2grader/54322）后,root 下被跳过的权限类测试会真正执行、site-packages 写入会失败,可能系统性翻转部分题的 reward;若四门验证是 root 跑的,须用同一 grader profile 重验 216 题或由 owner pin 身份。选项:(i) 保持非 root,T2-e 用同一 profile 重验（推荐,与 D2-2 一致;代价=重跑验证）;(ii) grader 执行候选代码用 root（放弃 D2-2 的非 root 要求,探针记录实际用户）;(iii) 逐题 pin 身份（复杂,不推荐）。(b) **每 run 一个 egress relay 容器**（约 40 行 stdlib 转发器,非 root/只读/cap-drop ALL,作为 isolated internal 网络的唯一出口）是否算"引入重要服务"——Claude 判断:它是 allowlist 的实现载体而非新服务面,无状态、无 API、随 run 生命周期;备选（普通 --internal 网络）实测宿主网关仍可达,不满足 direct-IP 阻断。请 owner 确认接受或指定备选。
 
 
