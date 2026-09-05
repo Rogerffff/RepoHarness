@@ -1,5 +1,7 @@
 # RepoHarness
 
+> **2026-09-05**：想快速了解当前仓库状态（rh2 + miles 训练链、已定/未定决策、该读哪些文件），请先读 `docs/agentic_RL/repo_harness_rh2_workstreams/CURRENT-STATE-BRIEF.md`。本 README 其余内容为历史快照。
+
 RepoHarness 是一个面向软件工程智能体训练和评测的 Harness。它的核心目标是把真实或半真实仓库任务转化为**可执行、可审计、可导出**的训练轨迹：
 
 ```text

@@ -1,5 +1,7 @@
 # RepoHarness Agent Guide
 
+> **2026-09-05 接手入口**：先读 `docs/agentic_RL/repo_harness_rh2_workstreams/CURRENT-STATE-BRIEF.md`（当前状态简报：定位/已定未定/阅读顺序/代码地图/边界）。本文件的协作协议摘要仍有效，但下方"当前进度"章节部分已过时——当前主线 = miles 候选链，权威执行计划 = `06-first-training-local-execution-plan.md`，账本 = `miles_spike/spike-log.md`。
+
 所有编写的文档或者注释，除了必要的专业词汇、命令名称、文件名、字段名和代码标识符之外，都使用清晰、详细、通俗易懂的中文。如果解释一个容易混淆的概念，尽量搭配具体数值、文件路径、命令或者实现例子。
 
 ## 项目一句话定位（2026-07 起，rh2 新架构）
