@@ -64,7 +64,7 @@
 **测试与验证**（在 `rh2/` 目录）：
 ```bash
 uv run pytest tests/ -q                                             # 默认 pin base（2026-09-05：1761 passed / 310 skipped）
-RH2_MILES_PATH=$PWD/../reference/miles-rh2-integration uv run pytest tests/ -q   # integration base（2069 passed）
+RH2_MILES_PATH=$PWD/../reference/miles-rh2-integration uv run pytest tests/ -q   # integration base（2071 passed）
 bash scripts/miles_integration_lanes.sh                             # 正式双 lane：tree/patch digest/pin 校验 + 精确计数（lane A 358/310，lane B 668/0）
 ```
 真实 Docker 测试（sandbox profile、grader 权限）在本机 Docker 上真跑；GPU 相关（CP=2 真机、多 engine e2e、retract 代价）只能在租卡时验。
