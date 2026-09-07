@@ -2,6 +2,8 @@
 
 本文持续记录 RepoHarness 重定位阶段使用的外部 paper、网页短报告、技术报告和参考代码库，以及它们的本地组织方式、阅读重点和后续用途。它不是论文综述终稿，而是一个面向后续架构设计和代码实现的资料入口。
 
+**2026-09-07 精读进展**：前两批全部完成，共 **14 份笔记、12 份线程内独立审查**，均已完成主线程检查。见 [成品索引](reading_notes/README.md)、[第一批质量检查](reading_notes/BATCH1_QUALITY_REVIEW_20260907.md)、[第二批质量检查](reading_notes/BATCH2_QUALITY_REVIEW_20260907.md)。**第三批不启动**；[原准备方案](reading_notes/BATCH3_PLAN.md)保留为候选，由用户安排外部 Pro 复查、重排和继续阅读。[外部 Pro 交接入口](reading_notes/external_pro_handoff_20260907/00_HANDOFF.md)包含两批全文与审查；候选总表见 [资料目录](reading_notes/SOURCE_CATALOG.md)。
+
 ## 1. 文件组织原则
 
 本次新增资料统一放在：

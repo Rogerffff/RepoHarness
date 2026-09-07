@@ -1,0 +1,72 @@
+# R13 原文独立覆盖底稿
+日期：2026-09-07；本表在阅读旧稿之前按本地47页PDF结构建立。
+正文1–8；附录A–F；无额外后训练附录。
+
+- p.2: 1   Introduction
+- p.3: 2    Model Architecture
+- p.4: 2.1     Hybrid Attention
+- p.4: 2.1.1    Kimi Delta Attention
+- p.5: 2.1.2   Gated MLA
+- p.6: 2.2   Attention Residuals
+- p.6: 2.3   Stable LatentMoE
+- p.7: 2.3.1   Normalized LatentMoE
+- p.7: 2.3.2   Sigmoid Tanh Unit GLU
+- p.8: 2.3.3     Quantile Balancing
+- p.9: 2.4   Native Vision
+- p.10: 2.5   Per-Head Muon
+- p.10: 3     Pre-Training
+- p.10: 3.1   Pre-Training Data
+- p.10: 3.2   Scaling Law
+- p.11: 3.3   Training Recipe
+- p.12: 3.4     Long-Context Extension
+- p.12: 4     Post-Training
+- p.12: 4.1     Method
+- p.12: 4.1.1    Supervised Fine-Tuning
+- p.12: 4.1.2    Reinforcement Learning
+- p.13: 4.1.3   Multi-Teacher On-Policy Distillation
+- p.14: 4.1.4    Deployment-Aware Post-Training
+- p.14: 4.2     RL Task Synthesis and Agentic Environments
+- p.14: 4.2.1    Unified White-Box RL Environment
+- p.15: 4.2.2   Knowledge-Graph-Guided Task Synthesis
+- p.15: 4.2.3   Verifiable Problems in Agentic Environments
+- p.16: 4.2.4   Kernel Optimization Tasks
+- p.16: 4.2.5   Personal Assistant Tasks
+- p.16: 4.2.6   Autonomous Execution Tasks
+- p.16: 4.2.7   Web Development Tasks
+- p.17: 5     Infrastructure
+- p.17: 5.1     Algorithm-System Co-Design for KDA
+- p.17: 5.1.1    KDA Kernels across Regimes
+- p.18: 5.1.2        KDA Context Parallelism
+- p.18: 5.2        Infra for 3T-class Pre-Training
+- p.19: 5.2.1        Perfectly Balanced Expert-Parallel MoE Training
+- p.20: 5.2.2   Memory-Efficient Training
+- p.21: 5.2.3    Multimodal Encoder Optimization
+- p.21: 5.3     Infra for 1M Agentic RL
+- p.21: 5.3.1    Long-context RL infrastructure
+- p.22: 5.3.2        Sandbox Infrastructure
+- p.22: 5.4        Inference and Online Serving
+- p.22: 5.4.1        KDA-Aware Prefix Cache Management
+- p.24: 5.4.2   High-Performance Kernels
+- p.25: 5.4.3    Fleet-Level Scheduling
+- p.25: 6     Evaluations
+- p.25: 6.1     Main Results
+- p.25: 6.1.1    Benchmarks
+- p.26: 6.1.2   Baselines
+- p.26: 6.1.3   Evaluation Configurations
+- p.26: 6.1.4   Results
+- p.28: 6.2     Internal Evaluation
+- p.28: 6.2.1    Capability Evaluation
+- p.30: 6.2.2   Cyber Security Evaluation
+- p.31: 6.3   Third-Party Evaluation
+- p.31: 6.4   Cost Efficiency
+- p.33: 7       Case Studies
+- p.34: 8            Conclusion
+- p.41: A    Contributions
+- p.43: B    Details of Sigmoid Tanh Unit GLU
+- p.43: C    Derivation of Quantile Balancing
+- p.44: D    Histogram-Based Quantile Estimation
+- p.45: E    MoonEP General Upper Bound Proof
+- p.46: F    Chat Template
+
+精读：§4全部、§5.3–5.4、§6全部、§7全部、附录F；概要读：§1–3、§5.1–5.2、附录B–E；附录A贡献名单与参考文献只作来源定位。
+§4与附录F、§5.3、§6、§7均已按全文读取；PDF表格/公式由源码与原页补核；输出截断的KCP与案例尾部已通过独立范围/TeX补读。
