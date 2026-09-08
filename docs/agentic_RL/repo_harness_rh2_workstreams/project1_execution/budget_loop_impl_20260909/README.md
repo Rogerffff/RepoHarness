@@ -1,6 +1,6 @@
 # 预算终止闭环实施计划（Owner Brief）：I02/I03/I04 + I14 + 依赖的 I05/I12
 
-日期：2026-09-09。作者：Claude（A 线）。状态：**已按 Codex 计划审查（[codex_plan_review.md](codex_plan_review.md)，R1–R4 全部接受，附两处我方细化）修订；批 A 已提交 `6bb5ffe4`（Codex 针对性复核通过）；批 B 已实施并按 [Codex 批 B 聚焦审查](batch_b_review/README.md) 修完 R1/R2a/R2b/R3 与 §4 非阻塞项（本地全量通过、未提交，待针对性复核）；§6 六项仍按现状登记，未新增 owner 批准。** 基线：I01 已提交 `297f1f59`（针对性复核通过）；miles 集成 `98a0272e4`，本批不改 fork，不改 vendored slime 字节。修订记录见 §11。
+日期：2026-09-09。作者：Claude（A 线）。状态：**2026-09-09 夜间（用户授权自主完成）：批 A `6bb5ffe4`（Codex 复核通过）、批 B `510c9b23`（含审查 R1/R2/R3 修复，待复核）、批 D-1 `756b8fd6`、批 C、批 D-2 全部实施并各自独立提交，本机全量通过；除批 A 外均**待 Codex 审查**，本机测试通过不等于批准。§6 六项与预算数值按授权保持现状。统一交接见 [handover_20260909.md](handover_20260909.md)。** 基线：I01 已提交 `297f1f59`（针对性复核通过）；miles 集成 `98a0272e4`，本批不改 fork，不改 vendored slime 字节。修订记录见 §11。
 
 ## 0. 一句话
 
@@ -77,7 +77,9 @@ I12：receipt 写失败 → 仍抛 `finalization_receipt_write_failed`（fatal�
 4. **归因与训练**：cap 事实**只解释"由预算拒绝导致的"非零退出 / 取消**：`termination_kind_hint = "max_turns_exhausted"`，`harness_exit_code` 原样记录；随后 drain → finish_session → 屏障 → 冻结 → 评分照常；quiescence + capture 闭合 → `present_truncated` → 批 D 注入的 KEEP_FULL → 真实 reward 进原组。cap 事实**不豁免**已有 poison / fatal / capture 不完整 / 外层取消（Codex R3）。**不伪造** `end_turn` 或采样 token：第 N+1 次请求根本没有渲染与采样，训练行 = N 轮真实生成。
 5. **hard wall 停止顺序**：exit=-1 或期限到点 → **先**强制停止（同上）→ drain（CC 已死；bringup 已设 `handler_cancellation=True`，在飞 handler 随连接断开被取消，走既有 `_send_once` 取消分支广播 `/abort_request`）→ finish_session → 屏障（①再 kill 一次，幂等）→ 冻结。不再出现"CC 还在发请求时就等 inflight 归零"。
 6. **cap 与 wall 同现，按既定规则**（Codex R3；撤回原稿的"以 cap 为准"）：episode deadline 到点时执行仍在进行（CC 未停）= 真实 hard wall → `hard_wall_timeout` → DROP，cap 事实保留在 `turn_budget` 块；执行已停止后清理越过期限**不算** hard wall（清理有独立预算），不补造。
-7. **观测**（audit 记录新增可选键 `termination`）：`kind`、`turn_budget: {cap, accepted, exhausted, refused_at}`、`harness_exit_code`、`stop: {requested_by, forced, kill_verified, residual_processes, aborts_requested}`。
+7. **观测**（audit 记录新增可选键 `termination`）：`kind`、`turn_budget: {cap, accepted, exhausted, refused_count, refused_at_monotonic}`、`harness_exit_code`、`stop: {requested_by, forced, kill_verified, residual_processes, grace_seconds, harness_exited_within_grace}`。
+
+**已实施（2026-09-09，v2.4）与计划的偏离：** (a) 计数留在 vendored `_check_turn_cap`（`MAX_TURNS_PER_SID` 仍经构造参数传入），`install_turn_budget_wire` 只包装：记事实 + 403 不可重试；`count_tokens` 不计；(b) 守卫等在飞归零的上限 = min(session 剩余, 600s)，无期限时 30s；(c) 强制停止的退出码用我方哨兵 `HARNESS_EXIT_STOPPED_BY_RH2 = -2`；(d) `terminate_agent_processes` 抽到新模块 `execution_scope.py`（屏障 ① 与编排共用，行为不变）；(e) 观测块 `stop` 没有 `aborts_requested`（abort 统计仍在 registry.stats，未并入本块）；(f) 真实 CC 对 403 的退出行为未验证，编排不依赖它。
 
 ### 批 D：I04 处置注入 + grading 侧 I14
 
@@ -86,6 +88,8 @@ I12：receipt 写失败 → 仍抛 `finalization_receipt_write_failed`（fatal�
 1. 常量 `DISPOSITION_POLICY = DispositionPolicy(policy_horizon_truncation="KEEP_FULL", hard_wall_truncation="DROP_GROUP")`。`args.rh2_disposition_policy` 未设则注入；已设但与常量不符 → `StartupCheckError("disposition_policy_conflict")`（不许隐藏覆盖）。`owner_cancelled_truncation` / `agent_violation` 保持 None（未定；遇到仍 fail-fast，如实记录）。`policy_horizon` 共用槽位本轮只服务已批的 turn producer，不从它推导未来 token/context producer。库函数 `apply_member_disposition` 与 `DispositionPolicy` 的中立性不变。**注入必须先于或同批于批 C 的 cap 启用。**
 2. `run_docker`：`communicate` 被取消 / 超时 → `proc.kill()` + `await proc.wait()` 再重新抛出（不留孤儿 CLI）。
 3. **最终停止事实三分**（Codex R4）：有界收口后容器状态 = 已停止/已删除、仍运行、无法确认。`_container_running` 改为三态（inspect 失败 ≠ 未运行）；第一次 rm 失败但随后确认已停止 → 只留诊断，不 fatal；有界收口结束仍运行或无法确认 → 走既有 fatal 传播（A4"scope 最终无法终止 = run-fatal"），**并继续清理**，不只追加一段 `infra_failure_detail`。普通 `failed_to_grade` 不等于这个通道。不做 I16 的重评分；不推翻 I13 对中间等待超时后安全收口的例外。
+
+**已实施（2026-09-09，v2.4）：** D-1 = `inject_disposition_policy` 在 `ensure_fa_started` 注入 + 冲突 `StartupCheckError` + `runtime_profile.json` 记录；D-2 = `_container_state` 三态（running / stopped / absent / unknown）、`_close_container_scope`（rm -f → 仍运行则 `docker kill` → rm -f；已停止 / 已删除只留 `cleanup_failures`；仍运行 / 无法确认 → `GradingScopeTerminationError(BaselineIntegrityError)` 穿队列，编排转 `FatalExecutionInfrastructureError("grading_scope_termination_failed")`），`_exec_bash_checked` 的 inspect 失败归 `grading_container_state_unknown_during_<phase>`（failed_to_grade 内新 detail 串，不是新类别）。批 B 已把 `run_docker` 的取消回收提前。
 
 ## 4. 明确不变、不顺带做的
 
@@ -168,6 +172,7 @@ Codex 计划审查已完成（[codex_plan_review.md](codex_plan_review.md)），
 
 - 2026-09-09 Codex 修后复核：批 A 已实施范围通过，R1/R2 关闭；主审定向测试 45 passed、独立探针 8+7 案、10 文件 ruff 通过，复核期间源码/测试摘要未变。§6 六项仍未新增批准。termination 事实错误与 audit sink 同时失败时，通知与尾部异常可能不同；该既有诊断边界不阻塞本批，见 [复核 §6](batch_a_review/README.md#6-修后针对性复核2026-09-09)。
 
+- 2026-09-09 v2.4（夜间自主完成 D-1 / C / D-2）：各批实施结果与偏离写在对应小节末段；测试与提交见 [handover_20260909.md](handover_20260909.md)；全部待 Codex 审查。
 - 2026-09-09 v2.3（Codex 批 B 聚焦审查后，R1/R2a/R2b/R3 + §4 修复）：准备阶段（物化 + HEAD + census）整体受期限约束、容器所有权交外层 finally；`manager.run_docker` 取消回收；建网 / relay 接入 / docker run 三处取消路径回收网络、槽位、容器并留痕；驱动启动事实三态 + 浮点期限 + 引导取消回填；Fatal 不被取消收口吸收；排队秒数取消也记、ACK 释放。撤回 v2.2 偏离 (b)"私网创建途中残留"的残余登记。
 - 2026-09-09 v2.2（批 B 实施）：批 A 提交 `6bb5ffe4`；批 B 按 v2 第 1–7 条实施，偏离见批 B 末段（proxy 侧 `hit_by` 单值、私网创建途中取消的残余、contextvar 回填启动事实、容器内 CC 的强制停止仍归批 C）；`failure_category` 选 `capture_incomplete`（T1 (9)）；观测块新增 `harness_time_budget_seconds`。
 - 2026-09-09 v2.1（Codex 批 A 聚焦审查后，R1/R2 修复）：driver 只转换 `SandboxExecError`（新 typed 容器操作失败），不再按 RuntimeError 改名；finally 尾部两条 fatal 提前经 `_notify_fatal_halt` 通知；删除 `STRUCTURAL_CONTRADICTION_CODES` 公开常量（可简化项）；Codex §4 提示（digest / 血缘切换 FATAL 时须在抛出点区分查询失败与内容不符）登记为 §6 确认后的实施约束。
