@@ -227,6 +227,11 @@ HARNESS_KIND = os.environ.get("RH2_BRINGUP_HARNESS", "claude_code")  # claude_co
 EXECUTION_MODE = os.environ.get("RH2_EXECUTION_MODE", "s1_compat")
 AGENT_TIME_BUDGET_SEC = int(os.environ.get("SWE_AGENT_TIME_BUDGET_SEC", "600"))
 MAX_TURNS_PER_SID = int(os.environ.get("RH2_MAX_TURNS_PER_SID", "25"))
+# I01（2026-09-08 定案：B 路线）：vendor TrajectoryManager 的 fork 阈值。0 = 只有精确 token 前缀
+# 才合并，任何重渲染漂移都 FORK 新开训练行；REALIGN 覆盖与消息 rewrite-merge 两个销毁点同时关闭，
+# 每个真实生成轮在该 execution 的训练行并集中恰有一次 loss_mask=1 归属。这是决定值，不设 env 旋钮
+# （默认值不应成为隐藏路径）；值随 runtime_profile.json 与 execution audit 的 turn_coverage 落盘。
+FORK_THRESHOLD_TOKENS = 0
 INJECT_INFRA_INSTANCE = os.environ.get("RH2_INJECT_INFRA_INSTANCE", "")
 # MoE routing tape 期望（P3 预实验 J4 增补，见 preflight/8gpu_preflight_protocol.md
 # J4 判据 2/3）：Qwen3-30B-A3B 等 MoE 模型置 "1"——启动探针与生产会话都请求
@@ -581,6 +586,8 @@ def write_execution_audit_record(proxy, audit, path) -> None:
             {"step": c.step, "detail": c.detail} for c in audit.cleanup_failures
         ],
         "context_shrink_reasons": list(audit.context_shrink_reasons),
+        # I01：动作覆盖与训练行成本（可选键；schema_id 不变，消费者忽略未知键）
+        "turn_coverage": getattr(audit, "turn_coverage", None),
         "model_call_attempts": [a.model_dump(mode="json") for a in attempts_snapshot],
     }
     with path.open("a", encoding="utf-8") as fh:
@@ -715,7 +722,10 @@ def make_per_rollout_adapter(registry, shared_adapter, hook):
                 wait_timeout=wait_timeout,
             )
             if samples:
-                from repoharness2.adapters.slime.generate import SlimeBindingError
+                from repoharness2.adapters.slime.generate import (
+                    RH2_TURN_COVERAGE_ATTR,
+                    SlimeBindingError,
+                )
                 from repoharness2.adapters.slime.turn_identity import (
                     attach_turn_identity_spans,
                 )
@@ -727,7 +737,7 @@ def make_per_rollout_adapter(registry, shared_adapter, hook):
                         "adapter 无 TrajectoryManager 树）——身份 span 无从"
                         "导出，fail-closed。",
                     )
-                attach_turn_identity_spans(
+                coverage = attach_turn_identity_spans(
                     samples,
                     root,
                     fork_threshold=fork_threshold,
@@ -738,6 +748,11 @@ def make_per_rollout_adapter(registry, shared_adapter, hook):
                         )
                     ),
                 )
+                # I01：覆盖统计随叶链运到编排层（generate.take_turn_coverage 取走后
+                # 进 RolloutAudit.turn_coverage 并剥除）；同一 dict 挂到每条叶链上。
+                coverage_dict = coverage.to_dict()
+                for leaf in samples:
+                    setattr(leaf, RH2_TURN_COVERAGE_ATTR, coverage_dict)
             return samples
 
         def revoke_session(self, sid):
@@ -890,6 +905,7 @@ class BringupService:
             tool_parser=getattr(args, "sglang_tool_call_parser", None) or None,
             reasoning_parser=getattr(args, "sglang_reasoning_parser", None) or None,
             max_turns_per_sid=MAX_TURNS_PER_SID,
+            fork_threshold_tokens=FORK_THRESHOLD_TOKENS,
         )
         install_capture_wire(self.registry)
         # codex 轮次 10 P0-2：install 的构造器 patch 对**已创建**的生产
@@ -1308,6 +1324,7 @@ class BringupService:
         record["adapter_url_host_side"] = self.adapter_url
         record["harness_adapter_url"] = self.harness_adapter_url
         record["execution_mode"] = EXECUTION_MODE
+        record["fork_threshold_tokens"] = FORK_THRESHOLD_TOKENS  # I01：B 路线接线值（供事件 join）
         self.runtime_profile_record = record
         write_runtime_profile_record(ARTIFACT_DIR / "runtime_profile.json", record)
         if not record["ok"]:

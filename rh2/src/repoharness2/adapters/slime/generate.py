@@ -1218,6 +1218,21 @@ def _match_turns_to_runs(
 # ATTACHED_MASK_ATTR 同一携带机制）：bringup 的 finish_session 包装在树侧
 # 导出后写入，bringup_leaf_facts 读出装进 LeafFacts.turn_spans。
 RH2_TURN_IDENTITY_SPANS_ATTR = "rh2_turn_identity_spans"
+# I01（B 路线观测）：finish_session 包装把 TurnCoverageSummary.to_dict() 以该附加属性挂到每条
+# 叶链 Sample 上（与身份 span 同一运输方式）；编排层 take_turn_coverage 取走进 RolloutAudit
+# 后立即剥除——不进 Sample metadata、不进 miles wire、不越过 canonicalize 的未知属性边界。
+RH2_TURN_COVERAGE_ATTR = "rh2_turn_coverage"
+
+
+def take_turn_coverage(samples: Any) -> dict[str, Any] | None:
+    """取走并剥除叶链上的覆盖统计（缺失 = 非 bringup 链或旧包装，返回 None）。"""
+
+    coverage: dict[str, Any] | None = None
+    for leaf in samples or ():
+        found = getattr(leaf, "__dict__", {}).pop(RH2_TURN_COVERAGE_ATTR, None)
+        if found is not None:
+            coverage = found
+    return coverage
 
 
 @dataclass(frozen=True)
@@ -2106,6 +2121,9 @@ class RolloutAudit:
     sandbox_setup: dict[str, Any] | None = None
     # W3b：启动前核对摘要（ok/violations/seconds；未通过时附完整 inspect/probe 事实）。
     prelaunch_check: dict[str, Any] | None = None
+    # I01（B 路线观测）：本 execution 的动作覆盖与训练行成本（turn_identity.TurnCoverageSummary
+    # 的 dict；bringup 经 execution audit 记录落盘）。非 bringup 链为 None。
+    turn_coverage: dict[str, Any] | None = None
 
     def step(self, name: str) -> None:
         self.steps.append(name)
@@ -2792,6 +2810,11 @@ class RolloutOrchestrator:
                 reward=0.0,  # 真实 reward 出自步骤 6 评分，之后再回写
                 extra_metadata={"instance_id": task.task_id},
             )
+            # I01：树侧覆盖统计随叶链运到这里，立即进 audit 并从样本上剥除
+            # （后续任何失败路径也能在 execution audit 里看到本次覆盖事实）。
+            coverage = take_turn_coverage(samples)
+            if coverage is not None:
+                audit.turn_coverage = coverage
             if self._session_poison_check is not None and self._session_poison_check(sid):
                 raise SlimeBindingError(
                     "session_poisoned_during_execution",

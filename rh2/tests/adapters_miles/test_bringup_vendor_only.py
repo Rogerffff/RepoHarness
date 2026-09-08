@@ -80,6 +80,10 @@ def test_bringup_service_constructs_with_vendor_only(world, monkeypatch, tmp_pat
             assert service.adapter_url.startswith("http://")
             assert len(service.task_specs) == 8  # 冻结 8 题
             assert service.renderer is not None
+            # I01（B 路线，2026-09-08 定案）：生产 manager 显式接 fork_threshold_tokens=0，
+            # 且 PerRolloutAdapter.finish_session 的身份导出读的是同一个 manager 值（单一来源）
+            assert bringup.FORK_THRESHOLD_TOKENS == 0
+            assert service.adapter.manager._fork_threshold == 0
 
             # 全过程只加载 vendor slime 模块（零 reference 泄漏）
             loaded = {
