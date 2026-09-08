@@ -1,0 +1,73 @@
+{
+  "sha": "36fa60e82d20e5853feb617319381ea278b2a932",
+  "node_id": "C_kwDOO9n4ndoAKDM2ZmE2MGU4MmQyMGU1ODUzZmViNjE3MzE5MzgxZWEyNzhiMmE5MzI",
+  "commit": {
+    "author": {
+      "name": "jingshenghang",
+      "email": "shenghang.jing@aminer.cn",
+      "date": "2026-06-12T08:21:31Z"
+    },
+    "committer": {
+      "name": "jingshenghang",
+      "email": "shenghang.jing@aminer.cn",
+      "date": "2026-06-12T08:21:31Z"
+    },
+    "message": "refactor(agent): gate fork on full output_ids length\n\nclassify_token_drift now compares len(turn.output_ids) against fork_threshold\nto mirror _try_merge_assistant_rewrite -- both call sites speak in whole-\nresponse sizes, not partial drift tails. The position guard is unchanged.\n\nUpdate test_4_6 boundary case to parameterize on the new turn's response length.",
+    "tree": {
+      "sha": "6849969b6694029ead07c0fafe4699e1702d3487",
+      "url": "https://api.github.com/repos/THUDM/slime/git/trees/6849969b6694029ead07c0fafe4699e1702d3487"
+    },
+    "url": "https://api.github.com/repos/THUDM/slime/git/commits/36fa60e82d20e5853feb617319381ea278b2a932",
+    "comment_count": 0,
+    "verification": {
+      "verified": false,
+      "reason": "unsigned",
+      "signature": null,
+      "payload": null,
+      "verified_at": null
+    }
+  },
+  "url": "https://api.github.com/repos/THUDM/slime/commits/36fa60e82d20e5853feb617319381ea278b2a932",
+  "html_url": "https://github.com/THUDM/slime/commit/36fa60e82d20e5853feb617319381ea278b2a932",
+  "comments_url": "https://api.github.com/repos/THUDM/slime/commits/36fa60e82d20e5853feb617319381ea278b2a932/comments",
+  "author": null,
+  "committer": null,
+  "parents": [
+    {
+      "sha": "46d09de9766979c8b80508504eff1a89f7098c84",
+      "url": "https://api.github.com/repos/THUDM/slime/commits/46d09de9766979c8b80508504eff1a89f7098c84",
+      "html_url": "https://github.com/THUDM/slime/commit/46d09de9766979c8b80508504eff1a89f7098c84"
+    }
+  ],
+  "stats": {
+    "total": 40,
+    "additions": 22,
+    "deletions": 18
+  },
+  "files": [
+    {
+      "sha": "169c7f394635ee9c12ef8a781d5393b6d91e2041",
+      "filename": "slime/agent/trajectory_manager.py",
+      "status": "modified",
+      "additions": 5,
+      "deletions": 4,
+      "changes": 9,
+      "blob_url": "https://github.com/THUDM/slime/blob/36fa60e82d20e5853feb617319381ea278b2a932/slime%2Fagent%2Ftrajectory_manager.py",
+      "raw_url": "https://github.com/THUDM/slime/raw/36fa60e82d20e5853feb617319381ea278b2a932/slime%2Fagent%2Ftrajectory_manager.py",
+      "contents_url": "https://api.github.com/repos/THUDM/slime/contents/slime%2Fagent%2Ftrajectory_manager.py?ref=36fa60e82d20e5853feb617319381ea278b2a932",
+      "patch": "@@ -129,7 +129,7 @@ def _common_prefix_len(a: list[int], b: list[int], chunk: int = 4096) -> int:\n class DriftKind(enum.Enum):\n     CLEAN = \"clean\"  # drift == 0: prompt_ids exactly extends held tokens; append the tail beyond them\n     REALIGN = (\n-        \"realign\"  # small drift inside the most-recent response span; replace that whole span from prompt_ids (loss=0)\n+        \"realign\"  # drift inside the most-recent response span and short incoming response; replace that span (loss=0)\n     )\n     FORK = \"fork\"  # everything else: close this builder, open a fresh one as a fork\n \n@@ -174,8 +174,9 @@ def classify_token_drift(self, turn: TurnRecord) -> DriftKind:\n         already holds as an exact prefix. When token drift has occurred -- the\n         prompt diverges from the held tokens -- we decide whether to REALIGN\n         (heal a short divergence inside the most-recent response span) or to FORK\n-        (the divergence is too large or too early to absorb). With no drift the\n-        turn is handled the CLEAN way -- a plain prefix extension.\n+        (``len(turn.output_ids) >= fork_threshold``, or the divergence sits too\n+        early to absorb). With no drift the turn is handled the CLEAN way -- a\n+        plain prefix extension.\n         \"\"\"\n         realign_at = _common_prefix_len(self.tokens, turn.prompt_ids)\n         drift = len(self.tokens) - realign_at\n@@ -186,7 +187,7 @@ def classify_token_drift(self, turn: TurnRecord) -> DriftKind:\n         # REALIGN only heals drift that falls inside the most-recent response span\n         # (and is short); divergence anywhere earlier, or an empty builder, forks.\n         start = self.last_response_start_idx\n-        if start is not None and realign_at >= start and drift < self._fork_threshold:\n+        if start is not None and realign_at >= start and len(turn.output_ids) < self._fork_threshold:\n             return DriftKind.REALIGN\n         return DriftKind.FORK\n "
+    },
+    {
+      "sha": "7d41a603b01385b4ffc9ad5b76f4ba4f50cea9da",
+      "filename": "tests/test_agent/test_trajectory_manager_e2e.py",
+      "status": "modified",
+      "additions": 17,
+      "deletions": 14,
+      "changes": 31,
+      "blob_url": "https://github.com/THUDM/slime/blob/36fa60e82d20e5853feb617319381ea278b2a932/tests%2Ftest_agent%2Ftest_trajectory_manager_e2e.py",
+      "raw_url": "https://github.com/THUDM/slime/raw/36fa60e82d20e5853feb617319381ea278b2a932/tests%2Ftest_agent%2Ftest_trajectory_manager_e2e.py",
+      "contents_url": "https://api.github.com/repos/THUDM/slime/contents/tests%2Ftest_agent%2Ftest_trajectory_manager_e2e.py?ref=36fa60e82d20e5853feb617319381ea278b2a932",
+      "patch": "@@ -1206,14 +1206,17 @@ def test_4_5_mixed_logprobs_across_turns():\n \n \n def test_4_6_drift_B1_threshold_boundary():\n-    \"\"\"case-B1 threshold is exclusive: a drift tail of length d == threshold\n-    forks, d == threshold-1 replaces. Verify both sides of the boundary.\"\"\"\n+    \"\"\"case-B1 threshold compares the incoming turn's full ``output_ids`` length\n+    to ``fork_threshold`` (mirroring ``_try_merge_assistant_rewrite``): the gate\n+    is exclusive, so ``len(r2) == threshold`` forks and ``len(r2) < threshold``\n+    replaces. Drift-tail length is not part of the gate -- only its position\n+    (inside the most-recent response span) keeps REALIGN physically applicable.\"\"\"\n \n-    def run(threshold, drift_tail_len):\n+    def run(threshold, new_resp_len):\n         mgr = TrajectoryManager(fork_threshold_tokens=threshold)\n-        sid = f\"4.6-{threshold}-{drift_tail_len}\"\n+        sid = f\"4.6-{threshold}-{new_resp_len}\"\n         s, u = sys_msg(\"S\"), usr_msg(\"u\")\n-        # 4-token response so the divergence can sit d tokens before its end.\n+        # 4-token response so the divergence can sit inside the response span.\n         p1 = render_prompt([s, u])\n         r1 = [9001, 9002, 9003, 9004]\n         mgr.record_turn(\n@@ -1226,10 +1229,10 @@ def run(threshold, drift_tail_len):\n         tm = tool_msg(\"t\")\n         # honest turn-2 prompt echoes p1 + r1 then the tool block + gen marker.\n         p2_honest = p1 + r1 + tm.render() + [_GEN]\n-        # divergence d tokens before the end of r1's echo (inside its response span).\n-        drift_idx = len(p1) + len(r1) - drift_tail_len\n+        # divergence one token before the end of r1's echo (well inside the response span).\n+        drift_idx = len(p1) + len(r1) - 1\n         p2 = drift_replace(p2_honest, drift_idx)\n-        r2 = [9101, 9102]\n+        r2 = [9100 + i for i in range(new_resp_len)]\n         mgr.record_turn(\n             sid,\n             turn=turn(p2, r2, finish_reason=\"stop\"),\n@@ -1239,16 +1242,16 @@ def run(threshold, drift_tail_len):\n         samples = get_traj(mgr, sid, base_sample=Sample(index=0, prompt=\"\"), reward=1.0)\n         return samples, p1, r1, p2, r2\n \n-    # d == threshold -> fork: two single-turn segments, each trains its own resp.\n-    forked, p1, r1, p2, r2 = run(threshold=2, drift_tail_len=2)\n-    assert len(forked) == 2, f\"d==threshold must fork, got {len(forked)}\"\n+    # len(r2) == threshold -> fork: two single-turn segments, each trains its own resp.\n+    forked, p1, r1, p2, r2 = run(threshold=2, new_resp_len=2)\n+    assert len(forked) == 2, f\"len(r2)==threshold must fork, got {len(forked)}\"\n     assert forked[0].tokens == p1 + r1\n     assert forked[0].loss_mask == [1] * len(r1)\n     assert forked[1].tokens == p2 + r2\n     assert forked[1].loss_mask == [1] * len(r2)\n-    # d < threshold -> replace: one coherent segment realigned to p2.\n-    replaced, p1b, r1b, p2b, r2b = run(threshold=2, drift_tail_len=1)\n-    assert len(replaced) == 1, f\"d<threshold must replace, got {len(replaced)}\"\n+    # len(r2) < threshold -> replace: one coherent segment realigned to p2.\n+    replaced, p1b, r1b, p2b, r2b = run(threshold=3, new_resp_len=2)\n+    assert len(replaced) == 1, f\"len(r2)<threshold must replace, got {len(replaced)}\"\n     assert replaced[0].tokens == p2b + r2b\n     # the drifted r1 echo is not a faithful response anymore -> the WHOLE r1 span is\n     # masked (loss=0 prompt context), r2 trains."
+    }
+  ]
+}

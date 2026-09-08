@@ -1,0 +1,110 @@
+{
+  "assertions": "passed",
+  "result": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/i01_options_20260908/miles_c_probe_result.json",
+  "matcher_results": {
+    "dict_key_order": {
+      "strict": true,
+      "loose_tool_call": true,
+      "role_content_only": true
+    },
+    "json_string_key_order": {
+      "strict": false,
+      "loose_tool_call": true,
+      "role_content_only": true
+    },
+    "json_string_vs_dict": {
+      "strict": false,
+      "loose_tool_call": true,
+      "role_content_only": true
+    },
+    "missing_nonempty_thinking": {
+      "strict": false,
+      "loose_tool_call": false,
+      "role_content_only": true
+    },
+    "changed_tool_name": {
+      "strict": false,
+      "loose_tool_call": false,
+      "role_content_only": true
+    },
+    "changed_tool_arguments": {
+      "strict": false,
+      "loose_tool_call": false,
+      "role_content_only": true
+    },
+    "dict_boolean_vs_integer": {
+      "strict": true,
+      "loose_tool_call": true,
+      "role_content_only": true
+    },
+    "json_boolean_vs_integer": {
+      "strict": false,
+      "loose_tool_call": false,
+      "role_content_only": true
+    },
+    "duplicate_json_key": {
+      "strict": false,
+      "loose_tool_call": false,
+      "role_content_only": true
+    },
+    "array_order": {
+      "strict": false,
+      "loose_tool_call": false,
+      "role_content_only": true
+    }
+  },
+  "merge_results": {
+    "native_tool_only": {
+      "accepted": true,
+      "prefix_preserved": true,
+      "prefix_tokens": 65,
+      "total_tokens": 80,
+      "inserted_boundary_token": 198,
+      "suffix_text": "\n<|im_start|>user\n<tool_response>\nFile updated.\n</tool_response><|im_end|>\n<|im_start|>assistant\n"
+    },
+    "native_user_reminder": {
+      "accepted": true,
+      "prefix_preserved": true,
+      "prefix_tokens": 65,
+      "total_tokens": 96,
+      "inserted_boundary_token": 198,
+      "suffix_text": "\n<|im_start|>user\n<tool_response>\nFile updated.\n</tool_response><|im_end|>\n<|im_start|>user\n<system-reminder>Continue.</system-reminder><|im_end|>\n<|im_start|>assistant\n"
+    },
+    "fixed_user_reminder": {
+      "accepted": true,
+      "prefix_preserved": true,
+      "prefix_tokens": 65,
+      "total_tokens": 96,
+      "inserted_boundary_token": 198,
+      "suffix_text": "\n<|im_start|>user\n<tool_response>\nFile updated.\n</tool_response><|im_end|>\n<|im_start|>user\n<system-reminder>Continue.</system-reminder><|im_end|>\n<|im_start|>assistant\n"
+    },
+    "fixed_reordered_dict": {
+      "accepted": true,
+      "prefix_preserved": true,
+      "prefix_tokens": 65,
+      "total_tokens": 80,
+      "inserted_boundary_token": 198,
+      "suffix_text": "\n<|im_start|>user\n<tool_response>\nFile updated.\n</tool_response><|im_end|>\n<|im_start|>assistant\n"
+    },
+    "loose_match_then_raw_merge": {
+      "accepted": false,
+      "error": "message mismatch at index 2 (role: stored=assistant, new=assistant). Diffs: {'tool_calls': {'stored': '[{\\'type\\': \\'function\\', \\'function\\': {\\'name\\': \\'Edit\\', \\'arguments\\': \\'{\"file_path\": \"a.py\", \"old_string\": \"a\", \"new_string\": \"b\", \"replace_all\": false}\\'}}]', 'new': '[{\\'type\\': \\'function\\', \\'function\\': {\\'name\\': \\'Edit\\', \\'arguments\\': \\'{\"replace_all\": false, \"new_string\": \"b\", \"old_string\": \"a\", \"file_path\": \"a.py\"}\\'}}]'}}"
+    },
+    "loose_match_then_stored_prefix_merge": {
+      "accepted": true,
+      "prefix_preserved": true,
+      "prefix_tokens": 65,
+      "total_tokens": 80,
+      "inserted_boundary_token": 198,
+      "suffix_text": "\n<|im_start|>user\n<tool_response>\nFile updated.\n</tool_response><|im_end|>\n<|im_start|>assistant\n"
+    },
+    "missing_cli_thinking": {
+      "accepted": false,
+      "error": "message mismatch at index 2 (role: stored=assistant, new=assistant). Diffs: {'reasoning_content': {'stored': \"'TRACE_THINK'\", 'new': 'None'}}"
+    },
+    "synthetic_compaction": {
+      "accepted": false,
+      "error": "new messages (2) are fewer than stored messages (3)"
+    }
+  }
+}

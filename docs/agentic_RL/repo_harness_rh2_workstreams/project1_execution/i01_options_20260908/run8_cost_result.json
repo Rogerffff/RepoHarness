@@ -1,0 +1,133 @@
+{
+  "scope": "单条 run8，真实 token 的无截断 builder 重放；不是完整 producer、C 或 GPU 测量",
+  "projection": "docs/agentic_RL/repo_harness_rh2_workstreams/s1/7a_artifacts/artifacts_run8/rollouts/4a25c5a4-f07f-422b-a6a4-/trajectory_projection.json",
+  "call_lengths": [
+    {
+      "prompt": 18508,
+      "output": 624
+    },
+    {
+      "prompt": 19169,
+      "output": 606
+    },
+    {
+      "prompt": 19811,
+      "output": 191
+    },
+    {
+      "prompt": 20260,
+      "output": 648
+    },
+    {
+      "prompt": 25535,
+      "output": 317
+    },
+    {
+      "prompt": 25897,
+      "output": 386
+    }
+  ],
+  "boundaries": [
+    {
+      "boundary": "t0->t1",
+      "old_total": 19132,
+      "new_prompt": 19169,
+      "common_prefix": 19064,
+      "is_exact_extension": false,
+      "old_tail_not_reusable_from_immediate_previous_call": 68,
+      "new_prompt_after_common_prefix": 105
+    },
+    {
+      "boundary": "t1->t2",
+      "old_total": 19775,
+      "new_prompt": 19811,
+      "common_prefix": 19775,
+      "is_exact_extension": true,
+      "old_tail_not_reusable_from_immediate_previous_call": 0,
+      "new_prompt_after_common_prefix": 36
+    },
+    {
+      "boundary": "t2->t3",
+      "old_total": 20002,
+      "new_prompt": 20260,
+      "common_prefix": 20002,
+      "is_exact_extension": true,
+      "old_tail_not_reusable_from_immediate_previous_call": 0,
+      "new_prompt_after_common_prefix": 258
+    },
+    {
+      "boundary": "t3->t4",
+      "old_total": 20908,
+      "new_prompt": 25535,
+      "common_prefix": 20908,
+      "is_exact_extension": true,
+      "old_tail_not_reusable_from_immediate_previous_call": 0,
+      "new_prompt_after_common_prefix": 4627
+    },
+    {
+      "boundary": "t4->t5",
+      "old_total": 25852,
+      "new_prompt": 25897,
+      "common_prefix": 25852,
+      "is_exact_extension": true,
+      "old_tail_not_reusable_from_immediate_previous_call": 0,
+      "new_prompt_after_common_prefix": 45
+    }
+  ],
+  "representations": [
+    {
+      "threshold": 1024,
+      "classifications": [
+        "clean",
+        "realign",
+        "clean",
+        "clean",
+        "clean",
+        "clean"
+      ],
+      "rows": [
+        {
+          "total_tokens": 26283,
+          "leading_prompt_tokens": 18508,
+          "trainable_tokens": 2148
+        }
+      ],
+      "total_unpadded_tokens": 26283,
+      "total_trainable_tokens": 2148,
+      "longest_row": 26283
+    },
+    {
+      "threshold": 0,
+      "classifications": [
+        "clean",
+        "fork",
+        "clean",
+        "clean",
+        "clean",
+        "clean"
+      ],
+      "rows": [
+        {
+          "total_tokens": 19132,
+          "leading_prompt_tokens": 18508,
+          "trainable_tokens": 624
+        },
+        {
+          "total_tokens": 26283,
+          "leading_prompt_tokens": 19169,
+          "trainable_tokens": 2148
+        }
+      ],
+      "total_unpadded_tokens": 45415,
+      "total_trainable_tokens": 2772,
+      "longest_row": 26283
+    }
+  ],
+  "B_over_current_total_token_ratio": 1.7279229920480919,
+  "per_request_total_unpadded_tokens": 131952,
+  "notes": [
+    "比较基准是当前欠覆盖的单行，不能当作等训练目标的性能对比。",
+    "输入 token 总量不等于 FLOPs、峰值显存或 wall time。",
+    "前缀长度只表示相邻请求的可复用机会；缓存驻留、权重与 engine 未模拟。"
+  ]
+}

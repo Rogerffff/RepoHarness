@@ -1,0 +1,97 @@
+{
+  "sha": "4fcbb24133af33682613d4db653e835fff602f8a",
+  "node_id": "C_kwDOO9n4ndoAKDRmY2JiMjQxMzNhZjMzNjgyNjEzZDRkYjY1M2U4MzVmZmY2MDJmOGE",
+  "commit": {
+    "author": {
+      "name": "jingshenghang",
+      "email": "shenghang.jing@aminer.cn",
+      "date": "2026-06-08T11:00:09Z"
+    },
+    "committer": {
+      "name": "jingshenghang",
+      "email": "shenghang.jing@aminer.cn",
+      "date": "2026-06-08T16:14:14Z"
+    },
+    "message": "feat(agent): assistant-rewrite merge to de-dilute reward\n\nAdd the single tolerated exception to the strict exact-prefix\nTrajectoryManager contract: when cc re-renders a short prior assistant\nmessage (tool_call arg order / whitespace), DFS forks at that assistant\nand leaves the original short turn as a standalone stub leaf -> its own\nSample, diluting the trajectory's evenly-split reward.\n\n_try_merge_assistant_rewrite absorbs such a rewrite onto the existing\nleaf when its response is short enough (fork_merge_max_response_tokens,\ndefault 1024), demoting that node to routing-only so it contributes 0\ntraining tokens. Wire the threshold through Anthropic/OpenAI adapters and\nthe coding_agent_rl generate entrypoint (env SLIME_FORK_MERGE_MAX_RESPONSE_TOKENS).",
+    "tree": {
+      "sha": "7f2734f5ddbaaed1be37248b805f08c8982c260d",
+      "url": "https://api.github.com/repos/THUDM/slime/git/trees/7f2734f5ddbaaed1be37248b805f08c8982c260d"
+    },
+    "url": "https://api.github.com/repos/THUDM/slime/git/commits/4fcbb24133af33682613d4db653e835fff602f8a",
+    "comment_count": 0,
+    "verification": {
+      "verified": false,
+      "reason": "unsigned",
+      "signature": null,
+      "payload": null,
+      "verified_at": null
+    }
+  },
+  "url": "https://api.github.com/repos/THUDM/slime/commits/4fcbb24133af33682613d4db653e835fff602f8a",
+  "html_url": "https://github.com/THUDM/slime/commit/4fcbb24133af33682613d4db653e835fff602f8a",
+  "comments_url": "https://api.github.com/repos/THUDM/slime/commits/4fcbb24133af33682613d4db653e835fff602f8a/comments",
+  "author": null,
+  "committer": null,
+  "parents": [
+    {
+      "sha": "6f95f188969c5b8cb30c282b4d2213a974330357",
+      "url": "https://api.github.com/repos/THUDM/slime/commits/6f95f188969c5b8cb30c282b4d2213a974330357",
+      "html_url": "https://github.com/THUDM/slime/commit/6f95f188969c5b8cb30c282b4d2213a974330357"
+    }
+  ],
+  "stats": {
+    "total": 134,
+    "additions": 123,
+    "deletions": 11
+  },
+  "files": [
+    {
+      "sha": "a007bf40e9460405207a144a80378d8480e4ef73",
+      "filename": "examples/coding_agent_rl/generate.py",
+      "status": "modified",
+      "additions": 10,
+      "deletions": 8,
+      "changes": 18,
+      "blob_url": "https://github.com/THUDM/slime/blob/4fcbb24133af33682613d4db653e835fff602f8a/examples%2Fcoding_agent_rl%2Fgenerate.py",
+      "raw_url": "https://github.com/THUDM/slime/raw/4fcbb24133af33682613d4db653e835fff602f8a/examples%2Fcoding_agent_rl%2Fgenerate.py",
+      "contents_url": "https://api.github.com/repos/THUDM/slime/contents/examples%2Fcoding_agent_rl%2Fgenerate.py?ref=4fcbb24133af33682613d4db653e835fff602f8a",
+      "patch": "@@ -97,23 +97,25 @@ def __init__(self, args) -> None:\n                 \"Without it the sandbox cannot dial back and the rollout will \"\n                 \"silently abort.\"\n             )\n-        # Kept for the staged re-add of drift tolerance: the strict\n-        # exact-prefix TrajectoryManager no longer honors these, so warn loudly\n-        # if an operator set them expecting fork/merge behavior.\n-        drift_fork_threshold = os.environ.get(\"SLIME_DRIFT_FORK_MIN_LOSS_TOKENS\")\n+        # Assistant-rewrite merge threshold (see TrajectoryManager): when cc\n+        # re-renders a short prior assistant, absorb it onto the existing leaf\n+        # instead of forking a reward-diluting stub Sample. None -> manager\n+        # default (1024); <=0 disables.\n         fork_merge_threshold = os.environ.get(\"SLIME_FORK_MERGE_MAX_RESPONSE_TOKENS\")\n-        if drift_fork_threshold or fork_merge_threshold:\n+        fork_merge_threshold = int(fork_merge_threshold) if fork_merge_threshold else None\n+        # drift-fork remains unimplemented in the strict core; warn if set.\n+        if os.environ.get(\"SLIME_DRIFT_FORK_MIN_LOSS_TOKENS\"):\n             logger.warning(\n-                \"[coding_agent_rl] SLIME_DRIFT_FORK_MIN_LOSS_TOKENS / \"\n-                \"SLIME_FORK_MERGE_MAX_RESPONSE_TOKENS are set but currently \"\n-                \"ignored: TrajectoryManager uses strict exact-prefix \"\n+                \"[coding_agent_rl] SLIME_DRIFT_FORK_MIN_LOSS_TOKENS is set but \"\n+                \"currently ignored: TrajectoryManager uses strict exact-prefix \"\n                 \"linearization and raises on TITO drift.\"\n             )\n         self.adapter = AnthropicAdapter(\n             tokenizer=self.tokenizer,\n             sglang_url=sglang_url,\n             tool_parser=self.tool_parser,\n             reasoning_parser=self.reasoning_parser,\n+            fork_merge_max_response_tokens=fork_merge_threshold,\n         )\n         # handler_cancellation=True so a client disconnect cancels the handler\n         # coroutine, arming the fire-and-forget /abort_request inside the"
+    },
+    {
+      "sha": "bc563682d46303ca1e2b14141fec6319af025be0",
+      "filename": "slime/agent/adapters/anthropic.py",
+      "status": "modified",
+      "additions": 7,
+      "deletions": 1,
+      "changes": 8,
+      "blob_url": "https://github.com/THUDM/slime/blob/4fcbb24133af33682613d4db653e835fff602f8a/slime%2Fagent%2Fadapters%2Fanthropic.py",
+      "raw_url": "https://github.com/THUDM/slime/raw/4fcbb24133af33682613d4db653e835fff602f8a/slime%2Fagent%2Fadapters%2Fanthropic.py",
+      "contents_url": "https://api.github.com/repos/THUDM/slime/contents/slime%2Fagent%2Fadapters%2Fanthropic.py?ref=4fcbb24133af33682613d4db653e835fff602f8a",
+      "patch": "@@ -67,6 +67,7 @@ def __init__(\n         tool_parser=None,\n         reasoning_parser=None,\n         max_turns_per_sid: int | None = None,\n+        fork_merge_max_response_tokens: int | None = None,\n         on_turn_appended: Callable[..., None] | None = None,\n     ) -> None:\n         super().__init__(\n@@ -76,7 +77,12 @@ def __init__(\n             reasoning_parser=reasoning_parser,\n         )\n         # ONE manager shared across all sids; per-sid trees live inside.\n-        self.manager = TrajectoryManager()\n+        # ``None`` means \"caller did not specify\" -> let TrajectoryManager use\n+        # its own default for the assistant-rewrite merge threshold.\n+        mgr_kwargs: dict[str, int] = {}\n+        if fork_merge_max_response_tokens is not None:\n+            mgr_kwargs[\"fork_merge_max_response_tokens\"] = fork_merge_max_response_tokens\n+        self.manager = TrajectoryManager(**mgr_kwargs)\n         # Optional debug hook invoked after each successful append_turn.\n         # Signature: (sid, prompt_messages, tools, response_message,\n         #             prompt_ids, response_ids, finish_reason) -> None."
+    },
+    {
+      "sha": "f051908a8f204fd16a5380351c4560add031aa52",
+      "filename": "slime/agent/adapters/openai.py",
+      "status": "modified",
+      "additions": 7,
+      "deletions": 1,
+      "changes": 8,
+      "blob_url": "https://github.com/THUDM/slime/blob/4fcbb24133af33682613d4db653e835fff602f8a/slime%2Fagent%2Fadapters%2Fopenai.py",
+      "raw_url": "https://github.com/THUDM/slime/raw/4fcbb24133af33682613d4db653e835fff602f8a/slime%2Fagent%2Fadapters%2Fopenai.py",
+      "contents_url": "https://api.github.com/repos/THUDM/slime/contents/slime%2Fagent%2Fadapters%2Fopenai.py?ref=4fcbb24133af33682613d4db653e835fff602f8a",
+      "patch": "@@ -74,6 +74,7 @@ def __init__(\n         tool_parser=None,\n         reasoning_parser=None,\n         max_turns_per_sid: int | None = None,\n+        fork_merge_max_response_tokens: int | None = None,\n         on_turn_appended: Callable[..., None] | None = None,\n     ) -> None:\n         super().__init__(\n@@ -83,7 +84,12 @@ def __init__(\n             reasoning_parser=reasoning_parser,\n         )\n         # ONE manager shared across all sids; per-sid trees live inside.\n-        self.manager = TrajectoryManager()\n+        # ``None`` means \"caller did not specify\" -> let TrajectoryManager use\n+        # its own default for the assistant-rewrite merge threshold.\n+        mgr_kwargs: dict[str, int] = {}\n+        if fork_merge_max_response_tokens is not None:\n+            mgr_kwargs[\"fork_merge_max_response_tokens\"] = fork_merge_max_response_tokens\n+        self.manager = TrajectoryManager(**mgr_kwargs)\n         # Optional debug hook invoked after each successful append_turn.\n         # Signature mirrors AnthropicAdapter.on_turn_appended:\n         #   (sid, prompt_messages, tools, response_message,"
+    },
+    {
+      "sha": "a10bfac6be5d0daec6f0f478d6ccc14dfa0ce58e",
+      "filename": "slime/agent/trajectory_manager.py",
+      "status": "modified",
+      "additions": 99,
+      "deletions": 1,
+      "changes": 100,
+      "blob_url": "https://github.com/THUDM/slime/blob/4fcbb24133af33682613d4db653e835fff602f8a/slime%2Fagent%2Ftrajectory_manager.py",
+      "raw_url": "https://github.com/THUDM/slime/raw/4fcbb24133af33682613d4db653e835fff602f8a/slime%2Fagent%2Ftrajectory_manager.py",
+      "contents_url": "https://api.github.com/repos/THUDM/slime/contents/slime%2Fagent%2Ftrajectory_manager.py?ref=4fcbb24133af33682613d4db653e835fff602f8a",
+      "patch": "@@ -33,6 +33,19 @@\n   optional drift-fork / drop-accounting / fork-merge. That machinery is\n   removed here in favor of failing loudly; it can be re-added as an explicit\n   layer later if real drift turns out to be unavoidable.)\n+\n+* ONE tolerated exception to the strict contract: an assistant-rewrite merge.\n+  cc sometimes re-renders a previously-recorded assistant message when feeding\n+  it back as prompt (tool_call arg order, whitespace). The message no longer\n+  matches, so DFS forks at that assistant — which does NOT raise (the rewrite\n+  mounts as a routing-only node, skipped at linearization) but leaves the\n+  original short turn as a standalone stub leaf -> its own Sample, diluting the\n+  trajectory's evenly-split reward. ``_try_merge_assistant_rewrite`` absorbs\n+  such a rewrite onto the existing leaf when its response is short enough\n+  (``fork_merge_max_response_tokens``), demoting that node to routing-only so it\n+  contributes 0 training tokens. Non-assistant mismatches, long responses, and\n+  ambiguous cases are left to fork as usual; same-message-different-token drift\n+  still raises.\n \"\"\"\n \n from __future__ import annotations\n@@ -172,7 +185,14 @@ class TrajectoryManager:\n     ancestor) + exactly 1 assistant leaf carrying that turn's sglang snapshot.\n     \"\"\"\n \n-    def __init__(self) -> None:\n+    def __init__(self, *, fork_merge_max_response_tokens: int = 1024) -> None:\n+        # Rewrite-merge threshold: when DFS breaks at an assistant message and\n+        # exactly one eligible short-response *leaf* sibling exists, absorb the\n+        # rewrite onto it (demoted to routing-only -> 0 training tokens),\n+        # compared against the abandoned turn's own turn_response_ids length.\n+        # Default 1024 (ON); set <=0 to disable. This is the single tolerated\n+        # exception to the strict exact-prefix contract; see module docstring.\n+        self._fork_merge_threshold = fork_merge_max_response_tokens\n         self._trees: dict[str, Node] = {}\n         self._turn_count: dict[str, int] = {}\n \n@@ -206,6 +226,7 @@ def append_turn(\n         root = self._trees.setdefault(sid, Node())\n \n         cur, i = self._find_mount_point(root, prompt_messages)\n+        cur, i = self._try_merge_assistant_rewrite(sid, cur, prompt_messages, i)\n         cur = self._mount_prompt_messages(cur, prompt_messages[i:], tools)\n         self._attach_assistant_leaf(sid, cur, turn=turn, response_message=response_message, metadata=metadata)\n \n@@ -276,6 +297,83 @@ def _find_mount_point(self, root: Node, messages: list[dict[str, Any]]) -> tuple\n             i += 1\n         return cur, i\n \n+    def _try_merge_assistant_rewrite(\n+        self,\n+        sid: str,\n+        cur: Node,\n+        prompt_messages: list[dict[str, Any]],\n+        i: int,\n+    ) -> tuple[Node, int]:\n+        \"\"\"Absorb a short assistant-rewrite onto its existing node instead of forking.\n+\n+        cc sometimes re-renders a previously-recorded assistant message when\n+        feeding it back as prompt (tool_call arg order, whitespace). That breaks\n+        DFS at the assistant and forks a fresh subtree, leaving the original\n+        short turn as a standalone stub leaf -> its own Sample, diluting the\n+        trajectory's evenly-split reward. Forking does NOT raise (the rewritten\n+        message mounts as a routing-only node and is already skipped at\n+        linearization); this merge is purely a reward-hygiene / de-fragmentation\n+        optimization.\n+\n+        When the diverging message is an assistant and exactly one eligible\n+        *short-response leaf* sibling exists, adopt the rewritten message onto\n+        that node and DEMOTE it to routing-only (clear its turn snapshot), so it\n+        contributes 0 training tokens -- handled by the existing\n+        ``turn_prompt_ids is not None`` filter in ``_chain_to_sample`` (no change\n+        needed there). Any other mismatch (non-assistant message, long response,\n+        non-leaf or ambiguous candidates) is left to fork as usual.\n+        \"\"\"\n+        if self._fork_merge_threshold <= 0:\n+            return cur, i  # feature off\n+        if i >= len(prompt_messages) or prompt_messages[i].get(\"role\") != \"assistant\":\n+            return cur, i  # genuine non-assistant history fork -> leave it\n+\n+        candidates = [\n+            c\n+            for c in cur.children\n+            if c.role == \"assistant\"\n+            # Leaf == rewrite of the immediately-previous assistant: no later\n+            # turn has extended it yet. A non-leaf assistant has already grown a\n+            # subchain; merging onto it would tangle that history.\n+            and not c.children\n+            # A real turn leaf carrying this turn's snapshot, not an already-\n+            # demoted routing node (turn_prompt_ids cleared by a prior merge).\n+            and c.turn_prompt_ids is not None and len(c.turn_response_ids or []) < self._fork_merge_threshold\n+        ]\n+        if len(candidates) != 1:\n+            if len(candidates) >= 2:\n+                # Ambiguous: don't pick arbitrarily — fork as usual and hint.\n+                logger.warning(\n+                    \"append_turn(sid=%s turn=%s): %d eligible rewrite-merge \"\n+                    \"candidates; forking instead (ambiguous mixed state).\",\n+                    sid,\n+                    self._turn_count.get(sid, 0) + 1,\n+                    len(candidates),\n+                )\n+            return cur, i\n+\n+        sib = candidates[0]\n+        # Observability breadcrumb only (NOT read by linearization).\n+        sib.metadata[\"merged_rewrite\"] = {\n+            \"abandoned_turn_index\": sib.turn_index,\n+            \"abandoned_response_tokens\": len(sib.turn_response_ids or []),\n+        }\n+        # Demote to routing-only: snapshot cleared -> skipped by the existing\n+        # ``turn_prompt_ids is not None`` filter at linearization. Clearing\n+        # turn_prompt_ids also prevents this node from being re-selected as a\n+        # merge candidate on a later turn.\n+        sib.turn_prompt_ids = None\n+        sib.turn_response_ids = None\n+        sib.turn_response_logprobs = None\n+        sib.turn_finish_reason = None\n+        sib.turn_index = None\n+        # Adopt the rewritten message; the match_key cache MUST follow messages\n+        # so a later turn's DFS descends through this (now rewritten) node\n+        # instead of forking again.\n+        sib.messages = [prompt_messages[i]]\n+        sib.match_key = node_match_key(sib.messages)\n+        return sib, i + 1\n+\n     def _mount_prompt_messages(\n         self,\n         cur: Node,"
+    }
+  ]
+}

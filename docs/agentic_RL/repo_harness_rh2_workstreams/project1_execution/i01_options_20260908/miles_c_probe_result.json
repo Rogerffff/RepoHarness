@@ -1,0 +1,665 @@
+{
+  "scope": "缓存真实 tokenizer；合成消息与输出 token；未执行 CLI、SGLang、模型采样、训练或 tools schema 校验",
+  "miles_integration_commit": "98a0272e4158b2c20e3a34d210c79b50159af0f6",
+  "model": "Qwen/Qwen3-30B-A3B",
+  "model_revision": "ad44e777bcd18fa416d9da3bd8f70d33ebb85d39",
+  "python": "3.12.13",
+  "transformers": "5.13.0",
+  "source_sha256": {
+    "reference/miles-rh2-integration/miles/utils/chat_template_utils/tito_tokenizer.py": "ae0883909f07e75071ffa0f0c1f035fac1a67270e506ae1201d45eda815cef03",
+    "reference/miles-rh2-integration/miles/utils/chat_template_utils/template.py": "2f76d964d4c94b880b2b7972f3e48a88b4d5f390eeddfdd42c44ccad87a2b249",
+    "reference/miles-rh2-integration/miles/utils/chat_template_utils/templates/qwen3_fixed.jinja": "c0f795b809f8b461e072a03c88eb7de42fc3a72e4a68f2fef804491986acd0dc",
+    "reference/miles-rh2-integration/miles/utils/chat_template_utils/message_matcher_hub/funcs.py": "a52390305864d91f09a446c58973f093e2f7cb07b6fb79acc0379c95970e5f24",
+    "reference/miles-rh2-integration/miles/utils/chat_template_utils/message_matcher_hub/utils.py": "3b2f4a7500434cb1acb7ca3dfcca4582c308f03e9deefd5510253492306cca4d"
+  },
+  "probe_sha256": "999851db2b6f3a5fded277fa54cb6c585b08ec447a35693e014e4ea21e65823a",
+  "native_chat_template_sha256": "a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8",
+  "matcher_inputs": {
+    "dict_key_order": [
+      {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "Edit",
+              "arguments": {
+                "file_path": "a.py",
+                "old_string": "a",
+                "new_string": "b",
+                "replace_all": false
+              }
+            }
+          }
+        ],
+        "reasoning_content": "TRACE_THINK"
+      },
+      {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "Edit",
+              "arguments": {
+                "replace_all": false,
+                "new_string": "b",
+                "old_string": "a",
+                "file_path": "a.py"
+              }
+            }
+          }
+        ],
+        "reasoning_content": "TRACE_THINK"
+      }
+    ],
+    "json_string_key_order": [
+      {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "Edit",
+              "arguments": "{\"file_path\": \"a.py\", \"old_string\": \"a\", \"new_string\": \"b\", \"replace_all\": false}"
+            }
+          }
+        ],
+        "reasoning_content": "TRACE_THINK"
+      },
+      {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "Edit",
+              "arguments": "{\"replace_all\": false, \"new_string\": \"b\", \"old_string\": \"a\", \"file_path\": \"a.py\"}"
+            }
+          }
+        ],
+        "reasoning_content": "TRACE_THINK"
+      }
+    ],
+    "json_string_vs_dict": [
+      {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "Edit",
+              "arguments": "{\"file_path\": \"a.py\", \"old_string\": \"a\", \"new_string\": \"b\", \"replace_all\": false}"
+            }
+          }
+        ],
+        "reasoning_content": "TRACE_THINK"
+      },
+      {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "Edit",
+              "arguments": {
+                "replace_all": false,
+                "new_string": "b",
+                "old_string": "a",
+                "file_path": "a.py"
+              }
+            }
+          }
+        ],
+        "reasoning_content": "TRACE_THINK"
+      }
+    ],
+    "missing_nonempty_thinking": [
+      {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "Edit",
+              "arguments": {
+                "file_path": "a.py",
+                "old_string": "a",
+                "new_string": "b",
+                "replace_all": false
+              }
+            }
+          }
+        ],
+        "reasoning_content": "TRACE_THINK"
+      },
+      {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "Edit",
+              "arguments": {
+                "file_path": "a.py",
+                "old_string": "a",
+                "new_string": "b",
+                "replace_all": false
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "changed_tool_name": [
+      {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "Edit",
+              "arguments": {
+                "file_path": "a.py",
+                "old_string": "a",
+                "new_string": "b",
+                "replace_all": false
+              }
+            }
+          }
+        ],
+        "reasoning_content": "TRACE_THINK"
+      },
+      {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "Delete",
+              "arguments": {
+                "file_path": "a.py",
+                "old_string": "a",
+                "new_string": "b",
+                "replace_all": false
+              }
+            }
+          }
+        ],
+        "reasoning_content": "TRACE_THINK"
+      }
+    ],
+    "changed_tool_arguments": [
+      {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "Edit",
+              "arguments": {
+                "file_path": "a.py",
+                "old_string": "a",
+                "new_string": "b",
+                "replace_all": false
+              }
+            }
+          }
+        ],
+        "reasoning_content": "TRACE_THINK"
+      },
+      {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "Edit",
+              "arguments": {
+                "file_path": "a.py",
+                "old_string": "a",
+                "new_string": "c",
+                "replace_all": false
+              }
+            }
+          }
+        ],
+        "reasoning_content": "TRACE_THINK"
+      }
+    ],
+    "dict_boolean_vs_integer": [
+      {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "Edit",
+              "arguments": {
+                "value": true
+              }
+            }
+          }
+        ],
+        "reasoning_content": "TRACE_THINK"
+      },
+      {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "Edit",
+              "arguments": {
+                "value": 1
+              }
+            }
+          }
+        ],
+        "reasoning_content": "TRACE_THINK"
+      }
+    ],
+    "json_boolean_vs_integer": [
+      {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "Edit",
+              "arguments": "{\"value\": true}"
+            }
+          }
+        ],
+        "reasoning_content": "TRACE_THINK"
+      },
+      {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "Edit",
+              "arguments": "{\"value\": 1}"
+            }
+          }
+        ],
+        "reasoning_content": "TRACE_THINK"
+      }
+    ],
+    "duplicate_json_key": [
+      {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "Edit",
+              "arguments": "{\"value\": 1, \"value\": 2}"
+            }
+          }
+        ],
+        "reasoning_content": "TRACE_THINK"
+      },
+      {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "Edit",
+              "arguments": "{\"value\": 2}"
+            }
+          }
+        ],
+        "reasoning_content": "TRACE_THINK"
+      }
+    ],
+    "array_order": [
+      {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "Edit",
+              "arguments": {
+                "value": [
+                  1,
+                  2
+                ]
+              }
+            }
+          }
+        ],
+        "reasoning_content": "TRACE_THINK"
+      },
+      {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "Edit",
+              "arguments": {
+                "value": [
+                  2,
+                  1
+                ]
+              }
+            }
+          }
+        ],
+        "reasoning_content": "TRACE_THINK"
+      }
+    ]
+  },
+  "matcher_results": {
+    "dict_key_order": {
+      "strict": true,
+      "loose_tool_call": true,
+      "role_content_only": true
+    },
+    "json_string_key_order": {
+      "strict": false,
+      "loose_tool_call": true,
+      "role_content_only": true
+    },
+    "json_string_vs_dict": {
+      "strict": false,
+      "loose_tool_call": true,
+      "role_content_only": true
+    },
+    "missing_nonempty_thinking": {
+      "strict": false,
+      "loose_tool_call": false,
+      "role_content_only": true
+    },
+    "changed_tool_name": {
+      "strict": false,
+      "loose_tool_call": false,
+      "role_content_only": true
+    },
+    "changed_tool_arguments": {
+      "strict": false,
+      "loose_tool_call": false,
+      "role_content_only": true
+    },
+    "dict_boolean_vs_integer": {
+      "strict": true,
+      "loose_tool_call": true,
+      "role_content_only": true
+    },
+    "json_boolean_vs_integer": {
+      "strict": false,
+      "loose_tool_call": false,
+      "role_content_only": true
+    },
+    "duplicate_json_key": {
+      "strict": false,
+      "loose_tool_call": false,
+      "role_content_only": true
+    },
+    "array_order": {
+      "strict": false,
+      "loose_tool_call": false,
+      "role_content_only": true
+    }
+  },
+  "messages": {
+    "stored": [
+      {
+        "role": "system",
+        "content": "You fix code."
+      },
+      {
+        "role": "user",
+        "content": "Replace a with b in a.py."
+      },
+      {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "Edit",
+              "arguments": {
+                "file_path": "a.py",
+                "old_string": "a",
+                "new_string": "b",
+                "replace_all": false
+              }
+            }
+          }
+        ],
+        "reasoning_content": "TRACE_THINK"
+      }
+    ],
+    "tool_tail": [
+      {
+        "role": "tool",
+        "content": "File updated."
+      }
+    ],
+    "reminder_tail": [
+      {
+        "role": "tool",
+        "content": "File updated."
+      },
+      {
+        "role": "user",
+        "content": "<system-reminder>Continue.</system-reminder>"
+      }
+    ],
+    "missing_thinking": [
+      {
+        "role": "system",
+        "content": "You fix code."
+      },
+      {
+        "role": "user",
+        "content": "Replace a with b in a.py."
+      },
+      {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "Edit",
+              "arguments": {
+                "file_path": "a.py",
+                "old_string": "a",
+                "new_string": "b",
+                "replace_all": false
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "content": "File updated."
+      }
+    ],
+    "compaction": [
+      {
+        "role": "system",
+        "content": "You fix code."
+      },
+      {
+        "role": "user",
+        "content": "Summary: a.py was updated. Continue."
+      }
+    ]
+  },
+  "synthetic_prompt_ids": [
+    151644,
+    8948,
+    198,
+    2610,
+    5046,
+    2038,
+    13,
+    151645,
+    198,
+    151644,
+    872,
+    198,
+    23107,
+    264,
+    448,
+    293,
+    304,
+    264,
+    7197,
+    13,
+    151645,
+    198,
+    151644,
+    77091,
+    198
+  ],
+  "synthetic_output_text": "<think>\nTRACE_THINK\n</think>\n\n<tool_call>\n{\"name\":\"Edit\",\"arguments\":{\"file_path\":\"a.py\",\"old_string\":\"a\",\"new_string\":\"b\",\"replace_all\":false}}\n</tool_call><|im_end|>",
+  "synthetic_output_ids": [
+    151667,
+    198,
+    33361,
+    10625,
+    11637,
+    198,
+    151668,
+    271,
+    151657,
+    198,
+    4913,
+    606,
+    3252,
+    4036,
+    2198,
+    16370,
+    22317,
+    1192,
+    2638,
+    3252,
+    64,
+    7197,
+    2198,
+    813,
+    3904,
+    3252,
+    64,
+    2198,
+    931,
+    3904,
+    3252,
+    65,
+    2198,
+    8156,
+    5705,
+    788,
+    3849,
+    11248,
+    151658,
+    151645
+  ],
+  "template_results": {
+    "constructor_installs_fixed_template": false,
+    "native_clear_thinking_false_ignored": true,
+    "native_reminder_retains_thinking": false,
+    "fixed_reminder_retains_thinking": true,
+    "native_full_render_dict_key_order_changes_tokens": true,
+    "native_reminder_text": "<|im_start|>system\nYou fix code.<|im_end|>\n<|im_start|>user\nReplace a with b in a.py.<|im_end|>\n<|im_start|>assistant\n<tool_call>\n{\"name\": \"Edit\", \"arguments\": {\"file_path\": \"a.py\", \"old_string\": \"a\", \"new_string\": \"b\", \"replace_all\": false}}\n</tool_call><|im_end|>\n<|im_start|>user\n<tool_response>\nFile updated.\n</tool_response><|im_end|>\n<|im_start|>user\n<system-reminder>Continue.</system-reminder><|im_end|>\n<|im_start|>assistant\n",
+    "fixed_reminder_text": "<|im_start|>system\nYou fix code.<|im_end|>\n<|im_start|>user\nReplace a with b in a.py.<|im_end|>\n<|im_start|>assistant\n<think>\nTRACE_THINK\n</think>\n\n<tool_call>\n{\"name\": \"Edit\", \"arguments\": {\"file_path\": \"a.py\", \"old_string\": \"a\", \"new_string\": \"b\", \"replace_all\": false}}\n</tool_call><|im_end|>\n<|im_start|>user\n<tool_response>\nFile updated.\n</tool_response><|im_end|>\n<|im_start|>user\n<system-reminder>Continue.</system-reminder><|im_end|>\n<|im_start|>assistant\n"
+  },
+  "dummy_prefix_renders": {
+    "native": {
+      "before": "<|im_start|>system\ndummy system<|im_end|>\n<|im_start|>assistant\n<tool_call>\n{\"name\": \"Edit\", \"arguments\": {\"file_path\": \"a.py\", \"old_string\": \"a\", \"new_string\": \"b\", \"replace_all\": false}}\n</tool_call><|im_end|>\n",
+      "after": "<|im_start|>system\ndummy system<|im_end|>\n<|im_start|>assistant\n<tool_call>\n{\"name\": \"Edit\", \"arguments\": {\"file_path\": \"a.py\", \"old_string\": \"a\", \"new_string\": \"b\", \"replace_all\": false}}\n</tool_call><|im_end|>\n<|im_start|>user\n<tool_response>\nFile updated.\n</tool_response><|im_end|>\n<|im_start|>user\n<system-reminder>Continue.</system-reminder><|im_end|>\n<|im_start|>assistant\n",
+      "prefix_stable": true
+    },
+    "fixed": {
+      "before": "<|im_start|>system\ndummy system<|im_end|>\n<|im_start|>assistant\n<think>\n \n</think>\n\n<tool_call>\n{\"name\": \"Edit\", \"arguments\": {\"file_path\": \"a.py\", \"old_string\": \"a\", \"new_string\": \"b\", \"replace_all\": false}}\n</tool_call><|im_end|>\n",
+      "after": "<|im_start|>system\ndummy system<|im_end|>\n<|im_start|>assistant\n<think>\n \n</think>\n\n<tool_call>\n{\"name\": \"Edit\", \"arguments\": {\"file_path\": \"a.py\", \"old_string\": \"a\", \"new_string\": \"b\", \"replace_all\": false}}\n</tool_call><|im_end|>\n<|im_start|>user\n<tool_response>\nFile updated.\n</tool_response><|im_end|>\n<|im_start|>user\n<system-reminder>Continue.</system-reminder><|im_end|>\n<|im_start|>assistant\n",
+      "prefix_stable": true
+    }
+  },
+  "falsified_probe_hypothesis": "首跑预期 native + reminder 会 suffix-diff 失败；实测成功。源码与实际 dummy 渲染显示 native 的 dummy assistant 从开始就不含 thinking，因此追加 reminder 没有删除 dummy 文本。此处已纠正探针预期，产品源码未变。",
+  "merge_results": {
+    "native_tool_only": {
+      "accepted": true,
+      "prefix_preserved": true,
+      "prefix_tokens": 65,
+      "total_tokens": 80,
+      "inserted_boundary_token": 198,
+      "suffix_text": "\n<|im_start|>user\n<tool_response>\nFile updated.\n</tool_response><|im_end|>\n<|im_start|>assistant\n"
+    },
+    "native_user_reminder": {
+      "accepted": true,
+      "prefix_preserved": true,
+      "prefix_tokens": 65,
+      "total_tokens": 96,
+      "inserted_boundary_token": 198,
+      "suffix_text": "\n<|im_start|>user\n<tool_response>\nFile updated.\n</tool_response><|im_end|>\n<|im_start|>user\n<system-reminder>Continue.</system-reminder><|im_end|>\n<|im_start|>assistant\n"
+    },
+    "fixed_user_reminder": {
+      "accepted": true,
+      "prefix_preserved": true,
+      "prefix_tokens": 65,
+      "total_tokens": 96,
+      "inserted_boundary_token": 198,
+      "suffix_text": "\n<|im_start|>user\n<tool_response>\nFile updated.\n</tool_response><|im_end|>\n<|im_start|>user\n<system-reminder>Continue.</system-reminder><|im_end|>\n<|im_start|>assistant\n"
+    },
+    "fixed_reordered_dict": {
+      "accepted": true,
+      "prefix_preserved": true,
+      "prefix_tokens": 65,
+      "total_tokens": 80,
+      "inserted_boundary_token": 198,
+      "suffix_text": "\n<|im_start|>user\n<tool_response>\nFile updated.\n</tool_response><|im_end|>\n<|im_start|>assistant\n"
+    },
+    "loose_match_then_raw_merge": {
+      "accepted": false,
+      "error": "message mismatch at index 2 (role: stored=assistant, new=assistant). Diffs: {'tool_calls': {'stored': '[{\\'type\\': \\'function\\', \\'function\\': {\\'name\\': \\'Edit\\', \\'arguments\\': \\'{\"file_path\": \"a.py\", \"old_string\": \"a\", \"new_string\": \"b\", \"replace_all\": false}\\'}}]', 'new': '[{\\'type\\': \\'function\\', \\'function\\': {\\'name\\': \\'Edit\\', \\'arguments\\': \\'{\"replace_all\": false, \"new_string\": \"b\", \"old_string\": \"a\", \"file_path\": \"a.py\"}\\'}}]'}}"
+    },
+    "loose_match_then_stored_prefix_merge": {
+      "accepted": true,
+      "prefix_preserved": true,
+      "prefix_tokens": 65,
+      "total_tokens": 80,
+      "inserted_boundary_token": 198,
+      "suffix_text": "\n<|im_start|>user\n<tool_response>\nFile updated.\n</tool_response><|im_end|>\n<|im_start|>assistant\n"
+    },
+    "missing_cli_thinking": {
+      "accepted": false,
+      "error": "message mismatch at index 2 (role: stored=assistant, new=assistant). Diffs: {'reasoning_content': {'stored': \"'TRACE_THINK'\", 'new': 'None'}}"
+    },
+    "synthetic_compaction": {
+      "accepted": false,
+      "error": "new messages (2) are fewer than stored messages (3)"
+    }
+  },
+  "assertions": "passed"
+}

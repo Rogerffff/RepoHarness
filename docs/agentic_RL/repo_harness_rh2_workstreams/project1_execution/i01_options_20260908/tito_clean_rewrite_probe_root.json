@@ -1,0 +1,66 @@
+{
+  "scope": "合成精确 token 前缀；真实消息翻译与 manager；未实现或验证 TITO adapter",
+  "trajectory_sha256": "6dbb7bec446d81fa0542a4c954d458b4a11edab6776b45a63bc33bca08dd0469",
+  "cases": [
+    {
+      "threshold": 1024,
+      "token_relation_before_message_tree": "CLEAN",
+      "exact_prefix": true,
+      "stored_assistant": {
+        "role": "assistant",
+        "content": "first action",
+        "reasoning_content": "stored reasoning"
+      },
+      "replayed_assistant": {
+        "role": "assistant",
+        "content": "first action"
+      },
+      "new_output_tokens": 20,
+      "tree_leaves": 1,
+      "retained_turn_indices": [
+        2
+      ],
+      "merged_rewrites": [
+        {
+          "abandoned_turn_index": 1,
+          "abandoned_response_tokens": 4
+        }
+      ],
+      "samples": 1,
+      "trained_tokens": 20,
+      "first_action_trained_tokens": 0,
+      "rewards": [
+        1
+      ]
+    },
+    {
+      "threshold": 0,
+      "token_relation_before_message_tree": "CLEAN",
+      "exact_prefix": true,
+      "stored_assistant": {
+        "role": "assistant",
+        "content": "first action",
+        "reasoning_content": "stored reasoning"
+      },
+      "replayed_assistant": {
+        "role": "assistant",
+        "content": "first action"
+      },
+      "new_output_tokens": 20,
+      "tree_leaves": 2,
+      "retained_turn_indices": [
+        1,
+        2
+      ],
+      "merged_rewrites": [],
+      "samples": 2,
+      "trained_tokens": 24,
+      "first_action_trained_tokens": 4,
+      "rewards": [
+        1,
+        1
+      ]
+    }
+  ],
+  "assertions": "PASS"
+}
