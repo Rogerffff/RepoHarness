@@ -1,0 +1,251 @@
+{
+  "scope": "reader-authored semantic reference probes; NOT upstream tests or end-to-end validation",
+  "source_pins": {
+    "prime-rl": "04a61d3b75c3c99f263b2c133e822f998909adf7",
+    "verifiers": "828488fffe31aa3332b9d1bd4bd9ee320e375cf1",
+    "renderers": "f91c3e7061ce50ea405cdf54fd419a45cb51a152",
+    "prime-envs": "1f1e050ab0cd273bca39eed5c3e5315e6a8ae9d1"
+  },
+  "python": "3.13.5",
+  "torch": "2.10.0+cpu",
+  "device": "cpu",
+  "passed": 19,
+  "total": 19,
+  "probes": [
+    {
+      "name": "error_is_not_zero_reward",
+      "status": "passed",
+      "details": {
+        "valid_trace_advantages": [
+          0.5,
+          -0.5
+        ],
+        "with_invented_failure_reward": [
+          0.6666666666666667,
+          -0.3333333333333333,
+          -0.3333333333333333
+        ]
+      }
+    },
+    {
+      "name": "all_pass_can_have_efficiency_credit",
+      "status": "passed",
+      "details": {
+        "raw_rewards": [
+          1.0,
+          1.0
+        ],
+        "shaped_rewards": [
+          0.875,
+          0.75
+        ],
+        "advantages": [
+          0.0625,
+          -0.0625
+        ]
+      }
+    },
+    {
+      "name": "maxrl_singleton_is_zero",
+      "status": "passed",
+      "details": {
+        "reward": [
+          1.0
+        ],
+        "max_rl_advantage": [
+          0.0
+        ],
+        "not_reinforce_reward": [
+          1.0
+        ]
+      }
+    },
+    {
+      "name": "rae_is_order_sensitive",
+      "status": "passed",
+      "details": {
+        "order_01": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            1.0
+          ]
+        ],
+        "order_10": [
+          [
+            1.0,
+            1.0
+          ],
+          [
+            0.0,
+            -0.5
+          ]
+        ],
+        "illustrative_decay": 0.5
+      }
+    },
+    {
+      "name": "shared_prefix_loss_not_compute_dedup",
+      "status": "passed",
+      "details": {
+        "rl_masks": [
+          [
+            false,
+            true,
+            false,
+            true
+          ],
+          [
+            false,
+            false,
+            false,
+            true
+          ]
+        ],
+        "ce_masks": [
+          [
+            false,
+            false,
+            true,
+            false
+          ],
+          [
+            false,
+            false,
+            false,
+            false
+          ]
+        ],
+        "forward_positions": 8,
+        "unique_nodes": 5
+      }
+    },
+    {
+      "name": "gate_can_remove_echo_before_pruning",
+      "status": "passed",
+      "details": {
+        "optional_adv_range_gate": false,
+        "builtin_pruning_without_gate": true
+      }
+    },
+    {
+      "name": "prune_is_component_specific",
+      "status": "passed",
+      "details": {
+        "pure_rl_echo_ref_kept": [
+          false,
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "name": "alpha_does_not_cancel",
+      "status": "passed",
+      "details": {
+        "nonzero_count_denominator": 0.30000000000000004,
+        "weight_sum_denominator": 3.0000000000000004
+      }
+    },
+    {
+      "name": "same_component_mixture_still_changes_mean",
+      "status": "passed",
+      "details": {
+        "echo_ce": 0.30000000000000004,
+        "extra_rl_only": 0.30000000000000004,
+        "with_sft_ce": 0.65
+      }
+    },
+    {
+      "name": "ipo_uses_absolute_probability_gap",
+      "status": "passed",
+      "details": {
+        "rare_token_ratio_kept": 20.0,
+        "outside_trust_region_kl_survives": 0.00022090341150416293
+      }
+    },
+    {
+      "name": "ref_signal_detach_changes_gradient",
+      "status": "passed",
+      "details": {
+        "detached_signal_gradient": -0.3313512754226944,
+        "non_detached_gradient": 0.7738196426529533
+      }
+    },
+    {
+      "name": "sampled_loggap_is_not_nonnegative_kl",
+      "status": "passed",
+      "details": {
+        "single_sample_ref_minus_student": -0.5877866649021191,
+        "full_distribution_kl_student_teacher": 0.3680642071684971
+      }
+    },
+    {
+      "name": "support_mismatch_creates_false_gap",
+      "status": "passed",
+      "details": {
+        "equal_raw_models_gap": 0.0,
+        "full_ref_vs_truncated_student_gap": -0.6931471805599453
+      }
+    },
+    {
+      "name": "dummy_requires_clearing_component_weights",
+      "status": "passed",
+      "details": {
+        "zero_action_mask_ce_members": 1,
+        "after_clearing_ce": 0
+      }
+    },
+    {
+      "name": "pool_weights_are_per_task",
+      "status": "passed",
+      "details": {
+        "easy_pool_probability": 0.6428571428571429,
+        "not_fixed_pool_probability": 0.16666666666666669
+      }
+    },
+    {
+      "name": "stale_boundary_uses_batch_input_version",
+      "status": "passed",
+      "details": {
+        "batch": 10,
+        "input_policy": 9,
+        "age": 2,
+        "in_flight": 1,
+        "queued": 1
+      }
+    },
+    {
+      "name": "retokenized_history_must_fork",
+      "status": "passed",
+      "details": {
+        "same_message_identity_not_sufficient": true,
+        "whole_prefix_nodes_reused": 1
+      }
+    },
+    {
+      "name": "post_admission_truncation_can_remove_all_loss",
+      "status": "passed",
+      "details": {
+        "before_sampled_tokens": 2,
+        "after_sampled_tokens": 0,
+        "backward_zero_gradient": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "global_token_denominator_needs_rank_compensation",
+      "status": "passed",
+      "details": {
+        "token_mean": 1.9,
+        "wrong_rank_mean": 1.5,
+        "global_denominator_plus_rank_compensation": 1.9000000000000001
+      }
+    }
+  ]
+}
