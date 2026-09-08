@@ -39,6 +39,8 @@ def _service(monkeypatch, tmp_path, *, mode: str, docker: SandboxRuntimeFakeDock
     # 本文件每个测试各起一个 service，测前把 wire 归属记录清掉（与 wire 语义无关的接线测试）。
     monkeypatch.setattr(slime_common, "_rh2_capture_wire_installed", False, raising=False)
     monkeypatch.setattr(slime_common, "_rh2_capture_wire_registry", None, raising=False)
+    # 批 C：turn 预算 wire 与 capture wire 同代——每个 BringupService 测试视作新进程，一起重置
+    monkeypatch.setattr(slime_common, "_rh2_turn_budget_wire_registry", None, raising=False)
     monkeypatch.setattr(bringup, "ARTIFACT_DIR", tmp_path / "artifacts")
     monkeypatch.setattr(bringup, "ADAPTER_BIND_HOST", "127.0.0.1")
     monkeypatch.setattr(bringup, "ADAPTER_PUBLIC_HOST", "127.0.0.1")

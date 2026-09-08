@@ -624,6 +624,18 @@ class SimpleLoopDriver:
 _SERVICE_LOCK = asyncio.Lock()
 
 
+def _termination_block(audit: Any) -> dict[str, Any] | None:
+    """批 C：audit.termination + 最终 termination_kind（outcome 优先，其次 hint）。"""
+
+    block = getattr(audit, "termination", None)
+    if block is None:
+        return None
+    block = dict(block)
+    outcome = getattr(audit, "outcome_v2", None) or {}
+    block["kind"] = outcome.get("termination_kind") or getattr(audit, "termination_kind_hint", None)
+    return block
+
+
 def _episode_deadline_block(audit: Any, proxy: Any) -> dict[str, Any] | None:
     """批 B：audit.episode_deadline + proxy 侧按 paid 累计的 model_call 排队秒数。"""
 
@@ -706,6 +718,9 @@ def write_execution_audit_record(proxy, audit, path) -> None:
         "non_chargeable_intervals": list(audit.non_chargeable_intervals),
         # 批 B（I03）：统一 episode 期限的观测块（可选键；B 线定预算数值的实测来源）
         "episode_deadline": _episode_deadline_block(audit, proxy),
+        # 批 C（I02/I14）：终止事实观测块（B 的接口：kind ∈ completed / max_turns_exhausted /
+        # hard_wall_timeout / 基础设施族；turn_budget / harness_exit_code / stop）
+        "termination": _termination_block(audit),
         # F2-2：quiescence 事实 + Outcome v2（producer 产物随审计持久化；
         # assembler 消费归 F2-5）。session_id 自 F2-2 复核起 = 非秘密
         # internal sid（s- 前缀）；capability token 只认证不落任何持久面
@@ -1433,6 +1448,10 @@ class BringupService:
             session_poison_release=self.registry.poison.release,
             # 批 B（I03）：poison 原因读取——episode_deadline_exhausted 归 hard_wall 而非 api_failure
             session_poison_reason=self.registry.poison.reason,
+            # 批 C（I02）：turn 预算事实（capture wire 包装 vendored _check_turn_cap 写入 registry）
+            turn_budget_subscribe=self.registry.subscribe_turn_budget,
+            turn_budget_unsubscribe=self.registry.unsubscribe_turn_budget,
+            turn_budget_snapshot=self.registry.turn_budget_snapshot,
             # 轮次 12 P0 层 1：评分前交付账边界断言
             capture_boundary_check=self.registry.assert_session_clean,
             # 轮次 13 P0-5：execution 终态审计落盘（FA 路径不走 record_event）
@@ -1484,6 +1503,7 @@ class BringupService:
         # 批 B（I03）：episode 预算（资源占用起表，含准备 / 引导 / 排队；数值 = SWE_AGENT_TIME_BUDGET_SEC）
         record["episode_budget_seconds"] = AGENT_TIME_BUDGET_SEC
         record["disposition_policy"] = dict(DISPOSITION_POLICY_VALUES)  # 批 D（I04）：已批处置
+        record["turn_budget_requests"] = MAX_TURNS_PER_SID  # 批 C（I02）：每 sid 接纳的模型请求数上限
         self.runtime_profile_record = record
         write_runtime_profile_record(ARTIFACT_DIR / "runtime_profile.json", record)
         if not record["ok"]:

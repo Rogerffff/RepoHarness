@@ -31,6 +31,7 @@ from __future__ import annotations
 import asyncio
 import contextvars
 import dataclasses
+import time
 import uuid
 from collections.abc import Awaitable, Callable
 from typing import Any
@@ -269,6 +270,10 @@ class CaptureRegistry:
         # 退账；drain owner 在 adapter loop 上等它归零）
         self._inflight: dict[str, int] = {}
         self._inflight_zero_events: dict[str, Any] = {}
+        # 批 C（I02）：turn 预算事实（vendored _check_turn_cap 的包装写入；guard 读"已达 N"；
+        # 编排订阅命中事件）。锁域；unregister 一并清理。
+        self._turn_budget: dict[str, dict[str, Any]] = {}
+        self._turn_budget_subscribers: dict[str, Callable[[str], None]] = {}
         # F2-2 复核 P0-3：capability token 只做**认证**——guard 验证后把
         # Authorization 重写为非秘密 internal sid，slime 的 store/closed/
         # turn-count/日志/routing key/异常消息全部只见 internal sid。
@@ -521,6 +526,82 @@ class CaptureRegistry:
     # 归零→账目读取，返回 typed 结果。消灭"多锁快照看不到真实 HTTP
     # inflight"的假阳性窗口（批 1 复核 P1-1 根修）。
 
+    # ---- 批 C（I02）：turn 预算事实 -------------------------------------------------
+
+    def _turn_budget_state(self, sid: str) -> dict[str, Any]:
+        return self._turn_budget.setdefault(
+            sid,
+            {"cap": None, "accepted": 0, "exhausted": False, "refused_count": 0, "refused_at_monotonic": None},
+        )
+
+    def note_turn_admitted(self, sid: str, *, accepted: int, cap: int | None) -> None:
+        """vendored _check_turn_cap 放行一次请求（accepted = 放行后的累计接纳数）。"""
+
+        with self._lock:
+            state = self._turn_budget_state(sid)
+            state["cap"] = cap
+            state["accepted"] = int(accepted)
+
+    def note_turn_budget_refused(self, sid: str, *, cap: int | None, accepted: int) -> None:
+        """vendored _check_turn_cap 拒绝了第 N+1 次请求：记预算事实并通知订阅者（锁外回调，
+        回调须线程安全——编排用 call_soon_threadsafe）。"""
+
+        with self._lock:
+            state = self._turn_budget_state(sid)
+            state["cap"] = cap
+            state["accepted"] = int(accepted)
+            state["exhausted"] = True
+            state["refused_count"] += 1
+            if state["refused_at_monotonic"] is None:
+                state["refused_at_monotonic"] = time.monotonic()
+            callback = self._turn_budget_subscribers.get(sid)
+        if callback is not None:
+            try:
+                callback(sid)
+            except Exception:  # noqa: BLE001 —— 通知失败只计数，不影响拒绝响应
+                with self._lock:
+                    self.stats["turn_budget_notify_failures"] = (
+                        self.stats.get("turn_budget_notify_failures", 0) + 1
+                    )
+
+    def turn_budget_snapshot(self, sid: str) -> dict[str, Any] | None:
+        with self._lock:
+            state = self._turn_budget.get(sid)
+            return dict(state) if state is not None else None
+
+    def turn_budget_reached(self, sid: str) -> bool:
+        """计数已达 N（下一次 /v1/messages 会被拒）——guard 据此先等在飞请求归零。"""
+
+        with self._lock:
+            state = self._turn_budget.get(sid)
+            return bool(state and state["cap"] is not None and state["accepted"] >= state["cap"])
+
+    def subscribe_turn_budget(self, sid: str, callback: Callable[[str], None]) -> None:
+        with self._lock:
+            self._turn_budget_subscribers[sid] = callback
+            already = bool(self._turn_budget.get(sid, {}).get("exhausted"))
+        if already:
+            callback(sid)  # 订阅前已命中：立即回调（与 poison.subscribe 同一竞态收口）
+
+    def unsubscribe_turn_budget(self, sid: str) -> None:
+        with self._lock:
+            self._turn_budget_subscribers.pop(sid, None)
+
+    async def wait_inflight_zero(self, sid: str, *, timeout: float, poll: float = 0.02) -> bool:
+        """等该 sid 的 guard 级在飞计数归零（有界轮询；须在 adapter loop 上调用）。"""
+
+        import asyncio as _asyncio
+
+        deadline = time.monotonic() + max(timeout, 0.0)
+        while True:
+            with self._lock:
+                n = self._inflight.get(sid, 0)
+            if n <= 0:
+                return True
+            if time.monotonic() >= deadline:
+                return False
+            await _asyncio.sleep(poll)
+
     def _inflight_enter(self, sid: str) -> None:
         with self._lock:
             self._inflight[sid] = self._inflight.get(sid, 0) + 1
@@ -619,6 +700,8 @@ class CaptureRegistry:
             self.weight_versions.pop(sid, None)
             self._physical_attempt_ids.pop(sid, None)
             self._turn_bindings.pop(sid, None)
+            self._turn_budget.pop(sid, None)
+            self._turn_budget_subscribers.pop(sid, None)
         self._finish_unregister(sid, leftover_locked)
         return
 
@@ -860,6 +943,15 @@ def build_session_guard_middleware(registry: "CaptureRegistry"):
         # 兼容路径：sid 直接注册（启动探针等非秘密 id）→ 原样放行。
         internal = registry.resolve_capability(token) if token else None
         effective = internal if internal is not None else token
+        if effective and request.path == "/v1/messages" and registry.turn_budget_reached(effective):
+            # 批 C（I02；Codex 计划审查 R3 的并发接缝）：计数已达 N 时，第 N+1 次不抢在第 N 次交付
+            # 之前被拒——先等该 sid 的在飞请求归零（受 session 期限约束），再进入下方授权判定与
+            # _run_turn（那里 vendored _check_turn_cap 的包装会拒绝并记录预算事实）。否则 CC 收到
+            # 拒绝立刻退出，会把在飞的第 N 轮断连成 client_cancelled poison。授权判定与 inflight
+            # 计入之间仍无 await（在下方）。
+            deadline = registry.session_deadline(effective)
+            budget = 30.0 if deadline is None else max(0.0, deadline - time.monotonic())
+            await registry.wait_inflight_zero(effective, timeout=min(budget, 600.0))
         if effective:
             with registry._lock:
                 known = effective in registry.hooks
@@ -959,6 +1051,55 @@ def escalate_abort_unproven(registry: CaptureRegistry, exc: AbortDeliveryUnprove
     return notified
 
 
+def install_turn_budget_wire(registry: CaptureRegistry) -> None:
+    """批 C（I02）：包装 vendored `BaseAdapter._check_turn_cap`。
+
+    计数与前置条件（读 body、预处理、closed 检查之后才计；`count_tokens` 不经 _run_turn 不计）
+    **仍由 vendored 完成**，`MAX_TURNS_PER_SID` 经 vendored 构造参数传入（唯一来源不变；不复制第三份
+    解析）。包装只做两件事：把每次接纳 / 拒绝写进 registry（预算事实，编排据此产出真实
+    `max_turns_exhausted`，不伪造 end_turn），并把拒绝响应从 429（Anthropic SDK 视为可重试）换成
+    403 + `x-should-retry: false`（与守卫拒绝同形状）。真实 CC 二进制对该响应怎样退出由 B 的真实
+    探针确认，编排不依赖它——宽限后强制停止。幂等、单 registry 归属（与 capture wire 同纪律）。
+    """
+
+    from slime.agent.adapters import common as slime_common
+
+    bound = getattr(slime_common, "_rh2_turn_budget_wire_registry", None)
+    if bound is registry:
+        return
+    if bound is not None:
+        raise CaptureWireOwnershipError(
+            "turn budget wire 已绑定另一 registry——进程级单代所有权被违反。"
+        )
+    original_check = slime_common.BaseAdapter._check_turn_cap
+
+    def rh2_check_turn_cap(self, sid):
+        cap = self.max_turns_per_sid
+        refused = original_check(self, sid)  # vendored 计数 + 前置条件不变
+        accepted = int(self._sid_turn_count.get(sid, 0))
+        if refused is None:
+            if cap is not None:
+                registry.note_turn_admitted(sid, accepted=accepted, cap=cap)
+            return None
+        registry.note_turn_budget_refused(sid, cap=cap, accepted=accepted)
+        return aiohttp_web.json_response(
+            {
+                "error": {
+                    "type": "rh2_turn_budget_exhausted",
+                    "message": (
+                        f"turn budget ({cap} accepted model requests) exhausted for this session; "
+                        "the run is being stopped"
+                    ),
+                }
+            },
+            status=403,
+            headers={"x-should-retry": "false"},
+        )
+
+    slime_common.BaseAdapter._check_turn_cap = rh2_check_turn_cap
+    slime_common._rh2_turn_budget_wire_registry = registry
+
+
 def install_capture_wire(registry: CaptureRegistry) -> None:
     """安装两处接线：模块级 call_sglang_generate 替换 + record_turn 包装。
 
@@ -996,6 +1137,7 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
         ensure_no_404_middleware(self.app)
 
     slime_common.BaseAdapter.__init__ = rh2_adapter_init
+    install_turn_budget_wire(registry)  # 批 C（I02）：turn 预算事实 + 不可重试的拒绝形状
 
     async def rh2_call_sglang_generate(
         prompt_ids: list[int],

@@ -36,6 +36,8 @@ def _prepare(bringup, monkeypatch, tmp_path, *, with_prepared: bool = True, real
     fx = prepare_synthetic(tmp_path)
     monkeypatch.setattr(slime_common, "_rh2_capture_wire_installed", False, raising=False)
     monkeypatch.setattr(slime_common, "_rh2_capture_wire_registry", None, raising=False)
+    # 批 C：turn 预算 wire 与 capture wire 同代——每个 BringupService 测试视作新进程，一起重置
+    monkeypatch.setattr(slime_common, "_rh2_turn_budget_wire_registry", None, raising=False)
     monkeypatch.setattr(bringup, "ARTIFACT_DIR", tmp_path / "artifacts")
     monkeypatch.setattr(bringup, "ADAPTER_BIND_HOST", "127.0.0.1")
     monkeypatch.setattr(bringup, "ADAPTER_PUBLIC_HOST", "127.0.0.1")

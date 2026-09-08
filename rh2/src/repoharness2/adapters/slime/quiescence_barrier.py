@@ -40,12 +40,15 @@ from repoharness2.adapters.slime.generate import (
 
 __all__ = ["DockerQuiescenceBarrier", "FrozenWorkspace"]
 
-# 进程终止验证的有界重试（总计约 5s；数值属实现细节非预注册阈值）
-_KILL_VERIFY_ATTEMPTS = 10
-_KILL_VERIFY_INTERVAL_SECONDS = 0.5
+# 进程终止动作与有界验证（批 C 起与编排的"先停止再 drain"共用 execution_scope 模块；
+# 这里保留同名别名供既有引用）
+from repoharness2.adapters.slime import execution_scope as _scope  # noqa: E402
+from repoharness2.adapters.slime.execution_scope import terminate_agent_processes  # noqa: E402
 
-_KILL_SCRIPT = "pkill -9 -u agent >/dev/null 2>&1; true"
-_COUNT_SCRIPT = "ps -o pid= -u agent 2>/dev/null | wc -l"
+_KILL_VERIFY_ATTEMPTS = _scope.KILL_VERIFY_ATTEMPTS
+_KILL_VERIFY_INTERVAL_SECONDS = _scope.KILL_VERIFY_INTERVAL_SECONDS
+_KILL_SCRIPT = _scope.KILL_SCRIPT
+_COUNT_SCRIPT = _scope.COUNT_SCRIPT
 
 
 def _digest_script(workdir: str) -> str:
@@ -96,19 +99,11 @@ class DockerQuiescenceBarrier:
                 reason_code="late_model_request_detected",
                 evidence_refs=("audit:session_plane_drained=false",),
             )
-        # ① 终止 execution scope + 有界验证进程归零
-        await workspace.run_bash(_KILL_SCRIPT)
-        residual = -1
-        for _ in range(_KILL_VERIFY_ATTEMPTS):
-            result = await workspace.run_bash(_COUNT_SCRIPT)
-            if getattr(result, "exit_code", 1) == 0:
-                try:
-                    residual = int(result.stdout.strip() or "0")
-                except ValueError:
-                    residual = -1
-                if residual == 0:
-                    break
-            await asyncio.sleep(_KILL_VERIFY_INTERVAL_SECONDS)
+        # ① 终止 execution scope + 有界验证进程归零（批 C：与编排的强制停止共用同一动作；
+        # 编排已先停过时这里是幂等复核）
+        residual = await terminate_agent_processes(
+            workspace, attempts=_KILL_VERIFY_ATTEMPTS, interval=_KILL_VERIFY_INTERVAL_SECONDS
+        )
         if residual != 0:
             return QuiescenceRejected(
                 reason_code="execution_scope_termination_timeout",

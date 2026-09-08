@@ -87,6 +87,7 @@ from typing import Any, Literal, Protocol
 
 from repoharness2.adapters.slime.async_worker import FatalExecutionInfrastructureError
 from repoharness2.adapters.slime.attempt_timing import AttemptLifecycleTiming
+from repoharness2.adapters.slime.execution_scope import terminate_agent_processes
 from repoharness2.adapters.slime.outcome_producer import (
     FAILURE_CODE_TERMINATION_MAP,
     STAGE_FALLBACK_TERMINATION_MAP,
@@ -345,6 +346,13 @@ HARNESS_EXIT_TIME_BUDGET_EXCEEDED = -1
 HARNESS_LAUNCH_FACTS: contextvars.ContextVar[dict[str, Any] | None] = contextvars.ContextVar(
     "rh2_harness_launch_facts", default=None
 )
+
+# 批 C（I02）：turn 预算命中后等 CC 自行退出的有界收口宽限（停止力学参数，不是额外行动预算；
+# 实际等待 = min(本值, episode 剩余)，期间守卫不再接受新模型工作）。
+TURN_BUDGET_EXIT_GRACE_SEC = 30.0
+# 批 C：rh2 在 turn 预算命中后强制停止了 harness（CC 未在宽限内自行退出）——我方哨兵，不是 CC 的
+# 退出码，也不是 vendored 的 EXIT_TIME_BUDGET_EXCEEDED。
+HARNESS_EXIT_STOPPED_BY_RH2 = -2
 
 
 def _now_utc() -> datetime:
@@ -2095,6 +2103,11 @@ class RolloutAudit:
     # bootstrap_seconds / remaining_at_launch；bringup 再补 model_call_queue_wait_seconds_total）。
     episode_deadline_monotonic: float | None = None
     episode_deadline: dict[str, Any] | None = None
+    # 批 C（I02/I14）：终止事实观测块（B 的接口：区分自然结束 / turn 截断 / hard wall / 执行错误）。
+    # keys: turn_budget（registry 快照：cap / accepted / exhausted / refused_count）、harness_exit_code、
+    # stop（requested_by ∈ {None, turn_budget, hard_wall} / forced / kill_verified / residual_processes /
+    # grace_seconds / harness_exited_within_grace）；bringup 落盘时补 kind = outcome 的 termination_kind。
+    termination: dict[str, Any] | None = None
     # B1：评分基线 digest（manifest 本体不进 audit——数万 entries；
     # 内存 + B5 receipt 持久化）
     baseline_manifest_digest: str | None = None
@@ -2340,6 +2353,9 @@ class RolloutOrchestrator:
         session_poison_release: Callable[[str], None] | None = None,
         session_poison_reason: Callable[[str], str | None] | None = None,
         clock: Callable[[], float] = time.monotonic,
+        turn_budget_subscribe: Callable[[str, Callable[[str], None]], None] | None = None,
+        turn_budget_unsubscribe: Callable[[str], None] | None = None,
+        turn_budget_snapshot: Callable[[str], dict[str, Any] | None] | None = None,
         capture_boundary_check: Callable[[str], None] | None = None,
         audit_sink: Callable[[Any], None] | None = None,
         runtime_quiescence_barrier: "RuntimeQuiescenceBarrier | None" = None,
@@ -2451,6 +2467,10 @@ class RolloutOrchestrator:
         # （测试用可控钟；生产 = time.monotonic，与 audit.started_monotonic 同域）。
         self._session_poison_reason = session_poison_reason
         self._clock = clock
+        # 批 C（I02）：turn 预算事实（capture wire 包装 vendored _check_turn_cap 写入 registry）
+        self._turn_budget_subscribe = turn_budget_subscribe
+        self._turn_budget_unsubscribe = turn_budget_unsubscribe
+        self._turn_budget_snapshot = turn_budget_snapshot
         # 轮次 12 P0 层 1：评分/Gate 前的交付账边界断言（glue 注入
         # registry.assert_session_clean——pending/unfinalized draft 在场即
         # poison + 缺员）
@@ -2801,9 +2821,29 @@ class RolloutOrchestrator:
                     owner_loop.call_soon_threadsafe(harness_task.cancel)
 
                 self._session_poison_subscribe(sid, _cancel_from_any_thread)
+            audit.termination = {
+                "turn_budget": None,
+                "harness_exit_code": None,
+                "stop": {
+                    "requested_by": None, "forced": False, "kill_verified": None,
+                    "residual_processes": None, "grace_seconds": None, "harness_exited_within_grace": None,
+                },
+            }
+            budget_event: asyncio.Event | None = None
+            if self._turn_budget_subscribe is not None:
+                # 批 C（I02）：turn 预算命中（adapter 线程）→ owner loop 上置事件；等待段据此进入
+                # 有界收口（等 CC 自退 → 未退则强制停止）。
+                budget_event = asyncio.Event()
+                budget_loop = asyncio.get_running_loop()
+
+                def _budget_hit_from_any_thread(_sid: str) -> None:
+                    budget_loop.call_soon_threadsafe(budget_event.set)
+
+                self._turn_budget_subscribe(sid, _budget_hit_from_any_thread)
             try:
                 exit_code = await self._await_harness_within_deadline(
-                    harness_task, audit=audit, launch_facts=launch_facts
+                    harness_task, audit=audit, launch_facts=launch_facts,
+                    budget_event=budget_event, sandbox=sandbox,
                 )
             except asyncio.CancelledError:
                 if self._session_poison_check is not None and self._session_poison_check(sid):
@@ -2834,7 +2874,16 @@ class RolloutOrchestrator:
             finally:
                 if self._session_poison_unsubscribe is not None:
                     self._session_poison_unsubscribe(sid)
+                if self._turn_budget_unsubscribe is not None:
+                    self._turn_budget_unsubscribe(sid)
+                # 批 C：cap 事实无论后续怎样收口（含 poison / 期限取消）都进观测块——cap 只解释
+                # 由预算拒绝导致的退出，不豁免其它失败，但事实本身要留给 B 看。
+                if self._turn_budget_snapshot is not None:
+                    audit.termination["turn_budget"] = self._turn_budget_snapshot(sid)
             audit.harness_exit_code = exit_code
+            audit.termination["harness_exit_code"] = exit_code
+            turn_budget = audit.termination["turn_budget"]
+            budget_exhausted = bool(turn_budget and turn_budget.get("exhausted"))
             remaining_at_exit = self._episode_remaining(audit)
             audit.episode_deadline["remaining_at_harness_exit"] = (
                 None if math.isinf(remaining_at_exit) else round(remaining_at_exit, 3)
@@ -2864,6 +2913,18 @@ class RolloutOrchestrator:
                         f"episode 预算在 harness 引导阶段耗尽（引导 {launch_facts.get('bootstrap_seconds')}s，"
                         "CC 未启动）——整组不训练。",
                     )
+                # 批 C（I14 rollout 侧）：hard wall 到点 → **先强制停止再 drain**。vendored 轮询到点不杀
+                # 进程、期限取消只回收宿主 CLI，容器内 CC 若不停会继续发请求 / 写工作区（drain 等不到
+                # inflight 归零 → session_plane_drain_unclean）。cap 事实即使在场也以 hard wall 为准
+                # （第一组 / Codex 计划审查 R3：到点时执行仍在进行 = 真实 hard wall → DROP）。
+                await self._force_stop_execution_scope(sandbox, audit, requested_by="hard_wall")
+            elif budget_exhausted:
+                # 批 C（I02）：turn 预算已命中且执行已在宽限内结束（CC 自行退出或 rh2 强制停止）——
+                # 真实 policy-horizon 事实（不伪造 end_turn，训练行 = N 轮真实生成）；随后 drain / 装配 /
+                # 屏障 / 评分照常，completion 由事实推导（quiescence + capture 闭合 → present_truncated，
+                # 批 D-1 注入的 KEEP_FULL → 真实 reward 进原组）。
+                audit.termination_kind_hint = "max_turns_exhausted"
+                audit.mark("max_turns_exhausted_observed")
             audit.step("step3_harness_completed")
 
             stage = "assemble"
@@ -2913,7 +2974,11 @@ class RolloutOrchestrator:
             if (
                 self.config.reject_on_nonzero_harness_exit
                 and exit_code != 0
-                and exit_code != -1  # hard wall 不是 crash（P1-4），继续按事实收口
+                and exit_code not in (HARNESS_EXIT_TIME_BUDGET_EXCEEDED, HARNESS_EXIT_STOPPED_BY_RH2)
+                # hard wall / rh2 强制停止不是 crash（P1-4），继续按事实收口
+                and audit.termination_kind_hint != "max_turns_exhausted"
+                # 批 C：cap 事实在场时 CC 因 403 退出的非零码不是 crash（只解释由预算拒绝导致的退出；
+                # poison / fatal / capture 不完整仍各走各的收口，cap 不豁免）
             ):
                 raise SlimeBindingError(
                     "nonzero_harness_exit_in_formal_chain",
@@ -3677,8 +3742,69 @@ class RolloutOrchestrator:
             "已取消该阶段并收口持有资源，整组不训练。",
         )
 
+    async def _force_stop_execution_scope(
+        self, sandbox: Any, audit: "RolloutAudit", *, requested_by: str
+    ) -> None:
+        """批 C（I14 rollout 侧）：杀容器内 agent 进程并有界验证归零；结果只落观测块 / failure_records，
+        不抛（首因 = 预算 / 墙钟；屏障 ① 会再复核一次并对残留 fail-closed）。"""
+
+        if sandbox is None or audit.termination is None:
+            return
+        stop = audit.termination["stop"]
+        stop["requested_by"] = requested_by
+        try:
+            residual = await terminate_agent_processes(sandbox.workspace)
+        except Exception as exc:  # noqa: BLE001 —— 停止动作自身异常：落账，不掩盖首因
+            audit.failure_records.append(
+                RolloutFailureRecord(
+                    stage="harness_run", error_type="execution_scope_stop_failed",
+                    detail=f"{type(exc).__name__}: {exc}"[:500],
+                )
+            )
+            residual = -1
+        stop["forced"] = True
+        stop["kill_verified"] = residual == 0
+        stop["residual_processes"] = residual
+        audit.mark(f"{requested_by}_forced_stop")
+
+    async def _stop_after_turn_budget(
+        self, harness_task: "asyncio.Future[int]", *, audit: "RolloutAudit", sandbox: Any
+    ) -> int:
+        """批 C（I02）：turn 预算命中后的有界收口——等 CC 自行退出（宽限 = min(TURN_BUDGET_EXIT_GRACE_SEC,
+        episode 剩余)）；宽限内未退且期限已到 → 真实 hard wall（按期限路径收口，cap 事实保留）；宽限内
+        未退且期限未到 → 强制停止（kill + 验证）并取消 harness task，返回 HARNESS_EXIT_STOPPED_BY_RH2。"""
+
+        stop = audit.termination["stop"] if audit.termination is not None else {}
+        grace = min(TURN_BUDGET_EXIT_GRACE_SEC, max(0.0, self._episode_remaining(audit)))
+        stop["requested_by"] = "turn_budget"
+        stop["grace_seconds"] = round(grace, 3)
+        audit.mark("turn_budget_exhausted_observed")
+        try:
+            done, _ = await asyncio.wait({harness_task}, timeout=grace)
+        except asyncio.CancelledError:
+            harness_task.cancel()
+            await self._settle_cancelled_stage(harness_task, audit, "harness_run")
+            raise
+        if harness_task in done:
+            stop["harness_exited_within_grace"] = True
+            return harness_task.result()
+        stop["harness_exited_within_grace"] = False
+        if self._episode_remaining(audit) <= 0:
+            # 宽限内没停且 episode 期限已到：真实 hard wall（Codex 计划审查 R3）——按期限路径收口，
+            # 调用方据 -1 强制停止并归 hard_wall_timeout；cap 事实保留在 turn_budget 块。
+            harness_task.cancel()
+            await self._settle_cancelled_stage(harness_task, audit, "harness_run")
+            audit.episode_deadline["hit_by"] = "harness_outer"
+            audit.mark("episode_deadline_harness_cancelled")
+            return HARNESS_EXIT_TIME_BUDGET_EXCEEDED
+        await self._force_stop_execution_scope(sandbox, audit, requested_by="turn_budget")
+        harness_task.cancel()
+        await self._settle_cancelled_stage(harness_task, audit, "harness_run")
+        return HARNESS_EXIT_STOPPED_BY_RH2
+
     async def _await_harness_within_deadline(
-        self, harness_task: "asyncio.Future[int]", *, audit: "RolloutAudit", launch_facts: dict[str, Any]
+        self, harness_task: "asyncio.Future[int]", *, audit: "RolloutAudit", launch_facts: dict[str, Any],
+        budget_event: "asyncio.Event | None" = None, sandbox: Any = None,
     ) -> int:
         """批 B：harness 运行（含驱动引导）受 episode 绝对期限约束。
 
@@ -3690,16 +3816,30 @@ class RolloutOrchestrator:
         """
 
         remaining = self._episode_remaining(audit)
+        waiters: set[Any] = {harness_task}
+        budget_waiter: asyncio.Future[Any] | None = None
+        if budget_event is not None:
+            budget_waiter = asyncio.ensure_future(budget_event.wait())
+            waiters.add(budget_waiter)
         try:
-            done, _ = await asyncio.wait(
-                {harness_task}, timeout=None if math.isinf(remaining) else max(remaining, 0.0)
-            )
-        except asyncio.CancelledError:
-            harness_task.cancel()
-            await self._settle_cancelled_stage(harness_task, audit, "harness_run")
-            raise
-        if harness_task in done:
-            return harness_task.result()
+            try:
+                done, _ = await asyncio.wait(
+                    waiters,
+                    timeout=None if math.isinf(remaining) else max(remaining, 0.0),
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
+            except asyncio.CancelledError:
+                harness_task.cancel()
+                await self._settle_cancelled_stage(harness_task, audit, "harness_run")
+                raise
+            if harness_task in done:
+                return harness_task.result()
+            if budget_waiter is not None and budget_waiter in done:
+                # 批 C（I02）：turn 预算命中而 harness 仍在 → 有界收口（自退 / 强制停止 / 期限到点）
+                return await self._stop_after_turn_budget(harness_task, audit=audit, sandbox=sandbox)
+        finally:
+            if budget_waiter is not None and not budget_waiter.done():
+                budget_waiter.cancel()
         harness_task.cancel()
         await self._settle_cancelled_stage(harness_task, audit, "harness_run")
         audit.episode_deadline["hit_by"] = (
