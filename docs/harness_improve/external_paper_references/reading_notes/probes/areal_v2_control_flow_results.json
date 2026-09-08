@@ -1,0 +1,82 @@
+{
+  "source_commit": "f289b989bc5d1930d5c6d592d335e2ffaf8c2f01",
+  "runtime": "Python 3.13.5",
+  "scope": "Isolated method bodies with HTTP/worker stubs; not a deployed AReaL test or training reproduction.",
+  "source_verification": {
+    "status": "not_run",
+    "reason": "No local upstream checkout; connector source was manually transcribed."
+  },
+  "characterization_cases_passed": 7,
+  "pass_meaning": "Assertions match current control flow, including undesirable outcomes; NOT a health certification.",
+  "cases": {
+    "positive_update": {
+      "events": [
+        "pause_generation",
+        "gateway_response(200,ok)",
+        "continue_generation",
+        "actor.set_version(1)",
+        "rollout.set_version(1)"
+      ],
+      "state": {
+        "actor_version": 1,
+        "rollout_version": 1,
+        "paused": false
+      },
+      "exception": null
+    },
+    "http_200_logical_error": {
+      "events": [
+        "pause_generation",
+        "gateway_response(200,error)",
+        "continue_generation",
+        "actor.set_version(1)",
+        "rollout.set_version(1)"
+      ],
+      "state": {
+        "actor_version": 1,
+        "rollout_version": 1,
+        "paused": false
+      },
+      "exception": null
+    },
+    "http_500_control": {
+      "events": [
+        "pause_generation",
+        "gateway_response(500,error)"
+      ],
+      "state": {
+        "actor_version": 0,
+        "rollout_version": 0,
+        "paused": true
+      },
+      "exception": "FakeHTTPError"
+    },
+    "success_resumes_before_version_publication": true,
+    "overflow": {
+      "callbacks": 1025,
+      "all_ack_ok": true,
+      "retained": 1024,
+      "oldest_retained_id": 1
+    },
+    "duplicate": {
+      "queued_descriptors": 2
+    },
+    "invalid_payload": {
+      "raises": true
+    }
+  },
+  "fragment_sha256": {
+    "transport": "ddf86692d28f2ebc4f3ca0cbc7a21acb5ffde9f498b977c1964c3d1a294fb852",
+    "actor": "c4161090c4aa32f9c5fd9c49043f6ffca86364aaccf7b049b743386fa3eff0bf",
+    "publish": "f12366c75aaed768c55bca4a10aa160c5d130596c1d6225de7acf12683fa7b36",
+    "callback": "a89355ee2b00c3629db28c91cec6e3c0f0d139b02a224743e290bd1e1498900c"
+  },
+  "not_tested": [
+    "Actual transfer or mixed weights",
+    "HTTP service deployment",
+    "NCCL/GPU",
+    "Concurrent waiter race",
+    "Remote export/storage recovery",
+    "Model learning"
+  ]
+}
