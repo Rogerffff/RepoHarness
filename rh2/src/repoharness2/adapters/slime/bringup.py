@@ -326,9 +326,14 @@ class ClaudeCodeDriver:
         # 轮次 11 一般 1：token 精确比较——子串判断会放过 "12.1.205-x"
         tokens = re.split(r"[^0-9A-Za-z.\-]+", observed)
         if expected not in tokens:
-            raise RuntimeError(
+            from repoharness2.adapters.slime.generate import SlimeBindingError
+
+            # 批 A（I05）：typed 且**不在** FAILURE_CODE_TERMINATION_MAP 内 → 编排层 run-halt。
+            # 版本画像失效是 run 级配置错误（每个 attempt 都会失败），不能当单次引导故障补采。
+            raise SlimeBindingError(
+                "cc_version_mismatch",
                 f"容器内 claude --version 不符：观测 {observed!r} 的 token 集不含"
-                f"期望 {expected!r}——CC 版本画像失效，fail-fast（升级须先重跑探针套件）。"
+                f"期望 {expected!r}——CC 版本画像失效，fail-fast（升级须先重跑探针套件）。",
             )
         self.cc_version_observed = observed
         # 轮次 11 一般 2 / 轮次 12 一般 2：进程内**只写一次** + 临时文件原子
@@ -350,37 +355,53 @@ class ClaudeCodeDriver:
     async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt):
         from slime.agent.harness import ClaudeCodeHarness
 
-        sb = DockerSandbox(sandbox.container_name)
-        await self._install_native_cli(sb)
-        # 预建 agent 用户（与 slime ensure_agent_user 同一命令、宽超时）：
-        # slime 侧写死 timeout=60s，django 官方镜像 /testbed 数万文件的
-        # chown -R 在 overlay2 copy-up 下超时（run6 实测 8/8 django rollout
-        # exit=124 全灭）。本命令幂等（id agent 短路），预跑成功后 slime
-        # 内部那次变成 no-op。
-        await sb.exec(
-            f"id agent >/dev/null 2>&1 || useradd -m -s /bin/bash agent && "
-            f"chown -R agent:agent /home/agent {workdir} && "
-            f"git config --system --add safe.directory '*' && id agent",
-            user="root",
-            check=True,
-            timeout=900,
+        from repoharness2.adapters.slime.docker_sandbox import SandboxExecError
+        from repoharness2.adapters.slime.generate import (
+            SlimeBindingError,
+            ensure_claude_code_training_guards,
         )
-        # D-FA-6 接线（FA-1，FA-0 递延项）：DISABLE_COMPACT=1 合并进
-        # SLIME_AGENT_CC_EXTRA_ENVS——slime ClaudeCodeHarness 会把该 JSON 并入
-        # CC 子进程环境。merged 存 self 供 evidence 采集；真实子进程验真挂
-        # FA-5 短租（本机无法冒烟真实 CC）。警示：env 只关 auto/manual compact，
-        # Microcompact/Context Collapse 由装配期收缩检测兜底（generate.py）。
-        from repoharness2.adapters.slime.generate import ensure_claude_code_training_guards
 
-        self.compaction_guard_envs = ensure_claude_code_training_guards(os.environ)
-        return await ClaudeCodeHarness().run(
-            sb,
-            workdir=workdir,
-            session_id=session_id,
-            adapter_url=adapter_url,
-            time_budget_sec=time_budget_sec,
-            prompt=prompt,
-        )
+        sb = DockerSandbox(sandbox.container_name)
+        try:
+            await self._install_native_cli(sb)
+            # 预建 agent 用户（与 slime ensure_agent_user 同一命令、宽超时）：
+            # slime 侧写死 timeout=60s，django 官方镜像 /testbed 数万文件的
+            # chown -R 在 overlay2 copy-up 下超时（run6 实测 8/8 django rollout
+            # exit=124 全灭）。本命令幂等（id agent 短路），预跑成功后 slime
+            # 内部那次变成 no-op。
+            await sb.exec(
+                f"id agent >/dev/null 2>&1 || useradd -m -s /bin/bash agent && "
+                f"chown -R agent:agent /home/agent {workdir} && "
+                f"git config --system --add safe.directory '*' && id agent",
+                user="root",
+                check=True,
+                timeout=900,
+            )
+            # D-FA-6 接线（FA-1，FA-0 递延项）：DISABLE_COMPACT=1 合并进
+            # SLIME_AGENT_CC_EXTRA_ENVS——slime ClaudeCodeHarness 会把该 JSON 并入
+            # CC 子进程环境。merged 存 self 供 evidence 采集；真实子进程验真挂
+            # FA-5 短租（本机无法冒烟真实 CC）。警示：env 只关 auto/manual compact，
+            # Microcompact/Context Collapse 由装配期收缩检测兜底（generate.py）。
+            self.compaction_guard_envs = ensure_claude_code_training_guards(os.environ)
+            return await ClaudeCodeHarness().run(
+                sb,
+                workdir=workdir,
+                session_id=session_id,
+                adapter_url=adapter_url,
+                time_budget_sec=time_budget_sec,
+                prompt=prompt,
+            )
+        except SandboxExecError as exc:
+            # 批 A（I05；Codex 批 A 审查 R1 修正）：只有 DockerSandbox 自己抛的操作失败
+            # （exec check=True 非零 / 超时 124、write_file 非零——覆盖装 CLI、useradd/chown、
+            # slime 的 ensure_agent_user / write_config / spawn）才是可证明来源的单次容器层面
+            # 引导故障（task-local，ABORTED 补采）。其它 RuntimeError（我方或 vendored 代码
+            # 不变量）与 typed 码（cc_version_mismatch / cc_training_guard_conflict…）原样
+            # 上抛，由编排层按 FAILURE_CODE_TERMINATION_MAP 分流（不在表内 = run-halt）。
+            # detail 保留原始 exec 输出供诊断。
+            raise SlimeBindingError(
+                "harness_bootstrap_failed", f"{type(exc).__name__}: {exc}"[:400]
+            ) from exc
 
 
 _SIMPLE_AGENT_PY = r'''

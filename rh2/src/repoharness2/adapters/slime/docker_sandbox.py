@@ -24,6 +24,21 @@ from pathlib import Path
 _DOCKER_BIN = "docker"
 
 
+class SandboxExecError(RuntimeError):
+    """`DockerSandbox` 的一次容器操作（exec check=True / write_file）失败。
+
+    批 A（I05，Codex 批 A 审查 R1）：这是**唯一**能证明"来源 = 容器内命令 / 文件写入的单次
+    失败"的类型——harness 驱动只把它转换成 task-local 的 `harness_bootstrap_failed`；其它
+    RuntimeError（我方代码不变量、vendored 内部错误）不再被改名，原样上抛给编排层按未归因
+    异常 run-halt。仍是 RuntimeError 子类，既有按 RuntimeError 捕获的调用方不受影响。
+    """
+
+    def __init__(self, op: str, exit_code: int, detail: str) -> None:
+        self.op = op
+        self.exit_code = exit_code
+        super().__init__(f"{op} failed (exit={exit_code}): {detail}")
+
+
 async def _run(*args: str, input_bytes: bytes | None = None, timeout: float | None = None):
     proc = await asyncio.create_subprocess_exec(
         _DOCKER_BIN,
@@ -70,7 +85,7 @@ class DockerSandbox:
         args += [self.container_name, "bash", "-c", cmd]
         code, out, err = await _run(*args, timeout=float(timeout))
         if check and code != 0:
-            raise RuntimeError(f"docker exec failed (exit={code}): {cmd[:120]}\n{err[:400]}")
+            raise SandboxExecError("docker exec", code, f"{cmd[:120]}\n{err[:400]}")
         return code, out, err
 
     async def write_file(self, sandbox_path: str, content, *, user: str = "root") -> None:
@@ -88,7 +103,7 @@ class DockerSandbox:
             "exec", "-i", self.container_name, "bash", "-c", script, input_bytes=payload, timeout=600.0
         )
         if code != 0:
-            raise RuntimeError(f"sandbox write_file {sandbox_path} failed: {err[:400]}")
+            raise SandboxExecError("sandbox write_file", code, f"{sandbox_path}: {err[:400]}")
 
     async def read_file(self, sandbox_path: str, *, user: str = "root") -> str:
         code, out, _err = await _run(

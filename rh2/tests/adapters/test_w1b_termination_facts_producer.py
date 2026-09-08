@@ -13,7 +13,9 @@
     ③ Outcome producer / 契约异常     → run-fatal `outcome_producer_failed`，且 producer 只允许调用一次
                                         （二次调用本身 = run-fatal `outcome_producer_called_twice`）；
     ④ 核心 admission sidecar 写失败   → run-fatal `admission_artifact_write_failed`（cleanup 仍执行）；
-    ⑤ finalize 之前的 task-local 故障 → 仍是普通 ABORTED（missing Outcome，miles 补采）；
+    ⑤ finalize 之前的**已归因** task-local 故障 → 仍是普通 ABORTED（missing Outcome，miles 补采）；
+       批 A（I05，2026-09-09）起"已归因"= typed 码在 FAILURE_CODE_TERMINATION_MAP 内；未映射
+       的 typed 码与任何非 typed 异常 → run-fatal `pre_finalize_failure_unclassified`（⑤b/⑤c/⑤d）；
   另：可选 telemetry（组修复信号转发通道）写失败 → 记录后照常交付，不改写样本处置；
   通用 except 里若发现 `audit.finalized is not None` → 不该到达的状态，升 fatal
   `post_finalize_failure_unclassified`，不撤销 finalized。
@@ -22,6 +24,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import sys
 from pathlib import Path
 
@@ -40,7 +43,8 @@ from test_slime_generate import (  # noqa: E402
 
 from repoharness2.adapters.slime import generate as generate_mod  # noqa: E402
 from repoharness2.adapters.slime.async_worker import FatalExecutionInfrastructureError  # noqa: E402
-from repoharness2.adapters.slime.generate import QuiescenceConfirmed  # noqa: E402
+from repoharness2.adapters.slime.generate import QuiescenceConfirmed, SlimeBindingError  # noqa: E402
+from repoharness2.adapters.slime.outcome_producer import FAILURE_CODE_TERMINATION_MAP  # noqa: E402
 from repoharness2.envpack.termination_facts import (  # noqa: E402
     TERMINATION_FACTS_METADATA_KEY,
     TerminationFactsError,
@@ -228,11 +232,15 @@ async def test_split_4_core_admission_sidecar_write_failure_is_run_fatal_cleanup
 
 
 async def test_split_5_pre_finalize_task_local_failure_stays_aborted():
-    """⑤ finalize 之前的 task-local 故障（harness 崩溃）：仍是普通 ABORTED——missing Outcome，
-    receipt aborted，producer 恰好一次，无 Fatal。"""
+    """⑤ finalize 之前的**已归因** task-local 故障（harness 驱动引导失败，typed
+    `harness_bootstrap_failed`）：仍是普通 ABORTED——missing Outcome，receipt aborted，producer
+    恰好一次，无 Fatal。批 A T1 oracle 改动：此前用裸 RuntimeError 模拟"harness 崩溃"，现在裸
+    异常 = 未归因 → run-fatal（见 5b）。"""
 
     store = FakeFinalizationStore()
-    chain = _formal_chain(store, crash=RuntimeError("harness crashed mid-run"))
+    chain = _formal_chain(
+        store, crash=SlimeBindingError("harness_bootstrap_failed", "docker exec failed (exit=1): useradd")
+    )
     calls = _spy_producer(chain.orchestrator)
     delivered = await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     audit = chain.orchestrator.audits[0]
@@ -247,6 +255,72 @@ async def test_split_5_pre_finalize_task_local_failure_stays_aborted():
     assert receipt.outcome_v2.failure_category == "harness_crash"
     payload = resolve_termination_facts(aborted.metadata)
     assert payload.termination_kind == "harness_crash" and payload.fresh_grading_complete is False
+
+
+async def test_split_5b_unclassified_pre_finalize_exception_is_run_fatal_and_cleans_up():
+    """⑤b 批 A（I05，第二组 §2 / 06 §2）：finalize 之前的**非 typed** 异常（裸 RuntimeError，模拟
+    harness 驱动内的编程错误）不再洗成 ABORTED——run-fatal `pre_finalize_failure_unclassified`；
+    producer 不被调用（无 Outcome，不伪造 missing）；receipt 记 fatal_run_halt；cleanup 照常
+    （容器 rm + drop_session），不留残留。"""
+
+    store = FakeFinalizationStore()
+    chain = _formal_chain(store, crash=RuntimeError("harness driver bug"))
+    calls = _spy_producer(chain.orchestrator)
+    with pytest.raises(FatalExecutionInfrastructureError, match="pre_finalize_failure_unclassified"):
+        await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    audit = chain.orchestrator.audits[0]
+    assert calls == [] and audit.outcome_v2 is None and audit.finalized is None
+    assert "pre_finalize_failure_unclassified" in _steps(audit)
+    assert any(f.stage == "harness_run" and f.error_type == "RuntimeError" for f in audit.failure_records)
+    assert len(chain.docker.removed) == 1 and audit.lease_released is True  # cleanup 照常
+    assert len(chain.adapter_ref["adapter"].dropped) == 1
+    (receipt,) = store.receipts
+    assert receipt.attempt_disposition == "fatal_run_halt"
+
+
+async def test_split_5c_leaf_facts_programming_error_is_run_fatal():
+    """⑤c 批 A（第二组 §2 的例子）：我方 `_leaf_facts_fn` 抛 TypeError → run-fatal（stage=assemble），
+    不是 missing/ABORTED——否则只在有分支的轨迹上触发的 bug 会静默筛选训练分布。"""
+
+    store = FakeFinalizationStore()
+    chain = _formal_chain(store)
+
+    def _buggy(sid, samples, hook):
+        raise TypeError("'NoneType' object is not iterable")
+
+    chain.orchestrator._leaf_facts_fn = _buggy
+    with pytest.raises(FatalExecutionInfrastructureError, match="pre_finalize_failure_unclassified"):
+        await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    audit = chain.orchestrator.audits[0]
+    assert any(f.stage == "assemble" and f.error_type == "TypeError" for f in audit.failure_records)
+    assert audit.outcome_v2 is None
+    assert len(chain.docker.removed) == 1  # cleanup 照常
+
+
+@pytest.mark.parametrize("code", ["capture_record_unknown_in_backfill", "leaf_facts_length_mismatch"])
+async def test_split_5d_structural_contradiction_codes_are_run_fatal(code):
+    """⑤d 批 A（第二组 §1 点名的两个账实矛盾）：leaf_facts_length_mismatch（两条分支只配一份事实）
+    与 capture_record_unknown_in_backfill（回链引用没有对应 TurnTape）不再按 capture_incomplete
+    收口为 ABORTED——run-fatal。判定唯一来源 = 这两个码**不在** FAILURE_CODE_TERMINATION_MAP 内
+    （Codex 批 A 审查可简化项：不另设公开集合，两码只在本参数化里点名）。"""
+
+    assert code not in FAILURE_CODE_TERMINATION_MAP
+    store = FakeFinalizationStore()
+    chain = _formal_chain(store)
+    original = chain.orchestrator._leaf_facts_fn
+
+    def _fn(sid, samples, hook):
+        facts = list(original(sid, samples, hook))
+        if code == "leaf_facts_length_mismatch":
+            return facts * 2
+        return [dataclasses.replace(f, capture_record_ids=("cap_ghost",)) for f in facts]
+
+    chain.orchestrator._leaf_facts_fn = _fn
+    with pytest.raises(FatalExecutionInfrastructureError, match="pre_finalize_failure_unclassified"):
+        await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    audit = chain.orchestrator.audits[0]
+    assert any(f.stage == "assemble" and f"[{code}]" in f.detail for f in audit.failure_records)
+    assert audit.outcome_v2 is None and len(chain.docker.removed) == 1
 
 
 async def test_telemetry_repair_signal_sink_failure_records_and_still_delivers():

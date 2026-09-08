@@ -44,6 +44,7 @@ from repoharness2.adapters.slime.async_worker import FatalExecutionInfrastructur
 from repoharness2.adapters.slime.generate import (  # noqa: E402
     S1_COMPAT_LEGACY_STALENESS_THRESHOLD,
     STALENESS_THRESHOLD_MIRROR_UNBOUNDED,
+    SlimeBindingError,
 )
 from repoharness2.envpack.termination_facts import resolve_termination_facts  # noqa: E402
 from repoharness2.governance.admission import (  # noqa: E402
@@ -257,7 +258,8 @@ async def test_structurally_unsafe_artifact_is_delivered_without_report_and_drop
 
 
 async def test_missing_outcome_stays_aborted_without_admission_payload():
-    chain = _formal_chain(crash=RuntimeError("harness crashed mid-run"))
+    # 批 A T1：已归因 task-local 故障用 typed 码（裸 RuntimeError 现在是未归因 → run-fatal）
+    chain = _formal_chain(crash=SlimeBindingError("harness_bootstrap_failed", "docker exec failed"))
     delivered = await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     (aborted,) = delivered
     assert aborted.remove_sample is True and aborted.status == "aborted"
@@ -366,7 +368,9 @@ async def test_validation_error_inside_finalize_is_run_fatal(monkeypatch):
 
 
 async def test_pre_finalize_validation_error_and_task_local_failure_stay_aborted(monkeypatch):
-    """对照：finalize 之前的 ValidationError 与真实 task-local 故障仍按 stage fallback 归 missing/ABORTED。"""
+    """对照：finalize 之前的 ValidationError（预算闭环 Brief §6 待确认项，确认前保持 stage fallback）
+    与**已归因**的 task-local 故障（typed `harness_bootstrap_failed`）仍归 missing/ABORTED；
+    批 A（I05）起裸 RuntimeError = 未归因 → run-fatal `pre_finalize_failure_unclassified`。"""
 
     chain = _formal_chain()
     err = _forced_validation_error()
@@ -383,10 +387,16 @@ async def test_pre_finalize_validation_error_and_task_local_failure_stay_aborted
     (receipt,) = chain.finalization.receipts
     assert receipt.attempt_disposition == "aborted"
 
-    crashed = _formal_chain(crash=RuntimeError("claude cli exploded"))
+    crashed = _formal_chain(crash=SlimeBindingError("harness_bootstrap_failed", "claude cli exploded"))
     (aborted2,) = await crashed.orchestrator.generate(_Args(), crashed.base_sample, dict(SAMPLING_PARAMS))
     assert aborted2.status == "aborted"
     assert crashed.finalization.receipts[0].outcome_v2.failure_category == "harness_crash"
+
+    # 批 A（I05）：同一位置的裸异常 = 未归因 → run-fatal，不产 Outcome、不返回 ABORTED
+    unclassified = _formal_chain(crash=RuntimeError("claude cli exploded"))
+    with pytest.raises(FatalExecutionInfrastructureError, match="pre_finalize_failure_unclassified"):
+        await unclassified.orchestrator.generate(_Args(), unclassified.base_sample, dict(SAMPLING_PARAMS))
+    assert unclassified.orchestrator.audits[0].outcome_v2 is None
 
 
 # ---------------------------------------------------------------------------

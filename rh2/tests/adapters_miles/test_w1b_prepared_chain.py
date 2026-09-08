@@ -88,10 +88,14 @@ class _RecordingDriver:
 
 
 class _NoDocker:
-    """CPU 无容器面：materialize 确定性失败（abort 收口路径）。"""
+    """CPU 无容器面：materialize 确定性失败（typed `rollout_*` 码 → 已归因 sandbox_failure，
+    abort 收口路径）。批 A（I05）起裸 FileNotFoundError（= docker 二进制缺失，run 级配置错误）
+    是未归因异常 → run-fatal，不再适合当 ABORTED 替身，故改为返回非零 ExecResult。"""
 
     async def __call__(self, *args, input_bytes=None):
-        raise FileNotFoundError("docker disabled in CPU test")
+        from repoharness2.grading.manager import ExecResult
+
+        return ExecResult(exit_code=1, stdout="", stderr="docker disabled in CPU test")
 
 
 class _PreparedDocker:

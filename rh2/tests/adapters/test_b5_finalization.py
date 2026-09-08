@@ -1,5 +1,6 @@
 """B5 验收（05 计划 5a 节）：
-① receipt 前 cleanup 不发生（正序 + persist 失败保留现场 run-halt）——**W3a（决策包 D2-1）
+① receipt 前 cleanup 不发生（正序 + persist 失败 run-halt；**批 A I12（06 A4，2026-09-09）**：
+   persist 失败后 cleanup 照常执行，容器只在清理失败时进隔离队列，不再"保留现场"）——**W3a（决策包 D2-1）
    修订**：rollout 容器在 artifact 本体持久化成功后**立即释放**（早于评分、早于 receipt），
    "receipt 之后才 cleanup"对容器移除只在**未冻结/未持久化**的 attempt 上仍成立；session drop /
    poison release / cleanup 追加记录仍在 receipt 之后。两种形态各有测试。
@@ -29,10 +30,12 @@ from test_slime_generate import (  # noqa: E402
     dense_turns,
 )
 
+from repoharness2.adapters.slime import generate as generate_mod  # noqa: E402
 from repoharness2.adapters.slime.async_worker import (  # noqa: E402
     FatalExecutionInfrastructureError,
 )
-from repoharness2.adapters.slime.generate import QuiescenceConfirmed  # noqa: E402
+from repoharness2.adapters.slime.generate import QuiescenceConfirmed, SlimeBindingError  # noqa: E402
+from repoharness2.envpack.termination_facts import TerminationFactsError  # noqa: E402
 
 
 class _FrozenWs:
@@ -100,29 +103,59 @@ async def test_artifact_persist_then_release_then_grading_then_receipt_then_appe
     assert len(chain.docker.removed) == 1  # finally 的 cleanup 幂等，不再 rm 第二次
 
 
-async def test_receipt_persist_failure_before_release_retains_workspace_and_run_halts():
-    """T0 失败表第 2 行（未冻结形态）：harness 崩溃 → 容器从未释放 → receipt 写失败 →
-    不清理（容器保留 + 隔离队列）+ run halt；cleanup 追加记录也不发生。"""
+async def test_receipt_persist_failure_before_release_cleans_up_and_run_halts():
+    """T0 失败表第 2 行（未冻结形态）：harness 引导失败 → 容器从未释放 → receipt 写失败 →
+    仍 run halt，**但 cleanup 照常**（批 A I12 / 06 A4 T1 oracle 改动：此前"不清理 + 容器入
+    隔离队列保留现场"）：docker rm 在 persist_receipt 之后发生、隔离队列为空、poison 不释放；
+    cleanup 追加记录仍不发生（无 receipt 就无追加对象）。"""
 
     store = FakeFinalizationStore(fail_persist_receipt=True)
-    chain = _formal_chain(store, crash=RuntimeError("harness crashed mid-run"))
+    chain = _formal_chain(
+        store, crash=SlimeBindingError("harness_bootstrap_failed", "docker exec failed (exit=1)")
+    )
     _log_docker_rm(chain)
     with pytest.raises(FatalExecutionInfrastructureError,
                        match="finalization_receipt_write_failed"):
         await chain.orchestrator.generate(
             _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
-    assert "docker_rm" not in store.call_order  # 容器未清理（现场保留）
+    order = store.call_order
+    assert order.index("persist_receipt") < order.index("docker_rm")  # receipt 失败后仍清理
     assert store.cleanup_results == []  # 无 receipt 就无追加
-    assert chain.orchestrator.cleanup_quarantine  # 容器入隔离队列
+    assert chain.orchestrator.cleanup_quarantine == []  # 容器已清，无需隔离
     audit = chain.orchestrator.audits[0]
     assert audit.rollout_container_released_before_grading is False
+    assert audit.lease_released is True and len(chain.docker.removed) == 1
+    steps = [e.step for e in audit.timeline]
+    assert "cleanup_started" in steps and "cleanup_completed" in steps
+    assert "cleanup_skipped_receipt_failure" not in steps
     assert any(f.error_type == "finalization_receipt_write_failed"
                for f in audit.failure_records)
 
 
+async def test_receipt_persist_failure_with_container_rm_failure_quarantines_and_still_halts():
+    """批 A I12：receipt 写失败且清理本身也失败（docker rm 非零）→ 首因仍是
+    finalization_receipt_write_failed；容器**此时才**进隔离队列，cleanup_failures 留痕。"""
+
+    store = FakeFinalizationStore(fail_persist_receipt=True)
+    chain = _formal_chain(
+        store, crash=SlimeBindingError("harness_bootstrap_failed", "docker exec failed (exit=1)"),
+        rm_fail=True,
+    )
+    with pytest.raises(FatalExecutionInfrastructureError,
+                       match="finalization_receipt_write_failed"):
+        await chain.orchestrator.generate(
+            _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    audit = chain.orchestrator.audits[0]
+    assert audit.lease_released is False
+    steps = [f.step for f in audit.cleanup_failures]
+    assert steps == ["finalization_receipt_write_failed", "remove_container"]  # 首因在前，rm 失败留痕
+    assert chain.orchestrator.cleanup_quarantine == [audit.lease.container_id]
+
+
 async def test_receipt_persist_failure_after_release_run_halts_without_quarantine():
     """W3a（D2-1）：artifact 已 durable 且容器已释放后 receipt 写失败——仍 run halt、仍无
-    cleanup 追加；但没有容器可"保留现场"（隔离队列为空），证据 = 已持久化的本体。"""
+    cleanup 追加；容器早已不存在（隔离队列为空），证据 = 已持久化的本体。批 A I12：cleanup
+    段照常执行（幂等，不再 rm 第二次）。"""
 
     store = FakeFinalizationStore(fail_persist_receipt=True)
     chain = _formal_chain(store)
@@ -137,9 +170,132 @@ async def test_receipt_persist_failure_after_release_run_halts_without_quarantin
     assert chain.orchestrator.cleanup_quarantine == []  # 容器已不存在，无现场可隔离
     audit = chain.orchestrator.audits[0]
     assert audit.rollout_container_released_before_grading is True
-    assert "cleanup_skipped_receipt_failure" in [e.step for e in audit.timeline]
+    steps = [e.step for e in audit.timeline]
+    assert "cleanup_completed" in steps and "cleanup_skipped_receipt_failure" not in steps
+    assert len(chain.docker.removed) == 1  # 幂等：已释放的容器不再 rm
     assert any(f.error_type == "finalization_receipt_write_failed"
                for f in audit.failure_records)
+
+
+def _pause_drop_session(chain):
+    """把 per-rollout adapter 的 drop_session（finally 段第一个清理 await）换成可暂停版本：
+    返回 (entered, release) 两个 Event——entered 在进入 drop_session 时置位，release 由测试
+    置位后才继续真正 drop。用于观察"清理等待期间"的状态（Codex 批 A 审查 R2 的探针形状）。"""
+
+    import asyncio
+
+    entered, release = asyncio.Event(), asyncio.Event()
+    original_factory = chain.orchestrator._adapter_factory
+
+    def factory(hook, defaults):
+        adapter = original_factory(hook, defaults)
+        original_drop = adapter.drop_session
+
+        async def paused_drop(sid, *, wait_timeout=5.0):
+            entered.set()
+            await release.wait()
+            return await original_drop(sid, wait_timeout=wait_timeout)
+
+        adapter.drop_session = paused_drop
+        return adapter
+
+    chain.orchestrator._adapter_factory = factory
+    return entered, release
+
+
+def _record_halt_notifications(chain) -> list:
+    notified: list = []
+    chain.orchestrator._notify_fatal_halt = notified.append
+    return notified
+
+
+async def test_receipt_only_failure_notifies_halt_before_cleanup_wait():
+    """批 A I12（Codex 批 A 审查 R2）：receipt 写失败是本 attempt **唯一**的 fatal 时，必须在
+    进入 drop_session / 容器 rm 等清理 await **之前**就经 `_notify_fatal_halt` 通知停机——否则
+    清理窗口内 worker 仍接新执行。放开清理后：cleanup 照常完成，最终抛出的就是已通知的同一个
+    fatal 对象（首因不变、不二次构造）。"""
+
+    import asyncio
+
+    store = FakeFinalizationStore(fail_persist_receipt=True)
+    chain = _formal_chain(
+        store, crash=SlimeBindingError("harness_bootstrap_failed", "docker exec failed (exit=1)")
+    )
+    entered, release = _pause_drop_session(chain)
+    notified = _record_halt_notifications(chain)
+    task = asyncio.create_task(
+        chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    )
+    await asyncio.wait_for(entered.wait(), 2.0)
+    # 检查点：清理尚未发生（容器还在、drop 未返回），但停机通知已经发出
+    audit = chain.orchestrator.audits[0]
+    assert [n.reason_code for n in notified] == ["finalization_receipt_write_failed"]
+    assert chain.docker.removed == [] and audit.lease_released is False
+    assert any(f.error_type == "finalization_receipt_write_failed" for f in audit.failure_records)
+    release.set()
+    with pytest.raises(FatalExecutionInfrastructureError, match="finalization_receipt_write_failed") as ei:
+        await asyncio.wait_for(task, 2.0)
+    assert ei.value is notified[0]  # 尾部抛的是已通知的同一对象
+    assert len(notified) == 1
+    steps = [e.step for e in audit.timeline]
+    assert "cleanup_started" in steps and "cleanup_completed" in steps
+    assert len(chain.docker.removed) == 1 and audit.lease_released is True
+    assert store.cleanup_results == [] and chain.orchestrator.cleanup_quarantine == []
+
+
+async def test_primary_fatal_with_receipt_failure_keeps_first_cause_single_notification():
+    """对照：已有在途 fatal（harness 内基建级致命错误）时 receipt 也失败 → 只通知首因一次，
+    receipt 失败只作 secondary 事实，尾部不再抛/不再通知 receipt fatal；清理照常。"""
+
+    import asyncio
+
+    store = FakeFinalizationStore(fail_persist_receipt=True)
+    chain = _formal_chain(
+        store, crash=FatalExecutionInfrastructureError("probe_primary_fatal", "harness 内首因")
+    )
+    entered, release = _pause_drop_session(chain)
+    notified = _record_halt_notifications(chain)
+    task = asyncio.create_task(
+        chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    )
+    await asyncio.wait_for(entered.wait(), 2.0)
+    assert [n.reason_code for n in notified] == ["probe_primary_fatal"]
+    release.set()
+    with pytest.raises(FatalExecutionInfrastructureError, match="probe_primary_fatal"):
+        await asyncio.wait_for(task, 2.0)
+    assert [n.reason_code for n in notified] == ["probe_primary_fatal"]
+    audit = chain.orchestrator.audits[0]
+    assert any(f.error_type == "finalization_receipt_write_failed" for f in audit.failure_records)
+    assert "cleanup_completed" in [e.step for e in audit.timeline]
+    assert len(chain.docker.removed) == 1
+
+
+async def test_underivable_facts_notifies_halt_before_cleanup_wait(monkeypatch):
+    """同一接缝的另一条尾部 fatal：termination 事实不可派生（receipt 已 durable）也在清理 await
+    之前通知，尾部抛同一对象。"""
+
+    import asyncio
+
+    store = FakeFinalizationStore()
+    chain = _formal_chain(store)
+
+    def _boom(receipt):
+        raise TerminationFactsError("forced contradiction")
+
+    monkeypatch.setattr(generate_mod, "termination_facts_payload", _boom)
+    entered, release = _pause_drop_session(chain)
+    notified = _record_halt_notifications(chain)
+    task = asyncio.create_task(
+        chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    )
+    await asyncio.wait_for(entered.wait(), 2.0)
+    assert [n.reason_code for n in notified] == ["termination_facts_underivable"]
+    assert store.receipts  # receipt 先 durable
+    release.set()
+    with pytest.raises(FatalExecutionInfrastructureError, match="termination_facts_underivable") as ei:
+        await asyncio.wait_for(task, 2.0)
+    assert ei.value is notified[0] and len(notified) == 1
+    assert "cleanup_completed" in [e.step for e in chain.orchestrator.audits[0].timeline]
 
 
 # ------------------------------------------- ② cleanup 失败追加不覆盖首因
@@ -419,7 +575,7 @@ async def test_receipt_then_audit_sink_failure_never_claims_handoff():
 async def test_double_store_failure_first_cause_wins():
     """B5 复核 P1-4：receipt 失败 + audit sink 也失败 → 最终抛的是
     finalization_receipt_write_failed（最早首因），sink 失败记 secondary；
-    不写 cleanup_started/cleanup_completed 假事件，标 cleanup_skipped。"""
+    批 A I12：cleanup 照常执行（cleanup_started/cleanup_completed 是真事件）。"""
 
     store = FakeFinalizationStore(fail_persist_receipt=True)
     chain = _formal_chain(store)
@@ -434,9 +590,8 @@ async def test_double_store_failure_first_cause_wins():
             _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     audit = chain.orchestrator.audits[0]
     steps = [e.step for e in audit.timeline]
-    assert "cleanup_skipped_receipt_failure" in steps
-    assert "cleanup_started" not in steps  # 跳过就不写假事件
-    assert "cleanup_completed" not in steps
+    assert "cleanup_skipped_receipt_failure" not in steps
+    assert "cleanup_started" in steps and "cleanup_completed" in steps
     assert any(f.error_type == "audit_sink_failed_secondary"
                for f in audit.failure_records)
     assert any(f.error_type == "finalization_receipt_write_failed"

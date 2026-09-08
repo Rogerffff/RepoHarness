@@ -3456,7 +3456,8 @@ class RolloutOrchestrator:
         except ValidationError as exc:
             # finalize/gate/交付面内由**我方自己的事实**构造 RH2 契约对象失败 = 接线矛盾；
             # finalize 之前（materialize/harness_run/assemble）的 ValidationError 仍按
-            # stage fallback 归 missing/ABORTED（不扩大 fatal 面）。
+            # stage fallback 归 missing/ABORTED——是否升 fatal 是预算闭环 Brief §6 的
+            # 待确认项，确认前保持现状。
             if stage in _STRUCTURAL_CONTRACT_STAGES:
                 raise self._structural_contract_fatal(
                     audit, exc, stage=stage, reason_code="rh2_contract_validation_failed"
@@ -3465,23 +3466,54 @@ class RolloutOrchestrator:
                 exc, stage=stage, audit=audit, raw_meta=raw_meta, sample=sample, task=task,
                 tape_top_p=tape_top_p,
             )
-        except Exception as exc:  # noqa: BLE001 - 收口为 abort，归因进 audit
-            return self._abort_after_task_local_exception(
-                exc, stage=stage, audit=audit, raw_meta=raw_meta, sample=sample, task=task,
-                tape_top_p=tape_top_p,
-            )
+        except Exception as exc:  # noqa: BLE001 - 已归因 → abort；未归因 → run-fatal
+            # 批 A（I05，第二组 §2 / 06 §2）：只有**已归因的 task-local 故障**（typed 码在
+            # FAILURE_CODE_TERMINATION_MAP 内）才收口为 missing/ABORTED 让 miles 补采；未映射
+            # 的 typed 码与任何非 typed 异常（TypeError / KeyError / OSError…）= 我方接线或
+            # 事实矛盾（例：_leaf_facts_fn 的编程错误、两条训练分支只配一份事实），洗成
+            # ABORTED 会被补采掩盖、让代码 bug 筛选训练分布 → run-halt。finalize 之后的
+            # 分流仍在 _abort_after_task_local_exception 内（post_finalize_failure_unclassified）；
+            # s1_compat 冻结路径逐字不变。
+            if self._pre_finalize_exception_is_attributed(exc, audit=audit):
+                return self._abort_after_task_local_exception(
+                    exc, stage=stage, audit=audit, raw_meta=raw_meta, sample=sample, task=task,
+                    tape_top_p=tape_top_p,
+                )
+            raise self._structural_contract_fatal(
+                audit, exc, stage=stage, reason_code="pre_finalize_failure_unclassified"
+            ) from exc
         finally:
             # ---- B5（A-prime 第 7 条）：cleanup 只许发生在 finalization
             # receipt 原子持久化**之后**。receipt 持久化失败 = T0 失败表
-            # 第 2 行"durable handoff 失败"→ 保留 workspace/容器（不清理、
-            # poison 不释放、容器进隔离队列）+ run halt（正常退出路径抛
-            # Fatal；异常在途时只落账不掩盖首因异常）。s1/audit-only 未注入
+            # 第 2 行"durable handoff 失败"→ run halt（正常退出路径抛
+            # Fatal；异常在途时只落账不掩盖首因异常）。批 A（I12，06 A4）
+            # 修订：失败后 cleanup **照常执行**（revoke session / 清容器），
+            # poison 不释放；容器只在清理本身失败时进隔离队列——旧"保留
+            # 现场"会让每次 receipt 失败残留一个占资源的容器，而现场证据
+            # = audit 记录 + 已持久化的 artifact 本体。s1/audit-only 未注入
             # store 时跳过 receipt（行为与 B5 前逐字一致）。
             in_flight = sys.exc_info()[1]
             await self._run_finally_section(
                 audit=audit, sandbox=sandbox, sid=sid, adapter=adapter, session_open=session_open,
                 in_flight=in_flight,
             )
+
+    def _pre_finalize_exception_is_attributed(
+        self, exc: BaseException, *, audit: "RolloutAudit"
+    ) -> bool:
+        """批 A（I05）：finalize 前的异常能否按"已归因 task-local 故障"收口为 ABORTED。
+
+        True 的三种情形：s1_compat（冻结路径，旧 stage 兜底逐字不变）；已 finalize（post-finalize
+        分流归 _abort_after_task_local_exception，那里升 fatal）；typed 码在
+        FAILURE_CODE_TERMINATION_MAP 内。其余一律 False → 调用方升 pre_finalize_failure_unclassified。
+        """
+
+        if self._mode == "s1_compat" or audit.finalized is not None:
+            return True
+        return (
+            isinstance(exc, SlimeBindingError)
+            and getattr(exc, "reason_code", None) in FAILURE_CODE_TERMINATION_MAP
+        )
 
     def _structural_contract_fatal(
         self, audit: "RolloutAudit", exc: BaseException, *, stage: str, reason_code: str
@@ -3596,10 +3628,16 @@ class RolloutOrchestrator:
     ) -> None:
         """`_generate_attempt` 的 finally 段本体（B5 receipt → F5 事实派生 → cleanup → 追加记录
         → audit sink → 尾部 run-halt 判定）。逐字搬自原 finally 段，只为让 except 链可以拆成显式
-        分支而不复制这 200 行；语义零改变。"""
+        分支而不复制这 200 行；语义零改变（批 A I12 例外：receipt 失败不再跳过 cleanup）。"""
 
         receipt: FinalizationReceiptV1 | None = None
         receipt_persist_failed = False
+        # 批 A（I12；Codex 批 A 审查 R2）：finally 尾部才抛的两个 run-fatal（receipt 写失败 /
+        # termination 事实不可派生）在这里**提前构造并通知** halt，再进入 drop_session /
+        # 容器 rm 等 await——否则清理窗口内 worker 仍接新执行（与其它编排 fatal "先
+        # _notify_fatal_halt 再 cleanup"的既有纪律一致）。只在最终会抛它的条件下通知
+        # （非 s1_compat 且无在途异常），在途首因不被次生错误覆盖。尾部 raise 同一对象。
+        pending_tail_fatal: FatalExecutionInfrastructureError | None = None
         if self._finalization_store is not None:
             try:
                 # B5 复核 P1-5：构造也在失败通道内——typed outcome_v2
@@ -3636,11 +3674,16 @@ class RolloutOrchestrator:
                         detail=f"{type(exc).__name__}: {exc}"[:300],
                     )
                 )
-                if sandbox is not None and not audit.lease_released:
-                    # 保留现场只对**仍存在**的容器有意义；W3a 提前释放（artifact 已
-                    # durable）后的 receipt 失败没有容器可隔离，证据 = 已持久化的本体。
-                    self.cleanup_quarantine.append(sandbox.container_name)
+                # 批 A（I12）：不再在此"保留现场"——下方 cleanup 照常执行，容器只在
+                # 清理失败时进隔离队列。
                 audit.mark("finalization_receipt_write_failed")
+                if self._mode != "s1_compat" and in_flight is None:
+                    pending_tail_fatal = FatalExecutionInfrastructureError(
+                        "finalization_receipt_write_failed",
+                        "finalization receipt 持久化失败——cleanup 已照常执行（结果见 "
+                        "cleanup_failures / 隔离队列）；继续 top-up 会产生无终局记录的 attempt。",
+                    )
+                    self._notify_fatal_halt(pending_tail_fatal)  # 清理 await 之前先停 intake
         # W1b 第一集成切片（F5 producer）：receipt 持久化成功后立刻派生
         # termination 事实载荷（只读派生，fail-closed）。只对形成了 Outcome
         # v2 的 attempt 派生——没有 Outcome 的 attempt（s1 兼容/身份不全的
@@ -3657,6 +3700,13 @@ class RolloutOrchestrator:
                     audit.mark("termination_facts_derived")
                 except TerminationFactsError as exc:
                     termination_facts_failed = True
+                    if in_flight is None and pending_tail_fatal is None:
+                        pending_tail_fatal = FatalExecutionInfrastructureError(
+                            "termination_facts_underivable",
+                            "finalization receipt 与 outcome 的引用账实矛盾，termination 事实"
+                            "无法派生——receipt 已持久化，run-halt 待人工核对。",
+                        )
+                        self._notify_fatal_halt(pending_tail_fatal)  # 同上：清理 await 之前通知
                     audit.failure_records.append(
                         RolloutFailureRecord(
                             stage="finalization_receipt",
@@ -3666,44 +3716,47 @@ class RolloutOrchestrator:
                     )
                     audit.mark("termination_facts_underivable")
         cleanup_exception = False
-        cleanup_skipped = receipt_persist_failed and self._mode != "s1_compat"
-        if cleanup_skipped:
-            # 保留现场：session 不 drop、容器不清、poison 不释放
-            # （s1_compat 容忍档与 audit sink 同口径：落账后照常清理）。
-            # B5 复核 P1-4：跳过就如实标注跳过——不写
-            # cleanup_started/cleanup_completed 假事件。
-            audit.mark("cleanup_skipped_receipt_failure")
-        else:
-            audit.mark("cleanup_started")
-            if session_open:
-                try:
-                    await adapter.drop_session(sid, wait_timeout=5.0)
-                except Exception as exc:  # noqa: BLE001 - 清理失败必须留痕（Q8）
-                    audit.cleanup_failures.append(
-                        CleanupFailureRecord(
-                            lease_id=sandbox.lease.lease_id if sandbox else f"lease_{sid}",
-                            step="drop_session",
-                            detail=str(exc)[:300],
-                        )
+        # 批 A（I12，06 A4）：receipt 写失败仍是 run-fatal（本段末尾抛），但 cleanup **照常
+        # 执行**——"样本不交付 + run-fatal，但仍 revoke session / 终止 scope / 清容器"。
+        # 旧行为（跳过清理、容器入隔离队列"保留现场"）删除；s1_compat 口径不变。
+        audit.mark("cleanup_started")
+        if session_open:
+            try:
+                await adapter.drop_session(sid, wait_timeout=5.0)
+            except Exception as exc:  # noqa: BLE001 - 清理失败必须留痕（Q8）
+                audit.cleanup_failures.append(
+                    CleanupFailureRecord(
+                        lease_id=sandbox.lease.lease_id if sandbox else f"lease_{sid}",
+                        step="drop_session",
+                        detail=str(exc)[:300],
                     )
-            if sandbox is not None:
-                try:
-                    await self._cleanup_container(sandbox.lease, sandbox.container_name, audit)
-                except Exception as exc:  # noqa: BLE001 - 轮次 12 一般 1：不许无账
-                    # docker socket OSError 等意外异常：结构化落账 + 隔离队列，
-                    # 不让清理异常覆盖 rollout 结果
-                    cleanup_exception = True
-                    audit.cleanup_failures.append(
-                        CleanupFailureRecord(
-                            lease_id=sandbox.lease.lease_id,
-                            step="container_cleanup_exception",
-                            detail=f"{type(exc).__name__}: {exc}"[:300],
-                        )
+                )
+        if sandbox is not None:
+            try:
+                await self._cleanup_container(sandbox.lease, sandbox.container_name, audit)
+            except Exception as exc:  # noqa: BLE001 - 轮次 12 一般 1：不许无账
+                # docker socket OSError 等意外异常：结构化落账 + 隔离队列，
+                # 不让清理异常覆盖 rollout 结果
+                cleanup_exception = True
+                audit.cleanup_failures.append(
+                    CleanupFailureRecord(
+                        lease_id=sandbox.lease.lease_id,
+                        step="container_cleanup_exception",
+                        detail=f"{type(exc).__name__}: {exc}"[:300],
                     )
-                    if sandbox.container_name not in self.cleanup_quarantine:
-                        self.cleanup_quarantine.append(sandbox.container_name)
-        if not cleanup_skipped:
-            audit.mark("cleanup_completed")
+                )
+                if sandbox.container_name not in self.cleanup_quarantine:
+                    self.cleanup_quarantine.append(sandbox.container_name)
+        audit.mark("cleanup_completed")
+        if (
+            receipt_persist_failed
+            and sandbox is not None
+            and not audit.lease_released
+            and sandbox.container_name not in self.cleanup_quarantine
+        ):
+            # 批 A（I12）：清理已尝试但容器仍在（rm 失败 / 通道异常）→ 才进隔离队列
+            # （停机报告 quarantined_containers / 人工回收）。
+            self.cleanup_quarantine.append(sandbox.container_name)
         poison_released = False
         if (
             receipt_persist_failed
@@ -3789,23 +3842,18 @@ class RolloutOrchestrator:
                     print(f"[rh2] audit sink 落盘失败（bring-up 容忍）：{exc}")
         if receipt_persist_failed and self._mode != "s1_compat" and in_flight is None:
             # B5（T0 失败表第 2 行）：durable handoff 失败 → run halt
-            # （worker 停机）。现场已保留（上方跳过 cleanup + 隔离队列）。
-            # 异常在途时不抛——不许掩盖首因，Fatal/取消按原样传播，
-            # receipt 缺失由 F2-4 恢复端按"未终局"fail-closed 处理。
-            raise FatalExecutionInfrastructureError(
-                "finalization_receipt_write_failed",
-                "finalization receipt 持久化失败——workspace 已保留、"
-                "容器入隔离队列；继续 top-up 会产生无终局记录的 attempt。",
-            )
+            # （worker 停机）。批 A（I12）：cleanup 已照常执行，结果在
+            # audit.cleanup_failures / 隔离队列。异常在途时不抛——不许掩盖
+            # 首因，Fatal/取消按原样传播，receipt 缺失由 F2-4 恢复端按
+            # "未终局"fail-closed 处理。
+            assert pending_tail_fatal is not None  # 上方 receipt 分支在同一条件下已构造并通知
+            raise pending_tail_fatal
         if termination_facts_failed and in_flight is None:
             # F5：receipt 已 durable，但其 outcome/引用账实矛盾到无法派生
             # 事实——继续 top-up 会积累无法 join 的 attempt。首因优先：
             # 异常在途时上方只记 secondary fact，不在此覆盖。
-            raise FatalExecutionInfrastructureError(
-                "termination_facts_underivable",
-                "finalization receipt 与 outcome 的引用账实矛盾，termination 事实"
-                "无法派生——receipt 已持久化，run-halt 待人工核对。",
-            )
+            assert pending_tail_fatal is not None  # 上方 facts 分支在同一条件下已构造并通知
+            raise pending_tail_fatal
 
     # ------------------------------------------------------------------ 步骤 2
     def _default_mount_planner(self, task: RolloutTaskSpec) -> list[BundleMount]:

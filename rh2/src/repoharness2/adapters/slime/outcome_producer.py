@@ -47,21 +47,52 @@ __all__ = [
 ]
 
 # SlimeBindingError code → (termination_kind, failure_category)。
-# 键 = generate.py 实际抛出的错误码（穷举当前存在的收口路径；新增错误码
-# 走 STAGE_FALLBACK 兜底并在审计里可见 reason_code=unmapped_failure_code）。
+#
+# 批 A（I05，2026-09-09，第二组 §2 / 06 §2）：本表 = "已归因、局限于单次 execution 的
+# task-local 故障"的**穷举**。只有 reason_code 在本表内的 SlimeBindingError 才允许在
+# finalize 前收口为 missing/ABORTED（miles 补采）；不在表内的 typed 码与任何非 typed
+# 异常由 generate.py 的 except 链按 `pre_finalize_failure_unclassified` run-halt——
+# "不可归因/结构性损坏 = typed run-fatal，不补采"。此前未登记的码走 STAGE_FALLBACK
+# 并在审计里记 unmapped_failure_code，那条路今后只剩 ValidationError（无 reason_code）
+# 与 s1_compat 冻结路径。
 FAILURE_CODE_TERMINATION_MAP: dict[str, tuple[TerminationKind, RuntimeFailureCategory]] = {
     # 模型代理面：poison = 不可归因中断（proxy 判定后毒化会话）
     "session_poisoned_during_execution": ("api_failure", "model_proxy_failure"),
-    # harness 面
+    # materialize 面（W3b/W3a 既有 typed 码：镜像 / 容器 / 私有网络 / 工作区 / 基线读取——
+    # docker 或任务镜像层面的单次失败）。此前经 STAGE_FALLBACK 归 sandbox_failure，
+    # 处置不变，改为显式登记。
+    "rollout_image_inspect_failed": ("sandbox_failure", "sandbox_crash"),
+    "rollout_image_ref_inspect_failed": ("sandbox_failure", "sandbox_crash"),
+    "rollout_container_start_failed": ("sandbox_failure", "sandbox_crash"),
+    "rollout_base_untracked_snapshot_failed": ("sandbox_failure", "sandbox_crash"),
+    "rollout_workspace_write_failed": ("sandbox_failure", "sandbox_crash"),
+    "rollout_git_sanitize_failed": ("sandbox_failure", "sandbox_crash"),
+    "rollout_trusted_init_failed": ("sandbox_failure", "sandbox_crash"),
+    "rollout_egress_network_failed": ("sandbox_failure", "sandbox_crash"),
+    "rollout_egress_relay_connect_failed": ("sandbox_failure", "sandbox_crash"),
+    "baseline_head_unreadable": ("sandbox_failure", "sandbox_crash"),
+    # harness 面。harness_bootstrap_failed（批 A 新增）= 驱动引导（装 CLI / useradd /
+    # 写配置 / spawn）时 sandbox exec 失败——单次容器层面故障，不是我方代码矛盾。
+    "harness_bootstrap_failed": ("harness_crash", "harness_crash"),
     "nonzero_harness_exit_in_formal_chain": ("harness_crash", "harness_crash"),
+    # 身份面：Brief §6 待确认项。今天 stage="identity" 不在 STAGE_FALLBACK 内，缺省归
+    # harness_crash；确认前处置不变、只做显式登记。
+    "fa_identity_incomplete_in_formal_mode": ("harness_crash", "harness_crash"),
     # capture 关账面：执行本身跑完了（completed），账目不完整 → missing
+    "session_plane_drain_unclean": ("completed", "capture_incomplete"),
     "capture_boundary_unclean": ("completed", "capture_incomplete"),
     "no_capture_records": ("completed", "capture_incomplete"),
     "adapter_session_empty": ("completed", "capture_incomplete"),
-    "leaf_facts_length_mismatch": ("completed", "capture_incomplete"),
-    "capture_record_unknown_in_backfill": ("completed", "capture_incomplete"),
     # D-FA-6：上下文收缩 = provenance 不可信 → 账目层拒绝
     "context_shrink_detected": ("completed", "capture_incomplete"),
+    # Brief §6 待确认项（今天经 STAGE_FALLBACK 归 capture_incomplete；确认前处置不变、显式登记）
+    "sampling_mask_tape_missing_in_assembly": ("completed", "capture_incomplete"),
+    "frozen_artifact_persist_failed": ("completed", "capture_incomplete"),
+    # Brief §6 待确认项（Codex 计划审查 R1：inspect **成功读取**后发现镜像 digest / testbed
+    # 血缘与冻结事实不符，是确定性的环境完整性矛盾而非单次运行故障，建议 FATAL）。
+    # 今天经 STAGE_FALLBACK 归 sandbox_failure；确认前处置不变、显式登记。
+    "rollout_image_digest_mismatch": ("sandbox_failure", "sandbox_crash"),
+    "rollout_testbed_lineage_failed": ("sandbox_failure", "sandbox_crash"),
     # B2 exporter 失败族（A-prime 失败表第 1 行：无可信冻结输入 = missing）
     "post_census_failed": ("completed", "capture_incomplete"),
     "post_census_parse_failed": ("completed", "capture_incomplete"),
@@ -73,7 +104,15 @@ FAILURE_CODE_TERMINATION_MAP: dict[str, tuple[TerminationKind, RuntimeFailureCat
     # 的旧行（B3 closure oracle 1）
 }
 
-# 未知错误码按失败阶段兜底（保守：宁可归 infra/missing，不猜 present）。
+# 批 A（I05）：第二组 §1 点名的两个账实矛盾码——"树侧给两条训练分支，却只给一份配套事实"
+# = leaf_facts_length_mismatch；"capture 返回引用但没有对应 TurnTape" =
+# capture_record_unknown_in_backfill——此前在上表内按 capture_incomplete 收口为 ABORTED，
+# 现在**不在**上表 ⇒ generate.py 按 pre_finalize_failure_unclassified run-halt（回归见
+# tests/adapters/test_w1b_termination_facts_producer.py 的 5d）。判定只看"是否在上表"，
+# 不另设集合。
+
+# 无 reason_code 的异常（finalize 前 ValidationError，Brief §6 待确认项）与 s1_compat 冻结路径
+# 按失败阶段兜底（保守：宁可归 infra/missing，不猜 present）。批 A 起 typed 码不再走本表。
 STAGE_FALLBACK_TERMINATION_MAP: dict[str, tuple[TerminationKind, RuntimeFailureCategory]] = {
     "materialize": ("sandbox_failure", "sandbox_crash"),
     "harness_run": ("harness_crash", "harness_crash"),

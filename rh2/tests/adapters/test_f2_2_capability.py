@@ -297,12 +297,18 @@ async def test_e2e_formal_path_audit_only_pre_barrier():
 
 
 async def test_e2e_failure_path_produces_missing_outcome():
-    """异常收口（harness 崩溃）：termination=harness_crash + completion=
-    missing（quiescence 未确认）；S1 兼容路径（无身份）不产 v2。"""
+    """异常收口（已归因 harness 引导失败，typed harness_bootstrap_failed）：
+    termination=harness_crash + completion=missing（quiescence 未确认）；S1 兼容路径
+    （无身份）不产 v2。批 A T1：正式链里裸 RuntimeError 已是未归因 → run-fatal，
+    见 test_w1b_termination_facts_producer 5b。"""
 
     from test_slime_generate import SAMPLING_PARAMS, _Args, build_dense_chain
 
-    chain = build_dense_chain(config=_fa_cfg(), crash=RuntimeError("claude cli exploded"))
+    from repoharness2.adapters.slime.generate import SlimeBindingError
+
+    chain = build_dense_chain(
+        config=_fa_cfg(), crash=SlimeBindingError("harness_bootstrap_failed", "claude cli exploded")
+    )
     _stamp_fa_identity(chain.base_sample)
     await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     ov2 = chain.orchestrator.audits[0].outcome_v2
