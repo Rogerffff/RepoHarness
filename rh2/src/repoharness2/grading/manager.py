@@ -102,7 +102,18 @@ async def run_docker(*args: str, input_bytes: bytes | None = None) -> ExecResult
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
-    stdout, stderr = await proc.communicate(input=input_bytes)
+    try:
+        stdout, stderr = await proc.communicate(input=input_bytes)
+    except asyncio.CancelledError:
+        # 批 B（I03；Codex 批 B 审查 R2a）：本函数是物化（inspect / 建网 / docker run / exec）与
+        # 评分的默认 Docker 通道——episode 期限或关停取消到达时先回收宿主 CLI 子进程再传播；
+        # 容器内进程不因此停止，由所有者按名字回收（rm -f）。此前只等 communicate，取消即孤儿。
+        try:
+            proc.kill()
+        except ProcessLookupError:  # 已退出
+            pass
+        await proc.wait()
+        raise
     return ExecResult(
         exit_code=proc.returncode or 0,
         stdout=stdout.decode(errors="replace"),

@@ -224,12 +224,15 @@ class MockSessionAdapter:
         max_context_tokens: int = 0,
         physical_attempt_id: str | None = None,
         capability_token: str | None = None,  # F2-2：认证映射（mock 记录可选）
+        deadline_monotonic: float | None = None,  # 批 B：episode 期限显式下传（mock 记录）
     ) -> None:
         if sid in self.opened:  # 真实 BaseAdapter.open_session 的唯一性约束
             raise ValueError(f"session_id {sid!r} already exists")
         self.opened.append(sid)
         self.opened_paids = getattr(self, "opened_paids", [])
         self.opened_paids.append(physical_attempt_id)
+        self.opened_deadlines = getattr(self, "opened_deadlines", [])
+        self.opened_deadlines.append(deadline_monotonic)
 
     async def run_all_turns(self) -> None:
         """由 harness 替身调用：逐轮把 mock SGLang 响应喂给真实 capture 钩子。"""
@@ -674,7 +677,10 @@ async def test_normal_path_a5_eight_questions_as_schema_instances():
     assert launch.workdir == "/testbed"  # Q3 workdir 显式传入
     driver_call = chain.driver.calls[0]
     assert driver_call["workdir"] == "/testbed"
-    assert driver_call["time_budget_sec"] == 900
+    # 批 B（I03，T1 oracle 改动）：vendored 相对整数秒 = harness 启动时刻的剩余 episode 预算
+    # （下取整、至少 1），不再是任务预算原值 900；真正的强制在编排层的绝对期限。
+    assert driver_call["time_budget_sec"] == audit.episode_deadline["harness_time_budget_seconds"]
+    assert 899 <= driver_call["time_budget_sec"] <= 900 == audit.episode_deadline["budget_seconds"]
 
     proxy = launch.model_proxy  # Q4 模型代理注入
     assert proxy.inject_env_var == "ANTHROPIC_BASE_URL"

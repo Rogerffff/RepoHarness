@@ -640,6 +640,9 @@ class ModelCallProxy:
         self._max_artifacts = max_audit_artifacts
         self._sleeper = sleeper
         self._clock = clock
+        # 批 B（I03）：model_call 信号量排队耗时按 execution_scope 累计（audit 观测
+        # episode_deadline.model_call_queue_wait_seconds_total 的来源）。
+        self.queue_wait_seconds: dict[str, float] = {}
         self.attempts_ledger: list[ModelCallAttempt] = []
         self.audit_artifacts: dict[str, Any] = {}
         self.audit_evictions = 0
@@ -664,6 +667,7 @@ class ModelCallProxy:
             self.attempts_ledger = [
                 a for a in self.attempts_ledger if not a.logical_turn_id.startswith(prefix)
             ]
+            self.queue_wait_seconds.pop(execution_scope, None)  # 批 B：审计 ACK 后释放排队累计
             return before - len(self.attempts_ledger)
 
     def drain_attempts(self, execution_scope: str) -> list[ModelCallAttempt]:
@@ -744,16 +748,99 @@ class ModelCallProxy:
         send_fn: Callable[[int], Awaitable[Mapping[str, Any]]],
         n: int,
         deadline_monotonic: float | None = None,
+        *,
+        execution_scope: str | None = None,
+        min_attempt_budget_seconds: float = 0.0,
     ):
-        timeout = self._effective_timeout(deadline_monotonic)
+        """一次物理发送。批 B（I03，第一组"排队后重算剩余时间"）：
+
+        - model_call 信号量的等待**受 episode 期限约束**（此前等待不计时，拿到后还用等待前
+          算好的 timeout）；等待中到点 → `episode_deadline_exhausted`（typed，不发请求）；
+        - 拿到额度后**重算** timeout（= min(attempt_timeout, 剩余)），剩余不足一次尝试同样
+          typed 收口；
+        - 排队耗时按 execution_scope 累计供审计。
+        """
+
         if self._limits is None:
+            timeout = self._effective_timeout(deadline_monotonic)
             if timeout is None:
                 return await send_fn(n)
             return await asyncio.wait_for(send_fn(n), timeout=timeout)
-        async with self._limits.acquire("model_call"):
+        waited_from = self._clock()
+        try:
+            lease = await self._acquire_model_call_within_deadline(deadline_monotonic)
+        finally:
+            self._note_queue_wait(execution_scope, waited_from)  # 外层取消也记（Codex 批 B 审查 §4）
+        if lease is None:
+            raise UnattributableModelCallError(
+                "episode_deadline_exhausted",
+                f"model_call 额度排队 {self._clock() - waited_from:.1f}s 后 episode 期限到点"
+                "——不再发送，session 中毒，execution 缺员。",
+            )
+        try:
+            remaining = self._remaining(deadline_monotonic)
+            if remaining is not None and remaining < min_attempt_budget_seconds:
+                raise UnattributableModelCallError(
+                    "episode_deadline_exhausted",
+                    f"拿到 model_call 额度后剩余预算 {remaining:.1f}s < {min_attempt_budget_seconds}s"
+                    "——不再发送，session 中毒，execution 缺员。",
+                )
+            timeout = self._effective_timeout(deadline_monotonic)  # 排队后重算
             if timeout is None:
                 return await send_fn(n)
             return await asyncio.wait_for(send_fn(n), timeout=timeout)
+        finally:
+            await lease.__aexit__(None, None, None)
+
+    async def _acquire_model_call_within_deadline(
+        self, deadline_monotonic: float | None
+    ) -> "_ResourceLease | None":
+        """拿 model_call 额度，等待不超过剩余 episode 预算；到点返回 None（不持有额度）。
+
+        用 asyncio.wait 而不是 wait_for：wait 到点时不取消内部 task，由本函数自己取消并处理
+        "取消与获取同时发生"的竞态（拿到了就立即归还），保证额度不泄漏；外层取消（客户端断连）
+        同样先收口未完成的获取再传播。
+        """
+
+        assert self._limits is not None
+        lease = self._limits.acquire("model_call")
+        remaining = self._remaining(deadline_monotonic)
+        if remaining is None:
+            await lease.__aenter__()
+            return lease
+        acquire = asyncio.ensure_future(lease.__aenter__())
+        try:
+            done, _ = await asyncio.wait({acquire}, timeout=max(remaining, 0.0))
+        except asyncio.CancelledError:
+            await self._settle_unfinished_acquire(acquire, lease)
+            raise
+        if acquire in done:
+            acquire.result()  # __aenter__ 自身异常原样上抛
+            return lease
+        await self._settle_unfinished_acquire(acquire, lease)
+        return None
+
+    @staticmethod
+    async def _settle_unfinished_acquire(acquire: "asyncio.Future[Any]", lease: "_ResourceLease") -> None:
+        acquire.cancel()
+        try:
+            await acquire
+        except asyncio.CancelledError:
+            return
+        except Exception:  # noqa: BLE001 —— 获取本身失败：没有额度可还
+            return
+        await lease.__aexit__(None, None, None)  # 取消未赶上获取：已持有 → 归还
+
+    def _note_queue_wait(self, execution_scope: str | None, waited_from: float) -> None:
+        if not execution_scope:
+            return
+        waited = max(0.0, self._clock() - waited_from)
+        self.queue_wait_seconds[execution_scope] = self.queue_wait_seconds.get(execution_scope, 0.0) + waited
+
+    def queue_wait_seconds_total(self, execution_scope: str) -> float:
+        """批 B：该 execution（paid 命名空间）在 model_call 信号量上累计排队的秒数。"""
+
+        return round(self.queue_wait_seconds.get(execution_scope, 0.0), 6)
 
     async def _wait_active_before_send(
         self,
@@ -866,7 +953,11 @@ class ModelCallProxy:
             failure: BaseException | None = None
             response: Mapping[str, Any] | None = None
             try:
-                response = await self._send(send_fn, attempt_number, deadline_monotonic)
+                response = await self._send(
+                    send_fn, attempt_number, deadline_monotonic,
+                    execution_scope=execution_scope,
+                    min_attempt_budget_seconds=min_attempt_budget_seconds,
+                )
             except asyncio.CancelledError:
                 # CC/客户端取消必须原样传播（aiohttp handler_cancellation 链），
                 # 但先落账 + poison——取消后 CC 的重试不得复活该 session
@@ -874,8 +965,35 @@ class ModelCallProxy:
                 self._record_failed(attempts, scoped, attempt_id, attempt_number, evidence=[ref], physical_attempt_id=physical_attempt_id)
                 self._poison(sid, poison_registry, "client_cancelled")  # 取消不走外层统一路径
                 raise
+            except UnattributableModelCallError as exc:
+                # 批 B（I03；Codex 计划审查 R2 探针）：_send 内的 episode 期限判定（排队中 /
+                # 拿到额度后剩余不足）已是 typed 归因，不进下方"中断 vs 更新窗口"守卫——那会把
+                # 它改写成 no_overlapping_update_window，harness 取消分支就读不到真实原因。
+                ref = self._store_artifact(attempt_id, exc.reason_code)
+                self._record_failed(
+                    attempts, scoped, attempt_id, attempt_number, evidence=[ref],
+                    physical_attempt_id=physical_attempt_id,
+                )
+                raise
             except Exception as exc:  # noqa: BLE001 —— 归因在下方守卫做
                 failure = exc
+
+            if isinstance(failure, (TimeoutError, asyncio.TimeoutError)):
+                remaining_after = self._remaining(deadline_monotonic)
+                if remaining_after is not None and remaining_after <= 0:
+                    # 批 B：发送超时恰是 episode 期限到点（timeout = min(attempt_timeout, 剩余)）
+                    # ——归 episode_deadline_exhausted；期限未到的单次 attempt_timeout 仍按下方
+                    # 守卫归中断 / 更新窗口（api/inference 族），不叫 hard wall。
+                    ref = self._store_artifact(attempt_id, "episode_deadline_exhausted")
+                    self._record_failed(
+                        attempts, scoped, attempt_id, attempt_number, evidence=[ref],
+                        physical_attempt_id=physical_attempt_id,
+                    )
+                    raise UnattributableModelCallError(
+                        "episode_deadline_exhausted",
+                        f"{attempt_id}: 发送中 episode 期限到点（剩余 {remaining_after:.1f}s）"
+                        "——session 中毒，execution 缺员。",
+                    )
 
             if response is not None and not _response_is_abort(response):
                 meta = response.get("meta_info")

@@ -306,7 +306,7 @@ class ClaudeCodeDriver:
     name = "claude_code"
     platform_tarball_env = "SLIME_AGENT_CC_PLATFORM_TARBALL"
 
-    async def _install_native_cli(self, sb: DockerSandbox) -> None:
+    async def _install_native_cli(self, sb: DockerSandbox, *, timeout: float = 180) -> None:
         tarball = os.environ[self.platform_tarball_env]
         await sb.write_file("/tmp/cc-platform.tgz", Path(tarball))
         _code, _out, _err = await sb.exec(
@@ -315,7 +315,7 @@ class ClaudeCodeDriver:
             "install -m 0755 /tmp/cc-extract/package/claude /usr/local/bin/claude && "
             "/usr/local/bin/claude --version",
             user="root",
-            timeout=180,
+            timeout=timeout,
             check=True,
         )
         # codex 轮次 10 一般 2：不只运行，还要**比较**——版本漂移 fail-fast
@@ -354,28 +354,67 @@ class ClaudeCodeDriver:
 
     async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt):
         from slime.agent.harness import ClaudeCodeHarness
+        from slime.agent.sandbox import EXIT_TIME_BUDGET_EXCEEDED
 
         from repoharness2.adapters.slime.docker_sandbox import SandboxExecError
         from repoharness2.adapters.slime.generate import (
+            HARNESS_LAUNCH_FACTS,
             SlimeBindingError,
             ensure_claude_code_training_guards,
         )
 
+        # 批 B（I03）：time_budget_sec = 编排此刻的剩余 episode 预算（vendored 兼容的相对整数秒）。
+        # 引导步骤（装 CLI / useradd+chown / 写配置）各自的超时上限与剩余预算取 min（浮点，不取整）；
+        # 引导吃光预算或引导途中被期限取消 → 不启动 CC，launch facts 写 launch_attempted=False
+        # （编排据此归 hard_wall、hit_by=bootstrap，不走 drain / 装配）。启动事实三态（Codex 批 B
+        # 审查 R3）：launch_attempted=False（已知未尝试）/ True（已进入上游 run，**不等于** CC 已启动）；
+        # launched 只有 False / None（未确认）——不复制上游启动流程去精确定位 spawn。真正的强制保护
+        # 在编排层（绝对期限 + 取消）；这里是让引导步骤合作地在期限内结束、并回填事实。
+        started = time.monotonic()
+        deadline = started + float(time_budget_sec)
+        facts = HARNESS_LAUNCH_FACTS.get()
+        if facts is None:
+            facts = {}  # 非编排调用（直接跑驱动的单测）
+        facts["launch_attempted"] = False
+        facts["launched"] = None
+        step_bound_by_deadline = False  # 当前引导步骤的 timeout 是否由 episode 期限（而非步骤上限）决定
+
+        def remaining() -> float:
+            return deadline - time.monotonic()
+
+        def bounded(cap: float) -> float:
+            nonlocal step_bound_by_deadline
+            left = remaining()
+            step_bound_by_deadline = left < cap
+            return max(0.05, min(float(cap), left))
+
+        def budget_exhausted(reason: str) -> int:
+            facts["bootstrap_seconds"] = round(time.monotonic() - started, 3)
+            facts["remaining_at_launch"] = round(remaining(), 3)
+            facts["launch_attempted"] = False
+            facts["launched"] = False
+            facts["bootstrap_deadline_reason"] = reason
+            return EXIT_TIME_BUDGET_EXCEEDED
+
         sb = DockerSandbox(sandbox.container_name)
         try:
-            await self._install_native_cli(sb)
+            if remaining() <= 0:
+                return budget_exhausted("before_install")
+            await self._install_native_cli(sb, timeout=bounded(180))
+            if remaining() <= 0:
+                return budget_exhausted("after_install")
             # 预建 agent 用户（与 slime ensure_agent_user 同一命令、宽超时）：
             # slime 侧写死 timeout=60s，django 官方镜像 /testbed 数万文件的
             # chown -R 在 overlay2 copy-up 下超时（run6 实测 8/8 django rollout
             # exit=124 全灭）。本命令幂等（id agent 短路），预跑成功后 slime
-            # 内部那次变成 no-op。
+            # 内部那次变成 no-op。上限 900s 与剩余预算取 min（批 B）。
             await sb.exec(
                 f"id agent >/dev/null 2>&1 || useradd -m -s /bin/bash agent && "
                 f"chown -R agent:agent /home/agent {workdir} && "
                 f"git config --system --add safe.directory '*' && id agent",
                 user="root",
                 check=True,
-                timeout=900,
+                timeout=bounded(900),
             )
             # D-FA-6 接线（FA-1，FA-0 递延项）：DISABLE_COMPACT=1 合并进
             # SLIME_AGENT_CC_EXTRA_ENVS——slime ClaudeCodeHarness 会把该 JSON 并入
@@ -383,15 +422,35 @@ class ClaudeCodeDriver:
             # FA-5 短租（本机无法冒烟真实 CC）。警示：env 只关 auto/manual compact，
             # Microcompact/Context Collapse 由装配期收缩检测兜底（generate.py）。
             self.compaction_guard_envs = ensure_claude_code_training_guards(os.environ)
+            left = remaining()
+            if left <= 0:
+                return budget_exhausted("after_bootstrap")
+            facts["bootstrap_seconds"] = round(time.monotonic() - started, 3)
+            facts["remaining_at_launch"] = round(left, 3)
+            facts["launch_attempted"] = True  # 进入上游 run：ensure user / write config / spawn 仍在其中
             return await ClaudeCodeHarness().run(
                 sb,
                 workdir=workdir,
                 session_id=session_id,
                 adapter_url=adapter_url,
-                time_budget_sec=time_budget_sec,
+                time_budget_sec=max(1, int(left)),
                 prompt=prompt,
             )
+        except asyncio.CancelledError:
+            # 编排的绝对期限 / 关停在引导途中取消——尚未尝试启动就如实回填（编排据此跳过 drain / 装配）；
+            # 已进入上游 run 的取消保持 launch_attempted=True、launched=None（未确认）。
+            if not facts.get("launch_attempted"):
+                facts["bootstrap_seconds"] = round(time.monotonic() - started, 3)
+                facts["remaining_at_launch"] = round(remaining(), 3)
+                facts["launched"] = False
+                facts["bootstrap_deadline_reason"] = "cancelled_during_bootstrap"
+            raise
         except SandboxExecError as exc:
+            if exc.exit_code == 124 and step_bound_by_deadline and not facts.get("launch_attempted"):
+                # 该步骤的 timeout 由 episode 期限决定（min(上限, 剩余) 取到了剩余）——超时 = 墙钟到点，
+                # 不是引导故障；按构造判定，不看异常发生时"是否刚好过墙"（Codex 批 B 审查 R3）。
+                facts["bootstrap_exec_error"] = str(exc)[:300]
+                return budget_exhausted("bootstrap_step_timed_out_at_deadline")
             # 批 A（I05；Codex 批 A 审查 R1 修正）：只有 DockerSandbox 自己抛的操作失败
             # （exec check=True 非零 / 超时 124、write_file 非零——覆盖装 CLI、useradd/chown、
             # slime 的 ensure_agent_user / write_config / spawn）才是可证明来源的单次容器层面
@@ -511,6 +570,21 @@ class SimpleLoopDriver:
 _SERVICE_LOCK = asyncio.Lock()
 
 
+def _episode_deadline_block(audit: Any, proxy: Any) -> dict[str, Any] | None:
+    """批 B：audit.episode_deadline + proxy 侧按 paid 累计的 model_call 排队秒数。"""
+
+    block = getattr(audit, "episode_deadline", None)
+    if block is None:
+        return None
+    block = dict(block)
+    scope = audit.physical_attempt_id or audit.session_id
+    if proxy is not None and scope and hasattr(proxy, "queue_wait_seconds_total"):
+        block["model_call_queue_wait_seconds_total"] = proxy.queue_wait_seconds_total(scope)
+    else:
+        block["model_call_queue_wait_seconds_total"] = None
+    return block
+
+
 def write_execution_audit_record(proxy, audit, path) -> None:
     """execution 终态审计（轮次 13 P0-5 + 轮次 14 事务化）：
 
@@ -576,6 +650,8 @@ def write_execution_audit_record(proxy, audit, path) -> None:
         "wall_end_monotonic": wall_end_monotonic,
         "wall_clock_domain_id": PROCESS_CLOCK_DOMAIN,
         "non_chargeable_intervals": list(audit.non_chargeable_intervals),
+        # 批 B（I03）：统一 episode 期限的观测块（可选键；B 线定预算数值的实测来源）
+        "episode_deadline": _episode_deadline_block(audit, proxy),
         # F2-2：quiescence 事实 + Outcome v2（producer 产物随审计持久化；
         # assembler 消费归 F2-5）。session_id 自 F2-2 复核起 = 非秘密
         # internal sid（s- 前缀）；capability token 只认证不落任何持久面
@@ -692,7 +768,7 @@ def make_per_rollout_adapter(registry, shared_adapter, hook):
     class PerRolloutAdapter:
         def open_session(
             self, sid, *, sampling_defaults=None, max_context_tokens=0,
-            physical_attempt_id=None, capability_token=None,
+            physical_attempt_id=None, capability_token=None, deadline_monotonic=None,
         ):
             # 轮次 13 P1-6：open 事务化——底层 open 失败必须回滚 registry
             # 注册。F2-1a 熔断后收敛：paid 与 hook 同一原子注册、同一
@@ -702,6 +778,7 @@ def make_per_rollout_adapter(registry, shared_adapter, hook):
                 sid, hook,
                 physical_attempt_id=physical_attempt_id,
                 capability_token=capability_token,
+                deadline_monotonic=deadline_monotonic,  # 批 B：episode 期限显式下传 proxy
             )
             try:
                 shared_adapter.open_session(
@@ -1256,7 +1333,9 @@ class BringupService:
             self.registry.model_call_proxy._artifact_sink is None
         ):  # pragma: no cover - 上两行恒配置；防未来编辑退化
             raise RuntimeError("正式链必须配置持久 artifact_sink（evidence_refs 不可悬空）。")
-        self.registry.default_session_budget_seconds = float(AGENT_TIME_BUDGET_SEC)
+        # 批 B（I03）：不再设 default_session_budget_seconds（首次模型调用懒起表）——正式链的
+        # proxy deadline 由编排在资源占用时刻算好、经 open_session(deadline_monotonic=…) 显式
+        # 下传，只有一个起点。
 
         runtime_barrier = None
         if EXECUTION_MODE == "fa_formal":
@@ -1298,6 +1377,8 @@ class BringupService:
             session_poison_unsubscribe=self.registry.poison.unsubscribe,
             # 轮次 11：清理完成后才归档 poison（真 ACK；unregister 不再释放）
             session_poison_release=self.registry.poison.release,
+            # 批 B（I03）：poison 原因读取——episode_deadline_exhausted 归 hard_wall 而非 api_failure
+            session_poison_reason=self.registry.poison.reason,
             # 轮次 12 P0 层 1：评分前交付账边界断言
             capture_boundary_check=self.registry.assert_session_clean,
             # 轮次 13 P0-5：execution 终态审计落盘（FA 路径不走 record_event）
@@ -1346,6 +1427,8 @@ class BringupService:
         record["harness_adapter_url"] = self.harness_adapter_url
         record["execution_mode"] = EXECUTION_MODE
         record["fork_threshold_tokens"] = FORK_THRESHOLD_TOKENS  # I01：B 路线接线值（供事件 join）
+        # 批 B（I03）：episode 预算（资源占用起表，含准备 / 引导 / 排队；数值 = SWE_AGENT_TIME_BUDGET_SEC）
+        record["episode_budget_seconds"] = AGENT_TIME_BUDGET_SEC
         self.runtime_profile_record = record
         write_runtime_profile_record(ARTIFACT_DIR / "runtime_profile.json", record)
         if not record["ok"]:

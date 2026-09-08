@@ -733,22 +733,49 @@ class EgressSubnetPool:
         self._in_use.discard(subnet)
 
 
+async def reclaim_network_after_cancel(docker: DockerRunner, *, name: str, timeout: float = 60.0) -> list[str]:
+    """批 B（Codex 批 B 审查 R2b）：`network create` 的 CLI 等待响应时被取消——daemon 可能已建出网络。
+    按预选名字有界 rm；返回失败描述列表（空 = 已确认删除或本就不存在）。"""
+
+    res = await _call(docker, "network", "rm", name, timeout=timeout)
+    if res.exit_code == 0:
+        return []
+    err = (res.stderr or res.stdout).strip()[-200:]
+    if "no such network" in err.lower() or "not found" in err.lower():
+        return []
+    return [f"network_rm_after_cancel:{err}"]
+
+
 async def create_attempt_network(
     docker: DockerRunner, *, profile: RolloutSandboxProfile, pool: EgressSubnetPool, name: str,
     labels: Sequence[str] = (), max_slots: int = 64, timeout: float = 60.0,
+    cancel_report: list[str] | None = None,
 ) -> AttemptNetwork:
     """创建本 attempt 的 isolated internal 网络（显式 /prefix 子网）。子网重叠 → 换槽重试；其余失败 →
-    SandboxNetworkError（task-local）。"""
+    SandboxNetworkError（task-local）。
+
+    取消（批 B）：创建命令等待响应时被取消 → 按预选名字有界回收；确认删除 / 不存在才归还地址池槽位，
+    否则槽位保持占用（不盲目归还可能仍被占用的地址）并把失败写进 cancel_report（调用方落账）。"""
 
     last_error = ""
     for _ in range(max_slots):
         subnet = pool.allocate()
-        res = await _call(
-            docker, "network", "create", "--internal",
-            "-o", "com.docker.network.bridge.gateway_mode_ipv4=isolated",
-            "--subnet", subnet, "--label", "rh2.egress.attempt=1", *labels, name,
-            timeout=timeout,
-        )
+        try:
+            res = await _call(
+                docker, "network", "create", "--internal",
+                "-o", "com.docker.network.bridge.gateway_mode_ipv4=isolated",
+                "--subnet", subnet, "--label", "rh2.egress.attempt=1", *labels, name,
+                timeout=timeout,
+            )
+        except asyncio.CancelledError:
+            failures = await reclaim_network_after_cancel(docker, name=name, timeout=timeout)
+            if failures:
+                pool.mark_foreign(subnet)  # 网络可能仍在：槽位继续占用，留给关停链的 label 清扫
+                if cancel_report is not None:
+                    cancel_report.extend(failures)
+            else:
+                pool.release(subnet)
+            raise
         if res.exit_code == 0:
             return AttemptNetwork(name=name, subnet=subnet)
         last_error = (res.stderr or res.stdout).strip()[-300:]

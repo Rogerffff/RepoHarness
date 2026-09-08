@@ -373,6 +373,7 @@ async def test_hard_wall_exit_records_trigger_not_crash():
     await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     audit = chain.orchestrator.audits[0]
     assert audit.termination_kind_hint == "hard_wall_timeout"
+    assert audit.episode_deadline["hit_by"] == "harness_poll"  # 批 B：vendored 轮询自己到点
     # 不是 crash：nonzero 拒绝没触发；正式路径屏障前不评分（P0-2——
     # -1 后 setsid 的 CC 进程可能仍在写活动 workspace）
     assert not any(

@@ -50,10 +50,24 @@ async def _run(*args: str, input_bytes: bytes | None = None, timeout: float | No
     try:
         stdout, stderr = await asyncio.wait_for(proc.communicate(input=input_bytes), timeout=timeout)
     except (TimeoutError, asyncio.TimeoutError):
-        proc.kill()
+        _kill_quietly(proc)
         await proc.wait()
         return 124, "", f"docker exec timeout after {timeout}s"
+    except asyncio.CancelledError:
+        # 批 B（I03；Codex R2 探针：此前外层取消时 kill/wait 均未调用，docker CLI 子进程
+        # 孤儿化）。episode 期限 / 关停取消到达时先回收本进程的子进程再传播取消。
+        # 注意：杀的是宿主侧 CLI，容器内命令不因此停止——容器本身由编排层按名字回收。
+        _kill_quietly(proc)
+        await proc.wait()
+        raise
     return proc.returncode or 0, stdout.decode(errors="replace"), stderr.decode(errors="replace")
+
+
+def _kill_quietly(proc: asyncio.subprocess.Process) -> None:
+    try:
+        proc.kill()
+    except ProcessLookupError:  # 已退出
+        pass
 
 
 class DockerSandbox:

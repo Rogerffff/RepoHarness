@@ -58,6 +58,14 @@ __all__ = [
 FAILURE_CODE_TERMINATION_MAP: dict[str, tuple[TerminationKind, RuntimeFailureCategory]] = {
     # 模型代理面：poison = 不可归因中断（proxy 判定后毒化会话）
     "session_poisoned_during_execution": ("api_failure", "model_proxy_failure"),
+    # 批 B（I03，第一组）：episode 期限（资源占用起表的宽墙钟）在不同环节到点——都是
+    # hard_wall_timeout（watchdog 族：整组不训练，不是 api/sandbox 故障）；capture 未闭合 ⇒
+    # completion 由事实推导为 missing，归因取执行事实集合里的 capture_incomplete（执行事实
+    # 未完整产生）。具体环节由 reason_code 与 audit.episode_deadline.hit_by 区分。
+    "episode_deadline_in_materialize": ("hard_wall_timeout", "capture_incomplete"),
+    "episode_deadline_before_launch": ("hard_wall_timeout", "capture_incomplete"),
+    "episode_deadline_in_bootstrap": ("hard_wall_timeout", "capture_incomplete"),
+    "episode_deadline_during_model_call": ("hard_wall_timeout", "capture_incomplete"),
     # materialize 面（W3b/W3a 既有 typed 码：镜像 / 容器 / 私有网络 / 工作区 / 基线读取——
     # docker 或任务镜像层面的单次失败）。此前经 STAGE_FALLBACK 归 sandbox_failure，
     # 处置不变，改为显式登记。

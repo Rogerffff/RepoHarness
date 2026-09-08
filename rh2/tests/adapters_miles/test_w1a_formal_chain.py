@@ -108,7 +108,7 @@ class _MockSessionAdapter:
         pass
 
     def open_session(self, sid, *, sampling_defaults=None, max_context_tokens=0,
-                     physical_attempt_id=None, capability_token=None):
+                     physical_attempt_id=None, capability_token=None, deadline_monotonic=None):
         if sid in self.opened:
             raise ValueError(f"session_id {sid!r} already exists")
         self.opened.append(sid)

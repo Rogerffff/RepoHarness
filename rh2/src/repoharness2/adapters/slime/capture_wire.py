@@ -294,6 +294,7 @@ class CaptureRegistry:
         hook: GenerationCaptureHook,
         physical_attempt_id: str | None = None,
         capability_token: str | None = None,
+        deadline_monotonic: float | None = None,
     ) -> None:
         """会话注册（F2-1a 熔断后所有权收敛版）：hook 与 paid **单锁原子
         绑定**，同生命周期——重复 SID 在任何状态修改前拒绝；绑定发生在
@@ -318,6 +319,10 @@ class CaptureRegistry:
             if capability_token is not None:
                 self._capability_tokens[capability_token] = sid
                 self._capability_required.add(sid)
+            if deadline_monotonic is not None:
+                # 批 B（I03）：episode 期限由编排在资源占用时刻算好、随注册显式下传——proxy 的
+                # deadline_monotonic 从此读它，不再在首次模型调用时才懒起表。
+                self.session_deadlines[sid] = float(deadline_monotonic)
 
     def assert_session_clean(self, sid: str) -> None:
         problems: list[str] = []
@@ -375,8 +380,9 @@ class CaptureRegistry:
             return {sid: list(vs) for sid, vs in self.weight_versions.items()}
 
     def session_deadline(self, sid: str | None) -> float | None:
-        """会话 deadline（episode 预算传播）。首次调用即按默认预算起表——
-        第一次模型调用 ≈ harness 启动后数秒，余量记入 notes。"""
+        """会话 deadline（episode 预算传播）。批 B（I03）起正式链由 register(deadline_monotonic=…)
+        显式设定（编排在资源占用时刻算好的绝对期限）；未显式设定且配置了
+        default_session_budget_seconds 时保留旧的首调懒起表（兼容 / 探针），两者都没有 → None。"""
 
         if sid is None:
             return None

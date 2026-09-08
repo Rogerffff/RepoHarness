@@ -171,8 +171,19 @@ def test_double_commit_does_not_refinalize():
 
 
 def test_session_deadline_starts_on_first_call_and_is_bounded():
+    """批 B（I03，T1 oracle 改动）：正式链的 deadline 由 register(deadline_monotonic=…) 显式设定
+    （编排在资源占用时刻算好）；旧的"首次调用按默认预算起表"只在配置了 default_session_budget_seconds
+    时保留（兼容 / 探针），两者都没有 → None，不再隐式起表。"""
+
     registry = CaptureRegistry()
-    registry.default_session_budget_seconds = 600.0
+    assert registry.session_deadline("sid_E") is None  # 无默认、未显式设定 → 不起表
+    registry.register("sid_E", FakeHook(), deadline_monotonic=4242.0)
+    assert registry.session_deadline("sid_E") == 4242.0
+    assert registry.session_deadline("sid_E") == 4242.0  # 稳定
+    registry.unregister("sid_E")
+    assert "sid_E" not in registry.session_deadlines  # 销毁即清理
+
+    registry.default_session_budget_seconds = 600.0  # 兼容路径
     d1 = registry.session_deadline("sid_F")
     d2 = registry.session_deadline("sid_F")
     assert d1 == d2  # 同会话稳定

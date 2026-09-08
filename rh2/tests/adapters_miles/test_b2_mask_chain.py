@@ -330,6 +330,7 @@ def _make_mask_wire_adapter(registry, hook, session_defaults):
             max_context_tokens=0,
             physical_attempt_id=None,
             capability_token=None,
+            deadline_monotonic=None,
         ):
             # B2 收口哨兵：生产 commit 接线（capture_wire 安装的 rh2_record_turn
             # 包装）必须在安装态——本测试的 commit 全部由它触发。若有人删掉

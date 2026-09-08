@@ -66,6 +66,7 @@ SGLang 响应 = {"meta_info": {"id", "finish_reason": {"type"},
 from __future__ import annotations
 
 import asyncio
+import contextvars
 import hashlib
 import json
 import math
@@ -331,6 +332,19 @@ class SlimeBindingError(RuntimeError):
 
 class StartupCheckError(SlimeBindingError):
     """启动期守门失败（U-G renderer / U-H tape 探针）：必须 fail，禁止静默降级。"""
+
+
+# 批 B（I03）：slime `EXIT_TIME_BUDGET_EXCEEDED` 的同值常量（vendored harness 的 done-marker 轮询
+# 到点返回它；编排的绝对期限取消 harness 后也按它继续收口）。
+HARNESS_EXIT_TIME_BUDGET_EXCEEDED = -1
+
+# 批 B（I03）：harness 驱动回填的启动事实（task-local）：编排在创建 harness task 之前放一个空
+# dict，task 复制当前 context 后驱动往**同一个 dict** 写（mock 驱动不写也无妨）。键：
+# launched（bool）、bootstrap_seconds、remaining_at_launch。用途 = 区分"引导吃光预算、CC 从未
+# 启动"（hit_by=bootstrap）与"CC 已启动后到点"。
+HARNESS_LAUNCH_FACTS: contextvars.ContextVar[dict[str, Any] | None] = contextvars.ContextVar(
+    "rh2_harness_launch_facts", default=None
+)
 
 
 def _now_utc() -> datetime:
@@ -2075,6 +2089,12 @@ class RolloutAudit:
     # F2-2 复核 P1-4：终止 trigger 提示（slime exit=-1 = 时间预算耗尽 →
     # hard_wall_timeout；不再误归 harness_crash/completed）
     termination_kind_hint: str | None = None
+    # 批 B（I03）：统一 episode 期限（从 _generate_attempt 入口 = 资源占用起表）。本体 = 单调钟
+    # 绝对时刻；观测块随 execution audit 落盘（可选键 episode_deadline：budget_seconds /
+    # remaining_at_harness_start / remaining_at_harness_exit / hit_by / harness_launched /
+    # bootstrap_seconds / remaining_at_launch；bringup 再补 model_call_queue_wait_seconds_total）。
+    episode_deadline_monotonic: float | None = None
+    episode_deadline: dict[str, Any] | None = None
     # B1：评分基线 digest（manifest 本体不进 audit——数万 entries；
     # 内存 + B5 receipt 持久化）
     baseline_manifest_digest: str | None = None
@@ -2318,6 +2338,8 @@ class RolloutOrchestrator:
         session_poison_subscribe: Callable[[str, Callable[[str, str], None]], None] | None = None,
         session_poison_unsubscribe: Callable[[str], None] | None = None,
         session_poison_release: Callable[[str], None] | None = None,
+        session_poison_reason: Callable[[str], str | None] | None = None,
+        clock: Callable[[], float] = time.monotonic,
         capture_boundary_check: Callable[[str], None] | None = None,
         audit_sink: Callable[[Any], None] | None = None,
         runtime_quiescence_barrier: "RuntimeQuiescenceBarrier | None" = None,
@@ -2425,6 +2447,10 @@ class RolloutOrchestrator:
         # 轮次 11 身份 4：release = execution 清理 ACK——在 finally 的 sandbox
         # 清理完成后调用（adapter drop_session 只是会话关闭，不算 ACK）
         self._session_poison_release = session_poison_release
+        # 批 B（I03）：poison 原因读取（episode_deadline_exhausted → hard_wall 归因）；可注入时钟
+        # （测试用可控钟；生产 = time.monotonic，与 audit.started_monotonic 同域）。
+        self._session_poison_reason = session_poison_reason
+        self._clock = clock
         # 轮次 12 P0 层 1：评分/Gate 前的交付账边界断言（glue 注入
         # registry.assert_session_clean——pending/unfinalized draft 在场即
         # poison + 缺员）
@@ -2592,6 +2618,25 @@ class RolloutOrchestrator:
         self.audits.append(audit)
         audit_slot.append(audit)
         audit.step("step1_custom_generate_invoked")
+        # 批 B（I03，06 A5-c，第一组）：episode 期限从这里起表——miles 已占并发槽、rh2 即将
+        # docker run，是当前链上最早的 rh2 可见资源占用事件。materialize / 驱动引导 / harness
+        # 运行整段受它**强制**约束（_await_within_episode_deadline / _await_harness_within_deadline
+        # 到点即取消并收口持有资源）；停止、drain、清理、评分不在其内，各用自己的有界预算。
+        # 数值 = task.time_budget_seconds（bringup 由 SWE_AGENT_TIME_BUDGET_SEC 填入，语义从
+        # "CC 启动后的运行预算"变为"资源占用起的 episode 预算"，T1）。
+        audit.episode_deadline_monotonic = self._clock() + float(task.time_budget_seconds)
+        audit.episode_deadline = {
+            "budget_seconds": task.time_budget_seconds,
+            "deadline_monotonic": audit.episode_deadline_monotonic,
+            "hit_by": "none",
+            "remaining_at_harness_start": None,
+            "remaining_at_harness_exit": None,
+            "harness_launch_attempted": None,
+            "harness_launched": None,
+            "harness_time_budget_seconds": None,
+            "bootstrap_seconds": None,
+            "remaining_at_launch": None,
+        }
 
         hook = GenerationCaptureHook(
             trajectory_id=trajectory_id,
@@ -2665,47 +2710,36 @@ class RolloutOrchestrator:
                     "——entry 契约破损，fail-closed（不评分不交付）。",
                 )
             stage = "materialize"
-            sandbox = await self._materialize_rollout_sandbox(task, trajectory_id, audit)
-            audit.step("step2_workspace_materialized")
-            # B1（A-prime 第 2 条）：harness 获写权前生成评分基线唯一权威。
-            # 仅 FA 模式（s1_compat 零改动）；失败走既有异常收口（missing）。
-            if self._mode != "s1_compat":
-                from repoharness2.adapters.slime.baseline_census import (
-                    generate_baseline_manifest,
+            prepared: dict[str, Any] = {}
+            try:
+                await self._await_within_episode_deadline(
+                    self._prepare_workspace(task, trajectory_id, audit, prepared),
+                    audit=audit, phase="materialize",
                 )
-                from repoharness2.contracts.baseline_manifest import (
-                    compute_baseline_manifest_digest,
-                )
-
-                head = await sandbox.workspace.run_bash(
-                    f"git -C {task.workdir} rev-parse HEAD"
-                )
-                if head.exit_code != 0:
-                    raise SlimeBindingError(
-                        "baseline_head_unreadable",
-                        f"materialized HEAD 读取失败：{head.stderr.strip()[-200:]}",
-                    )
-                census_started = time.monotonic()
-                baseline_manifest = await generate_baseline_manifest(
-                    sandbox.workspace,
-                    task_id=task.task_id,
-                    workdir=task.workdir,
-                    public_bundle_digest=task.public_bundle_digest,
-                    # 实际运行镜像的不可变 digest（lease 实测）——tag 不得
-                    # 伪装；环境包 lineage 未接通 = formal gate blocker，
-                    # 不用 bundle digest 填空（codex B1 P1-1）
-                    runtime_image_digest=sandbox.lease.image_digest,
-                    materialized_head=head.stdout.strip(),
-                    task_base_commit=task.base_commit,
-                )
-                audit.lifecycle_timing.set("baseline_census", time.monotonic() - census_started)
-                audit.baseline_manifest_digest = compute_baseline_manifest_digest(
-                    baseline_manifest
-                )
-                audit.baseline_entry_count = len(baseline_manifest.entries)
-                audit.mark("baseline_manifest_generated")
+            finally:
+                # 批 B（I03；Codex 批 B 审查 R1）：物化 / HEAD 读取 / 基线 census 同在一个期限内；
+                # 容器一物化所有权就交给外层 finally——期限取消、外层取消或任何异常都由它清理，
+                # 不再有"census 阻塞时容器无人认领"的窗口。
+                sandbox = prepared.get("sandbox")
+            baseline_manifest = prepared.get("baseline_manifest")  # s1_compat 为 None（只在 fa 分支消费）
 
             stage = "harness_run"
+            remaining_at_start = self._episode_remaining(audit)
+            audit.episode_deadline["remaining_at_harness_start"] = (
+                None if math.isinf(remaining_at_start) else round(remaining_at_start, 3)
+            )
+            if remaining_at_start <= 0:
+                # 批 B：准备阶段（materialize / 基线 census）已吃光 episode 预算——不开会话、不启动
+                # CC（不产生任何轮），记 hard_wall 事实并按已归因 task-local 收口（映射表 →
+                # hard_wall_timeout / missing，第一组：整组不训练）。
+                audit.episode_deadline["hit_by"] = "before_launch"
+                audit.termination_kind_hint = "hard_wall_timeout"
+                audit.mark("episode_deadline_before_launch")
+                raise SlimeBindingError(
+                    "episode_deadline_before_launch",
+                    f"episode 预算 {task.time_budget_seconds}s 在 harness 启动前已耗尽"
+                    f"（剩余 {remaining_at_start:.1f}s）——不启动 CC，整组不训练。",
+                )
             launch = HarnessLaunchSpec(
                 harness_name=self.config.harness_name,
                 workspace_id=sandbox.handle.workspace_id,
@@ -2717,31 +2751,45 @@ class RolloutOrchestrator:
                     inject_env_var="ANTHROPIC_BASE_URL",
                 ),
                 env_injections={"BASH_ENV": materialize.BASH_ENV_PATH},
-                time_budget_seconds=task.time_budget_seconds,
+                # 批 B：vendored harness 的相对整数秒只是兼容参数 = 此刻剩余（下取整、至少 1）；
+                # 真正的强制保护是下方按绝对期限的 _await_harness_within_deadline。
+                time_budget_seconds=(
+                    task.time_budget_seconds
+                    if math.isinf(remaining_at_start)
+                    else max(1, math.floor(remaining_at_start))
+                ),
             )
             audit.launch_spec = launch
+            # 批 B：驱动实际拿到的相对整数秒（与 remaining_at_harness_start 的 3 位舍入值可能差 1）
+            audit.episode_deadline["harness_time_budget_seconds"] = launch.time_budget_seconds
             adapter.open_session(
                 sid,
                 physical_attempt_id=physical_attempt_id,
                 sampling_defaults=session_defaults,
                 max_context_tokens=self.config.max_context_len,
                 capability_token=capability.token,  # F2-2：认证映射同事务绑定
+                deadline_monotonic=audit.episode_deadline_monotonic,  # 批 B：proxy 读同一期限
             )
             session_open = True
             audit.mark("harness_started")
-            harness_task = asyncio.ensure_future(
-                self._harness_driver.run(
-                    sandbox.workspace,
-                    workdir=launch.workdir,
-                    # F2-2：CC 侧拿**秘密 token**做 auth（guard 认证后重写为
-                    # internal sid），launch_spec/audit 里的 session_id 是
-                    # 非秘密 internal sid
-                    session_id=capability.token,
-                    adapter_url=launch.model_proxy.base_url,
-                    time_budget_sec=launch.time_budget_seconds,
-                    prompt=task.prompt,
+            launch_facts: dict[str, Any] = {}
+            facts_token = HARNESS_LAUNCH_FACTS.set(launch_facts)
+            try:
+                harness_task = asyncio.ensure_future(
+                    self._harness_driver.run(
+                        sandbox.workspace,
+                        workdir=launch.workdir,
+                        # F2-2：CC 侧拿**秘密 token**做 auth（guard 认证后重写为
+                        # internal sid），launch_spec/audit 里的 session_id 是
+                        # 非秘密 internal sid
+                        session_id=capability.token,
+                        adapter_url=launch.model_proxy.base_url,
+                        time_budget_sec=launch.time_budget_seconds,
+                        prompt=task.prompt,
+                    )
                 )
-            )
+            finally:
+                HARNESS_LAUNCH_FACTS.reset(facts_token)  # task 已复制 context；本 context 不留
             if self._session_poison_subscribe is not None:
                 # P0-4/轮次 10 P0-1：poison 即取消 harness。生产拓扑是双线程
                 # （Ray actor loop 持 harness_task；poison 从 aiohttp adapter
@@ -2754,9 +2802,28 @@ class RolloutOrchestrator:
 
                 self._session_poison_subscribe(sid, _cancel_from_any_thread)
             try:
-                exit_code = await harness_task
+                exit_code = await self._await_harness_within_deadline(
+                    harness_task, audit=audit, launch_facts=launch_facts
+                )
             except asyncio.CancelledError:
                 if self._session_poison_check is not None and self._session_poison_check(sid):
+                    reason = (
+                        self._session_poison_reason(sid)
+                        if self._session_poison_reason is not None
+                        else None
+                    )
+                    if reason == "episode_deadline_exhausted":
+                        # 批 B：proxy 因 episode 期限中毒并取消 harness = 墙钟在模型调用（排队 /
+                        # 发送）中到点——记 hard_wall（不是 api_failure）；partial trace 仍作废，
+                        # completion 由事实推导为 missing，第一组：整组不训练。
+                        audit.episode_deadline["hit_by"] = "proxy"
+                        audit.termination_kind_hint = "hard_wall_timeout"
+                        audit.mark("episode_deadline_during_model_call")
+                        raise SlimeBindingError(
+                            "episode_deadline_during_model_call",
+                            f"session {sid} 的 episode 期限在模型调用中到点（proxy 中毒并终止 "
+                            "harness）——partial trace 作废，整组不训练。",
+                        ) from None
                     # poison 触发的取消：收口为缺员（不是外层关停）
                     raise SlimeBindingError(
                         "session_poisoned_during_execution",
@@ -2768,13 +2835,35 @@ class RolloutOrchestrator:
                 if self._session_poison_unsubscribe is not None:
                     self._session_poison_unsubscribe(sid)
             audit.harness_exit_code = exit_code
-            if exit_code == -1:
+            remaining_at_exit = self._episode_remaining(audit)
+            audit.episode_deadline["remaining_at_harness_exit"] = (
+                None if math.isinf(remaining_at_exit) else round(remaining_at_exit, 3)
+            )
+            audit.episode_deadline["harness_launch_attempted"] = launch_facts.get("launch_attempted")
+            audit.episode_deadline["harness_launched"] = launch_facts.get("launched")  # None = 未确认
+            audit.episode_deadline["bootstrap_seconds"] = launch_facts.get("bootstrap_seconds")
+            audit.episode_deadline["remaining_at_launch"] = launch_facts.get("remaining_at_launch")
+            if exit_code == HARNESS_EXIT_TIME_BUDGET_EXCEEDED:
                 # F2-2 复核 P1-4：slime EXIT_TIME_BUDGET_EXCEEDED=-1 = 时间
                 # 预算耗尽——按 D1a 记 hard_wall_timeout（仅 termination
                 # trigger），completion 由完整性事实推导；不走 nonzero 拒绝
                 # （那会误归 harness_crash），也不伪装 completed。处置留 D1b。
                 audit.termination_kind_hint = "hard_wall_timeout"
                 audit.mark("hard_wall_timeout_observed")
+                if audit.episode_deadline["hit_by"] == "none":
+                    audit.episode_deadline["hit_by"] = "harness_poll"  # vendored done-marker 轮询自己到点
+                if launch_facts.get("launch_attempted") is False:
+                    # 批 B（Codex 批 B 审查 R3）：驱动**已知尚未尝试启动** CC（引导吃光预算 / 引导
+                    # 途中被期限取消）——没有任何轮，不走 drain / 装配，按已归因 task-local 收口
+                    # （映射表 → hard_wall_timeout / missing，整组不训练）。launched 只有 False /
+                    # None（未确认）两态：进入上游 run 不等于 CC 已启动，不据此推导。
+                    audit.episode_deadline["hit_by"] = "bootstrap"
+                    audit.mark("episode_deadline_in_bootstrap")
+                    raise SlimeBindingError(
+                        "episode_deadline_in_bootstrap",
+                        f"episode 预算在 harness 引导阶段耗尽（引导 {launch_facts.get('bootstrap_seconds')}s，"
+                        "CC 未启动）——整组不训练。",
+                    )
             audit.step("step3_harness_completed")
 
             stage = "assemble"
@@ -3498,6 +3587,147 @@ class RolloutOrchestrator:
                 in_flight=in_flight,
             )
 
+    async def _prepare_workspace(
+        self, task: RolloutTaskSpec, trajectory_id: str, audit: "RolloutAudit", prepared: dict[str, Any]
+    ) -> None:
+        """批 B（I03；Codex 批 B 审查 R1）：准备阶段 = 物化 + HEAD 读取 + 基线 census，整体受 episode
+        期限约束（由 _await_within_episode_deadline 圈住）。sandbox 一物化就放进 `prepared`，调用方的
+        finally 据此清理；之后 census 阻塞被期限取消时容器不会漏清。"""
+
+        sandbox = await self._materialize_rollout_sandbox(task, trajectory_id, audit)
+        prepared["sandbox"] = sandbox
+        audit.step("step2_workspace_materialized")
+        # B1（A-prime 第 2 条）：harness 获写权前生成评分基线唯一权威。
+        # 仅 FA 模式（s1_compat 零改动）；失败走既有异常收口（missing）。
+        if self._mode != "s1_compat":
+            from repoharness2.adapters.slime.baseline_census import (
+                generate_baseline_manifest,
+            )
+            from repoharness2.contracts.baseline_manifest import (
+                compute_baseline_manifest_digest,
+            )
+
+            head = await sandbox.workspace.run_bash(
+                f"git -C {task.workdir} rev-parse HEAD"
+            )
+            if head.exit_code != 0:
+                raise SlimeBindingError(
+                    "baseline_head_unreadable",
+                    f"materialized HEAD 读取失败：{head.stderr.strip()[-200:]}",
+                )
+            census_started = time.monotonic()
+            baseline_manifest = await generate_baseline_manifest(
+                sandbox.workspace,
+                task_id=task.task_id,
+                workdir=task.workdir,
+                public_bundle_digest=task.public_bundle_digest,
+                # 实际运行镜像的不可变 digest（lease 实测）——tag 不得
+                # 伪装；环境包 lineage 未接通 = formal gate blocker，
+                # 不用 bundle digest 填空（codex B1 P1-1）
+                runtime_image_digest=sandbox.lease.image_digest,
+                materialized_head=head.stdout.strip(),
+                task_base_commit=task.base_commit,
+            )
+            audit.lifecycle_timing.set("baseline_census", time.monotonic() - census_started)
+            audit.baseline_manifest_digest = compute_baseline_manifest_digest(
+                baseline_manifest
+            )
+            audit.baseline_entry_count = len(baseline_manifest.entries)
+            audit.mark("baseline_manifest_generated")
+            prepared["baseline_manifest"] = baseline_manifest  # 冻结导出 / hygiene / 交付要用
+
+    def _episode_remaining(self, audit: "RolloutAudit") -> float:
+        """批 B：episode 期限剩余秒数（无期限 = +inf）。"""
+
+        if audit.episode_deadline_monotonic is None:
+            return math.inf
+        return audit.episode_deadline_monotonic - self._clock()
+
+    async def _await_within_episode_deadline(
+        self, aw: Awaitable[Any], *, audit: "RolloutAudit", phase: str
+    ) -> Any:
+        """批 B（I03；Codex 计划审查 R2）：把一个准备阶段（materialize）圈进 episode 绝对期限。
+
+        到点 → 取消该阶段（阶段自己在取消路径上收口持有资源：容器按名字 rm -f、私网拆除）→
+        记 hit_by / hard_wall 事实 → 抛已归因 task-local 码（映射表 → hard_wall_timeout /
+        missing）。外层取消（关停）同样先取消阶段 task 再原样传播。用 asyncio.wait 而不是
+        wait_for：到点时由本函数取消并**等待**阶段 task 结束，保证收口真的跑完。
+        """
+
+        task = asyncio.ensure_future(aw)
+        remaining = self._episode_remaining(audit)
+        try:
+            done, _ = await asyncio.wait(
+                {task}, timeout=None if math.isinf(remaining) else max(remaining, 0.0)
+            )
+        except asyncio.CancelledError:
+            task.cancel()
+            await self._settle_cancelled_stage(task, audit, phase)
+            raise
+        if task in done:
+            return task.result()
+        task.cancel()
+        await self._settle_cancelled_stage(task, audit, phase)
+        audit.episode_deadline["hit_by"] = phase
+        audit.termination_kind_hint = "hard_wall_timeout"
+        audit.mark(f"episode_deadline_in_{phase}")
+        raise SlimeBindingError(
+            f"episode_deadline_in_{phase}",
+            f"episode 预算 {audit.episode_deadline['budget_seconds']}s 在 {phase} 阶段到点——"
+            "已取消该阶段并收口持有资源，整组不训练。",
+        )
+
+    async def _await_harness_within_deadline(
+        self, harness_task: "asyncio.Future[int]", *, audit: "RolloutAudit", launch_facts: dict[str, Any]
+    ) -> int:
+        """批 B：harness 运行（含驱动引导）受 episode 绝对期限约束。
+
+        到点时 harness task 仍在（引导未完成或 CC 仍在跑）→ 取消它（驱动内 docker exec 的宿主
+        子进程随 _run 的取消路径被 kill；CC 进程本身由后续屏障 / 清理终止）→ 按 vendored
+        EXIT_TIME_BUDGET_EXCEEDED 语义继续收口（drain → 装配 → 屏障），hit_by 按驱动回填的
+        launched 事实区分 bootstrap / harness_outer。poison 取消由 result() 重新抛出的
+        CancelledError 交给调用方既有分支；外层取消先取消 harness task 再传播。
+        """
+
+        remaining = self._episode_remaining(audit)
+        try:
+            done, _ = await asyncio.wait(
+                {harness_task}, timeout=None if math.isinf(remaining) else max(remaining, 0.0)
+            )
+        except asyncio.CancelledError:
+            harness_task.cancel()
+            await self._settle_cancelled_stage(harness_task, audit, "harness_run")
+            raise
+        if harness_task in done:
+            return harness_task.result()
+        harness_task.cancel()
+        await self._settle_cancelled_stage(harness_task, audit, "harness_run")
+        audit.episode_deadline["hit_by"] = (
+            "bootstrap" if launch_facts.get("launch_attempted") is False else "harness_outer"
+        )
+        audit.mark("episode_deadline_harness_cancelled")
+        return HARNESS_EXIT_TIME_BUDGET_EXCEEDED
+
+    async def _settle_cancelled_stage(
+        self, task: "asyncio.Future[Any]", audit: "RolloutAudit", phase: str
+    ) -> None:
+        """等待被取消的阶段 task 真正结束；它在取消路径上抛出的其它异常只落账，不掩盖期限首因。"""
+
+        try:
+            await task
+        except asyncio.CancelledError:
+            return
+        except FatalExecutionInfrastructureError:
+            raise  # 取消收口期间的基建级致命错误不得洗成次生记录（Codex 批 B 审查 §4）
+        except Exception as exc:  # noqa: BLE001 —— 取消收口期间的次生异常
+            audit.failure_records.append(
+                RolloutFailureRecord(
+                    stage=phase,
+                    error_type=f"{type(exc).__name__}_during_deadline_cancel",
+                    detail=str(exc)[:500],
+                )
+            )
+
     def _pre_finalize_exception_is_attributed(
         self, exc: BaseException, *, audit: "RolloutAudit"
     ) -> bool:
@@ -3959,7 +4189,14 @@ class RolloutOrchestrator:
                 name=name, network=network.name, image=task.image, labels=common_labels
             )
         start_started = time.monotonic()
-        run = await self._docker(*run_args)
+        try:
+            run = await self._docker(*run_args)
+        except asyncio.CancelledError:
+            # 批 B（I03；Codex 计划审查 R2）：episode 期限（或关停）在 docker run 途中取消——
+            # 宿主 CLI 子进程已被 _run 杀掉，但 daemon 可能已经建出容器：按已生成的名字尽力
+            # 回收（rm -f 幂等，"No such container" 视为已不存在），再拆已登记的私网。
+            await self._reclaim_after_cancel(lease, name, audit)
+            raise
         if run.exit_code != 0:
             if network is not None:
                 await self._teardown_attempt_network(name, audit)
@@ -4094,6 +4331,10 @@ class RolloutOrchestrator:
                         + "——不启动模型进程，run-halt（配置/实际未生效，补采无意义）。",
                     )
                 audit.mark("sandbox_prelaunch_check_passed")
+        except asyncio.CancelledError:
+            # 批 B：期限 / 关停取消——容器已存在，同样按名字回收（外层 finally 拿不到 sandbox）。
+            await self._reclaim_after_cancel(lease, name, audit)
+            raise
         except Exception:
             # 物化中途失败：容器已存在，立即按 Q7 清理（外层 finally 不再重复——
             # sandbox 尚未返回给调用方，这里是唯一知道容器名的位置）。
@@ -4107,6 +4348,40 @@ class RolloutOrchestrator:
             container_name=name, lease=lease, handle=handle, workspace=workspace, network=network
         )
 
+    async def _reclaim_after_cancel(self, lease: SandboxLease, name: str, audit: RolloutAudit) -> None:
+        """批 B：物化被取消时按名字回收（容器可能存在也可能不存在）。rm -f 成功或"No such
+        container"= 已不存在 → 记释放；其它失败落 cleanup_failures + 隔离队列；最后拆已登记的私网。
+        取消路径内不再抛异常（首因 = 期限 / 关停）。"""
+
+        if not audit.lease_released:
+            try:
+                rm = await asyncio.wait_for(
+                    self._docker("rm", "-f", name), timeout=lease.cleanup.timeout_seconds
+                )
+                if rm.exit_code == 0 or "No such container" in rm.stderr:
+                    audit.lease_released = True
+                    audit.note_rollout_container_released()
+                else:
+                    audit.cleanup_failures.append(
+                        CleanupFailureRecord(
+                            lease_id=lease.lease_id, step="remove_container",
+                            detail=f"cancel reclaim: {rm.stderr.strip()[-300:]}",
+                        )
+                    )
+                    if name not in self.cleanup_quarantine:
+                        self.cleanup_quarantine.append(name)
+            except Exception as exc:  # noqa: BLE001 —— 取消路径：只落账
+                audit.cleanup_failures.append(
+                    CleanupFailureRecord(
+                        lease_id=lease.lease_id, step="container_cleanup_exception",
+                        detail=f"cancel reclaim: {type(exc).__name__}: {exc}"[:300],
+                    )
+                )
+                if name not in self.cleanup_quarantine:
+                    self.cleanup_quarantine.append(name)
+        await self._teardown_attempt_network(name, audit)
+        audit.mark("materialize_cancelled_reclaimed")
+
     async def _create_attempt_network(
         self, container_name: str, *, labels: Sequence[str], audit: RolloutAudit
     ) -> AttemptNetwork:
@@ -4119,16 +4394,38 @@ class RolloutOrchestrator:
         relay = self._egress_relay
         assert profile is not None and relay is not None and self._egress_pool is not None
         net_name = f"rh2-egress-{container_name.removeprefix(self.config.name_prefix + '-')}"[:60]
+        cancel_report: list[str] = []
         try:
             network = await create_attempt_network(
-                self._docker, profile=profile, pool=self._egress_pool, name=net_name, labels=labels
+                self._docker, profile=profile, pool=self._egress_pool, name=net_name, labels=labels,
+                cancel_report=cancel_report,
             )
+        except asyncio.CancelledError:
+            # 批 B（Codex 批 B 审查 R2b）：建网途中被取消——库函数已按预选名字有界回收（确认删除 /
+            # 不存在才归还槽位）；网络尚未登记、外层拿不到句柄，回收结果只能在这里落账。
+            if cancel_report:
+                audit.cleanup_failures.append(
+                    CleanupFailureRecord(
+                        lease_id=audit.lease.lease_id if audit.lease is not None else f"lease_{container_name}",
+                        step="remove_egress_network",
+                        detail="; ".join(cancel_report)[:300],
+                    )
+                )
+                audit.mark("egress_network_remove_failed")
+            else:
+                audit.mark("egress_network_removed")
+            raise
         except SandboxNetworkError as exc:
             raise SlimeBindingError("rollout_egress_network_failed", str(exc)[:300]) from exc
         self._attempt_networks[container_name] = network
         audit.egress_network = network.name
         try:
             await connect_relay_to_network(self._docker, relay=relay, network=network)
+        except asyncio.CancelledError:
+            # 批 B（Codex R2b）：relay 接入途中被取消——网络已登记，复用既有 teardown（断开 relay、
+            # rm、归还槽位；失败落账）。
+            await self._teardown_attempt_network(container_name, audit)
+            raise
         except EgressRelayUnavailable as exc:
             await self._teardown_attempt_network(container_name, audit)
             audit.mark("egress_relay_unavailable")

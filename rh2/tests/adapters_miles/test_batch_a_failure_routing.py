@@ -38,7 +38,9 @@ class _Sandbox:
 async def _run_driver(driver: ClaudeCodeDriver) -> int:
     return await driver.run(
         _Sandbox(), workdir="/testbed", session_id="tok", adapter_url="http://relay:1",
-        time_budget_sec=1, prompt="p",
+        # 批 B 起引导步骤的 timeout = min(步骤上限, 剩余预算)：预算须大于步骤上限（180/900），
+        # 否则 124 超时按构造归 episode 期限而不是引导故障（见 test_budget_deadline）
+        time_budget_sec=1800, prompt="p",
     )
 
 
@@ -46,7 +48,7 @@ async def _run_driver(driver: ClaudeCodeDriver) -> int:
 
 
 async def test_driver_wraps_sandbox_exec_error_as_attributed_task_local(monkeypatch):
-    async def _boom(self, sb):
+    async def _boom(self, sb, **kwargs):
         raise SandboxExecError("docker exec", 124, "tar -xzf /tmp/cc-platform.tgz\ntimeout")
 
     monkeypatch.setattr(ClaudeCodeDriver, "_install_native_cli", _boom)
@@ -60,7 +62,7 @@ async def test_driver_wraps_sandbox_exec_error_as_attributed_task_local(monkeypa
 async def test_driver_does_not_rename_unknown_runtime_error(monkeypatch):
     """Codex R1 反例：安装函数内部的裸 RuntimeError（不变量）不是容器操作失败，不得改名成局部故障。"""
 
-    async def _bug(self, sb):
+    async def _bug(self, sb, **kwargs):
         raise RuntimeError("internal installation invariant")
 
     monkeypatch.setattr(ClaudeCodeDriver, "_install_native_cli", _bug)
@@ -70,7 +72,7 @@ async def test_driver_does_not_rename_unknown_runtime_error(monkeypatch):
 
 
 async def test_driver_passes_typed_config_errors_through_unwrapped(monkeypatch):
-    async def _mismatch(self, sb):
+    async def _mismatch(self, sb, **kwargs):
         raise SlimeBindingError("cc_version_mismatch", "观测 '1.0.0' 不含期望 '2.1.205'")
 
     monkeypatch.setattr(ClaudeCodeDriver, "_install_native_cli", _mismatch)
@@ -116,14 +118,15 @@ async def test_real_driver_through_formal_orchestrator_routes_by_source(name, mo
     notified: list = []
     chain.orchestrator._notify_fatal_halt = notified.append
 
-    async def install(self, sb):
+    async def install(self, sb, **kwargs):  # 批 B 起 _install_native_cli 带 timeout= 关键字
         if origin == "install":
             raise make_exc()
 
     async def fake_run(*args, input_bytes=None, timeout=None):
-        # 真实 DockerSandbox.exec(check=True) 走这里：docker_exec 案返回 124（超时形态）→ 抛
-        # SandboxExecError；其余案返回 0 让引导步骤（useradd / ensure_agent_user / write_config）通过
-        return (124, "", "docker exec timeout after 900s") if origin == "docker_exec" else (0, "", "")
+        # 真实 DockerSandbox.exec(check=True) 走这里：docker_exec 案返回非零（useradd 失败形态）→ 抛
+        # SandboxExecError；其余案返回 0 让引导步骤（useradd / ensure_agent_user / write_config）通过。
+        # 不用 124：批 B 起由期限决定 timeout 的步骤超时按构造归 episode 期限（另有测试）。
+        return (1, "", "useradd: cannot lock /etc/passwd") if origin == "docker_exec" else (0, "", "")
 
     async def launch(self, sb, ctx, prompt, time_budget_sec):
         raise make_exc()
@@ -140,7 +143,7 @@ async def test_real_driver_through_formal_orchestrator_routes_by_source(name, mo
         assert audit.outcome_v2["reason_code"] == "harness_bootstrap_failed"
         assert audit.outcome_v2["completion_class"] == "missing"
         assert notified == []
-        assert any("exit=124" in f.detail for f in audit.failure_records)  # 原始 exec 输出可诊断
+        assert any("cannot lock /etc/passwd" in f.detail for f in audit.failure_records)  # 原始 exec 输出可诊断
     else:
         with pytest.raises(FatalExecutionInfrastructureError, match="pre_finalize_failure_unclassified"):
             await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))

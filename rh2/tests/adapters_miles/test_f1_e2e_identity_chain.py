@@ -297,6 +297,7 @@ def _make_identity_wire_adapter(registry, hook, session_defaults, holder):
             max_context_tokens=0,
             physical_attempt_id=None,
             capability_token=None,
+            deadline_monotonic=None,
         ):
             assert TrajectoryManager.record_turn.__name__ == "rh2_record_turn", (
                 "capture_wire 的生产 commit+绑定接线（rh2_record_turn 包装）未安装"

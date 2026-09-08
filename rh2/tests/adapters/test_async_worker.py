@@ -1342,3 +1342,143 @@ def test_snapshot_weight_versions_survives_concurrent_mutation():
     t1.start(); t2.start()
     t2.join(20); stop.set(); t1.join(5)
     assert errors == []  # 修复前：RuntimeError(dictionary changed size)
+
+
+# ------------------------------------------------- 批 B（I03）：排队受期限约束 + 原因传递
+
+
+async def test_send_semaphore_wait_is_bounded_by_episode_deadline():
+    """model_call 额度排队不再无限等：剩余预算内拿不到额度 → episode_deadline_exhausted（typed，
+    不发请求、poison 原因正确、额度不泄漏）。此前 `_send` 先算 timeout 再无界等信号量。"""
+
+    import time
+
+    registry = SessionPoisonRegistry()
+    limits = ResourceLimits({"model_call": 1})
+    proxy = ModelCallProxy(
+        FakeCoordinator([_window(epoch=1, phase="ACTIVE", active="1")]),
+        sleeper=_no_sleep, limits=limits, attempt_timeout_seconds=None,
+    )
+    started, release = asyncio.Event(), asyncio.Event()
+
+    async def holder(attempt: int) -> dict:
+        started.set()
+        await release.wait()
+        return _ok_response([1], version="1")
+
+    calls: list[int] = []
+
+    async def second(attempt: int) -> dict:
+        calls.append(attempt)
+        return _ok_response([2], version="1")
+
+    holder_task = asyncio.create_task(
+        proxy.call("exec_H", "turn_0", holder, session_id="sid_H", poison_registry=registry)
+    )
+    await started.wait()
+    with pytest.raises(UnattributableModelCallError, match="episode_deadline_exhausted"):
+        await proxy.call(
+            "exec_W", "turn_0", second, session_id="sid_W", poison_registry=registry,
+            deadline_monotonic=time.monotonic() + 0.2, min_attempt_budget_seconds=0.0,
+        )
+    assert calls == []  # 一次都不发
+    assert registry.reason("sid_W") == "episode_deadline_exhausted"  # 经真实 proxy.call 的原因
+    assert proxy.queue_wait_seconds_total("exec_W") >= 0.15  # 排队耗时累计（审计来源）
+    release.set()
+    await holder_task  # 持有者不受影响
+    assert not limits._semaphores["model_call"].locked()  # 额度已归还，无泄漏
+
+
+async def test_send_timeout_recomputed_after_queue_and_attributed_to_deadline():
+    """拿到额度后按**剩余**重算 timeout；发送在期限到点被中断 → episode_deadline_exhausted，
+    不再被 _call_inner 改写成 no_overlapping_update_window（Codex 计划审查 R2 探针）。"""
+
+    import time
+
+    registry = SessionPoisonRegistry()
+    limits = ResourceLimits({"model_call": 1})
+    proxy = ModelCallProxy(
+        FakeCoordinator([_window(epoch=1, phase="ACTIVE", active="1")]),
+        sleeper=_no_sleep, limits=limits, attempt_timeout_seconds=None,
+    )
+    started, release = asyncio.Event(), asyncio.Event()
+
+    async def holder(attempt: int) -> dict:
+        started.set()
+        await release.wait()
+        return _ok_response([1], version="1")
+
+    async def slow(attempt: int) -> dict:
+        await asyncio.sleep(0.5)
+        return _ok_response([2], version="1")
+
+    holder_task = asyncio.create_task(
+        proxy.call("exec_H2", "turn_0", holder, session_id="sid_H2", poison_registry=registry)
+    )
+    await started.wait()
+    asyncio.get_running_loop().call_later(0.15, release.set)  # 排队 0.15s 后拿到额度
+    with pytest.raises(UnattributableModelCallError, match="episode_deadline_exhausted"):
+        await proxy.call(
+            "exec_S", "turn_0", slow, session_id="sid_S", poison_registry=registry,
+            deadline_monotonic=time.monotonic() + 0.35, min_attempt_budget_seconds=0.0,
+        )
+    assert registry.reason("sid_S") == "episode_deadline_exhausted"
+    await holder_task
+
+
+async def test_attempt_timeout_before_deadline_is_still_interruption_not_hard_wall():
+    """对照：期限未到时的单次 attempt_timeout 仍归中断 / 更新窗口守卫（api/inference 族）。"""
+
+    import time
+
+    registry = SessionPoisonRegistry()
+    proxy = ModelCallProxy(
+        FakeCoordinator([_window(epoch=1, phase="ACTIVE", active="1")]),
+        sleeper=_no_sleep, attempt_timeout_seconds=0.05,
+    )
+
+    async def slow(attempt: int) -> dict:
+        await asyncio.sleep(0.3)
+        return _ok_response([1], version="1")
+
+    with pytest.raises(UnattributableModelCallError, match="no_overlapping_update_window"):
+        await proxy.call(
+            "exec_T", "turn_0", slow, session_id="sid_T", poison_registry=registry,
+            deadline_monotonic=time.monotonic() + 100.0,
+        )
+    assert registry.reason("sid_T") == "no_overlapping_update_window"
+
+
+async def test_queue_wait_recorded_on_cancel_and_cleared_on_ack():
+    """Codex 批 B 审查 §4 非阻塞项：排队中被外层取消也累计排队秒数；审计 ACK 后释放该 scope 的累计。"""
+
+    import time
+
+    limits = ResourceLimits({"model_call": 1})
+    proxy = ModelCallProxy(
+        FakeCoordinator([_window(epoch=1, phase="ACTIVE", active="1")]),
+        sleeper=_no_sleep, limits=limits, attempt_timeout_seconds=None,
+    )
+    started, release = asyncio.Event(), asyncio.Event()
+
+    async def holder(attempt: int) -> dict:
+        started.set()
+        await release.wait()
+        return _ok_response([1], version="1")
+
+    async def never(attempt: int) -> dict:
+        raise AssertionError("不应发送")
+
+    holder_task = asyncio.create_task(proxy.call("exec_H3", "turn_0", holder))
+    await started.wait()
+    waiter = asyncio.create_task(proxy.call("exec_C", "turn_0", never, deadline_monotonic=time.monotonic() + 100.0))
+    await asyncio.sleep(0.05)
+    waiter.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await waiter
+    assert proxy.queue_wait_seconds_total("exec_C") >= 0.03  # 取消前的排队已记
+    release.set()
+    await holder_task
+    assert not limits._semaphores["model_call"].locked()  # 被取消的等待没有拿走额度
+    proxy.ack_attempts("exec_C")
+    assert proxy.queue_wait_seconds_total("exec_C") == 0.0  # ACK 后释放
