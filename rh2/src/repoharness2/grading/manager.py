@@ -693,6 +693,16 @@ class BaselineIntegrityError(RuntimeError):
         super().__init__(f"{reason_code}: {message}")
 
 
+class GradingScopeTerminationError(BaselineIntegrityError):
+    """批 D-2（I14 grading 侧；06 A4"execution scope 无法终止 = run-fatal，仍继续清理"）：评分容器在
+    有界收口（rm -f → kill → rm -f）之后**仍在运行或状态无法确认**。
+
+    与普通 failed_to_grade 的分界：评分动作失败可按成员损耗继续；但一个仍在跑测试 / 状态未知的容器
+    会继续占用资源、且后续评分容器会与它并存，继续接新任务只会累积。复用 BaselineIntegrityError 的
+    传播通道（故意不被 grade() 捕获，穿队列上抛，由 generate 转 FatalExecutionInfrastructureError）。
+    第一次 rm 失败但随后确认已停止 / 已删除 → 只留 cleanup_failures 诊断，不 fatal。"""
+
+
 class SandboxProfileViolation(BaselineIntegrityError):
     """W3b：grader 容器创建后核对发现 profile 未生效（或 root 可信初始化失败）。
 
@@ -1250,8 +1260,12 @@ class SWEGradingManager:
         finally:
             if record is not None:
                 cleanup_started = time.monotonic()
-                await self._remove_container(record)
-                phase.add("grader_cleanup", time.monotonic() - cleanup_started)
+                try:
+                    # 批 D-2：有界收口——仍运行 / 无法确认 → GradingScopeTerminationError 穿队列上抛
+                    # （替换在途的 failed_to_grade 结果：scope 未终止比单次评分结果更重要）
+                    await self._close_container_scope(record)
+                finally:
+                    phase.add("grader_cleanup", time.monotonic() - cleanup_started)
 
     # ------------------------------------------------------------------ gc
     async def gc(
@@ -1430,9 +1444,49 @@ class SWEGradingManager:
                 f"container_rm_failed:{record.name}:{rm.stderr.strip()[-200:]}"
             )
 
-    async def _container_running(self, record: _ContainerRecord) -> bool:
+    async def _container_state(self, record: _ContainerRecord) -> str:
+        """批 D-2：容器状态三分——"running" / "stopped"（存在但已退出）/ "absent"（已删除）/
+        "unknown"（inspect 失败：daemon 不可达等）。此前 `_container_running` 把 inspect 失败也压成
+        False（"已死"），Codex 批 B/计划审查 R4：无法确认 ≠ 已停止。"""
+
         inspect = await self._docker("inspect", "-f", "{{.State.Running}}", record.name)
-        return inspect.exit_code == 0 and inspect.stdout.strip() == "true"
+        if inspect.exit_code == 0:
+            return "running" if inspect.stdout.strip() == "true" else "stopped"
+        err = (inspect.stderr or inspect.stdout).strip().lower()
+        if "no such" in err or "not found" in err:
+            return "absent"
+        return "unknown"
+
+    async def _container_running(self, record: _ContainerRecord) -> bool:
+        return (await self._container_state(record)) == "running"
+
+    async def _close_container_scope(self, record: _ContainerRecord) -> None:
+        """批 D-2：grade() 收尾的有界收口。rm -f 成功 → 已删除；失败 → 看状态：已停止 / 已删除 → 只留
+        诊断（cleanup_failures 已由 _remove_container 记）；仍运行 → docker kill 再 rm -f 一次；最终仍
+        运行或无法确认 → GradingScopeTerminationError（run-fatal，穿队列上抛）。停止与删除分开表述。"""
+
+        await self._remove_container(record)
+        if record.removed:
+            return
+        state = await self._container_state(record)
+        if state in ("stopped", "absent"):
+            self.cleanup_failures.append(f"container_scope_stopped_but_not_removed:{record.name}:{state}")
+            return
+        if state == "running":
+            await self._docker("kill", record.name)
+            await self._remove_container(record)
+            if record.removed:
+                return
+            state = await self._container_state(record)
+            if state in ("stopped", "absent"):
+                self.cleanup_failures.append(f"container_scope_killed_but_not_removed:{record.name}:{state}")
+                return
+        self.cleanup_failures.append(f"container_scope_termination_failed:{record.name}:{state}")
+        raise GradingScopeTerminationError(
+            "grading_scope_termination_failed",
+            f"评分容器 {record.name} 在有界收口（rm -f → kill → rm -f）后状态仍为 {state}"
+            "——scope 无法确认终止，按 06 A4 run-halt（继续接新任务只会累积残留）。",
+        )
 
     async def _exec_bash(
         self,
@@ -1479,8 +1533,13 @@ class SWEGradingManager:
             raise GradingInfraError(
                 f"grading_{phase}_timeout_after_{int(timeout)}s"
             ) from None
-        if result.exit_code != 0 and not await self._container_running(record):
-            raise GradingInfraError(f"grading_container_killed_during_{phase}")
+        if result.exit_code != 0:
+            state = await self._container_state(record)
+            if state in ("stopped", "absent"):
+                raise GradingInfraError(f"grading_container_killed_during_{phase}")
+            if state == "unknown":
+                # 批 D-2：inspect 失败（daemon 不可达等）≠ 容器已死——单独归因，不冒充 killed
+                raise GradingInfraError(f"grading_container_state_unknown_during_{phase}")
         return result
 
     async def _verify_image_digest(self, record: _ContainerRecord, spec: GradingEnvSpec) -> None:

@@ -335,6 +335,10 @@ class FakeDocker:
     head_commit: str = ""
     ps_stdout: str = ""
     rm_fail_names: tuple[str, ...] = ()
+    # 批 D-2：容器状态三态替身——inspect 失败文本（None = 正常）；`docker kill` 是否真的让容器停下
+    inspect_fail: str | None = None
+    kill_stops: bool = True
+    killed: list[str] = field(default_factory=list)
     # 镜像 RepoDigests 罐头值（codex#1 运行期比对用；json 序列化后返回）。
     repo_digests: tuple[str, ...] = ()
     calls: list[tuple[str, ...]] = field(default_factory=list)
@@ -391,7 +395,14 @@ class FakeDocker:
         if cmd == "inspect":
             if "{{.Image}}" in args:  # 容器实际镜像 ID（codex#1 比对入口）
                 return ExecResult(0, "sha256:" + "ab" * 32 + "\n", "")
+            if self.inspect_fail is not None:
+                return ExecResult(1, "", self.inspect_fail)
             return ExecResult(0, "true\n" if self.container_running else "false\n", "")
+        if cmd == "kill":
+            self.killed.append(args[-1])
+            if self.kill_stops:
+                self.container_running = False
+            return ExecResult(0, "", "")
         if cmd == "ps":
             return ExecResult(0, self.ps_stdout, "")
         if cmd == "rm":

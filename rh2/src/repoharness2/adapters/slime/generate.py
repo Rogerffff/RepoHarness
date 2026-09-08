@@ -4890,7 +4890,10 @@ class RolloutOrchestrator:
         ]
 
         async def _grade() -> GradingReport:
-            from repoharness2.grading.manager import BaselineIntegrityError
+            from repoharness2.grading.manager import (
+                BaselineIntegrityError,
+                GradingScopeTerminationError,
+            )
 
             audit.mark("grading_started")
             try:
@@ -4902,6 +4905,19 @@ class RolloutOrchestrator:
                     spec=grading_spec,
                     **({"frozen_delta": frozen_delta} if frozen_delta is not None else {}),
                 )
+            except GradingScopeTerminationError as exc:
+                # 批 D-2（I14 grading 侧；06 A4）：评分容器有界收口后仍运行 / 无法确认 → run-halt
+                # （清理已在 manager 内继续做完；这里只是把 typed 终止失败转成致命传播）。
+                audit.failure_records.append(
+                    RolloutFailureRecord(
+                        stage="grading_cleanup", error_type=exc.reason_code, detail=str(exc)[:500],
+                    )
+                )
+                audit.mark("grading_scope_termination_failed")
+                raise FatalExecutionInfrastructureError(
+                    exc.reason_code,
+                    f"评分容器 scope 无法确认终止：{exc}——按 06 A4 run-halt，不得作为成员损耗继续。",
+                ) from exc
             except BaselineIntegrityError as exc:
                 # B4 P0-1：exact-baseline 重建/绑定矛盾 = grader 看到的树
                 # ≠ 模型开工时的树（或同进程事实分家）——系统性契约错误，

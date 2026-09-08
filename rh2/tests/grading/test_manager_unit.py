@@ -26,6 +26,7 @@ from repoharness2.contracts import GradingReport
 from repoharness2.envpack.bundles import load_bundle_pairs
 from repoharness2.envpack.scoring import GRADER_NAME
 from repoharness2.grading.manager import (
+    ExecResult,
     GradingManagerConfig,
     SWEGradingManager,
     build_swe_grading_spec,
@@ -596,3 +597,94 @@ print(json.dumps(leaked))
     import json
 
     assert json.loads(proc.stdout.strip().splitlines()[-1]) == []
+
+
+# ---------------------------------------------------------------------------
+# 批 D-2（I14 grading 侧；06 A4）：评分容器的有界收口与最终状态三分
+# ---------------------------------------------------------------------------
+
+
+async def test_rm_failure_but_container_stopped_is_diagnostic_only():
+    """第一次 rm 失败但 inspect 确认已停止 → 只留 cleanup_failures 诊断，报告照常返回，不 fatal。"""
+
+    fake = FakeDocker(base_commit=BASE, container_running=False)
+    manager = make_manager(fake)
+
+    async def rm_always_fails(*args, input_bytes=None):
+        if args[0] == "rm":
+            return ExecResult(1, "", f"cannot remove {args[-1]}: fake failure")
+        return await FakeDocker.__call__(fake, *args, input_bytes=input_bytes)
+
+    manager._docker = rm_always_fails
+    report = await manager.grade(trajectory_id="traj_stop", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec())
+    assert report.outcome in ("resolved", "unresolved", "failed_to_grade")
+    assert any("container_rm_failed" in item for item in manager.cleanup_failures)
+    assert any("container_scope_stopped_but_not_removed" in item for item in manager.cleanup_failures)
+    assert fake.killed == []  # 已停止就不 kill
+
+
+async def test_rm_failure_running_container_killed_then_confirmed_stopped_is_diagnostic():
+    """rm 失败且仍运行 → docker kill → 确认已停止（rm 仍失败）→ 诊断留痕，不 fatal；停止与删除分开表述。"""
+
+    fake = FakeDocker(base_commit=BASE, container_running=True, kill_stops=True)
+    manager = make_manager(fake)
+
+    async def rm_always_fails(*args, input_bytes=None):
+        if args[0] == "rm":
+            return ExecResult(1, "", f"cannot remove {args[-1]}: fake failure")
+        return await FakeDocker.__call__(fake, *args, input_bytes=input_bytes)
+
+    manager._docker = rm_always_fails
+    report = await manager.grade(trajectory_id="traj_kill", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec())
+    assert report.outcome in ("resolved", "unresolved", "failed_to_grade")
+    assert len(fake.killed) == 1
+    assert any("container_scope_killed_but_not_removed" in item for item in manager.cleanup_failures)
+
+
+@pytest.mark.parametrize(
+    ("running", "inspect_fail", "expected_state"),
+    [
+        (True, None, "running"),  # kill 也停不下来
+        (True, "Cannot connect to the Docker daemon at unix:///var/run/docker.sock", "unknown"),
+    ],
+)
+async def test_scope_still_running_or_unknown_after_bounded_closure_is_fatal(running, inspect_fail, expected_state):
+    """有界收口（rm -f → kill → rm -f）后仍运行 / 无法确认 → GradingScopeTerminationError（穿队列上抛，
+    编排转 run-fatal）；清理动作已做完、留痕在 cleanup_failures。"""
+
+    from repoharness2.grading.manager import GradingScopeTerminationError
+
+    fake = FakeDocker(base_commit=BASE, container_running=running, kill_stops=False, inspect_fail=inspect_fail)
+    manager = make_manager(fake)
+
+    async def rm_always_fails(*args, input_bytes=None):
+        if args[0] == "rm":
+            return ExecResult(1, "", f"cannot remove {args[-1]}: fake failure")
+        return await FakeDocker.__call__(fake, *args, input_bytes=input_bytes)
+
+    manager._docker = rm_always_fails
+    with pytest.raises(GradingScopeTerminationError, match="grading_scope_termination_failed") as ei:
+        await manager.grade(trajectory_id="traj_stuck", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec())
+    assert expected_state in str(ei.value)
+    assert any("container_scope_termination_failed" in item for item in manager.cleanup_failures)
+    if expected_state == "running":
+        assert len(fake.killed) == 1  # 收口确实尝试过 kill
+
+
+async def test_inspect_failure_during_test_is_state_unknown_not_killed():
+    """`_exec_bash_checked`：命令失败且 inspect 不可达 → `grading_container_state_unknown_during_test`
+    （不再把 inspect 失败压成"容器已死"）。"""
+
+    fake = FakeDocker(base_commit=BASE, eval_exit_code=137, inspect_fail="Cannot connect to the Docker daemon")
+    report = await make_manager(fake).grade(trajectory_id="traj_unknown", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec())
+    assert report.outcome == "failed_to_grade" and report.failure_category == "infra_failure"
+    assert report.infra_failure_detail == "grading_container_state_unknown_during_test"
+
+
+async def test_manager_run_docker_is_cancel_safe_is_the_default_channel():
+    """批 B 已修的 run_docker 是评分侧默认通道（generate 与 manager 同一对象）——这里只钉住引用关系。"""
+
+    from repoharness2.adapters.slime import generate as generate_mod
+    from repoharness2.grading import manager as manager_mod
+
+    assert generate_mod.run_docker is manager_mod.run_docker

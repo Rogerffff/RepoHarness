@@ -723,3 +723,31 @@ async def test_driver_fractional_budget_timeout_is_deadline_not_bootstrap_failur
     assert code == HARNESS_EXIT_TIME_BUDGET_EXCEEDED
     assert seen == [pytest.approx(599.7)]
     assert facts["launch_attempted"] is False and facts["bootstrap_deadline_reason"] == "bootstrap_step_timed_out_at_deadline"
+
+
+# ================================================================ 批 D-2（I14 grading 侧）：终止失败穿队列 → run-fatal
+
+
+async def test_grading_scope_termination_failure_is_run_fatal_with_cleanup(monkeypatch):
+    """评分容器有界收口后仍运行 / 无法确认 → manager 抛 GradingScopeTerminationError（穿队列）→ 编排转
+    FatalExecutionInfrastructureError（grading_scope_termination_failed）、通知 halt、failure_record
+    stage=grading_cleanup；rollout 侧 finally 清理照常。不是 failed_to_grade 成员损耗。"""
+
+    from repoharness2.adapters.slime.async_worker import FatalExecutionInfrastructureError
+    from repoharness2.grading.manager import GradingScopeTerminationError
+
+    chain = _formal_chain()
+    notified: list = []
+    chain.orchestrator._notify_fatal_halt = notified.append
+
+    async def stuck_grader(**kw):
+        raise GradingScopeTerminationError("grading_scope_termination_failed", "评分容器 x 在有界收口后状态仍为 running")
+
+    chain.orchestrator._grading_submit = stuck_grader
+    with pytest.raises(FatalExecutionInfrastructureError, match="grading_scope_termination_failed"):
+        await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    audit = chain.orchestrator.audits[0]
+    assert [n.reason_code for n in notified] == ["grading_scope_termination_failed"]
+    assert any(f.stage == "grading_cleanup" and f.error_type == "grading_scope_termination_failed" for f in audit.failure_records)
+    assert "grading_scope_termination_failed" in _steps(audit)
+    assert "cleanup_completed" in _steps(audit)
