@@ -1,0 +1,201 @@
+{
+  "source_commit": "13182a5f24a47856aa9191f651510d0df249c9c0",
+  "python": "3.13.5",
+  "torch": "2.10.0+cpu",
+  "cuda_available": false,
+  "execution_kind": "独立 CPU 语义探针；未导入上游测试套件",
+  "results": [
+    {
+      "name": "probe_global_token_reduction",
+      "status": "PASS",
+      "global_mean": 7.833333320277778,
+      "partition_gradient_max_errors": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "incorrect_mean_of_local_means": 5.0999999858,
+      "valid_tokens": 6
+    },
+    {
+      "name": "probe_sequence_vs_token",
+      "status": "PASS",
+      "token_objective": 2.49999999375,
+      "sequence_objective": 1.9999999800000001,
+      "interpretation": "这是两种不同的声明目标，不是舍入误差。"
+    },
+    {
+      "name": "probe_permutation_contract",
+      "status": "PASS",
+      "original": [
+        10,
+        20,
+        30,
+        40
+      ],
+      "forward": [
+        2,
+        0,
+        3,
+        1
+      ],
+      "inverse": [
+        1,
+        3,
+        0,
+        2
+      ],
+      "restored_with_forward": [
+        10,
+        20,
+        30,
+        40
+      ],
+      "inverse_passed_to_inverse_applying_API": [
+        40,
+        30,
+        20,
+        10
+      ],
+      "scope": "针对 preshard 返回值/文档契约；已检查的 TQ 调用丢弃该返回值。"
+    },
+    {
+      "name": "probe_dynamic_coordination",
+      "status": "PASS",
+      "independent_microbatch_counts": [
+        1,
+        3
+      ],
+      "coordinated_rows": [
+        [
+          0,
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ]
+      ],
+      "coordinated_microbatch_counts": [
+        3,
+        3
+      ],
+      "scope": "独立示意规划器，未调用 NeMo shard_by_batch_size。"
+    },
+    {
+      "name": "probe_cp_layout",
+      "status": "PASS",
+      "real_lengths": [
+        5,
+        9,
+        1
+      ],
+      "padded_lengths": [
+        8,
+        12,
+        4
+      ],
+      "rank_local_physical_tokens": [
+        12,
+        12
+      ],
+      "real_token_identity_count": 15,
+      "scope": "只验证 token 身份往返，不执行 CP attention 或通信内核。"
+    },
+    {
+      "name": "probe_packed_boundary",
+      "status": "PASS",
+      "global_roll": [
+        [
+          11,
+          12,
+          20,
+          21,
+          10
+        ]
+      ],
+      "boundary_safe_roll": [
+        [
+          11,
+          12,
+          0,
+          21,
+          0
+        ]
+      ],
+      "scope": "逐段移位示意；真实 loss 还必须排除无效目标位置。"
+    },
+    {
+      "name": "probe_scaling_algebra",
+      "status": "PASS",
+      "megatron_replica_local": 1.0,
+      "after_CP_loss_fanout": 2.0,
+      "automodel_cases": [
+        {
+          "cp_loss_fanout": 1,
+          "recovered": 2.0
+        },
+        {
+          "cp_loss_fanout": 2,
+          "recovered": 2.0
+        }
+      ],
+      "scope": "标量缩放核算，不是分布式 autograd 或 reducer 实测。"
+    },
+    {
+      "name": "probe_optional_positive_nll",
+      "status": "PASS",
+      "one_invocation_aux_loss": 2.49999999375,
+      "per_sequence_invocations_aux_loss": 3.99999998,
+      "one_invocation_gradient": [
+        [
+          -0.249999999375,
+          -0.0,
+          -0.0
+        ],
+        [
+          -0.249999999375,
+          -0.249999999375,
+          -0.249999999375
+        ]
+      ],
+      "per_sequence_gradient": [
+        [
+          -0.9999999900000002,
+          0.0,
+          0.0
+        ],
+        [
+          -0.3333333322222222,
+          -0.3333333322222222,
+          -0.3333333322222222
+        ]
+      ],
+      "scope": "复现可选 NLL 的局部归约；默认关闭；未运行完整 NeMo forward。"
+    },
+    {
+      "name": "probe_zero_mask_and_nan",
+      "status": "PASS",
+      "finite_all_masked_result": 0.0,
+      "NaN_survives_zero_mask": true,
+      "scope": "说明有限值前提，不主张真实 NeMo 作业已经产生 NaN。"
+    },
+    {
+      "name": "probe_budget_and_metadata_width",
+      "status": "PASS",
+      "raw_total": 130,
+      "aligned_total": 256,
+      "capacity": 192,
+      "int64_skeleton_example_shape": [
+        512,
+        32768
+      ],
+      "dense_storage_bytes": 134217728,
+      "dense_storage_MiB": 128.0,
+      "scope": "计算得到的分配大小，不是实测生产内存峰值或瓶颈。"
+    }
+  ],
+  "passed": 10
+}
