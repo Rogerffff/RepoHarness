@@ -1,0 +1,167 @@
+{
+  "upstream_commit": "3de96596f16b9e6d23ba550c4c47de3479c9f14c",
+  "python": "3.13.5",
+  "torch": "2.10.0+cpu",
+  "numpy": "2.3.5",
+  "scope": "isolated CPU source execution; not Ray/SGLang/Megatron integration",
+  "substitutions": [
+    "load_function: identity for callable/None",
+    "is_lora_enabled: False",
+    "RolloutSamplingMask: unused placeholder"
+  ],
+  "verified_source_blobs": {
+    "miles/utils/types.py": "a4d6de01d3d500faae0039c462a2199a46e5958a",
+    "miles/rollout/filter_hub/base_types.py": "96e887c66887cb677badcf1e3f3da5f9a2bf1357",
+    "miles/rollout/filter_hub/common_filters.py": "498c63c01022ef7f0a80a649034c4873b777f9d8",
+    "miles/rollout/fully_async_data_buffer.py": "58fd5cd83669d0f5cc2366eca453b40144e2c294",
+    "miles/utils/weight_version.py": "480689607cbf67e6cb155d97e6d76ca409378200"
+  },
+  "checks": [
+    {
+      "id": "P01",
+      "status": "PASS",
+      "title": "字段名未变，但旧字符串版本列表不能被新消费者读取",
+      "observed": {
+        "fields": 30,
+        "error": "AttributeError"
+      }
+    },
+    {
+      "id": "P02",
+      "status": "PASS",
+      "title": "原生逐调用版本区间可以正确序列化往返",
+      "observed": {
+        "oldest": 3
+      }
+    },
+    {
+      "id": "P03",
+      "status": "PASS",
+      "title": "裁剪输出同步裁剪版本区间",
+      "observed": {
+        "spans": [
+          {
+            "version": "3",
+            "abs_start": 1,
+            "abs_end": 2
+          },
+          {
+            "version": "4",
+            "abs_start": 2,
+            "abs_end": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "P04",
+      "status": "PASS",
+      "title": "null 回退单数版本，而空列表产生空区间",
+      "observed": {
+        "null_spans": 1,
+        "empty_spans": 0
+      }
+    },
+    {
+      "id": "P05",
+      "status": "PASS",
+      "title": "缺 reward 的默认过滤抢先于自定义 fatal 检查",
+      "observed": {
+        "custom_calls": 0,
+        "unused_calls": 0,
+        "stored": 0
+      }
+    },
+    {
+      "id": "P06",
+      "status": "PASS",
+      "title": "合法零 reward 不会被误认为缺失",
+      "observed": {
+        "custom_calls": 1,
+        "fatal_propagated": true
+      }
+    },
+    {
+      "id": "P07",
+      "status": "PASS",
+      "title": "DynamicFilterOutput 仍是同一类型的兼容别名",
+      "observed": true
+    },
+    {
+      "id": "P08",
+      "status": "PASS",
+      "title": "staleness 忽略缺版本成员，全部缺失则返回 None",
+      "observed": {
+        "partial": 6,
+        "all_missing": null
+      }
+    },
+    {
+      "id": "P09",
+      "status": "PASS",
+      "title": "默认 buffer 的阈值不会拒绝负 lag",
+      "observed": {
+        "lag": -2,
+        "returned": true
+      }
+    },
+    {
+      "id": "P10",
+      "status": "PASS",
+      "title": "avg_staleness 包含被扫描后拒绝的组",
+      "observed": {
+        "accepted_lag": 1,
+        "reported_average": 3.0,
+        "stale_drops": 1
+      }
+    },
+    {
+      "id": "P11",
+      "status": "PASS",
+      "title": "正向对照：有界 buffer 的背压与唤醒",
+      "observed": {
+        "capacity": 1,
+        "blocked_then_released": true
+      }
+    },
+    {
+      "id": "P12",
+      "status": "PASS",
+      "title": "版本合法性守卫检查已有区间，但空区间不触发",
+      "observed": {
+        "empty_passed": true,
+        "default": "AssertionError"
+      }
+    },
+    {
+      "id": "P13",
+      "status": "PASS",
+      "title": "零更新跳发布的未来组合风险：第4次 get 触发通知守卫",
+      "observed": {
+        "allowed_without_notification": 3,
+        "fourth": "AssertionError",
+        "scope": "guard only; not integrated driver"
+      }
+    },
+    {
+      "id": "P14",
+      "status": "PASS",
+      "title": "旧 dump 兼容保留旁路字段，但没有恢复可消费区间",
+      "observed": {
+        "legacy": [
+          "3",
+          "4"
+        ],
+        "active_spans": 0
+      }
+    },
+    {
+      "id": "P15",
+      "status": "PASS",
+      "title": "当前 DataBuffer 合同没有 aclose",
+      "observed": true
+    }
+  ],
+  "passed": 15,
+  "failed": 0
+}
