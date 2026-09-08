@@ -232,6 +232,60 @@ MAX_TURNS_PER_SID = int(os.environ.get("RH2_MAX_TURNS_PER_SID", "25"))
 # 每个真实生成轮在该 execution 的训练行并集中恰有一次 loss_mask=1 归属。这是决定值，不设 env 旋钮
 # （默认值不应成为隐藏路径）；值随 runtime_profile.json 与 execution audit 的 turn_coverage 落盘。
 FORK_THRESHOLD_TOKENS = 0
+
+# 批 D（I04；第一组已批 A5-a ① / A5-b (2)）：present_truncated 的处置注入值。写成常量而不是 env
+# 旋钮（默认值不应成为隐藏路径，与 I01 同纪律）；owner_cancelled / agent_violation 未定，保持 None
+# （遇到仍 fail-fast，如实记录）；policy_horizon 共用槽位本轮只服务已批的 turn producer
+# （max_turns_exhausted），不从它推导未来 token / context producer。值随 runtime_profile.json 落盘。
+DISPOSITION_POLICY_VALUES: dict[str, str | None] = {
+    "policy_horizon_truncation": "KEEP_FULL",
+    "hard_wall_truncation": "DROP_GROUP",
+    "owner_cancelled_truncation": None,
+    "agent_violation": None,
+}
+
+
+def make_disposition_policy():
+    """已批处置的 DispositionPolicy 实例（库层保持中立：值只在这里给）。"""
+
+    from repoharness2.governance.admission import DispositionPolicy
+
+    return DispositionPolicy(**DISPOSITION_POLICY_VALUES)
+
+
+def inject_disposition_policy(args: Any):
+    """批 D：把已批处置注入 `args.rh2_disposition_policy`（group_admission 的读取键）。
+
+    未设 → 注入；已设且与常量逐槽一致 → 保持；已设但不一致或类型不对 → `StartupCheckError`
+    （处置不是可覆盖的旋钮，不许隐藏覆盖）。返回生效的 policy。必须先于首个 present_truncated
+    成员到达 buffer（否则 group filter 抛 DispositionNotInjectedError 并停机）。
+    """
+
+    from repoharness2.adapters.miles.group_admission import DISPOSITION_POLICY_ARGS_KEY
+    from repoharness2.governance.admission import DispositionPolicy
+
+    expected = make_disposition_policy()
+    existing = getattr(args, DISPOSITION_POLICY_ARGS_KEY, None)
+    if existing is None:
+        setattr(args, DISPOSITION_POLICY_ARGS_KEY, expected)
+        return expected
+    if not isinstance(existing, DispositionPolicy):
+        raise StartupCheckError(
+            "disposition_policy_conflict",
+            f"args.{DISPOSITION_POLICY_ARGS_KEY} 必须是 DispositionPolicy，得到 {type(existing).__name__}。",
+        )
+    mismatch = {
+        name: (getattr(existing, name), value)
+        for name, value in DISPOSITION_POLICY_VALUES.items()
+        if getattr(existing, name) != value
+    }
+    if mismatch:
+        raise StartupCheckError(
+            "disposition_policy_conflict",
+            f"args.{DISPOSITION_POLICY_ARGS_KEY} 与已批处置不一致（槽位: 现值 / 已批）：{mismatch}"
+            "——处置不是可覆盖的旋钮，改常量并登记。",
+        )
+    return existing
 INJECT_INFRA_INSTANCE = os.environ.get("RH2_INJECT_INFRA_INSTANCE", "")
 # MoE routing tape 期望（P3 预实验 J4 增补，见 preflight/8gpu_preflight_protocol.md
 # J4 判据 2/3）：Qwen3-30B-A3B 等 MoE 模型置 "1"——启动探针与生产会话都请求
@@ -1429,6 +1483,7 @@ class BringupService:
         record["fork_threshold_tokens"] = FORK_THRESHOLD_TOKENS  # I01：B 路线接线值（供事件 join）
         # 批 B（I03）：episode 预算（资源占用起表，含准备 / 引导 / 排队；数值 = SWE_AGENT_TIME_BUDGET_SEC）
         record["episode_budget_seconds"] = AGENT_TIME_BUDGET_SEC
+        record["disposition_policy"] = dict(DISPOSITION_POLICY_VALUES)  # 批 D（I04）：已批处置
         self.runtime_profile_record = record
         write_runtime_profile_record(ARTIFACT_DIR / "runtime_profile.json", record)
         if not record["ok"]:
@@ -2543,6 +2598,9 @@ async def ensure_fa_started(args: Any) -> None:
         args.rh2_orchestrator = service.orchestrator
     if getattr(args, "rh2_sampling_params", None) is None:
         args.rh2_sampling_params = build_fa_sampling_params(args)
+    # 批 D（I04）：已批处置在启动时注入（turn 截断 KEEP_FULL / hard wall DROP_GROUP），
+    # 冲突覆盖 → StartupCheckError。必须先于批 C 的 cap 启用。
+    inject_disposition_policy(args)
     # W1b 第一集成切片（F4）：prepared 链把有界 attempt 绑定表挂到 args，
     # Rh2MilesGenerateFn 在铸造身份后 bind、结束后 release。legacy 链为 None。
     if getattr(args, "rh2_attempt_assignments", None) is None and service.attempt_assignments is not None:
