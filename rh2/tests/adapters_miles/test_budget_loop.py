@@ -383,10 +383,12 @@ async def test_hard_wall_forces_stop_before_drain():
     audit = chain.orchestrator.audits[0]
     steps = _steps(audit)
     assert steps.index("hard_wall_forced_stop") < steps.index("session_revoked")
-    assert audit.termination["stop"] == {
+    stop = audit.termination["stop"]
+    assert {k: stop[k] for k in ("requested_by", "forced", "kill_verified", "residual_processes", "grace_seconds", "harness_exited_within_grace")} == {
         "requested_by": "hard_wall", "forced": True, "kill_verified": True, "residual_processes": 0,
         "grace_seconds": None, "harness_exited_within_grace": None,
     }
+    assert stop["stop_timed_out"] is False and stop["kill_returned_before_deadline"] is True  # 停止事实（R3）
     assert len(_kill_execs(chain.docker)) >= 1
     assert audit.outcome_v2["termination_kind"] == "hard_wall_timeout"
 

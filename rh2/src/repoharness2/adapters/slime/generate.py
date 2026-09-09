@@ -87,7 +87,7 @@ from typing import Any, Literal, Protocol
 
 from repoharness2.adapters.slime.async_worker import FatalExecutionInfrastructureError
 from repoharness2.adapters.slime.attempt_timing import AttemptLifecycleTiming
-from repoharness2.adapters.slime.execution_scope import terminate_agent_processes
+from repoharness2.adapters.slime.execution_scope import ScopeStopResult, terminate_agent_processes
 from repoharness2.adapters.slime.outcome_producer import (
     FAILURE_CODE_TERMINATION_MAP,
     STAGE_FALLBACK_TERMINATION_MAP,
@@ -353,6 +353,9 @@ TURN_BUDGET_EXIT_GRACE_SEC = 30.0
 # 批 C：rh2 在 turn 预算命中后强制停止了 harness（CC 未在宽限内自行退出）——我方哨兵，不是 CC 的
 # 退出码，也不是 vendored 的 EXIT_TIME_BUDGET_EXCEEDED。
 HARNESS_EXIT_STOPPED_BY_RH2 = -2
+# 批 C（Codex 联合审查 R2）：强制停止（kill + 归零验证）的总截止点——停止 / 确认用自己的预算，与 episode
+# 期限无关；超时 = 未确认（屏障 ① 再复核并 fail-closed）。停止力学参数，不是策略预算。
+EXECUTION_SCOPE_STOP_TIMEOUT_SEC = 30.0
 
 
 def _now_utc() -> datetime:
@@ -2917,7 +2920,12 @@ class RolloutOrchestrator:
                 # 进程、期限取消只回收宿主 CLI，容器内 CC 若不停会继续发请求 / 写工作区（drain 等不到
                 # inflight 归零 → session_plane_drain_unclean）。cap 事实即使在场也以 hard wall 为准
                 # （第一组 / Codex 计划审查 R3：到点时执行仍在进行 = 真实 hard wall → DROP）。
-                await self._force_stop_execution_scope(sandbox, audit, requested_by="hard_wall")
+                if audit.termination["stop"].get("forced"):
+                    # 预算强停已执行过（kill 未在墙前返回 → 归 hard wall）：不重复 kill，只改归属
+                    audit.termination["stop"]["requested_by"] = "hard_wall"
+                    audit.mark("hard_wall_after_forced_stop")
+                else:
+                    await self._force_stop_execution_scope(sandbox, audit, requested_by="hard_wall")
             elif budget_exhausted:
                 # 批 C（I02）：turn 预算已命中且执行已在宽限内结束（CC 自行退出或 rh2 强制停止）——
                 # 真实 policy-horizon 事实（不伪造 end_turn，训练行 = N 轮真实生成）；随后 drain / 装配 /
@@ -3744,16 +3752,22 @@ class RolloutOrchestrator:
 
     async def _force_stop_execution_scope(
         self, sandbox: Any, audit: "RolloutAudit", *, requested_by: str
-    ) -> None:
-        """批 C（I14 rollout 侧）：杀容器内 agent 进程并有界验证归零；结果只落观测块 / failure_records，
-        不抛（首因 = 预算 / 墙钟；屏障 ① 会再复核一次并对残留 fail-closed）。"""
+    ) -> ScopeStopResult | None:
+        """批 C（I14 rollout 侧）：杀容器内 agent 进程并**有界**验证归零（总截止点
+        EXECUTION_SCOPE_STOP_TIMEOUT_SEC，Codex 联合审查 R2）；结果只落观测块 / failure_records，不抛
+        （首因 = 预算 / 墙钟；屏障 ① 会再复核一次并对残留 fail-closed）。停止事实分开记录 kill 返回时刻
+        与归零确认时刻（R3）。"""
 
         if sandbox is None or audit.termination is None:
-            return
+            return None
         stop = audit.termination["stop"]
         stop["requested_by"] = requested_by
         try:
-            residual = await terminate_agent_processes(sandbox.workspace)
+            result = await terminate_agent_processes(
+                sandbox.workspace, total_timeout=EXECUTION_SCOPE_STOP_TIMEOUT_SEC, clock=self._clock
+            )
+        except asyncio.CancelledError:
+            raise
         except Exception as exc:  # noqa: BLE001 —— 停止动作自身异常：落账，不掩盖首因
             audit.failure_records.append(
                 RolloutFailureRecord(
@@ -3761,11 +3775,23 @@ class RolloutOrchestrator:
                     detail=f"{type(exc).__name__}: {exc}"[:500],
                 )
             )
-            residual = -1
+            result = ScopeStopResult(
+                residual=-1, kill_returned_at=None, confirmed_at=None, timed_out=False, elapsed_seconds=0.0
+            )
+        deadline = audit.episode_deadline_monotonic
         stop["forced"] = True
-        stop["kill_verified"] = residual == 0
-        stop["residual_processes"] = residual
+        stop["kill_verified"] = result.verified
+        stop["residual_processes"] = result.residual
+        stop["stop_timed_out"] = result.timed_out
+        stop["stop_elapsed_seconds"] = result.elapsed_seconds
+        stop["kill_returned_at_monotonic"] = result.kill_returned_at
+        stop["confirmed_at_monotonic"] = result.confirmed_at
+        stop["kill_returned_before_deadline"] = (
+            None if result.kill_returned_at is None or deadline is None
+            else result.kill_returned_at <= deadline
+        )
         audit.mark(f"{requested_by}_forced_stop")
+        return result
 
     async def _stop_after_turn_budget(
         self, harness_task: "asyncio.Future[int]", *, audit: "RolloutAudit", sandbox: Any
@@ -3797,9 +3823,25 @@ class RolloutOrchestrator:
             audit.episode_deadline["hit_by"] = "harness_outer"
             audit.mark("episode_deadline_harness_cancelled")
             return HARNESS_EXIT_TIME_BUDGET_EXCEEDED
-        await self._force_stop_execution_scope(sandbox, audit, requested_by="turn_budget")
+        try:
+            result = await self._force_stop_execution_scope(sandbox, audit, requested_by="turn_budget")
+        except asyncio.CancelledError:
+            # 强停 await 期间父任务被取消（关停）：先 settle 仍持有的 harness task 再传播
+            harness_task.cancel()
+            await self._settle_cancelled_stage(harness_task, audit, "harness_run")
+            raise
         harness_task.cancel()
         await self._settle_cancelled_stage(harness_task, audit, "harness_run")
+        # Codex 联合审查 R3：期限继续约束**尚未停止**的执行。判据 = kill 命令是否在期限前返回（SIGKILL 已
+        # 投递的上界；不把"已发出 kill"当成"已停止"）；归零确认晚于期限不算越墙（只是观测晚）。
+        deadline = audit.episode_deadline_monotonic
+        kill_returned_at = result.kill_returned_at if result is not None else None
+        stopped_before_wall = kill_returned_at is not None and (deadline is None or kill_returned_at <= deadline)
+        if not stopped_before_wall and self._episode_remaining(audit) <= 0:
+            # kill 未在墙前返回（IO 超时 / 迟迟未生效）且期限已过 = 到点时执行仍在进行 → 真实 hard wall
+            audit.episode_deadline["hit_by"] = "harness_outer"
+            audit.mark("episode_deadline_during_forced_stop")
+            return HARNESS_EXIT_TIME_BUDGET_EXCEEDED
         return HARNESS_EXIT_STOPPED_BY_RH2
 
     async def _await_harness_within_deadline(

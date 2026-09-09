@@ -1432,10 +1432,19 @@ class SWEGradingManager:
                 f"{record.name}: " + "; ".join(report.violations)[:600],
             )
 
-    async def _remove_container(self, record: _ContainerRecord) -> None:
+    async def _remove_container(self, record: _ContainerRecord, *, timeout: float | None = None) -> None:
         if record.removed:
             return
-        rm = await self._docker("rm", "-f", record.name)
+        try:
+            if timeout is None:
+                rm = await self._docker("rm", "-f", record.name)
+            else:
+                # 批 D-2（Codex 联合审查 R2）：收口路径的 rm 受剩余清理预算约束（wait_for 取消 → 默认
+                # runner kill+wait 宿主 CLI）；超时 = 未删除，留痕后由状态判定继续
+                rm = await asyncio.wait_for(self._docker("rm", "-f", record.name), timeout=max(0.0, timeout))
+        except (TimeoutError, asyncio.TimeoutError):
+            self.cleanup_failures.append(f"container_rm_timeout:{record.name}:{timeout}s")
+            return
         if rm.exit_code == 0:
             record.removed = True
         else:
@@ -1444,12 +1453,20 @@ class SWEGradingManager:
                 f"container_rm_failed:{record.name}:{rm.stderr.strip()[-200:]}"
             )
 
-    async def _container_state(self, record: _ContainerRecord) -> str:
+    async def _container_state(self, record: _ContainerRecord, *, timeout: float | None = None) -> str:
         """批 D-2：容器状态三分——"running" / "stopped"（存在但已退出）/ "absent"（已删除）/
         "unknown"（inspect 失败：daemon 不可达等）。此前 `_container_running` 把 inspect 失败也压成
         False（"已死"），Codex 批 B/计划审查 R4：无法确认 ≠ 已停止。"""
 
-        inspect = await self._docker("inspect", "-f", "{{.State.Running}}", record.name)
+        try:
+            if timeout is None:
+                inspect = await self._docker("inspect", "-f", "{{.State.Running}}", record.name)
+            else:
+                inspect = await asyncio.wait_for(
+                    self._docker("inspect", "-f", "{{.State.Running}}", record.name), timeout=max(0.0, timeout)
+                )
+        except (TimeoutError, asyncio.TimeoutError):
+            return "unknown"  # inspect 未在预算内返回 = 无法确认
         if inspect.exit_code == 0:
             return "running" if inspect.stdout.strip() == "true" else "stopped"
         err = (inspect.stderr or inspect.stdout).strip().lower()
@@ -1461,30 +1478,46 @@ class SWEGradingManager:
         return (await self._container_state(record)) == "running"
 
     async def _close_container_scope(self, record: _ContainerRecord) -> None:
-        """批 D-2：grade() 收尾的有界收口。rm -f 成功 → 已删除；失败 → 看状态：已停止 / 已删除 → 只留
-        诊断（cleanup_failures 已由 _remove_container 记）；仍运行 → docker kill 再 rm -f 一次；最终仍
-        运行或无法确认 → GradingScopeTerminationError（run-fatal，穿队列上抛）。停止与删除分开表述。"""
+        """批 D-2：grade() 收尾的**有界**收口（总截止点 = config.cleanup_timeout_seconds，Codex 联合审查
+        R2：每个 rm / inspect / kill 都拿剩余预算做 wait_for；预算耗尽 = 状态无法确认）。rm -f 成功 →
+        已删除；失败 → 看状态：已停止 / 已删除 → 只留诊断（cleanup_failures 已由 _remove_container 记）；
+        仍运行 → docker kill 再 rm -f 一次；最终仍运行或无法确认 → GradingScopeTerminationError（run-fatal，
+        穿队列上抛）。停止与删除分开表述。"""
 
-        await self._remove_container(record)
+        budget = float(self.config.cleanup_timeout_seconds)
+        started = time.monotonic()
+
+        def left() -> float:
+            return max(0.0, budget - (time.monotonic() - started))
+
+        await self._remove_container(record, timeout=left())
         if record.removed:
             return
-        state = await self._container_state(record)
+        state = await self._container_state(record, timeout=left()) if left() > 0 else "unknown"
         if state in ("stopped", "absent"):
             self.cleanup_failures.append(f"container_scope_stopped_but_not_removed:{record.name}:{state}")
             return
-        if state == "running":
-            await self._docker("kill", record.name)
-            await self._remove_container(record)
+        if state == "running" and left() > 0:
+            try:
+                await asyncio.wait_for(self._docker("kill", record.name), timeout=left())
+            except (TimeoutError, asyncio.TimeoutError):
+                self.cleanup_failures.append(f"container_kill_timeout:{record.name}")
+            await self._remove_container(record, timeout=left())
             if record.removed:
                 return
-            state = await self._container_state(record)
+            state = await self._container_state(record, timeout=left()) if left() > 0 else "unknown"
             if state in ("stopped", "absent"):
                 self.cleanup_failures.append(f"container_scope_killed_but_not_removed:{record.name}:{state}")
                 return
-        self.cleanup_failures.append(f"container_scope_termination_failed:{record.name}:{state}")
+        exhausted = left() <= 0
+        self.cleanup_failures.append(
+            f"container_scope_termination_failed:{record.name}:{state}"
+            + (f":cleanup_budget_exhausted_{budget}s" if exhausted else "")
+        )
         raise GradingScopeTerminationError(
             "grading_scope_termination_failed",
-            f"评分容器 {record.name} 在有界收口（rm -f → kill → rm -f）后状态仍为 {state}"
+            f"评分容器 {record.name} 在有界收口（rm -f → kill → rm -f，预算 {budget}s"
+            f"{'，已耗尽' if exhausted else ''}）后状态仍为 {state}"
             "——scope 无法确认终止，按 06 A4 run-halt（继续接新任务只会累积残留）。",
         )
 
@@ -1534,7 +1567,9 @@ class SWEGradingManager:
                 f"grading_{phase}_timeout_after_{int(timeout)}s"
             ) from None
         if result.exit_code != 0:
-            state = await self._container_state(record)
+            state = await self._container_state(
+                record, timeout=min(30.0, float(self.config.cleanup_timeout_seconds))
+            )
             if state in ("stopped", "absent"):
                 raise GradingInfraError(f"grading_container_killed_during_{phase}")
             if state == "unknown":

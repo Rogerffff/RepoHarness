@@ -4,6 +4,7 @@
 test_manager_docker.py；这里用桩把控制流逐条钉死。
 """
 
+import asyncio
 import subprocess
 import sys
 
@@ -688,3 +689,70 @@ async def test_manager_run_docker_is_cancel_safe_is_the_default_channel():
     from repoharness2.grading import manager as manager_mod
 
     assert generate_mod.run_docker is manager_mod.run_docker
+
+
+# ---------------------------------------------------------------------------
+# Codex 联合审查 R2：grader 收口的总截止点（rm / inspect / kill 挂起也在预算内产生终止结果）
+# ---------------------------------------------------------------------------
+
+
+def _blocking_docker(fake: FakeDocker, block: str, *, block_once: bool = True):
+    """把某个 docker 子命令挂起（默认只挂第一次），其余交给 FakeDocker；rm 除首次挂起外一律失败。"""
+
+    state = {"blocked": 0}
+
+    async def docker(*args, input_bytes=None):
+        if args[0] == block and (not block_once or state["blocked"] == 0):
+            state["blocked"] += 1
+            await asyncio.Event().wait()
+        if args[0] == "rm":
+            return ExecResult(1, "", f"daemon failed to remove {args[-1]}")
+        return await FakeDocker.__call__(fake, *args, input_bytes=input_bytes)
+
+    return docker
+
+
+@pytest.mark.parametrize("block", ["rm", "inspect", "kill"])
+async def test_closure_io_hang_yields_scope_fatal_within_cleanup_budget(block):
+    from repoharness2.grading.manager import GradingScopeTerminationError
+
+    fake = FakeDocker(base_commit=BASE, container_running=True, kill_stops=False)
+    manager = make_manager(fake, cleanup_timeout_seconds=1)  # 契约字段是整数秒
+    manager._docker = _blocking_docker(fake, block, block_once=(block != "inspect"))
+    started = asyncio.get_running_loop().time()
+    with pytest.raises(GradingScopeTerminationError, match="grading_scope_termination_failed") as ei:
+        await asyncio.wait_for(
+            manager.grade(trajectory_id=f"traj_hang_{block}", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec()),
+            timeout=5,
+        )
+    elapsed = asyncio.get_running_loop().time() - started
+    assert elapsed < 4.0  # 修前：挂起的 IO 让 grade() 永久 pending
+    assert "unknown" in str(ei.value) or "running" in str(ei.value)
+    assert any("container_scope_termination_failed" in item for item in manager.cleanup_failures)
+    if block == "rm":
+        assert any("container_rm_timeout" in item for item in manager.cleanup_failures)
+    if block == "kill":
+        assert any("container_kill_timeout" in item for item in manager.cleanup_failures)
+
+
+async def test_inspect_hang_during_test_is_state_unknown_within_budget():
+    """`_exec_bash_checked` 的状态查询也有界：inspect 挂起 → unknown 归因，随后正常 rm 收口，不 fatal。"""
+
+    fake = FakeDocker(base_commit=BASE, eval_exit_code=137)
+    manager = make_manager(fake, cleanup_timeout_seconds=1)
+    state = {"n": 0}
+
+    async def docker(*args, input_bytes=None):
+        if args[0] == "inspect" and "{{.State.Running}}" in args:
+            state["n"] += 1
+            await asyncio.Event().wait()
+        return await FakeDocker.__call__(fake, *args, input_bytes=input_bytes)
+
+    manager._docker = docker
+    report = await asyncio.wait_for(
+        manager.grade(trajectory_id="traj_inspect_hang", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec()),
+        timeout=5,
+    )
+    assert report.outcome == "failed_to_grade"
+    assert report.infra_failure_detail == "grading_container_state_unknown_during_test"
+    assert manager.container_records[-1].removed is True

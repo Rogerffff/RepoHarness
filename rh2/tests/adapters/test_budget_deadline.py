@@ -751,3 +751,159 @@ async def test_grading_scope_termination_failure_is_run_fatal_with_cleanup(monke
     assert any(f.stage == "grading_cleanup" and f.error_type == "grading_scope_termination_failed" for f in audit.failure_records)
     assert "grading_scope_termination_failed" in _steps(audit)
     assert "cleanup_completed" in _steps(audit)
+
+
+# ================================================================ Codex 联合审查 R2/R3：停止边界有界、停止事实与墙钟优先级
+
+
+class _Budget:
+    def __init__(self):
+        self.states: dict = {}
+        self.callbacks: dict = {}
+
+    def subscribe(self, sid, cb):
+        self.callbacks[sid] = cb
+
+    def unsubscribe(self, sid):
+        self.callbacks.pop(sid, None)
+
+    def snapshot(self, sid):
+        return self.states.get(sid)
+
+    def exhaust(self, sid):
+        self.states[sid] = {"cap": 3, "accepted": 3, "exhausted": True, "refused_count": 1}
+        self.callbacks[sid](sid)
+
+
+def _stop_chain(monkeypatch, *, kind: str, stop_timeout: float = 30.0):
+    """真实 formal 编排 + 真实 DockerQuiescenceBarrier；只替换 Docker IO 与预算事件；可控时钟。
+    kind 控制 kill / count 的时钟推进（Codex stop_deadline_probe 的形状）。"""
+
+    from repoharness2.adapters.slime import generate as generate_mod
+    from repoharness2.adapters.slime import quiescence_barrier
+    from repoharness2.adapters.slime.quiescence_barrier import DockerQuiescenceBarrier
+
+    chain = _formal_chain(barrier=DockerQuiescenceBarrier())
+    orch, now, budget = chain.orchestrator, [0.0], _Budget()
+    orch._clock = lambda: now[0]
+    orch._turn_budget_subscribe = budget.subscribe
+    orch._turn_budget_unsubscribe = budget.unsubscribe
+    orch._turn_budget_snapshot = budget.snapshot
+    monkeypatch.setattr(generate_mod, "TURN_BUDGET_EXIT_GRACE_SEC", 0.005)
+    monkeypatch.setattr(generate_mod, "EXECUTION_SCOPE_STOP_TIMEOUT_SEC", stop_timeout)
+    monkeypatch.setattr(quiescence_barrier, "_STOP_TOTAL_TIMEOUT_SECONDS", stop_timeout)
+    facts = {"stop_entered": asyncio.Event(), "kill_effect_at": [], "confirmation_at": [], "driver_tasks": [],
+             "driver_cancelled": asyncio.Event()}
+    original_docker = orch._docker
+
+    async def io(*args, input_bytes=None):
+        if args[0] == "exec" and "pkill -9 -u agent" in args[-1]:
+            first = not facts["stop_entered"].is_set()
+            facts["stop_entered"].set()
+            if kind.startswith("hang"):
+                await asyncio.Event().wait()  # kill 通道持续挂起：强停与屏障 ① 各由自己的总预算收口
+            if kind == "kill_effect_after_wall" and first:
+                now[0] = 901.0  # kill 尚未实际生效，墙钟已过；agent 仍活着
+            facts["kill_effect_at"].append(now[0])
+        if args[0] == "exec" and "ps -o pid= -u agent" in args[-1]:
+            if kind == "confirmation_after_wall":
+                now[0] = 901.0  # 进程已在墙前停止，只是计数回包晚
+            facts["confirmation_at"].append(now[0])
+        return await original_docker(*args, input_bytes=input_bytes)
+
+    class Driver:
+        name = "cpu_stop_probe"
+
+        async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt):
+            facts["driver_tasks"].append(asyncio.current_task())
+            adapter = chain.adapter_ref["adapter"]
+            await adapter.run_all_turns()
+            now[0] = 899.5
+            if kind == "hang_hard_wall":
+                now[0] = 900.1
+                return -1
+            budget.exhaust(adapter.opened[-1])
+            try:
+                await asyncio.Event().wait()
+            finally:
+                facts["driver_cancelled"].set()
+
+    orch._docker = io
+    orch._harness_driver = Driver()
+    return chain, now, facts
+
+
+@pytest.mark.parametrize(
+    ("kind", "expected_kind", "expected_exit", "kill_before_deadline"),
+    [
+        ("stop_before_wall", "max_turns_exhausted", -2, True),
+        ("kill_effect_after_wall", "hard_wall_timeout", -1, False),
+        ("confirmation_after_wall", "max_turns_exhausted", -2, True),
+    ],
+)
+async def test_stop_facts_decide_keep_vs_hard_wall(monkeypatch, kind, expected_kind, expected_exit, kill_before_deadline):
+    """R3 三案（Codex stop_deadline_probe）：墙前停 → KEEP（max_turns）；kill 在墙后才生效 → 到点时执行仍在
+    进行 = hard wall（DROP，cap 事实保留）；墙前已停、只是归零确认晚 → 仍 KEEP。判据 = kill 命令返回时刻
+    是否 ≤ 期限，不是"最后一次看时间是否已过"。"""
+
+    from repoharness2.adapters.slime import generate as generate_mod
+
+    chain, now, facts = _stop_chain(monkeypatch, kind=kind)
+    delivered = await asyncio.wait_for(
+        chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS)), timeout=10
+    )
+    audit = chain.orchestrator.audits[0]
+    stop = audit.termination["stop"]
+    assert audit.runtime_quiescence_confirmed is True and chain.grading.calls  # 真实屏障通过、评分一次
+    assert audit.harness_exit_code == expected_exit
+    assert audit.outcome_v2["termination_kind"] == expected_kind
+    assert audit.outcome_v2["completion_class"] == "present_truncated"
+    assert audit.termination["turn_budget"]["exhausted"] is True  # cap 事实保留
+    assert stop["kill_returned_before_deadline"] is kill_before_deadline
+    assert stop["stop_timed_out"] is False and stop["kill_verified"] is True
+    if kind == "confirmation_after_wall":
+        assert stop["confirmed_at_monotonic"] == 901.0 and stop["kill_returned_at_monotonic"] == 899.5
+    if expected_kind == "hard_wall_timeout":
+        assert audit.episode_deadline["hit_by"] == "harness_outer"
+        assert stop["requested_by"] == "hard_wall" and "hard_wall_after_forced_stop" in _steps(audit)
+        assert facts["kill_effect_at"][0] == 901.0  # 首次 kill（预算强停）在墙后才生效；屏障复核的 kill 在其后
+    else:
+        assert stop["requested_by"] == "turn_budget"
+    assert all(not getattr(x, "remove_sample", False) for x in delivered)
+    assert audit.harness_exit_code != generate_mod.HARNESS_EXIT_TIME_BUDGET_EXCEEDED or expected_exit == -1
+
+
+@pytest.mark.parametrize("kind", ["hang_turn_stop", "hang_hard_wall"])
+async def test_forced_stop_io_hang_is_bounded_by_stop_budget(monkeypatch, kind):
+    """R2：kill 通道挂起时强停在 EXECUTION_SCOPE_STOP_TIMEOUT_SEC 内返回（未确认 → 屏障 ① 同样按其总预算
+    fail-closed → missing），generate 自行结束、drain 与清理照常，不需要外部取消（修前永久 pending）。"""
+
+    chain, now, facts = _stop_chain(monkeypatch, kind=kind, stop_timeout=0.2)
+    started = asyncio.get_running_loop().time()
+    delivered = await asyncio.wait_for(
+        chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS)), timeout=10
+    )
+    elapsed = asyncio.get_running_loop().time() - started
+    audit = chain.orchestrator.audits[0]
+    stop = audit.termination["stop"]
+    assert facts["stop_entered"].is_set()
+    assert stop["forced"] is True and stop["stop_timed_out"] is True and stop["kill_returned_at_monotonic"] is None
+    assert stop["kill_verified"] is False and stop["residual_processes"] == -1
+    assert elapsed < 5.0
+    assert audit.runtime_quiescence_confirmed is False  # 未确认停止 → 屏障 fail-closed，不评分
+    assert chain.grading.calls == [] and all(getattr(x, "remove_sample", False) for x in delivered)
+    assert "cleanup_completed" in _steps(audit) and len(chain.docker.removed) == 1
+    assert all(t.done() for t in facts["driver_tasks"])
+
+
+async def test_parent_cancel_during_forced_stop_settles_harness_task(monkeypatch):
+    """R2 附带：强停 await 期间父任务（编排）被取消 → 仍持有的 harness task 先被取消并 settle，再传播。"""
+
+    chain, now, facts = _stop_chain(monkeypatch, kind="hang_turn_stop", stop_timeout=30.0)
+    running = asyncio.create_task(chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS)))
+    await asyncio.wait_for(facts["stop_entered"].wait(), timeout=5)
+    running.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await asyncio.wait_for(running, timeout=5)
+    assert facts["driver_cancelled"].is_set()
+    assert all(t.done() for t in facts["driver_tasks"])  # 修前：harness task 仍 pending，需探针单独收掉

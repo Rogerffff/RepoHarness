@@ -49,6 +49,8 @@ _KILL_VERIFY_ATTEMPTS = _scope.KILL_VERIFY_ATTEMPTS
 _KILL_VERIFY_INTERVAL_SECONDS = _scope.KILL_VERIFY_INTERVAL_SECONDS
 _KILL_SCRIPT = _scope.KILL_SCRIPT
 _COUNT_SCRIPT = _scope.COUNT_SCRIPT
+# 屏障 ① 的总截止点（Codex 联合审查 R2：次数上限不是时间上界；超时 = 未确认 → fail-closed）
+_STOP_TOTAL_TIMEOUT_SECONDS = 30.0
 
 
 def _digest_script(workdir: str) -> str:
@@ -101,13 +103,18 @@ class DockerQuiescenceBarrier:
             )
         # ① 终止 execution scope + 有界验证进程归零（批 C：与编排的强制停止共用同一动作；
         # 编排已先停过时这里是幂等复核）
-        residual = await terminate_agent_processes(
-            workspace, attempts=_KILL_VERIFY_ATTEMPTS, interval=_KILL_VERIFY_INTERVAL_SECONDS
+        stop = await terminate_agent_processes(
+            workspace, attempts=_KILL_VERIFY_ATTEMPTS, interval=_KILL_VERIFY_INTERVAL_SECONDS,
+            total_timeout=_STOP_TOTAL_TIMEOUT_SECONDS,
         )
+        residual = stop.residual
         if residual != 0:
             return QuiescenceRejected(
                 reason_code="execution_scope_termination_timeout",
-                evidence_refs=(f"residual_agent_processes:{residual}",),
+                evidence_refs=(
+                    f"residual_agent_processes:{residual}",
+                    f"stop_timed_out:{str(stop.timed_out).lower()}",
+                ),
             )
         # ② 双读指纹：静止证实
         first = await workspace.run_bash(_digest_script(self._workdir))
