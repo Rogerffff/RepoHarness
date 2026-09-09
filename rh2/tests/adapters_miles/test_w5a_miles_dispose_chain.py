@@ -758,3 +758,129 @@ def test_dispose_owner_loop_and_train_async_try_placement_source_facts(world):
     assert aclose_body.index("finally:") < aclose_body.index("await aclose()")  # buffer 关闭在 finally
     buf_src = (world.miles_root / "miles" / "rollout" / "fully_async_data_buffer.py").read_text(encoding="utf-8")
     assert "class DataBufferClosed" in buf_src and "async def aclose(self) -> None:" in buf_src
+
+
+# ---------------------------------------------------------------------------
+# I13（第 2 组 §3，owner 2026-09-09 已批；Codex 计划审查 R2）：中间等待超时、最终安全收口 → 成功；
+# 晚到异常 → 仍失败。成功例走真实 fork verdict + rh2 报告合成（resolve_external_wait_residue 重写磁盘报告）。
+# ---------------------------------------------------------------------------
+
+
+def _late_settling_generate_factory(world, *, settle_delay: float, late_exception: bool = False):
+    """generate_and_rm_group 替身：挂起直到被取消；收到取消后再花 settle_delay 秒收口（模拟 adapter 侧
+    session cleanup），然后结束（late_exception=True 时以 RuntimeError 结束 = 晚到异常）。"""
+
+    entered = threading.Event()
+    count = [0]
+
+    async def generate(state, prompt_group, *, sampling_params, evaluation, sample_done_callback):
+        count[0] += 1
+        if count[0] == 2:
+            entered.set()
+        try:
+            await asyncio.sleep(3600)
+        except asyncio.CancelledError:
+            await asyncio.sleep(settle_delay)
+            if late_exception:
+                raise RuntimeError("late boom after cancel")
+            raise
+
+    return generate, entered
+
+
+async def test_dual_loop_wait_timeout_then_safe_completion_is_ok(world, monkeypatch):
+    """取消等待 0.2s 到期时组 task 还在收口（首次快照 = 超时）；再过 0.1s 它们安全结束；rh2 关停链
+    execution_closure 完整 → 复查通过：最终 verdict ok=true，等待快照保留为 resolved_wait_timeouts，
+    rh2 磁盘报告被重写为 ok=true，不写 marker。"""
+
+    from miles.utils.rh2_shutdown import dispose_on_owner_loop, raise_if_shutdown_failed
+
+    generate, entered = _late_settling_generate_factory(world, settle_delay=0.3)
+    args = _args(world, rh2_shutdown_deadline_sec=0.2)
+    far, fn, _source = _build_fn(world, monkeypatch, generate=generate, args=args)
+    service, tmp = _assemble_rh2_service(monkeypatch)
+    drain = asyncio.create_task(_drain_like_production(fn))
+    await asyncio.to_thread(entered.wait, 5.0)
+    t0 = time.monotonic()
+    report = await dispose_on_owner_loop(fn, timeout_seconds=10.0)
+    elapsed = time.monotonic() - t0
+    assert elapsed < 3.0, elapsed
+    fn_report = report["rollout_fn"]
+    assert fn_report["deadline_exceeded"] is True and fn_report["active_groups_unfinished"] >= 1  # 首次快照：超时
+    assert report["ok"] is True and report["cleanup_ok"] is True, report
+    assert report["primary_cause"] is None and report["trigger"] == "owner_close" and report["errors"] == []
+    failure = report["shutdown_failure"]
+    assert failure["kind"] == "rollout_fn_shutdown_incomplete" and failure["resolved_by_final_closure"] is True
+    assert failure["final_state"]["all_settled"] is True and failure["final_state"]["late_group_exceptions"] == []
+    assert all(g["state"] == "cancelled" for g in failure["final_state"]["active_groups"])
+    assert report["resolved_wait_timeouts"] is failure
+    rh2 = report["rh2"]
+    assert rh2["ok"] is True and rh2["cleanup_ok"] is True and rh2["wait_residue_resolved"] is True
+    assert rh2["execution_closure"]["complete"] is True and rh2["residue"]["rollout_fn_shutdown_failure"] is None
+    assert rh2["resolved_wait_timeouts"][0]["rows"][0]["source"] == "miles_rollout_fn"
+    disk = json.loads((tmp / "shutdown_report.json").read_text(encoding="utf-8"))
+    assert disk["ok"] is True and disk["residue_free"] is True and disk["first_cause"] is None
+    assert disk["trigger"] == "owner_close" and disk["resolved_wait_timeouts"][0]["final_state"]["all_settled"] is True
+    assert raise_if_shutdown_failed(report, driver_cause=None, evidence_dir=tmp) is None
+    assert not (tmp / "shutdown_failure.json").exists()
+    with pytest.raises(far.RolloutFnClosed):
+        await drain
+
+
+async def test_dual_loop_late_exception_after_wait_timeout_keeps_the_run_failed(world, monkeypatch):
+    """同形态但组 task 在期限后以异常结束 = 晚到异常，不是安全收口：verdict 仍 false，首因为等待失败，
+    rh2 报告晚到并入同一首因（trigger 升级为 shutdown_failure）。"""
+
+    from miles.utils.rh2_shutdown import ShutdownFailure, dispose_on_owner_loop, raise_if_shutdown_failed
+
+    generate, entered = _late_settling_generate_factory(world, settle_delay=0.3, late_exception=True)
+    args = _args(world, rh2_shutdown_deadline_sec=0.2)
+    far, fn, _source = _build_fn(world, monkeypatch, generate=generate, args=args)
+    service, tmp = _assemble_rh2_service(monkeypatch)
+    drain = asyncio.create_task(_drain_like_production(fn))
+    await asyncio.to_thread(entered.wait, 5.0)
+    report = await dispose_on_owner_loop(fn, timeout_seconds=10.0)
+    failure = report["shutdown_failure"]
+    assert report["ok"] is False and failure["resolved_by_final_closure"] is False
+    assert failure["final_state"]["all_settled"] is True
+    assert failure["final_state"]["late_group_exceptions"] and "late boom" in failure["final_state"]["late_group_exceptions"][0]
+    assert report["trigger"] == "shutdown_failure" and report["primary_cause"].startswith("shutdown_failure:")
+    assert report["resolved_wait_timeouts"] is None and report["rh2"]["wait_residue_resolved"] is False
+    disk = json.loads((tmp / "shutdown_report.json").read_text(encoding="utf-8"))
+    assert disk["ok"] is False and disk["trigger"] == "shutdown_failure" and "active_groups_unfinished" in disk["first_cause"]
+    assert disk["resolved_wait_timeouts"] == [] and disk["residue"]["rollout_fn_shutdown_failure"] is not None
+    with pytest.raises(ShutdownFailure):
+        raise_if_shutdown_failed(report, driver_cause=None, evidence_dir=tmp)
+    with pytest.raises(far.RolloutFnClosed):
+        await drain
+
+
+async def test_dual_loop_safe_completion_without_closure_evidence_stays_failed(world, monkeypatch):
+    """同形态、task 也安全结束，但 rh2 侧拿不到"rollout 容器已确认释放"的证据（一个 attempt 的 lease 未记
+    释放）→ execution_closure 不完整，等待快照不解消：verdict 仍 false，首因为等待失败。"""
+
+    from miles.utils.rh2_shutdown import ShutdownFailure, dispose_on_owner_loop, raise_if_shutdown_failed
+
+    generate, entered = _late_settling_generate_factory(world, settle_delay=0.3)
+    args = _args(world, rh2_shutdown_deadline_sec=0.2)
+    far, fn, _source = _build_fn(world, monkeypatch, generate=generate, args=args)
+    service, tmp = _assemble_rh2_service(monkeypatch)
+    service.orchestrator = SimpleNamespace(
+        audits=[SimpleNamespace(lease=SimpleNamespace(container_id="rh2-c1"), lease_released=False, failure_records=[])],
+        cleanup_quarantine=[],
+    )
+    drain = asyncio.create_task(_drain_like_production(fn))
+    await asyncio.to_thread(entered.wait, 5.0)
+    report = await dispose_on_owner_loop(fn, timeout_seconds=10.0)
+    failure = report["shutdown_failure"]
+    assert failure["final_state"]["all_settled"] is True and failure["final_state"]["late_group_exceptions"] == []
+    assert report["ok"] is False and failure["resolved_by_final_closure"] is False
+    closure = report["rh2"]["execution_closure"]
+    assert closure["complete"] is False and closure["rollout_containers_unreleased"] == ["rh2-c1"]
+    assert report["trigger"] == "shutdown_failure" and report["resolved_wait_timeouts"] is None
+    disk = json.loads((tmp / "shutdown_report.json").read_text(encoding="utf-8"))
+    assert disk["ok"] is False and disk["ok_if_wait_residue_resolved"] is False and disk["resolved_wait_timeouts"] == []
+    with pytest.raises(ShutdownFailure):
+        raise_if_shutdown_failed(report, driver_cause=None, evidence_dir=tmp)
+    with pytest.raises(far.RolloutFnClosed):
+        await drain

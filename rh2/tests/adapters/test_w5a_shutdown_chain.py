@@ -1109,3 +1109,98 @@ async def test_grading_queue_step_drains_backlog_within_timeout(tmp_path, monkey
     assert calls == ["first", "second"] and queue.queue_depth == 0 and queue._workers == []
     if not cancel_submitters:
         assert await second == "report:second"
+
+
+# ---------------------------------------------------------------------------
+# I13（第 2 组 §3，owner 2026-09-09 已批）：execution_closure 事实与等待类残留的解消
+# ---------------------------------------------------------------------------
+
+
+def _audit(*, container: str | None, released: bool, failures: tuple[str, ...] = ()):
+    return SimpleNamespace(
+        lease=SimpleNamespace(container_id=container) if container else None,
+        lease_released=released,
+        failure_records=[SimpleNamespace(error_type=code) for code in failures],
+    )
+
+
+async def test_execution_closure_complete_lets_verified_wait_residue_resolve(tmp_path, monkeypatch):
+    """miles 侧只剩等待类快照：rh2 自己的 ok 仍 False（严格口径），但 execution_closure 完整 →
+    `ok_if_wait_residue_resolved`；owner 复查后 `resolve_external_wait_residue` 把快照移到
+    resolved_wait_timeouts，磁盘报告原子重写，ok 变 True。"""
+
+    orchestrator = SimpleNamespace(audits=[_audit(container="c1", released=True)], cleanup_quarantine=[])
+    service, _docker = _assemble_service(tmp_path, monkeypatch, orchestrator=orchestrator)
+    monkeypatch.setattr(bringup.BringupService, "_instance", service)
+    report = await service.close(reason="rollout_manager_dispose", trigger="owner_close", external_residue=_LATE_RESIDUE)
+    assert report.ok is False and report.residue_free is False
+    assert report.execution_closure["complete"] is True and report.execution_closure["attempts_audited"] == 1
+    assert report.residue_free_excluding_external_wait is True and report.ok_if_wait_residue_resolved is True
+    disk0 = json.loads((bringup.ARTIFACT_DIR / "shutdown_report.json").read_text(encoding="utf-8"))
+    assert disk0["ok"] is False and disk0["ok_if_wait_residue_resolved"] is True and disk0["resolved_wait_timeouts"] == []
+    final_state = {"all_settled": True, "active_groups": [{"state": "cancelled"}], "late_group_exceptions": []}
+    resolved = bringup.resolve_external_wait_residue(final_state)  # 进程级入口 = miles 侧调用形状
+    assert resolved is report and report.ok is True and report.residue_free is True
+    (entry,) = report.resolved_wait_timeouts
+    assert entry["rows"][0]["source"] == "miles_rollout_fn" and entry["final_state"] == final_state
+    assert entry["rollout_fn_shutdown_failure"]["kind"] == "rollout_fn_shutdown_incomplete"
+    assert report.residue["unfinished_executions"] == [] and report.residue["rollout_fn_shutdown_failure"] is None
+    disk = json.loads((bringup.ARTIFACT_DIR / "shutdown_report.json").read_text(encoding="utf-8"))
+    assert disk["ok"] is True and disk["residue_free"] is True
+    assert disk["resolved_wait_timeouts"][0]["rows"][0]["prompt_id"] == "pg0"
+    assert disk["residue"]["rollout_fn_shutdown_failure"] is None and disk["first_cause"] is None
+    assert not (bringup.ARTIFACT_DIR / "shutdown_report.json.tmp").exists()
+    assert service.app_handle.stop_calls == 1  # 解消不重跑 cleanup
+    assert bringup.resolve_external_wait_residue(final_state) is None  # 再调一次：没有可移的快照
+
+
+async def test_wait_residue_resolution_keeps_rh2_own_unfinished_execution_as_residue(tmp_path, monkeypatch):
+    """rh2 自己的未完成执行（source 不是 miles_rollout_fn）不算等待类快照：不可解消。"""
+
+    service, _docker = _assemble_service(tmp_path, monkeypatch)
+    residue = {
+        "unfinished_executions": [
+            *_LATE_RESIDUE["unfinished_executions"],
+            {"source": "rh2_inflight", "reason": "unfinished_after_cancel_wait", "trajectory_id": "t1"},
+        ],
+        "rollout_fn_shutdown_failure": _LATE_RESIDUE["rollout_fn_shutdown_failure"],
+    }
+    report = await service.close(reason="rollout_manager_dispose", trigger="owner_close", external_residue=residue)
+    assert report.residue_free_excluding_external_wait is False and report.ok_if_wait_residue_resolved is False
+    assert service.resolve_external_wait_residue({"all_settled": True}) is None and report.ok is False
+
+
+@pytest.mark.parametrize(
+    "orchestrator",
+    [
+        SimpleNamespace(audits=[_audit(container="c1", released=False)], cleanup_quarantine=[]),  # 容器未确认释放
+        SimpleNamespace(
+            audits=[_audit(container="c1", released=True, failures=("finalization_receipt_write_failed",))],
+            cleanup_quarantine=[],
+        ),  # 必要记录写失败
+        SimpleNamespace(
+            audits=[_audit(container="c1", released=True, failures=("audit_sink_failed_secondary",))],
+            cleanup_quarantine=[],
+        ),  # audit 落盘失败
+    ],
+)
+async def test_missing_closure_evidence_keeps_wait_residue_unresolved(tmp_path, monkeypatch, orchestrator):
+    service, _docker = _assemble_service(tmp_path, monkeypatch, orchestrator=orchestrator)
+    report = await service.close(reason="rollout_manager_dispose", trigger="owner_close", external_residue=_LATE_RESIDUE)
+    assert report.cleanup_clean is True and report.residue_free_excluding_external_wait is True  # 只差 closure 证据
+    assert report.execution_closure["complete"] is False and report.ok_if_wait_residue_resolved is False
+    assert service.resolve_external_wait_residue({"all_settled": True}) is None
+    assert report.ok is False and report.resolved_wait_timeouts == []
+    disk = json.loads((bringup.ARTIFACT_DIR / "shutdown_report.json").read_text(encoding="utf-8"))
+    assert disk["ok"] is False and disk["execution_closure"]["complete"] is False
+
+
+async def test_evidence_failure_or_first_cause_keeps_wait_residue_unresolved(tmp_path, monkeypatch):
+    service, _docker = _assemble_service(tmp_path, monkeypatch)
+    report = await service.close(
+        reason="rollout_manager_dispose", trigger="run_fatal", first_cause="RuntimeError: worker exploded",
+        external_residue=_LATE_RESIDUE,
+    )
+    assert report.execution_closure["complete"] is False and report.execution_closure["first_cause"] is not None
+    assert report.ok_if_wait_residue_resolved is False and service.resolve_external_wait_residue({}) is None
+    assert report.first_cause is not None and report.ok is False

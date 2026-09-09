@@ -419,6 +419,12 @@ class ShutdownReport:
     # patch 0013：关停开始之后（进行中或已完成）后到的原因/残留的并入记录——
     # 报告所有权在此，不建旁路 marker；每次并入一条 {phase, trigger, first_cause, ...}
     late_merges: list[dict[str, Any]] = field(default_factory=list)
+    # I13（第 2 组 §3，owner 2026-09-09 已批）：rh2 负责的执行 / 资源 / 必要记录的完成事实（bringup 在
+    # residue 装配之后填；`complete` 是它们的合取）。miles 侧"等待超时后来清完"的改判由 miles owner loop
+    # 复查任务状态后调用 bringup.resolve_external_wait_residue 完成——本报告自己的 `ok` 口径不变。
+    execution_closure: dict[str, Any] = field(default_factory=dict)
+    # I13：复查通过后从 residue 移出的等待类快照（保留为历史诊断；不再计入 residue_free）
+    resolved_wait_timeouts: list[dict[str, Any]] = field(default_factory=list)
     schema_id: str = "rh2.shutdown_report.v1"
 
     # ---- 记账口 -------------------------------------------------------------
@@ -452,6 +458,35 @@ class ShutdownReport:
         return not any(bool(v) for v in self.residue.values())
 
     @property
+    def residue_free_excluding_external_wait(self) -> bool:
+        """I13：不计 miles 侧等待类快照（`unfinished_executions` 里 source=miles_rollout_fn 的行与
+        `rollout_fn_shutdown_failure` 对象）时，其余残留是否为空。rh2 自己的未完成执行仍算残留。"""
+
+        for key, value in self.residue.items():
+            if key == "rollout_fn_shutdown_failure":
+                continue
+            if key == "unfinished_executions":
+                if any((row or {}).get("source") != "miles_rollout_fn" for row in value or []):
+                    return False
+                continue
+            if value:
+                return False
+        return True
+
+    @property
+    def ok_if_wait_residue_resolved(self) -> bool:
+        """I13：若 miles 侧等待类残留已由其 owner 复查确认消失，本报告其余部分是否允许成功退出——
+        清理步全绿、除等待快照外无残留、证据全部写成功、无首因、且 execution_closure 完整。"""
+
+        return (
+            self.cleanup_clean
+            and self.residue_free_excluding_external_wait
+            and not self.evidence_failures
+            and self.first_cause is None
+            and bool(self.execution_closure.get("complete"))
+        )
+
+    @property
     def ok(self) -> bool:
         """H9 口径：清理步全绿 + 无残留 + 证据全部写成功 + 触发不是故障。"""
 
@@ -477,6 +512,9 @@ class ShutdownReport:
             "secondary_failures": list(self.secondary_failures),
             "evidence_failures": list(self.evidence_failures),
             "residue": dict(self.residue),
+            "execution_closure": dict(self.execution_closure),
+            "ok_if_wait_residue_resolved": self.ok_if_wait_residue_resolved,
+            "resolved_wait_timeouts": [dict(r) for r in self.resolved_wait_timeouts],
             "rejected_after_close": dict(self.rejected_after_close),
             "late_merges": [dict(m) for m in self.late_merges],
             "steps": [s.to_dict() for s in self.steps],

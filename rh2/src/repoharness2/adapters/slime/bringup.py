@@ -2163,6 +2163,7 @@ class BringupService:
         # 残留——任一非空即 residue_free=False → ok=False，不再假绿。链前到达的残留在此并入。
         while self._deferred_residues:
             self._merge_residue(report, self._deferred_residues.pop(0))
+        report.execution_closure = self._execution_closure_facts(report, inflight=inflight, egress=egress)
         report.rejected_after_close = dict(self.lifecycle.rejected_after_close)
         self.lifecycle.mark_closed()
         if type(self)._instance is self:
@@ -2254,6 +2255,9 @@ class BringupService:
         if desc:
             if report.first_cause is None:
                 report.note_failure("trigger", desc)
+                if report.trigger == "owner_close" and trigger != "owner_close":
+                    # I13：无其它首因的等待类失败先不作首因、复查未解消后才晚到——报告的 trigger 随之升级
+                    report.trigger = trigger
             elif desc != report.first_cause:
                 line = f"late_primary({trigger}): {desc}"
                 if line not in report.secondary_failures:  # 逐字重复的后到首因不叠加
@@ -2287,6 +2291,50 @@ class BringupService:
                     "at_utc": datetime.now(timezone.utc).isoformat(),
                 }
             )
+
+    def _execution_closure_facts(
+        self, report: ShutdownReport, *, inflight: dict[str, Any], egress: dict[str, Any]
+    ) -> dict[str, Any]:
+        """I13（第 2 组 §3）：rh2 负责的执行 / 资源 / 必要记录的完成事实。只陈述本进程能证明的事实：
+        在飞表清空、每个 attempt 的 rollout 容器按 lease 记账已释放、隔离队列 / grader 容器 / 私网无残留、
+        receipt 与 audit 落盘没有失败记录、evidence 全部写成功、无首因。任一项拿不到 = 不完整。"""
+
+        orchestrator = self.orchestrator
+        audits = list(getattr(orchestrator, "audits", []) or []) if orchestrator is not None else []
+        unreleased = [
+            a.lease.container_id for a in audits
+            if getattr(a, "lease", None) is not None and not getattr(a, "lease_released", False)
+        ]
+        record_failure_types = {"finalization_receipt_write_failed", "audit_sink_failed_secondary"}
+        record_failures = sum(
+            1 for a in audits for f in getattr(a, "failure_records", []) if f.error_type in record_failure_types
+        )
+        residue = report.residue
+        facts = {
+            "orchestrator_present": orchestrator is not None,
+            "attempts_audited": len(audits),
+            "inflight_unfinished": len(inflight.get("unfinished_after_cancel_wait", []) or []),
+            "rollout_containers_unreleased": unreleased,
+            "quarantined_containers": list(residue.get("quarantined_containers", []) or []),
+            "grading_containers_open": list(residue.get("grading_containers_open", []) or []),
+            "record_write_failures": record_failures,
+            "egress_cleanup_failures": len(egress.get("failures", []) or []),
+            "egress_relay_left": residue.get("egress_relay_left"),
+            "evidence_failures": len(report.evidence_failures),
+            "first_cause": report.first_cause,
+        }
+        facts["complete"] = (
+            facts["inflight_unfinished"] == 0
+            and not unreleased
+            and not facts["quarantined_containers"]
+            and not facts["grading_containers_open"]
+            and record_failures == 0
+            and facts["egress_cleanup_failures"] == 0
+            and facts["egress_relay_left"] is None
+            and facts["evidence_failures"] == 0
+            and report.first_cause is None
+        )
+        return facts
 
     @staticmethod
     def _merge_residue(report: ShutdownReport, external_residue: dict[str, Any]) -> int:
@@ -2336,6 +2384,38 @@ class BringupService:
             report.note_evidence_failure("evidence:shutdown_report_rewrite", f"{type(exc).__name__}: {exc}"[:300])
         print(f"[rh2-bringup] shutdown report amended after close: ok={report.ok} first_cause={report.first_cause!r} "
               f"secondary={report.secondary_failures} residue={report.residue}")
+
+    def resolve_external_wait_residue(self, final_state: dict[str, Any] | None) -> ShutdownReport | None:
+        """I13（第 2 组 §3，owner 2026-09-09 已批）：miles owner loop 复查确认"等待超时的任务已结束、无晚到异常"
+        后调用。只有在本报告已完成、且 `ok_if_wait_residue_resolved`（清理全绿、除等待快照外无残留、证据全部
+        写成功、无首因、execution_closure 完整）时，才把 miles 侧等待类快照从 residue 移到
+        `resolved_wait_timeouts`（保留为历史诊断，含复查到的最终状态）并原子重写磁盘报告；
+        否则不改任何东西、返回 None。返回后调用方读报告自己的 `ok`。"""
+
+        report = self.shutdown_report
+        if report is None or not report.ok_if_wait_residue_resolved:
+            return None
+        rows = list(report.residue.get("unfinished_executions", []) or [])
+        moved = [row for row in rows if (row or {}).get("source") == "miles_rollout_fn"]
+        failure = report.residue.get("rollout_fn_shutdown_failure")
+        if not moved and failure is None:
+            return None
+        report.residue["unfinished_executions"] = [row for row in rows if row not in moved]
+        report.residue["rollout_fn_shutdown_failure"] = None
+        report.resolved_wait_timeouts.append(
+            {
+                "rows": moved,
+                "rollout_fn_shutdown_failure": failure,
+                "final_state": final_state,
+                "resolved_at_utc": datetime.now(timezone.utc).isoformat(),
+            }
+        )
+        try:
+            self._write_report_to_disk(report)  # 同一路径原子重写：ok/residue_free 随之重算
+        except Exception as exc:  # noqa: BLE001
+            report.note_evidence_failure("evidence:shutdown_report_rewrite", f"{type(exc).__name__}: {exc}"[:300])
+        print(f"[rh2-bringup] external wait residue resolved by final closure: ok={report.ok} rows={len(moved)}")
+        return report
 
     @staticmethod
     def _write_report_to_disk(report: ShutdownReport) -> Path:
@@ -2589,6 +2669,16 @@ async def close_bringup_service(
         secondary_causes=secondary_causes,
         external_residue=external_residue,
     )
+
+
+def resolve_external_wait_residue(final_state: dict[str, Any] | None) -> ShutdownReport | None:
+    """I13 进程级入口（miles `rh2_shutdown.close_rollout_fn_and_rh2` 在最终复查通过后调用）：
+    见 `BringupService.resolve_external_wait_residue`。没有 service / 报告未完成 / 不满足条件 → None。"""
+
+    service = BringupService._instance
+    if service is None:
+        return None
+    return service.resolve_external_wait_residue(final_state)
 
 
 def notify_run_fatal(exc: BaseException) -> bool:
