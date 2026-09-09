@@ -292,7 +292,6 @@ async def test_cap_then_cc_exit_is_max_turns_exhausted_present_truncated_and_gra
     audit = chain.orchestrator.audits[0]
     assert all(not getattr(x, "remove_sample", False) for x in delivered)  # 不是 ABORTED
     assert audit.harness_exit_code == 1
-    assert "harness_exit_after_turn_budget" not in _steps(audit) or True
     assert audit.termination_kind_hint == "max_turns_exhausted"
     assert audit.outcome_v2["termination_kind"] == "max_turns_exhausted"
     assert audit.outcome_v2["completion_class"] == "present_truncated"
@@ -496,3 +495,371 @@ async def test_turn_truncated_member_keeps_full_through_real_buffer_after_inject
     assert got.group is group2
     td = _convert(world, args2, got.group)
     assert len(td["raw_reward"]) == 2  # 两个成员都进训练数据，reward 来自真实评分表
+
+
+# ================================================================ Codex 联合审查 R1：真实分块 HTTP 的 cap 竞态
+
+import json as _json  # noqa: E402
+import time as _time  # noqa: E402
+
+
+class _RaceTokenizer:
+    def apply_chat_template(self, *a, **kw):
+        return [1, 2, 3]
+
+    def decode(self, *a, **kw):
+        return "probe reply"
+
+
+class _Engine:
+    """内存 SGLang 替身：生成阻塞到 release；abort 计数。"""
+
+    def __init__(self):
+        self.version = "3"
+        self.reset()
+
+    def reset(self):
+        self.entered, self.release, self.cancelled = asyncio.Event(), asyncio.Event(), asyncio.Event()
+        self.calls = 0
+        self.aborts = 0
+
+
+class _EngineResponse:
+    status = 200
+
+    def __init__(self, payload):
+        self.payload = payload
+
+    async def json(self, **kw):
+        return self.payload
+
+
+class _EngineContext:
+    def __init__(self, engine, url, payload):
+        self.engine, self.url, self.payload = engine, url, payload
+
+    async def __aenter__(self):
+        if self.url.endswith("/abort_request"):
+            self.engine.aborts += 1
+            return _EngineResponse({})
+        self.engine.calls += 1
+        self.engine.entered.set()
+        try:
+            await self.engine.release.wait()
+        except asyncio.CancelledError:
+            self.engine.cancelled.set()
+            raise
+        return _EngineResponse({
+            "text": "probe reply",
+            "meta_info": {
+                "id": self.payload["rid"], "finish_reason": {"type": "stop"},
+                "weight_version": str(self.engine.version),
+                "output_token_logprobs": [[-0.1, 7, None], [-0.1, 8, None]],
+            },
+        })
+
+    async def __aexit__(self, *a):
+        return False
+
+
+class _EngineSession:
+    def __init__(self, engine):
+        self.engine = engine
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *a):
+        return False
+
+    def post(self, url, json=None, headers=None):
+        return _EngineContext(self.engine, url, json)
+
+
+class _EngineAiohttp:
+    class ClientError(Exception):
+        pass
+
+    def __init__(self, engine):
+        self.engine = engine
+
+    def ClientSession(self, **kw):
+        return _EngineSession(self.engine)
+
+    def ClientTimeout(self, **kw):
+        return None
+
+
+def _reset_wire_generation(monkeypatch, slime_common) -> None:
+    """把 capture wire / turn budget wire 的进程级单代归属重置为"新进程"（同 W3b 启动测试的 fixture）。"""
+
+    monkeypatch.setattr(slime_common, "_rh2_capture_wire_installed", False, raising=False)
+    monkeypatch.setattr(slime_common, "_rh2_capture_wire_registry", None, raising=False)
+    monkeypatch.setattr(slime_common, "_rh2_turn_budget_wire_registry", None, raising=False)
+
+
+async def _until(predicate, timeout=2.0):
+    async with asyncio.timeout(timeout):
+        while not predicate():
+            await asyncio.sleep(0.001)
+
+
+def _split_body_request(client, body_bytes, headers, gate):
+    async def partial():
+        yield body_bytes[:-1]
+        await gate.wait()
+        yield body_bytes[-1:]
+
+    return client.post("/v1/messages", data=partial(), headers=headers)
+
+
+async def _race_case(registry, adapter, engine, name, *, split_bodies: bool, close_on_refusal: bool):
+    from aiohttp.test_utils import TestClient, TestServer
+    from slime.utils.types import Sample
+
+    from repoharness2.adapters.slime.bringup import make_per_rollout_adapter
+    from repoharness2.adapters.slime.generate import GenerationCaptureHook
+    from repoharness2.adapters.slime.session_capability import mint_session_capability
+
+    engine.reset()
+    paid = f"exec_{name}#p1-aaaa"
+    sid = f"s-{paid}"
+    cap = mint_session_capability(paid)
+    hook = GenerationCaptureHook(
+        trajectory_id=f"traj_{name}", model_name="probe", backend_name="sglang", backend_version="probe",
+        renderer_cls_name="probe", tokenizer_name="probe", template_hash="sha256:" + "a" * 64,
+    )
+    per = make_per_rollout_adapter(registry, adapter, hook)
+    per.open_session(sid, physical_attempt_id=paid, capability_token=cap.token, deadline_monotonic=_time.monotonic() + 60)
+    notified: list[dict] = []
+    registry.subscribe_turn_budget(sid, lambda _: notified.append({
+        "captures_at_notify": len(hook.records),
+        "admitted_inflight_at_notify": len(adapter.inflight.get(sid, ())),
+    }))
+    client = TestClient(TestServer(adapter.app, handler_cancellation=True))
+    await client.start_server()
+    body = {"model": "probe", "max_tokens": 16, "stream": True, "messages": [{"role": "user", "content": "probe"}]}
+    headers = {"Authorization": f"Bearer {cap.token}", "Content-Type": "application/json"}
+    encoded = _json.dumps(body).encode()
+    gates = [asyncio.Event(), asyncio.Event()]
+    requests: list[asyncio.Task] = []
+
+    async def request(i):
+        if split_bodies:
+            return await _split_body_request(client, encoded, headers, gates[i])
+        return await client.post("/v1/messages", json=body, headers=headers)
+
+    try:
+        requests.append(asyncio.create_task(request(0)))
+        if split_bodies:
+            requests.append(asyncio.create_task(request(1)))
+            await _until(lambda: registry._inflight.get(sid, 0) == 2)  # 两个请求头都过了 guard，body 都没收全
+            assert registry.turn_budget_snapshot(sid) is None
+            gates[0].set()
+            await engine.entered.wait()  # 第 1 个已接纳并开始生成
+            gates[1].set()  # 第 2 个 body 补齐：修前此刻立即 403 + 通知
+        else:
+            await engine.entered.wait()
+            requests.append(asyncio.create_task(request(1)))
+        await asyncio.sleep(0.05)
+        early = {
+            "refusal_before_generation_release": requests[1].done(),
+            "captures": len(hook.records), "notified": list(notified), "engine_calls": engine.calls,
+        }
+        if close_on_refusal:
+            engine.release.set()  # 让已接纳的第 1 轮交付；拒绝只能在其后到达
+            refused = await asyncio.wait_for(requests[1], timeout=2)
+            assert refused.status == 403
+            requests[0].cancel()  # 客户端收到不可重试拒绝后关闭在飞连接——第 1 轮已交付，无可断
+            await asyncio.gather(requests[0], return_exceptions=True)
+            await asyncio.sleep(0.05)
+            statuses = [refused.status]
+        else:
+            engine.release.set()
+            replies = await asyncio.gather(*requests)
+            statuses = [r.status for r in replies]
+            for r in replies:
+                await r.read()
+        await _until(lambda: registry._inflight.get(sid, 0) == 0)
+        result = {
+            "early": early, "statuses": statuses, "captures": len(hook.records),
+            "tree_turns": adapter.manager.turn_count(sid), "poison": registry.poison.reason(sid),
+            "aborts": engine.aborts, "budget": registry.turn_budget_snapshot(sid), "notified": notified,
+        }
+        leaves = await per.finish_session(sid, base_sample=Sample(index=0))
+        result["leaf_response_tokens"] = [s.tokens[-s.response_length:] for s in leaves]
+        return result
+    finally:
+        engine.release.set()
+        for tsk in requests:
+            if not tsk.done():
+                tsk.cancel()
+        await asyncio.gather(*requests, return_exceptions=True)
+        await per.drop_session(sid)
+        await client.close()
+
+
+async def test_cap_refusal_waits_for_admitted_inflight_even_when_bodies_race(world, monkeypatch):
+    """Codex 联合审查 R1（移植其 cap_body_race_probe 三案）：真实 vendored app + 真实 capture wire /
+    proxy / 轨迹树，只替换 SGLang IO。cap=1：两个请求头先后过 guard、body 都没收全（修前判定点在读 body
+    之前，两者都在"0 次"时通过），第 1 个补齐 body 开始生成、第 2 个补齐 body → 修前立即 403 + 预算通知
+    （在飞第 1 轮未交付），客户端据此关连接则第 1 轮断连成 client_cancelled；修后第 2 个等第 1 轮交付
+    再被拒，通知时 captures=1、已接纳在飞=0，关连接也无可断。"""
+
+    world.install_sglang_stub()
+    import slime.agent.adapters.common as slime_common
+    from slime.agent.adapters.anthropic import AnthropicAdapter
+
+    from repoharness2.adapters.slime import capture_wire as cw
+    from repoharness2.adapters.slime.bringup import build_production_model_call_proxy
+
+    _reset_wire_generation(monkeypatch, slime_common)  # 本测试 = 新进程代（与 W3b 启动测试同约定）
+    registry = cw.CaptureRegistry()
+    cw.install_capture_wire(registry)
+    build_production_model_call_proxy(registry, lambda: "3", require_real=False, artifact_sink=None)
+    engine = _Engine()
+    monkeypatch.setattr(cw, "aiohttp", _EngineAiohttp(engine))
+    for name, split, close in (("seq", False, False), ("race_keep", True, False), ("race_close", True, True)):
+        adapter = AnthropicAdapter(tokenizer=_RaceTokenizer(), sglang_url="http://fake-engine", max_turns_per_sid=1)
+        adapter.app.middlewares.append(cw.build_session_guard_middleware(registry))
+        r = await _race_case(registry, adapter, engine, name, split_bodies=split, close_on_refusal=close)
+        assert r["early"]["refusal_before_generation_release"] is False, (name, r)  # 拒绝不早于已接纳轮的交付
+        assert r["early"]["engine_calls"] == 1
+        assert r["captures"] == 1 and r["tree_turns"] == 1 and r["poison"] is None and r["aborts"] == 0, (name, r)
+        assert r["budget"]["cap"] == 1 and r["budget"]["accepted"] == 1 and r["budget"]["exhausted"] is True
+        assert r["notified"] == [{"captures_at_notify": 1, "admitted_inflight_at_notify": 0}], (name, r)
+        assert r["leaf_response_tokens"] == [[7, 8]]
+        if not close:
+            assert r["statuses"] == [200, 403]
+        else:
+            assert r["statuses"] == [403]
+
+
+class _HttpCapDriver:
+    """真实 HTTP 驱动：第一个成员用分块 body 制造竞态，第二个成员顺序；都在 cap=1 后收到 403 并按 CC 退出。"""
+
+    name = "claude_code"
+
+    def __init__(self, client, registry, engine, holder, *, race_first: bool):
+        self.client, self.registry, self.engine, self.holder, self.race_first = client, registry, engine, holder, race_first
+        self.rows: list[dict] = []
+
+    async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt):
+        self.engine.reset()
+        sid = self.registry.resolve_capability(session_id)
+        hook = self.holder["hook"]
+        row = {"race": self.race_first and not self.rows}
+        self.rows.append(row)
+        body = {"model": "probe", "max_tokens": 16, "stream": True, "messages": [{"role": "user", "content": "probe"}]}
+        encoded = _json.dumps(body).encode()
+        headers = {"Authorization": f"Bearer {session_id}", "Content-Type": "application/json"}
+        gates = [asyncio.Event(), asyncio.Event()]
+        tasks: list[asyncio.Task] = []
+
+        async def request(n):
+            if row["race"]:
+                return await _split_body_request(self.client, encoded, headers, gates[n])
+            return await self.client.post("/v1/messages", json=body, headers=headers)
+
+        try:
+            tasks.append(asyncio.create_task(request(0)))
+            if row["race"]:
+                tasks.append(asyncio.create_task(request(1)))
+                await _until(lambda: self.registry._inflight.get(sid, 0) == 2)
+                gates[0].set()
+                await self.engine.entered.wait()
+                gates[1].set()
+                await asyncio.sleep(0.05)
+                row["refused_before_delivery"] = tasks[1].done()
+                self.engine.release.set()
+                refused = await asyncio.wait_for(tasks[1], timeout=2)
+                row.update(refusal_status=refused.status, captures_at_refusal=len(hook.records))
+                tasks[0].cancel()  # 收到拒绝后关连接：第 1 轮已交付
+                await asyncio.gather(tasks[0], return_exceptions=True)
+            else:
+                await self.engine.entered.wait()
+                tasks.append(asyncio.create_task(request(1)))
+                await asyncio.sleep(0.03)
+                assert not tasks[1].done()
+                self.engine.release.set()
+                responses = await asyncio.gather(*tasks)
+                for response in responses:
+                    await response.read()
+                row.update(statuses=[r.status for r in responses], captures_at_refusal=len(hook.records))
+            return 1
+        finally:
+            for tsk in tasks:
+                if not tsk.done():
+                    tsk.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+            row.update(captures=len(hook.records), poison=self.registry.poison.reason(sid), aborts=self.engine.aborts)
+            self.engine.release.set()
+
+
+async def test_cap_body_race_group_reaches_real_buffer_as_keep_full(world, tmp_path, monkeypatch):
+    """Codex 联合审查 R1（移植其 cap_to_admission_probe）：同一竞态经真实 HTTP → capture → formal 编排 →
+    canonicalize → 真实 DefaultDataBuffer：修前第一成员 missing/api_failure、整组补采；修后两成员都是
+    max_turns_exhausted / KEEP_FULL，buffer=1，raw_reward=[1.0, 0.0]，每成员训练 token=2。"""
+
+    world.install_sglang_stub()
+    import slime.agent.adapters.common as slime_common
+    from aiohttp.test_utils import TestClient, TestServer
+    from slime.agent.adapters.anthropic import AnthropicAdapter
+
+    from repoharness2.adapters.slime import capture_wire as cw
+    from repoharness2.adapters.slime.bringup import (
+        bringup_leaf_facts,
+        build_production_model_call_proxy,
+        inject_disposition_policy,
+        make_per_rollout_adapter,
+    )
+
+    _reset_wire_generation(monkeypatch, slime_common)
+    registry = cw.CaptureRegistry()
+    cw.install_capture_wire(registry)
+    build_production_model_call_proxy(registry, lambda: "5", require_real=False, artifact_sink=None)
+    engine = _Engine()
+    engine.version = "5"
+    monkeypatch.setattr(cw, "aiohttp", _EngineAiohttp(engine))
+    adapter = AnthropicAdapter(tokenizer=_RaceTokenizer(), sglang_url="http://fake-engine", max_turns_per_sid=1)
+    adapter.app.middlewares.append(cw.build_session_guard_middleware(registry))
+    client = TestClient(TestServer(adapter.app, handler_cancellation=True))
+    await client.start_server()
+    try:
+        chain = _build_chain(world, tmp_path, grading_kinds=BOTH_OK)
+        holder: dict = {}
+        orch = chain.orchestrator
+
+        def factory(hook, defaults):
+            holder["hook"] = hook
+            return make_per_rollout_adapter(registry, adapter, hook)
+
+        orch._adapter_factory = factory
+        orch._leaf_facts_fn = bringup_leaf_facts
+        orch._session_drain_owner = registry.drain_session_plane
+        orch._session_poison_check = registry.poison.is_poisoned
+        orch._session_poison_subscribe = registry.poison.subscribe
+        orch._session_poison_unsubscribe = registry.poison.unsubscribe
+        orch._session_poison_reason = registry.poison.reason
+        orch._capture_boundary_check = registry.assert_session_clean
+        orch._turn_budget_subscribe = registry.subscribe_turn_budget
+        orch._turn_budget_unsubscribe = registry.unsubscribe_turn_budget
+        orch._turn_budget_snapshot = registry.turn_budget_snapshot
+        driver = _HttpCapDriver(client, registry, engine, holder, race_first=True)
+        orch._harness_driver = driver
+        prompt_group, group = await _dispatch_group(world, chain)
+        assert driver.rows[0]["race"] is True and driver.rows[0]["refused_before_delivery"] is False
+        assert driver.rows[0]["captures"] == 1 and driver.rows[0]["poison"] is None and driver.rows[0]["aborts"] == 0
+        assert [a.outcome_v2["termination_kind"] for a in orch.audits] == ["max_turns_exhausted", "max_turns_exhausted"]
+        assert [[s.remove_sample for s in member] for member in group] == [[False], [False]]
+        args = _miles_args(world, chain)
+        inject_disposition_policy(args)
+        buf, recycled = _buffer(world, args)
+        await buf.put(_entry(world, prompt_group, group))
+        assert len(buf._buffer) == 1 and recycled == []
+        got = await buf.get(current_version=5)
+        td = _convert(world, args, got.group)
+        assert td["raw_reward"] == [1.0, 0.0]
+        assert [sum(mask) for mask in td["loss_masks"]] == [2, 2]
+    finally:
+        await client.close()

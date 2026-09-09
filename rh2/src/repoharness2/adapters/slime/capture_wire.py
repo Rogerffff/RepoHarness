@@ -587,21 +587,6 @@ class CaptureRegistry:
         with self._lock:
             self._turn_budget_subscribers.pop(sid, None)
 
-    async def wait_inflight_zero(self, sid: str, *, timeout: float, poll: float = 0.02) -> bool:
-        """等该 sid 的 guard 级在飞计数归零（有界轮询；须在 adapter loop 上调用）。"""
-
-        import asyncio as _asyncio
-
-        deadline = time.monotonic() + max(timeout, 0.0)
-        while True:
-            with self._lock:
-                n = self._inflight.get(sid, 0)
-            if n <= 0:
-                return True
-            if time.monotonic() >= deadline:
-                return False
-            await _asyncio.sleep(poll)
-
     def _inflight_enter(self, sid: str) -> None:
         with self._lock:
             self._inflight[sid] = self._inflight.get(sid, 0) + 1
@@ -943,15 +928,6 @@ def build_session_guard_middleware(registry: "CaptureRegistry"):
         # 兼容路径：sid 直接注册（启动探针等非秘密 id）→ 原样放行。
         internal = registry.resolve_capability(token) if token else None
         effective = internal if internal is not None else token
-        if effective and request.path == "/v1/messages" and registry.turn_budget_reached(effective):
-            # 批 C（I02；Codex 计划审查 R3 的并发接缝）：计数已达 N 时，第 N+1 次不抢在第 N 次交付
-            # 之前被拒——先等该 sid 的在飞请求归零（受 session 期限约束），再进入下方授权判定与
-            # _run_turn（那里 vendored _check_turn_cap 的包装会拒绝并记录预算事实）。否则 CC 收到
-            # 拒绝立刻退出，会把在飞的第 N 轮断连成 client_cancelled poison。授权判定与 inflight
-            # 计入之间仍无 await（在下方）。
-            deadline = registry.session_deadline(effective)
-            budget = 30.0 if deadline is None else max(0.0, deadline - time.monotonic())
-            await registry.wait_inflight_zero(effective, timeout=min(budget, 600.0))
         if effective:
             with registry._lock:
                 known = effective in registry.hooks
@@ -1071,7 +1047,11 @@ def install_turn_budget_wire(registry: CaptureRegistry) -> None:
         raise CaptureWireOwnershipError(
             "turn budget wire 已绑定另一 registry——进程级单代所有权被违反。"
         )
-    original_check = slime_common.BaseAdapter._check_turn_cap
+    # 重置代（测试按"新进程"重置 wire 归属）时包装保存的原始方法，不叠包装
+    original_check = getattr(slime_common, "_rh2_original_check_turn_cap", None)
+    if original_check is None:
+        original_check = slime_common.BaseAdapter._check_turn_cap
+        slime_common._rh2_original_check_turn_cap = original_check
 
     def rh2_check_turn_cap(self, sid):
         cap = self.max_turns_per_sid
@@ -1097,6 +1077,36 @@ def install_turn_budget_wire(registry: CaptureRegistry) -> None:
         )
 
     slime_common.BaseAdapter._check_turn_cap = rh2_check_turn_cap
+
+    original_run_turn = getattr(slime_common, "_rh2_original_run_turn", None)
+    if original_run_turn is None:
+        original_run_turn = slime_common.BaseAdapter._run_turn
+        slime_common._rh2_original_run_turn = original_run_turn
+
+    async def rh2_run_turn(self, request):
+        """批 C（Codex 联合审查 R1）：拒绝第 N+1 次之前先等**已接纳**的在飞轮交付。
+
+        判定点与 vendored 计数器同步：读完 body、算出 sid 之后（与 vendored _run_turn 的前置条件
+        一致）；从这里到 vendored `_check_turn_cap` 之间没有 await（aiohttp 缓存 body，二次 json()
+        不挂起），所以"两个请求都在 N-1 次时过检查、一个接纳一个立刻被拒"的交错不再存在。等待对象 =
+        vendored `self.inflight[sid]`（计数器之后才加入：不含本请求、不含其它待拒请求，多个待拒请求
+        不互相等待），受 session 期限约束；期限内没等到也放行拒绝（episode 本就在收口）。拒绝响应与
+        预算命中通知因此都在已接纳轮交付之后。
+        """
+
+        import asyncio as _asyncio
+
+        body = await request.json()
+        sid = self._session_id(request, body)
+        if sid not in self.closed and registry.turn_budget_reached(sid):
+            deadline = registry.session_deadline(sid)
+            budget = 30.0 if deadline is None else max(0.0, deadline - time.monotonic())
+            end = time.monotonic() + min(budget, 600.0)
+            while self.inflight.get(sid) and time.monotonic() < end:
+                await _asyncio.sleep(0.02)
+        return await original_run_turn(self, request)
+
+    slime_common.BaseAdapter._run_turn = rh2_run_turn
     slime_common._rh2_turn_budget_wire_registry = registry
 
 
