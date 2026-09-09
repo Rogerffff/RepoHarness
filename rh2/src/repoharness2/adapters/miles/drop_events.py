@@ -33,20 +33,31 @@ from pathlib import Path
 from typing import Any
 
 __all__ = [
+    "ATTEMPT_COST_SNAPSHOT_EVENT",
+    "COST_SUMMARY_SCHEMA_ID",
     "DROP_STAGES",
     "GROUP_CONSUMED_EVENT",
     "GROUP_DROP_EVENT",
     "SUMMARY_SCHEMA_ID",
     "iter_event_rows",
     "main",
+    "summarize_attempt_costs",
     "summarize_group_events",
 ]
 
 GROUP_DROP_EVENT = "group_filtered"
 GROUP_CONSUMED_EVENT = "group_consumed"
+# N1（第 2 组 §4 / I15-I20）：rh2 编排在每个 physical attempt 的 finally 段发出的成本快照
+# （schema 见 generate.py `_emit_attempt_cost_snapshot`）。它只是编排阶段的事实（disposition_hint），
+# 最终消费 / 丢弃仍由上面两种 buffer 事件判定。
+ATTEMPT_COST_SNAPSHOT_EVENT = "attempt_cost_snapshot"
 DROP_STAGES: tuple[str, ...] = ("put_aborted", "dynamic_filter", "consume_stale")
 SUMMARY_SCHEMA_ID = "rh2.group_event_summary.v1"
+COST_SUMMARY_SCHEMA_ID = "rh2.attempt_cost_summary.v1"
 UNKNOWN_TASK = "<unknown>"
+COST_FIELDS: tuple[str, ...] = (
+    "elapsed_seconds", "accepted_turns", "captured_output_tokens", "trainable_tokens_total", "input_tokens_total",
+)
 
 
 def iter_event_rows(paths: Iterable[Path | str]) -> Iterator[dict[str, Any]]:
@@ -186,13 +197,181 @@ def summarize_group_events(rows: Iterable[Mapping[str, Any]], *, run_id: str | N
     }
 
 
+def _num(value: Any) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    return float(value)
+
+
+def _dist(values: list[float], *, unknown: int) -> dict[str, Any]:
+    """成员级数值分布：count / min / p50 / max / sum + unknown 计数（未知不填 0，不进统计）。"""
+
+    if not values:
+        return {"count": 0, "min": None, "p50": None, "max": None, "sum": None, "unknown": unknown}
+    ordered = sorted(values)
+    return {
+        "count": len(values),
+        "min": ordered[0],
+        "p50": ordered[(len(ordered) - 1) // 2],
+        "max": ordered[-1],
+        "sum": round(sum(values), 3),
+        "unknown": unknown,
+    }
+
+
+def _new_cost_bucket() -> dict[str, Any]:
+    return {
+        "groups": 0,
+        "members_observed": 0,
+        "groups_without_snapshots": 0,
+        "member_fields": {name: {"values": [], "unknown": 0} for name in COST_FIELDS},
+        "group_cost_seconds": [],  # 每组已知成员 elapsed 之和（成员耗时之和，不是作业墙钟 / GPU 时间）
+        "groups_with_unknown_members": 0,
+        "root_cause_reasons": Counter(),  # 仅 put_aborted：导致丢组的成员在快照里的原因
+        "disposition_hints": Counter(),
+    }
+
+
+def _finish_cost_bucket(bucket: dict[str, Any]) -> dict[str, Any]:
+    fields = {
+        name: _dist(entry["values"], unknown=entry["unknown"]) for name, entry in bucket["member_fields"].items()
+    }
+    group_cost = bucket["group_cost_seconds"]
+    return {
+        "groups": bucket["groups"],
+        "members_observed": bucket["members_observed"],
+        "groups_without_snapshots": bucket["groups_without_snapshots"],
+        "member_fields": fields,
+        "group_cost_seconds": _dist(group_cost, unknown=bucket["groups_with_unknown_members"]),
+        "root_cause_reasons": dict(sorted(bucket["root_cause_reasons"].items())),
+        "disposition_hints": dict(sorted(bucket["disposition_hints"].items())),
+    }
+
+
+def summarize_attempt_costs(rows: Iterable[Mapping[str, Any]], *, run_id: str | None = None) -> dict[str, Any]:
+    """N1（第 2 组 §4）：把 `attempt_cost_snapshot` 与 buffer 终局事件按组身份连接，给出各终局的成本分布。
+
+    - 连接键：同 run 内 `rh2_prompt_group_id`（组终局行与快照都带）；`put_aborted` 行再按
+      `aborted_members[*].physical_attempt_id` 找导致丢组的成员及其快照原因。
+    - 桶：``consumed`` 与每个丢弃原因（`group_filtered.reason_code`，缺则 drop_stage）。每桶：组数、成员观测数、
+      成员级 elapsed / turns / tokens 分布（未知单列，不填 0）、**整组连带成本** = 同组所有已知成员 elapsed 之和
+      （七个 600s 成员 + 一个 5s 失败成员 = 4205s；不是失败者的 5s，也不是八条完整轨迹），多根因组保留原因
+      集合、不跨桶累加。
+    - 分母：组终局数仍是组数；成员观测数单列；无终局事件的快照记 ``unmatched_snapshots``，没有快照的组记
+      ``groups_without_snapshots``，缺组身份的旧格式行记 ``legacy_rows``；同一 attempt 多条快照只取最后一条并
+      计 ``duplicate_snapshots``（多条 FORK 训练行属同一 attempt，不重复记成员）。
+    """
+
+    snapshots_by_attempt: dict[str, Mapping[str, Any]] = {}
+    duplicates = 0
+    terminal_rows: list[Mapping[str, Any]] = []
+    skipped = {"foreign_run": 0, "malformed": 0}
+    for row in rows:
+        kind = row.get("event")
+        if kind == "_malformed":
+            skipped["malformed"] += 1
+            continue
+        if kind not in (ATTEMPT_COST_SNAPSHOT_EVENT, GROUP_DROP_EVENT, GROUP_CONSUMED_EVENT):
+            continue
+        if run_id is not None and row.get("run_id") != run_id:
+            skipped["foreign_run"] += 1
+            continue
+        if kind == ATTEMPT_COST_SNAPSHOT_EVENT:
+            paid = row.get("physical_attempt_id")
+            if not paid:
+                skipped["malformed"] += 1
+                continue
+            if paid in snapshots_by_attempt:
+                duplicates += 1
+            snapshots_by_attempt[str(paid)] = row
+        else:
+            terminal_rows.append(row)
+
+    by_group: dict[str, list[Mapping[str, Any]]] = {}
+    for snap in snapshots_by_attempt.values():
+        group = snap.get("rh2_prompt_group_id")
+        if group:
+            by_group.setdefault(str(group), []).append(snap)
+    matched_groups: set[str] = set()
+    buckets: dict[str, dict[str, Any]] = {}
+    legacy_rows = 0
+    for row in terminal_rows:
+        group = row.get("rh2_prompt_group_id")
+        if not group:
+            legacy_rows += 1
+            continue
+        group = str(group)
+        matched_groups.add(group)
+        if row.get("event") == GROUP_CONSUMED_EVENT:
+            key = "consumed"
+        else:
+            key = str(row.get("reason_code") or row.get("reason") or row.get("drop_stage") or "?")
+        bucket = buckets.setdefault(key, _new_cost_bucket())
+        bucket["groups"] += 1
+        members = by_group.get(group, [])
+        if not members:
+            bucket["groups_without_snapshots"] += 1
+        bucket["members_observed"] += len(members)
+        known_elapsed: list[float] = []
+        unknown_member = False
+        for snap in members:
+            bucket["disposition_hints"][str(snap.get("disposition_hint") or "unknown")] += 1
+            for name in COST_FIELDS:
+                value = _num(snap.get(name))
+                entry = bucket["member_fields"][name]
+                if value is None:
+                    entry["unknown"] += 1
+                else:
+                    entry["values"].append(value)
+            elapsed = _num(snap.get("elapsed_seconds"))
+            if elapsed is None:
+                unknown_member = True
+            else:
+                known_elapsed.append(elapsed)
+        if members:
+            bucket["group_cost_seconds"].append(round(sum(known_elapsed), 3))
+            if unknown_member:
+                bucket["groups_with_unknown_members"] += 1
+        if row.get("drop_stage") == "put_aborted":
+            for member in row.get("aborted_members") or []:
+                snap = snapshots_by_attempt.get(str((member or {}).get("physical_attempt_id")))
+                if snap is None:
+                    bucket["root_cause_reasons"]["<no_snapshot>"] += 1
+                    continue
+                failure = snap.get("last_failure") or {}
+                reason = snap.get("reason_code") or failure.get("error_type") or snap.get("termination_kind_hint")
+                bucket["root_cause_reasons"][str(reason or "?")] += 1
+    unmatched = sum(
+        1 for snap in snapshots_by_attempt.values()
+        if not snap.get("rh2_prompt_group_id") or str(snap.get("rh2_prompt_group_id")) not in matched_groups
+    )
+    return {
+        "schema_id": COST_SUMMARY_SCHEMA_ID,
+        "run_id": run_id,
+        "snapshots": len(snapshots_by_attempt),
+        "duplicate_snapshots": duplicates,
+        "unmatched_snapshots": unmatched,
+        "legacy_rows": legacy_rows,
+        "terminals": {key: _finish_cost_bucket(bucket) for key, bucket in sorted(buckets.items())},
+        "rows_skipped": skipped,
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="rh2 W4：fully-async buffer 组级事件 run 结束汇总")
     parser.add_argument("paths", nargs="+", help="事件目录（MILES_RH2_EVENT_DIR）或 jsonl 文件")
     parser.add_argument("--run-id", default=None, help="只统计该 run_id 的事件")
     parser.add_argument("--json", default=None, help="把汇总写到该文件（缺省打印到 stdout）")
+    parser.add_argument(
+        "--costs", action="store_true",
+        help="N1：输出 attempt_cost_snapshot 与组终局事件连接后的成本汇总（缺省仍是组级汇总）",
+    )
     args = parser.parse_args(argv)
-    summary = summarize_group_events(iter_event_rows(args.paths), run_id=args.run_id)
+    rows = list(iter_event_rows(args.paths))
+    summary = (
+        summarize_attempt_costs(rows, run_id=args.run_id) if args.costs
+        else summarize_group_events(rows, run_id=args.run_id)
+    )
     text = json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=False)
     if args.json:
         Path(args.json).write_text(text + "\n", encoding="utf-8")

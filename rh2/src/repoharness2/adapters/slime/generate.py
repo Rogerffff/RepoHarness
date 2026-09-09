@@ -1665,6 +1665,26 @@ class QuiescenceRejected:
 QuiescenceOutcome = QuiescenceConfirmed | QuiescenceRejected  # 真 union 别名
 
 
+ATTEMPT_COST_SNAPSHOT_EVENT = "attempt_cost_snapshot"
+
+
+def _emit_rh2_event(kind: str, **fields: Any) -> bool:
+    """N1：经 miles 集成分支的结构化事件日志（`miles/utils/rh2_event_log.emit`）发一条可选观测事件。
+
+    miles 不在路径上（纯 rh2 单测 / s1 链）或事件日志未启用 → 不发、返回 False；emit 自身对写失败
+    只记日志。这是**可选观测**：调用方不得让它的失败改变 receipt、交付或错误传播。
+    """
+
+    try:
+        from miles.utils import rh2_event_log
+    except Exception:  # noqa: BLE001 —— miles 不可 import：观测面缺席，不影响执行
+        return False
+    if not rh2_event_log.enabled():
+        return False
+    rh2_event_log.emit(kind, **fields)
+    return True
+
+
 class RuntimeQuiescenceBarrier(Protocol):
     """注入式屏障能力（复核四轮 P0-3）：布尔常量只能声明"作者认为可用"，
     注入对象的存在性本身就是生产接线的证明。fa_formal 构造时必须非空，
@@ -2171,6 +2191,13 @@ class RolloutAudit:
     # I01（B 路线观测）：本 execution 的动作覆盖与训练行成本（turn_identity.TurnCoverageSummary
     # 的 dict；bringup 经 execution audit 记录落盘）。非 bringup 链为 None。
     turn_coverage: dict[str, Any] | None = None
+    # N1（第 2 组 §4 / I15-I20 成本观测）：成员组身份（rh2_prompt_group_id / rh2_group_index /
+    # rh2_member_slot，取自入口 metadata，缺则 None）——让成本快照能按组身份与 buffer 的
+    # group_filtered / group_consumed 事件连接；唯一已捕获输出 token 数与 capture 记录数（真实
+    # tape 计数，不是 response_length）。未到装配阶段 = None（未知，不填 0）。
+    member_identity: dict[str, Any] | None = None
+    captured_output_tokens: int | None = None
+    capture_record_count: int | None = None
 
     def step(self, name: str) -> None:
         self.steps.append(name)
@@ -2654,6 +2681,9 @@ class RolloutOrchestrator:
         audit.runtime_profile_digest = self._runtime_profile_digest  # W3b：run 级摘要随 audit 落盘
         self.audits.append(audit)
         audit_slot.append(audit)
+        audit.member_identity = {
+            key: meta.get(key) for key in ("rh2_prompt_group_id", "rh2_group_index", "rh2_member_slot")
+        }
         audit.step("step1_custom_generate_invoked")
         # 批 B（I03，06 A5-c，第一组）：episode 期限从这里起表——miles 已占并发槽、rh2 即将
         # docker run，是当前链上最早的 rh2 可见资源占用事件。materialize / 驱动引导 / harness
@@ -3052,6 +3082,8 @@ class RolloutOrchestrator:
                     drained_at_utc=_now_utc(),
                 )
                 audit.mark("session_drain_receipt_issued")
+            audit.capture_record_count = len(hook.records)  # N1：真实 tape 计数（0 也是已知事实）
+            audit.captured_output_tokens = sum(int(r.response_token_count) for r in hook.records)
             if not hook.records:
                 raise SlimeBindingError(
                     "no_capture_records",
@@ -4172,6 +4204,76 @@ class RolloutOrchestrator:
                 self._notify_fatal_halt(fatal)
                 raise
 
+    def _emit_attempt_cost_snapshot(
+        self, audit: "RolloutAudit", *, sid: str, in_flight: BaseException | None,
+        pending_tail_fatal: BaseException | None, receipt: Any,
+    ) -> None:
+        """N1（第 2 组 §4 / I15-I20 观测）：一条 `attempt_cost_snapshot`——成员身份 + 当时处置线索 + 成本事实。
+
+        口径（Codex 计划审查 R3）：`captured_output_tokens` = 唯一已捕获输出 token（真实 tape 计数），
+        不是 `response_length`（后者含工具输出等 `loss_mask=0` 上下文）；`trainable_tokens_total` /
+        `input_tokens_total` = I01 turn_coverage 的既有键（表示层可训动作量 / 训练行输入规模），不称梯度或
+        GPU 耗时；`accepted_turns` = 预算 registry 快照的接纳数；`elapsed_seconds` 从资源占用起表。拿不到的
+        一律 None，不填 0。多条 FORK 训练行属同一 physical attempt，本快照每个 attempt 只发一条。
+        """
+
+        outcome = audit.outcome_v2 or {}
+        if isinstance(in_flight, asyncio.CancelledError):
+            hint = "cancelled"
+        elif isinstance(in_flight, FatalExecutionInfrastructureError) or pending_tail_fatal is not None:
+            hint = "fatal"
+        elif outcome:
+            hint = "present" if str(outcome.get("completion_class", "")).startswith("present") else "aborted"
+        elif in_flight is not None:
+            hint = "aborted"
+        else:
+            hint = "unknown"
+        snapshot: dict[str, Any] | None = None
+        if self._turn_budget_snapshot is not None:
+            try:
+                snapshot = self._turn_budget_snapshot(sid)
+            except Exception:  # noqa: BLE001 —— 观测面
+                snapshot = None
+        if snapshot is None and audit.termination is not None:
+            snapshot = audit.termination.get("turn_budget")
+        coverage = audit.turn_coverage or {}
+        stop = (audit.termination or {}).get("stop") or {}
+        last_failure = audit.failure_records[-1] if audit.failure_records else None
+        grading_outcome = None
+        if audit.finalized is not None and getattr(audit.finalized, "grading_report", None) is not None:
+            grading_outcome = audit.finalized.grading_report.outcome
+        fields = {
+            "physical_attempt_id": audit.physical_attempt_id,
+            "rollout_execution_id": audit.trajectory_id,
+            "task_id": audit.task_id,
+            **(audit.member_identity or {}),
+            "execution_mode": self._mode,
+            "disposition_hint": hint,
+            "termination_kind": outcome.get("termination_kind"),
+            "termination_kind_hint": audit.termination_kind_hint,
+            "reason_code": outcome.get("reason_code"),
+            "completion_class": outcome.get("completion_class"),
+            "last_failure": (
+                {"stage": last_failure.stage, "error_type": last_failure.error_type} if last_failure else None
+            ),
+            "elapsed_seconds": round(time.monotonic() - audit.started_monotonic, 3),
+            "lifecycle_segments_seconds": dict(audit.lifecycle_timing.segments),
+            "accepted_turns": snapshot.get("accepted") if isinstance(snapshot, Mapping) else None,
+            "turn_budget_exhausted": snapshot.get("exhausted") if isinstance(snapshot, Mapping) else None,
+            "captured_output_tokens": audit.captured_output_tokens,
+            "capture_record_count": audit.capture_record_count,
+            "trainable_tokens_total": coverage.get("trainable_tokens_total"),
+            "input_tokens_total": coverage.get("input_tokens_total"),
+            "grading_outcome": grading_outcome,
+            "hard_wall_hit_by": (audit.episode_deadline or {}).get("hit_by"),
+            "stop_forced": stop.get("forced"),
+            "stop_before_deadline": stop.get("stop_before_deadline"),
+            "receipt_id": getattr(receipt, "receipt_id", None),
+            "receipt_disposition": getattr(receipt, "attempt_disposition", None),
+        }
+        if _emit_rh2_event(ATTEMPT_COST_SNAPSHOT_EVENT, **fields):
+            audit.mark("attempt_cost_snapshot_emitted")
+
     async def _run_finally_section(
         self,
         *,
@@ -4366,6 +4468,15 @@ class RolloutOrchestrator:
                         detail=f"{type(exc).__name__}: {exc}"[:300],
                     )
                 )
+        # N1（第 2 组 §4）：编排阶段的成本快照——只是**此刻**的事实（disposition_hint），最终消费 / 丢弃由
+        # buffer 事件判定（Codex 计划审查 R4：之后仍可能 audit sink 失败、交付盖章失败或 canonicalize 失败）。
+        # 可选观测：任何异常都不改 receipt、交付与错误传播。
+        try:
+            self._emit_attempt_cost_snapshot(
+                audit, sid=sid, in_flight=in_flight, pending_tail_fatal=pending_tail_fatal, receipt=receipt
+            )
+        except Exception as exc:  # noqa: BLE001 —— 观测失败只留痕
+            audit.mark(f"attempt_cost_snapshot_failed:{type(exc).__name__}")
         if self._audit_sink is not None:
             try:
                 self._audit_sink(audit)
