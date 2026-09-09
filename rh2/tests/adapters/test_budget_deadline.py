@@ -777,11 +777,13 @@ class _Budget:
 
 def _stop_chain(monkeypatch, *, kind: str, stop_timeout: float = 30.0):
     """真实 formal 编排 + 真实 DockerQuiescenceBarrier；只替换 Docker IO 与预算事件；可控时钟。
-    kind 控制 kill / count 的时钟推进（Codex stop_deadline_probe 的形状）。"""
+    kind 控制 kill / count 的返回内容与时钟推进（Codex stop_deadline_probe 与修后复核 stop_facts_probe 的形状：
+    kill exec 失败按真实 `_DockerWorkspace.run_bash` 原样返回非零 ExecResult，不是抛异常）。"""
 
     from repoharness2.adapters.slime import generate as generate_mod
     from repoharness2.adapters.slime import quiescence_barrier
     from repoharness2.adapters.slime.quiescence_barrier import DockerQuiescenceBarrier
+    from repoharness2.grading.manager import ExecResult
 
     chain = _formal_chain(barrier=DockerQuiescenceBarrier())
     orch, now, budget = chain.orchestrator, [0.0], _Budget()
@@ -791,24 +793,52 @@ def _stop_chain(monkeypatch, *, kind: str, stop_timeout: float = 30.0):
     orch._turn_budget_snapshot = budget.snapshot
     monkeypatch.setattr(generate_mod, "TURN_BUDGET_EXIT_GRACE_SEC", 0.005)
     monkeypatch.setattr(generate_mod, "EXECUTION_SCOPE_STOP_TIMEOUT_SEC", stop_timeout)
+    monkeypatch.setattr(generate_mod, "EXECUTION_SCOPE_STOP_RETRY_INTERVAL_SEC", 0.01)
     monkeypatch.setattr(quiescence_barrier, "_STOP_TOTAL_TIMEOUT_SECONDS", stop_timeout)
-    facts = {"stop_entered": asyncio.Event(), "kill_effect_at": [], "confirmation_at": [], "driver_tasks": [],
-             "driver_cancelled": asyncio.Event()}
+    facts = {"stop_entered": asyncio.Event(), "kill_effect_at": [], "kill_returns": [], "confirmation_at": [],
+             "driver_tasks": [], "driver_cancelled": asyncio.Event(), "kills": 0, "counts": 0}
     original_docker = orch._docker
+    exec_failed = ExecResult(1, "", "Error response from daemon: exec failed")
+    late_start = kind == "kill_failed_then_retry_delivers" or kind.startswith("stop_unproven")
 
     async def io(*args, input_bytes=None):
         if args[0] == "exec" and "pkill -9 -u agent" in args[-1]:
-            first = not facts["stop_entered"].is_set()
+            facts["kills"] += 1
+            k = facts["kills"]
             facts["stop_entered"].set()
             if kind.startswith("hang"):
                 await asyncio.Event().wait()  # kill 通道持续挂起：强停与屏障 ① 各由自己的总预算收口
-            if kind == "kill_effect_after_wall" and first:
-                now[0] = 901.0  # kill 尚未实际生效，墙钟已过；agent 仍活着
+            if k == 1 and kind in ("kill_effect_after_wall", "kill_reply_late_but_effect_before_wall"):
+                now[0] = 901.0  # 前者：kill 尚未实际生效，墙钟已过；后者：实际 899.5 已停，只是宿主回包 901 才到
+            if (k == 1 and kind in ("kill_failed_alive_after_wall", "kill_failed_then_retry_delivers")) or (
+                kind.startswith("stop_unproven") and k <= 3
+            ):
+                facts["kill_returns"].append((now[0], 1))
+                return exec_failed  # docker exec 本身失败：信号未投递，容器内执行未停
+            if k == 4 and kind == "stop_unproven_then_wall_passes_before_barrier":
+                now[0] = 901.0  # 屏障 ① 的 kill：此时期限已过
+            if k == 4 and kind == "stop_unproven_then_barrier_confirms_before_wall":
+                now[0] = 850.5
             facts["kill_effect_at"].append(now[0])
+            facts["kill_returns"].append((now[0], 0))
         if args[0] == "exec" and "ps -o pid= -u agent" in args[-1]:
+            facts["counts"] += 1
+            c = facts["counts"]
             if kind == "confirmation_after_wall":
                 now[0] = 901.0  # 进程已在墙前停止，只是计数回包晚
-            facts["confirmation_at"].append(now[0])
+            if kind in ("kill_failed_alive_after_wall", "kill_ok_positive_count_after_wall"):
+                if c <= 2:
+                    now[0] = 900.1 if c == 1 else 900.2  # 第二次查询在墙后**发起**，仍有 1 个进程
+                    facts["confirmation_at"].append((now[0], 1))
+                    return ExecResult(0, "1\n", "")
+                if c == 3:
+                    now[0] = 901.0  # 此时才真正归零
+            if (kind == "kill_failed_then_retry_delivers" and facts["kills"] == 1) or (
+                kind.startswith("stop_unproven") and facts["kills"] <= 3
+            ):
+                facts["confirmation_at"].append((now[0], 1))
+                return ExecResult(0, "1\n", "")  # 未投递的 kill 之后：进程仍在
+            facts["confirmation_at"].append((now[0], 0))
         return await original_docker(*args, input_bytes=input_bytes)
 
     class Driver:
@@ -818,7 +848,7 @@ def _stop_chain(monkeypatch, *, kind: str, stop_timeout: float = 30.0):
             facts["driver_tasks"].append(asyncio.current_task())
             adapter = chain.adapter_ref["adapter"]
             await adapter.run_all_turns()
-            now[0] = 899.5
+            now[0] = 850.0 if late_start else 899.5
             if kind == "hang_hard_wall":
                 now[0] = 900.1
                 return -1
@@ -833,24 +863,42 @@ def _stop_chain(monkeypatch, *, kind: str, stop_timeout: float = 30.0):
     return chain, now, facts
 
 
-@pytest.mark.parametrize(
-    ("kind", "expected_kind", "expected_exit", "kill_before_deadline"),
-    [
-        ("stop_before_wall", "max_turns_exhausted", -2, True),
-        ("kill_effect_after_wall", "hard_wall_timeout", -1, False),
-        ("confirmation_after_wall", "max_turns_exhausted", -2, True),
-    ],
-)
-async def test_stop_facts_decide_keep_vs_hard_wall(monkeypatch, kind, expected_kind, expected_exit, kill_before_deadline):
-    """R3 三案（Codex stop_deadline_probe）：墙前停 → KEEP（max_turns）；kill 在墙后才生效 → 到点时执行仍在
-    进行 = hard wall（DROP，cap 事实保留）；墙前已停、只是归零确认晚 → 仍 KEEP。判据 = kill 命令返回时刻
-    是否 ≤ 期限，不是"最后一次看时间是否已过"。"""
+def _member_verdicts(delivered):
+    """真实处置函数看真实载荷（Codex：看最终 Outcome 与处置，不只看字段）。"""
 
-    from repoharness2.adapters.slime import generate as generate_mod
+    from repoharness2.adapters.slime.bringup import make_disposition_policy
+    from repoharness2.governance.admission import AdmissionPayloadV1, decide_member_disposition
 
+    policy = make_disposition_policy()
+    return {
+        decide_member_disposition(AdmissionPayloadV1.model_validate(s.metadata["rh2_admission"]), policy=policy).verdict
+        for s in delivered
+    }
+
+
+# kind → (termination_kind, harness_exit_code, stop_before_deadline, 证据码, 强停尝试次数)
+_STOP_CASES = {
+    "stop_before_wall": ("max_turns_exhausted", -2, True, "zero_confirmed_before_deadline", 1),
+    "kill_effect_after_wall": ("hard_wall_timeout", -1, False, "kill_delivered_after_deadline", 1),
+    "confirmation_after_wall": ("max_turns_exhausted", -2, True, "kill_delivered_before_deadline_no_later_presence", 1),
+    "kill_failed_alive_after_wall": ("hard_wall_timeout", -1, False, "kill_exec_failed", 1),
+    "kill_ok_positive_count_after_wall": ("hard_wall_timeout", -1, False, "presence_observed_after_deadline", 1),
+    "kill_reply_late_but_effect_before_wall": ("hard_wall_timeout", -1, False, "kill_delivered_after_deadline", 1),
+}
+
+
+@pytest.mark.parametrize("kind", list(_STOP_CASES))
+async def test_stop_facts_decide_keep_vs_hard_wall(monkeypatch, kind):
+    """R3（Codex 联合审查 + 修后复核）：停止证据规则（Brief 批 C）决定 KEEP vs hard wall。
+    墙前归零 → KEEP；kill 在墙后才生效 → hard wall；墙前投递、只是归零确认晚 → KEEP；
+    kill exec 失败（899.5 返回非零）、墙后发起的查询仍活、901 才归零 → hard wall（修前 KEEP）；
+    投递成功但墙后发起的查询仍见进程 → hard wall（修前 KEEP）；实际墙前已停但 kill 回包 901 才到 → 保守 hard wall。
+    最终看真实 Outcome 与真实处置函数（KEEP_FULL / DROP_GROUP），不只看字段。"""
+
+    expected_kind, expected_exit, proven, evidence, attempts = _STOP_CASES[kind]
     chain, now, facts = _stop_chain(monkeypatch, kind=kind)
     delivered = await asyncio.wait_for(
-        chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS)), timeout=10
+        chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS)), timeout=15
     )
     audit = chain.orchestrator.audits[0]
     stop = audit.termination["stop"]
@@ -859,18 +907,187 @@ async def test_stop_facts_decide_keep_vs_hard_wall(monkeypatch, kind, expected_k
     assert audit.outcome_v2["termination_kind"] == expected_kind
     assert audit.outcome_v2["completion_class"] == "present_truncated"
     assert audit.termination["turn_budget"]["exhausted"] is True  # cap 事实保留
-    assert stop["kill_returned_before_deadline"] is kill_before_deadline
-    assert stop["stop_timed_out"] is False and stop["kill_verified"] is True
+    assert stop["stop_before_deadline"] is proven and stop["stop_before_deadline_evidence"] == evidence
+    assert stop["stop_attempts"] == attempts and stop["stop_timed_out"] is False and stop["kill_verified"] is True
     if kind == "confirmation_after_wall":
-        assert stop["confirmed_at_monotonic"] == 901.0 and stop["kill_returned_at_monotonic"] == 899.5
+        assert stop["confirmed_at_monotonic"] == 901.0 and stop["kill_delivered_at_monotonic"] == 899.5
+    if kind == "kill_failed_alive_after_wall":
+        assert stop["kill_exit_code"] == 1 and stop["kill_delivered_at_monotonic"] is None
+        assert stop["kill_returned_before_deadline"] is True  # 原始观测仍为 True——它不再是判据
+        assert [o["residual"] for o in stop["observations"]] == [1, 1, 0]
+        assert any(o["issued_at"] >= 900.0 and o["residual"] > 0 for o in stop["observations"])
+    if kind == "kill_ok_positive_count_after_wall":
+        assert stop["kill_delivered_at_monotonic"] == 899.5 and stop["confirmed_at_monotonic"] == 901.0
+    if kind == "kill_reply_late_but_effect_before_wall":
+        assert stop["kill_delivered_at_monotonic"] == 901.0  # 代码只看得到投递时刻 901：不确定性显式化为保守 DROP
     if expected_kind == "hard_wall_timeout":
         assert audit.episode_deadline["hit_by"] == "harness_outer"
         assert stop["requested_by"] == "hard_wall" and "hard_wall_after_forced_stop" in _steps(audit)
-        assert facts["kill_effect_at"][0] == 901.0  # 首次 kill（预算强停）在墙后才生效；屏障复核的 kill 在其后
+        if kind == "kill_effect_after_wall":
+            assert facts["kill_effect_at"][0] == 901.0  # 首次 kill（预算强停）在墙后才生效；屏障复核的 kill 在其后
+        assert _member_verdicts(delivered) == {"DROP_GROUP"}
     else:
         assert stop["requested_by"] == "turn_budget"
+        assert _member_verdicts(delivered) == {"KEEP_FULL"}
     assert all(not getattr(x, "remove_sample", False) for x in delivered)
-    assert audit.harness_exit_code != generate_mod.HARNESS_EXIT_TIME_BUDGET_EXCEEDED or expected_exit == -1
+
+
+async def test_failed_kill_is_retried_and_confirmation_before_wall_keeps(monkeypatch):
+    """R3：kill exec 失败而期限未到 = 未投递 → 重试（不是按 KEEP 放行也不是提前 hard wall）；第二次投递成功、
+    归零确认在期限前 → 证明（A）→ KEEP；证据跨次合并（attempts=2，投递取成功那次，计数全部保留）。"""
+
+    chain, now, facts = _stop_chain(monkeypatch, kind="kill_failed_then_retry_delivers", stop_timeout=0.2)
+    delivered = await asyncio.wait_for(
+        chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS)), timeout=15
+    )
+    audit = chain.orchestrator.audits[0]
+    stop = audit.termination["stop"]
+    assert audit.harness_exit_code == -2 and audit.outcome_v2["termination_kind"] == "max_turns_exhausted"
+    assert "turn_budget_stop_retry" in _steps(audit) and stop["stop_attempts"] == 2
+    assert [code for _, code in facts["kill_returns"][:2]] == [1, 0]
+    assert stop["kill_exit_code"] == 0 and stop["kill_delivered_at_monotonic"] == 850.0
+    assert stop["stop_before_deadline"] is True and stop["stop_before_deadline_evidence"] == "zero_confirmed_before_deadline"
+    assert [o["residual"] for o in stop["observations"]][0] == 1 and stop["observations"][-1]["residual"] == 0
+    assert audit.runtime_quiescence_confirmed is True and chain.grading.calls
+    assert _member_verdicts(delivered) == {"KEEP_FULL"}
+
+
+@pytest.mark.parametrize(
+    ("kind", "expected_kind", "proven", "evidence"),
+    [
+        ("stop_unproven_then_barrier_confirms_before_wall", "max_turns_exhausted", True, "quiescence_confirmed_before_deadline"),
+        ("stop_unproven_then_wall_passes_before_barrier", "hard_wall_timeout", False, "deadline_passed_before_quiescence_confirmed"),
+    ],
+)
+async def test_unproven_stop_has_no_keep_exit_before_the_wall(monkeypatch, kind, expected_kind, proven, evidence):
+    """R3：三次强停都未投递、期限未到 → 三态 None（不按已证明放行）→ 屏障 ① 再停一次并确认归零；确认时期限
+    未到 = 期限前的证明 → KEEP；确认时期限已过 = 期限前没有任何证明 → hard wall（DROP），hit_by 记屏障。"""
+
+    chain, now, facts = _stop_chain(monkeypatch, kind=kind, stop_timeout=0.2)
+    delivered = await asyncio.wait_for(
+        chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS)), timeout=15
+    )
+    audit = chain.orchestrator.audits[0]
+    stop = audit.termination["stop"]
+    assert audit.harness_exit_code == -2 and "turn_budget_stop_unproven" in _steps(audit)
+    assert stop["stop_attempts"] == 3 and stop["kill_delivered_at_monotonic"] is None
+    assert [code for _, code in facts["kill_returns"]][:3] == [1, 1, 1] and facts["kills"] == 4  # 第 4 次 = 屏障 ①
+    assert audit.runtime_quiescence_confirmed is True and chain.grading.calls
+    assert audit.outcome_v2["termination_kind"] == expected_kind
+    assert stop["stop_before_deadline"] is proven and stop["stop_before_deadline_evidence"] == evidence
+    if expected_kind == "hard_wall_timeout":
+        assert audit.episode_deadline["hit_by"] == "quiescence_barrier"
+        assert stop["requested_by"] == "hard_wall" and "hard_wall_after_unproven_stop" in _steps(audit)
+        assert _member_verdicts(delivered) == {"DROP_GROUP"}
+    else:
+        assert stop["requested_by"] == "turn_budget" and _member_verdicts(delivered) == {"KEEP_FULL"}
+
+
+async def test_terminate_records_delivery_and_observations_separately():
+    """Codex 修后复核（Falsifier stop_return_fact_probe 两案 + pkill 状态两案）：真实停止 helper 只记观测，
+    kill 命令返回时刻不是已停止事实；结论由 stop_proven_before 出。"""
+
+    from repoharness2.adapters.slime.execution_scope import (
+        COUNT_SCRIPT,
+        KILL_SCRIPT,
+        stop_proven_before,
+        terminate_agent_processes,
+    )
+    from repoharness2.grading.manager import ExecResult
+
+    # 案 1：kill exec 失败 899.5 返回，900.1 发起的查询仍活，901 归零 → 最终归零不证明期限前已停
+    now = [899.5]
+
+    class Failed:
+        count = 0
+
+        async def run_bash(self, script):
+            if script == KILL_SCRIPT:
+                return ExecResult(1, "", "probe: docker exec failed, no signal delivered")
+            assert script == COUNT_SCRIPT
+            self.count += 1
+            now[0] = 900.1 if self.count == 1 else 901.0
+            return ExecResult(0, "1\n" if self.count == 1 else "0\n", "")
+
+    r = await terminate_agent_processes(Failed(), interval=0, clock=lambda: now[0])
+    assert r.verified and r.kill_returned_at == 899.5 and r.kill_exit_code == 1 and r.kill_delivered_at is None
+    assert r.confirmed_at == 901.0 and [(o.issued_at, o.residual) for o in r.observations] == [(899.5, 1), (900.1, 0)]
+    assert stop_proven_before(r, 900.0) == (False, "kill_exec_failed")
+
+    # 案 2：实际 899.5 已停、kill 宿主回包 901 才到 → 代码只看到投递时刻 901 → 未证明（保守）
+    now = [899.5]
+
+    class LateReply:
+        async def run_bash(self, script):
+            if script == KILL_SCRIPT:
+                now[0] = 901.0
+                return ExecResult(0, "pkill_status=0\n", "")
+            return ExecResult(0, "0\n", "")
+
+    r = await terminate_agent_processes(LateReply(), interval=0, clock=lambda: now[0])
+    assert r.kill_delivered_at == 901.0 and r.pkill_status == 0 and r.confirmed_at == 901.0
+    assert stop_proven_before(r, 900.0) == (False, "kill_delivered_after_deadline")
+
+    # 案 3：exec 退出 0 但 pkill 自身 127（不存在）→ 不算投递
+    now = [10.0]
+
+    class NoPkill:
+        async def run_bash(self, script):
+            if script == KILL_SCRIPT:
+                return ExecResult(0, "pkill_status=127\n", "")
+            return ExecResult(0, "2\n", "")
+
+    r = await terminate_agent_processes(NoPkill(), attempts=1, interval=0, clock=lambda: now[0])
+    assert r.kill_delivered_at is None and r.pkill_status == 127 and r.residual == 2 and not r.verified
+    assert stop_proven_before(r, 900.0) == (False, "kill_exec_failed")
+
+    # 案 4：pkill 状态 1（无匹配 = scope 本就空）算投递；期限前投递 + 归零确认晚 → 证明（B）
+    now = [899.0]
+
+    class Empty:
+        async def run_bash(self, script):
+            if script == KILL_SCRIPT:
+                return ExecResult(0, "pkill_status=1\n", "")
+            now[0] = 900.5
+            return ExecResult(0, "0\n", "")
+
+    r = await terminate_agent_processes(Empty(), interval=0, clock=lambda: now[0])
+    assert r.kill_delivered_at == 899.0 and r.confirmed_at == 900.5
+    assert stop_proven_before(r, 900.0) == (True, "kill_delivered_before_deadline_no_later_presence")
+    assert stop_proven_before(r, None) == (None, "no_deadline")
+    assert stop_proven_before(None, 900.0) == (False, "no_stop_result")
+
+
+def test_merge_stop_results_keeps_first_delivery_and_all_observations():
+    from repoharness2.adapters.slime.execution_scope import (
+        ScopeObservation,
+        ScopeStopResult,
+        merge_stop_results,
+        stop_proven_before,
+    )
+
+    first = ScopeStopResult(
+        residual=1, kill_returned_at=850.0, kill_exit_code=1,
+        observations=[ScopeObservation(850.0, 850.2, 1)], timed_out=True, elapsed_seconds=0.2,
+    )
+    second = ScopeStopResult(
+        residual=0, kill_returned_at=851.0, kill_exit_code=0, kill_delivered_at=851.0, confirmed_at=851.3,
+        observations=[ScopeObservation(851.0, 851.3, 0)], elapsed_seconds=0.3,
+    )
+    merged = merge_stop_results(first, second)
+    assert merged.attempts == 2 and merged.kill_delivered_at == 851.0 and merged.confirmed_at == 851.3
+    assert merged.residual == 0 and merged.kill_exit_code == 0 and merged.elapsed_seconds == 0.5
+    assert [o.residual for o in merged.observations] == [1, 0]
+    assert stop_proven_before(merged, 900.0) == (True, "zero_confirmed_before_deadline")
+    # 期限后仍见进程的观测不被后来的归零覆盖
+    late = merge_stop_results(
+        ScopeStopResult(residual=1, kill_returned_at=899.5, kill_exit_code=0, kill_delivered_at=899.5,
+                        observations=[ScopeObservation(900.1, 900.2, 1)]),
+        ScopeStopResult(residual=0, kill_returned_at=None, confirmed_at=901.0,
+                        observations=[ScopeObservation(900.9, 901.0, 0)]),
+    )
+    assert late.kill_delivered_at == 899.5 and late.confirmed_at == 901.0 and late.kill_returned_at == 899.5
+    assert stop_proven_before(late, 900.0) == (False, "presence_observed_after_deadline")
 
 
 @pytest.mark.parametrize("kind", ["hang_turn_stop", "hang_hard_wall"])
@@ -890,6 +1107,14 @@ async def test_forced_stop_io_hang_is_bounded_by_stop_budget(monkeypatch, kind):
     assert stop["forced"] is True and stop["stop_timed_out"] is True and stop["kill_returned_at_monotonic"] is None
     assert stop["kill_verified"] is False and stop["residual_processes"] == -1
     assert elapsed < 5.0
+    if kind == "hang_turn_stop":
+        # 三次尝试都未返回、期限未到 → 三态 None（不按已证明放行），屏障 ① fail-closed 收口
+        assert stop["stop_attempts"] == 3 and stop["stop_before_deadline"] is None
+        assert stop["stop_before_deadline_evidence"] == "stop_attempts_exhausted_before_deadline"
+        assert "turn_budget_stop_unproven" in _steps(audit)
+    else:
+        assert stop["stop_attempts"] == 1 and stop["stop_before_deadline"] is False
+        assert stop["stop_before_deadline_evidence"] == "kill_not_returned"
     assert audit.runtime_quiescence_confirmed is False  # 未确认停止 → 屏障 fail-closed，不评分
     assert chain.grading.calls == [] and all(getattr(x, "remove_sample", False) for x in delivered)
     assert "cleanup_completed" in _steps(audit) and len(chain.docker.removed) == 1

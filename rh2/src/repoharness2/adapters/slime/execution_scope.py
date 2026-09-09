@@ -11,17 +11,23 @@
 Docker runner 在取消路径上 kill+wait 宿主 CLI）。"最多查 N 次、每次间隔 I 秒"只限制次数，不是时间上界，
 所以不再单独作为保证。函数不抛业务异常（`CancelledError` 原样传播）。
 
-停止事实（Codex 联合审查 R3）：`kill_returned_at` 是 kill 命令**返回**的时刻（`clock` 域：编排传入自己
-的钟）——SIGKILL 已投递的上界；`confirmed_at` 是首次观测到进程归零的时刻。两者分开记录，调用方据此区分
-"墙前已停、只是确认晚"与"墙到时仍在执行"，不把"已发出 kill"当成"已停止"，也不把晚确认当成越墙。
+停止证据（Codex 联合审查 R3 + 修后复核 R3；规则全文见 Brief 批 C"停止证据与判定规则"）：
+- `kill_returned_at`：kill exec **返回**的时刻（`clock` 域），无论成败——只是原始观测；
+- `kill_delivered_at`：只有 exec 退出 0 且脚本回显的 pkill 状态 ∈ {0（已发信号）, 1（无匹配 = scope 本就空）}
+  （或未回显：替身 / 旧脚本）才有值 = **SIGKILL 已投递**的时刻上界；exec 失败 / 超时 / pkill 出错都不算投递；
+- `observations`：每次残留计数的发起 / 返回时刻与结果——"发起时刻 ≥ 期限仍见进程"是"期限后仍有进程"的证据，
+  最终归零**不能**反过来证明期限前已停；
+- `confirmed_at`：首次观测到归零的时刻。
+`stop_proven_before(result, deadline)` 把这些观测翻译成三态结论 + 证据码；编排与测试用同一实现。
 """
 
 from __future__ import annotations
 
 import asyncio
+import re
 import time
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 __all__ = [
@@ -29,27 +35,123 @@ __all__ = [
     "KILL_SCRIPT",
     "KILL_VERIFY_ATTEMPTS",
     "KILL_VERIFY_INTERVAL_SECONDS",
+    "ScopeObservation",
     "ScopeStopResult",
+    "merge_stop_results",
+    "stop_proven_before",
     "terminate_agent_processes",
 ]
 
-KILL_SCRIPT = "pkill -9 -u agent >/dev/null 2>&1; true"
+# pkill 自身状态回显到 stdout（0 = 已发信号；1 = 无匹配进程；2/3/127 = pkill 出错 / 不存在）；末尾 `true` 让
+# exec 退出码只反映 docker exec 本身是否跑完——exec 非零 = 信号可能根本没投递（Codex 修后复核 R3）。
+KILL_SCRIPT = "pkill -9 -u agent >/dev/null 2>&1; echo pkill_status=$?; true"
 COUNT_SCRIPT = "ps -o pid= -u agent 2>/dev/null | wc -l"
 KILL_VERIFY_ATTEMPTS = 10
 KILL_VERIFY_INTERVAL_SECONDS = 0.5
+_PKILL_STATUS = re.compile(r"pkill_status=(\d+)")
+_PKILL_DELIVERED_STATUSES = frozenset({0, 1})
+
+
+@dataclass(frozen=True)
+class ScopeObservation:
+    """一次残留计数查询：发起 / 返回时刻（clock 域）与结果（-1 = 不可读）。"""
+
+    issued_at: float
+    returned_at: float
+    residual: int
+
+    def as_dict(self) -> dict[str, Any]:
+        return {"issued_at": self.issued_at, "returned_at": self.returned_at, "residual": self.residual}
 
 
 @dataclass
 class ScopeStopResult:
-    residual: int  # 0 = 已验证归零；>0 = 验证窗口内仍有残留；-1 = 未确认（计数不可读 / IO 超时）
-    kill_returned_at: float | None  # kill 命令返回时刻（clock 域）；None = kill 未在预算内返回
-    confirmed_at: float | None  # 首次观测到归零的时刻（clock 域）；None = 未确认
-    timed_out: bool  # 总预算内没有完成（某次 IO 超时或预算耗尽）
-    elapsed_seconds: float
+    residual: int  # 最后一次可读计数：0 = 已验证归零；>0 = 仍有残留；-1 = 未确认（不可读 / IO 超时）
+    kill_returned_at: float | None  # kill exec 返回时刻（clock 域），无论成败；None = 预算内未返回
+    kill_exit_code: int | None = None  # kill exec 退出码；None = 未返回
+    pkill_status: int | None = None  # 脚本回显的 pkill 自身状态；None = 未回显
+    kill_delivered_at: float | None = None  # SIGKILL 已投递的时刻上界；None = 未证明投递
+    confirmed_at: float | None = None  # 首次观测到归零的时刻（clock 域）；None = 未确认
+    observations: list[ScopeObservation] = field(default_factory=list)
+    timed_out: bool = False  # 总预算内没有完成（某次 IO 超时或预算耗尽）
+    elapsed_seconds: float = 0.0
+    attempts: int = 1  # 合并了几次 terminate_agent_processes 调用（编排重试时 >1）
 
     @property
     def verified(self) -> bool:
         return self.residual == 0
+
+    def presence_observed_at_or_after(self, t: float) -> bool:
+        """有没有一次**发起时刻 ≥ t** 的计数看到残留进程（用发起时刻，排除"早发起、晚回包"的解释）。"""
+
+        return any(o.residual > 0 and o.issued_at >= t for o in self.observations)
+
+    def as_dict(self, *, max_observations: int = 32) -> dict[str, Any]:
+        return {
+            "residual": self.residual,
+            "kill_returned_at": self.kill_returned_at,
+            "kill_exit_code": self.kill_exit_code,
+            "pkill_status": self.pkill_status,
+            "kill_delivered_at": self.kill_delivered_at,
+            "confirmed_at": self.confirmed_at,
+            "observations": [o.as_dict() for o in self.observations[:max_observations]],
+            "observation_count": len(self.observations),
+            "timed_out": self.timed_out,
+            "elapsed_seconds": self.elapsed_seconds,
+            "attempts": self.attempts,
+        }
+
+
+def merge_stop_results(earlier: ScopeStopResult | None, later: ScopeStopResult) -> ScopeStopResult:
+    """把编排的多次停止尝试合并成一份证据：投递取第一次成功的，归零取第一次观测到的，计数全部保留，
+    kill 返回事实取最近一次真正返回的。"""
+
+    if earlier is None:
+        return later
+    observations = list(earlier.observations) + list(later.observations)
+    readable = [o.residual for o in observations if o.residual >= 0]
+    returned = later if later.kill_returned_at is not None else earlier
+    return ScopeStopResult(
+        residual=readable[-1] if readable else -1,
+        kill_returned_at=returned.kill_returned_at,
+        kill_exit_code=returned.kill_exit_code,
+        pkill_status=returned.pkill_status,
+        kill_delivered_at=(
+            earlier.kill_delivered_at if earlier.kill_delivered_at is not None else later.kill_delivered_at
+        ),
+        confirmed_at=earlier.confirmed_at if earlier.confirmed_at is not None else later.confirmed_at,
+        observations=observations,
+        timed_out=later.timed_out,
+        elapsed_seconds=round(earlier.elapsed_seconds + later.elapsed_seconds, 3),
+        attempts=earlier.attempts + later.attempts,
+    )
+
+
+def stop_proven_before(result: ScopeStopResult | None, deadline: float | None) -> tuple[bool | None, str]:
+    """"执行在 deadline 前已停止"有没有被**证明**（Brief 批 C 停止证据规则）。返回 (三态, 证据码)：
+
+    - True：(A) 某次计数返回 0 且返回时刻 ≤ deadline；或 (B) SIGKILL 在 deadline 前投递，且此后没有任何
+      一次发起时刻 ≥ deadline 的计数看到进程（归零确认晚于 deadline 只是观测晚，不是越墙）；
+    - False：kill exec 失败 / 未返回、投递晚于 deadline、deadline 后仍观测到进程——"未证明"，调用方在
+      deadline 已过时按 hard wall 处理；
+    - None：没有 deadline（无从比较）。
+    """
+
+    if deadline is None:
+        return None, "no_deadline"
+    if result is None:
+        return False, "no_stop_result"
+    if result.confirmed_at is not None and result.confirmed_at <= deadline:
+        return True, "zero_confirmed_before_deadline"
+    if result.kill_delivered_at is None:
+        if result.kill_returned_at is None:
+            return False, "kill_not_returned"
+        return False, "kill_exec_failed"
+    if result.kill_delivered_at > deadline:
+        return False, "kill_delivered_after_deadline"
+    if result.presence_observed_at_or_after(deadline):
+        return False, "presence_observed_after_deadline"
+    return True, "kill_delivered_before_deadline_no_later_presence"
 
 
 async def terminate_agent_processes(
@@ -60,38 +162,54 @@ async def terminate_agent_processes(
     total_timeout: float = 30.0,
     clock: Callable[[], float] = time.monotonic,
 ) -> ScopeStopResult:
-    """`pkill -9 -u agent` 然后按 `ps -u agent | wc -l` 有界验证；`total_timeout` 秒内必定返回。"""
+    """`pkill -9 -u agent` 然后按 `ps -u agent | wc -l` 有界验证；`total_timeout` 秒内必定返回。
+
+    只记录观测，不下结论：投递 / 归零 / 期限后仍在的判定由 `stop_proven_before` 做。
+    """
 
     started = time.monotonic()
 
     def left() -> float:
         return total_timeout - (time.monotonic() - started)
 
-    result = ScopeStopResult(residual=-1, kill_returned_at=None, confirmed_at=None, timed_out=False, elapsed_seconds=0.0)
+    result = ScopeStopResult(residual=-1, kill_returned_at=None)
     try:
-        await asyncio.wait_for(workspace.run_bash(KILL_SCRIPT), timeout=max(0.0, left()))
+        kill = await asyncio.wait_for(workspace.run_bash(KILL_SCRIPT), timeout=max(0.0, left()))
     except (TimeoutError, asyncio.TimeoutError):
         result.timed_out = True
         result.elapsed_seconds = round(time.monotonic() - started, 3)
         return result
     result.kill_returned_at = clock()
+    exit_code = getattr(kill, "exit_code", 1)
+    result.kill_exit_code = exit_code if isinstance(exit_code, int) else 1
+    match = _PKILL_STATUS.search(str(getattr(kill, "stdout", "") or ""))
+    result.pkill_status = int(match.group(1)) if match else None
+    if result.kill_exit_code == 0 and (
+        result.pkill_status is None or result.pkill_status in _PKILL_DELIVERED_STATUSES
+    ):
+        result.kill_delivered_at = result.kill_returned_at
     for _ in range(attempts):
         if left() <= 0:
             result.timed_out = True
             break
+        issued_at = clock()
         try:
             probe = await asyncio.wait_for(workspace.run_bash(COUNT_SCRIPT), timeout=max(0.0, left()))
         except (TimeoutError, asyncio.TimeoutError):
             result.timed_out = True
             break
+        returned_at = clock()
+        residual = -1
         if getattr(probe, "exit_code", 1) == 0:
             try:
                 residual = int((getattr(probe, "stdout", "") or "").strip() or "0")
             except ValueError:
                 residual = -1
+        result.observations.append(ScopeObservation(issued_at=issued_at, returned_at=returned_at, residual=residual))
+        if residual >= 0:
             result.residual = residual
             if residual == 0:
-                result.confirmed_at = clock()
+                result.confirmed_at = returned_at
                 break
         if left() <= 0:
             result.timed_out = True

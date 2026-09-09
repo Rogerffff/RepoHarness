@@ -87,7 +87,12 @@ from typing import Any, Literal, Protocol
 
 from repoharness2.adapters.slime.async_worker import FatalExecutionInfrastructureError
 from repoharness2.adapters.slime.attempt_timing import AttemptLifecycleTiming
-from repoharness2.adapters.slime.execution_scope import ScopeStopResult, terminate_agent_processes
+from repoharness2.adapters.slime.execution_scope import (
+    ScopeStopResult,
+    merge_stop_results,
+    stop_proven_before,
+    terminate_agent_processes,
+)
 from repoharness2.adapters.slime.outcome_producer import (
     FAILURE_CODE_TERMINATION_MAP,
     STAGE_FALLBACK_TERMINATION_MAP,
@@ -356,6 +361,11 @@ HARNESS_EXIT_STOPPED_BY_RH2 = -2
 # 批 C（Codex 联合审查 R2）：强制停止（kill + 归零验证）的总截止点——停止 / 确认用自己的预算，与 episode
 # 期限无关；超时 = 未确认（屏障 ① 再复核并 fail-closed）。停止力学参数，不是策略预算。
 EXECUTION_SCOPE_STOP_TIMEOUT_SEC = 30.0
+# Codex 修后复核 R3：预算强停"未证明且期限未到"只可能是 kill 未投递（exec 失败 / 超时）——重试，直到证明或
+# 期限到；每次尝试各用上面的 30s 总预算（不因期限缩短）。尝试用尽仍未证明 → 不按已证明放行（三态 None），
+# 由屏障 ① 再停一次并 fail-closed，finalize 时期限已过则归 hard wall。
+EXECUTION_SCOPE_STOP_MAX_ATTEMPTS = 3
+EXECUTION_SCOPE_STOP_RETRY_INTERVAL_SEC = 1.0
 
 
 def _now_utc() -> datetime:
@@ -2921,7 +2931,8 @@ class RolloutOrchestrator:
                 # inflight 归零 → session_plane_drain_unclean）。cap 事实即使在场也以 hard wall 为准
                 # （第一组 / Codex 计划审查 R3：到点时执行仍在进行 = 真实 hard wall → DROP）。
                 if audit.termination["stop"].get("forced"):
-                    # 预算强停已执行过（kill 未在墙前返回 → 归 hard wall）：不重复 kill，只改归属
+                    # 预算强停已执行过（期限前未能证明停止 → 归 hard wall）：不重复 kill，只改归属；
+                    # 屏障 ① 还会再停一次并对未确认 fail-closed
                     audit.termination["stop"]["requested_by"] = "hard_wall"
                     audit.mark("hard_wall_after_forced_stop")
                 else:
@@ -3244,6 +3255,7 @@ class RolloutOrchestrator:
                     )
                     audit.runtime_quiescence_confirmed = True
                     audit.mark("runtime_quiescence_confirmed")
+                    self._reclassify_unproven_stop_after_quiescence(audit)  # Codex 修后复核 R3
                     # 冻结时刻：rollout_container_hold_after_freeze 的起点
                     audit.freeze_monotonic = time.monotonic()
                     grading_workspace = result.frozen_grading_workspace
@@ -3751,21 +3763,22 @@ class RolloutOrchestrator:
         )
 
     async def _force_stop_execution_scope(
-        self, sandbox: Any, audit: "RolloutAudit", *, requested_by: str
+        self, sandbox: Any, audit: "RolloutAudit", *, requested_by: str,
+        total_timeout: float | None = None, merged_with: ScopeStopResult | None = None,
     ) -> ScopeStopResult | None:
-        """批 C（I14 rollout 侧）：杀容器内 agent 进程并**有界**验证归零（总截止点
-        EXECUTION_SCOPE_STOP_TIMEOUT_SEC，Codex 联合审查 R2）；结果只落观测块 / failure_records，不抛
-        （首因 = 预算 / 墙钟；屏障 ① 会再复核一次并对残留 fail-closed）。停止事实分开记录 kill 返回时刻
-        与归零确认时刻（R3）。"""
+        """批 C（I14 rollout 侧）：杀容器内 agent 进程并**有界**验证归零——一次尝试，总截止点默认
+        EXECUTION_SCOPE_STOP_TIMEOUT_SEC（Codex 联合审查 R2）；结果只落观测块 / failure_records，不抛
+        （首因 = 预算 / 墙钟；屏障 ① 会再复核一次并对残留 fail-closed）。返回与 `merged_with`（之前的尝试）
+        **合并后**的证据；投递 / 归零 / 期限后仍在 三类观测分开记，结论由 `stop_proven_before` 出
+        （Codex 修后复核 R3：kill 命令返回不是停止事实）。"""
 
         if sandbox is None or audit.termination is None:
             return None
         stop = audit.termination["stop"]
         stop["requested_by"] = requested_by
+        budget = EXECUTION_SCOPE_STOP_TIMEOUT_SEC if total_timeout is None else max(0.0, float(total_timeout))
         try:
-            result = await terminate_agent_processes(
-                sandbox.workspace, total_timeout=EXECUTION_SCOPE_STOP_TIMEOUT_SEC, clock=self._clock
-            )
+            attempt = await terminate_agent_processes(sandbox.workspace, total_timeout=budget, clock=self._clock)
         except asyncio.CancelledError:
             raise
         except Exception as exc:  # noqa: BLE001 —— 停止动作自身异常：落账，不掩盖首因
@@ -3775,30 +3788,67 @@ class RolloutOrchestrator:
                     detail=f"{type(exc).__name__}: {exc}"[:500],
                 )
             )
-            result = ScopeStopResult(
-                residual=-1, kill_returned_at=None, confirmed_at=None, timed_out=False, elapsed_seconds=0.0
-            )
+            attempt = ScopeStopResult(residual=-1, kill_returned_at=None)
+        result = merge_stop_results(merged_with, attempt)
+        self._record_stop_facts(audit, result)
+        audit.mark(f"{requested_by}_forced_stop")
+        return result
+
+    def _record_stop_facts(self, audit: "RolloutAudit", result: ScopeStopResult) -> None:
+        """停止观测块：原始观测（kill 返回 / 投递 / 每次计数）与三态结论分开写；
+        `kill_returned_before_deadline` 只是原始观测，不再是判据。"""
+
+        stop = audit.termination["stop"]
         deadline = audit.episode_deadline_monotonic
+        proven, evidence = stop_proven_before(result, deadline)
         stop["forced"] = True
         stop["kill_verified"] = result.verified
         stop["residual_processes"] = result.residual
         stop["stop_timed_out"] = result.timed_out
         stop["stop_elapsed_seconds"] = result.elapsed_seconds
+        stop["stop_attempts"] = result.attempts
         stop["kill_returned_at_monotonic"] = result.kill_returned_at
+        stop["kill_exit_code"] = result.kill_exit_code
+        stop["pkill_status"] = result.pkill_status
+        stop["kill_delivered_at_monotonic"] = result.kill_delivered_at
         stop["confirmed_at_monotonic"] = result.confirmed_at
+        stop["observations"] = [o.as_dict() for o in result.observations[:32]]
         stop["kill_returned_before_deadline"] = (
             None if result.kill_returned_at is None or deadline is None
             else result.kill_returned_at <= deadline
         )
-        audit.mark(f"{requested_by}_forced_stop")
-        return result
+        stop["stop_before_deadline"] = proven
+        stop["stop_before_deadline_evidence"] = evidence
+
+    def _reclassify_unproven_stop_after_quiescence(self, audit: "RolloutAudit") -> None:
+        """Codex 修后复核 R3 的最后一道核对：预算强停"尝试用尽仍未证明、期限当时未到"的样本，屏障 ① 刚又停
+        了一次并确认归零。此刻期限未到 → 这次归零确认就是期限前的证明（规则 A）；期限已过 → 期限前没有任何
+        一次证明，按已批规则归 hard wall（保守：屏障恰跨期限完成的窄窗也归 DROP，证据码显式记下）。"""
+
+        block = audit.termination
+        if block is None:
+            return
+        stop = block.get("stop") or {}
+        if stop.get("stop_before_deadline_evidence") != "stop_attempts_exhausted_before_deadline":
+            return
+        if self._episode_remaining(audit) > 0:
+            stop["stop_before_deadline"] = True
+            stop["stop_before_deadline_evidence"] = "quiescence_confirmed_before_deadline"
+            return
+        stop["stop_before_deadline"] = False
+        stop["stop_before_deadline_evidence"] = "deadline_passed_before_quiescence_confirmed"
+        stop["requested_by"] = "hard_wall"
+        audit.termination_kind_hint = "hard_wall_timeout"
+        audit.episode_deadline["hit_by"] = "quiescence_barrier"
+        audit.mark("hard_wall_after_unproven_stop")
 
     async def _stop_after_turn_budget(
         self, harness_task: "asyncio.Future[int]", *, audit: "RolloutAudit", sandbox: Any
     ) -> int:
         """批 C（I02）：turn 预算命中后的有界收口——等 CC 自行退出（宽限 = min(TURN_BUDGET_EXIT_GRACE_SEC,
         episode 剩余)）；宽限内未退且期限已到 → 真实 hard wall（按期限路径收口，cap 事实保留）；宽限内
-        未退且期限未到 → 强制停止（kill + 验证）并取消 harness task，返回 HARNESS_EXIT_STOPPED_BY_RH2。"""
+        未退且期限未到 → 强制停止（kill + 验证，最多 EXECUTION_SCOPE_STOP_MAX_ATTEMPTS 次，直到"期限前已停止"
+        被证明或期限到）并取消 harness task：已证明 → HARNESS_EXIT_STOPPED_BY_RH2；期限已过仍未证明 → -1。"""
 
         stop = audit.termination["stop"] if audit.termination is not None else {}
         grace = min(TURN_BUDGET_EXIT_GRACE_SEC, max(0.0, self._episode_remaining(audit)))
@@ -3823,25 +3873,55 @@ class RolloutOrchestrator:
             audit.episode_deadline["hit_by"] = "harness_outer"
             audit.mark("episode_deadline_harness_cancelled")
             return HARNESS_EXIT_TIME_BUDGET_EXCEEDED
-        try:
-            result = await self._force_stop_execution_scope(sandbox, audit, requested_by="turn_budget")
-        except asyncio.CancelledError:
-            # 强停 await 期间父任务被取消（关停）：先 settle 仍持有的 harness task 再传播
-            harness_task.cancel()
-            await self._settle_cancelled_stage(harness_task, audit, "harness_run")
-            raise
+        # Codex 联合审查 R3 + 修后复核 R3：期限继续约束**尚未证明已停止**的执行。证据规则见 Brief 批 C
+        # "停止证据与判定规则"（execution_scope.stop_proven_before）：kill 命令返回不是停止事实；证明 =
+        # 期限前归零确认，或期限前投递且期限后未再见进程。未证明且期限未到 = kill 未投递 → 重试。
+        deadline = audit.episode_deadline_monotonic
+        merged: ScopeStopResult | None = None
+        proven: bool | None = False
+        for attempt in range(1, EXECUTION_SCOPE_STOP_MAX_ATTEMPTS + 1):
+            # 停止动作用自己的总预算（Codex 联合审查 R2：不因 episode 到点跳过或缩短——cap 恰在期限前命中时
+            # 也要把 kill 真正投递出去）；期限只参与事后归类（stop_proven_before）
+            try:
+                merged = await self._force_stop_execution_scope(
+                    sandbox, audit, requested_by="turn_budget", merged_with=merged
+                )
+            except asyncio.CancelledError:
+                # 强停 await 期间父任务被取消（关停）：先 settle 仍持有的 harness task 再传播
+                harness_task.cancel()
+                await self._settle_cancelled_stage(harness_task, audit, "harness_run")
+                raise
+            proven, _evidence = stop_proven_before(merged, deadline)
+            if proven is not False:
+                break
+            if self._episode_remaining(audit) <= 0 or merged is None or merged.kill_delivered_at is not None:
+                # 期限已过 → hard wall；无 sandbox 无从重试；已投递却未证明 = 期限后仍见进程（期限也已过）
+                break
+            if attempt < EXECUTION_SCOPE_STOP_MAX_ATTEMPTS:
+                audit.mark("turn_budget_stop_retry")
+                try:
+                    await asyncio.sleep(
+                        min(EXECUTION_SCOPE_STOP_RETRY_INTERVAL_SEC, max(0.0, self._episode_remaining(audit)))
+                    )
+                except asyncio.CancelledError:
+                    harness_task.cancel()
+                    await self._settle_cancelled_stage(harness_task, audit, "harness_run")
+                    raise
         harness_task.cancel()
         await self._settle_cancelled_stage(harness_task, audit, "harness_run")
-        # Codex 联合审查 R3：期限继续约束**尚未停止**的执行。判据 = kill 命令是否在期限前返回（SIGKILL 已
-        # 投递的上界；不把"已发出 kill"当成"已停止"）；归零确认晚于期限不算越墙（只是观测晚）。
-        deadline = audit.episode_deadline_monotonic
-        kill_returned_at = result.kill_returned_at if result is not None else None
-        stopped_before_wall = kill_returned_at is not None and (deadline is None or kill_returned_at <= deadline)
-        if not stopped_before_wall and self._episode_remaining(audit) <= 0:
-            # kill 未在墙前返回（IO 超时 / 迟迟未生效）且期限已过 = 到点时执行仍在进行 → 真实 hard wall
-            audit.episode_deadline["hit_by"] = "harness_outer"
-            audit.mark("episode_deadline_during_forced_stop")
-            return HARNESS_EXIT_TIME_BUDGET_EXCEEDED
+        if proven is False:
+            if self._episode_remaining(audit) <= 0:
+                # 期限已过而期限前没有任何一次证明（kill exec 失败 / 未返回 / 投递晚于期限 / 期限后仍见进程）
+                # = 到点时执行仍在进行 → 真实 hard wall（-1 路径收口；cap 事实保留在 turn_budget 块）
+                audit.episode_deadline["hit_by"] = "harness_outer"
+                audit.mark("episode_deadline_during_forced_stop")
+                return HARNESS_EXIT_TIME_BUDGET_EXCEEDED
+            # 尝试用尽仍未证明、期限未到：**不按已证明放行**——三态记 None + 证据码；屏障 ① 再停一次并对未确认
+            # fail-closed；屏障确认时期限若已过，_reclassify_unproven_stop_after_quiescence 归 hard wall
+            if audit.termination is not None:
+                stop["stop_before_deadline"] = None
+                stop["stop_before_deadline_evidence"] = "stop_attempts_exhausted_before_deadline"
+            audit.mark("turn_budget_stop_unproven")
         return HARNESS_EXIT_STOPPED_BY_RH2
 
     async def _await_harness_within_deadline(
