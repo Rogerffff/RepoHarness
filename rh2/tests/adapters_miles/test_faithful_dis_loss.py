@@ -428,9 +428,100 @@ def test_accepted_token_with_zero_advantage_no_gradient(dis):
     )
     assert metrics["dis_accepted_tokens"].item() == 1  # accepted > 0
     assert metrics["dis_zero_contribution_microbatch"].item() == 0.0
+    # N4（I17 纯观测）：这正是"接受 ≠ 候选信号"的形态——全部多元素支持集,唯一被接受的位 advantage=0
+    assert metrics["dis_nonsingleton_provenance_tokens"].item() == 3
+    assert metrics["dis_singleton_accepted_tokens"].item() == 0
+    assert metrics["dis_candidate_signal_tokens"].item() == 0
+    assert metrics["dis_zero_advantage_accepted_tokens"].item() == 1
     assert loss.item() == 0.0  # 但真实训练信号为零
     loss.backward()
     assert bool((logits.grad == 0.0).all())  # 逐位精确零梯度
+
+
+# ---------------------------------------------------------------------------
+# N4（I17/I20 纯观测,第 2 组剩余 Brief;§4.1 已批）：接受再拆开看——单例 / 候选信号 / 两侧拒绝 / 支持集分桶
+# ---------------------------------------------------------------------------
+
+
+def test_dis_observation_metrics_hand_computed(dis):
+    """固定两样本形状的手算口径（动作位 = loss_mask=1）：
+    s0: 支持集大小 [3,2,1,2]、mask [1,1,0,1]、log-ratio [in, out-high, (观察位), out-low]
+    s1: 支持集大小 [2,1,3]、mask [1,1,1]、log-ratio [in, in, out-high]、advantage 全非零
+    → provenance 6 = 非单例 5 + 单例 1;accepted 3 = 候选信号 2（s0 位 0、s1 位 0）+ 单例接受 1（s1 位 1）
+      + 零优势接受 0;rejected 3 = 低侧 1（s0 位 3）+ 高侧 2（s0 位 1、s1 位 2）;分桶 1:1、2–3:5。"""
+    torch = dis.torch
+    args = _mk_args()
+    batch, logits = _mk_case(torch)
+    _fill_behavior_from_current(torch, dis, args, batch, logits)
+    _loss, metrics = dis.module.faithful_dis_loss_function(args, batch, logits, _mk_reducer(torch, batch))
+    m = {k: v.item() for k, v in metrics.items()}
+    assert m["dis_nonsingleton_provenance_tokens"] == 5
+    assert m["dis_singleton_accepted_tokens"] == 1
+    assert m["dis_candidate_signal_tokens"] == 2
+    assert m["dis_zero_advantage_accepted_tokens"] == 0
+    assert m["dis_rejected_low_tokens"] == 1 and m["dis_rejected_high_tokens"] == 2
+    assert (m["dis_support_size_1"], m["dis_support_size_2_3"], m["dis_support_size_4_7"],
+            m["dis_support_size_8_15"], m["dis_support_size_16_plus"]) == (1, 5, 0, 0, 0)
+    # 口径守恒：三分接受 = accepted;两侧拒绝 = rejected;分桶之和 = provenance;非单例 + 单例桶 = provenance
+    assert (m["dis_candidate_signal_tokens"] + m["dis_singleton_accepted_tokens"]
+            + m["dis_zero_advantage_accepted_tokens"]) == m["dis_accepted_tokens"] == 3
+    assert m["dis_rejected_low_tokens"] + m["dis_rejected_high_tokens"] == m["dis_rejected_tokens"] == 3
+    assert sum(m[k] for k in ("dis_support_size_1", "dis_support_size_2_3", "dis_support_size_4_7",
+                              "dis_support_size_8_15", "dis_support_size_16_plus")) == m["dis_microbatch_provenance_tokens"] == 6
+    assert m["dis_nonsingleton_provenance_tokens"] + m["dis_support_size_1"] == 6
+    # 既有 oracle 不变（loss / 计数口径未被观测改动）
+    assert (m["dis_microbatch_provenance_tokens"], m["dis_accepted_tokens"], m["dis_rejected_tokens"]) == (6, 3, 3)
+    assert m["dis_zero_contribution_microbatch"] == 0.0
+
+
+def test_support_size_buckets_partition_provenance_tokens(dis):
+    """桶边界 1 / 2–3 / 4–7 / 8–15 / ≥16 各取边界值：支持集大小 [1,2,3,4,7,8,15,16]（VOCAB=17 内可构造）,
+    behavior=current（全部在信任区间内 → 全部接受）,只有大小 2 的位 advantage=0。"""
+    torch = dis.torch
+    from miles.backends.training_utils.loss_hub.logit_processors import get_log_probs_and_entropy
+    from miles.backends.training_utils.sampling_mask import get_rollout_sampling_masks
+
+    def sup(target, size):
+        return [target] + [i for i in range(VOCAB) if i != target][: size - 1]
+
+    sizes = [1, 2, 3, 4, 7, 8, 15, 16]
+    targets = [4, 5, 7, 8, 9, 10, 11, 12]
+    supports = [sup(tgt, n) for tgt, n in zip(targets, sizes, strict=True)]
+    assert [len(s) for s in supports] == sizes and all(len(set(s)) == len(s) for s in supports)
+    ids, offsets = _csr(supports)
+    tokens = torch.tensor([1, 2, *targets], dtype=torch.long)
+    args = _mk_args()
+    g = torch.Generator().manual_seed(5)
+    logits_data = torch.randn(1, 10, VOCAB, generator=g, dtype=torch.float64)
+    adv = [1.0, 0.0, -0.5, 0.7, 1.1, -0.2, 0.3, 0.9]  # 位 1（大小 2）优势为零
+    batch = {
+        "unconcat_tokens": [tokens],
+        "total_lengths": [10],
+        "response_lengths": [8],
+        "loss_masks": [torch.ones(8, dtype=torch.long)],
+        "advantages": [torch.tensor(adv, dtype=torch.float64)],
+        "rollout_sampling_mask_ids": [ids],
+        "rollout_sampling_mask_offsets": [offsets],
+        "rollout_mask_sums": torch.tensor([8.0], dtype=torch.float32),
+    }
+    with torch.no_grad():
+        current = get_log_probs_and_entropy(
+            logits_data, args=args, unconcat_tokens=[tokens], total_lengths=[10], response_lengths=[8],
+            with_entropy=False, rollout_sampling_mask=get_rollout_sampling_masks(batch),
+        )["log_probs"][0]
+    batch["rollout_log_probs"] = [current.clone()]  # log-ratio 恒 0 → 全部接受
+    _loss, metrics = dis.module.faithful_dis_loss_function(
+        args, batch, logits_data.clone().requires_grad_(True), _mk_reducer(torch, batch)
+    )
+    m = {k: v.item() for k, v in metrics.items()}
+    assert (m["dis_microbatch_provenance_tokens"], m["dis_accepted_tokens"], m["dis_rejected_tokens"]) == (8, 8, 0)
+    assert (m["dis_support_size_1"], m["dis_support_size_2_3"], m["dis_support_size_4_7"],
+            m["dis_support_size_8_15"], m["dis_support_size_16_plus"]) == (1, 2, 2, 2, 1)
+    assert m["dis_nonsingleton_provenance_tokens"] == 7
+    assert m["dis_singleton_accepted_tokens"] == 1  # 大小 1 的位：接受但必然无梯度
+    assert m["dis_zero_advantage_accepted_tokens"] == 1  # 大小 2 的位：优势为零
+    assert m["dis_candidate_signal_tokens"] == 6
+    assert m["dis_rejected_low_tokens"] == 0 and m["dis_rejected_high_tokens"] == 0
 
 
 # ---------------------------------------------------------------------------

@@ -787,4 +787,98 @@ def faithful_dis_loss_function(
         # 因此聚合值 = 零贡献 microbatch 数 / num_rollouts（监控看非零即可）。
         "dis_zero_contribution_microbatch": torch.tensor(zero_contribution, device=device),
     }
+    metrics.update(_dis_observation_metrics(
+        sampling_masks=sampling_masks,
+        total_lengths=total_lengths,
+        response_lengths=response_lengths,
+        local_lengths=local_lengths,
+        qkv_format=qkv_format,
+        max_seq_lens=max_seq_lens,
+        provenance_bool=provenance_bool,
+        in_trust=in_trust,
+        log_ratio=log_ratio,
+        advantages=advantages,
+        device=device,
+    ))
     return loss, metrics
+
+
+# I17/I20 纯观测（第 2 组剩余 Brief N4;决策分组 §4.1 已批,不改 loss / skip / 熔断）。
+# 支持集大小有界分桶的桶边界：1 / 2–3 / 4–7 / 8–15 / ≥16（幂次桶,固定 5 个标量,不随词表变化）。
+_SUPPORT_SIZE_BUCKETS: tuple[tuple[str, int, int | None], ...] = (
+    ("dis_support_size_1", 1, 1),
+    ("dis_support_size_2_3", 2, 3),
+    ("dis_support_size_4_7", 4, 7),
+    ("dis_support_size_8_15", 8, 15),
+    ("dis_support_size_16_plus", 16, None),
+)
+
+
+def _dis_observation_metrics(
+    *,
+    sampling_masks,
+    total_lengths: list[int],
+    response_lengths: list[int],
+    local_lengths: list[int],
+    qkv_format: str,
+    max_seq_lens,
+    provenance_bool: torch.Tensor,
+    in_trust: torch.Tensor,
+    log_ratio: torch.Tensor,
+    advantages: torch.Tensor,
+    device,
+) -> dict[str, torch.Tensor]:
+    """I17/I20 纯观测指标（N4）：DIS accepted ≠ 有训练信号,把"接受"再拆开看。
+
+    口径（全部是**动作位** = provenance / loss_mask=1 的 token 计数;本 microbatch、CP>1 时本 rank
+    分片的线性计数,aggregate_train_losses 跨 DP×CP 求和后 = CP=1 数值,与 dis_accepted_tokens 同款）：
+
+    - ``dis_nonsingleton_provenance_tokens``：支持集大小 > 1 的动作位。单例支持集的 token 经
+      support-renormalized 后 logprob 恒为 0、ratio 恒为 1,被 DIS 接受但对 logits 的梯度精确为 0。
+    - ``dis_singleton_accepted_tokens``：被接受但支持集为单例（= 接受却必然无梯度的位）。
+    - ``dis_candidate_signal_tokens``：``loss_mask=1 ∧ accepted ∧ support>1 ∧ advantage≠0``。
+      **只是候选信号计数**,不叫"有效梯度 token"——advantage=0 的位没有 policy 梯度,而多样本梯度仍
+      可能相互抵消;全局零信号判定仍以 train_one_step 归约后的真实累计梯度为准（F2）。
+    - ``dis_zero_advantage_accepted_tokens``：接受且支持集 >1 但 advantage=0 的位（候选信号的另一
+      个漏口;与上两项相加 = dis_accepted_tokens）。
+    - ``dis_rejected_low_tokens`` / ``dis_rejected_high_tokens``：ratio 两侧的拒绝（detach 后的
+      log_ratio ≤ log(1-ε_low) / ≥ log(1+ε_high),与 in_trust 的开区间互补;两者之和 =
+      dis_rejected_tokens）。
+    - ``dis_support_size_*``：动作位按支持集大小的有界分桶（5 桶,之和 = dis_microbatch_provenance_tokens）。
+
+    支持集大小从 CSR offsets 差分得到（全量 response 位）,再用与 loss_mask 完全相同的 CP 切分函数取本
+    rank 分片,和 in_trust / advantages 逐位对齐。不加 actor forward、不导出逐 token、不做同步。
+    """
+
+    support_sizes_full = []
+    for mask in sampling_masks:
+        _ids, offsets = mask._as_tensors()
+        support_sizes_full.append((offsets[1:] - offsets[:-1]).to(torch.long))
+    local_support_sizes = get_local_response_loss_masks(
+        total_lengths, response_lengths, support_sizes_full, qkv_format, max_seq_lens
+    )
+    support_flat = torch.cat(local_support_sizes, dim=0).to(device=provenance_bool.device)
+    if int(support_flat.numel()) != int(sum(local_lengths)):
+        # 与 loss_mask 同一切分函数、同一长度输入,长度必然一致;万一不一致（切分规则漂移）只放弃观测,
+        # 不新增任何拒绝路径（纯观测不得改变样本处置）。
+        return {}
+
+    accepted_bool = in_trust & provenance_bool
+    multi = support_flat > 1
+    adv_nonzero = advantages != 0
+
+    def _count(flags: torch.Tensor) -> torch.Tensor:
+        return torch.tensor(float(int(flags.sum().item())), device=device)
+
+    out = {
+        "dis_nonsingleton_provenance_tokens": _count(provenance_bool & multi),
+        "dis_singleton_accepted_tokens": _count(accepted_bool & ~multi),
+        "dis_candidate_signal_tokens": _count(accepted_bool & multi & adv_nonzero),
+        "dis_zero_advantage_accepted_tokens": _count(accepted_bool & multi & ~adv_nonzero),
+        "dis_rejected_low_tokens": _count(provenance_bool & (log_ratio <= _LOG_TRUST_LOW)),
+        "dis_rejected_high_tokens": _count(provenance_bool & (log_ratio >= _LOG_TRUST_HIGH)),
+    }
+    for name, low, high in _SUPPORT_SIZE_BUCKETS:
+        in_bucket = support_flat >= low if high is None else (support_flat >= low) & (support_flat <= high)
+        out[name] = _count(provenance_bool & in_bucket)
+    return out

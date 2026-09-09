@@ -421,7 +421,14 @@ def _assert_cp2_matches_cp1(torch, case, per_rank, *, cp_size=CP_SIZE):
     grad_full = _reassemble_grad(torch, case, {r: per_rank[r]["grad"] for r in range(cp_size)}, cp_size)
     assert torch.equal(grad_full, base.grad), "CP=2 梯度拼回后与 CP=1 不逐位相等"
     # (4) 线性计数指标：跨 rank 求和 == CP=1（= aggregate_train_losses 的 DP×CP 求和口径）
-    for key in ("dis_microbatch_provenance_tokens", "dis_accepted_tokens", "dis_rejected_tokens"):
+    for key in (
+        "dis_microbatch_provenance_tokens", "dis_accepted_tokens", "dis_rejected_tokens",
+        # N4（I17/I20 纯观测）新增线性计数：同样按本 rank 分片报、跨 rank 求和 == CP=1
+        "dis_nonsingleton_provenance_tokens", "dis_singleton_accepted_tokens", "dis_candidate_signal_tokens",
+        "dis_zero_advantage_accepted_tokens", "dis_rejected_low_tokens", "dis_rejected_high_tokens",
+        "dis_support_size_1", "dis_support_size_2_3", "dis_support_size_4_7", "dis_support_size_8_15",
+        "dis_support_size_16_plus",
+    ):
         total = sum(float(per_rank[r]["metrics"][key]) for r in range(cp_size))
         assert total == float(base.metrics[key]), key
     # (5) loss 指标同口径
