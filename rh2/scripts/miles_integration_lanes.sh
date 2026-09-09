@@ -128,11 +128,12 @@ assert_counts() { # $1=lane 名 $2=尾行 $3=期望 passed $4=期望 skipped
 }
 
 echo "=== lane A: pin 兼容（默认 base）==="
-outA=$(uv run pytest tests/adapters_miles/ -q 2>&1 | tail -1)
+# lane A 必须清掉调用方 shell 里可能残留的 RH2_MILES_PATH（否则 lane A 静默跑成集成树,计数按 lane B 报红）
+outA=$(env -u RH2_MILES_PATH uv run pytest tests/adapters_miles/ -q 2>&1 | tail -1)
 echo "$outA"
 assert_counts "lane A" "$outA" "$laneA_passed" "$laneA_skipped"
 # skip 必须全部来自 integration_base 标记（-m 反选后应零 skip）
-outA2=$(uv run pytest tests/adapters_miles/ -q -m "not integration_base" 2>&1 | tail -1)
+outA2=$(env -u RH2_MILES_PATH uv run pytest tests/adapters_miles/ -q -m "not integration_base" 2>&1 | tail -1)
 echo "$outA2" | grep -qE "[0-9]+ skipped" && { echo "FAIL: lane A 存在非 integration_base 的 skip: $outA2" >&2; exit 1; }
 echo "lane A 通过（精确计数 ${laneA_passed}p/${laneA_skipped}s,skip 全部为 integration_base 豁免）"
 
