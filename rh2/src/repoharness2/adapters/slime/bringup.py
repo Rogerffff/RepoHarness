@@ -1065,7 +1065,12 @@ class BringupService:
 
         self.renderer = create_renderer(self.tokenizer, config=Qwen3RendererConfig())
 
-        # -- 共享 adapter（slime 现成组件）+ capture wire
+        # -- capture wire **先于** 共享 adapter 构造（Codex 修后复核 R1）：vendored `BaseAdapter.__init__`
+        #    在构造时就把当时的 `self._run_turn` 绑定成 POST /v1/messages 的 handler（aiohttp 路由保存的是
+        #    bound method 对象），之后再替换类属性不会更新已登记的路由——turn 预算的"先等已接纳在飞轮交付
+        #    再拒绝"包装（`install_turn_budget_wire` 包装 `_run_turn`）在"先构造、后安装"的顺序下根本不在
+        #    生产路由上。先安装再构造，路由登记直接绑到包装；下面再用启动核对兜底。
+        install_capture_wire(self.registry)
         self.adapter = AnthropicAdapter(
             tokenizer=self.tokenizer,
             sglang_url=self.sglang_url,
@@ -1074,16 +1079,22 @@ class BringupService:
             max_turns_per_sid=MAX_TURNS_PER_SID,
             fork_threshold_tokens=FORK_THRESHOLD_TOKENS,
         )
-        install_capture_wire(self.registry)
-        # codex 轮次 10 P0-2：install 的构造器 patch 对**已创建**的生产
-        # adapter 无效——直接对其 app 挂 404 守卫，并在起线程前断言在场
+        # codex 轮次 10 P0-2 的 404 守卫：构造器 patch 现在已对生产 adapter 生效（先安装后构造），
+        # 这里的显式补装是幂等兜底，并在起线程前断言在场
         from repoharness2.adapters.slime.capture_wire import (
             assert_no_404_guard_installed,
+            assert_turn_pipeline_bound_to_routes,
             ensure_no_404_middleware,
         )
 
         ensure_no_404_middleware(self.adapter.app)
         assert_no_404_guard_installed(self.adapter.app)
+        # Codex 修后复核 R1 的启动核对：已登记的 POST 路由必须就是当前（已包装的）`_run_turn`；
+        # 顺序再被改回去时这里 typed 停止，而不是带着失效的在飞交付保护进入 RUNNING
+        try:
+            assert_turn_pipeline_bound_to_routes(self.adapter)
+        except RuntimeError as exc:
+            raise StartupCheckError("turn_budget_wire_not_bound_to_route", str(exc)) from exc
         # 轮次 13 P0-1：bearer 能力预检——未知/已关/中毒会话 HTTP 层拒绝，
         # 不产生 SGLang 请求（wire 内 UnknownSessionError 是第二道）
         from repoharness2.adapters.slime.capture_wire import build_session_guard_middleware

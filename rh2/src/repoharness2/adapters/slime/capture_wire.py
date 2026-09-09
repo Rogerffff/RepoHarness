@@ -997,6 +997,39 @@ def assert_no_404_guard_installed(app: "aiohttp_web.Application") -> None:
         )
 
 
+def assert_turn_pipeline_bound_to_routes(adapter: Any) -> None:
+    """Codex 修后复核 R1 的启动核对：已登记的 POST `/v1/messages` 路由必须绑的就是**当前**的
+    `BaseAdapter._run_turn`（turn 预算 wire 安装后 = `rh2_run_turn`）。
+
+    vendored 构造器在 `__init__` 里把当时的 `self._run_turn` 绑成 handler；"先构造、后安装"会让路由永远
+    指向未包装的方法——在飞交付保护根本不在生产入口上。bringup 已改为先安装后构造，这里防止顺序被改回。
+    """
+
+    from slime.agent.adapters import common as slime_common
+
+    current = slime_common.BaseAdapter._run_turn
+    if getattr(current, "__name__", "") != "rh2_run_turn":
+        raise RuntimeError(
+            "turn budget wire 未安装：BaseAdapter._run_turn 不是 rh2_run_turn"
+            f"（现为 {getattr(current, '__name__', type(current).__name__)}）。"
+        )
+    routes = [
+        r for r in adapter.app.router.routes()
+        if r.method == "POST" and getattr(r.resource, "canonical", None) == "/v1/messages"
+    ]
+    if not routes:
+        raise RuntimeError("adapter app 没有 POST /v1/messages 路由。")
+    for route in routes:
+        handler = route.handler
+        if getattr(handler, "__self__", None) is not adapter or getattr(handler, "__func__", None) is not current:
+            bound_name = getattr(getattr(handler, "__func__", handler), "__name__", type(handler).__name__)
+            raise RuntimeError(
+                "POST /v1/messages 绑定的 handler 不是当前的 BaseAdapter._run_turn"
+                f"（路由持有 {bound_name}，当前为 {current.__name__}）——adapter 在 turn budget wire 安装之前"
+                "构造，在飞交付保护不在生产路由上。"
+            )
+
+
 def escalate_abort_unproven(registry: CaptureRegistry, exc: AbortDeliveryUnprovenError) -> bool:
     """W10（codex Wave3 F3 P1）：把"不能证明 abort 到达持有者"升级为进程级 run-fatal。
 

@@ -234,3 +234,70 @@ async def test_f4_startup_rollback_relay_remove_failure_keeps_handle_and_does_no
     finally:
         if not rolled_back:
             service.app_handle.stop()
+
+
+async def test_turn_budget_wrapper_is_bound_to_the_real_service_route(monkeypatch, tmp_path):
+    """Codex 修后复核 R1（真实 BringupService.__init__ + 真实 HTTP 线程）：vendored 构造器在构造时把当时的
+    `self._run_turn` 绑成 POST /v1/messages 的 handler——修前 bringup 先构造后安装 wire，路由永远指向未包装的
+    方法（cap 的"先等已接纳在飞轮交付再拒绝"不在生产入口上）。修后先安装后构造：路由绑的就是当前的
+    `rh2_run_turn`，启动核对通过；真实端口上裸 internal sid 被守卫 403（起线程的就是这同一个 app）。"""
+
+    import aiohttp
+    from slime.agent.adapters import common as slime_common
+
+    from repoharness2.adapters.slime.capture_wire import assert_turn_pipeline_bound_to_routes
+
+    bringup, service = _service(monkeypatch, tmp_path, mode="fa_audit_only", docker=None)
+    try:
+        route = next(
+            r for r in service.adapter.app.router.routes()
+            if r.method == "POST" and r.resource.canonical == "/v1/messages"
+        )
+        assert route.handler.__self__ is service.adapter
+        assert route.handler.__func__ is slime_common.BaseAdapter._run_turn
+        assert route.handler.__func__.__name__ == "rh2_run_turn"  # 修前：vendored 原方法 _run_turn
+        assert service.adapter._check_turn_cap.__func__.__name__ == "rh2_check_turn_cap"
+        assert slime_common._rh2_turn_budget_wire_registry is service.registry
+        assert_turn_pipeline_bound_to_routes(service.adapter)
+        body = {"model": "x", "max_tokens": 1, "messages": [{"role": "user", "content": "hi"}]}
+        async with aiohttp.ClientSession() as http:
+            async with http.post(
+                f"http://127.0.0.1:{service.app_handle.port}/v1/messages",
+                json=body, headers={"Authorization": "Bearer s-not-a-session"},
+            ) as resp:
+                assert resp.status == 403
+                assert (await resp.json())["error"]["type"] == "rh2_unknown_or_closed_session"
+    finally:
+        service.app_handle.stop()
+
+
+def test_route_binding_check_rejects_adapter_constructed_before_wire(monkeypatch):
+    """启动核对的反例：先构造 adapter、后安装 wire（修前的生产顺序）→ 路由持有旧方法 → RuntimeError
+    （bringup 把它转成 StartupCheckError("turn_budget_wire_not_bound_to_route")）；先安装后构造 → 通过。"""
+
+    from slime.agent.adapters import common as slime_common
+    from slime.agent.adapters.anthropic import AnthropicAdapter
+
+    from repoharness2.adapters.slime.capture_wire import (
+        CaptureRegistry,
+        assert_turn_pipeline_bound_to_routes,
+        install_capture_wire,
+    )
+
+    monkeypatch.setattr(slime_common, "_rh2_capture_wire_installed", False, raising=False)
+    monkeypatch.setattr(slime_common, "_rh2_capture_wire_registry", None, raising=False)
+    monkeypatch.setattr(slime_common, "_rh2_turn_budget_wire_registry", None, raising=False)
+
+    class _Tok:
+        def apply_chat_template(self, *args, **kwargs):
+            return [1, 2, 3]
+
+        def decode(self, *args, **kwargs):
+            return "x"
+
+    early = AnthropicAdapter(tokenizer=_Tok(), sglang_url="http://unused", max_turns_per_sid=1)
+    install_capture_wire(CaptureRegistry())
+    with pytest.raises(RuntimeError, match="不是当前的 BaseAdapter._run_turn"):
+        assert_turn_pipeline_bound_to_routes(early)
+    late = AnthropicAdapter(tokenizer=_Tok(), sglang_url="http://unused", max_turns_per_sid=1)
+    assert_turn_pipeline_bound_to_routes(late)
