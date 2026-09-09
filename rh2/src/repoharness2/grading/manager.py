@@ -673,10 +673,20 @@ class GradingInfraError(RuntimeError):
         detail: str,
         *,
         category: Literal["infra_failure", "test_log_parse_failed"] = "infra_failure",
+        op: str | None = None,
+        exit_code: int | None = None,
+        stderr: str | None = None,
+        container_name: str | None = None,
     ) -> None:
         super().__init__(detail)
         self.detail = detail
         self.category = category
+        # N2b：产生故障的操作阶段与原始 CLI 返回（重试判定只看这些，不解析 detail 文案）；
+        # container_name = docker run 失败时本次已生成的名字（创建回包丢失 → 先按名收口）
+        self.op = op
+        self.exit_code = exit_code
+        self.stderr = stderr
+        self.container_name = container_name
 
 
 # N2a（第 2 组剩余实施 Brief §3.2；Codex 计划审查 R1）：一条评分任务的**工作期限**——由编排在提交时建立，
@@ -711,6 +721,59 @@ def bounded_by_grading_deadline(timeout: float, phase: str) -> float:
 
     left = require_grading_time(phase)
     return timeout if left is None else min(timeout, left)
+
+
+# N2b（I16，第 2 组 §5 / 补充说明 §8；Codex 计划审查 §6）：只对**已核对的 Docker CLI 错误形态**判"可重试的
+# 传输 / 服务故障"。按操作阶段 + 原始 CLI 返回判定；不按单独的 `EOF` / `timeout` 子串兜底；确定的配置 /
+# 认证 / 引用错误先排除，不被通用传输字样覆盖；没有可靠来源的形态不开放（返回 None = 不重试）。
+# 形态来源：moby client / CLI 的连接错误文案（"Cannot connect to the Docker daemon"、"error during connect"）、
+# Go net 层错误（"connection reset by peer" / "connection refused" / "broken pipe" / "i/o timeout" /
+# "TLS handshake timeout" / "net/http: request canceled"）、distribution/registry 暂态状态
+# （"received unexpected HTTP status: 5xx"、"503 Service Unavailable"、"toomanyrequests"）。
+_NON_RETRYABLE_SHAPES: tuple[str, ...] = (
+    "not found", "manifest unknown", "pull access denied", "unauthorized", "denied: requested access",
+    "invalid reference format", "no such image", "repository does not exist", "name unknown",
+)
+_DAEMON_CONNECT_SHAPES: tuple[str, ...] = (
+    "cannot connect to the docker daemon", "error during connect", "connection reset by peer",
+    "connection refused", "broken pipe",
+)
+_REGISTRY_TRANSPORT_SHAPES: tuple[str, ...] = (
+    "tls handshake timeout", "i/o timeout", "net/http: request canceled", "received unexpected http status: 5",
+    "503 service unavailable", "toomanyrequests",
+)
+REGRADE_ALLOWED_OPS: tuple[str, ...] = ("image_pull", "container_start")
+MAX_GRADING_ATTEMPTS = 2  # 补充说明 §8：整次评分任务总共最多两次尝试（不是 pull、start 各加一次）
+GRADING_REGRADE_EVENT = "grading_regrade"
+
+
+def classify_docker_transport_error(op: str, exit_code: int, stderr: str | None) -> str | None:
+    """返回可重试类别（"daemon_connect" / "registry_transport"）或 None（不重试：未知 / 确定性错误 / 阶段不允许）。"""
+
+    if op not in REGRADE_ALLOWED_OPS or exit_code == 0:
+        return None
+    text = (stderr or "").lower()
+    if not text or any(shape in text for shape in _NON_RETRYABLE_SHAPES):
+        return None
+    if any(shape in text for shape in _DAEMON_CONNECT_SHAPES):
+        return "daemon_connect"
+    if op == "image_pull" and any(shape in text for shape in _REGISTRY_TRANSPORT_SHAPES):
+        return "registry_transport"
+    return None
+
+
+def _emit_grading_event(kind: str, **fields: Any) -> None:
+    """可选观测：经 miles 集成分支的事件日志发一条；miles 不在路径 / 未启用 → 不发。不影响评分结果。"""
+
+    try:
+        from miles.utils import rh2_event_log
+    except Exception:  # noqa: BLE001
+        return
+    try:
+        if rh2_event_log.enabled():
+            rh2_event_log.emit(kind, **fields)
+    except Exception:  # noqa: BLE001
+        return
 
 
 
@@ -935,6 +998,7 @@ class SWEGradingManager:
         self._prepare_tasks: set[asyncio.Task] = set()
         self.prepare_failures: list[str] = []  # prepare 失败只记录不外抛（P5：grade 不受连累）
         self.cleanup_failures: list[str] = []  # Q8：清理失败必须留痕（S1-6 收口为 finding）
+        self.regrade_events: list[dict[str, Any]] = []  # N2b：追加评分事实（上限 256 条；消费者 = close() 报告 + 事件日志）
         self.leases: list[SandboxLease] = []  # 评分容器租约 evidence（P9 deny_all 由 schema 锁死）
         self._closed = False  # W5a：close() 后 grade 走 typed 拒绝
         # W3a：grade() 内部分段计时暂存（record_id → GraderPhaseTiming），orchestrator 经
@@ -978,6 +1042,7 @@ class SWEGradingManager:
             "containers_removed": removed,
             "containers_open": [r.name for r in self._records if not r.removed],
             "cleanup_failures": list(self.cleanup_failures),
+            "regrade_events": len(self.regrade_events),  # N2b：本 run 追加评分次数
         }
 
     @property
@@ -1206,12 +1271,13 @@ class SWEGradingManager:
                     ) from exc
             timing_parts["prep"] += time.monotonic() - prep_start
 
-            # 阶段 3 前置：镜像就绪（P10 第一档，预拉取命中记 0.0）
-            timing_parts["image_pull"] = await self._ensure_image(spec.image)
-
-            # 阶段 3：fresh 容器 + 镜像 digest 比对 + clean checkout + 血缘核验（A7 条 2）
+            # 阶段 3 前置 + 阶段 3 起点：镜像就绪（P10 第一档，预拉取命中记 0.0）+ fresh 容器。
+            # N2b（I16）：这两个环节的**已识别**传输 / 服务故障最多追加一次（同工件、同配置、同队列槽位、不重置期限）
             reset_start = time.monotonic()
-            record = await self._start_container(trajectory_id, spec, nonce)
+            timing_parts["image_pull"], record = await self._ready_image_and_start_container(
+                trajectory_id, spec, nonce
+            )
+            # 阶段 3 其余：镜像 digest 比对 + clean checkout + 血缘核验（A7 条 2）——不在重试范围
             await self._verify_image_digest(record, spec)
             checkout_head = await self._clean_checkout(record, spec)
             timing_parts["env_reset"] = time.monotonic() - reset_start
@@ -1377,7 +1443,8 @@ class SWEGradingManager:
             pull = await self._await_within_grading_deadline(self._docker("pull", image), phase="image_pull")
             if pull.exit_code != 0:
                 raise GradingInfraError(
-                    f"grading_image_pull_failed:{image}:{pull.stderr.strip()[-300:]}"
+                    f"grading_image_pull_failed:{image}:{pull.stderr.strip()[-300:]}",
+                    op="image_pull", exit_code=pull.exit_code, stderr=pull.stderr,
                 )
             self._images_ready.add(image)
             return time.monotonic() - pull_start
@@ -1396,6 +1463,54 @@ class SWEGradingManager:
             raise GradingInfraError(f"{GRADING_DEADLINE_EXHAUSTED}:{phase}") from None
 
     # ------------------------------------------------------------------ 内部：容器生命周期
+    async def _ready_image_and_start_container(
+        self, trajectory_id: str, spec: GradingEnvSpec, nonce: str
+    ) -> tuple[float, _ContainerRecord]:
+        """N2b（I16，补充说明 §8 已批范围）：镜像就绪 + 新 grader 容器启动，整次评分任务最多 MAX_GRADING_ATTEMPTS 次。
+
+        只有 `classify_docker_transport_error` 认出的传输 / 服务故障才追加一次；prelaunch / profile 违规、
+        准备阶段、候选测试一律不在这里（它们不经本函数的 except）。追加前：期限未耗尽（不重置）、manager 未
+        关停；`docker run` 失败时容器可能已按本次名字创建——先把该名字登记进 `_records` 并走
+        `_close_container_scope`（absent / stopped → 可继续；running / unknown → GradingScopeTerminationError，
+        run-fatal，不重试）。第二次用新 nonce / 新名字；两次都失败 → 一条 GradingInfraError 带两次原始错误。
+        """
+
+        first_failure: GradingInfraError | None = None
+        attempt_nonce = nonce
+        for attempt in range(1, MAX_GRADING_ATTEMPTS + 1):
+            try:
+                pull_seconds = await self._ensure_image(spec.image)
+                record = await self._start_container(trajectory_id, spec, attempt_nonce)
+                return pull_seconds, record
+            except GradingInfraError as exc:
+                category = classify_docker_transport_error(exc.op or "", exc.exit_code or 0, exc.stderr)
+                if first_failure is not None:
+                    raise GradingInfraError(
+                        f"{exc.detail}; first_attempt: {first_failure.detail}",
+                        op=exc.op, exit_code=exc.exit_code, stderr=exc.stderr,
+                    ) from exc
+                if category is None or attempt >= MAX_GRADING_ATTEMPTS or self._closed:
+                    raise
+                require_grading_time("regrade")  # 共用同一评分期限：耗尽即不再追加
+                if exc.op == "container_start" and exc.container_name:
+                    # 创建回包丢失不证明容器不存在：按本次名字登记并收口（对象进现有清理记录，close/gc 可见）
+                    temp = _ContainerRecord(
+                        name=exc.container_name, trajectory_id=trajectory_id,
+                        created_epoch=time.time(), created_monotonic=time.monotonic(),
+                    )
+                    self._records.append(temp)
+                    await self._close_container_scope(temp)
+                first_failure = exc
+                event = {
+                    "trajectory_id": trajectory_id, "op": exc.op, "category": category, "attempt": attempt,
+                    "detail": exc.detail[:300],
+                }
+                self.regrade_events.append(event)
+                del self.regrade_events[:-256]
+                _emit_grading_event(GRADING_REGRADE_EVENT, **event)
+                attempt_nonce = uuid.uuid4().hex[:8]
+        raise AssertionError("unreachable: regrade loop must return or raise")
+
     async def _start_container(
         self, trajectory_id: str, spec: GradingEnvSpec, nonce: str
     ) -> _ContainerRecord:
@@ -1463,7 +1578,8 @@ class SWEGradingManager:
         run = await self._await_within_grading_deadline(self._docker(*args), phase="container_start")
         if run.exit_code != 0:
             raise GradingInfraError(
-                f"grading_container_start_failed:{run.stderr.strip()[-300:]}"
+                f"grading_container_start_failed:{run.stderr.strip()[-300:]}",
+                op="container_start", exit_code=run.exit_code, stderr=run.stderr, container_name=name,
             )
         self.leases.append(lease)
         record = _ContainerRecord(

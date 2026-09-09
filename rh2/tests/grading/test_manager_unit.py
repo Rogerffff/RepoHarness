@@ -908,3 +908,154 @@ async def test_no_deadline_keeps_the_old_behaviour():
     manager = make_manager(fake)
     report = await manager.grade(trajectory_id="traj_no_dl", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec())
     assert report.outcome in ("resolved", "unresolved")
+
+
+# ---------------------------------------------------------------------------
+# N2b（I16，补充说明 §8 已批范围）：镜像就绪 / 容器启动的已识别传输故障最多追加一次评分
+# ---------------------------------------------------------------------------
+
+
+def _fail_first(fake: FakeDocker, cmd: str, stderr: str, *, times: int = 1, on_fail=None):
+    """让某个 docker 子命令的前 times 次返回非零 + 给定 stderr（真实 CLI 形态），其余交 FakeDocker。"""
+
+    state = {"n": 0, "names": []}
+
+    async def docker(*args, input_bytes=None):
+        if args[0] == cmd and state["n"] < times:
+            state["n"] += 1
+            if cmd == "run":
+                state["names"].append(args[args.index("--name") + 1])
+            if on_fail is not None:
+                on_fail()
+            return ExecResult(1, "", stderr)
+        return await FakeDocker.__call__(fake, *args, input_bytes=input_bytes)
+
+    return docker, state
+
+
+TLS_TIMEOUT = "Error response from daemon: Get \"https://registry-1.docker.io/v2/\": net/http: TLS handshake timeout"
+DAEMON_RESET = "error during connect: Post \"http://%2Fvar%2Frun%2Fdocker.sock/v1.45/containers/create\": read: connection reset by peer"
+
+
+def test_transport_error_classifier_only_accepts_documented_shapes():
+    from repoharness2.grading.manager import classify_docker_transport_error as c
+
+    assert c("image_pull", 1, TLS_TIMEOUT) == "registry_transport"
+    assert c("container_start", 1, DAEMON_RESET) == "daemon_connect"
+    assert c("image_pull", 1, "Cannot connect to the Docker daemon at unix:///var/run/docker.sock") == "daemon_connect"
+    assert c("image_pull", 1, "Error response from daemon: pull access denied for x, repository does not exist") is None
+    assert c("image_pull", 1, "Error response from daemon: manifest for x not found: manifest unknown") is None
+    assert c("container_start", 1, "docker: invalid reference format.") is None
+    assert c("container_start", 1, "Error response from daemon: TLS handshake timeout") is None  # run 阶段不认 registry 暂态
+    assert c("image_pull", 1, "timeout") is None and c("image_pull", 1, "EOF") is None  # 泛化子串不兜底
+    assert c("image_pull", 0, TLS_TIMEOUT) is None and c("test", 1, DAEMON_RESET) is None  # 非失败 / 阶段不允许
+    assert c("image_pull", 1, "unauthorized: authentication required; connection reset by peer") is None  # 确定性错误优先排除
+
+
+async def test_pull_transport_error_is_retried_once_then_grades():
+    fake = FakeDocker(base_commit=BASE, image_present=False)
+    manager = make_manager(fake)
+    manager._docker, state = _fail_first(fake, "pull", TLS_TIMEOUT)
+    report = await manager.grade(trajectory_id="traj_regrade_pull", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec())
+    assert report.outcome in ("resolved", "unresolved")
+    assert state["n"] == 1 and fake.pull_count == 1  # 第一次替身失败（未计入 fake.pull_count），第二次真实成功
+    (event,) = manager.regrade_events
+    assert event["op"] == "image_pull" and event["category"] == "registry_transport" and event["attempt"] == 1
+    assert (await manager.close())["regrade_events"] == 1
+
+
+async def test_container_start_transport_error_closes_the_named_container_then_retries():
+    fake = FakeDocker(base_commit=BASE)
+    manager = make_manager(fake)
+    manager._docker, state = _fail_first(fake, "run", DAEMON_RESET)
+    report = await manager.grade(trajectory_id="traj_regrade_run", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec())
+    assert report.outcome in ("resolved", "unresolved")
+    (first_name,) = state["names"]
+    assert first_name in fake.removed  # 创建回包丢失 → 先按本次名字收口（rm -f）
+    names = [r.name for r in manager.container_records]
+    assert first_name in names and len(set(names)) == 2  # 两次对象都在清理记录里，第二次是新名字
+    assert all(r.removed for r in manager.container_records)
+    (event,) = manager.regrade_events
+    assert event["op"] == "container_start" and event["category"] == "daemon_connect"
+    assert (await manager.close())["containers_open"] == []
+
+
+@pytest.mark.parametrize(
+    ("cmd", "stderr", "detail_prefix"),
+    [
+        ("pull", "Error response from daemon: pull access denied for fake/img, repository does not exist", "grading_image_pull_failed"),
+        ("run", "docker: invalid reference format.", "grading_container_start_failed"),
+    ],
+)
+async def test_deterministic_errors_are_not_retried(cmd, stderr, detail_prefix):
+    fake = FakeDocker(base_commit=BASE, image_present=(cmd != "pull"))
+    manager = make_manager(fake)
+    manager._docker, state = _fail_first(fake, cmd, stderr, times=5)
+    report = await manager.grade(trajectory_id=f"traj_no_retry_{cmd}", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec())
+    assert report.outcome == "failed_to_grade" and report.infra_failure_detail.startswith(detail_prefix)
+    assert state["n"] == 1 and manager.regrade_events == []
+
+
+async def test_two_transport_failures_stop_at_two_attempts_and_keep_both_details():
+    fake = FakeDocker(base_commit=BASE, image_present=False)
+    manager = make_manager(fake)
+    manager._docker, state = _fail_first(fake, "pull", TLS_TIMEOUT, times=5)
+    report = await manager.grade(trajectory_id="traj_regrade_twice", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec())
+    assert report.outcome == "failed_to_grade"
+    assert "first_attempt: grading_image_pull_failed" in report.infra_failure_detail
+    assert state["n"] == 2 and len(manager.regrade_events) == 1  # 总共两次尝试，不是无限循环
+    assert not any(c[0] == "run" for c in fake.calls)
+
+
+async def test_second_attempt_is_still_bounded_by_the_shared_deadline():
+    fake = FakeDocker(base_commit=BASE, image_present=False)
+    manager = make_manager(fake)
+    state = {"n": 0}
+
+    async def docker(*args, input_bytes=None):
+        if args[0] == "pull":
+            state["n"] += 1
+            await asyncio.sleep(0.15)
+            if state["n"] == 1:
+                return ExecResult(1, "", TLS_TIMEOUT)
+            await asyncio.sleep(5)  # 第二次拉取慢：必须被同一期限切断，不重置
+        return await FakeDocker.__call__(fake, *args, input_bytes=input_bytes)
+
+    manager._docker = docker
+    report = await asyncio.wait_for(
+        manager.grade(trajectory_id="traj_regrade_deadline", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec(),
+                      deadline_monotonic=__import__("time").monotonic() + 0.4),
+        timeout=5,
+    )
+    assert report.outcome == "failed_to_grade" and report.infra_failure_detail.startswith("grading_deadline_exhausted:image_pull")
+    assert state["n"] == 2 and len(manager.regrade_events) == 1
+
+
+async def test_unconfirmed_old_container_after_start_failure_is_run_fatal_not_retry():
+    from repoharness2.grading.manager import GradingScopeTerminationError
+
+    fake = FakeDocker(base_commit=BASE, inspect_fail="Cannot connect to the Docker daemon", container_running=True)
+    manager = make_manager(fake, cleanup_timeout_seconds=1)
+    base_docker, state = _fail_first(fake, "run", DAEMON_RESET)
+
+    async def docker(*args, input_bytes=None):
+        if args[0] == "rm":
+            return ExecResult(1, "", "Error response from daemon: cannot remove container")  # 旧工作无法确认结束
+        return await base_docker(*args, input_bytes=input_bytes)
+
+    manager._docker = docker
+    with pytest.raises(GradingScopeTerminationError):
+        await asyncio.wait_for(
+            manager.grade(trajectory_id="traj_regrade_unknown", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec()),
+            timeout=5,
+        )
+    assert manager.regrade_events == [] and state["n"] == 1
+
+
+async def test_shutdown_between_attempts_blocks_the_second_attempt():
+    fake = FakeDocker(base_commit=BASE, image_present=False)
+    manager = make_manager(fake)
+    manager._docker, state = _fail_first(fake, "pull", TLS_TIMEOUT, on_fail=lambda: setattr(manager, "_closed", True))
+    report = await manager.grade(trajectory_id="traj_regrade_closed", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec())
+    assert report.outcome == "failed_to_grade" and report.infra_failure_detail.startswith("grading_image_pull_failed")
+    assert state["n"] == 1 and manager.regrade_events == []
