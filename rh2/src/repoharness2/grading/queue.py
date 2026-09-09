@@ -159,9 +159,13 @@ class GradingQueue:
     async def close(self, *, drain: bool = True) -> None:
         """关闭队列。drain=True 时先等在途/排队请求全部完成再撤 worker。"""
 
-        self._closing = True  # R5：worker 处理完在途异常后按此退出，不再回到 queue.get()
+        # R5-F1（Codex 修后复核）：drain 阶段 worker 必须继续消费已接收的积压——关闭标志只能在排空之后、
+        # 撤 worker 之前置位（先置位 = worker 做完手头一条就退出，剩余条目无人 task_done，join 永远等不到，
+        # 生产关停步耗满 grading_drain 再走强制关闭）。drain=False 仍立即置位：被取消的 worker 若在
+        # grade() 收口时被 ScopeError 替换掉 CancelledError，处理完那条后按标志退出，不再回到 queue.get()。
         if drain and self._workers:
             await self._queue.join()
+        self._closing = True
         for worker in self._workers:
             worker.cancel()
         await asyncio.gather(*self._workers, return_exceptions=True)

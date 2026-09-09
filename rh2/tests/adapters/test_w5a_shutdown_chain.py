@@ -1063,3 +1063,49 @@ def test_run_fatal_is_not_reported_notified_when_owner_loop_is_gone(tmp_path, mo
     finally:
         adapter.stop()
         owner.stop()
+
+
+@pytest.mark.parametrize("cancel_submitters", [False, True])
+async def test_grading_queue_step_drains_backlog_within_timeout(tmp_path, monkeypatch, cancel_submitters):
+    """R5-F1（Codex 修后复核）：真实关停链 grading_queue 步——一个 worker、两条已接收请求（一条在评、一条排队），
+    drain 阶段必须把第二条也评完再撤 worker，`drained_within_timeout=True`（修前：worker 做完第一条即退出，
+    第二条无人消费，步耗满 grading_drain 后 False 再走 close(drain=False)）。提交者仍在 / 已被服务取消两案。"""
+
+    from dataclasses import replace
+
+    entered, release = asyncio.Event(), asyncio.Event()
+    calls: list[str] = []
+
+    class Manager:
+        async def grade(self, **kwargs):
+            calls.append(kwargs["trajectory_id"])
+            if len(calls) == 1:
+                entered.set()
+                await release.wait()
+            return f"report:{kwargs['trajectory_id']}"
+
+    service, _docker = _assemble_service(tmp_path, monkeypatch, timeouts=replace(FAST, grading_drain=1.0))
+    queue = GradingQueue(Manager(), GradingQueueConfig(concurrency=1, queue_size=2))
+    await queue.start()
+    service.grading_queue = queue
+    service._queue_started = True
+    spec = SimpleNamespace(task_id="task")
+    first = asyncio.create_task(queue.submit(trajectory_id="first", workspace=None, spec=spec))
+    await asyncio.wait_for(entered.wait(), 1)
+    second = asyncio.create_task(queue.submit(trajectory_id="second", workspace=None, spec=spec))
+    while queue.queue_depth != 1:
+        await asyncio.sleep(0)
+    if cancel_submitters:
+        first.cancel()
+        second.cancel()
+        await asyncio.gather(first, second, return_exceptions=True)
+    step = next(s for s in service._build_shutdown_steps() if s.name == "grading_queue")
+    closing = asyncio.create_task(step.run())
+    await asyncio.sleep(0.02)
+    assert not closing.done() and queue._closing is False and not queue._workers[0].done()  # drain 中：worker 仍在
+    release.set()
+    facts = await asyncio.wait_for(closing, 2)
+    assert facts["drained_within_timeout"] is True
+    assert calls == ["first", "second"] and queue.queue_depth == 0 and queue._workers == []
+    if not cancel_submitters:
+        assert await second == "report:second"

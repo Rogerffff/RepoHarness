@@ -240,3 +240,62 @@ async def test_close_without_drain_completes_when_grade_finally_raises_scope_err
     with pytest.raises(GradingScopeTerminationError):
         await submitter  # 提交者仍在等：异常经 future 交付（由编排转 fatal），不走 sink
     assert sink == [] and queue._workers == []
+
+
+class _TwoPhaseManager:
+    """第一条评分进入后阻塞到 release；用于制造"一条在评、一条排队"的积压。"""
+
+    def __init__(self):
+        self.entered = asyncio.Event()
+        self.release = asyncio.Event()
+        self.calls: list[str] = []
+
+    async def grade(self, **kwargs):
+        self.calls.append(kwargs["trajectory_id"])
+        if len(self.calls) == 1:
+            self.entered.set()
+            await self.release.wait()
+        return f"report:{kwargs['trajectory_id']}"
+
+
+async def _backlog(manager):
+    queue = GradingQueue(manager, GradingQueueConfig(concurrency=1, queue_size=2))
+    await queue.start()
+    first = asyncio.create_task(queue.submit(trajectory_id="first", workspace=None, spec=_spec()))
+    await asyncio.wait_for(manager.entered.wait(), 1)
+    second = asyncio.create_task(queue.submit(trajectory_id="second", workspace=None, spec=_spec()))
+    while queue.queue_depth != 1:
+        await asyncio.sleep(0)
+    return queue, first, second
+
+
+async def test_close_with_drain_keeps_consuming_the_backlog():
+    """R5-F1（Codex 修后复核）：close(drain=True) 期间 worker 必须继续消费已接收条目——关闭标志在排空之后、
+    撤 worker 之前才置位（修前：一开始就置位，worker 做完手头一条即退出，第二条无人 task_done，join 永远等不到）。"""
+
+    manager = _TwoPhaseManager()
+    queue, first, second = await _backlog(manager)
+    closing = asyncio.create_task(queue.close(drain=True))
+    await asyncio.sleep(0.02)
+    assert not closing.done() and queue._closing is False and not queue._workers[0].done()
+    manager.release.set()
+    await asyncio.wait_for(closing, 1)  # 修前：永久等待
+    assert manager.calls == ["first", "second"]
+    assert await first == "report:first" and await second == "report:second"
+    assert queue.queue_depth == 0 and queue._workers == [] and queue._closing is True
+
+
+async def test_close_with_drain_consumes_backlog_whose_submitters_were_cancelled():
+    """R5-F1 对照：服务先取消在飞执行 → 两个提交者都不在了，已入队条目仍在；drain 仍要消费完再撤 worker。"""
+
+    manager = _TwoPhaseManager()
+    queue, first, second = await _backlog(manager)
+    first.cancel()
+    second.cancel()
+    await asyncio.gather(first, second, return_exceptions=True)
+    closing = asyncio.create_task(queue.close(drain=True))
+    await asyncio.sleep(0.02)
+    assert not closing.done() and queue.queue_depth == 1
+    manager.release.set()
+    await asyncio.wait_for(closing, 1)
+    assert manager.calls == ["first", "second"] and queue.queue_depth == 0 and queue._workers == []
