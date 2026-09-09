@@ -922,7 +922,8 @@ def _member_verdicts(delivered):
 _STOP_CASES = {
     "stop_before_wall": ("max_turns_exhausted", -2, True, "zero_confirmed_before_deadline", 1),
     "kill_effect_after_wall": ("hard_wall_timeout", -1, False, "kill_delivered_after_deadline", 1),
-    "confirmation_after_wall": ("max_turns_exhausted", -2, True, "kill_delivered_before_deadline_late_zero_confirmation", 1),
+    # 停止合同 A（owner 2026-09-09）：kill 在墙前完成、归零确认回包 901 才到 → 没有期限前的确认 → hard wall（修前 KEEP）
+    "confirmation_after_wall": ("hard_wall_timeout", -1, False, "zero_confirmation_after_deadline", 1),
     "kill_failed_alive_after_wall": ("hard_wall_timeout", -1, False, "kill_exec_failed", 1),
     "kill_ok_positive_count_after_wall": ("hard_wall_timeout", -1, False, "presence_observed_after_deadline", 1),
     "kill_reply_late_but_effect_before_wall": ("hard_wall_timeout", -1, False, "kill_delivered_after_deadline", 1),
@@ -934,8 +935,8 @@ _STOP_CASES = {
 
 @pytest.mark.parametrize("kind", list(_STOP_CASES))
 async def test_stop_facts_decide_keep_vs_hard_wall(monkeypatch, kind):
-    """R3（Codex 联合审查 + 修后复核）：停止证据规则（Brief 批 C）决定 KEEP vs hard wall。
-    墙前归零 → KEEP；kill 在墙后才生效 → hard wall；墙前投递、只是归零确认晚 → KEEP；
+    """R3（Codex 联合审查 + 修后复核 + 复核 2；停止合同 A）：只有期限前收到的归零确认算证明。
+    墙前归零 → KEEP；kill 在墙后才生效 → hard wall；墙前投递、归零确认晚于墙 → hard wall（合同 A 的代价）；
     kill exec 失败（899.5 返回非零）、墙后发起的查询仍活、901 才归零 → hard wall（修前 KEEP）；
     投递成功但墙后发起的查询仍见进程 → hard wall（修前 KEEP）；实际墙前已停但 kill 回包 901 才到 → 保守 hard wall。
     最终看真实 Outcome 与真实处置函数（KEEP_FULL / DROP_GROUP），不只看字段。"""
@@ -965,7 +966,7 @@ async def test_stop_facts_decide_keep_vs_hard_wall(monkeypatch, kind):
     barrier = audit.termination["barrier_stop"]
     assert barrier["confirmed_at"] is not None  # 屏障 ① 的停止观测已交给归类（编排同一时钟域）
     if kind == "confirmation_after_wall":
-        assert stop["confirmed_at_monotonic"] == 901.0 and stop["kill_delivered_at_monotonic"] == 899.5
+        assert stop["confirmed_at_monotonic"] == 901.0 and stop["kill_delivered_at_monotonic"] == 899.5  # 诊断字段
     if kind == "kill_failed_alive_after_wall":
         assert stop["kill_exit_code"] == 1 and stop["kill_delivered_at_monotonic"] is None
         assert stop["kill_returned_before_deadline"] is True  # 原始观测仍为 True——它不再是判据
@@ -1116,7 +1117,7 @@ async def test_terminate_records_delivery_and_observations_separately():
     assert r.kill_delivered_at is None and r.pkill_status == 127 and r.residual == 2 and not r.verified
     assert stop_proven_before(r, 900.0) == (False, "kill_exec_failed")
 
-    # 案 4：pkill 状态 1（无匹配 = scope 本就空）算投递；期限前投递 + 归零确认晚 → 证明（B）
+    # 案 4：pkill 状态 1（无匹配）仍算 kill 完成；但完成时刻不参与推断（合同 A）
     now = [899.0]
 
     class Empty:
@@ -1128,7 +1129,9 @@ async def test_terminate_records_delivery_and_observations_separately():
 
     r = await terminate_agent_processes(Empty(), interval=0, clock=lambda: now[0])
     assert r.kill_delivered_at == 899.0 and r.confirmed_at == 900.5
-    assert stop_proven_before(r, 900.0) == (True, "kill_delivered_before_deadline_late_zero_confirmation")
+    # 停止合同 A：确认回包晚于期限 → 未证明（修前按"投递早、确认晚"推断为 True）
+    assert stop_proven_before(r, 900.0) == (False, "zero_confirmation_after_deadline")
+    assert stop_proven_before(r, 900.5) == (True, "zero_confirmed_before_deadline")
     assert stop_proven_before(r, None) == (None, "no_deadline")
     assert stop_proven_before(None, 900.0) == (False, "no_stop_result")
 
