@@ -1,0 +1,323 @@
+From 4c04f997b60fd08c36941d8715db06bfc0ed0543 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 9 Sep 2026 21:23:14 +0800
+Subject: [PATCH] [rh2-integration] I13 exit verdict: defer wait-only shutdown
+ failures to a bounded settle wait and a final task re-check; resolve only
+ when rh2 reports its closure complete
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Before: a cancel-deadline wait snapshot from FullyAsyncRolloutFn.aclose() (worker_unfinished /
+active_groups_unfinished / deadline_exceeded) was always the first cause of the dispose verdict,
+even when the abandoned tasks finished safely a moment later; the verdict and the rh2 shutdown
+report then disagreed with the real end state.
+
+Now (owner-approved 2026-09-09, batch-2 §3):
+- fully_async_rollout.py: read-only `final_close_state()` (worker / active group tasks as they are
+  at verdict time: running / cancelled / returned / failed + late exceptions) and `await_settled()`
+  (bounded wait for the tasks aclose() abandoned; no second cancel, no second aclose). The first
+  aclose report stays as the diagnostic snapshot.
+- rh2_shutdown.py: a failure whose problems are all wait snapshots and with no other primary cause
+  is not passed to rh2 as first cause (only as external residue). After the rh2 chain ran, wait at
+  most one more cancel-deadline period (never past the verdict budget derived from the dispose
+  timeout), re-check the tasks, and ask rh2 `resolve_external_wait_residue(final_state)`: rh2 only
+  moves the wait rows out of its residue when its own execution / resource / necessary-record
+  closure is complete, rewriting its report; the verdict then reads rh2's own ok. Unresolved
+  (still running, late exception, worker failed late, closure evidence missing, any error) keeps
+  the non-ok verdict and late-merges the wait failure into the rh2 report as before.
+- Verdict report: `resolved_wait_timeouts`, `shutdown_failure.resolved_by_final_closure`,
+  `shutdown_failure.final_state`, rh2 summary gains `execution_closure` / `resolved_wait_timeouts`
+  / `wait_residue_resolved`.
+
+No change to training semantics, budgets, or the cancel deadline itself.
+---
+ miles/rollout/fully_async_rollout.py |  41 +++++++
+ miles/utils/rh2_shutdown.py          | 158 ++++++++++++++++++++++++---
+ 2 files changed, 181 insertions(+), 18 deletions(-)
+
+diff --git a/miles/rollout/fully_async_rollout.py b/miles/rollout/fully_async_rollout.py
+index e37e96164..a09ff4bb8 100644
+--- a/miles/rollout/fully_async_rollout.py
++++ b/miles/rollout/fully_async_rollout.py
+@@ -334,6 +334,47 @@ class FullyAsyncRolloutFn:
+     def closed(self) -> bool:
+         return self._closed
+ 
++    async def await_settled(self, timeout: float | None) -> None:
++        """[rh2-integration] I13: bounded wait for the tasks aclose() abandoned (no second cancel, no
++        second aclose); the verdict re-checks them afterwards with ``final_close_state``."""
++        pending = [task for task in (self._worker, *self._active_groups) if task is not None and not task.done()]
++        if pending and (timeout is None or timeout > 0):
++            await asyncio.wait(pending, timeout=timeout)
++
++    def final_close_state(self) -> dict:
++        """[rh2-integration] I13: the worker / active group tasks as they are **now** (verdict time).
++
++        ``aclose()`` caches its first report (the cancel-deadline snapshot); this is the re-check the
++        owner loop performs before composing the final verdict: a task that ended after the first
++        deadline shows up here as cancelled / returned, a task that is still running shows as
++        running, and a task that failed late carries its exception. Read-only; never raises.
++        """
++
++        def describe(task) -> dict:
++            if task is None:
++                return {"state": "never_started"}
++            if not task.done():
++                return {"state": "running"}
++            if task.cancelled():
++                return {"state": "cancelled"}
++            exc = task.exception()
++            if exc is not None:
++                return {"state": "failed", "exception": repr(exc)}
++            return {"state": "returned"}
++
++        worker = describe(self._worker)
++        groups = []
++        for task in sorted(self._active_groups, key=lambda item: item.get_name()):
++            entry = describe(task)
++            entry["facts"] = getattr(task, "rh2_group_facts", None) or {"task": task.get_name()}
++            groups.append(entry)
++        return {
++            "worker": worker,
++            "active_groups": groups,
++            "all_settled": worker["state"] != "running" and all(g["state"] != "running" for g in groups),
++            "late_group_exceptions": [g["exception"] for g in groups if g.get("exception")],
++        }
++
+     # -------------------------- consumer --------------------------
+ 
+     def _seconds_without_accepted_group(self) -> float:
+diff --git a/miles/utils/rh2_shutdown.py b/miles/utils/rh2_shutdown.py
+index 25b061c5d..e06355a8e 100644
+--- a/miles/utils/rh2_shutdown.py
++++ b/miles/utils/rh2_shutdown.py
+@@ -37,6 +37,7 @@ import asyncio
+ import json
+ import logging
+ import os
++import time
+ from datetime import datetime, UTC
+ from pathlib import Path
+ from typing import Any
+@@ -181,11 +182,44 @@ def _same_origin(worker_exc: BaseException | None, driver_cause: str | None) ->
+ # ---------------------------------------------------------------------------
+ 
+ 
++_WAIT_ONLY_KINDS = frozenset({"worker_unfinished", "active_groups_unfinished", "deadline_exceeded"})
++
++
++def _is_wait_only(failure: dict[str, Any] | None) -> bool:
++    """[rh2-integration] I13: a shutdown failure made only of cancel-deadline wait snapshots (no
++    aclose error, no buffer-close error) is a *candidate* for resolution by the final closure."""
++    if failure is None:
++        return False
++    problems = failure.get("problems") or []
++    return bool(problems) and all(p.get("kind") in _WAIT_ONLY_KINDS for p in problems)
++
++
++def _rh2_summary(rh2_report: Any, *, wait_resolved: bool) -> tuple[bool, bool, dict[str, Any]]:
++    """(rh2_ok, rh2_cleanup_ok, summary dict). ``wait_resolved`` is only a label here: when the
++    miles-side wait residue was verified gone, rh2 has already moved it out of its residue
++    (``bringup.resolve_external_wait_residue``), so rh2's own ``ok`` is the verdict either way."""
++    rh2_ok = bool(rh2_report.ok)
++    rh2_cleanup_ok = bool(rh2_report.cleanup_clean and rh2_report.residue_free and not rh2_report.evidence_failures)
++    summary = {
++        "ok": rh2_ok,
++        "cleanup_ok": rh2_cleanup_ok,
++        "first_cause": rh2_report.first_cause,
++        "secondary_failures": list(rh2_report.secondary_failures),
++        "residue": dict(rh2_report.residue),
++        "evidence_failures": list(rh2_report.evidence_failures),
++        "execution_closure": dict(getattr(rh2_report, "execution_closure", {}) or {}),
++        "resolved_wait_timeouts": [dict(r) for r in getattr(rh2_report, "resolved_wait_timeouts", []) or []],
++        "wait_residue_resolved": wait_resolved,
++    }
++    return rh2_ok, rh2_cleanup_ok, summary
++
++
+ async def close_rollout_fn_and_rh2(
+     generate_rollout: Any,
+     *,
+     driver_cause: str | None = None,
+     deadline_seconds: float | None = None,
++    verdict_deadline_seconds: float | None = None,
+ ) -> dict[str, Any]:
+     """**Runs on the owner loop** (post it with ``dispose_on_owner_loop``). Never raises.
+ 
+@@ -194,7 +228,18 @@ async def close_rollout_fn_and_rh2(
+     priority (driver primary; independent worker fatal / shutdown failure secondary; same-origin
+     worker fatal deduplicated) -> rh2 ``close_bringup_service`` with primary, secondaries and the
+     concrete residue. ``ok`` = rh2 report ok (or nothing to close) and no residue/error.
++
++    [rh2-integration] I13 (owner-approved 2026-09-09): a shutdown failure that consists **only** of
++    cancel-deadline wait snapshots is not passed to rh2 as the first cause. After the rh2 chain ran,
++    this loop waits for the abandoned tasks within ``verdict_deadline_seconds`` and re-checks their
++    real state (``final_close_state``): all settled without a late exception **and** rh2 reports its
++    execution / resource / necessary-record closure complete -> the wait snapshot is kept as a
++    diagnostic (``resolved_by_final_closure``, ``resolved_wait_timeouts``) and the verdict may be
++    ok. Anything else (aclose / buffer errors, driver or worker exceptions, evidence failures,
++    unfinished or failed tasks, missing closure evidence) keeps the old non-ok verdict, and the wait
++    failure is late-merged into the rh2 report as the first cause as before.
+     """
++    started = time.monotonic()
+ 
+     report: dict[str, Any] = {
+         "schema_id": SHUTDOWN_VERDICT_SCHEMA_ID,
+@@ -203,6 +248,7 @@ async def close_rollout_fn_and_rh2(
+         "timed_out": False,
+         "rollout_fn": None,
+         "shutdown_failure": None,
++        "resolved_wait_timeouts": None,  # I13: wait-only failure verified gone by the final closure
+         "primary_cause": None,
+         "trigger": "owner_close",
+         "secondary_causes": [],
+@@ -242,12 +288,17 @@ async def close_rollout_fn_and_rh2(
+                 secondary.append(f"worker_fatal: {worker_desc}")
+     elif worker_exc is not None:
+         primary, trigger = worker_exc, "run_fatal"
++    # I13: only a wait-only failure with **no other cause** (no driver / worker exception) is deferred to the
++    # final re-check; with another primary in play the run is already not ok, so it stays a secondary as before.
++    wait_only = _is_wait_only(failure) and primary is None
++    failure_desc: str | None = None
+     if failure is not None:
+         failure_desc = "shutdown_failure: " + json.dumps(failure, ensure_ascii=False, default=str)[:400]
+-        if primary is None:
+-            primary, trigger = failure_desc, "shutdown_failure"
+-        else:
+-            secondary.append(failure_desc)
++        if not wait_only:
++            if primary is None:
++                primary, trigger = failure_desc, "shutdown_failure"
++            else:
++                secondary.append(failure_desc)
+     report["primary_cause"] = _describe(primary)
+     report["trigger"] = trigger
+     report["secondary_causes"] = list(secondary)
+@@ -263,6 +314,7 @@ async def close_rollout_fn_and_rh2(
+     # ---- rh2 shutdown chain -------------------------------------------------------------
+     rh2_ok: bool | None = None
+     rh2_cleanup_ok: bool | None = None
++    rh2_report: Any = None
+     try:
+         from repoharness2.adapters.slime.bringup import close_bringup_service
+     except ImportError:  # rh2 not on the path (stock miles usage): nothing to close
+@@ -277,22 +329,87 @@ async def close_rollout_fn_and_rh2(
+                 external_residue=external_residue,
+             )
+             if rh2_report is not None:
+-                rh2_ok = bool(rh2_report.ok)
+-                rh2_cleanup_ok = bool(
+-                    rh2_report.cleanup_clean and rh2_report.residue_free and not rh2_report.evidence_failures
+-                )
+-                report["rh2"] = {
+-                    "ok": rh2_ok,
+-                    "cleanup_ok": rh2_cleanup_ok,
+-                    "first_cause": rh2_report.first_cause,
+-                    "secondary_failures": list(rh2_report.secondary_failures),
+-                    "residue": dict(rh2_report.residue),
+-                    "evidence_failures": list(rh2_report.evidence_failures),
+-                }
++                rh2_ok, rh2_cleanup_ok, report["rh2"] = _rh2_summary(rh2_report, wait_resolved=False)
+         except Exception as exc:  # noqa: BLE001
+             report["errors"].append(f"close_bringup_service: {exc!r}")
+             logger.exception("[rh2-integration] rh2 close_bringup_service() failed")
+-    report["cleanup_ok"] = not report["errors"] and failure is None and (rh2_cleanup_ok is None or rh2_cleanup_ok)
++
++    wait_resolved = False
++    if wait_only and failure is not None:
++        # I13: the first snapshot is stale by now. Wait (bounded by the remaining verdict budget) for the
++        # abandoned tasks, then re-check their real state; rh2 must independently report its closure complete.
++        # Bounded settle wait = one more cancel-deadline period at most (and never past the verdict budget):
++        # a task that is still running after that is a real residue, not a late cleanup.
++        settle_budget: float | None = (fn_report or {}).get("deadline_seconds")
++        if settle_budget is None:
++            settle_budget = deadline_seconds
++        if verdict_deadline_seconds is not None:
++            remaining = max(verdict_deadline_seconds - (time.monotonic() - started), 0.0)
++            settle_budget = remaining if settle_budget is None else min(float(settle_budget), remaining)
++        await_settled = getattr(generate_rollout, "await_settled", None)
++        if await_settled is not None:
++            try:
++                await await_settled(settle_budget)
++            except Exception as exc:  # noqa: BLE001
++                report["errors"].append(f"await_settled: {exc!r}")
++        final_state_fn = getattr(generate_rollout, "final_close_state", None)
++        final_state = final_state_fn() if final_state_fn is not None else None
++        failure["final_state"] = final_state
++        settled = bool(final_state and final_state.get("all_settled"))
++        late_exceptions = list((final_state or {}).get("late_group_exceptions") or [])
++        worker_failed_late = (
++            final_state is not None and final_state.get("worker", {}).get("state") == "failed" and worker_exc is None
++        )
++        rh2_closure_ok = rh2_report is not None and bool(getattr(rh2_report, "ok_if_wait_residue_resolved", False))
++        wait_resolved = (
++            settled and not late_exceptions and not worker_failed_late and rh2_closure_ok and not report["errors"]
++        )
++        if wait_resolved:
++            # rh2 moves the wait snapshot out of its residue (kept as diagnostics) and rewrites its own
++            # report; the verdict then reads rh2's own ok. Missing API (older rh2) or a decline = not resolved.
++            try:
++                from repoharness2.adapters.slime.bringup import resolve_external_wait_residue
++            except ImportError:
++                resolve_external_wait_residue = None
++            resolved_report = None
++            if resolve_external_wait_residue is not None:
++                try:
++                    resolved_report = resolve_external_wait_residue(final_state)
++                except Exception as exc:  # noqa: BLE001
++                    report["errors"].append(f"resolve_external_wait_residue: {exc!r}")
++            wait_resolved = resolved_report is not None and bool(resolved_report.ok)
++            if wait_resolved:
++                rh2_report = resolved_report
++        failure["resolved_by_final_closure"] = wait_resolved
++        if wait_resolved:
++            report["resolved_wait_timeouts"] = failure
++            rh2_ok, rh2_cleanup_ok, report["rh2"] = _rh2_summary(rh2_report, wait_resolved=True)
++        else:
++            # Not resolvable: the wait failure is a real failure — cause priority as before, and it is
++            # late-merged into the rh2 report so the persisted report carries the same first cause.
++            if primary is None:
++                primary, trigger = failure_desc, "shutdown_failure"
++            else:
++                secondary.append(failure_desc)
++            report["primary_cause"] = _describe(primary)
++            report["trigger"] = trigger
++            report["secondary_causes"] = list(secondary)
++            if close_bringup_service is not None and rh2_report is not None:
++                try:
++                    merged = await close_bringup_service(
++                        reason="rollout_manager_dispose",
++                        trigger=trigger,
++                        first_cause=failure_desc if primary is failure_desc else None,
++                        secondary_causes=[failure_desc] if primary is not failure_desc else [],
++                    )
++                    if merged is not None:
++                        rh2_ok, rh2_cleanup_ok, report["rh2"] = _rh2_summary(merged, wait_resolved=False)
++                except Exception as exc:  # noqa: BLE001
++                    report["errors"].append(f"close_bringup_service(late wait failure): {exc!r}")
++    failure_for_verdict = None if wait_resolved else failure
++    report["cleanup_ok"] = (
++        not report["errors"] and failure_for_verdict is None and (rh2_cleanup_ok is None or rh2_cleanup_ok)
++    )
+     report["ok"] = report["cleanup_ok"] and (rh2_ok is None or rh2_ok) and primary is None
+     return report
+ 
+@@ -312,8 +429,13 @@ async def dispose_on_owner_loop(
+ 
+     timeout = dispose_timeout_seconds(args) if timeout_seconds is None else float(timeout_seconds)
+     owner = get_async_loop()
++    # I13: the final re-check may wait for abandoned tasks, but must return before this outer timeout
++    verdict_budget = max(timeout - min(1.0, timeout * 0.1), 0.0)
+     concurrent_future = asyncio.run_coroutine_threadsafe(
+-        close_rollout_fn_and_rh2(generate_rollout, driver_cause=driver_cause, deadline_seconds=deadline_seconds),
++        close_rollout_fn_and_rh2(
++            generate_rollout, driver_cause=driver_cause, deadline_seconds=deadline_seconds,
++            verdict_deadline_seconds=verdict_budget,
++        ),
+         owner.loop,
+     )
+     try:
+-- 
+2.50.1 (Apple Git-155)
+
