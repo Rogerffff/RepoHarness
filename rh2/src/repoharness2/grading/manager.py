@@ -47,6 +47,8 @@ docker 调用函数是构造参数（P7 backend-neutral）：单测注入 FakeDo
 from __future__ import annotations
 
 import asyncio
+import math
+from contextvars import ContextVar
 import base64
 import hashlib
 import os
@@ -677,6 +679,41 @@ class GradingInfraError(RuntimeError):
         self.category = category
 
 
+# N2a（第 2 组剩余实施 Brief §3.2；Codex 计划审查 R1）：一条评分任务的**工作期限**——由编排在提交时建立，
+# 随 queue item 传到 worker，再由 grade() 设进本 task 的 contextvar；准备 / 等待 / 重试共用它。
+# 每个阻塞的 Docker 操作与分段 timeout 都取 min(既有 timeout, 剩余)，剩余 ≤ 0 → GradingInfraError
+# ("grading_deadline_exhausted:<phase>") → 既有 failed_to_grade / infra 族归类（不决定第四组 reward 规则）。
+# 清理 / 收口（_close_container_scope）沿自己的 cleanup_timeout_seconds，不受它约束。
+_GRADING_DEADLINE: ContextVar[float | None] = ContextVar("rh2_grading_deadline_monotonic", default=None)
+GRADING_DEADLINE_EXHAUSTED = "grading_deadline_exhausted"
+
+
+def grading_deadline_left() -> float | None:
+    """当前评分任务的剩余秒数；没有期限 = None。"""
+
+    deadline = _GRADING_DEADLINE.get()
+    if deadline is None:
+        return None
+    return deadline - time.monotonic()
+
+
+def require_grading_time(phase: str) -> float | None:
+    """剩余 ≤ 0 即抛 GradingInfraError（期限耗尽，phase 说明在哪个环节）；返回剩余秒数（无期限 = None）。"""
+
+    left = grading_deadline_left()
+    if left is not None and left <= 0:
+        raise GradingInfraError(f"{GRADING_DEADLINE_EXHAUSTED}:{phase}")
+    return left
+
+
+def bounded_by_grading_deadline(timeout: float, phase: str) -> float:
+    """分段 timeout 与评分期限取小（先核期限未耗尽）。"""
+
+    left = require_grading_time(phase)
+    return timeout if left is None else min(timeout, left)
+
+
+
 class BaselineIntegrityError(RuntimeError):
     """B4 P0-1：exact-baseline 重建/绑定校验失败 = **系统性契约错误**。
 
@@ -1016,11 +1053,13 @@ class SWEGradingManager:
         queue_wait_seconds: float = 0.0,
         queue_depth_at_enqueue: int | None = None,
         backpressure_triggered: bool = False,
+        deadline_monotonic: float | None = None,
     ) -> GradingReport:
         """评分一条轨迹：导出→清洗→fresh 容器 clean checkout→重放→测试→官方解析→报告。
 
         queue_* 参数由 GradingQueue 注入（F5 排队等待计时与反压事实）；
-        直接调用（不经队列）时保持默认值即可。
+        直接调用（不经队列）时保持默认值即可。`deadline_monotonic`（N2a）= 本次评分工作的期限
+        （编排提交时建立，含排队）；None = 不设期限（旧调用面）。
         """
 
         if self._closed:
@@ -1029,6 +1068,27 @@ class SWEGradingManager:
             from repoharness2.shutdown.chain import ServiceClosedError
 
             raise ServiceClosedError("grading_manager_grade", f"评分管理器已关停，拒绝 {trajectory_id}")
+        token = _GRADING_DEADLINE.set(deadline_monotonic)
+        try:
+            return await self._grade_within_deadline(
+                trajectory_id=trajectory_id, workspace=workspace, spec=spec, frozen_delta=frozen_delta,
+                queue_wait_seconds=queue_wait_seconds, queue_depth_at_enqueue=queue_depth_at_enqueue,
+                backpressure_triggered=backpressure_triggered,
+            )
+        finally:
+            _GRADING_DEADLINE.reset(token)
+
+    async def _grade_within_deadline(
+        self,
+        *,
+        trajectory_id: str,
+        workspace: WorkspaceRunner | None,
+        spec: GradingEnvSpec,
+        frozen_delta: "FrozenDeltaSource | None",
+        queue_wait_seconds: float,
+        queue_depth_at_enqueue: int | None,
+        backpressure_triggered: bool,
+    ) -> GradingReport:
         total_start = time.monotonic()
         nonce = uuid.uuid4().hex[:8]
         timing_parts = {"image_pull": 0.0, "env_reset": 0.0, "prep": 0.0, "test": 0.0}
@@ -1111,6 +1171,7 @@ class SWEGradingManager:
             # 检查（source 内部一致 + source⟷spec + **可信评分投影路径集
             # 独立重算相等**，起容器前 fail-fast，矛盾 = BaselineIntegrityError
             # run-halt）。
+            require_grading_time("queue")  # N2a：排队已耗尽期限 → 不起容器，直接 failed_to_grade
             prep_start = time.monotonic()
             if frozen_delta is not None:
                 cleaned = None  # FA 路径无 diff 文本
@@ -1298,21 +1359,41 @@ class SWEGradingManager:
         if image in self._images_ready:
             return 0.0
         lock = self._image_locks.setdefault(image, asyncio.Lock())
-        async with lock:
+        # N2a：等锁、inspect、pull 都消费同一评分期限（wait_for 取消 → 默认 runner 杀宿主 CLI）
+        try:
+            await asyncio.wait_for(lock.acquire(), timeout=bounded_by_grading_deadline(math.inf, "image_lock"))
+        except (TimeoutError, asyncio.TimeoutError):
+            raise GradingInfraError(f"{GRADING_DEADLINE_EXHAUSTED}:image_lock") from None
+        try:
             if image in self._images_ready:
                 return 0.0
-            inspect = await self._docker("image", "inspect", image)
+            inspect = await self._await_within_grading_deadline(
+                self._docker("image", "inspect", image), phase="image_inspect"
+            )
             if inspect.exit_code == 0:
                 self._images_ready.add(image)
                 return 0.0
             pull_start = time.monotonic()
-            pull = await self._docker("pull", image)
+            pull = await self._await_within_grading_deadline(self._docker("pull", image), phase="image_pull")
             if pull.exit_code != 0:
                 raise GradingInfraError(
                     f"grading_image_pull_failed:{image}:{pull.stderr.strip()[-300:]}"
                 )
             self._images_ready.add(image)
             return time.monotonic() - pull_start
+        finally:
+            lock.release()
+
+    async def _await_within_grading_deadline(self, aw, *, phase: str):
+        """N2a：一个 Docker 操作受评分期限约束；到点取消它（默认 runner 在取消路径 kill+wait 宿主 CLI）。"""
+
+        left = require_grading_time(phase)
+        if left is None:
+            return await aw
+        try:
+            return await asyncio.wait_for(aw, timeout=left)
+        except (TimeoutError, asyncio.TimeoutError):
+            raise GradingInfraError(f"{GRADING_DEADLINE_EXHAUSTED}:{phase}") from None
 
     # ------------------------------------------------------------------ 内部：容器生命周期
     async def _start_container(
@@ -1325,7 +1406,9 @@ class SWEGradingManager:
         # 租约先行：网络策略唯一来源是 SandboxLease（purpose=grading 在 schema 层
         # 锁死 deny_all，P9），docker 参数由租约推导——想开网先得改契约。
         profile = self.config.sandbox_profile
-        image_id = await self._docker("image", "inspect", "-f", "{{.Id}}", spec.image)
+        image_id = await self._await_within_grading_deadline(
+            self._docker("image", "inspect", "-f", "{{.Id}}", spec.image), phase="image_id_inspect"
+        )
         lease = SandboxLease(
             lease_id=f"lease_{name}",
             container_id=name,
@@ -1377,7 +1460,7 @@ class SWEGradingManager:
                 name=name, image=spec.image, labels=labels, declared_readonly_binds=declared_binds
             )
 
-        run = await self._docker(*args)
+        run = await self._await_within_grading_deadline(self._docker(*args), phase="container_start")
         if run.exit_code != 0:
             raise GradingInfraError(
                 f"grading_container_start_failed:{run.stderr.strip()[-300:]}"
@@ -1566,11 +1649,16 @@ class SWEGradingManager:
         """带分段超时（P3）与容器死亡检测（P4）的 exec：
         超时 -> infra；命令失败且容器已死 -> infra（killed）；其余交调用方定夺。"""
 
+        base_timeout = timeout
+        timeout = bounded_by_grading_deadline(timeout, phase)  # N2a：分段 timeout 与评分期限取小
         try:
             result = await asyncio.wait_for(
                 self._exec_bash(record, script, input_bytes=input_bytes, user=user, home=home), timeout=timeout
             )
         except (TimeoutError, asyncio.TimeoutError):
+            if timeout < base_timeout:
+                # 是评分期限而不是分段 timeout 先到：归因写清楚（同为 infra 族 failed_to_grade）
+                raise GradingInfraError(f"{GRADING_DEADLINE_EXHAUSTED}:{phase}") from None
             raise GradingInfraError(
                 f"grading_{phase}_timeout_after_{int(timeout)}s"
             ) from None

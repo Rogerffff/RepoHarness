@@ -1779,7 +1779,7 @@ class BringupService:
     def _adapter_factory(self, hook, session_defaults):
         return make_per_rollout_adapter(self.registry, self.adapter, hook)
 
-    async def _grading_submit(self, *, trajectory_id, workspace, spec, frozen_delta=None):
+    async def _grading_submit(self, *, trajectory_id, workspace, spec, frozen_delta=None, deadline_monotonic=None):
         # W5a：评分面在关停链的 grading_queue 步之后关闭（比停收新执行晚——在飞
         # 执行在宽限期内仍要把评分提交完）；关闭后 typed 拒绝。
         self.lifecycle.require_grading_open("grading_submit")
@@ -1800,7 +1800,7 @@ class BringupService:
                 spec = dataclasses.replace(spec, eval_script=_INJECTED_EVAL_SCRIPT)
         return await self.grading_queue.submit(
             trajectory_id=trajectory_id, workspace=workspace, spec=spec,
-            frozen_delta=frozen_delta,
+            frozen_delta=frozen_delta, deadline_monotonic=deadline_monotonic,
         )
 
     # -- 事件记录 --------------------------------------------------------------

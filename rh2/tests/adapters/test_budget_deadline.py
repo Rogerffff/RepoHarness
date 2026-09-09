@@ -1313,3 +1313,70 @@ async def test_materialize_fatal_is_notified_before_cleanup_and_survives_the_dea
     assert chain.orchestrator._attempt_networks == {} and chain.orchestrator.cleanup_quarantine == []  # 私网拆除、无残留
     assert any(f.stage == "materialize" for f in audit.failure_records)
     assert events == ["fatal", "rm_enter", "rm_return"]
+
+
+# ================================================================ N2a：编排提交时建立评分工作期限
+
+
+async def test_orchestrator_submits_a_grading_deadline_and_records_it(monkeypatch):
+    """N2a：`_grade()` 按 config.grading_deadline_seconds 建立 deadline_monotonic 随提交传下去并记进 audit；
+    配置 <= 0 时不传（旧调用面不变）。"""
+
+    import dataclasses
+    import time
+
+    seen: list = []
+    chain = _formal_chain()
+    original = chain.orchestrator._grading_submit
+
+    async def submit(**kwargs):
+        seen.append(dict(kwargs))
+        kwargs.pop("deadline_monotonic", None)
+        return await original(**kwargs)
+
+    chain.orchestrator._grading_submit = submit
+    before = time.monotonic()
+    await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    audit = chain.orchestrator.audits[0]
+    (call,) = seen
+    assert call["deadline_monotonic"] >= before + chain.orchestrator.config.grading_deadline_seconds - 1.0
+    assert audit.grading_deadline_seconds == chain.orchestrator.config.grading_deadline_seconds == 3600.0
+
+    seen.clear()
+    chain2 = _formal_chain()
+    chain2.orchestrator.config = dataclasses.replace(chain2.orchestrator.config, grading_deadline_seconds=0.0)
+    original2 = chain2.orchestrator._grading_submit
+
+    async def submit2(**kwargs):
+        seen.append(kwargs)
+        return await original2(**kwargs)
+
+    chain2.orchestrator._grading_submit = submit2
+    await chain2.orchestrator.generate(_Args(), chain2.base_sample, dict(SAMPLING_PARAMS))
+    assert "deadline_monotonic" not in seen[0] and chain2.orchestrator.audits[0].grading_deadline_seconds is None
+
+
+async def test_hung_grading_worker_is_run_fatal_after_deadline_plus_cleanup_margin(monkeypatch):
+    """N2a 兜底：worker 内的期限才是真正约束；提交方只多等清理预算余量——worker 真挂死 = grader 资源不可确认，
+    按 run-fatal `grading_submit_wait_exhausted`（不是 failed_to_grade 成员损耗）。"""
+
+    import dataclasses
+
+    from repoharness2.adapters.slime import generate as generate_mod
+    from repoharness2.adapters.slime.async_worker import FatalExecutionInfrastructureError
+
+    monkeypatch.setattr(generate_mod, "GRADING_SUBMIT_WAIT_MARGIN_SEC", 0.05)
+    chain = _formal_chain()
+    chain.orchestrator.config = dataclasses.replace(
+        chain.orchestrator.config, grading_deadline_seconds=0.05, cleanup_timeout_seconds=1
+    )
+
+    async def hung(**kwargs):
+        await asyncio.Event().wait()
+
+    chain.orchestrator._grading_submit = hung
+    with pytest.raises(FatalExecutionInfrastructureError, match="grading_submit_wait_exhausted"):
+        await asyncio.wait_for(chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS)), 10)
+    audit = chain.orchestrator.audits[0]
+    assert any(f.error_type == "grading_submit_wait_exhausted" for f in audit.failure_records)
+    assert "cleanup_completed" in _steps(audit)

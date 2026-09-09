@@ -97,6 +97,7 @@ class _QueueItem:
     submitted_monotonic: float
     depth_at_enqueue: int
     backpressure: bool
+    deadline_monotonic: float | None = None  # N2a：评分工作期限（编排提交时建立，含排队）
 
 
 class GradingQueue:
@@ -186,6 +187,7 @@ class GradingQueue:
         workspace: WorkspaceRunner | None,
         spec: GradingEnvSpec,
         frozen_delta=None,  # B4：FA formal 冻结 delta 源（透传 manager.grade）
+        deadline_monotonic: float | None = None,  # N2a：评分工作期限（含排队 / 反压等待）
     ) -> GradingReport:
         """提交一条评分请求并等待其 GradingReport。
 
@@ -219,6 +221,7 @@ class GradingQueue:
             submitted_monotonic=time.monotonic(),  # 等待计时含反压阻塞段
             depth_at_enqueue=depth,
             backpressure=backpressure,
+            deadline_monotonic=deadline_monotonic,
         )
         await self._queue.put(item)
         return await item.future
@@ -256,6 +259,7 @@ class GradingQueue:
                     queue_wait_seconds=queue_wait,
                     queue_depth_at_enqueue=item.depth_at_enqueue,
                     backpressure_triggered=item.backpressure,
+                    deadline_monotonic=item.deadline_monotonic,
                 )
                 if not item.future.done():
                     item.future.set_result(report)

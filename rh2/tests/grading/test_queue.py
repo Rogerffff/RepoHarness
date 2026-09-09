@@ -299,3 +299,28 @@ async def test_close_with_drain_consumes_backlog_whose_submitters_were_cancelled
     manager.release.set()
     await asyncio.wait_for(closing, 1)
     assert manager.calls == ["first", "second"] and queue.queue_depth == 0 and queue._workers == []
+
+
+async def test_deadline_travels_with_the_queue_item_and_is_enforced_in_the_worker():
+    """N2a：期限随 queue item 到 worker 内的 manager.grade；排队等待也消费它——被前一条挡住的第二条出队时
+    期限已过 → 直接 failed_to_grade（不起容器），不是只取消提交方的 future。"""
+
+    import time
+
+    from repoharness2.grading.manager import GradingManagerConfig, SWEGradingManager
+
+    fake = FakeDocker(base_commit=BASE, eval_delay=0.4)
+    manager = SWEGradingManager(GradingManagerConfig(), docker=fake)
+    queue = GradingQueue(manager, GradingQueueConfig(concurrency=1, queue_size=2))
+    await queue.start()
+    first = asyncio.create_task(queue.submit(
+        trajectory_id="q1", workspace=FakeWorkspace(GOOD_PATCH), spec=_spec(), deadline_monotonic=time.monotonic() + 30,
+    ))
+    await asyncio.sleep(0.05)
+    second = await asyncio.wait_for(queue.submit(
+        trajectory_id="q2", workspace=FakeWorkspace(GOOD_PATCH), spec=_spec(), deadline_monotonic=time.monotonic() + 0.1,
+    ), 5)
+    assert second.outcome == "failed_to_grade" and second.infra_failure_detail == "grading_deadline_exhausted:queue"
+    assert sum(1 for c in fake.calls if c[0] == "run") == 1  # 只有第一条起了容器
+    assert (await asyncio.wait_for(first, 5)).outcome in ("resolved", "unresolved")
+    await asyncio.wait_for(queue.close(), 2)

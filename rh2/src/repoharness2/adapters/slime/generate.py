@@ -365,6 +365,9 @@ EXECUTION_SCOPE_STOP_TIMEOUT_SEC = 30.0
 # 期限到；每次尝试各用上面的 30s 总预算（不因期限缩短）。尝试用尽仍未证明 → 不按已证明放行（三态 None），
 # 由屏障 ① 再停一次并 fail-closed，finalize 时期限已过则归 hard wall。
 EXECUTION_SCOPE_STOP_MAX_ATTEMPTS = 3
+# N2a：提交方对评分 future 的兜底等待 = 评分期限 + 清理预算 + 本余量（worker 内的期限才是真正的约束；
+# 兜底只在 worker 挂死时触发，按 run-fatal `grading_submit_wait_exhausted`）。
+GRADING_SUBMIT_WAIT_MARGIN_SEC = 60.0
 EXECUTION_SCOPE_STOP_RETRY_INTERVAL_SEC = 1.0
 
 
@@ -1988,6 +1991,10 @@ class SlimeBindingConfig:
     name_prefix: str = "rh2-rollout"
     label_prefix: str = "rh2.rollout"
     cleanup_timeout_seconds: int = 120
+    # N2a（第 2 组剩余实施 Brief §3.2）：一条评分任务的工作期限（从编排提交起表，含排队 / 反压等待、镜像就绪、
+    # grader 容器准备、候选测试；追加评分不重置）。默认 3600s = 队列等待 + 镜像 + 准备 + 候选测试 1800s 的余量；
+    # 运行配置（T1），owner 可改。<=0 = 不设期限（旧行为）。清理沿 cleanup_timeout_seconds，不在其内。
+    grading_deadline_seconds: float = 3600.0
     network_allowlist_justification: str = (
         "rollout 容器内的 Claude Code harness 必须反连宿主侧模型代理端点"
         "（ANTHROPIC_BASE_URL）；S1 仅记录白名单意图，包级过滤归 S2 安全 Runtime。"
@@ -2198,6 +2205,7 @@ class RolloutAudit:
     member_identity: dict[str, Any] | None = None
     captured_output_tokens: int | None = None
     capture_record_count: int | None = None
+    grading_deadline_seconds: float | None = None  # N2a：本次评分工作期限（None = 不设）
 
     def step(self, name: str) -> None:
         self.steps.append(name)
@@ -5225,15 +5233,41 @@ class RolloutOrchestrator:
             )
 
             audit.mark("grading_started")
+            budget = float(getattr(self.config, "grading_deadline_seconds", 0.0) or 0.0)
+            deadline = time.monotonic() + budget if budget > 0 else None
+            audit.grading_deadline_seconds = budget if budget > 0 else None
             try:
-                report = await self._grading_submit(
+                submit = self._grading_submit(
                     trajectory_id=trajectory_id,
                     # B4：frozen_delta 在场时 grader 不读 workspace（传 None，
                     # 契约级保证"不回读 rollout workspace"）
                     workspace=None if frozen_delta is not None else workspace,
                     spec=grading_spec,
                     **({"frozen_delta": frozen_delta} if frozen_delta is not None else {}),
+                    **({"deadline_monotonic": deadline} if deadline is not None else {}),
                 )
+                if deadline is None:
+                    report = await submit
+                else:
+                    # N2a：期限由 worker 内的 manager 真正执行（每个 Docker 操作受约束）；提交方只多等
+                    # 清理预算的余量作为兜底——worker 真挂死意味着 grader 资源不可确认，按 run-fatal
+                    try:
+                        report = await asyncio.wait_for(
+                            submit,
+                            timeout=budget + float(self.config.cleanup_timeout_seconds) + GRADING_SUBMIT_WAIT_MARGIN_SEC,
+                        )
+                    except (TimeoutError, asyncio.TimeoutError) as exc:
+                        audit.failure_records.append(
+                            RolloutFailureRecord(
+                                stage="grading", error_type="grading_submit_wait_exhausted",
+                                detail=f"评分 worker 在期限 + 清理余量内没有返回（budget={budget}s）",
+                            )
+                        )
+                        audit.mark("grading_submit_wait_exhausted")
+                        raise FatalExecutionInfrastructureError(
+                            "grading_submit_wait_exhausted",
+                            "评分 worker 超过评分期限 + 清理余量仍未返回——grader 资源状态不可确认，run-halt。",
+                        ) from exc
             except GradingScopeTerminationError as exc:
                 # 批 D-2（I14 grading 侧；06 A4）：评分容器有界收口后仍运行 / 无法确认 → run-halt
                 # （清理已在 manager 内继续做完；这里只是把 typed 终止失败转成致命传播）。

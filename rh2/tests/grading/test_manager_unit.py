@@ -817,3 +817,94 @@ async def test_other_container_absent_or_garbage_success_output_is_unknown():
         manager._docker = _rm_fails_docker(fake, reply)
         with pytest.raises(GradingScopeTerminationError, match="unknown"):
             await manager.grade(trajectory_id="traj_unknown_shape", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec())
+
+
+# ---------------------------------------------------------------------------
+# N2a（第 2 组剩余实施 Brief §3.2；Codex 计划审查 R1）：评分工作总期限约束实际评分工作
+# ---------------------------------------------------------------------------
+
+
+def _deadline(seconds: float) -> float:
+    return asyncio.get_running_loop().time() + seconds if False else __import__("time").monotonic() + seconds
+
+
+async def test_deadline_already_exhausted_when_dequeued_does_not_start_a_container():
+    fake = FakeDocker(base_commit=BASE)
+    manager = make_manager(fake)
+    report = await manager.grade(
+        trajectory_id="traj_dl_queue", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec(),
+        deadline_monotonic=_deadline(-1.0),
+    )
+    assert report.outcome == "failed_to_grade" and report.infra_failure_detail == "grading_deadline_exhausted:queue"
+    assert not any(c[0] == "run" for c in fake.calls)  # 排队已耗尽期限：不起容器
+
+
+async def test_pull_hang_is_cut_at_the_grading_deadline_without_starting_a_container():
+    fake = FakeDocker(base_commit=BASE, image_present=False, pull_delay=5.0)
+    manager = make_manager(fake)
+    started = asyncio.get_running_loop().time()
+    report = await asyncio.wait_for(
+        manager.grade(trajectory_id="traj_dl_pull", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec(),
+                      deadline_monotonic=_deadline(0.3)),
+        timeout=5,
+    )
+    assert asyncio.get_running_loop().time() - started < 2.0
+    assert report.outcome == "failed_to_grade" and report.infra_failure_detail == "grading_deadline_exhausted:image_pull"
+    assert not any(c[0] == "run" for c in fake.calls)
+    assert fake.pulls_in_flight == 0  # wait_for 取消了 pull（替身在 finally 里归零）
+
+
+async def test_image_lock_wait_consumes_the_deadline_of_the_waiter():
+    fake = FakeDocker(base_commit=BASE, image_present=False, pull_delay=1.0)
+    manager = make_manager(fake)
+    first = asyncio.create_task(manager.grade(
+        trajectory_id="traj_lock_1", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec(), deadline_monotonic=_deadline(30.0),
+    ))
+    await asyncio.sleep(0.05)  # 第一条持有 per-image 锁在 pull
+    second = await asyncio.wait_for(manager.grade(
+        trajectory_id="traj_lock_2", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec(), deadline_monotonic=_deadline(0.2),
+    ), timeout=5)
+    assert second.outcome == "failed_to_grade" and second.infra_failure_detail == "grading_deadline_exhausted:image_lock"
+    first_report = await asyncio.wait_for(first, timeout=5)
+    assert first_report.outcome in ("resolved", "unresolved")  # 持锁者不受等待者期限影响
+
+
+async def test_prep_exec_hang_hits_deadline_and_the_container_is_still_cleaned():
+    fake = FakeDocker(base_commit=BASE)
+    manager = make_manager(fake, cleanup_timeout_seconds=1)
+    state = {"n": 0}
+
+    async def docker(*args, input_bytes=None):
+        if args[0] == "exec" and state["n"] == 0:
+            state["n"] += 1
+            await asyncio.Event().wait()  # 第一个 exec（准备阶段）挂起
+        return await FakeDocker.__call__(fake, *args, input_bytes=input_bytes)
+
+    manager._docker = docker
+    report = await asyncio.wait_for(
+        manager.grade(trajectory_id="traj_dl_prep", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec(),
+                      deadline_monotonic=_deadline(0.3)),
+        timeout=5,
+    )
+    assert report.outcome == "failed_to_grade"
+    assert report.infra_failure_detail.startswith("grading_deadline_exhausted:")
+    assert manager.container_records[-1].removed is True  # 清理沿自己的预算，不因期限耗尽跳过
+
+
+async def test_test_phase_timeout_is_clamped_by_the_deadline_and_attributed_to_it():
+    fake = FakeDocker(base_commit=BASE, eval_delay=5.0)
+    manager = make_manager(fake, cleanup_timeout_seconds=1)
+    report = await asyncio.wait_for(
+        manager.grade(trajectory_id="traj_dl_test", workspace=FakeWorkspace(GOOD_PATCH),
+                      spec=make_spec(test_timeout_seconds=100.0), deadline_monotonic=_deadline(0.4)),
+        timeout=5,
+    )
+    assert report.outcome == "failed_to_grade" and report.infra_failure_detail == "grading_deadline_exhausted:test"
+    assert manager.container_records[-1].removed is True
+
+
+async def test_no_deadline_keeps_the_old_behaviour():
+    fake = FakeDocker(base_commit=BASE, eval_delay=0.05)
+    manager = make_manager(fake)
+    report = await manager.grade(trajectory_id="traj_no_dl", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec())
+    assert report.outcome in ("resolved", "unresolved")

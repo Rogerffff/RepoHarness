@@ -147,10 +147,11 @@ class _RealGrader:
         self.queue = GradingQueue(self.manager, GradingQueueConfig(concurrency=concurrency, queue_size=queue_size))
         self.calls: list[dict] = []
 
-    async def submit(self, *, trajectory_id, workspace, spec, frozen_delta=None):
-        self.calls.append({"trajectory_id": trajectory_id, "workspace": workspace, "frozen_delta": frozen_delta})
+    async def submit(self, *, trajectory_id, workspace, spec, frozen_delta=None, **kwargs):
+        self.calls.append({"trajectory_id": trajectory_id, "workspace": workspace, "frozen_delta": frozen_delta, **kwargs})
         return await self.queue.submit(
             trajectory_id=trajectory_id, workspace=workspace, spec=spec, frozen_delta=frozen_delta,
+            **kwargs,
         )
 
 
@@ -203,7 +204,7 @@ async def test_grader_completes_from_persisted_artifact_alone():
     chain = _formal_chain(barrier=make_barrier({"src/fix.py": b"print('half')\n"}), store=store)
     rebuilt_digests: list[str] = []
 
-    async def submit(*, trajectory_id, workspace, spec, frozen_delta=None):
+    async def submit(*, trajectory_id, workspace, spec, frozen_delta=None, **kwargs):
         assert workspace is None
         body = store.bodies[-1]
         art = FrozenPatchArtifactV1.model_validate(json.loads(body["frozen_patch"].model_dump_json()))

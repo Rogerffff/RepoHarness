@@ -186,9 +186,9 @@ def _chain(tree: dict[str, bytes], *, eval_log: str, rules: HygieneRules = SWE_R
     _stamp_fa_identity(chain.base_sample)
     submitted: list[dict] = []
 
-    async def submit(*, trajectory_id, workspace, spec, frozen_delta=None):
+    async def submit(*, trajectory_id, workspace, spec, frozen_delta=None, **kwargs):
         submitted.append({"workspace": workspace, "frozen_delta": frozen_delta})
-        return await manager.grade(trajectory_id=trajectory_id, workspace=workspace, spec=spec, frozen_delta=frozen_delta)
+        return await manager.grade(trajectory_id=trajectory_id, workspace=workspace, spec=spec, frozen_delta=frozen_delta, **kwargs)
 
     chain.orchestrator._grading_submit = submit
     chain.orchestrator._grader_phase_timing_source = manager.take_grader_phase_timing
@@ -349,7 +349,7 @@ async def test_grader_recomputes_split_from_spec_and_rejects_tampered_projection
     )
     manager_grade = chain.orchestrator._grading_submit
 
-    async def tampered_submit(*, trajectory_id, workspace, spec, frozen_delta=None):
+    async def tampered_submit(*, trajectory_id, workspace, spec, frozen_delta=None, **kwargs):
         tampered = FrozenDeltaSource(
             frozen_patch=frozen_delta.frozen_patch, baseline_manifest=frozen_delta.baseline_manifest,
             projection=frozen_delta.projection.model_copy(
