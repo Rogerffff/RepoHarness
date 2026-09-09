@@ -1187,6 +1187,8 @@ class BringupService:
             GradingQueueConfig(
                 concurrency=grading_concurrency, queue_size=grading_concurrency * 2
             ),
+            # 批 D-2（Codex 联合审查 R5）：提交者已取消时 grader 的 scope 终止失败仍经进程级入口停 run
+            fatal_sink=notify_run_fatal,
         )
         self._queue_started = False
 

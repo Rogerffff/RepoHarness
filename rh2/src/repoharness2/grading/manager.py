@@ -1468,9 +1468,17 @@ class SWEGradingManager:
         except (TimeoutError, asyncio.TimeoutError):
             return "unknown"  # inspect 未在预算内返回 = 无法确认
         if inspect.exit_code == 0:
-            return "running" if inspect.stdout.strip() == "true" else "stopped"
+            out = inspect.stdout.strip().lower()
+            if out == "true":
+                return "running"
+            if out == "false":
+                return "stopped"
+            return "unknown"  # 成功退出也只认明确的 true / false
         err = (inspect.stderr or inspect.stdout).strip().lower()
-        if "no such" in err or "not found" in err:
+        # Codex 联合审查 R4：只认**明确指向本容器**的"不存在"（docker 的形态："Error: No such object: <name>" /
+        # "No such container: <name>"）。连接 / 传输诊断（如 "dial unix /var/run/docker.sock: connect: no such
+        # file or directory"）里的 "no such" 指的是 socket，不是容器——容器可能仍在另一端运行，只能是 unknown。
+        if ("no such object" in err or "no such container" in err) and record.name.lower() in err:
             return "absent"
         return "unknown"
 

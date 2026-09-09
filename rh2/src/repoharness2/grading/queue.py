@@ -28,8 +28,15 @@ from typing import Any, Literal
 
 from pydantic import AwareDatetime, Field
 
+from collections.abc import Callable
+
 from repoharness2.contracts import GradingReport, NonEmptyStr, StrictModel
-from repoharness2.grading.manager import GradingEnvSpec, SWEGradingManager, WorkspaceRunner
+from repoharness2.grading.manager import (
+    BaselineIntegrityError,
+    GradingEnvSpec,
+    SWEGradingManager,
+    WorkspaceRunner,
+)
 
 # EligibilityReport.reason_codes 直接可用的理由码（SafeIdentifier 形态）。
 BACKPRESSURE_REASON_CODE = "grading_backpressure_queue_full"
@@ -107,7 +114,11 @@ class GradingQueue:
     """
 
     def __init__(
-        self, manager: SWEGradingManager, config: GradingQueueConfig | None = None
+        self,
+        manager: SWEGradingManager,
+        config: GradingQueueConfig | None = None,
+        *,
+        fatal_sink: Callable[[BaseException], None] | None = None,
     ) -> None:
         self.manager = manager
         self.config = config or GradingQueueConfig()
@@ -116,6 +127,11 @@ class GradingQueue:
         self._active = 0
         self.max_active_seen = 0  # F5 观测：实际并发峰值
         self.events: list[BackpressureEvent] = []  # P11 反压事实（gate/画像消费）
+        # 批 D-2（Codex 联合审查 R5）：scope / 完整性级致命异常的**独立接收者**——提交者已取消（future
+        # 已 done）时 worker 仍要把它交给服务（bringup 传 notify_run_fatal；未传时懒取进程级入口）。
+        self._fatal_sink = fatal_sink
+        self.out_of_band_fatals: list[BaseException] = []
+        self._closing = False
 
     @property
     def backpressure_count(self) -> int:
@@ -143,6 +159,7 @@ class GradingQueue:
     async def close(self, *, drain: bool = True) -> None:
         """关闭队列。drain=True 时先等在途/排队请求全部完成再撤 worker。"""
 
+        self._closing = True  # R5：worker 处理完在途异常后按此退出，不再回到 queue.get()
         if drain and self._workers:
             await self._queue.join()
         for worker in self._workers:
@@ -203,8 +220,25 @@ class GradingQueue:
         return await item.future
 
     # ------------------------------------------------------------------ worker
+    def _deliver_fatal_out_of_band(self, exc: BaseException) -> None:
+        """R5：提交者已不在（future 已取消 / 已 done）时，致命事实仍须到达服务。"""
+
+        self.out_of_band_fatals.append(exc)
+        sink = self._fatal_sink
+        if sink is None:
+            try:
+                from repoharness2.adapters.slime.bringup import notify_run_fatal  # 延迟 import：避免环
+
+                sink = notify_run_fatal
+            except Exception:  # noqa: BLE001 —— 无 bringup 的测试面：只留账
+                return
+        try:
+            sink(exc)
+        except Exception:  # noqa: BLE001 —— 通知失败不炸 worker（账已留）
+            pass
+
     async def _worker_loop(self) -> None:
-        while True:
+        while not self._closing:
             item = await self._queue.get()
             queue_wait = time.monotonic() - item.submitted_monotonic
             self._active += 1
@@ -223,7 +257,13 @@ class GradingQueue:
                     item.future.set_result(report)
             except Exception as exc:  # noqa: BLE001 单条失败不炸队列（故障域隔离）
                 if not item.future.done():
-                    item.future.set_exception(exc)
+                    item.future.set_exception(exc)  # 提交者在等：由它转 fatal / 记 failed_to_grade
+                elif isinstance(exc, BaselineIntegrityError):
+                    # R5：提交者已取消（stop/halt 路径）而 grader 收口后仍抛 scope / 完整性级致命异常——
+                    # 不能因 future 已 done 就丢掉；普通 task-local 评分故障仍按原隔离语义（只影响该条）。
+                    self._deliver_fatal_out_of_band(exc)
             finally:
                 self._active -= 1
                 self._queue.task_done()
+            # R5：close(drain=False) 的取消可能被 grade() finally 抛出的 ScopeError 替换（上面按普通异常
+            # 处理了）——处理完本条后按关闭标志退出，不再 while True 回到 queue.get() 让 close 挂住。

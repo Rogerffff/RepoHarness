@@ -150,3 +150,93 @@ async def test_queue_with_real_manager_fake_docker_propagates_facts():
     assert max(r.timings.queue_wait_seconds for r in reports) > 0.0
     if queue.events:  # 打满与否取决于时序，打满了就必须有对应旗标
         assert any(r.timings.backpressure_triggered for r in reports)
+
+
+# ---------------------------------------------------------------------------
+# Codex 联合审查 R5：取消后 scope fatal 的独立接收者 + 关闭中 worker 退出
+# ---------------------------------------------------------------------------
+
+
+class _ScopeFailingManager:
+    """grade() 先等 release；提交者取消 / 关闭时按 kind 决定收口异常。"""
+
+    def __init__(self, kind: str):
+        self.kind = kind
+        self.entered = asyncio.Event()
+        self.release = asyncio.Event()
+        self.calls = 0
+
+    async def grade(self, **kw):
+        from repoharness2.grading.manager import GradingScopeTerminationError
+
+        self.calls += 1
+        self.entered.set()
+        try:
+            await self.release.wait()
+        except asyncio.CancelledError:
+            if self.kind == "scope_error_on_cancel":
+                # 真实 grade() 的 finally：有界收口失败 → ScopeError 替换在途 CancelledError
+                raise GradingScopeTerminationError("grading_scope_termination_failed", "closure failed") from None
+            raise
+        if self.kind == "scope_error":
+            raise GradingScopeTerminationError("grading_scope_termination_failed", "still running after closure")
+        if self.kind == "plain_error":
+            raise RuntimeError("plain grading failure")
+        return "report"
+
+
+async def test_scope_fatal_after_submitter_cancelled_reaches_fatal_sink():
+    """提交者取消 → future 已 done；worker 稍后的 GradingScopeTerminationError 经 fatal_sink 到达服务
+    （修前：set_exception 被跳过，fatal 无人接收，halt=0）；worker 仍活着、队列可继续；不通知两次。"""
+
+    sink: list = []
+    manager = _ScopeFailingManager("scope_error")
+    queue = GradingQueue(manager, GradingQueueConfig(concurrency=1, queue_size=1), fatal_sink=sink.append)
+    await queue.start()
+    submitter = asyncio.create_task(queue.submit(trajectory_id="t1", workspace=None, spec=_spec()))
+    await asyncio.wait_for(manager.entered.wait(), 1)
+    submitter.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await submitter
+    manager.release.set()
+    await asyncio.wait_for(queue._queue.join(), 1)
+    assert [type(e).__name__ for e in sink] == ["GradingScopeTerminationError"]
+    assert len(queue.out_of_band_fatals) == 1
+    assert not queue._workers[0].done()  # worker 仍在
+    await asyncio.wait_for(queue.close(), 1)
+
+
+async def test_plain_error_after_submitter_cancelled_is_not_escalated():
+    """对照：普通 task-local 评分故障在提交者取消后只留在队列隔离语义内，不经 fatal_sink。"""
+
+    sink: list = []
+    manager = _ScopeFailingManager("plain_error")
+    queue = GradingQueue(manager, GradingQueueConfig(concurrency=1, queue_size=1), fatal_sink=sink.append)
+    await queue.start()
+    submitter = asyncio.create_task(queue.submit(trajectory_id="t2", workspace=None, spec=_spec()))
+    await asyncio.wait_for(manager.entered.wait(), 1)
+    submitter.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await submitter
+    manager.release.set()
+    await asyncio.wait_for(queue._queue.join(), 1)
+    assert sink == [] and queue.out_of_band_fatals == []
+    await asyncio.wait_for(queue.close(), 1)
+
+
+async def test_close_without_drain_completes_when_grade_finally_raises_scope_error():
+    """close(drain=False) 取消 worker，grade() 收口以 ScopeError 替换 CancelledError → worker 把它交给仍在
+    等待的提交者后按关闭标志退出，close 在有限时间内完成（修前：worker 回到 while True，close 挂住）。"""
+
+    from repoharness2.grading.manager import GradingScopeTerminationError
+
+    sink: list = []
+    manager = _ScopeFailingManager("scope_error_on_cancel")
+    queue = GradingQueue(manager, GradingQueueConfig(concurrency=1, queue_size=1), fatal_sink=sink.append)
+    await queue.start()
+    submitter = asyncio.create_task(queue.submit(trajectory_id="t3", workspace=None, spec=_spec()))
+    await asyncio.wait_for(manager.entered.wait(), 1)
+    await asyncio.wait_for(queue.close(drain=False), 2)  # 修前此处永久等待
+    with pytest.raises(GradingScopeTerminationError):
+        await submitter  # 提交者仍在等：异常经 future 交付（由编排转 fatal），不走 sink
+    assert sink == [] and queue._workers == []

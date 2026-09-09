@@ -756,3 +756,64 @@ async def test_inspect_hang_during_test_is_state_unknown_within_budget():
     assert report.outcome == "failed_to_grade"
     assert report.infra_failure_detail == "grading_container_state_unknown_during_test"
     assert manager.container_records[-1].removed is True
+
+
+# ---------------------------------------------------------------------------
+# Codex 联合审查 R4：缺 socket ≠ 缺容器
+# ---------------------------------------------------------------------------
+
+
+def _rm_fails_docker(fake: FakeDocker, inspect_reply):
+    """rm 一律失败；inspect {{.State.Running}} 由 inspect_reply(name) 决定；其余交 FakeDocker。"""
+
+    async def docker(*args, input_bytes=None):
+        if args[0] == "rm":
+            return ExecResult(1, "", f"daemon failed to remove {args[-1]}")
+        if args[0] == "inspect" and "{{.State.Running}}" in args:
+            return inspect_reply(args[-1])
+        return await FakeDocker.__call__(fake, *args, input_bytes=input_bytes)
+
+    return docker
+
+
+async def test_missing_docker_socket_is_unknown_not_absent():
+    """修前：`dial unix /var/run/docker.sock: connect: no such file or directory` 含 "no such" 被判 absent，
+    reward 样本照常交付、halt=0；修后 unknown → GradingScopeTerminationError。"""
+
+    from repoharness2.grading.manager import GradingScopeTerminationError
+
+    fake = FakeDocker(base_commit=BASE)
+    manager = make_manager(fake, cleanup_timeout_seconds=1)
+    manager._docker = _rm_fails_docker(
+        fake, lambda name: ExecResult(1, "", "error during connect: dial unix /var/run/docker.sock: connect: no such file or directory"),
+    )
+    with pytest.raises(GradingScopeTerminationError, match="unknown"):
+        await manager.grade(trajectory_id="traj_socket", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec())
+    assert any("container_scope_termination_failed" in item and ":unknown" in item for item in manager.cleanup_failures)
+
+
+async def test_target_container_truly_absent_stays_diagnostic():
+    """对照：明确指向本容器的 "No such object: <name>" → absent → 只留诊断，报告照常。"""
+
+    fake = FakeDocker(base_commit=BASE)
+    manager = make_manager(fake, cleanup_timeout_seconds=1)
+    manager._docker = _rm_fails_docker(fake, lambda name: ExecResult(1, "", f"Error: No such object: {name}"))
+    report = await manager.grade(trajectory_id="traj_absent", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec())
+    assert report.outcome in ("resolved", "unresolved", "failed_to_grade")
+    assert any("container_scope_stopped_but_not_removed" in item and ":absent" in item for item in manager.cleanup_failures)
+
+
+async def test_other_container_absent_or_garbage_success_output_is_unknown():
+    """不指向本容器的 "No such object: other" 与成功退出但非 true/false 的输出都只能是 unknown → fatal。"""
+
+    from repoharness2.grading.manager import GradingScopeTerminationError
+
+    for reply in (
+        lambda name: ExecResult(1, "", "Error: No such object: some-other-container"),
+        lambda name: ExecResult(0, "maybe\n", ""),
+    ):
+        fake = FakeDocker(base_commit=BASE)
+        manager = make_manager(fake, cleanup_timeout_seconds=1)
+        manager._docker = _rm_fails_docker(fake, reply)
+        with pytest.raises(GradingScopeTerminationError, match="unknown"):
+            await manager.grade(trajectory_id="traj_unknown_shape", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec())
