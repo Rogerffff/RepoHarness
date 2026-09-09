@@ -405,17 +405,18 @@ async def test_happy_path_payload_on_every_leaf_and_unique_dereference():
 
 
 async def test_attempt_without_outcome_skips_facts_without_forging():
-    """身份不全的 fa_formal 派发（W1a 负例形状）：无 Outcome v2 → 不派生、不伪造，如实记跳过。"""
+    """身份不全的 fa_formal 派发（W1a 负例形状；Brief §6 起为 typed run-fatal）：无 Outcome v2 → 不派生、
+    不伪造，如实记跳过；receipt 仍先 durable。"""
 
     store = FakeFinalizationStore()
     chain = _formal_chain(store)
     chain.base_sample.metadata = {}  # 未铸造身份
-    delivered = await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    with pytest.raises(FatalExecutionInfrastructureError, match="fa_identity_incomplete_in_formal_mode"):
+        await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     audit = chain.orchestrator.audits[0]
     assert audit.outcome_v2 is None and store.receipts
     assert "termination_facts_skipped_no_outcome" in _steps(audit)
     assert audit.termination_facts_payload is None
-    assert TERMINATION_FACTS_METADATA_KEY not in delivered[0].metadata
 
 
 async def test_underivable_facts_is_run_halt_after_receipt_durable(monkeypatch):

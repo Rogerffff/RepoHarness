@@ -1910,8 +1910,9 @@ S1_COMPAT_LEGACY_STALENESS_THRESHOLD = 4
 STALENESS_THRESHOLD_MIRROR_UNBOUNDED = 2**31 - 1
 
 # W1b 第二段复核修复 #2：在这些阶段由**我方事实**构造 RH2 契约对象时抛出的 pydantic
-# ValidationError = 我方接线/事实矛盾（不是任务数据问题）→ typed run-fatal；finalize 之前
-# （materialize/harness_run/assemble）的 ValidationError 仍按 stage fallback 归 missing/ABORTED。
+# ValidationError = 我方接线/事实矛盾（不是任务数据问题）→ typed run-fatal。Brief §6（owner
+# 2026-09-09 确认）起 finalize 之前的 ValidationError 在非 s1_compat 模式下同样升 fatal；本集合只还
+# 用于 s1_compat 冻结路径的分流。
 _STRUCTURAL_CONTRACT_STAGES: frozenset[str] = frozenset({"finalize", "deliver"})
 
 
@@ -2737,10 +2738,14 @@ class RolloutOrchestrator:
                 or meta.get("rh2_group_index") is None
                 or meta.get("rh2_member_slot") is None
             ):
-                raise SlimeBindingError(
-                    "fa_identity_incomplete_in_formal_mode",
-                    f"FA 模式 member metadata 四层身份不全（trajectory={trajectory_id}）"
-                    "——entry 契约破损，fail-closed（不评分不交付）。",
+                # Brief §6（owner 确认）：正式入口由我方写入的身份到编排时残缺 = 接线 / 入口违约，
+                # 补采修不好 → typed run-fatal（不评分不交付、通知停 run、继续清理）
+                raise self._attributed_fatal(
+                    audit, stage="identity", reason_code="fa_identity_incomplete_in_formal_mode",
+                    message=(
+                        f"FA 模式 member metadata 四层身份不全（trajectory={trajectory_id}）"
+                        "——entry 契约破损，run-halt（不评分不交付）。"
+                    ),
                 )
             stage = "materialize"
             prepared: dict[str, Any] = {}
@@ -3131,11 +3136,16 @@ class RolloutOrchestrator:
                     turn_supports = []
                     for tape in turns:
                         if tape.sampling_supports is None:
-                            raise SlimeBindingError(
-                                "sampling_mask_tape_missing_in_assembly",
-                                f"叶链 {facts.branch_id} 回链轮 {tape.record_id} 无"
-                                " sampling-support tape——mask 会话每一轮都必须捕到"
-                                "支持集（partial 捕获不许进装配）。",
+                            # Brief §6（owner 确认）：已要求记录 sampling support 却缺 tape 事实 = capture
+                            # 面破损（合法空支持集 ≠ 缺失）→ typed run-fatal
+                            raise self._attributed_fatal(
+                                audit, stage="assemble",
+                                reason_code="sampling_mask_tape_missing_in_assembly",
+                                message=(
+                                    f"叶链 {facts.branch_id} 回链轮 {tape.record_id} 无"
+                                    " sampling-support tape——mask 会话每一轮都必须捕到"
+                                    "支持集（partial 捕获不许进装配）。"
+                                ),
                             )
                         turn_supports.append(
                             TurnSupport(
@@ -3375,9 +3385,11 @@ class RolloutOrchestrator:
                             "run-halt，不重试不补采。",
                         ) from exc
                     except Exception as exc:
-                        raise SlimeBindingError(
-                            "frozen_artifact_persist_failed",
-                            f"artifact 本体持久化失败：{type(exc).__name__}: {exc}",
+                        # Brief §6（owner 确认）：冻结补丁与基线是评分 / 准入的核心事实，A4"核心记录持久化失败
+                        # = run-fatal"——不交付、通知停 run、继续清理（receipt 记 bodies 未持久化）
+                        raise self._attributed_fatal(
+                            audit, stage="finalize", reason_code="frozen_artifact_persist_failed",
+                            message=f"artifact 本体持久化失败：{type(exc).__name__}: {exc}",
                         ) from exc
                     audit.lifecycle_timing.set("artifact_persist", time.monotonic() - persist_started)
                     audit.mark("artifact_bodies_persisted")
@@ -3629,10 +3641,10 @@ class RolloutOrchestrator:
             ) from exc
         except ValidationError as exc:
             # finalize/gate/交付面内由**我方自己的事实**构造 RH2 契约对象失败 = 接线矛盾；
-            # finalize 之前（materialize/harness_run/assemble）的 ValidationError 仍按
-            # stage fallback 归 missing/ABORTED——是否升 fatal 是预算闭环 Brief §6 的
-            # 待确认项，确认前保持现状。
-            if stage in _STRUCTURAL_CONTRACT_STAGES:
+            # Brief §6（owner 2026-09-09 确认）：finalize 之前（materialize/harness_run/assemble）的
+            # ValidationError 同样升 typed run-fatal——我方必需契约构造失败不因尚未到 finalize 就当可补采
+            # 成员。只限本编排边界（telemetry 内自行处理的校验不经这里）；s1_compat 冻结路径逐字不变。
+            if stage in _STRUCTURAL_CONTRACT_STAGES or self._mode != "s1_compat":
                 raise self._structural_contract_fatal(
                     audit, exc, stage=stage, reason_code="rh2_contract_validation_failed"
                 ) from exc
@@ -4037,6 +4049,24 @@ class RolloutOrchestrator:
             isinstance(exc, SlimeBindingError)
             and getattr(exc, "reason_code", None) in FAILURE_CODE_TERMINATION_MAP
         )
+
+    def _attributed_fatal(
+        self, audit: "RolloutAudit", *, stage: str, reason_code: str, message: str
+    ) -> FatalExecutionInfrastructureError:
+        """Brief §6 六项（owner 2026-09-09 确认改 FATAL）：在**抛出点**把已归因的系统性矛盾直接升为 typed
+        run-fatal——先记 failure_record（stage / 码 / 说明，审计与 receipt 仍可回链），再返回 Fatal 由调用方
+        raise；halt 通知由外层 `except FatalExecutionInfrastructureError` 统一做（只通知一次）。
+        这些码不再进 FAILURE_CODE_TERMINATION_MAP：它们不是单次 execution 的 task-local 故障，补采只会
+        选择性丢掉这类任务、让接线 / 环境矛盾筛选训练分布。"""
+
+        audit.failure_records.append(
+            RolloutFailureRecord(
+                stage=stage, error_type="FatalExecutionInfrastructureError",
+                detail=f"{reason_code}: {message}"[:500],
+            )
+        )
+        audit.mark(reason_code)
+        return FatalExecutionInfrastructureError(reason_code, message)
 
     def _structural_contract_fatal(
         self, audit: "RolloutAudit", exc: BaseException, *, stage: str, reason_code: str
@@ -4505,7 +4535,7 @@ class RolloutOrchestrator:
             # 启动后镜像 digest 比对（codex#1 fail-closed）：先于任何写入/探针，
             # 漂移镜像上的 rollout 一步都不该跑。失败走本 try 的清理路径
             # （容器已起必须清，Q7），异常在 generate() 收口为 infra_failure。
-            await self._verify_rollout_image_digest(task, name)
+            await self._verify_rollout_image_digest(task, name, audit)
 
             # Q2：/testbed 物化校验——脚本与判据全部来自 envpack（库层所有权），
             # 编排只是执行通道（materialize.py 模块 docstring 的分工原文）。
@@ -4515,9 +4545,15 @@ class RolloutOrchestrator:
             check = materialize.evaluate_probe(
                 task.base_commit, probe.exit_code, probe.stdout, probe.stderr
             )
+            if probe.exit_code != 0:
+                # Brief §6 实施约束：探针命令本身失败（docker exec / 容器内命令层面）= 已识别的局部查询故障，
+                # 仍 task-local（ABORTED，可补采）——不与"读取成功但事实矛盾"共用一个码
+                raise SlimeBindingError("rollout_testbed_probe_failed", check.failure_message()[:500])
             if not check.ok:
-                raise SlimeBindingError(
-                    "rollout_testbed_lineage_failed", check.failure_message()[:500]
+                # Brief §6（owner 确认）：血缘核对**成功读取**后不符 = 确定性的环境完整性矛盾 → typed run-fatal
+                raise self._attributed_fatal(
+                    audit, stage="materialize", reason_code="rollout_testbed_lineage_failed",
+                    message=check.failure_message()[:500],
                 )
 
             if profile is not None:
@@ -4753,7 +4789,9 @@ class RolloutOrchestrator:
         else:
             audit.mark("egress_network_removed")
 
-    async def _verify_rollout_image_digest(self, task: RolloutTaskSpec, name: str) -> None:
+    async def _verify_rollout_image_digest(
+        self, task: RolloutTaskSpec, name: str, audit: "RolloutAudit | None" = None
+    ) -> None:
         """启动后镜像 digest 比对（codex#1，与评分容器同判据）：容器实际运行的
         镜像（`docker inspect -f {{.Image}}`，非 spec 标签——封住 :latest 在
         inspect 与 run 之间被重指的窗口）的 RepoDigests 必须命中 envpack 冻结的
@@ -4777,9 +4815,17 @@ class RolloutOrchestrator:
         check = materialize.evaluate_image_digest(
             expected, digests.exit_code, digests.stdout, digests.stderr
         )
+        if digests.exit_code != 0:
+            # Brief §6 实施约束：第二次 inspect 本身失败 = 已识别的局部查询故障，仍 task-local（ABORTED）
+            raise SlimeBindingError("rollout_image_digest_inspect_failed", check.failure_message()[:500])
         if not check.ok:
-            raise SlimeBindingError(
-                "rollout_image_digest_mismatch", check.failure_message()[:500]
+            # Brief §6（owner 确认）：inspect **成功读取**后 digest 与冻结事实不符（含无 RepoDigests 且未声明
+            # local_build）= 确定性的环境完整性矛盾 → typed run-fatal；补采只会选择性丢掉这类任务
+            message = check.failure_message()[:500]
+            if audit is None:
+                raise FatalExecutionInfrastructureError("rollout_image_digest_mismatch", message)
+            raise self._attributed_fatal(
+                audit, stage="materialize", reason_code="rollout_image_digest_mismatch", message=message
             )
 
     # ------------------------------------------------------------------ 步骤 6~8

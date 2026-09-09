@@ -500,8 +500,14 @@ async def test_w1a_formal_chain_unminted_identity_rejected(world):
     miles_input = world.mk_miles_input(index=7, group_index=3)
     chain = _build_formal_chain(world, [_mk_leaf(world, index=7, group_index=3)])
 
+    import pytest
+
+    from repoharness2.adapters.slime.async_worker import FatalExecutionInfrastructureError
+
     args = Namespace(rh2_orchestrator=chain.orchestrator)  # 直接调 rh2 入口，不经 generate_fn 守卫
-    delivered = await rh2_custom_generate(args, miles_input, dict(SAMPLING_PARAMS))
+    # Brief §6（owner 2026-09-09 确认，原 oracle = abort 形状）：身份残缺 = 入口契约破损 → typed run-fatal
+    with pytest.raises(FatalExecutionInfrastructureError, match="fa_identity_incomplete_in_formal_mode"):
+        await rh2_custom_generate(args, miles_input, dict(SAMPLING_PARAMS))
 
     audit = chain.orchestrator.audits[0]
     assert chain.grading_calls == []  # 不评分
@@ -510,4 +516,3 @@ async def test_w1a_formal_chain_unminted_identity_rejected(world):
         f.stage == "identity" and "fa_identity_incomplete" in f.detail
         for f in audit.failure_records
     )
-    assert all(getattr(x, "remove_sample", False) for x in delivered)  # abort 形状

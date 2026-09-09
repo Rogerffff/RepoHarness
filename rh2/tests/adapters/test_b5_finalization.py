@@ -419,21 +419,24 @@ async def test_test_only_change_is_graded_normally_not_unsafe():
     assert order.index("put_artifact_bodies") < order.index("docker_rm") < order.index("persist_receipt")
 
 
-async def test_artifact_body_persist_failure_is_missing_abort():
-    """T0 失败表第 1 行：本体持久化失败 = 无法建立可信 artifact →
-    abort（样本剔除），不评分；receipt 记 aborted + bodies 未持久化。"""
+async def test_artifact_body_persist_failure_is_run_fatal():
+    """Brief §6（owner 2026-09-09 确认，原 oracle = ABORTED）：本体持久化失败 = A4"核心记录持久化失败"→
+    typed run-fatal（不评分不交付、通知停 run、继续清理）；receipt 记 fatal_run_halt + bodies 未持久化。"""
+
+    from repoharness2.adapters.slime.async_worker import FatalExecutionInfrastructureError
 
     store = FakeFinalizationStore(fail_put_bodies=True)
     chain = _formal_chain(store)
-    delivered = await chain.orchestrator.generate(
-        _Args(), chain.base_sample, dict(SAMPLING_PARAMS))
-    assert all(getattr(x, "remove_sample", False) for x in delivered)
+    with pytest.raises(FatalExecutionInfrastructureError, match="frozen_artifact_persist_failed"):
+        await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     assert chain.grading.calls == []  # 不评分
     receipt = store.receipts[0]
-    assert receipt.attempt_disposition == "aborted"
+    assert receipt.attempt_disposition == "fatal_run_halt"
     assert receipt.artifact_bodies_persisted is False
     assert receipt.terminal_reason_code == "frozen_artifact_persist_failed"
-    assert receipt.outcome_v2.reward_unavailable is True
+    audit = chain.orchestrator.audits[0]
+    assert any("frozen_artifact_persist_failed" in f.detail and f.stage == "finalize" for f in audit.failure_records)
+    assert "cleanup_completed" in [e.step for e in audit.timeline]
 
 
 # ------------------------------------------- S1 回归 + 文件实现

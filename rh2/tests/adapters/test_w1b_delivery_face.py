@@ -367,9 +367,10 @@ async def test_validation_error_inside_finalize_is_run_fatal(monkeypatch):
     assert receipt.attempt_disposition == "fatal_run_halt"
 
 
-async def test_pre_finalize_validation_error_and_task_local_failure_stay_aborted(monkeypatch):
-    """对照：finalize 之前的 ValidationError（预算闭环 Brief §6 待确认项，确认前保持 stage fallback）
-    与**已归因**的 task-local 故障（typed `harness_bootstrap_failed`）仍归 missing/ABORTED；
+async def test_pre_finalize_validation_error_is_fatal_and_task_local_failure_stays_aborted(monkeypatch):
+    """Brief §6（owner 2026-09-09 确认，原 oracle = stage fallback → ABORTED）：finalize 之前的 ValidationError
+    在非 s1_compat 模式 = 我方契约构造失败 → typed run-fatal `rh2_contract_validation_failed`（receipt 记
+    fatal_run_halt）；**已归因**的 task-local 故障（typed `harness_bootstrap_failed`）仍归 missing/ABORTED；
     批 A（I05）起裸 RuntimeError = 未归因 → run-fatal `pre_finalize_failure_unclassified`。"""
 
     chain = _formal_chain()
@@ -379,13 +380,14 @@ async def test_pre_finalize_validation_error_and_task_local_failure_stay_aborted
         raise err
 
     monkeypatch.setattr(chain.orchestrator, "_materialize_rollout_sandbox", _materialize_boom)
-    (aborted,) = await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
-    assert aborted.remove_sample is True and aborted.status == "aborted"
+    with pytest.raises(FatalExecutionInfrastructureError, match="rh2_contract_validation_failed"):
+        await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     audit = chain.orchestrator.audits[0]
-    assert audit.outcome_v2["completion_class"] == "missing"
+    assert audit.outcome_v2 is None
     assert any(f.stage == "materialize" and f.error_type == "ValidationError" for f in audit.failure_records)
     (receipt,) = chain.finalization.receipts
-    assert receipt.attempt_disposition == "aborted"
+    assert receipt.attempt_disposition == "fatal_run_halt"
+    assert receipt.terminal_reason_code == "rh2_contract_validation_failed"
 
     crashed = _formal_chain(crash=SlimeBindingError("harness_bootstrap_failed", "claude cli exploded"))
     (aborted2,) = await crashed.orchestrator.generate(_Args(), crashed.base_sample, dict(SAMPLING_PARAMS))

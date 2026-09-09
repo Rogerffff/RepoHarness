@@ -89,6 +89,11 @@ class FakeRolloutDocker:
     exec_after_rm_raises: bool = False
     # 镜像 RepoDigests 罐头值（codex#1 运行期比对；json 序列化后返回）。
     repo_digests: tuple[str, ...] = ()
+    # Brief §6：第二次 image inspect 本身失败（局部查询故障，仍 task-local）/ 血缘探针命令失败 / 探针读到的
+    # HEAD 与冻结基线不符（事实矛盾 → run-fatal）
+    image_inspect_fail: bool = False
+    probe_fail: bool = False
+    probe_head: str | None = None
     calls: list[tuple[str, ...]] = field(default_factory=list)
     removed: list[str] = field(default_factory=list)
     writes: dict[str, bytes] = field(default_factory=dict)  # 容器内路径 -> 写入内容
@@ -115,6 +120,8 @@ class FakeRolloutDocker:
             if "RepoDigests" in " ".join(args):
                 import json as _json
 
+                if self.image_inspect_fail:
+                    return ExecResult(1, "", "Error response from daemon: connection reset (fake)")
                 return ExecResult(0, _json.dumps(list(self.repo_digests)) + "\n", "")
             return ExecResult(0, "sha256:" + "ab" * 32 + "\n", "")
         if cmd == "inspect":  # inspect -f {{.Image}} <container>（codex#1 比对入口）
@@ -142,8 +149,10 @@ class FakeRolloutDocker:
             if "find ." in script and "sha256sum" in script:
                 return ExecResult(0, "", "")  # 空树 = 零 entries 合法基线
             if "rev-parse HEAD" in script:
+                if self.probe_fail:
+                    return ExecResult(1, "", "fatal: not a git repository (fake exec failure)")
                 probe = (
-                    f"HEAD={self.base_commit}\n"
+                    f"HEAD={self.probe_head or self.base_commit}\n"
                     "BASE_OBJECT_OK\n"
                     "PARENT=none\n"
                     "DIFFSTAT=\n"
@@ -998,37 +1007,78 @@ async def test_rollout_image_digest_match_delivers():
     assert any("RepoDigests" in text for text in joined)  # 比对的是 RepoDigests 而非 image ID
 
 
-async def test_rollout_image_digest_mismatch_aborts_and_cleans():
-    """反例：RepoDigests 与冻结 digest 不符 -> materialize 阶段 infra_failure + 容器已清。"""
+async def test_rollout_image_digest_mismatch_is_run_fatal_and_cleans():
+    """Brief §6（owner 2026-09-09 确认，原 oracle = ABORTED）：inspect **成功读取**后 RepoDigests 与冻结
+    digest 不符 = 确定性环境完整性矛盾 -> typed run-fatal（不评分不交付、通知停 run），容器仍清。"""
+
+    from repoharness2.adapters.slime.async_worker import FatalExecutionInfrastructureError
 
     docker = FakeRolloutDocker(repo_digests=("docker.io/fake/img@sha256:" + "2" * 64,))
     chain = build_dense_chain(
         task=make_task(TASK_ID_DENSE, image_manifest_digest=FROZEN_IMG_DIGEST), docker=docker
     )
-    result = await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    with pytest.raises(FatalExecutionInfrastructureError, match="rollout_image_digest_mismatch"):
+        await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     audit = chain.orchestrator.audits[0]
     (failure,) = audit.failure_records
     assert failure.stage == "materialize"
     assert failure.failure_category == "infra_failure"
     assert "rollout_image_digest_mismatch" in failure.detail
     assert "digest 漂移" in failure.detail
-    assert result[0].remove_sample is True
     assert len(docker.removed) == 1  # 容器已起必须清（Q7 物化中途失败路径）
     assert chain.grading.calls == []  # 漂移镜像上一步都不跑
 
 
-async def test_rollout_image_without_repo_digests_and_no_marker_rejected():
-    """反例（豁免必须显式）：镜像无 RepoDigests 且任务未声明 local_build -> 拒。"""
+async def test_rollout_image_without_repo_digests_and_no_marker_is_run_fatal():
+    """反例（豁免必须显式）：镜像无 RepoDigests 且任务未声明 local_build -> 同为事实矛盾，run-fatal。"""
+
+    from repoharness2.adapters.slime.async_worker import FatalExecutionInfrastructureError
 
     docker = FakeRolloutDocker(repo_digests=())
     chain = build_dense_chain(
         task=make_task(TASK_ID_DENSE, image_manifest_digest=FROZEN_IMG_DIGEST), docker=docker
     )
-    result = await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    with pytest.raises(FatalExecutionInfrastructureError, match="rollout_image_digest_mismatch"):
+        await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     (failure,) = chain.orchestrator.audits[0].failure_records
     assert "rollout_image_digest_mismatch" in failure.detail
     assert "RepoDigests" in failure.detail and "local_build" in failure.detail
-    assert result[0].remove_sample is True and len(docker.removed) == 1
+    assert len(docker.removed) == 1
+
+
+async def test_rollout_image_digest_inspect_failure_stays_task_local():
+    """Brief §6 实施约束：第二次 inspect **本身失败**（docker 层面的局部查询故障）不与事实矛盾共用一个码——
+    仍是 task-local（ABORTED，可补采），不升 fatal（owner：临时故障用 abort，不做 run-halt）。"""
+
+    docker = FakeRolloutDocker(image_inspect_fail=True)
+    chain = build_dense_chain(
+        task=make_task(TASK_ID_DENSE, image_manifest_digest=FROZEN_IMG_DIGEST), docker=docker
+    )
+    result = await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    (failure,) = chain.orchestrator.audits[0].failure_records
+    assert "rollout_image_digest_inspect_failed" in failure.detail and "查询失败" in failure.detail
+    assert result[0].remove_sample is True and len(docker.removed) == 1 and chain.grading.calls == []
+
+
+async def test_rollout_testbed_lineage_mismatch_is_run_fatal_but_probe_failure_stays_task_local():
+    """Brief §6：血缘探针**成功读取**后 HEAD 与冻结基线不符 -> run-fatal；探针命令本身失败 -> task-local。"""
+
+    from repoharness2.adapters.slime.async_worker import FatalExecutionInfrastructureError
+
+    docker = FakeRolloutDocker(probe_head="f" * 40)
+    chain = build_dense_chain(docker=docker)
+    with pytest.raises(FatalExecutionInfrastructureError, match="rollout_testbed_lineage_failed"):
+        await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    (failure,) = chain.orchestrator.audits[0].failure_records
+    assert failure.stage == "materialize" and "rollout_testbed_lineage_failed" in failure.detail
+    assert len(docker.removed) == 1 and chain.grading.calls == []
+
+    docker = FakeRolloutDocker(probe_fail=True)
+    chain = build_dense_chain(docker=docker)
+    result = await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    (failure,) = chain.orchestrator.audits[0].failure_records
+    assert "rollout_testbed_probe_failed" in failure.detail
+    assert result[0].remove_sample is True and len(docker.removed) == 1 and chain.grading.calls == []
 
 
 async def test_rollout_local_build_exemption_is_explicit_and_skips_probe():

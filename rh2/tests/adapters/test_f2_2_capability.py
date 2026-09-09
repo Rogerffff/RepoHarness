@@ -399,15 +399,18 @@ async def test_identity_incomplete_rejected_in_fa_mode():
         "rh2_physical_attempt_seq": 1,
         # 故意缺 rh2_prompt_group_id / rh2_group_index / rh2_member_slot
     }
+    from repoharness2.adapters.slime.async_worker import FatalExecutionInfrastructureError
+
     chain = build_dense_chain(config=_fa_cfg())
     sample = chain.base_sample
     sample.metadata = dict(getattr(sample, "metadata", {}) or {})
     sample.metadata.update(partial)
-    delivered = await chain.orchestrator.generate(_Args(), sample, dict(SAMPLING_PARAMS))
+    # Brief §6（owner 2026-09-09 确认）：身份不全 = 入口契约破损 → typed run-fatal（仍不产 v2、不补值、不交付）
+    with pytest.raises(FatalExecutionInfrastructureError, match="fa_identity_incomplete_in_formal_mode"):
+        await chain.orchestrator.generate(_Args(), sample, dict(SAMPLING_PARAMS))
     audit = chain.orchestrator.audits[0]
     assert audit.outcome_v2 is None and chain.orchestrator.outcomes == []
     assert any(f.stage == "identity" for f in audit.failure_records)
-    assert all(getattr(x, "remove_sample", False) for x in delivered)
 
     # s1_compat：同样输入不触发任何 FA 门控，也绝不产 v2
     chain2 = build_dense_chain()
@@ -430,15 +433,16 @@ async def test_formal_mode_identity_fault_fails_closed_not_open():
         build_dense_chain,
     )
 
+    from repoharness2.adapters.slime.async_worker import FatalExecutionInfrastructureError
+
     chain = build_dense_chain(config=_fa_cfg())
-    # 不 stamp 任何 FA 身份（模拟身份注入故障）
-    delivered = await chain.orchestrator.generate(
-        _Args(), chain.base_sample, dict(SAMPLING_PARAMS)
-    )
+    # 不 stamp 任何 FA 身份（模拟身份注入故障）。Brief §6（owner 2026-09-09 确认）：不再是 abort 形状，
+    # 而是 typed run-fatal（仍不评分不交付）
+    with pytest.raises(FatalExecutionInfrastructureError, match="fa_identity_incomplete_in_formal_mode"):
+        await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
     audit = chain.orchestrator.audits[0]
     assert chain.grading.calls == []  # 修复前 = 1（fail-open 实锤位）
     assert audit.finalized is None
-    assert all(getattr(x, "remove_sample", False) for x in delivered)
     assert any(
         f.stage == "identity" and "fa_identity_incomplete" in f.detail
         for f in audit.failure_records

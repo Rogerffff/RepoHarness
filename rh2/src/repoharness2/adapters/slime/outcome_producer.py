@@ -83,9 +83,8 @@ FAILURE_CODE_TERMINATION_MAP: dict[str, tuple[TerminationKind, RuntimeFailureCat
     # 写配置 / spawn）时 sandbox exec 失败——单次容器层面故障，不是我方代码矛盾。
     "harness_bootstrap_failed": ("harness_crash", "harness_crash"),
     "nonzero_harness_exit_in_formal_chain": ("harness_crash", "harness_crash"),
-    # 身份面：Brief §6 待确认项。今天 stage="identity" 不在 STAGE_FALLBACK 内，缺省归
-    # harness_crash；确认前处置不变、只做显式登记。
-    "fa_identity_incomplete_in_formal_mode": ("harness_crash", "harness_crash"),
+    # 身份面：fa_identity_incomplete_in_formal_mode 已按 Brief §6（owner 2026-09-09 确认）改为抛出点
+    # typed run-fatal（generate._attributed_fatal），不再是 task-local 码。
     # capture 关账面：执行本身跑完了（completed），账目不完整 → missing
     "session_plane_drain_unclean": ("completed", "capture_incomplete"),
     "capture_boundary_unclean": ("completed", "capture_incomplete"),
@@ -93,14 +92,12 @@ FAILURE_CODE_TERMINATION_MAP: dict[str, tuple[TerminationKind, RuntimeFailureCat
     "adapter_session_empty": ("completed", "capture_incomplete"),
     # D-FA-6：上下文收缩 = provenance 不可信 → 账目层拒绝
     "context_shrink_detected": ("completed", "capture_incomplete"),
-    # Brief §6 待确认项（今天经 STAGE_FALLBACK 归 capture_incomplete；确认前处置不变、显式登记）
-    "sampling_mask_tape_missing_in_assembly": ("completed", "capture_incomplete"),
-    "frozen_artifact_persist_failed": ("completed", "capture_incomplete"),
-    # Brief §6 待确认项（Codex 计划审查 R1：inspect **成功读取**后发现镜像 digest / testbed
-    # 血缘与冻结事实不符，是确定性的环境完整性矛盾而非单次运行故障，建议 FATAL）。
-    # 今天经 STAGE_FALLBACK 归 sandbox_failure；确认前处置不变、显式登记。
-    "rollout_image_digest_mismatch": ("sandbox_failure", "sandbox_crash"),
-    "rollout_testbed_lineage_failed": ("sandbox_failure", "sandbox_crash"),
+    # Brief §6（owner 2026-09-09 确认）：sampling_mask_tape_missing_in_assembly、
+    # frozen_artifact_persist_failed、rollout_image_digest_mismatch、rollout_testbed_lineage_failed 改为
+    # 抛出点 typed run-fatal，不再登记于此。digest / 血缘按实施约束拆码：**查询本身失败**仍是 task-local
+    # （docker exec / inspect 层面的单次故障，可补采），只有**成功读取后事实矛盾**才 fatal。
+    "rollout_image_digest_inspect_failed": ("sandbox_failure", "sandbox_crash"),
+    "rollout_testbed_probe_failed": ("sandbox_failure", "sandbox_crash"),
     # B2 exporter 失败族（A-prime 失败表第 1 行：无可信冻结输入 = missing）
     "post_census_failed": ("completed", "capture_incomplete"),
     "post_census_parse_failed": ("completed", "capture_incomplete"),
@@ -119,8 +116,9 @@ FAILURE_CODE_TERMINATION_MAP: dict[str, tuple[TerminationKind, RuntimeFailureCat
 # tests/adapters/test_w1b_termination_facts_producer.py 的 5d）。判定只看"是否在上表"，
 # 不另设集合。
 
-# 无 reason_code 的异常（finalize 前 ValidationError，Brief §6 待确认项）与 s1_compat 冻结路径
-# 按失败阶段兜底（保守：宁可归 infra/missing，不猜 present）。批 A 起 typed 码不再走本表。
+# s1_compat 冻结路径（含其 finalize 前 ValidationError）按失败阶段兜底（保守：宁可归 infra/missing，
+# 不猜 present）。批 A 起 typed 码不再走本表；非 s1 模式的 finalize 前 ValidationError 自 Brief §6
+# （owner 2026-09-09 确认）起升 typed run-fatal，也不再经过这里。
 STAGE_FALLBACK_TERMINATION_MAP: dict[str, tuple[TerminationKind, RuntimeFailureCategory]] = {
     "materialize": ("sandbox_failure", "sandbox_crash"),
     "harness_run": ("harness_crash", "harness_crash"),

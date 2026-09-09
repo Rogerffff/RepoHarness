@@ -35,11 +35,11 @@ from grading_fixtures import (
     make_fixture_spec,
 )
 
+from repoharness2.adapters.slime.async_worker import FatalExecutionInfrastructureError
 from repoharness2.adapters.slime.generate import (
     RolloutOrchestrator,
     RolloutTaskSpec,
     SlimeBindingConfig,
-    SlimeBindingError,
 )
 from repoharness2.contracts import GradingReport
 from repoharness2.grading.manager import (
@@ -552,7 +552,7 @@ async def test_image_digest_verify_against_registry_image_real(fixture_repo, tmp
         await orch._verify_rollout_image_digest(  # 命中 -> 不抛
             _rollout_task(REGISTRY_IMAGE, fixture_repo, image_manifest_digest=expected), name
         )
-        with pytest.raises(SlimeBindingError, match="rollout_image_digest_mismatch"):
+        with pytest.raises(FatalExecutionInfrastructureError, match="rollout_image_digest_mismatch"):
             await orch._verify_rollout_image_digest(
                 _rollout_task(
                     REGISTRY_IMAGE, fixture_repo, image_manifest_digest="sha256:" + "0" * 64
@@ -573,7 +573,7 @@ async def test_rollout_image_digest_fixture_image_real(fixture_repo, fixture_ima
     assert run.returncode == 0, run.stderr
     try:
         orch = _min_orchestrator()
-        with pytest.raises(SlimeBindingError, match="rollout_image_digest_mismatch"):
+        with pytest.raises(FatalExecutionInfrastructureError, match="rollout_image_digest_mismatch"):
             await orch._verify_rollout_image_digest(
                 _rollout_task(
                     fixture_image, fixture_repo, image_manifest_digest="sha256:" + "0" * 64
