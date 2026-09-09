@@ -1,6 +1,6 @@
 # 预算终止闭环实施计划（Owner Brief）：I02/I03/I04 + I14 + 依赖的 I05/I12
 
-日期：2026-09-09。作者：Claude（A 线）。状态：**2026-09-09 夜间（用户授权自主完成）：批 A `6bb5ffe4`（Codex 复核通过）、批 B `510c9b23`（含审查 R1/R2/R3 修复，待复核）、批 D-1 `756b8fd6`、批 C、批 D-2 全部实施并各自独立提交，本机全量通过；除批 A 外均**待 Codex 审查**，本机测试通过不等于批准。§6 六项与预算数值按授权保持现状。统一交接见 [handover_20260909.md](handover_20260909.md)。** 基线：I01 已提交 `297f1f59`（针对性复核通过）；miles 集成 `98a0272e4`，本批不改 fork，不改 vendored slime 字节。修订记录见 §11。
+日期：2026-09-09。作者：Claude（A 线）。状态（Codex 联合审查后更新）：**批 A `6bb5ffe4` 沿用通过结论；批 B `510c9b23` 修后复核通过；D-1 `756b8fd6` 通过。C `34531b74`、D-2 `5c8fa4f7` 已提交但尚不能验收：本轮四项 P1 待修，另有一项限定取消/关停接缝的 P2。** 见 [联合聚焦审查](combined_review_20260909/README.md)。主审重跑 243 项维护测试及独立 CPU 探针，25 文件 ruff 通过；作者的全量 1839/310 记录见 [统一交接](handover_20260909.md)，不是主审重跑结果。§6 六项与预算数值未新增批准。基线：I01 已提交 `297f1f59`（针对性复核通过）；miles 集成 `98a0272e4`，本批不改 fork，不改 vendored slime 字节。下文实施记录保留其当时状态，修订记录见 §11。
 
 ## 0. 一句话
 
@@ -168,10 +168,13 @@ Codex 计划审查已完成（[codex_plan_review.md](codex_plan_review.md)），
 
 ## 11. 修订记录
 
+- 2026-09-09 Codex 联合聚焦审查：B 旧 R1/R2 两项 P1 与 R3（P2）修复通过，D-1 通过。C/D-2 新增四项 P1：并发 body 交错提前拒绝最后一轮、停止 IO 无真实时间上界、强停期间跨墙仍按 turn 保留、socket 缺席误认容器 absent。queue 取消后的 scope fatal 接收/worker 退出列 P2，明确限定关停路径，不声称训练继续或关停假绿。仅更新审查文档和状态，没有源码/维护测试改动、提交推送或真实 Docker/CC/GPU。见 [完整报告与窄修验收](combined_review_20260909/README.md)。
+
 - 2026-09-09 Codex 批 B 聚焦审查：R1（HEAD/census 未受期限强制）与 R2（真实物化 runner 取消、私网 create/connect 取消回收）为本批 P1；R3 引导事实/取整归因及排队观测为非阻塞项。共享 `manager.run_docker` 的取消回收需从 D 提前到 B，其余 C/D 分期保留。主审 181 项定向测试通过，独立探针确认上述缺口；见 [完整审查](batch_b_review/README.md)。
 
 - 2026-09-09 Codex 修后复核：批 A 已实施范围通过，R1/R2 关闭；主审定向测试 45 passed、独立探针 8+7 案、10 文件 ruff 通过，复核期间源码/测试摘要未变。§6 六项仍未新增批准。termination 事实错误与 audit sink 同时失败时，通知与尾部异常可能不同；该既有诊断边界不阻塞本批，见 [复核 §6](batch_a_review/README.md#6-修后针对性复核2026-09-09)。
 
+- 2026-09-09 v2.5（联合审查 R1–R5 修复）：cap 拒绝判定与 vendored 计数器同步、等已接纳在飞轮交付（`_run_turn` 包装，守卫层提前等待删除）；强停 / 屏障 ① / grader 收口都有总截止点；停止事实分 kill 返回与归零确认两个时刻并据此决定 KEEP vs hard wall；`_container_state` 只认指向本容器的不存在；队列 `fatal_sink` 与关闭标志。处置见 `infra.md` 同日条目。
 - 2026-09-09 v2.4（夜间自主完成 D-1 / C / D-2）：各批实施结果与偏离写在对应小节末段；测试与提交见 [handover_20260909.md](handover_20260909.md)；全部待 Codex 审查。
 - 2026-09-09 v2.3（Codex 批 B 聚焦审查后，R1/R2a/R2b/R3 + §4 修复）：准备阶段（物化 + HEAD + census）整体受期限约束、容器所有权交外层 finally；`manager.run_docker` 取消回收；建网 / relay 接入 / docker run 三处取消路径回收网络、槽位、容器并留痕；驱动启动事实三态 + 浮点期限 + 引导取消回填；Fatal 不被取消收口吸收；排队秒数取消也记、ACK 释放。撤回 v2.2 偏离 (b)"私网创建途中残留"的残余登记。
 - 2026-09-09 v2.2（批 B 实施）：批 A 提交 `6bb5ffe4`；批 B 按 v2 第 1–7 条实施，偏离见批 B 末段（proxy 侧 `hit_by` 单值、私网创建途中取消的残余、contextvar 回填启动事实、容器内 CC 的强制停止仍归批 C）；`failure_category` 选 `capture_incomplete`（T1 (9)）；观测块新增 `harness_time_budget_seconds`。
