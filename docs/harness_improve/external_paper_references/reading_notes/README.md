@@ -1,5 +1,7 @@
 # 项目一外部资料精读库与派工计划
 
+> **2026-09-09 增量**：[Miles v0.1 完整报告（2609.08368v1）](miles_v0_1_2609.08368.md)已完成全文、图表和定点源码阅读，附[作者自查](reviews/miles_v0_1_2609.08368_self_check_20260909.md)，尚未独立审查或复现训练。本文下方的批次总数与候选状态是 2026-09-07 历史快照，不能作为当前全库完成状态；最新情况以各篇正文与检查记录为准。本次只登记该新报告，不改写其他线程的成果或状态。
+
 日期：2026-09-07。状态：**第一组 01–06、第二组 07–12 已完成 14 份笔记及 12 份线程内独立审查。外部 Pro 经用户单独批准完成 O01 SkyRL-Agent 全文精读与作者自查，现有 15 份逐篇笔记；O01 尚未独立复查。原第三批不整批启动，其他候选未因本次阅读自动执行。** 完成与核查范围见 [第一组执行记录](BATCH1_RUN.md) / [质量检查](BATCH1_QUALITY_REVIEW_20260907.md)、[第二组执行记录](BATCH2_RUN.md) / [质量检查](BATCH2_QUALITY_REVIEW_20260907.md)。[外部 Pro 交接包入口](external_pro_handoff_20260907/00_HANDOFF.md)包含可直接携带的全文材料；[第三组准备方案](BATCH3_PLAN.md)仅保留为可重新排序的候选。
 
 **远程读写入口**：本库位于 GitHub 的 `miles-migration` 分支，默认 `main` 不代表这批成果。后续文档请基于 `miles-migration` 维护本目录，沿用单篇文件名和来源编号；O01 最新状态见本索引，其余第三批候选仍未启动。仓库已包含正文、审查、交接包、来源登记及第二批固定初稿。`sources/` 内的原始 PDF/TeX、渲染图和第三方代码缓存未随本次文档提交上传；指向这些附件的本地链接在远程可能不可用，复查请使用各篇的官方 URL、版本和页/节定位。
@@ -19,6 +21,7 @@
 | [N01 KAT-Coder-V2.5](N01_kat_coder_v2_5.md) | §4 环境；§5 PPO、GRM、MOPD；§6 harness/infra；§7 评测 | [03](reviews/03_N01_review.md) |
 | [E2 CalibForge](E2_calibforge.md) | §4 任务校准与筛选；§5 离线 SFT；§7 消融与失败案例；§8 开放资产 | [04](reviews/04_E2_review.md) |
 | [N11 miles agentic rollout](N11_miles_agentic_rollout.md) | §3–4 token/session；§5 loss/OPD；§6 fully async；§7 eval；§10 当前 rh2 接入边界 | [05](reviews/05_N11_review.md) |
+| [Miles v0.1 技术报告](miles_v0_1_2609.08368.md) | §3 rollout/TITO；§4–5 trainer/权重；§6 OPD/数值对齐；§7 diffusion；§9 GLM 案例；§10 代码对账 | [作者自查，待独立复查](reviews/miles_v0_1_2609.08368_self_check_20260909.md) |
 | [N13a SWE-bench Verified 审计](N13a_swe_verified_audit.md) | §3–5 抽样分母、失败模式与污染；§6 建议边界；§8 项目映射 | [06](reviews/06_N13_review.md) |
 | [N13b Coding 评测信号与噪声](N13b_coding_eval_signal_noise.md) | §3–4 两条审查路径与分母；§5 全部动态案例；§6 建议变化；§8 项目映射 | [06](reviews/06_N13_review.md) |
 | [R2 Nemotron 3 Ultra](R2_nemotron_3_ultra.md) | §3–4 全域训练、教师和 SWE；§5 MOPD/MTP；§6 效果；§7 infra；§8 评测；§10 未披露 | [07](reviews/07_R2_review.md) |
