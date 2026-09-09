@@ -785,26 +785,41 @@ def _stop_chain(monkeypatch, *, kind: str, stop_timeout: float = 30.0):
     from repoharness2.adapters.slime.quiescence_barrier import DockerQuiescenceBarrier
     from repoharness2.grading.manager import ExecResult
 
-    chain = _formal_chain(barrier=DockerQuiescenceBarrier())
-    orch, now, budget = chain.orchestrator, [0.0], _Budget()
+    now = [0.0]
+    chain = _formal_chain(barrier=DockerQuiescenceBarrier(clock=lambda: now[0]))  # 屏障与编排同一观测钟
+    orch, budget = chain.orchestrator, _Budget()
     orch._clock = lambda: now[0]
     orch._turn_budget_subscribe = budget.subscribe
     orch._turn_budget_unsubscribe = budget.unsubscribe
     orch._turn_budget_snapshot = budget.snapshot
+    if kind == "delivered_count_timeout_barrier_alive_after_wall":
+        stop_timeout = 0.2  # 强停的计数挂起：用短总预算让它超时（屏障 ① 的计数间隔另缩短，不受此影响）
     monkeypatch.setattr(generate_mod, "TURN_BUDGET_EXIT_GRACE_SEC", 0.005)
     monkeypatch.setattr(generate_mod, "EXECUTION_SCOPE_STOP_TIMEOUT_SEC", stop_timeout)
     monkeypatch.setattr(generate_mod, "EXECUTION_SCOPE_STOP_RETRY_INTERVAL_SEC", 0.01)
     monkeypatch.setattr(quiescence_barrier, "_STOP_TOTAL_TIMEOUT_SECONDS", stop_timeout)
+    monkeypatch.setattr(quiescence_barrier, "_KILL_VERIFY_INTERVAL_SECONDS", 0.001)
     facts = {"stop_entered": asyncio.Event(), "kill_effect_at": [], "kill_returns": [], "confirmation_at": [],
-             "driver_tasks": [], "driver_cancelled": asyncio.Event(), "kills": 0, "counts": 0}
+             "driver_tasks": [], "driver_cancelled": asyncio.Event(), "kills": 0, "counts": 0, "digest_at": []}
     original_docker = orch._docker
     exec_failed = ExecResult(1, "", "Error response from daemon: exec failed")
     late_start = kind == "kill_failed_then_retry_delivers" or kind.startswith("stop_unproven")
+    if kind == "delivered_polls_exhausted_barrier_alive_after_wall":
+        # 保留真实 10 次计数上限、只去掉真实睡眠（Codex 复核 2 §3.1 案 2：次数耗尽而非 IO 超时）
+        real_terminate = generate_mod.terminate_agent_processes
+
+        async def no_sleep_terminate(workspace, **kwargs):
+            kwargs["interval"] = 0
+            return await real_terminate(workspace, **kwargs)
+
+        monkeypatch.setattr(generate_mod, "terminate_agent_processes", no_sleep_terminate)
 
     async def io(*args, input_bytes=None):
         if args[0] == "exec" and "pkill -9 -u agent" in args[-1]:
             facts["kills"] += 1
             k = facts["kills"]
+            if k == 2:
+                facts["counts_at_kill2"] = facts["counts"]
             facts["stop_entered"].set()
             if kind.startswith("hang"):
                 await asyncio.Event().wait()  # kill 通道持续挂起：强停与屏障 ① 各由自己的总预算收口
@@ -817,8 +832,13 @@ def _stop_chain(monkeypatch, *, kind: str, stop_timeout: float = 30.0):
                 return exec_failed  # docker exec 本身失败：信号未投递，容器内执行未停
             if k == 4 and kind == "stop_unproven_then_wall_passes_before_barrier":
                 now[0] = 901.0  # 屏障 ① 的 kill：此时期限已过
-            if k == 4 and kind == "stop_unproven_then_barrier_confirms_before_wall":
+            if k == 4 and kind in ("stop_unproven_then_barrier_confirms_before_wall",
+                                   "stop_unproven_then_barrier_confirms_before_wall_digest_late"):
                 now[0] = 850.5
+            if k == 2 and kind == "delivered_count_timeout_barrier_alive_after_wall":
+                now[0] = 900.1  # 屏障 ① 的 kill 在墙后
+            if k == 2 and kind == "delivered_polls_exhausted_barrier_alive_after_wall":
+                now[0] = 900.1  # 第二次强停（重试）已在墙后
             facts["kill_effect_at"].append(now[0])
             facts["kill_returns"].append((now[0], 0))
         if args[0] == "exec" and "ps -o pid= -u agent" in args[-1]:
@@ -838,7 +858,27 @@ def _stop_chain(monkeypatch, *, kind: str, stop_timeout: float = 30.0):
             ):
                 facts["confirmation_at"].append((now[0], 1))
                 return ExecResult(0, "1\n", "")  # 未投递的 kill 之后：进程仍在
+            if kind == "delivered_count_timeout_barrier_alive_after_wall" and facts["kills"] == 1:
+                now[0] = 900.1  # 强停后的计数挂起：零条观测，墙钟已过
+                await asyncio.Event().wait()
+            if kind == "delivered_polls_exhausted_barrier_alive_after_wall" and facts["kills"] == 1:
+                now[0] = 890.0 + c * 0.5  # 十次计数都是 1（次数耗尽、未 IO 超时）
+                facts["confirmation_at"].append((now[0], 1))
+                return ExecResult(0, "1\n", "")
+            if kind.startswith("delivered_") and facts["kills"] == 2:
+                # 第一轮 kill 未覆盖的活进程仍在（枚举 / fork 竞态残留）：墙后发起的查询仍见 1，下一次才归零
+                if c == facts["counts_at_kill2"] + 1:
+                    now[0] = 900.2
+                    facts["confirmation_at"].append((now[0], 1))
+                    return ExecResult(0, "1\n", "")
+                now[0] = 901.0
+            if kind.endswith("digest_late") and facts["kills"] == 4:
+                now[0] = 899.5  # 屏障 ① 的归零确认在墙前
             facts["confirmation_at"].append((now[0], 0))
+        if (args[0] == "exec" and "git status --porcelain" in args[-1] and kind.endswith("digest_late")
+                and facts["stop_entered"].is_set()):
+            now[0] = 901.0  # 只有屏障的指纹读取跨墙（Codex 复核 2 §3.2）；物化期的 census 不受影响
+            facts["digest_at"].append(now[0])
         return await original_docker(*args, input_bytes=input_bytes)
 
     class Driver:
@@ -848,7 +888,9 @@ def _stop_chain(monkeypatch, *, kind: str, stop_timeout: float = 30.0):
             facts["driver_tasks"].append(asyncio.current_task())
             adapter = chain.adapter_ref["adapter"]
             await adapter.run_all_turns()
-            now[0] = 850.0 if late_start else 899.5
+            now[0] = 850.0 if late_start else (
+                890.0 if kind == "delivered_polls_exhausted_barrier_alive_after_wall" else 899.5
+            )
             if kind == "hang_hard_wall":
                 now[0] = 900.1
                 return -1
@@ -880,10 +922,13 @@ def _member_verdicts(delivered):
 _STOP_CASES = {
     "stop_before_wall": ("max_turns_exhausted", -2, True, "zero_confirmed_before_deadline", 1),
     "kill_effect_after_wall": ("hard_wall_timeout", -1, False, "kill_delivered_after_deadline", 1),
-    "confirmation_after_wall": ("max_turns_exhausted", -2, True, "kill_delivered_before_deadline_no_later_presence", 1),
+    "confirmation_after_wall": ("max_turns_exhausted", -2, True, "kill_delivered_before_deadline_late_zero_confirmation", 1),
     "kill_failed_alive_after_wall": ("hard_wall_timeout", -1, False, "kill_exec_failed", 1),
     "kill_ok_positive_count_after_wall": ("hard_wall_timeout", -1, False, "presence_observed_after_deadline", 1),
     "kill_reply_late_but_effect_before_wall": ("hard_wall_timeout", -1, False, "kill_delivered_after_deadline", 1),
+    # Codex 复核 2 §3.1：kill 完成但从未收到归零（计数挂起 / 十次都是 1）→ 缺观测不是证明；期限已过 → hard wall
+    "delivered_count_timeout_barrier_alive_after_wall": ("hard_wall_timeout", -1, False, "kill_delivered_but_never_confirmed", 1),
+    "delivered_polls_exhausted_barrier_alive_after_wall": ("hard_wall_timeout", -1, False, "presence_observed_after_deadline", 2),
 }
 
 
@@ -908,7 +953,17 @@ async def test_stop_facts_decide_keep_vs_hard_wall(monkeypatch, kind):
     assert audit.outcome_v2["completion_class"] == "present_truncated"
     assert audit.termination["turn_budget"]["exhausted"] is True  # cap 事实保留
     assert stop["stop_before_deadline"] is proven and stop["stop_before_deadline_evidence"] == evidence
-    assert stop["stop_attempts"] == attempts and stop["stop_timed_out"] is False and stop["kill_verified"] is True
+    assert stop["stop_attempts"] == attempts
+    if kind == "delivered_count_timeout_barrier_alive_after_wall":
+        assert stop["stop_timed_out"] is True and stop["kill_verified"] is False and stop["observations"] == []
+        assert stop["kill_delivered_at_monotonic"] == 899.5  # kill 完成了，但没有任何一次归零确认
+    elif kind == "delivered_polls_exhausted_barrier_alive_after_wall":
+        assert stop["stop_timed_out"] is False and stop["kill_verified"] is True  # 第二次尝试在墙后才归零
+        assert len(stop["observations"]) == 12 and stop["observations"][9]["residual"] == 1
+    else:
+        assert stop["stop_timed_out"] is False and stop["kill_verified"] is True
+    barrier = audit.termination["barrier_stop"]
+    assert barrier["confirmed_at"] is not None  # 屏障 ① 的停止观测已交给归类（编排同一时钟域）
     if kind == "confirmation_after_wall":
         assert stop["confirmed_at_monotonic"] == 901.0 and stop["kill_delivered_at_monotonic"] == 899.5
     if kind == "kill_failed_alive_after_wall":
@@ -956,6 +1011,8 @@ async def test_failed_kill_is_retried_and_confirmation_before_wall_keeps(monkeyp
     ("kind", "expected_kind", "proven", "evidence"),
     [
         ("stop_unproven_then_barrier_confirms_before_wall", "max_turns_exhausted", True, "quiescence_confirmed_before_deadline"),
+        # Codex 复核 2 §3.2：屏障 899.5 已收到零确认，只有指纹读取到 901 才结束 → 仍是 KEEP（修前 DROP）
+        ("stop_unproven_then_barrier_confirms_before_wall_digest_late", "max_turns_exhausted", True, "quiescence_confirmed_before_deadline"),
         ("stop_unproven_then_wall_passes_before_barrier", "hard_wall_timeout", False, "deadline_passed_before_quiescence_confirmed"),
     ],
 )
@@ -975,12 +1032,30 @@ async def test_unproven_stop_has_no_keep_exit_before_the_wall(monkeypatch, kind,
     assert audit.runtime_quiescence_confirmed is True and chain.grading.calls
     assert audit.outcome_v2["termination_kind"] == expected_kind
     assert stop["stop_before_deadline"] is proven and stop["stop_before_deadline_evidence"] == evidence
+    barrier = audit.termination["barrier_stop"]
+    if kind.endswith("digest_late"):
+        assert barrier["confirmed_at"] == 899.5 and facts["digest_at"] == [901.0, 901.0]  # 停止确认与指纹时长分开
     if expected_kind == "hard_wall_timeout":
+        assert barrier["confirmed_at"] == 901.0
         assert audit.episode_deadline["hit_by"] == "quiescence_barrier"
         assert stop["requested_by"] == "hard_wall" and "hard_wall_after_unproven_stop" in _steps(audit)
         assert _member_verdicts(delivered) == {"DROP_GROUP"}
     else:
         assert stop["requested_by"] == "turn_budget" and _member_verdicts(delivered) == {"KEEP_FULL"}
+
+
+async def test_proven_stop_is_not_overturned_by_late_digest_reads(monkeypatch):
+    """Codex 复核 2 §3.2 对照：强停已在墙前证明（899.5 归零），屏障的指纹读取到 901 才结束 → 仍 KEEP。"""
+
+    chain, now, facts = _stop_chain(monkeypatch, kind="stop_before_wall_digest_late")
+    delivered = await asyncio.wait_for(
+        chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS)), timeout=15
+    )
+    audit = chain.orchestrator.audits[0]
+    stop = audit.termination["stop"]
+    assert stop["stop_before_deadline"] is True and stop["stop_before_deadline_evidence"] == "zero_confirmed_before_deadline"
+    assert facts["digest_at"] == [901.0, 901.0] and audit.outcome_v2["termination_kind"] == "max_turns_exhausted"
+    assert _member_verdicts(delivered) == {"KEEP_FULL"}
 
 
 async def test_terminate_records_delivery_and_observations_separately():
@@ -1053,9 +1128,38 @@ async def test_terminate_records_delivery_and_observations_separately():
 
     r = await terminate_agent_processes(Empty(), interval=0, clock=lambda: now[0])
     assert r.kill_delivered_at == 899.0 and r.confirmed_at == 900.5
-    assert stop_proven_before(r, 900.0) == (True, "kill_delivered_before_deadline_no_later_presence")
+    assert stop_proven_before(r, 900.0) == (True, "kill_delivered_before_deadline_late_zero_confirmation")
     assert stop_proven_before(r, None) == (None, "no_deadline")
     assert stop_proven_before(None, 900.0) == (False, "no_stop_result")
+
+    # 案 5（Codex 复核 2 §3.1）：kill 完成但计数从未归零（超时 / 次数耗尽）→ 缺观测不是证明
+    now = [899.5]
+
+    class NeverConfirmed:
+        async def run_bash(self, script):
+            if script == KILL_SCRIPT:
+                return ExecResult(0, "pkill_status=0\n", "")
+            return ExecResult(0, "1\n", "")
+
+    r = await terminate_agent_processes(NeverConfirmed(), attempts=2, interval=0, clock=lambda: now[0])
+    assert r.kill_delivered_at == 899.5 and r.confirmed_at is None and r.residual == 1
+    assert stop_proven_before(r, 900.0) == (False, "kill_delivered_but_never_confirmed")
+    # 案 6：kill 完成后曾看到进程、之后才归零（回包晚于期限）→ 这次 kill 没覆盖全部执行，不是证明
+    now = [899.5]
+
+    class Straggler:
+        count = 0
+
+        async def run_bash(self, script):
+            if script == KILL_SCRIPT:
+                return ExecResult(0, "pkill_status=0\n", "")
+            self.count += 1
+            now[0] = 899.8 if self.count == 1 else 900.4
+            return ExecResult(0, "1\n" if self.count == 1 else "0\n", "")
+
+    r = await terminate_agent_processes(Straggler(), interval=0, clock=lambda: now[0])
+    assert r.confirmed_at == 900.4
+    assert stop_proven_before(r, 900.0) == (False, "presence_observed_after_delivery")
 
 
 def test_merge_stop_results_keeps_first_delivery_and_all_observations():

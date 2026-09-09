@@ -3255,7 +3255,7 @@ class RolloutOrchestrator:
                     )
                     audit.runtime_quiescence_confirmed = True
                     audit.mark("runtime_quiescence_confirmed")
-                    self._reclassify_unproven_stop_after_quiescence(audit)  # Codex 修后复核 R3
+                    self._settle_stop_classification_after_quiescence(audit)  # Codex 复核 2 §3.1/§3.2
                     # 冻结时刻：rollout_container_hold_after_freeze 的起点
                     audit.freeze_monotonic = time.monotonic()
                     grading_workspace = result.frozen_grading_workspace
@@ -3820,27 +3820,59 @@ class RolloutOrchestrator:
         stop["stop_before_deadline"] = proven
         stop["stop_before_deadline_evidence"] = evidence
 
-    def _reclassify_unproven_stop_after_quiescence(self, audit: "RolloutAudit") -> None:
-        """Codex 修后复核 R3 的最后一道核对：预算强停"尝试用尽仍未证明、期限当时未到"的样本，屏障 ① 刚又停
-        了一次并确认归零。此刻期限未到 → 这次归零确认就是期限前的证明（规则 A）；期限已过 → 期限前没有任何
-        一次证明，按已批规则归 hard wall（保守：屏障恰跨期限完成的窄窗也归 DROP，证据码显式记下）。"""
+    def _settle_stop_classification_after_quiescence(self, audit: "RolloutAudit") -> None:
+        """Codex 复核 2 §3.1/§3.2：屏障 ① 的停止观测参与**同一**归类，且只消费"可信停止确认"的时刻
+        （屏障里首次归零的计数返回时刻，编排时钟域），不消费屏障整体返回时刻——指纹读取跨期限不改归类。
+
+        规则（按序）：(1) 屏障在期限后（发起时刻 ≥ 期限）仍看到进程 = 越墙执行的证据 → hard wall，即使
+        强停曾判 True；(2) 强停已证明 → 保持；(3) 屏障的归零确认在期限前 → 证明（规则 A）；(4) 其余 =
+        期限前没有任何一次可信确认 → hard wall（DROP，cap 事实保留）。没有屏障观测（注入的非 Docker
+        屏障）时退回"此刻期限是否已过"。"""
 
         block = audit.termination
         if block is None:
             return
         stop = block.get("stop") or {}
-        if stop.get("stop_before_deadline_evidence") != "stop_attempts_exhausted_before_deadline":
+        if not stop.get("forced") or stop.get("requested_by") != "turn_budget":
+            return
+        if audit.termination_kind_hint != "max_turns_exhausted":
+            return
+        deadline = audit.episode_deadline_monotonic
+        if deadline is None:
+            return
+
+        def hard_wall(evidence: str) -> None:
+            stop["stop_before_deadline"] = False
+            stop["stop_before_deadline_evidence"] = evidence
+            stop["requested_by"] = "hard_wall"
+            audit.termination_kind_hint = "hard_wall_timeout"
+            audit.episode_deadline["hit_by"] = "quiescence_barrier"
+            audit.mark("hard_wall_after_unproven_stop")
+
+        def proven(evidence: str) -> None:
+            stop["stop_before_deadline"] = True
+            stop["stop_before_deadline_evidence"] = evidence
+
+        barrier = block.get("barrier_stop")
+        if barrier is not None:
+            observations = barrier.get("observations") or ()
+            if any(o.get("residual", -1) > 0 and o.get("issued_at", 0.0) >= deadline for o in observations):
+                hard_wall("presence_observed_after_deadline_by_barrier")
+                return
+            if stop.get("stop_before_deadline") is True:
+                return
+            confirmed = barrier.get("confirmed_at")
+            if confirmed is not None and confirmed <= deadline:
+                proven("quiescence_confirmed_before_deadline")
+                return
+            hard_wall("deadline_passed_before_quiescence_confirmed")
+            return
+        if stop.get("stop_before_deadline") is True:
             return
         if self._episode_remaining(audit) > 0:
-            stop["stop_before_deadline"] = True
-            stop["stop_before_deadline_evidence"] = "quiescence_confirmed_before_deadline"
+            proven("quiescence_confirmed_before_deadline")
             return
-        stop["stop_before_deadline"] = False
-        stop["stop_before_deadline_evidence"] = "deadline_passed_before_quiescence_confirmed"
-        stop["requested_by"] = "hard_wall"
-        audit.termination_kind_hint = "hard_wall_timeout"
-        audit.episode_deadline["hit_by"] = "quiescence_barrier"
-        audit.mark("hard_wall_after_unproven_stop")
+        hard_wall("deadline_passed_before_quiescence_confirmed")
 
     async def _stop_after_turn_budget(
         self, harness_task: "asyncio.Future[int]", *, audit: "RolloutAudit", sandbox: Any
@@ -3873,9 +3905,9 @@ class RolloutOrchestrator:
             audit.episode_deadline["hit_by"] = "harness_outer"
             audit.mark("episode_deadline_harness_cancelled")
             return HARNESS_EXIT_TIME_BUDGET_EXCEEDED
-        # Codex 联合审查 R3 + 修后复核 R3：期限继续约束**尚未证明已停止**的执行。证据规则见 Brief 批 C
-        # "停止证据与判定规则"（execution_scope.stop_proven_before）：kill 命令返回不是停止事实；证明 =
-        # 期限前归零确认，或期限前投递且期限后未再见进程。未证明且期限未到 = kill 未投递 → 重试。
+        # Codex 联合审查 R3 + 修后复核 R3 + 复核 2：期限继续约束**尚未证明已停止**的执行。证据规则见 Brief
+        # 批 C "停止证据与判定规则"（execution_scope.stop_proven_before）：kill 命令返回不是停止事实；缺观测
+        # 不是证明；证明 = 期限前收到归零确认（"投递早、确认晚"的边界待 owner 决定）。未证明且期限未到 → 重试。
         deadline = audit.episode_deadline_monotonic
         merged: ScopeStopResult | None = None
         proven: bool | None = False
@@ -3894,9 +3926,8 @@ class RolloutOrchestrator:
             proven, _evidence = stop_proven_before(merged, deadline)
             if proven is not False:
                 break
-            if self._episode_remaining(audit) <= 0 or merged is None or merged.kill_delivered_at is not None:
-                # 期限已过 → hard wall；无 sandbox 无从重试；已投递却未证明 = 期限后仍见进程（期限也已过）
-                break
+            if self._episode_remaining(audit) <= 0 or merged is None:
+                break  # 期限已过 → hard wall；无 sandbox 无从重试
             if attempt < EXECUTION_SCOPE_STOP_MAX_ATTEMPTS:
                 audit.mark("turn_budget_stop_retry")
                 try:
@@ -3917,7 +3948,7 @@ class RolloutOrchestrator:
                 audit.mark("episode_deadline_during_forced_stop")
                 return HARNESS_EXIT_TIME_BUDGET_EXCEEDED
             # 尝试用尽仍未证明、期限未到：**不按已证明放行**——三态记 None + 证据码；屏障 ① 再停一次并对未确认
-            # fail-closed；屏障确认时期限若已过，_reclassify_unproven_stop_after_quiescence 归 hard wall
+            # fail-closed；屏障的归零确认时刻若已过期限，_settle_stop_classification_after_quiescence 归 hard wall
             if audit.termination is not None:
                 stop["stop_before_deadline"] = None
                 stop["stop_before_deadline_evidence"] = "stop_attempts_exhausted_before_deadline"

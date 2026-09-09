@@ -13,8 +13,9 @@ Docker runner 在取消路径上 kill+wait 宿主 CLI）。"最多查 N 次、�
 
 停止证据（Codex 联合审查 R3 + 修后复核 R3；规则全文见 Brief 批 C"停止证据与判定规则"）：
 - `kill_returned_at`：kill exec **返回**的时刻（`clock` 域），无论成败——只是原始观测；
-- `kill_delivered_at`：只有 exec 退出 0 且脚本回显的 pkill 状态 ∈ {0（已发信号）, 1（无匹配 = scope 本就空）}
-  （或未回显：替身 / 旧脚本）才有值 = **SIGKILL 已投递**的时刻上界；exec 失败 / 超时 / pkill 出错都不算投递；
+- `kill_delivered_at`：只有 exec 退出 0 且脚本回显的 pkill 状态 ∈ {0, 1}（或未回显：替身 / 旧脚本）才有值——
+  **kill 动作完成**的时刻上界（procps：0 = 至少一个匹配进程成功收到信号；1 = 无匹配**或**没有一个能成功发送；
+  两者都不单独证明整个 scope 已停）；exec 失败 / 超时 / pkill 出错都不算完成；它是动作记录，不是停止证明；
 - `observations`：每次残留计数的发起 / 返回时刻与结果——"发起时刻 ≥ 期限仍见进程"是"期限后仍有进程"的证据，
   最终归零**不能**反过来证明期限前已停；
 - `confirmed_at`：首次观测到归零的时刻。
@@ -130,10 +131,11 @@ def merge_stop_results(earlier: ScopeStopResult | None, later: ScopeStopResult) 
 def stop_proven_before(result: ScopeStopResult | None, deadline: float | None) -> tuple[bool | None, str]:
     """"执行在 deadline 前已停止"有没有被**证明**（Brief 批 C 停止证据规则）。返回 (三态, 证据码)：
 
-    - True：(A) 某次计数返回 0 且返回时刻 ≤ deadline；或 (B) SIGKILL 在 deadline 前投递，且此后没有任何
-      一次发起时刻 ≥ deadline 的计数看到进程（归零确认晚于 deadline 只是观测晚，不是越墙）；
-    - False：kill exec 失败 / 未返回、投递晚于 deadline、deadline 后仍观测到进程——"未证明"，调用方在
-      deadline 已过时按 hard wall 处理；
+    - True：(A) 控制端在 deadline 前收到一次归零确认（计数返回 0 且返回时刻 ≤ deadline）；或 (B-残)
+      kill 动作在 deadline 前完成、之后**收到过**归零确认（只是回包晚于 deadline）、且完成之后没有任何一次
+      计数看到进程——这一条是"投递早、确认晚"的边界，是否继续算 KEEP 由 owner 决定（Codex 复核 2 §5）；
+    - False：kill exec 失败 / 未返回、完成晚于 deadline、完成后从未收到归零确认（缺观测不是证明）、完成后
+      仍观测到进程——"未证明"，调用方在 deadline 已过时按 hard wall 处理；
     - None：没有 deadline（无从比较）。
     """
 
@@ -149,9 +151,15 @@ def stop_proven_before(result: ScopeStopResult | None, deadline: float | None) -
         return False, "kill_exec_failed"
     if result.kill_delivered_at > deadline:
         return False, "kill_delivered_after_deadline"
+    if result.confirmed_at is None:
+        # Codex 复核 2 §3.1：COUNT 超时 / 次数耗尽都没拿到归零——没有反证 ≠ 停止证明
+        return False, "kill_delivered_but_never_confirmed"
     if result.presence_observed_at_or_after(deadline):
         return False, "presence_observed_after_deadline"
-    return True, "kill_delivered_before_deadline_no_later_presence"
+    if result.presence_observed_at_or_after(result.kill_delivered_at):
+        # kill 完成之后还看到过进程（不管发起时刻在期限前后）：这次 kill 没有覆盖全部执行
+        return False, "presence_observed_after_delivery"
+    return True, "kill_delivered_before_deadline_late_zero_confirmation"
 
 
 async def terminate_agent_processes(

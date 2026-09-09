@@ -31,6 +31,8 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import time
+from collections.abc import Callable
 from typing import Any
 
 from repoharness2.adapters.slime.generate import (
@@ -88,8 +90,10 @@ class FrozenWorkspace:
 class DockerQuiescenceBarrier:
     """RuntimeQuiescenceBarrier 的容器实现（bringup 在 fa_formal 注入）。"""
 
-    def __init__(self, workdir: str = "/testbed") -> None:
+    def __init__(self, workdir: str = "/testbed", *, clock: Callable[[], float] = time.monotonic) -> None:
         self._workdir = workdir
+        # Codex 复核 2 §3.2：停止观测的时刻必须与编排的 episode 期限同一时钟域，归类才能消费
+        self._clock = clock
 
     async def establish(
         self, *, workspace: Any, audit: Any
@@ -105,8 +109,13 @@ class DockerQuiescenceBarrier:
         # 编排已先停过时这里是幂等复核）
         stop = await terminate_agent_processes(
             workspace, attempts=_KILL_VERIFY_ATTEMPTS, interval=_KILL_VERIFY_INTERVAL_SECONDS,
-            total_timeout=_STOP_TOTAL_TIMEOUT_SECONDS,
+            total_timeout=_STOP_TOTAL_TIMEOUT_SECONDS, clock=self._clock,
         )
+        termination = getattr(audit, "termination", None)
+        if isinstance(termination, dict):
+            # 屏障 ① 的停止观测交给编排的归类消费（Codex 复核 2 §3.1/§3.2）：只有归零确认的时刻是
+            # "可信停止确认"，之后的指纹读取时长不属于停止事实
+            termination["barrier_stop"] = stop.as_dict()
         residual = stop.residual
         if residual != 0:
             return QuiescenceRejected(
