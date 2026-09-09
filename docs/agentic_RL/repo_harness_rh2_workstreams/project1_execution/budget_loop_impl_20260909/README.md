@@ -1,6 +1,6 @@
 # 预算终止闭环实施计划（Owner Brief）：I02/I03/I04 + I14 + 依赖的 I05/I12
 
-日期：2026-09-09。作者：Claude（A 线）。状态（Codex 联合审查后更新）：**批 A `6bb5ffe4` 沿用通过结论；批 B `510c9b23` 修后复核通过；D-1 `756b8fd6` 通过。C `34531b74`、D-2 `5c8fa4f7` 已提交但尚不能验收：本轮四项 P1 待修，另有一项限定取消/关停接缝的 P2。** 见 [联合聚焦审查](combined_review_20260909/README.md)。主审重跑 243 项维护测试及独立 CPU 探针，25 文件 ruff 通过；作者的全量 1839/310 记录见 [统一交接](handover_20260909.md)，不是主审重跑结果。§6 六项与预算数值未新增批准。基线：I01 已提交 `297f1f59`（针对性复核通过）；miles 集成 `98a0272e4`，本批不改 fork，不改 vendored slime 字节。下文实施记录保留其当时状态，修订记录见 §11。
+日期：2026-09-09。作者：Claude（A 线）。状态（Claude 对修后针对性复核的三项收尾，2026-09-09）：**A、B、D-1 沿用通过结论；R2、R4 及原 R5 取消问题已关闭。修后复核剩下的 R1（生产路由未绑 wrapper）、R3（kill 返回被当停止事实）、R5-F1（drain 排空回归）已按本文批 C "停止证据与判定规则"实施并各自独立提交（`5192356f` / `dfed0d61` / `f9f6c27b`），状态"已实施待 Codex 针对性复核"；本机测试通过不等于批准。新发现 PID 1 僵尸回收问题留待 owner 决定（§8 / 交接 §4）。** 当前结论见 [修后针对性复核](combined_review_20260909/followup/README.md)，历史见 [联合聚焦审查](combined_review_20260909/README.md)。本次主审重跑 157 项维护测试、四份 CPU 脚本，11 文件 ruff 通过；作者全量 1857/310 见 [统一交接](handover_20260909.md)，本次未重跑全量。§6 六项与预算数值未新增批准。基线：I01 已提交 `297f1f59`（针对性复核通过）；miles 集成 `98a0272e4`，本批不改 fork，不改 vendored slime 字节。下文实施记录保留其当时状态，修订记录见 §11。
 
 ## 0. 一句话
 
@@ -79,7 +79,31 @@ I12：receipt 写失败 → 仍抛 `finalization_receipt_write_failed`（fatal�
 6. **cap 与 wall 同现，按既定规则**（Codex R3；撤回原稿的"以 cap 为准"）：episode deadline 到点时执行仍在进行（CC 未停）= 真实 hard wall → `hard_wall_timeout` → DROP，cap 事实保留在 `turn_budget` 块；执行已停止后清理越过期限**不算** hard wall（清理有独立预算），不补造。
 7. **观测**（audit 记录新增可选键 `termination`）：`kind`、`turn_budget: {cap, accepted, exhausted, refused_count, refused_at_monotonic}`、`harness_exit_code`、`stop: {requested_by, forced, kill_verified, residual_processes, grace_seconds, harness_exited_within_grace}`。
 
+**v2.6 补记：** 生产顺序改为先 `install_capture_wire` 再构造 adapter，并有启动核对 `turn_budget_wire_not_bound_to_route`；停止事实按上面的证据规则实施，`kill_returned_before_deadline` 只是原始观测。
+
 **已实施（2026-09-09，v2.4）与计划的偏离：** (a) 计数留在 vendored `_check_turn_cap`（`MAX_TURNS_PER_SID` 仍经构造参数传入），`install_turn_budget_wire` 只包装：记事实 + 403 不可重试；`count_tokens` 不计；(b) 守卫等在飞归零的上限 = min(session 剩余, 600s)，无期限时 30s；(c) 强制停止的退出码用我方哨兵 `HARNESS_EXIT_STOPPED_BY_RH2 = -2`；(d) `terminate_agent_processes` 抽到新模块 `execution_scope.py`（屏障 ① 与编排共用，行为不变）；(e) 观测块 `stop` 没有 `aborts_requested`（abort 统计仍在 registry.stats，未并入本块）；(f) 真实 CC 对 403 的退出行为未验证，编排不依赖它。
+
+**停止证据与判定规则（Codex 修后复核 R3，v2.6，写在落码之前）。** 已批规则是"episode 期限到点时执行仍在进行 = 真实 hard wall → DROP；执行已停止后清理越过期限不算 hard wall"。要落实它，必须先说清哪些观测能**证明**"执行在期限前已停止"，哪些不能：
+
+| 观测 | 能证明什么 | 不能证明什么 |
+|---|---|---|
+| kill exec 返回，exit 0（`pkill -9 -u agent`，脚本另回显 pkill 自身状态；0 = 已发信号，1 = 无匹配进程 = scope 本就空）| **该时刻之前存在的 agent 进程都已收到 SIGKILL**，之后不能再执行用户态代码（返回时刻 = 投递时刻上界）| 进程已退出（D 状态、僵尸要晚一点消失）；枚举之后才 fork 的进程被杀（竞态残留会出现在随后的计数里）|
+| kill exec 返回 exit≠0 / pkill 状态 ∉ {0,1} / 总预算内未返回 | 什么都不证明：信号可能根本没投递 | —— |
+| 一次计数查询返回 0（`ps -u agent`）| **查询执行时刻 ≤ 返回时刻** 已无 agent 进程 | 更早的时刻已停（尤其返回晚于期限时，停止时刻可能在期限前也可能在后）|
+| 一次计数查询返回 >0 | 发起时刻之后仍有 agent 进程（发起时刻 ≥ 期限 ⇒ 期限后仍有进程）| 进程在执行（可能是僵尸；见遗留 §8）|
+| 最终归零 | 现在可以安全冻结（屏障 ① 的用途）| 期限前已停止 |
+
+据此，"执行在期限前已停止"当且仅当下列之一成立（`execution_scope.stop_proven_before(result, deadline)`，纯函数，编排与测试同一实现）：
+- **(A) 归零确认在期限前**：某次计数返回 0 且其返回时刻 ≤ 期限；或
+- **(B) 信号在期限前投递且此后未见进程**：kill 投递时刻 ≤ 期限，且没有任何一次**发起时刻 ≥ 期限**的计数返回 >0。
+
+其它一律"未证明"，并把原因写进 `stop.stop_before_deadline_evidence`（`kill_exec_failed` / `kill_not_returned` / `kill_delivered_after_deadline` / `presence_observed_after_deadline`）。判定动作：
+1. 预算强停后**未证明且期限已过** → hard wall（-1，`hit_by = harness_outer`，cap 事实保留）；这覆盖 Codex 反例（kill exec 失败 899.5、900.1 发起的查询仍活、901 归零）与"kill 投递成功但墙后查询仍见进程"。
+2. **未证明且期限未到**只可能是 kill 未投递（exec 失败 / 超时）——**重试**强停（最多 `EXECUTION_SCOPE_STOP_MAX_ATTEMPTS = 3` 次，每次用自己的总预算 `EXECUTION_SCOPE_STOP_TIMEOUT_SEC = 30s`，不因期限缩短——cap 恰在期限前命中时也要把 kill 真正投递出去；间隔 `EXECUTION_SCOPE_STOP_RETRY_INTERVAL_SEC = 1s`），直到证明或期限到；证据跨次合并（投递取成功那次、计数全部保留）。尝试用尽仍未证明而期限未到 → 三态 **None**、不按已证明放行：屏障 ① 再停一次并对未确认 fail-closed；屏障确认时期限已过 → 期限前没有任何证明 → hard wall（`hit_by = quiescence_barrier`），未过 → 这次确认就是期限前的证明 → KEEP。没有"未证明就按 KEEP 放行"的出口。
+3. **已证明** → `HARNESS_EXIT_STOPPED_BY_RH2`（-2）→ `max_turns_exhausted` / KEEP_FULL；归零确认晚于期限（B 成立）不补造 hard wall。
+4. 边界与不确定性显式化：kill 实际在 899.5 生效但宿主回包 901 才到，代码只看得到"投递时刻 901"→ 按未证明 = hard wall（保守 DROP）；`stop_before_deadline` 三态 True / False / None（None 只在无期限时），字段名不冒充停止事实。`kill_returned_before_deadline` 只保留为原始观测。
+5. 与已批语义的关系：只改"什么算证明"，不改 KEEP / DROP 规则；唯一新增的 DROP 来源是"未证明 + 期限已过"，方向与"hard wall 优先"一致。代价：cap 强停恰在期限前 <1 次计数往返内完成、且 kill 回包晚的样本被保守丢弃，频率未知、只在 cap 与墙钟相邻时出现。
+6. 仍未覆盖（记 §8 遗留）：容器 PID 1 是 `sleep infinity`，不回收孤儿——被杀的 CC 及其子进程会以僵尸形态留在 `ps -u agent` 里，真实 Docker 上强停后的计数可能永不归零 → 屏障 ① 拒绝 → missing；这不是 CPU 替身能看到的，需要真机确认后决定"计数排除 Z 状态"或 `docker run --init`。
 
 ### 批 D：I04 处置注入 + grading 侧 I14
 
@@ -154,6 +178,8 @@ uv run ruff check src tests
 
 - **T0**：无新增（原稿的"cap 覆盖真实 hard wall"已撤回，不再构成推翻既定决定）；§6 六项按"快速确认"处理，未确认部分不实施。
 - **T1**：(1) turn cap 的拒绝形状 429→403 + 不可重试头，并由 capture_wire 包装 vendored `_check_turn_cap` 记录预算事实；(2) 守卫在计数已达 N 时先等 inflight 归零再拒绝第 N+1 次；(3) `SWE_AGENT_TIME_BUDGET_SEC` 语义从 CC 运行预算改为资源占用起的 episode 预算，且对 materialize/引导强制生效并在到期取消时清理持有资源；(4) proxy deadline 中毒的归因从 `api_failure` 改为 `hard_wall_timeout`（单次 attempt timeout 不变）；(5) 未归因异常 → `pre_finalize_failure_unclassified` fatal（含四处测试 oracle）、两个点名账实矛盾码与 `cc_version_mismatch` → fatal，局部引导故障的 typed 边界 = `SandboxExecError`；(6) receipt 失败仍清理（三处 oracle），且 receipt / termination 事实两条尾部 fatal 在清理 await 前先通知 halt；(7) 启动注入 KEEP/DROP 策略并拒绝冲突覆盖；(8) `rh2.fa.execution_audit.v1` 新增可选键 `termination`、`episode_deadline`（`schema_id` 不变）；(9) 批 B 第 5 条的 `failure_category` 选值；(10) grading 有界收口后仍运行 / 无法确认 → fatal 并继续清理；(11) 批 B 审查后：`grading.manager.run_docker` 的取消回收提前到 B（Codex 建议）；`episode_deadline` 观测块新增 `harness_launch_attempted`，`harness_launched` 改为 False / None 两态；`create_attempt_network` 新增 `cancel_report` 参数与 `reclaim_network_after_cancel` 辅助；批 A 的两个驱动测试改用非 124 的本地失败形态（124 在期限决定 timeout 的步骤上按构造归期限）。
+- **T1（v2.6 追加）**：(12) `KILL_SCRIPT` 回显 pkill 状态、`kill_delivered_at` 只认 exec 0 且状态 ∈ {0,1}；(13) 强停重试 `EXECUTION_SCOPE_STOP_MAX_ATTEMPTS = 3` / `EXECUTION_SCOPE_STOP_RETRY_INTERVAL_SEC = 1s`，每次自己的 30s 预算；(14) `hit_by` 新值 `quiescence_barrier`；(15) 保守边界：kill 实际墙前生效但回包晚 → DROP；(16) 停止事实测试 oracle 改为三态 + 证据码 + 真实处置函数。
+- **待 owner 决定（v2.6 新发现）**：rollout 容器 PID 1 = `sleep infinity` 不回收孤儿，真实 Docker 上强停后 `ps -u agent` 可能永远有僵尸 → 屏障 ① 拒绝 → missing；候选：`COUNT_SCRIPT` 排除 Z 状态 或 `docker run --init`，需真机确认。
 - **T2**：`TURN_BUDGET_EXIT_GRACE_SEC = 30`、kill/验证脚本抽函数、映射表补齐既有 typed 码、`_NoDocker` 替身改写。
 
 ## 9. 对 B 的影响与接口
@@ -167,6 +193,9 @@ uv run ruff check src tests
 Codex 计划审查已完成（[codex_plan_review.md](codex_plan_review.md)），R1–R4 全部 accepted，本稿即其停止条件要求的写回。之后按四个小批各自的行为边界做聚焦审查；修复后只复核对应问题与必要回归。本批完成的判据：§7 命令全过、§8 T1 项在 `infra.md` 登记、§6 的确认结果落到映射表。
 
 ## 11. 修订记录
+
+- 2026-09-09 v2.6（修后复核三项收尾）：R1 先安装 wire 再构造 adapter + 启动核对路由绑定；R3 先写"停止证据与判定规则"再落码（投递 / 归零 / 期限后仍在 三类观测分开、纯函数判定、未投递重试、未证明无 KEEP 出口、屏障后核对）；R5-F1 关闭标志挪到排空之后。新发现 PID 1 僵尸问题记 §8 待定。处置见 `infra.md` 同日条目。
+- 2026-09-09 Codex 对 `1d9359f4` / `02807adc` / `5d822ae9` 修后针对性复核：R2、R4 及原 R5 反例关闭；R1 wrapper 在真实 BringupService 路由上未生效，R3 kill 非零、墙后仍活、最终归零仍 KEEP，两项沿原 P1 未关闭；R5 标志另使 drain 无法消费积压，P2。主审 157 项维护测试与四份 CPU 脚本、11 文件 ruff；代码/维护测试无改动。后续只收尾这三处与必要回归，见 [报告及验收条件](combined_review_20260909/followup/README.md)。
 
 - 2026-09-09 Codex 联合聚焦审查：B 旧 R1/R2 两项 P1 与 R3（P2）修复通过，D-1 通过。C/D-2 新增四项 P1：并发 body 交错提前拒绝最后一轮、停止 IO 无真实时间上界、强停期间跨墙仍按 turn 保留、socket 缺席误认容器 absent。queue 取消后的 scope fatal 接收/worker 退出列 P2，明确限定关停路径，不声称训练继续或关停假绿。仅更新审查文档和状态，没有源码/维护测试改动、提交推送或真实 Docker/CC/GPU。见 [完整报告与窄修验收](combined_review_20260909/README.md)。
 
