@@ -2273,11 +2273,14 @@ class RolloutAudit:
 
 @dataclass(frozen=True)
 class _MaterializedSandbox:
-    """步骤 2 的产物：容器名 + 契约实例 + 评分可复用的 workspace 执行通道。"""
+    """步骤 2 的产物：容器名 + 契约实例 + 评分可复用的 workspace 执行通道。
+
+    Codex 复核 3 F1：容器一起来就以 `handle=None` 的**临时形态**交给调用方的 finally 持有（回收所有权先于
+    物化完成），物化成功后再换成完整形态；handle 只在物化成功后的路径被读。"""
 
     container_name: str
     lease: SandboxLease
-    handle: WorkspaceHandle
+    handle: "WorkspaceHandle | None"
     workspace: "RolloutContainerWorkspace"
     network: AttemptNetwork | None = None  # W3b：attempt 私有 egress 网络（legacy 路径为 None）
 
@@ -3691,8 +3694,8 @@ class RolloutOrchestrator:
         期限约束（由 _await_within_episode_deadline 圈住）。sandbox 一物化就放进 `prepared`，调用方的
         finally 据此清理；之后 census 阻塞被期限取消时容器不会漏清。"""
 
-        sandbox = await self._materialize_rollout_sandbox(task, trajectory_id, audit)
-        prepared["sandbox"] = sandbox
+        sandbox = await self._materialize_rollout_sandbox(task, trajectory_id, audit, owner=prepared)
+        prepared["sandbox"] = sandbox  # 完整形态替换物化中途交出的临时形态
         audit.step("step2_workspace_materialized")
         # B1（A-prime 第 2 条）：harness 获写权前生成评分基线唯一权威。
         # 仅 FA 模式（s1_compat 零改动）；失败走既有异常收口（missing）。
@@ -4421,9 +4424,16 @@ class RolloutOrchestrator:
         ]
 
     async def _materialize_rollout_sandbox(
-        self, task: RolloutTaskSpec, trajectory_id: str, audit: RolloutAudit
+        self, task: RolloutTaskSpec, trajectory_id: str, audit: RolloutAudit,
+        owner: dict[str, Any] | None = None,
     ) -> _MaterializedSandbox:
-        """步骤 2：起 rollout 容器（租约先行）+ envpack 血缘校验 + bundle 写入。"""
+        """步骤 2：起 rollout 容器（租约先行）+ envpack 血缘校验 + bundle 写入。
+
+        `owner`（Codex 复核 3 F1）：调用方的 `prepared` 字典——容器一启动成功就把临时 sandbox 放进
+        `owner["sandbox"]`，回收所有权交给 `_generate_attempt` 的 finally；本函数的异常路径**不再 await
+        清理**。旧写法（except 里先 `await _cleanup_container` 再 raise）有两个缺口：已判定的 typed
+        Fatal 要等清理跑完才能到达外层通知；清理若被 episode 期限取消，CancelledError 会替换掉首因，
+        外层按 `episode_deadline_in_materialize` 补采，且外层没有 sandbox 引用、该次执行失去回收。"""
 
         nonce = uuid.uuid4().hex[:8]
         name = f"{self.config.name_prefix}-{_sanitize_for_name(trajectory_id)}-{nonce}"
@@ -4530,6 +4540,15 @@ class RolloutOrchestrator:
         if profile is not None:
             setup["container_start_seconds"] = round(time.monotonic() - start_started, 4)
             audit.lifecycle_timing.set("sandbox_container_start", setup["container_start_seconds"])
+        workspace = RolloutContainerWorkspace(
+            docker=self._docker, container_name=name, testbed_path=task.workdir
+        )
+        if owner is not None:
+            # Codex 复核 3 F1：容器已起 → 回收所有权立刻交给调用方 finally（临时形态，handle 稍后补）。
+            # 之后本函数里任何异常都直接传播：先由外层 except 定首因、通知 halt，再由 finally 有界清理。
+            owner["sandbox"] = _MaterializedSandbox(
+                container_name=name, lease=lease, handle=None, workspace=workspace, network=network
+            )
 
         try:
             # 启动后镜像 digest 比对（codex#1 fail-closed）：先于任何写入/探针，
@@ -4661,18 +4680,18 @@ class RolloutOrchestrator:
                     )
                 audit.mark("sandbox_prelaunch_check_passed")
         except asyncio.CancelledError:
-            # 批 B：期限 / 关停取消——容器已存在，同样按名字回收（外层 finally 拿不到 sandbox）。
+            # 批 B：期限 / 关停取消——容器已存在，按名字就地回收（幂等：外层 finally 再看到临时 sandbox 时
+            # lease 已释放即跳过）。
             await self._reclaim_after_cancel(lease, name, audit)
             raise
         except Exception:
-            # 物化中途失败：容器已存在，立即按 Q7 清理（外层 finally 不再重复——
-            # sandbox 尚未返回给调用方，这里是唯一知道容器名的位置）。
-            await self._cleanup_container(lease, name, audit)
+            if owner is None:
+                # 无 owner 的直接调用（单测 / 探针）：保持旧的就地清理（这里是唯一知道容器名的位置）
+                await self._cleanup_container(lease, name, audit)
+            # 有 owner：不在这里 await 清理（Codex 复核 3 F1）——首因先到外层 except（Fatal 立即通知），
+            # 清理由 finally 在 receipt 之后有界执行，期限取消不会再覆盖首因、也不会丢失回收
             raise
         audit.workspace_handle = handle
-        workspace = RolloutContainerWorkspace(
-            docker=self._docker, container_name=name, testbed_path=task.workdir
-        )
         return _MaterializedSandbox(
             container_name=name, lease=lease, handle=handle, workspace=workspace, network=network
         )

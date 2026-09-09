@@ -215,8 +215,8 @@ async def test_e2e_real_barrier_class_confirms_and_grades_frozen():
     stub = _Exec(digests=["D1", "D1", "D1"])
     real_materialize = chain.orchestrator._materialize_rollout_sandbox
 
-    async def patched_materialize(task, trajectory_id, audit):
-        sandbox = await real_materialize(task, trajectory_id, audit)
+    async def patched_materialize(task, trajectory_id, audit, **kwargs):
+        sandbox = await real_materialize(task, trajectory_id, audit, **kwargs)  # 透传 owner=（Codex 复核 3 F1）
         # workspace 为 frozen dataclass——测试注入走 object.__setattr__
         object.__setattr__(sandbox.workspace, "run_bash", stub.run_bash)
         return sandbox

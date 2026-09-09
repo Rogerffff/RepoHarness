@@ -1239,3 +1239,77 @@ async def test_parent_cancel_during_forced_stop_settles_harness_task(monkeypatch
         await asyncio.wait_for(running, timeout=5)
     assert facts["driver_cancelled"].is_set()
     assert all(t.done() for t in facts["driver_tasks"])  # 修前：harness task 仍 pending，需探针单独收掉
+
+
+# ================================================================ Codex 复核 3 F1：物化阶段的致命首因不被清理 / 期限取消覆盖
+
+
+@pytest.mark.parametrize("kind", ["digest_mismatch", "lineage_mismatch", "workspace_contract_invalid"])
+async def test_materialize_fatal_is_notified_before_cleanup_and_survives_the_deadline(kind):
+    """Codex 复核 3 F1（P1）：物化阶段已判定的 typed Fatal（digest / 血缘事实矛盾、我方 WorkspaceHandle 契约
+    ValidationError）修前要先等容器清理再抛；清理若跨 episode 期限被取消，CancelledError 替换首因 →
+    `episode_deadline_in_materialize` / ABORTED、无 halt 通知、容器与私网残留。修后：容器一起来回收所有权就交给
+    外层 finally，异常直接传播 → 通知先于第一个清理 await、receipt 已是 fatal_run_halt；期限（0.25s）过后清理仍在
+    进行也不改首因；释放后容器、私网、租约全部回收，Fatal 原码传播。"""
+
+    import dataclasses
+
+    from test_slime_generate import FROZEN_IMG_DIGEST, TASK_ID_DENSE, FakeFinalizationStore, FakeRolloutDocker, make_task
+
+    from repoharness2.adapters.slime.async_worker import FatalExecutionInfrastructureError
+
+    expected = {
+        "digest_mismatch": "rollout_image_digest_mismatch",
+        "lineage_mismatch": "rollout_testbed_lineage_failed",
+        "workspace_contract_invalid": "rh2_contract_validation_failed",
+    }[kind]
+    task = make_task(TASK_ID_DENSE)
+    docker_kwargs: dict = {}
+    if kind == "digest_mismatch":
+        task = make_task(TASK_ID_DENSE, image_manifest_digest=FROZEN_IMG_DIGEST)
+        docker_kwargs["repo_digests"] = ("fake/img@sha256:" + "2" * 64,)
+    elif kind == "lineage_mismatch":
+        docker_kwargs["probe_head"] = "f" * 40
+    task = dataclasses.replace(task, time_budget_seconds=0.25)  # 真实 episode 期限，清理会跨过它
+    docker = FakeRolloutDocker(**docker_kwargs)
+    store = FakeFinalizationStore()
+    chain = _formal_chain(store, docker=docker, task=task)
+    if kind == "workspace_contract_invalid":
+        chain.orchestrator._mount_planner = lambda task: ["invalid-mount-shape"]  # 真实 Pydantic 构造点抛 ValidationError
+    events: list = []
+    notices: list = []
+    entered_rm, release_rm = asyncio.Event(), asyncio.Event()
+    original_docker = chain.orchestrator._docker
+
+    async def gated(*args, input_bytes=None):
+        if args[0] == "rm":
+            events.append("rm_enter")
+            entered_rm.set()
+            await release_rm.wait()
+            result = await original_docker(*args, input_bytes=input_bytes)
+            events.append("rm_return")
+            return result
+        return await original_docker(*args, input_bytes=input_bytes)
+
+    def notify(exc):
+        notices.append(exc.reason_code)
+        events.append("fatal")
+
+    chain.orchestrator._docker = gated
+    chain.orchestrator._notify_fatal_halt = notify
+    running = asyncio.create_task(chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS)))
+    await asyncio.wait_for(entered_rm.wait(), 2)
+    assert events[0] == "fatal" and notices == [expected]  # 通知先于第一个清理 await，且只一次
+    assert [r.attempt_disposition for r in store.receipts] == ["fatal_run_halt"]  # receipt 先于清理持久化（B5）
+    await asyncio.sleep(0.4)  # 期限 0.25s 已过：清理仍在进行，首因不被期限取消覆盖
+    assert not running.done() and notices == [expected]
+    release_rm.set()
+    with pytest.raises(FatalExecutionInfrastructureError, match=expected):
+        await asyncio.wait_for(running, 3)
+    audit = chain.orchestrator.audits[0]
+    assert audit.outcome_v2 is None and chain.grading.calls == []
+    assert store.receipts[0].terminal_reason_code == expected
+    assert audit.lease_released and len(docker.removed) == 1  # 容器回收
+    assert chain.orchestrator._attempt_networks == {} and chain.orchestrator.cleanup_quarantine == []  # 私网拆除、无残留
+    assert any(f.stage == "materialize" for f in audit.failure_records)
+    assert events == ["fatal", "rm_enter", "rm_return"]
