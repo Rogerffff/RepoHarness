@@ -75,7 +75,7 @@ def synthesize_inspect(run_args: tuple[str, ...], *, name: str, running: bool = 
     hc: dict[str, Any] = {
         "CapDrop": [], "CapAdd": [], "SecurityOpt": None, "Privileged": False, "PidsLimit": None,
         "NanoCpus": 0, "Memory": 0, "MemorySwap": 0, "Tmpfs": None, "Binds": None, "NetworkMode": "bridge",
-        "ReadonlyRootfs": False, "StorageOpt": None, "Ulimits": [],
+        "ReadonlyRootfs": False, "StorageOpt": None, "Ulimits": [], "Init": None,
     }
     labels: dict[str, str] = {}
     mounts: list[dict[str, Any]] = []
@@ -121,6 +121,8 @@ def synthesize_inspect(run_args: tuple[str, ...], *, name: str, running: bool = 
             hc["ReadonlyRootfs"] = True; i += 1
         elif a in ("--detach", "-d"):
             i += 1
+        elif a == "--init":
+            hc["Init"] = True; i += 1  # 真实 docker inspect：HostConfig.Init = true（Codex 复核 2 Z1）
         elif a == "--name":
             i += 2
         elif a in ("--user", "-u", "--env", "-e"):

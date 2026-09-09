@@ -19,7 +19,7 @@ capability eligibility"。本模块因此只做三件事：
 
 三层边界在 Docker 上的落法（本机 Docker Desktop 29.4 与 Linux 引擎实测，见 w3b_report.md）：
 
-- **模型控制进程非 root**：容器主进程只是 `sleep infinity`；harness 以 `docker exec -u agent`
+- **模型控制进程非 root**：容器主进程只是 `sleep infinity`（`--init`：docker-init 作 PID 1 回收孤儿）；harness 以 `docker exec -u agent`
   启动（slime ClaudeCodeHarness 现状），agent 用户由可信初始化（root）按固定 uid 预建。
   探针以 agent 身份读 `/proc/self/status` 证明 uid≠0、CapEff=0、NoNewPrivs=1。
 - **CapEff=0 + no-new-privileges**：容器 `--cap-drop ALL --security-opt no-new-privileges`，
@@ -442,6 +442,7 @@ class RolloutSandboxProfile:
             "workdir": self.workdir,
             "security_opt": ["no-new-privileges"],
             "cap_drop": ["ALL"],
+            "init": True,  # PID 1 = docker-init（回收孤儿；Codex 复核 2 Z1）
         }
 
     def digest(self) -> str:
@@ -464,9 +465,11 @@ class RolloutSandboxProfile:
         }
 
     def docker_run_args(self, *, name: str, network: str, image: str, labels: Sequence[str] = ()) -> list[str]:
-        """完整 `docker run` 参数（含首个 "run"）。固定 `sleep infinity` 主进程。"""
+        """完整 `docker run` 参数（含首个 "run"）。固定 `sleep infinity` 主进程，`--init` 让 docker-init
+        （tini）当 PID 1 回收孤儿——Codex 复核 2 Z1 真机对照：没有 init 时 `setsid` 分离启动的 launcher 及被
+        `pkill` 的进程树会以僵尸留在 `ps -u agent`，正常完成与强停两条路径的屏障 ① 都会因计数非零拒绝。"""
 
-        args: list[str] = ["run", "--detach", "--network", network, "--cap-drop", "ALL"]
+        args: list[str] = ["run", "--detach", "--init", "--network", network, "--cap-drop", "ALL"]
         for cap in self.trusted_init_caps:
             args += ["--cap-add", cap]
         args += ["--security-opt", "no-new-privileges"]
@@ -1480,6 +1483,7 @@ def _facts_from_inspect(container: Mapping[str, Any]) -> dict[str, Any]:
         "config_env": list((container.get("Config") or {}).get("Env") or []),
         "running": (container.get("State") or {}).get("Running"),
         "image": container.get("Image"),
+        "init": hc.get("Init"),
     }
 
 
@@ -1505,6 +1509,10 @@ def check_rollout_inspect(
     v += _mounts_violations(container, ())
     if (container.get("State") or {}).get("Running") is not True:
         v.append("State.Running != True")
+    if hc.get("Init") is not True:
+        # Codex 复核 2 Z1：没有 init 时 `sleep infinity` 不回收孤儿，被杀 / 分离退出的 agent 进程树以僵尸留在
+        # `ps -u agent`，屏障 ① 会因计数非零拒绝——`--init` 必须真的生效
+        v.append(f"HostConfig.Init={hc.get('Init')!r} != True（PID 1 须为 docker-init 回收孤儿）")
     return v
 
 

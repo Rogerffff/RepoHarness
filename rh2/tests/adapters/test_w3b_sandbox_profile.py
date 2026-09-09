@@ -137,7 +137,8 @@ def test_docker_run_args_carry_every_boundary_and_no_switch_can_drop_them():
     r = make_rollout_profile()
     args = r.docker_run_args(name="c", network="net", image="img", labels=("--label", "a=b"))
     joined = " ".join(args)
-    assert args[:4] == ["run", "--detach", "--network", "net"]
+    assert args[:5] == ["run", "--detach", "--init", "--network", "net"]  # Codex 复核 2 Z1：PID 1 = docker-init
+    assert r.to_parameters()["init"] is True
     assert "--cap-drop ALL" in joined and "--security-opt no-new-privileges" in joined
     for cap in sp.TRUSTED_INIT_CAPS:
         assert f"--cap-add {cap}" in joined
