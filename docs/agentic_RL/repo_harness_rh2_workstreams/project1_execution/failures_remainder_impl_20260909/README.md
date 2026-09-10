@@ -1,6 +1,6 @@
 # 第 2 组剩余实施 Brief：丢组成本观测（I15/I20）、窄重评分（I16）、退出改判（I13）
 
-日期：2026-09-09。作者：Claude（A 线）。状态：**v2.1——N1 / N2a / N2b / N3 / N4 全部已实施、已提交（提交号与偏离见 §9），待 Codex 一次聚焦审查。** 计划正文（§0–§8）保持 v2（按 Codex [计划审查](review_20260909/README.md) R1–R4 与 §5/§6 修正后）。 前置：预算终止闭环已由[第四次窄复核](../budget_loop_impl_20260909/combined_review_20260909/followup4/README.md)关闭（合同 A、F1 通过），本批不重开。
+日期：2026-09-09。作者：Claude（A 线）。状态：**v2.2——N1–N4 已实施提交（§9）；Codex [集成审查](combined_review_20260910/README.md)（2026-09-10）R1–R3 P1 与 R4–R7 P2 全部接受并已修复提交（§11），待 Codex 针对性复核。** 计划正文（§0–§8）保持 v2（按 Codex [计划审查](review_20260909/README.md) R1–R4 与 §5/§6 修正后）。 前置：预算终止闭环已由[第四次窄复核](../budget_loop_impl_20260909/combined_review_20260909/followup4/README.md)关闭（合同 A、F1 通过），本批不重开。
 
 所用决定与链接：[决策分组 §4.1](../decision_batches_20260908.md)（I13 的 fork 文件、I15/I20、I16、I17/I20 纯观测均在已批实施位置表内）、[第 2 组决策](../batch2_failures_20260908/README.md)（I13 §3、I15 §4、I16 §5）、[I15/I16 补充说明 §8](../batch2_failures_20260908/i15_i16_sampling_and_retry_20260909.md)。I05/I12 已随预算闭环落地。第三组（I17–I20）owner 尚未决策：本批只做 §4.1 已批的纯观测部分，不碰 loss / 准入 / 路由来源。
 
@@ -117,7 +117,7 @@
 
 ### 9.1 T1 偏离与口径（相对 §2–§5 的计划文字）
 
-1. **N2b：rollout audit 的 grading 块不加 `regrade_attempts` 键**。计划 §3.3 写了"audit grading 块记 `regrade_attempts`"；实施时该块是 `RolloutAudit` 的固定形状，加键要改 audit schema 与其消费点，超出"公共 schema 不改"的边界。追加尝试的事实由 manager `regrade_events`（关停报告 grading 事实计数）+ `grading_regrade` 事件承载，`GradingReport.infra_failure_detail` 带两次原始错误。以后要进 audit 再单独提。
+1. **N2b：rollout audit 的 grading 块不加 `regrade_attempts` 键**。计划 §3.3 写了"audit grading 块记 `regrade_attempts`"；实施时选择不改 `RolloutAudit` 的固定形状（这是实现选择，不是"公共 schema 禁止"——Codex 集成审查 §6 指出前一版计划已允许该记录，措辞据此更正）。追加尝试的事实由 manager `regrade_events`（关停报告 grading 事实计数）+ `grading_regrade` 事件承载，`GradingReport.infra_failure_detail` 带两次原始错误。以后要进 audit 再单独提。
 2. **N2a：`grading_deadline_seconds` 默认 3600s** 是运行配置数值（T1），owner 可改；`_grade()` 对 future 的等待 = 期限 + `cleanup_timeout_seconds` + 60s 余量（常量 `GRADING_SUBMIT_WAIT_MARGIN_SEC`），超时 → `FatalExecutionInfrastructureError("grading_submit_wait_exhausted")`（worker 不响应期限本身就是基础设施故障，不是 task-local）。
 3. **N3：最终复查的等待上限 = 再等一个取消期限（`rh2_shutdown_deadline_sec`，默认 60s），且不超过由 dispose 总超时推出的 verdict 预算**（`timeout − min(1s, 10%)`）。计划 §4.2 只说"有界"；这里给了具体上界：一个在第一次期限后又整整一个期限仍未结束的 task 视为真实残留，不再等。因此 §4.3 写的"10ms 到期、60ms 安全结束"在实现下不成立（60ms > 2×10ms），验收改为"取消期限 0.2s 到期、任务在取消后 0.3s 收口"（第二个窗口 0.2s 覆盖 0.1s 的余量），三条双 loop 用例（安全收口 ok=true / 晚到异常 / 收口证据缺失）都走真实 fork verdict + rh2 报告合成，不手造 resolved 字段。
 4. **N3：解消的所有权在 rh2**。fork 复查通过后调用 `bringup.resolve_external_wait_residue(final_state)`；rh2 只在 `ok_if_wait_residue_resolved`（清理全绿 ∧ 除等待快照外无残留 ∧ 证据全部写成功 ∧ 无首因 ∧ `execution_closure.complete`）时把等待行移到 `resolved_wait_timeouts`（含复查到的 `final_state`）并原子重写磁盘报告；fork verdict 读 rh2 自己的 `ok`。rh2 API 缺失（旧 rh2）或拒绝 → 维持非零，等待失败晚并入 rh2 报告首因、`trigger` 由 `owner_close` 升级为 `shutdown_failure`（新增于 `_merge_late_facts`）。
@@ -139,4 +139,40 @@ N3 的解消条件是否仍有假绿路径（尤其：`execution_closure` 的证
 ## 10. 本批没有改变哪些已定案语义
 
 完整组准入、FIFO、staleness 数值；预算数值（600s / 25 turns）与停止合同 A；`GradingReport` / admission / audit 公共 schema；loss / skip / 8 步熔断 / no-progress / 路由来源（第三组待决）；vendored slime 字节；取消期限本身（60s 默认）。
+
+## 11. Codex 集成审查（2026-09-10）处置：R1–R7 全部接受并修复
+
+审查：[combined_review_20260910/README.md](combined_review_20260910/README.md)（基线 `92d165aa`→`06dd7c06`）。逐项按协议四选一，全部 **accepted**；三个探针在作者本机复跑均复现（修前），修后副本（断言改为修后口径）全部通过。修复提交：代码与测试 `dc7a613b`，lanes manifest 计数 `647127c6`。
+
+| 项 | 级别 | 处置 | 修法（最小充分） |
+|---|---|---|---|
+| R1 容器所有权 | P1 | accepted | `_start_container` 在 `docker run` **发出之前**登记 `_ContainerRecord`；创建失败 / 回包丢失 / 期限到点取消 / 外层取消 / prelaunch 失败一律在同一处按名有界收口（独立清理预算；absent → 干净，仍运行 / 无法确认 → `GradingScopeTerminationError`）。重试循环不再负责清理，只决定是否追加。配套：`rm -f` 得到 daemon 明确的 `No such container: <name>` 视为干净缺席（`absent_on_remove`），不再记清理失败（与 `_container_state` 的 absent 判据同款；连接类 "no such" 仍是失败）。 |
+| R2 共同期限 | P1 | accepted | `_grader_prelaunch` 的可信 init 与 prelaunch 探针、`_verify_image_digest` 的两次 inspect 都经 `_await_within_grading_deadline`（期限先到归因 `grading_deadline_exhausted:<phase>`，不包装成 profile 违规）；`_read_peak_memory_mb` 期限已耗尽时不再发起 I/O，有剩余时受 min(剩余, 30s) 约束、超时记 0.0。 |
+| R3 必要记录 | P1 | accepted | `RolloutAudit.necessary_records_complete`：finally 末尾 receipt 持久化成功 ∧ audit sink 成功返回才置 True（半途被第二次取消打断保持 False）；`execution_closure` 新增 `attempts_records_incomplete`（含前 20 个 id），任一 attempt 缺正向事实即 `complete=false`，等待类残留不解消。 |
+| R4 停止后追加 | P2 | accepted（本轮修） | manager 新增 `stop_requested` 谓词（bringup 注入 `fatal_seen ∨ ¬grading_open`）；旧容器收口之后、追加之前读取，命中即放弃追加并记 `regrade_declined`（close() 报 `regrade_declined`）。**未**提前关闭 queue 排空（不重开 F1）。 |
+| R5 跨 run 错连 | P2 | accepted（本轮修） | 汇总连接键改为 (run_id, 组 id) 与 (run_id, attempt id)。 |
+| R6 分布维度与缺失口径 | P2 | accepted（本轮修） | 每桶 `by_root_cause`（导致成员按原因的成本分布）、顶层 `by_task`；终局 `member_count` > 快照数记 `groups_with_missing_members`，有未知成员或缺成员的组只进 `group_cost_seconds_known_partial`（下界），全未知记 `groups_cost_unknown`、不填 0。只改离线汇总（输出键新增，schema id 保持 v1）。 |
+| R7 设备同步 | P2 | accepted（本轮修） | `_count` 直接返回 `flags.sum(dtype=float32)`，观测函数零次 `.item()`；docstring 补"最终日志 = 求和 ÷ num_rollouts 的每 execution 均值"口径。 |
+| §6 小口径 | — | accepted | `close()` 的 `regrade_events` 明确为保留条数（≤256），另报累计 `regrade_total`；§9.1 第 1 条措辞更正（见上）。 |
+
+### 11.1 T1 决定与口径
+
+- `_remove_container` 对 "No such container/object: <本名>" 的处理从"清理失败 + absent 诊断"改为"干净缺席"：这是清理账目口径的收紧（避免每次未生效的创建请求留下两条假失败），不改任何评分或训练语义。
+- `execution_closure.complete` 现在要求**正向事实**；装配态没有 orchestrator（attempts=0）仍为空真。miles-lane 与 rh2-lane 的 audit 替身默认带 `necessary_records_complete=True`，并各加一条"没有写失败记录但正向事实缺失"的反例。
+- 探针副本（scratchpad，不覆盖 Codex 原始 JSON）只改三处：修前断言 → 修后口径；n3/observation 的 ROOT 路径；n2 `fatal_while_pull` 的 `make_manager` 传入 `service._grading_stop_requested`——探针自己构造 manager 顶替了 bringup 装配的那个，必须复现生产接线（`BringupService.__init__` 注入），否则 R4 修复不在被测路径上。维护测试的两个装配 helper 也同样接线。
+- 测试 oracle 变更（T1）：`test_unknowns_legacy_rows_foreign_runs_and_unmatched_snapshots_are_kept_separate` 的组成本从数值 0 改为未知（R6 口径）。
+
+### 11.2 新增反例（按审查 §6 复盘的三个接缝）
+
+- 第二次创建失败 / 创建期间到期 / 创建期间外层取消（`test_manager_unit.py`：两次回包丢失两个名字都收口；到期与取消都收口；digest inspect 受期限约束；到期后不读内存、有剩余时读取有界；停止谓词放弃追加并留账；`No such container` 干净缺席 vs 连接类诊断仍失败）。
+- 必要 sink 从未执行（`test_w5a_shutdown_chain.py`：formal 编排 + 真实 finally + 真实关停链，第一次取消后私网清理挂 0.8s，关停链在飞步第二次取消落在该 await 上——receipt 已写、容器已释放、无写失败记录、audit 文件不存在 → `complete=false`、不解消；对照网络立即完成 → 完整）。
+- 默认多 run 输入（`test_w4_drop_event_summary.py`：同名组两 run 不混连；按根因 / task 分布；7/8 快照只给下界）；观测函数无主机标量读取（`test_faithful_dis_loss.py`）。
+
+### 11.3 证据（作者本机，不是 Codex 批准）
+
+ruff 全过；全量 `pytest tests -q`（集成树）**2245 passed, 0 skipped, 0 failed（159s；上一轮 2230 + 15 个新反例）**；lanes 清净环境实跑 lane A **404 passed / 316 skipped**、lane B **720 passed / 0 skipped**（manifest 计数 `647127c6`）。探针副本：n2 七案（含修后口径）、n3 两案（对照 ok=true；慢网络 `attempts_records_incomplete=1`、ok=false）、observation（10/100 分离、未知不为 0、7/8 下界、按根因与 task、`scalar_item_calls=0`）全部通过。没有真实 Docker / SWE 镜像 / CC / API / GPU。
+
+### 11.4 请 Codex 针对性复核的收口条件（沿审查 §8）
+
+R1：每个可能创建的名字都收口或明确 fatal；R2：到期停止全部工作且独立清理开始；R3：没有必要记录完成证据不成功改判；各正向对照与核心测试通过。P2 已随本轮修复，不另建 gate。
 
