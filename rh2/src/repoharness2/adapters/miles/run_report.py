@@ -1,16 +1,24 @@
-"""I20 首版（第三组 §0 / §0.1 第 4 条，owner 2026-09-10）：离线 run 报告——七面基础摘要，**只消费已有记录**。
+"""I20 首版（第三组 §0 / §0.1 第 4 条，owner 2026-09-10；Codex 09-11 聚焦复核 R1–R5 修正）：离线 run 报告——
+七面基础摘要，**只消费已有记录**。
 
-输入（一个 run 目录或若干文件）：
-  - `rh2_events_*.jsonl`（miles 集成分支 `rh2_event_log`；未设 MILES_RH2_EVENT_DIR 时根本没有这些文件——
-    此时事件面报 not_collected，**不能显示成"没有损耗"**）：group_filtered / group_consumed / drain_complete /
-    attempt_cost_snapshot / grading_regrade / rollout_group / train_step / train_step_consumed / weight_update /
-    logprob_compare / engine_versions_after_publish / run_restarted / sample_dis_accounting；
-  - `fa_execution_audit.jsonl`（rh2 bringup 的 execution 终态审计，每条 = 一个已结束 attempt）。
+输入（若干 run 目录或文件；每个顶层输入路径 = 一个"bundle"）：
+  - `rh2_events_*.jsonl`（miles 集成分支 `rh2_event_log`；未设 MILES_RH2_EVENT_DIR 时根本没有这些文件——此时事件面报
+    not_collected，**不能显示成"没有损耗"**）：group_filtered / group_consumed / drain_complete / attempt_cost_snapshot /
+    grading_regrade / rollout_group / train_step / train_step_consumed / weight_update / logprob_compare /
+    engine_versions_after_publish / run_restarted / sample_dis_accounting；
+  - `fa_execution_audit.jsonl`（rh2 bringup 的 execution 终态审计，每条 = 一个已结束 attempt；**不含评分**）；
+  - `bringup_events.jsonl`（rh2 bringup `record_event`：每次交付一条，带 `grading` 块、`eligibility_class`、
+    `rollout_timings`；按 `session_id` = audit `trajectory_id` 关联）。
 
-口径（Brief §3，也是测试 oracle）：单位分开（组 / 成员执行 / 训练行 / token / step）；`train_step.metrics` 是
-÷ num_rollouts 的每 execution 均值，总量 = 均值 × num_rollouts，跨 step 比例用总量之和；多 rank 副本只取一份；
-缺失 / 未匹配 / 未知不记 0；进行中的 attempt 不在 audit 里（单列为未知，不推造）；会话级上下文长度下降只是线索，
-不称压缩次数；同版本 logprob 差异与跨版本差异分列；只诊断不处置。可对进行中的 run 快照运行。
+run 身份（R4）：事件行自带 `run_id`；audit / bringup 行不带，按所在 bundle 的事件 run_id 归属（bundle 内恰有一个
+run_id 才归属，否则"归属未知"）。默认输入含多个 run 时**不混连**：输出 per_run 子报告；`--run-id` 只取该 run 的事件
+与归属该 run 的 audit / bringup 行。所有去重 / 连接键都带 run 身份。
+
+口径（Brief §3 = 测试 oracle）：单位分开（组 / 成员执行 / 训练行 / token / step）；`train_step.metrics` 是 ÷ num_rollouts
+的每 execution 均值，总量 = 均值 × num_rollouts，跨 step 比例用总量之和；同 (run, rollout, step) 多 rank 副本只取一份；
+`rollout_group` 逐叶写行（FORK 成员有多行），成员统计先按 (run, rollout, group, sample_index) 归并、行分布另列；
+缺失 / 未匹配 / 未知不记 0；进行中的 attempt 不在 audit 里（未知）；会话级上下文长度下降只是线索；同版本与跨版本
+logprob 差异分列；只诊断不处置。可对进行中的 run 快照运行。
 """
 
 from __future__ import annotations
@@ -34,6 +42,7 @@ from repoharness2.adapters.miles.drop_events import (
 
 REPORT_SCHEMA_ID = "rh2.run_report.v1"
 AUDIT_FILE_NAME = "fa_execution_audit.jsonl"
+BRINGUP_EVENTS_FILE_NAME = "bringup_events.jsonl"
 EVENT_FILE_GLOB = "rh2_events_*.jsonl"
 
 TRAIN_STEP_EVENT = "train_step"
@@ -92,64 +101,90 @@ TIMING_SUMMARY_KEYS: tuple[str, ...] = (
 )
 
 CALIBER_NOTES: tuple[str, ...] = (
-    "组、成员执行、训练行、token、optimizer step 是不同单位；一个 execution FORK 成多行不是多做多题。",
+    "组、成员执行、训练行、token、optimizer step 是不同单位；rollout_group 逐叶写行，成员统计先按身份归并，行分布另列。",
     "train_step.metrics 是 ÷ num_rollouts 的每 execution 均值；本报告按 均值 × num_rollouts 还原总量，跨 step 比例用总量之和。",
-    "多 rank 副本只取一份（同 (rollout_id, step_id) 取 pp 末段且 dp_rank 最小的一条）。",
-    "缺失记录、未匹配、未知版本不记 0；进行中的 attempt 不在 audit 里，未知就是未知。",
+    "多 rank 副本只取一份（同 (run_id, rollout_id, step_id) 取 pp 末段且 dp_rank 最小的一条）；连接 / 去重键都带 run 身份。",
+    "缺失记录、未匹配、未知版本不记 0；进行中的 attempt 不在 audit 里，未知就是未知；没有 bringup_events 时评分是『无法知道』而不是『没有评分』。",
     "context_length_drop_clues 是会话级 prompt 长度下降线索，不是压缩次数。",
     "同版本 logprob 差异（logprob_compare.same_version）与跨版本差异分列；跨版本差不叫 KL。",
+    "rollout_group 只代表已交付给 learner 的组，不是过滤前总体；过滤前总体没有来源（not_collected），不推造。",
     "本工具只诊断，不重采样、不改预算、不改准入。",
 )
 
 
 # ---------------------------------------------------------------------------
-# 输入
+# 输入（bundle = 一个顶层输入路径；audit / bringup 行按 bundle 内事件的 run_id 归属）
 # ---------------------------------------------------------------------------
 
 
-def load_run_inputs(paths: Iterable[Path | str]) -> dict[str, Any]:
-    """收集事件行与审计行。目录：递归找 `rh2_events_*.jsonl` 与 `fa_execution_audit.jsonl`；文件按名字归类。"""
+def _read_jsonl(path: Path) -> tuple[list[dict[str, Any]], int]:
+    rows: list[dict[str, Any]] = []
+    malformed = 0
+    with path.open(encoding="utf-8") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                malformed += 1
+                continue
+            if isinstance(row, dict):
+                rows.append(row)
+            else:
+                malformed += 1
+    return rows, malformed
 
-    event_files: list[Path] = []
-    audit_files: list[Path] = []
-    for raw in paths:
-        path = Path(raw)
-        if path.is_dir():
-            event_files += sorted(path.rglob(EVENT_FILE_GLOB))
-            audit_files += sorted(path.rglob(AUDIT_FILE_NAME))
-        elif path.name == AUDIT_FILE_NAME:
-            audit_files.append(path)
-        else:
-            event_files.append(path)
-    events = list(iter_event_rows(event_files)) if event_files else []
+
+def load_run_inputs(paths: Iterable[Path | str]) -> dict[str, Any]:
+    """收集事件行、审计行与 bringup 事件行；每个顶层路径是一个 bundle（`_bundle` 标在每行上，用于 run 归属）。"""
+
+    events: list[dict[str, Any]] = []
     audits: list[dict[str, Any]] = []
-    malformed_audit_rows = 0
-    for path in audit_files:
-        with path.open(encoding="utf-8") as fh:
-            for line in fh:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    row = json.loads(line)
-                except json.JSONDecodeError:
-                    malformed_audit_rows += 1
-                    continue
-                if isinstance(row, dict):
-                    audits.append(row)
-                else:
-                    malformed_audit_rows += 1
-    return {
-        "events": events,
-        "audits": audits,
-        "sources": {
-            "event_files": [str(p) for p in event_files],
-            "audit_files": [str(p) for p in audit_files],
-            "event_rows": len(events),
-            "audit_rows": len(audits),
-            "malformed_audit_rows": malformed_audit_rows,
-        },
-    }
+    bringup: list[dict[str, Any]] = []
+    sources: dict[str, Any] = {"bundles": [], "event_files": [], "audit_files": [], "bringup_files": [],
+                               "malformed_audit_rows": 0, "malformed_bringup_rows": 0}
+    for bundle_index, raw in enumerate(paths):
+        path = Path(raw)
+        event_files: list[Path] = []
+        audit_files: list[Path] = []
+        bringup_files: list[Path] = []
+        if path.is_dir():
+            event_files = sorted(path.rglob(EVENT_FILE_GLOB))
+            audit_files = sorted(path.rglob(AUDIT_FILE_NAME))
+            bringup_files = sorted(path.rglob(BRINGUP_EVENTS_FILE_NAME))
+        elif path.name == AUDIT_FILE_NAME:
+            audit_files = [path]
+        elif path.name == BRINGUP_EVENTS_FILE_NAME:
+            bringup_files = [path]
+        else:
+            event_files = [path]
+        for row in iter_event_rows(event_files):
+            row = dict(row)
+            row["_bundle"] = bundle_index
+            events.append(row)
+        for file in audit_files:
+            rows, bad = _read_jsonl(file)
+            sources["malformed_audit_rows"] += bad
+            for row in rows:
+                row["_bundle"] = bundle_index
+                row["_source_file"] = str(file)
+                audits.append(row)
+        for file in bringup_files:
+            rows, bad = _read_jsonl(file)
+            sources["malformed_bringup_rows"] += bad
+            for row in rows:
+                row["_bundle"] = bundle_index
+                bringup.append(row)
+        sources["bundles"].append({"index": bundle_index, "path": str(path)})
+        sources["event_files"] += [str(p) for p in event_files]
+        sources["audit_files"] += [str(p) for p in audit_files]
+        sources["bringup_files"] += [str(p) for p in bringup_files]
+    sources["event_rows"] = len(events)
+    sources["audit_rows"] = len(audits)
+    sources["bringup_rows"] = len(bringup)
+    return {"events": events, "audits": audits, "bringup": bringup, "sources": sources}
 
 
 # ---------------------------------------------------------------------------
@@ -189,25 +224,21 @@ def _ratio(numerator: float | None, denominator: float | None) -> float | None:
     return round(numerator / denominator, 4)
 
 
-def _by_kind(events: Iterable[Mapping[str, Any]], run_id: str | None) -> tuple[dict[str, list[Mapping[str, Any]]], int]:
+def _by_kind(events: Iterable[Mapping[str, Any]]) -> dict[str, list[Mapping[str, Any]]]:
     rows: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
-    foreign = 0
     for row in events:
-        if run_id is not None and row.get("run_id") != run_id:
-            foreign += 1
-            continue
         kind = row.get("event")
         if isinstance(kind, str):
             rows[kind].append(row)
-    return rows, foreign
+    return rows
 
 
-def _dedupe_train_steps(rows: list[Mapping[str, Any]]) -> dict[tuple[Any, Any], Mapping[str, Any]]:
-    """同 (rollout_id, step_id) 多 rank 副本只取一份：优先 pp 末段（带 metrics）且 dp_rank 最小。"""
+def _dedupe_train_steps(rows: list[Mapping[str, Any]]) -> dict[tuple[Any, Any, Any], Mapping[str, Any]]:
+    """同 (run_id, rollout_id, step_id) 多 rank 副本只取一份：优先 pp 末段（带 metrics）且 dp_rank 最小。"""
 
-    chosen: dict[tuple[Any, Any], Mapping[str, Any]] = {}
+    chosen: dict[tuple[Any, Any, Any], Mapping[str, Any]] = {}
     for row in rows:
-        key = (row.get("rollout_id"), row.get("step_id"))
+        key = (row.get("run_id"), row.get("rollout_id"), row.get("step_id"))
         current = chosen.get(key)
         if current is None:
             chosen[key] = row
@@ -219,21 +250,28 @@ def _dedupe_train_steps(rows: list[Mapping[str, Any]]) -> dict[tuple[Any, Any], 
     return chosen
 
 
-def _step_order(key: tuple[Any, Any]) -> tuple[float, float]:
-    return (_num(key[0]) if _num(key[0]) is not None else float("inf"), _num(key[1]) if _num(key[1]) is not None else float("inf"))
+def _order_value(value: Any) -> float:
+    number = _num(value)
+    return number if number is not None else float("inf")
+
+
+def _lifecycle_timing(audit: Mapping[str, Any]) -> Mapping[str, Any] | None:
+    timing = audit.get("timing_summary") or {}
+    lifecycle = timing.get("lifecycle_timing") if isinstance(timing, dict) else None
+    return lifecycle if isinstance(lifecycle, dict) else None
 
 
 # ---------------------------------------------------------------------------
-# 七面
+# 七面（都在单个 run 的范围内调用）
 # ---------------------------------------------------------------------------
 
 
-def _facet_execution(events_by_kind, audits, run_id, all_events) -> dict[str, Any]:
+def _facet_execution(events_by_kind, audits, run_id, run_events) -> dict[str, Any]:
     have_events = bool(events_by_kind.get(GROUP_DROP_EVENT) or events_by_kind.get(GROUP_CONSUMED_EVENT) or events_by_kind.get(ATTEMPT_COST_SNAPSHOT_EVENT))
     out: dict[str, Any] = {"status": NOT_COLLECTED, "reasons": []}
     if have_events:
-        out["groups"] = summarize_group_events(all_events, run_id=run_id)
-        out["costs"] = summarize_attempt_costs(all_events, run_id=run_id)
+        out["groups"] = summarize_group_events(run_events, run_id=run_id)
+        out["costs"] = summarize_attempt_costs(run_events, run_id=run_id)
     else:
         out["groups"] = None
         out["costs"] = None
@@ -249,10 +287,9 @@ def _facet_execution(events_by_kind, audits, run_id, all_events) -> dict[str, An
         out["termination_kinds"] = dict(sorted(Counter(str(((a.get("termination") or {}) or {}).get("kind")) for a in audits).items()))
         failures = Counter(f.get("error_type") for a in audits for f in (a.get("failure_records") or []) if isinstance(f, dict))
         out["failure_error_types_top"] = dict(failures.most_common(20))
-        out["attempts_without_grading"] = sum(1 for a in audits if not a.get("grading"))
     else:
         out["attempts_audited"] = 0
-        out["reasons"].append("no_audit_rows: fa_execution_audit.jsonl 缺失或为空")
+        out["reasons"].append("no_audit_rows: fa_execution_audit.jsonl 缺失、为空或未归属到本 run")
     out["in_progress_attempts"] = None  # audit 只覆盖已结束 attempt；进行中的数量本工具不知道，不推造
     out["status"] = COLLECTED if have_events and audits else PARTIAL if (have_events or audits) else NOT_COLLECTED
     return out
@@ -288,47 +325,84 @@ def _facet_action_coverage(audits) -> dict[str, Any]:
     return out
 
 
-def _facet_reward(events_by_kind, audits, run_id) -> dict[str, Any]:
+def _members_from_rollout_groups(rows: list[Mapping[str, Any]]) -> dict[str, Any]:
+    """R3：rollout_group 逐叶写行；成员身份 = (run_id, rollout_id, group_index, sample_index)。同成员各叶 reward
+    不一致记矛盾（不静默选第一条：矛盾成员不进 reward 统计）。"""
+
+    members: dict[tuple[Any, Any, Any, Any], dict[str, Any]] = {}
+    leaves = 0
+    for row in rows:
+        indices = row.get("sample_indices") or []
+        rewards = row.get("rewards") or []
+        for position, sample_index in enumerate(indices):
+            leaves += 1
+            key = (row.get("run_id"), row.get("rollout_id"), row.get("group_index"), sample_index)
+            reward = _num(rewards[position]) if position < len(rewards) else None
+            entry = members.setdefault(key, {"leaves": 0, "rewards": set(), "reward_unknown": 0})
+            entry["leaves"] += 1
+            if reward is None:
+                entry["reward_unknown"] += 1
+            else:
+                entry["rewards"].add(reward)
+    conflicts = sum(1 for m in members.values() if len(m["rewards"]) > 1)
+    return {"members": members, "leaves": leaves, "conflicts": conflicts}
+
+
+def _facet_reward(events_by_kind, audits, bringup) -> dict[str, Any]:
     out: dict[str, Any] = {"status": NOT_COLLECTED, "reasons": []}
-    graded = [a.get("grading") for a in audits if isinstance(a.get("grading"), dict)]
-    if graded:
-        rewards = [_num(g.get("reward")) for g in graded]
+    # ---- 已评分总体：bringup_events（R2：audit 记录本身不含评分；无 bringup 文件 = 无法知道，不是"没有评分"）
+    if bringup:
+        by_session: dict[Any, Mapping[str, Any]] = {}
+        for row in bringup:
+            by_session[row.get("session_id")] = row  # 同 session 多条取最后一条（重复交付记录）
+        graded = [r for r in by_session.values() if isinstance(r.get("grading"), dict)]
+        ungraded = [r for r in by_session.values() if not isinstance(r.get("grading"), dict)]
+        rewards = [_num(g["grading"].get("reward")) for g in graded]
         known = [r for r in rewards if r is not None]
-        out["audit_grading"] = {
-            "outcomes": dict(sorted(Counter(str(g.get("outcome")) for g in graded).items())),
-            "failure_categories": dict(sorted(Counter(str(g.get("failure_category")) for g in graded if g.get("failure_category")).items())),
-            "reward": _dist(known, unknown=len(rewards) - len(known)),
-            "reward_value_counts": dict(sorted(Counter(str(r) for r in known).items())),
-        }
         by_task: dict[str, dict[str, Any]] = {}
-        for audit in audits:
-            grading = audit.get("grading")
-            if not isinstance(grading, dict):
-                continue
-            entry = by_task.setdefault(str(audit.get("task_id") or "<unknown>"), {"graded": 0, "reward_known": 0, "reward_sum": 0.0})
+        audit_task = {a.get("trajectory_id"): a.get("task_id") for a in audits}
+        for row in graded:
+            task = str(audit_task.get(row.get("session_id")) or row.get("instance_id") or "<unknown>")
+            entry = by_task.setdefault(task, {"graded": 0, "reward_known": 0, "reward_sum": 0.0})
             entry["graded"] += 1
-            reward = _num(grading.get("reward"))
+            reward = _num(row["grading"].get("reward"))
             if reward is not None:
                 entry["reward_known"] += 1
                 entry["reward_sum"] += reward
         for entry in by_task.values():
             entry["reward_mean"] = round(entry["reward_sum"] / entry["reward_known"], 4) if entry["reward_known"] else None
             entry["reward_sum"] = round(entry["reward_sum"], 3)
-        out["by_task"] = dict(sorted(by_task.items()))
+        audit_sessions = {a.get("trajectory_id") for a in audits}
+        out["graded_attempts"] = {
+            "delivery_records": len(by_session),
+            "graded": len(graded),
+            "delivered_without_grading_record": len(ungraded),
+            "outcomes": dict(sorted(Counter(str(g["grading"].get("outcome")) for g in graded).items())),
+            "failure_categories": dict(sorted(Counter(str(g["grading"].get("failure_category")) for g in graded if g["grading"].get("failure_category")).items())),
+            "reward": _dist(known, unknown=len(rewards) - len(known)),
+            "reward_value_counts": dict(sorted(Counter(str(r) for r in known).items())),
+            "eligibility_classes": dict(sorted(Counter(str(r.get("eligibility_class")) for r in by_session.values()).items())),
+            "audited_attempts_without_delivery_record": len(audit_sessions - set(by_session)) if audits else None,
+            "by_task": dict(sorted(by_task.items())),
+        }
     else:
-        out["audit_grading"] = None
-        out["reasons"].append("no_graded_audits: 没有带 grading 块的 audit 行")
+        out["graded_attempts"] = None
+        out["reasons"].append("no_bringup_events: 没有 bringup_events.jsonl——评分总体无法知道（不是没有评分）")
+    # ---- 已交付给 learner 的组：rollout_group（逐叶行 → 先归并成员）
     groups = events_by_kind.get(ROLLOUT_GROUP_EVENT, [])
     consumed_keys = {(r.get("run_id"), tuple(r.get("sample_indices") or [])) for r in events_by_kind.get(GROUP_CONSUMED_EVENT, [])}
     if groups:
+        merged = _members_from_rollout_groups(groups)
+        members = merged["members"]
+        per_group: dict[tuple[Any, Any, Any], list[float]] = defaultdict(list)
+        for (run, rollout, group, _sample), entry in members.items():
+            if len(entry["rewards"]) == 1:
+                per_group[(run, rollout, group)].append(next(iter(entry["rewards"])))
         zero_var = all0 = all1 = 0
         pos = neg = zero = 0
-        consumed_group_rewards: list[float] = []
-        unmatched = 0
-        for row in groups:
-            rewards = [v for v in (_num(x) for x in (row.get("rewards") or [])) if v is not None]
-            if not rewards:
-                continue
+        member_rewards: list[float] = []
+        for rewards in per_group.values():
+            member_rewards += rewards
             if len(set(rewards)) == 1:
                 zero_var += 1
                 all0 += rewards[0] == 0.0
@@ -339,25 +413,28 @@ def _facet_reward(events_by_kind, audits, run_id) -> dict[str, Any]:
                 pos += delta > 0
                 neg += delta < 0
                 zero += delta == 0
-            key = (row.get("run_id"), tuple(row.get("sample_indices") or []))
-            if key in consumed_keys:
-                consumed_group_rewards += rewards
-            else:
-                unmatched += 1
-        out["rollout_groups"] = {
+        unmatched = sum(1 for row in groups if (row.get("run_id"), tuple(row.get("sample_indices") or [])) not in consumed_keys)
+        out["delivered_groups"] = {
             "groups": len(groups),
+            "members": len(members),
+            "training_rows": merged["leaves"],
+            "training_rows_per_member": _dist([float(m["leaves"]) for m in members.values()]),
+            "member_reward_conflicts": merged["conflicts"],
+            "members_reward_unknown": sum(1 for m in members.values() if not m["rewards"]),
+            "member_rewards": _dist(member_rewards),
             "zero_variance_groups": zero_var,
             "all_zero_groups": all0,
             "all_one_groups": all1,
             "advantage_sign_approximation": {"positive": pos, "negative": neg, "zero": zero,
-                                              "note": "reward − 组均值 的符号近似；真实优势在 trainer 内部，不导出"},
-            "consumed_member_rewards": _dist(consumed_group_rewards),
+                                              "note": "按成员 reward − 组均值 的符号近似；真实优势在 trainer 内部，不导出"},
             "groups_not_matched_to_consumed_event": unmatched,
+            "population_note": "rollout_group 在 buffer 取出之后发出 = 已交付 learner 的组；不是过滤前总体，也不证明已进入 applied step",
         }
     else:
-        out["rollout_groups"] = None
+        out["delivered_groups"] = None
         out["reasons"].append("no_rollout_group_events")
-    out["status"] = COLLECTED if graded and groups else PARTIAL if (graded or groups) else NOT_COLLECTED
+    out["pre_filter_population"] = {"status": NOT_COLLECTED, "reason": "过滤前全组总体没有事件来源，不从已交付组推造"}
+    out["status"] = COLLECTED if bringup and groups else PARTIAL if (bringup or groups) else NOT_COLLECTED
     return out
 
 
@@ -383,7 +460,7 @@ def _facet_dis(events_by_kind) -> dict[str, Any]:
             for key in DIS_FLAG_KEYS:
                 value = _num(metrics.get(key))
                 if value is not None and n is not None:
-                    flags[key] = flags.get(key, 0.0) + value * n  # 聚合值 = 零贡献 microbatch 数 / num_rollouts，×n 还原个数
+                    flags[key] = flags.get(key, 0.0) + value * n
         out["totals_restored"] = {k: round(v, 3) for k, v in sorted(totals.items())}
         out["totals_missing_steps"] = dict(sorted(missing.items()))
         out["zero_contribution_microbatches_restored"] = {k: round(v, 3) for k, v in flags.items()}
@@ -413,11 +490,38 @@ def _facet_dis(events_by_kind) -> dict[str, Any]:
             "accepted_tokens_sum": sum(int(_num(e.get("accepted_tokens")) or 0) for e in entries),
             "provenance_tokens_sum": sum(int(_num(e.get("provenance_tokens")) or 0) for e in entries),
             "entries_without_leaf_ordinal": sum(1 for e in entries if e.get("leaf_ordinal") is None),
+            "tp_copies": "unsupported: 事件不带 rollout_id / rank，TP>1 时各 TP rank 各发一份副本无法用现有键去重；当前只在 TP=1 下验证（R5）",
             "note": "只有 accepted / provenance 两个身份计数，不能从它补造候选信号或 log-ratio 分布",
         }
     out["log_ratio_distribution"] = {"status": NOT_COLLECTED, "reason": "当前没有有界 log-ratio 分布的 producer"}
     out["status"] = COLLECTED if with_metrics else PARTIAL if steps else NOT_COLLECTED
     return out
+
+
+def _dedupe_compare_entries(compares: list[Mapping[str, Any]]) -> tuple[list[Mapping[str, Any]], int, int]:
+    """R5：logprob_compare 逐叶 entries 按 (run_id, rollout_id, sample_index, leaf_ordinal) 精确去副本（TP 副本值相同）；
+    同身份不同值 = 数据矛盾（计数，保留第一条并标注）。leaf_ordinal 缺失（旧 wire）不去重。"""
+
+    seen: dict[tuple[Any, Any, Any, Any], Mapping[str, Any]] = {}
+    kept: list[Mapping[str, Any]] = []
+    duplicates = conflicts = 0
+    for row in compares:
+        for entry in row.get("entries") or []:
+            if not isinstance(entry, dict):
+                continue
+            if entry.get("leaf_ordinal") is None:
+                kept.append(entry)
+                continue
+            key = (row.get("run_id"), row.get("rollout_id"), entry.get("sample_index"), entry.get("leaf_ordinal"))
+            previous = seen.get(key)
+            if previous is None:
+                seen[key] = entry
+                kept.append(entry)
+            elif previous == entry:
+                duplicates += 1
+            else:
+                conflicts += 1
+    return kept, duplicates, conflicts
 
 
 def _facet_staleness(events_by_kind, execution) -> dict[str, Any]:
@@ -431,18 +535,25 @@ def _facet_staleness(events_by_kind, execution) -> dict[str, Any]:
     rollout_groups = events_by_kind.get(ROLLOUT_GROUP_EVENT, [])
     if rollout_groups:
         multi = single = unknown = 0
+        seen_members: set[tuple[Any, Any, Any, Any]] = set()
         for row in rollout_groups:
-            for versions in row.get("behavior_versions") or []:
+            versions_per_leaf = row.get("behavior_versions") or []
+            for position, sample_index in enumerate(row.get("sample_indices") or []):
+                key = (row.get("run_id"), row.get("rollout_id"), row.get("group_index"), sample_index)
+                if key in seen_members:
+                    continue  # 成员级：同成员的多叶只算一次
+                seen_members.add(key)
+                versions = versions_per_leaf[position] if position < len(versions_per_leaf) else None
                 if not versions:
                     unknown += 1
                 elif len({str(v) for v in versions}) > 1:
                     multi += 1
                 else:
                     single += 1
-        out["behavior_versions_per_sample"] = {"single_version": single, "multi_version": multi, "unknown": unknown}
+        out["behavior_versions_per_member"] = {"single_version": single, "multi_version": multi, "unknown": unknown}
     compares = events_by_kind.get(LOGPROB_COMPARE_EVENT, [])
     if compares:
-        entries = [e for r in compares for e in (r.get("entries") or []) if isinstance(e, dict)]
+        entries, duplicates, conflicts = _dedupe_compare_entries(compares)
         same = [e for e in entries if e.get("same_version") is True]
         cross = [e for e in entries if e.get("same_version") is False]
         unknown_version = [e for e in entries if e.get("same_version") is None]
@@ -460,8 +571,10 @@ def _facet_staleness(events_by_kind, execution) -> dict[str, Any]:
             "same_version": block(same),
             "cross_version": block(cross),
             "version_unknown_rows": len(unknown_version),
+            "duplicate_entries_dropped": duplicates,
+            "conflicting_entries": conflicts,
             "no_comparable_same_version_samples": not same,
-            "note": "same_version 按行的全部版本判断，不是逐 token 子集；完全异步时可能没有同版本样本",
+            "note": "same_version 按行的全部版本判断，不是逐 token 子集；完全异步时可能没有同版本样本；同身份副本（TP）按精确相等去重",
         }
     else:
         out["reasons"].append("no_logprob_compare_events")
@@ -473,10 +586,14 @@ def _facet_optimizer(events_by_kind) -> dict[str, Any]:
     out: dict[str, Any] = {"status": NOT_COLLECTED, "reasons": []}
     steps = _dedupe_train_steps(events_by_kind.get(TRAIN_STEP_EVENT, []))
     if steps:
-        ordered = [steps[k] for k in sorted(steps, key=_step_order)]
+        ordered = [steps[k] for k in sorted(steps, key=lambda k: (str(k[0]), _order_value(k[1]), _order_value(k[2])))]
         applied = [bool(r.get("optimizer_step_applied")) for r in ordered]
         longest_not_applied = current = 0
-        for flag in applied:
+        previous_run: Any = object()
+        for row, flag in zip(ordered, applied, strict=True):
+            if row.get("run_id") != previous_run:  # 连续未更新步数不跨 run 接起来
+                current = 0
+                previous_run = row.get("run_id")
             current = 0 if flag else current + 1
             longest_not_applied = max(longest_not_applied, current)
         adam_ok = sum(
@@ -500,13 +617,13 @@ def _facet_optimizer(events_by_kind) -> dict[str, Any]:
         out["reasons"].append("no_train_step_events")
     consumed = events_by_kind.get(TRAIN_STEP_CONSUMED_EVENT, [])
     if consumed:
-        union: dict[tuple[Any, Any], set] = defaultdict(set)
+        union: dict[tuple[Any, Any, Any], set] = defaultdict(set)
         errors = 0
         for row in consumed:
             if row.get("sample_indices") is None:
                 errors += 1
                 continue
-            union[(row.get("rollout_id"), row.get("step_id"))].update(int(i) for i in row["sample_indices"])
+            union[(row.get("run_id"), row.get("rollout_id"), row.get("step_id"))].update(int(i) for i in row["sample_indices"])
         out["consumed_samples_per_step"] = _dist([float(len(s)) for s in union.values()])
         out["train_step_consumed_error_rows"] = errors
     updates = events_by_kind.get(WEIGHT_UPDATE_EVENT, [])
@@ -528,16 +645,7 @@ def _facet_optimizer(events_by_kind) -> dict[str, Any]:
     return out
 
 
-def _lifecycle_segments(audit: Mapping[str, Any]) -> Mapping[str, Any]:
-    timing = audit.get("timing_summary") or {}
-    lifecycle = timing.get("lifecycle_timing") if isinstance(timing, dict) else None
-    if isinstance(lifecycle, dict):
-        segments = lifecycle.get("segments")
-        return segments if isinstance(segments, dict) else lifecycle
-    return {}
-
-
-def _facet_throughput(events_by_kind, audits, execution) -> dict[str, Any]:
+def _facet_throughput(events_by_kind, audits, bringup, execution) -> dict[str, Any]:
     out: dict[str, Any] = {"status": NOT_COLLECTED, "reasons": []}
     if audits:
         summary: dict[str, Any] = {}
@@ -545,33 +653,55 @@ def _facet_throughput(events_by_kind, audits, execution) -> dict[str, Any]:
             values = [_num((a.get("timing_summary") or {}).get(key)) for a in audits]
             summary[key] = _dist([v for v in values if v is not None], unknown=sum(1 for v in values if v is None))
         out["timing_summary_seconds"] = summary
+        # R1：真实 writer（AttemptLifecycleTiming.to_dict）的分段键是 segments_seconds；队列深度 / 反压是计数与旗标，
+        # 分开列，绝不当秒数。没有 lifecycle_timing 的 audit 记 unknown。
         segments: dict[str, list[float]] = defaultdict(list)
         segment_unknown: Counter = Counter()
+        audits_without_lifecycle = 0
+        queue_depths: list[float] = []
+        backpressure = 0
         for audit in audits:
-            for name, value in _lifecycle_segments(audit).items():
+            lifecycle = _lifecycle_timing(audit)
+            if lifecycle is None or not isinstance(lifecycle.get("segments_seconds"), dict):
+                audits_without_lifecycle += 1
+                continue
+            for name, value in lifecycle["segments_seconds"].items():
                 number = _num(value)
                 if number is None:
                     segment_unknown[name] += 1
                 else:
                     segments[name].append(number)
-        segment_names = sorted(set(segments) | set(segment_unknown))  # 只有未知值的段也要列出（unknown 计数，不填 0）
+            depth = _num(lifecycle.get("grading_queue_depth_at_enqueue"))
+            if depth is not None:
+                queue_depths.append(depth)
+            backpressure += bool(lifecycle.get("grading_backpressure_triggered"))
+        segment_names = sorted(set(segments) | set(segment_unknown))
         out["lifecycle_segments_seconds"] = {
             name: _dist(segments.get(name, []), unknown=segment_unknown.get(name, 0)) for name in segment_names
         }
+        out["audits_without_lifecycle_timing"] = audits_without_lifecycle
+        out["grading_queue_depth_at_enqueue"] = _dist(queue_depths, unknown=len(audits) - audits_without_lifecycle - len(queue_depths))
+        out["grading_backpressure_triggered_attempts"] = backpressure
         queue_wait = [_num(((a.get("episode_deadline") or {}) or {}).get("model_call_queue_wait_seconds_total")) for a in audits]
         out["model_call_queue_wait_seconds_total"] = _dist([v for v in queue_wait if v is not None], unknown=sum(1 for v in queue_wait if v is None))
+        out["note_lifecycle"] = "各段分开列，重叠段不相加；成员 elapsed 之和不是 run 墙钟或 GPU 秒"
+    else:
+        out["reasons"].append("no_audit_rows")
+    if bringup:
         grading_timings: dict[str, list[float]] = defaultdict(list)
-        for audit in audits:
-            timings = (audit.get("grading") or {}).get("timings") if isinstance(audit.get("grading"), dict) else None
+        for row in bringup:
+            grading = row.get("grading")
+            timings = grading.get("timings") if isinstance(grading, dict) else None
             if isinstance(timings, dict):
                 for key, value in timings.items():
                     number = _num(value)
                     if number is not None:
                         grading_timings[key].append(number)
         out["grading_timings"] = {k: _dist(v) for k, v in sorted(grading_timings.items())}
-        out["note_lifecycle"] = "各段分开列，重叠段不相加；成员 elapsed 之和不是 run 墙钟或 GPU 秒"
+        out["delivery_wall_seconds"] = _dist([v for v in (_num(r.get("wall_seconds")) for r in bringup) if v is not None])
     else:
-        out["reasons"].append("no_audit_rows")
+        out["grading_timings"] = None
+        out["reasons"].append("no_bringup_events: 评分分段耗时无法知道")
     drains = events_by_kind.get(DRAIN_COMPLETE_EVENT, [])
     if drains:
         out["drain_complete"] = {
@@ -586,50 +716,118 @@ def _facet_throughput(events_by_kind, audits, execution) -> dict[str, Any]:
             for terminal, bucket in (costs.get("terminals") or {}).items()
         }
     out["gpu_and_container_resources"] = {"status": NOT_COLLECTED, "reason": "现有 logger / Docker 资源指标不在本工具输入内"}
-    out["status"] = COLLECTED if audits and drains else PARTIAL if (audits or drains) else NOT_COLLECTED
+    out["status"] = COLLECTED if audits and bringup and drains else PARTIAL if (audits or bringup or drains) else NOT_COLLECTED
     return out
 
 
 # ---------------------------------------------------------------------------
-# 装配
+# 装配（run 归属 → 单 run 报告；多 run 输入 → per_run，不混连）
 # ---------------------------------------------------------------------------
 
 
-def build_run_report(*, events: list[Mapping[str, Any]], audits: list[dict[str, Any]], run_id: str | None = None,
-                     sources: Mapping[str, Any] | None = None) -> dict[str, Any]:
-    events_by_kind, foreign = _by_kind(events, run_id)
-    if run_id is not None:
-        audits = [a for a in audits if a.get("run_id") in (None, run_id)]  # audit 行通常不带 run_id：不按它过滤掉
+def _bundle_run_ids(events: Iterable[Mapping[str, Any]]) -> dict[Any, set]:
+    result: dict[Any, set] = defaultdict(set)
+    for row in events:
+        if row.get("event") == "_malformed":
+            continue
+        result[row.get("_bundle")].add(row.get("run_id"))
+    return result
+
+
+def _attribute_run(row: Mapping[str, Any], bundle_runs: Mapping[Any, set]) -> Any:
+    """audit / bringup 行按所在 bundle 的事件 run_id 归属；bundle 内不是恰好一个 run_id → None（归属未知）。"""
+
+    runs = bundle_runs.get(row.get("_bundle")) or set()
+    return next(iter(runs)) if len(runs) == 1 else None
+
+
+def _single_run_report(*, run_id, events, audits, bringup) -> dict[str, Any]:
+    events_by_kind = _by_kind(events)
     execution = _facet_execution(events_by_kind, audits, run_id, events)
     facets = {
         "execution_and_loss": execution,
         "action_coverage": _facet_action_coverage(audits),
-        "reward_and_distribution": _facet_reward(events_by_kind, audits, run_id),
+        "reward_and_distribution": _facet_reward(events_by_kind, audits, bringup),
         "dis_and_support": _facet_dis(events_by_kind),
         "staleness_and_alignment": _facet_staleness(events_by_kind, execution),
         "optimizer_and_publish": _facet_optimizer(events_by_kind),
-        "throughput_and_resources": _facet_throughput(events_by_kind, audits, execution),
+        "throughput_and_resources": _facet_throughput(events_by_kind, audits, bringup, execution),
     }
     return {
-        "schema_id": REPORT_SCHEMA_ID,
         "run_id": run_id,
-        "sources": dict(sources or {}),
         "event_kinds": dict(sorted(Counter(k for k in events_by_kind for _ in events_by_kind[k]).items())),
-        "events_foreign_run": foreign,
+        "audit_rows": len(audits),
+        "bringup_rows": len(bringup),
         "coverage": {name: facet["status"] for name, facet in facets.items()},
         "facets": facets,
+    }
+
+
+def build_run_report(*, events: list[Mapping[str, Any]], audits: list[dict[str, Any]], run_id: str | None = None,
+                     bringup: list[dict[str, Any]] | None = None, sources: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    bringup = list(bringup or [])
+    bundle_runs = _bundle_run_ids(events)
+    run_ids = sorted({r.get("run_id") for r in events if r.get("event") != "_malformed"}, key=str)
+    audits_by_run: dict[Any, list[dict[str, Any]]] = defaultdict(list)
+    bringup_by_run: dict[Any, list[dict[str, Any]]] = defaultdict(list)
+    unattributed_audits = unattributed_bringup = 0
+    for row in audits:
+        owner = _attribute_run(row, bundle_runs)
+        if owner is None and len(run_ids) <= 1 and not bundle_runs.get(row.get("_bundle")):
+            owner = run_ids[0] if run_ids else None  # 单 run（或无事件）输入：bundle 里没有事件时不算歧义
+        if owner is None and len(run_ids) > 1:
+            unattributed_audits += 1
+            continue
+        audits_by_run[owner].append(row)
+    for row in bringup:
+        owner = _attribute_run(row, bundle_runs)
+        if owner is None and len(run_ids) <= 1 and not bundle_runs.get(row.get("_bundle")):
+            owner = run_ids[0] if run_ids else None
+        if owner is None and len(run_ids) > 1:
+            unattributed_bringup += 1
+            continue
+        bringup_by_run[owner].append(row)
+    header = {
+        "schema_id": REPORT_SCHEMA_ID,
+        "sources": dict(sources or {}),
+        "runs_seen": run_ids,
+        "unattributed_audit_rows": unattributed_audits,
+        "unattributed_bringup_rows": unattributed_bringup,
         "caliber_notes": list(CALIBER_NOTES),
     }
+    if run_id is not None:
+        selected_events = [r for r in events if r.get("run_id") == run_id or r.get("event") == "_malformed"]
+        report = _single_run_report(run_id=run_id, events=selected_events, audits=audits_by_run.get(run_id, []),
+                                    bringup=bringup_by_run.get(run_id, []))
+        report["events_foreign_run"] = sum(1 for r in events if r.get("run_id") != run_id and r.get("event") != "_malformed")
+        report["audit_rows_excluded_other_or_unknown_run"] = len(audits) - len(audits_by_run.get(run_id, []))
+        return {**header, **report}
+    if len(run_ids) > 1:
+        # R4：多 run 输入默认不混连——逐 run 出子报告；归属未知的 audit / bringup 行只计数
+        per_run = {}
+        for rid in run_ids:
+            per_run[str(rid)] = _single_run_report(
+                run_id=rid, events=[r for r in events if r.get("run_id") == rid or r.get("event") == "_malformed"],
+                audits=audits_by_run.get(rid, []), bringup=bringup_by_run.get(rid, []),
+            )
+        return {**header, "multi_run": True, "run_id": None, "per_run": per_run,
+                "note": "输入含多个 run_id：不混连，逐 run 出子报告；用 --run-id 只看一个"}
+    only = run_ids[0] if run_ids else None
+    report = _single_run_report(run_id=only, events=events, audits=audits_by_run.get(only, []) + (audits_by_run.get(None, []) if only is not None else []),
+                                bringup=bringup_by_run.get(only, []) + (bringup_by_run.get(None, []) if only is not None else []))
+    report["events_foreign_run"] = 0
+    return {**header, "multi_run": False, **report}
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="I20 首版：离线 run 报告（七面基础摘要，只消费已有记录）")
-    parser.add_argument("paths", nargs="+", help="run 目录（递归找 rh2_events_*.jsonl 与 fa_execution_audit.jsonl）或文件")
-    parser.add_argument("--run-id", default=None, help="只统计该 run_id 的事件（不指定时按 run_id 分开连接，不混连）")
+    parser.add_argument("paths", nargs="+", help="run 目录（递归找 rh2_events_*.jsonl / fa_execution_audit.jsonl / bringup_events.jsonl）或文件；每个路径 = 一个 bundle")
+    parser.add_argument("--run-id", default=None, help="只统计该 run_id（不指定且输入含多个 run 时逐 run 出子报告，不混连）")
     parser.add_argument("--json", default=None, help="把报告写到该文件（同时打印到 stdout）")
     args = parser.parse_args(argv)
     inputs = load_run_inputs(args.paths)
-    report = build_run_report(events=inputs["events"], audits=inputs["audits"], run_id=args.run_id, sources=inputs["sources"])
+    report = build_run_report(events=inputs["events"], audits=inputs["audits"], bringup=inputs["bringup"], run_id=args.run_id,
+                              sources=inputs["sources"])
     text = json.dumps(report, ensure_ascii=False, indent=2, default=str)
     if args.json:
         Path(args.json).write_text(text + "\n", encoding="utf-8")

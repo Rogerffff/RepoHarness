@@ -1,42 +1,57 @@
-"""I20 首版（第三组 §0/§0.1 第 4 条）：离线 run 报告工具——合成行 + 真实汇总器，双 lane 都跑。
+"""I20 首版（第三组 §0/§0.1 第 4 条；Codex 09-11 聚焦复核 R1–R5 修正）：离线 run 报告工具——真实 rh2 writer + 按真实
+emitter 形状的事件行 + 真实汇总器，双 lane 都跑。
 
-被测 = `repoharness2.adapters.miles.run_report`（纯 stdlib 消费者）。oracle = Brief §3 的统计口径：缺失不填零、
-均值 × num_rollouts 还原总量、多 rank 副本只取一份、跨 run 不混连、进行中 / 未知单列、无可比同版本样本显示"无"。
+fixture 来源：audit 行由真实 `RolloutAudit` + `write_execution_audit_record` 写出（含真实 `AttemptLifecycleTiming.to_dict()`
+的 `segments_seconds` / 队列深度键）；评分记录由真实 `BringupService.record_event` 写到 bringup_events.jsonl；
+rollout_group / train_step 行按 fork emitter 的字段形状（逐叶 sample_indices + leaf_ordinals + rewards；metrics 只在 pp 末段）
+手工构造——fork 原函数的 AST 执行版见 test_run_report_real_emitters.py（integration_base）。
+oracle = Brief §3：缺失不填零、均值 × num_rollouts 还原、多 rank 副本只取一份、成员先归并再统计、跨 run 不混连、
+未知与进行中单列、无可比同版本样本显示"无"。
 """
 
 from __future__ import annotations
 
 import json
+from pathlib import Path
+from types import SimpleNamespace as NS
 
 import pytest
 
 
-def _ev(kind: str, run: str = "r1", **fields) -> dict:
-    return {"event": kind, "ts_unix": 1.0, "host": "h", "pid": 1, "run_id": run, **fields}
+def _ev(kind: str, run: str = "r1", bundle: int = 0, **fields) -> dict:
+    return {"event": kind, "ts_unix": 1.0, "host": "h", "pid": 1, "run_id": run, "_bundle": bundle, **fields}
 
 
-def _audit(task="A", *, reward=1.0, outcome="resolved", rows=1, trainable=10, inputs=100, excluding_last=0, clues=(),
-           harness_seconds=30.0, segments=None, disposition="delivered", kind="completed") -> dict:
-    return {
-        "task_id": task,
-        "disposition": disposition,
-        "termination": {"kind": kind},
-        "failure_records": [],
-        "context_shrink_reasons": list(clues),
-        "grading": {"outcome": outcome, "failure_category": None, "reward": reward,
-                    "timings": {"queue_wait_seconds": 2.0, "test_seconds": 40.0}},
-        "turn_coverage": {"fork_threshold_tokens": 0, "turns_generated": rows + 1, "turns_trained": rows + 1, "turns_empty_output": 0,
-                          "turns_dropped_realign": 0, "turns_dropped_merge": 0, "training_rows": rows,
-                          "trainable_tokens_total": trainable, "input_tokens_total": inputs,
-                          "input_tokens_excluding_last_row": excluding_last, "fork_events": [{}] * (rows - 1)},
-        "timing_summary": {"harness_run_seconds": harness_seconds, "total_audit_seconds": harness_seconds + 5,
-                           "lifecycle_timing": {"segments": segments or {"test": 40.0, "grading_queue_wait": None}}},
-        "episode_deadline": {"model_call_queue_wait_seconds_total": 1.5},
-    }
+def _write_real_audit(directory: Path, sid: str, *, task="task-A", reward=1.0, outcome="resolved", with_grading=True,
+                      test_seconds=40.0, queue_depth=7, backpressure=False):
+    """真实 writer：audit 记录（不含评分）+ bringup 交付记录（含评分块）。"""
+
+    from repoharness2.adapters.slime.bringup import BringupService, write_execution_audit_record
+    from repoharness2.adapters.slime.generate import RolloutAudit
+
+    directory.mkdir(parents=True, exist_ok=True)
+    audit = RolloutAudit(trajectory_id=sid, task_id=task)
+    audit.session_id = sid
+    audit.physical_attempt_id = f"attempt-{sid}"
+    audit.lifecycle_timing.set("test", test_seconds)
+    audit.lifecycle_timing.set("sandbox_container_start", 3.5)
+    audit.lifecycle_timing.grading_queue_depth_at_enqueue = queue_depth
+    audit.lifecycle_timing.grading_backpressure_triggered = backpressure
+    grading = NS(outcome=outcome, failure_category=None, reward=reward, timings=None) if with_grading else None
+    audit.finalized = NS(
+        grading_report=grading,
+        eligibility_report=NS(report_id=f"report-{sid}", eligibility_class="valid_for_training"),
+        group_repair_signal=NS(degraded=False),
+    )
+    write_execution_audit_record(None, audit, directory / "fa_execution_audit.jsonl")
+    service = NS(orchestrator=NS(audits=[audit]), registry=NS(weight_versions={}, stats={}), events_path=directory / "bringup_events.jsonl")
+    BringupService.record_event(service, args=None, sample=NS(session_id=sid, index=10, group_index=0, metadata={"instance_id": task}),
+                                result=[], wall_seconds=50.0)
+    return audit
 
 
-def _step(rollout, step, *, dp_rank=0, pp_last=True, applied=True, num_rollouts=8, accepted=1000.0, provenance=1250.0,
-          candidate=500.0, grad_norm=0.5, adam=(3, 4)) -> dict:
+def _step(rollout, step, *, run="r1", bundle=0, dp_rank=0, pp_last=True, applied=True, num_rollouts=8, accepted=1000.0,
+          provenance=1250.0, candidate=500.0, grad_norm=0.5, adam=(3, 4)) -> dict:
     metrics = None
     if pp_last:
         metrics = {"dis_microbatch_provenance_tokens": provenance, "dis_accepted_tokens": accepted,
@@ -44,128 +59,184 @@ def _step(rollout, step, *, dp_rank=0, pp_last=True, applied=True, num_rollouts=
                    "dis_singleton_accepted_tokens": 100.0, "dis_zero_advantage_accepted_tokens": 50.0,
                    "dis_rejected_low_tokens": 150.0, "dis_rejected_high_tokens": 100.0,
                    "dis_support_size_1": 100.0, "dis_support_size_2_3": 1150.0, "dis_zero_contribution_microbatch": 0.0}
-    return _ev("train_step", rollout_id=rollout, step_id=step, attempt=1, outcome="NORMAL" if applied else "SKIPPED_ZERO_SIGNAL",
+    return _ev("train_step", run=run, bundle=bundle, rollout_id=rollout, step_id=step, attempt=1, outcome="NORMAL" if applied else "SKIPPED_ZERO_SIGNAL",
                optimizer_step_applied=applied, adam_step_before=adam[0], adam_step_after=adam[1], scheduler_steps_before=0,
                scheduler_steps_after=num_rollouts, num_rollouts=num_rollouts, grad_norm=grad_norm, duration_seconds=1.5,
                zero_signal_scan_seconds=None, rank=dp_rank, dp_rank=dp_rank, is_pp_last_stage=pp_last, metrics=metrics)
 
 
+def _rollout_group(rollout, group, members: list[tuple[int, list[float]]], *, run="r1") -> dict:
+    """按 fork `_emit_rollout_evidence` 的形状：逐叶一行——FORK 成员的 sample_index 重复、leaf_ordinal 递增、reward 逐叶重复。"""
+
+    indices, ordinals, rewards, versions = [], [], [], []
+    for sample_index, leaf_rewards in members:
+        for ordinal, reward in enumerate(leaf_rewards):
+            indices.append(sample_index)
+            ordinals.append(ordinal)
+            rewards.append(reward)
+            versions.append(["5"])
+    return _ev("rollout_group", run=run, rollout_id=rollout, group_index=group, instance_id="task-A", sample_indices=indices,
+               leaf_ordinals=ordinals, rewards=rewards, behavior_versions=versions, weight_version_spans=[None] * len(indices),
+               statuses=["completed"] * len(indices), response_lengths=[1] * len(indices), routing_tape=[None] * len(indices))
+
+
 @pytest.fixture()
-def report():
+def build():
     from repoharness2.adapters.miles.run_report import build_run_report
 
     return build_run_report
 
 
-def test_audits_only_marks_event_facets_not_collected_and_never_zero_loss(report):
-    out = report(events=[], audits=[_audit(), _audit(task="B", reward=0.0, outcome="unresolved")])
-    cov = out["coverage"]
-    assert cov["execution_and_loss"] == "partial" and cov["dis_and_support"] == "not_collected"
-    assert cov["optimizer_and_publish"] == "not_collected" and cov["staleness_and_alignment"] == "not_collected"
-    ex = out["facets"]["execution_and_loss"]
-    assert ex["groups"] is None and ex["costs"] is None  # 不是 0 组 / 0 丢弃
-    assert any(r.startswith("no_group_or_cost_events") for r in ex["reasons"])
-    assert ex["attempts_audited"] == 2 and ex["in_progress_attempts"] is None
-    rw = out["facets"]["reward_and_distribution"]["audit_grading"]
-    assert rw["outcomes"] == {"resolved": 1, "unresolved": 1} and rw["reward"]["count"] == 2 and rw["reward"]["unknown"] == 0
-    assert out["facets"]["reward_and_distribution"]["by_task"]["B"]["reward_mean"] == 0.0
+def test_real_audit_writer_lifecycle_segments_are_seconds_and_queue_depth_is_not(tmp_path):
+    """R1：真实 writer 的分段键是 segments_seconds；排队深度 7 是计数，不能进秒数桶；未设的段记 unknown。"""
+
+    from repoharness2.adapters.miles.run_report import build_run_report, load_run_inputs
+
+    _write_real_audit(tmp_path / "run", "s1")
+    inputs = load_run_inputs([tmp_path / "run"])
+    report = build_run_report(events=[], audits=inputs["audits"], bringup=inputs["bringup"], sources=inputs["sources"])
+    tp = report["facets"]["throughput_and_resources"]
+    segs = tp["lifecycle_segments_seconds"]
+    assert segs["test"]["sum"] == 40.0 and segs["sandbox_container_start"]["sum"] == 3.5
+    assert "grading_queue_depth_at_enqueue" not in segs and segs["grading_queue_wait"]["unknown"] == 1
+    assert tp["grading_queue_depth_at_enqueue"]["sum"] == 7.0 and tp["grading_backpressure_triggered_attempts"] == 0
+    assert tp["audits_without_lifecycle_timing"] == 0
 
 
-def test_unknown_reward_and_missing_turn_coverage_are_counted_not_zeroed(report):
-    a = _audit(reward=None)
-    b = _audit(task="B")
-    del b["turn_coverage"]
-    out = report(events=[], audits=[a, b])
-    rw = out["facets"]["reward_and_distribution"]["audit_grading"]["reward"]
-    assert rw["count"] == 1 and rw["unknown"] == 1
-    cov = out["facets"]["action_coverage"]
-    assert cov["status"] == "partial" and cov["attempts_without_turn_coverage"] == 1 and cov["attempts_with_turn_coverage"] == 1
+def test_real_bringup_events_carry_grading_and_audit_alone_means_unknown_not_ungraded(tmp_path):
+    """R2：评分在 bringup_events.jsonl，不在 audit；只给 audit 时报"无法知道"，给了 bringup 才有已评分总体。"""
+
+    from repoharness2.adapters.miles.run_report import build_run_report, load_run_inputs
+
+    _write_real_audit(tmp_path / "run", "s1", reward=1.0)
+    _write_real_audit(tmp_path / "run", "s2", task="task-B", reward=0.0, outcome="unresolved")
+    _write_real_audit(tmp_path / "run", "s3", with_grading=False)  # 交付记录在、无评分块 = 已知没有评分
+    inputs = load_run_inputs([tmp_path / "run"])
+    only_audits = build_run_report(events=[], audits=inputs["audits"], bringup=[])
+    rw = only_audits["facets"]["reward_and_distribution"]
+    assert rw["graded_attempts"] is None and any(r.startswith("no_bringup_events") for r in rw["reasons"])
+    full = build_run_report(events=[], audits=inputs["audits"], bringup=inputs["bringup"])
+    graded = full["facets"]["reward_and_distribution"]["graded_attempts"]
+    assert graded["delivery_records"] == 3 and graded["graded"] == 2 and graded["delivered_without_grading_record"] == 1
+    assert graded["outcomes"] == {"resolved": 1, "unresolved": 1} and graded["reward"]["count"] == 2
+    assert graded["by_task"]["task-B"]["reward_mean"] == 0.0 and graded["by_task"]["task-A"]["reward_mean"] == 1.0
+    assert graded["audited_attempts_without_delivery_record"] == 0 and graded["eligibility_classes"] == {"valid_for_training": 3}
+    assert full["facets"]["throughput_and_resources"]["grading_timings"] == {}  # timings=None：没有就是没有
 
 
-def test_fork_rows_are_one_attempt_and_clues_are_not_compaction_counts(report):
-    out = report(events=[], audits=[_audit(rows=3, trainable=30, inputs=900, excluding_last=500, clues=("session: turn 3: prompt 40 < 0.6 x max_seen 160",))])
-    cov = out["facets"]["action_coverage"]
-    assert cov["sums"]["training_rows"] == 3 and cov["training_rows_per_attempt"]["count"] == 1  # 三行一题
-    assert cov["fork_events_total"] == 2 and cov["sums"]["input_tokens_excluding_last_row"] == 500
-    assert cov["context_length_drop_clues"] == {"attempts_with_clues": 1, "clue_lines_total": 1,
-                                                "note": cov["context_length_drop_clues"]["note"]}
-    assert "不是压缩次数" in cov["context_length_drop_clues"]["note"]
+def test_fork_rows_merge_into_members_before_reward_statistics(build):
+    """R3：两个 execution（reward 0 与 1），第一个分三行——真实事件为 sample_indices=[10,10,10,11]、rewards=[0,0,0,1]。
+    成员统计：2 个成员、均值 0.5、优势符号正 1 / 负 1；行分布另列（3 行 + 1 行）。"""
+
+    rows = [_rollout_group(0, 0, [(10, [0.0, 0.0, 0.0]), (11, [1.0])]),
+            _ev("group_consumed", rh2_prompt_group_id="g0", sample_indices=[10, 10, 10, 11], group_index=0, task_id="task-A", staleness=0)]
+    dg = build(events=rows, audits=[])["facets"]["reward_and_distribution"]["delivered_groups"]
+    assert dg["groups"] == 1 and dg["members"] == 2 and dg["training_rows"] == 4
+    assert dg["member_rewards"] == {"count": 2, "min": 0.0, "p50": 0.0, "p95": 1.0, "max": 1.0, "sum": 1.0, "unknown": 0}
+    assert dg["advantage_sign_approximation"]["positive"] == 1 and dg["advantage_sign_approximation"]["negative"] == 1
+    assert dg["training_rows_per_member"]["max"] == 3.0 and dg["member_reward_conflicts"] == 0
+    assert dg["groups_not_matched_to_consumed_event"] == 0
+    # 同成员各叶 reward 不一致 = 数据矛盾：计数，且该成员不进 reward 统计（不静默选第一条）
+    conflict = _rollout_group(1, 0, [(20, [1.0, 0.0]), (21, [1.0])])
+    dg2 = build(events=[conflict], audits=[])["facets"]["reward_and_distribution"]["delivered_groups"]
+    assert dg2["member_reward_conflicts"] == 1 and dg2["member_rewards"]["count"] == 1
 
 
-def test_train_step_totals_restore_mean_times_num_rollouts_and_dedupe_rank_copies(report):
+def test_train_step_totals_restore_mean_times_num_rollouts_and_dedupe_rank_copies(build):
     events = [
         _step(0, 0, dp_rank=0), _step(0, 0, dp_rank=1),  # 同一 step 的两个 rank 副本
         _step(0, 1, dp_rank=0, num_rollouts=4, accepted=1500.0, provenance=1800.0, candidate=600.0),
         _step(0, 2, dp_rank=0, pp_last=False),  # 非 pp 末段：无 metrics
     ]
-    out = report(events=events, audits=[])
+    out = build(events=events, audits=[])
     dis = out["facets"]["dis_and_support"]
     assert dis["steps_seen"] == 3 and dis["steps_with_metrics"] == 2
-    # 均值 × num_rollouts：1000×8 + 1500×4 = 14000（不是 2500 的均值口径）
-    assert dis["totals_restored"]["dis_accepted_tokens"] == 14000.0
-    assert dis["totals_restored"]["dis_microbatch_provenance_tokens"] == 1250 * 8 + 1800 * 4
-    assert dis["ratios_over_totals"]["accepted_over_provenance"] == round(14000 / (1250 * 8 + 1800 * 4), 4)
+    assert dis["totals_restored"]["dis_accepted_tokens"] == 14000.0  # 1000×8 + 1500×4，不是均值口径
     assert dis["ratios_over_totals"]["candidate_signal_over_accepted"] == round((500 * 8 + 600 * 4) / 14000, 4)
     opt = out["facets"]["optimizer_and_publish"]["train_steps"]
     assert opt["steps"] == 3 and opt["optimizer_steps_applied"] == 3 and opt["applied_steps_with_adam_increment_1"] == 3
 
 
-def test_skipped_steps_longest_run_and_weight_update_gaps(report):
-    events = [_step(0, 0), _step(0, 1, applied=False), _step(0, 2, applied=False), _step(0, 3),
+def test_same_step_ids_in_two_runs_are_not_collapsed_and_runs_are_reported_apart(build):
+    """R4：两 run 各有 (0,0) step——默认输入不混连（逐 run 子报告），指定 run 只取该 run 的事件与归属该 run 的 audit。"""
+
+    events = [_step(0, 0, run="r1", accepted=2.0, provenance=4.0), _step(0, 0, run="r2", bundle=1, accepted=5.0, provenance=8.0),
+              _ev("train_step_consumed", run="r1", rollout_id=0, step_id=0, dp_rank=0, rank=0, sample_indices=[10]),
+              _ev("train_step_consumed", run="r2", bundle=1, rollout_id=0, step_id=0, dp_rank=0, rank=0, sample_indices=[10])]
+    audits = [{"trajectory_id": "a1", "task_id": "A", "disposition": "delivered", "_bundle": 0},
+              {"trajectory_id": "b1", "task_id": "B", "disposition": "delivered", "_bundle": 1}]
+    combined = build(events=events, audits=audits)
+    assert combined["multi_run"] is True and combined["runs_seen"] == ["r1", "r2"] and "facets" not in combined
+    assert combined["per_run"]["r1"]["facets"]["dis_and_support"]["totals_restored"]["dis_accepted_tokens"] == 16.0
+    assert combined["per_run"]["r2"]["facets"]["dis_and_support"]["totals_restored"]["dis_accepted_tokens"] == 40.0
+    assert combined["per_run"]["r1"]["audit_rows"] == 1 and combined["per_run"]["r2"]["audit_rows"] == 1
+    scoped = build(events=events, audits=audits, run_id="r2")
+    assert scoped["run_id"] == "r2" and scoped["facets"]["dis_and_support"]["totals_restored"]["dis_accepted_tokens"] == 40.0
+    assert scoped["audit_rows"] == 1 and scoped["audit_rows_excluded_other_or_unknown_run"] == 1 and scoped["events_foreign_run"] == 2
+    assert scoped["facets"]["optimizer_and_publish"]["consumed_samples_per_step"]["count"] == 1
+    # bundle 内有两个 run 的事件 → 该 bundle 的 audit 归属未知：默认多 run 时只计数、不并入任何 run
+    mixed = build(events=[_step(0, 0, run="r1"), _step(0, 1, run="r2")], audits=[{"trajectory_id": "x", "_bundle": 0}])
+    assert mixed["unattributed_audit_rows"] == 1 and mixed["per_run"]["r1"]["audit_rows"] == 0
+
+
+def test_skipped_steps_longest_run_does_not_cross_runs_and_weight_update_gaps(build):
+    events = [_step(0, 0), _step(0, 1, applied=False), _step(0, 2, applied=False),
+              _step(0, 0, run="r2", bundle=1, applied=False), _step(0, 1, run="r2", bundle=1, applied=False), _step(0, 2, run="r2", bundle=1),
               _ev("weight_update", rollout_id=0, version_before=5, version_after=6, duration_seconds=2.0),
-              _ev("weight_update", rollout_id=1, version_before=6, version_after=8, duration_seconds=2.5),
-              _ev("train_step_consumed", rollout_id=0, step_id=0, dp_rank=0, rank=0, sample_indices=[0, 1]),
-              _ev("train_step_consumed", rollout_id=0, step_id=0, dp_rank=1, rank=1, sample_indices=[1, 2, 3]),
-              _ev("train_step_consumed", rollout_id=0, step_id=1, dp_rank=0, rank=0, sample_indices=None, error="step attribution failed")]
-    opt = report(events=events, audits=[])["facets"]["optimizer_and_publish"]
-    assert opt["train_steps"]["optimizer_steps_not_applied"] == 2 and opt["train_steps"]["longest_run_without_applied_step"] == 2
-    assert opt["weight_updates"]["count"] == 2 and opt["weight_updates"]["non_increment_by_one"] == 1
-    assert opt["consumed_samples_per_step"]["count"] == 1 and opt["consumed_samples_per_step"]["max"] == 4.0  # 两 rank 并集 {0,1,2,3}
-    assert opt["train_step_consumed_error_rows"] == 1 and opt["status"] == "collected"
+              _ev("weight_update", rollout_id=1, version_before=6, version_after=8, duration_seconds=2.5)]
+    out = build(events=events, audits=[])
+    assert out["multi_run"] is True
+    assert out["per_run"]["r1"]["facets"]["optimizer_and_publish"]["train_steps"]["longest_run_without_applied_step"] == 2
+    assert out["per_run"]["r2"]["facets"]["optimizer_and_publish"]["train_steps"]["longest_run_without_applied_step"] == 2
+    wu = out["per_run"]["r1"]["facets"]["optimizer_and_publish"]["weight_updates"]
+    assert wu["count"] == 2 and wu["non_increment_by_one"] == 1
 
 
-def test_staleness_and_logprob_compare_show_no_comparable_samples_instead_of_zero(report):
+def test_staleness_logprob_compare_dedupes_tp_copies_and_flags_no_same_version(build):
+    """R5：logprob_compare 逐叶 entries 按 (run, rollout, sample, leaf) 精确去副本；矛盾计数；sample_dis_accounting 不去重只标注。"""
+
+    entry = {"sample_index": 10, "leaf_ordinal": 0, "same_version": False, "num_tokens": 5, "total_tokens": 5, "mean_abs_diff": 0.2, "length_mismatch": False}
+    other = {"sample_index": 11, "leaf_ordinal": 0, "same_version": False, "num_tokens": 11, "total_tokens": 11, "mean_abs_diff": 0.1, "length_mismatch": False}
+    conflict = dict(entry, mean_abs_diff=0.9)
     events = [
-        _ev("group_consumed", rh2_prompt_group_id="g1", sample_indices=[0, 1], task_id="A", staleness=2, oldest_weight_version=3, current_weight_version=5),
-        _ev("rollout_group", rollout_id=0, group_index=0, sample_indices=[0, 1], rewards=[1.0, 0.0], behavior_versions=[["3", "4"], ["4"]]),
-        _ev("rollout_group", rollout_id=0, group_index=1, sample_indices=[2, 3], rewards=[1.0, 1.0], behavior_versions=[["5"], ["5"]]),
-        _ev("logprob_compare", rollout_id=0, dp_rank=0, trainer_current_version=5,
-            entries=[{"sample_index": 0, "leaf_ordinal": 0, "same_version": False, "num_tokens": 10, "total_tokens": 12, "mean_abs_diff": 0.3, "length_mismatch": False}]),
+        _ev("logprob_compare", rollout_id=0, dp_rank=0, trainer_current_version=5, entries=[entry]),
+        _ev("logprob_compare", rollout_id=0, dp_rank=0, trainer_current_version=5, entries=[entry]),  # TP 副本
+        _ev("logprob_compare", rollout_id=0, dp_rank=1, trainer_current_version=5, entries=[other, other]),
+        _ev("logprob_compare", rollout_id=0, dp_rank=1, trainer_current_version=5, entries=[conflict]),
+        _ev("sample_dis_accounting", entries=[{"sample_index": 10, "leaf_ordinal": 0, "accepted_tokens": 3, "provenance_tokens": 5}] * 2),
+        _ev("group_consumed", rh2_prompt_group_id="g1", sample_indices=[10, 11], task_id="A", staleness=2, oldest_weight_version=3, current_weight_version=5),
     ]
-    out = report(events=events, audits=[])
-    st = out["facets"]["staleness_and_alignment"]
-    assert st["consumed_staleness"]["count"] == 1 and st["consumed_staleness"]["max"] == 2  # 来自 summarize_group_events 的 _stats 口径
-    assert st["behavior_versions_per_sample"] == {"single_version": 3, "multi_version": 1, "unknown": 0}
-    assert st["logprob_compare"]["no_comparable_same_version_samples"] is True
-    assert st["logprob_compare"]["same_version"]["rows"] == 0 and st["logprob_compare"]["cross_version"]["comparable_action_tokens"] == 10
-    rw = out["facets"]["reward_and_distribution"]["rollout_groups"]
-    assert rw["groups"] == 2 and rw["zero_variance_groups"] == 1 and rw["all_one_groups"] == 1
-    assert rw["consumed_member_rewards"]["count"] == 2 and rw["groups_not_matched_to_consumed_event"] == 1
-    assert rw["advantage_sign_approximation"]["positive"] == 1 and rw["advantage_sign_approximation"]["zero"] == 2
+    st = build(events=events, audits=[])["facets"]["staleness_and_alignment"]
+    lc = st["logprob_compare"]
+    assert lc["cross_version"]["rows"] == 2 and lc["cross_version"]["comparable_action_tokens"] == 16
+    assert lc["duplicate_entries_dropped"] == 2 and lc["conflicting_entries"] == 1 and lc["no_comparable_same_version_samples"] is True
+    assert st["consumed_staleness"]["count"] == 1 and st["consumed_staleness"]["max"] == 2
+    dis = build(events=events, audits=[])["facets"]["dis_and_support"]["sample_dis_accounting"]
+    assert dis["accepted_tokens_sum"] == 6 and dis["tp_copies"].startswith("unsupported")  # 无 rollout_id：不去重、明说
 
 
-def test_run_id_scoping_keeps_runs_apart_and_cli_writes_json(tmp_path):
+def test_cli_reads_a_run_bundle_and_never_shows_missing_events_as_zero_loss(tmp_path):
     from repoharness2.adapters.miles import run_report
 
     run_dir = tmp_path / "run"
+    _write_real_audit(run_dir / "artifacts", "s1")
     (run_dir / "events").mkdir(parents=True)
-    rows = [
-        _ev("attempt_cost_snapshot", physical_attempt_id="a#p1", rh2_prompt_group_id="miles_g0", task_id="A", elapsed_seconds=10.0),
-        _ev("group_consumed", rh2_prompt_group_id="miles_g0", task_id="A", staleness=0, sample_indices=[0], member_count=1),
-        _ev("attempt_cost_snapshot", run="r2", physical_attempt_id="b#p1", rh2_prompt_group_id="miles_g0", task_id="A", elapsed_seconds=100.0),
-        _ev("group_consumed", run="r2", rh2_prompt_group_id="miles_g0", task_id="A", staleness=0, sample_indices=[0], member_count=1),
-        _ev("drain_complete", rollout_id=0, current_weight_version=5, target_groups=1, elapsed_seconds=3.0, consumed_total=1, drop_totals={}),
-    ]
-    (run_dir / "events" / "rh2_events_h_1.jsonl").write_text("\n".join(json.dumps(r) for r in rows) + "\n", encoding="utf-8")
-    (run_dir / "fa_execution_audit.jsonl").write_text(json.dumps(_audit()) + "\n" + "not json\n", encoding="utf-8")
+    rows = [_ev("attempt_cost_snapshot", physical_attempt_id="attempt-s1", rh2_prompt_group_id="miles_g0", task_id="task-A", elapsed_seconds=10.0),
+            _ev("group_consumed", rh2_prompt_group_id="miles_g0", task_id="task-A", staleness=0, sample_indices=[10], member_count=1),
+            _ev("drain_complete", rollout_id=0, current_weight_version=5, target_groups=1, elapsed_seconds=3.0, consumed_total=1, drop_totals={})]
+    (run_dir / "events" / "rh2_events_h_1.jsonl").write_text("\n".join(json.dumps({k: v for k, v in r.items() if k != "_bundle"}) for r in rows) + "\n", encoding="utf-8")
     out_file = tmp_path / "report.json"
     assert run_report.main([str(run_dir), "--json", str(out_file)]) == 0
     report = json.loads(out_file.read_text(encoding="utf-8"))
-    assert report["schema_id"] == "rh2.run_report.v1" and report["sources"]["audit_rows"] == 1 and report["sources"]["malformed_audit_rows"] == 1
-    costs = report["facets"]["execution_and_loss"]["costs"]["terminals"]["consumed"]
-    assert costs["groups"] == 2 and costs["group_cost_seconds"]["max"] == 100.0 and costs["group_cost_seconds"]["min"] == 10.0  # 两 run 不混连
-    assert report["coverage"]["throughput_and_resources"] == "collected"
-    assert report["facets"]["throughput_and_resources"]["drain_complete"]["count"] == 1
-    assert report["facets"]["throughput_and_resources"]["lifecycle_segments_seconds"]["grading_queue_wait"]["unknown"] == 1
-    scoped = run_report.build_run_report(events=rows, audits=[], run_id="r1")
-    assert scoped["events_foreign_run"] == 2 and scoped["facets"]["execution_and_loss"]["costs"]["terminals"]["consumed"]["groups"] == 1
+    assert report["schema_id"] == "rh2.run_report.v1" and report["multi_run"] is False and report["runs_seen"] == ["r1"]
+    assert report["sources"]["audit_rows"] == 1 and report["sources"]["bringup_rows"] == 1 and report["audit_rows"] == 1
+    assert report["coverage"]["throughput_and_resources"] == "collected" and report["coverage"]["reward_and_distribution"] == "partial"
+    assert report["facets"]["execution_and_loss"]["costs"]["terminals"]["consumed"]["group_cost_seconds"]["sum"] == 10.0
+    # 只给 audit 目录（没有事件文件）：事件面 not_collected，groups/costs 是 None 不是 0
+    empty = tmp_path / "audit_only"
+    _write_real_audit(empty, "s9")
+    assert run_report.main([str(empty)]) == 0
+    inputs = run_report.load_run_inputs([empty])
+    report2 = run_report.build_run_report(events=inputs["events"], audits=inputs["audits"], bringup=inputs["bringup"])
+    ex = report2["facets"]["execution_and_loss"]
+    assert ex["groups"] is None and ex["costs"] is None and report2["coverage"]["dis_and_support"] == "not_collected"

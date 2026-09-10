@@ -1037,7 +1037,8 @@ class GenerationCaptureHook:
 
 
 # ---------------------------------------------------------------------------
-# D-FA-6：compaction 关闭硬事实（环境注入 + 装配期上下文收缩兜底）
+# CC 训练守卫环境（重试 / fallback 三个键）。第三组 I19（owner 2026-09-10）：不再关闭压缩，也没有装配期收缩拒绝；
+# 会话级上下文长度下降只是 audit 线索（detect_context_shrink）。
 # ---------------------------------------------------------------------------
 
 _CC_EXTRA_ENVS_KEY = "SLIME_AGENT_CC_EXTRA_ENVS"
@@ -1118,7 +1119,7 @@ def ensure_claude_code_training_guards(env: MutableMapping[str, str]) -> dict[st
     return merged
 
 
-# 向后兼容别名（旧调用点 = 只关 compaction 的语义子集，现指向全守卫）。
+# 向后兼容别名（历史名字；I19 之后守卫表不含 DISABLE_COMPACT，本别名只是同一个三键合并函数）。
 ensure_claude_code_compaction_disabled = ensure_claude_code_training_guards
 
 
@@ -1965,10 +1966,9 @@ class SlimeBindingConfig:
     require_real_weight_versions: bool = False
     # F2-2 复核四轮：显式运行模式（见 ExecutionModeLiteral 注释）。
     execution_mode: str = "s1_compat"
-    # D-FA-6 兜底：装配期检测到"无法解释的上下文收缩"（compaction/Microcompact/
-    # Context Collapse 的机械信号）时整条轨迹 fail-closed 退出（收口为 abort 形状，
-    # remove_sample=True）。默认 False 保 S1 行为不变；正式 GRPO 基线必须 True。
-    context_shrink_ratio: float = 0.6  # 预注册黄线（05 计划 D-FA-6），FA-5 校准
+    # 会话级上下文长度下降线索的判据（detect_context_shrink：某轮 prompt < ratio × 此前最大值）。第三组 I19 之后
+    # 只写 audit.context_shrink_reasons，不拒绝、没有开关；0.6 是原 D-FA-6 的预注册值，沿用为线索阈值。
+    context_shrink_ratio: float = 0.6
     # P0-2/轮次 9 P0-3（codex）：正式链下 harness 非零退出即拒绝该 execution。
     # 语义澄清（轮次 9 纠正轮次 8 的错误理由）：任务失败负样本 = CC **exit 0**
     # + grader reward=0；CC 非零退出只可能是 harness/API/进程执行失败——
@@ -2108,7 +2108,7 @@ class RolloutAudit:
     cleanup_failures: list[CleanupFailureRecord] = field(default_factory=list)
     failure_records: list[RolloutFailureRecord] = field(default_factory=list)
     artifact_paths: list[Path] = field(default_factory=list)
-    # D-FA-6：上下文收缩检测结果（空 = 未检出；非空 + reject 关闭 = 只记录）
+    # 会话级上下文长度下降线索（空 = 未检出；非空只记录——I19 之后没有拒绝路径，也不是压缩次数）
     context_shrink_reasons: list[str] = field(default_factory=list)
     # 轮次 13 P0-5：audit sink 按 sid drain attempt ledger 的键
     session_id: str | None = None
