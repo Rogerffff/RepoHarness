@@ -1680,7 +1680,6 @@ def _formal_config(**overrides: Any) -> SlimeBindingConfig:
     defaults = dict(
         require_real_weight_versions=True,
         policy_version="5",
-        reject_context_shrink=True,
         reject_on_nonzero_harness_exit=True,  # codex 轮次 9 P0-3：正式链强制
         # 前置清理批（B-1）：finalize-time 阈值不再是资格门，本字段只是 consume-time 阈值
         # （miles --max-weight-staleness N）的记录用镜像；4 只是夹具值，缺省也能启动。
@@ -1701,14 +1700,12 @@ def test_orchestrator_rejects_static_policy_version_in_formal_chain():
         _dummy_orchestrator(_formal_config(policy_version=None))
     with pytest.raises(StartupCheckError, match="policy_version_not_numeric_in_formal_chain"):
         _dummy_orchestrator(_formal_config(policy_version="ckpt_a"))
-    # 正式链必须同时开启收缩兜底（D-FA-6 是硬要求不是注释——codex FA-0 审查）
-    with pytest.raises(StartupCheckError, match="context_shrink_rejection_disabled"):
-        _dummy_orchestrator(_formal_config(reject_context_shrink=False))
+    # 第三组 I19（owner 2026-09-10）：收缩拒绝及其与正式链的启动耦合已删除——不再有对应 StartupCheckError
     # 轮次 14 解耦回归：非零 exit 拒绝不再与正式链硬耦合（episode 时间
     # 预算耗尽 = slime EXIT_TIME_BUDGET_EXCEEDED=-1 是正常终止，硬耦合会
     # 确定性剔除长任务）——关闭旋钮的正式链配置必须能启动
     _dummy_orchestrator(_formal_config(reject_on_nonzero_harness_exit=False))
-    # 数值版本 + 收缩兜底开启：通过
+    # 数值版本：通过
     _dummy_orchestrator(_formal_config())
 
 
@@ -1813,59 +1810,51 @@ def test_detect_context_shrink_per_branch_spares_subagent():
     assert detect_context_shrink(main_chain + sub_chain) != []
 
 
-async def test_context_shrink_rejects_trajectory_end_to_end():
-    """D-FA-6 兜底端到端：叶链内 prompt 坍缩 + reject 开启 -> 轨迹收口为
-    abort 形状（remove_sample=True，退出基线），audit 留痕。"""
+@pytest.mark.parametrize("formal", [False, True])
+async def test_context_shrink_is_an_audit_clue_only_and_never_rejects(formal):
+    """第三组 I19（owner 2026-09-10）：压缩是 harness 正常行为——会话级 prompt 长度下降只留 audit 线索，
+    不再有叶链级硬拒绝，也没有可开启的拒绝开关；正式链配置同样交付。
+    （旧 oracle：reject 开启时 remove_sample=True、abort_reason=rh2_assemble_failed，已撤销。）"""
 
     base = dense_turns()
     shrunk = [
         base[0],
         MockTurn(prompt_ids=[1, 2, 3, 4, 5], response=base[1].response),  # 5 < 0.6*12
     ]
-    chain = build_dense_chain(config=dense_config(reject_context_shrink=True), turns=shrunk)
-    result = await chain.orchestrator.generate(
-        _Args(), chain.base_sample, dict(SAMPLING_PARAMS)
-    )
-    assert result[0].remove_sample is True
-    assert result[0].metadata["abort_reason"].startswith("rh2_assemble_failed")
-    audit = chain.orchestrator.audits[-1]
-    assert any("branch" in reason for reason in audit.context_shrink_reasons)
-    assert any(
-        "context_shrink_detected" in record.detail or "上下文收缩" in record.detail
-        for record in audit.failure_records
-    )
-
-
-async def test_context_shrink_audit_only_when_reject_disabled():
-    """reject 关闭（S1 兼容默认）：同样的收缩只记录 audit，不改变交付。"""
-
-    base = dense_turns()
-    shrunk = [
-        base[0],
-        MockTurn(prompt_ids=[1, 2, 3, 4, 5], response=base[1].response),
-    ]
-    chain = build_dense_chain(config=dense_config(), turns=shrunk)
+    if formal:  # 正式链要求真实权重版本（与其它 formal 用例同款夹具值）
+        for turn in shrunk:
+            turn.response["meta_info"]["weight_version"] = "5"
+    config = _formal_config() if formal else dense_config()
+    chain = build_dense_chain(config=config, turns=shrunk)
     result = await chain.orchestrator.generate(
         _Args(), chain.base_sample, dict(SAMPLING_PARAMS)
     )
     assert not getattr(result[0], "remove_sample", False)
     audit = chain.orchestrator.audits[-1]
-    assert audit.context_shrink_reasons  # 信号仍留痕
+    assert any(reason.startswith("session:") for reason in audit.context_shrink_reasons)  # 线索仍留痕
+    assert not any(reason.startswith("branch ") for reason in audit.context_shrink_reasons)  # 叶链级检测已删
+    assert not any("context_shrink" in record.error_type for record in audit.failure_records)
+    assert not hasattr(chain.orchestrator.config, "reject_context_shrink")
 
 
-def test_ensure_compaction_disabled_merges_and_fail_closed():
-    """DISABLE_COMPACT 合并进 SLIME_AGENT_CC_EXTRA_ENVS；已有键保留；坏 JSON 拒绝。"""
+def test_training_guards_merge_without_disabling_compaction_and_fail_closed():
+    """重试 / fallback 三个守卫键合并进 SLIME_AGENT_CC_EXTRA_ENVS；已有键保留；坏 JSON 拒绝。
+    第三组 I19（owner 2026-09-10）：不再注入 DISABLE_COMPACT——压缩恢复为 harness 正常行为。"""
 
     env: dict[str, str] = {}
     merged = ensure_claude_code_training_guards(env)
-    # 四变量训练守卫全在（codex 轮次 8：源码引导验证）
     assert merged == dict(CLAUDE_CODE_TRAINING_GUARD_ENVS)
+    assert set(merged) == {"CLAUDE_CODE_MAX_RETRIES", "CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK", "CLAUDE_CODE_UNATTENDED_RETRY"}
+    assert "DISABLE_COMPACT" not in merged
     assert merged["CLAUDE_CODE_MAX_RETRIES"] == "0"
     assert merged["CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK"] == "1"
 
     env2 = {"SLIME_AGENT_CC_EXTRA_ENVS": '{"FOO": "bar"}'}
     merged2 = ensure_claude_code_training_guards(env2)
-    assert merged2["FOO"] == "bar" and merged2["DISABLE_COMPACT"] == "1"
+    assert merged2["FOO"] == "bar" and "DISABLE_COMPACT" not in merged2
+    # 用户自己在 extra-envs 里放 DISABLE_COMPACT 不再是"守卫冲突"：它不属于守卫表，原样保留（不推荐，运行配置应留痕）
+    env2b = {"SLIME_AGENT_CC_EXTRA_ENVS": '{"DISABLE_COMPACT": "1"}'}
+    assert ensure_claude_code_training_guards(env2b)["DISABLE_COMPACT"] == "1"
 
     env3 = {"SLIME_AGENT_CC_EXTRA_ENVS": "[1, 2]"}
     with pytest.raises(SlimeBindingError, match="cc_extra_envs_not_object"):
@@ -1885,20 +1874,22 @@ def test_adapter_status_not_404_guard():
         assert_adapter_status_not_404(404)
 
 
-def test_compaction_disabled_env_reaches_child_process():
-    """FA-0 验收探针（本地冒烟替身）：子进程真实读到 DISABLE_COMPACT=1。
+def test_training_guard_env_reaches_child_process_without_disable_compact():
+    """FA-0 验收探针（本地冒烟替身）：子进程真实读到守卫键（MAX_RETRIES=0），且没有 DISABLE_COMPACT。
 
     真实 CC 子进程的验真挂 FA-5 短租（slime claude_code.py 合并逻辑同源）；
     本测试证明"env 准备 -> 子进程可见"这一段管道无泄漏。
     """
 
     env = dict(_os.environ)
+    env.pop("SLIME_AGENT_CC_EXTRA_ENVS", None)
     ensure_claude_code_training_guards(env)
     out = _subprocess.run(
         [
             _sys.executable,
             "-c",
-            "import os, json; print(json.loads(os.environ['SLIME_AGENT_CC_EXTRA_ENVS'])['DISABLE_COMPACT'])",
+            "import os, json; e = json.loads(os.environ['SLIME_AGENT_CC_EXTRA_ENVS']); "
+            "print(e['CLAUDE_CODE_MAX_RETRIES'], 'DISABLE_COMPACT' in e)",
         ],
         env=env,
         capture_output=True,
@@ -1906,7 +1897,7 @@ def test_compaction_disabled_env_reaches_child_process():
         check=True,
         timeout=30,
     )
-    assert out.stdout.strip() == "1"
+    assert out.stdout.strip() == "0 False"
 
 
 async def test_poison_actively_cancels_running_harness():

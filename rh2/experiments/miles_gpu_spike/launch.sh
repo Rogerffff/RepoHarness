@@ -38,8 +38,9 @@
 #
 # 硬钉死（本脚本内不可被环境覆盖——覆盖 = 换实验，应改脚本并留痕）：
 #   RH2_MODEL_ID=Qwen/Qwen3-30B-A3B；RH2_EXECUTION_MODE=s1_compat（pre-formal，见下）；
-#   RH2_REQUIRE_REAL_WEIGHT_VERSIONS=1、RH2_REJECT_CONTEXT_SHRINK=1、
-#   RH2_REJECT_NONZERO_HARNESS_EXIT=1；RH2_EXPECT_MOE_ROUTING=1、
+#   RH2_REQUIRE_REAL_WEIGHT_VERSIONS=1、RH2_REJECT_NONZERO_HARNESS_EXIT=1（第三组 I19
+#   已删除 RH2_REJECT_CONTEXT_SHRINK 与 DISABLE_COMPACT 注入：恢复 CC 正常压缩，上下文改写由
+#   I01 B 表示分行；带压缩的长任务结果与此前禁压缩的 spike 不能直接混比）；RH2_EXPECT_MOE_ROUTING=1、
 #   RH2_MOE_NUM_LAYERS=48、RH2_MOE_ROUTER_TOPK=8（HF config 核实：num_hidden_layers=48、
 #   num_experts_per_tok=8、decoder_sparse_step=1 且 mlp_only_layers=[] ⇒ 48 层全 MoE；
 #   与 miles scripts/models/qwen3-30B-A3B.py、slime scripts/models/qwen3-30B-A3B.sh 一致）；
@@ -78,7 +79,6 @@ die()  { echo "[gpu-spike] FAIL: $*" >&2; exit 1; }
 export RH2_MODEL_ID="Qwen/Qwen3-30B-A3B"
 export RH2_EXECUTION_MODE="s1_compat"               # pre-formal；见文件头说明
 export RH2_REQUIRE_REAL_WEIGHT_VERSIONS="1"         # parse_bool_env_flag 严格 "0"/"1"
-export RH2_REJECT_CONTEXT_SHRINK="1"
 export RH2_REJECT_NONZERO_HARNESS_EXIT="1"
 export RH2_EXPECT_MOE_ROUTING="1"
 export RH2_MOE_NUM_LAYERS="48"
@@ -385,7 +385,6 @@ RUNTIME_ENV_JSON="{
     \"RH2_MODEL_ID\": \"${RH2_MODEL_ID}\",
     \"RH2_EXECUTION_MODE\": \"${RH2_EXECUTION_MODE}\",
     \"RH2_REQUIRE_REAL_WEIGHT_VERSIONS\": \"${RH2_REQUIRE_REAL_WEIGHT_VERSIONS}\",
-    \"RH2_REJECT_CONTEXT_SHRINK\": \"${RH2_REJECT_CONTEXT_SHRINK}\",
     \"RH2_REJECT_NONZERO_HARNESS_EXIT\": \"${RH2_REJECT_NONZERO_HARNESS_EXIT}\",
     \"RH2_EXPECT_MOE_ROUTING\": \"${RH2_EXPECT_MOE_ROUTING}\",
     \"RH2_MOE_NUM_LAYERS\": \"${RH2_MOE_NUM_LAYERS}\",

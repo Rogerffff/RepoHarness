@@ -470,12 +470,10 @@ class ClaudeCodeDriver:
                 check=True,
                 timeout=bounded(900),
             )
-            # D-FA-6 接线（FA-1，FA-0 递延项）：DISABLE_COMPACT=1 合并进
-            # SLIME_AGENT_CC_EXTRA_ENVS——slime ClaudeCodeHarness 会把该 JSON 并入
-            # CC 子进程环境。merged 存 self 供 evidence 采集；真实子进程验真挂
-            # FA-5 短租（本机无法冒烟真实 CC）。警示：env 只关 auto/manual compact，
-            # Microcompact/Context Collapse 由装配期收缩检测兜底（generate.py）。
-            self.compaction_guard_envs = ensure_claude_code_training_guards(os.environ)
+            # CC 训练守卫（重试 / fallback 三个键）合并进 SLIME_AGENT_CC_EXTRA_ENVS——slime
+            # ClaudeCodeHarness 会把该 JSON 并入 CC 子进程环境；merged 存 self 供 evidence 采集。
+            # 第三组 I19（owner 2026-09-10）：不再注入 DISABLE_COMPACT，压缩由 I01 B 表示分行处理。
+            self.cc_training_guard_envs = ensure_claude_code_training_guards(os.environ)
             left = remaining()
             if left <= 0:
                 return budget_exhausted("after_bootstrap")
@@ -1221,9 +1219,9 @@ class BringupService:
         # codex Wave3 §9.4：owner loop 兜底绑定（__init__ 在同一个 loop 上跑，正常情况下这里是
         # no-op；只有"构造时无 running loop"的装配方式才在这里补上）。首次绑定生效，不改绑。
         self._bind_owner_loop()
-        # D-FA-6 接线（FA-1）：启动即把 DISABLE_COMPACT=1 合并进
-        # SLIME_AGENT_CC_EXTRA_ENVS（幂等；driver.run 内再合并一次是 no-op），
-        # merged dict 进 startup evidence 供 inspector 比对。
+        # 启动即把 CC 训练守卫（重试 / fallback 三个键；I19 之后不含 DISABLE_COMPACT）合并进
+        # SLIME_AGENT_CC_EXTRA_ENVS（幂等；driver.run 内再合并一次是 no-op），merged dict 进
+        # startup evidence 供 inspector 比对。
         # F2-2 复核四轮 P1-4：模式/组合校验前移到**任何副作用之前**
         # （adapter 线程在 __init__ 已起，属既有结构——其生命周期回滚
         # 登记 FA-5；本函数内的副作用从这里开始全部受校验保护）
@@ -1271,13 +1269,13 @@ class BringupService:
         在同一事务内，任一步失败由 async_start 的统一回滚清理 queue+app）。"""
 
         # 八轮：纯配置/CC guard 在资源型副作用（probe/queue）之前
-        self.cc_compaction_guard_envs = None
+        self.cc_training_guard_envs = None
         if HARNESS_KIND == "claude_code":
             from repoharness2.adapters.slime.generate import (
                 ensure_claude_code_training_guards,
             )
 
-            self.cc_compaction_guard_envs = ensure_claude_code_training_guards(os.environ)
+            self.cc_training_guard_envs = ensure_claude_code_training_guards(os.environ)
         await self._run_startup_checks()
         # W3b：起本 run 的 egress relay + 在真实容器上验证两个 profile（一次），记录写 run evidence；
         # 任一必需项不符 → StartupCheckError，训练不启动（同 profile 补采不会修好它）。
@@ -1322,9 +1320,6 @@ class BringupService:
             require_real_weight_versions=parse_bool_env_flag(
                 "RH2_REQUIRE_REAL_WEIGHT_VERSIONS",
                 os.environ.get("RH2_REQUIRE_REAL_WEIGHT_VERSIONS"),
-            ),
-            reject_context_shrink=parse_bool_env_flag(
-                "RH2_REJECT_CONTEXT_SHRINK", os.environ.get("RH2_REJECT_CONTEXT_SHRINK")
             ),
             # codex 轮次 9 P0-3：正式链默认联动拒绝非零 harness exit（启动
             # 断言强制耦合；env 只允许在非正式链下显式关）
@@ -1660,10 +1655,12 @@ class BringupService:
         # W3b：run 级 profile 摘要（完整记录在 runtime_profile.json）与 harness 侧代理地址
         evidence["runtime_profile_digest"] = self.runtime_profile_digest
         evidence["harness_adapter_url"] = self.harness_adapter_url
-        # D-FA-6 探针证据：合并进 CC 子进程环境的 extra-envs（async_start 急切
-        # 合并；inspector 比对 DISABLE_COMPACT=1 在场，FA-5 短租对真实子进程验真）
-        evidence["cc_compaction_guard_envs"] = getattr(
-            self, "cc_compaction_guard_envs", None
+        # 探针证据：合并进 CC 子进程环境的 extra-envs（async_start 急切合并；inspector 比对三个
+        # 重试 / fallback 键在场；I19 之后不再要求 DISABLE_COMPACT）。旧键名 cc_compaction_guard_envs 已停用。
+        evidence["cc_training_guard_envs"] = getattr(self, "cc_training_guard_envs", None)
+        # I19：已删除的旧开关若仍在环境里（旧 launcher / 手工 export），只记事实、不生效、不报错
+        evidence["obsolete_env_flags_ignored"] = sorted(
+            name for name in ("RH2_REJECT_CONTEXT_SHRINK",) if os.environ.get(name) is not None
         )
         self.probe_evidence = evidence
         (ARTIFACT_DIR / "startup_evidence.json").write_text(

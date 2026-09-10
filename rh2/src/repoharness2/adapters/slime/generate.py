@@ -1062,7 +1062,11 @@ def parse_bool_env_flag(name: str, raw: str | None, *, default: bool = False) ->
 
 # CC 训练守卫环境（codex 轮次 8 源码引导验证：CC 2.1.205 源码 + 黑盒实测）。
 # 值语义（`fa/claude_code_retry_timeout_source_guided_validation.md`）：
-# - DISABLE_COMPACT=1：关 auto/manual compaction（D-FA-6）；
+# - （第三组 I19，owner 2026-09-10 定案）**不再注入 DISABLE_COMPACT=1**：恢复 harness 正常压缩。
+#   上下文改写（auto/manual compact、Microcompact、工具结果裁剪）由 I01 B 表示处理——请求不再是精确
+#   token 前缀延续时分行（fork_threshold_tokens=0），旧动作保留自己的训练行；同策略捕获入口生成的
+#   摘要是一次真实动作（训练一次、用终局 reward、计入实际接纳的模型请求数），重注入后只是 prompt。
+#   会话级 prompt 长度下降只留 audit 线索（context_shrink_reasons），不是压缩次数，也不拒绝。
 # - CLAUDE_CODE_MAX_RETRIES=0：CC 自带重试改用 withRetry.ts，默认最多 11 次
 #   请求，置 0 使 500/429/断连都只发 1 次——proxy 成为唯一重试 owner；
 # - CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK=1：关流式中断后的非流式重发；
@@ -1072,7 +1076,6 @@ def parse_bool_env_flag(name: str, raw: str | None, *, default: bool = False) ->
 # fallback 开关再发一次非流式请求（claude.ts:2607 分支不检查禁用变量）——
 # 因此 adapter **任何错误路径都不得返回 404**（见 assert_adapter_status_not_404）。
 CLAUDE_CODE_TRAINING_GUARD_ENVS: dict[str, str] = {
-    "DISABLE_COMPACT": "1",
     "CLAUDE_CODE_MAX_RETRIES": "0",
     "CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK": "1",
     "CLAUDE_CODE_UNATTENDED_RETRY": "0",
@@ -1086,11 +1089,10 @@ def ensure_claude_code_training_guards(env: MutableMapping[str, str]) -> dict[st
     子进程环境；返回合并后的 extra-envs dict 作为 audit 证据。冲突检测：
     已有值与守卫值不符即 fail-closed（用户不得覆盖正式防线）。
 
-    警示（CC 压缩文档 + 源码验证）：DISABLE_COMPACT 只覆盖 auto/manual
-    compact；Microcompact / Context Collapse 是独立压缩层——**装配期上下文
-    收缩检测（reject_context_shrink）是硬兜底**。MAX_RETRIES=0 等只减负 CC
-    自身重试，**session poison + execution 主动终止**仍是不可归因故障的主
-    防线（404 例外证明环境变量不是完整闭环）。
+    第三组 I19（owner 2026-09-10 定案）：这里**不再**注入 DISABLE_COMPACT——压缩是 harness 的正常行为，
+    上下文改写由 I01 B 表示分行处理（见 CLAUDE_CODE_TRAINING_GUARD_ENVS 上方说明）。MAX_RETRIES=0 等
+    只减负 CC 自身重试，**session poison + execution 主动终止**仍是不可归因故障的主防线（404 例外证明
+    环境变量不是完整闭环）。
     """
 
     merged: dict[str, str] = {}
@@ -1138,20 +1140,13 @@ def assert_adapter_status_not_404(status: int) -> int:
 def detect_context_shrink(
     turns: Sequence[TurnTape], *, shrink_ratio: float = 0.6
 ) -> list[str]:
-    """检测一条轮序列中"无法解释的上下文收缩"（D-FA-6 兜底信号）。
+    """会话级"上下文长度下降"线索（第三组 I19 之后**只是观测**，不再有任何硬拒绝）。
 
-    正常多轮会话的 prompt 单调增长（历史累积）；thinking 剥离/REALIGN 只会
-    小幅缩短，compaction / Microcompact / Context Collapse 则把历史替换成
-    摘要——prompt 大幅坍缩。判据：某轮 prompt_token_count <
-    shrink_ratio ×（此前最大 prompt_token_count）。ratio 预注册 0.6
-    （05 计划 D-FA-6；黄线，FA-5 冒烟后校准），返回逐条理由串（空 = 未检出）。
-
-    **作用域警示（codex FA-0 审查严重 2）**：Claude Code 的子 agent 与主
-    agent 共享同一 session id（harness 用 ANTHROPIC_AUTH_TOKEN=session_id，
-    adapter 以该 token 归组）——**session 级全量 tapes 上跑本检测会把
-    "长上下文主 agent 之后启动短上下文子 agent"误判为收缩**。因此：
-    session 级结果只作 audit 信号；硬拒绝只允许在**叶链自己的入链轮序列**
-    （lineage 内）上执行——编排层照此接线，调用方不得反着用。
+    判据：某轮 prompt_token_count < shrink_ratio ×（此前最大 prompt_token_count），返回逐条理由串
+    （空 = 未检出）。它只说明同一 session 里后来的请求比之前短：压缩、工具结果裁剪、短上下文子 agent
+    都会触发，**不能当压缩次数用，也不能据此拒绝**。历史：D-FA-6 曾在叶链级用它硬拒绝"compaction 嫌疑"；
+    I01 B 接线（fork_threshold_tokens=0）后同一训练行只接受精确 token 前缀延续、prompt 长度单调不降，
+    叶链级检测结构上不可触发，第三组 I19 已连同 DISABLE_COMPACT 注入一起清理（owner 2026-09-10）。
     """
 
     if not (0.0 < shrink_ratio < 1.0) or not math.isfinite(shrink_ratio):
@@ -1750,12 +1745,6 @@ def validate_execution_config(
                 f"policy_version={version!r} 不是十进制整数——引擎 update_weights "
                 "计数器语义要求数值版本，staleness 派生依赖它。",
             ) from None
-        if not config.reject_context_shrink:
-            raise StartupCheckError(
-                "context_shrink_rejection_disabled_in_formal_chain",
-                "require_real_weight_versions=True 必须同时开启 "
-                "reject_context_shrink——D-FA-6 的收缩兜底是硬要求。",
-            )
 
 
 class SessionAdapter(Protocol):
@@ -1979,7 +1968,6 @@ class SlimeBindingConfig:
     # D-FA-6 兜底：装配期检测到"无法解释的上下文收缩"（compaction/Microcompact/
     # Context Collapse 的机械信号）时整条轨迹 fail-closed 退出（收口为 abort 形状，
     # remove_sample=True）。默认 False 保 S1 行为不变；正式 GRPO 基线必须 True。
-    reject_context_shrink: bool = False
     context_shrink_ratio: float = 0.6  # 预注册黄线（05 计划 D-FA-6），FA-5 校准
     # P0-2/轮次 9 P0-3（codex）：正式链下 harness 非零退出即拒绝该 execution。
     # 语义澄清（轮次 9 纠正轮次 8 的错误理由）：任务失败负样本 = CC **exit 0**
@@ -3104,10 +3092,9 @@ class RolloutOrchestrator:
                     "或钩子没接上（A4：无捕获事实的轨迹不可训练）。",
                 )
             audit.step("step4_capture_records_ready")
-            # D-FA-6 兜底（session 级）：只作 audit 信号，不硬拒绝——CC 子 agent
-            # 与主 agent 共享 session id，session 级比较会误杀合法的短上下文
-            # 子 agent（codex FA-0 审查严重 2）。硬拒绝在叶链级执行（见下方
-            # 装配循环，lineage 内比较）。
+            # 会话级上下文长度下降线索：只进 audit（context_shrink_reasons），不拒绝。第三组 I19
+            # （owner 2026-09-10）：压缩是正常 harness 行为，上下文改写由 B 表示分行处理；原叶链级硬拒绝
+            # 在 fork_threshold_tokens=0 下结构上不可触发，已删除。
             session_shrink = detect_context_shrink(
                 hook.tapes, shrink_ratio=self.config.context_shrink_ratio
             )
@@ -3137,22 +3124,6 @@ class RolloutOrchestrator:
                             f"叶链 {facts.branch_id} 回链 {record_id!r} 不在捕获轮次里。",
                         )
                     turns.append(tape)
-                # D-FA-6 硬拒绝（叶链级）：只在该叶链自己的入链轮序列上检测
-                # ——lineage 内的 prompt 坍缩没有"子 agent 独立会话"这种合法
-                # 解释，检出即整条轨迹 fail-closed 退出基线。
-                branch_shrink = detect_context_shrink(
-                    turns, shrink_ratio=self.config.context_shrink_ratio
-                )
-                if branch_shrink:
-                    audit.context_shrink_reasons.extend(
-                        f"branch {facts.branch_id}: {reason}" for reason in branch_shrink
-                    )
-                    if self.config.reject_context_shrink:
-                        raise SlimeBindingError(
-                            "context_shrink_detected",
-                            f"叶链 {facts.branch_id} 检测到无法解释的上下文收缩"
-                            "（compaction 嫌疑），轨迹退出基线：" + "; ".join(branch_shrink),
-                        )
                 # F1 身份制：树侧身份 span 在场（bringup 链）即走身份路径
                 # ——归属直取、token 相等只作校验断言；span 缺席（mock/
                 # default_leaf_facts 旧链）走原 token 锚定逻辑，行为不动。

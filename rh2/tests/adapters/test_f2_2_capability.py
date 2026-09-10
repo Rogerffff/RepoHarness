@@ -482,12 +482,7 @@ def test_fa_formal_startup_gates():
             _formal_config(policy_version="v5", execution_mode="fa_formal"),
             _GrantBarrier(),
         )
-    with pytest.raises(Exception, match="context_shrink_rejection_disabled"):
-        validate_execution_config(
-            _formal_config(policy_version="5", execution_mode="fa_formal",
-                           reject_context_shrink=False),
-            _GrantBarrier(),
-        )
+    # 第三组 I19（owner 2026-09-10）：收缩拒绝与正式链的启动耦合已删除，不再有对应 StartupCheckError
 
 
 async def test_replay_same_sample_keeps_stable_trajectory():

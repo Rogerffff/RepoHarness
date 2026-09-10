@@ -57,7 +57,6 @@ def _prepare(bringup, monkeypatch, tmp_path, *, with_prepared: bool = True, real
     monkeypatch.setattr(bringup, "_SERVICE_LOCK", asyncio.Lock())
     monkeypatch.setenv("HF_HUB_OFFLINE", "1")
     monkeypatch.setenv("RH2_REQUIRE_REAL_WEIGHT_VERSIONS", real_versions)
-    monkeypatch.setenv("RH2_REJECT_CONTEXT_SHRINK", "1")
     monkeypatch.setenv("RH2_REJECT_NONZERO_HARNESS_EXIT", "1")
     monkeypatch.delenv("MILES_RH2_RUN_ID", raising=False)
     return fx
