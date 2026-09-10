@@ -34,3 +34,11 @@
 ## 5. 不做
 
 不新增 producer、设备侧统计、告警阈值、常驻服务；不接路由一致率；不改 reward / loss / 准入 / 处置；不重写 `drop_events.py` 已有汇总，只调用。
+
+## 6. 实施状态（写于提交后）
+
+- 提交：`run_report.py` 与 `tests/adapters_miles/test_run_report.py` `a467d885`；lanes manifest 计数 `a8e49e0d`（+7 双 lane）。
+- 证据（作者本机，不是 Codex 验收）：`uv run ruff check src tests` 全过；全量 `pytest tests -q`（集成树）**2261 passed, 0 skipped, 0 failed（157s）**；lanes 清净环境实跑 lane A **414 passed / 318 skipped**、lane B **732 passed / 0 skipped**。合成行 + 真实汇总器，没有真实 run 文件、GPU 或 Docker。
+- 与 Brief §2 的偏离：无新增 producer。首版对"进行中 attempt 数"只能报 None（audit 只覆盖已结束 attempt），对"优势符号"只报 reward−组均值 的近似并标注；有界 log-ratio 分布、学习率、GPU / 容器资源三项按 §2 标 not_collected。`train_step.metrics` 只在 pp 末段行上有，去重时优先取带 metrics 的行。
+- 下一步（不在本版）：真实 run 目录上跑一次核对启用条件与键（随原定 GPU 作业）；缺口按 §2 表补少量 producer 时另出小 Brief。
+
