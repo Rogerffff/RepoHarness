@@ -182,7 +182,9 @@ def test_unknowns_legacy_rows_foreign_runs_and_unmatched_snapshots_are_kept_sepa
     s = costs(rows, run_id="r1")
     consumed = s["terminals"]["consumed"]
     assert consumed["member_fields"]["elapsed_seconds"] == {"count": 0, "min": None, "p50": None, "max": None, "sum": None, "unknown": 1}
-    assert consumed["group_cost_seconds"] == {"count": 1, "min": 0.0, "p50": 0.0, "max": 0.0, "sum": 0.0, "unknown": 1}
+    # R6（Codex 集成审查）：唯一成员 elapsed 未知 → 组成本"未知"，不再输出数值 0
+    assert consumed["group_cost_seconds"] == {"count": 0, "min": None, "p50": None, "max": None, "sum": None, "unknown": 1}
+    assert consumed["groups_cost_unknown"] == 1 and consumed["groups_with_unknown_members"] == 1
     assert s["terminals"]["staleness_exceeded"]["groups_without_snapshots"] == 1
     assert s["legacy_rows"] == 1 and s["unmatched_snapshots"] == 1
     assert s["rows_skipped"] == {"foreign_run": 1, "malformed": 1}
@@ -200,3 +202,75 @@ def test_cli_costs_flag_writes_cost_summary(tmp_path):
     summary = json.loads(out.read_text(encoding="utf-8"))
     assert summary["schema_id"] == "rh2.attempt_cost_summary.v1"
     assert summary["terminals"]["consumed"]["group_cost_seconds"]["sum"] == 12.0
+
+
+# ---------------------------------------------------------------------------
+# Codex 第 2 组剩余集成审查 R5 / R6：连接键含 run 身份；按根因 / 按 task 的成本分布；缺失与未知口径
+# ---------------------------------------------------------------------------
+
+
+def test_same_group_id_in_two_runs_is_not_joined_without_run_filter(costs):
+    """R5：组 id（miles_g{index}）只在 run 内唯一。A 消费组 10s、B 丢弃组 100s，默认汇总不得各成 110s。"""
+
+    rows = [
+        _snap("a#p1", "miles_g0", elapsed=10.0, run="run_a"), _consumed("A", 0, rh2_prompt_group_id="miles_g0", run_id="run_a"),
+        _snap("b#p1", "miles_g0", elapsed=100.0, run="run_b", hint="aborted", reason="harness_crash"),
+        _drop("put_aborted", "A", reason="aborted_member", rh2_prompt_group_id="miles_g0", run_id="run_b",
+              aborted_members=[{"index": 0, "member_slot": 0, "physical_attempt_id": "b#p1"}]),
+    ]
+    s = costs(rows)  # 不指定 run：仍按 (run_id, 组) 连接
+    assert s["terminals"]["consumed"]["members_observed"] == 1 and s["terminals"]["consumed"]["group_cost_seconds"]["sum"] == 10.0
+    assert s["terminals"]["aborted_member"]["members_observed"] == 1 and s["terminals"]["aborted_member"]["group_cost_seconds"]["sum"] == 100.0
+    assert s["terminals"]["aborted_member"]["root_cause_reasons"] == {"harness_crash": 1}
+    assert s["unmatched_snapshots"] == 0
+    only_a = costs(rows, run_id="run_a")
+    assert set(only_a["terminals"]) == {"consumed"} and only_a["rows_skipped"]["foreign_run"] == 2
+
+
+def test_cost_by_root_cause_and_by_task_keep_the_dimensions_apart(costs):
+    """R6：拉镜像失败 10s 与 hard wall 900s 两个根因、两个 task——分布按根因与 task 分开，不混成一个耗时分布。"""
+
+    rows = [
+        _snap("a#p1", "g1", elapsed=10.0, hint="aborted", reason="grading_image_pull_failed"),
+        _drop("put_aborted", "A", reason="aborted_member", rh2_prompt_group_id="g1", member_count=1,
+              aborted_members=[{"index": 0, "member_slot": 0, "physical_attempt_id": "a#p1"}]),
+        _row("attempt_cost_snapshot", physical_attempt_id="b#p1", rh2_prompt_group_id="g2", task_id="B",
+             disposition_hint="present", reason_code="hard_wall_timeout", elapsed_seconds=900.0, accepted_turns=25),
+        _drop("put_aborted", "B", reason="aborted_member", rh2_prompt_group_id="g2", member_count=1,
+              aborted_members=[{"index": 0, "member_slot": 0, "physical_attempt_id": "b#p1"}]),
+        _snap("c#p1", "g3", elapsed=50.0), _consumed("A", 1, rh2_prompt_group_id="g3", member_count=1),
+    ]
+    s = costs(rows, run_id="r1")
+    aborted = s["terminals"]["aborted_member"]
+    assert aborted["root_cause_reasons"] == {"grading_image_pull_failed": 1, "hard_wall_timeout": 1}
+    cause = aborted["by_root_cause"]
+    assert cause["grading_image_pull_failed"]["members"] == 1 and cause["grading_image_pull_failed"]["member_fields"]["elapsed_seconds"]["max"] == 10.0
+    assert cause["hard_wall_timeout"]["member_fields"]["elapsed_seconds"]["min"] == 900.0
+    assert cause["hard_wall_timeout"]["member_fields"]["accepted_turns"]["sum"] == 25.0
+    assert aborted["group_cost_seconds"] == {"count": 2, "min": 10.0, "p50": 10.0, "max": 900.0, "sum": 910.0, "unknown": 0}
+    by_task = s["by_task"]
+    assert by_task["A"] == {
+        "groups": 2, "consumed_groups": 1, "dropped_groups": {"aborted_member": 1}, "members_observed": 2,
+        "member_fields": by_task["A"]["member_fields"],
+    }
+    assert by_task["A"]["member_fields"]["elapsed_seconds"] == {"count": 2, "min": 10.0, "p50": 10.0, "max": 50.0, "sum": 60.0, "unknown": 0}
+    assert by_task["B"]["dropped_groups"] == {"aborted_member": 1} and by_task["B"]["member_fields"]["elapsed_seconds"]["sum"] == 900.0
+
+
+def test_missing_member_snapshots_give_a_lower_bound_not_a_complete_group_cost(costs):
+    """R6：终局说 8 个成员、只有 7 份快照 → 已知部分和 4200 只作下界（known_partial），不进完整组成本；
+    7 份齐全但其中 1 份 elapsed 未知 → 同样只是下界；全部齐全已知 → 完整。"""
+
+    rows = [_snap(f"g1#p{i}", "g1", elapsed=600.0) for i in range(7)]
+    rows.append(_consumed("A", 0, rh2_prompt_group_id="g1", member_count=8))
+    rows += [_snap(f"g2#p{i}", "g2", elapsed=600.0) for i in range(6)] + [_snap("g2#p6", "g2", elapsed=None)]
+    rows.append(_consumed("A", 0, rh2_prompt_group_id="g2", member_count=7))
+    rows += [_snap(f"g3#p{i}", "g3", elapsed=100.0) for i in range(2)]
+    rows.append(_consumed("A", 0, rh2_prompt_group_id="g3", member_count=2))
+    consumed = costs(rows, run_id="r1")["terminals"]["consumed"]
+    assert consumed["groups"] == 3 and consumed["members_observed"] == 16
+    assert consumed["groups_with_missing_members"] == 1 and consumed["groups_with_unknown_members"] == 1
+    assert consumed["group_cost_seconds"] == {"count": 1, "min": 200.0, "p50": 200.0, "max": 200.0, "sum": 200.0, "unknown": 0}
+    assert consumed["group_cost_seconds_known_partial"] == {"count": 2, "min": 3600.0, "p50": 3600.0, "max": 4200.0, "sum": 7800.0, "unknown": 2}
+    assert consumed["groups_cost_unknown"] == 0
+

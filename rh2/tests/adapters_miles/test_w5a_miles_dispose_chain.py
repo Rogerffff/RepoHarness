@@ -168,7 +168,9 @@ def _assemble_rh2_service(monkeypatch) -> tuple:
     service.registry = CaptureRegistry()
     service.adapter = SimpleNamespace(drop_session=None)
     service.app_handle = None
-    service.grading_manager = SWEGradingManager(GradingManagerConfig(), docker=None)
+    service.grading_manager = SWEGradingManager(
+        GradingManagerConfig(), docker=None, stop_requested=service._grading_stop_requested  # R4：与生产接线一致
+    )
     service.grading_queue = GradingQueue(service.grading_manager, GradingQueueConfig(concurrency=1, queue_size=1))
     service._queue_started = False
     service.events_path = tmp / "bringup_events.jsonl"

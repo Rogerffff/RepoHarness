@@ -7,6 +7,7 @@ test_manager_docker.py；这里用桩把控制流逐条钉死。
 import asyncio
 import subprocess
 import sys
+import time
 
 import pytest
 from grading_fixtures import (
@@ -1059,3 +1060,188 @@ async def test_shutdown_between_attempts_blocks_the_second_attempt():
     report = await manager.grade(trajectory_id="traj_regrade_closed", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec())
     assert report.outcome == "failed_to_grade" and report.infra_failure_detail.startswith("grading_image_pull_failed")
     assert state["n"] == 1 and manager.regrade_events == []
+
+
+# ---------------------------------------------------------------------------
+# Codex 第 2 组剩余集成审查 R1 / R2 / R4：容器所有权先于创建请求；共同期限覆盖全部工作等待；停止事实阻止追加
+# ---------------------------------------------------------------------------
+
+
+def _live_tracking_docker(fake: FakeDocker, *, run_result=None, hang_on=None):
+    """替身：`docker run` 一到就把名字记为"可能已创建"（模拟请求已到 daemon、回包丢失 / 被取消），rm 才移除；
+    run_result 给定时 run 返回它（不真正创建）；hang_on=(cmd, needle) 时该命令挂起直到被取消。"""
+
+    state = {"created": [], "live": set(), "cancelled": [], "calls": []}
+
+    async def docker(*args, input_bytes=None):
+        state["calls"].append(args)
+        if args[0] == "run":
+            name = args[args.index("--name") + 1]
+            state["created"].append(name)
+            state["live"].add(name)
+            if run_result is not None:
+                return run_result
+        if args[0] == "rm":
+            state["live"].discard(args[-1])
+        if hang_on is not None and args[0] == hang_on[0] and any(hang_on[1] in str(a) for a in args):
+            try:
+                await asyncio.sleep(3600)
+            except asyncio.CancelledError:
+                state["cancelled"].append(hang_on[1])
+                raise
+        return await FakeDocker.__call__(fake, *args, input_bytes=input_bytes)
+
+    return docker, state
+
+
+async def test_second_reply_loss_still_closes_the_second_container_name():
+    """R1：两次 `docker run` 都回包丢失——第二次失败此前直接 raise、绕过登记：第二个名字无人记账。
+    现在所有权在创建请求之前登记，两个名字都按名收口，close() 的 containers_open 才有意义。"""
+
+    fake = FakeDocker(base_commit=BASE)
+    manager = make_manager(fake)
+    manager._docker, state = _live_tracking_docker(fake, run_result=ExecResult(1, "", DAEMON_RESET))
+    report = await manager.grade(trajectory_id="traj_two_losses", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec())
+    assert report.outcome == "failed_to_grade" and "first_attempt: grading_container_start_failed" in report.infra_failure_detail
+    assert len(state["created"]) == 2 and state["live"] == set()  # 两个名字都被 rm
+    assert set(fake.removed) == set(state["created"])
+    assert len(manager.container_records) == 2 and all(r.removed for r in manager.container_records)
+    assert len(manager.regrade_events) == 1
+    assert (await manager.close())["containers_open"] == []
+
+
+async def test_deadline_during_container_start_closes_the_name_it_may_have_created():
+    """R1：创建期间评分期限到点——到期异常不带名字也不能绕过收口：记录已登记、rm 已发出。"""
+
+    fake = FakeDocker(base_commit=BASE)
+    manager = make_manager(fake)
+    manager._docker, state = _live_tracking_docker(fake, hang_on=("run", "--name"))
+    report = await asyncio.wait_for(
+        manager.grade(trajectory_id="traj_start_deadline", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec(),
+                      deadline_monotonic=time.monotonic() + 0.2),
+        timeout=5,
+    )
+    assert report.outcome == "failed_to_grade" and report.infra_failure_detail == "grading_deadline_exhausted:container_start"
+    assert state["cancelled"] == ["--name"] and state["live"] == set() and fake.removed == state["created"]
+    assert [r.removed for r in manager.container_records] == [True]
+    assert (await manager.close())["containers_open"] == []
+
+
+async def test_outer_cancellation_during_container_start_closes_the_name():
+    """R1：外层取消（queue close(drain=False) / run-fatal 撤 worker）落在 `docker run` 的 await 上：同样按名收口。"""
+
+    fake = FakeDocker(base_commit=BASE)
+    manager = make_manager(fake)
+    manager._docker, state = _live_tracking_docker(fake, hang_on=("run", "--name"))
+    task = asyncio.create_task(
+        manager.grade(trajectory_id="traj_start_cancel", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec())
+    )
+    while not state["created"]:
+        await asyncio.sleep(0.01)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert state["live"] == set() and fake.removed == state["created"]
+    assert [r.removed for r in manager.container_records] == [True]
+
+
+async def test_image_ref_inspect_is_bounded_by_the_shared_deadline_and_the_container_is_cleaned():
+    """R2：启动后的镜像 digest 比对（两次 inspect）此前直接 await——挂住即越过期限；现在受期限约束并收口容器。"""
+
+    digest = "sha256:" + "1" * 64  # 正式 digest 分支（image_local_build 豁免不在场）才会有这两次 inspect
+    fake = FakeDocker(base_commit=BASE, repo_digests=("docker.io/fake/img@" + digest,))
+    manager = make_manager(fake)
+    manager._docker, state = _live_tracking_docker(fake, hang_on=("inspect", "{{.Image}}"))
+    report = await asyncio.wait_for(
+        manager.grade(trajectory_id="traj_digest_hang", workspace=FakeWorkspace(GOOD_PATCH),
+                      spec=make_spec(image_manifest_digest=digest), deadline_monotonic=time.monotonic() + 0.2),
+        timeout=5,
+    )
+    assert report.outcome == "failed_to_grade" and report.infra_failure_detail == "grading_deadline_exhausted:image_ref_inspect"
+    assert state["cancelled"] == ["{{.Image}}"] and state["live"] == set()
+    assert (await manager.close())["containers_open"] == []
+
+
+async def test_peak_memory_read_is_skipped_once_the_deadline_is_exhausted():
+    """R2：到期异常分支里的可选内存峰值读取不能再发起 I/O（否则它挂住就没有随后的容器清理）。"""
+
+    fake = FakeDocker(base_commit=BASE)
+    manager = make_manager(fake)
+    manager._docker, state = _live_tracking_docker(fake, hang_on=("exec", "rev-parse HEAD"))
+    report = await asyncio.wait_for(
+        manager.grade(trajectory_id="traj_peak_skip", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec(),
+                      deadline_monotonic=time.monotonic() + 0.2),
+        timeout=5,
+    )
+    assert report.outcome == "failed_to_grade" and report.infra_failure_detail == "grading_deadline_exhausted:env_reset"
+    assert not any(a[0] == "exec" and "memory.peak" in str(a[-1]) for a in state["calls"])  # 期限耗尽：不读内存
+    assert state["live"] == set() and report.timings.container_peak_memory_mb == 0.0
+    assert (await manager.close())["containers_open"] == []
+
+
+async def test_peak_memory_read_is_bounded_when_time_remains():
+    """R2：有剩余时间时内存读取受 min(剩余, 上限) 约束，超时记 0.0、不改评分结果。"""
+
+    fake = FakeDocker(base_commit=BASE)
+    manager = make_manager(fake)
+    manager._docker, state = _live_tracking_docker(fake, hang_on=("exec", "memory.peak"))
+    report = await asyncio.wait_for(
+        manager.grade(trajectory_id="traj_peak_bounded", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec(),
+                      deadline_monotonic=time.monotonic() + 1.0),
+        timeout=5,
+    )
+    assert report.outcome in ("resolved", "unresolved") and report.timings.container_peak_memory_mb == 0.0
+    assert state["cancelled"] == ["memory.peak"] and state["live"] == set()
+
+
+async def test_stop_requested_hook_declines_the_second_attempt_and_records_it():
+    """R4：run-fatal 已发生 / 评分面已关（queue 排空期间 manager 未 closed）——不启动追加尝试；本次失败按原样返回。"""
+
+    fake = FakeDocker(base_commit=BASE, image_present=False)
+    stop = {"flag": False}
+    manager = make_manager(fake)
+    manager._stop_requested_hook = lambda: stop["flag"]
+    manager._docker, state = _fail_first(fake, "pull", TLS_TIMEOUT, on_fail=lambda: stop.__setitem__("flag", True))
+    report = await manager.grade(trajectory_id="traj_stop_hook", workspace=FakeWorkspace(GOOD_PATCH), spec=make_spec())
+    assert report.outcome == "failed_to_grade" and report.infra_failure_detail.startswith("grading_image_pull_failed")
+    assert state["n"] == 1 and manager.regrade_events == [] and manager.regrade_total == 0
+    (declined,) = manager.regrade_declined
+    assert declined["reason"] == "stop_requested" and declined["op"] == "image_pull" and declined["attempt"] == 1
+    assert not any(c[0] == "run" for c in fake.calls)
+    close = await manager.close()
+    assert close["regrade_declined"] == 1 and close["regrade_total"] == 0 and close["regrade_events"] == 0
+
+
+async def test_rm_no_such_container_is_a_clean_absence_not_a_cleanup_failure():
+    """R1 配套：创建请求从未生效时 `rm -f` 得到 daemon 明确的 "No such container: <name>" —— scope 干净，不算清理失败。"""
+
+    from repoharness2.grading.manager import GradingScopeTerminationError, _ContainerRecord
+
+    fake = FakeDocker(base_commit=BASE)
+    manager = make_manager(fake)
+
+    async def docker(*args, input_bytes=None):
+        if args[0] == "rm":
+            return ExecResult(1, "", f"Error response from daemon: No such container: {args[-1]}")
+        return await FakeDocker.__call__(fake, *args, input_bytes=input_bytes)
+
+    manager._docker = docker
+    record = _ContainerRecord(name="rh2-grading-ghost", trajectory_id="t", created_epoch=time.time(), created_monotonic=time.monotonic())
+    manager._records.append(record)
+    await manager._close_container_scope(record)
+    assert record.removed is True and record.absent_on_remove is True and manager.cleanup_failures == []
+    # 连接类诊断里的 "no such"（指 socket）不算 absent：仍是清理失败 + 状态判定
+    other = _ContainerRecord(name="rh2-grading-other", trajectory_id="t", created_epoch=time.time(), created_monotonic=time.monotonic())
+
+    async def docker2(*args, input_bytes=None):
+        if args[0] == "rm":
+            return ExecResult(1, "", "Cannot connect to the Docker daemon at unix:///var/run/docker.sock: dial unix: no such file or directory")
+        return await FakeDocker.__call__(fake, *args, input_bytes=input_bytes)
+
+    manager._docker = docker2
+    manager._records.append(other)
+    fake.kill_stops = False  # kill 也无效：仍运行 → 有界收口后 run-fatal
+    with pytest.raises(GradingScopeTerminationError):
+        await manager._close_container_scope(other)
+    assert other.removed is False and any("container_rm_failed:rh2-grading-other" in f for f in manager.cleanup_failures)
+

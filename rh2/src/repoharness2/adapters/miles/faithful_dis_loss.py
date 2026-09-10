@@ -847,7 +847,11 @@ def _dis_observation_metrics(
     - ``dis_support_size_*``：动作位按支持集大小的有界分桶（5 桶,之和 = dis_microbatch_provenance_tokens）。
 
     支持集大小从 CSR offsets 差分得到（全量 response 位）,再用与 loss_mask 完全相同的 CP 切分函数取本
-    rank 分片,和 in_trust / advantages 逐位对齐。不加 actor forward、不导出逐 token、不做同步。
+    rank 分片,和 in_trust / advantages 逐位对齐。不加 actor forward、不导出逐 token、不做主机同步（计数留在
+    设备上,由 aggregate_train_losses 汇合后统一读取）。
+
+    日志口径提醒：trainer 最终把这些线性计数跨 microbatch / DP×CP 求和后再 ÷ num_rollouts,日志里看到的是
+    **每 execution 的均值**,不是整 step 的原始 token 总数（与 dis_accepted_tokens 同款）。
     """
 
     support_sizes_full = []
@@ -868,7 +872,9 @@ def _dis_observation_metrics(
     adv_nonzero = advantages != 0
 
     def _count(flags: torch.Tensor) -> torch.Tensor:
-        return torch.tensor(float(int(flags.sum().item())), device=device)
+        # Codex 集成审查 R7：直接返回设备上的计数张量——不做 .item() 主机读取（GPU 上每次都是一次设备同步），
+        # 与既有 metrics 一起交给 aggregate_train_losses 统一读取。
+        return flags.sum(dtype=torch.float32)
 
     out = {
         "dis_nonsingleton_provenance_tokens": _count(provenance_bool & multi),

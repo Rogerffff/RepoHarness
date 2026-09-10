@@ -696,6 +696,7 @@ class GradingInfraError(RuntimeError):
 # 清理 / 收口（_close_container_scope）沿自己的 cleanup_timeout_seconds，不受它约束。
 _GRADING_DEADLINE: ContextVar[float | None] = ContextVar("rh2_grading_deadline_monotonic", default=None)
 GRADING_DEADLINE_EXHAUSTED = "grading_deadline_exhausted"
+_PEAK_MEMORY_READ_TIMEOUT_SEC = 30.0  # R2：可选内存峰值读取的独立上限（与剩余评分期限取小）
 
 
 def grading_deadline_left() -> float | None:
@@ -821,6 +822,8 @@ class _ContainerRecord:
     created_epoch: float
     created_monotonic: float
     removed: bool = False
+    # R1：rm 时 daemon 明确回答"没有这个名字的对象"（创建请求从未生效 / 已删除）——干净收口的诊断事实
+    absent_on_remove: bool = False
     # W3b：本容器的启动前核对摘要（profile 在场时必有；None = legacy 参数）
     prelaunch: dict[str, Any] | None = None
     # F2：候选测试前的控制面权限布置自证（PROTECTED_FILES/DIRS、MISSING_FILES、TESTBED_STAT）
@@ -987,9 +990,14 @@ class SWEGradingManager:
         self,
         config: GradingManagerConfig | None = None,
         docker: DockerRunner | None = None,
+        *,
+        stop_requested: Callable[[], bool] | None = None,
     ) -> None:
         self.config = config or GradingManagerConfig()
         self._docker = docker or run_docker
+        # N2b / Codex 集成审查 R4：追加尝试前读取的**实际停止事实**（bringup 注入 lifecycle 谓词：run-fatal 已发生 /
+        # 评分面已关闭而 queue 仍在排空）。None = 只看本实例的 _closed（直接构造 / 单测）。
+        self._stop_requested_hook = stop_requested
         self.run_id = uuid.uuid4().hex[:12]  # 本实例的 owner 标识（label + 孤儿判定）
         self._records: list[_ContainerRecord] = []
         self._images_ready: set[str] = set()
@@ -998,7 +1006,9 @@ class SWEGradingManager:
         self._prepare_tasks: set[asyncio.Task] = set()
         self.prepare_failures: list[str] = []  # prepare 失败只记录不外抛（P5：grade 不受连累）
         self.cleanup_failures: list[str] = []  # Q8：清理失败必须留痕（S1-6 收口为 finding）
-        self.regrade_events: list[dict[str, Any]] = []  # N2b：追加评分事实（上限 256 条；消费者 = close() 报告 + 事件日志）
+        self.regrade_events: list[dict[str, Any]] = []  # N2b：追加评分事实（**只保留最近 256 条**；消费者 = close() 报告 + 事件日志）
+        self.regrade_total = 0  # N2b：本 run 追加评分累计次数（不随上面列表截断变化）
+        self.regrade_declined: list[dict[str, Any]] = []  # R4：本可追加但因停止事实放弃的次数（保留最近 256 条）
         self.leases: list[SandboxLease] = []  # 评分容器租约 evidence（P9 deny_all 由 schema 锁死）
         self._closed = False  # W5a：close() 后 grade 走 typed 拒绝
         # W3a：grade() 内部分段计时暂存（record_id → GraderPhaseTiming），orchestrator 经
@@ -1042,12 +1052,29 @@ class SWEGradingManager:
             "containers_removed": removed,
             "containers_open": [r.name for r in self._records if not r.removed],
             "cleanup_failures": list(self.cleanup_failures),
-            "regrade_events": len(self.regrade_events),  # N2b：本 run 追加评分次数
+            "regrade_events": len(self.regrade_events),  # N2b：保留的追加评分事实条数（上限 256，不是累计总量）
+            "regrade_total": self.regrade_total,  # N2b：本 run 追加评分累计次数
+            "regrade_declined": len(self.regrade_declined),  # R4：因停止事实放弃追加的次数
         }
 
     @property
     def closed(self) -> bool:
         return self._closed
+
+    def _stop_requested(self) -> bool:
+        """R4：是否已有停止事实——本实例已关停，或 bringup 注入的 lifecycle 谓词为真（run-fatal 已发生 / 评分面已
+        关闭、queue 正在排空既有工作）。只决定"要不要再试一次"，不影响进行中的那次评分与它的容器收口。谓词自身
+        异常按"已停止"处理（保守：不追加）。"""
+
+        if self._closed:
+            return True
+        hook = self._stop_requested_hook
+        if hook is None:
+            return False
+        try:
+            return bool(hook())
+        except Exception:  # noqa: BLE001
+            return True
 
     # ------------------------------------------------------------------ P1
     async def startup(self) -> list[str]:
@@ -1483,23 +1510,28 @@ class SWEGradingManager:
                 record = await self._start_container(trajectory_id, spec, attempt_nonce)
                 return pull_seconds, record
             except GradingInfraError as exc:
+                # Codex 集成审查 R1：容器所有权与"是否再试一次"分开——名字在 _start_container 里、创建请求发出**之前**
+                # 就已登记，失败 / 回包丢失 / 到期取消 / 外层取消都在那里按名收口。到这里时旧对象已处理完，本分支只决定
+                # 是否追加，不再负责清理（也就不存在"第二次失败 / 到期绕过登记"的路径）。
                 category = classify_docker_transport_error(exc.op or "", exc.exit_code or 0, exc.stderr)
                 if first_failure is not None:
                     raise GradingInfraError(
                         f"{exc.detail}; first_attempt: {first_failure.detail}",
                         op=exc.op, exit_code=exc.exit_code, stderr=exc.stderr,
                     ) from exc
-                if category is None or attempt >= MAX_GRADING_ATTEMPTS or self._closed:
+                if category is None or attempt >= MAX_GRADING_ATTEMPTS:
+                    raise
+                if self._stop_requested():
+                    # R4：旧容器收口之后再读实际停止事实——run-fatal 已发生 / 评分面已关（queue 排空期间）不启动追加尝试，
+                    # 本次失败按原样返回（failed_to_grade），只留一条"放弃追加"的账。
+                    declined = {
+                        "trajectory_id": trajectory_id, "op": exc.op, "category": category, "attempt": attempt,
+                        "reason": "stop_requested", "detail": exc.detail[:300],
+                    }
+                    self.regrade_declined.append(declined)
+                    del self.regrade_declined[:-256]
                     raise
                 require_grading_time("regrade")  # 共用同一评分期限：耗尽即不再追加
-                if exc.op == "container_start" and exc.container_name:
-                    # 创建回包丢失不证明容器不存在：按本次名字登记并收口（对象进现有清理记录，close/gc 可见）
-                    temp = _ContainerRecord(
-                        name=exc.container_name, trajectory_id=trajectory_id,
-                        created_epoch=time.time(), created_monotonic=time.monotonic(),
-                    )
-                    self._records.append(temp)
-                    await self._close_container_scope(temp)
                 first_failure = exc
                 event = {
                     "trajectory_id": trajectory_id, "op": exc.op, "category": category, "attempt": attempt,
@@ -1507,6 +1539,7 @@ class SWEGradingManager:
                 }
                 self.regrade_events.append(event)
                 del self.regrade_events[:-256]
+                self.regrade_total += 1
                 _emit_grading_event(GRADING_REGRADE_EVENT, **event)
                 attempt_nonce = uuid.uuid4().hex[:8]
         raise AssertionError("unreachable: regrade loop must return or raise")
@@ -1575,13 +1608,11 @@ class SWEGradingManager:
                 name=name, image=spec.image, labels=labels, declared_readonly_binds=declared_binds
             )
 
-        run = await self._await_within_grading_deadline(self._docker(*args), phase="container_start")
-        if run.exit_code != 0:
-            raise GradingInfraError(
-                f"grading_container_start_failed:{run.stderr.strip()[-300:]}",
-                op="container_start", exit_code=run.exit_code, stderr=run.stderr, container_name=name,
-            )
-        self.leases.append(lease)
+        # Codex 集成审查 R1（P1）：**所有权先于创建请求**——名字一旦可能到达 daemon，就必须已在本实例的清理记录里
+        # （close()/gc 可见）。此前只在 `docker run` 成功返回后登记：第二次回包丢失、创建期间评分期限到点、外层取消
+        # 都会留下一个无人记账的容器。现在创建失败 / 回包丢失 / 到期取消 / 外层取消 / prelaunch 失败一律在此按名
+        # 有界收口（独立清理预算）：不存在或已删除 → 干净；仍运行 / 无法确认 → GradingScopeTerminationError
+        # （run-fatal，替换原异常——scope 未终止比单次评分失败更重要，与 grade() finally 同一规则）。
         record = _ContainerRecord(
             name=name,
             trajectory_id=trajectory_id,
@@ -1589,8 +1620,19 @@ class SWEGradingManager:
             created_monotonic=time.monotonic(),
         )
         self._records.append(record)
-        if profile is not None:
-            await self._grader_prelaunch(record, profile, declared_binds)
+        try:
+            run = await self._await_within_grading_deadline(self._docker(*args), phase="container_start")
+            if run.exit_code != 0:
+                raise GradingInfraError(
+                    f"grading_container_start_failed:{run.stderr.strip()[-300:]}",
+                    op="container_start", exit_code=run.exit_code, stderr=run.stderr, container_name=name,
+                )
+            self.leases.append(lease)
+            if profile is not None:
+                await self._grader_prelaunch(record, profile, declared_binds)
+        except BaseException:
+            await self._close_container_scope(record)
+            raise
         return record
 
     async def _grader_prelaunch(
@@ -1607,17 +1649,26 @@ class SWEGradingManager:
         )
 
         try:
-            init = await run_trusted_init(
-                self._docker, name=record.name, script=grader_trusted_init_script(profile),
-                timeout=profile.init_timeout_seconds,
+            # Codex 集成审查 R2：profile 自带分段 timeout 之外，还受共同评分期限约束（取小）
+            init = await self._await_within_grading_deadline(
+                run_trusted_init(
+                    self._docker, name=record.name, script=grader_trusted_init_script(profile),
+                    timeout=profile.init_timeout_seconds,
+                ),
+                phase="grader_trusted_init",
             )
+        except GradingInfraError:
+            raise  # 评分期限先到：归因工作期限（infra 族），不包装成 profile 违规；容器由 _start_container 收口
         except RuntimeError as exc:
             await self._remove_container(record)
             raise SandboxProfileViolation(
                 "grader_trusted_init_failed", f"{record.name}: {str(exc)[:400]}"
             ) from exc
-        report = await run_grader_prelaunch_check(
-            self._docker, name=record.name, profile=profile, declared_readonly_binds=declared_binds
+        report = await self._await_within_grading_deadline(
+            run_grader_prelaunch_check(
+                self._docker, name=record.name, profile=profile, declared_readonly_binds=declared_binds
+            ),
+            phase="grader_prelaunch_check",
         )
         summary = report.to_dict()
         summary["trusted_init"] = init
@@ -1646,11 +1697,18 @@ class SWEGradingManager:
             return
         if rm.exit_code == 0:
             record.removed = True
-        else:
-            # Q8：清理失败不许静默——留痕供 S1-6 收口为 runtime finding。
-            self.cleanup_failures.append(
-                f"container_rm_failed:{record.name}:{rm.stderr.strip()[-200:]}"
-            )
+            return
+        err = (rm.stderr or rm.stdout or "").strip().lower()
+        if ("no such container" in err or "no such object" in err) and record.name.lower() in err:
+            # R1：daemon 明确说**这个名字**没有对象（创建从未发生 / 已删除）= scope 干净——与 _container_state 的
+            # "absent" 同一判据（连接类诊断里的 "no such" 指 socket，不在此列）；不算清理失败。
+            record.removed = True
+            record.absent_on_remove = True
+            return
+        # Q8：清理失败不许静默——留痕供 S1-6 收口为 runtime finding。
+        self.cleanup_failures.append(
+            f"container_rm_failed:{record.name}:{rm.stderr.strip()[-200:]}"
+        )
 
     async def _container_state(self, record: _ContainerRecord, *, timeout: float | None = None) -> str:
         """批 D-2：容器状态三分——"running" / "stopped"（存在但已退出）/ "absent"（已删除）/
@@ -1803,13 +1861,17 @@ class SWEGradingManager:
             return  # 显式豁免：本地构建镜像没有 RepoDigests，schema 层已强制声明
         expected = spec.image_manifest_digest
         assert expected is not None  # GradingEnvSpec.__post_init__ 的二选一保证
-        ref = await self._docker("inspect", "-f", "{{.Image}}", record.name)
+        # Codex 集成审查 R2：两次 inspect 都受共同评分期限约束（此前直接 await，可越过期限挂住 worker）
+        ref = await self._await_within_grading_deadline(
+            self._docker("inspect", "-f", "{{.Image}}", record.name), phase="image_ref_inspect"
+        )
         if ref.exit_code != 0:
             raise GradingInfraError(
                 f"grading_image_ref_inspect_failed:{ref.stderr.strip()[-300:]}"
             )
-        digests = await self._docker(
-            "image", "inspect", "-f", materialize.IMAGE_REPO_DIGESTS_FORMAT, ref.stdout.strip()
+        digests = await self._await_within_grading_deadline(
+            self._docker("image", "inspect", "-f", materialize.IMAGE_REPO_DIGESTS_FORMAT, ref.stdout.strip()),
+            phase="image_digest_inspect",
         )
         check = materialize.evaluate_image_digest(
             expected, digests.exit_code, digests.stdout, digests.stderr
@@ -2345,13 +2407,27 @@ class SWEGradingManager:
         return verdict
 
     async def _read_peak_memory_mb(self, record: _ContainerRecord) -> float:
-        """读容器内存峰值（cgroup v2 memory.peak，回退 v1）。读不到记 0.0（不阻塞评分）。"""
+        """读容器内存峰值（cgroup v2 memory.peak，回退 v1）。读不到记 0.0（不阻塞评分）。
 
-        result = await self._exec_bash(
-            record,
-            "cat /sys/fs/cgroup/memory.peak 2>/dev/null"
-            " || cat /sys/fs/cgroup/memory/memory.max_usage_in_bytes 2>/dev/null",
-        )
+        Codex 集成审查 R2：这是**可选观测**——评分期限已耗尽时不再发起 I/O（否则到期异常分支里的这次查询
+        会挡住随后的容器清理），有剩余时间时受 min(剩余, 上限) 约束，超时同样记 0.0。
+        """
+
+        left = grading_deadline_left()
+        if left is not None and left <= 0:
+            return 0.0
+        timeout = _PEAK_MEMORY_READ_TIMEOUT_SEC if left is None else min(_PEAK_MEMORY_READ_TIMEOUT_SEC, left)
+        try:
+            result = await asyncio.wait_for(
+                self._exec_bash(
+                    record,
+                    "cat /sys/fs/cgroup/memory.peak 2>/dev/null"
+                    " || cat /sys/fs/cgroup/memory/memory.max_usage_in_bytes 2>/dev/null",
+                ),
+                timeout=timeout,
+            )
+        except (TimeoutError, asyncio.TimeoutError):
+            return 0.0
         try:
             return round(int(result.stdout.strip()) / (1024 * 1024), 3)
         except (ValueError, TypeError):

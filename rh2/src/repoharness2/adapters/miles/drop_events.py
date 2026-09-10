@@ -225,34 +225,94 @@ def _new_cost_bucket() -> dict[str, Any]:
         "members_observed": 0,
         "groups_without_snapshots": 0,
         "member_fields": {name: {"values": [], "unknown": 0} for name in COST_FIELDS},
-        "group_cost_seconds": [],  # 每组已知成员 elapsed 之和（成员耗时之和，不是作业墙钟 / GPU 时间）
-        "groups_with_unknown_members": 0,
+        # 整组连带成本 = 同组**全部**成员已知 elapsed 之和（成员耗时之和，不是作业墙钟 / GPU 时间）。只有"成员齐全
+        # 且每个成员 elapsed 已知"的组进这里；成员缺失 / 有未知成员的组的已知部分和单独放 group_cost_seconds_known_partial
+        # （下界，Codex 集成审查 R6：不能让不完整的组看起来是完整成本）；全部未知的组只计数，不填 0。
+        "group_cost_seconds": [],
+        "group_cost_seconds_known_partial": [],
+        "groups_with_unknown_members": 0,  # 有成员 elapsed 未知（快照在但值缺）的组数
+        "groups_with_missing_members": 0,  # 终局行 member_count > 观测到的快照数（成员快照缺失）的组数
+        "groups_cost_unknown": 0,  # 有快照但没有任何已知 elapsed 的组数
         "root_cause_reasons": Counter(),  # 仅 put_aborted：导致丢组的成员在快照里的原因
+        # R6：按根因的成员级成本（仅 put_aborted 的导致成员；同组多根因各记各的，不跨原因累加）
+        "by_root_cause": {},
         "disposition_hints": Counter(),
     }
 
 
+def _new_reason_cost() -> dict[str, Any]:
+    return {"members": 0, "member_fields": {name: {"values": [], "unknown": 0} for name in COST_FIELDS}}
+
+
+def _add_member_fields(target: dict[str, Any], snap: Mapping[str, Any]) -> None:
+    for name in COST_FIELDS:
+        value = _num(snap.get(name))
+        entry = target[name]
+        if value is None:
+            entry["unknown"] += 1
+        else:
+            entry["values"].append(value)
+
+
+def _finish_member_fields(fields: dict[str, Any]) -> dict[str, Any]:
+    return {name: _dist(entry["values"], unknown=entry["unknown"]) for name, entry in fields.items()}
+
+
 def _finish_cost_bucket(bucket: dict[str, Any]) -> dict[str, Any]:
-    fields = {
-        name: _dist(entry["values"], unknown=entry["unknown"]) for name, entry in bucket["member_fields"].items()
-    }
-    group_cost = bucket["group_cost_seconds"]
     return {
         "groups": bucket["groups"],
         "members_observed": bucket["members_observed"],
         "groups_without_snapshots": bucket["groups_without_snapshots"],
-        "member_fields": fields,
-        "group_cost_seconds": _dist(group_cost, unknown=bucket["groups_with_unknown_members"]),
+        "member_fields": _finish_member_fields(bucket["member_fields"]),
+        "group_cost_seconds": _dist(bucket["group_cost_seconds"], unknown=bucket["groups_cost_unknown"]),
+        "group_cost_seconds_known_partial": _dist(
+            bucket["group_cost_seconds_known_partial"],
+            unknown=bucket["groups_with_unknown_members"] + bucket["groups_with_missing_members"],
+        ),
+        "groups_with_unknown_members": bucket["groups_with_unknown_members"],
+        "groups_with_missing_members": bucket["groups_with_missing_members"],
+        "groups_cost_unknown": bucket["groups_cost_unknown"],
         "root_cause_reasons": dict(sorted(bucket["root_cause_reasons"].items())),
+        "by_root_cause": {
+            reason: {"members": entry["members"], "member_fields": _finish_member_fields(entry["member_fields"])}
+            for reason, entry in sorted(bucket["by_root_cause"].items())
+        },
         "disposition_hints": dict(sorted(bucket["disposition_hints"].items())),
     }
+
+
+def _new_task_cost() -> dict[str, Any]:
+    return {
+        "groups": 0,
+        "consumed_groups": 0,
+        "dropped_groups": Counter(),
+        "members_observed": 0,
+        "member_fields": {name: {"values": [], "unknown": 0} for name in COST_FIELDS},
+    }
+
+
+def _finish_task_cost(entry: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "groups": entry["groups"],
+        "consumed_groups": entry["consumed_groups"],
+        "dropped_groups": dict(sorted(entry["dropped_groups"].items())),
+        "members_observed": entry["members_observed"],
+        "member_fields": _finish_member_fields(entry["member_fields"]),
+    }
+
+
+def _scoped(row: Mapping[str, Any], value: Any) -> str:
+    """Codex 集成审查 R5：连接键带 run 身份——组 id（miles_g{group_index}）与 attempt id 只在同一 run 内唯一，
+    多目录输入且未指定 --run-id 时不能把两个 run 的同名组连成一组。"""
+
+    return f"{row.get('run_id')}\x00{value}"
 
 
 def summarize_attempt_costs(rows: Iterable[Mapping[str, Any]], *, run_id: str | None = None) -> dict[str, Any]:
     """N1（第 2 组 §4）：把 `attempt_cost_snapshot` 与 buffer 终局事件按组身份连接，给出各终局的成本分布。
 
-    - 连接键：同 run 内 `rh2_prompt_group_id`（组终局行与快照都带）；`put_aborted` 行再按
-      `aborted_members[*].physical_attempt_id` 找导致丢组的成员及其快照原因。
+    - 连接键：**(run_id, `rh2_prompt_group_id`)**（组终局行与快照都带 run_id；R5：跨 run 同名组不混连）；
+      `put_aborted` 行再按 (run_id, `aborted_members[*].physical_attempt_id`) 找导致丢组的成员及其快照原因。
     - 桶：``consumed`` 与每个丢弃原因（`group_filtered.reason_code`，缺则 drop_stage）。每桶：组数、成员观测数、
       成员级 elapsed / turns / tokens 分布（未知单列，不填 0）、**整组连带成本** = 同组所有已知成员 elapsed 之和
       （七个 600s 成员 + 一个 5s 失败成员 = 4205s；不是失败者的 5s，也不是八条完整轨迹），多根因组保留原因
@@ -260,6 +320,9 @@ def summarize_attempt_costs(rows: Iterable[Mapping[str, Any]], *, run_id: str | 
     - 分母：组终局数仍是组数；成员观测数单列；无终局事件的快照记 ``unmatched_snapshots``，没有快照的组记
       ``groups_without_snapshots``，缺组身份的旧格式行记 ``legacy_rows``；同一 attempt 多条快照只取最后一条并
       计 ``duplicate_snapshots``（多条 FORK 训练行属同一 attempt，不重复记成员）。
+    - R6 维度：每桶 ``by_root_cause``（put_aborted 导致成员按原因的成本分布）、顶层 ``by_task``（按 task 的
+      消费 / 丢弃组数与成员成本分布）；成员缺失（终局 member_count > 快照数）或成员 elapsed 未知的组只进
+      ``group_cost_seconds_known_partial``（下界），全部未知的组只计 ``groups_cost_unknown``，不填 0。
     """
 
     snapshots_by_attempt: dict[str, Mapping[str, Any]] = {}
@@ -281,9 +344,10 @@ def summarize_attempt_costs(rows: Iterable[Mapping[str, Any]], *, run_id: str | 
             if not paid:
                 skipped["malformed"] += 1
                 continue
-            if paid in snapshots_by_attempt:
+            key = _scoped(row, paid)
+            if key in snapshots_by_attempt:
                 duplicates += 1
-            snapshots_by_attempt[str(paid)] = row
+            snapshots_by_attempt[key] = row
         else:
             terminal_rows.append(row)
 
@@ -291,59 +355,76 @@ def summarize_attempt_costs(rows: Iterable[Mapping[str, Any]], *, run_id: str | 
     for snap in snapshots_by_attempt.values():
         group = snap.get("rh2_prompt_group_id")
         if group:
-            by_group.setdefault(str(group), []).append(snap)
+            by_group.setdefault(_scoped(snap, group), []).append(snap)
     matched_groups: set[str] = set()
     buckets: dict[str, dict[str, Any]] = {}
+    by_task: dict[str, dict[str, Any]] = {}
     legacy_rows = 0
     for row in terminal_rows:
         group = row.get("rh2_prompt_group_id")
         if not group:
             legacy_rows += 1
             continue
-        group = str(group)
-        matched_groups.add(group)
+        group_key = _scoped(row, group)
+        matched_groups.add(group_key)
         if row.get("event") == GROUP_CONSUMED_EVENT:
             key = "consumed"
         else:
             key = str(row.get("reason_code") or row.get("reason") or row.get("drop_stage") or "?")
         bucket = buckets.setdefault(key, _new_cost_bucket())
         bucket["groups"] += 1
-        members = by_group.get(group, [])
+        members = by_group.get(group_key, [])
+        task = by_task.setdefault(_task_key(row), _new_task_cost())
+        task["groups"] += 1
+        if key == "consumed":
+            task["consumed_groups"] += 1
+        else:
+            task["dropped_groups"][key] += 1
         if not members:
             bucket["groups_without_snapshots"] += 1
         bucket["members_observed"] += len(members)
+        task["members_observed"] += len(members)
         known_elapsed: list[float] = []
         unknown_member = False
         for snap in members:
             bucket["disposition_hints"][str(snap.get("disposition_hint") or "unknown")] += 1
-            for name in COST_FIELDS:
-                value = _num(snap.get(name))
-                entry = bucket["member_fields"][name]
-                if value is None:
-                    entry["unknown"] += 1
-                else:
-                    entry["values"].append(value)
+            _add_member_fields(bucket["member_fields"], snap)
+            _add_member_fields(task["member_fields"], snap)
             elapsed = _num(snap.get("elapsed_seconds"))
             if elapsed is None:
                 unknown_member = True
             else:
                 known_elapsed.append(elapsed)
+        expected_members = row.get("member_count")
+        missing_members = isinstance(expected_members, int) and not isinstance(expected_members, bool) and (
+            len(members) < expected_members
+        )
         if members:
-            bucket["group_cost_seconds"].append(round(sum(known_elapsed), 3))
+            if not known_elapsed:
+                bucket["groups_cost_unknown"] += 1  # 有快照但一个已知耗时都没有：不填 0
+            elif unknown_member or missing_members:
+                bucket["group_cost_seconds_known_partial"].append(round(sum(known_elapsed), 3))  # 下界
+            else:
+                bucket["group_cost_seconds"].append(round(sum(known_elapsed), 3))
             if unknown_member:
                 bucket["groups_with_unknown_members"] += 1
+        if missing_members:
+            bucket["groups_with_missing_members"] += 1
         if row.get("drop_stage") == "put_aborted":
             for member in row.get("aborted_members") or []:
-                snap = snapshots_by_attempt.get(str((member or {}).get("physical_attempt_id")))
+                snap = snapshots_by_attempt.get(_scoped(row, (member or {}).get("physical_attempt_id")))
                 if snap is None:
                     bucket["root_cause_reasons"]["<no_snapshot>"] += 1
                     continue
                 failure = snap.get("last_failure") or {}
-                reason = snap.get("reason_code") or failure.get("error_type") or snap.get("termination_kind_hint")
-                bucket["root_cause_reasons"][str(reason or "?")] += 1
+                reason = str(snap.get("reason_code") or failure.get("error_type") or snap.get("termination_kind_hint") or "?")
+                bucket["root_cause_reasons"][reason] += 1
+                cause = bucket["by_root_cause"].setdefault(reason, _new_reason_cost())
+                cause["members"] += 1
+                _add_member_fields(cause["member_fields"], snap)
     unmatched = sum(
         1 for snap in snapshots_by_attempt.values()
-        if not snap.get("rh2_prompt_group_id") or str(snap.get("rh2_prompt_group_id")) not in matched_groups
+        if not snap.get("rh2_prompt_group_id") or _scoped(snap, snap.get("rh2_prompt_group_id")) not in matched_groups
     )
     return {
         "schema_id": COST_SUMMARY_SCHEMA_ID,
@@ -353,6 +434,7 @@ def summarize_attempt_costs(rows: Iterable[Mapping[str, Any]], *, run_id: str | 
         "unmatched_snapshots": unmatched,
         "legacy_rows": legacy_rows,
         "terminals": {key: _finish_cost_bucket(bucket) for key, bucket in sorted(buckets.items())},
+        "by_task": {key: _finish_task_cost(entry) for key, entry in sorted(by_task.items())},
         "rows_skipped": skipped,
     }
 

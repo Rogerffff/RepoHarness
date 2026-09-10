@@ -2112,6 +2112,11 @@ class RolloutAudit:
     delivered_sample_count: int = 0
     repair_signal_forwarded: bool = False
     lease_released: bool = False
+    # Codex 第 2 组剩余集成审查 R3：必要记录**已成功写完**的正向事实——receipt 已持久化（或本模式无 receipt 存储）
+    # 且 audit sink 已成功返回（或未配置 sink）。只在 finally 段走到末尾时置 True；取消 / 异常让 finally 半途退出
+    # （例如第二次取消落在私网清理的 await 上）时保持 False。关停报告的 execution_closure 据此判"记录未完成"——
+    # 没有"写失败"记录不等于已经写完。
+    necessary_records_complete: bool = False
     cleanup_failures: list[CleanupFailureRecord] = field(default_factory=list)
     failure_records: list[RolloutFailureRecord] = field(default_factory=list)
     artifact_paths: list[Path] = field(default_factory=list)
@@ -4485,9 +4490,11 @@ class RolloutOrchestrator:
             )
         except Exception as exc:  # noqa: BLE001 —— 观测失败只留痕
             audit.mark(f"attempt_cost_snapshot_failed:{type(exc).__name__}")
+        audit_sink_ok = self._audit_sink is None
         if self._audit_sink is not None:
             try:
                 self._audit_sink(audit)
+                audit_sink_ok = True
             except Exception as exc:  # noqa: BLE001 —— 分链路处置
                 if (
                     receipt_persist_failed and self._mode != "s1_compat"
@@ -4515,6 +4522,8 @@ class RolloutOrchestrator:
                     ) from exc
                 else:
                     print(f"[rh2] audit sink 落盘失败（bring-up 容忍）：{exc}")
+        # R3：正向事实——走到这里且 receipt 与 sink 都成功，本 attempt 的必要记录才算写完
+        audit.necessary_records_complete = audit_sink_ok and not receipt_persist_failed
         if receipt_persist_failed and self._mode != "s1_compat" and in_flight is None:
             # B5（T0 失败表第 2 行）：durable handoff 失败 → run halt
             # （worker 停机）。批 A（I12）：cleanup 已照常执行，结果在

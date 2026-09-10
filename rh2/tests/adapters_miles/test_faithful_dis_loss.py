@@ -524,6 +524,31 @@ def test_support_size_buckets_partition_provenance_tokens(dis):
     assert m["dis_rejected_low_tokens"] == 0 and m["dis_rejected_high_tokens"] == 0
 
 
+def test_observation_metrics_do_no_host_scalar_reads(dis):
+    """R7（Codex 集成审查）：观测辅助函数不得 .item()（GPU 上每次都是一次设备同步）——计数留在设备上，
+    由既有 metrics 汇合统一读取。这里记录 Tensor.item 的调用者帧，要求没有一次来自观测函数。"""
+    import sys as _sys
+
+    torch = dis.torch
+    args = _mk_args()
+    batch, logits = _mk_case(torch)
+    _fill_behavior_from_current(torch, dis, args, batch, logits)
+    callers: list[str] = []
+    original_item = torch.Tensor.item
+
+    def tracked_item(self, *a, **kw):
+        callers.append(_sys._getframe(1).f_code.co_name)
+        return original_item(self, *a, **kw)
+
+    torch.Tensor.item = tracked_item
+    try:
+        _loss, metrics = dis.module.faithful_dis_loss_function(args, batch, logits, _mk_reducer(torch, batch))
+    finally:
+        torch.Tensor.item = original_item
+    assert not any(name in ("_count", "_dis_observation_metrics") for name in callers), callers
+    assert metrics["dis_candidate_signal_tokens"].dtype == torch.float32 and metrics["dis_candidate_signal_tokens"].item() == 2.0
+
+
 # ---------------------------------------------------------------------------
 # fail-closed 面
 # ---------------------------------------------------------------------------

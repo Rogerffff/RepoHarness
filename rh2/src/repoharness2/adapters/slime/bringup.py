@@ -1188,7 +1188,9 @@ class BringupService:
         eval_log_dir.mkdir(parents=True, exist_ok=True)
         self.grading_manager = SWEGradingManager(
             # W3b：非 s1 模式注入独立 grader profile（deny_all + 非 root 候选执行 + 限额）
-            GradingManagerConfig(eval_log_dir=eval_log_dir, sandbox_profile=self.grader_profile)
+            GradingManagerConfig(eval_log_dir=eval_log_dir, sandbox_profile=self.grader_profile),
+            # Codex 集成审查 R4：追加评分前读取实际停止事实（run-fatal 已发生 / 评分面已关而 queue 仍在排空）
+            stop_requested=self._grading_stop_requested,
         )
         # 轮次 13 P0-4：评分并发旋钮真实接线（此前 rh2_fa_limit_grading 是
         # 无消费者的假配置——评分并发一直由 GradingQueueConfig 独立管理）
@@ -1766,6 +1768,13 @@ class BringupService:
         assignment = self.attempt_assignments.resolve_for_sample(metadata)
         return self.prepared_face.grading_spec(assignment)
 
+    def _grading_stop_requested(self) -> bool:
+        """R4：评分 manager 的"停止事实"谓词——已有 run-fatal，或评分面已关闭（关停链先 close_grading 再排空
+        queue，排空期间既有评分继续，但不再启动追加尝试）。"""
+
+        lifecycle = self.lifecycle
+        return bool(lifecycle.fatal_seen) or not lifecycle.grading_open
+
     def _write_execution_audit(self, audit) -> None:
         try:
             write_execution_audit_record(
@@ -2297,7 +2306,8 @@ class BringupService:
     ) -> dict[str, Any]:
         """I13（第 2 组 §3）：rh2 负责的执行 / 资源 / 必要记录的完成事实。只陈述本进程能证明的事实：
         在飞表清空、每个 attempt 的 rollout 容器按 lease 记账已释放、隔离队列 / grader 容器 / 私网无残留、
-        receipt 与 audit 落盘没有失败记录、evidence 全部写成功、无首因。任一项拿不到 = 不完整。"""
+        每个 attempt 的必要记录**已成功写完**（正向事实 necessary_records_complete；R3：没有失败记录不算）
+        且没有写失败记录、evidence 全部写成功、无首因。任一项拿不到 = 不完整。"""
 
         orchestrator = self.orchestrator
         audits = list(getattr(orchestrator, "audits", []) or []) if orchestrator is not None else []
@@ -2309,10 +2319,20 @@ class BringupService:
         record_failures = sum(
             1 for a in audits for f in getattr(a, "failure_records", []) if f.error_type in record_failure_types
         )
+        # Codex 集成审查 R3（P1）：没有"写失败"记录 ≠ 已写完——第二次取消落在私网清理的 await 上时，成员 task 结束、
+        # audit sink 根本没执行，也就没有失败记录。每个 attempt 必须带**正向事实** necessary_records_complete
+        # （receipt 已持久化 + audit sink 成功返回，finally 走到末尾才置 True），缺一个即"记录未完成"。
+        records_incomplete = [
+            str(getattr(a, "physical_attempt_id", None) or getattr(a, "trajectory_id", None))
+            for a in audits
+            if not getattr(a, "necessary_records_complete", False)
+        ]
         residue = report.residue
         facts = {
             "orchestrator_present": orchestrator is not None,
             "attempts_audited": len(audits),
+            "attempts_records_incomplete": len(records_incomplete),
+            "attempts_records_incomplete_ids": records_incomplete[:20],
             "inflight_unfinished": len(inflight.get("unfinished_after_cancel_wait", []) or []),
             "rollout_containers_unreleased": unreleased,
             "quarantined_containers": list(residue.get("quarantined_containers", []) or []),
@@ -2329,6 +2349,7 @@ class BringupService:
             and not facts["quarantined_containers"]
             and not facts["grading_containers_open"]
             and record_failures == 0
+            and not records_incomplete
             and facts["egress_cleanup_failures"] == 0
             and facts["egress_relay_left"] is None
             and facts["evidence_failures"] == 0

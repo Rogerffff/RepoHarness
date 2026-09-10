@@ -213,7 +213,9 @@ def _assemble_service(
     service.adapter = adapter or _FakeSharedAdapter()
     service.app_handle = app_handle or _FakeAppHandle()
     docker = _FakeDockerRunner()
-    service.grading_manager = SWEGradingManager(GradingManagerConfig(), docker=docker)
+    service.grading_manager = SWEGradingManager(
+        GradingManagerConfig(), docker=docker, stop_requested=service._grading_stop_requested  # R4：与生产接线一致
+    )
     service.grading_queue = GradingQueue(
         service.grading_manager, GradingQueueConfig(concurrency=1, queue_size=2)
     )
@@ -1116,11 +1118,14 @@ async def test_grading_queue_step_drains_backlog_within_timeout(tmp_path, monkey
 # ---------------------------------------------------------------------------
 
 
-def _audit(*, container: str | None, released: bool, failures: tuple[str, ...] = ()):
+def _audit(*, container: str | None, released: bool, failures: tuple[str, ...] = (), records_complete: bool = True):
     return SimpleNamespace(
         lease=SimpleNamespace(container_id=container) if container else None,
         lease_released=released,
         failure_records=[SimpleNamespace(error_type=code) for code in failures],
+        # R3：必要记录**已写完**的正向事实（真实 audit 只在 finally 走到末尾时置 True）
+        necessary_records_complete=records_complete,
+        physical_attempt_id=f"{container or 'attempt'}#p1",
     )
 
 
@@ -1182,6 +1187,10 @@ async def test_wait_residue_resolution_keeps_rh2_own_unfinished_execution_as_res
             audits=[_audit(container="c1", released=True, failures=("audit_sink_failed_secondary",))],
             cleanup_quarantine=[],
         ),  # audit 落盘失败
+        SimpleNamespace(
+            audits=[_audit(container="c1", released=True, records_complete=False)],
+            cleanup_quarantine=[],
+        ),  # R3：没有写失败记录，但 finally 没走到 audit sink（第二次取消打断）——正向事实缺失同样不完整
     ],
 )
 async def test_missing_closure_evidence_keeps_wait_residue_unresolved(tmp_path, monkeypatch, orchestrator):
@@ -1189,6 +1198,9 @@ async def test_missing_closure_evidence_keeps_wait_residue_unresolved(tmp_path, 
     report = await service.close(reason="rollout_manager_dispose", trigger="owner_close", external_residue=_LATE_RESIDUE)
     assert report.cleanup_clean is True and report.residue_free_excluding_external_wait is True  # 只差 closure 证据
     assert report.execution_closure["complete"] is False and report.ok_if_wait_residue_resolved is False
+    if not orchestrator.audits[0].necessary_records_complete:
+        assert report.execution_closure["attempts_records_incomplete"] == 1
+        assert report.execution_closure["attempts_records_incomplete_ids"] == ["c1#p1"]
     assert service.resolve_external_wait_residue({"all_settled": True}) is None
     assert report.ok is False and report.resolved_wait_timeouts == []
     disk = json.loads((bringup.ARTIFACT_DIR / "shutdown_report.json").read_text(encoding="utf-8"))
@@ -1204,3 +1216,75 @@ async def test_evidence_failure_or_first_cause_keeps_wait_residue_unresolved(tmp
     assert report.execution_closure["complete"] is False and report.execution_closure["first_cause"] is not None
     assert report.ok_if_wait_residue_resolved is False and service.resolve_external_wait_residue({}) is None
     assert report.first_cause is not None and report.ok is False
+
+
+@pytest.mark.parametrize("slow_network", [False, True])
+async def test_second_cancel_inside_finally_leaves_necessary_records_incomplete(tmp_path, monkeypatch, slow_network):
+    """R3（Codex 第 2 组剩余集成审查）真实控制流：formal 编排、真实 finally、真实关停链。
+    第一次取消（= miles 侧 aclose 的组取消）让 finally 开始：receipt 已持久化 → 容器 rm → 私网清理 await；
+    slow_network=True 时该 await 挂 0.8s，关停链在飞步 grace 后**第二次取消**落在这里——成员 task 结束、
+    audit sink 从未执行、也没有任何"写失败"记录。此时 execution_closure 必须判"记录未完成"，等待类残留不可解消；
+    对照（网络清理立刻完成）：finally 走到末尾，audit 写出，closure 完整。"""
+
+    from dataclasses import replace
+
+    service, _docker = _assemble_service(
+        tmp_path, monkeypatch, timeouts=replace(FAST, inflight_grace=0.05, inflight_cancel_wait=2.0)
+    )
+    monkeypatch.setattr(bringup.BringupService, "_instance", service)
+    store = FakeFinalizationStore()
+    task_spec = make_task(TASK_ID_DENSE)
+
+    def resolver(sample):
+        service.lifecycle.enter_execution(getattr(sample, "metadata", None), task_id=task_spec.task_id)
+        return task_spec
+
+    turns = dense_turns()
+    for turn in turns:
+        turn.response["meta_info"]["weight_version"] = "5"
+    chain = build_dense_chain(
+        config=_formal_config(execution_mode="fa_formal"), runtime_quiescence_barrier=_Barrier(), turns=turns,
+        finalization_store=store, task=resolver, audit_sink=service._write_execution_audit,
+    )
+    _stamp_fa_identity(chain.base_sample)
+    service.orchestrator = chain.orchestrator
+    service.egress_relay = chain.orchestrator._egress_relay
+    driver = _BlockingDriver(chain.adapter_ref)
+    chain.orchestrator._harness_driver = driver
+    orig_docker = chain.orchestrator._docker
+    network_cancelled = asyncio.Event()
+
+    async def docker(*args, **kw):
+        if len(args) >= 2 and args[:2] == ("network", "disconnect") and slow_network:
+            try:
+                await asyncio.sleep(0.8)
+            except asyncio.CancelledError:
+                network_cancelled.set()
+                raise
+        return await orig_docker(*args, **kw)
+
+    chain.orchestrator._docker = docker
+    monkeypatch.setattr(bringup, "_sandbox_docker", lambda: docker)
+    run = asyncio.create_task(chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS)))
+    await asyncio.wait_for(driver.entered.wait(), 5)
+    run.cancel()  # 第一次取消：finally 开始（receipt → 容器 rm → 私网清理）
+    await asyncio.sleep(0.1)
+    report = await service.close(reason="rollout_manager_dispose", trigger="owner_close", external_residue=_LATE_RESIDUE)
+    await asyncio.gather(run, return_exceptions=True)
+    (audit,) = chain.orchestrator.audits
+    assert len(store.receipts) == 1 and audit.lease_released is True  # 两种情形 receipt 都已持久化、容器都已释放
+    closure = report.execution_closure
+    audit_written = (bringup.ARTIFACT_DIR / "fa_execution_audit.jsonl").exists()
+    if slow_network:
+        assert network_cancelled.is_set() and audit_written is False  # 第二次取消打断了 finally，sink 没执行
+        assert not any(f.error_type in ("audit_sink_failed_secondary", "finalization_receipt_write_failed") for f in audit.failure_records)
+        assert audit.necessary_records_complete is False
+        assert closure["complete"] is False and closure["attempts_records_incomplete"] == 1
+        assert closure["record_write_failures"] == 0  # 正是 R3：没有写失败记录 ≠ 已写完
+        assert report.ok_if_wait_residue_resolved is False and service.resolve_external_wait_residue({"all_settled": True}) is None
+        assert report.ok is False
+    else:
+        assert audit_written is True and audit.necessary_records_complete is True
+        assert closure["complete"] is True and closure["attempts_records_incomplete"] == 0
+        assert report.ok_if_wait_residue_resolved is True
+
