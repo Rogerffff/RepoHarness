@@ -236,7 +236,22 @@ def _new_cost_bucket() -> dict[str, Any]:
         "root_cause_reasons": Counter(),  # 仅 put_aborted：导致丢组的成员在快照里的原因
         # R6：按根因的成员级成本（仅 put_aborted 的导致成员；同组多根因各记各的，不跨原因累加）
         "by_root_cause": {},
+        # R6 余项（Codex 复核）：**整组连带成本**按根因集合归属——单根因组归该原因；多根因组归 "a|b" 组合键
+        # （不重复计入各单项，无重叠）。回答的是"哪类故障主要连带丢掉长轨迹"，与上面失败成员自身成本不同。
+        "by_root_cause_set": {},
         "disposition_hints": Counter(),
+    }
+
+
+def _new_reason_set_cost() -> dict[str, Any]:
+    return {"groups": 0, "group_cost_seconds": [], "group_cost_seconds_known_partial": [], "groups_cost_unknown": 0}
+
+
+def _finish_reason_set_cost(entry: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "groups": entry["groups"],
+        "group_cost_seconds": _dist(entry["group_cost_seconds"], unknown=entry["groups_cost_unknown"]),
+        "group_cost_seconds_known_partial": _dist(entry["group_cost_seconds_known_partial"], unknown=0),
     }
 
 
@@ -277,6 +292,9 @@ def _finish_cost_bucket(bucket: dict[str, Any]) -> dict[str, Any]:
             reason: {"members": entry["members"], "member_fields": _finish_member_fields(entry["member_fields"])}
             for reason, entry in sorted(bucket["by_root_cause"].items())
         },
+        "by_root_cause_set": {
+            key: _finish_reason_set_cost(entry) for key, entry in sorted(bucket["by_root_cause_set"].items())
+        },
         "disposition_hints": dict(sorted(bucket["disposition_hints"].items())),
     }
 
@@ -288,6 +306,9 @@ def _new_task_cost() -> dict[str, Any]:
         "dropped_groups": Counter(),
         "members_observed": 0,
         "member_fields": {name: {"values": [], "unknown": 0} for name in COST_FIELDS},
+        # R6 余项：同 task 内消费 / 丢弃两种终态的成员成本分开（上面 member_fields 是两者合计，保留作总量）
+        "consumed_member_fields": {name: {"values": [], "unknown": 0} for name in COST_FIELDS},
+        "dropped_member_fields": {name: {"values": [], "unknown": 0} for name in COST_FIELDS},
     }
 
 
@@ -298,6 +319,8 @@ def _finish_task_cost(entry: dict[str, Any]) -> dict[str, Any]:
         "dropped_groups": dict(sorted(entry["dropped_groups"].items())),
         "members_observed": entry["members_observed"],
         "member_fields": _finish_member_fields(entry["member_fields"]),
+        "consumed_member_fields": _finish_member_fields(entry["consumed_member_fields"]),
+        "dropped_member_fields": _finish_member_fields(entry["dropped_member_fields"]),
     }
 
 
@@ -320,8 +343,10 @@ def summarize_attempt_costs(rows: Iterable[Mapping[str, Any]], *, run_id: str | 
     - 分母：组终局数仍是组数；成员观测数单列；无终局事件的快照记 ``unmatched_snapshots``，没有快照的组记
       ``groups_without_snapshots``，缺组身份的旧格式行记 ``legacy_rows``；同一 attempt 多条快照只取最后一条并
       计 ``duplicate_snapshots``（多条 FORK 训练行属同一 attempt，不重复记成员）。
-    - R6 维度：每桶 ``by_root_cause``（put_aborted 导致成员按原因的成本分布）、顶层 ``by_task``（按 task 的
-      消费 / 丢弃组数与成员成本分布）；成员缺失（终局 member_count > 快照数）或成员 elapsed 未知的组只进
+    - R6 维度：每桶 ``by_root_cause``（put_aborted 导致成员**自身**按原因的成本分布）与 ``by_root_cause_set``
+      （**整组连带成本**按根因集合归属：单根因归该原因，多根因归 "a|b" 组合键、不重复计入各单项——回答"哪类故障
+      主要连带丢掉长轨迹"）、顶层 ``by_task``（按 task 的消费 / 丢弃组数，成员成本合计 + 消费 / 丢弃两种终态各自
+      的分布）；成员缺失（终局 member_count > 快照数）或成员 elapsed 未知的组只进
       ``group_cost_seconds_known_partial``（下界），全部未知的组只计 ``groups_cost_unknown``，不填 0。
     """
 
@@ -390,6 +415,7 @@ def summarize_attempt_costs(rows: Iterable[Mapping[str, Any]], *, run_id: str | 
             bucket["disposition_hints"][str(snap.get("disposition_hint") or "unknown")] += 1
             _add_member_fields(bucket["member_fields"], snap)
             _add_member_fields(task["member_fields"], snap)
+            _add_member_fields(task["consumed_member_fields" if key == "consumed" else "dropped_member_fields"], snap)
             elapsed = _num(snap.get("elapsed_seconds"))
             if elapsed is None:
                 unknown_member = True
@@ -399,29 +425,46 @@ def summarize_attempt_costs(rows: Iterable[Mapping[str, Any]], *, run_id: str | 
         missing_members = isinstance(expected_members, int) and not isinstance(expected_members, bool) and (
             len(members) < expected_members
         )
+        group_cost_kind: str | None = None  # "complete" / "partial" / "unknown"（无快照的组不归成本）
         if members:
             if not known_elapsed:
                 bucket["groups_cost_unknown"] += 1  # 有快照但一个已知耗时都没有：不填 0
+                group_cost_kind = "unknown"
             elif unknown_member or missing_members:
                 bucket["group_cost_seconds_known_partial"].append(round(sum(known_elapsed), 3))  # 下界
+                group_cost_kind = "partial"
             else:
                 bucket["group_cost_seconds"].append(round(sum(known_elapsed), 3))
+                group_cost_kind = "complete"
             if unknown_member:
                 bucket["groups_with_unknown_members"] += 1
         if missing_members:
             bucket["groups_with_missing_members"] += 1
         if row.get("drop_stage") == "put_aborted":
+            reasons: set[str] = set()
             for member in row.get("aborted_members") or []:
                 snap = snapshots_by_attempt.get(_scoped(row, (member or {}).get("physical_attempt_id")))
                 if snap is None:
                     bucket["root_cause_reasons"]["<no_snapshot>"] += 1
+                    reasons.add("<no_snapshot>")
                     continue
                 failure = snap.get("last_failure") or {}
                 reason = str(snap.get("reason_code") or failure.get("error_type") or snap.get("termination_kind_hint") or "?")
+                reasons.add(reason)
                 bucket["root_cause_reasons"][reason] += 1
                 cause = bucket["by_root_cause"].setdefault(reason, _new_reason_cost())
                 cause["members"] += 1
                 _add_member_fields(cause["member_fields"], snap)
+            if reasons and group_cost_kind is not None:
+                # 整组连带成本归根因集合（多根因 = 组合键，不重复计入各单项）
+                cause_set = bucket["by_root_cause_set"].setdefault("|".join(sorted(reasons)), _new_reason_set_cost())
+                cause_set["groups"] += 1
+                if group_cost_kind == "complete":
+                    cause_set["group_cost_seconds"].append(round(sum(known_elapsed), 3))
+                elif group_cost_kind == "partial":
+                    cause_set["group_cost_seconds_known_partial"].append(round(sum(known_elapsed), 3))
+                else:
+                    cause_set["groups_cost_unknown"] += 1
     unmatched = sum(
         1 for snap in snapshots_by_attempt.values()
         if not snap.get("rh2_prompt_group_id") or _scoped(snap, snap.get("rh2_prompt_group_id")) not in matched_groups

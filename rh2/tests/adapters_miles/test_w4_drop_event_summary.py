@@ -249,10 +249,9 @@ def test_cost_by_root_cause_and_by_task_keep_the_dimensions_apart(costs):
     assert cause["hard_wall_timeout"]["member_fields"]["accepted_turns"]["sum"] == 25.0
     assert aborted["group_cost_seconds"] == {"count": 2, "min": 10.0, "p50": 10.0, "max": 900.0, "sum": 910.0, "unknown": 0}
     by_task = s["by_task"]
-    assert by_task["A"] == {
-        "groups": 2, "consumed_groups": 1, "dropped_groups": {"aborted_member": 1}, "members_observed": 2,
-        "member_fields": by_task["A"]["member_fields"],
-    }
+    assert (by_task["A"]["groups"], by_task["A"]["consumed_groups"], by_task["A"]["dropped_groups"], by_task["A"]["members_observed"]) == (
+        2, 1, {"aborted_member": 1}, 2
+    )
     assert by_task["A"]["member_fields"]["elapsed_seconds"] == {"count": 2, "min": 10.0, "p50": 10.0, "max": 50.0, "sum": 60.0, "unknown": 0}
     assert by_task["B"]["dropped_groups"] == {"aborted_member": 1} and by_task["B"]["member_fields"]["elapsed_seconds"]["sum"] == 900.0
 
@@ -273,4 +272,64 @@ def test_missing_member_snapshots_give_a_lower_bound_not_a_complete_group_cost(c
     assert consumed["group_cost_seconds"] == {"count": 1, "min": 200.0, "p50": 200.0, "max": 200.0, "sum": 200.0, "unknown": 0}
     assert consumed["group_cost_seconds_known_partial"] == {"count": 2, "min": 3600.0, "p50": 3600.0, "max": 4200.0, "sum": 7800.0, "unknown": 2}
     assert consumed["groups_cost_unknown"] == 0
+
+
+def _aborted_group(group: str, reason: str, normal_elapsed: float, *, task: str = "A", run: str = "r1") -> list[dict]:
+    """八成员组：7 个正常成员各 normal_elapsed 秒 + 第 8 个成员 5 秒失败（根因 reason）→ put_aborted。"""
+
+    rows = [_snap(f"{group}#p{i}", group, elapsed=normal_elapsed, run=run) for i in range(7)]
+    rows.append(_snap(f"{group}#p7", group, elapsed=5.0, hint="aborted", reason=reason, run=run))
+    rows.append(_drop("put_aborted", task, reason="aborted_member", rh2_prompt_group_id=group, member_count=8, run_id=run,
+                      aborted_members=[{"index": 7, "member_slot": 7, "physical_attempt_id": f"{group}#p7"}]))
+    return rows
+
+
+def test_whole_group_collateral_cost_is_attributed_to_the_root_cause_set(costs):
+    """R6 余项（Codex 复核）：失败成员自身都是 5s，不能回答"哪类故障连带丢掉长轨迹"。整组连带成本按根因归属：
+    harness 失败组 4205s、拉镜像失败组 75s；交换正常成员成本后两个桶随之交换（汇总必须不同）。"""
+
+    first = costs(_aborted_group("g0", "harness_crash", 600.0) + _aborted_group("g1", "grading_image_pull_failed", 10.0), run_id="r1")
+    second = costs(_aborted_group("g0", "harness_crash", 10.0) + _aborted_group("g1", "grading_image_pull_failed", 600.0), run_id="r1")
+    assert first != second
+    b1, b2 = first["terminals"]["aborted_member"], second["terminals"]["aborted_member"]
+    assert b1["by_root_cause"]["harness_crash"]["member_fields"]["elapsed_seconds"]["sum"] == 5.0  # 失败成员自身成本不变
+    assert b1["by_root_cause_set"]["harness_crash"]["group_cost_seconds"]["sum"] == 4205.0
+    assert b1["by_root_cause_set"]["grading_image_pull_failed"]["group_cost_seconds"]["sum"] == 75.0
+    assert b2["by_root_cause_set"]["harness_crash"]["group_cost_seconds"]["sum"] == 75.0
+    assert b2["by_root_cause_set"]["grading_image_pull_failed"]["group_cost_seconds"]["sum"] == 4205.0
+    assert all(v["groups"] == 1 for v in b1["by_root_cause_set"].values())
+    assert b1["group_cost_seconds"]["sum"] == 4280.0  # 桶总量 = 两组之和，与按根因归属的分项相加一致（无重叠）
+
+
+def test_multi_cause_group_cost_goes_to_the_combined_key_only(costs):
+    """同组两个根因：整组成本归 "a|b" 组合键一次，不重复计入 a 与 b 各自的分项；成员缺失的组只给下界。"""
+
+    rows = [_snap("g1#p0", "g1", elapsed=100.0), _snap("g1#p1", "g1", elapsed=100.0),
+            _snap("g1#p2", "g1", elapsed=2.0, hint="aborted", reason="harness_crash"),
+            _snap("g1#p3", "g1", elapsed=3.0, hint="aborted", reason="rollout_container_start_failed"),
+            _drop("put_aborted", "A", reason="aborted_member", rh2_prompt_group_id="g1", member_count=4, aborted_members=[
+                {"index": 2, "member_slot": 2, "physical_attempt_id": "g1#p2"},
+                {"index": 3, "member_slot": 3, "physical_attempt_id": "g1#p3"},
+            ])]
+    rows += [_snap("g2#p0", "g2", elapsed=50.0), _snap("g2#p1", "g2", elapsed=1.0, hint="aborted", reason="harness_crash"),
+             _drop("put_aborted", "A", reason="aborted_member", rh2_prompt_group_id="g2", member_count=8,  # 8 个成员只有 2 份快照
+                   aborted_members=[{"index": 1, "member_slot": 1, "physical_attempt_id": "g2#p1"}])]
+    b = costs(rows, run_id="r1")["terminals"]["aborted_member"]
+    assert set(b["by_root_cause_set"]) == {"harness_crash|rollout_container_start_failed", "harness_crash"}
+    combined = b["by_root_cause_set"]["harness_crash|rollout_container_start_failed"]
+    assert combined["groups"] == 1 and combined["group_cost_seconds"]["sum"] == 205.0
+    single = b["by_root_cause_set"]["harness_crash"]
+    assert single["groups"] == 1 and single["group_cost_seconds"]["count"] == 0  # 成员缺失：不进完整成本
+    assert single["group_cost_seconds_known_partial"] == {"count": 1, "min": 51.0, "p50": 51.0, "max": 51.0, "sum": 51.0, "unknown": 0}
+    assert b["root_cause_reasons"] == {"harness_crash": 2, "rollout_container_start_failed": 1}  # 成员级计数不受影响
+
+
+def test_by_task_keeps_consumed_and_dropped_member_costs_apart(costs):
+    rows = _aborted_group("g0", "harness_crash", 600.0) + [_snap("g9#p0", "g9", elapsed=30.0), _snap("g9#p1", "g9", elapsed=40.0),
+                                                            _consumed("A", 1, rh2_prompt_group_id="g9", member_count=2)]
+    task = costs(rows, run_id="r1")["by_task"]["A"]
+    assert task["consumed_groups"] == 1 and task["dropped_groups"] == {"aborted_member": 1} and task["members_observed"] == 10
+    assert task["consumed_member_fields"]["elapsed_seconds"] == {"count": 2, "min": 30.0, "p50": 30.0, "max": 40.0, "sum": 70.0, "unknown": 0}
+    assert task["dropped_member_fields"]["elapsed_seconds"]["sum"] == 4205.0 and task["dropped_member_fields"]["elapsed_seconds"]["count"] == 8
+    assert task["member_fields"]["elapsed_seconds"]["sum"] == 4275.0  # 合计仍保留
 

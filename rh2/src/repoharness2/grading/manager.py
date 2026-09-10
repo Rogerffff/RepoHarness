@@ -1640,7 +1640,11 @@ class SWEGradingManager:
     ) -> None:
         """W3b：grader 容器创建后、任何评分步骤之前——root 可信初始化（建候选执行用户、safe.directory）
         + 一次 inspect + 一次候选用户身份探针（断网只剩 loopback、非 root、CapEff=0、限额）。
-        不合格 → 先移除容器再抛 SandboxProfileViolation（run-halt 通道）。"""
+        不合格 → 抛 SandboxProfileViolation（run-halt 通道）。
+
+        清理所有权（Codex 复核 R2 余项）：本函数**不再**自己 `rm` 容器——此前两个失败分支先 await 一次无 timeout 的
+        `_remove_container`，Docker 一卡住异常就到不了外层、独立清理预算也无从起算。record 由唯一调用方
+        `_start_container` 持有，任何异常都在那里经 `_close_container_scope` 按独立清理预算有界收口。"""
 
         from repoharness2.adapters.slime.sandbox_profile import (
             grader_trusted_init_script,
@@ -1660,8 +1664,7 @@ class SWEGradingManager:
         except GradingInfraError:
             raise  # 评分期限先到：归因工作期限（infra 族），不包装成 profile 违规；容器由 _start_container 收口
         except RuntimeError as exc:
-            await self._remove_container(record)
-            raise SandboxProfileViolation(
+            raise SandboxProfileViolation(  # 容器由 _start_container 有界收口
                 "grader_trusted_init_failed", f"{record.name}: {str(exc)[:400]}"
             ) from exc
         report = await self._await_within_grading_deadline(
@@ -1676,8 +1679,7 @@ class SWEGradingManager:
         self.prelaunch_checks.append(summary)
         del self.prelaunch_checks[:-256]
         if not report.ok:
-            await self._remove_container(record)
-            raise SandboxProfileViolation(
+            raise SandboxProfileViolation(  # 容器由 _start_container 有界收口
                 "grader_sandbox_profile_violation",
                 f"{record.name}: " + "; ".join(report.violations)[:600],
             )

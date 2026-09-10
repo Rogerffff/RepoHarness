@@ -9,7 +9,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import sys
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -33,6 +35,7 @@ from repoharness2.adapters.slime.sandbox_profile import (  # noqa: E402
 from repoharness2.grading.manager import (  # noqa: E402
     ExecResult,
     GradingManagerConfig,
+    GradingScopeTerminationError,
     SandboxProfileViolation,
     SWEGradingManager,
 )
@@ -292,3 +295,103 @@ async def test_f2_official_test_path_missing_after_setup_blocks_candidate_test(t
         manager, report, docker,
         detail_contains="grading_trusted_setup_failed:official_test_file_missing_after_setup",
     )
+
+
+# ---------------------------------------------------------------------------
+# Codex 复核 R2 余项：prelaunch 失败分支不再自己做无 timeout 的 rm——容器由 _start_container 有界收口
+# ---------------------------------------------------------------------------
+
+
+def _rm_hanging_docker(fake: ProfileGraderFakeDocker, *, inspect_unknown: bool, hang_times: int = 1):
+    """替身：前 hang_times 次 `rm` 挂起直到被取消（模拟 Docker 卡住）；inspect_unknown=True 时状态查询报 daemon 不可达。"""
+
+    state = {"rm_calls": 0, "cancelled": 0}
+
+    async def docker(*args, input_bytes=None):
+        if args[0] == "rm":
+            state["rm_calls"] += 1
+            if state["rm_calls"] <= hang_times:
+                try:
+                    await asyncio.sleep(3600)
+                except asyncio.CancelledError:
+                    state["cancelled"] += 1
+                    raise
+        if inspect_unknown and args[0] == "inspect" and "{{.State.Running}}" in args:
+            return ExecResult(1, "", "Cannot connect to the Docker daemon at unix:///var/run/docker.sock")
+        return await fake(*args, input_bytes=input_bytes)
+
+    return docker, state
+
+
+async def test_trusted_init_failure_is_still_a_profile_violation_and_the_container_is_closed_by_the_owner():
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT)
+    docker.profile_fake.trusted_init_fail = True
+    manager = _manager(docker)
+    with pytest.raises(SandboxProfileViolation, match="grader_trusted_init_failed"):
+        await manager.grade(trajectory_id="t-init-fail", workspace=FakeWorkspace(GOOD_PATCH), spec=_spec())
+    (record,) = manager.container_records
+    assert record.removed is True and manager.cleanup_failures == [] and manager.regrade_total == 0
+    assert not any(desc == "candidate_test_run" for _, desc in docker.exec_sequence)
+
+
+async def test_trusted_init_failure_with_hanging_rm_ends_within_the_cleanup_budget_as_run_fatal():
+    """Codex 复核反例：可信初始化失败后第一次 rm 卡住。此前该 rm 无 timeout、异常到不了外层、worker 一直占槽；现在由
+    _start_container 的有界收口接管：rm 在独立清理预算（1s）内被切断，预算随之耗尽 = 状态无法确认（D-2 合同）→
+    GradingScopeTerminationError（run-fatal）替换 profile 违规，记录保留、close() 仍能再次清理。"""
+
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT)
+    docker.profile_fake.trusted_init_fail = True
+    manager = SWEGradingManager(
+        GradingManagerConfig(sandbox_profile=make_grader_profile(), cleanup_timeout_seconds=1), docker=docker,
+    )
+    manager._docker, state = _rm_hanging_docker(docker, inspect_unknown=False)
+    started = time.monotonic()
+    with pytest.raises(GradingScopeTerminationError):
+        await asyncio.wait_for(
+            manager.grade(trajectory_id="t-init-rm-hang", workspace=FakeWorkspace(GOOD_PATCH), spec=_spec()), timeout=5
+        )
+    elapsed = time.monotonic() - started
+    assert 0.9 <= elapsed < 3.0, elapsed  # = 清理预算，不是无限等待
+    (record,) = manager.container_records
+    assert record.removed is False and state["cancelled"] == 1
+    assert any(f.startswith("container_rm_timeout:") for f in manager.cleanup_failures)
+    assert any("container_scope_termination_failed" in f for f in manager.cleanup_failures)
+    close = await manager.close()  # 记录仍在：关停 gc 的第二次 rm（替身不再挂起）完成清理
+    assert close["containers_removed"] == [record.name] and close["containers_open"] == []
+
+
+async def test_trusted_init_failure_with_hanging_rm_and_unknown_state_is_run_fatal_within_the_budget():
+    """rm 卡住且状态无法确认：清理预算耗尽后 GradingScopeTerminationError（run-fatal）替换 profile 违规，记录保留供后续清理。"""
+
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT)
+    docker.profile_fake.trusted_init_fail = True
+    manager = SWEGradingManager(
+        GradingManagerConfig(sandbox_profile=make_grader_profile(), cleanup_timeout_seconds=1), docker=docker,
+    )
+    manager._docker, state = _rm_hanging_docker(docker, inspect_unknown=True, hang_times=1)
+    started = time.monotonic()
+    with pytest.raises(GradingScopeTerminationError):
+        await asyncio.wait_for(
+            manager.grade(trajectory_id="t-init-rm-unknown", workspace=FakeWorkspace(GOOD_PATCH), spec=_spec()), timeout=5
+        )
+    assert time.monotonic() - started < 3.0
+    (record,) = manager.container_records
+    assert record.removed is False and state["cancelled"] == 1
+    assert any("container_scope_termination_failed" in f for f in manager.cleanup_failures)
+    assert (await manager.close())["containers_open"] == []  # 记录仍在：关停 gc 再次清理（替身此时不再挂起）
+
+
+async def test_prelaunch_check_violation_is_still_raised_and_the_container_is_closed_by_the_owner():
+    """R2 余项第二个分支：prelaunch 检查不合格（探针报候选身份是 root）→ SandboxProfileViolation 照常上抛，
+    容器由 _start_container 的有界收口删除；分支内不再有无 timeout 的 rm。"""
+
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT)
+    docker.profile_fake.grader_probe_overrides = {"UID": "0"}
+    manager = _manager(docker)
+    with pytest.raises(SandboxProfileViolation, match="grader_sandbox_profile_violation"):
+        await manager.grade(trajectory_id="t-probe-violation", workspace=FakeWorkspace(GOOD_PATCH), spec=_spec())
+    (record,) = manager.container_records
+    assert record.removed is True and manager.cleanup_failures == [] and manager.regrade_total == 0
+    assert record.prelaunch is not None and not record.prelaunch["ok"]  # 核对摘要仍留档
+    assert not any(desc == "candidate_test_run" for _, desc in docker.exec_sequence)
+
