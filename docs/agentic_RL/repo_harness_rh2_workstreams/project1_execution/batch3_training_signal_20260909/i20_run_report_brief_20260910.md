@@ -42,3 +42,29 @@
 - 与 Brief §2 的偏离：无新增 producer。首版对"进行中 attempt 数"只能报 None（audit 只覆盖已结束 attempt），对"优势符号"只报 reward−组均值 的近似并标注；有界 log-ratio 分布、学习率、GPU / 容器资源三项按 §2 标 not_collected。`train_step.metrics` 只在 pp 末段行上有，去重时优先取带 metrics 的行。
 - 下一步（不在本版）：真实 run 目录上跑一次核对启用条件与键（随原定 GPU 作业）；缺口按 §2 表补少量 producer 时另出小 Brief。
 
+
+## 7. Codex 聚焦复核（2026-09-11）
+
+HEAD `76ede7f4`：**I20 已实现，但 R1–R4 四项 P2 统计问题尚待修正，当前不按可靠 run 诊断报告收口**。包括 lifecycle schema / 单位、真实评分 producer、FORK 行与成员计权、多 run 隔离。完整反例、最小修复与验收条件见 [review_20260911/README.md](review_20260911/README.md)；R5 为 TP>1 条件性副本问题，不阻塞默认 TP=1 收口。没有发现这些报告错误改变训练 loss；不新增 owner 决策或训练门。171 项相关测试通过，但原手造 schema 未覆盖上述真实接缝。本节复核结论补充并纠正 §2 / §6 的完成说明，原作者记录保留。
+
+## 7. Codex 聚焦复核（2026-09-11）处置：R1–R4 P2 与 R5 条件性 P2 全部 accepted 并修复
+
+复核：[review_20260911/README.md](review_20260911/README.md)（基线 `f7521d94`→`76ede7f4`）。I19 通过；I20 四项统计问题在作者本机用 Codex 的 consumer 探针复现（修前 `reproduced=true`），修后副本（改为验收断言）通过。修复提交：`c8bf6bd4`；lanes 计数 `1bc2dfb7`。
+
+| 项 | 处置 | 修法 |
+|---|---|---|
+| R1 生命周期字段 | accepted | 只读真实 writer 的 `lifecycle_timing.segments_seconds`；`grading_queue_depth_at_enqueue`（计数）与 `grading_backpressure_triggered`（旗标）分开列；没有 lifecycle 的 audit 记 `audits_without_lifecycle_timing`；不再把整个容器字典当秒数兜底。 |
+| R2 评分来源 | accepted | 新增第三类输入 `bringup_events.jsonl`（`BringupService.record_event`，`session_id` = audit `trajectory_id`）；`graded_attempts` 区分"交付记录在但无评分块"（已知没有评分）与"没有 bringup 文件"（无法知道，`graded_attempts=None`）；按 task 的 reward 用 audit 的 task_id 关联；评分分段耗时改从 bringup 记录取；旧的 `attempts_without_grading` / `audit_grading` 撤销。 |
+| R3 分行成员 | accepted | `rollout_group` 逐叶行先按 (run, rollout, group, sample_index) 归并成员，再算成员 reward、组均值与优势符号；同成员各叶 reward 不一致记 `member_reward_conflicts` 且不进统计；`training_rows_per_member` 另列；明确 rollout_group = 已交付 learner 的组，过滤前总体 `not_collected`。 |
+| R4 run 身份 | accepted | 每个顶层输入路径 = bundle，audit / bringup 行按 bundle 内事件的唯一 run_id 归属（不唯一 = 归属未知，只计数）；step 去重、消费并集、成员键都带 run_id，连续未更新步数不跨 run；默认多 run 输入**逐 run 出子报告不混连**（`multi_run` / `per_run`），`--run-id` 只取该 run 的事件与归属行。 |
+| R5 TP 副本 | accepted（条件性） | `logprob_compare` entries 有 (run, rollout, sample, leaf) 身份：精确去副本并计 `duplicate_entries_dropped`，同身份不同值计 `conflicting_entries`；`sample_dis_accounting` 事件不带 rollout_id / rank，无法安全去重——报告明确标 `tp_copies: unsupported`（当前只在 TP=1 验证），不盲目按叶身份跨 step 合并，也不只取 DP0。 |
+| 文字余项 | accepted | `generate.py` 四处压缩时代注释改为纯观测语义；I19 Brief §1.2 收窄为"参考版本存在这些机制、目标 CC 待真实请求核对"。 |
+
+### 7.1 验收夹具（Codex §4 的建议）
+
+`test_run_report.py` 改用真实 rh2 writer：`RolloutAudit` + `write_execution_audit_record`（真实 `segments_seconds` / 队列深度键）、`BringupService.record_event`（评分块）；rollout_group / train_step 行按 fork emitter 形状构造。新增 `test_run_report_real_emitters.py`（integration_base）：AST 执行 fork 原函数 `_emit_rollout_evidence` / `_emit_train_step_event`，验证分行成员归并（[10,10,10,11] → 2 成员、均值 0.5、正 1 / 负 1）与两 run 同名 step 不合并（16 / 40，不是 1 step / 16）。
+
+### 7.2 证据（作者本机，不是 Codex 验收）
+
+ruff 全过；全量 `pytest tests -q`（集成树）**2264 passed, 0 skipped, 0 failed（162s）**；lanes 清净环境实跑 lane A **415 passed / 320 skipped**、lane B **735 passed / 0 skipped**（计数 `1bc2dfb7`）。探针副本（scratchpad，不覆盖 Codex 原件）R1–R5 验收断言全部通过；R5 的 `sample_dis_accounting` 按"不支持 TP>1"如实报告。没有真实 run 文件、GPU、Docker。
+
