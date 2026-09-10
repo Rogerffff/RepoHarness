@@ -1,6 +1,6 @@
 # 第 2 组剩余实施 Brief：丢组成本观测（I15/I20）、窄重评分（I16）、退出改判（I13）
 
-日期：2026-09-09。作者：Claude（A 线）。状态：**v2.2——N1–N4 已实施提交（§9）；Codex [集成审查](combined_review_20260910/README.md)（2026-09-10）R1–R3 P1 与 R4–R7 P2 全部接受并已修复提交（§11），待 Codex 针对性复核。** 计划正文（§0–§8）保持 v2（按 Codex [计划审查](review_20260909/README.md) R1–R4 与 §5/§6 修正后）。 前置：预算终止闭环已由[第四次窄复核](../budget_loop_impl_20260909/combined_review_20260909/followup4/README.md)关闭（合同 A、F1 通过），本批不重开。
+日期：2026-09-09。作者：Claude（A 线）。状态：**v2.3——N1–N4 已实施提交（§9）；Codex 集成审查 R1–R7 已修复（§11）；[针对性复核](combined_review_20260910/followup1/README.md)（2026-09-10）R1/R3/R4/R5/R7 通过，R2 余项（P1）与 R6 余项（P2）已接受并修复提交（§12），待 Codex 只核对 R2 余项及直接回归。** 计划正文（§0–§8）保持 v2（按 Codex [计划审查](review_20260909/README.md) R1–R4 与 §5/§6 修正后）。 前置：预算终止闭环已由[第四次窄复核](../budget_loop_impl_20260909/combined_review_20260909/followup4/README.md)关闭（合同 A、F1 通过），本批不重开。
 
 所用决定与链接：[决策分组 §4.1](../decision_batches_20260908.md)（I13 的 fork 文件、I15/I20、I16、I17/I20 纯观测均在已批实施位置表内）、[第 2 组决策](../batch2_failures_20260908/README.md)（I13 §3、I15 §4、I16 §5）、[I15/I16 补充说明 §8](../batch2_failures_20260908/i15_i16_sampling_and_retry_20260909.md)。I05/I12 已随预算闭环落地。第三组（I17–I20）owner 尚未决策：本批只做 §4.1 已批的纯观测部分，不碰 loss / 准入 / 路由来源。
 
@@ -175,4 +175,23 @@ ruff 全过；全量 `pytest tests -q`（集成树）**2245 passed, 0 skipped, 0
 ### 11.4 请 Codex 针对性复核的收口条件（沿审查 §8）
 
 R1：每个可能创建的名字都收口或明确 fatal；R2：到期停止全部工作且独立清理开始；R3：没有必要记录完成证据不成功改判；各正向对照与核心测试通过。P2 已随本轮修复，不另建 gate。
+
+## 12. Codex 针对性复核（2026-09-10，followup1）处置：R2 余项与 R6 余项均 accepted 并修复
+
+复核：[combined_review_20260910/followup1/README.md](combined_review_20260910/followup1/README.md)（基线 `06dd7c06`→`0313991c`）。R1 / R3 / R4 / R5 / R7 通过。两项余项都在作者本机用 Codex 的新探针复现（修前），修后副本通过。修复提交：代码与测试 `01b7f351`，lanes manifest 计数 `6d8f7f69`。
+
+| 项 | 级别 | 处置 | 修法 |
+|---|---|---|---|
+| R2 余项：prelaunch 两个失败分支先 await 无 timeout 的 `rm` | P1 | accepted | 删除 `_grader_prelaunch` 里两处 `_remove_container` 等待，直接抛原 `SandboxProfileViolation`；record 由唯一调用方 `_start_container` 经 `_close_container_scope` 按独立清理预算有界收口（docstring 写明清理所有权）。 |
+| R6 余项：失败成员成本 ≠ 整组连带成本；同 task 消费 / 丢弃成本混在一起 | P2 | accepted（本轮修） | 每桶新增 `by_root_cause_set`：整组连带成本按根因**集合**归属（单根因归该原因，多根因归 "a\|b" 组合键，不重复计入各单项）；成员缺失 / 未知的组只进该集合的 `group_cost_seconds_known_partial`，全未知只计数。`by_task` 新增 `consumed_member_fields` / `dropped_member_fields`（`member_fields` 仍为合计）。`by_root_cause`（失败成员自身成本）保留。 |
+
+### 12.1 T1 口径
+
+- **rm 卡住时的结果是 run-fatal，不是"违规照常上抛"**：`_close_container_scope` 的清理预算是 rm → inspect → kill → rm 的总额（D-2 合同，Codex 联合审查 R2 定案）；第一次 rm 卡满预算 = 无法确认停止 → `GradingScopeTerminationError` 替换 `SandboxProfileViolation`（两者同为 run-halt 通道），记录保留、`close()` 的 gc 再次清理。Codex 的探针场景（rm 阻塞 1s 预算）在修后正是这个结果，与其验收条件 b 一致；rm 及时返回时违规原样上抛、容器已删、无清理失败。
+- 探针副本（scratchpad，不覆盖 Codex 原件）：n2_followup 16 案的 `prelaunch_violation_rm_hang` 断言改为修后口径（提交方 1.25s 内收到 `GradingScopeTerminationError`、worker 槽空、记录保留、`close()` 后 `containers_open=[]`）；cost_diagnostic 加断言"交换正常成员成本后汇总必须不同、根因集合成本 4205/75 随之交换"。
+- 新增反例：可信 init 失败（rm 及时 / rm 卡住 / rm 卡住且状态未知）与 prelaunch 检查不合格四例（`tests/grading/test_w3b_grader_profile_unit.py`）；根因集合归属随成本交换而交换、多根因只进组合键且成员缺失只给下界、同 task 消费 / 丢弃分开三例（`tests/adapters_miles/test_w4_drop_event_summary.py`）。
+
+### 12.2 证据（作者本机，不是 Codex 批准）
+
+ruff 全过；全量 `pytest tests -q`（集成树）**2252 passed, 0 skipped, 0 failed（158s；上一轮 2245 + 7 个新反例）**；lanes 清净环境实跑 lane A **407 passed / 316 skipped**、lane B **723 passed / 0 skipped**（计数 `6d8f7f69`）。没有真实 Docker / SWE 镜像 / CC / API / GPU。请 Codex 按其 §5 停止条件只核对 R2 余项与直接回归；R6 余项已一并修复，若认可即可关闭。
 
