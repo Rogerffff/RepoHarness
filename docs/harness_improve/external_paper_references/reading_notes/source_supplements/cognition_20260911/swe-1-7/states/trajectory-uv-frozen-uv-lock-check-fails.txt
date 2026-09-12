@@ -1,0 +1,66 @@
+Example trajectories
+Hide
+FrontierCode 1.1 Main task:
+fizzy-implement-authorization
+matplotlib-bug-stackplot
+uv-frozen-uv-lock-check-fails
+
+Generalize the fix to the evidence, not the instruction: This task tests whether a model fixes the whole class of bugs or just the one instance the instruction mentions — the flaw lives in shared machinery, and hidden tests check the wider surface area. Both models detect that the bug is broader, but Kimi repeatedly reasons itself back to the narrower instruction, while SWE-1.7 frames the job as general from the start and ships the fix for the whole class.
+
+Kimi-K2.7-Code
+WHAT'S HAPPENING
+
+Kimi nails the diagnosis and sees the bug is bigger than the ticket. It quickly understands why `UV_FROZEN=0` misbehaves (the parser checks whether a flag is present, never its value), and notices, unprompted, that other commands like `uv sync` hit the identical flaw. Every piece of evidence points at a general fix.
+
+THINKING BLOCK
+
+But clap's conflict system triggers on the presence of the arg, not its value. So this also conflicts, which is the bug.
+
+THINKING BLOCK
+
+If I keep `conflicts_with`, then `UV_FROZEN=0 uv sync --no-sync` would still conflict (because frozen from env is considered present). Is that desired? The user didn't mention that case, but it's the same bug.
+
+WHAT'S HAPPENING
+
+Kimi retreats to the instruction's narrower scope. While it reasons through other instances this bug would cause failures, it narrows back to what the instruction specifies. It even explicitly runs the additional failing surface area itself.
+
+THINKING BLOCK
+
+The same bug exists: `UV_FROZEN=0 uv sync --locked` would fail. But the task title is specifically `UV_FROZEN=0 uv lock --check`. Let me focus on that.
+
+TOOL RESULT
+
+error: the argument '--locked' cannot be used with '--frozen'
+
+THINKING BLOCK
+
+Yes, `UV_FROZEN=0 uv sync --locked` also fails. So the bug exists in `uv sync` too. […] However, I feel uneasy leaving `uv sync` broken with the same bug. Let me think. […] So I think fixing `uv lock` is the requirement. The other commands are not part of the reported issue. I'll leave it as is.
+
+WHAT'S HAPPENING
+
+Kimi had every input needed for the right call: the correct diagnosis, the full list of affected variables, a prediction of the grader's exact scenario, and finally a live reproduction of it on its own patched binary. What it never granted itself was permission to act on that evidence.
+
+SWE-1.7
+WHAT'S HAPPENING
+
+SWE reproduces first, and generalizes on the spot. It builds the real binary, triggers the bug, and its very first analysis reframes the job: not one command's quirk, but a general rule — a false env var must never cause a conflict.
+
+TOOL CALL
+
+UV_FROZEN=0 /home/ubuntu/repos/uv/target/debug/uv lock --check
+
+THINKING BLOCK
+
+Both 0 and 1 conflict. The issue specifically says `UV_FROZEN=0` should not. […] Need fix general env bool false causing conflicts.
+
+WHAT'S HAPPENING
+
+It rejects the shortcut and builds the fix for the whole class. SWE considers hardcoding the handful of env vars it has seen so far — and turns the idea down. Its fix instead walks every argument of every uv subcommand automatically and disables the env binding of any boolean set to a false value.
+
+THINKING BLOCK
+
+But maybe we can avoid all this by not relying on metadata and instead specifically check for `UV_FROZEN`, `UV_LOCKED`, `UV_NO_SYNC` etc? Hardcoded list. There are not too many. But dynamic is cleaner.
+
+WHAT'S HAPPENING
+
+SWE passes because it treats the reported command as one symptom of a general bug, its single mechanism covers `UV_LOCKED`, `UV_OFFLINE`, `uv sync`, and every other variable and command the graders probe, including ones SWE never named.

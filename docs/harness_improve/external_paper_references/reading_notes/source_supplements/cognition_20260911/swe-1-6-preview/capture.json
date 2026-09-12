@@ -1,0 +1,482 @@
+{
+  "title": "An Early Preview of SWE-1.6 and Research Update | Cognition",
+  "url": "https://cognition.com/blog/swe-1-6-preview",
+  "headings": [
+    "An Early Preview of SWE-1.6 and Research Update",
+    "Evaluation Details",
+    "Scaling RL",
+    "How we made our training 6x faster",
+    "GPUs Allocation and Staleness",
+    "The missing axis: Model UX"
+  ],
+  "buttons": [
+    "Menu",
+    "Close",
+    "",
+    ""
+  ],
+  "links": [
+    {
+      "text": "",
+      "url": "https://cognition.com/"
+    },
+    {
+      "text": "",
+      "url": "https://cognition.com/"
+    },
+    {
+      "text": "Home",
+      "url": "https://cognition.com/"
+    },
+    {
+      "text": "Careers",
+      "url": "https://cognition.com/careers"
+    },
+    {
+      "text": "Research",
+      "url": "https://cognition.com/research"
+    },
+    {
+      "text": "Blog",
+      "url": "https://cognition.com/blog"
+    },
+    {
+      "text": "Get a Demo",
+      "url": "https://cognition.com/demo"
+    },
+    {
+      "text": "Devin",
+      "url": "https://devin.ai/"
+    },
+    {
+      "text": "",
+      "url": "https://cognition.com/"
+    },
+    {
+      "text": "Home",
+      "url": "https://cognition.com/"
+    },
+    {
+      "text": "Careers",
+      "url": "https://cognition.com/careers"
+    },
+    {
+      "text": "Research",
+      "url": "https://cognition.com/research"
+    },
+    {
+      "text": "Blog",
+      "url": "https://cognition.com/blog"
+    },
+    {
+      "text": "Get a Demo",
+      "url": "https://cognition.com/demo"
+    },
+    {
+      "text": "Devin",
+      "url": "https://devin.ai/"
+    },
+    {
+      "text": "OpenAI’s recommendation",
+      "url": "https://openai.com/index/why-we-no-longer-evaluate-swe-bench-verified/"
+    },
+    {
+      "text": "SWE-Bench Pro trajectories",
+      "url": "https://docent.transluce.org/dashboard/032fb63d-4992-4bfc-911d-3b7dafcb931f"
+    },
+    {
+      "text": "Codex",
+      "url": "https://openai.com/index/introducing-gpt-5-3-codex/"
+    },
+    {
+      "text": "Codex Spark",
+      "url": "https://openai.com/index/introducing-gpt-5-3-codex-spark/"
+    },
+    {
+      "text": "Blackwell chips",
+      "url": "https://developer.nvidia.com/blog/3-ways-nvfp4-accelerates-ai-training-and-inference/"
+    },
+    {
+      "text": "moved",
+      "url": "https://openai.com/index/why-we-no-longer-evaluate-swe-bench-verified/"
+    },
+    {
+      "text": "blog post",
+      "url": "https://cognition.ai/blog/swe-grep"
+    },
+    {
+      "text": "Estimating the Productivity of an Autonomous AI Software Engineer\n\n06.04.26",
+      "url": "https://cognition.com/blog/ai-productivity"
+    },
+    {
+      "text": "AI should earn its keep: Introducing the AI Productivity Guarantee\n\n06.04.26",
+      "url": "https://cognition.com/blog/ai-guarantee"
+    },
+    {
+      "text": "Introducing Devin Desktop\n\n06.02.26",
+      "url": "https://cognition.com/blog/introducing-devin-desktop"
+    },
+    {
+      "text": "More Devins in More Places\n\n05.27.26",
+      "url": "https://cognition.com/blog/series-d"
+    },
+    {
+      "text": "Devin in Windsurf\n\n04.15.26",
+      "url": "https://cognition.com/blog/devin-in-windsurf"
+    },
+    {
+      "text": "How Cognition Uses Devin to Build Devin\n\n02.27.26",
+      "url": "https://cognition.com/blog/how-cognition-uses-devin-to-build-devin"
+    },
+    {
+      "text": "Introducing Cognition for Government\n\n02.25.26",
+      "url": "https://cognition.com/blog/cognition-for-government"
+    },
+    {
+      "text": "Introducing Devin 2.2\n\n02.24.26",
+      "url": "https://cognition.com/blog/introducing-devin-2-2"
+    },
+    {
+      "text": "Linkedin",
+      "url": "https://www.linkedin.com/company/cognition-ai-labs"
+    },
+    {
+      "text": "X [Twitter]",
+      "url": "https://x.com/cognition"
+    },
+    {
+      "text": "Website Terms of Use",
+      "url": "https://cognition.com/legal/website-terms-of-use"
+    },
+    {
+      "text": "Enterprise Terms of Service",
+      "url": "https://cognition.com/legal/enterprise-terms-of-service"
+    },
+    {
+      "text": "Platform Terms of Service",
+      "url": "https://cognition.com/legal/platform-terms-of-service"
+    },
+    {
+      "text": "Data Processing Addendum",
+      "url": "https://cognition.com/legal/data-processing-statement"
+    },
+    {
+      "text": "Your Privacy Choices",
+      "url": "https://cognition.com/privacy-choices"
+    },
+    {
+      "text": "Privacy Policy",
+      "url": "https://cognition.com/legal/privacy-policy"
+    },
+    {
+      "text": "Acceptable Use Policy",
+      "url": "https://cognition.com/legal/acceptable-use-policy"
+    },
+    {
+      "text": "Report Vulnerability",
+      "url": "https://cognition.com/report-vulnerability"
+    },
+    {
+      "text": "Security",
+      "url": "https://cognition.com/legal/security"
+    }
+  ],
+  "math": [],
+  "images": [
+    {
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/c9417d507221b1aa1541fa7e40e7bbcc60e76a77-1600x975.png?w=1600&fit=max",
+      "alt": "An Early Preview of SWE-1.6 and Research Update"
+    },
+    {
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/897206eb8b18422b08f07dcbbcfc08e32b82390d-1600x846.png?w=1600&fit=max",
+      "alt": "An Early Preview of SWE-1.6 and Research Update"
+    },
+    {
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/7f030c4b78f02a27645ffca09d06b9330e3a1bb4-1600x846.png?w=1600&fit=max",
+      "alt": "An Early Preview of SWE-1.6 and Research Update"
+    },
+    {
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/3e18f64ecf9696b066b3bb3b3ec74c0744bc9567-1600x602.png?w=1600&fit=max",
+      "alt": "An Early Preview of SWE-1.6 and Research Update"
+    },
+    {
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/5e430c03a2194aeb8c2f8a512e72052d7edeb57a-2956x408.png?w=1600&fit=max",
+      "alt": "An Early Preview of SWE-1.6 and Research Update"
+    },
+    {
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/67c8c9edfb11896898e5491bdfb4a763dc0285f1-2934x444.png?w=1600&fit=max",
+      "alt": "An Early Preview of SWE-1.6 and Research Update"
+    },
+    {
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/d29e12b3338b09f6155645b5a7b8cdb184b6dd19-2950x416.png?w=1600&fit=max",
+      "alt": "An Early Preview of SWE-1.6 and Research Update"
+    },
+    {
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/e607c6caa174199c77a75bb269f06daaf0f2ffaa-3022x436.png?w=1600&fit=max",
+      "alt": "An Early Preview of SWE-1.6 and Research Update"
+    },
+    {
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/4ffeee4beff9cf794ee91b9bdf24ebad7fbd374d-1600x757.png?w=1600&fit=max",
+      "alt": "An Early Preview of SWE-1.6 and Research Update"
+    },
+    {
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2F8527b7c1b2b03f309d7ba9189296ac76a1c7b650-1920x1080.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "Estimating the Productivity of an Autonomous AI Software Engineer"
+    },
+    {
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2Fd378ef146ec6070438bfaeab4d9e47e8b886e55d-1920x1080.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "AI should earn its keep: Introducing the AI Productivity Guarantee"
+    },
+    {
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2F5841a7932386c05dc112f92fda8ff519b38d4f9a-1920x1080.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "Introducing Devin Desktop"
+    },
+    {
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2F58309361c06f31fa49f8c36e307963f21bd3f22b-1382x777.jpg%3Frect%3D1%2C0%2C1381%2C777%26w%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "More Devins in More Places"
+    },
+    {
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2F89fcacf48d33b51277268808596d123237018950-1920x1080.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "Devin in Windsurf"
+    },
+    {
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2Fc1e05d959a8c25c8df5e86198a4213e4fd634b61-1500x844.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "How Cognition Uses Devin to Build Devin"
+    },
+    {
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2F164f27869605d7c326a68e511efcf1a4077fc2b7-1920x1080.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "Introducing Cognition for Government"
+    },
+    {
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2F5638cfd0a8a65ad3074019b69c3aa05e112577b7-1920x1080.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "Introducing Devin 2.2"
+    }
+  ],
+  "inputs": [],
+  "captured_at": "2026-09-11T09:42:40.145Z",
+  "expanded": [],
+  "visuals": [
+    {
+      "file": "visuals/image-01.png",
+      "original_file": "assets/01.png",
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/c9417d507221b1aa1541fa7e40e7bbcc60e76a77-1600x975.png?w=1600&fit=max",
+      "alt": "An Early Preview of SWE-1.6 and Research Update",
+      "nearby_text": "We are sharing an early preview of our ongoing SWE-1.6 training run. Since training SWE 1.5, we have refined our RL recipe and scaled our infrastructure to unlock two orders of magnitude more compute. Our next model SWE-1.6 is post-trained on the same pre-trained model as SWE-1.5 and runs equally as fast at 950 tok/s. The current checkpoint achieves an 11% higher score than SWE-1.5 on SWE-Bench Pro.\n\nTraining this model has taught us a lot about how RL can affect the “user experience” of a model. For example, our current checkpoint exhibits behaviors like overthinking and excessive self-verification. This is an active area of research for us - we believe Model UX is an important axis that isn’t captured by benchmarks like SWE-Bench Pro.\n\nWe are rolling out early access to this model to a small subset of users to collect feedback for tuning model behavior. Our goal for the preview period is to fix rough edges and further push intelligence as we continue training the model!\n\nEvaluation Details\n\nWe chose to evaluate SWE-1.6 on SWE-Bench Pro following OpenAI’s recommendation as the spiritual successor of SWE-Bench Verified. Running bug-free and reproducible evaluations for agents requi"
+    },
+    {
+      "file": "visuals/image-02.png",
+      "original_file": "assets/02.png",
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/897206eb8b18422b08f07dcbbcfc08e32b82390d-1600x846.png?w=1600&fit=max",
+      "alt": "An Early Preview of SWE-1.6 and Research Update",
+      "nearby_text": "We are sharing an early preview of our ongoing SWE-1.6 training run. Since training SWE 1.5, we have refined our RL recipe and scaled our infrastructure to unlock two orders of magnitude more compute. Our next model SWE-1.6 is post-trained on the same pre-trained model as SWE-1.5 and runs equally as fast at 950 tok/s. The current checkpoint achieves an 11% higher score than SWE-1.5 on SWE-Bench Pro.\n\nTraining this model has taught us a lot about how RL can affect the “user experience” of a model. For example, our current checkpoint exhibits behaviors like overthinking and excessive self-verification. This is an active area of research for us - we believe Model UX is an important axis that isn’t captured by benchmarks like SWE-Bench Pro.\n\nWe are rolling out early access to this model to a small subset of users to collect feedback for tuning model behavior. Our goal for the preview period is to fix rough edges and further push intelligence as we continue training the model!\n\nEvaluation Details\n\nWe chose to evaluate SWE-1.6 on SWE-Bench Pro following OpenAI’s recommendation as the spiritual successor of SWE-Bench Verified. Running bug-free and reproducible evaluations for agents requi"
+    },
+    {
+      "file": "visuals/image-03.png",
+      "original_file": "assets/03.png",
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/7f030c4b78f02a27645ffca09d06b9330e3a1bb4-1600x846.png?w=1600&fit=max",
+      "alt": "An Early Preview of SWE-1.6 and Research Update",
+      "nearby_text": "We are sharing an early preview of our ongoing SWE-1.6 training run. Since training SWE 1.5, we have refined our RL recipe and scaled our infrastructure to unlock two orders of magnitude more compute. Our next model SWE-1.6 is post-trained on the same pre-trained model as SWE-1.5 and runs equally as fast at 950 tok/s. The current checkpoint achieves an 11% higher score than SWE-1.5 on SWE-Bench Pro.\n\nTraining this model has taught us a lot about how RL can affect the “user experience” of a model. For example, our current checkpoint exhibits behaviors like overthinking and excessive self-verification. This is an active area of research for us - we believe Model UX is an important axis that isn’t captured by benchmarks like SWE-Bench Pro.\n\nWe are rolling out early access to this model to a small subset of users to collect feedback for tuning model behavior. Our goal for the preview period is to fix rough edges and further push intelligence as we continue training the model!\n\nEvaluation Details\n\nWe chose to evaluate SWE-1.6 on SWE-Bench Pro following OpenAI’s recommendation as the spiritual successor of SWE-Bench Verified. Running bug-free and reproducible evaluations for agents requi"
+    },
+    {
+      "file": "visuals/image-04.png",
+      "original_file": "assets/04.png",
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/3e18f64ecf9696b066b3bb3b3ec74c0744bc9567-1600x602.png?w=1600&fit=max",
+      "alt": "An Early Preview of SWE-1.6 and Research Update",
+      "nearby_text": "We are sharing an early preview of our ongoing SWE-1.6 training run. Since training SWE 1.5, we have refined our RL recipe and scaled our infrastructure to unlock two orders of magnitude more compute. Our next model SWE-1.6 is post-trained on the same pre-trained model as SWE-1.5 and runs equally as fast at 950 tok/s. The current checkpoint achieves an 11% higher score than SWE-1.5 on SWE-Bench Pro.\n\nTraining this model has taught us a lot about how RL can affect the “user experience” of a model. For example, our current checkpoint exhibits behaviors like overthinking and excessive self-verification. This is an active area of research for us - we believe Model UX is an important axis that isn’t captured by benchmarks like SWE-Bench Pro.\n\nWe are rolling out early access to this model to a small subset of users to collect feedback for tuning model behavior. Our goal for the preview period is to fix rough edges and further push intelligence as we continue training the model!\n\nEvaluation Details\n\nWe chose to evaluate SWE-1.6 on SWE-Bench Pro following OpenAI’s recommendation as the spiritual successor of SWE-Bench Verified. Running bug-free and reproducible evaluations for agents requi"
+    },
+    {
+      "file": "visuals/image-05.png",
+      "original_file": "assets/05.png",
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/5e430c03a2194aeb8c2f8a512e72052d7edeb57a-2956x408.png?w=1600&fit=max",
+      "alt": "An Early Preview of SWE-1.6 and Research Update",
+      "nearby_text": "We are sharing an early preview of our ongoing SWE-1.6 training run. Since training SWE 1.5, we have refined our RL recipe and scaled our infrastructure to unlock two orders of magnitude more compute. Our next model SWE-1.6 is post-trained on the same pre-trained model as SWE-1.5 and runs equally as fast at 950 tok/s. The current checkpoint achieves an 11% higher score than SWE-1.5 on SWE-Bench Pro.\n\nTraining this model has taught us a lot about how RL can affect the “user experience” of a model. For example, our current checkpoint exhibits behaviors like overthinking and excessive self-verification. This is an active area of research for us - we believe Model UX is an important axis that isn’t captured by benchmarks like SWE-Bench Pro.\n\nWe are rolling out early access to this model to a small subset of users to collect feedback for tuning model behavior. Our goal for the preview period is to fix rough edges and further push intelligence as we continue training the model!\n\nEvaluation Details\n\nWe chose to evaluate SWE-1.6 on SWE-Bench Pro following OpenAI’s recommendation as the spiritual successor of SWE-Bench Verified. Running bug-free and reproducible evaluations for agents requi"
+    },
+    {
+      "file": "visuals/image-06.png",
+      "original_file": "assets/06.png",
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/67c8c9edfb11896898e5491bdfb4a763dc0285f1-2934x444.png?w=1600&fit=max",
+      "alt": "An Early Preview of SWE-1.6 and Research Update",
+      "nearby_text": "We are sharing an early preview of our ongoing SWE-1.6 training run. Since training SWE 1.5, we have refined our RL recipe and scaled our infrastructure to unlock two orders of magnitude more compute. Our next model SWE-1.6 is post-trained on the same pre-trained model as SWE-1.5 and runs equally as fast at 950 tok/s. The current checkpoint achieves an 11% higher score than SWE-1.5 on SWE-Bench Pro.\n\nTraining this model has taught us a lot about how RL can affect the “user experience” of a model. For example, our current checkpoint exhibits behaviors like overthinking and excessive self-verification. This is an active area of research for us - we believe Model UX is an important axis that isn’t captured by benchmarks like SWE-Bench Pro.\n\nWe are rolling out early access to this model to a small subset of users to collect feedback for tuning model behavior. Our goal for the preview period is to fix rough edges and further push intelligence as we continue training the model!\n\nEvaluation Details\n\nWe chose to evaluate SWE-1.6 on SWE-Bench Pro following OpenAI’s recommendation as the spiritual successor of SWE-Bench Verified. Running bug-free and reproducible evaluations for agents requi"
+    },
+    {
+      "file": "visuals/image-07.png",
+      "original_file": "assets/07.png",
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/d29e12b3338b09f6155645b5a7b8cdb184b6dd19-2950x416.png?w=1600&fit=max",
+      "alt": "An Early Preview of SWE-1.6 and Research Update",
+      "nearby_text": "We are sharing an early preview of our ongoing SWE-1.6 training run. Since training SWE 1.5, we have refined our RL recipe and scaled our infrastructure to unlock two orders of magnitude more compute. Our next model SWE-1.6 is post-trained on the same pre-trained model as SWE-1.5 and runs equally as fast at 950 tok/s. The current checkpoint achieves an 11% higher score than SWE-1.5 on SWE-Bench Pro.\n\nTraining this model has taught us a lot about how RL can affect the “user experience” of a model. For example, our current checkpoint exhibits behaviors like overthinking and excessive self-verification. This is an active area of research for us - we believe Model UX is an important axis that isn’t captured by benchmarks like SWE-Bench Pro.\n\nWe are rolling out early access to this model to a small subset of users to collect feedback for tuning model behavior. Our goal for the preview period is to fix rough edges and further push intelligence as we continue training the model!\n\nEvaluation Details\n\nWe chose to evaluate SWE-1.6 on SWE-Bench Pro following OpenAI’s recommendation as the spiritual successor of SWE-Bench Verified. Running bug-free and reproducible evaluations for agents requi"
+    },
+    {
+      "file": "visuals/image-08.png",
+      "original_file": "assets/08.png",
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/e607c6caa174199c77a75bb269f06daaf0f2ffaa-3022x436.png?w=1600&fit=max",
+      "alt": "An Early Preview of SWE-1.6 and Research Update",
+      "nearby_text": "We are sharing an early preview of our ongoing SWE-1.6 training run. Since training SWE 1.5, we have refined our RL recipe and scaled our infrastructure to unlock two orders of magnitude more compute. Our next model SWE-1.6 is post-trained on the same pre-trained model as SWE-1.5 and runs equally as fast at 950 tok/s. The current checkpoint achieves an 11% higher score than SWE-1.5 on SWE-Bench Pro.\n\nTraining this model has taught us a lot about how RL can affect the “user experience” of a model. For example, our current checkpoint exhibits behaviors like overthinking and excessive self-verification. This is an active area of research for us - we believe Model UX is an important axis that isn’t captured by benchmarks like SWE-Bench Pro.\n\nWe are rolling out early access to this model to a small subset of users to collect feedback for tuning model behavior. Our goal for the preview period is to fix rough edges and further push intelligence as we continue training the model!\n\nEvaluation Details\n\nWe chose to evaluate SWE-1.6 on SWE-Bench Pro following OpenAI’s recommendation as the spiritual successor of SWE-Bench Verified. Running bug-free and reproducible evaluations for agents requi"
+    },
+    {
+      "file": "visuals/image-09.png",
+      "original_file": "assets/09.png",
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/4ffeee4beff9cf794ee91b9bdf24ebad7fbd374d-1600x757.png?w=1600&fit=max",
+      "alt": "An Early Preview of SWE-1.6 and Research Update",
+      "nearby_text": "We are sharing an early preview of our ongoing SWE-1.6 training run. Since training SWE 1.5, we have refined our RL recipe and scaled our infrastructure to unlock two orders of magnitude more compute. Our next model SWE-1.6 is post-trained on the same pre-trained model as SWE-1.5 and runs equally as fast at 950 tok/s. The current checkpoint achieves an 11% higher score than SWE-1.5 on SWE-Bench Pro.\n\nTraining this model has taught us a lot about how RL can affect the “user experience” of a model. For example, our current checkpoint exhibits behaviors like overthinking and excessive self-verification. This is an active area of research for us - we believe Model UX is an important axis that isn’t captured by benchmarks like SWE-Bench Pro.\n\nWe are rolling out early access to this model to a small subset of users to collect feedback for tuning model behavior. Our goal for the preview period is to fix rough edges and further push intelligence as we continue training the model!\n\nEvaluation Details\n\nWe chose to evaluate SWE-1.6 on SWE-Bench Pro following OpenAI’s recommendation as the spiritual successor of SWE-Bench Verified. Running bug-free and reproducible evaluations for agents requi"
+    },
+    {
+      "file": "visuals/image-10.png",
+      "original_file": "assets/10.bin",
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2F8527b7c1b2b03f309d7ba9189296ac76a1c7b650-1920x1080.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "Estimating the Productivity of an Autonomous AI Software Engineer",
+      "nearby_text": "Estimating the Productivity of an Autonomous AI Software Engineer\n\n06.04.26"
+    },
+    {
+      "file": "visuals/image-11.png",
+      "original_file": "assets/11.bin",
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2Fd378ef146ec6070438bfaeab4d9e47e8b886e55d-1920x1080.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "AI should earn its keep: Introducing the AI Productivity Guarantee",
+      "nearby_text": "AI should earn its keep: Introducing the AI Productivity Guarantee\n\n06.04.26"
+    },
+    {
+      "file": "visuals/image-12.png",
+      "original_file": "assets/12.bin",
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2F5841a7932386c05dc112f92fda8ff519b38d4f9a-1920x1080.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "Introducing Devin Desktop",
+      "nearby_text": "Introducing Devin Desktop\n\n06.02.26"
+    },
+    {
+      "file": "visuals/image-13.png",
+      "original_file": "assets/13.bin",
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2F58309361c06f31fa49f8c36e307963f21bd3f22b-1382x777.jpg%3Frect%3D1%2C0%2C1381%2C777%26w%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "More Devins in More Places",
+      "nearby_text": "More Devins in More Places\n\n05.27.26"
+    },
+    {
+      "file": "visuals/image-14.png",
+      "original_file": "assets/14.bin",
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2F89fcacf48d33b51277268808596d123237018950-1920x1080.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "Devin in Windsurf",
+      "nearby_text": "Devin in Windsurf\n\n04.15.26"
+    },
+    {
+      "file": "visuals/image-15.png",
+      "original_file": "assets/15.bin",
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2Fc1e05d959a8c25c8df5e86198a4213e4fd634b61-1500x844.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "How Cognition Uses Devin to Build Devin",
+      "nearby_text": "How Cognition Uses Devin to Build Devin\n\n02.27.26"
+    },
+    {
+      "file": "visuals/image-16.png",
+      "original_file": "assets/16.bin",
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2F164f27869605d7c326a68e511efcf1a4077fc2b7-1920x1080.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "Introducing Cognition for Government",
+      "nearby_text": "Introducing Cognition for Government\n\n02.25.26"
+    },
+    {
+      "file": "visuals/image-17.png",
+      "original_file": "assets/17.bin",
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2F5638cfd0a8a65ad3074019b69c3aa05e112577b7-1920x1080.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "Introducing Devin 2.2",
+      "nearby_text": "Introducing Devin 2.2\n\n02.24.26"
+    }
+  ],
+  "scripts": [
+    {
+      "url": "https://cognition.com/_next/static/chunks/0t1et0tty8o9s.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/317b6e438c77d4bf.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/10qd__0r7a~.l.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/730b707e0189beca.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/01xlw8hd842-c.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/aee2d073d2a1157c.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0tkx75hsjmh2v.css?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/f06ae45ad98c8d81.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0pqt~8bl3ukh4.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/5261101892e2476e.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0gcnbnuyac.kx.css?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/20919430e5be6ba4.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/turbopack-0icil-qo9qn8a.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/431e3c9076f3217a.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0nq9ausxsc0-d.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/8befb3adebfed007.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/13xpd4dr49zj_.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/3c1240da6c7d003e.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/12flz-lm62gu~.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/7d9a6efc60e109be.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0e4bl2qj-.3es.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/035fa9c64bbf6dff.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0y8sku5ccmmbd.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/5eca791ba19ba51a.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/17xbkoqry2gn2.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/896584eef1d7ed23.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0ixbs3b~x0hlb.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/6d9a0d12b29cf04d.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/00p1i.0.wj~8g.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/17218ec7a2b04d2f.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0u0lwy1lr8msw.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/8bc4d8120a7ef6b7.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/063n5xp0bgpky.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/56bc53e7fa6c2718.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/09rwrz4jjy_ji.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/2d85ee58499a8aa8.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0u2sgqb7m5j2h.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/6ffbd788cfac336d.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0bp~nxrdt4~oe.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/c3cbc2f65d040234.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0auotxr96vp8j.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/642fdbde5d3f25ac.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0btnjjl.mw~vw.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/479c410acb635351.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/15-l4hepvk2n3.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/8f001552ad28067d.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0nfn.2147umpx.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/cc1130b14eabbb82.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0p35d.l_on67c.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/9f6e4fafdc7b8a7a.js"
+    }
+  ],
+  "errors": []
+}

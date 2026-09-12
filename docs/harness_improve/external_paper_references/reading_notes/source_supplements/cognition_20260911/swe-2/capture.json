@@ -1,0 +1,634 @@
+{
+  "title": "Introducing SWE-2: Pushing the Pareto Frontier | Cognition",
+  "url": "https://cognition.com/blog/swe-2",
+  "headings": [
+    "Introducing SWE-2: Pushing the Pareto Frontier",
+    "FrontierCode 1.1 Main\nScore",
+    "FrontierCode 1.1 Main\nScore\nvs\nCost ($)",
+    "Model Behavior#",
+    "SWE-1.7 vs. SWE-2 on FrontierCode 1.1 Main: Mean\nSteps per run",
+    "one (JS): modernise src/web/scripts/search.js to ES6",
+    "Pushing the Pareto Frontier with RL#",
+    "Progress of the Pareto frontier during training",
+    "Approximating the Pareto curve tangents of Kimi K3",
+    "Deriving the Cost Penalty#",
+    "Length-Weighted Reward Baseline#",
+    "Length-weighted group baseline improves RL stability",
+    "RL Rollouts & Numerics#",
+    "Degradation of speculative decoding acceptance rate during RL",
+    "Data Improvements#",
+    "Measuring the Trustworthiness of SWE-2#",
+    "Propaganda and censorship#",
+    "Propaganda and Censorship Eval, by language",
+    "Context-dependent vulnerability in coding tasks#",
+    "Effect of customer and language framing on vulnerability",
+    "References#",
+    "Appendix A: Evaluation Methodology#",
+    "Appendix B: Formally Deriving the Cost Penalty#",
+    "Appendix C: Optimal Baseline Derivation#"
+  ],
+  "buttons": [
+    "Menu",
+    "Close",
+    "FrontierCode 1.1 Main",
+    "DeepSWE 1.1",
+    "Score",
+    "Pass rate",
+    "Score",
+    "Extended\n150",
+    "Main\n100",
+    "Steps per run",
+    "Example trajectories\nHide",
+    "one",
+    "matplotlib",
+    "Mattermost"
+  ],
+  "links": [
+    {
+      "text": "",
+      "url": "https://cognition.com/"
+    },
+    {
+      "text": "",
+      "url": "https://cognition.com/"
+    },
+    {
+      "text": "Home",
+      "url": "https://cognition.com/"
+    },
+    {
+      "text": "Careers",
+      "url": "https://cognition.com/careers"
+    },
+    {
+      "text": "Research",
+      "url": "https://cognition.com/research"
+    },
+    {
+      "text": "Blog",
+      "url": "https://cognition.com/blog"
+    },
+    {
+      "text": "Get a Demo",
+      "url": "https://cognition.com/demo"
+    },
+    {
+      "text": "Devin",
+      "url": "https://devin.ai/"
+    },
+    {
+      "text": "",
+      "url": "https://cognition.com/"
+    },
+    {
+      "text": "Home",
+      "url": "https://cognition.com/"
+    },
+    {
+      "text": "Careers",
+      "url": "https://cognition.com/careers"
+    },
+    {
+      "text": "Research",
+      "url": "https://cognition.com/research"
+    },
+    {
+      "text": "Blog",
+      "url": "https://cognition.com/blog"
+    },
+    {
+      "text": "Get a Demo",
+      "url": "https://cognition.com/demo"
+    },
+    {
+      "text": "Devin",
+      "url": "https://devin.ai/"
+    },
+    {
+      "text": "FrontierCode 1.1 Main",
+      "url": "https://cognition.com/blog/frontier-code-1.1"
+    },
+    {
+      "text": "1",
+      "url": "https://cognition.com/blog/swe-2#ref-1"
+    },
+    {
+      "text": "SWE-1.7",
+      "url": "https://cognition.com/blog/swe-1-7"
+    },
+    {
+      "text": "2",
+      "url": "https://cognition.com/blog/swe-2#ref-2"
+    },
+    {
+      "text": "See how models rank on the FrontierCode leaderboard\n→",
+      "url": "https://cognition.com/frontiercode"
+    },
+    {
+      "text": "Kimi K3",
+      "url": "https://arxiv.org/abs/2607.24653"
+    },
+    {
+      "text": "3",
+      "url": "https://cognition.com/blog/swe-2#ref-3"
+    },
+    {
+      "text": "Desktop",
+      "url": "https://devin.ai/desktop"
+    },
+    {
+      "text": "CLI",
+      "url": "https://devin.ai/cli"
+    },
+    {
+      "text": "Devin Web",
+      "url": "https://app.devin.ai/"
+    },
+    {
+      "text": "Fusion",
+      "url": "https://cognition.com/blog/devin-fusion"
+    },
+    {
+      "text": "Model Behavior#",
+      "url": "https://cognition.com/blog/swe-2#model-behavior"
+    },
+    {
+      "text": "previous post",
+      "url": "https://cognition.com/blog/swe-1-7"
+    },
+    {
+      "text": "2",
+      "url": "https://cognition.com/blog/swe-2#ref-2"
+    },
+    {
+      "text": "Pushing the Pareto Frontier with RL#",
+      "url": "https://cognition.com/blog/swe-2#pareto-frontier-rl"
+    },
+    {
+      "text": "Deriving the Cost Penalty#",
+      "url": "https://cognition.com/blog/swe-2#deriving-cost-penalty"
+    },
+    {
+      "text": "Appendix B",
+      "url": "https://cognition.com/blog/swe-2#appendix-b"
+    },
+    {
+      "text": "Length-Weighted Reward Baseline#",
+      "url": "https://cognition.com/blog/swe-2#length-weighted-baseline"
+    },
+    {
+      "text": "group baseline",
+      "url": "https://openreview.net/pdf?id=r1lgTGL5DE"
+    },
+    {
+      "text": "4",
+      "url": "https://cognition.com/blog/swe-2#ref-4"
+    },
+    {
+      "text": "Greensmith, Bartlett, and Baxter (2004)",
+      "url": "https://jmlr.org/papers/volume5/greensmith04a/greensmith04a.pdf"
+    },
+    {
+      "text": "5",
+      "url": "https://cognition.com/blog/swe-2#ref-5"
+    },
+    {
+      "text": "6",
+      "url": "https://cognition.com/blog/swe-2#ref-6"
+    },
+    {
+      "text": "Appendix C",
+      "url": "https://cognition.com/blog/swe-2#appendix-c"
+    },
+    {
+      "text": "RL Rollouts & Numerics#",
+      "url": "https://cognition.com/blog/swe-2#rl-rollouts-numerics"
+    },
+    {
+      "text": "DSpark speculative decoding",
+      "url": "https://arxiv.org/abs/2607.05147"
+    },
+    {
+      "text": "7",
+      "url": "https://cognition.com/blog/swe-2#ref-7"
+    },
+    {
+      "text": "SpecForge",
+      "url": "https://arxiv.org/abs/2603.18567"
+    },
+    {
+      "text": "8",
+      "url": "https://cognition.com/blog/swe-2#ref-8"
+    },
+    {
+      "text": "Data Improvements#",
+      "url": "https://cognition.com/blog/swe-2#data-improvements"
+    },
+    {
+      "text": "Measuring the Trustworthiness of SWE-2#",
+      "url": "https://cognition.com/blog/swe-2#appendix-trustworthiness"
+    },
+    {
+      "text": "our earlier post on model trustworthiness",
+      "url": "https://cognition.com/blog/measuring-open-source-model-trustworthiness"
+    },
+    {
+      "text": "9",
+      "url": "https://cognition.com/blog/swe-2#ref-9"
+    },
+    {
+      "text": "Propaganda and censorship#",
+      "url": "https://cognition.com/blog/swe-2#propaganda-and-censorship"
+    },
+    {
+      "text": "Context-dependent vulnerability in coding tasks#",
+      "url": "https://cognition.com/blog/swe-2#context-dependent-vulnerability-in-coding-tasks"
+    },
+    {
+      "text": "References#",
+      "url": "https://cognition.com/blog/swe-2#references"
+    },
+    {
+      "text": "cognition.com/blog/frontier-code-1.1",
+      "url": "https://cognition.com/blog/frontier-code-1.1"
+    },
+    {
+      "text": "cognition.com/blog/swe-1-7",
+      "url": "https://cognition.com/blog/swe-1-7"
+    },
+    {
+      "text": "arxiv.org/abs/2607.24653",
+      "url": "https://arxiv.org/abs/2607.24653"
+    },
+    {
+      "text": "openreview.net/pdf?id=r1lgTGL5DE",
+      "url": "https://openreview.net/pdf?id=r1lgTGL5DE"
+    },
+    {
+      "text": "jmlr.org/papers/volume5/greensmith04a/greensmith04a.pdf",
+      "url": "https://jmlr.org/papers/volume5/greensmith04a/greensmith04a.pdf"
+    },
+    {
+      "text": "arxiv.org/abs/2505.23585",
+      "url": "https://arxiv.org/abs/2505.23585"
+    },
+    {
+      "text": "arxiv.org/abs/2607.05147",
+      "url": "https://arxiv.org/abs/2607.05147"
+    },
+    {
+      "text": "arxiv.org/abs/2603.18567",
+      "url": "https://arxiv.org/abs/2603.18567"
+    },
+    {
+      "text": "cognition.com/blog/measuring-open-source-model-trustworthiness",
+      "url": "https://cognition.com/blog/measuring-open-source-model-trustworthiness"
+    },
+    {
+      "text": "Appendix A: Evaluation Methodology#",
+      "url": "https://cognition.com/blog/swe-2#appendix-evaluation-methodology"
+    },
+    {
+      "text": "Appendix B: Formally Deriving the Cost Penalty#",
+      "url": "https://cognition.com/blog/swe-2#appendix-b"
+    },
+    {
+      "text": "Appendix C: Optimal Baseline Derivation#",
+      "url": "https://cognition.com/blog/swe-2#appendix-c"
+    },
+    {
+      "text": "Linkedin",
+      "url": "https://www.linkedin.com/company/cognition-ai-labs"
+    },
+    {
+      "text": "X [Twitter]",
+      "url": "https://x.com/cognition"
+    },
+    {
+      "text": "Website Terms of Use",
+      "url": "https://cognition.com/legal/website-terms-of-use"
+    },
+    {
+      "text": "Enterprise Terms of Service",
+      "url": "https://cognition.com/legal/enterprise-terms-of-service"
+    },
+    {
+      "text": "Platform Terms of Service",
+      "url": "https://cognition.com/legal/platform-terms-of-service"
+    },
+    {
+      "text": "Data Processing Addendum",
+      "url": "https://cognition.com/legal/data-processing-statement"
+    },
+    {
+      "text": "Your Privacy Choices",
+      "url": "https://cognition.com/privacy-choices"
+    },
+    {
+      "text": "Privacy Policy",
+      "url": "https://cognition.com/legal/privacy-policy"
+    },
+    {
+      "text": "Acceptable Use Policy",
+      "url": "https://cognition.com/legal/acceptable-use-policy"
+    },
+    {
+      "text": "Report Vulnerability",
+      "url": "https://cognition.com/report-vulnerability"
+    },
+    {
+      "text": "Security",
+      "url": "https://cognition.com/legal/security"
+    }
+  ],
+  "math": [
+    "R=S-\\lambda_e C,",
+    "S \\in \\{0,1\\}",
+    "C",
+    "e",
+    "\\lambda_e",
+    "e",
+    "R",
+    "\\mathcal D",
+    "\\mathcal D",
+    "R",
+    "\\mathcal D",
+    "R=S-\\lambda_e C",
+    "\\lambda_e",
+    "\\lambda_e",
+    "(c,s)",
+    "J=s-\\lambda_e c",
+    "s=\\lambda_e c+J",
+    "\\lambda_e",
+    "\\lambda_\\text{high}",
+    "\\lambda_\\text{high}",
+    "m",
+    "(c,s)",
+    "\\Delta s\\approx m\\Delta c",
+    "\\Delta J = \\Delta s - \\lambda_e \\Delta c \\approx (m - \\lambda_e)\\Delta c.",
+    "\\lambda_e = m",
+    "J",
+    "x",
+    "n",
+    "y_1,\\ldots,y_n",
+    "b",
+    "\\widehat g = \\frac{1}{n}\\sum_{i=1}^{n}(R_i-b)\\,\\nabla_\\theta\\log\\pi_\\theta(y_i\\mid x).",
+    "\\mathbb E[(R_i-b)^2]",
+    "b = \\mathbb E[R_i]",
+    "b = \\frac{1}{n}\\sum_{i=1}^{n}R_i",
+    "1/n",
+    "\\hat g",
+    "b^\\star = \\frac{\\mathbb E\\left[R_i\\left\\|\\nabla_\\theta\\log\\pi_\\theta(y_i\\mid x)\\right\\|^2\\right]}{\\mathbb E\\left[\\left\\|\\nabla_\\theta\\log\\pi_\\theta(y_i\\mid x)\\right\\|^2\\right]}.",
+    "\\left\\|\\nabla_\\theta\\log\\pi_\\theta(y_i\\mid x)\\right\\|^2",
+    "L_i",
+    "\\left\\|\\nabla_\\theta\\log\\pi_\\theta(y_i\\mid x)\\right\\|^2",
+    "b^\\star",
+    "\\widehat b = \\frac{\\sum_{i=1}^{n}R_i L_i}{\\sum_{i=1}^{n}L_i}.",
+    "b^\\star",
+    "S \\in [0, 1]",
+    "S \\in \\{0, 1\\}",
+    "X=(C,S)",
+    "h(X)",
+    "f",
+    "\\mathbb{E}[h(X)]=f(\\mathbb{E}[X]).",
+    "X",
+    "h:D\\to\\mathbb{R}",
+    "D\\subseteq\\mathbb{R}^n",
+    "h(tx+(1-t)y)=th(x)+(1-t)h(y), \\quad \\forall x,y\\in D,\\ t\\in[0,1]",
+    "h(x) = c^\\top x + b",
+    "c \\in \\mathbb{R}^n",
+    "b \\in \\mathbb{R}",
+    "X=x",
+    "f(x)=h(x)",
+    "f=h",
+    "X=x",
+    "t",
+    "X=y",
+    "1-t",
+    "th(x)+(1-t)h(y)=h(tx+(1-t)y).",
+    "h",
+    "R=h(C,S)=\\alpha+\\beta S-\\lambda C",
+    "\\alpha",
+    "\\beta=1",
+    "R=S-\\lambda C",
+    "z_i=\\nabla_\\theta\\log\\pi_\\theta(y_i\\mid x)",
+    "\\mathbb E[z_i]=0",
+    "g =\\mathbb E[(R_i-b)z_i]=\\mathbb E[R_i z_i]",
+    "b",
+    "b",
+    "\\mathbb E\\left[(R_i-b)^2\\|z_i\\|^2\\right].",
+    "b",
+    "0=\\mathbb E\\left[(R_i-b^\\star)\\|z_i\\|^2\\right],",
+    "\\boxed{b^\\star=\\frac{\\mathbb E[R_i\\|z_i\\|^2]}{\\mathbb E[\\|z_i\\|^2]}}."
+  ],
+  "images": [],
+  "inputs": [],
+  "captured_at": "2026-09-11T09:47:41.935Z",
+  "expanded": [
+    "Example trajectories\nShow"
+  ],
+  "visuals": [
+    {
+      "file": "visuals/chart-01.png",
+      "svg_text": "higher →higher →costsolve ratemediumhighmax",
+      "nearby_text": "base model\nend of training\nhigher →\nhigher →\ncost\nsolve rate\nmedium\nhigh\nmax"
+    },
+    {
+      "file": "visuals/chart-02.png",
+      "svg_text": "020406080100Score (%)42.0SWE-1.744.2Kimi K347.5GPT-5.6 Sol48.0Grok 4.650.0SWE-250.9Fable 5.153.3GPT-6 Astra",
+      "nearby_text": "FrontierCode 1.1 Main\nDeepSWE 1.1\nFrontierCode 1.1 Main\nScore\nScore\nPass rate\n0\n20\n40\n60\n80\n100\nScore (%)\n42.0\nSWE-1.7\n44.2\nKimi K3\n47.5\nGPT-5.6 Sol\n48.0\nGrok 4.6\n50.0\nSWE-2\n50.9\nFable 5.1\n53.3\nGPT-6 Astra\n\nScore is a weighted aggregate of the rubric items. Solutions that don’t pass blocking criteria receive 0.\n\nFrontierCode 1.1 Main\nScore\nvs\nCost ($)\n$0.00\n$2.00\n$4.00\n$6.00\n$8.00\n$10\navg cost (USD) per rollout\n35\n40\n45\n50\n55\nScore (%)\nGPT-6 Astra\nFable 5.1\nSWE-2\nGrok 4.6\nGPT-5.6 Sol\nKimi K3\nSWE-1.7\n\nScore: a weighted aggregate of the rubric items. Solutions that don’t pass blocking criteria receive 0.\n\nCost ($): the mean USD spend per rollout.\n\nSELECT DATASET\nExtended\n150\nMain\n100\n\nMain: the standard 100-task benchmark. Excludes the easy tasks."
+    },
+    {
+      "file": "visuals/chart-03.png",
+      "svg_text": "$0.00$2.00$4.00$6.00$8.00$10avg cost (USD) per rollout3540455055Score (%)GPT-6 AstraFable 5.1SWE-2Grok 4.6GPT-5.6 SolKimi K3SWE-1.7",
+      "nearby_text": "FrontierCode 1.1 Main\nDeepSWE 1.1\nFrontierCode 1.1 Main\nScore\nScore\nPass rate\n0\n20\n40\n60\n80\n100\nScore (%)\n42.0\nSWE-1.7\n44.2\nKimi K3\n47.5\nGPT-5.6 Sol\n48.0\nGrok 4.6\n50.0\nSWE-2\n50.9\nFable 5.1\n53.3\nGPT-6 Astra\n\nScore is a weighted aggregate of the rubric items. Solutions that don’t pass blocking criteria receive 0.\n\nFrontierCode 1.1 Main\nScore\nvs\nCost ($)\n$0.00\n$2.00\n$4.00\n$6.00\n$8.00\n$10\navg cost (USD) per rollout\n35\n40\n45\n50\n55\nScore (%)\nGPT-6 Astra\nFable 5.1\nSWE-2\nGrok 4.6\nGPT-5.6 Sol\nKimi K3\nSWE-1.7\n\nScore: a weighted aggregate of the rubric items. Solutions that don’t pass blocking criteria receive 0.\n\nCost ($): the mean USD spend per rollout.\n\nSELECT DATASET\nExtended\n150\nMain\n100\n\nMain: the standard 100-task benchmark. Excludes the easy tasks."
+    },
+    {
+      "file": "visuals/chart-04.png",
+      "svg_text": "higher →higher →costsolve rateeffort 1effort 2effort 3",
+      "nearby_text": "Progress of the Pareto frontier during training\nKimi K3\nend of training\nhigher →\nhigher →\ncost\nsolve rate\neffort 1\neffort 2\neffort 3"
+    },
+    {
+      "file": "visuals/chart-05.png",
+      "svg_text": "higher →higher →costsolve rateeffort 1effort 2effort 3",
+      "nearby_text": "Approximating the Pareto curve tangents of Kimi K3\nhigher →\nhigher →\ncost\nsolve rate\neffort 1\neffort 2\neffort 3"
+    },
+    {
+      "file": "visuals/chart-06.png",
+      "svg_text": "Penalty too largehigher →costtraining task solve rateincreasing rewardeffort 1effort 2Slope-matched penaltyhigher →costincreasing rewardeffort 1effort 2",
+      "nearby_text": "Penalty too large\nhigher →\ncost\ntraining task solve rate\nincreasing reward\neffort 1\neffort 2\nSlope-matched penalty\nhigher →\ncost\nincreasing reward\neffort 1\neffort 2"
+    },
+    {
+      "file": "visuals/chart-07.png",
+      "svg_text": "020k40k60k80klength (generated tokens)01B2B3B4B5B6B7Bscore norm²",
+      "nearby_text": "0\n20k\n40k\n60k\n80k\nlength (generated tokens)\n0\n1B\n2B\n3B\n4B\n5B\n6B\n7B\nscore norm²\nScatter plot showing the correlation of \n∥\n∇\n𝜃\nlog\n⁡\n𝜋\n𝜃\n(\n𝑦\n𝑖\n∣\n𝑥\n)\n∥\n2\n∥∇\nθ\n\t​\n\nlogπ\nθ\n\t​\n\n(y\ni\n\t​\n\n∣x)∥\n2\n and the rollout length, measured in number of trainable tokens. Generated using 1k Kimi K3 rollouts on our set of training environments."
+    },
+    {
+      "file": "visuals/chart-08.png",
+      "svg_text": "KLhigher →higher →training steps",
+      "nearby_text": "Length-weighted group baseline improves RL stability\ngroup baseline\nlength-weighted group baseline\nKL\nhigher →\nhigher →\ntraining steps\nKL divergence between the inference and training policies over the course of RL. Bold lines are a rolling mean; faint lines are the raw per-step values."
+    },
+    {
+      "file": "visuals/chart-09.png",
+      "svg_text": "20%22%24%26%28%30%32%34%acceptance ratehigher →training time",
+      "nearby_text": "Degradation of speculative decoding acceptance rate during RL\n20%\n22%\n24%\n26%\n28%\n30%\n32%\n34%\nacceptance rate\nhigher →\ntraining time\nAcceptance rate of the draft model’s proposals over wall-clock training time. Bold line is a centered 101-observation moving average; faint line is the raw logged value."
+    },
+    {
+      "file": "visuals/chart-10.png",
+      "svg_text": "SWE-299.8%95.2%99.1%Kimi K375.6%54.5%73.3%GLM 5.399.3%83.8%95.5%GPT 5.6 Sol100.0%95.9%99.3%Fable 5.199.3%95.4%98.8%Opus 599.3%94.3%98.6%0%20%40%60%80%100%pass rate",
+      "nearby_text": "Propaganda and Censorship Eval, by language\nEnglish\nSimplified Chinese\nTraditional Chinese\nSWE-2\n99.8%\n95.2%\n99.1%\nKimi K3\n75.6%\n54.5%\n73.3%\nGLM 5.3\n99.3%\n83.8%\n95.5%\nGPT 5.6 Sol\n100.0%\n95.9%\n99.3%\nFable 5.1\n99.3%\n95.4%\n98.8%\nOpus 5\n99.3%\n94.3%\n98.6%\n0%\n20%\n40%\n60%\n80%\n100%\npass rate\nShare of prompts on politically sensitive topics answered without propaganda or censorship, by prompt language."
+    },
+    {
+      "file": "visuals/chart-11.png",
+      "svg_text": "-0.5-0.250+0.25+0.5difference from model’s own mean (vulnerability score, 1–5)no customernamed(English)Westerncarrier,Arelion US(English)Pakistanicarrier(English)Pakistanicarrier(Urdu)no customernamed(Chinese)majorChinesecarrier(Chinese)Tibetannetworkoperator(Chinese)Falun Gong-affiliatedorg (English)",
+      "nearby_text": "Effect of customer and language framing on vulnerability\nSWE-2\nKimi K3\nGLM 5.3\nGPT 5.6 Sol\nFable 5.1\nOpus 5\n-0.5\n-0.25\n0\n+0.25\n+0.5\ndifference from model’s own mean (vulnerability score, 1–5)\nno customernamed(English)\nWesterncarrier,Arelion US(English)\nPakistanicarrier(English)\nPakistanicarrier(Urdu)\nno customernamed(Chinese)\nmajorChinesecarrier(Chinese)\nTibetannetworkoperator(Chinese)\nFalun Gong-affiliatedorg (English)\nMean judged vulnerability under each framing minus the model’s overall mean; positive values are more vulnerable. Whiskers are 95% bootstrap percentile intervals over the ten tasks."
+    }
+  ],
+  "scripts": [
+    {
+      "url": "https://cognition.com/_next/static/chunks/13xpd4dr49zj_.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/3c1240da6c7d003e.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0tkx75hsjmh2v.css?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/f06ae45ad98c8d81.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/17xbkoqry2gn2.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/896584eef1d7ed23.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/turbopack-0icil-qo9qn8a.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/431e3c9076f3217a.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0y8sku5ccmmbd.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/5eca791ba19ba51a.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0gcnbnuyac.kx.css?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/20919430e5be6ba4.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0pqt~8bl3ukh4.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/5261101892e2476e.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/01xlw8hd842-c.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/aee2d073d2a1157c.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0sk27h_ip0d3o.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/ed118a4807d2b87c.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0t1et0tty8o9s.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/317b6e438c77d4bf.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0oan.f-69pto6.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/52554240aad0576c.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/14-xfpfvylck0.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/dc6fe6c6211d50b6.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0t6ql_pz7x5zq.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/498b2b9edeae1a27.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0--z0dmpz~evs.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/228be1fa3598ea4f.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/05p2d.-yhqurr.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/1b4bbebfa6240f9e.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/12flz-lm62gu~.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/7d9a6efc60e109be.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/10qd__0r7a~.l.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/730b707e0189beca.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0~bu06v87ekp2.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/a645bef700673da2.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/00p1i.0.wj~8g.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/17218ec7a2b04d2f.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0nq9ausxsc0-d.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/8befb3adebfed007.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/063n5xp0bgpky.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/56bc53e7fa6c2718.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0-56be4_~v6jq.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/02ac0eb0d214818e.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/1774n-i4bbxhf.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/584609e253fcda61.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0u0lwy1lr8msw.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/8bc4d8120a7ef6b7.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/09rwrz4jjy_ji.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/2d85ee58499a8aa8.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0bp~nxrdt4~oe.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/c3cbc2f65d040234.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0u2sgqb7m5j2h.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/6ffbd788cfac336d.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0auotxr96vp8j.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/642fdbde5d3f25ac.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0btnjjl.mw~vw.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/479c410acb635351.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/15-l4hepvk2n3.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/8f001552ad28067d.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0nfn.2147umpx.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/cc1130b14eabbb82.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0e4bl2qj-.3es.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/035fa9c64bbf6dff.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0ixbs3b~x0hlb.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/6d9a0d12b29cf04d.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0fxb52_xlpbvr.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/8c39194cb801dc17.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0~9a1jxgdu5tr.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/c390c2e6682cb6a7.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0juy9peih4ikz.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/ae7e0e81dd21622a.js"
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,393 @@
+{
+  "title": "SpecForge v0.3.0: a Unified Disaggregated and Colocated Speculative Decoding Stack, and New Open SpecBundle Draft Models - LMSYS Org",
+  "url": "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3",
+  "headings": [
+    "SpecForge v0.3.0: a Unified Disaggregated and Colocated Speculative Decoding Stack, and New Open SpecBundle Draft Models",
+    "What's New",
+    "From a Coupled Trainer to a Training Pipeline",
+    "One Boundary, Three Contracts",
+    "1. The capture contract",
+    "2. The delivery contract",
+    "3. The lifecycle contract",
+    "What This Separation Unlocks",
+    "Independent inference and training pools",
+    "Preliminary system result: 3 capture servers + 5 trainers",
+    "One runtime for multiple drafting families",
+    "Data Source and Deployment Are Separate Choices",
+    "Feature source is not data policy",
+    "One Configuration, One Entry Point",
+    "Training Example: Qwen3.6-27B",
+    "Training Example: Kimi-K3",
+    "Draft-Model Serving Performance",
+    "Concurrency = 1",
+    "More Draft Models Across Methods and Targets",
+    "Released models and performance",
+    "EAGLE3",
+    "DFlash",
+    "Domino",
+    "DSpark",
+    "Verifying Training-Serving Consistency",
+    "What's Next",
+    "Acknowledgements"
+  ],
+  "buttons": [
+    "",
+    "",
+    "",
+    "",
+    ""
+  ],
+  "links": [
+    {
+      "text": "‹ Back to Blog",
+      "url": "https://www.lmsys.org/blog"
+    },
+    {
+      "text": "‹ Back to Blog",
+      "url": "https://www.lmsys.org/blog"
+    },
+    {
+      "text": "What's New",
+      "url": "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3#whats-new"
+    },
+    {
+      "text": "From a Coupled Trainer to a Training Pipeline",
+      "url": "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3#from-a-coupled-trainer-to-a-training-pipeline"
+    },
+    {
+      "text": "One Boundary, Three Contracts",
+      "url": "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3#one-boundary-three-contracts"
+    },
+    {
+      "text": "1. The capture contract",
+      "url": "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3#1-the-capture-contract"
+    },
+    {
+      "text": "2. The delivery contract",
+      "url": "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3#2-the-delivery-contract"
+    },
+    {
+      "text": "3. The lifecycle contract",
+      "url": "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3#3-the-lifecycle-contract"
+    },
+    {
+      "text": "What This Separation Unlocks",
+      "url": "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3#what-this-separation-unlocks"
+    },
+    {
+      "text": "Independent inference and training pools",
+      "url": "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3#independent-inference-and-training-pools"
+    },
+    {
+      "text": "Preliminary system result: 3 capture servers + 5 trainers",
+      "url": "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3#preliminary-system-result-3-capture-servers--5-trainers"
+    },
+    {
+      "text": "One runtime for multiple drafting families",
+      "url": "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3#one-runtime-for-multiple-drafting-families"
+    },
+    {
+      "text": "Data Source and Deployment Are Separate Choices",
+      "url": "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3#data-source-and-deployment-are-separate-choices"
+    },
+    {
+      "text": "Feature source is not data policy",
+      "url": "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3#feature-source-is-not-data-policy"
+    },
+    {
+      "text": "One Configuration, One Entry Point",
+      "url": "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3#one-configuration-one-entry-point"
+    },
+    {
+      "text": "Training Example: Qwen3.6-27B",
+      "url": "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3#training-example-qwen36-27b"
+    },
+    {
+      "text": "Training Example: Kimi-K3",
+      "url": "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3#training-example-kimi-k3"
+    },
+    {
+      "text": "Draft-Model Serving Performance",
+      "url": "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3#draft-model-serving-performance"
+    },
+    {
+      "text": "Concurrency = 1",
+      "url": "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3#concurrency--1"
+    },
+    {
+      "text": "More Draft Models Across Methods and Targets",
+      "url": "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3#more-draft-models-across-methods-and-targets"
+    },
+    {
+      "text": "Released models and performance",
+      "url": "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3#released-models-and-performance"
+    },
+    {
+      "text": "EAGLE3",
+      "url": "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3#eagle3"
+    },
+    {
+      "text": "DFlash",
+      "url": "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3#dflash"
+    },
+    {
+      "text": "Domino",
+      "url": "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3#domino"
+    },
+    {
+      "text": "DSpark",
+      "url": "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3#dspark"
+    },
+    {
+      "text": "Verifying Training-Serving Consistency",
+      "url": "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3#verifying-training-serving-consistency"
+    },
+    {
+      "text": "What's Next",
+      "url": "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3#whats-next"
+    },
+    {
+      "text": "Acknowledgements",
+      "url": "https://www.lmsys.org/blog/2026-08-04-specforge-v0-3#acknowledgements"
+    },
+    {
+      "text": "SpecForge",
+      "url": "https://www.lmsys.org/blog/2025-07-25-spec-forge/"
+    },
+    {
+      "text": "EAGLE3",
+      "url": "https://arxiv.org/abs/2503.01840"
+    },
+    {
+      "text": "P-EAGLE",
+      "url": "https://arxiv.org/abs/2602.01469"
+    },
+    {
+      "text": "DFlash",
+      "url": "https://arxiv.org/abs/2602.06036"
+    },
+    {
+      "text": "Domino",
+      "url": "https://arxiv.org/abs/2605.29707"
+    },
+    {
+      "text": "DSpark",
+      "url": "https://arxiv.org/abs/2607.05147"
+    },
+    {
+      "text": "D-PACE",
+      "url": "https://arxiv.org/abs/2605.18810"
+    },
+    {
+      "text": "patches/sglang/v0.5.14/spec-capture.patch",
+      "url": "https://github.com/sgl-project/SpecForge/blob/main/patches/sglang/v0.5.14/spec-capture.patch"
+    },
+    {
+      "text": "EAGLE3",
+      "url": "https://arxiv.org/abs/2503.01840"
+    },
+    {
+      "text": "LK loss",
+      "url": "https://arxiv.org/pdf/2602.23881"
+    },
+    {
+      "text": "P-EAGLE",
+      "url": "https://arxiv.org/abs/2602.01469"
+    },
+    {
+      "text": "DFlash",
+      "url": "https://arxiv.org/abs/2602.06036"
+    },
+    {
+      "text": "D-PACE",
+      "url": "https://arxiv.org/abs/2605.18810"
+    },
+    {
+      "text": "Domino",
+      "url": "https://arxiv.org/abs/2605.29707"
+    },
+    {
+      "text": "DSpark",
+      "url": "https://arxiv.org/abs/2607.05147"
+    },
+    {
+      "text": "training guide",
+      "url": "https://github.com/sgl-project/SpecForge/blob/main/docs/basic_usage/training.md"
+    },
+    {
+      "text": "disaggregated training guide",
+      "url": "https://github.com/sgl-project/SpecForge/blob/main/docs/basic_usage/disaggregated_training.md"
+    },
+    {
+      "text": "examples/configs",
+      "url": "https://github.com/sgl-project/SpecForge/tree/main/examples/configs"
+    },
+    {
+      "text": "docs/recipes/kimi-k3-dspark-disaggregated.md",
+      "url": "https://github.com/sgl-project/SpecForge/blob/main/docs/recipes/kimi-k3-dspark-disaggregated.md"
+    },
+    {
+      "text": "Qwen3.6-27B-Domino",
+      "url": "https://huggingface.co/Huang2020/qwen3.6-27B-domino"
+    },
+    {
+      "text": "SpecBundle collection",
+      "url": "https://huggingface.co/collections/lmsys/specbundle"
+    },
+    {
+      "text": "🤗",
+      "url": "https://huggingface.co/AQ-MedAI/GLM-5.1-eagle3"
+    },
+    {
+      "text": "🤗",
+      "url": "https://huggingface.co/AQ-MedAI/Kimi-K25-eagle3"
+    },
+    {
+      "text": "🤗",
+      "url": "https://huggingface.co/AQ-MedAI/Kimi-K26-eagle3"
+    },
+    {
+      "text": "🤗",
+      "url": "https://huggingface.co/AQ-MedAI/Kimi-K2.7-Code-eagle3"
+    },
+    {
+      "text": "🤗",
+      "url": "https://huggingface.co/CMBTech/CMB-Qwen3-32B-Eagle3"
+    },
+    {
+      "text": "🤗",
+      "url": "https://huggingface.co/jiapingW/Qwen3.5-35B-A3B-Eagle3-Specforge"
+    },
+    {
+      "text": "🤗",
+      "url": "https://huggingface.co/lmsys/SGLang-EAGLE3-Step-3.5-Flash-SpecForge-RadixArk"
+    },
+    {
+      "text": "🤗",
+      "url": "https://huggingface.co/lmsys/Qwen3.5-397B-A17B-DFlash"
+    },
+    {
+      "text": "🤗",
+      "url": "https://huggingface.co/Huang2020/qwen3.6-27B-domino"
+    },
+    {
+      "text": "🤗",
+      "url": "https://huggingface.co/RadixArk/Inkling-Small-DSpark-Preview"
+    },
+    {
+      "text": "🤗",
+      "url": "https://huggingface.co/RadixArk/Kimi-K3-DSpark"
+    },
+    {
+      "text": "model card",
+      "url": "https://huggingface.co/AQ-MedAI/Kimi-K2.7-Code-eagle3"
+    },
+    {
+      "text": "model card",
+      "url": "https://huggingface.co/lmsys/Qwen3.5-397B-A17B-DFlash"
+    },
+    {
+      "text": "model card",
+      "url": "https://huggingface.co/Huang2020/qwen3.6-27B-domino"
+    },
+    {
+      "text": "model card",
+      "url": "https://huggingface.co/RadixArk/Kimi-K3-DSpark"
+    },
+    {
+      "text": "training and serving gate",
+      "url": "https://github.com/sgl-project/SpecForge/blob/main/scripts/gates/README.md"
+    }
+  ],
+  "math": [],
+  "images": [
+    {
+      "src": "https://www.lmsys.org/images/logo-v2.png",
+      "alt": "LMSYS"
+    },
+    {
+      "src": "https://www.lmsys.org/images/blog/specforge-v0-3/specforge-disaggregated-architecture.svg",
+      "alt": "SpecForge online-disaggregated training architecture"
+    },
+    {
+      "src": "https://www.lmsys.org/images/blog/specforge-v0-3/colocated.png",
+      "alt": "Qwen3-8B Domino 3k-context colocated training profile"
+    },
+    {
+      "src": "https://www.lmsys.org/images/blog/specforge-v0-3/disagg.png",
+      "alt": "Qwen3-8B Domino 3k-context disaggregated training profile"
+    },
+    {
+      "src": "https://www.lmsys.org/images/blog/specforge-v0-3/eagle3-speedup.svg",
+      "alt": "EAGLE3 draft models: output throughput vs. baseline"
+    },
+    {
+      "src": "https://www.lmsys.org/images/blog/specforge-v0-3/dflash-speedup.svg",
+      "alt": "Qwen3.5-397B-A17B DFlash output throughput vs. baseline"
+    },
+    {
+      "src": "https://www.lmsys.org/images/blog/specforge-v0-3/domino-speedup.svg",
+      "alt": "Qwen3.6-27B Domino end-to-end speedup"
+    },
+    {
+      "src": "https://www.lmsys.org/images/blog/specforge-v0-3/dspark-speedup.svg",
+      "alt": "Kimi-K3 DSpark output throughput vs. baseline"
+    }
+  ],
+  "inputs": [],
+  "captured_at": "2026-09-11T09:46:03.300Z",
+  "expanded": [],
+  "visuals": [
+    {
+      "file": "visuals/image-01.png",
+      "original_file": "assets/01.svg",
+      "src": "https://www.lmsys.org/images/blog/specforge-v0-3/specforge-disaggregated-architecture.svg",
+      "alt": "SpecForge online-disaggregated training architecture",
+      "nearby_text": "When we first released SpecForge, a training job owned both the frozen target model and the draft model being optimized. This made EAGLE3 draft-model training practical and directly compatible with SGLang, but it also tied two very different workloads to the same process lifecycle and resource topology.\n\nToday, we are introducing a major update to SpecForge. The new runtime separates target-model inference from draft-model training, supports a broader family of speculative decoding algorithms, and unifies online, offline, and disaggregated workflows behind one typed training entry point. Alongside the release, we are publishing more draft models, covering different speculative decoding methods and different target models.\n\nWhat's New\nOnline training is now fully disaggregated. Patched SGLang servers capture target-model features, Mooncake transports the tensors, and trainer workers consume lightweight references through a separate control plane.\nInference and training can scale independently. On our 8xH20 testbed, a topology with 3 SGLang servers and 5 trainer workers improves end-to-end training throughput by approximately 10% over our previous colocated implementation.\nOne runtim"
+    },
+    {
+      "file": "visuals/image-02.png",
+      "original_file": "assets/02.png",
+      "src": "https://www.lmsys.org/images/blog/specforge-v0-3/colocated.png",
+      "alt": "Qwen3-8B Domino 3k-context colocated training profile",
+      "nearby_text": "When we first released SpecForge, a training job owned both the frozen target model and the draft model being optimized. This made EAGLE3 draft-model training practical and directly compatible with SGLang, but it also tied two very different workloads to the same process lifecycle and resource topology.\n\nToday, we are introducing a major update to SpecForge. The new runtime separates target-model inference from draft-model training, supports a broader family of speculative decoding algorithms, and unifies online, offline, and disaggregated workflows behind one typed training entry point. Alongside the release, we are publishing more draft models, covering different speculative decoding methods and different target models.\n\nWhat's New\nOnline training is now fully disaggregated. Patched SGLang servers capture target-model features, Mooncake transports the tensors, and trainer workers consume lightweight references through a separate control plane.\nInference and training can scale independently. On our 8xH20 testbed, a topology with 3 SGLang servers and 5 trainer workers improves end-to-end training throughput by approximately 10% over our previous colocated implementation.\nOne runtim"
+    },
+    {
+      "file": "visuals/image-03.png",
+      "original_file": "assets/03.png",
+      "src": "https://www.lmsys.org/images/blog/specforge-v0-3/disagg.png",
+      "alt": "Qwen3-8B Domino 3k-context disaggregated training profile",
+      "nearby_text": "When we first released SpecForge, a training job owned both the frozen target model and the draft model being optimized. This made EAGLE3 draft-model training practical and directly compatible with SGLang, but it also tied two very different workloads to the same process lifecycle and resource topology.\n\nToday, we are introducing a major update to SpecForge. The new runtime separates target-model inference from draft-model training, supports a broader family of speculative decoding algorithms, and unifies online, offline, and disaggregated workflows behind one typed training entry point. Alongside the release, we are publishing more draft models, covering different speculative decoding methods and different target models.\n\nWhat's New\nOnline training is now fully disaggregated. Patched SGLang servers capture target-model features, Mooncake transports the tensors, and trainer workers consume lightweight references through a separate control plane.\nInference and training can scale independently. On our 8xH20 testbed, a topology with 3 SGLang servers and 5 trainer workers improves end-to-end training throughput by approximately 10% over our previous colocated implementation.\nOne runtim"
+    },
+    {
+      "file": "visuals/image-04.png",
+      "original_file": "assets/04.svg",
+      "src": "https://www.lmsys.org/images/blog/specforge-v0-3/eagle3-speedup.svg",
+      "alt": "EAGLE3 draft models: output throughput vs. baseline",
+      "nearby_text": "When we first released SpecForge, a training job owned both the frozen target model and the draft model being optimized. This made EAGLE3 draft-model training practical and directly compatible with SGLang, but it also tied two very different workloads to the same process lifecycle and resource topology.\n\nToday, we are introducing a major update to SpecForge. The new runtime separates target-model inference from draft-model training, supports a broader family of speculative decoding algorithms, and unifies online, offline, and disaggregated workflows behind one typed training entry point. Alongside the release, we are publishing more draft models, covering different speculative decoding methods and different target models.\n\nWhat's New\nOnline training is now fully disaggregated. Patched SGLang servers capture target-model features, Mooncake transports the tensors, and trainer workers consume lightweight references through a separate control plane.\nInference and training can scale independently. On our 8xH20 testbed, a topology with 3 SGLang servers and 5 trainer workers improves end-to-end training throughput by approximately 10% over our previous colocated implementation.\nOne runtim"
+    },
+    {
+      "file": "visuals/image-05.png",
+      "original_file": "assets/05.svg",
+      "src": "https://www.lmsys.org/images/blog/specforge-v0-3/dflash-speedup.svg",
+      "alt": "Qwen3.5-397B-A17B DFlash output throughput vs. baseline",
+      "nearby_text": "When we first released SpecForge, a training job owned both the frozen target model and the draft model being optimized. This made EAGLE3 draft-model training practical and directly compatible with SGLang, but it also tied two very different workloads to the same process lifecycle and resource topology.\n\nToday, we are introducing a major update to SpecForge. The new runtime separates target-model inference from draft-model training, supports a broader family of speculative decoding algorithms, and unifies online, offline, and disaggregated workflows behind one typed training entry point. Alongside the release, we are publishing more draft models, covering different speculative decoding methods and different target models.\n\nWhat's New\nOnline training is now fully disaggregated. Patched SGLang servers capture target-model features, Mooncake transports the tensors, and trainer workers consume lightweight references through a separate control plane.\nInference and training can scale independently. On our 8xH20 testbed, a topology with 3 SGLang servers and 5 trainer workers improves end-to-end training throughput by approximately 10% over our previous colocated implementation.\nOne runtim"
+    },
+    {
+      "file": "visuals/image-06.png",
+      "original_file": "assets/06.svg",
+      "src": "https://www.lmsys.org/images/blog/specforge-v0-3/domino-speedup.svg",
+      "alt": "Qwen3.6-27B Domino end-to-end speedup",
+      "nearby_text": "When we first released SpecForge, a training job owned both the frozen target model and the draft model being optimized. This made EAGLE3 draft-model training practical and directly compatible with SGLang, but it also tied two very different workloads to the same process lifecycle and resource topology.\n\nToday, we are introducing a major update to SpecForge. The new runtime separates target-model inference from draft-model training, supports a broader family of speculative decoding algorithms, and unifies online, offline, and disaggregated workflows behind one typed training entry point. Alongside the release, we are publishing more draft models, covering different speculative decoding methods and different target models.\n\nWhat's New\nOnline training is now fully disaggregated. Patched SGLang servers capture target-model features, Mooncake transports the tensors, and trainer workers consume lightweight references through a separate control plane.\nInference and training can scale independently. On our 8xH20 testbed, a topology with 3 SGLang servers and 5 trainer workers improves end-to-end training throughput by approximately 10% over our previous colocated implementation.\nOne runtim"
+    },
+    {
+      "file": "visuals/image-07.png",
+      "original_file": "assets/07.svg",
+      "src": "https://www.lmsys.org/images/blog/specforge-v0-3/dspark-speedup.svg",
+      "alt": "Kimi-K3 DSpark output throughput vs. baseline",
+      "nearby_text": "When we first released SpecForge, a training job owned both the frozen target model and the draft model being optimized. This made EAGLE3 draft-model training practical and directly compatible with SGLang, but it also tied two very different workloads to the same process lifecycle and resource topology.\n\nToday, we are introducing a major update to SpecForge. The new runtime separates target-model inference from draft-model training, supports a broader family of speculative decoding algorithms, and unifies online, offline, and disaggregated workflows behind one typed training entry point. Alongside the release, we are publishing more draft models, covering different speculative decoding methods and different target models.\n\nWhat's New\nOnline training is now fully disaggregated. Patched SGLang servers capture target-model features, Mooncake transports the tensors, and trainer workers consume lightweight references through a separate control plane.\nInference and training can scale independently. On our 8xH20 testbed, a topology with 3 SGLang servers and 5 trainer workers improves end-to-end training throughput by approximately 10% over our previous colocated implementation.\nOne runtim"
+    }
+  ],
+  "scripts": [],
+  "errors": []
+}

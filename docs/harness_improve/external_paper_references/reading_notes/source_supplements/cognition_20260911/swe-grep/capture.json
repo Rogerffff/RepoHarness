@@ -1,0 +1,531 @@
+{
+  "title": "Introducing SWE-grep and SWE-grep-mini: RL for Multi-Turn, Fast Context Retrieval | Cognition",
+  "url": "https://cognition.com/blog/swe-grep",
+  "headings": [
+    "Introducing SWE-grep and SWE-grep-mini: RL for Multi-Turn, Fast Context Retrieval",
+    "Where to try Fast Context",
+    "Motivation",
+    "What makes SWE-grep fast?",
+    "RL for training fast, parallel agentic code search models",
+    "Policy Gradient",
+    "Instabilities",
+    "Data and Evals",
+    "Downstream analysis",
+    "Fast Context as the first step to Fast Agents"
+  ],
+  "buttons": [
+    "Menu",
+    "Close",
+    "",
+    ""
+  ],
+  "links": [
+    {
+      "text": "",
+      "url": "https://cognition.com/"
+    },
+    {
+      "text": "",
+      "url": "https://cognition.com/"
+    },
+    {
+      "text": "Home",
+      "url": "https://cognition.com/"
+    },
+    {
+      "text": "Careers",
+      "url": "https://cognition.com/careers"
+    },
+    {
+      "text": "Research",
+      "url": "https://cognition.com/research"
+    },
+    {
+      "text": "Blog",
+      "url": "https://cognition.com/blog"
+    },
+    {
+      "text": "Get a Demo",
+      "url": "https://cognition.com/demo"
+    },
+    {
+      "text": "Devin",
+      "url": "https://devin.ai/"
+    },
+    {
+      "text": "",
+      "url": "https://cognition.com/"
+    },
+    {
+      "text": "Home",
+      "url": "https://cognition.com/"
+    },
+    {
+      "text": "Careers",
+      "url": "https://cognition.com/careers"
+    },
+    {
+      "text": "Research",
+      "url": "https://cognition.com/research"
+    },
+    {
+      "text": "Blog",
+      "url": "https://cognition.com/blog"
+    },
+    {
+      "text": "Get a Demo",
+      "url": "https://cognition.com/demo"
+    },
+    {
+      "text": "Devin",
+      "url": "https://devin.ai/"
+    },
+    {
+      "text": "Both Claude Code and Cline have noted",
+      "url": "https://x.com/pashmerepat/status/1926717705660375463"
+    },
+    {
+      "text": "latest release",
+      "url": "https://windsurf.com/changelog"
+    },
+    {
+      "text": "https://playground.cognition.ai/",
+      "url": "https://playground.cognition.ai/"
+    },
+    {
+      "text": "How Contexts Fail",
+      "url": "https://www.dbreunig.com/2025/06/22/how-contexts-fail-and-how-to-fix-them.html"
+    },
+    {
+      "text": "multi-turn",
+      "url": "https://cognition.ai/blog/kevin-32b"
+    },
+    {
+      "text": "different numerics",
+      "url": "https://thinkingmachines.ai/blog/defeating-nondeterminism-in-llm-inference/"
+    },
+    {
+      "text": "per-token importance sampling",
+      "url": "https://fengyao.notion.site/off-policy-rl"
+    },
+    {
+      "text": "Dr. GRPO",
+      "url": "https://arxiv.org/pdf/2503.20783"
+    },
+    {
+      "text": "extreme importance sampling ratios",
+      "url": "https://yingru.notion.site/When-Speed-Kills-Stability-Demystifying-RL-Collapse-from-the-Training-Inference-Mismatch-271211a558b7808d8b12d403fd15edda"
+    },
+    {
+      "text": "Mihaly Csikszentmihalyi",
+      "url": "https://en.wikipedia.org/wiki/Flow_(psychology)"
+    },
+    {
+      "text": "Estimating the Productivity of an Autonomous AI Software Engineer\n\n06.04.26",
+      "url": "https://cognition.com/blog/ai-productivity"
+    },
+    {
+      "text": "AI should earn its keep: Introducing the AI Productivity Guarantee\n\n06.04.26",
+      "url": "https://cognition.com/blog/ai-guarantee"
+    },
+    {
+      "text": "Introducing Devin Desktop\n\n06.02.26",
+      "url": "https://cognition.com/blog/introducing-devin-desktop"
+    },
+    {
+      "text": "More Devins in More Places\n\n05.27.26",
+      "url": "https://cognition.com/blog/series-d"
+    },
+    {
+      "text": "Devin in Windsurf\n\n04.15.26",
+      "url": "https://cognition.com/blog/devin-in-windsurf"
+    },
+    {
+      "text": "An Early Preview of SWE-1.6 and Research Update\n\n03.01.26",
+      "url": "https://cognition.com/blog/swe-1-6-preview"
+    },
+    {
+      "text": "How Cognition Uses Devin to Build Devin\n\n02.27.26",
+      "url": "https://cognition.com/blog/how-cognition-uses-devin-to-build-devin"
+    },
+    {
+      "text": "Introducing Cognition for Government\n\n02.25.26",
+      "url": "https://cognition.com/blog/cognition-for-government"
+    },
+    {
+      "text": "Introducing Devin 2.2\n\n02.24.26",
+      "url": "https://cognition.com/blog/introducing-devin-2-2"
+    },
+    {
+      "text": "Linkedin",
+      "url": "https://www.linkedin.com/company/cognition-ai-labs"
+    },
+    {
+      "text": "X [Twitter]",
+      "url": "https://x.com/cognition"
+    },
+    {
+      "text": "Website Terms of Use",
+      "url": "https://cognition.com/legal/website-terms-of-use"
+    },
+    {
+      "text": "Enterprise Terms of Service",
+      "url": "https://cognition.com/legal/enterprise-terms-of-service"
+    },
+    {
+      "text": "Platform Terms of Service",
+      "url": "https://cognition.com/legal/platform-terms-of-service"
+    },
+    {
+      "text": "Data Processing Addendum",
+      "url": "https://cognition.com/legal/data-processing-statement"
+    },
+    {
+      "text": "Your Privacy Choices",
+      "url": "https://cognition.com/privacy-choices"
+    },
+    {
+      "text": "Privacy Policy",
+      "url": "https://cognition.com/legal/privacy-policy"
+    },
+    {
+      "text": "Acceptable Use Policy",
+      "url": "https://cognition.com/legal/acceptable-use-policy"
+    },
+    {
+      "text": "Report Vulnerability",
+      "url": "https://cognition.com/report-vulnerability"
+    },
+    {
+      "text": "Security",
+      "url": "https://cognition.com/legal/security"
+    }
+  ],
+  "math": [],
+  "images": [
+    {
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/fd5e1ffd36c37ce5a58c1f403abb9e312cce9ff7-1882x855.png?w=1600&fit=max",
+      "alt": "Introducing SWE-grep and SWE-grep-mini: RL for Multi-Turn, Fast Context Retrieval"
+    },
+    {
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/f001338632e43e2092247b396569b1ce932ffdf2-3590x1968.png?w=1600&fit=max",
+      "alt": "Introducing SWE-grep and SWE-grep-mini: RL for Multi-Turn, Fast Context Retrieval"
+    },
+    {
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/eee6739b16732947d6e9da3b17b656000af031ae-4700x3510.gif?w=1600&fit=max",
+      "alt": "Introducing SWE-grep and SWE-grep-mini: RL for Multi-Turn, Fast Context Retrieval"
+    },
+    {
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/e3a948f21fd3c924a866e8579aeba93cb3e75e86-16828x6118.png?w=1600&fit=max",
+      "alt": "Introducing SWE-grep and SWE-grep-mini: RL for Multi-Turn, Fast Context Retrieval"
+    },
+    {
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/503be6859ba1f0dd772776fa76b866026a79f46c-2582x346.png?w=1600&fit=max",
+      "alt": "Introducing SWE-grep and SWE-grep-mini: RL for Multi-Turn, Fast Context Retrieval"
+    },
+    {
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/db1d2fbbc63e886e90904fd3c97df6400961d8cf-2428x264.png?w=1600&fit=max",
+      "alt": "Introducing SWE-grep and SWE-grep-mini: RL for Multi-Turn, Fast Context Retrieval"
+    },
+    {
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/99e38d35218a96fa3d8e922979e3326ddc4e309a-2026x220.png?w=1600&fit=max",
+      "alt": "Introducing SWE-grep and SWE-grep-mini: RL for Multi-Turn, Fast Context Retrieval"
+    },
+    {
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/0669704135323f614fd0149646d55e882126f87d-1902x1284.png?w=1600&fit=max",
+      "alt": "Introducing SWE-grep and SWE-grep-mini: RL for Multi-Turn, Fast Context Retrieval"
+    },
+    {
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/121b6a145454f73c99d51fd50a855ff2c56ce4f4-1414x354.png?w=1600&fit=max",
+      "alt": "Introducing SWE-grep and SWE-grep-mini: RL for Multi-Turn, Fast Context Retrieval"
+    },
+    {
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/0bab316459ce2cc611ac0f1d56fcf1aa7677e6d5-2072x1632.png?w=1600&fit=max",
+      "alt": "Introducing SWE-grep and SWE-grep-mini: RL for Multi-Turn, Fast Context Retrieval"
+    },
+    {
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/a6e3d6c7846969e2a87835210c532ba7b1bad617-2198x1600.png?w=1600&fit=max",
+      "alt": "Introducing SWE-grep and SWE-grep-mini: RL for Multi-Turn, Fast Context Retrieval"
+    },
+    {
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2F8527b7c1b2b03f309d7ba9189296ac76a1c7b650-1920x1080.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "Estimating the Productivity of an Autonomous AI Software Engineer"
+    },
+    {
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2Fd378ef146ec6070438bfaeab4d9e47e8b886e55d-1920x1080.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "AI should earn its keep: Introducing the AI Productivity Guarantee"
+    },
+    {
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2F5841a7932386c05dc112f92fda8ff519b38d4f9a-1920x1080.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "Introducing Devin Desktop"
+    },
+    {
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2F58309361c06f31fa49f8c36e307963f21bd3f22b-1382x777.jpg%3Frect%3D1%2C0%2C1381%2C777%26w%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "More Devins in More Places"
+    },
+    {
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2F89fcacf48d33b51277268808596d123237018950-1920x1080.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "Devin in Windsurf"
+    },
+    {
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2F6ce843c49d6a38e1c0045e43891aca89fccd8981-1500x844.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "An Early Preview of SWE-1.6 and Research Update"
+    },
+    {
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2Fc1e05d959a8c25c8df5e86198a4213e4fd634b61-1500x844.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "How Cognition Uses Devin to Build Devin"
+    },
+    {
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2F164f27869605d7c326a68e511efcf1a4077fc2b7-1920x1080.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "Introducing Cognition for Government"
+    },
+    {
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2F5638cfd0a8a65ad3074019b69c3aa05e112577b7-1920x1080.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "Introducing Devin 2.2"
+    }
+  ],
+  "inputs": [],
+  "captured_at": "2026-09-11T09:43:07.182Z",
+  "expanded": [],
+  "visuals": [
+    {
+      "file": "visuals/image-01.png",
+      "original_file": "assets/01.png",
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/fd5e1ffd36c37ce5a58c1f403abb9e312cce9ff7-1882x855.png?w=1600&fit=max",
+      "alt": "Introducing SWE-grep and SWE-grep-mini: RL for Multi-Turn, Fast Context Retrieval",
+      "nearby_text": "TL;DR: We trained SWE-grep and SWE-grep-mini, fast agentic models specialized in highly parallel context retrieval. They match the retrieval capabilities of frontier coding models, while taking an order of magnitude less time. Available now in Windsurf’s new Fast Context subagent!\n\nModern coding agents face a fundamental tradeoff between speed and intelligence. Frontier models can solve complex tasks, but it can take minutes of searching before they edit a single file, breaking your flow. In Windsurf and Devin, we observed that our agent trajectories were often spending >60% of their first turn just retrieving context.\n\nContext retrieval has been historically done in 2 ways:\n\nEmbedding Search (RAG): once the upfront work of indexing the codebase is done, queries are fast. But:\nThe results can be inaccurate, especially for complex queries that require to jump across the codebase multiple times (such as tracing through some execution path in a large codebase).\nThe embeddings can even be counterproductive, as the agent can give too much weight to irrelevant information.\nAgentic Search: the model uses CLI tools to explore a codebase, much like a human would do. Both Claude Code and Cli"
+    },
+    {
+      "file": "visuals/image-02.png",
+      "original_file": "assets/02.png",
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/f001338632e43e2092247b396569b1ce932ffdf2-3590x1968.png?w=1600&fit=max",
+      "alt": "Introducing SWE-grep and SWE-grep-mini: RL for Multi-Turn, Fast Context Retrieval",
+      "nearby_text": "TL;DR: We trained SWE-grep and SWE-grep-mini, fast agentic models specialized in highly parallel context retrieval. They match the retrieval capabilities of frontier coding models, while taking an order of magnitude less time. Available now in Windsurf’s new Fast Context subagent!\n\nModern coding agents face a fundamental tradeoff between speed and intelligence. Frontier models can solve complex tasks, but it can take minutes of searching before they edit a single file, breaking your flow. In Windsurf and Devin, we observed that our agent trajectories were often spending >60% of their first turn just retrieving context.\n\nContext retrieval has been historically done in 2 ways:\n\nEmbedding Search (RAG): once the upfront work of indexing the codebase is done, queries are fast. But:\nThe results can be inaccurate, especially for complex queries that require to jump across the codebase multiple times (such as tracing through some execution path in a large codebase).\nThe embeddings can even be counterproductive, as the agent can give too much weight to irrelevant information.\nAgentic Search: the model uses CLI tools to explore a codebase, much like a human would do. Both Claude Code and Cli"
+    },
+    {
+      "file": "visuals/image-03.png",
+      "original_file": "assets/03.bin",
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/eee6739b16732947d6e9da3b17b656000af031ae-4700x3510.gif?w=1600&fit=max",
+      "alt": "Introducing SWE-grep and SWE-grep-mini: RL for Multi-Turn, Fast Context Retrieval",
+      "nearby_text": "TL;DR: We trained SWE-grep and SWE-grep-mini, fast agentic models specialized in highly parallel context retrieval. They match the retrieval capabilities of frontier coding models, while taking an order of magnitude less time. Available now in Windsurf’s new Fast Context subagent!\n\nModern coding agents face a fundamental tradeoff between speed and intelligence. Frontier models can solve complex tasks, but it can take minutes of searching before they edit a single file, breaking your flow. In Windsurf and Devin, we observed that our agent trajectories were often spending >60% of their first turn just retrieving context.\n\nContext retrieval has been historically done in 2 ways:\n\nEmbedding Search (RAG): once the upfront work of indexing the codebase is done, queries are fast. But:\nThe results can be inaccurate, especially for complex queries that require to jump across the codebase multiple times (such as tracing through some execution path in a large codebase).\nThe embeddings can even be counterproductive, as the agent can give too much weight to irrelevant information.\nAgentic Search: the model uses CLI tools to explore a codebase, much like a human would do. Both Claude Code and Cli"
+    },
+    {
+      "file": "visuals/image-04.png",
+      "original_file": "assets/04.png",
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/e3a948f21fd3c924a866e8579aeba93cb3e75e86-16828x6118.png?w=1600&fit=max",
+      "alt": "Introducing SWE-grep and SWE-grep-mini: RL for Multi-Turn, Fast Context Retrieval",
+      "nearby_text": "TL;DR: We trained SWE-grep and SWE-grep-mini, fast agentic models specialized in highly parallel context retrieval. They match the retrieval capabilities of frontier coding models, while taking an order of magnitude less time. Available now in Windsurf’s new Fast Context subagent!\n\nModern coding agents face a fundamental tradeoff between speed and intelligence. Frontier models can solve complex tasks, but it can take minutes of searching before they edit a single file, breaking your flow. In Windsurf and Devin, we observed that our agent trajectories were often spending >60% of their first turn just retrieving context.\n\nContext retrieval has been historically done in 2 ways:\n\nEmbedding Search (RAG): once the upfront work of indexing the codebase is done, queries are fast. But:\nThe results can be inaccurate, especially for complex queries that require to jump across the codebase multiple times (such as tracing through some execution path in a large codebase).\nThe embeddings can even be counterproductive, as the agent can give too much weight to irrelevant information.\nAgentic Search: the model uses CLI tools to explore a codebase, much like a human would do. Both Claude Code and Cli"
+    },
+    {
+      "file": "visuals/image-05.png",
+      "original_file": "assets/05.png",
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/503be6859ba1f0dd772776fa76b866026a79f46c-2582x346.png?w=1600&fit=max",
+      "alt": "Introducing SWE-grep and SWE-grep-mini: RL for Multi-Turn, Fast Context Retrieval",
+      "nearby_text": "TL;DR: We trained SWE-grep and SWE-grep-mini, fast agentic models specialized in highly parallel context retrieval. They match the retrieval capabilities of frontier coding models, while taking an order of magnitude less time. Available now in Windsurf’s new Fast Context subagent!\n\nModern coding agents face a fundamental tradeoff between speed and intelligence. Frontier models can solve complex tasks, but it can take minutes of searching before they edit a single file, breaking your flow. In Windsurf and Devin, we observed that our agent trajectories were often spending >60% of their first turn just retrieving context.\n\nContext retrieval has been historically done in 2 ways:\n\nEmbedding Search (RAG): once the upfront work of indexing the codebase is done, queries are fast. But:\nThe results can be inaccurate, especially for complex queries that require to jump across the codebase multiple times (such as tracing through some execution path in a large codebase).\nThe embeddings can even be counterproductive, as the agent can give too much weight to irrelevant information.\nAgentic Search: the model uses CLI tools to explore a codebase, much like a human would do. Both Claude Code and Cli"
+    },
+    {
+      "file": "visuals/image-06.png",
+      "original_file": "assets/06.png",
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/db1d2fbbc63e886e90904fd3c97df6400961d8cf-2428x264.png?w=1600&fit=max",
+      "alt": "Introducing SWE-grep and SWE-grep-mini: RL for Multi-Turn, Fast Context Retrieval",
+      "nearby_text": "TL;DR: We trained SWE-grep and SWE-grep-mini, fast agentic models specialized in highly parallel context retrieval. They match the retrieval capabilities of frontier coding models, while taking an order of magnitude less time. Available now in Windsurf’s new Fast Context subagent!\n\nModern coding agents face a fundamental tradeoff between speed and intelligence. Frontier models can solve complex tasks, but it can take minutes of searching before they edit a single file, breaking your flow. In Windsurf and Devin, we observed that our agent trajectories were often spending >60% of their first turn just retrieving context.\n\nContext retrieval has been historically done in 2 ways:\n\nEmbedding Search (RAG): once the upfront work of indexing the codebase is done, queries are fast. But:\nThe results can be inaccurate, especially for complex queries that require to jump across the codebase multiple times (such as tracing through some execution path in a large codebase).\nThe embeddings can even be counterproductive, as the agent can give too much weight to irrelevant information.\nAgentic Search: the model uses CLI tools to explore a codebase, much like a human would do. Both Claude Code and Cli"
+    },
+    {
+      "file": "visuals/image-07.png",
+      "original_file": "assets/07.png",
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/99e38d35218a96fa3d8e922979e3326ddc4e309a-2026x220.png?w=1600&fit=max",
+      "alt": "Introducing SWE-grep and SWE-grep-mini: RL for Multi-Turn, Fast Context Retrieval",
+      "nearby_text": "TL;DR: We trained SWE-grep and SWE-grep-mini, fast agentic models specialized in highly parallel context retrieval. They match the retrieval capabilities of frontier coding models, while taking an order of magnitude less time. Available now in Windsurf’s new Fast Context subagent!\n\nModern coding agents face a fundamental tradeoff between speed and intelligence. Frontier models can solve complex tasks, but it can take minutes of searching before they edit a single file, breaking your flow. In Windsurf and Devin, we observed that our agent trajectories were often spending >60% of their first turn just retrieving context.\n\nContext retrieval has been historically done in 2 ways:\n\nEmbedding Search (RAG): once the upfront work of indexing the codebase is done, queries are fast. But:\nThe results can be inaccurate, especially for complex queries that require to jump across the codebase multiple times (such as tracing through some execution path in a large codebase).\nThe embeddings can even be counterproductive, as the agent can give too much weight to irrelevant information.\nAgentic Search: the model uses CLI tools to explore a codebase, much like a human would do. Both Claude Code and Cli"
+    },
+    {
+      "file": "visuals/image-08.png",
+      "original_file": "assets/08.png",
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/0669704135323f614fd0149646d55e882126f87d-1902x1284.png?w=1600&fit=max",
+      "alt": "Introducing SWE-grep and SWE-grep-mini: RL for Multi-Turn, Fast Context Retrieval",
+      "nearby_text": "TL;DR: We trained SWE-grep and SWE-grep-mini, fast agentic models specialized in highly parallel context retrieval. They match the retrieval capabilities of frontier coding models, while taking an order of magnitude less time. Available now in Windsurf’s new Fast Context subagent!\n\nModern coding agents face a fundamental tradeoff between speed and intelligence. Frontier models can solve complex tasks, but it can take minutes of searching before they edit a single file, breaking your flow. In Windsurf and Devin, we observed that our agent trajectories were often spending >60% of their first turn just retrieving context.\n\nContext retrieval has been historically done in 2 ways:\n\nEmbedding Search (RAG): once the upfront work of indexing the codebase is done, queries are fast. But:\nThe results can be inaccurate, especially for complex queries that require to jump across the codebase multiple times (such as tracing through some execution path in a large codebase).\nThe embeddings can even be counterproductive, as the agent can give too much weight to irrelevant information.\nAgentic Search: the model uses CLI tools to explore a codebase, much like a human would do. Both Claude Code and Cli"
+    },
+    {
+      "file": "visuals/image-09.png",
+      "original_file": "assets/09.png",
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/121b6a145454f73c99d51fd50a855ff2c56ce4f4-1414x354.png?w=1600&fit=max",
+      "alt": "Introducing SWE-grep and SWE-grep-mini: RL for Multi-Turn, Fast Context Retrieval",
+      "nearby_text": "TL;DR: We trained SWE-grep and SWE-grep-mini, fast agentic models specialized in highly parallel context retrieval. They match the retrieval capabilities of frontier coding models, while taking an order of magnitude less time. Available now in Windsurf’s new Fast Context subagent!\n\nModern coding agents face a fundamental tradeoff between speed and intelligence. Frontier models can solve complex tasks, but it can take minutes of searching before they edit a single file, breaking your flow. In Windsurf and Devin, we observed that our agent trajectories were often spending >60% of their first turn just retrieving context.\n\nContext retrieval has been historically done in 2 ways:\n\nEmbedding Search (RAG): once the upfront work of indexing the codebase is done, queries are fast. But:\nThe results can be inaccurate, especially for complex queries that require to jump across the codebase multiple times (such as tracing through some execution path in a large codebase).\nThe embeddings can even be counterproductive, as the agent can give too much weight to irrelevant information.\nAgentic Search: the model uses CLI tools to explore a codebase, much like a human would do. Both Claude Code and Cli"
+    },
+    {
+      "file": "visuals/image-10.png",
+      "original_file": "assets/10.png",
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/0bab316459ce2cc611ac0f1d56fcf1aa7677e6d5-2072x1632.png?w=1600&fit=max",
+      "alt": "Introducing SWE-grep and SWE-grep-mini: RL for Multi-Turn, Fast Context Retrieval",
+      "nearby_text": "TL;DR: We trained SWE-grep and SWE-grep-mini, fast agentic models specialized in highly parallel context retrieval. They match the retrieval capabilities of frontier coding models, while taking an order of magnitude less time. Available now in Windsurf’s new Fast Context subagent!\n\nModern coding agents face a fundamental tradeoff between speed and intelligence. Frontier models can solve complex tasks, but it can take minutes of searching before they edit a single file, breaking your flow. In Windsurf and Devin, we observed that our agent trajectories were often spending >60% of their first turn just retrieving context.\n\nContext retrieval has been historically done in 2 ways:\n\nEmbedding Search (RAG): once the upfront work of indexing the codebase is done, queries are fast. But:\nThe results can be inaccurate, especially for complex queries that require to jump across the codebase multiple times (such as tracing through some execution path in a large codebase).\nThe embeddings can even be counterproductive, as the agent can give too much weight to irrelevant information.\nAgentic Search: the model uses CLI tools to explore a codebase, much like a human would do. Both Claude Code and Cli"
+    },
+    {
+      "file": "visuals/image-11.png",
+      "original_file": "assets/11.png",
+      "src": "https://cdn.sanity.io/images/2mc9cv2v/production/a6e3d6c7846969e2a87835210c532ba7b1bad617-2198x1600.png?w=1600&fit=max",
+      "alt": "Introducing SWE-grep and SWE-grep-mini: RL for Multi-Turn, Fast Context Retrieval",
+      "nearby_text": "TL;DR: We trained SWE-grep and SWE-grep-mini, fast agentic models specialized in highly parallel context retrieval. They match the retrieval capabilities of frontier coding models, while taking an order of magnitude less time. Available now in Windsurf’s new Fast Context subagent!\n\nModern coding agents face a fundamental tradeoff between speed and intelligence. Frontier models can solve complex tasks, but it can take minutes of searching before they edit a single file, breaking your flow. In Windsurf and Devin, we observed that our agent trajectories were often spending >60% of their first turn just retrieving context.\n\nContext retrieval has been historically done in 2 ways:\n\nEmbedding Search (RAG): once the upfront work of indexing the codebase is done, queries are fast. But:\nThe results can be inaccurate, especially for complex queries that require to jump across the codebase multiple times (such as tracing through some execution path in a large codebase).\nThe embeddings can even be counterproductive, as the agent can give too much weight to irrelevant information.\nAgentic Search: the model uses CLI tools to explore a codebase, much like a human would do. Both Claude Code and Cli"
+    },
+    {
+      "file": "visuals/image-12.png",
+      "original_file": "assets/12.bin",
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2F8527b7c1b2b03f309d7ba9189296ac76a1c7b650-1920x1080.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "Estimating the Productivity of an Autonomous AI Software Engineer",
+      "nearby_text": "Estimating the Productivity of an Autonomous AI Software Engineer\n\n06.04.26"
+    },
+    {
+      "file": "visuals/image-13.png",
+      "original_file": "assets/13.bin",
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2Fd378ef146ec6070438bfaeab4d9e47e8b886e55d-1920x1080.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "AI should earn its keep: Introducing the AI Productivity Guarantee",
+      "nearby_text": "AI should earn its keep: Introducing the AI Productivity Guarantee\n\n06.04.26"
+    },
+    {
+      "file": "visuals/image-14.png",
+      "original_file": "assets/14.bin",
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2F5841a7932386c05dc112f92fda8ff519b38d4f9a-1920x1080.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "Introducing Devin Desktop",
+      "nearby_text": "Introducing Devin Desktop\n\n06.02.26"
+    },
+    {
+      "file": "visuals/image-15.png",
+      "original_file": "assets/15.bin",
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2F58309361c06f31fa49f8c36e307963f21bd3f22b-1382x777.jpg%3Frect%3D1%2C0%2C1381%2C777%26w%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "More Devins in More Places",
+      "nearby_text": "More Devins in More Places\n\n05.27.26"
+    },
+    {
+      "file": "visuals/image-16.png",
+      "original_file": "assets/16.bin",
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2F89fcacf48d33b51277268808596d123237018950-1920x1080.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "Devin in Windsurf",
+      "nearby_text": "Devin in Windsurf\n\n04.15.26"
+    },
+    {
+      "file": "visuals/image-17.png",
+      "original_file": "assets/17.bin",
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2F6ce843c49d6a38e1c0045e43891aca89fccd8981-1500x844.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "An Early Preview of SWE-1.6 and Research Update",
+      "nearby_text": "An Early Preview of SWE-1.6 and Research Update\n\n03.01.26"
+    },
+    {
+      "file": "visuals/image-18.png",
+      "original_file": "assets/18.bin",
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2Fc1e05d959a8c25c8df5e86198a4213e4fd634b61-1500x844.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "How Cognition Uses Devin to Build Devin",
+      "nearby_text": "How Cognition Uses Devin to Build Devin\n\n02.27.26"
+    },
+    {
+      "file": "visuals/image-19.png",
+      "original_file": "assets/19.bin",
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2F164f27869605d7c326a68e511efcf1a4077fc2b7-1920x1080.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "Introducing Cognition for Government",
+      "nearby_text": "Introducing Cognition for Government\n\n02.25.26"
+    },
+    {
+      "file": "visuals/image-20.png",
+      "original_file": "assets/20.bin",
+      "src": "https://cognition.com/_next/image?url=https%3A%2F%2Fcdn.sanity.io%2Fimages%2F2mc9cv2v%2Fproduction%2F5638cfd0a8a65ad3074019b69c3aa05e112577b7-1920x1080.jpg%3Fw%3D640%26h%3D360%26fit%3Dcrop&w=1920&q=75",
+      "alt": "Introducing Devin 2.2",
+      "nearby_text": "Introducing Devin 2.2\n\n02.24.26"
+    }
+  ],
+  "scripts": [
+    {
+      "url": "https://cognition.com/_next/static/chunks/0gcnbnuyac.kx.css?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/20919430e5be6ba4.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/13xpd4dr49zj_.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/3c1240da6c7d003e.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/turbopack-0icil-qo9qn8a.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/431e3c9076f3217a.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0nq9ausxsc0-d.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/8befb3adebfed007.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/17xbkoqry2gn2.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/896584eef1d7ed23.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0t1et0tty8o9s.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/317b6e438c77d4bf.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0pqt~8bl3ukh4.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/5261101892e2476e.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0e4bl2qj-.3es.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/035fa9c64bbf6dff.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/09rwrz4jjy_ji.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/2d85ee58499a8aa8.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/10qd__0r7a~.l.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/730b707e0189beca.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0y8sku5ccmmbd.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/5eca791ba19ba51a.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/00p1i.0.wj~8g.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/17218ec7a2b04d2f.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/063n5xp0bgpky.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/56bc53e7fa6c2718.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/12flz-lm62gu~.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/7d9a6efc60e109be.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0ixbs3b~x0hlb.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/6d9a0d12b29cf04d.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0u0lwy1lr8msw.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/8bc4d8120a7ef6b7.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0tkx75hsjmh2v.css?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/f06ae45ad98c8d81.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/01xlw8hd842-c.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/aee2d073d2a1157c.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0u2sgqb7m5j2h.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/6ffbd788cfac336d.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0bp~nxrdt4~oe.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/c3cbc2f65d040234.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0auotxr96vp8j.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/642fdbde5d3f25ac.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0btnjjl.mw~vw.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/479c410acb635351.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/0nfn.2147umpx.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/cc1130b14eabbb82.js"
+    },
+    {
+      "url": "https://cognition.com/_next/static/chunks/15-l4hepvk2n3.js?dpl=dpl_4AgED6BitBsRriKwaSjXbbkJVGkR",
+      "file": "../web_scripts/8f001552ad28067d.js"
+    }
+  ],
+  "errors": []
+}

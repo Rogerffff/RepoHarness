@@ -1,0 +1,58 @@
+Example trajectories
+Hide
+FrontierCode 1.1 Main task:
+fizzy-implement-authorization
+matplotlib-bug-stackplot
+uv-frozen-uv-lock-check-fails
+
+Deriving the hidden contract: The task leaves key scenarios unspecified, and the hidden tests check them. SWE-1.7 derives the missing requirements by enumerating every possible requester, tracing the hostile cross-account case through the app’s real session code, and proving the vulnerability with a failing test before fixing anything. Kimi answers the same questions from intuition and writes tests that encode its own assumptions, which ultimately fail.
+
+Kimi-K2.7-Code
+WHAT'S HAPPENING
+
+Kimi explores the app thoroughly and reaches the key design question: every account lives under its own URL prefix, so what if a file request arrives without one — with no account context at all? It is exactly the right question. But instead of tracing the code or firing a test request, Kimi reassures itself that the app's URLs will always include the account — and builds the entire design on that assumption: every request must pass account-membership checks before file permissions are even looked at.
+
+THINKING BLOCK
+
+But what if it's just `/rails/active_storage/...` without account prefix? Then Current.account is nil.[…]Actually, ActiveStorage URLs generated in the app will include the script_name. So they will be `/{account_id}/rails/active_storage/blobs/...`. This means Current.account will be set.
+
+WHAT'S HAPPENING
+
+Next, the two cases the task never specifies. Kimi settles both from intuition, in three lines of thought: files attached to nothing get "not found", users from other accounts get "forbidden". Both are wrong — the hidden tests expect orphaned files to send anonymous visitors to login, and because of the account gate it just built, outsiders will actually be redirected, never reaching the "forbidden" Kimi intends.
+
+THINKING BLOCK
+
+For private blobs where user is authenticated but no access: head :forbidden. For blobs not attached to anything: head :not_found (or :forbidden?). Since orphaned blobs shouldn't be accessible, :not_found makes sense. For cross-account: head :forbidden.
+
+WHAT'S HAPPENING
+
+Kimi does write a test for the risky case — a logged-in user who shouldn't see the file — but casts a colleague from the same account in the role. The graders use a user from a different account, who hits the account gate and gets redirected. Kimi's test passes while the behavior that matters is never exercised: its tests encode the very assumptions they should be challenging.
+
+SWE-1.7
+WHAT'S HAPPENING
+
+SWE spots the trap immediately: you can't just reuse the app's login check on the file endpoints, because it would bounce every anonymous visitor — including people viewing legitimately public boards. So it designs its own order of checks: public files first, then permissions for logged-in users, a login redirect for anonymous ones, and "not found" only for logged-in users without access. That ordering even gives the right answer for the orphaned-file case it never explicitly considers.
+
+THINKING BLOCK
+
+But for public access, we cannot simply include Authentication and run require_authentication because it would redirect all unauth requests. We need allow unauth for avatars and public blobs. So in ActiveStorage controllers, we need a custom flow:[…]4. If not authenticated and not public, redirect to login. 5. If authenticated and not allowed, head :not_found (or forbidden).
+
+WHAT'S HAPPENING
+
+Then the case the task never specifies: what should a logged-in user without access see? SWE says out loud that the spec is silent — and instead of guessing, walks the hostile scenario step by step through the app's real session code: a user from another company opening a victim's file URL, ending in "not found". This is the exact scenario the hidden tests check.
+
+THINKING BLOCK
+
+The task doesn't specify. Use `head :not_found` for private/authorized but no access?[…]If signed in as mike (initech) and URL prefix 37signals, `resume_session` sets `Current.identity = mike.identity`, `Current.user` = mike.identity.users.find_by(account: 37s) => nil. `authenticated?` true. `Current.user` nil. For `record_accessible_to_user?`, `board.accessible_to?(nil)` returns false. So denied. Then `head :not_found`. Good.
+
+WHAT'S HAPPENING
+
+Before changing any code, SWE proves the hole exists: it writes a test expecting a login redirect and watches an anonymous request sail straight through to the file. Starting from this failing test means the fix will be measured against real behavior, not against its own assumptions.
+
+THINKING BLOCK
+
+That confirms vulnerability: the request succeeded (got a redirect to the actual file). The test failed because we asserted redirect to session, but it was not. Good baseline.
+
+WHAT'S HAPPENING
+
+The ending follows from those choices too. SWE's tests grow into a matrix of requester types — anonymous, authorized, and crucially the logged-in-but-unauthorized user, asserted to get "not found" rather than any redirect, precisely the check Kimi's suite lacked.

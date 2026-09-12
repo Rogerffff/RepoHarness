@@ -1,0 +1,98 @@
+Example trajectories
+Hide
+FrontierCode 1.1 Main task:
+fizzy-implement-authorization
+matplotlib-bug-stackplot
+uv-frozen-uv-lock-check-fails
+
+Empirical Probing: SWE-1.7 treats ambiguity as something it resolves by exploring the codebase or probing it directly. On this task, SWE-1.7 writes ~30 tiny Python probes before its first edit to learn how matplotlib actually interprets each ambiguous input, while Kimi answers the same questions in its head and runs zero code before editing. The hidden tests probe exactly those ambiguous cases, so SWE’s fix encodes measured answers while Kimi’s encodes unchecked guesses.
+
+Kimi-K2.7-Code
+WHAT'S HAPPENING
+
+Kimi finds the bug on its first read of the code. It even notices the task asks for more than the crash fix: the other style options (edgecolor, linewidth, linestyle) need the same treatment (ev 5–37).
+
+THINKING BLOCK
+
+I can see the problem. The `stackplot` function passes `facecolor=next(colors)` to every `fill_between` call. If the user also passes `facecolor` or `facecolors` in `kwargs`, it will conflict
+
+THINKING BLOCK
+
+We also need to consider `edgecolor`, `linewidth`, `linestyle` consistency.
+
+WHAT'S HAPPENING
+
+Then it talks itself out of that requirement. Whether the current behavior is "fine" is a question one quick script could answer — Kimi answers it in its head instead, and narrows the fix to facecolor only (ev 45).
+
+THINKING BLOCK
+
+But wait, what about `edgecolor`/`edgecolors`, `linewidth`/`linewidths`, `linestyle`/`linestyles`? The issue says "ensure consistent behavior across all style parameters". Currently these are passed through kwargs to every fill_between call, which means they apply to all layers equally. That seems fine and consistent.
+
+THINKING BLOCK
+
+So the fix is specifically for `facecolor`/`facecolors`. Let me implement.
+
+WHAT'S HAPPENING
+
+It keeps guessing all the way down. A fact it could check with one line of Python gets a "probably". And after ~90 events of reading, Kimi's first command of the whole run is making a git branch — it has never run the code, not even the bug report's crash (ev 55–95).
+
+THINKING BLOCK
+
+Let me not get too bogged down. `mcolors.is_color_like(['#FF0000'])` is probably False because a list with one string is not a valid single color.
+
+TOOL CALL
+
+git checkout -b fix-stackplot-facecolor-kbx9q2p
+
+THINKING BLOCK
+
+So the consistency is maintained.
+
+WHAT'S HAPPENING
+
+Everything Kimi built works: the crash is fixed, its own test passes, and its final report is accurate — for the part of the task it chose to do. But the choice itself was never tested. The hidden grader hands a two-layer chart a list of two edge colors and expects one color per layer — exactly the behavior Kimi called "fine and consistent" without looking. Score: 27/100. That's the pattern in one line: Kimi checks whether its code does what Kimi intended, never whether its intentions match reality. When its guess happens to be right (trial 9) it scores 95; here one unchecked sentence cost the whole task.
+
+SWE-1.7
+WHAT'S HAPPENING
+
+SWE reads the same code and finds the same bug. The difference starts with what it does about the open questions (ev 5–22).
+
+THINKING BLOCK
+
+The bug: stackplot passes facecolor=next(colors) and **kwargs to fill_between. If user supplies `facecolor='red'` in kwargs, duplicate argument.
+
+WHAT'S HAPPENING
+
+Before designing anything, SWE writes a small throwaway script that feeds all ten style options to the broken stackplot and prints what each one does. Now it knows the full damage: which options crash, which quietly work (ev 191–192).
+
+TOOL CALL
+
+for kw in [{'facecolor':'red'}, {'facecolors':'red'}, {'facecolor':['red','blue']}, {'facecolors':['red','blue']}, {'edgecolor':'black'}, {'edgecolors':['black','white']}, {'linewidth':2}, {'linewidths':[1,2]}, {'linestyle':'--'}, {'linestyles':['-','--']} ]:
+
+TOOL RESULT
+
+{'facecolor': 'red'} TypeError matplotlib.axes._axes.Axes.fill_between() got multiple values for keyword argument 'facecolor'
+
+TOOL RESULT
+
+{'edgecolor': 'black'} OK
+
+WHAT'S HAPPENING
+
+The key experiment: does a list of two edge colors go one-per-layer today? SWE draws a real two-layer chart and reads back what each layer actually got. Answer: no — both layers got both colors. This is the same question Kimi answered "seems fine" in its head; SWE just measured it (ev 193–196).
+
+TOOL CALL
+
+colls = ax.stackplot(x, y1, y2, edgecolor=['black','white'], linewidth=[1,3])
+
+THINKING BLOCK
+
+For two layers, each collection has two edgecolors (black and white) and two linewidths (1,3). That's per segment (x interval?) not per layer. The user expects per-layer: layer 0 black, layer 1 white. Our fix should make that. Good.
+
+THINKING BLOCK
+
+Wait we tested `linestyle=('-',)`? Not yet. Let's test.
+
+WHAT'S HAPPENING
+
+By the time SWE writes its first line of the fix — 30 small scripts in — every design question has a measured answer: it has watched the crash happen, seen that lists don't get spread across layers, and crashed a tricky linestyle on purpose to learn how matplotlib tells "one dash pattern" from "a list of styles". The hidden graders test exactly those behaviors, and SWE's fix encodes exactly those measurements — so it passes them the way you pass a test you've already taken: 89/100. And it's not luck: all three SWE runs opened the same way (43, 30, and 31 scripts before their first edit) and all three passed, while Kimi's outcome swings with how good its guesses happen to be.

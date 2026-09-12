@@ -1,0 +1,1052 @@
+                                             SpecForge: A Flexible and Efficient Open-Source Training Framework for
+                                                                      Speculative Decoding
+
+
+                                                  Shenggui Li 1 2 Chao Wang 3 2 Yikai Zhu 2 Yubo Wang 2 Fan Yin 2 Shuai Shi 2 Yefei Chen 2
+                                             Xiaomin Dong 4 Qiaoling Chen 1 Jin Pan 2 Ji Li 2 Laixin Xie 2 Yineng Zhang 2 Lei Yu 3 Yonggang Wen 1
+                                                                                 Ivor Tsang 5 Tianwei Zhang 1
+
+                                                                      GitHub: https://github.com/sgl-project/SpecForge
+
+
+
+
+arXiv:2603.18567v1 [cs.LG] 19 Mar 2026
+                                                                     Abstract                             counterparts, including LLaMA (??Dubey et al., 2023),
+                                                                                                          DeepSeek (DeepSeek-AI et al., 2024; 2025), and Qwen (Bai
+                                              Large language models (LLMs) incur high in-
+                                                                                                          et al., 2023; Qwen et al., 2025; Yang et al., 2025), have
+                                              ference latency due to sequential autoregressive
+                                                                                                          driven substantial productivity gains across a wide range of
+                                              decoding. Speculative decoding alleviates this
+                                                                                                          industries. However, as model sizes continue to scale, infer-
+                                              bottleneck by using a lightweight draft model
+                                                                                                          ence latency has emerged as a fundamental bottleneck (Yu &
+                                              to propose multiple tokens for batched verifi-
+                                                                                                          Jeong, 2022; Recasens et al., 2025). LLMs’ autoregressive
+                                              cation. However, its adoption has been lim-
+                                                                                                          generation requires a full forward pass through billions of
+                                              ited by the lack of high-quality draft models
+                                                                                                          parameters for each token, resulting in a memory-bound
+                                              and scalable training infrastructure. We intro-
+                                                                                                          inference process that significantly increases deployment
+                                              duce SpecForge, an open-source, production-
+                                                                                                          cost and hinders real-time or high-throughput applications.
+                                              oriented framework for training speculative de-
+                                              coding models with full support for EAGLE-3.                Speculative decoding has emerged as a promising rem-
+                                              SpecForge incorporates target–draft decoupling,             edy, offering substantial speedups by pairing a small
+                                              hybrid parallelism, optimized training kernels,             draft model with a large target model (e.g., the original
+                                              and integration with production-grade inference             model) (Leviathan et al., 2022; Chen et al., 2023). The draft
+                                              engines, enabling up to 9.9× faster EAGLE-3                 model quickly generates several candidate tokens, and the
+                                              training for Qwen3-235B-A22B. In addition, we               target model then verifies multiple tokens in parallel via a
+                                              release SpecBundle, a suite of production-grade             single forward pass. The draft model can be in the form of
+                                              EAGLE-3 draft models trained with SpecForge                 N-Gram models (Fu et al., 2024), models of smaller size
+                                              for mainstream open-source LLMs. Through a                  from the same model family (Leviathan et al., 2022; Chen
+                                              systematic study of speculative decoding train-             et al., 2023), sub-layers of the same model (Zhang et al.,
+                                              ing recipes, SpecBundle addresses the scarcity              2024a; Liu et al., 2024; Xia et al., 2024), and additional
+                                              of high-quality drafts in the community, and                autoregressive adapters (Cai et al., 2024; Li et al., 2024b;a;
+                                              our draft models achieve up to 4.48× end-to-                Zhang et al., 2024b; Du et al., 2024; Li et al., 2025). If
+                                              end inference speedup on SGLang, establishing               the draft’s predictions are likely to be correct as judged by
+                                              SpecForge as a practical foundation for real-               the target model, they are accepted; otherwise, the target
+                                              world speculative decoding deployment.                      model corrects them. The number of forward passes of
+                                                                                                          the target model is thus significantly reduced. As a result,
+                                                                                                          by effectively leveraging extra parallel computation when
+                                         1. Introduction                                                  available, speculative decoding can reduce inference time
+                                                                                                          substantially without changing the distribution of outputs.
+                                         Large language models (LLMs) have rapidly become a
+                                         cornerstone of modern AI systems. Both proprietary               Early demonstrations of speculative decoding (Leviathan
+                                         models—such as ChatGPT (Achiam et al., 2023), Gem-               et al., 2022) showed speedups of up to 3.4× on large Trans-
+                                         ini (?Comanici et al., 2024), and Grok—and open-source           former models such as T5-XXL (Raffel et al., 2020), while
+                                                                                                          provably preserving output fidelity. Subsequent advances
+                                             1
+                                              Nanyang Technological University 2 SpecForge Team           have further improved its efficiency and practicality. No-
+                                         3
+                                          Meituan 4 EigenAI 5 A*STAR, Singapore. Correspondence to:       tably, the EAGLE-3 algorithm (Li et al., 2025) introduces
+                                         Tianwei Zhang <tianwei.zhang@ntu.edu.sg>.
+                                                                                                          a draft model that operates at a hybrid feature level, sub-
+                                         Preprint. March 20, 2026.                                        stantially increasing token acceptance rates and achieving
+
+                                                                                                      1
+              SpecForge : A Flexible and Efficient Open-Source Training Framework for Speculative Decoding
+
+up to 4.79× speedup on LLaMA-3.3-70B without quality                scarce and underdeveloped, leaving substantial headroom
+degradation. EAGLE-3 further incorporates dynamic tree-             for improving the effectiveness of speculative decoding.
+based generation and a Training-Time Test (TTT) procedure
+                                                                    Cause 3: Lack of robust training tools. Constructing a
+that better simulates multi-step decoding during draft train-
+                                                                    high-quality draft model is inherently non-trivial, often re-
+ing. Owing to its strong empirical performance, EAGLE-3
+                                                                    quiring architectural customization and the implementation
+has become the de facto industrial standard for speculative
+                                                                    of sophisticated training mechanisms such as Training-Time
+decoding and is supported by major inference engines, in-
+                                                                    Test (TTT) (Li et al., 2025). Until recently, practitioners
+cluding open-source systems such as SGLang (Zheng et al.,
+                                                                    lacked robust tooling to support this process. Most exist-
+2023) and vLLM (Kwon et al., 2023), as well as proprietary
+                                                                    ing speculative decoding implementations remain ad hoc,
+platforms like TensorRT-LLM (trt, 2025).
+                                                                    fragmented, or ill-suited for large-scale training (eag, 2025).
+However, despite the strong theoretical guarantees and em-          Given that target models can range from several billion to
+pirical gains, speculative decoding remains underutilized in        over one trillion parameters, any practical training frame-
+practice, especially for EAGLE3. We identify three main             work must be highly scalable, efficient, and reliable. The
+causes which hinder the wider application of speculative            absence of such infrastructure has substantially hindered
+decoding in inference:                                              the community’s ability to train high-quality draft models,
+                                                                    thereby limiting their availability and adoption across real-
+Cause 1: Limited availability of draft models. The effec-
+                                                                    world and open-source ecosystems.
+tiveness of speculative decoding critically depends on the
+adoption of a well-trained draft model that closely approxi-        SpecForge is our attempt to fill these gaps by advancing
+mates the predictions of the target model. Such a draft model       the practical development of speculative decoding in both
+is often unavailable in practice. Early approaches (Leviathan       research and industry. It is a unified, production-oriented
+et al., 2022) assume the existence of smaller models from the       framework for training draft models for speculative decod-
+same family as the target model, which frequently does not          ing, offering native support for advanced algorithms such
+hold. For example, Kimi K2 (Team et al., 2025), a 1-trillion-       as EAGLE-3, including the complex Training-Time Test
+parameter model, was released without a corresponding               (TTT) procedure with tree attention masks and recursive
+smaller variant, rendering this approach infeasible. Even           scheduling. With SpecForge, practitioners can easily train
+with state-of-the-art methods such as EAGLE-3, many main-           state-of-the-art draft models through simple configuration
+stream models, including Qwen3, lack publicly available             rather than custom engineering.
+matching draft models, significantly hindering the practical
+                                                                    To ensure that these capabilities operate at scale,
+adoption of speculative decoding.
+                                                                    SpecForge adopts a hybrid parallelism strategy via
+Cause 2: Poor performance of open-source draft mod-                 target-draft decoupling, which explicitly decouples the
+els. Previous work (Li et al., 2025; 2024b) has released a          target model and the draft model, enabling each to be par-
+limited number of draft-model weights on Hugging Face, en-          allelized according to its distinct computational character-
+abling engineers and researchers to directly integrate them         istics. In speculative decoding training, the target model is
+into inference frameworks such as SGLang, vLLM, and                 typically large, frozen, and inference-dominated, while the
+TensorRT-LLM for acceleration. However, these publicly              draft model is lightweight and frequently updated. Treating
+available drafts are typically trained on relatively small,         both models as a single monolithic modules, as done in
+research-oriented datasets, which limits their robustness and       prior implementation, forces a uniform parallelization strat-
+renders them unsuitable for production-level deployment.            egy that is suboptimal for both. SpecForge instead applies
+                                                                    inference-oriented parallelism to the target model leverag-
+To quantify this limitation, we reproduced the EAGLE-3
+                                                                    ing the integration with SGLang and training-oriented
+training procedure for LLaMA-3.1-Instruct using ShareGPT
+                                                                    strategies to the draft model. This separation improves scal-
+(120K conversations) and UltraChat (200K conversa-
+                                                                    ability, reduces communication overhead, and allows the
+tions) (Ding et al., 2023). Under this setting, the resulting
+                                                                    framework to efficiently support target models ranging from
+draft model achieved an acceptance length of 2.82 on the
+                                                                    billions to over a trillion parameters.
+Math500 benchmark. In contrast, training the same draft
+model on the Perfect-Blend dataset, which contains 1.4M             SpecForge further optimizes the Training-Time Test (TTT)
+conversations, improved the acceptance length to 3.48, cor-         procedure in EAGLE-3 by introducing memory- and
+responding to an additional 1.17× inference speedup.                compute-efficient attention implementations tailored to its
+                                                                    autoregressive multi-step structure. It leverages the sparsity
+This gap highlights a broader mismatch in the open-
+                                                                    pattern in tree attention to reduce the computation time and
+source LLM ecosystem: while foundation models such as
+                                                                    memory peak, and optimizes the loss computation via cus-
+DeepSeek, Qwen, and GLM have rapidly advanced to state-
+                                                                    tomized in-place operations. Together, these optimizations
+of-the-art performance, high-quality draft models remain
+                                                                    significantly lower memory consumption and wall-clock
+
+                                                                2
+               SpecForge : A Flexible and Efficient Open-Source Training Framework for Speculative Decoding
+
+time, enabling stable and scalable EAGLE-3 training at long           with a parallel, compute-intensive verification of candidate
+context lengths.                                                      sequences. By employing a computationally inexpensive
+                                                                      “draft model” to propose short sequences of tokens (spec-
+To enrich the availability of high-quality draft models
+                                                                      ulation), speculative decoding allows the massive “target
+in the open ecosystem, we have trained a comprehen-
+                                                                      model” to verify these proposals in a single forward pass.
+sive suite of draft models, named SpecBundle, covering
+                                                                      This effectively converts the sequential generation prob-
+mainstream open-source LLM families including Llama-3,
+                                                                      lem into a batch processing problem, thereby increasing
+Llama-4, Qwen-3, GPT-OSS, Kimi K2, and DeepSeek V3.
+                                                                      arithmetic intensity and better utilizing the massive parallel
+SpecBundle is built on extensive, diverse training corpora
+                                                                      compute capabilities of modern hardware.
+specifically for speculative decoding, offering substantially
+stronger draft quality than existing open-source checkpoints.
+In empirical evaluations, SpecBundle models deliver up to             2.2. Theoretical Speedup
+4.8x speedup over inference without speculative decoding              The efficiency of speculative decoding is governed by the
+and 1.3× speedup over publicly available draft model check-           trade-off between the time saved by accepting draft tokens
+points across multiple task domains, making them practical            and the overhead of generating them. The number of tokens
+drop-in draft models for real-world deployment.                       generated per single run of the target model is a random vari-
+During the training of SpecBundle, we also systematically             able dependent on the quality of the draft model. Assuming
+investigated the properties of speculative decoding and de-           the acceptance of each token is an independent event with
+rived practical training recipes that elucidate key design            probability α (the acceptance rate), the expected number
+choices, including draft model architectures, dataset qual-           of tokens generated per cycle is derived from a truncated
+ity, and the configuration of training-time test. Together,           geometric distribution:
+these findings provide actionable guidance for building high-                                         1 − αγ+1
+quality draft models and inform best practices for deploying                            E[tokens] =
+                                                                                                        1−α
+speculative decoding in production settings.
+                                                                      where γ is the number of speculative draft tokens. As α ap-
+We summarize our main contributions and key novel fea-                proaches 1 (perfect alignment between draft and target), the
+tures of SpecForge as follows:                                        expected length approaches γ + 1. The theoretical walltime
+• We introduce SpecForge, an efficient and scalable train-            speedup S is defined as the ratio of standard autoregressive
+  ing framework for speculative decoding. SpecForge                   time to speculative decoding time. Let c be the cost ratio
+  implements hybrid parallelism through target–draft de-              between the draft model and the target model (c = Cq /Cp ).
+  coupling and training-time test attention optimization,             The speedup is given by:
+  enabling large-scale and efficient draft model training.
+• We release SpecBundle, a collection of high-quality draft                            E[tokens]      1 − αγ+1
+                                                                                  S=             =
+  models covering mainstream open-source LLM families.                                  1 + γc     (1 − α)(1 + γc)
+  It delivers stronger accuracy and up to 1.3× speedup
+  over existing open checkpoints, addressing the limited              This equation reveals the critical efficiency bounds:
+  availability of draft models in the open-source ecosystem.          • Draft Quality (α): Maximizing α is paramount. The
+• We systematically investigate training recipes and design             acceptance rate is fundamentally limited by the Kullback-
+  choices for improving speculative decoding performance,               Leibler (KL) divergence between the draft and target dis-
+  providing practical insights for real-world deployment                tributions.
+  and directions for future research.                                 • Draft Cost (c): The draft model must be significantly
+                                                                        cheaper than the target (c ≪ 1). If the draft overhead γc
+                                                                        becomes too large, it negates the parallelization gains.
+2. Preliminaries                                                      • Speculation Length (γ): There is an optimal γ for any
+2.1. Speculative Decoding                                               given α and c. While increasing γ raises the potential
+                                                                        tokens per step, it linearly increases the draft overhead.
+Speculative decoding (Chen et al., 2023; Leviathan et al.,              Modern frameworks often tune γ dynamically.
+2022; Xia et al., 2023; Miao et al., 2024; Cai et al., 2024; Li
+et al., 2024b;a; 2025; Hu et al., 2025) has emerged as the pre-       2.3. Architecture Paradigm
+mier algorithmic intervention to address this memory-bound
+inefficiency without requiring the retraining of the founda-          The draft model in speculative decoding has undergone a
+tional model or compromising generation quality. First                series of paradigm shift.
+formalized effectively by Leviathan et al. (2022), it funda-          Stage 1: Independent Draft Model. The earliest real-
+mentally restructures the inference workload. It replaces             izations of speculative decoding adopted a straightforward
+the serial, memory-intensive generation of single tokens              architectural strategy in which a smaller, independently
+
+                                                                  3
+              SpecForge : A Flexible and Efficient Open-Source Training Framework for Speculative Decoding
+
+trained language model serves as the draft model (Leviathan          Algorithm 1 TTT Attention
+et al., 2022; Chen et al., 2023; Sun et al., 2023; Kim et al.,         Input: query qt , prefix keys K train , prefix values V train ,
+2023). While conceptually simple, this paradigm imposes                cached keys {ki }i>T , cached values {vi }i>T
+significant system-level constraints. To preserve tokenizer            Output: attention output ot
+compatibility, a large target model (e.g., Chinchilla-70B or
+                                                                                          ⊤
+LLaMA-2-70B) must be paired with a substantially smaller                     qt (K train )
+model, often from the same family (e.g., 7B variants). This            S←        √
+                                                                                    dk
+tight architectural coupling introduces an inherent alignment          for i ← T + 1 to t − 1 do
+gap: smaller models tend to produce probability distribu-                 si ← q√t ·k
+                                                                                   dk
+                                                                                     i
+
+
+tions that diverge from those of their larger counterparts,               S ← concat(S, si )
+particularly on complex reasoning or long-context tasks,               end for
+resulting in elevated token rejection rates. From the system           α ← softmax(S)
+perspective, maintaining two independent models also in-               ot ← α · V train
+creases memory pressure, as both model parameters and KV               for i ← T + 1 to t − 1 do
+caches must reside in GPU memory. In distributed settings,                ot ← ot + αi vi
+this design further incurs synchronization and communica-              end for
+tion overhead, which can erode the theoretical speedups of
+speculative decoding.
+                                                                     2.4. Training-Time Test
+Stage 2: Multi-Token Prediction Heads. Medusa (Cai
+et al., 2024) introduced multiple prediction heads to elim-          In the latest upgrade, EAGLE-3 (Li et al., 2025) addition-
+inate the overhead of independent draft models and dual              ally incorporates Training-Time Testing (TTT) to autoregres-
+KV-caches. It adds lightweight heads that run in parallel            sively generate the next few tokens, reducing error accu-
+with the standard LM head, enabling zero-latency drafting:           mulation and improving acceptance rates in multi-token
+generating candidate tokens costs nearly the same walltime           prediction. The core idea of TTT is to simulate multiple
+as generating one because the additional MLPs are small and          steps of autoregressive token generation during training. As
+executed concurrently with the backbone. These heads reuse           shown in Algorithm 1, at each TTT step, the model attends
+the target model’s features, avoiding a separate KV-cache            to a growing context consisting of the original training se-
+and ensuring strong alignment. Verification is performed             quence as prefix and the tokens generated in previous steps.
+in a single forward pass using Tree Attention (Cai et al.,           Let T denote the length of the training prefix. For any
+2024), where a masked attention structure constrains each            position t > T , positions 1:T correspond to the training
+candidate token to attend only to its ancestors, allowing            sequence, while positions T +1:t−1 correspond to represen-
+the model to evaluate multiple hypotheses in parallel and            tations predicted during earlier TTT steps. At position t,
+preserve useful branches even when others are rejected.              the model computes attention using the query vector qt over
+Stage 3: Feature-Level Extrapolation. Although Medusa                keys and values concatenated.
+eliminates the overhead of maintaining an independent draft          We define the key and value matrices for the training prefix
+model, its non-autoregressive MLP heads struggle to cap-             and previously predicted tokens as
+ture long-range dependencies. Li et al. (2024b) address this
+limitation with EAGLE, which shifts autoregression from                K train = [k1 , . . . , kT ],    K pred = [kT +1 , . . . , kt−1 ],
+token space to feature space under the feature-uncertainty              V train = [v1 , . . . , vT ],   V pred = [vT +1 , . . . , vt−1 ].
+hypothesis: hidden-state trajectories in high-dimensional
+feature space are smoother and more predictable than the             The attention output at step t is computed as
+discrete jumps between tokens (Li et al., 2024b; Du et al.,                                             ⊤ 
+2024). EAGLE replaces the standalone draft model with a                                           K train
+lightweight single-layer Transformer that autoregressively                                  qt K pred   train 
+                                                                                                              V
+                                                                             ot = softmax         √                  ,
+                                                                                           
+predicts future feature representations, which are then pro-                                                  V pred
+                                                                                                             
+                                                                                                     dk
+jected through a linear layer to obtain the token logits.
+This fully autoregressive yet efficient design enables ac-
+curate multi-step drafting and achieves substantial empirical        where dk denotes the key dimensionality.
+speedups. Its successor, EAGLE-2 (Li et al., 2024a), further
+                                                                     Equivalently, the attention logits can be decomposed into
+improves performance by dynamically shaping the draft tree
+                                                                     prefix and prediction components as
+according to token-level confidence, allocating verification
+                                                                                                    ⊤            ⊤
+                                                                                        "                          #
+compute to the most promising candidates.                                                 qt K train    qt K pred
+                                                                                  St =       √        ,    √         .
+                                                                                                dk           dk
+
+                                                                 4
+               SpecForge : A Flexible and Efficient Open-Source Training Framework for Speculative Decoding
+
+Intuitively, the attention logits St decompose into two parts:        SGLang and vLLM are explicitly optimized for this execu-
+(i) causal attention between the query qt and the training            tion pattern and can deliver substantially higher throughput
+prefix keys K train , and (ii) dot products between qt and the        and better hardware utilization during prefill.
+keys ki generated in previous TTT steps for i > T :
+                                                                      This mismatch leads to a significant inefficiency in training:
+                                                                      the prefill stage often becomes a dominant bottleneck in
+3. Challenges                                                         large-scale draft-model training, inflating both training time
+                                                                      and resource consumption. Addressing this gap requires
+Despite the rapid growth of speculative decoding, espe-
+                                                                      rethinking the training pipeline to better align with inference-
+cially EAGLE3, training the draft model has received less
+                                                                      optimized execution.
+attention. Compared to large-scale model training using
+frameworks like Megatron (Narayanan et al., 2021) and
+DeepSpeed (Rasley et al., 2020), one significant attribute of         4. SpecForge
+EAGLE3 training is that the number of trainable parameters
+                                                                      We proposes several techniques to tackle the above chal-
+is smaller by a magnitude as the EAGLE3 draft model is of-
+                                                                      lenges and optimize the overall training performance.
+ten one-layer Transformer. Nonetheless, constructing a draft
+model is non-trivial because of the following challenges.
+                                                                      4.1. Target-Draft Decoupling
+Rigid Parallelism Strategies. Existing open-source im-
+plementations (eag, 2025; mod, 2025) treat the target and             The original EAGLE3 design tightly couples the draft and
+draft model as a unified model, and apply fully sharded data          target models into a single parallelized module, as illustrated
+parallelism (FSDP) (Zhao et al., 2023; Rasley et al., 2020)           in Figure 2a. While this design simplifies implementation,
+for training by wrapping both models. Despite its simplic-            it is suboptimal from a performance standpoint. More criti-
+ity and user-friendliness, such unified parallelism strategy          cally, training and inference engines are optimized for funda-
+is sub-optimal for several reasons. First, even though the            mentally different objectives and system constraints; tightly
+draft models are typically small, the target models can vary          coupling the two models prevents the simultaneous use of
+from several billions of parameters to trillions of parameters.       state-of-the-art training frameworks and high-performance
+ZeRO-style sharding (Rasley et al., 2020) is not optimal              inference engines. Decoupling the draft and target mod-
+for all scales and thus does not provide high-performance             els therefore emerges as a key abstraction for achieving
+hidden-state generation. It is evident that current high-             scalability, efficiency, and deployment flexibility.
+performance generation engines like SGLang, vLLM and                  For the draft model, the primary challenge lies in training
+TensorRT favour tensor parallelism and expert parallelism             efficiency which has been well supported by mature train-
+over all-gather-based ZeRO-style sharding. Consequently,              ing frameworks such as DeepSpeed (Rasley et al., 2020)
+treating the target and draft models as a single monolithic           and Megatron (Narayanan et al., 2021), offering extensive
+module limits both performance and scalability.                       parallelization for distributed training. In contrast, the tar-
+Sub-optimal Prefill Performance. The training process of              get model is typically large and inference-only, making
+EAGLE3 can be naturally decomposed into two stages. In                it better suited to specialized inference engines such as
+the first stage, the target model is executed over the entire         SGLang (Zheng et al., 2023). By decoupling the two models
+input sequence to generate the corresponding hidden states.           and applying distinct execution backends and parallelization
+This is equivalent to the prefill phase in standard LLM in-           strategies, SpecForge enables each component to operate
+ference, where the model processes the tokens in a fully              in its optimal regime. This also allows the direct deploy-
+autoregressive manner in parallel before decoding begins.             ment of trained draft models on optimized inference engines,
+                                                                      resulting in a seamless and production-ready workflow.
+However, existing EAGLE3 training frameworks typically
+rely on naı̈ve model implementations, either self-written or          4.1.1. H YBRID PARALLELISM
+directly imported from Hugging Face. These implementa-
+tions are primarily designed for general-purpose training             To accommodate the distinct characteristics of target and
+and correctness, rather than for high-throughput inference            draft models, we leverage the SGLang inference engine and
+workloads. As a result, they fail to exploit many inference-          Fully Sharded Data Parallelism for them respectively, as
+specific optimizations that have been extensively engineered          shown in Figure 2b.
+into mature, production-grade inference engines. In partic-           For the draft model, this design choice is motivated by
+ular, these training pipelines lack optimizations such as             two key observations. First, the draft model is typically
+efficient attention kernels, optimized memory management,             only 3–5% the size of the target model, rendering heavy-
+and CUDA Graph of which are critical for accelerating the             weight parallelization schemes such as tensor or pipeline
+prefill stage. In contrast, modern inference engines like             parallelism unnecessary or even counterproductive. Second,
+
+
+                                                                  5
+                  SpecForge : A Flexible and Efficient Open-Source Training Framework for Speculative Decoding
+
+
+
+
+                                           Figure 1. EAGLE3 attention mask used in Training-Time Testing.
+
+
+                                  DeepSpeed/FSDP                             Algorithm 2 BlockMask Construction for Training-Time
+                                                                             Testing
+           Target Model                              Draft Model
+                                                                               Input: batch index b, query index qi , key/value index
+                                                                               kvi , prefix length QLEN , sequence length T
+(a) Existing implmenetation wraps both the target model and draft              Output: BlockMask M
+model into a single parallel strategy
+                           SGLang                       FSDP                   // Causal mask
+          GPU 0           Target Model
+                            Shard 0
+                                                      Draft Model
+                                                       Replica 0
+                                                                               mcausal ← (qi ≥ kvi )
+                                                                               mpad ← (kvi < T )
+                          Target Model                Draft Model
+          GPU 1             Shard 1                    Replica 1               Mcausal ← mcausal ∧ mpad
+                          Target Model                Draft Model
+          GPU 2             Shard 2                    Replica 2
+                                                                               // Suffix mask
+          GPU 3
+                          Target Model
+                            Shard 3
+                                                      Draft Model
+                                                       Replica 3
+                                                                               msuffix ← (kvi ≥ QLEN )
+                                                                               mpad ← (kvi mod QLEN < T )
+(b) SpecForge decouples the target model and draft model with                  mdiag ← ((kvi − qi ) mod QLEN = 0)
+hybrid parallelism                                                             Msuffix ← msuffix ∧ mpad ∧ mdiag
+                  Figure 2. Architecture comparisons
+                                                                               // BlockMask
+                                                                               M ← Mcausal ∨ Msuffix
+
+training and inference stages impose fundamentally differ-
+ent compute and memory requirements, making specialized,                     4.2. Computation Optimization
+stage-specific optimizations critical to overall system per-
+formance. Given the relatively small size of the draft model,                Beyond parallelization strategies, we further investigated
+we only shard the optimizer states and gradients to minimize                 the training characteristics of the draft model and observed
+the communication overhead, which is equivalent to ZeRO                      that Training-Time Test (TTT) with a step length of 7 incurs
+Stage 2 in DeepSpeed (Rasley et al., 2020).                                  substantial GPU memory consumption. To address this
+                                                                             bottleneck, we design two complementary optimizations
+For the target model, we directly employ the model run-
+                                                                             that significantly reduce memory usage during training.
+ner provided by SGLang as the inference engine. This
+allows us to reuse SGLang’s existing parallelization strate-
+                                                                             4.2.1. S PARSE T REE ATTENTION
+gies—including tensor parallelism, expert parallelism, and
+pipeline parallelism—as well as high-performance kernels                     The naive implementation in Algorithm 1 materializes the
+such as FlashAttention (Shah et al., 2024) and FlashInfer (Ye                attention logits S as intermediate activations. As TTT runs
+et al., 2025) to accelerate the prefill phase of target-model in-            multiple autoregressive steps in the forward pass, these log-
+ference. In addition, we can apply piecewise CUDA Graph                      its accumulate and quickly dominate memory usage. Our
+in SGLang to fuse non-attention modules into a single kernel                 profiling shows that stored attention logits account for 80%
+to reduce kernel launch time.                                                of the total activation memory, making them the primary
+                                                                             memory bottleneck during training.
+By decoupling the parallel strategies of the target model and
+draft model, they can be either co-located on the same GPU,                  To reduce the memory footprint, we leverage FlexAttention
+or disaggregated on distinct GPUs. For our experiments, we                   to compute attention. FlexAttention is a PyTorch project
+conducted evaluation under the co-locate settings.                           that leverages TorchInductor to compile a Python DSL into
+
+                                                                         6
+              SpecForge : A Flexible and Efficient Open-Source Training Framework for Speculative Decoding
+
+a Triton kernel. It brings two benefits: (1) FlexAttention           5.2. End-to-end Performance
+computes attention in a FlashAttention-style streaming man-
+                                                                     We conducted end-to-end training experiments on four mod-
+ner, avoiding the need to save intermediate activations; and
+                                                                     els spanning different scales and architectures: LLaMA3.1-
+(2) FlexAttention implements a BlockMask data structure,
+                                                                     8B, LLaMA3.3-70B, Qwen3-30B-A3B, and Qwen3-235B-
+which efficiently precomputes blocks that can be skipped,
+                                                                     A22B, and measured training throughput in tokens per sec-
+partially computed, or fully computed, and optimizes the
+                                                                     ond. For SpecForge, we enabled tensor parallelism (TP),
+implementation accordingly. To use FlexAttention, we
+                                                                     FlashAttention kernels, and CUDA Graphs, with the ten-
+construct a BlockMask that encodes the allowed attention
+                                                                     sor parallel size chosen according to the scale of the target
+blocks, as illustrated in Figure 1 and Algorithm 2. At each
+                                                                     model. The draft model was trained using ZeRO Stage 2 to
+TTT step we store the newly generated keys and values
+                                                                     achieve memory-efficient data-parallel execution. For the
+in the KV cache and construct a custom attention mask
+                                                                     baseline, we evaluated both ZeRO Stage 2 and ZeRO Stage
+represented as a BlockMask, which is then provided to the
+                                                                     3 configurations and report the best-performing setting.
+FlexAttention operator during attention computation.
+                                                                     Table 1 summarizes the results. SpecForge consistently
+4.2.2. M EMORY-E FFICIENT G RADIENT C OMPUTATION                     outperforms the baseline across all model scales, achieving
+                                                                     a maximum speedup of 9.99×. The poor performance of the
+To further reduce memory usage, we implement the back-
+                                                                     baseline can be attributed to two primary factors:
+ward pass of the masked softmax loss with a custom Triton
+                                                                     • Under ZeRO Stage 2, although gradients and optimizer
+kernel (Algorithm 3). The key idea is to reuse the input
+                                                                        states are sharded, the frozen target model parameters
+logits tensor to store gradients during the backward pass.
+                                                                        remain fully replicated on each device, leading to rapid
+After the forward loss computation, the logits are no longer
+                                                                        scalability degradation as model size increases.
+needed. Instead of allocating a separate gradient buffer, the
+                                                                     • ZeRO Stage 3 shards parameters, optimizer states, and
+Triton kernel overwrites the logits tensor with the gradient
+                                                                        gradients; however, frequent all-gather operations during
+with respect to logits. This avoids storing additional activa-
+                                                                        target-model inference introduce substantial communica-
+tion or gradient tensors and reduces memory overhead. The
+                                                                        tion overhead, which severely limits throughput.
+memory reduction ranges from 30–40%, depending on the
+                                                                     These results further highlight the effectiveness of tar-
+context length and the draft model’s vocabulary size.
+                                                                     get–draft decoupling. For large-scale models such as
+                                                                     Qwen3-235B-A22B, ZeRO-style sharding leads to ex-
+Algorithm 3 In-place Backward for Log-Softmax Loss                   tremely low throughput due to communication-dominated
+                                                                     execution. In contrast, SpecForge consistently achieves
+  Input: logits z, target p, upstream gradient g
+                                                                     strong performance by avoiding unnecessary synchroniza-
+      P gradient w.r.t. logits (stored in z)
+  Output:
+                                                                     tion and applying model-specific parallelization strategies.
+  s ← (p · g)
+                                                                     The results also underscore the importance of integrating
+                                                                     with a mature inference engine like SGLang. As shown
+  π ← softmax(z)
+                                                                     by the LLaMA-3.1-8B experiments, even when neither
+  z ← −(p · g − π · s)
+                                                                     the baseline nor SpecForge parallelizes the target model,
+                                                                     SpecForge still attains a 2.01× speedup, owing to the
+                                                                     highly optimized prefill execution provided by SGLang.
+5. Evaluation of SpecForge
+                                                                     5.3. Impact of Target Model Backends
+5.1. Experimental Setup
+                                                                     In addition, we investigated the impact of different target
+We evaluated the system performance of SpecForge and                 model backends on training performance. In SpecForge,
+compare it against existing implementations. We considered           we have supported three types of execution backends:
+two publicly available codebases: (1) the official imple-
+mentation released by SafeAILab alongside the EAGLE3                 • Hugging Face Backend: Reuses model implementations
+paper, and (2) a third-party implementation developed by               from Hugging Face Transformers and relies on its internal
+NVIDIA’s Model Optimizer team. As both implementations                 tp plan for tensor parallelism, when available.
+adopt a similar monolithic architecture wrapping both the            • SGLang Backend: Reuses model implementations pro-
+target and draft models within DeepSpeed, we select the                vided by SGLang and leverages its system-level op-
+official SafeAILab implementation as our baseline. All ex-             timizations, including chunked prefill (Agrawal et al.,
+periments were conducted on a cluster of eight NVIDIA                  2025), torch.compile, CUDA Graphs, and high-
+H200 GPUs with a sequence length of 4096. The batch size               performance kernels (Ye et al., 2025; Shah et al., 2024).
+was adjusted for each method to maximize throughput under            • Custom Backend: Includes models manually imple-
+GPU memory constraints.                                                mented by our team. This backend is particularly useful
+
+                                                                 7
+                                   SpecForge : A Flexible and Efficient Open-Source Training Framework for Speculative Decoding
+
+        Target Model                     Framework    Target Model   Draft Model   Max Batch Size   Seq Length   Step Time (s)   Throughput (tokens/s)   speedup
+                                          EAGLE            ZeRO 2        ZeRO 2         16                          1.04                63015.4             1
+           Llama3.1-8B                                                                                 4096
+                                         SpecForge          TP=1         ZeRO 2         64                          2.07               126639.6           2.01
+                                          EAGLE            ZeRO 2        ZeRO 2         16                          OOM                    -                -
+        Llama3.3-70B                      EAGLE            ZeRO 3        ZeRO 3          8             4096         2.21                14827.1             1
+                                         SpecForge          TP=4         ZeRO 2         16                          3.18                20608.8           1.39
+                                          EAGLE            ZeRO 2        ZeRO 2          8                          1.12                29257.1             1
+  Qwen3-30B-A3B                           EAGLE            ZeRO 3        ZeRO 3          8             4096         5.07                6463.1             0.2
+                                         SpecForge          TP=4         ZeRO 2         16                          0.52               126030.8           4.31
+                                          EAGLE            ZeRO 2        ZeRO 2          8                          OOM                    -                -
+ Qwen3-235B-A22B                          EAGLE            ZeRO 3        ZeRO 3          8             4096         11.2                2025.7              1
+                                         SpecForge          TP=8         ZeRO 2          8                          1.62                20227.2           9.99
+                                                               Table 1. End-to-end performance on various models.
+
+
+
+  when a model is unavailable in Hugging Face Transform-                                     5.4. Impact of Optimization Attention Kernel
+  ers or SGLang, or when the Hugging Face implementation
+                                                                                             To evaluate the performance gains from our optimized at-
+  lacks built-in parallelization support.
+                                                                                             tention kernel, we conducted micro-benchmarks comparing
+We conducted training experiments on the same set of mod-                                    its execution time and peak memory usage against a native
+els and tensor parallel configurations in Table 1. As shown                                  SDPA-based implementation. We set the TTT length to
+in Figure 3, SGLang significantly outperforms the other                                      7 and report measurements from the final TTT step. As
+two execution backends, achieving speedups of up to 6.8×.                                    shown in Figure 4, our optimized attention substantially re-
+These results highlight a key observation: optimizing the                                    duces both wall-clock time and memory consumption. For
+prefill stage is non-trivial, particularly for MoE models. For                               a sequence length of 4096, it achieves reductions of 62.1%
+the Qwen3 experiments, both our custom backend and the                                       in execution time and 93.5% in peak memory usage on a
+Hugging Face backend exhibit substantially lower training                                    single NVIDIA H200 GPU. Moreover, the performance gap
+throughput compared to SGLang. Notably, the Hugging                                          widens as the sequence length increases, highlighting the
+Face implementation encounters runtime errors and fails to                                   effectiveness of our optimized kernel for training EAGLE3
+robustly support large-scale MoE models, further underscor-                                  under long-context settings.
+ing the importance of integrating with a mature, inference-
+optimized backend for scalable EAGLE3 training.
+                                                                                             6. SpecBundle
+Another engineering advantage of integrating with SGLang
+is the clear separation of responsibilities. Model support                                   As part of our open-source efforts, we trained the EAGLE3
+and low-level inference optimizations can be delegated to                                    draft models for a collection of mainstream open-source
+the engine team, which typically adds support for newly                                      models including Llama, Qwen and Kimi. This collection
+released models promptly. This allows SpecForge to focus                                     is named SpecBundle.
+on training-specific optimizations and system design, rather                                 We trained these on models on the Open-PerfectBlend
+than duplicating model integration and maintenance efforts.                                  dataset (Xu et al., 2024), which consists of offers balanced
+                                                                                             1.4M conversation in the chat, math, coding, instruction
+                                Training Throughput with Different Backends                  following domains. To achieve the best performance, we
+                                                                                             regenerated the assistant’s responses in the dataset using the
+
+
+
+
+   Throughput (tokens/s)
+                           120000                                                            target model with temperature 0.8 and trained the model
+                           100000                                                            from scratch on the regenerated dataset. We trained the
+                            80000                                                            draft models for 2 epochs at learning rate 1e-4 with cosine
+                            60000                                                            annealing scheduler.
+                            40000
+                            20000                                                            6.1. Evaluation Results
+                                0 Llama3-8B                               X
+                                              Llama3-70B    Qwen3-30B Qwen3-235B
+                                                      Model                                  We evaluated the results of SpecBundle on a wide range of
+                                                  Hugging Face Backend                       benchmark datasets:
+                                                  Custom Backend
+                                                  SGLang Backend                             1. Instruction-following: MTBench (Chen et al., 2025)
+                                                                                             2. Math: Math500 and GSM8K (Zhang & Math-AI, 2024)
+                                                                                             3. Coding: HumanEval (Chen et al., 2021) and LCB (Jain
+    Figure 3. Training time with different execution backends
+                                                                                                et al., 2024)
+                                                                                             4. Other Subjects: GPQA (Rein et al., 2024) and Fi-
+
+                                                                                        8
+                        SpecForge : A Flexible and Efficient Open-Source Training Framework for Speculative Decoding
+
+                                  Attention Time                                                                   Attention Peak Memory Usage
+            2000
+                                                                                                      100
+            1500                                                                                      80
+
+
+Time (ms)                                                                                 Time (ms)
+                                                                                                      60
+            1000
+                                                                                                      40
+            500
+                                                                                                      20
+              0                                                                                        0
+                   128 512 1024          2048                       4096                                    128 512 1024        2048                    4096
+                                  Sequence Length                                                                          Sequence Length
+                                     SDPA            Ours                                                                    SDPA         Ours
+
+                      (a) Kernel wall time for attention                                                    (b) Peak memory consumption for attention
+               Figure 4. Comparison of execution time and memory usage between naive EAGLE3 attention and our optimized kernel.
+
+                                                                          MTBench                       GPQA                     FinanceQA
+                         Target Model       Draft Model     #GPUs
+                                                                    Throughput Speedup           Throughput Speedup         Throughput Speedup
+                                                 -                    190.0          1                 190.5          1       185.7         1
+                         Llama-3.1-8B         Existing        1       454.7        2.39                438.1        2.30      237.2       1.27
+                                            SpecBundle                450.0        2.37                514.2        2.70      258.6       1.39
+                                                 -                    540.5          1                 575.7          1       512.6         1
+                         Llama-3.3-70B        Existing        4       1272.7       2.35                1049.0       1.82      981.7       1.92
+                                            SpecBundle                1253.0       2.31                1405.1       2.44      1022.7      2.00
+                                                 -                    502.1          1                 541.0          1       288.9         1
+                         Llama-4-Scout        Existing        8       1253.0       2.50                1405.1       2.60      1022.7      3.54
+                                            SpecBundle                1312.4       2.61                1502.2       2.78      1189.6      4.12
+                                                 -                    1341.3         1                 1410.4         1       1320.1        1
+                         Qwen-30B-A3B
+                                            SpecBundle        4       2086.1       1.55                2341.3       1.66      1779.0      1.35
+                                                 -                    529.9          1                 563.2          1       539.5         1
+                        Qwen-235B-A22B
+                                              Existing        8       642.7        1.21                716.7        1.27      689.4       1.28
+                                            SpecBundle                814.5        1.54                826.5        1.47      889.0       1.65
+                                                 -                    728.5          1                 794.1          1       747.7         1
+                         Ling-Flash-V2                        8
+                                            SpecBundle                1022.6       1.40                1185.7       1.49      863.9       1.16
+                                                 -                    430.9          1                 505.4          1       433.4         1
+                           Kimi-K2                            8
+                                            SpecBundle                533.8        1.24                811.4        1.61      660.0       1.52
+                                                Table 2. Performance of various models on general benchmarks
+
+
+
+        nanceQA (Mateega et al., 2025)                                             the highest throughput among all configurations.
+We used SGLang as the inference engine to evaluate                                 Table 2 shows the performance on the general benchmarks
+SpecBundle models on the these benchmarks, with all ex-                            and Table 3 shows the performs specifically on the coding
+periments conducted on NVIDIA H200 GPUs. We com-                                   and math benchmarks. It is evident that SpecBundle signif-
+pared our results against two baselines: (1) standard infer-                       icantly outperforms the baselines on all benchmarks and all
+ence using a single target model and (2) speculative decod-                        dense and MoE models: the speedup can reach up to 4.48×
+ing with existing open-source draft models, where available.                       compared to inference with no speculative decoding and
+Several EAGLE3 draft checkpoints were provided by the                              1.35× compared to inference with an existing draft model.
+authors of EAGLE3 (Li et al., 2025) as well as the LMSYS
+                                                                                   Particularly for the coding and mathematics benchmarks,
+team. Notably, the availability of speculative decoding draft
+                                                                                   SpecBundle achieves speedups over baselines ranging
+models remains limited, as many target models do not yet
+                                                                                   from 1.61× to 4.48× (Table 3). This performance gap arises
+have publicly accessible draft checkpoints. For all experi-
+                                                                                   because existing checkpoints are primarily trained on the
+ments, we fixed the number of concurrent requests to 8 for
+                                                                                   ShareGPT and UltraChat datasets, which contain limited
+LLaMA-3.1-8B due to its smaller model size, and to 16
+                                                                                   coverage of math- and code-centric samples. These results
+for larger models, applying tensor parallelism according to
+                                                                                   underscore the critical role of data composition in training a
+the target model scale. We evaluated multiple speculative
+                                                                                   well-balanced and high-performing draft model. However,
+decoding configurations, varying the number of speculative
+                                                                                   this improvement is not uniform across all domains. A trade-
+steps, top- k, and the number of draft tokens, including (3,
+                                                                                   off can be observed, as reflected in the slight decrease in
+1, 4), (5, 1, 6), (5, 3, 6), (7, 1, 8) and (7, 4, 8). We presented
+
+                                                                               9
+                  SpecForge : A Flexible and Efficient Open-Source Training Framework for Speculative Decoding
+
+                                              LiveCodeBench          HumanEval               GSM8K                 Math500
+   Target Model      Draft Model   #GPUs
+                                           Throughput Speedup   Throughput Speedup     Throughput Speedup    Throughput Speedup
+                           -                  189.7       1        190.9         1        181.8         1       191.0         1
+   Llama-3.1-8B         Existing     1        398.4     2.10       480.3       2.52       228.6       1.26      422.4       2.21
+                      SpecBundle              516.9     2.72       571.5       2.99       329.7       1.81      638.0       3.34
+                           -                  560.9       1        561.0         1        453.2         1       567.4         1
+   Llama-3.3-70B        Existing     4       1303.4     2.32      1282.8       2.29       521.5       1.15     1122.2       1.98
+                      SpecBundle             1459.4     2.60      1506.0       2.68       722.0       1.59     1524.9       2.69
+                           -                  484.3       1        631.9         1        455.9         1       561.8         1
+   Llama-4-Scout        Existing     8       1601.3     3.31      1556.5       2.46       816.6       1.79     1479.0       2.63
+                      SpecBundle             2170.2     4.48      1944.8       3.08       971.9       2.13     2110.3       3.76
+                           -                 1492.6       1       1366.6         1       1071.3         1      1469.0         1
+  Qwen-30B-A3B
+                      SpecBundle     4       3413.0     2.29      3070.0       2.25      1499.6       1.40     3636.1       1.48
+                           -                  598.2       1        553.1         1        469.1         1       587.4         1
+ Qwen-235B-A22B
+                        Existing     8        803.8     1.34       889.9       1.61       697.0       1.49      821.8       1.39
+                      SpecBundle             1155.7     1.93      1267.5       2.29       758.3       1.62     1399.2       2.38
+                           -                  770.4       1        740.2         1        674.3         1       762.7         1
+   Ling-Flash-V2                     8
+                      SpecBundle             1366.4     1.77      1359.0       1.83      1323.0       1.96     1685.6       2.21
+                           -                  500.1       1        466.1         1        337.9         1       492.1         1
+     Kimi-K2                         8
+                      SpecBundle              904.4     1.81       897.9       1.93       544.2       1.61     1022.7       2.08
+                               Table 3. Performance of various models on math and coding benchmarks
+
+
+
+MT-Bench performance for LLaMA-3 8B and 70B models.                  7.2. Impact of Training-Time Test
+SpecBundle enriches the open-source ecosystem with                   In the original implementation of EAGLE3 (eag, 2025; Li
+a broader supply of draft models and delivers substan-               et al., 2025), the TTT length is fixed at 7. We therefore con-
+tial performance improvements for production-grade infer-            ducted additional experiments to investigate the impact of
+ence. While the current release focuses on instruct mod-             TTT length on inference performance. Specifically, we var-
+els, we plan to extend support to reasoning models and               ied the TTT length from 1 to 17. As shown in Figure 6, the
+vision–language models in future iterations.                         results indicate that TTT is highly effective in improving the
+                                                                     acceptance length, with a sharp gain observed as the TTT
+7. Training Insights                                                 length increases from 1 to 3. Moreover, the optimal TTT
+                                                                     length is task-dependent. For MT-Bench, a TTT length of 3
+We draw some interesting insights for speculative decoding.          already achieves strong performance, whereas for more chal-
+                                                                     lenging and longer benchmarks, such as Math500, GSM8K,
+7.1. Impact of Data Regeneration                                     and HumanEval, a larger TTT length of approximately 13
+                                                                     yields the best results.
+Previous work claims that EAGLE methods exhibit low
+sensitivity to training data and therefore recommends train-         However, increasing the TTT length proportionally in-
+ing directly on the original dataset to reduce computational         creases both training time and memory consumption for
+costs (Li et al., 2024b). However, our empirical results sug-        the draft model, introducing a clear trade-off between per-
+gest that this assumption does not always hold. We trained           formance and efficiency. For domain-specific training, a
+an EAGLE3 draft model for LLaMA-3.1-8B using both the                practical strategy is to first conduct scaling experiments
+original PerfectBlend dataset and a regenerated version. As          on a small subset of data to identify an appropriate TTT
+shown in Figure 5, data regeneration consistently increases          length before training on the full dataset.When training un-
+the acceptance length across nearly all benchmarks, with             der limited resources, particularly memory constraints, it is
+FinanceQA being the only exception. Moreover, data regen-            advisable to reduce TTT to 3 or 5 to lower memory consump-
+eration yields an average throughput improvement of 5.3%             tion. For cross-domain training, dynamically adjusting the
+across all benchmarks.                                               TTT length based on the sample type could further reduce
+                                                                     training cost, as not all samples require the same degree of
+Although the absolute throughput gain is moderate, data              training-time testing. We leave the design and evaluation of
+regeneration can have a substantial impact on long-term              such dynamic TTT strategies to future work.
+inference efficiency. Given that speculative decoding is
+widely deployed in online model serving systems such as
+                                                                     7.3. Choice of Draft Models
+the OpenAI API, even modest improvements can translate
+into significant reductions in inference cost at scale.              Recently released models such as LLaMA-4, DeepSeek-
+                                                                     V3 (DeepSeek-AI et al., 2024), and Kimi-K2 (Team et al.,
+                                                                     2025) increasingly adopt the Mixture-of-Experts (MoE) ar-
+
+
+                                                                10
+                                 SpecForge : A Flexible and Efficient Open-Source Training Framework for Speculative Decoding
+
+
+
+
+                                       (a) Acceptance Length                                                      (b) Output throughput
+Figure 5. Inference performance of Llama3.1-8B with EAGLE3 trained on datasets with and without regenerating the responses. The
+experiment was conducted on 1 H200 GPU with batch size 8.
+
+           Configuration                   #Experts    MTBench           GPQA        FinanceQA      Math500    GSM8K       HumanEval      LiveCodeBench
+              Same Params                      2            1.16             1.05      1.07           1.17        1.05         1.2             1.14
+                                               2            1.61             1.56      1.34           1.67        1.59         1.64            1.46
+              Same FLOPS                       3            1.62             1.69      1.35           1.77        1.7          1.67            1.57
+                                               4            1.63              1.7      1.36           1.79        1.72         1.69            1.59
+                                               2            1.52             1.69      1.5            1.75        1.61         1.53            1.52
+  With Shared Experts                          3            1.52              1.7      1.46           1.75        1.61         1.53            1.52
+                                               4            1.53             1.69      1.47           1.81        1.67         1.64            1.54
+  Dense Draft Model                            -            2.99             3.14      1.91           2.55        3.48         3.34            3.12
+Table 4. Acceptance rate of MoE models with different settings. The results are obtained with configurations MoE top-k = 1, EAGLE3
+number of steps = 3, EAGLE3 top-k = 1 and EAGLE3 number of draft tokens = 4.
+
+
+
+                                       Scaling Training-Time Test                             • Same Parameters: We initialize two experts in the MoE
+                       3.5
+                                                                                                layer of the draft model, with each expert using an inter-
+                       3.0
+                                                                                                mediate dimension that is half that of the dense model.
+
+
+
+
+   Acceptance Length
+                       2.5
+                                                                                                As a result, the combined parameter of the MoE layer
+                       2.0                                                                      matches that of the FFN layer in the dense draft model.
+                       1.5                                                                    • Same FLOPS: We construct an MoE layer with two ex-
+                       1.0                                                                      perts, where each expert has the same parameter count
+                       0.5                                                                      as the dense FFN layer. The number of experts selected
+                       0.0                                                                      per token is set to one, ensuring that the total number of
+                             1     3      5        7   11      13       15      17              floating-point operations remains unchanged.
+                                               TTT Length                                     • MoE with shared experts: On top of the ”Same FLOPs”
+                                          MTBench           GSM8K
+                                          Math500           HumanEval                           setting, we further introduce a shared expert. In this con-
+                                                                                                figuration, both the numbers of parameters and the total
+                                                                                                floating-point operations exceed those of the correspond-
+Figure 6. Scaling TTT for the Llama3.1-8B model on the perfect-
+blend dataset.
+                                                                                                ing dense model.
+
+                                                                                             The results are summarized in Table 4. We observe that
+                                                                                             the dense draft model consistently outperforms all MoE
+chitecture due to its superior performance and inference
+                                                                                             variants across different settings, indicating that MoE draft
+efficiency. However, existing EAGLE3 draft models remain
+                                                                                             models are inherently more difficult to train. Under the
+dense. How to select the architecture of an appropriate draft
+                                                                                             Same Params setting, the dense model’s FFN can be viewed
+model remains largely unexplored.
+                                                                                             as a degenerate two-expert MoE in which one expert has
+Thus, we conducted experiments to investigate the suit-                                      zero parameters. In contrast, the MoE model with the same
+ability of MoE models as the draft model. We split the                                       total parameter budget performs poorly because each expert
+experiments into three categories:                                                           has fewer parameters than the dense FFN layer and therefore
+
+                                                                                        11
+               SpecForge : A Flexible and Efficient Open-Source Training Framework for Speculative Decoding
+
+acts as a weaker learner.
+Under the Same FLOPs setting, the MoE draft model per-
+forms noticeably better than in the Same Params case, as
+each expert has increased capacity and can learn more effec-
+tively. Nevertheless, its performance still lags behind that of
+the dense model. This gap arises because the routing top-k is
+set to 1, meaning that each expert is exposed to fewer tokens
+during training than the dense FFN, resulting in inferior gen-
+eralization. Increasing the routing top-k could mitigate this
+issue, but also proportionally increase the per-token FLOPs,
+slowing down the drafting process. Consequently, despite
+their success as target models, MoE architectures are not
+well suited as draft models for speculative decoding.
+
+8. Conclusion
+In this paper, we presented SpecForge, a highly efficient
+and scalable framework for training speculative decoding
+draft models, with first-class support for EAGLE3. We intro-
+duced target–draft decoupling and a set of optimized kernels
+that substantially reduce memory consumption and improve
+training throughput. Extensive experiments demonstrate
+that SpecForge achieves up to 9.9× speedup over existing
+approaches. In addition, we released SpecBundle, a collec-
+tion of production-grade, high-performance EAGLE3 draft
+models, and conducted systematic training analyses to distill
+practical insights that facilitate the real-world adoption of
+speculative decoding.
+
+
+
+
+                                                                  12
+              SpecForge : A Flexible and Efficient Open-Source Training Framework for Speculative Decoding
+
+References                                                           Chen, M., Tworek, J., Jun, H., Yuan, Q., de Oliveira Pinto,
+                                                                       H. P., Kaplan, J., Edwards, H., Burda, Y., Joseph, N.,
+Eagle-github. https://github.com/SafeAILab
+                                                                       Brockman, G., Ray, A., Puri, R., Krueger, G., Petrov,
+  /EAGLE, 2025.
+                                                                       M., Khlaaf, H., Sastry, G., Mishkin, P., Chan, B., Gray,
+Tensorrt-model-optimizer. https://github.com/N                         S., Ryder, N., Pavlov, M., Power, A., Kaiser, L., Bavar-
+  VIDIA/TensorRT-Model-Optimizer/tree/                                 ian, M., Winter, C., Tillet, P., Such, F. P., Cummings, D.,
+  main, 2025.                                                          Plappert, M., Chantzis, F., Barnes, E., Herbert-Voss, A.,
+                                                                       Guss, W. H., Nichol, A., Paino, A., Tezak, N., Tang,
+Tensorrt llm. https://github.com/NVIDIA/Tens                           J., Babuschkin, I., Balaji, S., Jain, S., Saunders, W.,
+  orRT-LLM, 2025.                                                      Hesse, C., Carr, A. N., Leike, J., Achiam, J., Misra,
+                                                                       V., Morikawa, E., Radford, A., Knight, M., Brundage,
+Achiam, O. J., Adler, S., Agarwal, S., Ahmad, L., Akkaya,              M., Murati, M., Mayer, K., Welinder, P., McGrew, B.,
+  I., Aleman, F. L., Almeida, D., Altenschmidt, J., Altman,            Amodei, D., McCandlish, S., Sutskever, I., and Zaremba,
+  S., Anadkat, S., Avila, R., Babuschkin, I., Balaji, S.,              W. Evaluating large language models trained on code.
+  Balcom, V., Baltescu, P., ing Bao, H., Bavarian, M., et al.          2021.
+  Gpt-4 technical report. 2023. URL https://api.se
+  manticscholar.org/CorpusID:257532815.                              Comanici, G., Bieber, E., Schaekermann, M., Pasupat, I.,
+                                                                       Sachdeva, N., Dhillon, I., Blistein, M., Ram, O., Zhang,
+Agrawal, A., Kedia, N., Panwar, A., Mohan, J., Kwatra, N.,             D., Rosen, E., et al. Gemini 2.5: Pushing the fron-
+  Gulavani, B. S., Tumanov, A., and Ramjee, R. Efficient               tier with advanced reasoning, multimodality, long con-
+  llm inference via chunked prefills. SIGOPS Oper. Syst.               text, and next generation agentic capabilities. ArXiv,
+  Rev., 59(1):9–16, August 2025. ISSN 0163-5980. doi:                  abs/2403.05530, 2024. URL https://api.semant
+ 10.1145/3759441.3759444. URL https://doi.or                           icscholar.org/CorpusID:268297180.
+  g/10.1145/3759441.3759444.
+                                                                     DeepSeek-AI, Liu, A., Feng, B., Xue, B., Wang, B.-L., Wu,
+Bai, J., Bai, S., Chu, Y., Cui, Z., Dang, K., Deng, X., Fan,           B., Lu, C., Zhao, C., Deng, C., Zhang, C., Ruan, C.,
+  Y., Ge, W., Han, Y., Huang, F., Hui, B., Ji, L., Li, M.,             Dai, D., Guo, D., Yang, D., Chen, D., Ji, D.-L., Li, E.,
+  Lin, J., Lin, R., Liu, D., Liu, G., Lu, C., Lu, K., Ma, J.,          Lin, F., Dai, F., Luo, F., Hao, G., et al. Deepseek-v3
+  Men, R., Ren, X., Ren, X., Tan, C., Tan, S., Tu, J., Wang,           technical report. ArXiv, abs/2412.19437, 2024. URL
+  P., Wang, S., Wang, W., Wu, S., Xu, B., Xu, J., Yang,                https://api.semanticscholar.org/Corp
+  A., Yang, H., Yang, J., Yang, J., Yang, S., Yao, Y., Yu,             usID:275118643.
+  B., Bowen, Y., Yuan, H., Yuan, Z., Zhang, J., Zhang, X.,           DeepSeek-AI, Guo, D., Yang, D., Zhang, H., Song, J.-M.,
+  Zhang, Y., Zhang, Z., Zhou, C., Zhou, J., Zhou, X., and              Zhang, R., Xu, R., Zhu, Q., Ma, S., Wang, P., Bi, X.,
+  Zhu, T. Qwen technical report. ArXiv, abs/2309.16609,                Zhang, X., Yu, X., Wu, Y., Wu, Z. F., Gou, Z., Shao,
+  2023. URL https://api.semanticscholar.                               Z., Li, Z., Gao, Z., Liu, A., Xue, B., et al. Deepseek-
+  org/CorpusID:263134555.                                              r1: Incentivizing reasoning capability in llms via rein-
+                                                                       forcement learning. ArXiv, abs/2501.12948, 2025. URL
+Cai, T., Li, Y., Geng, Z., Peng, H., Lee, J. D., huai Chen,
+                                                                       https://api.semanticscholar.org/Corp
+  D., and Dao, T. Medusa: Simple llm inference acceler-
+                                                                       usID:275789950.
+  ation framework with multiple decoding heads. ArXiv,
+  abs/2401.10774, 2024. URL https://api.semant                       Ding, N., Chen, Y., Xu, B., Qin, Y., Zheng, Z., Hu, S., Liu,
+  icscholar.org/CorpusID:267061277.                                    Z., Sun, M., and Zhou, B. Enhancing chat language mod-
+                                                                       els by scaling high-quality instructional conversations.
+Chen, C., Borgeaud, S., Irving, G., Lespiau, J.-B., Sifre,             ArXiv, abs/2305.14233, 2023. URL https://api.se
+  L., and Jumper, J. M. Accelerating large language                    manticscholar.org/CorpusID:258840897.
+  model decoding with speculative sampling. ArXiv,
+  abs/2302.01318, 2023. URL https://api.sema                         Du, C., Jiang, J., Xu, Y., Wu, J., Yu, S., Li, Y., Li, S., Xu,
+  nticscholar.org/CorpusID:256503945.                                  K., Nie, L., Tu, Z., and You, Y. Glide with a cape: A low-
+                                                                       hassle method to accelerate speculative decoding. ArXiv,
+Chen, J., Feng, A., Zhao, Z., Garza, J., Nurbek, G., Qin,              abs/2402.02082, 2024. URL https://api.semant
+  C., Maatouk, A., Tassiulas, L., Gao, Y., and Ying,                   icscholar.org/CorpusID:267412316.
+  R. Mtbench: A multimodal time series benchmark
+  for temporal reasoning and question answering. ArXiv,              Dubey, A., Jauhri, A., Pandey, A., Kadian, A., Al-Dahle,
+  abs/2503.16858, 2025. URL https://api.semant                        A., Letman, A., Mathur, A., Schelten, A., Yang, A., Fan,
+  icscholar.org/CorpusID:277244736.                                   A., Goyal, A., Hartshorn, A. S., Yang, A., Mitra, A.,
+
+                                                                13
+              SpecForge : A Flexible and Efficient Open-Source Training Framework for Speculative Decoding
+
+  Sravankumar, A., Korenev, A., et al. The llama 3 herd of          Li, Y., Wei, F., Zhang, C., and Zhang, H. EAGLE-3: Scaling
+  models. volume abs/2307.09288, 2023. URL https:                      up inference acceleration of large language models via
+  //api.semanticscholar.org/CorpusID:25                                training-time test. In The Thirty-ninth Annual Conference
+  9950998.                                                             on Neural Information Processing Systems, 2025. URL
+                                                                       https://openreview.net/forum?id=4exx
+Fu, Y., Bailis, P., Stoica, I., and Zhang, H. Break the se-           1hUffq.
+  quential dependency of llm inference using lookahead
+  decoding. ArXiv, abs/2402.02057, 2024. URL https:                 Liu, F., Tang, Y., Liu, Z., Ni, Y., Tang, D., Han, K., and
+  //api.semanticscholar.org/CorpusID:                                 Wang, Y. Kangaroo: Lossless self-speculative decoding
+  267412730.                                                          for accelerating llms via double early exiting. Advances
+                                                                      in Neural Information Processing Systems 37, 2024. URL
+Hu, Y., Liu, Z., Dong, Z., Peng, T., McDanel, B., and Zhang,          https://api.semanticscholar.org/Corp
+  S. Q. Speculative decoding and beyond: An in-depth                  usID:276117179.
+  survey of techniques. arXiv preprint arXiv:2502.19732,
+  2025.                                                             Mateega, S., Georgescu, C., and Tang, D. Financeqa: A
+                                                                     benchmark for evaluating financial analysis capabilities
+Jain, N., Han, K., Gu, A., Li, W.-D., Yan, F., Zhang, T.,            of large language models, 2025. URL https://arxi
+  Wang, S., Solar-Lezama, A., Sen, K., and Stoica, I.                v.org/abs/2501.18062.
+   Livecodebench: Holistic and contamination free eval-
+                                                                    Miao, X., Oliaro, G., Zhang, Z., Cheng, X., Wang, Z.,
+   uation of large language models for code. arXiv preprint
+                                                                     Zhang, Z., Wong, R. Y. Y., Zhu, A., Yang, L., Shi,
+   arXiv:2403.07974, 2024.
+                                                                     X., Shi, C., Chen, Z., Arfeen, D., Abhyankar, R., and
+                                                                     Jia, Z. Specinfer: Accelerating large language model
+Kim, S., Mangalam, K., Moon, S., Malik, J., Mahoney,
+                                                                     serving with tree-based speculative inference and verifi-
+  M. W., Gholami, A., and Keutzer, K. Speculative de-
+                                                                     cation. In Proceedings of the 29th ACM International
+  coding with big little decoder. In Oh, A., Naumann, T.,
+                                                                     Conference on Architectural Support for Programming
+  Globerson, A., Saenko, K., Hardt, M., and Levine, S.
+                                                                     Languages and Operating Systems, Volume 3, ASPLOS
+  (eds.), Advances in Neural Information Processing Sys-
+                                                                     ’24, pp. 932–949, New York, NY, USA, 2024. Associa-
+  tems, volume 36, pp. 39236–39256. Curran Associates,
+                                                                     tion for Computing Machinery. ISBN 9798400703867.
+  Inc., 2023. URL https://proceedings.neurip
+                                                                     doi: 10.1145/3620666.3651335. URL https:
+  s.cc/paper_files/paper/2023/file/7b9
+                                                                     //doi.org/10.1145/3620666.3651335.
+  7adeafa1c51cf65263459ca9d0d7c-Paper-C
+  onference.pdf.                                                    Narayanan, D., Shoeybi, M., Casper, J., LeGresley, P., Pat-
+                                                                      wary, M., Korthikanti, V., Vainbrand, D., Kashinkunti, P.,
+Kwon, W., Li, Z., Zhuang, S., Sheng, Y., Zheng, L., Yu,               Bernauer, J., Catanzaro, B., Phanishayee, A., and Zaharia,
+ C. H., Gonzalez, J. E., Zhang, H., and Stoica, I. Efficient          M. Efficient large-scale language model training on gpu
+ memory management for large language model serving                   clusters using megatron-lm. In Proceedings of the Inter-
+ with pagedattention. In Proceedings of the ACM SIGOPS                national Conference for High Performance Computing,
+ 29th Symposium on Operating Systems Principles, 2023.                Networking, Storage and Analysis, SC ’21, New York,
+                                                                      NY, USA, 2021. Association for Computing Machinery.
+Leviathan, Y., Kalman, M., and Matias, Y. Fast inference              ISBN 9781450384421. doi: 10.1145/3458817.3476209.
+  from transformers via speculative decoding. In Interna-             URL https://doi.org/10.1145/3458817.
+  tional Conference on Machine Learning, 2022. URL                    3476209.
+  https://api.semanticscholar.org/Corp
+  usID:254096365.                                                   Qwen, :, Yang, A., Yang, B., Zhang, B., Hui, B., Zheng,
+                                                                     B., Yu, B., Li, C., Liu, D., Huang, F., Wei, H., Lin, H.,
+Li, Y., Wei, F., Zhang, C., and Zhang, H. Eagle-2: Faster            Yang, J., Tu, J., Zhang, J., Yang, J., Yang, J., Zhou, J.,
+  inference of language models with dynamic draft trees. In          Lin, J., Dang, K., Lu, K., Bao, K., Yang, K., Yu, L.,
+  Conference on Empirical Methods in Natural Language                Li, M., Xue, M., Zhang, P., Zhu, Q., Men, R., Lin, R.,
+  Processing, 2024a. URL https://api.semantic                        Li, T., Tang, T., Xia, T., Ren, X., Ren, X., Fan, Y., Su,
+  scholar.org/CorpusID:270702281.                                    Y., Zhang, Y., Wan, Y., Liu, Y., Cui, Z., Zhang, Z., and
+                                                                     Qiu, Z. Qwen2.5 technical report, 2025. URL https:
+Li, Y., Wei, F., Zhang, C., and Zhang, H. Eagle: Speculative         //arxiv.org/abs/2412.15115.
+   sampling requires rethinking feature uncertainty. ArXiv,
+   abs/2401.15077, 2024b. URL https://api.sema                      Raffel, C., Shazeer, N., Roberts, A., Lee, K., Narang, S.,
+   nticscholar.org/CorpusID:267301131.                                Matena, M., Zhou, Y., Li, W., and Liu, P. J. Exploring
+
+                                                               14
+              SpecForge : A Flexible and Efficient Open-Source Training Framework for Speculative Decoding
+
+  the limits of transfer learning with a unified text-to-text            //api.semanticscholar.org/CorpusID:
+  transformer. J. Mach. Learn. Res., 21(1), January 2020.                273228257.
+  ISSN 1532-4435.
+                                                                       Xu, T., Helenowski, E., Sankararaman, K. A., Jin, D., Peng,
+Rasley, J., Rajbhandari, S., Ruwase, O., and He, Y. Deep-                K., Han, E., Nie, S., Zhu, C., Zhang, H., Zhou, W., Zeng,
+  speed: System optimizations enable training deep learn-                Z., He, Y., Mandyam, K., Talabzadeh, A., Khabsa, M.,
+  ing models with over 100 billion parameters. Proceed-                  Cohen, G., Tian, Y., Ma, H., Wang, S., and Fang, H. The
+  ings of the 26th ACM SIGKDD International Conference                   perfect blend: Redefining rlhf with mixture of judges,
+  on Knowledge Discovery & Data Mining, 2020. URL                        2024. URL https://arxiv.org/abs/2409.2
+  https://api.semanticscholar.org/Corp                                   0370.
+  usID:221191193.
+                                                                       Yang, A., Li, A., Yang, B., Zhang, B., Hui, B., Zheng,
+Recasens, P. G., Agullo, F., Zhu, Y., Wang, C., Lee, E. K.,              B., Yu, B., Gao, C., Huang, C., Lv, C., Zheng, C., Liu,
+  Tardieu, O., Torres, J., and Berral, J. L. Mind the memory             D., Zhou, F., Huang, F., Hu, F., Ge, H., Wei, H., Lin,
+  gap: Unveiling gpu bottlenecks in large-batch llm infer-               H., Tang, J., Yang, J., Tu, J., Zhang, J., Yang, J., Yang,
+  ence, 2025. URL https://arxiv.org/abs/25                               J., Zhou, J., Zhou, J., Lin, J., Dang, K., Bao, K., Yang,
+  03.08311.                                                              K., Yu, L., Deng, L., Li, M., Xue, M., Li, M., Zhang,
+                                                                         P., Wang, P., Zhu, Q., Men, R., Gao, R., Liu, S., Luo,
+Rein, D., Hou, B. L., Stickland, A. C., Petty, J., Pang, R. Y.,
+                                                                         S., Li, T., Tang, T., Yin, W., Ren, X., Wang, X., Zhang,
+  Dirani, J., Michael, J., and Bowman, S. R. GPQA: A
+                                                                         X., Ren, X., Fan, Y., Su, Y., Zhang, Y., Zhang, Y., Wan,
+  graduate-level google-proof q&a benchmark. In First
+                                                                         Y., Liu, Y., Wang, Z., Cui, Z., Zhang, Z., Zhou, Z., and
+  Conference on Language Modeling, 2024. URL https:
+                                                                         Qiu, Z. Qwen3 technical report, 2025. URL https:
+  //openreview.net/forum?id=Ti67584b98.
+                                                                         //arxiv.org/abs/2505.09388.
+Shah, J., Bikshandi, G., Zhang, Y., Thakkar, V., Ramani, P.,
+  and Dao, T. Flashattention-3: fast and accurate attention            Ye, Z., Chen, L., Lai, R., Lin, W., Zhang, Y., Wang, S.,
+  with asynchrony and low-precision. In Proceedings of                   Chen, T., Kasikci, B., Grover, V., Krishnamurthy, A., and
+  the 38th International Conference on Neural Information                Ceze, L. Flashinfer: Efficient and customizable attention
+  Processing Systems, NIPS ’24, Red Hook, NY, USA,                       engine for llm inference serving. ArXiv, abs/2501.01005,
+  2024. Curran Associates Inc. ISBN 9798331314385.                       2025. URL https://api.semanticscholar.
+                                                                         org/CorpusID:275212819.
+Sun, Z., Suresh, A. T., Ro, J. H., Beirami, A., Jain, H.,
+  and Yu, F. Spectr: Fast speculative decoding via optimal             Yu, G.-I. and Jeong, J. S. Orca: A distributed serving sys-
+  transport. In Oh, A., Naumann, T., Globerson, A., Saenko,              tem for transformer-based generative models. In USENIX
+  K., Hardt, M., and Levine, S. (eds.), Advances in Neural               Symposium on Operating Systems Design and Implemen-
+  Information Processing Systems, volume 36, pp. 30222–                  tation, 2022. URL https://api.semanticscho
+  30242. Curran Associates, Inc., 2023. URL https:                       lar.org/CorpusID:251734964.
+  //proceedings.neurips.cc/paper_files
+                                                                       Zhang, J., Wang, J., Li, H., Shou, L., Chen, K., Chen,
+  /paper/2023/file/6034a661584af6c28fd
+                                                                         G., and Mehrotra, S. Draft & verify: Lossless large
+  97a6f23e56c0a-Paper-Conference.pdf.
+                                                                         language model acceleration via self-speculative decod-
+Team, K., Bai, Y., Bao, Y., Chen, G., Chen, J., Chen, N.,                ing. In Ku, L.-W., Martins, A., and Srikumar, V. (eds.),
+  Chen, R., Chen, Y., Chen, Y., Chen, Y., Chen, Z., Cui, J.,             Proceedings of the 62nd Annual Meeting of the Associ-
+  Ding, H., Dong, M., Du, A., Du, C., Du, D., Du, Y., Fan,               ation for Computational Linguistics (Volume 1: Long
+  Y., Feng, Y., et al. Kimi k2: Open agentic intelligence,               Papers), pp. 11263–11282, Bangkok, Thailand, August
+  2025. URL https://arxiv.org/abs/2507.2                                 2024a. Association for Computational Linguistics. doi:
+  0534.                                                                  10.18653/v1/2024.acl- long.607. URL https:
+                                                                         //aclanthology.org/2024.acl-long.607/.
+Xia, H., Ge, T., Wang, P., Chen, S.-Q., Wei, F., and Sui,
+  Z. Speculative decoding: Exploiting speculative execu-               Zhang, L., Wang, X., Huang, Y., and Xu, R. Learning
+  tion for accelerating seq2seq generation. In Findings of               harmonized representations for speculative sampling. In
+  the Association for Computational Linguistics: EMNLP                   International Conference on Learning Representations,
+  2023, pp. 3909–3925, 2023.                                             2024b. URL https://api.semanticscholar.
+                                                                         org/CorpusID:271974795.
+Xia, H., Li, Y., Zhang, J., Du, C., and Li, W. Swift: On-
+  the-fly self-speculative decoding for llm inference accel-           Zhang, Y. and Math-AI, T. American invitational mathemat-
+  eration. ArXiv, abs/2410.06916, 2024. URL https:                       ics examination (aime) 2024, 2024.
+
+                                                                  15
+              SpecForge : A Flexible and Efficient Open-Source Training Framework for Speculative Decoding
+
+Zhao, Y., Gu, A., Varma, R., Luo, L., chin Huang, C., Xu,
+  M., Wright, L., Shojanazeri, H., Ott, M., Shleifer, S.,
+  Desmaison, A., Balioglu, C., Nguyen, B., Chauhan, G.,
+  Hao, Y., and Li, S. Pytorch fsdp: Experiences on scaling
+  fully sharded data parallel. Proc. VLDB Endow., 16:3848–
+  3860, 2023. URL https://api.semanticscho
+  lar.org/CorpusID:258297871.
+
+Zheng, L., Yin, L., Xie, Z., Sun, C., Huang, J., Yu, C. H.,
+  Cao, S., Kozyrakis, C., Stoica, I., Gonzalez, J., Barrett,
+  C. W., and Sheng, Y. Sglang: Efficient execution of
+  structured language model programs. Advances in Neural
+  Information Processing Systems 37, 2023. URL https:
+  //api.semanticscholar.org/CorpusID:26
+  6174771.
+
+
+
+
+                                                               16
+

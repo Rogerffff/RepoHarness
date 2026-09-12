@@ -1,0 +1,76 @@
+Wouter Kool,
+Herke van Hoof
+                        Buy 4 REINFORCE Samples,
+& Max Welling
+                        Get a Baseline for Free!                                                               Get the paper!
+
+
+
+
+ REINFORCE with replacement                                                                         Idea
+ • Multiple samples for a single datapoint (e.g. instance, source sentence)                         • Take multiple samples per datapoint
+ • Other samples can be used as baseline (unbiased)                                                 • Encoder-decoders: run encoder only once
+                                                                                                    • Data- and computational efficiency
+
+
+                                                                                                    Travelling S(alesman|cientist)
+                                                                                                    Problem (TSP)
+                                                                                                    Goal? Learn heuristic algorithms automatically!
+                                                                                                    Why? Problem is (NP-)hard, development costly!
+                                                                                                    How? ‘Translate’ problem into solution…
+ REINFORCE without replacement
+ • Samples without replacement are not independent!                                                 Math?
+ • Include importance weights, dependent on sampling threshold ! (unbiased)
+                                                                                                    • Instance " =              "$ , &$ , "' , &' , … , ") , &)
+
+                                                                                                    • Solution & = (&$ , &' , … &) ) e.g. (3,1,2,4)
+                                                                                                                    ∏)
+                                                                                                    • Model 01 & " = 34$ 01 &3 5, &$:37$ )
+ • Include a ‘baseline’                                (unbiased)
+                                                                                                    • Minimize expected tour length 8(&, "):
+
+                                                                                                      min <=1(>|@) 8 &, "
+ • Normalized importance weights (biased, but low variance)                                             1
+
+
+
+
+                                                                                                                                                      Also at
+
+Stochastic Beam Search (Kool et al., 2019b)                                    Deep RL meets
+                                                                                Structured
+                                                                                Prediction              Travelling Scientist Problem
+                                                                                                                                                 (Kool et al., 2019a)
+                                                                               ICLR 2019 workshop
+
+
+
+                                                                                 Results for TSP (20 nodes)
+
+
+
+
+                                                             Come see at
+
+Method for sampling sequences without replacement
+
+
+Experiment
+• Learn to predict tour (sequence) for TSP (Kool et al., 2019a)
+• Estimators:
+   •   Single sample with a batch baseline
+   •   Single sample with greedy rollout baseline (Kool et al., 2019a)
+   •   Multiple samples with replacement (WR) with local baseline
+   •   Multiple samples without replacement (WOR) with local baseline
+
+
+References
+• Wouter Kool, Herke van Hoof, and Max Welling. Attention, learn to solve
+  routing problems! In International Conference on Learning Representations,
+                                                                                 Conclusion
+  2019a.                                                                         • Requires less data for same performance
+• Wouter Kool, Herke van Hoof, and Max Welling. Stochastic beams and where       • Sampling without replacement increases performance
+  to find them: The gumbel-top-k trick for sampling sequences without
+                                                                                 • Especially well suited for structured prediction settings
+  replacement. In International Conference on Machine Learning, 2019b.
+

@@ -1,0 +1,52 @@
+[
+  {
+    "id": "r1",
+    "blocker": true,
+    "label": "Update `src/resolver.h` to use `LOG_WARNING` to print the multi-line warning in the `CustomResolver` constructor"
+  },
+  {
+    "id": "r2",
+    "blocker": true,
+    "label": "Update `src/command_bundle.cc` to use `LOG_WARNING` to print the multi-line warning in the `options.contains(\"without-id\")` conditional"
+  },
+  {
+    "id": "r3",
+    "blocker": false,
+    "label": "Update `src/logger.h` to implement a `LOG_WARNING` function that takes no arguments and returns a non-const `std::ostream &` to standard error with a `warning:` prefix pre-printed"
+  },
+  {
+    "id": "r4",
+    "blocker": false,
+    "label": "Update `src/command_lint.cc` to use `LOG_WARNING` for the single-line warning in the `disable_lint_rules` helper"
+  },
+  {
+    "id": "r5",
+    "blocker": false,
+    "label": "Update `src/command_validate.cc` to use `LOG_WARNING` for the single-line warning in the `get_schema_template` helper"
+  },
+  {
+    "id": "r6",
+    "blocker": false,
+    "label": "Update `src/command_validate.cc` to use `LOG_WARNING` for the single-line `The JSONL file is empty` warning"
+  },
+  {
+    "id": "r7",
+    "blocker": false,
+    "label": "`make -C ~/repos/jsonschema` — the project builds cleanly"
+  },
+  {
+    "id": "r8",
+    "blocker": false,
+    "label": "`clang_format_test` — the code is clang-format clean"
+  },
+  {
+    "id": "r9",
+    "blocker": false,
+    "label": "Check out the reference `test/CMakeLists.txt` and `test/*.sh`, then `make` — the implementation passes the reference test suite"
+  },
+  {
+    "id": "r10",
+    "blocker": false,
+    "label": "Restore everything except the reference tests to the base commit — `make` then fails, proving the tests exercise the change"
+  }
+]
