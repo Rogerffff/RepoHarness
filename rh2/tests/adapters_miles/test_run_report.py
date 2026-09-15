@@ -240,3 +240,55 @@ def test_cli_reads_a_run_bundle_and_never_shows_missing_events_as_zero_loss(tmp_
     report2 = run_report.build_run_report(events=inputs["events"], audits=inputs["audits"], bringup=inputs["bringup"])
     ex = report2["facets"]["execution_and_loss"]
     assert ex["groups"] is None and ex["costs"] is None and report2["coverage"]["dis_and_support"] == "not_collected"
+
+
+def test_eventless_bundle_is_not_claimed_by_the_only_visible_run(tmp_path):
+    """R4 余项（Codex 09-11 复核）：目录 A 有 r1 事件 + audit/bringup，目录 B 只有 audit/bringup 没有事件。
+    B 的记录归属未知：指定 r1 或不指定都只计数，不并入 r1 的 task 分布；给 B 补上 r2 事件后各归各。"""
+
+    from repoharness2.adapters.miles.run_report import build_run_report, load_run_inputs
+
+    _write_real_audit(tmp_path / "A", "s-1", task="task-s-1")
+    (tmp_path / "A" / "rh2_events_h_1.jsonl").write_text(json.dumps(_ev("drain_complete", rollout_id=0, elapsed_seconds=1.0, target_groups=1)) + "\n", encoding="utf-8")
+    _write_real_audit(tmp_path / "B", "s-2", task="task-s-2")
+    inputs = load_run_inputs([tmp_path / "A", tmp_path / "B"])
+    for run_id in ("r1", None):
+        report = build_run_report(events=inputs["events"], audits=inputs["audits"], bringup=inputs["bringup"], run_id=run_id)
+        assert report["run_id"] == "r1" and report["audit_rows"] == 1 and report["bringup_rows"] == 1
+        assert report["unattributed_audit_rows"] == 1 and report["unattributed_bringup_rows"] == 1
+        assert set(report["facets"]["reward_and_distribution"]["graded_attempts"]["by_task"]) == {"task-s-1"}
+    (tmp_path / "B" / "rh2_events_h_2.jsonl").write_text(json.dumps(_ev("drain_complete", run="r2", rollout_id=0, elapsed_seconds=1.0, target_groups=1)) + "\n", encoding="utf-8")
+    inputs = load_run_inputs([tmp_path / "A", tmp_path / "B"])
+    report = build_run_report(events=inputs["events"], audits=inputs["audits"], bringup=inputs["bringup"])
+    assert report["multi_run"] is True and report["unattributed_audit_rows"] == 0
+    assert {rid: sub["audit_rows"] for rid, sub in report["per_run"].items()} == {"r1": 1, "r2": 1}
+    # 正控：单个 audit-only 目录（没有任何事件）仍给未绑定 run 的本地摘要，记录全部进入
+    alone = load_run_inputs([tmp_path / "B"]) if False else load_run_inputs([tmp_path / "A"])
+    only_a = build_run_report(events=[], audits=alone["audits"], bringup=alone["bringup"])
+    assert only_a["run_id"] is None and only_a["audit_rows"] == 1 and only_a["unattributed_audit_rows"] == 0
+
+
+def test_member_versions_union_all_leaves_and_keep_partial_facts(build):
+    """R6（Codex 09-11 复核）：成员版本 = 全部叶的并集。[['5'],['6']] 判多版本；[['5'],['5']] 判单版本；交换叶顺序结果不变；
+    有叶缺版本的成员记"部分事实"，不当已确认单版本；全部缺版本才是 unknown。"""
+
+    def group(leaf_versions):
+        indices = [10] * len(leaf_versions)
+        return _ev("rollout_group", rollout_id=0, group_index=0, instance_id="task-A", sample_indices=indices,
+                   leaf_ordinals=list(range(len(indices))), rewards=[1.0] * len(indices), behavior_versions=leaf_versions,
+                   weight_version_spans=[None] * len(indices), statuses=["completed"] * len(indices),
+                   response_lengths=[1] * len(indices), routing_tape=[None] * len(indices))
+
+    def versions(rows):
+        return build(events=rows, audits=[])["facets"]["staleness_and_alignment"]["behavior_versions_per_member"]
+
+    multi = versions([group([["5"], ["6"]])])
+    assert (multi["members"], multi["single_version"], multi["multi_version"], multi["unknown"]) == (1, 0, 1, 0)
+    assert versions([group([["6"], ["5"]])])["multi_version"] == 1  # 顺序交换不变
+    assert versions([group([["5"], ["5", "6"]])])["multi_version"] == versions([group([["5", "6"], ["5"]])])["multi_version"] == 1
+    single = versions([group([["5"], ["5"]])])
+    assert (single["single_version"], single["multi_version"], single["members_with_leaves_missing_versions"]) == (1, 0, 0)
+    partial = versions([group([["5"], []])])
+    assert (partial["single_version"], partial["members_with_leaves_missing_versions"], partial["unknown"]) == (1, 1, 0)
+    assert versions([group([[], None])])["unknown"] == 1
+

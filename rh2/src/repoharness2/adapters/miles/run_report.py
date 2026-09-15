@@ -534,23 +534,42 @@ def _facet_staleness(events_by_kind, execution) -> dict[str, Any]:
         out["reasons"].append("no_group_events")
     rollout_groups = events_by_kind.get(ROLLOUT_GROUP_EVENT, [])
     if rollout_groups:
-        multi = single = unknown = 0
-        seen_members: set[tuple[Any, Any, Any, Any]] = set()
+        # R6（Codex 09-11 复核）：成员级版本 = 该成员**全部**叶的版本并集（同一 execution 可在 v5 生成早期动作、
+        # 更新后在 v6 继续，B 分行后两条训练行各带自己的版本）；不能只取首叶。缺版本的叶记为"部分事实"，
+        # 一个成员所有叶都缺版本才是 unknown。
+        member_versions: dict[tuple[Any, Any, Any, Any], set[str]] = {}
+        member_leaf_counts: Counter = Counter()
+        member_leaves_without_versions: Counter = Counter()
         for row in rollout_groups:
             versions_per_leaf = row.get("behavior_versions") or []
             for position, sample_index in enumerate(row.get("sample_indices") or []):
                 key = (row.get("run_id"), row.get("rollout_id"), row.get("group_index"), sample_index)
-                if key in seen_members:
-                    continue  # 成员级：同成员的多叶只算一次
-                seen_members.add(key)
+                member_leaf_counts[key] += 1
                 versions = versions_per_leaf[position] if position < len(versions_per_leaf) else None
-                if not versions:
-                    unknown += 1
-                elif len({str(v) for v in versions}) > 1:
-                    multi += 1
+                known = member_versions.setdefault(key, set())
+                if versions:
+                    known.update(str(v) for v in versions)
                 else:
-                    single += 1
-        out["behavior_versions_per_member"] = {"single_version": single, "multi_version": multi, "unknown": unknown}
+                    member_leaves_without_versions[key] += 1
+        multi = single = unknown = partial = 0
+        for key, known in member_versions.items():
+            if not known:
+                unknown += 1
+                continue
+            if member_leaves_without_versions.get(key):
+                partial += 1  # 有叶缺版本：已知集合是下界，不当"已确认单版本"
+            if len(known) > 1:
+                multi += 1
+            else:
+                single += 1
+        out["behavior_versions_per_member"] = {
+            "members": len(member_versions),
+            "single_version": single,
+            "multi_version": multi,
+            "unknown": unknown,
+            "members_with_leaves_missing_versions": partial,
+            "note": "版本集合 = 成员全部叶的并集；有叶缺版本的成员其集合只是下界（single 不等于已确认单版本）",
+        }
     compares = events_by_kind.get(LOGPROB_COMPARE_EVENT, [])
     if compares:
         entries, duplicates, conflicts = _dedupe_compare_entries(compares)
@@ -771,19 +790,18 @@ def build_run_report(*, events: list[Mapping[str, Any]], audits: list[dict[str, 
     audits_by_run: dict[Any, list[dict[str, Any]]] = defaultdict(list)
     bringup_by_run: dict[Any, list[dict[str, Any]]] = defaultdict(list)
     unattributed_audits = unattributed_bringup = 0
+    # R4 余项（Codex 09-11 复核）：归属只看**本 bundle** 的事件 run_id；bundle 没有事件或有多个 run 时归属未知——
+    # 不因为"全部输入里只看见一个 run"就把它认领过去。归属未知的行只在没有任何事件（run 未绑定的本地摘要）时
+    # 进入报告，否则只计数。
     for row in audits:
         owner = _attribute_run(row, bundle_runs)
-        if owner is None and len(run_ids) <= 1 and not bundle_runs.get(row.get("_bundle")):
-            owner = run_ids[0] if run_ids else None  # 单 run（或无事件）输入：bundle 里没有事件时不算歧义
-        if owner is None and len(run_ids) > 1:
+        if owner is None and run_ids:
             unattributed_audits += 1
             continue
         audits_by_run[owner].append(row)
     for row in bringup:
         owner = _attribute_run(row, bundle_runs)
-        if owner is None and len(run_ids) <= 1 and not bundle_runs.get(row.get("_bundle")):
-            owner = run_ids[0] if run_ids else None
-        if owner is None and len(run_ids) > 1:
+        if owner is None and run_ids:
             unattributed_bringup += 1
             continue
         bringup_by_run[owner].append(row)
@@ -812,9 +830,8 @@ def build_run_report(*, events: list[Mapping[str, Any]], audits: list[dict[str, 
             )
         return {**header, "multi_run": True, "run_id": None, "per_run": per_run,
                 "note": "输入含多个 run_id：不混连，逐 run 出子报告；用 --run-id 只看一个"}
-    only = run_ids[0] if run_ids else None
-    report = _single_run_report(run_id=only, events=events, audits=audits_by_run.get(only, []) + (audits_by_run.get(None, []) if only is not None else []),
-                                bringup=bringup_by_run.get(only, []) + (bringup_by_run.get(None, []) if only is not None else []))
+    only = run_ids[0] if run_ids else None  # None = 没有任何事件：未绑定 run 的本地摘要（audit / bringup 全部进入）
+    report = _single_run_report(run_id=only, events=events, audits=audits_by_run.get(only, []), bringup=bringup_by_run.get(only, []))
     report["events_foreign_run"] = 0
     return {**header, "multi_run": False, **report}
 
