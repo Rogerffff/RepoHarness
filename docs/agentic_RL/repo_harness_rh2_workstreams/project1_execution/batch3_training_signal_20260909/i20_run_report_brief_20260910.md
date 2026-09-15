@@ -68,3 +68,24 @@ HEAD `76ede7f4`：**I20 已实现，但 R1–R4 四项 P2 统计问题尚待修�
 
 ruff 全过；全量 `pytest tests -q`（集成树）**2264 passed, 0 skipped, 0 failed（162s）**；lanes 清净环境实跑 lane A **415 passed / 320 skipped**、lane B **735 passed / 0 skipped**（计数 `1bc2dfb7`）。探针副本（scratchpad，不覆盖 Codex 原件）R1–R5 验收断言全部通过；R5 的 `sample_dis_accounting` 按"不支持 TP>1"如实报告。没有真实 run 文件、GPU、Docker。
 
+
+## 8. Codex 修后针对性复核（2026-09-11，HEAD `bc2cfa71`）
+
+**R1 / R2 / R3 通过；R5 按明确 TP 支持范围收口；R4 仍有一处 P2 余项，新增一处本次修复的 P2 直接回归 R6。** R4：其它输入 bundle 没有事件文件时，仍被归入唯一可见 run；R6：新增 `behavior_versions_per_member` 只看首叶，遗漏同成员后续叶的版本。主审真实 producer / loader 反例已复现；相关维护测试 71 passed / 0 failed。完整证据、最小修改与停止条件见 [followup1/README.md](review_20260911/followup1/README.md)。后续只处理这两处报告逻辑，不重开已通过项，不新增 owner 决策或训练 / GPU 验收。I19 通过结论与 I18 未定状态不变。
+
+## 8. Codex 针对性复核（2026-09-11 followup1）处置：R4 余项与 R6 均 accepted，已修并提交（2026-09-15，用户审查通过：代码 `35fce017`、manifest `0d3bccd3`）
+
+复核：[review_20260911/followup1/README.md](review_20260911/followup1/README.md)。R1 / R2 / R3 通过、R5 按 TP 支持范围收口不重开。两项余项均在作者本机用 Codex 的 followup 探针复现（修前 `reproduced=true`），修后副本（改为 `fixed` 断言）通过。用户 2026-09-15 审查通过后提交：代码与测试 `35fce017`，manifest 计数 `0d3bccd3`。
+
+| 项 | 处置 | 修法 |
+|---|---|---|
+| R4 余项：无事件的 bundle 被"唯一可见 run"认领 | accepted | 删除两处"全部输入只见一个 run 就归它"的兜底：归属只看本 bundle 的事件 run_id；bundle 没有事件或有多个 run = 归属未知，只在**没有任何事件**（未绑定 run 的本地摘要）时进入报告，否则只计数（`unattributed_*_rows`）。指定 run 与默认单 run 两种输出同一规则。 |
+| R6：成员级版本只取首叶 | accepted（本次修复新增回归） | 成员版本 = 全部叶版本的并集；`[['5'],['6']]` 判多版本、顺序交换不变；有叶缺版本的成员计 `members_with_leaves_missing_versions`（已知集合只是下界，不当已确认单版本）；全部缺版本才 unknown。 |
+
+验收夹具：`test_run_report.py` 新增两例（目录 A 有事件 + 目录 B 无事件，指定 / 不指定 run 都不混入，补上 r2 事件后各归各；audit-only 单目录仍可读；成员版本并集 / 顺序 / 部分事实 / unknown）。证据（作者本机）：**2266 passed, 0 skipped, 0 failed**；lanes lane A **417 passed / 320 skipped**、lane B **737 passed / 0 skipped**（manifest 计数 `0d3bccd3`）；探针副本 R3 / R5 保持通过、R4 正控（两 run 各 1 条、父目录合报 2 条归属未知）通过。
+
+## 9. Codex R4 / R6 修后窄复核（2026-09-15）
+
+**R4 余项与 R6 均通过，I20 离线报告首版的本轮实施审查收口。** 被审对象为 HEAD `4529ebd7` 上尚未提交的工作区修复；源码快照、独立反例和验证结果见 [followup2/README.md](review_20260911/followup2/README.md)。指定 run / 默认输出均不再认领无事件目录；成员版本取全部叶并集，交换顺序不变，部分缺失与全部缺失有明确记录。`single_version` 只描述已知集合，需结合缺叶计数解读。
+
+主审相关测试 **73 passed（5.51 秒）**，ruff 与 lanes `--checks-only` 通过；后者不构成双 lane pytest 复跑。R3 成员计权、多 run step 与 R5 logprob 去副本正控保持通过；TP>1 的逐叶 DIS 统计限制保留。未复跑作者全量 / 完整双 lane，无真实 run / CC / Docker / API / GPU。没有新 T0、生产改动或提交；I19 原通过结论与 I18 未定状态不变。
