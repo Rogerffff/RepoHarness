@@ -9,6 +9,8 @@
 
 from __future__ import annotations
 
+import json
+
 import asyncio
 import sys
 import time
@@ -394,4 +396,846 @@ async def test_prelaunch_check_violation_is_still_raised_and_the_container_is_cl
     assert record.removed is True and manager.cleanup_failures == [] and manager.regrade_total == 0
     assert record.prelaunch is not None and not record.prelaunch["ok"]  # 核对摘要仍留档
     assert not any(desc == "candidate_test_run" for _, desc in docker.exec_sequence)
+
+
+
+# ---- S1-m（评分接线 2026-09-15）：候选段事实、root 观测、超时保留部分输出、诊断 sidecar ----------------
+
+_CANDIDATE_LOG_WITH_FACTS = (
+    "+ echo RH2_PHASE_START=install\nRH2_PHASE_START=install\nRH2_TS_INSTALL_START=100.0\n"
+    "RH2_INSTALL_RC=2\nRH2_TS_INSTALL_END=103.5\nRH2_PHASE_END=install\n"
+    "RH2_TS_TEST_START=104.0\n+ : '>>>>> Start Test Output'\n"
+    "PASSED tests/test_thing.py::test_feature\nPASSED tests/test_thing.py::test_stable\n"
+    "+ : '>>>>> End Test Output'\nRH2_TS_TEST_END=110.25\n"
+)
+
+
+async def test_s1m_candidate_facts_observations_and_sidecar(tmp_path):
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log=_CANDIDATE_LOG_WITH_FACTS)
+    docker.observation_stdout = "RH2_OBS_RUNNER_DIGEST=abc\nRH2_OBS_IMPORT_PATH=/testbed/src/thing.py\nnoise\n"
+    manager = SWEGradingManager(
+        GradingManagerConfig(sandbox_profile=make_grader_profile(), eval_log_dir=tmp_path / "logs"), docker=docker,
+    )
+    report = await manager.grade(
+        trajectory_id="s1m-facts", workspace=FakeWorkspace(patch_text=GOOD_PATCH),
+        spec=_spec(pre_candidate_observation_script="echo RH2_OBS_RUNNER_DIGEST=abc",
+                   post_candidate_observation_script="echo RH2_OBS_RUNNER_DIGEST=abc"),
+    )
+    assert report.outcome == "resolved"
+    rec = manager.container_records[-1]
+    assert rec.candidate_facts == {
+        "install_rc_last_command": 2, "install_failed_commands": [], "install_skipped": False, "install_seconds": 3.5, "test_rc": None, "test_seconds": 6.25,
+        "markers_seen": ["RH2_INSTALL_RC", "RH2_TS_INSTALL_END", "RH2_TS_INSTALL_START", "RH2_TS_TEST_END", "RH2_TS_TEST_START"],
+        "log_partial": False,
+    }
+    assert rec.observations["RH2_OBS_RUNNER_DIGEST_PRE"] == "abc" and rec.observations["RH2_OBS_RUNNER_DIGEST"] == "abc"
+    assert rec.observations["RH2_OBS_IMPORT_PATH"] == "/testbed/src/thing.py"
+    side = json.loads((tmp_path / "logs" / f"{report.eval_log_ref.ref_id}.diagnostics.json").read_text())
+    assert side["candidate"]["install_rc_last_command"] == 2 and side["runner_integrity_changed"] is False
+    assert side["verdict"]["num_parsed_tests"] == 2 and side["peak_memory_unavailable_or_zero"] is False
+    # 候选命令仍以候选用户执行且把输出 tee 到候选属主文件
+    cand = [a for a in docker.calls if a and a[0] == "exec" and "-u" in a and str(a[-1]).startswith("bash ")]
+    assert cand and "| tee /rh2/candidate/eval.log; exit ${PIPESTATUS[0]}" in cand[-1][-1]
+
+
+async def test_s1m_timeout_keeps_partial_candidate_output(tmp_path):
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log="never returned", eval_delay=2.0)
+    docker.candidate_partial_log = "RH2_PHASE_START=install\nRH2_INSTALL_RC=0\nRH2_TS_TEST_START=1.0\n+ : '>>>>> Start Test Output'\n"
+    manager = SWEGradingManager(
+        GradingManagerConfig(sandbox_profile=make_grader_profile(), eval_log_dir=tmp_path / "logs", cleanup_timeout_seconds=5),
+        docker=docker,
+    )
+    report = await manager.grade(
+        trajectory_id="s1m-timeout", workspace=FakeWorkspace(patch_text=GOOD_PATCH),
+        spec=_spec(test_timeout_seconds=0.2),
+    )
+    assert report.outcome == "failed_to_grade" and report.reward is None
+    assert "grading_test_timeout_after_0s" in (report.infra_failure_detail or "")
+    assert report.infra_failure_detail.endswith(":candidate_phase=install")  # A2：部分日志只有安装段开始标记
+    log = (tmp_path / "logs" / f"{report.eval_log_ref.ref_id}.eval.log").read_text()
+    assert "RH2_INSTALL_RC=0" in log and "RH2_PHASE_START=install" in log
+    side = json.loads((tmp_path / "logs" / f"{report.eval_log_ref.ref_id}.diagnostics.json").read_text())
+    assert side["candidate"]["log_partial"] is True and side["candidate"]["install_rc_last_command"] == 0
+    assert side["candidate"]["test_seconds"] is None and side["verdict"] is None
+
+
+async def test_s1m_observation_failure_is_recorded_not_fatal(tmp_path):
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log=_CANDIDATE_LOG_WITH_FACTS)
+    docker.observation_stdout = "RH2_OBS_RUNNER_DIGEST=x\n"
+    docker.observation_exit_code = 3
+    manager = SWEGradingManager(GradingManagerConfig(sandbox_profile=make_grader_profile()), docker=docker)
+    report = await manager.grade(
+        trajectory_id="s1m-obs-fail", workspace=FakeWorkspace(patch_text=GOOD_PATCH),
+        spec=_spec(post_candidate_observation_script="echo RH2_OBS_RUNNER_DIGEST=x; exit 3"),
+    )
+    assert report.outcome == "resolved"
+    obs = manager.container_records[-1].observations
+    assert obs["RH2_OBS_ERROR"].startswith("post_candidate_observation:exit=3") and obs["RH2_OBS_RUNNER_DIGEST"] == "x"
+
+
+def test_s1m_candidate_facts_parser_ignores_trace_and_missing():
+    from repoharness2.grading.manager import candidate_facts_from_log
+
+    assert candidate_facts_from_log("+ echo RH2_INSTALL_RC=7\n") == {
+        "install_rc_last_command": None, "install_failed_commands": [], "install_skipped": False, "install_seconds": None,
+        "test_rc": None, "test_seconds": None, "markers_seen": [],
+    }
+    # 2026-09-19：安装段 ERR trap 的失败命令行（`+ ` 回显不算；上限 20 条）
+    facts = candidate_facts_from_log("+ echo RH2_INSTALL_CMD_FAILED=2 make init\nRH2_INSTALL_CMD_FAILED=2 make init\nRH2_INSTALL_CMD_FAILED=127 pdm add pre-commit\nRH2_INSTALL_RC=2\n")
+    assert facts["install_failed_commands"] == [{"rc": 2, "cmd": "make init"}, {"rc": 127, "cmd": "pdm add pre-commit"}] and facts["install_rc_last_command"] == 2
+    assert candidate_facts_from_log("RH2_INSTALL_SKIPPED=1\nRH2_INSTALL_RC=9\nRH2_INSTALL_RC=1\n")["install_rc_last_command"] == 9
+
+
+# ---- §11/§12 修正（2026-09-15）：I1 观测以候选身份、I5 零解析保留诊断、I7 测试 RC、A2/A3 ----------------
+
+async def test_i1_observation_scripts_run_as_candidate_user(tmp_path):
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log=_CANDIDATE_LOG_WITH_FACTS)
+    docker.observation_stdout = "RH2_OBS_RUNNER_DIGEST=d\n"
+    manager = SWEGradingManager(GradingManagerConfig(sandbox_profile=make_grader_profile()), docker=docker)
+    await manager.grade(
+        trajectory_id="i1", workspace=FakeWorkspace(patch_text=GOOD_PATCH),
+        spec=_spec(pre_candidate_observation_script="echo RH2_OBS_RUNNER_DIGEST=d", post_candidate_observation_script="echo RH2_OBS_RUNNER_DIGEST=d"),
+    )
+    obs_execs = [a for a in docker.calls if a and a[0] == "exec" and "RH2_OBS_" in str(a[-1])]
+    assert len(obs_execs) == 2
+    for a in obs_execs:
+        assert "-u" in a and a[a.index("-u") + 1] == str(make_grader_profile().candidate_exec_uid) and "HOME=/home/rh2grader" in " ".join(a)
+
+
+async def test_i5_zero_parsed_keeps_parser_diagnostics_in_sidecar(tmp_path):
+    log = "+ : '>>>>> Start Test Output'\nno tests collected\n+ : '>>>>> End Test Output'\nPASSED tests/test_thing.py::test_feature\n"
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log=log)
+    manager = SWEGradingManager(GradingManagerConfig(sandbox_profile=make_grader_profile(), eval_log_dir=tmp_path / "logs"), docker=docker)
+    from repoharness2.envpack import scoring as _scoring
+    from repoharness2.envpack.bundles_v2 import PrivateGradingBundleV2
+    from repoharness2.envpack.spec_vendor import SPEC_VENDOR_ID_SWEGYM_242429C1, derive_eval_cmd
+    g = PrivateGradingBundleV2(
+        instance_id="getmoto__moto-0001", repo="getmoto/moto", repo_key_lower="getmoto/moto", version="5.0", base_commit="a" * 40,
+        test_patch="diff --git a/tests/t.py b/tests/t.py\n--- a/tests/t.py\n+++ b/tests/t.py\n+x\n",
+        fail_to_pass=["tests/test_thing.py::test_feature"], pass_to_pass=[],
+        eval_cmd=derive_eval_cmd(SPEC_VENDOR_ID_SWEGYM_242429C1, "getmoto/moto", "5.0"), spec_vendor_id=SPEC_VENDOR_ID_SWEGYM_242429C1,
+    )
+    report = await manager.grade(
+        trajectory_id="i5", workspace=FakeWorkspace(patch_text=GOOD_PATCH),
+        spec=_spec(parse_log=lambda text: _scoring.parse_eval_log_v2(g, text)),
+    )
+    assert report.outcome == "failed_to_grade" and report.failure_category == "test_log_parse_failed" and report.reward is None
+    side = json.loads((tmp_path / "logs" / f"{report.eval_log_ref.ref_id}.diagnostics.json").read_text())
+    assert side["verdict"]["num_parsed_tests"] == 0 and side["verdict"]["num_parsed_outside_segment"] == 1
+    assert side["verdict"]["reference_missing"] == ["tests/test_thing.py::test_feature"]
+
+
+def test_i7_and_a2_candidate_fact_helpers():
+    from repoharness2.grading.manager import candidate_facts_from_log, candidate_phase_at
+
+    facts = candidate_facts_from_log("RH2_INSTALL_RC=0\nRH2_TEST_RC=5\n")
+    assert facts["test_rc"] == 5 and facts["install_rc_last_command"] == 0
+    assert candidate_phase_at("RH2_PHASE_START=install\nfoo") == "install"
+    assert candidate_phase_at("RH2_PHASE_START=install\nRH2_PHASE_END=install\n") == "test"
+    assert candidate_phase_at("RH2_INSTALL_SKIPPED=1\n") == "test" and candidate_phase_at("") == "unknown"
+
+
+async def test_a3_partial_log_read_refuses_symlink_and_ignores_deadline(tmp_path):
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log="never", eval_delay=2.0)
+    docker.candidate_partial_log = "RH2_PARTIAL_LOG_UNAVAILABLE=irregular_or_missing\n"
+    manager = SWEGradingManager(GradingManagerConfig(sandbox_profile=make_grader_profile(), eval_log_dir=tmp_path / "logs", cleanup_timeout_seconds=5), docker=docker)
+    report = await manager.grade(trajectory_id="a3", workspace=FakeWorkspace(patch_text=GOOD_PATCH), spec=_spec(test_timeout_seconds=0.2))
+    assert report.outcome == "failed_to_grade"
+    reads = [a for a in docker.calls if a and a[0] == "exec" and "cat /rh2/candidate/eval.log" in str(a[-1])]
+    assert reads and "[ ! -L /rh2/candidate/eval.log ]" in reads[-1][-1]
+    side = json.loads((tmp_path / "logs" / f"{report.eval_log_ref.ref_id}.diagnostics.json").read_text())
+    assert side["candidate"]["log_partial"] is True and side["candidate"]["markers_seen"] == []
+    assert report.infra_failure_detail.endswith(":candidate_phase=unknown")
+
+
+# ---- §13 修正（2026-09-15）：R3 取消后的日志/诊断落盘 ----------------------------------------
+
+async def test_r3_cancel_during_post_observation_persists_full_log(tmp_path):
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log=_CANDIDATE_LOG_WITH_FACTS)
+    docker.observation_stdout = "RH2_OBS_RUNNER_DIGEST=x\n"
+    docker.observation_delay = 5.0
+    manager = SWEGradingManager(GradingManagerConfig(sandbox_profile=make_grader_profile(), eval_log_dir=tmp_path / "logs"), docker=docker)
+    task = asyncio.create_task(manager.grade(
+        trajectory_id="r3-postobs", workspace=FakeWorkspace(patch_text=GOOD_PATCH),
+        spec=_spec(post_candidate_observation_script="echo RH2_OBS_RUNNER_DIGEST=x"),
+    ))
+    await asyncio.sleep(0.3)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    rec = manager.container_records[-1]
+    assert rec.cancelled_eval_log_ref is not None
+    log = (tmp_path / "logs" / f"{rec.cancelled_eval_log_ref.ref_id}.eval.log").read_text()
+    assert "PASSED tests/test_thing.py::test_feature" in log and "RH2_INSTALL_RC=2" in log  # 完整测试日志未丢
+    side = json.loads((tmp_path / "logs" / f"{rec.cancelled_eval_log_ref.ref_id}.diagnostics.json").read_text())
+    assert side["candidate"]["log_partial"] is False and side["candidate"]["install_rc_last_command"] == 2
+
+
+async def test_r3_cancel_during_candidate_exec_persists_partial_log(tmp_path):
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log="never", eval_delay=5.0)
+    docker.candidate_partial_log = "RH2_PHASE_START=install\nRH2_INSTALL_RC=0\n"
+    manager = SWEGradingManager(GradingManagerConfig(sandbox_profile=make_grader_profile(), eval_log_dir=tmp_path / "logs", cleanup_timeout_seconds=5), docker=docker)
+    task = asyncio.create_task(manager.grade(trajectory_id="r3-exec", workspace=FakeWorkspace(patch_text=GOOD_PATCH), spec=_spec()))
+    await asyncio.sleep(0.3)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    rec = manager.container_records[-1]
+    assert rec.cancelled_eval_log_ref is not None
+    assert "RH2_INSTALL_RC=0" in (tmp_path / "logs" / f"{rec.cancelled_eval_log_ref.ref_id}.eval.log").read_text()
+    side = json.loads((tmp_path / "logs" / f"{rec.cancelled_eval_log_ref.ref_id}.diagnostics.json").read_text())
+    assert side["candidate"]["log_partial"] is True
+
+
+# ---------------------------------------------------------------------------
+# 第四组 A（P-A，2026-09-16）：候选全局执行失败的三路判定（v2 parser + 资格记录 + 编译复证）
+# ---------------------------------------------------------------------------
+
+_PA_INSTALL_OK = (
+    "+ echo RH2_PHASE_START=install\nRH2_PHASE_START=install\nRH2_TS_INSTALL_START=100.0\n"
+    "RH2_INSTALL_RC=0\nRH2_TS_INSTALL_END=103.5\nRH2_PHASE_END=install\nRH2_TS_TEST_START=104.0\n"
+)
+_PA_COLLECTION_FAIL_SEGMENT = (
+    "============================= test session starts ==============================\n"
+    "collected 0 items / 1 error\n"
+    "==================================== ERRORS ====================================\n"
+    "_________________ ERROR collecting tests/test_thing.py _________________\n"
+    "ImportError while importing test module '/testbed/tests/test_thing.py'.\n"
+    "E     File \"/testbed/src/thing.py\", line 1\nE       def feature(:\nE                   ^\nE   SyntaxError: invalid syntax\n"
+    "=========================== short test summary info ============================\n"
+    "ERROR tests/test_thing.py\n"
+    "!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n"
+    "=============================== 1 error in 0.12s ===============================\n"
+)
+_PA_STARTUP_FAIL_SEGMENT = (
+    "ImportError while loading conftest '/testbed/tests/conftest.py'.\n"
+    "tests/conftest.py:3: in <module>\n    from src.thing import feature\n"
+    "E     File \"/testbed/src/thing.py\", line 1\nE       def feature(:\nE   SyntaxError: invalid syntax\n"
+)
+
+
+def _pa_log(segment: str, *, test_rc: int, install: str = _PA_INSTALL_OK) -> str:
+    return (
+        f"{install}+ : '>>>>> Start Test Output'\n{segment}+ : '>>>>> End Test Output'\n"
+        f"RH2_TEST_RC={test_rc}\nRH2_TS_TEST_END=110.25\n"
+    )
+
+
+def _pa_v2_parser():
+    from repoharness2.envpack import scoring as _scoring
+    from repoharness2.envpack.bundles_v2 import PrivateGradingBundleV2
+    from repoharness2.envpack.spec_vendor import SPEC_VENDOR_ID_SWEGYM_242429C1, derive_eval_cmd
+
+    g = PrivateGradingBundleV2(
+        instance_id="getmoto__moto-0001", repo="getmoto/moto", repo_key_lower="getmoto/moto", version="5.0", base_commit="a" * 40,
+        test_patch="diff --git a/tests/t.py b/tests/t.py\n--- a/tests/t.py\n+++ b/tests/t.py\n+x\n",
+        fail_to_pass=["tests/test_thing.py::test_feature"], pass_to_pass=["tests/test_thing.py::test_stable"],
+        eval_cmd=derive_eval_cmd(SPEC_VENDOR_ID_SWEGYM_242429C1, "getmoto/moto", "5.0"), spec_vendor_id=SPEC_VENDOR_ID_SWEGYM_242429C1,
+    )
+    return lambda text: _scoring.parse_eval_log_v2(g, text)
+
+
+def _pa_spec(*, qualified: bool = True, probe: bool = True, **overrides):
+    import dataclasses
+
+    from repoharness2.grading.manager import EnvQualification, grading_image_identity, grading_scripts_digest, render_compile_probe_script
+
+    spec = _spec(parse_log=_pa_v2_parser(), render_compile_probe=(render_compile_probe_script if probe else None), **overrides)
+    if qualified:
+        q = EnvQualification(
+            image_identity=grading_image_identity(spec), scripts_digest=grading_scripts_digest(spec), reference_missing_count=0,
+            source="ledger_e2_A.jsonl:rpt_gold_1", qualified_at_utc="2026-09-16T00:00:00Z",
+        )
+        spec = dataclasses.replace(spec, env_qualification=q)
+    return spec
+
+
+def _pa_manager(docker, tmp_path, *, profile=True):
+    return SWEGradingManager(
+        GradingManagerConfig(sandbox_profile=make_grader_profile() if profile else None, eval_log_dir=tmp_path / "logs"), docker=docker,
+    )
+
+
+def _pa_side(manager, report):
+    return json.loads((Path(manager.config.eval_log_dir) / f"{report.eval_log_ref.ref_id}.diagnostics.json").read_text())
+
+
+def _compile_probe_calls(docker):
+    return [a for a in docker.calls if a and a[0] == "exec" and "RH2_COMPILE_EOF" in str(a[-1])]
+
+
+async def test_pa_collection_failure_proven_by_compile_probe_is_candidate_execution_failed(tmp_path):
+    """全部条件齐备：资格有效 ∧ 测试段收集失败形状确定 ∧ 安装段 rc=0 ∧ 候选改了 .py ∧ 编译复证在候选路径报 SyntaxError
+    → candidate_execution_failed、reward 0、四计数 None、阶段 test_collection、证据含日志行 + 复证行 + 资格来源。"""
+
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log=_pa_log(_PA_COLLECTION_FAIL_SEGMENT, test_rc=2))
+    docker.compile_probe_stdout = "RH2_COMPILE_INTERPRETER=/opt/miniconda3/envs/testbed/bin/python\nRH2_COMPILE_ERROR=src/thing.py:SyntaxError:line=1:invalid syntax\n"
+    manager = _pa_manager(docker, tmp_path)
+    report = await manager.grade(trajectory_id="pa-cand", workspace=FakeWorkspace(patch_text=GOOD_PATCH), spec=_pa_spec())
+    assert report.outcome == "unresolved" and report.failure_category == "candidate_execution_failed" and report.reward == 0.0
+    assert report.f2p_total_count is None and report.p2p_total_count is None
+    assert report.execution_failure_stage == "test_collection"
+    ev = report.execution_failure_evidence
+    assert any("ERROR collecting tests/test_thing.py" in line for line in ev) and "test_rc=2" in ev
+    assert "compile_probe:src/thing.py:SyntaxError:line=1:invalid syntax" in ev and "env_qualification:ok:ledger_e2_A.jsonl:rpt_gold_1" in ev
+    # 复证以候选身份执行，探的是候选改动的 .py 路径
+    (probe,) = _compile_probe_calls(docker)
+    assert "-u" in probe and probe[probe.index("-u") + 1] == str(make_grader_profile().candidate_exec_uid)
+    assert "src/thing.py" in str(probe[-1]) and "RH2_COMPILE_EOF" in str(probe[-1])
+    side = _pa_side(manager, report)
+    dec = side["execution_failure_decision"]
+    assert dec["kind"] == "candidate" and dec["trigger"] == "reference_all_missing" and dec["rule"] == "pytest_error_collecting"
+    assert dec["candidate_python_paths"] == ["src/thing.py"] and side["resource_facts"]["oom_kill_events"] == 0
+    assert side["env_qualification"].startswith("ok:") and side["scripts_digest"].startswith("sha256:")
+
+
+async def test_pa_startup_conftest_syntax_error_is_candidate_execution_failed_with_zero_parse(tmp_path):
+    """F1：conftest 加载阶段就炸（零解析、pytest rc=4）——阶段 test_startup。"""
+
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log=_pa_log(_PA_STARTUP_FAIL_SEGMENT, test_rc=4))
+    docker.compile_probe_stdout = "RH2_COMPILE_ERROR=src/thing.py:SyntaxError:line=1:invalid syntax\n"
+    manager = _pa_manager(docker, tmp_path)
+    report = await manager.grade(trajectory_id="pa-startup", workspace=FakeWorkspace(patch_text=GOOD_PATCH), spec=_pa_spec())
+    assert report.failure_category == "candidate_execution_failed" and report.execution_failure_stage == "test_startup"
+    dec = _pa_side(manager, report)["execution_failure_decision"]
+    assert dec["trigger"] == "zero_parsed" and dec["rule"] == "pytest_conftest_import_error"
+
+
+@pytest.mark.parametrize("variant,expect_missing", [
+    ("qualification_absent", "qualification:absent"),
+    ("scripts_digest_mismatch", "qualification:scripts_digest_mismatch"),
+    ("image_identity_mismatch", "qualification:image_identity_mismatch"),
+    ("compile_probe_clean", "compile_probe_clean"),
+    ("compile_probe_timeout", "compile_probe_timeout"),
+    ("no_probe_renderer", "no_compile_probe_renderer"),
+    ("install_failed", "install_segment_rc=1:baseline=0"),
+    ("termination_facts_unknown", "termination_facts_unknown:oom_kill_events+pids_events_max"),
+    ("test_rc_unknown", "termination_facts_unknown:test_rc"),
+    ("unrelated_syntax_file", "no_syntax_error_at_candidate_path"),
+])
+async def test_pa_missing_condition_goes_to_infra_without_reward(tmp_path, variant, expect_missing):
+    """任一条件缺席 → 未确定：failed_to_grade / test_log_parse_failed / reward None，detail 列出缺失条件。"""
+    import dataclasses
+
+    segment, rc, install = _PA_COLLECTION_FAIL_SEGMENT, 2, _PA_INSTALL_OK
+    if variant == "install_failed":
+        install = _PA_INSTALL_OK.replace("RH2_INSTALL_RC=0", "RH2_INSTALL_RC=1")
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log=_pa_log(segment, test_rc=rc, install=install))
+    if variant == "termination_facts_unknown":
+        docker.memory_events_stdout = ""  # 读不到 cgroup 事件（R3：未知 ≠ 已排除）
+        docker.pids_events_stdout = ""
+    if variant == "test_rc_unknown":
+        docker.eval_log = _pa_log(segment, test_rc=rc, install=install).replace("RH2_TEST_RC=2\n", "")
+    docker.compile_probe_stdout = (
+        "RH2_COMPILE_OK=src/thing.py\n" if variant == "compile_probe_clean"
+        else "RH2_COMPILE_ERROR=src/thing.py:SyntaxError:line=1:invalid syntax\n"
+    )
+    spec = _pa_spec(qualified=variant != "qualification_absent", probe=variant != "no_probe_renderer")
+    if variant == "scripts_digest_mismatch":
+        spec = dataclasses.replace(spec, env_qualification=dataclasses.replace(spec.env_qualification, scripts_digest="sha256:" + "0" * 64))
+    if variant == "image_identity_mismatch":
+        spec = dataclasses.replace(spec, env_qualification=dataclasses.replace(spec.env_qualification, image_identity="sha256:" + "1" * 64))
+    manager = _pa_manager(docker, tmp_path)
+    if variant == "compile_probe_timeout":
+        docker.observation_delay = 0.0
+        real = docker.__call__
+
+        async def slow(*args, input_bytes=None):
+            if args[0] == "exec" and "RH2_COMPILE_EOF" in str(args[-1]):
+                await asyncio.sleep(0.3)
+            return await real(*args, input_bytes=input_bytes)
+
+        docker.__call__ = slow  # type: ignore[method-assign]
+        manager = _pa_manager(slow, tmp_path)
+        spec = dataclasses.replace(spec, apply_timeout_seconds=0.05)
+    # R1 反例：候选另一份没被导入的坏文件（src/unused.py）不能解释这次失败——失败文字只点名 src/thing.py
+    patch = GOOD_PATCH.replace("src/thing.py", "src/unused.py") if variant == "unrelated_syntax_file" else GOOD_PATCH
+    if variant == "unrelated_syntax_file":
+        docker.compile_probe_stdout = "RH2_COMPILE_ERROR=src/unused.py:SyntaxError:line=1:invalid syntax\n"
+    report = await manager.grade(trajectory_id=f"pa-{variant}", workspace=FakeWorkspace(patch_text=patch), spec=spec)
+    assert report.outcome == "failed_to_grade" and report.failure_category == "test_log_parse_failed" and report.reward is None
+    assert report.infra_failure_detail.startswith("reference_all_missing:unattributed:"), report.infra_failure_detail
+    assert expect_missing in report.infra_failure_detail
+    if variant in ("qualification_absent", "scripts_digest_mismatch", "image_identity_mismatch", "install_failed", "no_probe_renderer",
+                   "termination_facts_unknown", "test_rc_unknown", "unrelated_syntax_file"):
+        assert _compile_probe_calls(docker) == []  # 前置条件不齐不发起复证 I/O
+    dec = _pa_side(manager, report)["execution_failure_decision"]
+    assert dec["kind"] == "unattributed" and expect_missing in dec["missing"]
+
+
+@pytest.mark.parametrize("variant", ["oom_kill_events", "container_oom_killed", "signal_exit"])
+async def test_pa_proven_resource_termination_is_infra_without_reward(tmp_path, variant):
+    """已证保护性资源终止（cgroup oom_kill / 容器 OOMKilled / 测试命令被信号杀 rc>=128）→ infra_failure、reward None，
+    即使其它候选归因条件全部齐备也不判模型负样本。"""
+
+    rc = 137 if variant == "signal_exit" else 2
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log=_pa_log(_PA_COLLECTION_FAIL_SEGMENT, test_rc=rc))
+    docker.compile_probe_stdout = "RH2_COMPILE_ERROR=src/thing.py:SyntaxError:line=1:invalid syntax\n"
+    if variant == "oom_kill_events":
+        docker.memory_events_stdout = "low 0\nhigh 3\nmax 12\noom 1\noom_kill 1\n"
+    if variant == "container_oom_killed":
+        docker.oom_killed = True
+    manager = _pa_manager(docker, tmp_path)
+    report = await manager.grade(trajectory_id=f"pa-{variant}", workspace=FakeWorkspace(patch_text=GOOD_PATCH), spec=_pa_spec())
+    assert report.outcome == "failed_to_grade" and report.failure_category == "infra_failure" and report.reward is None
+    assert report.infra_failure_detail.startswith("candidate_resource_terminated:reference_all_missing:")
+    assert variant.replace("signal_exit", "signal_exit_rc=137") in report.infra_failure_detail
+    assert _compile_probe_calls(docker) == []
+    dec = _pa_side(manager, report)["execution_failure_decision"]
+    assert dec["kind"] == "resource" and dec["resource"]["test_rc"] == rc
+
+
+async def test_pa_legacy_path_without_profile_stays_infra_and_names_the_missing_profile(tmp_path):
+    docker = FakeDocker(base_commit=BASE_COMMIT, eval_log=_pa_log(_PA_COLLECTION_FAIL_SEGMENT, test_rc=2))
+    manager = _pa_manager(docker, tmp_path, profile=False)
+    report = await manager.grade(trajectory_id="pa-legacy", workspace=FakeWorkspace(patch_text=GOOD_PATCH), spec=_pa_spec())
+    assert report.outcome == "failed_to_grade" and report.reward is None
+    assert "no_sandbox_profile" in report.infra_failure_detail and _compile_probe_calls(docker) == []
+
+
+async def test_pa_partial_reference_results_do_not_trigger_the_decision(tmp_path):
+    """参考清单里只要有一条拿到结果就不是全局失败：照旧 tests_failed（缺席计失败），不发起判定 I/O。"""
+
+    segment = "PASSED tests/test_thing.py::test_stable\n_________________ ERROR collecting tests/test_other.py _________________\n"
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log=_pa_log(segment, test_rc=2))
+    manager = _pa_manager(docker, tmp_path)
+    report = await manager.grade(trajectory_id="pa-partial", workspace=FakeWorkspace(patch_text=GOOD_PATCH), spec=_pa_spec())
+    assert report.outcome == "unresolved" and report.failure_category == "tests_failed"
+    assert (report.f2p_pass_count, report.f2p_total_count, report.p2p_fail_count, report.p2p_total_count) == (0, 1, 0, 1)
+    assert _pa_side(manager, report)["execution_failure_decision"] is None and _compile_probe_calls(docker) == []
+
+
+def test_pa_shape_classifier_and_trigger_helpers():
+    from repoharness2.grading.manager import classify_execution_failure_shape, execution_failure_trigger, parse_compile_probe_output
+
+    assert classify_execution_failure_shape("no markers at all", 2) is None
+    shape = classify_execution_failure_shape(_pa_log(_PA_COLLECTION_FAIL_SEGMENT, test_rc=2), 2)
+    assert shape["stage"] == "test_collection" and shape["rule"] == "pytest_error_collecting" and shape["evidence"][-1] == "test_rc=2"
+    shape = classify_execution_failure_shape(_pa_log("Traceback (most recent call last):\n  File \"tests/test_thing.py\", line 5\nSyntaxError: invalid syntax\n", test_rc=1), 1)
+    assert shape["stage"] == "test_startup" and shape["rule"] == "python_traceback_startup_error"
+    # 段外的失败文字不算（只看 Start/End 之间）
+    assert classify_execution_failure_shape("ERROR collecting x.py\n+ : '>>>>> Start Test Output'\nfine\n+ : '>>>>> End Test Output'\n", 0) is None
+    parsed = parse_compile_probe_output("noise\nRH2_COMPILE_INTERPRETER=/x/python\nRH2_COMPILE_OK=a.py\nRH2_COMPILE_ERROR=b.py:SyntaxError:line=2:bad\nRH2_COMPILE_MISSING=c.py\n")
+    assert parsed == {"ok": ["a.py"], "error": ["b.py:SyntaxError:line=2:bad"], "missing": ["c.py"], "interpreter": "/x/python"}
+    v = _pa_v2_parser()(_pa_log(_PA_COLLECTION_FAIL_SEGMENT, test_rc=2))
+    assert v.num_parsed_tests == 1 and execution_failure_trigger(v) == "reference_all_missing"
+    v = _pa_v2_parser()(_pa_log("nothing\n", test_rc=5))
+    assert execution_failure_trigger(v) == "zero_parsed"
+    v = _pa_v2_parser()(_pa_log("PASSED tests/test_thing.py::test_stable\n", test_rc=1))
+    assert execution_failure_trigger(v) is None
+
+
+async def test_pa_install_rc_matching_the_qualified_baseline_does_not_block_attribution(tmp_path):
+    """e2 实测：moto / pydantic 的安装段末命令在 gold/noop 下也恒为 rc=2（无网络 / 无 pdm），测试跑在镜像既有的可编辑安装上。
+    资格记录带基线 rc=2 → 候选同为 2 不算偏离，仍可归因；基线 0（或未知）时 rc=2 → 未确定。"""
+    import dataclasses
+
+    log = _pa_log(_PA_COLLECTION_FAIL_SEGMENT, test_rc=2, install=_PA_INSTALL_OK.replace("RH2_INSTALL_RC=0", "RH2_INSTALL_RC=2"))
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log=log)
+    docker.compile_probe_stdout = "RH2_COMPILE_ERROR=src/thing.py:SyntaxError:line=1:invalid syntax\n"
+    spec = _pa_spec()
+    spec_b2 = dataclasses.replace(spec, env_qualification=dataclasses.replace(spec.env_qualification, install_rc_last_command=2))
+    manager = _pa_manager(docker, tmp_path)
+    report = await manager.grade(trajectory_id="pa-b2", workspace=FakeWorkspace(patch_text=GOOD_PATCH), spec=spec_b2)
+    assert report.failure_category == "candidate_execution_failed" and report.reward == 0.0
+    assert _pa_side(manager, report)["execution_failure_decision"]["install_rc_baseline"] == 2
+    docker2 = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log=log)
+    docker2.compile_probe_stdout = docker.compile_probe_stdout
+    manager2 = _pa_manager(docker2, tmp_path / "b0")
+    report2 = await manager2.grade(trajectory_id="pa-b0", workspace=FakeWorkspace(patch_text=GOOD_PATCH), spec=spec)
+    assert report2.outcome == "failed_to_grade" and "install_segment_rc=2:baseline=0" in report2.infra_failure_detail
+    assert _compile_probe_calls(docker2) == []
+
+
+async def test_pa_r4_completed_tests_with_all_reference_missing_follow_the_source_rule(tmp_path):
+    """A 线复核 R4：测试正常跑完（有逐测试状态、rc=1）、只是参数化 ID 随源码改了，参考清单全缺席——
+    不是全局执行失败：按来源规则计 tests_failed / 0（缺席计失败），不读资源事实、不复证；判定记 source_rule。"""
+
+    segment = "F.                                                                       [100%]\nFAILED tests/test_thing.py::test_feature[after]\nPASSED tests/test_thing.py::test_stable[after]\n1 failed, 1 passed in 0.01s\n"
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log=_pa_log(segment, test_rc=1))
+    docker.compile_probe_stdout = "RH2_COMPILE_ERROR=src/thing.py:SyntaxError:line=1:invalid syntax\n"
+    manager = _pa_manager(docker, tmp_path)
+    report = await manager.grade(trajectory_id="pa-r4", workspace=FakeWorkspace(patch_text=GOOD_PATCH), spec=_pa_spec())
+    assert report.outcome == "unresolved" and report.failure_category == "tests_failed" and report.reward == 0.0
+    assert (report.f2p_pass_count, report.f2p_total_count, report.p2p_fail_count, report.p2p_total_count) == (0, 1, 1, 1)
+    dec = _pa_side(manager, report)["execution_failure_decision"]
+    assert dec["kind"] == "source_rule" and dec["trigger"] == "reference_all_missing" and dec["resource"] is None
+    assert _compile_probe_calls(docker) == [] and not any("memory.events" in str(a[-1]) for a in docker.calls if a and a[0] == "exec")
+    # 零解析 + 形状不确定仍是未确定（silent success 不能信）
+    docker2 = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log=_pa_log("nothing here\n", test_rc=5))
+    manager2 = _pa_manager(docker2, tmp_path / "z")
+    report2 = await manager2.grade(trajectory_id="pa-r4z", workspace=FakeWorkspace(patch_text=GOOD_PATCH), spec=_pa_spec())
+    assert report2.outcome == "failed_to_grade" and "shape_undetermined" in report2.infra_failure_detail
+
+
+async def test_pa_r3_pids_quota_hits_are_resource_termination(tmp_path):
+    """B 线 216 题诊断：进程配额撞满（pids.events max>0）是保护性资源终止事实 → infra、None，即便其它条件齐备。"""
+
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log=_pa_log(_PA_COLLECTION_FAIL_SEGMENT, test_rc=2))
+    docker.compile_probe_stdout = "RH2_COMPILE_ERROR=src/thing.py:SyntaxError:line=1:invalid syntax\n"
+    docker.pids_events_stdout = "max 37\n"
+    manager = _pa_manager(docker, tmp_path)
+    report = await manager.grade(trajectory_id="pa-pids", workspace=FakeWorkspace(patch_text=GOOD_PATCH), spec=_pa_spec())
+    assert report.outcome == "failed_to_grade" and report.failure_category == "infra_failure"
+    assert "pids_quota_hits" in report.infra_failure_detail and _compile_probe_calls(docker) == []
+    assert _pa_side(manager, report)["resource_facts"]["pids_events_max"] == 37
+
+
+async def test_pa_r1_only_referenced_candidate_paths_are_probed(tmp_path):
+    """R1 正例：候选改了两个 .py，失败文字只点名 src/thing.py → 只复证它；证据带点名行；未点名的路径不进复证。"""
+
+    two = GOOD_PATCH + GOOD_PATCH.replace("src/thing.py", "src/other.py")
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log=_pa_log(_PA_COLLECTION_FAIL_SEGMENT, test_rc=2))
+    docker.compile_probe_stdout = "RH2_COMPILE_ERROR=src/thing.py:SyntaxError:line=1:invalid syntax\n"
+    manager = _pa_manager(docker, tmp_path)
+    report = await manager.grade(trajectory_id="pa-r1", workspace=FakeWorkspace(patch_text=two), spec=_pa_spec())
+    assert report.failure_category == "candidate_execution_failed"
+    (probe,) = _compile_probe_calls(docker)
+    assert "src/thing.py" in str(probe[-1]) and "src/other.py" not in str(probe[-1])
+    assert "python -I -S -" in str(probe[-1]) and "import json" not in str(probe[-1])
+    dec = _pa_side(manager, report)["execution_failure_decision"]
+    assert dec["referenced_candidate_paths"] == ["src/thing.py"] and set(dec["candidate_python_paths"]) == {"src/other.py", "src/thing.py"}
+    assert any('File "/testbed/src/thing.py"' in line for line in report.execution_failure_evidence)
+
+
+def test_pa_r2_compile_probe_never_imports_repo_modules(tmp_path):
+    """R2 真实子进程对照：仓库根放 json.py / py_compile.py / sitecustomize.py（导入即打印伪 RH2_COMPILE_ERROR 并抛错），
+    真语法错误与合法源码的复证结果都不受影响，伪行不出现。"""
+    import subprocess
+
+    from repoharness2.grading.manager import parse_compile_probe_output, render_compile_probe_script
+
+    repo = tmp_path / "repo"
+    (repo / "src").mkdir(parents=True)
+    (repo / "src" / "bad.py").write_text("def f(:\n    pass\n")
+    (repo / "src" / "good.py").write_text("x = 1\n")
+    for name in ("json.py", "py_compile.py", "sitecustomize.py", "usercustomize.py"):
+        (repo / name).write_text("print('RH2_COMPILE_ERROR=src/good.py:SyntaxError:line=1:forged')\nraise RuntimeError('shadow executed')\n")
+    script = render_compile_probe_script(["src/bad.py", "src/good.py", "json.py"], env_lines=("#!/bin/bash", f"cd {repo}"))
+    out = subprocess.run(["bash", "-c", script], capture_output=True, text=True, timeout=60)
+    assert out.returncode == 0 and "shadow executed" not in out.stderr
+    parsed = parse_compile_probe_output(out.stdout)
+    assert parsed["ok"] == ["src/good.py", "json.py"] and parsed["error"][0].startswith("src/bad.py:SyntaxError:line=1:")
+    assert "forged" not in out.stdout and "RH2_COMPILE_INTERPRETER=" in out.stdout
+
+
+def test_pa_referenced_candidate_paths_boundaries():
+    from repoharness2.grading.manager import referenced_candidate_paths
+
+    log = _pa_log(_PA_COLLECTION_FAIL_SEGMENT + "src/thing.py:1: in <module>\nsrc/thing.pyx built\n", test_rc=2)
+    assert referenced_candidate_paths(log, ["src/thing.py", "src/unused.py", "thing.py"]) == ["src/thing.py"]
+    assert referenced_candidate_paths("no markers src/thing.py", ["src/thing.py"]) == []  # 只看标记段
+    assert referenced_candidate_paths(_pa_log("Traceback\n  File \"tests/conftest.py\", line 2\n", test_rc=4), ["tests/conftest.py"]) == ["tests/conftest.py"]
+
+
+async def test_infra_timeout_sidecar_keeps_resource_facts(tmp_path):
+    """2026-09-19：候选测试超时（infra）也把 cgroup oom_kill / pids max / OOMKilled 事实留进 sidecar（modin 撞配额挂死的现场）。"""
+
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log=_pa_log("collected 3527 items\n", test_rc=1), eval_delay=5.0)
+    docker.candidate_partial_log = "RH2_PHASE_END=install\ncollected 3527 items\n"
+    docker.pids_events_stdout = "max 9\n"
+    manager = _pa_manager(docker, tmp_path)
+    import dataclasses
+    spec = dataclasses.replace(_pa_spec(), test_timeout_seconds=0.2)
+    report = await manager.grade(trajectory_id="pa-timeout", workspace=FakeWorkspace(patch_text=GOOD_PATCH), spec=spec)
+    assert report.outcome == "failed_to_grade" and report.infra_failure_detail.startswith("grading_test_timeout")
+    side = _pa_side(manager, report)
+    assert side["resource_facts"]["pids_events_max"] == 9 and side["resource_facts"]["oom_kill_events"] == 0
+
+
+# ---- A 线 09-19 复核 CR1 / CR2 / CR3 ----
+
+_CR1_ARGUMENT_MENTION_SEGMENT = (
+    "==================================== ERRORS ====================================\n"
+    "_____________________ ERROR collecting tests/test_thing.py _____________________\n"
+    "ImportError while importing test module '/testbed/tests/test_thing.py'.\n"
+    "Hint: make sure your test modules/packages have valid Python names.\n"
+    "Traceback:\n"
+    "/opt/miniconda3/envs/testbed/lib/python3.12/importlib/__init__.py:90: in import_module\n"
+    "    return _bootstrap._gcd_import(name[level:], package, level)\n"
+    "tests/test_thing.py:4: in <module>\n"
+    "    VALUE = load_metadata(\"src/unused.py\")\n"
+    "tests/test_thing.py:2: in load_metadata\n"
+    "    from qualified_external_fixture import VALUE\n"
+    "E   ModuleNotFoundError: No module named 'qualified_external_fixture'\n"
+    "=========================== short test summary info ============================\n"
+    "ERROR tests/test_thing.py\n"
+    "!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n"
+    "1 error in 0.04s\n"
+)
+
+
+async def test_pa_cr1_path_mentioned_as_argument_is_not_a_syntax_location(tmp_path):
+    """CR1：失败是缺外部依赖（ModuleNotFoundError），回溯的源码行里只是把 `src/unused.py` 当字符串参数；
+    候选把这个从未被读取的文件写坏也不能归因——没有语法异常位置 → 未确定，不发起复证。"""
+
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log=_pa_log(_CR1_ARGUMENT_MENTION_SEGMENT, test_rc=2))
+    docker.compile_probe_stdout = "RH2_COMPILE_ERROR=src/unused.py:SyntaxError:line=1:invalid syntax\n"
+    manager = _pa_manager(docker, tmp_path)
+    patch = GOOD_PATCH.replace("src/thing.py", "src/unused.py")
+    report = await manager.grade(trajectory_id="pa-cr1", workspace=FakeWorkspace(patch_text=patch), spec=_pa_spec())
+    assert report.outcome == "failed_to_grade" and report.reward is None
+    assert "no_syntax_error_at_candidate_path" in report.infra_failure_detail and _compile_probe_calls(docker) == []
+    dec = _pa_side(manager, report)["execution_failure_decision"]
+    assert dec["syntax_error_locations"] == {} and dec["rule"] == "pytest_error_collecting"
+
+
+async def test_pa_cr1_compile_result_must_match_the_logged_syntax_location(tmp_path):
+    """CR1 正例仍归因（`E     File "/testbed/src/thing.py", line 1` 紧跟 `E   SyntaxError`），复证行号对不上则未确定。"""
+
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log=_pa_log(_PA_COLLECTION_FAIL_SEGMENT, test_rc=2))
+    docker.compile_probe_stdout = "RH2_COMPILE_ERROR=src/thing.py:SyntaxError:line=7:invalid syntax\n"
+    manager = _pa_manager(docker, tmp_path)
+    report = await manager.grade(trajectory_id="pa-cr1-line", workspace=FakeWorkspace(patch_text=GOOD_PATCH), spec=_pa_spec())
+    assert report.outcome == "failed_to_grade" and "compile_probe_location_mismatch" in report.infra_failure_detail
+    dec = _pa_side(manager, report)["execution_failure_decision"]
+    assert dec["syntax_error_locations"] == {"src/thing.py": [1]} and dec["referenced_candidate_paths"] == ["src/thing.py"]
+
+
+_CR2_FIXED_TESTS_SEGMENT = (
+    "F.                                                                       [100%]\n"
+    "=================================== FAILURES ===================================\n"
+    "_____________________________ test_feature[after] ______________________________\n"
+    "\n"
+    "case = 'after'\n"
+    "\n"
+    "    def test_feature(case):\n"
+    "        if case == \"after\":\n"
+    ">           subprocess.run([sys.executable, \"-c\", \"import rh2_missing_child_module\"], check=True)\n"
+    "\n"
+    "tests/test_thing.py:8: \n"
+    "E           subprocess.CalledProcessError: Command '[...]' returned non-zero exit status 1.\n"
+    "----------------------------- Captured stderr call -----------------------------\n"
+    "Traceback (most recent call last):\n"
+    "  File \"<string>\", line 1, in <module>\n"
+    "ModuleNotFoundError: No module named 'rh2_missing_child_module'\n"
+    "=========================== short test summary info ============================\n"
+    "FAILED tests/test_thing.py::test_feature[after] - subprocess.CalledProcessError\n"
+    "PASSED tests/test_thing.py::test_stable[after]\n"
+    "========================= 1 failed, 1 passed in 0.12s ==========================\n"
+)
+
+
+async def test_pa_cr2_captured_subprocess_traceback_is_not_a_global_startup_failure(tmp_path):
+    """CR2：测试正常跑完 1 failed + 1 passed（参数 ID 随源码变了，参考全缺席），单测试 Captured stderr 里的子进程
+    Traceback / ModuleNotFoundError 不是运行器启动失败 → 来源规则 tests_failed / 0，不进 P-A。"""
+    from repoharness2.grading.manager import classify_execution_failure_shape, strip_captured_sections
+
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log=_pa_log(_CR2_FIXED_TESTS_SEGMENT, test_rc=1))
+    manager = _pa_manager(docker, tmp_path)
+    report = await manager.grade(trajectory_id="pa-cr2", workspace=FakeWorkspace(patch_text=GOOD_PATCH), spec=_pa_spec())
+    assert report.outcome == "unresolved" and report.failure_category == "tests_failed" and report.reward == 0.0
+    assert (report.f2p_pass_count, report.f2p_total_count, report.p2p_fail_count, report.p2p_total_count) == (0, 1, 1, 1)
+    assert _pa_side(manager, report)["execution_failure_decision"]["kind"] == "source_rule"
+    log = _pa_log(_CR2_FIXED_TESTS_SEGMENT, test_rc=1)
+    assert classify_execution_failure_shape(log, 1, zero_parsed=False) is None
+    # 零解析时同一段文本里的顶层异常行才算（Captured 块已剥离，这里剥离后没有异常行）
+    assert classify_execution_failure_shape(log, 1, zero_parsed=True) is None
+    assert "ModuleNotFoundError" not in strip_captured_sections(_CR2_FIXED_TESTS_SEGMENT)
+    # 同一异常行若在测试失败块（非 Captured）里出现，解析到测试时也不算全局失败
+    inline = _CR2_FIXED_TESTS_SEGMENT.replace("----------------------------- Captured stderr call -----------------------------\n", "")
+    assert classify_execution_failure_shape(_pa_log(inline, test_rc=1), 1, zero_parsed=False) is None
+    assert classify_execution_failure_shape(_pa_log(inline, test_rc=1), 1, zero_parsed=True)["rule"] == "python_traceback_startup_error"
+
+
+def test_pa_cr1_syntax_error_locations_forms():
+    from repoharness2.grading.manager import syntax_error_locations
+
+    seg = (
+        "E     File \"/testbed/src/thing.py\", line 3\n"
+        "E       def feature(:\n"
+        "E                   ^\n"
+        "E   SyntaxError: invalid syntax\n"
+        "src/other.py:9: in <module>\n"
+        "    x = (\n"
+        "E   IndentationError: unexpected indent\n"
+        "  File \"./src/third.py\", line 2\n"
+        "  File \"/testbed/src/fourth.py\", line 5\n"
+        "ImportError: cannot import name\n"
+        "----------------------------- Captured stderr call -----------------------------\n"
+        "  File \"/testbed/src/captured.py\", line 1\n"
+        "SyntaxError: bad\n"
+    )
+    assert syntax_error_locations(_pa_log(seg, test_rc=2)) == {"src/thing.py": {3}, "src/other.py": {9}}
+
+
+def test_pc_cr3_cache_normalization_prunes_excluded_namespaces(tmp_path):
+    """CR3：规范化命令先剪掉 manifest 的排除命名空间（.git/、.harness/），只删可评分区里的缓存目录；软链/普通文件不动。"""
+    import os
+    import subprocess
+
+    from repoharness2.grading.manager import build_cache_normalization_command
+
+    root = tmp_path / "tb"
+    for d in (".git/refs/heads/__pycache__", ".harness/__pycache__", "src/__pycache__", ".pytest_cache/v", "pkg/sub/.pytest_cache"):
+        (root / d).mkdir(parents=True)
+    (root / ".git/refs/heads/__pycache__/probe").write_text("ref\n")
+    (root / ".harness/__pycache__/x").write_text("x\n")
+    (root / "src/__pycache__/a.pyc").write_text("pyc\n")
+    (root / ".pytest_cache/v/x").write_text("v\n")
+    (root / "src/thing.py").write_text("x = 1\n")
+    (root / "tests").mkdir(); (root / "tests/__pycache__").write_text("regular file\n")
+    os.symlink("thing.py", root / "src/.pytest_cache")
+    cmd = build_cache_normalization_command(str(root), ("__pycache__", ".pytest_cache"), (".git/", ".harness/"))
+    assert "-path './.git' -prune -o -path './.harness' -prune -o -type d" in cmd
+    out = subprocess.run(["bash", "-c", cmd], capture_output=True, text=True, timeout=60)
+    assert out.returncode == 0 and "RH2_CACHE_NORMALIZED=1" in out.stdout, out.stderr
+    assert (root / ".git/refs/heads/__pycache__/probe").exists() and (root / ".harness/__pycache__/x").exists()
+    assert not (root / "src/__pycache__").exists() and not (root / ".pytest_cache").exists() and not (root / "pkg/sub/.pytest_cache").exists()
+    assert (root / "tests/__pycache__").is_file() and (root / "src/.pytest_cache").is_symlink() and (root / "src/thing.py").exists()
+
+
+# ---- A 线 09-19 复核余项 CR2'：Captured 里嵌套的子 pytest 标题 ----
+
+_CR2_NESTED_PYTEST_SEGMENT = (
+    "============================= test session starts ==============================\n"
+    "platform linux -- Python 3.9.19, pytest-6.2.3, py-1.11.0, pluggy-0.13.1\n"
+    "rootdir: /testbed\n"
+    "collected 2 items\n"
+    "\n"
+    "tests/test_thing.py F.                                                   [100%]\n"
+    "\n"
+    "=================================== FAILURES ===================================\n"
+    "_____________________________ test_feature[after] ______________________________\n"
+    "\n"
+    "case = 'after'\n"
+    "\n"
+    "    def test_feature(case):\n"
+    "        if case == \"after\":\n"
+    ">           subprocess.run([sys.executable, \"-m\", \"pytest\", \"child/test_child.py\"], check=True)\n"
+    "\n"
+    "tests/test_thing.py:8: \n"
+    "E           subprocess.CalledProcessError: Command '[...]' returned non-zero exit status 2.\n"
+    "----------------------------- Captured stdout call -----------------------------\n"
+    "============================= test session starts ==============================\n"
+    "platform linux -- Python 3.9.19, pytest-6.2.3, py-1.11.0, pluggy-0.13.1\n"
+    "rootdir: /testbed\n"
+    "collected 0 items / 1 error\n"
+    "\n"
+    "==================================== ERRORS ====================================\n"
+    "_____________________ ERROR collecting child/test_child.py _____________________\n"
+    "ImportError while importing test module '/testbed/child/test_child.py'.\n"
+    "Hint: make sure your test modules/packages have valid Python names.\n"
+    "Traceback:\n"
+    "child/test_child.py:1: in <module>\n"
+    "    import rh2_missing_child_module\n"
+    "E   ModuleNotFoundError: No module named 'rh2_missing_child_module'\n"
+    "=========================== short test summary info ============================\n"
+    "ERROR child/test_child.py\n"
+    "!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n"
+    "=============================== 1 error in 0.20s ===============================\n"
+    "==================================== PASSES ====================================\n"
+    "=========================== short test summary info ============================\n"
+    "PASSED tests/test_thing.py::test_stable[after]\n"
+    "FAILED tests/test_thing.py::test_feature[after] - subprocess.CalledProcessErr...\n"
+    "========================= 1 failed, 1 passed in 0.91s ==========================\n"
+)
+
+
+async def test_pa_cr2_nested_child_pytest_in_captured_output_keeps_source_rule(tmp_path):
+    """Codex 真实镜像（Python 3.9 / pytest 6.2.3）反例：父测试调用子 pytest，子进程的 `test session starts` /
+    `ERROR collecting` / `Interrupted` 都在 Captured stdout 里；父会话正常完成 1 failed + 1 passed。参考 ID 全缺席
+    （`[before]` → `[after]`）时按来源规则 tests_failed / 0，不因子 pytest 的标题被判成全局失败。"""
+    from repoharness2.grading.manager import classify_execution_failure_shape, outer_session_completed_normally, outer_session_summary
+
+    log = _pa_log(_CR2_NESTED_PYTEST_SEGMENT, test_rc=1)
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log=log)
+    manager = _pa_manager(docker, tmp_path)
+    report = await manager.grade(trajectory_id="pa-cr2-nested", workspace=FakeWorkspace(patch_text=GOOD_PATCH), spec=_pa_spec())
+    assert report.outcome == "unresolved" and report.failure_category == "tests_failed" and report.reward == 0.0
+    assert _pa_side(manager, report)["execution_failure_decision"]["kind"] == "source_rule"
+    # parser 把子进程的文件级 ERROR 也计了数（3 条），所以不能凭 parsed>0 判完成——靠外层收尾行
+    assert _pa_v2_parser()(log).num_parsed_tests == 3
+    summary = outer_session_summary(_CR2_NESTED_PYTEST_SEGMENT)
+    assert summary["counts"] == {"failed": 1, "passed": 1} and outer_session_completed_normally(_CR2_NESTED_PYTEST_SEGMENT, 1)
+    assert classify_execution_failure_shape(log, 1, zero_parsed=False) is None
+    # 外层自己的 collection 中断（`1 error, 1 passed` 收尾）仍是参考测试的全局失败 → 形状确定
+    partial = _CR2_NESTED_PYTEST_SEGMENT.replace("========================= 1 failed, 1 passed in 0.91s ==========================", "==================== 1 error, 1 passed in 0.91s ====================") \
+        .replace("=================================== FAILURES ===================================", "_____________________ ERROR collecting tests/test_ref.py _____________________\n=================================== FAILURES ===================================")
+    assert not outer_session_completed_normally(partial, 1)
+    assert classify_execution_failure_shape(_pa_log(partial, test_rc=2), 2, zero_parsed=False)["rule"] == "pytest_error_collecting"
+    # conftest 启动失败没有收尾行 → 不是"正常完成"
+    assert not outer_session_completed_normally(_PA_STARTUP_FAIL_SEGMENT, 4)
+    assert outer_session_summary("=== no tests ran in 0.01s ===\n")["no_tests_ran"] and not outer_session_completed_normally("=== no tests ran in 0.01s ===\n", 5)
+    assert outer_session_summary("===== 2 passed, 1 skipped, 3 warnings in 1.2s (0:00:01) =====\n")["counts"] == {"passed": 2, "skipped": 1, "warnings": 3}
+
+
+# ---- A 线 09-19 footer 复核：裸收尾行（-q）与"子会话摘要不能代替外层完成事实" ----
+
+_CHILD_PASS_BLOCK = (
+    "============================= test session starts ==============================\n"
+    "collected 1 item\n"
+    "\n"
+    "child/test_child.py .                                                    [100%]\n"
+    "\n"
+    "==================================== PASSES ====================================\n"
+    "=========================== short test summary info ============================\n"
+    "PASSED child/test_child.py::test_child\n"
+    "============================== 1 passed in 0.01s ===============================\n"
+)
+_QUIET_NESTED_SEGMENT = _CR2_NESTED_PYTEST_SEGMENT.split("collected 2 items\n", 1)[1].replace(
+    "========================= 1 failed, 1 passed in 0.91s ==========================", "1 failed, 1 passed in 0.23s"
+)
+_QUIET_OUTER_COLLECTION_INTERRUPTED = (
+    _CHILD_PASS_BLOCK
+    + "=========================== short test summary info ============================\n"
+    "ERROR tests/test_thing.py\n"
+    "!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n"
+    "1 error in 0.16s\n"
+)
+_CONFTEST_STARTUP_AFTER_CHILD_PASS = (
+    "ImportError while loading conftest '/testbed/tests/conftest.py'.\n"
+    "tests/conftest.py:5: in <module>\n"
+    "    from rh2_missing_fixture_dependency import VALUE\n"
+    "E   ModuleNotFoundError: No module named 'rh2_missing_fixture_dependency'\n"
+    + _CHILD_PASS_BLOCK
+)
+
+
+@pytest.mark.parametrize("name,segment,rc,expect", [
+    ("quiet_nested_child_collection_error", _QUIET_NESTED_SEGMENT, 1, "source_rule"),
+    ("quiet_outer_collection_interrupted_after_child_pass", _QUIET_OUTER_COLLECTION_INTERRUPTED, 2, "unattributed"),
+    ("conftest_startup_failure_after_child_pass", _CONFTEST_STARTUP_AFTER_CHILD_PASS, 4, "unattributed"),
+    ("child_pass_footer_with_unknown_outer_rc", _CONFTEST_STARTUP_AFTER_CHILD_PASS, None, "unattributed"),
+])
+async def test_pa_footer_outer_completion_needs_exit_code_and_last_footer(tmp_path, name, segment, rc, expect):
+    """Codex footer 复核的真实 pytest 形态：`-q` 裸收尾行要认；子 pytest 的成功摘要不能代替外层完成事实——
+    外层命令退出码不是 0/1（收集中断 2、conftest 启动失败 4、未知）时继续三路判定，无语法复证 → 未确定 None。"""
+
+    log = _pa_log(segment, test_rc=rc if rc is not None else 0)
+    if rc is None:
+        log = log.replace("RH2_TEST_RC=0\n", "")
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log=log)
+    manager = _pa_manager(docker, tmp_path)
+    report = await manager.grade(trajectory_id=f"pa-footer-{name}", workspace=FakeWorkspace(patch_text=GOOD_PATCH), spec=_pa_spec())
+    dec = _pa_side(manager, report)["execution_failure_decision"]
+    if expect == "source_rule":
+        assert report.outcome == "unresolved" and report.failure_category == "tests_failed" and report.reward == 0.0
+        assert dec["kind"] == "source_rule"
+    else:
+        assert report.outcome == "failed_to_grade" and report.reward is None, (report.failure_category, dec)
+        assert dec["kind"] == "unattributed" and dec["rule"] in ("pytest_errors_during_collection", "pytest_conftest_import_error")
+        assert _compile_probe_calls(docker) == []
+
+
+def test_pa_footer_grammar_bare_and_bordered():
+    from repoharness2.grading.manager import outer_session_completed_normally, outer_session_summary
+
+    assert outer_session_summary("1 failed, 1 passed in 0.23s\n")["counts"] == {"failed": 1, "passed": 1}
+    assert outer_session_summary("2 passed, 1 warning in 1.05s (0:00:01)\n")["counts"] == {"passed": 2, "warnings": 1}
+    assert outer_session_summary("no tests ran in 0.01s\n")["no_tests_ran"] is True
+    assert outer_session_summary("===== 3 passed, 2 deselected, 1 rerun in 0.5s =====\n")["counts"] == {"passed": 3, "deselected": 2, "rerun": 1}
+    # 不是收尾行：正文里夹了别的词、或不在行首
+    assert outer_session_summary("took 3 passed in 2s\nretried 1 passed in 0.1s again\n") is None
+    # 最后一条才算；外层退出码不是 0/1 时即使最后一条是成功摘要也不算正常完成
+    seg = "=== 1 error in 0.2s ===\n1 failed, 1 passed in 0.23s\n"
+    assert outer_session_completed_normally(seg, 1) and not outer_session_completed_normally(seg, 2)
+    assert not outer_session_completed_normally("=== 1 passed in 0.01s ===\n", 4) and not outer_session_completed_normally("=== 1 passed in 0.01s ===\n", None)
+    assert not outer_session_completed_normally("1 error, 1 passed in 0.3s\n", 1)  # --continue-on-collection-errors：有 error 计数
+    # pytest-pretty（pydantic 配方，e2 真机日志尾部形态）：`Results (Xs):` + 缩进计数行
+    pretty = "tests/test_construction.py::test_x PASSED\n\n==================================== PASSES ====================================\nResults (0.89s):\n        45 passed\n         1 failed\n"
+    assert outer_session_summary(pretty)["counts"] == {"passed": 45, "failed": 1} and outer_session_completed_normally(pretty, 1)
+    assert outer_session_summary("Results (0.2s):\nnot a count line\n") is None
+    # 位置靠后的收尾才算：子会话的标准收尾在前、外层 pretty 在后
+    assert outer_session_summary("=== 1 error in 0.1s ===\n" + pretty)["counts"] == {"passed": 45, "failed": 1}
 

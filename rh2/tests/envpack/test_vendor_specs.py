@@ -128,3 +128,112 @@ def test_reextraction_byte_identical_to_package_json():
     packaged = (files("repoharness2.envpack") / "data" / pin.json_package_name).read_bytes()
     assert payload == packaged, "重提取结果与包内 JSON 不一致（两个 pin 语义脱节）"
     assert _h.sha256(packaged).hexdigest() == pin.json_sha256
+
+
+# ---- S1-a（评分接线 2026-09-15）：安装/eval_commands/测试选择器派生与 216 行官方契约 ----
+
+from repoharness2.envpack.spec_vendor import (  # noqa: E402
+    NON_TEST_EXTS,
+    derive_eval_commands,
+    derive_install_cmd,
+    derive_test_command,
+    derive_test_directives,
+)
+
+# A1：oracle 随 rh2 测试树走（docs 下的 B_materials 原件是证据副本，存在时必须逐字节相同）
+CONTRACT_216 = Path(__file__).resolve().parent / "data" / "official_cmd_contract_216.json"
+CONTRACT_216_DOCS_COPY = DOCS / "project1_execution/B_materials_20260908/official_cmd_contract_216.json"
+GRADING_BUNDLES_V2 = DOCS / "s2/ingest/grading_bundles_v2_v0.jsonl"
+RESOURCE_FILE_CASES = {
+    # 来源 get_test_directives 会剔除资源文件；这三题此前被 rh2 当测试文件传给 pytest（B 线复核 B1）
+    "getmoto__moto-4847": "pytest -n0 -rA tests/test_acm/test_acm.py",
+    "getmoto__moto-7607": (
+        "pytest -n0 -rA tests/test_stepfunctions/parser/__init__.py "
+        "tests/test_stepfunctions/parser/test_stepfunctions_dynamodb_integration.py"
+    ),
+    "iterative__dvc-5336": "pytest -rA tests/unit/remote/test_local.py",
+}
+
+
+@pytest.fixture(scope="module")
+def contract_rows():
+    rows = json.loads(CONTRACT_216.read_text())
+    assert len(rows) == 216
+    if CONTRACT_216_DOCS_COPY.exists():
+        assert CONTRACT_216_DOCS_COPY.read_bytes() == CONTRACT_216.read_bytes(), "docs 证据副本与测试 oracle 分家"
+    return {r["instance_id"]: r for r in rows}
+
+
+@pytest.fixture(scope="module")
+def grading_bundles_v2():
+    rows = [json.loads(l) for l in GRADING_BUNDLES_V2.read_text().splitlines() if l.strip()]
+    assert len(rows) == 216
+    return {r["instance_id"]: r for r in rows}
+
+
+def test_official_test_line_contract_216(contract_rows, grading_bundles_v2):
+    """216/216 派生测试命令必须与官方 fork 生成的 eval 脚本测试行逐字相等（含 mypy `-k` 与资源文件剔除）。"""
+    mismatches = []
+    for iid, row in grading_bundles_v2.items():
+        derived = derive_test_command(row["spec_vendor_id"], row["repo_key_lower"], row["version"], row["test_patch"])
+        official = contract_rows[iid]["official_test_line"]
+        if derived != official:
+            mismatches.append((iid, derived, official))
+    assert mismatches == [], f"{len(mismatches)} 条与官方行不一致，例如 {mismatches[:3]}"
+
+
+def test_resource_file_cases_are_dropped_from_selector_but_kept_in_restore_list(grading_bundles_v2):
+    from repoharness2.grading.manager import patch_touched_paths
+
+    for iid, expected in RESOURCE_FILE_CASES.items():
+        row = grading_bundles_v2[iid]
+        cmd = derive_test_command(row["spec_vendor_id"], row["repo_key_lower"], row["version"], row["test_patch"])
+        assert cmd == expected
+        touched = patch_touched_paths(row["test_patch"])
+        directives = set(derive_test_directives(row["repo_key_lower"], row["test_patch"]))
+        dropped = {p for p in touched if any(p.endswith(e) for e in NON_TEST_EXTS)}
+        assert dropped, f"{iid}: 应含至少一个资源文件"
+        assert directives.isdisjoint(dropped)
+        # 恢复/保护清单（test_patch 触碰的全部路径）不因选择器缩减
+        assert dropped <= touched and directives <= touched
+
+
+def test_install_and_eval_commands_presence(contract_rows, grading_bundles_v2):
+    """官方 fork `make_eval_script_list` 的规则：spec 有 `install` 就逐字加入 eval 脚本、有 `eval_commands`
+    就在激活环境后逐条执行。216 题的 9 个仓库全部带 `install`；只有 conan 12 题带 `eval_commands`。
+    注意：contract JSON 里的 `install_step_in_eval` 是 2026-09-09 的 `pip install` 子串启发式（pydantic 20 题的
+    安装串是 `pdm add …; make install`，被记成 False），不作 oracle；`eval_commands` 标志仍可对照。"""
+    for iid, row in grading_bundles_v2.items():
+        c = contract_rows[iid]
+        install = derive_install_cmd(row["spec_vendor_id"], row["repo_key_lower"], row["version"])
+        assert install is not None and install.strip(), iid
+        evc = derive_eval_commands(row["spec_vendor_id"], row["repo_key_lower"], row["version"])
+        assert bool(evc) == bool(c["eval_commands"]), iid
+        if row["repo_key_lower"] == "conan-io/conan":
+            assert evc == ("export PYTHONPATH=${PYTHONPATH:-}:$(pwd)",)
+        else:
+            assert evc == ()
+    pydantic_install = derive_install_cmd(SPEC_VENDOR_ID_SWEGYM_242429C1, "pydantic/pydantic", "2.04")
+    assert pydantic_install.startswith('export PATH="$HOME/.local/bin:$PATH"; pdm add pre-commit')
+
+
+def test_mypy_selector_uses_case_names_not_files():
+    patch = (
+        "diff --git a/test-data/unit/check-x.test b/test-data/unit/check-x.test\n"
+        "--- a/test-data/unit/check-x.test\n+++ b/test-data/unit/check-x.test\n"
+        "+[case testAlpha]\n+[case testBeta]\n"
+    )
+    cmd = derive_test_command(SPEC_VENDOR_ID_SWEGYM_242429C1, "python/mypy", "0.820", patch)
+    assert cmd == 'pytest -n0 -rA -k "testAlpha or testBeta"'
+    assert "check-x.test" not in cmd
+
+
+def test_directive_filter_and_django_transform():
+    patch = (
+        "diff --git a/tests/a/test_a.py b/tests/a/test_a.py\n"
+        "diff --git a/tests/a/data.json b/tests/a/data.json\n"
+        "diff --git a/tests/a/fixture.csv b/tests/a/fixture.csv\n"
+    )
+    assert derive_test_directives("getmoto/moto", patch) == ["tests/a/test_a.py"]
+    assert derive_test_directives("django/django", patch) == ["a.test_a"]
+    assert derive_test_directives("swe-bench/humaneval", patch) == ["test.py"]

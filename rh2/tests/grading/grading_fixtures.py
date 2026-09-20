@@ -153,6 +153,7 @@ def make_trusted_setup_script(
 def make_candidate_test_script(*, extra_prelude: str = "", test_cmd: str = "python tests/test_thing.py") -> str:
     """F2：候选执行用户半段（只跑测试命令，带官方 Start/End 标记；prelude 供测试注入探针/攻击）。"""
 
+    # 形态对齐生产 v2 渲染器：测试命令后立即记 `RH2_TEST_RC=$?`，End 标记之后 echo 出来（P-A R3 的终止事实之一）
     return (
         "#!/bin/bash\n"
         "set -xo pipefail\n"
@@ -160,7 +161,9 @@ def make_candidate_test_script(*, extra_prelude: str = "", test_cmd: str = "pyth
         f"{extra_prelude}"
         "echo '>>>>> Start Test Output'\n"
         f"{test_cmd}\n"
+        "RH2_TEST_RC=$?\n"
         "echo '>>>>> End Test Output'\n"
+        'echo "RH2_TEST_RC=$RH2_TEST_RC"\n'
     )
 
 
@@ -321,6 +324,21 @@ class FakeDocker:
     base_commit: str
     image_present: bool = True
     pull_delay: float = 0.0
+    # S1-m：超时后 root `cat /rh2/candidate/eval.log` 读回的部分日志；root 观测脚本（含 RH2_OBS_）的罐头输出
+    candidate_partial_log: str = ""
+    observation_stdout: str = ""
+    observation_exit_code: int = 0
+    # R1/R3/R4 反例旋钮：rm / 观测 / image inspect 的人为延迟（取消与预算边界）
+    rm_delay: float = 0.0
+    observation_delay: float = 0.0
+    observation_delay_match: str = ""  # 非空时只延迟含该子串的观测脚本（例如只延迟后观测）
+    image_inspect_delay: float = 0.0
+    # 第四组 P-A 旋钮：编译复证脚本（含 RH2_COMPILE_）的罐头输出；cgroup memory.events 文本；容器 OOMKilled
+    compile_probe_stdout: str = ""
+    compile_probe_exit_code: int = 0
+    memory_events_stdout: str = "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\n"
+    pids_events_stdout: str = "max 0\n"  # cgroup pids.events（P-A R3：未知 = 不能归因候选）
+    oom_killed: bool = False
     pull_fail: bool = False
     eval_log: str = GOOD_FAKE_LOG
     eval_delay: float = 0.0
@@ -368,6 +386,8 @@ class FakeDocker:
         cmd = args[0]
         if cmd == "image":  # image inspect [-f fmt] <image>
             image = args[-1]
+            if self.image_inspect_delay:
+                await asyncio.sleep(self.image_inspect_delay)
             if "RepoDigests" in " ".join(args):  # codex#1：RepoDigests 查询
                 import json as _json
 
@@ -395,6 +415,8 @@ class FakeDocker:
         if cmd == "inspect":
             if "{{.Image}}" in args:  # 容器实际镜像 ID（codex#1 比对入口）
                 return ExecResult(0, "sha256:" + "ab" * 32 + "\n", "")
+            if "{{.State.OOMKilled}}" in args:  # P-A 资源事实
+                return ExecResult(0, ("true" if self.oom_killed else "false") + "\n", "")
             if self.inspect_fail is not None:
                 return ExecResult(1, "", self.inspect_fail)
             return ExecResult(0, "true\n" if self.container_running else "false\n", "")
@@ -407,6 +429,8 @@ class FakeDocker:
             return ExecResult(0, self.ps_stdout, "")
         if cmd == "rm":
             name = args[-1]
+            if self.rm_delay:
+                await asyncio.sleep(self.rm_delay)
             if name in self.rm_fail_names:
                 return ExecResult(1, "", f"cannot remove {name}: fake failure")
             self.removed.append(name)
@@ -426,6 +450,18 @@ class FakeDocker:
                 return ExecResult(self.apply_exit_code, "", stderr)
             if "memory.peak" in script:
                 return ExecResult(0, str(1024 * 1024) + "\n", "")
+            if "RH2_CACHE_NORMALIZED" in script:  # 第四组 P-C：grader 应用前删可再生缓存目录（R6 一致规范化）
+                return ExecResult(0, "RH2_CACHE_NORMALIZED=1\n", "")
+            if "memory.events" in script:  # P-A 资源事实（memory.events + RH2_PIDS_EVENTS 分隔 + pids.events）
+                return ExecResult(0, self.memory_events_stdout + "RH2_PIDS_EVENTS\n" + self.pids_events_stdout, "")
+            if "RH2_COMPILE_EOF" in script:  # P-A 编译复证（候选身份）
+                return ExecResult(self.compile_probe_exit_code, self.compile_probe_stdout, "")
+            if "cat /rh2/candidate/eval.log" in script:  # A3 后带 [ -f ] && [ ! -L ] 守卫
+                return ExecResult(0, self.candidate_partial_log, "")
+            if "RH2_OBS_" in script:
+                if self.observation_delay and (not self.observation_delay_match or self.observation_delay_match in script):
+                    await asyncio.sleep(self.observation_delay)
+                return ExecResult(self.observation_exit_code, self.observation_stdout, "")
             if script.startswith("bash ") and "2>&1" in script:
                 if self.eval_delay:
                     await asyncio.sleep(self.eval_delay)

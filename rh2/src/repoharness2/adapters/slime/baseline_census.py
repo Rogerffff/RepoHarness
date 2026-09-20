@@ -18,6 +18,9 @@ from __future__ import annotations
 import hashlib
 from typing import Any
 
+from re import escape as re_escape
+from shlex import quote as shlex_quote
+
 from repoharness2.contracts.baseline_manifest import (
     BASELINE_MANIFEST_POLICY_V1,
     BaselineEntry,
@@ -53,6 +56,19 @@ def build_census_script(workdir: str, policy: BaselineManifestPolicy) -> str:
     prunes = " ".join(
         f"-path './{ns.rstrip('/')}' -prune -o" for ns in policy.excluded_namespaces
     )
+    # 第四组 P-C（R4）：只剪**目录**（-type d），同名普通文件/软链照常列出；被剪目录下的文件只计数，不进 digest。
+    cache_dirs = tuple(policy.regenerable_cache_dirs)
+    if cache_dirs:
+        names = " -o ".join(f"-name {shlex_quote(d)}" for d in cache_dirs)
+        ns_prunes = prunes
+        prunes = prunes + f" \\( -type d \\( {names} \\) -prune \\) -o"
+        alt = "|".join(re_escape(d) for d in cache_dirs)
+        cache_count = (
+            f"echo \"CACHE_OMITTED_DIRS\t$(find . {ns_prunes} -type d \\( {names} \\) -prune -print | wc -l | tr -d ' ')\"\n"
+            f"echo \"CACHE_OMITTED_FILES\t$(find . {ns_prunes} -type f -print | grep -c -E '/({alt})/' || true)\"\n"
+        )
+    else:
+        cache_count = ""
     excl_finds = " ; ".join(
         f"find './{ns.rstrip('/')}' -type f -print 2>/dev/null | LC_ALL=C sort | "
         f"while IFS= read -r p; do printf 'EXCL\\t%s\\n' \"${{p#./}}\"; done"
@@ -75,7 +91,25 @@ find . {prunes} \\( -type f -o -type l -o \\( ! -type d ! -type f ! -type l \\) 
   fi
 done
 {excl_finds}
-"""
+{cache_count}"""
+
+
+def parse_census_omitted_counts(text: str) -> dict[str, int]:
+    """第四组 P-C：census 输出里的可再生缓存省略计数（只进 sidecar/账本，不进 manifest 身份）。"""
+    counts: dict[str, int] = {}
+    for line in text.splitlines():
+        parts = line.split("\t")
+        if parts and parts[0].startswith("CACHE_OMITTED") and len(parts) >= 2 and parts[1].strip().isdigit():
+            counts["dirs" if parts[0].endswith("DIRS") else "files"] = int(parts[1].strip())
+    return counts
+
+
+def baseline_policy_for_task_id(task_id: str) -> BaselineManifestPolicy:
+    """第四组 P-C：只有所选 Python SWE 来源（swe_gym_lite）用政策 v2（省略可再生缓存目录）；其它来源沿用 v1。"""
+    from repoharness2.contracts.baseline_manifest import BASELINE_MANIFEST_POLICY_V2
+
+    source = task_id.split("::", 1)[0] if "::" in task_id else ""
+    return BASELINE_MANIFEST_POLICY_V2 if source == "swe_gym_lite" else BASELINE_MANIFEST_POLICY_V1
 
 
 def parse_census_output(
@@ -115,6 +149,8 @@ def parse_census_output(
         if parts[0] == "EXCL":
             excluded_paths.append(parts[1])
             continue
+        if parts[0].startswith("CACHE_OMITTED"):
+            continue  # 第四组 P-C：计数行不进 manifest（用 parse_census_omitted_counts 读）
         if len(parts) != 4:
             raise BaselineCensusError("census_parse_error", f"畸形行：{line!r}")
         kind, perm, sha, path = parts
@@ -161,6 +197,7 @@ async def generate_baseline_manifest(
     materialized_head: str,
     task_base_commit: str,
     policy: BaselineManifestPolicy = BASELINE_MANIFEST_POLICY_V1,
+    omitted_sink: dict[str, int] | None = None,
 ) -> BaselineWorkspaceManifestV1:
     result = await workspace.run_bash(build_census_script(workdir, policy))
     if getattr(result, "exit_code", 1) != 0:
@@ -168,6 +205,8 @@ async def generate_baseline_manifest(
             "baseline_census_failed",
             f"census 脚本失败（exit={result.exit_code}）：{result.stderr.strip()[-300:]}",
         )
+    if omitted_sink is not None:
+        omitted_sink.update(parse_census_omitted_counts(result.stdout))
     return parse_census_output(
         result.stdout,
         task_id=task_id,

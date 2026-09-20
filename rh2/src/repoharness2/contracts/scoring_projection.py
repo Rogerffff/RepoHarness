@@ -144,6 +144,28 @@ def classify_frozen_patch(
     excluded_namespaces = baseline.policy.excluded_namespaces
 
     reasons: list[str] = []
+    # 第四组 P-D：文件变目录——祖先 entry 只可能是"删除普通文件"（artifact 契约已保证），
+    # 还要求基线里该路径确是普通文件（不是 symlink），否则 unsafe（沿用 no-follow 边界）。
+    baseline_types = {b.path: b.object_type for b in baseline.entries}
+    entry_paths = {e.path for e in artifact.entries}
+    for e in artifact.entries:
+        if e.operation != "add":
+            continue
+        segs = e.path.split("/")
+        for i in range(1, len(segs)):
+            anc = "/".join(segs[:i])
+            if anc in entry_paths and baseline_types.get(anc) != "regular":
+                reasons.append(f"file_to_dir_ancestor_not_regular:{anc}")
+    # 第四组 P-C：可再生缓存目录由 census 整体省略，artifact 里不可能出现其内部路径；出现 = producer 与
+    # 政策不一致（契约矛盾，不是候选的 unsafe）。
+    cache_dirs = tuple(getattr(baseline.policy, "regenerable_cache_dirs", ()) or ())
+    if cache_dirs:
+        for e in artifact.entries:
+            if any(seg in cache_dirs for seg in e.path.split("/")[:-1]):
+                raise ProjectionContractError(
+                    "cache_entry_present_despite_policy",
+                    f"{e.path!r} 落在可再生缓存目录内，producer census 与 baseline 政策不一致",
+                )
     for e in artifact.entries:
         for ns in excluded_namespaces:
             if e.path == ns.rstrip("/") or e.path.startswith(ns):

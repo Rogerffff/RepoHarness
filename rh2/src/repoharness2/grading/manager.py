@@ -47,6 +47,7 @@ docker 调用函数是构造参数（P7 backend-neutral）：单测注入 FakeDo
 from __future__ import annotations
 
 import asyncio
+import json
 import math
 from contextvars import ContextVar
 import base64
@@ -55,7 +56,7 @@ import os
 import re
 import time
 import uuid
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from fnmatch import fnmatch
@@ -477,6 +478,19 @@ def screen_frozen_entries(
     )
 
 
+def build_cache_normalization_command(testbed_path: str, dirs: Sequence[str], excluded_namespaces: Sequence[str]) -> str:
+    """第四组 P-C 一致规范化的 find 命令（A 线 09-19 复核 CR3：先按 manifest 的 `excluded_namespaces` 剪枝——
+    `.git/`、`.harness/` 等排除区不是可评分树，里面同名的 `__pycache__` 目录（例如分支引用目录）不能动；
+    再只删可评分区内政策列出的可再生缓存**目录**，软链/普通文件不匹配 `-type d`）。"""
+
+    prunes = " ".join(f"-path {_shq('./' + ns.rstrip('/'))} -prune -o" for ns in excluded_namespaces)
+    names = " -o ".join(f"-name {_shq(d)}" for d in dirs)
+    return (
+        f"cd {_shq(testbed_path)} && find . -mindepth 1 {prunes} -type d \\( {names} \\) -prune -exec rm -rf -- {{}} + "
+        "&& echo RH2_CACHE_NORMALIZED=1"
+    )
+
+
 def build_delta_delete_command(testbed_path: str, path: str) -> str:
     """delete：`rm -f` 对 symlink 是 no-follow（删链本体不碰 target）。"""
 
@@ -548,7 +562,11 @@ async def export_cleaned_patch(
 
 # SWE 任务默认测试通配（fnmatch，`*` 跨 `/`）：django tests/、sympy */tests/、
 # requests 根目录 test_*.py、astropy 深层 tests/ 都被覆盖。宁误报不漏报。
-DEFAULT_SWE_TEST_GLOBS: tuple[str, ...] = (
+# 第四组 P-B（用户 2026-09-15 决定，2026-09-16 实施）：测试名通配**不再注入** SWE 评分规则——
+# `*tests/*`、`*testing/*` 曾把 `pandas/_testing/_io.py` 这类合法源码当控制面剔除（I08）。
+# 保留同一元组只作**观测**（sidecar 记录候选触碰了哪些测试样路径）与机制测试用；逐题额外排除
+# 留给流水线按题目、测试入口与仓库代码判断。official test 文件恢复/保护与保留命名空间不变。
+TEST_LIKE_OBSERVATION_GLOBS: tuple[str, ...] = (
     "*tests/*",
     "*testing/*",
     "test_*.py",
@@ -556,6 +574,20 @@ DEFAULT_SWE_TEST_GLOBS: tuple[str, ...] = (
     "*_test.py",
     "*/*_test.py",
 )
+DEFAULT_SWE_TEST_GLOBS = TEST_LIKE_OBSERVATION_GLOBS  # 旧名保留给既有 import；SWE spec 构造入口已不再使用
+# 观测：候选是否触碰能改变 pytest 收集/配置的文件（conftest、fixture 目录、pytest/tox/setup/pyproject 配置）。
+CONFTEST_OR_FIXTURE_GLOBS: tuple[str, ...] = (
+    "conftest.py", "*/conftest.py", "*/fixtures/*", "pytest.ini", "*/pytest.ini",
+    "tox.ini", "setup.cfg", "pyproject.toml",
+)
+
+
+def observe_candidate_paths(paths: "Sequence[str]") -> dict[str, list[str]]:
+    """P-B 观测（只进 sidecar/账本，不改判定、不剔除）：候选重放路径里的测试样路径与 conftest/fixture 类路径。"""
+
+    test_like = sorted(p for p in paths if any(fnmatch(p, g) for g in TEST_LIKE_OBSERVATION_GLOBS))
+    conf = sorted(p for p in paths if any(fnmatch(p, g) for g in CONFTEST_OR_FIXTURE_GLOBS))
+    return {"candidate_test_like_paths": test_like, "candidate_touched_conftest_or_fixture": conf}
 
 # SWE 任务默认禁区通配：rh2 运行时私有落点（cleaned patch、eval 脚本等都写在
 # 容器 /rh2/ 下、仓库外，正常 diff 不会出现；出现同名仓库内路径即视为污染企图）。
@@ -579,12 +611,27 @@ class GradingEnvSpec:
     # 两者都在场才允许在 profile 下评分（缺失 = SandboxProfileViolation run-halt）；legacy（无 profile）路径仍只用 eval_script。
     trusted_setup_script: str | None = None
     candidate_test_script: str | None = None
+    # S1-m（评分接线 2026-09-15）：候选段之前/之后的 root 观测脚本（输出 `RH2_OBS_*=` 行）。
+    # 只进诊断 sidecar（<eval_log>.diagnostics.json）与 _ContainerRecord.observations，不改判定；
+    # 观测失败不算 infra（记 RH2_OBS_ERROR）。None = 不观测（legacy / fixture）。
+    pre_candidate_observation_script: str | None = None
+    post_candidate_observation_script: str | None = None
+    # 第四组 A（2026-09-16）：候选全局执行失败的归因材料。
+    #   env_qualification：环境资格记录（同一镜像身份 + 同一脚本摘要下 gold/noop 的参考清单缺席数为 0）；
+    #     None 或与本 spec 不符 = 资格缺席 → 全局失败只能走未确定（infra 族、无 reward）。
+    #   render_compile_probe：给定候选改动路径清单，渲染"以候选身份、同一解释器做内存内 compile()"的脚本
+    #     （F3）；None = 不能复证 → 同样只能走未确定。框架无关的默认渲染见 render_compile_probe_script。
+    env_qualification: "EnvQualification | None" = None
+    render_compile_probe: Callable[[Sequence[str]], str] | None = None
     # 运行期镜像 digest 比对（S1-7a 前置修复，codex#1）：二选一、必选其一——
     # 要么给出 envpack 冻结的 manifest digest（评分容器启动后与实际镜像的
     # RepoDigests 比对，不符即 infra_failure），要么显式声明 image_local_build
     # 豁免（本地构建 fixture 镜像没有 RepoDigests）。两者都缺 = 构造即拒。
     image_manifest_digest: str | None = None
     image_local_build: bool = False
+    # 派生镜像（image_local_build）的实际 image ID（`docker image inspect -f {{.Id}}`）：资格键用它而不是可重指的
+    # tag（A 线复核 R5-P2：同 tag 重建不得沿用旧资格）。None = 调用方没有取得 ID，退回 tag。
+    image_local_build_id: str | None = None
     checkout_mode: Literal["image_embedded", "clone_from_readonly_snapshot"] = "image_embedded"
     # clone 模式（本机 fixture）：宿主侧只读快照目录，以 :ro 挂进容器后 clone 出 /testbed（P6）。
     snapshot_host_path: str | None = None
@@ -638,7 +685,7 @@ def build_swe_grading_spec(pair: bundles.BundlePair) -> GradingEnvSpec:
         grader_version=f"swebench-{scoring.swebench_version()}",
         hygiene=HygieneRules(
             test_files=test_files,
-            test_globs=DEFAULT_SWE_TEST_GLOBS,
+            test_globs=(),  # P-B：不再按测试名通配剔除候选改动（观测见 observe_candidate_paths）
             forbidden_globs=DEFAULT_SWE_FORBIDDEN_GLOBS,
         ),
         checkout_mode="image_embedded",  # 官方镜像自带 /testbed@base（血缘判据核验）
@@ -834,6 +881,21 @@ class _ContainerRecord:
     # 可信 setup / 权限布置阶段的原始输出：候选测试从未启动时 grade() 拿不到 eval 日志，
     # 用它给 infra 报告留 eval_log_ref（否则真实故障现场丢失）。
     eval_log_partial: str | None = None
+    # S1-m（评分接线 2026-09-15）：候选段前后 root 观测（RH2_OBS_* KEY=VALUE）、候选段事实
+    # （安装段退出码、按时间戳拆出的 install/test 秒数、日志是否为超时后的部分读取）与本次诊断 sidecar 内容。
+    observations: dict[str, str] | None = None
+    candidate_facts: dict[str, Any] | None = None
+    diagnostics: dict[str, Any] | None = None
+    # I5：parser 已算出的 verdict（零解析判 infra 时也保留其诊断字段）
+    parsed_verdict: Any | None = None
+    # R3：评分被取消时已落盘的日志引用（取消不产出 GradingReport，调用方从这里取证据）
+    cancelled_eval_log_ref: Any | None = None
+    # 第四组 P-C：grader 重建 census 时省略的可再生缓存计数（只进诊断）
+    omitted_cache: dict[str, int] | None = None
+    # 第四组 P-A：资源事实（cgroup oom_kill 事件、容器 OOMKilled）、编译复证结果、三路判定（只进诊断 + 报告证据）
+    resource_facts: dict[str, Any] | None = None
+    compile_probe: dict[str, Any] | None = None
+    execution_failure_decision: dict[str, Any] | None = None
 
 
 # W3a 生命周期计时：grader 内部六段（与 adapters/slime/attempt_timing.LIFECYCLE_SEGMENTS 同名）。
@@ -850,6 +912,398 @@ GRADER_PHASE_SEGMENTS: tuple[str, ...] = (
 # manager 内暂存的分段记录上限：orchestrator 经 take_grader_phase_timing() 取走即删除；
 # 没有消费者（例如 bringup 尚未接线）时按 FIFO 淘汰最旧记录，防止长 run 无界增长。
 _GRADER_PHASE_TIMING_RETENTION = 1024
+
+# S1-m：候选段输出同时 tee 到容器内文件（候选用户属主目录），超时后 root 仍能读回已产生的部分输出。
+CANDIDATE_LOG_DIR = "/rh2/candidate"
+CANDIDATE_LOG_PATH = f"{CANDIDATE_LOG_DIR}/eval.log"
+_CANDIDATE_LOG_PARTIAL_READ_TIMEOUT_SEC = 30.0
+_OBSERVATION_LINE = re.compile(r"^(RH2_OBS_[A-Z0-9_]+)=(.*)$")
+_CANDIDATE_FACT_LINE = re.compile(r"^(RH2_INSTALL_RC|RH2_INSTALL_SKIPPED|RH2_TEST_RC|RH2_TS_INSTALL_START|RH2_TS_INSTALL_END|RH2_TS_TEST_START|RH2_TS_TEST_END)=(.*)$")
+_INSTALL_CMD_FAILED_LINE = re.compile(r"^RH2_INSTALL_CMD_FAILED=(\d+) (.*)$")
+
+
+def candidate_facts_from_log(text: str) -> dict[str, Any]:
+    """从候选段日志抽取 S1-c 渲染的事实行：安装段退出码（段末命令）、时间戳 → install/test 秒数。
+
+    只认整行精确匹配（`set -x` 的回显行以 `+ ` 开头，不会被误认）；缺失即 None，不猜。"""
+
+    raw: dict[str, str] = {}
+    for line in text.splitlines():
+        m = _CANDIDATE_FACT_LINE.match(line.strip())
+        if m and m.group(1) not in raw:  # 第一次出现为准（候选无法在它之前伪造：安装段先于测试段）
+            raw[m.group(1)] = m.group(2).strip()
+
+    def _ts(key: str) -> float | None:
+        try:
+            return float(raw[key])
+        except (KeyError, ValueError):
+            return None
+
+    def _delta(a: str, b: str) -> float | None:
+        x, y = _ts(a), _ts(b)
+        return round(y - x, 3) if x is not None and y is not None and y >= x else None
+
+    rc: int | None = int(raw["RH2_INSTALL_RC"]) if raw.get("RH2_INSTALL_RC", "").isdigit() else None
+    test_rc: int | None = int(raw["RH2_TEST_RC"]) if raw.get("RH2_TEST_RC", "").isdigit() else None
+    # 2026-09-19：安装段 ERR trap 打出的失败命令（`RH2_INSTALL_CMD_FAILED=<rc> <cmd>`，不认 `+ ` 回显行）；上限 20 条
+    failed_cmds: list[dict[str, Any]] = []
+    for line in text.splitlines():
+        m = _INSTALL_CMD_FAILED_LINE.match(line)
+        if m and len(failed_cmds) < 20:
+            failed_cmds.append({"rc": int(m.group(1)), "cmd": m.group(2).strip()[:200]})
+    return {
+        "install_rc_last_command": rc,
+        "install_failed_commands": failed_cmds,
+        "install_skipped": raw.get("RH2_INSTALL_SKIPPED") == "1",
+        "install_seconds": _delta("RH2_TS_INSTALL_START", "RH2_TS_INSTALL_END"),
+        "test_rc": test_rc,  # I7：测试命令自身的退出码（只进诊断，不作闸门）
+        "test_seconds": _delta("RH2_TS_TEST_START", "RH2_TS_TEST_END"),
+        "markers_seen": sorted(raw),
+    }
+
+
+def candidate_phase_at(partial_log: str) -> str:
+    """A2：从部分日志的阶段标记判断超时发生在哪一段（install / test / unknown）——只用于归因文字。"""
+    if "RH2_PHASE_START=install" in partial_log and "RH2_PHASE_END=install" not in partial_log:
+        return "install"
+    if "RH2_PHASE_END=install" in partial_log or "RH2_INSTALL_SKIPPED=1" in partial_log:
+        return "test"
+    return "unknown"
+
+
+# ---------------------------------------------------------------------------
+# 第四组 A（P-A，用户 2026-09-15 批准 / 2026-09-16 实施）：候选全局执行失败的三路判定材料
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class EnvQualification:
+    """环境资格记录：在**同一镜像身份**与**同一评分脚本摘要**下，一次可信运行（gold 或 noop 候选）解析成功且
+    参考清单（F2P+P2P）缺席数为 0。它证明"这套镜像 + 脚本"本身能把参考测试跑出结果——之后同环境下的
+    全局执行失败才有资格归因到候选。字段与 spec 的对照见 env_qualification_status。"""
+
+    image_identity: str  # grading_image_identity(spec)：manifest digest 或 local_build:<image>
+    scripts_digest: str  # grading_scripts_digest(spec)
+    reference_missing_count: int  # 资格运行的参考缺席数（必须为 0）
+    source: str  # 证据来源（账本路径 / 行 id 等，进报告证据）
+    qualified_at_utc: str
+    # 资格运行的安装段末命令退出码（环境基线）：e2 实测 moto（`make init` 无网络装不了构建依赖）与 pydantic
+    # （`make install` 找不到 pdm）在 gold/noop 下也恒为 2，测试照常跑在镜像里已有的可编辑安装上——
+    # 所以"安装段 rc≠0"只有偏离这个基线才说明候选改变了安装结果。None = 未知，按 0 处理。
+    install_rc_last_command: int | None = None
+
+
+def grading_image_identity(spec: GradingEnvSpec) -> str:
+    if spec.image_manifest_digest is not None:
+        return spec.image_manifest_digest
+    return f"local_build:{spec.image_local_build_id or spec.image}"
+
+
+def grading_scripts_digest(spec: GradingEnvSpec) -> str:
+    """评分脚本摘要：trusted_setup + candidate_test + eval_script 三段全文（任一改动即资格失效）。"""
+
+    h = hashlib.sha256()
+    for part in (spec.trusted_setup_script or "", spec.candidate_test_script or "", spec.eval_script):
+        h.update(part.encode("utf-8"))
+        h.update(b"\0")
+    return "sha256:" + h.hexdigest()
+
+
+def env_qualification_status(spec: GradingEnvSpec) -> tuple[bool, str]:
+    """资格是否对本 spec 有效：(有效, 说明)。说明进诊断与报告证据。"""
+
+    q = spec.env_qualification
+    if q is None:
+        return False, "absent"
+    if q.reference_missing_count != 0:
+        return False, f"reference_missing_count={q.reference_missing_count}"
+    if q.image_identity != grading_image_identity(spec):
+        return False, "image_identity_mismatch"
+    if q.scripts_digest != grading_scripts_digest(spec):
+        return False, "scripts_digest_mismatch"
+    return True, f"ok:{q.source}"
+
+
+def render_compile_probe_script(paths: Sequence[str], *, env_lines: Sequence[str] = ()) -> str:
+    """F3 编译复证脚本（框架无关）：对候选改动的 `.py` 路径逐个 `compile()`——内存内、不写字节码、不 import、
+    不执行候选代码。以候选身份、在测试同一解释器下运行（调用方通过 env_lines 激活同一环境）。
+
+    输出行（manager 只认整行）：
+      RH2_COMPILE_OK=<path>
+      RH2_COMPILE_ERROR=<path>:<ExcType>:line=<n>:<msg>
+      RH2_COMPILE_MISSING=<path>（文件不存在/不可读）
+      RH2_COMPILE_INTERPRETER=<sys.executable>
+    非 `.py` 路径不进脚本（调用方过滤）。"""
+
+    py_paths = [p for p in paths if p.endswith(".py")]
+    lines = list(env_lines) or ["#!/bin/bash", "cd /testbed"]
+    # A 线复核 R2：`python -` 会把工作目录放进 sys.path，仓库根的 `json.py` / `py_compile.py` / `sitecustomize.py`
+    # 都能被复证脚本执行。`-I`（隔离：不加脚本目录/cwd、忽略 PYTHON* 环境变量与 user site）+ `-S`（不导入 site，
+    # 不加载 site-packages 与 sitecustomize/usercustomize/.pth）；脚本只用内建 `sys` 与 `compile`，路径清单以
+    # Python 字面量嵌入，不再 import json。候选源码在复证里既不被 import 也不被执行。
+    lines += [
+        "python -I -S - <<'RH2_COMPILE_EOF'",
+        "import sys",
+        f"paths = {py_paths!r}",
+        "print('RH2_COMPILE_INTERPRETER=' + sys.executable)",
+        "for p in paths:",
+        "    try:",
+        "        with open(p, 'rb') as fh:",
+        "            src = fh.read()",
+        "    except OSError:",
+        "        print('RH2_COMPILE_MISSING=' + p); continue",
+        "    try:",
+        "        compile(src, p, 'exec', dont_inherit=True)",
+        "    except SyntaxError as exc:  # SyntaxError 含 IndentationError / TabError",
+        "        msg = str(exc.msg or exc).replace('\\n', ' ')[:160]",
+        "        print('RH2_COMPILE_ERROR=%s:%s:line=%s:%s' % (p, type(exc).__name__, exc.lineno, msg)); continue",
+        "    except ValueError as exc:  # 源码含空字节等",
+        "        print('RH2_COMPILE_ERROR=%s:%s:line=?:%s' % (p, type(exc).__name__, str(exc)[:160])); continue",
+        "    print('RH2_COMPILE_OK=' + p)",
+        "RH2_COMPILE_EOF",
+    ]
+    return "\n".join(lines) + "\n"
+
+
+_COMPILE_PROBE_LINE = re.compile(r"^RH2_COMPILE_(OK|ERROR|MISSING|INTERPRETER)=(.*)$")
+
+
+def parse_compile_probe_output(text: str) -> dict[str, Any]:
+    out: dict[str, Any] = {"ok": [], "error": [], "missing": [], "interpreter": None}
+    for line in text.splitlines():
+        m = _COMPILE_PROBE_LINE.match(line.strip())
+        if not m:
+            continue
+        kind, value = m.group(1), m.group(2)
+        if kind == "INTERPRETER":
+            out["interpreter"] = value
+        else:
+            out[kind.lower()].append(value)
+    return out
+
+
+# 失败形状（只看候选测试段文本，退出码只作证据不作判据——F4：段末 rc 不可靠）
+# A 线 09-19 复核 CR2：规则分两档——pytest 全局规则（任何触发都适用）与"顶层解释器异常"规则（只在零解析时适用：
+# 有逐测试状态就说明运行器跑起来了，异常行只可能来自单个测试的失败块或子进程输出）。
+_EXEC_FAILURE_RULES: tuple[tuple[str, str, "re.Pattern[str]"], ...] = (
+    ("test_startup", "pytest_conftest_import_error", re.compile(r"ImportError while loading conftest")),
+    ("test_startup", "pytest_internal_error", re.compile(r"^INTERNALERROR>", re.M)),
+    ("test_startup", "pytest_usage_error", re.compile(r"^(?:ERROR: usage:|usage: pytest)", re.M)),
+    ("test_collection", "pytest_error_collecting", re.compile(r"ERROR collecting (\S+)")),
+    ("test_collection", "pytest_errors_during_collection", re.compile(r"\d+ errors? during collection")),
+    ("test_collection", "pytest_no_tests_ran", re.compile(r"^=+ no tests ran in .*=+$", re.M)),
+    ("test_collection", "pytest_collected_zero", re.compile(r"^collected 0 items", re.M)),
+    # 非 pytest 运行器 / 顶层脚本：解释器在启动阶段直接以确定性异常终止
+    ("test_startup", "python_traceback_startup_error",
+     re.compile(r"^(?:SyntaxError|IndentationError|TabError|ImportError|ModuleNotFoundError): .*$", re.M)),
+)
+_EXEC_FAILURE_EVIDENCE_MAX = 6
+
+
+def _candidate_test_segment(log_text: str) -> str | None:
+    """候选测试段：官方 Start/End 标记之间（含 `set -x` 回显的标记行时取第一次出现）。缺任一标记返回 None。"""
+
+    start, end = ">>>>> Start Test Output", ">>>>> End Test Output"
+    if start not in log_text:
+        return None
+    rest = log_text.split(start, 1)[1]
+    if end not in rest:
+        return None
+    return rest.split(end, 1)[0]
+
+
+_ZERO_PARSE_ONLY_RULES = frozenset({"python_traceback_startup_error"})
+_CAPTURED_HEADER = re.compile(r"^-{3,} Captured .* -{3,}\s*$")
+_SECTION_HEADER = re.compile(r"^(?:_{3,} .* _{3,}|={3,} .* ={3,}|-{3,} Captured .* -{3,})\s*$")
+
+
+def strip_captured_sections(segment: str) -> str:
+    """去掉 pytest 失败报告里的 `--- Captured stdout/stderr/log call ---` 块（到下一个分节头为止）：
+    单个测试捕获的子进程输出 / 日志里出现的 Traceback 与异常行不是运行器本身的启动失败（A 线复核 CR2）。"""
+
+    out: list[str] = []
+    skipping = False
+    for line in segment.splitlines():
+        if _CAPTURED_HEADER.match(line):
+            skipping = True
+            continue
+        if skipping and _SECTION_HEADER.match(line):
+            skipping = False
+        if not skipping:
+            out.append(line)
+    return "\n".join(out)
+
+
+_FOOTER_TOKEN = r"\d+ (?:passed|failed|errors?|skipped|xfailed|xpassed|deselected|warnings?|rerun)"
+# pytest 会话收尾行：带 `===` 边框（默认）或裸行（`-q`），正文只能是计数词元的逗号列表或 "no tests ran"
+_PYTEST_FOOTER = re.compile(
+    r"^(?:=+ )?(?P<body>(?:" + _FOOTER_TOKEN + r")(?:, " + _FOOTER_TOKEN + r")*|no tests ran)"
+    r" in [0-9.]+s(?: \([0-9:]+\))?(?: =+)?\s*$",
+    re.M,
+)
+_FOOTER_COUNT = re.compile(r"(\d+) (passed|failed|errors?|skipped|xfailed|xpassed|deselected|warnings?|rerun)")
+_PYTEST_NORMAL_EXIT_CODES = frozenset({0, 1})  # pytest：0 全过、1 有失败；2 中断/收集错误、3 内部错误、4 用法/conftest、5 无测试
+
+
+# pytest-pretty（pydantic 配方在用，e2 真机日志）把收尾行换成 `Results (0.89s):` + 每行一个缩进计数
+_PRETTY_HEADER = re.compile(r"^Results \([0-9.]+s\):\s*$", re.M)
+_PRETTY_COUNT = re.compile(r"^\s+(" + _FOOTER_TOKEN + r")\s*$")
+
+
+def outer_session_summary(segment: str) -> dict[str, Any] | None:
+    """测试段里**最后一条** pytest 收尾：标准收尾行（带边框或 `-q` 的裸行）或 pytest-pretty 的 `Results (Xs):` 块，
+    取位置靠后的那个。返回 {counts, no_tests_ran, body}；没有则 None。
+    注意：它只有在外层命令以 pytest 的正常完成码结束时才可信地属于外层会话——见 outer_session_completed_normally。"""
+
+    best_pos, body = -1, None
+    for m in _PYTEST_FOOTER.finditer(segment):
+        best_pos, body = m.start(), m.group("body")
+    for m in _PRETTY_HEADER.finditer(segment):
+        tokens: list[str] = []
+        for line in segment[m.end():].lstrip("\n").splitlines():
+            cm = _PRETTY_COUNT.match(line)
+            if cm is None:
+                break
+            tokens.append(cm.group(1))
+        if tokens and m.start() > best_pos:
+            best_pos, body = m.start(), ", ".join(tokens)
+    if body is None:
+        return None
+    counts: dict[str, int] = {}
+    for n, key in _FOOTER_COUNT.findall(body):
+        key = {"error": "errors", "warning": "warnings"}.get(key, key)
+        counts[key] = counts.get(key, 0) + int(n)
+    return {"body": body, "counts": counts, "no_tests_ran": body == "no tests ran"}
+
+
+def outer_session_completed_normally(segment: str, test_rc: int | None) -> bool:
+    """A 线 09-19 复核 CR2 余项（两轮）：外层会话**明确正常完成**的正向证据，两项都要成立——
+
+    1. 外层命令的退出事实：`test_rc`（候选脚本在派生测试命令行之后立即记下的 `RH2_TEST_RC=$?`，即整条测试命令的
+       退出码）属于 pytest 的正常完成码 0 / 1。收集中断（2）、内部错误（3）、用法 / conftest 启动失败（4）、无测试（5）
+       与未知（None）都不算——这时父会话可能根本没有自己的收尾行，段里最后一条收尾行可能是子 pytest 的成功摘要。
+    2. 段内最后一条收尾行（外层完成时它由外层会话在结束时打印，子进程输出都在它之前）不是 "no tests ran"、没有
+       `N error(s)` 计数，且 passed/failed/xfailed/xpassed 之和 > 0。
+    满足时不存在"整个测试过程启动/收集失败"，来源规则照常计分；不满足则继续既有三路判定。"""
+
+    if test_rc not in _PYTEST_NORMAL_EXIT_CODES:
+        return False
+    summary = outer_session_summary(segment)
+    if summary is None or summary["no_tests_ran"]:
+        return False
+    c = summary["counts"]
+    ran = c.get("passed", 0) + c.get("failed", 0) + c.get("xfailed", 0) + c.get("xpassed", 0)
+    return c.get("errors", 0) == 0 and ran > 0
+
+
+def classify_execution_failure_shape(
+    log_text: str, test_rc: int | None, *, zero_parsed: bool = True
+) -> dict[str, Any] | None:
+    """在"零解析 / 参考清单全部缺席"的前提下判断失败形状：返回 {stage, rule, evidence} 或 None（形状不确定）。
+    只认测试段内的文本规则（先去掉单测试的 Captured 块）；test_rc 只作为证据行附带。`zero_parsed=False`（解析到了
+    逐测试状态）时只用 pytest 全局规则，顶层解释器异常规则不适用，且外层会话明确正常完成（测试命令退出码 0/1 **且**
+    最后一条收尾行有逐测试结果、无 collection error 计数）就直接判"没有全局失败"——嵌套子 pytest 的标题、collection
+    报错与成功摘要都不能代替外层的完成事实。"""
+
+    raw = _candidate_test_segment(log_text)
+    if raw is None:
+        return None
+    if not zero_parsed and outer_session_completed_normally(raw, test_rc):
+        return None
+    segment = strip_captured_sections(raw)
+    for stage, rule, pattern in _EXEC_FAILURE_RULES:
+        if not zero_parsed and rule in _ZERO_PARSE_ONLY_RULES:
+            continue
+        m = pattern.search(segment)
+        if m is None:
+            continue
+        evidence: list[str] = []
+        for line in segment.splitlines():
+            if pattern.search(line) and line.strip():
+                evidence.append(line.strip()[:200])
+            if len(evidence) >= _EXEC_FAILURE_EVIDENCE_MAX:
+                break
+        if not evidence:  # 多行匹配（极少）：退到匹配片段本身
+            evidence.append(m.group(0).strip()[:200])
+        if test_rc is not None:
+            evidence.append(f"test_rc={test_rc}")
+        return {"stage": stage, "rule": rule, "evidence": evidence}
+    return None
+
+
+def referenced_candidate_paths(log_text: str, paths: Sequence[str], *, testbed_path: str = "/testbed") -> list[str]:
+    """A 线复核 R1：只有**失败文字里点名**的候选路径才进复证——`File "/testbed/<p>"`、`<p>:<line>`、
+    `ERROR collecting <p>`、conftest 加载报错等都会把路径原样写进测试段；候选另一份没被导入的坏文件不能拿来
+    证明这次失败。匹配在 Start/End 标记段内进行：路径左侧是行首/空白/引号/括号，或者紧跟 `<testbed>/`
+    （绝对路径形态），右侧是行尾/空白/引号/冒号/逗号/括号——根目录的 `thing.py` 不会被 `src/thing.py` 误认。"""
+
+    segment = _candidate_test_segment(log_text)
+    if segment is None:
+        return []
+    out: list[str] = []
+    left = r"(?:^|[\s\"'(\[]|" + re.escape(testbed_path.rstrip("/") + "/") + r")"
+    for p in paths:
+        if re.search(left + re.escape(p) + r"(?:$|[\s\"':,)\]])", segment, re.M):
+            out.append(p)
+    return out
+
+
+_SYNTAX_EXC = re.compile(r"^\s*(?:E\s+)?(?:SyntaxError|IndentationError|TabError)\b")
+_FILE_LINE = re.compile(r'File "([^"]+)", line (\d+)')
+_SHORT_TB_LINE = re.compile(r"^\s*(?:E\s+)?([^\s:\"]+\.py):(\d+):")
+
+
+def syntax_error_locations(log_text: str, *, testbed_path: str = "/testbed") -> dict[str, set[int]]:
+    """A 线 09-19 复核 CR1：从测试段的异常块里取**语法异常的实际位置**——`File "<p>", line N` 或短回溯 `<p>:N:`
+    之后（≤ 6 行内、不跨新的 File 行）紧跟 `SyntaxError / IndentationError / TabError` 的那些 (p, N)。
+    普通提及（调用参数里的字符串、被 import 的调用者帧、子进程输出）不算。路径去掉 `<testbed>/` 与 `./` 前缀。"""
+
+    raw = _candidate_test_segment(log_text)
+    if raw is None:
+        return {}
+    lines = strip_captured_sections(raw).splitlines()
+    prefix = testbed_path.rstrip("/") + "/"
+    out: dict[str, set[int]] = {}
+    for i, line in enumerate(lines):
+        m = _FILE_LINE.search(line) or _SHORT_TB_LINE.match(line)
+        if m is None:
+            continue
+        path, lineno = m.group(1), int(m.group(2))
+        if path.startswith(prefix):
+            path = path[len(prefix):]
+        elif path.startswith("./"):
+            path = path[2:]
+        for follow in lines[i + 1:i + 7]:
+            if _FILE_LINE.search(follow) or _SHORT_TB_LINE.match(follow):
+                break
+            if _SYNTAX_EXC.match(follow):
+                out.setdefault(path, set()).add(lineno)
+                break
+    return out
+
+
+def _path_mention_lines(log_text: str, paths: Sequence[str], limit: int = 3) -> list[str]:
+    segment = _candidate_test_segment(log_text) or ""
+    out: list[str] = []
+    for line in segment.splitlines():
+        if any(p in line for p in paths) and line.strip():
+            out.append(line.strip()[:200])
+            if len(out) >= limit:
+                break
+    return out
+
+
+def execution_failure_trigger(verdict: "scoring.EvalVerdict") -> str | None:
+    """P-A 钩子：零解析，或解析到了测试但参考清单里没有任何一条拿到结果（缺席 = 全局失败的迹象）。
+    v1 verdict 没有 reference_missing（恒空）→ 只可能触发 zero_parsed。"""
+
+    if verdict.num_parsed_tests == 0:
+        return "zero_parsed"
+    bucketed = len(verdict.f2p_success) + len(verdict.f2p_failure) + len(verdict.p2p_success) + len(verdict.p2p_failure)
+    missing = len(verdict.reference_missing)
+    if missing > 0 and bucketed - missing <= 0:
+        return "reference_all_missing"
+    return None
 
 
 @dataclass
@@ -1224,6 +1678,56 @@ class SWEGradingManager:
                 return eval_log_text
             return record.eval_log_partial if record is not None else None
 
+        def _diagnostics(verdict: "scoring.EvalVerdict | None") -> dict[str, Any]:
+            """S1-m 诊断 sidecar 内容（不进契约）：候选段事实、root 观测、控制面/可信 setup 自证、解析诊断、资源事实。"""
+
+            diag: dict[str, Any] = {
+                "schema_id": "rh2.grading_diagnostics.v1",
+                "trajectory_id": trajectory_id,
+                "task_id": spec.task_id,
+                "grader_version": spec.grader_version,
+                "candidate": record.candidate_facts if record is not None else None,
+                "observations": record.observations if record is not None else None,
+                "control_surface": record.control_surface if record is not None else None,
+                "trusted_setup": record.trusted_setup if record is not None else None,
+                "peak_memory_mb": peak_memory_mb,
+                "peak_memory_unavailable_or_zero": peak_memory_mb == 0.0,
+                # 只反映 fresh grader 重建 baseline 时省略的缓存计数（候选阶段的计数由 driver / 编排各自记账）
+                "grader_baseline_omitted_cache_count": record.omitted_cache if record is not None else None,
+                "phase_segments_seconds": dict(phase.segments),
+                "verdict": None,
+                # P-A：三路判定、资源事实、编译复证、资格状态与脚本摘要（离线核对与资格账本都用得到）
+                "execution_failure_decision": record.execution_failure_decision if record is not None else None,
+                "resource_facts": record.resource_facts if record is not None else None,
+                "compile_probe": record.compile_probe if record is not None else None,
+                "env_qualification": env_qualification_status(spec)[1],
+                "scripts_digest": grading_scripts_digest(spec),
+                "image_identity": grading_image_identity(spec),
+            }
+            if verdict is None and record is not None and record.parsed_verdict is not None:
+                verdict = record.parsed_verdict  # I5：零解析 infra 分支也保留 parser 诊断
+            if verdict is not None:
+                diag["verdict"] = {
+                    "apply_ok": verdict.apply_ok,
+                    "resolution": verdict.resolution,
+                    "num_parsed_tests": verdict.num_parsed_tests,
+                    "num_parsed_outside_segment": verdict.num_parsed_outside_segment,
+                    "reference_missing": list(verdict.reference_missing),
+                    "reference_skipped": list(verdict.reference_skipped),
+                    "parser_source": verdict.parser_source,
+                }
+            obs = diag["observations"] or {}
+            pre, post = obs.get("RH2_OBS_RUNNER_DIGEST_PRE"), obs.get("RH2_OBS_RUNNER_DIGEST")
+            diag["runner_integrity_changed"] = (pre != post) if (pre and post) else None
+            # P-B 观测：候选重放路径里的测试样路径 / conftest·fixture 类路径（frozen 路径按投影内路径算）
+            if frozen_delta is not None:
+                diag.update(observe_candidate_paths(list(frozen_delta.projection.included_entry_paths)))
+            else:
+                diag.update({"candidate_test_like_paths": None, "candidate_touched_conftest_or_fixture": None})
+            if record is not None:
+                record.diagnostics = diag
+            return diag
+
         def _hygiene() -> PatchHygieneResult | None:
             # 没走到重放阶段的 infra 报告不附 hygiene（附了反而暗示做过 clean 重放）。
             if not replay_started:
@@ -1323,6 +1827,7 @@ class SWEGradingManager:
                 phase.add("grader_baseline_rebuild", time.monotonic() - rebuild_started)
                 assert fa_plan is not None  # 阶段 1 已构造
                 apply_started = time.monotonic()
+                await self._normalize_regenerable_cache_dirs(record, spec, frozen_delta)
                 await self._apply_frozen_delta(record, spec, frozen_delta, fa_plan)
                 phase.add("delta_apply", time.monotonic() - apply_started)
                 apply_ok = True  # 应用失败已作 infra 抛出（A-prime：非模型负样本）
@@ -1359,10 +1864,41 @@ class SWEGradingManager:
             peak_memory_mb = await self._read_peak_memory_mb(record)
 
             # 阶段 6：官方 parser 解析（A7 条 5）
-            verdict = self._parse_eval_log(spec, eval_log_text)
+            verdict = self._parse_eval_log(spec, eval_log_text, record=record)
 
             # 阶段 7：结论组装（A7 条 6/7 + hygiene 封顶）
             fields = scoring.grading_outcome_fields(verdict)
+            trigger = execution_failure_trigger(verdict)
+            if trigger is not None:
+                # 第四组 P-A：零解析 / 参考清单全部缺席 = 候选测试段全局失败，三路判定
+                if frozen_delta is not None:
+                    candidate_paths: list[str] | None = list(frozen_delta.projection.included_entry_paths)
+                elif cleaned is not None:
+                    candidate_paths = sorted(patch_touched_paths(cleaned.cleaned_patch))
+                else:
+                    candidate_paths = None
+                decision = await self._decide_execution_failure(
+                    record=record, spec=spec, verdict=verdict, log_text=eval_log_text,
+                    candidate_paths=candidate_paths, trigger=trigger,
+                )
+                record.execution_failure_decision = decision
+                if decision["kind"] == "source_rule":
+                    pass  # 正常产出了测试状态：保留 grading_outcome_fields 的来源规则结论（tests_failed / 0）
+                elif decision["kind"] == "candidate":
+                    fields = {
+                        "outcome": "unresolved", "failure_category": "candidate_execution_failed", "reward": 0.0,
+                        "f2p_pass_count": None, "f2p_total_count": None, "p2p_fail_count": None, "p2p_total_count": None,
+                        "execution_failure_stage": decision["stage"], "execution_failure_evidence": list(decision["evidence"]),
+                    }
+                elif decision["kind"] == "resource":
+                    raise GradingInfraError(
+                        f"candidate_resource_terminated:{trigger}:{decision['resource_detail']}", category="infra_failure",
+                    )
+                else:
+                    base = "eval_log_zero_parsed_tests" if trigger == "zero_parsed" else "reference_all_missing"
+                    raise GradingInfraError(
+                        f"{base}:unattributed:{','.join(decision['missing'])}", category="test_log_parse_failed",
+                    )
             hygiene = _hygiene()
             assert hygiene is not None  # replay_started=True 后恒成立
             if hygiene.verdict != "clean" and fields["outcome"] == "resolved":
@@ -1380,18 +1916,33 @@ class SWEGradingManager:
                 **common,
                 **fields,
                 patch_hygiene=hygiene,
-                eval_log_ref=self._persist_eval_log(nonce, trajectory_id, eval_log_text),
+                eval_log_ref=self._persist_eval_log(nonce, trajectory_id, eval_log_text, diagnostics=_diagnostics(verdict)),
                 timings=_timings(),
                 graded_at_utc=_now_utc(),
             )
             phase.add("parser_and_report", time.monotonic() - report_started)
             return report
+        except asyncio.CancelledError:
+            # R3：取消不产出报告，但已产生的日志（完整或部分）与诊断必须落盘——纯文件 IO、不发起 Docker 调用；
+            # 引用挂在 record 上供调用方账本引用；随后原样传播取消（不构造 reward）。
+            if record is not None and _infra_log_text() is not None:
+                try:
+                    record.cancelled_eval_log_ref = self._persist_eval_log(
+                        nonce, trajectory_id, _infra_log_text(), diagnostics=_diagnostics(None)
+                    )
+                except OSError:
+                    pass  # 落盘失败不掩盖取消本身
+            raise
         except GradingInfraError as exc:
             # infra 族收口（P4）：本分支不存在 reward 取值——想给 infra 报告塞
             # reward 连参数都没有，schema 校验器是第二道锁。
             report_started = time.monotonic()
             if record is not None:
                 peak_memory_mb = await self._read_peak_memory_mb(record)
+                if record.resource_facts is None and replay_started:
+                    # 2026-09-19（B 线 216 题诊断）：超时/容器死亡等 infra 收口也把资源事实（oom_kill、pids 配额拒绝、
+                    # OOMKilled）留进 sidecar——modin 撞满进程配额后挂死到超时，此前 sidecar 里没有这项事实。可选观测，有界。
+                    record.resource_facts = await self._read_resource_facts(record)
             report = GradingReport(
                 **common,
                 outcome="failed_to_grade",
@@ -1402,7 +1953,7 @@ class SWEGradingManager:
                 # 候选测试从未启动时没有 eval 日志，但可信 setup / 权限布置的原始输出必须留下来
                 # （F2 判据挡下的那次，故障现场就在这段里）。
                 eval_log_ref=(
-                    self._persist_eval_log(nonce, trajectory_id, _infra_log_text())
+                    self._persist_eval_log(nonce, trajectory_id, _infra_log_text(), diagnostics=_diagnostics(None))
                     if _infra_log_text() is not None
                     else None
                 ),
@@ -1420,6 +1971,9 @@ class SWEGradingManager:
                     await self._close_container_scope(record)
                 finally:
                     phase.add("grader_cleanup", time.monotonic() - cleanup_started)
+                    # 接线页 §14.2 余项：日志全文已落盘（或本次没有落盘条件），不再留在进程内的记录里——
+                    # 长批/正式训练下 `_records` 按评分数增长，全文日志是其中唯一的大对象；引用与事实字段保留。
+                    record.eval_log_partial = None
 
     # ------------------------------------------------------------------ gc
     async def gc(
@@ -2076,6 +2630,7 @@ class SWEGradingManager:
         from repoharness2.adapters.slime.baseline_census import (
             BaselineCensusError,
             build_census_script,
+            parse_census_omitted_counts,
             parse_census_output,
         )
         from repoharness2.contracts.baseline_manifest import (
@@ -2094,6 +2649,7 @@ class SWEGradingManager:
                 "baseline_rebuild_census_failed",
                 f"census 脚本失败（exit={res.exit_code}）：{res.stderr.strip()[-300:]}",
             )
+        record.omitted_cache = parse_census_omitted_counts(res.stdout) or None
         try:
             rebuilt = parse_census_output(
                 res.stdout,
@@ -2118,6 +2674,27 @@ class SWEGradingManager:
                 f"（rebuilt_entries={len(rebuilt.entries)}, "
                 f"baseline_entries={len(baseline.entries)}）",
             )
+
+    async def _normalize_regenerable_cache_dirs(
+        self, record: "_ContainerRecord", spec: GradingEnvSpec, source: "FrozenDeltaSource"
+    ) -> None:
+        """第四组 P-C 的一致规范化（A 线复核 R6）：baseline 政策 v2 在 census 里整体省略的可再生缓存目录
+        （`__pycache__/`、`.pytest_cache/`），fresh grader 的 checkout 里仍然存在；候选把这样的目录换成同名普通文件
+        / 软链时，导出只看到 `add`，应用却撞上 `add_target_exists` 被记成 infra。让 grader 的树在应用前与 manifest
+        的世界一致：按 manifest 政策删掉这些目录（只删目录、只在 testbed 内、可再生），失败 = 评分动作故障。"""
+
+        policy = source.baseline_manifest.policy
+        dirs = tuple(getattr(policy, "regenerable_cache_dirs", ()) or ())
+        if not dirs:
+            return
+        script = build_cache_normalization_command(
+            spec.testbed_path, dirs, tuple(getattr(policy, "excluded_namespaces", ()) or ())
+        )
+        result = await self._exec_bash_checked(
+            record, script, phase="cache_normalization", timeout=spec.apply_timeout_seconds,
+        )
+        if result.exit_code != 0 or "RH2_CACHE_NORMALIZED=1" not in result.stdout:
+            raise GradingInfraError(f"cache_dir_normalization_failed:rc={result.exit_code}:{result.stderr.strip()[-200:]}")
 
     async def _apply_frozen_delta(
         self,
@@ -2366,23 +2943,124 @@ class SWEGradingManager:
             await self._write_root_script(
                 record, script_path, spec.candidate_test_script, timeout=spec.apply_timeout_seconds
             )
+            # S1-m：候选输出的 tee 落点（候选用户属主；root 之后读回）+ 候选段之前的 root 观测（非致命）
+            uid = profile.candidate_exec_uid
+            await self._exec_bash_checked(
+                record,
+                f"mkdir -p {CANDIDATE_LOG_DIR} && chown {uid}:{uid} {CANDIDATE_LOG_DIR} && chmod 0700 {CANDIDATE_LOG_DIR}",
+                phase="candidate_log_dir",
+                timeout=spec.apply_timeout_seconds,
+            )
+            # I1：观测脚本会激活候选可写的 conda 环境并启动 Python（cwd=/testbed 在 sys.path 上），
+            # 必须以候选身份执行——root 只做不执行候选代码的静态读取。观测输出不是可信证据，只进诊断。
+            pre_obs = await self._observe(
+                record, spec.pre_candidate_observation_script, phase="pre_candidate_observation",
+                timeout=spec.env_reset_timeout_seconds,
+                user=str(profile.candidate_exec_uid), home=f"/home/{profile.candidate_exec_user}",
+            )
+            # 候选段之前的观测键加 _PRE 后缀，与候选段之后的同名键并存（运行器摘要前后比对）
+            record.observations = {f"{k}_PRE": v for k, v in pre_obs.items()}
         finally:
             # 成功与失败都记 grader_trusted_setup 段：被判据挡下的那次也要在计时/审计里看得见。
             trusted_setup_seconds = time.monotonic() - setup_started
             phase.add("grader_trusted_setup", trusted_setup_seconds)
 
-        result = await self._exec_bash_checked(
-            record,
-            f"bash {script_path} 2>&1",
-            phase="test",
-            timeout=spec.test_timeout_seconds,
-            user=str(profile.candidate_exec_uid),
-            home=f"/home/{profile.candidate_exec_user}",
-        )
+        try:
+            result = await self._exec_bash_checked(
+                record,
+                # 输出同时 tee 到候选属主文件；exec 退出码仍是候选脚本的退出码（PIPESTATUS[0]）
+                f"bash {script_path} 2>&1 | tee {CANDIDATE_LOG_PATH}; exit ${{PIPESTATUS[0]}}",
+                phase="test",
+                timeout=spec.test_timeout_seconds,
+                user=str(profile.candidate_exec_uid),
+                home=f"/home/{profile.candidate_exec_user}",
+            )
+        except GradingInfraError as exc:
+            # 超时 / 容器死亡：exec 通道拿不到已产生的输出（run_docker 取消即 kill），从 tee 文件读回部分日志
+            partial = await self._read_candidate_log_partial(record)
+            self._record_partial_candidate(record, setup_log, partial)
+            # A2：安装段与测试段共用一份 test_timeout；归因文字注明超时发生在哪一段（判定仍是 infra）
+            raise GradingInfraError(
+                f"{exc.detail}:candidate_phase={candidate_phase_at(partial)}", category=exc.category,
+                op=exc.op, exit_code=exc.exit_code, stderr=exc.stderr, container_name=exc.container_name,
+            ) from exc
+        except asyncio.CancelledError:
+            # I4：外部取消（评分期限 / 关停）同样保留已产生的候选输出；读取用独立有界预算，再原样上抛
+            partial = await self._read_candidate_log_partial(record)
+            self._record_partial_candidate(record, setup_log, partial)
+            raise
         test_log = result.stdout if result.stdout else result.stderr
+        facts = candidate_facts_from_log(test_log)
+        facts["log_partial"] = False
+        record.candidate_facts = facts
+        record.eval_log_partial = setup_log + test_log  # R3：候选段已完整结束，后观测期间被取消也不丢日志
+        post = await self._observe(
+            record, spec.post_candidate_observation_script, phase="post_candidate_observation",
+            timeout=spec.env_reset_timeout_seconds,
+            user=str(profile.candidate_exec_uid), home=f"/home/{profile.candidate_exec_user}",
+        )
+        record.observations = {**(record.observations or {}), **post}
         return setup_log + test_log, trusted_setup_seconds
 
-    def _parse_eval_log(self, spec: GradingEnvSpec, log_text: str) -> scoring.EvalVerdict:
+    @staticmethod
+    def _record_partial_candidate(record: _ContainerRecord, setup_log: str, partial: str) -> None:
+        facts = candidate_facts_from_log(partial)
+        facts["log_partial"] = True
+        record.candidate_facts = facts
+        record.eval_log_partial = setup_log + (record.eval_log_partial or "")[len(setup_log):] + partial
+
+    async def _observe(
+        self, record: _ContainerRecord, script: str | None, *, phase: str, timeout: float,
+        user: str | None = None, home: str | None = None,
+    ) -> dict[str, str]:
+        """S1-m：观测脚本（KEY=VALUE，只认 `RH2_OBS_*` 行）。I1：会启动解释器/导入候选包的观测必须以候选
+        身份执行（调用方传 user/home）。非致命：失败/超时记 RH2_OBS_ERROR=<phase>。评分期限已耗尽时不发起 I/O。"""
+
+        if script is None:
+            return {}
+        left = grading_deadline_left()
+        if left is not None and left <= 0:
+            return {"RH2_OBS_ERROR": f"{phase}:deadline_exhausted"}
+        bounded = timeout if left is None else min(timeout, left)
+        try:
+            result = await asyncio.wait_for(self._exec_bash(record, script, user=user, home=home), timeout=bounded)
+        except (TimeoutError, asyncio.TimeoutError):
+            return {"RH2_OBS_ERROR": f"{phase}:timeout"}
+        facts: dict[str, str] = {}
+        for line in result.stdout.splitlines():
+            m = _OBSERVATION_LINE.match(line.strip())
+            if m:
+                facts[m.group(1)] = m.group(2).strip()
+        if result.exit_code != 0:
+            facts["RH2_OBS_ERROR"] = f"{phase}:exit={result.exit_code}"
+        return facts
+
+    async def _read_candidate_log_partial(self, record: _ContainerRecord) -> str:
+        """S1-m：超时/取消后读回候选段已 tee 的输出（root）。
+
+        I4：用**独立的有界收口预算**（与清理预算同源），不看评分期限剩余——总期限耗尽正是最需要它的场景；
+        它不延长安装/测试期限。A3：只读普通文件、不跟随符号链接（目录与文件属候选，候选可换成指向任意
+        root 可读文件的链接）。读不到返回空串。"""
+
+        timeout = min(_CANDIDATE_LOG_PARTIAL_READ_TIMEOUT_SEC, float(self.config.cleanup_timeout_seconds))
+        try:
+            result = await asyncio.wait_for(
+                self._exec_bash(
+                    record,
+                    f"if [ -f {CANDIDATE_LOG_PATH} ] && [ ! -L {CANDIDATE_LOG_PATH} ]; then cat {CANDIDATE_LOG_PATH}; "
+                    "else echo RH2_PARTIAL_LOG_UNAVAILABLE=irregular_or_missing; fi",
+                ),
+                timeout=timeout,
+            )
+        except (TimeoutError, asyncio.TimeoutError):
+            return ""
+        if result.exit_code != 0 or result.stdout.startswith("RH2_PARTIAL_LOG_UNAVAILABLE="):
+            return ""
+        return result.stdout
+
+    def _parse_eval_log(
+        self, spec: GradingEnvSpec, log_text: str, record: _ContainerRecord | None = None
+    ) -> scoring.EvalVerdict:
         """官方 parser 解析 + manager 级加严（test_log_parse_failed 的两个判据）。"""
 
         try:
@@ -2399,14 +3077,189 @@ class SWEGradingManager:
                 "official_bad_codes_after_successful_replay",
                 category="test_log_parse_failed",
             )
-        if verdict.num_parsed_tests == 0:
-            # 标记齐全但一条测试都解析不出：官方 silent-success 语义此时会产出
-            # "全部按通过计"的假结论（S1-4 实测确认），必须拦下判 infra 族。
-            raise GradingInfraError(
-                "eval_log_zero_parsed_tests",
-                category="test_log_parse_failed",
-            )
+        if record is not None:
+            record.parsed_verdict = verdict  # I5：零解析判 infra 时诊断字段（段外行数、参考缺席）仍进 sidecar
+        # 零解析（标记齐全但一条测试都解析不出）不在这里判：官方 silent-success 语义此时会产出"全部按通过计"
+        # 的假结论（S1-4 实测确认），必须拦下——拦截点在 grade() 的 P-A 三路判定（execution_failure_trigger）：
+        # 已证候选造成 → candidate_execution_failed（reward 0）；已证资源终止 / 事实不足 → infra 族（reward None）。
         return verdict
+
+    async def _read_resource_facts(self, record: _ContainerRecord) -> dict[str, Any]:
+        """P-A 资源事实：cgroup memory.events 的 oom_kill 计数（v2；v1 退到 memory.oom_control）与容器级 OOMKilled。
+        可选观测：期限耗尽不发起 I/O；读不到记 None。"""
+
+        facts: dict[str, Any] = {"oom_kill_events": None, "pids_events_max": None, "container_oom_killed": None}
+        left = grading_deadline_left()
+        if left is not None and left <= 0:
+            return facts
+        timeout = _PEAK_MEMORY_READ_TIMEOUT_SEC if left is None else min(_PEAK_MEMORY_READ_TIMEOUT_SEC, left)
+        try:
+            ev = await asyncio.wait_for(
+                self._exec_bash(
+                    record,
+                    "{ cat /sys/fs/cgroup/memory.events 2>/dev/null"
+                    " || cat /sys/fs/cgroup/memory/memory.oom_control 2>/dev/null; }; echo RH2_PIDS_EVENTS;"
+                    " { cat /sys/fs/cgroup/pids.events 2>/dev/null || cat /sys/fs/cgroup/pids/pids.events 2>/dev/null; }",
+                ),
+                timeout=timeout,
+            )
+            mem_part, _, pids_part = ev.stdout.partition("RH2_PIDS_EVENTS")
+            m = re.search(r"^oom_kill (\d+)$", mem_part, re.M)
+            facts["oom_kill_events"] = int(m.group(1)) if m else None
+            # B 线 216 题诊断：进程配额撞满（`pids.events: max N`）会让 fork 抛 EAGAIN、测试成批失败，是保护性资源终止的事实之一
+            m = re.search(r"^max (\d+)$", pids_part, re.M)
+            facts["pids_events_max"] = int(m.group(1)) if m else None
+        except (TimeoutError, asyncio.TimeoutError):
+            pass
+        try:
+            ins = await asyncio.wait_for(
+                self._docker("inspect", "-f", "{{.State.OOMKilled}}", record.name), timeout=timeout,
+            )
+            if ins.exit_code == 0 and ins.stdout.strip() in ("true", "false"):
+                facts["container_oom_killed"] = ins.stdout.strip() == "true"
+        except (TimeoutError, asyncio.TimeoutError):
+            pass
+        return facts
+
+    async def _run_compile_probe(self, record: _ContainerRecord, spec: GradingEnvSpec, paths: Sequence[str]) -> dict[str, Any]:
+        """F3：以候选身份跑编译复证脚本（有界：apply_timeout 与期限取小）。失败/超时记 error，不算 infra。"""
+
+        profile = self.config.sandbox_profile
+        assert profile is not None and spec.render_compile_probe is not None
+        script = spec.render_compile_probe(list(paths))
+        left = grading_deadline_left()
+        if left is not None and left <= 0:
+            return {"error": "deadline_exhausted", "ok": [], "error_paths": [], "missing": []}
+        bounded = spec.apply_timeout_seconds if left is None else min(spec.apply_timeout_seconds, left)
+        try:
+            result = await asyncio.wait_for(
+                self._exec_bash(
+                    record, script, user=str(profile.candidate_exec_uid), home=f"/home/{profile.candidate_exec_user}",
+                ),
+                timeout=bounded,
+            )
+        except (TimeoutError, asyncio.TimeoutError):
+            return {"error": "timeout", "ok": [], "error_paths": [], "missing": []}
+        parsed = parse_compile_probe_output(result.stdout)
+        return {
+            "error": None if result.exit_code == 0 else f"exit={result.exit_code}",
+            "ok": parsed["ok"], "error_paths": parsed["error"], "missing": parsed["missing"],
+            "interpreter": parsed["interpreter"], "paths_probed": [p for p in paths if p.endswith(".py")],
+        }
+
+    async def _decide_execution_failure(
+        self, *, record: _ContainerRecord, spec: GradingEnvSpec, verdict: "scoring.EvalVerdict", log_text: str,
+        candidate_paths: Sequence[str] | None, trigger: str,
+    ) -> dict[str, Any]:
+        """P-A 三路判定（用户 2026-09-15 批准的语义）：
+
+        - resource：已证保护性资源终止（cgroup oom_kill>0 / 容器 OOMKilled / 测试命令 rc>=128 即被信号杀）
+          → infra（reward None）；
+        - candidate：环境资格有效 ∧ 失败在测试段且形状确定 ∧ 安装段未失败 ∧ 候选改动里有 .py ∧ 编译复证在
+          候选改动路径上报出 SyntaxError → candidate_execution_failed（reward 0，带阶段与证据）；
+        - unattributed：其余（缺任一条件）→ infra 族（reward None），missing 列出缺了哪些条件；
+        - source_rule（A 线复核 R4）：参考全缺席但测试段没有全局失败形状 = 测试正常产出了状态，按来源规则计分。
+        A 线复核 R1/R3：只复证失败文字点名的候选路径；终止事实（cgroup oom_kill / pids max / 容器 OOMKilled / 测试
+        退出码）任一未知时不算"已排除资源终止"，归未确定。返回的 dict 原样进诊断 sidecar。"""
+
+        facts = record.candidate_facts or {}
+        test_rc = facts.get("test_rc")
+        decision: dict[str, Any] = {
+            "trigger": trigger, "kind": "unattributed", "stage": None, "rule": None, "evidence": [], "missing": [],
+            "resource": None, "qualification": None, "compile_probe": None, "candidate_python_paths": None,
+            "referenced_candidate_paths": None, "install_rc_baseline": None,
+        }
+        shape = classify_execution_failure_shape(log_text, test_rc, zero_parsed=(trigger == "zero_parsed"))
+        if shape is not None:
+            decision["stage"], decision["rule"] = shape["stage"], shape["rule"]
+        if trigger == "reference_all_missing" and shape is None:
+            # A 线复核 R4：测试正常跑完并产出了逐测试状态，只是参考 ID 都没对上（例如参数化 ID 随源码改变）——
+            # 这不是全局执行失败，按来源规则计分（缺席计失败 → tests_failed / 0），不发起任何判定 I/O。
+            decision["kind"] = "source_rule"
+            decision["missing"] = ["shape_undetermined"]
+            return decision
+
+        resource = await self._read_resource_facts(record)
+        resource["test_rc"] = test_rc
+        resource["signal_exit"] = test_rc is not None and test_rc >= 128
+        decision["resource"] = record.resource_facts = resource
+        positive = [name for name, hit in (
+            ("oom_kill_events", (resource["oom_kill_events"] or 0) > 0),
+            ("container_oom_killed", bool(resource["container_oom_killed"])),
+            ("pids_quota_hits", (resource["pids_events_max"] or 0) > 0),
+            (f"signal_exit_rc={test_rc}", resource["signal_exit"]),
+        ) if hit]
+        if positive:
+            decision["kind"] = "resource"
+            decision["resource_detail"] = ",".join(positive)
+            return decision
+
+        missing: list[str] = []
+        # A 线复核 R3：候选归因要求"已排除保护性终止"，事实拿不到（读取失败/超时、没有测试退出码）时不能当排除
+        unknown = [name for name in ("oom_kill_events", "pids_events_max", "container_oom_killed") if resource[name] is None]
+        if test_rc is None:
+            unknown.append("test_rc")
+        if unknown:
+            missing.append("termination_facts_unknown:" + "+".join(unknown))
+        qual_ok, qual_note = env_qualification_status(spec)
+        decision["qualification"] = qual_note
+        if not qual_ok:
+            missing.append(f"qualification:{qual_note}")
+        if shape is None:
+            missing.append("shape_undetermined")
+        q = spec.env_qualification
+        baseline_rc = q.install_rc_last_command if (qual_ok and q is not None and q.install_rc_last_command is not None) else 0
+        install_rc = facts.get("install_rc_last_command")
+        if install_rc is not None and install_rc != baseline_rc and not facts.get("install_skipped"):
+            missing.append(f"install_segment_rc={install_rc}:baseline={baseline_rc}")
+        decision["install_rc_baseline"] = baseline_rc
+        if self.config.sandbox_profile is None:
+            missing.append("no_sandbox_profile")
+        if spec.render_compile_probe is None:
+            missing.append("no_compile_probe_renderer")
+        py_paths = [p for p in (candidate_paths or ()) if p.endswith(".py")]
+        decision["candidate_python_paths"] = py_paths
+        if not py_paths:
+            missing.append("no_candidate_python_paths")
+        # A 线复核 R1 + 09-19 CR1：只复证**语法异常实际位置**上的候选路径（`File "<p>", line N` 紧跟 SyntaxError），
+        # 路径的普通提及（调用参数、调用者帧、子进程输出）不算——一个没被读取的坏文件不能解释缺依赖这类失败
+        locations = syntax_error_locations(log_text, testbed_path=spec.testbed_path)
+        decision["syntax_error_locations"] = {k: sorted(v) for k, v in locations.items()}
+        referenced = [p for p in py_paths if p in locations]
+        decision["referenced_candidate_paths"] = referenced
+        if py_paths and not referenced:
+            missing.append("no_syntax_error_at_candidate_path")
+        if missing:
+            decision["missing"] = missing
+            return decision
+        probe = await self._run_compile_probe(record, spec, referenced)
+        decision["compile_probe"] = record.compile_probe = probe
+        if probe.get("error"):
+            missing.append(f"compile_probe_{probe['error']}")
+        else:
+            # 复证结果要与日志里的语法异常位置对上：同一路径，且行号（两边都有时）一致
+            matched: list[str] = []
+            for line in probe["error_paths"]:
+                path, _, rest = line.partition(":")
+                m = re.search(r"line=(\d+)", rest)
+                if path in locations and (m is None or int(m.group(1)) in locations[path]):
+                    matched.append(line)
+            if not matched:
+                missing.append("compile_probe_clean" if not probe["error_paths"] else "compile_probe_location_mismatch")
+            else:
+                probe["error_paths"] = matched
+        if missing:
+            decision["missing"] = missing
+            return decision
+        assert shape is not None
+        decision["kind"] = "candidate"
+        decision["evidence"] = [
+            *shape["evidence"],
+            *[line for line in _path_mention_lines(log_text, referenced) if line not in shape["evidence"]],
+            *[f"compile_probe:{line}" for line in probe["error_paths"][:_EXEC_FAILURE_EVIDENCE_MAX]],
+            f"env_qualification:{qual_note}",
+        ][:20]
+        return decision
 
     async def _read_peak_memory_mb(self, record: _ContainerRecord) -> float:
         """读容器内存峰值（cgroup v2 memory.peak，回退 v1）。读不到记 0.0（不阻塞评分）。
@@ -2436,9 +3289,12 @@ class SWEGradingManager:
             return 0.0
 
     def _persist_eval_log(
-        self, nonce: str, trajectory_id: str, log_text: str
+        self, nonce: str, trajectory_id: str, log_text: str, diagnostics: dict[str, Any] | None = None
     ) -> ArtifactRef | None:
-        """eval 原始日志落盘（runtime-private 证据），返回 opaque 引用。"""
+        """eval 原始日志落盘（runtime-private 证据），返回 opaque 引用。
+
+        S1-m：`diagnostics` 非空时旁置 `<ref_id>.diagnostics.json`（候选段事实、root 观测、解析诊断、
+        资源事实）——只是证据文件，不进 GradingReport 契约。"""
 
         if self.config.eval_log_dir is None:
             return None
@@ -2447,6 +3303,11 @@ class SWEGradingManager:
         ref_id = f"evallog_{_sanitize_for_name(trajectory_id)}_{nonce}"
         payload = log_text.encode()
         (log_dir / f"{ref_id}.eval.log").write_bytes(payload)
+        if diagnostics is not None:
+            (log_dir / f"{ref_id}.diagnostics.json").write_text(
+                json.dumps({"eval_log_ref_id": ref_id, **diagnostics}, ensure_ascii=False, indent=1, sort_keys=True, default=str),
+                encoding="utf-8",
+            )
         import hashlib
 
         return ArtifactRef(

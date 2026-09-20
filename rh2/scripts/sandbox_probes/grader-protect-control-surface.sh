@@ -2,6 +2,16 @@
 set -u
 TB=/testbed; UIDV=54322; EXPECTED=1
 chown -R "$UIDV:$UIDV" "$TB" || { echo "RH2_PROTECT_ERROR=chown_candidate_failed"; exit 4; }
+PREFIX_DONE=0; PREFIX_MISSING=""
+for p in /opt/miniconda3/envs/testbed; do
+  if [ -d "$p" ] && [ ! -L "$p" ]; then
+    chown -R "$UIDV:$UIDV" -- "$p" || { echo "RH2_PROTECT_ERROR=prefix_chown_failed:$p"; exit 4; }
+    PREFIX_DONE=$((PREFIX_DONE+1))
+  else
+    PREFIX_MISSING="$PREFIX_MISSING$p,"
+  fi
+done
+echo "WRITABLE_PREFIXES_DONE=$PREFIX_DONE"; echo "WRITABLE_PREFIXES_MISSING=$PREFIX_MISSING"
 PROTECTED=0; DIRS=0; MISSING=""; MISSING_N=0; IRREGULAR=""
 protect_dirs() {
   d=$(dirname -- "$1")

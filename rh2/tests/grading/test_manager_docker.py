@@ -244,7 +244,7 @@ async def test_unparseable_log_real(fixture_repo, fixture_image, make_workspace,
     assert report.outcome == "failed_to_grade"
     assert report.failure_category == "test_log_parse_failed"
     assert report.reward is None
-    assert report.infra_failure_detail == "eval_log_zero_parsed_tests"
+    assert report.infra_failure_detail.startswith("eval_log_zero_parsed_tests:unattributed:")  # P-A：零解析走三路判定
     assert report.f2p_total_count is None
     _assert_no_leftover_containers(manager)
 

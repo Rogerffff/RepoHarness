@@ -24,11 +24,14 @@ from repoharness2.adapters.slime.baseline_census import (
     BaselineCensusError,
     build_census_script,
     parse_census_output,
+    parse_census_omitted_counts,
 )
 from repoharness2.contracts.baseline_manifest import (
     BaselineWorkspaceManifestV1,
     compute_baseline_manifest_digest,
 )
+from pydantic import ValidationError
+
 from repoharness2.contracts.frozen_patch import FrozenPatchArtifactV1, PatchEntry
 
 __all__ = ["PatchExportError", "diff_census_against_baseline", "export_frozen_patch"]
@@ -42,11 +45,15 @@ class PatchExportError(RuntimeError):
         *,
         object_path: str | None = None,
         object_type: str | None = None,
+        conflict: dict[str, str] | None = None,
     ) -> None:
         self.reason_code = reason_code
         # B5 复核三轮 P1-1：unsupported 对象的路径/类型结构化透传
         self.object_path = object_path
         self.object_type = object_type
+        # A 线复核 R7：父子前缀冲突的结构化上下文（ancestor / child 与各自 operation / object_type），
+        # 编排侧写进拒绝证据，清理后仍可定位冲突双方
+        self.conflict = conflict
         super().__init__(f"{reason_code}: {message}")
 
 
@@ -124,6 +131,7 @@ async def export_frozen_patch(
     rollout_execution_id: str,
     physical_attempt_id: str,
     segment_sink: MutableMapping[str, float] | None = None,
+    omitted_sink: MutableMapping[str, int] | None = None,
 ) -> FrozenPatchArtifactV1:
     """静止确认后导出 FrozenPatchArtifact。
 
@@ -147,6 +155,8 @@ async def export_frozen_patch(
             "post_census_failed",
             f"post census 失败（exit={result.exit_code}）：{result.stderr.strip()[-300:]}",
         )
+    if omitted_sink is not None:
+        omitted_sink.update(parse_census_omitted_counts(result.stdout))
     try:
         post = parse_census_output(
             result.stdout,
@@ -247,16 +257,33 @@ async def _capture_changes(
             mode=c["mode"], content_b64=b64, content_digest=digest,
         ))
 
-    return FrozenPatchArtifactV1(
-        task_id=baseline.task_id,
-        rollout_execution_id=rollout_execution_id,
-        physical_attempt_id=physical_attempt_id,
-        baseline_manifest_digest=baseline_manifest_digest,
-        public_bundle_digest=baseline.public_bundle_digest,
-        runtime_image_digest=baseline.runtime_image_digest,
-        materialized_head=baseline.materialized_head,
-        entries=tuple(entries),
-        excluded_pathset_changed=(
-            post.excluded_census_digest != baseline.excluded_census_digest
-        ),
-    )
+    try:
+        return FrozenPatchArtifactV1(
+            task_id=baseline.task_id,
+            rollout_execution_id=rollout_execution_id,
+            physical_attempt_id=physical_attempt_id,
+            baseline_manifest_digest=baseline_manifest_digest,
+            public_bundle_digest=baseline.public_bundle_digest,
+            runtime_image_digest=baseline.runtime_image_digest,
+            materialized_head=baseline.materialized_head,
+            entries=tuple(entries),
+            excluded_pathset_changed=(
+                post.excluded_census_digest != baseline.excluded_census_digest
+            ),
+        )
+    except ValidationError as exc:
+        # 第四组实施计划 S1（2026-09-15）+ P-D 收窄（2026-09-16）：只把**父子前缀冲突**（模型可控的 delta
+        # 形状：目录变文件、混合形状；普通文件变目录已由契约放开）转成 typed 导出错误，编排侧沿 unsafe 通道
+        # （present + 永久拒绝、不评分）处理并保留冲突路径；其它结构矛盾（排序/唯一性等内部错误）保持原分级。
+        first = exc.errors()[0] if exc.errors() else {}
+        msg = str(first.get("msg", exc))
+        if first.get("type") != "prefix_conflict":
+            raise
+        ctx = {k: str(v) for k, v in (first.get("ctx") or {}).items()}
+        raise PatchExportError(
+            "unsupported_delta_shape",
+            f"artifact 结构校验拒绝：{msg[:300]}",
+            object_path=ctx.get("child"),
+            object_type="prefix_conflict",
+            conflict=ctx or None,
+        ) from exc

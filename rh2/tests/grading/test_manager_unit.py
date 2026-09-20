@@ -153,7 +153,7 @@ async def test_zero_parsed_tests_is_test_log_parse_failed():
     assert report.outcome == "failed_to_grade"
     assert report.failure_category == "test_log_parse_failed"
     assert report.reward is None
-    assert report.infra_failure_detail == "eval_log_zero_parsed_tests"
+    assert report.infra_failure_detail.startswith("eval_log_zero_parsed_tests:unattributed:")  # P-A：零解析走三路判定，事实不足记缺失条件
     assert report.f2p_total_count is None
 
 

@@ -2153,6 +2153,8 @@ class RolloutAudit:
     # B3：hygiene/projection 摘要（AdmissionReport 本体归 FA-2/F2-5）
     runtime_private_pathset_changed: bool = False
     unsafe_artifact_reasons: list[str] = field(default_factory=list)
+    # 第四组 P-C（A 线复核观测差异）：编排侧两次 census 省略的可再生缓存计数 {baseline: {...}, post: {...}}
+    omitted_cache_counts: dict[str, dict[str, int]] = field(default_factory=dict)
     scoring_projection_entry_count: int = 0
     # F2-2 复核三轮 P1-2：audit-only 收口标记（屏障前正式探针/带身份
     # bring-up）——bringup 落盘 disposition=audit_only_rejected，
@@ -3324,10 +3326,13 @@ class RolloutOrchestrator:
                             ),
                             physical_attempt_id=physical_attempt_id,
                             segment_sink=export_segments,  # W3a：post_census / artifact_capture
+                            omitted_sink=audit.omitted_cache_counts.setdefault("post", {}),
                         )
                     except PatchExportError as exc:
                         self._record_export_segments(audit, export_segments)
-                        if exc.reason_code == "unsupported_object_in_patch":
+                        # 第四组实施计划 S1：unsupported_delta_shape（父子前缀冲突等模型可控形状）与
+                        # unsupported_object_in_patch 同走 unsafe 通道（present + 永久拒绝），不 run-fatal。
+                        if exc.reason_code in ("unsupported_object_in_patch", "unsupported_delta_shape"):
                             # B3 兑现 B2 登记：模型产出不支持对象 = unsafe
                             # artifact（present + 永久拒绝，不评分）。
                             # B5 复核三轮 P1-1：此分支在 artifact 建立之前
@@ -3339,8 +3344,15 @@ class RolloutOrchestrator:
                                 object_path=exc.object_path,
                                 object_type=exc.object_type,
                             )
+                            conflict = getattr(exc, "conflict", None) or {}
+                            conflict_suffix = (
+                                f":prefix_conflict:ancestor={conflict.get('ancestor')}"
+                                f"({conflict.get('ancestor_operation')}/{conflict.get('ancestor_object_type')})"
+                                f":child={conflict.get('child')}({conflict.get('child_operation')}/{conflict.get('child_object_type')})"
+                                if conflict else ""
+                            )
                             audit.unsafe_artifact_reasons = [
-                                f"{exc.reason_code}:{exc.object_path or '?'}"
+                                f"{exc.reason_code}:{exc.object_path or '?'}{conflict_suffix}"
                                 f":{exc.object_type or 'unknown'}"
                             ]
                             audit.mark("unsafe_artifact_rejected")
@@ -3463,9 +3475,24 @@ class RolloutOrchestrator:
                         hygiene.runtime_private_pathset_changed
                     )
                     unsafe_reasons: list[str] = []
+                    projection = None
+                    split = None
                     if hygiene.verdict == "unsafe_artifact":
                         # 仅结构不安全 artifact 走此路（D2-3：不进投影、typed 永久拒绝）。
                         unsafe_reasons = list(hygiene.reason_codes)
+                    else:
+                        # 第四组 P-D（R5）：投影先算——新增文件的祖先删除若被控制面排除（祖先是 official
+                        # 测试文件等），重放会在 mkdir 处撞上残留文件；这是已知不支持形状，与结构不安全
+                        # 同走 unsafe 通道（present + 永久拒绝），不进 Docker、不伪装成 infra。
+                        from repoharness2.grading.trusted_projection import (
+                            build_trusted_scoring_projection,
+                        )
+
+                        projection, split = build_trusted_scoring_projection(
+                            frozen_patch, grading_spec_for_attempt().hygiene
+                        )
+                        if split.unsupported_shape_reasons:
+                            unsafe_reasons = list(split.unsupported_shape_reasons)
                     if unsafe_reasons:
                         audit.unsafe_artifact_reasons = unsafe_reasons
                         audit.mark("unsafe_artifact_rejected")
@@ -3505,13 +3532,7 @@ class RolloutOrchestrator:
                     # evidence/sidecar）。grader 之后后写 official test_patch、跑可信 eval_cmd，
                     # 正常产出 0/1 与 EligibilityReport——只改测试没修代码自然得 0，写测试且
                     # 真修好得 1；不因控制面路径变化 DROP_GROUP，也不当 unsafe。
-                    from repoharness2.grading.trusted_projection import (
-                        build_trusted_scoring_projection,
-                    )
-
-                    projection, split = build_trusted_scoring_projection(
-                        frozen_patch, grading_spec_for_attempt().hygiene
-                    )
+                    assert projection is not None and split is not None  # 上方 projectable 分支已构建
                     audit.trusted_projection = split.to_record()
                     audit.scoring_projection_entry_count = len(split.candidate_entries)
                     audit.ignored_validation_entry_count = len(split.ignored_entries)
@@ -3717,6 +3738,7 @@ class RolloutOrchestrator:
         # 仅 FA 模式（s1_compat 零改动）；失败走既有异常收口（missing）。
         if self._mode != "s1_compat":
             from repoharness2.adapters.slime.baseline_census import (
+                baseline_policy_for_task_id,
                 generate_baseline_manifest,
             )
             from repoharness2.contracts.baseline_manifest import (
@@ -3743,6 +3765,8 @@ class RolloutOrchestrator:
                 runtime_image_digest=sandbox.lease.image_digest,
                 materialized_head=head.stdout.strip(),
                 task_base_commit=task.base_commit,
+                policy=baseline_policy_for_task_id(task.task_id),  # 第四组 P-C：SWE 来源用政策 v2
+                omitted_sink=audit.omitted_cache_counts.setdefault("baseline", {}),
             )
             audit.lifecycle_timing.set("baseline_census", time.monotonic() - census_started)
             audit.baseline_manifest_digest = compute_baseline_manifest_digest(

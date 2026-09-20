@@ -387,3 +387,21 @@ def test_group_repair_signal_degraded_requires_reason_codes():
     payload["reason_codes"] = []
     with pytest.raises(ValidationError, match="reason_codes"):
         GroupRepairSignal.model_validate(payload)
+
+
+async def test_pa_candidate_execution_failed_passes_clean_grading_as_a_model_negative():
+    """第四组 A：candidate_execution_failed 是模型负样本（reward 0），clean_grading 维通过、不进 audit 档；
+    finalize 全链（gate → 报告）不需要任何消费者改动。"""
+
+    grading = valid_grading_report()
+    grading.update({
+        "outcome": "unresolved", "failure_category": "candidate_execution_failed", "reward": 0.0,
+        "f2p_pass_count": None, "f2p_total_count": None, "p2p_fail_count": None, "p2p_total_count": None,
+        "execution_failure_stage": "test_startup", "execution_failure_evidence": ["ImportError while loading conftest", "compile_probe:src/x.py:SyntaxError:line=3:invalid syntax"],
+    })
+    projection = valid_trajectory_projection()
+    projection["reward_facts"]["raw_reward"] = 0.0
+    final = await run_finalize(grading=grading, projection=projection)
+    report = final.eligibility_report
+    assert report.facts.clean_grading.ok is True and report.facts.clean_grading.reason_codes == []
+    assert report.eligibility_class != "audit_only_or_rejected"

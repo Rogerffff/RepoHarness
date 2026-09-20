@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -542,4 +543,107 @@ async def test_f2_missing_official_path_is_recreatable_by_candidate_so_grading_s
     record = manager.container_records[-1]
     assert record.trusted_setup["RH2_SETUP_ABSENT_TEST_FILES"] == "1"
     assert "RH2_SETUP_OK" not in record.trusted_setup and record.control_surface is None
+    _no_leftover(manager)
+
+
+# ---- S1-c（评分接线 2026-09-15）：安装段以候选用户执行、可写前缀交出、shm 生效 ----------------
+
+_INSTALL_SEGMENT = (
+    "echo RH2_PHASE_START=install\n"
+    "( echo probe > /usr/local/lib/python3.12/site-packages/rh2_probe_write.txt ) 2>/dev/null "
+    "&& echo RH2_PREFIX_WRITE=OK || echo RH2_PREFIX_WRITE=DENIED\n"
+    "echo RH2_INSTALL_UID=$(id -u)\n"
+    "false; true\n"
+    "RH2_INSTALL_RC=$?\n"
+    "echo \"RH2_INSTALL_RC=$RH2_INSTALL_RC\"\n"
+    "echo RH2_PHASE_END=install\n"
+    "echo \"RH2_SHM_KB=$(df -k /dev/shm | awk 'NR==2{print $2}')\"\n"
+)
+
+
+async def test_install_segment_runs_as_candidate_with_writable_prefix_and_shm(fixture_repo, fixture_image, make_workspace, tmp_path):
+    profile = make_grader_profile(
+        shm_size_bytes=128 * 1024 * 1024,
+        candidate_writable_prefixes=("/usr/local/lib/python3.12/site-packages", "/opt/does-not-exist"),
+    )
+    ws = make_workspace()
+    (ws / "src" / "thing.py").write_text(SRC_FIXED)
+    manager = SWEGradingManager(GradingManagerConfig(eval_log_dir=tmp_path / "eval_logs", sandbox_profile=profile))
+    report = await manager.grade(
+        trajectory_id="s1c-install", workspace=HostWorkspace(ws),
+        spec=_spec(fixture_repo, fixture_image, prelude=_PRELUDE + _INSTALL_SEGMENT),
+    )
+    assert report.outcome == "resolved" and report.reward == 1.0  # 安装段不改变判定语义
+    log = _eval_log(manager, report)
+    assert f"RH2_INSTALL_UID={UID}" in log and "RH2_PREFIX_WRITE=OK" in log
+    assert "RH2_INSTALL_RC=0" in log  # `false; true` 段末为 0：段末退出码不证明每步成功（A 线 §8.3）
+    assert "RH2_SHM_KB=131072" in log
+    assert "RH2_STAT_TEST_FILE=0 644" in log  # official 测试文件保护不变
+    cs = manager.container_records[-1].control_surface
+    assert cs["WRITABLE_PREFIXES_DONE"] == "1" and "/opt/does-not-exist" in cs["WRITABLE_PREFIXES_MISSING"]
+    pre = manager.prelaunch_checks[-1]
+    assert pre["ok"] and pre["inspect_facts"]["shm_size"] == 128 * 1024 * 1024
+    _no_leftover(manager)
+
+
+async def test_default_profile_prefix_missing_is_recorded_not_fatal(fixture_repo, fixture_image, make_workspace, tmp_path):
+    ws = make_workspace()
+    (ws / "src" / "thing.py").write_text(SRC_STILL_BROKEN)
+    manager = _manager(tmp_path)
+    report = await manager.grade(trajectory_id="s1c-default", workspace=HostWorkspace(ws), spec=_spec(fixture_repo, fixture_image))
+    assert report.outcome == "unresolved" and report.failure_category == "tests_failed"
+    cs = manager.container_records[-1].control_surface
+    assert cs["WRITABLE_PREFIXES_DONE"] == "0" and "/opt/miniconda3/envs/testbed" in cs["WRITABLE_PREFIXES_MISSING"]
+    _no_leftover(manager)
+
+
+# ---- S1-m（评分接线 2026-09-15）：真实容器里超时保留 tee 输出；root 观测进 sidecar ----------------
+
+_HANG_AFTER_INSTALL = (
+    "echo RH2_PHASE_START=install\n"
+    "echo \"RH2_TS_INSTALL_START=$(date +%s.%N)\"\n"
+    "true\n"
+    "RH2_INSTALL_RC=$?\n"
+    "echo \"RH2_INSTALL_RC=$RH2_INSTALL_RC\"\n"
+    "echo \"RH2_TS_INSTALL_END=$(date +%s.%N)\"\n"
+    "echo RH2_PHASE_END=install\n"
+    "sleep 120\n"
+)
+
+
+async def test_s1m_real_timeout_keeps_tee_output_and_cleans_up(fixture_repo, fixture_image, make_workspace, tmp_path):
+    ws = make_workspace()
+    (ws / "src" / "thing.py").write_text(SRC_FIXED)
+    manager = SWEGradingManager(
+        GradingManagerConfig(eval_log_dir=tmp_path / "eval_logs", sandbox_profile=GRADER, cleanup_timeout_seconds=60),
+    )
+    report = await manager.grade(
+        trajectory_id="s1m-real-timeout", workspace=HostWorkspace(ws),
+        spec=_spec(fixture_repo, fixture_image, prelude=_HANG_AFTER_INSTALL, test_timeout_seconds=6.0),
+    )
+    assert report.outcome == "failed_to_grade" and report.reward is None
+    log = _eval_log(manager, report)
+    assert "RH2_INSTALL_RC=0" in log and "RH2_PHASE_END=install" in log
+    side = json.loads((Path(manager.config.eval_log_dir) / f"{report.eval_log_ref.ref_id}.diagnostics.json").read_text())
+    assert side["candidate"]["log_partial"] is True and side["candidate"]["install_rc_last_command"] == 0
+    assert side["candidate"]["install_seconds"] is not None and side["candidate"]["test_seconds"] is None
+    _no_leftover(manager)
+
+
+async def test_s1m_observation_scripts_reach_sidecar_on_fixture(fixture_repo, fixture_image, make_workspace, tmp_path):
+    ws = make_workspace()
+    (ws / "src" / "thing.py").write_text(SRC_FIXED)
+    manager = _manager(tmp_path)
+    pre = "echo RH2_OBS_RUNNER_DIGEST=$(sha256sum /usr/local/bin/python3 | cut -c1-16)\n"
+    post = pre + "echo RH2_OBS_IMPORT_PATH=$(cd /testbed && python3 -c 'import src.thing as t; print(t.__file__)')\n"
+    report = await manager.grade(
+        trajectory_id="s1m-obs", workspace=HostWorkspace(ws),
+        spec=_spec(fixture_repo, fixture_image, pre_candidate_observation_script=pre, post_candidate_observation_script=post),
+    )
+    assert report.outcome == "resolved"
+    side = json.loads((Path(manager.config.eval_log_dir) / f"{report.eval_log_ref.ref_id}.diagnostics.json").read_text())
+    obs = side["observations"]
+    assert obs["RH2_OBS_RUNNER_DIGEST_PRE"] == obs["RH2_OBS_RUNNER_DIGEST"] and side["runner_integrity_changed"] is False
+    assert obs["RH2_OBS_IMPORT_PATH"] == "/testbed/src/thing.py"
+    assert side["candidate"]["log_partial"] is False
     _no_leftover(manager)

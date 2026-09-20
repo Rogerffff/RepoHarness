@@ -20,7 +20,8 @@
 
 官方语义的两个"如实沿用"（不加严，加严是 S1-4/S2 的活）：
 
-  - silent success：不在日志出现的 F2P/P2P 按通过计（官方 check_pass_and_fail 行为）。
+  - 状态口径（2026-09-15 按 swebench 4.1.0 与 SWE-Gym fork 的 grading.py 实测改正；旧注释"缺席按通过计"是错的）：参考 ID **缺席计失败**（`test_failed` = 不在状态映射或 FAILED/ERROR）；
+    PASSED/XFAIL 计成功；SKIPPED 不进成功/失败任何一桶——清单全部 SKIPPED 时 report 可得 FULL。
   - apply_ok=False 的坏码集合是并集（APPLY_PATCH_FAIL / RESET_FAILED / TESTS_ERROR /
     TESTS_TIMEOUT / 缺 Start/End 标记），官方不区分成因。本层把它映射为
     patch_apply_failed；若上层（S1-4 manager）掌握容器级证据（如评分容器被杀），
@@ -67,11 +68,24 @@ class EvalVerdict(StrictModel):
     resolved: bool = Field(description="是否 RESOLVED_FULL（唯一得分态，校验器与 resolution 互检）。")
     f2p_rate: float = Field(ge=0.0, le=1.0, description="FAIL_TO_PASS 通过率（官方 compute_fail_to_pass）。")
     p2p_rate: float = Field(ge=0.0, le=1.0, description="PASS_TO_PASS 通过率（官方 compute_pass_to_pass）。")
-    f2p_success: list[str] = Field(description="F2P 清单内判通过的测试（含 silent success）。")
+    f2p_success: list[str] = Field(description="F2P 清单内判通过的测试（PASSED/XFAIL）。")
     f2p_failure: list[str] = Field(description="F2P 清单内判失败的测试。")
-    p2p_success: list[str] = Field(description="P2P 清单内判通过的测试（含 silent success）。")
+    p2p_success: list[str] = Field(description="P2P 清单内判通过的测试（PASSED/XFAIL）。")
     p2p_failure: list[str] = Field(description="P2P 清单内判失败的测试（回归项）。")
     num_parsed_tests: int = Field(ge=0, description="日志里实际解析出的测试条数（0 = 可疑，供上层加严）。")
+    # S1-b（2026-09-15）诊断字段：只有 v2 入口填写；v1 路径保持默认，不影响既有消费者。
+    num_parsed_outside_segment: int = Field(
+        default=0, ge=0, description="Start/End 标记段之外能被 parser 认出的测试行数（诊断：段外输出不作状态来源）。"
+    )
+    reference_missing: list[str] = Field(
+        default_factory=list, description="参考清单（F2P+P2P）里状态映射缺席的测试（官方口径计失败）。"
+    )
+    reference_skipped: list[str] = Field(
+        default_factory=list, description="参考清单里状态为 SKIPPED 的测试（官方口径不进任何桶）。"
+    )
+    parser_source: str = Field(
+        default="swebench_installed", description="状态映射来自哪个 parser 实现（v1 = 安装的 swebench；v2 = swegym_parsers@<commit>）。"
+    )
 
     @model_validator(mode="after")
     def _check_resolved_consistency(self) -> "EvalVerdict":
@@ -172,6 +186,91 @@ def parse_eval_log(private: PrivateGradingBundle, log_text: str) -> EvalVerdict:
     return parse_official_eval(instance, log_text)
 
 
+def parse_eval_log_v2(grading, log_text: str) -> EvalVerdict:
+    """v2 评分面入口（S1-b，评分接线 2026-09-15）：按 `spec_vendor_id` 分派 vendored parser。
+
+    与 v1 `parse_official_eval` 的差别：
+
+    1. 不构造 swebench `TestSpec`（4.1.0 的 spec 注册表不含 SWE-Gym 仓库，`make_test_spec` 会 KeyError）；
+       parser 来自 `envpack.swegym_parsers`（fork 242429c1 的移植，按 `grading.repo_key_lower` 查表）。
+    2. **只以 `>>>>> Start Test Output` 与 `>>>>> End Test Output` 之间的段作为状态来源**。4.1.0 的
+       `get_logs_eval` 在段内解析为空时会回退解析整份日志（B 线复核 B2 的合成反例：段内只有收集失败文字、
+       段外两行 PASSED → FULL）；这里不回退，段外能认出的行数只记进 `num_parsed_outside_segment`。
+    3. 坏码集合（APPLY_PATCH_FAIL / RESET_FAILED / TESTS_ERROR / TESTS_TIMEOUT）与缺标记 → `apply_ok=False`，
+       与 4.1.0 相同；report / resolution 复用 4.1.0 的 `get_eval_tests_report` / `get_resolution_status`
+       （与 fork 同语义：缺席计失败、PASSED/XFAIL 计成功、SKIPPED 不进桶）。
+    4. 额外填 `reference_missing` / `reference_skipped` / `parser_source` 诊断字段（不改 reward 口径）。
+
+    `grading` 是 `PrivateGradingBundleV2`（鸭子：需要 spec_vendor_id / repo_key_lower / instance_id /
+    fail_to_pass / pass_to_pass）。非 SWE-Gym vendor 直接拒绝——不静默回退到 v1。
+    """
+
+    from swebench.harness.constants import (
+        APPLY_PATCH_FAIL,
+        END_TEST_OUTPUT,
+        FAIL_TO_PASS,
+        PASS_TO_PASS,
+        RESET_FAILED,
+        START_TEST_OUTPUT,
+        TESTS_ERROR,
+        TESTS_TIMEOUT,
+        ResolvedStatus,
+    )
+    from swebench.harness.grading import (
+        compute_fail_to_pass,
+        compute_pass_to_pass,
+        get_eval_tests_report,
+        get_resolution_status,
+    )
+
+    from repoharness2.envpack.spec_vendor import SPEC_VENDOR_ID_SWEGYM_242429C1
+    from repoharness2.envpack.swegym_parsers import SWEGYM_PARSERS_VERSION_TAG, lookup_parser
+
+    if grading.spec_vendor_id != SPEC_VENDOR_ID_SWEGYM_242429C1:
+        raise ValueError(f"{grading.instance_id}: parse_eval_log_v2 只服务 {SPEC_VENDOR_ID_SWEGYM_242429C1!r}，得到 {grading.spec_vendor_id!r}")
+    parser = lookup_parser(grading.repo_key_lower)
+
+    bad_codes = [c for c in (APPLY_PATCH_FAIL, RESET_FAILED, TESTS_ERROR, TESTS_TIMEOUT) if c in log_text]
+    has_markers = START_TEST_OUTPUT in log_text and END_TEST_OUTPUT in log_text
+    if bad_codes or not has_markers:
+        status_map: dict[str, str] = {}
+        outside_map: dict[str, str] = {}
+        apply_ok = False
+    else:
+        head, rest = log_text.split(START_TEST_OUTPUT, 1)
+        if END_TEST_OUTPUT in rest:
+            segment, tail = rest.split(END_TEST_OUTPUT, 1)
+        else:
+            # End 标记只出现在 Start 之前：段不成立，按缺标记处理（与 4.1.0 的 split 会得到空段一致地不计分）
+            segment, tail = "", rest
+        status_map = parser(segment)
+        outside_map = parser(head + tail)
+        apply_ok = True
+
+    f2p = list(grading.fail_to_pass)
+    p2p = list(grading.pass_to_pass)
+    report = get_eval_tests_report(status_map, {FAIL_TO_PASS: f2p, PASS_TO_PASS: p2p})
+    resolution = get_resolution_status(report)
+    reference = f2p + p2p
+    return EvalVerdict(
+        instance_id=str(grading.instance_id),
+        apply_ok=apply_ok,
+        resolution=resolution,
+        resolved=resolution == ResolvedStatus.FULL.value,
+        f2p_rate=compute_fail_to_pass(report),
+        p2p_rate=compute_pass_to_pass(report),
+        f2p_success=report[FAIL_TO_PASS]["success"],
+        f2p_failure=report[FAIL_TO_PASS]["failure"],
+        p2p_success=report[PASS_TO_PASS]["success"],
+        p2p_failure=report[PASS_TO_PASS]["failure"],
+        num_parsed_tests=len(status_map),
+        num_parsed_outside_segment=len(outside_map),
+        reference_missing=[c for c in reference if c not in status_map],
+        reference_skipped=[c for c in reference if status_map.get(c) == "SKIPPED"],
+        parser_source=SWEGYM_PARSERS_VERSION_TAG,
+    )
+
+
 def grading_outcome_fields(verdict: EvalVerdict) -> dict:
     """把 EvalVerdict 翻成 contracts.GradingReport 的结论字段组（A7 接口）。
 
@@ -206,5 +305,61 @@ def grading_outcome_fields(verdict: EvalVerdict) -> dict:
         "p2p_total_count": len(verdict.p2p_success) + len(verdict.p2p_failure),
     }
     if verdict.resolved:
+        return {"outcome": "resolved", "failure_category": None, "reward": 1.0, **counts}
+    return {"outcome": "unresolved", "failure_category": "tests_failed", "reward": 0.0, **counts}
+
+
+# ---------------------------------------------------------------------------
+# R2E 方案 A（用户 2026-09-15 选定"最小接入"）：expected 状态映射的精确匹配
+# ---------------------------------------------------------------------------
+
+
+class ExpectedMapMatch(StrictModel):
+    """R2E 的判定原料：期望映射（测试 id → 状态）与观测映射逐键比对。
+
+    口径：`total_count` = 期望键 ∪ 观测键 的大小；`match_count` = 并集里"两边都在场且状态相等"的键数。
+    多出或缺少任何一个键都让 match < total——resolved 当且仅当 keys_equal 且 match == total > 0。"""
+
+    match_count: int = Field(ge=0)
+    total_count: int = Field(ge=0)
+    keys_equal: bool
+    mismatched: list[str] = Field(default_factory=list, description="状态不等的键（两边都在场）。")
+    missing: list[str] = Field(default_factory=list, description="期望里有、观测里没有的键。")
+    unexpected: list[str] = Field(default_factory=list, description="观测里有、期望里没有的键。")
+
+    @property
+    def resolved(self) -> bool:
+        return self.keys_equal and self.total_count > 0 and self.match_count == self.total_count
+
+
+def expected_map_matches(expected: Mapping[str, str], observed: Mapping[str, str]) -> ExpectedMapMatch:
+    """逐键精确匹配（R2E-Gym 的 resolved 口径：观测状态映射与期望映射相等）。"""
+
+    exp_keys, obs_keys = set(expected), set(observed)
+    union = sorted(exp_keys | obs_keys)
+    mismatched = sorted(k for k in exp_keys & obs_keys if expected[k] != observed[k])
+    missing = sorted(exp_keys - obs_keys)
+    unexpected = sorted(obs_keys - exp_keys)
+    match = sum(1 for k in union if k in exp_keys and k in obs_keys and expected[k] == observed[k])
+    return ExpectedMapMatch(
+        match_count=match, total_count=len(union), keys_equal=exp_keys == obs_keys,
+        mismatched=mismatched, missing=missing, unexpected=unexpected,
+    )
+
+
+def grading_outcome_fields_r2e(match: ExpectedMapMatch) -> dict:
+    """把 ExpectedMapMatch 翻成 GradingReport 的结论字段组（grading_semantics="r2e_expected_map"）。
+
+    - resolved（键集相等且全部相等）→ resolved / reward 1.0 / expected 计数齐全；
+    - 其余 → unresolved + tests_failed / reward 0.0 / expected 计数齐全（match < total 由口径保证）。
+    四个 F2P/P2P 计数恒为 None（契约横切约束）。infra 族仍只由 manager 产出。"""
+
+    counts = {
+        "grading_semantics": "r2e_expected_map",
+        "expected_match_count": match.match_count,
+        "expected_total_count": match.total_count,
+        "f2p_pass_count": None, "f2p_total_count": None, "p2p_fail_count": None, "p2p_total_count": None,
+    }
+    if match.resolved:
         return {"outcome": "resolved", "failure_category": None, "reward": 1.0, **counts}
     return {"outcome": "unresolved", "failure_category": "tests_failed", "reward": 0.0, **counts}

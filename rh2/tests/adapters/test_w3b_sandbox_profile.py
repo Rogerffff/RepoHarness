@@ -590,3 +590,31 @@ def test_f2_trusted_setup_attest_lines_gate_apply_result_and_file_shape():
     assert "RH2_APPLY_RC=${RH2_APPLY_RC:-1}" in text
     with pytest.raises(sp.SandboxProfileError, match="grader_control_surface_path_invalid"):
         sp.grader_trusted_setup_attest_lines(("../x.py",))
+
+
+# ---- S1-c（评分接线 2026-09-15）：shm 旋钮与候选可写前缀 ----------------------------------
+
+def test_grader_shm_and_writable_prefixes_enter_args_parameters_and_env():
+    g = sp.GraderSandboxProfile()
+    assert g.shm_size_bytes == 64 * 1024**2 and g.candidate_writable_prefixes == ("/opt/miniconda3/envs/testbed",)
+    args = g.docker_run_args(name="c", image="img")
+    assert "--shm-size 67108864" in " ".join(args)
+    # 2026-09-19（B 线 216 题诊断）：grader 容器也用 docker-init 当 PID 1 回收孤儿——dvc-2141 的 496–507 个僵尸撞满 512 配额
+    assert args[:5] == ["run", "--detach", "--init", "--network", "none"]
+    params = g.to_parameters()
+    assert params["shm_size_bytes"] == 67108864 and params["candidate_writable_prefixes"] == ["/opt/miniconda3/envs/testbed"]
+    big = sp.GraderSandboxProfile(shm_size_bytes=1024**3)
+    assert big.digest() != g.digest()  # 进摘要：改 shm 即换 runtime_profile_digest
+    e = sp.grader_profile_from_env({"RH2_GRADER_SHM_BYTES": "1073741824", "RH2_GRADER_CANDIDATE_WRITABLE_PREFIXES": "/opt/a:/opt/b"})
+    assert e.shm_size_bytes == 1024**3 and e.candidate_writable_prefixes == ("/opt/a", "/opt/b")
+    none = sp.grader_profile_from_env({"RH2_GRADER_CANDIDATE_WRITABLE_PREFIXES": ""})
+    assert none.candidate_writable_prefixes == ()
+    for bad in [{"shm_size_bytes": 0}, {"candidate_writable_prefixes": ("relative",)},
+                {"candidate_writable_prefixes": ("/",)}, {"candidate_writable_prefixes": ("/testbed",)},
+                {"candidate_writable_prefixes": ("/opt/../etc",)}]:
+        with pytest.raises(sp.SandboxProfileError):
+            sp.GraderSandboxProfile(**bad)
+    script = sp.grader_protect_control_surface_script(e, ["tests/test_x.py"])
+    assert "for p in /opt/a /opt/b; do" in script and "WRITABLE_PREFIXES_DONE" in script
+    assert "RH2_PROTECT_ERROR=prefix_chown_failed" in script
+    assert "for p in ; do" in sp.grader_protect_control_surface_script(none, ["tests/test_x.py"])

@@ -253,3 +253,56 @@ async def test_unsupported_object_in_post_tree_typed():
             _FifoWs(), empty, rollout_execution_id="e",
             physical_attempt_id="e#p1-a",
         )
+
+
+# ---- 第四组 P-D（2026-09-16）：exporter 只转换父子前缀冲突并保留冲突路径；文件变目录本身已放开 ----
+
+async def test_file_to_dir_now_exports_normally_and_dir_to_file_keeps_typed_error():
+    sha_old = hashlib.sha256(b"a=1\n").hexdigest()
+    b64_new, dg_new = _b64(b"{}\n")
+    baseline = _census("regular\t100644\t" + sha_old + "\tconfig\nregular\t100644\t" + "1" * 64 + "\tkeep.py\n")
+    post_text = "regular\t100644\t" + dg_new.split(":")[1] + "\tconfig/default.json\nregular\t100644\t" + "1" * 64 + "\tkeep.py\n"
+
+    class WS:
+        async def run_bash(self, script: str):
+            if "-prune" in script and "readlink" in script:
+                return SimpleNamespace(exit_code=0, stdout=post_text, stderr="")
+            return SimpleNamespace(exit_code=0, stdout=f"config/default.json\t{b64_new}\n", stderr="")
+
+    art = await export_frozen_patch(WS(), baseline, rollout_execution_id="exec_1", physical_attempt_id="exec_1#p1-aaaa")
+    assert [(e.path, e.operation) for e in art.entries] == [("config", "delete"), ("config/default.json", "add")]
+
+    # 反向（目录变文件）：仍是父子前缀冲突 → typed 错误且带冲突路径
+    baseline2 = _census("regular\t100644\t" + sha_old + "\tconfig/default.json\nregular\t100644\t" + "1" * 64 + "\tkeep.py\n")
+    post2 = "regular\t100644\t" + dg_new.split(":")[1] + "\tconfig\nregular\t100644\t" + "1" * 64 + "\tkeep.py\n"
+
+    class WS2:
+        async def run_bash(self, script: str):
+            if "-prune" in script and "readlink" in script:
+                return SimpleNamespace(exit_code=0, stdout=post2, stderr="")
+            return SimpleNamespace(exit_code=0, stdout=f"config\t{b64_new}\n", stderr="")
+
+    with pytest.raises(PatchExportError) as ei:
+        await export_frozen_patch(WS2(), baseline2, rollout_execution_id="exec_1", physical_attempt_id="exec_1#p1-aaaa")
+    assert ei.value.reason_code == "unsupported_delta_shape" and ei.value.object_type == "prefix_conflict"
+    assert ei.value.object_path == "config/default.json"
+    # A 线复核 R7：结构化冲突上下文（不再从 repr 文本反解）
+    assert ei.value.conflict == {
+        "ancestor": "config", "child": "config/default.json", "ancestor_operation": "add", "ancestor_object_type": "regular",
+        "child_operation": "delete", "child_object_type": "regular",
+    }
+
+    # 含引号的合法路径：repr 会换成双引号，旧正则丢证据；结构化上下文不受影响
+    qname = "config'quote"
+    baseline3 = _census("regular\t100644\t" + sha_old + "\t" + qname + "/default.json\nregular\t100644\t" + "1" * 64 + "\tkeep.py\n")
+    post3 = "regular\t100644\t" + dg_new.split(":")[1] + "\t" + qname + "\nregular\t100644\t" + "1" * 64 + "\tkeep.py\n"
+
+    class WS3:
+        async def run_bash(self, script: str):
+            if "-prune" in script and "readlink" in script:
+                return SimpleNamespace(exit_code=0, stdout=post3, stderr="")
+            return SimpleNamespace(exit_code=0, stdout=f"{qname}\t{b64_new}\n", stderr="")
+
+    with pytest.raises(PatchExportError) as ei3:
+        await export_frozen_patch(WS3(), baseline3, rollout_execution_id="exec_1", physical_attempt_id="exec_1#p1-aaaa")
+    assert ei3.value.object_path == qname + "/default.json" and ei3.value.conflict["ancestor"] == qname

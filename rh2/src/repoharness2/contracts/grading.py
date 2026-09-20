@@ -45,6 +45,11 @@ GradingFailureCategory = Literal[
     # patch。生产 producer = grading 超时分类器（未实现，落地时随
     # 该实现走三条件判定；本值先行进契约防 schema 二次迁移）。
     "test_execution_timeout",  # 模型 patch 致测试确定性超时（模型负样本）
+    # 第四组 A（用户 2026-09-15 批准，2026-09-16 实施）：已证由候选造成的**全局执行失败**（测试启动 / 收集阶段
+    # 就中断，没有逐测试结果）——模型真实失败，outcome=unresolved、reward=0、四计数 None。producer 三路门
+    # （grading/manager.py）：环境资格记录 ∧ 失败在测试段且形状确定 ∧ 定位到候选改动并以同一解释器复证
+    # 语法错误；已证保护性资源终止 → infra（reward None）；必要事实不足 → 未确定（infra 族，reward None）。
+    "candidate_execution_failed",
 ]
 
 # infra 族归因：评分链路自身的故障，与模型产出质量无关。
@@ -141,13 +146,18 @@ class GradingReport(StrictModel):
     1. outcome=failed_to_grade <=> failure_category 属 infra 族
        （infra_failure / test_log_parse_failed），且 reward 必须为 None
        （关键非法样例：infra_failure + reward=0.0 直接拒收）；
-    2. outcome=unresolved 必须归因 patch_apply_failed 或 tests_failed，
-       且 reward 必须恰为 0.0（S1 二值语义，见 reward_scale_version）；
+    2. outcome=unresolved 必须归因 patch_apply_failed / tests_failed / test_execution_timeout /
+       candidate_execution_failed，且 reward 必须恰为 0.0（S1 二值语义，见 reward_scale_version）；
     3. outcome=resolved 不得携带 failure_category，reward 必须恰为 1.0；
     4. hygiene verdict 非 clean 时 outcome 不得为 resolved（被拒 patch 不许拿满分）；
     5. F2P/P2P 计数当且仅当测试真正跑过且日志解析成功时在场：
        resolved / tests_failed 四计数必须齐全，
-       failed_to_grade / patch_apply_failed 必须全为 None。
+       failed_to_grade / patch_apply_failed / test_execution_timeout / candidate_execution_failed 必须全为 None；
+    6. 第四组 A（2026-09-16）：candidate_execution_failed 必须带 execution_failure_stage 与非空
+       execution_failure_evidence，其它类别不得携带这两个字段；
+    7. R2E 方案 A（2026-09-15）：grading_semantics="r2e_expected_map" 时四计数全 None、resolved/tests_failed
+       带 expected_match_count/expected_total_count（resolved 要求二者相等且 >0）；"swe_f2p_p2p" 时 expected 计数全 None。
+       老 JSON 没有这些字段时按默认值读取（swe_f2p_p2p、None、[]），不改变既有报告的语义。
 
     reward 二值锁（S1-1b）：S1 的 reward 语义是严格二值——resolved <=> 1.0，
     unresolved <=> 0.0，由 reward_scale_version="binary_v1" 显式声明。未来引入
@@ -199,6 +209,21 @@ class GradingReport(StrictModel):
     p2p_total_count: int | None = Field(
         default=None, ge=0, description="PASS_TO_PASS 总数。"
     )
+    # 第四组 A：全局执行失败的阶段与证据（只有 candidate_execution_failed 携带；其它类别必须为空）
+    execution_failure_stage: Literal["test_startup", "test_collection"] | None = Field(
+        default=None, description="candidate_execution_failed 的失败阶段：pytest 启动（conftest 加载）或收集。"
+    )
+    execution_failure_evidence: list[NonEmptyStr] = Field(
+        default_factory=list, max_length=20,
+        description="触发判定的证据行（日志片段、复证结果、资格记录来源），≤ 20 条；只随 candidate_execution_failed 出现。",
+    )
+    # R2E 方案 A（用户 2026-09-15 选定）：来源语义字段 + 专用计数。swe_f2p_p2p 下两计数必须为 None；
+    # r2e_expected_map 下四个 F2P/P2P 计数必须为 None，有可信结果时（resolved / tests_failed）两计数齐全。
+    grading_semantics: Literal["swe_f2p_p2p", "r2e_expected_map"] = Field(
+        default="swe_f2p_p2p", description="判定语义：SWE 的 F2P/P2P 清单，或 R2E 的 expected 状态映射精确匹配。"
+    )
+    expected_match_count: int | None = Field(default=None, ge=0, description="r2e_expected_map：观测与期望逐键相等的数量。")
+    expected_total_count: int | None = Field(default=None, ge=0, description="r2e_expected_map：期望映射的键数。")
     patch_hygiene: PatchHygieneResult | None = Field(
         default=None,
         description="patch 卫生检查结果。除 failed_to_grade（hygiene 可能根本没跑到）外必填。",
@@ -243,31 +268,39 @@ class GradingReport(StrictModel):
         elif self.outcome == "unresolved":
             # 2. 未解决必须归因，且 reward 恰为 0.0（binary_v1 二值锁）
             if self.failure_category not in (
-                "patch_apply_failed", "tests_failed", "test_execution_timeout"
+                "patch_apply_failed", "tests_failed", "test_execution_timeout", "candidate_execution_failed"
             ):
                 raise ValueError(
                     "outcome=unresolved 必须归因为 patch_apply_failed / tests_failed"
-                    f" / test_execution_timeout，得到 {self.failure_category}。"
+                    f" / test_execution_timeout / candidate_execution_failed，得到 {self.failure_category}。"
                 )
             if self.reward != 0.0:
                 raise ValueError(
                     f"outcome=unresolved 要求 reward 恰为 0.0（reward_scale_version=binary_v1），"
                     f"得到 {self.reward}。放宽二值语义必须先升 reward_scale_version 并改本校验器。"
                 )
-            if self.failure_category in ("patch_apply_failed", "test_execution_timeout"):
+            if self.failure_category in ("patch_apply_failed", "test_execution_timeout", "candidate_execution_failed"):
                 # test_execution_timeout：测试被超时截断，无可信计数
                 # （D1a 三条件门在 producer 侧；计数缺席是该类别的语义）
-                if any(value is not None for value in test_counts):
+                # candidate_execution_failed：测试启动/收集阶段就中断，没有逐测试结果，不得伪造计数
+                if any(value is not None for value in test_counts) or any(
+                    v is not None for v in (self.expected_match_count, self.expected_total_count)
+                ):
                     raise ValueError(
-                        f"{self.failure_category} 时不得携带 F2P/P2P 计数"
+                        f"{self.failure_category} 时不得携带 F2P/P2P 或 expected 计数"
                         "（测试未运行/未可信完成）。"
                     )
-            else:  # tests_failed
+            elif self.grading_semantics == "swe_f2p_p2p":  # tests_failed
                 if any(value is None for value in test_counts):
                     raise ValueError(
                         "tests_failed 时 F2P/P2P 四个计数必须齐全——测试跑了且日志解析成功才允许"
                         "归因 tests_failed；解析不出计数应归因 test_log_parse_failed（infra 族）。"
                     )
+            else:  # tests_failed + r2e_expected_map
+                if self.expected_match_count is None or self.expected_total_count is None:
+                    raise ValueError("r2e_expected_map 下 tests_failed 必须带 expected_match_count / expected_total_count。")
+                if self.expected_match_count >= self.expected_total_count and self.expected_total_count > 0:
+                    raise ValueError("r2e_expected_map 下 tests_failed 要求 expected_match_count < expected_total_count。")
         else:  # resolved
             # 3. resolved 三联：无归因、reward 恰为 1.0、测试计数在场
             if self.failure_category is not None:
@@ -277,17 +310,42 @@ class GradingReport(StrictModel):
                     f"outcome=resolved 要求 reward 恰为 1.0（reward_scale_version=binary_v1），"
                     f"得到 {self.reward}。放宽二值语义必须先升 reward_scale_version 并改本校验器。"
                 )
-            if any(value is None for value in test_counts):
-                raise ValueError("outcome=resolved 时 F2P/P2P 四个计数必须齐全（RESOLVED_FULL 的判据输入）。")
-            assert self.p2p_fail_count is not None
-            if self.p2p_fail_count != 0:
-                raise ValueError(
-                    f"outcome=resolved 要求 p2p_fail_count=0（P2P 无一失败），得到 {self.p2p_fail_count}。"
-                )
-            if self.f2p_pass_count != self.f2p_total_count:
-                raise ValueError(
-                    f"outcome=resolved 要求全部 F2P 通过：pass={self.f2p_pass_count}, total={self.f2p_total_count}。"
-                )
+            if self.grading_semantics == "r2e_expected_map":
+                # R2E 方案 A：resolved <=> 观测状态映射与期望映射逐键精确相等（键集相等 ∧ 每键状态相等）
+                if self.expected_match_count is None or self.expected_total_count is None:
+                    raise ValueError("r2e_expected_map 下 outcome=resolved 必须带 expected_match_count / expected_total_count。")
+                if self.expected_total_count == 0 or self.expected_match_count != self.expected_total_count:
+                    raise ValueError(
+                        "r2e_expected_map 下 outcome=resolved 要求 expected_match_count == expected_total_count > 0，"
+                        f"得到 match={self.expected_match_count}, total={self.expected_total_count}。"
+                    )
+            else:
+                if any(value is None for value in test_counts):
+                    raise ValueError("outcome=resolved 时 F2P/P2P 四个计数必须齐全（RESOLVED_FULL 的判据输入）。")
+                assert self.p2p_fail_count is not None
+                if self.p2p_fail_count != 0:
+                    raise ValueError(
+                        f"outcome=resolved 要求 p2p_fail_count=0（P2P 无一失败），得到 {self.p2p_fail_count}。"
+                    )
+                if self.f2p_pass_count != self.f2p_total_count:
+                    raise ValueError(
+                        f"outcome=resolved 要求全部 F2P 通过：pass={self.f2p_pass_count}, total={self.f2p_total_count}。"
+                    )
+
+        # 第四组 A / R2E 方案 A 的横切约束（与 outcome 分支无关）
+        if self.failure_category == "candidate_execution_failed":
+            if self.execution_failure_stage is None or not self.execution_failure_evidence:
+                raise ValueError("candidate_execution_failed 必须带 execution_failure_stage 与非空 execution_failure_evidence。")
+        elif self.execution_failure_stage is not None or self.execution_failure_evidence:
+            raise ValueError("只有 candidate_execution_failed 可携带 execution_failure_stage / execution_failure_evidence。")
+        if self.grading_semantics == "swe_f2p_p2p":
+            if self.expected_match_count is not None or self.expected_total_count is not None:
+                raise ValueError("swe_f2p_p2p 语义下不得携带 expected 计数。")
+        else:
+            if any(value is not None for value in test_counts):
+                raise ValueError("r2e_expected_map 语义下不得携带 F2P/P2P 计数（来源合同是 expected 状态映射）。")
+            if self.outcome == "failed_to_grade" and (self.expected_match_count is not None or self.expected_total_count is not None):
+                raise ValueError("failed_to_grade 时不得携带 expected 计数。")
 
         # 计数自洽
         if (

@@ -115,6 +115,9 @@ class TrustedProjectionSplit:
     candidate_entries: tuple[PatchEntry, ...]
     ignored_entries: tuple[IgnoredValidationEntry, ...]
     rule_version: str = TRUSTED_PROJECTION_RULE_VERSION
+    # 第四组 P-D（R5）：投影后仍需要的祖先删除被控制面排除（如祖先是 official 测试文件）——重放会在 mkdir 处
+    # 撞上残留文件。属于已知不支持形状：调用方走 unsafe 通道，不进 Docker，不伪装成 infra。
+    unsupported_shape_reasons: tuple[str, ...] = ()
 
     @property
     def candidate_paths(self) -> tuple[str, ...]:
@@ -147,6 +150,7 @@ class TrustedProjectionSplit:
         overflow = len(self.ignored_entries) - EVIDENCE_IGNORED_PATH_LIMIT
         if overflow > 0:
             refs.append(f"ignored_validation_delta_truncated:{overflow}")
+        refs.extend(self.unsupported_shape_reasons[:EVIDENCE_IGNORED_PATH_LIMIT])
         return refs
 
     def to_record(self) -> dict[str, Any]:
@@ -154,6 +158,7 @@ class TrustedProjectionSplit:
 
         return {
             "rule_version": self.rule_version,
+            "unsupported_shape_reasons": list(self.unsupported_shape_reasons),
             "candidate_solution_paths": list(self.candidate_paths),
             "candidate_solution_count": len(self.candidate_entries),
             "ignored_validation_entries": [e.to_dict() for e in self.ignored_entries],
@@ -180,8 +185,19 @@ def split_trusted_scoring_projection(
                     control_plane_class=cls,
                 )
             )
+    ignored_deletes = {e.path for e in ignored if e.operation == "delete"}
+    reasons: list[str] = []
+    for e in candidate:
+        if e.operation != "add":
+            continue
+        segs = e.path.split("/")
+        for i in range(1, len(segs)):
+            anc = "/".join(segs[:i])
+            if anc in ignored_deletes:
+                reasons.append(f"unsupported_delta_shape:ancestor_delete_excluded_by_control_plane:{anc}->{e.path}")
     return TrustedProjectionSplit(
         candidate_entries=tuple(candidate), ignored_entries=tuple(ignored),
+        unsupported_shape_reasons=tuple(sorted(reasons)),
     )
 
 

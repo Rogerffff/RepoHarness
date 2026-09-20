@@ -23,6 +23,7 @@ import hashlib
 import json
 from typing import Literal
 
+from pydantic_core import PydanticCustomError
 from pydantic import Field, model_validator
 
 from ._base import GitSha, NonEmptyStr, Sha256Digest, StrictModel
@@ -126,12 +127,29 @@ class FrozenPatchArtifactV1(StrictModel):
             raise ValueError("entries 必须按 path 排序。")
         if len(paths) != len(set(paths)):
             raise ValueError("entries path 必须唯一。")
-        path_set = set(paths)
-        for p in paths:
-            segs = p.split("/")
+        by_path = {e.path: e for e in self.entries}
+        for e in self.entries:
+            segs = e.path.split("/")
             for i in range(1, len(segs)):
-                if "/".join(segs[:i]) in path_set:
-                    raise ValueError(f"父子前缀冲突：{'/'.join(segs[:i])!r} 与 {p!r}。")
+                anc = "/".join(segs[:i])
+                if anc not in by_path:
+                    continue
+                a = by_path[anc]
+                # 第四组 P-D（用户已批）：唯一允许的父子形状——祖先是**被删除的普通文件**、后代是**新增**
+                # （普通文件变目录）。其余（祖先 add/modify、祖先是 symlink、后代 delete/modify、目录反向变文件）仍拒。
+                if a.operation == "delete" and a.object_type == "regular" and e.operation == "add":
+                    continue
+                # A 线复核 R7：结构化上下文（祖先/后代路径与各自操作、对象类型），exporter 按 error type 精确转换，
+                # 不再从展示文本反解路径（含引号的合法路径 repr 会换成双引号，正则解析就丢证据）。
+                raise PydanticCustomError(
+                    "prefix_conflict",
+                    "父子前缀冲突：'{ancestor}' 与 '{child}'。",
+                    {
+                        "ancestor": anc, "child": e.path,
+                        "ancestor_operation": a.operation, "ancestor_object_type": a.object_type,
+                        "child_operation": e.operation, "child_object_type": e.object_type,
+                    },
+                )
         return self
 
 

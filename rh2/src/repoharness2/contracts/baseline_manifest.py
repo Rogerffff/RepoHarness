@@ -57,6 +57,12 @@ class BaselineManifestPolicy(StrictModel):
     excluded_namespaces: tuple[NonEmptyStr, ...] = Field(
         description="被排除的目录前缀（以 / 结尾；如 .git/、.harness/）。"
     )
+    # 第四组 C（用户已批，2026-09-16 实施，R3/R4 修订）：可再生非答案缓存的**目录名**（任意层级、只匹配目录，
+    # 同名普通文件/软链不受影响）。census 整体省略、只计数，不进 excluded_census_digest；空元组时 canonical
+    # 形态与 v1 完全相同，旧证据的 policy/manifest digest 不变。
+    regenerable_cache_dirs: tuple[NonEmptyStr, ...] = Field(
+        default=(), description="可再生缓存目录名（如 __pycache__、.pytest_cache）；只按目录类型匹配。"
+    )
 
     @model_validator(mode="after")
     def _check(self) -> "BaselineManifestPolicy":
@@ -66,7 +72,26 @@ class BaselineManifestPolicy(StrictModel):
             _check_canonical_path(ns.rstrip("/"))
         if list(self.excluded_namespaces) != sorted(set(self.excluded_namespaces)):
             raise ValueError("excluded_namespaces 必须排序且唯一。")
+        for name in self.regenerable_cache_dirs:
+            if "/" in name or name in (".", "..") or "\n" in name or "\0" in name:
+                raise ValueError(f"缓存目录名非法：{name!r}（只能是单段目录名）")
+        if list(self.regenerable_cache_dirs) != sorted(set(self.regenerable_cache_dirs)):
+            raise ValueError("regenerable_cache_dirs 必须排序且唯一。")
         return self
+
+    def canonical_dump(self) -> dict:
+        """digest 用的 canonical 形态：`regenerable_cache_dirs` 为空时不出现——保证 v1 政策与旧 manifest 的
+        digest 逐字节不变（R3）；非空时进入身份（规则本身是政策的一部分）。"""
+        d = self.model_dump(mode="json")
+        if not d.get("regenerable_cache_dirs"):
+            d.pop("regenerable_cache_dirs", None)
+        return d
+
+
+def is_regenerable_cache_path(policy: "BaselineManifestPolicy", path: str) -> bool:
+    """路径是否落在可再生缓存目录**内部**（只看中间目录段；末段同名普通文件/软链不算）。"""
+    dirs = policy.regenerable_cache_dirs
+    return bool(dirs) and any(seg in dirs for seg in path.split("/")[:-1])
 
 
 # v1 生效政策：.git/（repo 元数据非 scoreable 内容）与 .harness/
@@ -77,10 +102,18 @@ BASELINE_MANIFEST_POLICY_V1 = BaselineManifestPolicy(
     excluded_namespaces=(".git/", ".harness/"),
 )
 
+# 第四组 C：v2 = v1 命名空间 + 两类可再生缓存目录（只剪目录、按类型）。只用于所选 Python SWE 环境
+# （baseline_census.baseline_policy_for_task_id 按来源选择），不作所有来源的通用默认。
+BASELINE_MANIFEST_POLICY_V2 = BaselineManifestPolicy(
+    policy_version="baseline_policy_v2",
+    excluded_namespaces=(".git/", ".harness/"),
+    regenerable_cache_dirs=(".pytest_cache", "__pycache__"),
+)
+
 
 def compute_policy_digest(policy: BaselineManifestPolicy) -> str:
     canonical = json.dumps(
-        policy.model_dump(mode="json"), sort_keys=True, ensure_ascii=False,
+        policy.canonical_dump(), sort_keys=True, ensure_ascii=False,
         separators=(",", ":"),
     )
     return "sha256:" + hashlib.sha256(canonical.encode("utf-8")).hexdigest()
@@ -170,14 +203,16 @@ class BaselineWorkspaceManifestV1(StrictModel):
             for ns in self.policy.excluded_namespaces:
                 if p == ns.rstrip("/") or p.startswith(ns):
                     raise ValueError(f"entry {p!r} 落在排除 namespace {ns!r} 内。")
+            if is_regenerable_cache_path(self.policy, p):
+                raise ValueError(f"entry {p!r} 落在可再生缓存目录内（政策要求 census 省略）。")
         return self
 
 
 def compute_baseline_manifest_digest(manifest: BaselineWorkspaceManifestV1) -> str:
-    """manifest digest（读写双方各自重算；不进 manifest 自身字段）。"""
+    """manifest digest（读写双方各自重算；不进 manifest 自身字段）。嵌套的政策用 canonical 形态
+    （R3：新增空默认字段不得改变旧 v1 manifest 的 digest）。"""
 
-    canonical = json.dumps(
-        manifest.model_dump(mode="json"), sort_keys=True, ensure_ascii=False,
-        separators=(",", ":"),
-    )
+    dumped = manifest.model_dump(mode="json")
+    dumped["policy"] = manifest.policy.canonical_dump()
+    canonical = json.dumps(dumped, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
     return "sha256:" + hashlib.sha256(canonical.encode("utf-8")).hexdigest()

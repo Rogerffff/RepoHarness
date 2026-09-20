@@ -231,3 +231,146 @@ def test_hygiene_contamination_verdict_valid():
     payload["verdict"] = "rejected_forbidden_contamination"
     result = PatchHygieneResult.model_validate(payload)
     assert result.verdict == "rejected_forbidden_contamination"
+
+
+# ---------------------------------------------------------------------------
+# 第四组 A（P-A，2026-09-16）：candidate_execution_failed 的契约矩阵
+# ---------------------------------------------------------------------------
+
+
+def valid_candidate_execution_failed_report() -> dict:
+    payload = valid_grading_report()
+    payload.update({
+        "outcome": "unresolved", "failure_category": "candidate_execution_failed", "reward": 0.0,
+        "f2p_pass_count": None, "f2p_total_count": None, "p2p_fail_count": None, "p2p_total_count": None,
+        "execution_failure_stage": "test_collection",
+        "execution_failure_evidence": ["ERROR collecting tests/test_thing.py", "compile_probe:src/thing.py:SyntaxError:line=1:invalid syntax", "env_qualification:ok:ledger_e2_A.jsonl:rpt_1"],
+    })
+    return payload
+
+
+def test_pa_candidate_execution_failed_valid_shape():
+    report = GradingReport.model_validate(valid_candidate_execution_failed_report())
+    assert report.reward == 0.0 and report.execution_failure_stage == "test_collection"
+    assert report.f2p_total_count is None and len(report.execution_failure_evidence) == 3
+
+
+@pytest.mark.parametrize("field,value,match", [
+    ("execution_failure_stage", None, "execution_failure_stage"),
+    ("execution_failure_evidence", [], "execution_failure_evidence"),
+    ("reward", None, "reward 恰为 0.0"),
+    ("f2p_total_count", 3, "不得携带 F2P/P2P"),
+])
+def test_pa_candidate_execution_failed_required_fields(field, value, match):
+    payload = valid_candidate_execution_failed_report()
+    payload[field] = value
+    with pytest.raises(ValidationError, match=match):
+        GradingReport.model_validate(payload)
+
+
+def test_pa_stage_and_evidence_only_with_that_category():
+    payload = valid_tests_failed_report()
+    payload["execution_failure_stage"] = "test_startup"
+    with pytest.raises(ValidationError, match="只有 candidate_execution_failed"):
+        GradingReport.model_validate(payload)
+    payload = valid_grading_report()
+    payload["execution_failure_evidence"] = ["x"]
+    with pytest.raises(ValidationError, match="只有 candidate_execution_failed"):
+        GradingReport.model_validate(payload)
+
+
+def test_pa_candidate_execution_failed_is_not_an_infra_category():
+    payload = valid_infra_grading_report()
+    payload["failure_category"] = "candidate_execution_failed"
+    with pytest.raises(ValidationError, match="infra 族"):
+        GradingReport.model_validate(payload)
+
+
+def test_pa_old_json_without_new_fields_reads_with_defaults():
+    report = GradingReport.model_validate(valid_grading_report())
+    assert report.grading_semantics == "swe_f2p_p2p" and report.execution_failure_stage is None
+    assert report.execution_failure_evidence == [] and report.expected_match_count is None
+
+
+# ---------------------------------------------------------------------------
+# R2E 方案 A（2026-09-15）：grading_semantics="r2e_expected_map" 的契约矩阵
+# ---------------------------------------------------------------------------
+
+
+def valid_r2e_resolved_report() -> dict:
+    payload = valid_grading_report()
+    payload.update({
+        "grading_semantics": "r2e_expected_map", "expected_match_count": 7, "expected_total_count": 7,
+        "f2p_pass_count": None, "f2p_total_count": None, "p2p_fail_count": None, "p2p_total_count": None,
+    })
+    return payload
+
+
+def test_r2e_resolved_valid_shape():
+    report = GradingReport.model_validate(valid_r2e_resolved_report())
+    assert report.reward == 1.0 and report.expected_total_count == 7
+
+
+@pytest.mark.parametrize("mutate,match", [
+    ({"expected_match_count": 6}, "expected_match_count == expected_total_count"),
+    ({"expected_match_count": 0, "expected_total_count": 0}, "> 0"),
+    ({"expected_match_count": None}, "必须带 expected_match_count"),
+    ({"f2p_pass_count": 1, "f2p_total_count": 1, "p2p_fail_count": 0, "p2p_total_count": 1}, "不得携带 F2P/P2P"),
+])
+def test_r2e_resolved_rejections(mutate, match):
+    payload = valid_r2e_resolved_report()
+    payload.update(mutate)
+    with pytest.raises(ValidationError, match=match):
+        GradingReport.model_validate(payload)
+
+
+def test_r2e_tests_failed_requires_match_below_total():
+    payload = valid_r2e_resolved_report()
+    payload.update({"outcome": "unresolved", "failure_category": "tests_failed", "reward": 0.0, "expected_match_count": 5})
+    report = GradingReport.model_validate(payload)
+    assert report.expected_match_count == 5
+    payload["expected_match_count"] = 7
+    with pytest.raises(ValidationError, match="expected_match_count < expected_total_count"):
+        GradingReport.model_validate(payload)
+    payload["expected_match_count"] = None
+    with pytest.raises(ValidationError, match="必须带 expected_match_count"):
+        GradingReport.model_validate(payload)
+
+
+def test_r2e_infra_report_carries_no_expected_counts():
+    payload = valid_infra_grading_report()
+    payload["grading_semantics"] = "r2e_expected_map"
+    assert GradingReport.model_validate(payload).expected_total_count is None
+    payload["expected_total_count"] = 3
+    with pytest.raises(ValidationError, match="expected"):
+        GradingReport.model_validate(payload)
+
+
+def test_swe_semantics_rejects_expected_counts():
+    payload = valid_grading_report()
+    payload["expected_match_count"] = 1
+    with pytest.raises(ValidationError, match="swe_f2p_p2p 语义下不得携带 expected 计数"):
+        GradingReport.model_validate(payload)
+
+
+def test_r2e_helper_round_trips_into_contract():
+    from repoharness2.envpack.scoring import expected_map_matches, grading_outcome_fields_r2e
+
+    expected = {"t1": "PASSED", "t2": "PASSED", "t3": "FAILED"}
+    full = expected_map_matches(expected, dict(expected))
+    assert full.resolved and (full.match_count, full.total_count) == (3, 3)
+    base = valid_grading_report()
+    ok = GradingReport.model_validate({**base, **grading_outcome_fields_r2e(full)})
+    assert ok.outcome == "resolved" and ok.reward == 1.0 and ok.grading_semantics == "r2e_expected_map"
+    # 状态不等 / 缺键 / 多键 都让 match < total（多出的键也计入 total）
+    for observed, counts in (
+        ({"t1": "PASSED", "t2": "FAILED", "t3": "FAILED"}, (2, 3)),
+        ({"t1": "PASSED", "t2": "PASSED"}, (2, 3)),
+        ({**expected, "t4": "PASSED"}, (3, 4)),
+    ):
+        m = expected_map_matches(expected, observed)
+        assert not m.resolved and (m.match_count, m.total_count) == counts
+        bad = GradingReport.model_validate({**base, **grading_outcome_fields_r2e(m)})
+        assert bad.outcome == "unresolved" and bad.failure_category == "tests_failed" and bad.reward == 0.0
+    empty = expected_map_matches({}, {})
+    assert not empty.resolved and grading_outcome_fields_r2e(empty)["outcome"] == "unresolved"

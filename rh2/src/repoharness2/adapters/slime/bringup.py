@@ -730,6 +730,8 @@ def write_execution_audit_record(proxy, audit, path) -> None:
         "excluded_pathset_changed": audit.excluded_pathset_changed,
         "runtime_private_pathset_changed": audit.runtime_private_pathset_changed,
         "unsafe_artifact_reasons": list(audit.unsafe_artifact_reasons),
+        # 第四组 P-C（A 线 09-19 复核）：编排侧两次 census 省略的可再生缓存计数 {baseline, post} 进持久 audit
+        "omitted_cache_counts": {k: dict(v) for k, v in (getattr(audit, "omitted_cache_counts", None) or {}).items()},
         "scoring_projection_entry_count": audit.scoring_projection_entry_count,
         # W3b：run 级 profile 摘要（join 键）+ 本 attempt 的 sandbox 创建期/启动前核对事实
         # （不是每轨迹能力事实，不进 eligibility）

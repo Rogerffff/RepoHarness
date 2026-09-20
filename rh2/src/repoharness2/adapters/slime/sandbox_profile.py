@@ -510,6 +510,14 @@ class GraderSandboxProfile:
     )
     init_timeout_seconds: float = 300.0
     probe_timeout_seconds: float = 120.0
+    # S1-c（评分接线 2026-09-15）：共享内存上限（`--shm-size`；Docker 默认 64 MiB，MONAI-763 的 DataLoader 在此值下
+    # SIGBUS）。进 to_parameters/digest，环境变量 RH2_GRADER_SHM_BYTES 覆盖；正式数值另行校准，这里只保持默认。
+    shm_size_bytes: int = 64 * _MIB
+    # D3=A（用户 2026-09-15）：候选执行用户需要写入的解释器/包环境前缀（可编辑安装、重编译、console scripts）。
+    # 权限布置脚本把存在的前缀 `chown -R` 给候选用户；不存在的前缀只记数（fixture 镜像没有 conda）。
+    # 真实代价（A 线终审 §10.2）：候选可以在安装段替换或 monkeypatch 测试运行器——运行器完整性只作观察，
+    # 不在 F2 保护范围内；official test 文件与祖先目录的 root 保护不变。
+    candidate_writable_prefixes: tuple[str, ...] = ("/opt/miniconda3/envs/testbed",)
 
     profile_id: str = GRADER_PROFILE_ID
 
@@ -527,6 +535,13 @@ class GraderSandboxProfile:
         )
         if self.testbed_path != "/testbed":
             raise SandboxProfileError("grader_testbed_path_invalid", f"{self.testbed_path!r}（探针固定 /testbed）")
+        if not isinstance(self.shm_size_bytes, int) or isinstance(self.shm_size_bytes, bool) or self.shm_size_bytes <= 0:
+            raise SandboxProfileError("grader_shm_invalid", f"shm_size_bytes={self.shm_size_bytes!r} 必须是正整数字节数")
+        for prefix in self.candidate_writable_prefixes:
+            segs = prefix.split("/")
+            if (not prefix.startswith("/") or prefix == "/" or prefix.rstrip("/") == self.testbed_path
+                    or any(seg in (".", "..") for seg in segs) or "\n" in prefix or "\0" in prefix):
+                raise SandboxProfileError("grader_writable_prefix_invalid", f"candidate_writable_prefixes 含非法前缀 {prefix!r}")
 
     def to_parameters(self) -> dict[str, Any]:
         return {
@@ -542,6 +557,8 @@ class GraderSandboxProfile:
             "tmp_tmpfs_bytes": self.tmp_tmpfs_bytes,
             "writable_layer_quota_bytes": self.writable_layer_quota_bytes,
             "require_writable_layer_quota": self.require_writable_layer_quota,
+            "shm_size_bytes": self.shm_size_bytes,
+            "candidate_writable_prefixes": list(self.candidate_writable_prefixes),
             "network": {"mode": "deny_all", "forbidden_probe_targets": [f"{h}:{p}" for h, p in self.forbidden_probe_targets]},
             "bind_mounts_allowed": ["declared_readonly_snapshot_only"],
             "testbed_path": self.testbed_path,
@@ -559,11 +576,15 @@ class GraderSandboxProfile:
         self, *, name: str, image: str, labels: Sequence[str] = (),
         declared_readonly_binds: Sequence[tuple[str, str]] = (),
     ) -> list[str]:
-        args: list[str] = ["run", "--detach", "--network", "none", "--cap-drop", "ALL"]
+        # 2026-09-19 链路修复（B 线 216 题诊断）：grader 容器此前没有 `--init`，PID 1 是 `sleep`，候选测试
+        # fork 出的孤儿进程退出后无人回收——dvc-2141 的 noop/gold 容器各累积 496–507 个僵尸，把 512 的进程配额
+        # 撞满（配额拒绝 37–38 次），正确的 gold 被判 0。与 rollout 容器一致改用 docker-init（tini）当 PID 1。
+        args: list[str] = ["run", "--detach", "--init", "--network", "none", "--cap-drop", "ALL"]
         for cap in self.trusted_init_caps:
             args += ["--cap-add", cap]
         args += ["--security-opt", "no-new-privileges"]
         args += _limit_args(pids_limit=self.pids_limit, cpus=self.cpus, memory_bytes=self.memory_bytes)
+        args += ["--shm-size", str(self.shm_size_bytes)]
         for path, opts in self.expected_tmpfs().items():
             args += ["--tmpfs", f"{path}:{opts}"]
         if self.require_writable_layer_quota:
@@ -677,7 +698,19 @@ def grader_profile_from_env(env: Mapping[str, str]) -> GraderSandboxProfile:
         tmp_tmpfs_bytes=_env_int(env, "RH2_GRADER_TMP_TMPFS_BYTES", 1 * _GIB),
         writable_layer_quota_bytes=_env_int(env, "RH2_GRADER_WRITABLE_LAYER_QUOTA_BYTES", 8 * _GIB),
         require_writable_layer_quota=_env_bool(env, "RH2_GRADER_REQUIRE_WRITABLE_LAYER_QUOTA", False),
+        shm_size_bytes=_env_int(env, "RH2_GRADER_SHM_BYTES", 64 * _MIB),
+        candidate_writable_prefixes=_env_paths(
+            env, "RH2_GRADER_CANDIDATE_WRITABLE_PREFIXES", ("/opt/miniconda3/envs/testbed",)
+        ),
     )
+
+
+def _env_paths(env: Mapping[str, str], key: str, default: tuple[str, ...]) -> tuple[str, ...]:
+    """冒号分隔的路径列表；未设置 = 默认，显式设为空字符串 = 空元组（不交出任何前缀）。"""
+    raw = env.get(key)
+    if raw is None:
+        return default
+    return tuple(x for x in raw.split(":") if x)
 
 
 # ---------------------------------------------------------------------------
@@ -1279,10 +1312,23 @@ def grader_protect_control_surface_script(profile: GraderSandboxProfile, officia
     uid = profile.candidate_exec_uid
     tb = shlex.quote(profile.testbed_path)
     quoted = " ".join(shlex.quote(f) for f in files)
+    prefixes = " ".join(shlex.quote(p) for p in profile.candidate_writable_prefixes)
     return (
         _marker("grader-protect-control-surface") + "set -u\n"
         f"TB={tb}; UIDV={uid}; EXPECTED={len(files)}\n"
         "chown -R \"$UIDV:$UIDV\" \"$TB\" || { echo \"RH2_PROTECT_ERROR=chown_candidate_failed\"; exit 4; }\n"
+        # D3=A：候选可写前缀（解释器/包环境）交给候选用户；缺失只记数（fixture 镜像无 conda），
+        # 失败即拒（否则安装段会以 EACCES 失败并被误读成候选问题）。
+        "PREFIX_DONE=0; PREFIX_MISSING=\"\"\n"
+        f"for p in {prefixes}; do\n"
+        "  if [ -d \"$p\" ] && [ ! -L \"$p\" ]; then\n"
+        "    chown -R \"$UIDV:$UIDV\" -- \"$p\" || { echo \"RH2_PROTECT_ERROR=prefix_chown_failed:$p\"; exit 4; }\n"
+        "    PREFIX_DONE=$((PREFIX_DONE+1))\n"
+        "  else\n"
+        "    PREFIX_MISSING=\"$PREFIX_MISSING$p,\"\n"
+        "  fi\n"
+        "done\n"
+        "echo \"WRITABLE_PREFIXES_DONE=$PREFIX_DONE\"; echo \"WRITABLE_PREFIXES_MISSING=$PREFIX_MISSING\"\n"
         "PROTECTED=0; DIRS=0; MISSING=\"\"; MISSING_N=0; IRREGULAR=\"\"\n"
         "protect_dirs() {\n"
         "  d=$(dirname -- \"$1\")\n"
@@ -1470,6 +1516,7 @@ def _facts_from_inspect(container: Mapping[str, Any]) -> dict[str, Any]:
         "nano_cpus": hc.get("NanoCpus"),
         "memory": hc.get("Memory"),
         "memory_swap": hc.get("MemorySwap"),
+        "shm_size": hc.get("ShmSize"),  # S1-c：`--shm-size` 的实际值（只记录，不作启动前判据）
         "tmpfs": dict(hc.get("Tmpfs") or {}),
         "storage_opt": dict(hc.get("StorageOpt") or {}),
         "binds": list(hc.get("Binds") or []),

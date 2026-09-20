@@ -97,6 +97,8 @@ def synthesize_inspect(run_args: tuple[str, ...], *, name: str, running: bool = 
             hc["Memory"] = int(nxt); i += 2
         elif a == "--memory-swap":
             hc["MemorySwap"] = int(nxt); i += 2
+        elif a == "--shm-size":
+            hc["ShmSize"] = int(nxt); i += 2  # S1-c：grader `--shm-size`
         elif a == "--tmpfs":
             path, _, opts = nxt.partition(":")
             hc["Tmpfs"] = {**(hc["Tmpfs"] or {}), path: opts}
