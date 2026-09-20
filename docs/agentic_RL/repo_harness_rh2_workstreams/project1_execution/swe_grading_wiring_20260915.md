@@ -275,6 +275,16 @@ notes
 
 本轮验证（本机）：ruff 无告警；grader-profile 单测 + driver 单测 39 passed；adapters + grading 单测（含 grader-profile）+ envpack 856 passed / 1 skipped；Docker 套件 30 passed。真实 x86 镜像端到端仍待机器。
 
+### 6.13 夜间连续执行状态（2026-09-16，Claude；用户 09-16 确认"可以开始执行"）
+
+| 项 | 状态 | 证据 / 位置 |
+| --- | --- | --- |
+| e2 代表批 | **已完成（机器 1，78 行，无 halt）**：28 张镜像 → 三张派生镜像（metacopy 关、完整性核对通过）→ 双 lane。B 组 24 条候选：可比 15 题 15/15 与投影组 oracle 一致、7 题 apply 失败（既知 fuzz 题）、2 题 modin 环境侧 infra；A 组 9 题 7 题 gold/noop ×2 达标，pandas（脆弱 ID）与 modin（环境）例外；C 组反例与派生镜像按预期（MONAI-1121 派生 resolved；MONAI-763 shm 1 GiB 触 4 GiB OOM） | 证据 `runs/swe_grading_wiring_20260915/e2/`；报告 [e2_report_20260916.md](swe_grading_wiring_20260915/e2_report_20260916.md)；对账 [reconcile.md](swe_grading_wiring_20260915/reconcile.md) |
+| e2 代码版本与回归 | e2 = P-B 之后、P-C/P-D/P-A 之前；**真机回归已完成**（25 行，`rh2/experiments/run_regression_post_e2.sh`，新代码同步到机器 `/work/code/rh2_next`）：7 题 gold → 6 条资格，noop / 候选结论与 e2 逐题一致；人为语法错误补丁 dvc-5822 带资格 → `candidate_execution_failed`（test_startup，复证行指到 `dvc/repo/__init__.py:145`）、无资格 → infra None；moto-6913 同类补丁只造成逐测试失败，照常 tests_failed | 回归账本 `runs/swe_grading_wiring_20260915/e2/reg/`；e2 报告 §6 |
+| 第四组 P-B / P-C / P-D / P-A | **已实施、本机验证**（ruff 无告警；contracts+adapters+governance 1118 passed；grading+envpack 非 Docker 287 passed / 1 skipped；Docker 3 + 30 passed） | [batch4 实施记录 §9](batch4_scoring_20260910/impl_plan_20260915.md#9-实施记录2026-09-16-夜间claude已实施本机验证真机回归待-e2-之后) |
+| P-A 账本新列（§6.5 增补） | `image_identity`、`scripts_digest`、`env_qualification`（`absent` / `ok:<来源>` / `*_mismatch`）、`reference_missing_count`、`execution_failure_decision`（trigger / kind / rule / missing / resource / compile_probe）、`resource_facts`；`report` 块增 `execution_failure_stage`、`execution_failure_evidence`、`grading_semantics`；CLI `run --qualification-ledger <path>`（可重复） | `adapters/slime/replay_grade.py`、`scripts/replay_grade.py` |
+| A2 预算拆分 | e2 实测：安装段中位 9 s / p90 40 s / 最大 597 s（pandas），测试段中位 7 s / p90 32 s / 最大 742 s（MONAI-1121 派生）；建议安装 900 s + 测试 1800 s 两份预算（T1，待 A 线复核） | e2 报告 §5 |
+
 ## 7. 实施与复核记录
 
 | 日期 | 进展/决定 | 下一步 |
@@ -288,7 +298,11 @@ notes
 | 2026-09-15 | Claude 实施 S1-a/b/p/c/m/d/f（见 §6.10）：命令派生与 216 契约、vendored parser 与 v2 入口、gold 静态预检、安装段与 shm/可写前缀、manager 观测出口与 sidecar、真实链 driver 与 CLI、R2E 决策包、S1-e 运行手册与派生镜像配方骨架。ruff 无告警；非 Docker 842 通过；Docker 30 通过。未提交。 | A/B 两线复核 §6.10 与代码；用户看 R2E 决策包；机器恢复后按 runbook 跑 e1。 |
 | 2026-09-15 | 用户决定 R2E 结果表达先选 A。Claude 按 §11–§12 修正 I1–I7、A1–A3 与 §11.3 三项（§6.11 逐条 accepted，仅派生镜像 tag 重指记为接受剩余风险）；oracle 与语料移入 `rh2/tests/envpack/data/`；driver 加镜像预拉预算、清理失败停止本批、取消落账；manager 观测以候选身份执行、超时读回不受期限限制且不跟随符号链接、零解析保留诊断、归因注明阶段。本机 ruff 无告警、单测 827+33 通过、Docker 30 通过、441 语料通过。 | A/B 复核 §6.11；用户租机器后按 runbook 跑 e1。 |
 | 2026-09-15 | Claude 按 §13 修正 R1–R4（§6.12 逐条 accepted 并已修）：候选收口在持久化失败与清理期间取消下仍完成有界清理并落账；运行手册改为整个 `s2/` + `data_freeze/` 同步与 `uv sync --locked`（备选 `rh2/requirements-replay.lock`）；manager 取消路径落盘日志与 sidecar 并挂引用；镜像 inspect 与 pull 同预算、拉取期间取消落账。本机 ruff 无告警、单测 856 通过 1 跳过（含 39 项 grader-profile/driver）、Docker 30 通过。未提交、未租机器。 | A/B 复核 §6.12；用户租机器后按 runbook 跑 e1。 |
+| 2026-09-15 | e1 真机冒烟（Claude）：机器 bootstrap + `uv sync --locked`，noop/gold 各 4 题；mypy、conan、dvc 三题全部满足冒烟标准（noop unresolved、gold resolved、参考缺席 0、导入路径 /testbed、运行器未变）；pandas 因脚本头 `set -u` 与镜像 conda 激活钩子冲突失败 → T1 去掉 `-u`（对齐 fork），复跑 noop 又因 overlay copy-up 超 300 s 权限布置预算 → 打开内核 overlay metacopy（chown 180 s→11 s，pandas 前缀 5.5 s），gold 复跑（metacopy 后）：setup 22 s、离线重编译 560 s、F2P 16/16、P2P 失败 3/1020 全是脆弱参考 ID，`unresolved` 与 oracle 的 NO 一致且原因可定位。另按 §13 修正后的 driver 在真机跑通；第四组实施计划按 §5–§6 审查修订并先行实施 S1（exporter 形状错误 typed 化）。报告见 [e1_report_20260915.md](swe_grading_wiring_20260915/e1_report_20260915.md)。 | e2 在 P-B（与可选 P-C）之后跑，机器前置 metacopy；用户决定是否开工 P-B 与 S1 通道选择。 |
 | 2026-09-15 | Codex 完成 §6.12 聚焦复核，结论见 §14：原 e1 阻塞核销，可以进入 e1。主审 140 项相关测试通过/1 跳过、30 项 Docker 通过；新版同步目录 26 项通过/1 跳过，四题 prepare/export-gold 成功，Linux 锁解析 dry-run 通过。 | 租 x86 CPU Docker 机器跑四题 gold/noop；全文日志留存、派生检查取消账本及 partial 口径按 §14.2 分期处理，不再阻塞 e1。 |
+| 2026-09-16 | 夜间连续执行（Claude，用户确认）：e2 在机器 1 启动（镜像预拉 → 派生镜像 → 双 lane）；本机实施第四组 P-B/P-C/P-D/P-A 并通过全部套件（§6.13、batch4 §9）；P-A 三路判定（已证候选 → `candidate_execution_failed` reward 0；已证资源终止 / 事实不足 → infra、None）、环境资格记录、编译复证、账本新列与 CLI 资格来源；核实 fork 判定在 F2P 桶为空时给 FULL、但真实 pytest 输出下被跳过的参考测试按缺席计失败（伪键 `[N]`），可利用面是候选进程 stdout 可伪造状态行（与 B 线 M2 的 conftest hook 满分同族），记为 T0 待拍板（batch4 §9.6 第 5–6 条）。未提交。 | e2 结束后同步证据、写对账与报告；跑 P-C/P-D/P-A 真机回归；早报列复核清单。 |
+| 2026-09-16 | e2 完成（78 行）与真机回归完成（25 行），证据同步到 `runs/swe_grading_wiring_20260915/e2/`；写 e2 报告与对账；P-A 判据按 e2 实测加"安装段偏离资格基线"；modin 定向探针见 e2 报告 §8。未提交。 | 早上：用户裁定 T0（stdout/conftest 伪造、正式链资格来源）与 A2 预算拆分；A/B 线复核 batch4 §9 与 e2 报告；B 线接手 modin / pandas / MONAI-3205 / moto-4799 的清洗规则。 |
+| 2026-09-19 | Claude 按 A 线实施审查（R1–R7、三条旧余项）与 B 线 216 题诊断修评分链路：grader 加 `--init`（dvc-2141 gold 在默认 512 配额下 0→1，僵尸 0）；P-A 只复证失败文字点名的候选路径、复证器 `python -I -S`、终止事实未知不归因、参考全缺席但测试正常完成按来源规则；`pids.events` 进资源事实（含超时 sidecar）；安装段 ERR trap 逐命令失败记录；R6 缓存目录一致规范化；R7 结构化冲突证据；正式 actor 资格入口与派生镜像 ID 资格键；日志全文落盘后释放。本机 1401+ 非 Docker、34 Docker 通过；新机器真机对照见 batch4 §10.3。modin 是引擎并发/配额问题（`--init` 不解决）。同日 A 线聚焦复核后窄修 CR1（只认语法异常实际位置并要求复证行号相符）、CR2（剥离 Captured 块、顶层异常规则只限零解析）、CR3（缓存规范化先剪排除命名空间），formal 缓存计数进持久 audit；本机 1407 非 Docker / 34 Docker 通过，真机坏补丁对照复验一致（batch4 §10.4）。再按 CR1–CR3 复核余项修 CR2'（嵌套子 pytest 标题：以外层会话正常完成的收尾行为来源计分依据，batch4 §10.5），并按 footer 复核补两条：收尾行认 `-q` 裸行与 pytest-pretty 块、外层完成必须同时有测试命令退出码 0/1（batch4 §10.6）；本机 1413 非 Docker / 34 Docker 通过，59 份真机日志离线复核无结果变化。用户 09-19 决定：PID 配额与 modin 配方归入后续流水线，参考键按问题类别分位置修（batch4 §10.2）。未提交。 | 用户决定：PID 默认配额、`MODIN_CPUS` 配方注入、参考键逐例处理；B 线继续环境配方修复；正式资格记录随流水线接入。 |
 
 背景按需查阅：[既有 CPU 证据](env_probe_20260909/morning_followup_20260911.md) · [流水线重排分析](env_probe_20260909/environment_pipeline_redesign_20260911.md)。
 
@@ -586,3 +600,16 @@ S1-a（含 B1 的选择器修正）、S1-f、parser 回归语料整理、§10.3 
 | **P3：完整日志被标成 partial**；`production_reachable`，`adapters/slime/replay_grade.py:582` | 后观测取消时，账本 `log.partial=True` 被硬编码，但 sidecar 与 `install.log_partial=False` 正确、完整文件也在。主审已复现。**B 线在汇总取消诊断前顺手修正**：读已有候选事实，不硬编码；无需重跑环境矩阵。 |
 
 停止条件已满足：原阻塞反例闭合，当前入口、取消传播、清理与搬运清单已验证，下一份关键证据应来自 e1 真实镜像。日志留存是这次修复直接引入的容量问题，登记局部处理即可，不回退取消日志能力或新建缓存管理器。本轮没有修改生产代码、提交、租机或执行远端任务。
+
+## 15. e1 真机独立复核 / Codex / 2026-09-16
+
+**e1 经补测可以收口。** [短复核报告](swe_grading_wiring_20260915/e1_codex_review_20260916.md)与[证据摘要](swe_grading_wiring_20260915/e1_codex_review_evidence_20260916.json)：补齐 pandas noop（F2P 0/16，与 gold 16/16 对照、逐参考状态符合 oracle）和 §6.6.10 人为超时（安装/测试标记保留、partial、reward=None、清理完成）。主审 82 项相关测试通过/1 跳过，S1 正式 integration CPU 探针 5 项通过。
+
+新发现当前 metacopy/native-diff 组合在 `chown → docker commit` 后把文件内容变成全 0，完整写回对照正常；已撤回 runbook 的通用开关要求。此路径不在普通 e1 评分中，不推翻结果；D4 前需验证具体构建路径。S1 旧 unsafe/整组 DROP 已获授权，不重开，但 P-D 的合法 file→dir 支持仍未完成。另更正 pandas ID“一一映射”、mypy 安装证明与内存口径。生产代码未改，原始证据未改写；未启动 P-B/e2、未提交，机器保持运行且无残留容器。下一步按已审范围推进 P-B，再同步当前源码跑 e2；§14.2 余项按原分期处理。
+
+
+## 16. e2 与第四组夜间实现独立审查 / Codex A 线 / 2026-09-16
+
+统一报告：[第四组实施审查](batch4_scoring_20260910/implementation_review_20260916/README.md)。e2 78 行、回归 25 行、92 份评分日志及诊断引用已独立核对；15 个可比候选全部与投影 oracle 一致，新旧代码 21 行对照无分数/计数变化。Linux 三个新增容器往返、本机 1392 项相关测试通过（1 跳过），机器最终无运行容器、metacopy=Y。
+
+**这些结果不构成“剩余接线和第四组全部完成”。** P-A 有三项必须修正的归因缺陷；正常完成但参考 ID 全变化的 None 处置需对齐范围；formal 资格入口和构建归因尚未完成，P-C/P-D 有两个窄余项。§14.2 的全文内存留存、派生 inspect 取消无账本、完整日志 partial 标记三项仍在当前源码，沿原分期处理。stdout/hook 伪造由用户另定策略；仅改 XML 通道不足以根治。具体实现建议、证据与后续复核停止条件均以统一报告为准，不重开已收口 e1 或已批准 D1–D4。

@@ -29,6 +29,22 @@ cd /work/code/rh2 && $PY -m pytest tests/envpack/test_vendor_specs.py tests/envp
 
 `TrustedTaskController.from_repo_root` 需要仓库根下的 `docs/.../s2/ingest` 与 `data_freeze`，所以 `--repo-root /work/code`。
 
+## 0.5 D3 权限准备与存储驱动（2026-09-16 主审修正）
+
+D3=A 会对 conda 前缀递归 `chown`。原 e1 的 `grader_trusted_setup` 合计为 80–204 s，
+pandas 一次在权限准备阶段超过 300 s；这个字段还包含 setup、保护和前观测，**不是单独 chown 计时**。
+开启 metacopy 后的 pandas gold 合计 21.65 s，支持本机成本明显下降，不能直接外推为其它机器的吞吐保证。
+
+**撤回“所有机器运行前直接写 metacopy=Y”的要求。** 主审确认本机实际存在 metadata-only 文件，
+但 Docker 28.1.1 仍显示 `Using metacopy=false`、`Native Overlay Diff=true`。临时文件实测：
+`chown → docker commit → 新容器` 后，32 字节内容变成全 0；强制完整写回再 commit 的对照正常。
+因此当前组合不能用于依赖这条导层路径的派生镜像。没有证据说明只重启 daemon 就一定修复。
+
+当前 e1 从容器 merged 视图执行与读取，未经过 commit，不因这项结果被推翻。
+普通 e2 可继续使用已验证的原镜像与当前执行条件；D4 制作派生镜像前，另行确认所选构建路径能保留内容。
+后续机器可采用已验证的存储配置，或在兼容的构建环境预置属主；若使用 metacopy，机器准备时做一次小文件
+属主修改与镜像往返对照即可，不把内核写操作放进每次评分前置。证据见[独立复核](e1_codex_review_20260916.md)。
+
 ## 1. 受信准备与 gold 导出（一次）
 
 ```bash
@@ -63,8 +79,8 @@ done
 
 e1 通过标准（进入 e2 前）：
 - 4 题 noop → `unresolved/tests_failed`，gold → `resolved`（pandas-48106 gold 预期 NO：参考 ID 脆弱，账本 `verdict_diagnostics.reference_missing` 非空）；
-- `install.install_rc_last_command` 为 0 且 `RH2_OBS_IMPORT_PATH` 在 `/testbed` 下；pandas 的 `RH2_OBS_PKG_VERSION` 带 `.dirty`；
-- `control_surface.WRITABLE_PREFIXES_DONE=1`；conda 前缀 chown 耗时（`phases.grader_trusted_setup`）记录下来；
+- 记录 `install.install_rc_last_command`、导入路径和版本；它们不能单独证明安装成功。mypy 要结合 gold/noop 的目标测试差异，pandas 要结合实际编译/链接与安装成功日志，不能只看 `.dirty`；
+- `control_surface.WRITABLE_PREFIXES_DONE=1`；记录整个 `phases.grader_trusted_setup`，不要把它标成单独 chown 耗时；
 - `runner_integrity_changed` 为 false（gold/noop 不该改运行器）。
 
 ## 3. 代表批 e2

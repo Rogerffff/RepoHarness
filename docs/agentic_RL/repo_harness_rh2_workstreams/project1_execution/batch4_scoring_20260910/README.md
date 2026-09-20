@@ -188,6 +188,7 @@ A / B 可并行准备，修改同一 grading 函数时仍由一个实际实现�
 1. **A 的归因门要写成正向条件**，不是"没看到 infra 信号"。当前契约只允许 `patch_apply_failed` / `test_execution_timeout` 无计数给 0，`unresolved` 在 `binary_v1` 下 reward 必为 0；新增类别要同步 `contracts/grading.py` 校验分支、`outcome_crosswalk` 的执行事实集合、`governance/admission` 的映射与 `outcome_producer` 的 task_outcome。建议 producer 至少要求：同镜像/版本有通过的 gold 或 noop 基线（环境资格）；失败发生在安装段之后的测试段（需要 I7 的测试退出码，安装退出码不算候选失败证据）；collection / import 错误指向投影 `included_paths` 里的候选改动。三者缺一仍是 infra / 未知。它与 R2E 已选方案 A 都改 `GradingReport`，应合成一次契约升级、字段带默认值。
 2. **一个 A 附近的空白**：安装段退出码目前只进 sidecar，评分不消费。编译型仓库（pandas 类）若候选改坏构建输入而重编译失败，测试可能对着旧产物通过，得到 resolved。建议 e1 对账把 `install_rc≠0 ∧ resolved` 列为必须解释的例外，再决定是否让"安装失败且候选触碰构建输入"阻止 resolved；这是 reward 语义，留用户定。
 3. **B 收窄的真实副作用**：今天候选触碰 `*tests/*` 会被剔除且 hygiene 判 `rejected_test_tampering` 阻止 resolved；默认通配移除后，候选对 `tests/conftest.py`、autouse fixture、tests 目录下插件的修改会被完整重放并生效——这是与 D3 运行器通道不同的另一条影响官方判分的路径，而 `test_patch` 通常不含这些文件，恢复步骤盖不住。同意移除（I08 误伤是基础设施责任），但建议：把"候选触碰测试样路径"保留为**纯观测**（sidecar / hygiene 事实，不剔除、不影响 reward），供流水线 agent 与将来的作弊裁定使用；e1 顺手统计触碰 conftest / fixture 的频率。`test_files` 仍来自 `test_patch` 全部触碰路径，其中混入的正常源码仍会被恢复覆盖，是已知残余。
+   **更正（2026-09-15，见 Codex 实施计划 §5.1 第 3 条与 §6 S5）**：上句"今天候选触碰 `*tests/*` 会被剔除且 hygiene 判 `rejected_test_tampering` 阻止 resolved"只对 S1 diff 文本路径（`clean_patch`）成立；正式 frozen 路径先做可信投影，glob 命中的条目进 `ignored_entries` 只作记录，`FrozenApplyPlan` 恒 clean，报告不被拒——今天的实际效果是这些改动**静默不重放**。移除默认通配后它们会被重放；纯观测的建议不变。
 4. **C 的实现事实**：`BaselineManifestPolicy.excluded_namespaces` 是根锚定目录前缀（census 用 `find -path './ns' -prune`），`__pycache__/`、`*.pyc` 这类嵌套模式需要新的政策版本（模式语义），且 census、导出、`excluded_pathset_changed`、应用四处同一规则；政策 digest 进 manifest 身份，保留 v1 供旧证据。首批只排 `__pycache__/`、`.pytest_cache/`、`*.pyc`；`build/` 对编译型仓库是解答产物不是缓存，未经 B 确认不排。
 5. **D 的实现事实**：冲突在 `contracts/frozen_patch.py` 的父子前缀校验；放开"删普通祖先文件 + 增子文件"时，应用顺序须先删后建，且要求被删祖先在基线中是 regular（不是 symlink），沿用现有基线 symlink 祖先检查；fixture Docker 上做 census → 导出 → 应用往返。
 6. **排期**：同意 §6.4——B 线 Claude 继续单一实现 grading 改动，A 线出验收要求并复核；B 的默认通配移除是小 T1（连带旧 oracle），A 的契约升级单独一个 Brief，C / D 各一个短 Brief；e1 校准穿插进行，不以"评分器零问题"为开工前提。
@@ -196,3 +197,10 @@ A / B 可并行准备，修改同一 grading 函数时仍由一个实际实现�
 
 已批 A/C/D 与收窄后的 B 的实施计划见 [impl_plan_20260915.md](impl_plan_20260915.md)：顺序 P-B（移除默认通配、测试样路径改观测）→ P-C（baseline 政策 v2，只省略 `__pycache__/`、`.pytest_cache/`、`*.pyc`）→ P-D（删普通祖先文件 + 增子文件）→ e2 代表批 → P-A（契约升级：候选执行失败类别 + R2E 方案 A 字段，producer 三条件）。每片的改动面、验收与待确认点在该页；未改代码。
 
+**同日 Codex 计划审查：** [实施计划 §5](impl_plan_20260915.md#5-codex-实施前审查2026-09-15)要求修订 P-A 的消费者与归因入口、P-C 的身份/类型/适用范围、P-D 的投影依赖；P-B 可先实施，e1 继续，缓存优化可缩小或暂缓而不阻塞小批校准。§7 的执行缺失集合、当前 hygiene 拒绝、编译失败需重新授权三处说法已在该审查中更正；上面的原建议不视为全部通过。用户已批 A–D 与 R2E-A 不变，无新 T0。
+
+**09-16 修订复核：** 作者 §7 已解决大部分问题；最新意见集中在[实施计划 §8](impl_plan_20260915.md#8-codex-对-7-的聚焦复核2026-09-16)。P-B 可继续，P-C/P-D 补完整身份与既有 S1 余项验收；P-A 需明确资源否决后的真实去向、修正 py_compile 复证，零解析语法失败仍属待补覆盖，构建切片不能以安装段末 RC 非零为必要条件。S1 复用旧 unsafe / 整组 DROP 有既有授权，不重开 T0；e1 采用 B 独立复核结论。本次未启动 P-B/e2 或改生产代码。
+
+**09-16 夜间实施记录：** P-B / P-C / P-D / P-A 全部按 §8 复核意见实施并在本机验证，逐片记录、偏离与待复核项见[实施计划 §9](impl_plan_20260915.md#9-实施记录2026-09-16-夜间claude已实施本机验证真机回归待-e2-之后)；e2 代表批用的是 P-B 之后的代码，P-C/P-D/P-A 的真机回归在 e2 之后另跑。未提交。
+
+**09-19 链路修复：** 对 A 线实施审查 R1–R7 / 三条旧余项与 B 线 216 题诊断（grader 无 `--init`、资源终止事实、安装各命令结果）的修复记录见[实施计划 §10](impl_plan_20260915.md#10-链路修复记录2026-09-19claude回应-a-线实施审查-与-b-线-216-题诊断)；反作弊与 PID 配额默认值、modin 配方注入、参考键逐例处理按用户意见留待后续决定。未提交。

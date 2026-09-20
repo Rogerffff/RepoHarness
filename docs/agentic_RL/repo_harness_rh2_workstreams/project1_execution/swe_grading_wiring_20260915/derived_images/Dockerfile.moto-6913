@@ -1,0 +1,11 @@
+# D4=A 诊断镜像：moto-6913（version 4.2，install = `make init`）。联网跑一次 make init，把安装后的全部包下载成本地 wheel/sdist 缓存，
+# 评分时 deny_all 下同一条 `make init` 只从 /rh2/wheels 解析。注意：镜像环境变为 make init 之后的状态。
+FROM xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6913:latest
+SHELL ["/bin/bash", "-c"]
+RUN source /opt/miniconda3/bin/activate && conda activate testbed && cd /testbed \
+ && pip freeze > /tmp/before.txt && (make init 2>&1 | tail -3) && pip freeze > /tmp/after.txt \
+ && grep -v -e '^-e ' -e '@ file://' -e '^moto' /tmp/after.txt > /tmp/download.txt \
+ && mkdir -p /rh2/wheels && (pip download -d /rh2/wheels -r /tmp/download.txt --no-deps 2>&1 | tail -2) \
+ && (pip download -d /rh2/wheels setuptools wheel 2>&1 | tail -1) && chmod -R a+rX /rh2 \
+ && ls /rh2/wheels | wc -l
+ENV PIP_NO_INDEX=1 PIP_FIND_LINKS=/rh2/wheels

@@ -1,0 +1,9 @@
+# D4=A 诊断镜像：MONAI-1121（version 0.3）。tests/test_ahnet.py 的 pretrained 用例需要 torchvision resnet50 权重
+# （resnet50-0676ba61.pth）；放到候选用户可读的 TORCH_HOME 下，评分时 deny_all 不再下载。
+FROM xingyaoww/sweb.eval.x86_64.project-monai_s_monai-1121:latest
+SHELL ["/bin/bash", "-c"]
+ENV TORCH_HOME=/opt/rh2/torch
+RUN mkdir -p /opt/rh2/torch/hub/checkpoints \
+ && source /opt/miniconda3/bin/activate && conda activate testbed \
+ && python -c "import urllib.request; urllib.request.urlretrieve('https://download.pytorch.org/models/resnet50-0676ba61.pth', '/opt/rh2/torch/hub/checkpoints/resnet50-0676ba61.pth')" \
+ && chmod -R a+rX /opt/rh2 && sha256sum /opt/rh2/torch/hub/checkpoints/resnet50-0676ba61.pth

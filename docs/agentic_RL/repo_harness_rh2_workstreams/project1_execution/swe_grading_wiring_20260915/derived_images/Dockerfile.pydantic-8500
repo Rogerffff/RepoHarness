@@ -1,0 +1,10 @@
+# D4=A 诊断镜像：pydantic-8500（version 2.6，install = `export PATH="$HOME/.local/bin:$PATH"; pdm add pre-commit; make install;`）。
+# PDM 由镜像构建期 pipx 装在 /root/.local；候选用户 HOME 是 /home/rh2grader，因此把 /root 与 /root/.local 放开可读可执行并把
+# /root/.local/bin 放进镜像 PATH；联网跑一次 pdm add + make install 填充共享 PDM 缓存。镜像环境变为该安装之后的状态。
+FROM xingyaoww/sweb.eval.x86_64.pydantic_s_pydantic-8500:latest
+SHELL ["/bin/bash", "-c"]
+ENV PDM_CACHE_DIR=/opt/rh2/pdm_cache PATH=/root/.local/bin:$PATH
+RUN chmod o+x /root && chmod -R a+rX /root/.local && mkdir -p /opt/rh2/pdm_cache \
+ && source /opt/miniconda3/bin/activate && conda activate testbed && cd /testbed \
+ && export PATH="$HOME/.local/bin:$PATH" && (pdm add pre-commit 2>&1 | tail -2) && (make install 2>&1 | tail -3) \
+ && chmod -R a+rwX /opt/rh2/pdm_cache && ls /opt/rh2/pdm_cache | head -3
