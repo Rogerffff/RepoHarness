@@ -469,23 +469,30 @@ async def test_gc_by_trace_and_ttl():
     assert await manager.gc() == []  # 账已清
 
 
-async def test_startup_sweep_age_and_ownership_rules():
-    """P1：清扫只动「非本 owner 且超龄」的 label 容器；时间戳非法视为孤儿。"""
+async def test_startup_never_removes_containers_owned_by_other_managers():
+    """2026-09-19 真机反例（T1 oracle 翻转）：此前 startup 把"非本 owner 且创建超过一小时 / 时间戳非法"的 label
+    容器当孤儿 `rm -f`——年龄不能证明 owner 已死，一条跑了约 88 分钟的评分被另一个刚启动的 manager 杀掉。
+    现在 startup 不做任何跨 manager 清扫：无论年龄与时间戳如何，外来容器都不碰，也不再发 `docker ps` / `rm`。"""
 
     import time as _time
 
     now = _time.time()
     fake = FakeDocker(base_commit=BASE)
-    manager = make_manager(fake, orphan_min_age_seconds=3600.0)
+    manager = make_manager(fake)
     fake.ps_stdout = (
-        f"orphan_old\tdeadrun\t{now - 7200:.0f}\n"  # 外来 + 超龄 → 清
-        f"orphan_fresh\totherrun\t{now:.0f}\n"  # 外来但年轻（可能是并行 worker）→ 留
-        f"mine\t{manager.run_id}\t{now - 7200:.0f}\n"  # 本 owner → 留
-        "orphan_badts\tdeadrun2\tnot_a_number\n"  # 时间戳非法 → 视为孤儿清掉
+        f"foreign_old\totherrun\t{now - 7200:.0f}\n"  # 外来 + 两小时前创建：可能正是别人的长评分
+        f"foreign_fresh\totherrun\t{now:.0f}\n"
+        f"mine\t{manager.run_id}\t{now - 7200:.0f}\n"
+        "foreign_badts\totherrun2\tnot_a_number\n"  # 时间戳非法也不是"已死"的证据
     )
-    removed = await manager.startup()
-    assert sorted(removed) == ["orphan_badts", "orphan_old"]
-    assert sorted(fake.removed) == ["orphan_badts", "orphan_old"]
+    assert await manager.startup() == []
+    assert fake.removed == [] and not any(call and call[0] in ("ps", "rm") for call in fake.calls)
+    # 本实例自己的容器照常由 gc / close 回收；close 只认自己记过账的 _records，外来容器仍不碰
+    record = await manager._start_container("traj_own", make_spec(), "eeee0001")
+    closed = await manager.close()
+    assert closed["containers_removed"] == [record.name] and closed["containers_open"] == []
+    assert fake.removed == [record.name]
+    assert not hasattr(manager.config, "orphan_min_age_seconds")  # 年龄配置已删除
 
 
 async def test_run_id_label_stamped_only_when_env_set(monkeypatch):

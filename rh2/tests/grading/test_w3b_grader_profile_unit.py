@@ -426,7 +426,7 @@ async def test_s1m_candidate_facts_observations_and_sidecar(tmp_path):
     assert rec.candidate_facts == {
         "install_rc_last_command": 2, "install_failed_commands": [], "install_skipped": False, "install_seconds": 3.5, "test_rc": None, "test_seconds": 6.25,
         "markers_seen": ["RH2_INSTALL_RC", "RH2_TS_INSTALL_END", "RH2_TS_INSTALL_START", "RH2_TS_TEST_END", "RH2_TS_TEST_START"],
-        "log_partial": False,
+        "log_partial": False, "candidate_exec_exit_code": 0, "candidate_segment_completed": True,
     }
     assert rec.observations["RH2_OBS_RUNNER_DIGEST_PRE"] == "abc" and rec.observations["RH2_OBS_RUNNER_DIGEST"] == "abc"
     assert rec.observations["RH2_OBS_IMPORT_PATH"] == "/testbed/src/thing.py"
@@ -436,6 +436,79 @@ async def test_s1m_candidate_facts_observations_and_sidecar(tmp_path):
     # 候选命令仍以候选用户执行且把输出 tee 到候选属主文件
     cand = [a for a in docker.calls if a and a[0] == "exec" and "-u" in a and str(a[-1]).startswith("bash ")]
     assert cand and "| tee /rh2/candidate/eval.log; exit ${PIPESTATUS[0]}" in cand[-1][-1]
+
+
+_KILLED_MID_TEST_LOG = (
+    "RH2_PHASE_START=install\nRH2_TS_INSTALL_START=100.0\nRH2_INSTALL_RC=0\nRH2_TS_INSTALL_END=103.5\nRH2_PHASE_END=install\n"
+    "RH2_TS_TEST_START=104.0\n+ : '>>>>> Start Test Output'\nPASSED tests/test_thing.py::test_feature\n"
+)  # 没有 End 标记、RH2_TEST_RC、RH2_TS_TEST_END：脚本没跑到结尾
+
+
+async def test_candidate_exec_killed_by_signal_is_recorded_as_interrupted_even_when_inspect_still_says_running(tmp_path):
+    """2026-09-19 真机：评分容器被另一个 manager `rm -f`，exec 以 137 返回；删除尚未完成时 inspect 仍报 running，
+    `_exec_bash_checked` 的"容器已死"检测落空，截断日志被当成完整日志——sidecar 写 log_partial=false、测试退出码
+    缺失，报告落到 parser 的 official_bad_codes。候选段是否跑完现在看日志里的收口事实（RH2_TEST_RC / RH2_TS_TEST_END）与 exec 退出码。"""
+
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log=_KILLED_MID_TEST_LOG, eval_exit_code=137)
+    manager = SWEGradingManager(
+        GradingManagerConfig(sandbox_profile=make_grader_profile(), eval_log_dir=tmp_path / "logs"), docker=docker,
+    )
+    report = await manager.grade(trajectory_id="killed-mid-test", workspace=FakeWorkspace(patch_text=GOOD_PATCH), spec=_spec())
+    assert report.outcome == "failed_to_grade" and report.reward is None and report.failure_category == "infra_failure"
+    assert report.infra_failure_detail == "grading_candidate_exec_killed:signal=9:candidate_phase=test"
+    side = json.loads((tmp_path / "logs" / f"{report.eval_log_ref.ref_id}.diagnostics.json").read_text())
+    assert side["candidate"]["log_partial"] is True and side["candidate"]["candidate_exec_exit_code"] == 137
+    assert side["candidate"]["candidate_segment_completed"] is False and side["candidate"]["test_rc"] is None
+    log = (tmp_path / "logs" / f"{report.eval_log_ref.ref_id}.eval.log").read_text()
+    assert "PASSED tests/test_thing.py::test_feature" in log  # 已产生的输出保留
+    assert manager.regrade_total == 0 and manager.container_records[-1].removed is True  # 不追加评分；自己的容器照常回收
+
+
+async def test_container_found_dead_after_exec_keeps_the_exit_code_and_output_the_exec_channel_delivered(tmp_path):
+    """同一事故的另一支：exec 返回后 inspect 已看到容器停止 / 不在（既有 grading_container_killed_during_test）。
+    容器不在了，tee 文件读不回（替身：读回为空）——此前这里只剩 setup 日志、candidate_phase=unknown、退出码不记。
+    现在用 exec 通道已交付的输出与退出码。"""
+
+    docker = ProfileGraderFakeDocker(
+        base_commit=BASE_COMMIT, eval_log=_KILLED_MID_TEST_LOG, eval_exit_code=137, container_running=False,
+    )
+    docker.candidate_partial_log = ""
+    manager = SWEGradingManager(
+        GradingManagerConfig(sandbox_profile=make_grader_profile(), eval_log_dir=tmp_path / "logs"), docker=docker,
+    )
+    report = await manager.grade(trajectory_id="dead-after-exec", workspace=FakeWorkspace(patch_text=GOOD_PATCH), spec=_spec())
+    assert report.outcome == "failed_to_grade" and report.reward is None and report.failure_category == "infra_failure"
+    assert report.infra_failure_detail == "grading_container_killed_during_test:candidate_phase=test"
+    facts = manager.container_records[-1].candidate_facts
+    assert (facts["log_partial"], facts["candidate_segment_completed"], facts["candidate_exec_exit_code"]) == (True, False, 137)
+    assert facts["install_rc_last_command"] == 0 and facts["test_rc"] is None
+    log = (tmp_path / "logs" / f"{report.eval_log_ref.ref_id}.eval.log").read_text()
+    assert "PASSED tests/test_thing.py::test_feature" in log
+
+
+@pytest.mark.parametrize(
+    ("log", "exit_code", "partial", "completed", "killed"),
+    [
+        # 测试进程被杀、脚本自己正常收尾（RH2_TEST_RC=137 + END 标记）：候选段是完整的，走既有解析路径
+        (_KILLED_MID_TEST_LOG + "+ : '>>>>> End Test Output'\nRH2_TEST_RC=137\nRH2_TS_TEST_END=110.0\n", 0, False, True, False),
+        # fixture 形态的脚本只打 RH2_TEST_RC、不打末行时间戳：收口事实在场即完整（真实 Docker fixture 即此形态）
+        (_KILLED_MID_TEST_LOG + "+ : '>>>>> End Test Output'\nRH2_TEST_RC=0\n", 0, False, True, False),
+        # 脚本以普通非零码提前结束（不是信号）：事实如实记未完成，判定仍走既有 parser 路径
+        (_KILLED_MID_TEST_LOG, 3, True, False, False),
+        # 任何输出之前就被杀
+        ("", 137, True, None, True),
+    ],
+)
+async def test_candidate_segment_completion_comes_from_log_markers_and_the_real_exit_code(tmp_path, log, exit_code, partial, completed, killed):
+    docker = ProfileGraderFakeDocker(base_commit=BASE_COMMIT, eval_log=log, eval_exit_code=exit_code)
+    manager = SWEGradingManager(
+        GradingManagerConfig(sandbox_profile=make_grader_profile(), eval_log_dir=tmp_path / "logs"), docker=docker,
+    )
+    report = await manager.grade(trajectory_id="segment-facts", workspace=FakeWorkspace(patch_text=GOOD_PATCH), spec=_spec())
+    facts = manager.container_records[-1].candidate_facts
+    assert (facts["log_partial"], facts["candidate_segment_completed"], facts["candidate_exec_exit_code"]) == (partial, completed, exit_code)
+    assert report.reward is None or completed  # 没跑完的候选段从不产出 reward
+    assert ("grading_candidate_exec_killed" in (report.infra_failure_detail or "")) is killed
 
 
 async def test_s1m_timeout_keeps_partial_candidate_output(tmp_path):

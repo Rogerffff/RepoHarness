@@ -8,9 +8,11 @@
 归属锚点 = docker 容器 label `rh2.run_id=<run_id>`：launch 经 Ray runtime env
 下发 `MILES_RH2_RUN_ID` 后，rollout 容器（`adapters/slime/generate.py`）与评分容器
 （`grading/manager.py`）启动时都盖这个 label。本工具**只动带本 run label 的容器**
-——同宿主上其他 run / 其他人的容器一律不碰（这是它和 `SWEGradingManager.startup`
-的年龄式孤儿清扫的区别）。工作区/临时目录按显式给出的 glob 处理（RH2 目前不在
-宿主上创建 per-run 临时目录，此项留给 launch 按需传入）。
+——同宿主上其他 run / 其他人的容器一律不碰。`SWEGradingManager.startup` 曾有的年龄式
+跨 manager 孤儿清扫已于 2026-09-20 删除（年龄不能证明 owner 已死，真机上误杀过活跃评分）；
+进程异常消失留下的评分容器，由本工具在所属 run **确认已结束之后**按 run label 清理。
+工作区/临时目录按显式给出的 glob 处理（RH2 目前不在宿主上创建 per-run 临时目录，
+此项留给 launch 按需传入）。
 
 两个纪律：
 

@@ -12,9 +12,12 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import subprocess
 import sys
+import time
+import uuid
 from pathlib import Path
 
 import pytest
@@ -627,6 +630,66 @@ async def test_s1m_real_timeout_keeps_tee_output_and_cleans_up(fixture_repo, fix
     side = json.loads((Path(manager.config.eval_log_dir) / f"{report.eval_log_ref.ref_id}.diagnostics.json").read_text())
     assert side["candidate"]["log_partial"] is True and side["candidate"]["install_rc_last_command"] == 0
     assert side["candidate"]["install_seconds"] is not None and side["candidate"]["test_seconds"] is None
+    _no_leftover(manager)
+
+
+_RUNNING_TEST_SEGMENT = (
+    "echo RH2_PHASE_START=install\n"
+    "echo \"RH2_TS_INSTALL_START=$(date +%s.%N)\"\n"
+    "true\n"
+    "RH2_INSTALL_RC=$?\n"
+    "echo \"RH2_INSTALL_RC=$RH2_INSTALL_RC\"\n"
+    "echo \"RH2_TS_INSTALL_END=$(date +%s.%N)\"\n"
+    "echo RH2_PHASE_END=install\n"
+    "echo \"RH2_TS_TEST_START=$(date +%s.%N)\"\n"
+    "echo RH2_PROBE_TEST_RUNNING=1\n"
+    "sleep 120\n"
+)
+
+
+async def test_grading_container_removed_by_someone_else_mid_test_is_an_interrupted_grading_real(
+    fixture_repo, fixture_image, make_workspace, tmp_path
+):
+    """2026-09-19 真机事故的真实容器形态：候选测试进行中，评分容器被**本 manager 之外**的 `docker rm -f` 删除
+    （当时是另一个 manager 的启动清扫）。无论 exec 返回后的 inspect 看到 stopped/absent（既有"容器已死"分支）
+    还是仍看到 running（删除尚未完成 → 新的 exec 被信号终止分支），结论都必须是"评分被打断"：
+    failed_to_grade / infra / reward=None、日志记 partial，而不是把截断日志交给 parser 去报坏码。"""
+
+    ws = make_workspace()
+    (ws / "src" / "thing.py").write_text(SRC_FIXED)
+    manager = _manager(tmp_path)
+    traj = f"removed-mid-test-{uuid.uuid4().hex[:6]}"
+    grade_task = asyncio.create_task(manager.grade(
+        trajectory_id=traj, workspace=HostWorkspace(ws),
+        spec=_spec(fixture_repo, fixture_image, prelude=_RUNNING_TEST_SEGMENT, test_timeout_seconds=120.0),
+    ))
+    container_id = ""
+    deadline = time.monotonic() + 90
+    while time.monotonic() < deadline and not grade_task.done():
+        ps = subprocess.run(
+            ["docker", "ps", "--filter", f"label={manager.config.label_prefix}.trajectory={traj}", "--format", "{{.ID}}"],
+            capture_output=True, text=True, timeout=60,
+        )
+        container_id = ps.stdout.strip()
+        if container_id and subprocess.run(
+            ["docker", "exec", container_id, "grep", "-q", "RH2_PROBE_TEST_RUNNING=1", "/rh2/candidate/eval.log"],
+            capture_output=True, timeout=60,
+        ).returncode == 0:
+            break
+        await asyncio.sleep(0.2)
+    assert container_id and not grade_task.done(), "评分容器迟迟未进入候选测试段"
+    assert subprocess.run(["docker", "rm", "-f", container_id], capture_output=True, timeout=120).returncode == 0
+    report = await asyncio.wait_for(grade_task, timeout=90)
+    assert report.outcome == "failed_to_grade" and report.failure_category == "infra_failure" and report.reward is None
+    detail = report.infra_failure_detail or ""
+    assert detail.startswith(("grading_container_killed_during_test", "grading_candidate_exec_killed:signal=9"))
+    assert detail.endswith("candidate_phase=test")  # 打断发生在哪一段：来自 exec 通道已交付的输出（容器已不在，tee 文件读不回）
+    side = json.loads((Path(manager.config.eval_log_dir) / f"{report.eval_log_ref.ref_id}.diagnostics.json").read_text())
+    candidate = side["candidate"]
+    assert candidate["log_partial"] is True and candidate["candidate_segment_completed"] is False
+    assert candidate["candidate_exec_exit_code"] == 137 and candidate["test_rc"] is None
+    assert candidate["install_rc_last_command"] == 0 and "RH2_TS_TEST_START" in candidate["markers_seen"]
+    assert "RH2_PROBE_TEST_RUNNING=1" in _eval_log(manager, report)  # 已产生的候选输出没有丢
     _no_leftover(manager)
 
 

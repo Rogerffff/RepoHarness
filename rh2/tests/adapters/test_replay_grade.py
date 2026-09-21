@@ -328,11 +328,18 @@ async def test_r1_cancel_during_cleanup_waits_for_removal_and_records(prepared, 
     assert any(n.startswith("rh2-replay-cand-") for n in docker.removed)
 
 
-async def test_r3_cancelled_grading_row_references_persisted_log(prepared, tmp_path):
+# 2026-09-20（跨 manager 误清理修复）：候选段是否完整以日志里的收口事实（`RH2_TEST_RC` / `RH2_TS_TEST_END`）为准，不再是
+# "exec 返回即完整"。正例补齐真实脚本的收口两行；反例是同一份日志缺收口行（容器被外部删除时的截断形态）。
+@pytest.mark.parametrize(
+    ("script_tail", "expected_partial"),
+    [("RH2_TEST_RC=0\nRH2_TS_TEST_END=20.0\n", False), ("", True)],
+    ids=["candidate_segment_reached_its_end_marker", "end_marker_missing_is_partial"],
+)
+async def test_r3_cancelled_grading_row_references_persisted_log(prepared, tmp_path, script_tail, expected_partial):
     probe_ctx = _ctx(prepared, FakeDocker(base_commit="0" * 40, image_present=True), tmp_path)
     public = probe_ctx.rollout_views[TASK].public
     g = probe_ctx.grading_views[TASK].grading
-    log = "RH2_INSTALL_RC=0\n+ : '>>>>> Start Test Output'\n" + "".join(f"PASSED {t}\n" for t in [*g.fail_to_pass, *g.pass_to_pass]) + "+ : '>>>>> End Test Output'\n"
+    log = "RH2_INSTALL_RC=0\n+ : '>>>>> Start Test Output'\n" + "".join(f"PASSED {t}\n" for t in [*g.fail_to_pass, *g.pass_to_pass]) + "+ : '>>>>> End Test Output'\n" + script_tail
     docker = DriverProfileFakeDocker(base_commit=public.base_commit, image_present=True, eval_log=log)
     n_files = len(set(__import__("repoharness2.grading.manager", fromlist=["patch_touched_paths"]).patch_touched_paths(g.test_patch)))
     docker.setup_attest = {**GOOD_SETUP_ATTEST, "RH2_SETUP_EXPECTED_TEST_FILES": str(n_files), "RH2_SETUP_TEST_FILES": str(n_files)}
@@ -350,7 +357,8 @@ async def test_r3_cancelled_grading_row_references_persisted_log(prepared, tmp_p
     row = json.loads((tmp_path / "ledger.jsonl").read_text().splitlines()[-1])
     assert row["stage_error"] == "cancelled:grading" and row["log"]["path"].endswith(".eval.log") and row["diagnostics_ref"]
     assert "PASSED" in Path(row["log"]["path"]).read_text() and row["install"]["install_rc_last_command"] == 0
-    assert row["log"]["partial"] is False  # 接线页 §14.2 余项：候选段已完整结束、后观测期间取消 → 日志完整
+    # 接线页 §14.2 余项：候选段已完整结束、后观测期间取消 → 日志完整；收口标记缺失 → 如实记 partial
+    assert row["log"]["partial"] is expected_partial
 
 
 async def test_cancel_during_derived_image_inspect_writes_a_row(prepared, tmp_path):

@@ -35,11 +35,11 @@
 容器通道定案（S1-4 决策，理由记录 implementation-notes）：**直接 docker CLI**
 （asyncio subprocess），不经 verifiers DockerRuntime。因为：
 (a) verifiers DockerRuntime 硬编码 `--network host` 且不支持 label——评分容器
-    需要 `--network none`（P9）+ label 记账（P1 孤儿清扫），子类化后 start()
+    需要 `--network none`（P9）+ label 记账（P1 记账回收 / 按 run 精确清理），子类化后 start()
     几乎整段重写，没有复用价值；
 (b) grading 与 envpack 同属框架无关库层：S1-6 slime 绑定同样要用本 manager，
     保持零 verifiers import（tests/grading 有子进程探针钉死）；
-(c) P1 清扫、P4 杀容器注入本来就要直接操作 docker CLI。
+(c) P1 回收、P4 杀容器注入本来就要直接操作 docker CLI。
 docker 调用函数是构造参数（P7 backend-neutral）：单测注入 FakeDocker，
 未来换独立评分池/serverless 后端只需替换这一个可调用对象。
 """
@@ -704,7 +704,6 @@ class GradingManagerConfig:
     label_prefix: str = "rh2.grading"  # 容器 label 键前缀（P1 记账与清扫的锚点）
     name_prefix: str = "rh2-grading"  # 容器名前缀
     prepare_concurrency: int = 2  # P2：prepare 预热的有界信号量
-    orphan_min_age_seconds: float = 3600.0  # P1：startup 清扫只动超过此年龄的外来容器
     eval_log_dir: Path | None = None  # 非空时把 eval 原始日志落盘并出 ArtifactRef
     cleanup_timeout_seconds: int = 120
     # W3b（D2-2）：独立 grader Docker profile。None = 旧参数（--network none、root、无限额）——
@@ -724,6 +723,7 @@ class GradingInfraError(RuntimeError):
         exit_code: int | None = None,
         stderr: str | None = None,
         container_name: str | None = None,
+        exec_result: ExecResult | None = None,
     ) -> None:
         super().__init__(detail)
         self.detail = detail
@@ -734,6 +734,9 @@ class GradingInfraError(RuntimeError):
         self.exit_code = exit_code
         self.stderr = stderr
         self.container_name = container_name
+        # exec 已返回、随后才判定容器已死 / 状态未知时，exec 通道**已经交付**的退出码与输出：容器不在了，
+        # tee 文件读不回，中断事实只剩这一份（只进诊断，不参与重试判定）
+        self.exec_result = exec_result
 
 
 # N2a（第 2 组剩余实施 Brief §3.2；Codex 计划审查 R1）：一条评分任务的**工作期限**——由编排在提交时建立，
@@ -862,7 +865,7 @@ class SandboxProfileViolation(BaselineIntegrityError):
 
 @dataclass
 class _ContainerRecord:
-    """per-容器记账条目（P1：TTL GC 与孤儿判定的数据底座）。"""
+    """per-容器记账条目（P1：TTL GC 的数据底座；只记本实例自己创建的容器）。"""
 
     name: str
     trajectory_id: str
@@ -960,6 +963,21 @@ def candidate_facts_from_log(text: str) -> dict[str, Any]:
         "test_seconds": _delta("RH2_TS_TEST_START", "RH2_TS_TEST_END"),
         "markers_seen": sorted(raw),
     }
+
+
+def candidate_segment_facts(log: str, exec_exit_code: int | None) -> dict[str, Any]:
+    """候选段事实 = 日志事实行 + exec 的真实退出码 + 候选段是否跑到收口。
+
+    收口事实：脚本在测试命令与 End 标记之后才打 `RH2_TEST_RC=`，生产渲染器再打末行 `RH2_TS_TEST_END=`
+    （fixture 脚本只打前者），任一在场 = 跑到了收口；脚本完全不打标记（旧形态）= None，无从判断。
+    这两行在候选测试输出之后打印、候选可以提前伪造；伪造只会把"被打断"变回"按截断日志评分"，换不到 reward。"""
+
+    facts = candidate_facts_from_log(log)
+    marker_aware = bool(facts["markers_seen"]) or "RH2_PHASE_START=install" in log
+    completed = bool({"RH2_TEST_RC", "RH2_TS_TEST_END"} & set(facts["markers_seen"]))
+    facts["candidate_exec_exit_code"] = exec_exit_code
+    facts["candidate_segment_completed"] = completed if marker_aware else None
+    return facts
 
 
 def candidate_phase_at(partial_log: str) -> str:
@@ -1452,7 +1470,7 @@ class SWEGradingManager:
         # N2b / Codex 集成审查 R4：追加尝试前读取的**实际停止事实**（bringup 注入 lifecycle 谓词：run-fatal 已发生 /
         # 评分面已关闭而 queue 仍在排空）。None = 只看本实例的 _closed（直接构造 / 单测）。
         self._stop_requested_hook = stop_requested
-        self.run_id = uuid.uuid4().hex[:12]  # 本实例的 owner 标识（label + 孤儿判定）
+        self.run_id = uuid.uuid4().hex[:12]  # 本实例的 owner 标识（owner label：诊断与归属，不用于清扫别人）
         self._records: list[_ContainerRecord] = []
         self._images_ready: set[str] = set()
         self._image_locks: dict[str, asyncio.Lock] = {}
@@ -1532,41 +1550,21 @@ class SWEGradingManager:
 
     # ------------------------------------------------------------------ P1
     async def startup(self) -> list[str]:
-        """进程启动清扫：按 label 前缀找出**不属于本实例**且超龄的评分容器并移除。
+        """启动入口（保留给既有调用方）：**不做任何跨 manager 清扫**，恒返回空列表。
 
-        年龄门槛（orphan_min_age_seconds）防止误杀同宿主上其他活跃 worker 的
-        容器——正常评分容器寿命只有几分钟，超过一小时仍在的 label 容器就是
-        上一次进程崩溃留下的孤儿。
+        此前这里按共享 label 找出"不属于本实例且创建超过一小时"的评分容器并 `rm -f`，时间戳非法的还按无限
+        年龄删。年龄不能证明 owner 已经死亡：2026-09-19 的真机实验里，一条运行了约 88 分钟的 MONAI 评分被
+        另一个刚启动的 manager 杀掉（exit 137），报告变成 reward None。提高年龄阈值只是把同一个误杀推迟，
+        因此整段删除，而不是调参；也不为此新增心跳 / 租约式的存活探测。
+
+        容器回收的三条既有路径不变：单次评分的 finally（`_close_container_scope`）、本实例的 `close()` /
+        `gc()`（只认自己记过账的 `_records`）、整场 run **确认已结束之后**按 `rh2.run_id` 标签的精确清理
+        （`shutdown/run_residue.py` / launch trap）。代价：进程异常消失留下的评分容器不会再被后来的 manager
+        自动"捡走"，需要在确认所属 run 已结束后按 run_id / 容器名清理；缺 run 标签时不得退回按共享 label 全扫。
+        owner / trajectory / created_at_epoch 标签继续盖，供诊断与精确清理使用。
         """
 
-        prefix = self.config.label_prefix
-        fmt = f'{{{{.ID}}}}\t{{{{.Label "{prefix}.owner"}}}}\t{{{{.Label "{prefix}.created_at_epoch"}}}}'
-        listing = await self._docker(
-            "ps", "-a", "--filter", f"label={prefix}.owner", "--format", fmt
-        )
-        removed: list[str] = []
-        if listing.exit_code != 0:
-            return removed
-        now = time.time()
-        for line in listing.stdout.splitlines():
-            parts = (line.split("\t") + ["", ""])[:3]
-            container_id, owner, created_raw = parts[0].strip(), parts[1].strip(), parts[2].strip()
-            if not container_id or owner == self.run_id:
-                continue
-            try:
-                age = now - float(created_raw)
-            except ValueError:
-                age = float("inf")  # 没有合法时间戳的 label 容器直接视为孤儿
-            if age < self.config.orphan_min_age_seconds:
-                continue
-            rm = await self._docker("rm", "-f", container_id)
-            if rm.exit_code == 0:
-                removed.append(container_id)
-            else:
-                self.cleanup_failures.append(
-                    f"orphan_sweep_rm_failed:{container_id}:{rm.stderr.strip()[-200:]}"
-                )
-        return removed
+        return []
 
     # ------------------------------------------------------------------ P2
     def prepare(self, spec: GradingEnvSpec) -> asyncio.Task:
@@ -2397,10 +2395,10 @@ class SWEGradingManager:
                 record, timeout=min(30.0, float(self.config.cleanup_timeout_seconds))
             )
             if state in ("stopped", "absent"):
-                raise GradingInfraError(f"grading_container_killed_during_{phase}")
+                raise GradingInfraError(f"grading_container_killed_during_{phase}", exec_result=result)
             if state == "unknown":
                 # 批 D-2：inspect 失败（daemon 不可达等）≠ 容器已死——单独归因，不冒充 killed
-                raise GradingInfraError(f"grading_container_state_unknown_during_{phase}")
+                raise GradingInfraError(f"grading_container_state_unknown_during_{phase}", exec_result=result)
         return result
 
     async def _verify_image_digest(self, record: _ContainerRecord, spec: GradingEnvSpec) -> None:
@@ -2976,9 +2974,16 @@ class SWEGradingManager:
                 home=f"/home/{profile.candidate_exec_user}",
             )
         except GradingInfraError as exc:
-            # 超时 / 容器死亡：exec 通道拿不到已产生的输出（run_docker 取消即 kill），从 tee 文件读回部分日志
+            # 超时：exec 通道拿不到已产生的输出（run_docker 取消即 kill），从 tee 文件读回部分日志。
+            # 容器死亡：容器已不在、tee 文件读不回——用 exec 返回时已交付的输出与退出码（真实容器实测：此前这里
+            # 只剩 setup 日志、candidate_phase=unknown，被谁在哪一段打断无从判断）。
             partial = await self._read_candidate_log_partial(record)
-            self._record_partial_candidate(record, setup_log, partial)
+            delivered = exc.exec_result
+            if not partial and delivered is not None:
+                partial = delivered.stdout if delivered.stdout else delivered.stderr
+            self._record_partial_candidate(
+                record, setup_log, partial, exec_exit_code=delivered.exit_code if delivered is not None else None,
+            )
             # A2：安装段与测试段共用一份 test_timeout；归因文字注明超时发生在哪一段（判定仍是 infra）
             raise GradingInfraError(
                 f"{exc.detail}:candidate_phase={candidate_phase_at(partial)}", category=exc.category,
@@ -2990,10 +2995,24 @@ class SWEGradingManager:
             self._record_partial_candidate(record, setup_log, partial)
             raise
         test_log = result.stdout if result.stdout else result.stderr
-        facts = candidate_facts_from_log(test_log)
-        facts["log_partial"] = False
+        facts = candidate_segment_facts(test_log, result.exit_code)
+        # 候选段是否跑完以日志里的收口事实为准（见 candidate_segment_facts）。此前只要 exec 返回就记
+        # log_partial=False——而容器被外部 `rm -f` 时，exec 以 137 返回、紧接着的 inspect 还可能看到 running
+        # （删除尚未完成），`_exec_bash_checked` 的"容器已死"检测因此落空，截断的日志被当成完整日志
+        # （2026-09-19 真机：sidecar 写 log_partial=false、测试退出码缺失）。
+        completed = facts["candidate_segment_completed"]  # None = 脚本不打标记，无从判断
+        killed_by_signal = result.exit_code >= 128
+        facts["log_partial"] = completed is False or killed_by_signal
         record.candidate_facts = facts
-        record.eval_log_partial = setup_log + test_log  # R3：候选段已完整结束，后观测期间被取消也不丢日志
+        record.eval_log_partial = setup_log + test_log  # R3：后观测期间被取消也不丢日志
+        if killed_by_signal and not completed:
+            # 候选脚本被信号终止且没跑到结尾 = 评分动作被打断（容器被杀 / 资源终止），与
+            # grading_container_killed_during_test 同族：infra、reward=None，不交给 parser 去报一个"坏码"。
+            # 脚本自己正常收尾时（测试进程被杀但脚本继续，RH2_TEST_RC=137 + END 标记在场）不走这里。
+            raise GradingInfraError(
+                f"grading_candidate_exec_killed:signal={result.exit_code - 128}:candidate_phase={candidate_phase_at(test_log)}",
+                op="test", exit_code=result.exit_code,
+            )
         post = await self._observe(
             record, spec.post_candidate_observation_script, phase="post_candidate_observation",
             timeout=spec.env_reset_timeout_seconds,
@@ -3003,8 +3022,10 @@ class SWEGradingManager:
         return setup_log + test_log, trusted_setup_seconds
 
     @staticmethod
-    def _record_partial_candidate(record: _ContainerRecord, setup_log: str, partial: str) -> None:
-        facts = candidate_facts_from_log(partial)
+    def _record_partial_candidate(
+        record: _ContainerRecord, setup_log: str, partial: str, *, exec_exit_code: int | None = None,
+    ) -> None:
+        facts = candidate_segment_facts(partial, exec_exit_code)  # exec_exit_code=None：exec 没有返回（超时 / 取消）
         facts["log_partial"] = True
         record.candidate_facts = facts
         record.eval_log_partial = setup_log + (record.eval_log_partial or "")[len(setup_log):] + partial

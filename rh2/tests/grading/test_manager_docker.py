@@ -318,35 +318,38 @@ async def test_segment_timeout_real(fixture_repo, fixture_image, make_workspace,
 # ---------------------------------------------------------------------------
 
 
-async def test_orphan_sweep_real(fixture_image, tmp_path):
-    """P1：启动清扫按 label 找孤儿——超龄外来容器清掉，年轻外来容器留下。"""
+async def test_foreign_live_containers_survive_another_manager_startup_and_close_real(fixture_image, tmp_path):
+    """2026-09-19 真机反例的 Docker 对照：同一 label 命名空间里，别的 manager 的活跃容器（创建时间标签两小时前 /
+    时间戳非法）在新 manager 的 startup 与 close 之后仍然存活；新 manager 自己评分的容器照常回收。"""
 
     now = int(time.time())
     suffix = uuid.uuid4().hex[:6]
-    orphan_name = f"rh2-grading-orphan-{suffix}"
-    fresh_name = f"rh2-grading-fresh-{suffix}"
+    old_name = f"rh2-grading-foreign-old-{suffix}"
+    badts_name = f"rh2-grading-foreign-badts-{suffix}"
 
-    def _spawn(name: str, epoch: int) -> None:
+    def _spawn(name: str, epoch: str) -> None:
         run = _docker(
             "run", "-d", "--network", "none",
-            "--label", "rh2.grading.owner=stale-run",
+            "--label", "rh2.grading.owner=live-other-manager",
             "--label", f"rh2.grading.trajectory={name}",
             "--label", f"rh2.grading.created_at_epoch={epoch}",
             "--name", name, fixture_image, "sleep", "infinity",
         )
         assert run.returncode == 0, run.stderr
 
-    _spawn(orphan_name, now - 7200)  # 两小时前 → 孤儿
-    _spawn(fresh_name, now)  # 刚创建 → 可能是并行 worker 的活容器
+    _spawn(old_name, str(now - 7200))
+    _spawn(badts_name, "not_a_number")
     try:
-        manager = _make_manager(tmp_path, orphan_min_age_seconds=3600.0)
-        removed = await manager.startup()
-        assert removed, "启动清扫应至少移除一个孤儿容器"
-        assert _docker("inspect", orphan_name).returncode != 0  # 孤儿已消失
-        assert _docker("inspect", fresh_name).returncode == 0  # 年轻容器幸存
+        manager = _make_manager(tmp_path)
+        assert await manager.startup() == []
+        closed = await manager.close()
+        assert closed["containers_open"] == []
+        for name in (old_name, badts_name):
+            state = _docker("inspect", "-f", "{{.State.Running}}", name)
+            assert state.returncode == 0 and state.stdout.strip() == "true", (name, state.stderr)
     finally:
-        _docker("rm", "-f", orphan_name)
-        _docker("rm", "-f", fresh_name)
+        _docker("rm", "-f", old_name)
+        _docker("rm", "-f", badts_name)
 
 
 async def test_snapshot_readonly_real(fixture_repo, fixture_image, make_workspace, tmp_path):
