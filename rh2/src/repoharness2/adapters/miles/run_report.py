@@ -54,6 +54,9 @@ DRAIN_COMPLETE_EVENT = "drain_complete"
 ENGINE_VERSIONS_EVENT = "engine_versions_after_publish"
 RUN_RESTARTED_EVENT = "run_restarted"
 GRADING_REGRADE_EVENT = "grading_regrade"
+# I21：评测钩子的逐点汇总（adapters/miles/eval_report.py）与共享引擎 eval 窗口（fork patch 0018）
+EVAL_POINT_EVENT = "eval_point"
+EVAL_WINDOW_EVENT = "eval_window"
 SAMPLE_DIS_EVENT = "sample_dis_accounting"
 
 COLLECTED, PARTIAL, NOT_COLLECTED = "collected", "partial", "not_collected"
@@ -109,6 +112,9 @@ CALIBER_NOTES: tuple[str, ...] = (
     "同版本 logprob 差异（logprob_compare.same_version）与跨版本差异分列；跨版本差不叫 KL。",
     "rollout_group 只代表已交付给 learner 的组，不是过滤前总体；过滤前总体没有来源（not_collected），不推造。",
     "本工具只诊断，不重采样、不改预算、不改准入。",
+    "评测 attempt（audit 行带 evaluation 块 / 成本快照 evaluation=True）不进训练统计：各训练 facet 只看训练 attempt，"
+    "评测单列在 evaluation facet；作业总成本 = 训练 + 评测两部分之和。评测点按 eval_point_id 区分（rollout_id 不是"
+    "唯一调用标识），完整性与模型绑定分别给出，不把『已派发』当作评测完成。",
 )
 
 
@@ -266,7 +272,35 @@ def _lifecycle_timing(audit: Mapping[str, Any]) -> Mapping[str, Any] | None:
 # ---------------------------------------------------------------------------
 
 
-def _facet_execution(events_by_kind, audits, run_id, run_events) -> dict[str, Any]:
+def _split_regrades_by_plane(regrades, train_audits, eval_audits) -> dict[str, list[Mapping[str, Any]]]:
+    """I21（Codex 实施复核 IR3）：`grading_regrade` 事件按 trajectory_id 与 audit 连接分成训练 / 评测 / 归属未知。
+
+    评测的一次重评分不该算进训练侧的重试发生率（否则训练统计随评测频率变化）。连接用现有事实：事件的
+    `trajectory_id` = audit 行的 `trajectory_id`，平面看该行有没有 `evaluation` 块；找不到 audit 的事件
+    （attempt 还没结束 / audit 未归属到本 run）单列为未知，不猜。不改 grading 的事件契约。"""
+
+    train_ids = {a.get("trajectory_id") for a in train_audits}
+    eval_ids = {a.get("trajectory_id") for a in eval_audits}
+    out: dict[str, list[Mapping[str, Any]]] = {"training": [], "evaluation": [], "unattributed": []}
+    for row in regrades:
+        trajectory = row.get("trajectory_id")
+        if trajectory in eval_ids:
+            out["evaluation"].append(row)
+        elif trajectory in train_ids:
+            out["training"].append(row)
+        else:
+            out["unattributed"].append(row)
+    return out
+
+
+def _regrade_block(rows) -> dict[str, Any]:
+    return {
+        "events": len(rows),
+        "by_op_and_category": dict(sorted(Counter(f"{r.get('op')}:{r.get('category')}" for r in rows).items())),
+    }
+
+
+def _facet_execution(events_by_kind, audits, run_id, run_events, *, regrades_by_plane=None) -> dict[str, Any]:
     have_events = bool(events_by_kind.get(GROUP_DROP_EVENT) or events_by_kind.get(GROUP_CONSUMED_EVENT) or events_by_kind.get(ATTEMPT_COST_SNAPSHOT_EVENT))
     out: dict[str, Any] = {"status": NOT_COLLECTED, "reasons": []}
     if have_events:
@@ -276,10 +310,13 @@ def _facet_execution(events_by_kind, audits, run_id, run_events) -> dict[str, An
         out["groups"] = None
         out["costs"] = None
         out["reasons"].append("no_group_or_cost_events: 未设 MILES_RH2_EVENT_DIR 或事件文件缺失——不能据此说没有损耗")
-    regrades = events_by_kind.get(GRADING_REGRADE_EVENT, [])
+    if regrades_by_plane is None:
+        regrades_by_plane = {"training": list(events_by_kind.get(GRADING_REGRADE_EVENT, [])), "evaluation": [], "unattributed": []}
+    # 训练 facet 只数训练 attempt 的重评分；评测的在 evaluation facet；连不上 audit 的单列（不并入训练）
     out["grading_regrades"] = {
-        "events": len(regrades),
-        "by_op_and_category": dict(sorted(Counter(f"{r.get('op')}:{r.get('category')}" for r in regrades).items())),
+        **_regrade_block(regrades_by_plane["training"]),
+        "unattributed_events": len(regrades_by_plane["unattributed"]),
+        "unattributed_by_op_and_category": _regrade_block(regrades_by_plane["unattributed"])["by_op_and_category"],
     }
     if audits:
         out["attempts_audited"] = len(audits)
@@ -760,9 +797,81 @@ def _attribute_run(row: Mapping[str, Any], bundle_runs: Mapping[Any, set]) -> An
     return next(iter(runs)) if len(runs) == 1 else None
 
 
+def _facet_evaluation(events_by_kind, eval_audits, *, regrades=()) -> dict[str, Any]:
+    """I21：评测单列。来源 = audit 行的 evaluation 块（逐 attempt，权威）+ `eval_point` 事件（评测钩子的逐点汇总：
+    完整性 / 模型绑定）+ `eval_window` 事件（共享引擎 eval 窗口两端的在飞训练组数）。都没有 = 本 run 没有评测记录
+    （not_collected，不等于"评测通过"）。"""
+
+    points = events_by_kind.get(EVAL_POINT_EVENT, [])
+    windows = events_by_kind.get(EVAL_WINDOW_EVENT, [])
+    out: dict[str, Any] = {"status": NOT_COLLECTED, "reasons": [], "attempt_rows": len(eval_audits)}
+    by_point: dict[str, dict[str, Any]] = {}
+    for row in eval_audits:
+        block = row.get("evaluation") or {}
+        facts = block.get("eval") or {}
+        entry = by_point.setdefault(str(facts.get("eval_point_id")), {
+            "eval_rollout_ids": set(), "datasets": set(), "attempts": 0, "result_classes": Counter(), "resolved": 0,
+            "unavailable_reasons": Counter(), "grading_failure_categories": Counter(), "observed_weight_versions": set(),
+            "target_weight_versions": set(), "configured_hf_checkpoints": set(),
+        })
+        entry["eval_rollout_ids"].add(facts.get("eval_rollout_id"))
+        entry["datasets"].add(facts.get("dataset"))
+        entry["attempts"] += 1
+        entry["result_classes"][str(block.get("result_class"))] += 1
+        if block.get("task_outcome") == "resolved":
+            entry["resolved"] += 1
+        elif block.get("result_class") == "graded":
+            entry["grading_failure_categories"][str(block.get("grading_failure_category"))] += 1
+        if block.get("unavailable_reason"):
+            entry["unavailable_reasons"][str(block.get("unavailable_reason"))] += 1
+        entry["observed_weight_versions"].update(str(v) for v in (block.get("turn_weight_versions") or []))
+        entry["target_weight_versions"].add(facts.get("target_weight_version"))
+        if block.get("configured_hf_checkpoint"):
+            entry["configured_hf_checkpoints"].add(str(block["configured_hf_checkpoint"]))
+    out["by_eval_point"] = {
+        key: {
+            "eval_rollout_ids": sorted(entry["eval_rollout_ids"], key=lambda v: (v is None, v)),
+            "datasets": sorted(str(d) for d in entry["datasets"]),
+            "attempts": entry["attempts"],
+            "result_classes": dict(sorted(entry["result_classes"].items())),
+            "resolved": entry["resolved"],
+            "unavailable_reasons": dict(sorted(entry["unavailable_reasons"].items())),
+            "grading_failure_categories": dict(sorted(entry["grading_failure_categories"].items())),
+            "observed_weight_versions": sorted(entry["observed_weight_versions"]),
+            "target_weight_versions": sorted(str(v) for v in entry["target_weight_versions"]),
+            "configured_hf_checkpoints": sorted(entry["configured_hf_checkpoints"]),  # 配置来源，非加载证明
+        }
+        for key, entry in sorted(by_point.items())
+    }
+    summary_keys = ("rollout_id", "dataset", "eval_point_ids", "planned_source", "planned_prompts", "host_loaded_prompts",
+                    "prompts_not_loaded", "planned", "received", "graded", "resolved", "unresolved",
+                    "reward_unavailable", "execution_missing", "payload_missing", "missing_members", "duplicate_members",
+                    "resolved_rate_graded", "resolved_rate_planned", "configured_hf_checkpoints", "target_weight_version", "observed_weight_versions",
+                    "binding", "complete")
+    out["eval_point_events"] = [{k: row.get(k) for k in summary_keys} for row in points]
+    out["points_complete"] = sum(1 for row in points if row.get("complete") is True)
+    out["points_incomplete"] = sum(1 for row in points if row.get("complete") is not True)
+    out["points_binding"] = dict(sorted(Counter(str(row.get("binding")) for row in points).items()))
+    out["eval_windows"] = [{k: row.get(k) for k in ("rollout_id", "phase", "active_groups", "ok", "ts_unix")} for row in windows]
+    out["grading_regrades"] = _regrade_block(list(regrades))
+    if not eval_audits and not points and not windows:
+        out["reasons"].append("no_eval_records: 没有评测 audit 行 / eval_point / eval_window 事件——不能据此说评测已完成")
+        return out
+    if not points:
+        out["reasons"].append("no_eval_point_events: 缺评测钩子的逐点汇总（钩子未接线或事件日志未启用）——完整性与绑定未知")
+    if not eval_audits:
+        out["reasons"].append("no_eval_audit_rows: 缺逐 attempt 的评测 audit 行")
+    out["status"] = COLLECTED if (eval_audits and points) else PARTIAL
+    return out
+
+
 def _single_run_report(*, run_id, events, audits, bringup) -> dict[str, Any]:
     events_by_kind = _by_kind(events)
-    execution = _facet_execution(events_by_kind, audits, run_id, events)
+    # I21：评测 attempt 与训练 attempt 分开——训练各 facet 只看训练 attempt（评测不进 buffer、不产生训练行）
+    eval_audits = [a for a in audits if isinstance(a.get("evaluation"), Mapping)]
+    audits = [a for a in audits if not isinstance(a.get("evaluation"), Mapping)]
+    regrades_by_plane = _split_regrades_by_plane(events_by_kind.get(GRADING_REGRADE_EVENT, []), audits, eval_audits)
+    execution = _facet_execution(events_by_kind, audits, run_id, events, regrades_by_plane=regrades_by_plane)
     facets = {
         "execution_and_loss": execution,
         "action_coverage": _facet_action_coverage(audits),
@@ -771,11 +880,13 @@ def _single_run_report(*, run_id, events, audits, bringup) -> dict[str, Any]:
         "staleness_and_alignment": _facet_staleness(events_by_kind, execution),
         "optimizer_and_publish": _facet_optimizer(events_by_kind),
         "throughput_and_resources": _facet_throughput(events_by_kind, audits, bringup, execution),
+        "evaluation": _facet_evaluation(events_by_kind, eval_audits, regrades=regrades_by_plane["evaluation"]),
     }
     return {
         "run_id": run_id,
         "event_kinds": dict(sorted(Counter(k for k in events_by_kind for _ in events_by_kind[k]).items())),
-        "audit_rows": len(audits),
+        "audit_rows": len(audits),  # 训练 attempt 的 audit 行
+        "eval_audit_rows": len(eval_audits),
         "bringup_rows": len(bringup),
         "coverage": {name: facet["status"] for name, facet in facets.items()},
         "facets": facets,

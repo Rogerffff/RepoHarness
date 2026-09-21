@@ -59,6 +59,7 @@ from typing import Any
 
 from repoharness2.contracts.fa_runtime import outcome_dict_is_unsafe_rejection
 from repoharness2.contracts.finalization import FinalizationStoreConflict
+from repoharness2.adapters.slime.eval_result import derive_eval_attempt_result
 from repoharness2.adapters.slime.generate import (
     PROCESS_CLOCK_DOMAIN,
     LeafFacts,
@@ -303,14 +304,28 @@ PREPARED_TASKS_DIR = os.environ.get("RH2_PREPARED_TASKS_DIR") or None
 PREPARED_TASKS_MANIFEST_SHA256 = os.environ.get("RH2_PREPARED_TASKS_MANIFEST_SHA256") or None
 HOST_GRADING_ARTIFACT_PATH = os.environ.get("RH2_HOST_GRADING_ARTIFACT_PATH") or None
 HOST_GRADING_ARTIFACT_SHA256 = os.environ.get("RH2_HOST_GRADING_ARTIFACT_SHA256") or None
+# I21（第五组）：评测题包——与训练题包同一种 trusted-prep 产物、独立配置（四个旋钮同形）。同一份题包
+# 可以同时配给训练与评测；代码不设 train/eval 题目互斥（用户 2026-09-19 决定：held-out 划分由 B 线
+# 协议检查，不写成通用运行规则）。RH2_EVAL_ONLY=1 = 不训练的独立评测作业：训练题包可缺省，任何训练
+# 派发 fail-closed。
+EVAL_PREPARED_TASKS_DIR = os.environ.get("RH2_EVAL_PREPARED_TASKS_DIR") or None
+EVAL_PREPARED_TASKS_MANIFEST_SHA256 = os.environ.get("RH2_EVAL_PREPARED_TASKS_MANIFEST_SHA256") or None
+EVAL_HOST_GRADING_ARTIFACT_PATH = os.environ.get("RH2_EVAL_HOST_GRADING_ARTIFACT_PATH") or None
+EVAL_HOST_GRADING_ARTIFACT_SHA256 = os.environ.get("RH2_EVAL_HOST_GRADING_ARTIFACT_SHA256") or None
+EVAL_ONLY = os.environ.get("RH2_EVAL_ONLY", "0") == "1"
 # W5a 关停：SIGTERM 是否接到关停链上。默认 "0"（opt-in）——Ray worker 进程自带
 # SIGTERM 处置，无条件覆盖等于改变运行边界；launch/集成者显式置 "1" 才安装
 # （install 只在有运行中 loop 的主线程可行，见 shutdown.chain.install_signal_shutdown）。
 SHUTDOWN_ON_SIGTERM = os.environ.get("RH2_SHUTDOWN_ON_SIGTERM", "0") == "1"
 
 
-def select_task_face_mode(execution_mode: str, prepared_dir: str | None) -> str:
+def select_task_face_mode(
+    execution_mode: str, prepared_dir: str | None, *, eval_only: bool = False, eval_prepared_dir: str | None = None
+) -> str:
     """任务面选择（纯函数，单测钉死；W1b 第一集成切片 F6）。
+
+    I21：``eval_only``（RH2_EVAL_ONLY=1 的独立评测作业）且评测题包在场时，训练题包可以缺省——
+    任务面仍是 ``"prepared"``（评测 attempt 同样按绑定解析），不回退 v1。
 
     - prepared 目录在场：只在 fa_audit_only/fa_formal 允许（F4 attempt 绑定依赖六字段
       身份，s1_compat 不铸造）→ ``"prepared"``；
@@ -326,11 +341,19 @@ def select_task_face_mode(execution_mode: str, prepared_dir: str | None) -> str:
                 "或去掉 prepared 目录走 v1 八题 bring-up）。"
             )
         return "prepared"
+    if eval_only and eval_prepared_dir and execution_mode != "s1_compat":
+        return "prepared"
     if execution_mode == "fa_formal":
         raise RuntimeError(
             "fa_formal 缺 RH2_PREPARED_TASKS_DIR：formal 入口不得静默回退 v1 BundlePair 八题"
             "（v1 私有面含 golden_patch）——先在 host 侧运行一次性 trusted-prep"
             "（python -m repoharness2.envpack.trusted_prep）。"
+        )
+    if eval_prepared_dir:
+        raise RuntimeError(
+            "已配置评测题包（RH2_EVAL_PREPARED_TASKS_DIR）但训练任务面会回退 legacy v1 八题：评测 attempt 按"
+            "prepared 链的 attempt 绑定解析，legacy 任务面没有绑定表——请同时配置 RH2_PREPARED_TASKS_DIR，"
+            "或用 RH2_EVAL_ONLY=1 跑独立评测作业。"
         )
     return "legacy_v1"
 
@@ -649,7 +672,7 @@ def _episode_deadline_block(audit: Any, proxy: Any) -> dict[str, Any] | None:
     return block
 
 
-def write_execution_audit_record(proxy, audit, path) -> None:
+def write_execution_audit_record(proxy, audit, path, *, model_name: str | None = None) -> None:
     """execution 终态审计（轮次 13 P0-5 + 轮次 14 事务化）：
 
     事务顺序 = **snapshot → 持久写成功 → ack 移除**——写失败时 attempt 仍在
@@ -754,6 +777,9 @@ def write_execution_audit_record(proxy, audit, path) -> None:
         "context_shrink_reasons": list(audit.context_shrink_reasons),
         # I01：动作覆盖与训练行成本（可选键；schema_id 不变，消费者忽略未知键）
         "turn_coverage": getattr(audit, "turn_coverage", None),
+        # I21：评测 attempt 的 typed 结果块（训练 attempt 为 None）。与交付叶上的 rh2_eval_result 载荷
+        # 出自同一个纯函数、同一份 audit 事实；run 报告据此把评测 attempt 从训练统计里分出。
+        "evaluation": derive_eval_attempt_result(audit, model_name=model_name),
         "model_call_attempts": [a.model_dump(mode="json") for a in attempts_snapshot],
     }
     with path.open("a", encoding="utf-8") as fh:
@@ -1103,6 +1129,21 @@ class BringupService:
         # 复核六轮 P0-2：纯配置校验在**任何资源启动之前**（线程未起）
         if EXECUTION_MODE not in ("s1_compat", "fa_audit_only", "fa_formal"):
             raise RuntimeError(f"RH2_EXECUTION_MODE={EXECUTION_MODE!r} 不在三值枚举内。")
+        # I21：评测接线预检（纯函数）。共享引擎形态下评测里的接线错误会原样上抛并停掉训练驱动，
+        # 所以配置层能发现的全部在这里拒绝——而不是训到第 k 步 eval 才崩。
+        from repoharness2.adapters.slime.eval_wiring import EvalWiringError, validate_eval_wiring
+
+        try:
+            self.eval_wiring = validate_eval_wiring(
+                args,
+                execution_mode=EXECUTION_MODE,
+                eval_only=EVAL_ONLY,
+                eval_prepared_dir=EVAL_PREPARED_TASKS_DIR,
+                eval_host_grading_path=EVAL_HOST_GRADING_ARTIFACT_PATH,
+                eval_host_grading_sha256=EVAL_HOST_GRADING_ARTIFACT_SHA256,
+            )
+        except EvalWiringError as exc:
+            raise StartupCheckError(exc.reason_code, str(exc)) from exc
         # F1（codex Wave3 复核，2026-09-04）：此处曾有无条件 `raise RuntimeError("fa_formal 暂禁…")` 临时挡板
         # （2026-08-19 设，移除条件 = W1b + W3a + W3b + W4 完成，已满足；D0-4 不建代码级 owner 闸门）。
         # 现已删除。fa_formal 真正的必需核对全部保留且各自 typed 停止：prepared 任务面
@@ -1133,27 +1174,43 @@ class BringupService:
         #    对象图里没有 golden/validation 面），或 legacy v1 八题 bring-up；
         #    fa_formal 缺 prepared 产物 = 拒绝，不回退（select_task_face_mode）。
         self.prepared_face = None
+        self.eval_prepared_face = None
         self.attempt_assignments = None
         self.pairs = None
-        if select_task_face_mode(EXECUTION_MODE, PREPARED_TASKS_DIR) == "prepared":
+        if select_task_face_mode(
+            EXECUTION_MODE, PREPARED_TASKS_DIR, eval_only=self.eval_wiring.eval_only,
+            eval_prepared_dir=EVAL_PREPARED_TASKS_DIR if self.eval_wiring.enabled else None,
+        ) == "prepared":
             from repoharness2.adapters.miles.attempt_assignment import AttemptAssignmentRegistry
             from repoharness2.adapters.slime.prepared_task_face import PreparedTaskFace
 
-            self.prepared_face = PreparedTaskFace.load(
-                prepared_dir=PREPARED_TASKS_DIR,
-                manifest_sha256=PREPARED_TASKS_MANIFEST_SHA256,
-                host_grading_path=HOST_GRADING_ARTIFACT_PATH,
-                host_grading_sha256=HOST_GRADING_ARTIFACT_SHA256,
-                time_budget_seconds=AGENT_TIME_BUDGET_SEC,
-                # miles RolloutDataSource 读的必须就是 prep 的 prompts.jsonl（按内容 digest 绑定）
-                prompt_data_path=getattr(args, "prompt_data", None),
+            if PREPARED_TASKS_DIR:
+                self.prepared_face = PreparedTaskFace.load(
+                    prepared_dir=PREPARED_TASKS_DIR,
+                    manifest_sha256=PREPARED_TASKS_MANIFEST_SHA256,
+                    host_grading_path=HOST_GRADING_ARTIFACT_PATH,
+                    host_grading_sha256=HOST_GRADING_ARTIFACT_SHA256,
+                    time_budget_seconds=AGENT_TIME_BUDGET_SEC,
+                    # miles RolloutDataSource 读的必须就是 prep 的 prompts.jsonl（按内容 digest 绑定）
+                    prompt_data_path=getattr(args, "prompt_data", None),
+                )
+            if self.eval_wiring.enabled:
+                # I21：评测题包 = 第二个 prepared 产物（类与产物格式不变）；miles 评测数据集读的文件必须
+                # 就是该产物的 prompts.jsonl（同样按内容 digest 绑定）。
+                self.eval_prepared_face = PreparedTaskFace.load(
+                    prepared_dir=EVAL_PREPARED_TASKS_DIR,
+                    manifest_sha256=EVAL_PREPARED_TASKS_MANIFEST_SHA256,
+                    host_grading_path=EVAL_HOST_GRADING_ARTIFACT_PATH,
+                    host_grading_sha256=EVAL_HOST_GRADING_ARTIFACT_SHA256,
+                    time_budget_seconds=AGENT_TIME_BUDGET_SEC,
+                    prompt_data_path=self.eval_wiring.dataset_path,
+                )
+            self.attempt_assignments = AttemptAssignmentRegistry(verify_dispatch=self._verify_dispatch_by_plane)
+            self.task_specs = (
+                {tid: self.prepared_face.rollout_spec(tid) for tid in self.prepared_face.task_ids()}
+                if self.prepared_face is not None
+                else {}
             )
-            self.attempt_assignments = AttemptAssignmentRegistry(
-                verify_dispatch=self.prepared_face.verify_dispatch
-            )
-            self.task_specs = {
-                tid: self.prepared_face.rollout_spec(tid) for tid in self.prepared_face.task_ids()
-            }
         else:
             # 冻结 8 题（防漂移校验开启）。v1 私有面内嵌 golden_patch——只许 bring-up。
             self.pairs = {pair.instance_id: pair for pair in bundles.load_bundle_pairs()}
@@ -1432,7 +1489,7 @@ class BringupService:
             # W1b 第一集成切片（F4/F6）：prepared 链的评分材料按 attempt 绑定在本
             # actor 内查找/构造；legacy 链为 None（任务面内嵌 v1 spec）。
             grading_spec_resolver=(
-                self._resolve_grading_spec if self.prepared_face is not None else None
+                self._resolve_grading_spec if self.attempt_assignments is not None else None
             ),
             adapter_factory=self._adapter_factory,
             harness_driver=driver,
@@ -1503,7 +1560,13 @@ class BringupService:
             if exc.leftover_containers:
                 detail += f"；残留容器：{list(exc.leftover_containers)}"
             raise StartupCheckError("egress_relay_start_failed", detail) from exc
-        image = SANDBOX_VERIFY_IMAGE or next(iter(self.task_specs.values())).image
+        # I21：不训练的独立评测作业没有训练题包（task_specs 为空）——用评测题包的第一道题的镜像做 profile 核对
+        verify_specs = self.task_specs or (
+            {tid: self.eval_prepared_face.rollout_spec(tid) for tid in self.eval_prepared_face.task_ids()}
+            if getattr(self, "eval_prepared_face", None) is not None
+            else {}
+        )
+        image = SANDBOX_VERIFY_IMAGE or next(iter(verify_specs.values())).image
         record = await verify_sandbox_profiles(
             docker, rollout=self.rollout_profile, grader=self.grader_profile, image=image, run_id=run_id,
             relay=self.egress_relay, labels=labels, expect_upstream_http=True,
@@ -1664,6 +1727,7 @@ class BringupService:
         evidence["obsolete_env_flags_ignored"] = sorted(
             name for name in ("RH2_REJECT_CONTEXT_SHRINK",) if os.environ.get(name) is not None
         )
+        evidence["eval_wiring"] = self._eval_wiring_evidence()
         self.probe_evidence = evidence
         (ARTIFACT_DIR / "startup_evidence.json").write_text(
             json.dumps(evidence, indent=2, ensure_ascii=False)
@@ -1742,6 +1806,43 @@ class BringupService:
 
     # -- 编排可注入件 ----------------------------------------------------------
 
+    def _eval_wiring_evidence(self) -> dict[str, Any]:
+        """I21 启动证据：评测接线事实。train∩eval 的题目数只作观测（开发诊断可以合法评测训练题；
+        最终 held-out 划分由 B 线协议检查），不是闸门。"""
+
+        wiring = getattr(self, "eval_wiring", None)
+        if wiring is None or not wiring.enabled:
+            return {"enabled": False}
+        eval_ids = set(self.eval_prepared_face.task_ids()) if self.eval_prepared_face is not None else set()
+        train_ids = set(self.prepared_face.task_ids()) if self.prepared_face is not None else set()
+        return {
+            "enabled": True,
+            "eval_only": wiring.eval_only,
+            "dataset_name": wiring.dataset_name,
+            "eval_task_count": len(eval_ids),
+            "train_task_count": len(train_ids),
+            "train_eval_task_overlap_count": len(eval_ids & train_ids),
+            # miles 加载器会按这个上限过滤长题：被过滤的题由评测钩子按题包逐条列为缺失（评测点不完整），
+            # 这里只让该配置在启动证据里可见，不设闸门。
+            "eval_max_prompt_len": getattr(self._profile_args, "eval_max_prompt_len", None),
+        }
+
+    def _face_for(self, assignment: Any):
+        """I21：分派平面 → 题包。评测 attempt 只认评测题包、训练 attempt 只认训练题包；对应题包未配置
+        即拒绝（独立评测作业收到训练派发、或未开评测却收到评测派发）。同一份题包可同时配给两个平面。"""
+
+        face = self.eval_prepared_face if getattr(assignment, "evaluation", False) else self.prepared_face
+        if face is None:
+            plane = "评测" if getattr(assignment, "evaluation", False) else "训练"
+            raise RuntimeError(
+                f"attempt {getattr(assignment, 'physical_attempt_id', '?')}: {plane}平面没有配置题包——"
+                "分派无法核对（RH2_EVAL_PREPARED_TASKS_DIR / RH2_PREPARED_TASKS_DIR）。"
+            )
+        return face
+
+    def _verify_dispatch_by_plane(self, assignment: Any) -> None:
+        self._face_for(assignment).verify_dispatch(assignment)
+
     def _resolve_task(self, sample: Any):
         metadata = getattr(sample, "metadata", None) or {}
         # W5a：任务面的第一件事——关停后 typed 拒绝（ServiceClosedError，不是 abort
@@ -1749,11 +1850,11 @@ class BringupService:
         # 这里是 orchestrator 9 步生命周期的 step1 之前（generate.py 先解析任务再建
         # audit），所以被拒的执行不会留下任何 audit/receipt——只在关停报告里计数。
         self.lifecycle.enter_execution(metadata)
-        if self.prepared_face is not None:
+        if self.attempt_assignments is not None:
             # prepared 链（F4）：只按样本自带的 attempt 绑定解析——样本回显的
             # task_id/digest 只用来与 host 原始分派逐字比对，不一致即拒绝。
             assignment = self.attempt_assignments.resolve_for_sample(metadata)
-            return self.prepared_face.rollout_spec(assignment.task_id)
+            return self._face_for(assignment).rollout_spec(assignment.task_id)
         iid = metadata.get("instance_id") or getattr(sample, "label", None)
         if iid not in self.task_specs:
             raise ValueError(f"样本没有可识别的 instance_id（metadata/label 均未命中）: {iid!r}")
@@ -1765,7 +1866,7 @@ class BringupService:
 
         metadata = getattr(sample, "metadata", None) or {}
         assignment = self.attempt_assignments.resolve_for_sample(metadata)
-        return self.prepared_face.grading_spec(assignment)
+        return self._face_for(assignment).grading_spec(assignment)
 
     def _grading_stop_requested(self) -> bool:
         """R4：评分 manager 的"停止事实"谓词——已有 run-fatal，或评分面已关闭（关停链先 close_grading 再排空
@@ -1777,7 +1878,8 @@ class BringupService:
     def _write_execution_audit(self, audit) -> None:
         try:
             write_execution_audit_record(
-                self.registry.model_call_proxy, audit, ARTIFACT_DIR / "fa_execution_audit.jsonl"
+                self.registry.model_call_proxy, audit, ARTIFACT_DIR / "fa_execution_audit.jsonl",
+                model_name=getattr(getattr(getattr(self, "orchestrator", None), "config", None), "model_name", None),
             )
         finally:
             # W5a：audit sink 在 generate.py 的 finally 里（receipt→cleanup 之后）被调，
@@ -2748,6 +2850,9 @@ async def ensure_fa_started(args: Any) -> None:
     # Rh2MilesGenerateFn 在铸造身份后 bind、结束后 release。legacy 链为 None。
     if getattr(args, "rh2_attempt_assignments", None) is None and service.attempt_assignments is not None:
         args.rh2_attempt_assignments = service.attempt_assignments
+    # I21：不训练的独立评测作业——Rh2MilesGenerateFn 据此拒绝任何训练派发。
+    if getattr(service, "eval_wiring", None) is not None and service.eval_wiring.eval_only:
+        args.rh2_eval_only = True
 
 
 async def generate(args: Any, sample: Any, sampling_params: dict, evaluation: bool = False):

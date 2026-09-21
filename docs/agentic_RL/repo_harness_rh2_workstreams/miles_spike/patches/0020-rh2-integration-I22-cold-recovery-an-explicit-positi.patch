@@ -1,0 +1,75 @@
+From 275e31eb21ecceeb27cb0d1a522c6a59f348dc2e Mon Sep 17 00:00:00 2001
+From: Fangjian Ju <roger@FangjiandeMacBook-Pro.local>
+Date: Sun, 20 Sep 2026 18:42:26 +0800
+Subject: [PATCH] [rh2-integration] I22 cold recovery: an explicit positive
+ --start-rollout-id must pair with the checkpoint the trainer actually loaded
+
+resolve_restore_rollout_id let an explicit start id win over the loaded point. With --start-rollout-id 21
+while the trainer actually loaded checkpoint iteration 10, both the trainer and RolloutManager read the
+rollout-20 state files: the two sides agree with each other but not with the weights. When the trainer has
+reported its loaded iteration k, an explicit N>0 now requires N - 1 == k, otherwise RecoveryStartMismatch is
+raised while the actor restores its updater counter, i.e. before any publish. Manual renumbering is not
+supported. N == 0 is the value arguments.py sets for a fresh run (whatever iteration a finetune load
+returns is not a recovery) and stays outside this check; an unknown loaded point keeps the old formula.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ miles/utils/rh2_recovery.py | 28 +++++++++++++++++++++++++++-
+ 1 file changed, 27 insertions(+), 1 deletion(-)
+
+diff --git a/miles/utils/rh2_recovery.py b/miles/utils/rh2_recovery.py
+index 93e1ae7fc..12e5df24f 100644
+--- a/miles/utils/rh2_recovery.py
++++ b/miles/utils/rh2_recovery.py
+@@ -28,6 +28,13 @@ rollout_id 是 ``placement_group.create_training_models`` 传给 ``RolloutManage
+ （``start_rollout_id = k + 1``）或用户显式传 ``--start-rollout-id N>0`` 时才 >= 0。trainer 侧用
+ 同一公式（:func:`resolve_restore_rollout_id`）取同一个 rollout_id 的状态文件。
+ 
++**显式起始编号必须与实际加载点一致**（I22，第五组 §6.2）：显式 ``N>0`` 会让 trainer 与 RolloutManager 都去读
++rollout ``N-1`` 的状态文件——两侧彼此一致，却不一定与 trainer **实际加载**的 checkpoint 配对（例：实际加载
++迭代 10、手填 ``--start-rollout-id 21``、目录里恰有 rollout 20 的状态 → 权重 10 配状态 20）。因此 trainer 已
++报告加载点 ``k`` 时要求 ``N - 1 == k``，否则 :class:`RecoveryStartMismatch`（run 在首次 publish 之前停止）。
++不支持手工重编号。``N == 0`` 是 arguments.py 给全新 run 置的值（Megatron finetune 加载返回什么迭代都不算恢复），
++不在本检查之内——它不因此被认定为任何一种"合法的新实验"形态，只是保持原有的非恢复语义。
++
+ **"已发布版本 p" 的定义**：``RolloutManager.weight_version``，即 trainer 上一次 publish 后经
+ ``set_weight_version`` 告知 rollout 侧的版本。train_async 循环里的顺序是
+ ``save_model(rollout_id) -> rollout_manager.save(rollout_id) -> update_weights``，所以 p 是
+@@ -117,6 +124,21 @@ class RecoveryVersionMismatch(RuntimeError):
+         )
+ 
+ 
++class RecoveryStartMismatch(RuntimeError):
++    """显式 ``--start-rollout-id N>0`` 与 trainer 实际加载的 checkpoint 迭代不配对（I22）。"""
++
++    def __init__(self, *, explicit: int, loaded: int) -> None:
++        self.explicit = explicit
++        self.loaded = loaded
++        super().__init__(
++            f"[rh2-integration] cold recovery: --start-rollout-id {explicit} asks both sides to restore rollout "
++            f"{explicit - 1} state, but the trainer actually loaded checkpoint iteration {loaded} (which resumes at "
++            f"{loaded + 1}). Restoring weights from {loaded} with rollout state from {explicit - 1} would silently "
++            "mismatch model and data/version state. Point --load at the intended checkpoint and do not pass "
++            "--start-rollout-id (manual renumbering is not supported); stopping before any publish."
++        )
++
++
+ def is_recovery_context(args: Any, rollout_id: int | None) -> bool:
+     """恢复语境 = 有 --load 且 rollout_id >= 0（见模块说明）。None / 负数 = 全新 run。"""
+     if rollout_id is None or getattr(args, "load", None) is None:
+@@ -226,7 +248,11 @@ def resolve_restore_rollout_id(args: Any, loaded_rollout_id: int | None) -> int:
+     """
+     explicit = getattr(args, "start_rollout_id", None)
+     if explicit is not None:
+-        return int(explicit) - 1
++        explicit = int(explicit)
++        # I22：显式 N>0 必须与实际加载点配对（加载点未知 = 无从核对，保持原行为；N == 0 见模块说明）
++        if explicit > 0 and loaded_rollout_id is not None and int(loaded_rollout_id) != explicit - 1:
++            raise RecoveryStartMismatch(explicit=explicit, loaded=int(loaded_rollout_id))
++        return explicit - 1
+     if loaded_rollout_id is None:
+         return -1
+     return int(loaded_rollout_id)
+-- 
+2.50.1 (Apple Git-155)
+

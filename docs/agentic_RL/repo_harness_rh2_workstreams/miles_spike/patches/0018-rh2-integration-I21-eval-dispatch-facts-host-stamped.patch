@@ -1,0 +1,211 @@
+From e13f000866226efd81aa4188a16f2744010fe51a Mon Sep 17 00:00:00 2001
+From: Fangjian Ju <roger@FangjiandeMacBook-Pro.local>
+Date: Sat, 19 Sep 2026 17:46:46 +0800
+Subject: [PATCH] [rh2-integration] I21 eval dispatch facts: host-stamped eval
+ point identity, shared-engine eval window events, published version as the
+ eval target
+
+- inference_rollout_eval: run_eval_datasets takes rollout_id / weight_version / hf_dir and stamps every eval
+  sample with metadata["rh2_eval_dispatch"] AFTER inject_metadata (a dataset row cannot supply or override it).
+  eval_point_id is generated once per call and shared by all of its samples: rollout_id is only a training
+  progress label, not a unique call id (the pre-train eval and the eval after the first update both carry
+  rollout_id 0). Module marker RH2_EVAL_DISPATCH_HOST_STAMP lets a generate function tell this tree from one
+  where the key could only come from the dataset file. Callers that pass nothing keep working.
+- fully_async_rollout._call_eval / InferenceRolloutFn._call_eval: pass the dispatch facts through. The
+  shared-engine branch emits eval_window start/end events with the number of training groups still in flight
+  (eval pauses NEW submissions only; nothing is drained) and whether the call returned normally. Pause/resume
+  and error propagation are unchanged.
+- rollout_manager.eval (shared-engine branch): fill RolloutFnEvalInput.weight_version with the version
+  published at eval start, so results can be checked against the per-request versions the engines report.
+
+No training semantics, budgets or lifecycle changes.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ miles/ray/rollout/rollout_manager.py          |  9 +++-
+ miles/rollout/fully_async_rollout.py          | 24 ++++++++++-
+ .../inference_rollout_common.py               |  9 +++-
+ .../inference_rollout_eval.py                 | 43 ++++++++++++++++++-
+ miles/utils/rh2_event_log.py                  |  4 ++
+ 5 files changed, 82 insertions(+), 7 deletions(-)
+
+diff --git a/miles/ray/rollout/rollout_manager.py b/miles/ray/rollout/rollout_manager.py
+index ef4d9e0b5..d64684ed3 100644
+--- a/miles/ray/rollout/rollout_manager.py
++++ b/miles/ray/rollout/rollout_manager.py
+@@ -341,9 +341,14 @@ class RolloutManager:
+ 
+         with timer("eval_rollout"):
+             if not self.use_legacy_rollout_v1:
+-                result = await asyncio.to_thread(
+-                    call_rollout_function, self.eval_generate_rollout, RolloutFnEvalInput(rollout_id=rollout_id)
++                # [rh2-integration] Shared-engine eval runs on whatever the engines currently serve; record the
++                # version published at eval start as the *target* so results can be checked against the
++                # per-request versions the engines actually report (None before the first publish).
++                eval_input = RolloutFnEvalInput(
++                    rollout_id=rollout_id,
++                    weight_version=None if self.weight_version is None else str(self.weight_version),
+                 )
++                result = await asyncio.to_thread(call_rollout_function, self.eval_generate_rollout, eval_input)
+             else:
+                 result = await asyncio.to_thread(
+                     call_rollout_fn,
+diff --git a/miles/rollout/fully_async_rollout.py b/miles/rollout/fully_async_rollout.py
+index a09ff4bb8..4d4ae61a6 100644
+--- a/miles/rollout/fully_async_rollout.py
++++ b/miles/rollout/fully_async_rollout.py
+@@ -186,19 +186,39 @@ class FullyAsyncRolloutFn:
+         return await self._drain(input)
+ 
+     async def _call_eval(self, input: RolloutFnEvalInput) -> RolloutFnOutput:
++        # [rh2-integration] eval dispatch facts (rollout_id label, target weight version, snapshot dir) travel
++        # with the call so every eval sample is stamped by the host (see inference_rollout_eval).
++        dispatch = dict(rollout_id=input.rollout_id, weight_version=input.weight_version, hf_dir=input.hf_dir)
+         if input.generate_state is not None:
+-            results = await run_eval_datasets(input.generate_state, self._eval_prompt_dataset_cache)
++            results = await run_eval_datasets(input.generate_state, self._eval_prompt_dataset_cache, **dispatch)
+             return RolloutFnEvalOutput(data=results)
+ 
+         logger.info("Pausing fully-async producer submissions for shared-engine eval")
+         self._producer_resumed.clear()
++        # [rh2-integration] Shared-engine eval pauses NEW group submissions only; groups already in flight keep
++        # running and share engines / sandboxes / grading with the eval samples. The window events record how
++        # many were still active at both ends so the overlap cost can be measured afterwards.
++        self._emit_eval_window(input.rollout_id, "start")
++        ok = False
+         try:
+-            results = await run_eval_datasets(self.state, self._eval_prompt_dataset_cache)
++            results = await run_eval_datasets(self.state, self._eval_prompt_dataset_cache, **dispatch)
++            ok = True
+         finally:
+             self._producer_resumed.set()
++            self._emit_eval_window(input.rollout_id, "end", ok=ok)
+             logger.info("Resumed fully-async producer submissions after eval")
+         return RolloutFnEvalOutput(data=results)
+ 
++    def _emit_eval_window(self, rollout_id: int, phase: str, *, ok: bool | None = None) -> None:
++        if rh2_event_log.enabled():
++            rh2_event_log.emit(
++                rh2_event_log.EVAL_WINDOW_EVENT,
++                rollout_id=rollout_id,
++                phase=phase,
++                active_groups=sum(1 for task in self._active_groups if not task.done()),
++                ok=ok,
++            )
++
+     # -------------------------- producer --------------------------
+ 
+     def _max_in_flight_groups(self) -> int:
+diff --git a/miles/rollout/inference_rollout/inference_rollout_common.py b/miles/rollout/inference_rollout/inference_rollout_common.py
+index a4d1296b9..9b4b45c2b 100644
+--- a/miles/rollout/inference_rollout/inference_rollout_common.py
++++ b/miles/rollout/inference_rollout/inference_rollout_common.py
+@@ -230,5 +230,12 @@ class InferenceRolloutFn:
+         from miles.rollout.inference_rollout.inference_rollout_eval import run_eval_datasets
+ 
+         state = input.generate_state or self.state
+-        results = await run_eval_datasets(state, self.eval_prompt_dataset_cache)
++        # [rh2-integration] pass the eval dispatch facts through (see inference_rollout_eval)
++        results = await run_eval_datasets(
++            state,
++            self.eval_prompt_dataset_cache,
++            rollout_id=input.rollout_id,
++            weight_version=input.weight_version,
++            hf_dir=input.hf_dir,
++        )
+         return RolloutFnEvalOutput(data=results)
+diff --git a/miles/rollout/inference_rollout/inference_rollout_eval.py b/miles/rollout/inference_rollout/inference_rollout_eval.py
+index f87347df0..e57a6f47c 100644
+--- a/miles/rollout/inference_rollout/inference_rollout_eval.py
++++ b/miles/rollout/inference_rollout/inference_rollout_eval.py
+@@ -20,17 +20,42 @@ from miles.utils.types import Sample
+ 
+ logger = logging.getLogger(__name__)
+ 
++# [rh2-integration] Host-side eval dispatch facts. Every eval sample is stamped with
++# ``metadata[RH2_EVAL_DISPATCH_METADATA_KEY]`` AFTER ``inject_metadata`` so a dataset row
++# cannot supply or override it. ``eval_point_id`` is generated once per
++# ``run_eval_datasets`` call and shared by all of its samples: ``rollout_id`` is only a
++# training-progress label, not a unique call id (the pre-train eval and the eval after
++# the first update both carry rollout_id 0). The module-level marker lets a generate
++# function tell a tree that stamps these facts from one where the key could only come
++# from the dataset file.
++RH2_EVAL_DISPATCH_HOST_STAMP = True
++RH2_EVAL_DISPATCH_METADATA_KEY = "rh2_eval_dispatch"
++
+ 
+ async def run_eval_datasets(
+     state: GenerateState,
+     prompt_dataset_cache: dict[Any, Dataset],
++    *,
++    rollout_id: int | None = None,
++    weight_version: str | None = None,
++    hf_dir: str | None = None,
+ ) -> dict[str, dict[str, Any]]:
+     args = state.args
+     assert not args.group_rm, "Group RM is not supported for eval rollout"
+ 
++    eval_dispatch = {
++        "eval_point_id": uuid.uuid4().hex[:12],
++        "eval_rollout_id": rollout_id,
++        "target_weight_version": None if weight_version is None else str(weight_version),
++        "hf_dir": hf_dir,
++    }
+     coros = []
+-    for dataset_cfg in args.eval_datasets:
+-        coros.append(eval_rollout_single_dataset(state, dataset_cfg, prompt_dataset_cache))
++    for dataset_index, dataset_cfg in enumerate(args.eval_datasets):
++        coros.append(
++            eval_rollout_single_dataset(
++                state, dataset_cfg, prompt_dataset_cache, eval_dispatch=eval_dispatch, dataset_index=dataset_index
++            )
++        )
+     results_list = await asyncio.gather(*coros)
+     return {k: v for r in results_list for k, v in r.items()}
+ 
+@@ -39,6 +64,9 @@ async def eval_rollout_single_dataset(
+     state: GenerateState,
+     dataset_cfg: EvalDatasetConfig,
+     prompt_dataset_cache: dict[Any, Dataset],
++    *,
++    eval_dispatch: dict[str, Any] | None = None,
++    dataset_index: int = 0,
+ ) -> dict[str, dict[str, list[Any]]]:
+     args = state.args
+     assert not args.group_rm, "Group RM is not supported for eval rollout"
+@@ -82,6 +110,17 @@ async def eval_rollout_single_dataset(
+             sample.index = sample_index
+             sample_index += 1
+             sample.metadata = dataset_cfg.inject_metadata(getattr(sample, "metadata", None))
++            if eval_dispatch is not None:
++                # [rh2-integration] stamped after inject_metadata: host facts win over dataset-supplied keys
++                sample.metadata[RH2_EVAL_DISPATCH_METADATA_KEY] = {
++                    **eval_dispatch,
++                    "dataset": dataset_cfg.name,
++                    "dataset_index": dataset_index,
++                    "prompt_index": _i,
++                    "sample_slot": j,
++                    "n_samples_per_eval_prompt": dataset_cfg.n_samples_per_eval_prompt,
++                    "num_prompts": len(dataset.samples),
++                }
+             sample.generate_function_path = dataset_cfg.custom_generate_function_path
+             if policy_uses_routing_key(args):
+                 sample.routing_key = str(uuid.uuid4())
+diff --git a/miles/utils/rh2_event_log.py b/miles/utils/rh2_event_log.py
+index 5814265f6..3ff277f07 100644
+--- a/miles/utils/rh2_event_log.py
++++ b/miles/utils/rh2_event_log.py
+@@ -74,6 +74,10 @@ RUN_ID_ENV = "MILES_RH2_RUN_ID"
+ GROUP_DROP_EVENT = "group_filtered"
+ GROUP_CONSUMED_EVENT = "group_consumed"
+ DRAIN_COMPLETE_EVENT = "drain_complete"
++# EVAL_WINDOW_EVENT（"eval_window"）：共享引擎 eval 的窗口两端（phase=start|end）：rollout_id /
++#   active_groups（当时仍未完成的在飞训练组数——eval 只暂停**新组提交**，不排空在飞组）/ ok（end：
++#   本次 eval 调用是否正常返回）。用于事后量化评测窗口与训练在飞组的重叠，不是评测完成的证据。
++EVAL_WINDOW_EVENT = "eval_window"
+ DROP_STAGE_PUT_ABORTED = "put_aborted"
+ DROP_STAGE_DYNAMIC_FILTER = "dynamic_filter"
+ DROP_STAGE_CONSUME_STALE = "consume_stale"
+-- 
+2.50.1 (Apple Git-155)
+

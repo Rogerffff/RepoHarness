@@ -74,6 +74,16 @@ IDENTITY_KEYS = (
 # 跨 retry 必须稳定的四个字段（组级 + member 级）；attempt 两字段每次派发换新。
 _STABLE_KEYS = (GROUP_ID_KEY, GROUP_INDEX_KEY, EXECUTION_ID_KEY, MEMBER_SLOT_KEY)
 
+# I21（第五组）：评测派发的宿主事实键——由 miles 集成分支（patch 0018）在 `inject_metadata` **之后**
+# 盖到 eval 样本上（数据集 JSON 自带的同名键会被覆盖）。训练身份以 `miles_g` 开头、评测身份以
+# `eval-` 开头，两个命名空间互不可达。
+EVAL_DISPATCH_METADATA_KEY = "rh2_eval_dispatch"
+TRAIN_GROUP_ID_PREFIX = "miles_g"
+EVAL_GROUP_ID_PREFIX = "eval-"
+_EVAL_DISPATCH_INT_KEYS = (
+    "dataset_index", "prompt_index", "sample_slot", "n_samples_per_eval_prompt", "num_prompts",
+)
+
 
 class MilesIdentityError(RuntimeError):
     """身份铸造边界 fail-closed 错误（reason_code 机器可读）。"""
@@ -251,6 +261,126 @@ def mint_attempt_identity(sample: Any, *, n_samples_per_prompt: Any) -> dict[str
     # 仍不可能撞车；同形制 = async_worker.py dispatch 铸造。
     minted[ATTEMPT_ID_KEY] = f"{minted[EXECUTION_ID_KEY]}#p{seq}-{uuid.uuid4().hex[:8]}"
 
+    meta.update(minted)
+    return minted
+
+
+def read_eval_dispatch_facts(sample_metadata: Any) -> dict[str, Any]:
+    """校验并取出评测派发的宿主事实（I21）。返回规范化副本；任何缺失 / 异型 fail-closed。
+
+    字段（patch 0018 盖章）：`eval_point_id`（一次 `run_eval_datasets` 调用一个，宿主生成的小写 hex——
+    rollout_id 不是唯一调用标识：训练前与第 0 步之后的两次 eval 都是 rollout 0）、`eval_rollout_id`
+    （训练进度标签，可为 None）、`target_weight_version`（eval 开始时宿主已发布版本，可为 None）、
+    `dataset` / `dataset_index` / `prompt_index` / `sample_slot` / `n_samples_per_eval_prompt` / `num_prompts`。
+    """
+
+    if not isinstance(sample_metadata, Mapping):
+        raise MilesIdentityError(
+            "eval_host_facts_missing",
+            f"eval 样本 metadata 不是 Mapping（{type(sample_metadata).__name__}）——没有宿主派发事实，fail-closed。",
+        )
+    raw = sample_metadata.get(EVAL_DISPATCH_METADATA_KEY)
+    if not isinstance(raw, Mapping):
+        raise MilesIdentityError(
+            "eval_host_facts_missing",
+            f"eval 样本缺 metadata[{EVAL_DISPATCH_METADATA_KEY!r}]——评测身份只由 miles 宿主事实推导"
+            "（集成分支 patch 0018），不从 sample.index 或数据集自报字段猜，fail-closed。",
+        )
+    point = raw.get("eval_point_id")
+    if (
+        not isinstance(point, str)
+        or not (8 <= len(point) <= 32)
+        or any(c not in "0123456789abcdef" for c in point)
+    ):
+        raise MilesIdentityError(
+            "eval_host_facts_malformed",
+            f"eval_point_id={point!r} 不是 8–32 位小写 hex——它必须由宿主在每次评测调用生成。",
+        )
+    facts: dict[str, Any] = {"eval_point_id": point}
+    for key in _EVAL_DISPATCH_INT_KEYS:
+        value = raw.get(key)
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            raise MilesIdentityError(
+                "eval_host_facts_malformed", f"评测派发事实 {key}={value!r} 不是非负 int，fail-closed。"
+            )
+        facts[key] = value
+    if facts["n_samples_per_eval_prompt"] < 1 or facts["num_prompts"] < 1:
+        raise MilesIdentityError(
+            "eval_host_facts_malformed",
+            f"n_samples_per_eval_prompt={facts['n_samples_per_eval_prompt']} / num_prompts={facts['num_prompts']} 必须 >= 1。",
+        )
+    if facts["sample_slot"] >= facts["n_samples_per_eval_prompt"] or facts["prompt_index"] >= facts["num_prompts"]:
+        raise MilesIdentityError(
+            "eval_host_facts_malformed",
+            f"sample_slot={facts['sample_slot']} / prompt_index={facts['prompt_index']} 超出本次评测调用的计划范围 "
+            f"(n={facts['n_samples_per_eval_prompt']}, prompts={facts['num_prompts']})。",
+        )
+    dataset = raw.get("dataset")
+    if not isinstance(dataset, str) or not dataset:
+        raise MilesIdentityError("eval_host_facts_malformed", f"dataset={dataset!r} 不是非空字符串。")
+    facts["dataset"] = dataset
+    rollout_id = raw.get("eval_rollout_id")
+    if rollout_id is not None and (isinstance(rollout_id, bool) or not isinstance(rollout_id, int)):
+        raise MilesIdentityError("eval_host_facts_malformed", f"eval_rollout_id={rollout_id!r} 不是 int / None。")
+    facts["eval_rollout_id"] = rollout_id
+    for key in ("target_weight_version", "hf_dir"):
+        value = raw.get(key)
+        if value is not None and not isinstance(value, str):
+            raise MilesIdentityError("eval_host_facts_malformed", f"{key}={value!r} 不是 str / None。")
+        facts[key] = value
+    return facts
+
+
+def mint_eval_attempt_identity(sample: Any) -> dict[str, Any]:
+    """I21：为一次**评测**派发铸造六字段身份（独立命名空间，不套训练组算术），写进 sample.metadata。
+
+    正式链的 Outcome v2 / receipt / finalization store / termination 事实都按六字段 join，所以评测
+    attempt 仍用同一组键；值只由宿主事实推导::
+
+        rh2_prompt_group_id      = eval-{eval_point_id}-d{dataset_index}-p{prompt_index}
+        rh2_group_index          = prompt_index
+        rh2_member_slot          = sample_slot
+        rh2_rollout_execution_id = {group_id}_m{sample_slot}
+        rh2_physical_attempt_seq = 1（miles eval 不重派发）
+        rh2_physical_attempt_id  = {execution_id}#p1-{uuid8}
+
+    数据集名不进身份（只进结果载荷），因此不设字符限制。只接受 fresh（PENDING）样本；携带任何保留
+    身份键 = 输入污染（与训练铸造同一条 F1 规则）。
+    """
+
+    meta = getattr(sample, "metadata", None)
+    if not isinstance(meta, dict):
+        raise MilesIdentityError(
+            "member_metadata_not_writable",
+            f"eval 样本的 metadata 不是 dict（得到 {type(meta).__name__}）——身份无法注入，fail-closed。",
+        )
+    facts = read_eval_dispatch_facts(meta)
+    status = _dispatch_status(sample)
+    if status != "pending":
+        raise MilesIdentityError(
+            "dispatch_status_unexpected",
+            f"eval 样本派发状态 {status!r} 不是 pending——miles eval 每个样本只派发一次、不重试，"
+            "其它状态不是本铸造边界认识的评测派发形态，fail-closed。",
+        )
+    present_keys = [k for k in IDENTITY_KEYS if k in meta]
+    if present_keys:
+        raise MilesIdentityError(
+            "reserved_identity_keys_polluted",
+            f"eval 样本 metadata 带 rh2 保留身份键 {present_keys}——评测输入不得携带系统身份"
+            "（含训练身份），fail-closed。",
+        )
+    group_id = (
+        f"{EVAL_GROUP_ID_PREFIX}{facts['eval_point_id']}-d{facts['dataset_index']}-p{facts['prompt_index']}"
+    )
+    execution_id = f"{group_id}_m{facts['sample_slot']}"
+    minted: dict[str, Any] = {
+        GROUP_ID_KEY: group_id,
+        GROUP_INDEX_KEY: facts["prompt_index"],
+        EXECUTION_ID_KEY: execution_id,
+        MEMBER_SLOT_KEY: facts["sample_slot"],
+        ATTEMPT_SEQ_KEY: 1,
+        ATTEMPT_ID_KEY: f"{execution_id}#p1-{uuid.uuid4().hex[:8]}",
+    }
     meta.update(minted)
     return minted
 

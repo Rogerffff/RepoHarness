@@ -351,6 +351,9 @@ def summarize_attempt_costs(rows: Iterable[Mapping[str, Any]], *, run_id: str | 
     """
 
     snapshots_by_attempt: dict[str, Mapping[str, Any]] = {}
+    # I21：评测 attempt 的快照（`evaluation=True`）不进 buffer、没有组终局事件——单列，不记成未匹配的训练快照，
+    # 也不进训练终局的成本 / 分母。作业总成本 = 训练各终局 + evaluation 两部分之和。
+    eval_snapshots_by_attempt: dict[str, Mapping[str, Any]] = {}
     duplicates = 0
     terminal_rows: list[Mapping[str, Any]] = []
     skipped = {"foreign_run": 0, "malformed": 0}
@@ -370,6 +373,11 @@ def summarize_attempt_costs(rows: Iterable[Mapping[str, Any]], *, run_id: str | 
                 skipped["malformed"] += 1
                 continue
             key = _scoped(row, paid)
+            if row.get("evaluation") is True:
+                if key in eval_snapshots_by_attempt:
+                    duplicates += 1
+                eval_snapshots_by_attempt[key] = row
+                continue
             if key in snapshots_by_attempt:
                 duplicates += 1
             snapshots_by_attempt[key] = row
@@ -469,12 +477,29 @@ def summarize_attempt_costs(rows: Iterable[Mapping[str, Any]], *, run_id: str | 
         1 for snap in snapshots_by_attempt.values()
         if not snap.get("rh2_prompt_group_id") or _scoped(snap, snap.get("rh2_prompt_group_id")) not in matched_groups
     )
+    eval_fields: dict[str, Any] = {name: {"values": [], "unknown": 0} for name in COST_FIELDS}
+    eval_points: dict[str, dict[str, Any]] = {}
+    for snap in eval_snapshots_by_attempt.values():
+        _add_member_fields(eval_fields, snap)
+        point = eval_points.setdefault(str(snap.get("eval_point_id")), {"members": 0, "disposition_hints": Counter(), "member_fields": {name: {"values": [], "unknown": 0} for name in COST_FIELDS}})
+        point["members"] += 1
+        point["disposition_hints"][str(snap.get("disposition_hint") or "unknown")] += 1
+        _add_member_fields(point["member_fields"], snap)
     return {
         "schema_id": COST_SUMMARY_SCHEMA_ID,
         "run_id": run_id,
-        "snapshots": len(snapshots_by_attempt),
+        "snapshots": len(snapshots_by_attempt),  # 训练 attempt 快照数（评测快照见 evaluation）
         "duplicate_snapshots": duplicates,
         "unmatched_snapshots": unmatched,
+        "evaluation": {
+            "snapshots": len(eval_snapshots_by_attempt),
+            "member_fields": _finish_member_fields(eval_fields),
+            "by_eval_point": {
+                key: {"members": entry["members"], "disposition_hints": dict(sorted(entry["disposition_hints"].items())),
+                      "member_fields": _finish_member_fields(entry["member_fields"])}
+                for key, entry in sorted(eval_points.items())
+            },
+        },
         "legacy_rows": legacy_rows,
         "terminals": {key: _finish_cost_bucket(bucket) for key, bucket in sorted(buckets.items())},
         "by_task": {key: _finish_task_cost(entry) for key, entry in sorted(by_task.items())},

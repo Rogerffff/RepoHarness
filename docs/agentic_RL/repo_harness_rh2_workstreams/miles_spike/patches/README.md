@@ -31,6 +31,10 @@ patch 表一一对应（sha256 钉死，`rh2/scripts/miles_integration_lanes.sh`
 | 0014 | 5c5c45331 | **W4**：consume-time staleness 唯一权威、三分支 drop 事件、no-progress、JIT drain |
 | 0015 | c97d8c201 | **W10**：publish 后逐 engine actor 核对版本收敛 |
 | 0016 | 98a0272e4 | **W5b**：最小冷恢复（已发布版本状态文件、updater 版本续接、状态缺失报错、run_restarted）|
+| 0017 | 4c04f997b | **I13**：退出改判（等待类关停失败延后到有界 settle 等待与最终复查；只有 rh2 自证闭合完整才解消）|
+| 0018 | e13f00086 | **I21**：评测派发宿主事实（每次调用的 eval_point_id、目标权重版本、成员坐标；盖在 inject_metadata 之后）、共享引擎 eval 窗口事件、共享分支目标版本；模块标记 RH2_EVAL_DISPATCH_HOST_STAMP |
+| 0019 | 227806cfb | **I21 复核 IR2**：调用级评测事实另挂到数据集结果（`rh2_eval_call`）——零样本存活时仍能标识评测点；`num_prompts` 注明为加载后的数目 |
+| 0020 | 275e31eb2 | **I22**：冷恢复时显式 `--start-rollout-id N>0` 必须与 trainer 实际加载的迭代配对（`N-1 == k`），否则 `RecoveryStartMismatch`；`0` 与加载点未知保持原语义，不支持手工重编号 |
 
 0001-0006 与 v2 存档语义相同（重铺产物，diff 内容一致；0006 文件名因 git
 format-patch 命名截断算法差异略有不同）。0007 为 V1 批新增，0008 为 V2 批

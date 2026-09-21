@@ -603,7 +603,8 @@ def test_w1b_bringup_builds_prepared_face_without_v1_loader(world, monkeypatch, 
         # 文本不再出现、任务面选择仍在。
         src = Path(bringup.__file__).read_text(encoding="utf-8")
         assert 'raise RuntimeError(\n                "fa_formal 暂禁' not in src
-        assert "select_task_face_mode(EXECUTION_MODE, PREPARED_TASKS_DIR)" in src
+        # I21（T1 oracle 同步）：调用多了 eval_only / eval_prepared_dir 两个关键字参数，首两个位置参数不变
+        assert "select_task_face_mode(\n            EXECUTION_MODE, PREPARED_TASKS_DIR," in src
     finally:
         for p in removed:
             sys.path.append(p)

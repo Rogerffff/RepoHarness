@@ -58,6 +58,9 @@ class AttemptAssignment:
     task_id: str
     environment_package_digest: str
     public_bundle_digest: str
+    # I21：分派平面。评测 attempt 只能绑定评测题包的 manifest 行、训练 attempt 只能绑定训练题包的行
+    # （由注册表的 verify_dispatch 按本字段选产物核对）；同一份题包可以同时配给两个平面。
+    evaluation: bool = False
 
     def dispatch_triple(self) -> dict[str, str]:
         return {
@@ -77,7 +80,9 @@ class AttemptAssignment:
         }
 
 
-def assignment_from_dispatch(sample_metadata: Any, minted_identity: Mapping[str, Any]) -> AttemptAssignment:
+def assignment_from_dispatch(
+    sample_metadata: Any, minted_identity: Mapping[str, Any], *, evaluation: bool = False
+) -> AttemptAssignment:
     """从派发时刻的样本 metadata（prepared prompt 的分派三元组）+ 本次铸造身份组装载荷。"""
 
     if not isinstance(sample_metadata, Mapping):
@@ -105,6 +110,7 @@ def assignment_from_dispatch(sample_metadata: Any, minted_identity: Mapping[str,
         task_id=str(sample_metadata["task_id"]),
         environment_package_digest=str(sample_metadata["environment_package_digest"]),
         public_bundle_digest=str(sample_metadata["public_bundle_digest"]),
+        evaluation=bool(evaluation),
     )
 
 

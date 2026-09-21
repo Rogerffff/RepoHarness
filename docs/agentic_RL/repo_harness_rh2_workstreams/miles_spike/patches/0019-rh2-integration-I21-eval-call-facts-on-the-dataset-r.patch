@@ -1,0 +1,63 @@
+From 227806cfbf8ae1743ff0243dadb030ead7b87509 Mon Sep 17 00:00:00 2001
+From: Fangjian Ju <roger@FangjiandeMacBook-Pro.local>
+Date: Sun, 20 Sep 2026 18:04:21 +0800
+Subject: [PATCH] [rh2-integration] I21 eval call facts on the dataset result:
+ keep the eval point identifiable when no sample survives
+
+eval_rollout_single_dataset also attaches the call-level dispatch facts to each dataset's result dict under
+"rh2_eval_call" (eval_point_id, eval_rollout_id label, target weight version, dataset / dataset_index,
+n_samples_per_eval_prompt, num_prompts, dispatched). The per-sample stamp from the previous patch vanishes
+together with the samples: when every prompt is dropped by the max-prompt-length filter at dataset load, the
+result carried no eval point at all and the consumer could not even record "this eval call evaluated nothing".
+num_prompts is the number of prompts actually loaded, i.e. AFTER that filter; it is not the intended task
+list, which only the consumer's own task package can state. Result dict keys read by miles are unchanged.
+
+Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
+---
+ .../inference_rollout_eval.py                 | 25 ++++++++++++++-----
+ 1 file changed, 19 insertions(+), 6 deletions(-)
+
+diff --git a/miles/rollout/inference_rollout/inference_rollout_eval.py b/miles/rollout/inference_rollout/inference_rollout_eval.py
+index e57a6f47c..ac4165b67 100644
+--- a/miles/rollout/inference_rollout/inference_rollout_eval.py
++++ b/miles/rollout/inference_rollout/inference_rollout_eval.py
+@@ -30,6 +30,11 @@ logger = logging.getLogger(__name__)
+ # from the dataset file.
+ RH2_EVAL_DISPATCH_HOST_STAMP = True
+ RH2_EVAL_DISPATCH_METADATA_KEY = "rh2_eval_dispatch"
++# [rh2-integration] The same call-level facts are also attached to each dataset's result dict, so the eval
++# point stays identifiable when no sample survives (e.g. every prompt was dropped by the max-prompt-length
++# filter at dataset load). ``num_prompts`` is the number of prompts actually loaded, i.e. AFTER that filter:
++# it is not the intended task list, which only the consumer's own task package can state.
++RH2_EVAL_CALL_RESULT_KEY = "rh2_eval_call"
+ 
+ 
+ async def run_eval_datasets(
+@@ -163,10 +168,18 @@ async def eval_rollout_single_dataset(
+     data.sort(key=lambda sample: sample.index)
+ 
+     reward_key = args.eval_reward_key or args.reward_key
+-    return {
+-        dataset_cfg.name: {
+-            "rewards": [sample.reward if not reward_key else sample.reward[reward_key] for sample in data],
+-            "truncated": [sample.status == Sample.Status.TRUNCATED for sample in data],
+-            "samples": data,
+-        }
++    result = {
++        "rewards": [sample.reward if not reward_key else sample.reward[reward_key] for sample in data],
++        "truncated": [sample.status == Sample.Status.TRUNCATED for sample in data],
++        "samples": data,
+     }
++    if eval_dispatch is not None:
++        result[RH2_EVAL_CALL_RESULT_KEY] = {
++            **eval_dispatch,
++            "dataset": dataset_cfg.name,
++            "dataset_index": dataset_index,
++            "n_samples_per_eval_prompt": dataset_cfg.n_samples_per_eval_prompt,
++            "num_prompts": len(dataset.samples),
++            "dispatched": len(tasks),
++        }
++    return {dataset_cfg.name: result}
+-- 
+2.50.1 (Apple Git-155)
+

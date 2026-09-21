@@ -2198,6 +2198,19 @@ class RolloutAudit:
     # group_filtered / group_consumed 事件连接；唯一已捕获输出 token 数与 capture 记录数（真实
     # tape 计数，不是 response_length）。未到装配阶段 = None（未知，不填 0）。
     member_identity: dict[str, Any] | None = None
+    # I21（第五组）：评测 attempt 标记与宿主派发事实（miles 集成分支 patch 0018 盖在 eval 样本
+    # metadata["rh2_eval_dispatch"] 上：eval_point_id / eval_rollout_id / target_weight_version /
+    # dataset / prompt_index / sample_slot …）。入口即写，audit sink 落盘 `evaluation` 块与出口盖章都
+    # 从同一份 audit 事实派生（eval_result.derive_eval_attempt_result）；run 报告据此把评测 attempt
+    # 从训练统计里分出。
+    evaluation: bool = False
+    eval_dispatch: dict[str, Any] | None = None
+    # 评测时 miles 的 `args.hf_checkpoint`——**配置来源，不是权重已加载的证明**（Codex 第五组本机收尾审查 LR2）：
+    # 引擎的有效 model_path 还可能被 engine group 覆盖，dummy 加载（MILES_SGLANG_DUMMY_LOAD=1 /
+    # --sglang-load-format dummy）下路径相同而权重是随机初始化。共享引擎形态 = 训练起点，之后由发布版本区分；
+    # 不训练的独立评测作业里它是"打算评的固定 HF 导出"，是否真的载入由真实引擎核验（GPU 清单 A3），
+    # 评测点的 binding 仍是 unverified。
+    configured_hf_checkpoint: str | None = None
     captured_output_tokens: int | None = None
     capture_record_count: int | None = None
     grading_deadline_seconds: float | None = None  # N2a：本次评分工作期限（None = 不设）
@@ -2549,6 +2562,26 @@ class RolloutOrchestrator:
         delivered = await self._generate_attempt(
             args, sample, sampling_params, evaluation, audit_slot=audit_slot
         )
+        if evaluation and self._mode != "s1_compat" and audit_slot:
+            # I21（第五组）：评测结果三类分开——评了分 / 评不了分 / 没跑成。此前 eval 占位写
+            # `float(grading_reward or 0.0)`、abort 形状写 `reward = 0.0`，基础设施失败会被评测统计算成
+            # 模型 0 分（训练面靠 admission 载荷守住的 P4 红线，评测面没有）。载荷与 audit sink 落盘的
+            # `evaluation` 块出自同一个纯函数、同一份 audit 事实；s1_compat 冻结路径不经过这里。
+            # 结果载体统一是**输入样本**（不进训练）：unsafe artifact 路径交付的 vendor 叶链不再充当评测
+            # 载体，否则 miles 入口会按训练的 rollout_top_p 向它要训练用 sampling mask（Codex 实施复核 IR1）。
+            # 注意：audit sink 已在 _generate_attempt 的 finally 里落盘——这里不改写 audit。
+            from repoharness2.adapters.slime.eval_result import apply_eval_result, derive_eval_attempt_result
+            from repoharness2.governance.admission import ADMISSION_METADATA_KEY
+
+            payload = derive_eval_attempt_result(audit_slot[0], model_name=self.config.model_name)
+            if payload is not None:
+                eval_top_p = float(sampling_params.get("top_p", 1.0))
+                delivered = apply_eval_result(
+                    delivered, payload, set_status=_set_status, carrier=sample,
+                    # 与 _generate_attempt 的 tape_top_p 同一条规则（mask 链路不写旧 slime 零宽 tape 字段）
+                    tape_top_p=None if bool(getattr(args, "rh2_engine_sampling_mask", False)) else eval_top_p,
+                    training_payload_keys=(ADMISSION_METADATA_KEY,),
+                )
         if audit_slot and audit_slot[0].termination_facts_payload is not None:
             try:
                 stamp_termination_facts(delivered, audit_slot[0].termination_facts_payload)
@@ -2687,6 +2720,13 @@ class RolloutOrchestrator:
         audit.member_identity = {
             key: meta.get(key) for key in ("rh2_prompt_group_id", "rh2_group_index", "rh2_member_slot")
         }
+        # I21：评测标记与宿主派发事实在入口即进 audit（sink 落盘发生在 generate() 出口盖章之前）。
+        audit.evaluation = bool(evaluation)
+        if evaluation and isinstance(meta.get("rh2_eval_dispatch"), Mapping):
+            audit.eval_dispatch = dict(meta["rh2_eval_dispatch"])
+        if evaluation:
+            hf_checkpoint = getattr(args, "hf_checkpoint", None)
+            audit.configured_hf_checkpoint = str(hf_checkpoint) if hf_checkpoint else None
         audit.step("step1_custom_generate_invoked")
         # 批 B（I03，06 A5-c，第一组）：episode 期限从这里起表——miles 已占并发槽、rh2 即将
         # docker run，是当前链上最早的 rh2 可见资源占用事件。materialize / 驱动引导 / harness
@@ -4278,6 +4318,9 @@ class RolloutOrchestrator:
             "stop_before_deadline": stop.get("stop_before_deadline"),
             "receipt_id": getattr(receipt, "receipt_id", None),
             "receipt_disposition": getattr(receipt, "attempt_disposition", None),
+            # I21：评测 attempt 不进 buffer、没有组终局事件——带上标记，成本汇总把它单列而不是记成未匹配
+            "evaluation": bool(audit.evaluation),
+            "eval_point_id": (audit.eval_dispatch or {}).get("eval_point_id"),
         }
         if _emit_rh2_event(ATTEMPT_COST_SNAPSHOT_EVENT, **fields):
             audit.mark("attempt_cost_snapshot_emitted")

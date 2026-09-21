@@ -22,6 +22,7 @@ CPU 测试环境按需先装 sglang 最小 stub）。`repoharness2.adapters.slim
 
 from __future__ import annotations
 
+import sys
 from typing import Any
 
 from repoharness2.adapters.miles.attempt_assignment import (
@@ -34,10 +35,13 @@ from repoharness2.adapters.miles.group_admission import (
     AdmissionWiringError,
 )
 from repoharness2.adapters.miles.identity import (
+    EVAL_DISPATCH_METADATA_KEY,
     MilesIdentityError,
     mint_attempt_identity,
+    mint_eval_attempt_identity,
     stamp_identity_on_outputs,
 )
+from repoharness2.adapters.slime.eval_result import verify_eval_result_binding
 from repoharness2.adapters.slime.generate import rh2_custom_generate
 from repoharness2.envpack.termination_facts import (
     TERMINATION_FACTS_METADATA_KEY,
@@ -95,6 +99,17 @@ def _assert_group_admission_filter_wired(args: Any, execution_mode: str) -> None
         )
 
 
+def _eval_host_stamp_supported() -> bool:
+    """I21：当前 miles 树是否由宿主给 eval 样本盖派发事实（集成分支 patch 0018 的模块级标记）。
+
+    eval 样本就是 `inference_rollout_eval` 造的，所以走到这里时该模块必然已加载——只读它的标记。没有
+    标记的树（stock pin）上 `metadata["rh2_eval_dispatch"]` 只可能来自数据集 JSON，评测身份可被输入数据
+    伪造，formal 评测直接拒绝。（CPU 测试环境导入不了该模块的重依赖，由测试自己装一个带真实标记的替身。）"""
+
+    module = sys.modules.get("miles.rollout.inference_rollout.inference_rollout_eval")
+    return bool(getattr(module, "RH2_EVAL_DISPATCH_HOST_STAMP", False))
+
+
 class Rh2MilesGenerateFn:
     """miles 新签名类形态 generate 函数：legacy rh2 链 + canonicalize 边界。
 
@@ -140,14 +155,41 @@ class Rh2MilesGenerateFn:
         # metadata 后重派发）在此换新 physical_attempt_id/seq，组/成员四
         # 字段跨 retry 稳定。铸造语义详见 identity.py 模块 docstring。
         execution_mode = getattr(binding_config, "execution_mode", "s1_compat")
+        # I21（第五组）：评测派发面。非 s1_compat 下评测与训练是两个平面——评测用宿主事实推导的独立
+        # 命名空间身份（不套训练组算术：eval 样本没有 group_index）、不要求也不经过组准入 filter
+        # （eval 样本不进 buffer；不训练的独立评测作业也不配置该 filter）、交付面核对的是评测结果
+        # 载荷而不是训练 admission 载荷。s1_compat 冻结路径逐字不变（不铸造身份）。
+        evaluation = bool(input.evaluation)
         minted_identity = None
         if execution_mode != "s1_compat":
-            # W1b 第二段：先验接线——复合 group filter 未挂即拒绝派发（见函数 docstring）。
-            _assert_group_admission_filter_wired(input.args, execution_mode)
-            minted_identity = mint_attempt_identity(
-                input.sample,
-                n_samples_per_prompt=getattr(input.args, "n_samples_per_prompt", None),
-            )
+            if evaluation:
+                if not _eval_host_stamp_supported():
+                    raise MilesIdentityError(
+                        "eval_host_stamp_unsupported",
+                        "当前 miles 树不给 eval 样本盖宿主派发事实（缺集成分支 patch 0018 的标记）——"
+                        "formal 评测身份只能由宿主事实推导，拒绝派发。",
+                    )
+                minted_identity = mint_eval_attempt_identity(input.sample)
+            else:
+                if getattr(input.args, "rh2_eval_only", False):
+                    raise MilesIdentityError(
+                        "training_dispatch_in_eval_only_mode",
+                        "RH2_EVAL_ONLY=1 的独立评测作业收到训练派发（evaluation=False）——该作业没有训练"
+                        "题包与组准入接线，拒绝（让驱动只跑评测，见 Brief §10.2 R4）。",
+                    )
+                sample_meta = getattr(input.sample, "metadata", None)
+                if isinstance(sample_meta, dict) and EVAL_DISPATCH_METADATA_KEY in sample_meta:
+                    raise MilesIdentityError(
+                        "eval_facts_on_training_sample",
+                        f"训练派发的样本 metadata 带 {EVAL_DISPATCH_METADATA_KEY!r}——评测派发事实不属于训练输入，"
+                        "fail-closed（两个平面不混）。",
+                    )
+                # W1b 第二段：先验接线——复合 group filter 未挂即拒绝派发（见函数 docstring）。
+                _assert_group_admission_filter_wired(input.args, execution_mode)
+                minted_identity = mint_attempt_identity(
+                    input.sample,
+                    n_samples_per_prompt=getattr(input.args, "n_samples_per_prompt", None),
+                )
 
         # W1b 第一集成切片（F4）：attempt → host 原始分派的 authoritative join。
         # prepared 链（bringup 把有界绑定表挂在 args.rh2_attempt_assignments）在
@@ -164,7 +206,7 @@ class Rh2MilesGenerateFn:
                     "prepared 链在场但本次派发未铸造身份（s1_compat）——attempt 绑定"
                     "无键可用，fail-closed。",
                 )
-            assignment = assignment_from_dispatch(input.sample.metadata, minted_identity)
+            assignment = assignment_from_dispatch(input.sample.metadata, minted_identity, evaluation=evaluation)
             registry.bind(assignment)
         try:
             # rh2 legacy 入口自己会从 args.rh2_orchestrator 取编排本体并 fail-closed
@@ -204,7 +246,10 @@ class Rh2MilesGenerateFn:
                 # 分派三元组（task_id + 两个 digest）同样不会自动传播到输出叶：
                 # 第二段 filter 的环境身份 join 要在交付样本上读到它。
                 stamp_assignment_on_outputs(samples, assignment)
-            if minted_identity is not None:
+            if minted_identity is not None and evaluation:
+                # I21：评测叶必须带结果载荷，且与本叶 attempt / execution / 评测点一致（编排出口盖章）。
+                verify_eval_result_binding(samples)
+            elif minted_identity is not None:
                 # W1b 第二段：admission 载荷必须按叶自身身份/分派 join 得回来（在身份与
                 # 分派三元组都盖章之后才能核对）。
                 _verify_admission_binding(samples)

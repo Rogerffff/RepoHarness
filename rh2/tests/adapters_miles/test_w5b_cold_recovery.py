@@ -372,7 +372,8 @@ def test_recovery_context_predicate(world, load, rollout_id, expected):
         (None, None, -1),
         (0, 0, -1),  # 全新 run（arguments.py 置 0）：Megatron 返回什么迭代都不算恢复
         (0, 9, -1),
-        (5, 2, 4),  # 用户显式 --start-rollout-id 5：与 RolloutManager.load(5 - 1) 同键
+        (5, 4, 4),  # 显式 --start-rollout-id 5 且 trainer 确实加载了迭代 4：与 RolloutManager.load(5 - 1) 同键
+        (5, None, 4),  # 加载点未知（本侧拿不到 trainer 的加载迭代）：无从核对，保持原公式
     ],
 )
 def test_restore_rollout_id_mirrors_placement_group_formula(world, start_rollout_id, loaded_rollout_id, expected):
@@ -380,6 +381,25 @@ def test_restore_rollout_id_mirrors_placement_group_formula(world, start_rollout
 
     args = Namespace(load="/ckpt", start_rollout_id=start_rollout_id)
     assert rh2_recovery.resolve_restore_rollout_id(args, loaded_rollout_id) == expected
+
+
+@pytest.mark.parametrize(("start_rollout_id", "loaded_rollout_id"), [(21, 10), (5, 2), (5, -1), (1, 3)])
+def test_explicit_start_that_does_not_pair_with_the_loaded_checkpoint_is_rejected(world, tmp_path, start_rollout_id, loaded_rollout_id):
+    """I22（第五组 §6.2；T1 oracle 翻转：此前 (5, 2) → 4 被当作受支持的显式覆盖）。
+
+    实际加载迭代 10 却手填 --start-rollout-id 21：trainer 与 RolloutManager 都会去读 rollout 20 的状态——两侧
+    彼此一致，却不与权重 10 配对。现在在 trainer 侧（actor 构造 updater 时，任何 publish 之前）typed 停止；
+    不支持手工重编号。`0` 是 arguments.py 给全新 run 置的值，不在本检查之内（上面的 (0, 9) 用例保持原语义，
+    并不因此被认定为某种合法的"新实验"形态）。"""
+
+    from miles.utils import rh2_recovery
+
+    args = Namespace(load=str(tmp_path), start_rollout_id=start_rollout_id)
+    with pytest.raises(rh2_recovery.RecoveryStartMismatch) as err:
+        rh2_recovery.resolve_restore_rollout_id(args, loaded_rollout_id)
+    assert (err.value.explicit, err.value.loaded) == (start_rollout_id, loaded_rollout_id)
+    with pytest.raises(rh2_recovery.RecoveryStartMismatch):  # 生产调用点：trainer 每个 rank 恢复 updater 计数器之前
+        rh2_recovery.restore_updater_weight_version(args, loaded_rollout_id)
 
 
 # ===========================================================================
