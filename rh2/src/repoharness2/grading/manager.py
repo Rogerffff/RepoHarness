@@ -970,7 +970,9 @@ def candidate_segment_facts(log: str, exec_exit_code: int | None) -> dict[str, A
 
     收口事实：脚本在测试命令与 End 标记之后才打 `RH2_TEST_RC=`，生产渲染器再打末行 `RH2_TS_TEST_END=`
     （fixture 脚本只打前者），任一在场 = 跑到了收口；脚本完全不打标记（旧形态）= None，无从判断。
-    这两行在候选测试输出之后打印、候选可以提前伪造；伪造只会把"被打断"变回"按截断日志评分"，换不到 reward。"""
+    这两行在候选测试输出之后打印、候选可以提前伪造，因此**不是可信评分证据**：只用于中断归因与 log_partial
+    标注，不参与 reward 判定。候选 stdout 本身的信任边界（伪造整段官方输出）是 B 线已登记的既有问题，不在此处解决；
+    `candidate_exec_exit_code=None` 只表示没有记录到退出码，不保证 exec 未返回（Codex 2026-09-20 复核澄清）。"""
 
     facts = candidate_facts_from_log(log)
     marker_aware = bool(facts["markers_seen"]) or "RH2_PHASE_START=install" in log
