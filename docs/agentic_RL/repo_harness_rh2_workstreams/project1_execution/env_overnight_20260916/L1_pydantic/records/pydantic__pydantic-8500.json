@@ -1,0 +1,230 @@
+{
+ "task_id": "pydantic__pydantic-8500",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_pydantic (Claude Opus 5, 2026-09-16 夜)",
+ "materials_refs": [
+  "s2/ingest/{public,grading_bundles_v2,validation}_bundles_v0.jsonl (pydantic__pydantic-8500)",
+  "repos/pydantic@069d0205424f98912f8b670b1bc5cfc7df37b2f3",
+  "runs/env_probe_stage1_20260910/.../pydantic__pydantic-8500/{gold,empty}/offline/a1/",
+  "runs/env_probe_20260909_final_sync/ledger/logs_cc/pydantic__pydantic-8500/",
+  "docs/.../L3_trajectories/counterexamples/pydantic__pydantic-8500/EXPECTED.md"
+ ],
+ "public_view": {
+  "目标行为": "BaseModel.model_construct() 产出的实例，model_dump()/model_dump_json() 的键顺序应与字段声明顺序一致，而不是把所有带默认值的字段挪到前面。",
+  "约束": "题面没有说 model_fields_set 语义可以变；也没说允许给缺失的必填字段塞占位值。",
+  "公开材料无法确定的点": [
+   "题面例子是 model_construct() 不传任何值、之后再逐个赋值（a.a='a'; a.b='b'）；这种“构造后赋值”的顺序是否也在修复范围内，题面没有区分",
+   "带 alias、带 default_factory 的字段是否同样要求，题面未提"
+  ],
+  "base 定位": "pydantic/main.py:212-228 `model_construct`：把默认值收进单独的 `defaults` 字典，最后 `fields_values.update(defaults)`，于是默认值统一排在显式值之后（在题面场景里则是显式值一个都没有、默认值先进 __dict__）。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show 069d0205:tests/test_construction.py 存在",
+    "git show 069d0205:pydantic/main.py `model_construct`"
+   ],
+   "note": "test_patch 与 gold 目标在 base 均存在且同属 model_construct 的顺序问题。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 empty status_map：test_retain_order_of_fields FAILED",
+    "pydantic/main.py 的 defaults/update 写法"
+   ],
+   "note": "base 确有缺陷。镜像脏文件同 R1。",
+   "by": "static+stage1log"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 1449 字符，含完整例子与期望输出"
+   ],
+   "note": "无外链、无图片、无截断。hints_text 只有维护者一句“2.6.0 会修”，无额外技术信息（不构成 hints 独占信息）。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只碰 tests/test_construction.py",
+    "F2P+P2P 45 条全在该文件",
+    "golden_patch 只碰 pydantic/main.py"
+   ],
+   "note": "additional_exclusions 保持空；仓库级残余面见 R4。",
+   "by": "static"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "本包内 pydantic__pydantic-8525 的 test_patch 也是 tests/test_construction.py、gold 也是 pydantic/main.py，base 相隔 4 天（8500: 2024-01-05，8525: 2024-01-09）"
+   ],
+   "note": "P3 近邻：8525 改的是 `__init__`/私有属性初始化，不是 model_construct，不是同一修复；但两题同文件同版本、时间紧邻，训练/评测划分时应放同一侧，避免测试集里出现训练集见过的同文件上下文。",
+   "by": "static"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "同 R2"
+   ],
+   "note": "install rc=2（离线），不影响判分。",
+   "by": "stage1log"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "tests/test_construction.py 第三方 import 仅 pytest / pydantic_core"
+   ],
+   "note": "无外部资产。",
+   "by": "static"
+  },
+  "10": {
+   "status": "issue",
+   "evidence_refs": [
+    "logs_cc/pydantic__pydantic-8500/stream.jsonl grep: No module named pytest / dirty_equals / typing_extensions"
+   ],
+   "note": "同 R3。",
+   "by": "trajectory"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "同 R2"
+   ],
+   "note": "只有 install 需要网络。",
+   "by": "stage1log"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement 的例子 vs test_patch 的场景",
+    "golden_patch 逐行语义"
+   ],
+   "note": "P1 题面-验收面落差：题面**散文**描述的规则（带默认值的字段被挪到前面）确实被 gold 修了；但题面给的**那个例子**在 gold 上依然输出 {'b': ..., 'a': ...}——因为 a 是必填且 model_construct() 没传，gold 的循环对必填缺失字段直接跳过，不写 __dict__，随后 `a.a='a'` 才追加。官方 F2P 换成了 `a: str = 'a'; b: str` + `model_construct(b='b')` 这个能修好的场景。L3 已把这一点做成可执行反例（test_problem_statement_example_dump_order 三态全 FAIL）。对 RL 的含义：模型看不到 F2P，只能对着题面原例调试，调到“原例仍不通过”就会放弃或改错方向。",
+   "by": "static+L3"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 只断言 model_dump_json() 的字符串",
+    "候选最终生产改动与 gold 逐行等价（L3 EXPECTED.md 记载）"
+   ],
+   "note": "不强制唯一实现：保留 defaults 字典但最后按 cls.model_fields 顺序重排、或在函数尾部重排 __dict__，都能通过。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "test_patch: 字段名 a、b，且期望顺序 a,b 恰好等于字母序",
+    "base tests/test_construction.py:52 test_construct_keep_order 的字段是 a,b,c（同样字母序）",
+    "P2P 44 条中与顺序相关的只有 test_construct_keep_order",
+    "静态复核：对 base 测试文件 + test_patch 做断言级扫描（见 summary.md 的“静态复核补强”）"
+   ],
+   "note": "P2 **已静态复核**：遍历判分文件（base tests/test_construction.py + test_patch）里所有依赖 key 顺序的断言，只有 4 个测试函数含此类断言，其中经过 model_construct 的只有 2 个——F2P 的 test_retain_order_of_fields（字段 a、b）与 P2P 的 test_construct_keep_order（字段 a、b、c），**两者的字段声明顺序都恰好等于字母序**（另两个 test_copy_update_unset / test_immutable_copy_with_frozen 走 model_copy，不经过 model_construct）。因此在 model_construct 末尾加一句按 key 字母序重排 __dict__ 的假修复，能通过全部 45 条。另：default_factory 与 alias 两条真实修复面官方完全没测。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "同 25"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "static"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 全文"
+   ],
+   "note": "gold 只改 model_construct，无题外改动，不依赖未交付改动。`_fields_set` 语义与 base 等价（base 也是在 update(defaults) 之前取 keys，即只含显式传入项）。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak 扫描：gold 新增 5 行有效行 0 行出现在题面/hints",
+    "题面无 URL"
+   ],
+   "note": "本地可见材料无泄漏。",
+   "by": "static"
+  },
+  "30": {
+   "status": "issue",
+   "evidence_refs": [
+    "L3_trajectories/counterexamples/pydantic__pydantic-8500/EXPECTED.md 引用 stream.jsonl:13119-13126 下载 pydantic 2.6.0 wheel、:13636-13645 下载 sdist 读官方新增测试、:19077-19078 取 PR 8500 diff"
+   ],
+   "note": "P2 答案外取：候选在定稿前通过网络取得了上游已修实现与官方测试。本题的 RESOLVED_FULL 不能当作独立解题能力证据。处置属 L3_report 的网络通道议题。",
+   "by": "L3"
+  },
+  "31": {
+   "status": "issue",
+   "evidence_refs": [
+    "同 R4"
+   ],
+   "note": "静态残余面；未做真机反例。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "problem_statement_vs_oracle_mismatch",
+   "severity": "P1",
+   "evidence_refs": [
+    "check 23"
+   ],
+   "proposed_action": "在 public_view 显式标注“验收面只覆盖 model_construct 期的顺序，不含构造后赋值”；或把本题标 spec_gap 单独处理",
+   "next_experiment": "L3 counterexamples/pydantic__pydantic-8500/run_matrix.sh"
+  },
+  {
+   "category": "oracle_accepts_wrong_fix",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 25"
+   ],
+   "proposed_action": "补一条字段名为非字母序的回归（见 proposed_regression_tests 第 1 条）",
+   "next_experiment": "在镜像里对 model_construct 尾部加 `m.__dict__ = dict(sorted(m.__dict__.items()))` 后跑官方 45 条，确认全绿"
+  },
+  {
+   "category": "answer_exposure",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 30"
+   ],
+   "proposed_action": "见 L3_report 网络通道",
+   "next_experiment": "无"
+  },
+  {
+   "category": "near_duplicate_context",
+   "severity": "P3",
+   "evidence_refs": [
+    "check 5"
+   ],
+   "proposed_action": "8500 与 8525 同侧划分",
+   "next_experiment": "无"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 tests/test_construction.py（纯测试），gold 只触碰 pydantic/main.py，F2P/P2P 全在该测试文件内。",
+  "evidence_refs": [
+   "grading.json.test_patch",
+   "validation.json.golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  "新增：字段声明为非字母序（如 `z: str = 'z'; a: str`）的 model_construct(a='a') 后 model_dump_json() == '{\"z\":\"z\",\"a\":\"a\"}' — 选择依据：直接排除“按 key 排序”这一类能通过现有 45 条的错误修复（检查 25）",
+  "新增：带 default_factory 的字段顺序（对应 base tests/test_construction.py:440 test_construct_default_factory 的模型，改成检查 dump 顺序）— 选择依据：gold 的 get_default(call_default_factory=True) 分支官方未测",
+  "新增：带 alias 的字段顺序（model_construct 用 alias 传值）— 选择依据：gold 改动的 `field.alias in values` 分支官方未测",
+  "保留：tests/test_construction.py::test_construct_fields_set、::test_simple_construct、::test_pickle_fields_set — 护栏，防止用“给缺失必填字段塞占位值”换顺序（会改 model_fields_set）",
+  "题面原例固化：`class M(BaseModel): a: str; b: str | None = None` + `m=M.model_construct(); m.a='a'; m.b='b'` 的 dump 顺序，作为**诊断**而非 reward（gold 也不通过，见 check 23）"
+ ],
+ "disposition_hint": {
+  "state": "needs_review",
+  "reason": "gold 与验收面自洽，但题面原例在 gold 上也不通过；不标注这一落差就直接拿来训练，会给出“修对了题面写的问题仍然 0 分 / 修了别的场景反而满分”的错误信号。"
+ },
+ "costs": {
+  "minutes": 22
+ }
+}

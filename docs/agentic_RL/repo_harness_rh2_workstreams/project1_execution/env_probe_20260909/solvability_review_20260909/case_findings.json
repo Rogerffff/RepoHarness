@@ -1,0 +1,499 @@
+{
+  "date": "2026-09-09",
+  "scope": "24道SWE-Gym开发参考求解；审查既存工件，未重新执行模型或仓库测试",
+  "status": "诊断观察；不是reward改判、自动剔除规则或正式验收",
+  "original_counts": {
+    "resolved": 13,
+    "unresolved": 10,
+    "error": 1
+  },
+  "cases": [
+    {
+      "instance_id": "pydantic__pydantic-8500",
+      "original_grade": "resolved",
+      "original_verdict": "RESOLVED_FULL",
+      "diagnostic_projected_verdict": "RESOLVED_FULL",
+      "gold_default_verdict": "RESOLVED_FULL",
+      "cli_result_subtype": "success",
+      "f2p_total": 1,
+      "f2p_not_passed": 0,
+      "f2p_missing": 0,
+      "p2p_total": 44,
+      "p2p_not_passed": 0,
+      "p2p_missing": 0,
+      "observation_tags": [
+        "官方测试未覆盖题面原例",
+        "访问上游修复"
+      ],
+      "assessment": "原例在早期候选实测仍错；终版及gold的同一行为由未变的写入路径静态推出，未重跑终版原例。",
+      "evidence_root": "runs/env_probe_20260909_codex_backup/ledger/logs_cc/pydantic__pydantic-8500"
+    },
+    {
+      "instance_id": "conan-io__conan-13326",
+      "original_grade": "unresolved",
+      "original_verdict": "RESOLVED_PARTIAL",
+      "diagnostic_projected_verdict": "RESOLVED_PARTIAL",
+      "gold_default_verdict": "RESOLVED_FULL",
+      "cli_result_subtype": "success",
+      "f2p_total": 3,
+      "f2p_not_passed": 1,
+      "f2p_missing": 0,
+      "p2p_total": 67,
+      "p2p_not_passed": 0,
+      "p2p_missing": 0,
+      "observation_tags": [
+        "已修明确例子",
+        "相邻版本支持表不足"
+      ],
+      "assessment": "qcc8.3通过；5.4漏17/gnu17，与已读仓库GCC支持表及官方断言不符。",
+      "evidence_root": "runs/env_probe_20260909_codex_backup/ledger/logs_cc/conan-io__conan-13326"
+    },
+    {
+      "instance_id": "Project-MONAI__MONAI-6975",
+      "original_grade": "resolved",
+      "original_verdict": "RESOLVED_FULL",
+      "diagnostic_projected_verdict": "RESOLVED_FULL",
+      "gold_default_verdict": "RESOLVED_FULL",
+      "cli_result_subtype": "success",
+      "f2p_total": 4,
+      "f2p_not_passed": 0,
+      "f2p_missing": 0,
+      "p2p_total": 59,
+      "p2p_not_passed": 0,
+      "p2p_missing": 0,
+      "observation_tags": [
+        "本轮未发现否定成功的证据",
+        "原mutation不是行为负例"
+      ],
+      "assessment": "Dataset显式lazy=None通过；gold末hunk只有文档，删掉仍通过是预期。",
+      "evidence_root": "runs/env_probe_20260909_codex_backup/ledger/logs_cc/Project-MONAI__MONAI-6975"
+    },
+    {
+      "instance_id": "dask__dask-7894",
+      "original_grade": "resolved",
+      "original_verdict": "RESOLVED_FULL",
+      "diagnostic_projected_verdict": "RESOLVED_FULL",
+      "gold_default_verdict": "RESOLVED_FULL",
+      "cli_result_subtype": "success",
+      "f2p_total": 5,
+      "f2p_not_passed": 0,
+      "f2p_missing": 0,
+      "p2p_total": 75,
+      "p2p_not_passed": 0,
+      "p2p_missing": 0,
+      "observation_tags": [
+        "本轮未发现否定成功的证据"
+      ],
+      "assessment": "轴号映射目标通过；额外new_axis范围未作完整等价证明。",
+      "evidence_root": "runs/env_probe_20260909_codex_backup/ledger/logs_cc/dask__dask-7894"
+    },
+    {
+      "instance_id": "getmoto__moto-6913",
+      "original_grade": "resolved",
+      "original_verdict": "RESOLVED_FULL",
+      "diagnostic_projected_verdict": "RESOLVED_FULL",
+      "gold_default_verdict": "RESOLVED_FULL",
+      "cli_result_subtype": "success",
+      "f2p_total": 1,
+      "f2p_not_passed": 0,
+      "f2p_missing": 0,
+      "p2p_total": 17,
+      "p2p_not_passed": 0,
+      "p2p_missing": 0,
+      "observation_tags": [
+        "本轮未发现否定成功的证据",
+        "题面直接提供修复线索"
+      ],
+      "assessment": "题面已指出Body.Text字段，候选一行修改与目标吻合。",
+      "evidence_root": "runs/env_probe_20260909_codex_backup/ledger/logs_cc/getmoto__moto-6913"
+    },
+    {
+      "instance_id": "getmoto__moto-6470",
+      "original_grade": "unresolved",
+      "original_verdict": "RESOLVED_NO",
+      "diagnostic_projected_verdict": "RESOLVED_NO",
+      "gold_default_verdict": "RESOLVED_FULL",
+      "cli_result_subtype": "success",
+      "f2p_total": 1,
+      "f2p_not_passed": 1,
+      "f2p_missing": 0,
+      "p2p_total": 11,
+      "p2p_not_passed": 0,
+      "p2p_missing": 0,
+      "observation_tags": [
+        "题面缺少关键验收说明",
+        "改变服务端输入契约"
+      ],
+      "assessment": "原server例子从500变成功；缺role应返回ClientException只在未提供hints中明示，候选放宽了EC2请求。",
+      "evidence_root": "runs/env_probe_20260909_codex_backup/ledger/logs_cc/getmoto__moto-6470"
+    },
+    {
+      "instance_id": "iterative__dvc-5822",
+      "original_grade": "resolved",
+      "original_verdict": "RESOLVED_FULL",
+      "diagnostic_projected_verdict": "RESOLVED_FULL",
+      "gold_default_verdict": "RESOLVED_FULL",
+      "cli_result_subtype": "error_max_turns",
+      "f2p_total": 1,
+      "f2p_not_passed": 0,
+      "f2p_missing": 0,
+      "p2p_total": 1,
+      "p2p_not_passed": 0,
+      "p2p_missing": 0,
+      "observation_tags": [
+        "本轮未发现否定成功的证据",
+        "轮数上限终止"
+      ],
+      "assessment": "本地repo+rev路径正确建立SCM，终止类型不抹掉现成有效补丁。",
+      "evidence_root": "runs/env_probe_20260909_codex_backup/ledger/logs_cc/iterative__dvc-5822"
+    },
+    {
+      "instance_id": "pydantic__pydantic-9214",
+      "original_grade": "unresolved",
+      "original_verdict": "RESOLVED_NO",
+      "diagnostic_projected_verdict": "RESOLVED_NO",
+      "gold_default_verdict": "RESOLVED_FULL",
+      "cli_result_subtype": "error_max_turns",
+      "f2p_total": 1,
+      "f2p_not_passed": 0,
+      "f2p_missing": 0,
+      "p2p_total": 54,
+      "p2p_not_passed": 1,
+      "p2p_missing": 0,
+      "observation_tags": [
+        "已修明确例子",
+        "既有优先级被改变",
+        "题面缺少关键验收说明",
+        "轮数上限终止"
+      ],
+      "assessment": "Field描述已生效，但docstring优先级被覆盖；相关兼容性补充未给模型。",
+      "evidence_root": "runs/env_probe_20260909_codex_backup/ledger/logs_cc/pydantic__pydantic-9214"
+    },
+    {
+      "instance_id": "python__mypy-12741",
+      "original_grade": "resolved",
+      "original_verdict": "RESOLVED_FULL",
+      "diagnostic_projected_verdict": "RESOLVED_FULL",
+      "gold_default_verdict": "RESOLVED_FULL",
+      "cli_result_subtype": "error_max_turns",
+      "f2p_total": 1,
+      "f2p_not_passed": 0,
+      "f2p_missing": 0,
+      "p2p_total": 1,
+      "p2p_not_passed": 0,
+      "p2p_missing": 0,
+      "observation_tags": [
+        "本轮未发现否定成功的证据",
+        "轮数上限终止"
+      ],
+      "assessment": "不再崩溃且保留不支持statement诊断；高层跳过类体的完整影响尚未验证。",
+      "evidence_root": "runs/env_probe_20260909_codex_backup/ledger/logs_cc/python__mypy-12741"
+    },
+    {
+      "instance_id": "modin-project__modin-6937",
+      "original_grade": "unresolved",
+      "original_verdict": "RESOLVED_NO",
+      "diagnostic_projected_verdict": "RESOLVED_NO",
+      "gold_default_verdict": "RESOLVED_NO",
+      "cli_result_subtype": "success",
+      "f2p_total": 1,
+      "f2p_not_passed": 0,
+      "f2p_missing": 0,
+      "p2p_total": 2354,
+      "p2p_not_passed": 1,
+      "p2p_missing": 0,
+      "observation_tags": [
+        "目标测试通过",
+        "环境造成负判"
+      ],
+      "assessment": "候选/gold同一S3 P2P失败；须固定条件复验同一候选，不直接重打分。",
+      "evidence_root": "runs/env_probe_20260909_codex_backup/ledger/logs_cc/modin-project__modin-6937"
+    },
+    {
+      "instance_id": "pandas-dev__pandas-48106",
+      "original_grade": "unresolved",
+      "original_verdict": "RESOLVED_NO",
+      "diagnostic_projected_verdict": "RESOLVED_NO",
+      "gold_default_verdict": "RESOLVED_NO",
+      "cli_result_subtype": "success",
+      "f2p_total": 16,
+      "f2p_not_passed": 15,
+      "f2p_missing": 0,
+      "p2p_total": 1020,
+      "p2p_not_passed": 0,
+      "p2p_missing": 3,
+      "observation_tags": [
+        "已修明确例子",
+        "更广语义未覆盖",
+        "参考测试ID不匹配"
+      ],
+      "assessment": "3个共享P2P ID缺失，同时仅1/16 F2P通过；其余15个是基线已有失败，不是新增回归。",
+      "evidence_root": "runs/env_probe_20260909_codex_backup/ledger/logs_cc/pandas-dev__pandas-48106"
+    },
+    {
+      "instance_id": "Project-MONAI__MONAI-2454",
+      "original_grade": "infra_failed:test_patch_not_applied",
+      "original_verdict": "UNPARSED",
+      "diagnostic_projected_verdict": "RESOLVED_NO",
+      "gold_default_verdict": "RESOLVED_FULL",
+      "cli_result_subtype": "success",
+      "f2p_total": 1,
+      "f2p_not_passed": 1,
+      "f2p_missing": 0,
+      "p2p_total": 1,
+      "p2p_not_passed": 0,
+      "p2p_missing": 0,
+      "observation_tags": [
+        "官方新测试路径冲突",
+        "已修明确例子",
+        "标量输入范围存在歧义"
+      ],
+      "assessment": "原apply error；投影后NumPy零维修复有效，官方Python int形状失败。",
+      "evidence_root": "runs/env_probe_20260909_codex_backup/ledger/logs_cc/Project-MONAI__MONAI-2454"
+    },
+    {
+      "instance_id": "python__mypy-11236",
+      "original_grade": "unresolved",
+      "original_verdict": "RESOLVED_NO",
+      "diagnostic_projected_verdict": "RESOLVED_NO",
+      "gold_default_verdict": "RESOLVED_FULL",
+      "cli_result_subtype": "error_max_turns",
+      "f2p_total": 1,
+      "f2p_not_passed": 1,
+      "f2p_missing": 0,
+      "p2p_total": 0,
+      "p2p_not_passed": 0,
+      "p2p_missing": 0,
+      "observation_tags": [
+        "已修明确例子",
+        "更广语义未覆盖",
+        "诊断字符串约束",
+        "轮数上限终止"
+      ],
+      "assessment": "直接return元组已过；Final字面量正例仍拒绝，因此不能仅归为文案误杀。",
+      "evidence_root": "runs/env_probe_20260909_codex_backup/ledger/logs_cc/python__mypy-11236"
+    },
+    {
+      "instance_id": "conan-io__conan-14296",
+      "original_grade": "resolved",
+      "original_verdict": "RESOLVED_FULL",
+      "diagnostic_projected_verdict": "RESOLVED_FULL",
+      "gold_default_verdict": "RESOLVED_FULL",
+      "cli_result_subtype": "success",
+      "f2p_total": 1,
+      "f2p_not_passed": 0,
+      "f2p_missing": 0,
+      "p2p_total": 32,
+      "p2p_not_passed": 0,
+      "p2p_missing": 0,
+      "observation_tags": [
+        "目标测试通过",
+        "访问上游修复"
+      ],
+      "assessment": "读取本题PR diff后写入实现和测试；不计为已证明的独立解题。",
+      "evidence_root": "runs/env_probe_20260909_codex_backup/ledger/logs_cc/conan-io__conan-14296"
+    },
+    {
+      "instance_id": "dask__dask-7656",
+      "original_grade": "resolved",
+      "original_verdict": "RESOLVED_FULL",
+      "diagnostic_projected_verdict": "RESOLVED_FULL",
+      "gold_default_verdict": "RESOLVED_FULL",
+      "cli_result_subtype": "success",
+      "f2p_total": 1,
+      "f2p_not_passed": 0,
+      "f2p_missing": 0,
+      "p2p_total": 48,
+      "p2p_not_passed": 0,
+      "p2p_missing": 0,
+      "observation_tags": [
+        "本轮未发现否定成功的证据"
+      ],
+      "assessment": "init=False缺失属性例子已修；与gold不同输入范围尚未证明等价或错误。",
+      "evidence_root": "runs/env_probe_20260909_codex_backup/ledger/logs_cc/dask__dask-7656"
+    },
+    {
+      "instance_id": "getmoto__moto-5899",
+      "original_grade": "resolved",
+      "original_verdict": "RESOLVED_FULL",
+      "diagnostic_projected_verdict": "RESOLVED_FULL",
+      "gold_default_verdict": "RESOLVED_FULL",
+      "cli_result_subtype": "success",
+      "f2p_total": 1,
+      "f2p_not_passed": 0,
+      "f2p_missing": 0,
+      "p2p_total": 22,
+      "p2p_not_passed": 0,
+      "p2p_missing": 0,
+      "observation_tags": [
+        "本轮未发现否定成功的证据"
+      ],
+      "assessment": "同用户重复加组幂等及移除行为符合目标。",
+      "evidence_root": "runs/env_probe_20260909_codex_backup/ledger/logs_cc/getmoto__moto-5899"
+    },
+    {
+      "instance_id": "modin-project__modin-6298",
+      "original_grade": "resolved",
+      "original_verdict": "RESOLVED_FULL",
+      "diagnostic_projected_verdict": "RESOLVED_FULL",
+      "gold_default_verdict": "RESOLVED_FULL",
+      "cli_result_subtype": "success",
+      "f2p_total": 2,
+      "f2p_not_passed": 0,
+      "f2p_missing": 0,
+      "p2p_total": 37,
+      "p2p_not_passed": 0,
+      "p2p_missing": 0,
+      "observation_tags": [
+        "本轮未发现否定成功的证据"
+      ],
+      "assessment": "NaN下argmax/min where位置修复，指定NumPy对照通过。",
+      "evidence_root": "runs/env_probe_20260909_codex_backup/ledger/logs_cc/modin-project__modin-6298"
+    },
+    {
+      "instance_id": "getmoto__moto-5701",
+      "original_grade": "unresolved",
+      "original_verdict": "RESOLVED_NO",
+      "diagnostic_projected_verdict": "RESOLVED_NO",
+      "gold_default_verdict": "RESOLVED_NO",
+      "cli_result_subtype": "success",
+      "f2p_total": 1,
+      "f2p_not_passed": 0,
+      "f2p_missing": 0,
+      "p2p_total": 149,
+      "p2p_not_passed": 0,
+      "p2p_missing": 1,
+      "observation_tags": [
+        "目标测试通过",
+        "参考测试ID不匹配",
+        "访问上游修复",
+        "题面缺少触发条件"
+      ],
+      "assessment": "Unicode P2P实际通过但键不匹配；原题未明确空格前缀，随后从上游获取真实修复。",
+      "evidence_root": "runs/env_probe_20260909_codex_backup/ledger/logs_cc/getmoto__moto-5701"
+    },
+    {
+      "instance_id": "iterative__dvc-9395",
+      "original_grade": "unresolved",
+      "original_verdict": "RESOLVED_PARTIAL",
+      "diagnostic_projected_verdict": "RESOLVED_PARTIAL",
+      "gold_default_verdict": "RESOLVED_FULL",
+      "cli_result_subtype": "error_max_turns",
+      "f2p_total": 2,
+      "f2p_not_passed": 1,
+      "f2p_missing": 0,
+      "p2p_total": 27,
+      "p2p_not_passed": 0,
+      "p2p_missing": 0,
+      "observation_tags": [
+        "已修明确例子",
+        "更广语义未覆盖",
+        "轮数上限终止"
+      ],
+      "assessment": "无cmd数据源已修，远端run-cache元数据未恢复；达到上限前未执行pytest。",
+      "evidence_root": "runs/env_probe_20260909_codex_backup/ledger/logs_cc/iterative__dvc-9395"
+    },
+    {
+      "instance_id": "pydantic__pydantic-8793",
+      "original_grade": "resolved",
+      "original_verdict": "RESOLVED_FULL",
+      "diagnostic_projected_verdict": "RESOLVED_FULL",
+      "gold_default_verdict": "RESOLVED_FULL",
+      "cli_result_subtype": "success",
+      "f2p_total": 3,
+      "f2p_not_passed": 0,
+      "f2p_missing": 0,
+      "p2p_total": 364,
+      "p2p_not_passed": 0,
+      "p2p_missing": 0,
+      "observation_tags": [
+        "本轮未发现否定成功的证据"
+      ],
+      "assessment": "候选在不同位置归一化Ellipsis，三项必填字段目标及指定回归通过。",
+      "evidence_root": "runs/env_probe_20260909_codex_backup/ledger/logs_cc/pydantic__pydantic-8793"
+    },
+    {
+      "instance_id": "pydantic__pydantic-5706",
+      "original_grade": "resolved",
+      "original_verdict": "RESOLVED_FULL",
+      "diagnostic_projected_verdict": "RESOLVED_FULL",
+      "gold_default_verdict": "RESOLVED_FULL",
+      "cli_result_subtype": "error_max_turns",
+      "f2p_total": 2,
+      "f2p_not_passed": 0,
+      "f2p_missing": 0,
+      "p2p_total": 273,
+      "p2p_not_passed": 0,
+      "p2p_missing": 0,
+      "observation_tags": [
+        "低覆盖假阳性",
+        "题面设计方向含糊",
+        "修改既有测试预期",
+        "轮数上限终止"
+      ],
+      "assessment": "官方仅JSON文件通过，轨迹另有8个未改既有测试失败；随后改断言但这些测试不在官方执行面。",
+      "evidence_root": "runs/env_probe_20260909_codex_backup/ledger/logs_cc/pydantic__pydantic-5706"
+    },
+    {
+      "instance_id": "python__mypy-16869",
+      "original_grade": "resolved",
+      "original_verdict": "RESOLVED_FULL",
+      "diagnostic_projected_verdict": "RESOLVED_FULL",
+      "gold_default_verdict": "RESOLVED_FULL",
+      "cli_result_subtype": "success",
+      "f2p_total": 2,
+      "f2p_not_passed": 0,
+      "f2p_missing": 0,
+      "p2p_total": 4,
+      "p2p_not_passed": 0,
+      "p2p_missing": 0,
+      "observation_tags": [
+        "本轮未发现否定成功的证据"
+      ],
+      "assessment": "新增StarExpr输出处理，两个指定stubgen模式目标通过。",
+      "evidence_root": "runs/env_probe_20260909_codex_backup/ledger/logs_cc/python__mypy-16869"
+    },
+    {
+      "instance_id": "python__mypy-11352",
+      "original_grade": "unresolved",
+      "original_verdict": "RESOLVED_PARTIAL",
+      "diagnostic_projected_verdict": "RESOLVED_PARTIAL",
+      "gold_default_verdict": "RESOLVED_FULL",
+      "cli_result_subtype": "success",
+      "f2p_total": 3,
+      "f2p_not_passed": 2,
+      "f2p_missing": 0,
+      "p2p_total": 1,
+      "p2p_not_passed": 0,
+      "p2p_missing": 0,
+      "observation_tags": [
+        "已修明确例子",
+        "额外泛型展示约束",
+        "语义影响尚待辨别"
+      ],
+      "assessment": "原类型替换已修；两项失败目前仅多显示未使用S，不声称其全局无语义影响。",
+      "evidence_root": "runs/env_probe_20260909_codex_backup/ledger/logs_cc/python__mypy-11352"
+    },
+    {
+      "instance_id": "pandas-dev__pandas-50319",
+      "original_grade": "unresolved",
+      "original_verdict": "RESOLVED_NO",
+      "diagnostic_projected_verdict": "RESOLVED_NO",
+      "gold_default_verdict": "RESOLVED_NO",
+      "cli_result_subtype": "success",
+      "f2p_total": 1,
+      "f2p_not_passed": 0,
+      "f2p_missing": 0,
+      "p2p_total": 109,
+      "p2p_not_passed": 0,
+      "p2p_missing": 1,
+      "observation_tags": [
+        "目标测试通过",
+        "参考测试ID不匹配",
+        "题面允许行为比官方宽"
+      ],
+      "assessment": "原始pytest114全过；反斜杠P2P键缺失。题面允许None但候选已返回官方要求格式。",
+      "evidence_root": "runs/env_probe_20260909_codex_backup/ledger/logs_cc/pandas-dev__pandas-50319"
+    }
+  ]
+}

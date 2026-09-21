@@ -4,11 +4,11 @@
 
 - **正式标题**：KAT-Coder-V2.5 Technical Report；机构/署名：快手（Kuaishou）的 KwaiKAT Team。PDF 首页署团队，arXiv 元数据列 Bo Huang 等 53 位作者，贡献名单见 §8/p20。
 - **版本**：arXiv:2607.05471v1，提交于 2026-07-06 08:14:02 UTC；阅读日期 2026-09-07。本轮 arXiv submission history 仅列 v1，未用后续版本或旧 KAT 报告替代。
-- **正式入口**：[摘要与版本记录](https://arxiv.org/abs/2607.05471v1)、[HTML 全文](https://arxiv.org/html/2607.05471v1)、[PDF](https://arxiv.org/pdf/2607.05471v1)、[TeX source](https://arxiv.org/src/2607.05471v1)。保存的原文：[本地 PDF](sources/N01/2607.05471v1.pdf)、[原始 TeX 压缩包](sources/N01/2607.05471v1-source.tar.gz)、[main.tex](sources/N01/tex/main.tex)、[版式文本](sources/N01/2607.05471v1-layout.txt)。PDF 保持下载原样；来源与校验值见[快照记录](sources/N01/SOURCES.md)。
+- **正式入口**：[摘要与版本记录](https://arxiv.org/abs/2607.05471v1)、[HTML 全文](https://arxiv.org/html/2607.05471v1)、[PDF](https://arxiv.org/pdf/2607.05471v1)、[TeX source](https://arxiv.org/src/2607.05471v1)。保存的原文：本地 PDF（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/N01/2607.05471v1.pdf`）、原始 TeX 压缩包（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/N01/2607.05471v1-source.tar.gz`）、main.tex（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/N01/tex/main.tex`）、版式文本（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/N01/2607.05471v1-layout.txt`）。PDF 保持下载原样；来源与校验值见[快照记录](sources/N01/SOURCES.md)。
 - **实际阅读**：通读 main.tex 全部正文，读参考文献条目以核引用身份；结合 24 页 PDF 提取文本定位，目视核对图1–5、表1–4、公式1–8。没有独立编号的 Appendix；p23–24 是 §4.4 的浮动表1–3，排在参考文献后，不能漏掉或虚称“未提供奖励细则”。
 - **页码口径**：下文 pN 指 PDF 从1开始的物理页。p2–24 的页脚与物理页一致；首页无可见页脚，仍称 p1。图2在 p3、图3在 p6、图4在 p10、图5在 p11；表4在 p19，表1在 p23，表2–3在 p24。
 - **配套资产边界**：报告给出[StreamLake 产品入口](https://streamlake.com/product/kat-coder)，本轮网页工具访问超时（400 Timeout fetching）。报告正文、文末、arXiv 入口未给可直接核验的 V2.5 训练代码、权重、数据或镜像发布链接；未沿不相干框架追代码，故无“实际查阅的训练代码 commit”。这是本轮来源边界，不是对互联网所有资产作“绝未开源”的断言。
-- **旧稿**：[外部pro1.md](../../../agentic_RL/repo_harness_rh2_workstreams/tmp/外部pro1.md)与[项目设计外部pro.md](../../../agentic_RL/repo_harness_rh2_workstreams/tmp/项目设计外部pro.md)仅作查证线索，原文件不改。主要纠错在 §9.2。
+- **旧稿**：外部pro1.md（相关本地材料未随本批发布：`docs/agentic_RL/repo_harness_rh2_workstreams/tmp/外部pro1.md`）与项目设计外部pro.md（相关本地材料未随本批发布：`docs/agentic_RL/repo_harness_rh2_workstreams/tmp/项目设计外部pro.md`）仅作查证线索，原文件不改。主要纠错在 §9.2。
 
 ### 1.1 先按原文目录建立的覆盖表
 
@@ -354,7 +354,7 @@ KL方向是**学生到教师**，作者称reverse KL；w_t∈[0,1]。公式是�
 
 ## 11. 快速定位与关联阅读
 
-- 来源/版本/全覆盖 → §1；[本地PDF](sources/N01/2607.05471v1.pdf)。
+- 来源/版本/全覆盖 → §1；本地PDF（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/N01/2607.05471v1.pdf`）。
 - 环境/恢复/通用服务 → §4；原§2–3/p3–9、图2–3。
 - PPO/critic → §5.1–5.2；原§4.3/p12–13、式1–4。
 - 规则奖励/GRM → §5.3–5.4；原§4.4/p13–15、式5、表1–3/p23–24。

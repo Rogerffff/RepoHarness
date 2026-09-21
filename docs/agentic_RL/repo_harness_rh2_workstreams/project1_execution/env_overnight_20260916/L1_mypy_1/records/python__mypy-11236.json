@@ -1,0 +1,65 @@
+{
+ "task_id": "python__mypy-11236",
+ "source": "SWE-Gym lite (swe_gym_lite_full_f70b1a29.jsonl) / python/mypy PR 11236",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "docs/.../s2/ingest/public_bundles_v0.jsonl:python__mypy-11236",
+  "grading": "docs/.../s2/ingest/grading_bundles_v2_v0.jsonl:python__mypy-11236",
+  "validation": "docs/.../s2/ingest/validation_bundles_v0.jsonl:python__mypy-11236",
+  "base_commit": "209a7193feb4bbfa38d09232b0a5a916e9d2e605",
+  "version": "0.920",
+  "eval_cmd": "pytest -n0 -rA -k",
+  "f2p": ["mypy/test/testcheck.py::TypeCheckSuite::testLiteralAndInstanceSubtyping"],
+  "p2p": []
+ },
+ "public_view": {
+  "goal": "mypy 在返回类型为 Union[Tuple[str], Tuple[Literal[1]]] 时无法把 (1,) 推成 Tuple[Literal[1]]，报 Incompatible return value type。要求这种写法不再报错。",
+  "constraints": [
+   "题面给出完整最小复现（fenced code block，无外链无图片）",
+   "只说 '失败识别 (1,) 是 Tuple[Literal[1]]'，没有规定修在哪一层"
+  ],
+  "unknowns_from_public_only": [
+   "修 checkexpr.visit_tuple_expr 的 union 上下文选择，还是修 subtypes.is_subtype 让带 last_known_value 的 Instance 成为 LiteralType 的子类型——题面完全没有线索",
+   "修好之后错误信息里 got 的类型该显示成 Tuple[bool, int] 还是 Tuple[Literal[False], int]，题面没有任何约束",
+   "是否要求同时修 Final 元组（x: Final = (1,) 后 return x）这一类，题面未提"
+  ],
+  "base_code_evidence": [
+   "209a7193f:mypy/checkexpr.py:3301-3318 visit_tuple_expr：type_context 为 UnionType 时收集同长度 TupleType，len(tuples_in_context)!=1 就整体放弃上下文；题面的 Union[Tuple[str], Tuple[Literal[1]]] 恰好命中 2 个同长度 tuple",
+   "209a7193f:mypy/checkexpr.py:2085-2114 is_literal_context/infer_literal_expr_type：无字面量上下文时返回带 last_known_value 的 Instance",
+   "209a7193f:mypy/subtypes.py:279-297 visit_instance：right 为 LiteralType 时无任何分支，直接落到最后 return False"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 目标 test-data/unit/check-literal.test 在 base 存在（git ls-tree 209a7193f test-data/unit/）", "gold 目标 mypy/subtypes.py 在 base 存在，且 hunk 上下文 visit_instance:287 与 base 逐行一致"], "note": "无二进制/LFS/子模块材料；test_patch 与 gold 同属 PR 11236，主题一致。", "by": "L1_mypy_1"},
+  "2": {"status": "pass", "evidence_refs": ["209a7193f:mypy/subtypes.py:279-297 缺少 gold 新增的 LiteralType/last_known_value 分支", "209a7193f:mypy/checkexpr.py:3305-3313 union 上下文放弃逻辑"], "note": "静态确认 base 确实含题面缺陷；未实跑（无 Docker 授权）。", "by": "L1_mypy_1"},
+  "3": {"status": "issue", "evidence_refs": ["public_bundles problem_statement（1257 字符，完整代码块）", "raw hints_text 14157 字符"], "note": "题面本身完整。但 hints_text 里 Michael0x2a 写了近乎逐字的 gold 方案：'One quick-and-dirty (?) way of fixing this specific issue would be to modify is_subtype so we consider Literal[1] to be a subtype of any ints with a last-known-value of Literal[1]'，并且写了他更倾向的另一种方案（在 visit_tuple_expr 里 splice union 上下文）。agent 看不到 hints，所以只能从题面猜出 gold 选了被作者自己称为 unsafe 的那条路。", "by": "L1_mypy_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 只触碰 test-data/unit/check-literal.test（纯测试数据文件）"], "note": "test_patch 不含非测试源码；gold 只碰 mypy/subtypes.py，不落在测试样路径。additional_exclusions 保持空。", "by": "L1_mypy_1"},
+  "17": {"status": "pass", "evidence_refs": ["同上：test_files 由 test_patch 路径生成 = {test-data/unit/check-literal.test}，与 gold 路径 mypy/subtypes.py 无交集"], "note": "不存在恢复覆盖候选源码的风险。", "by": "L1_mypy_1"},
+  "5": {"status": "pass", "evidence_refs": ["本包 20 题中只有本题 gold 触碰 mypy/subtypes.py；只有本题 test_patch 触碰 check-literal.test（见 runs/.../L1_mypy_1/dupidx.txt）"], "note": "未与同仓库其它题重复。", "by": "L1_mypy_1"},
+  "23": {"status": "issue", "evidence_refs": ["F2P case testLiteralAndInstanceSubtyping 里 invalid_literal_value / invalid_literal_type / incorrect_return1 / incorrect_return2 四段都断言了精确错误文本 got \"Tuple[int]\" / \"Tuple[bool]\" / \"Tuple[bool, int]\" / \"Tuple[bool, str]\""], "note": "公开材料只要求 '正例不再报错'，推不出这四段反例的精确 got 字符串；also 'x: Final = (1,) 后 return x' 这一族在题面里完全没出现。要求不充分。", "by": "L1_mypy_1"},
+  "24": {"status": "issue", "evidence_refs": ["test_patch check-literal.test 新增 case 中 incorrect_return1 期望 'got \"Tuple[bool, int]\"'", "hints_text 中作者首选方案：'We could maybe do together by \"splicing\" together a union of tuples -- e.g. if we have Union[Tuple[A, B], Tuple[C, D]], make the context basically be Tuple[Union[A, C], Union[B, D]]'"], "note": "强制唯一实现。若按作者首选方案在 visit_tuple_expr 里合成 union 上下文，(False, 5) 会被推成 Tuple[Literal[False], int]，错误文本变成 got \"Tuple[Literal[False], int]\"，F2P 直接失败；同理 invalid_literal_value 会给出 got \"Tuple[Literal[2]]\"。一个功能上同样正确（甚至更根本）的实现会被判 0。", "by": "L1_mypy_1"},
+  "25": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["grading_bundles fail_to_pass 长度 1、pass_to_pass 长度 0", "test_patch 同时把既有 case testLiteralFinalGoesOnlyOneLevelDown 的期望从报错改成 'ok'，但该 case 既不在 F2P 也不在 P2P"], "note": "两个缺口：(a) P2P 为空 → 评分对回归零保护，agent 可以任意放宽 subtypes.is_subtype（例如对 LiteralType 直接 return True）而仍得满分；(b) test_patch 改写的既有 case 不参与评分，等于 gold 真正修复的一半行为没有被检查。", "by": "L1_mypy_1"},
+  "26": {"status": "issue", "evidence_refs": ["P2P 为空"], "note": "必须补回归，见 proposed_regression_tests。", "by": "L1_mypy_1"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 仅 2 行新增，全部在 mypy/subtypes.py visit_instance"], "note": "gold 无题外改动、不依赖未交付改动；但它是 upstream 作者自己标注为 'unsafe if we've accidentally forgotten to erase the last known value field somewhere' 的权宜修法（hints_text），属于 gold 质量偏弱但与本题对应。", "by": "L1_mypy_1"},
+  "29": {"status": "pass", "evidence_refs": ["problem_statement 全文无 PR/commit 链接、无修复代码"], "note": "题面无泄漏。hints_text 有完整方案但按约定 agent 不可见；需确认实际渲染确实不带 hints（本包未验证 → 见 issues）。", "by": "L1_mypy_1"},
+  "6": {"status": "not_checked", "evidence_refs": [], "note": "未实跑安装。", "by": "L1_mypy_1"},
+  "7": {"status": "pass", "evidence_refs": ["F2P case 只用 [builtins fixtures/bool.pyi]，该 fixture 在 base 仓库内（test-data/unit/fixtures/bool.pyi）"], "note": "静态看无外部权重/数据/服务依赖。", "by": "L1_mypy_1"},
+  "11": {"status": "pass", "evidence_refs": ["case 正文无 URL、无 requests/boto3/torch.hub"], "note": "mypy 单元测试为纯离线数据驱动，测试阶段静态看不需要网络。", "by": "L1_mypy_1"},
+  "18": {"status": "issue", "evidence_refs": ["eval_cmd 'pytest -n0 -rA -k' + 选择器为 case 名；runs/env_probe_stage1_20260910/.../python__mypy-10174/gold/offline/a1/eval.sh 显示实际命令为 pytest -n0 -rA -k \"A or B\""], "note": "本题 kcheck 无过选（runs/.../L1_mypy_1/kcheck_all.txt）。但 -k 是子串匹配，这是仓库级风险，见 L1_mypy_1/summary.md 结尾。", "by": "L1_mypy_1"}
+ },
+ "issues": [
+  {"category": "grading_coverage", "severity": "P1", "evidence_refs": ["grading_bundles_v2_v0:python__mypy-11236 pass_to_pass=[]"], "proposed_action": "本题 P2P 为空，等于没有回归约束。建议在采用前补 P2P：至少 check-literal.test 的全部 case（testcheck.py -k 选不动，需要用 nodeid 直选或整文件跑）。", "next_experiment": "在 gold 与一个刻意放宽的假修复（subtypes.visit_instance 对 LiteralType 直接 return True）上各跑一次 testcheck.py 全量 check-literal.test + check-classes.test，看假修复是否被 P2P 拦下。"},
+  {"category": "test_forces_unique_impl", "severity": "P2", "evidence_refs": ["test_patch 新增 case incorrect_return1/2、invalid_literal_value/type 的精确 got 字符串"], "proposed_action": "承认这是 mypy 仓库通病（期望输出逐字比对）。若保留本题，处置写清 '只接受 subtypes 层修法'；若想保留实现自由度，需要把四段反例的 got 类型断言放宽。", "next_experiment": "按 hints 里作者首选的 visit_tuple_expr splice 方案写一个替代解，跑 F2P 确认是否被拒（预期被拒）。"},
+  {"category": "ungraded_test_patch_change", "severity": "P2", "evidence_refs": ["test_patch 对 testLiteralFinalGoesOnlyOneLevelDown 的改写（check-literal.test:2687 附近）既不在 F2P 也不在 P2P"], "proposed_action": "把 testLiteralFinalGoesOnlyOneLevelDown 补进 F2P（它在 base+test_patch 下确实是 fail→pass）。", "next_experiment": "base+test_patch（无 gold）跑 -k testLiteralFinalGoesOnlyOneLevelDown 应为 FAILED；base+test_patch+gold 应为 PASSED。确认后即可升为 F2P。"},
+  {"category": "leak_channel_unverified", "severity": "P3", "evidence_refs": ["raw hints_text 含近乎逐字的 gold 方案"], "proposed_action": "确认实际渲染给 agent 的 prompt 不含 hints_text。", "next_experiment": "读一条真实 e1/e2 prompt.txt 核对。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只触碰 test-data/unit/check-literal.test，是纯测试数据；gold 只碰 mypy/subtypes.py。没有混合职责路径，按第四组 B 默认保持空。", "evidence_refs": ["grading_bundles_v2_v0:python__mypy-11236 test_patch"]},
+  "proposed_regression_tests": [
+  {"id": "mypy/test/testcheck.py::TypeCheckSuite::testLiteralFinalGoesOnlyOneLevelDown", "reason": "test_patch 直接改写了它的期望输出，是 gold 行为的另一半，却没被评分。"},
+  {"id": "test-data/unit/check-literal.test 全文件（testcheck.py 不带 -k 跑该文件的全部 case）", "reason": "gold 改的是 subtypes.is_subtype 对 LiteralType 的判定，字面量子类型关系的主战场就是这个文件。"},
+  {"id": "test-data/unit/check-narrowing.test、check-enum.test、check-overloading.test", "reason": "这三处大量依赖 Literal 与 last_known_value 的窄化/重载选择；gold 放宽 Instance<:LiteralType 最可能在这里造成回归。"},
+  {"id": "mypy/test/testsubtypes.py（若该版本存在）", "reason": "直接针对 is_subtype 的单元测试。"}
+ ],
+ "disposition_hint": {"state": "needs_repair", "reason": "P2P 为空且 test_patch 改写的既有 case 未入 F2P，评分既无回归保护又漏掉一半目标行为；补 P2P 与补 F2P 都是低成本修复。"},
+ "costs": {"minutes": 38}
+}

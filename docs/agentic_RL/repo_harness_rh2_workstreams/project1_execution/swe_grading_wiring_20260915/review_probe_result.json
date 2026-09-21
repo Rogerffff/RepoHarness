@@ -1,0 +1,151 @@
+{
+  "head": "4529ebd77fa27bc4c3bb4f1bffe9657c0af78abb",
+  "swebench_version": "4.1.0",
+  "projection": [
+    {
+      "target": "../target.py",
+      "classifier_verdict": "projectable",
+      "classifier_reasons": [],
+      "classifier_has_projection": true,
+      "direct_builder_included_paths": [
+        "src/link"
+      ]
+    },
+    {
+      "target": "../../outside",
+      "classifier_verdict": "unsafe_artifact",
+      "classifier_reasons": [
+        "unsafe_symlink_escape:src/link"
+      ],
+      "classifier_has_projection": false,
+      "direct_builder_included_paths": [
+        "src/link"
+      ]
+    },
+    {
+      "target": "../.git/config",
+      "classifier_verdict": "unsafe_artifact",
+      "classifier_reasons": [
+        "unsafe_symlink_into_excluded_namespace:src/link"
+      ],
+      "classifier_has_projection": false,
+      "direct_builder_included_paths": [
+        "src/link"
+      ]
+    }
+  ],
+  "report_function_only": [
+    {
+      "case": "missing",
+      "report": {
+        "FAIL_TO_PASS": {
+          "success": [],
+          "failure": [
+            "f"
+          ]
+        },
+        "PASS_TO_PASS": {
+          "success": [],
+          "failure": [
+            "p"
+          ]
+        },
+        "FAIL_TO_FAIL": {
+          "success": [],
+          "failure": []
+        },
+        "PASS_TO_FAIL": {
+          "success": [],
+          "failure": []
+        }
+      },
+      "resolution": "RESOLVED_NO"
+    },
+    {
+      "case": "skipped",
+      "report": {
+        "FAIL_TO_PASS": {
+          "success": [],
+          "failure": []
+        },
+        "PASS_TO_PASS": {
+          "success": [],
+          "failure": []
+        },
+        "FAIL_TO_FAIL": {
+          "success": [],
+          "failure": []
+        },
+        "PASS_TO_FAIL": {
+          "success": [],
+          "failure": []
+        }
+      },
+      "resolution": "RESOLVED_FULL"
+    },
+    {
+      "case": "passed",
+      "report": {
+        "FAIL_TO_PASS": {
+          "success": [
+            "f"
+          ],
+          "failure": []
+        },
+        "PASS_TO_PASS": {
+          "success": [
+            "p"
+          ],
+          "failure": []
+        },
+        "FAIL_TO_FAIL": {
+          "success": [],
+          "failure": []
+        },
+        "PASS_TO_FAIL": {
+          "success": [],
+          "failure": []
+        }
+      },
+      "resolution": "RESOLVED_FULL"
+    },
+    {
+      "case": "failed",
+      "report": {
+        "FAIL_TO_PASS": {
+          "success": [],
+          "failure": [
+            "f"
+          ]
+        },
+        "PASS_TO_PASS": {
+          "success": [
+            "p"
+          ],
+          "failure": []
+        },
+        "FAIL_TO_FAIL": {
+          "success": [],
+          "failure": []
+        },
+        "PASS_TO_FAIL": {
+          "success": [],
+          "failure": []
+        }
+      },
+      "resolution": "RESOLVED_NO"
+    }
+  ],
+  "composite_shell": {
+    "command": "set -o pipefail; false; true",
+    "final_rc": 0
+  },
+  "git_diff_is_not_workspace_census": {
+    "new_file_exists": true,
+    "git_diff_head_paths": [],
+    "untracked_paths": [
+      "new.py"
+    ]
+  },
+  "scope": "真实纯函数与 shell 语义；不是完整 manager、真实安装或新 driver 的验收。"
+}

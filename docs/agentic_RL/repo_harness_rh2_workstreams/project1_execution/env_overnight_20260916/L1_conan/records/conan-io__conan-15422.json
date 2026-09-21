@@ -1,0 +1,213 @@
+{
+ "task_id": "conan-io__conan-15422",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "f08b9924712cf0c2f27b93cbb5206d56d0d824d8",
+  "version": "2.1",
+  "image": "xingyaoww/sweb.eval.x86_64.conan-io_s_conan-15422:latest",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/conan-io__conan-15422/{gold,empty}/offline/a1/",
+  "pkg_scans": "runs/env_overnight_20260916/L1_conan/{prescan2,envscan,collide}.json"
+ },
+ "public_view": {
+  "目标行为": "题面是 feature 请求：生成的 CMakePresets.json 的 buildPresets 里没有 jobs 字段，导致 cmake --build --preset 默认单线程；题面给了 before/after 两段 JSON，after 里是 \"jobs\": 16。相关代码：conan/tools/cmake/presets.py::_CMakePresets._build_preset_fields。",
+  "约束": "只改非测试源码；既有 preset 字段与 configurePresets 不能变。",
+  "公开材料无法确定的点": [
+   "jobs 的取值从哪来。题面的例子是硬编码 16，没说应该读 tools.build:jobs。仓库里已有 conan.tools.build.build_jobs（CMake.build / Autotools.make 都在用），读代码可以推出，但题面没说。",
+   "没有 tools.build:jobs 配置时的默认值该是什么（gold 沿用 build_jobs 的 cgroup/cpu_count 探测）。"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 唯一路径 conans/test/integration/toolchains/cmake/test_cmaketoolchain.py 在 base 存在（1217 行）",
+    "gold 唯一路径 conan/tools/cmake/presets.py 在 base 存在"
+   ],
+   "note": "同一 PR、同一需求。无二进制/LFS/子模块。",
+   "by": "L1_conan"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show f08b9924:conan/tools/cmake/presets.py 的 _build_preset_fields 只 return _common_preset_fields(...)，无 jobs",
+    "stage1 empty：F2P FAILED"
+   ],
+   "note": "base 确实没有该字段。feature 类任务。",
+   "by": "L1_conan"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 1375 字符，含 before/after JSON",
+    "raw.hints_text 118 字符：Thanks for your suggestion. I think this could make sense, might be doable, I'll check with the team."
+   ],
+   "note": "题面完整；hints 无额外信息。",
+   "by": "L1_conan"
+  },
+  "4_17": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan2.json: test_patch 只碰该测试文件"
+   ],
+   "note": "纯测试文件；gold 不碰测试路径。",
+   "by": "L1_conan"
+  },
+  "5": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "与 conan-io__conan-14296 同 gold 文件 conan/tools/cmake/presets.py、同 test_patch 文件 test_cmaketoolchain.py、同 version 2.1",
+    "两题 P2P 大量重叠（14296 有 32 条、15422 有 40 条，都取自同一文件）"
+   ],
+   "note": "两题是近邻但不同 PR。做 train/eval 划分时应视为同族，不要一题进训练一题进评测——同一文件的大量 P2P 会把评测侧的信息提前泄漏给训练侧。",
+   "by": "L1_conan"
+  },
+  "23": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "F2P：c.run('install . -g CMakeToolchain -c tools.build:jobs=42') 后断言 presets[\"buildPresets\"][0][\"jobs\"] == 42",
+    "题面的 after 例子里是硬编码 \"jobs\": 16"
+   ],
+   "note": "题面没说取值来源，但 tools.build:jobs 与 conan.tools.build.build_jobs 在 base 就是既有机制（CMake.build 用它生成 -j），读代码可推出。判为轻微。",
+   "by": "L1_conan"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 只断言最终 JSON 里的字段值"
+   ],
+   "note": "任何从 tools.build:jobs 取值并写进 buildPresets 的实现都能过。",
+   "by": "L1_conan"
+  },
+  "25": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "F2P 只覆盖显式传 -c tools.build:jobs=42 的情形"
+   ],
+   "note": "不传 conf 时的默认值没有任何检查；把 jobs 写死成 42 或只在 conf 存在时才写字段，都能通过 F2P。",
+   "by": "L1_conan"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "P2P 40 条覆盖同文件 presets / cross_build / android / user_presets 等家族"
+   ],
+   "note": "回归面较宽。",
+   "by": "L1_conan"
+  },
+  "27": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "golden_patch 用 build_jobs(conanfile)",
+    "conan/tools/build/cpu.py::build_jobs 的 default=_cpu_count()，会读 cgroup 配额或 multiprocessing.cpu_count()"
+   ],
+   "note": "gold 正确且最小，但它让生成的 CMakePresets.json 带上一个随机器/容器 CPU 数变化的数值。本题 P2P 40 条在 stage1 机器上全绿，说明没有比对整份 JSON 的测试；跨机器（例如从 21 vCPU 的 CPU 盒换到 GPU 节点或加 --cpus 限制）是否仍稳定没有验证过。",
+   "by": "L1_conan"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "scripts/leak.py: 3 行 gold 新增，0 命中题面"
+   ],
+   "note": "无静态泄漏。",
+   "by": "L1_conan"
+  },
+  "6_7_11": {
+   "status": "pass",
+   "evidence_refs": [
+    "envscan.json: 该文件无 @pytest.mark.tool，8 处 http 命中全是注释里的 issue 链接",
+    "stage1 gold 41 PASSED + 1 假键 SKIPPED"
+   ],
+   "note": "TestClient 在临时 cache 里 install，不需要 cmake 可执行文件，不访问 conancenter。",
+   "by": "L1_conan"
+  },
+  "19": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "stage1 gold status_map 有假键 '[1]'（值 SKIPPED），不在 F2P/P2P 内",
+    "test_output.txt L956-958 是 SKIPPED [1] conans/test/.../test_cmaketoolchain.py:355: Only OSX 等三行"
+   ],
+   "note": "与 14296 同样的 parse_log_pytest 跳过行解析问题，详见 repo_level_findings.md §2。本题 3 条 skip 都不在参考清单内，暂无判分影响。",
+   "by": "L1_conan"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan2.json: gold 41 PASSED + 1 假键；empty 40 PASSED + 1 FAILED + 1 假键"
+   ],
+   "note": "分差来自目标行为。",
+   "by": "L1_conan"
+  },
+  "31": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "conans/test/.gitignore 第 1 行就是 conftest_user.py（1.51/1.54/1.60/2.0/2.1 五个 base 一致）",
+    "conans/test/conftest.py 用 from conans.test.conftest_user import tools_locations（1.x）/ tools_locations + default_profiles（2.x）并 merge 覆盖默认值",
+    "scripts 补扫：本题目标测试文件里无模块级 pytestmark、无 pytest.mark.tool、无 pytest.skip(、无 sys.exit/os._exit、无 conftest_user 引用"
+   ],
+   "note": "发现一个仓库级控制面：候选可以在 /testbed 新建 conans/test/conftest_user.py，它被官方 conftest 无条件 import 并 merge，而且它在 conans/test/.gitignore 里、也不在 test_patch 路径内，所以既不会被 git checkout <base> -- <path> 恢复，也不会被不带 -x 的 git clean 删掉；文件里的任意代码会在 pytest 收集阶段执行。本题是 conan 2.x：conans/test/utils/tools.py 从 conftest import default_profiles 并在 TestClient 里用作默认 host profile，所以改 conftest_user.py 能直接改变 TestClient 的 settings。 本题用 TestClient 跑集成测试，受 default_profiles 影响面更大。 本题的 F2P/P2P 本身没有可被跳过或提前退出的入口（见上条补扫）。按第四组 B，未发现依据前不新增排除清单，只记录观测。",
+   "by": "L1_conan"
+  }
+ },
+ "issues": [
+  {
+   "category": "gold_introduces_host_dependent_output",
+   "severity": "P3",
+   "evidence_refs": [
+    "conan/tools/build/cpu.py::build_jobs 的 default=_cpu_count()"
+   ],
+   "proposed_action": "记录为跨机器稳定性风险：gold 之后 CMakePresets.json 的 jobs 字段随宿主 CPU 数变化。",
+   "next_experiment": "在 15422 镜像上用 docker run --cpus=2 与不限制两种条件各跑一次 F2P+P2P，逐 ID 比对；这同时是清单第 14/15 项的一个现成对照。"
+  },
+  {
+   "category": "near_duplicate_with_14296",
+   "severity": "P2",
+   "evidence_refs": [
+    "两题同 gold 文件、同 test_patch 文件、同 version"
+   ],
+   "proposed_action": "在数据划分时把 14296 与 15422 绑在同一侧。",
+   "next_experiment": "对 216 题统一统计 (repo, gold 文件, test_patch 文件) 三元组的碰撞，产出同族分组表。"
+  },
+  {
+   "category": "control_surface_conftest_user",
+   "severity": "P2",
+   "evidence_refs": [
+    "conans/test/.gitignore:1",
+    "conans/test/conftest.py 的 conftest_user import 段",
+    "conans/test/utils/tools.py 的 from conans.test.conftest import default_profiles（仅 2.x）"
+   ],
+   "proposed_action": "仓库级处置，见 repo_level_findings.md §10：建议在 conan 的评分配方里，在可信 setup 阶段删除 /testbed/conans/test/conftest_user.py（或对整个 conans/test/ 做 git clean -xfd 后再 checkout），而不是逐题加 additional_exclusions。",
+   "next_experiment": "在 conan 镜像里写一个 conftest_user.py（例如 tools_locations={'cmake':{'disabled':True}} 或 2.x 下改 default_profiles['Linux'] 的 compiler），跑本题官方 eval，确认它是否改变逐 ID 结果；同时确认 RH2 的恢复步骤之后该文件是否仍在。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰纯测试文件；gold 不碰测试路径。",
+  "evidence_refs": [
+   "runs/env_overnight_20260916/L1_conan/prescan2.json"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "conans/test/integration/toolchains/cmake/test_cmake_toolchain_presets.py 或同文件的 test_cmake_presets_multiconfig / test_cmake_presets_singleconfig",
+   "reason": "buildPresets 的生成在 multi-config 与 single-config 两条路径上不同，_build_preset_fields 改动要在两条路径都验证；后两个已在 P2P 内。"
+  },
+  {
+   "id": "conans/test/functional/toolchains/cmake/test_cmake_toolchain.py",
+   "reason": "沿调用者的真实 cmake --build --preset 验证；带 @pytest.mark.tool('cmake')，在缺工具链的镜像里 conan conftest 会 pytest.fail 而非 skip（见 repo_level_findings.md），只能当诊断项。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "题面给了明确的 before/after 期望、gold 最小、F2P 不强制实现、P2P 40 条覆盖宽、无网络与工具链依赖；待确认的是跨机器 CPU 数对生成物的影响，以及与 14296 的同族划分。"
+ },
+ "costs": {
+  "minutes": 22
+ }
+}

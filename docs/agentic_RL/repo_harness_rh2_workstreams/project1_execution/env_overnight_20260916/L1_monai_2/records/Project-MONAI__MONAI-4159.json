@@ -1,0 +1,263 @@
+{
+ "task_id": "swe_gym_lite::Project-MONAI__MONAI-4159",
+ "instance_id": "Project-MONAI__MONAI-4159",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_monai_2 (Claude Opus 5, 静态审查)",
+ "materials_refs": {
+  "public": "docs/.../s2/ingest/public_bundles_v0.jsonl :: Project-MONAI__MONAI-4159",
+  "grading": "docs/.../s2/ingest/grading_bundles_v2_v0.jsonl :: Project-MONAI__MONAI-4159",
+  "validation": "docs/.../s2/ingest/validation_bundles_v0.jsonl :: Project-MONAI__MONAI-4159",
+  "base_commit": "8f5c9924df73f6f3dbb222d6a1263d71b7abd0cd",
+  "version": "0.8",
+  "python_version": "3.8",
+  "eval_cmd": "pytest -rA  tests/test_bundle_ckpt_export.py（整文件跑，无 -k）",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/Project-MONAI__MONAI-4159/{gold,empty}/offline/a1/"
+ },
+ "public_view": {
+  "目标行为": "题面（GitHub feature request）要求 `python -m monai.bundle ckpt_export` 支持只给 bundle 目录：新增 `--bundle_path` 指向 bundle 根目录，自动收集 `configs/` 下全部配置文件、隐式使用 `models/model.pt` 作为权重；并建议把 `filepath` 改名为 `out_path`。",
+  "约束": "属于 QoL 改进（题面自述 'The current command works just fine'）；题面还讨论是否该把 network_def 移到 metadata.json（未定）。",
+  "公开材料无法确定的点": [
+   "新参数名是否真叫 bundle_path/out_path、是否保留旧参数",
+   "configs 目录下多个文件如何合并或分别保存",
+   "导出的 TorchScript 里 extra_files 的键名约定（题面完全未提）",
+   "是否要对重名配置文件报错"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "issue",
+   "evidence_refs": [
+    "grading.test_patch(tests/test_bundle_ckpt_export.py)",
+    "validation.golden_patch(monai/bundle/scripts.py:598-618)",
+    "public.problem_statement"
+   ],
+   "note": "三面材料指向同一 PR，但题面描述的是一个更大的 feature（bundle_path/out_path 自动发现），gold 只实现了其中一小步（把 more_extra_files 从单键 'config' 改成按文件名分键）。题面里没有任何一句对应 gold 的改动。无二进制/LFS/子模块材料。",
+   "by": "L1_monai_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base 8f5c9924 monai/bundle/scripts.py ckpt_export 末尾 more_extra_files={\"config\": json.dumps(parser.get()).encode()}"
+   ],
+   "note": "base 确实只写一个 'config' 键，因此新增的 F2P 断言（extra_files 含 'inference'/'def_args'）在 base 必然失败；stage1 empty 侧两条 F2P 都是 FAILED，与静态判断一致。但『初态含题面所述问题』只在很弱的意义上成立——题面说的是缺 bundle_path，不是缺分键。",
+   "by": "L1_monai_2"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "public.problem_statement 1301 字符，含两个完整 bash 代码块，无外链、无图片、无截断"
+   ],
+   "note": "题面渲染完整。hints_text 为空（0 字符），不存在『hints 有而题面没有』的信息差；但这也意味着确定 gold 方向的信息在任何可见材料里都不存在。",
+   "by": "L1_monai_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只触碰 tests/test_bundle_ckpt_export.py"
+   ],
+   "note": "test_patch 全部路径都是测试文件，无非测试源码被恢复覆盖；gold 只碰 monai/bundle/scripts.py，不含测试样路径。按第四组 B，additional_exclusions 保持空。",
+   "by": "L1_monai_2"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh: git checkout <base> tests/test_bundle_ckpt_export.py; git apply test_patch"
+   ],
+   "note": "恢复清单只有一个纯测试文件，无混合职责。",
+   "by": "L1_monai_2"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_monai_2/scan/monai_cross_index.txt"
+   ],
+   "note": "26 道 MONAI 题里只有本题触碰 monai/bundle/scripts.py 与 tests/test_bundle_ckpt_export.py，无同 PR/同修复重复。与同为 bundle 子系统的 5932/6756（reference_resolver.py）不同文件、不同 PR。",
+   "by": "L1_monai_2"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "public.problem_statement",
+    "grading.fail_to_pass",
+    "test_patch 新增断言 3 行"
+   ],
+   "note": "P1：F2P 检查的行为无法由公开材料推出。F2P 断言 `load_net_with_metadata(ts_file, more_extra_files=[\"inference\",\"def_args\"])` 能取到按**配置文件 basename 去扩展名**命名的两个 extra_file，题面从头到尾没提 extra_files 键名。按题面字面实现 `--bundle_path/--out_path` 的候选会拿 0 分。未说明的约定逐条：(a) extra_files 键 = 配置文件名去扩展名；(b) 值恒为 JSON 序列化（即使源文件是 YAML）；(c) 重名时抛 ValueError；(d) 旧的单键 'config' 被移除。",
+   "by": "L1_monai_2"
+  },
+  "24": {
+   "status": "issue",
+   "evidence_refs": [
+    "test_patch: more_extra_files=[\"inference\",\"def_args\"]"
+   ],
+   "note": "P2：键名 'inference'/'def_args' 直接来自测试临时文件名，等于把『键 = basename 去扩展名』这一唯一实现钉死。合理替代实现（例如键用完整文件名 'inference.json'、或保留 'config' 单键再加 per-file 子字典）都会被 F2P 拒绝，而题面没有任何依据支持这个命名。",
+   "by": "L1_monai_2"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "test_patch 断言只有 3 条：'schema' in metadata、'meta_file' in json.loads(extra_files['def_args'])、'network_def' in json.loads(extra_files['inference'])"
+   ],
+   "note": "P1：断言只查『某个键存在于某个 extra_file 的 JSON 里』，不查每个 extra_file 只含**该文件自己**的内容。因为 parser 已把 inference.json 与 def_args.yaml 合并，合并结果同时含 network_def 与 meta_file，所以 `extra_files = {basename(i): json.dumps(parser.get()).encode() for i in ensure_tuple(config_file_)}`（每个键都写合并后的整份配置）同样通过 F2P，但语义是错的。gold 的 ValueError（重名配置文件）分支完全未被测试覆盖。",
+   "by": "L1_monai_2"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "grading.pass_to_pass = []"
+   ],
+   "note": "P1：P2P 为空，零回归保护。gold 把导出产物里的 `config` 键整个删掉换成 per-file 键，这是对 TorchScript 产物布局的**不兼容改动**，而 MONAI 自身有读取该产物的路径（monai/bundle/scripts.py 的 verify_net_in_files / load_net_with_metadata 调用者），没有任何测试守住旧行为或新行为的完整性。",
+   "by": "L1_monai_2"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "validation.golden_patch 仅改 monai/bundle/scripts.py 的 docstring 与 ckpt_export 末段"
+   ],
+   "note": "gold 自洽、不含无关改动、不依赖未交付的其它改动（ensure_tuple 在 base 的 monai/utils/misc.py 已存在）。但 gold 只兑现了题面的一个侧面。",
+   "by": "L1_monai_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "public.problem_statement 全文"
+   ],
+   "note": "题面不含修复代码、不含上游 PR/commit 链接；hints_text 为空。无静态泄漏。",
+   "by": "L1_monai_2"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh install 段 rc=0（gold/empty 两侧）"
+   ],
+   "note": "安装配方 `sed -i '/^git+https:\\/\\/github.com\\/Project-MONAI\\//d' requirements-dev.txt; pip install types-pkg-resources==0.1.3 pytest; pip install -r requirements-dev.txt; python setup.py develop` 在离线镜像内 rc=0。",
+   "by": "L1_monai_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "git ls-tree 8f5c9924 tests/testing_data/ 含 inference.json、metadata.json"
+   ],
+   "note": "测试只用仓库内已跟踪的 testing_data 资产，不需要权重或外部数据。",
+   "by": "L1_monai_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "git grep 8f5c9924 -- tests/test_bundle_ckpt_export.py 中唯一 http 出现在 Apache 许可证头",
+    "tests/utils.py 的 download_url 只在函数体内调用，无 import 期下载"
+   ],
+   "note": "本题测试不需要网络。**但要注意 check 9**：测试通过 `subprocess.check_call(['coverage','run','-m','monai.bundle', ...])` 跑子进程，因此候选代码必须真正安装生效（python setup.py develop）才会被测到；同时需要 `coverage` 可执行文件存在。",
+   "by": "L1_monai_2"
+  },
+  "13": {
+   "status": "unknown",
+   "evidence_refs": [
+    "stage1 gold test 段"
+   ],
+   "note": "未测量 CPU/内存/耗时。测试要构建 UNet 并 torch.jit.script，属轻量 CPU 负载；无 DataLoader 多进程、无 shm 需求。",
+   "by": "L1_monai_2"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 gold status_map.json 共 2 条，与 F2P 2 条一一对应，无 SKIPPED 伪键"
+   ],
+   "note": "本题无 SKIPPED，未触发 parse_log_pytest 的 `SKIPPED [N] file:line` 键错位问题（见 4676/6523）。",
+   "by": "L1_monai_2"
+  },
+  "31": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_monai_2/scan/control_surface.txt",
+    "stage1 eval.sh 只 `git checkout <base> <test_patch 路径>`",
+    "grading.test_patch 不含 tests/utils.py"
+   ],
+   "note": "P2：本题测试从 **tests/utils.py** import `skip_if_windows`，而 test_patch 的恢复清单只含本题的测试文件本身，**tests/utils.py 不被恢复**，保持候选写过的状态。弱暴露：这些 helper 只影响跳过/超时行为，改它对候选没有正收益（跳过的 nodeid 会缺席→按缺席计失败）。 另：base 里没有 tests/conftest.py，候选可新建一个注入 hook。此处只记录观测与建议，不据怀疑扣分。",
+   "by": "L1_monai_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "题意-评分不对应",
+   "severity": "P1",
+   "evidence_refs": [
+    "public.problem_statement",
+    "validation.golden_patch",
+    "grading.fail_to_pass"
+   ],
+   "proposed_action": "标为需要改题面：把『导出时每个 config 文件单独存为 extra_file、键为文件名去扩展名』写进题面要求，否则本题不适合作为盲解训练/评测题。",
+   "next_experiment": "让一个只看题面的求解上下文实现 bundle_path/out_path 版本，跑当前 F2P，预期 0/2。"
+  },
+  {
+   "category": "零回归保护",
+   "severity": "P1",
+   "evidence_refs": [
+    "grading.pass_to_pass = []"
+   ],
+   "proposed_action": "补 P2P：至少纳入 tests/test_bundle_ckpt_export.py 的既有 2 条（在 base 已通过）以及 tests/test_bundle_verify_net.py / test_bundle_verify_metadata.py 等消费导出产物的用例。",
+   "next_experiment": "在 gold 上跑 tests/test_bundle_*.py 全套取基线通过集，挑出与 more_extra_files 相关的用例入 P2P。"
+  },
+  {
+   "category": "测试可被错误实现通过",
+   "severity": "P2",
+   "evidence_refs": [
+    "test_patch 3 条断言"
+   ],
+   "proposed_action": "补断言：每个 extra_file 的内容等于对应源文件自身的 JSON，而不是合并后的整份配置；并补重名文件抛 ValueError 的用例。",
+   "next_experiment": "写『每个键都塞合并后 parser.get()』的假修复，跑 F2P，预期 2/2 通过。"
+  },
+  {
+   "category": "测试强制唯一实现",
+   "severity": "P2",
+   "evidence_refs": [
+    "test_patch more_extra_files=[\"inference\",\"def_args\"]"
+   ],
+   "proposed_action": "若保留本题，需在题面里明确键名约定；否则放宽断言。",
+   "next_experiment": "无（与上一条共用实验）。"
+  },
+  {
+   "category": "评分控制面（test_patch 之外的测试依赖）",
+   "severity": "P3",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_monai_2/scan/control_surface.txt"
+   ],
+   "proposed_action": "记录即可：本题对该文件的暴露没有正收益。",
+   "next_experiment": "无。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰纯测试文件 tests/test_bundle_ckpt_export.py，无混合职责源码；gold 不碰测试样路径。按第四组 B §0/§6.5 默认为空。 补充：测试从 tests/utils.py import `skip_if_windows`，该文件不在恢复清单内；但这些 helper 只影响跳过/超时，改它对候选没有正收益，因此仍保持 additional_exclusions 为空。",
+  "evidence_refs": [
+   "grading.test_patch",
+   "validation.golden_patch",
+   "runs/env_overnight_20260916/L1_monai_2/scan/control_surface.txt"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/test_bundle_ckpt_export.py::TestCKPTExport::test_export_0_",
+   "reason": "本题唯一直接覆盖 ckpt_export 的用例，base 已通过，应作为 P2P 底线（当前 P2P 为空）。"
+  },
+  {
+   "id": "tests/test_bundle_verify_net.py",
+   "reason": "verify_net_in_files 与 ckpt_export 共用 monai/bundle/scripts.py 的参数解析与 ConfigParser 读取路径，gold 改动可能误伤。"
+  },
+  {
+   "id": "tests/test_bundle_verify_metadata.py",
+   "reason": "同一文件的 meta_file 读取路径，覆盖 gold 未改但相邻的 _pop_args/_update_args 行为。"
+  },
+  {
+   "id": "tests/test_save_net_with_metadata.py 或 tests/test_load_net_with_metadata（若存在）",
+   "reason": "直接覆盖 save/load_net_with_metadata 的 extra_files 往返，是本次布局改动的真正下游。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "评分目标（extra_files 分键命名）无法从题面推出，且 P2P 为空、错误实现可满分；需要改题面 + 补 P2P + 补断言后才适合入池。"
+ },
+ "costs": {
+  "minutes": 22
+ }
+}

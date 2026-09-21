@@ -1,0 +1,60 @@
+{
+ "task_id": "modin-project__modin-6400",
+ "source": "SWE-Gym lite (s2 ingest v0)",
+ "task_revision": "upstream",
+ "materials_refs": [
+  "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/{public,grading_bundles_v2,validation}_*_v0.jsonl",
+  "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/modin-project__modin-6400/{gold,empty}/offline/a1/",
+  "runs/env_overnight_20260916/repos/modin@2a6aafed41f7758d75dab88517c76b5cdb1905fc"
+ ],
+ "public_view": {
+  "goal": "ExperimentalNumPyAPI 打开时，modin 自己的 numpy array 被 df.insert()/df[col]= 当成标量，整列填成 array([1,2,3])；应当按数组逐元素插入。",
+  "constraints_from_statement": [
+   "标题直接点名 modin 的 dataframe.insert()。",
+   "题面给出 ExperimentalNumPyAPI False/True 两种输出对照，期望行为（True 时应与 False 时一致）从对照里可以推出。"
+  ],
+  "unknowns_from_public_only": [
+   "题面的复现用的是 df['c'] = df['a'].to_numpy()（__setitem__），F2P 测的是 df.insert(1, 'new_col', md_np_value) 直调；两者是否同一条路径题面没说（modin 的 __setitem__ 新列确实转调 insert，但这要读代码才知道）。",
+   "二维 modin array、长度不匹配、loc 越界等情形的期望行为未说明。",
+   "该在 modin/pandas/dataframe.py 改还是在 query_compiler / numpy 层改 —— 题面未指定。"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["modin@2a6aafed:modin/pandas/dataframe.py insert()", "modin@2a6aafed:modin/pandas/test/dataframe/test_map_metadata.py"], "note": "gold 与 test_patch 的目标文件在 base 都存在且与题面同一问题。", "by": "L1_modin_pandas"},
+  "2": {"status": "pass", "evidence_refs": ["validation.golden_patch（base 侧只判 np.ndarray 与 Series）", "stage1 empty/status_map.json: test_insert_modin_array FAILED"], "note": "base 的 insert 只认 np.ndarray 与 modin Series，modin.numpy.array 落到标量分支；empty 侧 F2P FAILED。", "by": "L1_modin_pandas"},
+  "3": {"status": "pass", "evidence_refs": ["public_bundles_v0.jsonl problem_statement"], "note": "题面 564 字符，代码块完整、无外链、无图片、无截断；hints_text 为空。", "by": "L1_modin_pandas"},
+  "4": {"status": "pass", "evidence_refs": ["grading.test_patch"], "note": "test_patch 只触碰 modin/pandas/test/dataframe/test_map_metadata.py。", "by": "L1_modin_pandas"},
+  "17": {"status": "pass", "evidence_refs": ["validation.golden_patch"], "note": "gold 只触碰 modin/pandas/dataframe.py；additional_exclusions 保持空。", "by": "L1_modin_pandas"},
+  "5": {"status": "pass", "evidence_refs": ["tasks_by_repo.json"], "note": "与本包其余 modin 题不同 PR、不同模块、不同测试文件；与 modin-6298 同属 modin.numpy 主题但改的是 modin/pandas/dataframe.py 的插入路径，不是同一修复。", "by": "L1_modin_pandas"},
+  "23": {"status": "issue", "evidence_refs": ["public_bundles_v0.jsonl problem_statement", "grading.test_patch"], "note": "题面复现走 __setitem__，F2P 直接调 insert()。虽然标题写了 insert()，但 agent 若只按复现代码验证（改 __setitem__ 里的分支）可能绕过 insert 本身。另外 F2P 断言的是『插入 modin array 与插入等价 numpy array 结果相同』，这个等价契约题面没明写。", "by": "L1_modin_pandas"},
+  "24": {"status": "pass", "evidence_refs": ["grading.test_patch"], "note": "F2P 只做 df_equals(modin_df1, modin_df2)，不引用 gold 的 isinstance(value, (array, np.ndarray)) 写法。在 insert 入口把 modin array 先 to_numpy() 再走原路径也能过。", "by": "L1_modin_pandas"},
+  "25": {"status": "issue", "evidence_refs": ["grading.test_patch"], "note": "F2P 只有一个一维 3 元素 array、loc=1 的样例。没覆盖二维 modin array（gold 的第一处改动正是为二维分支加的 isinstance），也没覆盖 ExperimentalNumPyAPI 开关。只改 gold 的第二处（isinstance(value, (Series, array))）就能过 F2P，第一处改动完全没有测试保护。", "by": "L1_modin_pandas"},
+  "26": {"status": "pass", "evidence_refs": ["modin@2a6aafed"], "note": "见 proposed_regression_tests。", "by": "L1_modin_pandas"},
+  "27": {"status": "issue", "evidence_refs": ["validation.golden_patch"], "note": "gold 本身自洽（用函数内 from modin.numpy import array 规避循环导入），不依赖未交付改动。但它沿用了 base 里 A or B and C 的写法（and 优先级高于 or），第一处改动落在 B 上，语义是 isinstance(value, (DataFrame, pandas.DataFrame)) or (isinstance(value, (array, np.ndarray)) and len(value.shape) > 1)。这是 base 既有的易读性陷阱，gold 没有顺手修，也没有被任何 F2P 覆盖。", "by": "L1_modin_pandas"},
+  "29": {"status": "pass", "evidence_refs": ["leak.json"], "note": "题面不含 gold 新增代码、不指向上游 PR/commit；hints_text 为空。", "by": "L1_modin_pandas"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold/offline/a1/eval.sh", "phase 计时"], "note": "install 3.4 秒（pip install -e .），测试段 401 秒、rc=0，gold 侧 692/692 全 PASSED。无编译扩展、无下载。", "by": "L1_modin_pandas"},
+  "7": {"status": "pass", "evidence_refs": ["runs/env_overnight_20260916/L1_modin_pandas/optdeps.json"], "note": "test_map_metadata.py 无 importorskip / S3 / datapath；URL 只在注释里。仍受 modin/conftest.py 模块级 import boto3/requests/s3fs 的约束。", "by": "L1_modin_pandas"},
+  "11": {"status": "issue", "evidence_refs": ["runs/env_overnight_20260916/L1_modin_pandas/collide_detail.json"], "note": "692 个常量对应 702 个运行时测试；10 个截断键各吞掉 1 个额外 ID（都是 test_applymap[...-plus one-...] 这类参数里带空格的）。无反斜杠层级问题，规模比其它 modin 题小得多。", "by": "L1_modin_pandas"}
+ },
+ "issues": [
+  {"category": "reference_id_truncation", "severity": "P3",
+   "evidence_refs": ["runs/env_overnight_20260916/L1_modin_pandas/collide_detail.json"],
+   "note": "10 个 P2P 键各代表 2 个运行时测试（test_applymap 的 int_data/float_nan_data 两个参数被折叠成一个键）。规模小，影响有限。",
+   "proposed_action": "与其它 modin 题一起用 junitxml 取 ID；短期可接受。",
+   "next_experiment": "与 6937/6780 合并做一次收集对拍。"},
+  {"category": "test_coverage_narrow", "severity": "P2",
+   "evidence_refs": ["grading.test_patch", "validation.golden_patch"],
+   "note": "gold 的两处改动里只有第二处被 F2P 覆盖；二维 modin array 那处没有任何测试。",
+   "proposed_action": "把二维 modin array 的插入断言加入 proposed_regression_tests，或在 task_revision 里补一条 F2P。",
+   "next_experiment": "真机上构造 array(np.array([[1],[2],[3]])) 调 insert，确认 base 与 gold 的差异确实存在。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只在 modin/pandas/test/，gold 只在 modin/pandas/dataframe.py，不交叉；沿用默认空集。", "evidence_refs": ["grading.test_patch", "validation.golden_patch"]},
+ "proposed_regression_tests": [
+  {"id": "modin/pandas/test/dataframe/test_map_metadata.py::test_insert", "reason": "同文件的 insert 主用例，直接覆盖 gold 改动的两个分支在非 modin-array 输入下的行为。"},
+  {"id": "modin/pandas/test/dataframe/test_indexing.py", "reason": "__setitem__ 新列会转调 insert，是题面复现走的那条路径。"},
+  {"id": "modin/numpy/test/test_array_creation.py", "reason": "验证 modin.numpy.array 的 shape/ndim 语义与 gold 的 len(value.shape) > 1 判据一致。"},
+  {"id": "modin/pandas/test/dataframe/test_map_metadata.py::test_insert_dtypes", "reason": "插入后 dtype 推断是最易被新分支改坏的地方。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "gold RESOLVED_FULL、F2P/P2P 无 missing 且 notpass 为空、无反斜杠 ID 问题、install 3.4 秒 + 测试 6.7 分钟。主要弱点是 F2P 覆盖只打到 gold 的一半改动，属可接受的 P2。"},
+ "costs": {"minutes": 22}
+}

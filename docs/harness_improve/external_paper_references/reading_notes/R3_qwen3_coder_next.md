@@ -413,9 +413,9 @@ SecCodeBench 是 **53 个 Java coding 任务**，多数源于阿里历史真实�
 
 | 资产 | 已读版本 | 阅读用途 / 快照 |
 |---|---|---|
-| [Qwen/Qwen3-Coder-Next](https://huggingface.co/Qwen/Qwen3-Coder-Next/tree/a7fbcb5c0e12d62a448eaa0e260346bf5dcc0feb) | `a7fbcb5c0e12d62a448eaa0e260346bf5dcc0feb`，API lastModified 2026-02-03 | 读 README；[快照](sources/R3/model_README.md)；公开最终模型，Apache-2.0，non-thinking，原生 262,144 context |
-| [Qwen/Qwen3-Coder-Next-Base](https://huggingface.co/Qwen/Qwen3-Coder-Next-Base/tree/1b6df59d5f75ab51edb9ad8cb3ea69c5d0aedd57) | `1b6df59d5f75ab51edb9ad8cb3ea69c5d0aedd57`，API lastModified 2026-02-03 | 读 README；[快照](sources/R3/base_README.md)；base/pretraining 标签，不能混作最终 post-trained checkpoint |
-| [QwenLM/Qwen3-Coder](https://github.com/QwenLM/Qwen3-Coder/tree/33bc6aabd7791ad7b32f7e92104f11f2359ba890) | `33bc6aabd7791ad7b32f7e92104f11f2359ba890`，commit 2026-03-24 | 读 README；[快照](sources/R3/qwen_code_README.md)；模型入口、调用/FIM 示例、SGLang/vLLM parser 提示；**是晚于报告的滚动仓库版本** |
+| [Qwen/Qwen3-Coder-Next](https://huggingface.co/Qwen/Qwen3-Coder-Next/tree/a7fbcb5c0e12d62a448eaa0e260346bf5dcc0feb) | `a7fbcb5c0e12d62a448eaa0e260346bf5dcc0feb`，API lastModified 2026-02-03 | 读 README；快照（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/R3/model_README.md`）；公开最终模型，Apache-2.0，non-thinking，原生 262,144 context |
+| [Qwen/Qwen3-Coder-Next-Base](https://huggingface.co/Qwen/Qwen3-Coder-Next-Base/tree/1b6df59d5f75ab51edb9ad8cb3ea69c5d0aedd57) | `1b6df59d5f75ab51edb9ad8cb3ea69c5d0aedd57`，API lastModified 2026-02-03 | 读 README；快照（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/R3/base_README.md`）；base/pretraining 标签，不能混作最终 post-trained checkpoint |
+| [QwenLM/Qwen3-Coder](https://github.com/QwenLM/Qwen3-Coder/tree/33bc6aabd7791ad7b32f7e92104f11f2359ba890) | `33bc6aabd7791ad7b32f7e92104f11f2359ba890`，commit 2026-03-24 | 读 README；快照（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/R3/qwen_code_README.md`）；模型入口、调用/FIM 示例、SGLang/vLLM parser 提示；**是晚于报告的滚动仓库版本** |
 | [PrimeVul 官方仓库](https://github.com/DLVulDet/PrimeVul/tree/6f54687c84947b1d17486495440b37030d147289) | `6f54687c84947b1d17486495440b37030d147289` | 读 README 核对原始论文入口；指标方向最终依据原论文 §IV-B2，不依据该仓库训练脚本 |
 
 仅 README 和元数据检查，没有下载权重或运行模型。Next 模型卡公开 SGLang ≥0.5.8、vLLM ≥0.15.0 和 `qwen3_coder` tool-call parser 的部署入口；这些是卡片发布时的建议，未据此认定 R3 训练使用这些版本。卡片 prose 说 tensor parallel on 4 GPUs，但示例写 `--tp-size 2` / `--tensor-parallel-size 2`，不能据此当作一致的硬件复现配置。

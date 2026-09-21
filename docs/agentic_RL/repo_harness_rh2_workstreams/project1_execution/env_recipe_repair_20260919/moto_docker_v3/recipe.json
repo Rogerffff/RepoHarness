@@ -1,0 +1,8 @@
+{
+  "instance_id": "getmoto__moto-7105",
+  "original_install": "make init",
+  "revised_install": "export DOCKER_HOST=tcp://127.0.0.1:2375\nmake init",
+  "trusted_setup_append": "for rh2_service_wait in $(seq 1 240); do\n  [ -f /tmp/rh2-docker-ready ] && break\n  sleep 1\ndone\n[ -f /tmp/rh2-docker-ready ] || { echo RH2_SETUP_ERROR=docker_service_not_ready; exit 1; }",
+  "decision": "E17",
+  "scope": "dedicated rootless daemon; same private no-network namespace; no host bind/socket; sidecar 1CPU/2GiB/PID512 additional to grader"
+}

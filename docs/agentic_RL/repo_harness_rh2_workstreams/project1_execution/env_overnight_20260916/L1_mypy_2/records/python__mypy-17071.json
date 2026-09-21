@@ -1,0 +1,260 @@
+{
+ "task_id": "python__mypy-17071",
+ "source": "SWE-Gym lite / python/mypy PR 17071（TypeGuard/TypeIs 里的 TypeVar 不被识别）",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "4310586460e0af07fa8994a0b4f03cb323e352f0",
+  "version": "1.10",
+  "python_version": "3.12",
+  "eval_cmd": "pytest -rA -k",
+  "f2p": [
+   "...check-typeguard.test::testTypeGuardTypeVarReturn",
+   "...check-typeis.test::testTypeIsTypeVarReturn"
+  ],
+  "p2p": [
+   "...check-typeis.test::testTypeIsUnionIn",
+   "...check-typeguard.test::testTypeGuardIsBool"
+  ],
+  "gold_paths": [
+   "mypy/typetraverser.py"
+  ],
+  "test_patch_paths": [
+   "test-data/unit/check-typeguard.test",
+   "test-data/unit/check-typeis.test"
+  ],
+  "runtime_evidence": "无（不在 stage1 样本、in_e2 空、无 DeepSeek 候选）"
+ },
+ "public_view": {
+  "goal": "`def type_guard(x: Any, f: Callable[[Any], TypeGuard[T]]) -> T` 被误报 'A function returning TypeVar should receive at least one argument containing the same TypeVar [type-var]'；要求不报。",
+  "constraints": [
+   "**题面整段重复两遍**（1638 字符 = 819×2 逐字相同），与 L1_mypy_1 在 216 题里扫出的 6 例重复题面同型",
+   "题面代码块缩进是坏的（`raise TypeError(...)` 后面的 `return x` 多缩进一级），且没有 import 段，直接粘贴无法运行",
+   "题面只讲 TypeGuard，没提 TypeIs"
+  ],
+  "unknowns_from_public_only": [
+   "修在哪一层：是给 check_unbound_return_typevar 的 CollectArgTypeVarTypes 单独补 TypeGuard 分支，还是像 gold 那样改公共基类 TypeTraverserVisitor（影响全部 6 个子类）",
+   "TypeIs 要不要一起修——题面没提，F2P 有一条专测它",
+   "修好之后 reveal_type(main(\"a\", is_str)) 应是 builtins.str（F2P 要求），题面没写这一步"
+  ],
+  "base_code_evidence": [
+   "43105864:mypy/typetraverser.py:80-90 visit_callable_type 只遍历 arg_types/ret_type/fallback，**不进 t.type_guard / t.type_is**",
+   "43105864:mypy/checker.py:1422-1440 check_unbound_return_typevar 用 CollectArgTypeVarTypes 收集参数里的 TypeVar；因为遍历漏了 type_guard，Callable[[Any], TypeGuard[T]] 里的 T 收不到 → 报 UNBOUND_TYPEVAR",
+   "43105864:mypy/ 全仓 TypeTraverserVisitor 共 6 个子类：checker.CollectArgTypeVarTypes、checkmember.FreezeTypeVarsVisitor、messages.CollectAllInstancesQuery、mixedtraverser.MixedTraverserVisitor、tvar_scope.TypeVarLikeNamespaceSetter、types.LocationSetter"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "两个 test_patch 目标文件在 base 均存在",
+    "gold 目标 mypy/typetraverser.py:86-92 在 base 逐行一致"
+   ],
+   "note": "无二进制/LFS/子模块；两条 F2P 都是新增 case。",
+   "by": "L1_mypy_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "43105864:mypy/typetraverser.py:80-90 缺 type_guard/type_is 遍历"
+   ],
+   "note": "静态确认 base 含题面缺陷，且根因链条完整（traverser → CollectArgTypeVarTypes → UNBOUND_TYPEVAR）。",
+   "by": "L1_mypy_2"
+  },
+  "3": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "problem_statement 1638 字符，前 819 与后 819 逐字相同（runs/.../L1_mypy_2/prescan.json:ps_dup_half=true）",
+    "题面代码块缩进损坏、缺 import",
+    "raw hints_text 473 字符，同样**重复两遍**：'I imagine the code that produces that error doesn't know to look inside the TypeGuard. If so, this should be an easy fix.'"
+   ],
+   "note": "题面与 hints 都被复制了两遍，说明 SWE-Gym 抽取时把同一段正文拼接了两次（本包只有本题命中）。hints 那句话正好点出了根因方向（'不知道往 TypeGuard 里面看'），agent 不可见。",
+   "by": "L1_mypy_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 两个路径都在 test-data/unit/"
+   ],
+   "note": "无非测试源码；gold 不碰测试样路径。",
+   "by": "L1_mypy_2"
+  },
+  "17": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "同 file_rules"
+   ],
+   "note": "仓库级。本题 4 条 F2P/P2P 的宿主文件都在 test_patch 里，受保护。",
+   "by": "L1_mypy_2"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "40 题里只有本题 gold 触碰 mypy/typetraverser.py"
+   ],
+   "note": "无重复；与 16905/16963/16966 同为 1.10 版本段，划分时注意时间相邻。",
+   "by": "L1_mypy_2"
+  },
+  "23": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "F2P 含 TypeIs 一条，题面只提 TypeGuard"
+   ],
+   "note": "TypeIs 是 TypeGuard 的姊妹特性（1.10 新增），要求虽超出题面但属自然对称；F2P 要求的 reveal_type 结果也是修好后的自然结果。总体可接受。",
+   "by": "L1_mypy_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 只断言无错误 + reveal_type 结果"
+   ],
+   "note": "不强制唯一实现：在 CollectArgTypeVarTypes 里单独 override visit_callable_type（更窄、更安全）同样能过 F2P 与 P2P。",
+   "by": "L1_mypy_2"
+  },
+  "25": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "gold 改的是公共基类 TypeTraverserVisitor.visit_callable_type，**6 个子类同时受影响**（见 base_code_evidence 第三条）",
+    "P2P 只有 2 条（testTypeIsUnionIn、testTypeGuardIsBool），都只覆盖 TypeGuard/TypeIs 的基本语义，对另外 5 个消费者（FreezeTypeVarsVisitor / CollectAllInstancesQuery / MixedTraverserVisitor / TypeVarLikeNamespaceSetter / LocationSetter）零覆盖"
+   ],
+   "note": "漏放方向不是'假修复能过'，而是'正确方向的修复可能带来未被检测的副作用'：例如 LocationSetter 从此会重写 type_guard 类型上的行列号、MixedTraverserVisitor 会多访问一层。当前评分无法发现这类回归。",
+   "by": "L1_mypy_2"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "6 个子类只有 1 个被间接覆盖"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_mypy_2"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 6 行，只加两个 None 判断与 accept 调用"
+   ],
+   "note": "gold 正确、完整、无题外改动、不依赖未交付改动。",
+   "by": "L1_mypy_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 无 PR/commit 链接、无修复代码"
+   ],
+   "note": "题面无泄漏（hints 有方向性提示但不可见）。",
+   "by": "L1_mypy_2"
+  },
+  "6": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "未实跑安装。",
+   "by": "L1_mypy_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P case 用 [builtins fixtures/exception.pyi]，在仓库内；TypeGuard/TypeIs 由随仓库分发的 typing_extensions stub 提供"
+   ],
+   "note": "无外部依赖。",
+   "by": "L1_mypy_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "case 正文无网络调用"
+   ],
+   "note": "纯离线。",
+   "by": "L1_mypy_2"
+  },
+  "18": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "eval_cmd 缺 -n0；43105864:pyproject.toml addopts = \"-nauto ...\"",
+    "kscan.json:python__mypy-17071 四条 over_select 均为空"
+   ],
+   "note": "并行口径问题；无 -k 过选、无跨文件同名冲突（两个 .test 文件里的 case 名互不包含）。",
+   "by": "L1_mypy_2"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "nodeid 4 段；43105864:mypy/test/data.py 含 DataFileCollector"
+   ],
+   "note": "形状一致。",
+   "by": "L1_mypy_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "problem_statement_duplicated",
+   "severity": "P3",
+   "evidence_refs": [
+    "problem_statement 前后半逐字相同；hints_text 同样重复两遍"
+   ],
+   "proposed_action": "入库前做一次'前后半相同'的机械去重（216 题里已知 6 例，本题是其中之一）。",
+   "next_experiment": "无（字符串比对即可）。"
+  },
+  {
+   "category": "grading_coverage",
+   "severity": "P2",
+   "evidence_refs": [
+    "gold 改公共基类影响 6 个子类，P2P 只 2 条且只覆盖 1 个子类的效果"
+   ],
+   "proposed_action": "补 P2P：check-typeguard.test / check-typeis.test 全文件，外加 semanal/merge/serialize 系列（它们经过 MixedTraverserVisitor 与 LocationSetter）。",
+   "next_experiment": "gold 上跑 check-typeguard.test、check-typeis.test、semanal-types.test、merge.test、check-serialize.test 取基线，观察是否有输出差异。"
+  },
+  {
+   "category": "eval_cmd_parallelism",
+   "severity": "P2",
+   "evidence_refs": [
+    "eval_cmd 'pytest -rA -k'（无 -n0）",
+    "base pyproject.toml addopts = \"-nauto --strict-markers --strict-config\"",
+    "test-requirements.in 含 pytest>=7.4.0 与 pytest-xdist>=1.34.0"
+   ],
+   "proposed_action": "本题会在 pytest-xdist 全核并行下评分（本包 5 题、40 题里 6 题如此）。建议统一补 -n0 或明确记录并行口径。",
+   "next_experiment": "同机对比带/不带 -n0 的逐 case 状态、墙钟耗时与峰值内存。"
+  },
+  {
+   "category": "file_boundary",
+   "severity": "P1",
+   "evidence_refs": [
+    "rh2/src/repoharness2/grading/manager.py:656/672/581"
+   ],
+   "proposed_action": "建议把 mypy/test/* 与 test-data/* 纳入 hygiene 保护（40 题 gold 均不触碰）。",
+   "next_experiment": "构造只改 mypy/test/helpers.py::assert_string_arrays_equal 的候选 patch 走一次评分，确认当前会判满分。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 test-data/unit/ 下的 .test 数据文件，gold 只碰 mypy/ 源码，两者无交集，按第四组 B 默认保持空。仓库级建议（需用户裁定、对 40 题统一生效）：把 'mypy/test/*' 与 'test-data/*' 加入 hygiene.test_globs——40 题 gold 无一触碰这两处（已对 validation_bundles 全量核对），而当前 agent 改 mypy/test/helpers.py、mypy/test/data.py 或 test-data/unit/fixtures/*.pyi 既不被 eval 的 git checkout 还原，也不被判 rejected_test_tampering。副作用：agent 在 test-data/ 下建临时文件会让整份提交作废，需一并决定。",
+  "evidence_refs": [
+   "rh2/src/repoharness2/grading/manager.py:656、:672、:581",
+   "rh2/src/repoharness2/contracts/grading.py:118-121"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "check-typeguard.test 与 check-typeis.test 全文件",
+   "reason": "本次改动的直接语义面。"
+  },
+  {
+   "id": "semanal-types.test、merge.test、check-serialize.test",
+   "reason": "这三处分别经过 MixedTraverserVisitor / LocationSetter，是遍历器改动最可能泄漏副作用的地方。"
+  },
+  {
+   "id": "check-errorcodes.test 里 [type-var] 相关 case",
+   "reason": "被消除的那条错误属于 type-var 错误码，需确认没有连带放行别的情形。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "根因链条清楚、gold 最小且正确、F2P/P2P 对应；主要待办是题面去重与补齐公共基类改动的回归面。"
+ },
+ "costs": {
+  "minutes": 26
+ }
+}

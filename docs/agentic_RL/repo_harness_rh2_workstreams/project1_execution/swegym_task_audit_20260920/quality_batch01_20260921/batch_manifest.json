@@ -1,0 +1,560 @@
+{
+  "status": "independent_plan_review_addressed_not_dispatched",
+  "as_of": "2026-09-21",
+  "scope": "12 SWE-Gym development-diagnostic tasks; static quality review before selective CPU and model probes",
+  "source_files": {
+    "public": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+      "sha256": "278a52be906f4f5fe98418f5bfd6536e97b333b0fdc9bbd15cd1328ae8c5f7f3"
+    },
+    "grading": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+      "sha256": "762a3ad12a08e4c723bf5da609cf765a6a42388e01530d411dd61e82de625264"
+    },
+    "validation": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+      "sha256": "196fdf81e1142c431d7b60dee5082db6ccfd3ba8b65f88f686bb12b2020ad961"
+    }
+  },
+  "selection": {
+    "seed": "swegym-quality-batch01-20260921",
+    "sample_key": "sha256(seed + \"|\" + instance_id), ascending, first 3 per selected repo among previous not_reviewed rows",
+    "calibration_count": 6,
+    "fixed_sample_count": 6,
+    "not_a_population_rate_estimator": true,
+    "pool_source": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/task_index_216.json",
+      "sha256": "7a5925428675432c7530d85daa5740667667a97c0b433bf33ee5f7df552502c5"
+    },
+    "frozen_pools": {
+      "iterative/dvc": [
+        "iterative__dvc-1661",
+        "iterative__dvc-1681",
+        "iterative__dvc-1712",
+        "iterative__dvc-1808",
+        "iterative__dvc-1877",
+        "iterative__dvc-2126",
+        "iterative__dvc-2141",
+        "iterative__dvc-2231",
+        "iterative__dvc-2254",
+        "iterative__dvc-3315",
+        "iterative__dvc-3527",
+        "iterative__dvc-3576",
+        "iterative__dvc-3620",
+        "iterative__dvc-3665",
+        "iterative__dvc-3677",
+        "iterative__dvc-3794",
+        "iterative__dvc-4066",
+        "iterative__dvc-4124",
+        "iterative__dvc-4125",
+        "iterative__dvc-4166",
+        "iterative__dvc-4185",
+        "iterative__dvc-4719",
+        "iterative__dvc-4778",
+        "iterative__dvc-4785",
+        "iterative__dvc-4961",
+        "iterative__dvc-5004",
+        "iterative__dvc-5148",
+        "iterative__dvc-5188",
+        "iterative__dvc-5336",
+        "iterative__dvc-5822",
+        "iterative__dvc-5839",
+        "iterative__dvc-6954",
+        "iterative__dvc-9212",
+        "iterative__dvc-9391",
+        "iterative__dvc-9395"
+      ],
+      "python/mypy": [
+        "python__mypy-10174",
+        "python__mypy-10284",
+        "python__mypy-10308",
+        "python__mypy-10382",
+        "python__mypy-10392",
+        "python__mypy-10401",
+        "python__mypy-10424",
+        "python__mypy-10430",
+        "python__mypy-10478",
+        "python__mypy-10658",
+        "python__mypy-11236",
+        "python__mypy-11241",
+        "python__mypy-11352",
+        "python__mypy-11420",
+        "python__mypy-11434",
+        "python__mypy-11567",
+        "python__mypy-11707",
+        "python__mypy-11824",
+        "python__mypy-11857",
+        "python__mypy-11945",
+        "python__mypy-11966",
+        "python__mypy-12222",
+        "python__mypy-12417",
+        "python__mypy-12741",
+        "python__mypy-15131",
+        "python__mypy-15139",
+        "python__mypy-15184",
+        "python__mypy-15208",
+        "python__mypy-15413",
+        "python__mypy-15876",
+        "python__mypy-16555",
+        "python__mypy-16869",
+        "python__mypy-16905",
+        "python__mypy-16963",
+        "python__mypy-16966",
+        "python__mypy-17071",
+        "python__mypy-5617",
+        "python__mypy-9625",
+        "python__mypy-9629",
+        "python__mypy-9909"
+      ]
+    }
+  },
+  "waves": [
+    [
+      "conan",
+      "dask"
+    ],
+    [
+      "pydantic",
+      "dvc",
+      "mypy"
+    ]
+  ],
+  "tasks": [
+    {
+      "instance_id": "conan-io__conan-15422",
+      "repo": "conan-io/conan",
+      "base_commit": "f08b9924712cf0c2f27b93cbb5206d56d0d824d8",
+      "package_id": "conan",
+      "selection": "known_case_calibration",
+      "repo_mirror": "runs/env_overnight_20260916/repos/conan",
+      "source_refs": {
+        "public": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+          "line": 38
+        },
+        "grading": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+          "line": 38
+        },
+        "validation": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+          "line": 38
+        }
+      },
+      "public_dir": "runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-15422",
+      "private_dir": "runs/swegym_quality_batch01_20260921_v2/private/conan-io__conan-15422",
+      "history_refs": "runs/swegym_quality_batch01_20260921_v2/history/conan-io__conan-15422/refs.json",
+      "output_dir": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-15422",
+      "environment": {
+        "status": "baseline_pair_no_known_environment_issue",
+        "evidence": "runs/env_recipe_repair_20260919/scope_reconciliation_20260920.json",
+        "task_key": "conan-io__conan-15422",
+        "limit": "Each original noop=0 with observed target failure and no installation failure in zero audit; original gold=1 and full test command rc=0. No new quality/stability certification."
+      },
+      "history_sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/records/conan-io__conan-15422.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/conan_pilot/records/conan-io__conan-15422.json"
+      ]
+    },
+    {
+      "instance_id": "conan-io__conan-14177",
+      "repo": "conan-io/conan",
+      "base_commit": "b43eb83956f053a47cc3897cfdd57b9da13a16e6",
+      "package_id": "conan",
+      "selection": "known_case_calibration",
+      "repo_mirror": "runs/env_overnight_20260916/repos/conan",
+      "source_refs": {
+        "public": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+          "line": 36
+        },
+        "grading": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+          "line": 36
+        },
+        "validation": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+          "line": 36
+        }
+      },
+      "public_dir": "runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-14177",
+      "private_dir": "runs/swegym_quality_batch01_20260921_v2/private/conan-io__conan-14177",
+      "history_refs": "runs/swegym_quality_batch01_20260921_v2/history/conan-io__conan-14177/refs.json",
+      "output_dir": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-14177",
+      "environment": {
+        "status": "baseline_pair_no_known_environment_issue",
+        "evidence": "runs/env_recipe_repair_20260919/scope_reconciliation_20260920.json",
+        "task_key": "conan-io__conan-14177",
+        "limit": "Each original noop=0 with observed target failure and no installation failure in zero audit; original gold=1 and full test command rc=0. No new quality/stability certification."
+      },
+      "history_sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/records/conan-io__conan-14177.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/conan_pilot/records/conan-io__conan-14177.json"
+      ]
+    },
+    {
+      "instance_id": "pydantic__pydantic-8511",
+      "repo": "pydantic/pydantic",
+      "base_commit": "e4fa099d5adde70acc80238ff810c87a5cec7ebf",
+      "package_id": "pydantic",
+      "selection": "known_case_calibration",
+      "repo_mirror": "runs/env_overnight_20260916/repos/pydantic",
+      "source_refs": {
+        "public": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+          "line": 167
+        },
+        "grading": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+          "line": 167
+        },
+        "validation": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+          "line": 167
+        }
+      },
+      "public_dir": "runs/swegym_quality_batch01_20260921_v2/public/pydantic__pydantic-8511",
+      "private_dir": "runs/swegym_quality_batch01_20260921_v2/private/pydantic__pydantic-8511",
+      "history_refs": "runs/swegym_quality_batch01_20260921_v2/history/pydantic__pydantic-8511/refs.json",
+      "output_dir": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/pydantic__pydantic-8511",
+      "environment": {
+        "status": "verified_environment_pair",
+        "evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json",
+        "task_key": "pydantic__pydantic-8511",
+        "selected_batch": "pydantic_v1",
+        "analysis": "runs/env_recipe_repair_20260919/pydantic_v1/analysis_41.json"
+      },
+      "history_sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_pydantic/records/pydantic__pydantic-8511.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/pydantic_pilot/records/pydantic__pydantic-8511.json"
+      ]
+    },
+    {
+      "instance_id": "pydantic__pydantic-5706",
+      "repo": "pydantic/pydantic",
+      "base_commit": "70e7e99ca1861ad71520cc8fcf1a2fb913abbc10",
+      "package_id": "pydantic",
+      "selection": "known_case_calibration",
+      "repo_mirror": "runs/env_overnight_20260916/repos/pydantic",
+      "source_refs": {
+        "public": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+          "line": 159
+        },
+        "grading": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+          "line": 159
+        },
+        "validation": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+          "line": 159
+        }
+      },
+      "public_dir": "runs/swegym_quality_batch01_20260921_v2/public/pydantic__pydantic-5706",
+      "private_dir": "runs/swegym_quality_batch01_20260921_v2/private/pydantic__pydantic-5706",
+      "history_refs": "runs/swegym_quality_batch01_20260921_v2/history/pydantic__pydantic-5706/refs.json",
+      "output_dir": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/pydantic__pydantic-5706",
+      "environment": {
+        "status": "verified_environment_pair",
+        "evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json",
+        "task_key": "pydantic__pydantic-5706",
+        "selected_batch": "pydantic_v1",
+        "analysis": "runs/env_recipe_repair_20260919/pydantic_v1/analysis_41.json"
+      },
+      "history_sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_pydantic/records/pydantic__pydantic-5706.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/pydantic_pilot/records/pydantic__pydantic-5706.json"
+      ]
+    },
+    {
+      "instance_id": "dask__dask-8597",
+      "repo": "dask/dask",
+      "base_commit": "c1c88f066672c0b216fc24862a2b36a0a9fb4e22",
+      "package_id": "dask",
+      "selection": "known_case_calibration",
+      "repo_mirror": "runs/env_overnight_20260916/repos/dask",
+      "source_refs": {
+        "public": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+          "line": 47
+        },
+        "grading": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+          "line": 47
+        },
+        "validation": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+          "line": 47
+        }
+      },
+      "public_dir": "runs/swegym_quality_batch01_20260921_v2/public/dask__dask-8597",
+      "private_dir": "runs/swegym_quality_batch01_20260921_v2/private/dask__dask-8597",
+      "history_refs": "runs/swegym_quality_batch01_20260921_v2/history/dask__dask-8597/refs.json",
+      "output_dir": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/dask__dask-8597",
+      "environment": {
+        "status": "verified_environment_pair",
+        "evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json",
+        "task_key": "dask__dask-8597",
+        "selected_batch": "compat_v1",
+        "analysis": "runs/env_recipe_repair_20260919/compat_v1/analysis_32.json"
+      },
+      "history_sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dask/records/dask__dask-8597.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/dask_pilot/records/dask__dask-8597.json"
+      ]
+    },
+    {
+      "instance_id": "dask__dask-8801",
+      "repo": "dask/dask",
+      "base_commit": "9634da11a5a6e5eb64cf941d2088aabffe504adb",
+      "package_id": "dask",
+      "selection": "known_case_calibration",
+      "repo_mirror": "runs/env_overnight_20260916/repos/dask",
+      "source_refs": {
+        "public": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+          "line": 49
+        },
+        "grading": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+          "line": 49
+        },
+        "validation": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+          "line": 49
+        }
+      },
+      "public_dir": "runs/swegym_quality_batch01_20260921_v2/public/dask__dask-8801",
+      "private_dir": "runs/swegym_quality_batch01_20260921_v2/private/dask__dask-8801",
+      "history_refs": "runs/swegym_quality_batch01_20260921_v2/history/dask__dask-8801/refs.json",
+      "output_dir": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/dask__dask-8801",
+      "environment": {
+        "status": "baseline_pair_no_known_environment_issue",
+        "evidence": "runs/env_recipe_repair_20260919/scope_reconciliation_20260920.json",
+        "task_key": "dask__dask-8801",
+        "limit": "Each original noop=0 with observed target failure and no installation failure in zero audit; original gold=1 and full test command rc=0. No new quality/stability certification."
+      },
+      "history_sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dask/records/dask__dask-8801.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/dask_pilot/records/dask__dask-8801.json"
+      ]
+    },
+    {
+      "instance_id": "iterative__dvc-5839",
+      "repo": "iterative/dvc",
+      "base_commit": "daf07451f8e8f3e76a791c696b0ea175e8ed3ac1",
+      "package_id": "dvc",
+      "selection": "fixed_hash_sample",
+      "repo_mirror": "runs/env_overnight_20260916/repos/dvc",
+      "source_refs": {
+        "public": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+          "line": 142
+        },
+        "grading": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+          "line": 142
+        },
+        "validation": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+          "line": 142
+        }
+      },
+      "public_dir": "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-5839",
+      "private_dir": "runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-5839",
+      "history_refs": "runs/swegym_quality_batch01_20260921_v2/history/iterative__dvc-5839/refs.json",
+      "output_dir": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-5839",
+      "environment": {
+        "status": "verified_environment_pair",
+        "evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json",
+        "task_key": "iterative__dvc-5839",
+        "selected_batch": "dvc_install_v1c",
+        "analysis": "runs/env_recipe_repair_20260919/dvc_install_v1c/analysis_68.json"
+      },
+      "history_sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_2/records/iterative__dvc-5839.json"
+      ]
+    },
+    {
+      "instance_id": "iterative__dvc-9395",
+      "repo": "iterative/dvc",
+      "base_commit": "c75a5583b3840ba90a8e800a0f42c1cb120916db",
+      "package_id": "dvc",
+      "selection": "fixed_hash_sample",
+      "repo_mirror": "runs/env_overnight_20260916/repos/dvc",
+      "source_refs": {
+        "public": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+          "line": 146
+        },
+        "grading": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+          "line": 146
+        },
+        "validation": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+          "line": 146
+        }
+      },
+      "public_dir": "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-9395",
+      "private_dir": "runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-9395",
+      "history_refs": "runs/swegym_quality_batch01_20260921_v2/history/iterative__dvc-9395/refs.json",
+      "output_dir": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-9395",
+      "environment": {
+        "status": "verified_environment_pair",
+        "evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json",
+        "task_key": "iterative__dvc-9395",
+        "selected_batch": "dvc_tail_v1",
+        "analysis": "runs/env_recipe_repair_20260919/dvc_tail_v1/analysis_4.json"
+      },
+      "history_sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_1/records/iterative__dvc-9395.json"
+      ]
+    },
+    {
+      "instance_id": "iterative__dvc-3620",
+      "repo": "iterative/dvc",
+      "base_commit": "e05157f8e05e856d2e9966c30a3150c26b32b86f",
+      "package_id": "dvc",
+      "selection": "fixed_hash_sample",
+      "repo_mirror": "runs/env_overnight_20260916/repos/dvc",
+      "source_refs": {
+        "public": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+          "line": 124
+        },
+        "grading": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+          "line": 124
+        },
+        "validation": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+          "line": 124
+        }
+      },
+      "public_dir": "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620",
+      "private_dir": "runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-3620",
+      "history_refs": "runs/swegym_quality_batch01_20260921_v2/history/iterative__dvc-3620/refs.json",
+      "output_dir": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620",
+      "environment": {
+        "status": "verified_environment_pair",
+        "evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json",
+        "task_key": "iterative__dvc-3620",
+        "selected_batch": "dvc_install_v1c",
+        "analysis": "runs/env_recipe_repair_20260919/dvc_install_v1c/analysis_68.json"
+      },
+      "history_sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_1/records/iterative__dvc-3620.json"
+      ]
+    },
+    {
+      "instance_id": "python__mypy-10424",
+      "repo": "python/mypy",
+      "base_commit": "4518b55663bc689646280a0ab2247c4a724bf3c0",
+      "package_id": "mypy",
+      "selection": "fixed_hash_sample",
+      "repo_mirror": "runs/env_overnight_20260916/repos/mypy",
+      "source_refs": {
+        "public": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+          "line": 183
+        },
+        "grading": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+          "line": 183
+        },
+        "validation": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+          "line": 183
+        }
+      },
+      "public_dir": "runs/swegym_quality_batch01_20260921_v2/public/python__mypy-10424",
+      "private_dir": "runs/swegym_quality_batch01_20260921_v2/private/python__mypy-10424",
+      "history_refs": "runs/swegym_quality_batch01_20260921_v2/history/python__mypy-10424/refs.json",
+      "output_dir": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-10424",
+      "environment": {
+        "status": "verified_environment_pair",
+        "evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json",
+        "task_key": "python__mypy-10424",
+        "selected_batch": "install_wave1",
+        "analysis": "runs/env_recipe_repair_20260919/install_wave1/analysis_149.json"
+      },
+      "history_sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_1/records/python__mypy-10424.json"
+      ]
+    },
+    {
+      "instance_id": "python__mypy-16963",
+      "repo": "python/mypy",
+      "base_commit": "f19b5d3a026319687dd81a5c7c976698bbe948a8",
+      "package_id": "mypy",
+      "selection": "fixed_hash_sample",
+      "repo_mirror": "runs/env_overnight_20260916/repos/mypy",
+      "source_refs": {
+        "public": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+          "line": 210
+        },
+        "grading": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+          "line": 210
+        },
+        "validation": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+          "line": 210
+        }
+      },
+      "public_dir": "runs/swegym_quality_batch01_20260921_v2/public/python__mypy-16963",
+      "private_dir": "runs/swegym_quality_batch01_20260921_v2/private/python__mypy-16963",
+      "history_refs": "runs/swegym_quality_batch01_20260921_v2/history/python__mypy-16963/refs.json",
+      "output_dir": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-16963",
+      "environment": {
+        "status": "verified_environment_pair",
+        "evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json",
+        "task_key": "python__mypy-16963",
+        "selected_batch": "install_wave1",
+        "analysis": "runs/env_recipe_repair_20260919/install_wave1/analysis_149.json"
+      },
+      "history_sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_2/records/python__mypy-16963.json"
+      ]
+    },
+    {
+      "instance_id": "python__mypy-12417",
+      "repo": "python/mypy",
+      "base_commit": "47b9f5e2f65d54d3187cbe0719f9619bf608a126",
+      "package_id": "mypy",
+      "selection": "fixed_hash_sample",
+      "repo_mirror": "runs/env_overnight_20260916/repos/mypy",
+      "source_refs": {
+        "public": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+          "line": 199
+        },
+        "grading": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+          "line": 199
+        },
+        "validation": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+          "line": 199
+        }
+      },
+      "public_dir": "runs/swegym_quality_batch01_20260921_v2/public/python__mypy-12417",
+      "private_dir": "runs/swegym_quality_batch01_20260921_v2/private/python__mypy-12417",
+      "history_refs": "runs/swegym_quality_batch01_20260921_v2/history/python__mypy-12417/refs.json",
+      "output_dir": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-12417",
+      "environment": {
+        "status": "verified_environment_pair",
+        "evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json",
+        "task_key": "python__mypy-12417",
+        "selected_batch": "install_wave1",
+        "analysis": "runs/env_recipe_repair_20260919/install_wave1/analysis_149.json"
+      },
+      "history_sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_2/records/python__mypy-12417.json"
+      ]
+    }
+  ],
+  "materials_version": "v2_public_instruction_scope_clarified"
+}

@@ -1,0 +1,11 @@
+# 原 pyproject 要求 setuptools>=62.6、versioneer[toml]==0.29。
+# setuptools/wheel/packaging 保持镜像已有版本；仅下载构建资产，不安装或升级 Dask。
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+RUN mkdir -p /opt/rh2/build-wheels \
+ && /opt/miniconda3/envs/testbed/bin/python -m pip download --only-binary=:all: --no-deps \
+      --dest /opt/rh2/build-wheels setuptools==72.2.0 wheel==0.44.0 packaging==24.1 \
+      versioneer==0.29 tomli==2.0.1 \
+ && chmod -R a+rX /opt/rh2/build-wheels \
+ && sha256sum /opt/rh2/build-wheels/*
+ENV PIP_NO_INDEX=1 PIP_FIND_LINKS=/opt/rh2/build-wheels

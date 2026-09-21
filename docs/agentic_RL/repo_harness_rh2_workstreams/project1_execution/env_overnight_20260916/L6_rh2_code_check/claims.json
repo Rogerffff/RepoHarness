@@ -1,0 +1,349 @@
+{
+  "package": "L6_rh2_code_check",
+  "generated_at_local": "2026-09-16T04:20+08:00",
+  "tree": {
+    "head": "bac7659ea70cc07a3a8c872a29e7659a894afc5a",
+    "branch": "miles-migration",
+    "rh2_dirty_entries": 45,
+    "note": "树内含另一会话未提交的 P-A/P-B/P-C/P-D 改动（26 个 ' M' + 19 个 '??'）；本包只读核实，未改任何 rh2 文件。"
+  },
+  "verdict_legend": {
+    "hold": "成立",
+    "partial": "部分成立",
+    "reject": "不成立",
+    "undecidable": "无法静态判定"
+  },
+  "claims": [
+    {
+      "id": "C01",
+      "source_pkg": [
+        "L1_moto_3",
+        "L1_moto_2(R8)",
+        "L1_moto_1",
+        "L2_reference_ids"
+      ],
+      "claim": "rh2/src/repoharness2/envpack/swegym_parsers.py:52-55 用 line.split() 取第 2 段并后写覆盖，含空格的参数化 ID 被截断并塌缩成同一个键。",
+      "verdict": "hold",
+      "evidence": [
+        "rh2/src/repoharness2/envpack/swegym_parsers.py:52-55 — `test_case = line.split()` / `if len(test_case) <= 1: continue` / `test_status_map[test_case[1]] = test_case[0]`（dict 赋值，同键后写覆盖）。",
+        "实测（runs/env_overnight_20260916/L6_rh2_code_check/probe_parser_out.json C1_space_truncation）：`PASSED tests/test_s3.py::test_head[my key with spaces-a]` 与 `FAILED ...-b] - AssertionError` 两行 → 只剩一个键 `tests/test_s3.py::test_head[my`，值为后写的 `FAILED`。",
+        "同缺陷存在于 parse_log_pytest_pydantic（:73-76），见 probe C5_pydantic_variant_space。",
+        "数据面：216 题里 35 题至少有一个参考 ID 含 `[` 但不以 `]` 结尾（runs/.../L6_rh2_code_check/idshape.py 输出），与 L1_moto_2 的 35/216 一致。"
+      ],
+      "actual_behavior": null,
+      "notes": "该逻辑与安装的 swebench 4.1.0 `harness/log_parsers/python.py:16-22` 逐字同形，缺陷继承自上游而非 rh2 引入；参考清单本身也是同一 parser 产出的截断串，所以 gold 不会因此失败——这正是 C10b 里信号漏检的原因。"
+    },
+    {
+      "id": "C02",
+      "source_pkg": [
+        "L1_dvc_1",
+        "L1_monai_1",
+        "L1_monai_2"
+      ],
+      "claim": "pytest -rA 的 `SKIPPED [N] path:line:` 行被 parser 取成 `[N]` 伪键；scoring.py 声明的『SKIPPED 不进桶』因此不可达；v2 parser 同样受影响。",
+      "verdict": "hold",
+      "evidence": [
+        "rh2/src/repoharness2/envpack/swegym_parsers.py:52-55 取 split()[1]；实测 `SKIPPED [1] tests/test_a.py:12:需要 docker` → 键 `[1]`（probe C2_skipped）。",
+        "rh2/src/repoharness2/envpack/scoring.py:24 与 :201 的注释原文『SKIPPED 不进成功/失败任何一桶——清单全部 SKIPPED 时 report 可得 FULL』。",
+        "rh2/src/repoharness2/envpack/scoring.py:231 `parser = lookup_parser(grading.repo_key_lower)` — parse_eval_log_v2 用的就是同一组 parser，无额外处理；:269 `reference_skipped=[c for c in reference if status_map.get(c) == 'SKIPPED']`。",
+        "swebench 4.1.0 grading.py:31-35 `test_failed` = `case not in sm or ...` → 参考 ID 缺席即计失败，被跳过的参考测试落进 failure 桶。",
+        "阶段一 181 份 gold status_map.json 实测：值为 SKIPPED 的条目里，键形如 `[N]` 的 41 条（dask 19 / modin 9 / MONAI 5 / dvc 5 / conan 2 / moto 1，与 L1_dvc_1 的『19 题丢 41 条』吻合）；键为真实 nodeid 的 69 条**全部来自 pydantic**——即 pydantic 尾状态分支的例外在真实语料里确实发生。"
+      ],
+      "actual_behavior": "被跳过的参考测试进 reference_missing 并按『缺席计失败』记账；reference_skipped 在 -rA 短摘要下恒空。",
+      "notes": "唯一可达例外：parse_log_pytest_pydantic 的旧版尾状态分支（:78-82）。实测 `tests/test_main.py::test_a SKIPPED`（无百分比列）→ {nodeid: 'SKIPPED'}，reference_skipped 可非空。该形态只可能出现在 pydantic 一个仓库，且需要日志里没有 `[ 50%]` 进度列。 真实语料佐证：可达例外只在 pydantic 一个仓库出现（69 条），其余 8 个仓库全是 `[N]` 伪键，L1_dvc_1 的『对其余 8 个仓库不可达』表述精确。"
+    },
+    {
+      "id": "C03",
+      "source_pkg": [
+        "L1_monai_1",
+        "L2_reference_ids"
+      ],
+      "claim": "parser 对任意以 FAILED/PASSED/ERROR 开头的行都记状态且不校验键，产生伪条目（含程序自身的 `ERROR:` 行）。",
+      "verdict": "hold",
+      "evidence": [
+        "rh2/src/repoharness2/envpack/swegym_parsers.py:48 `if any([line.startswith(x) for x in TEST_STATUS_VALUES])` — 前缀匹配，不是整词匹配，键与值都不校验。",
+        "实测（probe C3_pseudo）：`ERROR: Could not find a version that satisfies the requirement foo` → {'Could': 'ERROR:'}；`ERROR: pip's dependency resolver ...` → {\"pip's\": 'ERROR:'}；`PASSEDX not-a-test-line abc` → {'not-a-test-line': 'PASSEDX'}。",
+        "实测（probe C3b）：`ERROR tests/conftest.py - ImportError while loading conftest` → {'tests/conftest.py': 'ERROR'}。",
+        "实测（probe C5_pydantic_trailing）：`some random line ERROR` 经 pydantic 尾状态分支 → {'some': 'random'}。"
+      ],
+      "actual_behavior": null,
+      "notes": "比原断言更宽：**状态值**同样不校验，可以写进 TestStatus 之外的字符串（'ERROR:'、'PASSEDX'、'random'）。影响面：伪键不在参考清单里，不改 F2P/P2P 桶，但会抬高 num_parsed_tests（P-A 的 zero_parsed 触发器与『0 = 可疑』判据的输入）与 num_parsed_outside_segment。只有伪键恰好等于某条参考 ID 时才会污染评分，静态未发现此类碰撞。"
+    },
+    {
+      "id": "C04",
+      "source_pkg": [
+        "L1_monai_1"
+      ],
+      "claim": "manager.py:672 的 test_globs=() 使候选新建的 tests/conftest.py 不被投影剔除；prepared_task_face.py:199-210 只恢复 test_patch 路径；trusted_projection.py:18-20 登记不修。",
+      "verdict": "hold",
+      "evidence": [
+        "rh2/src/repoharness2/grading/manager.py:672 `test_globs=(),  # P-B：不再按测试名通配剔除候选改动（观测见 observe_candidate_paths）`；manager.py:258 `is_test_path` = 精确名单 ∪ test_globs，空元组即只剩精确名单。",
+        "rh2/src/repoharness2/adapters/slime/prepared_task_face.py:329 同样 `test_globs=()`（v2 评分面，driver 实际走这条）。",
+        "rh2/src/repoharness2/adapters/slime/prepared_task_face.py:200-206 `_v2_attested_trusted_setup_lines` 的恢复循环 `for f in {files}` 里 files = `_v2_eval_preconditions(grading, test_files)`，test_files = patch_touched_paths(test_patch)（:306）——只恢复 test_patch 触碰路径。",
+        "rh2/src/repoharness2/grading/trusted_projection.py:18-21 『已知不足（登记不修，等 taskset 定后由 environment adapter 声明通用控制面）：conftest.py / pytest.ini / tox.ini / setup.cfg·pyproject 的 pytest 段 / 插件 / 启动脚本等真正能改变测试收集的文件并不在上述规则内』。"
+      ],
+      "actual_behavior": null,
+      "notes": "补充核对（问题里点名要查的两项）：(1) TEST_LIKE_OBSERVATION_GLOBS（manager.py:556-563）**部分**覆盖 conftest —— `tests/conftest.py` 经 `*tests/*` 命中，但仓库根的 `conftest.py` 与 `monai/conftest.py` 不命中；(2) 诊断 sidecar **会**记录它：CONFTEST_OR_FIXTURE_GLOBS（manager.py:566-569）含 `conftest.py` 与 `*/conftest.py`，三种形态全部命中，经 manager.py:1535 `observe_candidate_paths(...)` 进 diag，再经 replay_grade.py:648 写进账本键 candidate_touched_conftest_or_fixture。即『不拦截但可观测』成立。"
+    },
+    {
+      "id": "C05",
+      "source_pkg": [
+        "L1_mypy_2"
+      ],
+      "claim": "hygiene.test_files 只等于 test_patch 路径（manager.py:656/672/581），mypy 的 mypy/test/*.py 与 test-data/unit/fixtures/*.pyi 不受保护；file_rules.additional_exclusions 这个字段在当前代码里是否存在、是否生效。",
+      "verdict": "hold",
+      "evidence": [
+        "rh2/src/repoharness2/grading/manager.py:656 `test_files = tuple(sorted(patch_touched_paths(private.test_patch)))`；:672 `test_globs=()`；:581 `DEFAULT_SWE_FORBIDDEN_GLOBS = ('.rh2*', 'rh2/*')`。v2 同形：prepared_task_face.py:306/329/330。",
+        "mypy 40 题的 test_patch 只含 `test-data/unit/*.test`（L1_mypy_2 语料），故 mypy/test/*.py 与 fixtures/*.pyi 都不在 test_files，不被恢复、不触发 rejected_test_tampering。",
+        "`additional_exclusions` 在 rh2/src 全树零命中（grep -rn 'additional_exclusions' rh2/src → 无结果）。"
+      ],
+      "actual_behavior": "additional_exclusions 目前只是筛查记录（briefs/COMMON.md §记录形状）的字段，**当前 rh2 代码不读、不消费、不生效**；写进逐题记录不会改变任何判分行为，需要另行实现才能落地。",
+      "notes": "比原断言更坏的一点：`mypy/test/testcheck.py` 连**观测**都没有——既不命中 TEST_LIKE_OBSERVATION_GLOBS，也不命中 CONFTEST_OR_FIXTURE_GLOBS（实测 fnmatch 双 False），候选改测试驱动在 sidecar 里也看不见。`test-data/unit/fixtures/tuple.pyi` 经 `*/fixtures/*` 命中观测（只观测，不拦截）。"
+    },
+    {
+      "id": "C06",
+      "source_pkg": [
+        "L1_mypy_2",
+        "L1_mypy_1"
+      ],
+      "claim": "spec_vendor.py:183-191：mypy 的 F2P/P2P 候选集 = test_patch diff 文本里字面出现的 [case X] 取 -k 子串闭包。",
+      "verdict": "hold",
+      "evidence": [
+        "rh2/src/repoharness2/envpack/spec_vendor.py:137 `_MYPY_CASE_PATTERN = r\"\\[case ([^\\]]+)\\]\"`；:183-191 `derive_test_command`，mypy 分支 `return test_cmd + ' ' + f'\"{\" or \".join(keys)}\"'`，**不拼测试文件路径**。",
+        "数据：mypy 的 eval_cmd 是 `pytest -n0 -rA -k`（或 1.8+ 的 `pytest -rA -k`），所以拼出来的就是 -k 表达式。",
+        "实测 python__mypy-16966：`pytest -rA -k \"testMatchEnumSingleChoice or testMatchLiteralPatternEnumNegativeNarrowing or testMatchLiteralPatternEnumCustomEquals-skip\"` —— `-skip` 后缀确被正则一起捕获（L1_mypy_2 的 16966 断言成立）。",
+        "实测 15876 与 16966 的全部参考 ID 都被某个 key 作为子串覆盖（refs NOT covered = 0），与『子串闭包』一致。"
+      ],
+      "actual_behavior": null,
+      "notes": "『20/20 无例外』是 L1_mypy_2 的语料结论，本包只抽验了 2 题；代码侧的构造方式已证实。"
+    },
+    {
+      "id": "C07",
+      "source_pkg": [
+        "L1_moto_3"
+      ],
+      "claim": "阶段一 eval.sh 的恢复 checkout 不含 test_patch 新建路径、3 题 checkout 无 pathspec；核对 replay_grade.py prepare 与 envpack 生成的 eval 脚本是否沿用同一逻辑。",
+      "verdict": "partial",
+      "evidence": [
+        "阶段一日志实测：runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/*/gold/offline/a1/eval.sh 里 NF==3 的 `git checkout <sha> `（无 pathspec）出现在 **4** 题：Project-MONAI__MONAI-2454、conan-io__conan-11594、getmoto__moto-5885、iterative__dvc-6954（不是 3 题）。",
+        "216 题里 test_patch 含 `new file mode` 的是 8 题（MONAI-2454/3690、conan-11594、moto-5885/7607、dvc-3665/6954、mypy-15184），与 L1_moto_3 的『8 题新建文件』一致。",
+        "当前代码渲染 moto-5885（runs/.../L6_rh2_code_check/render_probe.py 实跑）：legacy `render_v2_eval_script` → `git checkout 67197cb8... tests/test_eks/test_eks_ec2.py`（**含**新建路径）；profile `render_v2_trusted_setup_script` → `for f in ...; do if git cat-file -e <base>:\"$f\"; then git checkout <base> -- \"$f\" || exit 3; ...` （逐文件守卫）。",
+        "rh2/src/repoharness2/adapters/slime/prepared_task_face.py:84-94 `_v2_eval_preconditions` 在 test_files 为空时抛 GradingMaterialsError('v2_test_files_empty')；实测 216 题无一题 patch_touched_paths 为空。",
+        "rh2/scripts/replay_grade.py → repoharness2.adapters.slime.replay_grade:435 `build_grading_spec_from_host_view(...)` → prepared_task_face.py:317-320 同时产出 eval_script / trusted_setup_script / candidate_test_script；manager.py:2636-2637 只有 profile is None 时才执行整份 eval_script，:2678 profile 路径执行 trusted_setup_script。"
+      ],
+      "actual_behavior": "当前 v2 代码与阶段一脚本**不是**同一逻辑：(1) 『无 pathspec』已不可能——文件清单为空会直接拒绝构造脚本；(2) 新建路径**被写进** pathspec：legacy 单脚本路径的那条 `git checkout <base> <含新建路径>` 会整条失败（git 报 pathspec did not match）且无 set -e，效果是『一个文件都没恢复』而不是『部分恢复』；(3) driver/e1/e2 实际走的 grader profile 路径用 `git cat-file -e` 逐文件守卫，新建路径被跳过并计数，这一类缺陷在该路径已修（代码注释 prepared_task_face.py:185-190 明确点名此问题）。",
+      "notes": "结论指向：8 题的恢复完整性取决于走哪条路径。正式链（有 sandbox_profile）安全；legacy 路径只服务 s1_compat 与单测。"
+    },
+    {
+      "id": "C08",
+      "source_pkg": [
+        "L1_dvc_1",
+        "L0_facts_tool",
+        "M2"
+      ],
+      "claim": "安装段失败被 `|| true` 吞掉、RH2_INSTALL_RC 仍记 0；核对 install segment 的 rc 采集点。",
+      "verdict": "hold",
+      "evidence": [
+        "采集点：rh2/src/repoharness2/adapters/slime/prepared_task_face.py:137-141 —— `install`（vendor 串逐字）后紧接 `RH2_INSTALL_RC=$?` 再 echo。docstring（:131-133）原文：『RH2_INSTALL_RC = 安装串最后一个命令的退出码（多命令 a; b 只反映 b）；它不单独证明安装成功或失败』。",
+        "vendor 串实测（derive_install_cmd，spec_vendor.py:140-149）：iterative/dvc 2.0 与 2.9 = `... git+https://github.com/iterative/mock-ssh-server.git || true; ... -r tests/requirements.txt || true; ... -r test-requirements.txt || true; ... -e \".[tests,...]\"; ... \"numpy<=1.20\"; ... \"pytest<8\";` —— 三处字面 `|| true`，且段末命令是 `pip install \"pytest<8\"`。",
+        "python/mypy 0.820 = `... -r test-requirements.txt; pip install -e .; pip install pytest pytest-xdist; hash -r;`；1.8 = `...; pip install -e .; hash -r` —— 段末是 `hash -r`，恒 rc=0。",
+        "getmoto/moto 4.1 = `make init`（单命令，rc 有意义）。"
+      ],
+      "actual_behavior": null,
+      "notes": "责任归属要说清：`|| true` 来自上游 vendor spec 的 install 串，rh2 逐字执行、未加；rh2 侧的缺陷是只在段末采一次 $?。M2 另给出双向反例（同一 RH2_INSTALL_RC=0，断网/联网下 `pip install -e .` 真实 rc 分别是 1/0）。因此 install rc 既不能证明成功也不能证明失败——见 C11，这个不可靠信号当前**确实**接在候选失败归因上。"
+    },
+    {
+      "id": "C09",
+      "source_pkg": [
+        "L0_facts_tool"
+      ],
+      "claim": "driver 账本 schema 漂移（源码会写 9 个 e1 账本没有的键）而 schema_id 未升。",
+      "verdict": "hold",
+      "evidence": [
+        "rh2/src/repoharness2/adapters/slime/replay_grade.py:78 `LEDGER_SCHEMA_ID = 'rh2.replay_grade_ledger.v1'`；:458 每行写 `\"schema_id\": LEDGER_SCHEMA_ID`。",
+        "源码写而 e1 账本 10 行全无的键，逐键核对为 **10** 个（L0 报的 9 个行级键 + projection 子对象 1 个）：baseline_policy_version、omitted_cache_count、candidate_test_like_paths、candidate_touched_conftest_or_fixture、execution_failure_decision、image_identity、reference_missing_count、resource_facts、scripts_digest、projection.unsupported_shape_reasons。",
+        "e1 账本：runs/swe_grading_wiring_20260915/e1/ledger_e1.jsonl + ledger_e1_pandas.jsonl，共 10 行，schema_id 全部 = rh2.replay_grade_ledger.v1。"
+      ],
+      "actual_behavior": null,
+      "notes": "L0 的表述（9 键 + projection 缺 unsupported_shape_reasons）与实测完全一致，本包只是把两者并成 10 项统计。消费方按 schema_id 判字段可用性会静默拿 None。"
+    },
+    {
+      "id": "C10a",
+      "source_pkg": [
+        "L1_dvc_1",
+        "L1_monai_2",
+        "L2_reference_ids",
+        "L1_pydantic"
+      ],
+      "claim": "参考 ID 与运行时 ID 的失配（非 ASCII ascii_escaped、反斜杠、os.getcwd() 参数、parameterized 位宽）在代码里有无任何归一化。",
+      "verdict": "hold",
+      "evidence": [
+        "grep -rn 'unicode_escape|ascii_escaped|backslashreplace|latin-1|latin1|reference_remapped' rh2/src/ → 零命中（唯一命中是 generate.py:4989 的 'backend_group_normalized' 字符串常量，与 ID 无关）。",
+        "匹配方式是纯字符串相等：scoring.py:270 `reference_missing=[c for c in reference if c not in status_map]`；:269 `status_map.get(c) == 'SKIPPED'`；桶划分由 swebench grading.py:27-35 的 `case in sm` 决定。"
+      ],
+      "actual_behavior": "当前代码对参考 ID 与 parser 键不做任何规范化/回退匹配；L2 提出的 A 方案（缺席→unicode_escape 解码→唯一命中才采用）尚未实现。",
+      "notes": null
+    },
+    {
+      "id": "C10b",
+      "source_pkg": [
+        "L1_moto_2",
+        "L1_moto_3",
+        "L1_dask"
+      ],
+      "claim": "fragile_reference_id 字段由哪段代码计算、为何对截断塌缩类全 false。",
+      "verdict": "hold",
+      "evidence": [
+        "该字段**不由任何 rh2 源码产生**：grep -rn 'fragile_reference_id' 全仓 → 只出现在 env_overnight_20260916/task_signals_swegym.json 与各包读取它的脚本（L1_pydantic/scripts/prescan.py、L1_dvc_2/scripts/prescan.py、L3/parse_trajectories.py、L5/build_evidence_index.py），无生成脚本入库。",
+        "判据可从数据反推为**结果派生**而非**形状派生**：216 行里 fragile=True 恰好 10 条，且这 10 条的 stage1 全部是 gold.verdict=RESOLVED_NO ∧ f2p_missing=0 ∧ p2p_missing≥1（如 getmoto__moto-5417: p2p_missing=1）；与 L1_dvc_1 的 10 题结论逐题一致。",
+        "形状类对照（runs/.../L6_rh2_code_check/idshape.py）：参考 ID 含 `[` 而不以 `]` 结尾的有 **35** 题，其中 29 题不在 fragile 名单；参考 ID 含反斜杠的有 9 题，与 fragile 的 10 题只交 5 题；参考 ID 含空格的 0 题（因为数据集里的 ID 本身就是被同一 parser 截断过的）。",
+        "216 题里 stage1 为 null 的有 34 题——这些题无论 ID 形状多脆弱都不可能被这个信号标出。"
+      ],
+      "actual_behavior": "fragile_reference_id = 『stage1 gold 跑出来 P2P 缺席』的事后信号。截断塌缩不会让 gold 失败（参考串与日志键被同一 parser 截成同一形状，照样相等），所以这一类对该信号天然不可见；不在 stage1 样本里的 34 题同理漏检。",
+      "notes": "L1_moto_2 建议的判据（参考 ID 含 `[` 但不以 `]` 结尾）在本包实测能一次性圈出 35 题，可直接用。"
+    },
+    {
+      "id": "C11",
+      "source_pkg": [
+        "L1_moto_2(问题 3)"
+      ],
+      "claim": "候选执行失败归因（P-A）是否会把安装 rc / 测试 rc 当作输入（L1_moto_2 建议『禁止 rc 接入候选失败归因』）。",
+      "verdict": "reject",
+      "evidence": [
+        "rh2/src/repoharness2/grading/manager.py:2939-2948 —— `test_rc = facts.get('test_rc')`；`resource['signal_exit'] = test_rc is not None and test_rc >= 128`；随后 `if (oom_kill_events>0) or container_oom_killed or signal_exit: decision['kind']='resource'; return` —— test_rc **决定**是否判 resource（进而 infra、reward None）。",
+        "manager.py:2968-2972 —— `baseline_rc = q.install_rc_last_command if (qual_ok and q is not None and ...) else 0`；`install_rc = facts.get('install_rc_last_command')`；`if install_rc is not None and install_rc != baseline_rc and not facts.get('install_skipped'): missing.append(f'install_segment_rc={install_rc}:baseline={baseline_rc}')` —— 安装 rc **决定**能否归因到候选（missing 非空即落回 unattributed/infra）。",
+        "manager.py:1083-1085 `classify_execution_failure_shape(log_text, test_rc)` docstring『只认测试段内的文本规则；test_rc 只作为证据行附带』，:1103 `evidence.append(f'test_rc={test_rc}')` —— 只有**形状判定**这一步不用 rc。",
+        "触发器 manager.py:1108-1118 `execution_failure_trigger(verdict)` 只看 num_parsed_tests / reference_missing / 四桶，不看 rc。"
+      ],
+      "actual_behavior": "两个 rc 都是归因输入，只是位置不同：test_rc≥128 → 直接判 resource（infra）；install_rc 与**资格账本基线**比较（不是与 0 比较），不等即阻断 candidate 归因。因此 L1_moto_2 的『rc 目前没接进来 / 请勿接入』前提有误，正确的提法是『是否要把这两处 rc 依赖改掉或改判据』。",
+      "notes": "L1_moto_2 担心的 moto 场景（`make init` 离线恒 rc=2）已被 baseline 比较吸收：只要环境资格账本记录的基线也是 2，就不会误阻断。真正的残余风险是反向的——C08 证明 rc=0 并不代表安装成功（dvc/mypy 段末命令掩盖失败），所以 install_rc==baseline 这一关**放行过宽**。"
+    },
+    {
+      "id": "C12",
+      "source_pkg": [
+        "L1_moto_2",
+        "L1_moto_3"
+      ],
+      "claim": "重复题检测 duplicate_clusters_v0.json 的判据只按 base_commit，problem_statement sha 相同的两对漏检；该文件由哪段代码生成。",
+      "verdict": "hold",
+      "evidence": [
+        "生成代码：rh2/src/repoharness2/envpack/ingest_swegym_lite.py:198-217 `build_duplicate_clusters`，分组键 `groups.setdefault((r['repo'].lower(), r['base_commit']), []).append(r)`；`if len(members) < 2: continue`；成簇后才用五重内容 digest 判 suspected_duplicate。写盘在 :389-390 / :398（文件名 duplicate_clusters_v0.json）。",
+        "dataclass DuplicateCluster（:84-99）注释原文『同环境身份（repo_key_lower + base_commit）的任务簇（>1 成员才成簇）』。",
+        "数据实证：getmoto__moto-6121 base=3adbb8136a 与 6157 base=fe1869212f，problem_statement sha 相同（e3acbbf84cbb6c2a）；7331 base=ad63e3966b 与 7335 base=a5a2c22fc8，sha 相同（2a08bd1a74d58d7c）。四题全部不在 duplicate_clusters_v0.json（该文件只有 2 个簇，classification 全是 distinct_tasks_shared_environment）。"
+      ],
+      "actual_behavior": "base_commit 不同的两题永远不会进同一组，五重 digest 比较根本不会执行，题面完全相同也判不出。",
+      "notes": "扩判据（按 problem_statement sha 或 F2P 清单分组）是数据层改动，不动评分语义。"
+    },
+    {
+      "id": "C13",
+      "source_pkg": [
+        "M2"
+      ],
+      "claim": "GraderSandboxProfile.candidate_writable_prefixes（rh2/src/repoharness2/adapters/slime/sandbox_profile.py:517）。",
+      "verdict": "partial",
+      "evidence": [
+        "字段存在且默认值为 `('/opt/miniconda3/envs/testbed',)`，但当前行号是 **520** 而非 517（rh2/src/repoharness2/adapters/slime/sandbox_profile.py:520）。",
+        "同处注释（:516-519）已登记代价：『候选可以在安装段替换或 monkeypatch 测试运行器——运行器完整性只作观察，不在 F2 保护范围内』。"
+      ],
+      "actual_behavior": "字段与语义成立，只是行号漂移（该文件在本夜其它会话的未提交改动里）。",
+      "notes": "提醒：所有包给的行号都是在同一棵会动的工作树上取的，早上引用时以内容 grep 为准，不以行号为准。"
+    },
+    {
+      "id": "C14",
+      "source_pkg": [
+        "L2_reference_ids"
+      ],
+      "claim": "复算时 rh2/src/repoharness2/contracts/grading.py 第 317 行有未提交的语法错误，`python -c \"import repoharness2.envpack\"` 直接 SyntaxError（L2 因此按文件路径独立加载 parser）。",
+      "verdict": "reject",
+      "evidence": [
+        "当前树（HEAD bac7659e + 未提交改动，04:00 时刻）`import repoharness2.envpack.scoring, repoharness2.contracts.grading` 成功。",
+        "contracts/grading.py:313-323 的 if/else 结构完整（r2e_expected_map 分支 + else 分支），无重复 else。",
+        "全套测试 2062 passed（见 L6_report.md §3），其中 tests/contracts/ 425 条全绿。"
+      ],
+      "actual_behavior": "L2 在 02:3x 观察到的中间态已被该会话修复；L2 报告末尾的这条前提对当前树**不再成立**，其结论本身不受影响（它用的是同一份 parser 源码）。",
+      "notes": "这是『被核实树会动』的直接例证：同一条断言在夜里不同时刻结论不同。"
+    },
+    {
+      "id": "C15",
+      "source_pkg": [
+        "L1_pydantic(R4)",
+        "L1_monai_1"
+      ],
+      "claim": "判分恢复面只有 test_patch 触碰的文件：tests/conftest.py 与 pyproject.toml 的 [tool.pytest.ini_options] 都不恢复。",
+      "verdict": "hold",
+      "evidence": [
+        "rh2/src/repoharness2/adapters/slime/prepared_task_face.py:110-120 `_v2_trusted_setup_lines` 与 :200-206 `_v2_attested_trusted_setup_lines` 的恢复对象都只有 files = test_patch 触碰路径（:306 / :84-94）。",
+        "hygiene.test_files 同源（:306），所以这些文件既不恢复也不判篡改（C04/C05）。",
+        "唯一的对冲是观测：CONFTEST_OR_FIXTURE_GLOBS 含 `pyproject.toml` 与 `*/conftest.py`，会进 sidecar / 账本（manager.py:566-577、1535；replay_grade.py:648）。"
+      ],
+      "actual_behavior": null,
+      "notes": null
+    },
+    {
+      "id": "C16",
+      "source_pkg": [
+        "L1_mypy_1",
+        "L1_mypy_2",
+        "L1_monai_2"
+      ],
+      "claim": "6 题 version≥1.8 的 mypy eval_cmd 无 -n0，在 xdist 并行下评分。",
+      "verdict": "hold",
+      "evidence": [
+        "逐题扫描 grading_bundles_v2_v0.jsonl：mypy 40 题里 6 题 eval_cmd = `pytest -rA -k`（无 -n0），且全部 version≥1.8：16555(1.8)、16869(1.9)、16905(1.10)、16963(1.10)、16966(1.10)、17071(1.10)。"
+      ],
+      "actual_behavior": null,
+      "notes": "顺带的全池事实（各包未汇总过）：216 题里 **92** 题 eval_cmd 无 -n0 —— MONAI 26/26、dvc 35/35、pydantic 20/20、pandas 5/5、mypy 6/40。是否并行由各仓库自己的 addopts 决定，`-n0` 只是显式关闭。"
+    },
+    {
+      "id": "C17",
+      "source_pkg": [
+        "L6 自查"
+      ],
+      "claim": "rh2/ 全套 `uv run pytest -q` 是否可作为当前树的绿/红判据。",
+      "verdict": "reject",
+      "evidence": [
+        "整树单进程运行：6 failed / 2062 passed / 322 skipped，167.84s（runs/env_overnight_20260916/L6_rh2_code_check/pytest_full.log）。6 条失败全部在 tests/contract_slime_async/test_dp_schedule_differential.py，错误统一是 `ModuleNotFoundError: No module named 'slime.rollout'`。",
+        "同一文件单独跑：`uv run pytest tests/contract_slime_async/ -q` → 14 passed。",
+        "根因定位（runs/.../L6_rh2_code_check/l6plug2.py 插桩，整树 `-k differential_on_j4` 复现）：执行时 sys.path 里 `rh2/src` 在索引 3、`reference/slime` 在索引 20，`import slime` 解析到 vendored `rh2/src/slime`（无 rollout 子包）。收集阶段结束时 sys.modules 无 slime（l6plug.py 实测），所以是**运行期**路径顺序问题。",
+        "机制出处：tests/adapters_miles/conftest.py:165-195 的 module 级 autouse fixture `_vendor_slime_world` 把 RH2_SRC 提到 sys.path[0] 并 evict slime，teardown 用 `sys.path[:] = saved_path` 还原——注释明写是为了『后续目录（contract_slime_async 等）重新 import slime 时拿 reference/slime』，但还原的那份快照本身已把 rh2/src 排在 reference/slime 前面。"
+      ],
+      "actual_behavior": "这 6 条失败是整树单进程收集/执行顺序造成的 import 遮蔽，不是产品代码回归；被遮蔽的文件与 vendored slime 都不在本夜未提交改动清单里。仓库的既定验收是分 lane 跑（scripts/miles_integration_lanes.sh 只跑 tests/adapters_miles/，按 manifest 断言精确计数），不是整树一把梭。",
+      "notes": "结论：当前树除这 6 条顺序性失败外全绿；但『整树 pytest -q 绿』这个判据本身在本仓不成立，早上若要把它当门禁需要先修 fixture 的 path 还原或给该文件加 importorskip。"
+    },
+    {
+      "id": "C18",
+      "source_pkg": [
+        "L1_dvc_2",
+        "L6 自查"
+      ],
+      "claim": "阶段一离线日志没有 `>>>>> Start/End Test Output` 标记，status_map 是整份日志解析出来的，混进了 pip 的 `ERROR:` 行伪键；生产 v2 入口只取标记段且不回退。",
+      "verdict": "hold",
+      "evidence": [
+        "181 份 `runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/*/gold/offline/a1/test_output.txt` 里含 `>>>>> Start Test Output` 的是 **0** 份；阶段一的 eval.sh 也不写标记（getmoto__moto-5885 的 eval.sh grep 计数 0）。",
+        "181 份 status_map.json 统计：不含 `::` 的伪键 **54 种 / 148 条 / 涉及 54 题**，最常见的是 `Could`×35、`No`×21（来自 pip 的 `ERROR: Could not find a version…`）、`[1]`×16；状态值里出现 TestStatus 之外的 `ERROR:`×75 以及 `nothing]`、`int`、`to` 等断词。",
+        "当前 v2 入口 `rh2/src/repoharness2/envpack/scoring.py:233-238`：`has_markers = START in log_text and END in log_text`；`if bad_codes or not has_markers: status_map={}; outside_map={}; apply_ok=False` —— 缺标记直接空映射 + apply_ok=False，不回退整份日志（docstring :192-196 明确对比 4.1.0 的回退行为）。"
+      ],
+      "actual_behavior": "同一份阶段一日志喂给当前 v2 入口会得到 apply_ok=False / 零解析（归 patch_apply_failed），而不是阶段一记录的 RESOLVED_FULL/NO。",
+      "notes": "影响面很广：所有以阶段一 gold/empty 判定为依据的结论（含 `fragile_reference_id`、各包的『gold 全 FULL』『empty 全 NO』、p2p_missing 计数）都产自**整份日志解析**这条已废弃的路径，不能直接当作 v2 评分面的预期。要把它们转成 v2 口径，需要重跑或至少按标记段重解析。"
+    },
+    {
+      "id": "C19",
+      "source_pkg": [
+        "M2",
+        "L1_dask",
+        "L0_facts_tool",
+        "L1_monai_1"
+      ],
+      "claim": "各包给出的 rh2 源码行号（M2 的 sandbox_profile.py:517/496/502/323、L1_dask 的 trusted_projection.py:22-24、L0 的 manager.py:2731-2737 等）。",
+      "verdict": "partial",
+      "evidence": [
+        "M2：`declared_readonly_binds`（:577）与 `git_sanitize_script`（:1034）行号**精确**；`candidate_writable_prefixes` 实为 :520（M2 写 517）、`candidate_exec_uid=54322` 实为 :497（写 496）、`agent_uid=54321` 实为 :324（写 323）、Grader profile 的 `tmp_tmpfs_bytes=1 GiB` 实为 :501（写 502）。",
+        "L1_dask：`trusted_projection.py:22-24` 指向的『已知不足（登记不修）』段实际在 :18-20（:22-24 是后一段『仍是 infra/security failure』）；L1_monai_1 给的 :18-20 正确。",
+        "L0：`manager.py:2731-2737` 的候选身份注释实际在 :2734-2735，带 `user=str(profile.candidate_exec_uid)` 的 `_observe` 调用在 :2736-2741。",
+        "L1_conan:58 给的 `prepared_task_face.py:185-206` 与本包 C07 的 :185-190/:200-206 一致。"
+      ],
+      "actual_behavior": "所有被抽查的**结构性**断言都成立，偏差只在行号（0–4 行），方向与另一会话在同一夜持续编辑这些文件一致。",
+      "notes": "早上合并各包结论时，按符号名/内容 grep 定位，不要按包里的行号定位；引用行号时标注『2026-09-16 03:5x 工作树』。"
+    }
+  ]
+}

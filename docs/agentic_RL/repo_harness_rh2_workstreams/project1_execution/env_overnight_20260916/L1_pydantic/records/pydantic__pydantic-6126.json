@@ -1,0 +1,191 @@
+{
+ "task_id": "pydantic__pydantic-6126",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_pydantic (Claude Opus 5, 2026-09-16 夜)",
+ "materials_refs": [
+  "s2/ingest/*_bundles_v0.jsonl (pydantic__pydantic-6126)",
+  "repos/pydantic@2ea62bd4(见 grading.base_commit)",
+  "runs/env_probe_stage1_20260910/.../pydantic__pydantic-6126/"
+ ],
+ "public_view": {
+  "目标行为": "生成 JSON schema 时不要执行 `Field(default_factory=...)` 并把结果写进 schema 的 `default`（v1 不写，v2 写了）；理由是可能泄露密钥、缓存出陈旧的时间/uuid、以及 default_factory 可能发起数据库/网络调用。",
+  "约束": "显式 `default=` 的字段仍应写入 schema 的 default。",
+  "公开材料无法确定的点": [
+   "是否保留一个 opt-in（题面只说“不该这样暴露”，没说要不要留开关）",
+   "pydantic dataclass 的 schema 是否同步（题面只举 BaseModel，但 F2P 有 tests/test_dataclasses.py::test_schema）"
+  ],
+  "base 定位": "pydantic/json_schema.py:734-742 `default_schema`：`elif 'default_factory' in schema: default = schema['default_factory']()` —— 在生成 schema 时直接调用工厂。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "两个 test_patch 文件与 pydantic/json_schema.py 在 base 均存在"
+   ],
+   "note": "对应同一问题。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "json_schema.py:739",
+    "stage1 empty：2 条 F2P 全 FAILED"
+   ],
+   "note": "base 确有该行为。",
+   "by": "static+stage1log"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 1488 字符，含 v1/v2 输出对比"
+   ],
+   "note": "输入完整。hints 里 dmontagu 讨论了相关的 `a: int = None`，不是本题必需信息。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 碰 tests/test_dataclasses.py 与 tests/test_json_schema.py；F2P+P2P 449 条全在这两个文件；gold 只碰生产代码"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "static"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "同 gold 文件 json_schema.py 的还有 6043、9066；同 test_dataclasses.py 的还有 8511"
+   ],
+   "note": "不同函数不同 PR，不是派生。",
+   "by": "static"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "install rc=2。",
+   "by": "stage1log"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "测试第三方 import：pytest / pydantic_core / dirty_equals"
+   ],
+   "note": "无外部资产。",
+   "by": "static"
+  },
+  "10": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "无本题轨迹。",
+   "by": "-"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "只有 install 需要网络。",
+   "by": "stage1log"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 的 v1 输出就是期望输出"
+   ],
+   "note": "要求充分：题面给了 v1/v2 的具体差异，F2P 的断言与之一致。",
+   "by": "static"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 断言完整 schema 字典"
+   ],
+   "note": "不强制唯一实现：在 default_schema 早退、或在更上层剔除 default_factory 产生的 default，都能过。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "F2P 之一 tests/test_dataclasses.py::test_schema 是**既有测试删掉一行断言**（`'default': {'John':'Joey'}`）得到的",
+    "题面提到的“default_factory 可能发起数据库/网络调用”在判分面里没有对应检查（没有任何用例断言工厂**未被调用**）"
+   ],
+   "note": "P2：判分只看 schema 输出里没有 default 键，不看工厂是否被执行。一个“照旧执行工厂、但把结果丢掉”的实现能全绿，却完全没解决题面列出的核心风险（副作用、网络调用）。这是题面要求与验收面之间一个具体且可构造的缺口。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "default_schema 是所有带默认值字段的 JSON schema 出口"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "static"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 全文"
+   ],
+   "note": "gold 直接早退并把旧行为写成注释供用户覆写；无题外改动。同时它删掉了原来的 `raise ValueError('schema has neither default nor default_factory')`（pragma: no cover 分支），属于合理简化。",
+   "by": "static"
+  },
+  "29": {
+   "status": "issue",
+   "evidence_refs": [
+    "leak 扫描：gold 新增 3 行中 1 行（`default = schema['default']`）出现在 hints_text"
+   ],
+   "note": "P3：hints 不可见，且该行是原代码的一部分，不构成实质泄漏。",
+   "by": "static"
+  },
+  "31": {
+   "status": "issue",
+   "evidence_refs": [
+    "R4"
+   ],
+   "note": "静态残余面。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "oracle_misses_stated_requirement",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 25"
+   ],
+   "proposed_action": "补一条“生成 schema 时 default_factory 不被调用”的断言（用计数器工厂），把题面列出的副作用风险纳入判分",
+   "next_experiment": "在镜像里实现“仍调用工厂但丢弃结果”的版本，跑官方 449 条确认全绿"
+  },
+  {
+   "category": "official_test_coverage_gap",
+   "severity": "P3",
+   "evidence_refs": [
+    "check 26"
+   ],
+   "proposed_action": "扩 P2P 到 TypeAdapter/序列化模式的 schema",
+   "next_experiment": "无"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "两个 test_patch 路径都是纯测试文件，判分面与恢复面一致。",
+  "evidence_refs": [
+   "grading.json.test_patch",
+   "validation.json.golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  "计数器 default_factory：`calls=[]; Field(default_factory=lambda: calls.append(1) or 1)`，断言 model_json_schema() 后 `calls == []` — 选择依据：直接检查题面列出的副作用风险，现有判分面零覆盖（检查 25）",
+  "显式 `default=` 仍写入 schema（正向护栏）— 选择依据：防止过度修复把所有 default 都删掉",
+  "serialization 模式 `model_json_schema(mode='serialization')` 与 TypeAdapter 的同类断言 — 选择依据：default_schema 是共用出口，判分面只覆盖 validation 模式",
+  "tests/test_main.py / tests/test_fastapi_json_schema.py 中涉及默认值 schema 的条目 — 选择依据：跨文件调用者"
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "题面给了明确的 v1/v2 对比作为验收标准，gold 与题面一致，边界干净；唯一缺口是没有检查“工厂未被调用”，可通过补一条断言收紧。"
+ },
+ "costs": {
+  "minutes": 14
+ }
+}

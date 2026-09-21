@@ -1,0 +1,204 @@
+{
+ "task_id": "pydantic__pydantic-5386",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_pydantic (Claude Opus 5, 2026-09-16 夜)",
+ "materials_refs": [
+  "s2/ingest/*_bundles_v0.jsonl (pydantic__pydantic-5386)",
+  "repos/pydantic@6cbd8d69609bcc5b4b383830736790f9b8087e36",
+  "runs/env_probe_stage1_20260910/.../pydantic__pydantic-5386/"
+ ],
+ "public_view": {
+  "目标行为": "题面诉求：在子类定义时（`__init_subclass__` 阶段）能拿到字段信息（v1 的 `cls.__fields__` / v2 的 `cls.model_fields`），现在这时候 model_fields 还是空的。",
+  "约束": "题面没有提出任何具体 API 形状。",
+  "公开材料无法确定的点": [
+   "修复形态完全未定：可以是让 model_fields 在 __init_subclass__ 前就绪、可以新增一个后置钩子、也可以提供文档化的 workaround",
+   "如果新增钩子，它的名字、是否 classmethod、kwargs 如何传递、与 __init_subclass__ 的调用顺序，公开材料一概没有",
+   "题面代码块本身有语法错误（`ParentModelEnforcer(BaseModel):` 缺 `class`）、用的是 v1 的 `root_validator`"
+  ],
+  "base 定位": "pydantic/main.py 的 ModelMetaclass.__new__ 在 complete_model_class 之后直接 `return cls`（:155），没有任何“类完全初始化后”的回调；全仓 grep `__pydantic_init_subclass__` 在 base 命中 0 次。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "tests/test_main.py、pydantic/main.py 在 base 均存在"
+   ],
+   "note": "对应同一诉求（feature request 类）。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base 无 __pydantic_init_subclass__（git grep 命中 0）",
+    "stage1 empty：test_pydantic_init_subclass FAILED"
+   ],
+   "note": "base 确无该能力。注意这是**特性请求**不是缺陷修复，题目类型与其它 19 题不同。",
+   "by": "static+stage1log"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement 1135 字符：代码块 `ParentModelEnforcer(BaseModel):` / `ChildClass(ParentModelEnforcer):` 缺 class 关键字，且混用 v1 的 root_validator",
+    "hints_text 里的长讨论（含 samuelcolvin 的回复、可行 workaround、'should be easy to support'）全部不可见"
+   ],
+   "note": "P2：实际输入质量差——例子不可运行、用错版本 API；真正把诉求收敛成“在类完全初始化后回调”的讨论只在 hints 里。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只碰 tests/test_main.py；F2P+P2P 107 条全在该文件；gold 只碰 pydantic/main.py"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "static"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "同 test_patch 文件的还有 5662（gold 也是 pydantic/main.py）与 9134（gold 是 _model_construction.py）"
+   ],
+   "note": "P3：三题共用 tests/test_main.py，其中 5386 与 5662 的 gold 同文件；不同函数、不同 PR，不是派生，但训练/评测划分需同侧。",
+   "by": "static"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "install rc=2。",
+   "by": "stage1log"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "tests/test_main.py 第三方 import 仅 pytest"
+   ],
+   "note": "无外部资产。",
+   "by": "static"
+  },
+  "10": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "本题无 DeepSeek 轨迹；R3 应同样适用。",
+   "by": "-"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "只有 install 需要网络。",
+   "by": "stage1log"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement 全文 vs test_patch 断言"
+   ],
+   "note": "P1 要求不可由公开材料推断：F2P 要求实现一个名为 `__pydantic_init_subclass__` 的 **classmethod** 钩子、接收类定义 kwargs、在 `__init_subclass__` 之后被调用、且支持 `super().__pydantic_init_subclass__(**kwargs)` 链式调用。题面只说“拿不到字段”，没有一个字指向这个 API。这是本包里公开材料与验收面落差最大的一题。",
+   "by": "static"
+  },
+  "24": {
+   "status": "issue",
+   "evidence_refs": [
+    "test_patch 断言 `calls == [('MySubModel','__init_subclass__',{'a':1}), ('MySubModel','__pydantic_init_subclass__',{'a':1})]`",
+    "git grep '__pydantic_init_subclass__' @base 命中 0 次；docs 无提及"
+   ],
+   "note": "P1 强制唯一实现：测试同时钉死了(1) 新钩子的**精确名字**（base 与文档里都不存在的字符串）、(2) 两个钩子的**调用顺序**、(3) kwargs 的传递形状。任何满足题面诉求的替代方案（例如把 model_fields 提前就绪、或用别的钩子名）都会被拒。按检查 24 的口径，这属于“没有依据的唯一实现约束”。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "F2P 只有 1 条，且只用一个直接子类"
+   ],
+   "note": "P3：反向也很薄——只要在 metaclass 末尾调一次 `super(cls, cls).__pydantic_init_subclass__(**kwargs)` 并加个空的 classmethod 即可通过，多层继承、泛型子类、BaseModel 自身不触发等情况都没测。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "gold 改的是 ModelMetaclass.__new__ 的返回路径，影响所有模型类的创建"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "static"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 全文"
+   ],
+   "note": "gold 自洽：新增基类空实现 + 在 metaclass 用 `super(cls, cls)` 只调父类实现，注释解释了为何这样写。无题外改动。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak 扫描 0 命中；题面无 URL（hints 里有一条 python-dev 邮件列表链接，与本题修复无关）"
+   ],
+   "note": "无泄漏；问题在信息不足。",
+   "by": "static"
+  },
+  "31": {
+   "status": "issue",
+   "evidence_refs": [
+    "R4"
+   ],
+   "note": "静态残余面。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "spec_underspecified_api",
+   "severity": "P1",
+   "evidence_refs": [
+    "check 23",
+    "check 24"
+   ],
+   "proposed_action": "本题应当从训练集剔除或改写题面：把“需要一个在类完全初始化后调用的钩子 `__pydantic_init_subclass__(cls, **kwargs)`，在 `__init_subclass__` 之后触发”写进 public_view；否则模型不可能猜到这个名字。",
+   "next_experiment": "在镜像里实现一个等价但改名的钩子（如 `__pydantic_post_init_subclass__`），确认 F2P 必然失败，把“唯一实现约束”做成可复核结果"
+  },
+  {
+   "category": "problem_statement_quality",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 3"
+   ],
+   "proposed_action": "题面代码块缺 class 关键字、混用 v1 API；若保留本题需修正",
+   "next_experiment": "无"
+  },
+  {
+   "category": "official_test_coverage_gap",
+   "severity": "P3",
+   "evidence_refs": [
+    "check 25",
+    "check 26"
+   ],
+   "proposed_action": "补多层继承/泛型/BaseModel 自身的回归",
+   "next_experiment": "无"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 仅纯测试文件、gold 仅生产代码、判分面与恢复面一致。",
+  "evidence_refs": [
+   "grading.json.test_patch",
+   "validation.json.golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  "多层继承：A(BaseModel) → B(A) → C(B)，确认 __pydantic_init_subclass__ 在每一层被调用一次且顺序正确 — 选择依据：gold 用 `super(cls, cls)` 规避递归，这是最容易写错的点",
+  "BaseModel 本身创建时不触发该钩子 — 选择依据：gold 的分支 `else: # this is the BaseModel class itself` 没有断言",
+  "泛型模型 `MyModel[int]` 的参数化子类是否触发 — 选择依据：pydantic 的泛型走同一条 metaclass 路径",
+  "tests/test_main.py 既有的 model_fields 相关条目（已在 P2P）保留"
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "验收面要求一个公开材料里完全不存在的新 API 名与调用顺序；这类题在 RL 里只会教模型“猜上游 PR 的命名”，不补题面就不应进训练集。"
+ },
+ "costs": {
+  "minutes": 16
+ }
+}

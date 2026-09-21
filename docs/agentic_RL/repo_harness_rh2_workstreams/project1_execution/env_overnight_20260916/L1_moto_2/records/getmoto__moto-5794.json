@@ -1,0 +1,54 @@
+{
+ "task_id": "getmoto__moto-5794",
+ "source": "SWE-Gym lite (s2 ingest v0)",
+ "task_revision": "upstream",
+ "by": "L1_moto_2 (Opus 5, 静态审查, 2026-09-16)",
+ "materials_refs": {
+  "snapshot": "runs/env_overnight_20260916/L1_moto_2/mat/getmoto__moto-5794/",
+  "base_commit": "027572177da3e95b8f5b4a3e611fe6a7f969e1b1",
+  "version": "4.0",
+  "eval_cmd": "pytest -n0 -rA",
+  "repo_level": "docs/.../env_overnight_20260916/L1_moto_2/repo_level_findings.md"
+ },
+ "public_view": {
+  "目标行为": "cognito-idp global_sign_out 之后，用同一个 AccessToken 调 get_user 必须抛 NotAuthorizedException（不能只让 refresh token 失效）。",
+  "约束": "只改 moto/ 源码。",
+  "公开材料可推断": "base 的 CognitoIdpUserPool.sign_out 只把 refresh_tokens 的对应项置 None，完全不动 access_tokens（027572177d:moto/cognitoidp/models.py:623-629）；而 get_user 的鉴权正是查 user_pool.access_tokens（同文件 1893-1894、2026-2027 等多处）。缺陷与修法均可由公开材料＋读代码推出。",
+  "公开材料无法确定的点": [
+   "题面只说 global_sign_out；而 sign_out(username) 同时被 admin_user_global_sign_out 调用（027572177d:moto/cognitoidp/models.py:1642-1646）。改 sign_out 会一并改变管理员登出的行为，题面没说这是否期望（P2P 里的 test_admin_user_global_sign_out 系列会给出实际约束，但那是私有材料）。",
+   "题面没说失效范围是\"该用户在该 user pool 的全部 access token\"还是\"仅当前这一个 token\"。gold 选了前者。"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5794/test.patch", "mat/getmoto__moto-5794/gold.patch"], "note": "test_patch 只在既有 test_global_sign_out 末尾追加 6 行，gold 只碰 moto/cognitoidp/models.py；base 均存在、同一问题。", "by": "static"},
+  "2": {"status": "pass", "evidence_refs": ["027572177d:moto/cognitoidp/models.py:623-629"], "note": "base 的 sign_out 不清 access_tokens，缺陷确在。stage1 empty=RESOLVED_NO 印证。", "by": "static+stage1"},
+  "3": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5794/problem_statement.txt"], "note": "题面 1178 字符，含可直接粘贴的测试用例（与 test_patch 追加部分语义一致）、说明已对照真实 AWS，无外链/截断。", "by": "static"},
+  "4": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5794/test.patch"], "note": "合法解在 moto/cognitoidp/models.py。", "by": "static"},
+  "5": {"status": "pass", "evidence_refs": ["本包其余 19 题"], "note": "本包唯一的 cognitoidp 题，无同族。", "by": "static"},
+  "11": {"status": "pass", "evidence_refs": ["027572177d:tests/test_cognitoidp/test_cognitoidp.py:521,535,549,2400,4320"], "note": "文件里 5 处 settings.TEST_SERVER_MODE 分支是\"是否用 moto_server 进程\"的本地开关，不是网络依赖；离线模式下 TEST_SERVER_MODE=False，`if not settings.TEST_SERVER_MODE:` 包住的那批测试会被收集。无 network marker、无真实端点。", "by": "static"},
+  "17": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5794/test.patch"], "note": "只恢复 1 个纯测试文件。", "by": "static"},
+  "19": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5794/grading.json"], "note": "183 个 P2P 与 1 个 F2P 均无参数化 ID，不受 R8 影响。", "by": "static"},
+  "23": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5794/problem_statement.txt", "mat/getmoto__moto-5794/test.patch"], "note": "F2P 追加的断言（get_user 抛 NotAuthorizedException）与题面给的用例逐项对应。题面甚至没要求 Message 文本，F2P 也只查 Code，一致。", "by": "static"},
+  "24": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5794/test.patch"], "note": "只断言异常 Code，不约束实现方式；删除 token、标记为 revoked 再在鉴权处判断、或换一个数据结构，都能通过。", "by": "static"},
+  "25": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5794/grading.json"], "note": "判分集合防护较强：183 个同文件 P2P 里含 test_get_user、test_get_user_unconfirmed、test_admin_get_user 等正常鉴权路径，所以\"让 get_user 一律抛异常\"的假修复会大面积失败；还含 test_admin_user_global_sign_out / _twice / _unknown_user / _unknown_userpool 与 test_global_sign_out_unknown_accesstoken，覆盖登出的边界分支。", "by": "static"},
+  "26": {"status": "pass", "evidence_refs": ["027572177d:moto/cognitoidp/models.py:1642-1652"], "note": "sign_out 的两个调用者（global_sign_out、admin_user_global_sign_out）对应的测试都已在 P2P 内，回归面基本被覆盖。仍列出 1 条跨文件建议。", "by": "static"},
+  "27": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5794/gold.patch", "027572177d:moto/cognitoidp/models.py:1642-1652"], "note": "gold 4 行、无夹带。范围观察：因为改的是共用的 sign_out，admin_user_global_sign_out 也会一并失效 access token——题面没要求，但与 AWS 语义一致，且 P2P 里的 admin 系列测试通过（stage1 gold RESOLVED_FULL）说明没有破坏既有期望。判为正确且对应。", "by": "static"},
+  "29": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5794/hints.txt"], "note": "hints 只有维护者致谢。题面给出了验收用例但没给修复代码或代码位置。", "by": "static"},
+  "6": {"status": "pass", "evidence_refs": ["repo_level_findings.md#R2"], "note": "4.0，离线 rc=0。", "by": "static+stage1"},
+  "7": {"status": "not_applicable", "evidence_refs": [], "note": "无外部资产。", "by": "static"},
+  "9": {"status": "pass", "evidence_refs": ["repo_level_findings.md#R3"], "note": "仓库级共性证据。", "by": "static+stage1"},
+  "13": {"status": "unknown", "evidence_refs": ["mat/getmoto__moto-5794/grading.json"], "note": "本题判分集合 184 个 ID 全在单个文件，是本包最大的一个（cognitoidp 测试涉及 JWT 签名/密钥生成，单测偏慢）。静态无法判断耗时；需要一次真机计时才能确认不触发超时档位。", "by": "static"}
+ },
+ "issues": [
+  {"category": "改动范围外溢（可接受）", "severity": "P3", "evidence_refs": ["027572177d:moto/cognitoidp/models.py:1642-1652", "mat/getmoto__moto-5794/gold.patch"], "proposed_action": "记录 gold 同时改变了 admin_user_global_sign_out 的行为；与 AWS 语义一致，不需处理。", "next_experiment": "无。"},
+  {"category": "运行成本未知", "severity": "P3", "evidence_refs": ["mat/getmoto__moto-5794/grading.json"], "proposed_action": "在探针运行里记录本题的 test 阶段 wall time，作为 cognitoidp 版本组的资源档位校准点。", "next_experiment": "真机上跑一次 gold，记录 RH2_PHASE test 段耗时。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只碰 1 个纯测试文件。", "evidence_refs": ["mat/getmoto__moto-5794/test.patch"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_cognitoidp/test_cognitoidp_replay.py", "reason": "同包另一测试文件，覆盖 user pool 状态的序列化/重放路径；gold 会在 sign_out 时从 access_tokens 里 pop 条目，值得确认重放路径不依赖被删的 token。"},
+  {"id": "tests/test_cognitoidp/test_cognitoidp.py::test_change_password", "reason": "change_password 也用 access_token 鉴权（027572177d:moto/cognitoidp/models.py:2026-2027），是与 get_user 并列的调用者。"},
+  {"id": "tests/test_cognitoidp/test_cognitoidp.py::test_admin_user_global_sign_out", "reason": "gold 通过共用的 sign_out 改变了这条路径的行为；已在 P2P，列此强调它是关键对照。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "材料一致、初态含问题、gold 正确最小、判分集合对正反两方向都有防护；唯一未检查项是运行耗时。"},
+ "costs": {"minutes": 15}
+}

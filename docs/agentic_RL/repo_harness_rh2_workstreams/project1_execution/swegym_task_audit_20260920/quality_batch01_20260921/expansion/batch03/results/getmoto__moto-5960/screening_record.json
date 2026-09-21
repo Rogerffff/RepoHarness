@@ -1,0 +1,528 @@
+{
+  "task_id": "getmoto__moto-5960",
+  "task_revision": "upstream / unmodified SWE-Gym lite 4.1; static audit B3",
+  "source_adapter_ref": {
+    "source": "swe_gym_lite",
+    "spec_vendor_id": "swegym_constants_242429c1",
+    "frozen_archive": "runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz",
+    "members": [
+      {
+        "path": "src/repoharness2/adapters/slime/prepared_task_face.py",
+        "sha256": "3a3d7bcab18e8a83f99104180e065ed32d8ecbce5d1bd4aaa7f8bd72b001aa27"
+      },
+      {
+        "path": "src/repoharness2/envpack/spec_vendor.py",
+        "sha256": "8e0037b27c87268ed7df97ef64d261d0e6dac7375bc85fd5badd0fecdb94d41d"
+      },
+      {
+        "path": "src/repoharness2/envpack/data/swegym_specs_242429c1.json",
+        "sha256": "0da8f9caeec18e3b41386fb66e677807335c0fe12c41d811dd9fb65f9bfcc925"
+      },
+      {
+        "path": "src/repoharness2/envpack/swegym_parsers.py",
+        "sha256": "995bb6aae58a94f9553946c2f9aea59a158ad4fdf4d7fc0137802c11362b2276"
+      },
+      {
+        "path": "src/repoharness2/envpack/scoring.py",
+        "sha256": "b6c8b9bd3e9cac604bc0d03b0b243ef9646de369e94bb6a65e60eadd3a64f5ab"
+      },
+      {
+        "path": "src/repoharness2/grading/trusted_projection.py",
+        "sha256": "5ef126803e93e3606123a4aef4389d35bad0551a622020d1dd22f0db32224a60"
+      }
+    ],
+    "inspection": "text-only tar members; no extraction to disk, import or execution; shared frozen code read reused within this assigned bundle",
+    "semantics": "patch paths choose full test file; pytest status parser keys are compared against frozen F2P/P2P; ordinary test rc is not itself reward"
+  },
+  "recipe_ref": {
+    "family": "install_wave1",
+    "environment_record": "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/environment_record.json",
+    "run_refs": "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/run_refs.json",
+    "image_metadata": "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/image.json",
+    "base_digest": "sha256:4b71766331736b51bd74bb86cdb5e4e21040a7816e01fbb5d914526d33ef8944",
+    "base_image_id": "sha256:c67dbd356fcaa937ebff4b3fe0d78e4ea78211888233a4e5f07da95eddfe079d",
+    "actual_image_id": "sha256:5e8dbd0f9789953dad4712fb86d4b1fbb1058b41ccd279d27f16ad7d62c49860",
+    "scripts_digest": "sha256:5fade887f26755d6f0215bfdb327623a2aa0fc57da1041b917d8602bcd0de179",
+    "change": "baseline code + image COPY offline wheels and PIP_NO_INDEX/PIP_FIND_LINKS ENV; no recipe/materials/reference_bindings wrapper; actual make init required",
+    "current_host_image_availability": "not_checked"
+  },
+  "code_snapshot_ref": {
+    "base_commit": "d1e3f50756fdaaea498e8e47d5dcd56686e6ecdf",
+    "tree": "1a036474ade83906dcb02e8a99e452d10a5fad39",
+    "public_base": "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/base",
+    "gold_patch": "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/gold.patch",
+    "gold_patch_sha256": "df2af6b800578dc24b6ef33c396677683d766702734f44d506248354147b7af9",
+    "full_material_verification": "coordinator reused; no repeated all-blob read",
+    "unmaterialized_gitlink": {
+      "path": "tests/terraformtests/terraform-provider-aws",
+      "commit": "f9a6db6e3c3f3299701747972fd6c37ba4af36f4",
+      "relevance": "not used by inspected selected DynamoDB Python mock calls"
+    }
+  },
+  "facts_ref": [
+    {
+      "path": "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/gold/ledger.jsonl",
+      "line": 1,
+      "candidate": "gold",
+      "run_id": "er19-iw1-getmoto__moto-5960-gold",
+      "task_id": "swe_gym_lite::getmoto__moto-5960",
+      "attempt": 1,
+      "started_at_utc": "2026-09-19T06:13:53.098451+00:00",
+      "conditions": "install_wave1 baseline frozen code; actual make init; pytest -n0 -rA tests/test_dynamodb/test_dynamodb.py; 2 CPUs, 4294967296 memory bytes, deny_all; apply agent/54321, grader rh2grader/54322, not formal actor",
+      "ledger_file_sha256": "81f72c8cbf713832b1c6c03e7d356991d9b7ad57e33d2a9320b34d607889826f",
+      "log_ref": "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/gold/eval_logs/evallog_replay-er19-iw1-getmoto__f12bdab3.eval.log",
+      "log_sha256": "a942c7ed9cc6c9b64e3340b6a42b14794a2cd4c3a121ebffa23cb9aa20b7164e",
+      "diagnostics_ref": "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/gold/eval_logs/evallog_replay-er19-iw1-getmoto__f12bdab3.diagnostics.json",
+      "observed": {
+        "pytest_passed": 158,
+        "pytest_failed": 0,
+        "pytest_total_nodes": 158,
+        "parser_keys": 157,
+        "f2p_pass": 2,
+        "f2p_total": 2,
+        "p2p_pass": 155,
+        "p2p_total": 155,
+        "reward": 1,
+        "test_rc": 0,
+        "install_rc_last_command": 0,
+        "install_skipped": false,
+        "install_seconds": 10.952,
+        "test_seconds": 36.397,
+        "mem_peak_mb": 252.594,
+        "reference_missing": [],
+        "reference_skipped": [],
+        "parsed_extra_keys": [],
+        "env_qualification": "absent"
+      },
+      "source_strength": "historical original ledger and raw-log excerpts/full status-summary reconciliation; not a current rerun"
+    },
+    {
+      "path": "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/noop/ledger.jsonl",
+      "line": 1,
+      "candidate": "noop",
+      "run_id": "er19-iw1-getmoto__moto-5960-noop",
+      "task_id": "swe_gym_lite::getmoto__moto-5960",
+      "attempt": 1,
+      "started_at_utc": "2026-09-19T06:12:38.028717+00:00",
+      "conditions": "install_wave1 baseline frozen code; actual make init; pytest -n0 -rA tests/test_dynamodb/test_dynamodb.py; 2 CPUs, 4294967296 memory bytes, deny_all; apply agent/54321, grader rh2grader/54322, not formal actor",
+      "ledger_file_sha256": "52615e511e8be43fad73aa0a7a10af958676a843344c8f15b8b061ea51883a5b",
+      "log_ref": "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/noop/eval_logs/evallog_replay-er19-iw1-getmoto__a9c21d90.eval.log",
+      "log_sha256": "2d79bc1c50c4df481bc39bd1e16e765f52f8a572894333c94ac35bba88b6ff2b",
+      "diagnostics_ref": "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/noop/eval_logs/evallog_replay-er19-iw1-getmoto__a9c21d90.diagnostics.json",
+      "observed": {
+        "pytest_passed": 156,
+        "pytest_failed": 2,
+        "pytest_total_nodes": 158,
+        "parser_keys": 157,
+        "f2p_pass": 0,
+        "f2p_total": 2,
+        "p2p_pass": 155,
+        "p2p_total": 155,
+        "reward": 0,
+        "test_rc": 1,
+        "install_rc_last_command": 0,
+        "install_skipped": false,
+        "install_seconds": 11.334,
+        "test_seconds": 29.956,
+        "mem_peak_mb": 297.359,
+        "reference_missing": [],
+        "reference_skipped": [],
+        "parsed_extra_keys": [],
+        "env_qualification": "absent"
+      },
+      "source_strength": "historical original ledger and raw-log excerpts/full status-summary reconciliation; not a current rerun"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-5960/review.md",
+      "sha256": "85d413db5baa6d984175afef76a56d082664112297a265d6e33724b70f3d5ac8",
+      "role": "independent_review_after_package_seal"
+    }
+  ],
+  "checks": {
+    "1": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/public_bundle.json",
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/source_refs.json",
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/validation.json",
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/run_refs.json"
+      ],
+      "by": "B3 fresh private investigator; static file/Git/stdlib review, 2026-09-20 UTC",
+      "note": "Task identity, base, patch paths and exact replay refs checked; full material/blob validation reused from coordinator. This is not a new environment rebuild."
+    },
+    "2": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/base/moto/dynamodb/models/table.py:802",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/noop/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/noop/eval_logs/evallog_replay-er19-iw1-getmoto__a9c21d90.eval.log:687"
+      ],
+      "by": "B3 fresh private investigator; static file/Git/stdlib review, 2026-09-20 UTC",
+      "note": "Base scan omits index projection; raw noop fails on the two added scan assertions with extra nonprojected fields. Public GSI KEYS_ONLY exact snippet was not run."
+    },
+    "3": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/public_bundle.json",
+        "runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz!src/repoharness2/adapters/slime/prepared_task_face.py:345"
+      ],
+      "by": "B3 fresh private investigator; static file/Git/stdlib review, 2026-09-20 UTC",
+      "note": "Public bundle contains complete issue and generic harness hints; actual formal actor messages/tool initialization not captured."
+    },
+    "4": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/gold.patch",
+        "runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz!src/repoharness2/adapters/slime/prepared_task_face.py:327"
+      ],
+      "by": "B3 fresh private investigator; static file/Git/stdlib review, 2026-09-20 UTC",
+      "note": "A normal source fix is projectable. Static hygiene uses exact official file and empty test_globs; no additional exclusions proposed. Formal actor write permissions remain untested."
+    },
+    "6": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/image.json",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/gold/eval_logs/evallog_replay-er19-iw1-getmoto__f12bdab3.eval.log:414",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/noop/eval_logs/evallog_replay-er19-iw1-getmoto__a9c21d90.eval.log:392"
+      ],
+      "by": "B3 fresh private investigator; static file/Git/stdlib review, 2026-09-20 UTC",
+      "note": "Only for cited install_wave1 runs: original make init actually performs offline editable installs successfully; COPY is preparation, not installation. Current image rebuild was not attempted."
+    },
+    "7": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/public_bundle.json",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/image.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-5960/analysis_before_history.md"
+      ],
+      "by": "B3 fresh private investigator; static file/Git/stdlib review, 2026-09-20 UTC",
+      "note": "Selected DynamoDB mock tests do not use the unmaterialized Terraform gitlink. Present wheel payload/build context and actor mounts not revalidated."
+    },
+    "8": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/gold/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/noop/ledger.jsonl:1"
+      ],
+      "by": "B3 fresh private investigator; static file/Git/stdlib review, 2026-09-20 UTC",
+      "note": "Grader rh2grader/54322 and patch-apply agent/54321 are observed; neither proves formal actor cwd/env/write permissions."
+    },
+    "9": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/gold/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/gold/eval_logs/evallog_replay-er19-iw1-getmoto__f12bdab3.eval.log:445",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/noop/ledger.jsonl:1"
+      ],
+      "by": "B3 fresh private investigator; static file/Git/stdlib review, 2026-09-20 UTC",
+      "note": "Historical replay only: candidate source path included, actual installs, reported import /testbed/moto/__init__.py, and paired target behavior differential. Version observation and pip metadata are distinct."
+    },
+    "10": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/public_bundle.json",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/base/tests/test_dynamodb/test_dynamodb.py:4609"
+      ],
+      "by": "B3 fresh private investigator; static file/Git/stdlib review, 2026-09-20 UTC",
+      "note": "Public snippets and narrow public tests provide a development route, but no formal actor development validation was run."
+    },
+    "11": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/image.json",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/gold/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/noop/ledger.jsonl:1"
+      ],
+      "by": "B3 fresh private investigator; static file/Git/stdlib review, 2026-09-20 UTC",
+      "note": "Cited install/test runs used deny_all and offline wheel links. No claim about actual actor network or wheel acquisition phase."
+    },
+    "13": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/gold/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/noop/ledger.jsonl:1"
+      ],
+      "by": "B3 fresh private investigator; static file/Git/stdlib review, 2026-09-20 UTC",
+      "note": "No timeout/OOM/resource failure in the cited two runs. Original mem_peak_mb retained verbatim; no conversion or capacity generalization."
+    },
+    "14": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/run_refs.json"
+      ],
+      "by": "B3 fresh private investigator; static file/Git/stdlib review, 2026-09-20 UTC",
+      "note": "One cited gold and one noop under this recipe do not establish repeated-run or concurrent stability."
+    },
+    "17": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/test.patch",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/gold/eval_logs/evallog_replay-er19-iw1-getmoto__f12bdab3.diagnostics.json",
+        "runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz!src/repoharness2/adapters/slime/prepared_task_face.py:179"
+      ],
+      "by": "B3 fresh private investigator; static file/Git/stdlib review, 2026-09-20 UTC",
+      "note": "Official test.patch touches one pure test file; frozen trusted restore exact path then apply and diagnostics show success. No helper or product source restored."
+    },
+    "18": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/gold/eval_logs/evallog_replay-er19-iw1-getmoto__f12bdab3.eval.log:583",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/noop/eval_logs/evallog_replay-er19-iw1-getmoto__a9c21d90.eval.log:561"
+      ],
+      "by": "B3 fresh private investigator; static file/Git/stdlib review, 2026-09-20 UTC",
+      "note": "Raw command executes full patched test_dynamodb.py: 158 collected, complete terminal summary/markers. Not only 2 F2P selected."
+    },
+    "19": {
+      "status": "issue",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/grading.json",
+        "runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz!src/repoharness2/envpack/swegym_parsers.py:44",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/gold/eval_logs/evallog_replay-er19-iw1-getmoto__f12bdab3.eval.log:756",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/noop/eval_logs/evallog_replay-er19-iw1-getmoto__a9c21d90.eval.log:1009"
+      ],
+      "by": "B3 fresh private investigator; static file/Git/stdlib review, 2026-09-20 UTC",
+      "note": "158 full summary nodes become 157 keys due whitespace parameter collision; both collapsed nodes PASSED in each run, so no observed wrong classification. References and parsed extras/missing reconciled."
+    },
+    "20": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/gold/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/noop/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz!src/repoharness2/envpack/scoring.py:230"
+      ],
+      "by": "B3 fresh private investigator; static file/Git/stdlib review, 2026-09-20 UTC",
+      "note": "Raw two F2P extra-attribute failures explain noop reward0 vs gold1; ordinary pytest rc1 is not itself a reward rule."
+    },
+    "23": {
+      "status": "issue",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/public_bundle.json",
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/test.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/base/moto/dynamodb/models/table.py:39"
+      ],
+      "by": "B3 fresh private investigator; static file/Git/stdlib review, 2026-09-20 UTC",
+      "note": "GSI INCLUDE/KEYS_ONLY requirement explicit. LSI scan F2P is a plausible common-abstraction extension, but not explicitly required in issue; do not declare a GSI-only implementation wrongly rejected without scope decision."
+    },
+    "24": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/test.patch",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-5960/analysis_before_history.md"
+      ],
+      "by": "B3 fresh private investigator; static file/Git/stdlib review, 2026-09-20 UTC",
+      "note": "Changed assertions compare observable dictionaries, not helper/implementation identity; multiple non-gold implementations possible. None executed."
+    },
+    "25": {
+      "status": "issue",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/public_bundle.json",
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/test.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/base/tests/test_dynamodb/test_dynamodb.py:4609",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/base/tests/test_dynamodb/test_dynamodb.py:469",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/base/tests/test_dynamodb/test_dynamodb.py:717",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/base/moto/dynamodb/models/dynamo_type.py:395"
+      ],
+      "by": "B3 fresh private investigator; static file/Git/stdlib review, 2026-09-20 UTC",
+      "note": "Missing explicit GSI KEYS_ONLY scan, all-items/cardinality assertions, and post-index-scan source-data readback. Incomplete candidates scoring1 remain predictions."
+    },
+    "26": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-5960/analysis_before_history.md",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/base/moto/dynamodb/models/table.py:730",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/base/tests/test_dynamodb/test_dynamodb_table_with_range_key.py:1050",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/base/tests/test_dynamodb/test_dynamodb_table_without_range_key.py:505"
+      ],
+      "by": "B3 fresh private investigator; static file/Git/stdlib review, 2026-09-20 UTC",
+      "note": "Expanded relevant scan/filter/projection/index/pagination callers and old test bodies; no demonstrated gold regression in inspected paths, not all 155 P2P bodies or every index/filter/size combination inspected."
+    },
+    "27": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/gold.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/base/moto/dynamodb/models/table.py:39",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/base/moto/dynamodb/models/dynamo_type.py:395",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/gold/ledger.jsonl:1"
+      ],
+      "by": "B3 fresh private investigator; static file/Git/stdlib review, 2026-09-20 UTC",
+      "note": "Limited core assessment: gold copies before mutating project, preserves table/index keys, covers public GSI modes statically, and passes historical official file. Not proof of all edge cases."
+    },
+    "29": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/public_bundle.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-5960/old_findings_delta.md"
+      ],
+      "by": "B3 fresh private investigator; static file/Git/stdlib review, 2026-09-20 UTC",
+      "note": "Auditor saw private test/gold and one authorized old quality record; no formal actor Git/cache/mount/network inspection, so no broad no-leak claim."
+    },
+    "33": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/run_refs.json"
+      ],
+      "by": "B3 fresh private investigator; static file/Git/stdlib review, 2026-09-20 UTC",
+      "note": "No real model/actor run in this static audit; gold replay is not solver evidence."
+    },
+    "37": {
+      "status": "pass",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-5960/analysis_before_history.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-5960/old_findings_delta.md"
+      ],
+      "by": "B3 fresh private investigator; static file/Git/stdlib review, 2026-09-20 UTC",
+      "note": "No task/environment/parser/reference/source revision performed; all proposals unexecuted. Analysis sealed and only subsequent delta/card/record updated."
+    },
+    "38": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-5960/card.md"
+      ],
+      "by": "B3 fresh private investigator; static file/Git/stdlib review, 2026-09-20 UTC",
+      "note": "No new CPU experiment, environment replay or independent reviewer result yet."
+    },
+    "5": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/gold.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/base/moto/dynamodb/models/table.py:846",
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/gold.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/base/moto/dynamodb/models/table.py:487",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/base/moto/dynamodb/models/table.py:839",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-5960/review.md"
+      ],
+      "by": "coordinator /root after independent reviewer package seal",
+      "note": "同包源码关系已核：5960的scan复制/投影核心原样存在于6185 base；6185类型校验核心原样存在于6408 base，6408 scan另有返回值式演变。仅为公开源码包含/演变，不证明Git祖先、重复题或实际solver泄漏。 广泛重复/留出划分未核。"
+    }
+  },
+  "issues": [
+    {
+      "id": "I1",
+      "category": "public_requirement_coverage_gap",
+      "scope": "GSI KEYS_ONLY scan; multi-item completeness",
+      "severity": "P2",
+      "evidence_level": "direct_static_mapping; false_positive_reward_predicted_not_run",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/public_bundle.json",
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/test.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/base/tests/test_dynamodb/test_dynamodb.py:4609",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-5960/analysis_before_history.md"
+      ],
+      "proposed_action": "Prioritize one controlled diagnostic: preserve original reward/reference; run base, gold and a minimal candidate missing only GSI KEYS_ONLY projection against original suite plus both issue GSI snippets with all-items/cardinality assertions. Record observed reward and semantic result separately; no candidate executed.",
+      "status": "needs_review"
+    },
+    {
+      "id": "I2",
+      "category": "state_mutation_regression_coverage_gap",
+      "scope": "scan(index) projection must not destroy stored nonprojected attributes; this is not a gold defect",
+      "severity": "P2",
+      "evidence_level": "mutation_proven_by_static_source; candidate_reward_and_runtime_readback_unverified",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/base/moto/dynamodb/models/table.py:843",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/base/moto/dynamodb/models/dynamo_type.py:395",
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/test.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/base/tests/test_dynamodb/test_dynamodb.py:529",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/base/tests/test_dynamodb/test_dynamodb.py:762"
+      ],
+      "proposed_action": "Add a diagnostic post-index-scan get_item/query/unindexed scan readback with public original-data preservation rationale. Gold already copies correctly. Omitting copy is a predicted incomplete solution, not an observed full-score exploit. No second candidate is required before the priority I1 probe.",
+      "status": "needs_review"
+    },
+    {
+      "id": "I3",
+      "category": "scope_alignment_question",
+      "scope": "LSI KEYS_ONLY scan F2P vs GSI-only public issue",
+      "severity": "P3",
+      "evidence_level": "static_scope_difference_with_public_shared_abstraction_support",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/public_bundle.json",
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/test.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/base/moto/dynamodb/models/table.py:39",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960/base/tests/test_dynamodb/test_dynamodb.py:4713"
+      ],
+      "proposed_action": "Clarify whether LSI scan is intended public scope before judging conservative GSI-only fixes. Shared helper/query supports extension but does not alone settle acceptability. No oracle removal or task revision performed.",
+      "status": "needs_review"
+    },
+    {
+      "id": "I4",
+      "category": "parser_test_identity_collision",
+      "scope": "two whitespace-parameter nodes collapse to one frozen P2P key",
+      "severity": "P3",
+      "evidence_level": "historical_raw_log_and_frozen_parser; no_observed_score_error",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/grading.json",
+        "runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz!src/repoharness2/envpack/swegym_parsers.py:44",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/gold/eval_logs/evallog_replay-er19-iw1-getmoto__f12bdab3.eval.log:756",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960/noop/eval_logs/evallog_replay-er19-iw1-getmoto__a9c21d90.eval.log:1009"
+      ],
+      "proposed_action": "Review full-node parser identity and synchronized reference migration separately. Both actual nodes pass; raw-rA prints PASSED before FAILED, so last-write alone does not establish mixed-failure masking. No parser/reference/reward changes.",
+      "status": "needs_review"
+    },
+    {
+      "category": "cross_task_public_source_containment",
+      "scope": "same-package exposure and task relationship boundary",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/gold.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/base/moto/dynamodb/models/table.py:846",
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/gold.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/base/moto/dynamodb/models/table.py:487",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/base/moto/dynamodb/models/table.py:839",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-5960/review.md"
+      ],
+      "proposed_action": "保留有方向的源码关系与求解上下文暴露记录；不按同仓一刀切，不将本审查上下文复用为blind solver。",
+      "status": "static_relationship_confirmed_actual_solver_exposure_unknown",
+      "evidence_level": "direct static original gold/source comparison",
+      "detail": "同包源码关系已核：5960的scan复制/投影核心原样存在于6185 base；6185类型校验核心原样存在于6408 base，6408 scan另有返回值式演变。仅为公开源码包含/演变，不证明Git祖先、重复题或实际solver泄漏。"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "One exact official test file restored; test_globs empty. No concrete evidence supporting new exclusions. Generic public no-test-edits instruction is distinct from precise projection rules.",
+    "evidence_refs": [
+      "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/test.patch",
+      "runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz!src/repoharness2/adapters/slime/prepared_task_face.py:327"
+    ],
+    "applied_version": null
+  },
+  "revision_refs": [],
+  "disposition": {
+    "state": "needs_review",
+    "scope": "static_review",
+    "reason": "受限静态开发诊断候选：gold沿已查共享投影路径合理，历史2F2P/155P2P分差成立；明确GSI KEYS_ONLY scan和索引后存储保持仍漏测，LSI额外范围保留疑义。一个有目的的部分实现可校准分数外推，尚未执行。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-5960/analysis_before_history.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-5960/old_findings_delta.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-5960/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-5960/review.md"
+    ],
+    "reviewer": "/root/b3_review_moto; coordinator /root adjudication",
+    "reviewed_at_utc": "2026-09-20T22:11:49.417478+00:00",
+    "static_recommendation": "limited_static_candidate",
+    "priority_next_step": "唯一优先下一步：base/gold加一份仅遗漏GSI KEYS_ONLY投影的候选，对照原评分与题面两GSI例的全项/数量；附存储复读观察，不再强制去copy第二候选。全部未执行；LSI范围疑义单独保留。"
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "exposure_notes": "Private investigator read public reader note, task issue/base, test/gold, F2P/P2P lists and exact environment/raw outcome evidence before initial seal. Thus history-blind initial analysis, not outcome-blind. After coordinator gate at 2026-09-20T21:48:04.328918Z, read only this task authorized refs and single old record; no reviewer, earlier-batch results or aggregate followed. Not for solver or untouched holdout use.",
+    "history_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_moto_2/records/getmoto__moto-5960.json",
+    "initial_analysis_sha256": "661f583b8a2b7537079e300826f6d5f08ba62b63250c6c1412f92eab5ea7d801",
+    "initial_analysis_mtime_utc": "2026-09-20T21:47:42.892063+00:00",
+    "history_release_utc": "2026-09-20T21:48:04.328918+00:00",
+    "unread_or_unverified": [
+      "remaining nonselected P2P function bodies",
+      "formal actor messages/identity/tool flow",
+      "current host image/wheel payload",
+      "all special key-name/filter/Select/large-item combinations",
+      "repeat/concurrent stability",
+      "partial candidate reward outcomes"
+    ],
+    "coordinator_review_note": "整包三份reviewer initial封存后才放行结论；root仅收束最终card/record。独立复核完成；初判的-rA混合状态遮蔽推断已在review撤回，未观察当前错分。"
+  },
+  "costs": {
+    "container_wall_seconds": null,
+    "agent_tokens": null,
+    "human_decisions": null,
+    "source_refs": [
+      "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/run_refs.json"
+    ],
+    "note": "No CPU/model/install/test/remote activity executed in audit. Historical component timing is retained in facts, not substituted for audit/actor total cost. mem_peak_mb retained as raw field/value with no unit conversion."
+  }
+}

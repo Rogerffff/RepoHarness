@@ -1,0 +1,89 @@
+{
+  "instance_id": "pydantic__pydantic-5662",
+  "audit_date": "2026-09-20",
+  "old_record": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_pydantic/records/pydantic__pydantic-5662.json",
+  "source_refs": {
+    "public": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl#pydantic__pydantic-5662",
+    "grading": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl#pydantic__pydantic-5662",
+    "validation_reference_only": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl#pydantic__pydantic-5662",
+    "base_commit": "0346ddb6a35770007f32815d8e4a179b778e0ef4",
+    "F2P": 1,
+    "P2P": 127
+  },
+  "environment": {
+    "catalog_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json#tasks[instance_id=pydantic__pydantic-5662]",
+    "status": "verified_environment_pair",
+    "selected_batch": "pydantic_v1",
+    "recipe": "pydantic-install-v1",
+    "verified_existing_pair": "noop=0 / gold=1；两次安装rc=0，gold测试rc=0；日志SHA256已本轮复算。",
+    "verification_ref": "verification.json#environment.pydantic__pydantic-5662",
+    "boundary": "环境对照有效，不等于题意/评分质量或actor正式准入；选定配方仍需冻结消费。"
+  },
+  "requirements": [
+    "BaseModel 与非 BaseModel 对象比较时，应允许对方的比较协议处理，包括 unittest.mock.ANY。",
+    "题面直接提出返回 NotImplemented，让 Python 执行反向比较；已有模型间字段、类型和私有属性比较应保持。",
+    "验收要求可由题面及 Python 比较协议确定，不要求采用 gold 的 if/else 重排。"
+  ],
+  "old_claim_reviews": [
+    {
+      "original_claim": "题面、F2P 和 gold 对应，且题面已给出最小修复方向。",
+      "status": "confirmed",
+      "evidence": [
+        "题面 Possible solution 显式给 return NotImplemented；test_patch::test_equality_delegation 断言 MyModel(foo=\"bar\") == ANY。",
+        "pydantic@0346ddb6a35770007f32815d8e4a179b778e0ef4:pydantic/main.py:540-561 非模型分支直接 False；保留方法其余部分而只修改该分支是合法替代实现。"
+      ]
+    },
+    {
+      "original_claim": "return other == self 的递归坏解可通过全部 128 条，127 条 P2P 都是模型间比较。",
+      "status": "refuted",
+      "evidence": [
+        "pydantic@0346ddb6a35770007f32815d8e4a179b778e0ef4:tests/test_main.py:1985-1991 的 test_model_equality_dump 明确比较模型与 dict，且属于本题 P2P。",
+        "verification.json#local_probes.5662_exact_eq_with_protocol_doubles：抽取实际 __eq__ 方法；坏委托对 ANY=True、对 dict/int=RecursionError，NotImplemented 对 ANY=True、dict/int=False。本轮只跑 Python 协议替身，未跑 Pydantic/RH2。"
+      ]
+    },
+    {
+      "original_claim": "__ne__方向及与dict/dataclass比较仍应为False等没有测试（check25）。",
+      "status": "refuted",
+      "evidence": [
+        "test_model_equality_dump 已要求模型与其 dump 不相等；不能只看新增 F2P 而忽略 P2P。",
+        "仍可提出仅对 ANY 特判的弱候选，但其能否满分及是否违背题面更广自定义比较需求应另作反例，不能沿用已被挡住的递归候选。"
+      ]
+    },
+    {
+      "original_claim": "题面给出方案意味着这题几乎没有训练信号。",
+      "status": "unresolved",
+      "evidence": [
+        "solution_in_statement 是事实；实际难度、验证成本及后训练价值还需目标模型采样，不能从一行修复静态推定。"
+      ]
+    },
+    {
+      "original_claim": "与 6283 同属 __eq__ 或与 5386 共文件，所以必须同侧划分。",
+      "status": "refuted",
+      "evidence": [
+        "5662 处理 Python 反向比较；6283 根因是 model_construct 在 RootModel 实例写入内部属性。主题或文件交集不是同一修复。",
+        "5386 的完整接口确已进入本题 base，可单独记录来源包含关系；目前没有本题训练轨迹证明特定暴露。"
+      ]
+    },
+    {
+      "original_claim": "旧记录install rc=2或只有联网才能安装，构成当前环境阻塞。",
+      "status": "superseded_env",
+      "evidence": [
+        "repair_catalog本题选择pydantic_v1/pydantic-install-v1，在deny_all、uid54322、2CPU/4GiB下已有noop/gold成对结果；本轮校验该题两份原始日志SHA256匹配目录。",
+        "这只替代已修的安装结论；旧actor PATH及初始脏树应在真正启动探针时核对，不能由grader对照擅自宣称已修。"
+      ]
+    }
+  ],
+  "recommendation": "probe_candidate",
+  "probe_role": "低难度及工具链锚点；不单独作为强能力证据。",
+  "next_action": [
+    "在冻结配方并确认 actor 使用 testbed 解释器后，作为首轮短任务探针；分别记录执行成本与是否按语言协议修复。",
+    "诊断时加一个自定义对象 __eq__ 返回 True、另一个返回 NotImplemented；保持既有 dict 不等护栏，专门排查 ANY 特判。"
+  ],
+  "unknowns": [
+    "尚无本题目标模型采样；通过率、成本和学习价值未知。",
+    "本轮协议替身不是完整 Pydantic 测试运行。"
+  ],
+  "evidence_level": "static_or_existing_run",
+  "verification_scope": "本轮读取精确base源码、实际公开题面/test_patch/gold、已归档运行证据；新增仅本地纯Python探针与日志重解析，未启动Docker/远端/模型/真实RH2。",
+  "formal_admission": false
+}

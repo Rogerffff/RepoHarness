@@ -1,0 +1,56 @@
+{
+ "task_id": "python__mypy-10392",
+ "source": "SWE-Gym lite / python/mypy PR 10392（上游 commit 44925f4b12）",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "322ef60ba7231bbd4f735b273e88e67afb57ad17", "version": "0.820", "python_version": "3.9",
+  "eval_cmd": "pytest -n0 -rA -k",
+  "f2p": ["testMypyPathAndPython2Dir_python2"], "p2p": ["testMypyPathAndPython2Dir"],
+  "test_patch_paths": ["test-data/unit/check-modules.test"], "gold_paths": ["mypy/modulefinder.py"],
+  "stage1": "gold=RESOLVED_FULL / empty=RESOLVED_NO，rc_install=0"
+ },
+ "public_view": {
+  "goal": "Python 2 模式下，对用户自定义搜索路径条目 `foo`，先查 `foo/@python2` 再查 `foo`；Python 3 模式忽略 `@python2`。要求同时适用于配置文件的 mypy_path 与环境变量 MYPYPATH。",
+  "constraints": ["题面是维护者的功能需求描述（不是 bug 报告），把优先级、回退、模式区分三条都写清楚了", "题面明确点名两个入口：mypy_path 与 MYPYPATH"],
+  "unknowns_from_public_only": [
+   "`@python2` 目录不存在时是否应当仍把它加进搜索路径（gold 用 os.path.isdir 判断后才加）——题面没说，但不影响可观察行为",
+   "site-packages / typeshed 路径要不要同样处理？题面只说 'user-defined mypy search path'"
+  ],
+  "base_code_evidence": [
+   "322ef60ba:mypy/modulefinder.py:38 PYTHON2_STUB_DIR = '@python2' 已存在；:548 与 :736 已用于 typeshed 路径，但没有用于用户 mypypath",
+   "322ef60ba:mypy/modulefinder.py:689-712 compute_search_paths 里没有任何按 python_version 区分 @python2 的处理",
+   "322ef60ba:mypy/test/helpers.py:292 `if testcase_name.endswith('python2')` —— 以 _python2 结尾的 case 走 Python 2 模式，这个约定在 base 已存在"
+  ]
+ },
+ "checks": {
+  "1": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["runs/.../L1_mypy_1/upstream_filelist_check.txt：上游 commit 44925f4b12 还改了 docs/source/running_mypy.rst，test_patch ∪ golden_patch 里没有它"], "note": "丢的是文档，不影响判分与行为；记录以说明 gold 不是 PR 全集。test_patch 目标 check-modules.test 与 gold 目标 mypy/modulefinder.py 在 base 都存在、上下文匹配。", "by": "L1_mypy_1"},
+  "2": {"status": "pass", "evidence_refs": ["base compute_search_paths 无 @python2 处理", "stage1 empty=RESOLVED_NO"], "note": "base 确无该功能（本题是加功能不是修 bug）。", "by": "L1_mypy_1"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 766 字符，无外链无图片；hints_text 长度 0"], "note": "题面完整。", "by": "L1_mypy_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 只触碰 test-data/unit/check-modules.test（case 内用 [file xx/@python2/m.pyi] 等虚拟文件）"], "note": "无非测试源码。additional_exclusions 保持空。", "by": "L1_mypy_1"},
+  "17": {"status": "pass", "evidence_refs": ["同上；gold 只改 mypy/modulefinder.py"], "note": "无覆盖风险。", "by": "L1_mypy_1"},
+  "5": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["dupidx.txt：check-modules.test 被本题、10382、11707、15131 共 4 题触碰；gold 路径 mypy/modulefinder.py 仅本题使用"], "note": "同文件不同模块，非重复题。", "by": "L1_mypy_1"},
+  "23": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["题面写 'This should work with mypy_path in a config file and the MYPYPATH environment variable'", "F2P/P2P 两个 case 都只用 `# flags: --config-file tmp/mypy.ini` + `mypy_path = tmp/xx`"], "note": "要求本身充分且一致；缺口在覆盖侧——MYPYPATH 环境变量这一半没有任何测试。gold 的实现点在 mypypath 合并之后，两条路其实共用，所以不是实现缺陷，但测试没验证。", "by": "L1_mypy_1"},
+  "24": {"status": "pass", "evidence_refs": ["两个 case 只断言标准诊断（'Argument 1 to \"f\" has incompatible type ...' / 'Too many arguments for \"g\"'），不引用 gold 新增的 add_py2_mypypath_entries"], "note": "未强制唯一实现。", "by": "L1_mypy_1"},
+  "25": {"status": "pass", "evidence_refs": ["F2P 是 Python 2 模式下 @python2/m.pyi 生效（f(x: int)）；P2P 是 Python 3 模式下必须落回 xx/m.pyi（f(x: str)）", "F2P 里还有 `from mm import g` 验证 @python2 目录下没有的模块仍能从父目录找到（题面要求的回退）"], "note": "本包里少见的**有判别力的 P2P**：去掉 `if options.python_version[0] == 2` 守卫的实现会让 P2P 失败。三条公开要求（优先级、回退、Py3 忽略）都被覆盖。", "by": "L1_mypy_1"},
+  "26": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["P2P 只 1 条，且与 F2P 同属新增 case"], "note": "compute_search_paths 是全局模块解析入口，建议补既有模块解析回归，见 proposed_regression_tests。", "by": "L1_mypy_1"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 新增 add_py2_mypypath_entries（19 行）+ compute_search_paths 里 5 行调用；PYTHON2_STUB_DIR 在 base 已定义（modulefinder.py:38）"], "note": "不依赖未交付改动；相对上游 PR 只少了文档改动。", "by": "L1_mypy_1"},
+  "29": {"status": "pass", "evidence_refs": ["problem_statement 无 PR/commit 链接、无修复代码；hints_text 为空"], "note": "无泄漏。", "by": "L1_mypy_1"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 rc_install=0"], "note": "已有实跑证据。", "by": "L1_mypy_1"},
+  "7": {"status": "pass", "evidence_refs": ["case 用内联 [file ...]，无外部 fixture 依赖"], "note": "Python 2 模式的单元测试不需要真的 python2 解释器（那是 testpythoneval/testpep561 才需要，见 mypy/util.try_find_python2_interpreter 的调用点）。", "by": "L1_mypy_1"},
+  "11": {"status": "pass", "evidence_refs": ["case 正文无 URL"], "note": "不需要网络。", "by": "L1_mypy_1"},
+  "18": {"status": "pass", "evidence_refs": ["kcheck_all.txt：selector testMypyPathAndPython2Dir 子串命中 testMypyPathAndPython2Dir_python2"], "note": "过选良性（被命中的那条就是 F2P）。", "by": "L1_mypy_1"},
+  "20": {"status": "pass", "evidence_refs": ["stage1：empty=RESOLVED_NO、gold=RESOLVED_FULL"], "note": "分差来自目标行为。", "by": "L1_mypy_1"}
+ },
+ "issues": [
+  {"category": "coverage_gap", "severity": "P3", "evidence_refs": ["题面要求 MYPYPATH 也生效，两条 case 都只测 config 的 mypy_path"], "proposed_action": "补一条用 MYPYPATH 环境变量的 case（或在处置里注明该要求未被验证）。", "next_experiment": "在 gold 上用 MYPYPATH=tmp/xx 跑同样的输入，确认行为一致。"},
+  {"category": "gold_not_full_pr", "severity": "P3", "evidence_refs": ["upstream_filelist_check.txt：dropped=['docs/source/running_mypy.rst']"], "proposed_action": "仅记录；文档不影响判分。", "next_experiment": "无。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只触碰纯测试数据文件。", "evidence_refs": ["grading_bundles_v2_v0:python__mypy-10392 test_patch"]},
+ "proposed_regression_tests": [
+  {"id": "test-data/unit/check-modules.test 既有全部 case", "reason": "模块解析是 compute_search_paths 的直接下游。"},
+  {"id": "mypy/test/testmodulefinder.py", "reason": "直接针对 modulefinder 的单元测试，能捕捉搜索路径顺序被改坏。"},
+  {"id": "test-data/unit/pep561.test、check-python2.test", "reason": "前者验证真实包解析顺序，后者是 Python 2 模式的主战场。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "题面是清晰的功能需求，gold 实现直接对应，F2P/P2P 构成有判别力的一对（Py2 生效 / Py3 忽略 + 父目录回退）。唯一小缺口是 MYPYPATH 分支未测；本题可作为'P2P 有意义'的正面对照样本。"},
+ "costs": {"minutes": 16}
+}

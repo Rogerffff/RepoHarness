@@ -1,0 +1,59 @@
+{
+ "task_id": "python__mypy-11824",
+ "source": "SWE-Gym lite / python/mypy PR 11824（上游两个同标题 commit：3773d2db24 与 ee37502bad，主干 + cherry-pick）",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "f96446ce2f99a86210b21d39c7aec4b13a8bfc66", "version": "0.940", "python_version": "3.10",
+  "eval_cmd": "pytest -n0 -rA -k",
+  "f2p": ["testSlotsDefinitionWithTwoPasses1", "testSlotsDefinitionWithTwoPasses4"],
+  "p2p": ["testSlotsDefinitionWithTwoPasses2", "testSlotsDefinitionWithTwoPasses3"],
+  "test_patch_paths": ["test-data/unit/check-dataclasses.test"], "gold_paths": ["mypy/plugins/dataclasses.py"],
+  "stage1": "无 stage1 记录（signals.stage1 = null）"
+ },
+ "public_view": {
+  "goal": "0.930 的回归：`@dataclass(slots=True)` 修饰一个继承 `Generic[V]`（V bound 到一个 Protocol）的类时，误报 `\"Node\" both defines \"__slots__\" and is used with \"slots=True\"`。要求不报错。",
+  "constraints": ["题面给出完整复现、实际错误文本与期望（'This should not cause an error'）", "题面给出报告者的猜测：'This is probably because it inherits from Protocol, which defines `__slots__ = ()`'"],
+  "unknowns_from_public_only": [
+   "**真正的成因与题面猜测不同**：hints 里 sobolevn 写的是 'This happens because `semanal` requires two passes and we already set `__slots__` during the first pass'，即第二遍语义分析重跑 add_slots 时看到自己第一遍写入的 info.slots 就判成冲突。题面把原因指向 Protocol 的 `__slots__ = ()`，会把求解者带偏",
+   "显式写了 `__slots__` 的类是否仍应报错？题面未提（P2P 要求仍报错，包括 `__slots__ = ()` 这种空的）"
+  ],
+  "base_code_evidence": [
+   "f96446ce2:mypy/plugins/dataclasses.py:224 `if info.slots is not None or info.names.get('__slots__'):` —— 只要 info.slots 非空就判冲突，不区分'是上一遍自己写进去的'",
+   "f96446ce2:mypy/plugins/dataclasses.py:237 `info.slots = {attr.name for attr in attributes}` —— 第一遍写入",
+   "f96446ce2:test-data/unit/fixtures/dataclasses.pyi 存在；check-dataclasses.test 有 74 个 case，其中 4 个既有 slots 相关（:1390 testDataclassWithSlotsArg、:1406 SlotsDef、:1423 SlotsConflict、:1445 SlotsArgBefore310）"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 目标 check-dataclasses.test 在 base 存在；gold 目标 mypy/plugins/dataclasses.py 的 add_slots 上下文逐行匹配；fixtures/dataclasses.pyi 已存在", "upstream_filelist_check.txt：本题上游 commit 有两个同标题候选（主干 + cherry-pick），未定位到单一 commit，故未做文件集比对"], "note": "无二进制/LFS/子模块。", "by": "L1_mypy_1"},
+  "2": {"status": "pass", "evidence_refs": ["base dataclasses.py:224 的冲突判定不区分来源"], "note": "静态确认；无 stage1 实跑佐证。", "by": "L1_mypy_1"},
+  "3": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["题面：'This is probably because it inherits from Protocol, which defines `__slots__ = ()`'", "hints_text（122 字符）：'This happens because `semanal` requires two passes and we already set `__slots__` during the first pass.'"], "note": "题面给出的因果解释是**错的**，而正确解释只在不可见的 hints 里。这不算材料缺失（复现与期望都完整），但会把求解者引向'处理 Protocol 的空 __slots__'这条死路——注意 F2P 的 case 里 `class Comparable(Protocol): pass` 根本没有 `__slots__`，按题面猜测去做是修不好的。", "by": "L1_mypy_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 只触碰 test-data/unit/check-dataclasses.test"], "note": "无非测试源码。additional_exclusions 保持空。", "by": "L1_mypy_1"},
+  "17": {"status": "pass", "evidence_refs": ["同上；gold 只改 mypy/plugins/dataclasses.py"], "note": "无覆盖风险。", "by": "L1_mypy_1"},
+  "5": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["cross_task_leak.txt：本题与 python__mypy-11857 **共用同一个 base_commit f96446ce2f**（相隔 0 个 commit），是 40 题里唯一一对", "dupidx.txt：check-dataclasses.test 还被 python__mypy-11966 触碰，且 11966 的 gold 也是 mypy/plugins/dataclasses.py"], "note": "与 11857 共 base 但改动完全不同（11857 改 mypy/types.py，test_patch 涉及 16 个测试文件），不是重复题；与 11966 是同文件同模块的近邻（11966 不在本包）。划分训练/评测集时 (11824, 11857) 与 (11824, 11966) 都建议同侧。", "by": "L1_mypy_1"},
+  "23": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["P2P 的 TwoPasses2/3 要求显式 `__slots__`（包括空的 `__slots__ = ()`）仍然报错，题面未提", "F2P 的 TwoPasses4 用 `dict[int, 'PublishedMessages']` 前向引用触发两遍分析，与题面的 Protocol/Generic 场景不同"], "note": "要求本身自洽；缺口是题面只覆盖四种情形中的一种。不过 TwoPasses2/3 是'不要过度修复'的保护，方向合理。", "by": "L1_mypy_1"},
+  "24": {"status": "pass", "evidence_refs": ["四条 case 都只断言有无那条标准错误文本，不引用 gold 的 generated_slots 变量或比较方式"], "note": "未强制唯一实现：无论是比较 info.slots 与新生成的集合（gold 的做法），还是给 add_slots 加'本类本轮已处理'的幂等保护，都能同时满足 F2P 与 P2P。", "by": "L1_mypy_1"},
+  "25": {"status": "pass", "evidence_refs": ["P2P 的 TwoPasses2（显式 `__slots__ = ('data',)`）与 TwoPasses3（空的 `__slots__ = ()`）都要求**仍然报错**"], "note": "**本包里 P2P 设计最好的一题**：两条 P2P 精确堵住了最自然的错误修复——'把冲突检查删掉'或'只要 info.slots 已设就跳过'。F2P 两条覆盖两种不同的两遍触发路径（Protocol/Generic bound 与 PEP 585 前向引用）。硬编码或粗暴放宽都过不了。", "by": "L1_mypy_1"},
+  "26": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["P2P 两条都是 test_patch 新增；base 已有的 4 条 slots 相关既有 case（:1390/1406/1423/1445）未入 P2P"], "note": "边界保护到位，但既有 slots 行为仍无保护。建议把那 4 条补进 P2P（成本极低）。", "by": "L1_mypy_1"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 只改 add_slots 的判定与一行赋值，并同步更新注释（'Class explicitly specifies a different `__slots__` field.'）"], "note": "与本题对应、不依赖未交付改动、无题外改动。", "by": "L1_mypy_1"},
+  "29": {"status": "pass", "evidence_refs": ["problem_statement 无 PR/commit 链接、无修复代码"], "note": "无泄漏。F2P case 正文有 `# https://github.com/python/mypy/issues/11821` 注释，属私有材料。", "by": "L1_mypy_1"},
+  "6": {"status": "not_checked", "evidence_refs": [], "note": "无 stage1 记录。", "by": "L1_mypy_1"},
+  "7": {"status": "pass", "evidence_refs": ["四条 case 都用 fixtures/dataclasses.pyi，base 已存在"], "note": "无外部资产。", "by": "L1_mypy_1"},
+  "11": {"status": "pass", "evidence_refs": ["case 正文的 URL 是注释"], "note": "不需要网络。", "by": "L1_mypy_1"},
+  "18": {"status": "pass", "evidence_refs": ["kcheck_all.txt：无子串过选（四条 case 名互不包含，末位数字不同）"], "note": "选择无歧义。四条恰好被完整覆盖：F2P 取 1、4，P2P 取 2、3。", "by": "L1_mypy_1"},
+  "20": {"status": "not_checked", "evidence_refs": [], "note": "无 stage1。", "by": "L1_mypy_1"}
+ },
+ "issues": [
+  {"category": "misleading_causal_hypothesis", "severity": "P2", "evidence_refs": ["题面把原因归给 Protocol 的 `__slots__ = ()`；F2P 的 Comparable 其实没有 `__slots__`；真正原因（semanal 两遍）只在 hints 里"], "proposed_action": "保留题面（真实 issue 本来就带错误猜测，这对训练未必是坏事），但在处置里标注'题面含错误因果假设'，评估求解难度时计入。若要降低难度，可在题面补一句'该错误在第二遍语义分析时才出现'。", "next_experiment": "跑一条求解轨迹，看模型是否被 Protocol 假设带偏（本包无法执行，交 L3 轨迹包）。"},
+  {"category": "grading_coverage", "severity": "P3", "evidence_refs": ["base 的 4 条既有 slots case 未入 P2P"], "proposed_action": "把 testDataclassWithSlotsArg / SlotsDef / SlotsConflict / SlotsArgBefore310 补进 P2P。", "next_experiment": "base 与 gold 各跑一次这 4 条，确认双侧 PASSED。"},
+  {"category": "split_constraint", "severity": "P2", "evidence_refs": ["本题与 python__mypy-11857 共用 base_commit f96446ce2f"], "proposed_action": "标记 (11824, 11857) 必须同侧；(11824, 11966) 同模块同文件，建议同侧。", "next_experiment": "无。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只触碰纯测试数据文件 test-data/unit/check-dataclasses.test。", "evidence_refs": ["grading_bundles_v2_v0:python__mypy-11824 test_patch"]},
+ "proposed_regression_tests": [
+  {"id": "mypy/test/testcheck.py::TypeCheckSuite::check-dataclasses.test::testDataclassWithSlotsArg / SlotsDef / SlotsConflict / SlotsArgBefore310", "reason": "base 已有的 4 条 slots 用例，与被改函数一一对应，成本极低。"},
+  {"id": "test-data/unit/check-dataclasses.test 既有全部 74 个 case", "reason": "dataclass 插件的整体行为。"},
+  {"id": "test-data/unit/check-slots.test（若该版本存在）", "reason": "__slots__ 语义的主场，info.slots 的其它消费者。"},
+  {"id": "test-data/unit/check-incremental.test 中 dataclass 相关 case", "reason": "info.slots 会被序列化，两遍分析与增量缓存的交互是本题成因的同一根源。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "本包里评分设计最健康的一题：F2P 覆盖两条不同的两遍触发路径，P2P 两条精确堵住'删掉冲突检查'这类过度修复，且不强制唯一实现。需要注意的是题面带了一个错误的因果假设（真正原因只在 hints 里），这会抬高实际难度，但材料本身不缺。"},
+ "costs": {"minutes": 19}
+}

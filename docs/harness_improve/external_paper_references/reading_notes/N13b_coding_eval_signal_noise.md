@@ -4,7 +4,7 @@
 
 - 类型：官方评测质量审计文章；机构/署名 OpenAI；发布日期 **2026-07-08**；阅读日期 **2026-09-07**。
 - [正式原文](https://openai.com/index/separating-signal-from-noise-coding-evaluations/)。网页无独立修订号、更新时间或版本历史；以下对应读取当日可见英文内容，不将抓取日期称为发布版本。
-- [web 抽取记录](sources/N13/web_text_20260907.txt)、[浏览器交互内容与图表读数](sources/N13/browser_supplement_20260907.md)、[原方法图 SVG](sources/N13/N13b_quality_assurance.svg)。直接下载正文返回 HTTP 403，web 与浏览器成功读取；浏览器先自动显示中文，随后切到英文核对正文、图与全部案例。静态抽取只显示默认案例，不能独自支持全文覆盖。
+- web 抽取记录（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/N13/web_text_20260907.txt`）、[浏览器交互内容与图表读数](sources/N13/browser_supplement_20260907.md)、原方法图 SVG（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/N13/N13b_quality_assurance.svg`）。直接下载正文返回 HTTP 403，web 与浏览器成功读取；浏览器先自动显示中文，随后切到英文核对正文、图与全部案例。静态抽取只显示默认案例，不能独自支持全文覆盖。
 - 原文是网页，**没有 PDF 页码**，故以节标题、图题、标签名和案例 ID 定位。全文及末尾链接检查后，未见独立技术附录、审计代码、全量人审标签或方法附件下载入口。Methodology 及两个人/agent 审查节、方法图本身就是配套方法说明。
 - 旧稿为 [项目一设计建议](../../../agentic_RL/repo_harness_rh2_workstreams/project1_design_advice_20260907.md) §3 与 §7，仅作项目背景。此文与 [N13a](N13a_swe_verified_audit.md) 是两篇独立文章，不能合并为一个无日期的“OpenAI 建议”。
 
@@ -50,7 +50,7 @@ OpenAI 在 **731 题 public split** 上先自动筛出 **286 道可疑题**，�
 | 人类监督 agent 审查 | Codex-based investigator 可访问任务 repo/environment，读文件、跑测试、分析尝试/共同失败 | 若干独立重复深入审计后，researcher 查摘要并终判、分类；结果 200 broken | Human-supervised agent review；导言图注 |
 | 人工标注（同一 flagged 子集的并行分支） | 工程师先受 benchmark 目标、分类与边缘案例培训；先根据题意、tests、gold 独立判断，再看 pipeline/transcript 辅助材料 | 每题 5 名；标签与严重性；分歧/低置信升级；结果 249 broken | Human annotation campaign；导言图注 |
 
-见[原图](sources/N13/N13b_quality_assurance.svg)：初筛输出 flagged/not flagged；flagged 分成两个分支，每个分支输出自己的 broken/not broken 与类别。不能写成“先 200 题再交人审扩成 249”，也不能写“5 名工程师独立审完 731 题”。
+见原图（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/N13/N13b_quality_assurance.svg`）：初筛输出 flagged/not flagged；flagged 分成两个分支，每个分支输出自己的 broken/not broken 与类别。不能写成“先 200 题再交人审扩成 249”，也不能写“5 名工程师独立审完 731 题”。
 
 调查 agent 的环境权限具有方法意义：合理歧义可以通过邻近代码和仓库约定解决；真正缺失是既没写出、也无法合理推断的隐藏要求。因此审题不能只做 prompt—test 关键词对比。人工先形成独立判断再看 agent 解释，有助于减少先入为主；但整批人工样本仍由同一初筛选出，不能称整体与 agent 完全独立。[原文 Human-supervised agent review / Human annotation campaign](https://openai.com/index/separating-signal-from-noise-coding-evaluations/#human-supervised-agent-review)
 

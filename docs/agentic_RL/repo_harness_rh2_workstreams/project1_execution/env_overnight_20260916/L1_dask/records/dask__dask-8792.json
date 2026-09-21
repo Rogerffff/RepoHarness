@@ -1,0 +1,217 @@
+{
+ "task_id": "dask__dask-8792",
+ "source": "SWE-Gym lite (dask/dask 2022.02)",
+ "task_revision": "upstream",
+ "materials_refs": [
+  "s2/ingest/public_bundles_v0.jsonl (problem_statement 3138 字符)",
+  "s2/ingest/grading_bundles_v2_v0.jsonl (F2P=1; P2P=92)",
+  "s2/ingest/validation_bundles_v0.jsonl (golden_patch)",
+  "s2/raw/swe_gym_lite_full_f70b1a29.jsonl (hints_text 260 字符)",
+  "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/dask__dask-8792/{gold,empty}/offline/a1/"
+ ],
+ "public_view": {
+  "goal": "`dask.base.clone_key` 对“只有前缀、没有 token”的自定义 key（如 `bar`）会丢掉前缀，返回纯哈希；期望保留前缀（`bar-<hash>`）。",
+  "constraints": [
+   "题面给出两段对照 MCVE（`dask_key_name='bar'` vs `'bar-1'`）与各自 `__dask_keys__()` 输出。",
+   "题面**逐字给出**当前实现与它认为应有的实现（见检查 29）。"
+  ],
+  "unknown_from_public": [
+   "题面没有任何地方要求改变**有 token** 的 key 的哈希结果；而 F2P 恰恰要求 `clone_key('inc-1-2-3', 123)` 从 `inc-27b6e15b...` 变成 `inc-4dfeea2f...`（见检查 23/24）。",
+   "题面没说这些哈希值会被逐字断言。"
+  ],
+  "by": "L1_dask"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "d88b3442f6114a7e529338226eec2e342f3b62ed:dask/base.py:1425-1446",
+    "d88b3442f6114a7e529338226eec2e342f3b62ed:dask/tests/test_base.py:1479-1494"
+   ],
+   "note": "test_patch 只改 dask/tests/test_base.py，gold 只改 dask/base.py，base 均存在，同一函数。无二进制/LFS/子模块。",
+   "by": "L1_dask"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "d88b3442f6114a7e529338226eec2e342f3b62ed:dask/base.py:1443-1446（else: return tokenize(key, seed)）"
+   ],
+   "note": "base 在 token 为空时直接 `return tokenize(key, seed)`，前缀丢失，题面缺陷成立；empty 侧 F2P FAILED。",
+   "by": "L1_dask"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-8792.problem_statement",
+    "s2/raw/...:dask__dask-8792.hints_text"
+   ],
+   "note": "题面完整、无截断、无外链图片。hints 只有两句寒暄（'you have a good idea of the change'、ping @crusaderky），无题面之外的关键信息。",
+   "by": "L1_dask"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-8792.test_patch"
+   ],
+   "note": "test_patch 仅碰测试文件；gold 仅碰源码。",
+   "by": "L1_dask"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "同上"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "L1_dask"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "aa801de0f42716d977051f9abb9da2c9399da05c:dask/base.py:1503-1515",
+    "runs/env_overnight_20260916/L1_dask/mat/dask__dask-9212/grading.json"
+   ],
+   "note": "**本题的答案在 dask__dask-9212 的 base 里直接可见**：9212 的 base_commit（aa801de0f4，2022-06）已包含本题 gold（clone_key 的 docstring 与 `return prefix + '-' + tokenize(key, seed)` 一字不差），而且 9212 的 P2P 里就含 `test_clone_key`（带修好后的哈希值）。两题共用 dask/base.py + dask/tests/test_base.py。划分训练/评测集时必须同侧，否则构成直接泄漏。",
+   "by": "L1_dask"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-8792.problem_statement（'but I think it should be' 代码块）",
+    "grading_bundles_v2_v0.jsonl:dask__dask-8792.test_patch"
+   ],
+   "note": "**题面给出的修复与评分要求不一致**。题面的建议实现保留了 `if token:` 分支（有 token 时仍 `tokenize(token, seed)`），只改 else 分支；gold 则把分支整个删掉，改成对**完整 key** 求 token。二者在 `clone_key('inc-1-2-3', 123)` 上结果不同：题面版给 `inc-27b6e15b795fcaff169e0e0df14af97a`（= base 的旧值），gold 版给 `inc-4dfeea2f9300e67a75f30bf7d6182ea4`，而 F2P 逐字断言后者。",
+   "by": "L1_dask"
+  },
+  "24": {
+   "status": "issue",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-8792.test_patch"
+   ],
+   "note": "**本包最强制唯一实现的一题**：F2P 的 4 条断言全是逐字十六进制摘要（`inc-4dfeea2f...`、`x-dc2b8d1c...`、`x-b76f061b...`、`sum-1efd41f0...`）。只有“对完整 key 调 `tokenize(key, seed)` 再拼前缀”这一种写法能命中；照题面实现 → 第一条即失败。更糟的是这些常量还锁死了 `dask.base.tokenize` 的当前哈希行为（本包 dask__dask-9212 正是改 tokenize 的题）。",
+   "by": "L1_dask"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-8792.test_patch"
+   ],
+   "note": "反面：由于断言是常量，任何拿不到这四个常量的正确修法都被判 0；而写死 `if key == 'x': return 'x-dc2b8d1c...'` 这类硬编码虽然荒谬，也能过 F2P（P2P 里没有别的 clone_key 用例）。题面原例（`dask.graph_manipulation.bind` 后 key 以 `bar-` 开头）**没有任何断言覆盖**。",
+   "by": "L1_dask"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "d88b3442f6114a7e529338226eec2e342f3b62ed:dask/tests/test_graph_manipulation.py"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_dask"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "validation_bundles_v0.jsonl:dask__dask-8792.golden_patch"
+   ],
+   "note": "gold 本身自洽（同时更新了 docstring 的 doctest 示例，并把它们从 `# doctest: +SKIP` 改成真执行）。但它**超出了题面范围**：不只修了“无 token 丢前缀”，还改变了所有有 token 的 key 的 clone 结果 —— 这是一个对下游缓存键/图名的广义行为变更，题面没有请求。另注意 test_patch 顺带把 `test_compte_as_if_collection_low_level_task_graph` 的拼写错误改成 `test_compute_...`（与题无关的夹带；P2P 收的是改名后的新名字，未造成缺失）。",
+   "by": "L1_dask"
+  },
+  "29": {
+   "status": "issue",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-8792.problem_statement"
+   ],
+   "note": "题面**逐字给出**“当前实现”与“应有实现”两段完整函数体。属最强的静态泄漏形态，但由于泄漏的答案与评分标准不一致（检查 23），它反而是**误导性泄漏**：越照题面做越拿不到分。",
+   "by": "L1_dask"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-8792/gold/offline/a1/test_output.txt (install rc=0)"
+   ],
+   "note": "安装 rc=0；Python 3.9.19 + pytest-8.3.2（见 #R3）。",
+   "by": "L1_dask"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "d88b3442f6114a7e529338226eec2e342f3b62ed:dask/tests/test_base.py"
+   ],
+   "note": "无 mark.network / 真实 URL 访问；`'s3fs'` 只作为字符串出现在模块名清单里。importorskip 命中 graphviz / matplotlib.pyplot / dask.array 等本地包。",
+   "by": "L1_dask"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-8792/gold/offline/a1/test_output.txt",
+    "runs/env_overnight_20260916/L1_dask/scripts/prefail.py 输出"
+   ],
+   "note": "gold 侧 117 条结果行 → 106 个键（2 个伪键 `[1]`/`[2]`，13 条 SKIPPED 的真实 ID 全部丢失，见 #R2；跳过原因含 `could not import 'matplotlib.pyplot'`、`condition: not dd`）。另有 **11 条既有用例恒 FAILED**（7 条 `pytest.warns(None)` + pandas/scipy 漂移），全部不在参考集内。",
+   "by": "L1_dask"
+  },
+  "9": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-8792/{gold,empty}/offline/a1/status_map.json"
+   ],
+   "note": "empty→F2P FAILED，gold→PASSED，92 条 P2P 两侧全 PASSED。",
+   "by": "L1_dask"
+  }
+ },
+ "issues": [
+  {
+   "category": "题面建议与评分标准矛盾",
+   "severity": "P1",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-8792.problem_statement",
+    "grading_bundles_v2_v0.jsonl:dask__dask-8792.test_patch"
+   ],
+   "proposed_action": "needs_repair：要么把题面里的“应有实现”改成 gold 的形状（去掉 if token 分支），要么把 F2P 对 `clone_key('inc-1-2-3', 123)` 的期望放宽成“前缀为 inc- 且为确定性哈希”。当前形态会系统性惩罚“照题面做”的模型。",
+   "next_experiment": "在 base 上原样实现题面给出的那段函数，跑 F2P，预期第一条断言即 FAILED。"
+  },
+  {
+   "category": "逐字哈希常量做验收标准",
+   "severity": "P1",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-8792.test_patch"
+   ],
+   "proposed_action": "与 moto 的“错误字符串固化”同类（L1_moto_2 R 系列）；建议在全池统计“F2P 断言含 32 位十六进制常量”的题并统一处置。",
+   "next_experiment": "统计 216 题里 test_patch 新增断言含 md5/sha 十六进制常量的题数。"
+  },
+  {
+   "category": "跨题泄漏",
+   "severity": "P2",
+   "evidence_refs": [
+    "aa801de0f42716d977051f9abb9da2c9399da05c:dask/base.py:1503-1515"
+   ],
+   "proposed_action": "dask__dask-8792 与 dask__dask-9212 必须同侧；若 9212 进训练集而 8792 进评测集，答案与期望哈希都直接可见。",
+   "next_experiment": "对 216 题做一次“A 的 gold 是否已在 B 的 base 里”的全量交叉检查（本包已发现 8792→9212、7656→8820 两对）。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰 dask/tests/test_base.py，gold 只碰 dask/base.py；按第四组 B 默认保持空。",
+  "evidence_refs": [
+   "grading_bundles_v2_v0.jsonl:dask__dask-8792.test_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "dask/tests/test_graph_manipulation.py::test_bind / test_clone",
+   "reason": "题面原例走的是 dask.graph_manipulation.bind；这些用例能验证“前缀确实被保留”的对外行为，而不依赖逐字哈希。当前完全不在参考集内（不同文件）。"
+  },
+  {
+   "id": "dask/tests/test_base.py::test_replace_name_in_key",
+   "reason": "与 clone_key 同一族的 key 改写函数，就在其上方，能拦住把 key_split/前缀逻辑改坏的候选。"
+  },
+  {
+   "id": "dask/tests/test_base.py::test_tokenize 系列",
+   "reason": "F2P 的常量隐含地锁死了 tokenize 的哈希行为；把 tokenize 的基本用例纳入 P2P 可让“哈希变了”表现为可解释的失败而不是神秘的常量不匹配。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "题面逐字给出的“应有实现”与 F2P 要求的行为不一致，照题面做必判 0；F2P 用 4 个逐字哈希常量做验收标准，强制唯一写法并锁死 tokenize 行为；题面原例的对外行为无任何断言覆盖。需改题面或放宽断言后再用。"
+ },
+ "costs": {
+  "minutes": 24
+ }
+}

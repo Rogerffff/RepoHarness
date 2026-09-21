@@ -1,0 +1,230 @@
+{
+ "task_id": "iterative__dvc-5822",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "docs/.../s2/ingest/public_bundles_v0.jsonl#iterative__dvc-5822",
+  "grading": "docs/.../s2/ingest/grading_bundles_v2_v0.jsonl#iterative__dvc-5822",
+  "validation": "docs/.../s2/ingest/validation_bundles_v0.jsonl#iterative__dvc-5822",
+  "raw": "docs/.../s2/raw/swe_gym_lite_full_f70b1a29.jsonl#iterative__dvc-5822",
+  "base_commit": "31439754377d829da6babffcc720dd696554d8ab",
+  "version": "2.0",
+  "python_version": "3.9",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-5822:latest",
+  "eval_cmd": "pytest -rA",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-5822/{gold,empty}/offline/a1/",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc"
+ },
+ "public_view": {
+  "目标行为": "`dvc.api.open(path, repo=<本地路径>, rev=<版本>)` 不再抛 AssertionError，并且读到的是该 rev 的内容而不是工作区内容。题面给出完整 traceback，定位到 `dvc/repo/__init__.py::Repo._get_repo_dirs` 的 `assert bool(scm) == bool(rev)`。",
+  "约束": "不能简单删掉 assert：`Repo.__init__` 后续用 `if scm: self._fs = scm.get_fs(rev, ...) else: LocalFileSystem(...)`（base commit 31439754:dvc/repo/__init__.py:155-163），scm 仍为 None 时读到的是工作区文件。正确做法是在 `rev` 存在而 `scm` 缺席时构造 SCM。",
+  "公开材料无法确定的点": [
+   "题面只说\"本地仓库 + 任意 rev\"，未说明 `uninitialized=True`、`subrepos=True` 组合下的期望；",
+   "未说明 `root_dir` 为 None（从 cwd 推断）时用哪个目录初始化 SCM；",
+   "未说明非 git 仓库（no_scm）下传 rev 应报什么错。"
+  ],
+  "相关模块": "dvc/repo/__init__.py (Repo.__init__ / _get_repo_dirs)、dvc/api.py::_open、dvc/scm/__init__.py::SCM。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-5822/gold/offline/a1/eval.sh",
+    "mat/iterative__dvc-5822/{grading,validation}.json"
+   ],
+   "note": "test_patch 只动 tests/func/test_api.py（base 存在，git show 31439754:tests/func/test_api.py 可读）；gold 只动 dvc/repo/__init__.py。二者与题面同一问题（api.open + rev）。无二进制/LFS/子模块材料。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show 31439754:dvc/repo/__init__.py:92 `assert bool(scm) == bool(rev)`",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-5822/empty/offline/a1/status_map.json"
+   ],
+   "note": "base 第 92 行确实是题面 traceback 里的那句 assert；empty 侧 F2P `test_open_rev` FAILED，初态含问题。",
+   "by": "static"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-5822/public.json#problem_statement"
+   ],
+   "note": "题面 3673 字符，含完整可读 traceback 与复现步骤，无外链图片、无截断。唯一缺口：hints_text 里维护者写了\"以前 rev 存在时会 clone 仓库，现在不 clone 了但没正确初始化\"这条根因判断，题面没有——不过题面 traceback 已足以定位，落差不大。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-5822/grading.json#test_patch"
+   ],
+   "note": "test_patch 只触碰 tests/func/test_api.py（纯测试路径），不存在\"非测试源码被恢复覆盖\"的混合职责；gold 不触碰任何测试样路径。",
+   "by": "static"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-5822/grading.json#test_patch"
+   ],
+   "note": "恢复清单 = {tests/func/test_api.py}，全部是官方测试文件，恢复不会覆盖合法解答。",
+   "by": "static"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dvc_1/prescan.json"
+   ],
+   "note": "本包 17 题中唯一 version=2.0 的题；gold 路径 dvc/repo/__init__.py 在本包内不与其它题重合；test_patch 路径 tests/func/test_api.py 亦唯一。未与 L1_dvc_2 包交叉核对（not_checked 的部分见 issue）。",
+   "by": "static"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-5822/grading.json#fail_to_pass"
+   ],
+   "note": "F2P `test_open_rev` 断言 `api.open(\"foo\", rev=\"master\")` 读到提交时的内容 \"foo\" 而不是工作区的 \"bar\" —— 这一条\"必须读 rev 的内容\"题面里只用 \"A file opened from the local repo\" 一句带过，没有明说必须是该 rev 的历史内容。可推断但不显然。",
+   "by": "static"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show 31439754:dvc/repo/__init__.py:155-163"
+   ],
+   "note": "F2P 只断言对外行为（读到的字节），不锁 helper 名或调用顺序。合法替代实现（在 dvc/api.py::_open 或 Repo.open 里构造 scm 再传入）同样能过。但**在 `_get_repo_dirs` 内部赋值 scm 不行**：`self._scm = scm` 取的是 `__init__` 的局部变量，改不到，会读成工作区内容——这是 base 结构决定的，不算无依据约束。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-5822/gold/offline/a1/status_map.json"
+   ],
+   "note": "**P2P 只有 1 条**（`test_open_scm_controlled`，走 rev=None 分支）。删掉 assert 这种明显错误的\"修复\"会被 F2P 挡住（读到 \"bar\" != \"foo\"），但\"只要 rev 就无条件 `scm = SCM(os.curdir)`\"（忽略 root_dir）这类半对修复在该文件现存能跑的 2 条用例下无法区分。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-5822/gold/offline/a1/test_output.txt:21466-21512",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-5822/gold/offline/a1/test_output.txt:21463-21465"
+   ],
+   "note": "同文件 51 条里 **46 条 FAILED、24 条 SKIPPED**，gold 侧亦然 → 只剩 2 条进评分。见 issue env_rot_pathspec 与 skip_ids_lost。",
+   "by": "static"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-5822/validation.json#golden_patch"
+   ],
+   "note": "gold 仅 2 处：`from dvc.scm import SCM` 与 `if rev and not scm: scm = SCM(root_dir or os.curdir)`，与题目一一对应，无无关改动，不依赖未交付改动。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-5822/public.json#problem_statement",
+    "mat/iterative__dvc-5822/raw.json#hints_text"
+   ],
+   "note": "题面不含修复代码、不含上游 PR/commit 链接（只有一条 discord 讨论链接）。hints 也只给方向不给代码。",
+   "by": "static"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-5822/gold/offline/a1/test_output.txt:367,370",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-5822/gold/offline/a1/test_output.txt:854"
+   ],
+   "note": "安装阶段 `tests/requirements.txt` 与 `test-requirements.txt` 都不存在（被 `|| true` 吞掉，rc_install 仍记 0）；实际装出来的 `pathspec` 与 dvc 2.0 的 `dvc/ignore.py` 不兼容 → `re.error: redefinition of group name 'ps_d'`。",
+   "by": "static"
+  },
+  "7": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "未核查 fixture/外部资产完整性（本题 test_patch 不带资产）。",
+   "by": "static"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-5822/gold/offline/a1/test_output.txt:21463-21465"
+   ],
+   "note": "同文件大量用例需要真实云端（s3/gs/azure/gdrive/oss/ssh/http/hdfs/webdav/webhdfs，`clouds = [pytest.lazy_fixture(c) for c in cloud_names]`）或 docker：SKIPPED 原因写明 \"no docker installed\"、\"gs tests not enabled through CLI\"、\"gdrive tests not enabled through CLI\"。F2P/P2P 这 2 条本身不需要网络。",
+   "by": "static"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-5822/gold/offline/a1/status_map.json"
+   ],
+   "note": "status_map 里没有任何真实 nodeid 的 SKIPPED 记录，只有键 `[6]`、`[12]`（值 SKIPPED）与键 `Could`（值 `ERROR:`）——见跨题发现 A/B。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "环境依赖漂移(6)",
+   "severity": "P1",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-5822/gold/offline/a1/test_output.txt:854 `re.error: redefinition of group name 'ps_d' as group 2`",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-5822/gold/offline/a1/test_output.txt 帧栈 /testbed/dvc/ignore.py:43-44 → re.py:252"
+   ],
+   "note": "安装时解析到的 pathspec 版本会给每个 GitWildMatchPattern 生成同名捕获组 `ps_d`，dvc 2.0 的 `dvc/ignore.py` 把多条 pattern 拼成一个正则时重名 → 任何触发 dvcignore 的用例（`dvc add`/`dvc_gen`）都炸。gold 侧 46/51 FAILED 即由此而来。",
+   "proposed_action": "把 pathspec 钉到 dvc 2.0 当年的版本（`pathspec>=0.6.0,<0.9` 一线，具体版本需实测），或在配方里加 pip 约束文件；同时把 `pip install -r tests/requirements.txt` 的 `|| true` 改成记录 rc 而不是静默吞。",
+   "next_experiment": "在镜像里 `pip index versions pathspec` + 二分安装，跑 `pytest -rA tests/func/test_api.py -k \"test_open or test_missing\"`，找到使 `dvc/ignore.py` 正常工作的最高 pathspec 版本；然后重算 P2P。"
+  },
+  {
+   "category": "回归保护不足(25/26)",
+   "severity": "P1",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-5822/gold/offline/a1/status_map.json（PASSED 仅 2 条）",
+    "mat/iterative__dvc-5822/grading.json#pass_to_pass（1 条）"
+   ],
+   "note": "P2P=1。由于上一条环境问题，tests/func/test_api.py 里真正相关的 `test_open`、`test_open_granular`、`test_read_with_subrepos` 等全部在 base 与 gold 两侧同样失败，被自动排除出 P2P。修好 pathspec 后应重建 P2P。",
+   "proposed_action": "修复环境后重跑 gold，把恢复通过的 `test_open[*]`/`test_open_granular[*]`/`test_open_not_cached`/`test_read_with_subrepos` 纳入 P2P。",
+   "next_experiment": "环境修好后 base/gold 各跑一次整文件，取双侧 PASSED 交集作为新 P2P。"
+  },
+  {
+   "category": "评分身份/解析(19)",
+   "severity": "P2",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-5822/gold/offline/a1/test_output.txt:21463-21465",
+    "rh2/src/repoharness2/envpack/swegym_parsers.py:45-57 `test_status_map[test_case[1]] = test_case[0]`"
+   ],
+   "note": "pytest `-rA` 的跳过摘要格式是 `SKIPPED [N] path:line: reason`，第二个 token 是 `[N]` 而不是 nodeid → 被跳过的测试在 status_map 里根本不存在，按 scoring 的\"缺席计失败\"口径会被当成失败，而不是 scoring.py:24 声明的\"SKIPPED 不进任何桶\"。本题 24 条 SKIPPED 全部丢失，且 `[6]` 出现两次互相覆盖。",
+   "proposed_action": "评分侧改用 `--tb=no -q -rA` 之外的稳定身份来源（JUnit XML / `-p no:cacheprovider --junit-xml`），或在 parser 里识别 `SKIPPED [N] file:line` 并回到收集阶段补 nodeid。",
+   "next_experiment": "同一镜像加 `--junitxml=/tmp/j.xml` 跑一次，对比 XML 的逐 case 身份与 status_map 的差异条数。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 tests/func/test_api.py，是纯官方测试文件；gold 不触碰测试样路径。按第四组 B（额外排除默认为空）无需新增。",
+  "evidence_refs": [
+   "mat/iterative__dvc-5822/grading.json#test_patch",
+   "mat/iterative__dvc-5822/validation.json#golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/func/test_api.py::test_open_not_cached",
+   "reason": "同文件、同 `api.open` 入口且不需要云端，环境修好后应是最便宜的相关回归。"
+  },
+  {
+   "id": "tests/func/test_api.py::test_read_with_subrepos[False]",
+   "reason": "覆盖 gold 改动所在的 `Repo.__init__(subrepos=...)` 路径。"
+  },
+  {
+   "id": "tests/unit/repo/test_repo.py",
+   "reason": "`Repo` 构造的单元测试同包，直接覆盖 `_get_repo_dirs` 的 scm/rev 组合（需先确认 base 存在该文件）。"
+  },
+  {
+   "id": "tests/func/test_api.py::test_open_granular",
+   "reason": "granular（目录内单文件）路径也走同一 `Repo.open`，能挡住\"只对顶层文件有效\"的半修复。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "题面/gold/F2P 三者干净且互相对应，但评分只剩 2 条用例（P2P=1），根因是 pathspec 依赖漂移把同文件 46 条打挂；不修环境就不具备回归保护。"
+ },
+ "costs": {
+  "minutes": 38
+ },
+ "by": "L1_dvc_1 (Claude Opus 5, 静态审查)"
+}

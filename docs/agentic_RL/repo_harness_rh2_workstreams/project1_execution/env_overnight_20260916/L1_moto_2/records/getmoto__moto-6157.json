@@ -1,0 +1,244 @@
+{
+ "task_id": "getmoto__moto-6157",
+ "source": "SWE-Gym lite (s2 ingest v0)",
+ "task_revision": "upstream",
+ "by": "L1_moto_2 (Opus 5, 静态审查, 2026-09-16)",
+ "materials_refs": {
+  "snapshot": "runs/env_overnight_20260916/L1_moto_2/mat/getmoto__moto-6157/",
+  "base_commit": "fe1869212f17f030ec27ddf96753726af55c6670",
+  "version": "4.1",
+  "eval_cmd": "pytest -n0 -rA",
+  "repo_level": "docs/.../env_overnight_20260916/L1_moto_2/repo_level_findings.md",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-6157/{empty,gold}/offline/a1/"
+ },
+ "public_view": {
+  "目标行为": "（按 agent 实际可见的题面）mock 的 S3 GetObject 响应要带 accept-ranges: bytes。",
+  "约束": "只改 moto/ 源码。",
+  "公开材料可推断": "**按题面看，base 已经满足要求**：`fe1869212f:moto/s3/responses.py:1367` 已有 `response_headers.update({\"AcceptRanges\": \"bytes\"})`（这正是 6121 的 gold，6121 base 是本题 base 的祖先，相隔 23 个提交）。",
+  "公开材料无法确定的点": [
+   "题面正文说的是\"getting an object\"，字面指向 get_object，而 base 已经满足；但题面贴出的\"期望/实际\"响应字典里**没有 Body 键**，只有 AcceptRanges/LastModified/ContentLength/ETag/ContentType/Metadata —— 这正是 **head_object** 的响应形状（get_object 会返回 Body 流）。因此存在两种读法：(甲) 题面已过时、真实任务只在 hints 里；(乙) 题面从一开始描述的就是 head_object，只是用词含糊，6121 修错了地方、6157 才是对症修复。",
+   "两种读法都要求求解者先跑一遍复现、发现 get_object 已正常，再从响应形状反推是 head_object。题面没有任何一句明确写出 head_object。",
+   "真正明确点出 head_object 的只有不可见的 hints（报告者追问 \"Is this possible for the head_object as well?\"，维护者答 \"I'll just reopen this one\"）。"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/getmoto__moto-6157/problem_statement.txt",
+    "fe1869212f:moto/s3/responses.py:1367",
+    "mat/getmoto__moto-6157/gold.patch"
+   ],
+   "note": "test_patch、gold、base 三者内部自洽（都指向 HeadObject）。题面与它们的对应关系**有歧义**：正文字面说 \"getting an object\"（get_object 在 base 已修好），但题面贴出的响应字典没有 Body 键、形状是 head_object 的响应。按字面读是材料错配；按响应形状读则是题面用词含糊而非错配。记为 issue 并同时保留两种读法，不单方面判定为错配。",
+   "by": "static"
+  },
+  "2": {
+   "status": "issue",
+   "evidence_refs": [
+    "fe1869212f:moto/s3/responses.py:1367",
+    "3adbb8136a（6121 base）无 AcceptRanges"
+   ],
+   "note": "**按题面字面表述，初态不含所述问题**：题面说 \"getting an object\" 缺 accept-ranges，而 `fe1869212f:moto/s3/responses.py:1367` 已经有 `response_headers.update({\"AcceptRanges\": \"bytes\"})`（即 6121 的修复，6121 base 是本题 base 的祖先、相隔 23 个提交）。按题面贴出的响应形状（无 Body ⇒ head_object）读，则初态确实含问题（HeadObject 缺该头）。无论取哪种读法，求解者都必须先跑复现、发现 get_object 已正常，再自行反推到 head_object；这比普通题多一层推断。",
+   "by": "static"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/getmoto__moto-6157/problem_statement.txt",
+    "mat/getmoto__moto-6157/hints.txt"
+   ],
+   "note": "求解者实际收到的输入**可以**推出正确任务，但需要一条不平凡的推断链：跑复现 → 发现 get_object 已返回 AcceptRanges → 注意到题面响应字典没有 Body → 判定那是 head_object → 去查 HeadObject 分支。题面本身没有一处写出 head_object。这不是渲染/截断缺陷，而是来源把 issue 首帖当作同一 issue 两次提交的共同题面所致。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/getmoto__moto-6157/test.patch"
+   ],
+   "note": "合法解在 moto/s3/responses.py。",
+   "by": "static"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "docs/.../s2/ingest/duplicate_clusters_v0.json",
+    "两题 problem_statement sha256 相同"
+   ],
+   "note": "与 getmoto__moto-6121 同源（同一 issue 的两次提交）：problem_statement sha256 相同、判分文件相同、被改测试函数相同、F2P ID 列表逐字相同、gold 都是同一行 `response_headers.update({\"AcceptRanges\": \"bytes\"})` 只是插入位置不同（GetObject vs HeadObject）。现有 duplicate_clusters_v0.json 按 base_commit 归组，漏检了这一对。",
+   "by": "static"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "repo_level_findings.md#R2"
+   ],
+   "note": "4.1，离线 make init rc=2（共性）。",
+   "by": "stage1"
+  },
+  "9": {
+   "status": "pass",
+   "evidence_refs": [
+    "repo_level_findings.md#R3"
+   ],
+   "note": "仓库级共性证据。",
+   "by": "static+stage1"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "repo_level_findings.md#R9",
+    "runs/env_probe_stage1_20260910/.../getmoto__moto-6157/gold/offline/a1/test_output.txt:429-1045"
+   ],
+   "note": "同 6121：判分跑整个文件，test_s3_server_post_cors_multiple_origins 因无法解析 testcors.localhost 失败（`[Errno -3] Temporary failure in name resolution`），gold/empty 均 `1 failed, 12 passed`。",
+   "by": "stage1"
+  },
+  "13": {
+   "status": "issue",
+   "evidence_refs": [
+    "repo_level_findings.md#R9"
+   ],
+   "note": "同 6121：固定端口 6789 的 ThreadedMotoServer；并发下的端口冲突风险未验证。",
+   "by": "stage1"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/getmoto__moto-6157/test.patch"
+   ],
+   "note": "只恢复 1 个纯测试文件。",
+   "by": "static"
+  },
+  "18": {
+   "status": "issue",
+   "evidence_refs": [
+    "repo_level_findings.md#R9",
+    "runs/env_probe_stage1_20260910/.../getmoto__moto-6157/gold/offline/a1/test_output.txt"
+   ],
+   "note": "测试阶段 rc=1 却判 RESOLVED_FULL。",
+   "by": "stage1"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "repo_level_findings.md#R8"
+   ],
+   "note": "F2P 含截断 ID `...::test_s3_server_bucket_create[baz`（真实 ID `[baz bar]`）；日志 13 条结果行 vs 参考集 12 个 ID。",
+   "by": "static+stage1"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/getmoto__moto-6157/problem_statement.txt",
+    "mat/getmoto__moto-6157/test.patch"
+   ],
+   "note": "F2P 检查的行为（HeadObject 带 AcceptRanges）**不能由题面文字直接推出**，只能靠上面那条推断链。同时题面文字指向的 get_object 行为在 base 已成立，会把粗读题面的求解者引向\"无需改动\"。判为要求不充分/表述误导，而非完全不可解。",
+   "by": "static"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/getmoto__moto-6157/test.patch"
+   ],
+   "note": "只断言 HEAD 响应头的值，不约束实现位置。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/getmoto__moto-6157/test.patch"
+   ],
+   "note": "判分只检查 HeadObject 一条路径；同 6121，把该头加在更靠外的公共出口也能过。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/getmoto__moto-6157/grading.json"
+   ],
+   "note": "判分集合 12 个 ID 全在 server 模式文件里，S3 主力测试不参与。",
+   "by": "static"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/getmoto__moto-6157/gold.patch"
+   ],
+   "note": "gold 一行、无夹带；与 test_patch 严格对应（只是与题面不对应，已记在检查 1/2/23）。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/getmoto__moto-6157/hints.txt"
+   ],
+   "note": "hints 不含代码；但它是唯一说明真实任务范围（head_object）的材料，属\"关键信息只在 hints\"而非泄漏。",
+   "by": "static"
+  },
+  "7": {
+   "status": "not_applicable",
+   "evidence_refs": [],
+   "note": "无外部资产。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "题面与初态的对应关系有歧义（字面所述问题已修复）",
+   "severity": "P2",
+   "evidence_refs": [
+    "mat/getmoto__moto-6157/problem_statement.txt",
+    "fe1869212f:moto/s3/responses.py:1367",
+    "mat/getmoto__moto-6157/hints.txt"
+   ],
+   "proposed_action": "先做一次只给题面的盲解来定性：若求解者普遍得出\"已修复、无需改动\"，则按欠明确题面处理（修订题面或降级用途）；若能靠响应形状推到 head_object，则本题是合法的高难度样本，只需在题级事实里标注这条推断链。无论哪种结论，都要与 6121 登记为同族、同侧划分。",
+   "status": "open",
+   "next_experiment": "只给题面盲解 1-2 次，记录求解者是否触及 head_object。"
+  },
+  {
+   "category": "重复/派生题未被检出",
+   "severity": "P2",
+   "evidence_refs": [
+    "docs/.../s2/ingest/duplicate_clusters_v0.json"
+   ],
+   "proposed_action": "同 6121：登记同族，去重判据扩展为 problem_statement 摘要 + 判分文件 + F2P 集合。",
+   "next_experiment": "全池按 problem_statement sha256 重跑去重。"
+  },
+  {
+   "category": "参考集外的环境性失败",
+   "severity": "P2",
+   "evidence_refs": [
+    "repo_level_findings.md#R9"
+   ],
+   "proposed_action": "同 6121：/etc/hosts 加 testcors.localhost，并在事实层单列参考集外失败。",
+   "next_experiment": "同 6121。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰 1 个纯测试文件。",
+  "evidence_refs": [
+   "mat/getmoto__moto-6157/test.patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/test_s3/test_s3.py -k head_object",
+   "reason": "HeadObject 的主力测试（decorator 模式），验证新增响应头不影响 boto3 解析；不在判分集合内。"
+  },
+  {
+   "id": "tests/test_s3/test_s3_multipart.py",
+   "reason": "Range/分段路径与 accept-ranges 语义直接相关。"
+  },
+  {
+   "id": "tests/test_s3/test_server.py::test_s3_server_post_cors_multiple_origins",
+   "reason": "R9 的失败项，修 hosts 后作为环境健康度对照。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_review",
+  "reason": "题面文字所述的 get_object 缺陷在 base 已被 6121 修复（fe1869212f:moto/s3/responses.py:1367），真正要改的是 HeadObject；但题面贴出的响应字典没有 Body 键，形状确实是 head_object 的响应，所以任务并非绝对不可解，而是要求靠响应形状反推。需要一次只给题面的盲解来裁定它属于\"欠明确题面\"还是\"合法的高难度样本\"。另需与 6121 登记同族。"
+ },
+ "costs": {
+  "minutes": 18
+ }
+}

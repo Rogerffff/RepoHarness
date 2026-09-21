@@ -1,0 +1,67 @@
+{
+ "task_id": "Project-MONAI__MONAI-4109",
+ "source": "SWE-Gym lite / Project-MONAI/MONAI PR 4109 (created_at 2022-04-12)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "9c0a53870a1a7c3c3ee898496f9defcfeeb7d3fe",
+  "version": "0.8", "python_version": "3.8",
+  "eval_cmd": "pytest -rA ", "actual_test_cmd": "pytest -rA  tests/test_subpixel_upsample.py",
+  "f2p": ["tests/test_subpixel_upsample.py::TestSUBPIXEL::test_script"],
+  "p2p_n": 54,
+  "test_patch_paths": ["tests/test_subpixel_upsample.py"],
+  "gold_paths": ["monai/networks/utils.py"],
+  "stage1": "gold=RESOLVED_FULL（55 PASSED + 1 ERROR，6.03s）/ empty=RESOLVED_NO（54 PASSED + 1 FAILED + 1 ERROR），rc_install=0"
+ },
+ "public_view": {
+  "goal": "让 `monai.networks.utils.pixelshuffle` 可以被 `torch.jit.script` 脚本化。题面给出 3 行最小复现：`torch.jit.script(pixelshuffle)` 不应报错。",
+  "constraints": ["题面 436 字符，含可直接运行的最小复现", "题面只要求『能 script』，没有给出任何期望的报错文本或实现方式"],
+  "unknowns_from_public_only": [
+   "TorchScript 具体卡在哪三处（`channels // scale_divisor` 的类型、`tuple(range(...))` 与 `sum(zip(...), ())` 的动态元组、`reshape(*args)` 的星号展开），题面不提，需要自己跑 script 才知道",
+   "题面复现的是 `torch.jit.script(pixelshuffle)`（脚本化**函数**），F2P 走的却是 `torch.jit.script(SubpixelUpsample(...))`（脚本化**模块**）——两条路径不完全等价"
+  ],
+  "base_code_evidence": [
+   "9c0a53870:monai/networks/utils.py:284 `org_channels = channels // scale_divisor`（TorchScript 下推断为 float/Number，不能当 reshape 的维度）",
+   "同文件 :286-288 `indices = tuple(range(2, 2 + 2 * dim))` / `sum(zip(indices_dim, indices_factor), ())` —— TorchScript 不支持变长元组构造与 sum(zip(...), ())",
+   "同文件 :290 `x.reshape(batch_size, org_channels, *([factor] * dim + input_size[2:]))` —— TorchScript 不支持 * 展开"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["tests/test_subpixel_upsample.py 在 base 存在", "gold 目标 monai/networks/utils.py:281-292 上下文匹配"], "note": "无二进制/LFS/子模块。", "by": "L1_monai_1"},
+  "2": {"status": "pass", "evidence_refs": ["9c0a53870:monai/networks/utils.py:284-290", "stage1 empty 侧 test_script FAILED"], "note": "base 确实不能被 script。", "by": "L1_monai_1"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 436 字符，含 3 行复现", "raw hints_text 为空"], "note": "无外链/图片/截断。题面简短但可复现，与 MONAI-1121（同为『让网络可 script』但题面毫无线索）形成鲜明对比。", "by": "L1_monai_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 只碰 tests/test_subpixel_upsample.py"], "note": "无非测试源码。additional_exclusions 保持空。", "by": "L1_monai_1"},
+  "17": {"status": "pass", "evidence_refs": ["该文件在 base 存在"], "note": "恢复步骤可正常工作。", "by": "L1_monai_1"},
+  "5": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["dupidx.txt：monai/networks/utils.py 在 26 道 MONAI 题里只被本题改", "与 Project-MONAI__MONAI-1121 同属『补 test_script 让某模块可 TorchScript』一族；与 Project-MONAI__MONAI-6775（L1_monai_2 的题）共用同一个 test_script_save helper 误收集现象"], "note": "不是重复题（缺陷与文件都不同），但同族。若要给数据集打『TorchScript 可脚本化』这一主题标签，1121/4109/6775 应归一类。", "by": "L1_monai_1"},
+  "23": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["题面复现是 `torch.jit.script(pixelshuffle)`（函数）", "F2P 走 `test_script_save(SubpixelUpsample(**input_param), test_data)`，即 script 整个 nn.Module 并保存/重载/比对输出"], "note": "要求基本充分（『让它能 script』很明确），小缺口是复现路径与验证路径不同：把函数改成能 script 通常也让模块能 script，但反过来若候选用 `@torch.jit.ignore` 之类手段绕过，题面的那行复现仍会失败而 F2P 会通过。", "by": "L1_monai_1"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 只要求 convert_to_torchscript(verify=True, rtol=1e-4) 成功（脚本化 + 保存 + 重载 + 输出比对）"], "note": "不强制唯一实现：任何能让 TorchScript 通过类型检查且数值一致的写法都行。gold 选择用显式 list 与循环替换元组推导，不是唯一解。", "by": "L1_monai_1"},
+  "25": {"status": "pass", "evidence_refs": ["P2P 54 条是 TestSUBPIXEL 的全部 shape 用例（inch 1-4 × dim × scale 的笛卡尔积）", "F2P 的 test_script_save 内部用 convert_to_torchscript(verify=True, rtol=1e-4) 做输出比对"], "note": "**本包里评分强度最好的一题之一**：改错 permute 顺序会让 54 条 shape 用例大面积失败；`verify=True` 又保证脚本化前后数值一致。想只靠 hack 通过很难。", "by": "L1_monai_1"},
+  "26": {"status": "pass", "evidence_refs": ["P2P 54 条覆盖同一函数的全部参数组合"], "note": "同文件覆盖充分。可选补强见 proposed_regression_tests（pixelshuffle 还被别的 upsample 模式调用）。", "by": "L1_monai_1"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 一个 hunk，全部在 pixelshuffle 内"], "note": "改动与题目精确对应，不依赖未交付改动。", "by": "L1_monai_1"},
+  "29": {"status": "pass", "evidence_refs": ["题面无 PR/commit 链接、不含修复代码；hints_text 为空"], "note": "无泄漏。", "by": "L1_monai_1"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 rc_install=0"], "note": "安装离线可完成。", "by": "L1_monai_1"},
+  "7": {"status": "pass", "evidence_refs": ["测试只用 torch.randn 合成数据，写临时目录保存 .ts"], "note": "无外部资产、无下载。", "by": "L1_monai_1"},
+  "11": {"status": "pass", "evidence_refs": ["stage1 离线跑通 56 条，6.03s"], "note": "不需要网络。", "by": "L1_monai_1"},
+  "10": {"status": "pass", "evidence_refs": ["纯 CPU（test_script_save 内部硬编码 device='cpu'），无并发"], "note": "无 GPU/多进程/共享内存需求。", "by": "L1_monai_1"},
+  "18": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["gold/empty 两侧 status_map 都含 `tests/test_subpixel_upsample.py::test_script_save`: ERROR", "gold/offline/a1/test_output.txt:1181 `E fixture 'net' not found`；:1279 `ERROR tests/test_subpixel_upsample.py::test_script_save`", "runs/env_overnight_20260916/L1_monai_1/bogus_statusmap.txt：MONAI 里同现象的题还有 1121（6 条）与 6775（1 条）"], "note": "与 MONAI-1121 同型：`from tests.utils import ... test_script_save` 把一个名字以 test_ 开头的 helper 引进模块命名空间，pytest 当用例收集，产生一条 ERROR。不在 F2P/P2P 里，判分无影响，但会让『有 ERROR 即失败』的粗粒度判据误判。", "by": "L1_monai_1"},
+  "19": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["test_patch 给 F2P 加了 `@SkipIfBeforePyTorchVersion((1, 8, 1))`", "runs/env_overnight_20260916/L1_monai_1/bogus_statusmap.txt 与 MONAI-3547 记录的检查 18：pytest -rA 的 SKIPPED 摘要行不含 nodeid，parser 只能记 `[n]`"], "note": "**唯一的 F2P 带版本 skip 装饰器**。当前镜像的 torch 足够新所以正常执行；但只要换到 torch < 1.8.1 的环境，这条 F2P 会 SKIPPED → 在 status_map 里找不到自己的 nodeid → 被当作缺席计失败 → **gold 直接判 RESOLVED_NO**。这是『skip 无法正确记账』这条机制问题在本包里离实际判分最近的一处。", "by": "L1_monai_1"},
+  "20": {"status": "pass", "evidence_refs": ["gold 55 PASSED / empty 54 PASSED + 1 FAILED，差异只在 F2P"], "note": "分差干净，噪声只有那条恒定的 ERROR。", "by": "L1_monai_1"}
+ },
+ "issues": [
+  {"category": "skip_accounting_risk", "severity": "P2",
+   "evidence_refs": ["F2P 上的 @SkipIfBeforePyTorchVersion((1, 8, 1))", "swegym_parsers.py:47-58", "MONAI-3547 的 SKIPPED [1] 实证"],
+   "proposed_action": "本题判分正确性依赖『镜像 torch >= 1.8.1』这个隐含前提。建议在 environment package 里把该前提写成显式断言（安装阶段校验 torch 版本），并同时修 parser 侧的 skip 记账（见 MONAI-3547 记录）。",
+   "next_experiment": "用脚本扫 216 题：F2P/P2P 里的用例在 base 源码中是否带 skip 装饰器；对命中的题在缺依赖环境下跑一次 gold，确认会不会假判 RESOLVED_NO。"},
+  {"category": "test_collection_noise", "severity": "P3",
+   "evidence_refs": ["两侧恒定的 ::test_script_save ERROR", "bogus_statusmap.txt"],
+   "proposed_action": "与 MONAI-1121 同一条：确认整题成败只看 F2P/P2P 的逐条状态，不看 rc、不看 ERROR 总数。",
+   "next_experiment": "同 1121。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只碰测试文件，gold 只碰 monai/networks/utils.py。", "evidence_refs": ["grading_bundles_v2_v0:Project-MONAI__MONAI-4109 test_patch", "validation_bundles_v0:Project-MONAI__MONAI-4109 golden_patch"]},
+ "proposed_regression_tests": [
+  {"id": "新增：题面那行 `torch.jit.script(pixelshuffle)`（脚本化函数本身）", "reason": "F2P 走的是脚本化 nn.Module，与题面复现路径不同；补上这条能封住用 @torch.jit.ignore 绕过的可能。"},
+  {"id": "tests/test_upsample_block.py（该版本存在时，`mode='pixelshuffle'` 分支）", "reason": "pixelshuffle 还被通用 UpSample 块调用，是另一个调用方。"},
+  {"id": "tests/test_subpixel_upsample.py 全 54 条（已在 P2P）", "reason": "参数组合覆盖充分，建议原样保留。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "本包质量最高的题之一：题面有最小复现、gold 精确对应、离线 6s、P2P 54 条覆盖充分且 verify=True 保证数值一致，难以被假修复骗过。唯一隐患是 F2P 带 torch 版本 skip 装饰器（换环境会被静默判失败），属于环境前提而非题目缺陷。"},
+ "costs": {"minutes": 20}
+}

@@ -1,0 +1,213 @@
+{
+ "task_id": "conan-io__conan-14177",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "b43eb83956f053a47cc3897cfdd57b9da13a16e6",
+  "version": "2.1",
+  "image": "xingyaoww/sweb.eval.x86_64.conan-io_s_conan-14177:latest",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/conan-io__conan-14177/{gold,empty}/offline/a1/",
+  "pkg_scans": "runs/env_overnight_20260916/L1_conan/{prescan2,envscan,collide}.json"
+ },
+ "public_view": {
+  "目标行为": "题面是 feature 请求，并且用 diff 形式写死了要加什么：把 apply_conandata_patches(conanfile) 改成 apply_conandata_patches(conanfile, verbose=False)，verbose=True 时在日志里打印 Applying: patches/0001-Fix-cmake.patch 这样的行。提问者还说 I have this implemented and ready to go。相关代码：conan/tools/files/patches.py 的 patch() 与 apply_conandata_patches()，patch() 已有 patch_type / patch_description 两个 kwargs 决定日志形态。",
+  "约束": "只改非测试源码。",
+  "公开材料无法确定的点": [
+   "日志行的准确格式。题面提议 Applying: <file>，实际判分要求 Apply patch (file): <file>。",
+   "是否要加 verbose 参数。题面明确要求加，gold 没加。",
+   "patch_type 的默认取值（file / string）没有任何公开依据。"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "public.problem_statement 的 diff 块要求签名变成 apply_conandata_patches(conanfile, verbose=False)",
+    "validation.golden_patch 里 apply_conandata_patches 的签名完全没变，也没有 verbose 参数"
+   ],
+   "note": "gold 与 test_patch 严格对应（同一 PR），但与题面提出的方案不是一回事：gold 把打印改成默认行为，并用 patch_description 默认等于 patch_file、patch_type 默认等于 file/string 来实现。照题面加 verbose 参数的解会 100% 失败。无二进制/LFS/子模块。",
+   "by": "L1_conan"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show b43eb839:conan/tools/files/patches.py：patch_type = kwargs.get('patch_type') 无默认值；apply_conandata_patches 不注入 patch_description",
+    "stage1 empty：3 条 F2P 全 FAILED"
+   ],
+   "note": "base 确实没有 gold 要加的行为。",
+   "by": "L1_conan"
+  },
+  "3": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "problem_statement 835 字符",
+    "raw.hints_text 617 字符：Actually I think that listing by default the patches being applied should be the default behavior. This is an important information that should be in the logs by default, not as an opt-in... The verbose=False was to retain the current behavior as the default, but it's ..."
+   ],
+   "note": "决定性的方向转折（从 opt-in verbose 改成默认打印）只存在于不可见的 hints 里。求解者拿到的题面仍然主张 verbose 参数。",
+   "by": "L1_conan"
+  },
+  "4_17": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan2.json: test_patch 只碰 conans/test/unittests/tools/files/test_patches.py"
+   ],
+   "note": "纯测试文件；gold 不碰测试路径。",
+   "by": "L1_conan"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "本包内无其它 patches 题"
+   ],
+   "note": "无同族题。",
+   "by": "L1_conan"
+  },
+  "23": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "F2P test_single_patch_description 断言 'mocked/ref: Apply patch (file): patch_description\\n' 逐字符相等",
+    "F2P test_multiple_no_version / test_multiple_with_version 断言 'mocked/ref: Apply patch (file): patches/0001-buildflatbuffers-cmake.patch\\n' in output"
+   ],
+   "note": "公开材料推不出这些断言：既推不出要默认打印（题面要 opt-in），也推不出 (file) 这个标签（题面提议的是 Applying:）。",
+   "by": "L1_conan"
+  },
+  "24": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "三条断言都是对 ConanOutput 文本的精确匹配，其中 test_single_patch_description 用的是 == 而不是 in"
+   ],
+   "note": "格式被完全钉死：Apply patch ( + patch_type + ): + description。patch_type 的默认值必须恰好是字符串 file / string。任何等价但措辞不同的实现都会被拒。部分可从 base 的既有格式推出（base 已有 Apply patch ({}): {} 的模板），但默认值不行。",
+   "by": "L1_conan"
+  },
+  "25": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_multiple_no_version / with_version 把断言从 == 改成 in 并新增一条，等于要求两条日志都出现"
+   ],
+   "note": "只改 patch_type 默认值而不注入 patch_description 的半截修复会在 patches/0001-... 那条上失败。覆盖尚可。",
+   "by": "L1_conan"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "P2P 10 条覆盖同文件 test_single_patch_file / _string / _arguments / _type / _extra_fields / _no_patchset / _apply_fail / base_path 等"
+   ],
+   "note": "patch() 的既有 kwargs 行为由 test_single_patch_type / test_single_patch_extra_fields 守住。",
+   "by": "L1_conan"
+  },
+  "27": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "golden_patch 同时改了两件事：patch() 里 patch_type 的默认值，以及 apply_conandata_patches 里注入 patch_description"
+   ],
+   "note": "gold 正确且自洽，但它实现的是与题面不同的方案；对本题而言 gold 与题目的对应关系弱。另外 patch_type 默认值的改动会影响所有直接调用 patch() 的 recipe 的日志形态，属于比题面范围更广的行为变更。",
+   "by": "L1_conan"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "scripts/leak.py: 6 行 gold 新增，0 命中题面"
+   ],
+   "note": "无静态泄漏。",
+   "by": "L1_conan"
+  },
+  "6_7_11": {
+   "status": "pass",
+   "evidence_refs": [
+    "envscan.json: 该文件无 @pytest.mark.tool；2 处 http 命中是 conandata 里的 patch_source 元数据字符串（只写进输出，不发请求）",
+    "stage1 gold 13/13 PASSED、0 SKIPPED"
+   ],
+   "note": "用 mock_patch_ng fixture 打桩 patch_ng，不真正打补丁、不访问网络、不写家目录。",
+   "by": "L1_conan"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "scripts/collide.py 无输出"
+   ],
+   "note": "13 个参考 ID 无参数化。",
+   "by": "L1_conan"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan2.json: gold 13/13 PASSED；empty 10 PASSED + 3 FAILED（= 3 条 F2P）"
+   ],
+   "note": "分差来自目标行为。",
+   "by": "L1_conan"
+  },
+  "31": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "conans/test/.gitignore 第 1 行就是 conftest_user.py（1.51/1.54/1.60/2.0/2.1 五个 base 一致）",
+    "conans/test/conftest.py 用 from conans.test.conftest_user import tools_locations（1.x）/ tools_locations + default_profiles（2.x）并 merge 覆盖默认值",
+    "scripts 补扫：本题目标测试文件里无模块级 pytestmark、无 pytest.mark.tool、无 pytest.skip(、无 sys.exit/os._exit、无 conftest_user 引用"
+   ],
+   "note": "发现一个仓库级控制面：候选可以在 /testbed 新建 conans/test/conftest_user.py，它被官方 conftest 无条件 import 并 merge，而且它在 conans/test/.gitignore 里、也不在 test_patch 路径内，所以既不会被 git checkout <base> -- <path> 恢复，也不会被不带 -x 的 git clean 删掉；文件里的任意代码会在 pytest 收集阶段执行。本题是 conan 2.x：conans/test/utils/tools.py 从 conftest import default_profiles 并在 TestClient 里用作默认 host profile，所以改 conftest_user.py 能直接改变 TestClient 的 settings。 本题是用 Mock 的单元测试，不依赖 default_profiles，改 conftest_user 更可能弄坏自己而不是刷分。 本题的 F2P/P2P 本身没有可被跳过或提前退出的入口（见上条补扫）。按第四组 B，未发现依据前不新增排除清单，只记录观测。",
+   "by": "L1_conan"
+  }
+ },
+ "issues": [
+  {
+   "category": "misleading_problem_statement",
+   "severity": "P1",
+   "evidence_refs": [
+    "public.problem_statement 的 diff 块",
+    "validation.golden_patch",
+    "raw.hints_text"
+   ],
+   "proposed_action": "建议 needs_repair：题面写死了一个被维护者否决的方案（verbose opt-in），判分要的是默认打印且格式为 Apply patch (file): <patch_file>。最小修法是把题面改成 希望在日志里默认记录每个被应用的 patch 文件名，并给出期望的一行输出样例。",
+   "next_experiment": "实现题面版本（加 verbose=False，verbose=True 时打印 Applying: <file>）跑官方 F2P，确认 3 条全挂；作为误导题面反例入库。"
+  },
+  {
+   "category": "output_format_locked",
+   "severity": "P2",
+   "evidence_refs": [
+    "test_single_patch_description 的 == 断言"
+   ],
+   "proposed_action": "若保留，把 == 放宽成 in 并只断言 patch 文件名出现，不锁 (file) 标签。",
+   "next_experiment": "写一个打印 Applying patch: <file> 的等价解跑 F2P，记录被拒的具体 ID。"
+  },
+  {
+   "category": "control_surface_conftest_user",
+   "severity": "P2",
+   "evidence_refs": [
+    "conans/test/.gitignore:1",
+    "conans/test/conftest.py 的 conftest_user import 段",
+    "conans/test/utils/tools.py 的 from conans.test.conftest import default_profiles（仅 2.x）"
+   ],
+   "proposed_action": "仓库级处置，见 repo_level_findings.md §10：建议在 conan 的评分配方里，在可信 setup 阶段删除 /testbed/conans/test/conftest_user.py（或对整个 conans/test/ 做 git clean -xfd 后再 checkout），而不是逐题加 additional_exclusions。",
+   "next_experiment": "在 conan 镜像里写一个 conftest_user.py（例如 tools_locations={'cmake':{'disabled':True}} 或 2.x 下改 default_profiles['Linux'] 的 compiler），跑本题官方 eval，确认它是否改变逐 ID 结果；同时确认 RH2 的恢复步骤之后该文件是否仍在。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰纯测试文件；gold 不碰测试路径。",
+  "evidence_refs": [
+   "runs/env_overnight_20260916/L1_conan/prescan2.json"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "conans/test/integration/tools/file_tools_test.py 与 conans/test/functional/tools/test_files.py",
+   "reason": "沿调用者：patch() 的 patch_type 默认值改动会影响所有 recipe 的补丁日志，这两个文件覆盖 files 工具的集成使用。"
+  },
+  {
+   "id": "conans/test/unittests/tools/files/test_patches.py::test_single_patch_type",
+   "reason": "已在 P2P；显式传 patch_type 时的行为必须不变，用来区分 默认值改动 与 覆盖显式传参。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "题面用 diff 写死了一个与判分相反的方案，真正的方向转折只在不可见 hints 里；机制侧（无工具链、无网络、ID 干净、P2P 10 条）没问题。"
+ },
+ "costs": {
+  "minutes": 22
+ }
+}

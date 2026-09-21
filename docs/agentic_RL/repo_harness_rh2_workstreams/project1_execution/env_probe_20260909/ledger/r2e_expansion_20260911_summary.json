@@ -1,0 +1,123 @@
+{
+  "source": "R2E-Gym/R2E-Gym-Subset",
+  "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+  "new_tasks": 24,
+  "initial_jobs": 48,
+  "initial_gold_rewards": {
+    "1": 22,
+    "0": 2
+  },
+  "initial_noop_rewards": {
+    "0": 24
+  },
+  "all_noop_have_actual_expected_passed_case_failure": true,
+  "missing_or_extra_test_maps": 0,
+  "image_id_and_digest_matches": 48,
+  "unique_fresh_container_ids": 48,
+  "actual_gold_content_checks": {
+    "checked": 24,
+    "matched": 24,
+    "method": "实际测试前diff和gold分别应用于来源old content，再比纳入文件；沿git --whitespace=fix语义"
+  },
+  "repeated_jobs": 8,
+  "repeat_gold_rewards": {
+    "0": 4
+  },
+  "failures": [
+    {
+      "repo": "coveragepy",
+      "commit_hash": "016af5f6352d69206ac8f7537c2b18828767bcae",
+      "gate": "gold",
+      "reward": 0,
+      "reward_details": {
+        "expected_keys_have_ansi": false,
+        "parsed_keys_have_ansi": false,
+        "expected_n": 15,
+        "parsed_n": 15,
+        "missing": [],
+        "extra": [],
+        "mismatch": [
+          [
+            "MockingProtectionTest.test_os_path_exists",
+            "FAILED",
+            "PASSED"
+          ]
+        ],
+        "n_missing": 0,
+        "n_extra": 0,
+        "n_mismatch": 1,
+        "expected_statuses": {
+          "PASSED": 14,
+          "FAILED": 1
+        }
+      },
+      "gold_meta": {
+        "included": [
+          "coverage/inorout.py"
+        ],
+        "excluded": [
+          [
+            "CHANGES.rst",
+            "non_py"
+          ],
+          [
+            "tests/test_oddball.py",
+            "test"
+          ]
+        ],
+        "old_commit": "016af5f6352d69206ac8f7537c2b18828767bcae^",
+        "new_commit": "016af5f6352d69206ac8f7537c2b18828767bcae"
+      }
+    },
+    {
+      "repo": "datalad",
+      "commit_hash": "58ba5165234cb16de0e8463ee75097362099835f",
+      "gate": "gold",
+      "reward": 0,
+      "reward_details": {
+        "expected_keys_have_ansi": false,
+        "parsed_keys_have_ansi": false,
+        "expected_n": 4,
+        "parsed_n": 4,
+        "missing": [],
+        "extra": [],
+        "mismatch": [
+          [
+            "test_alter_interface_docs_for_cmdline",
+            "PASSED",
+            "FAILED"
+          ]
+        ],
+        "n_missing": 0,
+        "n_extra": 0,
+        "n_mismatch": 1,
+        "expected_statuses": {
+          "PASSED": 4
+        }
+      },
+      "gold_meta": {
+        "included": [
+          "datalad/cli/interface.py",
+          "datalad/interface/base.py"
+        ],
+        "excluded": [
+          [
+            "changelog.d/pr-7226.md",
+            "non_py"
+          ],
+          [
+            "datalad/cli/tests/test_interface.py",
+            "test"
+          ],
+          [
+            "datalad/interface/tests/test_docs.py",
+            "test"
+          ]
+        ],
+        "old_commit": "58ba5165234cb16de0e8463ee75097362099835f^",
+        "new_commit": "58ba5165234cb16de0e8463ee75097362099835f"
+      }
+    }
+  ],
+  "note": "官方expected为精确状态映射；reward1不等同全PASSED。失败保留，不自动剔除或改oracle。raw diff计数的两个提示已由最终文件内容比较解释。"
+}

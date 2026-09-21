@@ -1,0 +1,36 @@
+{
+ "sample": "E5_control_char_escape",
+ "note": "控制字符 U+0012 / U+0081 在日志里是字面 4 个 ASCII 字符的 \\x12 / \\x81，参考 ID 里是真控制字符。两个方向（解码日志键 / 转义参考 ID）在本组都能唯一命中。潜在陷阱：pydantic parser 会删掉行内真控制字符（chr(1)-chr(31)），若某次日志里 nodeid 带的是真控制字符而非字面转义，键会被静默截改，两个方向都救不回来。",
+ "source_instance_id": "pydantic__pydantic-8977",
+ "repo_key_lower": "pydantic/pydantic",
+ "parser": "parse_log_pytest_pydantic",
+ "parser_version_tag": "swegym_parsers@242429c1",
+ "source_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pydantic__pydantic-8977/gold/offline/a1/test_output.txt",
+ "lines": 16,
+ "expected_status_map": {
+  "tests/test_types.py::test_default_validators[str_check-s-s0]": "PASSED",
+  "tests/test_types.py::test_default_validators[str_check-": "s",
+  "tests/test_types.py::test_default_validators[str_check-s-s1]": "PASSED",
+  "tests/test_types.py::test_default_validators[str_check-value55-sssss]": "PASSED",
+  "tests/test_types.py::test_default_validators[str_check-1-ValidationError]": "PASSED",
+  "tests/test_types.py::test_default_validators[str_check-xxxxxxxxxxx-ValidationError0]": "PASSED",
+  "tests/test_types.py::test_default_validators[str_check-xxxxxxxxxxx-ValidationError1]": "PASSED",
+  "tests/test_types.py::test_default_validators[str_check-\\x81-ValidationError]": "PASSED",
+  "tests/test_types.py::test_default_validators[str_check-value60-ValidationError]": "PASSED",
+  "tests/test_types.py::test_default_validators[uuid_check-ebcdab58-6eb8-46fb-a190-d07a33e9eac8-result93]": "PASSED",
+  "tests/test_types.py::test_default_validators[uuid_check-value94-result94]": "PASSED",
+  "tests/test_types.py::test_default_validators[uuid_check-ebcdab58-6eb8-46fb-a190-d07a33e9eac8-result95]": "PASSED",
+  "tests/test_types.py::test_default_validators[uuid_check-\\x124Vx\\x124Vx\\x124Vx\\x124Vx-result96]": "PASSED",
+  "tests/test_types.py::test_default_validators[uuid_check-ebcdab58-6eb8-46fb-a190--ValidationError]": "PASSED",
+  "tests/test_types.py::test_default_validators[uuid_check-123-ValidationError]": "PASSED"
+ },
+ "reference_ids_of_interest": [
+  "tests/test_types.py::test_default_validators[uuid_check-\u00124Vx\u00124Vx\u00124Vx\u00124Vx-result96]",
+  "tests/test_types.py::test_default_validators[str_check--ValidationError]"
+ ],
+ "reference_ids_hit_directly": [],
+ "reference_ids_missing": [
+  "tests/test_types.py::test_default_validators[uuid_check-\u00124Vx\u00124Vx\u00124Vx\u00124Vx-result96]",
+  "tests/test_types.py::test_default_validators[str_check--ValidationError]"
+ ]
+}

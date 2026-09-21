@@ -1,0 +1,96 @@
+diff --git a/dask/array/overlap.py b/dask/array/overlap.py
+index 3f9550e2..f53a76e3 100644
+--- a/dask/array/overlap.py
++++ b/dask/array/overlap.py
+@@ -1,5 +1,5 @@
+ import warnings
+-from numbers import Integral
++from numbers import Integral, Number
+ 
+ import numpy as np
+ from tlz import concat, get, partial
+@@ -696,7 +696,41 @@ def map_overlap(
+         # Find index of array argument with maximum rank and break ties by choosing first provided
+         i = sorted(enumerate(args), key=lambda v: (v[1].ndim, -v[0]))[-1][0]
+         # Trim using depth/boundary setting for array of highest rank
+-        return trim_internal(x, depth[i], boundary[i])
++        d = depth[i]
++        b = boundary[i]
++
++        # If the function drops and/or adds axes, the depth and boundary
++        # settings need to be remapped to the axes of the output array.
++        drop_axis = kwargs.get("drop_axis", [])
++        if drop_axis is None:
++            drop_axis = []
++        if isinstance(drop_axis, Number):
++            drop_axis = [drop_axis]
++        new_axis = kwargs.get("new_axis", [])
++        if new_axis is None:
++            new_axis = []
++        if isinstance(new_axis, Number):
++            new_axis = [new_axis]
++
++        if drop_axis or new_axis:
++            # Build the mapping from output axes to the input axes they came
++            # from.  New axes do not have a corresponding input axis and are
++            # represented by None.
++            input_axes = [ax for ax in range(args[i].ndim) if ax not in drop_axis]
++            for ax in sorted(new_axis):
++                input_axes.insert(ax, None)
++            d = {
++                out_ax: d[in_ax]
++                for out_ax, in_ax in enumerate(input_axes)
++                if in_ax is not None
++            }
++            b = {
++                out_ax: b[in_ax]
++                for out_ax, in_ax in enumerate(input_axes)
++                if in_ax is not None
++            }
++
++        return trim_internal(x, d, b)
+     else:
+         return x
+ 
+diff --git a/dask/array/tests/test_overlap.py b/dask/array/tests/test_overlap.py
+index 0ad34174..0436c5aa 100644
+--- a/dask/array/tests/test_overlap.py
++++ b/dask/array/tests/test_overlap.py
+@@ -323,6 +323,37 @@ def test_map_overlap_escapes_to_map_blocks_when_depth_is_zero():
+     assert_eq(y, np.arange(10) + 1)
+ 
+ 
++def test_map_overlap_drop_axis():
++    # https://github.com/dask/dask/issues/7865
++    x = da.ones((5, 10), chunks=(2, 5), dtype=float)
++    y = da.map_overlap(
++        lambda x: x.mean(0), x, depth=(0, 2), drop_axis=(0,), dtype=float
++    )
++    assert y.shape == (x.shape[1],)
++    assert_eq(y, x.mean(0))
++
++    x = da.ones((5, 10), chunks=(2, 5), dtype=float)
++    y = da.map_overlap(
++        lambda x: x.mean(1), x, depth=(2, 0), drop_axis=(1,), dtype=float
++    )
++    assert y.shape == (x.shape[0],)
++    assert_eq(y, x.mean(1))
++
++    # The boundary for the remaining axis must also be preserved when the
++    # dropped axis has a different boundary setting.
++    x = da.arange(50, dtype=float).reshape(5, 10).rechunk((2, 5))
++    y = da.map_overlap(
++        lambda x: x.sum(0),
++        x,
++        depth=(0, 2),
++        boundary={0: "reflect", 1: "none"},
++        drop_axis=(0,),
++        dtype=float,
++    )
++    assert y.shape == (x.shape[1],)
++    assert_eq(y, x.sum(0))
++
++
+ @pytest.mark.parametrize(
+     "boundary", [None, "reflect", "periodic", "nearest", "none", 0]
+ )

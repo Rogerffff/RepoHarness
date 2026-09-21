@@ -1,0 +1,6 @@
+# FROM为已验证的权重预置v1；仅变更NumPy，解决已观测np.int API兼容错误。
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+COPY monai_numpy/ /opt/rh2/numpy-wheels/
+RUN /opt/miniconda3/envs/testbed/bin/python -m pip install --no-index --no-deps \
+    --find-links=/opt/rh2/numpy-wheels numpy==1.23.5

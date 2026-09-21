@@ -1,0 +1,11 @@
+{
+  "instance_id": "iterative__dvc-1808",
+  "original_install": "python -m pip install --upgrade pip wheel GitPython; python -m pip install \"cython<3.0.0\" && python -m pip install --no-build-isolation pyyaml==5.4.1; python -m pip install git+https://github.com/iterative/mock-ssh-server.git || true; python -m pip install -r tests/requirements.txt || true; python -m pip install -r test-requirements.txt || true; python -m pip install -e \".[tests,dev,all_remotes,all,testing]\"; python -m pip install \"numpy<=1.20\"; python -m pip install \"pytest<8\";",
+  "revised_install": "rh2_recipe_install() {\n  python -m pip install -r tests/requirements.txt || return $?\n  python -m pip install -e '.[all]'\n  local install_rc=$?\n  python -I -c 'import importlib.metadata as m,json; print(\"RH2_DVC_DEPS=\"+json.dumps({x:m.version(x) for x in ['\"'\"'dvc'\"'\"']}))'\n  return \"$install_rc\"\n}\nrh2_recipe_install",
+  "extras": [
+    "all"
+  ],
+  "compat": [],
+  "decision": "E13",
+  "note": "actual metadata extras; source files present; candidate dependencies resolved offline"
+}

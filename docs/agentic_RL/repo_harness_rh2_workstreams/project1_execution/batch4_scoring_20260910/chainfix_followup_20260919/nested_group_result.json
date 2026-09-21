@@ -1,0 +1,54 @@
+{
+  "qualification_injected_for_cpu_experiment": false,
+  "reports": [
+    {
+      "trajectory_id": "miles_g0_m0",
+      "outcome": "resolved",
+      "category": null,
+      "reward": 1.0
+    },
+    {
+      "trajectory_id": "miles_g0_m1",
+      "outcome": "failed_to_grade",
+      "category": "test_log_parse_failed",
+      "reward": null
+    }
+  ],
+  "decisions": [
+    null,
+    {
+      "trigger": "reference_all_missing",
+      "kind": "unattributed",
+      "stage": "test_collection",
+      "rule": "pytest_error_collecting",
+      "evidence": [],
+      "missing": [
+        "qualification:absent",
+        "no_syntax_error_at_candidate_path"
+      ],
+      "resource": {
+        "oom_kill_events": 0,
+        "pids_events_max": 0,
+        "container_oom_killed": false,
+        "test_rc": 1,
+        "signal_exit": false
+      },
+      "qualification": "absent",
+      "compile_probe": null,
+      "candidate_python_paths": [
+        "src/id_source.py"
+      ],
+      "referenced_candidate_paths": [],
+      "install_rc_baseline": 0,
+      "syntax_error_locations": {}
+    }
+  ],
+  "group_buffered": false,
+  "recycled": 0,
+  "metrics": {
+    "rollout/fully_async/queue_size": 0,
+    "rollout/fully_async/aborted_groups_filtered": 0,
+    "rollout/fully_async/stale_groups_filtered": 0,
+    "rollout/dynamic_filter/drop_admission_reward_scope_none": 1
+  }
+}

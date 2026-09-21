@@ -1,0 +1,107 @@
+{
+  "instance_id": "conan-io__conan-14177",
+  "old_record_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/records/conan-io__conan-14177.json",
+  "environment": {
+    "status": "verified_original_baseline_outside_repair_scope",
+    "recipe": "full216/baseline01 原始对照；无已知环境修复需求",
+    "status_ref": "runs/env_recipe_repair_20260919/scope_reconciliation_20260920.json#outside_repair_ids",
+    "analysis_ref": "runs/full216_rh2_diagnostic_20260919/analysis_final_1011/coverage_216.json#conan-io__conan-14177",
+    "scope": "原始 noop 有目标失败且安装审计无失败；gold 完整命令退出 0，不等于题目质量或稳定性认证。",
+    "existing_observations": {
+      "noop": {
+        "reward": 0.0,
+        "test_rc": 1,
+        "log": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-3/eval_logs/evallog_replay-f216-baseline01-w_be9aeaa5.eval.log",
+        "sha256": "07fdea4883056813e8de95915344bda63a1a31cc2d1233192bec935b5d0ea1d3"
+      },
+      "gold": {
+        "reward": 1.0,
+        "test_rc": 0,
+        "log": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-3/eval_logs/evallog_replay-f216-baseline01-w_7731a01a.eval.log",
+        "sha256": "0d4867d9271b23c7fa35ed067914021b63934f02785a3b5540f235b8d2450772"
+      }
+    }
+  },
+  "requirements": "题面明确提议 apply_conandata_patches(conanfile, verbose=False)，仅 verbose=True 时新增每个 patch 文件的日志。既有 patch 描述、类型和实际应用逻辑应保留；把新日志改成默认启用属于另一种公开行为。",
+  "public_sufficiency": "题面本身清晰，和测试默认启用存在真实冲突。仓库已有 Apply patch(type): description 模板，可推知应复用现有日志机制，但不能由它推出应忽略题面 verbose=False 或为无类型的直接 patch() 默认加 (file)。",
+  "test_assessment": "3 个 F2P 均在没有 verbose=True 的调用上要求新输出，其中一个直接调用 patch() 并改变旧默认格式；这超出题面 opt-in 提案。其余 10 个 P2P 覆盖 patch 路径、参数和失败处理，不能消除此契约冲突。",
+  "old_claim_reviews": [
+    {
+      "old_claim": "misleading_problem_statement：题面是 verbose=False opt-in，gold/test 是默认输出。",
+      "status": "confirmed",
+      "assessment": "题面显式给签名和 True 条件；测试调用 apply_conandata_patches(conanfile) 未传新参数，仍要求文件日志。这个冲突不依赖读取隐藏 hints 即能确认。",
+      "evidence": [
+        "public.problem_statement",
+        "grading.test_patch",
+        "base:conan/tools/files/patches.py:71-105"
+      ]
+    },
+    {
+      "old_claim": "checks.24：整套 Apply patch(...) 格式完全没有公开依据。",
+      "status": "refuted",
+      "assessment": "前缀、括号类型和描述格式已在基线实现及既有测试内；真正新且未在题面约定的是默认 (file) 类型和默认启用，不应把已有格式也说成隐藏规范。",
+      "evidence": [
+        "base:conan/tools/files/patches.py:42-48",
+        "base:conans/test/unittests/tools/files/test_patches.py:109-134"
+      ]
+    },
+    {
+      "old_claim": "checks.27：变更同时影响直接 patch() 的默认日志，范围比 apply_conandata_patches 更宽。",
+      "status": "confirmed",
+      "assessment": "test_single_patch_description 直接调用 patch()，旧期望 Apply patch: description 被改为 Apply patch (file): description；它不是 verbose=True 的测试。",
+      "evidence": [
+        "grading.test_patch",
+        "base:conans/test/unittests/tools/files/test_patches.py:118-124"
+      ]
+    },
+    {
+      "old_claim": "output_format_locked：把 == 改为 in 并去掉类型标签即可解决题目问题。",
+      "status": "refuted",
+      "assessment": "放宽比较形式不能解决默认关闭/开启这一公开契约冲突，也可能漏掉描述保留；必须先选择并说明行为，再设计检查。",
+      "evidence": [
+        "public.problem_statement",
+        "grading.test_patch"
+      ]
+    },
+    {
+      "old_claim": "checks.31 / control_surface_conftest_user：候选新增配置可进入测试控制面。",
+      "status": "unresolved",
+      "assessment": "旧仓库线索与本轮题意审查分开；没有执行新的篡改反例，也未据此给本题降级。可信边界的现实风险应沿统一评分链审查，不能把安装/参考键已验误写成安全已验。",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/CODEX_REVIEW_20260916.md#2",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/records/conan-io__conan-14177.json#checks.31"
+      ]
+    }
+  ],
+  "recommendation": "needs_revision",
+  "recommendation_scope": "本轮模型探针/反例调查建议，不是训练准入、剔题或修改正式题包决定。",
+  "next_action": [
+    "提交最小修订选择：若保留原题提案，应让测试显式调用 verbose=True 并检查默认关闭；若接受上游默认日志方案，应先在修订题面明确默认打印及与现有 patch_type/description 的兼容关系。两者不得混为原版同一评分语义，本轮不实施。",
+    "最小候选对照（未运行）：只按题面增加 verbose=False，并在 True 时输出文件名，保留 patch() 的默认日志；静态可预期 3 个 F2P 不接受它。另构造默认打印文件名但复用旧无类型格式的候选，区分默认行为冲突与 (file) 标签约束。"
+  ],
+  "evidence_level": {
+    "task_quality": "static",
+    "environment": "existing_run",
+    "new_counterexamples": "not_run",
+    "local_verification": "16 份所引用既有评分日志的 SHA256 与当前归档一致；未新增 Docker/远端/模型运行。"
+  },
+  "unknowns": [
+    "未实跑题面版本，3 个 F2P 的失败方向来自源码与断言推演；未测任何模型。",
+    "是否选择 opt-in 或默认打印，需要在修订版本层明确，而不是从 gold 反向宣布用户原需求。"
+  ],
+  "materials": {
+    "base_commit": "b43eb83956f053a47cc3897cfdd57b9da13a16e6",
+    "source_repository": "runs/env_overnight_20260916/repos/conan（只用 git show 读取精确 base）",
+    "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl:36",
+    "test_patch_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:36",
+    "gold_reference_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl:36",
+    "reference_counts": {
+      "f2p": 3,
+      "p2p": 10
+    },
+    "base_source_refs": [
+      "conan/tools/files/patches.py:25-68,71-105",
+      "conans/test/unittests/tools/files/test_patches.py:109-134,161-217"
+    ]
+  }
+}

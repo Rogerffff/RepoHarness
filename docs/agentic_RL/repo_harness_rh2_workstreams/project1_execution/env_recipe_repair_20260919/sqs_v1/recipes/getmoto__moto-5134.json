@@ -1,0 +1,13 @@
+{
+  "instance_id": "getmoto__moto-5134",
+  "original_install": "make init",
+  "revised_install": "rh2_compat_install() {\n python -m pip install --no-index --find-links=/opt/rh2/compat-wheels --no-deps boto3==1.28.57 botocore==1.31.57 s3transfer==0.7.0 urllib3==1.26.20 || return $?\n python -I -c 'import importlib.metadata as m,json; print(\"RH2_COMPAT_VERSIONS=\"+json.dumps({x:m.version(x) for x in ['\"'\"'boto3'\"'\"', '\"'\"'botocore'\"'\"', '\"'\"'s3transfer'\"'\"', '\"'\"'urllib3'\"'\"']}))'\n python -I -c 'import botocore,botocore.session,json; s=botocore.session.get_session().get_service_model(\"sqs\");print(\"RH2_SQS_MODEL=\"+json.dumps(s.metadata)); assert s.metadata[\"protocol\"]==\"query\"' || return $?\n make init\n local original_rc=$?\n python -I -c 'import importlib.metadata as m,json; print(\"RH2_COMPAT_VERSIONS=\"+json.dumps({x:m.version(x) for x in ['\"'\"'boto3'\"'\"', '\"'\"'botocore'\"'\"', '\"'\"'s3transfer'\"'\"', '\"'\"'urllib3'\"'\"']}))'\n return \"$original_rc\"\n}\nrh2_compat_install",
+  "pins": [
+    "boto3==1.28.57",
+    "botocore==1.31.57",
+    "s3transfer==0.7.0",
+    "urllib3==1.26.20"
+  ],
+  "decision": "E11 / compat_v3",
+  "reason": "1.31.85 service model actually JSON; restore pre-switch SQS query protocol and verify runtime model"
+}

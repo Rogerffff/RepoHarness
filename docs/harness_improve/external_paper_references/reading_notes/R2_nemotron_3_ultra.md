@@ -8,7 +8,7 @@ Nemotron 3 Ultra（550B 总参数、55B 激活参数）采用两阶段通用 SFT
 ## 1. 来源、版本与覆盖
 
 - 正式标题如上；署名机构 NVIDIA；封面日期 **2026-06-09**；阅读日期 **2026-09-07**。这是技术报告，没有在封面注明 v1/v2。
-- 主资料：[原本地 PDF](../../NVIDIA-Nemotron-3-Ultra-Technical-Report.pdf)。[官方 PDF](https://research.nvidia.com/labs/nemotron/files/NVIDIA-Nemotron-3-Ultra-Technical-Report.pdf) 于本次下载后与本地 `cmp` 相同，均 65 页、3,876,804 bytes；未静默换版本。[本次固定来源副本](sources/R2/online_20260907.pdf)。PDF 元数据创建/修改时间为 2026-06-09 18:49:09 UTC（与封面日一致），不是另一个发布日期。
+- 主资料：[原本地 PDF](../../NVIDIA-Nemotron-3-Ultra-Technical-Report.pdf)。[官方 PDF](https://research.nvidia.com/labs/nemotron/files/NVIDIA-Nemotron-3-Ultra-Technical-Report.pdf) 于本次下载后与本地 `cmp` 相同，均 65 页、3,876,804 bytes；未静默换版本。本次固定来源副本（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/R2/online_20260907.pdf`）。PDF 元数据创建/修改时间为 2026-06-09 18:49:09 UTC（与封面日一致），不是另一个发布日期。
 - 本文 **p.n 是从 1 起算的 PDF 物理页，也等于报告印刷页 n**；封面无页码，但下一页印刷为 2。文本内部分图形字体含控制字符，按 `\f` 分割会错误地产生超过 65 个片段，不能拿该片段序号作页码。本次按 `pdftotext -f/-l` 物理页分块读；关键公式和图像回原页核对。
 - 正文 §1–6、唯一附录 A.1/A.2 和图 1–17、表 1–18 均纳入覆盖；§3 全文与附录精读。作者/参考文献 p.51–63 用于确认来源结构及相关引用身份，不另精读所有被引论文。无网页动态案例需要补开。
 - 官方资产入口：[Nemotron 仓库](https://github.com/NVIDIA-NeMo/Nemotron)、[Evaluator 的 Ultra 复现目录](https://github.com/NVIDIA-NeMo/Evaluator/tree/9758d8d5508e0d1bea79cb99ed56d595a1c3acdc/examples/nemotron/nemotron-3-ultra)。实际只核验入口与复现说明，不把当前仓库默认配置当作 6 月报告的训练配置。资产查阅范围见 §9。
@@ -327,10 +327,10 @@ SSM cache在Ultra短于约64K时可大于FP8 KV；它的状态是固定大小但
 
 | 开放对象 | 本次核验范围 | 仍缺什么 |
 |---|---|---|
-| [Base BF16](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-Base-BF16)、[posttrained BF16](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-BF16)、[NVFP4](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-NVFP4)、[GenRM](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-GenRM) | p.2的发布声明与PDF超链接；2026-09-07实际查询四模型HF metadata，均public、non-gated；[各模型revision及访问状态](sources/R2/model_metadata_20260907.json) | 未下载权重、未验完整tensor/许可证条款（metadata license标签为other）；发布模型不等于十余teacher全部checkpoint公开 |
+| [Base BF16](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-Base-BF16)、[posttrained BF16](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-BF16)、[NVFP4](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-NVFP4)、[GenRM](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-GenRM) | p.2的发布声明与PDF超链接；2026-09-07实际查询四模型HF metadata，均public、non-gated；各模型revision及访问状态（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/R2/model_metadata_20260907.json`） | 未下载权重、未验完整tensor/许可证条款（metadata license标签为other）；发布模型不等于十余teacher全部checkpoint公开 |
 | [Posttraining-v3 collection](https://huggingface.co/collections/nvidia/nemotron-post-training-v3) | p.3入口；原文仍使用proprietary/vendor数据和商业许可筛选 | 不证明所有SFT/RL/pivot/hidden tests可取得，未批量下载数据 |
 | Nemotron recipe repo | 2026-09-07入口可达，HEAD `907d408c67cb70e9f1ed28fb67702e7bd36e3239` | 本次未追训练代码；不能以main框架默认值补本文未给配置 |
-| Evaluator Ultra recipe | HEAD `9758d8d5508e0d1bea79cb99ed56d595a1c3acdc`；读 `examples/nemotron/nemotron-3-ultra/reproducibility.md`，[固定远端](https://github.com/NVIDIA-NeMo/Evaluator/blob/9758d8d5508e0d1bea79cb99ed56d595a1c3acdc/examples/nemotron/nemotron-3-ultra/reproducibility.md)、[读取快照](sources/R2/evaluator_reproducibility_20260907.txt) | 当前说明分v0.2 instruct/Gym与v0.3 native SWE/terminal；不是六月所有评测配置的冻结证明 |
+| Evaluator Ultra recipe | HEAD `9758d8d5508e0d1bea79cb99ed56d595a1c3acdc`；读 `examples/nemotron/nemotron-3-ultra/reproducibility.md`，[固定远端](https://github.com/NVIDIA-NeMo/Evaluator/blob/9758d8d5508e0d1bea79cb99ed56d595a1c3acdc/examples/nemotron/nemotron-3-ultra/reproducibility.md)、读取快照（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/R2/evaluator_reproducibility_20260907.txt`） | 当前说明分v0.2 instruct/Gym与v0.3 native SWE/terminal；不是六月所有评测配置的冻结证明 |
 
 当前Evaluator说明还同时写Tau2/TauBenchV3 recipe与“TauBench3未onboarded”，terminal标Hard/2.0，而PDF主表为2.1；default instruct max_new_tokens262144、temperature1、top_p0.95是**后续入口说明**，不能移作Ultra SWE训练192K的解释或补全6月PDF评测预算。仅核入口未运行复现实验。
 

@@ -1,0 +1,260 @@
+{
+ "task_id": "swe_gym_lite::Project-MONAI__MONAI-6523",
+ "instance_id": "Project-MONAI__MONAI-6523",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_monai_2 (Claude Opus 5, 静态审查)",
+ "materials_refs": {
+  "base_commit": "e084885c6d498ab02df8107d23aa159f742a2cdd",
+  "version": "1.2",
+  "python_version": "3.8",
+  "eval_cmd": "pytest -rA  tests/test_meta_tensor.py（整文件跑）",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/Project-MONAI__MONAI-6523/{gold,empty}/offline/a1/",
+  "created_at": "2023-05-16"
+ },
+ "public_view": {
+  "目标行为": "`MetaTensor` 没有实现 `__format__`，f-string 里写 `f\"{metatensor_scalar:.3f}\"` 会经 `torch.Tensor.__format__` → `handle_torch_function` → `MetaTensor.__torch_function__` 绕回 `object.__format__`，抛 `TypeError: unsupported format string passed to MetaTensor.__format__`。题面场景是 PyTorch Lightning 的 EarlyStopping 打印 `New best score: {current:.3f}`。",
+  "约束": "题面给的是第三方库（pytorch_lightning）触发路径，traceback 里 monai 侧只有 `meta_tensor.py:276 __torch_function__` 一行。",
+  "公开材料无法确定的点": [
+   "修法放在 `__format__` 还是 `__torch_function__`",
+   "多元素张量的格式化语义",
+   "是否要同时处理 `__str__`/`__repr__`（base 已有）"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.test_patch tests/test_meta_tensor.py:433-436",
+    "validation.golden_patch monai/data/meta_tensor.py:590-596"
+   ],
+   "note": "同一 PR，目标文件 base 存在。无二进制/LFS/子模块材料。",
+   "by": "L1_monai_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base e084885c monai/data/meta_tensor.py 只有 __repr__(577) 与 __str__(585)，无 __format__",
+    "stage1 empty: test_str FAILED"
+   ],
+   "note": "初态确实缺 `__format__`。",
+   "by": "L1_monai_2"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "public.problem_statement 长度 17804，前后两半（各 8902 字符）逐字相同",
+    "第一半里约 6000 字符是用户的 MyDataModule/MyModel 管线代码，开头写 `from ... import MyDataModule, MyModel`（省略号是原文，不可运行）"
+   ],
+   "note": "P2：**题面整段重复两遍**（本包另一例是 4775），且即使去重后仍有 8902 字符，其中真正有用的信息（traceback + `{current:.3f}`）只占前约 2000 字符，其余是无法运行的第三方管线草稿。这是 216 题里最长的题面之一，对求解者是明显的成本与噪声负担。",
+   "by": "L1_monai_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.test_patch 只触碰 tests/test_meta_tensor.py"
+   ],
+   "note": "纯测试文件；gold 只碰 monai/data/meta_tensor.py。additional_exclusions 保持空。",
+   "by": "L1_monai_2"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh setup 段"
+   ],
+   "note": "恢复清单只有一个纯测试文件。",
+   "by": "L1_monai_2"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "scan/monai_cross_index.txt"
+   ],
+   "note": "P3：与 **MONAI-4676** 同 gold 文件同测试文件；本题 base 已含 4676 的 gold，本题 P2P 里的 `test_array_function_0..5` 正是 4676 的 F2P。两题必须同侧划分。",
+   "by": "L1_monai_2"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "public.problem_statement 的 traceback 末行逐字给出异常名 `MetaTensor.__format__`"
+   ],
+   "note": "要求可推出：异常名直接点出缺失的魔术方法。F2P 断言 `f\"{t[0]:.2f}\" == \"1.00\"` 是题面 `{current:.3f}` 的同型最小化。",
+   "by": "L1_monai_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只加一行 assertEqual(f\"{t[0]:.2f}\", \"1.00\")"
+   ],
+   "note": "不锁实现：`self.as_tensor().__format__(spec)`、`format(float(self), spec)`、或在 `__torch_function__` 里特判 `Tensor.__format__` 都能通过。",
+   "by": "L1_monai_2"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "F2P 只增加一条 0 维标量的格式化断言"
+   ],
+   "note": "P2：只验标量 + `.2f`。`format(float(self), spec)` 这类只对标量正确、对多元素张量会抛 TypeError 的实现同样满分；空 format_spec（`f\"{t}\"`，应回落到 `__str__` 的 `metatensor([1.])`）也未被单独验证。",
+   "by": "L1_monai_2"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.pass_to_pass 85 条 = 整文件通过集减 F2P（gold 侧 86 passed + 8 skipped）"
+   ],
+   "note": "P2P 覆盖整文件 25 个测试名族，包含 `test_str` 之外的全部既有行为。回归保护强。",
+   "by": "L1_monai_2"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "validation.golden_patch 只新增 6 行 __format__"
+   ],
+   "note": "gold 最小、正确、不依赖未交付改动。",
+   "by": "L1_monai_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "public.problem_statement 全文；raw.hints_text 2479 字符（维护者与报告者的复现讨论，无修复代码）"
+   ],
+   "note": "题面与 hints 都不含修复代码与 PR/commit 链接。",
+   "by": "L1_monai_2"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 install rc=0（两侧）"
+   ],
+   "note": "离线镜像内 rc=0。",
+   "by": "L1_monai_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "scan/envscan.txt"
+   ],
+   "note": "数据现场构造，无权重、无外部数据下载。",
+   "by": "L1_monai_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "scan/envscan.txt"
+   ],
+   "note": "不需要网络。",
+   "by": "L1_monai_2"
+  },
+  "13": {
+   "status": "issue",
+   "evidence_refs": [
+    "base tests/test_meta_tensor.py:323 DataLoader(ds, num_workers=batch_size=5)",
+    "grading.pass_to_pass 含 test_dataloader_0..5 与 test_multiprocessing_0..5 共 12 条"
+   ],
+   "note": "P1（与 4676 同型，MONAI-763 的已知反例）：12 条 P2P 依赖多进程与 /dev/shm。stage1 实跑通过说明当时 shm 足够，但配方里没有显式记下这个需求。",
+   "by": "L1_monai_2"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "stage1 gold 摘要 '86 passed, 8 skipped'，status_map.json 88 条，含伪键 '[1]'/'[6]'",
+    "base tests/test_meta_tensor.py:38-43 TESTS = TEST_DEVICES × DTYPES",
+    "tests/utils.py:730-732 TEST_DEVICES 在有 CUDA 时从 1 项变 2 项",
+    "5908 的 `test2d_04` 证明 parameterized 按 len(str(n-1)) 决定序号位宽"
+   ],
+   "note": "P1（本包最重要的机器画像风险，见 summary 仓库级第 2 条）：本题 F2P+P2P 里 `test_add_0..5`/`test_dataloader_0..5` 等**一位数序号**建立在 `TESTS` 长度为 6（=1 device × 6 dtypes）之上。一旦在**有 CUDA 的机器**上评分，`TEST_DEVICES` 变 2 项 → `TESTS` 变 12 项 → `parameterized` 的序号位宽从 1 位变 2 位，所有 ID 变成 `test_add_00..11`，**参考清单里 72 条一位数 ID 全部 MISSING → 按缺席计失败 → gold 也拿 0**。同样的结构见 4676。此外 `SKIPPED [N] file:line` 被 parser 解析成伪键 `[1]`/`[6]`，8 条跳过用例的 nodeid 从 status_map 消失。",
+   "by": "L1_monai_2"
+  },
+  "31": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_monai_2/scan/control_surface.txt",
+    "stage1 eval.sh 只 `git checkout <base> <test_patch 路径>`",
+    "grading.test_patch 不含 tests/utils.py"
+   ],
+   "note": "P1：本题测试从 **tests/utils.py** import `SkipIfBeforePyTorchVersion, TEST_DEVICES, assert_allclose, skip_if_no_cuda`，而 test_patch 的恢复清单只含本题的测试文件本身，**tests/utils.py 不被恢复**，保持候选写过的状态。强暴露：`assert_allclose` 直接承载参考断言，候选把它改成空函数即可让相关 F2P 通过。 另：base 里没有 tests/conftest.py，候选可新建一个注入 hook。此处只记录观测与建议，不据怀疑扣分。",
+   "by": "L1_monai_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "参考 ID 随 CUDA 可见性整体失效",
+   "severity": "P1",
+   "evidence_refs": [
+    "TESTS = TEST_DEVICES × DTYPES（CPU 6 / CUDA 12）",
+    "parameterized 序号位宽 = len(str(n-1))",
+    "5908 的两位 ID 实证"
+   ],
+   "proposed_action": "把『参考清单生成条件 = torch.cuda.is_available() 为 False』写进题级 facts，并在评分执行前做一次 `--collect-only` 的 ID 一致性校验（参考 ID 全部 MISSING 时判 environment 而不是判 0）。",
+   "next_experiment": "同镜像下 CUDA 可见/不可见各跑一次 `pytest --collect-only -q tests/test_meta_tensor.py`，对比 `test_add_*` 的 ID 形态（预期 `_0..5` vs `_00..11`）。"
+  },
+  {
+   "category": "资源依赖未记入配方",
+   "severity": "P1",
+   "evidence_refs": [
+    "test_dataloader/test_multiprocessing 共 12 条 P2P"
+   ],
+   "proposed_action": "同 4676：把多进程与 shm 需求写进配方与归因规则。",
+   "next_experiment": "`--shm-size=64m` vs `1g` 对照跑。"
+  },
+  {
+   "category": "题面重复且过长",
+   "severity": "P2",
+   "evidence_refs": [
+    "17804 字符，前后半逐字相同；去重后仍有 8902 字符，含约 6000 字符不可运行的管线草稿"
+   ],
+   "proposed_action": "去重并裁到 traceback + 触发行；裁剪属于实际输入修复，不改任务定义。",
+   "next_experiment": "用裁剪版与原版各盲解一次，比较 token 成本与通过率。"
+  },
+  {
+   "category": "F2P 覆盖面窄",
+   "severity": "P2",
+   "evidence_refs": [
+    "只验标量 + '.2f'"
+   ],
+   "proposed_action": "补多元素张量与空 format_spec 的断言。",
+   "next_experiment": "用 `format(float(self), spec)` 的实现跑当前 F2P，预期通过；再对 `MetaTensor([1.,2.])` 格式化，预期抛 TypeError。"
+  },
+  {
+   "category": "评分控制面（test_patch 之外的测试依赖）",
+   "severity": "P1",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_monai_2/scan/control_surface.txt"
+   ],
+   "proposed_action": "把 tests/utils.py 纳入恢复清单（见 file_rules），并在评分报告里单列候选对 tests/ 下非恢复文件的改动。",
+   "next_experiment": "把 tests/utils.py 的 assert_allclose 改成 `def assert_allclose(*a, **k): return` 后用空补丁跑一次评分，观察 verdict 是否变 RESOLVED_FULL。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [
+   "tests/utils.py"
+  ],
+  "rationale": "**建议（非裁定）**：把 tests/utils.py 加入恢复/排除清单。判分影响：本题 F2P/P2P 的断言经过该文件的 `SkipIfBeforePyTorchVersion, TEST_DEVICES, assert_allclose, skip_if_no_cuda`，候选改写它能直接改变判分结果；而本题 gold 只改 monai/ 下的实现，改 tests/utils.py **不属于合法解答路径**。反面证据：同仓库的 MONAI-1121 的上游 test_patch 本身就修改了 tests/utils.py，说明不能对 MONAI 全仓一刀切地永久排除该文件，应按题判断（本题 test_patch 未触碰它，故排除是安全的）。若不排除，至少要在评分报告里标出候选是否改动过该文件。",
+  "evidence_refs": [
+   "runs/env_overnight_20260916/L1_monai_2/scan/control_surface.txt",
+   "grading.test_patch",
+   "validation.golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/test_meta_tensor.py 全文件（已在 P2P）",
+   "reason": "P2P 已等于整文件通过集。"
+  },
+  {
+   "id": "新增：多元素 MetaTensor 与空 format_spec 的格式化用例",
+   "reason": "当前只验标量 + '.2f'。"
+  },
+  {
+   "id": "tests/test_handler_stats.py、tests/test_handler_metrics_saver.py",
+   "reason": "日志与 handler 路径是 f-string 格式化 MetaTensor 的真实下游。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "题面（去重后）含明确异常名、gold 六行干净、P2P 等于整文件通过集；但入池前必须固定机器画像（无 CUDA）并记录 shm 需求，题面建议去重裁剪。"
+ },
+ "costs": {
+  "minutes": 23
+ }
+}

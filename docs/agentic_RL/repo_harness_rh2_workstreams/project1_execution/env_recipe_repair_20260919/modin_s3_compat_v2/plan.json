@@ -1,0 +1,43 @@
+[
+  {
+    "instance_id": "modin-project__modin-6937",
+    "image": "sha256:6f20567db0e627be70dfea38c8e6231145c53558855fc045b69c4536414ac4da",
+    "image_id": "sha256:6f20567db0e627be70dfea38c8e6231145c53558855fc045b69c4536414ac4da",
+    "pins": [
+      "moto==4.2.14"
+    ],
+    "code_root": "/work/env_recipe_repair_20260919/resources_v1/code/rh2",
+    "environment": {
+      "RH2_GRADER_MEMORY_BYTES": "8589934592",
+      "RH2_GRADER_TMP_TMPFS_BYTES": "4294967296",
+      "RH2_GRADER_PIDS_LIMIT": "1024"
+    },
+    "grading_seconds": 4200,
+    "wait_for_batches": [
+      "resources_v1"
+    ],
+    "grading_label_prefix": "rh2.envrepair.modin_s3_compat_v2",
+    "reason": "PID controller denied fork at 512 (Moto121 threads plus pytest/Ray services); retain 2CPU/8GiB/4GiBtmp, Moto4 and all source tests. Trial bounded1024; measure actual demand, not global default.",
+    "reuse_prepared_image": "modin_s3_compat_v1/tasks/modin-project__modin-6937/image.json"
+  },
+  {
+    "instance_id": "modin-project__modin-5940",
+    "image": "rh2-envrepair/resources-v1-modin-project__modin-5940:20260919",
+    "image_id": "sha256:f3adbb0d9c3073a7ef42d5f3b9dd06c936ea7330d0eeffa9f643a41d1f4b7164",
+    "pins": [
+      "moto==4.2.14"
+    ],
+    "code_root": "/work/env_recipe_repair_20260919/resources_v1/code/rh2",
+    "environment": {
+      "RH2_GRADER_MEMORY_BYTES": "8589934592",
+      "RH2_GRADER_TMP_TMPFS_BYTES": "4294967296",
+      "RH2_GRADER_PIDS_LIMIT": "1024"
+    },
+    "grading_seconds": 4200,
+    "wait_for_batches": [
+      "modin5940_resources_v2"
+    ],
+    "grading_label_prefix": "rh2.envrepair.modin_s3_compat_v2",
+    "reason": "PID controller denied fork at 512 (Moto121 threads plus pytest/Ray services); retain 2CPU/8GiB/4GiBtmp, Moto4 and all source tests. Trial bounded1024; measure actual demand, not global default."
+  }
+]

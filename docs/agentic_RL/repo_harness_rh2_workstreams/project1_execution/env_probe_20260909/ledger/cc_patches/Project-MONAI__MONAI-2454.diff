@@ -1,0 +1,77 @@
+diff --git a/monai/transforms/utility/array.py b/monai/transforms/utility/array.py
+index c8b6f74..e8986eb 100644
+--- a/monai/transforms/utility/array.py
++++ b/monai/transforms/utility/array.py
+@@ -320,6 +320,8 @@ class ToTensor(Transform):
+         """
+         if isinstance(img, torch.Tensor):
+             return img.contiguous()
++        if isinstance(img, np.ndarray) and img.ndim == 0:
++            return torch.as_tensor(img)
+         return torch.as_tensor(np.ascontiguousarray(img))
+ 
+ 
+diff --git a/tests/test_to_tensor.py b/tests/test_to_tensor.py
+new file mode 100644
+index 0000000..956f24d
+--- /dev/null
++++ b/tests/test_to_tensor.py
+@@ -0,0 +1,58 @@
++# Copyright 2020 - 2021 MONAI Consortium
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#     http://www.apache.org/licenses/LICENSE-2.0
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++
++import unittest
++
++import numpy as np
++import torch
++
++from monai.transforms import ToTensor
++
++
++class TestToTensor(unittest.TestCase):
++    def test_numpy_0d_input(self):
++        test_data = np.array(2)
++        result = ToTensor()(test_data)
++        self.assertTrue(isinstance(result, torch.Tensor))
++        self.assertEqual(result.shape, torch.Size([]))
++        self.assertEqual(result.item(), 2)
++
++    def test_numpy_input(self):
++        test_data = np.array([[1, 2], [3, 4]])
++        test_data = np.rot90(test_data)
++        self.assertFalse(test_data.flags["C_CONTIGUOUS"])
++        result = ToTensor()(test_data)
++        self.assertTrue(isinstance(result, torch.Tensor))
++        self.assertTrue(result.is_contiguous())
++        np.testing.assert_allclose(result.numpy(), test_data)
++
++    def test_tensor_input(self):
++        test_data = torch.tensor([[1, 2], [3, 4]])
++        test_data = test_data.rot90()
++        self.assertFalse(test_data.is_contiguous())
++        result = ToTensor()(test_data)
++        self.assertTrue(isinstance(result, torch.Tensor))
++        self.assertTrue(result.is_contiguous())
++        np.testing.assert_allclose(result.numpy(), test_data.numpy())
++
++    def test_list_tuple(self):
++        test_data = [[1, 2], [3, 4]]
++        result = ToTensor()(test_data)
++        self.assertTrue(isinstance(result, torch.Tensor))
++        np.testing.assert_allclose(result.numpy(), np.asarray(test_data))
++        test_data = ((1, 2), (3, 4))
++        result = ToTensor()(test_data)
++        self.assertTrue(isinstance(result, torch.Tensor))
++        np.testing.assert_allclose(result.numpy(), np.asarray(test_data))
++
++
++if __name__ == "__main__":
++    unittest.main()

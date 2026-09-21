@@ -1,0 +1,26 @@
+{
+ "sample": "T2_truncated_key_collision",
+ "note": "同一截断键由 3 / 2 / 2 条完整用例写入，字典 last-wins：参考 ID 实际只核到最后一条的状态。这是覆盖度损失（一对多），不是键匹配失败。",
+ "source_instance_id": "pandas-dev__pandas-48106",
+ "repo_key_lower": "pandas-dev/pandas",
+ "parser": "parse_log_pytest",
+ "parser_version_tag": "swegym_parsers@242429c1",
+ "source_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-48106/gold/offline/a1/test_output.txt",
+ "lines": 7,
+ "expected_status_map": {
+  "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\('2019',": "PASSED",
+  "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\('2018',": "PASSED",
+  "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\('2017',": "PASSED"
+ },
+ "reference_ids_of_interest": [
+  "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\('2019',",
+  "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\('2018',",
+  "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\('2017',"
+ ],
+ "reference_ids_hit_directly": [],
+ "reference_ids_missing": [
+  "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\('2019',",
+  "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\('2018',",
+  "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\('2017',"
+ ]
+}

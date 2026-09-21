@@ -1,0 +1,54 @@
+{
+ "task_id": "getmoto__moto-5478",
+ "source": "SWE-Gym lite (s2 ingest v0)",
+ "task_revision": "upstream",
+ "by": "L1_moto_2 (Opus 5, 静态审查, 2026-09-16)",
+ "materials_refs": {
+  "snapshot": "runs/env_overnight_20260916/L1_moto_2/mat/getmoto__moto-5478/",
+  "base_commit": "837ad2cbb7f657d706dde8e42c68510c2fd51748",
+  "version": "4.0",
+  "eval_cmd": "pytest -n0 -rA",
+  "repo_level": "docs/.../env_overnight_20260916/L1_moto_2/repo_level_findings.md"
+ },
+ "public_view": {
+  "目标行为": "mock_rds 的 DBInstance 响应要包含顶层 DbInstancePort 字段（值等于实例端口），使 describe/create/modify 后 response['DBInstance']['DbInstancePort'] 可读。",
+  "约束": "只改 moto/ 源码。",
+  "公开材料可推断": "base 的 XML 模板只在 <Endpoint> 里渲染 <Port>（837ad2cbb7:moto/rds/models.py:596-599），顶层没有 DbInstancePort（全仓 grep DbInstancePort 在 base 为 0 命中）。端口值已存在 self.port（837ad2cbb7:moto/rds/models.py:372-374），加一行模板即可。",
+  "公开材料无法确定的点": [
+   "题面用 modify_db_instance 触发 KeyError，但没说 create/describe 是否也缺该字段——求解者必须自己读模板才知道是所有 DBInstance 响应共缺。",
+   "题面没说 DBCluster 或 to_json 路径是否也要补。",
+   "AWS 真实 API 里 DbInstancePort 对未修改端口的实例返回 0，题面与测试都没表达这一语义；按测试只要等于 self.port。"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5478/test.patch", "mat/getmoto__moto-5478/gold.patch"], "note": "test_patch 只碰 tests/test_rds/test_rds.py（base 存在），gold 只碰 moto/rds/models.py（base 存在）；同一问题。无二进制材料。", "by": "static"},
+  "2": {"status": "pass", "evidence_refs": ["837ad2cbb7 全仓 `git grep DbInstancePort` = 0 命中", "837ad2cbb7:moto/rds/models.py:596-599"], "note": "base 确无该字段。", "by": "static"},
+  "3": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5478/problem_statement.txt"], "note": "题面含完整 JSON 响应示例与 KeyError 栈片段，无外链、无截断。hints_text 为空。", "by": "static"},
+  "4": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5478/test.patch"], "note": "合法解在 moto/rds/models.py，不被恢复覆盖。", "by": "static"},
+  "5": {"status": "pass", "evidence_refs": ["本包 20 题 sha256 去重"], "note": "与 getmoto__moto-6114（同样改 moto/rds/models.py）属不同 PR、不同功能（6114 是 cluster 的 describe 过滤/参数），gold hunk 无重叠。", "by": "static"},
+  "11": {"status": "pass", "evidence_refs": ["837ad2cbb7:tests/test_rds/test_rds.py"], "note": "无 pytest.mark.network、无真实端点调用。", "by": "static"},
+  "17": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5478/test.patch"], "note": "只恢复 1 个纯测试文件。", "by": "static"},
+  "23": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-5478/problem_statement.txt", "mat/getmoto__moto-5478/test.patch"], "note": "题面只给 modify_db_instance 场景，F2P 却检查 create_db_instance 与 describe_db_instances。虽然同一个模板决定三者，但\"要在哪些 API 上生效\"要读代码才知道；判为可由公开材料推断但表述不足。字段名 DbInstancePort（注意大小写与 DBInstance 不一致）由题面 KeyError 明确给出，这点充分。", "by": "static"},
+  "24": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5478/test.patch"], "note": "只断言 boto3 解析后的公开字典键值，不限定实现方式；在模板加行、或在 responses 层后处理都能通过。", "by": "static"},
+  "25": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-5478/test.patch", "837ad2cbb7:tests/test_rds/test_rds.py:9-24,300-338"], "note": "两个 F2P 都用 Port=1234 建库，判分集合里没有任何用别的端口读 DbInstancePort 的用例。把模板写成 <DbInstancePort>1234</DbInstancePort> 这种字面量即可全绿。另外 test_patch 顺带加的 Endpoint.Port==1234 两行在 base 就已成立（base 测试本来就传 Port=1234），属空断言，不提供额外区分力。题面主场景 modify_db_instance 改端口后读取，判分集合完全没覆盖。", "by": "static"},
+  "26": {"status": "issue", "evidence_refs": ["837ad2cbb7:moto/rds/models.py:1373-1382"], "note": "现有判分不覆盖 modify/restore/replica 路径，见 proposed_regression_tests。", "by": "static"},
+  "27": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5478/gold.patch", "837ad2cbb7:moto/rds/models.py:800-803"], "note": "gold 一行、无夹带。范围观察：只补了 XML 模板；同文件的 Database.to_json 模板（800-803 行）仍只有 Endpoint.Port，没有 DbInstancePort。该 to_json 在 base 仅被子网组模板间接引用，不走 boto3 RDS 响应路径，因此不影响题目正确性，但说明 gold 是最小补丁而非全路径补全。", "by": "static"},
+  "29": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5478/hints.txt"], "note": "hints_text 为空；题面不含修复代码或上游 PR 链接。", "by": "static"},
+  "6": {"status": "pass", "evidence_refs": ["repo_level_findings.md#R2"], "note": "4.0，make init 离线 rc=0。", "by": "static+stage1"},
+  "7": {"status": "not_applicable", "evidence_refs": [], "note": "无外部资产。", "by": "static"},
+  "9": {"status": "pass", "evidence_refs": ["repo_level_findings.md#R3"], "note": "仓库级共性证据。", "by": "static+stage1"}
+ },
+ "issues": [
+  {"category": "测试放过错误修复", "severity": "P2", "evidence_refs": ["mat/getmoto__moto-5478/test.patch"], "proposed_action": "扩展回归里加\"非 1234 端口\"和 modify_db_instance 场景；不动原 F2P/P2P 参考。", "next_experiment": "构造把 DbInstancePort 写成字面量 1234 的错误补丁，在真实 grader 跑 F2P+P2P，预期全绿。"},
+  {"category": "题面—测试覆盖错位", "severity": "P3", "evidence_refs": ["mat/getmoto__moto-5478/problem_statement.txt"], "proposed_action": "记录\"题面主场景（modify 改端口）不在判分集合内\"，作为评测保留轨道的候选加强点。", "next_experiment": "无。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只碰 1 个纯测试文件。", "evidence_refs": ["mat/getmoto__moto-5478/test.patch"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_rds/test_rds.py::test_modify_db_instance", "reason": "题面原始场景（modify 后读端口）；modify_db_instance 走 database.update 再渲染同一模板（837ad2cbb7:moto/rds/models.py:1373-1382），能验证 DbInstancePort 随端口变化而不是常量。"},
+  {"id": "tests/test_rds/test_rds.py::test_create_database_no_allocated_storage", "reason": "不传 Port 的创建路径，走 Database.default_port（837ad2cbb7:moto/rds/models.py:372-374），可暴露把 1234 写死的实现。"},
+  {"id": "tests/test_rds/test_rds_clusters.py", "reason": "Cluster 也有 self.port 与独立模板（837ad2cbb7:moto/rds/models.py:100-102），确认改动没有误伤集群响应。"},
+  {"id": "tests/test_cloudformation/test_cloudformation_stack_integration.py -k rds", "reason": "Database.to_json / CFN 属性是同一模型的另一条渲染路径，检查未引入语法错误。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "材料一致、初态含问题、gold 正确对应、边界干净；弱点是判分对端口值只用单一常量 1234，允许字面量式错误修复（P2）。"},
+ "costs": {"minutes": 16}
+}

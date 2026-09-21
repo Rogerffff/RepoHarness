@@ -1,0 +1,1228 @@
+{
+  "review_date": "2026-09-16",
+  "scope": "e1 actual grading evidence, two missing acceptance probes, direct set-u and S1 fixes; no P-B/e2/training implementation",
+  "verdict": "e1 acceptance closed with stated source-ID exception; current storage combination unsafe for the reproduced docker commit path; runbook corrected",
+  "source": {
+    "base_commit": "bac7659ea70cc07a3a8c872a29e7659a894afc5a",
+    "sha256": {
+      "rh2/src/repoharness2/adapters/slime/patch_exporter.py": "d40a2ca9e482e17a30d0f8c91bb9eb74e0c85d34398b455b8ad2802dfbcd1be7",
+      "rh2/src/repoharness2/adapters/slime/generate.py": "3b06c36ec5e3b8fa94a49a23fa2b67411dcb02456efe9095f05d2d3814191e63",
+      "rh2/src/repoharness2/adapters/slime/prepared_task_face.py": "74ed823d5553eb8a6203700b50a5225102707898cc8071a3a83fe9fff99862c3",
+      "rh2/src/repoharness2/grading/manager.py": "bf02d0a2a6a450eed9dc4e49ae7961280fcf65726c3025ee46fdd5049599aa02",
+      "rh2/src/repoharness2/adapters/slime/replay_grade.py": "0d4187fb90ce924f5a27b1244c85a2817222602519a9038b4efdbe278d99cee2",
+      "rh2/scripts/replay_grade.py": "d4bea627116b750681c6a1aecbf5cc940c8806738deaac1ace40dae8a68a43c8",
+      "rh2/src/repoharness2/envpack/spec_vendor.py": "8e0037b27c87268ed7df97ef64d261d0e6dac7375bc85fd5badd0fecdb94d41d",
+      "rh2/src/repoharness2/envpack/scoring.py": "ddd2bbfa1a75c0b27edbf07e42a68dd65612ff6bba0bce8f86ea954e5346e33f",
+      "rh2/src/repoharness2/envpack/swegym_parsers.py": "995bb6aae58a94f9553946c2f9aea59a158ad4fdf4d7fc0137802c11362b2276",
+      "rh2/src/repoharness2/adapters/slime/sandbox_profile.py": "0c485f683971a95324957b046378d3cd3e88c77569cd004d484f35dcaa21a5ec",
+      "rh2/scripts/sandbox_probes/grader-protect-control-surface.sh": "2eebce8f0d067c9938b681608f9d973ca5b9ddb5a166e688e4771f91da7ef62b",
+      "rh2/tests/contracts/test_f2_2b_b2_exporter.py": "78828a3a2e252c1e7d8477499377b6ad6016678f325248f9027c095bb7ed3718",
+      "rh2/uv.lock": "8ed1ce4fcb2347ef1c05e6ab592a7ef03366a968a5dd934bd9925a08f06b0577"
+    }
+  },
+  "remote_source_sha256": {
+    "src/repoharness2/adapters/slime/patch_exporter.py": "583841cb2650aea1599291ef13a5ee516987ef7b68d595ff08441191c0a28a4f",
+    "src/repoharness2/adapters/slime/generate.py": "ebd4afd769e40a5ab6e605f5bcf7ea04083064ee3d903bcf93fb83e113e423f4",
+    "src/repoharness2/adapters/slime/prepared_task_face.py": "74ed823d5553eb8a6203700b50a5225102707898cc8071a3a83fe9fff99862c3",
+    "src/repoharness2/grading/manager.py": "bf02d0a2a6a450eed9dc4e49ae7961280fcf65726c3025ee46fdd5049599aa02",
+    "src/repoharness2/adapters/slime/replay_grade.py": "0d4187fb90ce924f5a27b1244c85a2817222602519a9038b4efdbe278d99cee2",
+    "scripts/replay_grade.py": "d4bea627116b750681c6a1aecbf5cc940c8806738deaac1ace40dae8a68a43c8",
+    "src/repoharness2/envpack/spec_vendor.py": "8e0037b27c87268ed7df97ef64d261d0e6dac7375bc85fd5badd0fecdb94d41d",
+    "src/repoharness2/envpack/scoring.py": "ddd2bbfa1a75c0b27edbf07e42a68dd65612ff6bba0bce8f86ea954e5346e33f",
+    "src/repoharness2/envpack/swegym_parsers.py": "995bb6aae58a94f9553946c2f9aea59a158ad4fdf4d7fc0137802c11362b2276",
+    "src/repoharness2/adapters/slime/sandbox_profile.py": "0c485f683971a95324957b046378d3cd3e88c77569cd004d484f35dcaa21a5ec",
+    "scripts/sandbox_probes/grader-protect-control-surface.sh": "2eebce8f0d067c9938b681608f9d973ca5b9ddb5a166e688e4771f91da7ef62b",
+    "uv.lock": "8ed1ce4fcb2347ef1c05e6ab592a7ef03366a968a5dd934bd9925a08f06b0577"
+  },
+  "remote_source_differences": [
+    "rh2/src/repoharness2/adapters/slime/patch_exporter.py",
+    "rh2/src/repoharness2/adapters/slime/generate.py"
+  ],
+  "verification": {
+    "focused_tests": {
+      "passed": 82,
+      "skipped": 1
+    },
+    "s1_actual_integration_probes": {
+      "passed": 5
+    },
+    "original_ledger_rows": 10,
+    "original_tested_rows": 7,
+    "original_reference_differences": 0,
+    "supplemental_reference_differences": 0,
+    "accepted_matrix_cells": 8,
+    "new_cpu_runs": 2,
+    "final_remote_snapshot_utc": "2026-09-15T17:03:23.174307+00:00",
+    "containers_remaining": []
+  },
+  "supplement": {
+    "pandas_noop": {
+      "ledger_sha256": "sha256:27cdd60c934d093f7143da4b4589075c8c793e93b5d3538243b805b40fb03217",
+      "log_sha256": "sha256:5317851a80af379a21783250853ada83e2b0d6e151024037b43071fe9232fef0",
+      "sidecar_sha256": "sha256:7f7e7265ee67c0c6b6f6e2b0d4c65f7ef0ab0d518549dfa6ee52ce6ee0322f52",
+      "artifact_sha256": "sha256:59e90822c1d426f62d025a1927d58b8f02a9e1a7486a53bf7c495f6e4c36e862",
+      "source_unchanged": true,
+      "cleanup_complete": true,
+      "report": {
+        "f2p_pass": 0,
+        "f2p_total": 16,
+        "failure_category": "tests_failed",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": 3,
+        "p2p_total": 1020,
+        "report_id": "rpt_grading_18b0e84a",
+        "reward": 0.0
+      },
+      "phases": {
+        "delta_apply": 0.000151,
+        "grader_baseline_rebuild": 15.081545,
+        "grader_cleanup": 3.271028,
+        "grader_start_and_verify": 2.002268,
+        "grader_trusted_setup": 9.617692,
+        "parser_and_report": 1.595516,
+        "test": 609.951144
+      },
+      "install": {
+        "install_rc_last_command": 0,
+        "install_seconds": 592.132,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 13.878
+      },
+      "test": {
+        "rc": 1,
+        "seconds": 13.878
+      },
+      "resource": {
+        "mem_peak_mb": 890.656,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/pandas/__init__.py",
+        "RH2_OBS_PKG_VERSION": "1.5.0.dev0+1299.g8b72297c87.dirty",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "1cfac6828a8ce1101528108a0a3379da1fe8e2b0ba4a9021ea32c5ffc26e13a4",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "1cfac6828a8ce1101528108a0a3379da1fe8e2b0ba4a9021ea32c5ffc26e13a4"
+      },
+      "reference_diff_count": 0,
+      "reference_missing_count": 3
+    },
+    "forced_timeout": {
+      "ledger_sha256": "sha256:e720bc94d54e4b445c6db060eed220c17c2e8d5c7ba3062c853cf38f00cf3c35",
+      "log_sha256": "sha256:fbf29011d8e6729b9f4846276234bd4b60483316b76fc1eff7999b3c07abb719",
+      "sidecar_sha256": "sha256:06f1b07ffa9b7dc1ada1868f23587552600ae8004493339464a70b74458ea92e",
+      "artifact_sha256": "sha256:c013501e50370eb8839e4bf376dbe1743edff810cd4f3e696984992f88e4151e",
+      "source_unchanged": true,
+      "cleanup_complete": true,
+      "report": {
+        "f2p_pass": null,
+        "f2p_total": null,
+        "failure_category": "infra_failure",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "infra_failure_detail": "grading_deadline_exhausted:test:candidate_phase=test",
+        "outcome": "failed_to_grade",
+        "p2p_fail": null,
+        "p2p_total": null,
+        "report_id": "rpt_grading_69bc3e8c",
+        "reward": null
+      },
+      "phases": {
+        "delta_apply": 0.168393,
+        "grader_baseline_rebuild": 4.680428,
+        "grader_cleanup": 0.564331,
+        "grader_start_and_verify": 1.375336,
+        "grader_trusted_setup": 3.962474,
+        "parser_and_report": 0.002439,
+        "test": null
+      },
+      "install": {
+        "install_rc_last_command": 0,
+        "install_seconds": 2.261,
+        "install_skipped": false,
+        "log_partial": true,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": null,
+        "test_seconds": null
+      },
+      "resource": {
+        "mem_peak_mb": 0.0,
+        "mem_peak_unavailable_or_zero": true
+      },
+      "test_markers_preserved": true
+    }
+  },
+  "original_matrix": [
+    {
+      "instance_id": "python__mypy-12741",
+      "candidate": "noop",
+      "outcome": "unresolved",
+      "failure_detail": null,
+      "f2p_pass": 0,
+      "f2p_total": 1,
+      "p2p_fail": 0,
+      "p2p_total": 1,
+      "setup_seconds": 119.295147,
+      "memory_peak_mb": 449.559
+    },
+    {
+      "instance_id": "conan-io__conan-13326",
+      "candidate": "noop",
+      "outcome": "unresolved",
+      "failure_detail": null,
+      "f2p_pass": 0,
+      "f2p_total": 3,
+      "p2p_fail": 0,
+      "p2p_total": 67,
+      "setup_seconds": 79.662471,
+      "memory_peak_mb": 342.156
+    },
+    {
+      "instance_id": "iterative__dvc-5822",
+      "candidate": "noop",
+      "outcome": "unresolved",
+      "failure_detail": null,
+      "f2p_pass": 0,
+      "f2p_total": 1,
+      "p2p_fail": 0,
+      "p2p_total": 1,
+      "setup_seconds": 203.578339,
+      "memory_peak_mb": 1097.352
+    },
+    {
+      "instance_id": "pandas-dev__pandas-48106",
+      "candidate": "noop",
+      "outcome": "failed_to_grade",
+      "failure_detail": "grading_trusted_setup_failed:setup_exit_code:rc=1:",
+      "f2p_pass": null,
+      "f2p_total": null,
+      "p2p_fail": null,
+      "p2p_total": null,
+      "setup_seconds": 1.102669,
+      "memory_peak_mb": 17.977
+    },
+    {
+      "instance_id": "python__mypy-12741",
+      "candidate": "gold",
+      "outcome": "resolved",
+      "failure_detail": null,
+      "f2p_pass": 1,
+      "f2p_total": 1,
+      "p2p_fail": 0,
+      "p2p_total": 1,
+      "setup_seconds": 194.726639,
+      "memory_peak_mb": 444.16
+    },
+    {
+      "instance_id": "conan-io__conan-13326",
+      "candidate": "gold",
+      "outcome": "resolved",
+      "failure_detail": null,
+      "f2p_pass": 3,
+      "f2p_total": 3,
+      "p2p_fail": 0,
+      "p2p_total": 67,
+      "setup_seconds": 79.805343,
+      "memory_peak_mb": 338.566
+    },
+    {
+      "instance_id": "iterative__dvc-5822",
+      "candidate": "gold",
+      "outcome": "resolved",
+      "failure_detail": null,
+      "f2p_pass": 1,
+      "f2p_total": 1,
+      "p2p_fail": 0,
+      "p2p_total": 1,
+      "setup_seconds": 170.093291,
+      "memory_peak_mb": 1093.059
+    },
+    {
+      "instance_id": "pandas-dev__pandas-48106",
+      "candidate": "gold",
+      "outcome": "failed_to_grade",
+      "failure_detail": "grading_trusted_setup_failed:setup_exit_code:rc=1:",
+      "f2p_pass": null,
+      "f2p_total": null,
+      "p2p_fail": null,
+      "p2p_total": null,
+      "setup_seconds": 1.036619,
+      "memory_peak_mb": 17.871
+    },
+    {
+      "instance_id": "pandas-dev__pandas-48106",
+      "candidate": "noop",
+      "outcome": "failed_to_grade",
+      "failure_detail": "grading_control_surface_protect_timeout_after_300s",
+      "f2p_pass": null,
+      "f2p_total": null,
+      "p2p_fail": null,
+      "p2p_total": null,
+      "setup_seconds": 302.17394,
+      "memory_peak_mb": 2406.297
+    },
+    {
+      "instance_id": "pandas-dev__pandas-48106",
+      "candidate": "gold",
+      "outcome": "unresolved",
+      "failure_detail": null,
+      "f2p_pass": 16,
+      "f2p_total": 16,
+      "p2p_fail": 3,
+      "p2p_total": 1020,
+      "setup_seconds": 21.65154,
+      "memory_peak_mb": 970.188
+    }
+  ],
+  "metacopy": {
+    "actual_snapshot": {
+      "at_utc": "2026-09-15T16:54:53.684312+00:00",
+      "kernel_metacopy": "Y",
+      "driver_status": [
+        [
+          "Backing Filesystem",
+          "extfs"
+        ],
+        [
+          "Supports d_type",
+          "true"
+        ],
+        [
+          "Using metacopy",
+          "false"
+        ],
+        [
+          "Native Overlay Diff",
+          "true"
+        ],
+        [
+          "userxattr",
+          "false"
+        ]
+      ],
+      "containers": [
+        {
+          "id": "2095a25b2329",
+          "image": "sha256:0e706113dce17d30fade5723a2a71c162afa253d777fd7fa139c5b89cf05c4b8",
+          "mount_options": [
+            "rw",
+            "relatime",
+            "redirect_dir=on",
+            "nouserxattr"
+          ],
+          "upper_regular_scanned": 500,
+          "metadata_only_count": 500,
+          "samples": [
+            {
+              "relative_path": "opt/miniconda3/envs/testbed/doc/config/exampleurl-qtlocation.qdocconf",
+              "size": 86,
+              "blocks": 0,
+              "metacopy_xattr_hex": ""
+            },
+            {
+              "relative_path": "opt/miniconda3/envs/testbed/doc/config/exampleurl-qtwinextras.qdocconf",
+              "size": 87,
+              "blocks": 0,
+              "metacopy_xattr_hex": ""
+            },
+            {
+              "relative_path": "opt/miniconda3/envs/testbed/doc/config/exampleurl-qtserialport.qdocconf",
+              "size": 88,
+              "blocks": 0,
+              "metacopy_xattr_hex": ""
+            },
+            {
+              "relative_path": "opt/miniconda3/envs/testbed/doc/config/exampleurl-qtcharts.qdocconf",
+              "size": 84,
+              "blocks": 0,
+              "metacopy_xattr_hex": ""
+            },
+            {
+              "relative_path": "opt/miniconda3/envs/testbed/doc/config/exampleurl-qtwayland.qdocconf",
+              "size": 85,
+              "blocks": 0,
+              "metacopy_xattr_hex": ""
+            },
+            {
+              "relative_path": "opt/miniconda3/envs/testbed/doc/config/exampleurl-qtquickcontrols2.qdocconf",
+              "size": 92,
+              "blocks": 0,
+              "metacopy_xattr_hex": ""
+            }
+          ]
+        }
+      ]
+    },
+    "metacopy_roundtrip": {
+      "at_utc": "2026-09-15T16:55:58.415005+00:00",
+      "scope": "temporary local image; one metadata-only chown; no daemon/kernel changes",
+      "before_hash": "ca434fdc1242d92fbe170e1d50b3209e4c480725f813cb2f21462b0faa177932",
+      "after_chown_merged_hash": "ca434fdc1242d92fbe170e1d50b3209e4c480725f813cb2f21462b0faa177932",
+      "upper": {
+        "size": 32,
+        "blocks": 8,
+        "xattrs": [
+          "trusted.overlay.origin",
+          "trusted.overlay.metacopy"
+        ],
+        "sha256": "66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925"
+      },
+      "committed_image_hash": "66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925",
+      "roundtrip_preserved": false,
+      "finished_utc": "2026-09-15T16:56:01.171768+00:00"
+    },
+    "metacopy_roundtrip_write_control": {
+      "at_utc": "2026-09-15T16:56:41.027553+00:00",
+      "scope": "temporary local image; one metadata-only chown; no daemon/kernel changes",
+      "before_hash": "ca434fdc1242d92fbe170e1d50b3209e4c480725f813cb2f21462b0faa177932",
+      "after_chown_merged_hash": "ca434fdc1242d92fbe170e1d50b3209e4c480725f813cb2f21462b0faa177932",
+      "upper": {
+        "size": 32,
+        "blocks": 8,
+        "xattrs": [
+          "trusted.overlay.origin",
+          "trusted.overlay.metacopy"
+        ],
+        "sha256": "66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925"
+      },
+      "after_full_write_hash": "ca434fdc1242d92fbe170e1d50b3209e4c480725f813cb2f21462b0faa177932",
+      "after_full_write_xattrs": [
+        "trusted.overlay.origin"
+      ],
+      "committed_image_hash": "ca434fdc1242d92fbe170e1d50b3209e4c480725f813cb2f21462b0faa177932",
+      "roundtrip_preserved": true,
+      "finished_utc": "2026-09-15T16:56:43.650044+00:00"
+    },
+    "interpretation": "reproduced current metacopy plus native overlay diff incompatibility; not proof of hot-switch necessity or daemon-restart remedy; e1 merged reads did not use commit",
+    "official_sources": [
+      "https://github.com/moby/moby/blob/v28.1.1/daemon/graphdriver/overlay2/overlay.go",
+      "https://github.com/moby/moby/blob/v28.1.1/daemon/graphdriver/overlay2/check.go",
+      "https://www.kernel.org/doc/html/v6.8/filesystems/overlayfs.html#metadata-only-copy-up"
+    ]
+  },
+  "s1": {
+    "results": {
+      "file_to_dir": {
+        "grading_calls": [
+          "miles_g0_m1"
+        ],
+        "buffer_groups": 0,
+        "recycled_groups": 0,
+        "drop_totals": {
+          "put_aborted": 0,
+          "dynamic_filter": 1,
+          "consume_stale": 0
+        },
+        "buffer_metrics": {
+          "rollout/fully_async/queue_size": 0,
+          "rollout/fully_async/aborted_groups_filtered": 0,
+          "rollout/fully_async/stale_groups_filtered": 0,
+          "rollout/dynamic_filter/drop_admission_unsafe_artifact_permanent_rejection": 1
+        },
+        "members": [
+          {
+            "slot": 0,
+            "outcome": {
+              "schema_id": "rh2.fa.rollout_attempt_outcome.v2",
+              "outcome_id": "ov2_miles_g0_m0#p1-9db0864b",
+              "identity": {
+                "schema_id": "rh2.fa.execution_identity.v1",
+                "prompt_group_id": "miles_g0",
+                "group_index": 0,
+                "rollout_execution_id": "miles_g0_m0",
+                "branch_id": null,
+                "parent_rollout_id": null,
+                "physical_attempt_id": "miles_g0_m0#p1-9db0864b",
+                "physical_attempt_seq": 1
+              },
+              "member_slot": 0,
+              "attempt_number": 1,
+              "completion_class": "present_complete",
+              "termination_kind": "completed",
+              "failure_category": null,
+              "reason_code": "unsafe_artifact_permanent_rejection",
+              "failed_component": "patch_hygiene",
+              "recovery_scope": "none",
+              "task_outcome": "unknown",
+              "reward_unavailable": true,
+              "turn_weight_versions": [
+                "5",
+                "5"
+              ],
+              "intra_execution_version_span": 0,
+              "current_version_at_finalize": "5",
+              "current_version_at_consume": null,
+              "worst_token_lag": null,
+              "eligibility_report_id": null,
+              "evidence_refs": [
+                "audit:miles_g0_m0",
+                "snapshot:sha256:abc",
+                "s1-review-cpu",
+                "drain_receipt:drain_miles_g0_m0_p1-9db0864b",
+                "unsupported_delta_shape",
+                "object:?:unknown"
+              ]
+            },
+            "unsafe_artifact_reasons": [
+              "unsupported_delta_shape:?:unknown"
+            ],
+            "failure_records": [],
+            "rejection_evidence": {
+              "reason_code": "unsupported_delta_shape",
+              "object_path": null,
+              "object_type": null
+            },
+            "artifact_bodies_persisted": false,
+            "receipt_disposition": "delivery_prepared",
+            "delivered": [
+              {
+                "remove_sample": false,
+                "status": "completed",
+                "reward": "NaN",
+                "loss_mask": [
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1
+                ]
+              }
+            ]
+          },
+          {
+            "slot": 1,
+            "outcome": {
+              "schema_id": "rh2.fa.rollout_attempt_outcome.v2",
+              "outcome_id": "ov2_miles_g0_m1#p1-02b160ec",
+              "identity": {
+                "schema_id": "rh2.fa.execution_identity.v1",
+                "prompt_group_id": "miles_g0",
+                "group_index": 0,
+                "rollout_execution_id": "miles_g0_m1",
+                "branch_id": null,
+                "parent_rollout_id": null,
+                "physical_attempt_id": "miles_g0_m1#p1-02b160ec",
+                "physical_attempt_seq": 1
+              },
+              "member_slot": 1,
+              "attempt_number": 1,
+              "completion_class": "present_complete",
+              "termination_kind": "completed",
+              "failure_category": null,
+              "reason_code": null,
+              "failed_component": null,
+              "recovery_scope": "none",
+              "task_outcome": "unresolved",
+              "reward_unavailable": false,
+              "turn_weight_versions": [
+                "5"
+              ],
+              "intra_execution_version_span": 0,
+              "current_version_at_finalize": "5",
+              "current_version_at_consume": null,
+              "worst_token_lag": null,
+              "eligibility_report_id": "elig_4815b6f67786",
+              "evidence_refs": [
+                "audit:miles_g0_m1",
+                "snapshot:sha256:abc",
+                "s1-review-cpu",
+                "drain_receipt:drain_miles_g0_m1_p1-02b160ec",
+                "trusted_projection:rh2.trusted_scoring_projection.swe_hygiene.v1",
+                "trusted_projection:candidate=0:ignored=0"
+              ]
+            },
+            "unsafe_artifact_reasons": [],
+            "failure_records": [],
+            "rejection_evidence": null,
+            "artifact_bodies_persisted": true,
+            "receipt_disposition": "delivery_prepared",
+            "delivered": [
+              {
+                "remove_sample": false,
+                "status": "completed",
+                "reward": 0.0,
+                "loss_mask": [
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "dir_to_file": {
+        "grading_calls": [
+          "miles_g0_m1"
+        ],
+        "buffer_groups": 0,
+        "recycled_groups": 0,
+        "drop_totals": {
+          "put_aborted": 0,
+          "dynamic_filter": 1,
+          "consume_stale": 0
+        },
+        "buffer_metrics": {
+          "rollout/fully_async/queue_size": 0,
+          "rollout/fully_async/aborted_groups_filtered": 0,
+          "rollout/fully_async/stale_groups_filtered": 0,
+          "rollout/dynamic_filter/drop_admission_unsafe_artifact_permanent_rejection": 1
+        },
+        "members": [
+          {
+            "slot": 0,
+            "outcome": {
+              "schema_id": "rh2.fa.rollout_attempt_outcome.v2",
+              "outcome_id": "ov2_miles_g0_m0#p1-3aeb583b",
+              "identity": {
+                "schema_id": "rh2.fa.execution_identity.v1",
+                "prompt_group_id": "miles_g0",
+                "group_index": 0,
+                "rollout_execution_id": "miles_g0_m0",
+                "branch_id": null,
+                "parent_rollout_id": null,
+                "physical_attempt_id": "miles_g0_m0#p1-3aeb583b",
+                "physical_attempt_seq": 1
+              },
+              "member_slot": 0,
+              "attempt_number": 1,
+              "completion_class": "present_complete",
+              "termination_kind": "completed",
+              "failure_category": null,
+              "reason_code": "unsafe_artifact_permanent_rejection",
+              "failed_component": "patch_hygiene",
+              "recovery_scope": "none",
+              "task_outcome": "unknown",
+              "reward_unavailable": true,
+              "turn_weight_versions": [
+                "5",
+                "5"
+              ],
+              "intra_execution_version_span": 0,
+              "current_version_at_finalize": "5",
+              "current_version_at_consume": null,
+              "worst_token_lag": null,
+              "eligibility_report_id": null,
+              "evidence_refs": [
+                "audit:miles_g0_m0",
+                "snapshot:sha256:abc",
+                "s1-review-cpu",
+                "drain_receipt:drain_miles_g0_m0_p1-3aeb583b",
+                "unsupported_delta_shape",
+                "object:?:unknown"
+              ]
+            },
+            "unsafe_artifact_reasons": [
+              "unsupported_delta_shape:?:unknown"
+            ],
+            "failure_records": [],
+            "rejection_evidence": {
+              "reason_code": "unsupported_delta_shape",
+              "object_path": null,
+              "object_type": null
+            },
+            "artifact_bodies_persisted": false,
+            "receipt_disposition": "delivery_prepared",
+            "delivered": [
+              {
+                "remove_sample": false,
+                "status": "completed",
+                "reward": "NaN",
+                "loss_mask": [
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1
+                ]
+              }
+            ]
+          },
+          {
+            "slot": 1,
+            "outcome": {
+              "schema_id": "rh2.fa.rollout_attempt_outcome.v2",
+              "outcome_id": "ov2_miles_g0_m1#p1-c53e38f0",
+              "identity": {
+                "schema_id": "rh2.fa.execution_identity.v1",
+                "prompt_group_id": "miles_g0",
+                "group_index": 0,
+                "rollout_execution_id": "miles_g0_m1",
+                "branch_id": null,
+                "parent_rollout_id": null,
+                "physical_attempt_id": "miles_g0_m1#p1-c53e38f0",
+                "physical_attempt_seq": 1
+              },
+              "member_slot": 1,
+              "attempt_number": 1,
+              "completion_class": "present_complete",
+              "termination_kind": "completed",
+              "failure_category": null,
+              "reason_code": null,
+              "failed_component": null,
+              "recovery_scope": "none",
+              "task_outcome": "unresolved",
+              "reward_unavailable": false,
+              "turn_weight_versions": [
+                "5"
+              ],
+              "intra_execution_version_span": 0,
+              "current_version_at_finalize": "5",
+              "current_version_at_consume": null,
+              "worst_token_lag": null,
+              "eligibility_report_id": "elig_26b8eaa6d4aa",
+              "evidence_refs": [
+                "audit:miles_g0_m1",
+                "snapshot:sha256:abc",
+                "s1-review-cpu",
+                "drain_receipt:drain_miles_g0_m1_p1-c53e38f0",
+                "trusted_projection:rh2.trusted_scoring_projection.swe_hygiene.v1",
+                "trusted_projection:candidate=0:ignored=0"
+              ]
+            },
+            "unsafe_artifact_reasons": [],
+            "failure_records": [],
+            "rejection_evidence": null,
+            "artifact_bodies_persisted": true,
+            "receipt_disposition": "delivery_prepared",
+            "delivered": [
+              {
+                "remove_sample": false,
+                "status": "completed",
+                "reward": 0.0,
+                "loss_mask": [
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "plain_modify": {
+        "grading_calls": [
+          "miles_g0_m0",
+          "miles_g0_m1"
+        ],
+        "buffer_groups": 1,
+        "recycled_groups": 0,
+        "drop_totals": {
+          "put_aborted": 0,
+          "dynamic_filter": 0,
+          "consume_stale": 0
+        },
+        "buffer_metrics": {
+          "rollout/fully_async/queue_size": 1,
+          "rollout/fully_async/aborted_groups_filtered": 0,
+          "rollout/fully_async/stale_groups_filtered": 0
+        },
+        "members": [
+          {
+            "slot": 0,
+            "outcome": {
+              "schema_id": "rh2.fa.rollout_attempt_outcome.v2",
+              "outcome_id": "ov2_miles_g0_m0#p1-e311864e",
+              "identity": {
+                "schema_id": "rh2.fa.execution_identity.v1",
+                "prompt_group_id": "miles_g0",
+                "group_index": 0,
+                "rollout_execution_id": "miles_g0_m0",
+                "branch_id": null,
+                "parent_rollout_id": null,
+                "physical_attempt_id": "miles_g0_m0#p1-e311864e",
+                "physical_attempt_seq": 1
+              },
+              "member_slot": 0,
+              "attempt_number": 1,
+              "completion_class": "present_complete",
+              "termination_kind": "completed",
+              "failure_category": null,
+              "reason_code": null,
+              "failed_component": null,
+              "recovery_scope": "none",
+              "task_outcome": "resolved",
+              "reward_unavailable": false,
+              "turn_weight_versions": [
+                "5"
+              ],
+              "intra_execution_version_span": 0,
+              "current_version_at_finalize": "5",
+              "current_version_at_consume": null,
+              "worst_token_lag": null,
+              "eligibility_report_id": "elig_b58041bf9f2a",
+              "evidence_refs": [
+                "audit:miles_g0_m0",
+                "snapshot:sha256:abc",
+                "s1-review-cpu",
+                "drain_receipt:drain_miles_g0_m0_p1-e311864e",
+                "trusted_projection:rh2.trusted_scoring_projection.swe_hygiene.v1",
+                "trusted_projection:candidate=1:ignored=0"
+              ]
+            },
+            "unsafe_artifact_reasons": [],
+            "failure_records": [],
+            "rejection_evidence": null,
+            "artifact_bodies_persisted": true,
+            "receipt_disposition": "delivery_prepared",
+            "delivered": [
+              {
+                "remove_sample": false,
+                "status": "completed",
+                "reward": 1.0,
+                "loss_mask": [
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1
+                ]
+              }
+            ]
+          },
+          {
+            "slot": 1,
+            "outcome": {
+              "schema_id": "rh2.fa.rollout_attempt_outcome.v2",
+              "outcome_id": "ov2_miles_g0_m1#p1-09682701",
+              "identity": {
+                "schema_id": "rh2.fa.execution_identity.v1",
+                "prompt_group_id": "miles_g0",
+                "group_index": 0,
+                "rollout_execution_id": "miles_g0_m1",
+                "branch_id": null,
+                "parent_rollout_id": null,
+                "physical_attempt_id": "miles_g0_m1#p1-09682701",
+                "physical_attempt_seq": 1
+              },
+              "member_slot": 1,
+              "attempt_number": 1,
+              "completion_class": "present_complete",
+              "termination_kind": "completed",
+              "failure_category": null,
+              "reason_code": null,
+              "failed_component": null,
+              "recovery_scope": "none",
+              "task_outcome": "unresolved",
+              "reward_unavailable": false,
+              "turn_weight_versions": [
+                "5"
+              ],
+              "intra_execution_version_span": 0,
+              "current_version_at_finalize": "5",
+              "current_version_at_consume": null,
+              "worst_token_lag": null,
+              "eligibility_report_id": "elig_eea5f8f966a7",
+              "evidence_refs": [
+                "audit:miles_g0_m1",
+                "snapshot:sha256:abc",
+                "s1-review-cpu",
+                "drain_receipt:drain_miles_g0_m1_p1-09682701",
+                "trusted_projection:rh2.trusted_scoring_projection.swe_hygiene.v1",
+                "trusted_projection:candidate=0:ignored=0"
+              ]
+            },
+            "unsafe_artifact_reasons": [],
+            "failure_records": [],
+            "rejection_evidence": null,
+            "artifact_bodies_persisted": true,
+            "receipt_disposition": "delivery_prepared",
+            "delivered": [
+              {
+                "remove_sample": false,
+                "status": "completed",
+                "reward": 0.0,
+                "loss_mask": [
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "injected_sort_bug": {
+        "grading_calls": [
+          "miles_g0_m1"
+        ],
+        "buffer_groups": 0,
+        "recycled_groups": 0,
+        "drop_totals": {
+          "put_aborted": 0,
+          "dynamic_filter": 1,
+          "consume_stale": 0
+        },
+        "buffer_metrics": {
+          "rollout/fully_async/queue_size": 0,
+          "rollout/fully_async/aborted_groups_filtered": 0,
+          "rollout/fully_async/stale_groups_filtered": 0,
+          "rollout/dynamic_filter/drop_admission_unsafe_artifact_permanent_rejection": 1
+        },
+        "members": [
+          {
+            "slot": 0,
+            "outcome": {
+              "schema_id": "rh2.fa.rollout_attempt_outcome.v2",
+              "outcome_id": "ov2_miles_g0_m0#p1-e52cc7a8",
+              "identity": {
+                "schema_id": "rh2.fa.execution_identity.v1",
+                "prompt_group_id": "miles_g0",
+                "group_index": 0,
+                "rollout_execution_id": "miles_g0_m0",
+                "branch_id": null,
+                "parent_rollout_id": null,
+                "physical_attempt_id": "miles_g0_m0#p1-e52cc7a8",
+                "physical_attempt_seq": 1
+              },
+              "member_slot": 0,
+              "attempt_number": 1,
+              "completion_class": "present_complete",
+              "termination_kind": "completed",
+              "failure_category": null,
+              "reason_code": "unsafe_artifact_permanent_rejection",
+              "failed_component": "patch_hygiene",
+              "recovery_scope": "none",
+              "task_outcome": "unknown",
+              "reward_unavailable": true,
+              "turn_weight_versions": [
+                "5",
+                "5"
+              ],
+              "intra_execution_version_span": 0,
+              "current_version_at_finalize": "5",
+              "current_version_at_consume": null,
+              "worst_token_lag": null,
+              "eligibility_report_id": null,
+              "evidence_refs": [
+                "audit:miles_g0_m0",
+                "snapshot:sha256:abc",
+                "s1-review-cpu",
+                "drain_receipt:drain_miles_g0_m0_p1-e52cc7a8",
+                "unsupported_delta_shape",
+                "object:?:unknown"
+              ]
+            },
+            "unsafe_artifact_reasons": [
+              "unsupported_delta_shape:?:unknown"
+            ],
+            "failure_records": [],
+            "rejection_evidence": {
+              "reason_code": "unsupported_delta_shape",
+              "object_path": null,
+              "object_type": null
+            },
+            "artifact_bodies_persisted": false,
+            "receipt_disposition": "delivery_prepared",
+            "delivered": [
+              {
+                "remove_sample": false,
+                "status": "completed",
+                "reward": "NaN",
+                "loss_mask": [
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1
+                ]
+              }
+            ]
+          },
+          {
+            "slot": 1,
+            "outcome": {
+              "schema_id": "rh2.fa.rollout_attempt_outcome.v2",
+              "outcome_id": "ov2_miles_g0_m1#p1-af9c51fc",
+              "identity": {
+                "schema_id": "rh2.fa.execution_identity.v1",
+                "prompt_group_id": "miles_g0",
+                "group_index": 0,
+                "rollout_execution_id": "miles_g0_m1",
+                "branch_id": null,
+                "parent_rollout_id": null,
+                "physical_attempt_id": "miles_g0_m1#p1-af9c51fc",
+                "physical_attempt_seq": 1
+              },
+              "member_slot": 1,
+              "attempt_number": 1,
+              "completion_class": "present_complete",
+              "termination_kind": "completed",
+              "failure_category": null,
+              "reason_code": null,
+              "failed_component": null,
+              "recovery_scope": "none",
+              "task_outcome": "unresolved",
+              "reward_unavailable": false,
+              "turn_weight_versions": [
+                "5"
+              ],
+              "intra_execution_version_span": 0,
+              "current_version_at_finalize": "5",
+              "current_version_at_consume": null,
+              "worst_token_lag": null,
+              "eligibility_report_id": "elig_c17a3c57b808",
+              "evidence_refs": [
+                "audit:miles_g0_m1",
+                "snapshot:sha256:abc",
+                "s1-review-cpu",
+                "drain_receipt:drain_miles_g0_m1_p1-af9c51fc",
+                "trusted_projection:rh2.trusted_scoring_projection.swe_hygiene.v1",
+                "trusted_projection:candidate=0:ignored=0"
+              ]
+            },
+            "unsafe_artifact_reasons": [],
+            "failure_records": [],
+            "rejection_evidence": null,
+            "artifact_bodies_persisted": true,
+            "receipt_disposition": "delivery_prepared",
+            "delivered": [
+              {
+                "remove_sample": false,
+                "status": "completed",
+                "reward": 0.0,
+                "loss_mask": [
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1,
+                  1
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "injected_entry_bug": {}
+    },
+    "authorization": "fa/pending_t0_frozen_patch_artifact.md approved 2026-08-17 sections 4,8; 06 plan A2 whole-group drop; batch4 D later approves file-to-dir support, implementation still pending",
+    "pending": "preserve structural rejection detail; narrow artifact-wide ValidationError conversion with P-D",
+    "injected_sort_bug_classification": "test_only, not observed spontaneous production failure"
+  },
+  "pandas_id_evidence": [
+    {
+      "reference": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\('2017',",
+      "parser_keys_after_backslash_normalization": [
+        "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\('2017',"
+      ],
+      "full_passed_case_count": 2,
+      "full_passed_lines": [
+        "PASSED pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\('2017', 'A-DEC'\\\\), 'foo', Period\\\\('2015', 'A-DEC'\\\\)-key5]",
+        "PASSED pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\('2017', 'A-DEC'\\\\), 'z1', 'bar'-key6]"
+      ]
+    },
+    {
+      "reference": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\('2019',",
+      "parser_keys_after_backslash_normalization": [
+        "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\('2019',"
+      ],
+      "full_passed_case_count": 3,
+      "full_passed_lines": [
+        "PASSED pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\('2019', 'A-DEC'\\\\), 'foo', 'bar'-key0]",
+        "PASSED pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\('2019', 'A-DEC'\\\\), 'y1', 'bar'-key1]",
+        "PASSED pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\('2019', 'A-DEC'\\\\), 'foo', 'z1'-key2]"
+      ]
+    },
+    {
+      "reference": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\('2018',",
+      "parser_keys_after_backslash_normalization": [
+        "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\('2018',"
+      ],
+      "full_passed_case_count": 2,
+      "full_passed_lines": [
+        "PASSED pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\('2018', 'A-DEC'\\\\), Period\\\\('2016', 'A-DEC'\\\\), 'bar'-key3]",
+        "PASSED pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\('2018', 'A-DEC'\\\\), 'foo', 'y1'-key4]"
+      ]
+    }
+  ],
+  "original_memory_mb": {
+    "all_ten_rows": 2406.297,
+    "seven_completed_test_rows": 1097.352
+  },
+  "method_limitations": [
+    "Three original task pairs ran before metacopy; pandas after header/storage change; not a repeated same-configuration capacity experiment.",
+    "Initial root S1 probe invocation omitted RH2_MILES_PATH and selected the default upstream checkout: four probe AttributeErrors; actual integration checkout rerun passed five.",
+    "Metacopy roundtrip touched only temporary reviewer-created containers/images; no daemon restart or kernel setting change.",
+    "Raw artifacts retained in git-ignored runs; no original e1 evidence overwritten."
+  ],
+  "evidence_sha256": {
+    "runs/swe_grading_e1_review_20260916/root/source_snapshot.json": "241b3450a9b657d23443a267b65271dc7d100dcfe7922da7d657416fef2d3592",
+    "runs/swe_grading_e1_review_20260916/root/focused_tests.txt": "63a7cb27f1b306e41964be4ede2764cb637acef49c5f174c0337a25f5d7397db",
+    "runs/swe_grading_e1_review_20260916/root/s1_integration_tests.txt": "4cb5ed8ba6b17f91d676ae3af918c2c454a7b2616f50839a2712e8750811209f",
+    "runs/swe_grading_e1_review_20260916/root/independent_ledger_check.json": "57627044f5e77bc6b68bb787429b8d4489901f55ee5ff33dee2348121d879103",
+    "runs/swe_grading_e1_review_20260916/root/supplement_check.json": "5b2bbc259c31d32e4d2c7ec00f71dd7c7a2dbbcada39809852824c652a973c03",
+    "runs/swe_grading_e1_review_20260916/root/check_supplement.py": "d5a6b9f67a0badb93a5076ca7a1268e89ccd1851f73e82ccf51692ce06905d44",
+    "runs/swe_grading_e1_review_20260916/root/test_s1_semantics.py": "56ee00b4070c25bca4d9cf0c40b184d005a598c782d7c313952b6cb4076cf632",
+    "runs/swe_grading_e1_review_20260916/root/metacopy_roundtrip.py": "3b7220315c0d9bf8891c25030650fd96a9cddeb15d5f0b0d706dac6b4a21007a",
+    "runs/swe_grading_e1_review_20260916/root/metacopy_roundtrip_write_control.py": "4bb0420ad0b0a0b72c3ec60f47e2365221f6b5414ebd22850911a319513917dd",
+    "runs/swe_grading_e1_review_20260916/root/remote_pandas_noop/metacopy_roundtrip.json": "beee8382f015109e5d6f1f50f8a7e5a0871e7b0f01ea51a39a4b84b46798b6c6",
+    "runs/swe_grading_e1_review_20260916/root/remote_pandas_noop/metacopy_roundtrip_write_control.json": "5cc2cbb93878bce6a0b61af5bcbbf772da66d05a6216ccf8ea3064fdae697433",
+    "runs/swe_grading_e1_review_20260916/root/remote_pandas_noop/metacopy_actual_snapshot.json": "3a9b16645e5c05caf07aa7b0d0eb8cb0363ae452fb8a711f5211c1c6c64f3be9",
+    "runs/swe_grading_e1_review_20260916/root/remote_pandas_noop/end_snapshot.json": "3ced625126af640af25dd17efd97450647ec920a475dd4638eb5db3f3e2ba488"
+  }
+}

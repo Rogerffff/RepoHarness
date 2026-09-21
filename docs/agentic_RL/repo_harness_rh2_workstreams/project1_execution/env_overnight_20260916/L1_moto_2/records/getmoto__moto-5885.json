@@ -1,0 +1,56 @@
+{
+ "task_id": "getmoto__moto-5885",
+ "source": "SWE-Gym lite (s2 ingest v0)",
+ "task_revision": "upstream",
+ "by": "L1_moto_2 (Opus 5, 静态审查, 2026-09-16)",
+ "materials_refs": {
+  "snapshot": "runs/env_overnight_20260916/L1_moto_2/mat/getmoto__moto-5885/",
+  "base_commit": "67197cb8a566ee5d598905f836c90de8ee9399e1",
+  "version": "4.1",
+  "eval_cmd": "pytest -n0 -rA",
+  "repo_level": "docs/.../env_overnight_20260916/L1_moto_2/repo_level_findings.md"
+ },
+ "public_view": {
+  "目标行为": "EKS create/describe nodegroup 的 launchTemplate 字段要同时返回 name 和 id，不论创建时给的是哪一个。",
+  "约束": "只改 moto/ 源码。",
+  "公开材料可推断": "base 的 ManagedNodegroup.__init__ 直接 `self.launch_template = launch_template` 原样存（67197cb8a5:moto/eks/models.py:278），__iter__ 也原样输出（同文件 308）。需要用 EC2 backend 按 name 或 id 反查模板补齐另一半。",
+  "公开材料无法确定的点": [
+   "题面没说\"模板不存在\"时该怎么办（报错还是原样返回）。F2P/P2P 里恰好有一条 test_passing_an_unknown_launchtemplate_is_supported 要求**原样返回且不报错**，这条要求题面完全没有。",
+   "题面没说 version 字段（AWS 响应里有 version）是否要补；测试用精确 dict 相等，隐含不补。",
+   "题面没说是在创建时解析还是在 describe 时解析。"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5885/test.patch", "67197cb8a5:tests/test_eks/"], "note": "test_patch **新建** tests/test_eks/test_eks_ec2.py（base 该路径不存在，base 的 tests/test_eks/ 只有 __init__.py、test_eks.py、test_eks_constants.py、test_eks_utils.py、test_server.py）。新文件 `from .test_eks_constants import NODEROLE_ARN_VALUE, SUBNET_IDS` 依赖的两个常量在 base 已存在（67197cb8a5:tests/test_eks/test_eks_constants.py:20,53），不需要额外恢复。gold 只碰 moto/eks/models.py（base 存在）。", "by": "static"},
+  "2": {"status": "pass", "evidence_refs": ["67197cb8a5:moto/eks/models.py:278,308"], "note": "base 原样存取 launch_template，缺陷确在。stage1 empty=RESOLVED_NO 印证。", "by": "static+stage1"},
+  "3": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5885/problem_statement.txt"], "note": "题面 934 字符，含 AWS 响应结构与现象描述，无外链/截断。", "by": "static"},
+  "4": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5885/test.patch"], "note": "合法解在 moto/eks/models.py。", "by": "static"},
+  "5": {"status": "pass", "evidence_refs": ["本包其余 19 题"], "note": "本包唯一的 EKS 题。", "by": "static"},
+  "6": {"status": "issue", "evidence_refs": ["repo_level_findings.md#R2"], "note": "4.1，离线 make init rc=2（共性）。", "by": "stage1"},
+  "9": {"status": "pass", "evidence_refs": ["repo_level_findings.md#R3"], "note": "仓库级共性证据。", "by": "static+stage1"},
+  "11": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5885/test.patch"], "note": "新测试只用 mock_ec2 + mock_eks，无 network marker、无真实端点。", "by": "static"},
+  "17": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5885/test.patch"], "note": "test_patch 只触碰 1 个新建的纯测试文件。恢复语义上是\"创建该文件\"，不覆盖任何源码。", "by": "static"},
+  "19": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5885/grading.json"], "note": "无参数化 ID，不受 R8 影响。", "by": "static"},
+  "23": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-5885/problem_statement.txt", "mat/getmoto__moto-5885/test.patch"], "note": "P2P 唯一那条要求（未知模板必须被静默接受、原样返回）在题面没有依据。求解者若按\"应当校验模板存在\"来实现（这也是 hints 里维护者说的 'verify it exists'），就会挂掉这条 P2P。这是一条题面无依据、且与 hints 表述相反的判据。", "by": "static"},
+  "24": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-5885/test.patch"], "note": "F2P 用 `group[\"launchTemplate\"].should.equal({\"name\": \"ltn\", \"id\": lt_id})` 做**精确 dict 相等**。AWS 真实响应里 launchTemplate 还有 version 字段；一个按 AWS 语义把 version 也补上的实现会被这条断言否决。约束偏紧，但影响面小于 5737。", "by": "static"},
+  "25": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-5885/grading.json", "67197cb8a5:tests/test_eks/test_eks.py"], "note": "**判分集合异常小：1 个 F2P 文件里的 3 个测试（2 F2P + 1 P2P），base 既有的整个 tests/test_eks/test_eks.py（15 处 create_nodegroup 调用）完全不在判分集合内。** 后果：一个在 launchTemplate 缺省（None）时崩溃的实现，照样 F2P+P2P 全绿——因为 3 个判分用例全部显式传了 launchTemplate。这是本包里\"测试放过错误修复\"最严重的一例。", "by": "static"},
+  "26": {"status": "issue", "evidence_refs": ["67197cb8a5:moto/eks/models.py:236,278", "67197cb8a5:tests/test_eks/test_eks.py"], "note": "改动位于 ManagedNodegroup.__init__，是所有 create_nodegroup 的必经路径，而判分集合不含任何既有 EKS 测试。必须扩展回归，见 proposed_regression_tests。", "by": "static"},
+  "27": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-5885/gold.patch", "67197cb8a5:moto/eks/models.py:236"], "note": "**gold 用裸 `except:` 吞掉全部异常（自带 `# noqa: E722` 注释），而且这个裸 except 是承重的**：`launch_template` 默认值为 None（models.py:236），gold 里 `if \"name\" in self.launch_template` 对 None 会抛 TypeError，正是靠裸 except 才让\"不传 launchTemplate\"这条最常见路径继续工作。同一个裸 except 也让\"模板不存在\"静默降级，从而满足那条 P2P。结果是：真实错误（EC2 backend 异常、数据损坏）与预期分支被同一个 except 掩盖。参考解可用但质量差。", "by": "static"},
+  "29": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5885/hints.txt"], "note": "hints 只说明 moto 目前原样存储、将标为 enhancement，不含代码/行号。注意 hints 说的方向（\"verify it exists\"）与判分集合实际要求（未知模板必须被接受）相反。", "by": "static"},
+  "7": {"status": "not_applicable", "evidence_refs": [], "note": "无外部资产。", "by": "static"}
+ },
+ "issues": [
+  {"category": "测试放过错误修复（判分覆盖过窄）", "severity": "P1", "evidence_refs": ["mat/getmoto__moto-5885/grading.json", "67197cb8a5:tests/test_eks/test_eks.py", "67197cb8a5:moto/eks/models.py:236"], "proposed_action": "本题必须扩展回归才能用于训练或评测：判分集合只有 3 个用例且全部显式传 launchTemplate，`launchTemplate` 缺省这条主路径无人看守。建议把 tests/test_eks/test_eks.py 作为固定扩展回归，与原 F2P/P2P 分开记录，不改原参考集。", "next_experiment": "构造一个去掉 try/except 的\"修复\"（直接 `if \"name\" in self.launch_template`），在真实 grader 上跑 F2P+P2P，预期全绿；再跑 tests/test_eks/test_eks.py，预期大面积 TypeError —— 形成具体反例。"},
+  {"category": "题面无依据的 reward 判据", "severity": "P2", "evidence_refs": ["mat/getmoto__moto-5885/test.patch", "mat/getmoto__moto-5885/hints.txt"], "proposed_action": "记录\"未知模板必须静默接受\"这条 P2P 无题面依据且与 hints 的表述方向相反；作为欠明确题面样本。", "next_experiment": "盲解一次，看是否有人实现了存在性校验而挂在这条 P2P 上。"},
+  {"category": "gold 质量（承重的裸 except）", "severity": "P2", "evidence_refs": ["mat/getmoto__moto-5885/gold.patch"], "proposed_action": "记录参考解用裸 except 兼当控制流；这是\"gold 也可能有缺陷\"的样本，不因此拒题。", "next_experiment": "无需额外实验，静态可判。"},
+  {"category": "精确 dict 相等约束", "severity": "P3", "evidence_refs": ["mat/getmoto__moto-5885/test.patch"], "proposed_action": "记录 F2P 的精确相等会否决补 version 字段的更完整实现。", "next_experiment": "无。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只新建 1 个纯测试文件；它依赖的 test_eks_constants.py 未被 test_patch 触碰，也不需要额外排除。", "evidence_refs": ["mat/getmoto__moto-5885/test.patch", "67197cb8a5:tests/test_eks/test_eks_constants.py:20,53"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_eks/test_eks.py", "reason": "**最关键的一条**：base 既有的 EKS 主测试文件，含 15 处 create_nodegroup 调用且绝大多数不传 launchTemplate，正是 gold 改动所在的 __init__ 的主路径，却完全不在判分集合内。"},
+  {"id": "tests/test_eks/test_server.py", "reason": "moto server 模式下的 EKS 路径，确认新增的跨 backend（EKS→EC2）调用在非 decorator 场景也可用。"},
+  {"id": "tests/test_ec2/test_launch_templates.py", "reason": "gold 新调用了 ec2.describe_launch_templates(template_names=/template_ids=)，确认参数形态与该接口契约一致。"}
+ ],
+ "disposition_hint": {"state": "needs_review", "reason": "环境与材料可用、初态含问题、gold 达成题面目标；但判分集合只有 3 个用例、把整个既有 EKS 测试排除在外，允许\"缺省 launchTemplate 即崩溃\"的实现拿满分（P1）。用于训练或评测前需要先定扩展回归。"},
+ "costs": {"minutes": 20}
+}

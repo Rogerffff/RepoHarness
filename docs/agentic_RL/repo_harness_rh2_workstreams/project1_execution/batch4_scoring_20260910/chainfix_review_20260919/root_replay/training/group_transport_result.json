@@ -1,0 +1,348 @@
+{
+  "miles_head": "4c04f997b60fd08c36941d8715db06bfc0ed0543",
+  "r1_bad": {
+    "qualification_injected_for_cpu_experiment": true,
+    "reports": [
+      {
+        "trajectory_id": "miles_g0_m0",
+        "outcome": "resolved",
+        "category": null,
+        "reward": 1.0
+      },
+      {
+        "trajectory_id": "miles_g0_m1",
+        "outcome": "unresolved",
+        "category": "candidate_execution_failed",
+        "reward": 0.0
+      }
+    ],
+    "decisions": [
+      null,
+      {
+        "trigger": "reference_all_missing",
+        "kind": "candidate",
+        "stage": "test_collection",
+        "rule": "pytest_error_collecting",
+        "evidence": [
+          "_____________________ ERROR collecting tests/test_thing.py _____________________",
+          "test_rc=2",
+          "VALUE = load_metadata(\"src/unused.py\")",
+          "compile_probe:src/unused.py:SyntaxError:line=1:invalid syntax",
+          "env_qualification:ok:cpu-probe:prior-gold"
+        ],
+        "missing": [],
+        "resource": {
+          "oom_kill_events": 0,
+          "pids_events_max": 0,
+          "container_oom_killed": false,
+          "test_rc": 2,
+          "signal_exit": false
+        },
+        "qualification": "ok:cpu-probe:prior-gold",
+        "compile_probe": {
+          "error": null,
+          "ok": [],
+          "error_paths": [
+            "src/unused.py:SyntaxError:line=1:invalid syntax"
+          ],
+          "missing": [],
+          "interpreter": "<REPO>/rh2/.venv/bin/python",
+          "paths_probed": [
+            "src/unused.py"
+          ]
+        },
+        "candidate_python_paths": [
+          "src/unused.py"
+        ],
+        "referenced_candidate_paths": [
+          "src/unused.py"
+        ],
+        "install_rc_baseline": 0
+      }
+    ],
+    "group_buffered": true,
+    "recycled": 0,
+    "metrics": {
+      "rollout/fully_async/queue_size": 1,
+      "rollout/fully_async/aborted_groups_filtered": 0,
+      "rollout/fully_async/stale_groups_filtered": 0
+    },
+    "train_data": {
+      "raw_reward": [
+        1.0,
+        0.0
+      ],
+      "loss_masks": [
+        [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      ]
+    }
+  },
+  "r1_clean_same_log": {
+    "qualification_injected_for_cpu_experiment": true,
+    "reports": [
+      {
+        "trajectory_id": "miles_g0_m0",
+        "outcome": "resolved",
+        "category": null,
+        "reward": 1.0
+      },
+      {
+        "trajectory_id": "miles_g0_m1",
+        "outcome": "failed_to_grade",
+        "category": "test_log_parse_failed",
+        "reward": null
+      }
+    ],
+    "decisions": [
+      null,
+      {
+        "trigger": "reference_all_missing",
+        "kind": "unattributed",
+        "stage": "test_collection",
+        "rule": "pytest_error_collecting",
+        "evidence": [],
+        "missing": [
+          "compile_probe_clean"
+        ],
+        "resource": {
+          "oom_kill_events": 0,
+          "pids_events_max": 0,
+          "container_oom_killed": false,
+          "test_rc": 2,
+          "signal_exit": false
+        },
+        "qualification": "ok:cpu-probe:prior-gold",
+        "compile_probe": {
+          "error": null,
+          "ok": [
+            "src/unused.py"
+          ],
+          "error_paths": [],
+          "missing": [],
+          "interpreter": "<REPO>/rh2/.venv/bin/python",
+          "paths_probed": [
+            "src/unused.py"
+          ]
+        },
+        "candidate_python_paths": [
+          "src/unused.py"
+        ],
+        "referenced_candidate_paths": [
+          "src/unused.py"
+        ],
+        "install_rc_baseline": 0
+      }
+    ],
+    "group_buffered": false,
+    "recycled": 0,
+    "metrics": {
+      "rollout/fully_async/queue_size": 0,
+      "rollout/fully_async/aborted_groups_filtered": 0,
+      "rollout/fully_async/stale_groups_filtered": 0,
+      "rollout/dynamic_filter/drop_admission_reward_scope_none": 1
+    }
+  },
+  "r4_simple": {
+    "qualification_injected_for_cpu_experiment": false,
+    "reports": [
+      {
+        "trajectory_id": "miles_g0_m0",
+        "outcome": "resolved",
+        "category": null,
+        "reward": 1.0
+      },
+      {
+        "trajectory_id": "miles_g0_m1",
+        "outcome": "unresolved",
+        "category": "tests_failed",
+        "reward": 0.0
+      }
+    ],
+    "decisions": [
+      null,
+      {
+        "trigger": "reference_all_missing",
+        "kind": "source_rule",
+        "stage": null,
+        "rule": null,
+        "evidence": [],
+        "missing": [
+          "shape_undetermined"
+        ],
+        "resource": null,
+        "qualification": null,
+        "compile_probe": null,
+        "candidate_python_paths": null,
+        "referenced_candidate_paths": null,
+        "install_rc_baseline": null
+      }
+    ],
+    "group_buffered": true,
+    "recycled": 0,
+    "metrics": {
+      "rollout/fully_async/queue_size": 1,
+      "rollout/fully_async/aborted_groups_filtered": 0,
+      "rollout/fully_async/stale_groups_filtered": 0
+    },
+    "train_data": {
+      "raw_reward": [
+        1.0,
+        0.0
+      ],
+      "loss_masks": [
+        [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      ]
+    }
+  },
+  "r4_nested": {
+    "qualification_injected_for_cpu_experiment": false,
+    "reports": [
+      {
+        "trajectory_id": "miles_g0_m0",
+        "outcome": "resolved",
+        "category": null,
+        "reward": 1.0
+      },
+      {
+        "trajectory_id": "miles_g0_m1",
+        "outcome": "failed_to_grade",
+        "category": "test_log_parse_failed",
+        "reward": null
+      }
+    ],
+    "decisions": [
+      null,
+      {
+        "trigger": "reference_all_missing",
+        "kind": "unattributed",
+        "stage": "test_startup",
+        "rule": "python_traceback_startup_error",
+        "evidence": [],
+        "missing": [
+          "qualification:absent",
+          "no_candidate_path_in_failure_evidence"
+        ],
+        "resource": {
+          "oom_kill_events": 0,
+          "pids_events_max": 0,
+          "container_oom_killed": false,
+          "test_rc": 1,
+          "signal_exit": false
+        },
+        "qualification": "absent",
+        "compile_probe": null,
+        "candidate_python_paths": [
+          "src/id_source.py"
+        ],
+        "referenced_candidate_paths": [],
+        "install_rc_baseline": 0
+      }
+    ],
+    "group_buffered": false,
+    "recycled": 0,
+    "metrics": {
+      "rollout/fully_async/queue_size": 0,
+      "rollout/fully_async/aborted_groups_filtered": 0,
+      "rollout/fully_async/stale_groups_filtered": 0,
+      "rollout/dynamic_filter/drop_admission_reward_scope_none": 1
+    }
+  }
+}

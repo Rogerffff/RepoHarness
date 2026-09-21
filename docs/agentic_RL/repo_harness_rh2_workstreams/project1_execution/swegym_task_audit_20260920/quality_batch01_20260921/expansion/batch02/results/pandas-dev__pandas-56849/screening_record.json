@@ -1,0 +1,485 @@
+{
+  "task_id": "pandas-dev__pandas-56849",
+  "task_revision": "upstream / s2 ingest v0 / public audit bundle v2",
+  "source_adapter_ref": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl:156",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:156",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl:156",
+    "rh2/src/repoharness2/adapters/slime/prepared_task_face.py:187-336",
+    "rh2/src/repoharness2/envpack/scoring.py:189-309",
+    "rh2/src/repoharness2/envpack/swegym_parsers.py:44-55"
+  ],
+  "recipe_ref": [
+    "runs/swegym_quality_batch02_20260921_v2/public/pandas-dev__pandas-56849/public_bundle.json:1 (original public image digest sha256:a8a1cad925505ccd8abad28474286566aed5b0ead05b235354c0611228daf13a)",
+    "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-3/ledger.jsonl:11-12 (derived_image_recipe=null; grader profile rh2.grader_sandbox_profile.v1, UID54322; actor not qualified)"
+  ],
+  "code_snapshot_ref": [
+    "runs/swegym_quality_batch02_20260921_v2/public/pandas-dev__pandas-56849/base_identity.json:3-4 (base 612823e824805b97a2dbe258ba808dc572083d49; tree edb634158e9d744dc86b29409271680833e98e86)",
+    "ROOT HEAD e3d120b55a62cca5985f688de8cdd481b12ea6be (read-only source snapshot; not historical scripts identity)",
+    "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-3/ledger.jsonl:11-12 (scripts_digest sha256:b5ed45e5309fc723231bcc855844da9a1d3a6bc2146f8ffaeca7aa08a9882765)"
+  ],
+  "facts_ref": [
+    "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-3/ledger.jsonl:11 (run_id=f216-baseline01-w06-3; attempt=1; candidate=noop; grader54322)",
+    "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-3/ledger.jsonl:12 (run_id=f216-baseline01-w06-3; attempt=1; candidate=gold; grader54322)",
+    "runs/swegym_quality_batch02_20260921_v2/private/pandas-dev__pandas-56849/run_refs.json:1-16",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/old_findings_delta.md"
+  ],
+  "checks": {
+    "1": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/private/pandas-dev__pandas-56849/source_refs.json:2-12",
+        "runs/swegym_quality_batch02_20260921_v2/public/pandas-dev__pandas-56849/public_bundle.json:1",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#1"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "本题精确S2行与局部JSON相符；base/官方patch/gold/image对应，完整物化复核沿协调者已有结果，未重做全包。"
+    },
+    "2": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-3/ledger.jsonl:11",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-3/eval_logs/evallog_replay-f216-baseline01-w_1d6b2dfa.eval.log:3090-3444"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "静态根因与已有真实noop目标traceback一致；不是新CPU复现。"
+    },
+    "3": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/public/pandas-dev__pandas-56849/user_prompt.txt:1-80",
+        "runs/swegym_quality_batch02_20260921_v2/public/pandas-dev__pandas-56849/environment_brief.md:18-26"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "当前静态prompt完整；public_hints实际消息注入、CLI工具附加文本待actor核对。"
+    },
+    "4": {
+      "status": "pass",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#6",
+        "rh2/src/repoharness2/adapters/slime/prepared_task_face.py:312-336"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "本题有非测试源码合法修复路径；仅按精确official路径恢复，非所有tests/testing文件一概剔除。"
+    },
+    "5": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/old_findings_delta.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/review.md; Independent reviewer and coordinator directly read53958/56849 public cast.py:626-631/634-639 containing the earlier48106 categorical branch, and56849 api/typing/__init__.py:5-6 containing53958 type exports. These are version-inclusion relations, not duplicate-task proof or observed runtime leakage; the original investigator did not claim this cross-task read."
+      ],
+      "by": "original investigator scope preserved; b2_review_pandas and coordinator relation supplement",
+      "note": "Original investigator did not inspect cross-task relationships; independent reviewer and coordinator now confirm later-base inclusion. Duplicate/grouping/runtime leakage implications remain unknown."
+    },
+    "6": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-3/ledger.jsonl:11-12",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-3/eval_logs/evallog_replay-f216-baseline01-w_2a3467af.eval.log:3025-3097"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "已有grader安装和实际Cython增量重编可解释；此pass只指所引运行，不含actor恢复验收。"
+    },
+    "7": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/public/pandas-dev__pandas-56849/user_prompt.txt:7",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#5"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "核心复现和已读测试是字面日期与本地库，不需额外业务资产/服务；未据此声称全仓资产完备。"
+    },
+    "8": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-3/ledger.jsonl:11-12",
+        "runs/swegym_quality_batch02_20260921_v2/public/pandas-dev__pandas-56849/environment_brief.md:9-12"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "日志为rh2grader/54322；apply_user=agent/54321只是补丁应用，正式actor导入/编译权限未知。"
+    },
+    "9": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-3/eval_logs/evallog_replay-f216-baseline01-w_2a3467af.eval.log:3066-3097",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-3/ledger.jsonl:12"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "所引gold实际重新编译offsets.pyx、C对象并链接扩展，工作区导入路径与目标版本有观测；限此次grader证据。"
+    },
+    "10": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#5",
+        "runs/swegym_quality_batch02_20260921_v2/public/pandas-dev__pandas-56849/environment_brief.md:12"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "已定位公开开发入口、导入和重编译需求；正式actor可执行性尚无验收。"
+    },
+    "11": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/public/pandas-dev__pandas-56849/user_prompt.txt:7",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-3/ledger.jsonl:11-12",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#5"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "本地字面日期复现无必需运行期公网；既有grader在deny_all下完成。准备和actor网络仍沿共享约束。"
+    },
+    "12": {
+      "status": "not_applicable",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#2",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#5"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "目标路径无外部服务或网络mock语义。"
+    },
+    "13": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-3/ledger.jsonl:11-12"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "既有grader2CPU/4GiB及峰值可用作观测，未测actor重编译资源或代表并发。"
+    },
+    "14": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/old_findings_delta.md"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "读取不同阶段旧对照不等于同条件稳定性重复验收。"
+    },
+    "15": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-3/ledger.jsonl:11-12"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "未核真实actor缓存、连续复用或并发；历史cleanup字段不足以包办。"
+    },
+    "16": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-3/ledger.jsonl:12",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#6"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "历史gold included_paths仅offsets.pyx，真实重编并产生目标分差；限普通源码修改形状。"
+    },
+    "17": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/private/pandas-dev__pandas-56849/test.patch:1-34",
+        "rh2/src/repoharness2/adapters/slime/prepared_task_face.py:187-234",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-3/eval_logs/evallog_replay-f216-baseline01-w_2a3467af.eval.log:1533-1583"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "两个精确official文件均纯测试；从base恢复后apply成功，合法.pyx未被覆盖。"
+    },
+    "18": {
+      "status": "pass",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#4",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-3/eval_logs/evallog_replay-f216-baseline01-w_2a3467af.eval.log:3106-3575"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "历史两个文件426节点有正常完整收尾和F2P失败/通过证据；实际执行、参考键及阅读范围分列。"
+    },
+    "19": {
+      "status": "issue",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#4",
+        "rh2/src/repoharness2/envpack/swegym_parsers.py:44-55"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "空白split使10个实际节点合为4键，426状态行只有420参考键；这两次合并节点全PASSED，未证明现有分差错判。"
+    },
+    "20": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-3/ledger.jsonl:11-12",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#1",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#4"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "noop在m目标路径失败，gold重编后目标通过且419参考P2P无失败；分差有真实原件依据。"
+    },
+    "21": {
+      "status": "pass",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#4",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#5",
+        "rh2/src/repoharness2/envpack/scoring.py:189-309",
+        "rh2/src/repoharness2/grading/manager.py:1197-1230"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "所引noop/gold未见安装/收集全局失败；读完整安装成功正文而非只信末行RC，正常非参考失败不自动reward0。"
+    },
+    "22": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/old_findings_delta.md",
+        "rh2/src/repoharness2/envpack/swegym_parsers.py:1-117"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "已读来源适配/parser及历史脚本，但未做当前条件的来源runner与RH2独立同条件对拍。"
+    },
+    "23": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/public/pandas-dev__pandas-56849/user_prompt.txt:3-77",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#1",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/old_findings_delta.md"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "核心m月末目标清楚；当前base公开支持M弃用与ME规范名。精确warning措辞争议归24，不用旧repr否定现接口。"
+    },
+    "24": {
+      "status": "issue",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/private/pandas-dev__pandas-56849/test.patch:9-18",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#3"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "要求warning中必须小写m可能拒绝先规范化已识别旧别名的合理实现；有静态依据，无候选实测，独立reviewer支持该静态疑点；未升级为实测误拒。"
+    },
+    "25": {
+      "status": "issue",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#2",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#3",
+        "runs/swegym_quality_batch02_20260921_v2/public/pandas-dev__pandas-56849/base/pandas/_testing/asserters.py:181-349"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "仅2点F2P不直接覆盖20点、m倍数或共享to_offset；assert_index_equal未检查freq属性。部分实现获分尚未实测。"
+    },
+    "26": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#2",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#8"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "已查相关P2P和公开Period/offset名称边界；没有全P2P测试体、扩展回归执行或全部别名组合保证。"
+    },
+    "27": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/private/pandas-dev__pandas-56849/gold.patch:1-23",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#2",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-3/ledger.jsonl:12"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "gold仅三处查表使用upper，保留warning输入/is_period隔离，未引依赖；现有grader通过。限核心任务及已读边界。"
+    },
+    "28": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#7"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "提出公开依据支持的窄对照，未加测试/规格或跑正负候选；不能把建议当验证完成。"
+    },
+    "29": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/public/pandas-dev__pandas-56849/base_identity.json:11",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/old_findings_delta.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#6"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "静态公开导出不含私有答案；真实镜像/Git/缓存可见面未验。旧文本扫描不替代actor验收。"
+    },
+    "30": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#6"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "实际工具出网与取得答案行为未测；本轮无模型轨迹。"
+    },
+    "31": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#6",
+        "rh2/src/repoharness2/grading/trusted_projection.py:18-20"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "official保护可定位；warnings/asserters/conftest等非official控制面仍是共享限制，未作攻击实验或新增排除。"
+    },
+    "32": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/private/pandas-dev__pandas-56849/test.patch:9-18",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#2"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "核心F2P真实调用date_range并比较日期值，不匹配gold代码；精确warning疑点与覆盖限度分别记录，非全面正确性证明。"
+    },
+    "33": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#7"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "没有本轮真实solver或目标基座运行，不从gold/静态难度推断能力和成本。"
+    },
+    "34": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#7"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "没有本轮真实solver或目标基座运行，不从gold/静态难度推断能力和成本。"
+    },
+    "35": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#7"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "没有本轮真实solver或目标基座运行，不从gold/静态难度推断能力和成本。"
+    },
+    "36": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#7"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "没有本轮真实solver或目标基座运行，不从gold/静态难度推断能力和成本。"
+    },
+    "37": {
+      "status": "not_applicable",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/old_findings_delta.md"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "未修改环境/题面/测试/参考；保持原版与空revision_refs。"
+    },
+    "38": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/old_findings_delta.md"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "封存初稿已核SHA，独立reviewer和候选实验仍待完成。"
+    },
+    "39": {
+      "status": "not_applicable",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/old_findings_delta.md"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "未实现共享修复，无新变更需跨题回归。"
+    },
+    "40": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/old_findings_delta.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#8"
+      ],
+      "by": "B2 pandas investigator; independent review consolidated",
+      "note": "本记录有阅读/暴露声明；不据单题审计估全池漏检率或宣称独立复核完成。"
+    }
+  },
+  "issues": [
+    {
+      "category": "warning_message_overconstraint",
+      "scope": "task_test_semantics",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/private/pandas-dev__pandas-56849/test.patch:9-18",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#3",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/old_findings_delta.md"
+      ],
+      "proposed_action": "先验证仅规范化已识别旧别名、以M发warning的语义正确非gold实现；按实际失败原因再判断是否修订匹配或规格。",
+      "status": "needs_review",
+      "evidence_level": "static_inference",
+      "note": "无候选CPU执行；FutureWarning类别及ME替代名有公开依据。"
+    },
+    {
+      "category": "behavioral_coverage_limit",
+      "scope": "task_test_coverage",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#2",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#3",
+        "runs/swegym_quality_batch02_20260921_v2/public/pandas-dev__pandas-56849/base/pandas/_testing/asserters.py:181-349",
+        "runs/swegym_quality_batch02_20260921_v2/public/pandas-dev__pandas-56849/base/pandas/core/indexes/datetimelike.py:141-175"
+      ],
+      "proposed_action": "在后续对照中记录公开20点、m倍数/共享入口及freq属性；不先追加全仓测试硬门。",
+      "status": "needs_review",
+      "evidence_level": "static_inference",
+      "note": "自然部分实现可能存活，尚无获分反例。"
+    },
+    {
+      "category": "reference_identity_collision",
+      "scope": "shared_parser_applied_to_task",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#4",
+        "rh2/src/repoharness2/envpack/swegym_parsers.py:44-55",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-3/ledger.jsonl:11-12"
+      ],
+      "proposed_action": "保留原冻结参考并记录4个合并键；若拟变更身份处理，应独立保存语义映射及混合状态证据。",
+      "status": "needs_review",
+      "evidence_level": "historical_real_rh2_and_static_parser",
+      "note": "实际426节点、参考420键；现有noop/gold的合并节点都通过，因此不改现有分差。"
+    },
+    {
+      "category": "actor_conditions_unverified",
+      "scope": "actor_environment",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#5",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-3/ledger.jsonl:11-12",
+        "runs/swegym_quality_batch02_20260921_v2/public/pandas-dev__pandas-56849/environment_brief.md:9-12"
+      ],
+      "proposed_action": "沿共享正式actor入口核UID54321、实际shell解释器、checkout导入和Cython重编译权限。",
+      "status": "unknown",
+      "evidence_level": "grader_observed_actor_unknown",
+      "note": "apply_user不证明开发身份，grader54322成功不等于actor通过；不据缺证据自动判坏题。"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "本题official仅两个纯测试文件；合法offsets.pyx可投影。默认test_globs=()，无新路径排除依据。",
+    "evidence_refs": [
+      "runs/swegym_quality_batch02_20260921_v2/private/pandas-dev__pandas-56849/test.patch:1-34",
+      "runs/swegym_quality_batch02_20260921_v2/private/pandas-dev__pandas-56849/gold.patch:1-23",
+      "rh2/src/repoharness2/adapters/slime/prepared_task_face.py:312-336",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md#6"
+    ],
+    "applied_version": "unchanged; rh2.trusted_scoring_projection.swe_hygiene.v1"
+  },
+  "revision_refs": [],
+  "disposition": {
+    "state": "needs_review",
+    "scope": "static_review",
+    "reason": "Independent review consolidated; limited static development_diagnostic candidate. Core public behavior and historical grader differential are supported. Lowercase warning requirement, unasserted DatetimeIndex.freq and reference identity merging remain bounded concerns, without observed candidate wrong reward. Priority is one canonical-M-warning comparison; actual actor qualification is separate.",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/analysis_before_history.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/old_findings_delta.md",
+      "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-3/ledger.jsonl:11-12",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/review.md"
+    ],
+    "reviewer": "B2 investigator; independent b2_review_pandas; coordinator consolidated"
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "exposure_notes": [
+      "本主审阅读本题公开包、base局部源码/测试、本题public_read及隐藏test/gold/冻结参考；不是solver盲解；未读reviewer、B1/B2聚合/manifest/assignments。",
+      "无历史初稿先保存并由协调者核验封存；SHA256=9d48e0f2531053df00fcc01e35dbed722f72898525894d54d6c61354539a10d2；随后才开放本题history refs和旧记录，范围见old_findings_delta。",
+      "范围偏差：发生于56849初稿封存且历史开放之后，误读 runs/env_overnight_20260916/L1_modin_pandas/collide_detail.json 前3行。三行仅为 { 、键 pandas-dev__pandas-48106 、scoring_keys_with_collision: 2。未读其余正文，已立即报告并停止；不将此数字作为48106结论。协调者已安排48106/53958交新鲜主审，本主审只完成56849后结束。",
+      "封存分析未改；未运行项目、测试、安装、Docker、SSH、网络或付费模型，未修改source/test/gold/reward；自有产物不提供未来solver。",
+      "Independent final review completed after all three initial drafts sealed. Independent reviewer and coordinator directly read53958/56849 public cast.py:626-631/634-639 containing the earlier48106 categorical branch, and56849 api/typing/__init__.py:5-6 containing53958 type exports. These are version-inclusion relations, not duplicate-task proof or observed runtime leakage; the original investigator did not claim this cross-task read.",
+      "Reviewer final report separately confirms its permitted environment summary exposure and no early quality-history followup. Main investigator aggregate incident remains disclosed; fresh replacement investigators for48106/53958 were not given that incident/count."
+    ]
+  },
+  "costs": {
+    "container_wall_seconds": null,
+    "agent_tokens": null,
+    "human_decisions": null,
+    "source_refs": []
+  }
+}

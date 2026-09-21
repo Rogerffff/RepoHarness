@@ -1,0 +1,82 @@
+{
+  "python_version": "3.12.13",
+  "pytest_version": "9.1.1",
+  "pytest_cases": {
+    "default": {
+      "rc": 2,
+      "parsed": {
+        "tests/test_thing.py": "ERROR"
+      },
+      "num_parsed_tests": 1,
+      "reference_missing": [
+        "tests/test_thing.py::test_answer"
+      ],
+      "candidate_file_in_traceback": true,
+      "current_outcome_fields": {
+        "outcome": "unresolved",
+        "failure_category": "tests_failed",
+        "reward": 0.0,
+        "f2p_pass_count": 0,
+        "f2p_total_count": 1,
+        "p2p_fail_count": 0,
+        "p2p_total_count": 0
+      },
+      "excerpts": [
+        "_____________________ ERROR collecting tests/test_thing.py _____________________",
+        "E     File \"/testbed/src/thing.py\", line 1",
+        "E   SyntaxError: invalid syntax",
+        "!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!"
+      ]
+    }
+  },
+  "conftest_startup_syntax_error": {
+    "rc": 4,
+    "parsed": {},
+    "has_error_collecting_marker": false,
+    "py_compile_rc": 1,
+    "syntax_error_confirmed": true,
+    "current_manager_result": {
+      "exception": "GradingInfraError",
+      "detail": "eval_log_zero_parsed_tests"
+    },
+    "excerpts": [
+      "ImportError while loading conftest '/testbed/conftest.py'.",
+      "E     File \"/testbed/conftest.py\", line 1",
+      "E   SyntaxError: invalid syntax"
+    ]
+  },
+  "zero_parsed": {
+    "exception": "GradingInfraError",
+    "detail": "eval_log_zero_parsed_tests"
+  },
+  "py_compile_counterexamples": {
+    "valid_source_default_rc": 0,
+    "writes_pyc_even_with_B_and_dontwritebytecode": true,
+    "valid_source_blocked_cache_rc": 1,
+    "blocked_cache_stderr": "[Errno 20] Not a directory: 'src/__pycache__/thing.cpython-312.pyc.<temporary-id>'",
+    "same_source_in_memory_compile": "passed",
+    "local_module_shadow_rc": 1,
+    "local_module_executed": true
+  },
+  "resource_veto_fallback": [
+    {
+      "resource_input": "oom_kill > 0 (assumed input)",
+      "new_category_allowed_by_plan": false,
+      "unchanged_fallback_category": "tests_failed",
+      "unchanged_fallback_reward": 0.0
+    },
+    {
+      "resource_input": "required resource read unavailable (assumed input)",
+      "new_category_allowed_by_plan": false,
+      "unchanged_fallback_category": "tests_failed",
+      "unchanged_fallback_reward": 0.0
+    }
+  ],
+  "source_sha256": {
+    "rh2/src/repoharness2/grading/manager.py": "bf02d0a2a6a450eed9dc4e49ae7961280fcf65726c3025ee46fdd5049599aa02",
+    "rh2/src/repoharness2/envpack/scoring.py": "ddd2bbfa1a75c0b27edbf07e42a68dd65612ff6bba0bce8f86ea954e5346e33f",
+    "rh2/src/repoharness2/envpack/swegym_parsers.py": "995bb6aae58a94f9553946c2f9aea59a158ad4fdf4d7fc0137802c11362b2276",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/batch4_scoring_20260910/impl_plan_20260915.md": "5c05c457b839799ee79400249f91c3ecec9ba08867e6d949a78dd50867432159"
+  },
+  "assertions": "passed"
+}

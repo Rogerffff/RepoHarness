@@ -1,0 +1,81 @@
+{
+ "task_id": "Project-MONAI__MONAI-1121",
+ "source": "SWE-Gym lite / Project-MONAI/MONAI PR 1121 (created_at 2020-10-19)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "5b91f937234a69fb299f220fc4bbdd8ef51ae37d",
+  "version": "0.3", "python_version": "3.8",
+  "eval_cmd": "pytest -rA ",
+  "actual_test_cmd": "pytest -rA  tests/test_ahnet.py tests/test_discriminator.py tests/test_generator.py tests/test_unet.py tests/test_vnet.py tests/utils.py（整文件跑，非 -k 过选）",
+  "f2p": ["tests/test_ahnet.py::TestAHNET::test_script"],
+  "p2p_n": 35,
+  "test_patch_paths": ["tests/test_ahnet.py", "tests/test_discriminator.py", "tests/test_generator.py", "tests/test_unet.py", "tests/test_vnet.py", "tests/utils.py"],
+  "gold_paths": ["monai/networks/nets/ahnet.py"],
+  "stage1": "gold=RESOLVED_NO / empty=RESOLVED_NO，rc_install=0；日志 runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/Project-MONAI__MONAI-1121/{gold,empty}/offline/a1/",
+  "stage1_counts": "gold: PASSED 28 / FAILED 12 / ERROR 6；empty: PASSED 27 / FAILED 13 / ERROR 6"
+ },
+ "public_view": {
+  "goal": "题面标题『Add TorchScript compatible test for all the networks』，正文只有一句：为了确保所有 network 能被 torch.jit 导出并重新载入，需要补更多单测。245 字符，无代码、无 traceback、无报错文本。",
+  "constraints": [
+   "public_hints 明确禁止改测试文件（评分前会把测试重置）——而题面字面要求恰恰是『补单测』，两者直接冲突",
+   "题面没有指名任何一个 network，也没说哪个 network 现在 script 不了"
+  ],
+  "unknowns_from_public_only": [
+   "到底哪个网络 TorchScript 失败？题面说『all the networks』，实际只有 AHNet 需要改",
+   "失败的具体形态（torch.jit.script 报什么错）完全没给",
+   "AHNet 里两处问题（Pseudo3DLayer.forward 的 self.dropout_prob = 0 整数赋值、PSP.forward 的 tuple(x.size()[2:])）在公开材料里零线索"
+  ],
+  "base_code_evidence": [
+   "5b91f9372:monai/networks/nets/ahnet.py:231 `self.dropout_prob = 0`（int 赋给 float 属性，TorchScript 类型检查失败）与 :233 `if self.dropout_prob > 0`",
+   "5b91f9372:monai/networks/nets/ahnet.py:303 `interpolate_size = tuple(x.size()[2:])`（TorchScript 下 tuple(...) 的返回类型不能做 F.interpolate 的 size 参数）",
+   "5b91f9372:monai/networks/blocks/fcn.py:118,127 FCN 默认 `pretrained=True`，构造时调用 `torchvision.models.resnet50(pretrained=True)`"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 的 6 个目标文件在 base 均存在（git show 5b91f9372:tests/utils.py 等）", "gold 目标 monai/networks/nets/ahnet.py 存在，hunk 上下文 228-233 / 300-303 行逐行匹配"], "note": "无二进制/LFS/子模块材料。", "by": "L1_monai_1"},
+  "2": {"status": "pass", "evidence_refs": ["5b91f9372:monai/networks/nets/ahnet.py:231/233/303", "stage1 empty 侧 tests/test_ahnet.py::TestAHNET::test_script=FAILED"], "note": "base 确实无法 torch.jit.script(AHNet)；有实跑佐证。", "by": "L1_monai_1"},
+  "3": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["problem_statement 全文 245 字符（public.json）", "raw hints_text 长度 0"], "note": "题面是一条『补测试』的 feature request，不是缺陷描述。公开材料里没有任何可用于定位 ahnet.py 的信息：不点名网络、不给报错、不给复现。hints 也为空，所以不是『信息在 hints 里』，而是上游 PR 的正文本身就不含缺陷信息。", "by": "L1_monai_1"},
+  "4": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["test_patch 触碰 tests/utils.py（测试辅助模块，不是 test_* 文件）", "eval.sh:172 把 tests/utils.py 作为 pytest 目标直接传入"], "note": "test_patch 的 6 个路径全在 tests/ 下，其中 tests/utils.py 是共享辅助模块而非用例文件；它会被 setup 阶段恢复覆盖，这是正确的（新 helper test_script_save 必须来自 test_patch）。gold 只碰 monai/networks/nets/ahnet.py，与测试路径无交集。additional_exclusions 保持空。副作用见检查 18。", "by": "L1_monai_1"},
+  "17": {"status": "pass", "evidence_refs": ["gold_paths=['monai/networks/nets/ahnet.py']，与 test_patch 路径无交集"], "note": "恢复测试文件不会覆盖候选的源码改动。", "by": "L1_monai_1"},
+  "5": {"status": "pass", "evidence_refs": ["26 道 MONAI 题中 gold 改 monai/networks/nets/ahnet.py 的只有本题（runs/env_overnight_20260916/L1_monai_1/dupidx.txt）"], "note": "无重复/派生题。注意 Project-MONAI__MONAI-4109（本包内）是同一类『补 test_script 让网络可 TorchScript』的后续题，改 monai/networks/utils.py，属同族但不同缺陷。", "by": "L1_monai_1"},
+  "23": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["题面 245 字符全文；F2P 只有 TestAHNET::test_script"], "note": "公开材料完全推不出 F2P 所查行为。题面要求的动作（补测试）被规则禁止，真正要做的事（改 ahnet.py 的两处 TorchScript 不兼容写法）题面一个字没提。模型只能靠『自己去 script 每个网络看谁炸』来反推——这在没有题面线索时是可行的探索路径，但成本高且与题面描述脱节。", "by": "L1_monai_1"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 断言 torch.jit.script(net) 成功 + 保存/重载后输出 allclose，不查内部实现"], "note": "不强制唯一实现：把 dropout_prob 改成 float 常量、或把整段 dropout 逻辑删掉、或给 forward 加类型注解，只要能 script 都能过。", "by": "L1_monai_1"},
+  "25": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["F2P 只用 AHNet(spatial_dims=3, out_channels=2) 一种配置；gold 第二处改动 PSP.forward 只在 upsample_mode != 'transpose' 时生效"], "note": "F2P 的默认 upsample_mode='trilinear' 会走到 PSP 的 else 分支，所以两处改动都被覆盖到；但『把 dropout 分支整段删掉』这种破坏语义的修法同样满分（dropout_prob 非 0 时的行为无任何测试）。P2P 里的 TestAHNET::test_ahnet_shape_* 只查形状，查不出 dropout 语义。", "by": "L1_monai_1"},
+  "26": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["P2P 35 条全是 shape/script 断言"], "note": "见 proposed_regression_tests。", "by": "L1_monai_1"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 只有 4 行有效改动，全在 ahnet.py"], "note": "无无关改动，不依赖未交付的其它改动。注意上游 PR 里同时新增的 5 个 test_script 用例已包含在 test_patch 中。", "by": "L1_monai_1"},
+  "29": {"status": "pass", "evidence_refs": ["problem_statement 无链接、无代码、无 commit 指向；hints_text 为空"], "note": "无泄漏——反过来说是信息过少（检查 3/23）。", "by": "L1_monai_1"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold/empty 的 rc_install=0"], "note": "安装阶段可离线完成（eval.sh 先 sed 掉 requirements-dev.txt 里的 git+https://github.com/Project-MONAI/ 行）。", "by": "L1_monai_1"},
+  "7": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["gold 侧 test_output.txt:1139-1141,1205 `torch/hub.py:731 load_state_dict_from_url` → `urllib.error.URLError: <urlopen error [Errno -3] Temporary failure in name resolution>`，目标 https://download.pytorch.org/models/resnet50-0676ba61.pth", "5b91f9372:monai/networks/blocks/fcn.py:127 `models.resnet50(pretrained=pretrained)`，默认 pretrained=True"], "note": "**离线阻断**：8 条 P2P（TestFCN::test_fcn_shape_0/1、TestMCFCN::test_mcfcn_shape_0/1、TestAHNETWithPretrain::test_ahnet_shape_0/1/2、test_initialize_pretrained）都要下载 torchvision ResNet50 ImageNet 权重（~100MB）。F2P 本身不需要下载（AHNet 默认 pretrained=False）。", "by": "L1_monai_1"},
+  "11": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["同检查 7"], "note": "测试阶段需要出网到 download.pytorch.org；无其它外部服务。", "by": "L1_monai_1"},
+  "18": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["gold/empty 两侧 status_map 都有 6 条 ERROR：tests/{test_ahnet,test_discriminator,test_generator,test_unet,test_vnet,utils}.py::test_script_save", "test_output.txt:969-1009 `E fixture 'net' not found`"], "note": "test_patch 在 tests/utils.py 里新增的 helper 名为 `test_script_save`，被 `from tests.utils import ... test_script_save` 导入后进入各模块的顶层命名空间，pytest 按 `test_*` 规则把它当用例收集，6 个模块各产生一条 ERROR。不在 F2P/P2P 里，当前不影响判分，但会让『rc != 0 即失败』或『有 ERROR 即失败』一类的粗粒度判据误判整题。", "by": "L1_monai_1"},
+  "20": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["stage1 gold=RESOLVED_NO：F2P 通过但 8 条下载型 P2P FAILED"], "note": "**no-op 与 gold 在当前离线环境下没有分差**（两侧都是 RESOLVED_NO）。这是本包唯一一道 gold 都判不过的题（另有 3205 是 F2P 都过不了）。", "by": "L1_monai_1"},
+  "9": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["gold/empty 两侧 tests/test_discriminator.py::TestDiscriminator::test_shape_0/1/2 与 test_script 都 FAILED", "test_output.txt:2662 `monai/networks/nets/regressor.py:81: self.final_size = np.asarray(self.in_shape, np.int)` → numpy 已移除 np.int 的 AttributeError"], "note": "**镜像依赖漂移**：镜像里的 numpy 版本已删除 np.int（numpy>=1.24），而 MONAI 0.3 的 regressor.py 还在用。这 4 条与本题无关，且已被排除在 P2P 之外（构数据集时它们两侧都失败），所以不影响判分；但说明镜像没有把依赖钉到 2020 年那一代，同一类漂移可能在别的题上恰好落进 P2P。", "by": "L1_monai_1"}
+ },
+ "issues": [
+  {"category": "offline_blocker", "severity": "P1",
+   "evidence_refs": ["gold/offline/a1/test_output.txt:1139-1141,1205,1209", "status_map.json gold: 8 条 P2P FAILED"],
+   "proposed_action": "两选一：(a) 在镜像里预置 /root/.cache/torch/hub/checkpoints/resnet50-0676ba61.pth 后重跑；(b) 把 8 条需要下载的 P2P 从名单里剔除，只保留 pretrained=False 的 shape 用例与 3 条 test_script。建议先做 (a) 验证，因为 (b) 会丢掉 FCN/MCFCN 的全部有效回归。",
+   "next_experiment": "把 resnet50-0676ba61.pth 预置进镜像缓存目录，重跑 gold 与 empty，确认 gold 转 RESOLVED_FULL、empty 仍 RESOLVED_NO。"},
+  {"category": "statement_insufficient", "severity": "P1",
+   "evidence_refs": ["problem_statement 全文 245 字符", "hints_text 为空"],
+   "proposed_action": "题面是纯 feature request（『补测试』），既与 public_hints 的禁改测试规则冲突，又不含任何定位 ahnet.py 的信息。建议改写题面为缺陷式描述（例如：`torch.jit.script(AHNet(spatial_dims=3, out_channels=2))` 失败，附报错），否则只能当作『高难度无线索探索题』使用。",
+   "next_experiment": "让模型在只看当前题面的条件下跑一次，统计是否会去逐个网络试 torch.jit.script；对比改写题面后的定位轮数。"},
+  {"category": "test_collection_noise", "severity": "P3",
+   "evidence_refs": ["status_map 6 条 `::test_script_save` ERROR；test_output.txt:969-1009"],
+   "proposed_action": "上游 helper 命名不当（`test_script_save` 被 pytest 误收集）。不建议改题（改了就偏离 upstream），但通用评分侧要确认『整题成败』不看 rc、不看 ERROR 总数，只看 F2P/P2P 的逐条状态。",
+   "next_experiment": "核对 rh2 grading 对 test 阶段 rc!=0 的处理路径，确认这 6 条 ERROR 不会让整题判 infra_failed。"},
+  {"category": "image_dependency_drift", "severity": "P2",
+   "evidence_refs": ["test_output.txt:2662 np.int AttributeError；4 条 test_discriminator 用例两侧皆 FAILED"],
+   "proposed_action": "记录为仓库级线索：0.3 这代 MONAI 镜像里的 numpy 已不兼容仓库源码。对本题无判分影响，但需要在其它 MONAI 老版本题上抽查同类漂移是否落进 F2P/P2P。",
+   "next_experiment": "在镜像里 `python -c 'import numpy,torch,torchvision;print(numpy.__version__,torch.__version__,torchvision.__version__)'`，与 MONAI 0.3 的 requirements 对照。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 全部落在 tests/ 下（含辅助模块 tests/utils.py），gold 只碰 monai/networks/nets/ahnet.py，两者无交集；按第四组 B 的默认，额外排除为空。", "evidence_refs": ["grading_bundles_v2_v0:Project-MONAI__MONAI-1121 test_patch", "validation_bundles_v0:Project-MONAI__MONAI-1121 golden_patch"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_ahnet.py::TestAHNET::test_ahnet_shape_0..5（已在 P2P）", "reason": "覆盖 PSP.forward 的 transpose 与非 transpose 两条分支形状不变。"},
+  {"id": "新增：AHNet(dropout_prob>0) 下 Pseudo3DLayer 的输出与 dropout_prob=0 不同", "reason": "gold 把 `self.dropout_prob = 0` 改成 `0.0` 但保留了『每次 forward 都把它清零』的既有逻辑；当前没有任何测试能区分『改类型』与『删掉整段 dropout』。"},
+  {"id": "tests/test_ahnet.py::TestFCN::test_fcn_shape_2、TestMCFCN::test_mcfcn_shape_2（pretrained=False，已在 P2P）", "reason": "离线可跑的 FCN/MCFCN 回归，替代 8 条需要下载的用例。"},
+  {"id": "tests/test_vnet.py、tests/test_unet.py、tests/test_generator.py 的 test_script（已在 P2P）", "reason": "确认候选没有用『全局关掉 torch.jit.script』之类的手段。"}
+ ],
+ "disposition_hint": {"state": "needs_repair", "reason": "环境上是硬阻断：gold 在离线环境判 RESOLVED_NO，8 条 P2P 要下载 ResNet50 权重；题面又完全不含定位信息。先预置权重重跑验证 gold 能转 FULL，再决定题面是否改写。"},
+ "costs": {"minutes": 26}
+}

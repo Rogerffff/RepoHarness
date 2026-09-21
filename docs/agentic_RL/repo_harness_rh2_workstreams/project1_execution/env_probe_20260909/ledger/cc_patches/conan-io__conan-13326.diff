@@ -1,0 +1,94 @@
+diff --git a/conan/tools/build/cppstd.py b/conan/tools/build/cppstd.py
+index 423c0a279..bda89b697 100644
+--- a/conan/tools/build/cppstd.py
++++ b/conan/tools/build/cppstd.py
+@@ -112,6 +112,7 @@ def supported_cppstd(conanfile, compiler=None, compiler_version=None):
+             "gcc": _gcc_supported_cppstd,
+             "msvc": _msvc_supported_cppstd,
+             "clang": _clang_supported_cppstd,
++            "qcc": _qcc_supported_cppstd,
+             "mcst-lcc": _mcst_lcc_supported_cppstd}.get(compiler)
+     if func:
+         return func(Version(compiler_version))
+@@ -239,6 +240,19 @@ def _clang_supported_cppstd(version):
+     return ["98", "gnu98", "11", "gnu11", "14", "gnu14", "17", "gnu17", "20", "gnu20", "23", "gnu23"]
+ 
+ 
++def _qcc_supported_cppstd(version):
++    """
++    ["98", "gnu98", "11", "gnu11", "14", "gnu14", "17", "gnu17"]
++    """
++    if version < "4.4":
++        return []
++    if version < "5.4":
++        return ["98", "gnu98"]
++    if version < "8.3":
++        return ["98", "gnu98", "11", "gnu11", "14", "gnu14"]
++    return ["98", "gnu98", "11", "gnu11", "14", "gnu14", "17", "gnu17"]
++
++
+ def _mcst_lcc_supported_cppstd(version):
+     """
+     ["98", "gnu98", "11", "gnu11", "14", "gnu14", "17", "gnu17", "20", "gnu20", "23", "gnu23"]
+diff --git a/conans/test/integration/package_id/test_cache_compatibles.py b/conans/test/integration/package_id/test_cache_compatibles.py
+index 4851aa4b5..ad9f9649b 100644
+--- a/conans/test/integration/package_id/test_cache_compatibles.py
++++ b/conans/test/integration/package_id/test_cache_compatibles.py
+@@ -164,6 +164,31 @@ class TestDefaultCompat:
+         assert "mylib/1.0: Main binary package 'e340edd75790e7156c595edebd3d98b10a2e091e' missing."\
+                f"Using compatible package '{package_id1}'"
+ 
++    def test_default_cppstd_compatibility_qcc(self):
++        c = TestClient()
++        save(c.cache.default_profile_path, "")
++        conanfile = textwrap.dedent("""
++            from conan import ConanFile
++            class Pkg(ConanFile):
++                name = "mylib"
++                version = "1.0"
++                package_type = "library"
++                options = {"shared": [True, False]}
++                default_options = {"shared": False}
++                settings = "os", "arch", "compiler", "build_type"
++            """)
++        c.save({"conanfile.py": conanfile, "profile_build": "[settings]\nos=Windows\narch=x86_64"})
++        settings = "-s os=Neutrino -s os.version=7.1 -s arch=x86_64 -s build_type=Release " \
++                   "-s compiler=qcc -s compiler.version=8.3 -s compiler.libcxx=cxx"
++        c.run(f"create . {settings} -s compiler.cppstd=17 -pr:b=profile_build")
++        package_id = c.created_package_id("mylib/1.0")
++
++        # Try to install with cppstd 14, it will find cppstd 17 as compatible
++        c.run(f"install --requires=mylib/1.0@ {settings} -s compiler.cppstd=14 "
++              f"-pr:b=profile_build")
++        assert "mylib/1.0: Main binary package" in c.out
++        assert f"Using compatible package '{package_id}'" in c.out
++
+     def test_fail_with_options_deleted(self):
+         """
+         This test used to fail with "ConanException: option 'with_fmt_alias' doesn't exist",
+diff --git a/conans/test/unittests/tools/build/test_cppstd.py b/conans/test/unittests/tools/build/test_cppstd.py
+index b3d24c10a..4038ba14c 100644
+--- a/conans/test/unittests/tools/build/test_cppstd.py
++++ b/conans/test/unittests/tools/build/test_cppstd.py
+@@ -91,6 +91,21 @@ def test_supported_cppstd_msvc(compiler, compiler_version, values):
+     assert sot == values
+ 
+ 
++@pytest.mark.parametrize("compiler,compiler_version,values", [
++    ("qcc", "4.3", []),
++    ("qcc", "4.4", ['98', 'gnu98']),
++    ("qcc", "5.0", ['98', 'gnu98']),
++    ("qcc", "5.4", ['98', 'gnu98', '11', 'gnu11', "14", "gnu14"]),
++    ("qcc", "8.2", ['98', 'gnu98', '11', 'gnu11', "14", "gnu14"]),
++    ("qcc", "8.3", ['98', 'gnu98', '11', 'gnu11', "14", "gnu14", "17", "gnu17"])
++])
++def test_supported_cppstd_qcc(compiler, compiler_version, values):
++    settings = MockSettings({"compiler": compiler, "compiler.version": compiler_version})
++    conanfile = MockConanfile(settings)
++    sot = supported_cppstd(conanfile)
++    assert sot == values
++
++
+ @pytest.mark.parametrize("compiler,compiler_version,values", [
+     ("mcst-lcc", "1.20", ['98', 'gnu98']),
+     ("mcst-lcc", "1.21", ['98', 'gnu98', '11', 'gnu11', "14", "gnu14"]),

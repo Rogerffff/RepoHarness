@@ -1,0 +1,224 @@
+{
+ "task_id": "dask__dask-9212",
+ "source": "SWE-Gym lite (dask/dask 2022.6)",
+ "task_revision": "upstream",
+ "materials_refs": [
+  "s2/ingest/public_bundles_v0.jsonl (problem_statement 588 字符)",
+  "s2/ingest/grading_bundles_v2_v0.jsonl (F2P=2; P2P=103)",
+  "s2/ingest/validation_bundles_v0.jsonl (golden_patch)",
+  "s2/raw/swe_gym_lite_full_f70b1a29.jsonl (hints_text 74 字符)",
+  "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/dask__dask-9212/{gold,empty}/offline/a1/"
+ ],
+ "public_view": {
+  "goal": "`dask.base.tokenize` 对 `enum.Enum` 成员没有确定性哈希，`tokenize(Color.RED) == tokenize(Color.RED)` 会失败；要求为 Enum 注册确定性的 normalize_token。",
+  "constraints": [
+   "题面给出 6 行复现与一段“Possible Implementation”。"
+  ],
+  "unknown_from_public": [
+   "题面只举了普通 `Enum`；F2P/P2P 还覆盖 `IntEnum` / `Flag` / `IntFlag` 四种（其中 IntEnum/IntFlag 在 base 本来就通过）。",
+   "题面没说不同成员必须哈希不同（`tokenize(Color.RED) != tokenize(Color.BLUE)`），F2P 有这条断言——不过它可由“确定性哈希”的常识推出。"
+  ],
+  "by": "L1_dask"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "aa801de0f42716d977051f9abb9da2c9399da05c:dask/base.py:999-1006",
+    "aa801de0f42716d977051f9abb9da2c9399da05c:dask/tests/test_base.py:425-435"
+   ],
+   "note": "test_patch 只改 dask/tests/test_base.py，gold 只改 dask/base.py，base 均存在，同一问题。无二进制/LFS/子模块。",
+   "by": "L1_dask"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "aa801de0f42716d977051f9abb9da2c9399da05c:dask/base.py:1005（@normalize_token.register(object) normalize_object）",
+    "runs/env_probe_stage1_20260910/.../dask__dask-9212/empty/offline/a1/status_map.json"
+   ],
+   "note": "base 没有 Enum 的 normalize_token 注册，纯 Enum/Flag 成员落到 normalize_object（走 uuid/pickle 路径，非确定性）；empty 侧 `[Enum]`、`[Flag]` FAILED，`[IntEnum]`、`[IntFlag]` PASSED（它们是 int 子类，走已有的数值路径）。缺陷成立且定位精确。",
+   "by": "L1_dask"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-9212.problem_statement",
+    "s2/raw/...:dask__dask-9212.hints_text"
+   ],
+   "note": "题面完整无截断。hints 只有一句 'That seems like a reasonable implementation- I think a PR would be welcome'，无题面之外的信息。",
+   "by": "L1_dask"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-9212.test_patch"
+   ],
+   "note": "test_patch 仅碰测试文件；gold 仅碰源码。",
+   "by": "L1_dask"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "同上"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "L1_dask"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "aa801de0f42716d977051f9abb9da2c9399da05c:dask/base.py:1503-1515",
+    "runs/env_overnight_20260916/L1_dask/mat/dask__dask-9212/grading.json"
+   ],
+   "note": "与 dask__dask-8792 共用 dask/base.py + dask/tests/test_base.py；**本题 base 已含 8792 的 gold**（clone_key 的新实现与新 docstring 逐字可见），且本题 P2P 里就有 `test_clone_key`（带 8792 修好后的哈希常量）。两题必须同侧划分。",
+   "by": "L1_dask"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-9212.test_patch"
+   ],
+   "note": "F2P 断言同一成员两次 tokenize 相同、不同成员不同，完全在题面覆盖范围内。",
+   "by": "L1_dask"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-9212.test_patch"
+   ],
+   "note": "不锁实现：注册 `(type(e).__name__, e.name, e.value)`、或 `(e.__class__.__qualname__, e.name)`、或给 Enum 加 `__dask_tokenize__` 都能过（断言只比较 tokenize 结果的相等/不等关系，不含任何逐字哈希常量 —— 与同仓库的 dask__dask-8792 形成鲜明对比）。",
+   "by": "L1_dask"
+  },
+  "25": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-9212.{fail_to_pass,pass_to_pass}",
+    "runs/env_probe_stage1_20260910/.../dask__dask-9212/empty/offline/a1/status_map.json"
+   ],
+   "note": "参数化划分得当：4 个枚举类型里 base 就通过的 `IntEnum`/`IntFlag` 自动进 P2P，构成对“注册得太宽把 int 路径也改坏”的反向保护；`tokenize(RED) != tokenize(BLUE)` 则堵住“对所有 Enum 返回同一常量”的假修复。本包 P2P 起到设计作用的第三例。",
+   "by": "L1_dask"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "aa801de0f42716d977051f9abb9da2c9399da05c:dask/tests/test_base.py"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_dask"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "validation_bundles_v0.jsonl:dask__dask-9212.golden_patch"
+   ],
+   "note": "gold 6 行（import Enum + 注册函数），与题面给出的实现逐字一致，无无关改动、不依赖未交付改动。注册位置在 `normalize_object` 之前，符合 Dispatch 的最具体优先语义。",
+   "by": "L1_dask"
+  },
+  "29": {
+   "status": "issue",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-9212.problem_statement"
+   ],
+   "note": "**题面直接给出 gold 的完整实现**（'Possible Implementation' 段与 golden_patch 逐字相同，只差一个错误的 import 行）。本题应归入“题面自带修复”的低难度桶，不适合当定位能力指标。",
+   "by": "L1_dask"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-9212/gold/offline/a1/test_output.txt (install rc=0)"
+   ],
+   "note": "安装 rc=0；Python 3.10.14 + pytest-8.3.2。",
+   "by": "L1_dask"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "aa801de0f42716d977051f9abb9da2c9399da05c:dask/tests/test_base.py"
+   ],
+   "note": "无 mark.network / 真实 URL 访问；`'s3fs'` 只作为字符串出现在模块名清单里。importorskip 命中 graphviz / ipycytoscape / matplotlib.pyplot / dask.array 等本地包。",
+   "by": "L1_dask"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-9212/gold/offline/a1/test_output.txt",
+    "runs/env_overnight_20260916/L1_dask/scripts/collide_skip.py 输出"
+   ],
+   "note": "gold 侧 128 条结果行 → 114 个键：13 条 SKIPPED 的真实 ID 全部丢失并塌进伪键 `[1]`/`[2]`（#R2，跳过原因含 `could not import 'matplotlib.pyplot'`、`condition: not dd`）；另有 **10 条既有用例恒 FAILED**（pandas 内部 API 漂移 + emscripten 用例）。",
+   "by": "L1_dask"
+  },
+  "12": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-9212/gold/offline/a1/test_output.txt"
+   ],
+   "note": "**本包唯一一处真实的 ID 塌缩**（#R1）：`test_emscripten_default_scheduler['dask.dataframe',` 一个截断键对应 2 条真实用例（`...'_Frame','sync',True]` 与 `...'_Frame','threads',False]`），`'dask.array',`、`'dask.bag',` 同理。这 3 个键共吞掉 6 条真实结果。它们都不在参考集内（本来就 FAILED），当前不影响判分，但证明该机制在 dask 上是活的。",
+   "by": "L1_dask"
+  },
+  "9": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-9212/{gold,empty}/offline/a1/status_map.json"
+   ],
+   "note": "empty→2 条 F2P FAILED，gold→PASSED，103 条 P2P 两侧全 PASSED。",
+   "by": "L1_dask"
+  }
+ },
+ "issues": [
+  {
+   "category": "静态泄漏",
+   "severity": "P1",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-9212.problem_statement"
+   ],
+   "proposed_action": "作为训练样本可用；不适合放进评测集衡量定位/推理能力。建议打 `statement_contains_fix` 标签（本包已知 7656、7138、9212 三题，8792 是“含修复但与评分不一致”的变体）。",
+   "next_experiment": "无需实验。"
+  },
+  {
+   "category": "跨题泄漏",
+   "severity": "P2",
+   "evidence_refs": [
+    "aa801de0f42716d977051f9abb9da2c9399da05c:dask/base.py:1503-1515"
+   ],
+   "proposed_action": "dask__dask-8792 与 dask__dask-9212 必须同侧。",
+   "next_experiment": "对 216 题做“A 的 gold 是否已在 B 的 base 里”的全量交叉检查。"
+  },
+  {
+   "category": "参考 ID 塌缩",
+   "severity": "P2",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-9212/gold/offline/a1/test_output.txt"
+   ],
+   "proposed_action": "随 #R1 一起处理；本题受影响的键都不在参考集内，仅作机制证据。",
+   "next_experiment": "用 --junitxml 跑同一命令，比对逐 ID 集合与 status_map 的差集（预期差 6 条）。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰 dask/tests/test_base.py，gold 只碰 dask/base.py；按第四组 B 默认保持空。",
+  "evidence_refs": [
+   "grading_bundles_v2_v0.jsonl:dask__dask-9212.test_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "dask/tests/test_base.py::test_tokenize_enum[IntEnum] / [IntFlag]",
+   "reason": "已在 P2P；确保新注册没有把 int 子类的既有哈希路径改掉。"
+  },
+  {
+   "id": "dask/tests/test_base.py::test_tokenize_object / test_tokenize_ordered_dict / test_tokenize_set",
+   "reason": "normalize_token Dispatch 的邻近注册项，能拦住注册顺序/覆盖范围出错的实现。"
+  },
+  {
+   "id": "dask/tests/test_base.py::test_tokenize_dataclass",
+   "reason": "与本题同属“给某个类型加 normalize_token”的同族用例，是最贴近的行为基线。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "材料一致、gold 6 行、F2P/P2P 的正反判别力完整且不含逐字哈希常量、链路健康。保留项：题面自带完整修复（难度标签），以及与 dask__dask-8792 的同侧划分要求。"
+ },
+ "costs": {
+  "minutes": 18
+ }
+}

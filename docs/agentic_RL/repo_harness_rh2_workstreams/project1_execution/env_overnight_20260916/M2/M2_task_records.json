@@ -1,0 +1,1786 @@
+{
+ "swe_gym_lite::python__mypy-12741": {
+  "task_id": "swe_gym_lite::python__mypy-12741",
+  "source": "swe_gym_lite",
+  "task_revision": "upstream",
+  "materials_refs": [
+   "s2/ingest/{public,grading_bundles_v2,validation,environment_packages}_v0.jsonl"
+  ],
+  "public_view": {
+   "note": "本包只做环境/依赖/资产/网络/泄漏与反例执行，未做盲审题面；public_view 留给 L1/L2 包"
+  },
+  "checks": {
+   "6": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/recipes/mypy-12741-none.json",
+     "runs/env_overnight_20260916/M2/recipes/mypy-12741-net.json",
+     "runs/env_overnight_20260916/M2/recipes/logs/mypy-12741-none.install.log",
+     "runs/env_overnight_20260916/M2/recipes/mypy-12741-preseed.json"
+    ],
+    "note": "断网 `pip install -e .` rc=1（PEP517 隔离取 setuptools），但串末 `hash -r` 使 RH2_INSTALL_RC=0；联网 rc=0；预置 setuptools/wheel 后断网全 0",
+    "by": "M2 (Claude)"
+   },
+   "8": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/recipes/mypy-12741-none.json",
+     "runs/env_overnight_20260916/M2/recipes/mypy-12741-net.json",
+     "runs/env_overnight_20260916/M2/recipes/logs/mypy-12741-none.install.log",
+     "runs/env_overnight_20260916/M2/recipes/mypy-12741-preseed.json"
+    ],
+    "note": "以 uid 54322 / HOME=/home/rh2grader / cwd=/testbed 执行；需按 candidate_writable_prefixes 也 chown /opt/miniconda3/envs/testbed，否则 site-packages 只读",
+    "by": "M2 (Claude)"
+   },
+   "9": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/recipes/mypy-12741-none.json",
+     "runs/env_overnight_20260916/M2/recipes/mypy-12741-net.json",
+     "runs/env_overnight_20260916/M2/recipes/logs/mypy-12741-none.install.log",
+     "runs/env_overnight_20260916/M2/recipes/mypy-12741-preseed.json"
+    ],
+    "note": "RH2_INSTALL_RC 只反映串末命令：mypy 假通过、moto 安装失败但测试仍 import /testbed 下的候选代码",
+    "by": "M2 (Claude)"
+   },
+   "11": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/recipes/mypy-12741-none.json",
+     "runs/env_overnight_20260916/M2/recipes/mypy-12741-net.json",
+     "runs/env_overnight_20260916/M2/recipes/logs/mypy-12741-none.install.log",
+     "runs/env_overnight_20260916/M2/recipes/mypy-12741-preseed.json"
+    ],
+    "note": "安装段唯一的网络需求是 PEP 517 构建隔离取 setuptools；其余依赖镜像已装",
+    "by": "M2 (Claude)"
+   },
+   "29": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/python__mypy-12741.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/python__mypy-12741.log",
+     "runs/env_overnight_20260916/M2/leak_scan/verify-python__mypy-12741.json"
+    ],
+    "note": "镜像出厂状态：HEAD=base_commit，但 tag 未删，`git rev-list --all --not HEAD --count`=2150，能列出 HEAD 的后代提交；dangling=36。RH2 的 git_sanitize_script 在每个 rollout attempt 无条件执行（generate.py:4698），实测后该计数归 0。",
+    "by": "M2 (Claude)"
+   },
+   "30": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/python__mypy-12741.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/python__mypy-12741.log",
+     "runs/env_overnight_20260916/M2/leak_scan/verify-python__mypy-12741.json"
+    ],
+    "note": "pandas 镜像带 upstream remote（github.com/pandas-dev/pandas）；其余 14 个 remote 为空。断网下无外取路径。",
+    "by": "M2 (Claude)"
+   }
+  },
+  "issues": [
+   {
+    "category": "offline_install_needs_preseed",
+    "severity": "P2",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/recipes/mypy-12741-preseed.json"
+    ],
+    "proposed_action": "用 declared_readonly_binds 预置 pinned setuptools/wheel wheelhouse + PIP_NO_INDEX/PIP_FIND_LINKS",
+    "next_experiment": "pin 版本并记 sha256 后在正式 grader profile 下复验"
+   },
+   {
+    "category": "answer_exposure_in_git_objects",
+    "severity": "P1",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/python__mypy-12741.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/python__mypy-12741.log",
+     "runs/env_overnight_20260916/M2/leak_scan/verify-python__mypy-12741.json"
+    ],
+    "proposed_action": "确认所有 rollout 路径都走 git_sanitize（profile is None 的路径不跑）；把 sanitize 自证值纳入准入",
+    "next_experiment": "runs/env_overnight_20260916/M2/leak_scan/verify-*.json 已验证 sanitize 后 NOTHEAD=0"
+   }
+  ],
+  "file_rules": {
+   "additional_exclusions": [],
+   "rationale": "本包未提出新增排除（第四组 §0/§6.5：默认为空）",
+   "evidence_refs": []
+  },
+  "proposed_regression_tests": [],
+  "disposition_hint": {
+   "state": "unknown",
+   "reason": "本包证据只覆盖环境维度"
+  },
+  "costs": {
+   "minutes": 15
+  }
+ },
+ "swe_gym_lite::pydantic__pydantic-8500": {
+  "task_id": "swe_gym_lite::pydantic__pydantic-8500",
+  "source": "swe_gym_lite",
+  "task_revision": "upstream",
+  "materials_refs": [
+   "s2/ingest/{public,grading_bundles_v2,validation,environment_packages}_v0.jsonl"
+  ],
+  "public_view": {
+   "note": "本包只做环境/依赖/资产/网络/泄漏与反例执行，未做盲审题面；public_view 留给 L1/L2 包"
+  },
+  "checks": {
+   "6": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/recipes/pydantic-8500-none.json",
+     "runs/env_overnight_20260916/M2/recipes/pydantic-8500-net.json",
+     "runs/env_overnight_20260916/M2/recipes/logs/pydantic-8500-none.install.log"
+    ],
+    "note": "`pdm` 不在镜像里，`pdm add pre-commit`=127、`make install`=2；**断网与联网都失败**（pre_install 不被正式链执行）",
+    "by": "M2 (Claude)"
+   },
+   "8": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/recipes/pydantic-8500-rootinstall.json",
+     "runs/env_overnight_20260916/M2/recipes/pydantic-8500-rootinstall-net.json",
+     "runs/env_overnight_20260916/M2/recipes/pydantic-8500-preinstall.json"
+    ],
+    "note": "install 串结果矩阵：root+联网=全 0（官方条件）；root+断网=pdm add 1；候选(54322)+联网=127；候选+断网=127。原因：镜像里的 pdm 在 /root/.local/bin，install 串靠 $HOME/.local/bin 定位；且 pdm add 需要联网。清单第 8 项的典型例子——root 的成功不证明非 root 可用。",
+    "by": "M2 (Claude)"
+   },
+   "9": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/recipes/pydantic-8500-none.json",
+     "runs/env_overnight_20260916/M2/recipes/pydantic-8500-net.json",
+     "runs/env_overnight_20260916/M2/recipes/logs/pydantic-8500-none.install.log"
+    ],
+    "note": "RH2_INSTALL_RC 只反映串末命令：mypy 假通过、moto 安装失败但测试仍 import /testbed 下的候选代码",
+    "by": "M2 (Claude)"
+   },
+   "11": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/recipes/pydantic-8500-none.json",
+     "runs/env_overnight_20260916/M2/recipes/pydantic-8500-net.json",
+     "runs/env_overnight_20260916/M2/recipes/logs/pydantic-8500-none.install.log"
+    ],
+    "note": "安装段唯一的网络需求是 PEP 517 构建隔离取 setuptools；其余依赖镜像已装",
+    "by": "M2 (Claude)"
+   },
+   "29": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/pydantic__pydantic-8500.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/pydantic__pydantic-8500.log",
+     "runs/env_overnight_20260916/M2/leak_scan/verify-pydantic__pydantic-8500.json"
+    ],
+    "note": "镜像出厂状态：HEAD=base_commit，但 tag 未删，`git rev-list --all --not HEAD --count`=749，能列出 HEAD 的后代提交；dangling=18。RH2 的 git_sanitize_script 在每个 rollout attempt 无条件执行（generate.py:4698），实测后该计数归 0。",
+    "by": "M2 (Claude)"
+   },
+   "30": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/pydantic__pydantic-8500.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/pydantic__pydantic-8500.log",
+     "runs/env_overnight_20260916/M2/leak_scan/verify-pydantic__pydantic-8500.json"
+    ],
+    "note": "pandas 镜像带 upstream remote（github.com/pandas-dev/pandas）；其余 14 个 remote 为空。断网下无外取路径。",
+    "by": "M2 (Claude)"
+   },
+   "23": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/counterexamples/pydantic__pydantic-8500/run-agent.json",
+     "runs/env_overnight_20260916/M2/counterexamples/pydantic__pydantic-8500/run-rh2grader.json",
+     "runs/env_overnight_20260916/M2/counterexamples/pydantic__pydantic-8500/results/agent/",
+     "runs/env_overnight_20260916/M2/counterexamples/ce_summary.json"
+    ],
+    "note": "题面原例（construct 后赋值的 dump 顺序）在 gold 上也 FAIL；官方 F2P 测的是另一个场景",
+    "by": "M2 (Claude)"
+   },
+   "38": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/counterexamples/pydantic__pydantic-8500/run-agent.json",
+     "runs/env_overnight_20260916/M2/counterexamples/pydantic__pydantic-8500/run-rh2grader.json",
+     "runs/env_overnight_20260916/M2/counterexamples/pydantic__pydantic-8500/results/agent/",
+     "runs/env_overnight_20260916/M2/counterexamples/ce_summary.json"
+    ],
+    "note": "agent(54321) 与 rh2grader(54322) 两个候选用户各跑一次，逐 run 计数完全相同",
+    "by": "M2 (Claude)"
+   },
+   "31": {
+    "status": "issue",
+    "evidence_refs": [
+     "docs/.../env_overnight_20260916/M2/M2_conftest_probe.json",
+     "runs/env_overnight_20260916/M2/conftest/ledger_conftest.jsonl",
+     "runs/env_overnight_20260916/M2/conftest2/ledger_conftest2.jsonl",
+     "runs/env_overnight_20260916/M2/conftest3/ledger_conftest3.jsonl"
+    ],
+    "note": "真实 RH2 链（replay_grade，正式 grader profile）实测：候选只新建/追加 tests/conftest.py 的 pytest_runtest_makereport hookwrapper 即 resolved/reward=1.0（F2P 全过、P2P 0 fail、RESOLVED_FULL）；受信投影 included_paths 含该文件、ignored_paths 为空、classification=projectable；可信 setup 只恢复 test_patch 路径，不覆盖它；hygiene.test_globs=() 也不拦。账本有观测字段 candidate_touched_conftest_or_fixture 但不进判据。第三条路径（只改 setup.py，安装段执行候选代码后写出 conftest）同样满分，且该观测字段为空。 本题实测：追加到 base 已有的 tests/conftest.py 满分",
+    "by": "M2 (Claude)"
+   },
+   "32": {
+    "status": "issue",
+    "evidence_refs": [
+     "docs/.../env_overnight_20260916/M2/M2_conftest_probe.json",
+     "runs/env_overnight_20260916/M2/conftest/ledger_conftest.jsonl",
+     "runs/env_overnight_20260916/M2/conftest2/ledger_conftest2.jsonl",
+     "runs/env_overnight_20260916/M2/conftest3/ledger_conftest3.jsonl"
+    ],
+    "note": "verifier 完全信任被测进程自报的 pytest 结果；候选能在同一进程内改写 report.outcome",
+    "by": "M2 (Claude)"
+   }
+  },
+  "issues": [
+   {
+    "category": "install_recipe_broken",
+    "severity": "P2",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/recipes/pydantic-8500-none.json",
+     "runs/env_overnight_20260916/M2/recipes/pydantic-8500-net.json"
+    ],
+    "proposed_action": "定 install 恒失败题的处置：接受非零 / 标 skip / 纳入 pre_install（需用户决定）",
+    "next_experiment": "把 pre_install（pipx install pdm）加进准备阶段后重跑，看是否改变测试结果"
+   },
+   {
+    "category": "answer_exposure_in_git_objects",
+    "severity": "P1",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/pydantic__pydantic-8500.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/pydantic__pydantic-8500.log",
+     "runs/env_overnight_20260916/M2/leak_scan/verify-pydantic__pydantic-8500.json"
+    ],
+    "proposed_action": "确认所有 rollout 路径都走 git_sanitize（profile is None 的路径不跑）；把 sanitize 自证值纳入准入",
+    "next_experiment": "runs/env_overnight_20260916/M2/leak_scan/verify-*.json 已验证 sanitize 后 NOTHEAD=0"
+   },
+   {
+    "category": "problem_statement_vs_oracle_mismatch",
+    "severity": "P1",
+    "proposed_action": "在 public_view 标注验收面只覆盖 construct 期顺序，或在数据层标 spec_gap",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/counterexamples/pydantic__pydantic-8500/run-agent.json",
+     "runs/env_overnight_20260916/M2/counterexamples/pydantic__pydantic-8500/run-rh2grader.json",
+     "runs/env_overnight_20260916/M2/counterexamples/pydantic__pydantic-8500/results/agent/",
+     "runs/env_overnight_20260916/M2/counterexamples/ce_summary.json"
+    ],
+    "next_experiment": "L3 run_matrix.sh（本轮已执行）"
+   },
+   {
+    "category": "evaluator_control_surface_bypass",
+    "severity": "P1",
+    "evidence_refs": [
+     "docs/.../env_overnight_20260916/M2/M2_conftest_probe.json",
+     "runs/env_overnight_20260916/M2/conftest/ledger_conftest.jsonl",
+     "runs/env_overnight_20260916/M2/conftest2/ledger_conftest2.jsonl",
+     "runs/env_overnight_20260916/M2/conftest3/ledger_conftest3.jsonl"
+    ],
+    "proposed_action": "需要用户决定：把候选触碰 conftest/fixture 从观测升为判据；或扩大 hygiene.test_files 到 pytest 自动加载的配置面；或改为不信任被测进程自报结果（受控 runner/独立报告通道）。注意只堵 conftest 不足以覆盖 setup.py 这条。",
+    "next_experiment": "其它控制面入口（pytest.ini/setup.cfg addopts、sitecustomize.py、各层级 conftest、插件 entry point）尚未测"
+   }
+  ],
+  "file_rules": {
+   "additional_exclusions": [],
+   "rationale": "本包未提出新增排除（第四组 §0/§6.5：默认为空）",
+   "evidence_refs": []
+  },
+  "proposed_regression_tests": [],
+  "disposition_hint": {
+   "state": "unknown",
+   "reason": "本包证据只覆盖环境维度"
+  },
+  "costs": {
+   "minutes": 45
+  }
+ },
+ "swe_gym_lite::pandas-dev__pandas-48106": {
+  "task_id": "swe_gym_lite::pandas-dev__pandas-48106",
+  "source": "swe_gym_lite",
+  "task_revision": "upstream",
+  "materials_refs": [
+   "s2/ingest/{public,grading_bundles_v2,validation,environment_packages}_v0.jsonl"
+  ],
+  "public_view": {
+   "note": "本包只做环境/依赖/资产/网络/泄漏与反例执行，未做盲审题面；public_view 留给 L1/L2 包"
+  },
+  "checks": {
+   "6": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/recipes/pandas-48106-none.json",
+     "runs/env_overnight_20260916/M2/recipes/pandas-48106-net.json",
+     "runs/env_overnight_20260916/M2/recipes/logs/pandas-48106-none.install.log"
+    ],
+    "note": "`--no-build-isolation`，断网 549 s 成功 / 联网 563 s 成功，无子命令失败",
+    "by": "M2 (Claude)"
+   },
+   "8": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/recipes/pandas-48106-none.json",
+     "runs/env_overnight_20260916/M2/recipes/pandas-48106-net.json",
+     "runs/env_overnight_20260916/M2/recipes/logs/pandas-48106-none.install.log"
+    ],
+    "note": "以 uid 54322 / HOME=/home/rh2grader / cwd=/testbed 执行；需按 candidate_writable_prefixes 也 chown /opt/miniconda3/envs/testbed，否则 site-packages 只读",
+    "by": "M2 (Claude)"
+   },
+   "9": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/recipes/pandas-48106-none.json",
+     "runs/env_overnight_20260916/M2/recipes/pandas-48106-net.json",
+     "runs/env_overnight_20260916/M2/recipes/logs/pandas-48106-none.install.log"
+    ],
+    "note": "RH2_INSTALL_RC 只反映串末命令：mypy 假通过、moto 安装失败但测试仍 import /testbed 下的候选代码",
+    "by": "M2 (Claude)"
+   },
+   "11": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/recipes/pandas-48106-none.json",
+     "runs/env_overnight_20260916/M2/recipes/pandas-48106-net.json",
+     "runs/env_overnight_20260916/M2/recipes/logs/pandas-48106-none.install.log"
+    ],
+    "note": "安装段唯一的网络需求是 PEP 517 构建隔离取 setuptools；其余依赖镜像已装",
+    "by": "M2 (Claude)"
+   },
+   "29": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/pandas-dev__pandas-48106.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/pandas-dev__pandas-48106.log",
+     "runs/env_overnight_20260916/M2/leak_scan/verify-pandas-dev__pandas-48106.json"
+    ],
+    "note": "镜像出厂状态：HEAD=base_commit，但 tag 未删，`git rev-list --all --not HEAD --count`=8294，能列出 HEAD 的后代提交；dangling=0。RH2 的 git_sanitize_script 在每个 rollout attempt 无条件执行（generate.py:4698），实测后该计数归 0。",
+    "by": "M2 (Claude)"
+   },
+   "30": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/pandas-dev__pandas-48106.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/pandas-dev__pandas-48106.log",
+     "runs/env_overnight_20260916/M2/leak_scan/verify-pandas-dev__pandas-48106.json"
+    ],
+    "note": "pandas 镜像带 upstream remote（github.com/pandas-dev/pandas）；其余 14 个 remote 为空。断网下无外取路径。",
+    "by": "M2 (Claude)"
+   }
+  },
+  "issues": [
+   {
+    "category": "answer_exposure_in_git_objects",
+    "severity": "P1",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/pandas-dev__pandas-48106.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/pandas-dev__pandas-48106.log",
+     "runs/env_overnight_20260916/M2/leak_scan/verify-pandas-dev__pandas-48106.json"
+    ],
+    "proposed_action": "确认所有 rollout 路径都走 git_sanitize（profile is None 的路径不跑）；把 sanitize 自证值纳入准入",
+    "next_experiment": "runs/env_overnight_20260916/M2/leak_scan/verify-*.json 已验证 sanitize 后 NOTHEAD=0"
+   }
+  ],
+  "file_rules": {
+   "additional_exclusions": [],
+   "rationale": "本包未提出新增排除（第四组 §0/§6.5：默认为空）",
+   "evidence_refs": []
+  },
+  "proposed_regression_tests": [],
+  "disposition_hint": {
+   "state": "unknown",
+   "reason": "本包证据只覆盖环境维度"
+  },
+  "costs": {
+   "minutes": 15
+  }
+ },
+ "swe_gym_lite::getmoto__moto-6913": {
+  "task_id": "swe_gym_lite::getmoto__moto-6913",
+  "source": "swe_gym_lite",
+  "task_revision": "upstream",
+  "materials_refs": [
+   "s2/ingest/{public,grading_bundles_v2,validation,environment_packages}_v0.jsonl"
+  ],
+  "public_view": {
+   "note": "本包只做环境/依赖/资产/网络/泄漏与反例执行，未做盲审题面；public_view 留给 L1/L2 包"
+  },
+  "checks": {
+   "6": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/recipes/moto-6913-none.json",
+     "runs/env_overnight_20260916/M2/recipes/moto-6913-net.json",
+     "runs/env_overnight_20260916/M2/recipes/logs/moto-6913-none.install.log",
+     "runs/env_overnight_20260916/M2/recipes/moto-6913-preseed.json"
+    ],
+    "note": "断网 `make init`=2（同 setuptools 隔离），联网=0；预置后断网全 0",
+    "by": "M2 (Claude)"
+   },
+   "8": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/recipes/moto-6913-none.json",
+     "runs/env_overnight_20260916/M2/recipes/moto-6913-net.json",
+     "runs/env_overnight_20260916/M2/recipes/logs/moto-6913-none.install.log",
+     "runs/env_overnight_20260916/M2/recipes/moto-6913-preseed.json"
+    ],
+    "note": "以 uid 54322 / HOME=/home/rh2grader / cwd=/testbed 执行；需按 candidate_writable_prefixes 也 chown /opt/miniconda3/envs/testbed，否则 site-packages 只读",
+    "by": "M2 (Claude)"
+   },
+   "9": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/recipes/moto-6913-none.json",
+     "runs/env_overnight_20260916/M2/recipes/moto-6913-net.json",
+     "runs/env_overnight_20260916/M2/recipes/logs/moto-6913-none.install.log",
+     "runs/env_overnight_20260916/M2/recipes/moto-6913-preseed.json"
+    ],
+    "note": "RH2_INSTALL_RC 只反映串末命令：mypy 假通过、moto 安装失败但测试仍 import /testbed 下的候选代码",
+    "by": "M2 (Claude)"
+   },
+   "11": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/network/moto-6913-none.json",
+     "runs/env_overnight_20260916/M2/logs/moto-6913-none.test.log"
+    ],
+    "note": "测试段不需要网络：断网 P2P 17/17 PASSED，日志无外部 URL",
+    "by": "M2 (Claude)"
+   },
+   "29": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/getmoto__moto-6913.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/getmoto__moto-6913.log",
+     "runs/env_overnight_20260916/M2/leak_scan/verify-getmoto__moto-6913.json"
+    ],
+    "note": "镜像出厂状态：HEAD=base_commit，但 tag 未删，`git rev-list --all --not HEAD --count`=817，能列出 HEAD 的后代提交；dangling=12。RH2 的 git_sanitize_script 在每个 rollout attempt 无条件执行（generate.py:4698），实测后该计数归 0。",
+    "by": "M2 (Claude)"
+   },
+   "12": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/network/moto-6913-none.json",
+     "runs/env_overnight_20260916/M2/logs/moto-6913-none.test.log"
+    ],
+    "note": "全部走 moto 内部 mock",
+    "by": "M2 (Claude)"
+   },
+   "30": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/getmoto__moto-6913.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/getmoto__moto-6913.log",
+     "runs/env_overnight_20260916/M2/leak_scan/verify-getmoto__moto-6913.json"
+    ],
+    "note": "pandas 镜像带 upstream remote（github.com/pandas-dev/pandas）；其余 14 个 remote 为空。断网下无外取路径。",
+    "by": "M2 (Claude)"
+   }
+  },
+  "issues": [
+   {
+    "category": "offline_install_needs_preseed",
+    "severity": "P2",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/recipes/moto-6913-preseed.json"
+    ],
+    "proposed_action": "用 declared_readonly_binds 预置 pinned setuptools/wheel wheelhouse + PIP_NO_INDEX/PIP_FIND_LINKS",
+    "next_experiment": "pin 版本并记 sha256 后在正式 grader profile 下复验"
+   },
+   {
+    "category": "answer_exposure_in_git_objects",
+    "severity": "P1",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/getmoto__moto-6913.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/getmoto__moto-6913.log",
+     "runs/env_overnight_20260916/M2/leak_scan/verify-getmoto__moto-6913.json"
+    ],
+    "proposed_action": "确认所有 rollout 路径都走 git_sanitize（profile is None 的路径不跑）；把 sanitize 自证值纳入准入",
+    "next_experiment": "runs/env_overnight_20260916/M2/leak_scan/verify-*.json 已验证 sanitize 后 NOTHEAD=0"
+   }
+  ],
+  "file_rules": {
+   "additional_exclusions": [],
+   "rationale": "本包未提出新增排除（第四组 §0/§6.5：默认为空）",
+   "evidence_refs": []
+  },
+  "proposed_regression_tests": [],
+  "disposition_hint": {
+   "state": "unknown",
+   "reason": "本包证据只覆盖环境维度"
+  },
+  "costs": {
+   "minutes": 15
+  }
+ },
+ "swe_gym_lite::dask__dask-7894": {
+  "task_id": "swe_gym_lite::dask__dask-7894",
+  "source": "swe_gym_lite",
+  "task_revision": "upstream",
+  "materials_refs": [
+   "s2/ingest/{public,grading_bundles_v2,validation,environment_packages}_v0.jsonl"
+  ],
+  "public_view": {
+   "note": "本包只做环境/依赖/资产/网络/泄漏与反例执行，未做盲审题面；public_view 留给 L1/L2 包"
+  },
+  "checks": {
+   "6": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/recipes/dask-7894-none.json",
+     "runs/env_overnight_20260916/M2/recipes/dask-7894-net.json",
+     "runs/env_overnight_20260916/M2/recipes/logs/dask-7894-none.install.log"
+    ],
+    "note": "`setup.py develop` 旧路径，断网 3.1 s 成功",
+    "by": "M2 (Claude)"
+   },
+   "8": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/recipes/dask-7894-none.json",
+     "runs/env_overnight_20260916/M2/recipes/dask-7894-net.json",
+     "runs/env_overnight_20260916/M2/recipes/logs/dask-7894-none.install.log"
+    ],
+    "note": "以 uid 54322 / HOME=/home/rh2grader / cwd=/testbed 执行；需按 candidate_writable_prefixes 也 chown /opt/miniconda3/envs/testbed，否则 site-packages 只读",
+    "by": "M2 (Claude)"
+   },
+   "9": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/recipes/dask-7894-none.json",
+     "runs/env_overnight_20260916/M2/recipes/dask-7894-net.json",
+     "runs/env_overnight_20260916/M2/recipes/logs/dask-7894-none.install.log"
+    ],
+    "note": "RH2_INSTALL_RC 只反映串末命令：mypy 假通过、moto 安装失败但测试仍 import /testbed 下的候选代码",
+    "by": "M2 (Claude)"
+   },
+   "11": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/recipes/dask-7894-none.json",
+     "runs/env_overnight_20260916/M2/recipes/dask-7894-net.json",
+     "runs/env_overnight_20260916/M2/recipes/logs/dask-7894-none.install.log"
+    ],
+    "note": "安装段唯一的网络需求是 PEP 517 构建隔离取 setuptools；其余依赖镜像已装",
+    "by": "M2 (Claude)"
+   },
+   "29": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/dask__dask-7894.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/dask__dask-7894.log"
+    ],
+    "note": "镜像出厂状态：HEAD=base_commit，但 tag 未删，`git rev-list --all --not HEAD --count`=5321，能列出 HEAD 的后代提交；dangling=4。RH2 的 git_sanitize_script 在每个 rollout attempt 无条件执行（generate.py:4698），实测后该计数归 0。",
+    "by": "M2 (Claude)"
+   },
+   "30": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/dask__dask-7894.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/dask__dask-7894.log"
+    ],
+    "note": "pandas 镜像带 upstream remote（github.com/pandas-dev/pandas）；其余 14 个 remote 为空。断网下无外取路径。",
+    "by": "M2 (Claude)"
+   }
+  },
+  "issues": [
+   {
+    "category": "answer_exposure_in_git_objects",
+    "severity": "P1",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/dask__dask-7894.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/dask__dask-7894.log"
+    ],
+    "proposed_action": "确认所有 rollout 路径都走 git_sanitize（profile is None 的路径不跑）；把 sanitize 自证值纳入准入",
+    "next_experiment": "runs/env_overnight_20260916/M2/leak_scan/verify-*.json 已验证 sanitize 后 NOTHEAD=0"
+   }
+  ],
+  "file_rules": {
+   "additional_exclusions": [],
+   "rationale": "本包未提出新增排除（第四组 §0/§6.5：默认为空）",
+   "evidence_refs": []
+  },
+  "proposed_regression_tests": [],
+  "disposition_hint": {
+   "state": "unknown",
+   "reason": "本包证据只覆盖环境维度"
+  },
+  "costs": {
+   "minutes": 15
+  }
+ },
+ "swe_gym_lite::conan-io__conan-13326": {
+  "task_id": "swe_gym_lite::conan-io__conan-13326",
+  "source": "swe_gym_lite",
+  "task_revision": "upstream",
+  "materials_refs": [
+   "s2/ingest/{public,grading_bundles_v2,validation,environment_packages}_v0.jsonl"
+  ],
+  "public_view": {
+   "note": "本包只做环境/依赖/资产/网络/泄漏与反例执行，未做盲审题面；public_view 留给 L1/L2 包"
+  },
+  "checks": {
+   "6": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/recipes/conan-13326-none.json",
+     "runs/env_overnight_20260916/M2/recipes/conan-13326-net.json",
+     "runs/env_overnight_20260916/M2/recipes/logs/conan-13326-none.install.log"
+    ],
+    "note": "断网/联网都成功；镜像自带 root 属主 /tmp/constraint.txt，不挂 tmpfs /tmp 时首条 `echo >` EACCES",
+    "by": "M2 (Claude)"
+   },
+   "8": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/recipes/conan-13326-none.json",
+     "runs/env_overnight_20260916/M2/recipes/conan-13326-net.json",
+     "runs/env_overnight_20260916/M2/recipes/logs/conan-13326-none.install.log"
+    ],
+    "note": "以 uid 54322 / HOME=/home/rh2grader / cwd=/testbed 执行；需按 candidate_writable_prefixes 也 chown /opt/miniconda3/envs/testbed，否则 site-packages 只读",
+    "by": "M2 (Claude)"
+   },
+   "9": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/recipes/conan-13326-none.json",
+     "runs/env_overnight_20260916/M2/recipes/conan-13326-net.json",
+     "runs/env_overnight_20260916/M2/recipes/logs/conan-13326-none.install.log"
+    ],
+    "note": "RH2_INSTALL_RC 只反映串末命令：mypy 假通过、moto 安装失败但测试仍 import /testbed 下的候选代码",
+    "by": "M2 (Claude)"
+   },
+   "11": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/recipes/conan-13326-none.json",
+     "runs/env_overnight_20260916/M2/recipes/conan-13326-net.json",
+     "runs/env_overnight_20260916/M2/recipes/logs/conan-13326-none.install.log"
+    ],
+    "note": "安装段唯一的网络需求是 PEP 517 构建隔离取 setuptools；其余依赖镜像已装",
+    "by": "M2 (Claude)"
+   },
+   "29": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/conan-io__conan-13326.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/conan-io__conan-13326.log",
+     "runs/env_overnight_20260916/M2/leak_scan/verify-conan-io__conan-13326.json"
+    ],
+    "note": "镜像出厂状态：HEAD=base_commit，但 tag 未删，`git rev-list --all --not HEAD --count`=1290，能列出 HEAD 的后代提交；dangling=9。RH2 的 git_sanitize_script 在每个 rollout attempt 无条件执行（generate.py:4698），实测后该计数归 0。",
+    "by": "M2 (Claude)"
+   },
+   "30": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/conan-io__conan-13326.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/conan-io__conan-13326.log",
+     "runs/env_overnight_20260916/M2/leak_scan/verify-conan-io__conan-13326.json"
+    ],
+    "note": "pandas 镜像带 upstream remote（github.com/pandas-dev/pandas）；其余 14 个 remote 为空。断网下无外取路径。",
+    "by": "M2 (Claude)"
+   }
+  },
+  "issues": [
+   {
+    "category": "answer_exposure_in_git_objects",
+    "severity": "P1",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/conan-io__conan-13326.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/conan-io__conan-13326.log",
+     "runs/env_overnight_20260916/M2/leak_scan/verify-conan-io__conan-13326.json"
+    ],
+    "proposed_action": "确认所有 rollout 路径都走 git_sanitize（profile is None 的路径不跑）；把 sanitize 自证值纳入准入",
+    "next_experiment": "runs/env_overnight_20260916/M2/leak_scan/verify-*.json 已验证 sanitize 后 NOTHEAD=0"
+   }
+  ],
+  "file_rules": {
+   "additional_exclusions": [],
+   "rationale": "本包未提出新增排除（第四组 §0/§6.5：默认为空）",
+   "evidence_refs": []
+  },
+  "proposed_regression_tests": [],
+  "disposition_hint": {
+   "state": "unknown",
+   "reason": "本包证据只覆盖环境维度"
+  },
+  "costs": {
+   "minutes": 15
+  }
+ },
+ "swe_gym_lite::Project-MONAI__MONAI-1121": {
+  "task_id": "swe_gym_lite::Project-MONAI__MONAI-1121",
+  "source": "swe_gym_lite",
+  "task_revision": "upstream",
+  "materials_refs": [
+   "s2/ingest/{public,grading_bundles_v2,validation,environment_packages}_v0.jsonl"
+  ],
+  "public_view": {
+   "note": "本包只做环境/依赖/资产/网络/泄漏与反例执行，未做盲审题面；public_view 留给 L1/L2 包"
+  },
+  "checks": {
+   "7": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/assets/monai-1121-none.json",
+     "runs/env_overnight_20260916/M2/assets/monai-1121-net.json",
+     "runs/env_overnight_20260916/M2/assets/monai-1121-asset.json",
+     "runs/env_overnight_20260916/M2/logs/monai-1121-none.test.log",
+     "runs/env_overnight_20260916/M2/logs/monai-1121-assetverify.test.log"
+    ],
+    "note": "测试实际请求 https://download.pytorch.org/models/resnet50-0676ba61.pth（102530333 B, sha256 0676ba61b6795bbe…）；预置到 $HOME/.cache/torch/hub/checkpoints/（HOME=/home/rh2grader，chown 54322） 后在 --network none + gold 下 F2P PASS",
+    "by": "M2 (Claude)"
+   },
+   "11": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/assets/monai-1121-none.json",
+     "runs/env_overnight_20260916/M2/assets/monai-1121-net.json",
+     "runs/env_overnight_20260916/M2/assets/monai-1121-asset.json",
+     "runs/env_overnight_20260916/M2/logs/monai-1121-none.test.log",
+     "runs/env_overnight_20260916/M2/logs/monai-1121-assetverify.test.log"
+    ],
+    "note": "只有资产下载需要网络；准备阶段下载后评分阶段可全断网",
+    "by": "M2 (Claude)"
+   },
+   "12": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/assets/monai-1121-none.json",
+     "runs/env_overnight_20260916/M2/assets/monai-1121-net.json",
+     "runs/env_overnight_20260916/M2/assets/monai-1121-asset.json",
+     "runs/env_overnight_20260916/M2/logs/monai-1121-none.test.log",
+     "runs/env_overnight_20260916/M2/logs/monai-1121-assetverify.test.log"
+    ],
+    "note": "对照 --network none 与联网，差异 100% 由该资产解释",
+    "by": "M2 (Claude)"
+   },
+   "8": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/assets/monai-1121-none.json",
+     "runs/env_overnight_20260916/M2/assets/monai-1121-net.json",
+     "runs/env_overnight_20260916/M2/assets/monai-1121-asset.json",
+     "runs/env_overnight_20260916/M2/logs/monai-1121-none.test.log",
+     "runs/env_overnight_20260916/M2/logs/monai-1121-assetverify.test.log"
+    ],
+    "note": "以 uid 54322 验证可读",
+    "by": "M2 (Claude)"
+   },
+   "18": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/assets/monai-1121-none.json",
+     "runs/env_overnight_20260916/M2/assets/monai-1121-net.json",
+     "runs/env_overnight_20260916/M2/assets/monai-1121-asset.json",
+     "runs/env_overnight_20260916/M2/logs/monai-1121-none.test.log",
+     "runs/env_overnight_20260916/M2/logs/monai-1121-assetverify.test.log"
+    ],
+    "note": "1121：官方测试选择器含 tests/utils.py，其中辅助函数 test_script_save 被 pytest 当用例收集并恒 ERROR；gold 上 RH2_TEST_RC 也非 0",
+    "by": "M2 (Claude)"
+   },
+   "29": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/Project-MONAI__MONAI-1121.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/Project-MONAI__MONAI-1121.log"
+    ],
+    "note": "镜像出厂状态：HEAD=base_commit，但 tag 未删，`git rev-list --all --not HEAD --count`=2581，能列出 HEAD 的后代提交；dangling=3。RH2 的 git_sanitize_script 在每个 rollout attempt 无条件执行（generate.py:4698），实测后该计数归 0。",
+    "by": "M2 (Claude)"
+   },
+   "30": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/Project-MONAI__MONAI-1121.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/Project-MONAI__MONAI-1121.log"
+    ],
+    "note": "pandas 镜像带 upstream remote（github.com/pandas-dev/pandas）；其余 14 个 remote 为空。断网下无外取路径。",
+    "by": "M2 (Claude)"
+   }
+  },
+  "issues": [
+   {
+    "category": "external_asset_required",
+    "severity": "P2",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/assets/monai-1121-none.json",
+     "runs/env_overnight_20260916/M2/assets/monai-1121-net.json",
+     "runs/env_overnight_20260916/M2/assets/monai-1121-asset.json",
+     "runs/env_overnight_20260916/M2/logs/monai-1121-none.test.log",
+     "runs/env_overnight_20260916/M2/logs/monai-1121-assetverify.test.log"
+    ],
+    "proposed_action": "准备阶段下载并 pin sha256，用派生镜像或 declared_readonly_binds 预置",
+    "next_experiment": "在正式 grader profile（cap-drop/pids-limit/quota 全套）下复验"
+   },
+   {
+    "category": "environment_rot_non_network",
+    "severity": "P3",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/assets/monai-1121-none.json",
+     "runs/env_overnight_20260916/M2/assets/monai-1121-net.json",
+     "runs/env_overnight_20260916/M2/assets/monai-1121-asset.json",
+     "runs/env_overnight_20260916/M2/logs/monai-1121-none.test.log",
+     "runs/env_overnight_20260916/M2/logs/monai-1121-assetverify.test.log"
+    ],
+    "proposed_action": "记录 TestDiscriminator 4 条因 NumPy 删除 np.int 恒 FAIL（不在 P2P，不改 reward），不要误当网络问题",
+    "next_experiment": "无"
+   },
+   {
+    "category": "test_selector_collects_helper",
+    "severity": "P3",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/assets/monai-1121-none.json",
+     "runs/env_overnight_20260916/M2/assets/monai-1121-net.json",
+     "runs/env_overnight_20260916/M2/assets/monai-1121-asset.json",
+     "runs/env_overnight_20260916/M2/logs/monai-1121-none.test.log",
+     "runs/env_overnight_20260916/M2/logs/monai-1121-assetverify.test.log"
+    ],
+    "proposed_action": "确认 derive_test_directives 保留 tests/utils.py 是否符合来源意图；测试命令退出码保持只进诊断",
+    "next_experiment": "无"
+   },
+   {
+    "category": "answer_exposure_in_git_objects",
+    "severity": "P1",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/Project-MONAI__MONAI-1121.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/Project-MONAI__MONAI-1121.log"
+    ],
+    "proposed_action": "确认所有 rollout 路径都走 git_sanitize（profile is None 的路径不跑）；把 sanitize 自证值纳入准入",
+    "next_experiment": "runs/env_overnight_20260916/M2/leak_scan/verify-*.json 已验证 sanitize 后 NOTHEAD=0"
+   }
+  ],
+  "file_rules": {
+   "additional_exclusions": [],
+   "rationale": "本包未提出新增排除（第四组 §0/§6.5：默认为空）",
+   "evidence_refs": []
+  },
+  "proposed_regression_tests": [],
+  "disposition_hint": {
+   "state": "unknown",
+   "reason": "资产预置后可在 deny_all 下评分；题意/gold 质量未在本包检查"
+  },
+  "costs": {
+   "minutes": 28
+  }
+ },
+ "swe_gym_lite::Project-MONAI__MONAI-3205": {
+  "task_id": "swe_gym_lite::Project-MONAI__MONAI-3205",
+  "source": "swe_gym_lite",
+  "task_revision": "upstream",
+  "materials_refs": [
+   "s2/ingest/{public,grading_bundles_v2,validation,environment_packages}_v0.jsonl"
+  ],
+  "public_view": {
+   "note": "本包只做环境/依赖/资产/网络/泄漏与反例执行，未做盲审题面；public_view 留给 L1/L2 包"
+  },
+  "checks": {
+   "7": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/assets/monai-3205-none.json",
+     "runs/env_overnight_20260916/M2/assets/monai-3205-net.json",
+     "runs/env_overnight_20260916/M2/assets/monai-3205-asset.json",
+     "runs/env_overnight_20260916/M2/logs/monai-3205-none.test.log",
+     "runs/env_overnight_20260916/M2/logs/monai-3205-assetverify.test.log"
+    ],
+    "note": "测试实际请求 https://msd-for-monai.s3-us-west-2.amazonaws.com/Task04_Hippocampus.tar（28425216 B, sha256 282d808a3e84e5a5…）；预置到 解压到 /testbed/tests/testing_data/Task04_Hippocampus/（chown 54322） 后在 --network none + gold 下 F2P PASS",
+    "by": "M2 (Claude)"
+   },
+   "11": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/assets/monai-3205-none.json",
+     "runs/env_overnight_20260916/M2/assets/monai-3205-net.json",
+     "runs/env_overnight_20260916/M2/assets/monai-3205-asset.json",
+     "runs/env_overnight_20260916/M2/logs/monai-3205-none.test.log",
+     "runs/env_overnight_20260916/M2/logs/monai-3205-assetverify.test.log"
+    ],
+    "note": "只有资产下载需要网络；准备阶段下载后评分阶段可全断网",
+    "by": "M2 (Claude)"
+   },
+   "12": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/assets/monai-3205-none.json",
+     "runs/env_overnight_20260916/M2/assets/monai-3205-net.json",
+     "runs/env_overnight_20260916/M2/assets/monai-3205-asset.json",
+     "runs/env_overnight_20260916/M2/logs/monai-3205-none.test.log",
+     "runs/env_overnight_20260916/M2/logs/monai-3205-assetverify.test.log"
+    ],
+    "note": "对照 --network none 与联网，差异 100% 由该资产解释",
+    "by": "M2 (Claude)"
+   },
+   "8": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/assets/monai-3205-none.json",
+     "runs/env_overnight_20260916/M2/assets/monai-3205-net.json",
+     "runs/env_overnight_20260916/M2/assets/monai-3205-asset.json",
+     "runs/env_overnight_20260916/M2/logs/monai-3205-none.test.log",
+     "runs/env_overnight_20260916/M2/logs/monai-3205-assetverify.test.log"
+    ],
+    "note": "以 uid 54322 验证可读",
+    "by": "M2 (Claude)"
+   },
+   "18": {
+    "status": "not_applicable",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/assets/monai-3205-none.json",
+     "runs/env_overnight_20260916/M2/assets/monai-3205-net.json",
+     "runs/env_overnight_20260916/M2/assets/monai-3205-asset.json",
+     "runs/env_overnight_20260916/M2/logs/monai-3205-none.test.log",
+     "runs/env_overnight_20260916/M2/logs/monai-3205-assetverify.test.log"
+    ],
+    "note": "1121：官方测试选择器含 tests/utils.py，其中辅助函数 test_script_save 被 pytest 当用例收集并恒 ERROR；gold 上 RH2_TEST_RC 也非 0",
+    "by": "M2 (Claude)"
+   },
+   "29": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/Project-MONAI__MONAI-3205.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/Project-MONAI__MONAI-3205.log"
+    ],
+    "note": "镜像出厂状态：HEAD=base_commit，但 tag 未删，`git rev-list --all --not HEAD --count`=1678，能列出 HEAD 的后代提交；dangling=2。RH2 的 git_sanitize_script 在每个 rollout attempt 无条件执行（generate.py:4698），实测后该计数归 0。",
+    "by": "M2 (Claude)"
+   },
+   "30": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/Project-MONAI__MONAI-3205.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/Project-MONAI__MONAI-3205.log"
+    ],
+    "note": "pandas 镜像带 upstream remote（github.com/pandas-dev/pandas）；其余 14 个 remote 为空。断网下无外取路径。",
+    "by": "M2 (Claude)"
+   }
+  },
+  "issues": [
+   {
+    "category": "external_asset_required",
+    "severity": "P2",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/assets/monai-3205-none.json",
+     "runs/env_overnight_20260916/M2/assets/monai-3205-net.json",
+     "runs/env_overnight_20260916/M2/assets/monai-3205-asset.json",
+     "runs/env_overnight_20260916/M2/logs/monai-3205-none.test.log",
+     "runs/env_overnight_20260916/M2/logs/monai-3205-assetverify.test.log"
+    ],
+    "proposed_action": "准备阶段下载并 pin sha256，用派生镜像或 declared_readonly_binds 预置",
+    "next_experiment": "在正式 grader profile（cap-drop/pids-limit/quota 全套）下复验"
+   },
+   {
+    "category": "answer_exposure_in_git_objects",
+    "severity": "P1",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/Project-MONAI__MONAI-3205.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/Project-MONAI__MONAI-3205.log"
+    ],
+    "proposed_action": "确认所有 rollout 路径都走 git_sanitize（profile is None 的路径不跑）；把 sanitize 自证值纳入准入",
+    "next_experiment": "runs/env_overnight_20260916/M2/leak_scan/verify-*.json 已验证 sanitize 后 NOTHEAD=0"
+   }
+  ],
+  "file_rules": {
+   "additional_exclusions": [],
+   "rationale": "本包未提出新增排除（第四组 §0/§6.5：默认为空）",
+   "evidence_refs": []
+  },
+  "proposed_regression_tests": [],
+  "disposition_hint": {
+   "state": "unknown",
+   "reason": "资产预置后可在 deny_all 下评分；题意/gold 质量未在本包检查"
+  },
+  "costs": {
+   "minutes": 28
+  }
+ },
+ "swe_gym_lite::getmoto__moto-4799": {
+  "task_id": "swe_gym_lite::getmoto__moto-4799",
+  "source": "swe_gym_lite",
+  "task_revision": "upstream",
+  "materials_refs": [
+   "s2/ingest/{public,grading_bundles_v2,validation,environment_packages}_v0.jsonl"
+  ],
+  "public_view": {
+   "note": "本包只做环境/依赖/资产/网络/泄漏与反例执行，未做盲审题面；public_view 留给 L1/L2 包"
+  },
+  "checks": {
+   "11": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/network/moto-4799-none.json",
+     "runs/env_overnight_20260916/M2/network/moto-4799-net.json",
+     "runs/env_overnight_20260916/M2/network/moto-4799-stub.json",
+     "runs/env_overnight_20260916/M2/network/moto-4799-hostsstub.json",
+     "runs/env_overnight_20260916/M2/logs/moto-4799-none.test.log",
+     "runs/env_overnight_20260916/M2/logs/moto-4799-hostsstub.test.log"
+    ],
+    "note": "两条 P2P 需要真实 AWS 端点：test_context_manager、test_decorator_start_and_stop",
+    "by": "M2 (Claude)"
+   },
+   "12": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/network/moto-4799-none.json",
+     "runs/env_overnight_20260916/M2/network/moto-4799-net.json",
+     "runs/env_overnight_20260916/M2/network/moto-4799-stub.json",
+     "runs/env_overnight_20260916/M2/network/moto-4799-hostsstub.json",
+     "runs/env_overnight_20260916/M2/logs/moto-4799-none.test.log",
+     "runs/env_overnight_20260916/M2/logs/moto-4799-hostsstub.test.log"
+    ],
+    "note": "断网得到 EndpointConnectionError 而非 ClientError → pytest.raises(ClientError) 失败；deny_all 下 P2P 上限 17/19，gold 也满不了",
+    "by": "M2 (Claude)"
+   },
+   "13": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/network/moto-4799-none.json",
+     "runs/env_overnight_20260916/M2/network/moto-4799-net.json",
+     "runs/env_overnight_20260916/M2/network/moto-4799-stub.json",
+     "runs/env_overnight_20260916/M2/network/moto-4799-hostsstub.json",
+     "runs/env_overnight_20260916/M2/logs/moto-4799-none.test.log",
+     "runs/env_overnight_20260916/M2/logs/moto-4799-hostsstub.test.log"
+    ],
+    "note": "无资源相关失败",
+    "by": "M2 (Claude)"
+   },
+   "19": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/network/moto-4799-none.json",
+     "runs/env_overnight_20260916/M2/network/moto-4799-net.json",
+     "runs/env_overnight_20260916/M2/network/moto-4799-stub.json",
+     "runs/env_overnight_20260916/M2/network/moto-4799-hostsstub.json",
+     "runs/env_overnight_20260916/M2/logs/moto-4799-none.test.log",
+     "runs/env_overnight_20260916/M2/logs/moto-4799-hostsstub.test.log"
+    ],
+    "note": "-rA 逐 ID 解析正常，无 ABSENT",
+    "by": "M2 (Claude)"
+   },
+   "29": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/getmoto__moto-4799.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/getmoto__moto-4799.log"
+    ],
+    "note": "镜像出厂状态：HEAD=base_commit，但 tag 未删，`git rev-list --all --not HEAD --count`=2405，能列出 HEAD 的后代提交；dangling=12。RH2 的 git_sanitize_script 在每个 rollout attempt 无条件执行（generate.py:4698），实测后该计数归 0。",
+    "by": "M2 (Claude)"
+   },
+   "30": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/getmoto__moto-4799.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/getmoto__moto-4799.log"
+    ],
+    "note": "pandas 镜像带 upstream remote（github.com/pandas-dev/pandas）；其余 14 个 remote 为空。断网下无外取路径。",
+    "by": "M2 (Claude)"
+   }
+  },
+  "issues": [
+   {
+    "category": "test_requires_live_external_service",
+    "severity": "P1",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/network/moto-4799-none.json",
+     "runs/env_overnight_20260916/M2/network/moto-4799-net.json",
+     "runs/env_overnight_20260916/M2/network/moto-4799-stub.json",
+     "runs/env_overnight_20260916/M2/network/moto-4799-hostsstub.json",
+     "runs/env_overnight_20260916/M2/logs/moto-4799-none.test.log",
+     "runs/env_overnight_20260916/M2/logs/moto-4799-hostsstub.test.log"
+    ],
+    "proposed_action": "三选一：把这两条列入 P2P 排除；对本题开端点白名单；或用已验证的 hosts+本地 HTTPS 桩（AWS_ENDPOINT_URL 方案已证伪，会连带打坏 17 条 mock 用例）",
+    "next_experiment": "把桩放进 grader 可信初始化后在正式 profile 下复验 gold 的 F2P/P2P"
+   },
+   {
+    "category": "answer_exposure_in_git_objects",
+    "severity": "P1",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/getmoto__moto-4799.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/getmoto__moto-4799.log"
+    ],
+    "proposed_action": "确认所有 rollout 路径都走 git_sanitize（profile is None 的路径不跑）；把 sanitize 自证值纳入准入",
+    "next_experiment": "runs/env_overnight_20260916/M2/leak_scan/verify-*.json 已验证 sanitize 后 NOTHEAD=0"
+   }
+  ],
+  "file_rules": {
+   "additional_exclusions": [],
+   "rationale": "本包未提出新增排除（第四组 §0/§6.5：默认为空）",
+   "evidence_refs": []
+  },
+  "proposed_regression_tests": [],
+  "disposition_hint": {
+   "state": "unknown",
+   "reason": "需要用户在排除/白名单/桩之间裁定后才能定可用性"
+  },
+  "costs": {
+   "minutes": 33
+  }
+ },
+ "swe_gym_lite::modin-project__modin-6937": {
+  "task_id": "swe_gym_lite::modin-project__modin-6937",
+  "source": "swe_gym_lite",
+  "task_revision": "upstream",
+  "materials_refs": [
+   "s2/ingest/{public,grading_bundles_v2,validation,environment_packages}_v0.jsonl"
+  ],
+  "public_view": {
+   "note": "本包只做环境/依赖/资产/网络/泄漏与反例执行，未做盲审题面；public_view 留给 L1/L2 包"
+  },
+  "checks": {
+   "11": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/network/modin-6937-none.json",
+     "runs/env_overnight_20260916/M2/network/modin-6937-net.json",
+     "runs/env_overnight_20260916/M2/logs/modin-6937-none.test.log"
+    ],
+    "note": "网络只影响 5 条（4 条 test_read_csv_s3 断网 FAILED/联网 XFAIL，test_read_csv_s3_issue4658 断网 PASSED/联网 FAILED）",
+    "by": "M2 (Claude)"
+   },
+   "12": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/network/modin-6937-none.json",
+     "runs/env_overnight_20260916/M2/network/modin-6937-net.json",
+     "runs/env_overnight_20260916/M2/logs/modin-6937-none.test.log"
+    ],
+    "note": "test_read_csv_s3_issue4658 在有网时反而 FAILED——外部服务行为参与判定",
+    "by": "M2 (Claude)"
+   },
+   "13": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/network/modin-6937-none.json",
+     "runs/env_overnight_20260916/M2/network/modin-6937-net.json",
+     "runs/env_overnight_20260916/M2/logs/modin-6937-none.test.log",
+     "runs/env_overnight_20260916/M2/network/modin-6937-none-tmpfs4g.json",
+     "runs/env_overnight_20260916/M2/network/modin-6937-none-tmpfs16g.json"
+    ],
+    "note": "grader 默认 tmp_tmpfs_bytes=1 GiB 下 271 条 OSError Errno 28（/tmp/pytest-of-rh2grader 写满），共约 400/2354 P2P 失败 补验：/tmp tmpfs 提到 4 GiB（及 16 GiB）后 P2P 2354/2354 全过，p2p_rate=1.0；1→4 GiB 间的最小值 not_checked。",
+    "by": "M2 (Claude)"
+   },
+   "18": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/network/modin-6937-none.json",
+     "runs/env_overnight_20260916/M2/network/modin-6937-net.json",
+     "runs/env_overnight_20260916/M2/logs/modin-6937-none.test.log"
+    ],
+    "note": "2354 条 P2P 全部出现在日志中，absent=0",
+    "by": "M2 (Claude)"
+   },
+   "29": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/modin-project__modin-6937.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/modin-project__modin-6937.log"
+    ],
+    "note": "镜像出厂状态：HEAD=base_commit，但 tag 未删，`git rev-list --all --not HEAD --count`=463，能列出 HEAD 的后代提交；dangling=1。RH2 的 git_sanitize_script 在每个 rollout attempt 无条件执行（generate.py:4698），实测后该计数归 0。",
+    "by": "M2 (Claude)"
+   },
+   "30": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/modin-project__modin-6937.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/modin-project__modin-6937.log"
+    ],
+    "note": "pandas 镜像带 upstream remote（github.com/pandas-dev/pandas）；其余 14 个 remote 为空。断网下无外取路径。",
+    "by": "M2 (Claude)"
+   }
+  },
+  "issues": [
+   {
+    "category": "resource_profile_too_small",
+    "severity": "P1",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/network/modin-6937-none.json",
+     "runs/env_overnight_20260916/M2/network/modin-6937-net.json",
+     "runs/env_overnight_20260916/M2/logs/modin-6937-none.test.log"
+    ],
+    "proposed_action": "提高 grader /tmp tmpfs 容量或把 TMPDIR 指到容器可写层；tmpfs 计入 cgroup 内存，需与 memory_bytes 一起校准",
+    "next_experiment": "runs/env_overnight_20260916/M2/network/modin-6937-none-tmpfs16g.json（本轮已跑，见报告 §3.3）"
+   },
+   {
+    "category": "flaky_external_service",
+    "severity": "P3",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/network/modin-6937-none.json",
+     "runs/env_overnight_20260916/M2/network/modin-6937-net.json",
+     "runs/env_overnight_20260916/M2/logs/modin-6937-none.test.log"
+    ],
+    "proposed_action": "把 test_read_csv_s3* 归入需处置的外部服务用例",
+    "next_experiment": "重复运行观察稳定性"
+   },
+   {
+    "category": "answer_exposure_in_git_objects",
+    "severity": "P1",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/modin-project__modin-6937.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/modin-project__modin-6937.log"
+    ],
+    "proposed_action": "确认所有 rollout 路径都走 git_sanitize（profile is None 的路径不跑）；把 sanitize 自证值纳入准入",
+    "next_experiment": "runs/env_overnight_20260916/M2/leak_scan/verify-*.json 已验证 sanitize 后 NOTHEAD=0"
+   }
+  ],
+  "file_rules": {
+   "additional_exclusions": [],
+   "rationale": "本包未提出新增排除（第四组 §0/§6.5：默认为空）",
+   "evidence_refs": []
+  },
+  "proposed_regression_tests": [],
+  "disposition_hint": {
+   "state": "unknown",
+   "reason": "资源参数修正前无法判断题目本身是否可用"
+  },
+  "costs": {
+   "minutes": 48
+  }
+ },
+ "swe_gym_lite::Project-MONAI__MONAI-763": {
+  "task_id": "swe_gym_lite::Project-MONAI__MONAI-763",
+  "source": "swe_gym_lite",
+  "task_revision": "upstream",
+  "materials_refs": [
+   "s2/ingest/{public,grading_bundles_v2,validation,environment_packages}_v0.jsonl"
+  ],
+  "public_view": {
+   "note": "本包不做盲审题面"
+  },
+  "checks": {
+   "29": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/Project-MONAI__MONAI-763.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/Project-MONAI__MONAI-763.log"
+    ],
+    "note": "镜像出厂状态：HEAD=base_commit，但 tag 未删，`git rev-list --all --not HEAD --count`=2751，能列出 HEAD 的后代提交；dangling=3。RH2 的 git_sanitize_script 在每个 rollout attempt 无条件执行（generate.py:4698），实测后该计数归 0。",
+    "by": "M2 (Claude)"
+   },
+   "30": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/Project-MONAI__MONAI-763.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/Project-MONAI__MONAI-763.log"
+    ],
+    "note": "pandas 镜像带 upstream remote（github.com/pandas-dev/pandas）；其余 14 个 remote 为空。断网下无外取路径。",
+    "by": "M2 (Claude)"
+   }
+  },
+  "issues": [
+   {
+    "category": "answer_exposure_in_git_objects",
+    "severity": "P1",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/Project-MONAI__MONAI-763.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/Project-MONAI__MONAI-763.log"
+    ],
+    "proposed_action": "确认所有 rollout 路径都走 git_sanitize（profile is None 的路径不跑）；把 sanitize 自证值纳入准入",
+    "next_experiment": "runs/env_overnight_20260916/M2/leak_scan/verify-*.json 已验证 sanitize 后 NOTHEAD=0"
+   }
+  ],
+  "file_rules": {
+   "additional_exclusions": [],
+   "rationale": "本包未提出新增排除",
+   "evidence_refs": []
+  },
+  "proposed_regression_tests": [],
+  "disposition_hint": {
+   "state": "unknown",
+   "reason": "本包证据只覆盖环境维度"
+  },
+  "costs": {
+   "minutes": 3
+  }
+ },
+ "swe_gym_lite::getmoto__moto-6470": {
+  "task_id": "swe_gym_lite::getmoto__moto-6470",
+  "source": "swe_gym_lite",
+  "task_revision": "upstream",
+  "materials_refs": [
+   "s2/ingest/{public,grading_bundles_v2,validation,environment_packages}_v0.jsonl"
+  ],
+  "public_view": {
+   "note": "本包不做盲审题面"
+  },
+  "checks": {
+   "29": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/getmoto__moto-6470.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/getmoto__moto-6470.log"
+    ],
+    "note": "镜像出厂状态：HEAD=base_commit，但 tag 未删，`git rev-list --all --not HEAD --count`=1179，能列出 HEAD 的后代提交；dangling=12。RH2 的 git_sanitize_script 在每个 rollout attempt 无条件执行（generate.py:4698），实测后该计数归 0。",
+    "by": "M2 (Claude)"
+   },
+   "30": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/getmoto__moto-6470.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/getmoto__moto-6470.log"
+    ],
+    "note": "pandas 镜像带 upstream remote（github.com/pandas-dev/pandas）；其余 14 个 remote 为空。断网下无外取路径。",
+    "by": "M2 (Claude)"
+   },
+   "23": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/counterexamples/getmoto__moto-6470/run-agent.json",
+     "runs/env_overnight_20260916/M2/counterexamples/getmoto__moto-6470/run-rh2grader.json",
+     "runs/env_overnight_20260916/M2/counterexamples/getmoto__moto-6470/results/agent/",
+     "runs/env_overnight_20260916/M2/counterexamples/ce_summary.json"
+    ],
+    "note": "题面只说返回 500，消歧材料只在未曝光的 hints_text；候选选宽松解释，gold 选严格拒绝。另外候选删掉的 securityGroupIds 校验官方 12 条与仓库自带 13 条都测不到",
+    "by": "M2 (Claude)"
+   },
+   "38": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/counterexamples/getmoto__moto-6470/run-agent.json",
+     "runs/env_overnight_20260916/M2/counterexamples/getmoto__moto-6470/run-rh2grader.json",
+     "runs/env_overnight_20260916/M2/counterexamples/getmoto__moto-6470/results/agent/",
+     "runs/env_overnight_20260916/M2/counterexamples/ce_summary.json"
+    ],
+    "note": "agent(54321) 与 rh2grader(54322) 两个候选用户各跑一次，逐 run 计数完全相同",
+    "by": "M2 (Claude)"
+   }
+  },
+  "issues": [
+   {
+    "category": "answer_exposure_in_git_objects",
+    "severity": "P1",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/getmoto__moto-6470.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/getmoto__moto-6470.log"
+    ],
+    "proposed_action": "确认所有 rollout 路径都走 git_sanitize（profile is None 的路径不跑）；把 sanitize 自证值纳入准入",
+    "next_experiment": "runs/env_overnight_20260916/M2/leak_scan/verify-*.json 已验证 sanitize 后 NOTHEAD=0"
+   },
+   {
+    "category": "ambiguous_requirement",
+    "severity": "P1",
+    "proposed_action": "补 public_view 消歧或标 spec_gap",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/counterexamples/getmoto__moto-6470/run-agent.json",
+     "runs/env_overnight_20260916/M2/counterexamples/getmoto__moto-6470/run-rh2grader.json",
+     "runs/env_overnight_20260916/M2/counterexamples/getmoto__moto-6470/results/agent/",
+     "runs/env_overnight_20260916/M2/counterexamples/ce_summary.json"
+    ],
+    "next_experiment": "L3 run_matrix.sh（本轮已执行）"
+   },
+   {
+    "category": "uncovered_regression",
+    "severity": "P2",
+    "proposed_action": "把空 securityGroupIds 拒绝作为回归用例",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/counterexamples/getmoto__moto-6470/run-agent.json",
+     "runs/env_overnight_20260916/M2/counterexamples/getmoto__moto-6470/run-rh2grader.json",
+     "runs/env_overnight_20260916/M2/counterexamples/getmoto__moto-6470/results/agent/",
+     "runs/env_overnight_20260916/M2/counterexamples/ce_summary.json"
+    ],
+    "next_experiment": "L3 run_matrix.sh（本轮已执行）"
+   }
+  ],
+  "file_rules": {
+   "additional_exclusions": [],
+   "rationale": "本包未提出新增排除",
+   "evidence_refs": []
+  },
+  "proposed_regression_tests": [
+   "test_preserved_empty_security_group_list_is_rejected"
+  ],
+  "disposition_hint": {
+   "state": "unknown",
+   "reason": "本包证据只覆盖环境维度"
+  },
+  "costs": {
+   "minutes": 13
+  }
+ },
+ "swe_gym_lite::pydantic__pydantic-5706": {
+  "task_id": "swe_gym_lite::pydantic__pydantic-5706",
+  "source": "swe_gym_lite",
+  "task_revision": "upstream",
+  "materials_refs": [
+   "s2/ingest/{public,grading_bundles_v2,validation,environment_packages}_v0.jsonl"
+  ],
+  "public_view": {
+   "note": "本包不做盲审题面"
+  },
+  "checks": {
+   "29": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/pydantic__pydantic-5706.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/pydantic__pydantic-5706.log"
+    ],
+    "note": "镜像出厂状态：HEAD=base_commit，但 tag 未删，`git rev-list --all --not HEAD --count`=1623，能列出 HEAD 的后代提交；dangling=18。RH2 的 git_sanitize_script 在每个 rollout attempt 无条件执行（generate.py:4698），实测后该计数归 0。",
+    "by": "M2 (Claude)"
+   },
+   "30": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/pydantic__pydantic-5706.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/pydantic__pydantic-5706.log"
+    ],
+    "note": "pandas 镜像带 upstream remote（github.com/pandas-dev/pandas）；其余 14 个 remote 为空。断网下无外取路径。",
+    "by": "M2 (Claude)"
+   },
+   "25": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/counterexamples/pydantic__pydantic-5706/run-agent.json",
+     "runs/env_overnight_20260916/M2/counterexamples/pydantic__pydantic-5706/run-rh2grader.json",
+     "runs/env_overnight_20260916/M2/counterexamples/pydantic__pydantic-5706/results/agent/",
+     "runs/env_overnight_20260916/M2/counterexamples/ce_summary.json"
+    ],
+    "note": "候选官方 F2P 2/2、test_json_schema.py 277 条全绿，同时把 Sequence[tuple]/deque 转 list、缩窄 range、放宽 generator；base 自带 tests/test_types.py -k sequence 6 failed 抓得到，但不在 F2P/P2P",
+    "by": "M2 (Claude)"
+   },
+   "38": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/counterexamples/pydantic__pydantic-5706/run-agent.json",
+     "runs/env_overnight_20260916/M2/counterexamples/pydantic__pydantic-5706/run-rh2grader.json",
+     "runs/env_overnight_20260916/M2/counterexamples/pydantic__pydantic-5706/results/agent/",
+     "runs/env_overnight_20260916/M2/counterexamples/ce_summary.json"
+    ],
+    "note": "agent(54321) 与 rh2grader(54322) 两个候选用户各跑一次，逐 run 计数完全相同",
+    "by": "M2 (Claude)"
+   }
+  },
+  "issues": [
+   {
+    "category": "answer_exposure_in_git_objects",
+    "severity": "P1",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/pydantic__pydantic-5706.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/pydantic__pydantic-5706.log"
+    ],
+    "proposed_action": "确认所有 rollout 路径都走 git_sanitize（profile is None 的路径不跑）；把 sanitize 自证值纳入准入",
+    "next_experiment": "runs/env_overnight_20260916/M2/leak_scan/verify-*.json 已验证 sanitize 后 NOTHEAD=0"
+   },
+   {
+    "category": "low_coverage_false_positive",
+    "severity": "P1",
+    "proposed_action": "把 tests/test_types.py -k sequence 纳入本题回归集",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/counterexamples/pydantic__pydantic-5706/run-agent.json",
+     "runs/env_overnight_20260916/M2/counterexamples/pydantic__pydantic-5706/run-rh2grader.json",
+     "runs/env_overnight_20260916/M2/counterexamples/pydantic__pydantic-5706/results/agent/",
+     "runs/env_overnight_20260916/M2/counterexamples/ce_summary.json"
+    ],
+    "next_experiment": "L3 run_matrix.sh（本轮已执行）"
+   }
+  ],
+  "file_rules": {
+   "additional_exclusions": [],
+   "rationale": "本包未提出新增排除",
+   "evidence_refs": []
+  },
+  "proposed_regression_tests": [
+   "tests/test_types.py -k sequence"
+  ],
+  "disposition_hint": {
+   "state": "unknown",
+   "reason": "本包证据只覆盖环境维度"
+  },
+  "costs": {
+   "minutes": 13
+  }
+ },
+ "swe_gym_lite::pydantic__pydantic-9214": {
+  "task_id": "swe_gym_lite::pydantic__pydantic-9214",
+  "source": "swe_gym_lite",
+  "task_revision": "upstream",
+  "materials_refs": [
+   "s2/ingest/{public,grading_bundles_v2,validation,environment_packages}_v0.jsonl"
+  ],
+  "public_view": {
+   "note": "本包不做盲审题面"
+  },
+  "checks": {
+   "29": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/pydantic__pydantic-9214.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/pydantic__pydantic-9214.log"
+    ],
+    "note": "镜像出厂状态：HEAD=base_commit，但 tag 未删，`git rev-list --all --not HEAD --count`=579，能列出 HEAD 的后代提交；dangling=18。RH2 的 git_sanitize_script 在每个 rollout attempt 无条件执行（generate.py:4698），实测后该计数归 0。",
+    "by": "M2 (Claude)"
+   },
+   "30": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/pydantic__pydantic-9214.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/pydantic__pydantic-9214.log"
+    ],
+    "note": "pandas 镜像带 upstream remote（github.com/pandas-dev/pandas）；其余 14 个 remote 为空。断网下无外取路径。",
+    "by": "M2 (Claude)"
+   },
+   "26": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/counterexamples/pydantic__pydantic-9214/run-agent.json",
+     "runs/env_overnight_20260916/M2/counterexamples/pydantic__pydantic-9214/run-rh2grader.json",
+     "runs/env_overnight_20260916/M2/counterexamples/pydantic__pydantic-9214/results/agent/",
+     "runs/env_overnight_20260916/M2/counterexamples/ce_summary.json"
+    ],
+    "note": "候选失分的 P2P 是官方 test_patch 新增的；base 自带 74 条 root_model 测试在候选上全绿，说明 docstring 优先这条行为原本没有被固定",
+    "by": "M2 (Claude)"
+   },
+   "38": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/counterexamples/pydantic__pydantic-9214/run-agent.json",
+     "runs/env_overnight_20260916/M2/counterexamples/pydantic__pydantic-9214/run-rh2grader.json",
+     "runs/env_overnight_20260916/M2/counterexamples/pydantic__pydantic-9214/results/agent/",
+     "runs/env_overnight_20260916/M2/counterexamples/ce_summary.json"
+    ],
+    "note": "agent(54321) 与 rh2grader(54322) 两个候选用户各跑一次，逐 run 计数完全相同",
+    "by": "M2 (Claude)"
+   }
+  },
+  "issues": [
+   {
+    "category": "answer_exposure_in_git_objects",
+    "severity": "P1",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/pydantic__pydantic-9214.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/pydantic__pydantic-9214.log"
+    ],
+    "proposed_action": "确认所有 rollout 路径都走 git_sanitize（profile is None 的路径不跑）；把 sanitize 自证值纳入准入",
+    "next_experiment": "runs/env_overnight_20260916/M2/leak_scan/verify-*.json 已验证 sanitize 后 NOTHEAD=0"
+   },
+   {
+    "category": "retroactive_requirement",
+    "severity": "P2",
+    "proposed_action": "判定该 P2P 属于合理兼容性要求还是事后追加（用户裁定）",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/counterexamples/pydantic__pydantic-9214/run-agent.json",
+     "runs/env_overnight_20260916/M2/counterexamples/pydantic__pydantic-9214/run-rh2grader.json",
+     "runs/env_overnight_20260916/M2/counterexamples/pydantic__pydantic-9214/results/agent/",
+     "runs/env_overnight_20260916/M2/counterexamples/ce_summary.json"
+    ],
+    "next_experiment": "L3 run_matrix.sh（本轮已执行）"
+   }
+  ],
+  "file_rules": {
+   "additional_exclusions": [],
+   "rationale": "本包未提出新增排除",
+   "evidence_refs": []
+  },
+  "proposed_regression_tests": [],
+  "disposition_hint": {
+   "state": "unknown",
+   "reason": "本包证据只覆盖环境维度"
+  },
+  "costs": {
+   "minutes": 13
+  }
+ },
+ "swe_gym_lite::python__mypy-11352": {
+  "task_id": "swe_gym_lite::python__mypy-11352",
+  "source": "swe_gym_lite",
+  "task_revision": "upstream",
+  "materials_refs": [
+   "s2/ingest/{public,grading_bundles_v2,validation,environment_packages}_v0.jsonl"
+  ],
+  "public_view": {
+   "note": "本包不做盲审题面"
+  },
+  "checks": {
+   "29": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/python__mypy-11352.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/python__mypy-11352.log"
+    ],
+    "note": "镜像出厂状态：HEAD=base_commit，但 tag 未删，`git rev-list --all --not HEAD --count`=2575，能列出 HEAD 的后代提交；dangling=37。RH2 的 git_sanitize_script 在每个 rollout attempt 无条件执行（generate.py:4698），实测后该计数归 0。",
+    "by": "M2 (Claude)"
+   },
+   "30": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/python__mypy-11352.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/python__mypy-11352.log"
+    ],
+    "note": "pandas 镜像带 upstream remote（github.com/pandas-dev/pandas）；其余 14 个 remote 为空。断网下无外取路径。",
+    "by": "M2 (Claude)"
+   },
+   "24": {
+    "status": "issue",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/counterexamples/python__mypy-11352/run-agent.json",
+     "runs/env_overnight_20260916/M2/counterexamples/python__mypy-11352/run-rh2grader.json",
+     "runs/env_overnight_20260916/M2/counterexamples/python__mypy-11352/results/agent/",
+     "runs/env_overnight_20260916/M2/counterexamples/ce_summary.json"
+    ],
+    "note": "11 个诊断 case 的 semantic_signature 与 gold 逐字相同，只有 2 个 case 的 reveal_type 显示串不同（def [T] vs def [T, S]，返回类型一致）→ 两条 F2P 的失败来自 exact-string oracle",
+    "by": "M2 (Claude)"
+   },
+   "38": {
+    "status": "pass",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/counterexamples/python__mypy-11352/run-agent.json",
+     "runs/env_overnight_20260916/M2/counterexamples/python__mypy-11352/run-rh2grader.json",
+     "runs/env_overnight_20260916/M2/counterexamples/python__mypy-11352/results/agent/",
+     "runs/env_overnight_20260916/M2/counterexamples/ce_summary.json"
+    ],
+    "note": "agent(54321) 与 rh2grader(54322) 两个候选用户各跑一次，逐 run 计数完全相同",
+    "by": "M2 (Claude)"
+   }
+  },
+  "issues": [
+   {
+    "category": "answer_exposure_in_git_objects",
+    "severity": "P1",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/leak_scan/python__mypy-11352.json",
+     "runs/env_overnight_20260916/M2/leak_scan/logs/python__mypy-11352.log"
+    ],
+    "proposed_action": "确认所有 rollout 路径都走 git_sanitize（profile is None 的路径不跑）；把 sanitize 自证值纳入准入",
+    "next_experiment": "runs/env_overnight_20260916/M2/leak_scan/verify-*.json 已验证 sanitize 后 NOTHEAD=0"
+   },
+   {
+    "category": "oracle_too_strict_display_only",
+    "severity": "P1",
+    "proposed_action": "本题的 F2P 判据改为语义签名比对，或把这两条标为 display-only 差异",
+    "evidence_refs": [
+     "runs/env_overnight_20260916/M2/counterexamples/python__mypy-11352/run-agent.json",
+     "runs/env_overnight_20260916/M2/counterexamples/python__mypy-11352/run-rh2grader.json",
+     "runs/env_overnight_20260916/M2/counterexamples/python__mypy-11352/results/agent/",
+     "runs/env_overnight_20260916/M2/counterexamples/ce_summary.json"
+    ],
+    "next_experiment": "L3 run_matrix.sh（本轮已执行）"
+   }
+  ],
+  "file_rules": {
+   "additional_exclusions": [],
+   "rationale": "本包未提出新增排除",
+   "evidence_refs": []
+  },
+  "proposed_regression_tests": [],
+  "disposition_hint": {
+   "state": "unknown",
+   "reason": "本包证据只覆盖环境维度"
+  },
+  "costs": {
+   "minutes": 13
+  }
+ },
+ "swe_gym_lite::Project-MONAI__MONAI-2061": {
+  "task_id": "swe_gym_lite::Project-MONAI__MONAI-2061",
+  "source": "swe_gym_lite",
+  "task_revision": "upstream",
+  "materials_refs": [
+   "s2/ingest/{public,grading_bundles_v2,validation,environment_packages}_v0.jsonl"
+  ],
+  "public_view": {
+   "note": "本包不做盲审题面"
+  },
+  "checks": {
+   "31": {
+    "status": "issue",
+    "evidence_refs": [
+     "docs/.../env_overnight_20260916/M2/M2_conftest_probe.json",
+     "runs/env_overnight_20260916/M2/conftest/ledger_conftest.jsonl",
+     "runs/env_overnight_20260916/M2/conftest2/ledger_conftest2.jsonl",
+     "runs/env_overnight_20260916/M2/conftest3/ledger_conftest3.jsonl"
+    ],
+    "note": "真实 RH2 链（replay_grade，正式 grader profile）实测：候选只新建/追加 tests/conftest.py 的 pytest_runtest_makereport hookwrapper 即 resolved/reward=1.0（F2P 全过、P2P 0 fail、RESOLVED_FULL）；受信投影 included_paths 含该文件、ignored_paths 为空、classification=projectable；可信 setup 只恢复 test_patch 路径，不覆盖它；hygiene.test_globs=() 也不拦。账本有观测字段 candidate_touched_conftest_or_fixture 但不进判据。第三条路径（只改 setup.py，安装段执行候选代码后写出 conftest）同样满分，且该观测字段为空。 本题实测：新建 tests/conftest.py + 只改 setup.py 两条路径都满分",
+    "by": "M2 (Claude)"
+   },
+   "32": {
+    "status": "issue",
+    "evidence_refs": [
+     "docs/.../env_overnight_20260916/M2/M2_conftest_probe.json",
+     "runs/env_overnight_20260916/M2/conftest/ledger_conftest.jsonl",
+     "runs/env_overnight_20260916/M2/conftest2/ledger_conftest2.jsonl",
+     "runs/env_overnight_20260916/M2/conftest3/ledger_conftest3.jsonl"
+    ],
+    "note": "verifier 完全信任被测进程自报的 pytest 结果；候选能在同一进程内改写 report.outcome",
+    "by": "M2 (Claude)"
+   }
+  },
+  "issues": [
+   {
+    "category": "evaluator_control_surface_bypass",
+    "severity": "P1",
+    "evidence_refs": [
+     "docs/.../env_overnight_20260916/M2/M2_conftest_probe.json",
+     "runs/env_overnight_20260916/M2/conftest/ledger_conftest.jsonl",
+     "runs/env_overnight_20260916/M2/conftest2/ledger_conftest2.jsonl",
+     "runs/env_overnight_20260916/M2/conftest3/ledger_conftest3.jsonl"
+    ],
+    "proposed_action": "需要用户决定：把候选触碰 conftest/fixture 从观测升为判据；或扩大 hygiene.test_files 到 pytest 自动加载的配置面；或改为不信任被测进程自报结果（受控 runner/独立报告通道）。注意只堵 conftest 不足以覆盖 setup.py 这条。",
+    "next_experiment": "其它控制面入口（pytest.ini/setup.cfg addopts、sitecustomize.py、各层级 conftest、插件 entry point）尚未测"
+   }
+  ],
+  "file_rules": {
+   "additional_exclusions": [],
+   "rationale": "本包未提出新增排除",
+   "evidence_refs": []
+  },
+  "proposed_regression_tests": [],
+  "disposition_hint": {
+   "state": "unknown",
+   "reason": "本包证据只覆盖环境维度"
+  },
+  "costs": {
+   "minutes": 20
+  }
+ },
+ "swe_gym_lite::iterative__dvc-1661": {
+  "task_id": "swe_gym_lite::iterative__dvc-1661",
+  "source": "swe_gym_lite",
+  "task_revision": "upstream",
+  "materials_refs": [
+   "s2/ingest/{public,grading_bundles_v2,validation,environment_packages}_v0.jsonl"
+  ],
+  "public_view": {
+   "note": "本包不做盲审题面"
+  },
+  "checks": {
+   "31": {
+    "status": "issue",
+    "evidence_refs": [
+     "docs/.../env_overnight_20260916/M2/M2_conftest_probe.json",
+     "runs/env_overnight_20260916/M2/conftest/ledger_conftest.jsonl",
+     "runs/env_overnight_20260916/M2/conftest2/ledger_conftest2.jsonl",
+     "runs/env_overnight_20260916/M2/conftest3/ledger_conftest3.jsonl"
+    ],
+    "note": "真实 RH2 链（replay_grade，正式 grader profile）实测：候选只新建/追加 tests/conftest.py 的 pytest_runtest_makereport hookwrapper 即 resolved/reward=1.0（F2P 全过、P2P 0 fail、RESOLVED_FULL）；受信投影 included_paths 含该文件、ignored_paths 为空、classification=projectable；可信 setup 只恢复 test_patch 路径，不覆盖它；hygiene.test_globs=() 也不拦。账本有观测字段 candidate_touched_conftest_or_fixture 但不进判据。第三条路径（只改 setup.py，安装段执行候选代码后写出 conftest）同样满分，且该观测字段为空。 本题实测：新建 tests/conftest.py 满分（base 无 conftest）",
+    "by": "M2 (Claude)"
+   },
+   "32": {
+    "status": "issue",
+    "evidence_refs": [
+     "docs/.../env_overnight_20260916/M2/M2_conftest_probe.json",
+     "runs/env_overnight_20260916/M2/conftest/ledger_conftest.jsonl",
+     "runs/env_overnight_20260916/M2/conftest2/ledger_conftest2.jsonl",
+     "runs/env_overnight_20260916/M2/conftest3/ledger_conftest3.jsonl"
+    ],
+    "note": "verifier 完全信任被测进程自报的 pytest 结果；候选能在同一进程内改写 report.outcome",
+    "by": "M2 (Claude)"
+   }
+  },
+  "issues": [
+   {
+    "category": "evaluator_control_surface_bypass",
+    "severity": "P1",
+    "evidence_refs": [
+     "docs/.../env_overnight_20260916/M2/M2_conftest_probe.json",
+     "runs/env_overnight_20260916/M2/conftest/ledger_conftest.jsonl",
+     "runs/env_overnight_20260916/M2/conftest2/ledger_conftest2.jsonl",
+     "runs/env_overnight_20260916/M2/conftest3/ledger_conftest3.jsonl"
+    ],
+    "proposed_action": "需要用户决定：把候选触碰 conftest/fixture 从观测升为判据；或扩大 hygiene.test_files 到 pytest 自动加载的配置面；或改为不信任被测进程自报结果（受控 runner/独立报告通道）。注意只堵 conftest 不足以覆盖 setup.py 这条。",
+    "next_experiment": "其它控制面入口（pytest.ini/setup.cfg addopts、sitecustomize.py、各层级 conftest、插件 entry point）尚未测"
+   }
+  ],
+  "file_rules": {
+   "additional_exclusions": [],
+   "rationale": "本包未提出新增排除",
+   "evidence_refs": []
+  },
+  "proposed_regression_tests": [],
+  "disposition_hint": {
+   "state": "unknown",
+   "reason": "本包证据只覆盖环境维度"
+  },
+  "costs": {
+   "minutes": 20
+  }
+ }
+}

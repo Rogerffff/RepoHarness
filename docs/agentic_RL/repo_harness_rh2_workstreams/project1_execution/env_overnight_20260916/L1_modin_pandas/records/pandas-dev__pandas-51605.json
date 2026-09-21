@@ -1,0 +1,60 @@
+{
+ "task_id": "pandas-dev__pandas-51605",
+ "source": "SWE-Gym lite (s2 ingest v0)",
+ "task_revision": "upstream",
+ "materials_refs": [
+  "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/{public,grading_bundles_v2,validation}_*_v0.jsonl",
+  "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl",
+  "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-51605/{gold,empty}/offline/a1/",
+  "runs/env_overnight_20260916/repos/pandas@b070d87f118709f7493dfd065a17ed506c93b59a"
+ ],
+ "public_view": {
+  "goal": "MultiIndex.isin([]) 在 2.0.x 抛 TypeError: Cannot infer number of levels from empty list；1.5.x 返回全 False 数组。",
+  "constraints_from_statement": [
+   "题面直接给出期望结果：Seems like an Index consisting of False is the right answer here，并给出 1.5.x 的实际输出 [False False False]。",
+   "定位线索是 MultiIndex.isin 与报错文本 Cannot infer number of levels from empty list（来自 MultiIndex.from_tuples）。"
+  ],
+  "unknowns_from_public_only": [
+   "返回值应是 np.bool_ 的 ndarray 还是别的容器 —— 题面只写 Index consisting of False（措辞与实际返回的 numpy 数组略有出入）。",
+   "level 参数非 None 时空 values 的行为 —— 题面未说（gold 也只改 level is None 分支）。"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["pandas@b070d87f:pandas/core/indexes/multi.py isin()", "pandas@b070d87f:pandas/tests/indexes/multi/test_isin.py"], "note": "gold 目标 pandas/core/indexes/multi.py 与 test_patch 目标 pandas/tests/indexes/multi/test_isin.py 在 base 都存在且与题面同一问题。", "by": "L1_modin_pandas"},
+  "2": {"status": "pass", "evidence_refs": ["validation.golden_patch（base 侧 level is None 时直接 MultiIndex.from_tuples(values)）", "stage1 empty/status_map.json: test_isin_empty FAILED"], "note": "base 在 level is None 分支对空 values 直接调 MultiIndex.from_tuples([])，正是 Cannot infer number of levels from empty list 的来源；empty 侧 F2P FAILED。", "by": "L1_modin_pandas"},
+  "3": {"status": "issue", "evidence_refs": ["public_bundles_v0.jsonl problem_statement", "raw hints_text"], "note": "题面 346 字符，无外链、无图片、无截断，期望值明写。但 hints_text 给出了引入回归的上游 commit 02d988ca 与 PR #48622 的完整 git show 摘要 —— 不可见，属于题面之外的定位信息。", "by": "L1_modin_pandas"},
+  "4": {"status": "pass", "evidence_refs": ["grading.test_patch"], "note": "test_patch 只触碰 pandas/tests/indexes/multi/test_isin.py。", "by": "L1_modin_pandas"},
+  "17": {"status": "pass", "evidence_refs": ["validation.golden_patch"], "note": "gold 只触碰 pandas/core/indexes/multi.py；additional_exclusions 保持空。", "by": "L1_modin_pandas"},
+  "5": {"status": "pass", "evidence_refs": ["tasks_by_repo.json"], "note": "与本包其余 pandas 题不同 PR、不同模块。", "by": "L1_modin_pandas"},
+  "23": {"status": "pass", "evidence_refs": ["public_bundles_v0.jsonl problem_statement", "grading.test_patch"], "note": "F2P 断言 midx.isin([]) == np.array([False, False])，正是题面明写的期望。要求充分且一致。", "by": "L1_modin_pandas"},
+  "24": {"status": "pass", "evidence_refs": ["grading.test_patch"], "note": "F2P 用 tm.assert_numpy_array_equal 比较返回值，不引用 gold 的 np.zeros((len(self),), dtype=np.bool_) 写法。先把空 values 转成有 nlevels 的空 MultiIndex 再走原路径，也能过。", "by": "L1_modin_pandas"},
+  "25": {"status": "issue", "evidence_refs": ["grading.test_patch", "grading.pass_to_pass"], "note": "F2P 只测 values=[]（list）。其它空可迭代对象（空 tuple、空 set、空 ndarray、空 MultiIndex、生成器）都没测。gold 用 len(values) == 0 判断，对无 len 的生成器会抛 TypeError —— 这个缺陷 F2P 与 12 条 P2P 都拦不住。硬编码『values 是空 list 就返回全 False』同样能过。", "by": "L1_modin_pandas"},
+  "26": {"status": "pass", "evidence_refs": ["pandas@b070d87f"], "note": "见 proposed_regression_tests。", "by": "L1_modin_pandas"},
+  "27": {"status": "pass", "evidence_refs": ["validation.golden_patch"], "note": "gold 只加两行，np/npt 在 multi.py 已有；不依赖未交付改动，无无关改动。局限：只处理 level is None 分支，且用 len(values) 要求 values 有 __len__。", "by": "L1_modin_pandas"},
+  "29": {"status": "issue", "evidence_refs": ["raw hints_text"], "note": "题面本身不泄漏。hints_text 直接给出引入回归的 commit hash 与 PR 号（PERF: Improve performance for MultiIndex.isin #48622）并列出它改过的文件，等于把 first bad commit 交到手上；若并入题面会构成强泄漏。", "by": "L1_modin_pandas"},
+  "6": {"status": "issue", "evidence_refs": ["stage1 gold/offline/a1/eval.sh", "phase 计时 install=829.6s test=5.0s"], "note": "本题 gold 是纯 Python 改动，却要付 829.6 秒的 install：该 base commit 的 pandas 仍用 setuptools 后端（日志里是 Building wheels for collected packages: pandas），pip install -ve . 会把全部 Cython 扩展从头编一遍。测试段只有 5 秒。评分成本的 99.4% 是无谓重编。", "by": "L1_modin_pandas"},
+  "7": {"status": "pass", "evidence_refs": ["runs/env_overnight_20260916/L1_modin_pandas/optdeps.json"], "note": "test_isin.py 无 importorskip / skip_if_no / datapath / URL / S3。", "by": "L1_modin_pandas"},
+  "11": {"status": "pass", "evidence_refs": ["runs/env_overnight_20260916/L1_modin_pandas/collide_detail.json"], "note": "13 个常量全部唯一命中（matched_keys=13，runtime_ids_behind_consts=13），无截断、无冲突、无非 ASCII。", "by": "L1_modin_pandas"}
+ },
+ "issues": [
+  {"category": "build_cost", "severity": "P2",
+   "evidence_refs": ["stage1 gold/offline/a1/test_output.txt: Building wheels for collected packages: pandas / RH2_PHASE install 829.6s、test 5.0s"],
+   "note": "pandas 2.1 早期 commit 仍是 setuptools 后端，每次评分都重编全部 Cython 扩展（约 13.8 分钟），而本题改动是纯 Python。对照：同为 2.1 但已切到 meson-python 的 pandas-53958 只要 7.7 秒（meson setup --reconfigure + ninja 增量），pandas 3.0 的 56849 改 .pyx 也只要 49.7 秒。",
+   "proposed_action": "对 setuptools 后端的 pandas 题（本包的 48106/50319/51605）在镜像里预置 build 缓存或改用 pip install -e . --no-deps 跳过重编（需先确认是否影响 .pyx 题）；或优先选 meson 后端的 commit 入题单。",
+   "next_experiment": "真机上对 51605 镜像试 python setup.py build_ext --inplace -j$(nproc) 后再 pip install -ve .，测第二次的耗时，确认缓存是否可持久化到镜像层。"},
+  {"category": "test_too_weak", "severity": "P3",
+   "evidence_refs": ["grading.test_patch"],
+   "note": "只测空 list，gold 的 len(values) 对无 __len__ 的可迭代对象会抛 TypeError，没有测试覆盖。",
+   "proposed_action": "把空 tuple/空 ndarray/空 MultiIndex 的断言加入 proposed_regression_tests。",
+   "next_experiment": "真机上对 gold 跑 midx.isin(iter([])) 确认是否抛 TypeError。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只在 pandas/tests/，gold 只在 pandas/core/，不交叉；沿用默认空集。", "evidence_refs": ["grading.test_patch", "validation.golden_patch"]},
+ "proposed_regression_tests": [
+  {"id": "pandas/tests/indexes/multi/test_isin.py", "reason": "整份文件（12 条已在 P2P），gold 改的就是这个方法，是最直接的回归面。"},
+  {"id": "pandas/tests/indexes/test_base.py::TestIndex::test_isin", "reason": "Index.isin 的基类行为，确认 MultiIndex 的特判没有破坏继承语义。"},
+  {"id": "pandas/tests/series/methods/test_isin.py", "reason": "Series.isin 在 MultiIndex 索引上的下游行为。"},
+  {"id": "pandas/tests/frame/methods/test_isin.py", "reason": "DataFrame.isin 走同一 Index.isin 入口，覆盖另一条调用者路径。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "ID 全部唯一命中、gold RESOLVED_FULL、题面明写期望值、要求与 F2P 一致。唯一实质问题是 829.6 秒的无谓重编成本（P2，属环境工程而非题目缺陷）。"},
+ "costs": {"minutes": 20}
+}

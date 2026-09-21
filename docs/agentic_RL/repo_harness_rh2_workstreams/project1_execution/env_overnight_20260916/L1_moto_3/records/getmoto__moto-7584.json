@@ -1,0 +1,52 @@
+{
+ "task_id": "getmoto__moto-7584",
+ "source": "SWE-Gym lite (swe_gym_lite_full_f70b1a29)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "s2/ingest/public_bundles_v0.jsonl#getmoto__moto-7584",
+  "grading": "s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-7584",
+  "validation": "s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-7584",
+  "base_commit": "cc1193076090f9daf90970db286b6b41581dd8bc",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-7584/gold/offline/a1/"
+ },
+ "public_view": {
+  "goal": "SNS subscribe 用 protocol='application' 订阅一个已被删除的 platform endpoint 时，moto 允许通过；AWS 会抛 InvalidParameter。要求 moto 对齐。",
+  "constraints": ["endpoint 存在时的订阅必须继续正常", "题面给出了完整复现脚本"],
+  "unknowns_from_public_only": [
+   "题面给的期望消息是 `Invalid parameter: Endpoint Reason: Endpoint does not exist for endpoint {endpoint_arn}`，而 F2P 断言的消息里在 arn 前多了一个字面量 `arn`（`... for endpoint arn{endpoint_arn}`）—— 照题面写会被逐字断言拒绝",
+   "题面没说已存在的订阅在 endpoint 被删后是否仍应可用"
+  ]
+ },
+ "checks": {
+  "1": {"status": "issue", "evidence_refs": ["test_patch 只碰 tests/test_sns/test_application_boto3.py（base 已存在）", "golden_patch 只碰 moto/sns/models.py 的 subscribe"], "note": "材料与题面同一问题，无二进制/LFS/子模块。小瑕：新增测试名为 `test_publish_to_deleted_platform_endpoint`，但它**从不 publish**，只做 subscribe —— 名实不符，会误导任何按测试名推断行为的工具或人工审查。", "by": "L1_moto_3"},
+  "2": {"status": "pass", "evidence_refs": ["base moto/sns/models.py:502-519 subscribe 只对 protocol=='sms' 做校验，application 协议没有任何 endpoint 存在性检查"], "note": "base 确有缺陷，与题面一致。", "by": "L1_moto_3"},
+  "3": {"status": "issue", "evidence_refs": ["problem_statement 1416 字符，含完整复现脚本；题面给出的 AWS 报文是 `An error occurred (InvalidParameter) ... Invalid parameter: Endpoint Reason: Endpoint does not exist for endpoint {endpoint_arn}`", "F2P 断言的是 `f\"Invalid parameter: Endpoint Reason: Endpoint does not exist for endpoint arn{endpoint_arn}\"`", "gold 自带注释：`# Space between `arn{endpoint}` is lacking in AWS as well`"], "note": "**P2：题面给的期望消息与判分要求的消息不一致**（少一个字面量 `arn`）。AWS 真实报文里 endpoint arn 前有个没跟空格的 `arn` 前缀，题面的报告者把它省略了。按题面逐字实现会失败。", "by": "L1_moto_3"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 触碰路径全集：tests/test_sns/test_application_boto3.py"], "note": "无非测试源码路径；gold 触碰 moto/sns/models.py，非测试样路径。", "by": "L1_moto_3"},
+  "17": {"status": "pass", "evidence_refs": ["同 4"], "note": "additional_exclusions 空。", "by": "L1_moto_3"},
+  "5": {"status": "issue", "evidence_refs": ["同 gold 文件 moto/sns/models.py 的另一题是 getmoto__moto-6355（本包）", "**已实测**：6355 的 golden_patch 在本题 base 上 `git apply -R --check` 成功 → 6355 的答案（`sns_backends[parsed_arn.account][self.region_name]`）逐字存在于本题 base"], "note": "不是重复题（修的是不同函数），但构成 train/eval 污染，两题需成组。", "by": "L1_moto_3"},
+  "23": {"status": "issue", "evidence_refs": ["同 3"], "note": "要求与公开材料不一致，P2。Code 断言 'InvalidParameter' 则可从 base 的 SNSInvalidParameter 推出。", "by": "L1_moto_3"},
+  "24": {"status": "issue", "evidence_refs": ["F2P 用 `==` 逐字断言消息"], "note": "与 23 同源：实现位置可任选（models 层校验、responses 层校验都行），但消息必须逐字命中那个多出来的 `arn`。P2。", "by": "L1_moto_3"},
+  "25": {"status": "issue", "evidence_refs": ["F2P 只覆盖“endpoint 被删后新建订阅”一条路径", "gold 的注释指出“已存在的订阅在 endpoint 被删后仍能找到”，但没有任何用例验证这条语义（gold 把校验放在 `_find_subscription` 的早返回之后正是为了保住它）"], "note": "P3：把校验放到 subscribe 最开头（早于 old_subscription 早返回）会破坏 gold 有意保留的语义，但判分发现不了。也没有用例验证“endpoint 存在时订阅仍然成功”这一正向路径是否被新校验误伤（P2P 里 test_publish_to_disabled_platform_endpoint 等间接覆盖）。", "by": "L1_moto_3"},
+  "26": {"status": "pass", "evidence_refs": ["collected 20 items = F2P 1 + P2P 19，全过"], "note": "只跑 test_application_boto3.py；同目录 test_topics_boto3.py、test_subscriptions_boto3.py 不跑，而 subscribe 的主要用例在后者。见 proposed_regression_tests。", "by": "L1_moto_3"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 在 `_find_subscription` 早返回之后、`get_topic` 之前插入 application 协议的 endpoint 存在性校验"], "note": "正确、最小、对应题面；位置选得有依据（保住已存在订阅的可用性），并附注释说明。无无关改动。", "by": "L1_moto_3"},
+  "29": {"status": "pass", "evidence_refs": ["hints_text 只是题面复现脚本的重复片段，无修复代码、无 PR/commit 链接"], "note": "无静态泄漏。", "by": "L1_moto_3"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold 20 passed，1.34s"], "note": "纯 mock。", "by": "L1_moto_3"},
+  "7": {"status": "issue", "evidence_refs": ["本包共性 install rc=2"], "note": "见包级 issue。", "by": "L1_moto_3"},
+  "11": {"status": "issue", "evidence_refs": ["F2P 挂 `@pytest.mark.aws_verified` + `@sns_aws_verified`", "base tests/test_sns/__init__.py:21-40：`MOTO_TEST_ALLOW_AWS_REQUEST=true` 时不进 mock_aws，而是先用真实 SSM 客户端 `ssm.get_parameter(Name='/moto/tests/ses/firebase_api_key', WithDecryption=True)` **取出解密后的 Firebase/GCM API key**，再用它去真实 AWS 建 GCM platform application"], "note": "**P2，且比 7111 那例更强**：这条路径不仅打真实 AWS，还会读取并使用一个解密后的第三方密钥。默认 'false' 时安全。见 summary.md 跨题发现 D。另记测试卫生问题：finally 块里 `conn.delete_topic(TopicArn=topic_arn)` 在 `application_arn is not None` 分支内，若 create_topic 先失败会以 NameError 掩盖真实错误。", "by": "L1_moto_3"}
+ },
+ "issues": [
+  {"category": "statement_message_mismatch", "severity": "P2", "evidence_refs": ["题面 `... for endpoint {endpoint_arn}` vs F2P `... for endpoint arn{endpoint_arn}`；gold 注释确认 AWS 真实报文就是缺空格的 `arn`"], "proposed_action": "标记为“题面给的期望报文与判分要求不一致”。若保留，接受这是对“照抄 AWS 真实报文而非题面转述”的考察；若要仅凭题面可解，应放宽为子串断言（需用户裁定）。", "next_experiment": "按题面逐字实现消息（不带多出的 `arn`）跑 F2P，确认断言失败（预期失败）。"},
+  {"category": "test_material_reads_real_secret", "severity": "P2", "evidence_refs": ["tests/test_sns/__init__.py:27-33 的 ssm.get_parameter(..., WithDecryption=True)"], "proposed_action": "在评测容器里显式置 MOTO_TEST_ALLOW_AWS_REQUEST=false 并禁止 agent 修改；把它列入环境准入检查。", "next_experiment": "见 summary.md 跨题发现 D。"},
+  {"category": "train_eval_contamination", "severity": "P2", "evidence_refs": ["6355 的 gold 在本题 base 里逐字存在"], "proposed_action": "6355 与 7584 成组，同进一侧。", "next_experiment": "无。"},
+  {"category": "test_name_mismatch", "severity": "P3", "evidence_refs": ["test_publish_to_deleted_platform_endpoint 里没有 publish 调用"], "proposed_action": "仅记录。", "next_experiment": "无。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只含测试文件；沿用默认空排除。", "evidence_refs": ["test_patch 路径全集 = tests/test_sns/test_application_boto3.py"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_sns/test_subscriptions_boto3.py", "reason": "subscribe 的主力用例都在这里（各协议、重复订阅、属性），而本题一条都不跑；新校验最可能在这里暴露误伤。"},
+  {"id": "新增：endpoint 存在时用 application 协议订阅，断言成功", "reason": "正向路径，防止新校验把正常订阅也拒掉（当前只有间接覆盖）。"},
+  {"id": "新增：先订阅、再 delete_endpoint、再用同样参数订阅，断言返回原订阅而不报错", "reason": "gold 有意把校验放在 `_find_subscription` 早返回之后来保住这条语义（其注释明说），但无任何用例固定它（见检查 25）。"},
+  {"id": "tests/test_sns/test_publishing_boto3.py 里 application 协议的发布用例", "reason": "endpoint 删除后的下游行为，属同一状态机的观察点。"}
+ ],
+ "disposition_hint": {"state": "needs_review", "reason": "base 缺陷真实、gold 正确且位置有依据、文件边界干净。需要裁定：F2P 逐字断言的错误消息比题面多一个字面量 `arn`，照题面实现会被拒；且该题的 F2P 挂在会读取真实 SSM 密钥的 aws_verified 装饰器上（默认关闭）。"},
+ "costs": {"minutes": 16}
+}

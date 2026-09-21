@@ -1,0 +1,51 @@
+{
+ "task_id": "getmoto__moto-6317",
+ "source": "SWE-Gym lite (swe_gym_lite_full_f70b1a29)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "s2/ingest/public_bundles_v0.jsonl#getmoto__moto-6317",
+  "grading": "s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-6317",
+  "validation": "s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-6317",
+  "base_commit": "a39be74273b2422df807f083d059c7a2ddfe0ffd",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-6317/gold/offline/a1/"
+ },
+ "public_view": {
+  "goal": "题面只说：在 mock_s3 下 put_object 返回 200 且 content-length 正确，但随后 list/get 得到空对象（Size 0、ETag 为空串的 d41d8cd9...）。要求对象内容不丢。",
+  "constraints": ["题面给出的三行复现代码只有 create/put/list/get，没有任何 patch_client 调用"],
+  "unknowns_from_public_only": [
+   "题面完全没有出现 patch_client / 事件处理器重复注册 / 请求体被消费两次 等关键线索",
+   "题面给出的复现代码在 base 上其实不会复现该 bug（缺少 patch_client），公开材料无法定位到 moto/core/models.py",
+   "题面没有说 patch_client 应当幂等"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 只碰 tests/test_core/test_importorder.py（base 已存在）", "golden_patch 只碰 moto/core/models.py:267 附近的 patch_client"], "note": "无二进制/LFS/子模块。但注意题面讲的是 S3 现象、材料落在 core 的 patch_client，属同一问题的不同层面。", "by": "L1_moto_3"},
+  "2": {"status": "issue", "evidence_refs": ["base moto/core/models.py:251-270 patch_client 无幂等保护，直接 `client.meta.events.register(\"before-send\", botocore_stubber)`", "hints_text：维护者说明 mock_s3 与 patch_client 注册同一 handler，请求被处理两次、Body 被第一次消费后第二次写入空内容"], "note": "base 代码确实有缺陷；但**题面所给的复现代码不触发该缺陷**（维护者在 hints 里明确说 “the patch-client isn't necessary in this particular example. It works if you remove that line.”）。也就是说题面的初态描述与真实缺陷路径不一致。", "by": "L1_moto_3"},
+  "3": {"status": "issue", "evidence_refs": ["problem_statement 2616 字符，无 patch_client 字样", "hints_text 含维护者完整诊断：双重注册 → Body 被消费两次 → 写入空对象，并含用户补充的 patch_client 复现脚本"], "note": "**本题最重要的问题（P1）**：定位所需的唯一关键信息（必须调用 patch_client 才能复现、根因在事件处理器重复注册）只存在于 hints_text，而 hints 按约定对 agent 不可见。仅凭题面，agent 会去查 moto/s3/*，无法推出 F2P 所测行为。", "by": "L1_moto_3"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 触碰路径全集：tests/test_core/test_importorder.py"], "note": "无非测试源码路径；test_patch 另含一处注释 typo 修正（client→resource），落在 P2P 测试 test_mock_works_with_resource_created_outside 内，无行为影响。gold 触碰 moto/core/models.py，非测试样路径。", "by": "L1_moto_3"},
+  "17": {"status": "pass", "evidence_refs": ["同 4"], "note": "additional_exclusions 空。", "by": "L1_moto_3"},
+  "5": {"status": "pass", "evidence_refs": ["全局索引：同 gold 文件 moto/core/models.py 的另两题是 getmoto__moto-4799、getmoto__moto-4833"], "note": "测试文件不重叠，未见同一 PR/同一修复。仅记录 moto/core/models.py 是 3 题共用的高频文件。", "by": "L1_moto_3"},
+  "23": {"status": "issue", "evidence_refs": ["F2P test_patch_can_be_called_on_a_mocked_client 要求连续两次 patch_client(client) 之后 put/get 仍返回原内容"], "note": "该要求无法从公开材料推出（见 3）。接口名 patch_client、幂等语义、'事件处理器只应注册一次' 全部未在题面出现。", "by": "L1_moto_3"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 只做端到端断言 got_object == test_object，不检查内部实现"], "note": "不强制唯一实现：用 WeakSet 记录已 patch 的 client、或读 client.meta.events 的公开接口去重，都能过 F2P；gold 深挖 botocore 私有结构只是其中一种。", "by": "L1_moto_3"},
+  "25": {"status": "pass", "evidence_refs": ["P2P test_mock_works_with_client_created_outside 依赖 patch_client 真的生效", "P2P test_patch_client_does_not_work_for_random_parameters 依赖非法参数抛异常"], "note": "把 patch_client 整体改成 no-op 会被这两条 P2P 拦住。", "by": "L1_moto_3"},
+  "26": {"status": "pass", "evidence_refs": ["collected 7 items = F2P 1 + P2P 6，全过"], "note": "见 proposed_regression_tests。", "by": "L1_moto_3"},
+  "27": {"status": "issue", "evidence_refs": ["golden_patch 读取 `client._ruleset_resolver._event_emitter._emitter._handlers._root[\"children\"]` 与 `list(all_handlers[\"before-send\"].values())[1]`，外面包裸 except", "gold 注释自述：'the API may change and newer versions of botocore may throw an exception … One of our tests will fail if this happens (test_patch_can_be_called_on_a_mocked_client)'", "setup.cfg:30 `botocore>=1.12.201`（无上界）"], "note": "gold 本身正确且对应题目，但**判分对 botocore 私有内部结构敏感**：一旦镜像里的 botocore 版本改变导致这些私有属性路径失效，裸 except 吞掉后会退回重复注册，F2P 直接失败。当前镜像下 stage1 gold 7 passed，说明现版本可用。", "by": "L1_moto_3"},
+  "29": {"status": "issue", "evidence_refs": ["hints_text 含维护者的完整根因分析与 'I'll raise a PR shortly to prevent the event handler from being registered twice'"], "note": "hints 对 agent 不可见，所以这不是泄漏给 agent；但它反过来说明题面信息不足（见 3）。若任何流程把 hints 拼进提示词，本题会从“几乎不可解”变成“答案直给”，需要确认 hints 不进入提示。", "by": "L1_moto_3"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold 日志 7 passed"], "note": "无权重/数据下载。", "by": "L1_moto_3"},
+  "7": {"status": "issue", "evidence_refs": ["本包共性：install 段 make init 离线 rc=2"], "note": "见包级 issue。", "by": "L1_moto_3"},
+  "11": {"status": "issue", "evidence_refs": ["F2P 新测试 test_patch_can_be_called_on_a_mocked_client 没有取 aws_credentials fixture，而同文件所有其它测试都取"], "note": "该 fixture 负责 monkeypatch 假的 AWS_ACCESS_KEY_ID 等，并在 settings.TEST_SERVER_MODE 下 SkipTest。新测试绕开它，意味着：(a) 依赖运行环境本身没有真实 AWS 凭据；(b) 在 TEST_SERVER_MODE 下不会被跳过。容器内两点都不构成实际问题，记为 P3 卫生问题。", "by": "L1_moto_3"}
+ },
+ "issues": [
+  {"category": "public_statement_insufficient", "severity": "P1", "evidence_refs": ["problem_statement 无 patch_client", "hints_text 含全部根因", "F2P 名为 test_patch_can_be_called_on_a_mocked_client"], "proposed_action": "从“仅题面可解”的角度，本题应判为 needs_repair：要么给题面补上 patch_client 复现（等价于把 hints 里用户的第二段复现脚本并入题面），要么剔除。直接纳入训练/评测会产生近乎不可解的样本，污染难度统计。", "next_experiment": "只给题面、不给 hints，跑一次 agent（或人工）看能否定位到 moto/core/models.py；预期定位失败。成本低，可用现成的 DeepSeek 轨迹流程。"},
+  {"category": "grading_env_fragility", "severity": "P2", "evidence_refs": ["golden_patch 依赖 botocore 私有属性链 + 裸 except", "setup.cfg botocore 无上界"], "proposed_action": "把本题标记为“判分依赖 botocore 私有实现”，任何镜像/依赖重建后需重跑 gold 复验。", "next_experiment": "在目标镜像里打印 `botocore.__version__` 与 `client._ruleset_resolver._event_emitter._emitter._handlers._root['children']['before-send']` 是否可取，记录到证据里。"},
+  {"category": "test_hygiene", "severity": "P3", "evidence_refs": ["F2P 未使用 aws_credentials fixture"], "proposed_action": "仅记录，不改上游。", "next_experiment": "无。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只含测试文件；沿用默认空排除。", "evidence_refs": ["test_patch 路径全集 = tests/test_core/test_importorder.py"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_core/test_importorder.py 全文件", "reason": "已整文件跑；patch_client/patch_resource 的全部既有语义都在这里。"},
+  {"id": "新增：patch_resource 连续调用两次的幂等测试", "reason": "gold 只修了 patch_client，patch_resource（moto/core/models.py 同区）仍然会重复注册；调用者对称，属明显遗漏面。"},
+  {"id": "tests/test_s3/test_s3.py::（put/get 往返用例）", "reason": "确认修复没有改变正常 mock 路径下的 Body 处理；core 改动影响全部 service。"}
+ ],
+ "disposition_hint": {"state": "needs_repair", "reason": "题面缺少定位所需的唯一关键线索（patch_client），且题面自带的复现代码在 base 上不复现该缺陷；根因只写在不可见的 hints 里。材料、gold、文件边界本身都干净。"},
+ "costs": {"minutes": 14}
+}

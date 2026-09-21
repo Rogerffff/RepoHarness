@@ -9,9 +9,9 @@ Kimi K3 的主线是 SFT 冷启动、三个领域与三个推理投入档位形�
 
 - 正式标题 **Kimi K3: Open Frontier Intelligence**，作者 Kimi Team，机构 Moonshot AI / Kimi；技术报告，阅读日期 2026-09-07。
 - 主证据：[资料库 PDF](../pdfs/k3_tech_report.pdf)，47 页，无 arXiv 水印，PDF 元数据生成于 2026-07-27。以下 `p.` 指此 PDF 的物理页；封面算 p.1，p.2 起与印刷页一致。
-- [arXiv 记录](https://arxiv.org/abs/2607.24653)：v1 提交 2026-07-27，v2 修订 2026-08-07。另保存 [v1 PDF](sources/R13/arxiv_v1.pdf)、[v2 PDF](sources/R13/arxiv_v2.pdf)、两版 TeX 源码。主 PDF 与 arXiv v1 **不是同一个字节版本**：逐页去空白比较，只有 p.1 的水印/版式及 p.41–42 贡献名单不同；p.2–40、43–47 正文和技术附录文本一致。故称“本地报告，与 arXiv v1 技术正文一致”，不直接把其文件身份改成 v1。
+- [arXiv 记录](https://arxiv.org/abs/2607.24653)：v1 提交 2026-07-27，v2 修订 2026-08-07。另保存 v1 PDF（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/R13/arxiv_v1.pdf`）、v2 PDF（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/R13/arxiv_v2.pdf`）、两版 TeX 源码。主 PDF 与 arXiv v1 **不是同一个字节版本**：逐页去空白比较，只有 p.1 的水印/版式及 p.41–42 贡献名单不同；p.2–40、43–47 正文和技术附录文本一致。故称“本地报告，与 arXiv v1 技术正文一致”，不直接把其文件身份改成 v1。
 - 已逐文件比较两版源码，包括 `4-post-training.tex`、`5-infrastructure.tex`、`6-eval.tex`、`tables/`、`7-case-study.tex`、`appendix.tex` 及附录 F。**后训练、数据环境、全部评测表、案例、技术附录 B–F 均无实质增删。** v2 的相关增量见下表。源码中的注释、`\iffalse` 内容不是已发表正文。
-- K3 §4.1.2 明确引用的 K2.5 算法，仅沿这一依赖核对：[Kimi K2.5: Visual Agentic Intelligence v1](https://arxiv.org/abs/2602.02276v1)，[资料库 PDF](../pdfs/R7_kimi_k2_5_2602.02276.pdf) p.8 §4.4.2 Eq.(1)，及 [原 TeX 对应文件](sources/R13/k25_tex/4-pipeline.tex)。这不是 K2.5 全篇精读，也不把其全部配方归入 K3。
+- K3 §4.1.2 明确引用的 K2.5 算法，仅沿这一依赖核对：[Kimi K2.5: Visual Agentic Intelligence v1](https://arxiv.org/abs/2602.02276v1)，[资料库 PDF](../pdfs/R7_kimi_k2_5_2602.02276.pdf) p.8 §4.4.2 Eq.(1)，及 原 TeX 对应文件（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/R13/k25_tex/4-pipeline.tex`）。这不是 K2.5 全篇精读，也不把其全部配方归入 K3。
 - 官方 [Kimi K3 模型卡](https://huggingface.co/moonshotai/Kimi-K3/tree/f831ab66814297da540d832a5235f8e904f29d06)：仅核发布资产与部署入口，查询 revision `f831ab66814297da540d832a5235f8e904f29d06`。AgentENV 只采用 K3 §5.3.2 的依赖说明及官方仓库可访问性，不展开环境系统专题。
 - 按原文章节先建立[独立覆盖底稿](sources/R13/coverage_before_old_notes.md)，随后才读[旧相关性笔记](../k3_agentenv_relevance_notes.md)、[旧证据矩阵](../agentic_rl_training_recipe_evidence_matrix.md) §7.1，及[旧 Pro 长文](../pdfs/外部pro探索回答粘贴.md) K3 部分的算法、阶段、预算、系统、继承关系等段落。旧稿不是事实源。
 
@@ -88,7 +88,7 @@ Z=\sum_{j=1}^K|y_j|.
 
 K2.5 把分母记为 N，并称 total generated tokens in a batch；与 K3 活跃池的 prompt 数 N **不同**。已发布式呈现 `Clip(ρ,α,β) A_j` 与 `−τ(logρ)^2`；说明文字则称 log-ratio 在 `[α,β]` 内才保留梯度、区间外归零，且不依赖 advantage 符号，不同于标准 PPO clipping。该公开目标没有 value/GAE 项或 reward 标准差归一化，支持“**采用组相对、无需显式 critic 的已披露优化路线**”这一继承解释。
 
-但 K2.5 原式/文字存在实现歧义：Clip 写在 ratio 上，文字边界说 log-ratio；平方正则的求和括号不完整；正文称“minimize”而式的符号呈 reward 最大化形态。此处保留[原页](sources/R13/k25_page-08.png)供核对，不擅自修成可运行 loss。旧长文写出的 `m(ρ)ρA−τ(logρ)^2` 只是概念重写；mask 是否也作用于正则、跨 prompt 分母、最终符号不能由它定案。
+但 K2.5 原式/文字存在实现歧义：Clip 写在 ratio 上，文字边界说 log-ratio；平方正则的求和括号不完整；正文称“minimize”而式的符号呈 reward 最大化形态。此处保留原页（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/R13/k25_page-08.png`）供核对，不擅自修成可运行 loss。旧长文写出的 `m(ρ)ρA−τ(logρ)^2` 只是概念重写；mask 是否也作用于正则、跨 prompt 分母、最终符号不能由它定案。
 
 **K3 可确认继承方法，不等于确认全部 K2.5 配置。** K3 未重述准确行为 logprob、跨版本 token 对应策略、优化 epoch、reference/old 的具体缓存关系，亦未把 K2.5 的 MuonClip 名称明确列为本篇 RL 优化器。其 §2.5 的 Per-Head Muon 属另一个披露位置。不能据“继承”断言未知内部变体绝不存在，或补写统一 `π_old` 覆盖整条跨版本轨迹。
 

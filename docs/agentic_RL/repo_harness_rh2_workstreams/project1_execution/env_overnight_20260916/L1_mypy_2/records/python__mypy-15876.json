@@ -1,0 +1,275 @@
+{
+ "task_id": "python__mypy-15876",
+ "source": "SWE-Gym lite / python/mypy PR 15876（改 'does not return a value' 报错措辞）",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "b49be105d2940e3a0607f5ec76f519931b0d0a08",
+  "version": "1.6",
+  "python_version": "3.11",
+  "eval_cmd": "pytest -n0 -rA -k",
+  "f2p_n": 6,
+  "p2p_n": 10,
+  "gold_paths": [
+   "mypy/messages.py"
+  ],
+  "test_patch_paths": [
+   "test-data/unit/check-errorcodes.test",
+   "test-data/unit/check-expressions.test",
+   "test-data/unit/check-functions.test",
+   "test-data/unit/check-inference.test",
+   "test-data/unit/check-optional.test",
+   "test-data/unit/check-tuples.test",
+   "test-data/unit/check-varargs.test",
+   "test-data/unit/pythoneval-asyncio.test"
+  ],
+  "runtime_evidence": "无（不在 stage1 样本、in_e2 空、无 DeepSeek 候选）"
+ },
+ "public_view": {
+  "goal": "题面标题是 'Docs: confirm that use of None-typed function return value is disallowed'，正文列了三件事：(1) mypy 拒绝安全但不常规的写法、(2) 该行为没文档、(3) 报错信息让人困惑；发帖人明说自己对 (1) 没意见，只认为 (2)(3) 值得修。",
+  "constraints": [
+   "题面是 Python 2 语法的老 issue（`print get_first_elem(...)`），无外链、无图片、无截断",
+   "题面把三件事并列，且明确放弃 (1)"
+  ],
+  "unknowns_from_public_only": [
+   "改成什么措辞——题面一个字都没给（**hints 里有一条 'does not return a value (or returns None)' 的提议，而 gold 用的是 '(it only ever returns None)'，两者并不相同**）",
+   "要不要同时改文档（题面标题就是 Docs）——gold 只改了 messages.py，一行文档都没动",
+   "没有函数名时的兜底文案（base 是 'Function does not return a value'），题面未提"
+  ],
+  "base_code_evidence": [
+   "b49be105d:mypy/messages.py:1023-1035 does_not_return_value：有名字时 `f\"{capitalize(name)} does not return a value\"`，没名字时 'Function does not return a value'，两条分支",
+   "b49be105d 下这句话在 test-data 里被十余个文件的断言引用（test_patch 一次改了 8 个文件、18 个 case）"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "8 个 test_patch 目标文件在 base 均存在",
+    "gold 目标 mypy/messages.py:1023-1035 在 base 逐行一致"
+   ],
+   "note": "无二进制/LFS/子模块。",
+   "by": "L1_mypy_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "b49be105d:mypy/messages.py:1023-1035"
+   ],
+   "note": "静态确认 base 就是题面抱怨的那两条措辞。",
+   "by": "L1_mypy_2"
+  },
+  "3": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "problem_statement 998 字符",
+    "raw hints_text 5202 字符（本包最长），含 gvanrossum 的 'Yeah, let's just update the docs and the error message.' 与 carlosgmartin 的具体提议 'changing the error message from `does not return a value` to something like `does not return a value (or returns None)`'"
+   ],
+   "note": "关键决定（只改文案、不改行为）与一个**接近但不相同**的候选措辞都在 hints 里。agent 看不到 hints，题面把三件事并列，很可能去改行为（放行 None 返回值）——那会让 F2P 与 P2P 同时崩。",
+   "by": "L1_mypy_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 8 个路径全在 test-data/unit/"
+   ],
+   "note": "test_patch 无非测试源码；gold 不碰测试样路径。",
+   "by": "L1_mypy_2"
+  },
+  "17": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "runs/.../L1_mypy_2/kscan.json:python__mypy-15876：P2P 的 testEmptyReturnInNoneTypedGenerator 与 testEmptyReturnInGenerator 位于 test-data/unit/check-statements.test、testEmptyReturnWithImplicitSignature 位于 check-dynamic-typing.test、testEmptyReturnInAnyTypedFunction 位于 check-basic.test，**这三个文件都不在 test_patch 里**",
+    "eval 脚本只对 test_patch 触碰的文件做 `git checkout <base> <file>` 还原（样例见 runs/env_probe_stage1_20260910/.../gold/offline/a1/eval.sh）"
+   ],
+   "note": "本题**必须**给非空 additional_exclusions：这 4 条 P2P 所在的 3 个 .test 文件既不被还原也不被判篡改，agent 只要把自己的改动踩坏的断言就地改掉，P2P 就恢复绿色。这是本包唯一一道 additional_exclusions 不能留空的题。",
+   "by": "L1_mypy_2"
+  },
+  "5": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "本包 12222/15139/15184/15876 四题 gold 都改 mypy/messages.py"
+   ],
+   "note": "messages.py 在 40 题里被改 4 次（本包全部）。本题改的是 does_not_return_value，与另三题不同函数，不重复；但四题 base_commit 跨 0.940→1.6，后面的题 base 天然含前面的修复，划分需注意。",
+   "by": "L1_mypy_2"
+  },
+  "23": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "题面无任何措辞提议；F2P 逐字要求 '(it only ever returns None)'"
+   ],
+   "note": "与 python__mypy-15131 同型：公开材料到 F2P 之间没有可推理路径。更糟的是 hints 里那条最接近的提议（'(or returns None)'）与 gold 也不一致，说明连'读过讨论'都猜不中。",
+   "by": "L1_mypy_2"
+  },
+  "24": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "F2P 是 .test 里的逐字 `# E:` 断言，6 个 case 共数十行"
+   ],
+   "note": "强制唯一实现到字符级。另一处细节：gold 把'无名字'分支的 'Function does not return a value' 也统一成 'Function does not return a value (it only ever returns None)'，agent 必须同时改两条分支才能全过。",
+   "by": "L1_mypy_2"
+  },
+  "25": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "scripts/tpcases.py python__mypy-15876：test_patch 改了 **18 个 case** 的期望，只有 6 个进 F2P，**12 个未参与评分**（含 testNoneReturnTypeBasics、testUseOfNoneReturningFunction、testErrorCodeFunctionDoesNotReturnValue 等最切题的几条）",
+    "P2P 10 条里有 4 条来自 -k 子串过选（`testEmptyReturn` 过选出 4 条同前缀 case，见 kscan.json）"
+   ],
+   "note": "因为是纯文本替换，漏放风险不大；真正的问题是覆盖面（12/18 被改 case 不评分）与 P2P 的来源（过选副产物而非设计）。",
+   "by": "L1_mypy_2"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "12 个被改 case 未评分"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_mypy_2"
+  },
+  "27": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "golden_patch 只改 mypy/messages.py 的 does_not_return_value"
+   ],
+   "note": "gold 本身正确、无题外改动；但**没有回应题面的第 (2) 点**——题面标题就是 'Docs: ...'，要求把该行为写进文档，上游 PR 里的文档改动（若有）没有进 golden_patch。以'完整回应题面'为标准，gold 不完整。",
+   "by": "L1_mypy_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 无 PR/commit 链接、无修复代码"
+   ],
+   "note": "题面无泄漏。",
+   "by": "L1_mypy_2"
+  },
+  "6": {
+   "status": "unknown",
+   "evidence_refs": [
+    "F2P/P2P 含 pythoneval-asyncio.test 的用例（testErrorReturnIsNotTheSameType），由 mypy/test/testpythoneval.py 驱动"
+   ],
+   "note": "pythoneval 系列以子进程方式跑真实 mypy + 真实 typeshed（不用 fixtures），比 testcheck 慢且对解释器版本敏感；本题未实跑，无法确认在评分镜像里稳定。",
+   "by": "L1_mypy_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "相关 case 使用仓库内 fixtures 与自带 typeshed"
+   ],
+   "note": "无需下载权重/数据。",
+   "by": "L1_mypy_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "case 正文无 URL、无网络调用；pythoneval 只起本地子进程"
+   ],
+   "note": "静态看不需要网络。",
+   "by": "L1_mypy_2"
+  },
+  "18": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "kscan.json:python__mypy-15876：`testEmptyReturn` 过选出 testEmptyReturnInAnyTypedFunction / testEmptyReturnInGenerator / testEmptyReturnInNoneTypedGenerator / testEmptyReturnWithImplicitSignature；`testNoneReturnTypeWithExpressions` 过选出 ...2"
+   ],
+   "note": "过选把 3 个**不在 test_patch 文件里**的 case 拉进了 P2P，这正是 17 里那个漏洞的成因：评分对象超出了受保护文件集。",
+   "by": "L1_mypy_2"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "nodeid 4 段；b49be105d:mypy/test/data.py 含 DataFileCollector"
+   ],
+   "note": "形状一致。",
+   "by": "L1_mypy_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "file_boundary_task_specific",
+   "severity": "P1",
+   "evidence_refs": [
+    "kscan.json:python__mypy-15876 的 home_protected=False 三处",
+    "eval.sh 只还原 test_patch 文件"
+   ],
+   "proposed_action": "给本题加 additional_exclusions = ['test-data/unit/check-statements.test','test-data/unit/check-dynamic-typing.test','test-data/unit/check-basic.test']（或直接采用仓库级的 test-data/*）。",
+   "next_experiment": "造一个候选 patch：破坏 does_not_return_value 使 testEmptyReturnInGenerator 失败，同时把 check-statements.test 里那条断言改成新文案；跑完整评分，确认当前会判为通过。"
+  },
+  {
+   "category": "requirement_unrecoverable",
+   "severity": "P1",
+   "evidence_refs": [
+    "题面无措辞；hints 里最接近的提议与 gold 也不同"
+   ],
+   "proposed_action": "与 15131 一并处理：措辞类任务要么把目标文案写进题面，要么放宽断言。",
+   "next_experiment": "让模型生成 10 个候选措辞，统计逐字命中 '(it only ever returns None)' 的次数（预期 0）。"
+  },
+  {
+   "category": "grading_coverage",
+   "severity": "P2",
+   "evidence_refs": [
+    "18 个被改 case 只有 6 个进 F2P"
+   ],
+   "proposed_action": "把 18 个被改 case 全部纳入 F2P。",
+   "next_experiment": "base+test_patch 与 +gold 各跑这 18 个 case 比对状态。"
+  },
+  {
+   "category": "gold_incomplete_vs_statement",
+   "severity": "P3",
+   "evidence_refs": [
+    "题面标题 'Docs: ...'；gold 无文档改动"
+   ],
+   "proposed_action": "记录 gold 只回应了题面三点中的第 (3) 点。",
+   "next_experiment": "核对上游 PR 15876 是否含 docs/ 改动而被 bundle 丢弃。"
+  },
+  {
+   "category": "file_boundary",
+   "severity": "P1",
+   "evidence_refs": [
+    "rh2/src/repoharness2/grading/manager.py:656/672/581"
+   ],
+   "proposed_action": "建议把 mypy/test/* 与 test-data/* 纳入 hygiene 保护（40 题 gold 均不触碰）。",
+   "next_experiment": "构造只改 mypy/test/helpers.py::assert_string_arrays_equal 的候选 patch 走一次评分，确认当前会判满分。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [
+   "test-data/unit/check-statements.test",
+   "test-data/unit/check-dynamic-typing.test",
+   "test-data/unit/check-basic.test"
+  ],
+  "rationale": "本题 P2P 里有 4 条 case（testEmptyReturnInNoneTypedGenerator、testEmptyReturnInGenerator、testEmptyReturnWithImplicitSignature、testEmptyReturnInAnyTypedFunction）位于这三个文件，而它们不在 test_patch 里 —— 既不被 eval 的 git checkout 还原，也不进 hygiene.test_files。不排除的话，agent 可以直接改这三个文件里的断言让 P2P 恢复绿色，判分结果因此改变（把本应失败的候选判成通过）。它们是纯测试数据文件，gold 不触碰，把它们纳入排除不会挡住任何合法解答。更彻底的做法是采用仓库级建议 'test-data/*' + 'mypy/test/*'（40 题 gold 均不触碰），本条可视为其子集。",
+  "evidence_refs": [
+   "runs/.../L1_mypy_2/kscan.json:python__mypy-15876（home_files_in_base / home_protected）",
+   "rh2/src/repoharness2/grading/manager.py:656、:672",
+   "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/python__mypy-10174/gold/offline/a1/eval.sh（还原命令样例）"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "test_patch 改过期望的全部 18 个 case（清单见 scripts/tpcases.py 输出）",
+   "reason": "它们都是 gold 的直接体现，现在只有 6 个进 F2P。"
+  },
+  {
+   "id": "check-errorcodes.test::testErrorCodeFunctionDoesNotReturnValue",
+   "reason": "最切题的一条（专测该错误码），却未评分。"
+  },
+  {
+   "id": "grep 'does not return a value' 命中的全部既有 case",
+   "reason": "两条分支的措辞都被改，所有引用点都要重核。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "两处硬伤：(a) 4 条 P2P 落在不受保护的 .test 文件里，必须加 additional_exclusions；(b) 与 15131 同型的'猜措辞'问题，题面无任何线索。前者必须修，后者需要用户就'措辞类任务'统一定调。"
+ },
+ "costs": {
+  "minutes": 34
+ }
+}

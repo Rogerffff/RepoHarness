@@ -1,0 +1,83 @@
+{
+  "instance_id": "pydantic__pydantic-8511",
+  "audit_date": "2026-09-20",
+  "old_record": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_pydantic/records/pydantic__pydantic-8511.json",
+  "source_refs": {
+    "public": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl#pydantic__pydantic-8511",
+    "grading": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl#pydantic__pydantic-8511",
+    "validation_reference_only": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl#pydantic__pydantic-8511",
+    "base_commit": "e4fa099d5adde70acc80238ff810c87a5cec7ebf",
+    "F2P": 1,
+    "P2P": 168
+  },
+  "environment": {
+    "catalog_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json#tasks[instance_id=pydantic__pydantic-8511]",
+    "status": "verified_environment_pair",
+    "selected_batch": "pydantic_v1",
+    "recipe": "pydantic-install-v1",
+    "verified_existing_pair": "noop=0 / gold=1；两次安装rc=0，gold测试rc=0；日志SHA256已本轮复算。",
+    "verification_ref": "verification.json#environment.pydantic__pydantic-8511",
+    "boundary": "环境对照有效，不等于题意/评分质量或actor正式准入；选定配方仍需冻结消费。"
+  },
+  "requirements": [
+    "Pydantic dataclass 使用 Field(repr=False) 时，应与标准 dataclasses.field(repr=False) 一样从 repr 中隐藏该字段。",
+    "其他可见字段仍需显示，且默认值、default_factory 和已有 kw_only 行为应保留。",
+    "基线 Field 的公开说明已承诺 repr 开关；修复需在该题实际Python环境适用，不要求新增 compare/hash/metadata 透传。"
+  ],
+  "old_claim_reviews": [
+    {
+      "original_claim": "题面、F2P 和 gold 的 repr 行为一致，接口需求充分。",
+      "status": "confirmed",
+      "evidence": [
+        "题面给同一数据类用两种 field 构造器的 repr 对照；test_patch::test_repr_false 对 Field和stdlib field参数化，只检查可见/隐藏字段。",
+        "pydantic@e4fa099d5adde70acc80238ff810c87a5cec7ebf:pydantic/fields.py:625,670 显式定义并说明 repr 参数，验收不是无来源的隐藏接口。",
+        "pydantic@e4fa099d5adde70acc80238ff810c87a5cec7ebf:pydantic/dataclasses.py:144-167 基线兼容逻辑只传kw_only且在Python<3.10直接no-op。"
+      ]
+    },
+    {
+      "original_claim": "把兼容逻辑扩到Python<3.10属于题外scope creep。",
+      "status": "refuted",
+      "evidence": [
+        "grading bundle 的 python_version 为3.8；要在支持环境让 repr=False 生效就必须覆盖该分支，不能同时称其为必要修复和题外改动。",
+        "gold 的 getattr 容错用于老版本无 __annotations__ 的类；尚无证据说明这部分造成越界行为。"
+      ]
+    },
+    {
+      "original_claim": "未透传 compare/hash/metadata 是本题P2缺陷，必须补这些回归。",
+      "status": "refuted",
+      "evidence": [
+        "pydantic@e4fa099d5adde70acc80238ff810c87a5cec7ebf:pydantic/fields.py:609-641 Field显式参数没有compare/hash/metadata；pydantic@e4fa099d5adde70acc80238ff810c87a5cec7ebf:pydantic/fields.py:736-744 未识别extra走弃用警告/json_schema_extra，而不是stdlib参数透传。",
+        "题面只要求repr；要求这些新功能会扩大任务，不是用现有公共契约纠正漏测。"
+      ]
+    },
+    {
+      "original_claim": "题面明确、边界干净，169条同文件验收支持ready_for_probe（disposition_hint）。",
+      "status": "confirmed",
+      "evidence": [
+        "test_patch还把test_default_factory_field扩成dataclasses.field与pydantic.dataclasses.Field两个参数，并恢复实例other值断言；这些是P2P的一部分。",
+        "官方168条P2P与新增F2P均在同文件；同文件并不等于只检查一个repr字符串。"
+      ]
+    },
+    {
+      "original_claim": "旧记录install rc=2或只有联网才能安装，构成当前环境阻塞。",
+      "status": "superseded_env",
+      "evidence": [
+        "repair_catalog本题选择pydantic_v1/pydantic-install-v1，在deny_all、uid54322、2CPU/4GiB下已有noop/gold成对结果；本轮校验该题两份原始日志SHA256匹配目录。",
+        "这只替代已修的安装结论；旧actor PATH及初始脏树应在真正启动探针时核对，不能由grader对照擅自宣称已修。"
+      ]
+    }
+  ],
+  "recommendation": "probe_candidate",
+  "probe_role": "公共repr契约与Python版本兼容修复。",
+  "next_action": [
+    "作为首轮普通探针；跟踪能否沿 FieldInfo→stdlib dataclass 路径定位，而不要求 gold 的 helper 重构形式。",
+    "保留默认工厂与标准field正向对照；若候选改repr生成逻辑，再加两个隐藏字段与一个可见字段的内容检查，不绑定局部类名格式。"
+  ],
+  "unknowns": [
+    "本轮没有新的候选运行；跨Python版本兼容性未重新实跑。",
+    "最新环境配方的actor接入仍需在探针启动前核验。"
+  ],
+  "evidence_level": "static_or_existing_run",
+  "verification_scope": "本轮读取精确base源码、实际公开题面/test_patch/gold、已归档运行证据；新增仅本地纯Python探针与日志重解析，未启动Docker/远端/模型/真实RH2。",
+  "formal_admission": false
+}

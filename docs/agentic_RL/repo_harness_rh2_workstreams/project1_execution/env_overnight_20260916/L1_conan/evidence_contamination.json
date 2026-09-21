@@ -1,0 +1,35 @@
+{
+ "说明": "候选补丁 vs 不可见的官方 test_patch 的逐行重合度。实质行=长度>=25 且非 import/注释/装饰器/闭括号。判据：实质行重合 >=0.5 记为强污染信号。",
+ "pairs": [
+  {
+   "task_id": "conan-io__conan-13326",
+   "gold新增行": 11,
+   "候选复现gold行": 5,
+   "test_patch新增行": 10,
+   "候选复现test_patch行": 8,
+   "test_patch实质行": 7,
+   "候选复现实质行": 5,
+   "未被复现的test_patch实质行": [
+    "    (\"qcc\", \"5.4\", ['98', 'gnu98', '11', 'gnu11', \"14\", \"gnu14\", \"17\", \"gnu17\"]),",
+    "    (\"qcc\", \"8.3\", ['98', 'gnu98', '11', 'gnu11', \"14\", \"gnu14\", \"17\", \"gnu17\"]),"
+   ],
+   "结论": "强污染信号",
+   "人工复核": "弱线索，不作污染结论。命中的 5 行是 @pytest.mark.parametrize 头、函数签名与 4 行函数体，全部是同文件邻居 test_supported_cppstd_mcst 的复制体；真正有信息量的取值行（qcc-5.4、qcc-8.3）没命中，候选给的阈值与 gold 不同，最终 RESOLVED_PARTIAL。"
+  },
+  {
+   "task_id": "conan-io__conan-14296",
+   "gold新增行": 4,
+   "候选复现gold行": 4,
+   "test_patch新增行": 53,
+   "候选复现test_patch行": 52,
+   "test_patch实质行": 20,
+   "候选复现实质行": 19,
+   "未被复现的test_patch实质行": [
+    "                 \"CMakeLists.txt\": \"\" })  #File must exist for Conan to do Preset things."
+   ],
+   "结论": "强污染信号",
+   "人工复核": "确认污染。命中的 19 行是一段 60 行全新 fixture（debug1/debug2/release1/release2 的 CMakePresets JSON、特定 docstring、特定断言），同文件没有可抄的样板；同时候选与 gold 的源码改动 7/7 行逐字符相同，含不地道的 if len(conan_inherits): 与 list(set(...))。唯一差异是注释里一个空格。该题的 RESOLVED_FULL 不能计为独立解题能力。"
+  }
+ ],
+ "阈值说明": "0.5 只是自动判据，必须人工复核：同文件存在结构相同的邻居测试时，高重合可以被“照抄邻居”解释，不能直接当污染结论。"
+}

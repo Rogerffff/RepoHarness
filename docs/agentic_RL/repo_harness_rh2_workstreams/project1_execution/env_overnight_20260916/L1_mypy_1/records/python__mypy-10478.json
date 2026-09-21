@@ -1,0 +1,61 @@
+{
+ "task_id": "python__mypy-10478",
+ "source": "SWE-Gym lite / python/mypy PR 10478",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "8642b351cff94c471333256f9cd6867807384f01", "version": "0.820", "python_version": "3.9",
+  "eval_cmd": "pytest -n0 -rA -k",
+  "f2p": ["testFinalUsedWithClassVar"], "p2p": [],
+  "test_patch_paths": ["test-data/unit/check-final.test"], "gold_paths": ["mypy/semanal.py"],
+  "stage1": "无 stage1 记录（signals.stage1 = null）"
+ },
+ "public_view": {
+  "goal": "`a: Final[ClassVar[int]] = 10` 应当报错（PEP 591 禁止同时用 ClassVar 与 Final），当前 mypy 不报错。",
+  "constraints": [
+   "题面**逐字给出期望错误文本**：`error: Variable should not be annotated with both ClassVar and Final`",
+   "题面引用 PEP 591 原文作为依据，给出最小复现与实际输出"
+  ],
+  "unknowns_from_public_only": [
+   "`ClassVar[Final[int]]`（内外顺序相反）该报什么？题面只给了 Final 在外层的例子——不过这一形态在 base 已经报 'Final can be only used as an outermost qualifier'，属既有行为",
+   "报错后是否还要继续处理该赋值（gold 选择 return False 提前退出）——题面无约束，也不可观察"
+  ],
+  "base_code_evidence": [
+   "8642b351c:mypy/semanal.py unwrap_final 在解开 Final[...] 之后直接进入 lvalue 检查，没有对 s.type 做 ClassVar 判定",
+   "8642b351c:mypy/semanal.py:3211 is_classvar 在 base 已存在，gold 直接复用",
+   "8642b351c:test-data/unit/check-final.test 在 base 有 67 个 case"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 目标 check-final.test 在 base 存在（67 个 case）；gold 目标 mypy/semanal.py 存在，unwrap_final 上下文匹配"], "note": "无二进制/LFS/子模块。test_patch 末尾带 `\\ No newline at end of file`，即打完补丁后该文件不以换行结尾——不影响 data.py 解析（最后一段是空的 [out]），但会让后续对该文件的补丁更容易产生冲突。", "by": "L1_mypy_1"},
+  "2": {"status": "pass", "evidence_refs": ["base unwrap_final 无 ClassVar 判定"], "note": "静态确认；无 stage1 实跑佐证。", "by": "L1_mypy_1"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 1190 字符，含 PEP 591 引文、最小复现、期望与实际输出；hints_text 长度 0"], "note": "题面质量高：期望错误文本逐字给出。GitHub 模板 HTML 注释残留属轻微噪声。", "by": "L1_mypy_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 只触碰 test-data/unit/check-final.test"], "note": "无非测试源码。additional_exclusions 保持空。", "by": "L1_mypy_1"},
+  "17": {"status": "pass", "evidence_refs": ["同上；gold 只改 mypy/semanal.py"], "note": "无覆盖风险。", "by": "L1_mypy_1"},
+  "5": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["dupidx.txt：check-final.test 只被本题触碰；mypy/semanal.py 是本题、10382、11707、5617 共 4 题的 gold 路径（前三题在本包）"], "note": "同模块不同函数（unwrap_final / visit_import_from / …），非重复题。", "by": "L1_mypy_1"},
+  "23": {"status": "pass", "evidence_refs": ["F2P 第一行断言的文本与题面逐字一致；第二、三行断言的是 base 已有的 'Final can be only used as an outermost qualifier' 行为"], "note": "要求充分、一致、可由公开材料推出。F2P 里有 2/3 条其实是既有行为的回归保护，设计合理。", "by": "L1_mypy_1"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 只断言错误文本，不引用 gold 的 is_classvar 调用或 return False"], "note": "任何在 Final 解析路径上加这条诊断的实现都能过。未强制唯一实现。", "by": "L1_mypy_1"},
+  "25": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["P2P 为空（0 条），而 check-final.test 在 base 有 67 个 case", "gold 在 unwrap_final 里加了 `return False` 提前退出，会改变所有触发该分支的赋值的后续处理"], "note": "缺口在回归侧而非正向侧：F2P 本身是正向断言（要求新增一条具体诊断），硬编码很难通过；但 gold 改的是所有 Final 声明都要走的 unwrap_final，P2P 为空意味着把其它 Final 行为改坏不会被发现。", "by": "L1_mypy_1"},
+  "26": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["P2P 为空；同文件有 67 个现成 case 可用"], "note": "本题补回归的成本最低——直接把 check-final.test 既有 67 条纳入即可。", "by": "L1_mypy_1"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 只加 5 行；依赖的 self.is_classvar 在 base 已存在（semanal.py:3211）"], "note": "与本题对应、不依赖未交付改动、无题外改动。", "by": "L1_mypy_1"},
+  "29": {"status": "pass", "evidence_refs": ["problem_statement 无 PR/commit 链接、无修复代码；hints_text 为空"], "note": "无泄漏。注意题面给出了期望错误文本本身——这是合理的需求说明（PEP 措辞），不算答案泄漏。", "by": "L1_mypy_1"},
+  "6": {"status": "not_checked", "evidence_refs": [], "note": "无 stage1 记录。", "by": "L1_mypy_1"},
+  "7": {"status": "pass", "evidence_refs": ["F2P case 不声明 fixture"], "note": "无外部资产。", "by": "L1_mypy_1"},
+  "11": {"status": "pass", "evidence_refs": ["case 正文无 URL"], "note": "不需要网络。", "by": "L1_mypy_1"},
+  "18": {"status": "pass", "evidence_refs": ["kcheck_all.txt：无子串过选"], "note": "选择无歧义。", "by": "L1_mypy_1"},
+  "19": {"status": "pass", "evidence_refs": ["8642b351c:mypy/test/data.py:137-143 与 :169 —— [out] 段先把 output 设为该段内容（这里为空），随后 expand_errors 把 inline 的 # E: 期望追加进去"], "note": "空 [out] 与 inline 断言并存是合法写法，不会互相覆盖。", "by": "L1_mypy_1"},
+  "20": {"status": "not_checked", "evidence_refs": [], "note": "无 stage1。", "by": "L1_mypy_1"}
+ },
+ "issues": [
+  {"category": "grading_coverage", "severity": "P2", "evidence_refs": ["P2P=0；gold 在所有 Final 声明都要经过的 unwrap_final 里加了提前 return False"], "proposed_action": "把 check-final.test 既有 67 条 case 全部纳入 P2P（成本最低的一题）。", "next_experiment": "在 gold 上跑 check-final.test 全量，记录基线通过集；再写一个把 `return False` 误写成无条件退出的候选，确认回归集能拦下。"},
+  {"category": "test_data_hygiene", "severity": "P3", "evidence_refs": ["test_patch 末尾 `\\ No newline at end of file`"], "proposed_action": "补一个结尾换行；纯卫生问题，不影响当前判分。", "next_experiment": "无。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只触碰纯测试数据文件 test-data/unit/check-final.test。", "evidence_refs": ["grading_bundles_v2_v0:python__mypy-10478 test_patch"]},
+ "proposed_regression_tests": [
+  {"id": "test-data/unit/check-final.test 既有全部 67 个 case", "reason": "同文件、同特性，覆盖 unwrap_final 的所有既有路径；当前 P2P 为空。"},
+  {"id": "test-data/unit/check-classvar.test", "reason": "gold 引入了 ClassVar 与 Final 的交互判定，ClassVar 既有语义需要保护。"},
+  {"id": "test-data/unit/check-errorcodes.test 中 Final/ClassVar 相关 case", "reason": "新增诊断需要有正确的 error code 归属。"},
+  {"id": "test-data/unit/check-inference.test 中 Final 推断相关 case", "reason": "gold 的 `return False` 会跳过后续处理，可能影响 Final 变量的类型推断。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "题面（含逐字期望错误文本与 PEP 依据）、gold（5 行、复用既有 is_classvar）、F2P（1 条新行为 + 2 条既有行为回归）三者对应良好。唯一缺口是 P2P 为空，而同文件 67 条 case 现成可用，修复成本最低。"},
+ "costs": {"minutes": 16}
+}

@@ -1,0 +1,193 @@
+{
+ "task_id": "pydantic__pydantic-8567",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_pydantic (Claude Opus 5, 2026-09-16 夜)",
+ "materials_refs": [
+  "s2/ingest/*_bundles_v0.jsonl (pydantic__pydantic-8567)",
+  "repos/pydantic@8060fa1c(见 grading.base_commit)",
+  "runs/env_probe_stage1_20260910/.../pydantic__pydantic-8567/"
+ ],
+ "public_view": {
+  "目标行为": "`Annotated[bool, PlainSerializer(...), PlainValidator(...)]` 与 `Annotated[bool, PlainValidator(...), PlainSerializer(...)]` 应产生相同的序列化结果；现在 PlainSerializer 写在 PlainValidator 前面时被忽略。",
+  "约束": "PlainValidator 本身的校验语义不能变。",
+  "公开材料无法确定的点": [
+   "修复应落在 PlainValidator（让它把 handler 的 serialization 带上）还是在 Annotated 元数据的应用顺序上",
+   "没有 PlainSerializer 时 PlainValidator 的序列化行为是否也应该变（gold 让它无条件挂上 wrap serializer）"
+  ],
+  "base 定位": "pydantic/functional_validators.py:153-163 `PlainValidator.__get_pydantic_core_schema__` 直接返回 `(with_info|no_info)_plain_validator_function(func)`，**完全不调用 handler(source_type)**，于是排在它后面的 Annotated 元数据（含 PlainSerializer）产生的 schema 被丢弃。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "tests/test_validators.py、pydantic/functional_validators.py 在 base 均存在"
+   ],
+   "note": "对应同一问题。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "functional_validators.py:153-163",
+    "stage1 empty：F2P FAILED"
+   ],
+   "note": "base 确有缺陷。",
+   "by": "static+stage1log"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 2083 字符，含完整可运行例子与实际输出"
+   ],
+   "note": "输入完整。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只碰 tests/test_validators.py；F2P+P2P 159 条全在该文件；gold 只碰 pydantic/functional_validators.py"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "static"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "本包内唯一改 functional_validators.py 的题"
+   ],
+   "note": "无重复。",
+   "by": "static"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "install rc=2。",
+   "by": "stage1log"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "测试第三方 import：pytest / pydantic_core / dirty_equals"
+   ],
+   "note": "无外部资产。",
+   "by": "static"
+  },
+  "10": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "无本题轨迹。",
+   "by": "-"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "只有 install 需要网络。",
+   "by": "stage1log"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 与 F2P 语义一致（两种顺序结果应相同）"
+   ],
+   "note": "要求充分。",
+   "by": "static"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 只断言两个字段 dump 后都是 str"
+   ],
+   "note": "不强制唯一实现。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "F2P 只断言 `isinstance(data['foo'], str)` 与 `isinstance(data['bar'], str)`，不比较具体值",
+    "gold 让 PlainValidator **无条件**挂上 `wrap_serializer_function_ser_schema(function=lambda v,h: h(v), schema=handler(source_type))`，即使 Annotated 里根本没有 PlainSerializer",
+    "P2P 158 条全在 tests/test_validators.py；tests/test_serialize.py（序列化主回归文件）不在判分面",
+    "静态复核：对 base 测试文件 + test_patch 做断言级扫描（见 summary.md 的“静态复核补强”）"
+   ],
+   "note": "P2 **已静态复核**：(a) F2P 只断言 `isinstance(data['foo'], str)` 与 `isinstance(data['bar'], str)`，不比较具体值，一个把两个字段都强制 str() 的错误实现也能过；(b) gold 让 PlainValidator **无条件**挂上 wrap serializer，而判分文件里三处不带 PlainSerializer 的 PlainValidator 用法（tests/test_validators.py:82 test_annotated_validator_plain、:167 test_annotated_validator_typing_cache 的参数、:2714 test_plain_validator_field_name）**全部只断言校验后的值，没有一条做 model_dump/model_dump_json**，所以 gold 对这一侧的序列化改变在判分面上完全不可见；序列化主回归文件 tests/test_serialize.py 也不在 P2P。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "同 25(b)"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "static"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "golden_patch：`schema = handler(source_type)` 无条件求值并包成 serialization"
+   ],
+   "note": "P2：gold 引入两个题面未要求的副作用——(1) PlainValidator 现在总是调用 handler(source_type)，即对 source_type 也要能生成 schema（原来不需要，这正是 PlainValidator 常被用于任意类型的原因）；(2) 没有 PlainSerializer 时序列化也改走 wrap。这两点都可能影响既有用法，判分面只有同文件 159 条。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak 扫描 0 命中；题面无 URL"
+   ],
+   "note": "无泄漏。test_patch 的 docstring 里写了 issue 链接，但测试文件不是 agent 可见材料。",
+   "by": "static"
+  },
+  "31": {
+   "status": "issue",
+   "evidence_refs": [
+    "R4"
+   ],
+   "note": "静态残余面。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "gold_scope_creep",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 27"
+   ],
+   "proposed_action": "补“PlainValidator 用于无法生成 schema 的任意类型时仍可用”与“无 PlainSerializer 时序列化行为不变”的断言",
+   "next_experiment": "在镜像里对一个 handler(source_type) 会抛 PydanticSchemaGenerationError 的 source_type 使用 PlainValidator，比较 base/gold"
+  },
+  {
+   "category": "oracle_weak_assertion",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 25(a)"
+   ],
+   "proposed_action": "把 F2P 的 isinstance 断言改成值断言（'0'/'1'）",
+   "next_experiment": "实现“无条件 str()”的错误修复跑官方 159 条"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 仅纯测试文件、gold 仅生产代码、判分面与恢复面一致。",
+  "evidence_refs": [
+   "grading.json.test_patch",
+   "validation.json.golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  "PlainValidator 用于 handler(source_type) 无法生成 schema 的类型（如任意第三方类）— 选择依据：gold 把 handler(source_type) 变成无条件求值，这是最可能的破坏点",
+  "只有 PlainValidator、没有 PlainSerializer 时的 model_dump/model_dump_json 结果与 base 一致 — 选择依据：gold 的范围外副作用",
+  "tests/test_serialize.py 全量 — 选择依据：序列化主回归文件，gold 改的是序列化 schema，却完全不在判分面",
+  "值断言：`data['foo'] == '0'` 与 `data['bar'] == '1'` — 选择依据：替换现有只查类型的弱断言"
+ ],
+ "disposition_hint": {
+  "state": "needs_review",
+  "reason": "缺陷与 gold 对应，但 F2P 断言过弱（只查类型）且 gold 有两处范围外副作用，主回归文件 tests/test_serialize.py 不在判分面。收紧断言并扩 P2P 后可入。"
+ },
+ "costs": {
+  "minutes": 15
+ }
+}

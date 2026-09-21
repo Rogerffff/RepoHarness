@@ -1,0 +1,992 @@
+{
+  "scope": "本机 CPU / 真实 orchestrator + manager + finalization + gate + admission；Docker 为维护测试替身",
+  "positive_control": {
+    "report": {
+      "schema_id": "rh2.grading_report.v1",
+      "report_id": "rpt_grading_4f23067d",
+      "trajectory_id": "exec_F22",
+      "task_id": "psf__requests-2931",
+      "grader_name": "swebench_official_parser",
+      "grader_version": "swebench-4.1.0",
+      "outcome": "unresolved",
+      "failure_category": "candidate_execution_failed",
+      "reward": 0.0,
+      "reward_scale_version": "binary_v1",
+      "f2p_pass_count": null,
+      "f2p_total_count": null,
+      "p2p_fail_count": null,
+      "p2p_total_count": null,
+      "execution_failure_stage": "test_collection",
+      "execution_failure_evidence": [
+        "_________________ ERROR collecting tests/test_thing.py _________________",
+        "test_rc=2",
+        "compile_probe:src/thing.py:SyntaxError:line=1:invalid syntax",
+        "env_qualification:ok:ledger_e2_A.jsonl:rpt_gold_1"
+      ],
+      "grading_semantics": "swe_f2p_p2p",
+      "expected_match_count": null,
+      "expected_total_count": null,
+      "patch_hygiene": {
+        "cleaned_patch_digest": "sha256:0b2b4b5b2df473f8ec9c6d033572eef6b657796c37d79b12a58351510726eae2",
+        "digest_kind": "applied_entry_set",
+        "replayed_on_clean_checkout": true,
+        "test_files_modified": false,
+        "forbidden_path_touched": false,
+        "forbidden_paths": [],
+        "verdict": "clean"
+      },
+      "infra_failure_detail": null,
+      "eval_log_ref": {
+        "ref_id": "evallog_exec_F22_4f23067d",
+        "sha256": "sha256:8af656760840fb6437e398dbbb13f718a56163306689202106edb3480747015d",
+        "byte_size": 1034
+      },
+      "timings": {
+        "schema_id": "rh2.grading_timing_record.v1",
+        "record_id": "timing_4f23067d",
+        "trajectory_id": "exec_F22",
+        "task_id": "psf__requests-2931",
+        "image_pull_seconds": 0.0,
+        "env_reset_seconds": 0.0,
+        "prep_seconds": 0.0,
+        "test_seconds": 0.0,
+        "total_grading_seconds": 0.722,
+        "queue_wait_seconds": 0.0,
+        "container_peak_memory_mb": 1.0,
+        "queue_depth_at_enqueue": null,
+        "backpressure_triggered": false
+      },
+      "graded_at_utc": "2026-09-16T05:02:28.257959Z"
+    },
+    "decision": {
+      "trigger": "reference_all_missing",
+      "kind": "candidate",
+      "stage": "test_collection",
+      "rule": "pytest_error_collecting",
+      "evidence": [
+        "_________________ ERROR collecting tests/test_thing.py _________________",
+        "test_rc=2",
+        "compile_probe:src/thing.py:SyntaxError:line=1:invalid syntax",
+        "env_qualification:ok:ledger_e2_A.jsonl:rpt_gold_1"
+      ],
+      "missing": [],
+      "resource": {
+        "oom_kill_events": 0,
+        "container_oom_killed": false,
+        "test_rc": 2,
+        "signal_exit": false
+      },
+      "qualification": "ok:ledger_e2_A.jsonl:rpt_gold_1",
+      "compile_probe": {
+        "error": null,
+        "ok": [],
+        "error_paths": [
+          "src/thing.py:SyntaxError:line=1:invalid syntax"
+        ],
+        "missing": [],
+        "interpreter": "/opt/miniconda3/envs/testbed/bin/python",
+        "paths_probed": [
+          "src/thing.py"
+        ]
+      },
+      "candidate_python_paths": [
+        "src/thing.py"
+      ],
+      "install_rc_baseline": 0
+    },
+    "outcome": {
+      "schema_id": "rh2.fa.rollout_attempt_outcome.v2",
+      "outcome_id": "ov2_exec_F22#p1-cafe1234",
+      "identity": {
+        "schema_id": "rh2.fa.execution_identity.v1",
+        "prompt_group_id": "pg_F22",
+        "group_index": 5,
+        "rollout_execution_id": "exec_F22",
+        "branch_id": null,
+        "parent_rollout_id": null,
+        "physical_attempt_id": "exec_F22#p1-cafe1234",
+        "physical_attempt_seq": 1
+      },
+      "member_slot": 2,
+      "attempt_number": 1,
+      "completion_class": "present_complete",
+      "termination_kind": "completed",
+      "failure_category": null,
+      "reason_code": null,
+      "failed_component": null,
+      "recovery_scope": "none",
+      "task_outcome": "unresolved",
+      "reward_unavailable": false,
+      "turn_weight_versions": [
+        "5"
+      ],
+      "intra_execution_version_span": 0,
+      "current_version_at_finalize": "5",
+      "current_version_at_consume": null,
+      "worst_token_lag": null,
+      "eligibility_report_id": "elig_0c8dad55e192",
+      "evidence_refs": [
+        "audit:exec_F22",
+        "snapshot:sha256:abc",
+        "s",
+        "drain_receipt:drain_exec_F22_p1-cafe1234",
+        "trusted_projection:rh2.trusted_scoring_projection.swe_hygiene.v1",
+        "trusted_projection:candidate=1:ignored=0"
+      ]
+    },
+    "clean_grading": {
+      "ok": true,
+      "reason_codes": [],
+      "evidence_refs": [
+        "rpt_grading_4f23067d"
+      ]
+    },
+    "member_disposition": {
+      "verdict": "KEEP_FULL",
+      "reason_code": "all_dimensions_ok",
+      "layer": "eligibility",
+      "detail": "七维全过、present_complete"
+    },
+    "leaves": [
+      {
+        "reward": 0.0,
+        "remove_sample": false
+      }
+    ],
+    "submissions": [
+      {
+        "workspace_none": true,
+        "frozen_delta_present": true,
+        "deadline_present": true
+      }
+    ],
+    "grader_removed": 1,
+    "receipt_count": 1
+  },
+  "no_qualification_control": {
+    "report": {
+      "schema_id": "rh2.grading_report.v1",
+      "report_id": "rpt_grading_d2e90f5f",
+      "trajectory_id": "exec_F22",
+      "task_id": "psf__requests-2931",
+      "grader_name": "swebench_official_parser",
+      "grader_version": "swebench-4.1.0",
+      "outcome": "failed_to_grade",
+      "failure_category": "test_log_parse_failed",
+      "reward": null,
+      "reward_scale_version": "binary_v1",
+      "f2p_pass_count": null,
+      "f2p_total_count": null,
+      "p2p_fail_count": null,
+      "p2p_total_count": null,
+      "execution_failure_stage": null,
+      "execution_failure_evidence": [],
+      "grading_semantics": "swe_f2p_p2p",
+      "expected_match_count": null,
+      "expected_total_count": null,
+      "patch_hygiene": {
+        "cleaned_patch_digest": "sha256:0b2b4b5b2df473f8ec9c6d033572eef6b657796c37d79b12a58351510726eae2",
+        "digest_kind": "applied_entry_set",
+        "replayed_on_clean_checkout": true,
+        "test_files_modified": false,
+        "forbidden_path_touched": false,
+        "forbidden_paths": [],
+        "verdict": "clean"
+      },
+      "infra_failure_detail": "reference_all_missing:unattributed:qualification:absent",
+      "eval_log_ref": {
+        "ref_id": "evallog_exec_F22_d2e90f5f",
+        "sha256": "sha256:8af656760840fb6437e398dbbb13f718a56163306689202106edb3480747015d",
+        "byte_size": 1034
+      },
+      "timings": {
+        "schema_id": "rh2.grading_timing_record.v1",
+        "record_id": "timing_d2e90f5f",
+        "trajectory_id": "exec_F22",
+        "task_id": "psf__requests-2931",
+        "image_pull_seconds": 0.0,
+        "env_reset_seconds": 0.0,
+        "prep_seconds": 0.0,
+        "test_seconds": 0.0,
+        "total_grading_seconds": 0.001,
+        "queue_wait_seconds": 0.0,
+        "container_peak_memory_mb": 1.0,
+        "queue_depth_at_enqueue": null,
+        "backpressure_triggered": false
+      },
+      "graded_at_utc": "2026-09-16T05:02:28.266610Z"
+    },
+    "decision": {
+      "trigger": "reference_all_missing",
+      "kind": "unattributed",
+      "stage": "test_collection",
+      "rule": "pytest_error_collecting",
+      "evidence": [],
+      "missing": [
+        "qualification:absent"
+      ],
+      "resource": {
+        "oom_kill_events": 0,
+        "container_oom_killed": false,
+        "test_rc": 2,
+        "signal_exit": false
+      },
+      "qualification": "absent",
+      "compile_probe": null,
+      "candidate_python_paths": [
+        "src/thing.py"
+      ],
+      "install_rc_baseline": 0
+    },
+    "outcome": {
+      "schema_id": "rh2.fa.rollout_attempt_outcome.v2",
+      "outcome_id": "ov2_exec_F22#p1-cafe1234",
+      "identity": {
+        "schema_id": "rh2.fa.execution_identity.v1",
+        "prompt_group_id": "pg_F22",
+        "group_index": 5,
+        "rollout_execution_id": "exec_F22",
+        "branch_id": null,
+        "parent_rollout_id": null,
+        "physical_attempt_id": "exec_F22#p1-cafe1234",
+        "physical_attempt_seq": 1
+      },
+      "member_slot": 2,
+      "attempt_number": 1,
+      "completion_class": "present_complete",
+      "termination_kind": "completed",
+      "failure_category": "grading_infra_failure",
+      "reason_code": null,
+      "failed_component": "grading_container",
+      "recovery_scope": "none",
+      "task_outcome": "unknown",
+      "reward_unavailable": true,
+      "turn_weight_versions": [
+        "5"
+      ],
+      "intra_execution_version_span": 0,
+      "current_version_at_finalize": "5",
+      "current_version_at_consume": null,
+      "worst_token_lag": null,
+      "eligibility_report_id": "elig_695b8c3c2242",
+      "evidence_refs": [
+        "audit:exec_F22",
+        "snapshot:sha256:abc",
+        "s",
+        "drain_receipt:drain_exec_F22_p1-cafe1234",
+        "trusted_projection:rh2.trusted_scoring_projection.swe_hygiene.v1",
+        "trusted_projection:candidate=1:ignored=0"
+      ]
+    },
+    "clean_grading": {
+      "ok": false,
+      "reason_codes": [
+        "grading_test_log_parse_failed"
+      ],
+      "evidence_refs": [
+        "rpt_grading_d2e90f5f",
+        "infra_detail:reference_all_missing:unattributed:qualification:absent"
+      ]
+    },
+    "member_disposition": {
+      "verdict": "DROP_GROUP",
+      "reason_code": "reward_scope_none",
+      "layer": "eligibility",
+      "detail": "合法不合格：['reward_scope_none', 'grading_test_log_parse_failed']"
+    },
+    "leaves": [
+      {
+        "reward": "nan",
+        "remove_sample": false
+      }
+    ],
+    "submissions": [
+      {
+        "workspace_none": true,
+        "frozen_delta_present": true,
+        "deadline_present": true
+      }
+    ],
+    "grader_removed": 1,
+    "receipt_count": 1
+  },
+  "resource_unknown": {
+    "report": {
+      "schema_id": "rh2.grading_report.v1",
+      "report_id": "rpt_grading_2b757635",
+      "trajectory_id": "exec_F22",
+      "task_id": "psf__requests-2931",
+      "grader_name": "swebench_official_parser",
+      "grader_version": "swebench-4.1.0",
+      "outcome": "unresolved",
+      "failure_category": "candidate_execution_failed",
+      "reward": 0.0,
+      "reward_scale_version": "binary_v1",
+      "f2p_pass_count": null,
+      "f2p_total_count": null,
+      "p2p_fail_count": null,
+      "p2p_total_count": null,
+      "execution_failure_stage": "test_collection",
+      "execution_failure_evidence": [
+        "_________________ ERROR collecting tests/test_thing.py _________________",
+        "test_rc=2",
+        "compile_probe:src/thing.py:SyntaxError:line=1:invalid syntax",
+        "env_qualification:ok:ledger_e2_A.jsonl:rpt_gold_1"
+      ],
+      "grading_semantics": "swe_f2p_p2p",
+      "expected_match_count": null,
+      "expected_total_count": null,
+      "patch_hygiene": {
+        "cleaned_patch_digest": "sha256:0b2b4b5b2df473f8ec9c6d033572eef6b657796c37d79b12a58351510726eae2",
+        "digest_kind": "applied_entry_set",
+        "replayed_on_clean_checkout": true,
+        "test_files_modified": false,
+        "forbidden_path_touched": false,
+        "forbidden_paths": [],
+        "verdict": "clean"
+      },
+      "infra_failure_detail": null,
+      "eval_log_ref": {
+        "ref_id": "evallog_exec_F22_2b757635",
+        "sha256": "sha256:8af656760840fb6437e398dbbb13f718a56163306689202106edb3480747015d",
+        "byte_size": 1034
+      },
+      "timings": {
+        "schema_id": "rh2.grading_timing_record.v1",
+        "record_id": "timing_2b757635",
+        "trajectory_id": "exec_F22",
+        "task_id": "psf__requests-2931",
+        "image_pull_seconds": 0.0,
+        "env_reset_seconds": 0.0,
+        "prep_seconds": 0.0,
+        "test_seconds": 0.0,
+        "total_grading_seconds": 0.001,
+        "queue_wait_seconds": 0.0,
+        "container_peak_memory_mb": 1.0,
+        "queue_depth_at_enqueue": null,
+        "backpressure_triggered": false
+      },
+      "graded_at_utc": "2026-09-16T05:02:28.302229Z"
+    },
+    "decision": {
+      "trigger": "reference_all_missing",
+      "kind": "candidate",
+      "stage": "test_collection",
+      "rule": "pytest_error_collecting",
+      "evidence": [
+        "_________________ ERROR collecting tests/test_thing.py _________________",
+        "test_rc=2",
+        "compile_probe:src/thing.py:SyntaxError:line=1:invalid syntax",
+        "env_qualification:ok:ledger_e2_A.jsonl:rpt_gold_1"
+      ],
+      "missing": [],
+      "resource": {
+        "oom_kill_events": null,
+        "container_oom_killed": null,
+        "test_rc": 2,
+        "signal_exit": false
+      },
+      "qualification": "ok:ledger_e2_A.jsonl:rpt_gold_1",
+      "compile_probe": {
+        "error": null,
+        "ok": [],
+        "error_paths": [
+          "src/thing.py:SyntaxError:line=1:invalid syntax"
+        ],
+        "missing": [],
+        "interpreter": "/opt/miniconda3/envs/testbed/bin/python",
+        "paths_probed": [
+          "src/thing.py"
+        ]
+      },
+      "candidate_python_paths": [
+        "src/thing.py"
+      ],
+      "install_rc_baseline": 0
+    },
+    "outcome": {
+      "schema_id": "rh2.fa.rollout_attempt_outcome.v2",
+      "outcome_id": "ov2_exec_F22#p1-cafe1234",
+      "identity": {
+        "schema_id": "rh2.fa.execution_identity.v1",
+        "prompt_group_id": "pg_F22",
+        "group_index": 5,
+        "rollout_execution_id": "exec_F22",
+        "branch_id": null,
+        "parent_rollout_id": null,
+        "physical_attempt_id": "exec_F22#p1-cafe1234",
+        "physical_attempt_seq": 1
+      },
+      "member_slot": 2,
+      "attempt_number": 1,
+      "completion_class": "present_complete",
+      "termination_kind": "completed",
+      "failure_category": null,
+      "reason_code": null,
+      "failed_component": null,
+      "recovery_scope": "none",
+      "task_outcome": "unresolved",
+      "reward_unavailable": false,
+      "turn_weight_versions": [
+        "5"
+      ],
+      "intra_execution_version_span": 0,
+      "current_version_at_finalize": "5",
+      "current_version_at_consume": null,
+      "worst_token_lag": null,
+      "eligibility_report_id": "elig_7c11db5dedd0",
+      "evidence_refs": [
+        "audit:exec_F22",
+        "snapshot:sha256:abc",
+        "s",
+        "drain_receipt:drain_exec_F22_p1-cafe1234",
+        "trusted_projection:rh2.trusted_scoring_projection.swe_hygiene.v1",
+        "trusted_projection:candidate=1:ignored=0"
+      ]
+    },
+    "clean_grading": {
+      "ok": true,
+      "reason_codes": [],
+      "evidence_refs": [
+        "rpt_grading_2b757635"
+      ]
+    },
+    "member_disposition": {
+      "verdict": "KEEP_FULL",
+      "reason_code": "all_dimensions_ok",
+      "layer": "eligibility",
+      "detail": "七维全过、present_complete"
+    },
+    "leaves": [
+      {
+        "reward": 0.0,
+        "remove_sample": false
+      }
+    ],
+    "submissions": [
+      {
+        "workspace_none": true,
+        "frozen_delta_present": true,
+        "deadline_present": true
+      }
+    ],
+    "grader_removed": 1,
+    "receipt_count": 1
+  },
+  "resource_and_rc_unknown": {
+    "report": {
+      "schema_id": "rh2.grading_report.v1",
+      "report_id": "rpt_grading_bff19878",
+      "trajectory_id": "exec_F22",
+      "task_id": "psf__requests-2931",
+      "grader_name": "swebench_official_parser",
+      "grader_version": "swebench-4.1.0",
+      "outcome": "unresolved",
+      "failure_category": "candidate_execution_failed",
+      "reward": 0.0,
+      "reward_scale_version": "binary_v1",
+      "f2p_pass_count": null,
+      "f2p_total_count": null,
+      "p2p_fail_count": null,
+      "p2p_total_count": null,
+      "execution_failure_stage": "test_collection",
+      "execution_failure_evidence": [
+        "_________________ ERROR collecting tests/test_thing.py _________________",
+        "compile_probe:src/thing.py:SyntaxError:line=1:invalid syntax",
+        "env_qualification:ok:ledger_e2_A.jsonl:rpt_gold_1"
+      ],
+      "grading_semantics": "swe_f2p_p2p",
+      "expected_match_count": null,
+      "expected_total_count": null,
+      "patch_hygiene": {
+        "cleaned_patch_digest": "sha256:0b2b4b5b2df473f8ec9c6d033572eef6b657796c37d79b12a58351510726eae2",
+        "digest_kind": "applied_entry_set",
+        "replayed_on_clean_checkout": true,
+        "test_files_modified": false,
+        "forbidden_path_touched": false,
+        "forbidden_paths": [],
+        "verdict": "clean"
+      },
+      "infra_failure_detail": null,
+      "eval_log_ref": {
+        "ref_id": "evallog_exec_F22_bff19878",
+        "sha256": "sha256:b67ff9117f63ba5870a02f6de9d7817b687c509b917380195ff925aa055fe705",
+        "byte_size": 1020
+      },
+      "timings": {
+        "schema_id": "rh2.grading_timing_record.v1",
+        "record_id": "timing_bff19878",
+        "trajectory_id": "exec_F22",
+        "task_id": "psf__requests-2931",
+        "image_pull_seconds": 0.0,
+        "env_reset_seconds": 0.0,
+        "prep_seconds": 0.0,
+        "test_seconds": 0.0,
+        "total_grading_seconds": 0.001,
+        "queue_wait_seconds": 0.0,
+        "container_peak_memory_mb": 1.0,
+        "queue_depth_at_enqueue": null,
+        "backpressure_triggered": false
+      },
+      "graded_at_utc": "2026-09-16T05:02:28.309651Z"
+    },
+    "decision": {
+      "trigger": "reference_all_missing",
+      "kind": "candidate",
+      "stage": "test_collection",
+      "rule": "pytest_error_collecting",
+      "evidence": [
+        "_________________ ERROR collecting tests/test_thing.py _________________",
+        "compile_probe:src/thing.py:SyntaxError:line=1:invalid syntax",
+        "env_qualification:ok:ledger_e2_A.jsonl:rpt_gold_1"
+      ],
+      "missing": [],
+      "resource": {
+        "oom_kill_events": null,
+        "container_oom_killed": null,
+        "test_rc": null,
+        "signal_exit": false
+      },
+      "qualification": "ok:ledger_e2_A.jsonl:rpt_gold_1",
+      "compile_probe": {
+        "error": null,
+        "ok": [],
+        "error_paths": [
+          "src/thing.py:SyntaxError:line=1:invalid syntax"
+        ],
+        "missing": [],
+        "interpreter": "/opt/miniconda3/envs/testbed/bin/python",
+        "paths_probed": [
+          "src/thing.py"
+        ]
+      },
+      "candidate_python_paths": [
+        "src/thing.py"
+      ],
+      "install_rc_baseline": 0
+    },
+    "outcome": {
+      "schema_id": "rh2.fa.rollout_attempt_outcome.v2",
+      "outcome_id": "ov2_exec_F22#p1-cafe1234",
+      "identity": {
+        "schema_id": "rh2.fa.execution_identity.v1",
+        "prompt_group_id": "pg_F22",
+        "group_index": 5,
+        "rollout_execution_id": "exec_F22",
+        "branch_id": null,
+        "parent_rollout_id": null,
+        "physical_attempt_id": "exec_F22#p1-cafe1234",
+        "physical_attempt_seq": 1
+      },
+      "member_slot": 2,
+      "attempt_number": 1,
+      "completion_class": "present_complete",
+      "termination_kind": "completed",
+      "failure_category": null,
+      "reason_code": null,
+      "failed_component": null,
+      "recovery_scope": "none",
+      "task_outcome": "unresolved",
+      "reward_unavailable": false,
+      "turn_weight_versions": [
+        "5"
+      ],
+      "intra_execution_version_span": 0,
+      "current_version_at_finalize": "5",
+      "current_version_at_consume": null,
+      "worst_token_lag": null,
+      "eligibility_report_id": "elig_4060745881cf",
+      "evidence_refs": [
+        "audit:exec_F22",
+        "snapshot:sha256:abc",
+        "s",
+        "drain_receipt:drain_exec_F22_p1-cafe1234",
+        "trusted_projection:rh2.trusted_scoring_projection.swe_hygiene.v1",
+        "trusted_projection:candidate=1:ignored=0"
+      ]
+    },
+    "clean_grading": {
+      "ok": true,
+      "reason_codes": [],
+      "evidence_refs": [
+        "rpt_grading_bff19878"
+      ]
+    },
+    "member_disposition": {
+      "verdict": "KEEP_FULL",
+      "reason_code": "all_dimensions_ok",
+      "layer": "eligibility",
+      "detail": "七维全过、present_complete"
+    },
+    "leaves": [
+      {
+        "reward": 0.0,
+        "remove_sample": false
+      }
+    ],
+    "submissions": [
+      {
+        "workspace_none": true,
+        "frozen_delta_present": true,
+        "deadline_present": true
+      }
+    ],
+    "grader_removed": 1,
+    "receipt_count": 1
+  },
+  "compile_local_clean": {
+    "exit_code": 0,
+    "stdout": "RH2_COMPILE_INTERPRETER=/python-under-review\nRH2_COMPILE_OK=src/thing.py\n",
+    "stderr": "",
+    "script": "#!/bin/bash\ncd <temporary-workspace>\npython - <<'RH2_COMPILE_EOF'\nimport json, sys\npaths = json.loads(\"[\\\"src/thing.py\\\"]\")\nprint('RH2_COMPILE_INTERPRETER=' + sys.executable)\nfor p in paths:\n    try:\n        with open(p, 'rb') as fh:\n            src = fh.read()\n    except OSError:\n        print('RH2_COMPILE_MISSING=' + p); continue\n    try:\n        compile(src, p, 'exec', dont_inherit=True)\n    except SyntaxError as exc:  # SyntaxError 含 IndentationError / TabError\n        msg = str(exc.msg or exc).replace('\\n', ' ')[:160]\n        print('RH2_COMPILE_ERROR=%s:%s:line=%s:%s' % (p, type(exc).__name__, exc.lineno, msg)); continue\n    except ValueError as exc:  # 源码含空字节等\n        print('RH2_COMPILE_ERROR=%s:%s:line=?:%s' % (p, type(exc).__name__, str(exc)[:160])); continue\n    print('RH2_COMPILE_OK=' + p)\nRH2_COMPILE_EOF\n"
+  },
+  "compile_local_json_shadow": {
+    "exit_code": 0,
+    "stdout": "RH2_COMPILE_ERROR=src/thing.py:SyntaxError:line=1:synthetic-from-local-json\nRH2_COMPILE_INTERPRETER=/python-under-review\nRH2_COMPILE_OK=src/thing.py\n",
+    "stderr": "",
+    "script": "#!/bin/bash\ncd <temporary-workspace>\npython - <<'RH2_COMPILE_EOF'\nimport json, sys\npaths = json.loads(\"[\\\"src/thing.py\\\", \\\"json.py\\\"]\")\nprint('RH2_COMPILE_INTERPRETER=' + sys.executable)\nfor p in paths:\n    try:\n        with open(p, 'rb') as fh:\n            src = fh.read()\n    except OSError:\n        print('RH2_COMPILE_MISSING=' + p); continue\n    try:\n        compile(src, p, 'exec', dont_inherit=True)\n    except SyntaxError as exc:  # SyntaxError 含 IndentationError / TabError\n        msg = str(exc.msg or exc).replace('\\n', ' ')[:160]\n        print('RH2_COMPILE_ERROR=%s:%s:line=%s:%s' % (p, type(exc).__name__, exc.lineno, msg)); continue\n    except ValueError as exc:  # 源码含空字节等\n        print('RH2_COMPILE_ERROR=%s:%s:line=?:%s' % (p, type(exc).__name__, str(exc)[:160])); continue\n    print('RH2_COMPILE_OK=' + p)\nRH2_COMPILE_EOF\n",
+    "candidate_module_executed": true,
+    "target_source_is_syntax_valid": true
+  },
+  "json_shadow_transport": {
+    "report": {
+      "schema_id": "rh2.grading_report.v1",
+      "report_id": "rpt_grading_874eada4",
+      "trajectory_id": "exec_F22",
+      "task_id": "psf__requests-2931",
+      "grader_name": "swebench_official_parser",
+      "grader_version": "swebench-4.1.0",
+      "outcome": "unresolved",
+      "failure_category": "candidate_execution_failed",
+      "reward": 0.0,
+      "reward_scale_version": "binary_v1",
+      "f2p_pass_count": null,
+      "f2p_total_count": null,
+      "p2p_fail_count": null,
+      "p2p_total_count": null,
+      "execution_failure_stage": "test_collection",
+      "execution_failure_evidence": [
+        "_________________ ERROR collecting tests/test_thing.py _________________",
+        "test_rc=2",
+        "compile_probe:src/thing.py:SyntaxError:line=1:synthetic-from-local-json",
+        "env_qualification:ok:ledger_e2_A.jsonl:rpt_gold_1"
+      ],
+      "grading_semantics": "swe_f2p_p2p",
+      "expected_match_count": null,
+      "expected_total_count": null,
+      "patch_hygiene": {
+        "cleaned_patch_digest": "sha256:52dea4482701401c4cdb77168be21a4767603f4f1e85556c48cc9d535a765ac1",
+        "digest_kind": "applied_entry_set",
+        "replayed_on_clean_checkout": true,
+        "test_files_modified": false,
+        "forbidden_path_touched": false,
+        "forbidden_paths": [],
+        "verdict": "clean"
+      },
+      "infra_failure_detail": null,
+      "eval_log_ref": {
+        "ref_id": "evallog_exec_F22_874eada4",
+        "sha256": "sha256:8af656760840fb6437e398dbbb13f718a56163306689202106edb3480747015d",
+        "byte_size": 1034
+      },
+      "timings": {
+        "schema_id": "rh2.grading_timing_record.v1",
+        "record_id": "timing_874eada4",
+        "trajectory_id": "exec_F22",
+        "task_id": "psf__requests-2931",
+        "image_pull_seconds": 0.0,
+        "env_reset_seconds": 0.0,
+        "prep_seconds": 0.0,
+        "test_seconds": 0.0,
+        "total_grading_seconds": 0.001,
+        "queue_wait_seconds": 0.0,
+        "container_peak_memory_mb": 1.0,
+        "queue_depth_at_enqueue": null,
+        "backpressure_triggered": false
+      },
+      "graded_at_utc": "2026-09-16T05:02:28.368635Z"
+    },
+    "decision": {
+      "trigger": "reference_all_missing",
+      "kind": "candidate",
+      "stage": "test_collection",
+      "rule": "pytest_error_collecting",
+      "evidence": [
+        "_________________ ERROR collecting tests/test_thing.py _________________",
+        "test_rc=2",
+        "compile_probe:src/thing.py:SyntaxError:line=1:synthetic-from-local-json",
+        "env_qualification:ok:ledger_e2_A.jsonl:rpt_gold_1"
+      ],
+      "missing": [],
+      "resource": {
+        "oom_kill_events": 0,
+        "container_oom_killed": false,
+        "test_rc": 2,
+        "signal_exit": false
+      },
+      "qualification": "ok:ledger_e2_A.jsonl:rpt_gold_1",
+      "compile_probe": {
+        "error": null,
+        "ok": [
+          "src/thing.py"
+        ],
+        "error_paths": [
+          "src/thing.py:SyntaxError:line=1:synthetic-from-local-json"
+        ],
+        "missing": [],
+        "interpreter": "/python-under-review",
+        "paths_probed": [
+          "json.py",
+          "src/thing.py"
+        ]
+      },
+      "candidate_python_paths": [
+        "json.py",
+        "src/thing.py"
+      ],
+      "install_rc_baseline": 0
+    },
+    "outcome": {
+      "schema_id": "rh2.fa.rollout_attempt_outcome.v2",
+      "outcome_id": "ov2_exec_F22#p1-cafe1234",
+      "identity": {
+        "schema_id": "rh2.fa.execution_identity.v1",
+        "prompt_group_id": "pg_F22",
+        "group_index": 5,
+        "rollout_execution_id": "exec_F22",
+        "branch_id": null,
+        "parent_rollout_id": null,
+        "physical_attempt_id": "exec_F22#p1-cafe1234",
+        "physical_attempt_seq": 1
+      },
+      "member_slot": 2,
+      "attempt_number": 1,
+      "completion_class": "present_complete",
+      "termination_kind": "completed",
+      "failure_category": null,
+      "reason_code": null,
+      "failed_component": null,
+      "recovery_scope": "none",
+      "task_outcome": "unresolved",
+      "reward_unavailable": false,
+      "turn_weight_versions": [
+        "5"
+      ],
+      "intra_execution_version_span": 0,
+      "current_version_at_finalize": "5",
+      "current_version_at_consume": null,
+      "worst_token_lag": null,
+      "eligibility_report_id": "elig_37b49ca1b4ec",
+      "evidence_refs": [
+        "audit:exec_F22",
+        "snapshot:sha256:abc",
+        "s",
+        "drain_receipt:drain_exec_F22_p1-cafe1234",
+        "trusted_projection:rh2.trusted_scoring_projection.swe_hygiene.v1",
+        "trusted_projection:candidate=2:ignored=0"
+      ]
+    },
+    "clean_grading": {
+      "ok": true,
+      "reason_codes": [],
+      "evidence_refs": [
+        "rpt_grading_874eada4"
+      ]
+    },
+    "member_disposition": {
+      "verdict": "KEEP_FULL",
+      "reason_code": "all_dimensions_ok",
+      "layer": "eligibility",
+      "detail": "七维全过、present_complete"
+    },
+    "leaves": [
+      {
+        "reward": 0.0,
+        "remove_sample": false
+      }
+    ],
+    "submissions": [
+      {
+        "workspace_none": true,
+        "frozen_delta_present": true,
+        "deadline_present": true
+      }
+    ],
+    "grader_removed": 1,
+    "receipt_count": 1
+  },
+  "unrelated_local_failure": {
+    "pytest_rc": 2,
+    "pytest_log": "============================= test session starts ==============================\nplatform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0\nrootdir: /testbed\nplugins: anyio-4.14.1, asyncio-1.4.0\nasyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollected 0 items / 1 error\n\n==================================== ERRORS ====================================\n_____________________ ERROR collecting tests/test_thing.py _____________________\nImportError while importing test module '/testbed/tests/test_thing.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\n/python-runtime/lib/python3.12/importlib/__init__.py:90: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_thing.py:1: in <module>\n    import rh2_review_dependency_that_does_not_exist\nE   ModuleNotFoundError: No module named 'rh2_review_dependency_that_does_not_exist'\n=========================== short test summary info ============================\nERROR tests/test_thing.py\n!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n=============================== 1 error in 0.04s ===============================\n",
+    "candidate_file_appears_in_failure": false,
+    "compile_probe": {
+      "exit_code": 0,
+      "stdout": "RH2_COMPILE_INTERPRETER=/python-under-review\nRH2_COMPILE_ERROR=src/unused.py:SyntaxError:line=1:invalid syntax\n",
+      "stderr": "",
+      "script": "#!/bin/bash\ncd <temporary-workspace>\npython - <<'RH2_COMPILE_EOF'\nimport json, sys\npaths = json.loads(\"[\\\"src/unused.py\\\"]\")\nprint('RH2_COMPILE_INTERPRETER=' + sys.executable)\nfor p in paths:\n    try:\n        with open(p, 'rb') as fh:\n            src = fh.read()\n    except OSError:\n        print('RH2_COMPILE_MISSING=' + p); continue\n    try:\n        compile(src, p, 'exec', dont_inherit=True)\n    except SyntaxError as exc:  # SyntaxError 含 IndentationError / TabError\n        msg = str(exc.msg or exc).replace('\\n', ' ')[:160]\n        print('RH2_COMPILE_ERROR=%s:%s:line=%s:%s' % (p, type(exc).__name__, exc.lineno, msg)); continue\n    except ValueError as exc:  # 源码含空字节等\n        print('RH2_COMPILE_ERROR=%s:%s:line=?:%s' % (p, type(exc).__name__, str(exc)[:160])); continue\n    print('RH2_COMPILE_OK=' + p)\nRH2_COMPILE_EOF\n"
+    }
+  },
+  "unrelated_error_transport": {
+    "report": {
+      "schema_id": "rh2.grading_report.v1",
+      "report_id": "rpt_grading_51be1001",
+      "trajectory_id": "exec_F22",
+      "task_id": "psf__requests-2931",
+      "grader_name": "swebench_official_parser",
+      "grader_version": "swebench-4.1.0",
+      "outcome": "unresolved",
+      "failure_category": "candidate_execution_failed",
+      "reward": 0.0,
+      "reward_scale_version": "binary_v1",
+      "f2p_pass_count": null,
+      "f2p_total_count": null,
+      "p2p_fail_count": null,
+      "p2p_total_count": null,
+      "execution_failure_stage": "test_collection",
+      "execution_failure_evidence": [
+        "_____________________ ERROR collecting tests/test_thing.py _____________________",
+        "test_rc=2",
+        "compile_probe:src/unused.py:SyntaxError:line=1:invalid syntax",
+        "env_qualification:ok:ledger_e2_A.jsonl:rpt_gold_1"
+      ],
+      "grading_semantics": "swe_f2p_p2p",
+      "expected_match_count": null,
+      "expected_total_count": null,
+      "patch_hygiene": {
+        "cleaned_patch_digest": "sha256:6eb60492cbd8702e6223f47d512288fda904e9a47748edec3bac203857ffa130",
+        "digest_kind": "applied_entry_set",
+        "replayed_on_clean_checkout": true,
+        "test_files_modified": false,
+        "forbidden_path_touched": false,
+        "forbidden_paths": [],
+        "verdict": "clean"
+      },
+      "infra_failure_detail": null,
+      "eval_log_ref": {
+        "ref_id": "evallog_exec_F22_51be1001",
+        "sha256": "sha256:b3c3047e55aa1be9b1f47412e75ce83679e962d06dd568a43e71f41d83bda65f",
+        "byte_size": 1617
+      },
+      "timings": {
+        "schema_id": "rh2.grading_timing_record.v1",
+        "record_id": "timing_51be1001",
+        "trajectory_id": "exec_F22",
+        "task_id": "psf__requests-2931",
+        "image_pull_seconds": 0.0,
+        "env_reset_seconds": 0.0,
+        "prep_seconds": 0.0,
+        "test_seconds": 0.0,
+        "total_grading_seconds": 0.001,
+        "queue_wait_seconds": 0.0,
+        "container_peak_memory_mb": 1.0,
+        "queue_depth_at_enqueue": null,
+        "backpressure_triggered": false
+      },
+      "graded_at_utc": "2026-09-16T05:02:28.570191Z"
+    },
+    "decision": {
+      "trigger": "reference_all_missing",
+      "kind": "candidate",
+      "stage": "test_collection",
+      "rule": "pytest_error_collecting",
+      "evidence": [
+        "_____________________ ERROR collecting tests/test_thing.py _____________________",
+        "test_rc=2",
+        "compile_probe:src/unused.py:SyntaxError:line=1:invalid syntax",
+        "env_qualification:ok:ledger_e2_A.jsonl:rpt_gold_1"
+      ],
+      "missing": [],
+      "resource": {
+        "oom_kill_events": 0,
+        "container_oom_killed": false,
+        "test_rc": 2,
+        "signal_exit": false
+      },
+      "qualification": "ok:ledger_e2_A.jsonl:rpt_gold_1",
+      "compile_probe": {
+        "error": null,
+        "ok": [],
+        "error_paths": [
+          "src/unused.py:SyntaxError:line=1:invalid syntax"
+        ],
+        "missing": [],
+        "interpreter": "/python-under-review",
+        "paths_probed": [
+          "src/unused.py"
+        ]
+      },
+      "candidate_python_paths": [
+        "src/unused.py"
+      ],
+      "install_rc_baseline": 0
+    },
+    "outcome": {
+      "schema_id": "rh2.fa.rollout_attempt_outcome.v2",
+      "outcome_id": "ov2_exec_F22#p1-cafe1234",
+      "identity": {
+        "schema_id": "rh2.fa.execution_identity.v1",
+        "prompt_group_id": "pg_F22",
+        "group_index": 5,
+        "rollout_execution_id": "exec_F22",
+        "branch_id": null,
+        "parent_rollout_id": null,
+        "physical_attempt_id": "exec_F22#p1-cafe1234",
+        "physical_attempt_seq": 1
+      },
+      "member_slot": 2,
+      "attempt_number": 1,
+      "completion_class": "present_complete",
+      "termination_kind": "completed",
+      "failure_category": null,
+      "reason_code": null,
+      "failed_component": null,
+      "recovery_scope": "none",
+      "task_outcome": "unresolved",
+      "reward_unavailable": false,
+      "turn_weight_versions": [
+        "5"
+      ],
+      "intra_execution_version_span": 0,
+      "current_version_at_finalize": "5",
+      "current_version_at_consume": null,
+      "worst_token_lag": null,
+      "eligibility_report_id": "elig_262bfb9b28a4",
+      "evidence_refs": [
+        "audit:exec_F22",
+        "snapshot:sha256:abc",
+        "s",
+        "drain_receipt:drain_exec_F22_p1-cafe1234",
+        "trusted_projection:rh2.trusted_scoring_projection.swe_hygiene.v1",
+        "trusted_projection:candidate=1:ignored=0"
+      ]
+    },
+    "clean_grading": {
+      "ok": true,
+      "reason_codes": [],
+      "evidence_refs": [
+        "rpt_grading_51be1001"
+      ]
+    },
+    "member_disposition": {
+      "verdict": "KEEP_FULL",
+      "reason_code": "all_dimensions_ok",
+      "layer": "eligibility",
+      "detail": "七维全过、present_complete"
+    },
+    "leaves": [
+      {
+        "reward": 0.0,
+        "remove_sample": false
+      }
+    ],
+    "submissions": [
+      {
+        "workspace_none": true,
+        "frozen_delta_present": true,
+        "deadline_present": true
+      }
+    ],
+    "grader_removed": 1,
+    "receipt_count": 1
+  }
+}

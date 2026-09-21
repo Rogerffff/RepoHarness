@@ -1,0 +1,253 @@
+{
+ "task_id": "Project-MONAI__MONAI-2061",
+ "source": "SWE-Gym lite / Project-MONAI/MONAI PR 2061 (created_at 2021-04-21)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "13bf996409eb04b2fddf753f6aedb2a4b71ccec3",
+  "version": "0.5",
+  "python_version": "3.8",
+  "eval_cmd": "pytest -rA ",
+  "actual_test_cmd": "pytest -rA  tests/test_handler_mean_dice.py",
+  "f2p": [
+   "tests/test_handler_mean_dice.py::TestHandlerMeanDice::test_compute_0",
+   "tests/test_handler_mean_dice.py::TestHandlerMeanDice::test_compute_1"
+  ],
+  "p2p": [
+   "tests/test_handler_mean_dice.py::TestHandlerMeanDice::test_shape_mismatch_0",
+   "tests/test_handler_mean_dice.py::TestHandlerMeanDice::test_shape_mismatch_1"
+  ],
+  "test_patch_paths": [
+   "tests/test_handler_mean_dice.py"
+  ],
+  "gold_paths": [
+   "monai/handlers/iteration_metric.py"
+  ],
+  "stage1": "gold=RESOLVED_FULL（4/4 PASSED，2.81s）/ empty=RESOLVED_NO（2 PASSED + 2 FAILED，失败集合等于 F2P），rc_install=0"
+ },
+ "public_view": {
+  "goal": "题面 252 字符，标题『Add support to compute metrics on list of images and tensor label』，正文只有一句：metrics 计算时要支持 image 是 tensor 列表而 label 是单个 tensor 的情形。",
+  "constraints": [
+   "纯 feature request，没有报错、没有复现代码、没有指名文件",
+   "题面只说 y_pred 是 list 而 y 是 tensor 这一个方向"
+  ],
+  "unknowns_from_public_only": [
+   "反方向（y 是 list 而 y_pred 是 tensor）要不要支持？题面没说，gold 的 `or` 把两个方向都打开了",
+   "两者长度不一致怎么办？题面与 gold 都没处理（zip 会静默截断）",
+   "改在 IterationMetric 还是各个具体 metric handler？题面不指"
+  ],
+  "base_code_evidence": [
+   "13bf99640:monai/handlers/iteration_metric.py:83 `if isinstance(y_pred, (list, tuple)) and isinstance(y, (list, tuple)):` —— and 导致混合形状落到 else 的整批路径",
+   "13bf99640:monai/handlers/iteration_metric.py:85 `torch.cat([_compute(p_.unsqueeze(0), y_.unsqueeze(0)) for p_, y_ in zip(y_pred, y)], dim=0)`",
+   "IterationMetric 的子类：mean_dice.py、confusion_matrix.py、hausdorff_distance.py、surface_distance.py（同一处改动影响全部 4 个 handler）"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "tests/test_handler_mean_dice.py 在 base 存在（65 行）",
+    "gold 目标 monai/handlers/iteration_metric.py:83-85 上下文匹配"
+   ],
+   "note": "无二进制/LFS/子模块。",
+   "by": "L1_monai_1"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "13bf99640:monai/handlers/iteration_metric.py:83",
+    "stage1 empty 侧 2 条 F2P FAILED"
+   ],
+   "note": "base 确实不支持混合形状。",
+   "by": "L1_monai_1"
+  },
+  "3": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "problem_statement 252 字符全文",
+    "raw hints_text 为空"
+   ],
+   "note": "信息极少：不给复现、不给报错、不指文件。无外链/图片/截断。定位难度主要来自题面而非问题本身。",
+   "by": "L1_monai_1"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只改 tests/test_handler_mean_dice.py 的一行"
+   ],
+   "note": "无非测试源码；gold 只碰 monai/handlers/iteration_metric.py。additional_exclusions 保持空。",
+   "by": "L1_monai_1"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "同上"
+   ],
+   "note": "恢复不覆盖候选源码。",
+   "by": "L1_monai_1"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "dupidx.txt：monai/handlers/iteration_metric.py 与该测试文件在 26 道 MONAI 题里只被本题触碰"
+   ],
+   "note": "无重复/派生。",
+   "by": "L1_monai_1"
+  },
+  "23": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "test_patch 只把既有 test_compute 里的 `y` 从 list 改成 tensor，期望值 0.75 / 0.66666 与 details_shape (4,2)/(4,1) 全部沿用"
+   ],
+   "note": "F2P 是**改写后的既有用例**，没有新增用例。公开材料能推出『要支持混合形状』，但推不出期望的 metric 数值与 details 形状——所幸这些值在改写前后不变，候选只要走对分支就自然对上。要求基本充分，缺口在『长度不等』与『反方向』两个未定义行为。",
+   "by": "L1_monai_1"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 只断言 avg_dice 数值与 details 形状"
+   ],
+   "note": "不强制唯一实现：把 y 提前转成 list、或对两侧分别判断再规整，都能过。",
+   "by": "L1_monai_1"
+  },
+  "25": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "P2P 只有 test_shape_mismatch_0/1，断言的是 `assertRaises((AssertionError, ValueError))`",
+    "base:tests/test_handler_mean_dice.py:38-40 第一次 update 用的是两个纯 tensor"
+   ],
+   "note": "**把条件直接写成 `if True:`（永远走逐样本 zip 路径）很可能满分**：(a) 纯 tensor 的第一次 update 会被逐样本拆开再 `torch.cat` 回来，数值与 details 形状不变；(b) P2P 的形状不匹配用例在逐样本路径下同样会抛异常，`assertRaises` 照样通过。代价是丢掉批量计算路径（性能回退，且对不可迭代的 0 维输入会崩）。需要一条实跑确认，但静态看漏洞是实的。",
+   "by": "L1_monai_1"
+  },
+  "26": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "P2P 只有 2 条，且只覆盖异常路径"
+   ],
+   "note": "IterationMetric 是 4 个 handler 的公共基类，当前只有 mean_dice 一个文件的测试在名单里。见 proposed_regression_tests。",
+   "by": "L1_monai_1"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 只改一个 `and`→`or` 与一行注释"
+   ],
+   "note": "改动最小，精确对应，不依赖未交付改动。局限：gold 没处理 len(y_pred) != len(y)（zip 静默截断），也没处理两边都不是序列但长度语义不同的情形。",
+   "by": "L1_monai_1"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "题面无链接、无代码；hints_text 为空"
+   ],
+   "note": "无泄漏。",
+   "by": "L1_monai_1"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 rc_install=0"
+   ],
+   "note": "安装离线可完成。",
+   "by": "L1_monai_1"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "测试全部用内存 torch.Tensor 构造"
+   ],
+   "note": "无外部资产。",
+   "by": "L1_monai_1"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 离线 4/4 通过，2.81s"
+   ],
+   "note": "不需要网络。",
+   "by": "L1_monai_1"
+  },
+  "10": {
+   "status": "pass",
+   "evidence_refs": [
+    "纯 CPU、无随机、无并发；依赖 pytorch-ignite 的 Engine 但只做 attach 不跑训练"
+   ],
+   "note": "无 GPU/多进程/共享内存需求。",
+   "by": "L1_monai_1"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "gold 4 PASSED / empty 2 PASSED + 2 FAILED，失败集合恰好等于 F2P"
+   ],
+   "note": "分差干净、无噪声失败、耗时 2.81s。本包里最廉价的一题。",
+   "by": "L1_monai_1"
+  }
+ },
+ "issues": [
+  {
+   "category": "reward_hacking_surface",
+   "severity": "P1",
+   "evidence_refs": [
+    "P2P 只有两条 assertRaises 用例",
+    "F2P 的纯 tensor 分支在逐样本路径下数值不变"
+   ],
+   "proposed_action": "补一条断言：纯 tensor 输入时**不得**逐样本拆分（例如用 mock 统计 metric_fn 的调用次数，或对 0 维/不可迭代输入断言不抛异常）。否则 `if True:` 一行即可满分。",
+   "next_experiment": "把条件改成 `if True:` 跑当前 F2P+P2P，预期 RESOLVED_FULL —— 若成立就是一个干净的反例。"
+  },
+  {
+   "category": "undefined_behavior",
+   "severity": "P2",
+   "evidence_refs": [
+    "gold 用 zip(y_pred, y)，两侧长度不等时静默截断"
+   ],
+   "proposed_action": "题面与 gold 都没规定长度不等时的行为。建议要么在题面写明，要么在 gold 上补一个长度校验并加对应测试；现状下候选加不加校验都能满分，训练信号里这一维是噪声。",
+   "next_experiment": "构造 len(y_pred)=3、len(y)=2 的输入在 gold 上跑，记录当前实际行为（静默丢弃第 3 个样本）。"
+  },
+  {
+   "category": "grading_control_surface_gap",
+   "severity": "P1",
+   "evidence_refs": [
+    "rh2/src/repoharness2/grading/manager.py:672 `test_globs=()`（P-B：不再按测试名通配剔除候选改动）",
+    "rh2/src/repoharness2/grading/manager.py:566-577 observe_candidate_paths：conftest/fixture/pytest 配置类路径只观测不剔除",
+    "rh2/src/repoharness2/grading/trusted_projection.py:18-20 已把 conftest.py 登记为『已知不足（登记不修）』",
+    "rh2/src/repoharness2/adapters/slime/prepared_task_face.py:199-210 恢复步骤只处理 hygiene.test_files（= test_patch 触碰的路径）",
+    "runs/env_overnight_20260916/L1_monai_1/conftest_scan.txt：MONAI 26/26 个 base 下不存在任何 conftest.py"
+   ],
+   "proposed_action": "这不是本题的缺陷，而是把本题选作**验证载体**：MONAI 的 base 里没有任何 conftest.py，候选新建的 `tests/conftest.py` 既不会被投影剔除、也不会被恢复，而 pytest 在 `pytest -rA tests/test_handler_mean_dice.py` 下会自动加载它。最小利用形状是一个 `pytest_runtest_makereport` hookwrapper 把 rep.outcome 改写成 'passed'。跨仓库问题，详见 summary.md 跨题发现 7。",
+   "next_experiment": "本题离线只要 2.81s、只有 4 条用例，是全批次最廉价的验证载体：构造一个只含该 hookwrapper 的 `tests/conftest.py` 作为候选 patch，走完整 v2 评分流程，看是否判 RESOLVED_FULL。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰 tests/test_handler_mean_dice.py，gold 只碰 monai/handlers/iteration_metric.py。",
+  "evidence_refs": [
+   "grading_bundles_v2_v0:Project-MONAI__MONAI-2061 test_patch",
+   "validation_bundles_v0:Project-MONAI__MONAI-2061 golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/test_handler_confusion_matrix.py、tests/test_handler_hausdorff_distance.py、tests/test_handler_surface_distance.py",
+   "reason": "这三个 handler 与 mean_dice 共用 IterationMetric._compute，是 gold 改动的直接影响面，当前零覆盖。"
+  },
+  {
+   "id": "新增：纯 tensor 输入不走逐样本路径的断言",
+   "reason": "唯一能挡住 `if True:` 假修复的测试。"
+  },
+  {
+   "id": "新增：y_pred 是 tensor、y 是 list 的反方向用例",
+   "reason": "gold 的 `or` 把这个方向也打开了，但没有任何测试覆盖。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "环境完全干净（离线、2.81s、分差精确），但 P2P 只有两条异常路径用例，`if True:` 一行大概率满分。补 1~2 条回归后就是很好的低成本训练题。"
+ },
+ "costs": {
+  "minutes": 18
+ }
+}

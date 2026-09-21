@@ -1,0 +1,267 @@
+{
+ "task_id": "swe_gym_lite::Project-MONAI__MONAI-4775",
+ "instance_id": "Project-MONAI__MONAI-4775",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_monai_2 (Claude Opus 5, 静态审查)",
+ "materials_refs": {
+  "base_commit": "83ec15685ead52f5b0c69019d88a160f60866cce",
+  "version": "0.9",
+  "python_version": "3.8",
+  "eval_cmd": "pytest -rA  tests/test_utils_pytorch_numpy_unification.py（整文件跑）",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/Project-MONAI__MONAI-4775/{gold,empty}/offline/a1/",
+  "created_at": "2022-07-27"
+ },
+ "public_view": {
+  "目标行为": "`percentile` 在 torch 分支上把 q 造成默认 dtype（int64/float32）的张量，与输入 x 的 dtype 不一致时 `torch.quantile` 抛 `RuntimeError: quantile() q tensor must be same dtype as the input tensor`。修好后 `ScaleIntensityRangePercentiles` 对 float64 numpy 输入也能工作。",
+  "约束": "0.9.0 能跑、0.9.1 回归；题面直接点到 monai/transforms/utils_pytorch_numpy_unification.py:111。",
+  "公开材料无法确定的点": [
+   "是否要同时保证 numpy 与 torch 两条分支数值一致",
+   "q 为标量与数组时是否都要处理",
+   "是否要改 ScaleIntensityRangePercentiles 本身"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.test_patch tests/test_utils_pytorch_numpy_unification.py",
+    "validation.golden_patch monai/transforms/utils_pytorch_numpy_unification.py:107-111"
+   ],
+   "note": "题面 traceback 的文件行号与 gold 目标逐字对应，base 存在。无二进制/LFS/子模块材料。",
+   "by": "L1_monai_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base 83ec1568 utils_pytorch_numpy_unification.py: q = torch.tensor(q, device=x.device)（无 dtype）",
+    "stage1 empty: test_percentile FAILED"
+   ],
+   "note": "初态确实含题面缺陷。",
+   "by": "L1_monai_2"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "public.problem_statement 长度 2152，前后两半（各 1076 字符）逐字相同",
+    "复现代码段 `class TestScaleIntensityRangePercentiles:` 未包在 ``` 代码块内"
+   ],
+   "note": "P3：**题面整段重复两遍**（与 mypy 包发现的 216 题中 6 题同型，本包另一例是 6523）。另外复现代码没有围栏，渲染成 markdown 时缩进会丢失，求解者看到的实际输入可能是一段折行的散文。",
+   "by": "L1_monai_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.test_patch 只触碰 tests/test_utils_pytorch_numpy_unification.py"
+   ],
+   "note": "纯测试文件；gold 只碰 monai/transforms/utils_pytorch_numpy_unification.py。additional_exclusions 保持空。",
+   "by": "L1_monai_2"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh setup 段"
+   ],
+   "note": "恢复清单只有一个纯测试文件。",
+   "by": "L1_monai_2"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "scan/monai_cross_index.txt"
+   ],
+   "note": "26 道 MONAI 题里只有本题触碰该 gold 文件与该测试文件。",
+   "by": "L1_monai_2"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "public.problem_statement 的 Additional context 段",
+    "test_patch 只加 dtype 轮换"
+   ],
+   "note": "要求充分：题面给出异常文本、文件行号、可复现场景与期望。F2P 检查的正是『不同 dtype 输入下 numpy 与 torch 结果一致』，可由题面推出。",
+   "by": "L1_monai_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只断言 percentile 返回值一致"
+   ],
+   "note": "不锁 helper 名与调用顺序。题面建议的 `torch.tensor(q, device=x.device, dtype=x.dtype)` 与 gold 的 `convert_to_dst_type(q/100.0, x)[0]` 都能通过。",
+   "by": "L1_monai_2"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "test_patch: dtype = [np.float32, float][idx % 2]",
+    "base tests/utils.py:711-719 TEST_NDARRAYS"
+   ],
+   "note": "P2：判别力依赖 `TEST_NDARRAYS` 的**元素顺序**。在 CPU 机上 idx0=np.array(float32)、idx1=torch.as_tensor(float64)，只有 idx1 触发 dtype 不匹配；一旦换成有 CUDA 的机器，`tests/utils.py:716-719` 把 TEST_NDARRAYS 重赋值为 `(torch.as_tensor, gpu_tensor)`，numpy 分支完全不再被跑，F2P 变成只比较两个 torch 结果。此外 `x` 为整型张量（torch.int64）的情形未覆盖，`convert_to_dst_type(q/100.0, x)` 在整型 x 上会把 q 截断成 0，是 gold 自身的潜在缺陷但无测试。",
+   "by": "L1_monai_2"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.pass_to_pass 11 条 = 整文件其余全部用例（test_mode_0..8 / test_dim / test_fails）"
+   ],
+   "note": "P2P 等于整文件通过集。`test_dim`（带 dim 参数的 percentile）与 `test_fails`（越界 q 抛 ValueError）是与改动同函数的有效回归。缺口：percentile 的真正调用方 ScaleIntensityRangePercentiles（题面场景）不在评分面内。",
+   "by": "L1_monai_2"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "base 文件第 19 行已 import convert_to_dst_type",
+    "validation.golden_patch 仅 2 行"
+   ],
+   "note": "gold 不依赖未交付改动（convert_to_dst_type 在 base 已 import），无无关改动。",
+   "by": "L1_monai_2"
+  },
+  "29": {
+   "status": "issue",
+   "evidence_refs": [
+    "public.problem_statement 的 'A possible solution is to change the code to:' 段"
+   ],
+   "note": "P2：**题面直接给出修复代码**（`q = torch.tensor(q, device=x.device, dtype=x.dtype)`），与 gold 语义等价。这来自原始 GitHub issue 的报告者建议而非未来 commit，不算私有答案泄漏，但它把本题的难度降到『照抄题面』，作为训练/评测样本的区分度很低。",
+   "by": "L1_monai_2"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 install rc=0（两侧）"
+   ],
+   "note": "离线镜像内 rc=0。",
+   "by": "L1_monai_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "scan/envscan.txt：无 DOWNLOAD/NET 命中"
+   ],
+   "note": "数据现场用 np.arange 构造，最大 (1,100,101) float32（约 40KB），无权重、无外部数据。",
+   "by": "L1_monai_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "scan/envscan.txt"
+   ],
+   "note": "不需要网络。",
+   "by": "L1_monai_2"
+  },
+  "13": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 gold test 段 6.7s / 12 passed",
+    "envscan 无 DataLoader/multiprocessing 命中"
+   ],
+   "note": "纯 CPU 小张量，无多进程、无 shm 需求。",
+   "by": "L1_monai_2"
+  },
+  "14": {
+   "status": "pass",
+   "evidence_refs": [
+    "base tests/test_utils_pytorch_numpy_unification.py:30-31 setUp 里调用 set_determinism(0)"
+   ],
+   "note": "`q = np.random.randint(...)` 看似无种子，但 `setUp` 每个用例都调用 `set_determinism(0)`，因此输入是确定的。不是随机源。",
+   "by": "L1_monai_2"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 gold status_map.json 12 条，与 F2P+P2P 一一对应"
+   ],
+   "note": "无 SKIPPED，无伪键。F2P 是非参数化的单个测试名，ID 稳定。",
+   "by": "L1_monai_2"
+  },
+  "31": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_monai_2/scan/control_surface.txt",
+    "stage1 eval.sh 只 `git checkout <base> <test_patch 路径>`",
+    "grading.test_patch 不含 tests/utils.py"
+   ],
+   "note": "P1：本题测试从 **tests/utils.py** import `TEST_NDARRAYS, assert_allclose`，而 test_patch 的恢复清单只含本题的测试文件本身，**tests/utils.py 不被恢复**，保持候选写过的状态。强暴露：`assert_allclose` 直接承载参考断言，候选把它改成空函数即可让相关 F2P 通过。 另：base 里没有 tests/conftest.py，候选可新建一个注入 hook。此处只记录观测与建议，不据怀疑扣分。",
+   "by": "L1_monai_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "题面直接给出修复",
+   "severity": "P2",
+   "evidence_refs": [
+    "public.problem_statement Additional context 段"
+   ],
+   "proposed_action": "若用于能力评测，删掉 'A possible solution' 段形成修订版；若用于训练，可保留但标注为低区分度样本。",
+   "next_experiment": "分别用完整题面与删掉建议段的题面各盲解一次，比较是否一次通过。"
+  },
+  {
+   "category": "题面整段重复",
+   "severity": "P3",
+   "evidence_refs": [
+    "problem_statement 前后半逐字相同"
+   ],
+   "proposed_action": "去重（属于实际输入修复，不改任务定义）。",
+   "next_experiment": "无。"
+  },
+  {
+   "category": "判别力依赖机器画像",
+   "severity": "P2",
+   "evidence_refs": [
+    "test_patch 的 idx % 2 dtype 轮换",
+    "tests/utils.py:716-719"
+   ],
+   "proposed_action": "把『参考清单生成条件 = 无 CUDA』写进题级 facts；或在修订版里显式写死 dtype 组合而不依赖 TEST_NDARRAYS 顺序。",
+   "next_experiment": "同镜像 CUDA 可见/不可见各收集一次 `pytest --collect-only -q`，并比较 test_percentile 实际走到的分支。"
+  },
+  {
+   "category": "题面场景不在评分面",
+   "severity": "P3",
+   "evidence_refs": [
+    "F2P 只覆盖 percentile 本身"
+   ],
+   "proposed_action": "把 tests/test_scale_intensity_range_percentiles.py 纳入 P2P。",
+   "next_experiment": "base/gold 各跑该文件取双侧通过集。"
+  },
+  {
+   "category": "评分控制面（test_patch 之外的测试依赖）",
+   "severity": "P1",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_monai_2/scan/control_surface.txt"
+   ],
+   "proposed_action": "把 tests/utils.py 纳入恢复清单（见 file_rules），并在评分报告里单列候选对 tests/ 下非恢复文件的改动。",
+   "next_experiment": "把 tests/utils.py 的 assert_allclose 改成 `def assert_allclose(*a, **k): return` 后用空补丁跑一次评分，观察 verdict 是否变 RESOLVED_FULL。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [
+   "tests/utils.py"
+  ],
+  "rationale": "**建议（非裁定）**：把 tests/utils.py 加入恢复/排除清单。判分影响：本题 F2P/P2P 的断言经过该文件的 `TEST_NDARRAYS, assert_allclose`，候选改写它能直接改变判分结果；而本题 gold 只改 monai/ 下的实现，改 tests/utils.py **不属于合法解答路径**。反面证据：同仓库的 MONAI-1121 的上游 test_patch 本身就修改了 tests/utils.py，说明不能对 MONAI 全仓一刀切地永久排除该文件，应按题判断（本题 test_patch 未触碰它，故排除是安全的）。若不排除，至少要在评分报告里标出候选是否改动过该文件。",
+  "evidence_refs": [
+   "runs/env_overnight_20260916/L1_monai_2/scan/control_surface.txt",
+   "grading.test_patch",
+   "validation.golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/test_scale_intensity_range_percentiles.py",
+   "reason": "题面复现用的就是这个变换，是 percentile 的直接调用者。"
+  },
+  {
+   "id": "tests/test_scale_intensity_range_percentilesd.py",
+   "reason": "字典版同一路径。"
+  },
+  {
+   "id": "tests/test_foreground_mask.py / tests/test_utils_pytorch_numpy_unification.py（已在 P2P）",
+   "reason": "percentile 的其它调用点，覆盖 dim/keepdim 组合。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "题面自带异常文本与文件行号、gold 两行干净、P2P 等于整文件通过集；主要缺陷是题面重复与直接给出解法（低区分度），不影响判分正确性。"
+ },
+ "costs": {
+  "minutes": 17
+ }
+}

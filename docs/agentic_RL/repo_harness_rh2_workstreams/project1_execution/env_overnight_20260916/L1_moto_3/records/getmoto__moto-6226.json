@@ -1,0 +1,49 @@
+{
+ "task_id": "getmoto__moto-6226",
+ "source": "SWE-Gym lite (swe_gym_lite_full_f70b1a29)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "s2/ingest/public_bundles_v0.jsonl#getmoto__moto-6226",
+  "grading": "s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-6226",
+  "validation": "s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-6226",
+  "base_commit": "0a1924358176b209e42b80e498d676596339a077",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-6226/gold/offline/a1/"
+ },
+ "public_view": {
+  "goal": "给一个没有 tag 的 ECS cluster 调用 tag_resource 时，moto 在 _merge_tags 里遍历 existing_tags（None）抛 TypeError: 'NoneType' object is not iterable。要求新 tag 能像 boto3/真实 AWS 那样被加上。",
+  "constraints": ["已有 tag 的资源合并语义不变", "题面给了完整复现脚本与 traceback，指明 moto/ecs/models.py:2014/2021"],
+  "unknowns_from_public_only": [
+   "题面没有说未打 tag 的 cluster 调用 list_tags_for_resource 应该返回什么：响应里没有 tags 键、还是 tags 为空列表（真实 AWS 返回空列表）",
+   "题面没有说修复应落在 Cluster.__init__ 的 tags 归一化、还是 tag_resource/_merge_tags 的 None 防御"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 只碰 tests/test_ecs/test_ecs_boto3.py（base 已存在，且 base 已有同名函数 test_create_cluster_with_tags，见 base 文件 115-121 行）", "golden_patch 只碰 moto/ecs/models.py:2014"], "note": "无二进制/LFS/子模块。注意 F2P 的测试 ID 不是新名字，而是把 base 上已通过的同名测试整体改写；任何“F2P 必为新增测试名”的工具假设在本题不成立。", "by": "L1_moto_3"},
+  "2": {"status": "pass", "evidence_refs": ["base moto/ecs/models.py:84 `self.tags = tags`（Cluster 不做 None 归一化，而同文件 203/360/539/863 行的其它类都归一化）", "base models.py:2011-2024 tag_resource → _merge_tags 直接遍历 existing_tags"], "note": "base 确有缺陷，复现路径与题面 traceback 一致。", "by": "L1_moto_3"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 5720 字符，含复现脚本与完整 traceback，无外链/图片/截断"], "note": "hints_text 只有一句致谢，无额外关键信息。", "by": "L1_moto_3"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 触碰路径全集：tests/test_ecs/test_ecs_boto3.py"], "note": "无非测试源码路径；gold 触碰 moto/ecs/models.py，非测试样路径。", "by": "L1_moto_3"},
+  "17": {"status": "pass", "evidence_refs": ["同 4"], "note": "additional_exclusions 空。", "by": "L1_moto_3"},
+  "5": {"status": "pass", "evidence_refs": ["全局索引 gidx_rev.json：同测试文件 + 同 gold 文件的另一题是 getmoto__moto-5865"], "note": "5865 的 F2P 是 test_list_unknown_service（list_services 的 ClusterNotFoundException），gold 改 _get_cluster/list_services，与本题无重叠，base commit 也不同。不构成重复/派生。", "by": "L1_moto_3"},
+  "23": {"status": "issue", "evidence_refs": ["F2P 新增断言 `resp = client.list_tags_for_resource(...); assert \"tags\" not in resp`", "problem_statement 未提及未打 tag 时的返回形状"], "note": "公开材料推不出这条断言，且它与真实 AWS 行为相反（AWS 对未打 tag 的资源返回 tags: []）。", "by": "L1_moto_3"},
+  "24": {"status": "issue", "evidence_refs": ["moto/ecs/responses.py:430-433 `return json.dumps({\"tags\": tags})`；tags 为 None → JSON null → botocore 的 _handle_structure 只在 raw_value is not None 时写入成员，故键缺失；tags 为 [] → 键存在且为 []", "base moto/ecs/models.py:203/360/539/863 同文件其它类都用 `tags or []` / `tags if tags is not None else []`"], "note": "本题最重要的问题（P2）：最自然、且与同文件既有风格一致的修法 `Cluster.__init__: self.tags = tags or []` 会让 `assert \"tags\" not in resp` 失败，被 F2P 拒。也就是说 F2P 强制了“Cluster.tags 必须保持 None”这一未在题面出现、且不符合真实 AWS 的实现细节。只有在 tag_resource/_merge_tags 处做 None 防御（gold 的做法）才通过。", "by": "L1_moto_3"},
+  "25": {"status": "pass", "evidence_refs": ["F2P 同时覆盖“无 tag→tag_resource→读回”和“create_cluster 带 tags→读回”两条路径"], "note": "部分修复（只处理 create 带 tags 的情况）过不了；硬编码空间很小。", "by": "L1_moto_3"},
+  "26": {"status": "pass", "evidence_refs": ["eval 实跑整文件：collected 81 items = F2P 1 + P2P 80，全过"], "note": "graded 数与 collected 数一致，无未判分用例。", "by": "L1_moto_3"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 单行改动 `self._merge_tags(resource.tags or [], tags)`"], "note": "最小、无无关改动、不依赖其它改动。但它把 None 语义保留在模型层（见 24）。", "by": "L1_moto_3"},
+  "29": {"status": "pass", "evidence_refs": ["hints_text 无代码；problem_statement 无 PR/commit 链接"], "note": "无静态泄漏。题面 traceback 精确指到 models.py:2014/2021 行号，等于给了定位提示，但这是用户原始报告的一部分，不算泄漏修复代码。", "by": "L1_moto_3"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold 日志 81 passed"], "note": "纯 mock。", "by": "L1_moto_3"},
+  "7": {"status": "issue", "evidence_refs": ["本包共性：install 段 `make init` 离线失败 rc=2"], "note": "见包级 issue，不影响本题判分。", "by": "L1_moto_3"},
+  "11": {"status": "pass", "evidence_refs": ["测试全部走 moto mock"], "note": "无外部服务。注意该文件跑出 90375 条 warning、22.8s，是本包最慢之一。", "by": "L1_moto_3"}
+ },
+ "issues": [
+  {"category": "test_forces_unique_impl", "severity": "P2", "evidence_refs": ["F2P `assert \"tags\" not in resp`", "moto/ecs/responses.py:430-433", "base models.py:84 vs 203/360/539/863"], "proposed_action": "标记为“存在合理替代解会被拒”的题；若纳入训练集，建议在难度统计里单列，或考虑把该断言从 F2P 里移除（属于修改上游题目，需用户裁定）。", "next_experiment": "构造补丁 `Cluster.__init__: self.tags = tags or []`（其余不改）跑 F2P，确认 test_create_cluster_with_tags 在 `assert \"tags\" not in resp` 处失败（预期失败）。这是本包最值得先做的一次真机复验。"},
+  {"category": "requirement_underspecified", "severity": "P3", "evidence_refs": ["同 23"], "proposed_action": "随 P2 一起处理。", "next_experiment": "同上。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只含测试文件；沿用第四组 B 的默认空排除。", "evidence_refs": ["test_patch 路径全集 = tests/test_ecs/test_ecs_boto3.py"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_ecs/test_ecs_boto3.py::test_ecs_service_tag_resource_overwrites_tag", "reason": "已在 P2P，覆盖 _merge_tags 的覆盖语义，防止把 merge 改坏。"},
+  {"id": "tests/test_ecs/test_ecs_boto3.py::test_ecs_service_untag_resource / test_ecs_service_untag_resource_multiple_tags", "reason": "已在 P2P，untag_resource 同样直接遍历 resource.tags，若解题者改了归一化会一起受影响。"},
+  {"id": "新增：对未打 tag 的 service / task_definition 调用 tag_resource", "reason": "_merge_tags 是 ECS 全资源共用路径，仅 Cluster 未归一化；同类资源的回归能区分“真修好 None 路径”与“只对 cluster 打补丁”。"}
+ ],
+ "disposition_hint": {"state": "needs_review", "reason": "材料与 gold 都干净，但 F2P 的 `assert \"tags\" not in resp` 把一个未在题面出现、且与真实 AWS 相反的实现细节变成硬约束，会拒绝同文件里最惯用的替代修法；是否接受这种噪声需要裁定。"},
+ "costs": {"minutes": 16}
+}

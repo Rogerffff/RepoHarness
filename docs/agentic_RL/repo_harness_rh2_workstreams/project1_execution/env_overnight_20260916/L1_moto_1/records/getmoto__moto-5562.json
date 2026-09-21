@@ -1,0 +1,98 @@
+{
+ "task_id": "getmoto__moto-5562",
+ "source": "swe_gym_lite_full_f70b1a29",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "s2/ingest/public_bundles_v0.jsonl#getmoto__moto-5562",
+  "grading": "s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-5562",
+  "validation": "s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-5562",
+  "base_commit": "121e3eadb821955c74b5ab61b8cfbef7328e7592",
+  "version": "4.0",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5562/",
+  "other_signals": "in_e2=[]; fragile_reference_id=true; stage1 gold=RESOLVED_NO(p2p_missing=1)"
+ },
+ "public_view": {
+  "goal": "题面：对版本化 bucket 调用 list_object_versions(Prefix='some/prefix/test_file.txt', Delimiter='/')，返回结果里没有 Versions 字段。期望返回 Versions。",
+  "constraints": [
+   "题面给出完整可运行复现与两条断言（第一条过、第二条不过）",
+   "关键特征：Prefix 本身含有 Delimiter（'/'），且 Prefix 就是整个 key"
+  ],
+  "unknowns_from_public_only": [
+   "题面没有说明正确的 CommonPrefixes 语义（S3 规定 delimiter 只在 prefix 之后的部分里找第一次出现）；只能从“Versions 应该有”反推",
+   "题面完全没有涉及 F2P 第二块新增断言的场景（无 prefix、delimiter='-with-'、CommonPrefixes 长度 8 / Versions 长度 24）"
+  ],
+  "base_code_located": [
+   "121e3ead:moto/s3/models.py:1601-1607 list_object_versions：`if delimiter and delimiter in name:` 从整个 key 开头找 delimiter，导致 prefix 内部的 '/' 也被算进去，所有 key 都进了 common_prefixes"
+  ],
+  "public_view_conclusion": "公开材料足以定位到 list_object_versions 的 delimiter 判定，也足以推出“delimiter 应从 prefix 之后开始找”，但推不出 F2P 第二块断言的具体数值。"
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 只改 tests/test_s3/test_s3.py（base 存在）", "gold 只改 moto/s3/models.py（base 存在）"], "note": "目标文件均在 base 存在；与题面同一问题；无二进制/LFS/子模块材料。注意 test_patch 是在既有用例 test_list_object_versions_with_delimiter 末尾追加断言，而非新增用例 —— F2P 是一条 base 上本来就存在且通过的测试。", "by": "L1_moto_1"},
+  "2": {"status": "pass", "evidence_refs": ["121e3ead:moto/s3/models.py:1604 `if delimiter and delimiter in name:`", "stage1:5562/empty F2P=FAILED"], "note": "base 确有缺陷。", "by": "L1_moto_1"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 无外链、无图片、无截断", "raw.hints_text 引用了 AWS 文档措辞 'contain the same string between the prefix and the first occurrence of the delimiter'"], "note": "hints 里有而题面没有的关键信息：正确的 delimiter 语义定义（直接对应 gold 的注释与实现）。按 COMMON.md hints 不可见。", "by": "L1_moto_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch paths = [tests/test_s3/test_s3.py]", "gold paths = [moto/s3/models.py]"], "note": "test_patch 只触碰纯测试文件；gold 不触碰测试样路径。additional_exclusions = []。", "by": "L1_moto_1"},
+  "5": {"status": "issue", "evidence_refs": ["git -C repos/moto merge-base --is-ancestor 121e3ead d6c43840 → 真（5562 base 是 5701 base 的祖先）", "git log 121e3ead..d6c43840 -- moto/s3/models.py 含 `5f7f3e6e4 S3:list_object_versions(): Fix delimiter to take prefix into account (#5562)`", "d6c43840:moto/s3/models.py:1626-1632 已是 5562 的 gold 形态"], "note": "本题的答案已经原样出现在同包另一题 getmoto__moto-5701 的 base 代码里。两题共用测试文件 tests/test_s3/test_s3.py，且 5562 的 F2P `test_list_object_versions_with_delimiter` 正是 5701 的 P2P 之一。属跨题答案可见性问题，见 issues。", "by": "L1_moto_1"},
+  "6": {"status": "pass", "evidence_refs": ["stage1:5562 gold rc_install=0"], "note": "", "by": "L1_moto_1"},
+  "7": {"status": "pass", "evidence_refs": ["测试全部走 @mock_s3"], "note": "无外部服务。", "by": "L1_moto_1"},
+  "11": {"status": "pass", "evidence_refs": ["无权重/数据集下载"], "note": "", "by": "L1_moto_1"},
+  "17": {"status": "pass", "evidence_refs": ["同 check 4"], "note": "additional_exclusions = []。", "by": "L1_moto_1"},
+  "23": {"status": "issue", "evidence_refs": ["problem_statement 只给 Prefix 为整个 key、Delimiter='/' 的场景", "test_patch 第二块断言：`s3.list_object_versions(Bucket=bucket_name, Delimiter='-with-')` 后 CommonPrefixes 长度 8、Versions 长度 24"], "note": "第一块新增断言可由题面推出；第二块（无 prefix、多字符 delimiter、具体计数）无法从公开材料推出，只能靠读既有用例的 fixture 数据反推。该块在 base 下本来就通过（prefix 为空时新旧实现等价），所以不构成额外判别力，但它会让“照着题面写修复”的模型误以为需要处理更多情形。", "by": "L1_moto_1"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 只断言 list_object_versions 响应里的 Versions/CommonPrefixes 结构与计数"], "note": "断言对外 API 行为，不绑定内部实现。任何“delimiter 只在 prefix 之后查找”的等价写法都通过。", "by": "L1_moto_1"},
+  "25": {"status": "pass", "evidence_refs": ["新增断言同时检查 `response.should.have.key('Versions').length_of(3)` 与 `response.shouldnt.have.key('CommonPrefixes')`"], "note": "正反两面都查，硬编码“永远返回 Versions”会被同用例前半段（原有的 CommonPrefixes 断言）与第二块的 CommonPrefixes 长度 8 拦住。", "by": "L1_moto_1"},
+  "26": {"status": "pass", "evidence_refs": ["见 proposed_regression_tests"], "note": "", "by": "L1_moto_1"},
+  "27": {"status": "pass", "evidence_refs": ["validation.golden_patch 与 raw.patch 一致，只改 list_object_versions 的 delimiter 判定"], "note": "gold 正确、最小、相关，不依赖未交付改动。", "by": "L1_moto_1"},
+  "29": {"status": "pass", "evidence_refs": ["problem_statement 无修复代码、无 PR/commit 链接"], "note": "题面无泄漏；hints 给了语义定义但不给代码。", "by": "L1_moto_1"}
+ },
+ "issues": [
+  {
+   "category": "grading_materials/id_encoding_mismatch",
+   "severity": "P1",
+   "evidence_refs": [
+    "grading.pass_to_pass 含 `tests/test_s3/test_s3.py::test_key_with_special_characters[/the-key-unîcode/test]`",
+    "stage1:5562/gold/offline/a1/status_map.json 无该 key（p2p_missing=1）",
+    "task_signals_swegym.json getmoto__moto-5562 stage1.gold.verdict = RESOLVED_NO"
+   ],
+   "proposed_action": "与 5701/5417/5545/6308 同因（pytest ascii_escaped 转义），统一在匹配层做归一化。",
+   "next_experiment": "见 5417 记录。"
+  },
+  {
+   "category": "cross_task_answer_visibility",
+   "severity": "P2",
+   "evidence_refs": [
+    "`git -C runs/env_overnight_20260916/repos/moto merge-base --is-ancestor 121e3eadb821955c74b5ab61b8cfbef7328e7592 d6c438400eaf3e2c94eac0ea2043d230518fe50b` 返回真",
+    "`git log 121e3ead..d6c43840 -- moto/s3/models.py` 含 `5f7f3e6e4 S3:list_object_versions(): Fix delimiter to take prefix into account (#5562)`",
+    "d6c438400eaf3e2c94eac0ea2043d230518fe50b:moto/s3/models.py:1626-1632 即 5562 的 gold 代码",
+    "5562 的 F2P `tests/test_s3/test_s3.py::test_list_object_versions_with_delimiter` 同时是 5701 的 P2P"
+   ],
+   "proposed_action": "本包内第二对“后题 base 含前题答案”（第一对是 4799→4833）。风险有二：(a) 同批采样时同一修复被重复训练；(b) 若任何缓存/复用机制让 agent 接触到 5701 的工作树，5562 的答案就是现成的。建议在题单构建阶段做一次 base_commit 偏序检查：对同仓库任意两题 (i,j)，若 base_i 是 base_j 的祖先且 gold_i 触碰的文件在 base_j 中已含该改动，则标记为“答案可见对”，由用户决定去重策略。",
+   "next_experiment": "对全 216 题按仓库建 base_commit 的偏序，对每对祖先关系的题跑 `git log base_i..base_j -- <gold_i 触碰路径>` 并 grep PR 号，统计“答案可见对”的总数。"
+  },
+  {
+   "category": "requirement_insufficiency",
+   "severity": "P3",
+   "evidence_refs": [
+    "test_patch 第二块：`response['CommonPrefixes'].should.have.length_of(8)` 与 `response.should.have.key('Versions').length_of(24)`",
+    "problem_statement 只给单 key、Delimiter='/' 的场景"
+   ],
+   "proposed_action": "第二块断言的具体计数只能靠阅读同用例上文的 fixture 数据得出，题面完全没有线索。好在该块在 base 下也通过，不影响判分；但会让只读题面的模型高估需求范围。可在题面补一句“delimiter 应只在 prefix 之后的部分查找首次出现”（即 hints 里引用的 AWS 文档措辞）。",
+   "next_experiment": "无需单独实验；与 6470 的题面补全实验合并。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 tests/test_s3/test_s3.py（纯测试文件，且是在既有用例末尾追加断言），gold 只触碰 moto/s3/models.py，二者不重叠。按第四组 B 默认空即可。",
+  "evidence_refs": ["grading.test_patch", "validation.golden_patch", "docs/.../batch4_scoring_20260910/README.md §0/§6.5"]
+ },
+ "proposed_regression_tests": [
+  {"id": "tests/test_s3/test_s3.py::test_list_object_versions_with_delimiter_for_deleted_objects", "reason": "同一 list_object_versions 的删除标记分支，紧邻 gold 改动，最直接的调用者"},
+  {"id": "tests/test_s3/test_s3.py::test_list_versions", "reason": "list_object_versions 的无 delimiter 主路径"},
+  {"id": "tests/test_s3/test_s3.py::test_delimiter_optional_in_response", "reason": "delimiter 缺省时的响应结构，是改动的边界条件"},
+  {"id": "tests/test_s3/test_s3.py::test_get_object_versions_with_prefix", "reason": "prefix 处理的姊妹路径；gold 引入了 name[len(prefix):] 的切片，prefix 含特殊字符时最易出偏移错误"},
+  {"id": "tests/test_s3/test_s3_list_object_versions.py 或同名模块的全部用例", "reason": "若该仓库版本有独立的 list_object_versions 测试模块，应整体纳入；本题 P2P 只覆盖 test_s3.py"}
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "题目质量本身不错（题面可定位、gold 最小正确、F2P 正反两面都查）。阻塞是材料侧 P1（非 ASCII P2P ID → gold=RESOLVED_NO）。另需与 5701 一起做“答案可见对”的去重裁定。"
+ },
+ "costs": {"minutes": 19}
+}

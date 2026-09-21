@@ -1,0 +1,91 @@
+diff --git a/monai/data/dataset.py b/monai/data/dataset.py
+index 4f206142..66161f29 100644
+--- a/monai/data/dataset.py
++++ b/monai/data/dataset.py
+@@ -95,7 +95,7 @@ class Dataset(_TorchDataset):
+         Fetch single data item from `self.data`.
+         """
+         data_i = self.data[index]
+-        return apply_transform(self.transform, data_i) if self.transform is not None else data_i
++        return apply_transform(self.transform, data_i, lazy=None) if self.transform is not None else data_i
+ 
+     def __getitem__(self, index: int | slice | Sequence[int]):
+         """
+diff --git a/requirements-dev.txt b/requirements-dev.txt
+index 9620ea25..4e55703c 100644
+--- a/requirements-dev.txt
++++ b/requirements-dev.txt
+@@ -48,7 +48,6 @@ pydicom
+ h5py
+ nni
+ optuna
+-git+https://github.com/Project-MONAI/MetricsReloaded@monai-support#egg=MetricsReloaded
+ onnx>=1.13.0
+ onnxruntime; python_version <= '3.10'
+ typeguard<3  # https://github.com/microsoft/nni/issues/5457
+diff --git a/tests/test_dataset.py b/tests/test_dataset.py
+index 667595ca..49275f29 100644
+--- a/tests/test_dataset.py
++++ b/tests/test_dataset.py
+@@ -11,16 +11,18 @@
+ 
+ from __future__ import annotations
+ 
++import logging
+ import os
+ import tempfile
+ import unittest
++from io import StringIO
+ 
+ import nibabel as nib
+ import numpy as np
+ from parameterized import parameterized
+ 
+ from monai.data import Dataset
+-from monai.transforms import Compose, LoadImaged, SimulateDelayd
++from monai.transforms import Compose, LoadImaged, RandAffined, SimulateDelayd
+ 
+ TEST_CASE_1 = [(128, 128, 128)]
+ 
+@@ -89,6 +91,41 @@ class TestDataset(unittest.TestCase):
+             for d in data4_list:
+                 self.assertTupleEqual(d["image"].shape, expected_shape)
+ 
++    def test_lazy_compose(self):
++        logger_name = "test_dataset_lazy_compose"
++        stream = StringIO()
++        handler = logging.StreamHandler(stream)
++        handler.setFormatter(logging.Formatter("%(levelname)s - %(message)s"))
++        logger = logging.getLogger(logger_name)
++        logger.setLevel(logging.INFO)
++        while logger.handlers:
++            logger.removeHandler(logger.handlers[0])
++        logger.addHandler(handler)
++        try:
++            test_image = nib.Nifti1Image(np.random.randint(0, 2, size=[32, 32, 32]).astype(float), np.eye(4))
++            with tempfile.TemporaryDirectory() as tempdir:
++                nib.save(test_image, os.path.join(tempdir, "test_image1.nii.gz"))
++                test_data = [{"image": os.path.join(tempdir, "test_image1.nii.gz")}]
++                test_transform = Compose(
++                    [
++                        LoadImaged(keys="image"),
++                        RandAffined(
++                            keys="image", prob=1.0, rotate_range=45.0, translate_range=10.0, scale_range=0.15
++                        ),
++                    ],
++                    lazy=True,
++                    log_stats=logger_name,
++                )
++                dataset = Dataset(data=test_data, transform=test_transform)
++                dataset[0]
++
++            handler.flush()
++            actual = stream.getvalue()
++            self.assertIn("Accumulate pending transforms - lazy: True", actual)
++            self.assertNotIn("Apply pending transforms - lazy: False", actual)
++        finally:
++            logger.removeHandler(handler)
++
+ 
+ if __name__ == "__main__":
+     unittest.main()

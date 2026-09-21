@@ -1,0 +1,79 @@
+{
+ "task_id": "Project-MONAI__MONAI-3205",
+ "source": "SWE-Gym lite / Project-MONAI/MONAI PR 3205 (created_at 2021-10-28)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "95ed167d5607dbd46a6986501c572d90f50e8753",
+  "version": "0.7", "python_version": "3.8",
+  "eval_cmd": "pytest -rA ",
+  "actual_test_cmd": "pytest -rA  tests/test_cross_validation.py",
+  "f2p": ["tests/test_cross_validation.py::TestCrossValidation::test_values"],
+  "p2p_n": 0,
+  "test_patch_paths": ["tests/test_cross_validation.py"],
+  "gold_paths": ["monai/apps/datasets.py"],
+  "stage1": "gold=RESOLVED_NO / empty=RESOLVED_NO，rc_install=0；日志 runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/Project-MONAI__MONAI-3205/{gold,empty}/offline/a1/",
+  "stage1_counts": "两侧 status_map 都只有 1 条且都是 FAILED"
+ },
+ "public_view": {
+  "goal": "题面是一条用户提问（不是缺陷报告）：使用 CrossValidation 做交叉验证时，训练集与验证集需要用不同的 transform，问『该怎么处理这种情况』。358 字符，含两句寒暄。",
+  "constraints": [
+   "题面通篇没有给出期望 API：既没说要给 get_dataset 加参数，也没说参数名、覆盖优先级、是否允许覆盖 download",
+   "题面没有报错、没有复现代码、没有指向任何文件"
+  ],
+  "unknowns_from_public_only": [
+   "解法是『给 get_dataset 加 **dataset_params 覆盖』，还是『让用户建两个 CrossValidation 实例』（后者用现有 API 就能做，不需要改代码）——题面无法区分",
+   "覆盖语义（新参数覆盖构造时的同名参数）题面没说",
+   "F2P 断言 `get_dataset(folds=[4], transform=val_transform, download=False)` 的 download=False 也必须可覆盖；题面对 download 只字未提"
+  ],
+  "base_code_evidence": [
+   "95ed167d5:monai/apps/datasets.py:373 `def get_dataset(self, folds: Union[Sequence[int], int]):` —— 只接受 folds，没有任何覆盖入口",
+   "95ed167d5:monai/apps/datasets.py:389 `return _NsplitsDataset(**self.dataset_params)` —— 直接用构造时的参数",
+   "95ed167d5:monai/apps/datasets.py:214 DecathlonDataset.resource['Task04_Hippocampus'] = https://msd-for-monai.s3-us-west-2.amazonaws.com/Task04_Hippocampus.tar"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["tests/test_cross_validation.py 在 base 存在", "monai/apps/datasets.py 存在，gold 两处 hunk 上下文（345-358、371-389）逐行匹配"], "note": "无二进制/LFS/子模块。", "by": "L1_monai_1"},
+  "2": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["95ed167d5:monai/apps/datasets.py:373,389"], "note": "base 不存在『bug』，只是缺少一个便利参数。这是 feature 而非 defect；题面本身也只是提问。按『初态含问题』的字面标准算 pass（base 确实做不到题面想做的事），但归类上属 feature request，与缺陷修复型题目的难度/信号性质不同，故标 issue 供归类参考。", "by": "L1_monai_1"},
+  "3": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["problem_statement 全文 358 字符，其中约三分之一是致谢寒暄", "raw hints_text 长度 0"], "note": "题面是论坛式提问，没有需求规格。没有外链/图片/截断，但信息量不足以推出 F2P。hints 为空，所以缺的信息在上游 PR 讨论里也没有被搬进来。", "by": "L1_monai_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 只触碰 tests/test_cross_validation.py"], "note": "无非测试源码；gold 只碰 monai/apps/datasets.py。additional_exclusions 保持空。", "by": "L1_monai_1"},
+  "17": {"status": "pass", "evidence_refs": ["同上"], "note": "恢复测试不覆盖候选源码。", "by": "L1_monai_1"},
+  "5": {"status": "pass", "evidence_refs": ["runs/env_overnight_20260916/L1_monai_1/dupidx.txt：monai/apps/datasets.py 与 tests/test_cross_validation.py 在 26 道 MONAI 题里都只被本题触碰"], "note": "无重复/派生。", "by": "L1_monai_1"},
+  "23": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["题面无任何 API 规格", "F2P 要求 get_dataset 接受任意关键字参数并覆盖构造参数，且断言 val_transform 下 shape 从 (1,38,53,30) 变成 (38,53,30)"], "note": "公开材料推不出 F2P：参数名（透传的 **kwargs 而不是显式 transform=）、覆盖方向（新参数覆盖旧参数）、download=False 也可覆盖，三条全部没说明。合理的替代答案『文档里说明可以建两个 CrossValidation 实例』完全不改代码，会判 0。", "by": "L1_monai_1"},
+  "24": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["F2P 调用形如 `cvdataset.get_dataset(folds=[4], transform=val_transform, download=False)`"], "note": "锁死了『在 get_dataset 上用关键字参数覆盖』这一种形状。一个同样合理的实现——给 CrossValidation 加 `get_dataset(folds, dataset_params=None)` 显式字典参数，或者加 `with_params()` 方法——都会被 F2P 拒绝。不过这类『API 形状必须匹配』在 feature 型题里难以避免。", "by": "L1_monai_1"},
+  "25": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["P2P 为空；F2P 只有 1 条"], "note": "**P2P=0，零回归保护**。把 `get_dataset` 改成 `def get_dataset(self, folds, **kw): ... return _NsplitsDataset(**{**self.dataset_params, **kw})` 是正解，但把覆盖方向写反（旧覆盖新）会让 F2P 失败，所以这一条还行；真正的漏洞是：候选完全可以顺手破坏 CrossValidation 的其它行为（例如把 nfolds/seed 也变成可覆盖、或者去掉 `_split_datalist` 校验），没有任何测试会发现。", "by": "L1_monai_1"},
+  "26": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["P2P 为空"], "note": "见 proposed_regression_tests。", "by": "L1_monai_1"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 两个 hunk：第一个只改 class docstring 里的示例、第二个改 get_dataset 实现"], "note": "docstring 改动与本题同一主题（示例里演示新参数），不算无关改动；不依赖未交付的其它改动。", "by": "L1_monai_1"},
+  "29": {"status": "pass", "evidence_refs": ["problem_statement 无链接、无代码；hints_text 为空"], "note": "无泄漏。", "by": "L1_monai_1"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold/empty 的 rc_install=0"], "note": "安装阶段离线可完成。", "by": "L1_monai_1"},
+  "7": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["gold/offline/a1/test_output.txt:798-805 `monai/apps/utils.py:297 download_and_extract` → `:191 download_url` → `:110 _download_with_progress`", "同文件 :873 `urllib.error.URLError: <urlopen error [Errno -3] Temporary failure in name resolution>`", "95ed167d5:monai/apps/datasets.py:214 Task04_Hippocampus tar 的 S3 地址", "git ls-tree 95ed167d5 tests/testing_data/ 中没有任何 Decathlon 数据"], "note": "**离线硬阻断**：唯一的 F2P 在 gold 侧也 FAILED。测试用 `DecathlonDataset(..., task='Task04_Hippocampus', download=True)`，必须从 msd-for-monai.s3-us-west-2.amazonaws.com 下载 Task04_Hippocampus.tar（数百 MB 量级）并校验 md5。", "by": "L1_monai_1"},
+  "11": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["同检查 7"], "note": "测试阶段必须出网到 AWS S3。", "by": "L1_monai_1"},
+  "20": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["stage1 gold=RESOLVED_NO、empty=RESOLVED_NO，两侧 status_map 都只有一条 FAILED"], "note": "**no-op 与 gold 零分差**，本题当前完全不可用于训练或评测。", "by": "L1_monai_1"},
+  "16": {"status": "unknown", "evidence_refs": ["测试第一次会把 ~数百 MB 的 tar 下载并解压到 tests/testing_data/"], "note": "未核实数据落地后的磁盘占用与解压耗时，也未核实 `skip_if_quick` 是否在评分环境生效（若 QUICKTEST 环境变量被设，这条 F2P 会 SKIPPED 而不是 PASSED，评分结果取决于 SKIPPED 的处理规则）。", "by": "L1_monai_1"}
+ },
+ "issues": [
+  {"category": "offline_blocker", "severity": "P1",
+   "evidence_refs": ["gold/offline/a1/test_output.txt:798-805,873", "两侧 status_map 都只有 1 条 FAILED"],
+   "proposed_action": "必须把 Task04_Hippocampus 数据预置进镜像（解压到 tests/testing_data/Task04_Hippocampus/，并保证 `download=True` 路径能走 md5 命中而不重新下载），否则本题无论如何都判 0。若不愿在镜像里放数百 MB 数据，建议直接 reject 本题。",
+   "next_experiment": "先量一下 Task04_Hippocampus.tar 的实际体积与解压后大小；预置后重跑 gold/empty，确认 gold→RESOLVED_FULL、empty→RESOLVED_NO。"},
+  {"category": "statement_insufficient", "severity": "P1",
+   "evidence_refs": ["problem_statement 全文（论坛提问体）", "F2P 断言的 API 形状"],
+   "proposed_action": "题面只是提问，不含需求规格。若保留本题，需把上游最终 API（get_dataset 接受额外关键字参数、覆盖构造参数）写进题面。",
+   "next_experiment": "不改题面让模型跑一次，记录它是否会选择『建两个 CrossValidation 实例』这种不改代码的回答。"},
+  {"category": "no_regression_coverage", "severity": "P1",
+   "evidence_refs": ["pass_to_pass == []"],
+   "proposed_action": "P2P 为空。建议把 tests/test_cross_validation.py 整文件（去掉 F2P 那条）之外，再纳入 tests/test_decathlondataset.py 等使用 dataset_params 的用例。注意这些同样依赖下载，需与预置数据方案一起解决。",
+   "next_experiment": "预置数据后在 gold 上跑 tests/test_cross_validation.py 与 tests/test_decathlondataset.py 全量，取基线通过集。"},
+  {"category": "skip_semantics", "severity": "P2",
+   "evidence_refs": ["test_patch 上下文保留了 @skip_if_quick 装饰器"],
+   "proposed_action": "唯一的 F2P 带 @skip_if_quick。需要确认评分环境不会设置触发 quick 的环境变量，并确认通用评分把 SKIPPED 视为『未通过』而不是『通过』。",
+   "next_experiment": "查 95ed167d5:tests/utils.py 里 skip_if_quick 的触发条件（环境变量名），并核对 rh2 grading 对 SKIPPED 的映射。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只改 tests/test_cross_validation.py，gold 只改 monai/apps/datasets.py，无交集。", "evidence_refs": ["grading_bundles_v2_v0:Project-MONAI__MONAI-3205 test_patch", "validation_bundles_v0:Project-MONAI__MONAI-3205 golden_patch"]},
+ "proposed_regression_tests": [
+  {"id": "新增：get_dataset 的覆盖参数不得污染 self.dataset_params（连调两次 get_dataset，第二次不传 transform 时应回到构造时的 transform）", "reason": "gold 用 `dataset_params_ = dict(self.dataset_params)` 做了拷贝；写成就地 update 也能过当前 F2P，但会让后续调用串味。"},
+  {"id": "新增：nfolds/seed 不随 get_dataset 的关键字参数改变", "reason": "防止候选把 CrossValidation 的划分语义一起放开。"},
+  {"id": "tests/test_decathlondataset.py 全量", "reason": "DecathlonDataset 是 _NsplitsDataset 的基类，构造参数透传路径的主要使用方。"}
+ ],
+ "disposition_hint": {"state": "needs_repair", "reason": "离线环境下 gold 自身判不过（要下载 Hippocampus 数据集），且 P2P=0、题面只是提问。要用必须先预置数据 + 改写题面 + 补 P2P，三件事都做完成本不低；若数据体积不可接受，建议 reject_revision。"},
+ "costs": {"minutes": 22}
+}

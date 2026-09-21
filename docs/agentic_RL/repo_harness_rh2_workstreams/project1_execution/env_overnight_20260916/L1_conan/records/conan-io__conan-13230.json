@@ -1,0 +1,188 @@
+{
+ "task_id": "conan-io__conan-13230",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "c2001bad8aa873eaf2c392ab6e3ff8b8bdfec971",
+  "version": "2.0",
+  "image": "xingyaoww/sweb.eval.x86_64.conan-io_s_conan-13230:latest",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/conan-io__conan-13230/{gold,empty}/offline/a1/",
+  "pkg_scans": "runs/env_overnight_20260916/L1_conan/{prescan2,envscan,collide}.json"
+ },
+ "public_view": {
+  "目标行为": "题面：在 macOS 上用 host profile 指向 Linux/gcc 交叉编译时，AutotoolsToolchain 生成的 cflags 里混进了 macOS 的 -isysroot /Library/.../MacOSX.sdk 与 -arch x86_64。题面给了可复现的 profile、conanfile.py 与完整日志，并说明这是 openssl 交叉编译失败的最小复现。相关代码：conan/tools/gnu/autotoolstoolchain.py::__init__ 的 if cross_building(...) 分支里 if os_build == \"Macos\": 只看 build 侧 OS。",
+  "约束": "只改非测试源码；macOS -> macOS/iOS 的既有 apple 交叉编译行为要保留。",
+  "公开材料无法确定的点": [
+   "判定应基于 host os 是不是 Apple 系（gold 用 is_apple_os(conanfile)）还是别的口径，题面没说。",
+   "题面说的 uses the build compiler rather than host compiler 范围比 gold 大：gold 只处理 apple flags 的泄漏，没处理编译器选择本身。"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 唯一路径 conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py 在 base 存在（515 行）",
+    "gold 唯一路径 conan/tools/gnu/autotoolstoolchain.py 在 base 存在"
+   ],
+   "note": "gold 与 test_patch 同一 PR，与题面同一问题。注意该测试文件以 _test.py 结尾，不是 test_ 前缀（conan 的常见命名）。无二进制/LFS/子模块。",
+   "by": "L1_conan"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show c2001bad:conan/tools/gnu/autotoolstoolchain.py L76-88：if os_build == \"Macos\": 内无条件取 apple_sdk_path 并设置 apple_arch_flag / apple_isysroot_flag",
+    "stage1 empty：F2P FAILED"
+   ],
+   "note": "base 确含题面所述缺陷。base 默认值是 apple_arch_flag = apple_isysroot_flag = None、apple_min_version_flag = apple_min_version_flag(host os.version, ...)（host 无 os.version 时为 ''），正好是 F2P 断言的三个值。",
+   "by": "L1_conan"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 2511 字符，含 profile、conanfile.py、完整日志",
+    "raw.hints_text 13846 字符（本包最长，不可见）"
+   ],
+   "note": "题面自足；hints 是长篇讨论（含真实 cross-toolchain 输出），不构成题面缺信息。",
+   "by": "L1_conan"
+  },
+  "4_17": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan2.json: test_patch_nontest=[]（用 conan 口径判定）",
+    "moto 口径的 prescan.py 曾把本文件误报为 TP_NONTEST"
+   ],
+   "note": "conans/test/.../autotools_toolchain_test.py 是测试文件；恢复覆盖不会吃掉源码。这类误报见 repo_level_findings.md。",
+   "by": "L1_conan"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "本包内 13403 也改 conan/tools/gnu/ 下的文件，但目标是 autotools.py 而非 autotoolstoolchain.py，测试文件也不同"
+   ],
+   "note": "同包非同族；两题共享 conan/tools/gnu 模块，做 train/eval 划分时可留意。",
+   "by": "L1_conan"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "题面 Note 一节明确写出 the resolved cflags contain flags meant for clang while the host profile indicates the compiler is gcc"
+   ],
+   "note": "公开材料足以推出 F2P 检查的行为。未说明的是三个属性名，但它们是 AutotoolsToolchain 在 base 就有的公开属性，读代码即可确认。",
+   "by": "L1_conan"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 只断言 be.apple_min_version_flag == '' / apple_arch_flag is None / apple_isysroot_flag is None"
+   ],
+   "note": "多种等价实现都能过：用 is_apple_os(conanfile)、判 os_host in (Macos,iOS,watchOS,tvOS)、或把整个 apple 块移到 is_apple_os 分支内。不强制唯一实现。",
+   "by": "L1_conan"
+  },
+  "25": {
+   "status": "pass",
+   "evidence_refs": [
+    "三条断言分别覆盖 min_version / arch / isysroot 三个泄漏出口"
+   ],
+   "note": "只堵 isysroot 不堵 arch 的半截修复会被抓到。仍未覆盖的是题面提到的 openssl 真实交叉编译。",
+   "by": "L1_conan"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "P2P 34 条覆盖同文件的 libcxx[config0..11]、apple_min_os_flag、apple_isysrootflag 等 apple 相关既有测试"
+   ],
+   "note": "macOS -> macOS 的既有行为由 test_apple_isysrootflag / test_apple_min_os_flag 守住。",
+   "by": "L1_conan"
+  },
+  "27": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "golden_patch 只改一处判断并补一个 import"
+   ],
+   "note": "gold 正确、最小、不依赖未交付改动；但只覆盖题面所报问题的一部分（apple flags 泄漏），题面标题说的 uses the build compiler rather than host compiler 本身没改。属于范围窄于题面，不是错误。",
+   "by": "L1_conan"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "scripts/leak.py: 2 行 gold 新增，0 命中题面"
+   ],
+   "note": "题面与 hints 无 PR/commit 指针。",
+   "by": "L1_conan"
+  },
+  "6_7_11": {
+   "status": "pass",
+   "evidence_refs": [
+    "envscan.json: 该文件无 @pytest.mark.tool、无网络/子进程命中",
+    "stage1 gold 35/35 PASSED、0 SKIPPED"
+   ],
+   "note": "纯单元测试（ConanFileMock/MockSettings），不需要任何交叉工具链、不访问 conancenter、不写家目录缓存。",
+   "by": "L1_conan"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "scripts/collide.py 无输出"
+   ],
+   "note": "35 个参考 ID 里的参数化是 config0..config11，无空格无碰撞。",
+   "by": "L1_conan"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan2.json: gold 35/35 PASSED；empty 34 PASSED + 1 FAILED"
+   ],
+   "note": "分差来自目标行为。",
+   "by": "L1_conan"
+  },
+  "31": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "conans/test/.gitignore 第 1 行就是 conftest_user.py（1.51/1.54/1.60/2.0/2.1 五个 base 一致）",
+    "conans/test/conftest.py 用 from conans.test.conftest_user import tools_locations（1.x）/ tools_locations + default_profiles（2.x）并 merge 覆盖默认值",
+    "scripts 补扫：本题目标测试文件里无模块级 pytestmark、无 pytest.mark.tool、无 pytest.skip(、无 sys.exit/os._exit、无 conftest_user 引用"
+   ],
+   "note": "发现一个仓库级控制面：候选可以在 /testbed 新建 conans/test/conftest_user.py，它被官方 conftest 无条件 import 并 merge，而且它在 conans/test/.gitignore 里、也不在 test_patch 路径内，所以既不会被 git checkout <base> -- <path> 恢复，也不会被不带 -x 的 git clean 删掉；文件里的任意代码会在 pytest 收集阶段执行。本题是 conan 2.x：conans/test/utils/tools.py 从 conftest import default_profiles 并在 TestClient 里用作默认 host profile，所以改 conftest_user.py 能直接改变 TestClient 的 settings。 本题是用 Mock 的单元测试，不依赖 default_profiles，改 conftest_user 更可能弄坏自己而不是刷分。 本题的 F2P/P2P 本身没有可被跳过或提前退出的入口（见上条补扫）。按第四组 B，未发现依据前不新增排除清单，只记录观测。",
+   "by": "L1_conan"
+  }
+ },
+ "issues": [
+  {
+   "category": "control_surface_conftest_user",
+   "severity": "P2",
+   "evidence_refs": [
+    "conans/test/.gitignore:1",
+    "conans/test/conftest.py 的 conftest_user import 段",
+    "conans/test/utils/tools.py 的 from conans.test.conftest import default_profiles（仅 2.x）"
+   ],
+   "proposed_action": "仓库级处置，见 repo_level_findings.md §10：建议在 conan 的评分配方里，在可信 setup 阶段删除 /testbed/conans/test/conftest_user.py（或对整个 conans/test/ 做 git clean -xfd 后再 checkout），而不是逐题加 additional_exclusions。",
+   "next_experiment": "在 conan 镜像里写一个 conftest_user.py（例如 tools_locations={'cmake':{'disabled':True}} 或 2.x 下改 default_profiles['Linux'] 的 compiler），跑本题官方 eval，确认它是否改变逐 ID 结果；同时确认 RH2 的恢复步骤之后该文件是否仍在。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰 conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py；虽然文件名是 _test.py 后缀而非 test_ 前缀，它确实是测试文件。gold 不碰测试路径。",
+  "evidence_refs": [
+   "runs/env_overnight_20260916/L1_conan/prescan2.json"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "conans/test/unittests/tools/gnu/autotoolschain_test.py",
+   "reason": "AutotoolsToolchain 的另一组单测入口（triplet/configure_args），能抓到改动溢出到交叉三元组计算。"
+  },
+  {
+   "id": "conans/test/integration/toolchains/gnu/test_autotoolstoolchain.py",
+   "reason": "沿调用者：集成层验证生成的 conanautotoolstoolchain.sh/环境变量，不需要真实编译器。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "题面自足、gold 最小且不强制唯一实现、F2P 三条断言覆盖三个泄漏出口、P2P 34 条守住 apple 既有行为、无工具链与网络依赖、参考 ID 干净。"
+ },
+ "costs": {
+  "minutes": 20
+ }
+}

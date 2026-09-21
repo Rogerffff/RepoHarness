@@ -1,0 +1,296 @@
+{
+ "task_id": "iterative__dvc-3677",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+  "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+  "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+  "raw": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc",
+  "base_commit": "ae9bc914d64db5fa87c750a7b56816b5a693e37e",
+  "version": "0.93",
+  "python_version": "3.8",
+  "eval_cmd": "pytest -rA",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-3677:latest",
+  "workdir": "/testbed",
+  "test_patch_paths": [
+   "tests/unit/scm/test_git.py"
+  ],
+  "gold_paths": [
+   "dvc/scm/git/__init__.py"
+  ],
+  "n_f2p": 1,
+  "n_p2p": 5,
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3677/{gold,empty}/offline/a1/",
+  "signals": {
+   "in_e2": [],
+   "fragile_reference_id": false,
+   "stage1": {
+    "empty": {
+     "verdict": "RESOLVED_NO",
+     "rc_install": 0
+    },
+    "gold": {
+     "verdict": "RESOLVED_FULL",
+     "rc_install": 0,
+     "p2p_missing": 0,
+     "f2p_missing": 0
+    }
+   },
+   "deepseek_candidate_oracle": null
+  }
+ },
+ "public_view": {
+  "目标行为": "止住 `.dvc/.gitignore` 里 `/tmp` 行被反复追加；题面只给了一段 `git diff .dvc/.gitignore`，显示 3 行新增的 `/tmp`。",
+  "约束": "题面未给命令序列、未给栈、未给 dvc 侧日志；只说 dvc 0.91.1 / pip / ubuntu 18.04。",
+  "公开材料无法确定的点": [
+   "根因在哪：`Git.ignore()` 的去重（`_ignored(path)` 早退）、`_add_entry_to_gitignore` 的写入，还是判断『是否已被 git 跟踪』的 `Git.is_tracked`。题面一个字都没提目录、没提 `is_tracked`、没提 `.dvc/tmp` 是目录。",
+   "触发命令：题面写 `dvc add`，但上游 issue 线程里用户实际说的是 `dvc status`（该信息只在 hints_text 里）。",
+   "期望的验收形式：题面是端到端症状，公开材料无法推出评分其实只看 `Git.is_tracked` 的单元语义。"
+  ],
+  "base 关键代码": "dvc/scm/git/__init__.py:273-278 `is_tracked` 用 `(relpath, stage) in self.repo.index.entries` 判断；git index 只登记文件不登记目录，因此对目录恒为 False。调用者：dvc/output/base.py:220（`OutputAlreadyTrackedError`）、dvc/repo/add.py:112（递归 add 时过滤已跟踪文件）。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "repos/dvc e2981d274398da0494a26ffd05b98d3afa90ac50 (`git: is_tracked: use ls_files instead of walking the index (#3677)`)",
+    "validation_bundles_v0.jsonl golden_patch",
+    "grading_bundles_v2_v0.jsonl test_patch"
+   ],
+   "note": "gold + test_patch 与上游 commit e2981d274 的两个文件逐字对应（dvc/scm/git/__init__.py 6 行、tests/unit/scm/test_git.py 34 行），无丢件、无二进制/LFS/子模块。base ae9bc914d64db5fa87c750a7b56816b5a693e37e 是该 commit 的父提交。",
+   "by": "L1_dvc_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base:dvc/scm/git/__init__.py:273-278",
+    "stage1 empty status_map: tests/unit/scm/test_git.py::test_is_tracked=FAILED"
+   ],
+   "note": "base 的 `is_tracked` 走 `repo.index.entries`，git index 不含目录条目，`is_tracked('dir')` 必为 False；缺陷在 base 确实存在。但缺陷与题面描述的症状（.gitignore 重复行）之间的因果链只在上游 commit message（`results in hard-to-debug bugs like #3561`）里，公开材料里没有。",
+   "by": "L1_dvc_2"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl problem_statement（383 字符）",
+    "raw hints_text: `Each \\`dvc status\\` call adds a /tmp to the end of .dvc/.gitignore`"
+   ],
+   "note": "题面本身完整（代码块闭合、无外链、无图片、无截断）。但两处关键信息只在不可见的 hints 里：(a) 真实触发命令是 `dvc status` 而非 `dvc add`；(b) 维护者在线程里把方向引向全局 gitignore/环境，最终也没在可见材料里点出目录语义。",
+   "by": "L1_dvc_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 仅触碰 tests/unit/scm/test_git.py",
+    "gold 仅触碰 dvc/scm/git/__init__.py"
+   ],
+   "note": "test_patch 无非测试源码路径，gold 无测试样路径，两者零交集。合法解可以改 dvc/scm/git/__init__.py 及任何非测试源码。additional_exclusions 保持空（第四组 B 默认）。",
+   "by": "L1_dvc_2"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh: `git checkout <base> tests/unit/scm/test_git.py` 后 `git apply` test_patch"
+   ],
+   "note": "恢复集合 = {tests/unit/scm/test_git.py}，纯测试文件，不会覆盖候选的源码改动。",
+   "by": "L1_dvc_2"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "prescan.json: iterative__dvc-5148 gold_paths=['dvc/scm/git/__init__.py']、test_patch_paths 含 tests/unit/scm/test_git.py",
+    "repos/dvc: 5148 的 base 76cc70a86b 在 e2981d274 之后"
+   ],
+   "note": "非同一 PR、非同一修复（5148 是 ignore/ignore_remove 的空文件清理，版本 1.11）。但两题同改 `dvc/scm/git/__init__.py`、同改 `tests/unit/scm/test_git.py`，且 5148 的 base 已含本题的参考解；训练/评测划分需同侧或至少记入同族。",
+   "by": "L1_dvc_2"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement 全文",
+    "F2P: tests/unit/scm/test_git.py::test_is_tracked"
+   ],
+   "note": "从题面推不出 F2P 检查的行为。F2P 断言的是 `scm.is_tracked('dir')`、`is_tracked('dir/subdir')` 必须为 True —— 即『目录也算被跟踪』这条语义；题面通篇只有 `.dvc/.gitignore` 里多了几行 `/tmp`，没有任何线索指向目录跟踪判断。解题者按题面最自然的路径会去查 `Git.ignore()`/`_add_entry_to_gitignore`/`_ignored`，那条路径改完 F2P 仍然 FAILED。",
+   "by": "L1_dvc_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch tests/unit/scm/test_git.py::test_is_tracked 的 7 条断言",
+    "gold: `return bool(self.repo.git.ls_files(path))`"
+   ],
+   "note": "F2P 只断言 `is_tracked` 的对外语义（跟踪文件 True / 跟踪目录 True / 未跟踪 False），不锁 helper 名、不锁调用顺序、不比对字符串。合法替代实现（保留 index 走法但改成前缀匹配 `any(e[0]==p or e[0].startswith(p+'/') for e in entries)`）能同时过 F2P 与 P2P 的 test_is_tracked_unicode。",
+   "by": "L1_dvc_2"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "F2P/P2P 全集（6 条，全在 tests/unit/scm/test_git.py）",
+    "problem_statement"
+   ],
+   "note": "题面的原始症状（`.dvc/.gitignore` 里不出现重复 `/tmp`）在 F2P/P2P 里零覆盖。后果双向：(a) 只按题面做端到端去重（例如在 `_add_entry_to_gitignore` 里先查重）的合理修复得 0；(b) 只改 `is_tracked` 而实际上没消除症状的修复得满分——没有任何测试验证症状消失。",
+   "by": "L1_dvc_2"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "base:tests/func/test_scm.py:47-60 `test_is_tracked`",
+    "base:dvc/output/base.py:220",
+    "base:dvc/repo/add.py:112"
+   ],
+   "note": "P2P 5 条全部落在 test_patch 触碰的那一个文件里（因为 dvc 的评分是整文件跑，见 eval.sh `pytest -rA tests/unit/scm/test_git.py`）；`is_tracked` 的两个真实调用者（output/base.py 的 OutputAlreadyTrackedError、repo/add.py 的递归过滤）零回归保护。gold 把 unicode 绕行注释删掉了，而 base 已有的 tests/func/test_scm.py::test_is_tracked 恰好覆盖 unicode + 删除后应为 untracked，却不在 P2P 内。",
+   "by": "L1_dvc_2"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "repos/dvc e2981d274 commit message 与 --stat"
+   ],
+   "note": "gold 与上游 commit 完全一致，只有 6 行、无夹带改动、不依赖未交付的其它改动。上游注明它依赖 GitPython 侧已修的 unicode bug（`The bug that made us walk through index manually is now fixed in gitpython`）——这是对镜像内 GitPython 版本的隐含依赖，见 check 6。",
+   "by": "L1_dvc_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak.py 输出：iterative__dvc-3677 gold_added=1 ps_match=0 hints_match=0"
+   ],
+   "note": "题面不含修复代码，不含 PR/commit 链接。hints（不可见）含 issue #3561 与 Discord 链接，但对求解者不可达。",
+   "by": "L1_dvc_2"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "stage1 eval.sh install 段",
+    "stage1 gold test_output.txt:351-394 `ERROR: Could not find a version that satisfies the requirement pyyaml==5.4.1 (from versions: none)`"
+   ],
+   "note": "install 段包含 `pip install git+https://github.com/iterative/mock-ssh-server.git`（带 `|| true`）与多条无 `|| true` 的 pip install，需要网络；离线阶段一里 pyyaml==5.4.1、setuptools>=40.8.0 都装失败，靠镜像预装环境兜底，gold 仍 RESOLVED_FULL。另 gold 的正确性依赖镜像内 GitPython 版本已修的 unicode bug（上游 commit message）。",
+   "by": "L1_dvc_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 内容：只用 tmp_dir/scm fixture 现场 `scm_gen`"
+   ],
+   "note": "不需要权重、外部数据或预置 fixture 文件；测试自己造临时 git 仓库。",
+   "by": "L1_dvc_2"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "test_patch：无 requests/boto3/URL",
+    "stage1 eval.sh install 段"
+   ],
+   "note": "测试执行段不需要网络（纯本地 git）。需要网络的只有 install 段。agent 解题段需求未检查。",
+   "by": "L1_dvc_2"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "stage1 gold status_map.json：8 个键，其中 'Could'->'ERROR:'、'No'->'ERROR:' 两个伪条目",
+    "rh2/src/repoharness2/envpack/swegym_parsers.py:parse_log_pytest（dvc 映射到它）"
+   ],
+   "note": "`parse_log_pytest` 对任何以 ERROR/FAILED/... 开头的行取 `line.split()[1]` 当 test id；pip 的 `ERROR: Could not find a version...` 因此生成伪键 'Could'/'No'。本题不影响判分（伪键不在 F2P/P2P）。根因是阶段一离线日志没有 `>>>>> Start/End Test Output` 标记（grep 计数 0），parser 吃了整份日志；生产 v2 入口 `parse_eval_log_v2` 只取标记段。因此阶段一 status_map 是判分的近似证据，不等于生产判分。",
+   "by": "L1_dvc_2"
+  },
+  "18": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh: `pytest -rA tests/unit/scm/test_git.py`",
+    "gold status_map 6 条真实用例 = F2P 1 + P2P 5"
+   ],
+   "note": "dvc 的 eval_cmd 是裸 `pytest -rA`，runner 追加 test_patch 触碰的文件整文件跑，不用 `-k`；本题收集到的 6 条恰好等于 F2P∪P2P，无漏选、无过选。",
+   "by": "L1_dvc_2"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 empty: test_is_tracked=FAILED，其余 5 条 PASSED",
+    "stage1 gold: 6 条全 PASSED"
+   ],
+   "note": "empty→gold 的分差只来自 test_is_tracked 一条，方向正确。",
+   "by": "L1_dvc_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "题意-评分错位",
+   "severity": "P1",
+   "evidence_refs": [
+    "problem_statement",
+    "F2P tests/unit/scm/test_git.py::test_is_tracked"
+   ],
+   "proposed_action": "补题面：把上游 commit message 的因果（`is_tracked` 对目录不工作 → .gitignore 重复写入）与真实触发命令写进去，或换成 issue #3561 加维护者结论的合成题面。",
+   "next_experiment": "盲解一次：只给现题面，看模型是否会去改 `Git.ignore()` 路径；统计 F2P 通过率（预期 0）。"
+  },
+  {
+   "category": "测试覆盖不足",
+   "severity": "P2",
+   "evidence_refs": [
+    "F2P/P2P 全集"
+   ],
+   "proposed_action": "补一条端到端回归：两次 `dvc add` 后断言 `.dvc/.gitignore` 里目标行只出现一次。",
+   "next_experiment": "在 base 上跑该新测试确认 FAILED、在 gold 上确认 PASSED（若 gold 也 FAILED，说明题面症状与本 gold 无关，需重新定题）。"
+  },
+  {
+   "category": "回归保护缺口",
+   "severity": "P2",
+   "evidence_refs": [
+    "base:tests/func/test_scm.py:47-60",
+    "base:dvc/output/base.py:220"
+   ],
+   "proposed_action": "把 tests/func/test_scm.py 的 is_tracked 用例与 tests/func/test_add.py 的 OutputAlreadyTrackedError 用例纳入 P2P。",
+   "next_experiment": "base/gold 各跑一次这两个文件，取双侧 PASSED 集合。"
+  },
+  {
+   "category": "parser 噪声",
+   "severity": "P3",
+   "evidence_refs": [
+    "stage1 gold status_map.json 键 'Could'/'No'"
+   ],
+   "proposed_action": "生产判分必须依赖 `>>>>> Start/End Test Output` 标记段；阶段一 status_map 在引用时标注为『整份日志解析』。",
+   "next_experiment": "用同一份日志分别按整份/标记段解析，比较键集合差。"
+  },
+  {
+   "category": "同族",
+   "severity": "P3",
+   "evidence_refs": [
+    "prescan.json iterative__dvc-5148"
+   ],
+   "proposed_action": "3677 与 5148 同改 dvc/scm/git/__init__.py 与 tests/unit/scm/test_git.py，划分同侧。",
+   "next_experiment": "无（静态可判）。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只有 tests/unit/scm/test_git.py 一个纯测试文件，恢复它不会覆盖任何合法解答路径；gold 不触碰测试样路径。沿用第四组 B『额外排除默认为空』。",
+  "evidence_refs": [
+   "test_patch",
+   "golden_patch",
+   "stage1 eval.sh 的 git checkout 目标"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/func/test_scm.py::TestSCMGitSubmodule::test_is_tracked 及同文件 is_tracked 用例(base 已有，行 47-60)",
+   "reason": "直接覆盖 gold 改动的函数，且包含 unicode 与『删除后应 untracked』两条 base 实现特意绕行的场景。"
+  },
+  {
+   "id": "tests/func/test_add.py 中触发 OutputAlreadyTrackedError 的用例",
+   "reason": "dvc/output/base.py:220 是 is_tracked 的主要调用者；改成 ls_files 后目录也算 tracked，可能把原本允许的 `dvc add <dir>` 变成报错。"
+  },
+  {
+   "id": "tests/func/test_add.py::test_should_not_track_git_internal_files 一族",
+   "reason": "dvc/repo/add.py:112 用 is_tracked 过滤递归 add 的候选文件，语义放宽会改变被 add 的文件集合。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "环境与判分链路干净（整文件跑、无网络依赖、gold 与上游一致、empty/gold 分差单一），但题面描述的症状与 F2P 检查的语义之间缺一整段因果，且症状本身零覆盖；补题面 + 补一条端到端回归后可用。"
+ },
+ "costs": {
+  "minutes": 38
+ },
+ "by": "L1_dvc_2 (Claude Opus 5, 2026-09-16, 静态审查)"
+}

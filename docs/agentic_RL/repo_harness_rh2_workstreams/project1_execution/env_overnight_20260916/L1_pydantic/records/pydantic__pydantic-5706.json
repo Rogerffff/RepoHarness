@@ -1,0 +1,235 @@
+{
+ "task_id": "pydantic__pydantic-5706",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_pydantic (Claude Opus 5, 2026-09-16 夜)",
+ "materials_refs": [
+  "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl (instance_id=pydantic__pydantic-5706)",
+  "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+  "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+  "repos/pydantic@70e7e99ca1861ad71520cc8fcf1a2fb913abbc10",
+  "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pydantic__pydantic-5706/{gold,empty}/offline/a1/",
+  "runs/env_probe_20260909_final_sync/ledger/logs_cc/pydantic__pydantic-5706/{stream.jsonl,candidate.diff}",
+  "docs/.../env_overnight_20260916/L3_trajectories/counterexamples/pydantic__pydantic-5706/EXPECTED.md"
+ ],
+ "public_view": {
+  "目标行为": "typing.Sequence[int] 作为模型字段时，model_json_schema() 应与 list[int] 一致（{'type':'array','items':{'type':'integer'}}）而不是抛 PydanticInvalidForJsonSchema；题面例子里 Model.model_validate_json('{\"int_sequence\": [1,2,3], ...}') 也应成功。",
+  "约束": "题面第二条 checkbox 是未勾选的诉求（validate_json 应在 model_json_schema 抛错时也抛错），与第一条互为备选；base 已有的 Sequence 校验语义（接受任意 Sequence、拒绝 generator、错误类型 sequence_str 等）题面未要求改变。",
+  "公开材料无法确定的点": [
+   "JSON 模式下 Sequence[int] 校验后的容器类型应是 list 还是保持原类型（题面只给 model_validate_json 的报错，不给期望返回值）",
+   "item_type 为 Any 的裸 Sequence 是否也要改（题面只举 Sequence[int]）",
+   "修复应落在 _generate_schema._sequence_schema 还是 _std_types_schema 的 SEQUENCE_ORIGIN_MAP（两条路都在 base 存在）"
+  ],
+  "base 定位": "pydantic/_internal/_generate_schema.py:826-845 `_sequence_schema`，item_type != Any 时返回 chain_schema([is_instance_schema(Sequence), no_info_wrap_validator_function(sequence_validator, list_schema(..., allow_any_iter=True))])，整条链没有挂 JSON schema metadata，故 is_instance_schema 无法生成 JSON schema。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "repos/pydantic: git show 70e7e99c:tests/test_json_schema.py 存在",
+    "git show 70e7e99c:pydantic/_internal/_generate_schema.py:826 `_sequence_schema`"
+   ],
+   "note": "test_patch 只改 tests/test_json_schema.py（base 存在）；gold 只改 pydantic/_internal/_generate_schema.py 的 _sequence_schema（base 存在、正是题面涉及的函数）。无二进制/LFS/子模块材料。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 .../empty/offline/a1/status_map.json：两条 F2P 均 FAILED",
+    "_generate_schema.py:832-845 无 js_functions metadata"
+   ],
+   "note": "base 确实含题面缺陷。但需同时记录：镜像出厂即带未提交改动 pdm.lock + pyproject.toml（见 issue env_dirty_worktree），no-op 的 git diff 基线不是空的。",
+   "by": "static+stage1log"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "public.json.problem_statement（1706 字符，含完整可运行例子）",
+    "raw.json.hints_text 为空"
+   ],
+   "note": "题面自带完整最小复现，无外链、无图片、无截断代码块；hints_text 为空，不存在“关键信息只在 hints”问题。",
+   "by": "static"
+  },
+  "4": {
+   "status": "issue",
+   "evidence_refs": [
+    "grading.json.test_patch 只触碰 tests/test_json_schema.py",
+    "F2P/P2P 275 条全部在 tests/test_json_schema.py",
+    "eval.sh: `git checkout <base> tests/test_json_schema.py` 只恢复这一个文件",
+    "git show 70e7e99c:pyproject.toml:142-148 [tool.pytest.ini_options] filterwarnings=['error'], xfail_strict=true"
+   ],
+   "note": "本题 additional_exclusions 保持空是对的（无混合职责路径、gold 不碰测试路径）。但仓库级残余面存在：tests/conftest.py 与 pyproject.toml 的 [tool.pytest.ini_options] 都不在恢复集内，候选改它们可影响判分；且 pyproject.toml 本来就是脏的，改动不显眼。见 repo 级 issue。",
+   "by": "static"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "本包 20 题中 _generate_schema.py 同为 gold 目标的还有 6104/8583/9193/9214；test_json_schema.py 同为 test_patch 的还有 6043/8793/9066"
+   ],
+   "note": "同文件不同函数、不同 PR、base_commit 相隔数月，不是同一修复的派生。但训练/评测划分时应注意同一文件被 5 题反复改，跨题记忆可迁移。",
+   "by": "static"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "stage1 .../gold/offline/a1/test_output.txt:3682-3708 `pdm add pre-commit` 与 `make install` 均因 [ConnectError] name resolution 失败，RH2_PHASE_END install rc=2"
+   ],
+   "note": "安装串需要网络；离线下必然 rc=2。测试仍全绿说明实际用的是镜像预装的 conda testbed 环境，安装串对结果无贡献。不能把 install rc!=0 当本题的坏环境信号（检查 9 的“安装非零却 resolved 必须解释”在这里的解释就是它）。",
+   "by": "stage1log"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "tests/test_json_schema.py@70e7e99c 第三方 import 仅 pytest / pydantic_core",
+    "stage1 gold 277 passed 1 xfailed"
+   ],
+   "note": "无权重/数据集/fixture 外部文件；唯一 URL 是断言常量 '$schema': 'https://json-schema.org/draft/2020-12/schema'（字符串，不发请求）。",
+   "by": "static+stage1log"
+  },
+  "10": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_20260909_final_sync/ledger/logs_cc/pydantic__pydantic-5706/stream.jsonl:1260 `ModuleNotFoundError: No module named 'pydantic_core'`",
+    "同文件 :6897 `/opt/miniconda3/bin/python: No module named pytest`",
+    "同文件全文 grep 'envs/testbed' 命中 0 次"
+   ],
+   "note": "2026-09-09 轨迹里 agent 的 PATH 指向 /opt/miniconda3/bin/python（base env），不是 grading 用的 testbed env；agent 既跑不了题面复现也跑不了 pytest。而 public_hints 明确写“python/pip 已指向 testbed”。当前接线是否仍如此：not_checked（e1 未含 pydantic）。",
+   "by": "trajectory"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "同 check 6 证据"
+   ],
+   "note": "需要网络的阶段只有 install（pdm/make install）。agent 解题与测试执行均不需要网络。建议：本仓库把 install 阶段整体跳过或改成 no-op，避免每题多 19 秒的必然失败。",
+   "by": "stage1log"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 全文",
+    "test_patch 断言的 schema 字典"
+   ],
+   "note": "F2P 断言的 JSON schema 形状可由题面“与 list[int] 不一致”直接推出；validate_json 成功也在题面例子里。未说明项：返回容器类型、Any 分支——但 F2P 没检查这两点，故不构成缺信息。",
+   "by": "static"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "gold 走 _generate_schema._sequence_schema 的 json_or_python_schema",
+    "candidate.diff 走 pydantic/_internal/_std_types_schema.py 的 SEQUENCE_ORIGIN_MAP，同样让两条 F2P 全绿（stage1/DeepSeek oracle=RESOLVED_FULL）"
+   ],
+   "note": "两条完全不同的实现路径都被接受，测试没有强制唯一实现。注意纯 metadata 方案（只挂 js_functions 不改校验）会被 test_sequences_int_json_schema 末尾的 `Model.model_validate_json` 断言拒绝——这条拒绝是有题面依据的。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "F2P/P2P 275 条全部在 tests/test_json_schema.py（无一条来自 test_types.py / test_edge_cases.py）",
+    "git show 70e7e99c:tests/test_types.py:1887 test_sequence_success / :2010 test_sequence_generator_fails / :2138 test_sequence_fails / :4726 test_sequence_subclass_without_core_schema",
+    "git show 70e7e99c:tests/test_edge_cases.py:2503 test_sequences_str",
+    "stream.jsonl:6905 候选实测 tests/test_types.py -k sequence → 6 failed / 10 passed",
+    "L3_trajectories/counterexamples/pydantic__pydantic-5706/EXPECTED.md"
+   ],
+   "note": "P2 低覆盖假阳性：base 自带的 5 组 Sequence 行为测试全部不在判分面内，把 Sequence 直接映射成 list 的补丁（缩窄 range、放宽 generator、改变 tuple/deque 返回类型、改变错误契约 sequence_str→list_type）仍判 RESOLVED_FULL。这是本仓库最强的一个验收面缺口。",
+   "by": "static+trajectory"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "同 25"
+   ],
+   "note": "已给出具体扩展回归 ID，见 proposed_regression_tests。",
+   "by": "static"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "validation.json.golden_patch"
+   ],
+   "note": "两点：(a) gold 同时改了 item_type == Any 的裸 Sequence 分支（新增 json_schema=list_schema 路径），题面没要求、F2P 也没覆盖；(b) gold 内部 json_schema_func 用 self._generate_schema(item_type)，而同函数里的 list_schema 用 self.generate_schema(item_type)（差一个下划线，缓存/递归保护语义不同），上游未解释。均属上游 gold 的已知范围外改动，不影响本题判分，但做 gold-as-reference 时要标注。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak 扫描：gold 新增 11 行有效行，0 行出现在 problem_statement；hints_text 为空",
+    "problem_statement 无 http 链接"
+   ],
+   "note": "题面无修复代码、无上游 PR/commit 指向。注意另一条通道：候选轨迹可联网下载上游发布版（见 L3_report 网络通道），与题面材料无关。",
+   "by": "static"
+  },
+  "31": {
+   "status": "issue",
+   "evidence_refs": [
+    "pyproject.toml:142-148 filterwarnings=['error'] / xfail_strict=true 不在恢复集",
+    "tests/conftest.py 不在恢复集"
+   ],
+   "note": "静态可见的控制面残余；未做真机反例（not_checked 是否真能改变判分）。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "official_test_coverage_gap",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 25 证据"
+   ],
+   "proposed_action": "把 tests/test_types.py -k sequence（test_sequence_success/test_sequence_fails/test_sequence_generator_fails/test_sequence_subclass_without_core_schema）与 tests/test_edge_cases.py::test_sequences_str 补进本题 P2P",
+   "next_experiment": "L3_trajectories/counterexamples/pydantic__pydantic-5706/run_matrix.sh"
+  },
+  {
+   "category": "gold_scope_creep",
+   "severity": "P3",
+   "evidence_refs": [
+    "golden_patch item_type==Any 分支"
+   ],
+   "proposed_action": "标注 gold 含题面范围外改动；不因此调整测试标准",
+   "next_experiment": "无"
+  },
+  {
+   "category": "env_dirty_worktree",
+   "severity": "P2",
+   "evidence_refs": [
+    "stage1 empty/gold test_output.txt 起始 git status：pdm.lock、pyproject.toml modified",
+    "candidate.diff 包含 pdm.lock/pyproject.toml 两个非 agent 改动的 hunk"
+   ],
+   "proposed_action": "仓库级：候选补丁提取时对 pydantic 基线脏文件做 pre-existing 扣除，或在 agent 起手前 git checkout -- pdm.lock pyproject.toml",
+   "next_experiment": "在镜像里对比 no-op 的 git diff 与 candidate 提取结果"
+  },
+  {
+   "category": "agent_env_mismatch",
+   "severity": "P1",
+   "evidence_refs": [
+    "check 10 证据"
+   ],
+   "proposed_action": "仓库级：确认 agent shell 的 PATH 指向 /opt/miniconda3/envs/testbed/bin；否则 public_hints 的描述与实际不符，agent 无法本地验证",
+   "next_experiment": "在 pydantic 镜像里以 actor 身份执行 `which python; python -c 'import pydantic_core'; python -m pytest --version`"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 tests/test_json_schema.py（纯测试文件），gold 不触碰任何测试路径，F2P/P2P 全部落在该文件内；无混合职责路径需要额外排除。pdm.lock / pyproject.toml 的改动是镜像出厂脏状态，属补丁提取口径问题，不是本题排除规则问题。",
+  "evidence_refs": [
+   "grading.json.test_patch",
+   "validation.json.golden_patch",
+   "stage1 eval.sh setup 阶段"
+  ]
+ },
+ "proposed_regression_tests": [
+  "tests/test_types.py::test_sequence_success（全部 param）— 覆盖 list/tuple/deque/set 等容器进出类型保持",
+  "tests/test_types.py::test_sequence_fails（全部 param）— 覆盖错误契约 sequence_str/sequence_type",
+  "tests/test_types.py::test_sequence_generator_fails — 覆盖 generator 必须被拒绝",
+  "tests/test_types.py::test_sequence_subclass_without_core_schema — 覆盖自定义 Sequence 子类",
+  "tests/test_edge_cases.py::test_sequences_str（全部 param）— 覆盖 Sequence[str]/Sequence[bytes] 的错误契约",
+  "选择依据：以上都是 base 在同一 commit 上已有且已通过的测试，直接调用被 gold 修改的 _sequence_schema 产出的 core schema；不是审查者新造的要求（对应检查 28）。"
+ ],
+ "disposition_hint": {
+  "state": "needs_review",
+  "reason": "题目本身可解且 gold 对应题面，但判分面只有一个测试文件、放过改变 Sequence 公开语义的补丁；先按 issue 25 扩 P2P 再入训练集，否则会教模型“只对齐官方那一个文件”。"
+ },
+ "costs": {
+  "minutes": 38
+ }
+}

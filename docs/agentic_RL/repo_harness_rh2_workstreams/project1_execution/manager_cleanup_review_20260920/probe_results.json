@@ -1,0 +1,282 @@
+{
+  "scope": "CPU 真实 manager + Docker 替身，rc/state 显式注入；不是重跑 MONAI",
+  "historical_log_sha256": "sha256:25407384b0ff0f20e05ff5baab592e81034230bf3b2fadc92f2a16bfaf72abc7",
+  "cases": {
+    "resolved_control": {
+      "outcome": "resolved",
+      "reward": 1.0,
+      "failure_category": null,
+      "detail": null,
+      "candidate": {
+        "install_rc_last_command": null,
+        "install_failed_commands": [],
+        "install_skipped": true,
+        "install_seconds": null,
+        "test_rc": 0,
+        "test_seconds": 1.0,
+        "markers_seen": [
+          "RH2_INSTALL_SKIPPED",
+          "RH2_TEST_RC",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "log_partial": false
+      },
+      "candidate_output_retained": true,
+      "sidecar_matches_record": true,
+      "close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0
+      },
+      "regrade_total": 0
+    },
+    "model_failure_control": {
+      "outcome": "unresolved",
+      "reward": 0.0,
+      "failure_category": "tests_failed",
+      "detail": null,
+      "candidate": {
+        "install_rc_last_command": null,
+        "install_failed_commands": [],
+        "install_skipped": true,
+        "install_seconds": null,
+        "test_rc": 0,
+        "test_seconds": 1.0,
+        "markers_seen": [
+          "RH2_INSTALL_SKIPPED",
+          "RH2_TEST_RC",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "log_partial": false
+      },
+      "candidate_output_retained": true,
+      "sidecar_matches_record": true,
+      "close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0
+      },
+      "regrade_total": 0
+    },
+    "monai_race_prior_method": {
+      "outcome": "failed_to_grade",
+      "reward": null,
+      "failure_category": "test_log_parse_failed",
+      "detail": "official_bad_codes_after_successful_replay",
+      "candidate": {
+        "install_rc_last_command": 0,
+        "install_failed_commands": [],
+        "install_skipped": false,
+        "install_seconds": 12.415,
+        "test_rc": null,
+        "test_seconds": null,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_START"
+        ],
+        "log_partial": false
+      },
+      "candidate_output_retained": true,
+      "sidecar_matches_record": true,
+      "close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0
+      },
+      "regrade_total": 0
+    },
+    "monai_race_fixed": {
+      "outcome": "failed_to_grade",
+      "reward": null,
+      "failure_category": "infra_failure",
+      "detail": "grading_candidate_exec_killed:signal=9:candidate_phase=test",
+      "candidate": {
+        "install_rc_last_command": 0,
+        "install_failed_commands": [],
+        "install_skipped": false,
+        "install_seconds": 12.415,
+        "test_rc": null,
+        "test_seconds": null,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_START"
+        ],
+        "candidate_exec_exit_code": 137,
+        "candidate_segment_completed": false,
+        "log_partial": true
+      },
+      "candidate_output_retained": true,
+      "sidecar_matches_record": true,
+      "close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0
+      },
+      "regrade_total": 0
+    },
+    "monai_already_dead_fixed": {
+      "outcome": "failed_to_grade",
+      "reward": null,
+      "failure_category": "infra_failure",
+      "detail": "grading_container_killed_during_test:candidate_phase=test",
+      "candidate": {
+        "install_rc_last_command": 0,
+        "install_failed_commands": [],
+        "install_skipped": false,
+        "install_seconds": 12.415,
+        "test_rc": null,
+        "test_seconds": null,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_START"
+        ],
+        "candidate_exec_exit_code": 137,
+        "candidate_segment_completed": false,
+        "log_partial": true
+      },
+      "candidate_output_retained": true,
+      "sidecar_matches_record": true,
+      "close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0
+      },
+      "regrade_total": 0
+    },
+    "finished_wrapper_with_killed_child": {
+      "outcome": "resolved",
+      "reward": 1.0,
+      "failure_category": null,
+      "detail": null,
+      "candidate": {
+        "install_rc_last_command": null,
+        "install_failed_commands": [],
+        "install_skipped": true,
+        "install_seconds": null,
+        "test_rc": 137,
+        "test_seconds": 1.0,
+        "markers_seen": [
+          "RH2_INSTALL_SKIPPED",
+          "RH2_TEST_RC",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "log_partial": false
+      },
+      "candidate_output_retained": true,
+      "sidecar_matches_record": true,
+      "close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0
+      },
+      "regrade_total": 0
+    },
+    "candidate_supplied_finish_marker_prior": {
+      "outcome": "resolved",
+      "reward": 1.0,
+      "failure_category": null,
+      "detail": null,
+      "candidate": {
+        "install_rc_last_command": null,
+        "install_failed_commands": [],
+        "install_skipped": true,
+        "install_seconds": null,
+        "test_rc": 0,
+        "test_seconds": 1.0,
+        "markers_seen": [
+          "RH2_INSTALL_SKIPPED",
+          "RH2_TEST_RC",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "log_partial": false
+      },
+      "candidate_output_retained": true,
+      "sidecar_matches_record": true,
+      "close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0
+      },
+      "regrade_total": 0
+    },
+    "candidate_supplied_finish_marker_fixed": {
+      "outcome": "resolved",
+      "reward": 1.0,
+      "failure_category": null,
+      "detail": null,
+      "candidate": {
+        "install_rc_last_command": null,
+        "install_failed_commands": [],
+        "install_skipped": true,
+        "install_seconds": null,
+        "test_rc": 0,
+        "test_seconds": 1.0,
+        "markers_seen": [
+          "RH2_INSTALL_SKIPPED",
+          "RH2_TEST_RC",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "candidate_exec_exit_code": 137,
+        "candidate_segment_completed": true,
+        "log_partial": true
+      },
+      "candidate_output_retained": true,
+      "sidecar_matches_record": true,
+      "close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0
+      },
+      "regrade_total": 0
+    }
+  }
+}

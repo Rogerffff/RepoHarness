@@ -1,0 +1,273 @@
+{
+ "task_id": "swe_gym_lite::Project-MONAI__MONAI-6775",
+ "instance_id": "Project-MONAI__MONAI-6775",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_monai_2 (Claude Opus 5, 静态审查)",
+ "materials_refs": {
+  "base_commit": "3b56e7f17640665695ba413a023b67268c2b5bb4",
+  "version": "1.2",
+  "python_version": "3.8",
+  "eval_cmd": "pytest -rA  tests/test_generalized_dice_loss.py（整文件跑）",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/Project-MONAI__MONAI-6775/{gold,empty}/offline/a1/",
+  "created_at": "2023-07-25"
+ },
+ "public_view": {
+  "目标行为": "`GeneralizedDiceLoss` 的类别权重 w 失效：`numer = 2.0*(intersection*w)` 与 `denom = (denominator*w)` 是逐元素相乘后再相除，忽略 smooth 项时 w 被约掉。题面引 NiftyNet 的写法说明正确做法是『先按类别求和，再相除』。",
+  "约束": "题面只讨论 `self.batch is True`（形状 [C]）这一情形。",
+  "公开材料无法确定的点": [
+   "`batch=False` 时是否也要改（题面只讲 batch=True）",
+   "沿哪个维度求和、是否 keepdim",
+   "改动后 `reduction=\"none\"` 的输出形状是否允许从 (B,C,1) 变成 (B,1,1)",
+   "6 个既有期望数值该变成多少"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.test_patch tests/test_generalized_dice_loss.py",
+    "validation.golden_patch monai/losses/dice.py:361-366"
+   ],
+   "note": "同一 PR，目标文件 base 存在。无二进制/LFS/子模块材料。",
+   "by": "L1_monai_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base 3b56e7f1 monai/losses/dice.py:363-364 `numer = 2.0 * (intersection * w) + self.smooth_nr`",
+    "stage1 empty: 6 条 test_shape FAILED"
+   ],
+   "note": "初态确实含题面所述缺陷。",
+   "by": "L1_monai_2"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "public.problem_statement 654 字符（本包最短之一）",
+    "raw.hints_text 1379 字符"
+   ],
+   "note": "P1：**决定性信息只在不可见的 hints 里**。题面只说 w 被约掉、引 NiftyNet 的『先求和再相除』；而 hints 里维护者与报告者的对话逐字给出了目标代码 `numer = 2.0 * (intersection * w).sum(final_reduce_dim, keepdim=True) + self.smooth_nr`，并给出关键裁定『GDL cannot generate [C] output』——后者正是 gold 改变 `reduction=\"none\"` 输出形状的唯一依据，题面里没有。",
+   "by": "L1_monai_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.test_patch 只触碰 tests/test_generalized_dice_loss.py"
+   ],
+   "note": "纯测试文件；gold 只碰 monai/losses/dice.py。additional_exclusions 保持空。",
+   "by": "L1_monai_2"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh setup 段"
+   ],
+   "note": "恢复清单只有一个纯测试文件。",
+   "by": "L1_monai_2"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "scan/monai_cross_index.txt"
+   ],
+   "note": "26 道 MONAI 题里只有本题触碰 monai/losses/dice.py。hints 提到本 bug 是修 issue #5466 时引入的，但 #5466 不在 216 题里。",
+   "by": "L1_monai_2"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "test_patch 把 6 个期望数值改写成新的 6 位小数（0.435035→0.469964、0.3837→0.414507、1.5348→0.829015、0.26669→0.250023、-8.55485→-0.097833）",
+    "其中 reduction=\"none\" 用例的期望从 [[[0.210949],[0.295351]],[[0.599976],[0.428522]]]（形状 (2,2,1)）变成 [[[0.273476]],[[0.555539]]]（形状 (2,1,1)）"
+   ],
+   "note": "P1：**要求不可由公开材料推出**。(a) 题面只讲 batch=True，gold 却用 `final_reduce_dim = 0 if self.batch else 1` 同时改了 batch=False 的语义；(b) 公开输出形状从 (B,C,1) 变成 (B,1,1) 是破坏性 API 改动，依据只在 hints；(c) 6 个新期望值必须逐个算到 rtol=1e-5 才能通过，题面没给任何一个目标数字。",
+   "by": "L1_monai_2"
+  },
+  "24": {
+   "status": "issue",
+   "evidence_refs": [
+    "base tests/test_generalized_dice_loss.py:146-148 `np.testing.assert_allclose(result.detach().cpu().numpy(), expected_val, rtol=1e-5)`"
+   ],
+   "note": "P2：`rtol=1e-5` 且无 atol 的 6 位小数比对，实际上把归约顺序钉死。语义上同样合理的替代（先加 smooth 再求和、或 `sum(dim, keepdim=False)` 后广播、或只在 batch=True 时求和）都会给出不同数值或形状而被拒。这里有一部分是数值语义本来就必须精确，但『改哪一维、要不要 keepdim』这类选择没有公开依据。",
+   "by": "L1_monai_2"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "base tests/test_generalized_dice_loss.py 全部 TEST_CASES 都没有 batch=True（grep 'batch' 只命中 test_batch 方法）",
+    "base:188-196 test_batch 只断言 `loss.grad_fn is not None`"
+   ],
+   "note": "P1：**题面真正抱怨的 `batch=True` 情形零数值覆盖**。12 个 TEST_CASES 一个都没开 batch=True；唯一的 batch=True 用例 `test_batch` 只检查梯度存在，不检查数值。也就是说『w 在 batch=True 下失效』这个缺陷本身没有任何回归测试，评分完全靠 batch=False 路径的 6 个数值。",
+   "by": "L1_monai_2"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.pass_to_pass 12 条 = 整文件其余通过用例（6 条期望未变的 test_shape + test_batch/test_script/test_differentiability/test_ill_shape/test_ill_opts/test_input_warnings）"
+   ],
+   "note": "P2P 等于整文件通过集减 F2P。其中 6 条期望未变的 test_shape 有实质意义：它们是 C=1 或归约后不变的用例，能挡住『把求和写错维度』的实现。",
+   "by": "L1_monai_2"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "validation.golden_patch 3 行代码 + 1 行 docstring"
+   ],
+   "note": "gold 最小、与题对应、不依赖未交付改动。docstring 也同步说明了 batch=True 的新语义。",
+   "by": "L1_monai_2"
+  },
+  "29": {
+   "status": "issue",
+   "evidence_refs": [
+    "raw.hints_text 含 `numer = 2.0 * (intersection * w).sum(final_reduce_dim, keepdim=True) + self.smooth_nr` 与 https://github.com/Project-MONAI/MONAI/issues/5466 链接"
+   ],
+   "note": "P3：hints 里同时有**修复代码**与**上游 issue 链接**。hints 不进 agent 可见材料，所以不是当前泄漏通道；但若将来把 hints 并入题面（常见做法），本题会立刻退化成照抄。",
+   "by": "L1_monai_2"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 install rc=0（两侧）"
+   ],
+   "note": "离线镜像内 rc=0。",
+   "by": "L1_monai_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "scan/envscan.txt：tests/test_generalized_dice_loss.py 零命中"
+   ],
+   "note": "张量全部写死在测试文件里，无权重、无外部数据。",
+   "by": "L1_monai_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "scan/envscan.txt"
+   ],
+   "note": "不需要网络。",
+   "by": "L1_monai_2"
+  },
+  "13": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 gold test 段 10.5s"
+   ],
+   "note": "最大张量 (2,1,8,8)，无多进程、无 shm 需求。",
+   "by": "L1_monai_2"
+  },
+  "18": {
+   "status": "issue",
+   "evidence_refs": [
+    "base tests/test_generalized_dice_loss.py:21 `from tests.utils import test_script_save`",
+    "stage1 gold 日志 789-795 行：`ERROR at setup of test_script_save` / `fixture 'net' not found`",
+    "stage1 gold 日志 865-869 行：`18 passed, 19 warnings, 1 error in 8.70s` 后 `RH2_PHASE_END test ... rc=1`"
+   ],
+   "note": "P2：测试文件 `from tests.utils import test_script_save` 把一个**普通 helper 函数**引入模块命名空间，pytest 按 `test_*` 规则把它当测试收集，在 setup 阶段报 `fixture 'net' not found`。后果：**gold 侧的测试阶段 rc 也是 1**，整场评分永远带 1 个 ERROR。当前判分只看 status_map 里的 F2P/P2P，所以 verdict 仍是 RESOLVED_FULL（stage1 已验证）；但任何以 test 段 rc 作为健康信号的逻辑都会把正确解误判成失败。这也是本包唯一一道 gold 侧 rc≠0 的题。",
+   "by": "L1_monai_2"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 gold status_map.json 19 条 = 18 通过 + 1 个 ERROR 条目 `tests/test_generalized_dice_loss.py::test_script_save`"
+   ],
+   "note": "parser 正确解析了 ERROR 行的 nodeid（它带 `::`，不是 `SKIPPED [n]` 形态）。该条不在 F2P/P2P 中，被评分忽略。",
+   "by": "L1_monai_2"
+  },
+  "31": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_monai_2/scan/control_surface.txt",
+    "stage1 eval.sh 只 `git checkout <base> <test_patch 路径>`",
+    "grading.test_patch 不含 tests/utils.py"
+   ],
+   "note": "P2：本题测试从 **tests/utils.py** import `test_script_save`，而 test_patch 的恢复清单只含本题的测试文件本身，**tests/utils.py 不被恢复**，保持候选写过的状态。中等暴露：`test_script_save` 承载 P2P `test_script` 的全部检查。 另：base 里没有 tests/conftest.py，候选可新建一个注入 hook。此处只记录观测与建议，不据怀疑扣分。",
+   "by": "L1_monai_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "决定性要求只在不可见 hints 里",
+   "severity": "P1",
+   "evidence_refs": [
+    "hints 的目标代码与『GDL cannot generate [C] output』裁定",
+    "题面只讲 batch=True"
+   ],
+   "proposed_action": "把维护者的裁定（先按类别求和再相除；GDL 输出不应带 [C] 维；batch=False 时沿 dim=1 求和）写进题面，否则本题不适合盲解评测。",
+   "next_experiment": "只按题面字面实现（仅在 batch=True 时求和）跑当前 F2P，预期 6 条大面积失败。"
+  },
+  {
+   "category": "题面所指情形零数值覆盖",
+   "severity": "P1",
+   "evidence_refs": [
+    "TEST_CASES 无 batch=True；test_batch 只查 grad_fn"
+   ],
+   "proposed_action": "补 batch=True 的数值用例（用 hints 里给的 intersection/denominator/w 例子即可构造），直接覆盖题面主张。",
+   "next_experiment": "构造 batch=True 且各类别权重差异明显的输入，在 base/gold 上各跑一次，确认两者数值不同。"
+  },
+  {
+   "category": "gold 侧测试阶段 rc=1",
+   "severity": "P2",
+   "evidence_refs": [
+    "`from tests.utils import test_script_save` 被 pytest 当测试收集",
+    "stage1 gold rc=1 但 verdict=RESOLVED_FULL"
+   ],
+   "proposed_action": "在题级 facts 记录『本题 test 段 rc 恒为 1，非候选问题』；若将来把 rc 纳入归因，必须先排除这一类收集期 ERROR。",
+   "next_experiment": "在 conftest 里加 `collect_ignore` 或用 `--deselect` 跑一次，确认 rc 变 0 且 status_map 不变。"
+  },
+  {
+   "category": "精确数值断言锁死归约写法",
+   "severity": "P2",
+   "evidence_refs": [
+    "rtol=1e-5 无 atol 的 6 位小数比对"
+   ],
+   "proposed_action": "记录即可；数值语义确实需要精确，但应在题面写明归约约定。",
+   "next_experiment": "无（与第一条共用）。"
+  },
+  {
+   "category": "评分控制面（test_patch 之外的测试依赖）",
+   "severity": "P3",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_monai_2/scan/control_surface.txt"
+   ],
+   "proposed_action": "把 tests/utils.py 纳入恢复清单（见 file_rules），并在评分报告里单列候选对 tests/ 下非恢复文件的改动。",
+   "next_experiment": "无。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [
+   "tests/utils.py"
+  ],
+  "rationale": "**建议（非裁定）**：把 tests/utils.py 加入恢复/排除清单。判分影响：本题 F2P/P2P 的断言经过该文件的 `test_script_save`，候选改写它能直接改变判分结果；而本题 gold 只改 monai/ 下的实现，改 tests/utils.py **不属于合法解答路径**。反面证据：同仓库的 MONAI-1121 的上游 test_patch 本身就修改了 tests/utils.py，说明不能对 MONAI 全仓一刀切地永久排除该文件，应按题判断（本题 test_patch 未触碰它，故排除是安全的）。若不排除，至少要在评分报告里标出候选是否改动过该文件。",
+  "evidence_refs": [
+   "runs/env_overnight_20260916/L1_monai_2/scan/control_surface.txt",
+   "grading.test_patch",
+   "validation.golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "新增：batch=True 的数值用例",
+   "reason": "题面主张的情形当前零数值覆盖。"
+  },
+  {
+   "id": "tests/test_generalized_dice_focal_loss.py",
+   "reason": "GeneralizedDiceFocalLoss 直接复用 GeneralizedDiceLoss.forward，是数值改动的第一调用者。"
+  },
+  {
+   "id": "tests/test_dice_loss.py、tests/test_dice_ce_loss.py",
+   "reason": "同文件 monai/losses/dice.py 的邻近实现，确认改动没有波及。"
+  },
+  {
+   "id": "tests/test_seg_loss_integration.py（若存在）",
+   "reason": "损失函数的集成用法，能检出输出形状变化对训练循环的影响。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "gold 与测试自洽且 P2P 覆盖整文件，但（a）决定归约维度与输出形状的裁定只存在于不可见 hints、（b）题面主张的 batch=True 情形零数值覆盖、（c）gold 侧 test 段 rc 恒为 1。补题面与 batch=True 用例后可入池。"
+ },
+ "costs": {
+  "minutes": 24
+ }
+}

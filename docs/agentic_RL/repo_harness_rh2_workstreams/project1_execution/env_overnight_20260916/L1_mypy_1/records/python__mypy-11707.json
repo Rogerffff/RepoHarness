@@ -1,0 +1,59 @@
+{
+ "task_id": "python__mypy-11707",
+ "source": "SWE-Gym lite / python/mypy PR 11707",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "5d71f58b9dc5a89862253fef3d82356a7370bf8e", "version": "0.920", "python_version": "3.9",
+  "eval_cmd": "pytest -n0 -rA -k",
+  "f2p": ["mypy/test/testcheck.py::TypeCheckSuite::check-modules.test::testReExportChildStubs3"],
+  "p2p": ["mypy/test/testcheck.py::TypeCheckSuite::check-modules.test::testNoReExportChildStubs"],
+  "test_patch_paths": ["test-data/unit/check-modules.test"], "gold_paths": ["mypy/semanal.py"],
+  "stage1": "无 stage1 记录（signals.stage1 = null）"
+ },
+ "public_view": {
+  "goal": "（按题面字面）`--no-implicit-reexport` 行为不一致：`from a import Y as W`（Y 是包 a 里的别名）在下游被判 'Module \"c\" does not explicitly export attribute \"W\"'，而把 Y 换成 X 就没问题。报告者**明确要求两种情形都应当被接受**（'One would expect both cases to be accepted.'）。",
+  "constraints": ["题面给出四文件目录结构、每个文件内容、期望输出与实际输出，材料非常完整", "题面还给出关键对照：'if a is not a package, both cases yield a re-export error'"],
+  "unknowns_from_public_only": [
+   "**方向本身就是未知的**：题面说两种都该接受；上游维护者在 hints 里给出的结论是 'the expected behaviour is an error in both cases'（依据 PEP 484 的澄清 python/peps#1630）。公开材料里没有任何线索指向'应当多报错'这个方向",
+   "stub（.pyi）与普通模块的再导出规则差异——题面只提到包/非包的差异，没提 stub"
+  ],
+  "base_code_evidence": [
+   "5d71f58b9:mypy/semanal.py:1894 `module_hidden = not module_public and fullname not in self.modules` —— 只要 fullname 是一个已知模块名就一律不隐藏，不管该符号本身是不是模块",
+   "5d71f58b9:test-data/unit/check-modules.test:1879/1897/1913 已有 testReExportChildStubs、testReExportChildStubs2、testNoReExportChildStubs 三个同族既有 case",
+   "5d71f58b9:mypy/test/data.py 已含 DataFileCollector → nodeid 带 check-modules.test 段，与 F2P/P2P 字符串格式一致（同为 0.920 的 python__mypy-11567 其 base 没有该类，nodeid 也确实不带该段；说明这些 nodeid 是各自 base 上真实跑出来的）"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 目标 check-modules.test 在 base 存在；gold 目标 mypy/semanal.py 上下文（process_imported_symbol:1894）逐行匹配", "F2P/P2P 的 nodeid 格式与 base 的 data.py 一致"], "note": "无二进制/LFS/子模块。", "by": "L1_mypy_1"},
+  "2": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["base semanal.py:1894 的条件确实是题面所述行为的来源", "但题面描述的复现是普通 .py 包，F2P 用的是 .pyi stub 包"], "note": "base 含'某种不一致'是成立的，但**题面复现与 F2P 复现不是同一组文件**：题面用 a/__init__.py + a/X.py + c.py + d.py（普通模块），F2P 用 package/__init__.pyi + package/mod.pyi + util.pyi（stub）。gold 是否修好了题面那个具体例子，静态无法确认，需实跑验证。", "by": "L1_mypy_1"},
+  "3": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["problem_statement 1609 字符，材料完整，但结论是 'One would expect both cases to be accepted'", "hints_text 278 字符：'the expected behaviour is an **error in both cases**. This was somewhat recently clarified in PEP 484 (https://github.com/python/peps/pull/1630/files)'"], "note": "**决定方向的唯一信息只在不可见的 hints 里**。agent 看到的题面明确要求'少报错'，而评分要求'多报错'。这是本包里'题面与评分方向相反'最彻底的一例——比 12741 更严重，因为 12741 至少标题里还有 'Crash' 一词提示，这里题面没有任何反向线索。", "by": "L1_mypy_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 只触碰 test-data/unit/check-modules.test（case 内用 [file package/__init__.pyi] 等虚拟文件）"], "note": "无非测试源码。additional_exclusions 保持空。", "by": "L1_mypy_1"},
+  "17": {"status": "pass", "evidence_refs": ["同上；gold 只改 mypy/semanal.py"], "note": "无覆盖风险。", "by": "L1_mypy_1"},
+  "5": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["dupidx.txt：check-modules.test 被本题、10382、10392、15131 共 4 题触碰；mypy/semanal.py 是本题、10382、10478、5617 的 gold 路径"], "note": "同文件同模块不同函数，非重复题；但 check-modules.test + semanal.py 这一族在本包内有 3 题（10382、10478、11707），划分时建议同侧。", "by": "L1_mypy_1"},
+  "23": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["F2P 断言 `from util import internal_detail  # E: Module \"util\" has no attribute \"internal_detail\"`，即要求**新增**一条错误", "题面要求消除错误"], "note": "公开材料不仅推不出 F2P 所查行为，而且指向相反方向。按题面正确作答（让两种情形都通过）必然判 0。", "by": "L1_mypy_1"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 只断言标准诊断文本与 reveal_type 结果，不引用 gold 的 isinstance(node.node, MypyFile) 判定"], "note": "只要区分'符号本身是模块'与'符号只是恰好与某模块同名'，任何实现都能过。未强制唯一实现。", "by": "L1_mypy_1"},
+  "25": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["P2P 只有 testNoReExportChildStubs 一条", "base 的 check-modules.test:1879/1897 还有 testReExportChildStubs 与 testReExportChildStubs2 两条同族既有 case，均未入 P2P"], "note": "gold 把 module_hidden 的判定收紧，最容易误伤的正是 testReExportChildStubs / ChildStubs2 这两条'应当允许再导出'的既有用例，它们却没进 P2P。P2P 选了名字相邻的 testNoReExportChildStubs（方向相反的那条），覆盖不对称。", "by": "L1_mypy_1"},
+  "26": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["同上；另有 testNoReExportFromStubs/MemberType/MemberVar、testNoReExportNestedStub 等同族既有 case"], "note": "见 proposed_regression_tests。", "by": "L1_mypy_1"},
+  "27": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["golden_patch 只改 1 个表达式；但题面的复现是普通 .py 包，test_patch 只覆盖 stub 包"], "note": "gold 本身干净、不依赖未交付改动。存疑的是它与题面所述场景的对应关系——需要实跑题面那四个文件确认 gold 之后行为如何（题面期望无错，维护者期望两边都报错）。", "by": "L1_mypy_1"},
+  "29": {"status": "pass", "evidence_refs": ["problem_statement 无 PR/commit 链接、无修复代码"], "note": "题面无泄漏；但关键决定（方向）也只在 hints 里，属信息缺失而非泄漏。", "by": "L1_mypy_1"},
+  "6": {"status": "not_checked", "evidence_refs": [], "note": "无 stage1 记录。", "by": "L1_mypy_1"},
+  "7": {"status": "pass", "evidence_refs": ["F2P case 用 fixtures/module.pyi 与内联 [file ...]"], "note": "无外部资产。", "by": "L1_mypy_1"},
+  "11": {"status": "pass", "evidence_refs": ["case 正文无 URL"], "note": "不需要网络。", "by": "L1_mypy_1"},
+  "18": {"status": "pass", "evidence_refs": ["kcheck_all.txt：无子串过选（testReExportChildStubs3 与 testNoReExportChildStubs 都不被其它 case 名包含）"], "note": "选择无歧义。注意反方向：若把 testReExportChildStubs 当选择器，会连带选中 2 和 3。", "by": "L1_mypy_1"},
+  "19": {"status": "pass", "evidence_refs": ["本题 nodeid 带 check-modules.test 段且 base 含 DataFileCollector；python__mypy-11567 同为 version 0.920 但 base 无该类、nodeid 也不带该段"], "note": "正面证据：F2P/P2P 的 nodeid 是在各自 base 上真实收集的，不是按版本号统一拼出来的。", "by": "L1_mypy_1"},
+  "20": {"status": "not_checked", "evidence_refs": [], "note": "无 stage1。", "by": "L1_mypy_1"}
+ },
+ "issues": [
+  {"category": "requirement_contradicts_grading", "severity": "P1", "evidence_refs": ["题面 'One would expect both cases to be accepted' vs F2P 要求新增 'Module \"util\" has no attribute \"internal_detail\"' 错误", "hints_text 里维护者的结论 'the expected behaviour is an error in both cases'"], "proposed_action": "本题按现状不适合做求解任务。要改的话，必须把维护者的裁定（依 PEP 484，stub 里没有显式 `as` 再导出的名字不应可见）写进题面；否则应 reject_revision。", "next_experiment": "把题面那四个文件（普通 .py 包）在 base 与 gold 上各跑一次 mypy --strict --no-implicit-reexport，确认 gold 对题面场景的实际效果（题面期望无错、维护者期望报错——看 gold 站哪边）。"},
+  {"category": "p2p_asymmetric_coverage", "severity": "P2", "evidence_refs": ["base 已有 testReExportChildStubs（:1879）与 testReExportChildStubs2（:1897），均未入 P2P；P2P 只有方向相反的 testNoReExportChildStubs"], "proposed_action": "把 testReExportChildStubs、testReExportChildStubs2、testNoReExportFromStubs 系列、testNoReExportNestedStub 补进 P2P —— gold 收紧 module_hidden，最可能误伤的就是这几条'应当允许'的用例。", "next_experiment": "base 与 gold 各跑一次这些 case，确认双侧 PASSED 后入 P2P。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只触碰纯测试数据文件 test-data/unit/check-modules.test。", "evidence_refs": ["grading_bundles_v2_v0:python__mypy-11707 test_patch"]},
+ "proposed_regression_tests": [
+  {"id": "mypy/test/testcheck.py::TypeCheckSuite::check-modules.test::testReExportChildStubs / testReExportChildStubs2", "reason": "gold 收紧 module_hidden 判定，这两条'应当允许再导出'的既有用例是最直接的误伤对象，却未被评分。"},
+  {"id": "check-modules.test 里 testNoReExportFromStubs / MemberType / MemberVar / testNoReExportNestedStub / testNoReExportFromMissingStubs", "reason": "同一 --no-implicit-reexport 语义族。"},
+  {"id": "test-data/unit/check-flags.test 中 --no-implicit-reexport 相关 case", "reason": "该标志的开关语义。"},
+  {"id": "test-data/unit/pep561.test", "reason": "真实 stub 包的再导出行为，最贴近题面场景。"}
+ ],
+ "disposition_hint": {"state": "reject_revision", "reason": "题面明确要求'两种情形都应被接受'，F2P 要求的却是新增一条错误；决定方向的唯一依据（维护者按 PEP 484 的裁定）只存在于不可见的 hints 里。不改题面则对诚实求解者不可完成；另外题面复现（普通 .py 包）与 F2P 复现（stub 包）不是同一组文件，对应关系也需实跑确认。"},
+ "costs": {"minutes": 21}
+}

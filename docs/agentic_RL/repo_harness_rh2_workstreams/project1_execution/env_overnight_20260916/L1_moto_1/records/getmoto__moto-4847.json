@@ -1,0 +1,109 @@
+{
+ "task_id": "getmoto__moto-4847",
+ "source": "swe_gym_lite_full_f70b1a29",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "s2/ingest/public_bundles_v0.jsonl#getmoto__moto-4847",
+  "grading": "s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-4847",
+  "validation": "s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-4847",
+  "base_commit": "de559e450dd921bf7f85b0750001a6cb4f840758",
+  "version": "3.0",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-4847/",
+  "other_signals": "in_e2=[]; stage1 gold=RESOLVED_FULL(rc_install=0)"
+ },
+ "public_view": {
+  "goal": "题面：用 ValidationMethod='DNS' 申请 ACM 证书后 describe_certificate 不返回 DomainValidationOptions。题面给出期望输出的完整结构（含 ResourceRecord 的 Name/Type=CNAME/Value 与 ValidationMethod='DNS'）与实际输出。",
+  "constraints": [
+   "题面给出期望响应的字段结构（但 ResourceRecord 的具体值写作 'string' 占位）",
+   "题面的实际输出显示 base 完全没有 DomainValidationOptions 字段"
+  ],
+  "unknowns_from_public_only": [
+   "题面没提 RenewalEligibility / Options / ExtendedKeyUsages 三个字段，而 F2P 恰好断言前两个",
+   "题面没说 IMPORTED 证书（status=ISSUED）与 PENDING_VALIDATION 证书的 DomainValidationOptions 结构应当不同（F2P 断言 IMPORTED 的那条不应有 ValidationDomain）",
+   "ResourceRecord 的 Name/Value 具体取值无从得知（真实 AWS 是随机哈希）"
+  ],
+  "base_code_located": [
+   "de559e45:moto/acm/models.py:367-380 CertBundle.describe()：返回体里没有 DomainValidationOptions / RenewalEligibility / Options / ExtendedKeyUsages"
+  ],
+  "public_view_conclusion": "题面能定位到 describe() 并说明要补 DomainValidationOptions，但推不出 F2P 另外断言的 RenewalEligibility/Options，也推不出两种证书状态的结构差异。"
+ },
+ "checks": {
+  "1": {"status": "issue", "evidence_refs": ["test_patch paths = [tests/terraform-tests.success.txt, tests/test_acm/test_acm.py]", "gold paths = [moto/acm/models.py]"], "note": "test_patch 除测试文件外还改了 tests/terraform-tests.success.txt（新增一行 TestAccAWSAcmCertificateDataSource）。该文件是 terraform 兼容性清单，不是 Python 测试；见 issues 与 file_rules。目标文件在 base 均存在；无二进制/LFS/子模块材料。", "by": "L1_moto_1"},
+  "2": {"status": "pass", "evidence_refs": ["de559e45:moto/acm/models.py:367-380 describe() 无 DomainValidationOptions", "stage1:4847/empty 两条 F2P 均 FAILED"], "note": "base 确有缺陷。", "by": "L1_moto_1"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 无外链、无图片；期望/实际输出均完整", "raw.hints_text 只有维护者的流程性回复与文档链接，无技术信息"], "note": "题面自足到能定位；不足之处见 check 23。", "by": "L1_moto_1"},
+  "4": {"status": "issue", "evidence_refs": ["test_patch 触碰 tests/terraform-tests.success.txt", "de559e45:.github/workflows/build.yml:261 该文件仅被 CI 的 `bin/list-tests -i ../tests/terraform-tests.success.txt` 使用"], "note": "test_patch 里有一个非测试源码的数据清单文件。它不被 pytest 读取，只在 GitHub Actions 的 terraform 兼容性作业里使用，因此恢复它对本题判分无影响。但它证明 test_patch 的路径集合不等于“测试代码集合”，任何基于 test_patch 路径推导恢复范围的规则都要允许数据文件。additional_exclusions 仍为 []（见 file_rules）。", "by": "L1_moto_1"},
+  "5": {"status": "pass", "evidence_refs": ["本包内其余 18 题的 gold 均不触碰 moto/acm/"], "note": "无重复/派生。", "by": "L1_moto_1"},
+  "6": {"status": "pass", "evidence_refs": ["stage1:4847 gold rc_install=0"], "note": "", "by": "L1_moto_1"},
+  "7": {"status": "pass", "evidence_refs": ["tests/test_acm/test_acm.py 全部走 @mock_acm"], "note": "无外部服务。注意 tests/terraform-tests.success.txt 所描述的 terraform 作业确实需要外部环境，但它不在本题的 pytest 执行路径上。", "by": "L1_moto_1"},
+  "11": {"status": "pass", "evidence_refs": ["无权重/数据集下载"], "note": "", "by": "L1_moto_1"},
+  "17": {"status": "issue", "evidence_refs": ["同 check 4"], "note": "test_patch 触碰的路径中有 1 个非测试文件（数据清单）。混合职责风险为零（该文件与被测代码无关），但需要在规则里明确“test_patch 内的非 .py 数据文件同样被恢复且不视为解答”。", "by": "L1_moto_1"},
+  "23": {"status": "issue", "evidence_refs": ["problem_statement 的期望输出只含 CertificateArn/DomainName/SubjectAlternativeNames/DomainValidationOptions", "test_patch 断言 `resp['Certificate'].should.have.key('RenewalEligibility').equals('INELIGIBLE')` 与 `.should.have.key('Options')`", "test_patch 断言 IMPORTED 证书的 validation_option `shouldnt.have.key('ValidationDomain')`"], "note": "三处公开材料推不出：(a) RenewalEligibility 必须存在且等于 'INELIGIBLE'；(b) Options 必须存在；(c) 对 status != PENDING_VALIDATION 的证书，DomainValidationOptions[0] 只能有 DomainName 而不能有 ValidationDomain。题面完全没有涉及第二类证书。", "by": "L1_moto_1"},
+  "24": {"status": "pass", "evidence_refs": ["test_patch 不断言 ResourceRecord 的 Name/Value，也不断言 ValidationMethod"], "note": "gold 里写死的两个哈希串（`_d930b28be6c5927595552b219965053e.` 与 `_c9edd76ee4a0e2a74388032f3861cc50.ykybfrwcxw.acm-validations.aws.`）不被任何断言检验，agent 可以用自己的取值。测试不强制唯一实现。", "by": "L1_moto_1"},
+  "25": {"status": "issue", "evidence_refs": ["problem_statement 期望输出的核心是 `'ResourceRecord': {'Name': ..., 'Type': 'CNAME', 'Value': ...}` 与 `'ValidationMethod': 'DNS'`", "test_patch 的两条 F2P 都没有断言 ResourceRecord 或 ValidationMethod"], "note": "题面最核心的诉求（DNS 验证需要的 CNAME 记录）完全没有被 F2P 覆盖。一个只补 DomainName/ValidationDomain/RenewalEligibility/Options 而不给 ResourceRecord 的部分修复会被判满分，但它并没有解决提问者的问题。这是本包内“测试放过错误修复”最实质的一例。", "by": "L1_moto_1"},
+  "26": {"status": "pass", "evidence_refs": ["见 proposed_regression_tests"], "note": "", "by": "L1_moto_1"},
+  "27": {"status": "issue", "evidence_refs": ["validation.golden_patch 把 `\"Serial\": self._cert.serial_number` 改为 `\"Serial\": str(self._cert.serial_number)`", "problem_statement 未提及 Serial 的类型问题", "test_patch 不断言 Serial"], "note": "gold 夹带了一处与题面无关的改动（Serial 由整数改为字符串）。它不被任何 F2P/P2P 检验，agent 不做这一改动也能满分。作为 oracle 使用时需知 gold ⊋ 被检验行为。另外 gold 新增的 ExtendedKeyUsages 同样无断言。", "by": "L1_moto_1"},
+  "29": {"status": "pass", "evidence_refs": ["problem_statement 给出期望响应结构但不给实现代码，无 PR/commit 链接", "raw.hints_text 无技术内容"], "note": "无答案泄漏（期望输出结构属合理需求描述）。", "by": "L1_moto_1"}
+ },
+ "issues": [
+  {
+   "category": "test_patch_contains_non_test_asset",
+   "severity": "P3",
+   "evidence_refs": [
+    "grading.test_patch 的 `diff --git a/tests/terraform-tests.success.txt b/tests/terraform-tests.success.txt`（新增一行 `TestAccAWSAcmCertificateDataSource`）",
+    "de559e450dd921bf7f85b0750001a6cb4f840758:.github/workflows/build.yml:261 `bin/list-tests -i ../tests/terraform-tests.success.txt -e ../tests/terraform-tests.failures.txt > tftestlist.txt`",
+    "`git grep -l terraform-tests.success.txt` 在该 commit 下只命中 .github/workflows/build.yml"
+   ],
+   "proposed_action": "test_patch 里混入了一个 CI 用的数据清单（不是测试代码，也不被 pytest 读取）。对本题无害，但说明“test_patch 路径 = 需恢复的测试文件”这一等式在边界上不成立。建议在文件边界规则里显式说明：test_patch 触碰的所有路径（含非 .py 数据文件）都在恢复范围内且不计入解答；同时在筛查脚本里把这类路径单列出来，避免被误判为“非测试源码混入”。",
+   "next_experiment": "对全 216 题统计 test_patch 中的非 .py 路径，按扩展名分桶，确认是否存在真正会影响运行的数据文件（如 conftest 数据、fixture JSON、requirements 文件）。"
+  },
+  {
+   "category": "test_misses_core_requirement",
+   "severity": "P2",
+   "evidence_refs": [
+    "problem_statement 期望输出中的 `'ResourceRecord': {'Name': 'string', 'Type': 'CNAME', 'Value': 'string'}` 与 `'ValidationMethod': 'DNS'`",
+    "grading.test_patch 中两条 F2P 的断言只涉及 RenewalEligibility / Options / DomainValidationOptions 长度 / DomainName / ValidationDomain",
+    "validation.golden_patch 在 status == 'PENDING_VALIDATION' 分支里设置 ResourceRecord 与 ValidationMethod"
+   ],
+   "proposed_action": "题面的核心诉求是拿到 DNS 验证用的 CNAME 记录，但 F2P 一个字都没查 ResourceRecord/ValidationMethod。只补 DomainName/ValidationDomain 的部分修复可满分通过却不解决原问题 —— 训练信号与题面目标脱节。建议给 F2P 补两条断言：PENDING_VALIDATION 证书的 validation_option 必须含 ResourceRecord（且 Type == 'CNAME'）与 ValidationMethod == 'DNS'。",
+   "next_experiment": "构造只补 DomainName/ValidationDomain/RenewalEligibility/Options 的 patch，跑本题 F2P+P2P，确认被判 RESOLVED_FULL。"
+  },
+  {
+   "category": "requirement_insufficiency",
+   "severity": "P2",
+   "evidence_refs": [
+    "problem_statement 未提 RenewalEligibility / Options",
+    "test_patch `resp[\"Certificate\"].should.have.key(\"RenewalEligibility\").equals(\"INELIGIBLE\")` 与 `.should.have.key(\"Options\")`",
+    "test_patch 对 IMPORTED 证书断言 `validation_option.shouldnt.have.key(\"ValidationDomain\")`"
+   ],
+   "proposed_action": "F2P 要求的三件事在题面里没有任何线索：RenewalEligibility 的确切取值 'INELIGIBLE'、Options 字段的存在、以及非 PENDING 证书不得有 ValidationDomain。建议在题面补一句“describe_certificate 还应返回 AWS 文档里的 RenewalEligibility 与 Options 字段，且只有待验证的证书才带验证明细”。",
+   "next_experiment": "与 6470 的题面补全实验合并，同批给基线模型跑对照 rollout。"
+  },
+  {
+   "category": "gold_unrelated_change",
+   "severity": "P3",
+   "evidence_refs": [
+    "validation.golden_patch 的 `-\"Serial\": self._cert.serial_number` / `+\"Serial\": str(self._cert.serial_number)`",
+    "grading.test_patch 无任何 Serial 断言"
+   ],
+   "proposed_action": "gold 夹带了 Serial 类型转换与 ExtendedKeyUsages 字段，两者都与题面无关且无断言覆盖。用 gold 做“标准答案相似度”评估时会对不做这些改动的正确解答产生系统性低估。建议在 oracle 比较时按“被 F2P 检验的行为”而非“与 gold 的文本差异”打分。",
+   "next_experiment": "无需单独实验；在 gold-vs-candidate 打分方案里登记这类题。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 触碰 tests/test_acm/test_acm.py（纯测试文件）与 tests/terraform-tests.success.txt（CI 数据清单，不被 pytest 读取）；gold 只触碰 moto/acm/models.py，二者不重叠。两个 test_patch 路径都应被恢复且不计入解答，按第四组 B 的默认（额外排除为空）即可，无需追加排除。",
+  "evidence_refs": ["grading.test_patch", "validation.golden_patch", "de559e45:.github/workflows/build.yml:261", "docs/.../batch4_scoring_20260910/README.md §0/§6.5"]
+ },
+ "proposed_regression_tests": [
+  {"id": "tests/test_acm/test_acm.py::test_import_certificate", "reason": "IMPORTED 证书路径，describe() 的另一分支（gold 按 status 分叉，最易顾此失彼）"},
+  {"id": "tests/test_acm/test_acm.py::test_request_certificate_with_optional_arguments", "reason": "带 SAN 的申请路径，DomainValidationOptions 的长度断言在多域名时是边界"},
+  {"id": "tests/test_acm/test_acm.py::test_list_certificates", "reason": "list 路径复用同一 CertBundle 结构，字段新增可能改变序列化"},
+  {"id": "tests/test_acm/test_acm.py::test_resend_validation_email", "reason": "EMAIL 验证方式的对照分支，确认 DNS 专有字段不会误加到 EMAIL 证书上"},
+  {"id": "建议新增：PENDING_VALIDATION 证书的 ResourceRecord.Type == 'CNAME' 与 ValidationMethod == 'DNS'", "reason": "补上题面核心诉求的断言，堵住 check 25 指出的部分修复"}
+ ],
+ "disposition_hint": {
+  "state": "needs_review",
+  "reason": "运行面健康（gold=RESOLVED_FULL、rc_install=0、base 确有缺陷、边界实质干净）。保留意见集中在判分口径：F2P 不查题面核心的 ResourceRecord/ValidationMethod（部分修复可满分），同时又要求题面从未提及的 RenewalEligibility/Options。建议补断言与补题面后入集；不补也能跑，但训练信号与题面目标不一致。"
+ },
+ "costs": {"minutes": 25}
+}

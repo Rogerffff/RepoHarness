@@ -1,0 +1,72 @@
+{
+ "task_id": "modin-project__modin-5940",
+ "source": "SWE-Gym lite (s2 ingest v0)",
+ "task_revision": "upstream",
+ "materials_refs": [
+  "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/{public,grading_bundles_v2,validation}_*_v0.jsonl",
+  "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl",
+  "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/modin-project__modin-5940/{gold,empty}/offline/a1/",
+  "runs/env_overnight_20260916/repos/modin@e1d42410c3900f93be420303e745de29c1e6bda1"
+ ],
+ "public_view": {
+  "goal": "把 sqlalchemy 的连接/引擎对象传给 DataFrame.to_sql 时报 can not pickle 'sqlalchemy.cprocessors.UnicodeResultProcessor' object；pandas 同样代码可用。",
+  "constraints_from_statement": [
+   "题面是 2022 年的用户 bug 报告（modin 0.12.1、Windows Server、mssql+pymssql），没有 traceback、没有文件名/行号。",
+   "唯一可用线索：modin 把 to_sql 的工作分发到 worker 时要 pickle con 对象，而 sqlalchemy 的 Engine/Connection 不可 pickle。"
+  ],
+  "unknowns_from_public_only": [
+   "修复点在哪个文件 —— 题面完全没给（真正的修复点是 modin/core/io/sql/sql_dispatcher.py 的 write）。",
+   "Connection（engine.connect() 的结果）是否也要支持 —— 题面只提 create_engine 的 Engine。",
+   "对既不是 str 也不是 sqlalchemy 对象的 con（例如 sqlite3.Connection、DBAPI 连接）该怎么办 —— 题面完全没提，但 gold 为此新增了 base_io.to_sql 兜底分支。",
+   "报错环境是 modin 0.12.1 + mssql，评测环境是 0.23 + sqlite，差异未说明。"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["modin@e1d42410:modin/core/io/sql/sql_dispatcher.py L110-140", "modin@e1d42410:modin/pandas/test/test_io.py L2344 与 L49（import sqlalchemy as sa）"], "note": "gold 与 test_patch 的目标文件在 base 都存在；test_patch 新增的 sa.create_engine 依赖的 import sqlalchemy as sa 在 base L49 已有，test_patch 不需要补 import。", "by": "L1_modin_pandas"},
+  "2": {"status": "pass", "evidence_refs": ["validation.golden_patch（base 侧 write 直接 empty_df.to_sql(**kwargs) 并把 con 分发给 worker）", "stage1 empty/status_map.json: 4 个 F2P 全 FAILED"], "note": "base 的 write 对 con 不做任何类型分流，Engine/Connection 会被直接带进分区函数；empty 侧 4 个 F2P 全 FAILED。", "by": "L1_modin_pandas"},
+  "3": {"status": "issue", "evidence_refs": ["public_bundles_v0.jsonl problem_statement（706 字符级别的纯文字报告）", "raw hints_text（5540 字符，含完整 traceback 与可跑复现）"], "note": "题面没有 traceback、没有文件名行号；关键诊断信息全在 hints_text 里（维护者给出的 postgres 复现 + 从 modin/pandas/base.py to_sql 一路到 pandas_on_ray/io/io.py 的完整调用栈）。hints 不可见 ⇒ agent 只能从 can not pickle 这句话自己去找 sql_dispatcher。题面无图片、无外链、无截断。", "by": "L1_modin_pandas"},
+  "4": {"status": "pass", "evidence_refs": ["grading.test_patch"], "note": "test_patch 只触碰 modin/pandas/test/test_io.py。", "by": "L1_modin_pandas"},
+  "17": {"status": "pass", "evidence_refs": ["validation.golden_patch"], "note": "gold 只触碰 modin/core/io/sql/sql_dispatcher.py；additional_exclusions 保持空。", "by": "L1_modin_pandas"},
+  "5": {"status": "issue", "evidence_refs": ["prescan.json"], "note": "与 modin-6937 共用整份 modin/pandas/test/test_io.py，127 个截断键与大量 P2P 完全重叠，两题各需 21–23 分钟评测。不是同一 PR/修复，但预算上高度重复。", "by": "L1_modin_pandas"},
+  "23": {"status": "issue", "evidence_refs": ["public_bundles_v0.jsonl problem_statement", "grading.test_patch", "validation.golden_patch"], "note": "F2P 的 4 条覆盖 conn_type ∈ {sqlalchemy, sqlalchemy+connect} × index ∈ {False, True}。题面只提 create_engine 得到的 Engine，没提 Connection；gold 还额外加了『con 既不是 str 也不是受支持 sqlalchemy 对象就整体退回 base_io.to_sql』的分支，这条行为题面与 F2P 都没要求，属于 gold 超出题面。", "by": "L1_modin_pandas"},
+  "24": {"status": "pass", "evidence_refs": ["grading.test_patch"], "note": "F2P 只比较 modin 与 pandas 通过 read_sql 读回的结果，不引用 gold 新增的 _is_supported_sqlalchemy_object 这个名字，也不检查 con 被转成 URL 字符串这个中间形态。把 con 转成 str(engine.url)、或改用 ModinDatabaseConnection 包装、或整条走 base_io，都能过。", "by": "L1_modin_pandas"},
+  "25": {"status": "pass", "evidence_refs": ["grading.test_patch"], "note": "题面原例（Engine）与 Connection 变体都在 F2P 里，且 conn_type='str' 的两条留在 P2P 保护原有行为。对『只支持 Engine 不支持 Connection』和『把 str 路径一起改坏』这两类部分修复都有拦截。", "by": "L1_modin_pandas"},
+  "26": {"status": "pass", "evidence_refs": ["modin@e1d42410"], "note": "见 proposed_regression_tests。", "by": "L1_modin_pandas"},
+  "27": {"status": "issue", "evidence_refs": ["validation.golden_patch"], "note": "gold 的两处改动里，把不受支持的 con 整体退回 cls.base_io.to_sql 这一条超出题面范围（题面只讲 sqlalchemy 对象不可 pickle），属于顺带的行为扩展；F2P 不检查它。gold 本身自洽、不依赖未交付改动。另外 _is_supported_sqlalchemy_object 在 write 里被调用两次（一次在 not ... and not ... 里，一次在紧接着的 if 里），逻辑上第二次恒为真，属可读性瑕疵。", "by": "L1_modin_pandas"},
+  "29": {"status": "pass", "evidence_refs": ["leak.json"], "note": "题面不含 gold 新增代码、不指向上游 PR/commit。hints_text 有维护者复现但没有给出修复代码。", "by": "L1_modin_pandas"},
+  "6": {"status": "issue", "evidence_refs": ["stage1 gold/offline/a1/eval.sh", "stage1 gold/offline/a1/test_output.txt: 6 failed, 2640 passed, 122 skipped, 317 xfailed, 2 errors in 1371.47s (0:22:51)"], "note": "install 3.4 秒；测试段 1379 秒（22:51），本包最贵的一题。其中 2 个 to_parquet_s3 用例 ERROR（moto server 起不来，各重试 50 次）。", "by": "L1_modin_pandas"},
+  "7": {"status": "issue", "evidence_refs": ["modin@e1d42410:modin/pandas/test/test_io.py L1635-1656（s3://modin-datasets/...）", "modin@e1d42410:modin/conftest.py L620-745（本地 moto server，只建 modin-test 桶）", "stage1 gold/offline/a1/test_output.txt: Cannot connect to host modin-datasets.s3.amazonaws.com:443"], "note": "P2P 里有 19 条 *_s3 用例，分两类：(a) test_read_parquet_s3* 直连真实公共桶 s3://modin-datasets（需要外网 DNS + AWS）；(b) test_read_{json,fwf,feather}_s3 走 conftest 用 subprocess 起的本地 moto server（端口 5000 或 555<worker_id>，只建 modin-test 桶）。两类都不是自足环境。", "by": "L1_modin_pandas"},
+  "11": {"status": "issue", "evidence_refs": ["runs/env_overnight_20260916/L1_modin_pandas/collide_detail.json"], "note": "1935 个常量对应 2640 个运行时测试；127 个截断键吞掉 705 个额外 ID（最大一组 108 个，test_to_csv[None-New）。无反斜杠层级问题。", "by": "L1_modin_pandas"}
+ },
+ "issues": [
+  {"category": "network_dependent_p2p", "severity": "P1",
+   "evidence_refs": ["stage1 gold/offline/a1/test_output.txt: FAILED TestParquet::test_read_parquet_s3[object-pyarrow] -> aiohttp ClientConnectorError: Cannot connect to host modin-datasets.s3.amazonaws.com:443 [Temporary failure in name resolution]", "grading.pass_to_pass 里 19 条 *_s3"],
+   "note": "test_read_parquet_s3[object-pyarrow] 在 gold 与 empty 两侧都 FAILED（离线跑不通真实 AWS），且它在 P2P 里 ⇒ gold 恒判 RESOLVED_NO。这是 stage1 gold 非 FULL 的直接原因（f2p_missing=0、p2p_missing=0，只有这一条 p2p_notpass）。",
+   "proposed_action": "把 19 条 *_s3 从 P2P 里剔除（或至少剔除 test_read_parquet_s3* 与 test_read_parquet_s3_with_column_partitioning*），写进 task_revision；同时在 eval_cmd 上 -k 'not s3' 省掉 moto 的 50 次重试。",
+   "next_experiment": "真机上分别在有网/无网两种条件下跑 -k 's3'，记录 19 条的判定差异，确认剔除范围。"},
+  {"category": "vacuous_pass", "severity": "P1",
+   "evidence_refs": ["modin@e1d42410:modin/pandas/test/utils.py eval_general L896-913", "stage1 gold/offline/a1/test_output.txt: PASSED test_read_parquet_s3[directory-pyarrow] 等 18 条"],
+   "note": "eval_general 的语义是：pandas 抛异常时，只要 modin 抛出同类型异常就算通过（assert isinstance(md_e.value, type(pd_e))）。离线时 18 条走 eval_io 的 s3 用例两侧都因网络失败而抛同类型异常，于是『通过』——这是空洞通过，不代表功能正确。同一机制适用于 modin 里所有基于 eval_io/eval_general 的 P2P：环境坏掉时它们会集体变成无信息的 PASSED，掩盖真实回归。",
+   "proposed_action": "对 modin 题在准入时标注哪些 P2P 走 eval_general 的异常对齐分支；或在评分前用一次 base 基线跑确认这些用例走的是『两侧都成功』而不是『两侧都失败』。",
+   "next_experiment": "真机上在 base 跑 -k 's3' 并保留 -rA 与完整 stdout，统计有多少条是靠异常对齐通过的。"},
+  {"category": "reference_id_truncation", "severity": "P1",
+   "evidence_refs": ["runs/env_overnight_20260916/L1_modin_pandas/collide_detail.json"],
+   "note": "127 个 P2P 键各代表多个运行时测试（最大 108 个）。与 modin-6937 完全同一批键（同一测试文件）。",
+   "proposed_action": "同 6937：改用 junitxml/json 报告取 ID。",
+   "next_experiment": "与 6937 合并做一次。"},
+  {"category": "requirement_insufficient", "severity": "P2",
+   "evidence_refs": ["public_bundles_v0.jsonl problem_statement", "raw hints_text"],
+   "note": "题面没有 traceback 也没有文件指针，关键定位信息只在不可见的 hints 里；且 F2P 要求支持 Connection，题面只提 Engine。",
+   "proposed_action": "把 hints 里维护者给的 traceback（去掉 PR/commit 指针）并入题面，并补一句『Engine 与 Connection 都要支持』。",
+   "next_experiment": "无需跑；题面改写决定。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只在 modin/pandas/test/，gold 只在 modin/core/io/sql/，不交叉；沿用默认空集。19 条 s3 P2P 的问题属于 P2P 选取而不是文件边界，不用 additional_exclusions 解决。", "evidence_refs": ["grading.test_patch", "validation.golden_patch"]},
+ "proposed_regression_tests": [
+  {"id": "modin/pandas/test/test_io.py::TestSql::test_read_sql", "reason": "同一 sql_dispatcher 的读侧，gold 新增的类型判断在 _read 同文件，读写要一起回归。"},
+  {"id": "modin/pandas/test/test_io.py::TestSql::test_read_sql_with_chunksize", "reason": "分块路径同样把 con 传给 worker，是 pickle 问题的同族场景。"},
+  {"id": "modin/pandas/test/test_io.py::TestSql::test_to_sql[str-False]", "reason": "原有的字符串 con 路径，直接验证 gold 的新分支没有把它改坏（已在 P2P，建议显式列出）。"},
+  {"id": "modin/experimental/pandas/test/test_io_exp.py", "reason": "experimental 的 read_sql/to_sql 走同一 dispatcher 家族，覆盖另一条调用者路径。"}
+ ],
+ "disposition_hint": {"state": "needs_repair", "reason": "P2P 里 19 条 s3 用例要么依赖真实 AWS（其中 1 条离线必挂，直接导致 gold 恒判 RESOLVED_NO），要么依赖本地 moto server；另有 18 条靠 eval_general 的异常对齐空洞通过。P2P 必须先做清洗，否则本题在 RL 里恒定 0 奖励且信号不可信。"},
+ "costs": {"minutes": 34}
+}

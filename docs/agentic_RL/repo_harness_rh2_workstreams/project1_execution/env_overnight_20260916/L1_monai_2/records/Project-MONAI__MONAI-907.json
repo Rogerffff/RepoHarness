@@ -1,0 +1,235 @@
+{
+ "task_id": "swe_gym_lite::Project-MONAI__MONAI-907",
+ "instance_id": "Project-MONAI__MONAI-907",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_monai_2 (Claude Opus 5, 静态审查)",
+ "materials_refs": {
+  "base_commit": "f2ea6fa7a75acc235037e91611638be6bf34188a",
+  "version": "0.2",
+  "python_version": "3.8",
+  "eval_cmd": "pytest -rA  tests/test_sliding_window_inference.py（整文件跑）",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/Project-MONAI__MONAI-907/{gold,empty}/offline/a1/",
+  "created_at": "2020-08-18"
+ },
+ "public_view": {
+  "目标行为": "`sliding_window_inference()` 在 `roi_size=(M,N,1)` 时输出 NaN。题面指出根因链：`scan_interval` 在该维算成 0（`int(1*(1-overlap))==0`），`dense_patch_slices` 于是只生成 30 个切片而不是 30*450，部分体素从未被覆盖。",
+  "约束": "题面直接点到 `_get_scan_interval` 的计算式与 `dense_patch_slices` 的调用。",
+  "公开材料无法确定的点": [
+   "interval 为 0 时该取 1 还是取 roi_size",
+   "是否要同时校验 image_size/roi_size 维度（题面未提）",
+   "其它 overlap 取值下是否也会出现 0"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.test_patch tests/test_sliding_window_inference.py",
+    "validation.golden_patch monai/inferers/utils.py:164-185"
+   ],
+   "note": "题面指的 `sliding_window_inference`/`_get_scan_interval` 就是 gold 目标，base 存在。无二进制/LFS/子模块材料。",
+   "by": "L1_monai_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base f2ea6fa7 monai/inferers/utils.py `scan_interval.append(int(roi_size[i] * (1 - overlap)))` 无下界",
+    "stage1 empty: test_sliding_window_default_9 FAILED"
+   ],
+   "note": "初态确实含题面缺陷：roi_size[i]=1、overlap=0.25 时 `int(0.75)==0`。",
+   "by": "L1_monai_2"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "public.problem_statement 531 字符"
+   ],
+   "note": "渲染完整、无外链无图片无截断；hints_text 为空。题面短但信息密度高，直接给出会触发问题的参数组合与中间量。",
+   "by": "L1_monai_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.test_patch 只触碰 tests/test_sliding_window_inference.py"
+   ],
+   "note": "纯测试文件；gold 只碰 monai/inferers/utils.py。additional_exclusions 保持空。",
+   "by": "L1_monai_2"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh setup 段"
+   ],
+   "note": "恢复清单只有一个纯测试文件。",
+   "by": "L1_monai_2"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "scan/monai_cross_index.txt"
+   ],
+   "note": "P3：与 **MONAI-763**（L1_monai_1 的题，2020-07-15）同测试文件 tests/test_sliding_window_inference.py，但 gold 文件不同（763 改 monai/data/utils.py）。763 的 base 早于本题，本题 base 已含 763 的修复。建议同侧划分。",
+   "by": "L1_monai_2"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "public.problem_statement 的 scan_interval=(72,72,0) 与 len(slices)=30"
+   ],
+   "note": "要求可由公开材料推出：题面已经把『某维 scan_interval 为 0』这个中间量摆出来了。F2P 的 TEST_CASE_9 `roi_shape=(4,1,7)` 正是题面 (M,N,1) 的同型最小化。",
+   "by": "L1_monai_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只断言 result 全等于 2（输入全 1、compute 为 +1）与 device.type"
+   ],
+   "note": "不锁实现。`max(1, int(...))`、`interval or 1`、或在 `dense_patch_slices` 里兜底，都能通过。",
+   "by": "L1_monai_2"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "grading.fail_to_pass 只有 1 条；gold 的第二处改动（assert → raise ValueError）无任何测试"
+   ],
+   "note": "P2：(a) 只验 `roi=(4,1,7)`、`overlap=0.25` 一个组合，其它会算出 0 的组合（如 roi=2、overlap=0.75）未覆盖；(b) gold 把两个 `assert` 换成 `raise ValueError` 的改动**零覆盖**，而这是对外异常类型的变化（`assert` 在 `python -O` 下会被剥离，`ValueError` 不会），调用者若 catch AssertionError 会被破坏。",
+   "by": "L1_monai_2"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.pass_to_pass 9 条 = 整文件其余用例"
+   ],
+   "note": "P2P 等于整文件通过集，覆盖 2D/3D、大小 roi、constant/gaussian 两种 blending、overlap 0.25/0.5，对『把 scan_interval 整体改坏』有实质判别力。注意其中 `test_sliding_window_default_8` 是 test_patch **新启用**的用例（TEST_CASE_8 在 base 已定义但没进 expand 列表），它在 base 也通过，因此合法地进了 P2P。",
+   "by": "L1_monai_2"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "validation.golden_patch 除 interval 下界外，还把 2 个 assert 改成 raise ValueError 并新增 docstring"
+   ],
+   "note": "P3：gold 含与题面无关的附带改动（异常类型变更 + docstring）。不影响本题正确性，但按 check 27 应记录：参考解不是最小改动，且这处改动没有任何测试。",
+   "by": "L1_monai_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "public.problem_statement 全文；raw.hints_text 长度 0"
+   ],
+   "note": "题面不含修复代码与 PR/commit 链接。",
+   "by": "L1_monai_2"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 install rc=0（两侧）"
+   ],
+   "note": "离线镜像内 rc=0。版本 0.2（2020 年）是本包最老的题。",
+   "by": "L1_monai_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "scan/envscan.txt：tests/test_sliding_window_inference.py 只有 GPU 命中"
+   ],
+   "note": "输入用 torch.ones 现场构造，无权重、无外部数据。",
+   "by": "L1_monai_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "scan/envscan.txt"
+   ],
+   "note": "不需要网络。",
+   "by": "L1_monai_2"
+  },
+  "13": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 gold test 段 6.3s / 10 passed"
+   ],
+   "note": "最大输入 (1,3,16,15,7)，无多进程、无 shm 需求。本包最快的题之一。",
+   "by": "L1_monai_2"
+  },
+  "14": {
+   "status": "issue",
+   "evidence_refs": [
+    "base tests/test_sliding_window_inference.py:36-43 TEST_CASE_8 用 torch.device(\"cuda:0\")",
+    "同文件 test 体内 `if device.type == \"cuda\" and not torch.cuda.is_available(): device = torch.device(\"cpu:0\")`"
+   ],
+   "note": "P3：`test_sliding_window_default_8` 在 CPU 机上会**静默降级成 CPU**，与 `test_sliding_window_default_7` 完全等价（参数只差 device）；在有 GPU 的机器上它才真正跑 GPU 并断言 `result.device.type == \"cuda\"`。参数列表长度固定为 10（不随 CUDA 变化），所以 ID 本身稳定——这是本包里少数不受 `parameterized` 位宽问题影响的题。",
+   "by": "L1_monai_2"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 gold status_map.json 10 条，与 F2P+P2P 一一对应"
+   ],
+   "note": "无 SKIPPED，无伪键。",
+   "by": "L1_monai_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "gold 附带未覆盖的行为变更",
+   "severity": "P2",
+   "evidence_refs": [
+    "assert → raise ValueError 两处，无测试"
+   ],
+   "proposed_action": "补两条维度不匹配时抛 ValueError 的用例；或在修订版里把这处改动剥离出本题。",
+   "next_experiment": "用 `_get_scan_interval(image_size=(1,2), roi_size=(1,2,3), num_spatial_dims=3, overlap=0.25)` 在 base/gold 上各调一次，比较异常类型。"
+  },
+  {
+   "category": "F2P 单点覆盖",
+   "severity": "P2",
+   "evidence_refs": [
+    "只验 roi=(4,1,7)、overlap=0.25"
+   ],
+   "proposed_action": "补 overlap=0.75 且 roi_size=2（interval 同样为 0）的用例，确认修法不是只对 roi==1 生效。",
+   "next_experiment": "构造该组合在 base/gold 各跑一次。"
+  },
+  {
+   "category": "GPU 用例在 CPU 机上静默降级",
+   "severity": "P3",
+   "evidence_refs": [
+    "TEST_CASE_8 的 cuda:0 + 体内降级分支"
+   ],
+   "proposed_action": "记入题级 facts：`test_sliding_window_default_8` 在无 CUDA 机器上等价于 _7，不提供额外覆盖。",
+   "next_experiment": "无。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰纯测试文件；gold 不碰测试样路径。",
+  "evidence_refs": [
+   "grading.test_patch",
+   "validation.golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/test_inferers.py（SlidingWindowInferer 封装）",
+   "reason": "_get_scan_interval 的上层调用者。"
+  },
+  {
+   "id": "tests/test_dense_patch_slices.py",
+   "reason": "题面里直接点名的下游函数，scan_interval 的消费者。"
+  },
+  {
+   "id": "新增：维度不匹配抛 ValueError 的用例",
+   "reason": "gold 的第二处改动零覆盖。"
+  },
+  {
+   "id": "tests/test_integration_sliding_window.py",
+   "reason": "端到端推理路径，能检出覆盖不全导致的 NaN。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "题面短而准（直接给出 scan_interval=0 这个中间量）、F2P 与题面同型、P2P 等于整文件通过集且覆盖多种 blending/overlap；已知缺口（gold 的 assert→ValueError 无覆盖、F2P 单点）不影响判分正确性。"
+ },
+ "costs": {
+  "minutes": 18
+ }
+}

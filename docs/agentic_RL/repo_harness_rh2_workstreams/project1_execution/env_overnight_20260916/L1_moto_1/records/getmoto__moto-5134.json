@@ -1,0 +1,77 @@
+{
+ "task_id": "getmoto__moto-5134",
+ "source": "swe_gym_lite_full_f70b1a29",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "s2/ingest/public_bundles_v0.jsonl#getmoto__moto-5134",
+  "grading": "s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-5134",
+  "validation": "s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-5134",
+  "base_commit": "0e3ac260682f3354912fe552c61d9b3e590903b8",
+  "version": "3.1",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5134/",
+  "other_signals": "in_e2=[]; stage1 gold=RESOLVED_FULL(rc_install=0)"
+ },
+ "public_view": {
+  "goal": "题面：EventBridge 的 `{\"exists\": true}` 过滤器在字段值为 null 时不匹配，而真实 AWS 会匹配。期望 moto 与 AWS 一致。",
+  "constraints": [
+   "题面给出两个完整的 unittest 用例（一个打真实 AWS 作为对照，一个打 moto），并附带完整的断言差异输出",
+   "题面明确区分了“字段不存在”与“字段存在但值为 null”两种情形（这是本题的核心）"
+  ],
+  "unknowns_from_public_only": [
+   "题面没说 `{\"exists\": false}` 在值为 null 时应当如何（F2P 断言它不匹配）；但由 exists:true 的语义可对称推出",
+   "题面没说实现手段（哨兵对象 vs `k in event` 判断），但这属于实现自由度而非缺失需求"
+  ],
+  "base_code_located": [
+   "0e3ac260:moto/events/models.py:830 `items_and_filters = [(event.get(k), v) for k, v in pattern.items()]` —— 缺失字段与值为 None 的字段被折叠成同一种情况",
+   "0e3ac260:moto/events/models.py:859 `leaf_exists = is_leaf_node and item is not None`"
+  ],
+  "public_view_conclusion": "公开材料非常充分：题面自带 AWS 对照用例，且把“不存在”与“值为 null”的区别讲清楚了，足以推出正确语义与修法方向。"
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 改 tests/test_events/test_event_pattern.py 与 tests/test_events/test_events_integration.py（base 均存在）", "gold 只改 moto/events/models.py（base 存在）"], "note": "目标文件均在 base 存在；与题面同一问题；无二进制/LFS/子模块材料。", "by": "L1_moto_1"},
+  "2": {"status": "pass", "evidence_refs": ["0e3ac260:moto/events/models.py:830 与 :859", "stage1:5134/empty 两条 F2P 均 FAILED"], "note": "base 确有缺陷。", "by": "L1_moto_1"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 含完整代码与断言输出，无外链、无图片、无截断", "raw.hints_text 只有致谢"], "note": "题面自足。", "by": "L1_moto_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch paths = [tests/test_events/test_event_pattern.py, tests/test_events/test_events_integration.py]", "gold paths = [moto/events/models.py]"], "note": "test_patch 只触碰两个纯测试文件；gold 不触碰测试样路径。additional_exclusions = []。", "by": "L1_moto_1"},
+  "5": {"status": "pass", "evidence_refs": ["本包内其余 18 题的 gold 均不触碰 moto/events/"], "note": "无重复/派生。", "by": "L1_moto_1"},
+  "6": {"status": "pass", "evidence_refs": ["stage1:5134 gold rc_install=0"], "note": "", "by": "L1_moto_1"},
+  "7": {"status": "pass", "evidence_refs": ["集成用例用 @mock_events + @mock_logs，均为进程内 mock"], "note": "无外部服务。注意题面里的第一个用例是直连真实 AWS 的对照用例，但它没有被纳入 test_patch，所以不会带来外网依赖。", "by": "L1_moto_1"},
+  "11": {"status": "pass", "evidence_refs": ["无权重/数据集下载"], "note": "", "by": "L1_moto_1"},
+  "17": {"status": "pass", "evidence_refs": ["同 check 4"], "note": "additional_exclusions = []。", "by": "L1_moto_1"},
+  "23": {"status": "pass", "evidence_refs": ["problem_statement 的两个对照用例与 F2P 的断言一一对应"], "note": "要求充分且一致；exists:false 的对称断言虽未在题面明写，但可由 exists:true 的语义直接推出。", "by": "L1_moto_1"},
+  "24": {"status": "pass", "evidence_refs": ["test_patch 只调用 EventPattern.load(...).matches_event(...) 并断言布尔结果", "gold 新增的模块级 UNDEFINED 哨兵不被任何断言引用"], "note": "不强制唯一实现。替代写法（在 _does_event_match 里判 `k in event`、或用字符串哨兵、或把 items_and_filters 改成三元组带 present 标志）都能通过。", "by": "L1_moto_1"},
+  "25": {"status": "pass", "evidence_refs": ["test_patch 保留了 `assert not foo_exists.matches_event({\"detail\": {}})` 与 `assert foo_not_exists.matches_event({\"detail\": {}})`", "新增 `assert foo_exists.matches_event({\"detail\": {\"foo\": None}})` 与 `assert not foo_not_exists.matches_event({\"detail\": {\"foo\": None}})`"], "note": "正反四象限都查：字段缺失/字段为 null × exists True/False。把 leaf_exists 直接改成 `is_leaf_node`（去掉 None 判断）这种最省事的错误修法会被“字段缺失时不应匹配”的断言拦住。本包内 F2P 设计最严谨的一题。", "by": "L1_moto_1"},
+  "26": {"status": "pass", "evidence_refs": ["见 proposed_regression_tests"], "note": "", "by": "L1_moto_1"},
+  "27": {"status": "pass", "evidence_refs": ["validation.golden_patch 只改 _does_event_match 与 _does_item_match_named_filter 各一行，外加哨兵定义"], "note": "gold 正确、最小、相关，不依赖未交付改动。", "by": "L1_moto_1"},
+  "29": {"status": "pass", "evidence_refs": ["problem_statement 无修复代码、无 PR/commit 链接"], "note": "无泄漏。", "by": "L1_moto_1"}
+ },
+ "issues": [
+  {
+   "category": "grading_materials/fragile_test_id",
+   "severity": "P2",
+   "evidence_refs": [
+    "grading.pass_to_pass 含 `tests/test_events/test_event_pattern.py::test_event_pattern_dump[{\"source\":`（方括号未闭合）",
+    "runs/env_probe_stage1_20260910/.../getmoto__moto-5134/gold/offline/a1/test_output.txt:877 `PASSED tests/test_events/test_event_pattern.py::test_event_pattern_dump[{\"source\": [\"foo\", \"bar\"]}-{\"source\": [\"foo\", \"bar\"]}]`",
+    "同目录 status_map.json 的键同样是截断形式 `...test_event_pattern_dump[{\"source\":`，因而当前能匹配上"
+   ],
+   "proposed_action": "参数化 ID 里嵌了带空格的 JSON，被按空白截断成 `[{\"source\":`。本题只有一个这样的参数，未发生碰撞；但这是碰撞风险最直观的例子 —— 只要该参数化再加一个以 `{\"source\":` 开头的 JSON，两条就会塌成同一个键，dict 只保留最后一条，一条失败就可能被另一条的 PASSED 覆盖。与 5701/5417/5545 同属一类，应在匹配层与解析层一起修（解析锚定到短摘要区并保留整行 nodeid）。",
+   "next_experiment": "用本题的 test_output.txt 作夹具，验证新解析器能否还原出完整 ID `...dump[{\"source\": [\"foo\", \"bar\"]}-{\"source\": [\"foo\", \"bar\"]}]`；再人造一个双 JSON 参数化验证碰撞。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 tests/test_events/test_event_pattern.py 与 tests/test_events/test_events_integration.py（均为纯测试文件），gold 只触碰 moto/events/models.py，二者不重叠。按第四组 B 默认空即可。",
+  "evidence_refs": ["grading.test_patch", "validation.golden_patch", "docs/.../batch4_scoring_20260910/README.md §0/§6.5"]
+ },
+ "proposed_regression_tests": [
+  {"id": "tests/test_events/test_event_pattern.py::test_event_pattern_with_nested_event_filter", "reason": "嵌套 pattern 走 _does_event_match 的递归分支，gold 改的正是该函数的入参构造"},
+  {"id": "tests/test_events/test_event_pattern.py::test_event_pattern_with_prefix_event_filter", "reason": "同一 _does_item_match_named_filter 的相邻分支"},
+  {"id": "tests/test_events/test_event_pattern.py::test_event_pattern_with_single_numeric_event_filter", "reason": "numeric 分支同样接收 item，哨兵值若泄漏到该分支会报错"},
+  {"id": "tests/test_events/test_events.py 中 put_rule/list_rule_names_by_target 的 pattern 用例", "reason": "EventPattern 的另一组调用者（不在本题 P2P 内）"},
+  {"id": "建议新增：pattern 里字段值为 null 且使用 prefix/numeric 过滤器", "reason": "确认 UNDEFINED 哨兵不会被误当成普通值传入其它过滤器分支"}
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "本包内综合质量最好的题：题面自带 AWS 对照用例且把核心区别讲清、base 确有缺陷、gold 最小且优雅、F2P 正反四象限都查、边界干净、gold=RESOLVED_FULL 且 rc_install=0。唯一问题是 P2P 里一条参数化 ID 被截断（当前靠解析器同款截断侥幸匹配），属全局性材料问题而非本题特有。"
+ },
+ "costs": {"minutes": 17}
+}

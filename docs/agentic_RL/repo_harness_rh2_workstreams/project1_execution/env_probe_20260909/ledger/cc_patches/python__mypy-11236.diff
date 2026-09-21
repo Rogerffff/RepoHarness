@@ -1,0 +1,67 @@
+diff --git a/mypy/checkexpr.py b/mypy/checkexpr.py
+index 280e9a35d..232606d15 100644
+--- a/mypy/checkexpr.py
++++ b/mypy/checkexpr.py
+@@ -3309,10 +3309,25 @@ class ExpressionChecker(ExpressionVisitor[Type]):
+                                  is_named_instance(t, 'builtins.tuple')]
+             if len(tuples_in_context) == 1:
+                 type_context = tuples_in_context[0]
+-            else:
+-                # There are either no relevant tuples in the Union, or there is
+-                # more than one.  Either way, we can't decide on a context.
+-                pass
++            elif len(tuples_in_context) > 1:
++                # There are multiple relevant tuples in the Union. Use the union
++                # of the item types as the type context for each item. This
++                # allows inferring more precise types for literals, for example
++                # in Union[Tuple[str], Tuple[Literal[1]]].
++                type_context_items = []
++                for i in range(len(e.items)):
++                    item_types = []
++                    for t in tuples_in_context:
++                        t = get_proper_type(t)
++                        if isinstance(t, TupleType):
++                            item_types.append(t.items[i])
++                        else:
++                            assert isinstance(t, Instance)
++                            if t.args:
++                                item_types.append(t.args[0])
++                            else:
++                                item_types.append(AnyType(TypeOfAny.special_form))
++                    type_context_items.append(make_simplified_union(item_types))
+ 
+         if isinstance(type_context, TupleType):
+             type_context_items = type_context.items
+diff --git a/test-data/unit/check-literal.test b/test-data/unit/check-literal.test
+index e96d72c73..acd7aa945 100644
+--- a/test-data/unit/check-literal.test
++++ b/test-data/unit/check-literal.test
+@@ -1525,6 +1525,19 @@ reveal_type(d)  # N: Revealed type is "Tuple[builtins.int, builtins.int]"
+ [builtins fixtures/tuple.pyi]
+ [out]
+ 
++[case testLiteralInferredInUnionTupleContext]
++from typing import Tuple, Union
++from typing_extensions import Literal
++
++x: Union[Tuple[str], Tuple[Literal[1]]] = (1,)
++y: Union[Tuple[str], Tuple[Literal[1]]] = ("a",)
++z: Union[Tuple[str], Tuple[Literal[1]]] = (2,)  # E: Incompatible types in assignment (expression has type "Tuple[Literal[2]]", variable has type "Union[Tuple[str], Tuple[Literal[1]]]")
++
++def f() -> Union[Tuple[str], Tuple[Literal[1]]]:
++    return (1,)
++[builtins fixtures/tuple.pyi]
++[out]
++
+ [case testLiteralInferredInDictContext]
+ from typing import Dict
+ from typing_extensions import Literal
+diff --git a/test-requirements.txt b/test-requirements.txt
+index 93300baaa..1c0e4901d 100644
+--- a/test-requirements.txt
++++ b/test-requirements.txt
+@@ -1,3 +1,4 @@
++types-typing-extensions==3.7.3
+ -r mypy-requirements.txt
+ -r build-requirements.txt
+ attrs>=18.0

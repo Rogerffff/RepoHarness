@@ -1,0 +1,52 @@
+{
+ "task_id": "getmoto__moto-7484",
+ "source": "SWE-Gym lite (swe_gym_lite_full_f70b1a29)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "s2/ingest/public_bundles_v0.jsonl#getmoto__moto-7484",
+  "grading": "s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-7484",
+  "validation": "s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-7484",
+  "base_commit": "ca5d514c61d74b7278ad9c3a035d179f54ed0b92",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-7484/gold/offline/a1/"
+ },
+ "public_view": {
+  "goal": "DynamoDB query/scan 传入的 ExclusiveStartKey 若不是表里真实存在的条目，moto 5 会当作“后面没有记录了”；真实 DynamoDB 与 moto v4 都允许该键不存在。要求按“跳过所有不大于该键的条目”来分页。",
+  "constraints": ["题面给了完整可运行复现脚本与输出", "ExclusiveStartKey 恰好存在时的既有行为必须不变"],
+  "unknowns_from_public_only": [
+   "题面只演示了 query，没演示 scan；F2P 两条里有一条是 scan",
+   "题面没说复合主键（hash+range）下比较语义应当是字典序整体比较还是分量比较"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 触碰 tests/test_dynamodb/__init__.py（给 dynamodb_aws_verified 加 add_range 参数）与 tests/test_dynamodb/test_dynamodb.py（新增两个测试）", "golden_patch 只碰 moto/dynamodb/models/table.py 的 query/scan 与 _item_equals_dct"], "note": "无二进制/LFS/子模块。两条 F2P 都是新增测试名。", "by": "L1_moto_3"},
+  "2": {"status": "pass", "evidence_refs": ["base moto/dynamodb/models/table.py 的 query 与 scan 里 `if processing_previous_page: if self._item_equals_dct(...): processing_previous_page = False; continue`", "base `_item_equals_dct` 用 `item.hash_key == hash_key and item.range_key == range_key`"], "note": "base 要求精确相等才结束“上一页”扫描；键不存在时整轮循环都在 continue，结果为空。与题面一致。", "by": "L1_moto_3"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 3608 字符，含完整复现脚本与实际输出，无外链/图片/截断", "hints_text 为空"], "note": "题面自足。", "by": "L1_moto_3"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 触碰路径全集：tests/test_dynamodb/__init__.py、tests/test_dynamodb/test_dynamodb.py"], "note": "两条都在 tests/ 下（一个测试包 __init__ 夹具 + 一个测试模块），无非测试源码被恢复覆盖；gold 触碰 moto/dynamodb/models/table.py，非测试样路径。", "by": "L1_moto_3"},
+  "17": {"status": "pass", "evidence_refs": ["同 4"], "note": "additional_exclusions 空。", "by": "L1_moto_3"},
+  "5": {"status": "issue", "evidence_refs": ["同测试文件 tests/test_dynamodb/test_dynamodb.py：getmoto__moto-5960、getmoto__moto-7273（本包）", "同 gold 文件 moto/dynamodb/models/table.py：5960、6185、7273", "ancestry：5960 → 6185 → 7273 → 7484 的 base_commit 构成祖先链"], "note": "四题成组。把 7273 的 golden_patch 反向应用到本题 base 上 `git apply -R --check` 失败（上下文漂移），但从代码看 7273 的排序前移已在本题 base 里（query 的 SORT 块位于 FILTER 之前），因此实际上仍是污染关系；结论按证据强度记为 issue 而非确证。", "by": "L1_moto_3"},
+  "23": {"status": "pass", "evidence_refs": ["F2P 的断言全部围绕“不存在的 ExclusiveStartKey 应被当作分页游标”，与题面一致", "题面虽只演示 query，但 scan 同样有 ExclusiveStartKey 语义，属同一要求的自然延伸"], "note": "要求充分且一致。", "by": "L1_moto_3"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 只做黑盒断言"], "note": "不强制唯一实现（可以改比较函数，也可以在进入循环前二分定位起点）。", "by": "L1_moto_3"},
+  "25": {"status": "pass", "evidence_refs": ["F2P 覆盖四个场景：精确键、键末尾加字符（略大）、键大幅增大（range_value500 → 期望 range_value6）、以及 query/scan 两条路径"], "note": "判分较紧，单纯“忽略 ExclusiveStartKey”会被 p2/p4 拒。", "by": "L1_moto_3"},
+  "26": {"status": "issue", "evidence_refs": ["collected 192 items 但 graded 191；本题 P2P 含截断 id tests/test_dynamodb/test_dynamodb.py::test_set_attribute_is_dropped_if_empty_after_update_expression[use（真实为两条参数化用例）"], "note": "跨题问题 A 的受影响样本。另：gold 同时改了 scan 与 query 两条路径，但两条 F2P 用的都是**单一 hash key** 的表，复合键跨 hash 的 scan 分页完全无覆盖（见 27）。", "by": "L1_moto_3"},
+  "27": {"status": "issue", "evidence_refs": ["golden_patch 把 `_item_equals_dct` 改成 `_item_smaller_than_dct`，复合键分支返回 `item.hash_key <= hash_key and item.range_key <= range_key`", "两条 F2P 的所有条目共享同一个 pk='hash_value'"], "note": "**P2 gold 语义存疑**：`hash <= H and range <= R` 不是 (hash, range) 的字典序比较。query 里因为已按单一 hash key 过滤，hash 恒等，结论正确；但 **scan 会跨所有 hash key**，此时一个 `hash_key < H 且 range_key > R` 的条目不会被跳过，会被重复返回。F2P 用单一 hash key，完全测不到这个分支。gold 无无关改动、不依赖其它改动，但这条分支的正确性属 unknown，需要实验确认。另：test_patch 里那句注释 'it just needs to be >= page1, but < page1' 本身自相矛盾，说明上游作者对语义的表述也不清晰。", "by": "L1_moto_3"},
+  "29": {"status": "pass", "evidence_refs": ["hints_text 为空；题面无 PR/commit 链接、无修复代码"], "note": "无静态泄漏。", "by": "L1_moto_3"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold 192 passed，11.37s"], "note": "纯 mock。", "by": "L1_moto_3"},
+  "7": {"status": "issue", "evidence_refs": ["本包共性 install rc=2"], "note": "见包级 issue。", "by": "L1_moto_3"},
+  "11": {"status": "issue", "evidence_refs": ["base tests/test_dynamodb/__init__.py:30 `os.environ.get('MOTO_TEST_ALLOW_AWS_REQUEST', 'false').lower() == 'true'`，为真时 dynamodb_aws_verified 会跳过 mock 直接打真实 AWS（建表/删表/写条目）", "两条 F2P 都带 @pytest.mark.aws_verified + @dynamodb_aws_verified(add_range=True)"], "note": "P2：与 7111 相同的真实 AWS 分支，且本题的 F2P 直接挂在该装饰器上。默认 false 时安全。见 summary.md 跨题发现 D。", "by": "L1_moto_3"}
+ },
+ "issues": [
+  {"category": "gold_semantics_uncovered_branch", "severity": "P2", "evidence_refs": ["_item_smaller_than_dct 的复合键分支 `hash<=H and range<=R`；F2P 全用单一 hash key"], "proposed_action": "记录为“gold 在 scan 跨 hash key 场景下可能重复返回条目”的开放问题；若把本题纳入，建议补一条跨 hash key 的 scan 分页回归。", "next_experiment": "建一张 pk+sk 表，写入 pk=a/sk=z 与 pk=b/sk=a 两条，用 ExclusiveStartKey={pk:b, sk:a} 做 scan 分页，观察 pk=a/sk=z 是否被重复返回（预期被重复返回，即 gold 有缺陷）。"},
+  {"category": "grading_id_collapse", "severity": "P1", "evidence_refs": ["collected 192 vs graded 191"], "proposed_action": "见 summary.md 跨题发现 A。", "next_experiment": "同 A。"},
+  {"category": "dataset_split_grouping", "severity": "P2", "evidence_refs": ["5960 → 6185 → 7273 → 7484 祖先链共用 moto/dynamodb/models/table.py 与 test_dynamodb.py"], "proposed_action": "四题成组，同进一侧。", "next_experiment": "无。"},
+  {"category": "test_material_enables_real_aws_calls", "severity": "P2", "evidence_refs": ["tests/test_dynamodb/__init__.py:30"], "proposed_action": "见 summary.md 跨题发现 D。", "next_experiment": "同 D。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 的两条路径都在 tests/ 下；沿用第四组 B 的默认空排除。", "evidence_refs": ["test_patch 路径全集 = tests/test_dynamodb/__init__.py, tests/test_dynamodb/test_dynamodb.py"]},
+ "proposed_regression_tests": [
+  {"id": "新增：跨多个 hash key 的 scan 分页（ExclusiveStartKey 的 hash 大于某些条目、range 小于它们）", "reason": "直接检验 _item_smaller_than_dct 的复合键比较（见检查 27），是 gold 改动里唯一无覆盖的分支。"},
+  {"id": "tests/test_dynamodb/test_dynamodb.py 里既有的 query/scan 分页用例（P2P 已含）", "reason": "ExclusiveStartKey 精确命中的老路径必须不回退。"},
+  {"id": "新增：GSI/LSI 上带 ExclusiveStartKey 的 query 分页", "reason": "query 的 index 分支同样走 processing_previous_page 逻辑，且 _item_smaller_than_dct 只看表主键而非 index 键，索引分页语义未被验证。"},
+  {"id": "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py", "reason": "非法 ExclusiveStartKey（缺少主键属性）应报错而非静默按 <= 处理；gold 的 DynamoType(dct.get(...)) 在缺键时行为未知。"}
+ ],
+ "disposition_hint": {"state": "needs_review", "reason": "题面自足、base 缺陷明确、F2P 覆盖四个场景较紧、文件边界干净。保留意见：gold 的复合键比较在 scan 跨 hash key 时可能不正确且完全无覆盖；本题同时是 id 塌缩与 AWS 直连分支的受影响样本。"},
+ "costs": {"minutes": 19}
+}

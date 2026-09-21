@@ -1,0 +1,58 @@
+{
+ "task_id": "python__mypy-10658",
+ "source": "SWE-Gym lite / python/mypy PR 10658",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "2ebdbca3b5afbfa1113f01b583522f4afcc4b3e3", "version": "0.910", "python_version": "3.9",
+  "eval_cmd": "pytest -n0 -rA -k",
+  "f2p": ["testNarrowingUsingTypeVar"], "p2p": [],
+  "test_patch_paths": ["test-data/unit/check-narrowing.test"], "gold_paths": ["mypy/meet.py"],
+  "stage1": "无 stage1 记录（signals.stage1 = null）"
+ },
+ "public_view": {
+  "goal": "`T = TypeVar(\"T\", bound=A)`，`def foo(t: Type[T], a: A)`，`if type(a) is t:` 之后 a 被窄化成 `<nothing>`，导致 `a.a` 报错。题面明确写：**should not be narrowed to nothing, should be narrowed to A**。",
+  "constraints": ["题面给出完整复现与期望；说明这是相对 0.8xx 的回归", "题面只给了一个 `a: A` 的例子"],
+  "unknowns_from_public_only": [
+   "窄化结果究竟该是 `A` 还是 `T`？题面说 A，实际 gold 给的是 T（更精确）——公开材料无法推出后者",
+   "当声明类型比 TypeVar 的 bound 更窄时（例如 `b: B`，B 是 A 的子类）该窄化成什么？题面没提"
+  ],
+  "base_code_evidence": [
+   "2ebdbca3b:mypy/meet.py:70-79 narrow_declared_type 里 AnyType 分支之后直接是 TypeType×TypeType，没有 TypeVarType 分支；TypeVarType 最终落到 `meet_types(declared, narrowed)` 得到 UninhabitedType",
+   "2ebdbca3b:mypy/meet.py:75-79 已含 python__mypy-10424 的 metaclass 分支（'We'd need intersection types, so give up.'），即本题 base 已包含 10424 的答案",
+   "2ebdbca3b:test-data/unit/check-narrowing.test 已含 10424 新增的 [case testNarrowingUsingMetaclass]，本题 test_patch 正是追加在它后面"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 目标 check-narrowing.test 在 base 存在且 diff 上下文就是 10424 新增的 case；gold 目标 mypy/meet.py 上下文匹配"], "note": "无二进制/LFS/子模块。", "by": "L1_mypy_1"},
+  "2": {"status": "pass", "evidence_refs": ["base meet.py 的 narrow_declared_type 无 TypeVarType 分支"], "note": "静态确认；无 stage1 实跑佐证。", "by": "L1_mypy_1"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 705 字符，含完整复现与期望；hints_text 长度 0"], "note": "题面本身完整（但其陈述的期望与 F2P 不一致，见检查 23）。", "by": "L1_mypy_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 只触碰 test-data/unit/check-narrowing.test"], "note": "无非测试源码。additional_exclusions 保持空。", "by": "L1_mypy_1"},
+  "17": {"status": "pass", "evidence_refs": ["同上；gold 只改 mypy/meet.py"], "note": "无覆盖风险。", "by": "L1_mypy_1"},
+  "5": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["本题与 python__mypy-10424 改的是**同一个函数** mypy/meet.py:narrow_declared_type，且都是往同一条 elif 链里插一个分支", "本题 base（2ebdbca3b）已包含 10424 的 gold 分支与其新增的 testNarrowingUsingMetaclass case；本题 test_patch 直接追加在该 case 之后", "python__mypy-10174 的 gold 同样在 mypy/meet.py（_is_overlapping_types），而 narrow_declared_type 的第一个分支就调用 is_overlapping_types"], "note": "**派生关系明确**：10424 → 10658 是同函数的连续两次修补，10174 改的是它调用的判定函数。三题应视为同族，划分训练/评测集必须同侧；把其中一题放评测、另两题放训练，等于把评测题的上下文与修改手法直接喂给模型。", "by": "L1_mypy_1"},
+  "23": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["problem_statement：'should not be narrowed to nothing, should be narrowed to **A**'", "F2P 断言：`if type(a) is t: reveal_type(a)  # N: Revealed type is \"T`-1\"`（不是 A）", "F2P 还断言 `if type(b) is t: reveal_type(b)  # N: Revealed type is \"<nothing>\"`（b: B，T bound=A）"], "note": "**题面陈述的期望与评分要求直接冲突**。按题面字面实现（不窄化，保持 A）会在第一条断言就失败。而且题面抱怨 `<nothing>`，F2P 却在 b 的分支上要求保留 `<nothing>`——正确理由是 `is_subtype(T.upper_bound=A, declared=B)` 为假所以不适用新分支，但这条推理在公开材料里没有任何依据。", "by": "L1_mypy_1"},
+  "24": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["F2P 的 4 条 reveal_type 断言把 gold 的条件 `is_subtype(narrowed.upper_bound, declared)` 精确地钉死：满足时返回 TypeVar，不满足时保持 meet 结果"], "note": "只断言对外行为（reveal_type），不引用内部名，形式上不算强制唯一实现；但这 4 条的组合只有 gold 那一种条件判定能同时满足。对 TypeVarType 无条件 `return narrowed` 的实现会在 b 的分支给出 `T`-1` 而失败。", "by": "L1_mypy_1"},
+  "25": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["P2P 为空（0 条）"], "note": "正向侧比 10424 好（4 条断言里有 3 种不同期望值，简单的 `return declared` 会失败）；但回归侧仍为零：narrow_declared_type 是 isinstance 窄化的唯一实现点，改坏其它分支不会被发现。", "by": "L1_mypy_1"},
+  "26": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["P2P 为空；同文件与 check-isinstance.test 有大量现成用例"], "note": "见 proposed_regression_tests。", "by": "L1_mypy_1"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 只加 2 行 elif 分支"], "note": "与本题对应、不依赖未交付改动、无题外改动。", "by": "L1_mypy_1"},
+  "29": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["本题 base 已含 10424 的完整答案（meet.py 的 metaclass 分支 + testNarrowingUsingMetaclass）"], "note": "这是跨题层面的可见答案：如果 10424 被留作评测题而 10658 进训练集，模型在 10658 的初始仓库里就能直接读到 10424 的参考解与其测试。题面本身无泄漏。", "by": "L1_mypy_1"},
+  "6": {"status": "not_checked", "evidence_refs": [], "note": "无 stage1 记录。", "by": "L1_mypy_1"},
+  "7": {"status": "pass", "evidence_refs": ["F2P case 不声明 fixture"], "note": "无外部资产。", "by": "L1_mypy_1"},
+  "11": {"status": "pass", "evidence_refs": ["case 正文无 URL"], "note": "不需要网络。", "by": "L1_mypy_1"},
+  "18": {"status": "pass", "evidence_refs": ["kcheck_all.txt：无子串过选"], "note": "选择无歧义。", "by": "L1_mypy_1"},
+  "20": {"status": "not_checked", "evidence_refs": [], "note": "无 stage1。", "by": "L1_mypy_1"}
+ },
+ "issues": [
+  {"category": "requirement_contradicts_grading", "severity": "P1", "evidence_refs": ["题面 'should be narrowed to A' vs F2P 'Revealed type is \"T`-1\"'"], "proposed_action": "改题面：写清期望窄化到 TypeVar 本身（比 A 更精确），并说明当声明类型比 bound 更窄时保持原有 meet 结果。否则按题面正确作答必然判 0。", "next_experiment": "实现'TypeVarType 时 return declared'（题面字面要求）跑 F2P，确认第一条断言即失败。"},
+  {"category": "derivative_task_family", "severity": "P2", "evidence_refs": ["10424 与 10658 改同一函数；10658 的 base 含 10424 的 gold 与测试；10174 改其调用的 is_overlapping_types"], "proposed_action": "把 (10174, 10424, 10658) 标为 meet.py 同族，训练/评测划分同侧。", "next_experiment": "无（数据集划分约束）。"},
+  {"category": "grading_coverage", "severity": "P1", "evidence_refs": ["P2P=0"], "proposed_action": "补 P2P，见 proposed_regression_tests。", "next_experiment": "在 gold 上跑 check-narrowing.test + check-isinstance.test 全量取基线。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只触碰纯测试数据文件 test-data/unit/check-narrowing.test。", "evidence_refs": ["grading_bundles_v2_v0:python__mypy-10658 test_patch"]},
+ "proposed_regression_tests": [
+  {"id": "test-data/unit/check-narrowing.test 既有全部 case（含 10424 新增的 testNarrowingUsingMetaclass）", "reason": "同文件、同函数；10424 的 case 正好是本题最直接的回归。"},
+  {"id": "test-data/unit/check-isinstance.test", "reason": "narrow_declared_type 的唯一生产调用点在 checkexpr 的 isinstance 窄化路径。"},
+  {"id": "test-data/unit/check-typevar-values.test、check-generics.test", "reason": "gold 新分支专门处理 TypeVarType 与其 upper_bound，泛型相关用例最可能回归。"},
+  {"id": "mypy/test/testtypes.py 中对 narrow_declared_type 的直接断言", "reason": "单元级回归，成本极低。"}
+ ],
+ "disposition_hint": {"state": "needs_repair", "reason": "题面写的期望（窄化到 A）与 F2P 要求（窄化到 T`-1，且另一分支保留 <nothing>）直接冲突，按公开材料正确作答会判 0；P2P 为空；且与 10424 是同函数派生关系，需要一并处理划分约束。"},
+ "costs": {"minutes": 19}
+}

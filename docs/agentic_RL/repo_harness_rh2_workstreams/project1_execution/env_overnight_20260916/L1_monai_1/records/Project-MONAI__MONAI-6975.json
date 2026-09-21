@@ -1,0 +1,79 @@
+{
+ "task_id": "Project-MONAI__MONAI-6975",
+ "source": "SWE-Gym lite / Project-MONAI/MONAI PR 6975 (created_at 2023-09-13)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "392c5c1b860c0f0cfd0aa14e9d4b342c8b5ef5e7",
+  "version": "1.2", "python_version": "3.8",
+  "eval_cmd": "pytest -rA ",
+  "actual_test_cmd": "pytest -rA  tests/test_compose.py tests/test_dataset.py",
+  "f2p": ["tests/test_dataset.py::TestDatsesetWithLazy::test_dataset_lazy_with_logging_0..3（4 条）"],
+  "p2p_n": 59,
+  "test_patch_paths": ["tests/test_compose.py", "tests/test_dataset.py"],
+  "gold_paths": ["monai/transforms/transform.py"],
+  "stage1": "gold=RESOLVED_FULL（63/63 PASSED）/ empty=RESOLVED_NO（59 PASSED + 4 FAILED，失败的正是 4 条 F2P），rc_install=0",
+  "in_e2": ["A", "B"],
+  "deepseek_trajectory": "runs/env_probe_20260909_final_sync/ledger/logs_cc/Project-MONAI__MONAI-6975/candidate.diff（oracle=RESOLVED_FULL）"
+ },
+ "public_view": {
+  "goal": "`Compose(..., lazy=True)` 直接调用时生效，但把同一个 Compose 交给 `Dataset` 之后 lazy 被忽略。题面给出完整可运行复现脚本。",
+  "constraints": [
+   "题面**整段逐字重复了两遍**（1226 字符，前后两半完全相同）——与 mypy-11352、MONAI-4775、MONAI-6523 是同一种题面加工缺陷",
+   "题面只描述 Dataset 这一个入口"
+  ],
+  "unknowns_from_public_only": [
+   "修在 `Dataset._transform` 的调用点，还是修 `apply_transform` 的默认值？题面不区分——而这两种选择的语义范围差别很大（见检查 25）",
+   "lazy 的『未指定』语义该用 None 还是别的哨兵？题面没说",
+   "期望的日志文本格式题面完全没给，而 F2P 逐字比对日志"
+  ],
+  "base_code_evidence": [
+   "392c5c1b8:monai/transforms/transform.py:107 `lazy: bool | None = False`（apply_transform 的默认值，缺陷所在）",
+   "392c5c1b8:monai/data/dataset.py:98 `return apply_transform(self.transform, data_i) ...` —— 不传 lazy，于是拿到 False 而不是『未指定』",
+   "392c5c1b8:monai/transforms/compose.py:111-113 execute_compose 把 lazy 透传给 apply_transform",
+   "同一 base 下 apply_transform 的其它调用点：dataset.py:1279/1432、grid_dataset.py:210/293、image_dataset.py:122/124/131/135/140、iterable_dataset.py:62、wsi_datasets.py:169、engines/utils.py:261/274 —— 全部同样不传 lazy"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["tests/test_compose.py、tests/test_dataset.py 在 base 均存在", "gold 目标 monai/transforms/transform.py:107 存在且上下文匹配"], "note": "无二进制/LFS/子模块。test_patch 在 test_dataset.py 里 `from tests.test_compose import ...`，两个文件必须成对提供——materials 已成对。", "by": "L1_monai_1"},
+  "2": {"status": "pass", "evidence_refs": ["392c5c1b8:monai/transforms/transform.py:107", "stage1 empty 侧 4 条 F2P FAILED"], "note": "base 确含题面所述缺陷，有实跑证据。", "by": "L1_monai_1"},
+  "3": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["problem_statement 1226 字符，前 613 与后 613 逐字相同", "复现脚本引用 tests/testing_data/ref_avg152T1_LR.nii.gz", "392c5c1b8:tests/testing_data/data_config.json 中 ref_avg152T1_LR 的 url = https://github.com/Project-MONAI/MONAI-extra-test-data/releases/download/0.8.1/avg152T1_LR_nifti.nii.gz", "git ls-tree 392c5c1b8 tests/testing_data/ 中没有该文件"], "note": "两个问题：(a) 题面整段重复一遍；(b) 题面的复现脚本在离线容器里**跑不起来**——它引用的 nii.gz 不在仓库里，要从 GitHub Releases 下载。模型若照抄题面复现会先撞到 FileNotFoundError，这会把它引向错误的排查方向。hints_text 只有一个换行符。", "by": "L1_monai_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 只碰 tests/test_compose.py 与 tests/test_dataset.py"], "note": "无非测试源码；gold 只碰 monai/transforms/transform.py。additional_exclusions 保持空。", "by": "L1_monai_1"},
+  "17": {"status": "pass", "evidence_refs": ["两个 test_patch 路径在 base 都存在，恢复步骤可正常 git checkout"], "note": "与 2454/3690 不同，本题不涉及新建测试文件，恢复机制没有缺口。", "by": "L1_monai_1"},
+  "5": {"status": "pass", "evidence_refs": ["runs/env_overnight_20260916/L1_monai_1/dupidx.txt：monai/transforms/transform.py 与这两个测试文件在 26 道 MONAI 题里只被本题触碰"], "note": "无重复/派生。", "by": "L1_monai_1"},
+  "23": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["F2P 逐字断言日志，如 \"INFO - Apply pending transforms - lazy: False, pending: 0, upcoming 'Flip', transform.lazy: False\\n\"", "题面只字未提日志"], "note": "F2P 断言的是 log_stats 的**完整输出字符串**，题面完全没有这方面要求。所幸这些字符串由 base 已有的日志代码产生，候选不需要自己写；但只要候选顺手改了任何一处日志措辞，4 条 F2P 全挂。", "by": "L1_monai_1"},
+  "24": {"status": "pass", "evidence_refs": ["DeepSeek 候选改的是 monai/data/dataset.py:98（调用点显式传 lazy=None），与 gold 改默认值不是同一处，oracle 仍判 RESOLVED_FULL", "runs/env_probe_20260909_final_sync/ledger/logs_cc/Project-MONAI__MONAI-6975/candidate.diff"], "note": "**有真实反例证明不强制唯一实现**：至少两种不同位置的修法都能满分。这是本包里这一条最有说服力的证据。", "by": "L1_monai_1"},
+  "25": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["DeepSeek 候选只改 dataset.py:98 一处就 RESOLVED_FULL", "base 里 apply_transform 另有 11 处调用点同样不传 lazy：dataset.py:1279/1432、grid_dataset.py:210/293、image_dataset.py:122/124/131/135/140、iterable_dataset.py:62、wsi_datasets.py:169"], "note": "**部分修复拿满分**：F2P 只测 `Dataset`，所以『只给 Dataset.__getitem__ 补一个 lazy=None』就够了，而 `CacheDataset`/`GridPatchDataset`/`ImageDataset`/`IterableDataset`/`WSI` 系列仍然忽略 lazy——题面描述的同一个缺陷在这些入口依然存在。gold 改默认值一次性修好全部调用点。评分区分不出这两者。", "by": "L1_monai_1"},
+  "26": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["P2P 59 条全在 tests/test_compose.py(56) 与 tests/test_dataset.py(3)"], "note": "P2P 规模是本包最大的，对 Compose 的保护很充分；缺的是**其它 Dataset 类型**的 lazy 行为覆盖，正好是检查 25 指出的漏洞面。", "by": "L1_monai_1"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 两个 hunk：改默认值 + docstring 缩进/补一句 'Defaults to None.'"], "note": "改动最小、精确对应、不依赖未交付改动。", "by": "L1_monai_1"},
+  "29": {"status": "pass", "evidence_refs": ["problem_statement 无 PR/commit 链接、不含修复代码", "hints_text 只有 '\\n'"], "note": "无泄漏。", "by": "L1_monai_1"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 rc_install=0"], "note": "安装离线可完成（eval.sh 先 sed 掉 requirements-dev.txt 里的 git+https 行；DeepSeek 候选自己也删了这一行，说明未加工的安装会去拉 GitHub）。", "by": "L1_monai_1"},
+  "7": {"status": "pass", "evidence_refs": ["F2P 用 data_from_keys(None, 12, 16) 合成数据，不读磁盘", "stage1 离线 gold 侧 63/63 PASSED"], "note": "**评分路径无外部资产**。但注意题面的复现脚本需要下载（检查 3），两者不同。", "by": "L1_monai_1"},
+  "11": {"status": "pass", "evidence_refs": ["同上"], "note": "测试阶段不需要网络。", "by": "L1_monai_1"},
+  "20": {"status": "pass", "evidence_refs": ["gold 63 PASSED / empty 59 PASSED + 4 FAILED，失败集合恰好等于 F2P"], "note": "分差干净：empty 的失败**只**来自目标行为，没有噪声失败。本包里最理想的一题。", "by": "L1_monai_1"},
+  "10": {"status": "pass", "evidence_refs": ["测试用 StringIO handler 捕获日志，逐条 removeHandler 清理；数据为内存合成"], "note": "无 GPU/多进程/共享内存需求。轻微隐患：test 通过全局 logging 名 'a_logger_name' 通信，若与 pytest 的 caplog 或 -p no:logging 之类配置冲突会不稳定，但当前 eval_cmd 无相关参数。", "by": "L1_monai_1"},
+  "18": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["test_patch 新增 `def test_dataset_lazy_on_call(self)` 函数体只有两行赋值，没有任何断言"], "note": "上游带进来一个空壳用例（只构造 data 就结束），它会被收集并恒 PASSED。不影响判分（它在 P2P 里也只是恒真），但属于材料卫生问题；另有 class 名拼写 `TestDatsesetWithLazy`（少一个 a）。", "by": "L1_monai_1"}
+ },
+ "issues": [
+  {"category": "partial_fix_accepted", "severity": "P1",
+   "evidence_refs": ["logs_cc/Project-MONAI__MONAI-6975/candidate.diff 只改 dataset.py:98 → oracle RESOLVED_FULL", "base 中另 11 处 apply_transform 调用点"],
+   "proposed_action": "补 P2P/F2P：为 CacheDataset、IterableDataset、GridPatchDataset 各加一条同形状的 lazy 日志断言。这样只有改默认值（或逐个调用点全改）才能满分。",
+   "next_experiment": "把 DeepSeek 的 dataset.py:98 单点修复重放一次，同时跑新增的 CacheDataset lazy 用例，确认它失败而 gold 通过。"},
+  {"category": "statement_duplicated", "severity": "P2",
+   "evidence_refs": ["problem_statement 1226 字符，前后半段逐字相同"],
+   "proposed_action": "去重。与 MONAI-4775、MONAI-6523 以及 mypy-11352、dvc-4785、mypy-17071 是同一类加工缺陷，建议在数据清洗里统一做一次『前后半段完全相同则截半』的检测。",
+   "next_experiment": "对 216 题跑一次前后半段逐字比较，确认命中集合与既有 dup_problem_statements.txt 一致。"},
+  {"category": "unrunnable_repro_offline", "severity": "P2",
+   "evidence_refs": ["题面复现脚本引用 tests/testing_data/ref_avg152T1_LR.nii.gz", "data_config.json 里该文件来自 GitHub Releases 下载", "git ls-tree 确认仓库里没有"],
+   "proposed_action": "题面复现在离线容器里跑不通。建议把复现脚本改成用仓库内已有的 tests/testing_data/anatomical.nii，或直接用内存合成数据（官方测试就是这么做的）。",
+   "next_experiment": "在离线容器里原样执行题面脚本，记录它第一个报错，评估会把模型带偏多久。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只碰两个测试文件，gold 只碰 monai/transforms/transform.py，无交集。", "evidence_refs": ["grading_bundles_v2_v0:Project-MONAI__MONAI-6975 test_patch", "validation_bundles_v0:Project-MONAI__MONAI-6975 golden_patch"]},
+ "proposed_regression_tests": [
+  {"id": "新增：CacheDataset / PersistentDataset 下同一个 lazy=True 的 Compose 的日志断言", "reason": "对应 dataset.py:1279/1432 两处未修的调用点，直接堵住只改 Dataset 的部分修复。"},
+  {"id": "新增：IterableDataset（iterable_dataset.py:62）与 GridPatchDataset（grid_dataset.py:210/293）的同形断言", "reason": "同上，覆盖面最广的两个剩余入口。"},
+  {"id": "tests/test_compose.py 全文件（当前 56 条已在 P2P）", "reason": "apply_transform 默认值改动的主要风险面就是 Compose 的 lazy 语义，已有覆盖足够，建议保留整文件。"},
+  {"id": "tests/test_image_dataset.py", "reason": "image_dataset.py 有 5 处 apply_transform 调用，默认值改动会影响它们的 lazy 行为。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "环境干净（离线可跑、gold 63/63、empty 的失败恰好等于 F2P）、P2P 规模最大、已有真实模型 RESOLVED_FULL 的证据，可直接进探针。两个待改项（题面去重、补其它 Dataset 的 lazy 覆盖）不阻塞使用。"},
+ "costs": {"minutes": 25}
+}

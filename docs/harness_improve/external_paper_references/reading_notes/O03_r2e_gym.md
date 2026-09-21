@@ -8,10 +8,10 @@ R2E-Gym 的核心成果是从真实 commit 构建可执行 SWE 任务，再用�
 ## 1. 来源、版本与完整覆盖
 
 - **论文**：Naman Jain、Jaskirat Singh（共同一作）、Manish Shetty、Liang Zheng、Koushik Sen、Ion Stoica；UC Berkeley / Australian National University。正式标题见本文标题。[arXiv v1](https://arxiv.org/abs/2504.07164v1)，提交 2025-04-09；截至本次读取仅列 v1；PDF 标注 Preprint / Under review。阅读和修订日期：2026-09-07。
-- **原文附件**：[arXiv PDF](sources/O03/2504.07164v1.pdf)、[官方 TeX 包](sources/O03/2504.07164v1.tar.gz)、[提取全文](sources/O03/paper.txt)。全文共 27 页；本文 p.N 同时指 PDF 第 N 物理页与印刷页，两者一致。
-- **官网版本**：[项目页](https://r2e-gym.github.io/)及其 [PDF 附件](sources/O03/project-paper.pdf)。官网标题多出 “Environment Generation”；PDF 正式标题与 arXiv 相同。两份 PDF 全 27 页提取文本在去掉 arXiv 水印、归一空白后完全相同，覆盖正文后训练、数据、infra、评测和 A–E 附录，未发现实质文本增删；另将 p.2–27 以 Poppler 60 DPI 渲染，对应 PNG 字节全部相同；p.1 仍有水印/版面差异。图表另回 arXiv 原页检查。不能把官网视为新增训练版本。
-- **官方代码**：[R2E-Gym/R2E-Gym](https://github.com/R2E-Gym/R2E-Gym)，实际读取 commit `0d94c4eb9431cd195c55a7ea3abd54006c9a1735`（下文简称 C）；[本地只读摘录](sources/O03/official_repo/README.md)。它已加入 DeepSWE/rLLM 指引和更多 runtime 支持，故不是论文实验代码的时间锁定版本。本文单列能影响复现的当前增量，不把 DeepSWE 当作本论文新增 RL 阶段。
-- **网页/资产快照**：[arXiv 摘要 HTML](sources/O03/arxiv_abs.html)、[官网 HTML](sources/O03/project_page.html)、[资产读取记录](sources/O03/SOURCE_RECORD.md)。官网检查了全部正文、图注和 HTML；未见包含额外技术案例的 tab/select，展示图对应论文图。论文图像中的数字和轨迹不只依赖文本提取。
+- **原文附件**：arXiv PDF（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/O03/2504.07164v1.pdf`）、官方 TeX 包（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/O03/2504.07164v1.tar.gz`）、提取全文（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/O03/paper.txt`）。全文共 27 页；本文 p.N 同时指 PDF 第 N 物理页与印刷页，两者一致。
+- **官网版本**：[项目页](https://r2e-gym.github.io/)及其 PDF 附件（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/O03/project-paper.pdf`）。官网标题多出 “Environment Generation”；PDF 正式标题与 arXiv 相同。两份 PDF 全 27 页提取文本在去掉 arXiv 水印、归一空白后完全相同，覆盖正文后训练、数据、infra、评测和 A–E 附录，未发现实质文本增删；另将 p.2–27 以 Poppler 60 DPI 渲染，对应 PNG 字节全部相同；p.1 仍有水印/版面差异。图表另回 arXiv 原页检查。不能把官网视为新增训练版本。
+- **官方代码**：[R2E-Gym/R2E-Gym](https://github.com/R2E-Gym/R2E-Gym)，实际读取 commit `0d94c4eb9431cd195c55a7ea3abd54006c9a1735`（下文简称 C）；本地只读摘录（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/O03/official_repo/README.md`）。它已加入 DeepSWE/rLLM 指引和更多 runtime 支持，故不是论文实验代码的时间锁定版本。本文单列能影响复现的当前增量，不把 DeepSWE 当作本论文新增 RL 阶段。
+- **网页/资产快照**：arXiv 摘要 HTML（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/O03/arxiv_abs.html`）、官网 HTML（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/O03/project_page.html`）、[资产读取记录](sources/O03/SOURCE_RECORD.md)。官网检查了全部正文、图注和 HTML；未见包含额外技术案例的 tab/select，展示图对应论文图。论文图像中的数字和轨迹不只依赖文本提取。
 - **版本冲突**：arXiv 摘要网页写 `AgentGym`、`SYNGEN`、`>8.7K`，PDF p.1/§2 写 R2E-Gym、SWEGEN、`>8.1K`，Table 1 为 8,135。这里用完整 PDF 作为论文实验事实，保留网页矛盾，不据摘要另造一版 8.7K 实验。官网及 C 的 README 把 51% 写成 pass@1；本文严格采用 PDF Table 4 的 Best@26。
 - **旧稿**：[knowledge/summary_r2e_gym.md](../../../../knowledge/summary_r2e_gym.md)，在全文/附录覆盖建立并阅读后才对照。旧稿的 SFT 定位、主要数值基本正确，主要缺失是测试 agent/EF verifier 训练细节、公式、预算、负案例和资产差异，详见 §9。
 
@@ -62,7 +62,7 @@ Appendix A p.15 给定的 commit 阈值是：最多 **5 个非测试文件**、�
 
 依赖恢复步骤是读取 `requirements.txt/setup.py` 等信息 → 识别版本冲突 → 生成多组 pin → 逐一试装直到成功。作者明确承认 **semi-manual、难扩展**；未来更多使用 LLM 是展望。Listing 1 用 pandas 的 Python/numpy/setuptools 等组合展示尝试过程，属于示意代码（还有参数/排版笔误），不能当可直接运行的完整构建器。论文没有给镜像层复用率、每题构建耗时/磁盘、失败重试成本或总人工时。
 
-当前代码 C 的 [docs/ENV_GENERATION.md](sources/O03/official_repo/docs/ENV_GENERATION.md)要求给新仓库添加配置、枚举、测试命令，再跑历史采集、可测试 commit 分析及环境验证。对应完整路径为 `src/r2egym/repo_analysis/constants.py`、`src/r2egym/repo_analysis/repo_analysis_args.py`、`src/r2egym/repo_analysis/store_repo_commits.py`、`src/r2egym/repo_analysis/analyze_testable_commits.py`、`src/r2egym/repo_analysis/repo_testextract.py`。文档示例用 `o1-mini`、12,000 max tokens，但不能回填为论文所有生产阶段的模型/预算。`src/r2egym/repo_analysis/repo_testheuristics.py::repo_heuristics` 还有 pyramid fixture/import、aiohttp Makefile 等仓库特例，说明跨仓库迁移仍有工程维护成本。
+当前代码 C 的 docs/ENV_GENERATION.md（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/O03/official_repo/docs/ENV_GENERATION.md`）要求给新仓库添加配置、枚举、测试命令，再跑历史采集、可测试 commit 分析及环境验证。对应完整路径为 `src/r2egym/repo_analysis/constants.py`、`src/r2egym/repo_analysis/repo_analysis_args.py`、`src/r2egym/repo_analysis/store_repo_commits.py`、`src/r2egym/repo_analysis/analyze_testable_commits.py`、`src/r2egym/repo_analysis/repo_testextract.py`。文档示例用 `o1-mini`、12,000 max tokens，但不能回填为论文所有生产阶段的模型/预算。`src/r2egym/repo_analysis/repo_testheuristics.py::repo_heuristics` 还有 pyramid fixture/import、aiohttp Makefile 等仓库特例，说明跨仓库迁移仍有工程维护成本。
 
 ### 2.3 验证测试、反译问题和最小补丁
 
@@ -241,7 +241,7 @@ C 的代码许可证是 Apache-2.0；上述多数轨迹/模型 cardData 没有�
 
 以下只陈述 C 的静态文件，不宣称重跑过：
 
-- `train/train_r2egym_32B_agent.yaml`、`train/train_r2egym_32B_testing_agent.yaml`、`train/train_r2egym_14B_verifier.yaml`（[目录摘录](sources/O03/official_repo/train/)）提供 SFT 入口；对应 `llamafactory-cli train <yaml>`。初始化明确为 Qwen2.5-Coder Instruct；编辑/测试 full，verifier LoRA rank 64、target all。
+- `train/train_r2egym_32B_agent.yaml`、`train/train_r2egym_32B_testing_agent.yaml`、`train/train_r2egym_14B_verifier.yaml`（目录摘录（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/O03/official_repo/train`））提供 SFT 入口；对应 `llamafactory-cli train <yaml>`。初始化明确为 Qwen2.5-Coder Instruct；编辑/测试 full，verifier LoRA rank 64、target all。
 - 三者均 LR 1e-5、2 epochs、**warmup 0.05**（论文为 0.1）、cosine、BF16、FlashAttention2、Liger、Unsloth gradient checkpointing 开关；编辑/测试 cutoff 20,480，verifier 32,768；每设备 batch 1、accumulation 1。编辑/测试选择 ZeRO-3 offload，verifier ZeRO-3。未给启动 GPU 数/DP 布局，不能凭 batch 8 宣称用了八卡，也不能据开关算实测吞吐。
 - `train/dataset_info.json` 是 ShareGPT messages 的 role/content 映射。没有固定 LLaMA-Factory commit，也没有显式 token loss denominator、`train_on_prompt`、packing/长轨迹策略等完整历史证据。
 - `src/r2egym/agenthub/run/edit.py` 提供并行采集/评测入口；README 示例 54 workers、编辑采集 T=0.2、40 steps，评测 T=0、40 steps，输出轨迹/patch 后再用官方 SWE-Bench harness 评分。样例 worker 数不等于论文训练资源。

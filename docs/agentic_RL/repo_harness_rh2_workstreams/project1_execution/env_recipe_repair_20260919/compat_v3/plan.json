@@ -1,0 +1,48 @@
+[
+  {
+    "instance_id": "dask__dask-6801",
+    "image": "xingyaoww/sweb.eval.x86_64.dask_s_dask-6801:latest",
+    "image_id": "sha256:3252e3aa5898cf58c640d3bf37f961860042173734677a8eb2aa8db097563b56",
+    "pins": [
+      "pandas==1.1.5",
+      "fastparquet==0.5.0",
+      "pytest==7.4.4"
+    ],
+    "bindings": false,
+    "source_pins": [
+      "fastparquet==0.5.0"
+    ],
+    "reason": "0.4.1 changes partition filtering; examine next historical minor, keep failing evidence"
+  },
+  {
+    "instance_id": "Project-MONAI__MONAI-3566",
+    "image": "xingyaoww/sweb.eval.x86_64.project-monai_s_monai-3566:latest",
+    "image_id": "sha256:80a34f2ecc38de2cc412d0dddd867b7d5e30fe1d934327c220d08a3d93551ff7",
+    "pins": [
+      "itk==5.2.1",
+      "itk-core==5.2.1",
+      "itk-io==5.2.1",
+      "itk-filtering==5.2.1",
+      "itk-numerics==5.2.1",
+      "itk-registration==5.2.1",
+      "itk-segmentation==5.2.1"
+    ],
+    "bindings": false,
+    "source_pins": [],
+    "reason": "5.3 itself introduces itkMatrixF44 incompatibility, confirmed upstream changelog; verify 5.2.1"
+  },
+  {
+    "instance_id": "getmoto__moto-5134",
+    "image": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5134:latest",
+    "image_id": "sha256:7cc5581e04defe645f936d61923c8135e05dee25483491595657738d77bc85f5",
+    "pins": [
+      "boto3==1.28.57",
+      "botocore==1.31.57",
+      "s3transfer==0.7.0",
+      "urllib3==1.26.20"
+    ],
+    "bindings": false,
+    "source_pins": [],
+    "reason": "1.31.85 service model actually JSON; restore pre-switch SQS query protocol and verify runtime model"
+  }
+]

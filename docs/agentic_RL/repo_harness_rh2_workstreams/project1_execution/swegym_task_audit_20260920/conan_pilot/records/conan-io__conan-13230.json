@@ -1,0 +1,98 @@
+{
+  "instance_id": "conan-io__conan-13230",
+  "old_record_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/records/conan-io__conan-13230.json",
+  "environment": {
+    "status": "verified_original_baseline_outside_repair_scope",
+    "recipe": "full216/baseline01 原始对照；无已知环境修复需求",
+    "status_ref": "runs/env_recipe_repair_20260919/scope_reconciliation_20260920.json#outside_repair_ids",
+    "analysis_ref": "runs/full216_rh2_diagnostic_20260919/analysis_final_1011/coverage_216.json#conan-io__conan-13230",
+    "scope": "原始 noop 有目标失败且安装审计无失败；gold 完整命令退出 0，不等于题目质量或稳定性认证。",
+    "existing_observations": {
+      "noop": {
+        "reward": 0.0,
+        "test_rc": 1,
+        "log": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-1/eval_logs/evallog_replay-f216-baseline01-w_3c8a4d04.eval.log",
+        "sha256": "c5424545c7bbf2123242db1fb4005cae030f289507d91982b94e4fba5ccfaa2c"
+      },
+      "gold": {
+        "reward": 1.0,
+        "test_rc": 0,
+        "log": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-1/eval_logs/evallog_replay-f216-baseline01-w_2d8f2dea.eval.log",
+        "sha256": "5640692aa3f4ea46c0f0996f98bb5b8d3e97fd5a996832e7771ae33098d915be"
+      }
+    }
+  },
+  "requirements": "在 macOS build profile 向 Linux 等非 Apple host 交叉编译时，AutotoolsToolchain 不应注入 Apple 专用 arch/sysroot 参数或要求 Apple SDK。保留 Apple 目标原有参数以及用户显式设置。",
+  "public_sufficiency": "充分：题面给出 profile、完整最小复现与错误 flags；基线多数 flags 已读 host settings，真正错误是交叉编译 Apple 分支只判断 os_build。现有 is_apple_os 函数给出仓库内 Apple 系统定义。",
+  "test_assessment": "F2P 以 Android host 验证初始化成功与三个属性，未直接跑题面 Linux/gcc 或最终 CFLAGS；P2P 覆盖既有 Apple 属性及其环境映射。测试限制属性接口但没有钉具体条件实现；min_version 在该输入原本就是空串，不能把三条断言说成三个新修复出口。",
+  "old_claim_reviews": [
+    {
+      "old_claim": "checks.27：gold 只修 flags，遗漏题面要求更换 build compiler 为 host compiler。",
+      "status": "refuted",
+      "assessment": "标题是用户对症状的归因；正文需要移除泄漏的 Apple flags。基线 architecture/libcxx/cppstd 和 triplet compiler 已取 self._conanfile.settings，未见独立的错误编译器选择需修；不能从标题再添加未证实需求。",
+      "evidence": [
+        "public.problem_statement#Logs",
+        "base:conan/tools/gnu/autotoolstoolchain.py:44-49,68-77"
+      ]
+    },
+    {
+      "old_claim": "题面自足，既有 Apple 行为可从仓库推出，可用于探针。",
+      "status": "confirmed",
+      "assessment": "is_apple_os 已列出 Macos/iOS/watchOS/tvOS；P2P 明确验证 iOS arch/sysroot，给出不破坏既有行为的依据。",
+      "evidence": [
+        "base:conan/tools/apple/apple.py:8-11",
+        "base:conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py:278-367"
+      ]
+    },
+    {
+      "old_claim": "F2P 三条断言充分覆盖 min_version/arch/isysroot 三个修复出口。",
+      "status": "refuted",
+      "assessment": "Android 用例没有 os.version/os.sdk，apple_min_version_flag 在 base 就返回空串；主要新增能力是避免错误 SDK 分支。官方未直接检查 Linux 题面路径或最终环境输出，充分二字应收窄。",
+      "evidence": [
+        "grading.test_patch",
+        "base:conan/tools/apple/apple.py:40-62",
+        "base:conan/tools/gnu/autotoolstoolchain.py:58-88"
+      ]
+    },
+    {
+      "old_claim": "checks.31 / control_surface_conftest_user：候选新增配置可进入测试控制面。",
+      "status": "unresolved",
+      "assessment": "旧仓库线索与本轮题意审查分开；没有执行新的篡改反例，也未据此给本题降级。可信边界的现实风险应沿统一评分链审查，不能把安装/参考键已验误写成安全已验。",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/CODEX_REVIEW_20260916.md#2",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/records/conan-io__conan-13230.json#checks.31"
+      ]
+    }
+  ],
+  "recommendation": "probe_candidate",
+  "recommendation_scope": "本轮模型探针/反例调查建议，不是训练准入、剔题或修改正式题包决定。",
+  "next_action": [
+    "优先模型探针；核对候选以 host OS 约束 Apple 特有逻辑，并保持 Apple 交叉编译。",
+    "补最小诊断（未运行）：设置题面 Macos/armv8 build、Linux/x86_64/gcc host，给出可用 tools.apple:sdk_path 后检查 cflags/cxxflags/ldflags 无 -arch 与 -isysroot；保留 Macos→iOS 正对照。可用仅排除 Android 的错误补丁检验该诊断，官方 F2P 是否误放尚未实跑。"
+  ],
+  "evidence_level": {
+    "task_quality": "static",
+    "environment": "existing_run",
+    "new_counterexamples": "not_run",
+    "local_verification": "16 份所引用既有评分日志的 SHA256 与当前归档一致；未新增 Docker/远端/模型运行。"
+  },
+  "unknowns": [
+    "未新跑 Linux/gcc 复现或 Android-only 错误补丁；本轮不把静态对照写成评分反例。"
+  ],
+  "materials": {
+    "base_commit": "c2001bad8aa873eaf2c392ab6e3ff8b8bdfec971",
+    "source_repository": "runs/env_overnight_20260916/repos/conan（只用 git show 读取精确 base）",
+    "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl:30",
+    "test_patch_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:30",
+    "gold_reference_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl:30",
+    "reference_counts": {
+      "f2p": 1,
+      "p2p": 34
+    },
+    "base_source_refs": [
+      "conan/tools/gnu/autotoolstoolchain.py:39-88,110-140",
+      "conan/tools/apple/apple.py:8-11,32-85",
+      "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py:278-367"
+    ]
+  }
+}
