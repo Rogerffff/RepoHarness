@@ -106,6 +106,7 @@ from repoharness2.adapters.slime.projection import (
     SlimeRewardInput,
     assert_renderer_class,
     decode_int32_tape,
+    decode_int32_tape_bytes,
     project_from_slime,
 )
 from repoharness2.contracts import (
@@ -726,7 +727,11 @@ class TurnTape:
     output_log_probs: tuple[float, ...]
     top_p_token_ids: tuple[int, ...] | None
     top_p_token_offsets: tuple[int, ...] | None
-    routed_experts_flat: tuple[int, ...] | None
+    # E3（第六组 I23）：routing tape 只保留一份规范小端 int32 字节——与本轮 artifact store 里
+    # `{record_id}_routing` 的载荷是**同一个** bytes 对象；元素数 = len // 4。此前是逐元素 tuple
+    # （32K 行 × 48 × 8 = 1,258 万个 Python int 常驻整个 session）。改名而不是原名换类型：漏改的
+    # 消费者直接 AttributeError，而不是把 len() 悄悄当成元素数。
+    routed_experts_le_int32: bytes | None
     # FA-0：本轮引擎真实 weight_version（meta_info.weight_version 原文透传；
     # 权重更新可发生在轮与轮之间，逐轮记录是 faithful DIS 的前置事实）。
     weight_version: str | None = None
@@ -903,10 +908,19 @@ class GenerationCaptureHook:
         elif want_top_p_tape:
             missing.append("top_p_tape")  # U-H 静默降级形态：请求了但响应没带
 
-        routing_flat: list[int] | None = None
+        routing_bytes: bytes | None = None
         routing_raw = meta.get(_ROUTED_EXPERTS_META_KEY)
         if routing_raw is not None:
-            routing_flat = decode_int32_tape(routing_raw, field_name=f"{record_id}.routed_experts")
+            routing_field = f"{record_id}.routed_experts"
+            if isinstance(routing_raw, (str, bytes, bytearray)):
+                # E3：wire 形态（base64 / bytes）直通成规范小端 int32 字节，不再展开成 Python 整数；
+                # 落工件的字节与 sha256 和旧的 unpack→pack 逐位相同。
+                routing_bytes = decode_int32_tape_bytes(routing_raw, field_name=routing_field)
+            else:
+                # 其它形态（嵌套 / 扁平 list、张量）保持旧路径与旧异常（超界整数仍是原生 struct.error，
+                # 与旧 _store_int32 一致——Codex E3 计划复核 ER2：不顺带统一异常机制）。
+                routing_values = decode_int32_tape(routing_raw, field_name=routing_field)
+                routing_bytes = struct.pack(f"<{len(routing_values)}i", *routing_values)
         elif params.return_routed_experts:
             missing.append("routing_tape")
 
@@ -1001,8 +1015,8 @@ class GenerationCaptureHook:
                 else None
             ),
             routed_experts_ref=(
-                self._store_int32(f"{record_id}_routing", routing_flat)
-                if routing_flat is not None
+                self._store(f"{record_id}_routing", routing_bytes)  # store 与 TurnTape 引用同一个 bytes
+                if routing_bytes is not None
                 else None
             ),
             weight_version=turn_weight_version,
@@ -1023,7 +1037,7 @@ class GenerationCaptureHook:
                 output_log_probs=tuple(output_log_probs),
                 top_p_token_ids=tuple(top_p_ids) if top_p_ids is not None else None,
                 top_p_token_offsets=tuple(top_p_offsets) if top_p_offsets is not None else None,
-                routed_experts_flat=tuple(routing_flat) if routing_flat is not None else None,
+                routed_experts_le_int32=routing_bytes,
                 weight_version=turn_weight_version,
                 sampling_supports=sampling_supports,
                 weight_version_spans=turn_weight_version_spans,
@@ -1380,14 +1394,28 @@ def _runs_from_identity_spans(
     return per_run, used
 
 
-def _shape_routing_experts(flat: Sequence[int], *, rows: int, layers: int, topk: int) -> Any:
-    """返回 slime 原生的 [rows, layers, topk] routing replay 形状。"""
+def _int32_values(payload: bytes) -> tuple[int, ...]:
+    """规范小端 int32 字节 -> Python 整数（只在需要 Python 结构的回退 / 保底路径上展开）。"""
+
+    return struct.unpack(f"<{len(payload) // 4}i", payload)
+
+
+def _shape_routing_experts(payload: bytes, *, rows: int, layers: int, topk: int) -> Any:
+    """返回 slime 原生的 [rows, layers, topk] routing replay 形状。
+
+    E3：输入是规范小端 int32 字节。torch 在场、主机小端且载荷非空时 `frombuffer(bytearray(...))`：
+    bytearray 是这片叶自己的可写缓冲区（一次 memcpy，PyTorch 持有它的引用），张量与不可变的捕获
+    工件、与其它叶互不共享；空载荷与非小端主机走旧的 `torch.tensor(list)` 构造（Codex ER2/ER3）。
+    """
 
     try:
         import torch
 
-        return torch.tensor(list(flat), dtype=torch.int32).reshape(rows, layers, topk)
+        if payload and sys.byteorder == "little":
+            return torch.frombuffer(bytearray(payload), dtype=torch.int32).reshape(rows, layers, topk)
+        return torch.tensor(list(_int32_values(payload)), dtype=torch.int32).reshape(rows, layers, topk)
     except Exception:  # noqa: BLE001 - 单测或轻量环境没有 torch 时保留等价嵌套形状
+        flat = _int32_values(payload)
         shaped: list[list[list[int]]] = []
         per_token = layers * topk
         for row in range(rows):
@@ -1473,29 +1501,32 @@ def backfill_leaf_sample(
         sample.rollout_top_p_token_ids = merged_ids
         sample.rollout_top_p_token_offsets = merged_offsets
 
-    with_routing = [tape for tape in turns if tape.routed_experts_flat is not None]
+    with_routing = [tape for tape in turns if tape.routed_experts_le_int32 is not None]
     if with_routing:
         last = turns[-1]
-        if last.routed_experts_flat is None:
+        if last.routed_experts_le_int32 is None:
             raise SlimeBindingError(
                 "routing_tape_missing_on_last_turn",
                 "整段替换语义下最后一轮必须携带全量 routing tape，但它缺失。",
             )
-        flat = list(last.routed_experts_flat)
+        # E3：全程按规范小端 int32 字节处理（元素数 = len // 4，前缀裁剪 = 字节切片），
+        # 判据与文案不变；只在交付保底的扁平 list 形态时才展开成 Python 整数。
+        payload = last.routed_experts_le_int32
+        numel = len(payload) // 4
         rows = len(sample.tokens) - 1  # slime _apply_meta_info: expected_rows = len(tokens)-1
         if moe_num_layers is not None and moe_router_topk is not None:
             per_row = moe_num_layers * moe_router_topk
             expected = rows * per_row
-            if len(flat) < expected or len(flat) % per_row != 0:
+            if numel < expected or numel % per_row != 0:
                 raise SlimeBindingError(
                     "routing_rows_mismatch_backfill",
-                    f"最后一轮 routing 元素数 {len(flat)} != len(tokens)-1 行的期望 {expected}"
+                    f"最后一轮 routing 元素数 {numel} != len(tokens)-1 行的期望 {expected}"
                     f"（rows={rows} x layers={moe_num_layers} x topk={moe_router_topk}）。",
                 )
-            if len(flat) > expected:
-                actual_rows = len(flat) // per_row
+            if numel > expected:
+                actual_rows = numel // per_row
                 extra_rows = actual_rows - rows
-                flat = flat[extra_rows * per_row :]
+                payload = payload[extra_rows * per_row * 4 :]
                 metadata = dict(getattr(sample, "metadata", None) or {})
                 metadata.update(
                     {
@@ -1505,20 +1536,20 @@ def backfill_leaf_sample(
                     }
                 )
                 sample.metadata = metadata
-        elif rows > 0 and len(flat) % rows != 0:
+        elif rows > 0 and numel % rows != 0:
             raise SlimeBindingError(
                 "routing_rows_mismatch_backfill",
-                f"最后一轮 routing 元素数 {len(flat)} 不能按 len(tokens)-1={rows} 行整除。",
+                f"最后一轮 routing 元素数 {numel} 不能按 len(tokens)-1={rows} 行整除。",
             )
         if moe_num_layers is not None and moe_router_topk is not None:
             sample.rollout_routed_experts = _shape_routing_experts(
-                flat,
+                payload,
                 rows=rows,
                 layers=moe_num_layers,
                 topk=moe_router_topk,
             )
         else:
-            sample.rollout_routed_experts = flat
+            sample.rollout_routed_experts = list(_int32_values(payload))
 
     # FA-0 真实版本管道：逐入训轮取 tape 上的真实 weight_version，缺失才回退
     # policy_version。口径分两档（精确表述，codex FA-0 审查一般项）：

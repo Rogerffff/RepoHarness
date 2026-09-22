@@ -39,6 +39,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import struct
+import sys
 from collections.abc import Mapping, MutableMapping, Sequence
 from datetime import datetime, timezone
 from typing import Any, Literal
@@ -188,6 +189,38 @@ def _int32_bytes(values: Sequence[int], field_name: str) -> bytes:
         ) from None
 
 
+def decode_int32_tape_bytes(value: Any, *, field_name: str) -> bytes:
+    """tape 载荷 -> 规范小端 int32 字节（E3 / 第六组 I23 紧凑表示的直通点）。
+
+    与 ``decode_int32_tape`` + ``_int32_bytes`` 逐位等价，只是 wire 形态不再展开成 Python 整数：
+
+    - base64 ``str`` / ``bytes`` / ``bytearray``：解码 / 拷贝后直接返回——``pack("<Ni", *unpack("<Ni", raw))``
+      对任意 4 字节模式都是恒等变换，所以原字节得到的工件与 sha256 和旧路径逐位相同；
+    - 其余形态（memoryview、带 ``.tolist()`` 的对象、嵌套 / 扁平 list）**原样走旧归一化**：memoryview
+      在旧实现里先 ``.tolist()``（bytes 底座的 memoryview 因此变成逐字节整数），这里不修正也不扩展
+      这类语义（Codex E3 计划复核 ER1）。
+    错误分类不变：``tape_base64_invalid`` / ``tape_bytes_not_int32`` / ``tape_element_not_int`` /
+    ``tape_value_out_of_int32`` / ``tape_type_unsupported`` / ``tape_payload_missing``。
+    """
+
+    if isinstance(value, str):
+        try:
+            value = base64.b64decode(value.encode("ascii"), validate=True)
+        except Exception as exc:  # noqa: BLE001 - 统一转成投影错误
+            raise SlimeProjectionError(
+                "tape_base64_invalid", f"{field_name} base64 解码失败：{exc}"
+            ) from None
+    if isinstance(value, (bytes, bytearray)):
+        raw = bytes(value)
+        if len(raw) % 4 != 0:
+            raise SlimeProjectionError(
+                "tape_bytes_not_int32",
+                f"{field_name} 字节数 {len(raw)} 不是 4 的倍数，不能按 int32 小端解码。",
+            )
+        return raw
+    return _int32_bytes(decode_int32_tape(value, field_name=field_name), field_name)
+
+
 def _make_artifact_ref(
     ref_id: str, values: Sequence[int], store: MutableMapping[str, bytes] | None
 ) -> ArtifactRef:
@@ -197,7 +230,15 @@ def _make_artifact_ref(
     （例如 S1-6 的 artifact 目录写入器）就顺手落盘，没给也不影响 digest。
     """
 
-    payload = _int32_bytes(values, ref_id)
+    return _make_artifact_ref_from_bytes(ref_id, _int32_bytes(values, ref_id), store)
+
+
+def _make_artifact_ref_from_bytes(
+    ref_id: str, payload: bytes, store: MutableMapping[str, bytes] | None
+) -> ArtifactRef:
+    """已是规范小端 int32 字节的载荷直接生成引用（E3 快路径）；digest 算法与上面同一个。
+    单独入口，不让 ``_make_artifact_ref`` 的同一参数兼收"字节载荷"与"整数序列"（Codex ER1）。"""
+
     digest = "sha256:" + hashlib.sha256(payload).hexdigest()
     if store is not None:
         store[ref_id] = payload
@@ -564,6 +605,94 @@ def _routing_flat_and_dims(
     return flat, len(flat) // per_row, moe_num_layers, moe_router_topk
 
 
+def _routing_int32_array_payload(raw: Any) -> tuple[bytes, tuple[int, int, int]] | None:
+    """E3 快路径：3 维 int32 张量 / ndarray 直接取小端 C 顺序字节，不经 Python 整数。
+
+    只在能证明"逐位等价于旧路径"的输入上启用：torch int32 张量，或整数 kind、4 字节宽的 ndarray
+    （大端 / 非连续按 ``<i4`` C 顺序转换后与旧字节相同，Codex ER2 探针已核）；恰好 3 维、非空、
+    小端主机。其它一律返回 None 交给旧路径——那里保留 int64 值域内接受、超界 / 浮点 / bool 拒绝、
+    空张量等既有语义（不新增拒绝）。numpy / torch 都惰性 import，本模块顶层仍不依赖它们。
+    """
+
+    if sys.byteorder != "little":
+        return None
+    try:
+        import numpy
+    except Exception:  # noqa: BLE001 - 没有 numpy 的环境：旧路径
+        return None
+    try:
+        module = type(raw).__module__ or ""
+        if module == "torch" or module.startswith("torch."):
+            import torch
+
+            if (
+                not isinstance(raw, torch.Tensor)
+                or raw.dtype != torch.int32
+                or raw.dim() != 3
+                or raw.numel() == 0
+            ):
+                return None
+            arr = raw.detach().cpu().numpy()
+        elif isinstance(raw, numpy.ndarray):
+            arr = raw
+        else:
+            return None
+        if arr.ndim != 3 or arr.size == 0 or arr.dtype.kind != "i" or arr.dtype.itemsize != 4:
+            return None
+        payload = numpy.ascontiguousarray(arr, dtype="<i4").tobytes()
+    except Exception:  # noqa: BLE001 - 取视图 / 转换不适用 -> 旧路径（不把哈希 / 落工件阶段包进来）
+        return None
+    rows, layers, topk = (int(dim) for dim in arr.shape)
+    return payload, (rows, layers, topk)
+
+
+def _routing_fast_payload(
+    raw: Any,
+    *,
+    field_name: str,
+    moe_num_layers: int | None,
+    moe_router_topk: int | None,
+) -> tuple[bytes, int, int, int] | None:
+    """E3：快路径输入 -> (规范小端 int32 字节, rows, layers, topk)；不适用返回 None（调用方走旧路径）。
+
+    两类快路径：3 维 int32 数组（``_routing_int32_array_payload``）与 base64 / bytes 扁平载荷
+    （``decode_int32_tape_bytes``）。配置对照（layers / topk）与 ``routing_shape_unknown`` /
+    ``routing_numel_mismatch`` 的判据、文案沿用 ``_routing_flat_and_dims``（Codex ER2：只用 ``.shape``
+    生成引用不够）。
+    """
+
+    fast = _routing_int32_array_payload(raw)
+    if fast is not None:
+        payload, (rows, layers, topk) = fast
+        if (moe_num_layers is not None and moe_num_layers != layers) or (
+            moe_router_topk is not None and moe_router_topk != topk
+        ):
+            raise SlimeProjectionError(
+                "routing_shape_mismatch",
+                f"{field_name} 自带形状 [*, {layers}, {topk}] 与调用方申报 "
+                f"[*, {moe_num_layers}, {moe_router_topk}] 不一致。",
+            )
+        return payload, rows, layers, topk
+    if not isinstance(raw, (str, bytes, bytearray)):
+        return None
+    payload = decode_int32_tape_bytes(raw, field_name=field_name)
+    numel = len(payload) // 4
+    if moe_num_layers is None or moe_router_topk is None:
+        raise SlimeProjectionError(
+            "routing_shape_unknown",
+            f"{field_name} 是扁平载荷（base64/bytes/一维 list），必须提供 "
+            "moe_num_layers 与 moe_router_topk 才能切行（Qwen3-30B-A3B 为 48 与 8）。",
+        )
+    per_row = moe_num_layers * moe_router_topk
+    if per_row <= 0 or numel % per_row != 0:
+        raise SlimeProjectionError(
+            "routing_numel_mismatch",
+            f"{field_name} 元素数 {numel} 不能按每行 {per_row}"
+            f"（{moe_num_layers}x{moe_router_topk}）整除。",
+        )
+    return payload, numel // per_row, moe_num_layers, moe_router_topk
+
+
 def _build_routing(
     sample: Any,
     *,
@@ -596,9 +725,20 @@ def _build_routing(
             "——事实与请求矛盾，禁止静默取舍。",
         )
 
-    flat, rows, layers, topk = _routing_flat_and_dims(
-        raw, branch_id=branch_id, moe_num_layers=moe_num_layers, moe_router_topk=moe_router_topk
+    # E3（第六组 I23）：能证明逐位等价的输入（3 维 int32 数组 / base64 / bytes）直接取规范字节，
+    # 不经 Python 整数；其它输入走下面原封不动的旧路径（含其旧的错误顺序与分类）。
+    fast = _routing_fast_payload(
+        raw,
+        field_name=f"{branch_id}.rollout_routed_experts",
+        moe_num_layers=moe_num_layers,
+        moe_router_topk=moe_router_topk,
     )
+    if fast is not None:
+        payload, rows, layers, topk = fast
+    else:
+        flat, rows, layers, topk = _routing_flat_and_dims(
+            raw, branch_id=branch_id, moe_num_layers=moe_num_layers, moe_router_topk=moe_router_topk
+        )
     if engine_name == "sglang":
         alignment = "sglang_prompt_minus1_plus_gen"
         expected_rows = prompt_len - 1 + response_len
@@ -612,7 +752,12 @@ def _build_routing(
             f"prompt={prompt_len}，generated={response_len}，期望 {expected_rows} 行，"
             f"实际 {rows} 行。差一行也必须报错，绝不静默裁剪或补行（S1-0 对齐事实）。",
         )
-    tensor_ref = _make_artifact_ref(f"{trajectory_id}_{branch_id}_routing_tape", flat, store)
+    ref_id = f"{trajectory_id}_{branch_id}_routing_tape"
+    tensor_ref = (
+        _make_artifact_ref_from_bytes(ref_id, payload, store)
+        if fast is not None
+        else _make_artifact_ref(ref_id, flat, store)
+    )
     return RoutingTensorRef(
         alignment=alignment,
         tensor_ref=tensor_ref,

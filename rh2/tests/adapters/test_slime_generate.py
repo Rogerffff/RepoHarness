@@ -1766,7 +1766,7 @@ def _tape(turn_index: int, prompt_tokens: int) -> TurnTape:
         output_log_probs=(-0.1,),
         top_p_token_ids=None,
         top_p_token_offsets=None,
-        routed_experts_flat=None,
+        routed_experts_le_int32=None,
     )
 
 

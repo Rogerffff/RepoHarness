@@ -127,7 +127,7 @@ def _mk_tape(record_id, turn_index, prompt_ids, output_ids):
         output_log_probs=tuple([-0.2] * len(output_ids)),
         top_p_token_ids=None,
         top_p_token_offsets=None,
-        routed_experts_flat=None,
+        routed_experts_le_int32=None,
         weight_version=str(turn_index),
     )
 
