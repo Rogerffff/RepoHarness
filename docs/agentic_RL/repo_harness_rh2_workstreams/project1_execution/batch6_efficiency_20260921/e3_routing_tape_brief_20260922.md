@@ -165,3 +165,11 @@
 - §3.1 原写"`_routing_flat_and_dims` 输入是张量时取 numpy 视图"——按 ER1 改为不动该函数，另设 `_routing_fast_payload`。
 - §3.2 原写"`frombuffer` 给张量一份自有内存"——按 ER3 表述为"每叶自己的可写缓冲区，PyTorch 持有其引用"；不加 `clone()`。
 - 空张量：快路径不启用；零行本来就过不了 `RoutingTensorRef` 契约（`num_rows ≥ 1`），旧新都在同一处以同一类异常拒绝，测试按此钉住，不为零行另建支持能力。
+
+## 9. E3b 实施记录（2026-09-22，Claude，已实施、本机验证；独立提交）
+
+- **改动**：`generate.py` 新增 `_canonical_meta_digest(meta, *, verbatim_key)`，只在 hook 里对 wire 形态且已严格 base64 解码成功的顶层 `routed_experts` 串使用（`routing_verbatim` 事实来自同一次 `decode_int32_tape_bytes` 调用）；其余情况（list 形态、无该键）仍调原 `canonical_json_digest(dict(meta))`。`contracts/_base.py` 不动，原函数是 oracle。
+- **机制**：按 `sorted(meta)` 的键序结构定位目标键（不搜占位串）：前段 = `json.dumps(前缀键的 dict, sort_keys=True, ensure_ascii=False, separators=(",", ":"))` 去尾 `}`，后段 = 后缀键的 dict 去头 `{`，中间 = `"routed_experts":"` + 串（`encode("ascii")` 一次）+ `"`，逗号按前后是否有键决定；五次 `sha256.update`。等价前提是 base64 字母表里没有 JSON 需转义的字符，因此 `json.dumps(串)` 恒等于加引号的原串。未设大小阈值：一条路径、全尺寸等价测试覆盖，比 Brief §3.3 原写的"超过阈值才启用"少一个分支。混有非 str 键时与原函数一样 `TypeError`。
+- **测试**（`tests/adapters/test_e3b_meta_digest.py`，11 例）：0 B / 4 B / 16 KiB / 1 MiB±1 / 4 MiB 全等；目标键排在首 / 尾 / 唯一；其它字段带同样的值、占位样文本（`\x00RH2_BIG_0\x00`、带引号的同串、`"routed_experts"` 文本）、另一大串、Unicode 键值、空串 / 假值键；值非 str 或键缺失时回落原函数；非 str 键两者同为 `TypeError`；hook 记录的 `raw_meta_info_digest` 与 oracle 一致（wire 与 list 两种形态）；`json.dumps` 被 spy 证明没有处理过大串。
+- **测量**（本机，含快路径判定与前后段生成，取 3 次最小值）：`canonical_json_digest` 28 / 52 / 107 ms → 流式 5 / 10 / 21 ms（8K / 16K / 32K 行，base64 16 / 32 / 64 MiB），摘要逐位相同。单轮 hook 合计（`baseline_bench.py`，`results/baseline_new_e3b.txt`）：旧 182 / 294 / 544 ms → E3 50 / 101 / 420（噪声，生命周期基准同规模 194）→ E3b 22 / 42 / 85 ms。该脚本"其中 meta digest 约"一列单独计时的是**原函数**（参考值），不是 hook 内实际走的流式版本。
+- **可独立回退**：删除 hook 里的三元分支与 `_canonical_meta_digest` 即回到 E3 主体状态，记录内容不变。

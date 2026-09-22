@@ -715,6 +715,35 @@ def parse_weight_version_spans(
     return tuple(spans)
 
 
+def _canonical_meta_digest(meta: Mapping[str, Any], *, verbatim_key: str) -> str:
+    """E3b：`canonical_json_digest(dict(meta))` 的流式等价——`verbatim_key` 的 str 值不经 json.dumps。
+
+    只在调用方已证明该值是**严格 base64 解码成功**的字符串时使用（`decode_int32_tape_bytes` 对 str 走
+    `b64decode(validate=True)`）：base64 字母表里没有 JSON 需要转义的字符，`json.dumps(value,
+    ensure_ascii=False)` 恒等于 `'"' + value + '"'`，所以可以按排序后的键序把摘要拆成
+    前段 / 键与引号 / 串本身（ASCII 编码一次）/ 引号 / 后段五次 update，省掉对大串的 dumps 与 utf-8
+    编码两次全量拷贝（Codex E3 计划复核 §3.5）。前后段仍用原 `json.dumps(sort_keys=True,
+    ensure_ascii=False, separators=(",", ":"))`；目标键按结构定位（排序后的键序），不搜占位串。
+    值不是 str / 键不存在 → 直接返回原函数结果。原函数 `canonical_json_digest` 是等价测试的 oracle。
+    """
+
+    value = meta.get(verbatim_key) if isinstance(meta, Mapping) else None
+    if not isinstance(value, str):
+        return canonical_json_digest(dict(meta))
+    keys = sorted(meta)  # 与 json.dumps(sort_keys=True) 同一排序；混有非 str 键时与原函数一样 TypeError
+    index = keys.index(verbatim_key)
+    dumps = dict(sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    head = json.dumps({k: meta[k] for k in keys[:index]}, **dumps)  # "{...}"：去掉尾 "}"
+    tail = json.dumps({k: meta[k] for k in keys[index + 1 :]}, **dumps)  # "{...}"：去掉头 "{"
+    digest = hashlib.sha256()
+    digest.update((head[:-1] + ("," if index else "")).encode("utf-8"))
+    digest.update((json.dumps(verbatim_key, ensure_ascii=False) + ':"').encode("utf-8"))
+    digest.update(value.encode("ascii"))
+    digest.update(('"' + ("," if index + 1 < len(keys) else "")).encode("utf-8"))
+    digest.update(tail[1:].encode("utf-8"))
+    return "sha256:" + digest.hexdigest()
+
+
 @dataclass(frozen=True)
 class TurnTape:
     """一轮 /generate 的解码后事实（capture 记录的回填伴生物，不进契约）。"""
@@ -909,6 +938,7 @@ class GenerationCaptureHook:
             missing.append("top_p_tape")  # U-H 静默降级形态：请求了但响应没带
 
         routing_bytes: bytes | None = None
+        routing_verbatim = False  # E3b：值是已严格解码成功的 base64 str 时，meta 摘要可流式计算
         routing_raw = meta.get(_ROUTED_EXPERTS_META_KEY)
         if routing_raw is not None:
             routing_field = f"{record_id}.routed_experts"
@@ -916,6 +946,7 @@ class GenerationCaptureHook:
                 # E3：wire 形态（base64 / bytes）直通成规范小端 int32 字节，不再展开成 Python 整数；
                 # 落工件的字节与 sha256 和旧的 unpack→pack 逐位相同。
                 routing_bytes = decode_int32_tape_bytes(routing_raw, field_name=routing_field)
+                routing_verbatim = isinstance(routing_raw, str)
             else:
                 # 其它形态（嵌套 / 扁平 list、张量）保持旧路径与旧异常（超界整数仍是原生 struct.error，
                 # 与旧 _store_int32 一致——Codex E3 计划复核 ER2：不顺带统一异常机制）。
@@ -999,7 +1030,12 @@ class GenerationCaptureHook:
             response_token_ids_ref=(
                 self._store_int32(f"{record_id}_output_ids", output_ids) if generated else None
             ),
-            raw_meta_info_digest=canonical_json_digest(dict(meta)),
+            # E3b：wire 形态的 routing 串已严格 base64 解码成功 → 流式等价摘要（不再 dumps / encode 那个大串）
+            raw_meta_info_digest=(
+                _canonical_meta_digest(meta, verbatim_key=_ROUTED_EXPERTS_META_KEY)
+                if routing_verbatim
+                else canonical_json_digest(dict(meta))
+            ),
             server_timing=_extract_server_timing(meta),
             logprobs_ref=(
                 self._store_f64(f"{record_id}_logprobs", output_log_probs) if generated else None
