@@ -151,3 +151,18 @@ vendored `run_agent`（`slime/agent/harness/common.py:107–122`）在 `{workdir
 - 期限到点只杀宿主 `docker exec` 客户端，容器内 CC 进程不由收集器终止：正式链随后 `_force_stop_execution_scope`（`pkill -u agent` + 停止证据）与容器清理收口（`generate.py` hard_wall 路径）。真机验收记录残留进程数（§6.4）。
 - 日志目录 `<artifact_dir>/<trajectory_id>/harness`（从非秘密身份生成，不用 session token）；`artifact_dir` 缺省时收集到宿主临时目录并留痕，不静默丢日志。
 - B 线 `experiments/base_probe_20260922/solve_attempt.py` 仍从容器内 `<workdir>/.harness/trajectory.jsonl` 取轨迹：#2 之后该文件不存在，应改读 `launch_facts["harness_log"]["stdout_path"]`（B 线脚本，留言告知，不由 A 改）。
+
+### 6.4 真机验收（SR4，2026-09-23，验证机 x86_64 CPU / Docker 28，真实 `conan-io__conan-15422` 镜像，真实 CC 2.1.205）
+
+夹具：`rh2/experiments/base_probe_fixes_20260923/stub_anthropic_endpoint.py`（Anthropic Messages 形状的桩端点，SSE 与 vendored `_render_stream` 同形，逐请求剧本：`tool_use / text / hang / cut / http_error`，请求体落盘）+ `acceptance_startup_2.py`（正式 profile → relay → attempt 网络 → `docker_run_args` → sanitize → 可信初始化 → 与 `generate.py` 同一条脚本写激活文件 → `run_rollout_prelaunch_check(activation_file=)` → `run_rollout_activation_check` → **正式 `ClaudeCodeDriver.run(env_injections=agent_shell_env(...), harness_log_dir=...)`**；只有模型端点是桩）。CC 版本核对 `2.1.205 (Claude Code)`；平台包 sha256 记在各 `attempt.json`。证据：`runs/base_probe_fixes_20260923/remote/acc2_{normal,time_budget,max_turns,cut_stream}/`（`attempt.json`、`harness/trajectory.jsonl`、`stub/requests/*.json`、`prelaunch.json`、`activation_check.json`、`post_run_facts_root.txt`）。四个场景都以真实 SWE-Gym 镜像跑；桩剧本让 CC 用 Bash 执行 `python -c 'import sys,os; print(sys.executable, os.environ.get("CONDA_DEFAULT_ENV"))'` 与"模型可见面"检查。
+
+| 场景 | 退出码 / `client_exit_kind` | 宿主日志 | 轨迹 `message_start` = 桩 `/v1/messages` 数 | 关键事实 | 期望 |
+| --- | --- | --- | --- | --- | --- |
+| normal | 0 / `container_process_exit` | complete，11 822 B，stderr 0 B | 3 = 3 | 工具结果 `RH2_SYS_EXECUTABLE=/opt/miniconda3/envs/testbed/bin/python`、`CONDA_DEFAULT_ENV=testbed`、`HOME=/home/agent`、`BASH_ENV=/rh2/bash_env`；agent 视角 `/testbed/.harness`、`/tmp/.run.sh`、`/tmp/.run.done` 均不存在；`git status --porcelain` 0 行；`/rh2/bash_env` 追加写 `DENIED`；运行后 agent 进程 0；`result{subtype:success,num_turns:3}` | 全部通过 |
+| time_budget（wall 60 s，桩在第 2 个请求挂住） | -1 / `time_budget`（客户端 -9） | partial=`time_budget`，5 113 B | 2 = 2（第 2 个请求的 `message_start` 已收到） | 首个工具结果保留；容器内残留 1 个 `claude` 进程（58 s），`pkill -KILL -u agent` 后 0——**收集器不终止容器内进程**，正式链由 `_force_stop_execution_scope` 收口 | 全部通过 |
+| max_turns（`--max-turns 3`，桩无限 tool_use） | 1 / `container_process_exit` | complete，10 521 B | 3 = 3 | `result{subtype:error_max_turns,is_error:true,num_turns:4}`；非零退出码来自 docker CLI，不再是 agent 可写的标记 | 通过（脚本 oracle 的解释器项对本剧本 N/A） |
+| cut_stream（第 2 个请求在 `content_block_start` 后断开） | 1 / `container_process_exit` | complete，7 215 B | 2 = 2（**CC 未重试**） | `result{subtype:success,is_error:true,stop_reason:stop_sequence,num_turns:2}`，进程退出码 1。这是 #3 的第一条事实：流被切断时 CC 2.1.205 不重试、`result.subtype` 仍是 `success` 但 `is_error=true` 且退出非零——正式链凭宿主拿到的退出码即可区分（`nonzero_harness_exit_in_formal_chain`），不依赖 `result` 事件 | 只记事实（#3 另做四形状 × commit 前/后边界） |
+
+其它事实：四个场景桩端点**一次都没收到** `/v1/messages/count_tokens`（CC 2.1.205 在此启动形状下不调用它——#8 决策包的输入，B 线"count_tokens 返回 0"的影响面需要按此重估）；请求头 `anthropic-beta` 含 `claude-code-20250219, interleaved-thinking-2025-05-14, mid-conversation-system-2026-04-07, effort-2025-11-24`，请求体已落盘供 #4/#5/#6 分析。
+
+未覆盖 / 偏差：SR2 ② `docker_cli_error`（daemon 断连）与 ① `write_error` 只有单测，真机不制造；census digest 前后对照未做，以 `git status` 0 行 + `find /testbed -newer <激活文件写入时刻>` 0 个文件替代（首轮把 `/testbed/.git` 目录本身算作"新写"——`git status` 刷新 index 的 lock 重命名改了目录 mtime，排除 `.git` 目录后为 0）；桩的 `hang` 场景在 SIGTERM 下不立刻退出（aiohttp 等待处理器），脚本已 kill。验证机用完由用户销毁（Spheron 无暂停）；远端已确认无残留容器 / 网络 / 桩进程。
