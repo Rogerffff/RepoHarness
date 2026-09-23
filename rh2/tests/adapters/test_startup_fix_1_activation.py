@@ -241,15 +241,15 @@ async def test_launch_claude_code_is_stateless_and_concurrent_executions_keep_th
     async def fake_write_config(self, sb, ctx):
         return None
 
-    async def fake_collect(argv, *, stdout_path, stderr_path, deadline_seconds, time_budget_exit_code=-1, chunk_size=65536):
-        env = {a.split("=", 1)[0]: a.split("=", 1)[1] for i, a in enumerate(argv) if i > 0 and argv[i - 1] == "-e"}
+    async def fake_collect(*, container_name, user, workdir, env, cmd, stdout_path, stderr_path, deadline_seconds,
+                           time_budget_exit_code=-1, progress=None, socket_path=None, settle_seconds=10.0):
         await asyncio.sleep(0.01 if env["BASH_ENV"].endswith("A") else 0.0)  # 交错
-        seen.append({"argv": list(argv), "cmd": argv[-1], "env": env, "budget": deadline_seconds, "stdout": str(stdout_path)})
-        return ds.HostCollectedRun(0, 0, "container_process_exit", str(stdout_path), str(stderr_path), 1, 0, True, None, "", 0.1)
+        seen.append({"cmd": cmd, "env": dict(env), "budget": deadline_seconds, "stdout": str(stdout_path), "user": user, "workdir": workdir})
+        return ds.ExecCollectedRun("exec-1", 0, "exited", str(stdout_path), str(stderr_path), 1, 0, True, None, "", 0.1)
 
     monkeypatch.setattr(slime_sandbox, "ensure_agent_user", fake_ensure)
     monkeypatch.setattr(ClaudeCodeHarness, "write_config", fake_write_config)
-    monkeypatch.setattr(ds, "run_host_collected", fake_collect)
+    monkeypatch.setattr(ds, "run_exec_collected", fake_collect)
     monkeypatch.setenv("SLIME_AGENT_CC_EXTRA_ARGS", "--max-turns 25")
 
     await asyncio.gather(
@@ -266,7 +266,7 @@ async def test_launch_claude_code_is_stateless_and_concurrent_executions_keep_th
     assert by_token["tokA"]["stdout"].endswith("/A/trajectory.jsonl") and by_token["tokB"]["stdout"].endswith("/B/trajectory.jsonl")
     for s in seen:
         assert s["cmd"].startswith("exec /usr/local/bin/claude -p ") and "--output-format stream-json" in s["cmd"]
-        assert s["cmd"].endswith("--max-turns 25")
+        assert s["cmd"].endswith("--max-turns 25") and s["user"] == "agent" and s["workdir"] == "/testbed"
     # 单例上没有留下任何逐 execution 状态
     harness = ClaudeCodeHarness()
     assert not any(k for k in vars(harness) if "env" in k.lower() or "inject" in k.lower())

@@ -152,7 +152,7 @@ vendored `run_agent`（`slime/agent/harness/common.py:107–122`）在 `{workdir
 - 日志目录 `<artifact_dir>/<trajectory_id>/harness`（从非秘密身份生成，不用 session token）；`artifact_dir` 缺省时收集到宿主临时目录并留痕，不静默丢日志。
 - B 线 `experiments/base_probe_20260922/solve_attempt.py` 仍从容器内 `<workdir>/.harness/trajectory.jsonl` 取轨迹：#2 之后该文件不存在，应改读 `launch_facts["harness_log"]["stdout_path"]`（B 线脚本，留言告知，不由 A 改）。
 
-### 6.4 真机验收（SR4，2026-09-23，验证机 x86_64 CPU / Docker 28，真实 `conan-io__conan-15422` 镜像，真实 CC 2.1.205）
+### 6.4 真机验收（SR4，2026-09-23，验证机 x86_64 CPU / Docker 29.8.1（Codex 复核实测；此前误记为 28），真实 `conan-io__conan-15422` 镜像，真实 CC 2.1.205）
 
 夹具：`rh2/experiments/base_probe_fixes_20260923/stub_anthropic_endpoint.py`（Anthropic Messages 形状的桩端点，SSE 与 vendored `_render_stream` 同形，逐请求剧本：`tool_use / text / hang / cut / http_error`，请求体落盘）+ `acceptance_startup_2.py`（正式 profile → relay → attempt 网络 → `docker_run_args` → sanitize → 可信初始化 → 与 `generate.py` 同一条脚本写激活文件 → `run_rollout_prelaunch_check(activation_file=)` → `run_rollout_activation_check` → **正式 `ClaudeCodeDriver.run(env_injections=agent_shell_env(...), harness_log_dir=...)`**；只有模型端点是桩）。CC 版本核对 `2.1.205 (Claude Code)`；平台包 sha256 记在各 `attempt.json`。证据：`runs/base_probe_fixes_20260923/remote/acc2_{normal,time_budget,max_turns,cut_stream}/`（`attempt.json`、`harness/trajectory.jsonl`、`stub/requests/*.json`、`prelaunch.json`、`activation_check.json`、`post_run_facts_root.txt`）。四个场景都以真实 SWE-Gym 镜像跑；桩剧本让 CC 用 Bash 执行 `python -c 'import sys,os; print(sys.executable, os.environ.get("CONDA_DEFAULT_ENV"))'` 与"模型可见面"检查。
 
@@ -166,3 +166,82 @@ vendored `run_agent`（`slime/agent/harness/common.py:107–122`）在 `{workdir
 其它事实：四个场景桩端点**一次都没收到** `/v1/messages/count_tokens`（CC 2.1.205 在此启动形状下不调用它——#8 决策包的输入，B 线"count_tokens 返回 0"的影响面需要按此重估）；请求头 `anthropic-beta` 含 `claude-code-20250219, interleaved-thinking-2025-05-14, mid-conversation-system-2026-04-07, effort-2025-11-24`，请求体已落盘供 #4/#5/#6 分析。
 
 未覆盖 / 偏差：SR2 ② `docker_cli_error`（daemon 断连）与 ① `write_error` 只有单测，真机不制造；census digest 前后对照未做，以 `git status` 0 行 + `find /testbed -newer <激活文件写入时刻>` 0 个文件替代（首轮把 `/testbed/.git` 目录本身算作"新写"——`git status` 刷新 index 的 lock 重命名改了目录 mtime，排除 `.git` 目录后为 0）；桩的 `hang` 场景在 SIGTERM 下不立刻退出（aiohttp 等待处理器），脚本已 kill。验证机用完由用户销毁（Spheron 无暂停）；远端已确认无残留容器 / 网络 / 桩进程。
+
+
+## 7. Codex 实施复核（2026-09-24）
+
+[复核报告、反例与验收条件](codex_implementation_review_20260924.md)：#1 激活与逐 execution 注入接受；#2 尚有 IR1（P1：客户端退出不能直接证明本次 exec 已完成）、IR2（P2：异常/取消日志事实未进入持久审计）、IR3（P2：短写误报完整）。本机和验证机真实 Docker 均复现 SIGINT/SIGTERM 后 CLI 返回 0、容器内原进程仍活，不能只补负返回码分支。主审 144 项相关维护测试通过（含 14 项真 Docker）；无新 T0，三项在本片修复，#3 夹具/后续决策包可并行准备。作者原验收记录保留，本文指针不把待修项标为已修。
+
+## 7. Codex 实施复核 IR1–IR3 的处置与修订（2026-09-24，Claude）
+
+[复核原文](codex_implementation_review_20260924.md)。三项全部 accepted；无新 T0。
+
+| 项 | 处置 | 修法 |
+| --- | --- | --- |
+| IR1 / P1：Docker 客户端退出 ≠ 本次 CC 执行结束 | accepted | 宿主收集**不再起 `docker exec` CLI 子进程**，局部直连 Engine API（unix socket，裸 HTTP，无新依赖）：`POST /containers/{c}/exec` 拿 exec ID → `POST /exec/{id}/start`（`Upgrade: tcp` hijack，多路复用帧流增量写宿主文件）→ 流结束后对**同一 exec ID** 轮询 `GET /exec/{id}/json`（上限 10 s，正常几十毫秒）：`Running=false` 且 `ExitCode` 为 0..255 整数才是可信终态。流结束但仍 `Running=true`、inspect 404 / 无退出码 / 负码 → 不给退出码，调用方抛既有 typed `harness_exec_connection_lost`（`harness_crash` 收口，不受 cap 豁免）。没有宿主子进程，也就没有 `-1/-2/-9/-15` 这类与 RH2 内部码碰撞的负返回值。建 exec / 起流失败（daemon 不可达、容器不在）抛 `EngineApiError` → 启动函数转 `SandboxExecError` → driver 既有归因 `harness_bootstrap_failed`（task-local） |
+| IR2 / P2：失败与取消时审计引用丢失 | accepted | 启动函数在起流**之前**就把 `progress` dict 挂到 `HARNESS_LAUNCH_FACTS["harness_log"]`，收集器每帧更新字节数、收口（正常 / 期限 / 取消 / 异常）时在 `finally` 里写全事实；编排层把复制动作移到 `_await_harness_within_deadline` 之后的既有 `finally`（`_absorb_harness_log`，幂等）——正常、typed 连接丢失、外层期限取消、poison 取消都能从内存 audit 与落盘 JSON 回读路径、实际字节与 partial 原因。保持原 `CancelledError` / typed 首因，不吞取消、不改预算类别 |
+| IR3 / P2：短写误报完整 | accepted | `_LogSink` 按 `write()` 的实际返回累计；返回 0 视为短写（`EFBIG`），写失败 / 短写即关闭该文件、停止写、继续排空管道；`log_complete` 只在 exited 且两路无写失败时为 true。真实 `RLIMIT_FSIZE=4096` 子进程用例：8192 B 落 4096 B、计 4096、标 `write_error:stdout:write:…` |
+| §5 验证机 Docker 版本 | accepted | §6.4 改为 29.8.1（此前误记 28） |
+| §5 验收脚本没跑正式 orchestrator / cap 路径 | accepted（范围说明） | 新增正式编排（fa_formal）用例：typed 连接丢失在 cap 有 / 无两种情形下都 `aborted`、`remove_sample=True`、`completion_class=missing`、评分 0 次；验收脚本仍只覆盖 driver 层，不冒充正式 orchestrator 验收 |
+
+### 7.1 改动
+
+| 文件 | 改动 |
+| --- | --- |
+| `adapters/slime/docker_sandbox.py` | 删除 CLI 收集器（`run_host_collected / host_exec_argv / classify_client_exit / HostCollectedRun`）；新增 `docker_socket_path()`（`DOCKER_HOST=unix://…` 优先，否则 `/var/run/docker.sock`，再退 Docker Desktop 用户 socket）、`engine_request()`（普通请求，`Content-Length` / chunked 两种响应体）、`engine_hijack()`（`Upgrade: tcp`；101 = 原始帧流，200 + chunked = 帧在 chunk 体里）、`_FrameSource`（8 字节头解帧，chunk 边界与帧边界无关）、`_LogSink`（实际写入计数、短写收口）、`ExecCollectedRun`（`exec_id / exit_code / exec_state / 路径 / 字节 / log_complete / log_partial_reason / stderr_tail / seconds / inspect`）、`run_exec_collected(container_name, user, workdir, env, cmd, stdout_path, stderr_path, deadline_seconds, time_budget_exit_code, progress, socket_path, settle_seconds)`。`exec_state ∈ {start_failed, streaming, exited, time_budget, exec_running_after_stream_end, inspect_failed, cancelled}` |
+| `adapters/slime/bringup.py` | `launch_claude_code` 改调 `run_exec_collected`；`progress` 先挂进 launch facts；`EngineApiError → SandboxExecError`；`time_budget → EXIT_TIME_BUDGET_EXCEEDED`；非 `exited` → typed `harness_exec_connection_lost` |
+| `adapters/slime/generate.py` | `_absorb_harness_log(audit, launch_facts)`（幂等：`audit.harness_log` + 两条宿主路径进 `artifact_paths`）在既有 `finally` 里调用；删除只在正常返回后复制的旧写法 |
+| 测试 | `test_startup_fix_2_host_collected.py` 重写（27 例）：unix socket 上的假 daemon（exec create / start(101 或 200+chunked) / inspect 剧本）钉住终态判定（settle 轮询、EOF 后仍 Running、404、无码、负码、bool）、期限（关连接不等退出、记一次 inspect 事实）、取消（传播 + 事实交出）、建 exec 失败、socket 不可达、短写 / open 失败、真实 RLIMIT_FSIZE、启动函数接线（create body 的 User / WorkingDir / Env / Cmd）、真实 driver（spawn 失败 → bootstrap_failed；typed 码不被改写）、编排落盘（正常 / typed / 外层期限取消三条路径的 `harness_log`）、正式编排 cap 有 / 无。新增 `test_startup_fix_2_engine_exec_docker.py`（7 例，`@pytest.mark.docker`，无 daemon 或镜像即 skip，`RH2_EXEC_TEST_IMAGE` 可指到在场镜像）：真实 daemon 的 0 / 3 / 130、300 KB、User/WorkingDir/Env 生效、期限后进程仍在且屏障杀掉后 daemon 记下终态、取消保留部分日志、容器被 kill → 137、容器不存在。`test_startup_fix_1_activation.py` 并发用例改到新接缝 |
+| vendored `rh2/src/slime/` | 零改动 |
+
+### 7.2 真实 daemon 上核对的事实（原型脚本，本机 29.4.1 与验证机 29.8.1 一致）
+
+- 不带 `Upgrade` 头时 29.x 的 exec start 回 `200 + Transfer-Encoding: chunked`（帧在 chunk 体里）；带 `Upgrade: tcp` 回 `101` + `application/vnd.docker.multiplexed-stream` 原始帧流——正式路径用后者（与官方 CLI 同一接缝），前者作兼容分支只在假 daemon 上测。
+- 流只在进程退出或连接丢失时结束：进程把自己的 stdio 重定向到 `/dev/null` 后继续跑，流**不会**结束——所以"流已 EOF 但 `Running=true`"只会来自连接层，作 typed 判据成立。
+- 流 EOF 后立即 inspect 就是 `Running=false` + `ExitCode`（3 / 130 / 0，300 KB 输出逐帧完整）；容器被 `docker kill` 时 exec 的终态是 137，走既有非零退出码路径而不是"完成"。
+- 关掉本次 hijack 连接**不会**终止容器内进程（`sleep` 继续在 `/proc` 里）：期限 / 取消后容器内 CC 仍归既有 `_force_stop_execution_scope` 屏障与容器清理，收集器不另造停止生命周期（Codex：owner 语义不变）。
+
+### 7.3 验证
+
+- 单测（§7.5 处置后的最终数）：`test_startup_fix_2_host_collected.py` 40 passed（假 daemon；含 daemon 侧连接重置 → 记 `stream_error`、截断帧不落盘、仍以 inspect 为准，以及 §7.5 各缺陷的用例）；`test_startup_fix_2_engine_exec_docker.py` 8 passed（本机 Docker 29.4.1 用 `python:3.12-slim`；验证机 29.8.1 用在场的 conan 镜像 `RH2_EXEC_TEST_IMAGE=…`）；`test_startup_fix_1_activation.py` 20 passed；验证机三文件合计 68 passed。
+- 本机五目录 **1691 passed / 1 skipped**（含 `test_w3b_sandbox_docker.py` 14 例真容器；§7.5 处置后的最终一轮）；双 lane 全绿（A 463p/343s、B 806p/0s）；ruff 通过。
+- 真机验收（同 §6.4 的四个场景重跑，`runs/base_probe_fixes_20260923/remote/acc3_*/`；§7.5 处置后的最终代码再跑 normal / time_budget = `acc4_*/`，期望项全部通过）：normal 退出 0、`exec_state=exited`、`inspect={Running:false, ExitCode:0}`、11 822 B 完整、`message_start` 3 = 桩请求 3、解释器 / 模型可见面事实全同 §6.4；time_budget -1 / `time_budget` partial / `inspect.Running=true`、容器内残留 1 个 claude 进程由 `pkill -u agent` 收口；max_turns 退出 1（inspect ExitCode=1）、`result.subtype=error_max_turns`；cut_stream 退出 1、CC 不重试（与 §6.4 一致）。全部期望项通过（max_turns 剧本不含解释器项，同前）。
+
+### 7.4 未覆盖 / 残余
+
+- daemon 重启、daemon 暂停、并发字节精确、退出与期限竞态、信号打到收集器进程——交给独立对抗验证（Opus 5.5 子代理，验证机），结果见 §7.5。
+- `200 + chunked` 的 exec start 兼容分支只在假 daemon 上测过（29.x 带 `Upgrade` 头时总是 101）。
+- settle 上限 10 s 是经验值：流 EOF 后 daemon 正常几十毫秒内记下终态；超过上限仍 `Running=true` 视为连接丢失（typed），不会把慢 daemon 误判成完成，只会把极慢的终态记录误判成丢失（保守方向）。
+- 收集器不终止容器内进程（设计如此）：期限 / 取消 / 连接丢失后的 CC 由 `_force_stop_execution_scope` 与容器清理收口，这一段没有改。
+
+### 7.5 独立对抗验证（Opus 5.5 子代理，验证机 Docker 29.8.1 + 本机 29.4.1，2026-09-24）与处置
+
+探针脚本 `rh2/experiments/base_probe_fixes_20260923/review_probes/`（未跟踪），结果 `runs/base_probe_fixes_20260923/adversarial_ir1/`。**核心不变量成立**：7 个场景、几百次收集，没有一次在不该给退出码时给出 `exited`；所有 `exited` 的码都来自同一 exec 的 inspect 且与实际一致。
+
+| 场景 | 观测 | 结论 |
+| --- | --- | --- |
+| 流式收集中 `systemctl restart docker` / `kill -9 dockerd`（live-restore 关 / 开各一遍） | 4 例都是 `inspect_failed`（settle 上限 10 s 内 48 次 inspect 全失败 / 404），无退出码；live-restore 关时容器 143 退出、开时 `sleep` 仍活 | 符合设计（typed 收口） |
+| `kill -STOP/-CONT dockerd` | 流中途暂停 5 s：只是停顿，300 行 / 20 MiB 全到、`exited`；期限内暂停：`time_budget` 5.0 s 返回，有界 inspect 2.0 s；settle 期间暂停 15 s：`inspect_failed`（偏安全，实际已完成的执行被 typed 收口）；create 与 start 之间暂停 40 s：**未包装的 `TimeoutError`**（D1）；CONT 后没有"幽灵启动" | D1 缺陷，其余符合设计 |
+| 容器 `kill -KILL` / `stop`（有 / 无 `--init`）/ `rm -f` / `restart` / `pause` 跨期限 | 全部 `exited 137`（`rm -f` 后 inspect 404 也不给错码）；`pause` → `time_budget`；`docker stop` 时 exec 进程收不到 SIGTERM（随 PID 命名空间被 KILL） | 符合设计 |
+| 6 路并发、各 3 MiB stdout + 3 MiB stderr、随机块交错、0x00–0xff、单段 298 KB 无换行、退出码各不相同 | 24/24 sha256 与容器内一致、无串扰；真实 daemon 单帧最大 32 KiB | 符合设计 |
+| 退出与期限竞态（deadline 1.0 s，进程约 1.0 s 退出，120 次） | 只有 `exited 7` 或 `time_budget -1`，无错码无异常；7 次 `time_budget` 时进程其实刚退出 | 设计接受的竞态结局 |
+| SIGINT / SIGTERM / SIGHUP / SIGKILL 打到运行收集器的 Python 进程 | SIGINT 走 `CancelledError` 路径（事实 cancelled）；默认处理的 TERM/HUP 直接终止（无 finally）；宿主无僵尸；容器内 exec 仍在跑（归屏障）；dockerd 侧 hijack socket 约 125 s 后由 GC 释放，不累积（旧 CLI 路径同样） | 符合设计 |
+| 代码审读疑点复现 | 帧头跨 chunk 边界正确；settle 中 inspect 间歇 500/404 后仍得正确终态；`writer.close()` 无 ResourceWarning / fd 泄漏；收集器停顿 5 s 不丢尾部（假设被推翻）；1 MiB tmpfs 写满 → `write_error`、退出码仍可信 | 符合设计 |
+
+**缺陷与处置（全部已修，均有用例）**：
+
+| 编号 | 问题 | 修法 |
+| --- | --- | --- |
+| D1 / P2 | `engine_hijack` 起流阶段的超时 / 连接重置原样抛 `TimeoutError` / `ConnectionResetError`，经正式编排实测是 `pre_finalize_failure_unclassified` **整 run 停机**，而同一故障在 create 阶段只作废本条 | 与 `engine_request` 同样包成 `EngineApiError` → `SandboxExecError` → `harness_bootstrap_failed`；`_read_http_head` 改抛可包装的 `ConnectionError` / `ValueError`；用例：/start 永不应答、/start 被重置，各经真实 driver 归因 bootstrap 失败 |
+| D7 / P2 | 日志追加写（`"ab"`）+ 目录按跨 retry 恒等的 execution id → 重派发的两次尝试混进同一文件，事实只计本次字节却报 complete | `_open_log` 改 `"wb"`（每次尝试从空文件开始）；`_harness_log_dir` 再按 `physical_attempt_id` 分子目录 `…/harness/<attempt>/`（消费者按 audit 里的路径读，不猜路径）；用例：预置旧内容被替换、目录按 attempt 区分 |
+| D3 / P3 | 期限后的那次 inspect 里被外层取消：`cancelled` 却带 `exit_code=-1` | 取消分支置 `exit_code=None`；用例：慢 inspect + 取消 |
+| D2 / P3 | 畸形 chunked：create 阶段抛未包装 `ValueError`；流中途时 progress 停在 `streaming` | `engine_request` / `engine_hijack` 包 `ValueError`；`_FrameSource` 把 `ValueError` 当流结束记 `stream_error`；未知异常路径记 `stream_error:<type>` 后原样传播（不包、不吞） |
+| D4 / P3 | `_TIME_BUDGET_INSPECT_SECONDS` 按阶段计时，最坏约 8 s | `engine_request` 改为整次请求一个 `wait_for` 上限 |
+| D5 / P3 | 退出码没有上限检查 | `0 <= code <= 255` 之外一律 `inspect_failed` |
+| D6 / P3 | OCI 启动失败（工作目录不在、bash 不在 PATH）被报成 `exited 127`、daemon 错误文本进 stdout 文件 | `Running=false` 且 `Pid=0` 且码非零 → `exec_never_started`（保留 daemon 合成码与 stdout 尾部）→ 启动函数抛 `SandboxExecError` → `harness_bootstrap_failed`；真 daemon 用例：工作目录不存在 |
+| D9 / P3 | `docker_socket_path()` 只看 `DOCKER_HOST`，与用非默认 context 的 CLI 分家 | `DOCKER_HOST` 未设时按 `docker context inspect` 的 endpoint（进程内缓存），再退到默认路径 |
+| D12 / P3 | 测试打补丁的 `_EXEC_SETTLE_SECONDS` 无效（默认值定义时绑定） | `settle_seconds=None` 时调用时取模块常量；`_ENGINE_REQUEST_TIMEOUT` 同理；用例断言耗时 |
+| D13 / P3 | 截断的 chunked 响应体被当完整 | 终止 chunk 之前 EOF → `IncompleteReadError` → `EngineApiError`；用例 |
+| D10 / D11 | 类型非 1/2 的帧被静默丢弃；超大帧约 3 倍内存 | 不改：真实 exec 只有类型 1/2，daemon 单帧 ≤ 32 KiB（记录为已知边界） |
+
+子代理对生产代码零改动；远端资源全部清理（探针容器 0 残留、无自建网络、live-restore 已恢复关闭、tmpfs 已卸载）。

@@ -397,13 +397,15 @@ async def launch_claude_code(
     env_injections: Mapping[str, str], harness_log_dir: str | None = None,
 ) -> int:
     """RS 层的 Claude Code 启动（#1 / #2）：按 vendored `BaseHarness.run` 的三步——ensure agent user → write config →
-    launch——但启动这一步自己拼命令与环境，把逐 execution 的 env 显式带上（#1），并由**宿主**收集 CC 的
-    stdout / stderr（#2：容器内不再有 `.harness/`、launcher 与 done 标记；退出码来自 docker CLI）。**无状态**：
-    不子类化单例 `ClaudeCodeHarness`，只借用它的常量与无状态的 `write_config`。
+    launch——但启动这一步自己拼命令与环境，把逐 execution 的 env 显式带上（#1），并由**宿主**经 Engine API exec
+    收集 CC 的 stdout / stderr（#2：容器内不再有 `.harness/`、launcher 与 done 标记）。**无状态**：不子类化单例
+    `ClaudeCodeHarness`，只借用它的常量与无状态的 `write_config`。
 
-    返回容器内 CC 的退出码；时间预算到点返回 `EXIT_TIME_BUDGET_EXCEEDED`（与旧 `exec_and_wait` 同码，容器内
-    进程由既有屏障终止）；docker CLI 自身异常（连接丢失等）抛 typed `harness_exec_connection_lost`（失去可信的
-    结束事实，按执行基础设施失败收口，不受 turn-cap 豁免）。事实进 HARNESS_LAUNCH_FACTS["harness_log"]。"""
+    返回值 = daemon 对**同一次 exec** inspect 到的退出码（Codex IR1：宿主客户端的返回值不是结束事实）；时间预算
+    到点返回 `EXIT_TIME_BUDGET_EXCEEDED`（容器内进程由既有屏障终止）；流结束而 exec 仍在跑 / 拿不到终态抛 typed
+    `harness_exec_connection_lost`（失去可信的结束事实，按执行基础设施失败收口，不受 turn-cap 豁免）；建 exec /
+    起流失败抛 SandboxExecError（driver 按引导失败归因）。事实从流开始就挂在 HARNESS_LAUNCH_FACTS["harness_log"]
+    上并随进度更新——取消 / 异常时编排仍拿得到路径、实际字节与 partial 原因（IR2）。"""
 
     from slime.agent import sandbox as _sandbox
     from slime.agent.harness import ClaudeCodeHarness
@@ -431,19 +433,33 @@ async def launch_claude_code(
     log_dir = Path(harness_log_dir)
     log_dir.mkdir(parents=True, exist_ok=True)
     os.chmod(log_dir, 0o700)
-    run = await _ds.run_host_collected(
-        _ds.host_exec_argv(container_name=sb.container_name, user="agent", workdir=ctx.workdir, env=env, cmd=f"exec {cmd}"),
-        stdout_path=log_dir / "trajectory.jsonl", stderr_path=log_dir / "stderr.log",
-        deadline_seconds=float(time_budget_sec), time_budget_exit_code=_sandbox.EXIT_TIME_BUDGET_EXCEEDED,
-    )
+    progress: dict = {}
     facts = HARNESS_LAUNCH_FACTS.get()
     if facts is not None:
-        facts["harness_log"] = run.facts()
-    if run.client_exit_kind == "docker_cli_error":
+        facts["harness_log"] = progress  # 先挂上再起流：取消 / 异常路径也能从 launch facts 回读（IR2）
+    try:
+        run = await _ds.run_exec_collected(
+            container_name=sb.container_name, user="agent", workdir=ctx.workdir, env=env, cmd=f"exec {cmd}",
+            stdout_path=log_dir / "trajectory.jsonl", stderr_path=log_dir / "stderr.log",
+            deadline_seconds=float(time_budget_sec), time_budget_exit_code=_sandbox.EXIT_TIME_BUDGET_EXCEEDED,
+            progress=progress,
+        )
+    except _ds.EngineApiError as exc:
+        # 建 exec / 起流失败 = spawn 阶段的沙箱操作失败：与装 CLI / useradd 同类，driver 归因 harness_bootstrap_failed
+        raise _ds.SandboxExecError(f"engine api {exc.op}", -1, exc.detail) from exc
+    if run.exec_state == "time_budget":
+        return _sandbox.EXIT_TIME_BUDGET_EXCEEDED
+    if run.exec_state == "exec_never_started":
+        # OCI 层没起来（daemon 合成的 126/127、Pid=0）：CC 从未运行，按 spawn 失败归因 harness_bootstrap_failed
+        raise _ds.SandboxExecError(
+            "engine api exec_start", int(run.exit_code or -1),
+            f"exec 从未启动（inspect={run.inspect}）：{run.stdout_tail[-300:]!r}",
+        )
+    if run.exec_state != "exited" or run.exit_code is None:
         raise SlimeBindingError(
             "harness_exec_connection_lost",
-            f"docker exec 客户端异常退出 rc={run.client_exit_code}（stderr 尾部 {run.stderr_tail[-200:]!r}）"
-            "——失去可信的 CC 结束事实，按执行基础设施失败收口（日志已保留的部分见 harness_log）。",
+            f"CC 的 exec 流已结束但拿不到本次 exec 的可信终态（{run.exec_state}，inspect={run.inspect}，"
+            f"stderr 尾部 {run.stderr_tail[-200:]!r}）——按执行基础设施失败收口（已收到的部分见 harness_log）。",
         )
     return run.exit_code
 

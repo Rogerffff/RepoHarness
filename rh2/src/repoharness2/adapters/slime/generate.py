@@ -3064,6 +3064,10 @@ class RolloutOrchestrator:
                 # 由预算拒绝导致的退出，不豁免其它失败，但事实本身要留给 B 看。
                 if self._turn_budget_snapshot is not None:
                     audit.termination["turn_budget"] = self._turn_budget_snapshot(sid)
+                # #2 / IR2：宿主收集事实无论怎样收口（正常 / typed 连接丢失 / 期限取消 / poison）都进 audit——
+                # 被取消的 harness task 已在 _settle_cancelled_stage 里等到结束，driver 的 finally 已把
+                # 已知路径、实际字节与 partial 原因交出
+                self._absorb_harness_log(audit, launch_facts)
             audit.harness_exit_code = exit_code
             audit.termination["harness_exit_code"] = exit_code
             turn_budget = audit.termination["turn_budget"]
@@ -3076,10 +3080,6 @@ class RolloutOrchestrator:
             audit.episode_deadline["harness_launched"] = launch_facts.get("launched")  # None = 未确认
             audit.episode_deadline["bootstrap_seconds"] = launch_facts.get("bootstrap_seconds")
             audit.episode_deadline["remaining_at_launch"] = launch_facts.get("remaining_at_launch")
-            audit.harness_log = launch_facts.get("harness_log")  # #2：宿主收集事实（None = 未收集 / 替身驱动）
-            for key in ("stdout_path", "stderr_path"):  # 宿主轨迹 / stderr 文件进 artifact 清单（B 线分析改读宿主副本）
-                if (audit.harness_log or {}).get(key):
-                    audit.artifact_paths.append(Path(audit.harness_log[key]))
             if exit_code == HARNESS_EXIT_TIME_BUDGET_EXCEEDED:
                 # F2-2 复核 P1-4：slime EXIT_TIME_BUDGET_EXCEEDED=-1 = 时间
                 # 预算耗尽——按 D1a 记 hard_wall_timeout（仅 termination
@@ -3940,12 +3940,31 @@ class RolloutOrchestrator:
             )
         audit.mark("sandbox_activation_check_passed")
 
+    @staticmethod
+    def _absorb_harness_log(audit: "RolloutAudit", launch_facts: dict[str, Any]) -> None:
+        """#2：driver 交出的宿主收集事实 → audit.harness_log；两份宿主文件进 artifact 清单（B 线分析改读宿主副本）。
+        None = 未收集（替身驱动 / 未起流）。幂等。"""
+
+        log = launch_facts.get("harness_log")
+        if not log:
+            return
+        audit.harness_log = dict(log)
+        for key in ("stdout_path", "stderr_path"):
+            path = log.get(key)
+            if path and Path(path) not in audit.artifact_paths:
+                audit.artifact_paths.append(Path(path))
+
     def _harness_log_dir(self, audit: "RolloutAudit") -> str | None:
-        """#2：宿主侧 harness 日志目录（从非秘密 trajectory 身份生成；没有 artifact_dir 时为 None）。"""
+        """#2：宿主侧 harness 日志目录（从非秘密 trajectory 身份生成；没有 artifact_dir 时为 None）。
+        execution id 跨 retry 恒等，所以再按 physical attempt 分子目录：重派发的两次尝试各有各的日志
+        （对抗验证 D7；文件本身也按 "wb" 从空开始）。"""
 
         if self.artifact_dir is None:
             return None
-        return str(self.artifact_dir / _sanitize_for_name(audit.trajectory_id) / "harness")
+        base = self.artifact_dir / _sanitize_for_name(audit.trajectory_id) / "harness"
+        if audit.physical_attempt_id:
+            base = base / _sanitize_for_name(str(audit.physical_attempt_id))
+        return str(base)
 
     def _episode_remaining(self, audit: "RolloutAudit") -> float:
         """批 B：episode 期限剩余秒数（无期限 = +inf）。"""
