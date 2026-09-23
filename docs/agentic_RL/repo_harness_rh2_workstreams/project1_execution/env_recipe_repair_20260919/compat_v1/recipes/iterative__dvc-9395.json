@@ -1,0 +1,10 @@
+{
+  "instance_id": "iterative__dvc-9395",
+  "original_install": "python -m pip install --upgrade pip wheel GitPython; python -m pip install \"cython<3.0.0\" && python -m pip install --no-build-isolation pyyaml==5.4.1; python -m pip install git+https://github.com/iterative/mock-ssh-server.git || true; python -m pip install -r tests/requirements.txt || true; python -m pip install -r test-requirements.txt || true; python -m pip install -e \".[tests,dev,all_remotes,all,testing]\"; python -m pip install \"numpy<=1.20\"; python -m pip install \"pytest<8\";",
+  "revised_install": "rh2_compat_install() {\n python -m pip install --no-index --find-links=/opt/rh2/compat-wheels --no-deps pygit2==1.14.1 || return $?\n python -I -c 'import importlib.metadata as m,json; print(\"RH2_COMPAT_VERSIONS=\"+json.dumps({x:m.version(x) for x in ['\"'\"'pygit2'\"'\"']}))'\n python -m pip install --upgrade pip wheel GitPython; python -m pip install \"cython<3.0.0\" && python -m pip install --no-build-isolation pyyaml==5.4.1; python -m pip install git+https://github.com/iterative/mock-ssh-server.git || true; python -m pip install -r tests/requirements.txt || true; python -m pip install -r test-requirements.txt || true; python -m pip install -e \".[tests,dev,all_remotes,all,testing]\"; python -m pip install \"numpy<=1.20\"; python -m pip install \"pytest<8\";\n local original_rc=$?\n python -I -c 'import importlib.metadata as m,json; print(\"RH2_COMPAT_VERSIONS=\"+json.dumps({x:m.version(x) for x in ['\"'\"'pygit2'\"'\"']}))'\n return \"$original_rc\"\n}\nrh2_compat_install",
+  "pins": [
+    "pygit2==1.14.1"
+  ],
+  "scope": "dependency variant; source install still audited independently",
+  "decision": "E11"
+}

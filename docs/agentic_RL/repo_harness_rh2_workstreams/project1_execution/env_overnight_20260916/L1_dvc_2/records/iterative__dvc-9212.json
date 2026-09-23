@@ -1,0 +1,270 @@
+{
+ "task_id": "iterative__dvc-9212",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+  "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+  "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+  "raw": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc",
+  "base_commit": "8399bf612a849efa2bc800eef61a6d5c19269893",
+  "version": "2.50",
+  "python_version": "3.9",
+  "eval_cmd": "pytest -rA",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-9212:latest",
+  "workdir": "/testbed",
+  "test_patch_paths": [
+   "tests/func/utils/test_hydra.py"
+  ],
+  "gold_paths": [
+   "dvc/utils/hydra.py"
+  ],
+  "n_f2p": 1,
+  "n_p2p": 54,
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-9212/{gold,empty}/offline/a1/",
+  "signals": {
+   "in_e2": [],
+   "fragile_reference_id": false,
+   "stage1": {
+    "empty": {
+     "verdict": "RESOLVED_NO",
+     "rc_install": 0
+    },
+    "gold": {
+     "verdict": "RESOLVED_FULL",
+     "rc_install": 0,
+     "p2p_missing": 0,
+     "f2p_missing": 0
+    }
+   },
+   "deepseek_candidate_oracle": null
+  }
+ },
+ "public_view": {
+  "目标行为": "题面请求的是**嵌套插值**：在 `params.yaml` 里让一个字段引用同文件的另一个字段（`raw: ${paths.data.root}/raw/`），再在 `dvc.yaml` 里用 `${paths.raw}`。",
+  "约束": "题面是功能请求（feature request），给了 params.yaml 与 dvc.yaml 的样例，没有错误信息、没有版本信息、没有提到 hydra。",
+  "公开材料无法确定的点": [
+   "**范围**：题面要的是 dvc 自己的 `${}` 插值引擎（`dvc/parsing/`）支持嵌套；gold 实现的却是**只在 hydra 集成里**调用 `OmegaConf.resolve(cfg)`（`dvc/utils/hydra.py`）。题面一个字都没提 hydra。",
+   "语法：F2P 用的是 OmegaConf 的相对插值 `${.root}`，题面里只有绝对路径式的 `${paths.data.root}`。",
+   "为什么只修 hydra：维护者在 issue 里问『你在用 hydra 集成吧？』并据此把问题归到 hydra 侧——这段对话只在不可见的 hints 里。"
+  ],
+  "base 关键代码": "dvc/utils/hydra.py:compose_and_dump —— YAML 输出走 `OmegaConf.to_yaml(cfg)`（默认 **不** 解析插值），非 YAML 走 `OmegaConf.to_object(cfg)`（**会** 解析）。所以 base 里同一份 hydra 配置 dump 成 params.yaml 与 params.json 的结果不一致；gold 加的 `OmegaConf.resolve(cfg)` 把两条路径统一到『都解析』。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "repos/dvc 121d56b7391f5325e5eb6ff41448980f0ede00df `hydra: resolve OmegaConf interpolations. (#9212)` / `Closes #9196` --stat: dvc/utils/hydra.py 2, tests/func/utils/test_hydra.py 16"
+   ],
+   "note": "gold+test_patch 与上游一致，无丢件。test_patch 顺带把一条 docstring 从 `Regression test for 8583` 改成完整 URL（无关改动，但无害）。",
+   "by": "L1_dvc_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base:dvc/utils/hydra.py compose_and_dump 的 YAML 分支用 `OmegaConf.to_yaml(cfg)`",
+    "stage1 empty: test_compose_and_dump_resolves_interpolation FAILED"
+   ],
+   "note": "base 在 YAML 输出路径上确实不解析插值。",
+   "by": "L1_dvc_2"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 724 字符，两段 yaml，代码块闭合"
+   ],
+   "note": "题面完整、无截断、无外链图片。但它是功能请求而非缺陷报告，没有任何可执行的复现或错误信息。",
+   "by": "L1_dvc_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 仅 tests/func/utils/test_hydra.py",
+    "gold 仅 dvc/utils/hydra.py"
+   ],
+   "note": "零交集。additional_exclusions 空。",
+   "by": "L1_dvc_2"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh git checkout 目标"
+   ],
+   "note": "纯测试文件恢复。",
+   "by": "L1_dvc_2"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan.json 本包路径表"
+   ],
+   "note": "本包无第二题触碰 dvc/utils/hydra.py 或该测试文件。",
+   "by": "L1_dvc_2"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement 全文（无 hydra 字样）",
+    "golden_patch 位置 dvc/utils/hydra.py",
+    "F2P 用 `${.root}` 相对插值语法",
+    "raw hints_text: `You are using the hydra integration, right?`"
+   ],
+   "note": "**这是本包题意与评分范围错位最大的一题**。题面请求的是 dvc 原生 `${}` 插值支持嵌套（会落到 `dvc/parsing/`），F2P 验的是 hydra 集成的 `compose_and_dump` 会 `OmegaConf.resolve`。把两者连起来的唯一依据是不可见 hints 里维护者的那句反问。此外 F2P 使用的相对插值语法 `${.root}` 在题面中从未出现。盲解几乎必然走错模块。",
+   "by": "L1_dvc_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 断言 `output_file.parse() == {\"data\": {...}}`"
+   ],
+   "note": "只断言 dump 出来的文件内容，不锁实现（用 `OmegaConf.to_yaml(cfg, resolve=True)` 也能过）。",
+   "by": "L1_dvc_2"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "F2P 只有 1 条，只覆盖 YAML 输出 + 相对插值",
+    "问题陈述的场景（params.yaml 里的嵌套插值被 dvc.yaml 引用）"
+   ],
+   "note": "题面场景零覆盖：没有任何测试验证 `dvc.yaml` 里 `${paths.raw}` 能拿到展开后的值。F2P 只验证一次 hydra compose→dump。另外没有测试确认 toml/json 输出路径的行为未变（base 那边本来就解析），也没有测试插值失败（引用不存在的键）时的行为。",
+   "by": "L1_dvc_2"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "smstat.json 9212: gold real=55 全 PASSED",
+    "P2P 54 条，含 test_compose_and_dump 在 yaml/toml/json 三种 suffix × 多组 overrides 的参数化，以及 apply_overrides 一族"
+   ],
+   "note": "P2P 规模本包第二大且全绿。它覆盖了 yaml/toml/json 三条 dump 路径，因此把 `OmegaConf.resolve` 加错位置（例如改成 `to_object` 全量转换）大概率会被拦下。",
+   "by": "L1_dvc_2"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "golden_patch 一行 `OmegaConf.resolve(cfg)`",
+    "base 的 yaml/非 yaml 两条分支"
+   ],
+   "note": "gold 与上游一致、只有一行、不依赖未交付改动。但它**没有解决题面请求的功能**（dvc 原生嵌套插值），只是顺手把 hydra 集成里 yaml 与非 yaml 两条输出路径的行为统一了。以『gold 是否与本题对应』衡量，对应关系是弱的。",
+   "by": "L1_dvc_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak.py: gold_added=1 ps_match=0 hints_match=0"
+   ],
+   "note": "题面不含修复代码与 PR 链接。test_patch 的 docstring 里有 issue URL（`issues/9196`），那是测试文件内容而非 agent 可见材料。",
+   "by": "L1_dvc_2"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "base:dvc/utils/hydra.py 内 `from hydra import compose, initialize_config_dir`",
+    "smstat.json: gold 55/55 全 PASSED"
+   ],
+   "note": "本题依赖 `hydra-core` + `omegaconf` 已装（镜像里装了，55/55 全绿）。install 段仍需网络。未受 pathspec/networkx 影响。",
+   "by": "L1_dvc_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 在 tmp_dir 下现场写 conf/config.yaml"
+   ],
+   "note": "无外部资产，hydra 只读本地目录。",
+   "by": "L1_dvc_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 无 URL/requests；hydra initialize_config_dir 只读本地"
+   ],
+   "note": "测试段纯本地。",
+   "by": "L1_dvc_2"
+  },
+  "18": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh `pytest -rA tests/func/utils/test_hydra.py`；gold real=55 = F2P 1 + P2P 54"
+   ],
+   "note": "收集集合与 F2P∪P2P 完全相等，零过选零漏选。",
+   "by": "L1_dvc_2"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "伪键 'Could'、'[4]'"
+   ],
+   "note": "'[4]' 来自 pytest 的 SKIPPED 汇总行 `SKIPPED [4] ...`；与本题参数化 ID 形状不冲突。不影响判分。",
+   "by": "L1_dvc_2"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "empty 54 PASSED/1 FAILED；gold 55/55"
+   ],
+   "note": "分差恰为 F2P 一条。",
+   "by": "L1_dvc_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "题意-评分范围错位",
+   "severity": "P1",
+   "evidence_refs": [
+    "problem_statement 无 hydra 字样",
+    "golden_patch 在 dvc/utils/hydra.py",
+    "hints_text 维护者的反问"
+   ],
+   "proposed_action": "改题面：把维护者的归因（『这是 hydra 集成下的问题，hydra compose 后 dump 成 yaml 时插值未被解析』）写进去，并给出 hydra 场景的复现；否则盲解会走到 `dvc/parsing/` 去实现一个完全不同的功能。",
+   "next_experiment": "盲解一次只给现题面，统计候选改动落在 `dvc/parsing/` 还是 `dvc/utils/hydra.py`（预期前者，F2P 0/1）。"
+  },
+  {
+   "category": "gold 未解决题面请求",
+   "severity": "P2",
+   "evidence_refs": [
+    "gold 只统一了 hydra 的 yaml/非 yaml 输出行为"
+   ],
+   "proposed_action": "若坚持保留本题，应把题目重述为『hydra compose 输出到 yaml 时应解析 OmegaConf 插值，与 toml/json 输出保持一致』——这才是 gold 实际做的事。",
+   "next_experiment": "在 base 上把同一份 hydra 配置分别 dump 成 params.yaml 与 params.json，确认两者内容不一致（这是本题真正的缺陷陈述）。"
+  },
+  {
+   "category": "题面场景零覆盖",
+   "severity": "P3",
+   "evidence_refs": [
+    "F2P 只有一条 compose_and_dump 断言"
+   ],
+   "proposed_action": "补一条端到端：hydra 生成 params.yaml 后，`dvc.yaml` 里 `${...}` 能拿到展开后的值。",
+   "next_experiment": "无。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只有 tests/func/utils/test_hydra.py；gold 只改 dvc/utils/hydra.py。沿用第四组 B 默认空。",
+  "evidence_refs": [
+   "test_patch",
+   "golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "新增：同一份带插值的 hydra 配置分别 dump 成 .yaml / .json / .toml，断言三者内容一致",
+   "reason": "这是 gold 真正修复的不一致，当前只有 yaml 一侧被断言。"
+  },
+  {
+   "id": "新增：插值引用不存在的键时 compose_and_dump 的行为（OmegaConf.resolve 会抛 InterpolationKeyError）",
+   "reason": "gold 把解析时机从 dump 提前到 resolve，错误路径与消息都可能变，当前无覆盖。"
+  },
+  {
+   "id": "tests/func/utils/test_hydra.py::test_compose_and_dump 的 yaml/toml/json 参数化（已在 P2P）",
+   "reason": "三条 dump 路径的回归，已覆盖。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "判分链路很干净（55/55 全绿、收集集合与参考集完全相等、无依赖问题），但题面请求的功能（dvc 原生嵌套插值）与 gold 实现的功能（hydra 集成里解析 OmegaConf 插值）是两件不同的事，连接依据只在不可见 hints 里；不改题面就是一道盲解必然走错模块的题。"
+ },
+ "costs": {
+  "minutes": 15
+ },
+ "by": "L1_dvc_2 (Claude Opus 5, 2026-09-16, 静态审查)"
+}

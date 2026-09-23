@@ -1,0 +1,52 @@
+{
+ "task_id": "getmoto__moto-7335",
+ "source": "SWE-Gym lite (swe_gym_lite_full_f70b1a29)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "s2/ingest/public_bundles_v0.jsonl#getmoto__moto-7335",
+  "grading": "s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-7335",
+  "validation": "s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-7335",
+  "base_commit": "a5a2c22fc8757d956216628371e4b072122d423c",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-7335/gold/offline/a1/",
+  "related": "getmoto__moto-7331（同一题面、同一 gold 文件、前一个 PR）"
+ },
+ "public_view": {
+  "goal": "同 7331 的题面（逐字相同）：access control 开启时对 Cognito Identity 的 GetId 调用因缺 Authorization 头抛 KeyError。要求这类公开操作免鉴权。",
+  "constraints": ["base 已经有 PUBLIC_OPERATIONS 白名单机制（由 7331 引入），只需扩充"],
+  "unknowns_from_public_only": [
+   "题面只点名 GetId；F2P 还要求 GetOpenIdToken 也公开，题面完全没提",
+   "题面没说 X-Amz-Target 的确切取值前缀是 AWSCognitoIdentityService."
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 只碰 tests/test_cognitoidentity/test_cognitoidentity.py（base 已存在）", "golden_patch 只碰 moto/core/responses.py 的 PUBLIC_OPERATIONS，加两行 AWSCognitoIdentityService.GetId / .GetOpenIdToken"], "note": "与题面同一问题（本题才是题面 GetId 的正解；7331 不是）。无二进制/LFS/子模块。", "by": "L1_moto_3"},
+  "2": {"status": "pass", "evidence_refs": ["base moto/core/responses.py:146-152 PUBLIC_OPERATIONS 只有 5 个 AWSCognitoIdentityProviderService.* 条目，无 AWSCognitoIdentityService.*"], "note": "base 确实还没有放行 GetId / GetOpenIdToken。", "by": "L1_moto_3"},
+  "3": {"status": "issue", "evidence_refs": ["problem_statement 与 getmoto__moto-7331 **逐字相同**（problem_statement_sha256 均为 sha256:2a08bd1a74d58d7cf70806d1f9ce545a660fb6ab816a394b34bc8826798acb1a）", "hints_text 里报告者追问 'why is there an error in AWSCognitoIdentityProviderService.GetId and it is not included in the target?'"], "note": "P2：题面只提 GetId，没提 GetOpenIdToken，而 F2P 两条里有一条正是 test_get_open_id_token。仅按题面作答会失败一半 F2P。", "by": "L1_moto_3"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 触碰路径全集：tests/test_cognitoidentity/test_cognitoidentity.py"], "note": "无非测试源码路径；gold 触碰 moto/core/responses.py，非测试样路径。", "by": "L1_moto_3"},
+  "17": {"status": "pass", "evidence_refs": ["同 4"], "note": "additional_exclusions 空。", "by": "L1_moto_3"},
+  "5": {"status": "issue", "evidence_refs": ["与 getmoto__moto-7331 题面逐字相同、gold 文件相同、同一上游 issue 的前后两个 PR", "已实测：7331 的 golden_patch 在本题 base 上 `git apply -R --check` 成功 → 7331 的答案（PUBLIC_OPERATIONS 机制与那 5 个条目）逐字存在于本题 base 的 moto/core/responses.py:146-152", "全局扫描：216 题里题面 sha256 重复的只有两组 —— (7331, 7335) 与 (6121, 6157)；而现有的 s2/ingest/duplicate_clusters_v0.json 只按相同 base_commit 聚类，**没有覆盖这两组**"], "note": "**P1 重复/派生**：这是同一个 issue 被上游拆成两个 PR，SWE-Gym 把同一段题面配给了两题。二者必须成组处理，且现有去重产物漏掉了它们。", "by": "L1_moto_3"},
+  "23": {"status": "issue", "evidence_refs": ["F2P = test_get_id + test_get_open_id_token；题面只提 GetId"], "note": "见 3，P2。", "by": "L1_moto_3"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 黑盒断言；base 已有白名单机制"], "note": "不强制唯一实现（可以扩白名单、也可以按 service 前缀放行）。但本题因为 base 已给出机制，实际只剩“往列表里加两个字符串”，难度极低。", "by": "L1_moto_3"},
+  "25": {"status": "issue", "evidence_refs": ["grep 确认 tests/test_cognitoidentity/test_cognitoidentity.py 全文无 AccessDenied / 鉴权失败断言", "eval 只跑该文件（collected 22 = F2P 2 + P2P 20）", "tests/test_core/test_auth.py 不在判分集合"], "note": "**P1**：与 7331 同样的假修复通道——把 `_authenticate_and_authorize_action` 改成无条件 `return`（关闭整个 IAM 访问控制）即可满分。", "by": "L1_moto_3"},
+  "26": {"status": "issue", "evidence_refs": ["collected 22 = F2P 2 + P2P 20，全在一个文件"], "note": "gold 改的是全局鉴权入口，判分面只有 22 条 cognito-identity 用例。", "by": "L1_moto_3"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 只加两行白名单条目"], "note": "正确、最小、对应题面；**依赖 7331 的 gold 已在 base 里**（PUBLIC_OPERATIONS 与那段 if 判断）——这不是缺陷，但说明两题强耦合。", "by": "L1_moto_3"},
+  "29": {"status": "pass", "evidence_refs": ["hints_text 是 issue 里的问答，无代码、无 PR 链接"], "note": "无静态泄漏。", "by": "L1_moto_3"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold 22 passed，1.34s"], "note": "本包最快的测试之一。", "by": "L1_moto_3"},
+  "7": {"status": "issue", "evidence_refs": ["本包共性 install rc=2"], "note": "见包级 issue。", "by": "L1_moto_3"},
+  "11": {"status": "issue", "evidence_refs": ["F2P test_get_id 用 `@set_initial_no_auth_action_count(1)`、test_get_open_id_token 用 `(0)`；该装饰器改写全局 settings.INITIAL_NO_AUTH_ACTION_COUNT 与类变量 request_count（moto/core/responses.py:186-215），server 模式下还会发 HTTP POST /moto-api/reset-auth", "本题 P2P 里有一条截断的参数化 id：tests/test_cognitoidentity/test_cognitoidentity.py::test_create_identity_pool_valid_name[with"], "note": "P2：判分依赖精确的请求计数（test_get_id 只允许 create_identity_pool 这 1 次免鉴权）；实现若多发一次内部请求即失败。另本题是跨题问题 A（id 截断）的受影响样本。", "by": "L1_moto_3"}
+ },
+ "issues": [
+  {"category": "duplicate_task_same_statement", "severity": "P1", "evidence_refs": ["7331 与 7335 的 problem_statement_sha256 相同", "duplicate_clusters_v0.json 只按 base_commit 聚类，未收录这两组"], "proposed_action": "两题合并或只保留 7335（它才与题面对应）；同时把 ingest 的去重判据从“相同 base_commit”扩展到“相同 problem_statement_sha256”，重新生成 duplicate_clusters。另一组 (6121, 6157) 同样漏收。", "next_experiment": "对 216 题按 problem_statement_sha256 重跑聚类，产出补充的 duplicate_clusters。"},
+  {"category": "test_lets_wrong_fix_pass", "severity": "P1", "evidence_refs": ["test_cognitoidentity.py 无鉴权失败断言；tests/test_core/test_auth.py 不跑"], "proposed_action": "同 7331：把 tests/test_core/test_auth.py 纳入判分或附加回归。", "next_experiment": "用“首行 return 关闭鉴权”的补丁跑本题确认满分。"},
+  {"category": "requirement_underspecified", "severity": "P2", "evidence_refs": ["题面只提 GetId，F2P 还要求 GetOpenIdToken"], "proposed_action": "标记“按题面作答只能过一半 F2P”。", "next_experiment": "只加 AWSCognitoIdentityService.GetId 的补丁跑 F2P，确认 test_get_open_id_token 仍失败。"},
+  {"category": "difficulty_too_low", "severity": "P3", "evidence_refs": ["base 已含白名单机制，gold 只是加两个字符串"], "proposed_action": "标为低难度样本。", "next_experiment": "无。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只含测试文件；沿用默认空排除。", "evidence_refs": ["test_patch 路径全集 = tests/test_cognitoidentity/test_cognitoidentity.py"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_core/test_auth.py", "reason": "**必须加**：唯一能拦住“关闭鉴权”这一满分假解的测试文件。"},
+  {"id": "tests/test_cognitoidp/test_cognitoidp.py", "reason": "同一个 PUBLIC_OPERATIONS 列表的另一半（7331 加入的 5 个条目），防止解题者重写列表时删掉已有条目。"},
+  {"id": "新增：不带 Authorization 调用一个不在白名单里的 cognito-identity 操作，断言仍按鉴权失败处理", "reason": "钉住白名单语义而不是全放行。"}
+ ],
+ "disposition_hint": {"state": "needs_repair", "reason": "与 7331 题面逐字相同、是同一 issue 的后半个 PR，属重复/派生且现有去重未收录；判分集合里没有任何鉴权仍生效的断言，关闭鉴权可得满分；题面还缺 GetOpenIdToken 这一半要求。若二选一保留，应保留本题（它与题面对应）并补判分。"},
+ "costs": {"minutes": 15}
+}

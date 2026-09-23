@@ -1,0 +1,293 @@
+diff --git a/pdm.lock b/pdm.lock
+index 87a856c2..1df4355f 100644
+--- a/pdm.lock
++++ b/pdm.lock
+@@ -3,10 +3,12 @@
+ 
+ [metadata]
+ groups = ["default", "docs", "email", "linting", "memray", "mypy", "testing", "testing-extra"]
+-cross_platform = true
+-static_urls = false
+-lock_version = "4.3"
+-content_hash = "sha256:140881c62bd18f4e3ad6e493e91b1058461fb64d32ceb785cb726ad5b4433bbc"
++strategy = ["cross_platform"]
++lock_version = "4.5.0"
++content_hash = "sha256:e96b63ca778ad4cd79989d7f24fdd2fe6b7fe185ad26b05002ea81c6febf541e"
++
++[[metadata.targets]]
++requires_python = ">=3.8"
+ 
+ [[package]]
+ name = "annotated-types"
+@@ -26,6 +28,9 @@ name = "ansi2html"
+ version = "1.8.0"
+ requires_python = ">=3.6"
+ summary = ""
++dependencies = [
++    "importlib-metadata; python_version < \"3.8\"",
++]
+ files = [
+     {file = "ansi2html-1.8.0-py3-none-any.whl", hash = "sha256:ef9cc9682539dbe524fbf8edad9c9462a308e04bce1170c32daa8fdfd0001785"},
+     {file = "ansi2html-1.8.0.tar.gz", hash = "sha256:38b82a298482a1fa2613f0f9c9beb3db72a8f832eeac58eb2e47bf32cd37f6d5"},
+@@ -37,6 +42,7 @@ version = "2.4.1"
+ summary = "Annotate AST trees with source code positions"
+ dependencies = [
+     "six>=1.12.0",
++    "typing; python_version < \"3.5\"",
+ ]
+ files = [
+     {file = "asttokens-2.4.1-py2.py3-none-any.whl", hash = "sha256:051ed49c3dcae8913ea7cd08e46a606dba30b79993209636c4875bc1d637bc24"},
+@@ -167,6 +173,16 @@ files = [
+     {file = "cffi-1.15.1.tar.gz", hash = "sha256:d400bfb9a37b1351253cb402671cea7e89bdecc294e8016a707f6d1d8ac934f9"},
+ ]
+ 
++[[package]]
++name = "cfgv"
++version = "3.4.0"
++requires_python = ">=3.8"
++summary = "Validate configuration and produce human readable error messages."
++files = [
++    {file = "cfgv-3.4.0-py2.py3-none-any.whl", hash = "sha256:b7265b1f29fd3316bfcd2b330d63d024f2bfd8bcb8b0272f8e19a504856c48f9"},
++    {file = "cfgv-3.4.0.tar.gz", hash = "sha256:e52591d4c5f5dead8e0f673fb16db7949d2cfb3f7da4582893288f0ded8fe560"},
++]
++
+ [[package]]
+ name = "charset-normalizer"
+ version = "3.3.2"
+@@ -259,6 +275,7 @@ requires_python = ">=3.7"
+ summary = "Composable command line interface toolkit"
+ dependencies = [
+     "colorama; platform_system == \"Windows\"",
++    "importlib-metadata; python_version < \"3.8\"",
+ ]
+ files = [
+     {file = "click-8.1.7-py3-none-any.whl", hash = "sha256:ae74fb96c20a0277a1d615f1e4d73c8414f5a98db8b799a7931d1582f3390c28"},
+@@ -438,6 +455,15 @@ files = [
+     {file = "dirty_equals-0.7.1.post0.tar.gz", hash = "sha256:78ff80578a46163831ecb3255cf30d03d1dc2fbca8e67f820105691a1bc556dc"},
+ ]
+ 
++[[package]]
++name = "distlib"
++version = "0.3.8"
++summary = "Distribution utilities"
++files = [
++    {file = "distlib-0.3.8-py2.py3-none-any.whl", hash = "sha256:034db59a0b96f8ca18035f36290806a9a6e6bd9d1ff91e45a7f172eb17e51784"},
++    {file = "distlib-0.3.8.tar.gz", hash = "sha256:1530ea13e350031b6312d8580ddb6b27a104275a31106523b8f123787f494f64"},
++]
++
+ [[package]]
+ name = "dnspython"
+ version = "2.4.2"
+@@ -587,6 +613,16 @@ files = [
+     {file = "griffe-0.38.0.tar.gz", hash = "sha256:9b97487b583042b543d1e28196caee638ecd766c8c4c98135071806cb5333ac2"},
+ ]
+ 
++[[package]]
++name = "identify"
++version = "2.6.1"
++requires_python = ">=3.8"
++summary = "File identification library for Python"
++files = [
++    {file = "identify-2.6.1-py2.py3-none-any.whl", hash = "sha256:53863bcac7caf8d2ed85bd20312ea5dcfc22226800f6d6881f232d861db5a8f0"},
++    {file = "identify-2.6.1.tar.gz", hash = "sha256:91478c5fb7c3aac5ff7bf9b4344f803843dc586832d5f110d672b19aa1984c98"},
++]
++
+ [[package]]
+ name = "idna"
+ version = "3.4"
+@@ -603,6 +639,7 @@ version = "6.8.0"
+ requires_python = ">=3.8"
+ summary = "Read metadata from Python packages"
+ dependencies = [
++    "typing-extensions>=3.6.4; python_version < \"3.8\"",
+     "zipp>=0.5",
+ ]
+ files = [
+@@ -749,6 +786,7 @@ summary = "A memory profiler for Python applications"
+ dependencies = [
+     "jinja2>=2.9",
+     "rich>=11.2.0",
++    "typing-extensions; python_version < \"3.8.0\"",
+ ]
+ files = [
+     {file = "memray-1.10.0-cp310-cp310-macosx_10_14_x86_64.whl", hash = "sha256:843a688877691746f9d1835cfa8a65139948471bdd78720435808d20bc30a1cc"},
+@@ -829,6 +867,7 @@ dependencies = [
+     "platformdirs>=2.2.0",
+     "pyyaml-env-tag>=0.1",
+     "pyyaml>=5.1",
++    "typing-extensions>=3.10; python_version < \"3.8\"",
+     "watchdog>=2.0",
+ ]
+ files = [
+@@ -974,6 +1013,7 @@ summary = "Optional static typing for Python"
+ dependencies = [
+     "mypy-extensions>=1.0.0",
+     "tomli>=1.1.0; python_version < \"3.11\"",
++    "typed-ast<2,>=1.4.0; python_version < \"3.8\"",
+     "typing-extensions>=3.10",
+ ]
+ files = [
+@@ -1011,6 +1051,16 @@ files = [
+     {file = "mypy_extensions-1.0.0.tar.gz", hash = "sha256:75dbf8955dc00442a438fc4d0666508a9a97b6bd41aa2f0ffe9d2f2725af0782"},
+ ]
+ 
++[[package]]
++name = "nodeenv"
++version = "1.9.1"
++requires_python = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
++summary = "Node.js virtual environment builder"
++files = [
++    {file = "nodeenv-1.9.1-py2.py3-none-any.whl", hash = "sha256:ba11c9782d29c27c70ffbdda2d7415098754709be8a7056d79a737cd901155c9"},
++    {file = "nodeenv-1.9.1.tar.gz", hash = "sha256:6ec12890a2dab7946721edbfbcd91f3319c6ccc9aec47be7c7e6b7011ee6645f"},
++]
++
+ [[package]]
+ name = "packaging"
+ version = "23.2"
+@@ -1044,6 +1094,9 @@ name = "platformdirs"
+ version = "4.0.0"
+ requires_python = ">=3.7"
+ summary = "A small Python package for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
++dependencies = [
++    "typing-extensions>=4.7.1; python_version < \"3.8\"",
++]
+ files = [
+     {file = "platformdirs-4.0.0-py3-none-any.whl", hash = "sha256:118c954d7e949b35437270383a3f2531e99dd93cf7ce4dc8340d3356d30f173b"},
+     {file = "platformdirs-4.0.0.tar.gz", hash = "sha256:cb633b2bcf10c51af60beb0ab06d2f1d69064b43abf4c185ca6b28865f3f9731"},
+@@ -1059,6 +1112,23 @@ files = [
+     {file = "pluggy-1.3.0.tar.gz", hash = "sha256:cf61ae8f126ac6f7c451172cf30e3e43d3ca77615509771b3a984a0730651e12"},
+ ]
+ 
++[[package]]
++name = "pre-commit"
++version = "3.5.0"
++requires_python = ">=3.8"
++summary = "A framework for managing and maintaining multi-language pre-commit hooks."
++dependencies = [
++    "cfgv>=2.0.0",
++    "identify>=1.0.0",
++    "nodeenv>=0.11.1",
++    "pyyaml>=5.1",
++    "virtualenv>=20.10.0",
++]
++files = [
++    {file = "pre_commit-3.5.0-py2.py3-none-any.whl", hash = "sha256:841dc9aef25daba9a0238cd27984041fa0467b4199fc4852e27950664919f660"},
++    {file = "pre_commit-3.5.0.tar.gz", hash = "sha256:5804465c675b659b0862f07907f96295d490822a450c4c40e747d0b1c6ebcb32"},
++]
++
+ [[package]]
+ name = "py-cpuinfo"
+ version = "9.0.0"
+@@ -1260,6 +1330,7 @@ summary = "pytest: simple powerful testing with Python"
+ dependencies = [
+     "colorama; sys_platform == \"win32\"",
+     "exceptiongroup>=1.0.0rc8; python_version < \"3.11\"",
++    "importlib-metadata>=0.12; python_version < \"3.8\"",
+     "iniconfig",
+     "packaging",
+     "pluggy<2.0,>=0.12",
+@@ -1276,8 +1347,10 @@ version = "4.0.0"
+ requires_python = ">=3.7"
+ summary = "A ``pytest`` fixture for benchmarking code. It will group the tests into rounds that are calibrated to the chosen timer."
+ dependencies = [
++    "pathlib2; python_version < \"3.4\"",
+     "py-cpuinfo",
+     "pytest>=3.8",
++    "statistics; python_version < \"3.4\"",
+ ]
+ files = [
+     {file = "pytest-benchmark-4.0.0.tar.gz", hash = "sha256:fb0785b83efe599a6a956361c0691ae1dbb5318018561af10f3e915caa0048d1"},
+@@ -1624,7 +1697,8 @@ version = "2.0.23"
+ requires_python = ">=3.7"
+ summary = "Database Abstraction Library"
+ dependencies = [
+-    "greenlet!=0.4.17; platform_machine == \"aarch64\" or (platform_machine == \"ppc64le\" or (platform_machine == \"x86_64\" or (platform_machine == \"amd64\" or (platform_machine == \"AMD64\" or (platform_machine == \"win32\" or platform_machine == \"WIN32\")))))",
++    "greenlet!=0.4.17; platform_machine == \"win32\" or platform_machine == \"WIN32\" or platform_machine == \"AMD64\" or platform_machine == \"amd64\" or platform_machine == \"x86_64\" or platform_machine == \"ppc64le\" or platform_machine == \"aarch64\"",
++    "importlib-metadata; python_version < \"3.8\"",
+     "typing-extensions>=4.2.0",
+ ]
+ files = [
+@@ -1721,6 +1795,22 @@ files = [
+     {file = "verspec-0.1.0.tar.gz", hash = "sha256:c4504ca697b2056cdb4bfa7121461f5a0e81809255b41c03dda4ba823637c01e"},
+ ]
+ 
++[[package]]
++name = "virtualenv"
++version = "20.26.5"
++requires_python = ">=3.7"
++summary = "Virtual Python Environment builder"
++dependencies = [
++    "distlib<1,>=0.3.7",
++    "filelock<4,>=3.12.2",
++    "importlib-metadata>=6.6; python_version < \"3.8\"",
++    "platformdirs<5,>=3.9.1",
++]
++files = [
++    {file = "virtualenv-20.26.5-py3-none-any.whl", hash = "sha256:4f3ac17b81fba3ce3bd6f4ead2749a72da5929c01774948e243db9ba41df4ff6"},
++    {file = "virtualenv-20.26.5.tar.gz", hash = "sha256:ce489cac131aa58f4b25e321d6d186171f78e6cb13fafbf32a840cee67733ff4"},
++]
++
+ [[package]]
+ name = "watchdog"
+ version = "3.0.0"
+diff --git a/pydantic/main.py b/pydantic/main.py
+index 59afce4e..dff78930 100644
+--- a/pydantic/main.py
++++ b/pydantic/main.py
+@@ -212,17 +212,19 @@ class BaseModel(metaclass=_model_construction.ModelMetaclass):
+         """
+         m = cls.__new__(cls)
+         fields_values: dict[str, Any] = {}
+-        defaults: dict[str, Any] = {}  # keeping this separate from `fields_values` helps us compute `_fields_set`
++        fields_set = set()
++
+         for name, field in cls.model_fields.items():
+             if field.alias and field.alias in values:
+                 fields_values[name] = values.pop(field.alias)
++                fields_set.add(name)
+             elif name in values:
+                 fields_values[name] = values.pop(name)
++                fields_set.add(name)
+             elif not field.is_required():
+-                defaults[name] = field.get_default(call_default_factory=True)
++                fields_values[name] = field.get_default(call_default_factory=True)
+         if _fields_set is None:
+-            _fields_set = set(fields_values.keys())
+-        fields_values.update(defaults)
++            _fields_set = fields_set
+ 
+         _extra: dict[str, Any] | None = None
+         if cls.model_config.get('extra') == 'allow':
+diff --git a/pyproject.toml b/pyproject.toml
+index 4c5f8a82..61f7ce57 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -66,6 +66,7 @@ dependencies = [
+     'typing-extensions>=4.6.1',
+     'annotated-types>=0.4.0',
+     "pydantic-core==2.14.5",
++    "pre-commit>=3.5.0",
+ ]
+ dynamic = ['version', 'readme']
+ 
+diff --git a/tests/test_construction.py b/tests/test_construction.py
+index 95cce6af..ba1660fe 100644
+--- a/tests/test_construction.py
++++ b/tests/test_construction.py
+@@ -62,6 +62,16 @@ def test_construct_keep_order():
+     assert instance.model_dump_json() == instance_construct.model_dump_json()
+ 
+ 
++def test_retain_order_of_fields():
++    class MyModel(BaseModel):
++        a: str = 'a'
++        b: str
++
++    m = MyModel.model_construct(b='b')
++
++    assert m.model_dump_json() == '{"a":"a","b":"b"}'
++
++
+ def test_large_any_str():
+     class Model(BaseModel):
+         a: bytes

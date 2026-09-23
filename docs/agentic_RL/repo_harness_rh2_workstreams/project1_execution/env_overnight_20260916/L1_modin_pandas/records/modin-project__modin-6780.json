@@ -1,0 +1,70 @@
+{
+ "task_id": "modin-project__modin-6780",
+ "source": "SWE-Gym lite (s2 ingest v0)",
+ "task_revision": "upstream",
+ "materials_refs": [
+  "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/{public,grading_bundles_v2,validation}_*_v0.jsonl",
+  "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/modin-project__modin-6780/{gold,empty}/offline/a1/",
+  "runs/env_overnight_20260916/repos/modin@76d741bec279305b041ba5689947438884893dad"
+ ],
+ "public_view": {
+  "goal": "modin.pandas.Series 用布尔 Series 做 loc 取值时抛 pandas.errors.IndexingError: Too many indexers（对 1 维对象传了 2 个 indexer）。",
+  "constraints_from_statement": [
+   "traceback 完整给出 modin/pandas/indexing.py 的 __getitem__ -> _helper_for__getitem__ -> _handle_boolean_masking -> 递归 __getitem__ -> _validate_key_length 链路与行号（660/704/576/643/293），定位成本很低。",
+   "根因在 _handle_boolean_masking 末尾无条件 return type(self)(masked_df)[(slice(None), col_loc)]：对 Series 这条路本来就不该再套一层二维索引。"
+  ],
+  "unknowns_from_public_only": [
+   "题面的复现代码写错了：pd.Series(True, False, False) 是 Series(data=True, index=False, dtype=False)，不是 pd.Series([True, False, False])。照抄会得到另一种错误，agent 必须自己猜出本意。",
+   "布尔掩码长度不匹配、掩码含 NA、掩码是 numpy 数组/list 等变体的期望行为未说明。",
+   "修复该落在 _handle_boolean_masking 还是更上层的 _helper_for__getitem__ —— 题面未指定。"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["modin@76d741be:modin/pandas/indexing.py L560-575", "modin@76d741be:modin/pandas/test/test_series.py"], "note": "gold 目标 modin/pandas/indexing.py、test_patch 目标 modin/pandas/test/test_series.py 在 base 都存在且与题面同一问题。", "by": "L1_modin_pandas"},
+  "2": {"status": "pass", "evidence_refs": ["validation.golden_patch", "stage1 empty/status_map.json: test_loc_with_boolean_series FAILED"], "note": "base 的 _handle_boolean_masking 末尾无条件走二维再索引，Series 场景必然触发 _validate_key_length 的 Too many indexers；empty 侧该 F2P FAILED。", "by": "L1_modin_pandas"},
+  "3": {"status": "issue", "evidence_refs": ["public_bundles_v0.jsonl problem_statement 的 Reproducer 段"], "note": "复现代码 pd.Series(True, False, False) 语法上合法但语义错误（第 2、3 个位置参数是 index 与 dtype），不能复现题面 traceback。题面无外链、无图片、无截断；hints_text 为空。这是题面质量缺陷，不是截断。", "by": "L1_modin_pandas"},
+  "4": {"status": "pass", "evidence_refs": ["grading.test_patch"], "note": "test_patch 只触碰 modin/pandas/test/test_series.py。", "by": "L1_modin_pandas"},
+  "17": {"status": "pass", "evidence_refs": ["validation.golden_patch"], "note": "gold 只触碰 modin/pandas/indexing.py；additional_exclusions 保持空。", "by": "L1_modin_pandas"},
+  "5": {"status": "pass", "evidence_refs": ["tasks_by_repo.json"], "note": "与本包其余 modin 题不同 PR、不同模块、不同测试文件。", "by": "L1_modin_pandas"},
+  "23": {"status": "pass", "evidence_refs": ["grading.test_patch"], "note": "唯一的 F2P 就是题面那个场景（Series.loc[布尔 Series]），断言是与 pandas 的结果一致，可从题面 + modin 对齐 pandas 的默认契约推出。要求充分。", "by": "L1_modin_pandas"},
+  "24": {"status": "pass", "evidence_refs": ["grading.test_patch", "validation.golden_patch"], "note": "F2P 只做 df_equals(modin_result, pandas_result)，不引用 gold 的 isinstance(masked_df, Series) 分支或那句 assert。在 _helper_for__getitem__ 层提前分流的替代实现同样能过。", "by": "L1_modin_pandas"},
+  "25": {"status": "issue", "evidence_refs": ["grading.test_patch"], "note": "F2P 只有一个 3 元素、掩码 [True, False, False] 的样例，没有长度不匹配、全 False、含 NA、numpy 数组掩码等变体。只要 Series 分支直接返回 masked_df 就能过，无法区分『正确分流』与『顺手吞掉 col_loc』。gold 自己是用 assert col_loc == slice(None) 兜的底，这条 assert 在 python -O 下会被剥掉。", "by": "L1_modin_pandas"},
+  "26": {"status": "pass", "evidence_refs": ["modin@76d741be"], "note": "见 proposed_regression_tests。", "by": "L1_modin_pandas"},
+  "27": {"status": "pass", "evidence_refs": ["validation.golden_patch", "modin@76d741be:modin/pandas/indexing.py L44"], "note": "gold 只加 3 行；用到的 Series 在 base L44（from .series import Series）已 import；不依赖未交付改动。瑕疵：用 assert 做生产期契约检查（python -O 下失效），且当 col_loc != slice(None) 时行为变成 AssertionError 而不是明确错误。", "by": "L1_modin_pandas"},
+  "29": {"status": "pass", "evidence_refs": ["leak.json"], "note": "题面不含 gold 新增代码、不指向上游 PR/commit；hints_text 为空。traceback 给出的是 base 已有的调用链，属于正常故障信息。", "by": "L1_modin_pandas"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold/offline/a1/eval.sh", "stage1 gold/offline/a1/test_output.txt 统计行"], "note": "install 只是 pip install -e .（3.6 秒）；测试段 452 秒（pytest 自报 446.03s / 0:07:26），rc=1（因 28 个既有失败）。无权重/数据下载。", "by": "L1_modin_pandas"},
+  "7": {"status": "pass", "evidence_refs": ["runs/env_overnight_20260916/L1_modin_pandas/optdeps.json"], "note": "modin/pandas/test/test_series.py 无 importorskip / S3 / datapath；唯一 URL 在注释里。仍受 modin/conftest.py 模块级 import boto3/requests/s3fs 的约束。", "by": "L1_modin_pandas"},
+  "11": {"status": "issue", "evidence_refs": ["runs/env_overnight_20260916/L1_modin_pandas/collide_detail.json", "stage1 gold/offline/a1/test_output.txt L9045-9049"], "note": "714 个 P2P 常量方括号不配平；3 条因反斜杠层级不一致永远 missing；102 个截断键吞掉 362 个额外运行时 ID（最大一组 25 个）。2837 个常量对应 3196 个运行时测试。", "by": "L1_modin_pandas"}
+ },
+ "issues": [
+  {"category": "reference_id_mismatch", "severity": "P1",
+   "evidence_refs": ["stage1 gold/offline/a1/test_output.txt L9047-9049", "grading.pass_to_pass"],
+   "note": "3 个 P2P 常量 test_str_extract[([ab])(\\d)-{True,False,None}-separator（单反斜杠）在运行时是 ([ab])(\\\\d)（双反斜杠），gold/empty 两侧都 missing，stage1 因此把 gold 判成 RESOLVED_NO。与 pandas-48106 / pandas-50319 同一机制，跨仓库一致。",
+   "proposed_action": "剔除或按运行时 ID 重写这 3 条 P2P 常量。",
+   "next_experiment": "真机 pytest --collect-only -q modin/pandas/test/test_series.py 导出运行时 ID 做集合对拍。"},
+  {"category": "reference_id_truncation", "severity": "P1",
+   "evidence_refs": ["runs/env_overnight_20260916/L1_modin_pandas/collide_detail.json"],
+   "note": "102 个 P2P 键各代表多个运行时测试（最大 25 个，如 test_str_slice_replace[empty）。parser 后写覆盖先写，每组只保留最后执行那条的判定。",
+   "proposed_action": "同 6937：改用 junitxml/json 报告取 ID，或对 N>1 的键降权。",
+   "next_experiment": "同上，一次收集即可覆盖两题。"},
+  {"category": "task_statement_defect", "severity": "P2",
+   "evidence_refs": ["public_bundles_v0.jsonl problem_statement"],
+   "note": "复现代码 pd.Series(True, False, False) 写错，照抄不能复现。agent 若先按题面复现会先撞上另一个错误，浪费步数或走错方向。",
+   "proposed_action": "把复现改成 pd.Series([1,2,3]).loc[pd.Series([True, False, False])]，记入 task_revision。",
+   "next_experiment": "无需跑；题面改写决定。"},
+  {"category": "preexisting_failures", "severity": "P2",
+   "evidence_refs": ["stage1 gold/offline/a1/test_output.txt: 28 failed, 3199 passed, 6 xfailed in 446.03s", "同文件 test___add__[int_data] 的 E TypeError: __add__() got an unexpected keyword argument 'level'"],
+   "note": "P2P 所在的 test_series.py 在 base 环境下有 28 个常红用例（全是 test___<op>__ 家族，报 TypeError: __add__() got an unexpected keyword argument 'level' 后 pytest.warns 判 DID NOT WARN）。这 28 条被上游排除在 P2P 之外，判分不受影响；但测试段 rc 恒为 1，若有任何链路用 rc 判健康会误判。empty 侧是 29 failed（多的一条正是 F2P）。根因是 modin 自身 Series.__add__ 不接受 level 关键字，与镜像内 pandas 版本的组合（镜像满足 pandas>=2.1,<2.2 的 pin）—— 具体是上游该 commit 本身就红还是镜像组合问题，本次未核实，记 unknown。",
+   "proposed_action": "把『测试段 rc』从健康判据里剔除，只用 status_map 判；并在题级记录里登记这 28 条常红用例，避免后续误当成候选造成的回归。",
+   "next_experiment": "真机上在 base（未打任何补丁）跑一次 test_series.py，确认 28 条常红可复现且集合一致。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只在 modin/pandas/test/，gold 只在 modin/pandas/indexing.py，不交叉；沿用默认空集。", "evidence_refs": ["grading.test_patch", "validation.golden_patch"]},
+ "proposed_regression_tests": [
+  {"id": "modin/pandas/test/dataframe/test_indexing.py", "reason": "_handle_boolean_masking 是 DataFrame 与 Series 共用的入口，gold 新增的 Series 早退分支最可能在 DataFrame 侧造成旁路回归。"},
+  {"id": "modin/pandas/test/test_series.py::test_loc", "reason": "同文件的 loc 主用例，直接覆盖非布尔掩码路径。"},
+  {"id": "modin/pandas/test/test_series.py::test_iloc", "reason": "iloc 走同一 _LocIndexer 基类的 _validate_key_length，验证早退不影响 iloc。"},
+  {"id": "modin/pandas/test/dataframe/test_default.py", "reason": "覆盖 col_loc 非 slice(None) 的组合，检验 gold 那句 assert 在真实路径上是否真的恒成立。"}
+ ],
+ "disposition_hint": {"state": "needs_repair", "reason": "3 个 P2P 常量转义不一致导致 gold 恒判 RESOLVED_NO；题面复现代码写错；两处都要先改。改完后本题的 F2P 语义清晰、成本中等（约 7.5 分钟测试），是可用的。"},
+ "costs": {"minutes": 30}
+}

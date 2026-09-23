@@ -1,0 +1,222 @@
+{
+ "task_id": "iterative__dvc-2141",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "docs/.../s2/ingest/public_bundles_v0.jsonl#iterative__dvc-2141",
+  "grading": "docs/.../s2/ingest/grading_bundles_v2_v0.jsonl#iterative__dvc-2141",
+  "validation": "docs/.../s2/ingest/validation_bundles_v0.jsonl#iterative__dvc-2141",
+  "raw": "docs/.../s2/raw/swe_gym_lite_full_f70b1a29.jsonl#iterative__dvc-2141",
+  "base_commit": "c023b8da570a9b18ff26969d602011ae03ff75bf",
+  "version": "0.41",
+  "python_version": "3.8",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-2141:latest",
+  "eval_cmd": "pytest -rA",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2141/{gold,empty}/offline/a1/",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc"
+ },
+ "public_view": {
+  "目标行为": "（按题面）`dvc metrics show -T`（只看 tag）不应把 `master` 分支混进结果——题面对照的是文档里只列两个 tag 的示例输出。",
+  "约束": "base `dvc/repo/brancher.py` 的行为：仅当 `scm.is_dirty()` 才 `yield \"Working Tree\"`；`branches is None` 时无条件 `revs.extend([scm.active_branch()])`——后者就是 `-T` 下 master 出现的原因。`brancher` 同时被 `dvc/repo/metrics/show.py:266` 与 `dvc/repo/__init__.py:214`（`used_cache`，即 gc/push/pull/fetch/status）消费。",
+  "公开材料无法确定的点": [
+   "题面给的两个建议**都是改文档**（\"Adding the steps to create the bigram-experiment\" 或 \"Updating the expected output\"），完全没有要求改代码；",
+   "\"Working Tree\" 要不要改成小写 `working tree`，题面没提（用户贴的输出里就是 `Working Tree:`，他没有抱怨）；",
+   "工作区没有未提交改动时要不要照样列出 working tree，题面没提；",
+   "改 `brancher` 会同时影响 gc/push/pull/fetch/status，题面没提到这些。"
+  ],
+  "相关模块": "dvc/repo/brancher.py、dvc/repo/metrics/show.py:266、dvc/repo/__init__.py:214（used_cache）。"
+ },
+ "checks": {
+  "1": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-2141/public.json#problem_statement",
+    "mat/iterative__dvc-2141/validation.json#golden_patch"
+   ],
+   "note": "材料文件都在（tests/func/test_metrics.py、dvc/repo/brancher.py 在 base 均存在），但**题面与 gold 不是同一件事**：题面是一份文档 bug 报告（用户提的两个解法都是改文档），gold 改的是 `brancher` 的语义。无二进制/LFS/子模块。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show c023b8da57:dvc/repo/brancher.py:27-40",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2141/empty/offline/a1/status_map.json"
+   ],
+   "note": "base 的 `brancher` 确实只在 dirty 时 yield \"Working Tree\"，并在 `branches is None` 时补上 active_branch；empty 侧两条 F2P FAILED。",
+   "by": "static"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-2141/public.json#problem_statement",
+    "mat/iterative__dvc-2141/raw.json#hints_text"
+   ],
+   "note": "题面 756 字符、渲染完整。但**决定方向的两条信息都只在 hints 里**：维护者的裁定 \"`master` should not be included\" 与 \"I would rename `Working Tree` to just `working tree` along the way. It's not a title or something.\"。hints 不可见。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-2141/grading.json#test_patch"
+   ],
+   "note": "test_patch 只触碰 tests/func/test_metrics.py；gold 不触碰测试样路径。",
+   "by": "static"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-2141/grading.json#test_patch"
+   ],
+   "note": "恢复清单 = {tests/func/test_metrics.py}，官方测试文件。",
+   "by": "static"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dvc_1/prescan.json"
+   ],
+   "note": "与 dvc-2126 同为 version=0.41 但 gold 路径与 test_patch 路径均不重合，不是同一 PR。",
+   "by": "static"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-2141/grading.json#test_patch（新增期望键 `\"working tree\"`）",
+    "mat/iterative__dvc-2141/public.json#problem_statement"
+   ],
+   "note": "**公开材料推不出 F2P**。F2P 只新增一个期望键 `\"working tree\"`（全小写），要求的是\"即使工作区干净也要列出 working tree\"＋\"名字改成小写\"这两条题面完全没写的行为。题面真正抱怨的 `master` 混入，反而与 F2P 无关（F2P 用的是 `all_branches=True`，此时 `branches is not None`，gold 删掉的那段代码根本不执行）。",
+   "by": "static"
+  },
+  "24": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-2141/grading.json#test_patch"
+   ],
+   "note": "期望字典逐字匹配键名 `\"working tree\"`。保留原来的 `\"Working Tree\"` 但正确修掉 master 混入的实现会被判 0——而后者才是题面要求的。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-2141/grading.json#pass_to_pass（26 条，无一条用 all_tags）",
+    "git grep all_tags c023b8da57 -- tests（只在 tests/func/test_gc.py 出现，不在本题评分文件内）"
+   ],
+   "note": "**题面报告的场景零覆盖**：`all_tags=True` 在被评分的 tests/func/test_metrics.py 里一次都没出现，全仓库只有 `tests/func/test_gc.py` 用到。也就是说 gold 里\"删掉 `revs.extend([scm.active_branch()])`\"这半边改动既没有 F2P 也没有 P2P 验证；反过来，只做 `yield \"working tree\"` 这一行、完全不碰 master 混入的\"半修复\"可以拿满分。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2141/gold/offline/a1/test_output.txt（28 passed, 0 failed in 45.69s）",
+    "git show c023b8da57:dvc/repo/__init__.py:214"
+   ],
+   "note": "P2P 26 条 = tests/func/test_metrics.py 在 base 通过的全部用例，环境干净。**但 `brancher` 的另一个消费者 `Repo.used_cache`（dvc/repo/__init__.py:214）——也就是 gc / push / pull / fetch / status——完全不在评分文件里**。gold 让 working tree 无条件参与遍历、并去掉隐式 active_branch，对这些命令的缓存收集范围有实质影响，却没有任何回归把关。",
+   "by": "static"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-2141/validation.json#golden_patch"
+   ],
+   "note": "gold 三件事捆在一起：(a) 无条件 yield working tree；(b) 重命名为小写；(c) 去掉 `branches is None` 时的 active_branch。只有 (c) 对应题面，(b) 只在 hints 里，(a) 两处都没有。gold 本身自洽，但对本题而言含范围外改动。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-2141/public.json#problem_statement"
+   ],
+   "note": "题面不含修复代码、不含 PR/commit 链接。hints 含维护者裁定但不含代码。",
+   "by": "static"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2141/gold/offline/a1/test_output.txt（28 passed）"
+   ],
+   "note": "安装与测试正常，无依赖漂移症状。",
+   "by": "static"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2141/gold/offline/a1/test_output.txt（无 SKIPPED）"
+   ],
+   "note": "tests/func/test_metrics.py 全本地 git/文件操作，无网络。",
+   "by": "static"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2141/gold/offline/a1/status_map.json（5 个 `dvc.command.metrics:metrics.py:*` 类键）"
+   ],
+   "note": "caplog 行污染 status_map（见跨题发现 B），未与 F2P/P2P 冲突。",
+   "by": "static"
+  },
+  "7": {
+   "status": "not_applicable",
+   "evidence_refs": [],
+   "note": "test_patch 不带外部资产。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "题面与评分不对应(23/25)",
+   "severity": "P1",
+   "evidence_refs": [
+    "mat/iterative__dvc-2141/public.json#problem_statement（两个建议都是改文档）",
+    "mat/iterative__dvc-2141/grading.json#test_patch（只新增 `\"working tree\"` 键）",
+    "mat/iterative__dvc-2141/raw.json#hints_text（\"master should not be included\"、\"rename Working Tree to working tree\"）"
+   ],
+   "note": "F2P 验的是题面没要求的两条（无条件列 working tree、改小写），题面真正抱怨的 master 混入则零覆盖（F2P 走 all_branches 分支，gold 删掉的代码不执行；仓库里唯一用 all_tags 的测试在 tests/func/test_gc.py，不在评分文件里）。",
+   "proposed_action": "把 hints 里维护者的两条裁定写进题面（\"`master` 不该出现在 `-T` 结果里\"、\"顺便把 `Working Tree` 改成小写 `working tree`\"），并新增一条 F2P：`metrics.show(all_tags=True)` 的结果里不含 `master`。",
+   "next_experiment": "写\"只加 `yield 'working tree'`、不动 active_branch\"的半修复跑当前 F2P+P2P，预期满分——即题面所述缺陷仍在却判通过。"
+  },
+  {
+   "category": "跨命令回归缺失(26)",
+   "severity": "P2",
+   "evidence_refs": [
+    "git show c023b8da57:dvc/repo/__init__.py:214（`for branch in self.brancher(...)` in used_cache）",
+    "mat/iterative__dvc-2141/grading.json#pass_to_pass（全部来自 tests/func/test_metrics.py）"
+   ],
+   "note": "gold 改的 `brancher` 同时服务 `used_cache`（gc/push/pull/fetch/status）。评分只跑 metrics 一个文件，这些命令的缓存收集范围变化完全没把关——`dvc gc --all-branches` 少收/多收缓存是会删数据的。",
+   "proposed_action": "把 `tests/func/test_gc.py`（尤其 `test_all_tags`/`test_all_branches` 一族）纳入 P2P。",
+   "next_experiment": "base/gold 各跑一次 `pytest -rA tests/func/test_gc.py tests/func/test_data_cloud.py -k \"all_branches or all_tags\"`，比较逐 case 状态。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 tests/func/test_metrics.py；gold 不触碰测试样路径。按第四组 B 保持为空。",
+  "evidence_refs": [
+   "mat/iterative__dvc-2141/grading.json#test_patch",
+   "mat/iterative__dvc-2141/validation.json#golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/func/test_gc.py::TestGCBranchesTags",
+   "reason": "仓库里唯一使用 `all_tags=True` 的既有测试；gold 删掉的 `revs.extend([scm.active_branch()])` 只有它能覆盖。"
+  },
+  {
+   "id": "tests/func/test_data_cloud.py -k \"all_branches or all_tags\"",
+   "reason": "push/pull 经 `used_cache` → `brancher`，是 gold 最可能造成数据面副作用的路径。"
+  },
+  {
+   "id": "tests/func/test_status.py",
+   "reason": "`dvc status --all-branches` 同样走 brancher。"
+  },
+  {
+   "id": "（新增）tests/func/test_metrics.py::TestCachedMetrics::test_all_tags_excludes_master",
+   "reason": "直接覆盖题面报告的场景，当前完全没有。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "环境干净、P2P 在本文件内取满；但 F2P 验的是 hints 才有的重命名与\"无条件列 working tree\"，题面真正报告的 master 混入零覆盖，且 `brancher` 另一个消费者 `used_cache`（gc/push/pull）没有任何回归。"
+ },
+ "costs": {
+  "minutes": 24
+ },
+ "by": "L1_dvc_1 (Claude Opus 5, 静态审查)"
+}

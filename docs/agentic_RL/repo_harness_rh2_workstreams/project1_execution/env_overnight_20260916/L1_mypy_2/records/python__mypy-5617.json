@@ -1,0 +1,266 @@
+{
+ "task_id": "python__mypy-5617",
+ "source": "SWE-Gym lite / python/mypy PR 5617（允许对空元组赋值；上游 commit 48f2b10d5）",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "5db3e1a024a98af4184d6864c71d6abbf00dc3b3",
+  "version": "0.800",
+  "python_version": "3.9",
+  "eval_cmd": "pytest -n0 -rA -k",
+  "f2p": [
+   "mypy/test/testcheck.py::TypeCheckSuite::testAssignEmptyBogus",
+   "mypy/test/testcheck.py::TypeCheckSuite::testAssignEmptyPy36"
+  ],
+  "p2p": [
+   "mypy/test/testsemanal.py::SemAnalErrorSuite::testInvalidLvalues6",
+   "mypy/test/testcheck.py::TypeCheckSuite::testAssignEmptyPy27"
+  ],
+  "gold_paths": [
+   "mypy/semanal.py"
+  ],
+  "test_patch_paths": [
+   "test-data/unit/check-tuples.test",
+   "test-data/unit/semanal-errors.test"
+  ],
+  "k_expression": "testAssignEmptyPy36 or testAssignEmptyPy27 or testAssignEmptyBogus or testInvalidLvalues5 or testInvalidLvalues6",
+  "runtime_evidence": "无（不在 stage1 样本、in_e2 空、无 DeepSeek 候选）"
+ },
+ "public_view": {
+  "goal": "`() = []` 被 mypy 报 `error: can't assign to ()`，而这段代码运行时完全合法；要求不再报错。",
+  "constraints": [
+   "题面给两个最小复现（`() = []` 与 `(a, b), () = [[1, 2], []]`），无外链、无图片、无截断",
+   "**题面最后一句直接给出了修法**：'I believe it could be implemented by removing the check on line 1930 of `mypy/semanal.py` and updating the tests.'"
+  ],
+  "unknowns_from_public_only": [
+   "Python 2 模式下要不要继续报错——题面没提，而 P2P 有一条 testAssignEmptyPy27 要求继续报 'can't assign to ()'",
+   "`() = 1` 这种不可迭代右值改完之后应报什么（F2P 要求 `'Literal[1]?' object is not iterable`），题面没写",
+   "题面给的行号 1930 是 2018 年的（base 上该检查在 semanal.py:2638-2641），照字面找行号会落空"
+  ],
+  "base_code_evidence": [
+   "5db3e1a02:mypy/semanal.py:2638-2641 analyze_lvalue 的 TupleExpr 分支：`items = lval.items; if len(items) == 0 and isinstance(lval, TupleExpr): self.fail(\"can't assign to ()\", lval)`",
+   "5db3e1a02 全仓 grep \"can't assign to ()\" 只命中 mypy/semanal.py:2641 一处 + semanal-errors.test 的期望输出",
+   "5db3e1a02:mypy/fastparse2.py:121-122 把 typed_ast 的 SyntaxError.msg 原样上报；CPython 2 语法下 `() = []` 的 SyntaxError 文本正是 \"can't assign to ()\"",
+   "5db3e1a02:setup.py:196 install_requires 含 typed_ast >= 1.4.0, < 1.5.0"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "两个 test_patch 目标文件在 base 均存在",
+    "gold 目标 mypy/semanal.py:2638-2641 在 base 逐行一致",
+    "与上游 commit 48f2b10d5 逐文件比对：上游改了 4 个文件（mypy/semanal.py、test-data/unit/README.md、check-tuples.test、semanal-errors.test），bundle 丢弃的只有 README.md（纯文档）"
+   ],
+   "note": "材料完整；无二进制/LFS/子模块。",
+   "by": "L1_mypy_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "5db3e1a02:mypy/semanal.py:2641"
+   ],
+   "note": "静态确认 base 含题面缺陷。",
+   "by": "L1_mypy_2"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 890 字符，自足",
+    "raw hints_text 166 字符：'low-priority because little real-world code would do it'"
+   ],
+   "note": "hints 无额外关键信息。",
+   "by": "L1_mypy_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 两个路径都在 test-data/unit/"
+   ],
+   "note": "无非测试源码；gold 不碰测试样路径。",
+   "by": "L1_mypy_2"
+  },
+  "17": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "同 file_rules"
+   ],
+   "note": "仓库级。本题 4 条评分项的宿主文件都在 test_patch 里，受保护。",
+   "by": "L1_mypy_2"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "40 题里 0.800 版本段共 4 题（5617/9625/9629/9909），gold 分别改 semanal.py / exprtotype.py / checkexpr.py / checker.py"
+   ],
+   "note": "无重复。",
+   "by": "L1_mypy_2"
+  },
+  "23": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "F2P testAssignEmptyBogus 要求 `() = 1  # E: 'Literal[1]?' object is not iterable`"
+   ],
+   "note": "这条精确措辞题面没写，但它是删掉特判后 mypy 既有的迭代检查自然产生的输出，agent 只要真的删对地方就会得到它；属'可由代码推出'而非'不可推断'。",
+   "by": "L1_mypy_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P/P2P 都是标准诊断文本断言"
+   ],
+   "note": "不强制唯一实现。",
+   "by": "L1_mypy_2"
+  },
+  "25": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "P2P testAssignEmptyPy27 表面上守着'Python 2 下仍报错'，但该错误在 base 上**根本不来自 semanal**：全仓只有 semanal.py:2641 一处写这句话，而 gold 把它删了；py2 下的同名错误来自 typed_ast 的 CPython 2 语法解析（fastparse2.py:121-122 原样上报 SyntaxError.msg）",
+    "P2P testInvalidLvalues6 是 semanal-errors.test 里的既有 case，覆盖 `x, (y, 1) = 1` 这类非法左值",
+    "上游历史核对：`git log -S testAssignEmptyPy27 -- test-data/unit/check-tuples.test` 只有两条——引入它的正是本题修复 commit 48f2b10d5，删除它的是 5718dfff7 'No longer support checking Python 2 (#13135)'。即该用例在删掉 semanal 检查之后仍在上游 CI 上持续通过约两年，证明 py2 下那句 \"can't assign to ()\" 确实来自 typed_ast 的 ast27.parse（fastparse2.py:112-124 以 blocker 语法错误上报），而不是 mypy 自己的检查。"
+   ],
+   "note": "结论有两面：(a) testAssignEmptyPy27 作为**回归护栏几乎无效**——任何在 semanal 里的改动都不会让它变红；(b) 它却是一个很好的**环境探针**——只要评分镜像里 typed_ast 缺失或 py2 解析路径不可用，它就会失败，从而让本题恒定 0 分。真正的护栏只有 testInvalidLvalues6 一条。",
+   "by": "L1_mypy_2"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "有效 P2P 实际只有 1 条"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_mypy_2"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 删 3 行，与上游 48f2b10d5 的代码改动逐字相同"
+   ],
+   "note": "gold 正确、完整、不依赖未交付改动（丢的 README.md 与行为无关）。",
+   "by": "L1_mypy_2"
+  },
+  "29": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "problem_statement 末段：'I believe it could be implemented by removing the check on line 1930 of `mypy/semanal.py` and updating the tests.'"
+   ],
+   "note": "**题面直接给出了修复方案**（文件名 + 操作 + 行号），是本包里最露骨的静态泄漏。行号 1930 已过期（base 上是 2638-2641），但文件与做法完全对。这道题剩下的难度只有'找到那三行'。",
+   "by": "L1_mypy_2"
+  },
+  "6": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "5db3e1a02:setup.py:196 install_requires 含 typed_ast>=1.4.0,<1.5.0",
+    "5db3e1a02:test-requirements.txt 含 pytest>=6.0.0,<7.0.0、virtualenv<20",
+    "5db3e1a02:test-requirements.txt 含 pytest>=6.0.0,<7.0.0（与 1.x 版本段的 pytest>=7.4.0 不同）"
+   ],
+   "note": "P2P 的 py2 用例依赖 typed_ast 的 Python-2 解析路径；typed_ast 1.4.x 在 Python 3.9 上可装，但未实跑确认镜像里可用。另注意本版本段固定 pytest 6.x，与 1.x 版本段的 pytest 7.4 不同。",
+   "by": "L1_mypy_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "相关 case 只用 [builtins fixtures/tuple.pyi]"
+   ],
+   "note": "无需下载权重/数据。",
+   "by": "L1_mypy_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "case 正文无网络调用"
+   ],
+   "note": "纯离线。",
+   "by": "L1_mypy_2"
+  },
+  "18": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "rh2/src/repoharness2/envpack/spec_vendor.py:188-190 用 `\\[case ([^\\]]+)\\]` 在 test_patch 全文（含被删除行）上取选择器",
+    "本题 test_patch **删除**了 `[case testInvalidLvalues5]`，该名字仍被拼进 -k 表达式；应用 test_patch 后运行时不存在该 case，选择器空转",
+    "kscan.json:python__mypy-5617 显示四条评分选择器均无子串过选"
+   ],
+   "note": "与 16966 的 `-skip` 属同一类构造缺陷的不同表现：选择器来自 diff 文本而非应用后的文件状态。本题空转不改判分。",
+   "by": "L1_mypy_2"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P/P2P nodeid 为 **3 段**（file::Suite::case）；5db3e1a02:mypy/test/data.py 不含 DataFileCollector，与 3 段形状一致"
+   ],
+   "note": "0.800 版本段（5617/9625/9629/9909）都是 3 段，1.x 段是 4 段，常量与运行时一致。",
+   "by": "L1_mypy_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "solution_leak_in_statement",
+   "severity": "P1",
+   "evidence_refs": [
+    "problem_statement 末段给出 'removing the check on line 1930 of mypy/semanal.py'"
+   ],
+   "proposed_action": "若把本题用于评测'定位能力'，必须删掉题面最后那句；若只用于训练'按指示改代码'，可保留但要在题单里标注为泄漏题。",
+   "next_experiment": "分别用'保留末段'与'删掉末段'的题面各跑一次同一模型，比较解决率差值。"
+  },
+  {
+   "category": "p2p_ineffective_but_env_canary",
+   "severity": "P2",
+   "evidence_refs": [
+    "全仓只有 semanal.py:2641 写 \"can't assign to ()\"；gold 删除它后 py2 用例仍须报同样的话 → 来源是 typed_ast"
+   ],
+   "proposed_action": "补一条真正的 semanal 级回归（如 `(a, b), () = [[1,2],[]]` 在 py3 下不报错、`x, (y, 1) = 1` 仍报错）；同时把 testAssignEmptyPy27 明确标注为环境探针而非回归护栏。",
+   "next_experiment": "在评分镜像里单跑 `-k testAssignEmptyPy27`，确认 typed_ast 的 py2 解析可用；再在 gold 上确认它确实通过。"
+  },
+  {
+   "category": "eval_cmd_stale_selector",
+   "severity": "P3",
+   "evidence_refs": [
+    "-k 表达式含已被 test_patch 删除的 testInvalidLvalues5"
+   ],
+   "proposed_action": "选择器派生应基于应用 test_patch 后的文件状态，或至少剔除只出现在删除行里的 case 名。",
+   "next_experiment": "无（静态可验证）。"
+  },
+  {
+   "category": "file_boundary",
+   "severity": "P1",
+   "evidence_refs": [
+    "rh2/src/repoharness2/grading/manager.py:656/672/581"
+   ],
+   "proposed_action": "建议把 mypy/test/* 与 test-data/* 纳入 hygiene 保护（40 题 gold 均不触碰）。",
+   "next_experiment": "构造只改 mypy/test/helpers.py::assert_string_arrays_equal 的候选 patch 走一次评分，确认当前会判满分。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 test-data/unit/ 下的 .test 数据文件，gold 只碰 mypy/ 源码，两者无交集，按第四组 B 默认保持空。仓库级建议（需用户裁定、对 40 题统一生效）：把 'mypy/test/*' 与 'test-data/*' 加入 hygiene.test_globs——40 题 gold 无一触碰这两处（已对 validation_bundles 全量核对），而当前 agent 改 mypy/test/helpers.py、mypy/test/data.py 或 test-data/unit/fixtures/*.pyi 既不被 eval 的 git checkout 还原，也不被判 rejected_test_tampering。副作用：agent 在 test-data/ 下建临时文件会让整份提交作废，需一并决定。",
+  "evidence_refs": [
+   "rh2/src/repoharness2/grading/manager.py:656、:672、:581",
+   "rh2/src/repoharness2/contracts/grading.py:118-121"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "mypy/test/testsemanal.py::SemAnalErrorSuite::semanal-errors.test 全文件",
+   "reason": "gold 删的是 analyze_lvalue 的一个分支，非法左值检查的主战场。"
+  },
+  {
+   "id": "mypy/test/testcheck.py::TypeCheckSuite::check-tuples.test 全文件",
+   "reason": "元组解包赋值的语义面。"
+  },
+  {
+   "id": "新增：`(a, b), () = [[1, 2], []]`（题面第二个复现）在 py3 下不报错",
+   "reason": "题面的嵌套复现没有进任何评分项。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "题面直接写明了修法（文件 + 做法），难度被抽空；P2P 里唯一看起来对口的 py2 用例其实守不住任何 semanal 改动，反而是个环境探针。要用需先删题面末段并补真回归。"
+ },
+ "costs": {
+  "minutes": 32
+ }
+}

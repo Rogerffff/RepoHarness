@@ -4,7 +4,7 @@
 
 - 类型：官方评测审计文章；机构与署名均为 OpenAI；发布日期 **2026-02-23**；阅读日期 **2026-09-07**。
 - [正式原文](https://openai.com/index/why-we-no-longer-evaluate-swe-bench-verified/)。URL 中的旧式 slug 不是正式标题。页面没有论文版本号或独立更新时间；本笔记记录读取当日内容，不声称恢复了首发逐字版本。
-- 来源记录：[web 分段抽取](sources/N13/web_text_20260907.txt)、[后半篇抽取](sources/N13/N13a_web_tail_20260907.txt)、[浏览器补充读取记录](sources/N13/browser_supplement_20260907.md)。前两者合用，仍不等于完整 HTML 存档。直接下载遭 HTTP 403，但 web 与浏览器可读全文。
+- 来源记录：web 分段抽取（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/N13/web_text_20260907.txt`）、后半篇抽取（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/N13/N13a_web_tail_20260907.txt`）、[浏览器补充读取记录](sources/N13/browser_supplement_20260907.md)。前两者合用，仍不等于完整 HTML 存档。直接下载遭 HTTP 403，但 web 与浏览器可读全文。
 - 原文为网页，**无 PDF 物理页/印刷页**；下文按正式节标题、具体任务 ID 和展示区块定位。网页引用列表、正文及末尾检查后，未见文章专属 PDF、附录、审计代码、完整标签或方法附件入口。案例代码是网页展示片段，不是训练框架源码。
 - 对照旧稿：[项目一设计建议](../../../agentic_RL/repo_harness_rh2_workstreams/project1_design_advice_20260907.md) §3、§7；旧稿仅作项目映射线索，不作为本文事实来源。
 - **后续文章不能覆盖本篇历史结论**：本文当时建议报告 SWE-Bench Pro；2026-07-08 的 [N13b](N13b_coding_eval_signal_noise.md) 撤回该建议。两篇必须分别引用。

@@ -9,9 +9,9 @@ MiniMax-M2 系列以约 10B 激活的 MoE 为底座，经多领域轨迹生产�
 
 正式标题为 **The MiniMax-M2 Series: Mini Activations Unleashing Max Real-World Intelligence**，机构/团体作者 MiniMax；个人贡献者见附录 A。阅读日期 2026-09-07。
 
-- 本地主资料指定 PDF 是 **arXiv:2605.26494v1，2026-05-26，35 页**，见[固定 PDF](sources/R4/source.pdf)及[官方 v1](https://arxiv.org/abs/2605.26494v1)。本文 p.n 使用 PDF 物理页，p.2 起与印刷页码相同；首页按 p.1 计。
-- 当前官方版本是 **v2，2026-07-30，35 页**：[官方 v2](https://arxiv.org/abs/2605.26494v2)、[固定 PDF](sources/R4/source-v2.pdf)。已下载两版官方 TeX，并逐文件比较；仅 `app.tex` 改变，新增贡献者并将 Lunbin/Qunhong 的 Ceng 改为 Zeng。`main.tex`、`intro.tex`、全部 `section/*.tex`、`eval.tex`、`conclusion.tex`、图表资产和文献文件相同。PDF 提取文本差异仅首页版本水印和附录名单排版，见[版本差异](sources/R4/version-diff.txt)。因此后训练、环境、infra、评测和全部附录均已覆盖当前版本；没有新增技术内容要另补。
-- [v1 TeX 入口](sources/R4/tex/main.tex)递归包含架构、预训练数据、后训练数据、SFT、RL、agent mechanism、评测、结论和 `app.tex`。源码用于核对公式及目录，**不是训练实现代码**。本次未查 Forge 内部源码；不借 M1 或配套博客补齐实现。
+- 本地主资料指定 PDF 是 **arXiv:2605.26494v1，2026-05-26，35 页**，见固定 PDF（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/R4/source.pdf`）及[官方 v1](https://arxiv.org/abs/2605.26494v1)。本文 p.n 使用 PDF 物理页，p.2 起与印刷页码相同；首页按 p.1 计。
+- 当前官方版本是 **v2，2026-07-30，35 页**：[官方 v2](https://arxiv.org/abs/2605.26494v2)、固定 PDF（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/R4/source-v2.pdf`）。已下载两版官方 TeX，并逐文件比较；仅 `app.tex` 改变，新增贡献者并将 Lunbin/Qunhong 的 Ceng 改为 Zeng。`main.tex`、`intro.tex`、全部 `section/*.tex`、`eval.tex`、`conclusion.tex`、图表资产和文献文件相同。PDF 提取文本差异仅首页版本水印和附录名单排版，见版本差异（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/R4/version-diff.txt`）。因此后训练、环境、infra、评测和全部附录均已覆盖当前版本；没有新增技术内容要另补。
+- v1 TeX 入口（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/R4/tex/main.tex`）递归包含架构、预训练数据、后训练数据、SFT、RL、agent mechanism、评测、结论和 `app.tex`。源码用于核对公式及目录，**不是训练实现代码**。本次未查 Forge 内部源码；不借 M1 或配套博客补齐实现。
 - N10 是 2026-02-13 独立官方文章，针对 M2.5；其 200k、样本吞吐、黑盒 reward 曲线等见[N10 笔记](N10_minimax_forge.md)，不合并为本报告实测结果。
 
 先按原文结构阅读，再对照旧稿。覆盖表的页码也适用于 v2。
@@ -146,7 +146,7 @@ Anything2Docker 和 CVE-Factory 扩展是后续方向，本报告没有其完整
 
 ### 5.2 CISPO 原式和不完整处
 
-以下按 p.17 Eq.2–3 与 [TeX](sources/R4/tex/section/post_training_rl.tex)记录，最大化目标为：
+以下按 p.17 Eq.2–3 与 TeX（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/R4/tex/section/post_training_rl.tex`）记录，最大化目标为：
 
 \[
 J_{\rm CISPO}(\theta)=\mathbb E_{(q,a)\sim D,\{o_i\}_{i=1}^G\sim\pi_{\theta_{old}}(\cdot|q)}\left[

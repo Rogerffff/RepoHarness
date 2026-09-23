@@ -1,0 +1,209 @@
+{
+ "task_id": "conan-io__conan-13403",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "55163679ad1fa933f671ddf186e53b92bf39bbdb",
+  "version": "2.1",
+  "image": "xingyaoww/sweb.eval.x86_64.conan-io_s_conan-13403:latest",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/conan-io__conan-13403/{gold,empty}/offline/a1/",
+  "pkg_scans": "runs/env_overnight_20260916/L1_conan/{prescan2,envscan,collide}.json"
+ },
+ "public_view": {
+  "目标行为": "题面：Autotools.autoreconf() 硬编码在 conanfile.source_folder 里找 configure.ac，用户没法指定 build 目录；题面明确对比说 At least Autotools.configure allows you to specify the build_script_folder location, but Autotools.autoreconf does not。相关代码：conan/tools/gnu/autotools.py::Autotools.autoreconf 里 with chdir(self, self._conanfile.source_folder)，而同文件 configure() 已有 build_script_folder 参数。",
+  "约束": "只改非测试源码；autoreconf() 不传参时的既有行为要保持。",
+  "公开材料无法确定的点": [
+   "新参数的位置（在 args 之前还是之后）没说，但因为测试用关键字调用，位置不影响。",
+   "相对路径是相对 source_folder 还是相对 cwd 没说；照抄 configure() 的既有实现即可得到 gold 的语义。"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 唯一路径 conans/test/unittests/tools/gnu/autotools_test.py 在 base 存在（27 行）",
+    "gold 唯一路径 conan/tools/gnu/autotools.py 在 base 存在"
+   ],
+   "note": "同一 PR、同一问题。注意 test_patch 是改写既有测试 test_source_folder_works（加 @patch 装饰器、改 autoreconf_args 取值、追加断言），不是新增测试。无二进制/LFS/子模块。",
+   "by": "L1_conan"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show 55163679:conan/tools/gnu/autotools.py 的 def autoreconf(self, args=None) 无 build_script_folder",
+    "stage1 empty：F2P FAILED"
+   ],
+   "note": "base 确含题面所述缺陷。",
+   "by": "L1_conan"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 1091 字符，含代码块，Logs 为 No response",
+    "raw.hints_text 1674 字符：维护者提示 autoreconf should also gain a build_script_folder argument"
+   ],
+   "note": "题面自足；hints 把参数名说破了，但题面自己也提到了 build_script_folder（在 configure 的语境下），所以不算 hints 独有的关键信息。",
+   "by": "L1_conan"
+  },
+  "4_17": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan2.json: test_patch 只碰 conans/test/unittests/tools/gnu/autotools_test.py（conan 口径为测试文件；moto 口径会误报 TP_NONTEST）"
+   ],
+   "note": "gold 不碰测试路径。",
+   "by": "L1_conan"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "13230 也在 conan/tools/gnu 下，但目标文件与测试文件都不同"
+   ],
+   "note": "非同族，只是同模块。",
+   "by": "L1_conan"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "题面直接点名 build_script_folder 并对比 configure/autoreconf"
+   ],
+   "note": "公开材料足以推出要加什么参数、叫什么名字、语义参照谁。",
+   "by": "L1_conan"
+  },
+  "24": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "test_patch 用 @patch('conan.tools.gnu.autotools.chdir') 打桩，断言 chdir_mock.assert_called_with(autotools, \"/path/to/sources/subfolder\")"
+   ],
+   "note": "这条断言钉死了三件实现细节：必须调用 conan.tools.gnu.autotools 模块级的 chdir（不能改用 os.chdir 或 contextlib 包装）、必须按位置传 (self, path)（改成关键字 chdir(conanfile=self, newdir=...) 就失败）、路径必须是未规范化的字符串拼接（用 os.path.normpath 或 pathlib 会得到同样字符串，但 os.path.abspath 会失败）。属于对内部调用方式的无依据约束。",
+   "by": "L1_conan"
+  },
+  "25": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "grading.pass_to_pass 为空列表（p2p_n=0）",
+    "stage1 gold status_map 只有 1 个键"
+   ],
+   "note": "整题的判分信号就是 1 个测试、0 条 P2P。任何回归（例如把 configure() 也一起改坏、或让 autoreconf 的默认行为变化）只要不触发这一个测试就完全不可见。这是本包里回归保护最弱的一题。",
+   "by": "L1_conan"
+  },
+  "26": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "p2p_n=0"
+   ],
+   "note": "必须补 P2P，见 proposed_regression_tests。",
+   "by": "L1_conan"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 6 行新增，只改 autoreconf 签名与 chdir 目标，并补 docstring"
+   ],
+   "note": "gold 正确、与题对应、不依赖未交付改动。",
+   "by": "L1_conan"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "scripts/leak.py: 6 行 gold 新增，0 命中题面"
+   ],
+   "note": "无静态泄漏。",
+   "by": "L1_conan"
+  },
+  "6_7_11": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "base 测试体第 2-3 行是 folder = temp_folder(); os.chdir(folder)，全程不恢复 cwd",
+    "test_patch 新增 from mock import patch，依赖独立的 mock 包（不是 unittest.mock）"
+   ],
+   "note": "不需要 autoconf/autoreconf 可执行文件（conanfile.run 被 ConanFileMock 截获），不访问网络与 conancenter。两个线索：(a) 测试永久改掉进程 cwd，本题只跑单文件所以无害，放宽选择器时会污染同批其它测试；(b) 依赖 mock 包，需确认镜像 requirements_dev 里有——stage1 gold PASSED 已间接证明有。",
+   "by": "L1_conan"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "scripts/collide.py 无输出"
+   ],
+   "note": "唯一参考 ID 无参数化。",
+   "by": "L1_conan"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan2.json: gold 1/1 PASSED；empty 1 FAILED"
+   ],
+   "note": "分差来自目标行为，但样本只有 1 个测试。",
+   "by": "L1_conan"
+  },
+  "31": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "conans/test/.gitignore 第 1 行就是 conftest_user.py（1.51/1.54/1.60/2.0/2.1 五个 base 一致）",
+    "conans/test/conftest.py 用 from conans.test.conftest_user import tools_locations（1.x）/ tools_locations + default_profiles（2.x）并 merge 覆盖默认值",
+    "scripts 补扫：本题目标测试文件里无模块级 pytestmark、无 pytest.mark.tool、无 pytest.skip(、无 sys.exit/os._exit、无 conftest_user 引用"
+   ],
+   "note": "发现一个仓库级控制面：候选可以在 /testbed 新建 conans/test/conftest_user.py，它被官方 conftest 无条件 import 并 merge，而且它在 conans/test/.gitignore 里、也不在 test_patch 路径内，所以既不会被 git checkout <base> -- <path> 恢复，也不会被不带 -x 的 git clean 删掉；文件里的任意代码会在 pytest 收集阶段执行。本题是 conan 2.x：conans/test/utils/tools.py 从 conftest import default_profiles 并在 TestClient 里用作默认 host profile，所以改 conftest_user.py 能直接改变 TestClient 的 settings。 本题是用 Mock 的单元测试，不依赖 default_profiles，改 conftest_user 更可能弄坏自己而不是刷分。 本题的 F2P/P2P 本身没有可被跳过或提前退出的入口（见上条补扫）。按第四组 B，未发现依据前不新增排除清单，只记录观测。",
+   "by": "L1_conan"
+  }
+ },
+ "issues": [
+  {
+   "category": "no_p2p_guard",
+   "severity": "P2",
+   "evidence_refs": [
+    "grading.pass_to_pass == []"
+   ],
+   "proposed_action": "补 P2P（见 proposed_regression_tests），否则本题只能证明新功能存在、不能证明没破坏别的东西。",
+   "next_experiment": "在 13403 镜像里跑 pytest -n0 -rA conans/test/unittests/tools/gnu/ 与 conans/test/integration/toolchains/gnu/，记录 gold 下全绿的 ID 作为候选 P2P。"
+  },
+  {
+   "category": "mock_based_implementation_lock",
+   "severity": "P2",
+   "evidence_refs": [
+    "test_patch 的 chdir_mock.assert_called_with"
+   ],
+   "proposed_action": "若要放宽，把断言改成检查 autoreconf 实际执行时的 cwd（例如让 ConanFileMock 记录 os.getcwd()），而不是打桩断言调用形态。",
+   "next_experiment": "写一个用 os.chdir 或关键字参数调用 chdir 的等价实现，跑官方 F2P 确认被拒，入库为过严测试反例。"
+  },
+  {
+   "category": "control_surface_conftest_user",
+   "severity": "P2",
+   "evidence_refs": [
+    "conans/test/.gitignore:1",
+    "conans/test/conftest.py 的 conftest_user import 段",
+    "conans/test/utils/tools.py 的 from conans.test.conftest import default_profiles（仅 2.x）"
+   ],
+   "proposed_action": "仓库级处置，见 repo_level_findings.md §10：建议在 conan 的评分配方里，在可信 setup 阶段删除 /testbed/conans/test/conftest_user.py（或对整个 conans/test/ 做 git clean -xfd 后再 checkout），而不是逐题加 additional_exclusions。",
+   "next_experiment": "在 conan 镜像里写一个 conftest_user.py（例如 tools_locations={'cmake':{'disabled':True}} 或 2.x 下改 default_profiles['Linux'] 的 compiler），跑本题官方 eval，确认它是否改变逐 ID 结果；同时确认 RH2 的恢复步骤之后该文件是否仍在。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰纯测试文件（_test.py 后缀是 conan 的命名习惯）；gold 不碰测试路径。",
+  "evidence_refs": [
+   "runs/env_overnight_20260916/L1_conan/prescan2.json"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "conans/test/unittests/tools/gnu/autotoolschain_test.py",
+   "reason": "同包单测，覆盖 AutotoolsToolchain 侧的 autoreconf_args 生成；autoreconf 签名变化会影响这条链路。"
+  },
+  {
+   "id": "conans/test/integration/toolchains/gnu/test_makedeps.py 与 conans/test/functional/toolchains/gnu/autotools/test_basic.py",
+   "reason": "沿调用者：前者不需要工具链，后者是 autoreconf 的真实使用场景但带 @pytest.mark.tool('autotools')，在缺工具链的镜像里 conan conftest 会 pytest.fail 而非 skip（见 repo_level_findings.md），只能当诊断项。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_review",
+  "reason": "题意清晰、gold 最小，但判分只有 1 个测试且 P2P 为空，另外 F2P 用 mock 钉死了 chdir 的调用形态。补 P2P 并放宽 mock 断言后可用。"
+ },
+ "costs": {
+  "minutes": 20
+ }
+}

@@ -1,0 +1,399 @@
+{
+  "task_id": "python__mypy-15184",
+  "task_revision": {
+    "base_commit": "13f35ad0915e70c2c299e2eb308968c86117132d",
+    "review_revision": "B3_fresh_static_20260921",
+    "original_materials_unchanged": true
+  },
+  "source_adapter_ref": {
+    "grading_bundle": "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-15184/grading.json",
+    "source_refs": "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-15184/source_refs.json",
+    "spec_vendor_id": "swegym_constants_242429c1",
+    "grader_version": "swebench-4.1.0+swegym_parsers@242429c1"
+  },
+  "recipe_ref": {
+    "family": "install_wave1",
+    "image_audit": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184/image.json",
+    "image_id": "sha256:38c3651c72ac2fe7ce40e3cf3e2a6056f8e983fe325d0fed771124e5827a829e",
+    "recipe_override": null,
+    "materials_override": null,
+    "reference_bindings_override": null,
+    "scope": "historical grader only; COPY wheels and ENV; original spec install/test; actor unknown"
+  },
+  "code_snapshot_ref": {
+    "public_base_identity": "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/base_identity.json",
+    "historical_code_archive": "runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz",
+    "read_members_and_sha256": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/analysis_before_history.md#6",
+    "analysis_before_history_sha256": "30ccec9075c23bf2bb10b687f084f19e1a519cde4b4ab78f3e0587b25ae7b9bd"
+  },
+  "facts_ref": [
+    {
+      "path": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184/gold/ledger.jsonl",
+      "line": 1,
+      "candidate": "gold",
+      "run_id": "er19-iw1-python__mypy-15184-gold",
+      "condition": "install_wave1 / rh2grader54322 / deny_all / 2CPU4GiB",
+      "eval_log": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184/gold/eval_logs/evallog_replay-er19-iw1-python___d57f367c.eval.log",
+      "observed": {
+        "executed_nodes": 3,
+        "parsed_keys": 3,
+        "f2p_total": 2,
+        "p2p_total": 1,
+        "reward": 1,
+        "test_rc": 0
+      }
+    },
+    {
+      "path": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184/noop/ledger.jsonl",
+      "line": 1,
+      "candidate": "noop",
+      "run_id": "er19-iw1-python__mypy-15184-noop",
+      "condition": "same historical derived image/policy",
+      "eval_log": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184/noop/eval_logs/evallog_replay-er19-iw1-python___0ecfe8ca.eval.log",
+      "observed": {
+        "executed_nodes": 3,
+        "parsed_keys": 3,
+        "f2p_total": 2,
+        "p2p_total": 1,
+        "reward": 0,
+        "test_rc": 1
+      }
+    },
+    {
+      "path": "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-15184/environment_record.json",
+      "note": "Results summary exposed before seal and disclosed; original logs checked"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/review.md",
+      "sha256": "822a318b3f60e8905642d0aea59e288102c264b952cf4a79c6ee518477a47843",
+      "role": "independent_review_after_package_seal"
+    }
+  ],
+  "checks": {
+    "1": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/base_identity.json",
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-15184/source_refs.json",
+        "父协调者材料验收；未重做blob遍历"
+      ],
+      "by": "B3_fresh_private_mypy"
+    },
+    "2": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184/noop/eval_logs/evallog_replay-er19-iw1-python___0ecfe8ca.eval.log:445-475",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/base/mypy/messages.py:1658",
+        "一般同名诊断缺陷；原题protocol案例另列待验"
+      ],
+      "by": "B3_fresh_private_mypy"
+    },
+    "3": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/public_bundle.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/analysis_before_history.md#4；原题CLI/实际模型消息未知"
+      ],
+      "by": "B3_fresh_private_mypy"
+    },
+    "4": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-15184/test.patch",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184/gold/ledger.jsonl:1#projection"
+      ],
+      "by": "B3_fresh_private_mypy"
+    },
+    "5": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/gold.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15139/base/mypy/meet.py:300-312",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/base/mypy/meet.py:300-312",
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-15139/gold.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/base/mypy/messages.py:2519-2521",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/review.md"
+      ],
+      "by": "coordinator /root bounded source comparison after independent review",
+      "note": "已核15184公开base包含15139的TypeType显示核心，两个1.4题base包含10174的Optional/Any顺序修复；仅源码包含，不证明Git祖先、重复任务或真实泄漏，完整重复/留出划分未知。"
+    },
+    "6": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184/noop/eval_logs/evallog_replay-er19-iw1-python___0ecfe8ca.eval.log:355-423",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184/gold/eval_logs/evallog_replay-er19-iw1-python___d57f367c.eval.log:379-447",
+        "仅历史grader"
+      ],
+      "by": "B3_fresh_private_mypy"
+    },
+    "7": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/base/test-data/unit/fixtures/tuple.pyi",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/base/mypy/typeshed/stdlib/array.pyi",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/analysis_before_history.md#5；actor未验"
+      ],
+      "by": "B3_fresh_private_mypy"
+    },
+    "8": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184/gold/ledger.jsonl:1#policy",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/analysis_before_history.md#5"
+      ],
+      "by": "B3_fresh_private_mypy"
+    },
+    "9": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184/gold/ledger.jsonl:1#observations",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184/noop/eval_logs/evallog_replay-er19-iw1-python___0ecfe8ca.eval.log:449-465",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184/gold/eval_logs/evallog_replay-er19-iw1-python___d57f367c.eval.log:470-473",
+        "历史gold/noop窄因果证据"
+      ],
+      "by": "B3_fresh_private_mypy"
+    },
+    "10": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/base/CONTRIBUTING.md:39",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/analysis_before_history.md#5"
+      ],
+      "by": "B3_fresh_private_mypy"
+    },
+    "11": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184/gold/ledger.jsonl:1#policy.network",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/analysis_before_history.md#5；离线本地诊断"
+      ],
+      "by": "B3_fresh_private_mypy"
+    },
+    "14": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/analysis_before_history.md#8"
+      ],
+      "by": "B3_fresh_private_mypy"
+    },
+    "17": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-15184/test.patch",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184/gold/eval_logs/evallog_replay-er19-iw1-python___d57f367c.diagnostics.json#trusted_setup",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/analysis_before_history.md#6"
+      ],
+      "by": "B3_fresh_private_mypy"
+    },
+    "18": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184/noop/eval_logs/evallog_replay-er19-iw1-python___0ecfe8ca.eval.log:433-480",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184/gold/eval_logs/evallog_replay-er19-iw1-python___d57f367c.eval.log:457-477"
+      ],
+      "by": "B3_fresh_private_mypy"
+    },
+    "19": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184/gold/ledger.jsonl:1#verdict_diagnostics",
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-15184/grading.json"
+      ],
+      "by": "B3_fresh_private_mypy"
+    },
+    "20": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184/noop/eval_logs/evallog_replay-er19-iw1-python___0ecfe8ca.eval.log:449-465",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184/gold/eval_logs/evallog_replay-er19-iw1-python___d57f367c.eval.log:470-473"
+      ],
+      "by": "B3_fresh_private_mypy"
+    },
+    "23": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/user_prompt.txt",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/base/test-data/unit/check-basic.test:69",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/analysis_before_history.md#1",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/old_findings_delta.md#公开限定名可推知"
+      ],
+      "by": "B3_fresh_private_mypy"
+    },
+    "24": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-15184/test.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/base/mypy/messages.py:2584",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/analysis_before_history.md#3",
+        "静态未见强制内部实现；非所有合理解完备证明"
+      ],
+      "by": "B3_fresh_private_mypy"
+    },
+    "25": {
+      "status": "issue",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/analysis_before_history.md#3",
+        "顶层-only实现漏参数内部冲突的静态覆盖限度，未跑反例"
+      ],
+      "by": "B3_fresh_private_mypy"
+    },
+    "26": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/base/test-data/unit/check-expressions.test:931",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/analysis_before_history.md#4；P2P仅一个无歧义负例"
+      ],
+      "by": "B3_fresh_private_mypy"
+    },
+    "27": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-15184/gold.patch",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184/gold/eval_logs/evallog_replay-er19-iw1-python___d57f367c.eval.log:470-473",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/analysis_before_history.md#4；限定已审需求和官方测试"
+      ],
+      "by": "B3_fresh_private_mypy"
+    },
+    "29": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/analysis_before_history.md#7"
+      ],
+      "by": "B3_fresh_private_mypy"
+    },
+    "31": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/analysis_before_history.md#6；未执行控制面绕过"
+      ],
+      "by": "B3_fresh_private_mypy"
+    },
+    "32": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/base/mypy/test/testcheck.py:154",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/base/mypy/test/helpers.py:46",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184/noop/eval_logs/evallog_replay-er19-iw1-python___0ecfe8ca.eval.log:449-465"
+      ],
+      "by": "B3_fresh_private_mypy"
+    },
+    "33": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/analysis_before_history.md#8"
+      ],
+      "by": "B3_fresh_private_mypy"
+    },
+    "36": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/analysis_before_history.md#8"
+      ],
+      "by": "B3_fresh_private_mypy"
+    },
+    "37": {
+      "status": "pass",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/old_findings_delta.md",
+        "原材料未改"
+      ],
+      "by": "B3_fresh_private_mypy"
+    },
+    "38": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/analysis_before_history.md#8；独立reviewer和actor验证待做"
+      ],
+      "by": "B3_fresh_private_mypy"
+    }
+  },
+  "issues": [
+    {
+      "category": "public_reproduction_unverified",
+      "scope": "SupportsIndex issue program on exact base",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/user_prompt.txt",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/base/mypy/subtypes.py:251",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/base/mypy/subtypes.py:602",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/analysis_before_history.md#4",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/old_findings_delta.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/review.md"
+      ],
+      "proposed_action": "原程序目标3.10/包内桩的base/gold CLI对照，实际是否有错误开放记录。若两侧无错误，另记该条件原例不再触发；名义同名类缺陷仍由历史F2P支持。封存public_read C3与reviewer初判必报错预测已撤回，原稿不改。",
+      "status": "retracted_failure_forecast_actual_cli_unknown",
+      "evidence_strength": "static inference; old comments only secondary claim, not current execution"
+    },
+    {
+      "category": "limited_generalization_and_regression_coverage",
+      "scope": "nested generic collisions and successful assert_type behavior absent from official 2/1",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-15184/test.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/base/mypy/typetraverser.py:80",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/base/test-data/unit/check-expressions.test:931",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/analysis_before_history.md#3-4"
+      ],
+      "proposed_action": "If expanding acceptance, add requirement-backed generic-inner collision and successful assertion cases; no mandatory dual patch",
+      "status": "static_coverage_limit_no_executed_counterexample"
+    },
+    {
+      "category": "actor_environment_unverified",
+      "scope": "formal actor image/shell/assets and current replay availability",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-15184/environment_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/analysis_before_history.md#5"
+      ],
+      "proposed_action": "正式模型probe前验actor镜像/消息、PATH/导入、写权限和离线资产；固定grader语义诊断只需先确认自己的实际身份/源码/依赖，不以正式actor全面资格为前置。",
+      "status": "unknown"
+    },
+    {
+      "category": "cross_task_source_relationship",
+      "scope": "Mypy authorized three-task public-source containment",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/gold.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15139/base/mypy/meet.py:300-312",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/base/mypy/meet.py:300-312",
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-15139/gold.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/base/mypy/messages.py:2519-2521",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/review.md"
+      ],
+      "proposed_action": "记录两1.4 base含10174关键排序、15184含15139 TypeType分支；未核Git谱系，不因此合并任务或宣称重复/实际solver泄漏。",
+      "status": "observed_static_source_containment"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "Only exact new official test file is restored/injected; no evidence warrants blanket test-directory exclusion",
+    "evidence_refs": [
+      "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-15184/test.patch",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/analysis_before_history.md#6",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/old_findings_delta.md"
+    ],
+    "applied_version": null
+  },
+  "revision_refs": [],
+  "disposition": {
+    "state": "needs_review",
+    "scope": "static_review",
+    "reason": "受限静态开发诊断候选：同名消歧2F2P与无歧义短名1P2P有公开依据，gold局部合理。原SupportsIndex可能已结构等价，必报错预测已撤回；原例与窄回归、正式actor待验。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/analysis_before_history.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/old_findings_delta.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/review.md"
+    ],
+    "reviewer": "/root/b3_review_mypy; coordinator /root adjudication",
+    "reviewed_at_utc": "2026-09-20T22:00:16.557202+00:00",
+    "static_recommendation": "limited_static_candidate"
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "exposure_notes": "Read own public_read, private gold/tests and environment result summary before seal; own historical record after explicit release. Earlier task history mentioned only this task path/hotspot; disclosed and not used as evidence. Not solver-facing.",
+    "coordinator_review_note": "三份独立初判全部封存后才开放结论；最终card/record收束，public/main/reviewer封存稿及delta/review保留原字节。固定grader诊断与正式模型开发资格分开。"
+  },
+  "costs": {
+    "container_wall_seconds": null,
+    "agent_tokens": null,
+    "human_decisions": null,
+    "source_refs": []
+  },
+  "reviewed_at_utc": "2026-09-20T21:27:47.992539+00:00"
+}

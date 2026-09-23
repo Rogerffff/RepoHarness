@@ -1,0 +1,270 @@
+{
+ "task_id": "iterative__dvc-4961",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+  "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+  "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+  "raw": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc",
+  "base_commit": "c989b28eae536f08767d3cb32e790187d63a581b",
+  "version": "1.10",
+  "python_version": "3.9",
+  "eval_cmd": "pytest -rA",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-4961:latest",
+  "workdir": "/testbed",
+  "test_patch_paths": [
+   "tests/unit/utils/test_utils.py"
+  ],
+  "gold_paths": [
+   "dvc/utils/__init__.py"
+  ],
+  "n_f2p": 6,
+  "n_p2p": 41,
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4961/{gold,empty}/offline/a1/",
+  "signals": {
+   "in_e2": [],
+   "fragile_reference_id": false,
+   "stage1": {
+    "empty": {
+     "verdict": "RESOLVED_NO",
+     "rc_install": 0
+    },
+    "gold": {
+     "verdict": "RESOLVED_FULL",
+     "rc_install": 0,
+     "p2p_missing": 0,
+     "f2p_missing": 0
+    }
+   },
+   "deepseek_candidate_oracle": null
+  }
+ },
+ "public_view": {
+  "目标行为": "`foreach` 用 dict 列表生成的 stage（名字形如 `build@{'level': 15}`）应能被 `dvc repro -f \"build@{'level': 15}\"` 正确定位；当前报 `ERROR: 'build@{'level'' does not exist.`。",
+  "约束": "题面给了两份 dvc.yaml（list 版可用、dict 版不可用）、`dvc repro --dry` 的完整输出、精确错误文本、dvc version 全量输出，并自陈『看了源码没找到线索』。",
+  "公开材料无法确定的点": [
+   "定位：错误文本 `'build@{'level''` 明显是在第二个 `'` 处被截断，但题面没说是哪个解析器。要靠 grep 找到 `dvc/utils/__init__.py:22 TARGET_REGEX = re.compile(r\"(?P<path>.*?)(:(?P<name>[^\\\\/:]*))??$\")`，它把 stage 名里的 `:` 当成 path/name 分隔符。",
+   "期望语义：`:` 在 `@` 之后（属于 dict 字面量）时不应被当作分隔符——这条规则题面没写，只能从『list 版可用、dict 版不可用』的对比推出。",
+   "list 值（`build2@{'level': [1, 2, 3]}`）也要支持——题面里没有这种例子，是 F2P 额外加的。"
+  ],
+  "base 关键代码": "dvc/utils/__init__.py:409 `parse_target` 直接 `TARGET_REGEX.match(target)`；`dvc/parsing/__init__.py:44 JOIN = \"@\"` 在 base 已存在。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "repos/dvc 1294450a46811c98c6e2fc14ea889d9447c5996b `parse: parse target correctly for generated stages (#4961)` --stat: dvc/utils/__init__.py 14, tests/unit/utils/test_utils.py 25"
+   ],
+   "note": "gold+test_patch 与上游一致，无丢件。",
+   "by": "L1_dvc_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base:dvc/utils/__init__.py:22,419",
+    "stage1 empty: 6 条 F2P 全 FAILED"
+   ],
+   "note": "缺陷在 base 存在，与题面错误文本一致。",
+   "by": "L1_dvc_2"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 1551 字符，含两份 yaml、两段 console 输出、version 输出"
+   ],
+   "note": "题面完整、结构清晰、无截断、无外链图片。",
+   "by": "L1_dvc_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 仅 tests/unit/utils/test_utils.py",
+    "gold 仅 dvc/utils/__init__.py"
+   ],
+   "note": "零交集。additional_exclusions 空。",
+   "by": "L1_dvc_2"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh git checkout 目标"
+   ],
+   "note": "纯测试文件恢复。",
+   "by": "L1_dvc_2"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "prescan.json: iterative__dvc-4778 的 gold 也是 dvc/utils/__init__.py"
+   ],
+   "note": "与 4778 同改 `dvc/utils/__init__.py`（不同函数），本题 base 在 4778 之后，已含 4778 的参考解。同文件，划分留意。",
+   "by": "L1_dvc_2"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "grading_bundle fail_to_pass 的 6 条 ID 全部以 `[...'level':` 结尾且方括号不闭合",
+    "stage1 gold status_map.json 里对应键同样被截断（例如 `\"tests/unit/utils/test_utils.py::test_parse_target[build@{'level':\"`）",
+    "原始日志行 `PASSED tests/unit/utils/test_utils.py::test_parse_target[build@{'level': 35}-out12-None]`",
+    "scripts/collide.py: graded_truncated_keys=6, graded_collisions=0"
+   ],
+   "note": "**本包参考 ID 截断最集中的一题**：6 条 F2P 的 nodeid 里都含空格（dict 字面量 `{'level': 35}`），`parse_log_pytest` 按空白切分后只保留第一段，参考集与 status_map 在『同样截断』这一点上恰好一致，所以当前判分正确。但键已经丢掉了 `-outN-None` 这部分参数化索引，任何两个在首个空格前同前缀的用例都会合并。本题 6 条前缀互异，暂无碰撞（与 L2 包的 collided_keys 统计一致：本题未列入）。",
+   "by": "L1_dvc_2"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 的 list/dict 对比与精确错误文本",
+    "F2P 九个新参数化用例"
+   ],
+   "note": "公开材料足以推出 F2P 检查的行为（`@` 之后的内容整体属于 stage 名）。唯一超出题面的是 list 值 `build2@{'level': [1, 2, 3]}`，但它与 dict 值同属一类，不构成额外要求。",
+   "by": "L1_dvc_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 用 `target.partition(JOIN)`",
+    "F2P 断言是 `parse_target(inp) == out` 的元组比较"
+   ],
+   "note": "F2P 只断言函数返回值，不锁实现。用字面量 `\"@\"`、或把正则改成 `[^\\\\/:@]*` 之类的替代实现同样能过。",
+   "by": "L1_dvc_2"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "F2P 6 条全在 `parse_target` 单元层",
+    "problem_statement 的症状是 `dvc repro -f` 报 does not exist"
+   ],
+   "note": "题面症状（repro 找不到 stage）**没有端到端覆盖**；只要 `parse_target` 返回正确元组即可满分，不验证 repro 真的能跑起来。另外 F2P 只覆盖 `@` 之后含 `:` 的情形，不覆盖 stage 名本身含 `@`（例如路径里带 `@`）或 dict 值里含 `/`、`\\` 的情形。",
+   "by": "L1_dvc_2"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "smstat.json 4961: gold real=47 全 PASSED",
+    "P2P 41 条含 test_parse_target 的 12 条既有参数化、test_resolve_output、test_relpath、test_tmp_fname 等"
+   ],
+   "note": "P2P 里的 12 条既有 `test_parse_target` 参数化直接保护了原有的 path/name 解析语义（例如 `dvc.yaml:name`、`../something.dvc:name`），把 `:` 分隔逻辑改坏会被拦下，判别力真实。缺口：`parse_target` 的调用者（`dvc/repo/collect`、`dvc/dvcfile.py`）无回归。",
+   "by": "L1_dvc_2"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "上游 --stat 两文件",
+    "base:dvc/parsing/__init__.py:44 JOIN 已存在"
+   ],
+   "note": "gold 14 行、带解释注释、不依赖未交付改动；顺带加了类型标注（`target: str, default: str = None`），属无害夹带。",
+   "by": "L1_dvc_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak.py: gold_added=6 ps_match=0 hints_match=0；题面与 hints 均无 URL"
+   ],
+   "note": "题面不含修复代码。hints（不可见）反而**方向相反**：维护者先说『list 里放 dict 本来就不支持，请改用 dict 形式』；最终仍然修了解析。",
+   "by": "L1_dvc_2"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "stage1 eval.sh install 段"
+   ],
+   "note": "install 段需要网络。本题测试文件未受 pathspec/networkx 影响（gold 47/47 全绿）。",
+   "by": "L1_dvc_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 纯参数化字符串"
+   ],
+   "note": "无外部资产。",
+   "by": "L1_dvc_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 无 URL/requests"
+   ],
+   "note": "测试段纯本地、纯内存。",
+   "by": "L1_dvc_2"
+  },
+  "18": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh `pytest -rA tests/unit/utils/test_utils.py`；gold real=47 = F2P 6 + P2P 41"
+   ],
+   "note": "收集集合与 F2P∪P2P 完全相等（在截断后的键空间里），零过选零漏选。",
+   "by": "L1_dvc_2"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "empty 41 PASSED/6 FAILED；gold 47/47"
+   ],
+   "note": "分差恰为 6 条 F2P。",
+   "by": "L1_dvc_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "参考 ID 截断（当前无碰撞但脆）",
+   "severity": "P2",
+   "evidence_refs": [
+    "6 条 F2P 的 ID 方括号不闭合",
+    "collide.py 输出"
+   ],
+   "proposed_action": "与 L2 包的方案合并处理：按镜像实际 nodeid 重生成参考 ID，或改 parser 用整行而非首 token。本题现状可用，但任何新增参数化都可能引入碰撞。",
+   "next_experiment": "在该镜像里给 test_parse_target 再加一个 `build@{'level': 36}` 参数，确认它与 35 那条会合并成同一键。"
+  },
+  {
+   "category": "症状零端到端覆盖",
+   "severity": "P2",
+   "evidence_refs": [
+    "F2P 全在单元层"
+   ],
+   "proposed_action": "补一条 func 层：`foreach` dict 生成 stage 后 `dvc repro -f \"build@{'level': 15}\"` 必须命中。",
+   "next_experiment": "在 base/gold 上各跑该新测试。"
+  },
+  {
+   "category": "同文件同族",
+   "severity": "P3",
+   "evidence_refs": [
+    "4778 gold 也是 dvc/utils/__init__.py"
+   ],
+   "proposed_action": "记入同族，划分留意。",
+   "next_experiment": "无。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只有 tests/unit/utils/test_utils.py；gold 只改 dvc/utils/__init__.py。沿用第四组 B 默认空。",
+  "evidence_refs": [
+   "test_patch",
+   "golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/func/test_stage.py / tests/func/test_repro_multistage.py 中按名字定位 foreach 生成 stage 的用例",
+   "reason": "覆盖题面症状所在的 repro 路径，也保护 parse_target 的调用者。"
+  },
+  {
+   "id": "tests/unit/utils/test_utils.py::test_parse_target 的 12 条既有参数化（已在 P2P）",
+   "reason": "保护原有的 path/name 分隔语义，已覆盖。"
+  },
+  {
+   "id": "新增：stage 名里含 `/` 或 `\\` 的 dict 值",
+   "reason": "gold 只把 `@` 之前的部分交给 TARGET_REGEX，`@` 之后不再检查；含路径分隔符的值未验证。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "题面质量高（完整复现 + 精确错误文本）、gold 与上游一致、收集集合与参考集完全相等、gold 47/47 全绿、P2P 对原有解析语义有真实判别力。唯一结构性风险是 6 条 F2P 的参考 ID 被空白截断（当前无碰撞），以及题面症状缺端到端覆盖。"
+ },
+ "costs": {
+  "minutes": 17
+ },
+ "by": "L1_dvc_2 (Claude Opus 5, 2026-09-16, 静态审查)"
+}

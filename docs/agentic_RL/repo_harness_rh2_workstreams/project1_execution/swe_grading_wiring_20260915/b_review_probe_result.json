@@ -1,0 +1,118 @@
+{
+  "head": "4529ebd77fa27bc4c3bb4f1bffe9657c0af78abb",
+  "swebench_version": "4.1.0",
+  "source_sha256": {
+    "rh2/src/repoharness2/envpack/scoring.py": "sha256:0b4cc87423e7d600a5f94e832a2655963fa295975c3bef93a114cbbaadabaaa7",
+    "rh2/src/repoharness2/adapters/slime/prepared_task_face.py": "sha256:6d321ec3baf62763f79c092987c419a96d25fad5097c7cafde82f612aae51800",
+    "rh2/src/repoharness2/grading/manager.py": "sha256:99e83d3afbd66c0a712b7933d171633ccc5773b08b9cd1f640f9d4b91cbd44d1"
+  },
+  "get_logs_eval_source_sha256": "sha256:f9ae0fd05df42616d9ef720b898cf01db43e5ccd3b2da523c9690b6c8c57c871",
+  "log_boundary": [
+    {
+      "case": "no_results_anywhere",
+      "test_segment_map": {},
+      "get_logs_eval_map": {},
+      "apply_ok": true,
+      "report_resolution": "RESOLVED_NO",
+      "manager_zero_parsed_condition": true
+    },
+    {
+      "case": "passed_only_outside_test_markers",
+      "test_segment_map": {},
+      "get_logs_eval_map": {
+        "tests/f.py::f": "PASSED",
+        "tests/p.py::p": "PASSED"
+      },
+      "apply_ok": true,
+      "report_resolution": "RESOLVED_FULL",
+      "manager_zero_parsed_condition": false
+    },
+    {
+      "case": "passed_inside_test_markers",
+      "test_segment_map": {
+        "tests/f.py::f": "PASSED",
+        "tests/p.py::p": "PASSED"
+      },
+      "get_logs_eval_map": {
+        "tests/f.py::f": "PASSED",
+        "tests/p.py::p": "PASSED"
+      },
+      "apply_ok": true,
+      "report_resolution": "RESOLVED_FULL",
+      "manager_zero_parsed_condition": false
+    }
+  ],
+  "candidate_evidence": {
+    "source": "runs/env_probe_20260909_final_sync/ledger/cc_candidate_grading.jsonl",
+    "available": true,
+    "source_sha256": "sha256:b2ee8416814c9a017b9c6103c50bb2fd9cf5b5faaa2044ccd506205fabb1966c",
+    "groups": {
+      "candidate": {
+        "rows": 24,
+        "unique_tasks": 24,
+        "verdicts": {
+          "RESOLVED_FULL": 13,
+          "RESOLVED_PARTIAL": 3,
+          "RESOLVED_NO": 7,
+          "UNPARSED": 1
+        }
+      },
+      "candidate_projected": {
+        "rows": 24,
+        "unique_tasks": 24,
+        "verdicts": {
+          "RESOLVED_PARTIAL": 3,
+          "RESOLVED_FULL": 13,
+          "RESOLVED_NO": 8
+        }
+      }
+    },
+    "original_patch_file_mismatches": [],
+    "original_strict_apply_failed": [
+      {
+        "task_id": "pydantic__pydantic-8500",
+        "patch_sha256": "sha256:c181f576e7505f9c19225144aff5f4bb6fb25b47ad9778dcd14b2720dfff90b9",
+        "oracle_apply_method": "patch_fuzz5",
+        "oracle_verdict": "RESOLVED_FULL"
+      },
+      {
+        "task_id": "Project-MONAI__MONAI-6975",
+        "patch_sha256": "sha256:f7364c0dd2ede594943edc957fbe0f07e12135e9a59ea5d877769530c500ad79",
+        "oracle_apply_method": "patch_fuzz5",
+        "oracle_verdict": "RESOLVED_FULL"
+      },
+      {
+        "task_id": "pydantic__pydantic-9214",
+        "patch_sha256": "sha256:bd26ba0782d17ebf8a60e62201ed8c0ca56a1ff3cee24053966d8973a1dbefc8",
+        "oracle_apply_method": "patch_fuzz5",
+        "oracle_verdict": "RESOLVED_NO"
+      },
+      {
+        "task_id": "python__mypy-11236",
+        "patch_sha256": "sha256:e1e93c68b8edc25d5f7f1fc17abd25912de69d20bff2454481ae718cd72033c3",
+        "oracle_apply_method": "patch_fuzz5",
+        "oracle_verdict": "RESOLVED_NO"
+      },
+      {
+        "task_id": "pydantic__pydantic-8793",
+        "patch_sha256": "sha256:471458e95ff11abf50194eceb90c7335b0e8c367f3e66577a6609343985d5edb",
+        "oracle_apply_method": "patch_fuzz5",
+        "oracle_verdict": "RESOLVED_FULL"
+      },
+      {
+        "task_id": "pydantic__pydantic-5706",
+        "patch_sha256": "sha256:92a9d03601cc8b13094e0002af19b4592c0b4dd3fcd785b55c461ec09d04a20b",
+        "oracle_apply_method": "patch_fuzz5",
+        "oracle_verdict": "RESOLVED_FULL"
+      },
+      {
+        "task_id": "python__mypy-11352",
+        "patch_sha256": "sha256:be6b11d9f221a362c7b6912339ec83a95dd837cd4037c861e184c719242aff9b",
+        "oracle_apply_method": "patch_fuzz5",
+        "oracle_verdict": "RESOLVED_PARTIAL"
+      }
+    ],
+    "scope": "历史账本及现存 patch 字节核验；未在新 candidate 容器复现 patch 应用。"
+  },
+  "scope": "CPU 函数对照与历史证据读取；没有实现新 driver/parser，没有新 Docker 评分。"
+}

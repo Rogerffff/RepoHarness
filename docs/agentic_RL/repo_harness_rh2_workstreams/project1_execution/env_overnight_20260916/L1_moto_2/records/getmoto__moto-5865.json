@@ -1,0 +1,54 @@
+{
+ "task_id": "getmoto__moto-5865",
+ "source": "SWE-Gym lite (s2 ingest v0)",
+ "task_revision": "upstream",
+ "by": "L1_moto_2 (Opus 5, 静态审查, 2026-09-16)",
+ "materials_refs": {
+  "snapshot": "runs/env_overnight_20260916/L1_moto_2/mat/getmoto__moto-5865/",
+  "base_commit": "90e63c1cb5178acaa49cfc301b2688dcaba12115",
+  "version": "4.1",
+  "eval_cmd": "pytest -n0 -rA",
+  "repo_level": "docs/.../env_overnight_20260916/L1_moto_2/repo_level_findings.md"
+ },
+ "public_view": {
+  "目标行为": "ECS list_services 传入不存在的 cluster 时抛 ClusterNotFoundException（Message \"Cluster not found.\"），而不是返回空列表。",
+  "约束": "只改 moto/ 源码。",
+  "公开材料可推断": "base 的 list_services 只做 `cluster_name = cluster_str.split(\"/\")[-1]` 后按前缀过滤，从不校验集群是否存在（90e63c1cb5:moto/ecs/models.py:1335-1339）；同一个 backend 已有现成的 `_get_cluster(name)`，不存在就抛 ClusterNotFoundException（同文件 811-819）。改法就是改调 _get_cluster。",
+  "公开材料无法确定的点": [
+   "题面只谈\"传了一个不存在的 cluster\"。F2P 的第二个参数化用例是**完全不传 cluster**，期望同样抛 ClusterNotFoundException——这条在题面里没有依据（依据在 hints 里：AWS 文档说不传则假定 default 集群）。实际上 responses.py 的默认值是 \"default\"（90e63c1cb5:moto/ecs/responses.py:241），所以任何走 _get_cluster 的实现都会自然满足，但\"这是期望行为\"这一点求解者只能靠猜或靠读 AWS 文档。",
+   "题面没给 Message 文本；F2P 断言 \"Cluster not found.\"，该字符串来自 base 已有的 ClusterNotFoundException 定义，读代码可得。"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5865/test.patch", "mat/getmoto__moto-5865/gold.patch"], "note": "test_patch 只在 tests/test_ecs/test_ecs_boto3.py 追加 1 个参数化测试，gold 只碰 moto/ecs/models.py；base 均存在、同一问题。", "by": "static"},
+  "2": {"status": "pass", "evidence_refs": ["90e63c1cb5:moto/ecs/models.py:1335-1339"], "note": "base 的 list_services 无集群存在性校验。stage1 empty=RESOLVED_NO 印证。", "by": "static+stage1"},
+  "3": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5865/problem_statement.txt"], "note": "题面 390 字符但结构完整（服务、方法、现象、期望、版本），无外链/截断。信息量偏少但没有遗失内容。", "by": "static"},
+  "4": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5865/test.patch"], "note": "合法解在 moto/ecs/models.py。", "by": "static"},
+  "5": {"status": "pass", "evidence_refs": ["本包其余 19 题"], "note": "本包唯一的 ECS 题。", "by": "static"},
+  "6": {"status": "issue", "evidence_refs": ["repo_level_findings.md#R2"], "note": "4.1，离线 make init rc=2（共性，非本题特有）。", "by": "stage1"},
+  "9": {"status": "pass", "evidence_refs": ["repo_level_findings.md#R3"], "note": "仓库级共性证据（gold/empty 逐测试差异证明候选代码被执行）。", "by": "static+stage1"},
+  "11": {"status": "pass", "evidence_refs": ["90e63c1cb5:tests/test_ecs/test_ecs_boto3.py:802,1264,1824"], "note": "3 处 settings.TEST_SERVER_MODE 是本地 server 模式开关，不是网络；无 network marker、无真实端点。", "by": "static"},
+  "17": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5865/test.patch"], "note": "只恢复 1 个纯测试文件。", "by": "static"},
+  "19": {"status": "issue", "evidence_refs": ["repo_level_findings.md#R8", "mat/getmoto__moto-5865/test.patch"], "note": "**F2P 自身含截断 ID**：测试用 `ids=[\"no args\", \"unknown\"]`，\"no args\" 含空格，参考集里存成 `tests/test_ecs/test_ecs_boto3.py::test_list_unknown_service[no`。阶段一日志核对：83 条结果行 → 83 个唯一截断键，与参考集 2+81=83 一一对应，当前**未发生塌缩**，但这是 reward 判据依赖不稳定 ID 的实例。task_signals 仍标 fragile_reference_id=false。", "by": "static+stage1"},
+  "23": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-5865/problem_statement.txt", "mat/getmoto__moto-5865/test.patch", "mat/getmoto__moto-5865/hints.txt"], "note": "F2P 的 \"no args\" 用例（不传 cluster 也要抛异常）在题面里没有依据，依据只出现在不可见的 hints 里。实践上不构成障碍（responses.py 默认 cluster=\"default\"，任何走 _get_cluster 的实现都自然满足），但严格讲是题面未覆盖的 reward 判据。", "by": "static"},
+  "24": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5865/test.patch"], "note": "只断言异常 Code 与 Message；Message 字符串来自 base 已有的异常定义，属既有公共格式。不复用 _get_cluster 而自己判断 `cluster_name not in self.clusters` 的实现同样通过。", "by": "static"},
+  "25": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5865/grading.json"], "note": "81 个同文件 P2P 覆盖 list_services 正常路径与 ECS 其它 API，\"无条件抛异常\"的假修复会失败；两个参数化用例分别覆盖显式未知集群与缺省集群两条入口。", "by": "static"},
+  "26": {"status": "issue", "evidence_refs": ["90e63c1cb5:moto/ecs/models.py:811-819"], "note": "gold 让 list_services 走上 _get_cluster 这条共享路径，回归面包括所有依赖 list_services 的上层（如 ECS 的 CloudFormation 资源、moto server 模式）。见 proposed_regression_tests。", "by": "static"},
+  "27": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5865/gold.patch"], "note": "gold 主体正确、最小。夹带一处无关的类型注解补充（`def _get_cluster(self, name: str) -> Cluster:`），属同一 PR 的顺手改动，不影响行为。不依赖未交付改动。", "by": "static"},
+  "29": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5865/hints.txt"], "note": "hints 含实现提示（default 集群语义）但不含代码或行号；题面本身无泄漏。", "by": "static"},
+  "7": {"status": "not_applicable", "evidence_refs": [], "note": "无外部资产。", "by": "static"}
+ },
+ "issues": [
+  {"category": "参考 ID 身份（F2P 层）", "severity": "P2", "evidence_refs": ["repo_level_findings.md#R8", "mat/getmoto__moto-5865/test.patch"], "proposed_action": "本题是\"reward 判据本身是截断 ID\"的样本，建议纳入 R8 的裁定材料；当前无误判。", "next_experiment": "跑一次 gold，核对 status_map 是否恰好 83 键、两个 F2P 均命中。"},
+  {"category": "题面未覆盖的 reward 判据", "severity": "P3", "evidence_refs": ["mat/getmoto__moto-5865/problem_statement.txt"], "proposed_action": "记录\"no args\"用例无题面依据；实践上不误杀，不建议改题。", "next_experiment": "无。"},
+  {"category": "安装配方与离线条件不匹配", "severity": "P2", "evidence_refs": ["repo_level_findings.md#R2"], "proposed_action": "见 R2。", "next_experiment": "见 R2。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只碰 1 个纯测试文件。", "evidence_refs": ["mat/getmoto__moto-5865/test.patch"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_ecs/test_ecs_cloudformation.py", "reason": "CloudFront/CFN 侧通过 ECS backend 创建与查询服务，是 list_services 的间接调用者，能发现\"默认集群不存在就抛异常\"对模板流程的影响。"},
+  {"id": "tests/test_ecs/test_ecs_capacity_provider.py", "reason": "同一 backend 的 _get_cluster 其它调用点，确认注解与调用路径改动无副作用。"},
+  {"id": "tests/test_ecs/test_ecs_boto3.py::test_list_services", "reason": "list_services 的正常路径，唯一能否决\"一律抛异常\"的用例；已在 P2P，列此强调是关键对照。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "材料一致、初态含问题、gold 正确最小、判分防护充分。保留项：F2P 依赖截断参数化 ID（R8），以及 4.1 的安装 rc=2 共性问题。"},
+ "costs": {"minutes": 14}
+}

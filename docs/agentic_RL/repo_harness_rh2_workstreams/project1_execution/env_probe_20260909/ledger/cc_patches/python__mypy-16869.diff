@@ -1,0 +1,49 @@
+diff --git a/mypy/stubgen.py b/mypy/stubgen.py
+index 1f7a01e6a..c4b937fce 100755
+--- a/mypy/stubgen.py
++++ b/mypy/stubgen.py
+@@ -100,6 +100,7 @@ from mypy.nodes import (
+     OpExpr,
+     OverloadedFuncDef,
+     SetExpr,
++    StarExpr,
+     Statement,
+     StrExpr,
+     TempNode,
+@@ -322,6 +323,9 @@ class AliasPrinter(NodeVisitor[str]):
+     def visit_tuple_expr(self, node: TupleExpr) -> str:
+         return f"({', '.join(n.accept(self) for n in node.items)})"
+ 
++    def visit_star_expr(self, node: StarExpr) -> str:
++        return f"*{node.expr.accept(self)}"
++
+     def visit_list_expr(self, node: ListExpr) -> str:
+         return f"[{', '.join(n.accept(self) for n in node.items)}]"
+ 
+diff --git a/test-data/unit/stubgen.test b/test-data/unit/stubgen.test
+index 751a1a7fb..8a6de5845 100644
+--- a/test-data/unit/stubgen.test
++++ b/test-data/unit/stubgen.test
+@@ -1211,6 +1211,22 @@ T = TypeVar('T')
+ 
+ class D(Generic[T]): ...
+ 
++[case testGenericTypeVarTupleClass]
++class D(Generic[*Ts]): ...
++[out]
++class D(Generic[*Ts]): ...
++
++[case testGenericTypeVarTupleClass_semanal]
++from typing import Generic, TypeVarTuple
++Ts = TypeVarTuple('Ts')
++class D(Generic[*Ts]): ...
++[out]
++from typing import Generic, TypeVarTuple
++
++Ts = TypeVarTuple('Ts')
++
++class D(Generic[*Ts]): ...
++
+ [case testObjectBaseClass]
+ class A(object): ...
+ [out]

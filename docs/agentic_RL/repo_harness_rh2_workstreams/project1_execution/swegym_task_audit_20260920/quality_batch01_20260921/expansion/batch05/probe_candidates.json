@@ -1,0 +1,51 @@
+{
+  "status": "static_review_complete",
+  "scope": "static_review_only",
+  "intended_use": "development_diagnostic",
+  "candidates": [],
+  "not_prioritized": [
+    {
+      "instance_id": "python__mypy-11707",
+      "decision": "not_prioritized_pending_public_semantics",
+      "reason": "普通.py题面两版均成功与公开旧导出规则/gold方向冲突；当前两项stub参考未裁决该语义，原四文件行为尚未实跑。",
+      "retained_for": "最小原例CPU对照与公开语义裁决；不是永久拒绝，不沿用旧必然零分论证。",
+      "next_cpu_queue_id": "mypy11707-public-reexport-semantics",
+      "secondary_issue": "删去真子模块豁免的错误简化可能过现有两参考并破坏公开正例，独立保留为后续校准。",
+      "refs": [
+        "results/python__mypy-11707/card.md",
+        "results/python__mypy-11707/screening_record.json",
+        "results/python__mypy-11707/review.md"
+      ]
+    },
+    {
+      "instance_id": "getmoto__moto-5406",
+      "decision": "not_prioritized_pending_scoring_calibration",
+      "reason": "核心地区ARN目标可由公开材料推断，gold合理且历史27项通过；但唯一地区断言仅East2，直接替换地区常量的错误修复可能满分。",
+      "retained_for": "单个CPU反例优先；保留有限未来模型诊断价值，不是拒绝题目。",
+      "next_cpu_queue_id": "moto5406-region-constant-calibration",
+      "limitations": [
+        "错误候选尚未执行；不能声称已经获reward1。",
+        "原actual image ID=null；目标镜像和真实actor未验。",
+        "模型观察如先于该CPU，可在基本actor条件有证据且人工复核通过补丁的限定诊断范围安排；原reward不独立认证完整修复。"
+      ],
+      "refs": [
+        "results/getmoto__moto-5406/card.md",
+        "results/getmoto__moto-5406/screening_record.json",
+        "results/getmoto__moto-5406/review.md"
+      ]
+    }
+  ],
+  "updated_at": "2026-09-20T23:37:34.660408+00:00",
+  "ready_for_probe": false,
+  "decision_counts": {
+    "limited_static_candidates": 0,
+    "not_prioritized_pending_diagnostic": 2,
+    "formal_actor_accepted": 0
+  },
+  "common_conditions": [
+    "两题均保持needs_review/static_review/development_diagnostic；这是一轮静态审查收口，不是ready_for_probe、训练或正式评测批准。",
+    "先CPU是针对各自具体问题的调度建议，不设置所有扩展回归先于任何模型观察的统一门槛。",
+    "没有新增项目运行或模型结果；历史gold/noop分数仅适用于各自记录的grader条件，真实actor输入/依赖/源码/权限/资产仍未知。",
+    "未来CPU方案全部未执行；目标镜像、缺失构建载荷与重定位输入另行准备。私有审查材料与已暴露角色不可作为独立solver输入。"
+  ]
+}

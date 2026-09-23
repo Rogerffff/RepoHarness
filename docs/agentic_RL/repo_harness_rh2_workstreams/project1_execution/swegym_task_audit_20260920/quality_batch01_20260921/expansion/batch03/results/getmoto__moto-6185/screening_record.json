@@ -1,0 +1,426 @@
+{
+  "task_id": "getmoto__moto-6185",
+  "task_revision": "upstream@dc460a325839bc6797084a54afc297a2c9d87e63; B3 static review 2026-09-21",
+  "source_adapter_ref": {
+    "grading_bundle": "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/grading.json",
+    "spec_vendor_id": "swegym_constants_242429c1",
+    "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+    "frozen_archive": "runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz",
+    "member_hashes_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/analysis_before_history.md"
+  },
+  "recipe_ref": {
+    "family": "install_wave1",
+    "image_audit": "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6185/image.json",
+    "image_id": "sha256:03d0313ef99258a707b5218ca0fc91985dca2bcde321650e709365b8f2597720",
+    "install": "make init",
+    "test_command": "pytest -n0 -rA tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py",
+    "overrides": {
+      "recipe": null,
+      "materials": null,
+      "reference_bindings": null
+    },
+    "scope": "历史grader环境；COPY wheels/ENV增层，实际安装由原日志证实；当前运行资产及actor待验"
+  },
+  "code_snapshot_ref": {
+    "base_commit": "dc460a325839bc6797084a54afc297a2c9d87e63",
+    "base_tree": "e6198e1c93632b169ec590b7d25dd9df7d9bf173",
+    "identity": "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/base_identity.json",
+    "gold_sha256": "868fd2d166ddc9e3bb4028fe491ef6dbb9b45b160ef53d7d05ed3cc9647979e1"
+  },
+  "facts_ref": [
+    {
+      "path": "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6185/gold/ledger.jsonl",
+      "line": 1,
+      "run_id": "er19-iw1-getmoto__moto-6185-gold",
+      "candidate": "gold",
+      "attempt": 1,
+      "evidence_level": "historical_rh2",
+      "observed": {
+        "f2p_pass": 1,
+        "f2p_total": 1,
+        "p2p_fail": 0,
+        "p2p_total": 34,
+        "reward": 1,
+        "test_rc": 0,
+        "pytest_nodes": 36,
+        "parsed_keys": 35
+      },
+      "condition": "install-wave1; rh2grader/54322; deny_all; 2 CPU; 4 GiB; env_qualification absent"
+    },
+    {
+      "path": "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6185/noop/ledger.jsonl",
+      "line": 1,
+      "run_id": "er19-iw1-getmoto__moto-6185-noop",
+      "candidate": "noop",
+      "attempt": 1,
+      "evidence_level": "historical_rh2",
+      "observed": {
+        "f2p_pass": 0,
+        "f2p_total": 1,
+        "p2p_fail": 0,
+        "p2p_total": 34,
+        "reward": 0,
+        "test_rc": 1,
+        "pytest_nodes": 36,
+        "parsed_keys": 35
+      },
+      "condition": "same historical derived image and grader profile"
+    },
+    {
+      "path": "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/environment_record.json",
+      "evidence_level": "frozen_environment_summary",
+      "note": "在初稿前实际看到结果摘要，已披露；未追旧聚合"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/analysis_before_history.md",
+      "sha256": "1b6b19f493abc83312c30a05ad804d622e2d55b608655c09af637d7617d34239",
+      "evidence_level": "static_analysis",
+      "sealed_file_mtime_utc": "2026-09-20T21:33:26.463037Z"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/old_findings_delta.md",
+      "evidence_level": "post_release_history_comparison",
+      "history_release_utc": "2026-09-20T21:33:44.951990Z"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/review.md",
+      "sha256": "31fc64f3134defada295b765ce4df95e57544153a467e043c5990ce17a4e2394",
+      "role": "independent_review_after_package_seal"
+    }
+  ],
+  "checks": {
+    "1": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/base_identity.json",
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/grading.json",
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/validation.json"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "任务/base/补丁身份一致；复用协调者材料验证，未重新核全库blob。"
+    },
+    "2": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/base/moto/dynamodb/models/table.py:487",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6185/noop/eval_logs/evallog_replay-er19-iw1-getmoto__416532ff.eval.log:603"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "历史noop新增合法S写入失败；题面resource NULL原例未在本轮执行。"
+    },
+    "3": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/user_prompt.txt",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/public_bundle.json"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "静态提示完整；真实消息/附加工具提示未捕获。"
+    },
+    "4": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6185/gold/ledger.jsonl:1"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "历史gold源码文件成功投影；正式actor写权限待验。"
+    },
+    "5": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/gold.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/base/moto/dynamodb/models/table.py:846",
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/gold.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/base/moto/dynamodb/models/table.py:487",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/base/moto/dynamodb/models/table.py:839",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/review.md"
+      ],
+      "by": "coordinator /root after independent reviewer package seal",
+      "note": "同包源码关系已核：5960的scan复制/投影核心原样存在于6185 base；6185类型校验核心原样存在于6408 base，6408 scan另有返回值式演变。仅为公开源码包含/演变，不证明Git祖先、重复题或实际solver泄漏。 广泛重复/留出划分未核。"
+    },
+    "6": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6185/image.json",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6185/gold/eval_logs/evallog_replay-er19-iw1-getmoto__1e09829a.eval.log:424"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "仅历史install_wave1 grader：离线资产配方后真实安装完成。当前目标机镜像/wheel payload未验。"
+    },
+    "8": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6185/gold/ledger.jsonl:1",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/analysis_before_history.md"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "grader rh2grader/54322与apply agent/54321不证明正式actor条件。"
+    },
+    "9": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6185/gold/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6185/noop/ledger.jsonl:1"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "历史候选源码投影、editable安装、工作区导入和F2P分差相互支持；不称正式actor通过。"
+    },
+    "10": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/public_read.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/analysis_before_history.md"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "公开可定位开发入口；实际actor导入/工具/权限未验。"
+    },
+    "11": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/base/tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py:917",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6185/gold/ledger.jsonl:1"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "所选进程内mock测试无真实AWS服务；历史grader deny_all完成。准备阶段需要固定安装资产。"
+    },
+    "14": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6185/gold/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6185/noop/ledger.jsonl:1"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "各一次历史对照，未作同状态重复稳定性实验。"
+    },
+    "17": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/test.patch",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/analysis_before_history.md"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "官方恢复仅精确exceptions测试文件；冻结test_globs=()，非按测试名全排除。"
+    },
+    "18": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6185/gold/eval_logs/evallog_replay-er19-iw1-getmoto__1e09829a.eval.log:594",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6185/noop/eval_logs/evallog_replay-er19-iw1-getmoto__416532ff.eval.log:561"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "历史完整pytest模块执行36节点；gold36通过，noop1失败35通过。"
+    },
+    "19": {
+      "status": "issue",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6185/gold/eval_logs/evallog_replay-er19-iw1-getmoto__1e09829a.eval.log:643",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/old_findings_delta.md"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "两个参数节点合并为一个...[set解析键，35解析键对应36执行节点。当前均pass、未证错分；真实-rA摘要先PASSED后FAILED，不能推导混合状态reward遮蔽。"
+    },
+    "20": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6185/gold/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6185/noop/ledger.jsonl:1"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "同派生镜像；F2P1/1 vs 0/1，P2P均34/34，具体新增合法S写入解释分差。"
+    },
+    "23": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/user_prompt.txt",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/base/tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py:917"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "需求与原负例可由公开题面/base旧测试推断，不把gold主键条件反推为规格。"
+    },
+    "24": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/test.patch",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/analysis_before_history.md"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "黑盒断言未见内部形式强制，合理上下文遍历替代路线未执行，未证所有合法解均接受。"
+    },
+    "25": {
+      "status": "issue",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/test.patch",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/analysis_before_history.md"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "成功断言仅顶层字符串S；题面NULL/深层map及M主键反例缺失。"
+    },
+    "26": {
+      "status": "issue",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/base/moto/dynamodb/models/dynamo_type.py:193",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/base/moto/dynamodb/models/utilities.py:15",
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/gold.patch"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "gold跳过非主键S字典原校验，预计转内部AttributeError；强静态推断，未执行。"
+    },
+    "27": {
+      "status": "issue",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/base/moto/dynamodb/models/table.py:257",
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/gold.patch",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/analysis_before_history.md"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "gold遇HASH名M的合法嵌套S预计仍报原异常；强静态推断，未执行。"
+    },
+    "29": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/analysis_before_history.md"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "静态导出无Git不证明实际镜像/祖先历史/包资产无答案。"
+    },
+    "31": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/analysis_before_history.md"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "检查精确恢复边界及helper入口，未做评分控制面运行实验；无新增排除。"
+    },
+    "33": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/analysis_before_history.md"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "本轮无正式actor或真实模型流程。"
+    }
+  },
+  "issues": [
+    {
+      "category": "gold_incomplete_deep_S",
+      "scope": "public requirement / gold completeness",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/user_prompt.txt",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/base/moto/dynamodb/models/table.py:257",
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/gold.patch",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/analysis_before_history.md"
+      ],
+      "proposed_action": "唯一优先下一步：在固定诊断环境只用base/gold，创建HASH名M/typeS并用正常resource API写入、等值读回 {\"M\":\"id\",\"A\":{\"S\":None}}；保存实际异常/结果并另记原评分。上下文正确替代实现及非法S异常回归留作后续，不作为这项诊断前置。所有CPU和修订均未执行。",
+      "status": "needs_review",
+      "evidence_level": "strong_static_inference"
+    },
+    {
+      "category": "coverage_gap_NULL_and_nested_maps",
+      "scope": "test adequacy",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/test.patch",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/analysis_before_history.md"
+      ],
+      "proposed_action": "确认I1后另版补公开原例NULL/深层map验收，并验证合理替代解；不直接改原测试。",
+      "status": "needs_review",
+      "evidence_level": "static_assertion_mapping"
+    },
+    {
+      "category": "gold_regression_invalid_nonkey_S_dictionary",
+      "scope": "existing server-side type validation",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/base/moto/dynamodb/models/table.py:493",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/base/moto/dynamodb/models/dynamo_type.py:193",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/base/moto/dynamodb/models/utilities.py:15",
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/gold.patch"
+      ],
+      "proposed_action": "后续窄回归比较parameter_validation=False的非主键S字典：base原SerializationException vs gold实际错误；目前只提出，不执行。",
+      "status": "needs_review",
+      "evidence_level": "strong_static_inference"
+    },
+    {
+      "category": "parameterized_test_identity_merge",
+      "scope": "parser / reference identity",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6185/gold/eval_logs/evallog_replay-er19-iw1-getmoto__1e09829a.eval.log:643",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6185/noop/eval_logs/evallog_replay-er19-iw1-getmoto__416532ff.eval.log:718",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/old_findings_delta.md"
+      ],
+      "proposed_action": "保留36执行/35解析/35参考的分账；仅在取得具体状态与顺序证据后讨论错分，任何ID映射修订须另版，不改本题冻结引用。",
+      "status": "needs_review",
+      "evidence_level": "historical_logs_plus_frozen_parser",
+      "limitation": "当前两个合并节点都pass，未证reward遮蔽；-rA摘要的FAILED在PASSED后。"
+    },
+    {
+      "category": "formal_actor_and_current_replay_assets_unverified",
+      "scope": "development environment",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/environment_brief.md",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6185/image.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/analysis_before_history.md"
+      ],
+      "proposed_action": "固定grader诊断先核自身镜像/代码/依赖和重定位路径；实际actor UID/HOME/PATH/解释器/导入/权限/消息是后续模型开发的独立门槛。",
+      "status": "needs_review",
+      "evidence_level": "historical_grader_only"
+    },
+    {
+      "category": "cross_task_public_source_containment",
+      "scope": "same-package exposure and task relationship boundary",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/gold.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/base/moto/dynamodb/models/table.py:846",
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/gold.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/base/moto/dynamodb/models/table.py:487",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/base/moto/dynamodb/models/table.py:839",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/review.md"
+      ],
+      "proposed_action": "保留有方向的源码关系与求解上下文暴露记录；不按同仓一刀切，不将本审查上下文复用为blind solver。",
+      "status": "static_relationship_confirmed_actual_solver_exposure_unknown",
+      "evidence_level": "direct static original gold/source comparison",
+      "detail": "同包源码关系已核：5960的scan复制/投影核心原样存在于6185 base；6185类型校验核心原样存在于6408 base，6408 scan另有返回值式演变。仅为公开源码包含/演变，不证明Git祖先、重复题或实际solver泄漏。"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "合法源码修复可投影；精确官方恢复exceptions测试文件；test_globs为空。未凭测试名或假想风险添加排除。",
+    "evidence_refs": [
+      "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/test.patch",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/analysis_before_history.md"
+    ],
+    "applied_version": null
+  },
+  "revision_refs": [],
+  "disposition": {
+    "state": "needs_review",
+    "scope": "static_review",
+    "reason": "暂不优先普通能力探针：gold对公开深层S要求有主键名M的具体漏修路径；非键非法S另有异常类别回归。二者为强静态证据，尚未CPU确认；不得称非法值成功落库。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/analysis_before_history.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/old_findings_delta.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/review.md"
+    ],
+    "reviewer": "/root/b3_review_moto; coordinator /root adjudication",
+    "reviewed_at_utc": "2026-09-20T22:11:49.417478+00:00",
+    "static_recommendation": "not_prioritized_pending_semantic_diagnostic",
+    "priority_next_step": "唯一优先下一步：在固定诊断环境只用base/gold，创建HASH名M/typeS并用正常resource API写入、等值读回 {\"M\":\"id\",\"A\":{\"S\":None}}；保存实际异常/结果并另记原评分。上下文正确替代实现及非法S异常回归留作后续，不作为这项诊断前置。所有CPU和修订均未执行。"
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "exposure_notes": [
+      "先读封存public_read后读本题test/gold/grading/validation与环境结果摘要；不是无结果暴露盲审。",
+      "初稿封存后经协调者放行仅读history/refs指定唯一L1旧记录；未读B1/B2结果、他题/reviewer或质量聚合。",
+      "仅静态文本/Git允许范围，无项目导入、测试、安装、网络、Docker/SSH、付费模型、配额操作；所有CPU/修订均为未执行建议。"
+    ],
+    "coordinator_review_note": "整包三份reviewer initial封存后才放行结论；root仅收束最终card/record。独立复核完成；初判的-rA混合状态遮蔽推断已在review撤回，未观察当前错分。"
+  },
+  "costs": {
+    "container_wall_seconds": null,
+    "agent_tokens": null,
+    "human_decisions": null,
+    "source_refs": [
+      "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6185/gold/ledger.jsonl:1",
+      "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6185/noop/ledger.jsonl:1"
+    ],
+    "note": "历史阶段时长不作为本轮执行或模型成本；未知费用不估算。"
+  }
+}

@@ -1,0 +1,434 @@
+{
+  "task_id": "iterative__dvc-3620",
+  "task_revision": "upstream",
+  "source_adapter_ref": [
+    "runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-3620/source_refs.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:124; swegym_constants_242429c1; swe_f2p_p2p; parser swegym_parsers@242429c1"
+  ],
+  "recipe_ref": [
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/recipe/recipe.json",
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/recipe/candidate_test_script.after.sh",
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/recipe/eval_script.after.sh",
+    "dvc-install-v1:iterative__dvc-3620; dvc_install_v1c; local_build sha256:820a5c7d4c7b28edebb1886834a74d4cfa1f058137ed76f210737a33f4cd1cc7; only historical grader conditions verified"
+  ],
+  "code_snapshot_ref": [
+    "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base_identity.json; base e05157f8e05e856d2e9966c30a3150c26b32b86f; tree d4fa95ff32fb623e4bf12a3bf3098c7cc882fef3",
+    "runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-3620/gold.patch; SHA256 54c21a8c1dbd18cabb0dc1176db6f06aba4c4d41d4282f242f5f658451da22f0"
+  ],
+  "facts_ref": [
+    "runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-3620/environment_record.json; summary read, analysis/history links not followed before release",
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/ledger.jsonl:1; attempt=1 candidate=gold; run_id=er19-dv1-iterative__dvc-3620-gold; rh2grader/54322 deny_all 2CPU 4GiB",
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/noop/ledger.jsonl:1; attempt=1 candidate=noop; run_id=er19-dv1-iterative__dvc-3620-noop; same profile/image",
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/eval_logs/evallog_replay-er19-dv1-iterativ_9b423984.eval.log:620-721; actual execution 7 PASS; reference F2P2/P2P4; extra CLI not in reference",
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/noop/eval_logs/evallog_replay-er19-dv1-iterativ_cf25aa49.eval.log:587-803; actual 3 FAIL/4 PASS; reference F2P2 FAIL/P2P4 PASS; extra CLI FAIL",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/analysis_before_history.md; SHA256 d4aa8c171a4a39d05ae8a7a9028b3777b1b71d7a12a2ddcb71b634405882dfb7",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/old_findings_delta.md"
+  ],
+  "checks": {
+    "1": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/public_bundle.json",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base_identity.json",
+        "runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-3620/source_refs.json; three S2 rows 124 equal bundled JSON",
+        "runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-3620/validation.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/analysis_before_history.md#路径与身份"
+      ],
+      "by": "investigate_dvc; static artifact equality and historical pair identity; no actor/image rebuild"
+    },
+    "2": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/dvc/utils/fs.py:118",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/dvc/remote/local.py:412",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/noop/eval_logs/evallog_replay-er19-dv1-iterativ_cf25aa49.eval.log:654-747"
+      ],
+      "by": "investigate_dvc; base cause and actual noop target assertion failures verified"
+    },
+    "3": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/user_prompt.txt",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/public_bundle.json",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/environment_brief.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/actor_environment_card.md"
+      ],
+      "by": "investigate_dvc; current fields and malformed code-block newlines read; actual model/system/tool messages not captured"
+    },
+    "4": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-3620/test.patch",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/ledger.jsonl:1; projection included dvc/utils/fs.py only",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/recipe/eval_script.after.sh:10"
+      ],
+      "by": "investigate_dvc; ordinary source repair deliverable in historical gold; no additional path exclusions justified"
+    },
+    "5": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_1/records/iterative__dvc-3620.json#/checks/5",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/old_findings_delta.md; same ID across revisions insufficient for mandatory same-side grouping"
+      ],
+      "by": "investigate_dvc; historical 3527 family assertion not independently checked; other-task files unread"
+    },
+    "6": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/recipe/recipe.json",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/eval_logs/evallog_replay-er19-dv1-iterativ_9b423984.eval.log:211-221,414-425,590-610",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/noop/eval_logs/evallog_replay-er19-dv1-iterativ_cf25aa49.eval.log:177-189,557-577"
+      ],
+      "by": "investigate_dvc; repaired historical grader installation only; source setup.py moto adjustment preserved, actor unknown"
+    },
+    "7": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/tests/dir_helpers.py:89-107,217-243",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/tests/basic_env.py:21-113,153-156",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/tests/conftest.py:1-8",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/tests/utils/httpd.py:1-6"
+      ],
+      "by": "investigate_dvc; selected fixture inputs created locally; top-level test imports identified; actual actor assets unverified"
+    },
+    "8": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/noop/ledger.jsonl:1",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/actor_environment_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/analysis_before_history.md#7-actor-开发条件与交付边界"
+      ],
+      "by": "investigate_dvc; grader non-root pair verified; actor UID/HOME/PATH/permissions and recipe consumption unverified"
+    },
+    "9": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/eval_logs/evallog_replay-er19-dv1-iterativ_9b423984.eval.log:178-221,590-610",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/ledger.jsonl:1; RH2_OBS_IMPORT_PATH=/testbed/dvc/__init__.py",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/noop/eval_logs/evallog_replay-er19-dv1-iterativ_cf25aa49.eval.log:177-189,708-747"
+      ],
+      "by": "investigate_dvc; historical gold source diff, editable installation, and behavior-linked pair; import observation is not independent anti-tamper proof"
+    },
+    "10": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/dvc/remote/local.py:412-450",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/tests/unit/remote/test_local.py:34-61",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/analysis_before_history.md#7-actor-开发条件与交付边界"
+      ],
+      "by": "investigate_dvc; public minimal reproduction and narrow test path identified, no current actor execution"
+    },
+    "11": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/eval_logs/evallog_replay-er19-dv1-iterativ_9b423984.eval.log:414-425",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/noop/eval_logs/evallog_replay-er19-dv1-iterativ_cf25aa49.eval.log:381-396",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/tests/unit/remote/test_local.py",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/tests/func/test_unprotect.py"
+      ],
+      "by": "investigate_dvc; selected local behavior has no runtime external service; historical grader offline installation from prepared wheels"
+    },
+    "12": {
+      "status": "not_applicable",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/tests/conftest.py",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/tests/unit/remote/test_local.py",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/tests/func/test_unprotect.py"
+      ],
+      "by": "investigate_dvc; selected tests do not request network services; SSH/HTTP imports still require packages"
+    },
+    "13": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/ledger.jsonl:1; install 6.393s, test 2.089s, mem_peak 191.676MB",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/noop/ledger.jsonl:1; install 6.285s, test 2.591s, mem_peak 264.547MB"
+      ],
+      "by": "investigate_dvc; single historical pair resource facts available, actor/concurrency/stability not verified"
+    },
+    "16": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/ledger.jsonl:1; included_paths=dvc/utils/fs.py, ignored_paths=[]",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/eval_logs/evallog_replay-er19-dv1-iterativ_9b423984.eval.log:178-210"
+      ],
+      "by": "investigate_dvc; historical gold one-file projection only; not universal submission shape proof"
+    },
+    "17": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-3620/test.patch",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/eval_logs/evallog_replay-er19-dv1-iterativ_9b423984.eval.log:224-274",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/noop/eval_logs/evallog_replay-er19-dv1-iterativ_cf25aa49.eval.log:191-234"
+      ],
+      "by": "investigate_dvc; two pure test files restored and patched; no legitimate business file overwritten"
+    },
+    "18": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/eval_logs/evallog_replay-er19-dv1-iterativ_9b423984.eval.log:620-721",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/noop/eval_logs/evallog_replay-er19-dv1-iterativ_cf25aa49.eval.log:587-803"
+      ],
+      "by": "investigate_dvc; original command, collection, failure stacks and terminal states reconciled; no new execution"
+    },
+    "19": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-3620/grading.json",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/eval_logs/evallog_replay-er19-dv1-iterativ_9b423984.eval.log:706-718",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/noop/eval_logs/evallog_replay-er19-dv1-iterativ_cf25aa49.eval.log:788-803",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/ledger.jsonl:1; parsed=7, reference_missing/skipped=[]",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/old_findings_delta.md; old maps contained Could and No"
+      ],
+      "by": "investigate_dvc; current 7 actual IDs/parsed count reconciled; six references all present; old false keys separately rejected"
+    },
+    "20": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/eval_logs/evallog_replay-er19-dv1-iterativ_9b423984.eval.log:601-628,707-718",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/noop/eval_logs/evallog_replay-er19-dv1-iterativ_cf25aa49.eval.log:568-595,631-634,688-747"
+      ],
+      "by": "investigate_dvc; current pair difference arises in target permission assertions after successful installation"
+    },
+    "21": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/eval_logs/evallog_replay-er19-dv1-iterativ_9b423984.eval.log:602-618,714-721",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/noop/eval_logs/evallog_replay-er19-dv1-iterativ_cf25aa49.eval.log:569-585,796-803",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/old_findings_delta.md"
+      ],
+      "by": "investigate_dvc; current pair installation and test RC explicitly preserved; historical masking not propagated"
+    },
+    "23": {
+      "status": "issue",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/user_prompt.txt",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/tests/unit/remote/test_local.py:57-61",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/tests/func/test_unprotect.py:27-34",
+        "runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-3620/test.patch",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/analysis_before_history.md#3-需求—测试双向映射"
+      ],
+      "by": "investigate_dvc; hardlink promotion beyond explicit symlink issue has plausible basis but conflicts with stated old test behavior"
+    },
+    "24": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-3620/test.patch",
+        "runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-3620/gold.patch",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/analysis_before_history.md#4-替代解部分解与-gold"
+      ],
+      "by": "investigate_dvc; static check found no private helper or order constraint; semantic scope dispute tracked under 23, alternative not executed"
+    },
+    "25": {
+      "status": "issue",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/dvc/remote/local.py:532-538",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/tests/unit/remote/test_local.py:34-61",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/tests/func/test_unprotect.py",
+        "runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-3620/grading.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/analysis_before_history.md#4-替代解部分解与-gold"
+      ],
+      "by": "investigate_dvc; identified output-content/detachment and reference membership gaps; no observed false-positive candidate"
+    },
+    "26": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/dvc/output/base.py:307-338",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/dvc/stage.py:357-379",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/dvc/repo/destroy.py",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/tests/unit/utils/test_fs.py:163-172",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/tests/func/test_remove.py:39-65",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/tests/func/test_checkout.py:488-519",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/tests/func/test_run.py:347-458",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/analysis_before_history.md#5-相关调用者与回归实际阅读范围"
+      ],
+      "by": "investigate_dvc; relevant callers and public regressions read; broader/Windows execution not performed; no established gold regression"
+    },
+    "27": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-3620/gold.patch",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/dvc/utils/fs.py:118-143",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/dvc/remote/local.py:412-450",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/eval_logs/evallog_replay-er19-dv1-iterativ_9b423984.eval.log:707-718"
+      ],
+      "by": "investigate_dvc; gold ordinary target path and narrow historical Linux suite verified; cross-platform and all failures not proved"
+    },
+    "28": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/analysis_before_history.md#8-暂定处置与唯一优先下一步",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/old_findings_delta.md"
+      ],
+      "by": "investigate_dvc; proposed input-controlled comparison not run; CPU cannot decide hardlink requirement scope"
+    },
+    "29": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base_identity.json",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/user_prompt.txt",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/actor_environment_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/old_findings_delta.md"
+      ],
+      "by": "investigate_dvc; public issue legitimately reveals faulty code/root cause; actual actor image/Git/assets not audited"
+    },
+    "31": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-3620/test.patch",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/ledger.jsonl:1",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/actor_environment_card.md"
+      ],
+      "by": "investigate_dvc; no task-specific control-file abuse found; common scoring control-plane audit not repeated"
+    },
+    "32": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/tests/unit/remote/test_local.py:34-61",
+        "runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-3620/test.patch",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/analysis_before_history.md#3-需求—测试双向映射"
+      ],
+      "by": "investigate_dvc; behavior assertions meaningful but wrong-patch and equivalent-patch controls remain static proposals"
+    },
+    "37": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/recipe/recipe.json",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/eval_logs/evallog_replay-er19-dv1-iterativ_9b423984.eval.log:211-221",
+        "runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-3620/grading.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/old_findings_delta.md"
+      ],
+      "by": "investigate_dvc; environment repair separated from unchanged upstream task/reference; no new revision made"
+    },
+    "38": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/analysis_before_history.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/old_findings_delta.md",
+        "runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-3620/run_refs.json"
+      ],
+      "by": "investigate_dvc; new CPU experiments and independent reviewer result unavailable; preserved exact evidence and sealed analysis"
+    }
+  },
+  "issues": [
+    {
+      "category": "public_requirement_scope",
+      "scope": "static semantic ambiguity: POSIX hardlink F2P versus symlink-only issue and public old behavior",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/user_prompt.txt",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/tests/unit/remote/test_local.py:57-61",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/tests/func/test_unprotect.py:27-34",
+        "runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-3620/test.patch",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/noop/eval_logs/evallog_replay-er19-dv1-iterativ_cf25aa49.eval.log:654-747"
+      ],
+      "proposed_action": "Keep needs_review. Unique priority CPU proposal is base/gold/symlink-only in the same non-root actor conditions with fixed nonempty bytes, symlink and hardlink, exact cache modes/bytes and output postconditions, then existing RH2 score. Report observed behavior/score separately from human interpretation of whether hardlink promotion is required; no CPU run yet.",
+      "status": "open_static_review"
+    },
+    {
+      "category": "coverage_limit",
+      "scope": "reference 6 versus actual 7; missing output bytes and detachment postconditions",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-3620/grading.json",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/dvc/remote/local.py:532-538",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/tests/unit/remote/test_local.py:34-61",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/tests/func/test_unprotect.py",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/eval_logs/evallog_replay-er19-dv1-iterativ_9b423984.eval.log:707-714",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/review.md"
+      ],
+      "proposed_action": "Prioritize the reviewer gold/delete-link-only controlled comparison with nonempty temporary assets, actual output existence/bytes/detachment and original six-reference RH2 reward; extra CLI failure recorded separately. Symlink-only remains an optional scope comparison, not a simultaneous mandatory gate.",
+      "status": "open_static_coverage_limit"
+    },
+    {
+      "category": "platform_regression_coverage",
+      "scope": "Linux-only evidence does not execute NTFS readonly-unlink fallback",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-3620/gold.patch",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/eval_logs/evallog_replay-er19-dv1-iterativ_9b423984.eval.log:622-625",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/tests/unit/remote/test_local.py:64-88",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/base/tests/unit/utils/test_fs.py:163-172",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/old_findings_delta.md"
+      ],
+      "proposed_action": "Retain as an unverified regression boundary. Missing chmod fallback is a plausible cross-platform partial implementation, not an observed current false positive. Broad ordinary Linux remove/gc runs do not prove the Windows error branch; any later targeted check must control first unlink failure or use Windows. This does not replace the single priority scope comparison.",
+      "status": "open_static_coverage_limit"
+    },
+    {
+      "category": "actor_environment_unknown",
+      "scope": "actual actor runtime, dependency recipe, activation, filesystem permissions and messages",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/actor_environment_card.md",
+        "runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620/environment_brief.md",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/eval_logs/evallog_replay-er19-dv1-iterativ_9b423984.eval.log:211-221,414-425,590-610",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/analysis_before_history.md#7-actor-开发条件与交付边界"
+      ],
+      "proposed_action": "Before a model diagnostic use the real actor entry to record selected image/recipe, UID/HOME/cwd/PATH/interpreter, imported package path, HEAD plus initial setup.py difference, writable temporary paths and link operations; run the public minimal reproduction without giving hidden material. Grader success is not actor proof.",
+      "status": "unknown"
+    },
+    {
+      "category": "historical_claim_correction",
+      "scope": "old root blocker, install/parser claims and symlink-only alternative",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_1/records/iterative__dvc-3620.json",
+        "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3620/gold/offline/a1/test_output.txt:383-426,495-498,587-599",
+        "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3620/gold/offline/a1/status_map.json",
+        "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3620/empty/offline/a1/status_map.json",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/eval_logs/evallog_replay-er19-dv1-iterativ_9b423984.eval.log:707-718",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/old_findings_delta.md"
+      ],
+      "proposed_action": "Preserve original history but do not carry its needs_repair label forward as a current root/install blocker. Record old install failures and Could/No parser false keys; current pair is clean. Correct the static assertion that a symlink-only change satisfies hardlink F2P. Leave source-reference exclusion motive and uninspected 3527 family relation unverified.",
+      "status": "corrected_by_static_reaudit"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "合法修复位于普通 dvc 源码；官方恢复仅触碰两份纯测试文件。未发现需要新增路径排除的题目特例。",
+    "evidence_refs": [
+      "runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-3620/test.patch",
+      "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/ledger.jsonl:1",
+      "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/recipe/eval_script.after.sh:10-58"
+    ],
+    "applied_version": null
+  },
+  "revision_refs": [],
+  "disposition": {
+    "state": "needs_review",
+    "scope": "static_review",
+    "reason": "Symlink target behavior, gold implementation and current non-root grader pair are supported. POSIX hardlink requirement expansion remains a semantic ambiguity; output-content/detachment and Windows fallback coverage are limited. Actual actor conditions/messages remain unverified. Candidate for explicitly bounded development diagnostics, not formal training/evaluation approval; no current CPU/model experiment or proven misgrading.",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/analysis_before_history.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/old_findings_delta.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/card.md",
+      "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/ledger.jsonl:1",
+      "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/noop/ledger.jsonl:1",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/reviewer_initial.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/review.md"
+    ],
+    "reviewer": {
+      "agent_id": "/root/review_dvc",
+      "initial_ref": "reviewer_initial.md",
+      "review_ref": "review.md",
+      "scope": "全部分配初判先封存后交叉复核，仅静态/历史原件"
+    }
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "exposure_notes": [
+      "主审先读本题已封存 public_read 和原始公开/私有材料，再保存 analysis_before_history.md，协调者登记 SHA256 d4aa8c171a4a39d05ae8a7a9028b3777b1b71d7a12a2ddcb71b634405882dfb7 后单独开放 history refs；前稿未回写。",
+      "已读本题 test patch、gold、2 F2P/4 P2P 全体测试体与 fixtures、相关调用者、environment_record、最新两角色账本和日志关键原件。哈希读取全部字节不等于逐行人工阅读；依赖长清单抽读；详细范围见前稿。",
+      "执行证据：历史窄选择器实际7项；来源参考保护：F2P2+P2P4=6项，额外CLI并非参考；实际阅读：全部7项测试体和相关公开回归静态阅读，未宣称回归被本轮执行。",
+      "历史后已读 H 旧报告及其本题 stage1 maps/log/recipe 片段。未读 manifest、主计划、method_adjustments、未授权其它题材料或 reviewer 文件；未读旧 prescan 或仓库 clone。旧根因报告与公开定位提示不能作为独立模型成绩。",
+      "无项目运行/安装/Docker/SSH/CPU或模型；审查材料不可给solver，不是盲解上下文。未知实际actor资产泄漏与外网访问；未从issue详细度推断模型难度。",
+      "独立复核保留hardlink合理推广与旧契约冲突的判断差异；协调者采纳数据丢失负对照为首个评分校准，symlink-only只量化范围且不能裁定契约，不设两组必做门。review补核共享moto版本预改；local.py:532–538定位is_protected正确。"
+    ]
+  },
+  "costs": {
+    "container_wall_seconds": null,
+    "agent_tokens": null,
+    "human_decisions": null,
+    "source_refs": [
+      "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/ledger.jsonl:1; historical install_seconds=6.393,test_seconds=2.089; not current audit container wall time",
+      "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/noop/ledger.jsonl:1; historical install_seconds=6.285,test_seconds=2.591; not current audit container wall time",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/analysis_before_history.md; current metadata-only audit, no CPU/model run"
+    ]
+  }
+}

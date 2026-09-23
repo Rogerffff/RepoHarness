@@ -1,0 +1,226 @@
+{
+  "pytest": "8.3.5",
+  "pytest-pretty": "1.2.0",
+  "cases": {
+    "outer_zero_default": {
+      "baseline": {
+        "rc": 0,
+        "stdout": "============================= test session starts ==============================\nplatform darwin -- Python 3.12.13, pytest-8.3.5, pluggy-1.6.0\nrootdir: /testbed\nconfigfile: ../../../../../../../../../pyproject.toml\ncollected 2 items\n\ntests/test_thing.py ..                                                   [100%]\n\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_thing.py::test_feature[before]\nPASSED tests/test_thing.py::test_stable[before]\n============================== 2 passed in 0.01s ===============================\n",
+        "pretty": false,
+        "flags": []
+      },
+      "candidate": {
+        "rc": 0,
+        "stdout": "============================= test session starts ==============================\nplatform darwin -- Python 3.12.13, pytest-8.3.5, pluggy-1.6.0\nrootdir: /testbed\nconfigfile: ../../../../../../../../../pyproject.toml\ncollected 2 items\n\ntests/test_thing.py ..                                                   [100%]\n\n==================================== PASSES ====================================\n_____________________________ test_feature[after] ______________________________\n----------------------------- Captured stdout call -----------------------------\n============================= test session starts ==============================\nplatform darwin -- Python 3.12.13, pytest-8.3.5, pluggy-1.6.0\nrootdir: /testbed\nconfigfile: ../../../../../../../../../pyproject.toml\ncollected 0 items / 1 error\n\n==================================== ERRORS ====================================\n_____________________ ERROR collecting child/test_child.py _____________________\nImportError while importing test module '/testbed/child/test_child.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\n<USER_HOME>/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/importlib/__init__.py:90: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\nchild/test_child.py:1: in <module>\n    import rh2_missing_child_module\nE   ModuleNotFoundError: No module named 'rh2_missing_child_module'\n=========================== short test summary info ============================\nERROR child/test_child.py\n!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n=============================== 1 error in 0.04s ===============================\n=========================== short test summary info ============================\nPASSED tests/test_thing.py::test_feature[after]\nPASSED tests/test_thing.py::test_stable[after]\n============================== 2 passed in 0.15s ===============================\n",
+        "pretty": false,
+        "flags": []
+      },
+      "expected_reward": 0.0,
+      "qualified": false,
+      "test_sha256": "6919724e265f7b690632ce87bdef1f9e6a369383f8a83b058130bda7f357ede7",
+      "patch_path": "src/id_source.py",
+      "before": "label = \"before\"",
+      "after": "label = \"after\"",
+      "refs": [
+        [
+          "tests/test_thing.py::test_feature[before]"
+        ],
+        [
+          "tests/test_thing.py::test_stable[before]"
+        ]
+      ]
+    },
+    "outer_zero_quiet": {
+      "baseline": {
+        "rc": 0,
+        "stdout": "..                                                                       [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_thing.py::test_feature[before]\nPASSED tests/test_thing.py::test_stable[before]\n2 passed in 0.01s\n",
+        "pretty": false,
+        "flags": [
+          "-q"
+        ]
+      },
+      "candidate": {
+        "rc": 0,
+        "stdout": "..                                                                       [100%]\n==================================== PASSES ====================================\n_____________________________ test_feature[after] ______________________________\n----------------------------- Captured stdout call -----------------------------\n============================= test session starts ==============================\nplatform darwin -- Python 3.12.13, pytest-8.3.5, pluggy-1.6.0\nrootdir: /testbed\nconfigfile: ../../../../../../../../../pyproject.toml\ncollected 0 items / 1 error\n\n==================================== ERRORS ====================================\n_____________________ ERROR collecting child/test_child.py _____________________\nImportError while importing test module '/testbed/child/test_child.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\n<USER_HOME>/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/importlib/__init__.py:90: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\nchild/test_child.py:1: in <module>\n    import rh2_missing_child_module\nE   ModuleNotFoundError: No module named 'rh2_missing_child_module'\n=========================== short test summary info ============================\nERROR child/test_child.py\n!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n=============================== 1 error in 0.06s ===============================\n=========================== short test summary info ============================\nPASSED tests/test_thing.py::test_feature[after]\nPASSED tests/test_thing.py::test_stable[after]\n2 passed in 0.19s\n",
+        "pretty": false,
+        "flags": [
+          "-q"
+        ]
+      },
+      "expected_reward": 0.0,
+      "qualified": false,
+      "test_sha256": "6919724e265f7b690632ce87bdef1f9e6a369383f8a83b058130bda7f357ede7",
+      "patch_path": "src/id_source.py",
+      "before": "label = \"before\"",
+      "after": "label = \"after\"",
+      "refs": [
+        [
+          "tests/test_thing.py::test_feature[before]"
+        ],
+        [
+          "tests/test_thing.py::test_stable[before]"
+        ]
+      ]
+    },
+    "pretty_outer_zero": {
+      "baseline": {
+        "rc": 0,
+        "stdout": "============================= test session starts ==============================\ncollecting ... collected 2 items\n\ntests/test_thing.py::test_feature[before] PASSED\ntests/test_thing.py::test_stable[before] PASSED\n\n==================================== PASSES ====================================\nResults (0.01s):\n         2 passed\n",
+        "pretty": true,
+        "flags": [
+          "--tb=short",
+          "-vv",
+          "-o",
+          "console_output_style=classic",
+          "--no-header"
+        ]
+      },
+      "candidate": {
+        "rc": 0,
+        "stdout": "============================= test session starts ==============================\ncollecting ... collected 2 items\n\ntests/test_thing.py::test_feature[after] PASSED\ntests/test_thing.py::test_stable[after] PASSED\n\n==================================== PASSES ====================================\n_____________________________ test_feature[after] ______________________________\n----------------------------- Captured stdout call -----------------------------\n============================= test session starts ==============================\nplatform darwin -- Python 3.12.13, pytest-8.3.5, pluggy-1.6.0\nrootdir: /testbed\nconfigfile: ../../../../../../../../../pyproject.toml\ncollected 0 items / 1 error\n\n==================================== ERRORS ====================================\n_____________________ ERROR collecting child/test_child.py _____________________\nImportError while importing test module '/testbed/child/test_child.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\n<USER_HOME>/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/importlib/__init__.py:90: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\nchild/test_child.py:1: in <module>\n    import rh2_missing_child_module\nE   ModuleNotFoundError: No module named 'rh2_missing_child_module'\n=========================== short test summary info ============================\nERROR child/test_child.py\n!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n=============================== 1 error in 0.05s ===============================\nResults (0.19s):\n         2 passed\n",
+        "pretty": true,
+        "flags": [
+          "--tb=short",
+          "-vv",
+          "-o",
+          "console_output_style=classic",
+          "--no-header"
+        ]
+      },
+      "expected_reward": 0.0,
+      "qualified": false,
+      "test_sha256": "6919724e265f7b690632ce87bdef1f9e6a369383f8a83b058130bda7f357ede7",
+      "patch_path": "src/id_source.py",
+      "before": "label = \"before\"",
+      "after": "label = \"after\"",
+      "refs": [
+        [
+          "tests/test_thing.py::test_feature[before]"
+        ],
+        [
+          "tests/test_thing.py::test_stable[before]"
+        ]
+      ]
+    },
+    "pretty_outer_one": {
+      "baseline": {
+        "rc": 0,
+        "stdout": "============================= test session starts ==============================\ncollecting ... collected 2 items\n\ntests/test_thing.py::test_feature[before] PASSED\ntests/test_thing.py::test_stable[before] PASSED\n\n==================================== PASSES ====================================\nResults (0.01s):\n         2 passed\n",
+        "pretty": true,
+        "flags": [
+          "--tb=short",
+          "-vv",
+          "-o",
+          "console_output_style=classic",
+          "--no-header"
+        ]
+      },
+      "candidate": {
+        "rc": 1,
+        "stdout": "============================= test session starts ==============================\ncollecting ... collected 2 items\n\ntests/test_thing.py::test_feature[after] FAILED                          [ 50%]\ntests/test_thing.py:2 test_feature[after] - subprocess.CalledProcess…\ntests/test_thing.py::test_stable[after] PASSED\n\n=================================== FAILURES ===================================\n_____________________________ test_feature[after] ______________________________\ntests/test_thing.py:6: in test_feature\n    subprocess.run([sys.executable,\"-B\",\"-m\",\"pytest\",\"--rootdir=.\",\"-p\",\"no:cacheprovider\",\"child/test_child.py\"],check=True)\n<USER_HOME>/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/subprocess.py:571: in run\n    raise CalledProcessError(retcode, process.args,\nE   subprocess.CalledProcessError: Command '['<USER_HOME>/.cache/uv/builds-v0/.tmpDhGQmE/bin/python', '-B', '-m', 'pytest', '--rootdir=.', '-p', 'no:cacheprovider', 'child/test_child.py']' returned non-zero exit status 2.\n----------------------------- Captured stdout call -----------------------------\n============================= test session starts ==============================\nplatform darwin -- Python 3.12.13, pytest-8.3.5, pluggy-1.6.0\nrootdir: /testbed\nconfigfile: ../../../../../../../../../pyproject.toml\ncollected 0 items / 1 error\n\n==================================== ERRORS ====================================\n_____________________ ERROR collecting child/test_child.py _____________________\nImportError while importing test module '/testbed/child/test_child.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\n<USER_HOME>/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/importlib/__init__.py:90: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\nchild/test_child.py:1: in <module>\n    import rh2_missing_child_module\nE   ModuleNotFoundError: No module named 'rh2_missing_child_module'\n=========================== short test summary info ============================\nERROR child/test_child.py\n!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n=============================== 1 error in 0.04s ===============================\n==================================== PASSES ====================================\n                              Summary of Failures                               \n┏━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━┓\n┃                 ┃                 ┃  Function      ┃              ┃          ┃\n┃  File           ┃  Function       ┃  Line          ┃  Error Line  ┃  Error   ┃\n┡━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━┩\n│  tests/test_t…  │  test_feature…  │  3             │  6           │  in run  │\n└─────────────────┴─────────────────┴────────────────┴──────────────┴──────────┘\nResults (0.17s):\n         1 failed\n         1 passed\n",
+        "pretty": true,
+        "flags": [
+          "--tb=short",
+          "-vv",
+          "-o",
+          "console_output_style=classic",
+          "--no-header"
+        ]
+      },
+      "expected_reward": 0.0,
+      "qualified": false,
+      "test_sha256": "ee6370b0da06bd9d4a0fa94a23408ed00ab7275845493173c95b5b7b3dcf35e4",
+      "patch_path": "src/id_source.py",
+      "before": "label = \"before\"",
+      "after": "label = \"after\"",
+      "refs": [
+        [
+          "tests/test_thing.py::test_feature[before]"
+        ],
+        [
+          "tests/test_thing.py::test_stable[before]"
+        ]
+      ]
+    },
+    "pretty_collection_error": {
+      "baseline": {
+        "rc": 0,
+        "stdout": "============================= test session starts ==============================\ncollecting ... collected 2 items\n\ntests/test_thing.py::test_feature[before] PASSED\ntests/test_thing.py::test_stable[before] PASSED\n\n==================================== PASSES ====================================\nResults (0.02s):\n         2 passed\n",
+        "pretty": true,
+        "flags": [
+          "--tb=short",
+          "-vv",
+          "-o",
+          "console_output_style=classic",
+          "--no-header"
+        ]
+      },
+      "candidate": {
+        "rc": 2,
+        "stdout": "============================= test session starts ==============================\ncollecting ... collected 2 items / 1 error\n\n==================================== ERRORS ====================================\n______________________ ERROR collecting tests/test_bad.py ______________________\nImportError while importing test module '/testbed/tests/test_bad.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\n<USER_HOME>/.cache/uv/archive-v0/2W5b8p9HXOZ3K1AQ/lib/python3.12/site-packages/_pytest/python.py:493: in importtestmodule\n    mod = import_path(\n<USER_HOME>/.cache/uv/archive-v0/2W5b8p9HXOZ3K1AQ/lib/python3.12/site-packages/_pytest/pathlib.py:587: in import_path\n    importlib.import_module(module_name)\n<USER_HOME>/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/importlib/__init__.py:90: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n<frozen importlib._bootstrap>:1387: in _gcd_import\n    ???\n<frozen importlib._bootstrap>:1360: in _find_and_load\n    ???\n<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked\n    ???\n<frozen importlib._bootstrap>:935: in _load_unlocked\n    ???\n<USER_HOME>/.cache/uv/archive-v0/2W5b8p9HXOZ3K1AQ/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:185: in exec_module\n    exec(co, module.__dict__)\ntests/test_bad.py:3: in <module>\n    import rh2_missing_collection_dependency\nE   ModuleNotFoundError: No module named 'rh2_missing_collection_dependency'\n!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\nResults (0.12s):\n         1 error\n",
+        "pretty": true,
+        "flags": [
+          "--tb=short",
+          "-vv",
+          "-o",
+          "console_output_style=classic",
+          "--no-header"
+        ]
+      },
+      "expected_reward": null,
+      "qualified": false,
+      "patch_path": "src/id_source.py",
+      "before": "label = \"before\"",
+      "after": "label = \"after\"",
+      "refs": [
+        [
+          "tests/test_thing.py::test_feature[before]"
+        ],
+        [
+          "tests/test_thing.py::test_stable[before]"
+        ]
+      ]
+    },
+    "pretty_collection_continue": {
+      "baseline": {
+        "rc": 0,
+        "stdout": "============================= test session starts ==============================\ncollecting ... collected 2 items\n\ntests/test_thing.py::test_feature[before] PASSED\ntests/test_thing.py::test_stable[before] PASSED\n\n==================================== PASSES ====================================\nResults (0.01s):\n         2 passed\n",
+        "pretty": true,
+        "flags": [
+          "--tb=short",
+          "-vv",
+          "-o",
+          "console_output_style=classic",
+          "--no-header",
+          "--continue-on-collection-errors"
+        ]
+      },
+      "candidate": {
+        "rc": 1,
+        "stdout": "============================= test session starts ==============================\ncollecting ... collected 2 items / 1 error\n\ntests/test_thing.py::test_feature[after] PASSED\ntests/test_thing.py::test_stable[after] PASSED\n\n==================================== ERRORS ====================================\n______________________ ERROR collecting tests/test_bad.py ______________________\nImportError while importing test module '/testbed/tests/test_bad.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\n<USER_HOME>/.cache/uv/archive-v0/2W5b8p9HXOZ3K1AQ/lib/python3.12/site-packages/_pytest/python.py:493: in importtestmodule\n    mod = import_path(\n<USER_HOME>/.cache/uv/archive-v0/2W5b8p9HXOZ3K1AQ/lib/python3.12/site-packages/_pytest/pathlib.py:587: in import_path\n    importlib.import_module(module_name)\n<USER_HOME>/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/importlib/__init__.py:90: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n<frozen importlib._bootstrap>:1387: in _gcd_import\n    ???\n<frozen importlib._bootstrap>:1360: in _find_and_load\n    ???\n<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked\n    ???\n<frozen importlib._bootstrap>:935: in _load_unlocked\n    ???\n<USER_HOME>/.cache/uv/archive-v0/2W5b8p9HXOZ3K1AQ/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:185: in exec_module\n    exec(co, module.__dict__)\ntests/test_bad.py:3: in <module>\n    import rh2_missing_collection_dependency\nE   ModuleNotFoundError: No module named 'rh2_missing_collection_dependency'\n==================================== PASSES ====================================\nResults (0.04s):\n         2 passed\n         1 error\n",
+        "pretty": true,
+        "flags": [
+          "--tb=short",
+          "-vv",
+          "-o",
+          "console_output_style=classic",
+          "--no-header",
+          "--continue-on-collection-errors"
+        ]
+      },
+      "expected_reward": null,
+      "qualified": false,
+      "patch_path": "src/id_source.py",
+      "before": "label = \"before\"",
+      "after": "label = \"after\"",
+      "refs": [
+        [
+          "tests/test_thing.py::test_feature[before]"
+        ],
+        [
+          "tests/test_thing.py::test_stable[before]"
+        ]
+      ]
+    }
+  }
+}

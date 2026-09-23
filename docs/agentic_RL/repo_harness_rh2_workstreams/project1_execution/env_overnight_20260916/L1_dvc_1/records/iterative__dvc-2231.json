@@ -1,0 +1,223 @@
+{
+ "task_id": "iterative__dvc-2231",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "docs/.../s2/ingest/public_bundles_v0.jsonl#iterative__dvc-2231",
+  "grading": "docs/.../s2/ingest/grading_bundles_v2_v0.jsonl#iterative__dvc-2231",
+  "validation": "docs/.../s2/ingest/validation_bundles_v0.jsonl#iterative__dvc-2231",
+  "raw": "docs/.../s2/raw/swe_gym_lite_full_f70b1a29.jsonl#iterative__dvc-2231",
+  "base_commit": "817e3f8bfaa15b2494dae4853c6c3c3f5f701ad9",
+  "version": "0.50",
+  "python_version": "3.8",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-2231:latest",
+  "eval_cmd": "pytest -rA",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2231/{gold,empty}/offline/a1/",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc"
+ },
+ "public_view": {
+  "目标行为": "切回没有该产物的分支后 `dvc checkout` 应把属于另一分支的输出文件删掉——具体说，.dvc 文件里某个 out 没有 checksum 信息（例如 `dvc run --no-exec` 生成的）时，工作区里同名文件应被移除而不是保留。",
+  "约束": "base `dvc/remote/base.py:770-775 RemoteBASE.checkout`：`checksum` 为空时只 `logger.debug(\"No checksum info for ...\")` 然后 `return`，什么都不做。同文件第 686 行已有 `safe_remove(self, path_info, force=False)` 可直接复用。",
+  "公开材料无法确定的点": [
+   "题面用的是\"切分支\"的场景，没有点明触发条件是 **out 缺少 checksum**（`--no-exec` 建的 stage）；这层因果只在 hints 的维护者回复里；",
+   "删除时要不要尊重 `force`（非 force 时是否应提示）题面没说；",
+   "要不要同时打印警告、警告文本是什么，题面没说。"
+  ],
+  "相关模块": "dvc/remote/base.py（RemoteBASE.checkout / safe_remove）、dvc/output/base.py 的 checkout 调用链。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-2231/grading.json#test_patch",
+    "mat/iterative__dvc-2231/validation.json#golden_patch",
+    "git show 817e3f8bfa:dvc/remote/base.py:770"
+   ],
+   "note": "test_patch 只动 tests/func/test_checkout.py（base 存在）；gold 只动 dvc/remote/base.py。同一问题。无二进制/LFS/子模块。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show 817e3f8bfa:dvc/remote/base.py:770-775（`msg = \"No checksum info for '{}'.\" ; logger.debug(...) ; return`）",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2231/empty/offline/a1/status_map.json"
+   ],
+   "note": "base 在缺 checksum 时直接 return，文件被留下；empty 侧 F2P FAILED。",
+   "by": "static"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-2231/public.json#problem_statement",
+    "mat/iterative__dvc-2231/raw.json#hints_text"
+   ],
+   "note": "题面 543 字符、含完整可复制的复现脚本（git init → dvc run --no-exec → 切分支 → dvc checkout），渲染完整。缺口：**\"因为它没有 checksum 信息，所以应该被删\"这条因果判断只在 hints 里**（efiop 的回复）；题面只描述现象。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-2231/grading.json#test_patch"
+   ],
+   "note": "test_patch 只触碰 tests/func/test_checkout.py；gold 不触碰测试样路径。",
+   "by": "static"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-2231/grading.json#test_patch"
+   ],
+   "note": "恢复清单 = {tests/func/test_checkout.py}，官方测试文件。",
+   "by": "static"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dvc_1/prescan.json"
+   ],
+   "note": "本包唯一 version=0.50、唯一改 dvc/remote/base.py 的题。",
+   "by": "static"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-2231/grading.json#test_patch"
+   ],
+   "note": "F2P `test_checkout_no_checksum` 是行为级断言（`assert not os.path.exists(repo_dir.FOO)`），与题面\"someout.txt 不该留在 master\"直接对应，可从公开材料推出——前提是求解者自己想到用 `--no-exec` 复现（题面复现脚本里正好用了 `--no-exec`，所以线索是有的）。",
+   "by": "static"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-2231/grading.json#test_patch",
+    "mat/iterative__dvc-2231/validation.json#golden_patch"
+   ],
+   "note": "F2P 只看文件是否存在，不断言警告文本、不锁方法名。在 `dvc/output/base.py` 层删除、或在 `RemoteBASE.checkout` 里删除，都能通过。约束合理。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-2231/grading.json#test_patch（`dvc_repo.checkout(stage.path, force=True)`）",
+    "git show 817e3f8bfa:dvc/remote/base.py:686 `def safe_remove(self, path_info, force=False)`"
+   ],
+   "note": "F2P **只覆盖 `force=True`**。gold 把 `force` 透传给 `safe_remove`（非 force 时会走确认/保护逻辑），但没有任何用例验证 `force=False` 的行为；一个无条件 `remove(path_info)`（忽略 force）的实现同样满分，却会在用户没加 `--force` 时直接删掉工作区文件。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2231/gold/offline/a1/test_output.txt（1 failed, 22 passed in 9.54s）",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2231/empty/offline/a1/status_map.json"
+   ],
+   "note": "P2P 21 条 = tests/func/test_checkout.py 在两侧都通过的用例，覆盖 checkout 的目录/递归/损坏缓存/relink/进度条等主路径。**`TestCheckoutWithDeps::test` 在 base 与 gold 两侧都 FAILED**，原因是 networkx 版本漂移（见 issue），被排除——这条恰好是唯一覆盖 `--with-deps` 的用例。",
+   "by": "static"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-2231/validation.json#golden_patch"
+   ],
+   "note": "gold 把 debug 改成 warning 并调用已有的 `safe_remove(path_info, force=force)`，与题目对应，无无关改动，不依赖未交付改动。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-2231/public.json#problem_statement",
+    "mat/iterative__dvc-2231/raw.json#hints_text"
+   ],
+   "note": "题面与 hints 都不含修复代码、不含 PR/commit 链接。",
+   "by": "static"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2231/gold/offline/a1/test_output.txt（`AttributeError: 'DiGraph' object has no attribute 'node'`）",
+    "git show 817e3f8bfa:dvc/repo/__init__.py:178 `ret.append(G.node[n][\"stage\"])`"
+   ],
+   "note": "**networkx 漂移（方向与 dvc-4185 相反）**：装到的 networkx ≥2.4 已把 `G.node` 去掉（改名 `G.nodes`），而 dvc 0.50 的 `dvc/repo/__init__.py:178` 仍用 `G.node`，于是 `dvc checkout --with-deps` 直接 `unexpected error`、退出码 255。",
+   "by": "static"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2231/gold/offline/a1/test_output.txt（无 SKIPPED）"
+   ],
+   "note": "tests/func/test_checkout.py 全本地操作，无网络。",
+   "by": "static"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2231/gold/offline/a1/status_map.json（键 `Could`/`No`/`unexpected`/`dvc:main.py:53`）"
+   ],
+   "note": "安装阶段 `ERROR:` 行与运行期 `ERROR: unexpected error - ...` 行都被 parser 记成测试结果（键 `unexpected` 来自 `ERROR: unexpected error`），见跨题发现 B；未与 F2P/P2P 冲突。",
+   "by": "static"
+  },
+  "7": {
+   "status": "not_applicable",
+   "evidence_refs": [],
+   "note": "test_patch 不带外部资产。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "环境依赖漂移(6/26)",
+   "severity": "P1",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2231/gold/offline/a1/test_output.txt（`'DiGraph' object has no attribute 'node'`，退出码 255）",
+    "git show 817e3f8bfa:dvc/repo/__init__.py:178"
+   ],
+   "note": "networkx ≥2.4 删除了 `G.node`，dvc 0.50 仍在用 → `--with-deps` 全线失效，`TestCheckoutWithDeps::test` 双侧失败被排除出 P2P。注意方向与 dvc-4185 相反（那题是 networkx 太旧、在 Python 3.9 上 `from fractions import gcd` 失败）：**同一批 dvc 镜像里 networkx 没有统一钉版，落到两侧都不兼容的区间**。",
+   "proposed_action": "按 dvc 版本区间分别钉 networkx（0.50 一线需 `networkx<2.4`，1.1 一线需兼容 py3.9 的 2.4/2.5），并在配方里记录 `pip freeze` 快照。",
+   "next_experiment": "在 2231 镜像里 `pip install \"networkx<2.4\"` 后重跑 `pytest -rA tests/func/test_checkout.py`，确认 `TestCheckoutWithDeps` 转绿；同时确认没有别的 API 依赖被打破。"
+  },
+  {
+   "category": "测试放过错误修复(25)",
+   "severity": "P2",
+   "evidence_refs": [
+    "mat/iterative__dvc-2231/grading.json#test_patch（只用 `force=True`）",
+    "git show 817e3f8bfa:dvc/remote/base.py:686"
+   ],
+   "note": "F2P 不覆盖 `force=False`。忽略 `force` 直接删文件的实现能满分，但会在没有 `--force` 时破坏用户工作区——这是比原 bug 更危险的行为。",
+   "proposed_action": "补一条 F2P/P2P：`dvc_repo.checkout(stage.path)`（不带 force）时文件应保留或走确认路径。",
+   "next_experiment": "写\"无条件 remove（忽略 force）\"的实现跑当前 F2P+P2P，预期满分。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 tests/func/test_checkout.py；gold 不触碰测试样路径。按第四组 B 保持为空。",
+  "evidence_refs": [
+   "mat/iterative__dvc-2231/grading.json#test_patch",
+   "mat/iterative__dvc-2231/validation.json#golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/func/test_checkout.py::TestCheckoutWithDeps::test",
+   "reason": "唯一覆盖 `--with-deps` 的用例；修好 networkx 后应纳入 P2P。"
+  },
+  {
+   "id": "tests/func/test_checkout.py::TestCheckoutNotCachedFile::test",
+   "reason": "已在 P2P；`cache: false` 的 out 同样没有 checksum 走到 gold 改的分支，是最可能被误删的场景。"
+  },
+  {
+   "id": "tests/func/test_move.py / tests/func/test_remove.py",
+   "reason": "`safe_remove` 的其它消费者，gold 改变了它的调用时机。"
+  },
+  {
+   "id": "（新增）tests/func/test_checkout.py::test_checkout_no_checksum_without_force",
+   "reason": "针对 check 25 的缺口：不带 force 时不应直接删文件。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "题面有完整复现、gold 复用已有 `safe_remove` 且 F2P 是行为级断言，质量不错；但 networkx 漂移让 `--with-deps` 的唯一回归失效，且 F2P 不覆盖 `force=False`，忽略 force 的危险实现能满分。"
+ },
+ "costs": {
+  "minutes": 22
+ },
+ "by": "L1_dvc_1 (Claude Opus 5, 静态审查)"
+}

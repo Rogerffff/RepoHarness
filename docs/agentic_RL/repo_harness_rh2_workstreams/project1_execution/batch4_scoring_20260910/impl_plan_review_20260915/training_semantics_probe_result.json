@@ -1,0 +1,80 @@
+{
+  "scope": "计划覆盖反例；当前 binary 0 可成立，参考集合缺席计数不等于逐项执行失败。",
+  "command": [
+    "<rh2-venv-python>",
+    "-m",
+    "pytest",
+    "-q",
+    "-rA",
+    "tests/test_thing.py"
+  ],
+  "environment_override": {
+    "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1"
+  },
+  "sources": {
+    "src/__init__.py": "",
+    "src/thing.py.baseline": "def answer():\n    return 42\n",
+    "src/thing.py.candidate": "def answer(:\n    return 42\n",
+    "tests/test_thing.py": "from pathlib import Path\nfrom src.thing import answer\n\ndef test_answer():\n    Path('test_body_executed').write_text('yes')\n    assert answer() == 42\n"
+  },
+  "baseline": {
+    "exit_code": 0,
+    "test_body_executed": true,
+    "stdout": ".                                                                        [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_thing.py::test_answer\n1 passed in 0.00s\n",
+    "stderr": ""
+  },
+  "candidate": {
+    "exit_code": 2,
+    "test_body_executed": false,
+    "stdout": "\n==================================== ERRORS ====================================\n_____________________ ERROR collecting tests/test_thing.py _____________________\n<repo>/rh2/.venv/lib/python3.12/site-packages/_pytest/python.py:508: in importtestmodule\n    mod = import_path(\n<repo>/rh2/.venv/lib/python3.12/site-packages/_pytest/pathlib.py:596: in import_path\n    importlib.import_module(module_name)\n<user-home>/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/importlib/__init__.py:90: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n<frozen importlib._bootstrap>:1387: in _gcd_import\n    ???\n<frozen importlib._bootstrap>:1360: in _find_and_load\n    ???\n<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked\n    ???\n<frozen importlib._bootstrap>:935: in _load_unlocked\n    ???\n<repo>/rh2/.venv/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:188: in exec_module\n    exec(co, module.__dict__)\ntests/test_thing.py:2: in <module>\n    from src.thing import answer\nE     File \"/private/tmp/rh2-batch4-training-semantics-ttbkzypi/src/thing.py\", line 1\nE       def answer(:\nE                  ^\nE   SyntaxError: invalid syntax\n=========================== short test summary info ============================\nERROR tests/test_thing.py\n!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n1 error in 0.05s\n",
+    "stderr": ""
+  },
+  "wrapped_parser_input": ">>>>> Start Test Output\n\n==================================== ERRORS ====================================\n_____________________ ERROR collecting tests/test_thing.py _____________________\n<repo>/rh2/.venv/lib/python3.12/site-packages/_pytest/python.py:508: in importtestmodule\n    mod = import_path(\n<repo>/rh2/.venv/lib/python3.12/site-packages/_pytest/pathlib.py:596: in import_path\n    importlib.import_module(module_name)\n<user-home>/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/importlib/__init__.py:90: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n<frozen importlib._bootstrap>:1387: in _gcd_import\n    ???\n<frozen importlib._bootstrap>:1360: in _find_and_load\n    ???\n<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked\n    ???\n<frozen importlib._bootstrap>:935: in _load_unlocked\n    ???\n<repo>/rh2/.venv/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:188: in exec_module\n    exec(co, module.__dict__)\ntests/test_thing.py:2: in <module>\n    from src.thing import answer\nE     File \"/private/tmp/rh2-batch4-training-semantics-ttbkzypi/src/thing.py\", line 1\nE       def answer(:\nE                  ^\nE   SyntaxError: invalid syntax\n=========================== short test summary info ============================\nERROR tests/test_thing.py\n!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n1 error in 0.05s\n\n>>>>> End Test Output\n",
+  "log_path_redactions": [
+    "repository absolute prefix -> <repo>",
+    "user home prefix -> <user-home>"
+  ],
+  "raw_log_refs": {
+    "baseline.stdout": "runs/impl_plan_review_20260915/raw_logs/20260915T142500891033Z/baseline.stdout",
+    "baseline.stderr": "runs/impl_plan_review_20260915/raw_logs/20260915T142500891033Z/baseline.stderr",
+    "candidate.stdout": "runs/impl_plan_review_20260915/raw_logs/20260915T142500891033Z/candidate.stdout",
+    "candidate.stderr": "runs/impl_plan_review_20260915/raw_logs/20260915T142500891033Z/candidate.stderr",
+    "wrapped_parser_input.log": "runs/impl_plan_review_20260915/raw_logs/20260915T142500891033Z/wrapped_parser_input.log"
+  },
+  "parser_inputs": {
+    "repo_key_lower": "pandas-dev/pandas",
+    "fail_to_pass": [
+      "tests/test_thing.py::test_answer"
+    ],
+    "pass_to_pass": []
+  },
+  "parsed_status_map": {
+    "tests/test_thing.py": "ERROR"
+  },
+  "expected_case_has_observed_status": false,
+  "num_parsed_tests": 1,
+  "reference_missing": [
+    "tests/test_thing.py::test_answer"
+  ],
+  "planned_zero_parse_branch_would_run": false,
+  "current_grading_fields": {
+    "outcome": "unresolved",
+    "failure_category": "tests_failed",
+    "reward": 0.0,
+    "f2p_pass_count": 0,
+    "f2p_total_count": 1,
+    "p2p_fail_count": 0,
+    "p2p_total_count": 0
+  },
+  "current_source_sha256": {
+    "rh2/src/repoharness2/envpack/swegym_parsers.py": "995bb6aae58a94f9553946c2f9aea59a158ad4fdf4d7fc0137802c11362b2276",
+    "rh2/src/repoharness2/envpack/scoring.py": "ddd2bbfa1a75c0b27edbf07e42a68dd65612ff6bba0bce8f86ea954e5346e33f",
+    "rh2/src/repoharness2/grading/manager.py": "bf02d0a2a6a450eed9dc4e49ae7961280fcf65726c3025ee46fdd5049599aa02"
+  },
+  "current_functions": {
+    "parse_log_pytest": "def parse_log_pytest(log: str) -> dict[str, str]:\n    \"\"\"fork `parse_log_pytest` 逐字移植：`PASSED path::case` / `FAILED path::case - msg` 摘要行。\"\"\"\n    test_status_map: dict[str, str] = {}\n    for line in log.split(\"\\n\"):\n        if any([line.startswith(x) for x in TEST_STATUS_VALUES]):\n            # Additional parsing for FAILED status\n            if line.startswith(\"FAILED\"):\n                line = line.replace(\" - \", \" \")\n            test_case = line.split()\n            if len(test_case) <= 1:\n                continue\n            test_status_map[test_case[1]] = test_case[0]\n    return test_status_map\n",
+    "parse_eval_log_v2": "def parse_eval_log_v2(grading, log_text: str) -> EvalVerdict:\n    \"\"\"v2 评分面入口（S1-b，评分接线 2026-09-15）：按 `spec_vendor_id` 分派 vendored parser。\n\n    与 v1 `parse_official_eval` 的差别：\n\n    1. 不构造 swebench `TestSpec`（4.1.0 的 spec 注册表不含 SWE-Gym 仓库，`make_test_spec` 会 KeyError）；\n       parser 来自 `envpack.swegym_parsers`（fork 242429c1 的移植，按 `grading.repo_key_lower` 查表）。\n    2. **只以 `>>>>> Start Test Output` 与 `>>>>> End Test Output` 之间的段作为状态来源**。4.1.0 的\n       `get_logs_eval` 在段内解析为空时会回退解析整份日志（B 线复核 B2 的合成反例：段内只有收集失败文字、\n       段外两行 PASSED → FULL）；这里不回退，段外能认出的行数只记进 `num_parsed_outside_segment`。\n    3. 坏码集合（APPLY_PATCH_FAIL / RESET_FAILED / TESTS_ERROR / TESTS_TIMEOUT）与缺标记 → `apply_ok=False`，\n       与 4.1.0 相同；report / resolution 复用 4.1.0 的 `get_eval_tests_report` / `get_resolution_status`\n       （与 fork 同语义：缺席计失败、PASSED/XFAIL 计成功、SKIPPED 不进桶）。\n    4. 额外填 `reference_missing` / `reference_skipped` / `parser_source` 诊断字段（不改 reward 口径）。\n\n    `grading` 是 `PrivateGradingBundleV2`（鸭子：需要 spec_vendor_id / repo_key_lower / instance_id /\n    fail_to_pass / pass_to_pass）。非 SWE-Gym vendor 直接拒绝——不静默回退到 v1。\n    \"\"\"\n\n    from swebench.harness.constants import (\n        APPLY_PATCH_FAIL,\n        END_TEST_OUTPUT,\n        FAIL_TO_PASS,\n        PASS_TO_PASS,\n        RESET_FAILED,\n        START_TEST_OUTPUT,\n        TESTS_ERROR,\n        TESTS_TIMEOUT,\n        ResolvedStatus,\n    )\n    from swebench.harness.grading import (\n        compute_fail_to_pass,\n        compute_pass_to_pass,\n        get_eval_tests_report,\n        get_resolution_status,\n    )\n\n    from repoharness2.envpack.spec_vendor import SPEC_VENDOR_ID_SWEGYM_242429C1\n    from repoharness2.envpack.swegym_parsers import SWEGYM_PARSERS_VERSION_TAG, lookup_parser\n\n    if grading.spec_vendor_id != SPEC_VENDOR_ID_SWEGYM_242429C1:\n        raise ValueError(f\"{grading.instance_id}: parse_eval_log_v2 只服务 {SPEC_VENDOR_ID_SWEGYM_242429C1!r}，得到 {grading.spec_vendor_id!r}\")\n    parser = lookup_parser(grading.repo_key_lower)\n\n    bad_codes = [c for c in (APPLY_PATCH_FAIL, RESET_FAILED, TESTS_ERROR, TESTS_TIMEOUT) if c in log_text]\n    has_markers = START_TEST_OUTPUT in log_text and END_TEST_OUTPUT in log_text\n    if bad_codes or not has_markers:\n        status_map: dict[str, str] = {}\n        outside_map: dict[str, str] = {}\n        apply_ok = False\n    else:\n        head, rest = log_text.split(START_TEST_OUTPUT, 1)\n        if END_TEST_OUTPUT in rest:\n            segment, tail = rest.split(END_TEST_OUTPUT, 1)\n        else:\n            # End 标记只出现在 Start 之前：段不成立，按缺标记处理（与 4.1.0 的 split 会得到空段一致地不计分）\n            segment, tail = \"\", rest\n        status_map = parser(segment)\n        outside_map = parser(head + tail)\n        apply_ok = True\n\n    f2p = list(grading.fail_to_pass)\n    p2p = list(grading.pass_to_pass)\n    report = get_eval_tests_report(status_map, {FAIL_TO_PASS: f2p, PASS_TO_PASS: p2p})\n    resolution = get_resolution_status(report)\n    reference = f2p + p2p\n    return EvalVerdict(\n        instance_id=str(grading.instance_id),\n        apply_ok=apply_ok,\n        resolution=resolution,\n        resolved=resolution == ResolvedStatus.FULL.value,\n        f2p_rate=compute_fail_to_pass(report),\n        p2p_rate=compute_pass_to_pass(report),\n        f2p_success=report[FAIL_TO_PASS][\"success\"],\n        f2p_failure=report[FAIL_TO_PASS][\"failure\"],\n        p2p_success=report[PASS_TO_PASS][\"success\"],\n        p2p_failure=report[PASS_TO_PASS][\"failure\"],\n        num_parsed_tests=len(status_map),\n        num_parsed_outside_segment=len(outside_map),\n        reference_missing=[c for c in reference if c not in status_map],\n        reference_skipped=[c for c in reference if status_map.get(c) == \"SKIPPED\"],\n        parser_source=SWEGYM_PARSERS_VERSION_TAG,\n    )\n",
+    "SWEGradingManager._parse_eval_log": "    def _parse_eval_log(\n        self, spec: GradingEnvSpec, log_text: str, record: _ContainerRecord | None = None\n    ) -> scoring.EvalVerdict:\n        \"\"\"官方 parser 解析 + manager 级加严（test_log_parse_failed 的两个判据）。\"\"\"\n\n        try:\n            verdict = spec.parse_log(log_text)\n        except Exception as exc:  # noqa: BLE001 parser 崩溃是评分链路问题，不是模型负样本\n            raise GradingInfraError(\n                f\"official_parser_exception:{type(exc).__name__}:{exc}\",\n                category=\"test_log_parse_failed\",\n            ) from exc\n        if not verdict.apply_ok:\n            # 我们的 git apply 已经成功，日志坏码（缺标记/RESET_FAILED/TESTS_ERROR/\n            # TESTS_TIMEOUT）只能来自 eval 段自身 -> 评分链路问题（infra 族）。\n            raise GradingInfraError(\n                \"official_bad_codes_after_successful_replay\",\n                category=\"test_log_parse_failed\",\n            )\n        if record is not None:\n            record.parsed_verdict = verdict  # I5：零解析判 infra 时诊断字段（段外行数、参考缺席）仍进 sidecar\n        if verdict.num_parsed_tests == 0:\n            # 标记齐全但一条测试都解析不出：官方 silent-success 语义此时会产出\n            # \"全部按通过计\"的假结论（S1-4 实测确认），必须拦下判 infra 族。\n            raise GradingInfraError(\n                \"eval_log_zero_parsed_tests\",\n                category=\"test_log_parse_failed\",\n            )\n        return verdict\n",
+    "grading_outcome_fields": "def grading_outcome_fields(verdict: EvalVerdict) -> dict:\n    \"\"\"把 EvalVerdict 翻成 contracts.GradingReport 的结论字段组（A7 接口）。\n\n    返回键：outcome / failure_category / reward / f2p_pass_count / f2p_total_count /\n    p2p_fail_count / p2p_total_count，取值组合保证能通过 GradingReport 的\n    fail-closed 校验器：\n\n      - apply_ok=False  -> unresolved + patch_apply_failed + reward=0.0，四计数 None\n                           （官方语义：坏码即测试结果不可信，计数无意义）；\n      - resolved        -> resolved + 无归因 + reward=1.0 + 四计数齐全；\n      - 其余            -> unresolved + tests_failed + reward=0.0 + 四计数齐全。\n\n    计数口径 = 官方 report 的 success/failure 桶（清单内测试的划分；skipped 等\n    异态不入桶，与官方 resolution 判定保持同一口径）。**infra_failure 永远不由\n    本函数产出**——parser 只看得见日志，容器级故障归 S1-4 manager 判。\n    \"\"\"\n\n    if not verdict.apply_ok:\n        return {\n            \"outcome\": \"unresolved\",\n            \"failure_category\": \"patch_apply_failed\",\n            \"reward\": 0.0,\n            \"f2p_pass_count\": None,\n            \"f2p_total_count\": None,\n            \"p2p_fail_count\": None,\n            \"p2p_total_count\": None,\n        }\n    counts = {\n        \"f2p_pass_count\": len(verdict.f2p_success),\n        \"f2p_total_count\": len(verdict.f2p_success) + len(verdict.f2p_failure),\n        \"p2p_fail_count\": len(verdict.p2p_failure),\n        \"p2p_total_count\": len(verdict.p2p_success) + len(verdict.p2p_failure),\n    }\n    if verdict.resolved:\n        return {\"outcome\": \"resolved\", \"failure_category\": None, \"reward\": 1.0, **counts}\n    return {\"outcome\": \"unresolved\", \"failure_category\": \"tests_failed\", \"reward\": 0.0, **counts}\n"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "instance_id": "Project-MONAI__MONAI-2446",
+  "original_install": "sed -i '/^git+https:\\/\\/github.com\\/Project-MONAI\\//d' requirements-dev.txt; python -m pip install types-pkg-resources==0.1.3 pytest; pip install -r requirements-dev.txt;python setup.py develop;",
+  "revised_install": "rh2_compat_install() {\n python -m pip install --no-index --find-links=/opt/rh2/compat-wheels --no-deps nibabel==4.0.2 || return $?\n python -I -c 'import importlib.metadata as m,json; print(\"RH2_COMPAT_VERSIONS=\"+json.dumps({x:m.version(x) for x in ['\"'\"'nibabel'\"'\"']}))'\n sed -i '/^git+https:\\/\\/github.com\\/Project-MONAI\\//d' requirements-dev.txt; python -m pip install types-pkg-resources==0.1.3 pytest; pip install -r requirements-dev.txt;python setup.py develop;\n local original_rc=$?\n python -I -c 'import importlib.metadata as m,json; print(\"RH2_COMPAT_VERSIONS=\"+json.dumps({x:m.version(x) for x in ['\"'\"'nibabel'\"'\"']}))'\n return \"$original_rc\"\n}\nrh2_compat_install",
+  "pins": [
+    "nibabel==4.0.2"
+  ],
+  "scope": "dependency variant; source install still audited independently",
+  "decision": "E11"
+}

@@ -1,0 +1,202 @@
+{
+ "task_id": "pydantic__pydantic-6104",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_pydantic (Claude Opus 5, 2026-09-16 夜)",
+ "materials_refs": [
+  "s2/ingest/*_bundles_v0.jsonl (pydantic__pydantic-6104)",
+  "repos/pydantic@493be96b(见 grading.base_commit)",
+  "runs/env_probe_stage1_20260910/.../pydantic__pydantic-6104/"
+ ],
+ "public_view": {
+  "目标行为": "RootModel 子类的 model_json_schema() 应带上 title（类名）与 description（类 docstring），现在两者都是 None。",
+  "约束": "普通 BaseModel 的现有行为不能变。",
+  "公开材料无法确定的点": [
+   "RootModel[int] 这种**参数化**（非子类化）模型的 title 应该是什么（F2P 要求 'RootModel[int]'、description 为 None），题面只举了子类化的例子",
+   "当 root 指向另一个模型、schema 变成 $ref 时，title/description 挂在哪一层（F2P 要求把 $ref 包成 allOf 再挂同级 key），题面完全没提"
+  ],
+  "base 定位": "pydantic/_internal/_generate_schema.py:156-165 `modify_model_json_schema` 只在 `original_schema` 不含 title 时写 title；但 RootModel 的 `_model_schema` 走 `metadata={**metadata, **root_field['metadata']}`（:276），root 字段的 metadata 覆盖了模型级的 js 函数，于是 modify_model_json_schema 根本没被挂上。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "两个 test_patch 文件与 gold 文件在 base 均存在"
+   ],
+   "note": "对应同一问题。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "_generate_schema.py:276 metadata 合并",
+    "stage1 empty：2 条 F2P 全 FAILED"
+   ],
+   "note": "base 确有缺陷。",
+   "by": "static+stage1log"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 1359 字符，含完整可运行例子与实际输出"
+   ],
+   "note": "无外链、无截断；hints 只有“确认问题”一句。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 碰 tests/test_json_schema.py 与 tests/test_root_model.py；F2P+P2P 342 条全在这两个文件；gold 只碰生产代码"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "static"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "与 9214 同为 modify_model_json_schema 的 description 相关改动（9214 在 2024-04 给同一函数加 RootModel 的 Field description 分支）"
+   ],
+   "note": "P2 同族：6104 与 9214 改的是**同一个函数的同一段逻辑**，9214 的 gold 正是在 6104 引入的 docstring 分支后面加 elif。两题不能分置训练/评测两侧——见过 6104 的模型对 9214 的上下文有实质优势。",
+   "by": "static"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "install rc=2。",
+   "by": "stage1log"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "测试第三方 import：pytest / pydantic_core"
+   ],
+   "note": "无外部资产。",
+   "by": "static"
+  },
+  "10": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "无本题轨迹。",
+   "by": "-"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "只有 install 需要网络。",
+   "by": "stage1log"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "test_patch 在 test_root_model 里新增 B/C 两个 RootModel[A] 断言，要求 `{'$defs':..., 'allOf':[{'$ref':...}], 'title':'B'}` 的精确形状",
+    "test_root_model_json_schema_meta 要求 `RootModel[int]` 的 title 恰为 'RootModel[int]'、description 为 None"
+   ],
+   "note": "P2：题面只讲“子类化 RootModel 缺 title/description”，但 F2P 还要求(1) 参数化 RootModel[int] 的 title 字符串形式、(2) `$ref` 必须被重写成 `allOf` 包装以便挂同级 key。这两条都推不出来，尤其 (2) 是 JSON Schema 规范细节（definitions schema 不应有 sibling key）。",
+   "by": "static"
+  },
+  "24": {
+   "status": "issue",
+   "evidence_refs": [
+    "同 23 的 (2)"
+   ],
+   "note": "P3：`allOf` 包装是一种实现选择；另一种合法做法是把 title/description 直接写进 $defs 条目（B 的 schema 就是 `{'$defs':{'A':...}, '$ref':'#/$defs/A'}` 不带 sibling），会被 F2P 拒绝。该约束有 JSON Schema 规范依据（gold 注释里写了），但题面未交代。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "gold 第二处改动 `metadata={**metadata, **root_field['metadata']}` → `metadata=metadata`（丢弃 root 字段的 metadata）",
+    "F2P/P2P 里没有任何条目检查“root 字段上的 __get_pydantic_json_schema__ / Field(json_schema_extra) 仍然生效”"
+   ],
+   "note": "P2：gold 为了让模型级 js 函数不被覆盖，直接丢掉了 root 字段的 metadata；如果用户在 root 字段上挂了自定义 json schema 回调，它会被静默丢弃。判分面完全不覆盖这一侧，一个同样丢弃 metadata 的实现（或一个只保留模型级、合并而非丢弃的更好实现）都被同等接受。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "同 25"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "static"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "golden_patch 第二 hunk"
+   ],
+   "note": "P2：gold 的 `metadata=metadata` 是**有损**改法（丢弃 root_field 的 metadata），题面没有要求这个副作用。属于 gold 自身不完整，按检查 27 的口径记录，不据此放低测试标准。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak 扫描 0 命中；题面无 URL"
+   ],
+   "note": "无泄漏。",
+   "by": "static"
+  },
+  "31": {
+   "status": "issue",
+   "evidence_refs": [
+    "R4"
+   ],
+   "note": "静态残余面。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "spec_underspecified",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 23"
+   ],
+   "proposed_action": "把“参数化 RootModel[int] 的 title 形式”与“$ref 需包成 allOf 才能挂同级 key”写进 public_view",
+   "next_experiment": "无"
+  },
+  {
+   "category": "gold_lossy_change",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 25",
+    "check 27"
+   ],
+   "proposed_action": "补 root 字段自定义 json schema metadata 仍生效的断言；若 gold 确实丢弃，需在记录里标明这是已知的上游取舍",
+   "next_experiment": "在镜像里对 RootModel 的 root 字段加 Field(json_schema_extra={'x':1})，比较 base/gold 的 schema 输出"
+  },
+  {
+   "category": "same_function_family",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 5"
+   ],
+   "proposed_action": "6104 与 9214 必须同侧划分（同一函数同一段逻辑的前后两次改动）",
+   "next_experiment": "无"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "两个 test_patch 路径都是纯测试文件，判分面与恢复面一致，gold 只碰生产代码。",
+  "evidence_refs": [
+   "grading.json.test_patch",
+   "validation.json.golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  "RootModel 的 root 字段带 `Field(json_schema_extra=...)` 或 `__get_pydantic_json_schema__` 时，该 metadata 仍进入最终 schema — 选择依据：gold 的 `metadata=metadata` 把 root_field metadata 丢了，判分面零覆盖",
+  "普通 BaseModel 的 title/description 行为不变（tests/test_json_schema.py::test_model_subclass_metadata 已在 P2P，保留）",
+  "嵌套三层 RootModel[RootModel[int]] 的 $defs/allOf 形状 — 选择依据：gold 的 `$ref`→`allOf` 重写只在两层上验证过",
+  "tests/test_fastapi_json_schema.py — 选择依据：FastAPI 场景大量使用 $ref/allOf，最可能被这次重写影响，不在判分面"
+ ],
+ "disposition_hint": {
+  "state": "needs_review",
+  "reason": "题面与主目标对应、gold 可解，但 F2P 额外要求两条题面推不出的形状（参数化 title 字符串、$ref→allOf 包装），且 gold 含一处有损改动（丢弃 root 字段 metadata）判分面零覆盖。补 public_view 与回归后可用。"
+ },
+ "costs": {
+  "minutes": 17
+ }
+}

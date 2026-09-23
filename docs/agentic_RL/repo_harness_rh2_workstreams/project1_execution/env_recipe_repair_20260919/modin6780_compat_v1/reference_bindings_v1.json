@@ -1,0 +1,30 @@
+{
+  "version": "reference-bindings-v1",
+  "decision": "E21",
+  "tasks": {
+    "modin-project__modin-6780": {
+      "bindings": {
+        "modin/pandas/test/test_series.py::test_str_extract[([ab])(\\d)-False-separator": [
+          "modin/pandas/test/test_series.py::test_str_extract[([ab])(\\\\d)-False-separator data]"
+        ],
+        "modin/pandas/test/test_series.py::test_str_extract[([ab])(\\d)-None-separator": [
+          "modin/pandas/test/test_series.py::test_str_extract[([ab])(\\\\d)-None-separator data]"
+        ],
+        "modin/pandas/test/test_series.py::test_str_extract[([ab])(\\d)-True-separator": [
+          "modin/pandas/test/test_series.py::test_str_extract[([ab])(\\\\d)-True-separator data]"
+        ]
+      },
+      "meaning": "3 original escaped/truncated P2P identifiers bind one-to-one to observed complete nodes; unchanged buckets and tests",
+      "source_logs": {
+        "gold": {
+          "path": "runs/env_recipe_repair_20260919/resources_v1/tasks/modin-project__modin-6780/gold/eval_logs/evallog_replay-er19-rv1-modin-pr_89fce41c.eval.log",
+          "sha256": "8cf211c5c283567be5530ac96eaaed6be5733377f59f654131b8df4600f3335f"
+        },
+        "noop": {
+          "path": "runs/env_recipe_repair_20260919/resources_v1/tasks/modin-project__modin-6780/noop/eval_logs/evallog_replay-er19-rv1-modin-pr_5fc45525.eval.log",
+          "sha256": "d8878e88c96c209ce651839fffabb5b253595e445f0d2d6bbd3bd2e9dbde2940"
+        }
+      }
+    }
+  }
+}

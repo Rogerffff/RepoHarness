@@ -1,0 +1,260 @@
+{
+ "task_id": "iterative__dvc-1877",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "docs/.../s2/ingest/public_bundles_v0.jsonl#iterative__dvc-1877",
+  "grading": "docs/.../s2/ingest/grading_bundles_v2_v0.jsonl#iterative__dvc-1877",
+  "validation": "docs/.../s2/ingest/validation_bundles_v0.jsonl#iterative__dvc-1877",
+  "raw": "docs/.../s2/raw/swe_gym_lite_full_f70b1a29.jsonl#iterative__dvc-1877",
+  "base_commit": "165f6472ca06b1811c08a7aaa3ce08874653294a",
+  "version": "0.35",
+  "python_version": "3.8",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-1877:latest",
+  "eval_cmd": "pytest -rA",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1877/{gold,empty}/offline/a1/",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc"
+ },
+ "public_view": {
+  "目标行为": "stage 里只要有 persist 输出（`--outs-persist` / `--outs-persist-no-cache`），`dvc run` 就不走 build cache（即使依赖没变也要重跑命令），并打一条警告。",
+  "约束": "题面明确点名 `Stage.is_cached`；base `dvc/stage.py::Stage.create`（第 495-508 行）已有完全同构的先例——`--remove-outs` 分支就是 `logger.warning(\"Build cache is ignored when using --remove-outs.\") ; ignore_build_cache = True`，照此改写是自然做法。",
+  "公开材料无法确定的点": [
+   "**警告的确切措辞**：题面只说 \"Don't forget to put a warning on about it\"，没给字符串；",
+   "**首次创建 stage 时要不要警告**：题面没区分，F2P 却要求第一次 `dvc run` 不出现该警告、第二次才出现；",
+   "题面还要求 \"reflect that in cmd help and our docs\"，但看不出这部分是否计入验收。"
+  ],
+  "相关模块": "dvc/stage.py（Stage.create / Stage.is_cached）、dvc/command/run.py（--outs-persist 的 help 文本）。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-1877/grading.json#test_patch",
+    "mat/iterative__dvc-1877/validation.json#golden_patch",
+    "git show 165f6472ca:dvc/stage.py:495-508"
+   ],
+   "note": "test_patch 只动 tests/func/test_run.py（base 存在）；gold 只动 dvc/stage.py。同一问题。无二进制/LFS/子模块。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show 165f6472ca:dvc/stage.py:504-508（只有 --remove-outs 分支会置 ignore_build_cache）",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1877/empty/offline/a1/status_map.json"
+   ],
+   "note": "base 的 `Stage.create` 里没有任何针对 persist 输出的处理；empty 侧 F2P FAILED。",
+   "by": "static"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-1877/public.json#problem_statement（261 字符）",
+    "mat/iterative__dvc-1877/raw.json#hints_text（空）"
+   ],
+   "note": "题面是维护者写给自己的 TODO（261 字符，本包最短），无复现、无期望输出、无用户视角。`hints_text` 为空，所以警告措辞与\"首次不警告\"这两项要求在任何材料里都没有。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-1877/grading.json#test_patch"
+   ],
+   "note": "test_patch 只触碰 tests/func/test_run.py；gold 不触碰测试样路径。",
+   "by": "static"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-1877/grading.json#test_patch"
+   ],
+   "note": "恢复清单 = {tests/func/test_run.py}，官方测试文件。",
+   "by": "static"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dvc_1/prescan.json"
+   ],
+   "note": "**与 dvc-2254（0.51）同文件同测试文件**：两题的 gold 都改 `dvc/stage.py`、test_patch 都改 `tests/func/test_run.py`，且 2254 的 base（0.51）已经包含本题（0.35）的修复与 `TestPersistentOutput`。不是同一 PR，但属同族历史序列，训练/评测划分必须同侧。本包另有 dvc-1681（0.30）也改 `dvc/stage.py`。",
+   "by": "static"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-1877/grading.json#test_patch（`warning = \"Build cache is ignored when persisting outputs.\"`）"
+   ],
+   "note": "**F2P 逐字匹配一条题面没给出的警告文本**。可辩护之处：base 里 `--remove-outs` 分支的措辞是 \"Build cache is ignored when using --remove-outs.\"，句式可类比；但后半句 \"when persisting outputs.\" 仍属猜测。另一条隐藏要求是\"第一次 run 不许出现该警告\"（gold 靠 `os.path.exists(path)` 实现），题面同样没写。",
+   "by": "static"
+  },
+  "24": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-1877/grading.json#test_patch",
+    "mat/iterative__dvc-1877/validation.json#golden_patch"
+   ],
+   "note": "两处强制：(a) 精确警告字符串；(b) `assert warning not in caplog.text` 要求首次创建时静默——不加 `os.path.exists(path)` 守卫的实现（题面字面上完全允许）会被判 0。不过第三段 `assert \"hello\\nhello\\n\" == fobj.read()` 是货真价实的行为断言（命令必须真的重跑了），这部分设计得好。",
+   "by": "static"
+  },
+  "25": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-1877/grading.json#test_patch"
+   ],
+   "note": "光打警告不改行为的假修复过不了：最后一段 `assert \"hello\\nhello\\n\" == fobj.read()` 要求第二次 run 真的执行了 `echo hello>>greetings`。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1877/gold/offline/a1/test_output.txt（3 failed, 52 passed in 388.23s）"
+   ],
+   "note": "P2P 51 条 = tests/func/test_run.py 在 base 通过的全部用例，覆盖面很好（run 的 wdir/deps/outs/persist/deterministic/callback 全家）。两个缺陷：(a) **`TestRunUnprotectOutsCopy|Symlink|Hardlink::test` 三条双侧失败被排除**，原因是容器以 root 运行、`os.access(path, os.W_OK)` 对 root 恒为 True（见 issue root_user）；(b) **整文件耗时 388 秒**，是本包最贵的一题。",
+   "by": "static"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-1877/validation.json#golden_patch",
+    "mat/iterative__dvc-1877/public.json#problem_statement（\"Also need to not forget to reflect that in cmd help and our docs.\"）"
+   ],
+   "note": "gold 4 行、位置正确（放在 `--remove-outs` 分支之后、`validate_state` 之前），不含无关改动。**但题面明确要求的\"更新 cmd help 与文档\"两项 gold 都没做**，也没有对应测试——题面范围大于 gold。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-1877/public.json#problem_statement",
+    "mat/iterative__dvc-1877/raw.json#hints_text"
+   ],
+   "note": "题面点名 `Stage.is_cached` 属于定位提示而非答案（实际修改点是 `Stage.create`，不是 `is_cached`）；无修复代码、无 PR/commit 链接；hints 为空。",
+   "by": "static"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1877/gold/offline/a1/test_output.txt"
+   ],
+   "note": "安装正常，无 ImportError/依赖漂移症状。",
+   "by": "static"
+  },
+  "8": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1877/gold/offline/a1/test_output.txt（`AssertionError: True is not false` at `self.assertFalse(os.access(self.FOO, os.W_OK))`）",
+    "docs/.../env_probe_20260909/ledger/cc_candidate_grading.jsonl（`\"exec_user_test\": \"root\"`）"
+   ],
+   "note": "**评分以 root 身份执行**，所有依赖\"只读权限位\"的用例（本题 3 条 unprotect）恒失败。",
+   "by": "static"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1877/gold/offline/a1/test_output.txt"
+   ],
+   "note": "tests/func/test_run.py 全本地操作，无网络。",
+   "by": "static"
+  },
+  "13": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1877/gold/offline/a1/test_output.txt（`388.23s (0:06:28)`）"
+   ],
+   "note": "单题测试阶段 6 分半，是本包 17 题里最慢的（第二名 dvc-2141 的 45.7 秒）。dvc-2254 跑同一文件只用 14.88 秒，说明 388 秒不是文件固有成本，需要单独查（疑似某条用例在本版本上有长超时/重试）。",
+   "by": "static"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1877/gold/offline/a1/status_map.json（键 `dvc.command.run:run.py:56`、`dvc:main.py:39`）"
+   ],
+   "note": "caplog 行污染 status_map（见跨题发现 B），未与 F2P/P2P 冲突。",
+   "by": "static"
+  },
+  "7": {
+   "status": "not_applicable",
+   "evidence_refs": [],
+   "note": "test_patch 不带外部资产。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "精确字符串锁实现(23/24)",
+   "severity": "P2",
+   "evidence_refs": [
+    "mat/iterative__dvc-1877/grading.json#test_patch",
+    "git show 165f6472ca:dvc/stage.py:504-508"
+   ],
+   "note": "F2P 逐字匹配 \"Build cache is ignored when persisting outputs.\"，并要求首次创建 stage 时不出现该警告；两条题面都没写。base 里 `--remove-outs` 的同构措辞让第一条部分可猜，第二条纯属隐含。",
+   "proposed_action": "题面补一句\"首次创建 stage 时不必警告，已存在 stage 文件而被迫忽略 build cache 时才警告\"；断言从逐字匹配放宽为 `\"Build cache is ignored\" in caplog.text`。",
+   "next_experiment": "写\"无 `os.path.exists(path)` 守卫 + 自拟措辞\"的合法实现跑 F2P，预期前两段断言失败，形成反例。"
+  },
+  {
+   "category": "容器以 root 运行(8/26)",
+   "severity": "P1",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1877/gold/offline/a1/test_output.txt（TestRunUnprotectOuts{Copy,Symlink,Hardlink}::test）",
+    "docs/.../env_probe_20260909/ledger/cc_candidate_grading.jsonl（exec_user_test=root）"
+   ],
+   "note": "`os.access(path, os.W_OK)` 对 root 恒为 True，dvc 的 \"protect/unprotect\"（只读权限位）语义在 root 下整体失效。本题 3 条、dvc-2254 3 条、dvc-3620 1 条（`tests/func/test_unprotect.py::TestUnprotect::test`）都是这个原因；dvc-3620 的题目本身就是 `is_protected`，最相关的回归恰好被这个环境问题排除。",
+   "proposed_action": "评分容器改用非 root 用户执行测试（或至少为 protect 相关用例创建普通用户），然后重建这些题的 P2P。",
+   "next_experiment": "在镜像里 `useradd -m t && chown -R t /testbed && su t -c \"pytest -rA tests/func/test_unprotect.py tests/func/test_run.py -k Unprotect\"`，看 4 条能否转绿。"
+  },
+  {
+   "category": "成本(13)",
+   "severity": "P2",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1877/gold/offline/a1/test_output.txt（388.23s）",
+    "runs/.../iterative__dvc-2254/gold/offline/a1/test_output.txt（同一文件 14.88s）"
+   ],
+   "note": "同一个 tests/func/test_run.py，0.35 版跑 388 秒、0.51 版只跑 14.9 秒，差 26 倍。原因未查（not_checked），但这是训练里单题成本的实质差异。",
+   "proposed_action": "先用 `--durations=20` 定位是哪几条用例慢，再决定是否排除或调 fixture。",
+   "next_experiment": "`pytest -rA --durations=20 tests/func/test_run.py` 在 0.35 镜像上跑一次。"
+  },
+  {
+   "category": "题面范围大于 gold(27)",
+   "severity": "P3",
+   "evidence_refs": [
+    "mat/iterative__dvc-1877/public.json#problem_statement",
+    "mat/iterative__dvc-1877/validation.json#golden_patch"
+   ],
+   "note": "题面要求同时更新 cmd help 与文档，gold 两项都没做，也无对应测试。求解者照做不会扣分，但会浪费步数。",
+   "proposed_action": "题面删掉 \"Also need to not forget to reflect that in cmd help and our docs.\" 这句，或注明不计入验收。",
+   "next_experiment": "无。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 tests/func/test_run.py；gold 不触碰测试样路径。按第四组 B 保持为空。",
+  "evidence_refs": [
+   "mat/iterative__dvc-1877/grading.json#test_patch",
+   "mat/iterative__dvc-1877/validation.json#golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/func/test_run.py::TestNewRunShouldRemoveOutsOnNoPersist::test",
+   "reason": "已在 P2P；是 persist 语义的直接对照面（非 persist 输出应被删），最可能被本改动误伤。"
+  },
+  {
+   "id": "tests/func/test_run.py::TestShouldNotCheckoutUponCorruptedLocalHardlinkCache::test",
+   "reason": "已在 P2P；覆盖 `Stage.create` 里 build cache 判断的另一条路径。"
+  },
+  {
+   "id": "tests/func/test_run.py -k Deterministic",
+   "reason": "已在 P2P；`is_cached` 的主要消费者，gold 改的正是它的前置条件。"
+  },
+  {
+   "id": "tests/func/test_unprotect.py::TestUnprotect::test",
+   "reason": "与 `stage.unprotect_outs()` 同路径；当前因 root 身份失败，修好用户身份后应纳入。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "P2P 覆盖面是本包最好的之一，gold 简洁正确；但 F2P 逐字锁了题面没给的警告文本并隐含\"首次不警告\"，且 3 条 unprotect 用例因 root 身份被排除、整文件耗时 388 秒。"
+ },
+ "costs": {
+  "minutes": 24
+ },
+ "by": "L1_dvc_1 (Claude Opus 5, 静态审查)"
+}

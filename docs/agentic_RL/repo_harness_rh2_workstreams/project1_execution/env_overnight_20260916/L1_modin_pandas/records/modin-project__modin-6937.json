@@ -1,0 +1,70 @@
+{
+ "task_id": "modin-project__modin-6937",
+ "source": "SWE-Gym lite (s2 ingest v0)",
+ "task_revision": "upstream",
+ "materials_refs": [
+  "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/{public,grading_bundles_v2,validation}_*_v0.jsonl",
+  "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/modin-project__modin-6937/{gold,empty}/offline/a1/",
+  "runs/env_overnight_20260916/repos/modin@d54dcfd8e4cceecdbf818a48bbc712854dda906e"
+ ],
+ "public_view": {
+  "goal": "to_parquet(index=False) 写出的数据集，read_parquet 读回时抛 IndexError: list index out of range。",
+  "constraints_from_statement": [
+   "题面是 asv CI 的原始日志（每行前缀 2024-02-16T12:19:04.97xxxxxZ 时间戳），6562 字符里绝大部分是路径与时间戳噪声。",
+   "题面末尾给出确切定位：parquet_dispatcher.py line 693, and dataset.pandas_metadata['column_indexes'][0]['numpy_type'] == 'int64'，随后 IndexError: list index out of range。等于把要改的那一行原样抄给了 agent。"
+  ],
+  "unknowns_from_public_only": [
+   "index=False 时 column_indexes 为空，正确行为是跳过 int64 强转还是补别的推断 —— 题面未说。",
+   "读回后列名应是字符串还是 int64 —— 题面未说（F2P 的测试体自己在断言前把列名转回 int64，等于回避了这个问题）。",
+   "只说 pyarrow 引擎，fastparquet 引擎的期望未说。"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["modin@d54dcfd8:modin/core/io/column_stores/parquet_dispatcher.py L688-696", "modin@d54dcfd8:modin/pandas/test/test_io.py L2029-2043"], "note": "gold 目标 parquet_dispatcher.py、test_patch 目标 modin/pandas/test/test_io.py 在 base 都存在且与题面同一问题。", "by": "L1_modin_pandas"},
+  "2": {"status": "pass", "evidence_refs": ["validation.golden_patch", "stage1 empty/status_map.json"], "note": "base 的 build_query_compiler 只判 'column_indexes' in pandas_metadata，没判长度，空列表时 [0] 越界；empty 侧 F2P FAILED。", "by": "L1_modin_pandas"},
+  "3": {"status": "issue", "evidence_refs": ["public_bundles_v0.jsonl problem_statement"], "note": "题面是 asv CI 日志直贴：每行带 ISO 时间戳、含大量 /home/runner/work/... 与 .asv/env/<hash>/ 的无关路径，可读性差；但没有截断（结尾的 IndexError 完整）、无图片、无外链。hints_text 为空。", "by": "L1_modin_pandas"},
+  "4": {"status": "pass", "evidence_refs": ["grading.test_patch"], "note": "test_patch 只触碰 modin/pandas/test/test_io.py。", "by": "L1_modin_pandas"},
+  "17": {"status": "pass", "evidence_refs": ["validation.golden_patch"], "note": "gold 只触碰 modin/core/io/column_stores/parquet_dispatcher.py；additional_exclusions 保持空。", "by": "L1_modin_pandas"},
+  "5": {"status": "issue", "evidence_refs": ["tasks_by_repo.json", "prescan.json"], "note": "与 modin-5940 共用同一测试文件 modin/pandas/test/test_io.py，两题的 P2P 有大量重叠（同一批 127 个截断键、同样的 TestCsv::test_to_csv 参数组），且两题都要跑完整份 test_io.py（各 21/23 分钟）。不是同一 PR、不是同一修复，但在预算上高度重复。", "by": "L1_modin_pandas"},
+  "23": {"status": "issue", "evidence_refs": ["grading.test_patch", "public_bundles_v0.jsonl problem_statement"], "note": "F2P 只有 1 条且题面已给出确切失败行，要求本身不难推；但『读回后列名类型』这一关键接口语义题面没写，测试体用 read_df.columns = pandas.Index(read_df.columns).astype('int64').to_list() 自行抹平，等于判分对该语义不作要求。agent 无法从公开材料判断该不该保持 int64 列名。", "by": "L1_modin_pandas"},
+  "24": {"status": "pass", "evidence_refs": ["grading.test_patch"], "note": "F2P 只断言 df_equals(test_df, read_df)，不引用 gold 的 len(...)==1 条件。用 try/except IndexError 包住强转、或改判 if dataset.pandas_metadata.get('column_indexes') 非空，都能过。不强制唯一实现。", "by": "L1_modin_pandas"},
+  "25": {"status": "issue", "evidence_refs": ["grading.test_patch", "grading.fail_to_pass"], "note": "F2P 只有 test_read_parquet_6855[False-pyarrow] 一条（fastparquet 两个参数被测试体 pytest.skip 掉，True-pyarrow 在 base 已通过被列为 P2P）。一个『把整个 int64 列名强转块删掉』的粗暴修复会通过 F2P，还得靠 P2P 里的 test_read_parquet_5767 等才可能被拦住 —— 该保护在 P2P 里存在，但由于 127 个截断键的折叠（见 issues），P2P 的整体拦截力被削弱。", "by": "L1_modin_pandas"},
+  "26": {"status": "pass", "evidence_refs": ["modin@d54dcfd8"], "note": "见 proposed_regression_tests。", "by": "L1_modin_pandas"},
+  "27": {"status": "pass", "evidence_refs": ["validation.golden_patch"], "note": "gold 只加一行 and len(dataset.pandas_metadata['column_indexes']) == 1，不依赖未交付改动，无无关改动。", "by": "L1_modin_pandas"},
+  "29": {"status": "issue", "evidence_refs": ["public_bundles_v0.jsonl problem_statement 末 3 行"], "note": "题面把 gold 要改的那行源码原样打印出来（and dataset.pandas_metadata['column_indexes'][0]['numpy_type'] == 'int64'）并给出确切文件名与行号 693，再加 IndexError: list index out of range。修复方向几乎被直接指定。逐行文本比对没命中（gold 新增行不在题面里），但定位与诊断已被完全泄漏。", "by": "L1_modin_pandas"},
+  "6": {"status": "issue", "evidence_refs": ["stage1 gold/offline/a1/eval.sh", "stage1 gold/offline/a1/test_output.txt 统计行"], "note": "install 只要 pip install -e .（3.5 秒）。但测试段 1271 秒（日志内 pytest 自报 1264.00s / 0:21:03），其中 19 个 *_s3 用例因 moto CLI 不兼容各重试 50 次连接才报错，是可观的纯浪费。单题一次评分约 21 分钟。", "by": "L1_modin_pandas"},
+  "7": {"status": "issue", "evidence_refs": ["stage1 gold/offline/a1/test_output.txt: RuntimeError: Could not connect to moto server after 50 tries ... moto_server: error: unrecognized arguments: s3", "modin@d54dcfd8:modin/conftest.py L497-545"], "note": "modin/conftest.py 的 s3_base fixture 用 subprocess 起本地 moto server（端口 5000 或 555<worker_id>）。本镜像装的 moto 已是新版 CLI，不接受 moto_server s3 这种旧写法，19 个 s3 用例全部 ERROR。对本题无害（P2P 里只有 TestCsv::test_read_csv_s3_issue4658 一条 s3 用例且它通过了），但同一 fixture 在 modin-5940 里牵动 19 条 P2P。", "by": "L1_modin_pandas"},
+  "11": {"status": "issue", "evidence_refs": ["runs/env_overnight_20260916/L1_modin_pandas/collide_detail.json"], "note": "2355 个常量在运行时实际对应 3060 个测试：127 个截断键吞掉 705 个额外 ID，最大一组 test_to_csv[None-New 一个键代表 108 个测试。另有 124 个 skipped 用例在 -rA 摘要里只以 SKIPPED [48]/[64]/... 的聚合形式出现，parser 把 [48] 当成 nodeid，真正被跳过的测试在 status_map 里完全不可见。", "by": "L1_modin_pandas"}
+ },
+ "issues": [
+  {"category": "reference_id_truncation", "severity": "P1",
+   "evidence_refs": ["runs/env_overnight_20260916/L1_modin_pandas/collide_detail.json", "rh2/src/repoharness2/envpack/swegym_parsers.py parse_log_pytest"],
+   "note": "127 个 P2P 键各自折叠多个运行时测试（最大 108 个）。parser 后写覆盖先写，等于每组只保留 -rA 摘要里最后打印的那条的判定。候选补丁若弄挂组内前 107 个、只留最后一个通过，该 P2P 仍判 PASSED —— P2P 覆盖率被严重高估（名义 2354，实际独立信号约 2228 组里只有 1 条代表）。",
+   "proposed_action": "改用 --junitxml（或 pytest-json-report）取 classname+name 作 ID；短期可在题级标注『该 P2P 键代表 N 个运行时测试』并对 N>1 的键降权。",
+   "next_experiment": "真机上同时保存 -rA 摘要与 junitxml，比对两侧 ID 集合与判定，量化折叠比例（预期 3060 -> 2355）。"},
+  {"category": "skipped_tests_invisible", "severity": "P2",
+   "evidence_refs": ["stage1 gold/offline/a1/test_output.txt: SKIPPED [48] modin/pandas/test/test_io.py:321: ... 等 5 行", "stage1 gold/offline/a1/status_map.json 键 ['[48]','[64]','[4]','[2]','[1]']"],
+   "note": "pytest -rA 对 skip 只打聚合行 SKIPPED [N] <file>:<line>: <reason>，parser 取第二个分词 [N] 当 nodeid。124 个被跳过的测试在 status_map 里没有任何条目，status_map 反而多了 5 个垃圾键。本题 F2P/P2P 都不含被跳过的用例，所以判分未受影响；但这意味着『因缺可选依赖被 skip』的 F2P/P2P 会表现为 missing 而不是 SKIPPED，排障时容易误判成 ID 写错。",
+   "proposed_action": "评分侧对 status_map 里不含 :: 的键直接丢弃并告警；对 F2P/P2P 的 missing 加一条『是否出现在 SKIPPED 聚合行的文件里』的诊断。",
+   "next_experiment": "真机上 pip uninstall fastparquet 后重跑，确认 268 条 fastparquet P2P 是变成 missing 而不是 SKIPPED。"},
+  {"category": "wasted_runtime", "severity": "P2",
+   "evidence_refs": ["stage1 gold/offline/a1/test_output.txt: Could not connect to moto server after 50 tries", "统计行 ... 19 errors in 1264.00s"],
+   "note": "19 个 s3 用例各自重试 50 次连接 moto server 才失败（镜像里的 moto 版本不认 moto_server s3 这种旧 CLI），纯浪费；整题一次评分 21 分钟。",
+   "proposed_action": "对本题在 eval_cmd 上加 --deselect 或 -k 'not _s3'（P2P 里只有 test_read_csv_s3_issue4658 一条 s3 用例，需保留），并记入 task_revision。",
+   "next_experiment": "真机上比较加/不加 -k 'not s3' 的墙钟时间与 status_map 差异。"},
+  {"category": "budget_overlap", "severity": "P3",
+   "evidence_refs": ["prescan.json: 6937 与 5940 的 test_patch_paths 同为 modin/pandas/test/test_io.py"],
+   "note": "本包两道 modin IO 题都要跑完整份 test_io.py（21 与 23 分钟），P2P 大面积重叠。",
+   "proposed_action": "如果题单要控预算，这两题只保留一道（6937 的 gold 是 RESOLVED_FULL，更适合保留）。",
+   "next_experiment": "无需跑。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只在 modin/pandas/test/，gold 只在 modin/core/io/，不交叉；沿用默认空集。", "evidence_refs": ["grading.test_patch", "validation.golden_patch"]},
+ "proposed_regression_tests": [
+  {"id": "modin/pandas/test/test_io.py::TestParquet::test_read_parquet_5767", "reason": "同一 build_query_compiler 分支的既有回归用例，直接覆盖 column_indexes 非空的正常路径。"},
+  {"id": "modin/pandas/test/test_io.py::TestParquet::test_read_parquet_indexing_by_column", "reason": "覆盖列名类型对后续按列索引的影响，能抓到把 int64 强转整块删掉的粗暴修复。"},
+  {"id": "modin/pandas/test/test_io.py::TestParquet::test_read_parquet_directory", "reason": "分区目录数据集走同一 dataset.pandas_metadata 路径，多列索引是本 bug 的边界。"},
+  {"id": "modin/pandas/test/test_io.py::TestParquet::test_to_parquet", "reason": "写侧与读侧配对，确认 index=False/True 往返一致。"}
+ ],
+ "disposition_hint": {"state": "needs_review", "reason": "gold RESOLVED_FULL、F2P/P2P 无 missing，判分链本身是通的；但 127 个折叠键让 P2P 的实际保护力远低于名义值，且题面把要改的那行源码原样给出（定位泄漏），加上 21 分钟的评分成本，是否入选要看题单预算与对泄漏的容忍度。"},
+ "costs": {"minutes": 32}
+}

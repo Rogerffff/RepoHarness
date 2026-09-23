@@ -1,0 +1,241 @@
+{
+ "task_id": "python__mypy-15131",
+ "source": "SWE-Gym lite / python/mypy PR 15131",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "00f3913b314994b4b391a2813a839c094482b632",
+  "version": "1.4",
+  "python_version": "3.11",
+  "eval_cmd": "pytest -n0 -rA -k",
+  "f2p": [
+   "mypy/test/testcheck.py::TypeCheckSuite::check-statements.test::testInvalidTupleValueAsExceptionType",
+   "mypy/test/testcheck.py::TypeCheckSuite::check-statements.test::testTupleValueAsExceptionType"
+  ],
+  "p2p": [
+   "mypy/test/testcheck.py::TypeCheckSuite::check-statements.test::testOverloadedExceptionType"
+  ],
+  "gold_paths": [
+   "mypy/message_registry.py"
+  ],
+  "test_patch_paths": [
+   "test-data/unit/check-modules.test",
+   "test-data/unit/check-python311.test",
+   "test-data/unit/check-statements.test"
+  ],
+  "runtime_evidence": "无（不在 stage1 样本、in_e2 空、无 DeepSeek 候选）"
+ },
+ "public_view": {
+  "goal": "`except excs:`（excs 是 list 而非 tuple）时 mypy 报 'Exception type must be derived from BaseException'，用户认为这句话误导——真正的修法是把 list 换成 tuple。要求改进这句提示。",
+  "constraints": [
+   "题面是 2018 年的老 issue，给的 mypy 版本是 0.610；复现完整、无外链、无图片、无截断",
+   "**题面完全没有提出任何替代措辞**，只说 'While it's true that this code is incorrect, I probably want to fix it by writing `excs = (IOError, LookupError)`'"
+  ],
+  "unknowns_from_public_only": [
+   "新消息的确切文字——题面一个字都没给，而 F2P 逐字要求 'Exception type must be derived from BaseException (or be a tuple of exception classes)'",
+   "是改成统一一句，还是在'传了 list'这种具体情形下另给一句更精准的提示（后者更贴题面诉求，但会让所有既有断言不变）",
+   "要不要同时改 INVALID_EXCEPTION（不带 type 的那条），题面没说"
+  ],
+  "base_code_evidence": [
+   "00f3913b3:mypy/message_registry.py:46 INVALID_EXCEPTION_TYPE = ErrorMessage('Exception type must be derived from BaseException')",
+   "00f3913b3:test-data/unit/check-statements.test 有十余处断言这句原文（testExceptWithMultipleTypes / testExceptWithAnyTypes / testInvalidExceptionCallable 等）"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "3 个 test_patch 目标文件在 base 均存在",
+    "gold 目标 mypy/message_registry.py:46 在 base 逐字一致"
+   ],
+   "note": "无二进制/LFS/子模块。",
+   "by": "L1_mypy_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "00f3913b3:mypy/message_registry.py:46"
+   ],
+   "note": "静态确认 base 的消息就是题面抱怨的那句。",
+   "by": "L1_mypy_2"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 510 字符，自足",
+    "hints_text 543 字符"
+   ],
+   "note": "题面短但完整。",
+   "by": "L1_mypy_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 3 个路径全在 test-data/unit/"
+   ],
+   "note": "无非测试源码；gold 不碰测试样路径。",
+   "by": "L1_mypy_2"
+  },
+  "17": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "同 file_rules"
+   ],
+   "note": "仓库级：mypy/test/*.py 与 test-data/unit/fixtures/* 不受保护。",
+   "by": "L1_mypy_2"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "40 题中只有本题 gold 触碰 mypy/message_registry.py"
+   ],
+   "note": "无重复/派生。",
+   "by": "L1_mypy_2"
+  },
+  "23": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "题面未给任何替代措辞",
+    "F2P 逐字要求 '(or be a tuple of exception classes)' 这 8 个词的括号补充"
+   ],
+   "note": "公开材料**无法**推出 F2P 检查的行为。这是一道纯猜字符串题：改动本身只有 1 行、无任何逻辑，通过与否完全取决于是否逐字猜中上游的措辞。本包里'要求不可推断'最彻底的一题。",
+   "by": "L1_mypy_2"
+  },
+  "24": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "F2P 是 .test 里的逐字 `# E:` 断言"
+   ],
+   "note": "强制唯一实现到字符级。任何语义等价、甚至更贴题面诉求的措辞（例如只在 list 情形下追加提示）都判 0。",
+   "by": "L1_mypy_2"
+  },
+  "25": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "scripts/tpcases.py python__mypy-15131：test_patch 改了 **11 个 case** 的期望，只有 2 个进 F2P，**9 个未参与评分**（testImportedExceptionType/2、testTryStarInvalidType、testExceptWithMultipleTypes/2/4、testExceptWithAnyTypes、testInvalidExceptionCallable、testExceptionIsType）",
+    "P2P 唯一一条 testOverloadedExceptionType 与本次消息改动无关（它断言的是 overload __init__ 的赋值类型），是 hunk 尾部上下文里出现 [case] 行被顺带选中的"
+   ],
+   "note": "评分覆盖只占被改 case 的 2/11；P2P 零判别力。反过来说，因为这是纯文本替换，漏放风险不大——真正的问题是 23/24。",
+   "by": "L1_mypy_2"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "9 个被改 case 未评分"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_mypy_2"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 只改 message_registry.py 的一条常量"
+   ],
+   "note": "gold 正确、完整、无题外改动。",
+   "by": "L1_mypy_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 无 PR/commit 链接、无修复代码"
+   ],
+   "note": "无静态泄漏——但这里的'无泄漏'恰恰意味着无解（见 23）。",
+   "by": "L1_mypy_2"
+  },
+  "6": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "未实跑安装。",
+   "by": "L1_mypy_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "相关 case 只用 [builtins fixtures/exception.pyi]/[builtins fixtures/tuple.pyi]，均在仓库内"
+   ],
+   "note": "无外部依赖。",
+   "by": "L1_mypy_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "case 正文无网络调用"
+   ],
+   "note": "纯离线。",
+   "by": "L1_mypy_2"
+  },
+  "18": {
+   "status": "pass",
+   "evidence_refs": [
+    "kscan.json:python__mypy-15131 三条 over_select 均为空"
+   ],
+   "note": "无 -k 过选、无同名冲突。",
+   "by": "L1_mypy_2"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "nodeid 4 段；00f3913b3:mypy/test/data.py 含 DataFileCollector"
+   ],
+   "note": "形状一致。",
+   "by": "L1_mypy_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "requirement_unrecoverable",
+   "severity": "P1",
+   "evidence_refs": [
+    "题面无任何措辞提示；F2P 逐字匹配新增的括号补充"
+   ],
+   "proposed_action": "建议剔除或改题：把新措辞写进题面（'请把提示改成 … (or be a tuple of exception classes)'），或把 F2P 断言放宽成'消息中包含 tuple 一词'。当前形态下模型能通过基本靠背诵 mypy 历史。",
+   "next_experiment": "让模型在不看 gold 的情况下生成 10 个候选措辞，统计逐字命中率（预期 0）。"
+  },
+  {
+   "category": "grading_coverage",
+   "severity": "P2",
+   "evidence_refs": [
+    "11 个被改 case 只有 2 个进 F2P"
+   ],
+   "proposed_action": "若保留，把 11 个被改 case 全部纳入 F2P（它们按定义都是 base 失败、gold 通过）。",
+   "next_experiment": "base+test_patch 与 +gold 各跑这 11 个 case，比对状态。"
+  },
+  {
+   "category": "file_boundary",
+   "severity": "P1",
+   "evidence_refs": [
+    "rh2/src/repoharness2/grading/manager.py:656/672/581"
+   ],
+   "proposed_action": "建议把 mypy/test/* 与 test-data/* 纳入 hygiene 保护（40 题 gold 均不触碰）。",
+   "next_experiment": "构造只改 mypy/test/helpers.py::assert_string_arrays_equal 的候选 patch 走一次评分，确认当前会判满分。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 test-data/unit/ 下的 .test 数据文件，gold 只碰 mypy/ 源码，两者无交集，按第四组 B 默认保持空。仓库级建议（需用户裁定、对 40 题统一生效）：把 'mypy/test/*' 与 'test-data/*' 加入 hygiene.test_globs——40 题 gold 无一触碰这两处（已对 validation_bundles 全量核对），而当前 agent 改 mypy/test/helpers.py、mypy/test/data.py 或 test-data/unit/fixtures/*.pyi 既不被 eval 的 git checkout 还原，也不被判 rejected_test_tampering。副作用：agent 在 test-data/ 下建临时文件会让整份提交作废，需一并决定。",
+  "evidence_refs": [
+   "rh2/src/repoharness2/grading/manager.py:656、:672、:581",
+   "rh2/src/repoharness2/contracts/grading.py:118-121"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "test_patch 改过期望的全部 11 个 case（清单见 scripts/tpcases.py 输出）",
+   "reason": "它们都是 gold 的直接体现，现在只有 2 个进评分。"
+  },
+  {
+   "id": "grep 'Exception type must be derived' 命中的全部既有 case",
+   "reason": "常量被改后所有引用点都应重新核对。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "reject_revision",
+  "reason": "gold 只有一行纯文本替换，而题面不含任何措辞线索，F2P 逐字匹配——公开材料到 F2P 之间没有可推理的路径，作为 RL 任务只奖励记忆。若要保留必须改题面或放宽断言。"
+ },
+ "costs": {
+  "minutes": 19
+ }
+}

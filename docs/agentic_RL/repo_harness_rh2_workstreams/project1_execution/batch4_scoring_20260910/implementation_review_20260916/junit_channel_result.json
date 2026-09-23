@@ -1,0 +1,37 @@
+{
+  "scope": "真实本机 pytest 与官方 JUnit XML plugin；未模拟 root 文件权限、未运行 RH2 或容器；仅验证改变输出格式不能建立进程内信任隔离",
+  "rows": [
+    {
+      "name": "baseline",
+      "exit_code": 1,
+      "testsuites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "1",
+          "skipped": "0",
+          "tests": "1",
+          "time": "0.011",
+          "timestamp": "2026-09-16T13:00:14.055588+08:00"
+        }
+      ],
+      "assertion_source_unchanged": true
+    },
+    {
+      "name": "same_process_report_hook",
+      "exit_code": 0,
+      "testsuites": [
+        {
+          "name": "pytest",
+          "errors": "0",
+          "failures": "0",
+          "skipped": "0",
+          "tests": "1",
+          "time": "0.011",
+          "timestamp": "2026-09-16T13:00:14.185509+08:00"
+        }
+      ],
+      "assertion_source_unchanged": true
+    }
+  ]
+}

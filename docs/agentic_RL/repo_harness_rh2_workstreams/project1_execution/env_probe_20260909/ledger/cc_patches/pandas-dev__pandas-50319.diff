@@ -1,0 +1,28 @@
+diff --git a/pandas/_libs/tslibs/parsing.pyx b/pandas/_libs/tslibs/parsing.pyx
+index 614db69425..8dc02daff0 100644
+--- a/pandas/_libs/tslibs/parsing.pyx
++++ b/pandas/_libs/tslibs/parsing.pyx
+@@ -1020,6 +1020,11 @@ cdef str _fill_token(token: str, padding: int):
+         token_filled = token.zfill(padding)
+     else:
+         seconds, nanoseconds = token.split(".")
++        if not seconds or not nanoseconds:
++            # A token containing "." but with an empty part before or after it
++            # is a date separator (e.g. "27.03.2003") rather than a fractional
++            # seconds token, so return it unchanged.
++            return token
+         seconds = f"{int(seconds):02d}"
+         # right-pad so we get nanoseconds, then only take
+         # first 6 digits (microseconds) as stdlib datetime
+diff --git a/pandas/tests/tslibs/test_parsing.py b/pandas/tests/tslibs/test_parsing.py
+index a4c79e77d2..a087e2289d 100644
+--- a/pandas/tests/tslibs/test_parsing.py
++++ b/pandas/tests/tslibs/test_parsing.py
+@@ -177,6 +177,7 @@ def test_parsers_month_freq(date_str, expected):
+         ("2011-12-30T00:00:00.000000+9:0", None),
+         ("2011-12-30T00:00:00.000000+09:", None),
+         ("2011-12-30 00:00:00.000000", "%Y-%m-%d %H:%M:%S.%f"),
++        ("27.03.2003 14:55:00.000", "%d.%m.%Y %H:%M:%S.%f"),
+         ("Tue 24 Aug 2021 01:30:48 AM", "%a %d %b %Y %H:%M:%S %p"),
+         ("Tuesday 24 Aug 2021 01:30:48 AM", "%A %d %b %Y %H:%M:%S %p"),
+     ],

@@ -1,0 +1,143 @@
+{
+  "runs": [
+    {
+      "run_tag": "monai1121_online_20260911",
+      "official_verdict": "RESOLVED_FULL",
+      "result": "passed",
+      "strict": {
+        "strict_full": true,
+        "f2p_total": 1,
+        "p2p_total": 35,
+        "p2p_empty": false,
+        "f2p_missing": 0,
+        "p2p_missing": 0,
+        "f2p_not_ok": 0,
+        "p2p_not_ok": 0,
+        "ref_skipped": 0,
+        "ref_xfail": 0,
+        "f2p_status": {
+          "tests/test_ahnet.py::TestAHNET::test_script": "PASSED"
+        },
+        "p2p_not_ok_examples": []
+      },
+      "t_eval_total": 167.14,
+      "mem_peak_bytes": 2772996096,
+      "image_digest_actual": "sha256:0f5853531e10b960378077b7837b972ac46656281d87c41f15f073a06d73a481",
+      "fixture_digest": "sha256:4fb1556f5c38746e9a8562e2fe852aaea08a0d5ed9cb81cc4cab1ee1a5009e48",
+      "official_script_sha256": "sha256:d3a7f504c84c8e3843860b21162cfc07a1c6c2c79f11af6bc0d73f65e14e1003",
+      "cleanup_ok": true,
+      "test_asset_preload": null
+    },
+    {
+      "run_tag": "monai1121_offline_uncached_20260911",
+      "official_verdict": "RESOLVED_NO",
+      "result": "failed",
+      "strict": {
+        "strict_full": false,
+        "f2p_total": 1,
+        "p2p_total": 35,
+        "p2p_empty": false,
+        "f2p_missing": 0,
+        "p2p_missing": 0,
+        "f2p_not_ok": 0,
+        "p2p_not_ok": 8,
+        "ref_skipped": 0,
+        "ref_xfail": 0,
+        "f2p_status": {
+          "tests/test_ahnet.py::TestAHNET::test_script": "PASSED"
+        },
+        "p2p_not_ok_examples": [
+          "tests/test_ahnet.py::TestAHNETWithPretrain::test_ahnet_shape_2",
+          "tests/test_ahnet.py::TestAHNETWithPretrain::test_initialize_pretrained",
+          "tests/test_ahnet.py::TestAHNETWithPretrain::test_ahnet_shape_0",
+          "tests/test_ahnet.py::TestMCFCN::test_mcfcn_shape_1",
+          "tests/test_ahnet.py::TestFCN::test_fcn_shape_1"
+        ]
+      },
+      "t_eval_total": 117.72,
+      "mem_peak_bytes": 2535837696,
+      "image_digest_actual": "sha256:0f5853531e10b960378077b7837b972ac46656281d87c41f15f073a06d73a481",
+      "fixture_digest": "sha256:4fb1556f5c38746e9a8562e2fe852aaea08a0d5ed9cb81cc4cab1ee1a5009e48",
+      "official_script_sha256": "sha256:d3a7f504c84c8e3843860b21162cfc07a1c6c2c79f11af6bc0d73f65e14e1003",
+      "cleanup_ok": true,
+      "test_asset_preload": null
+    },
+    {
+      "run_tag": "monai1121_offline_cached_20260911",
+      "official_verdict": "RESOLVED_FULL",
+      "result": "passed",
+      "strict": {
+        "strict_full": true,
+        "f2p_total": 1,
+        "p2p_total": 35,
+        "p2p_empty": false,
+        "f2p_missing": 0,
+        "p2p_missing": 0,
+        "f2p_not_ok": 0,
+        "p2p_not_ok": 0,
+        "ref_skipped": 0,
+        "ref_xfail": 0,
+        "f2p_status": {
+          "tests/test_ahnet.py::TestAHNET::test_script": "PASSED"
+        },
+        "p2p_not_ok_examples": []
+      },
+      "t_eval_total": 171.81,
+      "mem_peak_bytes": 2488336384,
+      "image_digest_actual": "sha256:0f5853531e10b960378077b7837b972ac46656281d87c41f15f073a06d73a481",
+      "fixture_digest": "sha256:4fb1556f5c38746e9a8562e2fe852aaea08a0d5ed9cb81cc4cab1ee1a5009e48",
+      "official_script_sha256": "sha256:d3a7f504c84c8e3843860b21162cfc07a1c6c2c79f11af6bc0d73f65e14e1003",
+      "cleanup_ok": true,
+      "test_asset_preload": {
+        "url": "https://download.pytorch.org/models/resnet50-0676ba61.pth",
+        "sha256": "0676ba61b6795bbe1773cffd859882e5e297624d384b6993f7c9e683e722fb8a",
+        "bytes": 102530333,
+        "container_path": "/root/.cache/torch/hub/checkpoints/resnet50-0676ba61.pth",
+        "purpose": "实验性预置测试依赖；未改变参考测试或评分定义"
+      }
+    }
+  ],
+  "online_vs_cached_full_map_equal": true,
+  "uncached_to_cached_changes": [
+    [
+      "tests/test_ahnet.py::TestFCN::test_fcn_shape_0",
+      "FAILED",
+      "PASSED"
+    ],
+    [
+      "tests/test_ahnet.py::TestFCN::test_fcn_shape_1",
+      "FAILED",
+      "PASSED"
+    ],
+    [
+      "tests/test_ahnet.py::TestMCFCN::test_mcfcn_shape_0",
+      "FAILED",
+      "PASSED"
+    ],
+    [
+      "tests/test_ahnet.py::TestMCFCN::test_mcfcn_shape_1",
+      "FAILED",
+      "PASSED"
+    ],
+    [
+      "tests/test_ahnet.py::TestAHNETWithPretrain::test_ahnet_shape_0",
+      "FAILED",
+      "PASSED"
+    ],
+    [
+      "tests/test_ahnet.py::TestAHNETWithPretrain::test_ahnet_shape_1",
+      "FAILED",
+      "PASSED"
+    ],
+    [
+      "tests/test_ahnet.py::TestAHNETWithPretrain::test_ahnet_shape_2",
+      "FAILED",
+      "PASSED"
+    ],
+    [
+      "tests/test_ahnet.py::TestAHNETWithPretrain::test_initialize_pretrained",
+      "FAILED",
+      "PASSED"
+    ]
+  ]
+}

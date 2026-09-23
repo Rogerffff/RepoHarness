@@ -1,0 +1,58 @@
+{
+  "scope": "本批对当前来源材料的处置记录；未修改正式题池，不按仓库整体淘汰。资源/服务对照仍须跑完、回传并审阅。",
+  "decision": "E23, delegated by user2026-09-19",
+  "tasks": {
+    "modin-project__modin-5940": {
+      "status": "held_source_material",
+      "reason": "原NOAA1788.csv当前公开路径404；原xfail与双方同报网络错误的helper组合可能导致strict XPASS。另有原Parquet/JSON公开路径403。",
+      "restore_when": [
+        "可追溯原资产恢复并固定，验证真实读取与原断言",
+        "或另立带明确来源的本地材料修订版本，验证完整noop/gold并保留原口径结果"
+      ],
+      "evidence": [
+        "runs/env_recipe_repair_20260919/modin_s3_probe/asset_probe.json",
+        "runs/env_recipe_repair_20260919/modin_s3_probe/source5940.json",
+        "https://github.com/modin-project/modin/issues/4875"
+      ],
+      "component_runs_still_to_review": [],
+      "reviewed_component_runs": {
+        "resources_v1": "12行已核对；安装成功，资源/服务问题保留，analysis_12.json；不是修复通过。",
+        "modin5940_resources_v2": "两侧完整结束；gold目标4/4通过但S3仍6fail/2error，noop另有4目标失败。ENOSPC消失、采样tmp至少约3.0GiB可用，manager收口无残留。analysis_2.json；整题未通过。",
+        "modin_s3_compat_v1": "仅6937 noop执行：测试3600秒超时、PID拒绝；部分评分日志为空不等于未执行，宿主实时日志和cgroup证据保存。manager/候选清理均正常、实际容器消失后父派发退役；其余三条明确未执行，由后续v3替代。",
+        "modin_s3_compat_v2": "仅6937 noop执行并重放：安装0，3600秒测试超时，rewardNone；峰值约4.1GiB、PID采样最高570但无PID拒绝或OOM。源码及小探针定位日志管道阻塞。收口正常后已退役，三条未执行转v3；部分日志不能断言参考未执行。",
+        "modin_s3_compat_v3_noop": "完整noop12fail/2636pass，4项目标失败、4CSV strictXPASS、2公共Parquet断网、2本地写入缺模拟凭据；安装0，PID采样峰值459，无观察OOM/拒绝、收口正常。gold尚待，不算全批完成。",
+        "modin_s3_compat_v3": "完整两侧已审阅；gold8fail/2640pass、目标4/4通过但1个公共Parquet P2P失败。8项均为4CSV strictXPASS、2公共Parquet断网、2本地写入缺模拟凭据。noop另有4目标失败。两侧安装0、实际完整退出及manager/候选清理通过，无观察OOM/PID拒绝。",
+        "modin_s3_compat_v5_noop": "完整noop1633秒10fail/2638pass；两项直接S3写读通过，余4目标、4CSV旧材料、2公共Parquet，无新资源/清理问题。gold未结束。",
+        "modin_s3_compat_v5": "完整两侧已审阅：noop1633秒10fail/2638pass，gold1306秒6fail/2642pass；两项直接本地S3写入/读回已恢复，gold余4CSV strictXPASS及2公共Parquet不可达。参考F2P4pass/P2P1930pass1fail，安装0、真实测试退出1、两层清理正常；采样PID466/465且无OOM/拒绝。原材料继续隔离，不算环境通过。"
+      },
+      "component_review_complete": true,
+      "final_component_batch": "modin_s3_compat_v5"
+    },
+    "modin-project__modin-6937": {
+      "status": "held_source_material",
+      "reason": "原NOAA1788.csv当前公开路径404；原xfail与双方同报网络错误的helper组合可能导致strict XPASS。Parquet已使用来源本地fixture，不能把5940的Parquet缺失直接套在本题。",
+      "restore_when": [
+        "可追溯原资产恢复并固定，验证真实读取与原断言",
+        "或另立带明确来源的本地材料修订版本，验证完整noop/gold并保留原口径结果"
+      ],
+      "evidence": [
+        "runs/env_recipe_repair_20260919/modin_s3_probe/asset_probe.json",
+        "runs/env_recipe_repair_20260919/modin_s3_probe/source6937.json",
+        "https://github.com/modin-project/modin/issues/4875"
+      ],
+      "component_runs_still_to_review": [],
+      "reviewed_component_runs": {
+        "resources_v1": "12行已核对；安装成功，资源/服务问题保留，analysis_12.json；不是修复通过。",
+        "modin_s3_compat_v1": "仅6937 noop执行：测试3600秒超时、PID拒绝；部分评分日志为空不等于未执行，宿主实时日志和cgroup证据保存。manager/候选清理均正常、实际容器消失后父派发退役；其余三条明确未执行，由后续v3替代。",
+        "modin_s3_compat_v2": "仅6937 noop执行并重放：安装0，3600秒测试超时，rewardNone；峰值约4.1GiB、PID采样最高570但无PID拒绝或OOM。源码及小探针定位日志管道阻塞。收口正常后已退役，三条未执行转v3；部分日志不能断言参考未执行。",
+        "modin_s3_compat_v3": "本题两侧完整、原参考全解析；gold3075pass/8fail，noop3074pass/9fail（多目标1项）。文件日志后PID512完成、未观察拒绝/OOM；8项环境失败为4CSV材料、4端口配置。gold得1不代表环境通过，继续v4。",
+        "modin_s3_compat_v4_noop": "完整noop1128秒14fail/3069pass；端口修订实际生效，原object读取2项通过，但暴露6NoCredentials和3个anon=False的worker403；CSV4与目标1保留。没有OOM/PID拒绝，清理正常；待gold与v6组合对照。",
+        "modin_s3_compat_v4": "完整noop1128秒14fail/3069pass，gold1036秒13fail/3070pass；gold只去掉原目标失败。原参考全解析、gold参考全通过但全测试仍13fail（6NoCredentials、3worker403、4CSV）。端口配置确已一致，2个object读由失败变通过。两侧安装0/完整日志/实际退出/manager及候选清理通过；采样无OOM/PID拒绝。后续v6验证凭据组合，材料隔离不解除。",
+        "modin_s3_compat_v6": "完整两侧已审阅：noop1083秒5fail/3078pass，gold1476秒4fail/3079pass；相对v4两侧均9项凭据/worker403失败消失，余4CSV strictXPASS。gold参考2355项全通过但全测试退出1，安装0及两层清理正常；采样PID465/427且无OOM/拒绝。原材料继续隔离，不以reward1验收。"
+      },
+      "additional_semantic_disposition": "E29保留原对象ACL。匿名私有对象403只支持异常行为一致，不能算成功读取数据；未来修订材料必须明确匿名用例的预期，不以放开ACL凑全绿。独立微探针已保存真实读取对照。",
+      "component_review_complete": true,
+      "final_component_batch": "modin_s3_compat_v6"
+    }
+  }
+}

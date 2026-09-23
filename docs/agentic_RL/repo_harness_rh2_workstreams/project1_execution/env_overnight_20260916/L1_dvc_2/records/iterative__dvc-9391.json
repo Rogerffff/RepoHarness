@@ -1,0 +1,277 @@
+{
+ "task_id": "iterative__dvc-9391",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+  "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+  "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+  "raw": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc",
+  "base_commit": "6b6084a84829ba90b740a1cb18ed897d96fcc3af",
+  "version": "2.56",
+  "python_version": "3.9",
+  "eval_cmd": "pytest -rA",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-9391:latest",
+  "workdir": "/testbed",
+  "test_patch_paths": [
+   "tests/unit/command/test_experiments.py"
+  ],
+  "gold_paths": [
+   "dvc/commands/experiments/__init__.py"
+  ],
+  "n_f2p": 5,
+  "n_p2p": 24,
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-9391/{gold,empty}/offline/a1/",
+  "signals": {
+   "in_e2": [],
+   "fragile_reference_id": false,
+   "stage1": {
+    "gold": {
+     "verdict": "RESOLVED_FULL",
+     "rc_install": 0,
+     "p2p_missing": 0,
+     "f2p_missing": 0
+    },
+    "empty": {
+     "verdict": "RESOLVED_NO",
+     "rc_install": 0
+    }
+   },
+   "deepseek_candidate_oracle": null
+  }
+ },
+ "public_view": {
+  "目标行为": "题面请求：一次调用里给多个分支各自指定提交数，形如 `dvc exp show --rev main -n 5 --rev other-branch -n 3`，替代目前每个分支调用一次。",
+  "约束": "题面是 VS Code 扩展团队的功能请求（518 字符），没有错误信息、没有版本信息，结尾是问句 `Would it be possible?`。",
+  "公开材料无法确定的点": [
+   "**交付范围**：题面要的是『每个 --rev 配自己的 -n』；gold 只让 `--rev` 可重复（`action=\"append\"`），`-n` 仍然是全局单值。题面请求的功能**没有被实现**。",
+   "内部 API 是否已支持多 rev：hints（不可见）里维护者说 `The internal API already supports multiple revs`，这是判断『只改 CLI 就够』的关键前提，题面没有。",
+   "验收形态：F2P 只是把 5 处 mock 断言里的 `rev=\"foo\"` 改成 `rev=[\"foo\"]`，没有任何一条传两个 `--rev`。"
+  ],
+  "base 关键代码": "dvc/commands/experiments/__init__.py:`add_rev_selection_flags` 里 `--rev` 只有 `type=str, default=None`，没有 `action=\"append\"`；该 helper 被 exp show/list/push/pull/remove 共用。"
+ },
+ "checks": {
+  "1": {
+   "status": "issue",
+   "evidence_refs": [
+    "repos/dvc 8620b6e5afb6b6878d34d2e2b4109bbca93ec60c `exp: Update --rev to support append action.` / `Closes #9390` --stat: dvc/commands/experiments/__init__.py 1, tests/unit/command/test_experiments.py 10"
+   ],
+   "note": "gold+test_patch 与上游一致，无丢件。注意 commit message 写的是 `Closes #9390`，而 instance_id 用的是 PR 号 9391（与 6954 同型：题号来自 PR，issue 号另算）。",
+   "by": "L1_dvc_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base:dvc/commands/experiments/__init__.py add_rev_selection_flags",
+    "stage1 empty: 5 条 F2P 全 FAILED"
+   ],
+   "note": "base 的 `--rev` 确实不可重复。",
+   "by": "L1_dvc_2"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 518 字符；raw hints_text 176 字符"
+   ],
+   "note": "题面完整、无截断、无外链图片，但信息量低（无版本、无复现、以问句收尾）。",
+   "by": "L1_dvc_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 仅 tests/unit/command/test_experiments.py",
+    "gold 仅 dvc/commands/experiments/__init__.py"
+   ],
+   "note": "零交集。additional_exclusions 空。",
+   "by": "L1_dvc_2"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh git checkout 目标"
+   ],
+   "note": "纯测试文件恢复；test_patch 改写的是 5 处既有断言，不是新增用例。",
+   "by": "L1_dvc_2"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan.json 本包路径表"
+   ],
+   "note": "本包无第二题触碰 dvc/commands/experiments/ 或该测试文件。",
+   "by": "L1_dvc_2"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement 的 `--rev main -n 5 --rev other-branch -n 3`",
+    "golden_patch 只加 action=\"append\"",
+    "raw hints_text: `The internal API already supports multiple revs. This should be a simple change to make for the CLI`"
+   ],
+   "note": "**题面请求的功能没有被交付**：per-rev 的 `-n` 需要成对解析（argparse 做不到简单 append），gold 只让 `--rev` 可重复。判断『只改 CLI 就够』所依赖的前提（内部 API 已支持多 rev）只在不可见 hints 里。按题面字面去实现 per-rev `-n` 的解答，会改动 `-n` 的解析并很可能打挂 5 条 F2P 里的 `num=` 断言。",
+   "by": "L1_dvc_2"
+  },
+  "24": {
+   "status": "issue",
+   "evidence_refs": [
+    "F2P 5 条都是 `m.assert_called_once_with(..., rev=[\"foo\"], num=N, ...)` 形式的 mock 断言"
+   ],
+   "note": "F2P 钉死的是**命令层传给 repo API 的关键字参数形状**，而不是 CLI 的实际行为。它既不要求用 `action=\"append\"`，也不要求真的支持多个 `--rev`——只要最终传下去的是 `[\"foo\"]` 即可。",
+   "by": "L1_dvc_2"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "5 条 F2P 里没有任何一条传两个 --rev",
+    "P2P 24 条全是 test_experiments_init/gc/apply/branch/run/save/diff/clean/remove_invalid/remove_special，均不走 --rev"
+   ],
+   "note": "**具体可复现的奖励漏洞**：把 `--rev` 保持单值、然后在 5 个命令的 `run()` 里各写一句 `rev=[self.args.rev] if self.args.rev else None`（或直接给参数加 `type=lambda s: [s]`），5 条 F2P 全过，而『一次传多个 --rev』这个功能根本没实现——因为没有任何测试传过两个。P2P 24 条与 `--rev` 完全无关，提供不了任何拦截。",
+   "by": "L1_dvc_2"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "P2P 24 条清单（全部 test_experiments_init* / gc / apply / branch / run / save / diff / diff_revs / clean / remove_invalid / remove_special）",
+    "smstat.json 9391: gold real=29 全 PASSED"
+   ],
+   "note": "整文件 29 条全绿，但 P2P 的 24 条没有一条经过 `add_rev_selection_flags`（gold 改的那个共享 helper）。它们保护的是同一个 CLI 模块的其它子命令，属于『同文件邻居』而非有针对性的回归。",
+   "by": "L1_dvc_2"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "golden_patch 一行"
+   ],
+   "note": "gold 与上游一致、只有一行、不依赖未交付改动，但它只交付了题面请求的一半（`--rev` 可重复），没有交付 per-rev 的 `-n`。同时 `-n` 与多 rev 组合时的语义（对每个 rev 都取 N 个？总共 N 个？）在 gold 与测试里都没有定义。",
+   "by": "L1_dvc_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak.py: gold_added=1 ps_match=0 hints_match=0；题面与 hints 均无 URL"
+   ],
+   "note": "题面不含修复代码。hints（不可见）几乎直接给出修法方向（『内部 API 已支持，CLI 改一下就行』）。",
+   "by": "L1_dvc_2"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "smstat.json: gold 29/29 全 PASSED；deps_scan2.txt 本题未命中"
+   ],
+   "note": "不受 pathspec/networkx 影响。install 段仍需网络。",
+   "by": "L1_dvc_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 全部走 mocker + CLI parser"
+   ],
+   "note": "无外部资产。",
+   "by": "L1_dvc_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 无 URL/requests"
+   ],
+   "note": "测试段纯内存。",
+   "by": "L1_dvc_2"
+  },
+  "18": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh `pytest -rA tests/unit/command/test_experiments.py`；gold real=29 = F2P 5 + P2P 24"
+   ],
+   "note": "收集集合与 F2P∪P2P 完全相等，零过选零漏选。",
+   "by": "L1_dvc_2"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "伪键 'Could'、'dvc.cli.parser:parser.py:118'"
+   ],
+   "note": "dvc 自身的 CLI 错误日志行进了 status_map；不与真实 nodeid 冲突。",
+   "by": "L1_dvc_2"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "empty 24 PASSED/5 FAILED；gold 29/29"
+   ],
+   "note": "分差恰为 5 条 F2P。",
+   "by": "L1_dvc_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "奖励漏洞（可复现）",
+   "severity": "P1",
+   "evidence_refs": [
+    "5 条 F2P 无一传两个 --rev",
+    "P2P 24 条与 --rev 无关"
+   ],
+   "proposed_action": "补一条真正传两个 `--rev` 的断言（例如 `--rev foo --rev bar` 应得到 `rev=[\"foo\",\"bar\"]`）；没有它，本题无法区分『实现了可重复参数』与『把单值包成列表』。",
+   "next_experiment": "写 `type=lambda s: [s]`（或在各 run() 里包一层列表）的假修复跑 F2P+P2P，预期 RESOLVED_FULL。"
+  },
+  {
+   "category": "题面请求未被交付",
+   "severity": "P2",
+   "evidence_refs": [
+    "problem_statement 的 per-rev -n",
+    "gold 只加 action=append"
+   ],
+   "proposed_action": "把题面改成 gold 真正做的事（『让 `--rev` 可以重复指定』），或补上 per-rev `-n` 的实现与测试。当前题面会诱导解答者去改 `-n` 的解析，而那会打挂 F2P 里的 `num=` 断言。",
+   "next_experiment": "盲解一次只给现题面，统计候选是否改动 `-n/--num`；记录 F2P 通过数。"
+  },
+  {
+   "category": "P2P 与改动无关",
+   "severity": "P2",
+   "evidence_refs": [
+    "P2P 24 条清单"
+   ],
+   "proposed_action": "把 `--rev` 相关的其它路径（exp show/list 的 func 层用例）纳入 P2P，替代目前与改动无关的 init 一族。",
+   "next_experiment": "在 base/gold 上跑 tests/func/test_experiments.py 里带 --rev 的用例，取双侧通过集。"
+  },
+  {
+   "category": "多 rev 与 -n 的组合语义未定义",
+   "severity": "P3",
+   "evidence_refs": [
+    "gold 未改 -n",
+    "无测试覆盖组合"
+   ],
+   "proposed_action": "明确 `--rev a --rev b -n 3` 的语义（每个 rev 取 3 个？合计 3 个？）并补断言。",
+   "next_experiment": "在 gold 上实跑该组合看实际行为。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只有 tests/unit/command/test_experiments.py；gold 只改 dvc/commands/experiments/__init__.py。沿用第四组 B 默认空。",
+  "evidence_refs": [
+   "test_patch",
+   "golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "新增：`dvc exp show --rev foo --rev bar` 应使 `revs=[\"foo\",\"bar\"]`",
+   "reason": "这是本题唯一能区分真实现与包列表式假修复的断言，当前完全缺失。"
+  },
+  {
+   "id": "tests/func/test_experiments.py 中 exp show/list 带 --rev 的端到端用例",
+   "reason": "gold 改的是共享的 rev 选择参数，命令层之外的消费方（repo API 对 list 的处理）零覆盖。"
+  },
+  {
+   "id": "新增：`--rev` 与 `--all-commits`/`-n` 组合的参数校验",
+   "reason": "改成 append 后互斥/组合校验是否仍正确没有验证。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "F2P 5 条只是把 mock 断言里的 `rev=\"foo\"` 改成 `rev=[\"foo\"]`，没有任何一条传两个 `--rev`，P2P 24 条又全与 `--rev` 无关——把单值包成列表的假修复即可满分；同时题面请求的 per-rev `-n` 并没有被 gold 交付。补一条多 rev 断言并改题面后可用。"
+ },
+ "costs": {
+  "minutes": 15
+ },
+ "by": "L1_dvc_2 (Claude Opus 5, 2026-09-16, 静态审查)"
+}

@@ -1,0 +1,204 @@
+{
+ "task_id": "pydantic__pydantic-6043",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_pydantic (Claude Opus 5, 2026-09-16 夜)",
+ "materials_refs": [
+  "s2/ingest/*_bundles_v0.jsonl (pydantic__pydantic-6043)",
+  "repos/pydantic@d476599c(见 grading.base_commit)",
+  "runs/env_probe_stage1_20260910/.../pydantic__pydantic-6043/"
+ ],
+ "public_view": {
+  "目标行为": "让 model_json_schema() 产出的 JSON schema 尽量确定性有序，使测试断言不因内部重构而变化。题面建议“在 json schema 生产的最后插一个递归排序 key 和 item 的函数”。",
+  "约束": "题面用的是“at the very least / best-effort”，没有给任何验收标准。",
+  "公开材料无法确定的点": [
+   "排序范围：只排 dict key？还是也排 list（题面写的是 'keys and items'）？required 列表、enum 值、$defs 要不要排？",
+   "排序时机：generate() 出口、generate_definitions() 出口，还是两者都要",
+   "题面**没有任何示例代码、没有期望输出、没有复现步骤**（全文只有 3 段散文，783 字符，是本包最短的题面）"
+  ],
+  "base 定位": "pydantic/json_schema.py:261 `return refs_map, self.definitions` 与 :318 `return json_schema`，出口不做任何排序。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "tests/test_json_schema.py、pydantic/json_schema.py 在 base 均存在"
+   ],
+   "note": "对应同一诉求。本题是**维护者自提的改进需求**，不是用户 bug 报告。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "json_schema.py:261/318",
+    "stage1 empty：test_by_alias FAILED"
+   ],
+   "note": "base 确实不排序。",
+   "by": "static+stage1log"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement 全文 783 字符、无代码块、无期望输出",
+    "hints_text 为空"
+   ],
+   "note": "P2：实际输入只有一段散文诉求，没有任何可执行的验收线索；agent 无法从公开材料判断“排到什么程度算修好”。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只碰 tests/test_json_schema.py；F2P+P2P 304 条全在该文件；gold 只碰 pydantic/json_schema.py"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "static"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "同 gold 文件 json_schema.py 的还有 6126、9066；不同函数不同 PR"
+   ],
+   "note": "不是派生。但注意 6043 的 `version` 字段是 2.02，created_at 2023-06-08，比 `version` 2.04 的 5706（2023-05-06）还晚——上游 version 字段与时间序不一致，做版本分层时不要依赖它。",
+   "by": "static"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "install rc=2。",
+   "by": "stage1log"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "测试第三方 import：pytest / pydantic_core"
+   ],
+   "note": "无外部资产。",
+   "by": "static"
+  },
+  "10": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "无本题轨迹。",
+   "by": "-"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "只有 install 需要网络。",
+   "by": "stage1log"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "同 check 3"
+   ],
+   "note": "P1 要求不充分：'best-effort deterministically sorted' 没有可判定的边界。gold 选择了“递归排 dict key、不排 list”，这只是众多合理选择之一，公开材料推不出来。",
+   "by": "static"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 只有 1 条断言：`list(ApplePie.model_json_schema(by_alias=True)['properties'].keys()) == ['Crackle','Snap']`"
+   ],
+   "note": "不强制唯一实现（反而过松，见 25）。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "F2P 是**既有测试 test_by_alias 的断言被改写**（`['Snap','Crackle']` → `['Crackle','Snap']`），test_patch 没有新增任何测试函数",
+    "其余 303 条 P2P 都是 dict 相等断言，与 key 顺序无关",
+    "静态复核：对 base 测试文件 + test_patch 做断言级扫描（见 summary.md 的“静态复核补强”）"
+   ],
+   "note": "P1 **已静态复核**：判分文件 tests/test_json_schema.py（184 个测试块）里依赖 JSON schema key 顺序的断言只有 **1 条非平凡的**——即 F2P 的 test_by_alias 那两元素列表。另外 3 处看似相关的都不构成约束：test_schema_class_by_alias 是单元素列表、test_by_alias_generator 与 test_multiple_models_with_same_name 用的是 set 比较、test_ref_template 的 json.dumps 只做子串检查（'foobar/KeyLimePie.json' in json_schema）。所以只在 generate() 出口对顶层 properties 做一次 sorted() 的最小改动即可全绿，不需要递归、不需要处理 generate_definitions。这是本包判分最弱的一题。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "gold 改的是所有 JSON schema 的出口，影响面覆盖 tests/test_dataclasses.py、tests/test_docs.py、tests/test_fastapi_json_schema.py 等；判分面只有 tests/test_json_schema.py"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "static"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "golden_patch 的 `_sort_json_schema`：`elif isinstance(value, list): for item in value: sorted_list.append(_sort_json_schema(item))` —— 只递归，**不排序** list"
+   ],
+   "note": "P2：题面明确说 'recursively sorts keys **and items**'，gold 对 list 只做递归不做排序，即没有实现题面写的一半。这不是 gold 有 bug（不排 list 是合理的，排了会破坏 allOf/anyOf 语义），而是**题面与 gold 不一致**；按题面字面去实现（连 list 也排）反而可能挂掉 P2P。",
+   "by": "static"
+  },
+  "29": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement 末段：'we could insert a function at the end of the json schema production that goes through it and recursively sorts keys and items'"
+   ],
+   "note": "P3：题面（维护者自己写的）直接描述了实现方案；不是流水线泄漏，但降低难度。",
+   "by": "static"
+  },
+  "31": {
+   "status": "issue",
+   "evidence_refs": [
+    "R4"
+   ],
+   "note": "静态残余面。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "oracle_almost_empty",
+   "severity": "P1",
+   "evidence_refs": [
+    "check 25"
+   ],
+   "proposed_action": "本题不宜作为训练样本：F2P 是改写既有断言得到的单条 key 顺序检查，最小 hack 即可满分。若保留，需补“嵌套 $defs 内的 key 也有序”“generate_definitions 出口有序”等断言。",
+   "next_experiment": "在镜像里只对 generate() 返回值的顶层 properties 做一次 sorted()，跑官方 304 条看是否全绿"
+  },
+  {
+   "category": "spec_underspecified",
+   "severity": "P1",
+   "evidence_refs": [
+    "check 3",
+    "check 23"
+   ],
+   "proposed_action": "题面无验收标准；若保留需补明确范围",
+   "next_experiment": "无"
+  },
+  {
+   "category": "statement_vs_gold_mismatch",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 27"
+   ],
+   "proposed_action": "标注题面说的 'sorts keys and items' 与 gold 只排 key 不排 item 的差异",
+   "next_experiment": "按题面字面实现（连 list 也排序）跑 304 条，看会不会挂"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 仅纯测试文件、gold 仅生产代码、判分面与恢复面一致。",
+  "evidence_refs": [
+   "grading.json.test_patch",
+   "validation.json.golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  "嵌套 $defs 内部 key 有序（如 test_json_schema.py 里带 $defs 的模型，断言 list(schema['$defs']['X'].keys()) 有序）— 选择依据：gold 的递归是核心，F2P 完全没覆盖",
+  "generate_definitions() 出口有序（models_json_schema(...) 的返回）— 选择依据：gold 改了两个出口，F2P 只覆盖一个",
+  "allOf/anyOf 列表顺序**不变** — 选择依据：把“list 不排序”固化为要求，防止照题面字面实现",
+  "tests/test_docs.py 与 tests/test_fastapi_json_schema.py — 选择依据：这两个文件比较 schema 的文本/结构表示，最可能被全局排序改动影响，且都不在判分面"
+ ],
+ "disposition_hint": {
+  "state": "reject_revision",
+  "reason": "题面是一段无验收标准的散文诉求，F2P 是改写既有断言得到的单条 key 顺序检查，最小 hack 即可满分，且题面与 gold 对 'items' 的处理不一致。作为 RL 样本信噪比过低，建议本修订版本剔除或重写题面+扩判分面后再入。"
+ },
+ "costs": {
+  "minutes": 15
+ }
+}

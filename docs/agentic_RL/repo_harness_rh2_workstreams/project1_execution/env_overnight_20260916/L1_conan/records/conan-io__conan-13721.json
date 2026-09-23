@@ -1,0 +1,199 @@
+{
+ "task_id": "conan-io__conan-13721",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "0efbe7e49fdf554da4d897735b357d85b2a75aca",
+  "version": "2.0",
+  "image": "xingyaoww/sweb.eval.x86_64.conan-io_s_conan-13721:latest",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/conan-io__conan-13721/{gold,empty}/offline/a1/",
+  "pkg_scans": "runs/env_overnight_20260916/L1_conan/{prescan2,envscan,collide}.json"
+ },
+ "public_view": {
+  "目标行为": "题面是 feature 请求：在 profile 的 jinja 渲染上下文里加一个 profile_name 变量，这样成百上千个按 <os>_<compiler>_<version>_<arch> 命名的 .jinja profile 可以共用一个生成器宏。相关代码：conans/client/profile_loader.py::_load_profile 里已有的 context 字典（platform / os / profile_dir / conan_version）。",
+  "约束": "只改非测试源码；既有的 profile_dir、conan_version 等变量语义不能变。",
+  "公开材料无法确定的点": [
+   "profile_name 到底是带扩展名的文件名、不带扩展名的文件名、还是用户传给 -pr 的原始字符串。题面的例子 windows_msvc_v1933_x86.jinja 里，宏收到的参数 windows_msvc_v1933_x86 是不带扩展名的——这与判分要求相反。",
+   "profile 之间 include 时，被 include 的 profile 里 profile_name 应该是谁。"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 唯一路径 conans/test/integration/configuration/test_profile_jinja.py 在 base 存在（108 行）",
+    "gold 唯一路径 conans/client/profile_loader.py 在 base 存在"
+   ],
+   "note": "同一 PR、同一需求。无二进制/LFS/子模块。",
+   "by": "L1_conan"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show 0efbe7e4:conans/client/profile_loader.py L158-166 的 context 字典无 profile_name",
+    "stage1 empty：F2P FAILED"
+   ],
+   "note": "base 确实没有该变量。这是 feature 类任务，不是缺陷修复。",
+   "by": "L1_conan"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 1535 字符，含两段 jinja 代码块",
+    "raw.hints_text 509 字符：维护者说可以做、要 PR 到 release/2.0 分支"
+   ],
+   "note": "题面完整、无外链资产。",
+   "by": "L1_conan"
+  },
+  "4_17": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan2.json: test_patch 只碰 conans/test/integration/configuration/test_profile_jinja.py"
+   ],
+   "note": "纯测试文件；gold 不碰测试路径。",
+   "by": "L1_conan"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "本包内无其它 profile_loader 题"
+   ],
+   "note": "无同族题。",
+   "by": "L1_conan"
+  },
+  "23": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "F2P 第二段断言：client.run(\"install . -pr=another_folder/foo.profile\") 之后要求 PROFILE NAME: foo.profile（保留扩展名）",
+    "题面的例子里宏参数是 windows_msvc_v1933_x86，对应文件是 windows_msvc_v1933_x86.jinja（不含扩展名）"
+   ],
+   "note": "题面给的唯一语义线索指向不带扩展名，判分要求带扩展名。一个照题面实现 os.path.splitext(os.path.basename(path))[0] 的合理解会在 foo.profile 这一条断言上失败（foobar / default / baz 三条仍会过），属于部分失败。另外 include 场景下 profile_name 的期望也没有公开依据。",
+   "by": "L1_conan"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 只通过 user.profile:name 这个 conf 值观察结果，不检查实现"
+   ],
+   "note": "只要把文件名放进 jinja context 即可，不限定变量怎么算出来。",
+   "by": "L1_conan"
+  },
+  "25": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "F2P 的 5 段断言覆盖 相对路径 / 带扩展名 / cache 内 default / cache 内普通 profile / include 场景"
+   ],
+   "note": "覆盖面其实不错；漏放的是题面真正的用例——用 profile_name 在 jinja 里 split 出 os/compiler/arch 再 include fragments，没有端到端验证。",
+   "by": "L1_conan"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "P2P 6 条覆盖同文件的 test_profile_template / _variables / _include / _import / _profile_dir / test_profile_version"
+   ],
+   "note": "profile_dir 与 conan_version 的既有语义由 P2P 守住。",
+   "by": "L1_conan"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 2 行新增"
+   ],
+   "note": "gold 最小、与题对应、不依赖未交付改动。",
+   "by": "L1_conan"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "scripts/leak.py: 2 行 gold 新增，0 命中题面"
+   ],
+   "note": "无静态泄漏。",
+   "by": "L1_conan"
+  },
+  "6_7_11": {
+   "status": "pass",
+   "evidence_refs": [
+    "envscan.json: 该文件无 @pytest.mark.tool、无 http/网络命中",
+    "stage1 gold 7/7 PASSED、0 SKIPPED"
+   ],
+   "note": "TestClient 使用临时 cache（测试里显式写 client.cache.profiles_path 下的 default/baz），不访问 conancenter，不写真实家目录。",
+   "by": "L1_conan"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "scripts/collide.py 无输出"
+   ],
+   "note": "7 个参考 ID 无参数化。",
+   "by": "L1_conan"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan2.json: gold 7/7 PASSED；empty 6 PASSED + 1 FAILED"
+   ],
+   "note": "分差来自目标行为。",
+   "by": "L1_conan"
+  },
+  "31": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "conans/test/.gitignore 第 1 行就是 conftest_user.py（1.51/1.54/1.60/2.0/2.1 五个 base 一致）",
+    "conans/test/conftest.py 用 from conans.test.conftest_user import tools_locations（1.x）/ tools_locations + default_profiles（2.x）并 merge 覆盖默认值",
+    "scripts 补扫：本题目标测试文件里无模块级 pytestmark、无 pytest.mark.tool、无 pytest.skip(、无 sys.exit/os._exit、无 conftest_user 引用"
+   ],
+   "note": "发现一个仓库级控制面：候选可以在 /testbed 新建 conans/test/conftest_user.py，它被官方 conftest 无条件 import 并 merge，而且它在 conans/test/.gitignore 里、也不在 test_patch 路径内，所以既不会被 git checkout <base> -- <path> 恢复，也不会被不带 -x 的 git clean 删掉；文件里的任意代码会在 pytest 收集阶段执行。本题是 conan 2.x：conans/test/utils/tools.py 从 conftest import default_profiles 并在 TestClient 里用作默认 host profile，所以改 conftest_user.py 能直接改变 TestClient 的 settings。 本题用 TestClient 跑集成测试，受 default_profiles 影响面更大。 本题的 F2P/P2P 本身没有可被跳过或提前退出的入口（见上条补扫）。按第四组 B，未发现依据前不新增排除清单，只记录观测。",
+   "by": "L1_conan"
+  }
+ },
+ "issues": [
+  {
+   "category": "requirement_underspecified",
+   "severity": "P2",
+   "evidence_refs": [
+    "public.problem_statement 的 jinja 例子",
+    "grading.test_patch 的 foo.profile 断言"
+   ],
+   "proposed_action": "题面补一句 profile_name 等于 profile 文件名（含扩展名），或把 foo.profile 那条断言从 F2P 里摘出当诊断项。",
+   "next_experiment": "实现两个版本（含扩展名 / 去扩展名）各跑一次 F2P，确认去扩展名版本恰好只挂 foo.profile 一条，用来量化题面误导的代价。"
+  },
+  {
+   "category": "control_surface_conftest_user",
+   "severity": "P2",
+   "evidence_refs": [
+    "conans/test/.gitignore:1",
+    "conans/test/conftest.py 的 conftest_user import 段",
+    "conans/test/utils/tools.py 的 from conans.test.conftest import default_profiles（仅 2.x）"
+   ],
+   "proposed_action": "仓库级处置，见 repo_level_findings.md §10：建议在 conan 的评分配方里，在可信 setup 阶段删除 /testbed/conans/test/conftest_user.py（或对整个 conans/test/ 做 git clean -xfd 后再 checkout），而不是逐题加 additional_exclusions。",
+   "next_experiment": "在 conan 镜像里写一个 conftest_user.py（例如 tools_locations={'cmake':{'disabled':True}} 或 2.x 下改 default_profiles['Linux'] 的 compiler），跑本题官方 eval，确认它是否改变逐 ID 结果；同时确认 RH2 的恢复步骤之后该文件是否仍在。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰纯测试文件；gold 不碰测试路径。",
+  "evidence_refs": [
+   "runs/env_overnight_20260916/L1_conan/prescan2.json"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "conans/test/integration/configuration/profile_test.py",
+   "reason": "沿调用者：_load_profile 的主要使用方，覆盖非 jinja profile 的加载与 include 链，能抓到 context 变更影响普通 profile。"
+  },
+  {
+   "id": "conans/test/unittests/client/profile_loader/profile_loader_test.py",
+   "reason": "同模块单测，直接覆盖 _load_profile 的解析分支。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "机制完全干净、gold 最小、P2P 充分；唯一问题是扩展名语义与题面例子相反，属于一条断言的边界，可在探针里量化。"
+ },
+ "costs": {
+  "minutes": 18
+ }
+}

@@ -1,0 +1,71 @@
+{
+ "task_id": "Project-MONAI__MONAI-3547",
+ "source": "SWE-Gym lite / Project-MONAI/MONAI PR 3547 (created_at 2021-12-24)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "29bc93be64d1186671fff3a6917787d7d4fd4546",
+  "version": "0.8", "python_version": "3.8",
+  "eval_cmd": "pytest -rA ", "actual_test_cmd": "pytest -rA  tests/test_set_determinism.py",
+  "f2p": ["tests/test_set_determinism.py::TestSetDeterminism::test_values"],
+  "p2p_n": 0,
+  "test_patch_paths": ["tests/test_set_determinism.py"],
+  "gold_paths": ["monai/utils/misc.py"],
+  "stage1": "gold=RESOLVED_FULL（1 PASSED + 1 SKIPPED，4.80s）/ empty=RESOLVED_NO（1 FAILED + 1 SKIPPED），rc_install=0"
+ },
+ "public_view": {
+  "goal": "调用过 `torch.backends.disable_global_flags()` 之后再调 `set_determinism(seed=...)` 会抛 `RuntimeError: not allowed to set torch.backends.cudnn flags after disable_global_flags`。要求 set_determinism 在这种全局状态下也能工作。",
+  "constraints": ["题面 739 字符，附完整 traceback（含出错行 monai/utils/misc.py:255 与 torch 的报错文本）", "题面最后一句『Would be nice to enhance the utility for the global status』很含糊，没说期望语义"],
+  "unknowns_from_public_only": [
+   "期望语义是『强行解冻全局标志』还是『用 flags() 上下文管理器局部设置』？torch 的报错文本推荐后者，gold 选了前者（并加一条 warning）",
+   "要不要在函数结束时把冻结状态恢复回去？gold 不恢复（副作用是全局解冻）",
+   "要不要发警告？gold 发了，但没有任何测试断言它"
+  ],
+  "base_code_evidence": [
+   "29bc93be6:monai/utils/misc.py set_determinism 中 `torch.backends.cudnn.deterministic = True` / `benchmark = False` 直接写全局标志（题面 traceback 指的就是这里）",
+   "29bc93be6:tests/test_set_determinism.py:21-50 TestSetDeterminism.test_values；:53-66 TestSetFlag（带 @skip_if_no_cuda）"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["tests/test_set_determinism.py 在 base 存在（69 行）", "gold 目标 monai/utils/misc.py 存在，hunk 上下文匹配；gold 用的 `warnings` 在该文件 base 已导入"], "note": "无二进制/LFS/子模块。", "by": "L1_monai_1"},
+  "2": {"status": "pass", "evidence_refs": ["题面 traceback 指向 misc.py:255", "stage1 empty 侧 test_values FAILED"], "note": "base 确含题面所述缺陷。", "by": "L1_monai_1"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 739 字符，含完整 traceback", "raw hints_text 为空"], "note": "无外链/图片/截断。traceback 里的 `/workspace/data/medical/MONAI/` 是报告者的私有路径，不影响理解。", "by": "L1_monai_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 只碰 tests/test_set_determinism.py"], "note": "无非测试源码。additional_exclusions 保持空。", "by": "L1_monai_1"},
+  "17": {"status": "pass", "evidence_refs": ["同上"], "note": "恢复不覆盖候选源码。", "by": "L1_monai_1"},
+  "5": {"status": "pass", "evidence_refs": ["dupidx.txt：monai/utils/misc.py 在 26 道 MONAI 题里只被本题改"], "note": "无重复/派生。", "by": "L1_monai_1"},
+  "23": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["题面只要求『不要报错』，没说解冻还是局部 bracket", "test_patch 只插入一行 `torch.backends.disable_global_flags()`，没有任何新断言"], "note": "要求勉强够用（『别抛 RuntimeError』是可推出的），但『期望的全局状态语义』完全未定义：gold 选择永久解冻并发警告，一个等价合理的『用 torch.backends.flags() 局部设置、退出后仍保持冻结』的实现也能过 F2P，但两者留下的进程状态完全不同。", "by": "L1_monai_1"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 的断言全是 base 已有的（seed 一致性、cudnn.deterministic 值），test_patch 没加新断言"], "note": "不强制唯一实现：解冻式与 bracket 式都能过。", "by": "L1_monai_1"},
+  "25": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["P2P = []（零回归保护）", "test_values 第 48-49 行仍断言 `torch.backends.cudnn.deterministic` 为 True、benchmark 为 False"], "note": "**可被放过的错误修复**：把 misc.py 里那两行 cudnn 赋值整个包进 `try/except RuntimeError: pass` 会让异常消失，但 deterministic 不会被设成 True，第 48 行断言随即失败——所以这一条被挡住了。真正的漏洞在别处：候选可以只解冻一次而不恢复、或者直接在 monai 导入时全局调用 `torch.backends.__allow_nonbracketed_mutation_flag = True`（把整个库的全局标志保护永久关掉），F2P 照样满分。P2P 为空意味着 set_determinism 的其它职责（numpy/random/torch 种子、additional_settings、use_deterministic_algorithms）全无保护。", "by": "L1_monai_1"},
+  "26": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["P2P = []"], "note": "见 proposed_regression_tests。", "by": "L1_monai_1"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 只加 4 行（flags_frozen 判断 + warning + 解冻）"], "note": "改动最小、精确对应、不依赖未交付改动。可商榷之处：永久解冻是副作用式修法，且 `torch.backends.__allow_nonbracketed_mutation_flag` 是 torch 的私有变量。", "by": "L1_monai_1"},
+  "29": {"status": "pass", "evidence_refs": ["题面无 PR/commit 链接、不含修复代码"], "note": "无泄漏。但题面引用的 torch 报错文本自带『please use flags() context manager instead』——这是一条**指向另一种修法**的强提示，而 gold 没采用它。", "by": "L1_monai_1"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 rc_install=0"], "note": "安装离线可完成。", "by": "L1_monai_1"},
+  "7": {"status": "pass", "evidence_refs": ["测试不读盘、不下载"], "note": "无外部资产。", "by": "L1_monai_1"},
+  "11": {"status": "pass", "evidence_refs": ["stage1 离线跑通，4.80s"], "note": "不需要网络。", "by": "L1_monai_1"},
+  "10": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["test_patch 插入的 `torch.backends.disable_global_flags()` **不可逆**：它把进程级的 `__allow_nonbracketed_mutation_flag` 置 False，测试自身不恢复", "test_values 开头第 25 行断言 `not torch.backends.cudnn.deterministic`（依赖『进程刚启动时的系统默认』）"], "note": "**测试顺序/进程状态依赖**：(a) 这条用例改写了进程级全局状态且不还原——当前评分只跑这一个文件所以后果有限，但只要把 P2P 扩成多文件同进程跑，它会污染后续所有碰 torch.backends 的测试；(b) 反过来，test_values 开头假定 cudnn.deterministic 仍是系统默认 False，若有别的用例先跑过 set_determinism 就会失败。用 gold 时污染会被 set_determinism 的解冻副作用抵消，用 bracket 式修法则不会——**同一份测试对不同的正确实现留下不同的进程状态**。", "by": "L1_monai_1"},
+  "18": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["两侧 status_map 都含伪条目 {'[1]': 'SKIPPED'}", "gold/offline/a1/test_output.txt:678 `SKIPPED [1] tests/test_set_determinism.py:59: Skipping CUDA-based tests`", "rh2/src/repoharness2/envpack/swegym_parsers.py:47-58"], "note": "pytest `-rA` 的 SKIPPED 摘要行格式是 `SKIPPED [n] 文件:行号: 原因`，**不含 nodeid**，所以 `parse_log_pytest` 记下的键是 `[1]`。推论（跨仓库）：**任何被 skip 的 F2P/P2P 用例都不会以自己的 nodeid 出现在 status_map 里，会被当成『缺席』计为失败**——`get_eval_tests_report` 的『SKIPPED 不进桶』分支在 pytest -rA 下永远触发不了。本题里被跳过的 TestSetFlag::test_algo 不在名单中，所以无判分影响。", "by": "L1_monai_1"},
+  "20": {"status": "pass", "evidence_refs": ["gold 1 PASSED / empty 1 FAILED，差异只在 F2P"], "note": "分差干净。", "by": "L1_monai_1"}
+ },
+ "issues": [
+  {"category": "grading_parser_skipped_ids", "severity": "P1",
+   "evidence_refs": ["gold/offline/a1/test_output.txt:678", "两侧 status_map 的 {'[1]': 'SKIPPED'}", "rh2/src/repoharness2/envpack/swegym_parsers.py:47-58", "rh2/src/repoharness2/envpack/scoring.py:199-201 注释『SKIPPED 不进桶』"],
+   "proposed_action": "这是**跨仓库的评分机制问题**，不只本题：SKIPPED 用例在 pytest -rA 摘要里没有 nodeid，parser 只能记到 `[n]`，于是名单里的 skip 会被当作缺席→失败。对含 `@skip_if_no_cuda` / `@skip_if_quick` / `SkipIfNoModule` 的题（MONAI 大量使用），换一台没有某依赖的机器就会让 gold 判 RESOLVED_NO。建议：改用 `--tb=no -q -rA` 之外再加 `--junitxml` 或 `-p no:cacheprovider` 之类能拿到逐 nodeid 结果的通道，或在 runner 侧直接解析 pytest 的 report hook。",
+   "next_experiment": "挑一道 F2P/P2P 里含 skip 装饰器的题（先用脚本扫 216 题的 F2P/P2P 名字在 base 里是否带 skip 标记），在无 CUDA 机器上跑 gold，确认它是否被判 RESOLVED_NO。"},
+  {"category": "global_state_pollution", "severity": "P2",
+   "evidence_refs": ["test_patch 插入 torch.backends.disable_global_flags() 且不恢复", "gold 的解冻是永久性的"],
+   "proposed_action": "本题的用例会不可逆地改写进程级 torch.backends 状态。若将来把 MONAI 的 P2P 扩成多文件同进程跑，必须把它隔离（单独进程 / fixture 恢复）。也建议在 test 末尾补一条『恢复冻结状态』。",
+   "next_experiment": "把 tests/test_set_determinism.py 与任意一个会设 cudnn 标志的测试文件放在同一条 pytest 命令里跑，观察顺序依赖。"},
+  {"category": "no_regression_coverage", "severity": "P1",
+   "evidence_refs": ["pass_to_pass == []"],
+   "proposed_action": "P2P 为空。set_determinism 是全库随机性入口，建议纳入 tests/test_set_determinism.py 整文件之外，再加 tests/test_randomizable.py 之类依赖种子的用例作为基线。",
+   "next_experiment": "在 gold 上跑一批依赖 set_determinism 的测试取基线通过集，评估耗时。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只碰测试文件，gold 只碰 monai/utils/misc.py。", "evidence_refs": ["grading_bundles_v2_v0:Project-MONAI__MONAI-3547 test_patch", "validation_bundles_v0:Project-MONAI__MONAI-3547 golden_patch"]},
+ "proposed_regression_tests": [
+  {"id": "新增：set_determinism(seed) 后 numpy/random/torch 三路种子确实生效（与 base 行为一致）", "reason": "P2P 为空，函数的主职责零保护。"},
+  {"id": "新增：解冻后再次 disable_global_flags 仍能工作（幂等性）", "reason": "gold 只在 flags_frozen() 为真时解冻一次，重复调用路径无覆盖。"},
+  {"id": "新增：warning 被发出（gold 的 warnings.warn）", "reason": "gold 的用户可见行为之一，当前无断言。"},
+  {"id": "tests/test_set_determinism.py 整文件（含 TestSetFlag，CUDA 机器上）", "reason": "TestSetFlag 覆盖 use_deterministic_algorithms 路径，但需要 GPU；在 CPU 评分机上它会被 skip，参见检查 18 的机制问题。"}
+ ],
+ "disposition_hint": {"state": "needs_repair", "reason": "题面与 gold 对应清楚、离线 4.8s，但 P2P=0，且这道题把两个机制问题暴露得最清楚：SKIPPED 用例无法进 status_map、测试不可逆地改写进程级全局状态。补 P2P 并确认 skip 处理后可用。"},
+ "costs": {"minutes": 21}
+}

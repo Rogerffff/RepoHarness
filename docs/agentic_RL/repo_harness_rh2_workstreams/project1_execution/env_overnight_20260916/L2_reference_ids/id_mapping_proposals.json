@@ -1,0 +1,499 @@
+{
+ "schema": "rh2.l2.id_mapping_proposals.v0",
+ "generated_by": "env_overnight_20260916/L2_reference_ids",
+ "parser_version_tag": "swegym_parsers@242429c1",
+ "rule": "参考 ID 直接命中优先；仅对缺席参考 ID 做一次 unicode_escape 解码回退，且要求唯一命中。",
+ "diff_type_legend": {
+  "E1": "非 BMP 字符的 \\UXXXXXXXX ASCII 转义（emoji）",
+  "E2": "latin-1 范围字符的 \\xNN ASCII 转义",
+  "E3": "字面反斜杠被双写（\\ -> \\\\）",
+  "E4": "bytes 参数逐字节 \\xNN 转义（参考侧呈 latin-1 mojibake）",
+  "E5": "控制字符（U+0012 / U+0081）的 \\xNN 转义",
+  "T1": "nodeid 含空格导致 parser 空白切分截断（参考侧也已截断）",
+  "T2": "截断键碰撞：多条完整用例写入同一键，dict last-wins（一对多）",
+  "V1": "pydantic 行尾状态词分支下，含空格 nodeid 的“状态”被写成 nodeid 里的单词"
+ },
+ "n_proposals": 18,
+ "n_provable": 18,
+ "n_ambiguous": 0,
+ "proposals": [
+  {
+   "instance_id": "getmoto__moto-5417",
+   "kind": "P2P",
+   "original_reference_id": "tests/test_s3/test_s3_multipart.py::test_multipart_upload_with_copy_key[the-unicode-💩-key]",
+   "original_reference_id_repr": "'tests/test_s3/test_s3_multipart.py::test_multipart_upload_with_copy_key[the-unicode-💩-key]'",
+   "mapped_log_nodeid": "tests/test_s3/test_s3_multipart.py::test_multipart_upload_with_copy_key[the-unicode-\\U0001f4a9-key]",
+   "mapped_log_nodeid_repr": "'tests/test_s3/test_s3_multipart.py::test_multipart_upload_with_copy_key[the-unicode-\\\\U0001f4a9-key]'",
+   "mapping_rule": "unicode_escape_decode(log_nodeid) == original_reference_id",
+   "candidates_n": 1,
+   "verdict": "provable_one_to_one_key_mapping",
+   "diff_types": [
+    "E1"
+   ],
+   "status_in_gold": "PASSED",
+   "status_in_empty": "PASSED",
+   "full_nodeids_collapsed_into_key": 1,
+   "semantics_note": "该键在本日志中由唯一一条摘要行写入。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=getmoto__moto-5417:pass_to_pass",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5417/gold/offline/a1/test_output.txt:709"
+   ],
+   "evidence_raw_lines": [
+    "'PASSED tests/test_s3/test_s3_multipart.py::test_multipart_upload_with_copy_key[the-unicode-\\\\U0001f4a9-key]'"
+   ]
+  },
+  {
+   "instance_id": "getmoto__moto-5545",
+   "kind": "P2P",
+   "original_reference_id": "tests/test_s3/test_s3_multipart.py::test_multipart_upload_with_copy_key[the-unicode-💩-key]",
+   "original_reference_id_repr": "'tests/test_s3/test_s3_multipart.py::test_multipart_upload_with_copy_key[the-unicode-💩-key]'",
+   "mapped_log_nodeid": "tests/test_s3/test_s3_multipart.py::test_multipart_upload_with_copy_key[the-unicode-\\U0001f4a9-key]",
+   "mapped_log_nodeid_repr": "'tests/test_s3/test_s3_multipart.py::test_multipart_upload_with_copy_key[the-unicode-\\\\U0001f4a9-key]'",
+   "mapping_rule": "unicode_escape_decode(log_nodeid) == original_reference_id",
+   "candidates_n": 1,
+   "verdict": "provable_one_to_one_key_mapping",
+   "diff_types": [
+    "E1"
+   ],
+   "status_in_gold": "PASSED",
+   "status_in_empty": "PASSED",
+   "full_nodeids_collapsed_into_key": 1,
+   "semantics_note": "该键在本日志中由唯一一条摘要行写入。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=getmoto__moto-5545:pass_to_pass",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5545/gold/offline/a1/test_output.txt:1460"
+   ],
+   "evidence_raw_lines": [
+    "'PASSED tests/test_s3/test_s3_multipart.py::test_multipart_upload_with_copy_key[the-unicode-\\\\U0001f4a9-key]'"
+   ]
+  },
+  {
+   "instance_id": "getmoto__moto-5562",
+   "kind": "P2P",
+   "original_reference_id": "tests/test_s3/test_s3.py::test_key_with_special_characters[/the-key-unîcode/test]",
+   "original_reference_id_repr": "'tests/test_s3/test_s3.py::test_key_with_special_characters[/the-key-unîcode/test]'",
+   "mapped_log_nodeid": "tests/test_s3/test_s3.py::test_key_with_special_characters[/the-key-un\\xeecode/test]",
+   "mapped_log_nodeid_repr": "'tests/test_s3/test_s3.py::test_key_with_special_characters[/the-key-un\\\\xeecode/test]'",
+   "mapping_rule": "unicode_escape_decode(log_nodeid) == original_reference_id",
+   "candidates_n": 1,
+   "verdict": "provable_one_to_one_key_mapping",
+   "diff_types": [
+    "E2"
+   ],
+   "status_in_gold": "PASSED",
+   "status_in_empty": "PASSED",
+   "full_nodeids_collapsed_into_key": 1,
+   "semantics_note": "该键在本日志中由唯一一条摘要行写入。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=getmoto__moto-5562:pass_to_pass",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5562/gold/offline/a1/test_output.txt:1544"
+   ],
+   "evidence_raw_lines": [
+    "'PASSED tests/test_s3/test_s3.py::test_key_with_special_characters[/the-key-un\\\\xeecode/test]'"
+   ]
+  },
+  {
+   "instance_id": "getmoto__moto-5701",
+   "kind": "P2P",
+   "original_reference_id": "tests/test_s3/test_s3.py::test_key_with_special_characters[/the-key-unîcode/test]",
+   "original_reference_id_repr": "'tests/test_s3/test_s3.py::test_key_with_special_characters[/the-key-unîcode/test]'",
+   "mapped_log_nodeid": "tests/test_s3/test_s3.py::test_key_with_special_characters[/the-key-un\\xeecode/test]",
+   "mapped_log_nodeid_repr": "'tests/test_s3/test_s3.py::test_key_with_special_characters[/the-key-un\\\\xeecode/test]'",
+   "mapping_rule": "unicode_escape_decode(log_nodeid) == original_reference_id",
+   "candidates_n": 1,
+   "verdict": "provable_one_to_one_key_mapping",
+   "diff_types": [
+    "E2"
+   ],
+   "status_in_gold": "PASSED",
+   "status_in_empty": "PASSED",
+   "full_nodeids_collapsed_into_key": 1,
+   "semantics_note": "该键在本日志中由唯一一条摘要行写入。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=getmoto__moto-5701:pass_to_pass",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5701/gold/offline/a1/test_output.txt:1505"
+   ],
+   "evidence_raw_lines": [
+    "'PASSED tests/test_s3/test_s3.py::test_key_with_special_characters[/the-key-un\\\\xeecode/test]'"
+   ]
+  },
+  {
+   "instance_id": "getmoto__moto-6308",
+   "kind": "P2P",
+   "original_reference_id": "tests/test_s3/test_s3_copyobject.py::test_copy_key_boto3[the-unicode-💩-key]",
+   "original_reference_id_repr": "'tests/test_s3/test_s3_copyobject.py::test_copy_key_boto3[the-unicode-💩-key]'",
+   "mapped_log_nodeid": "tests/test_s3/test_s3_copyobject.py::test_copy_key_boto3[the-unicode-\\U0001f4a9-key]",
+   "mapped_log_nodeid_repr": "'tests/test_s3/test_s3_copyobject.py::test_copy_key_boto3[the-unicode-\\\\U0001f4a9-key]'",
+   "mapping_rule": "unicode_escape_decode(log_nodeid) == original_reference_id",
+   "candidates_n": 1,
+   "verdict": "provable_one_to_one_key_mapping",
+   "diff_types": [
+    "E1"
+   ],
+   "status_in_gold": "PASSED",
+   "status_in_empty": "PASSED",
+   "full_nodeids_collapsed_into_key": 1,
+   "semantics_note": "该键在本日志中由唯一一条摘要行写入。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=getmoto__moto-6308:pass_to_pass",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-6308/gold/offline/a1/test_output.txt:443"
+   ],
+   "evidence_raw_lines": [
+    "'PASSED tests/test_s3/test_s3_copyobject.py::test_copy_key_boto3[the-unicode-\\\\U0001f4a9-key]'"
+   ]
+  },
+  {
+   "instance_id": "iterative__dvc-4185",
+   "kind": "P2P",
+   "original_reference_id": "tests/func/test_run_multistage.py::test_run_with_invalid_stage_name[\\]",
+   "original_reference_id_repr": "'tests/func/test_run_multistage.py::test_run_with_invalid_stage_name[\\\\]'",
+   "mapped_log_nodeid": "tests/func/test_run_multistage.py::test_run_with_invalid_stage_name[\\\\]",
+   "mapped_log_nodeid_repr": "'tests/func/test_run_multistage.py::test_run_with_invalid_stage_name[\\\\\\\\]'",
+   "mapping_rule": "unicode_escape_decode(log_nodeid) == original_reference_id",
+   "candidates_n": 1,
+   "verdict": "provable_one_to_one_key_mapping",
+   "diff_types": [
+    "E3"
+   ],
+   "status_in_gold": "PASSED",
+   "status_in_empty": "PASSED",
+   "full_nodeids_collapsed_into_key": 1,
+   "semantics_note": "该键在本日志中由唯一一条摘要行写入。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=iterative__dvc-4185:pass_to_pass",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4185/gold/offline/a1/test_output.txt:2725"
+   ],
+   "evidence_raw_lines": [
+    "'PASSED tests/func/test_run_multistage.py::test_run_with_invalid_stage_name[\\\\\\\\]'"
+   ]
+  },
+  {
+   "instance_id": "modin-project__modin-6780",
+   "kind": "P2P",
+   "original_reference_id": "modin/pandas/test/test_series.py::test_str_extract[([ab])(\\d)-False-separator",
+   "original_reference_id_repr": "'modin/pandas/test/test_series.py::test_str_extract[([ab])(\\\\d)-False-separator'",
+   "mapped_log_nodeid": "modin/pandas/test/test_series.py::test_str_extract[([ab])(\\\\d)-False-separator",
+   "mapped_log_nodeid_repr": "'modin/pandas/test/test_series.py::test_str_extract[([ab])(\\\\\\\\d)-False-separator'",
+   "mapping_rule": "unicode_escape_decode(log_nodeid) == original_reference_id",
+   "candidates_n": 1,
+   "verdict": "provable_one_to_one_key_mapping",
+   "diff_types": [
+    "E3",
+    "T1"
+   ],
+   "status_in_gold": "PASSED",
+   "status_in_empty": "PASSED",
+   "full_nodeids_collapsed_into_key": 1,
+   "semantics_note": "该键在本日志中由唯一一条摘要行写入。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=modin-project__modin-6780:pass_to_pass",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/modin-project__modin-6780/gold/offline/a1/test_output.txt:11822"
+   ],
+   "evidence_raw_lines": [
+    "'PASSED modin/pandas/test/test_series.py::test_str_extract[([ab])(\\\\\\\\d)-False-separator data]'"
+   ]
+  },
+  {
+   "instance_id": "modin-project__modin-6780",
+   "kind": "P2P",
+   "original_reference_id": "modin/pandas/test/test_series.py::test_str_extract[([ab])(\\d)-None-separator",
+   "original_reference_id_repr": "'modin/pandas/test/test_series.py::test_str_extract[([ab])(\\\\d)-None-separator'",
+   "mapped_log_nodeid": "modin/pandas/test/test_series.py::test_str_extract[([ab])(\\\\d)-None-separator",
+   "mapped_log_nodeid_repr": "'modin/pandas/test/test_series.py::test_str_extract[([ab])(\\\\\\\\d)-None-separator'",
+   "mapping_rule": "unicode_escape_decode(log_nodeid) == original_reference_id",
+   "candidates_n": 1,
+   "verdict": "provable_one_to_one_key_mapping",
+   "diff_types": [
+    "E3",
+    "T1"
+   ],
+   "status_in_gold": "PASSED",
+   "status_in_empty": "PASSED",
+   "full_nodeids_collapsed_into_key": 1,
+   "semantics_note": "该键在本日志中由唯一一条摘要行写入。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=modin-project__modin-6780:pass_to_pass",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/modin-project__modin-6780/gold/offline/a1/test_output.txt:11823"
+   ],
+   "evidence_raw_lines": [
+    "'PASSED modin/pandas/test/test_series.py::test_str_extract[([ab])(\\\\\\\\d)-None-separator data]'"
+   ]
+  },
+  {
+   "instance_id": "modin-project__modin-6780",
+   "kind": "P2P",
+   "original_reference_id": "modin/pandas/test/test_series.py::test_str_extract[([ab])(\\d)-True-separator",
+   "original_reference_id_repr": "'modin/pandas/test/test_series.py::test_str_extract[([ab])(\\\\d)-True-separator'",
+   "mapped_log_nodeid": "modin/pandas/test/test_series.py::test_str_extract[([ab])(\\\\d)-True-separator",
+   "mapped_log_nodeid_repr": "'modin/pandas/test/test_series.py::test_str_extract[([ab])(\\\\\\\\d)-True-separator'",
+   "mapping_rule": "unicode_escape_decode(log_nodeid) == original_reference_id",
+   "candidates_n": 1,
+   "verdict": "provable_one_to_one_key_mapping",
+   "diff_types": [
+    "E3",
+    "T1"
+   ],
+   "status_in_gold": "PASSED",
+   "status_in_empty": "PASSED",
+   "full_nodeids_collapsed_into_key": 1,
+   "semantics_note": "该键在本日志中由唯一一条摘要行写入。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=modin-project__modin-6780:pass_to_pass",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/modin-project__modin-6780/gold/offline/a1/test_output.txt:11821"
+   ],
+   "evidence_raw_lines": [
+    "'PASSED modin/pandas/test/test_series.py::test_str_extract[([ab])(\\\\\\\\d)-True-separator data]'"
+   ]
+  },
+  {
+   "instance_id": "pandas-dev__pandas-48106",
+   "kind": "P2P",
+   "original_reference_id": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\('2017',",
+   "original_reference_id_repr": "\"pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\('2017',\"",
+   "mapped_log_nodeid": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\('2017',",
+   "mapped_log_nodeid_repr": "\"pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\\\\\('2017',\"",
+   "mapping_rule": "unicode_escape_decode(log_nodeid) == original_reference_id",
+   "candidates_n": 1,
+   "verdict": "provable_one_to_one_key_mapping",
+   "diff_types": [
+    "E3",
+    "T1",
+    "T2"
+   ],
+   "status_in_gold": "PASSED",
+   "status_in_empty": "PASSED",
+   "full_nodeids_collapsed_into_key": 2,
+   "semantics_note": "截断键由多条完整用例写入，last-wins：映射成立但覆盖度有损。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=pandas-dev__pandas-48106:pass_to_pass",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-48106/gold/offline/a1/test_output.txt:6169",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-48106/gold/offline/a1/test_output.txt:6170"
+   ],
+   "evidence_raw_lines": [
+    "\"PASSED pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\\\\\('2017', 'A-DEC'\\\\\\\\), 'foo', Period\\\\\\\\('2015', 'A-DEC'\\\\\\\\)-key5]\"",
+    "\"PASSED pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\\\\\('2017', 'A-DEC'\\\\\\\\), 'z1', 'bar'-key6]\""
+   ]
+  },
+  {
+   "instance_id": "pandas-dev__pandas-48106",
+   "kind": "P2P",
+   "original_reference_id": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\('2019',",
+   "original_reference_id_repr": "\"pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\('2019',\"",
+   "mapped_log_nodeid": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\('2019',",
+   "mapped_log_nodeid_repr": "\"pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\\\\\('2019',\"",
+   "mapping_rule": "unicode_escape_decode(log_nodeid) == original_reference_id",
+   "candidates_n": 1,
+   "verdict": "provable_one_to_one_key_mapping",
+   "diff_types": [
+    "E3",
+    "T1",
+    "T2"
+   ],
+   "status_in_gold": "PASSED",
+   "status_in_empty": "PASSED",
+   "full_nodeids_collapsed_into_key": 3,
+   "semantics_note": "截断键由多条完整用例写入，last-wins：映射成立但覆盖度有损。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=pandas-dev__pandas-48106:pass_to_pass",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-48106/gold/offline/a1/test_output.txt:6164",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-48106/gold/offline/a1/test_output.txt:6165",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-48106/gold/offline/a1/test_output.txt:6166"
+   ],
+   "evidence_raw_lines": [
+    "\"PASSED pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\\\\\('2019', 'A-DEC'\\\\\\\\), 'foo', 'bar'-key0]\"",
+    "\"PASSED pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\\\\\('2019', 'A-DEC'\\\\\\\\), 'y1', 'bar'-key1]\"",
+    "\"PASSED pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\\\\\('2019', 'A-DEC'\\\\\\\\), 'foo', 'z1'-key2]\""
+   ]
+  },
+  {
+   "instance_id": "pandas-dev__pandas-48106",
+   "kind": "P2P",
+   "original_reference_id": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\('2018',",
+   "original_reference_id_repr": "\"pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\('2018',\"",
+   "mapped_log_nodeid": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\('2018',",
+   "mapped_log_nodeid_repr": "\"pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\\\\\('2018',\"",
+   "mapping_rule": "unicode_escape_decode(log_nodeid) == original_reference_id",
+   "candidates_n": 1,
+   "verdict": "provable_one_to_one_key_mapping",
+   "diff_types": [
+    "E3",
+    "T1",
+    "T2"
+   ],
+   "status_in_gold": "PASSED",
+   "status_in_empty": "PASSED",
+   "full_nodeids_collapsed_into_key": 2,
+   "semantics_note": "截断键由多条完整用例写入，last-wins：映射成立但覆盖度有损。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=pandas-dev__pandas-48106:pass_to_pass",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-48106/gold/offline/a1/test_output.txt:6167",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-48106/gold/offline/a1/test_output.txt:6168"
+   ],
+   "evidence_raw_lines": [
+    "\"PASSED pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\\\\\('2018', 'A-DEC'\\\\\\\\), Period\\\\\\\\('2016', 'A-DEC'\\\\\\\\), 'bar'-key3]\"",
+    "\"PASSED pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_contains_raise_error_if_period_index_is_in_multi_index[Period\\\\\\\\('2018', 'A-DEC'\\\\\\\\), 'foo', 'y1'-key4]\""
+   ]
+  },
+  {
+   "instance_id": "pandas-dev__pandas-50319",
+   "kind": "P2P",
+   "original_reference_id": "pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y\\%m\\%d",
+   "original_reference_id_repr": "'pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y\\\\%m\\\\%d'",
+   "mapped_log_nodeid": "pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y\\\\%m\\\\%d",
+   "mapped_log_nodeid_repr": "'pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y\\\\\\\\%m\\\\\\\\%d'",
+   "mapping_rule": "unicode_escape_decode(log_nodeid) == original_reference_id",
+   "candidates_n": 1,
+   "verdict": "provable_one_to_one_key_mapping",
+   "diff_types": [
+    "E3",
+    "T1"
+   ],
+   "status_in_gold": "PASSED",
+   "status_in_empty": "PASSED",
+   "full_nodeids_collapsed_into_key": 1,
+   "semantics_note": "该键在本日志中由唯一一条摘要行写入。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=pandas-dev__pandas-50319:pass_to_pass",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-50319/gold/offline/a1/test_output.txt:6247"
+   ],
+   "evidence_raw_lines": [
+    "'PASSED pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y\\\\\\\\%m\\\\\\\\%d %H:%M:%S-True]'"
+   ]
+  },
+  {
+   "instance_id": "pydantic__pydantic-8977",
+   "kind": "P2P",
+   "original_reference_id": "tests/test_types.py::test_constrained_bytes_too_long[âª¶â²â½·01-False]",
+   "original_reference_id_repr": "'tests/test_types.py::test_constrained_bytes_too_long[âª¶â\\x93²â½·01-False]'",
+   "mapped_log_nodeid": "tests/test_types.py::test_constrained_bytes_too_long[\\xe2\\xaa\\xb6\\xe2\\x93\\xb2\\xe2\\xbd\\xb701-False]",
+   "mapped_log_nodeid_repr": "'tests/test_types.py::test_constrained_bytes_too_long[\\\\xe2\\\\xaa\\\\xb6\\\\xe2\\\\x93\\\\xb2\\\\xe2\\\\xbd\\\\xb701-False]'",
+   "mapping_rule": "unicode_escape_decode(log_nodeid) == original_reference_id",
+   "candidates_n": 1,
+   "verdict": "provable_one_to_one_key_mapping",
+   "diff_types": [
+    "E4",
+    "E5",
+    "V1"
+   ],
+   "status_in_gold": "PASSED",
+   "status_in_empty": "PASSED",
+   "full_nodeids_collapsed_into_key": 1,
+   "semantics_note": "该键在本日志中由唯一一条摘要行写入。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=pydantic__pydantic-8977:pass_to_pass",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pydantic__pydantic-8977/gold/offline/a1/test_output.txt:900"
+   ],
+   "evidence_raw_lines": [
+    "'tests/test_types.py::test_constrained_bytes_too_long[\\\\xe2\\\\xaa\\\\xb6\\\\xe2\\\\x93\\\\xb2\\\\xe2\\\\xbd\\\\xb701-False] PASSED'"
+   ]
+  },
+  {
+   "instance_id": "pydantic__pydantic-8977",
+   "kind": "P2P",
+   "original_reference_id": "tests/test_types.py::test_default_validators[str_check--ValidationError]",
+   "original_reference_id_repr": "'tests/test_types.py::test_default_validators[str_check-\\x81-ValidationError]'",
+   "mapped_log_nodeid": "tests/test_types.py::test_default_validators[str_check-\\x81-ValidationError]",
+   "mapped_log_nodeid_repr": "'tests/test_types.py::test_default_validators[str_check-\\\\x81-ValidationError]'",
+   "mapping_rule": "unicode_escape_decode(log_nodeid) == original_reference_id",
+   "candidates_n": 1,
+   "verdict": "provable_one_to_one_key_mapping",
+   "diff_types": [
+    "E4",
+    "E5",
+    "V1"
+   ],
+   "status_in_gold": "PASSED",
+   "status_in_empty": "PASSED",
+   "full_nodeids_collapsed_into_key": 1,
+   "semantics_note": "该键在本日志中由唯一一条摘要行写入。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=pydantic__pydantic-8977:pass_to_pass",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pydantic__pydantic-8977/gold/offline/a1/test_output.txt:1041"
+   ],
+   "evidence_raw_lines": [
+    "'tests/test_types.py::test_default_validators[str_check-\\\\x81-ValidationError] PASSED'"
+   ]
+  },
+  {
+   "instance_id": "pydantic__pydantic-8977",
+   "kind": "P2P",
+   "original_reference_id": "tests/test_types.py::test_default_validators[bool_check--ValidationError]",
+   "original_reference_id_repr": "'tests/test_types.py::test_default_validators[bool_check-\\x81-ValidationError]'",
+   "mapped_log_nodeid": "tests/test_types.py::test_default_validators[bool_check-\\x81-ValidationError]",
+   "mapped_log_nodeid_repr": "'tests/test_types.py::test_default_validators[bool_check-\\\\x81-ValidationError]'",
+   "mapping_rule": "unicode_escape_decode(log_nodeid) == original_reference_id",
+   "candidates_n": 1,
+   "verdict": "provable_one_to_one_key_mapping",
+   "diff_types": [
+    "E4",
+    "E5",
+    "V1"
+   ],
+   "status_in_gold": "PASSED",
+   "status_in_empty": "PASSED",
+   "full_nodeids_collapsed_into_key": 1,
+   "semantics_note": "该键在本日志中由唯一一条摘要行写入。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=pydantic__pydantic-8977:pass_to_pass",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pydantic__pydantic-8977/gold/offline/a1/test_output.txt:1031"
+   ],
+   "evidence_raw_lines": [
+    "'tests/test_types.py::test_default_validators[bool_check-\\\\x81-ValidationError] PASSED'"
+   ]
+  },
+  {
+   "instance_id": "pydantic__pydantic-8977",
+   "kind": "P2P",
+   "original_reference_id": "tests/test_types.py::test_default_validators[uuid_check-\u00124Vx\u00124Vx\u00124Vx\u00124Vx-result96]",
+   "original_reference_id_repr": "'tests/test_types.py::test_default_validators[uuid_check-\\x124Vx\\x124Vx\\x124Vx\\x124Vx-result96]'",
+   "mapped_log_nodeid": "tests/test_types.py::test_default_validators[uuid_check-\\x124Vx\\x124Vx\\x124Vx\\x124Vx-result96]",
+   "mapped_log_nodeid_repr": "'tests/test_types.py::test_default_validators[uuid_check-\\\\x124Vx\\\\x124Vx\\\\x124Vx\\\\x124Vx-result96]'",
+   "mapping_rule": "unicode_escape_decode(log_nodeid) == original_reference_id",
+   "candidates_n": 1,
+   "verdict": "provable_one_to_one_key_mapping",
+   "diff_types": [
+    "E4",
+    "E5",
+    "V1"
+   ],
+   "status_in_gold": "PASSED",
+   "status_in_empty": "PASSED",
+   "full_nodeids_collapsed_into_key": 1,
+   "semantics_note": "该键在本日志中由唯一一条摘要行写入。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=pydantic__pydantic-8977:pass_to_pass",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pydantic__pydantic-8977/gold/offline/a1/test_output.txt:1078"
+   ],
+   "evidence_raw_lines": [
+    "'tests/test_types.py::test_default_validators[uuid_check-\\\\x124Vx\\\\x124Vx\\\\x124Vx\\\\x124Vx-result96] PASSED'"
+   ]
+  },
+  {
+   "instance_id": "pydantic__pydantic-8977",
+   "kind": "P2P",
+   "original_reference_id": "tests/test_types.py::test_constrained_bytes_too_long[âª¶â²â½·0-True]",
+   "original_reference_id_repr": "'tests/test_types.py::test_constrained_bytes_too_long[âª¶â\\x93²â½·0-True]'",
+   "mapped_log_nodeid": "tests/test_types.py::test_constrained_bytes_too_long[\\xe2\\xaa\\xb6\\xe2\\x93\\xb2\\xe2\\xbd\\xb70-True]",
+   "mapped_log_nodeid_repr": "'tests/test_types.py::test_constrained_bytes_too_long[\\\\xe2\\\\xaa\\\\xb6\\\\xe2\\\\x93\\\\xb2\\\\xe2\\\\xbd\\\\xb70-True]'",
+   "mapping_rule": "unicode_escape_decode(log_nodeid) == original_reference_id",
+   "candidates_n": 1,
+   "verdict": "provable_one_to_one_key_mapping",
+   "diff_types": [
+    "E4",
+    "E5",
+    "V1"
+   ],
+   "status_in_gold": "PASSED",
+   "status_in_empty": "PASSED",
+   "full_nodeids_collapsed_into_key": 1,
+   "semantics_note": "该键在本日志中由唯一一条摘要行写入。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=pydantic__pydantic-8977:pass_to_pass",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pydantic__pydantic-8977/gold/offline/a1/test_output.txt:902"
+   ],
+   "evidence_raw_lines": [
+    "'tests/test_types.py::test_constrained_bytes_too_long[\\\\xe2\\\\xaa\\\\xb6\\\\xe2\\\\x93\\\\xb2\\\\xe2\\\\xbd\\\\xb70-True] PASSED'"
+   ]
+  }
+ ]
+}

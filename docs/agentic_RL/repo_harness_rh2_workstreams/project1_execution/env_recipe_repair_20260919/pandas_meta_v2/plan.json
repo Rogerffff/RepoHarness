@@ -1,0 +1,25 @@
+[
+  {
+    "instance_id": "pandas-dev__pandas-48106",
+    "image": "xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-48106:latest",
+    "image_id": "sha256:0e706113dce17d30fade5723a2a71c162afa253d777fd7fa139c5b89cf05c4b8",
+    "pins": [
+      "fastparquet==0.8.3",
+      "Fiona==1.9.6",
+      "click-plugins==1.1.1",
+      "cligj==0.7.2",
+      "fsspec==2021.9.0",
+      "s3fs==2021.9.0",
+      "nbsphinx==0.8.9",
+      "build==1.2.2.post1",
+      "pyproject-hooks==1.2.0"
+    ],
+    "bindings": true,
+    "code_root": "/work/env_recipe_repair_20260919/resources_v1/code/rh2",
+    "preflight_pip_check": true,
+    "wait_for_batches": [
+      "pandas_meta_v1"
+    ],
+    "reason": "Restore metadata consistency without changing target pandas or tests: coupled fsspec/s3fs1.9 accepts existing Dask/aiobotocore; historical nbsphinx accepts Sphinx4/docutils0.17; add missing build/pyproject-hooks. Preflight metadata before two source builds."
+  }
+]

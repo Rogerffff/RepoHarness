@@ -1,0 +1,281 @@
+{
+  "scope": "actual driver/manager control flow; Docker I/O fixture, no containers",
+  "cases": [
+    {
+      "case": "normal",
+      "run_return": 0,
+      "exception": null,
+      "final_status": {
+        "exit_code": 0,
+        "reason": "ok",
+        "grader_containers_open": [],
+        "cleanup_failures_total": 0,
+        "cleanup_failures_resolved": false
+      },
+      "reported_rows": 1,
+      "ledger_rows": 1,
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 1.0,
+        "segment_completed": true
+      },
+      "candidate_facts": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true
+      },
+      "persisted_sidecar_facts": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true
+      },
+      "ledger_has_log_ref": true,
+      "ledger_has_diagnostics_ref": true,
+      "outcome": "resolved",
+      "reward": 1.0,
+      "stage_error": null,
+      "manager_closed": true,
+      "manager_record_count": 1
+    },
+    {
+      "case": "late_removed",
+      "run_return": 0,
+      "exception": null,
+      "final_status": {
+        "exit_code": 0,
+        "reason": "ok",
+        "grader_containers_open": [],
+        "cleanup_failures_total": 2,
+        "cleanup_failures_resolved": true
+      },
+      "reported_rows": 1,
+      "ledger_rows": 1,
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 1.0,
+        "segment_completed": true
+      },
+      "candidate_facts": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true
+      },
+      "persisted_sidecar_facts": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true
+      },
+      "ledger_has_log_ref": true,
+      "ledger_has_diagnostics_ref": true,
+      "outcome": "resolved",
+      "reward": 1.0,
+      "stage_error": null,
+      "manager_closed": true,
+      "manager_record_count": 1
+    },
+    {
+      "case": "left_open",
+      "run_return": 3,
+      "exception": null,
+      "final_status": {
+        "exit_code": 3,
+        "reason": "grader_containers_open:rh2-grading-replay-a947761fb970-getm-2eb83224",
+        "grader_containers_open": [
+          "rh2-grading-replay-a947761fb970-getm-2eb83224"
+        ],
+        "cleanup_failures_total": 3,
+        "cleanup_failures_resolved": false
+      },
+      "reported_rows": 1,
+      "ledger_rows": 1,
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 1.0,
+        "segment_completed": true
+      },
+      "candidate_facts": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true
+      },
+      "persisted_sidecar_facts": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true
+      },
+      "ledger_has_log_ref": true,
+      "ledger_has_diagnostics_ref": true,
+      "outcome": "resolved",
+      "reward": 1.0,
+      "stage_error": null,
+      "manager_closed": true,
+      "manager_record_count": 1
+    },
+    {
+      "case": "halt_running",
+      "run_return": 2,
+      "exception": null,
+      "final_status": {
+        "exit_code": 2,
+        "reason": "halted:GradingScopeTerminationError:grading_scope_termination_failed: 评分容器 rh2-grading-replay-8e27d9de7a86-getm-7ebccfd8 在有界收口（rm -f → kill → rm -f，预算 120.0s）后状态仍为 running——scope 无法确认终止，按 06 A4 run-halt（继续接新任务只会累积残留）。",
+        "grader_containers_open": [
+          "rh2-grading-replay-8e27d9de7a86-getm-7ebccfd8"
+        ],
+        "cleanup_failures_total": 4,
+        "cleanup_failures_resolved": false
+      },
+      "reported_rows": 0,
+      "ledger_rows": 1,
+      "test": null,
+      "candidate_facts": {
+        "candidate_exec_exit_code": null,
+        "candidate_segment_completed": null
+      },
+      "persisted_sidecar_facts": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true
+      },
+      "ledger_has_log_ref": false,
+      "ledger_has_diagnostics_ref": false,
+      "outcome": null,
+      "reward": null,
+      "stage_error": "baseline_integrity:grading_scope_termination_failed:grading_scope_termination_failed: 评分容器 rh2-grading-replay-8e27d9de7a86-getm-7ebccfd8 在有界收口（rm -f → kill → rm -f，预算 120.0s）后状态仍为 running——scope 无法确认终止，按 06 A4 run-halt（继续接新任务只会累积残留）。",
+      "manager_closed": true,
+      "manager_record_count": 1
+    },
+    {
+      "case": "halt_late_removed",
+      "run_return": 2,
+      "exception": null,
+      "final_status": {
+        "exit_code": 2,
+        "reason": "halted:GradingScopeTerminationError:grading_scope_termination_failed: 评分容器 rh2-grading-replay-32ae8d26f390-getm-fed69fb3 在有界收口（rm -f → kill → rm -f，预算 120.0s）后状态仍为 running——scope 无法确认终止，按 06 A4 run-halt（继续接新任务只会累积残留）。",
+        "grader_containers_open": [],
+        "cleanup_failures_total": 3,
+        "cleanup_failures_resolved": true
+      },
+      "reported_rows": 0,
+      "ledger_rows": 1,
+      "test": null,
+      "candidate_facts": {
+        "candidate_exec_exit_code": null,
+        "candidate_segment_completed": null
+      },
+      "persisted_sidecar_facts": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true
+      },
+      "ledger_has_log_ref": false,
+      "ledger_has_diagnostics_ref": false,
+      "outcome": null,
+      "reward": null,
+      "stage_error": "baseline_integrity:grading_scope_termination_failed:grading_scope_termination_failed: 评分容器 rh2-grading-replay-32ae8d26f390-getm-fed69fb3 在有界收口（rm -f → kill → rm -f，预算 120.0s）后状态仍为 running——scope 无法确认终止，按 06 A4 run-halt（继续接新任务只会累积残留）。",
+      "manager_closed": true,
+      "manager_record_count": 1
+    },
+    {
+      "case": "exec_signal",
+      "run_return": 0,
+      "exception": null,
+      "final_status": {
+        "exit_code": 0,
+        "reason": "ok",
+        "grader_containers_open": [],
+        "cleanup_failures_total": 0,
+        "cleanup_failures_resolved": false
+      },
+      "reported_rows": 1,
+      "ledger_rows": 1,
+      "test": {
+        "exec_exit_code": 137,
+        "rc": null,
+        "seconds": null,
+        "segment_completed": false
+      },
+      "candidate_facts": {
+        "candidate_exec_exit_code": 137,
+        "candidate_segment_completed": false
+      },
+      "persisted_sidecar_facts": {
+        "candidate_exec_exit_code": 137,
+        "candidate_segment_completed": false
+      },
+      "ledger_has_log_ref": true,
+      "ledger_has_diagnostics_ref": true,
+      "outcome": "failed_to_grade",
+      "reward": null,
+      "stage_error": null,
+      "manager_closed": true,
+      "manager_record_count": 1
+    },
+    {
+      "case": "missing_patch",
+      "run_return": null,
+      "exception": "FileNotFoundError",
+      "final_status": {
+        "exit_code": 0,
+        "reason": "ok",
+        "grader_containers_open": [],
+        "cleanup_failures_total": 0,
+        "cleanup_failures_resolved": false
+      },
+      "reported_rows": 0,
+      "ledger_rows": 0,
+      "test": null,
+      "candidate_facts": {
+        "candidate_exec_exit_code": null,
+        "candidate_segment_completed": null
+      },
+      "persisted_sidecar_facts": {
+        "candidate_exec_exit_code": null,
+        "candidate_segment_completed": null
+      },
+      "ledger_has_log_ref": false,
+      "ledger_has_diagnostics_ref": false,
+      "outcome": null,
+      "reward": null,
+      "stage_error": null,
+      "manager_closed": true,
+      "manager_record_count": 0
+    },
+    {
+      "case": "cancel_after_candidate",
+      "run_return": null,
+      "exception": "CancelledError",
+      "final_status": {
+        "exit_code": 0,
+        "reason": "ok",
+        "grader_containers_open": [],
+        "cleanup_failures_total": 0,
+        "cleanup_failures_resolved": false
+      },
+      "reported_rows": 0,
+      "ledger_rows": 1,
+      "test": null,
+      "candidate_facts": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true
+      },
+      "persisted_sidecar_facts": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true
+      },
+      "ledger_has_log_ref": true,
+      "ledger_has_diagnostics_ref": true,
+      "outcome": null,
+      "reward": null,
+      "stage_error": "cancelled:grading",
+      "manager_closed": true,
+      "manager_record_count": 1
+    }
+  ],
+  "unmocked_cli": {
+    "case": "unmocked_cli_missing_patch",
+    "process_exit_code": 1,
+    "final_status": {
+      "exit_code": 0,
+      "reason": "ok",
+      "grader_containers_open": [],
+      "cleanup_failures_total": 0,
+      "cleanup_failures_resolved": false
+    },
+    "ledger_exists": false
+  }
+}

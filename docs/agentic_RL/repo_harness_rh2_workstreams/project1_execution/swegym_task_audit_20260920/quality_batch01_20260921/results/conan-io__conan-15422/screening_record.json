@@ -1,0 +1,352 @@
+{
+  "task_id": "conan-io__conan-15422",
+  "task_revision": "upstream",
+  "source_adapter_ref": {
+    "public": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+      "line": 38
+    },
+    "grading": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+      "line": 38
+    },
+    "validation": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+      "line": 38
+    }
+  },
+  "recipe_ref": {
+    "image": "xingyaoww/sweb.eval.x86_64.conan-io_s_conan-15422:latest",
+    "digest": "sha256:afd7d4928ba361196d446926204dbd8e0c37ea2018dda392096972a8767c353a",
+    "derived_recipe": null,
+    "scope": "baseline01 historical grader pair only; actor recipe consumption unverified"
+  },
+  "code_snapshot_ref": {
+    "base_commit": "f08b9924712cf0c2f27b93cbb5206d56d0d824d8",
+    "base_tree": "c6db74a43d17809b8abb51050c6be72c58461ff0",
+    "public_dir": "runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-15422",
+    "private_dir": "runs/swegym_quality_batch01_20260921_v2/private/conan-io__conan-15422"
+  },
+  "facts_ref": [
+    {
+      "path": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w02-1/ledger.jsonl",
+      "line": 1,
+      "role": "noop",
+      "conditions": "original image; rh2grader/54322; Python3.10.14; 2CPU/4GiB; deny_all",
+      "result": "install_rc=0, test_rc=1, F2P=0/1, P2P_fail=0/40, no missing/skipped references"
+    },
+    {
+      "path": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w02-1/ledger.jsonl",
+      "line": 2,
+      "role": "gold",
+      "conditions": "same grader profile; source projection included conan/tools/cmake/presets.py",
+      "result": "install_rc=0, test_rc=0, F2P=1/1, P2P_fail=0/40; 41 passed and 3 non-reference platform skips"
+    },
+    {
+      "path": "runs/swegym_quality_batch01_20260921_v2/private/conan-io__conan-15422/run_refs.json",
+      "note": "Both referenced raw log SHA256 hashes rechecked; decisive ranges in analysis_before_history.md section 4"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/actor_environment_card.md",
+      "note": "Shared static platform facts only, not per-task actor verification"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-15422/analysis_before_history.md",
+      "note": "Full mapping, actor requirements and reading scope; see sibling old_findings_delta.md for history comparison."
+    }
+  ],
+  "checks": {
+    "1": {
+      "status": "pass",
+      "note": "S2三行bundle和patch值一致；物化记录精确base；未新做镜像物化。",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-15422/base_identity.json",
+        "runs/swegym_quality_batch01_20260921_v2/private/conan-io__conan-15422/source_refs.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-15422/analysis_before_history.md#1"
+      ],
+      "by": "investigator_conan"
+    },
+    "2": {
+      "status": "pass",
+      "note": "base缺jobs，已有noop在目标断言KeyError。",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-15422/base/conan/tools/cmake/presets.py:189",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w02-1/ledger.jsonl:1"
+      ],
+      "by": "investigator_conan"
+    },
+    "3": {
+      "status": "unknown",
+      "note": "公开要求/配置来源可读；静态渲染不是实际请求，hints注入待验。",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-15422/public_bundle.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/actor_environment_card.md"
+      ],
+      "by": "investigator_conan"
+    },
+    "4": {
+      "status": "pass",
+      "note": "test patch仅改官方测试；已有gold源码修复被投影。",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/private/conan-io__conan-15422/test.patch",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w02-1/ledger.jsonl:2"
+      ],
+      "by": "investigator_conan"
+    },
+    "5": {
+      "status": "issue",
+      "note": "随后14177调查核实15422公开base已含14177 gold关键日志行为；需求不同，不按重复题处理。旧14296关系仍未核。",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/private/conan-io__conan-14177/gold.patch",
+        "runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-15422/base/conan/tools/files/patches.py:42",
+        "runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-15422/base/conan/tools/files/patches.py:99",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-14177/analysis_before_history.md"
+      ],
+      "by": "investigator_conan"
+    },
+    "6": {
+      "status": "unknown",
+      "note": "分析逐项列导入、资产、写入、网络、编译需求；grader成功不代表actor已验。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-15422/analysis_before_history.md#5",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/actor_environment_card.md"
+      ],
+      "by": "investigator_conan"
+    },
+    "14": {
+      "status": "unknown",
+      "note": "已有grader在2CPU/4GiB运行成功；actor资源与稳定性未验。",
+      "evidence_refs": [
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w02-1/ledger.jsonl:1",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w02-1/ledger.jsonl:2",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/actor_environment_card.md"
+      ],
+      "by": "investigator_conan"
+    },
+    "18": {
+      "status": "pass",
+      "note": "唯一F2P完整追至TestClient CLI/临时recipe/真实JSON/断言；无jobs结果Mock。",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/private/conan-io__conan-15422/test.patch",
+        "runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-15422/base/conans/test/utils/tools.py:508"
+      ],
+      "by": "investigator_conan"
+    },
+    "19": {
+      "status": "pass",
+      "note": "41参考项有原日志结果，无参考缺席/跳过；3个平台skip均不属参考，解析数不等于执行数。",
+      "evidence_refs": [
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w02-1/ledger.jsonl:1",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w02-1/ledger.jsonl:2",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-15422/analysis_before_history.md#4"
+      ],
+      "by": "investigator_conan"
+    },
+    "20": {
+      "status": "pass",
+      "note": "已有分差来自jobs缺失和生成值；另核安装与完整测试退出。",
+      "evidence_refs": [
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w02-1/ledger.jsonl:1",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w02-1/ledger.jsonl:2"
+      ],
+      "by": "investigator_conan"
+    },
+    "23": {
+      "status": "pass",
+      "note": "公开build_jobs文档及CMake使用支持配置/默认来源；16不是固定要求。",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-15422/base/conan/tools/build/cpu.py:8",
+        "runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-15422/base/conan/tools/cmake/cmake.py:11"
+      ],
+      "by": "investigator_conan"
+    },
+    "24": {
+      "status": "pass",
+      "note": "未见gold内部身份断言；上游传值可行；未证明所有正确解均接受。",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/private/conan-io__conan-15422/test.patch",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-15422/analysis_before_history.md#3"
+      ],
+      "by": "investigator_conan"
+    },
+    "25": {
+      "status": "issue",
+      "note": "仅显式42与首个preset；默认/其它值/追加条目/外部CMake消费未测。",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/private/conan-io__conan-15422/test.patch",
+        "runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-15422/base/conans/test/integration/toolchains/cmake/test_cmaketoolchain.py:538"
+      ],
+      "by": "investigator_conan"
+    },
+    "26": {
+      "status": "unknown",
+      "note": "已读相关预设P2P并核40项运行结果；未逐条展开无关cross-build/Android语义；jobs兼容未受保护。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-15422/analysis_before_history.md#2",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-15422/analysis_before_history.md#6",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w02-1/ledger.jsonl:2"
+      ],
+      "by": "investigator_conan"
+    },
+    "27": {
+      "status": "unknown",
+      "note": "gold覆盖两生成分支且依赖已在base；跨generator及零/负值语义未验。",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/private/conan-io__conan-15422/gold.patch",
+        "runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-15422/base/conan/tools/cmake/toolchain/blocks.py:237"
+      ],
+      "by": "investigator_conan"
+    },
+    "29": {
+      "status": "unknown",
+      "note": "静态包无.git；真实actor镜像资产/历史泄漏未查。",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-15422/base_identity.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/actor_environment_card.md"
+      ],
+      "by": "investigator_conan"
+    },
+    "31": {
+      "status": "unknown",
+      "note": "conftest_user默认profile入口已核；最新投影/清理下利用性未验，不加额外排除。",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-15422/base/conans/test/conftest.py:235",
+        "runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-15422/base/conans/test/utils/tools.py:425"
+      ],
+      "by": "investigator_conan"
+    },
+    "33": {
+      "status": "not_checked",
+      "note": "未运行模型，不作能力或学习价值判断。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-15422/analysis_before_history.md#6"
+      ],
+      "by": "investigator_conan"
+    }
+  },
+  "issues": [
+    {
+      "id": "default_and_append_jobs_uncovered",
+      "category": "acceptance_undercoverage",
+      "evidence_level": "static_inference_plus_historical_RH2_baseline",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/private/conan-io__conan-15422/test.patch",
+        "runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-15422/base/conans/test/integration/toolchains/cmake/test_cmaketoolchain.py:538-660",
+        "runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-15422/base/conan/tools/build/cpu.py:8-28"
+      ],
+      "impact": "An explicit-configuration-only implementation may satisfy official assertions while leaving default installs unfixed; no candidate score claimed.",
+      "next_experiment": "Actor public recipe with explicit 2/7, absent conf and Ninja Multi-Config append/replace; compare conditional-jobs CPU candidate official score.",
+      "scope": "task_static_review",
+      "proposed_action": "先以公开不同值/默认/多配置对照及条件写jobs候选校准漏收；不据静态预测填实测得分。",
+      "status": "open"
+    },
+    {
+      "id": "generator_compatibility_unknown",
+      "category": "gold_and_regression_uncertainty",
+      "evidence_level": "static_inference",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/private/conan-io__conan-15422/gold.patch",
+        "runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-15422/base/conan/tools/cmake/cmake.py:11-23",
+        "runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-15422/base/conan/tools/cmake/toolchain/blocks.py:237-252"
+      ],
+      "impact": "Gold unconditionally emits jobs; NMake exclusions and Visual /MP are public compatibility clues, not proof of a failing preset.",
+      "next_experiment": "Check period-correct CMake generator semantics or focused backend build; do not reject implementations solely for differing from gold.",
+      "scope": "task_static_review",
+      "proposed_action": "保留为兼容待核；检查对应时期CMake语义或定点后端构建，不按与gold差异拒绝。",
+      "status": "open"
+    },
+    {
+      "id": "actor_and_actual_prompt_unverified",
+      "category": "development_conditions",
+      "evidence_level": "static_platform_card_and_historical_grader_only",
+      "impact": "Cannot claim ready_for_probe from grader success; actual activation, permissions, public_hints and visible assets require actor evidence.",
+      "next_experiment": "Record actor identity, image/recipe, Python/package origin and public reproduction in actual shell.",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/actor_environment_card.md",
+        "runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-15422/public_bundle.json",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w02-1/ledger.jsonl:2"
+      ],
+      "scope": "actor_readiness",
+      "proposed_action": "使用真实actor配方核身份、解释器、包来源、公开复现和实际提示内容。",
+      "status": "open"
+    },
+    {
+      "id": "base_contains_14177_reference_behavior",
+      "category": "cross_task_exposure",
+      "scope": "task_relationship",
+      "status": "open",
+      "evidence_level": "随后另一题原件静态源码对照；没有修改15422历史前稿",
+      "evidence_refs": [
+        "runs/swegym_quality_batch01_20260921_v2/private/conan-io__conan-14177/gold.patch",
+        "runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-15422/base/conan/tools/files/patches.py:42",
+        "runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-15422/base/conan/tools/files/patches.py:99",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-14177/analysis_before_history.md"
+      ],
+      "impact": "若solver先读本题patches.py，可能已接触14177参考日志行为；未证明实际读取或两题重复。",
+      "proposed_action": "登记具体base关系及真实solver暴露条件；不按同文件自动去重。"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": [],
+    "official_restore_paths": [
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py"
+    ],
+    "rationale": "Observed restore scope and gold source projection do not block legal repair; no new per-task exclusion justified.",
+    "evidence_refs": [
+      "runs/swegym_quality_batch01_20260921_v2/private/conan-io__conan-15422/test.patch",
+      "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w02-1/ledger.jsonl:2",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-15422/analysis_before_history.md#4"
+    ],
+    "applied_version": null
+  },
+  "revision_refs": [],
+  "disposition": {
+    "state": "needs_review",
+    "scope": "static_review",
+    "recommendation": "probe_candidate_with_bounded_semantic_scope",
+    "reason": "原始评分对照支持范围明确的字段传递诊断；actor未验，默认/追加/后端消费的覆盖限制保留。",
+    "reviewer_status": "completed",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-15422/analysis_before_history.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-15422/old_findings_delta.md",
+      "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w02-1/ledger.jsonl:1",
+      "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w02-1/ledger.jsonl:2",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-15422/review.md"
+    ],
+    "reviewer": {
+      "agent_id": "/root/review_conan",
+      "initial_ref": "reviewer_initial.md",
+      "review_ref": "review.md",
+      "scope": "独立静态复核与旧日志复读，未独立运行"
+    },
+    "coordinator_closure_at": "2026-09-20T17:42:57.651237+00:00"
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "not_approved_for": [
+      "training",
+      "final_evaluation"
+    ],
+    "exposure": [
+      "public_read.md",
+      "hidden_test_patch",
+      "gold",
+      "grading_reference_ids",
+      "historical_grader_logs",
+      "authorized_old_records_after_analysis_saved"
+    ],
+    "independent_solver_eligible": false,
+    "model_runs": 0,
+    "exposure_notes": "主审先保存并报备历史前稿，再由协调者开放旧记录。已见公开读者稿、隐藏测试、gold、评分日志和两份旧调查；未读reviewer；不得作为本题独立solver。 后续14177原件调查核实本题base包含其参考行为，已追加短卡/JSON，未回写本题历史前稿。"
+  },
+  "costs": {
+    "tokens": null,
+    "money": null,
+    "elapsed_seconds": null,
+    "new_project_cpu_runs": 0,
+    "container_wall_seconds": null,
+    "agent_tokens": null,
+    "human_decisions": null,
+    "source_refs": null
+  }
+}

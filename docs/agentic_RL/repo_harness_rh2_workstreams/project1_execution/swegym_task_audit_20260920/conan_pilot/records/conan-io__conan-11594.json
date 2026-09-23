@@ -1,0 +1,107 @@
+{
+  "instance_id": "conan-io__conan-11594",
+  "old_record_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/records/conan-io__conan-11594.json",
+  "environment": {
+    "status": "verified_environment_pair",
+    "recipe": "reference_v1",
+    "status_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json#conan-io__conan-11594",
+    "analysis_ref": "runs/env_recipe_repair_20260919/reference_v1/analysis_20.json",
+    "scope": "实验配方已验，尚未因此获得正式训练准入。",
+    "existing_observations": {
+      "noop": {
+        "reward": 0.0,
+        "test_rc": 1,
+        "log": "runs/env_recipe_repair_20260919/reference_v1/runs/conan-io__conan-11594-noop/eval_logs/evallog_replay-er19-ref-v1-conan_fea22e52.eval.log",
+        "sha256": "f1fa42967bf67ffcdf4116efb028ac59d8dfc849dd62ec80ac0e522532bf60da"
+      },
+      "gold": {
+        "reward": 1.0,
+        "test_rc": 0,
+        "log": "runs/env_recipe_repair_20260919/reference_v1/runs/conan-io__conan-11594-gold/eval_logs/evallog_replay-er19-ref-v1-conan_c6c7c2ef.eval.log",
+        "sha256": "b1e4873dfd6b8b79294bd5e8ab36d3e3e0c5c303b1628927b54a0866e1a1822d"
+      }
+    }
+  },
+  "requirements": "Ninja Multi-Config 下 CMake.test() 默认使用 test 目标，不能误用 RUN_TESTS；其余生成器保留现有目标选择。显式 target 和 skip_test 等既有参数行为继续有效。",
+  "public_sufficiency": "充分：题面给了报错命令和 test 可用的结论；基线 CMake.test 与 is_multi_configuration 可直接定位错误分类。无需猜 gold 的字符串条件，保留多配置识别并仅修默认测试目标即可。",
+  "test_assessment": "新增测试通过 ConanFileMock 捕获生成命令，6 个生成器覆盖默认目标选择，没有要求采用某种条件写法。没有真实启动 CMake，也不检查 --config 是否保留、显式 target/skip_test，因此不能把满分解释为这些回归都已验证。",
+  "old_claim_reviews": [
+    {
+      "old_claim": "checks.19：Ninja 参考键截断合并两个 nodeid，目前仍造成结果不清。",
+      "status": "superseded_env",
+      "assessment": "历史碰撞属实；当前 reference_v1 明确绑定 Ninja Makefiles 与 Ninja Multi-Config，要求两者均出现且全过。已有修后 gold 6 passed、noop 1 failed/5 passed，参考组 reward=1/0。",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/reference_bindings_v1.json#tasks.conan-io__conan-11594",
+        "runs/env_recipe_repair_20260919/reference_v1/reference_bindings.py:14-33",
+        "runs/env_recipe_repair_20260919/reference_v1/analysis_20.json"
+      ]
+    },
+    {
+      "old_claim": "checks.19：任一碰撞成员失败会覆盖成 FAILED，但只弄坏 Ninja Makefiles 的回归又完全不可见。",
+      "status": "refuted",
+      "assessment": "这两句互相矛盾。旧摘要若确按 PASSED→FAILED 输出，则 Makefiles 单独失败也会使合并键 FAILED；当前显式全成员绑定进一步消除输出顺序依赖。",
+      "evidence": [
+        "old_record#checks.19",
+        "runs/env_recipe_repair_20260919/reference_v1/reference_bindings.py:25-33"
+      ]
+    },
+    {
+      "old_claim": "checks.4_17：新建测试文件会让当前 RH2 恢复退化成整树 checkout。",
+      "status": "superseded_env",
+      "assessment": "旧记录本身已说明是 stage1 脚本边界，并区分 RH2 逐文件恢复。本轮当前实验配方的 noop/gold 对照正常，不能继续当作现行环境未修。",
+      "evidence": [
+        "old_record#checks.4_17",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json#conan-io__conan-11594"
+      ]
+    },
+    {
+      "old_claim": "checks.25：只判断生成器名、没有真实 CMake 构建。",
+      "status": "confirmed",
+      "assessment": "这是边界而非无效 oracle：题目错误恰在默认目标生成，Mock 可直接观测它；需要额外检查多配置参数保持，但不要求实现必须与 gold 相同。",
+      "evidence": [
+        "grading.test_patch",
+        "base:conan/tools/cmake/cmake.py:151-159"
+      ]
+    },
+    {
+      "old_claim": "checks.31 / control_surface_conftest_user：候选新增配置可进入测试控制面。",
+      "status": "unresolved",
+      "assessment": "旧仓库线索与本轮题意审查分开；没有执行新的篡改反例，也未据此给本题降级。可信边界的现实风险应沿统一评分链审查，不能把安装/参考键已验误写成安全已验。",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/CODEX_REVIEW_20260916.md#2",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/records/conan-io__conan-11594.json#checks.31"
+      ]
+    }
+  ],
+  "recommendation": "probe_candidate",
+  "recommendation_scope": "本轮模型探针/反例调查建议，不是训练准入、剔题或修改正式题包决定。",
+  "next_action": [
+    "优先用 reference_v1 配方进行模型探针，核对候选是否局部修 CMake.test 默认目标。",
+    "最小错误修复对照（未运行）：从 is_multi_configuration 中删除 Multi-Config，使 Ninja 退化成单配置；它预计满足现有目标断言却丢失 --config Release。补独立诊断检查 Ninja Multi-Config 的目标为 test 且仍含 --config Release，并保留 target=\"custom\" 与 skip_test 对照；不修改正式测试。"
+  ],
+  "evidence_level": {
+    "task_quality": "static",
+    "environment": "existing_run",
+    "new_counterexamples": "not_run",
+    "local_verification": "16 份所引用既有评分日志的 SHA256 与当前归档一致；未新增 Docker/远端/模型运行。"
+  },
+  "unknowns": [
+    "未新跑错误修复对照或真实 cmake.test；现有评分只验证命令生成。",
+    "reference_v1 是已验实验配方；正式冻结和 actor 消费不由本记录声称完成。"
+  ],
+  "materials": {
+    "base_commit": "4ed1bee0fb81b2826208e8c1c824c99fb6d69be8",
+    "source_repository": "runs/env_overnight_20260916/repos/conan（只用 git show 读取精确 base）",
+    "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl:28",
+    "test_patch_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:28",
+    "gold_reference_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl:28",
+    "reference_counts": {
+      "f2p": 1,
+      "p2p": 4
+    },
+    "base_source_refs": [
+      "conan/tools/cmake/cmake.py:151-159",
+      "conan/tools/cmake/utils.py:4-7"
+    ]
+  }
+}

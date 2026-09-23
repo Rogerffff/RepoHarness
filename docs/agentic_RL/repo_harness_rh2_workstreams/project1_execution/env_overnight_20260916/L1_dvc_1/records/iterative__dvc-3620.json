@@ -1,0 +1,241 @@
+{
+ "task_id": "iterative__dvc-3620",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "docs/.../s2/ingest/public_bundles_v0.jsonl#iterative__dvc-3620",
+  "grading": "docs/.../s2/ingest/grading_bundles_v2_v0.jsonl#iterative__dvc-3620",
+  "validation": "docs/.../s2/ingest/validation_bundles_v0.jsonl#iterative__dvc-3620",
+  "raw": "docs/.../s2/raw/swe_gym_lite_full_f70b1a29.jsonl#iterative__dvc-3620",
+  "base_commit": "e05157f8e05e856d2e9966c30a3150c26b32b86f",
+  "version": "0.92",
+  "python_version": "3.8",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-3620:latest",
+  "eval_cmd": "pytest -rA",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3620/{gold,empty}/offline/a1/",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc"
+ },
+ "public_view": {
+  "目标行为": "`RemoteLOCAL.unprotect` 删除 symlink 时不应把**被链接的 cache 文件**的权限改掉；unprotect 一个链接之后，源文件（cache 里的数据）必须仍然是 protected（只读）。",
+  "约束": "base `dvc/utils/fs.py::remove` 对非目录路径一律走 `_chmod(os.unlink, path, None)`，而 `_chmod` 里的 `os.chmod(p, perm)` **对 symlink 会跟随到目标**，于是 cache 文件被加上写权限。加 chmod 本来是为了 NTFS（只读文件不能删），在 POSIX 上是不必要的。",
+  "公开材料无法确定的点": [
+   "修法可以是\"只在删除失败时才 chmod\"（gold）、\"islink 时跳过 chmod\"、或\"用 `os.chmod(..., follow_symlinks=False)`\"，题面没指定；",
+   "题面没说 Windows 上应保留什么行为（test_patch 里加了 `os.name == \"nt\"` 分支）。"
+  ],
+  "相关模块": "dvc/utils/fs.py（remove / _chmod）、dvc/remote/local.py（unprotect / _unprotect_file / is_protected）。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3620/grading.json#test_patch",
+    "mat/iterative__dvc-3620/validation.json#golden_patch",
+    "git show e05157f8e0:dvc/utils/fs.py"
+   ],
+   "note": "test_patch 动 tests/func/test_unprotect.py 与 tests/unit/remote/test_local.py（base 均存在）；gold 只动 dvc/utils/fs.py。同一问题。无二进制/LFS/子模块。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show e05157f8e0:dvc/utils/fs.py::remove（`_chmod(os.unlink, path, None)`）",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3620/empty/offline/a1/status_map.json"
+   ],
+   "note": "base 的 `remove` 无条件先 chmod 再 unlink，与题面贴出的代码一致；empty 侧两条 F2P FAILED。",
+   "by": "static"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3620/public.json#problem_statement"
+   ],
+   "note": "题面 1193 字符，**把 `remove` 与 `_chmod` 两个函数的源码都贴了出来并直接点明根因**（\"but this call `os.chmod(p, perm)` changes the permissions of the cached file, not the link\"），渲染基本完整（原文里 `path = fspath_py35(path)` 等几行被挤到同一行，属轻微格式损伤，不影响理解）。hints 为空，无信息落差。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3620/grading.json#test_patch"
+   ],
+   "note": "test_patch 触碰的两个路径都是纯官方测试文件；gold 不触碰测试样路径。",
+   "by": "static"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3620/grading.json#test_patch",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3620/gold/offline/a1/eval.sh:68"
+   ],
+   "note": "恢复清单 = {tests/func/test_unprotect.py, tests/unit/remote/test_local.py}，均为官方测试文件；eval_cmd 两个文件都跑。",
+   "by": "static"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dvc_1/prescan.json",
+    "mat/iterative__dvc-3527/grading.json#pass_to_pass"
+   ],
+   "note": "**与 dvc-3527（0.91）紧邻同族**：3527 的 P2P 里就有 `test_is_protected[symlink]` / `[hardlink]`（期望 `assert not remote.is_protected(foo)`），本题 test_patch 把同名用例的期望**翻转成 `assert remote.is_protected(foo)`** 并作为 F2P。同一个测试 ID 在两题里语义相反，跨题按 ID 做任何统计都会出错；数据划分必须同侧。",
+   "by": "static"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3620/grading.json#test_patch",
+    "mat/iterative__dvc-3620/public.json#problem_statement"
+   ],
+   "note": "F2P 断言\"unprotect 链接后源文件仍 protected\"，与题面\"不应改动 cache 文件权限\"直接对应，可从公开材料推出。",
+   "by": "static"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3620/validation.json#golden_patch",
+    "mat/iterative__dvc-3620/grading.json#test_patch"
+   ],
+   "note": "F2P 只看 `remote.is_protected(foo)` 的布尔结果，不引用 gold 新增的 `_unlink` helper、不锁调用顺序。其它合法写法（`if os.path.islink(p): func(p); return` 或 `os.chmod(..., follow_symlinks=False)`）同样能过。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3620/gold/offline/a1/status_map.json",
+    "mat/iterative__dvc-3620/grading.json#pass_to_pass（4 条）"
+   ],
+   "note": "F2P 只覆盖\"unprotect 单个链接\"这一条路径。gold 改的是通用的 `dvc/utils/fs.py::remove`——一个把 `_chmod` 整个删掉（永不 chmod）的实现同样能过全部 F2P/P2P，但会让 NTFS 上删只读文件失败；现有用例里没有任何一条能区分。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3620/gold/offline/a1/test_output.txt（1 failed, 6 passed in 1.05s）",
+    "git grep \"from dvc.utils.fs import .*remove\" e05157f8e0 -- dvc（external_repo/remote.local/repo.destroy/repo.get/repo.init/state 等 6 个模块直接导入）"
+   ],
+   "note": "**本题最严重的覆盖缺口**：test_patch 专门为本 issue 修改的 `tests/func/test_unprotect.py::TestUnprotect::test` 在 base 与 gold 两侧都 FAILED（`self.assertFalse(os.access(self.FOO, os.W_OK))` → `AssertionError: True is not false`，因为容器以 root 运行），于是被排除出 F2P/P2P —— **题目讲的就是 unprotect，而唯一的 unprotect 功能测试被环境问题剔掉了**。同时 gold 改的 `remove()` 被 6 个模块（destroy/get/init/state/external_repo/remote.local）直接使用，P2P 只有 4 条 test_local.py 的单元测试，这些调用点零回归。",
+   "by": "static"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3620/validation.json#golden_patch"
+   ],
+   "note": "gold 新增 `_unlink(path, onerror)`：先直接 `os.unlink`，失败才回退到 `_chmod`。与题目对应，无无关改动，不依赖未交付改动；`import sys` 是新 helper 需要的。",
+   "by": "static"
+  },
+  "29": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-3620/public.json#problem_statement"
+   ],
+   "note": "题面**把有缺陷的两个函数源码逐行贴出并直接点名有问题的那一行**。这是原始 issue 报告者写的、属于合法的 bug 报告详尽度，不是未来修复泄漏；但它把定位难度降到接近 0，做难度分级时要注意。无 PR/commit 链接，hints 为空。",
+   "by": "static"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3620/gold/offline/a1/test_output.txt（1.05s）"
+   ],
+   "note": "安装与测试正常，无依赖漂移症状。",
+   "by": "static"
+  },
+  "8": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3620/gold/offline/a1/test_output.txt（TestUnprotect::test `AssertionError: True is not false` at `os.access(self.FOO, os.W_OK)`）"
+   ],
+   "note": "评分以 root 执行；`os.access(p, os.W_OK)` 对 root 恒为 True，本题唯一的功能测试因此双侧失败（与 dvc-1877、dvc-2254 同因，但本题影响最大，因为题目主题就是权限保护）。",
+   "by": "static"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3620/gold/offline/a1/test_output.txt（无 SKIPPED）"
+   ],
+   "note": "纯本地文件/链接操作，无网络。",
+   "by": "static"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3620/gold/offline/a1/status_map.json"
+   ],
+   "note": "status_map 无污染键，F2P/P2P 全部对上。",
+   "by": "static"
+  },
+  "7": {
+   "status": "not_applicable",
+   "evidence_refs": [],
+   "note": "test_patch 不带外部资产。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "容器以 root 运行(8/26)",
+   "severity": "P1",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3620/gold/offline/a1/test_output.txt（tests/func/test_unprotect.py::TestUnprotect::test 双侧 FAILED）",
+    "docs/.../env_probe_20260909/ledger/cc_candidate_grading.jsonl（exec_user_test=root）"
+   ],
+   "note": "本题主题是\"unprotect 不该改 cache 权限\"，而唯一直接验证 unprotect 的功能测试 `TestUnprotect::test` 因为 root 下 `os.access(..., os.W_OK)` 恒 True 而双侧失败，被剔出评分。等于把最相关的回归去掉了。",
+   "proposed_action": "评分容器用非 root 用户执行测试（本包 1877/2254/3620 共 7 条用例受同一问题影响），随后把 `TestUnprotect::test` 纳入 F2P 或 P2P。",
+   "next_experiment": "镜像里 `useradd -m t && chown -R t /testbed && su t -c \"pytest -rA tests/func/test_unprotect.py tests/unit/remote/test_local.py\"`，比较 base/gold 的逐 case 状态。"
+  },
+  {
+   "category": "跨题同 ID 语义翻转(5/19)",
+   "severity": "P2",
+   "evidence_refs": [
+    "mat/iterative__dvc-3527/grading.json#pass_to_pass（`test_is_protected[symlink]` 期望 `not is_protected(foo)`）",
+    "mat/iterative__dvc-3620/grading.json#test_patch（同名用例期望翻转为 `is_protected(foo)`）"
+   ],
+   "note": "`tests/unit/remote/test_local.py::test_is_protected[symlink|hardlink]` 在 dvc-3527 是 P2P（旧语义），在 dvc-3620 是 F2P（新语义）。按测试 ID 做跨题聚合/去重会把两者混为一谈。",
+   "proposed_action": "跨题工具按 (instance_id, 测试 ID) 而非仅测试 ID 索引；数据划分把 {3527, 3620} 记为同侧。",
+   "next_experiment": "无。"
+  },
+  {
+   "category": "通用函数改动零回归(25/26)",
+   "severity": "P2",
+   "evidence_refs": [
+    "git grep \"from dvc.utils.fs import .*remove\" e05157f8e0 -- dvc（6 个模块）",
+    "mat/iterative__dvc-3620/grading.json#pass_to_pass（4 条单元测试）"
+   ],
+   "note": "gold 改的是全仓库通用的 `remove()`。把 `_chmod` 回退整个删掉的实现也能满分，但会破坏 NTFS 上删只读文件的能力；destroy/get/init/state 等调用点没有任何回归。",
+   "proposed_action": "把 `tests/unit/utils/test_fs.py`（若存在）与 `tests/func/test_gc.py` / `tests/func/test_remove.py` 纳入 P2P。",
+   "next_experiment": "base/gold 各跑一次 `pytest -rA tests/unit/utils/ tests/func/test_remove.py tests/func/test_gc.py`，取双侧 PASSED 交集扩充 P2P。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 触碰的两个路径都是纯官方测试文件；gold 不触碰测试样路径。按第四组 B 保持为空。",
+  "evidence_refs": [
+   "mat/iterative__dvc-3620/grading.json#test_patch",
+   "mat/iterative__dvc-3620/validation.json#golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/func/test_unprotect.py::TestUnprotect::test",
+   "reason": "本题主题的唯一功能测试；当前因 root 身份双侧失败，修好用户身份后必须纳入。"
+  },
+  {
+   "id": "tests/unit/utils/test_fs.py",
+   "reason": "gold 改的 `remove`/`_chmod` 的直接单元测试位置（需确认 base 是否存在该文件）。"
+  },
+  {
+   "id": "tests/func/test_remove.py / tests/func/test_gc.py",
+   "reason": "`dvc/utils/fs.py::remove` 的功能级消费者，能挡住\"删掉 _chmod 回退\"的实现。"
+  },
+  {
+   "id": "tests/unit/remote/test_local.py::test_protect_ignore_erofs",
+   "reason": "已在 P2P；与 protect/unprotect 权限语义同族（正是 dvc-3527 的 F2P），互为回归。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "题面质量高（贴出两个函数并点明根因）、gold 正确且不强制唯一实现、F2P 是行为级断言；但唯一的 unprotect 功能测试因容器以 root 运行被剔除，且 gold 改的是被 6 个模块使用的通用 `remove()` 而只有 4 条单元测试把关。"
+ },
+ "costs": {
+  "minutes": 20
+ },
+ "by": "L1_dvc_1 (Claude Opus 5, 静态审查)"
+}

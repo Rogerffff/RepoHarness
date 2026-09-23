@@ -1,0 +1,281 @@
+{
+ "task_id": "iterative__dvc-5336",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+  "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+  "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+  "raw": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc",
+  "base_commit": "9638dde4daf3f338e3538712133c4457e96d23ad",
+  "version": "1.11",
+  "python_version": "3.9",
+  "eval_cmd": "pytest -rA",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-5336:latest",
+  "workdir": "/testbed",
+  "test_patch_paths": [
+   "tests/docker-compose.yml",
+   "tests/unit/remote/test_local.py"
+  ],
+  "gold_paths": [
+   "dvc/tree/local.py"
+  ],
+  "n_f2p": 2,
+  "n_p2p": 4,
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-5336/{gold,empty}/offline/a1/",
+  "signals": {
+   "in_e2": [],
+   "fragile_reference_id": false,
+   "stage1": {
+    "empty": {
+     "verdict": "RESOLVED_NO",
+     "rc_install": 0
+    },
+    "gold": {
+     "verdict": "RESOLVED_FULL",
+     "rc_install": 0,
+     "p2p_missing": 0,
+     "f2p_missing": 0
+    }
+   },
+   "deepseek_candidate_oracle": null
+  }
+ },
+ "public_view": {
+  "目标行为": "在 Windows 把 Samba/ZFS 共享挂成盘符、当作 dvc 共享 cache 时，`dvc add` 应该能完成；当前在把文件搬进 cache 后卡住并抛 `[WinError 5] Access is denied`。",
+  "约束": "题面给了完整复现步骤、`dvc add -v` 的全量 DEBUG 日志与两层 traceback（`shutil.move` 的 WinError 17 → 上层 WinError 5），以及『1.7.2 能用、1.11.10 不能用』的版本区间。5795 字符，是本包最长的题面。",
+  "公开材料无法确定的点": [
+   "修哪一层：题面的 traceback 指向 `shutil.move` 与 add 流程，没有指向 `LocalTree.chmod`。真正的修法是把 `chmod` 里对 errno 的精细判断整体改成『任何 OSError 都吞掉并 trace 日志』。",
+   "『吞掉所有 OSError』这条产品决定的依据（维护者判断 protect/set_exec 失败不致命）只在上游 commit message 里。",
+   "Windows 场景无法在 Linux 镜像里复现，评分用的是 mock `os.chmod` 抛 OSError 的单元测试。"
+  ],
+  "base 关键代码": "dvc/tree/local.py:246-262 `chmod` 对 EROFS 直接返回、对 EPERM/EACCES 再 stat 比较 mode、其它 errno 抛出；`protect()`（base:300-301）只是 `self.chmod(path_info, self.CACHE_MODE)`。"
+ },
+ "checks": {
+  "1": {
+   "status": "issue",
+   "evidence_refs": [
+    "repos/dvc 7fe0279c201862a85443c8ee199665a343fd3945 `dvc: ignore errors on protect/set_exec (bp #5335) (#5336)`，commit message 含 `(cherry picked from commit 434cd305e9a56e5866b37043c5008c1369ebc384)` 与 `* tests: upgrade azurite and enable loose mode / Backport of #5272`",
+    "--stat: dvc/tree/local.py 19, tests/docker-compose.yml 3, tests/unit/remote/test_local.py 22",
+    "base 9638dde4daf3f338e3538712133c4457e96d23ad = `dvc: bump to 1.11.12`",
+    "`git merge-base --is-ancestor <base> origin/main` → false；`git tag --contains <base>` → 1.11.12/1.11.13/1.11.14"
+   ],
+   "note": "三点：(a) gold+test_patch 与上游 commit 一致，无丢件；(b) 该上游 commit 是一个 **backport（cherry-pick）**，把两件不相干的事合并进一次提交——protect 的修复（#5335）与 azurite 镜像升级（#5272）；(c) **base 不在 origin/main 上**，而在 1.11 维护分支（只有 tag 1.11.12+ 含它）。本包其余 17 题的 base 都在主线上，本题是唯一例外，跨题『后面的题含前面的修复』这类推理对它不成立。",
+   "by": "L1_dvc_2"
+  },
+  "2": {
+   "status": "unknown",
+   "evidence_refs": [
+    "base:dvc/tree/local.py:246-262",
+    "stage1 empty: test_protect_ignore_errors[1] 与 [13] FAILED"
+   ],
+   "note": "base 的 `chmod` 确实会在『chmod 抛 EPERM/EACCES 且实际 mode 与目标不一致』时重新抛出，这与题面的 WinError 5 一致。但题面症状发生在 Windows + Samba，**Linux 镜像里无法复现真实初态**；F2P 用 mock 制造 OSError 来近似。是否真的复现了用户的因果链，静态无法确认。",
+   "by": "L1_dvc_2"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 5795 字符，含复现步骤、完整 -v 日志、两层 traceback"
+   ],
+   "note": "题面信息量本包最大，代码块闭合、无外链图片、无截断。",
+   "by": "L1_dvc_2"
+  },
+  "4": {
+   "status": "issue",
+   "evidence_refs": [
+    "test_patch 触碰 tests/docker-compose.yml（azurite 3.9.0→3.10.0 并加 `command: azurite -L -l /data --blobHost 0.0.0.0 --queueHost 0.0.0.0`）"
+   ],
+   "note": "**test_patch 里有一个与本题无关的测试基础设施改动**。它落在 `tests/` 下，按第四组 B 的默认规则会被当作可信测试文件恢复；它不影响 F2P/P2P（两者都在 tests/unit/remote/test_local.py，不用 azurite），但它说明『test_patch 全部路径』并不都是测试代码。additional_exclusions 仍保持空：恢复这个 yml 不会覆盖任何合法解答路径，也不会改变判分。",
+   "by": "L1_dvc_2"
+  },
+  "17": {
+   "status": "issue",
+   "evidence_refs": [
+    "同上"
+   ],
+   "note": "恢复集合 = {tests/docker-compose.yml, tests/unit/remote/test_local.py}。前者是 compose 配置而非测试代码；若将来某题的候选需要改测试基础设施，这类路径就会形成混合职责。本题无实际影响，记为观测。",
+   "by": "L1_dvc_2"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan.json 本包路径表"
+   ],
+   "note": "本包无第二题触碰 dvc/tree/local.py 或 tests/unit/remote/test_local.py。",
+   "by": "L1_dvc_2"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement 的 traceback 指向 shutil.move / repo/add.py",
+    "golden_patch 改的是 dvc/tree/local.py 的 chmod"
+   ],
+   "note": "公开材料（含完整 traceback）指向的是 move/add 路径，**没有任何一帧落在 `LocalTree.chmod`**（因为真正抛 WinError 5 的那层在日志里被截断在 funcy decorators）。要推出『问题在 protect 的 chmod errno 判断』需要额外推理。另『所有 OSError 都应被吞掉』这条决定无公开依据。",
+   "by": "L1_dvc_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 断言只有 `assert mock_chmod.called`"
+   ],
+   "note": "不锁实现。任何『调用 os.chmod 并吞掉异常』的写法都能过。",
+   "by": "L1_dvc_2"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "test_patch 新版 `test_protect_ignore_errors` 的唯一断言是 `assert mock_chmod.called`",
+    "P2P 只有 4 条"
+   ],
+   "note": "F2P 极弱：只验证『调用了 os.chmod 且没有异常逃逸』。`except BaseException: pass` 这种把所有错误（包括真正的 bug）吞掉的实现同样满分。gold 本身就是一次**放宽**（从按 errno 精细判断改成吞掉全部 OSError），而测试没有任何一条守住『不该吞的错误仍要抛』。题面的 Windows 症状本身在 Linux 镜像里零覆盖。",
+   "by": "L1_dvc_2"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "P2P 4 条：test_is_protected[symlink]/[hardlink]、test_protect_ignore_errors[30]、test_status_download_optimization",
+    "smstat.json 5336: gold real=6 全 PASSED"
+   ],
+   "note": "P2P 规模本包第二小。`test_protect_ignore_errors[30]`（EROFS）是唯一有意义的保留项。`chmod`/`protect` 的真实调用面（cache 保存、checkout、unprotect、relink）零回归——而 gold 正是在放宽这条路径的错误处理。",
+   "by": "L1_dvc_2"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "上游 commit message 与 --stat"
+   ],
+   "note": "gold 与上游一致、不依赖未交付改动。但它是一个 backport，并把一次不相干的 CI 改动（azurite）打包进来；同时 commit 标题写的是 `protect/set_exec`，而 base 的 `dvc/tree/local.py` 里根本没有 `set_exec`（`protect()` 只是调 `chmod`），标题与实际改动范围不完全对应。",
+   "by": "L1_dvc_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak.py: gold_added=2 ps_match=0 hints_match=0"
+   ],
+   "note": "题面不含修复代码。hints（不可见）里有 dvc 与 cpython 的源码行号链接以及 PR #4832 链接。",
+   "by": "L1_dvc_2"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "smstat.json: gold 6/6 全 PASSED；deps_scan2.txt 本题未命中 pathspec/networkx"
+   ],
+   "note": "本题测试文件不触发 dvcignore，未受依赖问题影响。install 段仍需网络（同其它题）。",
+   "by": "L1_dvc_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 用 tmp_dir + mocker.patch('os.chmod')"
+   ],
+   "note": "F2P/P2P 无外部资产。test_patch 改的 azurite compose 服务不被这两个文件使用。",
+   "by": "L1_dvc_2"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "test_patch 修改 tests/docker-compose.yml 的 azurite 服务（`mcr.microsoft.com/azure-storage/azurite:3.10.0`）"
+   ],
+   "note": "F2P/P2P 本身不需要网络。但 test_patch 引入的 compose 改动意味着**该仓库的完整测试套件依赖可拉取的容器镜像与本地 Docker**；本题的评分路径不触发它，只是线索。",
+   "by": "L1_dvc_2"
+  },
+  "18": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh `pytest -rA tests/unit/remote/test_local.py`；gold real=6 = F2P 2 + P2P 4"
+   ],
+   "note": "收集集合与 F2P∪P2P 完全相等，零过选零漏选。注意 eval.sh 不会去跑 docker-compose。",
+   "by": "L1_dvc_2"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "伪键 'Could'"
+   ],
+   "note": "同 3677。另注意本题 F2P 的参数化 ID 是裸 errno 数字（`[1]`/`[13]`/`[30]`），与 pytest SKIPPED 汇总行 `SKIPPED [1] path:line: reason` 产生的伪键 `[1]` 形状相近——本题日志里没有 skip，未发生冲突，但这是一个值得记下的形状风险。",
+   "by": "L1_dvc_2"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "empty 4 PASSED/2 FAILED；gold 6/6"
+   ],
+   "note": "分差恰为 2 条 F2P。",
+   "by": "L1_dvc_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "F2P 过弱（放宽型修复无约束）",
+   "severity": "P1",
+   "evidence_refs": [
+    "唯一断言 `assert mock_chmod.called`",
+    "P2P 仅 4 条"
+   ],
+   "proposed_action": "补一条反向断言：非 EPERM/EACCES/EROFS 的 OSError（或非 OSError 的异常）仍应向上抛，或至少要求 `logger.trace` 被调用。当前设计对『吞掉一切』毫无约束，而本题的修复方向恰恰是放宽。",
+   "next_experiment": "写 `def chmod(self, p, m): \\n    try: os.chmod(...)\\n    except BaseException: pass` 跑 F2P+P2P，预期满分。"
+  },
+  {
+   "category": "题面症状不可复现",
+   "severity": "P2",
+   "evidence_refs": [
+    "题面是 Windows + Samba 场景",
+    "镜像是 Linux"
+   ],
+   "proposed_action": "记录本题属于『平台相关缺陷，用 mock 近似验证』一类；评估训练价值时按此打折。",
+   "next_experiment": "无（需要 Windows 机器才能真复现）。"
+  },
+  {
+   "category": "test_patch 含无关基础设施改动",
+   "severity": "P2",
+   "evidence_refs": [
+    "tests/docker-compose.yml 的 azurite 升级",
+    "上游 commit message `Backport of #5272`"
+   ],
+   "proposed_action": "从 test_patch 里剥离 azurite 改动（它属于另一个 PR），或至少在题级记录里标注。这是『check 17 的 test_files 由 test_patch 全部路径生成』会带进无关文件的具体样本。",
+   "next_experiment": "无（静态可判）。"
+  },
+  {
+   "category": "base 不在主线",
+   "severity": "P2",
+   "evidence_refs": [
+    "`git merge-base --is-ancestor 9638dde4da origin/main` → false",
+    "`git tag --contains` → 1.11.12/13/14"
+   ],
+   "proposed_action": "标注本题 base 在 1.11 维护分支；做跨题时间线/同族分析与数据划分时不能用主线祖先关系推断。",
+   "next_experiment": "无。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 两个路径（tests/docker-compose.yml、tests/unit/remote/test_local.py）都在 tests/ 下，恢复它们不会覆盖任何合法解答路径，也不改变判分；gold 只改 dvc/tree/local.py。沿用第四组 B 默认空。docker-compose.yml 属于测试基础设施而非测试代码，这一点单独记在 check 4/17，不作为排除理由。",
+  "evidence_refs": [
+   "test_patch",
+   "golden_patch",
+   "stage1 eval.sh"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "新增：`os.chmod` 抛非 EPERM/EACCES/EROFS 的 OSError（例如 ENOSPC）时 `protect` 的行为断言",
+   "reason": "gold 是放宽型修复，必须有一条界定放宽边界的测试，否则任何『吞掉一切』的实现都等价。"
+  },
+  {
+   "id": "tests/func/test_add.py 的 test_should_protect_on_repeated_add[hardlink|symlink|copy]",
+   "reason": "`protect()` 的真实调用面；gold 改的正是它调用的 chmod。"
+  },
+  {
+   "id": "tests/unit/remote/test_local.py::test_is_protected[copy]（若该版本有）与 tests/func/test_unprotect.py",
+   "reason": "unprotect/relink 路径同样依赖 chmod 的错误语义。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "F2P 的唯一断言是 `assert mock_chmod.called`，而本题的修复方向是『放宽异常处理』，测试对放宽过头毫无约束（`except BaseException: pass` 即可满分）；题面症状是 Windows/Samba，Linux 镜像里根本不可复现；此外 test_patch 夹带了一个无关的 azurite compose 改动，base 还在 1.11 维护分支上。"
+ },
+ "costs": {
+  "minutes": 21
+ },
+ "by": "L1_dvc_2 (Claude Opus 5, 2026-09-16, 静态审查)"
+}

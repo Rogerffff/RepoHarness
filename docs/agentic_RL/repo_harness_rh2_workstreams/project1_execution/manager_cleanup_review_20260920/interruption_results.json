@@ -1,0 +1,143 @@
+{
+  "baseline": "e3d120b55a62cca5985f688de8cdd481b12ea6be",
+  "scope": "CPU fake Docker + local Bash; no Docker processes",
+  "cases": [
+    {
+      "code": "baseline",
+      "pause_at": "inspect",
+      "exec_delivered": true,
+      "cancelled": true,
+      "delivered_output_retained": false,
+      "candidate_facts": {
+        "install_rc_last_command": null,
+        "install_failed_commands": [],
+        "install_skipped": false,
+        "install_seconds": null,
+        "test_rc": null,
+        "test_seconds": null,
+        "markers_seen": [],
+        "log_partial": true
+      },
+      "container_removed": true,
+      "reward": null,
+      "detail": null
+    },
+    {
+      "code": "baseline",
+      "pause_at": "partial_read",
+      "exec_delivered": true,
+      "cancelled": true,
+      "delivered_output_retained": false,
+      "candidate_facts": null,
+      "container_removed": true,
+      "reward": null,
+      "detail": null
+    },
+    {
+      "code": "working_tree",
+      "pause_at": "inspect",
+      "exec_delivered": true,
+      "cancelled": true,
+      "delivered_output_retained": false,
+      "candidate_facts": {
+        "install_rc_last_command": null,
+        "install_failed_commands": [],
+        "install_skipped": false,
+        "install_seconds": null,
+        "test_rc": null,
+        "test_seconds": null,
+        "markers_seen": [],
+        "candidate_exec_exit_code": null,
+        "candidate_segment_completed": null,
+        "log_partial": true
+      },
+      "container_removed": true,
+      "reward": null,
+      "detail": null
+    },
+    {
+      "code": "working_tree",
+      "pause_at": "partial_read",
+      "exec_delivered": true,
+      "cancelled": true,
+      "delivered_output_retained": false,
+      "candidate_facts": null,
+      "container_removed": true,
+      "reward": null,
+      "detail": null
+    },
+    {
+      "code": "working_tree",
+      "pause_at": null,
+      "exec_delivered": true,
+      "cancelled": false,
+      "delivered_output_retained": true,
+      "candidate_facts": {
+        "install_rc_last_command": 0,
+        "install_failed_commands": [],
+        "install_skipped": false,
+        "install_seconds": null,
+        "test_rc": null,
+        "test_seconds": null,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TS_TEST_START"
+        ],
+        "candidate_exec_exit_code": 137,
+        "candidate_segment_completed": false,
+        "log_partial": true
+      },
+      "container_removed": true,
+      "reward": null,
+      "detail": "grading_container_killed_during_test:candidate_phase=test"
+    },
+    {
+      "code": "working_tree",
+      "pause_at": null,
+      "exec_delivered": true,
+      "cancelled": false,
+      "delivered_output_retained": false,
+      "candidate_facts": {
+        "install_rc_last_command": null,
+        "install_failed_commands": [],
+        "install_skipped": false,
+        "install_seconds": null,
+        "test_rc": null,
+        "test_seconds": null,
+        "markers_seen": [],
+        "candidate_exec_exit_code": 137,
+        "candidate_segment_completed": false,
+        "log_partial": true
+      },
+      "container_removed": true,
+      "reward": null,
+      "detail": "grading_container_state_unknown_during_test:candidate_phase=install"
+    }
+  ],
+  "shell_cases": [
+    {
+      "child_exit": 0,
+      "wrapper_exit": 0,
+      "test_rc": 0,
+      "completed": true
+    },
+    {
+      "child_exit": 1,
+      "wrapper_exit": 0,
+      "test_rc": 1,
+      "completed": true
+    },
+    {
+      "child_exit": 137,
+      "wrapper_exit": 0,
+      "test_rc": 137,
+      "completed": true
+    },
+    {
+      "child_exit": 255,
+      "wrapper_exit": 0,
+      "test_rc": 255,
+      "completed": true
+    }
+  ]
+}

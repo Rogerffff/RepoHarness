@@ -1,0 +1,281 @@
+{
+ "task_id": "iterative__dvc-4778",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+  "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+  "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+  "raw": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc",
+  "base_commit": "f8ba5daae23ffc5c2135f86670bd562d6ce654d7",
+  "version": "1.9",
+  "python_version": "3.9",
+  "eval_cmd": "pytest -rA",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-4778:latest",
+  "workdir": "/testbed",
+  "test_patch_paths": [
+   "tests/func/test_add.py"
+  ],
+  "gold_paths": [
+   "dvc/utils/__init__.py"
+  ],
+  "n_f2p": 4,
+  "n_p2p": 0,
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4778/{gold,empty}/offline/a1/",
+  "signals": {
+   "in_e2": [],
+   "fragile_reference_id": false,
+   "stage1": {
+    "gold": {
+     "verdict": "RESOLVED_FULL",
+     "rc_install": 0,
+     "p2p_missing": 0,
+     "f2p_missing": 0
+    },
+    "empty": {
+     "verdict": "RESOLVED_NO",
+     "rc_install": 0
+    }
+   },
+   "deepseek_candidate_oracle": null
+  }
+ },
+ "public_view": {
+  "目标行为": "对一个**已被 dvc 跟踪、且在子目录里**的文件再次 `dvc add`，不应报 `output ... is already specified in stage ...`；在该子目录里 `cd` 进去再 add 是正确的（提示 `Stage is cached, skipping`）。",
+  "约束": "题面给了目录树（文件是指向 dvc cache 的符号链接）、两种调用方式的对比、错误文本、以及 .dvc 文件内容。dvc 1.8.0。",
+  "公开材料无法确定的点": [
+   "根因：题面没有指出 `dvc/utils/resolve_paths` 里 `contains_symlink_up_to(abspath, ...)` 把『文件自身是符号链接』也算成『路径上有符号链接』，于是 wdir 落到 cwd 而不是文件所在目录，第二次 add 时 .dvc 的落点与第一次不一致。",
+   "评分方向：gold 除了修上面这条，还**新增**了一条拒绝——对符号链接目录直接 `raise DvcException(\"Cannot add files inside symlinked directories to DVC\")`。题面完全没有要求『拒绝』这件事。",
+   "F2P 全部验的是新增的那条拒绝，而不是题面报告的症状。"
+  ],
+  "base 关键代码": "dvc/utils/__init__.py:resolve_paths —— `not contains_symlink_up_to(abspath, repo.root_dir)` 用的是含文件本身的 abspath；gold 改成 `contains_symlink_up_to(dirname, ...)` 并把符号链接目录改成抛异常。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "repos/dvc b2495aa2308b3d8f91e7ea2075a3cc349a2c9e74 `add: fix issue when adding already tracked symlinked files (#4778)` --stat: dvc/utils/__init__.py 23, tests/func/test_add.py 89"
+   ],
+   "note": "gold+test_patch 与上游一致，无丢件。test_patch 删除了两个既有类 `TestShouldAddDataFromExternalSymlink` / `TestShouldAddDataFromInternalSymlink`（它们测的正是新 gold 要禁止的行为），并把 `test_add_symlink` 重命名为 `test_add_symlink_file` 且加了断言。",
+   "by": "L1_dvc_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base:dvc/utils/__init__.py resolve_paths 用 abspath",
+    "stage1 empty: 4 条 F2P 全 FAILED"
+   ],
+   "note": "缺陷在 base 存在。",
+   "by": "L1_dvc_2"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 1828 字符，含目录树、两段命令对比、.dvc 内容"
+   ],
+   "note": "题面完整、代码块闭合。",
+   "by": "L1_dvc_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 仅 tests/func/test_add.py",
+    "gold 仅 dvc/utils/__init__.py"
+   ],
+   "note": "零交集。additional_exclusions 空。",
+   "by": "L1_dvc_2"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh git checkout 目标"
+   ],
+   "note": "纯测试文件恢复。",
+   "by": "L1_dvc_2"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "prescan.json: iterative__dvc-4961 的 gold 也是 dvc/utils/__init__.py"
+   ],
+   "note": "4778 与 4961 同改 `dvc/utils/__init__.py`（不同函数：resolve_paths vs parse_target），4961 的 base 在 4778 之后。非同一修复，但同文件，划分留意。",
+   "by": "L1_dvc_2"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement（要求第二次 add 成功）",
+    "F2P 四条全是 `with pytest.raises(DvcException): dvc.add(...)`",
+    "golden_patch 新增的 `Cannot add files inside symlinked directories to DVC` 分支"
+   ],
+   "note": "**题面要『让它工作』，F2P 验的是『让它明确报错』**。gold 里真正对应题面症状的改动是 `contains_symlink_up_to(abspath→dirname)`，覆盖它的测试是 `test_add_symlink_file`（含注释 `Test that subsequent add succeeds / See issues/4654`）——而这条测试**既不在 F2P 也不在 P2P**。『符号链接目录一律拒绝』这条产品决定在公开材料里零依据。",
+   "by": "L1_dvc_2"
+  },
+  "24": {
+   "status": "issue",
+   "evidence_refs": [
+    "F2P 四条只断言 `pytest.raises(DvcException)`"
+   ],
+   "note": "不锁 helper/顺序/字符串，但断言极弱：只要求抛 DvcException，不要求消息、不要求只对符号链接目录抛。见 check 25。",
+   "by": "L1_dvc_2"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "F2P 4 条全是 `pytest.raises(DvcException)`",
+    "P2P = 0",
+    "smstat.json 4778: gold real=55, PASSED 4 / FAILED 51；4 条 PASSED 正好等于 F2P 全集"
+   ],
+   "note": "**本包最直接的奖励漏洞**：在 `dvc/utils/__init__.py:resolve_paths` 开头写一行 `raise DvcException(\"nope\")` 就能让 4 条 F2P 全过，而 P2P 为空、同文件另外 51 条在 gold 下本来就红，没有任何东西会拦住这个把 `dvc add` 整体打死的改动。题面症状（第二次 add 成功）零覆盖。",
+   "by": "L1_dvc_2"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "P2P=0",
+    "stage1 gold: 51/55 FAILED，其中 18 条是 `re.error: redefinition of group name 'ps_d'`，包括覆盖题面症状的 test_add_symlink_file",
+    "deps_scan2.txt: iterative__dvc-4778 pathspec_ps_d=66"
+   ],
+   "note": "gold 改的是 `resolve_paths`，即所有 `dvc add` 的路径解析入口，回归面极大，但 P2P 为空。更糟：**唯一覆盖题面症状的 `test_add_symlink_file` 在 gold 下也是 FAILED（pathspec re.error）**，所以它既进不了 F2P 也进不了 P2P。",
+   "by": "L1_dvc_2"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "golden_patch 两个行为：dirname 改动 + 新增拒绝分支"
+   ],
+   "note": "gold 与上游一致，但把『修 bug』与『新增一条产品级拒绝（并附 dvc.org 文档链接）』捆在一起。后者没有对应的题面要求，也让两个既有测试类被删。评估 gold『与本题对应』时应记下这一点。",
+   "by": "L1_dvc_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak.py: gold_added=11 ps_match=0 hints_match=0"
+   ],
+   "note": "题面无修复代码。hints（不可见）给了维护者的最小复现脚本与归因。gold 里含一个 dvc.org troubleshooting 链接，那是产品文档不是答案泄漏。",
+   "by": "L1_dvc_2"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "deps_scan2.txt: pathspec_ps_d=66 次匹配",
+    "stage1 gold 51 FAILED"
+   ],
+   "note": "pathspec 未锁版本，导致 tests/func/test_add.py 几乎整体崩溃。这是本包受依赖问题打击最重的一题。",
+   "by": "L1_dvc_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 用 make_tmp_dir/tmp_dir fixture"
+   ],
+   "note": "F2P 的 external=True 变体会在仓库外建临时目录（`make_tmp_dir(\"data\")`），仍是本地文件系统，无外部资产。",
+   "by": "L1_dvc_2"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "stage1 gold 日志含 `paramiko.transport:transport.py:1944` 噪声键；同文件有 test_add_external_file[ssh/s3-...] 等用例"
+   ],
+   "note": "F2P 四条不需要网络。但整文件跑会连带跑 ssh/s3/gs 的 external 用例（它们在 gold 下 FAILED），日志里出现 paramiko 的错误行。这些用例不计分，但会拖长运行并在日志里制造外部服务相关噪声。",
+   "by": "L1_dvc_2"
+  },
+  "18": {
+   "status": "issue",
+   "evidence_refs": [
+    "stage1 eval.sh `pytest -rA tests/func/test_add.py`；gold real=55，只有 4 条 PASSED"
+   ],
+   "note": "选择器正确，但整文件 93% 的用例在 gold 下就失败；『测试是否真正执行完』的答案是『执行了但绝大多数崩在依赖问题上』。",
+   "by": "L1_dvc_2"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "伪键 'Could' / '[1]' / 'cannot' / 'dvc.command.add:add.py:26' / 'dvc:main.py:103' / 'paramiko.transport:transport.py:1944' / 'unexpected'"
+   ],
+   "note": "本题 status_map 里有 7 个伪键，来源包括 pip、pytest 的 SKIPPED 汇总行 `[1] tests/func/test_add.py:187: no gs`、dvc 自身日志、paramiko 日志。仍不与真实 nodeid 冲突。",
+   "by": "L1_dvc_2"
+  },
+  "20": {
+   "status": "issue",
+   "evidence_refs": [
+    "empty: 55 条全 FAILED；gold: 4 PASSED / 51 FAILED"
+   ],
+   "note": "分差等于 4 条 F2P，方向正确；但 empty 侧 55 条全红说明 `RESOLVED_NO` 并不能证明『问题未修复』——它同时也被依赖问题打死了。零信息的 no-op 基线。",
+   "by": "L1_dvc_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "奖励漏洞（可复现）",
+   "severity": "P1",
+   "evidence_refs": [
+    "F2P 四条只断言 pytest.raises(DvcException)",
+    "P2P=0",
+    "gold 下同文件 51/55 FAILED"
+   ],
+   "proposed_action": "在修好依赖、重建 P2P 之前不要把本题放进训练集。",
+   "next_experiment": "在 `resolve_paths` 开头写一行 `raise DvcException(\"x\")` 跑真实 grader，预期 RESOLVED_FULL —— 这是本包最值得先跑的一个反例。"
+  },
+  {
+   "category": "题意-评分方向相反",
+   "severity": "P1",
+   "evidence_refs": [
+    "problem_statement",
+    "F2P 全是 raises",
+    "test_add_symlink_file 不在 F2P/P2P"
+   ],
+   "proposed_action": "要么把题面补成『第二次 add 应成功，且对符号链接目录应给出明确错误』，要么把 `test_add_symlink_file` 修好后纳入 F2P。",
+   "next_experiment": "修好 pathspec 后单跑 test_add_symlink_file，确认它在 base FAILED、gold PASSED，从而可以进 F2P。"
+  },
+  {
+   "category": "依赖未锁定",
+   "severity": "P1",
+   "evidence_refs": [
+    "deps_scan2.txt pathspec_ps_d=66"
+   ],
+   "proposed_action": "同 4125/4166：给 dvc 1.x 镜像锁 `pathspec<0.9.0`。本题是受影响最严重的样本。",
+   "next_experiment": "降级 pathspec 后重跑 tests/func/test_add.py，统计恢复用例数并重算 P2P。"
+  },
+  {
+   "category": "no-op 基线无信息",
+   "severity": "P2",
+   "evidence_refs": [
+    "empty 55/55 FAILED"
+   ],
+   "proposed_action": "记录本题的 `RESOLVED_NO` 不构成『初态含问题』的证据；check 2 的结论来自代码阅读而非该基线。",
+   "next_experiment": "依赖修好后重跑 empty 基线。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只有 tests/func/test_add.py；gold 只改 dvc/utils/__init__.py。沿用第四组 B 默认空。",
+  "evidence_refs": [
+   "test_patch",
+   "golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/func/test_add.py::test_add_symlink_file（修好 pathspec 后，建议进 F2P 而非 P2P）",
+   "reason": "它是唯一覆盖题面症状『第二次 add 成功』的测试，且其注释直接引用 issue #4654。"
+  },
+  {
+   "id": "tests/func/test_add.py 的 test_add / test_add_directory / test_add_file_in_dir / TestAddCmdDirectoryRecursive 一族",
+   "reason": "gold 改的是所有 add 的路径解析入口 `resolve_paths`，这些是最基本的正向回归，能直接拦下『无条件 raise』式的假修复。"
+  },
+  {
+   "id": "tests/unit/utils/test_utils.py（resolve_paths 的同模块单测）",
+   "reason": "更快、更细地覆盖被改函数。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "三个 P1 叠加：P2P=0 且 F2P 四条只断言抛异常，`resolve_paths` 开头无条件 raise 即可满分；题面要『能用』而评分验『明确报错』，真正对应症状的测试因依赖问题在 gold 下也是红的；no-op 基线因同样原因零信息。必须先修依赖再重建 F2P/P2P。"
+ },
+ "costs": {
+  "minutes": 25
+ },
+ "by": "L1_dvc_2 (Claude Opus 5, 2026-09-16, 静态审查)"
+}

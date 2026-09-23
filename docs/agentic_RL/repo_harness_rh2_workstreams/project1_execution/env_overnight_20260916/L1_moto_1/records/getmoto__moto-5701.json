@@ -1,0 +1,110 @@
+{
+ "task_id": "getmoto__moto-5701",
+ "source": "swe_gym_lite_full_f70b1a29",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl#getmoto__moto-5701",
+  "grading": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-5701",
+  "validation": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-5701",
+  "base_commit": "d6c438400eaf3e2c94eac0ea2043d230518fe50b",
+  "version": "4.0",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5701/"
+ },
+ "public_view": {
+  "goal": "题面：升级 moto 2.2.9 → 4.0.9 后，pyspark 通过 s3:// 前缀读取“目录”报 Path does not exist；给出完整文件路径则可读。期望恢复按前缀列举对象的能力。",
+  "constraints": [
+   "题面只给 pyspark 侧复现，未给 boto3 / HTTP 层最小复现",
+   "题面路径 raw-data/prefix/foo=bar/partition=baz/service=subscriptions 中不含空格",
+   "题面未提及 moto ServerMode（flask）与 querystring 解析"
+  ],
+  "unknowns_from_public_only": [
+   "真正触发条件是 key/prefix 含空格、被客户端编码成 '+'；题面完全没有这一信息",
+   "题面无法推出修复点在 moto/s3/responses.py 的 _get_querystring，而不是 moto/s3/models.py 的 list_objects",
+   "题面无法推出需要在 ServerMode 下修（F2P 位于 tests/test_s3/test_server.py）"
+  ],
+  "base_code_located": [
+   "moto/s3/models.py:2048 list_objects(bucket, prefix, delimiter) —— 前缀匹配逻辑本身没问题",
+   "moto/s3/responses.py:300-312 _get_querystring(full_url) —— 手工把 '+' 换成 '%2B' 再 parse_qs，导致本应解码成空格的 '+' 被当成字面加号"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["grading.test_patch 仅改 tests/test_s3/test_s3.py, tests/test_s3/test_server.py", "d6c438400eaf3e2c94eac0ea2043d230518fe50b:tests/test_s3/test_server.py 存在", "d6c43840:tests/test_s3/test_s3.py 存在"], "note": "test_patch 与 gold 的目标文件在 base 均存在；无二进制/LFS/子模块材料。gold 只改 moto/s3/responses.py，与题面同一问题（前缀列举）。", "by": "L1_moto_1"},
+  "2": {"status": "pass", "evidence_refs": ["d6c43840:moto/s3/responses.py:299-312", "runs/env_probe_stage1_20260910/.../getmoto__moto-5701/empty/offline/a1/status_map.json 中 F2P=FAILED"], "note": "base 的 _get_querystring 把 '+' 先替换为 '%2B' 再 parse_qs，含空格的 key 前缀在 ServerMode 下无法命中；stage1 empty 运行该 F2P 为 FAILED，静态与动态一致。", "by": "L1_moto_1"},
+  "3": {"status": "issue", "evidence_refs": ["public_bundles problem_statement（无 URL、无空格路径）", "raw.hints_text 含 github compare 链接、PR #5097 链接与“I reverted the change locally and it indeed fixed the issue”"], "note": "关键信息（空格被编码成 '+'、根因在 PR #5097、ServerMode）只存在于 hints_text，而 hints 按 COMMON.md 不算 agent 可见。题面本身无外链、无截断代码块。", "by": "L1_moto_1"},
+  "4": {"status": "pass", "evidence_refs": ["grading.test_patch paths = [tests/test_s3/test_s3.py, tests/test_s3/test_server.py]", "validation.golden_patch paths = [moto/s3/responses.py]"], "note": "test_patch 只触碰 tests/ 下的测试文件，无非测试源码；gold 不触碰测试样路径。额外排除保持默认空（沿用第四组 B）。", "by": "L1_moto_1"},
+  "5": {"status": "pass", "evidence_refs": ["task_signals_swegym.json：本包内 5417/5545/5562 触碰 tests/test_s3/test_s3_multipart.py 或 test_s3.py，但 gold 目标文件与 PR 不同"], "note": "与 5562 同样触碰 tests/test_s3/test_s3.py，但修复点不同（5701 改 responses._get_querystring）。未发现同一 PR 的重复题。", "by": "L1_moto_1"},
+  "6": {"status": "pass", "evidence_refs": ["test_patch 新增 import xmltodict", "d6c43840:setup.py:29-42 install_requires 含 xmltodict"], "note": "test_patch 新增的 xmltodict 是 moto 运行时依赖，已随包安装，不需额外下载。", "by": "L1_moto_1"},
+  "7": {"status": "pass", "evidence_refs": ["tests/test_s3/test_server.py 使用 flask.testing.FlaskClient，进程内 moto.server"], "note": "F2P 走进程内 flask test client，不访问外部网络/真实 AWS 端点。", "by": "L1_moto_1"},
+  "11": {"status": "pass", "evidence_refs": ["同上"], "note": "无权重、无数据集下载线索。", "by": "L1_moto_1"},
+  "17": {"status": "pass", "evidence_refs": ["同 check 4"], "note": "文件边界清晰，additional_exclusions = []。", "by": "L1_moto_1"},
+  "23": {"status": "issue", "evidence_refs": ["problem_statement 全文", "test_patch tests/test_s3/test_server.py 新增 parametrize key_name=['bar_baz','bar+baz','baz bar']"], "note": "公开材料推不出 F2P 检查的行为：F2P 要求 prefix='baz bar'（含空格）在 ServerMode ListBucket 下只返回一个 Contents 且 Key 等于原名。题面既未提空格，也未提 ServerMode，也未说明返回应为单条。", "by": "L1_moto_1"},
+  "24": {"status": "pass", "evidence_refs": ["test_patch 断言 xmltodict.parse(res.data)['ListBucketResult']['Contents'] 是 dict 且 ['Key']==key_name"], "note": "断言的是 HTTP 响应的对外行为，不绑定内部 helper 名或调用顺序。替代实现（例如在 _get_querystring 里改成 parse_qsl(..., encoding) 正确处理 '+'，而不引入 request.args 分支）同样能通过。", "by": "L1_moto_1"},
+  "25": {"status": "issue", "evidence_refs": ["F2P 只有 tests/test_s3/test_server.py::test_s3_server_bucket_create[baz（截断 ID）"], "note": "只有 ServerMode 一条 F2P。仅在 ServerMode 分支 short-circuit（gold 的做法）即可通过，decorator 模式下 _get_querystring 的 '+'→'%2B' 缺陷仍在，题面描述的 boto3/decorator 场景未被 F2P 覆盖；部分修复会被放过。", "by": "L1_moto_1"},
+  "26": {"status": "pass", "evidence_refs": ["d6c43840:tests/test_s3/test_s3.py test_key_name_encoding_in_listing / test_get_object_versions_with_prefix"], "note": "见 proposed_regression_tests。", "by": "L1_moto_1"},
+  "27": {"status": "pass", "evidence_refs": ["validation.golden_patch 只改 moto/s3/responses.py 的 _bucket_response 与 _get_querystring"], "note": "gold 无与题无关的改动，不依赖其它未交付改动。但 gold 只在 hasattr(request,'args')（ServerMode）时走新分支，decorator 模式仍走旧的 '+'→'%2B' workaround，属上游有意的窄修。", "by": "L1_moto_1"},
+  "29": {"status": "issue", "evidence_refs": ["raw.hints_text 含 https://github.com/spulec/moto/pull/5097/files 与 compare/3.1.7...3.1.8 链接"], "note": "hints 直接指向上游 PR 并说明“revert 后即修复”。按 COMMON.md hints 不下发，故对 agent 不构成泄漏；但若将来把 hints 并入题面会构成强泄漏。problem_statement 本身无泄漏。", "by": "L1_moto_1"}
+ },
+ "issues": [
+  {
+   "category": "grading_materials/fragile_test_id",
+   "severity": "P1",
+   "evidence_refs": [
+    "grading.fail_to_pass = ['tests/test_s3/test_server.py::test_s3_server_bucket_create[baz']（方括号未闭合）",
+    "grading.pass_to_pass 含 'tests/test_s3/test_s3.py::test_get_object_versions_with_prefix[file'（方括号未闭合）",
+    "runs/env_probe_stage1_20260910/.../getmoto__moto-5701/gold/offline/a1/test_output.txt:1620 'PASSED tests/test_s3/test_server.py::test_s3_server_bucket_create[baz bar]'",
+    "同上 test_output.txt:1606 'PASSED tests/test_s3/test_s3.py::test_get_object_versions_with_prefix[file another]'"
+   ],
+   "proposed_action": "F2P/P2P 的参数化 ID 在上游被按空白切断（真实 ID 为 [baz bar] 与 [file another]）。当前之所以仍能匹配，只是因为 RH2 的 status_map 解析器按同样方式切断（status_map.json 的 key 就是 '...[baz'）；两处 bug 相互抵消。修复方向二选一：(a) 把 F2P/P2P 常量按 test_output 的完整 ID 校正，并同时修 status_map 解析为按行首 verdict + 行尾完整 nodeid 解析；(b) 若暂不动解析器，则至少把这类含空格参数化 ID 的题标记出来并禁用其 F2P 匹配的“前缀相等”假设。注意潜在碰撞：两个只在空格后不同的参数（如 [foo bar] 与 [foo baz]）会被截断成同一 key，dict 只保留最后一个。",
+   "next_experiment": "在阶段一容器里对本题跑 `pytest -n0 -rA tests/test_s3/test_server.py` 并核对 RH2 status_map 解析结果，确认 '[baz bar]' 是否被记为 '[baz'；再用一个人造 parametrize（['a b','a c']）验证碰撞是否真的丢条目。"
+  },
+  {
+   "category": "grading_materials/id_encoding_mismatch",
+   "severity": "P1",
+   "evidence_refs": [
+    "grading.pass_to_pass 含 'tests/test_s3/test_s3.py::test_key_with_special_characters[/the-key-unîcode/test]'",
+    "runs/env_probe_stage1_20260910/.../getmoto__moto-5701/gold/offline/a1/status_map.json 只有 'tests/test_s3/test_s3.py::test_key_with_special_characters[/the-key-un\\xeecode/test]'",
+    "task_signals_swegym.json getmoto__moto-5701 stage1.gold.p2p_missing = 1，verdict = RESOLVED_NO"
+   ],
+   "proposed_action": "pytest 默认对参数化 ID 做 ascii_escaped（î → \\xee），而上游 P2P 常量里是原始 î，两者永远不等，导致 p2p_missing=1、gold 被判 RESOLVED_NO。这是本题当前不可用的直接原因。修复方向：把 P2P 常量改成运行时 ID 形式（\\xee），或在匹配层对两侧做同一套 ascii_escaped 归一化。不要用“找不到就跳过”掩盖，否则会同时掩盖真正缺失的用例。",
+   "next_experiment": "在容器里运行 `pytest --collect-only -q tests/test_s3/test_s3.py | grep special_characters`，确认运行时 ID 的确切文本；再在 RH2 匹配层加一个归一化函数做 A/B，看 gold 是否转为 RESOLVED_FULL。"
+  },
+  {
+   "category": "requirement_insufficiency",
+   "severity": "P2",
+   "evidence_refs": [
+    "public_bundles problem_statement 全文（无空格路径、无 ServerMode、无 '+' 编码）",
+    "raw.hints_text 第 3 段“my strings have a space inside a timestamp … timestamp%3D2020-01-01+01%3A01%3A01”",
+    "test_patch tests/test_s3/test_server.py 的 key_name 参数 'baz bar'"
+   ],
+   "proposed_action": "题面只给 Spark 侧现象，真正的触发条件（key 含空格、客户端按 quote_plus 编码成 '+'）只在 hints 里。按当前“hints 不可见”的设定，agent 几乎只能靠猜。建议：要么把 hints 中那一段事实性复现信息（不含 PR 链接）补进题面，要么把本题降级为 needs_repair 而非直接入训练集。",
+   "next_experiment": "给一个基线模型只喂现有题面跑 1 次 rollout，看它是否会去改 moto/s3/models.py 的 list_objects（错误方向）；对比补上“空格→'+'”一句话后的 rollout。"
+  },
+  {
+   "category": "partial_fix_accepted",
+   "severity": "P3",
+   "evidence_refs": [
+    "grading.fail_to_pass 只有 1 条且位于 tests/test_s3/test_server.py",
+    "validation.golden_patch 的 hasattr(request, 'args') 分支"
+   ],
+   "proposed_action": "F2P 只覆盖 ServerMode。只要在 ServerMode 加一条 request.args 分支即可通过，decorator 模式下 '+'→'%2B' 的缺陷（题面实际抱怨的场景）不被检验。建议补一条 decorator 模式的回归断言，否则“修好 F2P”不等于“修好题面问题”。",
+   "next_experiment": "写一个 mock_s3 decorator 模式的最小用例：put_object(Key='a b/c.json') 后 list_objects_v2(Prefix='a b/')，在 base / gold 下各跑一次，看 gold 是否仍失败。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 tests/test_s3/test_s3.py 与 tests/test_s3/test_server.py，均为纯测试文件；gold 只触碰 moto/s3/responses.py，二者不重叠。按第四组 B 的默认（额外排除为空）即可，无需追加。",
+  "evidence_refs": ["grading.test_patch", "validation.golden_patch", "docs/.../batch4_scoring_20260910/README.md §0/§6.5"]
+ },
+ "proposed_regression_tests": [
+  {"id": "tests/test_s3/test_s3.py::test_key_name_encoding_in_listing", "reason": "同属 key 名编码与列举路径，最可能被 querystring 解析改动波及"},
+  {"id": "tests/test_s3/test_s3.py::test_get_object_versions_with_prefix", "reason": "test_patch 自身扩展的参数化，覆盖 decorator 模式下的前缀匹配（含新增的 'file another'）"},
+  {"id": "tests/test_s3/test_server.py::test_s3_server_get", "reason": "同一 ServerMode 入口的基础用例，确保 _get_querystring 新分支不破坏无参请求"},
+  {"id": "tests/test_s3/test_s3.py::test_delete_objects_with_url_encoded_key", "reason": "URL 编码相关的另一调用者，检验 '+'/%2B 处理改动的副作用"},
+  {"id": "新增（建议）：decorator 模式下 Prefix 含空格的 list_objects_v2", "reason": "F2P 只覆盖 ServerMode；题面场景是 decorator/HTTP 客户端，需要一条对应断言防止部分修复"}
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "两个 P1 都在评分材料侧：P2P 的 unicode ID 永远匹配不上（直接导致 gold=RESOLVED_NO，题目当前不可用），F2P/P2P 的空格截断 ID 只是靠解析器同款 bug 侥幸匹配。修好 ID 归一化后本题本身（base 确有缺陷、gold 相关且最小、边界干净）是可用的。"
+ },
+ "costs": {"minutes": 38}
+}

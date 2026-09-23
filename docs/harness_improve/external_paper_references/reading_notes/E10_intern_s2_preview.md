@@ -9,7 +9,7 @@ Intern-S2-Preview 从科学多模态预训练模型出发，先做广域 SFT，�
 
 - **原文**：Intern-S2-Preview Team, Shanghai AI Laboratory，《Intern-S2-Preview: Scientific Agentic Foundation Model》，[arXiv:2608.13505v1](https://arxiv.org/abs/2608.13505v1)，2026-08-13 17:31:28 UTC 提交；本次查阅日 2026-09-07。正式标题不含“训练配方”等目录说明。
 - **定位口径**：[本地 PDF](../pdfs/E10_intern_s2_preview_2608.13505.pdf) 共 35 页，PDF 物理页与印刷页一致；第一页未印页码。下文 p.、Eq.、Fig.、Table 均指这一 PDF。正文 p.1–27，References p.28–35，**没有附录**。已从 TeX `main.tex` 的全部 `input` 到 `end{document}` 及 PDF 尾页核对，不把参考文献后的空白当成漏读附录。
-- **交叉材料**：[官方 TeX 下载](https://arxiv.org/src/2608.13505v1)，已保存在 [E10 来源目录说明](sources/E10/README.md)，读了全部正文源文件；[文本提取](sources/E10/paper-layout.txt) 用于检索，公式、全部图表回本地 PDF 渲染页核对。下载的部分图形素材排版与本地 PDF 不同，本文页码、图示与数值以指定 PDF 为准，TeX 用于公式文字交叉核验；未重新编译或替换 PDF。
+- **交叉材料**：[官方 TeX 下载](https://arxiv.org/src/2608.13505v1)，已保存在 [E10 来源目录说明](sources/E10/README.md)，读了全部正文源文件；文本提取（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/E10/paper-layout.txt`） 用于检索，公式、全部图表回本地 PDF 渲染页核对。下载的部分图形素材排版与本地 PDF 不同，本文页码、图示与数值以指定 PDF 为准，TeX 用于公式文字交叉核验；未重新编译或替换 PDF。
 - **开放资产检查**：查阅论文脚注所指 [HF 模型卡](https://huggingface.co/internlm/Intern-S2-Preview/blob/4f57cab513689b089019fce4ad24e26520df183c/README.md)，revision `4f57cab513689b089019fce4ad24e26520df183c`；API 返回 lastModified `2026-05-29T07:30:04Z`。此卡介绍 **35B**、continued pretrained from Qwen3.5，而非论文主表的 397B。只用于识别资产与版本边界，未用其内容补写 397B 配方。
 - **框架入口检查**：[InternLM/xtuner](https://github.com/InternLM/xtuner/tree/76e705134521eff867b409f3b3451df1c4d8dd36)，读取该 commit 的 `README.md`；只核公开入口和其披露状态，未将当前框架默认值认定为本论文配置，也未完成框架实现审计。
 - **旧稿最后才读**：[旧摘要](../../../../knowledge/summary_intern_s2_preview.md)。另检查[配方矩阵](../agentic_rl_training_recipe_evidence_matrix.md)全文检索结果；该文件最近核验为 2026-08-03，本次没有找到 Intern-S2/E10 专属段落，不能假称已有对应配方行。

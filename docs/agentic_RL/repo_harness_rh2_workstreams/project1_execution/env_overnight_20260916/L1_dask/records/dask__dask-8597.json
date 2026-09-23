@@ -1,0 +1,203 @@
+{
+ "task_id": "dask__dask-8597",
+ "source": "SWE-Gym lite (dask/dask 2022.01)",
+ "task_revision": "upstream",
+ "materials_refs": [
+  "s2/ingest/public_bundles_v0.jsonl (problem_statement 1184 字符)",
+  "s2/ingest/grading_bundles_v2_v0.jsonl (F2P=1; P2P=116)",
+  "s2/ingest/validation_bundles_v0.jsonl (golden_patch 1 行)",
+  "s2/raw/swe_gym_lite_full_f70b1a29.jsonl (hints_text 3297 字符)",
+  "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/dask__dask-8597/{gold,empty}/offline/a1/"
+ ],
+ "public_view": {
+  "goal": "对某个维度长度为 0 的 dask array 做花式索引（`da.from_array(np.zeros((3,0)))[[0]]`）会抛 OverflowError；期望与 numpy 一致，返回 shape=(1,0) 的空数组。",
+  "constraints": [
+   "题面给出可直接运行的 MCVE 与 numpy 的期望输出。"
+  ],
+  "unknown_from_public": [
+   "题面的 traceback 被省略号截断（只有首尾两行 `OverflowError: cannot convert float infinity to integer`），**中间的调用栈与出错行号不可见**；真正的出错点 `dask/array/slicing.py:647 maxsize = math.ceil(nbytes / (other_numel * itemsize))`（除零）只在不可见的 hints 里。",
+   "题面没说修好之后 chunk 大小警告（`take` 的 warnsize/maxsize 逻辑）该如何取值。"
+  ],
+  "by": "L1_dask"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "c1c88f066672c0b216fc24862a2b36a0a9fb4e22:dask/array/slicing.py:641-646",
+    "c1c88f066672c0b216fc24862a2b36a0a9fb4e22:dask/array/tests/test_slicing.py"
+   ],
+   "note": "test_patch 只在 test_slicing.py 末尾新增一条用例，gold 只改 dask/array/slicing.py 一行，base 均存在，同一问题。无二进制/LFS/子模块。",
+   "by": "L1_dask"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "c1c88f066672c0b216fc24862a2b36a0a9fb4e22:dask/array/slicing.py:641-646"
+   ],
+   "note": "base 只判 `math.isnan(other_numel)`，`other_numel == 0` 时 `nbytes / (other_numel*itemsize)` 除零得 inf，`math.ceil(inf)` → OverflowError；缺陷成立，empty 侧 F2P FAILED。",
+   "by": "L1_dask"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-8597.problem_statement（'    ...' 省略号）",
+    "s2/raw/...:dask__dask-8597.hints_text"
+   ],
+   "note": "题面的 traceback **被截断**，只留首尾；hints（3297 字符，不可见）给出完整调用栈和精确到行的 `slicing.py:647: RuntimeWarning: divide by zero encountered in long_scalars`，等于直接点出根因。公开难度因此显著高于表面难度。",
+   "by": "L1_dask"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-8597.test_patch"
+   ],
+   "note": "test_patch 仅碰测试文件；gold 仅碰源码。",
+   "by": "L1_dask"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "同上"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "L1_dask"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dask/prescan.json"
+   ],
+   "note": "本包内唯一改 dask/array/slicing.py 的题。",
+   "by": "L1_dask"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-8597.test_patch"
+   ],
+   "note": "F2P 断言 `assert_eq(array[[0]], np.zeros((3,0))[[0]])`，与题面期望逐字对应。",
+   "by": "L1_dask"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "validation_bundles_v0.jsonl:dask__dask-8597.golden_patch"
+   ],
+   "note": "不锁实现：加 `or other_numel == 0`、或改成 `if not other_numel or math.isnan(...)`、或在除法处直接防零，都能过。断言只看结果数组。",
+   "by": "L1_dask"
+  },
+  "25": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-8597.pass_to_pass（含 test_take_avoids_large_chunks、test_getitem_avoids_large_chunks_missing[chunks0]）"
+   ],
+   "note": "“一律 `warnsize = maxsize = math.inf`”这类把分块大小保护整体关掉的偷懒修法会被 P2P 里的 `test_take_avoids_large_chunks` 拦下（该用例在 gold 日志 945 行 PASSED）。判别力到位。",
+   "by": "L1_dask"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "c1c88f066672c0b216fc24862a2b36a0a9fb4e22:dask/array/tests/test_slicing.py"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_dask"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "validation_bundles_v0.jsonl:dask__dask-8597.golden_patch"
+   ],
+   "note": "gold 一行，无无关改动、不依赖未交付改动。",
+   "by": "L1_dask"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-8597.problem_statement"
+   ],
+   "note": "题面不含修复代码、无 PR/commit 号。hints 里也只有 traceback，没有补丁。",
+   "by": "L1_dask"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-8597/gold/offline/a1/test_output.txt (install rc=0)"
+   ],
+   "note": "安装 rc=0；Python 3.9.19 + pytest-8.3.2（见 #R3）。",
+   "by": "L1_dask"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "c1c88f066672c0b216fc24862a2b36a0a9fb4e22:dask/array/tests/test_slicing.py"
+   ],
+   "note": "无 mark.network / URL 下载 / requests / boto3；模块级 `np = pytest.importorskip('numpy')`，另有 1 处 `pytest.importorskip('pandas')` 和 1 处 `@pytest.mark.slow`。",
+   "by": "L1_dask"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-8597/gold/offline/a1/test_output.txt:944-973"
+   ],
+   "note": "gold 侧 123 条结果行 → 122 个键（1 个伪键 `[1]`，来自 `--runslow` 与 'really long test'，见 #R2）。**2 条既有用例恒 FAILED**：`test_slicing_integer_no_warnings`、`test_getitem_avoids_large_chunks`，都因 pytest 8 移除 `pytest.warns(None)`（#R3）。后者正是与本题改动同一段代码（take 的 warnsize/maxsize）最相关的回归用例，被排除出 P2P —— 好在同族的 `test_take_avoids_large_chunks` 与 `test_getitem_avoids_large_chunks_missing[chunks0]` 仍在。",
+   "by": "L1_dask"
+  },
+  "9": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-8597/{gold,empty}/offline/a1/status_map.json"
+   ],
+   "note": "empty→F2P FAILED，gold→PASSED，116 条 P2P 两侧全 PASSED。",
+   "by": "L1_dask"
+  }
+ },
+ "issues": [
+  {
+   "category": "题面 traceback 截断",
+   "severity": "P2",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-8597.problem_statement"
+   ],
+   "proposed_action": "若用于评测，可把 hints 里的完整 traceback（或至少出错行）并入题面；否则在难度标注里记“需自行定位”。",
+   "next_experiment": "无。"
+  },
+  {
+   "category": "回归用例被工具链废掉",
+   "severity": "P3",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-8597/gold/offline/a1/test_output.txt:973"
+   ],
+   "proposed_action": "属仓库级问题（#R3）；本题因同族替代用例仍在，影响有限。",
+   "next_experiment": "镜像里装 `pytest<7` 后重跑，确认 test_getitem_avoids_large_chunks 恢复并可入 P2P。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰测试文件，gold 只碰源码；按第四组 B 默认保持空。",
+  "evidence_refs": [
+   "grading_bundles_v2_v0.jsonl:dask__dask-8597.test_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "dask/array/tests/test_slicing.py::test_take_avoids_large_chunks",
+   "reason": "已在 P2P；直接检查 take 的 maxsize/warnsize 逻辑，是拦住“无条件 inf”偷懒修法的关键。"
+  },
+  {
+   "id": "dask/array/tests/test_slicing.py::test_getitem_avoids_large_chunks",
+   "reason": "同一段逻辑的 getitem 侧，当前因 pytest 8 恒失败被排除；修好工具链后应纳入。"
+  },
+  {
+   "id": "dask/array/tests/test_slicing.py::test_take_uses_config",
+   "reason": "验证 `array.slicing.split-large-chunks` 配置仍生效，防止候选把配置读取一并绕过。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "题面可复现、gold 一行、F2P 与 P2P 的正反判别力完整、链路健康。唯一保留是题面 traceback 被截断（定位信息只在不可见的 hints 里）。"
+ },
+ "costs": {
+  "minutes": 18
+ }
+}

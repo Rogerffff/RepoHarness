@@ -1,0 +1,200 @@
+{
+ "task_id": "pydantic__pydantic-9134",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_pydantic (Claude Opus 5, 2026-09-16 夜)",
+ "materials_refs": [
+  "s2/ingest/*_bundles_v0.jsonl (pydantic__pydantic-9134)",
+  "repos/pydantic@b900fe2c(见 grading.base_commit)",
+  "runs/env_probe_stage1_20260910/.../pydantic__pydantic-9134/"
+ ],
+ "public_view": {
+  "目标行为": "子类在自己的 model_post_init 里、调用 super().model_post_init 之前访问**父类声明的**私有属性时，不应抛 `TypeError: 'NoneType' object is not subscriptable`；私有属性此时应已初始化。",
+  "约束": "已有的 model_post_init 调用语义（含 7091 那条既有回归）不变。",
+  "公开材料无法确定的点": [
+   "根因在 ModelMetaclass 只在 `if private_attributes:`（当前类自己声明了私有属性）时才包装 model_post_init，忽略了 base_private_attributes；题面给了完整 traceback 指到 main.py:746，但指不到 metaclass"
+  ],
+  "base 定位": "pydantic/_internal/_model_construction.py:93-96 `if private_attributes:` —— 子类自己没有私有属性时不包装其 model_post_init，`__pydantic_private__` 在调用时还是 None。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "tests/test_main.py、pydantic/_internal/_model_construction.py 在 base 均存在"
+   ],
+   "note": "对应同一问题。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "_model_construction.py:93-96",
+    "stage1 empty：F2P FAILED"
+   ],
+   "note": "base 确有缺陷。",
+   "by": "static+stage1log"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 2723 字符，含完整 traceback 与可运行例子"
+   ],
+   "note": "输入完整，是本包题面质量最好的几题之一。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只碰 tests/test_main.py；F2P+P2P 177 条全在该文件；gold 只碰生产代码"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "static"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "R8 扫描：8004 的 gold 7/7 行出现在 9134 的 base:pydantic/_internal/_model_construction.py",
+    "同 test_main.py 的还有 5386、5662；R8 显示 5386/5662 的 gold 也在 9134 的 base:pydantic/main.py 里"
+   ],
+   "note": "P2 跨题答案泄漏：9134 的 base 同时含 8004、5386、5662 三题的 gold。",
+   "by": "static"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "install rc=2。",
+   "by": "stage1log"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "测试第三方 import：pytest / pydantic_core / pydoc"
+   ],
+   "note": "无外部资产。",
+   "by": "static"
+  },
+  "8": {
+   "status": "pass",
+   "evidence_refs": [
+    "gold status_map：PASSED 177 + SKIPPED 22"
+   ],
+   "note": "22 条 SKIPPED 与 Python 3.8 判分环境一致（见 8583 的 check 8）。",
+   "by": "stage1log"
+  },
+  "10": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "无本题轨迹。",
+   "by": "-"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "只有 install 需要网络。",
+   "by": "stage1log"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 与 F2P 场景一致"
+   ],
+   "note": "要求充分：题面的 BaseCls/_priv/Cls.model_post_init 与 F2P 的 Model/_private/SubModel 一一对应。",
+   "by": "static"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 只断言 `m._private == 13`"
+   ],
+   "note": "不强制唯一实现。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "gold 只改一个条件 `if private_attributes or base_private_attributes:`",
+    "F2P 只有 1 条，且子类只有一层"
+   ],
+   "note": "P3：判分面对多层继承、父类有私有属性且子类也有、以及“子类既无私有属性也无 model_post_init”的组合没有断言。不过同文件的 test_model_post_init_subclass_setting_private_attrs（7091 的回归）在 P2P 里，提供了部分护栏。本题是本包 oracle 与题面对应最好的题之一。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "gold 改的是 ModelMetaclass.__new__ 的包装条件，影响所有带继承私有属性的模型"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "static"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 只有一行条件改动"
+   ],
+   "note": "gold 最小且与根因对应，无题外改动；是本包 gold 质量最好的一题。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak 扫描 0 命中；题面无 URL（hints 里有指向 _model_construction.py L96 的 blob 链接，即修复位置，但 hints 不可见）"
+   ],
+   "note": "题面无泄漏。",
+   "by": "static"
+  },
+  "31": {
+   "status": "issue",
+   "evidence_refs": [
+    "R4"
+   ],
+   "note": "静态残余面。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "cross_task_answer_leak",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 5",
+    "R8"
+   ],
+   "proposed_action": "9134 与 8004/5386/5662 同侧划分",
+   "next_experiment": "无"
+  },
+  {
+   "category": "official_test_coverage_gap",
+   "severity": "P3",
+   "evidence_refs": [
+    "check 25"
+   ],
+   "proposed_action": "补多层继承与组合场景的断言",
+   "next_experiment": "无"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 仅纯测试文件、gold 仅生产代码、判分面与恢复面一致。",
+  "evidence_refs": [
+   "grading.json.test_patch",
+   "validation.json.golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  "三层继承：A 声明私有属性，B 与 C 各自定义 model_post_init 并调 super() — 选择依据：gold 的条件改动只在两层上验证过",
+  "父类与子类都声明私有属性时的初始化顺序 — 选择依据：`private_attributes or base_private_attributes` 的两个分支都为真的情形",
+  "tests/test_private_attributes.py 全量 — 选择依据：gold 改的是私有属性包装的总闸，主回归文件不在判分面",
+  "tests/test_main.py::test_model_post_init_subclass_setting_private_attrs（已在 P2P）保留 — 7091 的既有护栏"
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "题面完整（含 traceback）、gold 一行且对应根因、F2P 与题面场景一致、判分面 177 条；唯一需要处理的是与 8004/5386/5662 的同侧划分。"
+ },
+ "costs": {
+  "minutes": 13
+ }
+}

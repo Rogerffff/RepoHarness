@@ -1,0 +1,232 @@
+{
+ "task_id": "iterative__dvc-2126",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "docs/.../s2/ingest/public_bundles_v0.jsonl#iterative__dvc-2126",
+  "grading": "docs/.../s2/ingest/grading_bundles_v2_v0.jsonl#iterative__dvc-2126",
+  "validation": "docs/.../s2/ingest/validation_bundles_v0.jsonl#iterative__dvc-2126",
+  "raw": "docs/.../s2/raw/swe_gym_lite_full_f70b1a29.jsonl#iterative__dvc-2126",
+  "base_commit": "1c6f46c0419232cc45f7ae770e633d3884bac169",
+  "version": "0.41",
+  "python_version": "3.8",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-2126:latest",
+  "eval_cmd": "pytest -rA",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2126/{gold,empty}/offline/a1/",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc"
+ },
+ "public_view": {
+  "目标行为": "（按题面字面）新增一个 `dvc version` 命令，输出 dvc 版本、Python 版本、平台、cache 链接类型等环境信息。",
+  "约束": "**题面描述的功能在 base 已经完全实现**：`dvc/command/version.py` 里 `CmdVersion.run` 已输出 DVC version / Python version / Platform / Cache / Filesystem type，`add_parser` 已注册 `version` 子命令；`tests/func/test_version.py` 已有两条对应用例。求解者按题面去\"introduce\" 这个命令，会发现无事可做。",
+  "公开材料无法确定的点": [
+   "**题面从头到尾没有提到 `Binary:` 字段**，而这正是本题唯一要做的改动；",
+   "题面末尾是 4 个未勾选的 TODO（cache 部分怎么写、与 `dvc --version` 如何共存、PyInstaller 有无特殊信息、要不要带 GitPython 版本），全是开放讨论；其中\"PyInstaller\"一项最接近 `is_binary()`，但题面把它写成问句而不是要求；",
+   "题面里的示例输出包含 `VIRTUAL_ENV`、`LSB Release` 等 base 与 gold 都没有的字段。"
+  ],
+  "相关模块": "dvc/command/version.py（CmdVersion.run）、dvc/utils/__init__.py:199 `is_binary()`。"
+ },
+ "checks": {
+  "1": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-2126/public.json#problem_statement",
+    "git show 1c6f46c041:dvc/command/version.py（base 已实现 version 命令）",
+    "mat/iterative__dvc-2126/validation.json#golden_patch"
+   ],
+   "note": "**题面与 base/gold 不是同一个任务版本**：题面是\"提议新增 `dvc version` 命令\"的 RFC，base 里该命令已经存在且功能齐备，gold 只是给输出加一行 `Binary: {is_binary()}`。材料文件本身都在（tests/func/test_version.py、dvc/command/version.py 在 base 均存在），但题面对应的是这个 issue 的**开头**，gold 对应的是它下游某次增量提交。",
+   "by": "static"
+  },
+  "2": {
+   "status": "issue",
+   "evidence_refs": [
+    "git show 1c6f46c041:dvc/command/version.py:27-36",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2126/empty/offline/a1/status_map.json"
+   ],
+   "note": "严格说 base 不含\"题面所述缺陷\"——题面要的命令已经有了。empty 侧两条 F2P 都 FAILED，但失败原因是缺少 `Binary:` 一行，而不是缺少 `dvc version` 命令。",
+   "by": "static"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-2126/public.json#problem_statement"
+   ],
+   "note": "题面 1156 字符，代码块完整、无截断、无外链。问题不在渲染，而在内容：它是一份带未决 TODO 的 RFC，不是可执行的需求。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-2126/grading.json#test_patch"
+   ],
+   "note": "test_patch 只触碰 tests/func/test_version.py；gold 不触碰测试样路径。",
+   "by": "static"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-2126/grading.json#test_patch"
+   ],
+   "note": "恢复清单 = {tests/func/test_version.py}，官方测试文件。",
+   "by": "static"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dvc_1/prescan.json"
+   ],
+   "note": "与 dvc-2141 同为 version=0.41，但 gold 路径（dvc/command/version.py vs dvc/repo/brancher.py）与 test_patch 路径都不重合，不是同一 PR。",
+   "by": "static"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-2126/public.json#problem_statement",
+    "mat/iterative__dvc-2126/grading.json#test_patch（`r\"Binary: (True\\|False)\"`）"
+   ],
+   "note": "**公开材料推不出 F2P**。F2P 的唯一新增断言是输出里必须有 `Binary: True` 或 `Binary: False`；题面里 \"Binary\" 这个词一次都没出现，示例输出里也没有这一行。最接近的线索是 TODO 里那句 \"Do we have something special related to PyInstaller builds to collect?\"——但它是问句，且不含字段名。",
+   "by": "static"
+  },
+  "24": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-2126/grading.json#test_patch"
+   ],
+   "note": "断言用正则 `Binary: (True|False)`，**字段名被逐字锁死**。等价信息用别的字段名（`Package: pip` / `Installation: source` / `Frozen: False`）输出会被判 0，而题面对字段名没有任何约定。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-2126/grading.json#pass_to_pass（0 条）",
+    "mat/iterative__dvc-2126/grading.json#test_patch"
+   ],
+   "note": "**P2P = 0**，零回归保护。而且断言只要求输出里出现 `Binary: True|False` 这个子串，`logger.info(\"Binary: False\")` 这种硬编码（与实际是否 PyInstaller 打包无关）同样满分。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2126/gold/offline/a1/test_output.txt（2 passed, 13 warnings in 3.25s）"
+   ],
+   "note": "整个 tests/func/test_version.py 只有 2 条用例，且两条都进了 F2P → P2P 只能是 0。要有回归就必须跨文件补（例如 `tests/unit/test_utils.py` 对 `is_binary` 的覆盖，或 `tests/func/test_version.py` 里对其余字段的既有断言拆成独立用例）。",
+   "by": "static"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-2126/validation.json#golden_patch",
+    "mat/iterative__dvc-2126/public.json#problem_statement"
+   ],
+   "note": "gold 本身是正确的最小增量（import `is_binary`、算 `binary`、加一行模板）。**但它与题面不对应**：题面要的是整个命令，gold 只加一个字段；题面 TODO 里列的 4 项 gold 一项也没回答。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-2126/public.json#problem_statement",
+    "mat/iterative__dvc-2126/raw.json#hints_text"
+   ],
+   "note": "题面与 hints 都不含修复代码、不含 PR/commit 链接。hints 是维护者对 RFC 的讨论（\"Why do we need a separate command\"、docker version 的类比），同样没有提到 Binary 字段。",
+   "by": "static"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2126/gold/offline/a1/test_output.txt（2 passed）"
+   ],
+   "note": "安装与测试正常。",
+   "by": "static"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2126/gold/offline/a1/test_output.txt"
+   ],
+   "note": "`dvc version` 只读本机信息（psutil 分区、System.reflink/hardlink/symlink 探测），无网络。",
+   "by": "static"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2126/gold/offline/a1/status_map.json（键 `Could`、`No`，值 `ERROR:`）"
+   ],
+   "note": "安装阶段 ERROR: 行污染 status_map（见跨题发现 B），未与 F2P 冲突。",
+   "by": "static"
+  },
+  "7": {
+   "status": "not_applicable",
+   "evidence_refs": [],
+   "note": "test_patch 不带外部资产。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "题面与任务版本不对应(1/23/27)",
+   "severity": "P1",
+   "evidence_refs": [
+    "mat/iterative__dvc-2126/public.json#problem_statement（RFC: introduce `dvc version` command）",
+    "git show 1c6f46c041:dvc/command/version.py（base 已完整实现该命令）",
+    "mat/iterative__dvc-2126/validation.json#golden_patch（只加一行 Binary）"
+   ],
+   "note": "题面描述的工作在 base 已经完成；真正要做的（加 `Binary:` 字段）在题面里没有任何依据。求解者读完题面会认为无事可做，或者去重写整个命令（大概率打挂现有断言）。",
+   "proposed_action": "改写题面为该增量的真实需求，例如：\"`dvc version` 的输出应额外报告 DVC 是否为二进制（PyInstaller）安装，字段名 `Binary`，取值 True/False\"。若不愿改题面则建议剔除本题。",
+   "next_experiment": "把题面原样交给模型跑一次，统计它是否会去动 `dvc/command/version.py`（预期不会，或会去重写整个命令）。"
+  },
+  {
+   "category": "零回归保护(25/26)",
+   "severity": "P1",
+   "evidence_refs": [
+    "mat/iterative__dvc-2126/grading.json#pass_to_pass（0 条）",
+    "git show 1c6f46c041:tests/func/test_version.py（全文件仅 2 条用例，均入 F2P）"
+   ],
+   "note": "P2P=0，且断言只查子串，`logger.info(\"Binary: False\")` 硬编码即可满分。",
+   "proposed_action": "把 `tests/unit/test_utils.py`（或 `is_binary` 所在模块的单元测试）纳入 P2P；F2P 补一条：mock `dvc.utils.is_binary` 返回 True 时输出必须是 `Binary: True`。",
+   "next_experiment": "写硬编码 `\"Binary: False\\n\"` 的假修复跑当前 F2P，预期满分，形成反例。"
+  },
+  {
+   "category": "字段名逐字锁定(24)",
+   "severity": "P2",
+   "evidence_refs": [
+    "mat/iterative__dvc-2126/grading.json#test_patch（`r\"Binary: (True|False)\"`）"
+   ],
+   "note": "题面对字段名零约定，测试却逐字匹配 `Binary:`。",
+   "proposed_action": "与上面的题面修订一并处理：题面写明字段名即可，无需改测试。",
+   "next_experiment": "无。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 tests/func/test_version.py；gold 不触碰测试样路径。按第四组 B 保持为空。",
+  "evidence_refs": [
+   "mat/iterative__dvc-2126/grading.json#test_patch",
+   "mat/iterative__dvc-2126/validation.json#golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/unit/test_utils.py -k binary",
+   "reason": "`is_binary()` 的直接单元覆盖；gold 的正确性完全依赖它。"
+  },
+  {
+   "id": "tests/func/test_version.py::test_info_outside_of_repo",
+   "reason": "已在 F2P；同时是\"非 repo 下不应输出 cache 信息\"的负向断言，若改成 P2P 可提供回归。"
+  },
+  {
+   "id": "（新增）tests/func/test_version.py::test_binary_field_follows_is_binary",
+   "reason": "mock `is_binary` 为 True/False 各跑一次，断言输出随之变化，堵住硬编码。"
+  },
+  {
+   "id": "tests/func/test_cli.py",
+   "reason": "gold 改的是一个 CLI 子命令的输出；CLI 解析与子命令注册的功能测试是最近的同族回归。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "reject_revision",
+  "reason": "题面（\"提议新增 dvc version 命令\"）与 base（命令已存在）、gold（只加 Binary 字段）三者不是同一任务版本，F2P 要求的字段在任何可见材料里都没有依据；加上 P2P=0、断言可被硬编码通过。除非重写题面，否则不适合入题。"
+ },
+ "costs": {
+  "minutes": 18
+ },
+ "by": "L1_dvc_1 (Claude Opus 5, 静态审查)"
+}

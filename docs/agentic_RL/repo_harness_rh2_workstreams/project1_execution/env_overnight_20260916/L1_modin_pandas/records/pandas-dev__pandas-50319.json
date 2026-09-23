@@ -1,0 +1,71 @@
+{
+ "task_id": "pandas-dev__pandas-50319",
+ "source": "SWE-Gym lite (s2 ingest v0)",
+ "task_revision": "upstream",
+ "materials_refs": [
+  "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/{public,grading_bundles_v2,validation}_*_v0.jsonl",
+  "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl",
+  "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-50319/{gold,empty}/offline/a1/",
+  "runs/env_overnight_20260916/repos/pandas@1613f26ff0ec75e30828996fd9ec3f9dd5119ca6"
+ ],
+ "public_view": {
+  "goal": "guess_datetime_format('27.03.2003 14:55:00.000') 抛 ValueError: invalid literal for int() with base 10: ''，不应报错。",
+  "constraints_from_statement": [
+   "题面 traceback 直接点名 pandas/_libs/tslibs/parsing.pyx 的 guess_datetime_format 与 _fill_token，定位成本极低。",
+   "期望结果写成二选一：It should return None, or guess the format, but not error。"
+  ],
+  "unknowns_from_public_only": [
+   "到底要返回 None 还是要猜出 %d.%m.%Y %H:%M:%S.%f —— 题面明确说两者都可接受，F2P 只认后者。",
+   "对其它含点号但非小数的 token（纯分隔符 '.'、'1.'、'.5'）的期望行为未说明。",
+   "题面 traceback 的行号（965/1024-1026）来自报告者插了 print 调试的本地构建；base 的 parsing.pyx 没有那两行 print，行号对不上（base 对应 L965/L1017-1026）。"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["pandas@1613f26f:pandas/_libs/tslibs/parsing.pyx L1017-1030", "pandas@1613f26f:pandas/tests/tslibs/test_parsing.py"], "note": "gold 目标 pandas/_libs/tslibs/parsing.pyx 与 test_patch 目标 pandas/tests/tslibs/test_parsing.py 在 base 都存在，且与题面同一问题；无二进制/LFS/子模块。", "by": "L1_modin_pandas"},
+  "2": {"status": "pass", "evidence_refs": ["pandas@1613f26f:pandas/_libs/tslibs/parsing.pyx L1017-1030", "stage1 empty/status_map.json"], "note": "base 的 _fill_token 判据是 if '.' not in token，纯分隔符 token '.' 会走 token.split('.') -> int('') 报 ValueError，与题面一致；empty 侧该 F2P FAILED。", "by": "L1_modin_pandas"},
+  "3": {"status": "issue", "evidence_refs": ["public_bundles_v0.jsonl problem_statement", "pandas@1613f26f:pandas/_libs/tslibs/parsing.pyx"], "note": "题面 traceback 含报告者自己插的 print('tokens[i]', ...) / print('token', token) 两行，base 代码里没有，行号整体偏移 2 行。题面无外链、无图片、无截断。hints_text 为空字符串（无隐藏信息）。", "by": "L1_modin_pandas"},
+  "4": {"status": "pass", "evidence_refs": ["grading.test_patch"], "note": "test_patch 只改 pandas/tests/tslibs/test_parsing.py，且只往既有 parametrize 列表加一个元组，无非测试源码。", "by": "L1_modin_pandas"},
+  "17": {"status": "pass", "evidence_refs": ["validation.golden_patch"], "note": "gold 只改 pandas/_libs/tslibs/parsing.pyx，不含测试样路径；additional_exclusions 保持空。", "by": "L1_modin_pandas"},
+  "5": {"status": "pass", "evidence_refs": ["tasks_by_repo.json"], "note": "与本包其余 pandas 题不同 PR、不同模块。", "by": "L1_modin_pandas"},
+  "23": {"status": "issue", "evidence_refs": ["public_bundles_v0.jsonl problem_statement", "grading.test_patch"], "note": "题面字面允许『返回 None』，但唯一的 F2P 断言 guess_datetime_format('27.03.2003 14:55:00.000') == '%d.%m.%Y %H:%M:%S.%f'。选了题面明写的另一条合法路径（捕获异常返回 None）的 agent 必然失败。公开要求与判分标准不一致。", "by": "L1_modin_pandas"},
+  "24": {"status": "pass", "evidence_refs": ["grading.test_patch", "validation.golden_patch"], "note": "F2P 只断言函数返回值，不引用 gold 新增的正则 r'\\d+\\.\\d+'、不检查内部调用。等价替代实现（例如 if not token.split('.')[0].isdigit() 或 try/except 后 zfill）同样能过，不强制唯一实现。", "by": "L1_modin_pandas"},
+  "25": {"status": "issue", "evidence_refs": ["grading.test_patch"], "note": "F2P 只有 1 条，只覆盖 '27.03.2003 14:55:00.000' 这一个输入。针对该字符串硬编码返回 '%d.%m.%Y %H:%M:%S.%f' 即可通过；P2P 里的其它 guess_datetime_format 用例不含任何『点号分隔日期 + 毫秒』的变体，拦不住硬编码。", "by": "L1_modin_pandas"},
+  "26": {"status": "pass", "evidence_refs": ["pandas@1613f26f"], "note": "见 proposed_regression_tests。", "by": "L1_modin_pandas"},
+  "27": {"status": "pass", "evidence_refs": ["validation.golden_patch", "pandas@1613f26f:pandas/_libs/tslibs/parsing.pyx L4"], "note": "gold 只改 _fill_token 的分支判据并加两行注释；用到的 re 在 base L4 已 import；不依赖未交付改动，无无关改动。", "by": "L1_modin_pandas"},
+  "29": {"status": "pass", "evidence_refs": ["leak.json"], "note": "题面不含 gold 新增代码、不指向上游 PR/commit；hints_text 为空。", "by": "L1_modin_pandas"},
+  "6": {"status": "issue", "evidence_refs": ["stage1 gold/offline/a1/eval.sh"], "note": "install 阶段：python -m pip install 'numpy<2'（联网） + pip install -ve . --no-build-isolation（重编 Cython 扩展），随后 pip uninstall pytest-qt。gold 改的是 .pyx，必须重编才生效 —— 见 issues 的 compiled_extension 条。", "by": "L1_modin_pandas"},
+  "7": {"status": "pass", "evidence_refs": ["runs/env_overnight_20260916/L1_modin_pandas/optdeps.json"], "note": "test_parsing.py 无 importorskip / skip_if_no / datapath / S3；唯一的 https://github.com 出现在注释里，不是真实请求。", "by": "L1_modin_pandas"},
+  "11": {"status": "issue", "evidence_refs": ["runs/env_overnight_20260916/L1_modin_pandas/collide_detail.json"], "note": "1 个 P2P 因转义层级不一致永远 missing；F2P 常量本身被截断但能唯一解析；另有 2 个截断键各吞掉 4 个和 2 个运行时 ID。", "by": "L1_modin_pandas"}
+ },
+ "issues": [
+  {"category": "compiled_extension", "severity": "P1",
+   "evidence_refs": ["validation.golden_patch（目标是 pandas/_libs/tslibs/parsing.pyx）", "stage1 gold/offline/a1/eval.sh install 阶段"],
+   "note": "修复点在 Cython 源 .pyx 里。agent 在 rollout 中改完 .pyx 后，若不重跑 pip install -ve . --no-build-isolation（或 python setup.py build_ext --inplace），已加载的 .so 不变，自测会看到『改了没效果』。评分侧因为 eval.sh 在 setup/test 之前重跑 install，所以最终判分是对的 —— 但 agent 的自测反馈与最终判分在重编之前是脱节的。",
+   "proposed_action": "在 public_hints 或任务环境说明里写明『修改 pandas/_libs/**.pyx 后必须重新编译才能自测』，并给出具体命令与预计耗时。",
+   "next_experiment": "真机上计时一次增量 build_ext --inplace（只改一个 .pyx），量化 agent 自测一轮的秒数。"},
+  {"category": "requirement_ambiguous", "severity": "P1",
+   "evidence_refs": ["public_bundles_v0.jsonl problem_statement 末句", "grading.fail_to_pass"],
+   "note": "题面写 It should return None, or guess the format, but not error，两条路都合法；F2P 只接受『猜出格式』。",
+   "proposed_action": "改写题面末句为只允许猜出格式，或把 F2P 放宽为『不抛异常』。",
+   "next_experiment": "无需跑；题面改写决定。"},
+  {"category": "reference_id_mismatch", "severity": "P1",
+   "evidence_refs": ["stage1 gold/offline/a1/test_output.txt L6247", "grading.pass_to_pass"],
+   "note": "P2P 常量 test_is_iso_format[%Y\\%m\\%d（单反斜杠）在运行时是 %Y\\\\%m\\\\%d（双反斜杠），gold/empty 两侧都 missing=1，stage1 因此把 gold 判成 RESOLVED_NO。与 pandas-48106 同一机制。",
+   "proposed_action": "剔除或按运行时 ID 重写该 P2P 常量。",
+   "next_experiment": "pytest --collect-only -q pandas/tests/tslibs/test_parsing.py 导出运行时 ID 做集合对拍。"},
+  {"category": "test_too_weak", "severity": "P2",
+   "evidence_refs": ["grading.fail_to_pass（仅 1 条）"],
+   "note": "单条 F2P + 该输入未被其它 P2P 覆盖，等价于给硬编码开了门。",
+   "proposed_action": "把 gold PR 里同批加入的其它点号分隔样例（若有）一并纳入 F2P，或自建几个变体（'1.1.2003 1:2:3.4'）做 proposed_regression_tests。",
+   "next_experiment": "真机上对一个只在 guess_datetime_format 开头 if dt_str == '27.03.2003 14:55:00.000': return '%d.%m.%Y %H:%M:%S.%f' 的假补丁跑一次评分，确认它会被判 RESOLVED_FULL。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只在 pandas/tests/，gold 只在 pandas/_libs/，无交叉；沿用默认空集。", "evidence_refs": ["grading.test_patch", "validation.golden_patch"]},
+ "proposed_regression_tests": [
+  {"id": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats", "reason": "同一参数化函数的全部既有样例，能抓到 _fill_token 判据改动对普通格式的回归。"},
+  {"id": "pandas/tests/tools/test_to_datetime.py", "reason": "guess_datetime_format 的主要下游消费者是 to_datetime 的格式推断，改判据最容易在这里翻车。"},
+  {"id": "pandas/tests/io/parser/test_parse_dates.py", "reason": "read_csv 的日期推断同样走 guess_datetime_format，覆盖另一条调用者路径。"},
+  {"id": "pandas/tests/tslibs/test_array_to_datetime.py", "reason": "与 array_strptime 的交互在 gold 改动的函数尾部，值得一并回归。"}
+ ],
+ "disposition_hint": {"state": "needs_repair", "reason": "1 个 P2P 常量转义不一致导致 gold 恒判 RESOLVED_NO；同时题面二选一的措辞与单条 F2P 冲突，两处都要先改才适合进 RL 题单。"},
+ "costs": {"minutes": 26}
+}

@@ -1,0 +1,205 @@
+{
+ "task_id": "pydantic__pydantic-9214",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_pydantic (Claude Opus 5, 2026-09-16 夜)",
+ "materials_refs": [
+  "s2/ingest/*_bundles_v0.jsonl (pydantic__pydantic-9214)",
+  "repos/pydantic@7af856a1098406aea84bcadfd0f3de6b7901526c",
+  "runs/env_probe_stage1_20260910/.../pydantic__pydantic-9214/",
+  "runs/env_probe_20260909_final_sync/ledger/logs_cc/pydantic__pydantic-9214/",
+  "docs/.../L3_trajectories/counterexamples/pydantic__pydantic-9214/EXPECTED.md",
+  "s2/raw/swe_gym_lite_full_f70b1a29.jsonl (hints_text)"
+ ],
+ "public_view": {
+  "目标行为": "RootModel 的 root 字段上写 Field(description='abc') 时，model_json_schema() 应把该 description 放到模型级 schema 上（现在被丢掉，只有加类 docstring 才有）。",
+  "约束": "题面没给 docstring 与 Field(description) 同时存在且不同时的优先级；题面的 FixedLiteralModel 例子里 docstring 与 description 都是 'abc'，输出无法消歧。",
+  "公开材料无法确定的点": [
+   "docstring 与 Field(description) 同时存在时谁优先——这是本题唯一的失分点，题面无法推出",
+   "修复落在 _generate_schema.modify_model_json_schema 还是 json_schema.py 的 RootModel 分支"
+  ],
+  "base 定位": "pydantic/_internal/_generate_schema.py:229-231 `modify_model_json_schema`：只有 `docstring and 'description' not in original_schema` 一条分支写 description，RootModel 的 root 字段 description 没有任何通路进入模型级 schema。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show 7af856a1:tests/test_root_model.py、pydantic/_internal/_generate_schema.py 均存在"
+   ],
+   "note": "对应同一问题。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "_generate_schema.py:229-231",
+    "stage1 empty：test_model_with_field_description FAILED"
+   ],
+   "note": "base 确有缺陷。",
+   "by": "static+stage1log"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement 1810 字符：FixedLiteralModel 的 docstring 与 Field(description) 同为 'abc'",
+    "hints_text（s2/raw 原始行）：'for backwards compatibility reasons, let's use the docstring over the field description if both are present'"
+   ],
+   "note": "P2：判分需要的关键信息（两者并存时 docstring 优先）**只在不可见的 hints_text 里**，题面的例子因为两处字符串相同而无法消歧。这是本题失分的直接原因。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只碰 tests/test_root_model.py；F2P+P2P 55 条全在该文件；gold 只碰 pydantic/_internal/_generate_schema.py"
+   ],
+   "note": "additional_exclusions 保持空。候选 candidate.diff 里的 pdm.lock/pyproject.toml 是镜像脏状态（R1），不是本题排除问题。",
+   "by": "static"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "同 test_patch 文件的还有 6283（gold 是 pydantic/main.py 的 RootModel __eq__）"
+   ],
+   "note": "不同修复。",
+   "by": "static"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "install rc=2。",
+   "by": "stage1log"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "tests/test_root_model.py 第三方 import：pytest / pydantic_core / pydoc"
+   ],
+   "note": "无外部资产。",
+   "by": "static"
+  },
+  "10": {
+   "status": "issue",
+   "evidence_refs": [
+    "logs_cc/pydantic__pydantic-9214/stream.jsonl: No module named pytest / dirty_equals / typing_extensions；grep 'envs/testbed' 0 命中"
+   ],
+   "note": "同 R3。L3 记录本题轨迹以 error_max_turns 结束、末尾三次缺依赖。",
+   "by": "trajectory"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "只有 install 需要网络。",
+   "by": "stage1log"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "同 check 3",
+    "test_patch 的 test_model_with_both_docstring_and_field_description 是 test_patch **新增**却被归入 P2P 的测试（见 R7）"
+   ],
+   "note": "P2 要求不充分：判分面里有一条题面推不出的优先级要求，而且它是以 P2P 身份进来的——即它并不是“base 已固定的既有行为”（base tests/test_root_model.py 里没有任何一条钉住 docstring 优先），而是 test_patch 新引入的要求。DeepSeek 候选正是在这条上失分（stage1/oracle=RESOLVED_NO）。",
+   "by": "static+L3"
+  },
+  "24": {
+   "status": "issue",
+   "evidence_refs": [
+    "gold 走 _generate_schema.modify_model_json_schema；候选走 pydantic/json_schema.py，F2P 通过、P2P 那条失败"
+   ],
+   "note": "P3：测试没有强制唯一**文件**，但那条 P2P 事实上强制了一个**优先级选择**；满足公开要求的另一种合法实现（Field description 优先）会被拒绝。按检查 24 的口径，这条断言缺乏公开依据 → 属于“无依据地强制唯一行为”，处置应是补题面而不是删测试（向后兼容是真实约束）。",
+   "by": "static+L3"
+  },
+  "25": {
+   "status": "unknown",
+   "evidence_refs": [],
+   "note": "未构造部分修复/硬编码反例。F2P 只有一条、断言整个 schema 字典，硬编码 description='abc' 会被 P2P 那条（期望 'More detailed description'）挡住，故最粗暴的硬编码不成立；更细的部分修复未检查。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "modify_model_json_schema 是所有 model-like 类 JSON schema 的公共入口（不只 RootModel）"
+   ],
+   "note": "gold 在这个公共入口上加了 RootModel 分支，影响面覆盖普通 BaseModel、嵌套 RootModel、TypeAdapter；判分面只有 tests/test_root_model.py 55 条。见 proposed_regression_tests。",
+   "by": "static"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 全文（2 行新增 + 1 行 import）"
+   ],
+   "note": "gold 与题面对应、无题外改动；`elif` 的位置即“docstring 优先”的实现，与 hints 的说明一致。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak 扫描 0 命中；题面无 URL"
+   ],
+   "note": "题面无泄漏。反向问题是信息**不足**（check 3）。",
+   "by": "static"
+  },
+  "31": {
+   "status": "issue",
+   "evidence_refs": [
+    "R4"
+   ],
+   "note": "静态残余面。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "spec_ambiguity_prompt_gap",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 3",
+    "check 23"
+   ],
+   "proposed_action": "把“docstring 与 Field(description) 并存时以 docstring 为准（向后兼容）”补进 public_view；或把本题标 spec_gap",
+   "next_experiment": "L3 counterexamples/pydantic__pydantic-9214/run_matrix.sh"
+  },
+  {
+   "category": "new_requirement_as_p2p",
+   "severity": "P2",
+   "evidence_refs": [
+    "R7",
+    "test_patch 新增 test_model_with_both_docstring_and_field_description 且它在 P2P"
+   ],
+   "proposed_action": "对这类“新增但归入 P2P”的测试单独标注：它不是回归护栏，而是题面外的新要求；至少在 public_view 里交代",
+   "next_experiment": "无"
+  },
+  {
+   "category": "official_test_coverage_gap",
+   "severity": "P3",
+   "evidence_refs": [
+    "check 26"
+   ],
+   "proposed_action": "扩 P2P 到 tests/test_json_schema.py 的 description/docstring 相关条目",
+   "next_experiment": "同上"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 仅纯测试文件、gold 仅生产代码、判分面与恢复面一致。",
+  "evidence_refs": [
+   "grading.json.test_patch",
+   "validation.json.golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  "L3 已设计的四格矩阵（无 description / 只有 Field description / 只有 docstring / 两者并存且不同）+ 六条护栏 — 见 L3_trajectories/counterexamples/pydantic__pydantic-9214/diagnostic_test.py",
+  "tests/test_json_schema.py 里普通 BaseModel 的 docstring→description 用例 — 选择依据：gold 改的是 modify_model_json_schema 这个所有 model-like 类共用的入口，不能只测 RootModel",
+  "嵌套 RootModel（作为另一个模型的字段）时 description 落在 $defs 条目上 — 选择依据：gold 的 `original_schema = handler.resolve_ref_schema(json_schema)` 分支在嵌套时走 allOf/$ref 路径，官方未测"
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "判分依赖一条题面完全推不出、且由 test_patch 新引入的优先级要求（并以 P2P 身份出现）。不补题面就直接用于 RL，会稳定产生“主目标做对、仍判 0 分”的信号。补一句题面即可修复，成本极低。"
+ },
+ "costs": {
+  "minutes": 18
+ }
+}

@@ -1,0 +1,910 @@
+{
+  "status": "static_plans_complete_not_executed",
+  "execution_status": "not_executed",
+  "scope": "selective_future_cpu_plans_only",
+  "items": [
+    {
+      "queue_id": "mypy11707-public-reexport-semantics",
+      "instance_id": "python__mypy-11707",
+      "status": "planned_not_executed_pending_cpu_scheduling",
+      "execution_status": "not_executed",
+      "source_condition": {
+        "instance_id": "python__mypy-11707",
+        "repo": "python/mypy",
+        "base_commit": "5d71f58b9dc5a89862253fef3d82356a7370bf8e",
+        "family": "install_wave1",
+        "environment_record": "runs/swegym_quality_batch05_20260921_v1/private/python__mypy-11707/environment_record.json",
+        "run_refs": "runs/swegym_quality_batch05_20260921_v1/private/python__mypy-11707/run_refs.json",
+        "original_inputs": {
+          "grading": "runs/swegym_quality_batch05_20260921_v1/private/python__mypy-11707/grading.json",
+          "host_grading_selector": {
+            "instance_id": "python__mypy-11707",
+            "line": 193,
+            "raw_line_sha256": "cd08fb59d9cecc3a4c71ee969bb55765890db68a2bca4f4adb08cebb6a98baa3",
+            "grading_bundle_digest": "sha256:c7e5e87666dd69a913b6a9daff4501b4ceeccab322cc0a8161e47702538dfcc8"
+          },
+          "recipe": null,
+          "materials": null,
+          "reference_bindings": null,
+          "gold_candidate": "runs/full216_rh2_diagnostic_20260919/remote/replay/gold/python__mypy-11707.gold.patch",
+          "build_plan": {
+            "file": "runs/env_recipe_repair_20260919/install_wave1/plan.json",
+            "selector": {
+              "instance_id": "python__mypy-11707",
+              "array_index_0based": 53
+            },
+            "entry_sha256_canonical_json": "7a8bd1773676e876f92b61416f451d124f1805dae9b39e4df4a7ff1ecc68e7e6"
+          },
+          "build_pins": {
+            "setuptools": "69.5.1",
+            "wheel": "0.43.0",
+            "packaging": "24.1"
+          }
+        },
+        "spec": {
+          "schema_id": "rh2.private_grading_bundle.v2",
+          "spec_vendor_id": "swegym_constants_242429c1",
+          "version": "0.920",
+          "python_version": "3.9",
+          "eval_cmd": "pytest -n0 -rA -k",
+          "observed_full_test_command": "pytest -n0 -rA -k 'testReExportChildStubs3 or testNoReExportChildStubs'",
+          "scripts_digest": "sha256:655a4ee7ddc26681b0a9e6e147e2c8bccaf4d978c695aeb2beadc1bf67687644",
+          "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+          "grading_semantics": "swe_f2p_p2p"
+        },
+        "runtime_evidence": {
+          "gold": {
+            "ledger": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11707/gold/ledger.jsonl",
+            "line": 1,
+            "eval_log": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11707/gold/eval_logs/evallog_replay-er19-iw1-python___bab5562a.eval.log",
+            "test_command_log_line": 651,
+            "diagnostics": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11707/gold/eval_logs/evallog_replay-er19-iw1-python___bab5562a.diagnostics.json",
+            "driver_log": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11707/gold/driver.log"
+          },
+          "noop": {
+            "ledger": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11707/noop/ledger.jsonl",
+            "line": 1,
+            "eval_log": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11707/noop/eval_logs/evallog_replay-er19-iw1-python___521f6047.eval.log",
+            "test_command_log_line": 633,
+            "diagnostics": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11707/noop/eval_logs/evallog_replay-er19-iw1-python___521f6047.diagnostics.json",
+            "driver_log": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11707/noop/driver.log"
+          }
+        },
+        "historical_run_ids": {
+          "gold": "er19-iw1-python__mypy-11707-gold",
+          "noop": "er19-iw1-python__mypy-11707-noop"
+        },
+        "original_image": {
+          "image_ref": "sha256:e3e933e4d2db3fb698b543dc0b878dbcb24beace775bc9ad3eb25e7a873eab1f",
+          "image_id_actual": "sha256:e3e933e4d2db3fb698b543dc0b878dbcb24beace775bc9ad3eb25e7a873eab1f",
+          "image_identity": "local_build:sha256:e3e933e4d2db3fb698b543dc0b878dbcb24beace775bc9ad3eb25e7a873eab1f",
+          "image_local_build": true,
+          "image_digest_expected": "sha256:b3f866b27cdaaa85800026ad13c38cf762c2f6ebcf03fb24a7d7c351e844969e",
+          "derived_image_recipe": "install-wave1:python__mypy-11707",
+          "target_availability": "未检查，不据历史记录填已存在"
+        },
+        "image_build_audit": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11707/image.json",
+        "dockerfile_text_from_audit": "ARG BASE_IMAGE\nFROM ${BASE_IMAGE}\nCOPY wheels/ /opt/rh2/build-wheels/\nENV PIP_NO_INDEX=1 PIP_FIND_LINKS=/opt/rh2/build-wheels\n",
+        "entrypoint": {
+          "launcher": "runs/env_recipe_repair_20260919/install_wave1/run_install_wave1.py",
+          "wrapper": null,
+          "cli_member": "scripts/replay_grade.py",
+          "command_audit": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11707/status.json",
+          "extra_arguments": [
+            "--derived-image",
+            "sha256:e3e933e4d2db3fb698b543dc0b878dbcb24beace775bc9ad3eb25e7a873eab1f",
+            "--derived-image-recipe",
+            "install-wave1:python__mypy-11707"
+          ],
+          "meaning": "派生镜像仅COPY离线wheel并设PIP变量，原spec安装与测试，不加覆写。"
+        },
+        "build_payload_status": {
+          "expected_local_context": "runs/env_recipe_repair_20260919/install_wave1/assets/contexts/python__mypy-11707",
+          "exists_on_authoritative_host": false,
+          "note": "image.json是构建审计；原镜像缺失时需另备真实context/wheel，不能直接把审计输出作输入。"
+        },
+        "code_archive": {
+          "file": "runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz",
+          "original_code_root": "/work/full216_20260919/code/rh2",
+          "members": [
+            {
+              "member": "scripts/replay_grade.py",
+              "sha256": "6115714639d677a7a2b116738507d8adf8fc9f5a4f4059ff7f792360359a0311",
+              "bytes": 7525
+            },
+            {
+              "member": "src/repoharness2/adapters/slime/replay_grade.py",
+              "sha256": "b8f1fbe2f37032e52b496f2eb9296c8a647a3072af2b7def600809544c9999fb",
+              "bytes": 38878
+            },
+            {
+              "member": "src/repoharness2/adapters/slime/prepared_task_face.py",
+              "sha256": "3a3d7bcab18e8a83f99104180e065ed32d8ecbce5d1bd4aaa7f8bd72b001aa27",
+              "bytes": 23211
+            },
+            {
+              "member": "src/repoharness2/envpack/spec_vendor.py",
+              "sha256": "8e0037b27c87268ed7df97ef64d261d0e6dac7375bc85fd5badd0fecdb94d41d",
+              "bytes": 10370
+            }
+          ],
+          "status": "归档在本地；未解包、未导入。目标code-root与Python依赖待准备。"
+        },
+        "historical_outcomes": {
+          "gold": {
+            "report": {
+              "execution_failure_evidence": [],
+              "execution_failure_stage": null,
+              "f2p_pass": 1,
+              "f2p_total": 1,
+              "failure_category": null,
+              "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+              "grading_semantics": "swe_f2p_p2p",
+              "infra_failure_detail": null,
+              "outcome": "resolved",
+              "p2p_fail": 0,
+              "p2p_total": 1,
+              "report_id": "rpt_grading_bab5562a",
+              "reward": 1.0
+            },
+            "install": {
+              "install_rc_last_command": 0,
+              "install_seconds": 6.937,
+              "install_skipped": false,
+              "log_partial": false,
+              "markers_seen": [
+                "RH2_INSTALL_RC",
+                "RH2_TEST_RC",
+                "RH2_TS_INSTALL_END",
+                "RH2_TS_INSTALL_START",
+                "RH2_TS_TEST_END",
+                "RH2_TS_TEST_START"
+              ],
+              "test_rc": 0,
+              "test_seconds": 4.165
+            },
+            "test": {
+              "rc": 0,
+              "seconds": 4.165
+            },
+            "verdict_diagnostics": {
+              "apply_ok": true,
+              "num_parsed_outside_segment": 0,
+              "num_parsed_tests": 2,
+              "parser_source": "swegym_parsers@242429c1",
+              "reference_missing": [],
+              "reference_skipped": [],
+              "resolution": "RESOLVED_FULL"
+            },
+            "reference_missing_count": 0,
+            "cleanup": {
+              "detail": "",
+              "removed": true,
+              "steps": [
+                "rm:ok"
+              ]
+            },
+            "projection": {
+              "frozen_patch_digest": "sha256:222439268dd1e5a0708c0f42cec3e7a15093c51a7b2fae924a8276db57825e9f",
+              "ignored_paths": [],
+              "included_paths": [
+                "mypy/semanal.py"
+              ],
+              "unsupported_shape_reasons": []
+            },
+            "observations": {
+              "RH2_OBS_IMPORT_PATH": "/testbed/mypy/__init__.py",
+              "RH2_OBS_PKG_VERSION": "?",
+              "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+              "RH2_OBS_RUNNER_DIGEST": "ff4f77e2a762d390a159c9f31a96a06c4f5792a2cfedfbf5db7974d69f678650",
+              "RH2_OBS_RUNNER_DIGEST_PRE": "ff4f77e2a762d390a159c9f31a96a06c4f5792a2cfedfbf5db7974d69f678650"
+            },
+            "resource_raw": {
+              "mem_peak_mb": 126.641,
+              "mem_peak_unavailable_or_zero": false
+            },
+            "resource_unit_note": "Preserve original resource fields, no unverified conversion."
+          },
+          "noop": {
+            "report": {
+              "execution_failure_evidence": [],
+              "execution_failure_stage": null,
+              "f2p_pass": 0,
+              "f2p_total": 1,
+              "failure_category": "tests_failed",
+              "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+              "grading_semantics": "swe_f2p_p2p",
+              "infra_failure_detail": null,
+              "outcome": "unresolved",
+              "p2p_fail": 0,
+              "p2p_total": 1,
+              "report_id": "rpt_grading_521f6047",
+              "reward": 0.0
+            },
+            "install": {
+              "install_rc_last_command": 0,
+              "install_seconds": 7.167,
+              "install_skipped": false,
+              "log_partial": false,
+              "markers_seen": [
+                "RH2_INSTALL_RC",
+                "RH2_TEST_RC",
+                "RH2_TS_INSTALL_END",
+                "RH2_TS_INSTALL_START",
+                "RH2_TS_TEST_END",
+                "RH2_TS_TEST_START"
+              ],
+              "test_rc": 1,
+              "test_seconds": 4.311
+            },
+            "test": {
+              "rc": 1,
+              "seconds": 4.311
+            },
+            "verdict_diagnostics": {
+              "apply_ok": true,
+              "num_parsed_outside_segment": 0,
+              "num_parsed_tests": 2,
+              "parser_source": "swegym_parsers@242429c1",
+              "reference_missing": [],
+              "reference_skipped": [],
+              "resolution": "RESOLVED_NO"
+            },
+            "reference_missing_count": 0,
+            "cleanup": {
+              "detail": "",
+              "removed": true,
+              "steps": [
+                "rm:ok"
+              ]
+            },
+            "projection": {
+              "frozen_patch_digest": "sha256:63b1f7e4c24dfc6cb23aafb1734016e2ff65042e0b2bbba9696975016b13b2e7",
+              "ignored_paths": [],
+              "included_paths": [],
+              "unsupported_shape_reasons": []
+            },
+            "observations": {
+              "RH2_OBS_IMPORT_PATH": "/testbed/mypy/__init__.py",
+              "RH2_OBS_PKG_VERSION": "?",
+              "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+              "RH2_OBS_RUNNER_DIGEST": "ff4f77e2a762d390a159c9f31a96a06c4f5792a2cfedfbf5db7974d69f678650",
+              "RH2_OBS_RUNNER_DIGEST_PRE": "ff4f77e2a762d390a159c9f31a96a06c4f5792a2cfedfbf5db7974d69f678650"
+            },
+            "resource_raw": {
+              "mem_peak_mb": 131.801,
+              "mem_peak_unavailable_or_zero": false
+            },
+            "resource_unit_note": "Preserve original resource fields, no unverified conversion."
+          }
+        },
+        "shared_initial_delta": "test-requirements.txt adds types-typing-extensions==3.7.3 in original noop explicit git diff; preserve in both sides. Earlier typeshed diffs are base git show.",
+        "observed_shared_initial_delta_evidence": [
+          {
+            "role": "noop",
+            "log": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11707/noop/eval_logs/evallog_replay-er19-iw1-python___521f6047.eval.log",
+            "physical_lines": "132-139,356-365",
+            "meaning": "Only test-requirements.txt differs from exact base; added types-typing-extensions==3.7.3."
+          },
+          {
+            "role": "gold",
+            "log": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11707/gold/eval_logs/evallog_replay-er19-iw1-python___bab5562a.eval.log",
+            "physical_lines": "357-383",
+            "meaning": "Same dependency prechange plus official semanalyzer patch."
+          }
+        ]
+      },
+      "replay_entry": {
+        "code_root": "<new expanded frozen baseline archive directory ending rh2>",
+        "cli_member": "scripts/replay_grade.py",
+        "cli_arguments": [
+          "run",
+          "--prepared-summary",
+          "<new_relocated_summary>",
+          "--task-ids",
+          "python__mypy-11707",
+          "--candidate",
+          "noop OR patch:<explicit_candidate_file> OR gold-dir:<prepared_gold_dir>",
+          "--eval-log-dir",
+          "<new_run>/eval_logs",
+          "--artifacts-dir",
+          "<new_run>/artifacts",
+          "--ledger",
+          "<new_run>/ledger.jsonl",
+          "--derived-image",
+          "sha256:e3e933e4d2db3fb698b543dc0b878dbcb24beace775bc9ad3eb25e7a873eab1f",
+          "--derived-image-recipe",
+          "install-wave1:python__mypy-11707"
+        ],
+        "wrapper": null,
+        "recipe": null,
+        "materials": null,
+        "reference_bindings": null,
+        "historical_entry": {
+          "launcher": "runs/env_recipe_repair_20260919/install_wave1/run_install_wave1.py",
+          "wrapper": null,
+          "cli_member": "scripts/replay_grade.py",
+          "command_audit": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11707/status.json",
+          "extra_arguments": [
+            "--derived-image",
+            "sha256:e3e933e4d2db3fb698b543dc0b878dbcb24beace775bc9ad3eb25e7a873eab1f",
+            "--derived-image-recipe",
+            "install-wave1:python__mypy-11707"
+          ],
+          "meaning": "派生镜像仅COPY离线wheel并设PIP变量，原spec安装与测试，不加覆写。"
+        },
+        "warning": "Exact task only. Old worker jobs include other tasks; do not replay the whole list. Target identity and relocated inputs still unprepared."
+      },
+      "question": "在原题四个普通.py文件中，base/gold分别对Y as W与X as W怎样诊断？gold是否仅按公开旧规则消除不一致，却不满足题面明确两者成功的预期？",
+      "variants": [
+        {
+          "name": "base-Y",
+          "candidate": "noop",
+          "c_py": "from a import Y as W\n",
+          "static_prediction": "d.py导入W时报未显式导出错误"
+        },
+        {
+          "name": "base-X",
+          "candidate": "noop",
+          "c_py": "from a import X as W\n",
+          "static_prediction": "接受"
+        },
+        {
+          "name": "gold-Y",
+          "candidate": "gold patch from this task",
+          "c_py": "from a import Y as W\n",
+          "static_prediction": "拒绝"
+        },
+        {
+          "name": "gold-X",
+          "candidate": "gold patch from this task",
+          "c_py": "from a import X as W\n",
+          "static_prediction": "拒绝"
+        }
+      ],
+      "diagnostic_steps": [
+        "另行取得CPU授权，准备本题精确派生镜像、冻结baseline代码/依赖和可达重定位summary；核对实际镜像ID与e3e933e4…eab1f，保留两侧相同的test-requirements.txt预存types-typing-extensions==3.7.3差异。",
+        "每个代码变体用fresh环境/独立输出。应用本题noop或原gold，按原spec安装；记录base HEAD、完整初态delta、候选SHA、解释器与源码导入位置、UID/HOME/cwd/PATH。使用原grader54322及2CPU/4GiB/deny_all作为明确诊断条件，不冒称真实actor。",
+        "在四个新case目录写上列原四文件，分别执行原strict/no-implicit-reexport命令。逐个保留stdout/stderr、退出码、输入文件SHA和缓存/配置状态；只把Y/X那一行作为同源码条件下的变化。",
+        "本项优先采集公开语义对照。replay_entry保留原冻结评分复跑入口作可选同环境控制，其两项stub得分单独记；不把四文件诊断偷偷注入reward或改变官方test patch。",
+        "对照题面两者成功、公开文档同名as才导出、实际base/gold输出，形成可审阅事实供语义裁决；不自动修改公开题面、gold或expected。"
+      ],
+      "decision_rule": {
+        "predicted_matrix_observed": "确认gold消除不一致的方向与题面字面预期相反；仍需决定保留公开旧契约还是扩展普通.py语义，CPU结果本身不裁决规格。",
+        "matrix_differs": "先核候选生效、版本/配置/缓存，再更正静态推断；不为符合预测改命令或隐藏失败。",
+        "score_interpretation": "隐藏两项均为stub；它们不能证明所有满足普通.py题面预期的解必得0，也不能证明原例已满足。",
+        "later_separate_candidate": "module_hidden = not module_public的错误简化与公开testReExportChildStubs/ChildStubs2对照，暂列第二优先，不纳入此次唯一主实验或统一模型前置门。"
+      },
+      "review_refs": [
+        "results/python__mypy-11707/card.md",
+        "results/python__mypy-11707/review.md"
+      ],
+      "depends_on": [
+        "Later root CPU/resource scheduling",
+        "Verify target image and prepare frozen code/dependencies",
+        "Prepare reachable relocated summary/private input copy"
+      ],
+      "evidence_to_save": [
+        "candidate diff/SHA and complete source/initial-tree identity",
+        "actual image identity vs expected manifest; effective spec/scripts",
+        "projection/official restoration/install",
+        "public behavior stdout/stderr/RC",
+        "actual nodes/parsed keys/reference states/missing/skipped/reward",
+        "cleanup/resource original fields"
+      ],
+      "priority_within_task": 1,
+      "costs": {
+        "new_cpu_seconds": null,
+        "tokens": null,
+        "cost_usd": null
+      },
+      "public_case": {
+        "source": "runs/swegym_quality_batch05_20260921_v1/public/python__mypy-11707/user_prompt.txt:10-70",
+        "files": {
+          "a/__init__.py": "from a.X import X as X\nY = X\n",
+          "a/X.py": "class X:\n    pass\n",
+          "c.py": "variant-specific as above",
+          "d.py": "from c import W\n"
+        },
+        "cwd": "<new isolated case directory outside /testbed, separate directory per variant>",
+        "command": "PYTHONPATH=/testbed python -m mypy --strict --no-implicit-reexport .",
+        "configuration": "No inherited mypy config; retain exact primary flags; each case starts with fresh cache. Any explicit no-cache/config comparison is a separately labelled diagnostic.",
+        "identity_probe": "Record sys.executable, Python version and mypy.__file__ as the actual diagnostic user before running; ensure /testbed candidate sources are loaded.",
+        "reported_issue_environment": "Reporter used mypy0.910/Python3.10; the frozen task/source and historical replay use task0.920/Python3.9.19. This is a frozen-task diagnostic, not a claim to reproduce the original reporter machine."
+      },
+      "secondary_deferred": {
+        "id": "mypy11707-real-submodule-regression",
+        "status": "not_executed_not_primary",
+        "candidate": "At base, replace the module-hidden assignment with module_hidden = not module_public; do not write it during B5.",
+        "frozen_controls": "existing 1 F2P + 1 P2P",
+        "public_regressions": [
+          "TypeCheckSuite::check-modules.test::testReExportChildStubs",
+          "TypeCheckSuite::check-modules.test::testReExportChildStubs2"
+        ],
+        "boundary": "Static counterexample candidate only; no observed reward and no claim that gold has this regression."
+      },
+      "review_resolution": "independent reviewer supports this single primary experiment; scope/status corrections accepted in card/record",
+      "runtime_results": null
+    },
+    {
+      "queue_id": "moto5406-region-constant-calibration",
+      "instance_id": "getmoto__moto-5406",
+      "status": "planned_not_executed_pending_cpu_scheduling",
+      "execution_status": "not_executed",
+      "source_condition": {
+        "instance_id": "getmoto__moto-5406",
+        "repo": "getmoto/moto",
+        "base_commit": "87683a786f0d3a0280c92ea01fecce8a3dd4b0fd",
+        "family": "baseline01",
+        "environment_record": "runs/swegym_quality_batch05_20260921_v1/private/getmoto__moto-5406/environment_record.json",
+        "run_refs": "runs/swegym_quality_batch05_20260921_v1/private/getmoto__moto-5406/run_refs.json",
+        "original_inputs": {
+          "grading": "runs/swegym_quality_batch05_20260921_v1/private/getmoto__moto-5406/grading.json",
+          "host_grading_selector": {
+            "instance_id": "getmoto__moto-5406",
+            "line": 63,
+            "raw_line_sha256": "84d445e6a5326cc4978e141740950e767a6192a9a0e18fdf5de2a1f4299811f8",
+            "grading_bundle_digest": "sha256:e2ed44cf22c9ddf0466c2b2f4891378af251774fe8a63f0a0fa7e3150684e088"
+          },
+          "recipe": null,
+          "materials": null,
+          "reference_bindings": null,
+          "gold_candidate": "runs/full216_rh2_diagnostic_20260919/remote/replay/gold/getmoto__moto-5406.gold.patch"
+        },
+        "spec": {
+          "schema_id": "rh2.private_grading_bundle.v2",
+          "spec_vendor_id": "swegym_constants_242429c1",
+          "version": "4.0",
+          "python_version": "3.12",
+          "eval_cmd": "pytest -n0 -rA",
+          "observed_full_test_command": "pytest -n0 -rA tests/test_dynamodb/test_dynamodb_table_without_range_key.py",
+          "scripts_digest": "sha256:6bddb336fbcd562c6db09fe90a8b727832228d45258f713b8be89fba3c5e151e",
+          "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+          "grading_semantics": "swe_f2p_p2p"
+        },
+        "runtime_evidence": {
+          "noop": {
+            "ledger": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/ledger.jsonl",
+            "line": 1,
+            "eval_log": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/eval_logs/evallog_replay-f216-baseline01-w_390d6d0a.eval.log",
+            "test_command_log_line": 651,
+            "diagnostics": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/eval_logs/evallog_replay-f216-baseline01-w_390d6d0a.diagnostics.json"
+          },
+          "gold": {
+            "ledger": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/ledger.jsonl",
+            "line": 2,
+            "eval_log": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/eval_logs/evallog_replay-f216-baseline01-w_c94b9e6b.eval.log",
+            "test_command_log_line": 677,
+            "diagnostics": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/eval_logs/evallog_replay-f216-baseline01-w_c94b9e6b.diagnostics.json"
+          }
+        },
+        "historical_run_ids": {
+          "noop": "f216-baseline01-w04-3",
+          "gold": "f216-baseline01-w04-3"
+        },
+        "original_image": {
+          "image_ref": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5406:latest",
+          "image_id_actual": null,
+          "image_identity": "sha256:727caa5dba157d41b1e839a5044106f0ad7ea1fe824c9a5f562e2f74113339d6",
+          "image_local_build": false,
+          "image_digest_expected": "sha256:727caa5dba157d41b1e839a5044106f0ad7ea1fe824c9a5f562e2f74113339d6",
+          "derived_image_recipe": null,
+          "target_availability": "未检查，不据历史记录填已存在"
+        },
+        "entrypoint": {
+          "actual_entry": "campaign.py -> worker.py -> default ReplayGrader.replay_one",
+          "driver_files": [
+            "rh2/experiments/full216_diagnostic_20260919/campaign.py",
+            "rh2/experiments/full216_diagnostic_20260919/worker.py"
+          ],
+          "configuration": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/config.json",
+          "wrapper": null,
+          "derived_image_argument": null,
+          "default_cli_member": "scripts/replay_grade.py",
+          "default_cli_note": "归档CLI是单题静态入口；原baseline由worker调用。",
+          "original_jobs": {
+            "file": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/jobs/w04-3.json",
+            "selector": {
+              "instance_id": "getmoto__moto-5406",
+              "array_indexes_0based": [
+                0,
+                1
+              ]
+            },
+            "selected_entries_sha256_canonical_json": "54e2a7b41f782e48ebff9a78658ccf1a03c1aa0abaa79c5e6e6c4906bfe8981f"
+          },
+          "events": {
+            "file": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/events.jsonl",
+            "lines": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "warning": "原worker jobs含其它题，不可整份盲跑；新运行只能另备精确本题job。"
+        },
+        "code_archive": {
+          "file": "runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz",
+          "original_code_root": "/work/full216_20260919/code/rh2",
+          "members": [
+            {
+              "member": "scripts/replay_grade.py",
+              "sha256": "6115714639d677a7a2b116738507d8adf8fc9f5a4f4059ff7f792360359a0311",
+              "bytes": 7525
+            },
+            {
+              "member": "src/repoharness2/adapters/slime/replay_grade.py",
+              "sha256": "b8f1fbe2f37032e52b496f2eb9296c8a647a3072af2b7def600809544c9999fb",
+              "bytes": 38878
+            },
+            {
+              "member": "src/repoharness2/adapters/slime/prepared_task_face.py",
+              "sha256": "3a3d7bcab18e8a83f99104180e065ed32d8ecbce5d1bd4aaa7f8bd72b001aa27",
+              "bytes": 23211
+            },
+            {
+              "member": "src/repoharness2/envpack/spec_vendor.py",
+              "sha256": "8e0037b27c87268ed7df97ef64d261d0e6dac7375bc85fd5badd0fecdb94d41d",
+              "bytes": 10370
+            }
+          ],
+          "status": "归档在本地；未解包、未导入。目标code-root与Python依赖待准备。"
+        },
+        "historical_outcomes": {
+          "noop": {
+            "report": {
+              "execution_failure_evidence": [],
+              "execution_failure_stage": null,
+              "f2p_pass": 0,
+              "f2p_total": 1,
+              "failure_category": "tests_failed",
+              "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+              "grading_semantics": "swe_f2p_p2p",
+              "infra_failure_detail": null,
+              "outcome": "unresolved",
+              "p2p_fail": 0,
+              "p2p_total": 26,
+              "report_id": "rpt_grading_390d6d0a",
+              "reward": 0.0
+            },
+            "install": {
+              "install_rc_last_command": 0,
+              "install_seconds": 6.675,
+              "install_skipped": false,
+              "log_partial": false,
+              "markers_seen": [
+                "RH2_INSTALL_RC",
+                "RH2_TEST_RC",
+                "RH2_TS_INSTALL_END",
+                "RH2_TS_INSTALL_START",
+                "RH2_TS_TEST_END",
+                "RH2_TS_TEST_START"
+              ],
+              "test_rc": 1,
+              "test_seconds": 7.406
+            },
+            "test": {
+              "rc": 1,
+              "seconds": 7.406
+            },
+            "verdict_diagnostics": {
+              "apply_ok": true,
+              "num_parsed_outside_segment": 0,
+              "num_parsed_tests": 27,
+              "parser_source": "swegym_parsers@242429c1",
+              "reference_missing": [],
+              "reference_skipped": [],
+              "resolution": "RESOLVED_NO"
+            },
+            "reference_missing_count": 0,
+            "cleanup": {
+              "detail": "",
+              "removed": true,
+              "steps": [
+                "rm:ok"
+              ]
+            },
+            "projection": {
+              "frozen_patch_digest": "sha256:c89aa1499348eae46deba1bf36f80f8fa943c6bdc2f546a83bd302de35ed18bf",
+              "ignored_paths": [],
+              "included_paths": [],
+              "unsupported_shape_reasons": []
+            },
+            "observations": {
+              "RH2_OBS_IMPORT_PATH": "/testbed/moto/__init__.py",
+              "RH2_OBS_PKG_VERSION": "4.0.0.dev",
+              "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+              "RH2_OBS_RUNNER_DIGEST": "10a0308d887b21b702e28790379e06bfdbede40a5d5d04684757372d4d86f96c",
+              "RH2_OBS_RUNNER_DIGEST_PRE": "10a0308d887b21b702e28790379e06bfdbede40a5d5d04684757372d4d86f96c"
+            },
+            "resource_raw": {
+              "mem_peak_mb": 250.824,
+              "mem_peak_unavailable_or_zero": false
+            },
+            "resource_unit_note": "Preserve original resource fields, no unverified conversion."
+          },
+          "gold": {
+            "report": {
+              "execution_failure_evidence": [],
+              "execution_failure_stage": null,
+              "f2p_pass": 1,
+              "f2p_total": 1,
+              "failure_category": null,
+              "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+              "grading_semantics": "swe_f2p_p2p",
+              "infra_failure_detail": null,
+              "outcome": "resolved",
+              "p2p_fail": 0,
+              "p2p_total": 26,
+              "report_id": "rpt_grading_c94b9e6b",
+              "reward": 1.0
+            },
+            "install": {
+              "install_rc_last_command": 0,
+              "install_seconds": 6.082,
+              "install_skipped": false,
+              "log_partial": false,
+              "markers_seen": [
+                "RH2_INSTALL_RC",
+                "RH2_TEST_RC",
+                "RH2_TS_INSTALL_END",
+                "RH2_TS_INSTALL_START",
+                "RH2_TS_TEST_END",
+                "RH2_TS_TEST_START"
+              ],
+              "test_rc": 0,
+              "test_seconds": 7.63
+            },
+            "test": {
+              "rc": 0,
+              "seconds": 7.63
+            },
+            "verdict_diagnostics": {
+              "apply_ok": true,
+              "num_parsed_outside_segment": 0,
+              "num_parsed_tests": 27,
+              "parser_source": "swegym_parsers@242429c1",
+              "reference_missing": [],
+              "reference_skipped": [],
+              "resolution": "RESOLVED_FULL"
+            },
+            "reference_missing_count": 0,
+            "cleanup": {
+              "detail": "",
+              "removed": true,
+              "steps": [
+                "rm:ok"
+              ]
+            },
+            "projection": {
+              "frozen_patch_digest": "sha256:50e8d48085d6566ebbd6c92aa49781c8b7d968582e230efb9b8e0eac3cd70fcf",
+              "ignored_paths": [],
+              "included_paths": [
+                "moto/dynamodb/models/__init__.py"
+              ],
+              "unsupported_shape_reasons": []
+            },
+            "observations": {
+              "RH2_OBS_IMPORT_PATH": "/testbed/moto/__init__.py",
+              "RH2_OBS_PKG_VERSION": "4.0.0.dev",
+              "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+              "RH2_OBS_RUNNER_DIGEST": "10a0308d887b21b702e28790379e06bfdbede40a5d5d04684757372d4d86f96c",
+              "RH2_OBS_RUNNER_DIGEST_PRE": "10a0308d887b21b702e28790379e06bfdbede40a5d5d04684757372d4d86f96c"
+            },
+            "resource_raw": {
+              "mem_peak_mb": 230.828,
+              "mem_peak_unavailable_or_zero": false
+            },
+            "resource_unit_note": "Preserve original resource fields, no unverified conversion."
+          }
+        },
+        "shared_initial_delta": "Original noop git status clean and explicit git diff empty; ThreadedMotoServer patch is base git show, not prechange.",
+        "observed_shared_initial_delta_evidence": [
+          {
+            "role": "noop",
+            "log": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/eval_logs/evallog_replay-f216-baseline01-w_390d6d0a.eval.log",
+            "physical_lines": "132-160",
+            "meaning": "Clean status and empty explicit diff; preceding server patch is git show of base."
+          }
+        ]
+      },
+      "replay_entry": {
+        "code_root": "<new expanded frozen baseline archive directory ending rh2>",
+        "cli_member": "scripts/replay_grade.py",
+        "cli_arguments": [
+          "run",
+          "--prepared-summary",
+          "<new_relocated_summary>",
+          "--task-ids",
+          "getmoto__moto-5406",
+          "--candidate",
+          "noop OR patch:<explicit_candidate_file> OR gold-dir:<prepared_gold_dir>",
+          "--eval-log-dir",
+          "<new_run>/eval_logs",
+          "--artifacts-dir",
+          "<new_run>/artifacts",
+          "--ledger",
+          "<new_run>/ledger.jsonl"
+        ],
+        "wrapper": null,
+        "recipe": null,
+        "materials": null,
+        "reference_bindings": null,
+        "historical_entry": {
+          "actual_entry": "campaign.py -> worker.py -> default ReplayGrader.replay_one",
+          "driver_files": [
+            "rh2/experiments/full216_diagnostic_20260919/campaign.py",
+            "rh2/experiments/full216_diagnostic_20260919/worker.py"
+          ],
+          "configuration": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/config.json",
+          "wrapper": null,
+          "derived_image_argument": null,
+          "default_cli_member": "scripts/replay_grade.py",
+          "default_cli_note": "归档CLI是单题静态入口；原baseline由worker调用。",
+          "original_jobs": {
+            "file": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/jobs/w04-3.json",
+            "selector": {
+              "instance_id": "getmoto__moto-5406",
+              "array_indexes_0based": [
+                0,
+                1
+              ]
+            },
+            "selected_entries_sha256_canonical_json": "54e2a7b41f782e48ebff9a78658ccf1a03c1aa0abaa79c5e6e6c4906bfe8981f"
+          },
+          "events": {
+            "file": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/events.jsonl",
+            "lines": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "warning": "原worker jobs含其它题，不可整份盲跑；新运行只能另备精确本题job。"
+        },
+        "warning": "Exact task only. Old worker jobs include other tasks; do not replay the whole list. Target identity and relocated inputs still unprepared.",
+        "image_identity_requirement": "Use original baseline image with recorded expected manifest digest sha256:727caa5dba157d41b1e839a5044106f0ad7ea1fe824c9a5f562e2f74113339d6; verify target identity and capture actual local ID. Historical actual ID is null and must stay null. Do not add install_wave1 derived-image parameters."
+      },
+      "question": "仅将_generate_arn的地区常量从us-east-1换成us-east-2，是否获得原27项满分，却破坏公开已有的East1 TableArn行为？",
+      "variants": [
+        {
+          "name": "base",
+          "candidate": "noop",
+          "expected_frozen_score": "historical reward0: 1F2P fails/26P2P pass; new result not yet observed",
+          "expected_public_east1": "pass (static prediction)"
+        },
+        {
+          "name": "gold",
+          "candidate": "this task original gold.patch",
+          "expected_frozen_score": "historical reward1: 27pass; new result not yet observed",
+          "expected_public_east1": "pass (static prediction)"
+        },
+        {
+          "name": "wrong-east2-constant",
+          "candidate": "New unexecuted patch from base: in moto/dynamodb/models/__init__.py::_generate_arn only replace literal us-east-1 with us-east-2; retain all other code.",
+          "expected_frozen_score": "possibly reward1, static prediction only",
+          "expected_public_east1": "fail at existing TableArn assertion (static prediction)"
+        }
+      ],
+      "diagnostic_steps": [
+        "另行取得CPU授权并准备原baseline镜像、冻结代码/依赖、新单题summary与输出目录。按expected manifest核当前镜像，再记录actual image ID；历史null不回填，不添加install_wave1或derived-image条件。",
+        "从同一精确base构造上述三个候选到新临时目录。每份记录源码SHA、完整diff、初态clean状态，错误候选只改_generate_arn一处地区常量；不得改变tests/gold/expected/reward。",
+        "分别通过replay_entry的原冻结CLI运行精确本题27项。保留原grader54322、2CPU/4GiB/deny_all、make init和官方恢复/注入步骤；逐项对账1F2P+26P2P、缺席/跳过、安装/测试RC和reward。历史原入口worker->ReplayGrader另记，不误称已用该CLI做过本轮实验。",
+        "同代码候选另开有相同镜像/安装/身份条件的诊断副本，运行既有公开East1节点。明确记录两个环境源代码与安装来源一致；诊断结果单列，不修改冻结reward和官方参考。不要依赖原grader清理后还存在的容器。",
+        "比较base/gold/错误候选在East2冻结断言与East1公开断言的结果及加载源码；若错误候选满分且East1失败，保存这一具体反例供后续版本化修订或通过补丁人工复核。"
+      ],
+      "decision_rule": {
+        "wrong_candidate_reward1_and_east1_fails": "形成已执行的具体漏收反例，原reward不能单独作完整正确性标签；未来修订最窄增加公开依据的地区回归，并保留原版成绩。",
+        "wrong_candidate_rejected": "定位具体失败节点/安装原因，更新漏测推断；不要只因最终0就声称原ARN需求覆盖完整。",
+        "gold_fails_east1": "在同条件base对照及候选生效核验后调查真实gold回归；静态审查未预先证明此回归。",
+        "minimality": "不把所有流/恢复/CFN/地区扩展回归设成模型诊断共同前置。核心目标可解，题面表名笔误可消解；此单个CPU反例优先是针对具体评分风险。"
+      },
+      "review_refs": [
+        "results/getmoto__moto-5406/card.md",
+        "results/getmoto__moto-5406/review.md"
+      ],
+      "depends_on": [
+        "Later root CPU/resource scheduling",
+        "Verify target image and prepare frozen code/dependencies",
+        "Prepare reachable relocated summary/private input copy"
+      ],
+      "evidence_to_save": [
+        "candidate diff/SHA and complete source/initial-tree identity",
+        "actual image identity vs expected manifest; effective spec/scripts",
+        "projection/official restoration/install",
+        "public behavior stdout/stderr/RC",
+        "actual nodes/parsed keys/reference states/missing/skipped/reward",
+        "cleanup/resource original fields"
+      ],
+      "priority_within_task": 1,
+      "costs": {
+        "new_cpu_seconds": null,
+        "tokens": null,
+        "cost_usd": null
+      },
+      "public_diagnostic": {
+        "source": "runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406/base/tests/test_dynamodb/test_dynamodb_create_table.py:11-50",
+        "node": "tests/test_dynamodb/test_dynamodb_create_table.py::test_create_table_standard",
+        "command": "pytest -n0 -rA tests/test_dynamodb/test_dynamodb_create_table.py::test_create_table_standard",
+        "decisive_assertion": "TableArn == f\"arn:aws:dynamodb:us-east-1:{ACCOUNT_ID}:table/messages\" at43-45",
+        "scope": "Existing public East1 regression plus frozen East2 F2P distinguishes the constant repair; third-region/full stream/CFN/TableClass coverage is not required for this minimal counterexample."
+      },
+      "review_resolution": "independent reviewer supports this single primary experiment; scope/status corrections accepted in card/record",
+      "runtime_results": null
+    }
+  ],
+  "updated_at": "2026-09-20T23:37:34.660408+00:00",
+  "common_conditions": {
+    "scope": "Static future plans only; no execution authorized in B5",
+    "code_archive": {
+      "file": "runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz",
+      "original_code_root": "/work/full216_20260919/code/rh2",
+      "members": [
+        {
+          "member": "scripts/replay_grade.py",
+          "sha256": "6115714639d677a7a2b116738507d8adf8fc9f5a4f4059ff7f792360359a0311",
+          "bytes": 7525
+        },
+        {
+          "member": "src/repoharness2/adapters/slime/replay_grade.py",
+          "sha256": "b8f1fbe2f37032e52b496f2eb9296c8a647a3072af2b7def600809544c9999fb",
+          "bytes": 38878
+        },
+        {
+          "member": "src/repoharness2/adapters/slime/prepared_task_face.py",
+          "sha256": "3a3d7bcab18e8a83f99104180e065ed32d8ecbce5d1bd4aaa7f8bd72b001aa27",
+          "bytes": 23211
+        },
+        {
+          "member": "src/repoharness2/envpack/spec_vendor.py",
+          "sha256": "8e0037b27c87268ed7df97ef64d261d0e6dac7375bc85fd5badd0fecdb94d41d",
+          "bytes": 10370
+        }
+      ],
+      "status": "归档在本地；未解包、未导入。目标code-root与Python依赖待准备。"
+    },
+    "original_prepared_summary": "runs/full216_rh2_diagnostic_20260919/remote/replay/prepared/replay_summary.json",
+    "original_prepared_manifest": "runs/full216_rh2_diagnostic_20260919/remote/replay/prepared/prepared_manifest.json",
+    "original_host_grading_views": "runs/full216_rh2_diagnostic_20260919/remote/replay/private/host_grading_views.jsonl",
+    "new_input_requirement": "另建可达的重定位summary、manifest/private references与新输出目录；旧/work路径不代表当前可用，不回写原件。",
+    "budgets": {
+      "candidate_stage_seconds": 900.0,
+      "cleanup_seconds": 120.0,
+      "grading_deadline_seconds": 3600.0,
+      "image_pull_seconds": 1800.0
+    },
+    "grader_policy": {
+      "candidate_writable_prefixes": [
+        "/opt/miniconda3/envs/testbed"
+      ],
+      "cpus": 2.0,
+      "grader_profile_digest": "sha256:1bb8e0cf80ce48b15401fdf79d18f4f4c08a5f01001d8b0756311c58de25c19a",
+      "memory_bytes": 4294967296,
+      "network": "deny_all",
+      "pids_limit": 512,
+      "profile_id": "rh2.grader_sandbox_profile.v1",
+      "shm_bytes": 67108864,
+      "tmpfs_bytes": 1073741824,
+      "uid": 54322,
+      "user": "rh2grader"
+    },
+    "candidate_apply_user": "agent/54321",
+    "actor_limit": "apply_user与grader并非正式actor验收；消息、源码/解释器导入、依赖、权限、可见资产另验。",
+    "overrides": {
+      "recipe": null,
+      "materials": null,
+      "reference_bindings": null
+    },
+    "assets": "Target images and runtime dependencies unverified. Build audits are not input wheel/context payloads.",
+    "solver_separation": "Private audit, gold, tests and historical answers must not be sent to future independent solvers.",
+    "plan_boundary": "原冻结评分与公开诊断分开保存；未改harness/spec/reference/reward。所有commands只是未来计划，本批未执行。"
+  },
+  "final_review_status": "both_independent_reviews_complete; coordinator accepted the two minimal primary experiments",
+  "decision_counts": {
+    "primary_experiments": 2,
+    "executed": 0,
+    "secondary_deferred_experiments": 1
+  }
+}

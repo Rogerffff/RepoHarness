@@ -1,0 +1,310 @@
+{
+  "task_id": "iterative__dvc-3665",
+  "task_revision": "upstream@a2de48bdfbba80a7e41e96a44c67d51ff36f0810",
+  "source_adapter_ref": {
+    "grading": "runs/swegym_quality_batch03_20260921_v1/private/iterative__dvc-3665/grading.json",
+    "vendor": "swegym_constants_242429c1",
+    "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+    "semantics": "swe_f2p_p2p"
+  },
+  "recipe_ref": {
+    "input": "runs/env_recipe_repair_20260919/dvc_install_v1c/recipes/iterative__dvc-3665.json",
+    "wrapper": "runs/env_recipe_repair_20260919/dvc_install_v1c/replay_with_install_recipe.py",
+    "run_recipe_is_audit_output": true,
+    "actor_consumption": "unknown"
+  },
+  "code_snapshot_ref": {
+    "base": "a2de48bdfbba80a7e41e96a44c67d51ff36f0810",
+    "historical_archive": "runs/env_recipe_repair_20260919/frozen_sources/dvc.tar.gz",
+    "members_read": [
+      {
+        "member": "src/repoharness2/adapters/slime/prepared_task_face.py",
+        "scope": "imports and shared historical execution functions"
+      },
+      {
+        "member": "src/repoharness2/envpack/scoring.py",
+        "sha256": "b6c8b9bd3e9cac604bc0d03b0b243ef9646de369e94bb6a65e60eadd3a64f5ab",
+        "scope": "selected documentation, model fields, v2 and outcome logic through line309"
+      },
+      {
+        "member": "src/repoharness2/envpack/swegym_parsers.py",
+        "sha256": "995bb6aae58a94f9553946c2f9aea59a158ad4fdf4d7fc0137802c11362b2276",
+        "scope": "all111lines"
+      }
+    ],
+    "current_rh2_used_as_historical_evidence": false
+  },
+  "facts_ref": [
+    {
+      "path": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3665/gold/ledger.jsonl",
+      "line": 1,
+      "role": "gold",
+      "run_id": "er19-dv1-iterative__dvc-3665-gold",
+      "scope": "historical_fixed_grader"
+    },
+    {
+      "path": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3665/noop/ledger.jsonl",
+      "line": 1,
+      "role": "noop",
+      "run_id": "er19-dv1-iterative__dvc-3665-noop",
+      "scope": "historical_fixed_grader"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-3665/analysis_before_history.md",
+      "sha256": "ca034ff97ae32a9335442ac8d69454537e447412f1fe48b3c6ab2b3354d29041"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-3665/review.md",
+      "sha256": "ab238d94de5c6298fc56cd0f1bb4383e791f1945c74fb81730f5fc3f60e3e6cf",
+      "role": "independent_review_after_sealed_initial"
+    }
+  ],
+  "checks": {
+    "1": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/iterative__dvc-3665/grading.json",
+        "runs/swegym_quality_batch03_20260921_v1/private/iterative__dvc-3665/gold.patch"
+      ],
+      "by": "B3_fresh_investigator",
+      "note": "沿用协调者身份验收并核补丁字段一致。"
+    },
+    "2": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3665/noop/eval_logs/evallog_replay-er19-dv1-iterativ_4ffdaade.eval.log:630",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-3665/analysis_before_history.md"
+      ],
+      "by": "B3_fresh_investigator",
+      "note": "Windows根因静态成立；noop实际仅证明新helper缺席，初态setup.py有moto pin差异。"
+    },
+    "3": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-3665/public_read.md"
+      ],
+      "by": "B3_fresh_investigator",
+      "note": "公开目标完整；实际CC输入/提示传递未验。"
+    },
+    "4": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/iterative__dvc-3665/test.patch",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3665/gold/ledger.jsonl:1"
+      ],
+      "by": "B3_fresh_investigator",
+      "note": "三个官方纯测试路径，不覆盖dvc/config.py；仅本题投影范围。"
+    },
+    "6": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3665/gold/eval_logs/evallog_replay-er19-dv1-iterativ_1392f999.eval.log:463"
+      ],
+      "by": "B3_fresh_investigator",
+      "note": "历史固定grader本题离线editable安装成功，非actor验收。"
+    },
+    "8": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3665/gold/ledger.jsonl:1"
+      ],
+      "by": "B3_fresh_investigator",
+      "note": "grader54322已见；actor54321权限/资源未知。"
+    },
+    "9": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3665/gold/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3665/noop/ledger.jsonl:1"
+      ],
+      "by": "B3_fresh_investigator",
+      "note": "历史导入/testbed/dvc、候选只改config；两角色.mod含共同初态差异，不能单凭版本串判生效。"
+    },
+    "10": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-3665/analysis_before_history.md"
+      ],
+      "by": "B3_fresh_investigator",
+      "note": "正式actor与Windows验证路径未验。"
+    },
+    "17": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3665/gold/eval_logs/evallog_replay-er19-dv1-iterativ_1392f999.diagnostics.json"
+      ],
+      "by": "B3_fresh_investigator",
+      "note": "恢复2现存官方测试并新增1文件、setup/protect OK。"
+    },
+    "18": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3665/gold/eval_logs/evallog_replay-er19-dv1-iterativ_1392f999.eval.log:674",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3665/noop/eval_logs/evallog_replay-er19-dv1-iterativ_4ffdaade.eval.log:609"
+      ],
+      "by": "B3_fresh_investigator",
+      "note": "历史真实执行33项，非parser42或引用22。"
+    },
+    "19": {
+      "status": "issue",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-3665/analysis_before_history.md"
+      ],
+      "by": "B3_fresh_investigator",
+      "note": "42解析键含9非测试ERROR键，不撞本题引用；/testbed动态ID当前匹配，搬迁有身份限度。"
+    },
+    "20": {
+      "status": "issue",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3665/noop/eval_logs/evallog_replay-er19-dv1-iterativ_4ffdaade.eval.log:630"
+      ],
+      "by": "B3_fresh_investigator",
+      "note": "分差来自强制新helper缺席，未实际触发Windows分隔符bug。"
+    },
+    "23": {
+      "status": "issue",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/iterative__dvc-3665/test.patch",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-3665/public_read.md"
+      ],
+      "by": "B3_fresh_investigator",
+      "note": "新增私有方法名/签名无公开依据；绝对路径与remote格式有范围争议。"
+    },
+    "24": {
+      "status": "issue",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-3665/analysis_before_history.md"
+      ],
+      "by": "B3_fresh_investigator",
+      "note": "合理内联修复可能被拒，高置信静态路线；未执行候选。"
+    },
+    "25": {
+      "status": "issue",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/iterative__dvc-3665/test.patch",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3665/noop/ledger.jsonl:1"
+      ],
+      "by": "B3_fresh_investigator",
+      "note": "Linux和未接线helper可漏目标；核心cache相对功能用例在冻结参考外。"
+    },
+    "26": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-3665/analysis_before_history.md"
+      ],
+      "by": "B3_fresh_investigator",
+      "note": "全18P2P及额外11真实节点读完/有历史状态，Windows及全部回归未验。"
+    },
+    "27": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/iterative__dvc-3665/gold.patch",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3665/gold/ledger.jsonl:1"
+      ],
+      "by": "B3_fresh_investigator",
+      "note": "gold平台转换方向合理，Linux通过不能证明Windows/UNC全面正确。"
+    },
+    "29": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-3665/public_read.md"
+      ],
+      "by": "B3_fresh_investigator",
+      "note": "实际actor可见Git/镜像/答案资产未验。"
+    }
+  },
+  "issues": [
+    {
+      "category": "private_helper_requirement",
+      "scope": "all4F2P",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/iterative__dvc-3665/test.patch",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-3665/analysis_before_history.md"
+      ],
+      "proposed_action": "唯一优先不新增helper的合理内联修复：真实Windows或标明局限的完整路径语义检查公开保存/缓存位置，再对照冻结RH2。固定grader诊断不要求先完成正式actor会话资格；未执行。",
+      "status": "static_inference"
+    },
+    {
+      "category": "platform_and_integration_gap",
+      "scope": "Windows target and Config._save_paths",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-3665/analysis_before_history.md"
+      ],
+      "proposed_action": "若修订，按公开行为设计平台检查；不将helper可调用等同Windows修复。",
+      "status": "static_inference"
+    },
+    {
+      "category": "ungraded_actual_tests",
+      "scope": "11actual nodes outside frozen22 references",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-3665/analysis_before_history.md"
+      ],
+      "proposed_action": "优先保留核心cache relative缺口；任何参考变动另版本审查，不自动扩大P2P。",
+      "status": "observed_historical_logs"
+    },
+    {
+      "category": "parser_count_limit",
+      "scope": "42keys=33nodes+9captured ERROR keys",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-3665/analysis_before_history.md"
+      ],
+      "proposed_action": "分开执行/解析/引用计数；本题伪键无碰撞，不回写reward。",
+      "status": "static_source_and_log_metadata_confirmed"
+    },
+    {
+      "category": "actor_conditions_unverified",
+      "scope": "formal_actor",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3665/gold/ledger.jsonl:1"
+      ],
+      "proposed_action": "Windows开发/解释器/权限/镜像与消息须后续实际核验；现有资格absent。",
+      "status": "unknown"
+    },
+    {
+      "category": "cross_task_source_relationship",
+      "scope": "DVC3665 core implementation present in later public bases; not duplicate or proven solver leakage",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/iterative__dvc-3665/gold.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/iterative__dvc-4785/base/dvc/config.py:385-399",
+        "runs/swegym_quality_batch03_20260921_v1/public/iterative__dvc-6954/base/dvc/config.py:230-250",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-3665/review.md"
+      ],
+      "proposed_action": "在后续独立评测划分记录代码包含关系；未核完整Git谱系，不因同仓/晚base而自动去重或声称实际泄漏。",
+      "status": "observed_static_source_relationship"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "官方3路径均纯测试，无新增排除依据。",
+    "evidence_refs": [
+      "runs/swegym_quality_batch03_20260921_v1/private/iterative__dvc-3665/test.patch",
+      "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3665/gold/ledger.jsonl:1"
+    ],
+    "applied_version": null
+  },
+  "revision_refs": [],
+  "disposition": {
+    "state": "needs_review",
+    "scope": "static_review",
+    "reason": "暂不优先普通能力探针：4个F2P强制非公开helper，Linux未覆盖Windows目标；合理内联路线误拒是强静态证据，实际Windows行为和候选reward未执行。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-3665/analysis_before_history.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-3665/old_findings_delta.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-3665/review.md"
+    ],
+    "reviewer": "/root/b3_review_dvc; coordinator /root adjudication",
+    "reviewed_at_utc": "2026-09-20T21:44:31.761143+00:00",
+    "static_recommendation": "not_prioritized_pending_semantic_diagnostic"
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "exposure_notes": "已见本题gold/全部隐藏断言/公开稿、授权运行原件及放行后的唯一旧记录；不可作solver。未读reviewer/B1/B2/聚合/邻题材料。",
+    "coordinator_review_note": "独立reviewer整包3份初判先封存后开放结论，root收束仅改最终card/record；静态初稿、delta、review均保持原字节。所有CPU建议未执行。"
+  },
+  "costs": {
+    "container_wall_seconds": null,
+    "agent_tokens": null,
+    "human_decisions": null,
+    "source_refs": []
+  }
+}

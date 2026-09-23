@@ -1,0 +1,199 @@
+{
+ "task_id": "pydantic__pydantic-5662",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_pydantic (Claude Opus 5, 2026-09-16 夜)",
+ "materials_refs": [
+  "s2/ingest/*_bundles_v0.jsonl (pydantic__pydantic-5662)",
+  "repos/pydantic@0346ddb6(见 grading.base_commit)",
+  "runs/env_probe_stage1_20260910/.../pydantic__pydantic-5662/"
+ ],
+ "public_view": {
+  "目标行为": "BaseModel.__eq__ 在 other 不是 BaseModel 时应返回 NotImplemented 而不是 False，让 Python 回退到 other.__eq__（典型场景 unittest.mock.ANY）。",
+  "约束": "不能改变 BaseModel 之间的比较语义（类型/字段/私有属性三段比较）。",
+  "公开材料无法确定的点": [
+   "几乎没有——题面直接给出了修复代码 `return NotImplemented`、动机、以及性能顾虑"
+  ],
+  "base 定位": "pydantic/main.py:538-541 `__eq__` 首行 `if not isinstance(other, BaseModel): return False`。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "tests/test_main.py、pydantic/main.py 在 base 均存在"
+   ],
+   "note": "对应同一问题。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "main.py:538-541",
+    "stage1 empty：test_equality_delegation FAILED"
+   ],
+   "note": "base 确有该行为。",
+   "by": "static+stage1log"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 3916 字符，含现状代码、建议修复、可运行例子"
+   ],
+   "note": "输入完整。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只碰 tests/test_main.py；F2P+P2P 128 条全在该文件；gold 只碰 pydantic/main.py"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "static"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "与 5386 同 test_patch 文件、同 gold 文件 pydantic/main.py；与 6283 同属 __eq__ 语义（6283 是 RootModel 的 __eq__）"
+   ],
+   "note": "P3：6283（RootModel equality）与本题主题相近、相隔约 2 个月，属同族但不同修复；训练/评测划分需同侧。",
+   "by": "static"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "install rc=2。",
+   "by": "stage1log"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "tests/test_main.py 第三方 import 仅 pytest"
+   ],
+   "note": "无外部资产。",
+   "by": "static"
+  },
+  "10": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "无本题轨迹。",
+   "by": "-"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "只有 install 需要网络。",
+   "by": "stage1log"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 的 Possible solution 段"
+   ],
+   "note": "要求充分且一致；甚至过于充分（见 check 29）。",
+   "by": "static"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 只断言 `MyModel(foo='bar') == ANY`"
+   ],
+   "note": "不强制唯一实现：返回 NotImplemented、或对 NotImplemented 的等价写法都能过。gold 把整个方法重排成 if/else 只是风格，不构成约束。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "F2P 仅 1 条、仅 == 方向、仅 ANY 一个对象"
+   ],
+   "note": "P2：判分面放得很松。`__ne__` 方向、`ANY == MyModel(...)` 反向、与 dict/dataclass 比较仍应为 False、以及 `NotImplemented` 被误当真值使用（`if m == obj:` 在双方都返回 NotImplemented 时 Python 回退到 identity）等都没测。更直接的漏洞：把首行改成 `return other == self` 这类会无限递归的坏实现，只要对 ANY 成立也能过这 1 条（其它 127 条 P2P 都是 BaseModel 间比较，走不到这个分支）。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "__eq__ 是 BaseModel 的核心公共行为，被 tests/test_edge_cases.py、tests/test_generics.py、tests/test_dataclasses.py 等大量间接使用，而判分面只有 tests/test_main.py"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "static"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 全文"
+   ],
+   "note": "gold 语义上就是把 `return False` 换成 `return NotImplemented`，其余是缩进重排；无题外改动。",
+   "by": "static"
+  },
+  "29": {
+   "status": "issue",
+   "evidence_refs": [
+    "leak 扫描：gold 新增 10 行有效行中 3 行出现在 problem_statement（`if isinstance(other, BaseModel):`、两处 `return False`）",
+    "problem_statement 的 **Possible solution** 段直接给出 `def __eq__(self, other) -> bool: if not isinstance(other, BaseModel): return NotImplemented`"
+   ],
+   "note": "P3 不是流水线泄漏，而是**上游 issue 自带完整解法**。后果是难度极低（一行改动、题面已给答案），作为 RL 训练样本几乎不提供信号；作为“最低难度锚点”或 smoke test 有价值。建议在数据层打 difficulty=trivial / solution_in_statement 标记。",
+   "by": "static"
+  },
+  "31": {
+   "status": "issue",
+   "evidence_refs": [
+    "R4"
+   ],
+   "note": "静态残余面。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "solution_in_problem_statement",
+   "severity": "P3",
+   "evidence_refs": [
+    "check 29"
+   ],
+   "proposed_action": "打 solution_in_statement 标记；可留作最低难度锚点，不要当作模型能力证据",
+   "next_experiment": "无"
+  },
+  {
+   "category": "oracle_accepts_wrong_fix",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 25"
+   ],
+   "proposed_action": "补反向比较与非 BaseModel 类型的护栏断言进 P2P",
+   "next_experiment": "在镜像里把首行换成 `return other == self`，跑官方 128 条看是否全绿"
+  },
+  {
+   "category": "near_duplicate_context",
+   "severity": "P3",
+   "evidence_refs": [
+    "check 5"
+   ],
+   "proposed_action": "5662 与 6283（RootModel __eq__）同侧划分",
+   "next_experiment": "无"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 仅纯测试文件、gold 仅生产代码、判分面与恢复面一致。",
+  "evidence_refs": [
+   "grading.json.test_patch",
+   "validation.json.golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  "反向：`ANY == MyModel(foo='bar')` 与 `MyModel(foo='bar') != ANY` — 选择依据：NotImplemented 的回退是双向协议，gold 只改了一侧",
+  "非 BaseModel 且未实现反向 __eq__ 的对象（dict / 同名 dataclass / int）比较仍为 False — 选择依据：防止“让所有比较都为真”这类过度修复",
+  "tests/test_edge_cases.py 与 tests/test_generics.py 里涉及模型相等的条目 — 选择依据：__eq__ 是跨文件的公共行为，判分面只覆盖了 tests/test_main.py",
+  "私有属性参与比较的既有条目（tests/test_private_attributes.py）— 选择依据：gold 把私有属性比较整块移进 if 分支，缩进改动最容易出错的地方"
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "材料完整、gold 与题面完全对应、判分面无边界问题；唯一缺点是难度过低且题面自带答案，应打标记后按 trivial 锚点使用。"
+ },
+ "costs": {
+  "minutes": 14
+ }
+}

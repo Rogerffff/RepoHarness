@@ -1,0 +1,1090 @@
+{
+  "status": "设计对照；未修改生产实现",
+  "cases": {
+    "syntax_collection_default_rA": {
+      "completion_evidence": {
+        "normal_completion": false,
+        "footer": "1 error in 0.06s",
+        "test_status_rows": [],
+        "collection_error_rows": [
+          "ERROR tests/test_thing.py"
+        ],
+        "interruption": true
+      },
+      "current_reward": 0.0,
+      "hypothesis_reward": 0.0,
+      "hypothesis_category": "candidate_execution_failed",
+      "hypothesis_decision": {
+        "candidate_python_paths": [
+          "src/thing.py"
+        ],
+        "compile_probe": {
+          "error": null,
+          "error_paths": [
+            "src/thing.py:SyntaxError:line=1:invalid syntax"
+          ],
+          "interpreter": "<REPO>/rh2/.venv/bin/python",
+          "missing": [],
+          "ok": [],
+          "paths_probed": [
+            "src/thing.py"
+          ]
+        },
+        "evidence": [
+          "_____________________ ERROR collecting tests/test_thing.py _____________________",
+          "test_rc=2",
+          "E     File \"/testbed/src/thing.py\", line 1",
+          "compile_probe:src/thing.py:SyntaxError:line=1:invalid syntax",
+          "env_qualification:ok:ledger_e2_A.jsonl:rpt_gold_1"
+        ],
+        "install_rc_baseline": 0,
+        "kind": "candidate",
+        "missing": [],
+        "qualification": "ok:ledger_e2_A.jsonl:rpt_gold_1",
+        "referenced_candidate_paths": [
+          "src/thing.py"
+        ],
+        "resource": {
+          "container_oom_killed": false,
+          "oom_kill_events": 0,
+          "pids_events_max": 0,
+          "signal_exit": false,
+          "test_rc": 2
+        },
+        "rule": "pytest_error_collecting",
+        "stage": "test_collection",
+        "syntax_error_locations": {
+          "src/thing.py": [
+            1
+          ]
+        },
+        "trigger": "reference_all_missing"
+      }
+    },
+    "syntax_conftest_default_rA": {
+      "completion_evidence": {
+        "normal_completion": false,
+        "reason": "no_final_pytest_summary"
+      },
+      "current_reward": 0.0,
+      "hypothesis_reward": 0.0,
+      "hypothesis_category": "candidate_execution_failed",
+      "hypothesis_decision": {
+        "candidate_python_paths": [
+          "src/thing.py"
+        ],
+        "compile_probe": {
+          "error": null,
+          "error_paths": [
+            "src/thing.py:SyntaxError:line=1:invalid syntax"
+          ],
+          "interpreter": "<REPO>/rh2/.venv/bin/python",
+          "missing": [],
+          "ok": [],
+          "paths_probed": [
+            "src/thing.py"
+          ]
+        },
+        "evidence": [
+          "ImportError while loading conftest '/testbed/tests/conftest.py'.",
+          "test_rc=4",
+          "E     File \"/testbed/src/thing.py\", line 1",
+          "compile_probe:src/thing.py:SyntaxError:line=1:invalid syntax",
+          "env_qualification:ok:ledger_e2_A.jsonl:rpt_gold_1"
+        ],
+        "install_rc_baseline": 0,
+        "kind": "candidate",
+        "missing": [],
+        "qualification": "ok:ledger_e2_A.jsonl:rpt_gold_1",
+        "referenced_candidate_paths": [
+          "src/thing.py"
+        ],
+        "resource": {
+          "container_oom_killed": false,
+          "oom_kill_events": 0,
+          "pids_events_max": 0,
+          "signal_exit": false,
+          "test_rc": 4
+        },
+        "rule": "pytest_conftest_import_error",
+        "stage": "test_startup",
+        "syntax_error_locations": {
+          "src/thing.py": [
+            1
+          ]
+        },
+        "trigger": "zero_parsed"
+      }
+    },
+    "ordinary_argument_default_rA": {
+      "completion_evidence": {
+        "normal_completion": false,
+        "footer": "1 error in 0.04s",
+        "test_status_rows": [],
+        "collection_error_rows": [
+          "ERROR tests/test_thing.py"
+        ],
+        "interruption": true
+      },
+      "current_reward": null,
+      "hypothesis_reward": null,
+      "hypothesis_category": "test_log_parse_failed",
+      "hypothesis_decision": {
+        "candidate_python_paths": [
+          "src/unused.py"
+        ],
+        "compile_probe": null,
+        "evidence": [],
+        "install_rc_baseline": 0,
+        "kind": "unattributed",
+        "missing": [
+          "no_syntax_error_at_candidate_path"
+        ],
+        "qualification": "ok:ledger_e2_A.jsonl:rpt_gold_1",
+        "referenced_candidate_paths": [],
+        "resource": {
+          "container_oom_killed": false,
+          "oom_kill_events": 0,
+          "pids_events_max": 0,
+          "signal_exit": false,
+          "test_rc": 2
+        },
+        "rule": "pytest_error_collecting",
+        "stage": "test_collection",
+        "syntax_error_locations": {},
+        "trigger": "reference_all_missing"
+      }
+    },
+    "captured_python_default_rA": {
+      "completion_evidence": {
+        "normal_completion": true,
+        "footer": "1 failed, 1 passed in 0.04s",
+        "test_status_rows": [
+          "PASSED tests/test_thing.py::test_stable[after]",
+          "FAILED tests/test_thing.py::test_feature[after] - subprocess.CalledProcessErr..."
+        ],
+        "collection_error_rows": [],
+        "interruption": false
+      },
+      "current_reward": 0.0,
+      "hypothesis_reward": 0.0,
+      "hypothesis_category": "tests_failed",
+      "hypothesis_decision": {
+        "candidate_python_paths": null,
+        "compile_probe": null,
+        "evidence": [],
+        "install_rc_baseline": null,
+        "kind": "source_rule",
+        "missing": [
+          "shape_undetermined"
+        ],
+        "qualification": null,
+        "referenced_candidate_paths": null,
+        "resource": null,
+        "rule": null,
+        "stage": null,
+        "trigger": "reference_all_missing"
+      }
+    },
+    "captured_pytest_default_rA": {
+      "completion_evidence": {
+        "normal_completion": true,
+        "footer": "1 failed, 1 passed in 0.16s",
+        "test_status_rows": [
+          "PASSED tests/test_thing.py::test_stable[after]",
+          "FAILED tests/test_thing.py::test_feature[after] - subprocess.CalledProcessErr..."
+        ],
+        "collection_error_rows": [],
+        "interruption": false
+      },
+      "current_reward": null,
+      "hypothesis_reward": 0.0,
+      "hypothesis_category": "tests_failed",
+      "hypothesis_decision": {
+        "candidate_python_paths": null,
+        "compile_probe": null,
+        "evidence": [],
+        "install_rc_baseline": null,
+        "kind": "source_rule",
+        "missing": [
+          "shape_undetermined"
+        ],
+        "qualification": null,
+        "referenced_candidate_paths": null,
+        "resource": null,
+        "rule": null,
+        "stage": null,
+        "trigger": "reference_all_missing"
+      }
+    },
+    "syntax_collection_short": {
+      "completion_evidence": {
+        "normal_completion": false,
+        "footer": "1 error in 0.06s",
+        "test_status_rows": [],
+        "collection_error_rows": [
+          "ERROR tests/test_thing.py"
+        ],
+        "interruption": true
+      },
+      "current_reward": 0.0,
+      "hypothesis_reward": 0.0,
+      "hypothesis_category": "candidate_execution_failed",
+      "hypothesis_decision": {
+        "candidate_python_paths": [
+          "src/thing.py"
+        ],
+        "compile_probe": {
+          "error": null,
+          "error_paths": [
+            "src/thing.py:SyntaxError:line=1:invalid syntax"
+          ],
+          "interpreter": "<REPO>/rh2/.venv/bin/python",
+          "missing": [],
+          "ok": [],
+          "paths_probed": [
+            "src/thing.py"
+          ]
+        },
+        "evidence": [
+          "_____________________ ERROR collecting tests/test_thing.py _____________________",
+          "test_rc=2",
+          "E     File \"/testbed/src/thing.py\", line 1",
+          "compile_probe:src/thing.py:SyntaxError:line=1:invalid syntax",
+          "env_qualification:ok:ledger_e2_A.jsonl:rpt_gold_1"
+        ],
+        "install_rc_baseline": 0,
+        "kind": "candidate",
+        "missing": [],
+        "qualification": "ok:ledger_e2_A.jsonl:rpt_gold_1",
+        "referenced_candidate_paths": [
+          "src/thing.py"
+        ],
+        "resource": {
+          "container_oom_killed": false,
+          "oom_kill_events": 0,
+          "pids_events_max": 0,
+          "signal_exit": false,
+          "test_rc": 2
+        },
+        "rule": "pytest_error_collecting",
+        "stage": "test_collection",
+        "syntax_error_locations": {
+          "src/thing.py": [
+            1
+          ]
+        },
+        "trigger": "reference_all_missing"
+      }
+    },
+    "syntax_conftest_short": {
+      "completion_evidence": {
+        "normal_completion": false,
+        "reason": "no_final_pytest_summary"
+      },
+      "current_reward": 0.0,
+      "hypothesis_reward": 0.0,
+      "hypothesis_category": "candidate_execution_failed",
+      "hypothesis_decision": {
+        "candidate_python_paths": [
+          "src/thing.py"
+        ],
+        "compile_probe": {
+          "error": null,
+          "error_paths": [
+            "src/thing.py:SyntaxError:line=1:invalid syntax"
+          ],
+          "interpreter": "<REPO>/rh2/.venv/bin/python",
+          "missing": [],
+          "ok": [],
+          "paths_probed": [
+            "src/thing.py"
+          ]
+        },
+        "evidence": [
+          "ImportError while loading conftest '/testbed/tests/conftest.py'.",
+          "test_rc=4",
+          "E     File \"/testbed/src/thing.py\", line 1",
+          "compile_probe:src/thing.py:SyntaxError:line=1:invalid syntax",
+          "env_qualification:ok:ledger_e2_A.jsonl:rpt_gold_1"
+        ],
+        "install_rc_baseline": 0,
+        "kind": "candidate",
+        "missing": [],
+        "qualification": "ok:ledger_e2_A.jsonl:rpt_gold_1",
+        "referenced_candidate_paths": [
+          "src/thing.py"
+        ],
+        "resource": {
+          "container_oom_killed": false,
+          "oom_kill_events": 0,
+          "pids_events_max": 0,
+          "signal_exit": false,
+          "test_rc": 4
+        },
+        "rule": "pytest_conftest_import_error",
+        "stage": "test_startup",
+        "syntax_error_locations": {
+          "src/thing.py": [
+            1
+          ]
+        },
+        "trigger": "zero_parsed"
+      }
+    },
+    "ordinary_argument_short": {
+      "completion_evidence": {
+        "normal_completion": false,
+        "footer": "1 error in 0.04s",
+        "test_status_rows": [],
+        "collection_error_rows": [
+          "ERROR tests/test_thing.py"
+        ],
+        "interruption": true
+      },
+      "current_reward": null,
+      "hypothesis_reward": null,
+      "hypothesis_category": "test_log_parse_failed",
+      "hypothesis_decision": {
+        "candidate_python_paths": [
+          "src/unused.py"
+        ],
+        "compile_probe": null,
+        "evidence": [],
+        "install_rc_baseline": 0,
+        "kind": "unattributed",
+        "missing": [
+          "no_syntax_error_at_candidate_path"
+        ],
+        "qualification": "ok:ledger_e2_A.jsonl:rpt_gold_1",
+        "referenced_candidate_paths": [],
+        "resource": {
+          "container_oom_killed": false,
+          "oom_kill_events": 0,
+          "pids_events_max": 0,
+          "signal_exit": false,
+          "test_rc": 2
+        },
+        "rule": "pytest_error_collecting",
+        "stage": "test_collection",
+        "syntax_error_locations": {},
+        "trigger": "reference_all_missing"
+      }
+    },
+    "captured_python_short": {
+      "completion_evidence": {
+        "normal_completion": true,
+        "footer": "1 failed, 1 passed in 0.04s",
+        "test_status_rows": [
+          "PASSED tests/test_thing.py::test_stable[after]",
+          "FAILED tests/test_thing.py::test_feature[after] - subprocess.CalledProcessErr..."
+        ],
+        "collection_error_rows": [],
+        "interruption": false
+      },
+      "current_reward": 0.0,
+      "hypothesis_reward": 0.0,
+      "hypothesis_category": "tests_failed",
+      "hypothesis_decision": {
+        "candidate_python_paths": null,
+        "compile_probe": null,
+        "evidence": [],
+        "install_rc_baseline": null,
+        "kind": "source_rule",
+        "missing": [
+          "shape_undetermined"
+        ],
+        "qualification": null,
+        "referenced_candidate_paths": null,
+        "resource": null,
+        "rule": null,
+        "stage": null,
+        "trigger": "reference_all_missing"
+      }
+    },
+    "captured_pytest_short": {
+      "completion_evidence": {
+        "normal_completion": true,
+        "footer": "1 failed, 1 passed in 0.15s",
+        "test_status_rows": [
+          "PASSED tests/test_thing.py::test_stable[after]",
+          "FAILED tests/test_thing.py::test_feature[after] - subprocess.CalledProcessErr..."
+        ],
+        "collection_error_rows": [],
+        "interruption": false
+      },
+      "current_reward": null,
+      "hypothesis_reward": 0.0,
+      "hypothesis_category": "tests_failed",
+      "hypothesis_decision": {
+        "candidate_python_paths": null,
+        "compile_probe": null,
+        "evidence": [],
+        "install_rc_baseline": null,
+        "kind": "source_rule",
+        "missing": [
+          "shape_undetermined"
+        ],
+        "qualification": null,
+        "referenced_candidate_paths": null,
+        "resource": null,
+        "rule": null,
+        "stage": null,
+        "trigger": "reference_all_missing"
+      }
+    },
+    "syntax_collection_long": {
+      "completion_evidence": {
+        "normal_completion": false,
+        "footer": "1 error in 0.06s",
+        "test_status_rows": [],
+        "collection_error_rows": [
+          "ERROR tests/test_thing.py"
+        ],
+        "interruption": true
+      },
+      "current_reward": 0.0,
+      "hypothesis_reward": 0.0,
+      "hypothesis_category": "candidate_execution_failed",
+      "hypothesis_decision": {
+        "candidate_python_paths": [
+          "src/thing.py"
+        ],
+        "compile_probe": {
+          "error": null,
+          "error_paths": [
+            "src/thing.py:SyntaxError:line=1:invalid syntax"
+          ],
+          "interpreter": "<REPO>/rh2/.venv/bin/python",
+          "missing": [],
+          "ok": [],
+          "paths_probed": [
+            "src/thing.py"
+          ]
+        },
+        "evidence": [
+          "_____________________ ERROR collecting tests/test_thing.py _____________________",
+          "test_rc=2",
+          "E     File \"/testbed/src/thing.py\", line 1",
+          "compile_probe:src/thing.py:SyntaxError:line=1:invalid syntax",
+          "env_qualification:ok:ledger_e2_A.jsonl:rpt_gold_1"
+        ],
+        "install_rc_baseline": 0,
+        "kind": "candidate",
+        "missing": [],
+        "qualification": "ok:ledger_e2_A.jsonl:rpt_gold_1",
+        "referenced_candidate_paths": [
+          "src/thing.py"
+        ],
+        "resource": {
+          "container_oom_killed": false,
+          "oom_kill_events": 0,
+          "pids_events_max": 0,
+          "signal_exit": false,
+          "test_rc": 2
+        },
+        "rule": "pytest_error_collecting",
+        "stage": "test_collection",
+        "syntax_error_locations": {
+          "src/thing.py": [
+            1
+          ]
+        },
+        "trigger": "reference_all_missing"
+      }
+    },
+    "syntax_conftest_long": {
+      "completion_evidence": {
+        "normal_completion": false,
+        "reason": "no_final_pytest_summary"
+      },
+      "current_reward": 0.0,
+      "hypothesis_reward": 0.0,
+      "hypothesis_category": "candidate_execution_failed",
+      "hypothesis_decision": {
+        "candidate_python_paths": [
+          "src/thing.py"
+        ],
+        "compile_probe": {
+          "error": null,
+          "error_paths": [
+            "src/thing.py:SyntaxError:line=1:invalid syntax"
+          ],
+          "interpreter": "<REPO>/rh2/.venv/bin/python",
+          "missing": [],
+          "ok": [],
+          "paths_probed": [
+            "src/thing.py"
+          ]
+        },
+        "evidence": [
+          "ImportError while loading conftest '/testbed/tests/conftest.py'.",
+          "test_rc=4",
+          "E     File \"/testbed/src/thing.py\", line 1",
+          "compile_probe:src/thing.py:SyntaxError:line=1:invalid syntax",
+          "env_qualification:ok:ledger_e2_A.jsonl:rpt_gold_1"
+        ],
+        "install_rc_baseline": 0,
+        "kind": "candidate",
+        "missing": [],
+        "qualification": "ok:ledger_e2_A.jsonl:rpt_gold_1",
+        "referenced_candidate_paths": [
+          "src/thing.py"
+        ],
+        "resource": {
+          "container_oom_killed": false,
+          "oom_kill_events": 0,
+          "pids_events_max": 0,
+          "signal_exit": false,
+          "test_rc": 4
+        },
+        "rule": "pytest_conftest_import_error",
+        "stage": "test_startup",
+        "syntax_error_locations": {
+          "src/thing.py": [
+            1
+          ]
+        },
+        "trigger": "zero_parsed"
+      }
+    },
+    "ordinary_argument_long": {
+      "completion_evidence": {
+        "normal_completion": false,
+        "footer": "1 error in 0.05s",
+        "test_status_rows": [],
+        "collection_error_rows": [
+          "ERROR tests/test_thing.py"
+        ],
+        "interruption": true
+      },
+      "current_reward": null,
+      "hypothesis_reward": null,
+      "hypothesis_category": "test_log_parse_failed",
+      "hypothesis_decision": {
+        "candidate_python_paths": [
+          "src/unused.py"
+        ],
+        "compile_probe": null,
+        "evidence": [],
+        "install_rc_baseline": 0,
+        "kind": "unattributed",
+        "missing": [
+          "no_syntax_error_at_candidate_path"
+        ],
+        "qualification": "ok:ledger_e2_A.jsonl:rpt_gold_1",
+        "referenced_candidate_paths": [],
+        "resource": {
+          "container_oom_killed": false,
+          "oom_kill_events": 0,
+          "pids_events_max": 0,
+          "signal_exit": false,
+          "test_rc": 2
+        },
+        "rule": "pytest_error_collecting",
+        "stage": "test_collection",
+        "syntax_error_locations": {},
+        "trigger": "reference_all_missing"
+      }
+    },
+    "captured_python_long": {
+      "completion_evidence": {
+        "normal_completion": true,
+        "footer": "1 failed, 1 passed in 0.04s",
+        "test_status_rows": [
+          "PASSED tests/test_thing.py::test_stable[after]",
+          "FAILED tests/test_thing.py::test_feature[after] - subprocess.CalledProcessErr..."
+        ],
+        "collection_error_rows": [],
+        "interruption": false
+      },
+      "current_reward": 0.0,
+      "hypothesis_reward": 0.0,
+      "hypothesis_category": "tests_failed",
+      "hypothesis_decision": {
+        "candidate_python_paths": null,
+        "compile_probe": null,
+        "evidence": [],
+        "install_rc_baseline": null,
+        "kind": "source_rule",
+        "missing": [
+          "shape_undetermined"
+        ],
+        "qualification": null,
+        "referenced_candidate_paths": null,
+        "resource": null,
+        "rule": null,
+        "stage": null,
+        "trigger": "reference_all_missing"
+      }
+    },
+    "captured_pytest_long": {
+      "completion_evidence": {
+        "normal_completion": true,
+        "footer": "1 failed, 1 passed in 0.15s",
+        "test_status_rows": [
+          "PASSED tests/test_thing.py::test_stable[after]",
+          "FAILED tests/test_thing.py::test_feature[after] - subprocess.CalledProcessErr..."
+        ],
+        "collection_error_rows": [],
+        "interruption": false
+      },
+      "current_reward": null,
+      "hypothesis_reward": 0.0,
+      "hypothesis_category": "tests_failed",
+      "hypothesis_decision": {
+        "candidate_python_paths": null,
+        "compile_probe": null,
+        "evidence": [],
+        "install_rc_baseline": null,
+        "kind": "source_rule",
+        "missing": [
+          "shape_undetermined"
+        ],
+        "qualification": null,
+        "referenced_candidate_paths": null,
+        "resource": null,
+        "rule": null,
+        "stage": null,
+        "trigger": "reference_all_missing"
+      }
+    },
+    "syntax_collection_native": {
+      "completion_evidence": {
+        "normal_completion": false,
+        "footer": "1 error in 0.06s",
+        "test_status_rows": [],
+        "collection_error_rows": [
+          "ERROR tests/test_thing.py"
+        ],
+        "interruption": true
+      },
+      "current_reward": 0.0,
+      "hypothesis_reward": 0.0,
+      "hypothesis_category": "candidate_execution_failed",
+      "hypothesis_decision": {
+        "candidate_python_paths": [
+          "src/thing.py"
+        ],
+        "compile_probe": {
+          "error": null,
+          "error_paths": [
+            "src/thing.py:SyntaxError:line=1:invalid syntax"
+          ],
+          "interpreter": "<REPO>/rh2/.venv/bin/python",
+          "missing": [],
+          "ok": [],
+          "paths_probed": [
+            "src/thing.py"
+          ]
+        },
+        "evidence": [
+          "_____________________ ERROR collecting tests/test_thing.py _____________________",
+          "test_rc=2",
+          "E     File \"/testbed/src/thing.py\", line 1",
+          "compile_probe:src/thing.py:SyntaxError:line=1:invalid syntax",
+          "env_qualification:ok:ledger_e2_A.jsonl:rpt_gold_1"
+        ],
+        "install_rc_baseline": 0,
+        "kind": "candidate",
+        "missing": [],
+        "qualification": "ok:ledger_e2_A.jsonl:rpt_gold_1",
+        "referenced_candidate_paths": [
+          "src/thing.py"
+        ],
+        "resource": {
+          "container_oom_killed": false,
+          "oom_kill_events": 0,
+          "pids_events_max": 0,
+          "signal_exit": false,
+          "test_rc": 2
+        },
+        "rule": "pytest_error_collecting",
+        "stage": "test_collection",
+        "syntax_error_locations": {
+          "src/thing.py": [
+            1
+          ]
+        },
+        "trigger": "reference_all_missing"
+      }
+    },
+    "syntax_conftest_native": {
+      "completion_evidence": {
+        "normal_completion": false,
+        "reason": "no_final_pytest_summary"
+      },
+      "current_reward": 0.0,
+      "hypothesis_reward": 0.0,
+      "hypothesis_category": "candidate_execution_failed",
+      "hypothesis_decision": {
+        "candidate_python_paths": [
+          "src/thing.py"
+        ],
+        "compile_probe": {
+          "error": null,
+          "error_paths": [
+            "src/thing.py:SyntaxError:line=1:invalid syntax"
+          ],
+          "interpreter": "<REPO>/rh2/.venv/bin/python",
+          "missing": [],
+          "ok": [],
+          "paths_probed": [
+            "src/thing.py"
+          ]
+        },
+        "evidence": [
+          "ImportError while loading conftest '/testbed/tests/conftest.py'.",
+          "test_rc=4",
+          "E     File \"/testbed/src/thing.py\", line 1",
+          "compile_probe:src/thing.py:SyntaxError:line=1:invalid syntax",
+          "env_qualification:ok:ledger_e2_A.jsonl:rpt_gold_1"
+        ],
+        "install_rc_baseline": 0,
+        "kind": "candidate",
+        "missing": [],
+        "qualification": "ok:ledger_e2_A.jsonl:rpt_gold_1",
+        "referenced_candidate_paths": [
+          "src/thing.py"
+        ],
+        "resource": {
+          "container_oom_killed": false,
+          "oom_kill_events": 0,
+          "pids_events_max": 0,
+          "signal_exit": false,
+          "test_rc": 4
+        },
+        "rule": "pytest_conftest_import_error",
+        "stage": "test_startup",
+        "syntax_error_locations": {
+          "src/thing.py": [
+            1
+          ]
+        },
+        "trigger": "zero_parsed"
+      }
+    },
+    "ordinary_argument_native": {
+      "completion_evidence": {
+        "normal_completion": false,
+        "footer": "1 error in 0.04s",
+        "test_status_rows": [],
+        "collection_error_rows": [
+          "ERROR tests/test_thing.py"
+        ],
+        "interruption": true
+      },
+      "current_reward": null,
+      "hypothesis_reward": null,
+      "hypothesis_category": "test_log_parse_failed",
+      "hypothesis_decision": {
+        "candidate_python_paths": [
+          "src/unused.py"
+        ],
+        "compile_probe": null,
+        "evidence": [],
+        "install_rc_baseline": 0,
+        "kind": "unattributed",
+        "missing": [
+          "no_syntax_error_at_candidate_path"
+        ],
+        "qualification": "ok:ledger_e2_A.jsonl:rpt_gold_1",
+        "referenced_candidate_paths": [],
+        "resource": {
+          "container_oom_killed": false,
+          "oom_kill_events": 0,
+          "pids_events_max": 0,
+          "signal_exit": false,
+          "test_rc": 2
+        },
+        "rule": "pytest_error_collecting",
+        "stage": "test_collection",
+        "syntax_error_locations": {},
+        "trigger": "reference_all_missing"
+      }
+    },
+    "captured_python_native": {
+      "completion_evidence": {
+        "normal_completion": true,
+        "footer": "1 failed, 1 passed in 0.03s",
+        "test_status_rows": [
+          "PASSED tests/test_thing.py::test_stable[after]",
+          "FAILED tests/test_thing.py::test_feature[after] - subprocess.CalledProcessErr..."
+        ],
+        "collection_error_rows": [],
+        "interruption": false
+      },
+      "current_reward": 0.0,
+      "hypothesis_reward": 0.0,
+      "hypothesis_category": "tests_failed",
+      "hypothesis_decision": {
+        "candidate_python_paths": null,
+        "compile_probe": null,
+        "evidence": [],
+        "install_rc_baseline": null,
+        "kind": "source_rule",
+        "missing": [
+          "shape_undetermined"
+        ],
+        "qualification": null,
+        "referenced_candidate_paths": null,
+        "resource": null,
+        "rule": null,
+        "stage": null,
+        "trigger": "reference_all_missing"
+      }
+    },
+    "captured_pytest_native": {
+      "completion_evidence": {
+        "normal_completion": true,
+        "footer": "1 failed, 1 passed in 0.14s",
+        "test_status_rows": [
+          "PASSED tests/test_thing.py::test_stable[after]",
+          "FAILED tests/test_thing.py::test_feature[after] - subprocess.CalledProcessErr..."
+        ],
+        "collection_error_rows": [],
+        "interruption": false
+      },
+      "current_reward": null,
+      "hypothesis_reward": 0.0,
+      "hypothesis_category": "tests_failed",
+      "hypothesis_decision": {
+        "candidate_python_paths": null,
+        "compile_probe": null,
+        "evidence": [],
+        "install_rc_baseline": null,
+        "kind": "source_rule",
+        "missing": [
+          "shape_undetermined"
+        ],
+        "qualification": null,
+        "referenced_candidate_paths": null,
+        "resource": null,
+        "rule": null,
+        "stage": null,
+        "trigger": "reference_all_missing"
+      }
+    },
+    "syntax_collection_quiet_default": {
+      "completion_evidence": {
+        "normal_completion": false,
+        "footer": "1 error in 0.08s",
+        "test_status_rows": [],
+        "collection_error_rows": [
+          "ERROR tests/test_thing.py"
+        ],
+        "interruption": true
+      },
+      "current_reward": 0.0,
+      "hypothesis_reward": 0.0,
+      "hypothesis_category": "candidate_execution_failed",
+      "hypothesis_decision": {
+        "candidate_python_paths": [
+          "src/thing.py"
+        ],
+        "compile_probe": {
+          "error": null,
+          "error_paths": [
+            "src/thing.py:SyntaxError:line=1:invalid syntax"
+          ],
+          "interpreter": "<REPO>/rh2/.venv/bin/python",
+          "missing": [],
+          "ok": [],
+          "paths_probed": [
+            "src/thing.py"
+          ]
+        },
+        "evidence": [
+          "_____________________ ERROR collecting tests/test_thing.py _____________________",
+          "test_rc=2",
+          "E     File \"/testbed/src/thing.py\", line 1",
+          "compile_probe:src/thing.py:SyntaxError:line=1:invalid syntax",
+          "env_qualification:ok:ledger_e2_A.jsonl:rpt_gold_1"
+        ],
+        "install_rc_baseline": 0,
+        "kind": "candidate",
+        "missing": [],
+        "qualification": "ok:ledger_e2_A.jsonl:rpt_gold_1",
+        "referenced_candidate_paths": [
+          "src/thing.py"
+        ],
+        "resource": {
+          "container_oom_killed": false,
+          "oom_kill_events": 0,
+          "pids_events_max": 0,
+          "signal_exit": false,
+          "test_rc": 2
+        },
+        "rule": "pytest_error_collecting",
+        "stage": "test_collection",
+        "syntax_error_locations": {
+          "src/thing.py": [
+            1
+          ]
+        },
+        "trigger": "reference_all_missing"
+      }
+    },
+    "syntax_conftest_quiet_default": {
+      "completion_evidence": {
+        "normal_completion": false,
+        "reason": "no_final_pytest_summary"
+      },
+      "current_reward": 0.0,
+      "hypothesis_reward": 0.0,
+      "hypothesis_category": "candidate_execution_failed",
+      "hypothesis_decision": {
+        "candidate_python_paths": [
+          "src/thing.py"
+        ],
+        "compile_probe": {
+          "error": null,
+          "error_paths": [
+            "src/thing.py:SyntaxError:line=1:invalid syntax"
+          ],
+          "interpreter": "<REPO>/rh2/.venv/bin/python",
+          "missing": [],
+          "ok": [],
+          "paths_probed": [
+            "src/thing.py"
+          ]
+        },
+        "evidence": [
+          "ImportError while loading conftest '/testbed/tests/conftest.py'.",
+          "test_rc=4",
+          "E     File \"/testbed/src/thing.py\", line 1",
+          "compile_probe:src/thing.py:SyntaxError:line=1:invalid syntax",
+          "env_qualification:ok:ledger_e2_A.jsonl:rpt_gold_1"
+        ],
+        "install_rc_baseline": 0,
+        "kind": "candidate",
+        "missing": [],
+        "qualification": "ok:ledger_e2_A.jsonl:rpt_gold_1",
+        "referenced_candidate_paths": [
+          "src/thing.py"
+        ],
+        "resource": {
+          "container_oom_killed": false,
+          "oom_kill_events": 0,
+          "pids_events_max": 0,
+          "signal_exit": false,
+          "test_rc": 4
+        },
+        "rule": "pytest_conftest_import_error",
+        "stage": "test_startup",
+        "syntax_error_locations": {
+          "src/thing.py": [
+            1
+          ]
+        },
+        "trigger": "zero_parsed"
+      }
+    },
+    "ordinary_argument_quiet_default": {
+      "completion_evidence": {
+        "normal_completion": false,
+        "footer": "1 error in 0.04s",
+        "test_status_rows": [],
+        "collection_error_rows": [
+          "ERROR tests/test_thing.py"
+        ],
+        "interruption": true
+      },
+      "current_reward": null,
+      "hypothesis_reward": null,
+      "hypothesis_category": "test_log_parse_failed",
+      "hypothesis_decision": {
+        "candidate_python_paths": [
+          "src/unused.py"
+        ],
+        "compile_probe": null,
+        "evidence": [],
+        "install_rc_baseline": 0,
+        "kind": "unattributed",
+        "missing": [
+          "no_syntax_error_at_candidate_path"
+        ],
+        "qualification": "ok:ledger_e2_A.jsonl:rpt_gold_1",
+        "referenced_candidate_paths": [],
+        "resource": {
+          "container_oom_killed": false,
+          "oom_kill_events": 0,
+          "pids_events_max": 0,
+          "signal_exit": false,
+          "test_rc": 2
+        },
+        "rule": "pytest_error_collecting",
+        "stage": "test_collection",
+        "syntax_error_locations": {},
+        "trigger": "reference_all_missing"
+      }
+    },
+    "captured_python_quiet_default": {
+      "completion_evidence": {
+        "normal_completion": true,
+        "footer": "1 failed, 1 passed in 0.04s",
+        "test_status_rows": [
+          "PASSED tests/test_thing.py::test_stable[after]",
+          "FAILED tests/test_thing.py::test_feature[after] - subprocess.CalledProcessErr..."
+        ],
+        "collection_error_rows": [],
+        "interruption": false
+      },
+      "current_reward": 0.0,
+      "hypothesis_reward": 0.0,
+      "hypothesis_category": "tests_failed",
+      "hypothesis_decision": {
+        "candidate_python_paths": null,
+        "compile_probe": null,
+        "evidence": [],
+        "install_rc_baseline": null,
+        "kind": "source_rule",
+        "missing": [
+          "shape_undetermined"
+        ],
+        "qualification": null,
+        "referenced_candidate_paths": null,
+        "resource": null,
+        "rule": null,
+        "stage": null,
+        "trigger": "reference_all_missing"
+      }
+    },
+    "captured_pytest_quiet_default": {
+      "completion_evidence": {
+        "normal_completion": true,
+        "footer": "1 failed, 1 passed in 0.18s",
+        "test_status_rows": [
+          "PASSED tests/test_thing.py::test_stable[after]",
+          "FAILED tests/test_thing.py::test_feature[after] - subprocess.CalledProcessErr..."
+        ],
+        "collection_error_rows": [],
+        "interruption": false
+      },
+      "current_reward": null,
+      "hypothesis_reward": 0.0,
+      "hypothesis_category": "tests_failed",
+      "hypothesis_decision": {
+        "candidate_python_paths": null,
+        "compile_probe": null,
+        "evidence": [],
+        "install_rc_baseline": null,
+        "kind": "source_rule",
+        "missing": [
+          "shape_undetermined"
+        ],
+        "qualification": null,
+        "referenced_candidate_paths": null,
+        "resource": null,
+        "rule": null,
+        "stage": null,
+        "trigger": "reference_all_missing"
+      }
+    }
+  },
+  "source_sha256": {
+    "rh2/src/repoharness2/grading/manager.py": "645bf5e5899b12589d4920e19d501dae139b0fc8b6797bf00f9ff5c41461a36e",
+    "rh2/src/repoharness2/envpack/scoring.py": "b6c8b9bd3e9cac604bc0d03b0b243ef9646de369e94bb6a65e60eadd3a64f5ab",
+    "rh2/tests/grading/test_w3b_grader_profile_unit.py": "33cf9ab09485b676be406cac6a7912f2cd7d495a45848d98dc59fd0b571c5cc3"
+  }
+}

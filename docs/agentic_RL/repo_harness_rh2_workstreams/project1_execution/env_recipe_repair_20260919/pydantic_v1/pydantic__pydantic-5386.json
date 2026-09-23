@@ -1,0 +1,7 @@
+{
+  "instance_id": "pydantic__pydantic-5386",
+  "original_install": "export PATH=\"$HOME/.local/bin:$PATH\"; pdm add pre-commit; make install;",
+  "revised_install": "rh2_recipe_install() {\n  python -m pip install -e . || return $?\n  python -I - <<'RH2_TEST_REQUIREMENTS'\nimport pathlib, tomli\np = tomli.loads(pathlib.Path('/testbed/pyproject.toml').read_text())\ngroups = p.get('tool', {}).get('pdm', {}).get('dev-dependencies', {})\nrequirements = [x for name in ('testing', 'testing-extra') for x in groups.get(name, [])]\npathlib.Path('/tmp/rh2-envrepair-testing-reqs.txt').write_text('\\n'.join(requirements) + '\\n')\nRH2_TEST_REQUIREMENTS\n  [ \"$?\" = 0 ] || return 1\n  python -m pip install -r /tmp/rh2-envrepair-testing-reqs.txt\n}\nrh2_recipe_install",
+  "decision": "E10: consume candidate project + testing/testing-extra metadata; docs/lint/precommit hook setup stays image preparation",
+  "baseline_runtime_dependencies_satisfied": true
+}

@@ -1,0 +1,86 @@
+{
+ "task_id": "getmoto__moto-6913",
+ "source": "swe_gym_lite_full_f70b1a29",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "s2/ingest/public_bundles_v0.jsonl#getmoto__moto-6913",
+  "grading": "s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-6913",
+  "validation": "s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-6913",
+  "base_commit": "f59e178f272003ba39694d68390611e118d8eaa9",
+  "version": "4.2",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-6913/",
+  "deepseek_traj": "runs/env_probe_20260909_final_sync/ledger/logs_cc/getmoto__moto-6913/",
+  "other_signals": "in_e2=[A,B]; stage1 gold=RESOLVED_FULL(rc_install=2); DeepSeek 候选 oracle=RESOLVED_FULL"
+ },
+ "public_view": {
+  "goal": "题面：sesv2 send_email 把邮件正文存成了主题。题面直接指出 moto/sesv2/responses.py 第 45-50 行，贴出错误代码，并给出完整的修正代码。",
+  "constraints": [
+   "题面自带 before/after 两段代码，after 段与 gold 完全一致",
+   "题面还预判了“看起来不需要更新任何测试”"
+  ],
+  "unknowns_from_public_only": [
+   "无。公开材料已给出逐字答案。"
+  ],
+  "base_code_located": [
+   "f59e178f:moto/sesv2/responses.py:49 `body=content[\"Simple\"][\"Subject\"][\"Data\"],`"
+  ],
+  "public_view_conclusion": "只看公开材料就能一字不差地写出 gold；本题不需要任何代码定位、阅读或推理。"
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 只改 tests/test_sesv2/test_sesv2.py（base 存在）", "gold 只改 moto/sesv2/responses.py（base 存在）"], "note": "目标文件均在 base 存在；与题面同一问题；无二进制/LFS/子模块材料。test_patch 新增断言用到的 ses_backends/RawMessage/DEFAULT_ACCOUNT_ID/settings 在 base 的 import 段（f59e178f:tests/test_sesv2/test_sesv2.py:1-7）已齐备，不需要额外 import。", "by": "L1_moto_1"},
+  "2": {"status": "pass", "evidence_refs": ["f59e178f:moto/sesv2/responses.py:49", "stage1:6913/empty F2P=FAILED"], "note": "base 确有缺陷。", "by": "L1_moto_1"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 无外链、无图片、无截断代码块"], "note": "hints 只有维护者一句欢迎语，无额外信息。", "by": "L1_moto_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch paths = [tests/test_sesv2/test_sesv2.py]", "gold paths = [moto/sesv2/responses.py]"], "note": "test_patch 只触碰纯测试文件；gold 不触碰测试样路径。additional_exclusions = []。", "by": "L1_moto_1"},
+  "5": {"status": "pass", "evidence_refs": ["本包内其余 18 题的 gold 均不触碰 moto/sesv2/"], "note": "无重复/派生。", "by": "L1_moto_1"},
+  "6": {"status": "issue", "evidence_refs": ["stage1:6913 gold rc_install=2"], "note": "同 5899 的离线 make init 失败；本题不受实际影响。", "by": "L1_moto_1"},
+  "7": {"status": "pass", "evidence_refs": ["tests/test_sesv2/test_sesv2.py 全部走 @mock_sesv2/@mock_ses"], "note": "无外部服务。", "by": "L1_moto_1"},
+  "11": {"status": "pass", "evidence_refs": ["无权重/数据集下载"], "note": "", "by": "L1_moto_1"},
+  "17": {"status": "pass", "evidence_refs": ["同 check 4"], "note": "additional_exclusions = []。", "by": "L1_moto_1"},
+  "23": {"status": "pass", "evidence_refs": ["problem_statement 直接给出目标表达式"], "note": "要求充分且一致 —— 事实上是过度充分（见 issues）。", "by": "L1_moto_1"},
+  "24": {"status": "pass", "evidence_refs": ["test_patch 只断言 backend.sent_messages[0].subject == 'test subject' 与 .body == 'test body'"], "note": "断言的是后端状态而非内部实现细节；任何把 body 取自 Simple.Body.Text.Data 的写法都通过。", "by": "L1_moto_1"},
+  "25": {"status": "issue", "evidence_refs": ["test_patch 的新断言包在 `if not settings.TEST_SERVER_MODE:` 之内"], "note": "新增断言在 ServerMode 下被整体跳过。当前 eval_cmd（pytest -n0 -rA，decorator 模式）不受影响；但若任何流程改成 TEST_SERVER_MODE=true 跑，这条 F2P 会在 base 上也 PASS，形成静默的假阳性。属需要记录的运行前提。", "by": "L1_moto_1"},
+  "26": {"status": "pass", "evidence_refs": ["见 proposed_regression_tests"], "note": "", "by": "L1_moto_1"},
+  "27": {"status": "pass", "evidence_refs": ["validation.golden_patch 单行改动"], "note": "gold 正确、最小、相关，不依赖未交付改动。", "by": "L1_moto_1"},
+  "29": {"status": "issue", "evidence_refs": ["problem_statement 含 `I think it should be corrected like this:` 后的完整代码块，其中 `body=content[\"Simple\"][\"Body\"][\"Text\"][\"Data\"],` 与 validation.golden_patch 的新增行逐字相同", "problem_statement 还直接点名 `moto/sesv2/responses.py line 45-50`"], "note": "题面本身即完整答案（文件、行号、修正代码全给）。这是本包内最严重的静态泄漏。", "by": "L1_moto_1"}
+ },
+ "issues": [
+  {
+   "category": "static_leakage/answer_in_problem_statement",
+   "severity": "P1",
+   "evidence_refs": [
+    "public_bundles problem_statement：'The issue comes from moto/sesv2/responses.py line 45-50' + 'I think it should be corrected like this:' + `body=content[\"Simple\"][\"Body\"][\"Text\"][\"Data\"],`",
+    "validation.golden_patch 唯一的新增行与上述一字不差",
+    "task_signals_swegym.json：stage1 gold=RESOLVED_FULL 且 DeepSeek 候选也 RESOLVED_FULL"
+   ],
+   "proposed_action": "题面直接给出文件、行号与逐字修正代码，解题退化为复制粘贴。作为 RL 训练样本价值极低，甚至会奖励“照抄题面”而非“定位与推理”；作为难度分层里的最低档或流水线冒烟用例则很合适（它是本包内唯一 in_e2=[A,B] 且 gold/DeepSeek 双 FULL 的题）。建议：明确标为 smoke/trivial 档，不计入训练难度分布；若要保留为训练题，需改写题面只留现象（'正文被存成了主题'）而删去定位与修正代码。",
+   "next_experiment": "统计全 216 题中“题面包含与 gold 新增行逐字相同的代码”的数量：对每题把 gold 的新增行做规范化后在 problem_statement 里做子串匹配，产出泄漏清单。"
+  },
+  {
+   "category": "grading_precondition/server_mode_skips_assertion",
+   "severity": "P3",
+   "evidence_refs": [
+    "test_patch 新增块以 `if not settings.TEST_SERVER_MODE:` 为条件",
+    "grading.eval_cmd = `pytest -n0 -rA`（未设 TEST_SERVER_MODE）"
+   ],
+   "proposed_action": "本题的判别力完全来自这个条件块。一旦运行环境设了 TEST_SERVER_MODE=true，F2P 会在未修复的 base 上也 PASS，且不会有任何报错提示。建议在环境准入里对“F2P 断言被 settings.TEST_SERVER_MODE 包裹”的题登记运行前提，并在 harness 侧固定该变量为 false。",
+   "next_experiment": "grep 全 216 题的 test_patch 中 `settings.TEST_SERVER_MODE` 与 `SkipTest`，列出同类题；再确认 RH2 执行时该环境变量的实际取值。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 tests/test_sesv2/test_sesv2.py（纯测试文件），gold 只触碰 moto/sesv2/responses.py，二者不重叠。按第四组 B 默认空即可。",
+  "evidence_refs": ["grading.test_patch", "validation.golden_patch", "docs/.../batch4_scoring_20260910/README.md §0/§6.5"]
+ },
+ "proposed_regression_tests": [
+  {"id": "tests/test_sesv2/test_sesv2.py::test_send_raw_email", "reason": "同一 responses.py 的相邻分支，确认改动不波及 raw email 路径"},
+  {"id": "tests/test_sesv2/test_sesv2.py::test_send_raw_email__with_specific_message", "reason": "同上，覆盖显式 message 的分支"},
+  {"id": "tests/test_ses/test_ses_boto3.py", "reason": "sesv2 的 send_email 落到 ses_backend 的同一 sent_messages 存储，v1 侧的行为不能被破坏（不在 P2P 内）"},
+  {"id": "建议新增：Simple.Body 缺失或只有 Html 时的行为", "reason": "gold 直接 content['Simple']['Body']['Text']['Data'] 取键，缺 Body 或只给 Html 时会 KeyError → 500；与 6470 是同一类缺键问题"},
+  {"id": "tests/test_sesv2/test_sesv2.py::test_create_contact", "reason": "同文件基础用例，作为 P2P 冒烟"}
+ ],
+ "disposition_hint": {
+  "state": "needs_review",
+  "reason": "技术面全绿（gold=FULL、DeepSeek=FULL、边界干净、材料一致），但题面逐字给出答案，作为训练题几乎没有学习信号。建议由用户裁定：保留为流水线冒烟/最低难度档，还是改写题面后再入训练集，或直接剔除。"
+ },
+ "costs": {"minutes": 16}
+}

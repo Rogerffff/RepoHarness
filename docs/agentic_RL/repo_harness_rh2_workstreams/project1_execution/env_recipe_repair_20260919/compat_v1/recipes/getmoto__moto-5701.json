@@ -1,0 +1,10 @@
+{
+  "instance_id": "getmoto__moto-5701",
+  "original_install": "make init",
+  "revised_install": "rh2_compat_install() {\n python -m pip install --no-index --find-links=/opt/rh2/compat-wheels --no-deps urllib3==1.26.20 || return $?\n python -I -c 'import importlib.metadata as m,json; print(\"RH2_COMPAT_VERSIONS=\"+json.dumps({x:m.version(x) for x in ['\"'\"'urllib3'\"'\"']}))'\n make init\n local original_rc=$?\n python -I -c 'import importlib.metadata as m,json; print(\"RH2_COMPAT_VERSIONS=\"+json.dumps({x:m.version(x) for x in ['\"'\"'urllib3'\"'\"']}))'\n return \"$original_rc\"\n}\nrh2_compat_install",
+  "pins": [
+    "urllib3==1.26.20"
+  ],
+  "scope": "dependency variant; source install still audited independently",
+  "decision": "E11"
+}

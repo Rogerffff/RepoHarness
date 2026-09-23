@@ -1,0 +1,217 @@
+{
+ "task_id": "pydantic__pydantic-8977",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_pydantic (Claude Opus 5, 2026-09-16 夜)",
+ "materials_refs": [
+  "s2/ingest/*_bundles_v0.jsonl (pydantic__pydantic-8977)",
+  "repos/pydantic@e58134b83e54ec3a5c8bb7e6a3a1e0a0b46a5ae2(见 grading.base_commit)",
+  "runs/env_probe_stage1_20260910/.../pydantic__pydantic-8977/{gold,empty}/offline/a1/status_map.json"
+ ],
+ "public_view": {
+  "目标行为": "在 strict=True 下，validate_call/BaseModel 等对 collections.abc.Set / list / tuple / frozenset 注解的校验不应做容器类型转换（题面例子：传 tuple 给 Set[str] 参数时被静默转成 frozenset，应当报错）。",
+  "约束": "题面只说“不该转换、应当拒绝”，没说 deque/Counter 这些需要内部借道 list 校验的类型怎么办。",
+  "公开材料无法确定的点": [
+   "strict 应该在 SequenceValidator 层默认 None 还是在别处传递",
+   "deque/Counter 这类 mapped_origin 不是 list 的类型在 strict 下的期望行为（gold 专门给它们加了 strict=False 例外）",
+   "题面只给 validate_call，是否要求 BaseModel/dataclass 同步（hints 里维护者说是同一套逻辑，但 hints 不可见）"
+  ],
+  "base 定位": "pydantic/_internal/_std_types_schema.py:277 `SequenceValidator.strict: bool = False` —— 硬编码 False 覆盖了 config 的 strict；:329 `constrained_schema = core_schema.list_schema(items_schema, **metadata)`。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 三个文件 tests/test_main.py、tests/test_types.py、tests/test_validate_call.py 在 base 均存在；gold 目标 pydantic/_internal/_std_types_schema.py 存在"
+   ],
+   "note": "对应同一问题。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "_std_types_schema.py:277",
+    "stage1 empty：4 条 F2P 全 FAILED"
+   ],
+   "note": "base 确有缺陷。",
+   "by": "static+stage1log"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 1309 字符，含可运行例子"
+   ],
+   "note": "无外链、无截断。hints 里维护者补了“不只是 validate_call，BaseModel/dataclass 同理”——这条信息题面没有，但 F2P 已经把 tests/test_main.py 与 tests/test_types.py 的用例摆出来，agent 从 strict 语义也能推到；列为提示而非缺信息。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 触碰 3 个纯测试文件；F2P+P2P 978 条全部落在这 3 个文件内；gold 只碰生产代码"
+   ],
+   "note": "additional_exclusions 保持空。本题是本包判分面最宽的一题（974 条 P2P、3 个文件）。",
+   "by": "static"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "本包内无第二题改 _std_types_schema.py"
+   ],
+   "note": "无重复。注意 5706 的 DeepSeek 候选改的正是本文件的 SEQUENCE_ORIGIN_MAP，两题相邻但不同修复。",
+   "by": "static"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "install rc=2。",
+   "by": "stage1log"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "三个测试文件的第三方 import：pytest / pydantic_core / dirty_equals / annotated_types / pydoc / numbers"
+   ],
+   "note": "均为镜像预装（gold 跑出 974 条 PASSED）。",
+   "by": "static+stage1log"
+  },
+  "10": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "本题无 DeepSeek 轨迹；仓库级 R3 的 PATH 问题应同样适用但未单独核实。",
+   "by": "-"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "只有 install 需要网络。",
+   "by": "stage1log"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "stage1 gold status_map.json：5 条 P2P 在 status_map 中找不到 → verdict RESOLVED_NO",
+    "参考常量 repr：'tests/test_types.py::test_default_validators[uuid_check-\\x124Vx\\x124Vx\\x124Vx\\x124Vx-result96]'（含 0x12 控制字节）、'...test_constrained_bytes_too_long[âª¶â\\x93²â½·01-False]'（mojibake）",
+    "运行时 ID：'...[\\\\x124Vx...]'、'...[\\\\xe2\\\\xaa\\\\xb6\\\\xe2\\\\x93\\\\xb2\\\\xe2\\\\xbd\\\\xb701-False]'（pytest ascii_escaped 的字面反斜杠形式）",
+    "scripts/idfix_216.py 全 216 题验证输出（见 summary.md 附-1）"
+   ],
+   "note": "P1 且**根因已定量确定**：参考 ID = `unicode_escape_decode(运行时 ID)`。反解 `ref.encode('unicode_escape').decode('ascii')` 对这 5 条 5/5 命中，命中后全部是 PASSED，即 gold 实际应为 RESOLVED_FULL，当前的 RESOLVED_NO 是纯 ID 对账缺陷。**但不能无条件套用**：同题另有 2 条参考 ID（test_constrained_str_too_long[\\u26c4...×10/×11]）本来就能精确匹配，盲目变换会把它们改坏（反斜杠被二次转义）。正确修法是“先精确匹配，失败再用 unicode_escape 反解重试”。本包 20 题用这个回退规则后 missing 归零。",
+   "by": "static+stage1log"
+  },
+  "20": {
+   "status": "issue",
+   "evidence_refs": [
+    "同 19"
+   ],
+   "note": "gold 与 no-op 的分差被 ID 缺陷污染：gold 被判 RESOLVED_NO 不是因为目标行为没达成。",
+   "by": "stage1log"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 与 4 条 F2P"
+   ],
+   "note": "F2P 覆盖 set/frozenset/list 三种容器的 strict 行为与 validate_call 的 config strict，可由题面“strict 下不该转换容器类型”推出。deque/Counter 的例外不在 F2P 里。",
+   "by": "static"
+  },
+  "24": {
+   "status": "unknown",
+   "evidence_refs": [],
+   "note": "未构造替代实现。gold 只改 2 处、都在数据流上，看不出对内部命名/调用顺序的强制；但 974 条 P2P 的约束面很大，是否存在合法替代解被拒需要实跑才能判。",
+   "by": "-"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "test_patch 新增 test_model_validate_list_strict（tests/test_main.py），但它既不在 F2P 也不在 P2P（本包唯一一条“加了却从不判分”的测试）",
+    "gold 的 deque/Counter strict=False 例外（_std_types_schema.py:329-332）在 F2P/P2P 里没有对应断言"
+   ],
+   "note": "P2（已修正）：(a) test_patch 新增的 tests/test_main.py::test_model_validate_list_strict 在 gold 实跑里是 **XFAIL**（gold test_output.txt:838 `XFAIL (strict=True ...)`），所以它既不在 F2P 也不在 P2P 是**正确**的，不是流水线缺陷；但它说明上游自己承认 model_validate 的 list strict 这一路没修完。(b) gold 的 deque/Counter strict=False 例外（_std_types_schema.py:329-332）在 F2P/P2P 里没有对应断言：只把 SequenceValidator.strict 改成 None、不加这个例外的“半修复”是否能全绿，未验证。另注意 pyproject.toml `xfail_strict = true`：比 gold 更彻底的修复会把这条 XFAIL 变成 XPASS→FAILED，但它不在判分集内，不影响得分。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "同 25(b)"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "static"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 全文"
+   ],
+   "note": "gold 两处改动互相支撑（放开 strict 默认 + 给借道 list 的 mapped_origin 加例外），无题外改动。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak 扫描 0 命中；题面无 URL"
+   ],
+   "note": "无泄漏。",
+   "by": "static"
+  },
+  "31": {
+   "status": "issue",
+   "evidence_refs": [
+    "R4"
+   ],
+   "note": "静态残余面。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "reference_id_encoding",
+   "severity": "P1",
+   "evidence_refs": [
+    "check 19"
+   ],
+   "proposed_action": "在 RH2 的参考集对账里加“精确匹配失败则用 `id.encode('unicode_escape').decode('ascii')` 再匹配一次”的回退；不要做无条件变换（会破坏 test_constrained_str_too_long[\\u26c4…] 这类本来就匹配的 ID）。修好后本题 gold 应从 RESOLVED_NO 变 RESOLVED_FULL。",
+   "next_experiment": "已做：`scripts/idfix_216.py` 在全部 181 个有 stage1 gold 日志的题上跑完——missing 18 → 回退后修复 18 → 仍缺 0、碰撞 0；被挽回的 10 题恰好是 task_signals 里全部 fragile_reference_id=True 的题（moto-5417/5545/5562/5701/6308、dvc-4185、modin-6780、pandas-48106/50319、pydantic-8977），回退后缺失的 P2P 全部是 PASSED，即这 10 题的 gold 应为 RESOLVED_FULL。181 题里 gold 非 FULL 的共 16 题，修好后只剩 6 题（真实非 PASSED，与 ID 无关）。"
+  },
+  {
+   "category": "official_test_coverage_gap",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 25(b)"
+   ],
+   "proposed_action": "补 deque/Counter 在 strict 下的行为断言进 P2P",
+   "next_experiment": "只把 strict 默认改成 None、不加 deque 例外，跑官方 978 条看是否仍全绿"
+  },
+  {
+   "category": "upstream_partial_fix",
+   "severity": "P3",
+   "evidence_refs": [
+    "gold test_output.txt:838 tests/test_main.py::test_model_validate_list_strict XFAIL"
+   ],
+   "proposed_action": "记录 gold 未覆盖 model_validate 的 list strict（上游以 xfail 标注）；不据此调整判分",
+   "next_experiment": "无"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "三个 test_patch 路径都是纯测试文件，判分面与恢复面完全一致，gold 只碰生产代码。",
+  "evidence_refs": [
+   "grading.json.test_patch",
+   "validation.json.golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  "deque[int] / Counter 在 strict=True 下的校验行为（接受 deque/Counter 本体、拒绝 list）— 选择依据：gold 专门为它们加了 strict=False 例外，判分面无覆盖",
+  "tests/test_main.py::test_model_validate_list_strict — 选择依据：test_patch 已经注入它却没判分，先确认它在 gold 上的状态再决定收进 F2P 还是 P2P",
+  "tests/test_types.py 里 strict 相关的既有条目（test_sequence_strict 等）已在 P2P，保留"
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "题目本身质量好（判分面 978 条、3 个文件、F2P 覆盖题面场景），但参考 ID 编码缺陷让 gold 被判 RESOLVED_NO；修好对账回退规则后应可直接 ready_for_probe。"
+ },
+ "costs": {
+  "minutes": 30
+ }
+}

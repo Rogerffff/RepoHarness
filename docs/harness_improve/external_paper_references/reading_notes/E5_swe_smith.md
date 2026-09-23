@@ -8,8 +8,8 @@ SWE-smith 的核心是先固定可执行的仓库版本，再在同一环境中�
 ## 1. 来源、版本与阅读范围
 
 - **论文**：John Yang、Kilian Lieret、Carlos E. Jimenez、Alexander Wettig、Kabir Khandpur、Yanzhe Zhang、Binyuan Hui、Ofir Press、Ludwig Schmidt、Diyi Yang；Stanford、Princeton、独立研究者、Alibaba Qwen。[arXiv v2](https://arxiv.org/abs/2504.21798v2)，2025-05-21；v1 为 2025-04-30。阅读日期 2026-09-07。
-- **主文本**：[本地原 PDF](../pdfs/E5_swe_smith_2504.21798.pdf)，46 页，物理页与印刷页均从 1 起且一致；下文 p. 指这份 v2。另存[阅读副本](sources/E5/paper.pdf)、[完整提取文本](sources/E5/paper.txt)、[v2 TeX 压缩包](sources/E5/arxiv-v2.tar.gz)与[入口](sources/E5/tex/main.tex)。未用后来的会议版替换 v2；官方代码首页的 NeurIPS 2025 D&B Spotlight 标签只作后续发表信息。
-- **官方实现 C**：[SWE-bench/SWE-smith](https://github.com/SWE-bench/SWE-smith/tree/9b74ac08118a85c39c356802f7961893af73e07f)，本次读取 HEAD 固定为 `9b74ac08118a85c39c356802f7961893af73e07f`。下文 C: 后均给完整仓库相对路径；[源码快照](sources/E5/official-code/README.md)。这是当前实现，不是论文发布时的 commit。
+- **主文本**：[本地原 PDF](../pdfs/E5_swe_smith_2504.21798.pdf)，46 页，物理页与印刷页均从 1 起且一致；下文 p. 指这份 v2。另存阅读副本（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/E5/paper.pdf`）、完整提取文本（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/E5/paper.txt`）、v2 TeX 压缩包（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/E5/arxiv-v2.tar.gz`）与入口（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/E5/tex/main.tex`）。未用后来的会议版替换 v2；官方代码首页的 NeurIPS 2025 D&B Spotlight 标签只作后续发表信息。
+- **官方实现 C**：[SWE-bench/SWE-smith](https://github.com/SWE-bench/SWE-smith/tree/9b74ac08118a85c39c356802f7961893af73e07f)，本次读取 HEAD 固定为 `9b74ac08118a85c39c356802f7961893af73e07f`。下文 C: 后均给完整仓库相对路径；源码快照（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/E5/official-code/README.md`）。这是当前实现，不是论文发布时的 commit。
 - **资产与 RL 线索**：官方 HF 模型/任务/轨迹卡、官方训练指南；README 的 SkyRL 链接、SkyRL 当前 SWE 示例及2025-06-05历史`swe-smith`接入提交作有限追踪，版本及限制见 §7；[来源登记](sources/E5/SOURCE_MANIFEST.md)保存完整版本入口。没有下载权重、完整数据或镜像，没有执行训练/环境构建。
 - **旧稿**：[summary_swe_smith.md](../../../../knowledge/summary_swe_smith.md)，在独立读完正文与附录后对照；更正见 §9。项目背景是[当前状态简报](../../../agentic_RL/repo_harness_rh2_workstreams/CURRENT-STATE-BRIEF.md)与[项目一设计建议 §3](../../../agentic_RL/repo_harness_rh2_workstreams/project1_design_advice_20260907.md)，不作为论文事实来源。
 
@@ -258,9 +258,9 @@ G p.46报告曾尝试从在线代码编辑/commit历史合成并重放轨迹，�
 
 | 资产 | 实际读取revision与状态 | 可复现边界 |
 | --- | --- | --- |
-| [SWE-smith任务](https://huggingface.co/datasets/SWE-bench/SWE-smith) | `ea6d7173829c7ec8fa16c22055699ff2e9188091`；卡metadata59136行，旧叙述仍50137；2025-12-14声明转向语言专属数据集 | 不等于论文冻结集；[本地卡](sources/E5/SWE-smith-card.md) |
-| [轨迹](https://huggingface.co/datasets/SWE-bench/SWE-smith-trajectories) | `08e109b4a59eaeebf80e4675cd125d42e7ac99a4`；tool24100/xml26076/ticks25826行，卡文字称训练5017 | 三种序列化split不能相加成独立轨迹数；5017与论文5016相差1；[本地卡](sources/E5/SWE-smith-trajectories-card.md) |
-| [SWE-agent-LM-32B](https://huggingface.co/SWE-bench/SWE-agent-LM-32B) | `6b6b924ea6f17aeff85e5228772df8fff3aab62d`；卡称5k Claude3.7轨迹微调 | 已核页面可达，未验证权重可完整加载；[本地卡](sources/E5/SWE-agent-LM-32B-card.md) |
+| [SWE-smith任务](https://huggingface.co/datasets/SWE-bench/SWE-smith) | `ea6d7173829c7ec8fa16c22055699ff2e9188091`；卡metadata59136行，旧叙述仍50137；2025-12-14声明转向语言专属数据集 | 不等于论文冻结集；本地卡（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/E5/SWE-smith-card.md`） |
+| [轨迹](https://huggingface.co/datasets/SWE-bench/SWE-smith-trajectories) | `08e109b4a59eaeebf80e4675cd125d42e7ac99a4`；tool24100/xml26076/ticks25826行，卡文字称训练5017 | 三种序列化split不能相加成独立轨迹数；5017与论文5016相差1；本地卡（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/E5/SWE-smith-trajectories-card.md`） |
+| [SWE-agent-LM-32B](https://huggingface.co/SWE-bench/SWE-agent-LM-32B) | `6b6b924ea6f17aeff85e5228772df8fff3aab62d`；卡称5k Claude3.7轨迹微调 | 已核页面可达，未验证权重可完整加载；本地卡（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/E5/SWE-agent-LM-32B-card.md`） |
 | 官方镜像/其他模型 | C README现列250+环境、52k任务、26k轨迹；官方assets页还列难度评分器和7B | README数字不是一致冻结manifest；没有pull镜像或核对所有模型版本 |
 
 代码/数据卡标MIT；原始仓库许可仍需按具体源repo处理。A.2区分BSD/MIT/Apache与GPL等，表6图注却统称permissive，后者不准确；不把非专有研究用途描述当成所有再分发/商业使用的法律结论。当前官方说明主要支持Ubuntu22.04.4、Docker，不计划支持macOS/Windows；本机只读研究没有验证Linux可运行性。

@@ -1,0 +1,66 @@
+{
+ "task_id": "Project-MONAI__MONAI-2446",
+ "source": "SWE-Gym lite / Project-MONAI/MONAI PR 2446 (created_at 2021-06-25)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "05b2da61d70324c2f02b5d72429ddb7cc171b9b9",
+  "version": "0.5", "python_version": "3.8",
+  "eval_cmd": "pytest -rA ", "actual_test_cmd": "pytest -rA  tests/test_smartcachedataset.py",
+  "f2p": ["tests/test_smartcachedataset.py::TestSmartCacheDataset::test_datalist"],
+  "p2p": ["tests/test_smartcachedataset.py::TestSmartCacheDataset::test_shuffle", "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_update_cache"],
+  "test_patch_paths": ["tests/test_smartcachedataset.py"],
+  "gold_paths": ["monai/data/dataset.py"],
+  "stage1": "gold=RESOLVED_FULL（3 PASSED + 5 FAILED，失败的 5 条 test_shape_* 两侧一致、不计分）/ empty=RESOLVED_NO，rc_install=0，3.66s"
+ },
+ "public_view": {
+  "goal": "`SmartCacheDataset(shuffle=True)` 会**就地**打乱调用方传入的 datalist。题面给出可运行复现与前后输出，明确要求只在 dataset 内部打乱。",
+  "constraints": ["题面 882 字符，含复现代码与实际输出（包含进度条那一行）", "要求写得很具体：'It should only shuffle the datalist in the SmartCacheDataset'"],
+  "unknowns_from_public_only": [
+   "浅拷贝还是深拷贝？题面没说。gold 用 `copy(data)`（浅拷贝，元素仍共享），足以修复顺序问题但元素本身仍可被下游改动",
+   "非 shuffle 路径要不要也拷贝？题面没说，gold 只在 `if shuffle:` 分支内拷贝",
+   "data 是生成器/可迭代对象时怎么办？题面与 gold 都假定它可 copy"
+  ],
+  "base_code_evidence": [
+   "05b2da61d:monai/data/dataset.py SmartCacheDataset.__init__ 的 `if shuffle: self.set_random_state(seed=seed); self.randomize(data)` —— randomize 就地 shuffle 传入的 list",
+   "05b2da61d:tests/test_smartcachedataset.py:12 `import copy` 在 base 已存在（test_patch 用了 copy.copy 却没有加 import，靠 base 的这一行）"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["tests/test_smartcachedataset.py 在 base 存在", "test_patch 用 copy.copy 且 base 第 12 行已有 `import copy`（核对过，不缺 import）", "gold 目标 monai/data/dataset.py 存在，三个 hunk 上下文匹配"], "note": "无二进制/LFS/子模块。", "by": "L1_monai_1"},
+  "2": {"status": "pass", "evidence_refs": ["05b2da61d:monai/data/dataset.py SmartCacheDataset.__init__", "stage1 empty 侧 test_datalist FAILED"], "note": "base 确含题面所述缺陷。", "by": "L1_monai_1"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 882 字符，含复现代码块与输出块", "raw hints_text 为空"], "note": "题面质量好：复现可直接跑（纯内存），期望行为一句话讲清。无外链/图片/截断。", "by": "L1_monai_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 只碰 tests/test_smartcachedataset.py"], "note": "无非测试源码。additional_exclusions 保持空。", "by": "L1_monai_1"},
+  "17": {"status": "pass", "evidence_refs": ["同上"], "note": "恢复不覆盖候选源码。", "by": "L1_monai_1"},
+  "5": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["dupidx.txt：monai/data/dataset.py 在 26 道 MONAI 题里只被本题改；但同包的 Project-MONAI__MONAI-6975 的 DeepSeek 候选也改过这个文件（不同函数）"], "note": "无重复题。仅记录同文件关联。", "by": "L1_monai_1"},
+  "23": {"status": "pass", "evidence_refs": ["F2P `test_datalist` 就是题面复现的测试化版本（同样的 5 元素 datalist、同样的参数）"], "note": "公开材料完全能推出 F2P 所查行为——F2P 就是题面那段代码加一条 assert_allclose。", "by": "L1_monai_1"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 只断言调用后原 list 未变"], "note": "不强制唯一实现：`copy(data)`、`list(data)`、`data[:]`、或改 randomize 不就地操作，都能过。", "by": "L1_monai_1"},
+  "25": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["F2P 只断言原 list 不变，不断言 dataset 内部**确实**被打乱", "P2P 的 test_shuffle 断言的是 dataset[0] 的内容与某个期望不同（已核对该用例在 gold 下通过）"], "note": "把 `self.randomize(data)` 整行删掉会让 F2P 通过（原 list 当然不变）。P2P 的 test_shuffle 是否能挡住这种『干脆不 shuffle』的假修复，需要实跑确认——它在 base 上是通过的，说明它断言的行为在 base 的 shuffle 语义下成立；若删掉 shuffle 后顺序变成恒等，test_shuffle 很可能失败。**标 issue 是因为这层保护是偶然的，不是设计出来的**。", "by": "L1_monai_1"},
+  "26": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["P2P 只有 2 条；同文件另外 5 条 test_shape_* 因环境漂移在两侧都失败而被排除"], "note": "本题的 P2P 之所以只有 2 条，一半原因是环境问题（见检查 9）。修好 nibabel 漂移后应把 test_shape_* 加回。", "by": "L1_monai_1"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 三个 hunk：import copy、docstring 补一句、`data = copy(data)`"], "note": "改动最小、精确对应、不依赖未交付改动。", "by": "L1_monai_1"},
+  "29": {"status": "pass", "evidence_refs": ["题面无 PR/commit 链接、不含修复代码；hints_text 为空"], "note": "无泄漏。题面点出了现象但没点出 `copy` 这个解法。", "by": "L1_monai_1"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 rc_install=0"], "note": "安装离线可完成。", "by": "L1_monai_1"},
+  "7": {"status": "pass", "evidence_refs": ["F2P 用 np.array 内存构造；P2P 的 test_update_cache 用假文件名不读盘"], "note": "F2P/P2P 路径无外部资产（同文件的 test_shape_* 会写临时 nii.gz，也不下载）。", "by": "L1_monai_1"},
+  "11": {"status": "pass", "evidence_refs": ["stage1 离线跑完 8 条"], "note": "不需要网络。", "by": "L1_monai_1"},
+  "9": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["gold/empty 两侧 tests/test_smartcachedataset.py::TestSmartCacheDataset::test_shape_0..4 都 FAILED", "gold/offline/a1/test_output.txt 中 `ValueError: Image data has type int64, which may cause incompatibilities with other tools. To use this type, pass an explicit header or dtype argument to Nifti1Image().`，抛出点 nibabel/deprecated.py:120"], "note": "**镜像依赖漂移（第二例）**：镜像里的 nibabel 已把 int64 数据的警告升级成 ValueError，而 MONAI 0.5 这代测试用 `nib.Nifti1Image(np.random.randint(...), np.eye(4))` 默认产出 int64。5 条用例两侧一致失败，因而被排除出 P2P——判分不受影响，但**回归覆盖被环境问题削掉了 5/8**。与 MONAI-1121 的 np.int 漂移是同一类问题。", "by": "L1_monai_1"},
+  "10": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["SmartCacheDataset 内部用 ThreadPool；P2P 的 test_update_cache 会 start()/update_cache()/shutdown()"], "note": "涉及后台线程的启动与关停，属于潜在不稳定源。stage1 单次运行两侧都稳定，但只有一次样本，标 P3 备查。F2P 本身只构造不 start()，无并发。", "by": "L1_monai_1"},
+  "20": {"status": "pass", "evidence_refs": ["gold 3 PASSED / empty 2 PASSED，差异只在 test_datalist"], "note": "分差干净；噪声失败（5 条 test_shape_*）两侧一致。", "by": "L1_monai_1"}
+ },
+ "issues": [
+  {"category": "image_dependency_drift", "severity": "P2",
+   "evidence_refs": ["gold/offline/a1/test_output.txt 的 nibabel int64 ValueError", "5 条 test_shape_* 两侧 FAILED"],
+   "proposed_action": "镜像的 nibabel 与 MONAI 0.5 不兼容。两选一：(a) 把镜像里的 nibabel 钉回 3.x；(b) 接受这 5 条永久失败并在文档里记明。建议 (a)，因为修好后 P2P 能从 2 条涨到 7 条，这是本题回归覆盖的主要来源。注意这是**跨题**问题：MONAI-1121 是同类（numpy 删了 np.int）。",
+   "next_experiment": "在镜像里 `pip show nibabel numpy torch torchvision`，与 MONAI 0.5 的 requirements.txt 对照；降级 nibabel 后重跑本题看 5 条是否转 PASSED。"},
+  {"category": "weak_regression_coverage", "severity": "P2",
+   "evidence_refs": ["P2P 只有 test_shuffle 与 test_update_cache"],
+   "proposed_action": "修好依赖漂移后把 test_shape_0..4 纳入 P2P；另外补一条『dataset 内部确实被 shuffle 过』的正向断言，堵住『干脆不 shuffle』的假修复。",
+   "next_experiment": "把 `self.randomize(data)` 整行删掉跑当前 F2P+P2P，确认 test_shuffle 是否真的能挡住它。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只碰测试文件，gold 只碰 monai/data/dataset.py。", "evidence_refs": ["grading_bundles_v2_v0:Project-MONAI__MONAI-2446 test_patch", "validation_bundles_v0:Project-MONAI__MONAI-2446 golden_patch"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_shape_0..4（修好 nibabel 后）", "reason": "同文件现成的 5 条，覆盖 cache/replace worker 的主路径。"},
+  {"id": "新增：shuffle=True 时 dataset 内部顺序确实与输入不同", "reason": "挡住『删掉 randomize』的假修复。"},
+  {"id": "tests/test_cachedataset.py", "reason": "SmartCacheDataset 继承 CacheDataset，gold 改的是子类 __init__ 传给 super() 的 data，父类行为需回归。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "题面、gold、F2P 三者对应得干净，离线 3.66s，分差精确。两个待改项（nibabel 漂移让 5 条回归失效、缺一条正向 shuffle 断言）都不阻塞使用。"},
+ "costs": {"minutes": 20}
+}

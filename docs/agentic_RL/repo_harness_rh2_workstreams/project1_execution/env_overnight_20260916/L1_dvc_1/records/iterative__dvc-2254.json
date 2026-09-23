@@ -1,0 +1,236 @@
+{
+ "task_id": "iterative__dvc-2254",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "docs/.../s2/ingest/public_bundles_v0.jsonl#iterative__dvc-2254",
+  "grading": "docs/.../s2/ingest/grading_bundles_v2_v0.jsonl#iterative__dvc-2254",
+  "validation": "docs/.../s2/ingest/validation_bundles_v0.jsonl#iterative__dvc-2254",
+  "raw": "docs/.../s2/raw/swe_gym_lite_full_f70b1a29.jsonl#iterative__dvc-2254",
+  "base_commit": "217f2c4dbd4b38ab465f0b8bd85b369b30734d3d",
+  "version": "0.51",
+  "python_version": "3.8",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-2254:latest",
+  "eval_cmd": "pytest -rA",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2254/{gold,empty}/offline/a1/",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc"
+ },
+ "public_view": {
+  "目标行为": "callback stage（只有 cmd、没有 deps）连续跑两次 `dvc run -o hello 'echo hello > hello'` 时，第二次必须真的再执行命令，不能报 \"Stage is cached, skipping.\"。",
+  "约束": "base `dvc/stage.py:534-537 Stage.create` 的跳过条件是 `if not ignore_build_cache and stage.is_cached:`；同文件第 215 行已有 `Stage.is_callback` 属性，第 858 行的 `changed` 判断里已经写着 `and not self.is_callback`——照此在 `create` 里补同一个条件是最自然的做法。",
+  "公开材料无法确定的点": [
+   "题面没点名文件或属性，但 base 里 `is_callback` 的既有用法（第 238、858、905 行）提供了清楚的类比；",
+   "第二次 run 时 `.dvc` 文件已存在、`overwrite=False`，按 base 逻辑会走 `prompt.confirm`；题面的终端输出里没有这次确认提示，所以\"要不要提示用户\"从题面看不出来（F2P 用 `mock.patch(\"dvc.prompt.confirm\", return_value=True)` 绕过）。"
+  ],
+  "相关模块": "dvc/stage.py（Stage.create / Stage.is_cached / Stage.is_callback）。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-2254/grading.json#test_patch",
+    "mat/iterative__dvc-2254/validation.json#golden_patch",
+    "git show 217f2c4dbd:dvc/stage.py:534"
+   ],
+   "note": "test_patch 只动 tests/func/test_run.py（base 存在）；gold 只动 dvc/stage.py。同一问题。无二进制/LFS/子模块。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show 217f2c4dbd:dvc/stage.py:534-537",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2254/empty/offline/a1/status_map.json"
+   ],
+   "note": "base 的跳过条件里没有 `is_callback`；empty 侧 F2P FAILED。",
+   "by": "static"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-2254/public.json#problem_statement"
+   ],
+   "note": "题面 427 字符，含版本号、两段终端输出、一句期望（\"The second run should have run the command again, as it is a callback stage.\"），渲染完整、无截断、无外链。简短但足够。hints 为空，不存在信息落差。",
+   "by": "static"
+  },
+  "4": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-2254/grading.json#test_patch"
+   ],
+   "note": "test_patch 只触碰 tests/func/test_run.py（纯测试文件），无混合职责。**但它同时是一次大范围测试重构**：把 `TestRunDeterministicBase` 及其 8 个子类从 unittest 类改写成 pytest fixture + 函数，测试 ID 从 `TestRunDeterministic*::test` 全部改名成 `test_run_deterministic*`。P2P 里收的正是改名后的 8 个新 ID（已核对），机制上没问题，但这意味着**同一批 dvc 题里 `tests/func/test_run.py` 的 ID 体系在 0.35（dvc-1877）与 0.51（本题）之间发生了整体迁移**，跨题比较 P2P 时要注意。",
+   "by": "static"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-2254/grading.json#test_patch"
+   ],
+   "note": "恢复清单 = {tests/func/test_run.py}，官方测试文件；恢复后再打 test_patch，新 ID 才存在。",
+   "by": "static"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dvc_1/prescan.json"
+   ],
+   "note": "**与 dvc-1877（0.35）同 gold 文件（dvc/stage.py）、同 test_patch 文件（tests/func/test_run.py）**，且本题 base 已包含 1877 的修复与它的 `TestPersistentOutput`。两题都围绕 `Stage.create` 里的 build cache 跳过条件（1877 加 persist 守卫、2254 加 callback 守卫），是同一处代码的连续两次修补——训练/评测划分必须同侧。本包另有 dvc-1681（0.30）也改 dvc/stage.py。",
+   "by": "static"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-2254/grading.json#test_patch",
+    "git show 217f2c4dbd:dvc/stage.py:215,858"
+   ],
+   "note": "F2P `test_run_deterministic_callback` 的语义（去掉 deps 后连跑两次都应成功返回 stage）与题面一致；base 里 `is_callback` 的既有用法让要求可从公开材料推出。",
+   "by": "static"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-2254/validation.json#golden_patch",
+    "mat/iterative__dvc-2254/grading.json#test_patch"
+   ],
+   "note": "F2P 只断言 `assert deterministic_run.run()` 返回真值，不锁属性名或调用顺序。用 `not stage.deps` 代替 `not stage.is_callback` 同样能过。约束合理。",
+   "by": "static"
+  },
+  "25": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-2254/grading.json#pass_to_pass（含 8 条 test_run_deterministic* ）"
+   ],
+   "note": "**P2P 在这题是真有判别力的**：`test_run_deterministic` 要求相同输入的第二次 run 仍然走 build cache 跳过（不抛 `StageFileAlreadyExistsError`），所以\"干脆删掉 `stage.is_cached` 条件\"的过度修复会被它挡下；`test_run_deterministic_changed_{dep,cmd,out}` 等 6 条则从反方向钉住\"输入变了必须报 StageFileAlreadyExistsError\"。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2254/gold/offline/a1/test_output.txt（3 failed, 50 passed in 14.88s）"
+   ],
+   "note": "P2P 49 条 = tests/func/test_run.py 在两侧都通过的用例，覆盖面好。被排除的 3 条是 `TestRunUnprotectOuts{Copy,Symlink,Hardlink}::test`，双侧失败，原因是容器以 root 运行、`os.access(p, os.W_OK)` 恒 True（与 dvc-1877、dvc-3620 同因）。",
+   "by": "static"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-2254/validation.json#golden_patch"
+   ],
+   "note": "gold 只把跳过条件加上 `and not stage.is_callback`，与 base 第 858 行的既有写法一致，无无关改动，不依赖未交付改动。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-2254/public.json#problem_statement",
+    "mat/iterative__dvc-2254/raw.json#hints_text（空）"
+   ],
+   "note": "题面无修复代码、无 PR/commit 链接；hints 为空。",
+   "by": "static"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2254/gold/offline/a1/test_output.txt（14.88s）"
+   ],
+   "note": "安装与测试正常，无 ImportError/依赖漂移症状。**同一个 tests/func/test_run.py 在本题只用 14.88 秒，而 dvc-1877（0.35）要 388 秒**，说明慢的是 0.35 那套 fixture 而不是文件本身。",
+   "by": "static"
+  },
+  "8": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2254/gold/offline/a1/test_output.txt（TestRunUnprotectOuts* AssertionError）"
+   ],
+   "note": "评分以 root 执行，权限位语义失效（详见 dvc-1877 的同名 issue）。",
+   "by": "static"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2254/gold/offline/a1/test_output.txt（无 SKIPPED）"
+   ],
+   "note": "全本地操作，无网络。",
+   "by": "static"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2254/gold/offline/a1/status_map.json（键 `dvc.command.run:run.py:56`、`dvc:main.py:45`）"
+   ],
+   "note": "caplog 行污染 status_map（见跨题发现 B），未与 F2P/P2P 冲突。",
+   "by": "static"
+  },
+  "7": {
+   "status": "not_applicable",
+   "evidence_refs": [],
+   "note": "test_patch 不带外部资产。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "同族题相邻(5)",
+   "severity": "P2",
+   "evidence_refs": [
+    "mat/iterative__dvc-1877/validation.json#golden_patch（`Stage.create` 加 persist 守卫）",
+    "mat/iterative__dvc-2254/validation.json#golden_patch（`Stage.create` 加 callback 守卫）"
+   ],
+   "note": "dvc-1877（0.35）与 dvc-2254（0.51）修的是同一段 `if not ignore_build_cache and stage.is_cached:`；2254 的 base 里能直接读到 1877 的参考解与其测试。两题不能一个进训练一个进评测。",
+   "proposed_action": "在数据划分约束里登记 {1877, 2254} 同侧（若 L1_dvc_2 包里还有改 dvc/stage.py 的题，一并合并）。",
+   "next_experiment": "无。"
+  },
+  {
+   "category": "容器以 root 运行(8/26)",
+   "severity": "P1",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-2254/gold/offline/a1/test_output.txt（3 条 TestRunUnprotectOuts*）"
+   ],
+   "note": "与 dvc-1877/dvc-3620 同因：root 下 `os.access(path, os.W_OK)` 恒 True，protect/unprotect 语义整体失效。",
+   "proposed_action": "见 dvc-1877 的同名 issue（评分容器改非 root）。",
+   "next_experiment": "见 dvc-1877。"
+  },
+  {
+   "category": "测试 ID 体系迁移(4/19)",
+   "severity": "P3",
+   "evidence_refs": [
+    "mat/iterative__dvc-2254/grading.json#test_patch（TestRunDeterministic* → test_run_deterministic*）"
+   ],
+   "note": "test_patch 顺带做了 unittest→pytest 的整块重构，8 个 P2P 的 ID 全部改名。当前评分没问题（P2P 收的是新名），但跨题/跨版本比较 `tests/func/test_run.py` 的覆盖时会对不上。",
+   "proposed_action": "无需改题；在跨题分析工具里按\"文件 + 测试体\"而不是按 ID 字符串比对。",
+   "next_experiment": "无。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 tests/func/test_run.py；gold 不触碰测试样路径。按第四组 B 保持为空。",
+  "evidence_refs": [
+   "mat/iterative__dvc-2254/grading.json#test_patch",
+   "mat/iterative__dvc-2254/validation.json#golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/func/test_run.py::test_run_deterministic",
+   "reason": "已在 P2P；是本题最关键的反向保护（相同输入第二次仍应跳过），能挡住\"删掉 is_cached\"的过度修复。"
+  },
+  {
+   "id": "tests/func/test_repro.py -k callback",
+   "reason": "`is_callback` 的另一个消费者是 repro 路径（dvc/stage.py:905），gold 改的条件与它共享语义。"
+  },
+  {
+   "id": "tests/func/test_run.py::TestPersistentOutput::test_ignore_build_cache",
+   "reason": "已在 P2P；dvc-1877 为同一段代码加的守卫，两个守卫互为回归。"
+  },
+  {
+   "id": "tests/func/test_unprotect.py::TestUnprotect::test",
+   "reason": "当前因 root 身份失败；修好用户身份后应纳入（`stage.unprotect_outs()` 在 `Stage.create` 里紧邻 gold 的改动点）。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "题面简短但完整、hints 为空无信息落差、gold 与 base 既有写法一致、F2P 是行为级断言，且 P2P 的 8 条 deterministic 用例有真实判别力（能挡住过度修复）。唯一环境缺陷是 3 条 unprotect 用例因 root 身份被排除。"
+ },
+ "costs": {
+  "minutes": 22
+ },
+ "by": "L1_dvc_1 (Claude Opus 5, 静态审查)"
+}

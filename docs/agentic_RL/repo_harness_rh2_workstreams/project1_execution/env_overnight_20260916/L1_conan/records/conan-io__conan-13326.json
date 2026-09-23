@@ -1,0 +1,226 @@
+{
+ "task_id": "conan-io__conan-13326",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+  "grading": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+  "validation": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+  "base_commit": "00700331f59e1e01b53315fec786e7f78d7bced2",
+  "version": "2.0",
+  "image": "xingyaoww/sweb.eval.x86_64.conan-io_s_conan-13326:latest",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/conan-io__conan-13326/{gold,empty}/offline/a1/",
+  "deepseek_candidate": "runs/env_probe_20260909_final_sync/ledger/logs_cc/conan-io__conan-13326/candidate.diff",
+  "pkg_scans": "runs/env_overnight_20260916/L1_conan/{prescan2,envscan,collide}.json"
+ },
+ "public_view": {
+  "目标行为": "题面是 conan 2.0.1 的 bug 报告：用 qcc 8.3 的 profile 跑 conan build 时，compatibility 插件调用 cppstd_compat()，后者对 qcc 拿到 None 后 for _cppstd in cppstd_possible_values 抛 TypeError: 'NoneType' object is not iterable。求解者可从 traceback 定位到 conan/tools/build/cppstd.py::supported_cppstd，它对未注册的 compiler 直接 return None（base L112-118 只注册 apple-clang/gcc/msvc/clang/mcst-lcc）。",
+  "约束": "settings.yml（conans/client/conf/__init__.py L110）已声明 qcc 为合法 compiler；题面只给出 qcc 8.3 一个版本。",
+  "公开材料无法确定的点": [
+   "qcc 各版本到底支持哪些 cppstd 值：题面没有任何一句说明，没有链接 QNX 文档，也没给期望输出。",
+   "版本分界点（gold 取 version < 5）没有公开依据。",
+   "上限取到 17/gnu17 而不是 20/gnu20 没有公开依据。",
+   "另一种同样合理的修法是让调用方容忍 None（cppstd_possible_values or []），题面描述的症状会被完全消除，但不会被 F2P 接受。"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.test_patch 唯一路径 conans/test/unittests/tools/build/test_cppstd.py 在 base 存在（210 行，envscan.json）",
+    "gold 唯一路径 conan/tools/build/cppstd.py 在 base 存在"
+   ],
+   "note": "题面 traceback、test_patch 新增的 test_supported_cppstd_qcc、gold 新增的 _qcc_supported_cppstd 指向同一问题；无二进制/LFS/子模块材料。",
+   "by": "L1_conan"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show 00700331:conan/tools/build/cppstd.py L112-118 的 func 映射不含 qcc，随后 return None",
+    "stage1 empty status_map：3 条 F2P 全 FAILED"
+   ],
+   "note": "base 确实含题面所述缺陷。",
+   "by": "L1_conan"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "public.problem_statement 3713 字符，含完整 profile 与 traceback",
+    "raw.hints_text 仅 44 字符：I have a fix for this and would like to help"
+   ],
+   "note": "题面无外链图片、代码块未截断；hints 无额外信息。判分所需的行为规格缺失另记在 23。",
+   "by": "L1_conan"
+  },
+  "4_17": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan2.json: test_patch_paths 单文件、test_patch_nontest=[]、gold_touches_test=[]"
+   ],
+   "note": "test_patch 只碰一个测试文件，恢复覆盖不会吃掉源码。注意 conan 的测试根是 conans/test/（单数）且很多文件以 _test.py 结尾，沿 moto 的 tests/ 前缀启发式会误判，见 repo_level_findings.md。",
+   "by": "L1_conan"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "本包 12 题 gold_paths 比对：只有 14296 与 15422 共用 conan/tools/cmake/presets.py"
+   ],
+   "note": "13326 无同族题。",
+   "by": "L1_conan"
+  },
+  "23": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "test_patch 断言 qcc 4.4 -> ['98','gnu98']；5.4 与 8.3 -> ['98','gnu98','11','gnu11','14','gnu14','17','gnu17']",
+    "problem_statement 全文无任何 cppstd 取值或版本分界说明"
+   ],
+   "note": "公开材料推不出 F2P 检查的行为。未说明项：qcc 支持的 cppstd 集合、版本阈值、是否含 gnu 扩展、上限是否到 20。",
+   "by": "L1_conan"
+  },
+  "24": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "runs/env_probe_20260909_final_sync/ledger/logs_cc/conan-io__conan-13326/candidate.diff",
+    "task_signals_swegym.json: deepseek_candidate_oracle=RESOLVED_PARTIAL"
+   ],
+   "note": "实证反例：DeepSeek 的 _qcc_supported_cppstd 用更细的阈值（<4.4 -> []；<5.4 -> 98/gnu98；<8.3 -> 到 gnu14；否则到 gnu17）。它在 qcc-4.4 与 qcc-8.3 上与 gold 一致，只在 qcc-5.4 上给到 gnu14 而 gold 要到 gnu17，于是判 PARTIAL。属于公开要求满足、实现不同即被拒。",
+   "by": "L1_conan"
+  },
+  "25": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "test_patch 只断言 supported_cppstd 的返回值，未覆盖题面报告的 cppstd_compat / compatibility 插件路径"
+   ],
+   "note": "F2P 完全不验证题面报的 conan build 是否还崩；只要在字典里加一个返回固定列表的函数就全过，与 gold 做的事等价。",
+   "by": "L1_conan"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "P2P 67 条覆盖 test_cppstd.py 内 gcc/clang/apple-clang/msvc/mcst-lcc 全部既有参数化与 check_min_cppstd 家族"
+   ],
+   "note": "同文件回归充分；扩展建议见 proposed_regression_tests。",
+   "by": "L1_conan"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "validation.golden_patch 只改 conan/tools/build/cppstd.py，新增 8 行"
+   ],
+   "note": "gold 无题外改动、不依赖未交付改动。gold 未同步 default_cppstd/cppstd_default 的 qcc 分支，属上游取舍，不构成材料缺陷。",
+   "by": "L1_conan"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "scripts/leak.py: gold_added_lines=8, matched_in_statement=0/8",
+    "题面与 hints 均无 PR/commit 指针"
+   ],
+   "note": "无静态泄漏。",
+   "by": "L1_conan"
+  },
+  "6_7_11": {
+   "status": "pass",
+   "evidence_refs": [
+    "envscan.json: test_cppstd.py 无 @pytest.mark.tool、无 http/conancenter/requests/subprocess 命中",
+    "stage1 gold status_map 70 项全 PASSED、0 SKIPPED"
+   ],
+   "note": "纯单元测试（MockSettings/MockConanfile）：不需要 cmake/gcc 工具链、不访问 conancenter、不写家目录缓存。",
+   "by": "L1_conan"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "scripts/collide.py 对本题 gold/empty 无 COLLISION / TRUNCATED / SKIP_SUMMARY 输出"
+   ],
+   "note": "70 个参考 ID 无空格、无非 ASCII、无截断，parse_log_pytest 的 split()[1] 对本题安全。",
+   "by": "L1_conan"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan2.json: gold 70/70 PASSED；empty 67 PASSED + 3 FAILED，失败的正是 3 条 F2P"
+   ],
+   "note": "no-op/gold 分差来自目标行为。",
+   "by": "L1_conan"
+  },
+  "31": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "conans/test/.gitignore 第 1 行就是 conftest_user.py（1.51/1.54/1.60/2.0/2.1 五个 base 一致）",
+    "conans/test/conftest.py 用 from conans.test.conftest_user import tools_locations（1.x）/ tools_locations + default_profiles（2.x）并 merge 覆盖默认值",
+    "scripts 补扫：本题目标测试文件里无模块级 pytestmark、无 pytest.mark.tool、无 pytest.skip(、无 sys.exit/os._exit、无 conftest_user 引用"
+   ],
+   "note": "发现一个仓库级控制面：候选可以在 /testbed 新建 conans/test/conftest_user.py，它被官方 conftest 无条件 import 并 merge，而且它在 conans/test/.gitignore 里、也不在 test_patch 路径内，所以既不会被 git checkout <base> -- <path> 恢复，也不会被不带 -x 的 git clean 删掉；文件里的任意代码会在 pytest 收集阶段执行。本题是 conan 2.x：conans/test/utils/tools.py 从 conftest import default_profiles 并在 TestClient 里用作默认 host profile，所以改 conftest_user.py 能直接改变 TestClient 的 settings。 本题是用 Mock 的单元测试，不依赖 default_profiles，改 conftest_user 更可能弄坏自己而不是刷分。 本题的 F2P/P2P 本身没有可被跳过或提前退出的入口（见上条补扫）。按第四组 B，未发现依据前不新增排除清单，只记录观测。",
+   "by": "L1_conan"
+  }
+ },
+ "issues": [
+  {
+   "category": "requirement_underspecified",
+   "severity": "P1",
+   "evidence_refs": [
+    "public.problem_statement",
+    "grading.test_patch"
+   ],
+   "proposed_action": "题面补一句 qcc 支持矩阵的依据（例如 qcc 5 起支持 C++11/14/17），或把 qcc-5.4 这条参数从 F2P 降级为诊断项。不补则本题只适合当照抄上游取值的记忆题。",
+   "next_experiment": "在 13326 镜像里分别用 3 个合理阈值实现（<5 / <5.4 / <4.4）patch conan/tools/build/cppstd.py，各跑 pytest -n0 -rA conans/test/unittests/tools/build/test_cppstd.py，统计有多少种合理实现被拒。"
+  },
+  {
+   "category": "test_forces_single_implementation",
+   "severity": "P1",
+   "evidence_refs": [
+    "runs/env_probe_20260909_final_sync/ledger/logs_cc/conan-io__conan-13326/candidate.diff"
+   ],
+   "proposed_action": "收编为清单 §11 过严测试的校准样本。",
+   "next_experiment": "在真实 RH2 上重放 DeepSeek 的 candidate.diff，确认 RESOLVED_PARTIAL 的逐 ID 归因就是 qcc-5.4 单条。"
+  },
+  {
+   "category": "candidate_test_files_not_restored",
+   "severity": "P3",
+   "evidence_refs": [
+    "candidate.diff 同时改了 conans/test/integration/package_id/test_cache_compatibles.py，该路径不在 test_patch 内"
+   ],
+   "proposed_action": "记录事实：只有 test_patch 触碰的路径会被恢复，候选在 conans/test/ 下新增或修改的其它测试文件留在评分树里。本题 eval 只跑单文件，无判分影响。",
+   "next_experiment": "若把 conan 的测试命令放宽到目录级，先复验这些残留是否会被 pytest 收集执行。"
+  },
+  {
+   "category": "control_surface_conftest_user",
+   "severity": "P2",
+   "evidence_refs": [
+    "conans/test/.gitignore:1",
+    "conans/test/conftest.py 的 conftest_user import 段",
+    "conans/test/utils/tools.py 的 from conans.test.conftest import default_profiles（仅 2.x）"
+   ],
+   "proposed_action": "仓库级处置，见 repo_level_findings.md §10：建议在 conan 的评分配方里，在可信 setup 阶段删除 /testbed/conans/test/conftest_user.py（或对整个 conans/test/ 做 git clean -xfd 后再 checkout），而不是逐题加 additional_exclusions。",
+   "next_experiment": "在 conan 镜像里写一个 conftest_user.py（例如 tools_locations={'cmake':{'disabled':True}} 或 2.x 下改 default_profiles['Linux'] 的 compiler），跑本题官方 eval，确认它是否改变逐 ID 结果；同时确认 RH2 的恢复步骤之后该文件是否仍在。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰 conans/test/unittests/tools/build/test_cppstd.py（纯测试文件），gold 不碰任何测试路径。按第四组 B，额外排除保持为空。",
+  "evidence_refs": [
+   "runs/env_overnight_20260916/L1_conan/prescan2.json"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "conans/test/integration/package_id/test_cache_compatibles.py::TestDefaultCompat",
+   "reason": "题面报的调用链是 compatibility 插件 -> cppstd_compat -> supported_cppstd；这个类是该链路的集成测试，能验证 qcc 修好后 binary 兼容计算真的不再崩。DeepSeek 自己也想到要在这里加 qcc 用例。"
+  },
+  {
+   "id": "conans/test/unittests/tools/build/test_cppstd.py::test_supported_cppstd_error",
+   "reason": "已在 P2P 内，确认新增分支没有改变无 compiler / 无 version 时抛 ConanException 的既有语义。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_review",
+  "reason": "机制干净（无工具链依赖、无网络、参考 ID 不脆弱、gold/no-op 分差正确），但 F2P 检查的 qcc 版本阈值在公开材料里毫无依据，且已有一个合理替代解被判 PARTIAL。"
+ },
+ "costs": {
+  "minutes": 35
+ }
+}

@@ -1,0 +1,248 @@
+{
+ "task_id": "getmoto__moto-5980",
+ "source": "SWE-Gym lite (s2 ingest v0)",
+ "task_revision": "upstream",
+ "by": "L1_moto_2 (Opus 5, 静态审查, 2026-09-16)",
+ "materials_refs": {
+  "snapshot": "runs/env_overnight_20260916/L1_moto_2/mat/getmoto__moto-5980/",
+  "base_commit": "dae4f4947e8d092c87246befc8c2694afc096b7e",
+  "version": "4.1",
+  "eval_cmd": "pytest -n0 -rA",
+  "repo_level": "docs/.../env_overnight_20260916/L1_moto_2/repo_level_findings.md"
+ },
+ "public_view": {
+  "目标行为": "EC2 describe_instances 用 `tag:<key>` 过滤时，标签值里含方括号等正则元字符（例如 JSON 数组字符串 `[\"entry1\", \"entry2\"]`）也要能匹配到实例。",
+  "约束": "只改 moto/ 源码。",
+  "公开材料可推断": "base 的 tag_filter_matches 把每个 filter value 经 simple_aws_filter_to_re 转成正则再 `regex.match`（dae4f4947e:moto/ec2/utils.py:383-397），而 simple_aws_filter_to_re 用 `fnmatch.translate`（同文件 546-550），于是 `[`/`]` 被当成字符类元字符，JSON 串永远匹配不上。定位可由公开材料＋读代码完成。",
+  "公开材料无法确定的点": [
+   "题面没说该保留通配符（`*`/`?`）语义——直接把正则换成精确相等就会破坏既有通配行为（P2P 里 test_filter_wildcard_in_specified_tag_only 会挡住）。",
+   "题面没说反方向的假匹配（filter value 里的元字符导致多匹配）是否也算本题范围。"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/getmoto__moto-5980/test.patch",
+    "mat/getmoto__moto-5980/gold.patch"
+   ],
+   "note": "test_patch 只改 tests/test_ec2/test_instances.py（base 存在，给既有 test_get_instances_filtering_by_tag 加第三个标签与一段断言，并加 `import json`），gold 只碰 moto/ec2/utils.py（base 存在）。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "dae4f4947e:moto/ec2/utils.py:383-397,546-550"
+   ],
+   "note": "base 的正则路径确实无法匹配含方括号的值。stage1 empty=RESOLVED_NO 印证。 逐测试证据：empty 下 F2P=FAILED、P2P 全 PASSED；gold 下 F2P=PASSED（见 repo_level_findings.md#R11）。",
+   "by": "static+stage1"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/getmoto__moto-5980/problem_statement.txt"
+   ],
+   "note": "题面 1476 字符，含完整复现与实际返回值，无外链/截断。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/getmoto__moto-5980/test.patch"
+   ],
+   "note": "合法解在 moto/ec2/utils.py。",
+   "by": "static"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "本包 6022（moto/ec2/models/vpcs.py）、6041（moto/ec2/responses/security_groups.py）"
+   ],
+   "note": "本包有 3 道 EC2 题（5980/6022/6041），源文件与判分文件各不相同、不同 PR，非派生；但同属 tests/test_ec2/ 版本组，安装与 runner 事实可共享。",
+   "by": "static"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "repo_level_findings.md#R2"
+   ],
+   "note": "4.1，离线 make init rc=2（共性）。",
+   "by": "stage1"
+  },
+  "9": {
+   "status": "pass",
+   "evidence_refs": [
+    "repo_level_findings.md#R3"
+   ],
+   "note": "仓库级共性证据。",
+   "by": "static+stage1"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "dae4f4947e:tests/test_ec2/test_instances.py:63,274,432,1178,1604"
+   ],
+   "note": "5 处 settings.TEST_SERVER_MODE 是本地 server 模式开关，不是网络依赖；无 network marker、无真实端点。",
+   "by": "static"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/getmoto__moto-5980/test.patch"
+   ],
+   "note": "只恢复 1 个纯测试文件。",
+   "by": "static"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/getmoto__moto-5980/grading.json"
+   ],
+   "note": "F2P/P2P 无参数化 ID，不受 R8 影响。",
+   "by": "static"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/getmoto__moto-5980/problem_statement.txt",
+    "mat/getmoto__moto-5980/test.patch"
+   ],
+   "note": "F2P 追加的断言与题面场景一致（JSON 数组字符串作为标签值可被过滤命中）。",
+   "by": "static"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/getmoto__moto-5980/test.patch"
+   ],
+   "note": "只断言 describe_instances 的结果集合，不约束实现（加精确相等分支、或对非通配部分 re.escape，都能通过）。",
+   "by": "static"
+  },
+  "25": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/getmoto__moto-5980/grading.json",
+    "dae4f4947e:tests/test_ec2/test_instances.py"
+   ],
+   "note": "最诱人的错误修复是\"把正则换成精确相等\"，会被 P2P 里的 test_filter_wildcard_in_specified_tag_only、test_get_instances_filtering_by_tag_value、test_get_instances_filtering_by_tag_name 打掉。89 个同文件 P2P 覆盖面广。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "dae4f4947e:moto/ec2/models/security_groups.py:438",
+    "dae4f4947e:moto/ec2/utils.py:435,486"
+   ],
+   "note": "tag_filter_matches 还被 security groups（models/security_groups.py:438）和 internet gateway 过滤（utils.py:486）调用，这些调用者的测试文件不在判分集合内。见 proposed_regression_tests。",
+   "by": "static"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/getmoto__moto-5980/gold.patch",
+    "dae4f4947e:moto/ec2/utils.py:546-550",
+    "master:moto/ec2/utils.py:395-413"
+   ],
+   "note": "gold 是**变通而非根治**：在正则分支之外再加一条 `if tag_value in filter_values: return True`，只补了漏匹配方向。反方向的假匹配仍在——`simple_aws_filter_to_re` 用 fnmatch.translate，`[abc]` 这类字符类、`?`/`*` 之外的元字符依旧被当成模式，于是 filter value `[abc]` 会错误命中标签值 `a`（AWS 只支持 `*`/`?` 两种通配）。旁证：同仓库 master 分支的 tag_filter_matches 与 gold 逐行一致（master:moto/ec2/utils.py:395-413），说明上游至今仍是这个变通。判为\"gold 达成题面目标但不完整\"，不是任务缺陷。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/getmoto__moto-5980/hints.txt"
+   ],
+   "note": "hints 只说维护者会推修复，不含代码/位置。",
+   "by": "static"
+  },
+  "7": {
+   "status": "not_applicable",
+   "evidence_refs": [],
+   "note": "无外部资产。",
+   "by": "static"
+  },
+  "13": {
+   "status": "issue",
+   "evidence_refs": [
+    "repo_level_findings.md#R10",
+    "runs/env_probe_stage1_20260910/.../getmoto__moto-5980/gold/offline/a1/test_output.txt:425-492"
+   ],
+   "note": "判分跑整个 tests/test_ec2/test_instances.py，其中 test_create_instance_with_launch_template_id_produces_no_warning[LaunchTemplateId/Name] 两条在 gold 与 empty 下都 FAILED：测试用 warnings.simplefilter(\"error\")（dae4f4947e:tests/test_ec2/test_instances.py:2316），而 Python 3.12 下 botocore 自己调用 datetime.utcnow() 会发 DeprecationWarning，被提升成异常。两条都不在参考集内，因此不影响判分，但测试阶段 rc 因此非零。详见 R10。",
+   "by": "stage1"
+  },
+  "18": {
+   "status": "issue",
+   "evidence_refs": [
+    "repo_level_findings.md#R10"
+   ],
+   "note": "参考集外有 2 条确定性失败；与 6121/6157 的情况同类——pytest 退出码在本配方下不能当健康度信号。",
+   "by": "stage1"
+  }
+ },
+ "issues": [
+  {
+   "category": "gold 不完整（变通修复）",
+   "severity": "P3",
+   "evidence_refs": [
+    "mat/getmoto__moto-5980/gold.patch",
+    "master:moto/ec2/utils.py:395-413"
+   ],
+   "proposed_action": "记录反方向假匹配仍在；因上游 master 同样如此，不作为任务缺陷处理。",
+   "next_experiment": "gold 之上用 filter value `[abc]` 过滤标签值为 `a` 的实例，预期错误命中。"
+  },
+  {
+   "category": "参考集外的确定性失败（Python 3.12 引起）",
+   "severity": "P2",
+   "evidence_refs": [
+    "repo_level_findings.md#R10"
+   ],
+   "proposed_action": "在事实层单列\"参考集外失败\"；若将来把测试阶段 rc 接进归因，需要先处理这两条。不建议为此改测试（上游 moto 5.0 已自行改写为 catch_warnings(record=True)）。",
+   "next_experiment": "在 python 3.11 镜像上重跑同一文件，确认这两条转为 PASSED，从而把归因钉在 python 版本上。"
+  },
+  {
+   "category": "共享函数的回归面超出判分集合",
+   "severity": "P3",
+   "evidence_refs": [
+    "dae4f4947e:moto/ec2/models/security_groups.py:438"
+   ],
+   "proposed_action": "扩展回归覆盖 security groups / internet gateway 的标签过滤。",
+   "next_experiment": "见 proposed_regression_tests。"
+  },
+  {
+   "category": "安装配方与离线条件不匹配",
+   "severity": "P2",
+   "evidence_refs": [
+    "repo_level_findings.md#R2"
+   ],
+   "proposed_action": "见 R2。",
+   "next_experiment": "见 R2。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰 1 个纯测试文件。",
+  "evidence_refs": [
+   "mat/getmoto__moto-5980/test.patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/test_ec2/test_security_groups.py -k tag",
+   "reason": "SecurityGroup.matches_filter 直接调用 tag_filter_matches（dae4f4947e:moto/ec2/models/security_groups.py:438），是判分集合外最重要的调用者。"
+  },
+  {
+   "id": "tests/test_ec2/test_internet_gateways.py",
+   "reason": "utils.py:486 的 IGW 过滤路径同样复用该函数。"
+  },
+  {
+   "id": "tests/test_ec2/test_tags.py",
+   "reason": "标签过滤语义（含通配符与特殊字符）的集中测试文件，能同时验证漏匹配修复与通配行为保持。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "材料一致、初态含问题、题面充分、判分对\"丢掉通配符\"的错误修复有明确防护；gold 的不完整与上游一致，属可记录不阻塞项。"
+ },
+ "costs": {
+  "minutes": 16
+ }
+}

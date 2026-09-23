@@ -1,0 +1,52 @@
+{
+ "task_id": "getmoto__moto-7331",
+ "source": "SWE-Gym lite (swe_gym_lite_full_f70b1a29)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "s2/ingest/public_bundles_v0.jsonl#getmoto__moto-7331",
+  "grading": "s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-7331",
+  "validation": "s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-7331",
+  "base_commit": "ad63e3966bbcb65dc1a7c9ef1c90b31c6d6100f4",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-7331/gold/offline/a1/"
+ },
+ "public_view": {
+  "goal": "题面：moto server 开了 access control 后，对 Cognito **Identity** 的 `GetId` 调用因为请求没有 Authorization 头而抛 KeyError: 'HTTP_AUTHORIZATION'。要求这类“本就公开、不带 Authorization”的 Cognito 操作不报错。",
+  "constraints": ["题面给的是 moto server 模式 + werkzeug 的栈回溯，定位到 moto/core/responses.py:_authenticate_and_authorize_action → moto/iam/access_control.py:191"],
+  "unknowns_from_public_only": [
+   "题面只点名一个操作 GetId，没有给出“应当公开”的完整操作清单",
+   "题面没说用什么判据识别公开操作（X-Amz-Target 头、URL 路径、还是 service 名）",
+   "题面没说没有 Authorization 时应当放行还是返回 AWS 的标准鉴权错误"
+  ]
+ },
+ "checks": {
+  "1": {"status": "issue", "evidence_refs": ["题面标题与正文讲的是 Cognito **Identity** 的 `GetId`（`AWSCognitoIdentityService.GetId`）", "golden_patch 新增的 PUBLIC_OPERATIONS 只有 5 个 `AWSCognitoIdentityProviderService.*`：ConfirmSignUp / GetUser / ForgotPassword / InitiateAuth / SignUp，**不含 GetId**", "test_patch 只碰 tests/test_cognitoidp/test_cognitoidp.py，4 条 F2P 全是 cognito-idp 的用例", "同 gold 文件的 getmoto__moto-7335（也在本包）测试文件是 tests/test_cognitoidentity/test_cognitoidentity.py，才是处理 cognito-identity 的那一半"], "note": "**P1：题面与判分材料不是同一个问题。** 题面报的是 cognito-identity 的 GetId，gold 与 F2P 修/测的是 cognito-idp 的另外五个操作。同一个 issue 被上游拆成两个 PR，SWE-Gym 把同一段题面配给了前一个 PR。无二进制/LFS/子模块。", "by": "L1_moto_3"},
+  "2": {"status": "pass", "evidence_refs": ["base moto/core/responses.py:146-170 `_authenticate_and_authorize_action` 在 request_count >= INITIAL_NO_AUTH_ACTION_COUNT 时无条件构造 IAMRequest，没有任何“公开操作”豁免"], "note": "base 确实缺少公开操作豁免；但这是题面症状的**同类**缺陷，不是题面那一个（GetId）。", "by": "L1_moto_3"},
+  "3": {"status": "issue", "evidence_refs": ["problem_statement 4098 字符，只有栈回溯与版本，无复现脚本", "hints_text 为空"], "note": "P2：题面既没给应当公开的操作清单，也没给判据；配合检查 1 的错配，公开材料无法推出 F2P 所测行为（要恰好列出 cognito-idp 的那 5 个操作、并用 X-Amz-Target 判定）。", "by": "L1_moto_3"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 触碰路径全集：tests/test_cognitoidp/test_cognitoidp.py"], "note": "无非测试源码路径；gold 触碰 moto/core/responses.py，非测试样路径。", "by": "L1_moto_3"},
+  "17": {"status": "pass", "evidence_refs": ["同 4"], "note": "additional_exclusions 空。", "by": "L1_moto_3"},
+  "5": {"status": "issue", "evidence_refs": ["同 gold 文件 moto/core/responses.py 的另一题是 getmoto__moto-7335（本包）", "已实测：7331 的 golden_patch 在 7335 的 base 上 `git apply -R --check` 成功 → 7331 的答案逐字存在于 7335 的 base"], "note": "7331 与 7335 是同一 issue 的前后两个 PR，构成强派生关系 + train/eval 污染。另：同测试文件 tests/test_cognitoidp/test_cognitoidp.py 还被 getmoto__moto-5286、5794 使用（不在本包）。", "by": "L1_moto_3"},
+  "23": {"status": "issue", "evidence_refs": ["F2P：test_initiate_auth_with_invalid_user_pool、test_get_user_unknown_accesstoken、test_forgot_password、test_confirm_sign_up"], "note": "见 1/3：公开材料推不出这四条。严重度 P1。", "by": "L1_moto_3"},
+  "24": {"status": "issue", "evidence_refs": ["gold 用 `self.headers.get('X-Amz-Target') in PUBLIC_OPERATIONS` 判定"], "note": "F2P 本身是黑盒的，判据可换（按 service+action 名、按 URL），所以不强制唯一实现；但**必须恰好覆盖那 5 个操作**才能全过，而清单不可从题面得到。属于“要求不充分”而非“测试锁死实现”，P2，与 23 合并处理。", "by": "L1_moto_3"},
+  "25": {"status": "issue", "evidence_refs": ["grep 确认 tests/test_cognitoidp/test_cognitoidp.py 全文没有任何 AccessDenied / 鉴权失败断言", "真正验证鉴权被执行的测试在 tests/test_core/test_auth.py、tests/test_s3/test_s3_auth.py、tests/test_kms/test_kms_policy_enforcement.py，**本题一个都不跑**（eval 只跑 test_cognitoidp.py）"], "note": "**P1 最强的假修复通道**：把 `_authenticate_and_authorize_action` 改成无条件 `return`（即整体关闭 IAM 访问控制），4 条 F2P 与 191 条 P2P 会全过 → 满分。判分对“摧毁整个鉴权特性”零拦截。", "by": "L1_moto_3"},
+  "26": {"status": "issue", "evidence_refs": ["collected 195 = F2P 4 + P2P 191，全在 test_cognitoidp.py"], "note": "gold 改的是 moto/core/responses.py 这一全局鉴权入口，判分却只看一个 service 的测试文件。见 proposed_regression_tests。", "by": "L1_moto_3"},
+  "27": {"status": "issue", "evidence_refs": ["golden_patch 只加 cognito-idp 的 5 个操作"], "note": "gold 本身正确、无无关改动，但**不解决题面报告的 GetId**（要等 7335）。按检查 27 的口径：gold 与题目所述问题不完全对应。", "by": "L1_moto_3"},
+  "29": {"status": "pass", "evidence_refs": ["hints_text 为空；题面无 PR/commit 链接、无修复代码"], "note": "无静态泄漏。", "by": "L1_moto_3"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold 195 passed，26.12s"], "note": "纯 mock。", "by": "L1_moto_3"},
+  "7": {"status": "issue", "evidence_refs": ["本包共性 install rc=2"], "note": "见包级 issue。", "by": "L1_moto_3"},
+  "11": {"status": "issue", "evidence_refs": ["`set_initial_no_auth_action_count` 会改写全局 settings.INITIAL_NO_AUTH_ACTION_COUNT 与类变量 ActionAuthenticatorMixin.request_count（moto/core/responses.py:186-215）", "F2P test_forgot_password 用 `@set_initial_no_auth_action_count(2)`，即依赖“前 2 个请求免鉴权、第 3 个必须公开”这一精确计数", "该装饰器在 settings.TEST_SERVER_MODE 下会向 moto server 发 HTTP POST /moto-api/reset-auth（requests.post）"], "note": "P2 脆弱性：判分依赖跨进程全局计数器和精确的请求条数；任何让实现多发一次内部请求的改动都会让 test_forgot_password 偏移。另在 server 模式下这些测试会发真实 HTTP（对本地 moto server），当前 decorator 模式不触发。", "by": "L1_moto_3"}
+ },
+ "issues": [
+  {"category": "statement_grading_mismatch", "severity": "P1", "evidence_refs": ["题面讲 cognito-identity GetId；gold/F2P 全是 cognito-idp 的 5 个操作；GetId 由 7335 处理"], "proposed_action": "判为 needs_repair：题面与判分不对应，仅凭题面无法推出要修的操作集合。处置选项：(a) 剔除本题；(b) 与 7335 合并成一题并改写题面；(c) 保留但明确标注为“题面不足”样本，不计入解题率统计。", "next_experiment": "只给题面跑一次 agent，看它会把哪些操作加入公开清单（预期加 GetId 而非那 5 个 cognito-idp 操作），F2P 全失败。"},
+  {"category": "test_lets_wrong_fix_pass", "severity": "P1", "evidence_refs": ["test_cognitoidp.py 无任何鉴权失败断言；tests/test_core/test_auth.py 等不在判分集合"], "proposed_action": "若保留本题，必须把 tests/test_core/test_auth.py 加进判分或附加回归，否则“关闭鉴权”可得满分。", "next_experiment": "构造把 `_authenticate_and_authorize_action` 首行改成 `return` 的补丁，跑 F2P+P2P 确认满分（预期满分），再跑 tests/test_core/test_auth.py 确认大面积失败。"},
+  {"category": "train_eval_contamination", "severity": "P2", "evidence_refs": ["7331 的 gold 在 7335 的 base 里逐字存在"], "proposed_action": "7331 与 7335 成组，同进一侧；且因为是同一 issue 的两半，建议只保留一题。", "next_experiment": "无。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只含测试文件；沿用默认空排除。", "evidence_refs": ["test_patch 路径全集 = tests/test_cognitoidp/test_cognitoidp.py"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_core/test_auth.py", "reason": "**必须加**：这是仓库里唯一系统验证 IAM 访问控制仍然生效的测试文件，缺了它“关闭鉴权”就是满分解（见检查 25）。"},
+  {"id": "tests/test_s3/test_s3_auth.py、tests/test_kms/test_kms_policy_enforcement.py", "reason": "gold 改的是全局鉴权入口 moto/core/responses.py，这两个文件覆盖非 cognito 的鉴权路径。"},
+  {"id": "tests/test_cognitoidentity/test_cognitoidentity.py", "reason": "题面报告的 GetId 所在的 service；用来暴露 gold 并未解决题面问题（也是 7335 的判分文件）。"},
+  {"id": "新增：不带 Authorization 调用一个**不在**公开清单里的操作，断言仍然按鉴权失败处理", "reason": "钉住“豁免清单是白名单而非全放行”。"}
+ ],
+ "disposition_hint": {"state": "needs_repair", "reason": "题面（cognito-identity GetId）与 gold/F2P（cognito-idp 的 5 个操作）不是同一个问题，仅凭公开材料无法推出判分要求；同时判分集合里没有任何鉴权仍生效的断言，‘直接关闭 IAM 访问控制’可得满分。两点都需要修题或补判分才能用。"},
+ "costs": {"minutes": 21}
+}

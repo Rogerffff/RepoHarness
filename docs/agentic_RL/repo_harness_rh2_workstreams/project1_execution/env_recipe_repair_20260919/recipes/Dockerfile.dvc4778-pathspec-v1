@@ -1,0 +1,10 @@
+# 诊断修复：旧 DVC 用 | 合并 pathspec 的 regex；0.12.1 重复引入命名组 ps_d。
+# 0.8.1 满足此 checkout 的 pathspec>=0.6.0；需实证确认目标与其它测试，不宣称恢复唯一历史版本。
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+RUN mkdir -p /opt/rh2/dependency-wheels \
+ && /opt/miniconda3/envs/testbed/bin/python -m pip download --only-binary=:all: --no-deps \
+      --dest /opt/rh2/dependency-wheels pathspec==0.8.1 \
+ && /opt/miniconda3/envs/testbed/bin/python -m pip install --no-index --no-deps \
+      --find-links=/opt/rh2/dependency-wheels pathspec==0.8.1 \
+ && sha256sum /opt/rh2/dependency-wheels/*

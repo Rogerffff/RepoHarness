@@ -1,0 +1,212 @@
+{
+ "task_id": "conan-io__conan-13610",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "0c1624d2dd3b0278c1cf6f66f8dcc7bd1aa9ec48",
+  "version": "2.0",
+  "image": "xingyaoww/sweb.eval.x86_64.conan-io_s_conan-13610:latest",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/conan-io__conan-13610/{gold,empty}/offline/a1/",
+  "pkg_scans": "runs/env_overnight_20260916/L1_conan/{prescan2,envscan,collide}.json"
+ },
+ "public_view": {
+  "目标行为": "题面全文只有 245 字符：Take a look into normalizing the log levels of conan / Currently, it's not clear whether verbose or notice/status is the default one, and if their order is correct. We should take a look into normalizing all the log levels to be consistent across。这是一条内部待办，不是缺陷报告：它既没说当前哪里错，也没说期望结果。相关代码是 conan/cli/command.py::_process_log_level_args 的 levels 字典，裸 -v（键 None）当前映射到 LEVEL_VERBOSE。",
+  "约束": "只改非测试源码。",
+  "公开材料无法确定的点": [
+   "裸 -v 到底应该等于 status 还是 verbose——题面没有给出任何判据，gold 选了 status。",
+   "normalizing 的范围（只改 -v，还是把整张表重排、改名、改数值）完全没界定。",
+   "题面说 order is correct 存疑，但 base 的字典顺序其实已经是从高到低单调的（warning 60 / notice 50 / status 40 / verbose 30 / debug 20 / trace 10），gold 也没改数值。"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 唯一路径 conans/test/integration/command_v2/test_output_level.py 在 base 存在（145 行）",
+    "gold 唯一路径 conan/cli/command.py 在 base 存在"
+   ],
+   "note": "gold 与 test_patch 同一 PR。test_patch 是把既有测试 test_output_level 里的一行断言从 in 改成 not in，没有新增测试。无二进制/LFS/子模块。",
+   "by": "L1_conan"
+  },
+  "2": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "git show 0c1624d2:conan/cli/command.py L117-125：None: LEVEL_VERBOSE",
+    "base 的 test_output_level 第 41-49 行断言 -v 之后 This is a verbose in t.out（即 base 行为被既有测试明确认可）"
+   ],
+   "note": "base 不是含缺陷，而是含一个被既有测试锁定的既定行为。本题是产品口径变更（-v 的含义从 verbose 改成 status），不是 bug 修复；判定初态含问题只能建立在题面的模糊表述上。",
+   "by": "L1_conan"
+  },
+  "3": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "problem_statement 仅 245 字符，无复现、无期望、无日志",
+    "raw.hints_text 为空"
+   ],
+   "note": "求解者收到的输入不足以确定任务目标；也没有 hints 可补。",
+   "by": "L1_conan"
+  },
+  "4_17": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan2.json: test_patch 只碰 conans/test/integration/command_v2/test_output_level.py"
+   ],
+   "note": "纯测试文件；gold 不碰测试路径。",
+   "by": "L1_conan"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "本包内无其它 cli 题"
+   ],
+   "note": "无同族题。",
+   "by": "L1_conan"
+  },
+  "23": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "F2P 唯一的行为变化是：conan create -v 之后 This is a verbose 不应出现在输出里",
+    "题面没有任何一句说明裸 -v 应该等于哪一级"
+   ],
+   "note": "公开材料完全推不出 F2P。求解者面对的是一个二选一的产品决定（-v = status 还是 -v = verbose），而 base 的既有测试恰好把答案指向相反方向。这是本包里题意与判分脱节最严重的一题。",
+   "by": "L1_conan"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 只看 CLI 输出，不看实现"
+   ],
+   "note": "改字典、改 argparse 默认值、在 ConanOutput 里过滤，只要 -v 之后不打印 verbose 都能过。不强制唯一实现。",
+   "by": "L1_conan"
+  },
+  "25": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "F2P + P2P 一共 2 个测试；P2P 只有 test_invalid_output_level（只检查非法参数报错）"
+   ],
+   "note": "把 -v 直接映射到 LEVEL_ERROR（比 status 更高）同样能让 verbose 不出现——但 test_output_level 后续还断言 info/highlight/success 仍在输出里，所以这条被挡住了。真正的漏放是：题面说的 normalizing 的其它部分（各级别的相对顺序与命名）完全没有检查。",
+   "by": "L1_conan"
+  },
+  "26": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "P2P 只有 1 条，且与日志级别的实际使用无关"
+   ],
+   "note": "应补覆盖 -vquiet/-verror/-vwarning/-vnotice 等级别以及其它使用 ConanOutput 的命令，见 proposed_regression_tests。",
+   "by": "L1_conan"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 只把 None 键从 LEVEL_VERBOSE 挪到 LEVEL_STATUS 的位置"
+   ],
+   "note": "gold 无题外改动。但它只兑现了题面 normalizing 的一小部分，且没更新 base 测试里 # Print also verbose traces 这条现在已经不成立的注释。",
+   "by": "L1_conan"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "scripts/leak.py: 1 行 gold 新增，0 命中题面"
+   ],
+   "note": "无静态泄漏（题面太短，也没有可泄漏的内容）。",
+   "by": "L1_conan"
+  },
+  "6_7_11": {
+   "status": "pass",
+   "evidence_refs": [
+    "envscan.json: 该文件无 @pytest.mark.tool、无 http/网络命中",
+    "stage1 gold 2/2 PASSED、0 SKIPPED"
+   ],
+   "note": "TestClient + GenConanfile 全在临时 cache 里 conan create，不需要编译器、不访问 conancenter、不写真实家目录。",
+   "by": "L1_conan"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "scripts/collide.py 无输出"
+   ],
+   "note": "2 个参考 ID 无参数化。",
+   "by": "L1_conan"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan2.json: gold 2/2 PASSED；empty 1 PASSED + 1 FAILED"
+   ],
+   "note": "分差来自目标行为，但样本只有 2 个测试。",
+   "by": "L1_conan"
+  },
+  "31": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "conans/test/.gitignore 第 1 行就是 conftest_user.py（1.51/1.54/1.60/2.0/2.1 五个 base 一致）",
+    "conans/test/conftest.py 用 from conans.test.conftest_user import tools_locations（1.x）/ tools_locations + default_profiles（2.x）并 merge 覆盖默认值",
+    "scripts 补扫：本题目标测试文件里无模块级 pytestmark、无 pytest.mark.tool、无 pytest.skip(、无 sys.exit/os._exit、无 conftest_user 引用"
+   ],
+   "note": "发现一个仓库级控制面：候选可以在 /testbed 新建 conans/test/conftest_user.py，它被官方 conftest 无条件 import 并 merge，而且它在 conans/test/.gitignore 里、也不在 test_patch 路径内，所以既不会被 git checkout <base> -- <path> 恢复，也不会被不带 -x 的 git clean 删掉；文件里的任意代码会在 pytest 收集阶段执行。本题是 conan 2.x：conans/test/utils/tools.py 从 conftest import default_profiles 并在 TestClient 里用作默认 host profile，所以改 conftest_user.py 能直接改变 TestClient 的 settings。 本题用 TestClient 跑集成测试，受 default_profiles 影响面更大。 本题的 F2P/P2P 本身没有可被跳过或提前退出的入口（见上条补扫）。按第四组 B，未发现依据前不新增排除清单，只记录观测。",
+   "by": "L1_conan"
+  }
+ },
+ "issues": [
+  {
+   "category": "requirement_unknowable",
+   "severity": "P1",
+   "evidence_refs": [
+    "public.problem_statement 全文 245 字符",
+    "grading.test_patch 单行断言取反"
+   ],
+   "proposed_action": "建议 reject_revision：题面是一条 take a look into 的内部待办，判分却要求做出一个特定的产品决定（裸 -v = status）。若要保留，题面必须改写成明确要求，例如 -v 应与 -vstatus 等价，verbose 只在 -vverbose 时开启。",
+   "next_experiment": "盲解 3 次，统计模型选择 -v = status 与 -v = verbose 的比例；若接近随机，即证明奖励不可学。"
+  },
+  {
+   "category": "base_behavior_locked_by_existing_test",
+   "severity": "P2",
+   "evidence_refs": [
+    "base 的 test_output_level L41-49 断言 -v 之后 This is a verbose in t.out"
+   ],
+   "proposed_action": "记录为初态判定的反例：本题的 base 不含缺陷，而是含一个被既有测试认可的行为，PR 改的是产品口径。筛查工具若按 base 是否有既有测试认可当前行为 来区分 bug fix 与 behavior change，本题会被正确标出。",
+   "next_experiment": "对 216 题统计：有多少题的 test_patch 只是把既有断言取反（而非新增测试），作为 behavior change 类任务的候选清单。"
+  },
+  {
+   "category": "control_surface_conftest_user",
+   "severity": "P2",
+   "evidence_refs": [
+    "conans/test/.gitignore:1",
+    "conans/test/conftest.py 的 conftest_user import 段",
+    "conans/test/utils/tools.py 的 from conans.test.conftest import default_profiles（仅 2.x）"
+   ],
+   "proposed_action": "仓库级处置，见 repo_level_findings.md §10：建议在 conan 的评分配方里，在可信 setup 阶段删除 /testbed/conans/test/conftest_user.py（或对整个 conans/test/ 做 git clean -xfd 后再 checkout），而不是逐题加 additional_exclusions。",
+   "next_experiment": "在 conan 镜像里写一个 conftest_user.py（例如 tools_locations={'cmake':{'disabled':True}} 或 2.x 下改 default_profiles['Linux'] 的 compiler），跑本题官方 eval，确认它是否改变逐 ID 结果；同时确认 RH2 的恢复步骤之后该文件是否仍在。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰纯测试文件；gold 不碰测试路径。",
+  "evidence_refs": [
+   "runs/env_overnight_20260916/L1_conan/prescan2.json"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "conans/test/integration/command_v2/test_output_level.py::test_invalid_output_level",
+   "reason": "已在 P2P；确认参数解析本身没被改坏。"
+  },
+  {
+   "id": "conans/test/integration/command/test_output.py 与 conans/test/unittests/model/test_conf.py",
+   "reason": "沿调用者：ConanOutput 的其它使用点与 core:default_build_profile 等 conf 读取都经过同一 CLI 入口，能抓到把 -v 语义改动溢出到别的命令。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "题面是一句无判据的内部待办，判分要求一个特定产品决定，base 的既有测试还指向相反答案；不改题面则奖励基本不可学。机制侧本身干净。"
+ },
+ "costs": {
+  "minutes": 20
+ }
+}

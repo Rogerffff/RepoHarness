@@ -1,0 +1,193 @@
+{
+ "task_id": "pydantic__pydantic-8004",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_pydantic (Claude Opus 5, 2026-09-16 夜)",
+ "materials_refs": [
+  "s2/ingest/*_bundles_v0.jsonl (pydantic__pydantic-8004)",
+  "repos/pydantic@0a2377e6(见 grading.base_commit)",
+  "runs/env_probe_stage1_20260910/.../pydantic__pydantic-8004/"
+ ],
+ "public_view": {
+  "目标行为": "`_x: Annotated[T, PrivateAttr(...)]` 这种写法声明的私有属性应与 `_x: T = PrivateAttr(...)` 一样生效（默认值/工厂被应用），现在取值时抛 AttributeError。",
+  "约束": "普通 `= PrivateAttr(...)` 写法与非 Annotated 的私有属性行为不变。",
+  "公开材料无法确定的点": [
+   "Annotated 里有多个 PrivateAttr 时取哪一个",
+   "PrivateAttr 与 Field 混在同一个 Annotated 里怎么办"
+  ],
+  "base 定位": "pydantic/_internal/_model_construction.py:385-390 `inspect_namespace`：对下划线开头的注解一律 `private_attributes[ann_name] = PrivateAttr()`（丢掉 Annotated 元数据里的 ModelPrivateAttr），于是没有默认值，取值时 `__pydantic_private__[item]` KeyError → AttributeError。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "tests/test_annotated.py、pydantic/_internal/_model_construction.py 在 base 均存在"
+   ],
+   "note": "对应同一问题。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "_model_construction.py:385-390",
+    "stage1 empty：F2P FAILED"
+   ],
+   "note": "base 确有缺陷。",
+   "by": "static+stage1log"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 2022 字符，含完整 traceback 与可运行例子"
+   ],
+   "note": "输入完整。hints 里维护者给了精确到行号的 GitHub blob 链接（L375-L384）并说明“要从 ann_type 里取 default/default_factory”——这是**定位级别的提示**，agent 看不到，但题面的 traceback 已经指到 main.py:738 的 __getattr__，可自行定位。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只碰 tests/test_annotated.py；F2P+P2P 16 条全在该文件；gold 只碰生产代码"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "static"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "与 9134 同 gold 文件 pydantic/_internal/_model_construction.py（9134 改 model_post_init 与私有属性的交互）"
+   ],
+   "note": "P3 同族：两题都围绕私有属性在 ModelMetaclass 里的处理，相隔 5 个月；不是派生，但划分需注意。",
+   "by": "static"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "install rc=2。",
+   "by": "stage1log"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "测试第三方 import：pytest / pydantic_core / annotated_types"
+   ],
+   "note": "无外部资产。",
+   "by": "static"
+  },
+  "10": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "无本题轨迹。",
+   "by": "-"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "只有 install 需要网络。",
+   "by": "stage1log"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 与 F2P 语义一致"
+   ],
+   "note": "要求充分。",
+   "by": "static"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 只断言 `model._foo == 1`"
+   ],
+   "note": "不强制唯一实现。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "**P2P 只有 15 条**（本包最小判分面），全在 tests/test_annotated.py",
+    "F2P 用的是 `PrivateAttr(default=1)`，而题面原例用的是 `PrivateAttr(default_factory=datetime.now)` —— 题面原例的写法不在判分面里",
+    "base tests/test_private_attributes.py（私有属性的主测试文件）完全不在判分面",
+    "静态复核：对 base 测试文件 + test_patch 做断言级扫描（见 summary.md 的“静态复核补强”）"
+   ],
+   "note": "P2 **已静态复核**：判分面只有 16 条（本包最小）。(a) 在 tests/test_annotated.py 里 grep，`default_factory` 只出现在普通 `Field(default_factory=...)` 里，**没有任何一条用 Annotated + PrivateAttr(default_factory=...)**——即题面原例（`_t2: Annotated[datetime, PrivateAttr(default_factory=datetime.now)]`）的写法不在判分面，只处理 `default=` 的部分修复能全绿却修不好题面例子；(b) 私有属性的主回归文件 tests/test_private_attributes.py 完全不在判分面，任何破坏普通私有属性行为的改动都看不见。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "同 25"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "static"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 全文"
+   ],
+   "note": "gold 只在 inspect_namespace 的私有属性分支里识别 Annotated 元数据中的 ModelPrivateAttr；无题外改动。`next(...)` 取第一个，多个 PrivateAttr 的情况未定义但也未被要求。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak 扫描 0 命中；题面无 URL（hints 里有指向修复位置的 blob 链接，不可见）"
+   ],
+   "note": "无泄漏。",
+   "by": "static"
+  },
+  "31": {
+   "status": "issue",
+   "evidence_refs": [
+    "R4"
+   ],
+   "note": "静态残余面。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "oracle_surface_too_small",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 25"
+   ],
+   "proposed_action": "把 tests/test_private_attributes.py 并入 P2P，并补题面原例的 default_factory 断言",
+   "next_experiment": "在镜像里实现只处理 default= 的部分修复，跑官方 16 条确认全绿但题面例子仍失败"
+  },
+  {
+   "category": "statement_example_not_graded",
+   "severity": "P3",
+   "evidence_refs": [
+    "check 25(a)"
+   ],
+   "proposed_action": "把 `_t2: Annotated[datetime, PrivateAttr(default_factory=datetime.now)]` 写成一条 F2P",
+   "next_experiment": "同上"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 仅纯测试文件、gold 仅生产代码、判分面与恢复面一致。",
+  "evidence_refs": [
+   "grading.json.test_patch",
+   "validation.json.golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  "题面原例：`_t2: Annotated[datetime, PrivateAttr(default_factory=datetime.now)]` 能取值且每实例不同 — 选择依据：题面原例当前不在判分面",
+  "tests/test_private_attributes.py 全量 — 选择依据：gold 改的是所有私有属性的收集入口 inspect_namespace，这是它的主回归文件，当前完全不在判分面",
+  "`_x: Annotated[int, Field(...)]`（Annotated 里不是 PrivateAttr）仍走原分支 — 选择依据：gold 的 `next(..., None)` 为 None 的反面分支",
+  "带继承的私有属性（父类 Annotated 私有属性被子类继承）— 选择依据：inspect_namespace 按类命名空间工作，继承路径未测"
+ ],
+ "disposition_hint": {
+  "state": "needs_review",
+  "reason": "题面与 gold 对应、边界干净，但 P2P 只有 15 条且不含私有属性的主回归文件；题面原例的 default_factory 路径也不在判分面。扩 P2P 后可入。"
+ },
+ "costs": {
+  "minutes": 15
+ }
+}

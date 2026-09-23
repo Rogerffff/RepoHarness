@@ -1,0 +1,98 @@
+{
+  "instance_id": "dask__dask-10972",
+  "review_date": "2026-09-20",
+  "reviewer": "Codex / B root",
+  "old_record": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dask/records/dask__dask-10972.json",
+  "environment": {
+    "status": "verified_environment_pair",
+    "evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json",
+    "task_key": "dask__dask-10972",
+    "selected_batch": "remote",
+    "analysis": "runs/env_recipe_repair_20260919/analysis_6.json"
+  },
+  "base_commit": "9c20facdfb5f20e28f0e9259147283f8a7982728",
+  "public_requirements": "题面希望 utf-16 相关 strict xfail 不再偶发 XPASS，点名 test_encoding_gh601，并提出 byteswap 猜测。当前公共提示要求修非测试源码，因此应先调查该已有用例检验的 CSV 编码行为。",
+  "public_boundary": "仅以 public bundle 的 problem_statement 与通用 public_hints 判定可见性；raw hints 是私有来源背景，不据此认定 agent 已知。",
+  "old_claim_reviews": [
+    {
+      "claim": "公开材料完全推不出 CSV/blocksize；只能改测试文件。",
+      "status": "refuted",
+      "reason": "题面点名的测试在可见 base 已含 pandas 与 Dask read_csv(blocksize=1000) 的相等断言。修复底层编码读取是可调查的非测试路径，不能以题面没写根因就判不可解。题面允许纯 xfail 改动与任务通用限制之间确有张力，但不等于只剩一条被禁止路径。",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl#dask__dask-10972",
+        "9c20facdfb5f20e28f0e9259147283f8a7982728:dask/dataframe/io/tests/test_csv.py:1161-1183"
+      ]
+    },
+    {
+      "claim": "base 的 delimiter 错在带了 BOM。",
+      "status": "refuted",
+      "reason": "base 无条件使用换行符的默认 UTF-8 编码，不能称其带 BOM。gold 先使用目标编码，再对会产生 BOM 的编码剥除前缀；这是两个不同步骤。",
+      "evidence": [
+        "9c20facdfb5f20e28f0e9259147283f8a7982728:dask/dataframe/io/csv.py:562",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl#dask__dask-10972"
+      ]
+    },
+    {
+      "claim": "x86 无法复现原报告 s390x 的偶发 XPASS，所以本题应淘汰。",
+      "status": "unresolved",
+      "reason": "是否复现原报告的偶发 XPASS 未测；已有 RH2 两侧却验证了同名测试的底层编码失败可被修复。不能由机器架构不同推出 agent 无从调查。",
+      "evidence": [
+        "9c20facdfb5f20e28f0e9259147283f8a7982728:dask/dataframe/io/tests/test_csv.py:1161-1183",
+        "run_evidence"
+      ]
+    },
+    {
+      "claim": "离线 PEP 517 安装失败仍需处理。",
+      "status": "superseded_env",
+      "reason": "09-19 最终 dask10972-wheels-v1 已验证两侧完整安装；gold 152passed/12skipped/1xfailed，noop 两个目标失败且P2P150全过。",
+      "evidence": [
+        "run_evidence",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json"
+      ]
+    },
+    {
+      "claim": "同一 CSV 文件与 P2P 重叠就必须和6818划同侧。",
+      "status": "unresolved",
+      "reason": "同文件与回归集重叠本身不证明目标泄漏。后续按问题语义、提交包含关系、直接补丁/答案重用证据检查，当前不自动建立不可拆分簇。",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dask/records/dask__dask-10972.json#checks.5"
+      ]
+    },
+    {
+      "claim": "部分参考ID截断有潜在碰撞。",
+      "status": "unresolved",
+      "reason": "旧 parser 归一化的风险线索保留；当前两侧无参考缺席或失败，不因潜在碰撞宣布环境未修。若改变 parser/参数化，再做逐ID映射对照。",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dask/records/dask__dask-10972.json#checks.12",
+        "run_evidence"
+      ]
+    }
+  ],
+  "recommendation": "needs_counterexample",
+  "next_action": "保留原题，不立即重写。先在隔离材料里把题面指向的原测试以 --runxfail 展示底层失败，确认 agent 可见的定位线索；可作为歧义诊断题，首轮干净基座小批先选别题。",
+  "evidence_level": "精确 base 源码和来源补丁静态核对；回读既有 RH2 noop/gold 日志并核对摘要；未重跑远端或模型。8801 另有本地抽取函数反例。",
+  "run_evidence": [
+    {
+      "kind": "noop",
+      "path": "runs/env_recipe_repair_20260919/remote/runs/dask10972-wheels-v1-noop/eval_logs/evallog_replay-er19-dask10972-wh_efb92d1f.eval.log",
+      "sha256": "4b43ea7792ec39dfaec2e4b06ae95dcbc6b850e3a21d862a706e545f13ec7060",
+      "reward": 0.0,
+      "full_test_summary": [
+        "============ 2 failed, 150 passed, 12 skipped, 1 xfailed in 13.04s ============="
+      ]
+    },
+    {
+      "kind": "gold",
+      "path": "runs/env_recipe_repair_20260919/remote/runs/dask10972-wheels-v1-gold/eval_logs/evallog_replay-er19-dask10972-wh_e5fd727f.eval.log",
+      "sha256": "87cedc3fa38136a4541d0edb0a05882e9bfdaa7cbe27656efad8fa2de8faf771",
+      "reward": 1.0,
+      "full_test_summary": [
+        "================= 152 passed, 12 skipped, 1 xfailed in 12.41s =================="
+      ]
+    }
+  ],
+  "unknowns": [
+    "未运行真实 agent，不能预测修源码概率；未复验原s390x偶发性；模型可解性与现有环境有效性分开。"
+  ],
+  "admission": false
+}

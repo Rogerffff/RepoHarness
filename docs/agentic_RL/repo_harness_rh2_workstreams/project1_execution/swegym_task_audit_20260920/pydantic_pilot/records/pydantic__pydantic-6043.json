@@ -1,0 +1,90 @@
+{
+  "instance_id": "pydantic__pydantic-6043",
+  "audit_date": "2026-09-20",
+  "old_record": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_pydantic/records/pydantic__pydantic-6043.json",
+  "source_refs": {
+    "public": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl#pydantic__pydantic-6043",
+    "grading": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl#pydantic__pydantic-6043",
+    "validation_reference_only": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl#pydantic__pydantic-6043",
+    "base_commit": "d476599cdd956284595034d7d9fd046569a0574c",
+    "F2P": 1,
+    "P2P": 303
+  },
+  "environment": {
+    "catalog_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json#tasks[instance_id=pydantic__pydantic-6043]",
+    "status": "verified_environment_pair",
+    "selected_batch": "pydantic_v1",
+    "recipe": "pydantic-install-v1",
+    "verified_existing_pair": "noop=0 / gold=1；两次安装rc=0，gold测试rc=0；日志SHA256已本轮复算。",
+    "verification_ref": "verification.json#environment.pydantic__pydantic-6043",
+    "boundary": "环境对照有效，不等于题意/评分质量或actor正式准入；选定配方仍需冻结消费。"
+  },
+  "requirements": [
+    "生成 JSON schema 时尽可能保持确定的排序，减少内部重构造成的文本及差异变动。",
+    "题面明确提出在生成末尾递归排序，因此只排序顶层 properties 不能完成其递归目标。",
+    "排序需保留 schema 的原有意义；items 一词没有充分规定每种数组是否重排，不能据此要求打乱按位置解释的 prefixItems。"
+  ],
+  "old_claim_reviews": [
+    {
+      "original_claim": "题面只是无验收标准的散文，没有示例即不可解，应 reject_revision。",
+      "status": "refuted",
+      "evidence": [
+        "实际题面明确说明确定排序的目的和递归处理方向；无具体示例不足以否定可执行需求。",
+        "pydantic@d476599cdd956284595034d7d9fd046569a0574c:pydantic/json_schema.py:215-321 公开基线可定位 generate/generate_definitions 两个输出；实现递归 key 排序不依赖猜测新 API。",
+        "现有测试薄弱可以支持修覆盖，但不能支持“任务不可解”或自动剔除。"
+      ]
+    },
+    {
+      "original_claim": "gold 不排序 list 就未实现题面一半，题面与 gold 明确矛盾。",
+      "status": "refuted",
+      "evidence": [
+        "pydantic@d476599cdd956284595034d7d9fd046569a0574c:pydantic/json_schema.py:601-620 将 tuple 各位置生成 prefixItems 数组，顺序来自 items_schema；任意重排所有列表会改变此类 schema。",
+        "pydantic@d476599cdd956284595034d7d9fd046569a0574c:tests/test_json_schema.py:443-470 固定 enum/examples 的原有列表顺序。保留列表顺序、递归处理其中对象，是与既有语义兼容的合理解释；词语 items 仍有歧义，但不能据此认定 gold 错。"
+      ]
+    },
+    {
+      "original_claim": "仅给顶层 properties 按 key 排序即可通过官方304条，嵌套与 generate_definitions 无辨别力。",
+      "status": "confirmed",
+      "evidence": [
+        "test_patch 仅将 test_by_alias 的键序 Snap/Crackle 改为 Crackle/Snap；没有新增递归排序断言。",
+        "runs/env_overnight_20260916/M2/L7/patches/pydantic__pydantic-6043.fake.diff 只排序顶层 properties。verification.json#historical_runs.L7_6043 重解析更正后原始日志：base仅F2P失败、gold和fake全部304参考ID通过，属旧独立脚本。",
+        "verification.json#local_probes.6043_exact_sort_transforms_on_plain_data：执行实际 fake 插入代码后嵌套 properties 仍为 z,a；gold 真实函数为 a,z，并保持 prefixItems 的 string,integer 顺序。本轮是纯字典反例，未跑Pydantic/RH2。"
+      ]
+    },
+    {
+      "original_claim": "测试不强制唯一实现，主要问题是过松（check24）。",
+      "status": "confirmed",
+      "evidence": [
+        "官方只约束一个可观察键序；递归遍历、构建时统一排序等不同实现可满足这一行为，不应把 gold 函数名或算法写入拟议题面。"
+      ]
+    },
+    {
+      "original_claim": "题面直接描述递归实现方案，因而降低难度（check29）。",
+      "status": "unresolved",
+      "evidence": [
+        "题面给出递归方向属事实；覆盖问题已有证据，模型难度和后训练收益仍需测量，二者不能互相替代。"
+      ]
+    },
+    {
+      "original_claim": "旧记录install rc=2或只有联网才能安装，构成当前环境阻塞。",
+      "status": "superseded_env",
+      "evidence": [
+        "repair_catalog本题选择pydantic_v1/pydantic-install-v1，在deny_all、uid54322、2CPU/4GiB下已有noop/gold成对结果；本轮校验该题两份原始日志SHA256匹配目录。",
+        "这只替代已修的安装结论；旧actor PATH及初始脏树应在真正启动探针时核对，不能由grader对照擅自宣称已修。"
+      ]
+    }
+  ],
+  "recommendation": "needs_revision",
+  "next_action": [
+    "保留为可修复任务候选，优先加一个嵌套模型的 $defs/properties 键序和 generate_definitions 输出键序检查，用既有 top-properties-only fake 作最小负例。",
+    "如需澄清题面，只规定递归字典键排序及有序数组保持语义，不要求特定 helper 名称；先验证新断言能拒fake且保留至少一种非gold实现，再定是否进入模型探针。"
+  ],
+  "unknowns": [
+    "旧独立脚本反例尚未在选定新环境用最新 RH2 重放。",
+    "best-effort 对每种列表排序的边界仍可澄清；本轮没有把任何新规则写回正式题面。",
+    "没有本题模型成本或成功/失败混合度证据。"
+  ],
+  "evidence_level": "static_or_existing_run",
+  "verification_scope": "本轮读取精确base源码、实际公开题面/test_patch/gold、已归档运行证据；新增仅本地纯Python探针与日志重解析，未启动Docker/远端/模型/真实RH2。",
+  "formal_admission": false
+}

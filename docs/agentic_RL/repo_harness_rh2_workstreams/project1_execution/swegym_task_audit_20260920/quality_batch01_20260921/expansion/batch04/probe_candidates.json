@@ -1,0 +1,64 @@
+{
+  "status": "static_review_complete",
+  "scope": "static_review_only",
+  "intended_use": "development_diagnostic",
+  "ready_for_probe": false,
+  "decision_counts": {
+    "limited_static_candidates": 1,
+    "not_prioritized_pending_diagnostic": 2,
+    "formal_actor_accepted": 0
+  },
+  "candidates": [
+    {
+      "instance_id": "python__mypy-16869",
+      "decision": "limited_static_candidate",
+      "allowed_use": "Limited development diagnostic after actor/environment validation, with semantic review of outputs and frozen score reported separately.",
+      "reason": "Core StarExpr crash has exact source/log support and both AST paths are covered; a concrete semantically equivalent Unpack output could still be falsely rejected by exact text.",
+      "limitations": [
+        "Not ready_for_probe or training/final-evaluation approval.",
+        "Do not count raw reward as a universal correctness label; equivalent-output failures require semantic review.",
+        "Private _Ts omission is a separately scoped existing output question, not proven new gold regression.",
+        "Actual actor messages, accessible assets, source/import identity and dependencies remain unverified."
+      ],
+      "next_cpu_queue_id": "mypy16869-unpack-output-contract",
+      "refs": [
+        "results/python__mypy-16869/card.md",
+        "results/python__mypy-16869/screening_record.json",
+        "results/python__mypy-16869/review.md"
+      ]
+    }
+  ],
+  "not_prioritized": [
+    {
+      "instance_id": "iterative__dvc-4185",
+      "decision": "not_prioritized_pending_semantic_diagnostic",
+      "reason": "Gold likely leaves the explicitly requested unchanged-parameter commit symptom while receiving full frozen score; prioritize same-environment base/gold public two-symptom comparison.",
+      "retained_for": "CPU public-requirement/gold diagnostic; not permanently rejected",
+      "next_cpu_queue_id": "dvc4185-public-false-param-workflow",
+      "refs": [
+        "results/iterative__dvc-4185/card.md",
+        "results/iterative__dvc-4185/screening_record.json",
+        "results/iterative__dvc-4185/review.md"
+      ]
+    },
+    {
+      "instance_id": "getmoto__moto-6114",
+      "decision": "not_prioritized_pending_scoring_calibration",
+      "reason": "The sole new ARN assertion checks count without identity; an ARN-only first-cluster candidate could earn full score while violating the central lookup requirement.",
+      "retained_for": "CPU target-identity versus frozen-score calibration; normal-input gold not shown wrong",
+      "next_cpu_queue_id": "moto6114-arn-result-identity",
+      "refs": [
+        "results/getmoto__moto-6114/card.md",
+        "results/getmoto__moto-6114/screening_record.json",
+        "results/getmoto__moto-6114/review.md"
+      ]
+    }
+  ],
+  "common_conditions": [
+    "All three screening dispositions remain needs_review/static_review/development_diagnostic.",
+    "No new runtime or model outcomes in this batch. Historical gold/noop results apply only to their recorded grader conditions.",
+    "Future CPU plans are unexecuted; target images/build payloads and relocated prepared inputs require preparation.",
+    "Private audit artifacts and exposed reviewers must not be used as blind solver inputs."
+  ],
+  "updated_at": "2026-09-20T22:55:56.542639+00:00"
+}

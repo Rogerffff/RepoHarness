@@ -1,6 +1,6 @@
 # 新补充的四份质量审计来源
 
-2026-09-15 核查三份官方网页正文及新发布的 SWE-Bench Pro Verified 论文。原始 HTML 和检索文本在 [sources/web_quality/](sources/web_quality/manifest.json)，论文 PDF 单独链接于第 4 项。**本轮是环境专题核查，不是完整精读**：重点读取主文方法、局限及相关附录；没有逐图视觉核验、复现审计器或重跑样本，全部图片/交互依赖也未离线归档。后续 Pro 可从下列原始材料继续读。
+2026-09-15 核查三份官方网页正文及新发布的 SWE-Bench Pro Verified 论文。原始 HTML 和检索文本在 sources/web_quality/（原文缓存未发布：`docs/harness_improve/external_paper_references/environment_processing_survey_20260915/sources/web_quality/manifest.json`），论文 PDF 单独链接于第 4 项。**本轮是环境专题核查，不是完整精读**：重点读取主文方法、局限及相关附录；没有逐图视觉核验、复现审计器或重跑样本，全部图片/交互依赖也未离线归档。后续 Pro 可从下列原始材料继续读。
 
 ## 1. METR：Many SWE-bench-Passing PRs Would Not Be Merged into Main
 
@@ -8,7 +8,7 @@
 
 **用途与边界：**它检查“测试过关能否代表维护者接受”，补充 OpenAI 的题意/测试缺陷审计；也与 FrontierCode **主动设计和校准新 rubric** 不同。不是每道不合并补丁都证明测试错；样本只含三个仓库、旧模型且不允许依据 review 迭代，不能据此宣判新模型的最终修复能力。
 
-来源：[官方文章](https://metr.org/notes/2026-03-10-many-swe-bench-passing-prs-would-not-be-merged-into-main/)（2026-03-10），Data and Methods、Technical limitations、Appendix A1/A3/A8；[原始 HTML](sources/web_quality/metr_mergeability.html) · [检索文本](sources/web_quality/metr_mergeability.txt)。
+来源：[官方文章](https://metr.org/notes/2026-03-10-many-swe-bench-passing-prs-would-not-be-merged-into-main/)（2026-03-10），Data and Methods、Technical limitations、Appendix A1/A3/A8；原始 HTML（原文缓存未发布：`docs/harness_improve/external_paper_references/environment_processing_survey_20260915/sources/web_quality/metr_mergeability.html`） · 检索文本（原文缓存未发布：`docs/harness_improve/external_paper_references/environment_processing_survey_20260915/sources/web_quality/metr_mergeability.txt`）。
 
 ## 2. Cursor：Reward hacking is swamping model intelligence gains
 
@@ -16,7 +16,7 @@
 
 **用途与边界：**提供运行期信息泄漏的审计与干预，区别于 OpenAI 的测试语义审查；相比 FrontierCode 1.1 的规则提示/scanner，它主要修改网络和历史可达性。标准/严格差值是两项限制的联合结果，也受 prompt 影响，不能全算作弊贡献；未给审计器误检漏检率，包源许可只是 best effort。作者没有建议所有真实工作任务都断网。
 
-来源：[官方文章](https://cursor.com/blog/reward-hacking-coding-benchmarks)（2026-06-25），Catch a model with a model、Stricter environment design、脚注；[原始 HTML](sources/web_quality/cursor_reward_hacking.html) · [检索文本](sources/web_quality/cursor_reward_hacking.txt)。
+来源：[官方文章](https://cursor.com/blog/reward-hacking-coding-benchmarks)（2026-06-25），Catch a model with a model、Stricter environment design、脚注；原始 HTML（原文缓存未发布：`docs/harness_improve/external_paper_references/environment_processing_survey_20260915/sources/web_quality/cursor_reward_hacking.html`） · 检索文本（原文缓存未发布：`docs/harness_improve/external_paper_references/environment_processing_survey_20260915/sources/web_quality/cursor_reward_hacking.txt`）。
 
 ## 3. Datacurve：DeepSWE v1.1
 
@@ -24,7 +24,7 @@
 
 **用途与边界：**这是可直接对照 RH2 的评分隔离、候选工件、逐测试账本和环境修订实例；不是 Agentica 的同名 DeepSWE 训练配方，也不是 OpenAI/FrontierCode 式完整题意/替代解质检。博客没有公开全部依赖/flaky 修订理由及权限合同；fresh 容器本身不证明候选源码、配置或结构化报告无法影响评分。日期截面的上游检查也不保证以后没有答案泄漏。
 
-来源：[官方文章](https://deepswe.datacurve.ai/blog/deepswe-v1-1)（当前页署 2026-06-14，排行榜另有后续更新时间），导言、What changed、Impact on Results；[原始 HTML](sources/web_quality/datacurve_deepswe_v11.html) · [检索文本](sources/web_quality/datacurve_deepswe_v11.txt)。
+来源：[官方文章](https://deepswe.datacurve.ai/blog/deepswe-v1-1)（当前页署 2026-06-14，排行榜另有后续更新时间），导言、What changed、Impact on Results；原始 HTML（原文缓存未发布：`docs/harness_improve/external_paper_references/environment_processing_survey_20260915/sources/web_quality/datacurve_deepswe_v11.html`） · 检索文本（原文缓存未发布：`docs/harness_improve/external_paper_references/environment_processing_survey_20260915/sources/web_quality/datacurve_deepswe_v11.txt`）。
 
 ## 4. SWE-Bench Pro Verified：修任务与封泄漏分开验证
 
@@ -32,6 +32,6 @@
 
 **用途与边界：**比只报告缺陷多给了可下载修订题库和执行入口；本轮确认 HF 有 731 行 JSONL、AgentCompass 有接入导航，尚未校验每条修订/运行实现。其“优先改题面与测试自洽”可能改变能力目标，不能自动成为我们的修题原则。公开报告候选不等于全池独立复审；仍承认域名绕行、残留工件和遗漏坏题。转移归因含 LLM 判断，未证明零误杀/零泄漏。
 
-来源：[论文 §3–4、§5.2](https://arxiv.org/html/2609.08149v1)（arXiv v1：2026-09-08；PDF 封面另印 2026-09-09，保留两种日期）；[本地 PDF](sources/swe_bench_pro_verified_2609.08149v1.pdf)；[官方修订数据](https://huggingface.co/datasets/opencompass/SWEBench-Pro-Verified) · [AgentCompass](https://github.com/open-compass/AgentCompass)。
+来源：[论文 §3–4、§5.2](https://arxiv.org/html/2609.08149v1)（arXiv v1：2026-09-08；PDF 封面另印 2026-09-09，保留两种日期）；本地 PDF（原文缓存未发布：`docs/harness_improve/external_paper_references/environment_processing_survey_20260915/sources/swe_bench_pro_verified_2609.08149v1.pdf`）；[官方修订数据](https://huggingface.co/datasets/opencompass/SWEBench-Pro-Verified) · [AgentCompass](https://github.com/open-compass/AgentCompass)。
 
 四份资料的补读重点是：**人类判断怎样校准、泄漏检测怎样验证、环境/评分版本变更怎样对账，以及如何发布有证据的题目修订**。它们互补，不能把维护者不接受、运行期查答案、测试本身错误统计成同一种“坏题率”。

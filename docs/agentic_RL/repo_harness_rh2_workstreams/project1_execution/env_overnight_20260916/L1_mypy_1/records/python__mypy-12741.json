@@ -1,0 +1,64 @@
+{
+ "task_id": "python__mypy-12741",
+ "source": "SWE-Gym lite / python/mypy PR 12741（上游 issue 5653）",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "4f07c79aea0fef61ab649d6acedf01186f1054eb",
+  "version": "0.960", "python_version": "3.10",
+  "in_e2": ["A", "B"],
+  "eval_cmd": "pytest -n0 -rA -k",
+  "f2p": ["mypy/test/testcheck.py::TypeCheckSuite::check-typeddict.test::testTypedDictWithClassmethodAlternativeConstructorDoesNotCrash"],
+  "p2p": ["mypy/test/testcheck.py::TypeCheckSuite::check-typeddict.test::testCanCreateTypedDictTypeWithUnderscoreItemName"],
+  "test_patch_paths": ["test-data/unit/check-typeddict.test"],
+  "gold_paths": ["mypy/types.py"]
+ },
+ "public_view": {
+  "goal": "（只看题面能得到的）用户报告在 TypedDict 类体里写 @classmethod 会得到 'Invalid statement in TypedDict definition; expected \"field_name: field_type\"'，并询问这是不是 bug、能否支持方法。题面标题是 'Crash on definition of TypedDict method'。",
+  "constraints": [
+   "题面正文里**没有任何崩溃现象**：没有 traceback、没有 INTERNAL ERROR、没有 'mypy crashed'；正文只展示上面那条普通错误，还写 'Despite the error, the code runs fine'",
+   "示例代码不完整：未 import TypedDict，RowProxy 未定义，`typing` 未 import"
+  ],
+  "unknowns_from_public_only": [
+   "到底要不要让 TypedDict 支持方法？题面读起来是功能请求（'looking for clarification that this is / isn't a bug'），只有标题里的 'Crash' 一词暗示是崩溃修复",
+   "修好之后那条 'Invalid statement in TypedDict definition' 错误是应当保留还是应当消失——这是两个相反的方向，题面没给答案",
+   "题面在 'maybe some reasoning about' 处**被截断**，后半句丢失，无法判断作者接下来说了什么"
+  ],
+  "base_code_evidence": [
+   "4f07c79ae:mypy/types.py:1768-1771 CallableType.__hash__ 直接调用 self.is_type_obj()，无 FakeInfo 保护",
+   "4f07c79ae:mypy/nodes.py:2954 FakeInfo(TypeInfo)：其 __getattribute__ 在被访问时抛 AssertionError（NOT_READY 占位）",
+   "4f07c79ae:mypy/test/data.py:636 DataFileCollector 已存在 → pytest nodeid 形如 testcheck.py::TypeCheckSuite::check-typeddict.test::<case>，与 F2P/P2P 字符串格式一致"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 目标 test-data/unit/check-typeddict.test 在 base 存在（177 个 case）", "gold 目标 mypy/types.py 在 base 存在，hunk 上下文 __hash__ 逐行匹配", "F2P/P2P nodeid 含 check-typeddict.test 段，与 base 的 DataFileCollector 产生的 id 格式一致"], "note": "无二进制/LFS/子模块；nodeid 格式与本版本 mypy 一致（0.820/0.920 那批不含 .test 段，属正常版本差异）。", "by": "L1_mypy_1"},
+  "2": {"status": "pass", "evidence_refs": ["4f07c79ae:mypy/types.py:1768 缺少 gold 新增的 FakeInfo 分支"], "note": "静态确认 base 缺保护；崩溃本身未实跑复现。", "by": "L1_mypy_1"},
+  "3": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["problem_statement 末尾原文：'...and maybe some reasoning about\\n'（781 字符，raw 与 public 完全相同，说明截断发生在上游数据，不是本地渲染）", "正文无 traceback、无 INTERNAL ERROR"], "note": "两个缺陷叠加：(a) 题面被截断在半句话上；(b) 题面正文描述的现象（一条普通错误消息 + '代码运行正常'）与实际要修的缺陷（mypy 自身崩溃）**不是同一件事**，唯一线索是标题里的 'Crash' 一词。hints_text 里才有 'The crash reproduces on mypy 0.950 ... flags=show-traceback' 和可复现的完整代码，但 hints 不可见。", "by": "L1_mypy_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 只触碰 test-data/unit/check-typeddict.test"], "note": "无非测试源码；gold 路径 mypy/types.py 不在测试样路径。additional_exclusions 保持空。", "by": "L1_mypy_1"},
+  "17": {"status": "pass", "evidence_refs": ["同上"], "note": "恢复不会覆盖候选源码。", "by": "L1_mypy_1"},
+  "5": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["runs/.../L1_mypy_1/dupidx.txt：check-typeddict.test 还被 python__mypy-16963、python__mypy-9629 的 test_patch 触碰；三题 gold 路径互不相同（types.py / checkexpr.py / checkexpr.py）"], "note": "共用测试文件但不是同一修复，不构成重复题；仅记录同族关系。", "by": "L1_mypy_1"},
+  "23": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["F2P case 期望输出保留 '# E: Invalid statement in TypedDict definition; expected \"field_name: field_type\"'", "problem_statement 正文把这条错误当成**要被消除的问题**来抱怨"], "note": "公开材料推不出 F2P 检查的行为，而且方向相反。按题面最自然的解读（让 TypedDict 支持 classmethod）去做，那条错误会消失 → F2P 立刻失败。真正的要求是 '保留这条错误，但内部不要崩溃'。", "by": "L1_mypy_1"},
+  "24": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["F2P 断言精确错误文本与其出现的行（@classmethod 那一行）"], "note": "对 '不崩溃' 这一目标，任何不改变该错误文本与位置的修法都能过；但任何顺带改善 TypedDict 方法支持的修法都会被拒。测试把 '行为不变' 当成了硬约束，而题面恰恰在要求改变这个行为。", "by": "L1_mypy_1"},
+  "25": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["F2P 只有 1 条；P2P 只有 1 条（testCanCreateTypedDictTypeWithUnderscoreItemName），而 check-typeddict.test 在 base 有 177 个 case"], "note": "gold 改的是 CallableType.__hash__ —— 一个被整棵类型系统共用的热点函数。用 1 条 P2P（且是随机一条 TypedDict 构造用例）无法发现哈希语义被改坏（例如把 __hash__ 改成 return 0 也能过）。", "by": "L1_mypy_1"},
+  "26": {"status": "issue", "evidence_refs": ["P2P 覆盖 1/177"], "note": "见 proposed_regression_tests。", "by": "L1_mypy_1"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 只改 mypy/types.py 的 import 行与 __hash__"], "note": "gold 与本题对应、不依赖其它改动。它用 `is_type_obj = 2` 作为第三种状态混进 hash 元组，属于上游的权宜写法（2 与 True/False 在 Python 里 hash 不冲突），可接受。", "by": "L1_mypy_1"},
+  "29": {"status": "pass", "evidence_refs": ["problem_statement 无 PR/commit 链接、无修复代码"], "note": "题面无泄漏。注意 test_patch 的 case 正文第一行是 '# https://github.com/python/mypy/issues/5653'，但这在私有材料里。", "by": "L1_mypy_1"},
+  "6": {"status": "not_checked", "evidence_refs": [], "note": "未实跑安装。", "by": "L1_mypy_1"},
+  "7": {"status": "pass", "evidence_refs": ["F2P case 只用 fixtures/dict.pyi 与 fixtures/typing-typeddict.pyi，均在 base 仓库内"], "note": "无外部资产。", "by": "L1_mypy_1"},
+  "11": {"status": "pass", "evidence_refs": ["case 正文无 URL / 外部服务"], "note": "测试阶段静态看不需要网络。", "by": "L1_mypy_1"},
+  "18": {"status": "pass", "evidence_refs": ["runs/.../L1_mypy_1/kcheck_all.txt：本题两个 selector 均无子串过选"], "note": "-k 选择无歧义。", "by": "L1_mypy_1"}
+ },
+ "issues": [
+  {"category": "problem_statement_truncated", "severity": "P1", "evidence_refs": ["raw 与 public 的 problem_statement 都以 'and maybe some reasoning about' 结尾（781 字符）"], "proposed_action": "从上游 issue 5653 补全题面尾部；并且在题面里明确写出真正的目标（mypy 在该输入上崩溃，要求不崩溃、错误消息保持不变）。", "next_experiment": "对 216 题跑一次 '题面末尾无终止标点且非代码围栏' 的启发式扫描，统计还有多少题疑似截断（本包已跑，见 runs/.../L1_mypy_1/truncation_scan.txt）。"},
+  {"category": "requirement_mismatch", "severity": "P1", "evidence_refs": ["F2P 要求保留 'Invalid statement in TypedDict definition' 错误；题面把这条错误当成待修问题"], "proposed_action": "改题面：说明本题只修崩溃、不改变该诊断；或把本题标为 needs_repair 暂不入训练集。", "next_experiment": "拿一条真实 e2 轨迹（本题 in_e2=[A,B]）看模型实际走了哪个方向，是否在尝试让 TypedDict 支持方法。"},
+  {"category": "grading_coverage", "severity": "P2", "evidence_refs": ["P2P 仅 1 条，而 gold 改的是 CallableType.__hash__ 这个全局热点"], "proposed_action": "为本题补一组覆盖类型哈希/缓存路径的 P2P。", "next_experiment": "把 __hash__ 改成 `return 0`（保持语义正确但退化），跑 F2P+P2P，确认当前评分放行；再用建议的回归集确认能拦下。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只触碰纯测试数据文件；gold 只改 mypy/types.py。无混合职责路径。", "evidence_refs": ["grading_bundles_v2_v0:python__mypy-12741 test_patch"]},
+ "proposed_regression_tests": [
+  {"id": "test-data/unit/check-typeddict.test 全文件（177 个 case）", "reason": "最直接的同域回归；当前只取了 1 条。"},
+  {"id": "test-data/unit/check-serialize.test、check-incremental.test", "reason": "FakeInfo/NOT_READY 只在反序列化（增量模式 fixup）时出现，这两个文件是 gold 触发条件的真正主场；当前 P2P 完全没覆盖。"},
+  {"id": "test-data/unit/check-overloading.test、check-inference.test", "reason": "CallableType.__hash__ 被 overload 去重、类型缓存与 make_simplified_union 大量使用，改坏哈希最先在这里暴露。"},
+  {"id": "mypy/test/testtypes.py", "reason": "直接对 types.py 的单元测试，能捕捉 __hash__/__eq__ 一致性破坏。"}
+ ],
+ "disposition_hint": {"state": "needs_repair", "reason": "题面截断且与实际评分目标方向相反（题面抱怨的那条错误恰恰是 F2P 要求保留的），按公开材料正确作答会被判 0；另外 P2P 覆盖 1/177 无法保护被改的全局哈希函数。"},
+ "costs": {"minutes": 25}
+}

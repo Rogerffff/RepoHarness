@@ -1,0 +1,55 @@
+{
+ "task_id": "getmoto__moto-5960",
+ "source": "SWE-Gym lite (s2 ingest v0)",
+ "task_revision": "upstream",
+ "by": "L1_moto_2 (Opus 5, 静态审查, 2026-09-16)",
+ "materials_refs": {
+  "snapshot": "runs/env_overnight_20260916/L1_moto_2/mat/getmoto__moto-5960/",
+  "base_commit": "d1e3f50756fdaaea498e8e47d5dcd56686e6ecdf",
+  "version": "4.1",
+  "eval_cmd": "pytest -n0 -rA",
+  "repo_level": "docs/.../env_overnight_20260916/L1_moto_2/repo_level_findings.md"
+ },
+ "public_view": {
+  "目标行为": "对二级索引做 scan 时要按索引的 ProjectionType（KEYS_ONLY / INCLUDE）裁剪返回属性，和 query 的行为一致。",
+  "约束": "只改 moto/ 源码。",
+  "公开材料可推断": "base 的 Table.query 已经做了这件事：先 `results = copy.deepcopy(results)` 再对每条 `index.project(result)`（d1e3f50756:moto/dynamodb/models/table.py:749-753），而 Table.scan 完全没有这一段（同文件 843 附近）。SecondaryIndex.project 的实现在同文件 39-60。方向与写法都可由公开材料直接推出——照抄 query 的两行即可。",
+  "公开材料无法确定的点": [
+   "题面只谈 GSI；F2P 里一条是 GSI(INCLUDE)、另一条是 **LSI**(KEYS_ONLY)。LSI 没在题面出现过，不过修法是共用的 get_index/project，实践上不构成额外要求。",
+   "题面没说\"裁剪不能改动表里存的原始 item\"——这恰恰是最容易写错的地方（见检查 25）。"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5960/test.patch", "mat/getmoto__moto-5960/gold.patch"], "note": "test_patch 只在既有的两个测试末尾各追加一段 scan 断言（tests/test_dynamodb/test_dynamodb.py，base 存在），gold 只碰 moto/dynamodb/models/table.py（base 存在）。", "by": "static"},
+  "2": {"status": "pass", "evidence_refs": ["d1e3f50756:moto/dynamodb/models/table.py:749-753 与 843 附近对比"], "note": "base 的 scan 路径确实没有投影裁剪，而 query 有；缺陷确在。stage1 empty=RESOLVED_NO 印证。", "by": "static+stage1"},
+  "3": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5960/problem_statement.txt"], "note": "题面 4864 字符（本包最长），含两个完整可运行测试、期望与实际输出 diff、依赖版本，无外链/截断。", "by": "static"},
+  "4": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5960/test.patch"], "note": "合法解在 moto/dynamodb/models/table.py。", "by": "static"},
+  "5": {"status": "issue", "evidence_refs": ["本包 getmoto__moto-6185 也改 moto/dynamodb/models/table.py"], "note": "与 6185 改同一源文件但不同函数、不同 PR、判分文件不同（test_dynamodb.py vs exceptions/test_dynamodb_exceptions.py），非派生。", "by": "static"},
+  "6": {"status": "issue", "evidence_refs": ["repo_level_findings.md#R2"], "note": "4.1，离线 make init rc=2（共性）。", "by": "stage1"},
+  "9": {"status": "pass", "evidence_refs": ["repo_level_findings.md#R3"], "note": "仓库级共性证据。", "by": "static+stage1"},
+  "11": {"status": "pass", "evidence_refs": ["d1e3f50756:tests/test_dynamodb/test_dynamodb.py:404"], "note": "唯一的 settings.TEST_SERVER_MODE 分支是本地 server 开关；无 network marker、无真实端点。", "by": "static"},
+  "17": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5960/test.patch"], "note": "只恢复 1 个纯测试文件。", "by": "static"},
+  "19": {"status": "issue", "evidence_refs": ["repo_level_findings.md#R8"], "note": "P2P 的 `...::test_set_attribute_is_dropped_if_empty_after_update_expression[use` 是截断参数化 ID，阶段一日志里对应 **2 条真实用例塌缩成 1 个键**（两条都 PASSED，当前无误判）。", "by": "static+stage1"},
+  "23": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5960/problem_statement.txt", "mat/getmoto__moto-5960/test.patch"], "note": "F2P 检查的行为与题面一致（scan 按投影裁剪）。LSI 与 GSI 的差异不构成额外要求。", "by": "static"},
+  "24": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5960/test.patch"], "note": "F2P 只断言 scan 返回的第一条 item 的完整字典；不约束是复用 index.project 还是自己实现裁剪。", "by": "static"},
+  "25": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-5960/gold.patch", "d1e3f50756:moto/dynamodb/models/table.py:39-60", "mat/getmoto__moto-5960/test.patch"], "note": "**判分放过一个会造成数据损坏的实现。** SecondaryIndex.project 通过 `item.filter(...)` **原地修改** item（table.py:39-60），所以 gold 先 `results = copy.deepcopy(results)` 再裁剪。若求解者漏掉 deepcopy，scan 一个投影索引就会把表里存的原始 item 永久裁剪掉。两个 F2P 里 scan 断言都是各自测试的**最后一条语句**，之后不再读取该 item；其余 155 个 P2P 各自建表、互不影响。因此漏掉 deepcopy 的实现能 F2P+P2P 全绿。", "by": "static"},
+  "26": {"status": "issue", "evidence_refs": ["d1e3f50756:moto/dynamodb/models/table.py:843-860"], "note": "改动在 scan 主路径，回归面含分页（_trim_results 的 exclusive_start_key）、过滤表达式、以及\"scan 后再 get_item\"的组合。见 proposed_regression_tests。", "by": "static"},
+  "27": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5960/gold.patch", "d1e3f50756:moto/dynamodb/models/table.py:749-753"], "note": "gold 6 行、无夹带，且与同文件 query 路径的既有写法完全一致（先 deepcopy 再 project），是正确且风格一致的最小修复。注意 deepcopy 整个结果集对大表有性能代价，但这是既有约定。", "by": "static"},
+  "29": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5960/hints.txt"], "note": "hints 只有维护者致谢；题面给出完整复现但没给修复代码或位置。", "by": "static"},
+  "7": {"status": "not_applicable", "evidence_refs": [], "note": "无外部资产。", "by": "static"}
+ },
+ "issues": [
+  {"category": "测试放过错误修复（数据损坏型）", "severity": "P2", "evidence_refs": ["mat/getmoto__moto-5960/gold.patch", "d1e3f50756:moto/dynamodb/models/table.py:39-60"], "proposed_action": "扩展回归里加一条\"scan 投影索引后再 get_item / 再 scan 主表\"的用例；不改原 F2P/P2P 参考。", "next_experiment": "构造去掉 deepcopy 的补丁（只加 `if index_name: for r in results: self.get_index(index_name).project(r)`），在真实 grader 跑 F2P+P2P，预期全绿；再跑新增的\"scan 后 get_item\"用例，预期属性丢失 —— 形成具体反例。"},
+  {"category": "参考 ID 塌缩", "severity": "P3", "evidence_refs": ["repo_level_findings.md#R8"], "proposed_action": "同 R8。", "next_experiment": "同 R8。"},
+  {"category": "安装配方与离线条件不匹配", "severity": "P2", "evidence_refs": ["repo_level_findings.md#R2"], "proposed_action": "见 R2。", "next_experiment": "见 R2。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只碰 1 个纯测试文件。", "evidence_refs": ["mat/getmoto__moto-5960/test.patch"]},
+ "proposed_regression_tests": [
+  {"id": "新增：scan(IndexName=...) 之后再 get_item / scan 主表，断言原始属性仍在", "reason": "直接覆盖漏掉 deepcopy 的失败模式；当前 216 题材料与 tests/test_dynamodb 里都没有这条。"},
+  {"id": "tests/test_dynamodb/test_dynamodb_query.py", "reason": "query 路径用的是同一套 deepcopy+project 写法，确认 scan 改动没有把共享的 project/get_index 语义改坏。"},
+  {"id": "tests/test_dynamodb/test_dynamodb.py::test_scan_pagination", "reason": "scan 的分页路径（_trim_results 与 exclusive_start_key），gold 把裁剪插在 _trim_results 之前，需确认 LastEvaluatedKey 仍由未裁剪的键属性算出。"},
+  {"id": "tests/test_dynamodb/test_dynamodb_table_with_range_key.py", "reason": "带 range key 的表 + LSI 组合，覆盖 KEYS_ONLY 在复合主键下的键集合计算。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "材料一致、题面信息充分、gold 与既有 query 路径写法一致且正确。已知弱点是判分放过\"漏 deepcopy\"这一数据损坏型实现（P2），属题目质量，不影响环境可用性。"},
+ "costs": {"minutes": 18}
+}

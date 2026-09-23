@@ -1,0 +1,60 @@
+diff --git a/mypy/plugins/default.py b/mypy/plugins/default.py
+index f151d3da6..6a35193fc 100644
+--- a/mypy/plugins/default.py
++++ b/mypy/plugins/default.py
+@@ -24,7 +24,7 @@ class DefaultPlugin(Plugin):
+                           ) -> Optional[Callable[[FunctionContext], Type]]:
+         from mypy.plugins import ctypes, singledispatch
+ 
+-        if fullname == 'contextlib.contextmanager':
++        if fullname in ('contextlib.contextmanager', 'contextlib.asynccontextmanager'):
+             return contextmanager_callback
+         elif fullname == 'builtins.open' and self.python_version[0] == 3:
+             return open_callback
+@@ -184,7 +184,8 @@ def _analyze_open_signature(arg_types: List[List[Type]],
+ 
+ 
+ def contextmanager_callback(ctx: FunctionContext) -> Type:
+-    """Infer a better return type for 'contextlib.contextmanager'."""
++    """Infer a better return type for 'contextlib.contextmanager' and
++    'contextlib.asynccontextmanager'."""
+     # Be defensive, just in case.
+     if ctx.arg_types and len(ctx.arg_types[0]) == 1:
+         arg_type = get_proper_type(ctx.arg_types[0][0])
+diff --git a/test-data/unit/check-default-plugin.test b/test-data/unit/check-default-plugin.test
+index 7493763d3..ba4d15919 100644
+--- a/test-data/unit/check-default-plugin.test
++++ b/test-data/unit/check-default-plugin.test
+@@ -33,3 +33,23 @@ reveal_type(c) # N: Revealed type is "def (*Any, **Any) -> typing.Iterator[built
+ reveal_type(contextmanager(c)) # N: Revealed type is "def (*Any, **Any) -> contextlib.GeneratorContextManager[builtins.int*]"
+ [typing fixtures/typing-medium.pyi]
+ [builtins fixtures/tuple.pyi]
++
++[case testAsyncContextManagerWithGenericFunction]
++# flags: --python-version 3.7
++from contextlib import asynccontextmanager
++from typing import TypeVar, AsyncIterator
++
++T = TypeVar('T')
++
++@asynccontextmanager
++async def yield_id(item: T) -> AsyncIterator[T]:
++    yield item
++
++reveal_type(yield_id) # N: Revealed type is "def [T] (item: T`-1) -> typing.AsyncContextManager[T`-1]"
++
++async def f() -> None:
++    async with yield_id(1) as x:
++        reveal_type(x) # N: Revealed type is "builtins.int*"
++        x = 2
++[typing fixtures/typing-async.pyi]
++[builtins fixtures/tuple.pyi]
+diff --git a/test-requirements.txt b/test-requirements.txt
+index 9091914a5..d9ca36824 100644
+--- a/test-requirements.txt
++++ b/test-requirements.txt
+@@ -1,3 +1,4 @@
++types-typing-extensions==3.7.3
+ -r mypy-requirements.txt
+ -r build-requirements.txt
+ attrs>=18.0

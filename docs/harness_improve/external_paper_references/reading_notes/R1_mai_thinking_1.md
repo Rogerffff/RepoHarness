@@ -4,7 +4,7 @@
 
 正式标题 **MAI-Thinking-1: Building a Hill-Climbing Machine**；集体作者 **The Microsoft AI Team**，机构 **Microsoft AI**。这是技术报告，模型于 2026-06-02 随[官方发布公告](https://microsoft.ai/news/building-a-hillclimbing-machine-launching-seven-new-mai-models/)公布（该网页标注2026-06-08更新）；PDF 本身没有独立的语义版本号。本篇阅读与项目映射日期为 **2026-09-07**。
 
-本篇以委派的[本地原始 PDF](../../main_20260602_2.pdf)为主版本，记作 **L**。同时实际下载并核对了[官方同名 URL](https://microsoft.ai/wp-content/uploads/2026/06/main_20260602_2.pdf)返回的[2026-09-07 官方快照](sources/R1/main_20260602_2_fetched_20260907.pdf)，记作 **W**。两者均为 109 页，但内容不同，不能只凭文件名判定同版。
+本篇以委派的[本地原始 PDF](../../main_20260602_2.pdf)为主版本，记作 **L**。同时实际下载并核对了[官方同名 URL](https://microsoft.ai/wp-content/uploads/2026/06/main_20260602_2.pdf)返回的2026-09-07 官方快照（原文缓存未发布：`docs/harness_improve/external_paper_references/reading_notes/sources/R1/main_20260602_2_fetched_20260907.pdf`），记作 **W**。两者均为 109 页，但内容不同，不能只凭文件名判定同版。
 
 | 版本 | SHA-256 | PDF 元数据创建时间（UTC，非正式发布日期） |
 | --- | --- | --- |

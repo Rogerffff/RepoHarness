@@ -1,0 +1,16 @@
+diff --git a/mypy/checker.py b/mypy/checker.py
+index cff637dbb..ea530c43d 100644
+--- a/mypy/checker.py
++++ b/mypy/checker.py
+@@ -1803,7 +1803,10 @@ class TypeChecker(NodeVisitor[None], CheckerPluginInterface):
+             self.binder = ConditionalTypeBinder()
+             with self.binder.top_frame_context():
+                 with self.scope.push_class(defn.info):
+-                    self.accept(defn.defs)
++                    if not defn.info.typeddict_type:
++                        # TypedDicts are not actually classes, and their body has
++                        # already been processed by the semantic analyzer.
++                        self.accept(defn.defs)
+             self.binder = old_binder
+             if not (defn.info.typeddict_type or defn.info.tuple_type or defn.info.is_enum):
+                 # If it is not a normal class (not a special form) check class keywords.

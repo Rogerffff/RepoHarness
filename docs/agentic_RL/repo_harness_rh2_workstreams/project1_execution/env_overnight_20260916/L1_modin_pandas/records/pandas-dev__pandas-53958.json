@@ -1,0 +1,64 @@
+{
+ "task_id": "pandas-dev__pandas-53958",
+ "source": "SWE-Gym lite (s2 ingest v0)",
+ "task_revision": "upstream",
+ "materials_refs": [
+  "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/{public,grading_bundles_v2,validation}_*_v0.jsonl",
+  "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-53958/{gold,empty}/offline/a1/",
+  "runs/env_overnight_20260916/repos/pandas@1186ee0080a43a08c3431a5bfa86898f6ec3b54d"
+ ],
+ "public_view": {
+  "goal": "NaTType 与 NAType 分别住在 pandas._libs 与 pandas._libs.missing，位置不一致；希望统一，题面提议放进 pandas.api.typing。",
+  "constraints_from_statement": [
+   "题面直接写出两条可用的 import：from pandas._libs import NaTType 与 from pandas._libs.missing import NAType。",
+   "题面末段明写 Another option is to add these to pandas.api.typing —— 正好就是 gold 采用的方案。"
+  ],
+  "unknowns_from_public_only": [
+   "是『搬家』还是『新增导出』—— 题面是讨论帖，没有结论（gold 选的是在 pandas.api.typing 新增导出，原位置保留）。",
+   "是否要同时加进 __all__、是否要写 whatsnew —— 题面未说（F2P 不检查 __all__，只检查 dir() 的可见名）。"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["pandas@1186ee00:pandas/api/typing/__init__.py", "pandas@1186ee00:pandas/tests/api/test_api.py L342-343"], "note": "gold 目标 pandas/api/typing/__init__.py、test_patch 目标 pandas/tests/api/test_api.py 在 base 都存在且与题面同一问题。", "by": "L1_modin_pandas"},
+  "2": {"status": "pass", "evidence_refs": ["pandas@1186ee00:pandas/api/typing/__init__.py（base 不含 NaTType/NAType）", "stage1 empty/status_map.json: test_api_typing FAILED"], "note": "base 的 pandas/api/typing/__init__.py 确实没有这两个名字；empty 侧 F2P FAILED。注意这是 API 表面缺失而非 bug，『初态含问题』成立但性质是 feature request。", "by": "L1_modin_pandas"},
+  "3": {"status": "pass", "evidence_refs": ["public_bundles_v0.jsonl problem_statement", "raw hints_text"], "note": "题面 706 字符，代码块完整、无外链、无图片、无截断。hints_text 只有一句 Adding to typing makes sense to me.（35 字符），没有题面之外的关键信息。", "by": "L1_modin_pandas"},
+  "4": {"status": "pass", "evidence_refs": ["grading.test_patch"], "note": "test_patch 只触碰 pandas/tests/api/test_api.py，且只往 allowed_typing 期望列表里加两个字符串。", "by": "L1_modin_pandas"},
+  "17": {"status": "pass", "evidence_refs": ["validation.golden_patch"], "note": "gold 只触碰 pandas/api/typing/__init__.py；additional_exclusions 保持空。", "by": "L1_modin_pandas"},
+  "5": {"status": "pass", "evidence_refs": ["tasks_by_repo.json"], "note": "与本包其余 pandas 题不同 PR、不同模块。", "by": "L1_modin_pandas"},
+  "23": {"status": "pass", "evidence_refs": ["public_bundles_v0.jsonl problem_statement", "grading.test_patch"], "note": "F2P 要求 dir(pandas.api.typing) 恰好多出 NaTType 与 NAType 两个名字。题面把两个类名、它们当前的模块路径、以及目标模块 pandas.api.typing 都写了。要求充分。", "by": "L1_modin_pandas"},
+  "24": {"status": "issue", "evidence_refs": ["pandas@1186ee00:pandas/tests/api/test_api.py Base.check L18-31"], "note": "Base.check 用 sorted(dir(namespace)) 与期望列表做 tm.assert_almost_equal —— 是集合级全等，不是包含关系。除了 NaTType/NAType，任何多出来的顶层名（例如 agent 顺手 import 的 typing、TYPE_CHECKING、annotations 之外的模块别名）都会让 F2P 失败。这不算『强制唯一实现』，但对实现方式（不能留下多余的模块级名字）有硬约束，且 agent 看不到测试、无法预知这一点。", "by": "L1_modin_pandas"},
+  "25": {"status": "issue", "evidence_refs": ["grading.test_patch"], "note": "F2P 只检查名字是否可见，完全不检查这两个名字是否指向正确的类。写 NaTType = None; NAType = None 放进模块里也能通过。这是典型的『只测 API 表面』的弱判分。", "by": "L1_modin_pandas"},
+  "26": {"status": "pass", "evidence_refs": ["pandas@1186ee00"], "note": "见 proposed_regression_tests。", "by": "L1_modin_pandas"},
+  "27": {"status": "pass", "evidence_refs": ["validation.golden_patch"], "note": "gold 加两行 import 与两个 __all__ 条目，自洽、不依赖未交付改动、无无关改动。注意 __all__ 的两条对 F2P 无影响（Base.check 用 dir() 而不是 __all__）。", "by": "L1_modin_pandas"},
+  "29": {"status": "issue", "evidence_refs": ["runs/env_overnight_20260916/L1_modin_pandas/leak.json", "public_bundles_v0.jsonl problem_statement"], "note": "题面逐字包含 gold 新增的两行代码：from pandas._libs import NaTType 与 from pandas._libs.missing import NAType（leak 扫描两条全中），并且明写建议放进 pandas.api.typing。等于把完整解答交给了 agent，只差贴到哪个文件。这是本包泄漏最严重的一题。", "by": "L1_modin_pandas"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold/offline/a1/test_output.txt: meson setup --reconfigure /testbed /testbed/build/cp310 ... Found ninja-1.12.1", "phase 计时 install=7.7s test=5.2s"], "note": "该 base commit 的 pandas 已切到 meson-python 后端，镜像里带着 /testbed/build/cp310 的 ninja 缓存，install 只要 7.7 秒（纯 Python 改动无需重编）。整题一次评分不到 15 秒，是本包 pandas 侧最便宜的一题。", "by": "L1_modin_pandas"},
+  "7": {"status": "pass", "evidence_refs": ["runs/env_overnight_20260916/L1_modin_pandas/optdeps.json"], "note": "pandas/tests/api/test_api.py 无 importorskip / skip_if_no / datapath / URL / S3。", "by": "L1_modin_pandas"},
+  "11": {"status": "issue", "evidence_refs": ["runs/env_overnight_20260916/L1_modin_pandas/collide_detail.json", "stage1 gold/offline/a1/status_map.json 含键 pip's"], "note": "11 个常量全部唯一命中、无截断无冲突。但 status_map 里多出一个非 nodeid 的键 pip's（值 ERROR:），来自安装阶段 pip 的 ERROR: pip's dependency resolver ... 那行被 parser 当成状态行。该行落在 RH2_PHASE_START test 之前，v2 入口只取标记段则不受影响；这里记录为 stage1 离线日志的已知伪影。", "by": "L1_modin_pandas"}
+ },
+ "issues": [
+  {"category": "solution_leak", "severity": "P1",
+   "evidence_refs": ["public_bundles_v0.jsonl problem_statement", "validation.golden_patch", "runs/env_overnight_20260916/L1_modin_pandas/leak.json"],
+   "note": "题面逐字给出 gold 新增的两行 import，并明写目标模块 pandas.api.typing。gold 实质就是把题面里的两行贴进 pandas/api/typing/__init__.py。作为 RL 题目几乎没有搜索或推理难度。",
+   "proposed_action": "要么剔除本题，要么改写题面：只描述『NaTType 与 NAType 的导入路径不一致、希望在公共 typing 命名空间统一暴露』，删掉具体 import 行与目标模块建议。",
+   "next_experiment": "无需跑；题面改写或去留决定。"},
+  {"category": "test_too_weak", "severity": "P2",
+   "evidence_refs": ["pandas@1186ee00:pandas/tests/api/test_api.py Base.check"],
+   "note": "F2P 只比较 dir() 的名字集合，不验证对象身份。把两个名字绑成任意占位对象即可通过。",
+   "proposed_action": "补一条断言 pandas.api.typing.NaTType is type(pd.NaT) 与 pandas.api.typing.NAType is type(pd.NA)，放进 proposed_regression_tests。",
+   "next_experiment": "真机上用假补丁（NaTType = None）跑一次评分，确认会被判 RESOLVED_FULL。"},
+  {"category": "strict_namespace_check", "severity": "P3",
+   "evidence_refs": ["pandas@1186ee00:pandas/tests/api/test_api.py Base.check（sorted(dir()) 全等比较）"],
+   "note": "F2P 是命名空间全等比较，agent 在该文件里多留任何模块级名字都会失败，而 agent 看不到期望列表。",
+   "proposed_action": "在 public_hints 或题面里提示『pandas.api.typing 的公共命名空间受严格测试约束，不要引入额外顶层名字』。",
+   "next_experiment": "无需跑。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只在 pandas/tests/，gold 只在 pandas/api/，不交叉；沿用默认空集。", "evidence_refs": ["grading.test_patch", "validation.golden_patch"]},
+ "proposed_regression_tests": [
+  {"id": "pandas/tests/api/test_api.py::TestPDApi::test_api", "reason": "顶层 pandas 命名空间的同类全等检查，确认新导出没有意外提升到顶层（已在 P2P，建议显式列出）。"},
+  {"id": "pandas/tests/api/test_types.py", "reason": "pandas.api.types 的命名空间检查，是同一 api 包的邻居。"},
+  {"id": "pandas/tests/dtypes/test_missing.py", "reason": "NAType/NaTType 的实际语义测试，能补上 F2P 缺的『名字是否指向正确的类』。"},
+  {"id": "pandas/tests/scalar/test_nat.py", "reason": "NaT 与 NaTType 的行为测试，同上。"}
+ ],
+ "disposition_hint": {"state": "needs_review", "reason": "判分链完全干净（11 个 ID 全唯一、gold RESOLVED_FULL、评分 15 秒），但题面逐字给出了 gold 的两行代码与目标模块，且 F2P 只查名字不查身份 —— 作为 RL 训练题信号价值很低。建议由用户决定是改写题面还是剔除。"},
+ "costs": {"minutes": 20}
+}

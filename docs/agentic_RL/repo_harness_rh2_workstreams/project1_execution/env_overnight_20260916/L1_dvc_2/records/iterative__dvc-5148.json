@@ -1,0 +1,279 @@
+{
+ "task_id": "iterative__dvc-5148",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+  "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+  "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+  "raw": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc",
+  "base_commit": "76cc70a86ba49b4f55e2b98d9c03249a38025234",
+  "version": "1.11",
+  "python_version": "3.9",
+  "eval_cmd": "pytest -rA",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-5148:latest",
+  "workdir": "/testbed",
+  "test_patch_paths": [
+   "tests/func/test_remove.py",
+   "tests/func/test_scm.py",
+   "tests/unit/scm/test_git.py"
+  ],
+  "gold_paths": [
+   "dvc/scm/git/__init__.py"
+  ],
+  "n_f2p": 3,
+  "n_p2p": 47,
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-5148/{gold,empty}/offline/a1/",
+  "signals": {
+   "in_e2": [],
+   "fragile_reference_id": false,
+   "stage1": {
+    "empty": {
+     "verdict": "RESOLVED_NO",
+     "rc_install": 0
+    },
+    "gold": {
+     "verdict": "RESOLVED_FULL",
+     "rc_install": 0,
+     "p2p_missing": 0,
+     "f2p_missing": 0
+    }
+   },
+   "deepseek_candidate_oracle": null
+  }
+ },
+ "public_view": {
+  "目标行为": "`dvc remove` 之后如果 `.gitignore` 变空，应该像处理空的 dvc.yaml / dvc.lock 一样把它删掉，而不是留一个空文件让 git 显示成改动。",
+  "约束": "题面 267 字符，是一句功能请求，没有给命令序列、没有给期望输出。",
+  "公开材料无法确定的点": [
+   "在哪一层删：`dvc/repo/remove.py`、还是 SCM 层的 `Git.ignore_remove`（gold 选后者，于是 `scm.ignore_remove` 这个公共方法的语义也跟着变了）。",
+   "删掉文件后还要不要 `track_file`（把删除告诉 git）。gold 的早退**跳过了** base 里原有的 `self.track_file(relpath(gitignore))`，题面没提，也没有任何测试覆盖。",
+   "『空』的判定：是『过滤后没有任何行』还是『只剩空白行』。gold 用 `if not filtered`（严格无行）。"
+  ],
+  "base 关键代码": "dvc/scm/git/__init__.py:`ignore_remove` 过滤掉目标 entry 后无条件重写文件并 `track_file`；没有『空则删文件』的分支。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "repos/dvc 0bb3f40be8ee1a2732af3d73bbe1eabb98166993 `remove: delete .gitignore file if empty (#5148)` --stat: dvc/scm/git/__init__.py 4, tests/func/test_remove.py 28, tests/func/test_scm.py 2, tests/unit/scm/test_git.py 22"
+   ],
+   "note": "gold+test_patch 与上游一致，无丢件。test_patch 同时**改写了两条既有断言**（test_remove.py 的 `assert not any(out in get_gitignore_content() ...)` → `assert not (tmp_dir/'.gitignore').exists()`；test_scm.py 的 `_count_gitignore_entries(target) == 0` → 文件不存在）。",
+   "by": "L1_dvc_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base:dvc/scm/git/__init__.py ignore_remove",
+    "stage1 empty: 3 条 F2P 全 FAILED"
+   ],
+   "note": "缺陷（其实是缺功能）在 base 存在。",
+   "by": "L1_dvc_2"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement 267 字符；raw hints_text 只有 99 字符（两句无信息的认领对话）"
+   ],
+   "note": "题面完整但信息量极低，是本包最短的题面。既没有复现命令，也没有说要不要同步 git 索引。",
+   "by": "L1_dvc_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 三个文件全在 tests/ 下",
+    "gold 仅 dvc/scm/git/__init__.py"
+   ],
+   "note": "零交集，无混合职责文件。additional_exclusions 空。",
+   "by": "L1_dvc_2"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh git checkout 三个测试文件"
+   ],
+   "note": "纯测试恢复；注意其中两个是既有断言改写，恢复顺序（先 checkout 再 apply）正确。",
+   "by": "L1_dvc_2"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "prescan.json: iterative__dvc-3677 的 gold 也是 dvc/scm/git/__init__.py，test_patch 也含 tests/unit/scm/test_git.py",
+    "repos/dvc: 3677 的修复 e2981d274 早于本题 base"
+   ],
+   "note": "与 3677 同改 `dvc/scm/git/__init__.py`、同用 `tests/unit/scm/test_git.py`；本题 base 已含 3677 的参考解。同族，划分同侧。",
+   "by": "L1_dvc_2"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement",
+    "F2P: tests/unit/scm/test_git.py::test_ignore_remove_empty[dulwich|gitpython]、tests/func/test_scm.py::test_ignore"
+   ],
+   "note": "从题面能推出 F2P 检查的行为（移除最后一条 entry 后 .gitignore 文件不应存在）。",
+   "by": "L1_dvc_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 断言只是 `path_to_gitignore.exists()` 的真假"
+   ],
+   "note": "不锁实现、不锁消息。在 repo 层删文件的替代实现也能过 func 层那条，但过不了 unit 层的 `git.ignore_remove(...)` 直调——那条要求语义放在 SCM 层。这是接口层次的要求，题面没写，但属于合理的公共方法语义。",
+   "by": "L1_dvc_2"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "smstat.json 5148: gold real=56，PASSED 50 / FAILED 6",
+    "stage1 gold: tests/func/test_remove.py 的全部 6 条 FAILED（`re.error: redefinition of group name 'ps_d'`），其中含 test_patch 新增的 test_cmd_remove_gitignore_single_stage 与 test_cmd_remove_gitignore_multistage"
+   ],
+   "note": "**test_patch 自己新增的两条功能级测试（直接验证 `dvc remove` 后 .gitignore 被删）在 gold 下就崩，因而既进不了 F2P 也进不了 P2P**。留下的 F2P 只覆盖 SCM helper 层。题面描述的用户场景（跑 `dvc remove` 看 git 状态）实际零覆盖。",
+   "by": "L1_dvc_2"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "P2P 47 条，主要来自 tests/unit/scm/test_git.py 与 tests/func/test_scm.py",
+    "gold 下 tests/func/test_remove.py 整文件 6/6 红"
+   ],
+   "note": "P2P 规模不小且覆盖 dulwich/gitpython 两种后端，但 `dvc remove` 这条主路径的回归整体缺席。另 gold 的早退跳过了 `track_file`，没有任何测试检查删除是否被告知 git。",
+   "by": "L1_dvc_2"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "golden_patch 的 `if not filtered: os.unlink(gitignore); return`",
+    "base:dvc/scm/git/__init__.py ignore_remove 结尾的 `self.track_file(relpath(gitignore))`"
+   ],
+   "note": "gold 与上游一致、只有 4 行、不依赖未交付改动。但它的 `return` **跳过了原有的 `track_file`**，也就是删掉 .gitignore 后不再把这次变更告诉 git 索引。这可能是有意（删除的文件无法 `index.add`），也可能是遗漏；上游没有测试，本任务也没有。记为待确认的 gold 行为缺口。",
+   "by": "L1_dvc_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak.py: gold_added=2 ps_match=0 hints_match=0；题面与 hints 均无 URL"
+   ],
+   "note": "题面不含修复代码；hints 只有两句认领对话，无信息。",
+   "by": "L1_dvc_2"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "deps_scan2.txt: iterative__dvc-5148 pathspec_ps_d=6",
+    "stage1 gold 6 FAILED"
+   ],
+   "note": "pathspec 未锁版本，打掉 tests/func/test_remove.py 整个文件。",
+   "by": "L1_dvc_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 用 tmp_dir/scm/git fixture"
+   ],
+   "note": "无外部资产；`git` fixture 参数化为 dulwich / gitpython 两种后端，均为本地库。",
+   "by": "L1_dvc_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 无 URL/requests"
+   ],
+   "note": "测试段纯本地。",
+   "by": "L1_dvc_2"
+  },
+  "18": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh `pytest -rA tests/func/test_remove.py tests/func/test_scm.py tests/unit/scm/test_git.py`；gold real=56 ⊇ F2P 3 + P2P 47"
+   ],
+   "note": "无漏选；过选 6 条坏死用例。",
+   "by": "L1_dvc_2"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "伪键 'Could'、'dvc.command.remove:remove.py:17'"
+   ],
+   "note": "dvc 自身在测试期间打印的 `ERROR:` 日志行进了 status_map（`dvc.command.remove:remove.py:17 ERROR`）；不与真实 nodeid 冲突。",
+   "by": "L1_dvc_2"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "empty 47 PASSED/9 FAILED；gold 50 PASSED/6 FAILED"
+   ],
+   "note": "分差恰为 3 条 F2P。",
+   "by": "L1_dvc_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "功能级覆盖整体缺席",
+   "severity": "P1",
+   "evidence_refs": [
+    "gold 下 tests/func/test_remove.py 6/6 FAILED，含 test_patch 新增的两条",
+    "deps_scan2.txt"
+   ],
+   "proposed_action": "修好 pathspec 后重跑，把 test_cmd_remove_gitignore_single_stage / multistage 纳入 F2P —— 它们才是题面场景的直接验收。",
+   "next_experiment": "降级 pathspec 后单跑 tests/func/test_remove.py，确认这两条在 base FAILED、gold PASSED。"
+  },
+  {
+   "category": "gold 行为缺口",
+   "severity": "P2",
+   "evidence_refs": [
+    "golden_patch 早退跳过 track_file"
+   ],
+   "proposed_action": "确认删掉 .gitignore 后是否需要同步 git 索引；若需要，补 gold 与断言。",
+   "next_experiment": "在一个已 `git add .gitignore` 的仓库里跑 `dvc remove`，看 `git status` 是否把删除登记为 staged。"
+  },
+  {
+   "category": "题面信息量低",
+   "severity": "P3",
+   "evidence_refs": [
+    "problem_statement 267 字符"
+   ],
+   "proposed_action": "补一段最小复现（run → remove → `git status`）。",
+   "next_experiment": "无。"
+  },
+  {
+   "category": "同族",
+   "severity": "P3",
+   "evidence_refs": [
+    "3677 同文件同测试文件"
+   ],
+   "proposed_action": "3677 与 5148 划分同侧。",
+   "next_experiment": "无。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 三个文件全在 tests/ 下且为纯测试；gold 只改 dvc/scm/git/__init__.py。沿用第四组 B 默认空。",
+  "evidence_refs": [
+   "test_patch",
+   "golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/func/test_remove.py::test_cmd_remove_gitignore_single_stage / test_cmd_remove_gitignore_multistage（修好 pathspec 后建议进 F2P）",
+   "reason": "题面场景的直接验收，当前因依赖问题坏死。"
+  },
+  {
+   "id": "tests/func/test_add.py::test_escape_gitignore_entries 与 tests/unit/scm/test_git.py 的 ignore/ignored 一族",
+   "reason": "`ignore_remove` 与 `ignore` 是一对；删文件的新分支不应影响写入侧。"
+  },
+  {
+   "id": "新增：`.gitignore` 里还有非 dvc 行时不得删除文件",
+   "reason": "gold 用 `if not filtered` 严格判断，但没有一条测试验证『还剩别人的规则时必须保留文件』。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "题目与 gold 都简单清楚，但 test_patch 自带的两条功能级验收（`dvc remove` 后 .gitignore 被删）在 gold 下因 pathspec 依赖问题就崩，F2P 只剩 SCM helper 层；另 gold 的早退跳过 `track_file` 这一点无人验证。修依赖后重建 F2P 即可。"
+ },
+ "costs": {
+  "minutes": 16
+ },
+ "by": "L1_dvc_2 (Claude Opus 5, 2026-09-16, 静态审查)"
+}

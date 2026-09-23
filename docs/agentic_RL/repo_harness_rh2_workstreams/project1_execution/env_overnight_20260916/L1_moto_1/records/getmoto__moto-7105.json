@@ -1,0 +1,111 @@
+{
+ "task_id": "getmoto__moto-7105",
+ "source": "swe_gym_lite_full_f70b1a29",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "s2/ingest/public_bundles_v0.jsonl#getmoto__moto-7105",
+  "grading": "s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-7105",
+  "validation": "s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-7105",
+  "base_commit": "85156f59396a85e83e83200c9df41b66d6f82b68",
+  "version": "4.2",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-7105/",
+  "other_signals": "in_e2=[]; f2p_n=11, p2p_n=1; stage1 gold=RESOLVED_PARTIAL(rc_install=2)"
+ },
+ "public_view": {
+  "goal": "题面：从 moto 4.0.11 升级到 4.2.11 后，连续两个 @mock_batch 测试中的第二个失败，`RuntimeError: cannot join thread before it is started`，traceback 指向 moto/batch/models.py:1058 的 job.join(0.2)。期望 reset 不再对未启动的线程 join。",
+  "constraints": [
+   "题面给出完整 traceback（含出错文件、行号与 threading 源码说明）",
+   "题面给出的是使用方式而非可独立运行的复现（依赖用户自己的 fixture）",
+   "题面提到装饰器叠加 @mock_dynamodb/@mock_s3/@mock_batch/@mock_iam"
+  ],
+  "unknowns_from_public_only": [
+   "题面没有说明什么情况下会产生“创建了但未 start 的 Job 线程”；真正的触发条件是 submit_job 带 arrayProperties（父 job 线程被创建但从不启动），这一点只在 hints 里出现",
+   "题面没有可直接运行的复现，公开材料无法构造出触发场景"
+  ],
+  "base_code_located": [
+   "85156f59:moto/batch/models.py:1053-1060 BatchBackend.reset：对所有非 FAILED/SUCCEEDED 的 job 无条件 job.join(0.2)；未 start 的 Thread 被 join 会抛 RuntimeError"
+  ],
+  "public_view_conclusion": "题面足以定位到出错行与修法方向（join 前判断 is_alive/已启动），但不足以构造复现或理解 array job 场景。"
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 只改 tests/test_batch/test_batch_jobs.py（base 存在）", "gold 只改 moto/batch/models.py（base 存在）", "85156f59:tests/test_batch/__init__.py:5 `DEFAULT_REGION = \"eu-central-1\"` 存在（test_patch 新增的 import 可解析）"], "note": "目标文件与新增 import 依赖在 base 均存在；无二进制/LFS/子模块材料。", "by": "L1_moto_1"},
+  "2": {"status": "pass", "evidence_refs": ["85156f59:moto/batch/models.py:1058 `job.join(0.2)` 无 is_alive 守卫", "stage1:7105/empty 11 条 F2P 全部 FAILED"], "note": "base 确有缺陷。", "by": "L1_moto_1"},
+  "3": {"status": "issue", "evidence_refs": ["problem_statement 只给使用方式，不含可独立运行的复现", "raw.hints_text 给出 `submit_job(..., arrayProperties={\"size\": 2})` 且“测试不等待 job 执行完”的关键场景"], "note": "触发条件（array job 的父线程被创建但从不启动）只在 hints 里。按 COMMON.md hints 不可见，agent 只能从 traceback 反推“join 前要判断线程是否已启动”，而无法验证自己的修复是否真的覆盖了触发路径。", "by": "L1_moto_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch paths = [tests/test_batch/test_batch_jobs.py]", "gold paths = [moto/batch/models.py]"], "note": "test_patch 只触碰纯测试文件；gold 不触碰测试样路径。additional_exclusions = []。", "by": "L1_moto_1"},
+  "5": {"status": "issue", "evidence_refs": ["本包内 getmoto__moto-6470 的 gold 也只改 moto/batch/models.py"], "note": "同文件不同函数（6470 改 _validate_compute_resources），非同一 PR、非同一修复。", "by": "L1_moto_1"},
+  "6": {"status": "issue", "evidence_refs": ["stage1:7105 gold rc_install=2（离线 make init 失败）", "stage1:7105/gold/offline/a1/test_output.txt:509 `ERROR    moto.batch.models:models.py:899 Failed to run AWS Batch container MOTO-BATCH-... Error while fetching server API version: ('Connection aborted.', FileNotFoundError(2, 'No such file or directory'))`"], "note": "两层问题：install 阶段离线失败（同 5899），以及运行阶段缺少 Docker daemon（FileNotFoundError 即 /var/run/docker.sock 不存在）。见 issues。", "by": "L1_moto_1"},
+  "7": {"status": "issue", "evidence_refs": ["85156f59:tests/markers.py `requires_docker = pytest.mark.requires_docker`，并在 settings.SKIP_REQUIRES_DOCKER 时改为 pytest.mark.skip", "85156f59:moto/settings.py:41 `SKIP_REQUIRES_DOCKER = bool(os.environ.get(\"TESTS_SKIP_REQUIRES_DOCKER\", False))`", "85156f59:tests/test_batch/test_batch_jobs.py 共 14 处 requires_docker", "F2P 中 test_cancel_pending_job / test_submit_job_with_timeout / test_submit_job_with_timeout_set_at_definition 带 @requires_docker，test_patch 新增的 test_submit_job_array_size__reset_while_job_is_running 同时带 @requires_docker 与 @pytest.mark.network"], "note": "本题需要真实 Docker daemon 才能完整判分；当前离线沙箱没有。见 issues。", "by": "L1_moto_1"},
+  "11": {"status": "pass", "evidence_refs": ["无权重/数据集下载"], "note": "但需要能拉起容器镜像（moto batch 会 docker run），这本身也隐含镜像可得性要求。", "by": "L1_moto_1"},
+  "17": {"status": "pass", "evidence_refs": ["同 check 4"], "note": "additional_exclusions = []。", "by": "L1_moto_1"},
+  "23": {"status": "issue", "evidence_refs": ["F2P 共 11 条，其中 10 条（test_register_job_definition_with_timeout / test_submit_job_invalid_name / test_update_job_definition / test_cancel_nonexisting_job / test_terminate_nonexisting_job 等）与本题的 join 修复毫无语义关系"], "note": "F2P 集合是执行顺序的副产物：新增用例在 base 上让 BatchBackend.reset 抛 RuntimeError，此后同文件里每个 @mock_batch 用例在 start→reset 时都会失败，于是“新增用例之后声明的所有用例”都被算成 F2P，而 P2P 只剩 1 条。这不是对行为的规约。", "by": "L1_moto_1"},
+  "24": {"status": "pass", "evidence_refs": ["新增 F2P 只调用 backend.reset() 并期望不抛异常"], "note": "不绑定内部实现；`if job.is_alive()`、`if job.ident is not None`、try/except RuntimeError 等写法都能通过。", "by": "L1_moto_1"},
+  "25": {"status": "issue", "evidence_refs": ["新增 F2P 只断言 reset() 不抛异常，没有断言已启动的线程仍被正确 join/stop"], "note": "`def reset(self): super().reset()`（整段删掉 join 逻辑）同样能通过新增用例；是否会被其它 F2P 拦住取决于那 10 条顺序副产物用例是否依赖 join 的清理效果 —— 从用例内容看多数不依赖。因此“直接去掉 join”这一明显过度的修复很可能被放过。", "by": "L1_moto_1"},
+  "26": {"status": "pass", "evidence_refs": ["见 proposed_regression_tests"], "note": "", "by": "L1_moto_1"},
+  "27": {"status": "pass", "evidence_refs": ["validation.golden_patch 只加 `if job.is_alive():` 守卫"], "note": "gold 正确、最小、相关，不依赖未交付改动。", "by": "L1_moto_1"},
+  "29": {"status": "pass", "evidence_refs": ["problem_statement 的 traceback 指到 moto/batch/models.py:1058 的 job.join(0.2)，但不给修复代码"], "note": "定位泄漏（真实 issue 的正常信息），非答案泄漏。", "by": "L1_moto_1"}
+ },
+ "issues": [
+  {
+   "category": "environment/requires_docker",
+   "severity": "P1",
+   "evidence_refs": [
+    "stage1:7105/gold/offline/a1/test_output.txt:509-511 `ERROR    moto.batch.models:models.py:899 Failed to run AWS Batch container MOTO-BATCH-... Error while fetching server API version: ('Connection aborted.', FileNotFoundError(2, 'No such file or directory'))`",
+    "同上 :1162 `FAILED tests/test_batch/test_batch_jobs.py::test_cancel_pending_job - KeyError...`，失败点是 `assert resp[\"jobs\"][0][\"statusReason\"] == \"test_cancel\"` → KeyError: 'statusReason'（依赖 job 因无 Docker 而失败，被判为 failed dependency 而非 cancelled）",
+    "85156f59396a85e83e83200c9df41b66d6f82b68:tests/markers.py 与 moto/settings.py:41 `TESTS_SKIP_REQUIRES_DOCKER`",
+    "F2P 中 4 条带 @requires_docker（含 test_patch 新增的那条）",
+    "task_signals_swegym.json getmoto__moto-7105 stage1.gold.verdict = RESOLVED_PARTIAL"
+   ],
+   "proposed_action": "本题的 batch job 需要真实 Docker daemon 才能跑完整状态机，当前离线沙箱无 /var/run/docker.sock，gold 只能 RESOLVED_PARTIAL。三条路径：(a) 给该仓库的执行环境提供 Docker-in-Docker（成本高，且要预拉基础镜像，与离线约束冲突）；(b) 设 `TESTS_SKIP_REQUIRES_DOCKER=1` 把这些用例转为 SKIPPED，同时从 F2P/P2P 常量里剔除所有 @requires_docker 用例 —— 本题剔除后 F2P 只剩 7 条顺序副产物用例，判别力可疑；(c) 直接剔除本题。建议先按 (b) 试一次看剩余 F2P 是否仍能区分 base/gold，否则按 (c)。这条结论对整个 moto 仓库通用：应先统计全部 moto 题里 F2P/P2P 命中 @requires_docker 用例的数量。",
+   "next_experiment": "在容器里设 TESTS_SKIP_REQUIRES_DOCKER=1 重跑本题的 base 与 gold，记录哪些用例转 SKIPPED、剩余 F2P 在 base 下是否仍全 FAILED、在 gold 下是否全 PASSED。"
+  },
+  {
+   "category": "harness/status_map_parser_pollution",
+   "severity": "P1",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../getmoto__moto-7105/gold/offline/a1/status_map.json 含键 `moto.batch.models:models.py:899` 与 `moto.batch.models:models.py:954`（共 24 个键里有 2 个不含 '::'）",
+    "同目录 test_output.txt:509 该文本出现在 `ERROR    moto.batch.models:models.py:899 ...` 形式的 pytest captured-log 行里",
+    "同文件 `=========================== short test summary info ===========================` 在第 1145 行，即污染行（509）出现在短摘要区之前"
+   ],
+   "proposed_action": "RH2 的 status_map 解析显然是“行首 verdict 关键字 + 取第一个空白分隔 token”并作用于整份输出，而不是只解析 `short test summary info` 区段。三个后果已各自实证：(a) 本题把 captured-log 行当成测试结果写进 status_map；(b) 含空格的参数化 ID 被截断（见 5701/5417/5545/5134）；(c) 同一 ID 出现多条 verdict 时按“后者覆盖”（见 4799/empty 的 ERROR 后接 FAILED）。建议把解析锚定到短摘要区段内，并保留完整行尾作为 nodeid；对同一 nodeid 的多条 verdict 采用“最严重者优先”而非“最后者优先”。",
+   "next_experiment": "用本题与 5701 的 test_output.txt 作为夹具，对现行解析器与锚定到短摘要区的新解析器做对拍，比较 status_map 键集合差异。"
+  },
+  {
+   "category": "grading_materials/f2p_is_order_cascade",
+   "severity": "P2",
+   "evidence_refs": [
+    "grading.fail_to_pass 共 11 条，grading.pass_to_pass 仅 1 条（tests/test_batch/test_batch_jobs.py::test_submit_job_by_name）",
+    "validation.golden_patch 只有 2 行（`if job.is_alive():` + 缩进）",
+    "test_patch 新增用例插在 test_submit_job_array_size 之后，其后声明的用例几乎全部进入 F2P"
+   ],
+   "proposed_action": "11 条 F2P 里只有 1 条与修复语义相关，其余是“新增用例在 base 上污染了 BatchBackend.reset，导致后续同文件用例连锁失败”的顺序副产物。风险：(a) 一旦执行顺序变化（xdist、随机化、只跑子集），F2P 集合不再成立；(b) 判分对“任何无关失败”极度敏感 —— 只要文件里任一用例挂掉，多条 F2P 跟着挂。建议对这类题（F2P 数量远大于 gold 改动规模、P2P 极少）单独标记，并在准入时用“只跑新增用例”的最小 F2P 复核一次。",
+   "next_experiment": "只跑 `tests/test_batch/test_batch_jobs.py::test_submit_job_array_size__reset_while_job_is_running` 一条，在 base 与 gold 下各跑一次，确认它单独就能区分（预期 base FAILED / gold PASSED），据此把 F2P 收敛为这一条。"
+  },
+  {
+   "category": "test_permits_wrong_fix",
+   "severity": "P3",
+   "evidence_refs": [
+    "test_patch 新增用例体内只调用 `batch_backends[...][DEFAULT_REGION].reset()`，无任何后置断言",
+    "validation.golden_patch 保留了对已启动线程的 join"
+   ],
+   "proposed_action": "把 BatchBackend.reset 里的 join 整段删掉同样能通过新增用例；没有任何断言检验“已启动的 job 线程仍被 stop 并 join”。建议补一条：提交一个正在运行的 job，reset 后断言该线程已结束（或 job.stop 为真）。",
+   "next_experiment": "构造删除 join 的 patch，跑本题全量 F2P+P2P，确认是否被判 RESOLVED_FULL。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 tests/test_batch/test_batch_jobs.py（纯测试文件），gold 只触碰 moto/batch/models.py，二者不重叠。按第四组 B 默认空即可。",
+  "evidence_refs": ["grading.test_patch", "validation.golden_patch", "docs/.../batch4_scoring_20260910/README.md §0/§6.5"]
+ },
+ "proposed_regression_tests": [
+  {"id": "tests/test_batch/test_batch_jobs.py::test_submit_job_array_size", "reason": "array job 的正常路径，是本题触发条件的来源；必须确认 reset 守卫不影响它"},
+  {"id": "tests/test_batch/test_batch_jobs.py::test_submit_job_by_name", "reason": "唯一的 P2P，且不需要 Docker，可作为无 Docker 环境下的最小冒烟"},
+  {"id": "tests/test_batch/test_batch_compute_envs.py::test_delete_managed_compute_environment", "reason": "BatchBackend.reset 的另一类调用者（compute env 删除路径），不在本题 P2P 内"},
+  {"id": "tests/test_core/test_decorator_calls.py 的 reset 相关用例", "reason": "backend.reset 由 moto/core 的 mock start 调用，跨模块回归面"},
+  {"id": "建议新增：提交一个运行中的 job 后 reset，断言线程已停止", "reason": "堵住“直接删掉 join”这一过度修复；目前无任何覆盖"}
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "两个 P1 叠加：(a) 需要真实 Docker，当前离线沙箱下 gold 只能 RESOLVED_PARTIAL（test_cancel_pending_job 因无 Docker 走了 failed-dependency 分支）；(b) F2P 是顺序连锁副产物（11 条 F2P 对 2 行 gold，P2P 仅 1 条），判别力与稳定性都差。建议先做 TESTS_SKIP_REQUIRES_DOCKER 实验并把 F2P 收敛到新增那一条；若收敛后仍不可用则剔除本题。"
+ },
+ "costs": {"minutes": 32}
+}

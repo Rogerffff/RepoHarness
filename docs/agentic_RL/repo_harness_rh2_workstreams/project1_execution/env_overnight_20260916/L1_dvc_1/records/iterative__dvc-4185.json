@@ -1,0 +1,241 @@
+{
+ "task_id": "iterative__dvc-4185",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "docs/.../s2/ingest/public_bundles_v0.jsonl#iterative__dvc-4185",
+  "grading": "docs/.../s2/ingest/grading_bundles_v2_v0.jsonl#iterative__dvc-4185",
+  "validation": "docs/.../s2/ingest/validation_bundles_v0.jsonl#iterative__dvc-4185",
+  "raw": "docs/.../s2/raw/swe_gym_lite_full_f70b1a29.jsonl#iterative__dvc-4185",
+  "base_commit": "0899b277c02082ffc24bb732e8a7cf3ef4333948",
+  "version": "1.1",
+  "python_version": "3.9",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-4185:latest",
+  "eval_cmd": "pytest -rA",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4185/{gold,empty}/offline/a1/",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc"
+ },
+ "public_view": {
+  "目标行为": "params.yaml 里取值为假（`false`/`null`/`[]`/`{}`/空串/`no`/`off`）的参数，`dvc status` 不应永远报 \"new\"/changed。",
+  "约束": "base `dvc/dependency/param.py::fill_values` 用 `value = values.get(param); if value:` 过滤，真值判断把所有假值都丢掉；`status()`（同文件）用 `param not in self.info` 判 \"new\"，所以假值参数永远进不了 `self.info`。",
+  "公开材料无法确定的点": [
+   "题面明确列了**两个**问题：(1) `dvc commit` 总说 `get_base_dv` 变了，`dvc status` 却不显示；(2) `dvc status` 总说 `eval.filter_limitup` 变了。公开材料看不出只需修第 2 个；",
+   "题面没给 traceback、没点名任何文件或函数，需要自己从 \"changed deps / new\" 这条输出反查 `ParamsDependency.status`；",
+   "参数在 params.yaml 里缺失时 `self.info` 该不该写入 `None`，题面没说。"
+  ],
+  "相关模块": "dvc/dependency/param.py（fill_values / status / read_params）、dvc/stage/__init__.py 的 deps 状态汇总。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-4185/grading.json#test_patch",
+    "mat/iterative__dvc-4185/validation.json#golden_patch"
+   ],
+   "note": "test_patch 动 tests/func/test_run_multistage.py + tests/unit/dependency/test_params.py（base 均存在）；gold 只动 dvc/dependency/param.py。三者同一问题。无二进制/LFS/子模块。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show 0899b277:dvc/dependency/param.py `if value:` 在 fill_values 内",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4185/empty/offline/a1/status_map.json"
+   ],
+   "note": "base 的 `fill_values` 确实是真值判断；empty 侧 7 条 F2P 全 FAILED。",
+   "by": "static"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-4185/public.json#problem_statement"
+   ],
+   "note": "题面 3279 字符，含 `dvc version`、完整的 params.yaml 与 dvc.yaml、三次命令输出，代码块完整、无外链图片、无截断。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-4185/grading.json#test_patch"
+   ],
+   "note": "test_patch 只触碰 tests/ 下两个纯测试文件；gold 不触碰测试样路径。",
+   "by": "static"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-4185/grading.json#test_patch"
+   ],
+   "note": "恢复清单 = 两个官方测试文件，不覆盖正常源码。",
+   "by": "static"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dvc_1/prescan.json"
+   ],
+   "note": "本包唯一 version=1.1 的题；gold 路径 dvc/dependency/param.py 在本包内唯一。",
+   "by": "static"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4185/gold/offline/a1/status_map.json",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4185/gold/offline/a1/test_output.txt:2725",
+    "mat/iterative__dvc-4185/grading.json#pass_to_pass"
+   ],
+   "note": "**本题 gold 判 RESOLVED_NO 完全由测试 ID 转义不一致造成**：grading 常量是 `tests/func/test_run_multistage.py::test_run_with_invalid_stage_name[\\]`（长度 70，单个反斜杠），镜像里 pytest 实际产生的是 `...[\\\\]`（长度 71，两个反斜杠，`test_output.txt:2725` 记 PASSED）。P2P 缺 1 条 → 判失败。其余 8 个同族参数（`@:`、`#`、`$`、`:`、`/`、`.`、`;`、`,`）全部对得上。",
+   "by": "static"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-4185/public.json#problem_statement",
+    "mat/iterative__dvc-4185/validation.json#golden_patch"
+   ],
+   "note": "**题面列了 2 个问题，gold 只修第 2 个**（假值参数）。第 1 个（`dvc commit` 与 `dvc status` 判断不一致）既没改也没测。求解者按题面把两个都修，多出来的改动可能打挂 P2P；只修第 1 个则 F2P 全挂。题面本身不足以推出\"只修假值这一半\"。",
+   "by": "static"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-4185/grading.json#test_patch（`assert dep.status() == {}`）"
+   ],
+   "note": "F2P 只断言对外行为 `dep.status() == {}`，不锁 helper 名或调用顺序；`fill_values` 换成 `self.info.update({p: values[p] for p in self.params if p in values})` 一类写法同样通过。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "git show 0899b277:dvc/dependency/param.py::status"
+   ],
+   "note": "**一个明显更差的修法也能满分**：把 `fill_values` 写成无条件 `self.info[param] = values.get(param)`（即参数在文件里缺失时写入 `None`）同样让 7 条 F2P 通过，但会让 `status()` 的 `elif param not in self.info: st = \"new\"` 分支永远不触发——\"参数是新增的\"这个状态从此报不出来。现有 P2P 里没有任何一条覆盖\"params.yaml 缺少某个 param 时 status 应报 new\"。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4185/gold/offline/a1/test_output.txt:800-818"
+   ],
+   "note": "被触碰的 tests/func/test_run_multistage.py 有 33 条，其中 **20 条在 base 与 gold 两侧都因 `ImportError: cannot import name 'gcd' from 'fractions'`（networkx/dag.py:23，Python 3.9 已删 `fractions.gcd`）而失败**，全部被排除出 P2P；活下来的只有 `test_run_without_cmd[*]` 与 `test_run_with_invalid_stage_name[*]`（它们在建图前就抛异常）。真正与 params 相关的 `test_run_params_default`、`test_run_params_custom_file`、`test_run_params_no_exec` 恰好都在失败名单里。",
+   "by": "static"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-4185/validation.json#golden_patch",
+    "mat/iterative__dvc-4185/public.json#problem_statement"
+   ],
+   "note": "gold 3 行、就事论事、不含无关改动、不依赖未交付改动；但只覆盖题面两个问题中的第 2 个（见 check 23）。",
+   "by": "static"
+  },
+  "29": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-4185/raw.json#hints_text"
+   ],
+   "note": "题面本身干净（无修复代码、无 PR/commit 链接）。**hints_text 直接给出修复代码 `self.info[param] = value` 并附 base_commit 精确行号的 GitHub permalink（`.../blob/0899b277.../dvc/dependency/param.py#L49-L50`）**——按约定 hints 不可见，但只要哪一天把 hints 并进题面，这题就变成抄答案。",
+   "by": "static"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4185/gold/offline/a1/test_output.txt:672-673,695,698"
+   ],
+   "note": "安装阶段多处失败被 `|| true`/`;` 吞掉，rc_install 仍记 0：`ERROR: Could not find a version that satisfies the requirement pyyaml==5.4.1 (from versions: none)`、`tests/requirements.txt` 与 `test-requirements.txt` 不存在。另装出的 networkx 与 Python 3.9 不兼容（见 check 26）。",
+   "by": "static"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4185/gold/offline/a1/test_output.txt（`ERROR paramiko.transport ... Socket exception`、SKIPPED \"no gs\" / \"no hadoop running\"）"
+   ],
+   "note": "同文件的 `test_run_external_outputs[ssh|s3|gs|hdfs]` 需要真实/伪远端；F2P 全在 tests/unit/dependency/test_params.py，不需要网络。",
+   "by": "static"
+  },
+  "7": {
+   "status": "not_applicable",
+   "evidence_refs": [],
+   "note": "test_patch 不带外部资产。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "测试身份转义(19)",
+   "severity": "P1",
+   "evidence_refs": [
+    "mat/iterative__dvc-4185/grading.json#pass_to_pass（`...invalid_stage_name[\\]`，len=70）",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4185/gold/offline/a1/status_map.json（`...invalid_stage_name[\\\\]`，len=71，PASSED）",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4185/gold/offline/a1/test_output.txt:2725"
+   ],
+   "note": "唯一原因是 pytest 对参数值 `\"\\\\\"`（单个反斜杠字符）做 `ascii_escaped` 转义：上游生成 P2P 清单时的 pytest 版本不转义，镜像里 `pip install \"pytest<8\"` 装到的版本转义。gold 因此被判 RESOLVED_NO —— **这是纯粹的假阴性，题目和 gold 都没问题**。本包 17 题里只有这一题命中（signals 的 `fragile_reference_id` 标注正确）。",
+   "proposed_action": "两条路：(a) 评分前对参考清单与运行时 ID 同时做一次规范化（对 `[...]` 段做 `encode(\"unicode_escape\")`）再比对；(b) 在冻结数据时按镜像里实际 pytest 版本重新采集一次参考清单。倾向 (b)，因为 (a) 有可能把本来就不同的两条参数化用例合并。",
+   "next_experiment": "在镜像里 `python -c \"import pytest; print(pytest.__version__)\"` 并 `pytest --collect-only -q tests/func/test_run_multistage.py | grep invalid_stage_name`，确认实际 ID；再对 216 题全量跑一次\"参考清单 vs 收集 ID\"的对账，统计还有多少题受影响。"
+  },
+  {
+   "category": "环境依赖漂移(6/26)",
+   "severity": "P1",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4185/gold/offline/a1/test_output.txt:800-818"
+   ],
+   "note": "networkx 版本（dvc 1.1 的 `networkx>=2.1,<2.4` 一线）在 Python 3.9 上 `from fractions import gcd` 直接 ImportError，tests/func/test_run_multistage.py 33 条里 20 条双侧失败，其中包含本题最相关的三条 params 用例。",
+   "proposed_action": "把 networkx 升到同样兼容 dvc 1.1 API 且支持 3.9 的版本（2.4/2.5 一线），或把镜像 Python 降到 3.8；然后重建 P2P。",
+   "next_experiment": "镜像里 `pip install \"networkx==2.5\"` 后跑 `pytest -rA tests/func/test_run_multistage.py`，看 20 条能否转绿、dvc 自身是否仍可用。"
+  },
+  {
+   "category": "题面与 gold 范围不符(23/27)",
+   "severity": "P2",
+   "evidence_refs": [
+    "mat/iterative__dvc-4185/public.json#problem_statement（\"So there are at least 2 problems here\"）",
+    "mat/iterative__dvc-4185/validation.json#golden_patch"
+   ],
+   "note": "题面显式编号列了两个问题，gold 只解决第 2 个，第 1 个（commit 与 status 判断不一致）无改动也无测试。",
+   "proposed_action": "把题面裁到只保留第 2 个问题（并保留 params.yaml 片段），或在题面注明\"本次只需处理 status 误报\"。",
+   "next_experiment": "无需实验；属于题面修订。"
+  },
+  {
+   "category": "测试放过错误修复(25)",
+   "severity": "P2",
+   "evidence_refs": [
+    "git show 0899b277:dvc/dependency/param.py::status（`elif param not in self.info: st = \"new\"`）"
+   ],
+   "note": "`fill_values` 写成无条件 `self.info[param] = values.get(param)` 也能过全部 F2P/P2P，但会永久压掉 \"new\" 状态。",
+   "proposed_action": "补一条 P2P/F2P：params.yaml 里缺少声明的 param 时 `dep.status()` 应报 `{path: {param: \"new\"}}`。",
+   "next_experiment": "写这个假修复跑当前 F2P+P2P，预期全过，形成反例。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰两个纯官方测试文件；gold 不触碰测试样路径。按第四组 B 保持为空。",
+  "evidence_refs": [
+   "mat/iterative__dvc-4185/grading.json#test_patch",
+   "mat/iterative__dvc-4185/validation.json#golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/func/test_run_multistage.py::test_run_params_default",
+   "reason": "直接覆盖 `ParamsDependency` 在 lockfile 里写什么；环境修好后是最相关的回归。"
+  },
+  {
+   "id": "tests/func/test_run_multistage.py::test_run_params_custom_file",
+   "reason": "覆盖非默认 params 文件路径，能挡住\"只对 params.yaml 生效\"的半修复。"
+  },
+  {
+   "id": "tests/unit/dependency/test_params.py::test_save_info_missing_param",
+   "reason": "已在 P2P；与 `fill_values` 写不写 None 直接相关。"
+  },
+  {
+   "id": "（新增）tests/unit/dependency/test_params.py::test_status_reports_new_param",
+   "reason": "针对 check 25 的缺口：param 在 params.yaml 里不存在时 status 应报 new，现无任何覆盖。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "题本身质量好（题面完整、gold 3 行、F2P 只断言对外行为），但当前 gold 被 ID 转义不一致误判 RESOLVED_NO，且 networkx/py3.9 让最相关的 20 条回归全部失效；两处都是环境/接线问题，修好后可入题。"
+ },
+ "costs": {
+  "minutes": 30
+ },
+ "by": "L1_dvc_1 (Claude Opus 5, 静态审查)"
+}

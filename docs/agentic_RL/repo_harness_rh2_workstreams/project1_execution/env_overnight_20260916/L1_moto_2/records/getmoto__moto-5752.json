@@ -1,0 +1,57 @@
+{
+ "task_id": "getmoto__moto-5752",
+ "source": "SWE-Gym lite (s2 ingest v0)",
+ "task_revision": "upstream",
+ "by": "L1_moto_2 (Opus 5, 静态审查, 2026-09-16)",
+ "materials_refs": {
+  "snapshot": "runs/env_overnight_20260916/L1_moto_2/mat/getmoto__moto-5752/",
+  "base_commit": "b2300f1eae1323e3e8bc45f97e530ce129dff12e",
+  "version": "4.0",
+  "eval_cmd": "pytest -n0 -rA",
+  "repo_level": "docs/.../env_overnight_20260916/L1_moto_2/repo_level_findings.md"
+ },
+ "public_view": {
+  "目标行为": "ssm describe_parameters 的多个 ParameterFilters 必须全部满足（AND 语义），且结果与过滤器书写顺序无关；题面用两个 tag 过滤器（tag:hello=world 与 tag:x=b）两种顺序各断言返回 1 条。",
+  "约束": "只改 moto/ 源码。",
+  "公开材料可推断": "base 的 _match_filters 在 tag 分支里**从循环中间 return True**（b2300f1eae:moto/ssm/models.py:1607-1612），一旦第一个 tag 过滤器匹配就整体判定通过，后续过滤器不再检查；把 tag 分支改成\"不匹配才 return False、匹配则继续循环\"即可。缺陷与修法均可由公开材料＋读代码推出。",
+  "公开材料无法确定的点": [
+   "题面只示范 Option=Equals；F2P 还额外检查 Option=BeginsWith 对 tag 的行为（`tag:hello` BeginsWith \"w\" → 2 条，`tag:x` BeginsWith \"a\" → 1 条），这条要求题面没有。",
+   "题面没说同一个 tag key 出现多次时的语义（gold 把 what 变成该 key 的全部 tag 值列表）。",
+   "题面没说 Option=Contains 对 tag 的语义。"
+  ]
+ },
+ "checks": {
+  "1": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-5752/test.patch"], "note": "主体对应正确（test_patch 碰 tests/test_ssm/test_ssm_boto3.py，gold 碰 moto/ssm/models.py，base 均存在）。但 test_patch 前半段是**与本题无关的改动**：把 test_get_parameters_by_path 里 8 处 put_parameter 的 `Description=\"A test parameter\"` 参数删掉。该测试不断言 Description（b2300f1eae:tests/test_ssm/test_ssm_boto3.py:116-145），删与不删结果相同，属上游同一提交里夹带的清理。它本身是 P2P 成员，所以这段改动会被注入并参与判分。", "by": "static"},
+  "2": {"status": "pass", "evidence_refs": ["b2300f1eae:moto/ssm/models.py:1607-1612"], "note": "base 的 tag 分支确实提前 return True。stage1 empty=RESOLVED_NO 印证。", "by": "static+stage1"},
+  "3": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5752/problem_statement.txt"], "note": "题面 2664 字符，含完整 MWE、期望与实际行为、如何对照真实 AWS，无外链/截断。", "by": "static"},
+  "4": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5752/test.patch"], "note": "合法解在 moto/ssm/models.py。", "by": "static"},
+  "5": {"status": "issue", "evidence_refs": ["本包 5502/5835 同判分文件同源文件"], "note": "与 5502、5835 共用判分文件 tests/test_ssm/test_ssm_boto3.py 与源文件 moto/ssm/models.py，P2P 高度重叠；gold hunk 不重叠、非同一修复。划分留出集时按文件考虑。", "by": "static"},
+  "11": {"status": "pass", "evidence_refs": ["b2300f1eae:tests/test_ssm/test_ssm_boto3.py"], "note": "无 network marker、无真实端点。注意题面 MWE 建议\"注释掉 mock_ssm 跑真实 AWS\"，但这只是报告者的对照方法，判分不需要联网。", "by": "static"},
+  "17": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5752/test.patch"], "note": "只恢复 1 个纯测试文件。", "by": "static"},
+  "19": {"status": "issue", "evidence_refs": ["repo_level_findings.md#R8"], "note": "P2P 含 15 个被空格截断的参数化 ID（test_describe_parameters_invalid_parameter_filters[filters*-... 共 14 个、test_put_parameter_invalid_data_type[something 1 个）。阶段一日志核对显示当前一一对应、未塌缩，但 ID 不稳定，换 parser 会全部变 reference_missing。", "by": "static+stage1"},
+  "23": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-5752/problem_statement.txt", "mat/getmoto__moto-5752/test.patch"], "note": "F2P 的后半段（tag 过滤器的 BeginsWith 行为）在题面里没有任何依据。题面只谈 Equals 与过滤器顺序。求解者若只按题面修（tag 分支改成\"不匹配才 return False\"，即 hints 里给的写法），BeginsWith 断言仍会失败：那种写法把 tag 值当 Equals 比较，`tag:hello` BeginsWith \"w\" 会返回 0 条而不是 2 条。这是一条题面未覆盖、却决定 reward 的要求。", "by": "static"},
+  "24": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5752/test.patch"], "note": "F2P 只断言 describe_parameters 返回条数，不约束内部结构；把 tag 值收集成列表、或对每个过滤器单独判断，都能通过。", "by": "static"},
+  "25": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-5752/test.patch", "b2300f1eae:moto/ssm/models.py:1617-1622"], "note": "F2P 覆盖 Equals 与 BeginsWith 两种 Option，对\"只修顺序不修语义\"的部分修复有防护。未覆盖的缺口是 Option=Contains 对 tag 的语义——gold 自己也没改这一支（见检查 27），所以判分集合与参考解在这一点上一致地不正确，任何同样不处理 Contains 的实现都被放过。", "by": "static"},
+  "26": {"status": "issue", "evidence_refs": ["b2300f1eae:moto/ssm/models.py:1578-1641"], "note": "_match_filters 同时服务 describe_parameters 与 get_parameters_by_path 等路径，79 个同文件 P2P 覆盖较好但仍集中在一个文件。见 proposed_regression_tests。", "by": "static"},
+  "27": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-5752/gold.patch", "b2300f1eae:moto/ssm/models.py:1619"], "note": "gold 修好了 BeginsWith 与 Equals 的列表分支，但 `elif option == \"Contains\" and not any(value in what for value in values)` 原样保留。当 what 是 tag 值列表时，`value in what` 变成**精确成员判断**而不是子串包含，与 AWS 对 Contains 的语义不符。这是 gold 留下的残余缺陷（未被任何测试覆盖）。另外 OneLevel/Recursive 分支对列表会崩（what.split），但 tag key 不允许这两个 Option，属不可达路径。", "by": "static"},
+  "28": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-5752/test.patch"], "note": "test_patch 夹带的 Description 删除与本题无关（见检查 1），属判分材料非最小化。不影响判分结果，但会让\"test_patch 即本题验收材料\"的假设失真。", "by": "static"},
+  "29": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-5752/hints.txt"], "note": "**hints_text 泄漏程度最高的一题**：既给出上游源码精确行号链接（moto/ssm/models.py#L1612），又给出接近可用的修复代码片段。按约定 hints 不对 agent 可见，当前无泄漏；但这题是\"若 hints 意外并入题面则直接送答案\"的典型样本，值得在实际输入渲染上做一次核对。", "by": "static"},
+  "6": {"status": "pass", "evidence_refs": ["repo_level_findings.md#R2"], "note": "4.0，离线 rc=0。", "by": "static+stage1"},
+  "7": {"status": "not_applicable", "evidence_refs": [], "note": "无外部资产。", "by": "static"},
+  "9": {"status": "pass", "evidence_refs": ["repo_level_findings.md#R3"], "note": "仓库级共性证据。", "by": "static+stage1"}
+ },
+ "issues": [
+  {"category": "要求不充分（题面未覆盖的 reward 判据）", "severity": "P2", "evidence_refs": ["mat/getmoto__moto-5752/test.patch", "mat/getmoto__moto-5752/hints.txt"], "proposed_action": "标注 F2P 的 BeginsWith 断言无题面依据；这是\"按题面正确修复仍不得分\"的候选反例。若做任务修订，可在题面补一句 tag 过滤器需支持 BeginsWith。", "next_experiment": "把 hints 里给的修法（只改 tag 分支为 not any(...) return False）当作合法替代解，在真实 grader 上跑 F2P，预期因 BeginsWith 两条断言失败——这同时验证检查 23 与检查 24 的边界。"},
+  {"category": "gold 残余缺陷", "severity": "P3", "evidence_refs": ["b2300f1eae:moto/ssm/models.py:1619", "mat/getmoto__moto-5752/gold.patch"], "proposed_action": "记录 Contains 对 tag 的语义在 gold 后仍不正确；不因此拒题。", "next_experiment": "gold 之上跑 `describe_parameters(ParameterFilters=[{Key:'tag:hello',Option:'Contains',Values:['orl']}])`，预期返回 0 条（AWS 应返回 2 条）。"},
+  {"category": "判分材料非最小化", "severity": "P3", "evidence_refs": ["mat/getmoto__moto-5752/test.patch"], "proposed_action": "记录 test_patch 含无关清理；汇总时区分\"与题目相关的测试改动\"和\"夹带改动\"。", "next_experiment": "无。"},
+  {"category": "参考 ID 身份", "severity": "P3", "evidence_refs": ["repo_level_findings.md#R8"], "proposed_action": "同 R8。", "next_experiment": "同 R8。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只碰 1 个纯测试文件。", "evidence_refs": ["mat/getmoto__moto-5752/test.patch"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_ssm/test_ssm_parameter_store.py", "reason": "参数存储的另一组测试文件，覆盖 _match_filters 的非 tag 分支（Name/Path/Type/KeyId/Label），确认引入 is_list 分支后这些路径未回归。"},
+  {"id": "tests/test_ssm/test_ssm_boto3.py::test_get_parameters_by_path", "reason": "同一 _match_filters 的另一调用者，且本题 test_patch 恰好改动了它；已在 P2P，列此强调它是关键对照。"},
+  {"id": "tests/test_ssm/test_ssm_boto3.py::test_describe_parameters_with_parameter_filters_path", "reason": "覆盖 OneLevel/Recursive 分支（gold 未适配列表的分支），确认 what 为列表时不会走到这些分支。"}
+ ],
+ "disposition_hint": {"state": "needs_review", "reason": "环境与材料可用、初态含问题、gold 达成题面目标；但 F2P 含一条题面无依据的 BeginsWith 要求（按题面正确修复仍会失败），需要裁定这是否算\"过严测试\"。"},
+ "costs": {"minutes": 22}
+}

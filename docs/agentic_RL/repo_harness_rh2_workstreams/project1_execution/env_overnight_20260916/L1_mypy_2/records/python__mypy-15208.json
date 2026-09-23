@@ -1,0 +1,233 @@
+{
+ "task_id": "python__mypy-15208",
+ "source": "SWE-Gym lite / python/mypy PR 15208（stubgen 丢失 TypedDict 的 total）",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "7832e1f4ec5edf5f814c91f323c2d4ccc3022603",
+  "version": "1.4",
+  "python_version": "3.11",
+  "eval_cmd": "pytest -n0 -rA -k",
+  "f2p": [
+   "mypy/test/teststubgen.py::StubgenPythonSuite::stubgen.test::testTypeddictClassWithKeyword"
+  ],
+  "p2p": [
+   "mypy/test/teststubgen.py::StubgenPythonSuite::stubgen.test::testTypeddictKeywordSyntax"
+  ],
+  "gold_paths": [
+   "mypy/stubgen.py"
+  ],
+  "test_patch_paths": [
+   "test-data/unit/stubgen.test"
+  ],
+  "runtime_evidence": "无（不在 stage1 样本、in_e2 空、无 DeepSeek 候选）"
+ },
+ "public_view": {
+  "goal": "stubgen 处理 `class MyDict(TypedDict, total=False)` 时丢掉 total=False，生成的 stub 变成 `class MyDict(TypedDict)`；要求保留。",
+  "constraints": [
+   "题面给完整最小复现 + 实际/期望输出，无外链、无图片、无截断",
+   "hints_text 为空"
+  ],
+  "unknowns_from_public_only": [
+   "只保留 total，还是保留所有类定义关键字（gold 选了后者）？题面只提 total",
+   "metaclass= 这个关键字怎么办——base 在别处已经单独处理过它，题面完全没提；这恰恰是本题最容易踩的坑",
+   "功能式写法 `X = TypedDict('X', {...}, total=False)` 是否也受影响（base 已正确，题面未提）"
+  ],
+  "base_code_evidence": [
+   "7832e1f4e:mypy/stubgen.py:1004-1046 get_base_types() 只遍历 cdef.base_type_exprs，**完全没看 cdef.keywords** → 题面缺陷成立",
+   "7832e1f4e:mypy/stubgen.py:968-980 visit_class_def 已经单独把 metaclass 拼进 base_types（'metaclass=' + meta / 'metaclass=abc.ABCMeta'）",
+   "7832e1f4e:mypy/nodes.py:1096/1121 ClassDef.keywords: dict[str, Expression]，gold 依赖的字段在 base 就绪"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "test-data/unit/stubgen.test 在 base 存在（216 个 case）",
+    "gold 目标 mypy/stubgen.py:1004-1046 在 base 逐行一致"
+   ],
+   "note": "无二进制/LFS/子模块；F2P 是新增 case。",
+   "by": "L1_mypy_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "7832e1f4e:mypy/stubgen.py:1004-1046 不读 cdef.keywords"
+   ],
+   "note": "静态确认 base 含题面缺陷。",
+   "by": "L1_mypy_2"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 680 字符，自足",
+    "hints_text 长度 0"
+   ],
+   "note": "题面清晰、无信息不对称。",
+   "by": "L1_mypy_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只碰 test-data/unit/stubgen.test"
+   ],
+   "note": "无非测试源码；gold 不碰测试样路径。",
+   "by": "L1_mypy_2"
+  },
+  "17": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "同 file_rules"
+   ],
+   "note": "仓库级。本题的 F2P/P2P 由 mypy/test/teststubgen.py 驱动，该文件不受保护。",
+   "by": "L1_mypy_2"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "40 题里本包只有本题 gold 触碰 mypy/stubgen.py；L1_mypy_1 的 16869 也是 stubgen 题但改的是 teststubgen.py + 另一处"
+   ],
+   "note": "与 16869 同属 stubgen 主题、base_commit 不同（1.4 vs 1.9），不构成重复。",
+   "by": "L1_mypy_2"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 的 [out] 段就是题面 Expected Behavior 那段代码"
+   ],
+   "note": "要求充分且与题面一致——本包里公开材料与 F2P 对应最好的一题。",
+   "by": "L1_mypy_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 只断言生成的 stub 文本"
+   ],
+   "note": "不强制唯一实现：只处理 total、或处理全部 keywords，都能过。",
+   "by": "L1_mypy_2"
+  },
+  "25": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "gold 里 `if name == \"metaclass\": continue  # handled separately` 这一行是必需的——base 的 7832e1f4e:mypy/stubgen.py:968-980 已经单独拼过 metaclass=",
+    "7832e1f4e:test-data/unit/stubgen.test 有 11 处 `metaclass=` 的既有用例（1691/1698/1705/1712/1719/1726/1742/1751/1917/1933/1949 行附近），**一条都不在 P2P**",
+    "P2P 只有 testTypeddictKeywordSyntax 一条，走的是功能式 TypedDict('X', {...}, total=False) 那条路径，与 gold 改的 get_base_types 无关"
+   ],
+   "note": "漏放通道非常具体：agent 若写成 `for name, value in cdef.keywords.items(): base_types.append(f'{name}={value.accept(p)}')`（漏掉 metaclass 跳过），F2P 与唯一的 P2P 都能过，而所有 `class A(metaclass=ABCMeta)` 会生成重复的 `metaclass=` —— 11 条既有用例全挂，评分检不出来。",
+   "by": "L1_mypy_2"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "P2P 只有 1 条且无判别力"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_mypy_2"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 把 `p = AliasPrinter(self)` 从两处内联提到函数开头（纯重构）",
+    "cdef.keywords 在 base 的 nodes.py:1096 已存在"
+   ],
+   "note": "gold 正确、完整、不依赖未交付改动；`p` 的提取是必要的（新代码在循环外要用），不算题外改动。",
+   "by": "L1_mypy_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 无 PR/commit 链接、无修复代码；hints 为空"
+   ],
+   "note": "无静态泄漏。",
+   "by": "L1_mypy_2"
+  },
+  "6": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "未实跑安装。",
+   "by": "L1_mypy_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "stubgen.test 的 case 不依赖外部资源"
+   ],
+   "note": "无外部权重/数据依赖。",
+   "by": "L1_mypy_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "case 正文无网络调用"
+   ],
+   "note": "纯离线。",
+   "by": "L1_mypy_2"
+  },
+  "18": {
+   "status": "pass",
+   "evidence_refs": [
+    "kscan.json:python__mypy-15208 两条 over_select 均为空"
+   ],
+   "note": "无 -k 过选。注意 -k 不带文件，会先 collect 整个 mypy/test，包含 teststubgen.py 里的非 DataSuite 单测。",
+   "by": "L1_mypy_2"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "nodeid 4 段（teststubgen.py::StubgenPythonSuite::stubgen.test::case）；7832e1f4e:mypy/test/data.py 含 DataFileCollector"
+   ],
+   "note": "形状一致。",
+   "by": "L1_mypy_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "grading_coverage",
+   "severity": "P1",
+   "evidence_refs": [
+    "stubgen.test 11 条 metaclass 用例无一入 P2P；唯一的 P2P 与改动路径无关"
+   ],
+   "proposed_action": "补 P2P：把 stubgen.test 里所有含 metaclass= 的 case 纳入，再加若干普通 class 定义 case（确认没有多出关键字）。",
+   "next_experiment": "写漏掉 metaclass 跳过的假修复，跑当前 F2P+P2P（预期满分），再跑那 11 条 metaclass 用例（预期全挂）。"
+  },
+  {
+   "category": "file_boundary",
+   "severity": "P1",
+   "evidence_refs": [
+    "rh2/src/repoharness2/grading/manager.py:656/672/581"
+   ],
+   "proposed_action": "建议把 mypy/test/* 与 test-data/* 纳入 hygiene 保护（40 题 gold 均不触碰）。",
+   "next_experiment": "构造只改 mypy/test/helpers.py::assert_string_arrays_equal 的候选 patch 走一次评分，确认当前会判满分。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 test-data/unit/ 下的 .test 数据文件，gold 只碰 mypy/ 源码，两者无交集，按第四组 B 默认保持空。仓库级建议（需用户裁定、对 40 题统一生效）：把 'mypy/test/*' 与 'test-data/*' 加入 hygiene.test_globs——40 题 gold 无一触碰这两处（已对 validation_bundles 全量核对），而当前 agent 改 mypy/test/helpers.py、mypy/test/data.py 或 test-data/unit/fixtures/*.pyi 既不被 eval 的 git checkout 还原，也不被判 rejected_test_tampering。副作用：agent 在 test-data/ 下建临时文件会让整份提交作废，需一并决定。",
+  "evidence_refs": [
+   "rh2/src/repoharness2/grading/manager.py:656、:672、:581",
+   "rh2/src/repoharness2/contracts/grading.py:118-121"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "stubgen.test 中所有 metaclass 相关 case（约 11 条，含 testAbstractMethodMemberExpr 一族）",
+   "reason": "gold 的 metaclass 跳过分支是必需的，却完全没有护栏。"
+  },
+  {
+   "id": "mypy/test/teststubgen.py::StubgenPythonSuite::stubgen.test 全文件（216 个 case）",
+   "reason": "gold 改的是所有类定义基类列表的生成入口。"
+  },
+  {
+   "id": "新增：`class A(Base, metaclass=M, total=False)` 同时含 metaclass 与其它关键字",
+   "reason": "钉死两条处理路径的组合。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "题面/gold/F2P 三者对应是本包最好的，唯一硬伤是 P2P 无判别力而 gold 里最关键的 metaclass 跳过分支毫无护栏；补 P2P 后可直接用。"
+ },
+ "costs": {
+  "minutes": 23
+ }
+}

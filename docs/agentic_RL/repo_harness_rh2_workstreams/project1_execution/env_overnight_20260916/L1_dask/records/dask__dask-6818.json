@@ -1,0 +1,222 @@
+{
+ "task_id": "dask__dask-6818",
+ "source": "SWE-Gym lite (dask/dask 2.30)",
+ "task_revision": "upstream",
+ "materials_refs": [
+  "s2/ingest/public_bundles_v0.jsonl",
+  "s2/ingest/grading_bundles_v2_v0.jsonl (F2P=1; P2P=121; eval_cmd 'pytest -n0 -rA  --color=no')",
+  "s2/ingest/validation_bundles_v0.jsonl",
+  "s2/raw/swe_gym_lite_full_f70b1a29.jsonl (hints_text 200 字符)",
+  "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/dask__dask-6818/{gold,empty}/offline/a1/"
+ ],
+ "public_view": {
+  "goal": "同一份数据用不同 blocksize 调 dd.read_csv 后 persist，重复读取会串到上一次的缓存结果（行数从 7667792 突变成 12204124）；期望每次结果一致。",
+  "constraints": [
+   "题面给出完整脚本与三次输出。",
+   "题面明确期望：'The same result every time'。"
+  ],
+  "unknown_from_public": [
+   "题面没点出根因是任务名（tokenize）不含 blocksize；但“换 blocksize 却串到旧结果”对熟悉 dask 的人是很强的指向。",
+   "**题面场景在离线容器里不可复现**：它依赖 `s3://nyc-tlc/...`（storage_options anon=True）与一个 10 worker 的 distributed 集群。agent 只能靠推理，不能靠复现。"
+  ],
+  "by": "L1_dask"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "554ca8877d36d30732712698f3135e13edd6654a:dask/dataframe/io/csv.py:312-320,383,598-607",
+    "554ca8877d36d30732712698f3135e13edd6654a:dask/dataframe/io/tests/test_csv.py:828-836"
+   ],
+   "note": "test_patch 只改测试文件、gold 只改 dask/dataframe/io/csv.py，base 均存在，与题面同一问题。无二进制/LFS/子模块。",
+   "by": "L1_dask"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "554ca8877d36d30732712698f3135e13edd6654a:dask/dataframe/io/csv.py:383（name = 'read-csv-' + tokenize(reader, columns, enforce, head)）"
+   ],
+   "note": "base 的任务名不含 blocksize，两次不同 blocksize 的 read_csv 产生同名 key，persist 缓存因此串用；缺陷成立，empty 侧 F2P FAILED。",
+   "by": "L1_dask"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-6818.problem_statement",
+    "s2/raw/...:dask__dask-6818.hints_text"
+   ],
+   "note": "题面完整无截断，但复现路径依赖 S3 与 distributed 集群，容器内做不了（见 checks.7 的区分：**测试**不需要网络，**题面复现**需要）。hints 只有一句（200 字符）且与题面指向一致（'tasks having the same name even if the blocksize is different'），不构成 hints 独有的关键信息。",
+   "by": "L1_dask"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-6818.test_patch"
+   ],
+   "note": "test_patch 仅碰 dask/dataframe/io/tests/test_csv.py；gold 仅碰源码。",
+   "by": "L1_dask"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "同上"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "L1_dask"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dask/prescan.json"
+   ],
+   "note": "与 dask__dask-10972 改同一对文件（dask/dataframe/io/csv.py + dask/dataframe/io/tests/test_csv.py），P2P 大量同源（本题 121 条 / 10972 150 条）。不是同一 PR（相隔 3 年多），但划分训练/评测集须同侧。",
+   "by": "L1_dask"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-6818.test_patch"
+   ],
+   "note": "F2P 断言 `dd.read_csv(fn, blocksize='10kB')._name != dd.read_csv(fn, blocksize='20kB')._name`，即“不同 blocksize 必须产生不同任务名”。题面的“结果不该串”能推出这条（dask 用户熟知同名即同缓存）。未说明的接口：`_name` 是私有属性，题面没提，但它是 dask 内部通用约定。",
+   "by": "L1_dask"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-6818.test_patch"
+   ],
+   "note": "不锁实现：把 blocksize 加进 tokenize、或换成任何随 blocksize 变化的确定性名字都能过。",
+   "by": "L1_dask"
+  },
+  "25": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-6818.pass_to_pass（含 test_multiple_read_csv_has_deterministic_name）"
+   ],
+   "note": "F2P 只断言“名字不同”，单看它，`name = 'read-csv-' + uuid4().hex` 这种破坏确定性的假修复也能过；但 P2P 里的 `test_multiple_read_csv_has_deterministic_name`（断言相同参数两次读必须同名）正好堵住这条路。两条断言合起来判别力完整。这是本包 P2P 起到设计作用的第二例。",
+   "by": "L1_dask"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "554ca8877d36d30732712698f3135e13edd6654a:dask/dataframe/io/tests/test_csv.py:179-305"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_dask"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "validation_bundles_v0.jsonl:dask__dask-6818.golden_patch"
+   ],
+   "note": "gold 3 处改动（加参数、进 tokenize、调用处传参），无无关内容、不依赖未交付改动。新参数带默认值 None，`text_blocks_to_pandas` 的 6 处既有测试调用（位置参数）不受影响。blocksize 在 read_pandas:509-512 已被 parse_bytes 归一成 int，所以 '10kB' 与 10000 仍同名，不会引入假阴性。",
+   "by": "L1_dask"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-6818.problem_statement"
+   ],
+   "note": "题面与 hints 都不含修复代码，也没有 PR/commit 号。",
+   "by": "L1_dask"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-6818/gold/offline/a1/test_output.txt (install rc=0)"
+   ],
+   "note": "安装 rc=0；工具链 Python 3.8.15 + pytest-8.3.2（见 #R3），2 条既有用例因 pandas `_mgr` 漂移恒 FAILED，均不在参考集内。",
+   "by": "L1_dask"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "554ca8877d36d30732712698f3135e13edd6654a:dask/dataframe/io/tests/test_csv.py"
+   ],
+   "note": "**测试侧**无网络：无 mark.network、无真实 s3/http 端点，只有本地 filetext/tmpfile 与被 importorskip 守卫的 psutil。题面里的 s3 只出现在 MCVE 中，不进判分。",
+   "by": "L1_dask"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-6818/gold/offline/a1/test_output.txt",
+    "runs/env_overnight_20260916/L1_dask/scripts/extrakeys.py 输出"
+   ],
+   "note": "gold 侧 132 条结果行 → 129 个键，其中 2 个是伪键 `[1]`/`[2]`（#R2）；跳过原因为 lz4 / lzma 压缩函数缺失与 `--runslow`。另有 3 条 XFAIL（含 `test_encoding_gh601[utf-16]`、`[utf-16-le]`，即 dask__dask-10972 后来修掉的那两条）。F2P/P2P 无一条落在被跳过用例上。",
+   "by": "L1_dask"
+  },
+  "12": {
+   "status": "issue",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-6818.pass_to_pass"
+   ],
+   "note": "3 条 P2P 是被空白截断的 ID（与 10972 同样三条，见 #R1）：`test_skiprows_as_list[read_csv-read_csv-files0-str,` 等。当前未塌缩，但 ID 不稳定；task_signals 记 `fragile_reference_id=false`，漏检。",
+   "by": "L1_dask"
+  },
+  "9": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-6818/{gold,empty}/offline/a1/status_map.json"
+   ],
+   "note": "empty→F2P FAILED，gold→PASSED，121 条 P2P 两侧全 PASSED。",
+   "by": "L1_dask"
+  }
+ },
+ "issues": [
+  {
+   "category": "题面复现依赖网络",
+   "severity": "P2",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-6818.problem_statement（s3://nyc-tlc/...、distributed 10 worker）"
+   ],
+   "proposed_action": "若用于评测，在题级记录标注“题面 MCVE 在离线容器内不可执行，agent 必须靠推理”。不改题面也可用——本题的推理链短且 F2P 断言不依赖网络。",
+   "next_experiment": "无需实验；可统计 216 题里 MCVE 依赖网络/集群的比例。"
+  },
+  {
+   "category": "参考 ID 不稳定",
+   "severity": "P2",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-6818.pass_to_pass"
+   ],
+   "proposed_action": "随 #R1 一起处理。",
+   "next_experiment": "用 --junitxml 跑同一命令，比对逐 ID 集合与 status_map 的差集。"
+  },
+  {
+   "category": "默认 blocksize 使任务名与主机相关",
+   "severity": "P3",
+   "evidence_refs": [
+    "554ca8877d36d30732712698f3135e13edd6654a:dask/dataframe/io/csv.py:441-447,509-512"
+   ],
+   "proposed_action": "仅记录：gold 之后 `blocksize='default'` 会把 AUTO_BLOCKSIZE（依赖 psutil 探到的内存/CPU）写进任务名，跨机器的名字不再稳定。不影响本题判分。",
+   "next_experiment": "无。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰测试文件，gold 只碰源码；按第四组 B 默认保持空。",
+  "evidence_refs": [
+   "grading_bundles_v2_v0.jsonl:dask__dask-6818.test_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "dask/dataframe/io/tests/test_csv.py::test_multiple_read_csv_has_deterministic_name",
+   "reason": "已在 P2P；是拦住“随机化任务名”假修复的唯一屏障，必须保留。"
+  },
+  {
+   "id": "dask/dataframe/io/tests/test_csv.py::test_text_blocks_to_pandas_simple / _kwargs / _blocked",
+   "reason": "gold 给 text_blocks_to_pandas 加了新参数；这三条以位置参数直接调用该函数，能拦住把参数插到中间导致签名不兼容的改法。"
+  },
+  {
+   "id": "dask/dataframe/io/tests/test_csv.py::test_read_csv_sensitive_to_enforce",
+   "reason": "同一 tokenize 的另一维度（enforce），验证候选没有把其它区分维度删掉。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "材料一致、gold 三行且精准、F2P 与 P2P 形成互补的正反断言（本包少数几道 P2P 真起作用的题）。唯一保留是题面 MCVE 依赖 S3/集群、无法在容器内复现，以及 3 条截断 P2P ID 的稳定性问题。"
+ },
+ "costs": {
+  "minutes": 20
+ }
+}

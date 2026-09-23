@@ -1,0 +1,212 @@
+{
+ "task_id": "dask__dask-7138",
+ "source": "SWE-Gym lite (dask/dask 2021.01)",
+ "task_revision": "upstream",
+ "materials_refs": [
+  "s2/ingest/public_bundles_v0.jsonl (problem_statement 1487 字符)",
+  "s2/ingest/grading_bundles_v2_v0.jsonl (F2P=1; P2P=468)",
+  "s2/ingest/validation_bundles_v0.jsonl (golden_patch 2 行)",
+  "s2/raw/swe_gym_lite_full_f70b1a29.jsonl (hints_text 为空)",
+  "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/dask__dask-7138/{gold,empty}/offline/a1/"
+ ],
+ "public_view": {
+  "goal": "`dask.array.ravel` 只接受已经是 dask/numpy array 的输入，传 list/tuple/标量会抛 AttributeError；应像 `numpy.ravel` 一样接受 array_like。",
+  "constraints": [
+   "题面给出 2 行复现（np.ravel([0,0]) 正常、da.ravel([0,0]) 报错）。",
+   "题面还说明动机：numpy.append 等函数内部依赖 ravel 接受 array_like。"
+  ],
+  "unknown_from_public": [
+   "几乎没有未知项——题面把当前实现、期望实现、原因都写全了（见检查 29）。唯一未说明的是返回类型必须仍是 `dask.array.core.Array`（F2P 有此断言），但这是 dask 的一般约定。"
+  ],
+  "by": "L1_dask"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "9bb586a6b8fac1983b7cea3ab399719f93dbbb29:dask/array/routines.py:1197-1198",
+    "9bb586a6b8fac1983b7cea3ab399719f93dbbb29:dask/array/tests/test_routines.py:986-1005"
+   ],
+   "note": "test_patch 只改 dask/array/tests/test_routines.py、gold 只改 dask/array/routines.py，base 均存在，同一问题。无二进制/LFS/子模块。",
+   "by": "L1_dask"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "9bb586a6b8fac1983b7cea3ab399719f93dbbb29:dask/array/routines.py:1197-1198（def ravel(array): return array.reshape((-1,))）"
+   ],
+   "note": "base 代码与题面引述逐字一致，缺陷成立；empty 侧 F2P FAILED。",
+   "by": "L1_dask"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-7138.problem_statement"
+   ],
+   "note": "题面完整、无截断、无图片外链；hints_text 为空，不存在 hints 独有信息。",
+   "by": "L1_dask"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-7138.test_patch"
+   ],
+   "note": "test_patch 仅碰测试文件；gold 仅碰源码。",
+   "by": "L1_dask"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "同上"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "L1_dask"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dask/prescan.json"
+   ],
+   "note": "本包内唯一改 dask/array/routines.py 的题。",
+   "by": "L1_dask"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-7138.test_patch"
+   ],
+   "note": "F2P 断言 int/list/tuple/嵌套 tuple 四种 array_like 与 np.ravel 结果相等且返回 dask Array，完全在题面覆盖范围内。",
+   "by": "L1_dask"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-7138.test_patch"
+   ],
+   "note": "不锁实现：`asanyarray(x).reshape((-1,))`、`asarray`、或先判 `hasattr(x,'reshape')` 再转换都能过。`asanyarray` 在 base 的 routines.py:24-38 已经 import，不需要新增导入。",
+   "by": "L1_dask"
+  },
+  "25": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-7138.test_patch",
+    "grading_bundles_v2_v0.jsonl:dask__dask-7138.pass_to_pass（含 test_ravel、test_ravel_1D_no_op）"
+   ],
+   "note": "F2P 覆盖题面原例并扩展到标量/tuple/嵌套；P2P 里的 test_ravel / test_ravel_1D_no_op 保证已有 dask Array 输入的行为不退化（例如把返回值改成 numpy 会被 F2P 的 isinstance 断言拦下，把 asanyarray 换成会复制数据的实现会被 test_ravel_1D_no_op 的 no-op 语义拦下）。",
+   "by": "L1_dask"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "9bb586a6b8fac1983b7cea3ab399719f93dbbb29:dask/array/routines.py:1194"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_dask"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "validation_bundles_v0.jsonl:dask__dask-7138.golden_patch"
+   ],
+   "note": "gold 只有 2 行（改形参名 + 包一层 asanyarray），无无关改动、不依赖未交付改动。",
+   "by": "L1_dask"
+  },
+  "29": {
+   "status": "issue",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-7138.problem_statement"
+   ],
+   "note": "**题面直接给出修复代码**：先贴 base 的实现，再贴 'the correct way' `asasanyarray(array_like).reshape((-1))`（只多打了一个 'as'）。与 gold 逐字等价。本题应归入“题面自带修复”的低难度桶，不适合当定位能力指标。",
+   "by": "L1_dask"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-7138/gold/offline/a1/test_output.txt (install rc=0)"
+   ],
+   "note": "安装 rc=0。工具链仍是 Python 3.8.15 + pytest-8.3.2（见 #R3）。",
+   "by": "L1_dask"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "9bb586a6b8fac1983b7cea3ab399719f93dbbb29:dask/array/tests/test_routines.py"
+   ],
+   "note": "无 mark.network / URL 下载 / requests / boto3；模块级只有 `np = pytest.importorskip('numpy')`。",
+   "by": "L1_dask"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-7138/gold/offline/a1/test_output.txt",
+    "runs/env_overnight_20260916/L1_dask/scripts/prefail.py 输出"
+   ],
+   "note": "gold 侧 0 条 SKIPPED、无伪键，但**92 条既有用例恒 FAILED**（占 561 条结果行的 16%），全部是 pytest 8 移除 `pytest.warns(None)` 所致（test_cov、test_isin_rand 系列等）。它们不在参考集内，不影响判分，但说明该文件有 1/6 的回归保护是死的。这是本包工具链错配最严重的一题。",
+   "by": "L1_dask"
+  },
+  "8": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-7138.pass_to_pass"
+   ],
+   "note": "P2P 468 条是本包最大，覆盖 test_routines.py 绝大部分；含 test_ravel、test_ravel_1D_no_op、test_ravel_multi_index[0-5]、test_unravel_index 等同族用例。",
+   "by": "L1_dask"
+  },
+  "9": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-7138/{gold,empty}/offline/a1/status_map.json"
+   ],
+   "note": "empty→F2P FAILED，gold→PASSED，468 条 P2P 两侧全 PASSED。",
+   "by": "L1_dask"
+  }
+ },
+ "issues": [
+  {
+   "category": "静态泄漏",
+   "severity": "P1",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-7138.problem_statement"
+   ],
+   "proposed_action": "作为训练样本可用（一次成功的修复轨迹），但不适合放进评测集衡量定位/推理能力；建议在题级打 `statement_contains_fix` 标签。",
+   "next_experiment": "无需实验；可统计 216 题里题面含可执行修复片段的比例（本包已知 7656、7138 两题）。"
+  },
+  {
+   "category": "回归保护被工具链削弱",
+   "severity": "P2",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-7138/gold/offline/a1/test_output.txt"
+   ],
+   "proposed_action": "属仓库级问题（#R3）；本题因 P2P 基数大（468）受影响相对小。",
+   "next_experiment": "镜像里 `pip install 'pytest<7'` 后重跑该文件，统计恢复多少条可用 P2P（预期 +92）。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰测试文件，gold 只碰源码；按第四组 B 默认保持空。",
+  "evidence_refs": [
+   "grading_bundles_v2_v0.jsonl:dask__dask-7138.test_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "dask/array/tests/test_routines.py::test_ravel / test_ravel_1D_no_op",
+   "reason": "已在 P2P；保证已有 Array 输入时 ravel 仍是零拷贝 reshape。"
+  },
+  {
+   "id": "dask/array/tests/test_routines.py::test_union1d",
+   "reason": "routines.py:1192 的 union1d 在同文件里调用 `ar.ravel()`（方法而非函数），可验证候选没有把方法路径一起改坏。"
+  },
+  {
+   "id": "dask/array/tests/test_routines.py::test_append",
+   "reason": "题面明确提到 numpy.append 依赖 ravel 接受 array_like；若 dask 的 append 走同一路径，这是“题面动机被满足”的直接检查。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "材料一致、gold 两行、F2P/P2P 判别力完整、链路健康。唯一保留是题面自带修复代码（难度标签问题）与同文件 92 条死用例（仓库级）。"
+ },
+ "costs": {
+  "minutes": 18
+ }
+}

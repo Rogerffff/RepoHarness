@@ -1,0 +1,990 @@
+{
+  "schema_id": "rh2.environment_replay_inventory.v1",
+  "generated_at": "2026-09-21T05:29:19.753918+08:00",
+  "status": "standby_static_inventory_not_execution_authorization",
+  "audience": "根任务/私有环境复现协调者；不交公开读者",
+  "scope": "只记录batch04固定3题原运行条件；不作题目质量判断",
+  "batch_manifest": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/batch_manifest.json",
+  "task_count": 3,
+  "common": {
+    "method_reference": {
+      "file": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/environment_replay_inventory.json",
+      "reused_sections": [
+        "common.code_archives"
+      ],
+      "prior_task_verification_repeated": false
+    },
+    "original_prepared_summary": "runs/full216_rh2_diagnostic_20260919/remote/replay/prepared/replay_summary.json",
+    "original_prepared_manifest": "runs/full216_rh2_diagnostic_20260919/remote/replay/prepared/prepared_manifest.json",
+    "original_host_grading_views": "runs/full216_rh2_diagnostic_20260919/remote/replay/private/host_grading_views.jsonl",
+    "historical_summary_path": "/work/full216_20260919/replay/prepared/replay_summary.json",
+    "historical_summary_path_exists_on_authoritative_host": false,
+    "target_summary_status": "待准备；原summary仍引用历史/work路径，须另建可达路径版本，不能直接当目标机已就绪。",
+    "code_archives": {
+      "baseline": {
+        "file": "runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz",
+        "original_code_root": "/work/full216_20260919/code/rh2",
+        "members": [
+          {
+            "member": "scripts/replay_grade.py",
+            "sha256": "6115714639d677a7a2b116738507d8adf8fc9f5a4f4059ff7f792360359a0311",
+            "bytes": 7525
+          },
+          {
+            "member": "src/repoharness2/adapters/slime/replay_grade.py",
+            "sha256": "b8f1fbe2f37032e52b496f2eb9296c8a647a3072af2b7def600809544c9999fb",
+            "bytes": 38878
+          },
+          {
+            "member": "src/repoharness2/adapters/slime/prepared_task_face.py",
+            "sha256": "3a3d7bcab18e8a83f99104180e065ed32d8ecbce5d1bd4aaa7f8bd72b001aa27",
+            "bytes": 23211
+          },
+          {
+            "member": "src/repoharness2/envpack/spec_vendor.py",
+            "sha256": "8e0037b27c87268ed7df97ef64d261d0e6dac7375bc85fd5badd0fecdb94d41d",
+            "bytes": 10370
+          }
+        ],
+        "status": "归档在本地；未解包、未导入。目标code-root与Python依赖待准备。"
+      },
+      "dvc": {
+        "file": "runs/env_recipe_repair_20260919/frozen_sources/dvc.tar.gz",
+        "original_code_root": "/work/env_recipe_repair_20260919/dvc_install_v1c/code/rh2",
+        "members": [
+          {
+            "member": "scripts/replay_grade.py",
+            "sha256": "6115714639d677a7a2b116738507d8adf8fc9f5a4f4059ff7f792360359a0311",
+            "bytes": 7525
+          },
+          {
+            "member": "src/repoharness2/adapters/slime/replay_grade.py",
+            "sha256": "031046ba444e26a91643ce988c3855e80acb1b4cf90408235d61ff35d87fb896",
+            "bytes": 39879
+          },
+          {
+            "member": "src/repoharness2/adapters/slime/prepared_task_face.py",
+            "sha256": "31ff5145dfa8b71b2a183b14f8a5fbfe4572b71911af54023c8168e534e4f8a3",
+            "bytes": 24462
+          },
+          {
+            "member": "src/repoharness2/envpack/spec_vendor.py",
+            "sha256": "8e0037b27c87268ed7df97ef64d261d0e6dac7375bc85fd5badd0fecdb94d41d",
+            "bytes": 10370
+          }
+        ],
+        "status": "归档在本地；未解包、未导入。目标code-root与Python依赖待准备。"
+      }
+    },
+    "code_archive_provenance_note": "沿已记录的baseline/DVC归档与成员hash定位；本任务不重做B1-B3验核。",
+    "cli_arguments": [
+      "run",
+      "--prepared-summary",
+      "<new_relocated_summary>",
+      "--task-ids",
+      "<exact_instance_id>",
+      "--candidate",
+      "noop OR patch:<explicit_candidate_file> OR gold-dir:<prepared_gold_dir>",
+      "--derived-image",
+      "<verified_runtime_image_id>",
+      "--derived-image-recipe",
+      "<recorded_recipe_label>",
+      "--eval-log-dir",
+      "<new_run>/eval_logs",
+      "--artifacts-dir",
+      "<new_run>/artifacts",
+      "--ledger",
+      "<new_run>/ledger.jsonl"
+    ],
+    "budgets": {
+      "candidate_stage_seconds": 900.0,
+      "cleanup_seconds": 120.0,
+      "grading_deadline_seconds": 3600.0,
+      "image_pull_seconds": 1800.0
+    },
+    "grader_policy": {
+      "candidate_writable_prefixes": [
+        "/opt/miniconda3/envs/testbed"
+      ],
+      "cpus": 2.0,
+      "grader_profile_digest": "sha256:1bb8e0cf80ce48b15401fdf79d18f4f4c08a5f01001d8b0756311c58de25c19a",
+      "memory_bytes": 4294967296,
+      "network": "deny_all",
+      "pids_limit": 512,
+      "profile_id": "rh2.grader_sandbox_profile.v1",
+      "shm_bytes": 67108864,
+      "tmpfs_bytes": 1073741824,
+      "uid": 54322,
+      "user": "rh2grader"
+    },
+    "candidate_apply_user": "agent/54321",
+    "materials_override": null,
+    "new_runtime_status": "未查目标镜像存在性，未准备运行环境或新summary，未授权执行。"
+  },
+  "tasks": [
+    {
+      "instance_id": "iterative__dvc-4185",
+      "repo": "iterative/dvc",
+      "base_commit": "0899b277c02082ffc24bb732e8a7cf3ef4333948",
+      "family": "dvc_install_v1c",
+      "environment_record": "runs/swegym_quality_batch04_20260921_v1/private/iterative__dvc-4185/environment_record.json",
+      "run_refs": "runs/swegym_quality_batch04_20260921_v1/private/iterative__dvc-4185/run_refs.json",
+      "original_inputs": {
+        "grading": "runs/swegym_quality_batch04_20260921_v1/private/iterative__dvc-4185/grading.json",
+        "prepared_selector": {
+          "instance_id": "iterative__dvc-4185",
+          "prepared_manifest_array_index_0based": 131,
+          "host_grading_line": 132,
+          "host_grading_raw_line_sha256": "d586b1486b93fac1672e7b0d3679b8715ce4b55890eaaf3ed5b019b1bba3eaa6",
+          "grading_bundle_digest": "sha256:75b54af59a82d273ad91b9029711bc957c7dd8e59071a1f508aac6bb13fb2abc"
+        },
+        "build_plan": {
+          "file": "runs/env_recipe_repair_20260919/dvc_install_v1c/repair_plan.json",
+          "selector": {
+            "instance_id": "iterative__dvc-4185",
+            "array_index_0based": 20
+          },
+          "entry_sha256_canonical_json": "6c8c605b59883c9d4b941c525bd1f58ff3c04da305de64366c7ab72fd2c97f6d"
+        },
+        "build_pins": [
+          "setuptools==75.1.0",
+          "wheel==0.44.0",
+          "packaging==24.1",
+          "networkx==2.3+rh2.1"
+        ],
+        "recipe": {
+          "file": "runs/env_recipe_repair_20260919/dvc_install_v1c/recipes/iterative__dvc-4185.json",
+          "required_parameter": "--recipe"
+        },
+        "materials": null,
+        "reference_bindings": {
+          "file": "runs/env_recipe_repair_20260919/dvc_install_v1c/reference_bindings_v1.json",
+          "required_parameter": "--bindings",
+          "selector": {
+            "tasks_key": "iterative__dvc-4185"
+          },
+          "entry_sha256_canonical_json": "2c2193f683d8c2d7980558df574744e1d5a649617db290113665eebad2ddafaa",
+          "version": "reference-bindings-v1",
+          "binding_count": 1
+        },
+        "gold_candidate": "runs/full216_rh2_diagnostic_20260919/remote/replay/gold/iterative__dvc-4185.gold.patch"
+      },
+      "image_build_audit": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/image.json",
+      "dockerfile_text_from_audit": "ARG BASE_IMAGE\nFROM ${BASE_IMAGE}\nCOPY wheels/ /opt/rh2/build-wheels/\nENV PIP_NO_INDEX=1 PIP_FIND_LINKS=/opt/rh2/build-wheels\n",
+      "spec": {
+        "schema_id": "rh2.private_grading_bundle.v2",
+        "spec_vendor_id": "swegym_constants_242429c1",
+        "version": "1.1",
+        "python_version": "3.9",
+        "eval_cmd": "pytest -rA",
+        "observed_full_test_command": "pytest -rA tests/func/test_run_multistage.py tests/unit/dependency/test_params.py",
+        "scripts_digest": "sha256:0920720c715149e07d4de3679b3a0cc3fd7d5aaca7f0560278196bfb48c8a5b8",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+reference-bindings-v1",
+        "grading_semantics": "swe_f2p_p2p"
+      },
+      "runtime_evidence": {
+        "gold": {
+          "ledger": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/ledger.jsonl",
+          "ledger_line": 1,
+          "eval_log": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/eval_logs/evallog_replay-er19-dv1-iterativ_24d09737.eval.log",
+          "test_command_log_line": 930,
+          "diagnostics": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/eval_logs/evallog_replay-er19-dv1-iterativ_24d09737.diagnostics.json",
+          "driver_log": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/driver.log",
+          "recipe_audit_output": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/recipe/recipe.json",
+          "script_audit_outputs": {
+            "eval_script": {
+              "before": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/recipe/eval_script.before.sh",
+              "after": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/recipe/eval_script.after.sh"
+            },
+            "candidate_test_script": {
+              "before": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/recipe/candidate_test_script.before.sh",
+              "after": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/recipe/candidate_test_script.after.sh"
+            }
+          },
+          "binding_entry_audit_output": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/recipe/reference_bindings.json",
+          "binding_application_audit": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/recipe/iterative__dvc-4185.reference.json"
+        },
+        "noop": {
+          "ledger": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/ledger.jsonl",
+          "ledger_line": 1,
+          "eval_log": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/eval_logs/evallog_replay-er19-dv1-iterativ_92136cb3.eval.log",
+          "test_command_log_line": 913,
+          "diagnostics": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/eval_logs/evallog_replay-er19-dv1-iterativ_92136cb3.diagnostics.json",
+          "driver_log": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/driver.log",
+          "recipe_audit_output": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/recipe/recipe.json",
+          "script_audit_outputs": {
+            "eval_script": {
+              "before": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/recipe/eval_script.before.sh",
+              "after": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/recipe/eval_script.after.sh"
+            },
+            "candidate_test_script": {
+              "before": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/recipe/candidate_test_script.before.sh",
+              "after": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/recipe/candidate_test_script.after.sh"
+            }
+          },
+          "binding_entry_audit_output": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/recipe/reference_bindings.json",
+          "binding_application_audit": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/recipe/iterative__dvc-4185.reference.json"
+        }
+      },
+      "historical_run_ids": {
+        "gold": "er19-dv1-iterative__dvc-4185-gold",
+        "noop": "er19-dv1-iterative__dvc-4185-noop"
+      },
+      "original_image": {
+        "image_ref": "sha256:fff47cb990a42b0f174cf646d339681682c7538bf3caf6792ea5ceab216e5b96",
+        "image_id_actual": "sha256:fff47cb990a42b0f174cf646d339681682c7538bf3caf6792ea5ceab216e5b96",
+        "image_identity": "local_build:sha256:fff47cb990a42b0f174cf646d339681682c7538bf3caf6792ea5ceab216e5b96",
+        "image_local_build": true,
+        "image_digest_expected": "sha256:c5cf0dfbf7d14f04f84618ccf6a1234efe18e46d156a57719478e48029155af7",
+        "derived_image_recipe": "dvc-install-v1:iterative__dvc-4185",
+        "base_image_ref": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-4185:latest",
+        "base_image_id": "sha256:d938f8765aebb9b3a2cc481cdba908d0182af149867c4fd6993d3a1342bf72a6",
+        "base_repo_digest_recorded": null,
+        "target_availability": "未核验，待目标运行机准备/核身份"
+      },
+      "entrypoint": {
+        "launcher": "runs/env_recipe_repair_20260919/dvc_install_v1c/run_dvc_install.py",
+        "wrapper": "runs/env_recipe_repair_20260919/dvc_install_v1c/replay_with_install_recipe.py",
+        "parser_dependency": "runs/env_recipe_repair_20260919/dvc_install_v1c/reference_bindings.py",
+        "code_archive": "dvc",
+        "cli_member": "scripts/replay_grade.py",
+        "wrapper_arguments": [
+          "--code-root",
+          "<expanded_dvc_code_root>",
+          "--recipe",
+          "runs/env_recipe_repair_20260919/dvc_install_v1c/recipes/iterative__dvc-4185.json",
+          "--bindings",
+          "runs/env_recipe_repair_20260919/dvc_install_v1c/reference_bindings_v1.json",
+          "--audit-dir",
+          "<new_run>/recipe",
+          "--"
+        ],
+        "launcher_condition": "run_dvc_install.py在instance_id == iterative__dvc-4185时追加--bindings；已与两份审计及grader版本核对。"
+      },
+      "install_override": {
+        "extras": [
+          "all",
+          "tests"
+        ],
+        "compat": [
+          "networkx==2.3+rh2.1"
+        ],
+        "summary": "先离线安装networkx==2.3+rh2.1，再pip install -e .[all,tests]；保留安装退出码。"
+      },
+      "networkx_backport_audit": {
+        "file": "runs/env_recipe_repair_20260919/dvc_install_v1c/networkx_backport.json",
+        "recorded_revised_wheel": "networkx-2.3+rh2.1-py2.py3-none-any.whl",
+        "recorded_revised_wheel_sha256": "a1e1691dcc8af2606b8ade41b5b7f725fe6951bdbc6809bbd5c9f2b2a040ffa9",
+        "note": "这是构建审计，不能当wheel输入；若原派生镜像不存在，需另备对应wheel。"
+      },
+      "missing_runtime_build_payload": {
+        "expected_local_context": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/context",
+        "exists_on_authoritative_host": false,
+        "status": "若目标机没有原派生镜像，构建资产须另行准备；不得将image/recipe审计输出冒作payload。"
+      }
+    },
+    {
+      "instance_id": "python__mypy-16869",
+      "repo": "python/mypy",
+      "base_commit": "8c2ef9dde8aa803e04038427ad84f09664d9d93f",
+      "family": "install_wave1",
+      "environment_record": "runs/swegym_quality_batch04_20260921_v1/private/python__mypy-16869/environment_record.json",
+      "run_refs": "runs/swegym_quality_batch04_20260921_v1/private/python__mypy-16869/run_refs.json",
+      "original_inputs": {
+        "grading": "runs/swegym_quality_batch04_20260921_v1/private/python__mypy-16869/grading.json",
+        "prepared_selector": {
+          "instance_id": "python__mypy-16869",
+          "prepared_manifest_array_index_0based": 207,
+          "host_grading_line": 208,
+          "host_grading_raw_line_sha256": "ea5475931d0df0fa153e117cd2de52073dfd498c0317a4e7c18e85fcec4b3abb",
+          "grading_bundle_digest": "sha256:b4bc6d5bba91f891afa216a872ab55b7eb855f5c852fd4b352376bf7a419c433"
+        },
+        "build_plan": {
+          "file": "runs/env_recipe_repair_20260919/install_wave1/plan.json",
+          "selector": {
+            "instance_id": "python__mypy-16869",
+            "array_index_0based": 68
+          },
+          "entry_sha256_canonical_json": "5fc7e0a178ca980205b75170f6a87fa53067c341dafacf78bd2234c8f4787d54"
+        },
+        "build_pins": {
+          "setuptools": "68.2.2",
+          "wheel": "0.43.0",
+          "typing-extensions": "4.8.0",
+          "mypy-extensions": "1.0.0",
+          "tomli": "2.0.1",
+          "types-psutil": "5.9.5.17",
+          "types-setuptools": "68.2.0.0",
+          "packaging": "23.2"
+        },
+        "recipe": null,
+        "materials": null,
+        "reference_bindings": null,
+        "gold_candidate": "runs/full216_rh2_diagnostic_20260919/remote/replay/gold/python__mypy-16869.gold.patch"
+      },
+      "image_build_audit": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-16869/image.json",
+      "dockerfile_text_from_audit": "ARG BASE_IMAGE\nFROM ${BASE_IMAGE}\nCOPY wheels/ /opt/rh2/build-wheels/\nENV PIP_NO_INDEX=1 PIP_FIND_LINKS=/opt/rh2/build-wheels\n",
+      "spec": {
+        "schema_id": "rh2.private_grading_bundle.v2",
+        "spec_vendor_id": "swegym_constants_242429c1",
+        "version": "1.9",
+        "python_version": "3.12",
+        "eval_cmd": "pytest -rA -k",
+        "observed_full_test_command": "pytest -rA -k 'testGenericClassTypeVarTuple or testGenericClassTypeVarTuple_semanal or testGenericClassTypeVarTuplePy311 or testGenericClassTypeVarTuplePy311_semanal or testObjectBaseClass'",
+        "scripts_digest": "sha256:f3e13f2518ab8a2ae6396c156ad5805fd2f106d818b1d9db76991b78d11615df",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "grading_semantics": "swe_f2p_p2p"
+      },
+      "runtime_evidence": {
+        "gold": {
+          "ledger": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-16869/gold/ledger.jsonl",
+          "ledger_line": 1,
+          "eval_log": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-16869/gold/eval_logs/evallog_replay-er19-iw1-python___13fbae98.eval.log",
+          "test_command_log_line": 449,
+          "diagnostics": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-16869/gold/eval_logs/evallog_replay-er19-iw1-python___13fbae98.diagnostics.json",
+          "driver_log": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-16869/gold/driver.log"
+        },
+        "noop": {
+          "ledger": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-16869/noop/ledger.jsonl",
+          "ledger_line": 1,
+          "eval_log": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-16869/noop/eval_logs/evallog_replay-er19-iw1-python___fd19ff5b.eval.log",
+          "test_command_log_line": 422,
+          "diagnostics": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-16869/noop/eval_logs/evallog_replay-er19-iw1-python___fd19ff5b.diagnostics.json",
+          "driver_log": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-16869/noop/driver.log"
+        }
+      },
+      "historical_run_ids": {
+        "gold": "er19-iw1-python__mypy-16869-gold",
+        "noop": "er19-iw1-python__mypy-16869-noop"
+      },
+      "original_image": {
+        "image_ref": "sha256:5cb7a943ddd7b212706e5413fedc61c8e8cccf3edc8f73e583c06e967b4f2ce1",
+        "image_id_actual": "sha256:5cb7a943ddd7b212706e5413fedc61c8e8cccf3edc8f73e583c06e967b4f2ce1",
+        "image_identity": "local_build:sha256:5cb7a943ddd7b212706e5413fedc61c8e8cccf3edc8f73e583c06e967b4f2ce1",
+        "image_local_build": true,
+        "image_digest_expected": "sha256:37fb1870cc8802ad1f6d3f87ff294181c9dcd86f4d13a7533ea76a875f9a6a02",
+        "derived_image_recipe": "install-wave1:python__mypy-16869",
+        "base_image_ref": "xingyaoww/sweb.eval.x86_64.python_s_mypy-16869:latest",
+        "base_image_id": "sha256:ded6f54daf8f09bdc4fedee5c4b851ec8eb7f9be96e3e608383f6fee5a6681db",
+        "base_repo_digest_recorded": "xingyaoww/sweb.eval.x86_64.python_s_mypy-16869@sha256:37fb1870cc8802ad1f6d3f87ff294181c9dcd86f4d13a7533ea76a875f9a6a02",
+        "target_availability": "未核验，待目标运行机准备/核身份"
+      },
+      "entrypoint": {
+        "launcher": "runs/env_recipe_repair_20260919/install_wave1/run_install_wave1.py",
+        "wrapper": null,
+        "code_archive": "baseline",
+        "cli_member": "scripts/replay_grade.py",
+        "original_command_audit": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-16869/status.json",
+        "meaning": "派生镜像仅COPY离线wheel及PIP环境；使用原spec安装与测试，无recipe/materials/bindings覆写。"
+      },
+      "missing_runtime_build_payload": {
+        "expected_local_context": "runs/env_recipe_repair_20260919/install_wave1/assets/contexts/python__mypy-16869",
+        "exists_on_authoritative_host": false,
+        "status": "若目标机没有原派生镜像，构建资产须另行准备；不得将image/recipe审计输出冒作payload。"
+      }
+    },
+    {
+      "instance_id": "getmoto__moto-6114",
+      "repo": "getmoto/moto",
+      "base_commit": "f01709f9ba656e7cf4399bcd1a0a07fd134b0aec",
+      "family": "install_wave1",
+      "environment_record": "runs/swegym_quality_batch04_20260921_v1/private/getmoto__moto-6114/environment_record.json",
+      "run_refs": "runs/swegym_quality_batch04_20260921_v1/private/getmoto__moto-6114/run_refs.json",
+      "original_inputs": {
+        "grading": "runs/swegym_quality_batch04_20260921_v1/private/getmoto__moto-6114/grading.json",
+        "prepared_selector": {
+          "instance_id": "getmoto__moto-6114",
+          "prepared_manifest_array_index_0based": 82,
+          "host_grading_line": 83,
+          "host_grading_raw_line_sha256": "2ef26ab9a7286040940f5f3f48c214bc0ff635a0a146248f66c683d9e89615db",
+          "grading_bundle_digest": "sha256:8110bc80927d9465ffd27fd2353429cf05a80a03b2fefd0ca195c8d57a4992a4"
+        },
+        "build_plan": {
+          "file": "runs/env_recipe_repair_20260919/install_wave1/plan.json",
+          "selector": {
+            "instance_id": "getmoto__moto-6114",
+            "array_index_0based": 8
+          },
+          "entry_sha256_canonical_json": "6fb46d2cea698b13baa0c875ff3ddb3e7c2d1fa6c1aec6440cb578eb39da10a0"
+        },
+        "build_pins": {
+          "setuptools": "72.1.0",
+          "wheel": "0.43.0",
+          "packaging": "24.1"
+        },
+        "recipe": null,
+        "materials": null,
+        "reference_bindings": null,
+        "gold_candidate": "runs/full216_rh2_diagnostic_20260919/remote/replay/gold/getmoto__moto-6114.gold.patch"
+      },
+      "image_build_audit": "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6114/image.json",
+      "dockerfile_text_from_audit": "ARG BASE_IMAGE\nFROM ${BASE_IMAGE}\nCOPY wheels/ /opt/rh2/build-wheels/\nENV PIP_NO_INDEX=1 PIP_FIND_LINKS=/opt/rh2/build-wheels\n",
+      "spec": {
+        "schema_id": "rh2.private_grading_bundle.v2",
+        "spec_vendor_id": "swegym_constants_242429c1",
+        "version": "4.1",
+        "python_version": "3.12",
+        "eval_cmd": "pytest -n0 -rA",
+        "observed_full_test_command": "pytest -n0 -rA tests/test_rds/test_rds_clusters.py",
+        "scripts_digest": "sha256:d98d9e14b94f2edd156e77b3e1b1677958b0d2d285c3375edd0bb75004c797e3",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "grading_semantics": "swe_f2p_p2p"
+      },
+      "runtime_evidence": {
+        "gold": {
+          "ledger": "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6114/gold/ledger.jsonl",
+          "ledger_line": 1,
+          "eval_log": "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6114/gold/eval_logs/evallog_replay-er19-iw1-getmoto__356bbc61.eval.log",
+          "test_command_log_line": 539,
+          "diagnostics": "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6114/gold/eval_logs/evallog_replay-er19-iw1-getmoto__356bbc61.diagnostics.json",
+          "driver_log": "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6114/gold/driver.log"
+        },
+        "noop": {
+          "ledger": "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6114/noop/ledger.jsonl",
+          "ledger_line": 1,
+          "eval_log": "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6114/noop/eval_logs/evallog_replay-er19-iw1-getmoto__793414a1.eval.log",
+          "test_command_log_line": 520,
+          "diagnostics": "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6114/noop/eval_logs/evallog_replay-er19-iw1-getmoto__793414a1.diagnostics.json",
+          "driver_log": "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6114/noop/driver.log"
+        }
+      },
+      "historical_run_ids": {
+        "gold": "er19-iw1-getmoto__moto-6114-gold",
+        "noop": "er19-iw1-getmoto__moto-6114-noop"
+      },
+      "original_image": {
+        "image_ref": "sha256:b473823508458d059713620738c06954d661e3b7b51d43cb8e126e630f57231c",
+        "image_id_actual": "sha256:b473823508458d059713620738c06954d661e3b7b51d43cb8e126e630f57231c",
+        "image_identity": "local_build:sha256:b473823508458d059713620738c06954d661e3b7b51d43cb8e126e630f57231c",
+        "image_local_build": true,
+        "image_digest_expected": "sha256:cb35f7e131f8e46c8a6865e8fb618c09032ce5ee27f1122f79010a7cfae8ef9a",
+        "derived_image_recipe": "install-wave1:getmoto__moto-6114",
+        "base_image_ref": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6114:latest",
+        "base_image_id": "sha256:fefec492f58ed0f8385a7e72234d296bd84d295031ce7e019f63fc33973ec249",
+        "base_repo_digest_recorded": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6114@sha256:cb35f7e131f8e46c8a6865e8fb618c09032ce5ee27f1122f79010a7cfae8ef9a",
+        "target_availability": "未核验，待目标运行机准备/核身份"
+      },
+      "entrypoint": {
+        "launcher": "runs/env_recipe_repair_20260919/install_wave1/run_install_wave1.py",
+        "wrapper": null,
+        "code_archive": "baseline",
+        "cli_member": "scripts/replay_grade.py",
+        "original_command_audit": "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6114/status.json",
+        "meaning": "派生镜像仅COPY离线wheel及PIP环境；使用原spec安装与测试，无recipe/materials/bindings覆写。"
+      },
+      "missing_runtime_build_payload": {
+        "expected_local_context": "runs/env_recipe_repair_20260919/install_wave1/assets/contexts/getmoto__moto-6114",
+        "exists_on_authoritative_host": false,
+        "status": "若目标机没有原派生镜像，构建资产须另行准备；不得将image/recipe审计输出冒作payload。"
+      }
+    }
+  ],
+  "files": {
+    "runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz": {
+      "sha256": "ca82543bdab09f21816879c0f3051a8ea4fd83815a220d1b87380a355d5b7c49",
+      "bytes": 923543,
+      "roles": [
+        "original_code_archive"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/frozen_sources/dvc.tar.gz": {
+      "sha256": "b9e82ebe1922508a5d2a956e238378ca1ec3a65b77e1b9acecf9e7b4020ae15f",
+      "bytes": 1767135,
+      "roles": [
+        "original_code_archive"
+      ]
+    },
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/batch_manifest.json": {
+      "sha256": "6c27c2a0fd6a83be5c11076985e84421c8887f5ff801783db1564e8f20392c9b",
+      "bytes": 44310,
+      "roles": [
+        "frozen_selection_input"
+      ]
+    },
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/environment_replay_inventory.json": {
+      "sha256": "ace4c919636b58987180f7c8ba9e7888bfe94e2ca150ce52eaece5122df9804b",
+      "bytes": 146708,
+      "roles": [
+        "shared_inventory_method_and_code_archive_provenance"
+      ]
+    },
+    "runs/full216_rh2_diagnostic_20260919/remote/replay/prepared/replay_summary.json": {
+      "sha256": "80e897f73ee08bf0df729d5cf3ae441184f258d686f782b41746052587ec9e18",
+      "bytes": 8913,
+      "roles": [
+        "original_prepared_input_snapshot"
+      ]
+    },
+    "runs/full216_rh2_diagnostic_20260919/remote/replay/prepared/prepared_manifest.json": {
+      "sha256": "ba8873ec22752572078fb1a420d38c53eb2350dfb9f6b9e76ccd6e97364599e1",
+      "bytes": 78208,
+      "roles": [
+        "original_prepared_input_snapshot"
+      ]
+    },
+    "runs/full216_rh2_diagnostic_20260919/remote/replay/private/host_grading_views.jsonl": {
+      "sha256": "f5896076c5f903b38ddf4734b1578b65e10603eb4ec6a88860e47d6472105eb3",
+      "bytes": 2337184,
+      "roles": [
+        "original_private_grading_input"
+      ]
+    },
+    "runs/swegym_quality_batch04_20260921_v1/private/iterative__dvc-4185/environment_record.json": {
+      "sha256": "9c3565abaa5b153b470c606980cfa43b3d73ae9fa80aefd263e6770ef8a48f32",
+      "bytes": 11266,
+      "roles": [
+        "frozen_task_environment_record"
+      ]
+    },
+    "runs/swegym_quality_batch04_20260921_v1/private/iterative__dvc-4185/run_refs.json": {
+      "sha256": "e4f9a919b62e139eba288c9133db82c0bcd7b6b24ff4f5119bc26e3e36296ab9",
+      "bytes": 1177,
+      "roles": [
+        "frozen_exact_run_refs"
+      ]
+    },
+    "runs/swegym_quality_batch04_20260921_v1/private/iterative__dvc-4185/grading.json": {
+      "sha256": "57402b704648b92f369f773d35cdc22ab4ec61677fb7ccb9326a18d6de27cb85",
+      "bytes": 6024,
+      "roles": [
+        "frozen_grading_copy"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/repair_plan.json": {
+      "sha256": "1382a67aed2136d982b13d36fe9e11ce92cd9d74a1bd0c3271c132522faed173",
+      "bytes": 11658,
+      "roles": [
+        "original_image_build_plan"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/image.json": {
+      "sha256": "98ca107622d216c0d78945f4317e7b3effdb47f8e7190de5838bed156eec36d2",
+      "bytes": 326,
+      "roles": [
+        "image_build_audit_output"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/ledger.jsonl": {
+      "sha256": "0dcd966d643d5e23a5af3eab63b75695d9a41eed274f4c2855f560cec964c543",
+      "bytes": 4650,
+      "roles": [
+        "original_runtime_ledger"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/eval_logs/evallog_replay-er19-dv1-iterativ_24d09737.eval.log": {
+      "sha256": "732d2c9c49eaa086d5b87eea6e96c123aa88e38b714ea40aa795e3c2e9df7eb1",
+      "bytes": 128235,
+      "roles": [
+        "original_eval_log"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/eval_logs/evallog_replay-er19-dv1-iterativ_24d09737.diagnostics.json": {
+      "sha256": "0c498537327988dfa00f734943b07cd52572f94b160eb3c27f00bbf3001c48a0",
+      "bytes": 2766,
+      "roles": [
+        "runtime_diagnostics"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/driver.log": {
+      "sha256": "d4d1e8c9b3518135af7e3da215f460832eacbf396ffff6a119df819e65514583",
+      "bytes": 523,
+      "roles": [
+        "runtime_driver_log"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/recipe/recipe.json": {
+      "sha256": "fecaabbea91c35b5e528c7ec3784f89aa698919017a20f45d279a0121e2ab3c5",
+      "bytes": 1330,
+      "roles": [
+        "recipe_audit_output_not_input"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/recipe/eval_script.before.sh": {
+      "sha256": "488100d34cdb237a958518c31d7285b8c2500bbcaae3e2ed4218171597ec41df",
+      "bytes": 4959,
+      "roles": [
+        "script_audit_output"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/recipe/eval_script.after.sh": {
+      "sha256": "98438637cb41621c1abf250bb17006bf5cf5fff7f872ee78b796c81d430a028a",
+      "bytes": 4824,
+      "roles": [
+        "script_audit_output"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/recipe/candidate_test_script.before.sh": {
+      "sha256": "19ced2849f6326b7a4cb27306c088e284d9a788848b2a79308120658ffe49cdc",
+      "bytes": 1178,
+      "roles": [
+        "script_audit_output"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/recipe/candidate_test_script.after.sh": {
+      "sha256": "dc509d84f5bf54c4fd18a1febcbe89aee9ab3150853bac1c76e32a7d185a078f",
+      "bytes": 1043,
+      "roles": [
+        "script_audit_output"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/recipe/reference_bindings.json": {
+      "sha256": "ae0d8a6f16c224f872c687bf723feab41f8fecac3a46bdc75c17a90fb8bf973b",
+      "bytes": 840,
+      "roles": [
+        "selected_binding_entry_audit_output_not_input"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/recipe/iterative__dvc-4185.reference.json": {
+      "sha256": "1ab24fb21849554f87f272b24cd44bcd3c37eb2681c032078fc9630425985e7f",
+      "bytes": 5883,
+      "roles": [
+        "binding_parse_audit_output"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/ledger.jsonl": {
+      "sha256": "fbb21b3e53661daab4207b4c882d710c82af2b5a84e1636be25f1e30a57f0849",
+      "bytes": 4501,
+      "roles": [
+        "original_runtime_ledger"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/eval_logs/evallog_replay-er19-dv1-iterativ_92136cb3.eval.log": {
+      "sha256": "fde8fc8ec8982ba668eaaa291f963287df1512d687e100ed81d3be50e67fa050",
+      "bytes": 135080,
+      "roles": [
+        "original_eval_log"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/eval_logs/evallog_replay-er19-dv1-iterativ_92136cb3.diagnostics.json": {
+      "sha256": "5d48f362133c1776bc5152f756e216686124a2ef2804598b7b284c011a41ec09",
+      "bytes": 2765,
+      "roles": [
+        "runtime_diagnostics"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/driver.log": {
+      "sha256": "628788c9071be87e0a48f2e54ed63a052520f895c5af2a5d165d20721870633d",
+      "bytes": 520,
+      "roles": [
+        "runtime_driver_log"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/recipe/recipe.json": {
+      "sha256": "fecaabbea91c35b5e528c7ec3784f89aa698919017a20f45d279a0121e2ab3c5",
+      "bytes": 1330,
+      "roles": [
+        "recipe_audit_output_not_input"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/recipe/eval_script.before.sh": {
+      "sha256": "488100d34cdb237a958518c31d7285b8c2500bbcaae3e2ed4218171597ec41df",
+      "bytes": 4959,
+      "roles": [
+        "script_audit_output"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/recipe/eval_script.after.sh": {
+      "sha256": "98438637cb41621c1abf250bb17006bf5cf5fff7f872ee78b796c81d430a028a",
+      "bytes": 4824,
+      "roles": [
+        "script_audit_output"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/recipe/candidate_test_script.before.sh": {
+      "sha256": "19ced2849f6326b7a4cb27306c088e284d9a788848b2a79308120658ffe49cdc",
+      "bytes": 1178,
+      "roles": [
+        "script_audit_output"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/recipe/candidate_test_script.after.sh": {
+      "sha256": "dc509d84f5bf54c4fd18a1febcbe89aee9ab3150853bac1c76e32a7d185a078f",
+      "bytes": 1043,
+      "roles": [
+        "script_audit_output"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/recipe/reference_bindings.json": {
+      "sha256": "ae0d8a6f16c224f872c687bf723feab41f8fecac3a46bdc75c17a90fb8bf973b",
+      "bytes": 840,
+      "roles": [
+        "selected_binding_entry_audit_output_not_input"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/recipe/iterative__dvc-4185.reference.json": {
+      "sha256": "9bcbd25048409bba097b72a34d3a312034bd1483292d6cd7a4185f2f2f7aae7a",
+      "bytes": 5882,
+      "roles": [
+        "binding_parse_audit_output"
+      ]
+    },
+    "runs/full216_rh2_diagnostic_20260919/remote/replay/gold/iterative__dvc-4185.gold.patch": {
+      "sha256": "e7e7e3a57a260031662358552a139407eac46a7bc133fdb30a4881dfb097289d",
+      "bytes": 490,
+      "roles": [
+        "original_gold_candidate_input"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/recipes/iterative__dvc-4185.json": {
+      "sha256": "279f3158cff986d5c45904876f0c9ce4df6b6e148de4a32985ef1289906a8a5f",
+      "bytes": 1159,
+      "roles": [
+        "original_recipe_input"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/reference_bindings_v1.json": {
+      "sha256": "0bfdc78e16b3b62768ab471c123cb87a7acf90de06b8eb54ca44dd2cf50e86a3",
+      "bytes": 12291,
+      "roles": [
+        "original_bindings_input"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/run_dvc_install.py": {
+      "sha256": "7b71a9649d06058c56f3be032373eb9ade89a997734ef1dfa935a04ec62fffa1",
+      "bytes": 9044,
+      "roles": [
+        "original_launcher_snapshot"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/replay_with_install_recipe.py": {
+      "sha256": "92dbaf792b5afb6409adaabcc2c4e5bd2519c77b7fed616dbe471a3e6758c77b",
+      "bytes": 5917,
+      "roles": [
+        "original_wrapper_input"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/reference_bindings.py": {
+      "sha256": "088f6f24574d7d52b9dbe37060e4474802c2b74130f05a0702fde5b49be5f4cd",
+      "bytes": 3602,
+      "roles": [
+        "binding_parser_input"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/dvc_install_v1c/networkx_backport.json": {
+      "sha256": "352c954ea26cded33237b3a0e83957bb8c21b95a1c1eb9aaf5dd6aced5d67b8b",
+      "bytes": 885,
+      "roles": [
+        "dependency_backport_audit_not_wheel_payload"
+      ]
+    },
+    "runs/swegym_quality_batch04_20260921_v1/private/python__mypy-16869/environment_record.json": {
+      "sha256": "8abbe35cc7584c5835b91dceb53cde543d895bf2ec4a882aa96a3f0c8c22d3fa",
+      "bytes": 7511,
+      "roles": [
+        "frozen_task_environment_record"
+      ]
+    },
+    "runs/swegym_quality_batch04_20260921_v1/private/python__mypy-16869/run_refs.json": {
+      "sha256": "0678e6f1c8b825dd64aa438eb1d404f029128887837edc60d2e0b674fd02fe0b",
+      "bytes": 1165,
+      "roles": [
+        "frozen_exact_run_refs"
+      ]
+    },
+    "runs/swegym_quality_batch04_20260921_v1/private/python__mypy-16869/grading.json": {
+      "sha256": "83b9e34626105a722382f745a81ebdcd126ef847af95c698d6540b30cd5eed9a",
+      "bytes": 3199,
+      "roles": [
+        "frozen_grading_copy"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/install_wave1/plan.json": {
+      "sha256": "ad6ee05a1e44b486c6caa912bbb712adce221865261ad0ba2afe67a0c87d8879",
+      "bytes": 41698,
+      "roles": [
+        "original_image_build_plan"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-16869/image.json": {
+      "sha256": "0e922c44799b9189c88c43bbca6a3e34d0f5c8968c749e30e015ce2b08ceeb34",
+      "bytes": 746,
+      "roles": [
+        "image_build_audit_output"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-16869/gold/ledger.jsonl": {
+      "sha256": "430b4b1decabbfd579eb5334a8145a96530e7e744cf0d23a8e2f575c4e8dcdee",
+      "bytes": 4466,
+      "roles": [
+        "original_runtime_ledger"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-16869/gold/eval_logs/evallog_replay-er19-iw1-python___13fbae98.eval.log": {
+      "sha256": "7b6f37747435fb991f2bfe225e9bf873fbad77a6351158523282927eff56a1ce",
+      "bytes": 23483,
+      "roles": [
+        "original_eval_log"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-16869/gold/eval_logs/evallog_replay-er19-iw1-python___13fbae98.diagnostics.json": {
+      "sha256": "018fa8a508d21a5ca6aba0175f21a7a8cd7163301e05364fa853fc379b6d4e8f",
+      "bytes": 2578,
+      "roles": [
+        "runtime_diagnostics"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-16869/gold/driver.log": {
+      "sha256": "38406d64d0e1ea06d1c8deb2f060fa3cbd5450b56f96a2c455512787a1ba25af",
+      "bytes": 519,
+      "roles": [
+        "runtime_driver_log"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-16869/noop/ledger.jsonl": {
+      "sha256": "817cf0f9378df55581bb702944151fb749219d7c718ea37aca923ff3551edd04",
+      "bytes": 4324,
+      "roles": [
+        "original_runtime_ledger"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-16869/noop/eval_logs/evallog_replay-er19-iw1-python___fd19ff5b.eval.log": {
+      "sha256": "44113d4526300b34bba9b09012a74dff713f1fd70f0f5031b3e7c3f001438a2c",
+      "bytes": 27470,
+      "roles": [
+        "original_eval_log"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-16869/noop/eval_logs/evallog_replay-er19-iw1-python___fd19ff5b.diagnostics.json": {
+      "sha256": "7e04e843d663c2dfd05482e18d432482fc7fea0ec79dc067bdb73989817627a0",
+      "bytes": 2575,
+      "roles": [
+        "runtime_diagnostics"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-16869/noop/driver.log": {
+      "sha256": "752788e26d5dee1f20c0ff0f2188dbaba7e390f4e3482e9b83bf806c5c184544",
+      "bytes": 516,
+      "roles": [
+        "runtime_driver_log"
+      ]
+    },
+    "runs/full216_rh2_diagnostic_20260919/remote/replay/gold/python__mypy-16869.gold.patch": {
+      "sha256": "c48adbd28c5b5542afb4875ef6be5109a2907ab95cbbae216d8be9e8b879d421",
+      "bytes": 600,
+      "roles": [
+        "original_gold_candidate_input"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/install_wave1/run_install_wave1.py": {
+      "sha256": "038dfffdb7d10bb4e26583eaeb4c31cead3ac763c0b1ab8e2132dbb9694033d7",
+      "bytes": 5474,
+      "roles": [
+        "original_launcher_snapshot"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-16869/status.json": {
+      "sha256": "56fa9d717efb18de6a8dbcb98e287ead1f6f32510a9805219cb7fa4b671efe04",
+      "bytes": 922,
+      "roles": [
+        "original_exact_task_command_audit"
+      ]
+    },
+    "runs/swegym_quality_batch04_20260921_v1/private/getmoto__moto-6114/environment_record.json": {
+      "sha256": "c856204b59d58bb5b895113fb991c57386eeb92bcb38a4870e8ea798486eefe6",
+      "bytes": 7517,
+      "roles": [
+        "frozen_task_environment_record"
+      ]
+    },
+    "runs/swegym_quality_batch04_20260921_v1/private/getmoto__moto-6114/run_refs.json": {
+      "sha256": "7910a1d26469a3cce73076e1a378d95dabff15eecc72cd04756cfb58b10f4de3",
+      "bytes": 1165,
+      "roles": [
+        "frozen_exact_run_refs"
+      ]
+    },
+    "runs/swegym_quality_batch04_20260921_v1/private/getmoto__moto-6114/grading.json": {
+      "sha256": "b26dccd671637cac4cf79dd15f6e1e0973b8cccb6157142b1b2e15220e025066",
+      "bytes": 4225,
+      "roles": [
+        "frozen_grading_copy"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6114/image.json": {
+      "sha256": "a83598a2746c06359bfe3f0b9ed9801215f46be8c4363aa972022b70fb7f68ed",
+      "bytes": 590,
+      "roles": [
+        "image_build_audit_output"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6114/gold/ledger.jsonl": {
+      "sha256": "84820dc41610cbcf5e868dc56013f1efdba74ad64992fbf93b48a77dbdd7dc74",
+      "bytes": 4478,
+      "roles": [
+        "original_runtime_ledger"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6114/gold/eval_logs/evallog_replay-er19-iw1-getmoto__356bbc61.eval.log": {
+      "sha256": "6f3ea7a472101fa9edd0655740f14f6a877c307f2e5e74e4dd7b2acfe11a43c4",
+      "bytes": 40894,
+      "roles": [
+        "original_eval_log"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6114/gold/eval_logs/evallog_replay-er19-iw1-getmoto__356bbc61.diagnostics.json": {
+      "sha256": "823f31f4e88ff11964f441e706fc58c38cf80b50f1ce8ddf7e5baaf38221ab4e",
+      "bytes": 2587,
+      "roles": [
+        "runtime_diagnostics"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6114/gold/driver.log": {
+      "sha256": "e39e690e507e7d991455400aadd8b91813cff851b4bdc3bd59a92e1a407ab353",
+      "bytes": 519,
+      "roles": [
+        "runtime_driver_log"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6114/noop/ledger.jsonl": {
+      "sha256": "d14eb80ea9a7d1e958734c240d8dbaf31cfd5e7706c95e838858e2cbbeb5137c",
+      "bytes": 4336,
+      "roles": [
+        "original_runtime_ledger"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6114/noop/eval_logs/evallog_replay-er19-iw1-getmoto__793414a1.eval.log": {
+      "sha256": "c6d13397fa775c2244a4f622436f23a394c920dd06c5b44260c8f9d8ced12e7c",
+      "bytes": 45164,
+      "roles": [
+        "original_eval_log"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6114/noop/eval_logs/evallog_replay-er19-iw1-getmoto__793414a1.diagnostics.json": {
+      "sha256": "dea4e3758294e51546d309dc61793075d2ef5c37f6a1f042f672995cfbd33f43",
+      "bytes": 2586,
+      "roles": [
+        "runtime_diagnostics"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6114/noop/driver.log": {
+      "sha256": "40d7b7928515d167d96f5f3197262c195cfdc5b701358624f5d0c8549e3a1f1f",
+      "bytes": 516,
+      "roles": [
+        "runtime_driver_log"
+      ]
+    },
+    "runs/full216_rh2_diagnostic_20260919/remote/replay/gold/getmoto__moto-6114.gold.patch": {
+      "sha256": "bfae681e1044acffe64d7d65c1615b5545f4b62b2625961b7a6fe7d0ad591bbc",
+      "bytes": 635,
+      "roles": [
+        "original_gold_candidate_input"
+      ]
+    },
+    "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6114/status.json": {
+      "sha256": "5e689966cd2d370d71289fdf51ae9131d37642cd1e53acd7c1a6133e79ee2727",
+      "bytes": 921,
+      "roles": [
+        "original_exact_task_command_audit"
+      ]
+    }
+  },
+  "verification": {
+    "ledger_rows": 6,
+    "log_hashes": 6,
+    "prepared_rows_match_frozen_grading": 3,
+    "recipe_audits_match_input": 2,
+    "binding_audits_match_input": 2,
+    "historical_test_commands_match_both_roles": 3,
+    "no_project_imports_or_execution": true
+  }
+}

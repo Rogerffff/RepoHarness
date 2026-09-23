@@ -1,0 +1,220 @@
+{
+ "task_id": "iterative__dvc-3576",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "docs/.../s2/ingest/public_bundles_v0.jsonl#iterative__dvc-3576",
+  "grading": "docs/.../s2/ingest/grading_bundles_v2_v0.jsonl#iterative__dvc-3576",
+  "validation": "docs/.../s2/ingest/validation_bundles_v0.jsonl#iterative__dvc-3576",
+  "raw": "docs/.../s2/raw/swe_gym_lite_full_f70b1a29.jsonl#iterative__dvc-3576",
+  "base_commit": "a338fad036bd9ac8bdd79ecec964f8c5558609c4",
+  "version": "0.92",
+  "python_version": "3.8",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-3576:latest",
+  "eval_cmd": "pytest -rA",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3576/{gold,empty}/offline/a1/",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc"
+ },
+ "public_view": {
+  "目标行为": "（按题面 4 项清单）① 只有一个版本时也能做 metrics diff；② JSON 输出支持缺失的 old 值；③ 把 `ERROR: unexpected error - 'HEAD^'` 换成有意义的错误信息；④ STDOUT 只放表格，其它信息（如 \"No changes.\"）走 STDERR。",
+  "约束": "base `dvc/command/metrics.py:108-112 _show_diff` 在 `not diff` 时 `return \"No changes.\"`，调用方 `CmdMetricsDiff.run`（第 145 行附近）用 `logger.info(_show_diff(diff))` 输出。",
+  "公开材料无法确定的点": [
+   "**题面第 ④ 项说的是\"把 No changes. 挪到 STDERR\"，而 gold 的做法是直接返回空串**——从题面读不出\"应该什么都不输出\"；",
+   "另外三项（①②③）在 gold 里完全没做，题面看不出哪些计入验收；",
+   "\"改成空输出\"的理由（`git diff` 惯例、便于 `[ -z \"$(dvc metrics diff)\" ]` 判空）只在不可见的 hints 讨论里。"
+  ],
+  "相关模块": "dvc/command/metrics.py（_show_diff / CmdMetricsDiff.run）、dvc/repo/metrics/diff.py。"
+ },
+ "checks": {
+  "1": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-3576/public.json#problem_statement（4 项清单）",
+    "mat/iterative__dvc-3576/validation.json#golden_patch（一行）"
+   ],
+   "note": "材料文件都在（tests/unit/command/test_metrics.py、dvc/command/metrics.py 在 base 均存在），**但题面对应的是整个 issue（4 项），gold 只做了第 ④ 项的一半**（返回空串，且并未挪到 STDERR）。属于题面与任务版本范围不匹配。无二进制/LFS/子模块。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show a338fad036:dvc/command/metrics.py:111（`return \"No changes.\"`）",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3576/empty/offline/a1/status_map.json"
+   ],
+   "note": "base 确实返回 \"No changes.\"；empty 侧 F2P FAILED。但题面主诉的 `ERROR: unexpected error - 'HEAD^'` 崩溃在 base 是否存在**未核查**（gold 不碰那条路径）。",
+   "by": "static"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3576/public.json#problem_statement"
+   ],
+   "note": "题面 1284 字符，含错误输出、期望表格、4 项 checklist，渲染完整、无截断、无外链。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3576/grading.json#test_patch"
+   ],
+   "note": "test_patch 只触碰 tests/unit/command/test_metrics.py（一行改动）；gold 不触碰测试样路径。",
+   "by": "static"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3576/grading.json#test_patch"
+   ],
+   "note": "恢复清单 = {tests/unit/command/test_metrics.py}，官方测试文件。",
+   "by": "static"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dvc_1/prescan.json"
+   ],
+   "note": "与 dvc-3620 同为 version=0.92，但 gold 路径（dvc/command/metrics.py vs dvc/utils/fs.py）与 test_patch 路径均不重合，不是同一 PR。与本包 dvc-2141（0.41，metrics show）主题相邻但代码无关。",
+   "by": "static"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-3576/public.json#problem_statement（\"All other messages (like \\\"No changes.\\\") should be in STDERR\"）",
+    "mat/iterative__dvc-3576/grading.json#test_patch（`assert _show_diff({}) == \"\"`）",
+    "mat/iterative__dvc-3576/raw.json#hints_text"
+   ],
+   "note": "**题面与 F2P 方向不同**：题面要求把 \"No changes.\" 挪到 STDERR（即保留这条消息、换输出流），F2P 要求 `_show_diff({})` 返回空串（即取消这条消息）。按题面实现（把 `logger.info` 换成写 stderr、字符串不变）会判 0。决定改成空输出的依据（dmpetrov 说 \"I'd prefer to have an empty output... It is a usual approach for many commands including `git diff`\"）只在不可见的 hints 讨论里，而且 hints 里 efiop 一开始还持相反意见。",
+   "by": "static"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3576/grading.json#test_patch"
+   ],
+   "note": "F2P 只断言纯函数 `_show_diff({})` 的返回值，不锁内部写法。不算强制唯一实现（问题在要求本身，见 check 23）。",
+   "by": "static"
+  },
+  "25": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3576/grading.json#pass_to_pass（6 条逐字匹配表格输出）"
+   ],
+   "note": "**P2P 在这题有判别力**：`_show_diff` 直接 `return \"\"`（对任何输入）会让 6 条 P2P 全挂，因为它们逐字比对 Texttable 画出的表格文本。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3576/gold/offline/a1/test_output.txt（7 passed in 0.40s）",
+    "mat/iterative__dvc-3576/validation.json#golden_patch"
+   ],
+   "note": "P2P 6 条 = 整个 tests/unit/command/test_metrics.py 除 F2P 外的全部用例，已取满，环境干净。但覆盖面仅限 `_show_diff` 这个纯函数：**调用方 `CmdMetricsDiff.run` 里的 `logger.info(_show_diff(diff))` 在空串时会打印一个空行**，这个端到端行为（题面真正关心的 \"STDOUT 只放表格\"）没有任何测试。",
+   "by": "static"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-3576/validation.json#golden_patch",
+    "mat/iterative__dvc-3576/public.json#problem_statement"
+   ],
+   "note": "gold 一行、无无关改动、不依赖未交付改动；**但只覆盖题面 4 项里第 ④ 项的一半**（①只有一个版本时的 diff、②JSON 缺失 old 值、③错误信息改善，三项都没做），且没有把消息挪到 STDERR。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3576/public.json#problem_statement"
+   ],
+   "note": "题面不含修复代码、不含 PR/commit 链接。",
+   "by": "static"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3576/gold/offline/a1/test_output.txt（7 passed in 0.40s）"
+   ],
+   "note": "安装与测试正常，环境干净。",
+   "by": "static"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3576/gold/offline/a1/test_output.txt"
+   ],
+   "note": "纯单元测试，无网络。",
+   "by": "static"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3576/gold/offline/a1/status_map.json"
+   ],
+   "note": "status_map 无污染键，F2P/P2P 全部对上。",
+   "by": "static"
+  },
+  "7": {
+   "status": "not_applicable",
+   "evidence_refs": [],
+   "note": "test_patch 不带外部资产。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "题面与评分方向不同(23/27)",
+   "severity": "P1",
+   "evidence_refs": [
+    "mat/iterative__dvc-3576/public.json#problem_statement（第 ④ 项：挪到 STDERR）",
+    "mat/iterative__dvc-3576/grading.json#test_patch（要求返回空串）",
+    "mat/iterative__dvc-3576/raw.json#hints_text（dmpetrov 主张空输出，efiop 一开始反对）"
+   ],
+   "note": "题面要求\"换输出流、保留消息\"，评分要求\"取消消息\"。按题面字面实现的合法解判 0。而且题面另外三项 gold 一项没做，求解者很可能把大量步数花在 ①②③ 上。",
+   "proposed_action": "把题面裁成单一需求：\"`dvc metrics diff` 没有差异时不应输出任何内容（与 `git diff` 一致），以便 `[ -z \"$(dvc metrics diff)\" ]` 这类判空可用\"。①②③ 若要保留，应拆成独立题并配相应测试。",
+   "next_experiment": "实现\"把 No changes. 写到 stderr、字符串不变\"跑 F2P，预期 FAILED，形成\"按题面实现被判 0\"的反例。"
+  },
+  {
+   "category": "端到端行为无覆盖(26)",
+   "severity": "P3",
+   "evidence_refs": [
+    "git show a338fad036:dvc/command/metrics.py:145（`logger.info(_show_diff(diff))`）"
+   ],
+   "note": "gold 只改纯函数返回值，调用方仍 `logger.info(\"\")` —— 实际 STDOUT 还是会多出一个空行，题面第 ④ 项的目标（\"只有表格\"）并未真正达成，且无测试。",
+   "proposed_action": "补一条 CLI 级用例：`main([\"metrics\",\"diff\"])` 在无差异时 capsys 捕获的 stdout 为空。",
+   "next_experiment": "在 gold 上跑 `dvc metrics diff` 并 `| wc -c`，确认是否仍输出换行。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 tests/unit/command/test_metrics.py；gold 不触碰测试样路径。按第四组 B 保持为空。",
+  "evidence_refs": [
+   "mat/iterative__dvc-3576/grading.json#test_patch",
+   "mat/iterative__dvc-3576/validation.json#golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/unit/command/test_metrics.py::test_metrics_diff",
+   "reason": "已在 P2P；逐字比对表格输出，能挡住\"`_show_diff` 一律返回空串\"的破坏性修复。"
+  },
+  {
+   "id": "tests/func/test_metrics.py -k diff",
+   "reason": "`CmdMetricsDiff.run` 的端到端路径，覆盖题面真正关心的 STDOUT 内容。"
+  },
+  {
+   "id": "tests/unit/command/test_metrics.py::test_metrics_show_json_diff",
+   "reason": "已在 P2P；题面第 ② 项（JSON 支持缺失 old 值）的最近覆盖点。"
+  },
+  {
+   "id": "（新增）tests/unit/command/test_metrics.py::test_metrics_diff_cli_stdout_empty",
+   "reason": "针对 check 26 的缺口：CLI 层无差异时 stdout 必须为空（含换行）。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "环境干净、P2P 有真实判别力（逐字表格）、gold 一行；但题面要求\"挪到 STDERR\"而评分要求\"返回空串\"，方向不同，按题面实现会判 0，且题面另外三项 gold 一项没做。裁题面即可转为可用。"
+ },
+ "costs": {
+  "minutes": 18
+ },
+ "by": "L1_dvc_1 (Claude Opus 5, 静态审查)"
+}

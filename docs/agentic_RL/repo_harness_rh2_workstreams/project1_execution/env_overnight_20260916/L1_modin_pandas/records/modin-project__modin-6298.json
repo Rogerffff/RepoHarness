@@ -1,0 +1,60 @@
+{
+ "task_id": "modin-project__modin-6298",
+ "source": "SWE-Gym lite (s2 ingest v0)",
+ "task_revision": "upstream",
+ "materials_refs": [
+  "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/{public,grading_bundles_v2,validation}_*_v0.jsonl",
+  "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/modin-project__modin-6298/{gold,empty}/offline/a1/",
+  "runs/env_overnight_20260916/repos/modin@5cd15a51b00a6338783454c5ddb77da25422f7db"
+ ],
+ "public_view": {
+  "goal": "ExperimentalNumPyAPI 打开、数据含 NaN 时，np.argmax/np.argmin 抛 ValueError: Boolean array expected for the condition, not int64。",
+  "constraints_from_statement": [
+   "题面给出可复现脚本与 traceback，末帧停在 pandas 的 generic.py _where，但上游调用链点名 modin/core/storage_formats/pandas/query_compiler.py 的 df.where(cond, other)。",
+   "报错信息本身说明 where 的第一个位置参数（条件）被传了 int64 而不是布尔。"
+  ],
+  "unknowns_from_public_only": [
+   "题面没给期望输出。正确语义只能靠『modin.numpy 应与 numpy 对齐』这个项目默认契约推断：含 NaN 的行，argmax/argmin 应返回该 NaN 的位置（numpy 语义）。",
+   "题面 traceback 落在 modin/core/... 与 query_compiler.py，而实际修复点在 modin/numpy/arr.py 的 argmax/argmin；需要 agent 自己向上回溯一层。",
+   "axis=0、keepdims、一维数组、整行全 NaN 等情形的期望行为未说明。"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["modin@5cd15a51:modin/numpy/arr.py L2235-2250", "modin@5cd15a51:modin/numpy/test/test_array.py"], "note": "gold 目标 modin/numpy/arr.py、test_patch 目标 modin/numpy/test/test_array.py 在 base 都存在，且与题面同一问题（argmax/argmin 的 NaN 分支）。", "by": "L1_modin_pandas"},
+  "2": {"status": "pass", "evidence_refs": ["validation.golden_patch（base 侧是 na_mask.where(na_idxs, result)）", "stage1 empty/status_map.json: 2 个 F2P 全 FAILED"], "note": "base 把布尔掩码 na_mask 当作被 where 的对象、把整数 na_idxs 当作条件，参数顺序反了，正对应题面 Boolean array expected for the condition, not int64；empty 侧 2 个 F2P 全 FAILED。", "by": "L1_modin_pandas"},
+  "3": {"status": "pass", "evidence_refs": ["public_bundles_v0.jsonl problem_statement", "raw hints_text"], "note": "题面无外链、无图片、无截断代码块；hints_text 为空字符串，没有题面之外的关键信息。", "by": "L1_modin_pandas"},
+  "4": {"status": "pass", "evidence_refs": ["grading.test_patch"], "note": "test_patch 只触碰 modin/numpy/test/test_array.py（纯测试路径）。", "by": "L1_modin_pandas"},
+  "17": {"status": "pass", "evidence_refs": ["validation.golden_patch"], "note": "gold 只触碰 modin/numpy/arr.py，不含测试样路径；additional_exclusions 保持空。", "by": "L1_modin_pandas"},
+  "5": {"status": "pass", "evidence_refs": ["tasks_by_repo.json"], "note": "本包其余 4 道 modin 题分别改 parquet_dispatcher / indexing / sql_dispatcher / dataframe，与本题不同 PR、不同模块、不同测试文件。", "by": "L1_modin_pandas"},
+  "23": {"status": "issue", "evidence_refs": ["public_bundles_v0.jsonl problem_statement", "grading.test_patch"], "note": "题面只给崩溃，不给期望值。F2P 断言 modin 结果与 numpy.argmax/argmin(axis=1) 逐元素相等 —— 对含 NaN 的行 numpy 返回 NaN 的下标。这个语义只能从『modin 对齐 pandas/numpy』的项目默认契约推出，题面没写。另外题面的 traceback 指向 query_compiler.py，真正要改的是 modin/numpy/arr.py，定位需多回溯一层。", "by": "L1_modin_pandas"},
+  "24": {"status": "pass", "evidence_refs": ["grading.test_patch"], "note": "F2P 只比较返回值，不引用 na_mask/na_idxs 这些内部名，也不检查调用顺序。把 argmax 整体改写成先 to_numpy 再交给 numpy 的实现同样能过；不强制唯一实现。", "by": "L1_modin_pandas"},
+  "25": {"status": "issue", "evidence_refs": ["grading.test_patch"], "note": "F2P 只有一个 2x3、只有一个 NaN、只测 axis=1 的样例。未覆盖 axis=0、axis=None、keepdims=True、一维数组、整行全 NaN。一个『含 NaN 就退回 numpy』的兜底实现能过 F2P，但那正是 modin 要避免的 default_to_pandas 路径（虽然 modin 的 filterwarnings 只把 'defaulting to pandas' 的 UserWarning 转错，兜底走 to_numpy 不会触发它）。", "by": "L1_modin_pandas"},
+  "26": {"status": "pass", "evidence_refs": ["modin@5cd15a51"], "note": "见 proposed_regression_tests。", "by": "L1_modin_pandas"},
+  "27": {"status": "pass", "evidence_refs": ["validation.golden_patch"], "note": "gold 只在 argmax 与 argmin 两处把 na_mask.where(na_idxs, result) 换成 na_idxs.where(na_mask, result)，两处改动对称、与题一致，无无关改动、不依赖其它未交付改动。", "by": "L1_modin_pandas"},
+  "29": {"status": "pass", "evidence_refs": ["leak.json"], "note": "题面不含 gold 新增代码（gold 只有 2 行改动，均未出现在题面），不指向上游 PR/commit；hints_text 为空。", "by": "L1_modin_pandas"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold/offline/a1/eval.sh", "stage1 gold/offline/a1/test_output.txt RH2_PHASE 时间戳"], "note": "install 只是 python -m pip install -e .（3.7 秒，rc=0），无编译扩展、无权重/数据下载；测试段 39.3 秒，rc=0。本包 10 题里最便宜的一题。", "by": "L1_modin_pandas"},
+  "7": {"status": "pass", "evidence_refs": ["runs/env_overnight_20260916/L1_modin_pandas/optdeps.json"], "note": "modin/numpy/test/test_array.py 无 importorskip、无 URL、无 S3、无 datapath。但注意 modin/conftest.py 在模块级 import boto3 / requests / s3fs（见 repo_level_findings.md），缺这三个包会让整份收集失败 —— 与本题测试内容无关但属于环境前提。", "by": "L1_modin_pandas"},
+  "11": {"status": "pass", "evidence_refs": ["runs/env_overnight_20260916/L1_modin_pandas/collide_detail.json", "prescan.json"], "note": "39 个常量全部在运行时唯一命中（matched_keys=39，runtime_ids_behind_consts=39），无截断、无冲突、无非 ASCII。本包 10 题里 ID 最干净的一题。", "by": "L1_modin_pandas"}
+ },
+ "issues": [
+  {"category": "test_coverage_narrow", "severity": "P3",
+   "evidence_refs": ["grading.test_patch"],
+   "note": "只测 axis=1 的一个 2x3 样例，axis=0/keepdims/一维/全 NaN 均未覆盖。",
+   "proposed_action": "把 axis=0 与 keepdims=True 的同类断言加入 proposed_regression_tests，评估时一并跑。",
+   "next_experiment": "真机上对 modin/numpy/test/test_array.py 全量跑一次（39 秒），确认扩展断言不会引入新失败。"},
+  {"category": "env_prerequisite", "severity": "P3",
+   "evidence_refs": ["modin@d54dcfd8:modin/conftest.py L25-30"],
+   "note": "modin/conftest.py 模块级 import boto3 / requests / s3fs，任何 modin 测试都依赖这三个包存在；镜像里已装，但 agent 若在 rollout 里动 pip 环境会整份收集失败。",
+   "proposed_action": "在环境说明里把这三个包列为不可卸载依赖，或在准入检查里固定。",
+   "next_experiment": "真机上 pip uninstall s3fs 后跑一次收集，确认失败形态（收集错误 vs 判分 infra）。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只在 modin/numpy/test/，gold 只在 modin/numpy/arr.py，路径不交叉；沿用默认空集。", "evidence_refs": ["grading.test_patch", "validation.golden_patch"]},
+ "proposed_regression_tests": [
+  {"id": "modin/numpy/test/test_array.py::test_array_where", "reason": "gold 改的正是 where 的调用形态，同文件的 where 测试是最近的回归面。"},
+  {"id": "modin/numpy/test/test_array_math.py", "reason": "argmax/argmin 属于 reduce 家族，与 max/min/sum 共用 apply_axis 与 keepdims 逻辑。"},
+  {"id": "modin/numpy/test/test_array_axis_functions.py", "reason": "覆盖 axis=0/axis=None/keepdims 的轴语义，正好补上 F2P 没测的维度。"},
+  {"id": "modin/pandas/test/dataframe/test_reduce.py", "reason": "modin.numpy 的 reduce 最终落到 query_compiler 的同一批算子，能抓到 QueryCompiler 层的连带回归。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "ID 全部唯一命中、gold RESOLVED_FULL、DeepSeek 候选也 RESOLVED_FULL、install 3.7 秒测试 39 秒，是本包成本与信号质量最好的一题；只有 F2P 覆盖偏窄一个 P3。"},
+ "costs": {"minutes": 18}
+}

@@ -1,0 +1,243 @@
+{
+ "task_id": "iterative__dvc-1681",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "docs/.../s2/ingest/public_bundles_v0.jsonl#iterative__dvc-1681",
+  "grading": "docs/.../s2/ingest/grading_bundles_v2_v0.jsonl#iterative__dvc-1681",
+  "validation": "docs/.../s2/ingest/validation_bundles_v0.jsonl#iterative__dvc-1681",
+  "raw": "docs/.../s2/raw/swe_gym_lite_full_f70b1a29.jsonl#iterative__dvc-1681",
+  "base_commit": "9175c45b1472070e02521380e4db8315d7c910c4",
+  "version": "0.30",
+  "python_version": "3.8",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-1681:latest",
+  "eval_cmd": "pytest -rA",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1681/{gold,empty}/offline/a1/",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc"
+ },
+ "public_view": {
+  "目标行为": "0.30 起对 0.28 时代生成的 .dvc 文件跑 `dvc status`，不应再报 `changed checksum`（stage md5 必须与旧版一致）。",
+  "约束": "base `dvc/stage.py:558-578 _compute_md5` 已经写了\"wdir 为默认值 `.` 时从 md5 输入里删掉，以保持对没有 wdir 字段的旧 pipeline 的向后兼容\"；但 `dumpd()`（第 527 行）返回的是 `self.wdir`（绝对路径），所以 `d.get(PARAM_WDIR) == \".\"` 永远不成立，旧文件的 md5 就变了。真正把 wdir 转成相对路径的代码在 `dump()` 里、只在写文件时执行。",
+  "公开材料无法确定的点": [
+   "题面只给了现象与三个版本的对照输出，没有 traceback、没有点名文件；根因（`dumpd` 与 `dump` 对 wdir 处理不一致）要自己读代码；",
+   "题面没说修法该落在 `dumpd` 还是 `_compute_md5`——两处都能让旧文件 md5 复原，但只有改 `dumpd` 才会让 F2P 新增的 `stage.dumpd()[PARAM_WDIR] == \".\"` 通过；",
+   "`git bisect` 定位到的回归 commit 只在不可见的 hints 里。"
+  ],
+  "相关模块": "dvc/stage.py（dumpd / dump / _compute_md5 / load）。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-1681/grading.json#test_patch",
+    "mat/iterative__dvc-1681/validation.json#golden_patch",
+    "git show 9175c45b14:dvc/stage.py"
+   ],
+   "note": "test_patch 动 tests/test_stage.py 与 tests/unit/stage.py（base 均存在）；gold 只动 dvc/stage.py。同一问题。无二进制/LFS/子模块。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show 9175c45b14:dvc/stage.py:527-537（`Stage.PARAM_WDIR: self.wdir`）",
+    "git show 9175c45b14:dvc/stage.py:571-572",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1681/empty/offline/a1/status_map.json"
+   ],
+   "note": "base 的 `dumpd` 返回绝对 wdir，`_compute_md5` 的 `== \".\"` 判断因此失效；empty 侧 F2P FAILED。初态确有该缺陷。",
+   "by": "static"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-1681/public.json#problem_statement",
+    "mat/iterative__dvc-1681/raw.json#hints_text"
+   ],
+   "note": "题面 1173 字符，含 .dvc 文件内容与三个版本的命令输出，代码块完整、无截断、无外链图片。缺口：hints 里的 `git bisect` 结果（指向回归 commit 38536903）没有进题面——这是定位效率上的实质差别，但不属于答案。",
+   "by": "static"
+  },
+  "4": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-1681/grading.json#test_patch（`tests/unit/stage.py`）",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1681/gold/offline/a1/eval.sh:88"
+   ],
+   "note": "**触碰的测试文件之一叫 `tests/unit/stage.py`，不匹配 pytest 默认的 `python_files = test_*.py`**。当前 eval_cmd 是 `pytest -rA tests/test_stage.py tests/unit/stage.py`（显式点名文件），所以能收集到；但任何基于文件名通配来判断\"这是测试文件\"的规则都会漏掉它。这正好是第四组 B 取消默认测试名通配的一个具体依据。两个文件都是纯测试职责，无混合。",
+   "by": "static"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-1681/grading.json#test_patch"
+   ],
+   "note": "恢复清单 = {tests/test_stage.py, tests/unit/stage.py}，均为官方测试文件，不覆盖正常源码。",
+   "by": "static"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dvc_1/prescan.json"
+   ],
+   "note": "本包内 gold 路径 `dvc/stage.py` 与 **dvc-1877（0.35）、dvc-2254（0.51）** 重合，三题都改 `dvc/stage.py`，但函数不同（1681 改 dumpd/dump，1877 改 persist outs 的 build cache 判断，2254 改 deterministic callback）。不是同一 PR，但**属于同一文件的历史序列：1877 与 2254 的 base 已经包含 1681 的修复**，训练/评测划分需同侧考虑。",
+   "by": "static"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-1681/grading.json#test_patch（`d = stage.dumpd(); assertEqual(d[stage.PARAM_WDIR], \".\")`）"
+   ],
+   "note": "**F2P 新增的第一条断言把修法钉死在 `dumpd`**：题面要求的是\"status 不再误报\"，在 `_compute_md5` 里把 wdir 归一化（`os.path.relpath(self.wdir, os.path.dirname(self.path))` 后再比 `\".\"`）同样能让 status 恢复正常，却过不了 `stage.dumpd()[PARAM_WDIR] == \".\"` 这条。这条断言在公开材料里没有依据。",
+   "by": "static"
+  },
+  "24": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-1681/grading.json#test_patch"
+   ],
+   "note": "同上：F2P 断言的是 `dumpd()` 的返回内容（内部方法的返回值形状），不是对外可见行为。合法替代解（只改 `_compute_md5`）会被拒。",
+   "by": "static"
+  },
+  "25": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-1681/grading.json#test_patch（tests/unit/stage.py 新增两条）"
+   ],
+   "note": "配套新增的 `test_wdir_default_ignored`（wdir=\".\" 时 md5 = e9521a22...，与无 wdir 相同）与 `test_wdir_non_default_is_not_ignored`（wdir=\"..\" 时 md5 = 2ceba15e...，必须不同）是一对方向相反的断言，能挡住\"无条件把 wdir 从 md5 输入里删掉\"这种过度修复。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1681/gold/offline/a1/test_output.txt（13 passed，无失败无跳过）",
+    "mat/iterative__dvc-1681/grading.json#pass_to_pass"
+   ],
+   "note": "P2P 12 条 = 两个文件在 base 通过的全部用例，环境干净。**但两个文件都很小**（合计 13 条），且 8 条是 schema 校验（TestSchemaCmd/TestSchemaDepsOuts）与本改动无关；真正相关的只有 `TestReload::test` 与 tests/unit/stage.py 的 3 条。gold 同时改了 `dump()` 的签名，而 `dvc/repo/{add,commit,imp,lock,move,reproduce,run}.py`、`dvc/repo/metrics/modify.py` 共 8 处调用 `stage.dump()` 都没有回归覆盖。",
+   "by": "static"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-1681/validation.json#golden_patch",
+    "git show 9175c45b14: 各 caller: dvc/repo/add.py:13 等 8 处均为 `stage.dump()` 无参调用"
+   ],
+   "note": "gold 的核心改动正确。**但它额外把 `def dump(self, fname=None)` 改成 `def dump(self)`**——这不是题目要求的一部分，属于顺带的 API 收窄。已核对 base 里 8 个 caller 全部无参调用，所以不会破坏；但求解者若不做这一步（只改 dumpd、保留 `fname` 参数并删掉 `dump` 里重复的 relpath 赋值）行为等价，也应判通过。",
+   "by": "static"
+  },
+  "29": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-1681/raw.json#hints_text"
+   ],
+   "note": "题面干净。**hints 直接给出 `git bisect` 定位到的回归 commit 链接**（https://github.com/iterative/dvc/commit/38536903...），虽不是修复本身，但等于把根因定位这一半工作直接送出；hints 不可见，记录以备将来合并题面时注意。",
+   "by": "static"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1681/gold/offline/a1/test_output.txt（13 passed, 12 warnings in 10.41s）"
+   ],
+   "note": "安装与测试正常，无依赖漂移症状。",
+   "by": "static"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1681/gold/offline/a1/test_output.txt（无 SKIPPED）"
+   ],
+   "note": "两个测试文件全是本地/纯内存操作，无网络、无外部服务。",
+   "by": "static"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1681/gold/offline/a1/status_map.json"
+   ],
+   "note": "status_map 无 caplog 污染键，F2P/P2P 全部对上。",
+   "by": "static"
+  },
+  "7": {
+   "status": "not_applicable",
+   "evidence_refs": [],
+   "note": "test_patch 不带外部资产。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "测试强制唯一实现(23/24)",
+   "severity": "P2",
+   "evidence_refs": [
+    "mat/iterative__dvc-1681/grading.json#test_patch（`assertEqual(d[stage.PARAM_WDIR], \".\")` on `stage.dumpd()`）",
+    "git show 9175c45b14:dvc/stage.py:558-578"
+   ],
+   "note": "题面要求\"status 不再误报\"，F2P 却断言内部方法 `dumpd()` 的返回值形状，把修法限定在 `dumpd`；等价的 `_compute_md5` 内归一化会被判 0。",
+   "proposed_action": "把该条断言换成行为级：用旧格式（无 wdir 字段）的 .dvc 文件 load 后 `assertFalse(stage.changed())`——test_patch 后半段其实已经这么做了，前面那条 dumpd 断言可以删。",
+   "next_experiment": "写\"只改 `_compute_md5`\"的替代实现跑 F2P，预期在 `d[PARAM_WDIR] == \".\"` 这条 KeyError/失败，形成合法解被拒反例。"
+  },
+  {
+   "category": "gold 含范围外改动(27)",
+   "severity": "P3",
+   "evidence_refs": [
+    "mat/iterative__dvc-1681/validation.json#golden_patch",
+    "git grep \"stage.dump()\" 9175c45b14 -- dvc（8 处无参调用）"
+   ],
+   "note": "gold 顺带删掉 `Stage.dump(fname=None)` 的参数。无 caller 受影响，但求解者保留该参数同样正确，不应因此扣分。",
+   "proposed_action": "无需改材料；评分本来也不看签名。记录以免审查时把它当作\"gold 必需的一部分\"。",
+   "next_experiment": "无。"
+  },
+  {
+   "category": "回归覆盖不足(26)",
+   "severity": "P3",
+   "evidence_refs": [
+    "mat/iterative__dvc-1681/grading.json#pass_to_pass（12 条，其中 8 条是 schema 校验）"
+   ],
+   "note": "`stage.dump()` 的 8 个调用点（add/commit/imp/lock/move/reproduce/run/metrics.modify）无任何回归覆盖；wdir 非默认值（子目录里的 stage）的端到端写盘行为也没覆盖。",
+   "proposed_action": "把 `tests/test_run.py::TestRunWorkingDirectoryAsOutput` 一类涉及 `-w/--wdir` 的功能用例纳入 P2P。",
+   "next_experiment": "base/gold 各跑一次 `pytest -rA tests/test_run.py -k wdir`，取双侧 PASSED 作为补充 P2P。"
+  },
+  {
+   "category": "测试文件命名(4/18)",
+   "severity": "P3",
+   "evidence_refs": [
+    "mat/iterative__dvc-1681/grading.json#test_patch（`tests/unit/stage.py`）",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1681/gold/offline/a1/eval.sh:88"
+   ],
+   "note": "`tests/unit/stage.py` 不匹配 pytest 默认 `python_files`，靠 eval_cmd 显式点名才被收集。是\"不能按文件名通配判断测试文件\"的具体证据。",
+   "proposed_action": "无需改题；在筛查规则里记一笔：测试文件识别一律以 test_patch 实际路径为准。",
+   "next_experiment": "无。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 触碰的两个路径（tests/test_stage.py、tests/unit/stage.py）都是纯官方测试文件，虽然后者文件名不带 test_ 前缀；gold 不触碰测试样路径。按第四组 B 保持为空，并以 test_patch 实际路径而非文件名通配来判定。",
+  "evidence_refs": [
+   "mat/iterative__dvc-1681/grading.json#test_patch",
+   "mat/iterative__dvc-1681/validation.json#golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/test_run.py -k wdir",
+   "reason": "gold 改的是 wdir 的序列化位置，`dvc run -w` 的端到端行为是最直接的回归。"
+  },
+  {
+   "id": "tests/test_repro.py::TestReproWorkingDirectoryAsOutput",
+   "reason": "repro 路径调用 `stage.dump()`，且涉及非默认 wdir。"
+  },
+  {
+   "id": "tests/test_stage.py::TestReload::test",
+   "reason": "已在 P2P；load→dump→load 往返一致性直接覆盖本改动。"
+  },
+  {
+   "id": "tests/test_add.py::TestAddFileInDir::test",
+   "reason": "add 子目录文件会生成带非默认 wdir 的 stage，能挡住\"把 wdir 一律写成 `.`\"的错误修法。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_review",
+  "reason": "环境干净、gold 正确、配套单元测试设计得好（正反两条 wdir 断言）；问题在 F2P 有一条无依据的 `dumpd()` 返回值断言把修法钉死，以及 `stage.dump()` 的 8 个调用点零回归覆盖。"
+ },
+ "costs": {
+  "minutes": 22
+ },
+ "by": "L1_dvc_1 (Claude Opus 5, 静态审查)"
+}

@@ -1,0 +1,206 @@
+{
+ "task_id": "pydantic__pydantic-8316",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_pydantic (Claude Opus 5, 2026-09-16 夜)",
+ "materials_refs": [
+  "s2/ingest/*_bundles_v0.jsonl (pydantic__pydantic-8316)",
+  "repos/pydantic@20c0c6d9(见 grading.base_commit)",
+  "runs/env_probe_stage1_20260910/.../pydantic__pydantic-8316/"
+ ],
+ "public_view": {
+  "目标行为": "`to_snake('HTTPResponse')` 应返回 `'http_response'`，现在返回 `'httpresponse'`——连续大写后接大写+小写时要断词。",
+  "约束": "现有 17 组 to_snake 参数化用例的结果不能变。",
+  "公开材料无法确定的点": [
+   "题面同时提出了**第二个诉求**（to_camel 在 populate_by_name 下不接受 'HTTPResponseCode'），维护者在**不可见的 hints_text** 里明确回绝了它（'I don't think that the camel case alias generator is doing anything wrong'）。只读题面的 agent 会认为这也在范围内。",
+   "大写字母紧跟数字（如 'CAMEL2'）应该断词还是不断，题面没说"
+  ],
+  "base 定位": "pydantic/alias_generators.py:42-44 `to_snake` 只有两条规则：`([a-zA-Z])([0-9])` 与 `([a-z0-9])([A-Z])`，没有处理连续大写。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "tests/test_utils.py、pydantic/alias_generators.py 在 base 均存在"
+   ],
+   "note": "对应同一问题。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "alias_generators.py:42-44",
+    "stage1 empty：test_camel2snake[CAMELToSnake-camel_to_snake] FAILED"
+   ],
+   "note": "base 确有缺陷。",
+   "by": "static+stage1log"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement 2537 字符的 'Additional Notes' 段提出 to_camel 诉求",
+    "hints_text 里维护者回绝该诉求"
+   ],
+   "note": "P2：题面包含一个**被判分面拒绝**的额外诉求，而拒绝理由只在不可见的 hints 里。按题面去“修好” to_camel 会改动 to_pascal/to_camel，很可能挂掉 P2P 里的 test_snake2camel 参数化用例。这是与 9214 同类但方向相反的信息缺口。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只碰 tests/test_utils.py；F2P+P2P 144 条全在该文件；gold 只碰 pydantic/alias_generators.py"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "static"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "本包内唯一改 alias_generators.py 的题"
+   ],
+   "note": "无重复。",
+   "by": "static"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "install rc=2。",
+   "by": "stage1log"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "测试第三方 import：pytest / pydantic_core / dirty_equals"
+   ],
+   "note": "无外部资产。",
+   "by": "static"
+  },
+  "10": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "无本题轨迹。",
+   "by": "-"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "只有 install 需要网络。",
+   "by": "stage1log"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "同 check 3"
+   ],
+   "note": "P2：题面两个诉求，只有一个被接受；且被接受的那个的**原例**（`to_snake('HTTPResponse') == 'http_response'`）没有进判分面，判分用的是 `('CAMELToSnake','camel_to_snake')`。两者是同一规则，所以不影响可解性，但题面原例不可核对。",
+   "by": "static"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只新增一组 parametrize 参数"
+   ],
+   "note": "不强制唯一实现：任何能断开连续大写的正则/算法都可以。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "F2P 只有 1 条：新增的 parametrize 参数 `('CAMELToSnake','camel_to_snake')`；test_patch 不新增测试函数"
+   ],
+   "note": "P2：只要让 `CAMELToSnake` 断词、其余 17 组不变即可满分。题面的 `HTTPResponse`、以及 `to_camel` 那一半都不在判分面。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "gold 把 base 的 `([a-zA-Z])([0-9])` 换成了 `([a-z])([0-9])`（只保留小写→数字）",
+    "既有 17 组参数里数字前一律是小写字母（'Camel2'、'camel2' 等），没有任何一组是**大写字母紧跟数字**",
+    "scripts/to_snake_diff.py 实跑输出（纯 re 复现 base/gold，不需要 pydantic）：判分面内 18 组参数只有 CAMELToSnake 一组有差异（base 'camelto_snake' → gold 'camel_to_snake'）；判分面外 7 个输入全部有差异：CAMEL2 'camel_2'→'camel2'、HTTP2 'http_2'→'http2'、A1B2 'a_1_b_2'→'a1_b2'、HTTP2Response 'http_2_response'→'http2_response'、XMLHttpRequest 'xmlhttp_request'→'xml_http_request'、IOError 'ioerror'→'io_error'、HTTPResponse 'httpresponse'→'http_response'"
+   ],
+   "note": "P2 已实证：gold 把 base 的 `([a-zA-Z])([0-9])` 换成 `([a-z])([0-9])`，大写字母紧跟数字不再断词。判分面内 18 组参数里数字前一律是小写字母，因此这次缩窄**完全不可见**；判分面外 7 个代表性输入全部与 base 不同，其中 CAMEL2 'camel_2'→'camel2'、A1B2 'a_1_b_2'→'a1_b2' 是明确的行为缩窄，XMLHttpRequest / IOError / HTTPResponse 则是题面要的改进。改进与缩窄混在同一个 gold 里，而判分只看见改进的一小部分。",
+   "by": "static"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "同 26",
+    "scripts/to_snake_diff.py 实跑输出（纯 re 复现 base/gold，不需要 pydantic）：判分面内 18 组参数只有 CAMELToSnake 一组有差异（base 'camelto_snake' → gold 'camel_to_snake'）；判分面外 7 个输入全部有差异：CAMEL2 'camel_2'→'camel2'、HTTP2 'http_2'→'http2'、A1B2 'a_1_b_2'→'a1_b2'、HTTP2Response 'http_2_response'→'http2_response'、XMLHttpRequest 'xmlhttp_request'→'xml_http_request'、IOError 'ioerror'→'io_error'、HTTPResponse 'httpresponse'→'http_response'"
+   ],
+   "note": "P2：gold 在修连续大写的同时**缩小**了数字断词规则（大写字母→数字不再断），题面没有要求这个改动，也没有测试固定它。属于 gold 的范围外行为变化。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak 扫描 0 命中；题面无 URL"
+   ],
+   "note": "题面标题自带 'great first issue'，暗示难度低，但不泄漏解法。",
+   "by": "static"
+  },
+  "31": {
+   "status": "issue",
+   "evidence_refs": [
+    "R4"
+   ],
+   "note": "静态残余面。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "statement_contains_rejected_requirement",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 3",
+    "check 23"
+   ],
+   "proposed_action": "在 public_view 里注明“to_camel 的行为按设计不改”，否则 agent 按题面去改 to_camel 会挂 P2P",
+   "next_experiment": "在镜像里按题面 'Additional Notes' 修改 to_camel/to_pascal，跑官方 144 条看挂几条"
+  },
+  {
+   "category": "gold_scope_creep",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 26",
+    "check 27"
+   ],
+   "proposed_action": "补 `to_snake('CAMEL2')` / `to_snake('HTTP2')` 的断言（无论定为 'camel_2' 还是 'camel2'），把 gold 的这次缩窄变成显式决定",
+   "next_experiment": "已做：python3 scripts/to_snake_diff.py（本机纯 re 复现，无需容器）"
+  },
+  {
+   "category": "oracle_surface_narrow",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 25"
+   ],
+   "proposed_action": "把题面原例 `to_snake('HTTPResponse')` 加进 F2P",
+   "next_experiment": "同上"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 仅纯测试文件、gold 仅生产代码、判分面与恢复面一致。",
+  "evidence_refs": [
+   "grading.json.test_patch",
+   "validation.json.golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  "`to_snake('HTTPResponse') == 'http_response'` — 选择依据：题面原例，当前不在判分面",
+  "`to_snake('CAMEL2')` 与 `to_snake('HTTP2')` — 选择依据：gold 缩窄了大写→数字的断词规则，base 与 gold 结果不同且零覆盖（检查 26/27）",
+  "既有 17 组 test_camel2snake 参数（已在 P2P）保留 — 护栏",
+  "tests/test_utils.py::test_snake2camel 全量（已在 P2P）保留 — 选择依据：防止 agent 按题面去“修” to_camel",
+  "tests/test_aliases.py 里使用 alias_generator 的条目 — 选择依据：to_snake 的真实调用者，不在判分面"
+ ],
+ "disposition_hint": {
+  "state": "needs_review",
+  "reason": "缺陷明确、gold 简洁，但三处需要处理：题面含被回绝的第二诉求（理由只在 hints）、题面原例不在判分面、gold 顺带缩窄了大写→数字断词且无覆盖。补 public_view 与两条断言后可入。"
+ },
+ "costs": {
+  "minutes": 18
+ }
+}

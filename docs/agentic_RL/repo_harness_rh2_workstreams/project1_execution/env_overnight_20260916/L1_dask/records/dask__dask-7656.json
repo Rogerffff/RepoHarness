@@ -1,0 +1,226 @@
+{
+ "task_id": "dask__dask-7656",
+ "source": "SWE-Gym lite (dask/dask 2021.04)",
+ "task_revision": "upstream",
+ "materials_refs": [
+  "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl (problem_statement, image xingyaoww/sweb.eval.x86_64.dask_s_dask-7656:latest, workdir /testbed)",
+  "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl (test_patch, F2P=1, P2P=48, eval_cmd 'pytest -n0 -rA  --color=no', version 2021.04)",
+  "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl (golden_patch)",
+  "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/dask__dask-7656/{gold,empty}/offline/a1/",
+  "runs/env_probe_20260909_final_sync/ledger/logs_cc/dask__dask-7656/candidate.diff"
+ ],
+ "public_view": {
+  "goal": "dask.delayed 处理 dataclass 实例时，对 init=False 且尚未赋值的字段调用 getattr 会抛 AttributeError；要求这类字段不再导致崩溃。",
+  "constraints": [
+   "题面给出完整 traceback，定位到 dask/delayed.py:108 的 [[f.name, getattr(expr, f.name)] for f in dataclass_fields(expr)]。",
+   "题面自带 Environment（dask 2021.03，Python 3.8）。"
+  ],
+  "unknown_from_public": [
+   "题面没说 init=False 但**已有值**的字段该保留还是丢弃 —— 这正是本题唯一的语义分歧点（见 checks.24）。",
+   "题面只提 dask.delayed 路径，没提 dask/base.py:unpack_collections 与 dask/delayed.py:to_task_dask 两条同样有 bug 的路径。"
+  ],
+  "by": "L1_dask"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "07d5ad0ab1bc8903554b37453f02cc8024460f2a:dask/delayed.py:109,191",
+    "07d5ad0ab1bc8903554b37453f02cc8024460f2a:dask/tests/test_delayed.py:99-112"
+   ],
+   "note": "test_patch 只改 dask/tests/test_delayed.py，gold 只改 dask/delayed.py，两文件在 base 均存在；无二进制/LFS/子模块材料。",
+   "by": "L1_dask"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "07d5ad0ab1bc8903554b37453f02cc8024460f2a:dask/delayed.py:109"
+   ],
+   "note": "base 的列表推导无任何 init/hasattr 过滤，题面所述缺陷确实存在。stage1 empty 侧 F2P FAILED 也印证（runs/env_probe_stage1_20260910/.../dask__dask-7656/empty/offline/a1/status_map.json）。",
+   "by": "L1_dask"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-7656.problem_statement 的 **Fix** 段"
+   ],
+   "note": "题面末尾直接贴出用户自己的修复代码 `if field.init or hasattr(expr, field.name)`。虽然和 gold 的 `if hasattr(...)` 不逐字相同，但已把修复位置与判据交给 agent。hints_text 为空，无“hints 独有信息”问题。",
+   "by": "L1_dask"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-7656.test_patch"
+   ],
+   "note": "test_patch 触碰路径只有 dask/tests/test_delayed.py（纯测试）。gold 触碰路径只有 dask/delayed.py（纯源码）。无混合职责。",
+   "by": "L1_dask"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "同上"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "L1_dask"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "ASSIGNMENT.json",
+    "dask__dask-8820 grading/validation bundles"
+   ],
+   "note": "本包内 dask__dask-8820 改同一对文件（dask/delayed.py + dask/tests/test_delayed.py），且 base 晚 10 个月（2022-03-16 vs 2021-05-14），8820 的 base 已含本题 gold。两题不是同一 PR、不是同一修复，但 P2P 高度重叠（均为 test_delayed.py 近乎整文件），划分训练/评测集时应同侧，避免同一文件的通过基线跨侧泄漏。",
+   "by": "L1_dask"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-7656.test_patch"
+   ],
+   "note": "F2P 只有 dask/tests/test_delayed.py::test_delayed_with_dataclass；test_patch 把既有用例的 make_dataclass 加了一个 ('b', int, field(init=False)) 字段，断言仍是 final.compute()==3。公开题面（AttributeError 不该发生）足以推出该断言。",
+   "by": "L1_dask"
+  },
+  "24": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_20260909_final_sync/ledger/logs_cc/dask__dask-7656/candidate.diff",
+    "docs/.../task_signals_swegym.json:dask__dask-7656.deepseek_candidate_oracle=RESOLVED_FULL"
+   ],
+   "note": "不强制唯一实现，但**过于宽松**：DeepSeek 候选用的是语义不同的 `if f.init`（无条件丢弃所有 init=False 字段），gold 用 `if hasattr(expr, f.name)`（保留已赋值的 init=False 字段），二者在“init=False 且已有值”的对象上行为不同（前者丢数据），却同被判 RESOLVED_FULL。F2P 里的 b 字段无默认值也从不赋值，测不出这个差异。",
+   "by": "L1_dask"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "07d5ad0ab1bc8903554b37453f02cc8024460f2a:dask/tests/test_delayed.py:45-84",
+    "07d5ad0ab1bc8903554b37453f02cc8024460f2a:dask/delayed.py:188-193"
+   ],
+   "note": "gold 改了两处（unpack_collections:109 与 to_task_dask:191）。F2P 只走 dask.delayed → unpack_collections，**完全不经过 to_task_dask**；P2P 里唯一覆盖 to_task_dask 的 test_to_task_dask 不含任何 dataclass 用例。因此只改 unpack_collections 的一半修复可满分。",
+   "by": "L1_dask"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "07d5ad0ab1bc8903554b37453f02cc8024460f2a:dask/base.py:431"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_dask"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "07d5ad0ab1bc8903554b37453f02cc8024460f2a:dask/base.py:428-435"
+   ],
+   "note": "gold 无与题无关的改动、不依赖未交付改动，但**不完整**：dask/base.py:unpack_collections（dask.compute/persist 的公共入口）里同样是 `[[f.name, _unpack(getattr(expr, f.name))] for f in fields(expr)]`，没有任何过滤，同一个 init=False dataclass 走 dask.compute 仍会 AttributeError。DeepSeek 候选主动补了这一处（candidate.diff 第 1 个 hunk），说明这不是理论风险。",
+   "by": "L1_dask"
+  },
+  "29": {
+   "status": "issue",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-7656.problem_statement"
+   ],
+   "note": "题面 **Fix** 段直接给出可用修复代码；未指向上游 PR/commit 号。hints_text 为空（raw 行）。",
+   "by": "L1_dask"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-7656/gold/offline/a1/test_output.txt (RH2_PHASE_END install rc=0)"
+   ],
+   "note": "dask 2021.04 的 setup.py 走 legacy 路径，`pip install --no-deps -e .` 离线 rc=0；与 2024.2 题（10972）不同。",
+   "by": "L1_dask"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "07d5ad0ab1bc8903554b37453f02cc8024460f2a:dask/tests/test_delayed.py"
+   ],
+   "note": "全文件无 mark.network / requests / boto3 / s3fs / torch.hub / URL 下载；只有 pytest.importorskip('numpy'|'dask.array'|'dataclasses'|'cloudpickle') 这类本地可选依赖。",
+   "by": "L1_dask"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-7656/gold/offline/a1/test_output.txt"
+   ],
+   "note": "gold 侧 52 条结果行、0 条 SKIPPED，48 条 P2P 与 1 条 F2P 全部 PASSED，说明镜像里 numpy/cloudpickle/dask.array 都在，importorskip 未触发。仅 2 条 XFAIL（test_pickle[f1]/[f2]，不在参考集）。",
+   "by": "L1_dask"
+  },
+  "9": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-7656/{gold,empty}/offline/a1/status_map.json"
+   ],
+   "note": "empty→F2P FAILED、gold→F2P PASSED，两侧 P2P 全 PASSED，判据能区分候选。",
+   "by": "L1_dask"
+  }
+ },
+ "issues": [
+  {
+   "category": "测试放过错误修复",
+   "severity": "P1",
+   "evidence_refs": [
+    "07d5ad0ab1bc8903554b37453f02cc8024460f2a:dask/delayed.py:188-193",
+    "07d5ad0ab1bc8903554b37453f02cc8024460f2a:dask/tests/test_delayed.py:45-84"
+   ],
+   "proposed_action": "补一条针对 to_task_dask 的 dataclass 用例进 P2P/F2P，或在评分侧接受“半修复”的事实并在题级记录里标注。",
+   "next_experiment": "在 base 上只改 delayed.py:109 一处，跑当前 F2P+48 条 P2P，预期 RESOLVED_FULL。"
+  },
+  {
+   "category": "评分不区分语义",
+   "severity": "P1",
+   "evidence_refs": [
+    "runs/env_probe_20260909_final_sync/ledger/logs_cc/dask__dask-7656/candidate.diff"
+   ],
+   "proposed_action": "若要把本题当“正确性”训练信号，需补一条 init=False 且在 __post_init__ 里被赋值的 dataclass 用例（gold 保留该字段、`if f.init` 版丢弃）。",
+   "next_experiment": "写 make_dataclass 带 __post_init__ 赋值的用例，分别对 gold 与 `if f.init` 版跑，确认前者通过后者失败。"
+  },
+  {
+   "category": "gold 不完整",
+   "severity": "P2",
+   "evidence_refs": [
+    "07d5ad0ab1bc8903554b37453f02cc8024460f2a:dask/base.py:428-435"
+   ],
+   "proposed_action": "记为已知缺口；不改题面。若用于评测，避免宣称“修复了 dataclass init=False 问题”。",
+   "next_experiment": "在 gold 树上跑 `dask.compute(ADataClass())`（init=False 无默认值），确认仍抛 AttributeError。"
+  },
+  {
+   "category": "静态泄漏",
+   "severity": "P2",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-7656.problem_statement **Fix** 段"
+   ],
+   "proposed_action": "若作为难度分层的证据：本题应归入“题面自带修复”的低难度桶，不适合当“定位能力”指标。",
+   "next_experiment": "无需实验；可统计 216 题里题面含可执行修复片段的比例。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰 dask/tests/test_delayed.py，全部属于测试侧，恢复它是正确行为；gold 不碰测试路径。按第四组 B 默认保持空。",
+  "evidence_refs": [
+   "grading_bundles_v2_v0.jsonl:dask__dask-7656.test_patch",
+   "validation_bundles_v0.jsonl:dask__dask-7656.golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "dask/tests/test_base.py::test_unpack_collections",
+   "reason": "dask/base.py:unpack_collections 是 dask.compute/persist 的 dataclass 处理入口，与 gold 改动同源；当前不在任何参考集里，无法拦住“把 dask/base.py 一并改坏”的候选。"
+  },
+  {
+   "id": "dask/tests/test_delayed.py::test_to_task_dask",
+   "reason": "已在 P2P，但不含 dataclass 场景；建议新增 test_to_task_dask 的 dataclass 变体以覆盖 gold 的第二处 hunk。"
+  },
+  {
+   "id": "dask/tests/test_delayed.py::test_delayed_with_dataclass_init_false（新增）",
+   "reason": "覆盖 init=False 但在 __post_init__ 中被赋值的字段，区分 `hasattr` 与 `f.init` 两种实现。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_review",
+  "reason": "链路健康（安装 rc=0、无 skip、empty/gold 判据可区分），但 F2P 只覆盖 gold 两处改动的一处，且不区分 `hasattr` 与 `f.init` 两种语义不同的修法；题面自带修复代码。作为训练样本可用，作为正确性评测题需补 P2P。"
+ },
+ "costs": {
+  "minutes": 28
+ }
+}

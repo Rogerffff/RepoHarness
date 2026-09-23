@@ -1,0 +1,58 @@
+{
+ "task_id": "python__mypy-10401",
+ "source": "SWE-Gym lite / python/mypy PR 10401",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "44925f4b121392135440f53d7c8a3fb30593d6cc", "version": "0.820", "python_version": "3.9",
+  "eval_cmd": "pytest -n0 -rA -k",
+  "f2p": ["testSingleUndefinedTypeAndTuple", "testMultipleUndefinedTypeAndTuple"], "p2p": ["testAssignEmptyBogus"],
+  "test_patch_paths": ["test-data/unit/check-tuples.test"], "gold_paths": ["mypy/join.py"],
+  "stage1": "**无结果**：gold 与 empty 两侧都只生成了 eval.sh，没有 test_output.txt；ledger 记为 result=\"infra_failed:run_stopped\", notes=[\"wall_deadline\"]（runs/env_probe_stage1_20260910/ledger/stage1_offline.jsonl）"
+ },
+ "public_view": {
+  "goal": "`class Bar(aaaaaaaaaa)`（未定义名）+ `class FooBarTuple(Tuple[Foo, Bar])` 让 mypy 崩溃（AssertionError in types.py accept）。要求不崩溃，正常报出 aaaaaaaaaa 未定义。",
+  "constraints": ["题面给出完整 traceback，终点 join.py:533 join_type_list → join_types → types.py accept 的 `assert isinstance(visitor, SyntheticTypeVisitor)`", "题面 'Relevant notes' 明确写出期望行为：把 Tuple[Foo, Bar] 换成 Tuple[Bar] 就能正常 'outputs the expected values (that aaaaaaaaaa is undefined)'"],
+  "unknowns_from_public_only": [
+   "两个基类都未定义时应当报几条错误？题面只给了一个未定义名的例子",
+   "join 遇到 PlaceholderType 时返回什么类型（Any / 另一侧类型）？题面无线索，但这一点不影响可观察输出"
+  ],
+  "base_code_evidence": [
+   "44925f4b1:mypy/join.py 的 join_types 在进入 TypeJoinVisitor 之前只处理 UninhabitedType/NoneType 等，对 PlaceholderType 无任何保护",
+   "traceback 指出 PlaceholderType.accept 要求 SyntheticTypeVisitor，而 TypeJoinVisitor 不是，因此 assert 失败"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 目标 check-tuples.test 在 base 存在；gold 目标 mypy/join.py 存在，import 行与 join_types 上下文匹配"], "note": "无二进制/LFS/子模块。", "by": "L1_mypy_1"},
+  "2": {"status": "pass", "evidence_refs": ["base join.py 的 join_types 无 PlaceholderType 分支"], "note": "静态确认；**无 stage1 实跑佐证**（见 materials_refs.stage1）。", "by": "L1_mypy_1"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 2898 字符，含完整 traceback、最小复现与期望行为说明；hints_text 长度 0"], "note": "题面完整。含 GitHub issue 模板的 HTML 注释残留，属轻微噪声。", "by": "L1_mypy_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 只触碰 test-data/unit/check-tuples.test"], "note": "无非测试源码。additional_exclusions 保持空。", "by": "L1_mypy_1"},
+  "17": {"status": "pass", "evidence_refs": ["同上；gold 只改 mypy/join.py"], "note": "无覆盖风险。", "by": "L1_mypy_1"},
+  "5": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["runs/.../L1_mypy_1/cross_task_leak.txt：python__mypy-10392 的上游修复 commit 44925f4b12 **就是** 本题的 base_commit（两题相隔 1 个 commit）", "dupidx.txt：check-tuples.test 还被 python__mypy-11857、15876、5617 触碰"], "note": "本题的初始仓库状态就是 10392 刚合并完的状态。两题缺陷完全不同，不是重复题；但拆分训练/评测集时这一对必须同侧——否则评测题 10392 的完整答案会直接出现在训练题 10401 的 base 代码里（mypy/modulefinder.py 的 add_py2_mypypath_entries）。mypy 全部 40 题里这种精确相邻只有两对（另一对是 16963→16966）。", "by": "L1_mypy_1"},
+  "23": {"status": "pass", "evidence_refs": ["题面 traceback + 'Relevant notes' 已给出期望行为；F2P 只断言 'Name \"aaaaaaaaaa\" is not defined'"], "note": "要求可由公开材料推出。", "by": "L1_mypy_1"},
+  "24": {"status": "pass", "evidence_refs": ["两条 F2P 只断言标准的未定义名诊断，不引用 gold 的 PlaceholderType 分支"], "note": "在 semanal_shared.calculate_tuple_fallback、join_type_list 或 join_types 任一层加保护都能通过。未强制唯一实现。", "by": "L1_mypy_1"},
+  "25": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["P2P 只有 1 条 testAssignEmptyBogus（`() = 1`），与 join 语义无关，只是 diff 上文相邻的既有 case"], "note": "gold 改的是 join_types —— 类型格的 join 运算入口，被推断、条件分支合并、Union 化简等大量调用。在 join_types 开头无条件 `return AnyType(...)` 这种彻底破坏语义的改法同样能过 2 条 F2P 与这 1 条 P2P。", "by": "L1_mypy_1"},
+  "26": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["P2P 与被改函数无调用关系"], "note": "见 proposed_regression_tests。", "by": "L1_mypy_1"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 只加 PlaceholderType import 与 8 行分支"], "note": "与本题对应、不依赖未交付改动。注释 'mypyc does not allow switching the values like above' 解释了为何不复用上面的 swap 写法，合理。", "by": "L1_mypy_1"},
+  "29": {"status": "pass", "evidence_refs": ["problem_statement 无 PR/commit 链接、无修复代码；hints_text 为空"], "note": "题面无泄漏；但见检查 5 的跨题相邻问题。", "by": "L1_mypy_1"},
+  "6": {"status": "unknown", "evidence_refs": ["stage1 ledger：result=infra_failed:run_stopped，notes=[wall_deadline]，install/test 两行都已生成但未执行完"], "note": "**本题在 182 个 stage1 任务目录里是唯一 gold 与 empty 两侧都没有 test_output.txt 的**。原因是批次 wall deadline 截断，不是题目缺陷；但它意味着本题目前完全没有实跑证据。", "by": "L1_mypy_1"},
+  "7": {"status": "pass", "evidence_refs": ["两条 F2P 只用 fixtures/tuple.pyi"], "note": "无外部资产。", "by": "L1_mypy_1"},
+  "11": {"status": "pass", "evidence_refs": ["case 正文无 URL"], "note": "不需要网络。", "by": "L1_mypy_1"},
+  "18": {"status": "pass", "evidence_refs": ["kcheck_all.txt：无子串过选"], "note": "选择无歧义。", "by": "L1_mypy_1"},
+  "20": {"status": "not_checked", "evidence_refs": [], "note": "stage1 未产出结果，no-op/gold 分差未验证。", "by": "L1_mypy_1"}
+ },
+ "issues": [
+  {"category": "missing_stage1_evidence", "severity": "P2", "evidence_refs": ["runs/env_probe_stage1_20260910/ledger/stage1_offline.jsonl 中本题两条记录 result=infra_failed:run_stopped / notes=[wall_deadline]", "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/python__mypy-10401/{gold,empty}/offline/a1/ 只有 eval.sh"], "proposed_action": "补跑本题的 stage1（gold + empty）。这是 182 个 stage1 目录里唯一两侧都缺结果的题。", "next_experiment": "用同样条件（memory 8g / cpus 3 / network none / timeout 2400）单独补跑 python__mypy-10401 的 gold 与 empty。"},
+  {"category": "grading_coverage", "severity": "P1", "evidence_refs": ["P2P 仅 testAssignEmptyBogus，与 join_types 无关"], "proposed_action": "补 P2P：join 语义相关的既有回归。", "next_experiment": "在 join_types 开头加 `return AnyType(TypeOfAny.special_form)`，跑当前 F2P+P2P，预期满分 → 形成反例。"},
+  {"category": "split_constraint", "severity": "P2", "evidence_refs": ["cross_task_leak.txt：10392 的修复 commit == 10401 的 base_commit"], "proposed_action": "把 (10392, 10401) 与 (16963, 16966) 两对标记为必须同侧；11824 与 11857 共用同一个 base_commit，同理。", "next_experiment": "无（数据集划分约束，交用户裁定）。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只触碰纯测试数据文件 test-data/unit/check-tuples.test。", "evidence_refs": ["grading_bundles_v2_v0:python__mypy-10401 test_patch"]},
+ "proposed_regression_tests": [
+  {"id": "test-data/unit/check-inference.test", "reason": "join_types 是类型推断合并分支结果的核心；改坏它这里最先大面积失败。"},
+  {"id": "test-data/unit/check-tuples.test 既有全部 case", "reason": "同文件；且 calculate_tuple_fallback 直接调用 join_type_list。"},
+  {"id": "test-data/unit/check-unions.test、check-optional.test", "reason": "Union 化简与 Optional 合并同样走 join。"},
+  {"id": "mypy/test/testtypes.py::JoinSuite（若该版本存在）", "reason": "直接针对 join 运算的单元测试，最小成本覆盖格运算性质。"},
+  {"id": "test-data/unit/check-semanal-error.test、semanal-errors.test", "reason": "PlaceholderType 只在未解析名字（前向引用/未定义名）场景出现，这两个文件是它的主场。"}
+ ],
+ "disposition_hint": {"state": "needs_repair", "reason": "题面与 gold 质量好、要求可推断，但 (a) 全包唯一一道没有任何 stage1 实跑证据的题，必须先补跑；(b) P2P 与被改的 join_types 完全无关，回归保护为零。"},
+ "costs": {"minutes": 26}
+}

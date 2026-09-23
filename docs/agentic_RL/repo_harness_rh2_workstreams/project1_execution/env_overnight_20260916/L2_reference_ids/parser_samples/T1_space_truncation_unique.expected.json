@@ -1,0 +1,36 @@
+{
+ "sample": "T1_space_truncation_unique",
+ "note": "nodeid 含空格时 parser 按空白切分只保留第一段；这里每个截断键仍只对应 1 条完整用例（无碰撞）。参考 ID 本身也是截断形态（全 216 题参考 ID 无一含空格），说明上游也走过同一 parser。",
+ "source_instance_id": "pandas-dev__pandas-50319",
+ "repo_key_lower": "pandas-dev/pandas",
+ "parser": "parse_log_pytest",
+ "parser_version_tag": "swegym_parsers@242429c1",
+ "source_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-50319/gold/offline/a1/test_output.txt",
+ "lines": 17,
+ "expected_status_map": {
+  "pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y": "PASSED",
+  "pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y/%m/%d": "PASSED",
+  "pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y\\\\%m\\\\%d": "PASSED",
+  "pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y-%m-%d": "PASSED",
+  "pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y.%m.%d": "PASSED",
+  "pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y%m%d": "PASSED",
+  "pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y-%m-%dT%H:%M:%S-True]": "PASSED",
+  "pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y-%m-%dT%H:%M:%S%z-True]": "PASSED",
+  "pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y-%m-%dT%H:%M:%S%Z-False]": "PASSED",
+  "pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y-%m-%dT%H:%M:%S.%f-True]": "PASSED",
+  "pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y-%m-%dT%H:%M:%S.%f%z-True]": "PASSED",
+  "pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y-%m-%dT%H:%M:%S.%f%Z-False]": "PASSED",
+  "pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y%m%d-False]": "PASSED",
+  "pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y%m-False]": "PASSED",
+  "pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y-False]": "PASSED",
+  "pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y-%m-%d-True]": "PASSED",
+  "pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y-%m-True]": "PASSED"
+ },
+ "reference_ids_of_interest": [
+  "pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y\\%m\\%d"
+ ],
+ "reference_ids_hit_directly": [],
+ "reference_ids_missing": [
+  "pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y\\%m\\%d"
+ ]
+}

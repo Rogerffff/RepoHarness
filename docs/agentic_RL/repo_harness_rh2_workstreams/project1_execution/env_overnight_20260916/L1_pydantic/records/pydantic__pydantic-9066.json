@@ -1,0 +1,202 @@
+{
+ "task_id": "pydantic__pydantic-9066",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_pydantic (Claude Opus 5, 2026-09-16 夜)",
+ "materials_refs": [
+  "s2/ingest/*_bundles_v0.jsonl (pydantic__pydantic-9066)",
+  "repos/pydantic@a3b7214a(见 grading.base_commit)",
+  "runs/env_probe_stage1_20260910/.../pydantic__pydantic-9066/"
+ ],
+ "public_view": {
+  "目标行为": "字段默认值是 IPv4Address/IPv6Address 这类 pydantic 支持、但 pydantic-core 的 to_jsonable_python 不认识的类型时，model_json_schema() 应把它编码进 schema 的 default，而不是发 PydanticJsonSchemaWarning 并丢掉 default。",
+  "约束": "现有可序列化默认值的编码结果不变。",
+  "公开材料无法确定的点": [
+   "修复应落在 pydantic 的 encode_default 还是 pydantic-core 的 ObType（hints 里贡献者倾向后者，但那是另一个仓库）",
+   "无法编码时应该抛什么异常（gold 抛 PydanticSerializationError）"
+  ],
+  "base 定位": "pydantic/json_schema.py:1993-2000 `encode_default` 直接把 dft 交给 `pydantic_core.to_jsonable_python`，对 core 不认识的类型返回不可 JSON 序列化的值，随后被 warning 掉。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "tests/test_json_schema.py、pydantic/json_schema.py 在 base 均存在"
+   ],
+   "note": "对应同一问题。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "json_schema.py:1993-2000",
+    "stage1 empty：2 条 F2P 全 FAILED"
+   ],
+   "note": "base 确有缺陷。",
+   "by": "static+stage1log"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 1280 字符，含 warning 原文与可运行例子"
+   ],
+   "note": "输入完整。hints 里贡献者给了 pydantic-core 的 ObType 源码链接与两处 json_schema.py 行号——定位级提示，不可见。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只碰 tests/test_json_schema.py；F2P+P2P 369 条全在该文件；gold 只碰 pydantic/json_schema.py"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "static"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "R8 扫描：6126 的 gold 3/3 行出现在 9066 的 base:pydantic/json_schema.py（同一个 default_schema 函数附近）"
+   ],
+   "note": "P2 跨题答案泄漏：9066 的 base 含 6126 的 gold。两题都改 json_schema.py 的默认值路径，应同侧。",
+   "by": "static"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "install rc=2。",
+   "by": "stage1log"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "测试第三方 import：pytest / pydantic_core / dirty_equals"
+   ],
+   "note": "无外部资产。",
+   "by": "static"
+  },
+  "10": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "无本题轨迹。",
+   "by": "-"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "只有 install 需要网络。",
+   "by": "stage1log"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 与 F2P 场景一致（IPvAnyAddress 默认值）"
+   ],
+   "note": "要求充分：题面原例的类型与 F2P 的 field_type 相同。",
+   "by": "static"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 断言完整 schema 字典，含 'default': '127.0.0.1'"
+   ],
+   "note": "不强制唯一实现：任何能把 IPv4Address 编码成字符串的路径都可以。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "F2P 只有 IPvAnyAddress 的 v4/v6 两个参数",
+    "gold 新增的 `except PydanticSchemaGenerationError: raise PydanticSerializationError(...)` 分支没有任何断言",
+    "gold 对**每一个**默认值都新建一个 TypeAdapter(type(dft))，性能与副作用（对任意类型构造 schema）无覆盖"
+   ],
+   "note": "P2：(a) 失败路径（无法生成 schema 的默认值类型）零覆盖；(b) gold 的 `hasattr(dft, '__pydantic_serializer__')` 短路分支与 TypeAdapter 分支的分界没有断言；(c) 一个只特判 ipaddress 类型的硬编码修复能通过这 2 条 F2P。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "encode_default 是所有默认值进 JSON schema 的唯一出口"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "static"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "golden_patch：在 encode_default 内部 `from .type_adapter import TypeAdapter` 并对每个默认值构造 TypeAdapter"
+   ],
+   "note": "P3：gold 引入了函数内延迟 import 与逐默认值构造 TypeAdapter 的开销，且把原来只是 warning 的失败路径升级成抛 PydanticSerializationError（行为收紧）。这些都超出题面要求，判分面也不覆盖。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak 扫描 0 命中；题面无 URL"
+   ],
+   "note": "题面无泄漏；hints 有定位链接但不可见。",
+   "by": "static"
+  },
+  "31": {
+   "status": "issue",
+   "evidence_refs": [
+    "R4"
+   ],
+   "note": "静态残余面。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "oracle_accepts_hardcoded_fix",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 25(c)"
+   ],
+   "proposed_action": "把 F2P 的参数扩展到至少一个非 ipaddress 的自定义类型（如 Path、Decimal 子类、或带 __get_pydantic_core_schema__ 的用户类）",
+   "next_experiment": "在镜像里只特判 ipaddress 的修复跑官方 369 条"
+  },
+  {
+   "category": "gold_behavior_tightening",
+   "severity": "P3",
+   "evidence_refs": [
+    "check 27"
+   ],
+   "proposed_action": "标注 gold 把 warning 升级成异常；补一条失败路径断言",
+   "next_experiment": "用一个无法生成 schema 的默认值（如 object()）比较 base/gold"
+  },
+  {
+   "category": "cross_task_answer_leak",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 5",
+    "R8"
+   ],
+   "proposed_action": "6126 与 9066 同侧划分",
+   "next_experiment": "无"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 仅纯测试文件、gold 仅生产代码、判分面与恢复面一致。",
+  "evidence_refs": [
+   "grading.json.test_patch",
+   "validation.json.golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  "非 ipaddress 的不可直接 jsonable 默认值（如 pathlib.Path、自定义带 __get_pydantic_core_schema__ 的类）— 选择依据：排除只特判 ipaddress 的硬编码修复",
+  "无法生成 schema 的默认值（如 object()）应抛 PydanticSerializationError — 选择依据：gold 新增的 except 分支零覆盖",
+  "已有的可序列化默认值（int/str/datetime/timedelta/bytes）编码结果与 base 一致 — 选择依据：gold 把所有默认值改走 TypeAdapter，ser_json_timedelta / ser_json_bytes 配置是否仍生效需要护栏",
+  "tests/test_types.py 与 tests/test_serialize.py 中涉及默认值序列化的条目 — 选择依据：跨文件调用者，不在判分面"
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "题面原例与 F2P 一致、gold 对应、边界干净、判分面 369 条；缺口是只测 ipaddress 且失败路径零覆盖，可通过扩参数收紧，不阻塞探针。"
+ },
+ "costs": {
+  "minutes": 15
+ }
+}

@@ -1,0 +1,214 @@
+{
+ "task_id": "conan-io__conan-11594",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "4ed1bee0fb81b2826208e8c1c824c99fb6d69be8",
+  "version": "1.51",
+  "image": "xingyaoww/sweb.eval.x86_64.conan-io_s_conan-11594:latest",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/conan-io__conan-11594/{gold,empty}/offline/a1/",
+  "pkg_scans": "runs/env_overnight_20260916/L1_conan/{prescan2,envscan,collide}.json"
+ },
+ "public_view": {
+  "目标行为": "题面：conan 1.49 下用 Ninja Multi-Config 生成器时 cmake.test() 去 build 名为 RUN_TESTS 的 target，ninja 报 unknown target 'RUN_TESTS'；题面明确写出 CMake target RUN_TESTS is not available. test target works correctly but Conan does not use it。相关代码在 conan/tools/cmake/cmake.py::CMake.test：target = \"RUN_TESTS\" if is_multi else \"test\"，is_multi 来自 is_multi_configuration(generator)，后者对含 Multi-Config 的生成器返回 True。",
+  "约束": "只改非测试源码；不能破坏 Visual Studio / Xcode 仍用 RUN_TESTS 的既有行为。",
+  "公开材料无法确定的点": [
+   "题面只点名 Ninja Multi-Config，没说 Ninja（单配置）或未来其它 Ninja 变体要怎么处理；判分里 Ninja Makefiles 这个并不存在的 CMake 生成器名也被参数化了。",
+   "题面没说判定应基于生成器名字符串还是别的机制。"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "grading.test_patch 头部：new file mode 100644 / --- /dev/null，目标文件 conans/test/unittests/tools/cmake/test_cmake_test.py 在 base 不存在",
+    "envscan.json: conan-io__conan-11594 的该文件标记 MISSING_AT_BASE"
+   ],
+   "note": "材料本身对应同一问题，但这是本包唯一一道 test_patch 新建测试文件的题；它会触发恢复步骤的边界（见 17）。无二进制/LFS/子模块。",
+   "by": "L1_conan"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show 4ed1bee0:conan/tools/cmake/cmake.py L153-157：target = \"RUN_TESTS\" if is_multi else \"test\"",
+    "stage1 empty：test_run_tests[Ninja Multi-Config-test] FAILED"
+   ],
+   "note": "base 确含题面所述缺陷。",
+   "by": "L1_conan"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 1239 字符，含完整命令与报错日志",
+    "raw.hints_text 122 字符：Yes, sounds that the test target is not taking into account Ninja Multi-Config generator."
+   ],
+   "note": "题面完整；hints 只是确认，无额外关键信息。",
+   "by": "L1_conan"
+  },
+  "4_17": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "stage1 eval.sh L18 与 L76 是裸的 `git checkout 4ed1bee0fb81b2826208e8c1c824c99fb6d69be8`（没有 pathspec）",
+    "rh2/src/repoharness2/adapters/slime/prepared_task_face.py:185-206 的注释与逐文件恢复循环"
+   ],
+   "note": "因为 test_patch 的唯一路径在 base 不存在，官方那条 `git checkout <base> <全部路径>` 退化成无 pathspec 的整树 checkout。stage1 里 HEAD 本来就在 base_commit，所以对已修改的跟踪文件是空操作，gold 补丁存活（gold 6/6 PASSED 可证）；结尾那条也删不掉新建的未跟踪测试文件，等于没有恢复。RH2 的 grader profile 路径（prepared_task_face 的逐文件循环 + git cat-file -e 判存在）已经处理了这一形态；legacy 单脚本路径没有。additional_exclusions 仍为空。",
+   "by": "L1_conan"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "本包内 gold_paths 比对"
+   ],
+   "note": "无同族题。",
+   "by": "L1_conan"
+  },
+  "19": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "grading.fail_to_pass 唯一项是 'conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja'（方括号不配对）",
+    "scripts/collide.py 输出 COLLISION: '...test_run_tests[Ninja' -> ['...[Ninja Makefiles-test]', '...[Ninja Multi-Config-test]']",
+    "stage1 empty/status_map.json 只有 5 个键，而 test_output.txt 有 6 条摘要行（L597-602）"
+   ],
+   "note": "参数化 ID 里有空格，parse_log_pytest 取 split()[1] 把 nodeid 截到第一个空格。P2P 也有 3 条被截断（[NMake / [Unix / [Visual），它们各自只对应一个真实测试，不碰撞；但 F2P 的 [Ninja 同时覆盖两个真实测试，后写入的覆盖先写入的。实测 pytest 6.2.5 的 -rA 摘要顺序是 PASSED -> SKIPPED -> FAILED（-rA 展开为 PpsxXEf），所以碰撞时 FAILED 永远最后写入、结果偏保守：组内任一失败即整键 FAILED。这一次运气好——empty 里失败的正是目标测试 Ninja Multi-Config。风险在于 Ninja Makefiles 这条测试的结果被静默丢弃：它既不在 P2P，也不在 status_map 里，任何只破坏它的回归都不可见。",
+   "by": "L1_conan"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "题面直接说明 test target works correctly but Conan does not use it"
+   ],
+   "note": "公开材料足以推出 F2P 检查的行为。",
+   "by": "L1_conan"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "测试只断言最终 conanfile.command 里出现 '--target' '<target>'，不检查内部实现"
+   ],
+   "note": "gold 用 \"Ninja\" in self._generator；等价实现（self._generator == \"Ninja Multi-Config\"、或改 is_multi_configuration 把 Ninja 排除）都能过。不强制唯一实现。",
+   "by": "L1_conan"
+  },
+  "25": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "6 个参数只覆盖 Windows settings 下的生成器名判断，不实际跑 cmake"
+   ],
+   "note": "硬编码 if \"Ninja\" in gen: target=\"test\" 就能过——这恰好就是 gold。题面报的 conan build . 实跑不在检查范围内。",
+   "by": "L1_conan"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "P2P 4 条覆盖 NMake/Unix/Visual/Xcode 四个生成器"
+   ],
+   "note": "Visual Studio 与 Xcode 仍要 RUN_TESTS 的既有行为被保住了。扩展建议见 proposed_regression_tests。",
+   "by": "L1_conan"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 2 行，只改 CMake.test 的 target 选择"
+   ],
+   "note": "gold 无题外改动，不依赖未交付改动。",
+   "by": "L1_conan"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "scripts/leak.py: 2 行 gold 新增，0 命中题面"
+   ],
+   "note": "题面无 PR 指针；test_patch 内的 docstring 引了 issue 11405，但 test_patch 不可见。",
+   "by": "L1_conan"
+  },
+  "6_7_11": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 新增内容无 @pytest.mark.tool；用 ConanFileMock + temp_folder，不调用真实 cmake",
+    "stage1 gold 5/5 键 PASSED、0 SKIPPED"
+   ],
+   "note": "不需要 cmake/ninja 可执行文件；write_cmake_presets 只写临时目录，不写家目录缓存；不访问 conancenter。",
+   "by": "L1_conan"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan2.json: gold 5 键全 PASSED（对应 6 个真实测试）；empty 4 PASSED + 1 FAILED"
+   ],
+   "note": "分差来自目标行为，但因为 19 的碰撞，逐 ID 对账的粒度比真实测试数少一个。",
+   "by": "L1_conan"
+  },
+  "31": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "conans/test/.gitignore 第 1 行就是 conftest_user.py（1.51/1.54/1.60/2.0/2.1 五个 base 一致）",
+    "conans/test/conftest.py 用 from conans.test.conftest_user import tools_locations（1.x）/ tools_locations + default_profiles（2.x）并 merge 覆盖默认值",
+    "scripts 补扫：本题目标测试文件里无模块级 pytestmark、无 pytest.mark.tool、无 pytest.skip(、无 sys.exit/os._exit、无 conftest_user 引用"
+   ],
+   "note": "发现一个仓库级控制面：候选可以在 /testbed 新建 conans/test/conftest_user.py，它被官方 conftest 无条件 import 并 merge，而且它在 conans/test/.gitignore 里、也不在 test_patch 路径内，所以既不会被 git checkout <base> -- <path> 恢复，也不会被不带 -x 的 git clean 删掉；文件里的任意代码会在 pytest 收集阶段执行。本题是 conan 1.x：tools.py 不消费 default_profiles，可改的只有 tools_locations（把工具标记从 fail 变成 skip）。 本题是用 Mock 的单元测试，不依赖 default_profiles，改 conftest_user 更可能弄坏自己而不是刷分。 本题的 F2P/P2P 本身没有可被跳过或提前退出的入口（见上条补扫）。按第四组 B，未发现依据前不新增排除清单，只记录观测。",
+   "by": "L1_conan"
+  }
+ },
+ "issues": [
+  {
+   "category": "fragile_reference_id",
+   "severity": "P1",
+   "evidence_refs": [
+    "scripts/collide.py 输出",
+    "runs/.../stage1_offline_20260910/conan-io__conan-11594/empty/offline/a1/status_map.json（5 键 vs 6 条摘要行）",
+    "rh2/src/repoharness2/envpack/swegym_parsers.py::parse_log_pytest"
+   ],
+   "proposed_action": "task_signals_swegym.json 把本题的 fragile_reference_id 标成 false 是错的，建议更正。处置上二选一：(a) 把 F2P 的 [Ninja 拆成两条完整 nodeid 并改 parser 让它保留整行 nodeid；(b) 接受碰撞但在筛查记录里注明 Ninja Makefiles-test 的结果不可观测。",
+   "next_experiment": "在 11594 镜像里构造一个只破坏 Ninja Makefiles-test（例如让非 Multi-Config 的 Ninja 也走 RUN_TESTS）、同时修好 Ninja Multi-Config 的补丁，跑官方 eval，确认 RH2 给出的是 RESOLVED_FULL 还是 NO；这能直接量化碰撞的判分后果。"
+  },
+  {
+   "category": "new_test_file_restore",
+   "severity": "P2",
+   "evidence_refs": [
+    "stage1 eval.sh L18/L76 无 pathspec",
+    "prepared_task_face.py:185-206"
+   ],
+   "proposed_action": "把本题收作 RH2 恢复逻辑的回归夹具：它是本包唯一 test_patch 新建测试文件的题，正好覆盖 prepared_task_face 注释里描述的那条边界。",
+   "next_experiment": "用 RH2 当前 grader profile 路径对 11594 跑一次真机评分，检查 RH2_RESTORED 计数为 0 且 RH2_APPLY_RC=0，评分仍是 gold FULL / empty NO。"
+  },
+  {
+   "category": "control_surface_conftest_user",
+   "severity": "P2",
+   "evidence_refs": [
+    "conans/test/.gitignore:1",
+    "conans/test/conftest.py 的 conftest_user import 段",
+    "conans/test/utils/tools.py 的 from conans.test.conftest import default_profiles（仅 2.x）"
+   ],
+   "proposed_action": "仓库级处置，见 repo_level_findings.md §10：建议在 conan 的评分配方里，在可信 setup 阶段删除 /testbed/conans/test/conftest_user.py（或对整个 conans/test/ 做 git clean -xfd 后再 checkout），而不是逐题加 additional_exclusions。",
+   "next_experiment": "在 conan 镜像里写一个 conftest_user.py（例如 tools_locations={'cmake':{'disabled':True}} 或 2.x 下改 default_profiles['Linux'] 的 compiler），跑本题官方 eval，确认它是否改变逐 ID 结果；同时确认 RH2 的恢复步骤之后该文件是否仍在。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只新建 conans/test/unittests/tools/cmake/test_cmake_test.py（纯测试文件）；gold 不碰测试路径。",
+  "evidence_refs": [
+   "runs/env_overnight_20260916/L1_conan/prescan2.json"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "conans/test/unittests/tools/cmake/test_cmake.py",
+   "reason": "CMake.test 与 CMake.build 共用 self._build 与 _generator 判断，同模块的既有单测能抓到 target 选择改动溢出到 build()。"
+  },
+  {
+   "id": "conans/test/functional/toolchains/cmake/test_ninja.py",
+   "reason": "沿调用者：Ninja 生成器的功能测试是这次改动的真实使用场景。注意它带 @pytest.mark.tool(\"cmake\") / (\"ninja\")，在没有工具链的镜像里会 pytest.fail 而不是 skip（见 repo_level_findings.md §3），只能当诊断项、不能进 P2P。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_review",
+  "reason": "题意清晰、gold 最小、无网络无工具链依赖，唯一但要紧的问题是参考 ID 截断碰撞（F2P 的 [Ninja 同时覆盖两个真实测试）；同时它是 test_patch 新建测试文件的唯一样本，适合当恢复逻辑的回归夹具。"
+ },
+ "costs": {
+  "minutes": 30
+ }
+}

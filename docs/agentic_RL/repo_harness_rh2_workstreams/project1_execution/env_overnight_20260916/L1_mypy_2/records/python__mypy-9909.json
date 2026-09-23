@@ -1,0 +1,254 @@
+{
+ "task_id": "python__mypy-9909",
+ "source": "SWE-Gym lite / python/mypy PR 9909（isinstance 交集类型的 unreachable 误报）",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "e9edcb957f341dcf7a14bb7b7acfd4186fb1248b",
+  "version": "0.800",
+  "python_version": "3.9",
+  "eval_cmd": "pytest -n0 -rA -k",
+  "f2p": [
+   "mypy/test/testcheck.py::TypeCheckSuite::testIsInstanceAdHocIntersectionReversed"
+  ],
+  "p2p": [
+   "mypy/test/testcheck.py::TypeCheckSuite::testIsInstanceAdHocIntersectionGenericsWithValues",
+   "mypy/test/testcheck.py::TypeCheckSuite::testIsInstanceAdHocIntersectionGenericsWithValuesDirectReturn",
+   "mypy/test/testcheck.py::TypeCheckSuite::testIsInstanceAdHocIntersectionGenerics"
+  ],
+  "gold_paths": [
+   "mypy/checker.py"
+  ],
+  "test_patch_paths": [
+   "test-data/unit/check-isinstance.test"
+  ],
+  "runtime_evidence": "无（不在 stage1 样本、in_e2 空、无 DeepSeek 候选）"
+ },
+ "public_view": {
+  "goal": "`if isinstance(self, A)` 在 B 内部时，mypy 误判 'Subclass of \"B\" and \"A\" cannot exist'（并把分支判为 unreachable），而实际上 `class C(A, B)` 是合法的——只有 `class D(B, A)` 不合法。要求按可行的那个 MRO 顺序判定。",
+  "constraints": [
+   "题面给完整最小复现与逐条错误，并**自己指出了解法方向**：'So method TypeChecker.check_multiple_inheritance could eventually help to fix method TypeChecker.find_isinstance_check_helper?'",
+   "题面还提到 runtime checkable Protocol 同理"
+  ],
+  "unknowns_from_public_only": [
+   "生成的交集类型该叫什么名字：F2P 逐字断言 `'__main__.<subclass of \"A1\" and \"B\">'`、`'...>1'`、`'...>2'`——**带数字后缀**，这些后缀来自 gen_unique_name 的去重计数，取决于实现内部创建了几个临时 TypeInfo",
+   "Protocol 情形要不要一起修（题面提到，F2P 没有）",
+   "题面的复现用的是 `f: Literal[0]` 属性赋值，F2P 换成了返回 Literal 的方法"
+  ],
+  "base_code_evidence": [
+   "e9edcb957:mypy/checker.py:3727-3786 intersect_instances 只按 `[v, t]` 一个顺序构造 fake TypeInfo 并 check_multiple_inheritance，失败即认为交集不存在",
+   "e9edcb957:mypy/checker.py:4930 conditional_type_map_with_intersection 调用 self.intersect_instances([v, t], expr)"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "test-data/unit/check-isinstance.test 在 base 存在",
+    "gold 的三处 hunk 在 base 逐行一致"
+   ],
+   "note": "无二进制/LFS/子模块；F2P 是新增的 47 行 case。",
+   "by": "L1_mypy_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "e9edcb957:mypy/checker.py:3753-3760 单一顺序构造 base_classes"
+   ],
+   "note": "静态确认 base 含题面缺陷。",
+   "by": "L1_mypy_2"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 1330 字符，含正反对照",
+    "raw hints_text 仅 74 字符（'Do you want to send us a PR with a fix?' / 'Yes, I will try it at the weekend.'）"
+   ],
+   "note": "hints 几乎为空，无信息不对称；题面质量在本包里属上乘。",
+   "by": "L1_mypy_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只碰 test-data/unit/check-isinstance.test"
+   ],
+   "note": "无非测试源码；gold 不碰测试样路径。",
+   "by": "L1_mypy_2"
+  },
+  "17": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "同 file_rules"
+   ],
+   "note": "仓库级。",
+   "by": "L1_mypy_2"
+  },
+  "5": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "L1_mypy_1 的 10174 / 10424 / 10658 三题都在 meet.py / is_overlapping_types 一族，与本题的 intersect_instances 相邻但不同"
+   ],
+   "note": "同属'isinstance 窄化'主题簇；本题 base(0.800) 早于那三题(0.820~0.920)，划分时注意时间顺序。",
+   "by": "L1_mypy_2"
+  },
+  "23": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "F2P 断言 `reveal_type(self)  # N: Revealed type is '__main__.<subclass of \"A1\" and \"B\">1'`（t2）与 `'...>2'`（t3）"
+   ],
+   "note": "这些**数字后缀**是 gen_unique_name 对重名的去重计数，等价于'实现内部一共创建了几个临时 TypeInfo'。公开材料完全推不出来，而且它把实现的内部控制流写进了期望输出。",
+   "by": "L1_mypy_2"
+  },
+  "24": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "同 23"
+   ],
+   "note": "强制唯一实现，程度是本包最强：gold 的做法是'先试 (A,B)，失败再试 (B,A)'，每次尝试都会调用 make_fake_typeinfo 从而消耗一个名字。任何**先判断再构造**（只创建一个 TypeInfo）或**先试反序**的等价实现，都会得到没有后缀或后缀不同的名字，F2P 立刻挂。",
+   "by": "L1_mypy_2"
+  },
+  "25": {
+   "status": "pass",
+   "evidence_refs": [
+    "3 条 P2P（testIsInstanceAdHocIntersectionGenerics 及其两个子串过选）断言泛型场景下交集类型的精确名字与 revealed type"
+   ],
+   "note": "这 3 条能挡住'干脆不报 unreachable'之类的粗暴修复。它们同样是 -k 子串过选的产物（kscan 显示 testIsInstanceAdHocIntersectionGenerics 过选出另外两条），但功能上确实相关。",
+   "by": "L1_mypy_2"
+  },
+  "26": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "check-isinstance.test 在 base 有大量 testIsInstanceAdHocIntersection* 用例，P2P 只取了 Generics 一族"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_mypy_2"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 三处 hunk：签名从 Sequence 收紧为 Tuple[Instance, Instance]、抽出两个内部函数、失败后用 instances[::-1] 再试一次；调用点同步改成元组"
+   ],
+   "note": "gold 正确、完整、不依赖未交付改动。它顺带做了一次结构重构（抽函数），diff 比最小必要大。",
+   "by": "L1_mypy_2"
+  },
+  "29": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "problem_statement 末段：'So method TypeChecker.check_multiple_inheritance could eventually help to fix method TypeChecker.find_isinstance_check_helper?'"
+   ],
+   "note": "题面点名了两个方法，等于给出了定位答案（虽然 gold 实际改的是它们之间的 intersect_instances）。属于中等程度的静态泄漏——比 5617 弱，但仍大幅降低定位难度。",
+   "by": "L1_mypy_2"
+  },
+  "6": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "未实跑安装。",
+   "by": "L1_mypy_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P case 用 [builtins fixtures/isinstance.pyi]，在仓库内"
+   ],
+   "note": "无外部依赖。",
+   "by": "L1_mypy_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "case 正文无网络调用"
+   ],
+   "note": "纯离线。",
+   "by": "L1_mypy_2"
+  },
+  "18": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "kscan.json:python__mypy-9909：`testIsInstanceAdHocIntersectionGenerics` 过选出 WithValues 与 WithValuesDirectReturn"
+   ],
+   "note": "过选出的两条都在 P2P 里，不改判分；再次印证 P2P 是子串闭包的产物。",
+   "by": "L1_mypy_2"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P/P2P nodeid 为 3 段（file::Suite::case）；该 base 的 mypy/test/data.py 不含 DataFileCollector"
+   ],
+   "note": "0.800 版本段常量与运行时形状一致（1.x 段为 4 段）。",
+   "by": "L1_mypy_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "test_forces_unique_impl",
+   "severity": "P1",
+   "evidence_refs": [
+    "F2P 期望输出里的 `<subclass of \"A1\" and \"B\">1` / `>2` 数字后缀"
+   ],
+   "proposed_action": "这是本包最强的'唯一实现'约束：期望输出把 gen_unique_name 的去重计数（即内部创建了几个 fake TypeInfo）写进了断言。若保留本题，应把这几条 reveal_type 断言改成不含后缀的形式，或改用别的方式验证交集类型。",
+   "next_experiment": "实现一版'先用 check_multiple_inheritance 预判、只构造一个 TypeInfo'的等价修复，跑 F2P 确认因名字后缀不同而失败。"
+  },
+  {
+   "category": "solution_hint_in_statement",
+   "severity": "P2",
+   "evidence_refs": [
+    "题面点名 check_multiple_inheritance 与 find_isinstance_check_helper"
+   ],
+   "proposed_action": "若用于评测定位能力，删掉题面最后一段。",
+   "next_experiment": "删/留末段各跑一次同模型比解决率。"
+  },
+  {
+   "category": "grading_coverage",
+   "severity": "P2",
+   "evidence_refs": [
+    "P2P 只覆盖 Generics 一族"
+   ],
+   "proposed_action": "补 P2P：check-isinstance.test 里全部 testIsInstanceAdHocIntersection* 用例。",
+   "next_experiment": "gold 上整文件跑 check-isinstance.test 取基线通过集。"
+  },
+  {
+   "category": "file_boundary",
+   "severity": "P1",
+   "evidence_refs": [
+    "rh2/src/repoharness2/grading/manager.py:656/672/581"
+   ],
+   "proposed_action": "建议把 mypy/test/* 与 test-data/* 纳入 hygiene 保护（40 题 gold 均不触碰）。",
+   "next_experiment": "构造只改 mypy/test/helpers.py::assert_string_arrays_equal 的候选 patch 走一次评分，确认当前会判满分。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 test-data/unit/ 下的 .test 数据文件，gold 只碰 mypy/ 源码，两者无交集，按第四组 B 默认保持空。仓库级建议（需用户裁定、对 40 题统一生效）：把 'mypy/test/*' 与 'test-data/*' 加入 hygiene.test_globs——40 题 gold 无一触碰这两处（已对 validation_bundles 全量核对），而当前 agent 改 mypy/test/helpers.py、mypy/test/data.py 或 test-data/unit/fixtures/*.pyi 既不被 eval 的 git checkout 还原，也不被判 rejected_test_tampering。副作用：agent 在 test-data/ 下建临时文件会让整份提交作废，需一并决定。",
+  "evidence_refs": [
+   "rh2/src/repoharness2/grading/manager.py:656、:672、:581",
+   "rh2/src/repoharness2/contracts/grading.py:118-121"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "check-isinstance.test 里全部 testIsInstanceAdHocIntersection* 用例",
+   "reason": "intersect_instances 的直接语义面，且现成可用。"
+  },
+  {
+   "id": "mypy/test/testcheck.py::TypeCheckSuite::check-isinstance.test 全文件",
+   "reason": "gold 改的是 isinstance 窄化里交集类型的构造入口。"
+  },
+  {
+   "id": "新增：runtime checkable Protocol 作为 isinstance 目标（题面提到但未覆盖）",
+   "reason": "题面明说 Protocol 同理，F2P 一条都没测。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "题面与 gold 质量都好、P2P 也有判别力，但 F2P 把 gen_unique_name 的去重计数写进了期望输出，等于要求逐字复刻 gold 的内部控制流；不放宽这几条断言就不适合做 RL 判分。"
+ },
+ "costs": {
+  "minutes": 31
+ }
+}

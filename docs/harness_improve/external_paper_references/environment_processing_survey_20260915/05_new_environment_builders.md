@@ -6,9 +6,9 @@
 
 **实际做法：**识别 GitHub diff 漏掉的二进制测试资源，生成下载/删除命令并移除不完整的二进制 hunk。四个 agent 分别探索仓库、生成 Dockerfile、生成测试脚本、分析执行结果；失败后只调用相关角色修订，再执行验证。同仓相近版本的成功配置进入记忆池。测试脚本在主测试命令后捕获退出码并输出 `OMNIGRIL_EXIT_CODE`，由修复前非零、gold 后零筛出任务。
 
-**可复用与边界：**支持“分工＋执行反馈＋定点修复”，还提示图片/压缩包等 fixture 不能只看文本 patch。这里是**测试命令整体状态**，不是逐测试 ID 的 F2P/P2P 账本；缺 marker 判错误。1201 组日志的 F1=0.991 对照人工日志标签，不能证明需求覆盖或替代解公平。构建者可改 Dockerfile/测试脚本，不等于可以为通过而弱化断言。[现行官方 README](sources/swe_factory_supplement/README_upstream.md) 也建议人工排查 error-to-pass。论文所引独立 `Appendix.pdf` 返回 404，当前树/历史查询未找到；[获取记录](sources/swe_factory_supplement/manifest.json) 保留范围，不声称作者从未公开。
+**可复用与边界：**支持“分工＋执行反馈＋定点修复”，还提示图片/压缩包等 fixture 不能只看文本 patch。这里是**测试命令整体状态**，不是逐测试 ID 的 F2P/P2P 账本；缺 marker 判错误。1201 组日志的 F1=0.991 对照人工日志标签，不能证明需求覆盖或替代解公平。构建者可改 Dockerfile/测试脚本，不等于可以为通过而弱化断言。现行官方 README（原文缓存未发布：`docs/harness_improve/external_paper_references/environment_processing_survey_20260915/sources/swe_factory_supplement/README_upstream.md`） 也建议人工排查 error-to-pass。论文所引独立 `Appendix.pdf` 返回 404，当前树/历史查询未找到；获取记录（原文缓存未发布：`docs/harness_improve/external_paper_references/environment_processing_survey_20260915/sources/swe_factory_supplement/manifest.json`） 保留范围，不声称作者从未公开。
 
-来源：Guo 等，*SWE Data Construction, Automatically!*，[v3 原文](https://arxiv.org/pdf/2506.10954v3)／[本地 PDF](sources/swe_factory_2506.10954v3.pdf)，§3.1–3.3，pp.5–10；§5.3，pp.15–16。PDF 的 2018/Trovato 模板页眉不作为真实作者或发布日期；本次版本为 2026-01-05 v3。
+来源：Guo 等，*SWE Data Construction, Automatically!*，[v3 原文](https://arxiv.org/pdf/2506.10954v3)／本地 PDF（原文缓存未发布：`docs/harness_improve/external_paper_references/environment_processing_survey_20260915/sources/swe_factory_2506.10954v3.pdf`），§3.1–3.3，pp.5–10；§5.3，pp.15–16。PDF 的 2018/Trovato 模板页眉不作为真实作者或发布日期；本次版本为 2026-01-05 v3。
 
 ## 2. MEnvAgent：规划、执行、验证与增量环境适配
 
@@ -16,7 +16,7 @@
 
 **可复用与边界：**原文支持按错误归因修依赖与测试命令，home-assistant 案例是补 `pyrainbird`，没有靠放宽功能测试修题。较新环境向后兼容是检索假设，不能代替当前题验证。F2P 仍主要是所选测试脚本状态，不能据此推定逐项稳定性、题意完整或所有合法替代解都接受；没有在所读方法段看到独立的反捷径审计。
 
-来源：[v3 原文](https://arxiv.org/pdf/2601.22859v3)／[本地 PDF](sources/menvagent_2601.22859v3.pdf)，§3–4，pp.3–4；附录 B–D，pp.13–16；I.3，p.23。Pro 引的是 [v1](sources/menvagent_pro_version_2601.22859v1.pdf)，2026-01-30；本轮主读 2026-06-06 v3，定点对照确认上述主机制 v1 已有，不据此宣称两个版本的全部规模/结果相同。
+来源：[v3 原文](https://arxiv.org/pdf/2601.22859v3)／本地 PDF（原文缓存未发布：`docs/harness_improve/external_paper_references/environment_processing_survey_20260915/sources/menvagent_2601.22859v3.pdf`），§3–4，pp.3–4；附录 B–D，pp.13–16；I.3，p.23。Pro 引的是 v1（原文缓存未发布：`docs/harness_improve/external_paper_references/environment_processing_survey_20260915/sources/menvagent_pro_version_2601.22859v1.pdf`），2026-01-30；本轮主读 2026-06-06 v3，定点对照确认上述主机制 v1 已有，不据此宣称两个版本的全部规模/结果相同。
 
 ## 3. SWE-Universe：双态验证之外，检查 verifier 是否真执行行为
 
@@ -24,6 +24,6 @@
 
 **可复用与边界：**Pro 所说“在构建循环内反捷径，并另做任务质量检查”有直接原文依据。作者仍发现歧义、环境与要求不符、测试错配；78.72% 是质量 judge 对人标样本的准确率，**不是全库有效率**。两个参考状态可区分、且执行代码，仍不证明测试完整或不拒绝合理替代实现；不能把该接受条件直接等同最终训练资格，也不应机械禁止正常日志搜索。
 
-来源：[v1 原文](https://arxiv.org/pdf/2602.02361v1)／[本地 PDF](sources/swe_universe_2602.02361v1.pdf)，§2.1–2.2，pp.3–5；§3–4，pp.5–6。图 3 展示静态检查捷径，图 4 与邻文说明剩余质量问题。
+来源：[v1 原文](https://arxiv.org/pdf/2602.02361v1)／本地 PDF（原文缓存未发布：`docs/harness_improve/external_paper_references/environment_processing_survey_20260915/sources/swe_universe_2602.02361v1.pdf`），§2.1–2.2，pp.3–5；§3–4，pp.5–6。图 3 展示静态检查捷径，图 4 与邻文说明剩余质量问题。
 
 这三篇支持 Pro 建议的技术基础。**“每仓负责人＋题目盲审＋共用固定执行器＋语义争议独立裁定”仍是面向我们项目的组合设计**，没有哪篇已经完整验证这套组织方式；尤其不能把环境构建成功当成所有题目质量问题都已解决。

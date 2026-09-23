@@ -1,0 +1,64 @@
+{
+ "task_id": "python__mypy-11241",
+ "source": "SWE-Gym lite / python/mypy PR 11241",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "ed0cc78a5cbdfcb9724cf1f294f7b5cbbd1d6778", "version": "0.920", "python_version": "3.9",
+  "eval_cmd": "pytest -n0 -rA -k",
+  "f2p": ["testSliceInAnnotation39", "testSliceInAnnotation38", "testSliceInAnnotationTypeComment39"],
+  "p2p": ["testDictionaryExpression", "testCorrectSlicesInAnnotations39", "testCorrectSlicesInAnnotations38", "testSliceInList39", "testPrintStatementTrailingCommaFastParser_python2"],
+  "test_patch_paths": ["test-data/unit/check-fastparse.test", "test-data/unit/parse.test"],
+  "gold_paths": ["mypy/fastparse.py"],
+  "stage1": "无 stage1 记录（signals.stage1 = null）"
+ },
+ "public_view": {
+  "goal": "（只看题面）`def func(x: Annotated[int, 3:4])` 让 mypy 报 `syntax error in type comment` 并中止后续检查。用户希望这种写法至少不要让 mypy 挂掉，能靠 `# type: ignore` 绕过。",
+  "constraints": [
+   "题面标题写 'Crash'，但展示的实际输出不是崩溃，而是一条错误消息 + 'Found 1 error in 1 file (errors prevented further checking)'",
+   "题面明确说 'Any use of slices seems to give the error, e.g. Annotated[int, \"a\": 4]'",
+   "题面最后一句是用户的诉求：'it would at least be nice if it can be used without crashing mypy, with just a # type: ignore where it's imported'"
+   ],
+  "unknowns_from_public_only": [
+   "**真正要做什么完全推不出来**：gold 既没有让这种写法合法，也没有改变'报错并中止'的结果，只是把错误文本从 `syntax error in type comment` 换成 `Slice usage in type annotation is invalid`",
+   "那条新错误文本的**精确措辞**没有任何线索",
+   "Python 3.8 与 3.9 的 AST 结构差异要各处理一次——题面未提"
+  ],
+  "base_code_evidence": [
+   "ed0cc78a5:mypy/fastparse.py:1560-1572 visit_Subscript 对 ast3.Slice（3.9+）与非 Index（3.8-）两条分支都 self.fail(TYPE_COMMENT_SYNTAX_ERROR, ...)",
+   "ed0cc78a5:test-data/unit/check-fastparse.test:320-325 既有 case testIncorrectTypeCommentIndex 期望 `main:3: error: syntax error in type comment`"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 两个目标 check-fastparse.test 与 parse.test 在 base 都存在；gold 目标 mypy/fastparse.py 上下文匹配"], "note": "无二进制/LFS/子模块。", "by": "L1_mypy_1"},
+  "2": {"status": "pass", "evidence_refs": ["base fastparse.py 两处都用 TYPE_COMMENT_SYNTAX_ERROR"], "note": "base 确实给出题面所说的误导性消息。注意 base 并不崩溃——题面标题的 'Crash' 与实际现象不符。", "by": "L1_mypy_1"},
+  "3": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["题面标题 'Crash with slices'，正文展示的却是一条普通错误消息"], "note": "题面自相矛盾（标题说崩溃、正文说报错），且用户诉求（希望能用 # type: ignore 绕过）与实际交付物（换一条错误文本）不是一回事。hints_text 见 mat/，未提供关键补充。", "by": "L1_mypy_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 只触碰 test-data/unit/check-fastparse.test 与 test-data/unit/parse.test，都是纯测试数据"], "note": "无非测试源码。additional_exclusions 保持空。", "by": "L1_mypy_1"},
+  "17": {"status": "pass", "evidence_refs": ["同上；gold 只改 mypy/fastparse.py"], "note": "无覆盖风险。", "by": "L1_mypy_1"},
+  "5": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["dupidx.txt：check-fastparse.test 还被 python__mypy-11857 触碰；parse.test 只被本题触碰；gold 路径 mypy/fastparse.py 只被本题使用"], "note": "非重复题。另注意本题 base 与 python__mypy-11236 的 base 只相隔 1 个 commit（cross_task_leak.txt），两题模块不同，仅记录。", "by": "L1_mypy_1"},
+  "23": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["F2P 三条 case 全部断言精确文本 `# E: Slice usage in type annotation is invalid`", "题面从未出现这句话，也没有要求'改错误消息措辞'"], "note": "**公开材料完全推不出评分要求**。题面读起来是'希望这种写法可用/可忽略'，而 gold 的实际交付是把诊断文本换成一句新措辞。任何诚实的求解者都不可能猜中 'Slice usage in type annotation is invalid' 这 6 个词。本题在本包里是'要求不可推断'最严重的一道。", "by": "L1_mypy_1"},
+  "24": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["F2P 与被改的既有 case 都是逐字匹配那条新消息"], "note": "强制唯一实现到字符串级别。哪怕写成 'Invalid slice usage in type annotation' 也会全挂。", "by": "L1_mypy_1"},
+  "25": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["test_patch 把既有 case `testIncorrectTypeCommentIndex`（check-fastparse.test:320）的期望从 `syntax error in type comment` 改成新文本，但该 case 既不在 F2P 也不在 P2P"], "note": "与 python__mypy-11236 同型：test_patch 改写了既有 case 的期望，改写后的 case 在 base 上必然失败、在 gold 上通过，本应是 F2P，却完全未被评分。", "by": "L1_mypy_1"},
+  "26": {"status": "pass", "evidence_refs": ["P2P 5 条里有 testCorrectSlicesInAnnotations38/39（断言完整 AST dump，验证合法 slice 写法不受影响）、testSliceInList39（普通切片表达式）、testDictionaryExpression、testPrintStatementTrailingCommaFastParser_python2"], "note": "本包里 P2P 质量较好的一题：既覆盖'正确写法不受影响'（AST dump 级断言），也覆盖 Python 2 解析路径。虽然仍是 diff 邻接 + 新增用例拼出来的，但实际判别力不弱。", "by": "L1_mypy_1"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 只加一个常量 INVALID_SLICE_ERROR 并替换两处 fail 调用"], "note": "与 PR 对应、不依赖未交付改动。但它只改善诊断措辞，没有解决题面用户的实际诉求——属于 gold 与题意不完全对应（见检查 23）。", "by": "L1_mypy_1"},
+  "29": {"status": "pass", "evidence_refs": ["problem_statement 无 PR/commit 链接、无修复代码"], "note": "无泄漏。", "by": "L1_mypy_1"},
+  "6": {"status": "not_checked", "evidence_refs": [], "note": "无 stage1 记录。", "by": "L1_mypy_1"},
+  "7": {"status": "pass", "evidence_refs": ["parse.test 的 case 不需要 fixture（解析器测试不解析名字）"], "note": "无外部资产。", "by": "L1_mypy_1"},
+  "11": {"status": "pass", "evidence_refs": ["case 正文无 URL"], "note": "不需要网络。", "by": "L1_mypy_1"},
+  "18": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["F2P/P2P 横跨两个 suite：mypy/test/testparse.py::ParserSuite 与 mypy/test/testcheck.py::TypeCheckSuite（dupfile.py 输出）", "kcheck_all.txt：本题无子串过选"], "note": "`-k` 是全局选择器，会同时在两个 suite 里选中同名 case；本题各 case 名在 test-data/ 下唯一（dupfile.py 校验 multifile=-），所以不会串。这是本包唯一跨 suite 的题，值得在实跑时确认 status_map 两个 suite 的 nodeid 都被正确记账。", "by": "L1_mypy_1"},
+  "20": {"status": "not_checked", "evidence_refs": [], "note": "无 stage1。", "by": "L1_mypy_1"}
+ },
+ "issues": [
+  {"category": "requirement_unguessable", "severity": "P1", "evidence_refs": ["F2P 断言 'Slice usage in type annotation is invalid'；题面无此措辞也无'改消息'的要求"], "proposed_action": "本题按现状不适合做求解任务：要么改题面（明说'请把这条误导性的 syntax error in type comment 换成描述切片用法非法的专门诊断'，并放宽断言只检查关键词），要么直接 reject_revision。", "next_experiment": "拿一条真实求解轨迹（若有）看模型是否走向'让 slice 合法'的方向；或用 DeepSeek/Claude 各跑一次，统计有多少次猜中该字符串（预期 0）。"},
+  {"category": "ungraded_test_patch_change", "severity": "P2", "evidence_refs": ["testIncorrectTypeCommentIndex 的期望被 test_patch 改写但未入 F2P/P2P"], "proposed_action": "补进 F2P。", "next_experiment": "base+test_patch 跑 -k testIncorrectTypeCommentIndex 预期 FAILED；加 gold 后预期 PASSED。"},
+  {"category": "cross_suite_selection", "severity": "P3", "evidence_refs": ["F2P 在 testparse.py::ParserSuite，P2P 有一条在 testcheck.py::TypeCheckSuite"], "proposed_action": "实跑时确认 status_map 同时收录两个 suite 的 nodeid。", "next_experiment": "跑一次 gold，比对 status_map 键与 F2P/P2P 字符串是否逐条匹配。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 的两个路径都是纯测试数据文件。", "evidence_refs": ["grading_bundles_v2_v0:python__mypy-11241 test_patch"]},
+ "proposed_regression_tests": [
+  {"id": "mypy/test/testparse.py::ParserSuite::testIncorrectTypeCommentIndex 所在的 check-fastparse.test 全量", "reason": "同文件、同诊断来源；被 test_patch 改写的既有 case 就在这里。"},
+  {"id": "test-data/unit/parse.test 既有全部 case", "reason": "gold 改的是 fastparse.visit_Subscript，解析层任何回归都在这里最先暴露。"},
+  {"id": "test-data/unit/check-annotated.test、check-type-aliases.test", "reason": "Annotated / 下标类型注解的语义层用例。"},
+  {"id": "test-data/unit/check-errorcodes.test", "reason": "新诊断需要有正确的 error code 归属。"}
+ ],
+ "disposition_hint": {"state": "reject_revision", "reason": "评分要求是逐字匹配一条题面里从未出现的新错误消息 'Slice usage in type annotation is invalid'，而题面表达的诉求（希望该写法可用或可 ignore）与 gold 的实际交付（只换措辞）不是一回事。不改题面的话，本题对诚实求解者是不可完成的。"},
+ "costs": {"minutes": 20}
+}
