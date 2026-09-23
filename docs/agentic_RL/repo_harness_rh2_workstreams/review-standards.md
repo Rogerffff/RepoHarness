@@ -127,7 +127,7 @@
 
 ```text
 confirmed T0        —— 确认需要用户决定
-missing T0          —— Claude 漏列的 T0（审查者主动发现）
+missing T0          —— 实现方漏列的 T0（审查者主动发现）
 false-positive T0   —— 其实只是 T1
 deferred T0         —— 现在不必决定（注明何时决定）
 experiment-required —— 证据不足，先做实验再决策
@@ -136,11 +136,11 @@ experiment-required —— 证据不足，先做实验再决策
 ## 4. finding 格式与回应（分歧收敛规则见协议 §5）
 
 ```text
-codex finding 必须包含八要素：
+审查 finding 必须包含八要素：
   当前行为 / 违反的不变量 / 证据 / 影响 / 建议分期
   / 文件与行号 / 复现命令或最小探针 / 修复验收条件
 
-Claude 对每项四选一回应（§10.5 第 4 条，2026-08-17）：
+被审查方对每项四选一回应（§10.5 第 4 条，2026-08-17）：
   accepted / rejected_with_evidence / deferred_with_owner_and_gate
 ```
 
@@ -200,10 +200,10 @@ passed / skipped / xfailed 数量及原因
 
 用户核签的是结构化证据，不是"917 tests passed"这句话。
 
-## 7. Claude 交接前自检清单
+## 7. 实现者交接前自检清单（Claude 或 Codex 承担实现时同样适用）
 
 **定位（诚实声明）**：自检者与实现者同模型，盲区相关——自检不降低
-codex 审查强度，"自检过了"不构成豁免。
+独立审查强度，"自检过了"不构成豁免。
 
 **机械清单（每批必做）**：
 
@@ -366,3 +366,4 @@ C：Training Semantics Reviewer——仅当改动直接影响 reward/mask/
 - 2026-08-16：§10 生产可达性标签、修复五问、熔断方案空间、强制 subagent 分工（触发事故：F2-2 复核循环——不可达 P0 与方案复杂度失控；T1 强报告落地）。
 - 2026-08-17：§10.4 增补 subagent 成本纪律（每边界/批次一对，限定范围与停止条件；触发事故：F2-2 八轮单批约 15 万 token）。
 - 2026-08-17：§10.5 比例原则（用户授权按 codex 修订版定稿）；finding 处置三选一改四选一（同步 protocol/AGENTS/CLAUDE.md）。
+- 2026-09-15：口径统一（T2 文字澄清，随协议 v1.1 分工默认化）：§3.3 "Claude 漏列"改"实现方漏列"；§4 "codex finding / Claude 回应"改"审查 finding / 被审查方回应"；§7 标题改为"实现者交接前自检清单"。维度、强制性、覆盖范围均未改。
