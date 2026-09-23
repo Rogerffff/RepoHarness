@@ -85,6 +85,9 @@ FAILURE_CODE_TERMINATION_MAP: dict[str, tuple[TerminationKind, RuntimeFailureCat
     # harness 面。harness_bootstrap_failed（批 A 新增）= 驱动引导（装 CLI / useradd /
     # 写配置 / spawn）时 sandbox exec 失败——单次容器层面故障，不是我方代码矛盾。
     "harness_bootstrap_failed": ("harness_crash", "harness_crash"),
+    # #2（基座探针修复，2026-09-23）：宿主收集 CC 输出的 docker exec 客户端自身异常退出（连接丢失等）——
+    # 失去可信的结束事实；不评分交付、继续停止与清理，不受 turn-cap 豁免（Codex SR2 第 ② 类）。
+    "harness_exec_connection_lost": ("harness_crash", "harness_crash"),
     "nonzero_harness_exit_in_formal_chain": ("harness_crash", "harness_crash"),
     # 身份面：fa_identity_incomplete_in_formal_mode 已按 Brief §6（owner 2026-09-09 确认）改为抛出点
     # typed run-fatal（generate._attributed_fatal），不再是 task-local 码。

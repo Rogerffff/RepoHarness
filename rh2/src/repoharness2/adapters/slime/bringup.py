@@ -52,6 +52,7 @@ from datetime import datetime, timezone
 import json
 import os
 import shlex
+import tempfile
 import re
 import time
 from pathlib import Path
@@ -393,15 +394,23 @@ def claude_code_launch_env(
 
 async def launch_claude_code(
     sb, *, workdir: str, session_id: str, adapter_url: str, prompt: str, time_budget_sec: int,
-    env_injections: Mapping[str, str],
+    env_injections: Mapping[str, str], harness_log_dir: str | None = None,
 ) -> int:
-    """RS 层的 Claude Code 启动（#1）：按 vendored `BaseHarness.run` 的三步——ensure agent user → write config →
-    launch——但启动这一步自己拼命令与环境，把逐 execution 的 env 显式带上。**无状态**：不子类化单例
-    `ClaudeCodeHarness`，只借用它的常量与无状态的 `write_config`。#2 提交把 `run_agent` 换成宿主收集。"""
+    """RS 层的 Claude Code 启动（#1 / #2）：按 vendored `BaseHarness.run` 的三步——ensure agent user → write config →
+    launch——但启动这一步自己拼命令与环境，把逐 execution 的 env 显式带上（#1），并由**宿主**收集 CC 的
+    stdout / stderr（#2：容器内不再有 `.harness/`、launcher 与 done 标记；退出码来自 docker CLI）。**无状态**：
+    不子类化单例 `ClaudeCodeHarness`，只借用它的常量与无状态的 `write_config`。
+
+    返回容器内 CC 的退出码；时间预算到点返回 `EXIT_TIME_BUDGET_EXCEEDED`（与旧 `exec_and_wait` 同码，容器内
+    进程由既有屏障终止）；docker CLI 自身异常（连接丢失等）抛 typed `harness_exec_connection_lost`（失去可信的
+    结束事实，按执行基础设施失败收口，不受 turn-cap 豁免）。事实进 HARNESS_LAUNCH_FACTS["harness_log"]。"""
 
     from slime.agent import sandbox as _sandbox
     from slime.agent.harness import ClaudeCodeHarness
     from slime.agent.harness import common as _harness_common
+
+    from repoharness2.adapters.slime import docker_sandbox as _ds
+    from repoharness2.adapters.slime.generate import HARNESS_LAUNCH_FACTS, SlimeBindingError
 
     harness = ClaudeCodeHarness()  # 单例，只读其常量 / 无状态方法
     await _sandbox.ensure_agent_user(sb, workdir)
@@ -415,9 +424,28 @@ async def launch_claude_code(
         adapter_url=ctx.adapter_url, session_id=ctx.session_id, model_label=ctx.model_label,
         env_injections=env_injections,
     )
-    return await _harness_common.run_agent(
-        sb, workdir=ctx.workdir, start_cmd=cmd, env=env, time_budget_sec=time_budget_sec,
+    env.setdefault("HOME", "/home/agent")  # 旧 launcher 在 body 里 export；现在随 exec env 在 bash 启动前就位（SR3）
+    if harness_log_dir is None:
+        # 编排层没给 artifact 目录（直接跑驱动的单测 / 无 artifact_dir 的部署）：仍收集到宿主临时目录并留痕
+        harness_log_dir = tempfile.mkdtemp(prefix="rh2-harness-")
+    log_dir = Path(harness_log_dir)
+    log_dir.mkdir(parents=True, exist_ok=True)
+    os.chmod(log_dir, 0o700)
+    run = await _ds.run_host_collected(
+        _ds.host_exec_argv(container_name=sb.container_name, user="agent", workdir=ctx.workdir, env=env, cmd=f"exec {cmd}"),
+        stdout_path=log_dir / "trajectory.jsonl", stderr_path=log_dir / "stderr.log",
+        deadline_seconds=float(time_budget_sec), time_budget_exit_code=_sandbox.EXIT_TIME_BUDGET_EXCEEDED,
     )
+    facts = HARNESS_LAUNCH_FACTS.get()
+    if facts is not None:
+        facts["harness_log"] = run.facts()
+    if run.client_exit_kind == "docker_cli_error":
+        raise SlimeBindingError(
+            "harness_exec_connection_lost",
+            f"docker exec 客户端异常退出 rc={run.client_exit_code}（stderr 尾部 {run.stderr_tail[-200:]!r}）"
+            "——失去可信的 CC 结束事实，按执行基础设施失败收口（日志已保留的部分见 harness_log）。",
+        )
+    return run.exit_code
 
 
 class ClaudeCodeDriver:
@@ -558,7 +586,7 @@ class ClaudeCodeDriver:
             facts["launch_attempted"] = True  # 进入启动函数：ensure user / write config / spawn 仍在其中
             # #1（基座探针修复）：逐 execution 的环境（BASH_ENV / HOME）由编排层经 HarnessLaunchSpec 传到这里，
             # 再显式交给无状态启动函数——不经过进程级 SLIME_AGENT_CC_EXTRA_ENVS，也不放进任何单例实例
-            # （vendored BaseHarness 是 SingletonABCMeta 单例，Codex SR1）。harness_log_dir 在 #2 提交启用。
+            # （vendored BaseHarness 是 SingletonABCMeta 单例，Codex SR1）。harness_log_dir = 宿主侧日志目录（#2）。
             return await launch_claude_code(
                 sb,
                 workdir=workdir,
@@ -567,6 +595,7 @@ class ClaudeCodeDriver:
                 time_budget_sec=max(1, int(left)),
                 prompt=prompt,
                 env_injections=dict(env_injections or {}),
+                harness_log_dir=harness_log_dir,
             )
         except asyncio.CancelledError:
             # 编排的绝对期限 / 关停在引导途中取消——尚未尝试启动就如实回填（编排据此跳过 drain / 装配）；
@@ -825,6 +854,8 @@ def write_execution_audit_record(proxy, audit, path, *, model_name: str | None =
         "prelaunch_check": getattr(audit, "prelaunch_check", None),
         # #1：首次 census 之后、harness 启动之前的解释器 / 激活核对（agent 身份、CC 同形 env）
         "activation_check": getattr(audit, "activation_check", None),
+        # #2：宿主收集的 harness 日志事实（路径 / 字节数 / complete / partial 原因 / CLI 退出类别）
+        "harness_log": getattr(audit, "harness_log", None),
         "session_plane_drained": audit.session_plane_drained,
         "runtime_quiescence_confirmed": audit.runtime_quiescence_confirmed,
         "capture_closed": audit.capture_closed,

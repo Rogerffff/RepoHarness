@@ -379,6 +379,7 @@ BODY=$(timeout 8 bash -c 'exec 3<>/dev/tcp/rh2-egress-relay/__PORT__; printf "GE
 echo "PROXY_BODY=$BODY"
 if timeout 3 bash -c 'exec 3<>/dev/tcp/__UPHOST__/__PORT__' 2>/dev/null; then echo "UPSTREAM_DIRECT=CONNECTED"; else echo "UPSTREAM_DIRECT=DENIED"; fi
 if timeout 3 bash -c 'exec 3<>/dev/tcp/1.1.1.1/443' 2>/dev/null; then echo "PUBLIC=CONNECTED"; else echo "PUBLIC=DENIED"; fi
+echo "ACTIVATED=${RH2_W3B_ACTIVATED:-ABSENT}"
 echo "AGENT_VIEW_OK=1"
 '''
 
@@ -407,8 +408,10 @@ class AgentViewDriver:
             .replace("__UPHOST__", self.runtime.upstream_host)
         )
         p = self.runtime.profile
+        # 基座探针修复 #1：编排层经 HarnessLaunchSpec 交来的逐 execution 环境（HOME / BASH_ENV）随 exec 进入 agent 的 bash
+        injected = [a for k, v in (env_injections or {"HOME": f"/home/{p.agent_user}"}).items() for a in ("-e", f"{k}={v}")]
         res = await run_docker(
-            "exec", "-u", str(p.agent_uid), "-e", f"HOME=/home/{p.agent_user}", sandbox.container_name,
+            "exec", "-u", str(p.agent_uid), *injected, sandbox.container_name,
             "bash", "-c", script,
         )
         self.facts = sp.parse_key_value_output(res.stdout)
@@ -462,6 +465,9 @@ def _make_task(fixture: RolloutFixture) -> RolloutTaskSpec:
             hygiene=HygieneRules(test_files=("tests/test_thing.py",)),
         ),
         time_budget_seconds=300,
+        # 夹具镜像是 python:3.12-slim（无 conda testbed）：按基座探针修复 #1 的契约，任务规格声明自己的激活脚本与解释器前缀
+        env_activation_script="# rh2 w3b 夹具：系统解释器即项目解释器，只留可观测标记\nexport RH2_W3B_ACTIVATED=1\n",
+        expected_interpreter_prefix="/usr/local",
     )
 
 
@@ -522,6 +528,10 @@ def test_normal_formal_rollout_completes_under_profile_and_stamps_runtime_profil
     assert fr.driver.facts.get("AGENT_VIEW_OK") == "1", fr.driver.facts
     assert fr.audit.prelaunch_check["ok"] is True and fr.audit.harness_exit_code == 0
     assert "sandbox_prelaunch_check_passed" in [e.step for e in fr.audit.timeline]
+    # 基座探针修复 #1：census 之后的激活核查在真实容器上通过（BASH_ENV=/rh2/bash_env → 声明前缀下的解释器）
+    assert fr.audit.activation_check["ok"] is True, fr.audit.activation_check
+    assert fr.audit.activation_check["facts"]["ACT_SYS_EXECUTABLE"].startswith("/usr/local/")
+    assert fr.driver.facts["ACTIVATED"] == "1"  # 注入的 BASH_ENV 在 agent 的非交互 bash 里生效（真实容器）
     delivered = [s for s in fr.result if not getattr(s, "remove_sample", False)]
     assert delivered, [getattr(s, "metadata", None) for s in fr.result]
     assert all(s.metadata[sp.RUNTIME_PROFILE_DIGEST_METADATA_KEY] == fr.digest for s in delivered)

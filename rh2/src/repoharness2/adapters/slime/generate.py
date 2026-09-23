@@ -2270,6 +2270,8 @@ class RolloutAudit:
     prelaunch_check: dict[str, Any] | None = None
     # #1：首次 census 之后、harness 启动之前的激活 / 解释器核对（agent 身份、CC 同形 env）
     activation_check: dict[str, Any] | None = None
+    # #2：宿主收集的 harness 日志事实（HARNESS_LAUNCH_FACTS["harness_log"] 的副本）
+    harness_log: dict[str, Any] | None = None
     # I01（B 路线观测）：本 execution 的动作覆盖与训练行成本（turn_identity.TurnCoverageSummary
     # 的 dict；bringup 经 execution audit 记录落盘）。非 bringup 链为 None。
     turn_coverage: dict[str, Any] | None = None
@@ -3074,6 +3076,10 @@ class RolloutOrchestrator:
             audit.episode_deadline["harness_launched"] = launch_facts.get("launched")  # None = 未确认
             audit.episode_deadline["bootstrap_seconds"] = launch_facts.get("bootstrap_seconds")
             audit.episode_deadline["remaining_at_launch"] = launch_facts.get("remaining_at_launch")
+            audit.harness_log = launch_facts.get("harness_log")  # #2：宿主收集事实（None = 未收集 / 替身驱动）
+            for key in ("stdout_path", "stderr_path"):  # 宿主轨迹 / stderr 文件进 artifact 清单（B 线分析改读宿主副本）
+                if (audit.harness_log or {}).get(key):
+                    audit.artifact_paths.append(Path(audit.harness_log[key]))
             if exit_code == HARNESS_EXIT_TIME_BUDGET_EXCEEDED:
                 # F2-2 复核 P1-4：slime EXIT_TIME_BUDGET_EXCEEDED=-1 = 时间
                 # 预算耗尽——按 D1a 记 hard_wall_timeout（仅 termination

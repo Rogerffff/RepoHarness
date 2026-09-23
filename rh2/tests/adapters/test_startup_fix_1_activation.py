@@ -227,10 +227,11 @@ def test_claude_code_launch_env_merge_order(monkeypatch):
     assert env["BASH_ENV"] == "/rh2/bash_env" and env["HOME"] == "/home/agent"  # 逐 execution 注入优先级最高
 
 
-async def test_launch_claude_code_is_stateless_and_concurrent_executions_keep_their_own_env(monkeypatch):
+async def test_launch_claude_code_is_stateless_and_concurrent_executions_keep_their_own_env(monkeypatch, tmp_path):
     from slime.agent import sandbox as slime_sandbox
     from slime.agent.harness import ClaudeCodeHarness
-    from slime.agent.harness import common as harness_common
+
+    from repoharness2.adapters.slime import docker_sandbox as ds
 
     seen: list[dict] = []
 
@@ -240,27 +241,31 @@ async def test_launch_claude_code_is_stateless_and_concurrent_executions_keep_th
     async def fake_write_config(self, sb, ctx):
         return None
 
-    async def fake_run_agent(sb, *, workdir, start_cmd, env, time_budget_sec):
+    async def fake_collect(argv, *, stdout_path, stderr_path, deadline_seconds, time_budget_exit_code=-1, chunk_size=65536):
+        env = {a.split("=", 1)[0]: a.split("=", 1)[1] for i, a in enumerate(argv) if i > 0 and argv[i - 1] == "-e"}
         await asyncio.sleep(0.01 if env["BASH_ENV"].endswith("A") else 0.0)  # 交错
-        seen.append({"workdir": workdir, "cmd": start_cmd, "env": dict(env), "budget": time_budget_sec})
-        return 0
+        seen.append({"argv": list(argv), "cmd": argv[-1], "env": env, "budget": deadline_seconds, "stdout": str(stdout_path)})
+        return ds.HostCollectedRun(0, 0, "container_process_exit", str(stdout_path), str(stderr_path), 1, 0, True, None, "", 0.1)
 
     monkeypatch.setattr(slime_sandbox, "ensure_agent_user", fake_ensure)
     monkeypatch.setattr(ClaudeCodeHarness, "write_config", fake_write_config)
-    monkeypatch.setattr(harness_common, "run_agent", fake_run_agent)
+    monkeypatch.setattr(ds, "run_host_collected", fake_collect)
     monkeypatch.setenv("SLIME_AGENT_CC_EXTRA_ARGS", "--max-turns 25")
 
     await asyncio.gather(
         bringup.launch_claude_code(_Sandbox(), workdir="/testbed", session_id="tokA", adapter_url="http://relay:1",
-                                   prompt="fix A", time_budget_sec=100, env_injections={"BASH_ENV": "/rh2/A", "HOME": "/home/agent"}),
+                                   prompt="fix A", time_budget_sec=100, env_injections={"BASH_ENV": "/rh2/A", "HOME": "/home/agent"},
+                                   harness_log_dir=str(tmp_path / "A")),
         bringup.launch_claude_code(_Sandbox(), workdir="/testbed", session_id="tokB", adapter_url="http://relay:1",
-                                   prompt="fix B", time_budget_sec=200, env_injections={"BASH_ENV": "/rh2/B", "HOME": "/home/agent"}),
+                                   prompt="fix B", time_budget_sec=200, env_injections={"BASH_ENV": "/rh2/B", "HOME": "/home/agent"},
+                                   harness_log_dir=str(tmp_path / "B")),
     )
     by_token = {s["env"]["ANTHROPIC_AUTH_TOKEN"]: s for s in seen}
     assert by_token["tokA"]["env"]["BASH_ENV"] == "/rh2/A" and by_token["tokB"]["env"]["BASH_ENV"] == "/rh2/B"
     assert by_token["tokA"]["budget"] == 100 and by_token["tokB"]["budget"] == 200
+    assert by_token["tokA"]["stdout"].endswith("/A/trajectory.jsonl") and by_token["tokB"]["stdout"].endswith("/B/trajectory.jsonl")
     for s in seen:
-        assert s["cmd"].startswith("/usr/local/bin/claude -p ") and "--output-format stream-json" in s["cmd"]
+        assert s["cmd"].startswith("exec /usr/local/bin/claude -p ") and "--output-format stream-json" in s["cmd"]
         assert s["cmd"].endswith("--max-turns 25")
     # 单例上没有留下任何逐 execution 状态
     harness = ClaudeCodeHarness()

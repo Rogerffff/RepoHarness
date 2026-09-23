@@ -124,3 +124,30 @@ vendored `run_agent`（`slime/agent/harness/common.py:107–122`）在 `{workdir
 
 - SR3 的"cwd=/tmp、只 import sys、不写字节码"照做，但不宣称零副作用；真机对照显示 `/testbed` 未被写。
 - 激活核对失败按 task-local（`sandbox_failure / sandbox_crash`）处理而不是 run-halt：同一镜像的系统性失败会表现为该任务反复 ABORTED，可从 `activation_check.facts` 直接看出；R2E 的逐题 `.venv` 也可能只有个别题失败，run-halt 不合适。
+
+## 6. 提交 B（#2）实施记录（2026-09-23，Claude，已实施、本机验证；真机验收见 §6.4）
+
+### 6.1 改动
+
+| 文件 | 改动 |
+| --- | --- |
+| `adapters/slime/docker_sandbox.py` | 新增宿主收集器：`host_exec_argv(container_name, user, workdir, env, cmd)` 拼 `docker exec -u agent -w <workdir> -e K=V … <容器> bash -c 'exec <cmd>'`（HOME / BASH_ENV 在 bash 启动前就位，SR3）；`run_host_collected(argv, stdout_path, stderr_path, deadline_seconds, time_budget_exit_code)`：asyncio 子进程 + 两路泵任务逐块（64 KiB）追加写宿主文件、stderr 留 4 KiB 尾部；`wait_for` 期限到点杀客户端记 `time_budget`；`CancelledError` 杀客户端、取消泵、原样传播；返回 `HostCollectedRun`（`exit_code / client_exit_code / client_exit_kind / stdout_path / stderr_path / stdout_bytes / stderr_bytes / log_complete / log_partial_reason / stderr_tail / seconds`）。`classify_client_exit(rc, stderr_tail)`：125/126/127 或 stderr 末行是 docker 客户端错误形态 → `docker_cli_error`，否则 `container_process_exit`。`_open_log` 单独成函数作测试接缝 |
+| `adapters/slime/bringup.py` | `launch_claude_code(..., harness_log_dir=None)` 不再调 vendored `run_agent`：宿主收集到 `<harness_log_dir>/{trajectory.jsonl,stderr.log}`（目录 0700；编排未给目录时用宿主临时目录 `rh2-harness-*` 并留痕）；事实进 `HARNESS_LAUNCH_FACTS["harness_log"]`；`client_exit_kind == docker_cli_error` → 抛 typed `harness_exec_connection_lost`（事实先落再抛）；期限到点返回 `EXIT_TIME_BUDGET_EXCEEDED`（-1）。`ClaudeCodeDriver.run` 把 `harness_log_dir` 传下去；`write_execution_audit_record` 落盘 `harness_log` |
+| `adapters/slime/generate.py` | `RolloutAudit.harness_log`；harness 返回后从 launch facts 复制，宿主两份文件进 `audit.artifact_paths`（§2.2） |
+| `adapters/slime/outcome_producer.py` | `harness_exec_connection_lost → ("harness_crash", "harness_crash")`（执行基础设施失败：不评分交付、继续停止与清理、不受 turn-cap 豁免） |
+| 测试 | 新增 `tests/adapters/test_startup_fix_2_host_collected.py`（21 例：真实子进程的双通道流式收集、非零退出码、期限杀客户端且 `pgrep` 无残留、外层取消传播且无残留、写失败只标 partial 而退出码可信、`classify_client_exit` 矩阵、argv 形状、启动函数接线 / 无容器内 launcher / 事实与 typed 码、经真实 `ClaudeCodeDriver.run` 的 typed 码不被引导层改写、无目录时临时目录、audit 落盘回读、编排复制事实与 artifact 清单、源码断言不再调 `run_agent`）；`test_startup_fix_1_activation.py` 的并发用例改到收集器接缝 |
+| `tests/adapters/test_w3b_sandbox_docker.py` | 夹具任务声明自己的 `env_activation_script` / `expected_interpreter_prefix="/usr/local"`（夹具镜像 `python:3.12-slim` 无 conda）；正常 rollout 用例加断言：真容器上激活核查通过、注入的 BASH_ENV 在 agent 的非交互 bash 里生效（`ACTIVATED=1`）；`AgentViewDriver` 把 `env_injections` 随 exec 传入 |
+| vendored `rh2/src/slime/` | 零改动 |
+
+### 6.2 验证（本机）
+
+- `tests/adapters/test_startup_fix_2_host_collected.py` 21 passed（macOS）；同两份文件在验证机 Linux 上 41 passed。
+- 五目录 **1663 passed / 1 skipped**（本机 Docker 已开：`test_w3b_sandbox_docker.py` 14 例真容器用例全部执行）；双 lane 全绿（A 463p/343s、B 806p/0s）；ruff 通过。
+- **提交 A 遗留的夹具缺口**：提交 A 验证时本机 Docker 未开，`test_w3b_sandbox_docker.py` 未执行；本轮开 Docker 后 4 例失败，原因是夹具镜像 `python:3.12-slim` 的 `sys.executable=/usr/local/bin/python` 不在默认前缀 `/opt/miniconda3/envs/testbed` 下，激活核查按设计 task-local 失败（`sandbox_activation_check_failed`）。修法是夹具任务声明自己的激活事实（非 SWE-Gym 镜像的任务规格本来就该这样，R2E 同理），不是放宽核查。
+
+### 6.3 与 Brief 的差异
+
+- §2.2 的 `harness_output_collection_failed` 按 SR2 拆成两类：① 写文件失败（`log_partial_reason=write_error:…`，退出码仍可信、处置不变）；② `harness_exec_connection_lost`（typed、进映射表）。`client_exit_kind` 只有 `container_process_exit / docker_cli_error / time_budget`；取消不返回 `killed_by_owner` 而是原样传播 `CancelledError`（编排的取消路径已有自己的记录）。
+- 期限到点只杀宿主 `docker exec` 客户端，容器内 CC 进程不由收集器终止：正式链随后 `_force_stop_execution_scope`（`pkill -u agent` + 停止证据）与容器清理收口（`generate.py` hard_wall 路径）。真机验收记录残留进程数（§6.4）。
+- 日志目录 `<artifact_dir>/<trajectory_id>/harness`（从非秘密身份生成，不用 session token）；`artifact_dir` 缺省时收集到宿主临时目录并留痕，不静默丢日志。
+- B 线 `experiments/base_probe_20260922/solve_attempt.py` 仍从容器内 `<workdir>/.harness/trajectory.jsonl` 取轨迹：#2 之后该文件不存在，应改读 `launch_facts["harness_log"]["stdout_path"]`（B 线脚本，留言告知，不由 A 改）。
