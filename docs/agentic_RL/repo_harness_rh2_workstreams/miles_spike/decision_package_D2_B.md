@@ -70,6 +70,8 @@
 - **每次丢弃一条轻量结构化事件**（在 buffer 真正判定的三个分支记录：put ABORTED / get stale / filter keep=False）：task_id 或 opaque ref、`rh2_prompt_group_id`、group_index、drop_stage、reason_code、ABORTED 的 member_slot/physical_attempt_id、stale 的 oldest/current 版本与阈值、时间戳；不记 prompt/private/patch 内容。run 结束汇总各 reason 组数、总尝试/接受/丢弃、**按 task 的尝试/丢弃分母**（识别"长任务被系统性丢弃"的分布偏差）。事实：stock buffer 已有 `group_filtered` 事件（aborted/filter），stale 分支未发且不带版本差——W4 的 miles 侧窄 patch 补齐。不建 ledger/WAL，不成为新闸门。
 - **no-progress**：简单运行参数 `max_time_without_accepted_group`——progress 指"获得一个最终可训练 group"，不因持续完成又持续 drop 而重置；数值归 C。
 
+> **2026-09-09 I15/I16 后续决定**：owner 确认首版继续完整组训练，完善原因观测、发现具体问题后修复；可变组外部资料调查留后续。owner 已确认“符合条件的评分基础设施失败，最多追加一次同工件评分”及其范围：仅候选测试发起前，镜像就绪/获取、新 grader 创建/启动中已识别可重试的服务/传输故障。旧工作先确认收口，最多两次评分共用有界总预算；未知、配置/完整性错误、测试后的失败与可信 0/1 不纳入。该例外发生在最终评分/准入交付前，不重新采样模型、不把组重新放回数据源、不对可信结果择优，不等于打开 miles 的通用 `retry` handler。**范围已批、实现待办**，完整条件见 [I15/I16 §8](../project1_execution/batch2_failures_20260908/i15_i16_sampling_and_retry_20260909.md#8-重评分条件的具体边界2026-09-09-后续讨论)。未覆盖的失败继续按原 B-2 处理，已有 fatal、停止和终态规则优先。
+
 ### B-3 冷恢复：**最小合同**（owner 细化："不建设联合 checkpoint、事务恢复或复合版本体系"）
 
 - **依赖 miles 既有能力**：Megatron checkpoint（model/optimizer/scheduler/RNG）+ `RolloutDataSource.save/load`（sample_offset/epoch_id/group_index/index）+ `start_rollout_id`。
@@ -90,6 +92,8 @@
 ### B-6 落账
 
 提前 drain 关闭（W4）；正常 shutdown 硬门（W5a 已实现：残留/后到事实/双因进报告，不 ok 即非零退出；W7 读取口径 = `verdict.rh2` / `shutdown_report.json` 为时间首因，顶层 `primary_cause` 为 driver 视角；报告重写失败/事件漂移由 W7 用"退出码 + failure marker + canonical report"联合判断，不建 revision 状态机）；明确不做 pending replay/精确 cursor/exactly-once。
+
+> **2026-09-09 owner 窄改判（I13，原则已批、实现待办）**：仅中间取消等待超时，随后在明确的最终关停期限内确认任务/执行与应释放资源均已安全结束、必要记录完整且其它原有失败条件均不存在时，允许成功退出；保留中间超时诊断。不得借此清除训练/worker/driver 错误、真实清理失败、必要记录失败、未知残留或总期限超时。仅调整中间等待超时快照对 verdict 的永久失败作用；不推翻其它 B-6 条件。当前 900 秒只覆盖 owner-loop 的 aclose＋RH2 close，不能冒充完整 dispose 总期限。依据与范围见 [第二组说明](../project1_execution/batch2_failures_20260908/README.md)。B-2 的不立即重试规则未在此改判。
 
 ---
 

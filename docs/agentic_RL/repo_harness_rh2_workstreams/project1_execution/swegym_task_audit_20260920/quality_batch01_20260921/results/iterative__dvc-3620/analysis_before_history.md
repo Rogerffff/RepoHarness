@@ -6,12 +6,12 @@
 
 以下缩写均为固定绝对路径，后文 `X/文件:行` 可据此展开：
 
-- R = `.`
-- B = `docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921`
-- P = `runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620`
-- Q = `runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-3620`
-- O = `docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620`
-- T = `runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620`
+- R = `${REPO_ROOT}`
+- B = `${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921`
+- P = `${REPO_ROOT}/runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620`
+- Q = `${REPO_ROOT}/runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-3620`
+- O = `${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620`
+- T = `${REPO_ROOT}/runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620`
 - GL = `T/gold/eval_logs/evallog_replay-er19-dv1-iterativ_9b423984.eval.log`
 - NL = `T/noop/eval_logs/evallog_replay-er19-dv1-iterativ_cf25aa49.eval.log`
 

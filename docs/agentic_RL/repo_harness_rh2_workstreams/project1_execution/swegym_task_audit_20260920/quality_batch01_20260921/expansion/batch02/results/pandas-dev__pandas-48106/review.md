@@ -2,7 +2,7 @@
 
 2026-09-21，B2 pandas reviewer，第二阶段。**建议保留受限静态候选：`state=needs_review`、`scope=static_review`、`intended_use=development_diagnostic`。** 同意主审对公开契约与修复后 grader 对照的基本判断；补充确认剩余两组 tz 节点身份合并。现有材料没有证明这两组导致错误 reward，也没有理由因一般覆盖未穷尽直接拒题。不是正式训练、评测或 actor 开发批准。
 
-`ROOT=.`；下文相对路径以 ROOT 为根。`I=runs/swegym_quality_batch02_20260921_v2`，`B=I/public/pandas-dev__pandas-48106/base`，`P=I/private/pandas-dev__pandas-48106`，`R=runs/env_recipe_repair_20260919/pandas_meta_v3`，`T=R/tasks/pandas-dev__pandas-48106`。第一阶段初判 SHA256 `fd89b2c4db4163a03e99d4d8cba2377422bd0352e4046e6f09d8ff132e47ed8a` 保持不变。三份初判统一封存后才读本题五份主审/公开产物、history/refs 和其唯一精确旧记录。仅静态文件、JSON、文本分析；没有项目导入、测试、安装、容器、网络、模型或 source/test/gold/reward 修改。
+`ROOT=${REPO_ROOT}`；下文相对路径以 ROOT 为根。`I=runs/swegym_quality_batch02_20260921_v2`，`B=I/public/pandas-dev__pandas-48106/base`，`P=I/private/pandas-dev__pandas-48106`，`R=runs/env_recipe_repair_20260919/pandas_meta_v3`，`T=R/tasks/pandas-dev__pandas-48106`。第一阶段初判 SHA256 `fd89b2c4db4163a03e99d4d8cba2377422bd0352e4046e6f09d8ff132e47ed8a` 保持不变。三份初判统一封存后才读本题五份主审/公开产物、history/refs 和其唯一精确旧记录。仅静态文件、JSON、文本分析；没有项目导入、测试、安装、容器、网络、模型或 source/test/gold/reward 修改。
 
 ## 公开要求、断言及合理实现
 

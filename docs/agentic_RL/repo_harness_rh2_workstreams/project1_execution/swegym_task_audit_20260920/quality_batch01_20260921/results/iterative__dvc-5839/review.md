@@ -2,7 +2,7 @@
 
 2026-09-21，第二阶段。独立初判 `reviewer_initial.md` 已在本包三题任何其他角色结论开放前封存，SHA-256=`d2115e440248378aa79eaa3b529ea77f1a5ca39593a64315dfffbe06f5242357`；本轮不修改初判。本报告只增加开放后的比较和处置建议。没有运行 DVC、pytest、安装、Docker、SSH、模型或新 CPU 对照。
 
-沿用初判路径：`R=.`；`P=R/runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-5839`；`Q=同材料根/private/iterative__dvc-5839`；`E=R/runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-5839`；源码行号相对 `P/base`。`O` 是本报告所在目录。`H=R/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_2/records/iterative__dvc-5839.json`。
+沿用初判路径：`R=${REPO_ROOT}`；`P=R/runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-5839`；`Q=同材料根/private/iterative__dvc-5839`；`E=R/runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-5839`；源码行号相对 `P/base`。`O` 是本报告所在目录。`H=R/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_2/records/iterative__dvc-5839.json`。
 
 ## 结论和使用边界
 

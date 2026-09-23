@@ -4,7 +4,7 @@
 
 **同意 needs_review / static_review / development_diagnostic，additional_exclusions=[]。** 派生 grader 的真实 0/1 证据可靠，公开需求可以调查，尚无已证错误修复满分或正确修复被拒。保留 TypeIs 的范围差异，但其仓库依据足够明确，不把这个差异或共享 visitor 的全部覆盖空白自动设为拒收门槛。修改主审及本人初判的实验排序：固定 grader 上的窄语义对照不必等待正式 actor 资格验收。
 
-下列路径以 `.` 为根。U=`runs/swegym_quality_batch02_20260921_v2/public/python__mypy-17071`，P 为同层 private 本题目录；W=`runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-17071`，G/N=`W/{gold,noop}`。
+下列路径以 `${REPO_ROOT}` 为根。U=`runs/swegym_quality_batch02_20260921_v2/public/python__mypy-17071`，P 为同层 private 本题目录；W=`runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-17071`，G/N=`W/{gold,noop}`。
 
 ## 决定性主张与八方面覆盖
 

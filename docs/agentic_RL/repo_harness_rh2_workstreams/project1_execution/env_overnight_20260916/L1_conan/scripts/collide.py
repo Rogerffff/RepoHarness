@@ -1,7 +1,7 @@
 # 用 stage1 gold/empty 的真实 -rA 摘要行，检验 parse_log_pytest 的 split()[1] 截断是否产生碰撞
 import json,os,re,collections
-L='runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
-ASG=json.load(open('docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/ASSIGNMENT.json'))
+L='${REPO_ROOT}/runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
+ASG=json.load(open('${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/ASSIGNMENT.json'))
 STAT=("FAILED","PASSED","SKIPPED","ERROR","XFAIL")
 out={}
 for tid in ASG['tasks']:
@@ -31,4 +31,4 @@ for tid in ASG['tasks']:
             if trunc: print('  TRUNCATED:',json.dumps(trunc,ensure_ascii=False))
             if skipline: print('  SKIP_SUMMARY(键被解析成',[l.split()[1] for l in skipline],'):')
             for l in skipline: print('      ',l)
-json.dump(out,open('runs/env_overnight_20260916/L1_conan/collide.json','w'),ensure_ascii=False,indent=1)
+json.dump(out,open('${REPO_ROOT}/runs/env_overnight_20260916/L1_conan/collide.json','w'),ensure_ascii=False,indent=1)

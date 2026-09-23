@@ -1,0 +1,144 @@
+{
+  "scope": "真实编排与既有关停 inflight 步的两案局部对照；非完整 Bringup 关停验收",
+  "cases": [
+    {
+      "case": "materialize_digest",
+      "expected_original_reason": "rollout_image_digest_mismatch",
+      "events": [
+        "fatal",
+        "intake_stop",
+        "rm_enter",
+        "rm_cancelled"
+      ],
+      "at_first_cleanup": [
+        {
+          "notification_count": 1,
+          "receipt_dispositions": [
+            "fatal_run_halt"
+          ],
+          "receipt_reasons": [
+            "rollout_image_digest_mismatch"
+          ],
+          "workspace_handle_ready": false
+        }
+      ],
+      "run_level_cancel_result": "CancelledError",
+      "intake_accepting": false,
+      "first_reason": [
+        "rollout_image_digest_mismatch"
+      ],
+      "fatal_notifications": [
+        "rollout_image_digest_mismatch"
+      ],
+      "receipt_dispositions": [
+        "fatal_run_halt"
+      ],
+      "receipt_reasons": [
+        "rollout_image_digest_mismatch"
+      ],
+      "outcome_v2": null,
+      "lease_released": false,
+      "removed_containers": 0,
+      "attempt_networks": 1,
+      "cleanup_appends": 0,
+      "cleanup_failures": [],
+      "quarantined_containers": 0,
+      "episode_hit_by": "none",
+      "close_inflight_facts": {
+        "inflight_at_shutdown": 1,
+        "finished_in_grace": 0,
+        "cancelled": [
+          {
+            "trajectory_id": "exec_F22",
+            "physical_attempt_id": "exec_F22#p1-cafe1234",
+            "rollout_execution_id": "exec_F22",
+            "task_id": "psf__requests-2931",
+            "in_flight_seconds": 0.052,
+            "finished_after_cancel": true,
+            "termination_kind": "owner_cancelled",
+            "completion_class": "missing"
+          }
+        ],
+        "unfinished_after_cancel_wait": []
+      },
+      "production_defaults": {
+        "inflight_grace_seconds": 30,
+        "cleanup_timeout_seconds": 120
+      },
+      "probe_scaled_waits": {
+        "inflight_grace_seconds": 0.05,
+        "docker_rm_seconds": 0.2
+      }
+    },
+    {
+      "case": "existing_artifact_fatal",
+      "expected_original_reason": "frozen_artifact_persist_failed",
+      "events": [
+        "fatal",
+        "intake_stop",
+        "rm_enter",
+        "rm_cancelled"
+      ],
+      "at_first_cleanup": [
+        {
+          "notification_count": 1,
+          "receipt_dispositions": [
+            "fatal_run_halt"
+          ],
+          "receipt_reasons": [
+            "frozen_artifact_persist_failed"
+          ],
+          "workspace_handle_ready": true
+        }
+      ],
+      "run_level_cancel_result": "CancelledError",
+      "intake_accepting": false,
+      "first_reason": [
+        "frozen_artifact_persist_failed"
+      ],
+      "fatal_notifications": [
+        "frozen_artifact_persist_failed"
+      ],
+      "receipt_dispositions": [
+        "fatal_run_halt"
+      ],
+      "receipt_reasons": [
+        "frozen_artifact_persist_failed"
+      ],
+      "outcome_v2": null,
+      "lease_released": false,
+      "removed_containers": 0,
+      "attempt_networks": 1,
+      "cleanup_appends": 0,
+      "cleanup_failures": [],
+      "quarantined_containers": 0,
+      "episode_hit_by": "none",
+      "close_inflight_facts": {
+        "inflight_at_shutdown": 1,
+        "finished_in_grace": 0,
+        "cancelled": [
+          {
+            "trajectory_id": "exec_F22",
+            "physical_attempt_id": "exec_F22#p1-cafe1234",
+            "rollout_execution_id": "exec_F22",
+            "task_id": "psf__requests-2931",
+            "in_flight_seconds": 0.055,
+            "finished_after_cancel": true,
+            "termination_kind": "owner_cancelled",
+            "completion_class": "missing"
+          }
+        ],
+        "unfinished_after_cancel_wait": []
+      },
+      "production_defaults": {
+        "inflight_grace_seconds": 30,
+        "cleanup_timeout_seconds": 120
+      },
+      "probe_scaled_waits": {
+        "inflight_grace_seconds": 0.05,
+        "docker_rm_seconds": 0.2
+      }
+    }
+  ],
+  "conclusion": "两案均已通知、receipt 保留原 Fatal；run 级宽限取消会中断清理，但没有生成普通 ABORTED。"
+}

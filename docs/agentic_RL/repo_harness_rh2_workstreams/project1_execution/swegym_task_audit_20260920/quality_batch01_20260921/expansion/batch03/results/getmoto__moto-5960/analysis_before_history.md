@@ -4,7 +4,7 @@
 
 ## 边界与身份
 
-权威根目录 ROOT=`.`。下文 P=`ROOT/runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960`，Q=同批 `private/getmoto__moto-5960`，E=`ROOT/runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960`；路径均相对此权威 ROOT，而非工具默认 cwd。
+权威根目录 ROOT=`${REPO_ROOT}`。下文 P=`ROOT/runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960`，Q=同批 `private/getmoto__moto-5960`，E=`ROOT/runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960`；路径均相对此权威 ROOT，而非工具默认 cwd。
 
 先读本题封存 `public_read.md`（SHA256 c2ac93029588118e7ba49745674a38096cbd9702d5b5c9f6b431e887662023dc），随后独立阅读公开 bundle、相关源码/旧测试、完整 test.patch/gold.patch、完整 2 F2P + 155 P2P 名单、grading/validation/environment_record/run_refs/source_refs，以及本题精确原始 ledger、diagnostics、image、日志片段与全部 pytest 摘要。未读本题 history/refs、旧质量记录、其他题结果、reviewer 或本批聚合。环境卡和 inventory 本题对象含 gold/noop 结果，已经暴露；这是“旧质量结论未读”的独立初稿，不是结果盲审。inventory 只取 common、families.install_wave1、exact id 对象，未追 analysis_reference。
 

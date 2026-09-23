@@ -1,7 +1,7 @@
 import json,os,re
-M='runs/env_overnight_20260916/L1_moto_1/mat'
-L='runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
-ASG=json.load(open('docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_moto_1/ASSIGNMENT.json'))
+M='${REPO_ROOT}/runs/env_overnight_20260916/L1_moto_1/mat'
+L='${REPO_ROOT}/runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
+ASG=json.load(open('${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_moto_1/ASSIGNMENT.json'))
 def ascii_escaped(s):
     # mimic pytest _pytest.compat.ascii_escaped for str
     return s.encode('unicode_escape').decode('ascii')

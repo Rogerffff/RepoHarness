@@ -7,7 +7,7 @@
 import json, os, re
 from collections import Counter
 
-ROOT = "."
+ROOT = "${REPO_ROOT}"
 RUNS = os.path.join(ROOT, "runs/env_overnight_20260916/M3")
 PKG = os.path.join(ROOT, "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M3")
 OUT = os.path.join(PKG, "M3_r2e_check_records.json")

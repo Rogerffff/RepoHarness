@@ -1,6 +1,6 @@
 import json,sys,os
-D='docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_1/records'
-M='runs/env_overnight_20260916/L1_dvc_1/mat'
+D='${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_1/records'
+M='${REPO_ROOT}/runs/env_overnight_20260916/L1_dvc_1/mat'
 def write(tid, public_view, checks, issues, file_rules, tests, disp, minutes, extra=None):
     g=json.load(open(f'{M}/{tid}/grading.json')); pub=json.load(open(f'{M}/{tid}/public.json'))
     rec={'task_id':tid,'source':'swe_gym_lite','task_revision':'upstream',

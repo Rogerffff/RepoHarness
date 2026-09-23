@@ -2,7 +2,7 @@
 
 本稿于 2026-09-21 完成静态原件审查后封存。未读本题历史调查、旧 record、reviewer、其它题或环境聚合质量分析；后续历史比对应另写 delta，不回写本稿。仅写此文件；未导入项目、运行项目测试、安装、访问网络/容器/SSH/GPU/模型、修改题目或提交。使用 Python 标准库读取 JSON、AST、归档成员及计算哈希不属于项目执行。
 
-路径约定：`ROOT=.`；`P=ROOT/runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406`；`V=ROOT/runs/swegym_quality_batch05_20260921_v1/private/getmoto__moto-5406`；`R=ROOT/runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01`；下文 `base/...` 均在 P。环境入口仅从 batch05 inventory 的 common 与本题 entry 展开。共享角色卡中其它题的例子仅作方法背景。
+路径约定：`ROOT=${REPO_ROOT}`；`P=ROOT/runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406`；`V=ROOT/runs/swegym_quality_batch05_20260921_v1/private/getmoto__moto-5406`；`R=ROOT/runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01`；下文 `base/...` 均在 P。环境入口仅从 batch05 inventory 的 common 与本题 entry 展开。共享角色卡中其它题的例子仅作方法背景。
 
 **初步建议：保留为开发诊断题，但先做单个 CPU 评分反例；暂不直接列为模型优先探针或训练/评测准入。** 问题真实、修复入口公开、gold 与目标一致，原 baseline 有可靠的 noop 失败／gold 成功记录。主要质量缺口是唯一 ARN 断言只看 `us-east-2`，评分没有保护原有 `us-east-1` ARN；把硬编码常量改成 `us-east-2` 的错误实现有明确的漏收风险，尚未执行验证。题面另有可消解的表名笔误；完整原例、实际 actor 条件和原 actual image ID 均未获得新验证。
 

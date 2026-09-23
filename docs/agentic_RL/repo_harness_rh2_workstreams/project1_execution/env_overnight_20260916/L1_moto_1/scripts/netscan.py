@@ -1,7 +1,7 @@
 import json,os,re,subprocess
-R='runs/env_overnight_20260916/repos/moto'
-M='runs/env_overnight_20260916/L1_moto_1/mat'
-ASG=json.load(open('docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_moto_1/ASSIGNMENT.json'))
+R='${REPO_ROOT}/runs/env_overnight_20260916/repos/moto'
+M='${REPO_ROOT}/runs/env_overnight_20260916/L1_moto_1/mat'
+ASG=json.load(open('${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_moto_1/ASSIGNMENT.json'))
 def show(commit,path):
     p=subprocess.run(['git','-C',R,'show',f'{commit}:{path}'],capture_output=True,text=True)
     return p.stdout if p.returncode==0 else None
@@ -38,4 +38,4 @@ for tid in ASG['tasks']:
     res[tid]=hits
     if hits: print(tid, len(hits), hits[:8])
     else: print(tid,'clean')
-json.dump(res,open('runs/env_overnight_20260916/L1_moto_1/netscan.json','w'),ensure_ascii=False,indent=1)
+json.dump(res,open('${REPO_ROOT}/runs/env_overnight_20260916/L1_moto_1/netscan.json','w'),ensure_ascii=False,indent=1)

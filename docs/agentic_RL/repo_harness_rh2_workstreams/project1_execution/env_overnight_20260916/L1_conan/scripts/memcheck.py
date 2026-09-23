@@ -1,8 +1,8 @@
 # 污染探针：候选补丁与 gold / 隐藏 test_patch 的逐行重合度。
 # 隐藏 test_patch 求解者不可见；高重合 = 记忆上游 PR 的强证据。
 import json,os,re
-D='runs/env_probe_20260909_final_sync/ledger/logs_cc'
-BASE='docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest'
+D='${REPO_ROOT}/runs/env_probe_20260909_final_sync/ledger/logs_cc'
+BASE='${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest'
 def load_jsonl(p,key='instance_id'):
     d={}
     for line in open(p):

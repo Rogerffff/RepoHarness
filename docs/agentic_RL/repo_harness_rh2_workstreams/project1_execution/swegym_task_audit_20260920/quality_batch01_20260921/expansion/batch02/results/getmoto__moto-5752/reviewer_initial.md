@@ -6,7 +6,7 @@
 
 建议 `needs_review / static_review`，用途 `development_diagnostic`。公开顺序问题在 base 中明确成立，gold 的总体修复路线合理，历史 RH2 原基线 noop=0/gold=1。保留一个具体范围争议：同一新增 F2P 在验证两种 Equals 顺序之后，还强制修复标签 BeginsWith 的既有行为；仅消除早退、完整实现公开 Equals 原例的自然修复会被后两条断言拒绝（静态预测）。公开验证器已经允许 BeginsWith，是支持这些断言的重要反证，因此尚不把它定为无依据隐藏要求或坏题。
 
-路径缩写：`P=ROOT/runs/swegym_quality_batch02_20260921_v2/public/getmoto__moto-5752`，`Q=…/private/getmoto__moto-5752`，`L=ROOT/runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-1`；`ROOT=.`。以下 base 路径在 P/base。
+路径缩写：`P=ROOT/runs/swegym_quality_batch02_20260921_v2/public/getmoto__moto-5752`，`Q=…/private/getmoto__moto-5752`，`L=ROOT/runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-1`；`ROOT=${REPO_ROOT}`。以下 base 路径在 P/base。
 
 ## 公开目标、初态与每项修改
 

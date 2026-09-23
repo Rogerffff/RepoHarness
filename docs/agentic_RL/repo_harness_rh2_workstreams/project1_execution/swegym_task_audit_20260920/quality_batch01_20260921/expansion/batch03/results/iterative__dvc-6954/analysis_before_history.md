@@ -2,7 +2,7 @@
 
 2026-09-21，B3 私有主审。仅静态文件读取与 stdlib 元数据比对；未运行项目、测试、安装、容器、联网或模型。已读公开稿、gold/隐藏测试、授权 environment_record 与本题两角色运行原件；未读 history/refs、质量旧记录、reviewer 或批次聚合。以下命令均为建议，未执行。本上下文不能用于独立 solver。
 
-路径简写：P=`runs/swegym_quality_batch03_20260921_v1/public/iterative__dvc-6954`；V=同批 `private/iterative__dvc-6954`；R=`runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-6954`。所有路径相对权威 ROOT=.。
+路径简写：P=`runs/swegym_quality_batch03_20260921_v1/public/iterative__dvc-6954`；V=同批 `private/iterative__dvc-6954`；R=`runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-6954`。所有路径相对权威 ROOT=${REPO_ROOT}。
 
 ## 1. 材料、初态与公开要求
 

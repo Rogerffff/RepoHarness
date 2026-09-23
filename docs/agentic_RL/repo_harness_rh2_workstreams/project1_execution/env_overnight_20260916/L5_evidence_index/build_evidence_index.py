@@ -15,7 +15,7 @@ import os
 import subprocess
 from collections import Counter, defaultdict
 
-ROOT = "."
+ROOT = "${REPO_ROOT}"
 PKG = "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916"
 OUT = os.path.join(ROOT, PKG, "L5_evidence_index", "evidence_index.json")
 

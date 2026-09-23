@@ -14,6 +14,6 @@
 
 封存后补充：两侧 setup.py 均预改 moto `.dev464`→`1.3.14`，未来对照须固定此共享差异，不能称 pristine base。资源只引用原字段 `mem_peak_mb`（gold 386.82/noop 482.152）；初稿换写 MiB 的表述已在差分稿纠正，未回写原稿。历史 raw hints 说法未核原件，实际 actor 资产泄漏仍未知。
 
-**唯一优先下一步：**在记录了镜像、配方、moto 预改、身份及源码来源的固定环境，对 base/gold 重放公开本地两阶段例：普通 start 参数＋嵌套 false，重新加载后记录 status 与不带 force 的 commit。预期 gold 清除 false 的 new，却仍提示普通参数已变；首轮仅附 start 改值正向控制，并记录参数 info 与文件哈希；其他边界留后续。尚未执行任何新实验。详见 [初稿](analysis_before_history.md) 和 [差分](old_findings_delta.md)。审查已见隐藏测试、gold、运行结果和旧记录，产物不得进入 solver 上下文。
+**唯一优先下一步：**在记录了镜像、配方、moto 预改、身份及源码来源的固定环境，对 base/gold 重放公开本地两阶段例：普通 start 参数＋嵌套 false，重新加载后记录 status 与不带 force 的 commit。预期 gold 清除 false 的 new，却仍提示普通参数已变；首轮仅附 start 改值正向控制，并记录参数 info 与文件哈希；其他边界留后续。尚未执行任何新实验。详见 [初稿](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/results/iterative__dvc-4185/analysis_before_history.md) 和 [差分](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/results/iterative__dvc-4185/old_findings_delta.md)。审查已见隐藏测试、gold、运行结果和旧记录，产物不得进入 solver 上下文。
 
-[独立复审](review.md) 已纳入。复审将替代解 KeyError 提醒限定为基类 status 返回空映射等条件下的风险，不否定所有参数专用比较方案。两份初稿均保持封存。
+[独立复审](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/results/iterative__dvc-4185/review.md) 已纳入。复审将替代解 KeyError 提醒限定为基类 status 返回空映射等条件下的风险，不否定所有参数专用比较方案。两份初稿均保持封存。

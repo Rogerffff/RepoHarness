@@ -3,9 +3,9 @@
 按顶层 def/class 切段，找出每条参考 ID 对应的函数体，扫描体内的 importorskip / skipif，
 并单独列出模块级 importorskip（影响整文件）。"""
 import json,os,re,subprocess,collections
-R='runs/env_overnight_20260916/repos/dask'
-M='runs/env_overnight_20260916/L1_dask/mat'
-ASG=json.load(open('docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dask/ASSIGNMENT.json'))
+R='${REPO_ROOT}/runs/env_overnight_20260916/repos/dask'
+M='${REPO_ROOT}/runs/env_overnight_20260916/L1_dask/mat'
+ASG=json.load(open('${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dask/ASSIGNMENT.json'))
 def show(c,p):
     r=subprocess.run(['git','-C',R,'show',f'{c}:{p}'],capture_output=True,text=True)
     return r.stdout if r.returncode==0 else None
@@ -54,4 +54,4 @@ for tid in ASG['tasks']:
     for m in rep['module_guards']: print('   [模块级]',m)
     for k,v in list(rep['guarded_refs'].items())[:8]:
         print(f"   {v['kind']} {k.split('::')[-1]} @line{v['line']} -> {v['guards']}")
-json.dump(out,open('runs/env_overnight_20260916/L1_dask/refskip.json','w'),ensure_ascii=False,indent=1)
+json.dump(out,open('${REPO_ROOT}/runs/env_overnight_20260916/L1_dask/refskip.json','w'),ensure_ascii=False,indent=1)

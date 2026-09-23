@@ -4,7 +4,7 @@
 
 **初判：base 的目录末尾 `/` 匹配缺陷及 gold/noop 分离有直接历史 RH2 证据；gold 的目录类型处理与此路径相符。冻结奖励没有直接核题面七组 blacklist/negation 原例，而且新增“目录”测试存在弱断言。可保留静态诊断候选，但优先做原例和目录/普通文件对照，不能将 63 passed 解读为完整证明题意。**
 
-路径约定：`ROOT=.`；`P=ROOT/runs/swegym_quality_batch02_20260921_v2/public/iterative__dvc-4166`；`Q=ROOT/runs/swegym_quality_batch02_20260921_v2/private/iterative__dvc-4166`；`R=ROOT/runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4166`。源码行号相对 `P/base/`，log 行号指实际 eval.log。
+路径约定：`ROOT=${REPO_ROOT}`；`P=ROOT/runs/swegym_quality_batch02_20260921_v2/public/iterative__dvc-4166`；`Q=ROOT/runs/swegym_quality_batch02_20260921_v2/private/iterative__dvc-4166`；`R=ROOT/runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4166`。源码行号相对 `P/base/`，log 行号指实际 eval.log。
 
 ## 阅读门禁与身份
 

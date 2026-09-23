@@ -2,7 +2,7 @@
 
 2026-09-16 夜 · 只读证据，未起容器、未装依赖、未连远程机器。
 下面的结论对本包对应仓库的题共同适用；题级 JSON 用 `repo_level_findings.md#<锚>` 的方式引用，不逐题重抄。
-证据里的相对路径都以 `` 为根。
+证据里的相对路径都以 `${REPO_ROOT}/` 为根。
 阶段一日志缩写：`LOG = runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/<instance_id>/<gold|empty>/offline/a1/`。
 
 ---

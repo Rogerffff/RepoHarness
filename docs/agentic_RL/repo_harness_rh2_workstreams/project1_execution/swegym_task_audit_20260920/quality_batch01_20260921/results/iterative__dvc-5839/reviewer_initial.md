@@ -2,7 +2,7 @@
 
 2026-09-21。角色：独立 reviewer；本文件在阅读本包任一其他角色结论之前写成，落盘后不改。第一阶段顺序：5839 → 9395 → 3620。本次只静态读文件和校验元数据，没有执行 DVC、pytest、安装、Docker、SSH 或模型。下列新 CPU 方案全部未执行。
 
-路径约定：`R=.`；`P=R/runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-5839`；`Q=同材料根/private/iterative__dvc-5839`；源码行号相对 `P/base`；`E=R/runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-5839`。引用的相对路径均以这四个明确根解析。
+路径约定：`R=${REPO_ROOT}`；`P=R/runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-5839`；`Q=同材料根/private/iterative__dvc-5839`；源码行号相对 `P/base`；`E=R/runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-5839`。引用的相对路径均以这四个明确根解析。
 
 ## 初判与建议用途
 

@@ -2,7 +2,7 @@
 
 审查日：2026-09-21。角色：B2 pandas 独立 reviewer。建议 `disposition.state=needs_review`、`scope=static_review`、`usage.intended_use=development_diagnostic`；原因是正式 actor 开发环境尚未核验，并非已发现题意或 gold 的决定性错误。本次没有执行 pandas、测试、安装、容器或模型，也没有修改 source/test/gold/reward。
 
-本文 `ROOT=.`，`I=ROOT/runs/swegym_quality_batch02_20260921_v2`，`B=I/public/pandas-dev__pandas-56849/base`，`P=I/private/pandas-dev__pandas-56849`。所有源码行号指本次实际读取的静态文件。未读公开读者、主审、其它 reviewer、旧质量结论、批次聚合、manifest、assignments、CPU 计划或方法调整。读取了本题 `environment_record.json` 的原环境摘要，随后用 own `run_refs.json` 的原账本和日志核对；未跟进该摘要的聚合 evidence 指针。三题均独立初判保存后才等待统一开放第二阶段。
+本文 `ROOT=${REPO_ROOT}`，`I=ROOT/runs/swegym_quality_batch02_20260921_v2`，`B=I/public/pandas-dev__pandas-56849/base`，`P=I/private/pandas-dev__pandas-56849`。所有源码行号指本次实际读取的静态文件。未读公开读者、主审、其它 reviewer、旧质量结论、批次聚合、manifest、assignments、CPU 计划或方法调整。读取了本题 `environment_record.json` 的原环境摘要，随后用 own `run_refs.json` 的原账本和日志核对；未跟进该摘要的聚合 evidence 指针。三题均独立初判保存后才等待统一开放第二阶段。
 
 ## 1. 公开要求、版本与初始问题
 

@@ -3,7 +3,7 @@
 import json, hashlib
 from pathlib import Path
 
-ROOT = Path(".")
+ROOT = Path("${REPO_ROOT}")
 DOCS = ROOT / "docs/agentic_RL/repo_harness_rh2_workstreams"
 OUT = DOCS / "project1_execution/env_overnight_20260916/L4_r2e"
 

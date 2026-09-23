@@ -1,6 +1,6 @@
 # getmoto__moto-6114 公开审读
 
-依据仅为共享公开读者角色卡及本题公开包。本文相对引用以 `runs/swegym_quality_batch04_20260921_v1/public/getmoto__moto-6114/` 为根；权威工作区为 `.`。未运行项目、导入项目或执行测试。
+依据仅为共享公开读者角色卡及本题公开包。本文相对引用以 `runs/swegym_quality_batch04_20260921_v1/public/getmoto__moto-6114/` 为根；权威工作区为 `${REPO_ROOT}`。未运行项目、导入项目或执行测试。
 
 ## 需求与应保留行为
 

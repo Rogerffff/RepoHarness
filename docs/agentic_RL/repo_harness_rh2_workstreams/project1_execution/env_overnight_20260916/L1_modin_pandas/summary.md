@@ -3,7 +3,7 @@
 范围：`ASSIGNMENT.json` 的 10 题（pandas 5 题、modin 5 题），按优先级顺序做。
 题级记录在 `records/<instance_id>.json`；仓库级共性事实在 `repo_level_findings.md`；
 复用脚本在 `scripts/`（`prescan.py` / `collide.py` / `leak.py` / `optdeps.py`，前三个改编自 `L1_moto_1/scripts/`）；
-大文件产物在 `runs/env_overnight_20260916/L1_modin_pandas/`
+大文件产物在 `${REPO_ROOT}/runs/env_overnight_20260916/L1_modin_pandas/`
 （`mat/`、`prescan.json`、`collide.json`、`collide_detail.json`、`leak.json`、`optdeps.json`）。
 
 ## 逐题表

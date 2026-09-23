@@ -6,7 +6,7 @@
 
 ## 0. 阅读范围、身份与证据定位
 
-权威根为 `ROOT=.`，没有使用继承 worktree 的内容。下文相对路径缩写：
+权威根为 `ROOT=${REPO_ROOT}`，没有使用继承 worktree 的内容。下文相对路径缩写：
 
 - `I=runs/swegym_quality_batch02_20260921_v2`；`P=I/public/iterative__dvc-1681`；`V=I/private/iterative__dvc-1681`；`B=P/base`。
 - `B1=docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921`；`O=B1/expansion/batch02/results/iterative__dvc-1681`。

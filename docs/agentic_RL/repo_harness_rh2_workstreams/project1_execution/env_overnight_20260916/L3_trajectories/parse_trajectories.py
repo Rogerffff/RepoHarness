@@ -19,11 +19,11 @@ import re
 import sys
 from collections import Counter, OrderedDict
 
-LOGS_CC = "runs/env_probe_20260909_final_sync/ledger/logs_cc"
+LOGS_CC = "${REPO_ROOT}/runs/env_probe_20260909_final_sync/ledger/logs_cc"
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "trajectory_facts.json")
-SIGNALS = ("docs/agentic_RL/repo_harness_rh2_workstreams"
+SIGNALS = ("${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams"
            "/project1_execution/env_overnight_20260916/task_signals_swegym.json")
-REPOS_ROOT = "runs/env_overnight_20260916/repos"
+REPOS_ROOT = "${REPO_ROOT}/runs/env_overnight_20260916/repos"
 REPO_DIRNAME = {
     "python/mypy": "mypy", "getmoto/moto": "moto", "iterative/dvc": "dvc",
     "Project-MONAI/MONAI": "MONAI", "pydantic/pydantic": "pydantic", "dask/dask": "dask",
@@ -254,7 +254,7 @@ def parse_candidate_diff(path):
 
 _SIG = None
 _GRD = None
-GRADING = ("docs/agentic_RL/repo_harness_rh2_workstreams"
+GRADING = ("${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams"
            "/s2/ingest/grading_bundles_v2_v0.jsonl")
 
 

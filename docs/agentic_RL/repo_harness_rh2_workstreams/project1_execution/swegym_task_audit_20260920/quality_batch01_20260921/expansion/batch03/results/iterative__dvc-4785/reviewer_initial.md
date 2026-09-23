@@ -1,6 +1,6 @@
 # iterative__dvc-4785 独立复核初判（封存后不回写）
 
-记录时间：2026-09-20 21:34 UTC / 2026-09-21 05:34 SGT。B3 DVC fresh 独立 reviewer；权威 ROOT=`.`，下列路径相对此根。机器处置 `state=needs_review, scope=static_review`；用途 `development_diagnostic`。
+记录时间：2026-09-20 21:34 UTC / 2026-09-21 05:34 SGT。B3 DVC fresh 独立 reviewer；权威 ROOT=`${REPO_ROOT}`，下列路径相对此根。机器处置 `state=needs_review, scope=static_review`；用途 `development_diagnostic`。
 
 **独立结论：公开HTTP存在性错误成立，gold修好同一状态响应的200/404/403/401主分支，但当前测试不足以确认HEAD→GET回退中的合理旧行为。建议先做状态组合CPU诊断，暂不把原版gold通过等同完整质量合格。** 最重要的新静态疑点是：既有 `_head` 在HEAD和GET都不成功时返回原HEAD响应；因此gold会把HEAD405/GET404从base的False改成抛405，而HEAD404/GET403仍返回False隐藏权限错误。前者是与公开“不把404当错误”及原回退用途相关的回归候选，后者是漏修候选，均尚未运行。
 

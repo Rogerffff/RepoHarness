@@ -9,7 +9,7 @@ FrogNano 从 Qwen3.5-4B 出发，在真实仓库快照上交替进行五轮 Task
 
 **主来源 P：** *FrogNano: Training a 4B Coding Agent via Online Task Synthesis*，Minseon Kim、Zhengyan Shi 等，Froggy Team — Microsoft Research Montréal。官方网页登记日期 **2026-09-07**；阅读与成文日期 **2026-09-09**。只对本次固定 PDF 做结论，不给它虚构 arXiv 版本号。上轮导航候选 `2609.07925` 本轮仍未取得，未验证它与 PDF 的版本关系。
 
-- 本仓库原始 PDF（原文缓存未发布：`docs/harness_improve/external_paper_references/pdfs/frognano_technical_report.pdf`）；[官方 PDF][P]。
+- [本仓库原始 PDF](../pdfs/frognano_technical_report.pdf)；[官方 PDF][P]。
 - 官方托管提交：`microsoft/debug-gym@6c8cea40a507c8e9dac0439c270c3c5a3ce8a4dc`，`docs/static/papers/frognano_technical_report.pdf`。
 - 本次附件为 **37 页、2,753,933 bytes**。对附件实际计算 Git blob ID 得到 **`c7ac442cdeb49cd4f0cd15793649b05234abcb55`**，与先前取得的官方元数据一致；因此不是拿另一版本替换原链接。
 - PDF metadata 的生成时间为 `2026-09-07 19:41:50Z`。页码以下均为 **PDF 物理页，与印刷页一致**。

@@ -2,7 +2,7 @@ iterative__dvc-4185 公开阅读记录
 
 审查日期：2026-09-21。角色：全新单题公开读者。这里只记录公开要求、静态代码线索和建议验证，不提供修复补丁，不推测隐藏验收或标准答案。
 
-路径约定：ROOT=.；PUBLIC_DIR=ROOT/runs/swegym_quality_batch04_20260921_v1/public/iterative__dvc-4185。下列 user_prompt.txt、public_bundle.json、environment_brief.md、base/... 引用均相对 PUBLIC_DIR；L 表示实际静态文件行号。base_commit 的公开标签为 0899b277c02082ffc24bb732e8a7cf3ef4333948（public_bundle.json:L1），本角色未通过共享镜像或历史另行核验导出身份。
+路径约定：ROOT=${REPO_ROOT}；PUBLIC_DIR=ROOT/runs/swegym_quality_batch04_20260921_v1/public/iterative__dvc-4185。下列 user_prompt.txt、public_bundle.json、environment_brief.md、base/... 引用均相对 PUBLIC_DIR；L 表示实际静态文件行号。base_commit 的公开标签为 0899b277c02082ffc24bb732e8a7cf3ef4333948（public_bundle.json:L1），本角色未通过共享镜像或历史另行核验导出身份。
 
 **公开要求与约束分层**
 

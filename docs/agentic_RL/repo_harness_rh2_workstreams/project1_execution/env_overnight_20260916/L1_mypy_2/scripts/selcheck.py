@@ -3,8 +3,8 @@
 2) 每个评分 case 的宿主 .test 文件是否在本题 test_patch 里（不在 = 既不被 eval 还原也不受 hygiene 保护）。
 只读操作：git grep / git ls-tree。"""
 import json,subprocess,re,os
-R='runs/env_overnight_20260916/repos/mypy'
-RUN='runs/env_overnight_20260916/L1_mypy_2'
+R='${REPO_ROOT}/runs/env_overnight_20260916/repos/mypy'
+RUN='${REPO_ROOT}/runs/env_overnight_20260916/L1_mypy_2'
 PRE=json.load(open(f'{RUN}/prescan.json')); KS=json.load(open(f'{RUN}/kscan.json'))
 cache={}
 def pynames(commit):

@@ -1,6 +1,6 @@
 # python__mypy-16963：旧结论增量
 
-协调者明确放行后读取 history/python__mypy-16963/refs.json 及其唯一引用 `R/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_2/records/python__mypy-16963.json`（H），R=`.`。未扩读其它题/其它角色，前稿 SHA256 `faa88f06bce3ae6bcf9cf449cfda359c3988ba52fc2867f28d55b4e95048a6cf` 保持不变。
+协调者明确放行后读取 history/python__mypy-16963/refs.json 及其唯一引用 `R/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_2/records/python__mypy-16963.json`（H），R=`${REPO_ROOT}`。未扩读其它题/其它角色，前稿 SHA256 `faa88f06bce3ae6bcf9cf449cfda359c3988ba52fc2867f28d55b4e95048a6cf` 保持不变。
 
 | 旧主张 | 处理 | 新决定性依据 |
 | --- | --- | --- |

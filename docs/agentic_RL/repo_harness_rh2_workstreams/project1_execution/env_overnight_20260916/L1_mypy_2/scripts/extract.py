@@ -1,7 +1,7 @@
 import json, os
-S='docs/agentic_RL/repo_harness_rh2_workstreams/s2'
-PKG='docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_2'
-OUT='runs/env_overnight_20260916/L1_mypy_2/mat'
+S='${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/s2'
+PKG='${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_2'
+OUT='${REPO_ROOT}/runs/env_overnight_20260916/L1_mypy_2/mat'
 ids=set(json.load(open(f'{PKG}/ASSIGNMENT.json'))['tasks'])
 files={'public':f'{S}/ingest/public_bundles_v0.jsonl','grading':f'{S}/ingest/grading_bundles_v2_v0.jsonl',
        'validation':f'{S}/ingest/validation_bundles_v0.jsonl','envpkg':f'{S}/ingest/environment_packages_v0.jsonl',

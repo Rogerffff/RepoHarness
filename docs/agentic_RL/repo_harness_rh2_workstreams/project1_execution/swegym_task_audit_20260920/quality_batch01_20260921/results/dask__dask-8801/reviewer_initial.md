@@ -14,10 +14,10 @@
 
 固定路径缩写：
 
-- PUB = runs/swegym_quality_batch01_20260921_v2/public/dask__dask-8801
+- PUB = ${REPO_ROOT}/runs/swegym_quality_batch01_20260921_v2/public/dask__dask-8801
 - BASE = PUB/base
-- PRV = runs/swegym_quality_batch01_20260921_v2/private/dask__dask-8801
-- RUN = runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-2
+- PRV = ${REPO_ROOT}/runs/swegym_quality_batch01_20260921_v2/private/dask__dask-8801
+- RUN = ${REPO_ROOT}/runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-2
 - GOLD_LOG = RUN/eval_logs/evallog_replay-f216-baseline01-w_61ac6118.eval.log
 - NOOP_LOG = RUN/eval_logs/evallog_replay-f216-baseline01-w_8d250d15.eval.log
 - LEDGER = RUN/ledger.jsonl，**仅读取本题第 9 行 noop、第 10 行 gold**。

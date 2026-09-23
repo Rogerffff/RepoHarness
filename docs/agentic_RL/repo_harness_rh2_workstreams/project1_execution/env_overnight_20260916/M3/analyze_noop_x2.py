@@ -8,7 +8,7 @@ normalize_map / r2e_reward（Prime 口径 + 0.3 版对称去 ANSI），只读不
 import json, os, re
 from collections import Counter
 
-ROOT = "."
+ROOT = "${REPO_ROOT}"
 FACTS = os.path.join(ROOT, "runs/env_overnight_20260916/M3/facts")
 OUT = os.path.join(ROOT, "runs/env_overnight_20260916/M3/noop_repeat.json")
 CANDS = [os.path.join(ROOT, "runs/env_probe_20260909_codex_backup/data/r2e_candidates_full.jsonl"),

@@ -6,7 +6,7 @@ base 代码一律用裸克隆的 `git show <base_commit>:<path>` / `git grep <pa
 
 **本包 20 题全部没有任何历史实跑证据**：不在 stage1 的 182 题样本内、`in_e2` 全空、无 DeepSeek 候选（`task_signals_swegym.json`）。所以所有结论都是静态的，运行期问题只能写成"下一实验"。
 
-逐题记录：`records/<instance_id>.json`。脚本在 `scripts/`（`extract.py` 抽四面材料、`prescan.py` 路径/评分面预扫、`kscan.py` -k 子串过选与 case 归属文件、`tpcases.py` 把 test_patch 改动逐行归属到 `[case X]`、`dump.py` 单题查看）。中间产物在 `runs/env_overnight_20260916/L1_mypy_2/`（`mat/`、`prescan.json`、`kscan.json`）。
+逐题记录：`records/<instance_id>.json`。脚本在 `scripts/`（`extract.py` 抽四面材料、`prescan.py` 路径/评分面预扫、`kscan.py` -k 子串过选与 case 归属文件、`tpcases.py` 把 test_patch 改动逐行归属到 `[case X]`、`dump.py` 单题查看）。中间产物在 `${REPO_ROOT}/runs/env_overnight_20260916/L1_mypy_2/`（`mat/`、`prescan.json`、`kscan.json`）。
 
 | task | 主要发现 | 建议处置 | 下一实验 |
 | --- | --- | --- | --- |
@@ -41,7 +41,7 @@ base 代码一律用裸克隆的 `git show <base_commit>:<path>` / `git grep <pa
 
 ## 仓库级（跨题）发现
 
-证据文件都在 `runs/env_overnight_20260916/L1_mypy_2/`。第 1、3 条与 L1_mypy_1 的仓库级结论方向一致，这里给出**精确成因与量化**；第 2、4、5 条是本包新增。
+证据文件都在 `${REPO_ROOT}/runs/env_overnight_20260916/L1_mypy_2/`。第 1、3 条与 L1_mypy_1 的仓库级结论方向一致，这里给出**精确成因与量化**；第 2、4、5 条是本包新增。
 
 1. **P2P/F2P 的候选集就是 `re.findall(r"\[case ([^\]]+)\]", test_patch)`，即 test_patch **diff 文本**里字面出现过的 case 名，再取 pytest `-k` 子串闭包。**
    代码依据：`rh2/src/repoharness2/envpack/spec_vendor.py:183-191 derive_test_command`（逐字对齐上游 fork `test_spec.make_test_command`），mypy 分支是 `test_cmd + " " + '"' + " or ".join(keys) + '"'`，**不带测试文件路径**。

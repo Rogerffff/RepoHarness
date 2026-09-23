@@ -1,0 +1,454 @@
+{
+  "started_at": "2026-09-21T01:13:49.069116+08:00",
+  "status": "completed_night_static_audit",
+  "root_thread_id": "01a08bd3-b639-7c71-a1ee-f3f4d05b3a0e",
+  "host_id": "local",
+  "source_workspace": "${REPO_ROOT}",
+  "coordinator": {
+    "clientThreadId": "client-new-thread:253788ed-21aa-4a6e-b964-9b05f4ea4c4f",
+    "hostId": "local",
+    "status": "idle",
+    "threadId": "01a0bfcf-544a-7ce3-95a0-1a0f3dac6ded",
+    "actual_start_confirmed_at": "2026-09-21T01:18:19.696960+08:00",
+    "wait_cursor": "757187e0-691b-4d11-addc-40cbc74e7eba:27",
+    "active_turn": "01a0c112-b893-7353-a26b-1f18719ef2a5"
+  },
+  "model": "gpt-6-astra",
+  "thinking": "max",
+  "batch_manifest_sha256": "a19cfcda5df53f0aee924ecb2e2a4534535f69287e3e770a27bdcdc817683a22",
+  "deadline_new_tasks": "2026-09-21T08:00:00+08:00",
+  "close_inflight_after": "2026-09-21T07:30:00+08:00",
+  "usage_initial": {
+    "codex_used_percent": 43,
+    "window_minutes": 10080,
+    "checked_at": "2026-09-21T01:13:49.069394+08:00"
+  },
+  "reset_authorization": {
+    "max_credits": 1,
+    "expires_at": "2026-09-21T08:08:08+08:00",
+    "threshold_remaining_percent": 10,
+    "idempotency_key": "6e6e452b-4951-4471-a861-099e2725bb63",
+    "status": "redeemed",
+    "intent_at": "2026-09-21T03:44:16.663496+08:00",
+    "eligibility": {
+      "used_percent": 90,
+      "remaining_percent": 10,
+      "window_minutes": 10080,
+      "checked_at": "2026-09-21T03:44:03+08:00",
+      "other_windows": "unavailable",
+      "useful_work": "batch02 active and batch03 prepared for acceptance-dependent expansion"
+    },
+    "outcome": "reset",
+    "completed_at": "2026-09-21T03:44:35.164759+08:00",
+    "authorized_credits_consumed": 1,
+    "credits_remaining_visible": 2
+  },
+  "automation": {
+    "id": "9-11",
+    "status": "PAUSED",
+    "actual_trigger_verified": true,
+    "name": "SWE-Gym 夜间审查协调巡检",
+    "rrule": "FREQ=MINUTELY;INTERVAL=20",
+    "target_thread_id": "01a08bd3-b639-7c71-a1ee-f3f4d05b3a0e",
+    "saved_at": "2026-09-21T01:14:43.149651+08:00",
+    "first_actual_trigger_at": "2026-09-21T01:23:42.085+08:00",
+    "last_actual_trigger_at": "2026-09-21T06:54:43.182+08:00",
+    "interval_save_readback_at": "2026-09-21T01:24:53.080648+08:00",
+    "next_run_at": "not_exposed_by_official_tool_or_toml",
+    "last_prompt_update": "2026-09-21T07:42:50.991656+08:00",
+    "reset_consumed_prompt_readback": true,
+    "batch03_prompt_readback": true,
+    "prompt_sha256": "f459ba5d82b819d064192cf73b358ceac4561dc09c00924c80ed93b8d91c152b",
+    "batch04_prompt_readback": true,
+    "batch05_prompt_readback": true,
+    "pause_readback_at": "2026-09-21T07:42:50.991656+08:00",
+    "pause_reason": "all_five_batches_reviewed_evidence_closed_no_remaining_night_scope"
+  },
+  "extensions": [
+    {
+      "batch": "batch02",
+      "manifest": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/batch_manifest.json",
+      "status": "static_review_accepted",
+      "task_count": 12,
+      "material_check": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/material_check.json",
+      "material_manifest_sha256": "26e171efc10a508c9fb7f18b6e33c3b9576f309e3999996aceff86bcb2812dcf",
+      "prepared_at": "2026-09-21T01:21:22.713558+08:00",
+      "handoff": "expansion/batch02/coordinator_handoff.md",
+      "dispatched_at": "2026-09-21T03:17:33.465770+08:00",
+      "actual_start_confirmed_at": "2026-09-21T03:18:30.198285+08:00",
+      "accepted_at": "2026-09-21T05:02:03.358815+08:00"
+    },
+    {
+      "batch": "batch03",
+      "status": "static_review_accepted",
+      "task_count_planned": 11,
+      "manifest": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/batch_manifest.json",
+      "agent": "/root/batch03_material_prepare",
+      "seed": "swegym-quality-batch03-20260921",
+      "scope": "same four repository pools, exclude batch01 and batch02, fixed hash sample, preparation only",
+      "adjustment": {
+        "requested_slots": 12,
+        "selected_count": 11,
+        "reason": "fixed original not_reviewed Pandas pool has 5 tasks, 3 selected in batch02; retain remaining 2 without expanding pool or reusing tasks",
+        "decision": "root_accept_11_not_missing_task"
+      },
+      "task_count": 11,
+      "material_manifest_sha256": "424ad043fda8c3171109faa0d6acf9354da8011e6f5c625f24308fdcf19ea3b3",
+      "material_check": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/material_check.json",
+      "root_material_check": "acceptance/batch03_material_precheck.json",
+      "prepared_confirmed_at": "2026-09-21T03:45:57.506673+08:00",
+      "handoff": "expansion/batch03/coordinator_handoff.md",
+      "handoff_status": "dispatched_actual_turn_confirmed",
+      "dispatched_at": "2026-09-21T05:02:03.358815+08:00",
+      "environment_inventory": "expansion/batch03/environment_replay_inventory.json",
+      "actual_start_confirmed_at": "2026-09-21T05:03:24.224399+08:00",
+      "accepted_at": "2026-09-21T06:20:26.851485+08:00"
+    },
+    {
+      "batch": "batch04",
+      "status": "static_review_accepted",
+      "task_count_planned": 3,
+      "agent": "/root/batch03_material_prepare",
+      "seed": "swegym-quality-batch04-20260921",
+      "scope": "same original not_reviewed pool, exclude batch01/02/03; one DVC, one mypy, one Moto, no Pandas remainder; only prepare backup pending acceptance and time",
+      "manifest": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/batch_manifest.json",
+      "handoff_status": "dispatched_actual_turn_confirmed",
+      "task_count": 3,
+      "task_ids": [
+        "iterative__dvc-4185",
+        "python__mypy-16869",
+        "getmoto__moto-6114"
+      ],
+      "material_manifest_sha256": "6c27c2a0fd6a83be5c11076985e84421c8887f5ff801783db1564e8f20392c9b",
+      "root_material_check": "acceptance/batch04_material_precheck.json",
+      "prepared_confirmed_at": "2026-09-21T05:48:21.028032+08:00",
+      "handoff": "expansion/batch04/coordinator_handoff.md",
+      "dispatched_at": "2026-09-21T06:20:26.851485+08:00",
+      "actual_start_confirmed_at": "2026-09-21T06:22:38.468107+08:00",
+      "accepted_at": "2026-09-21T07:05:49.994541+08:00"
+    },
+    {
+      "batch": "batch05",
+      "status": "static_review_accepted",
+      "task_count": 2,
+      "task_ids": [
+        "python__mypy-11707",
+        "getmoto__moto-5406"
+      ],
+      "manifest": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/batch_manifest.json",
+      "material_manifest_sha256": "ea9421d30ba7bbf9078dc42967f8f5eaa7cc0554a7db19b6aa85bb48d1be9174",
+      "root_material_check": "acceptance/batch05_material_precheck.json",
+      "handoff": "expansion/batch05/coordinator_handoff.md",
+      "last_batch_this_night": true,
+      "authorized_at": "2026-09-21T07:06:49.776211+08:00",
+      "dispatched_at": "2026-09-21T07:07:04+08:00",
+      "actual_start_confirmed_at": "2026-09-21T07:07:30.866623+08:00",
+      "accepted_at": "2026-09-21T07:41:58.882011+08:00"
+    }
+  ],
+  "last_checked_at": "2026-09-21T07:42:50.991656+08:00",
+  "parallel_preparation": {
+    "agent": "/root/night_probe_readiness",
+    "scope": "static actor CPU entry design",
+    "output": "acceptance/cpu_entry_plan.md",
+    "status": "static_plan_reviewed_no_execution"
+  },
+  "verification": {
+    "coordinator_create_accepted": true,
+    "coordinator_real_thread_seen": true,
+    "automation_save_readback": true,
+    "automation_heartbeat_received": true,
+    "coordinator_completion_callback_delivery": true
+  },
+  "usage_latest": {
+    "used_percent": 91,
+    "remaining_percent": 9,
+    "window_minutes": 10080,
+    "recorded_at": "2026-09-21T07:42:50.991656+08:00",
+    "other_windows": "unavailable",
+    "source": "fresh_get_usage_limits_during_final_closure",
+    "credits_remaining_visible": 2,
+    "additional_reset_authorized": false
+  },
+  "early_review": {
+    "at": "2026-09-21T01:25:21.427434+08:00",
+    "scope": "spot-read public_read outputs for Conan15422 and Dask8597; assignment order checked from ledger",
+    "result": "no method correction requested yet; complete private/reviewer chain still pending",
+    "limits": "not independent task-quality acceptance; not OS isolation verification; some long output truncated so not counted as full-file review"
+  },
+  "accepted_method_findings": [
+    {
+      "topic": "execution_vs_reward_reference",
+      "instance_id": "dask__dask-8597",
+      "evidence": "acceptance/dask8597_reference_scope.md",
+      "status": "static_and_historical_facts_verified_candidate_reward_consequence_pending"
+    }
+  ],
+  "accepted_deliveries": [
+    {
+      "instance_id": "conan-io__conan-15422",
+      "scope": "limited_static_candidate_cpu_handoff",
+      "root_review": "acceptance/conan15422_first_delivery.md",
+      "runtime_verified": false
+    },
+    {
+      "instance_id": "conan-io__conan-14177",
+      "scope": "static_contract_conflict_cpu_calibration",
+      "root_review": "acceptance/first_wave_review.md",
+      "runtime_verified": false
+    },
+    {
+      "instance_id": "dask__dask-8597",
+      "scope": "limited_static_candidate_targeted_cpu_before_model",
+      "root_review": "acceptance/first_wave_review.md",
+      "runtime_verified": false
+    },
+    {
+      "instance_id": "dask__dask-8801",
+      "scope": "static_wording_and_coverage_issues_cpu_counterexamples",
+      "root_review": "acceptance/first_wave_review.md",
+      "runtime_verified": false
+    },
+    {
+      "instance_id": "pydantic__pydantic-8511",
+      "scope": "conditional_static_candidate_inheritance_cpu",
+      "root_review": "acceptance/wave2_interim_review.md",
+      "runtime_verified": false
+    },
+    {
+      "instance_id": "pydantic__pydantic-5706",
+      "scope": "static_direction_ambiguity_and_historical_coverage_gap",
+      "root_review": "acceptance/wave2_interim_review.md",
+      "runtime_verified": false
+    }
+  ],
+  "method_clarifications": [
+    {
+      "topic": "cross_task_review_exposure",
+      "rule": "For future multi-task reviewers, save package initial assessments before opening primary conclusions; record existing specific cross-task exposures without automatically rerunning whole tasks.",
+      "status": "sent_to_coordinator"
+    }
+  ],
+  "first_wave_acceptance": {
+    "at": "2026-09-21T02:09:51.124816+08:00",
+    "completed_static_role_chains": 4,
+    "metadata_record": "acceptance/first_wave_metadata_check.json",
+    "root_review": "acceptance/first_wave_review.md",
+    "result": "method_and_scoped_findings_accepted_continue_fixed_eight"
+  },
+  "wave2_interim_review": {
+    "record": "acceptance/wave2_interim_review.md",
+    "public_read_count": 12,
+    "new_hypotheses": [
+      "pydantic8511_inherited_annotations",
+      "dvc9395_dry_and_no_remote"
+    ],
+    "historical_attribution_corrected": "dvc9395 old candidate failed before checkout-count assertion",
+    "independent_reviewer_complete": false,
+    "pydantic_reviewer_complete": true,
+    "pydantic5706_historical_evidence": "acceptance/pydantic5706_historical_evidence.json"
+  },
+  "batch01_acceptance": {
+    "at": "2026-09-21T03:17:33.465770+08:00",
+    "static_tasks_complete": 12,
+    "root_review": "acceptance/batch01_final_review.md",
+    "root_metadata_check": "acceptance/batch01_final_metadata_check.json",
+    "runtime_verified": false,
+    "cpu_queue_supplement_review": "/root/batch01_cpu_handoff_review",
+    "cpu_queue_supplement_status": "reviewed_no_blocking_issue"
+  },
+  "parallel_preparations": [
+    {
+      "agent": "/root/batch01_cpu_handoff_review",
+      "status": "completed_no_blocking_issue",
+      "output": "acceptance/cpu_queue_handoff_review.md"
+    },
+    {
+      "agent": "/root/batch03_material_prepare",
+      "status": "completed_materials_only_no_dispatch",
+      "output": "expansion/batch03/"
+    }
+  ],
+  "batch02_interim_review": {
+    "root_review": "acceptance/batch02_interim_review.md",
+    "metadata": "acceptance/batch02_interim_metadata_check.json",
+    "completed_public": 12,
+    "dvc_review_initial_order_checked": true,
+    "full_batch_accepted": false,
+    "source_spot_checks": [
+      "dvc4166_actual_alias_collision_no_mixed_reward_observation",
+      "dvc1681_internal_representation_and_mock_boundary_no_runtime",
+      "moto7584_public_repeat_subscription_vs_gold_new_subscription_static_path",
+      "pandas48106_remaining_tz_aliases_all_observed_members_pass_no_mixed_case"
+    ]
+  },
+  "batch02_partial_acceptance": {
+    "package": "dvc",
+    "task_count": 3,
+    "accepted_at": "2026-09-21T04:22:46.291342+08:00",
+    "root_review": "acceptance/batch02_dvc_review.md",
+    "metadata": "acceptance/batch02_dvc_metadata_check.json",
+    "result": "static_role_chain_and_limited_recommendations_accepted",
+    "runtime_verified": false,
+    "full_batch_accepted": false
+  },
+  "batch02_method_exception": {
+    "observed_at": "2026-09-21T04:24:51.562982+08:00",
+    "source": "coordinator task message and assignments/method records",
+    "scope": "Pandas56849 main after own history release saw another task id and one historical aggregate count",
+    "verified": "56849 pre-history draft unchanged; 48106/53958 have only public_read at root check, original main assignments withdrawn",
+    "disposition": "accept bounded containment; fresh main for remaining two, no redo public roles or completed56849; verify disclosed final output and reassignment at batch acceptance",
+    "actual_tool_output_not_independently_retrieved": true
+  },
+  "batch02_package_acceptances": [
+    {
+      "package": "dvc",
+      "task_count": 3,
+      "accepted_at": "2026-09-21T04:22:46.291342+08:00",
+      "root_review": "acceptance/batch02_dvc_review.md",
+      "metadata": "acceptance/batch02_dvc_metadata_check.json",
+      "result": "static_role_chain_and_limited_recommendations_accepted",
+      "runtime_verified": false,
+      "full_batch_accepted": false
+    },
+    {
+      "package": "mypy",
+      "task_count": 3,
+      "accepted_at": "2026-09-21T04:45:02.997988+08:00",
+      "root_review": "acceptance/batch02_mypy_review.md",
+      "metadata": "acceptance/batch02_mypy_metadata_check.json",
+      "result": "static_role_chain_and_limited_recommendations_accepted",
+      "runtime_verified": false
+    }
+  ],
+  "batch03_environment_inventory": {
+    "status": "root_reviewed_static_inventory",
+    "root_review": "acceptance/batch03_environment_inventory_review.json",
+    "runtime_verified": false
+  },
+  "batch02_acceptance": {
+    "at": "2026-09-21T05:02:03.358815+08:00",
+    "static_tasks_complete": 12,
+    "root_review": "acceptance/batch02_final_review.md",
+    "root_metadata_check": "acceptance/batch02_final_metadata_check.json",
+    "cpu_handoff_review": "acceptance/batch02_cpu_handoff_review.md",
+    "runtime_verified": false,
+    "limited_static_candidates": 10,
+    "diagnostic_reserves": 2
+  },
+  "batch03_interim_review": {
+    "at": "2026-09-21T05:26:22.837150+08:00",
+    "record": "acceptance/batch03_interim_review.md",
+    "public_seals_checked": 8,
+    "main_seals_and_order_checked": 4,
+    "completed_independent_packages_at_check": 0,
+    "status": "no_correction_to_live_work_pending_independent_review"
+  },
+  "batch03_package_acceptances": {
+    "dvc": {
+      "at": "2026-09-21T05:48:21.028032+08:00",
+      "root_review": "acceptance/batch03_dvc_review.md",
+      "metadata": "acceptance/batch03_dvc_metadata_check.json",
+      "task_count": 3,
+      "runtime_verified": false
+    },
+    "mypy": {
+      "at": "2026-09-21T06:20:26.851485+08:00",
+      "root_review": "acceptance/batch03_mypy_review.md",
+      "metadata": "acceptance/batch03_mypy_metadata_final.json",
+      "task_count": 3,
+      "runtime_verified": false
+    }
+  },
+  "batch03_acceptance": {
+    "at": "2026-09-21T06:20:26.851485+08:00",
+    "static_tasks_complete": 11,
+    "root_review": "acceptance/batch03_final_review.md",
+    "root_metadata_check": "acceptance/batch03_final_metadata_check.json",
+    "cpu_handoff_reviews": [
+      "acceptance/batch03_mypy_cpu_handoff_review.md",
+      "acceptance/batch03_final5_cpu_handoff_review.md"
+    ],
+    "limited_static_candidates": 5,
+    "not_prioritized": 6,
+    "cpu_plan_count": 11,
+    "runtime_verified": false
+  },
+  "morning_handoff_preparation": {
+    "agent": "/root/night_probe_readiness",
+    "status": "root_reviewed_static_suggestions_no_execution",
+    "output": "acceptance/morning_cpu_shortlist.md",
+    "scope": "accepted first35; no new task review or runtime",
+    "accepted_at": "2026-09-21T06:34:08.745738+08:00",
+    "queue_links_checked": 6,
+    "document_links_checked": 13
+  },
+  "batch04_interim_review": {
+    "at": "2026-09-21T06:34:08.745738+08:00",
+    "root_review": "acceptance/batch04_interim_review.md",
+    "public_seals": [
+      {
+        "id": "iterative__dvc-4185",
+        "sha_matches": true
+      },
+      {
+        "id": "python__mypy-16869",
+        "sha_matches": true
+      },
+      {
+        "id": "getmoto__moto-6114",
+        "sha_matches": true
+      }
+    ],
+    "scope": "DVC4185 original public two symptoms vs unchanged checksum path; independent reviewer pending",
+    "runtime_verified": false,
+    "cpu_handoff_reviewer": "/root/batch01_cpu_handoff_review"
+  },
+  "batch04_acceptance": {
+    "at": "2026-09-21T07:05:49.994541+08:00",
+    "static_tasks_complete": 3,
+    "root_review": "acceptance/batch04_final_review.md",
+    "root_metadata_check": "acceptance/batch04_final_metadata_check.json",
+    "cpu_handoff_review": "acceptance/batch04_cpu_handoff_review.md",
+    "limited_static_candidates": 1,
+    "not_prioritized": 2,
+    "cpu_plan_count": 3,
+    "runtime_verified": false
+  },
+  "batch05_interim_review": {
+    "at": "2026-09-21T07:11:52.294323+08:00",
+    "source": "coordinator_callback_not_heartbeat",
+    "root_review": "acceptance/batch05_interim_review.md",
+    "scope": "two original prompts/gold/test and key public code; no role output or runtime read",
+    "independent_review_complete": false,
+    "midpoint_metadata": "acceptance/batch05_midpoint_metadata_check.json",
+    "sealed_initial_files_checked": 4,
+    "all_matched": true,
+    "history_order_checked": 2,
+    "cpu_handoff_reviewer": "/root/batch01_cpu_handoff_review",
+    "cpu_handoff_status": "completed_and_root_final_queue_reviewed",
+    "historical_log_spotcheck": "acceptance/batch05_historical_log_spotcheck.json"
+  },
+  "batch05_acceptance": {
+    "at": "2026-09-21T07:41:58.882011+08:00",
+    "static_tasks_complete": 2,
+    "root_review": "acceptance/batch05_final_review.md",
+    "root_metadata_check": "acceptance/batch05_final_metadata_check.json",
+    "cpu_handoff_review": "acceptance/batch05_cpu_handoff_review.md",
+    "limited_static_candidates": 0,
+    "not_prioritized": 2,
+    "cpu_plan_count": 2,
+    "runtime_verified": false
+  },
+  "night_summary": {
+    "path": "night_summary_20260921.md",
+    "totals": "acceptance/night_totals_20260921.json",
+    "tasks": 40,
+    "limited_static_candidates": 21,
+    "diagnostic_or_deferred": 19,
+    "unexecuted_cpu_plans": 42,
+    "further_batches_authorized": false,
+    "runtime_executed": false
+  },
+  "completed_at": "2026-09-21T07:42:50.991656+08:00"
+}

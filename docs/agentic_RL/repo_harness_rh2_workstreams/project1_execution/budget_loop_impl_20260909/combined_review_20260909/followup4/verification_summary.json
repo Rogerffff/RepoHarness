@@ -1,0 +1,80 @@
+{
+  "date": "2026-09-09",
+  "base_commit": "d4af9d9a449555580e27126425391de2cf87fbf5",
+  "reviewed_head": "92d165aa1dae5a660557f5f07cc702c3dee62ea3",
+  "conclusion": "聚焦复核通过：停止合同 A 已实现，F1 episode 取消问题关闭；无新增本批阻塞",
+  "source_and_maintenance_files_verified": 4,
+  "changed_files_during_review": [],
+  "root_verification": {
+    "focused_maintenance_tests": {
+      "passed": 258,
+      "seconds": 16.88,
+      "exit_code": 0
+    },
+    "ruff": {
+      "files": 4,
+      "exit_code": 0
+    },
+    "fatal_replay": {
+      "cases": 16,
+      "cross_episode_deadline_cases": 3,
+      "exit_code": 0
+    },
+    "stop_contract_a_replay": {
+      "cases": 8,
+      "exit_code": 0
+    },
+    "prior_stop_evidence_replay": {
+      "cases": 7,
+      "exit_code": 0
+    },
+    "prior_retry_replay": {
+      "cases": 2,
+      "exit_code": 0
+    },
+    "run_shutdown_shared_boundary_probe": {
+      "cases": 2,
+      "exit_code": 0,
+      "scope": "只接 intake/inflight 局部步骤，不代表完整关停验收"
+    }
+  },
+  "nonblocking_backlog": [
+    "共享 run 级再次取消已进入 finally 的慢清理",
+    "上轮缺 base 的血缘 producer 区分不足"
+  ],
+  "limits": [
+    "未重跑作者全量 2190 项",
+    "本轮没有真实 Docker／目标 SWE／CC／模型 API／GPU",
+    "F1 关闭针对 episode 期限，不保证任意 run 关停取消下的完整清理"
+  ],
+  "local_document_links_checked": true,
+  "artifact_sha256": {
+    "README.md": "e8020d3c22ef5ad014761c85351ce593e6fbb767e62f8314fa49973abc891778",
+    "falsifier.md": "a6f89d632b73afedc29c2595cc24a7de5287d48a90d276890845632683169e0e",
+    "fatal_replay.diff": "020fd8128f3579ea9ceb147025a925b3089de87ebfbdb53361253bdce6559a0c",
+    "fatal_replay.jsonl": "daf143989c28913c36c186ab760de5576ebd8bf0d824ebcdfe1bba4245d86ac3",
+    "fatal_replay.py": "d6653a84c5e8bd569161047b61ca94a04f7426a7dff94516d9d7eeb6f15e40a7",
+    "fatal_replay_result.json": "2fe04a917fcc4ddaef80ac49cef745cb1b290ac40f3f24885bb2b47f564a3861",
+    "fatal_replay_stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "focused_tests.txt": "eb8647a177b1b7f7c227c99b86616c77151c386078ca1cee251b674c57c3552c",
+    "production_probe.json": "9f0b6b15bc6e5a8477c060878c88587b7a502afea211410221e45a399e97266f",
+    "production_probe.py": "1193a5cdbf5aee4abe4227cbb87164f50c81bac5f4606f580ac60ea1872a2203",
+    "production_probe_root.jsonl": "6206ef46fd64fa68af0f763777a981dfea7338747cabb1f58f880787cc7022a0",
+    "production_probe_root_stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "production_tracer.md": "59802903504dff9caf5bedeed8d6e64afabc8625bb1f963c1d20805297d54bfe",
+    "retry_confirmed_replay.jsonl": "a42538161fe2891875f05b9c5f7d413bf0140f5274cf0771095e4a10e3328dc1",
+    "retry_confirmed_replay_stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "review_snapshot.json": "16bcf26e81f20a0acab2ff8632ed2f5e5f22514154db6332da858b857ddebfa9",
+    "ruff.txt": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+    "stop_cases_replay.diff": "6d075794cd68e1795738436d4f706680528eccdaaa5714f1889a944dd9742b87",
+    "stop_cases_replay.jsonl": "d85637fc398d24752ba50816f238861bff05a1f90e37d6bdbbd1e7bf7f39d5cd",
+    "stop_cases_replay.py": "caf784a563295460a3971b45dca35a0ee06b554c160d41e6d63b5129b9d61923",
+    "stop_cases_replay_stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stop_evidence_replay.jsonl": "c47711a6f88502ca0786d05ec711d739e447791c8dd5d7b2c98235c3f11d55bd",
+    "stop_evidence_replay_stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "reused_probe_sha256": {
+    "followup3/stop_evidence_replay.py": "0b24fbc229dcd3956558b5c6c9f8bd8a6d6f6069ae3d173204aa3c4a448ab695",
+    "followup3/falsifier_probe.py": "b741041c44eaa2154d98b2ea760651126025ef0672d5c9aa15ad8e0ffdca2148"
+  }
+}

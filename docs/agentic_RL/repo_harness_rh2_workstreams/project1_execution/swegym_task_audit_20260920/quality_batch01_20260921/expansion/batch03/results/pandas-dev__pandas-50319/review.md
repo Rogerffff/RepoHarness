@@ -8,7 +8,7 @@
 
 放行后只读本题及同包 51605 的 public_read、analysis_before_history、old_findings_delta、card、screening_record，以及各自 history/refs.json 精确指向的唯一旧单题 JSON。没有追读旧记录中的其它报告、其它任务、聚合或 analysis_reference。另读共用原 40 项检查表，并针对自己的公开源码补核调用者与 helper；未执行项目。独立阶段已见 environment_record 内 gold/noop 摘要与本题全部私有测试/gold 的暴露，仍按 initial 披露；本次又见主审和旧结论，不能作为公开盲读或 solver。
 
-路径：`ROOT=.`；`I3=ROOT/runs/swegym_quality_batch03_20260921_v1`；`P=I3/public/pandas-dev__pandas-50319/base`；`Q=I3/private/pandas-dev__pandas-50319`；`R=ROOT/runs/env_recipe_repair_20260919/reference_v1`。本题结果目录为 `ROOT/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/pandas-dev__pandas-50319`。
+路径：`ROOT=${REPO_ROOT}`；`I3=ROOT/runs/swegym_quality_batch03_20260921_v1`；`P=I3/public/pandas-dev__pandas-50319/base`；`Q=I3/private/pandas-dev__pandas-50319`；`R=ROOT/runs/env_recipe_repair_20260919/reference_v1`。本题结果目录为 `ROOT/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/pandas-dev__pandas-50319`。
 
 对照主审封存稿 SHA256=`2148d157f3ab1b723305abbc7d61998cc7403afc0b651643c6ce0938a0c88d44`。读取时 screening_record SHA256=`ddb3dd292063bf116713ca23441a9a7d5342c47387f1e5dcf8b6f611ed19ba5d`；以下涉及其状态的意见针对该版本，最终结构补齐由 root 负责。
 

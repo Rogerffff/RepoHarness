@@ -2,7 +2,7 @@
 
 本报告只依据指定角色卡及本题公开包；路径引用均相对 PUBLIC_DIR。没有读取其他题、私有材料、gold、历史结论、镜像克隆或网络资料，没有运行或导入项目、安装依赖、修改 base、调用 Docker/SSH 或查询配额。下面所有开发命令都是**建议，未执行**。
 
-PUBLIC_DIR：`runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174`
+PUBLIC_DIR：`${REPO_ROOT}/runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174`
 
 公开身份：`base_commit=c8bae06919674b9846e3ff864b0a44592db888eb`；`base_identity.json:3-17` 记录 1466 个已导出 blob、无 gitlinks、无未物化 LFS 指针、无导出的 Git 元数据。这是包内身份声明及静态源码，不是实际解题容器已验结果。
 

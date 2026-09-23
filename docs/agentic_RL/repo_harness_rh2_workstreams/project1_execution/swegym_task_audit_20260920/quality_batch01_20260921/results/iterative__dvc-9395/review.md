@@ -2,7 +2,7 @@
 
 2026-09-21，统一开放后的第二阶段。封存初判 `reviewer_initial.md` 的 SHA-256 为 `45fb4fc0c670dbed66d51fffd0ca69ddd8ea9ec64c22acd7eb176fa6af04e6ef`，未修改。此次只读取原件和核文件元数据，没有执行 DVC、pytest、安装、容器、SSH、模型或新 CPU 实验。
 
-路径：`R=.`；`P=R/runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-9395`；`Q=同材料根/private/iterative__dvc-9395`；`E=R/runs/env_recipe_repair_20260919/dvc_tail_v1/tasks/iterative__dvc-9395`；源码行号相对 `P/base`。`GL=E/gold/eval_logs/evallog_replay-er19-dvc_tail_v1-_66688534.eval.log`；`NL=E/noop/eval_logs/evallog_replay-er19-dvc_tail_v1-_d7bf896d.eval.log`。`O` 为本报告目录。
+路径：`R=${REPO_ROOT}`；`P=R/runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-9395`；`Q=同材料根/private/iterative__dvc-9395`；`E=R/runs/env_recipe_repair_20260919/dvc_tail_v1/tasks/iterative__dvc-9395`；源码行号相对 `P/base`。`GL=E/gold/eval_logs/evallog_replay-er19-dvc_tail_v1-_66688534.eval.log`；`NL=E/noop/eval_logs/evallog_replay-er19-dvc_tail_v1-_d7bf896d.eval.log`。`O` 为本报告目录。
 
 ## 结论
 

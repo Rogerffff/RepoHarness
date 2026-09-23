@@ -10,8 +10,8 @@
 
 原件：
 
-- Pydantic gold（仅本地运行证据：`runs/swegym_quality_batch01_20260921_v2/private/pydantic__pydantic-8511/gold.patch`）、[封存分析](../results/pydantic__pydantic-8511/analysis_before_history.md)。
-- DVC gold（仅本地运行证据：`runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-9395/gold.patch`）、[历史更正与原日志路径](../results/iterative__dvc-9395/old_findings_delta.md)。
+- [Pydantic gold](../../../../../../../runs/swegym_quality_batch01_20260921_v2/private/pydantic__pydantic-8511/gold.patch)、[封存分析](../results/pydantic__pydantic-8511/analysis_before_history.md)。
+- [DVC gold](../../../../../../../runs/swegym_quality_batch01_20260921_v2/private/iterative__dvc-9395/gold.patch)、[历史更正与原日志路径](../results/iterative__dvc-9395/old_findings_delta.md)。
 
 本轮新疑点来自重新读题与源码；旧报告也确有需撤回的归因。这支持继续当前方法。CPU 仍只形成方案，不新增运行授权；协调者按固定题单继续完成独立复核。
 

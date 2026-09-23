@@ -6,7 +6,7 @@
 
 ## 证据索引与阅读边界
 
-以下相对路径统一相对于 `ROOT=.`，不是当前 Codex worktree。
+以下相对路径统一相对于 `ROOT=${REPO_ROOT}`，不是当前 Codex worktree。
 
 - **P**：`runs/swegym_quality_batch01_20260921_v2/public/dask__dask-8801`。读完整 `public_bundle.json`、`user_prompt.txt`（166 行）、`base_identity.json`、`environment_brief.md`。**B**=`P/base`。
 - **V**：`runs/swegym_quality_batch01_20260921_v2/private/dask__dask-8801`。完整读 `source_refs.json`、`grading.json`、`validation.json`、`test.patch`、`gold.patch`、`run_refs.json`、`environment_record.json`。

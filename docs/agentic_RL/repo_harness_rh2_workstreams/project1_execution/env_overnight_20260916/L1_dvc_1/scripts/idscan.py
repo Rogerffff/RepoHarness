@@ -1,8 +1,8 @@
 # 216 题全量：参考清单里"环境相关/易变"的测试 ID 扫描 + P2P 漏收统计 + SKIPPED 身份丢失统计
 import json,os,re,collections
-S2='docs/agentic_RL/repo_harness_rh2_workstreams/s2'
-L='runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
-OUT='runs/env_overnight_20260916/L1_dvc_1'
+S2='${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/s2'
+L='${REPO_ROOT}/runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
+OUT='${REPO_ROOT}/runs/env_overnight_20260916/L1_dvc_1'
 G={}
 for line in open(f'{S2}/ingest/grading_bundles_v2_v0.jsonl'):
     d=json.loads(line); G[d['instance_id']]=d

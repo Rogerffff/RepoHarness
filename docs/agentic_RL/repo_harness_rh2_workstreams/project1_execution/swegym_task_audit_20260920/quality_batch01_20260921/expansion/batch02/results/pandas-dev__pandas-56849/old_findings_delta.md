@@ -1,6 +1,6 @@
 # pandas-dev__pandas-56849：历史差量
 
-无历史初稿已由协调者封存，SHA256=`9d48e0f2531053df00fcc01e35dbed722f72898525894d54d6c61354539a10d2`，未回写。随后按 `runs/swegym_quality_batch02_20260921_v2/history/pandas-dev__pandas-56849/refs.json:1–5` 开放本题旧记录。下文路径均相对 `.`；P/B/V/N/G/W 缩写沿封存初稿。
+无历史初稿已由协调者封存，SHA256=`9d48e0f2531053df00fcc01e35dbed722f72898525894d54d6c61354539a10d2`，未回写。随后按 `runs/swegym_quality_batch02_20260921_v2/history/pandas-dev__pandas-56849/refs.json:1–5` 开放本题旧记录。下文路径均相对 `${REPO_ROOT}`；P/B/V/N/G/W 缩写沿封存初稿。
 
 旧记录 `H=docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_modin_pandas/records/pandas-dev__pandas-56849.json` 全文1–71。额外读取本题 `S=runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-56849` 的 gold eval.sh1–59；gold/empty status_map 全JSON计数与唯一F2P条目；gold test_output 的安装/重编译/收尾匹配行4193–4287、4519、4748–4752；empty 的目标 traceback/status/收尾匹配行4271–4294、4550–4558、5076–5077。没有运行旧脚本或新实验。
 

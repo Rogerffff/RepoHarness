@@ -5,7 +5,7 @@
 于是被测程序自己打印的日志（dvc 的 `ERROR: Could not ...`）、pytest 的 SKIPPED 摘要行
 （`SKIPPED [1] file:line: reason`，不含 nodeid）都会进 status_map。"""
 import json,glob,os,collections
-L='runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
+L='${REPO_ROOT}/runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
 tot=collections.Counter(); ntask=0; nbad=0
 for d in sorted(glob.glob(f'{L}/*')):
     tid=os.path.basename(d)

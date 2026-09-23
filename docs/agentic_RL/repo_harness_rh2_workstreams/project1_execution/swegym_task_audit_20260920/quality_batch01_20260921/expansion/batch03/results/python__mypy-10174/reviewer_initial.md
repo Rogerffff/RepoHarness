@@ -1,7 +1,7 @@
 # python__mypy-10174：独立初判
 
 - 状态 `needs_review`；范围 `static_review`；用途 `development_diagnostic`。可解释的原问题和合理 gold，但评分的相关回归保护弱；建议优先做一个过宽修复的 CPU 校准，不直接称质量合格。
-- ROOT=`.`。P=`runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174`；Q 为同根 `private/python__mypy-10174`；R=`runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174`；A=`runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz`。引用均相对 ROOT；源码行号以 P/base 为准。
+- ROOT=`${REPO_ROOT}`。P=`runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174`；Q 为同根 `private/python__mypy-10174`；R=`runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174`；A=`runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz`。引用均相对 ROOT；源码行号以 P/base 为准。
 - 暴露：本题公开/私有顶层原件（含隐藏测试、gold、环境记录自带 gold/noop 结果）、本题 inventory exact entry/common/install_wave1、指向的本题原始运行证据，以及 baseline 归档相关成员文本。此前按顺序独立处理15139、15184原件和初判。未读任一主审、公开读者、旧质量结论或批次聚合；未追 environment_record 的 analysis/history。不是无结果盲审。仅静态读/标准库文本JSONhash；没有项目执行、测试、安装、网络、Docker/SSH、解包、提交或题目修改。
 
 ## 结论与核心疑点

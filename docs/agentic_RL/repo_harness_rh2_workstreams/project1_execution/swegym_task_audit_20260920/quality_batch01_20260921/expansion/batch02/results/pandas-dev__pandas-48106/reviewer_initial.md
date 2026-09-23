@@ -2,7 +2,7 @@
 
 审查日：2026-09-21。建议 `state=needs_review`、`scope=static_review`、`intended_use=development_diagnostic`。核心需求、gold 和新增测试相符；历史配方加参考绑定的 grader 对照可解释，但正式 actor 的环境消费和开发条件尚未验收，不能自动转成正式准入。本轮只读文件/JSON/hash/只读 Git，没有导入 pandas、运行测试、安装、容器、联网或模型，也未改 source/test/gold/reward。
 
-路径缩写：`ROOT=.`；`I=ROOT/runs/swegym_quality_batch02_20260921_v2`；`B=I/public/pandas-dev__pandas-48106/base`；`P=I/private/pandas-dev__pandas-48106`；`R=ROOT/runs/env_recipe_repair_20260919/pandas_meta_v3`；`T=R/tasks/pandas-dev__pandas-48106`。
+路径缩写：`ROOT=${REPO_ROOT}`；`I=ROOT/runs/swegym_quality_batch02_20260921_v2`；`B=I/public/pandas-dev__pandas-48106/base`；`P=I/private/pandas-dev__pandas-48106`；`R=ROOT/runs/env_recipe_repair_20260919/pandas_meta_v3`；`T=R/tasks/pandas-dev__pandas-48106`。
 
 **阅读/暴露声明。**独立上下文未读任何 public_read、主审/其它 reviewer、card、screening_record、旧质量历史、B1/B2 聚合/manifest/assignments/method_adjustments/CPU 计划。一次读取完整授权原始包 `P/environment_record.json`，看到了其环境 summary/checks/observations、原运行结果及 history 字段中的三个环境批次/analysis 路径/roles 索引，不只是键名；未打开这些 history/analysis 指针。以下重要环境结论重新用 own run_refs 的原账本、日志、配方/镜像/资产/审计输出核实。有限暴露已向协调者报告；不称对原环境结果完全盲审。未读任何质量结论；三题初判全部保存后等待统一开放。
 

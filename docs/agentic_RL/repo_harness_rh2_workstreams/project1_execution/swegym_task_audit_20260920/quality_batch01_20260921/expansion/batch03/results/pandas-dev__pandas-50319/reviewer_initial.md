@@ -12,7 +12,7 @@
 
 全部操作为静态文本/JSON、stdlib hash、tarfile.extractfile 读历史字节；未解包、import/执行项目、测试、安装、联网、Docker、SSH、模型调用、quota/reset、修改源/tests/gold/reference/reward/expected 或提交推送。
 
-路径缩写：`ROOT=.`；`I3=ROOT/runs/swegym_quality_batch03_20260921_v1`；`P=I3/public/pandas-dev__pandas-50319/base`；`Q=I3/private/pandas-dev__pandas-50319`；`R=ROOT/runs/env_recipe_repair_20260919/reference_v1`。下列相对引用都以这些明确根为基准。
+路径缩写：`ROOT=${REPO_ROOT}`；`I3=ROOT/runs/swegym_quality_batch03_20260921_v1`；`P=I3/public/pandas-dev__pandas-50319/base`；`Q=I3/private/pandas-dev__pandas-50319`；`R=ROOT/runs/env_recipe_repair_20260919/reference_v1`。下列相对引用都以这些明确根为基准。
 
 ## 八方面覆盖与需求—断言映射
 

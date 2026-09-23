@@ -1,6 +1,6 @@
 # conan-io__conan-15422：历史读取前分析
 
-2026-09-21；私有主审。此稿在任何本题旧调查/history 引用读取前保存。仅静态读指定原件、以标准库核 JSON/哈希；未运行 Conan、pytest、CMake、安装、容器或模型。已读本题 `public_read.md`，不曾读 reviewer 文件。下文源码路径相对 `PUBLIC/base/`；`ROOT=.`，`PUBLIC=ROOT/runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-15422`，`PRIVATE` 同根的 `private/conan-io__conan-15422`。
+2026-09-21；私有主审。此稿在任何本题旧调查/history 引用读取前保存。仅静态读指定原件、以标准库核 JSON/哈希；未运行 Conan、pytest、CMake、安装、容器或模型。已读本题 `public_read.md`，不曾读 reviewer 文件。下文源码路径相对 `PUBLIC/base/`；`ROOT=${REPO_ROOT}`，`PUBLIC=ROOT/runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-15422`，`PRIVATE` 同根的 `private/conan-io__conan-15422`。
 
 **暂定处置：needs_review / static_review，可作为范围明确的开发诊断候选；不是 ready_for_probe。** Linux 普通正整数安装路径有真实失败/修复证据；没有发现绑定 gold 内部实现的误拒约束。但只有一个显式值断言，默认并行度、多配置新增条目的 jobs、实际 CMake 消费和生成器兼容性未得到功能验收。对 gold 无条件向所有生成器添加 jobs 的兼容风险只作静态疑点，不据此宣判 gold 错误或题目拒绝。
 

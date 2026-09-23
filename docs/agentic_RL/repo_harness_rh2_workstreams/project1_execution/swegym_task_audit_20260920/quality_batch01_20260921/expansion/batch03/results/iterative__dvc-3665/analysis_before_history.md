@@ -2,7 +2,7 @@
 
 2026-09-21，B3 私有主审。仅静态文件/冻结归档成员读取与 stdlib 日志元数据分析；未运行/导入项目、测试、安装、容器、网络或模型。已读本题公开稿、test/gold、授权环境摘要及双角色原运行，未读本题 history/refs、质量旧记录、reviewer、B1/B2 或批次聚合。本上下文有答案暴露，不能作为 solver；所有下一实验均建议、未执行。
 
-P=`runs/swegym_quality_batch03_20260921_v1/public/iterative__dvc-3665`，V=同批 `private/iterative__dvc-3665`，R=`runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3665`，路径相对权威 ROOT=.。
+P=`runs/swegym_quality_batch03_20260921_v1/public/iterative__dvc-3665`，V=同批 `private/iterative__dvc-3665`，R=`runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3665`，路径相对权威 ROOT=${REPO_ROOT}。
 
 ## 1. 公开目标、身份与初態
 

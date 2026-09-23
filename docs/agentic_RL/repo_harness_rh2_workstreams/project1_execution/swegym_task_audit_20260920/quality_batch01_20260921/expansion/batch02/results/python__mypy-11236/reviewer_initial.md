@@ -2,7 +2,7 @@
 
 2026-09-21。`disposition.scope=static_review`，`state=needs_review`，`usage.intended_use=development_diagnostic`。建议为静态诊断候选：公开目标与新增正负断言有实质联系，已有指定 gold/noop 对照可解释；正式 actor 条件及题面原例尚待验证，不能标 `ready_for_probe`。
 
-根目录为 `.`；`P=runs/swegym_quality_batch02_20260921_v2/public/python__mypy-11236`，`Q=.../private/python__mypy-11236`，`W=runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236`。源码行号均相对 `P/base`。`G=W/gold/eval_logs/evallog_replay-er19-iw1-python___74f1c394.eval.log`；`N=W/noop/eval_logs/evallog_replay-er19-iw1-python___32643f4f.eval.log`。
+根目录为 `${REPO_ROOT}`；`P=runs/swegym_quality_batch02_20260921_v2/public/python__mypy-11236`，`Q=.../private/python__mypy-11236`，`W=runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236`。源码行号均相对 `P/base`。`G=W/gold/eval_logs/evallog_replay-er19-iw1-python___74f1c394.eval.log`；`N=W/noop/eval_logs/evallog_replay-er19-iw1-python___32643f4f.eval.log`。
 
 ## 公开目标、根因与版本
 

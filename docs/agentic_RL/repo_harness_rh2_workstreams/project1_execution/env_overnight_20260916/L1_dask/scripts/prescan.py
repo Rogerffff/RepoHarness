@@ -1,8 +1,8 @@
 import json,os,re
-M='runs/env_overnight_20260916/L1_dask/mat'
-L='runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
-ASG=json.load(open('docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dask/ASSIGNMENT.json'))
-SIG={d['instance_id']:d for d in json.load(open('docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/task_signals_swegym.json'))}
+M='${REPO_ROOT}/runs/env_overnight_20260916/L1_dask/mat'
+L='${REPO_ROOT}/runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
+ASG=json.load(open('${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dask/ASSIGNMENT.json'))
+SIG={d['instance_id']:d for d in json.load(open('${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/task_signals_swegym.json'))}
 def paths(diff):
     return sorted(set(re.findall(r'^diff --git a/(\S+) b/\S+', diff or '', re.M)))
 out={}
@@ -38,7 +38,7 @@ for tid in ASG['tasks']:
                  'skipped_any':sorted([k for k,vv in sm.items() if vv in ('SKIPPED','XFAIL','XPASS')])[:20],
                  'n_skipped':sum(1 for vv in sm.values() if vv=='SKIPPED')}
     out[tid]=r
-json.dump(out,open('runs/env_overnight_20260916/L1_dask/prescan.json','w'),ensure_ascii=False,indent=1)
+json.dump(out,open('${REPO_ROOT}/runs/env_overnight_20260916/L1_dask/prescan.json','w'),ensure_ascii=False,indent=1)
 for tid,r in out.items():
     print(f"== {tid} ver={r['version']} py={r['py']} base={r['base'][:10]} F2P={r['n_f2p']} P2P={r['n_p2p']} ps={r['ps_len']} hints={r['hints_len']} gold={r['gold_len']}")
     print(f"   eval_cmd={r['eval_cmd']!r}")

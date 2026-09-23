@@ -1,12 +1,22 @@
 # 项目一外部资料精读库与派工计划
 
+**2026-09-23 同步说明**：当前最新项目事实与补读背景见[外部协作状态页](../../../agentic_RL/repo_harness_rh2_workstreams/project1_execution/external_sync_20260923/README.md)。本次统一读写分支为 `codex/project-status-20260923`；下文按日期保留既有阅读状态，旧批次总数不是当前全库总数。
+
+**2026-09-16 专题核查**：[失败后补采、在线修复与自蒸馏](online_fixing_2605.28751_and_feedback_training_20260916.md)。精读 2605.28751v1 Appendix G，并定点比较 RLEF、SCoRe、SDPO、OPSD、KAT；核对修复与原题指标、成本口径及 SWE 反馈协议。记录 Figure 30 图例冲突；这是专题阅读，非整篇全文精读或运行复现，附[作者自查](reviews/online_fixing_2605.28751_self_check_20260916.md)。
+
+**2026-09-16 新增**：[NGU：自适应采样、在线课程与难题信号](ngu_2609.13443.md)。已读 arXiv 2609.13443v1 正文与附录，核对 16 图、6 表和伪代码，并保存博客关键交互图截图；附[作者自查](reviews/ngu_2609.13443_self_check_20260916.md)。未独立审查或复现；公开代码链接此次返回 404。
+
+**2026-09-15 环境专题汇总**：[逐来源的环境处理方法、证据边界与补齐原文](../environment_processing_survey_20260915/README.md)。本轮筛查全部实质精读及原有 PDF；另补 29 份原始 PDF、三份质量审计网页。新增下载不等于完成精读。E12 身份更正为 *MiniMax Sparse Attention*，不是 M3 完整技术报告。
+
 > **2026-09-09 增量**：[Miles v0.1 完整报告（2609.08368v1）](miles_v0_1_2609.08368.md)已完成全文、图表和定点源码阅读，附[作者自查](reviews/miles_v0_1_2609.08368_self_check_20260909.md)，尚未独立审查或复现训练。本文下方的批次总数与候选状态是 2026-09-07 历史快照，不能作为当前全库完成状态；最新情况以各篇正文与检查记录为准。本次只登记该新报告，不改写其他线程的成果或状态。
 
-日期：2026-09-07。状态：**第一组 01–06、第二组 07–12 已完成 14 份笔记及 12 份线程内独立审查。外部 Pro 经用户单独批准完成 O01 SkyRL-Agent 全文精读与作者自查，现有 15 份逐篇笔记；O01 尚未独立复查。原第三批不整批启动，其他候选未因本次阅读自动执行。** 完成与核查范围见 [第一组执行记录](BATCH1_RUN.md) / [质量检查](BATCH1_QUALITY_REVIEW_20260907.md)、[第二组执行记录](BATCH2_RUN.md) / [质量检查](BATCH2_QUALITY_REVIEW_20260907.md)。[外部 Pro 交接包入口](external_pro_handoff_20260907/00_HANDOFF.md)包含可直接携带的全文材料；[第三组准备方案](BATCH3_PLAN.md)仅保留为可重新排序的候选。
+日期：2026-09-07。本次同步快照：`miles-migration@5b6e1262`。**现有 23 份逐篇笔记：前两批 14 份，外部 Pro 9 份。** 此数量表示笔记已交付，不表示均已完成原图核查或独立审查。前两批保留 12 份线程内独立审查；O01 另有 [Codex 定点复核与补充意见](reviews/15_O01_codex_quality_review_20260907.md)；新同步的 8 篇均为作者自查，具体缺口见下表。
 
-**远程读写入口**：本库位于 GitHub 的 `miles-migration` 分支，默认 `main` 不代表这批成果。后续文档请基于 `miles-migration` 维护本目录，沿用单篇文件名和来源编号；O01 最新状态见本索引，其余第三批候选仍未启动。仓库已包含正文、审查、交接包、来源登记及第二批固定初稿。`sources/` 内的原始 PDF/TeX、渲染图和第三方代码缓存未随本次文档提交上传；指向这些附件的本地链接在远程可能不可用，复查请使用各篇的官方 URL、版本和页/节定位。
+前两批范围见 [第一组执行记录](BATCH1_RUN.md) / [质量检查](BATCH1_QUALITY_REVIEW_20260907.md)、[第二组执行记录](BATCH2_RUN.md) / [质量检查](BATCH2_QUALITY_REVIEW_20260907.md)。[外部 Pro 交接包](external_pro_handoff_20260907/00_HANDOFF.md)和[原第三组准备方案](BATCH3_PLAN.md)保留历史快照；用户已另行安排外部 Pro 后续精读，当前状态以实际笔记和检查记录为准。
 
-阅读要求：每个任务覆盖全部后训练正文和附录，任务问题仅作补充重点。前两批实际采用线程内独立 sub agent 审查；外部线程按真实工具能力记录检查。O01 当前只有作者自查，不伪称独立审查；后续独立复查可追加记录。
+**远程读写入口**：本次项目对齐快照位于 GitHub 的 `codex/project-status-20260923` 分支，默认 `main` 与旧 `miles-migration` 远端不代表这批完整成果。后续本轮外部文档请基于此同步分支维护本目录，沿用单篇文件名和来源编号；新来源尚未统一编号时保留独立文件名，避免抢占编号。仓库已包含正文、审查、交接包、来源登记及第二批固定初稿。`sources/` 内的原始 PDF/TeX、渲染图和第三方代码缓存未随此前文档提交上传；指向这些附件的本地链接在远程可能不可用，复查请使用各篇的官方 URL、版本和页/节定位。
+
+阅读要求：每个任务覆盖全部后训练正文和附录，任务问题仅作补充重点。前两批实际采用线程内独立 sub agent 审查；外部线程按真实工具能力记录检查。文件名含 `review` 不自动代表独立审查，例如 N07 当前记录的是作者自查。目录同步和摘要核对不冒充逐篇独立精读。
 
 本库服务项目一：coding / SWE / terminal 的环境供给、可靠高效的 RL / OPD 链路及可信评测。项目二的长期记忆、世界模型等暂不进入主队列。阅读顺序按当前决策价值安排，既读近期报告，也保留直接解释现有方法的早期来源。
 
@@ -31,7 +41,17 @@
 | [E10 Intern-S2-Preview](E10_intern_s2_preview.md) | §4 reasoning RL/R3/BKL；§5 agentic/token；§6 OPD；§7 其他后训练；§8 评测 | [10](reviews/10_E10_review.md) |
 | [E5 SWE-smith](E5_swe_smith.md) | §2–3 任务漏斗；§4 SFT；§5 消融；§6 成本/污染；§7 后来 RL 接线 | [11](reviews/11_E5_review.md) |
 | [O03 R2E-Gym](O03_r2e_gym.md) | §2 环境；§3 三类 SFT；§4 推理打分；§5 harness；§6 评测；§7 当前资产；§8 冲突/未知 | [12](reviews/12_O03_review.md) |
-| [O01 SkyRL-Agent / SA-SWE](O01_skyrl_agent_sa_swe.md) | §3 generation 流水线；§4–5 SWE 工具、LOO/horizon；§6 评测/成本；§7 搜索/记忆/GUI；§8 当前代码差异 | [15：作者自查，待独立复查](reviews/15_O01_self_check_20260907.md) |
+| [O01 SkyRL-Agent / SA-SWE](O01_skyrl_agent_sa_swe.md) | §3 generation 流水线；§4–5 SWE 工具、LOO/horizon；§6 评测/成本；§7 搜索/记忆/GUI；§8 当前代码差异 | [作者自查](reviews/15_O01_self_check_20260907.md)；[Codex 定点复核，有补充意见](reviews/15_O01_codex_quality_review_20260907.md) |
+| [R11 RollArt v2](R11_rollart.md) | 异构执行、环境长尾、staleness、step time 与 time-to-score、生产边界 | [作者自查，待独立复查](reviews/R11_rollart_v2_self_check_20260907.md) |
+| [O11 SWE-rebench V2](O11_swe_rebench_v2.md) | 真实 PR、多语言安装、测试解析、质量诊断、开放资产与成本 | [作者自查；Table 8 的一致 v2 图页待补核](reviews/O11_self_check_20260907.md) |
+| [Nemotron-Terminal 数据工程](nemotron_terminal_data_engineering_2602.21193.md) | 任务生成、SFT、混合/过滤/课程/上下文消融、环境复用边界 | [作者自查，待独立复查](reviews/nemotron_terminal_self_check_20260907.md) |
+| [E8 ECHO](E8_echo.md) | 观测预测辅助目标、动作/观测 mask 与归一化、迁移及负结果 | [作者自查，待独立复查](reviews/E8_echo_self_check_20260907.md) |
+| [N07 SDPO](N07_sdpo.md) | 自蒸馏目标、反馈条件化教师、代码反馈、测试时训练、全部附录与实现边界 | [作者自查，待独立复查](reviews/16_N07_review.md) |
+| [Agent Lightning v1.0](agent_lightning_v1_2608.17528.md) | rollout/model call/training row、优势与归一化、共置异步、coding 配方 | [正文与附录文字已读；PDF/原图复核待补](reviews/agent_lightning_v1_2608.17528_self_check_20260907.md) |
+| [R15 SAO](R15_single_rollout_asynchronous_optimization.md) | single-rollout、DIS、critic、Skip-Observation GAE、三类实验与成本缺口 | [作者自查，待独立复查](reviews/13_R15_self_check_20260907.md) |
+| [R14 CompactionRL](R14_compaction_rl.md) | 摘要与任务动作联合训练、分段权重、跨段 GAE、压缩条件与负结果 | [作者自查，待独立复查](reviews/14_R14_self_check_20260907.md) |
+
+本次从 `f0eaf0df` 快进到 `5b6e1262`，新增 8 篇笔记和 8 份作者自查记录；O01 正文与自查未随这次同步修改，因此不能把此前修订建议记为已经落实。
 
 ## 1. 入口与已有资产
 
@@ -84,11 +104,15 @@
 
 选择这一批的原因：既补模型团队完整案例，又尽早形成数据、运行链路和评测的参考文档；已有笔记的升级也能较快验证模板是否真的解决检索问题。此顺序不是论文质量排名。Composer 2、SAO、CompactionRL 等同样重要，只是本地已有专题线索，接在下一批。
 
-## 3. 后续候选（由外部 Pro 重新排序）
+## 3. 外部 Pro 当前排期与后续主题
 
-**原第三组不整批启动，原顺序不再作为自动执行队列**。其中任务 15 / O01 SkyRL-Agent 已由外部 Pro 单篇精读并自查；SAO、CompactionRL、SDPO、OPSD、MOPD 仍是未启动候选。SDPO v2 为 50 页长报告；MiMo v2 为另一份 31 页报告。原准备范围见 [BATCH3_PLAN](BATCH3_PLAN.md)，它及交接包保留历史快照，不覆盖本索引的最新 O01 状态。
+**原第三组顺序已由外部 Pro 重排，不再作为自动执行队列。** 重排后的上一轮六篇——SkyRL-Agent、RollArt、SWE-rebench V2、Nemotron-Terminal、ECHO、SDPO——均已有笔记；各自完成范围以上表为准。
 
-以下是任务组，不表示每组交给一个线程。**一篇长报告通常独立一个线程；短文章可以同线程读 2–3 篇，但每篇仍有独立 Markdown。** 代码库入口则允许一份边界清楚、绑定版本的专题，避免给每个 release / issue 单独建空洞笔记。
+用户已安排下一轮，核心选题为 **Agent Lightning v1.0、SAO、CompactionRL、Polar、Nemotron-Cascade 2、Envs-FORGE**；另含 Harness Interplay、Hardening Agent Benchmarks 两个补充来源，以及分别成文的 GLM-5.2/5.3 官方文章。**本次快照已收到前三篇；其余来源尚未收到本轮独立成品，不能据此推断会话是否仍在执行。** OPSD、MOPD 等仍保留候选，不因相关论文完成而自动标为已读。
+
+来源校正：Envs-FORGE 本地 PDF 首页与当前 arXiv 均为 *Frontier-Optimized Reward-Grounded Environment Synthesis for Agent RL*；旧目录的 *Verifier-Pass-Rate-Guided Synthesis Policy for Executable Environments* 不应继续当作当前 PDF 的正式标题。本次只核首页与元数据，没有完成该论文精读，也没有据此推断历史改名过程。
+
+以下保留主题地图，包含已交付和候选来源，**不是待办清单或新的派发指令**。一篇长报告通常独立一个线程；短文章可以同线程读 2–3 篇，但每篇仍有独立 Markdown。代码库入口则允许一份边界清楚、绑定版本的专题，避免给每个 release / issue 单独建空洞笔记。
 
 | 顺序 | 来源 | 目的与组织 |
 | --- | --- | --- |
@@ -141,4 +165,12 @@ O07 = E4，O33 = R7b 的版本线索，N05 = O35，不重复开任务。N10 已�
 - 旧稿先保留，完成新稿时记“复用了哪些旧稿、纠正了什么”；新稿成为后续维护入口。暂不批量删除旧摘要或改动其他历史引用。
 - 文献版本、代码 commit 与一次性来源快照服务复核；不另建自动 hash 闸门、审批流程或文献管理平台。
 
-前两组保留原有独立审查状态；O01 为外部全文精读与作者自查完成、待独立复查。其余候选继续由用户逐篇确认，阅读任务不修改训练实现，也不把候选建议写成项目实施定案。
+前两组保留原有独立审查状态；外部笔记按各自自查与追加复核记录标注。后续派发以用户已经安排的批次和具体任务为准，不另加逐篇批准要求。阅读任务不修改训练实现，也不把候选建议写成项目实施定案。
+
+## 6. 与用户共读时的约定
+
+用户于 2026-09-07 明确：当前资料讲解任务专门帮助理解已读外部资料，不承担项目一 A/B 实施主线。笔记已交付不代表用户已阅读或理解；后续由用户指定讲解任务，本轮只同步和整理材料。
+
+讲解从论文要解决的具体问题和必要背景出发，用小例子说明机制，再看公式、实验对照、限制与项目意义。优先复用笔记，需要核验关键结论时回原始来源；作者自查稿中的判断也可以被修正。保留全篇其他后训练内容，不只回答预设项目问题。
+
+研究排期与学习顺序可以不同：先以 SkyRL-Agent 等完整案例建立任务、harness、轨迹、训练和评测的关系，再按环境、系统、优化方法分组深入；不要求用户按提交顺序连续读完所有长报告。

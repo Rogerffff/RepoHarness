@@ -8,7 +8,7 @@ root 在 `2026-09-20T22:05:49.422998+00:00` 重算本包两份 initial 并封存
 
 放行后只读取自己两题的 public_read、analysis_before_history、old_findings_delta、card、screening_record，及各自 history/refs.json 指向的唯一旧单题记录；未追其它任务/聚合/附件。独立阶段已见本题 gold/test.patch/F2P/P2P，environment_record 的原 noop=0、gold=1 摘要，以及同包 50319 环境摘要；本阶段又见主审与历史结论，均为已暴露 reviewer。对照主审封存稿 SHA256=`9368249d288851e632e6bf46726c2180f424edea257a331c6e58c2110a40bef6`，所读 record SHA256=`3796b2ab999c6b37411d268e52b05f9e085b77b7cb17ac4160c6af46c92760de`。之后由 root 补结构，不代表这些读取时字节未曾存在。
 
-路径：`ROOT=.`；`I3=ROOT/runs/swegym_quality_batch03_20260921_v1`；`P=I3/public/pandas-dev__pandas-51605/base`；`Q=I3/private/pandas-dev__pandas-51605`；`B=ROOT/runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01`；`W=B/workers/w06-1`。结果目录为 `ROOT/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/pandas-dev__pandas-51605`。
+路径：`ROOT=${REPO_ROOT}`；`I3=ROOT/runs/swegym_quality_batch03_20260921_v1`；`P=I3/public/pandas-dev__pandas-51605/base`；`Q=I3/private/pandas-dev__pandas-51605`；`B=ROOT/runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01`；`W=B/workers/w06-1`。结果目录为 `ROOT/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/pandas-dev__pandas-51605`。
 
 ## 同意、补充与限缩
 

@@ -1,0 +1,133 @@
++ git checkout base -- tests/
+RH2_SETUP_RAN=1
++ echo RH2_PHASE_START=install
+RH2_PHASE_START=install
+RH2_TS_INSTALL_START=100.0
+RH2_INSTALL_RC=0
+RH2_TS_INSTALL_END=103.5
+RH2_PHASE_END=install
+RH2_TS_TEST_START=104.0
++ : '>>>>> Start Test Output'
+============================= test session starts ==============================
+platform linux -- Python 3.9.19, pytest-6.2.3, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed
+collected 2 items
+
+tests/test_thing.py F.                                                   [100%]
+
+=================================== FAILURES ===================================
+_____________________________ test_feature[after] ______________________________
+
+case = 'after'
+
+    @pytest.mark.parametrize("case", [label], ids=[label])
+    def test_feature(case):
+        if case == "after":
+>           subprocess.run([sys.executable, "-B", "-m", "pytest", "-p", "no:cacheprovider", "child/test_child.py"], check=True)
+
+tests/test_thing.py:8: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+input = None, capture_output = False, timeout = None, check = True
+popenargs = (['/opt/miniconda3/envs/testbed/bin/python', '-B', '-m', 'pytest', '-p', 'no:cacheprovider', ...],)
+kwargs = {}
+process = <Popen: returncode: 2 args: ['/opt/miniconda3/envs/testbed/bin/python', '-B'...>
+stdout = None, stderr = None, retcode = 2
+
+    def run(*popenargs,
+            input=None, capture_output=False, timeout=None, check=False, **kwargs):
+        """Run command with arguments and return a CompletedProcess instance.
+    
+        The returned instance will have attributes args, returncode, stdout and
+        stderr. By default, stdout and stderr are not captured, and those attributes
+        will be None. Pass stdout=PIPE and/or stderr=PIPE in order to capture them.
+    
+        If check is True and the exit code was non-zero, it raises a
+        CalledProcessError. The CalledProcessError object will have the return code
+        in the returncode attribute, and output & stderr attributes if those streams
+        were captured.
+    
+        If timeout is given, and the process takes too long, a TimeoutExpired
+        exception will be raised.
+    
+        There is an optional argument "input", allowing you to
+        pass bytes or a string to the subprocess's stdin.  If you use this argument
+        you may not also use the Popen constructor's "stdin" argument, as
+        it will be used internally.
+    
+        By default, all communication is in bytes, and therefore any "input" should
+        be bytes, and the stdout and stderr will be bytes. If in text mode, any
+        "input" should be a string, and stdout and stderr will be strings decoded
+        according to locale encoding, or by "encoding" if set. Text mode is
+        triggered by setting any of text, encoding, errors or universal_newlines.
+    
+        The other arguments are the same as for the Popen constructor.
+        """
+        if input is not None:
+            if kwargs.get('stdin') is not None:
+                raise ValueError('stdin and input arguments may not both be used.')
+            kwargs['stdin'] = PIPE
+    
+        if capture_output:
+            if kwargs.get('stdout') is not None or kwargs.get('stderr') is not None:
+                raise ValueError('stdout and stderr arguments may not be used '
+                                 'with capture_output.')
+            kwargs['stdout'] = PIPE
+            kwargs['stderr'] = PIPE
+    
+        with Popen(*popenargs, **kwargs) as process:
+            try:
+                stdout, stderr = process.communicate(input, timeout=timeout)
+            except TimeoutExpired as exc:
+                process.kill()
+                if _mswindows:
+                    # Windows accumulates the output in a single blocking
+                    # read() call run on child threads, with the timeout
+                    # being done in a join() on those threads.  communicate()
+                    # _after_ kill() is required to collect that and add it
+                    # to the exception.
+                    exc.stdout, exc.stderr = process.communicate()
+                else:
+                    # POSIX _communicate already populated the output so
+                    # far into the TimeoutExpired exception.
+                    process.wait()
+                raise
+            except:  # Including KeyboardInterrupt, communicate handled that.
+                process.kill()
+                # We don't call process.wait() as .__exit__ does that for us.
+                raise
+            retcode = process.poll()
+            if check and retcode:
+>               raise CalledProcessError(retcode, process.args,
+                                         output=stdout, stderr=stderr)
+E               subprocess.CalledProcessError: Command '['/opt/miniconda3/envs/testbed/bin/python', '-B', '-m', 'pytest', '-p', 'no:cacheprovider', 'child/test_child.py']' returned non-zero exit status 2.
+
+/opt/miniconda3/envs/testbed/lib/python3.9/subprocess.py:528: CalledProcessError
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.19, pytest-6.2.3, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed
+collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+_____________________ ERROR collecting child/test_child.py _____________________
+ImportError while importing test module '/testbed/child/test_child.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/miniconda3/envs/testbed/lib/python3.9/importlib/__init__.py:127: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+child/test_child.py:1: in <module>
+    import rh2_missing_child_module
+E   ModuleNotFoundError: No module named 'rh2_missing_child_module'
+=========================== short test summary info ============================
+ERROR child/test_child.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+=============================== 1 error in 0.20s ===============================
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_thing.py::test_stable[after]
+FAILED tests/test_thing.py::test_feature[after] - subprocess.CalledProcessErr...
+========================= 1 failed, 1 passed in 0.91s ==========================
++ : '>>>>> End Test Output'
+RH2_TEST_RC=1
+RH2_TS_TEST_END=110.25

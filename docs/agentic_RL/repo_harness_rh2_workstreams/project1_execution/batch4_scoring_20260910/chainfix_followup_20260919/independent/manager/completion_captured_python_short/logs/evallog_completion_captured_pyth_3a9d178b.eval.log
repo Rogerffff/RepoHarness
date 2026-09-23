@@ -1,0 +1,37 @@
++ git checkout base -- tests/
+RH2_SETUP_RAN=1
++ echo RH2_PHASE_START=install
+RH2_PHASE_START=install
+RH2_TS_INSTALL_START=100.0
+RH2_INSTALL_RC=0
+RH2_TS_INSTALL_END=103.5
+RH2_PHASE_END=install
+RH2_TS_TEST_START=104.0
++ : '>>>>> Start Test Output'
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /testbed
+configfile: ../../../../../../../../../pyproject.toml
+collected 2 items
+
+tests/test_thing.py F.                                                   [100%]
+
+=================================== FAILURES ===================================
+_____________________________ test_feature[after] ______________________________
+tests/test_thing.py:8: in test_feature
+    subprocess.run([sys.executable, "-c", "import rh2_missing_child_module"], check=True)
+<USER_HOME>/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/subprocess.py:571: in run
+    raise CalledProcessError(retcode, process.args,
+E   subprocess.CalledProcessError: Command '['<REPO>/rh2/.venv/bin/python', '-c', 'import rh2_missing_child_module']' returned non-zero exit status 1.
+----------------------------- Captured stderr call -----------------------------
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+ModuleNotFoundError: No module named 'rh2_missing_child_module'
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_thing.py::test_stable[after]
+FAILED tests/test_thing.py::test_feature[after] - subprocess.CalledProcessErr...
+========================= 1 failed, 1 passed in 0.04s ==========================
++ : '>>>>> End Test Output'
+RH2_TEST_RC=1
+RH2_TS_TEST_END=110.25

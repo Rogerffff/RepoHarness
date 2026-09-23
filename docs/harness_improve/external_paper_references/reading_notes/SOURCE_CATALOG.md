@@ -1,5 +1,7 @@
 # 资料目录与旧稿复用盘点
 
+**2026-09-15 环境专题汇总**：[逐来源的环境处理方法、证据边界与补齐原文](../environment_processing_survey_20260915/README.md)。本轮筛查全部实质精读及原有 PDF；另补 29 份原始 PDF、三份质量审计网页。新增下载不等于完成精读。E12 身份更正为 *MiniMax Sparse Attention*，不是 M3 完整技术报告。
+
 盘点日期：2026-09-07。用途是安排精读，不是声称下列资料已经完成事实核验。原始目录盘点、旧稿质量盘点与五份项目设计对话的遗漏线索由三名独立 GPT-6 Astra / high 子 agent 并行完成，主线程合并。
 
 **同日完成更新**：R1、R3、N01、E2、N11、N13 已交付 7 份精读笔记并完成独立审查；优先查 [成品索引](README.md)，质量范围见 [第一组检查](BATCH1_QUALITY_REVIEW_20260907.md)。下方“本轮仅核标题/未重验”等盘点措辞只适用于尚未更新的来源，不覆盖这些已完成项。
@@ -39,7 +41,7 @@
 | R15 | Single-Rollout Asynchronous Optimization for Agentic Reinforcement Learning<br>B · 后续重点 | [本地 PDF](../pdfs/2607.07508v1.pdf)<br><https://arxiv.org/pdf/2607.07508> | 需补原文证据<br>[knowledge/summary_single_rollout_asynchronous_optimization.md](../../../../knowledge/summary_single_rollout_asynchronous_optimization.md)<br>[docs/agentic_RL/training_design/repoharness_sao_dis_grpo_ppo_analysis.md](../../../agentic_RL/training_design/repoharness_sao_dis_grpo_ppo_analysis.md)<br>[docs/harness_improve/external_paper_references/agentic_rl_training_recipe_evidence_matrix.md](../agentic_rl_training_recipe_evidence_matrix.md) |
 | E1 | The Interplay of Harness Design and Post-Training in LLM Agents<br>B · 后续重点 | [本地 PDF](../pdfs/E1_harness_interplay_2606.25447.pdf)<br><https://arxiv.org/pdf/2606.25447> | 需补原文证据<br>[knowledge/summary_harness_interplay_posttraining.md](../../../../knowledge/summary_harness_interplay_posttraining.md) |
 | E2 | CalibForge: Adversarial Solver Calibration for Scaling Learnable Terminal Tasks<br>A · 任务 04，已完成 | [本地 PDF](../pdfs/E2_calibforge_solver_calibration_2608.06352.pdf)<br><https://arxiv.org/pdf/2608.06352> | [两稿合并升级，精读及审查完成](E2_calibforge.md)<br>旧稿：[summary_calibforge](../../../../knowledge/summary_calibforge.md)、[solver_calibration](../../../../knowledge/summary_calibforge_solver_calibration.md) |
-| E3 | Envs-FORGE: Verifier-Pass-Rate-Guided Synthesis Policy for Executable Environments<br>B · 后续重点 | [本地 PDF](../pdfs/E3_envs_forge_2608.14312.pdf)<br><https://arxiv.org/pdf/2608.14312> | 需补原文证据<br>[knowledge/summary_envs_forge_synthesis_policy.md](../../../../knowledge/summary_envs_forge_synthesis_policy.md) |
+| E3 | Envs-FORGE: Frontier-Optimized Reward-Grounded Environment Synthesis for Agent RL<br>B · 后续重点 | [本地 PDF](../pdfs/E3_envs_forge_2608.14312.pdf)<br><https://arxiv.org/pdf/2608.14312> | 2026-09-07 按本地 PDF 首页与 arXiv 校正标题；完整精读待交付<br>[knowledge/summary_envs_forge_synthesis_policy.md](../../../../knowledge/summary_envs_forge_synthesis_policy.md) |
 | E4 | Endless Terminals: Procedurally Generated Containerized Terminal Tasks for RL<br>B · 后续重点 | [本地 PDF](../pdfs/E4_endless_terminals_2601.16443.pdf)<br><https://arxiv.org/pdf/2601.16443> | 需补原文证据<br>[knowledge/summary_endless_terminals.md](../../../../knowledge/summary_endless_terminals.md) |
 | E5 | SWE-smith: Scaling Data for Software Engineering Agents<br>A · 已完成任务 11 | [本地 PDF](../pdfs/E5_swe_smith_2504.21798.pdf)<br><https://arxiv.org/pdf/2504.21798> | [精读及独立审查完成](E5_swe_smith.md)<br>旧稿保留<br>[knowledge/summary_swe_smith.md](../../../../knowledge/summary_swe_smith.md) |
 | E6 | Surge AI: Cross-Domain Transfer from Office-Tool RL to Coding (SWE-Bench Pro)<br>C · 背景/备查 | [本地 PDF](../pdfs/E6_surge_office_rl_2608.01604.pdf)<br><https://arxiv.org/pdf/2608.01604> | 需补原文证据<br>[knowledge/summary_surge_office_rl_transfer.md](../../../../knowledge/summary_surge_office_rl_transfer.md) |
@@ -48,7 +50,7 @@
 | E9 | On the Design of Qwen3.8-Next Architecture: Evaluation, Efficiency, and Training Stability (Qwen3.8-Flash-Next)<br>C · 背景/备查 | [本地 PDF](../pdfs/E9_qwen3.8_flash_next_tech_report.pdf)<br><https://github.com/QwenLM/Qwen3.8-Flash-Next/blob/main/tech_report.pdf> | 可复用但需更新项目映射<br>[knowledge/summary_qwen38_flash_next_architecture.md](../../../../knowledge/summary_qwen38_flash_next_architecture.md) |
 | E10 | Intern-S2-Preview: Scientific Agentic Foundation Model<br>A · 已完成任务 10 | [本地 PDF](../pdfs/E10_intern_s2_preview_2608.13505.pdf)<br><https://arxiv.org/pdf/2608.13505> | [精读及独立审查完成](E10_intern_s2_preview.md)<br>旧稿保留<br>[knowledge/summary_intern_s2_preview.md](../../../../knowledge/summary_intern_s2_preview.md) |
 | E11 | NVIDIA Nemotron-Cascade 2: 30B-A3B MoE, SFT -> Cascade RL (strict on-policy GRPO) -> multi-domain OPD<br>B · 后续重点 | [本地 PDF](../pdfs/E11_nemotron_cascade2_2603.19220.pdf)<br><https://arxiv.org/pdf/2603.19220> | 需补原文证据<br>[knowledge/summary_nemotron_cascade2.md](../../../../knowledge/summary_nemotron_cascade2.md) |
-| E12 | MiniMax-M3 Technical Report<br>B · 后续重点 | [本地 PDF](../pdfs/E12_minimax_m3_2606.13392.pdf)<br><https://arxiv.org/pdf/2606.13392> | 未找到<br>未找到独立稿指针 |
+| E12 | MiniMax Sparse Attention（旧名 M3 有误）<br>架构背景；不含环境配方 | [本地 PDF](../pdfs/E12_minimax_m3_2606.13392.pdf)<br><https://arxiv.org/pdf/2606.13392> | 未找到<br>未找到独立稿指针 |
 | E13 | MiMo-V2-Flash Technical Report<br>B · 后续独立任务 | [本地 PDF](../pdfs/E13_mimo_v2_flash_2601.02780.pdf)<br><https://arxiv.org/pdf/2601.02780v2> | 未找到独立稿；本地 v2、31 页已核，见 [第三组关联安排](BATCH3_PLAN.md)；术语首创性未核 |
 
 这些标题沿用原始登记的识别名称，部分含解释性副标题（例如 E8）。正式笔记必须从原文恢复正式标题，不能照抄索引标题作为已核论文元数据。

@@ -2,7 +2,7 @@
 
 2026-09-21；B2 private investigator。**needs_review / static_review；intended_use=development_diagnostic；additional_exclusions=[]；未知 cost=null。** 本稿先写后封存，未打开本题 history/refs.json、旧调查或 environment_record.json。已读本题封存的 public_read.md，但下列私有判断以原始包、源码、账本和日志交叉核对。没有运行项目代码、测试、安装、Docker/SSH、网络或付费模型；没有修改源码、原测试、gold、reward、共享镜像或提交。
 
-路径均相对于权威 ROOT=.。U=`runs/swegym_quality_batch02_20260921_v2/public/python__mypy-17071`；P=对应的 private/python__mypy-17071；`base/` 指 U/base。W=`runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-17071`；G=W/gold，N=W/noop。Glog=`G/eval_logs/evallog_replay-er19-iw1-python___9334e4a9.eval.log`，Nlog=`N/eval_logs/evallog_replay-er19-iw1-python___2965a84e.eval.log`。Ga/Na 分别是两侧 `artifacts/swe_gym_lite--python__mypy-17071/a1-2c4b6784`、`a1-a6be602c`。
+路径均相对于权威 ROOT=${REPO_ROOT}。U=`runs/swegym_quality_batch02_20260921_v2/public/python__mypy-17071`；P=对应的 private/python__mypy-17071；`base/` 指 U/base。W=`runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-17071`；G=W/gold，N=W/noop。Glog=`G/eval_logs/evallog_replay-er19-iw1-python___9334e4a9.eval.log`，Nlog=`N/eval_logs/evallog_replay-er19-iw1-python___2965a84e.eval.log`。Ga/Na 分别是两侧 `artifacts/swe_gym_lite--python__mypy-17071/a1-2c4b6784`、`a1-a6be602c`。
 
 ## 1. 公开需求、可推导范围与可解性
 

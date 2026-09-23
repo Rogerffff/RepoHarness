@@ -1,7 +1,7 @@
 import json,subprocess,re,collections,os
-R='runs/env_overnight_20260916/repos/mypy'
-PKG='docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_2'
-PRE=json.load(open('runs/env_overnight_20260916/L1_mypy_2/prescan.json'))
+R='${REPO_ROOT}/runs/env_overnight_20260916/repos/mypy'
+PKG='${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_2'
+PRE=json.load(open('${REPO_ROOT}/runs/env_overnight_20260916/L1_mypy_2/prescan.json'))
 ids=json.load(open(f'{PKG}/ASSIGNMENT.json'))['tasks']
 cache={}
 def cases_at(commit):
@@ -34,7 +34,7 @@ for tid in ids:
         rows.append({'id':x,'case':name,'over_select':over,'home_files_in_base':homes,
                      'home_protected':prot,'dup_in_base':len(loc)>1})
     out[tid]={'rows':rows,'test_patch_paths':sorted(tp)}
-json.dump(out,open('runs/env_overnight_20260916/L1_mypy_2/kscan.json','w'),ensure_ascii=False,indent=1)
+json.dump(out,open('${REPO_ROOT}/runs/env_overnight_20260916/L1_mypy_2/kscan.json','w'),ensure_ascii=False,indent=1)
 for tid in ids:
     o=out[tid]; flags=[]
     for row in o['rows']:

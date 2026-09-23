@@ -1,6 +1,6 @@
 # iterative__dvc-3665 独立复核初判（封存后不回写）
 
-记录时间：2026-09-20 21:31 UTC / 2026-09-21 05:31 SGT。B3 DVC fresh 独立 reviewer；权威 ROOT=`.`，路径均相对此根。`state=needs_review, scope=static_review, intended_use=development_diagnostic`。
+记录时间：2026-09-20 21:31 UTC / 2026-09-21 05:31 SGT。B3 DVC fresh 独立 reviewer；权威 ROOT=`${REPO_ROOT}`，路径均相对此根。`state=needs_review, scope=static_review, intended_use=development_diagnostic`。
 
 **独立结论：题目是明确的跨平台配置序列化问题，但原验收含高影响的实现耦合和目标平台漏测，不宜把原版 reward 直接作为修好题面问题的依据。** 四个 F2P 全部调用新私有方法 `_to_relpath`，题面与 base 都没有这个 API 要求。等价地在原 `_save_paths` 闭包内正规化路径的合理解，会因没有该方法而被拒。反过来，仅添加未接入真实保存路径的 helper，静态上可通过这四项和 Linux 旧行为，却仍不修 Windows 保存。后一项目前是有具体依据的静态漏测候选，未执行 RH2 反例；不把它写成已得分。
 

@@ -4,7 +4,7 @@
 
 **独立性与封存。** 先独立读取授权公开/私有原件并保存 reviewer_initial.md，协调者核验 SHA-256 `808124f9b8579004f0cc727a79ed209dd5e9cc6d5238d30f730269e75100ef15` 后显式解封。本轮复核该 hash 未变；没有回写初稿。解封后完整读取本题 public_read.md、analysis_before_history.md、old_findings_delta.md、card.md、screening_record.json，以及本题 history/refs.json 唯一指定的 env_overnight_20260916/L1_moto_2/records/getmoto__moto-6114.json。没有跟随旧记录的 repo_level、master、其他题或 stage1 引用。已见 gold、隐藏测试、既有运行结果和旧质量结论，不称 result blind，所有稿件均不应提供给独立 solver。
 
-权威根为 `.`。下文 `P` 为 `runs/swegym_quality_batch04_20260921_v1/public/getmoto__moto-6114`，`V` 为同批 `private/getmoto__moto-6114`，`S=P/base`；`B` 为本 review.md 所在目录；`E` 为 `runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6114`。已复核 public_read.md SHA-256 `20b97ef56a9417a75c53ce91023009da45a02abd6e824a9ba21dd20a2de5f912`、主审封存初稿 SHA-256 `b26bfa9cf9bae02b53b7fa6a376335aba7ac5f86f93d39e51c027352dd693426`。本轮只新增本文件。
+权威根为 `${REPO_ROOT}`。下文 `P` 为 `runs/swegym_quality_batch04_20260921_v1/public/getmoto__moto-6114`，`V` 为同批 `private/getmoto__moto-6114`，`S=P/base`；`B` 为本 review.md 所在目录；`E` 为 `runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6114`。已复核 public_read.md SHA-256 `20b97ef56a9417a75c53ce91023009da45a02abd6e824a9ba21dd20a2de5f912`、主审封存初稿 SHA-256 `b26bfa9cf9bae02b53b7fa6a376335aba7ac5f86f93d39e51c027352dd693426`。本轮只新增本文件。
 
 **对主审关键结论的复核。**
 

@@ -1,6 +1,6 @@
 import json,sys,os
 PKG='L1_monai_2'
-M=f'runs/env_overnight_20260916/{PKG}/mat'
+M=f'${REPO_ROOT}/runs/env_overnight_20260916/{PKG}/mat'
 tid=sys.argv[1]; what=sys.argv[2] if len(sys.argv)>2 else 'all'
 pub=json.load(open(f'{M}/{tid}/public.json')); g=json.load(open(f'{M}/{tid}/grading.json'))
 v=json.load(open(f'{M}/{tid}/validation.json')); raw=json.load(open(f'{M}/{tid}/raw.json'))

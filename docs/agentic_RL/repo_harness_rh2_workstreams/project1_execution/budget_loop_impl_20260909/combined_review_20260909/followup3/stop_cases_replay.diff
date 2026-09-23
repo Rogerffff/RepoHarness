@@ -1,0 +1,14 @@
+--- followup2/stop_cases_replay.py
++++ followup3/stop_cases_replay.py
+@@ -22,8 +22,9 @@
+ 
+ 
+ async def one_case(kind: str) -> dict:
+-    chain = old._formal_chain(barrier=old.DockerQuiescenceBarrier())
+-    orch, now, budget = chain.orchestrator, [0.0], old.Budget()
++    now = [0.0]
++    chain = old._formal_chain(barrier=old.DockerQuiescenceBarrier(clock=lambda: now[0]))
++    orch, budget = chain.orchestrator, old.Budget()
+     orch._clock = lambda: now[0]
+     orch._turn_budget_subscribe = budget.subscribe
+     orch._turn_budget_unsubscribe = budget.unsubscribe

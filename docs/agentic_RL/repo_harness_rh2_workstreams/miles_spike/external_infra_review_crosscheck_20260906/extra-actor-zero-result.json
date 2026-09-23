@@ -1,0 +1,266 @@
+{
+  "real_advantage_and_custom_loss": [
+    {
+      "use_rollout_logprobs": false,
+      "loss": -1.3877787807814457e-17,
+      "gradient": [
+        0.0,
+        0.0
+      ],
+      "advantages": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "metrics": {
+        "loss": -2.220446049250313e-16,
+        "dis_microbatch_provenance_tokens": 16.0,
+        "dis_accepted_tokens": 16.0,
+        "dis_rejected_tokens": 0.0,
+        "dis_zero_contribution_microbatch": 0.0
+      }
+    },
+    {
+      "use_rollout_logprobs": true,
+      "loss": -1.3877787807814457e-17,
+      "gradient": [
+        0.0,
+        0.0
+      ],
+      "advantages": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "metrics": {
+        "loss": -2.220446049250313e-16,
+        "dis_microbatch_provenance_tokens": 16.0,
+        "dis_accepted_tokens": 16.0,
+        "dis_rejected_tokens": 0.0,
+        "dis_zero_contribution_microbatch": 0.0
+      }
+    }
+  ],
+  "nonzero_gradient_flag_comparison": [
+    {
+      "use_rollout_logprobs": false,
+      "loss": -1.3877787807814457e-17,
+      "gradient": [
+        -0.5,
+        0.5
+      ],
+      "advantages": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0
+      ]
+    },
+    {
+      "use_rollout_logprobs": true,
+      "loss": -1.3877787807814457e-17,
+      "gradient": [
+        -0.5,
+        0.5
+      ],
+      "advantages": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0
+      ]
+    }
+  ],
+  "production_train_actor_ast_with_environment_stubs": [
+    {
+      "use_rollout_logprobs": false,
+      "get_mismatch_metrics": false,
+      "calls": [
+        [
+          "fill",
+          "init"
+        ],
+        [
+          "compute_log_prob",
+          "replay_forward"
+        ],
+        [
+          "logprob_compare",
+          "replay_forward"
+        ],
+        [
+          "train",
+          "replay_backward"
+        ]
+      ],
+      "replay_calls": [
+        "clear_forward",
+        "clear_all"
+      ],
+      "events": [
+        "train_rollout",
+        "replay_fill",
+        "replay_consume",
+        "replay_exhausted"
+      ],
+      "advantages": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "use_rollout_logprobs": true,
+      "get_mismatch_metrics": false,
+      "calls": [
+        [
+          "fill",
+          "init"
+        ],
+        [
+          "train",
+          "replay_backward"
+        ]
+      ],
+      "replay_calls": [
+        "clear_all"
+      ],
+      "events": [
+        "train_rollout",
+        "replay_fill",
+        "replay_exhausted"
+      ],
+      "advantages": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "use_rollout_logprobs": true,
+      "get_mismatch_metrics": true,
+      "calls": [
+        [
+          "fill",
+          "init"
+        ],
+        [
+          "compute_log_prob",
+          "replay_forward"
+        ],
+        [
+          "logprob_compare",
+          "replay_forward"
+        ],
+        [
+          "train",
+          "replay_backward"
+        ]
+      ],
+      "replay_calls": [
+        "clear_forward",
+        "clear_all"
+      ],
+      "events": [
+        "train_rollout",
+        "replay_fill",
+        "replay_consume",
+        "replay_exhausted"
+      ],
+      "advantages": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    }
+  ]
+}

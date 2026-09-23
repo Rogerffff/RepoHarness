@@ -1,7 +1,7 @@
 import json,subprocess,re,os
-R='runs/env_overnight_20260916/repos/dvc'
-M='runs/env_overnight_20260916/L1_dvc_2/mat'
-B='docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916'
+R='${REPO_ROOT}/runs/env_overnight_20260916/repos/dvc'
+M='${REPO_ROOT}/runs/env_overnight_20260916/L1_dvc_2/mat'
+B='${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916'
 ASG=json.load(open(f'{B}/L1_dvc_2/ASSIGNMENT.json'))
 out={}
 for tid in ASG['tasks']:
@@ -22,6 +22,6 @@ for tid in ASG['tasks']:
         p3=subprocess.run(['git','-C',R,'show','--stat','--format=%H%n%s','-m','--first-parent',sha],capture_output=True,text=True)
         res.setdefault('stats',{})[sha]=p3.stdout[:1400]
     out[tid]=res
-json.dump(out,open('runs/env_overnight_20260916/L1_dvc_2/upstream.json','w'),ensure_ascii=False,indent=1)
+json.dump(out,open('${REPO_ROOT}/runs/env_overnight_20260916/L1_dvc_2/upstream.json','w'),ensure_ascii=False,indent=1)
 for tid,r in out.items():
     print('###',tid,'base',r['base'][:9]); print('  PR:',r['pr_commits']); print('  child:',r['first_child'])

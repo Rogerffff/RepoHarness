@@ -1,5 +1,5 @@
 import json,sys
-M='runs/env_overnight_20260916/L1_conan/mat'
+M='${REPO_ROOT}/runs/env_overnight_20260916/L1_conan/mat'
 t=sys.argv[1]; what=sys.argv[2] if len(sys.argv)>2 else 'all'
 p=json.load(open(f'{M}/{t}/public.json')); g=json.load(open(f'{M}/{t}/grading.json'))
 v=json.load(open(f'{M}/{t}/validation.json')); r=json.load(open(f'{M}/{t}/raw.json'))

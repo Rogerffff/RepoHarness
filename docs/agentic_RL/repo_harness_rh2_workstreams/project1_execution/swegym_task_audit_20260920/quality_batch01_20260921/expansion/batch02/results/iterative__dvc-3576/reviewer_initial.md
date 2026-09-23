@@ -6,7 +6,7 @@
 
 路径约定（均为权威桌面 ROOT，不是当前 worktree）：
 
-- `ROOT=.`
+- `ROOT=${REPO_ROOT}`
 - `P=ROOT/runs/swegym_quality_batch02_20260921_v2/public/iterative__dvc-3576`
 - `Q=ROOT/runs/swegym_quality_batch02_20260921_v2/private/iterative__dvc-3576`
 - `R=ROOT/runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3576`

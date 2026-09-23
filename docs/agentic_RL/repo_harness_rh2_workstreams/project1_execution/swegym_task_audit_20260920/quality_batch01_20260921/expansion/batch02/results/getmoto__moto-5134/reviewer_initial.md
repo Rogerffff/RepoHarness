@@ -6,7 +6,7 @@
 
 建议 `needs_review / static_review`，用途 `development_diagnostic`。公开要求、两条 F2P 与 gold 的 missing/null 区分一致；目前没有足够具体的语义误判或回归争议要求先造质量反例。保留测试范围限度和正式 actor 开发条件未知。历史 sqs_v1 的 noop/gold 成功对照只证明修订评分安装配方的诊断条件；COPY wheel 不是正式 actor 中已安装依赖的证据。
 
-缩写：`P=ROOT/runs/swegym_quality_batch02_20260921_v2/public/getmoto__moto-5134`，`Q=…/private/getmoto__moto-5134`，`E=ROOT/runs/env_recipe_repair_20260919/sqs_v1`，`T=E/tasks/getmoto__moto-5134`；`ROOT=.`。base 路径均在 P/base。
+缩写：`P=ROOT/runs/swegym_quality_batch02_20260921_v2/public/getmoto__moto-5134`，`Q=…/private/getmoto__moto-5134`，`E=ROOT/runs/env_recipe_repair_20260919/sqs_v1`，`T=E/tasks/getmoto__moto-5134`；`ROOT=${REPO_ROOT}`。base 路径均在 P/base。
 
 ## 公开目标、初态与断言映射
 

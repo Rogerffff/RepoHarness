@@ -2,7 +2,7 @@
 
 这是静态公开要求审查，不是修复或运行验证。仅阅读指定角色卡及本题 `PUBLIC_DIR`；未接触本题私有材料、历史结论、其他题或共享镜像克隆。所有下列开发命令均为**建议，未执行**。未运行或导入项目、安装或下载依赖、联网、调用 Docker/SSH、查询或重置配额，也未修改 `base/`。
 
-公开包根目录：`runs/swegym_quality_batch03_20260921_v1/public/pandas-dev__pandas-50319`。下文文件定位均相对此目录。包声明的 base commit 为 `1613f26ff0ec75e30828996fd9ec3f9dd5119ca6`（`public_bundle.json:1`、`base_identity.json:3`）。
+公开包根目录：`${REPO_ROOT}/runs/swegym_quality_batch03_20260921_v1/public/pandas-dev__pandas-50319`。下文文件定位均相对此目录。包声明的 base commit 为 `1613f26ff0ec75e30828996fd9ec3f9dd5119ca6`（`public_bundle.json:1`、`base_identity.json:3`）。
 
 ## 1. 需求表
 
@@ -132,7 +132,7 @@ python -c 'import locale; print(locale.getlocale())'
 
 此外用 `rg --files` 枚举本题公开包的相关文件名，并在 `base/` 内检索函数名、目标字符串、构建/测试及依赖线索。只看过匹配行而未展开全文的材料包括 `base/setup.cfg`（`:65`、`:78`、`:80`）和 `base/web/pandas/pdeps/0004-consistent-to-datetime-parsing.md`（`:87`、`:89`、`:93`）；未据此将提案当作本题新要求。对 build/test 配置的关键词结果不是完整依赖审计，部分宽检索输出曾被工具截断，已对本报告依赖的关键段落另行定点读取。曾尝试检索 `base/conftest.py`，结果为文件不存在；实际读取的是 `base/pandas/conftest.py`。
 
-唯一额外阅读的任务约束文件是指定角色卡：`docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/roles/public_reader.md`。未读取其父目录内容。
+唯一额外阅读的任务约束文件是指定角色卡：`${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/roles/public_reader.md`。未读取其父目录内容。
 
 未查项包括：实际模型消息和 CLI system message、容器/镜像实际状态、actor 运行环境、扩展产物、完整依赖闭包、全仓测试、私有评分材料、gold、未来修复、公开祖先历史及外部网页。`user_prompt.txt` 仅为静态渲染；`public_hints` 不在其中不代表 actor 不可见，环境说明称 bundle 会写入真实工作区公开路径，但实际消息和读取行为仍待验证（`environment_brief.md:3-6`、`:20-26`）。`base_identity.json` 的校验字段是导出方提供的声明，本次未重做全树校验，也不能据此证明运行容器完整。
 

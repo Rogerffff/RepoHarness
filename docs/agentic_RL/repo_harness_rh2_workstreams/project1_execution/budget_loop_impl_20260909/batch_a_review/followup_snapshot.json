@@ -1,0 +1,75 @@
+{
+  "base_commit": "297f1f591f5ed218fc2c4cb976c605b6ff51c188",
+  "files": {
+    "rh2/src/repoharness2/adapters/slime/bringup.py": "dcb10921ee52b8a3a0da3982367b3db587079bc05819e980abd236bd0f0a991e",
+    "rh2/src/repoharness2/adapters/slime/generate.py": "17cb37b9270f51604862432d582dd2262d84554f5ce0111753ae08d74439c69b",
+    "rh2/src/repoharness2/adapters/slime/outcome_producer.py": "2081a7fb0361f10f6a4d8e327a57ee03fabdafe5a84419e27b0fe7b7bb6ecfc0",
+    "rh2/tests/adapters/test_b5_finalization.py": "0afdd11bf84f7486efbe796b27e828e403c6b4d7b04700344858a7565f2d9f37",
+    "rh2/tests/adapters/test_f2_2_capability.py": "840c06b58635b0edaac25088dab257bfbc3c193ee8f0c5265145d4463d8bee1e",
+    "rh2/tests/adapters/test_w1b_delivery_face.py": "b69775f6786435103a39a4f1f6cd9430b35c7cd2638fdfd4fc1c22728e0f3ff6",
+    "rh2/tests/adapters/test_w1b_termination_facts_producer.py": "af4b502860417f217d31392f598a44c27b5401890843c77c229034d38d54c56b",
+    "rh2/tests/adapters_miles/test_w1b_prepared_chain.py": "6da977b4133ff068a0f8067fc3d9b004f065a3756227a1bc960b94dbde4a6f17",
+    "rh2/tests/adapters_miles/test_batch_a_failure_routing.py": "0503a1bddb071416910253e65782593d04ccbf5e357c0c19da25f3807a349805",
+    "rh2/src/repoharness2/adapters/slime/docker_sandbox.py": "88da6d8b338028221159a90bf9081f48abd8fc161658e48cf5be00ec045e7f29"
+  },
+  "changed_since_initial_review": [
+    "rh2/src/repoharness2/adapters/slime/bringup.py",
+    "rh2/src/repoharness2/adapters/slime/generate.py",
+    "rh2/src/repoharness2/adapters/slime/outcome_producer.py",
+    "rh2/tests/adapters/test_b5_finalization.py",
+    "rh2/tests/adapters/test_w1b_termination_facts_producer.py",
+    "rh2/tests/adapters_miles/test_batch_a_failure_routing.py"
+  ],
+  "unchanged_since_initial_review": [
+    "rh2/tests/adapters/test_f2_2_capability.py",
+    "rh2/tests/adapters/test_w1b_delivery_face.py",
+    "rh2/tests/adapters_miles/test_w1b_prepared_chain.py"
+  ],
+  "added_to_review": [
+    "rh2/src/repoharness2/adapters/slime/docker_sandbox.py"
+  ],
+  "end_files": {
+    "rh2/src/repoharness2/adapters/slime/bringup.py": "dcb10921ee52b8a3a0da3982367b3db587079bc05819e980abd236bd0f0a991e",
+    "rh2/src/repoharness2/adapters/slime/generate.py": "17cb37b9270f51604862432d582dd2262d84554f5ce0111753ae08d74439c69b",
+    "rh2/src/repoharness2/adapters/slime/outcome_producer.py": "2081a7fb0361f10f6a4d8e327a57ee03fabdafe5a84419e27b0fe7b7bb6ecfc0",
+    "rh2/tests/adapters/test_b5_finalization.py": "0afdd11bf84f7486efbe796b27e828e403c6b4d7b04700344858a7565f2d9f37",
+    "rh2/tests/adapters/test_f2_2_capability.py": "840c06b58635b0edaac25088dab257bfbc3c193ee8f0c5265145d4463d8bee1e",
+    "rh2/tests/adapters/test_w1b_delivery_face.py": "b69775f6786435103a39a4f1f6cd9430b35c7cd2638fdfd4fc1c22728e0f3ff6",
+    "rh2/tests/adapters/test_w1b_termination_facts_producer.py": "af4b502860417f217d31392f598a44c27b5401890843c77c229034d38d54c56b",
+    "rh2/tests/adapters_miles/test_w1b_prepared_chain.py": "6da977b4133ff068a0f8067fc3d9b004f065a3756227a1bc960b94dbde4a6f17",
+    "rh2/tests/adapters_miles/test_batch_a_failure_routing.py": "0503a1bddb071416910253e65782593d04ccbf5e357c0c19da25f3807a349805",
+    "rh2/src/repoharness2/adapters/slime/docker_sandbox.py": "88da6d8b338028221159a90bf9081f48abd8fc161658e48cf5be00ec045e7f29"
+  },
+  "changed_during_followup": [],
+  "verification": {
+    "pytest": {
+      "basis": "reference/miles-rh2-integration",
+      "files": [
+        "tests/adapters_miles/test_batch_a_failure_routing.py",
+        "tests/adapters/test_b5_finalization.py",
+        "tests/adapters/test_w1b_termination_facts_producer.py"
+      ],
+      "passed": 45,
+      "seconds": 1.46,
+      "exit_code": 0,
+      "artifact": "followup_tests.txt"
+    },
+    "ruff": {
+      "file_count": 10,
+      "exit_code": 0,
+      "artifact": "followup_ruff.txt"
+    },
+    "source_boundary_probe": {
+      "cases": 8,
+      "exit_code": 0,
+      "artifact": "followup_error_routing_result.jsonl"
+    },
+    "receipt_cleanup_probe": {
+      "cases": 7,
+      "exit_code": 0,
+      "artifact": "followup_receipt_cleanup_result.json"
+    },
+    "full_suite": "作者报告 1796 passed / 310 skipped；主审本轮未重跑全量",
+    "real_docker_cc_gpu": false
+  }
+}

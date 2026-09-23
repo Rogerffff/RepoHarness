@@ -1,0 +1,24 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /testbed
+configfile: ../../../../../../../../../pyproject.toml
+collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+_____________________ ERROR collecting tests/test_thing.py _____________________
+ImportError while importing test module '/testbed/tests/test_thing.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+<USER_HOME>/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_thing.py:4: in <module>
+    VALUE = load_metadata("src/unused.py")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_thing.py:2: in load_metadata
+    from rh2_missing_external_fixture import VALUE
+E   ModuleNotFoundError: No module named 'rh2_missing_external_fixture'
+=========================== short test summary info ============================
+ERROR tests/test_thing.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+=============================== 1 error in 0.11s ===============================

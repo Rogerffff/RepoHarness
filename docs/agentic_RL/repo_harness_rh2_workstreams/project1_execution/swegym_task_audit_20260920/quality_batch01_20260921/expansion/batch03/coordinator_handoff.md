@@ -1,6 +1,6 @@
 # 第三批交接：11题，派发状态见dispatch.json
 
-**收到根任务明确派发后才开始，实际状态看dispatch.json。** 第二批根验收见 `../../acceptance/batch02_final_review.md`。执行与本批材料路径的权威根为 `.`，不是自动创建的干净 worktree。
+**收到根任务明确派发后才开始，实际状态看dispatch.json。** 第二批根验收见 `../../acceptance/batch02_final_review.md`。执行与本批材料路径的权威根为 `${REPO_ROOT}`，不是自动创建的干净 worktree。
 
 ## 目标与固定范围
 

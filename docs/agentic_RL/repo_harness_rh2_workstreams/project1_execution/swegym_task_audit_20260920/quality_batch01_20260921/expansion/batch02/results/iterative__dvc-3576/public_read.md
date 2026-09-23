@@ -2,7 +2,7 @@
 
 审查日期：2026-09-21。角色：独立公开读者，仅做静态阅读；未修复、未运行项目或测试。
 
-材料根目录：`runs/swegym_quality_batch02_20260921_v2/public/iterative__dvc-3576/`。下文路径均相对此目录；`base/` 是源码导出。未使用继承 cwd 中的 worktree。
+材料根目录：`${REPO_ROOT}/runs/swegym_quality_batch02_20260921_v2/public/iterative__dvc-3576/`。下文路径均相对此目录；`base/` 是源码导出。未使用继承 cwd 中的 worktree。
 
 公开材料足以定位实现入口并设计本地复现。一个重要初态差异是：所给源码和旧功能测试已经支持单侧缺失指标，但表格仍输出 `diff not supported`，无变化提示仍走 STDOUT。因此，不能把题面中的 `unexpected error - 'HEAD^'` 当成本 base 上已复现的事实。需要真实 actor 后续验证，但不需要先补外部业务数据。
 

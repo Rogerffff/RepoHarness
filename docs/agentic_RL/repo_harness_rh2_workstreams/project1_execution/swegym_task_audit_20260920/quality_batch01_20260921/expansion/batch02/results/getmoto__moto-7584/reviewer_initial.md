@@ -6,7 +6,7 @@
 
 建议 `needs_review / static_review`，用途 `development_diagnostic`。发现具体的公开目标—gold—测试不一致，不能凭历史 gold=1 认定题意已对齐。最重要的问题是公开原例“成功订阅→删除端点→再次订阅”仍会在 gold 中成功返回旧订阅；隐藏 F2P 删除了首次订阅这一步。另有错误字符串对合理实现的潜在误拒。尚未执行 CPU 反例或真实模型。
 
-本报告路径缩写：`P=ROOT/runs/swegym_quality_batch02_20260921_v2/public/getmoto__moto-7584`，`Q=…/private/getmoto__moto-7584`，`E=ROOT/runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-7584`；`ROOT=.`。以下 base 文件均在 P/base。
+本报告路径缩写：`P=ROOT/runs/swegym_quality_batch02_20260921_v2/public/getmoto__moto-7584`，`Q=…/private/getmoto__moto-7584`，`E=ROOT/runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-7584`；`ROOT=${REPO_ROOT}`。以下 base 文件均在 P/base。
 
 ## 公开目标、初态与断言映射
 

@@ -1,0 +1,62 @@
+{
+  "outer_zero_default": {
+    "rc": 0,
+    "tail": [
+      "=============================== 1 error in 0.04s ===============================",
+      "=========================== short test summary info ============================",
+      "PASSED tests/test_thing.py::test_feature[after]",
+      "PASSED tests/test_thing.py::test_stable[after]",
+      "============================== 2 passed in 0.12s ==============================="
+    ]
+  },
+  "outer_zero_quiet": {
+    "rc": 0,
+    "tail": [
+      "=============================== 1 error in 0.04s ===============================",
+      "=========================== short test summary info ============================",
+      "PASSED tests/test_thing.py::test_feature[after]",
+      "PASSED tests/test_thing.py::test_stable[after]",
+      "2 passed in 0.14s"
+    ]
+  },
+  "pretty_outer_zero": {
+    "rc": 0,
+    "tail": [
+      "ERROR child/test_child.py",
+      "!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!",
+      "=============================== 1 error in 0.04s ===============================",
+      "Results (0.12s):",
+      "         2 passed"
+    ]
+  },
+  "pretty_outer_one": {
+    "rc": 1,
+    "tail": [
+      "│  tests/test…  │  test_featu…  │  3            │  6           │  CalledProc…  │",
+      "└───────────────┴───────────────┴───────────────┴──────────────┴───────────────┘",
+      "Results (0.14s):",
+      "         1 failed",
+      "         1 passed"
+    ]
+  },
+  "pretty_collection_error": {
+    "rc": 2,
+    "tail": [
+      "    import rh2_missing_collection_dependency",
+      "E   ModuleNotFoundError: No module named 'rh2_missing_collection_dependency'",
+      "!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!",
+      "Results (0.04s):",
+      "         1 error"
+    ]
+  },
+  "pretty_collection_continue": {
+    "rc": 1,
+    "tail": [
+      "E   ModuleNotFoundError: No module named 'rh2_missing_collection_dependency'",
+      "==================================== PASSES ====================================",
+      "Results (0.02s):",
+      "         2 passed",
+      "         1 error"
+    ]
+  }
+}

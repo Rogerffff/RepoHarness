@@ -3,7 +3,7 @@
 import json, re, collections
 from pathlib import Path
 
-ROOT = Path(".")
+ROOT = Path("${REPO_ROOT}")
 DOCS = ROOT / "docs/agentic_RL/repo_harness_rh2_workstreams"
 PKG = DOCS / "project1_execution/env_overnight_20260916/L4_r2e"
 OLD_LEDGER = DOCS / "project1_execution/env_probe_20260909/ledger/r2e_ledger_v3.jsonl"

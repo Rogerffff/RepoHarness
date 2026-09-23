@@ -1,0 +1,106 @@
+{
+  "scope": "CPU；真 Dataset / 派发函数体 / RH2 编排和 canonicalize；tokenizer、Docker、harness、引擎为替身",
+  "unfiltered": {
+    "prepared_tasks": 2,
+    "precheck_enabled": true,
+    "filter_limit": null,
+    "planned": 2,
+    "received": 2,
+    "complete": true,
+    "binding": "verified",
+    "resolved_rate_planned": 1.0,
+    "logging_error": null,
+    "eval_point_events": 1
+  },
+  "one_filtered": {
+    "prepared_tasks": 2,
+    "precheck_enabled": true,
+    "filter_limit": 10,
+    "planned": 1,
+    "received": 1,
+    "complete": true,
+    "binding": "verified",
+    "resolved_rate_planned": 1.0,
+    "logging_error": null,
+    "eval_point_events": 1
+  },
+  "all_filtered": {
+    "prepared_tasks": 2,
+    "precheck_enabled": true,
+    "filter_limit": 10,
+    "planned": 0,
+    "received": 0,
+    "complete": false,
+    "binding": "unverified",
+    "resolved_rate_planned": null,
+    "logging_error": {
+      "type": "ZeroDivisionError",
+      "message": "division by zero"
+    },
+    "eval_point_events": 0
+  },
+  "unsafe_top_p_equal": {
+    "error": null,
+    "status": "aborted",
+    "reward": null,
+    "result_class": "reward_unavailable",
+    "train_top_p": 1.0,
+    "eval_top_p": 1.0,
+    "unsafe": true,
+    "unsafe_audit_reasons": [
+      "unsupported_object_in_patch:src/fifo:fifo"
+    ],
+    "grading_calls": 0,
+    "live_assignments": 0
+  },
+  "unsafe_top_p_different": {
+    "error": "CanonicalizationError",
+    "reason_code": "sampling_mask_required",
+    "message": "[sampling_mask_required] rollout_top_p=0.95 < 1.0 的 slime->miles 构造分支缺装配 mask（rh2_sampling_mask 附加属性）——top_p<1 无支持集不可忠实 replay，fail-closed 拒绝（对照上游 top_p<1.0 即开 replay 的严格开关）。",
+    "train_top_p": 0.95,
+    "eval_top_p": 1.0,
+    "unsafe": true,
+    "unsafe_audit_reasons": [
+      "unsupported_object_in_patch:src/fifo:fifo"
+    ],
+    "grading_calls": 0,
+    "live_assignments": 0
+  },
+  "graded_top_p_different": {
+    "error": null,
+    "status": "completed",
+    "reward": 1.0,
+    "result_class": "graded",
+    "train_top_p": 0.95,
+    "eval_top_p": 1.0,
+    "unsafe": false,
+    "unsafe_audit_reasons": [],
+    "grading_calls": 1,
+    "live_assignments": 0
+  },
+  "eval_regrade_report": {
+    "train_audits": 0,
+    "eval_audits": 1,
+    "train_grading_regrades": {
+      "events": 1,
+      "by_op_and_category": {
+        "container_start:daemon_connect": 1
+      }
+    }
+  },
+  "source_sha256": {
+    "reference/miles-rh2-integration/miles/rollout/inference_rollout/inference_rollout_eval.py": "7e53604574ad65da08c5508b81e8aa98fa25e9c6025b89ac72591fefb218f449",
+    "reference/miles-rh2-integration/miles/ray/rollout/metrics.py": "3a943afc61730831e58dc41e5418a6c390eb4450c9d2b5ad337a5fe8e5da5482",
+    "rh2/src/repoharness2/adapters/miles/generate_fn.py": "2448a9227c75e1567a2ff3fa743e9a602771d6d4a02bfe37ac78b62800358ce2",
+    "rh2/src/repoharness2/adapters/miles/canonicalize.py": "d27d2931d6fc39ef564bfa10bad2215d46bc74ca75177aa698baab934dd4544b",
+    "rh2/src/repoharness2/adapters/slime/generate.py": "eeee50bee1605088261f0c046e2d5194d39fcd79adb82ceb1a7f0ec7b6684158",
+    "rh2/src/repoharness2/adapters/slime/bringup.py": "1b18d755d79e1a6e2a82827b51079c4f24fce8b9329f1a6d67faecc6f1835e63",
+    "rh2/src/repoharness2/adapters/slime/eval_result.py": "f09df4cfc812cad022ecd086f29f5abbf02dd8a5f2b3043eee09a4d0c14fb4a3",
+    "rh2/src/repoharness2/adapters/miles/eval_report.py": "167cbaad34373d97339e3a4cbada5156180158d396fd282af603d1864a321858",
+    "rh2/src/repoharness2/adapters/slime/eval_wiring.py": "48b75cf2d95563377097707c336d46b233f76336c3d0be460da0702c03aa7943",
+    "rh2/src/repoharness2/adapters/miles/run_report.py": "2baceaddd4a933a5dd79c70d7fb82c91fca19cd5895bd41495c2231765fc8d27",
+    "rh2/src/repoharness2/adapters/miles/drop_events.py": "82028b1a0c9c796e513c6c195787b7e812c3ff5fcb6823f9698cb34130bb2185",
+    "rh2/src/repoharness2/adapters/miles/identity.py": "44db96bfd0b9b735c0046c479f3b2bf0586edb52b77e6609ce89821ff5914a6b",
+    "reference/miles-rh2-integration/miles/utils/data.py": "19708053b2e9ba1768550e562135e5d9ea4510de4fa53ffe673b754ab97ea712"
+  }
+}

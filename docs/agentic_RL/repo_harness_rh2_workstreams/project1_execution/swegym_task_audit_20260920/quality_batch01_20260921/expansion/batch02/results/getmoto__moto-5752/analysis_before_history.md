@@ -2,7 +2,7 @@
 
 只读本题指定原件，未运行项目/测试/容器/安装/联网。暂定 `needs_review / static_review`，用途限 `development_diagnostic`。核心顺序缺陷及 gold/no-op 分差可解释；新增 F2P 还捆绑单标签 BeginsWith 的独立旧缺陷，保留验收范围待核。正式 actor 条件另待验，不称 `ready_for_probe`。
 
-路径均相对 `.`：`PUB=runs/swegym_quality_batch02_20260921_v2/public/getmoto__moto-5752`；`PRI=同包/private/getmoto__moto-5752`；`RUN=runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-1`；`GLOG=RUN/eval_logs/evallog_replay-f216-baseline01-w_fb82c576.eval.log`；`NLOG=同目录/evallog_replay-f216-baseline01-w_0ec23aeb.eval.log`；`RH2=rh2/src/repoharness2`。公开源码引用从 `PUB/base/` 起算；`T=tests/test_ssm/test_ssm_boto3.py`，`M=moto/ssm/models.py`。
+路径均相对 `${REPO_ROOT}`：`PUB=runs/swegym_quality_batch02_20260921_v2/public/getmoto__moto-5752`；`PRI=同包/private/getmoto__moto-5752`；`RUN=runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-1`；`GLOG=RUN/eval_logs/evallog_replay-f216-baseline01-w_fb82c576.eval.log`；`NLOG=同目录/evallog_replay-f216-baseline01-w_0ec23aeb.eval.log`；`RH2=rh2/src/repoharness2`。公开源码引用从 `PUB/base/` 起算；`T=tests/test_ssm/test_ssm_boto3.py`，`M=moto/ssm/models.py`。
 
 ## 1. 材料、输入与初态
 

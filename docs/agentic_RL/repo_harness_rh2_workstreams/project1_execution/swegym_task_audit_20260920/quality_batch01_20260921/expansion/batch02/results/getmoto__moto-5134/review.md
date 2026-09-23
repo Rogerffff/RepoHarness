@@ -4,7 +4,7 @@
 
 本人独立初稿 SHA256 为 `19a2a02e667365989f68b83125c5cc77e39167937238d34a1ad565b0b674ccd5`，三题统一封存后才读本题 public_read、analysis_before_history、old_findings_delta、card、screening_record 和 history/refs 精确指向的 L1_moto_1 旧记录。初稿未改。主审核心判断获独立支持；历史使环境限制更具体，没有迫使另造质量反例。
 
-ROOT 为 `.`；PUB/PRI 为 `runs/swegym_quality_batch02_20260921_v2/{public,private}/getmoto__moto-5134`；ENV 为 `runs/env_recipe_repair_20260919/sqs_v1`，TASK 为 ENV/tasks/getmoto__moto-5134；S1 为 `runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5134`。源码行号从 PUB/base 起算，完整第一阶段八方面证据见 reviewer_initial.md。
+ROOT 为 `${REPO_ROOT}`；PUB/PRI 为 `runs/swegym_quality_batch02_20260921_v2/{public,private}/getmoto__moto-5134`；ENV 为 `runs/env_recipe_repair_20260919/sqs_v1`，TASK 为 ENV/tasks/getmoto__moto-5134；S1 为 `runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5134`。源码行号从 PUB/base 起算，完整第一阶段八方面证据见 reviewer_initial.md。
 
 ## 目标与测试对应
 

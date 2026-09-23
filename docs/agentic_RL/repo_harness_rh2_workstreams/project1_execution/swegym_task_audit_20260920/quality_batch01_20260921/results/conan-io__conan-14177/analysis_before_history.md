@@ -1,6 +1,6 @@
 # conan-io__conan-14177：历史读取前分析
 
-2026-09-21；私有主审。在读取本题任何 history/旧调查前保存；未读 reviewer。仅静态源码/patch/已有日志和标准库材料校验，未运行项目、安装、容器或模型。路径约定：`ROOT=.`；`PUBLIC=ROOT/runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-14177`，`PRIVATE` 为同根 `private/conan-io__conan-14177`；源码简称相对 `PUBLIC/base/`。先读公开 bundle、public_read.md 与公开源码，再读私有材料。
+2026-09-21；私有主审。在读取本题任何 history/旧调查前保存；未读 reviewer。仅静态源码/patch/已有日志和标准库材料校验，未运行项目、安装、容器或模型。路径约定：`ROOT=${REPO_ROOT}`；`PUBLIC=ROOT/runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-14177`，`PRIVATE` 为同根 `private/conan-io__conan-14177`；源码简称相对 `PUBLIC/base/`。先读公开 bundle、public_read.md 与公开源码，再读私有材料。
 
 **暂定处置：needs_review / static_review，先校准题面—验收契约，不进入原版通用求解探针。** 题面明确新增默认关闭的 `verbose=False`，开启时逐文件输出 `Applying: ...`；三个 F2P 却修改默认调用的日志，且一个直接调用 `patch()`。gold 保留原单参数签名，也不实现开关。实际 gold 满分证明该验收测的是另一种默认日志增强，不能证明题面完成。此处是公开签名/默认语义与测试/源码的直接冲突，不是因实现与 gold 不同而否定合理解。
 

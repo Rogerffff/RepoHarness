@@ -1,6 +1,6 @@
 # python__mypy-10424：旧结论增量
 
-协调者明确放行后才读 `R/runs/swegym_quality_batch01_20260921_v2/history/python__mypy-10424/refs.json` 所列唯一旧记录：`R/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_1/records/python__mypy-10424.json`（以下 H）。R=`.`。未沿 H 中无完整定位的 dupidx/kcheck 等线索扩读其它题。
+协调者明确放行后才读 `R/runs/swegym_quality_batch01_20260921_v2/history/python__mypy-10424/refs.json` 所列唯一旧记录：`R/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_1/records/python__mypy-10424.json`（以下 H）。R=`${REPO_ROOT}`。未沿 H 中无完整定位的 dupidx/kcheck 等线索扩读其它题。
 
 | 旧主张 | 处理 | 当前决定性证据与范围 |
 | --- | --- | --- |

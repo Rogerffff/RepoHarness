@@ -4,7 +4,7 @@
 
 三题独立初稿统一封存后才开放主审和历史。本人初稿 SHA256 为 `0b5b1cf65b3a20b0bafd68ab9409deb4945d68fafdf58007b284a934d8e21720`，保持不变。本稿读本题获准的五份主审产物及 history/refs 指向的 L1_moto_2 本题旧记录，再查其原 hints、public.json 和精确 stage1 运行原件。主判断与初稿和主审一致；新增一个需要明确的细节：raw hints 除字段拼写外还缺成功匹配后的 `continue`，不能只改拼写就当成预期能过公开原例的补丁。
 
-ROOT 为 `.`；PUB/PRI 为 `runs/swegym_quality_batch02_20260921_v2/{public,private}/getmoto__moto-5752`；RUN 为 `runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-1`；S1 为 `runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5752`；MAT 为 `runs/env_overnight_20260916/L1_moto_2/mat/getmoto__moto-5752`。源码行号从 PUB/base 起算。
+ROOT 为 `${REPO_ROOT}`；PUB/PRI 为 `runs/swegym_quality_batch02_20260921_v2/{public,private}/getmoto__moto-5752`；RUN 为 `runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-1`；S1 为 `runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5752`；MAT 为 `runs/env_overnight_20260916/L1_moto_2/mat/getmoto__moto-5752`。源码行号从 PUB/base 起算。
 
 ## 需求、断言和范围判断
 

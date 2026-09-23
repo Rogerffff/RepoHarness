@@ -2,7 +2,7 @@
 
 仅静态阅读指定本题原件，未运行项目、测试、容器、安装或联网；本题历史关闭。暂定 `needs_review / static_review`，用途 `development_diagnostic`。公开 null 存在性与新增断言、gold相符，暂无具体误拒/误收反例；已核成功证据属于带安装覆写的派生 grader，正式 public-image actor 尚未验证，因此不称 ready_for_probe。
 
-路径相对权威 `.`：`PUB=runs/swegym_quality_batch02_20260921_v2/public/getmoto__moto-5134`；`PRI=同包/private/getmoto__moto-5134`；`ENV=runs/env_recipe_repair_20260919/sqs_v1`；`TASK=ENV/tasks/getmoto__moto-5134`；`GLOG=TASK/gold/eval_logs/evallog_replay-er19-sqs_v1-getmo_949cd6be.eval.log`；`NLOG=TASK/noop/eval_logs/evallog_replay-er19-sqs_v1-getmo_ee16eb53.eval.log`；`RH2=rh2/src/repoharness2`。源码行号从PUB/base起：`M=moto/events/models.py`、`P=tests/test_events/test_event_pattern.py`、`T=tests/test_events/test_events_integration.py`。
+路径相对权威 `${REPO_ROOT}`：`PUB=runs/swegym_quality_batch02_20260921_v2/public/getmoto__moto-5134`；`PRI=同包/private/getmoto__moto-5134`；`ENV=runs/env_recipe_repair_20260919/sqs_v1`；`TASK=ENV/tasks/getmoto__moto-5134`；`GLOG=TASK/gold/eval_logs/evallog_replay-er19-sqs_v1-getmo_949cd6be.eval.log`；`NLOG=TASK/noop/eval_logs/evallog_replay-er19-sqs_v1-getmo_ee16eb53.eval.log`；`RH2=rh2/src/repoharness2`。源码行号从PUB/base起：`M=moto/events/models.py`、`P=tests/test_events/test_event_pattern.py`、`T=tests/test_events/test_events_integration.py`。
 
 ## 1. 固定版本、公开要求与初态
 

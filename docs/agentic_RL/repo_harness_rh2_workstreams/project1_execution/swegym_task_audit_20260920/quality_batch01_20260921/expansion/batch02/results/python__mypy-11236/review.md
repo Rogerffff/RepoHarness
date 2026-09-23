@@ -4,7 +4,7 @@
 
 **同意 needs_review / static_review / development_diagnostic，additional_exclusions=[]。** 一个 F2P 内有实质正负约束，不能等同零保护；派生 grader 的 0/1 分差来自目标行为。精确诊断对合法上下文实现有具体约束风险，但未证明唯一 gold 或已发生误拒。修正主审和本人初判的优先顺序：先在固定 grader 做窄语义对照即可，正式 actor 验收是启用条件，非该诊断的前置门。
 
-下文路径以 `.` 为根。U=`runs/swegym_quality_batch02_20260921_v2/public/python__mypy-11236`，P 为同层 private 本题目录；W=`runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236`，G/N=`W/{gold,noop}`。
+下文路径以 `${REPO_ROOT}` 为根。U=`runs/swegym_quality_batch02_20260921_v2/public/python__mypy-11236`，P 为同层 private 本题目录；W=`runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236`，G/N=`W/{gold,noop}`。
 
 ## 逐项实质复核
 

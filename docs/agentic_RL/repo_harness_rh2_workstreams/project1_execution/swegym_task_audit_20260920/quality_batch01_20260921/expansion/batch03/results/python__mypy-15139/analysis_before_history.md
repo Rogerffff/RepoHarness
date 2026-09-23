@@ -4,7 +4,7 @@
 
 ## 身份、暴露和证据范围
 
-权威 ROOT=`.`。P=`runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15139`，Q=同根 `private/python__mypy-15139`；以下源码路径相对 `P/base`。已先读本题封存 `public_read.md`；base=`16b936c15b074db858729ed218248ef623070e03`，tree=`319db706885eb99e59f4b37054559d23d7561d3b`，沿用父协调者材料验收，不重做 blob 遍历。公开 bundle、grading 和 validation 的 base 一致；gold SHA256=`581a925ac3731600ced8561881f41bf083dd569b192dad1ce1f5370c88c9cfc5`。
+权威 ROOT=`${REPO_ROOT}`。P=`runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15139`，Q=同根 `private/python__mypy-15139`；以下源码路径相对 `P/base`。已先读本题封存 `public_read.md`；base=`16b936c15b074db858729ed218248ef623070e03`，tree=`319db706885eb99e59f4b37054559d23d7561d3b`，沿用父协调者材料验收，不重做 blob 遍历。公开 bundle、grading 和 validation 的 base 一致；gold SHA256=`581a925ac3731600ced8561881f41bf083dd569b192dad1ce1f5370c88c9cfc5`。
 
 已读私有 test/gold/validation/grading、environment_record、run_refs、source_refs。本题 environment_record 自带 `verified_environment_pair`、noop=0/gold=1 等结果摘要；这些已暴露，随后核了精确原账本和原日志，**本稿不是未见运行结果的盲审**。未读 history/refs、旧质量报告、B1/B2 结果、本批聚合、他题结果或 reviewer。未运行项目、导入项目模块、测试、安装、下载、联网、Docker/SSH 或模型。文档写入与 stdlib 文本读取/哈希不是行为验证。
 

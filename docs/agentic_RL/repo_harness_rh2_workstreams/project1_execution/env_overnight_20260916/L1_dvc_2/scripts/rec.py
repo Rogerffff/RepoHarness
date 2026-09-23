@@ -1,7 +1,7 @@
 """把 records/<tid>.json 写盘；从 stdin 读 JSON 片段并与 prescan 元数据合并。"""
 import json,sys,os
-P='runs/env_overnight_20260916/L1_dvc_2/prescan.json'
-OUT='docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_2/records'
+P='${REPO_ROOT}/runs/env_overnight_20260916/L1_dvc_2/prescan.json'
+OUT='${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_2/records'
 pre=json.load(open(P))
 d=json.load(sys.stdin)
 tid=d['task_id']

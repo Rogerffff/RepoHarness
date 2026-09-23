@@ -1,7 +1,7 @@
 # python__mypy-15184：独立初判
 
 - 状态 `needs_review`，范围 `static_review`，用途 `development_diagnostic`。静态看可作为条件性开发诊断候选；不是环境已验或正式评测准入。
-- 权威 ROOT=`.`。P=`runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184`；Q 为同根 `private/python__mypy-15184`；R=`runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184`；A=`runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz`。下述相对路径相对 ROOT，源码行号是 P/base 的本题版本。
+- 权威 ROOT=`${REPO_ROOT}`。P=`runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184`；Q 为同根 `private/python__mypy-15184`；R=`runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184`；A=`runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz`。下述相对路径相对 ROOT，源码行号是 P/base 的本题版本。
 - 暴露：四份共用方法、本题 P/Q 原件（已看到 test/gold、环境 gold/noop 摘要）、本题 inventory exact entry 与 common/install_wave1、精确指向的本题原始运行记录及 baseline 归档调用链。顺序上此前已独立检查 15139 的原件和写初判；未见任何题的主审/公开/旧质量结论，没有读取本批聚合或其它题调查。environment_record 的 analysis/history 链接未跟随。不是无结果盲审。只做文本/JSON/hash，未执行项目、测试、安装、网络、Docker 或解包归档。
 
 ## 结论

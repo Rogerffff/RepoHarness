@@ -2,7 +2,7 @@
 
 审查日：2026-09-21。建议 `state=needs_review`、`scope=static_review`、`intended_use=development_diagnostic`。本题有具体质量疑点：官方唯一 F2P 只检查 namespace 名称，不验证两个名字代表所需类型；公开题面还保留“补到 _libs”与“补到 api.typing”两种位置选项。gold 实现合理且历史运行通过，但这些事实不足以证明测试对合理替代解和自然错误解均能正确区分。未执行新反例，不能宣称误判已实跑确认或原题无效。
 
-`ROOT=.`；`I=ROOT/runs/swegym_quality_batch02_20260921_v2`；`B=I/public/pandas-dev__pandas-53958/base`；`P=I/private/pandas-dev__pandas-53958`。本次仅静态文件/JSON/hash/只读 Git；未导入/执行项目、测试、安装、联网、容器或模型，未改 source/test/gold/reward。未看 public_read、主审、其它 reviewer、旧质量结论、B1/B2 聚合/manifest/assignments/method_adjustments/CPU计划。看过本题授权 `environment_record.json` 的 baseline 摘要，未跟进聚合 evidence；以下使用 own run_refs 原 ledger/log 核实。三题初判统一保存后等待封存开放。
+`ROOT=${REPO_ROOT}`；`I=ROOT/runs/swegym_quality_batch02_20260921_v2`；`B=I/public/pandas-dev__pandas-53958/base`；`P=I/private/pandas-dev__pandas-53958`。本次仅静态文件/JSON/hash/只读 Git；未导入/执行项目、测试、安装、联网、容器或模型，未改 source/test/gold/reward。未看 public_read、主审、其它 reviewer、旧质量结论、B1/B2 聚合/manifest/assignments/method_adjustments/CPU计划。看过本题授权 `environment_record.json` 的 baseline 摘要，未跟进聚合 evidence；以下使用 own run_refs 原 ledger/log 核实。三题初判统一保存后等待封存开放。
 
 ## 1. 公开目标、材料与初态
 

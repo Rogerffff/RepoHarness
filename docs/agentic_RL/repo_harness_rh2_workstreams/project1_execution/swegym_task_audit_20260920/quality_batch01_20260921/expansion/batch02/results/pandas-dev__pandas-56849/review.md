@@ -2,7 +2,7 @@
 
 2026-09-21，B2 pandas reviewer，第二阶段。**建议保留为受限静态候选：`state=needs_review`、`scope=static_review`、`intended_use=development_diagnostic`。** 同意主审保留 warning 措辞过严、频率属性漏检及参考身份合并的具体限制；它们尚不是实际候选错分的运行证明。历史 noop/gold 对照成立，不能据此给正式训练、评测或 actor 启用批准。
 
-本文路径除特别说明外相对 `ROOT=.`。`I=runs/swegym_quality_batch02_20260921_v2`，`B=I/public/pandas-dev__pandas-56849/base`，`P=I/private/pandas-dev__pandas-56849`。第一阶段初判 SHA256 为 `cc61dc855bd0f2d3b0f95b5090ae9a52b413a3b35ffea04eb2ace1bbd28cd109`；三题全部封存后，才按协调者统一开放读取本题五份主审/公开成品及 `I/history/pandas-dev__pandas-56849/refs.json` 指向的唯一旧记录。初判未回写。本轮仅静态文件、JSON 和文本计数，未导入项目、运行 pytest、构建、安装、容器、网络或模型，未改源码、测试、gold、参考或 reward。
+本文路径除特别说明外相对 `ROOT=${REPO_ROOT}`。`I=runs/swegym_quality_batch02_20260921_v2`，`B=I/public/pandas-dev__pandas-56849/base`，`P=I/private/pandas-dev__pandas-56849`。第一阶段初判 SHA256 为 `cc61dc855bd0f2d3b0f95b5090ae9a52b413a3b35ffea04eb2ace1bbd28cd109`；三题全部封存后，才按协调者统一开放读取本题五份主审/公开成品及 `I/history/pandas-dev__pandas-56849/refs.json` 指向的唯一旧记录。初判未回写。本轮仅静态文件、JSON 和文本计数，未导入项目、运行 pytest、构建、安装、容器、网络或模型，未改源码、测试、gold、参考或 reward。
 
 ## 决定性论据复核
 

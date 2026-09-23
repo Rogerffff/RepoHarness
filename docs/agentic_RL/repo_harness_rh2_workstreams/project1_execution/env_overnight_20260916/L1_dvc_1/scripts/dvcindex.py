@@ -1,7 +1,7 @@
 # dvc 35 题跨题索引：共享 gold/test_patch 文件、base_commit 提交距离
 import json,re,collections,subprocess
-S2='docs/agentic_RL/repo_harness_rh2_workstreams/s2'
-R='runs/env_overnight_20260916/repos/dvc'
+S2='${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/s2'
+R='${REPO_ROOT}/runs/env_overnight_20260916/repos/dvc'
 G={};V={}
 for line in open(f'{S2}/ingest/grading_bundles_v2_v0.jsonl'):
     d=json.loads(line)
@@ -10,7 +10,7 @@ for line in open(f'{S2}/ingest/validation_bundles_v0.jsonl'):
     d=json.loads(line)
     if d['instance_id'] in G: V[d['instance_id']]=d
 def paths(diff): return sorted(set(re.findall(r'^diff --git a/(\S+) b/\S+', diff or '', re.M)))
-mine=set(json.load(open('docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_1/ASSIGNMENT.json'))['tasks'])
+mine=set(json.load(open('${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_1/ASSIGNMENT.json'))['tasks'])
 rows={t:{'base':d['base_commit'],'ver':d.get('version'),'gold':paths(V[t]['golden_patch']),'tp':paths(d['test_patch'])} for t,d in G.items()}
 print(f'dvc 题数: {len(rows)}（本包 {len(mine)}）')
 for label,key in (('gold','gold'),('test_patch','tp')):

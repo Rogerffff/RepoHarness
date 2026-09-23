@@ -1,6 +1,6 @@
 # iterative__dvc-6954 独立复核初判（封存后不回写）
 
-记录时间：2026-09-20 21:28 UTC / 2026-09-21 05:28 SGT。角色：B3 DVC 整包 fresh 独立 reviewer。权威根目录为 `.`；下列相对路径均对此根目录。机器处置：`state=needs_review, scope=static_review`；用途：`development_diagnostic`。
+记录时间：2026-09-20 21:28 UTC / 2026-09-21 05:28 SGT。角色：B3 DVC 整包 fresh 独立 reviewer。权威根目录为 `${REPO_ROOT}`；下列相对路径均对此根目录。机器处置：`state=needs_review, scope=static_review`；用途：`development_diagnostic`。
 
 **独立结论：题面成立，核心评分与公开要求相符；可保留为静态诊断候选，但不能宣称覆盖全部负数形式或实际 actor 已可用。** 未发现要求 gold 特定内部实现的断言。确定的覆盖边界是只用一个 `-1` 单测判修复，未直接验证 CLI 原例、负浮点数、容器内负数及参数更新回归。当前无证据须先改题；如将 reward 解释为完整需求满足，先做下述定点覆盖实验。
 

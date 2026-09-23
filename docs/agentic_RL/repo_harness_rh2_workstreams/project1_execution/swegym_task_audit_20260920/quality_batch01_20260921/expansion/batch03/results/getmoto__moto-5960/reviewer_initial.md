@@ -2,7 +2,7 @@
 
 状态`needs_review`，范围`static_review`，用途`development_diagnostic`。本稿先于任何本题public_read、主审初稿/delta/card/record和旧质量结论；纯静态，只读文件/日志/源码，stdlib文本/JSON/AST定位/哈希，未执行项目、测试、安装、Docker、网络、模型。
 
-ROOT=.；I3=ROOT/runs/swegym_quality_batch03_20260921_v1；IW=ROOT/runs/env_recipe_repair_20260919/install_wave1。源码引用均为I3/public/getmoto__moto-5960/base。
+ROOT=${REPO_ROOT}；I3=ROOT/runs/swegym_quality_batch03_20260921_v1；IW=ROOT/runs/env_recipe_repair_20260919/install_wave1。源码引用均为I3/public/getmoto__moto-5960/base。
 
 独立初判：公开GSI投影问题与base对应，gold沿已存在的query投影模式修复scan，历史两项F2P的失败/通过也解释清楚。主要质量限度是题面明确GSI INCLUDE和GSI KEYS_ONLY，而新增评分实际为GSI INCLUDE与LSI KEYS_ONLY；冻结P2P中的GSI KEYS_ONLY只做query，不能补上scan缺口。还未专门保护索引投影后原表数据保留。可以作为有限范围的开发诊断静态候选，但不得把reward1解释为题面两种GSI scan均已验证；优先补窄CPU语义检查。未据LSI字样直接判误拒或认定gold有错。
 

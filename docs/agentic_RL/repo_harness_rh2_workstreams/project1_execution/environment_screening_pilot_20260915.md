@@ -72,7 +72,7 @@ worker 可以在补丁副本继续调查，但结果保留该变体标识。独�
 
 ## 5. 使用现有真实评分入口，不让 worker 重写 grader
 
-使用 [S1-e 手册](swe_grading_wiring_20260915/runbook_s1e.md)中的环境安装、`prepare`、`export-gold` 与 CLI（对应生产源码未随本批发布：`rh2/scripts/replay_grade.py`）。任务包由协调者准备或明确交给负责人准备；私有材料不挂进盲解工作区。**现有入口主要是 SWE-Gym；R2E 方案 A 已决定，但完整适配不能仅凭契约方案当成已实现。** R2E 先做材料/边界分析，真实接线验过再跑本流程的评分步骤，不回退实验 runner 冒充 RH2。
+使用 [S1-e 手册](swe_grading_wiring_20260915/runbook_s1e.md)中的环境安装、`prepare`、`export-gold` 与 [CLI](../../../../rh2/scripts/replay_grade.py)。任务包由协调者准备或明确交给负责人准备；私有材料不挂进盲解工作区。**现有入口主要是 SWE-Gym；R2E 方案 A 已决定，但完整适配不能仅凭契约方案当成已实现。** R2E 先做材料/边界分析，真实接线验过再跑本流程的评分步骤，不回退实验 runner 冒充 RH2。
 
 下面是单题、单变体的调用模板，参数名已与当前 CLI 对照；地址、快照和路径由派发时填写。`prepare` 生成的 summary 含路径，复制后先核对其仍指向本包的正确材料。
 

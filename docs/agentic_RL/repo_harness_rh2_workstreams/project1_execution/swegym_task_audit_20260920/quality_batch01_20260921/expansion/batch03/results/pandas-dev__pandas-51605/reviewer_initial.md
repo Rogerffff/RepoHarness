@@ -12,7 +12,7 @@
 
 静态 stdlib JSON/hash 与 tarfile.extractfile；没有项目 import/执行、测试、安装、下载/联网、Docker、SSH、模型/quota/reset 或提交推送；没有改源/tests/gold/reference/reward/expected。
 
-路径缩写：`ROOT=.`；`I3=ROOT/runs/swegym_quality_batch03_20260921_v1`；`P=I3/public/pandas-dev__pandas-51605/base`；`Q=I3/private/pandas-dev__pandas-51605`；`B=ROOT/runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01`。下列相对引用均以此为准。
+路径缩写：`ROOT=${REPO_ROOT}`；`I3=ROOT/runs/swegym_quality_batch03_20260921_v1`；`P=I3/public/pandas-dev__pandas-51605/base`；`Q=I3/private/pandas-dev__pandas-51605`；`B=ROOT/runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01`。下列相对引用均以此为准。
 
 base `b070d87f118709f7493dfd065a17ed506c93b59a`，tree `a3d714b05bc870106b35b3bff6f00d7c551b7460`。source_refs 原 ingest public/grading/validation 第 154 行、导出文件 SHA 全核一致；test.patch 等于 grading.test_patch；gold 等于原 replay/gold candidate，SHA `3e268d05a6a97e89e8b031091642842ca0a7ac6768a6e04bde63b7be5b179f22`。stdlib Git blob hash 核得源码 old blob `92cb7b5fd5f4714f86966efbedc5340ba09f8f31`、测试 old blob `bf003019d538761d7384cad0b105f106d2c9b124`，均匹配补丁 index。
 

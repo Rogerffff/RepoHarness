@@ -1,7 +1,7 @@
 import json,os,re,collections
-L='runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
-M='runs/env_overnight_20260916/L1_dask/mat'
-ASG=json.load(open('docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dask/ASSIGNMENT.json'))
+L='${REPO_ROOT}/runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
+M='${REPO_ROOT}/runs/env_overnight_20260916/L1_dask/mat'
+ASG=json.load(open('${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dask/ASSIGNMENT.json'))
 pat=re.compile(r'^(PASSED|FAILED|ERROR|SKIPPED|XFAIL|XPASS)\s+(\S.*)$')
 for tid in ASG['tasks']:
     g=json.load(open(f'{M}/{tid}/grading.json'))

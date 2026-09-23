@@ -1,7 +1,7 @@
 import json,os,re
-M='runs/env_overnight_20260916/L1_dvc_1/mat'
-L='runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
-ASG=json.load(open('docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_1/ASSIGNMENT.json'))
+M='${REPO_ROOT}/runs/env_overnight_20260916/L1_dvc_1/mat'
+L='${REPO_ROOT}/runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
+ASG=json.load(open('${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_1/ASSIGNMENT.json'))
 def paths(diff): return sorted(set(re.findall(r'^diff --git a/(\S+) b/\S+', diff or '', re.M)))
 def istest(p):
     b=os.path.basename(p)
@@ -37,7 +37,7 @@ for tid in ASG['tasks']:
                  'f2p_notpass':{x:sm[x] for x in f2p if x in sm and sm[x]!='PASSED'},
                  'p2p_notpass':{x:sm[x] for x in p2p if x in sm and sm[x]!='PASSED'}}
     out[tid]=r
-json.dump(out,open('runs/env_overnight_20260916/L1_dvc_1/prescan.json','w'),ensure_ascii=False,indent=1)
+json.dump(out,open('${REPO_ROOT}/runs/env_overnight_20260916/L1_dvc_1/prescan.json','w'),ensure_ascii=False,indent=1)
 for tid,r in out.items():
     print(f"### {tid} v={r['version']} py={r['py']} ps={r['ps_len']}")
     print(f"    gold_paths={r['gold_paths']}")

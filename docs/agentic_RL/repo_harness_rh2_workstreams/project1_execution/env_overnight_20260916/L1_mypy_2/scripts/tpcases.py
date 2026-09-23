@@ -1,8 +1,8 @@
 """把 test_patch 的每个改动行归属到所在 [case X]，用 base 文件内容定位。"""
 import json,sys,re,subprocess
-R='runs/env_overnight_20260916/repos/mypy'
-M='runs/env_overnight_20260916/L1_mypy_2/mat'
-PRE=json.load(open('runs/env_overnight_20260916/L1_mypy_2/prescan.json'))
+R='${REPO_ROOT}/runs/env_overnight_20260916/repos/mypy'
+M='${REPO_ROOT}/runs/env_overnight_20260916/L1_mypy_2/mat'
+PRE=json.load(open('${REPO_ROOT}/runs/env_overnight_20260916/L1_mypy_2/prescan.json'))
 tid=sys.argv[1]
 g=json.load(open(f'{M}/{tid}/grading.json')); base=PRE[tid]['base_commit']
 diff=g['test_patch']

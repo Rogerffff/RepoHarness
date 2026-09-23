@@ -2,7 +2,7 @@
 
 本稿在未读取本题历史调查、旧答案、reviewer 或 B1/B2 聚合材料的条件下保存。仅做文本、JSON 和只读 Git 阅读，没有运行项目、测试、安装、容器、联网或模型，也未修改 source/test/gold/reward。公开视角引用本题 `public_read.md`，本主审已暴露于本题隐藏测试及 gold，不是盲解。
 
-路径缩写均以 `.` 为根：`P=runs/swegym_quality_batch02_20260921_v2/public/pandas-dev__pandas-56849`，`B=P/base`，`V=runs/swegym_quality_batch02_20260921_v2/private/pandas-dev__pandas-56849`，`W=runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-3`，`N=W/eval_logs/evallog_replay-f216-baseline01-w_1d6b2dfa.eval.log`，`G=W/eval_logs/evallog_replay-f216-baseline01-w_2a3467af.eval.log`。RH2 源码读取时根仓库 HEAD 为 `e3d120b55a62cca5985f688de8cdd481b12ea6be`；这是宿主源码身份，不替代历史运行脚本摘要。
+路径缩写均以 `${REPO_ROOT}` 为根：`P=runs/swegym_quality_batch02_20260921_v2/public/pandas-dev__pandas-56849`，`B=P/base`，`V=runs/swegym_quality_batch02_20260921_v2/private/pandas-dev__pandas-56849`，`W=runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-3`，`N=W/eval_logs/evallog_replay-f216-baseline01-w_1d6b2dfa.eval.log`，`G=W/eval_logs/evallog_replay-f216-baseline01-w_2a3467af.eval.log`。RH2 源码读取时根仓库 HEAD 为 `e3d120b55a62cca5985f688de8cdd481b12ea6be`；这是宿主源码身份，不替代历史运行脚本摘要。
 
 ## 1. 公开目标、版本与初态
 

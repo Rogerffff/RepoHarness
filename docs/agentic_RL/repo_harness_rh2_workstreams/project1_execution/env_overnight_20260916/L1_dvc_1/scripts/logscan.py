@@ -1,8 +1,8 @@
 # 解析污染扫描：test_output.txt 里被 RH2 状态解析器当成"测试结果"的非 nodeid 行；以及同 key 重复出现
 import json,os,re,collections
-M='runs/env_overnight_20260916/L1_dvc_1/mat'
-L='runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
-ASG=json.load(open('docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_1/ASSIGNMENT.json'))
+M='${REPO_ROOT}/runs/env_overnight_20260916/L1_dvc_1/mat'
+L='${REPO_ROOT}/runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
+ASG=json.load(open('${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_1/ASSIGNMENT.json'))
 pat=re.compile(r'^(PASSED|FAILED|ERROR|SKIPPED|XFAIL|XPASS)\s+(\S.*)$')
 out={}
 for tid in ASG['tasks']:
@@ -30,4 +30,4 @@ for tid in ASG['tasks']:
         if dupdiff: flags.append(f'VERDICT_CONFLICT={ {k:sorted(v) for k,v in list(dupdiff.items())[:4]} }')
         if collide: flags.append(f'TRUNC_COLLISION={len(collide)}:{list(collide.items())[:2]}')
         if flags: print(f'--- {tid}/{kind}'); [print('   !',f) for f in flags]
-json.dump(out,open('runs/env_overnight_20260916/L1_dvc_1/logscan.json','w'),ensure_ascii=False,indent=1)
+json.dump(out,open('${REPO_ROOT}/runs/env_overnight_20260916/L1_dvc_1/logscan.json','w'),ensure_ascii=False,indent=1)

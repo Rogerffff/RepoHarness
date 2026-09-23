@@ -2,7 +2,7 @@
 
 2026-09-21；主审 B2；`disposition.state=needs_review`，`scope=static_review`；`usage.intended_use=development_diagnostic`。仅静态阅读既有源码、日志、工件及标准库 JSON/哈希检查，未运行项目代码、测试、安装、容器、网络或模型。本文保存后等待协调者封存，尚未读取 `I2/history/python__mypy-10308/refs.json` 或旧调查。
 
-路径约定：`ROOT=.`；`U=ROOT/runs/swegym_quality_batch02_20260921_v2/public/python__mypy-10308`；`P=ROOT/runs/swegym_quality_batch02_20260921_v2/private/python__mypy-10308`；`M=ROOT/runs/env_recipe_repair_20260919/materials_v2`；`G=M/runs/python__mypy-10308-gold`；`N=M/runs/python__mypy-10308-noop`。下文 `base/` 相对 U，RH2 源码路径相对 ROOT。日志简称：`Glog=G/eval_logs/evallog_replay-er19-mat1-python__e8bba825.eval.log`，`Nlog=N/eval_logs/evallog_replay-er19-mat1-python__4cc880f8.eval.log`。
+路径约定：`ROOT=${REPO_ROOT}`；`U=ROOT/runs/swegym_quality_batch02_20260921_v2/public/python__mypy-10308`；`P=ROOT/runs/swegym_quality_batch02_20260921_v2/private/python__mypy-10308`；`M=ROOT/runs/env_recipe_repair_20260919/materials_v2`；`G=M/runs/python__mypy-10308-gold`；`N=M/runs/python__mypy-10308-noop`。下文 `base/` 相对 U，RH2 源码路径相对 ROOT。日志简称：`Glog=G/eval_logs/evallog_replay-er19-mat1-python__e8bba825.eval.log`，`Nlog=N/eval_logs/evallog_replay-er19-mat1-python__4cc880f8.eval.log`。
 
 **初判：**公开需求明确到可以独立调查；既存、带版本的 materials-v2 评分对照支持真实目标路径上的 no-op/gold 分差。它不是原 S2 材料原样验收，也不是正式 actor 开发条件验收。唯一冻结 F2P 具有正、负行为断言，不能称为只测“不崩溃”；但没有 P2P，且没有直接执行题面原例的证据。保留静态诊断候选，暂不判 reject、不自动改测试或评分、不宣称已经 ready_for_probe。
 

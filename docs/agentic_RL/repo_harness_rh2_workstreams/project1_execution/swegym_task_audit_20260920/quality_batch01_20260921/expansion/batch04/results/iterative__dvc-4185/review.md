@@ -10,7 +10,7 @@
 
 继承初稿的原件范围，并补读公开 `tests/unit/stage/test_loader_pipeline_file.py:41–86,138–145` 与 `dvc/output/base.py:90–117,168–218`。没有新项目 import、测试、安装、容器、下载、网络或模型执行；只新写本 review，所有封存稿及其他角色稿不改。已见 gold、隐藏测试、历史结果和旧质量判断，故不是 result blind，亦不适合作为 solver 上下文。
 
-路径约定：ROOT=`.`；P=`runs/swegym_quality_batch04_20260921_v1/public/iterative__dvc-4185/base/`；E=`runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/`。以下源码位置相对 P。
+路径约定：ROOT=`${REPO_ROOT}`；P=`runs/swegym_quality_batch04_20260921_v1/public/iterative__dvc-4185/base/`；E=`runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/`。以下源码位置相对 P。
 
 ## 对主审决定性主张的判定
 

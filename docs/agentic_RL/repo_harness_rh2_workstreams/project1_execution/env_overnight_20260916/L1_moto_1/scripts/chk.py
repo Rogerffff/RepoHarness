@@ -1,6 +1,6 @@
 import json,sys,os
-M='runs/env_overnight_20260916/L1_moto_1/mat'
-L='runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
+M='${REPO_ROOT}/runs/env_overnight_20260916/L1_moto_1/mat'
+L='${REPO_ROOT}/runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
 tid=sys.argv[1]
 g=json.load(open(f'{M}/{tid}/grading.json'))
 f2p=g['fail_to_pass']; p2p=g['pass_to_pass']

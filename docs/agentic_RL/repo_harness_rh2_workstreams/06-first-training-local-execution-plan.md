@@ -1,5 +1,7 @@
 # 06 · 首训就绪本地执行计划（决策包 A + 05 替换条款 + 工作包 W0~W8）
 
+> **2026-09-21 执行补充：第六组效率优化。** 用户已批准 I25/I26/I29 窄优化、I23 无损紧凑表示、I24 两种诊断/效率配置、I27/I28/I30 随八卡验收实测分期，具体范围和实施入口统一见[第六组决定](project1_execution/batch6_efficiency_20260921/README.md)。I18 来源仍待决定；当前保留 fresh 评分，受控依赖供应处于设计准备，原容器评分未启用。以下旧计划的阶段状态需结合当前各批记录阅读。
+
 日期：2026-09-01。状态：**草案——决策包 A 与 §2 替换条款经 codex 写码前审查、owner 拍板后，本文升为权威计划并回写 05**。输入文档（历史草案,冲突以本 06 提案处理,owner 批准前均为提案）：`miles_spike/formal_first_training_readiness_scope.md`（codex 就绪稿）、`miles_spike/first_training_readiness_alignment_claude.md`（Claude 对齐意见书）、`tmp/租卡前本地工作.md`（codex 分批建议）。进度权威沿用 `miles_spike/spike-log.md` 按批追加。
 
 分批原则（协作协议 §近期冻结,2026-09-02 按 codex wave1 建议细化为分时点）：**D0 = 现在拍板的最小集**（§1,允许 W0/W1a/W2a 开工）；**D1 在 W1b 写码前**（三终态高层原则 + A2/A3/A6 + staleness 参数化接口;映射表细目由契约/代码审查收口,阈值数值归 B,A5 disposition 归 C——**2026-09-02 已拍板**,见 §4）；**D2 = W3a/W3b 开工确认点**（A4/评分正链无变化则不新增决策）；决策包 B 在 W4/W5b 开工前、决策包 C 在 W7/租卡前分别拍板。
@@ -42,7 +44,11 @@
 - **run-fatal 面**：grader 隔离失效、hidden 资产可见、跨 execution 身份错接、execution scope 无法终止、核心 admission record（identity/patch/GradingReport/EligibilityReport 及引用）持久化失败（样本不交付 + run-fatal，但**仍** revoke session/终止 scope/清容器）；timeline/telemetry 写失败不阻止 cleanup。
 - **明确不做**：microVM、透明通用代理、LLM claim-check、完整展示型红队（原样）。
 
-### A5 timeout / truncation 决策矩阵（owner 2026-09-02 裁定:**决策时点 = C**,Wave1/W1b 只实现 termination 事实与 fail-fast 边界；全部为建议,状态 pending_owner_decision）
+### A5 timeout / truncation 决策矩阵（2026-09-08 部分原则已定；预算数值与未覆盖分支仍待决定）
+
+> **2026-09-08 owner 补充定案（A 线第一组）**：保留 turn 预算与较宽墙钟，暂不决定具体次数/秒数。turn 是模型行动机会预算；正常 turn 用尽且 capture/quiescence/frozen snapshot/grading 可信时，选择 A5-a ① KEEP_FULL，使用真实评分、正常进入后续流程。墙钟只作强制终止保护，防止故障/大量排队等无限占用资源；选择 A5-b (2)，触发后整组不训练。**方案已定，实现未完成**；不自动批准所有未来 token/context horizon producer 或其它 disposition 分支。详情与外部依据见 [第一组记录](project1_execution/batch1_budget_20260908/README.md)。Codex 补充意见：超时本身不能证明 infra 故障，保留真实终止原因及已有归因证据；该意见与用户批准的训练处置分开记录。
+
+2026-09-02 的原始分期为“决策时点 = C，Wave1/W1b 只实现 termination 事实与 fail-fast 边界”。以下保留原始候选与比较，已获上述确认的部分不再重复请求决定。
 
 **A5-a 确定性 policy horizon**（`task_token_budget_exhausted`/`max_turns_exhausted`/`context_limit_reached`；前提 = capture/quiescence/frozen snapshot/grading 完整 ⇒ `present_truncated`）：
 
@@ -57,7 +63,7 @@
 
 **A5-c 其余 termination 映射**：`owner_cancelled`（正常 shutdown 取消的 active execution）→ 不评分不训练、不补采（run 已结束）；setup/infra timeout → 无可信轨迹，拒组+补采；execution scope 无法终止 → run-fatal；run 总墙钟 → 停新提交 + 正常 shutdown。episode 计时起点改为资源占用（不变）；数值属 C 包。
 
-**批准前边界**：代码只实现 termination 事实与观测；A5 未拍板前不实现任何新的 admission/gradient mask/补采语义。
+**批准边界**：上述 2026-09-08 已确认部分可据此实施接线；未覆盖的训练语义仍不得借本次决定扩展。预算数值后定，不把当前默认认作正式训练配方。
 
 ### A6 成员语义（D1 已批准 2026-09-02;codex 复审修正——推翻 Claude 原方案，Claude 复核后同意）
 
@@ -98,6 +104,8 @@
 - **B-3 最小冷恢复合同**：依赖 miles 既有 checkpoint + data_source 状态；buffer/在飞组丢弃；**不建 joint commit / COMMITTED marker / (segment_id, numeric_version) 复合身份**；只修 updater 版本从恢复点继续、data_source 状态缺失显式报错、重启记录三点（**取代 W5b 行原文**）。
 - **B-5b / 新增 W10**：租卡前闭合多 engine 最小正确性（abort 广播、版本不经 router 随机查、恢复 per-engine 参数删 engine_count==1、两假 engine 反例）；engine 数由 GPU matched comparison 决定。
 - B-1 语义/B-2 drop + 三分支 drop 事件 + `max_time_without_accepted_group`/B-4=1/B-5a retract/B-6 落账：按 v2。
+- **2026-09-09 I13 窄改判已获 owner 确认**：B-6 中仅中间取消等待超时，若在最终关停期限内确认安全收口且其它原有失败条件均不存在，可成功退出并保留诊断。真实残留/未知、核心记录失败、训练或其它实际关闭错误、总期限超时仍失败；实现待办。详见 [B-6 补充](miles_spike/decision_package_D2_B.md#b-6-落账) 与 [第二组说明](project1_execution/batch2_failures_20260908/README.md)。不顺带批准 I15/I16 的可变组或重试策略。
+- **2026-09-09 I15/I16 后续确认**：owner 继续保留首版完整组，补齐原因观测；可变组外部调查留后续。最多追加一次同工件评分及具体范围均已确认：仅候选测试发起前，镜像就绪/获取、新 grader 创建/启动中已识别可重试的服务/传输故障；先收口旧工作，共享有界评分总预算。未知/配置/完整性错误、测试已发起后的失败及可信 0/1 不纳入。沿用原模型采样与行为版本，最终只交付一个权威评分；未批准可变组、单成员/整组重新 rollout 或通用无界 retry，代码未实施。完整条件见 [B-2 补充](miles_spike/decision_package_D2_B.md#b-2-unused-handler--drop)。
 - **前置清理批**先于 W3/W4 开工（见 §5 3a）。
 - **Wave3 闭合口径（codex §10.3,2026-09-04,Claude 接受）**：Wave3 只能声称完成**当前 exact official-file 边界**（official test 文件在位内容对候选不可改、应缺路径不可被重建——当前 SWE profile 对 official patch 删除/改名后仍缺失的路径 fail-closed,216 题冻结集为新增 8/删除 0/改名 0）,**不能声称"通用 pytest/SWE evaluator 控制面已完全不可控"**：fresh baseline 里只命中 test_glob 的辅助文件在 chown 后仍归候选、`conftest.py`/`pytest.ini`/plugin 等通用控制面尚未定义。**T2-d/W2b 在真实首训或 GPU 上使用某个 taskset 前,必须由该 environment adapter 声明并实测完整控制面**（含影响 runner 的 glob-only 文件、config/plugin/启动脚本）;在此之前不得据 Wave3 绿灯单独宣称真实首训 reward 已可信。
 - **W3b 提出的两项待拍板 T0（2026-09-04,owner 未决）**：(a) **grader 非 root 与 T2-e 验证身份一致性**——grader 候选执行改为非 root（rh2grader/54322）后,root 下被跳过的权限类测试会真正执行、site-packages 写入会失败,可能系统性翻转部分题的 reward;若四门验证是 root 跑的,须用同一 grader profile 重验 216 题或由 owner pin 身份。选项:(i) 保持非 root,T2-e 用同一 profile 重验（推荐,与 D2-2 一致;代价=重跑验证）;(ii) grader 执行候选代码用 root（放弃 D2-2 的非 root 要求,探针记录实际用户）;(iii) 逐题 pin 身份（复杂,不推荐）。(b) **每 run 一个 egress relay 容器**（约 40 行 stdlib 转发器,非 root/只读/cap-drop ALL,作为 isolated internal 网络的唯一出口）是否算"引入重要服务"——Claude 判断:它是 allowlist 的实现载体而非新服务面,无状态、无 API、随 run 生命周期;备选（普通 --internal 网络）实测宿主网关仍可达,不满足 direct-IP 阻断。请 owner 确认接受或指定备选。

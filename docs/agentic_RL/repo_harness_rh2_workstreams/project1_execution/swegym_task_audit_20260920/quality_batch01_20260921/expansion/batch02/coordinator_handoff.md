@@ -4,7 +4,7 @@
 
 ## 范围与材料
 
-- 权威工作区仍为 `.`。输入以本目录 `batch_manifest.json`、`material_check.json` 为准，材料根为 `runs/swegym_quality_batch02_20260921_v2/`；v1不用于派发。
+- 权威工作区仍为 `${REPO_ROOT}`。输入以本目录 `batch_manifest.json`、`material_check.json` 为准，材料根为 `runs/swegym_quality_batch02_20260921_v2/`；v1不用于派发。
 - 固定12题：DVC 3576/4166/1681，mypy 10308/17071/11236，Moto 7584/5752/5134，Pandas 56849/48106/53958。不因发现问题换题。按DVC/mypy小包、Moto/Pandas小包推进，不一次铺开剩余全池。
 - 输出仅在本目录：`assignments.json`、`results/<id>/`、`batch_report.md`、`probe_candidates.json`、`cpu_queue.json`、`method_adjustments.md`。首批结果不搬走、不覆盖；需要累计汇总时只写链接和计数。
 - 共用首批 `roles/`、`record_template.md`、`actor_environment_card.md` 和上级质量协议，以及首批 `method_adjustments.md` 已核实的改进。公开读者只得到角色卡与自己题目的公开材料目录，不能得到此交接、manifest、选题理由、历史或评分材料。

@@ -39,7 +39,7 @@
 | `remote_log` / `diagnostics_ref` | rh2 e1/e2 的日志在机器 1 的远端路径（`/work/replay/eval_logs/...`），本机没有同步，只记路径。 |
 | `superseded_by` | 该行来自被取代的中途快照账本，统计时跳过。见 §6-C5。 |
 
-所有路径都相对工作区根 `.`。
+所有路径都相对工作区根 `${REPO_ROOT}`。
 
 查一题的典型做法：
 

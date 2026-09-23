@@ -2,7 +2,7 @@
 
 状态：`needs_review`；范围：`static_review`；用途：`development_diagnostic`。独立审查者首次接触本题，在阅读任何 public_read、主审初稿/delta/card/record、旧质量结论以前保存。全程只读文本、JSON、源码与历史日志，使用 stdlib 做路径选择/AST定位/哈希；未执行项目、import 项目、测试、安装、Docker、网络或模型。
 
-路径约定：ROOT=.；I3=ROOT/runs/swegym_quality_batch03_20260921_v1；以下 public/private 路径均在 I3 本题目录内；IW=ROOT/runs/env_recipe_repair_20260919/install_wave1。
+路径约定：ROOT=${REPO_ROOT}；I3=ROOT/runs/swegym_quality_batch03_20260921_v1；以下 public/private 路径均在 I3 本题目录内；IW=ROOT/runs/env_recipe_repair_20260919/install_wave1。
 
 初判：公开问题和 base 确实对应，新增回读断言有效触发原 bug；但只测顶层字符串，遗漏题面 None、嵌套和属性名/类型标签同名的关键边界。gold 的递归上下文仍混淆属性名和类型标签：存在合法嵌套 S 在主键名 M 的表上仍被拒绝的静态反例，并把普通非键的非法 S 字典值校验放宽。建议先做下述窄 CPU 语义诊断，不能由 gold=1 宣布题意完整修复。没有发现新增断言本身误拒合理实现的具体证据。
 

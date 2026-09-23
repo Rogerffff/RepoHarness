@@ -1,8 +1,8 @@
 # 改编自 L1_moto_1/scripts/leak.py：题面/hints 是否泄漏 gold 代码或上游 PR/commit 指针
 import json,re
 PKG='L1_modin_pandas'
-M=f'runs/env_overnight_20260916/{PKG}/mat'
-ASG=json.load(open(f'docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/{PKG}/ASSIGNMENT.json'))
+M=f'${REPO_ROOT}/runs/env_overnight_20260916/{PKG}/mat'
+ASG=json.load(open(f'${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/{PKG}/ASSIGNMENT.json'))
 def norm(s): return re.sub(r'\s+','',s or '')
 PTR=re.compile(r'(github\.com/\S+/(pull|commit|issues)/\d+|#\d{4,6}|\bGH ?\d{4,6}\b|whatsnew|xref\s+#?\d+)',re.I)
 out={}
@@ -26,4 +26,4 @@ for tid in ASG['tasks']:
           f"stmt_ptrs={o['statement_ptrs'][:3]} hints_chars={o['hints_chars']} img={o['statement_has_image']} urls={len(o['statement_has_url'])}")
     for e in hit[:3]: print('     STMT-LEAK:',e[:110])
     for e in hadded[:3]: print('     HINTS-LEAK:',e[:110])
-json.dump(out,open(f'runs/env_overnight_20260916/{PKG}/leak.json','w'),ensure_ascii=False,indent=1)
+json.dump(out,open(f'${REPO_ROOT}/runs/env_overnight_20260916/{PKG}/leak.json','w'),ensure_ascii=False,indent=1)

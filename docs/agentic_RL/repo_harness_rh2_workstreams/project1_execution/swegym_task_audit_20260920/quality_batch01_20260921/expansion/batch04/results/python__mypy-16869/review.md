@@ -2,7 +2,7 @@
 
 2026-09-21。角色为 B4 独立 reviewer。明确解封后仅新读本题 `public_read.md`、`analysis_before_history.md`、`old_findings_delta.md`、`card.md`、`screening_record.json`，以及 `runs/swegym_quality_batch04_20260921_v1/history/python__mypy-16869/refs.json` 指定的唯一 own 旧记录 `docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_1/records/python__mypy-16869.json`。未追读其中引用的其他题或聚合。继承独立初稿的只读、无项目执行限制；本阶段仅写本文件。
 
-封存核验：独立初稿 SHA256 为 `f5d4b7cee8609ba714c6b049c045d7d5f0a67a62581cadeba0c50ec491b12a56`；主审初稿为 `0e9064f9f2f19653995f7717c2e894b3d4b8a172d5744166b29029f47341d3f0`；公开稿为 `46fc57ff7a95e8801f87f43d7daafb9d514cc23423922904882e985646928ed8`。读取时与记录值相符。未回写任一稿件。证据路径简称沿 `reviewer_initial.md`，根为 `.`。
+封存核验：独立初稿 SHA256 为 `f5d4b7cee8609ba714c6b049c045d7d5f0a67a62581cadeba0c50ec491b12a56`；主审初稿为 `0e9064f9f2f19653995f7717c2e894b3d4b8a172d5744166b29029f47341d3f0`；公开稿为 `46fc57ff7a95e8801f87f43d7daafb9d514cc23423922904882e985646928ed8`。读取时与记录值相符。未回写任一稿件。证据路径简称沿 `reviewer_initial.md`，根为 `${REPO_ROOT}`。
 
 ## 建议与分歧
 

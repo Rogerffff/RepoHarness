@@ -1,0 +1,1123 @@
+diff --git a/rh2/experiments/s1_parity.py b/rh2/experiments/s1_parity.py
+index c873c7bc..a790f222 100644
+--- a/rh2/experiments/s1_parity.py
++++ b/rh2/experiments/s1_parity.py
+@@ -198,6 +198,7 @@ class MockAdapter:
+         self, sid: str, *, sampling_defaults=None, max_context_tokens: int = 0,
+         physical_attempt_id: str | None = None,  # F2-1a：paid 经 open 事务传入
+         capability_token: str | None = None,  # F2-2：认证映射（parity mock 不用）
++        deadline_monotonic: float | None = None,  # 批 B（I03）：episode 期限显式下传（parity mock 不用）
+     ) -> None:
+         pass
+ 
+diff --git a/rh2/src/repoharness2/adapters/slime/async_worker.py b/rh2/src/repoharness2/adapters/slime/async_worker.py
+index d087fece..73e75440 100644
+--- a/rh2/src/repoharness2/adapters/slime/async_worker.py
++++ b/rh2/src/repoharness2/adapters/slime/async_worker.py
+@@ -640,6 +640,9 @@ class ModelCallProxy:
+         self._max_artifacts = max_audit_artifacts
+         self._sleeper = sleeper
+         self._clock = clock
++        # 批 B（I03）：model_call 信号量排队耗时按 execution_scope 累计（audit 观测
++        # episode_deadline.model_call_queue_wait_seconds_total 的来源）。
++        self.queue_wait_seconds: dict[str, float] = {}
+         self.attempts_ledger: list[ModelCallAttempt] = []
+         self.audit_artifacts: dict[str, Any] = {}
+         self.audit_evictions = 0
+@@ -744,16 +747,97 @@ class ModelCallProxy:
+         send_fn: Callable[[int], Awaitable[Mapping[str, Any]]],
+         n: int,
+         deadline_monotonic: float | None = None,
++        *,
++        execution_scope: str | None = None,
++        min_attempt_budget_seconds: float = 0.0,
+     ):
+-        timeout = self._effective_timeout(deadline_monotonic)
++        """一次物理发送。批 B（I03，第一组"排队后重算剩余时间"）：
++
++        - model_call 信号量的等待**受 episode 期限约束**（此前等待不计时，拿到后还用等待前
++          算好的 timeout）；等待中到点 → `episode_deadline_exhausted`（typed，不发请求）；
++        - 拿到额度后**重算** timeout（= min(attempt_timeout, 剩余)），剩余不足一次尝试同样
++          typed 收口；
++        - 排队耗时按 execution_scope 累计供审计。
++        """
++
+         if self._limits is None:
++            timeout = self._effective_timeout(deadline_monotonic)
+             if timeout is None:
+                 return await send_fn(n)
+             return await asyncio.wait_for(send_fn(n), timeout=timeout)
+-        async with self._limits.acquire("model_call"):
++        waited_from = self._clock()
++        lease = await self._acquire_model_call_within_deadline(deadline_monotonic)
++        self._note_queue_wait(execution_scope, waited_from)
++        if lease is None:
++            raise UnattributableModelCallError(
++                "episode_deadline_exhausted",
++                f"model_call 额度排队 {self._clock() - waited_from:.1f}s 后 episode 期限到点"
++                "——不再发送，session 中毒，execution 缺员。",
++            )
++        try:
++            remaining = self._remaining(deadline_monotonic)
++            if remaining is not None and remaining < min_attempt_budget_seconds:
++                raise UnattributableModelCallError(
++                    "episode_deadline_exhausted",
++                    f"拿到 model_call 额度后剩余预算 {remaining:.1f}s < {min_attempt_budget_seconds}s"
++                    "——不再发送，session 中毒，execution 缺员。",
++                )
++            timeout = self._effective_timeout(deadline_monotonic)  # 排队后重算
+             if timeout is None:
+                 return await send_fn(n)
+             return await asyncio.wait_for(send_fn(n), timeout=timeout)
++        finally:
++            await lease.__aexit__(None, None, None)
++
++    async def _acquire_model_call_within_deadline(
++        self, deadline_monotonic: float | None
++    ) -> "_ResourceLease | None":
++        """拿 model_call 额度，等待不超过剩余 episode 预算；到点返回 None（不持有额度）。
++
++        用 asyncio.wait 而不是 wait_for：wait 到点时不取消内部 task，由本函数自己取消并处理
++        "取消与获取同时发生"的竞态（拿到了就立即归还），保证额度不泄漏；外层取消（客户端断连）
++        同样先收口未完成的获取再传播。
++        """
++
++        assert self._limits is not None
++        lease = self._limits.acquire("model_call")
++        remaining = self._remaining(deadline_monotonic)
++        if remaining is None:
++            await lease.__aenter__()
++            return lease
++        acquire = asyncio.ensure_future(lease.__aenter__())
++        try:
++            done, _ = await asyncio.wait({acquire}, timeout=max(remaining, 0.0))
++        except asyncio.CancelledError:
++            await self._settle_unfinished_acquire(acquire, lease)
++            raise
++        if acquire in done:
++            acquire.result()  # __aenter__ 自身异常原样上抛
++            return lease
++        await self._settle_unfinished_acquire(acquire, lease)
++        return None
++
++    @staticmethod
++    async def _settle_unfinished_acquire(acquire: "asyncio.Future[Any]", lease: "_ResourceLease") -> None:
++        acquire.cancel()
++        try:
++            await acquire
++        except asyncio.CancelledError:
++            return
++        except Exception:  # noqa: BLE001 —— 获取本身失败：没有额度可还
++            return
++        await lease.__aexit__(None, None, None)  # 取消未赶上获取：已持有 → 归还
++
++    def _note_queue_wait(self, execution_scope: str | None, waited_from: float) -> None:
++        if not execution_scope:
++            return
++        waited = max(0.0, self._clock() - waited_from)
++        self.queue_wait_seconds[execution_scope] = self.queue_wait_seconds.get(execution_scope, 0.0) + waited
++
++    def queue_wait_seconds_total(self, execution_scope: str) -> float:
++        """批 B：该 execution（paid 命名空间）在 model_call 信号量上累计排队的秒数。"""
++
++        return round(self.queue_wait_seconds.get(execution_scope, 0.0), 6)
+ 
+     async def _wait_active_before_send(
+         self,
+@@ -866,7 +950,11 @@ class ModelCallProxy:
+             failure: BaseException | None = None
+             response: Mapping[str, Any] | None = None
+             try:
+-                response = await self._send(send_fn, attempt_number, deadline_monotonic)
++                response = await self._send(
++                    send_fn, attempt_number, deadline_monotonic,
++                    execution_scope=execution_scope,
++                    min_attempt_budget_seconds=min_attempt_budget_seconds,
++                )
+             except asyncio.CancelledError:
+                 # CC/客户端取消必须原样传播（aiohttp handler_cancellation 链），
+                 # 但先落账 + poison——取消后 CC 的重试不得复活该 session
+@@ -874,9 +962,36 @@ class ModelCallProxy:
+                 self._record_failed(attempts, scoped, attempt_id, attempt_number, evidence=[ref], physical_attempt_id=physical_attempt_id)
+                 self._poison(sid, poison_registry, "client_cancelled")  # 取消不走外层统一路径
+                 raise
++            except UnattributableModelCallError as exc:
++                # 批 B（I03；Codex 计划审查 R2 探针）：_send 内的 episode 期限判定（排队中 /
++                # 拿到额度后剩余不足）已是 typed 归因，不进下方"中断 vs 更新窗口"守卫——那会把
++                # 它改写成 no_overlapping_update_window，harness 取消分支就读不到真实原因。
++                ref = self._store_artifact(attempt_id, exc.reason_code)
++                self._record_failed(
++                    attempts, scoped, attempt_id, attempt_number, evidence=[ref],
++                    physical_attempt_id=physical_attempt_id,
++                )
++                raise
+             except Exception as exc:  # noqa: BLE001 —— 归因在下方守卫做
+                 failure = exc
+ 
++            if isinstance(failure, (TimeoutError, asyncio.TimeoutError)):
++                remaining_after = self._remaining(deadline_monotonic)
++                if remaining_after is not None and remaining_after <= 0:
++                    # 批 B：发送超时恰是 episode 期限到点（timeout = min(attempt_timeout, 剩余)）
++                    # ——归 episode_deadline_exhausted；期限未到的单次 attempt_timeout 仍按下方
++                    # 守卫归中断 / 更新窗口（api/inference 族），不叫 hard wall。
++                    ref = self._store_artifact(attempt_id, "episode_deadline_exhausted")
++                    self._record_failed(
++                        attempts, scoped, attempt_id, attempt_number, evidence=[ref],
++                        physical_attempt_id=physical_attempt_id,
++                    )
++                    raise UnattributableModelCallError(
++                        "episode_deadline_exhausted",
++                        f"{attempt_id}: 发送中 episode 期限到点（剩余 {remaining_after:.1f}s）"
++                        "——session 中毒，execution 缺员。",
++                    )
++
+             if response is not None and not _response_is_abort(response):
+                 meta = response.get("meta_info")
+                 weight_version = None
+diff --git a/rh2/src/repoharness2/adapters/slime/bringup.py b/rh2/src/repoharness2/adapters/slime/bringup.py
+index e09920b1..de698a71 100644
+--- a/rh2/src/repoharness2/adapters/slime/bringup.py
++++ b/rh2/src/repoharness2/adapters/slime/bringup.py
+@@ -306,7 +306,7 @@ class ClaudeCodeDriver:
+     name = "claude_code"
+     platform_tarball_env = "SLIME_AGENT_CC_PLATFORM_TARBALL"
+ 
+-    async def _install_native_cli(self, sb: DockerSandbox) -> None:
++    async def _install_native_cli(self, sb: DockerSandbox, *, timeout: int = 180) -> None:
+         tarball = os.environ[self.platform_tarball_env]
+         await sb.write_file("/tmp/cc-platform.tgz", Path(tarball))
+         _code, _out, _err = await sb.exec(
+@@ -315,7 +315,7 @@ class ClaudeCodeDriver:
+             "install -m 0755 /tmp/cc-extract/package/claude /usr/local/bin/claude && "
+             "/usr/local/bin/claude --version",
+             user="root",
+-            timeout=180,
++            timeout=timeout,
+             check=True,
+         )
+         # codex 轮次 10 一般 2：不只运行，还要**比较**——版本漂移 fail-fast
+@@ -354,28 +354,57 @@ class ClaudeCodeDriver:
+ 
+     async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt):
+         from slime.agent.harness import ClaudeCodeHarness
++        from slime.agent.sandbox import EXIT_TIME_BUDGET_EXCEEDED
+ 
+         from repoharness2.adapters.slime.docker_sandbox import SandboxExecError
+         from repoharness2.adapters.slime.generate import (
++            HARNESS_LAUNCH_FACTS,
+             SlimeBindingError,
+             ensure_claude_code_training_guards,
+         )
+ 
++        # 批 B（I03）：time_budget_sec = 编排此刻的剩余 episode 预算（vendored 兼容的相对整数秒）。
++        # 引导步骤（装 CLI / useradd+chown / 写配置）各自的超时上限与剩余预算取 min；引导吃光
++        # 预算就不启动 CC，返回 EXIT_TIME_BUDGET_EXCEEDED 并在 launch facts 里写 launched=False
++        # （编排据此归 hard_wall、hit_by=bootstrap，不走 drain / 装配）。真正的强制保护在编排层
++        # （绝对期限 + 取消）；这里是让引导步骤合作地在期限内结束、并回填事实。
++        started = time.monotonic()
++        deadline = started + float(time_budget_sec)
++        facts = HARNESS_LAUNCH_FACTS.get()
++        if facts is None:
++            facts = {}  # 非编排调用（直接跑驱动的单测）
++
++        def remaining() -> float:
++            return deadline - time.monotonic()
++
++        def bounded(cap: int) -> int:
++            return max(1, int(min(float(cap), remaining())))
++
++        def budget_exhausted() -> int:
++            facts["bootstrap_seconds"] = round(time.monotonic() - started, 3)
++            facts["remaining_at_launch"] = round(remaining(), 3)
++            facts["launched"] = False
++            return EXIT_TIME_BUDGET_EXCEEDED
++
+         sb = DockerSandbox(sandbox.container_name)
+         try:
+-            await self._install_native_cli(sb)
++            if remaining() <= 0:
++                return budget_exhausted()
++            await self._install_native_cli(sb, timeout=bounded(180))
++            if remaining() <= 0:
++                return budget_exhausted()
+             # 预建 agent 用户（与 slime ensure_agent_user 同一命令、宽超时）：
+             # slime 侧写死 timeout=60s，django 官方镜像 /testbed 数万文件的
+             # chown -R 在 overlay2 copy-up 下超时（run6 实测 8/8 django rollout
+             # exit=124 全灭）。本命令幂等（id agent 短路），预跑成功后 slime
+-            # 内部那次变成 no-op。
++            # 内部那次变成 no-op。上限 900s 与剩余预算取 min（批 B）。
+             await sb.exec(
+                 f"id agent >/dev/null 2>&1 || useradd -m -s /bin/bash agent && "
+                 f"chown -R agent:agent /home/agent {workdir} && "
+                 f"git config --system --add safe.directory '*' && id agent",
+                 user="root",
+                 check=True,
+-                timeout=900,
++                timeout=bounded(900),
+             )
+             # D-FA-6 接线（FA-1，FA-0 递延项）：DISABLE_COMPACT=1 合并进
+             # SLIME_AGENT_CC_EXTRA_ENVS——slime ClaudeCodeHarness 会把该 JSON 并入
+@@ -383,15 +412,26 @@ class ClaudeCodeDriver:
+             # FA-5 短租（本机无法冒烟真实 CC）。警示：env 只关 auto/manual compact，
+             # Microcompact/Context Collapse 由装配期收缩检测兜底（generate.py）。
+             self.compaction_guard_envs = ensure_claude_code_training_guards(os.environ)
++            left = remaining()
++            if left <= 0:
++                return budget_exhausted()
++            facts["bootstrap_seconds"] = round(time.monotonic() - started, 3)
++            facts["remaining_at_launch"] = round(left, 3)
++            facts["launched"] = True
+             return await ClaudeCodeHarness().run(
+                 sb,
+                 workdir=workdir,
+                 session_id=session_id,
+                 adapter_url=adapter_url,
+-                time_budget_sec=time_budget_sec,
++                time_budget_sec=max(1, int(left)),
+                 prompt=prompt,
+             )
+         except SandboxExecError as exc:
++            if remaining() <= 0 and not facts.get("launched"):
++                # 引导步骤的超时来自 episode 期限收缩（min(cap, 剩余)）——这是墙钟到点，不是
++                # 引导故障；返回 -1 让编排按 hard_wall（hit_by=bootstrap）收口。
++                facts["bootstrap_exec_error"] = str(exc)[:300]
++                return budget_exhausted()
+             # 批 A（I05；Codex 批 A 审查 R1 修正）：只有 DockerSandbox 自己抛的操作失败
+             # （exec check=True 非零 / 超时 124、write_file 非零——覆盖装 CLI、useradd/chown、
+             # slime 的 ensure_agent_user / write_config / spawn）才是可证明来源的单次容器层面
+@@ -511,6 +551,21 @@ class SimpleLoopDriver:
+ _SERVICE_LOCK = asyncio.Lock()
+ 
+ 
++def _episode_deadline_block(audit: Any, proxy: Any) -> dict[str, Any] | None:
++    """批 B：audit.episode_deadline + proxy 侧按 paid 累计的 model_call 排队秒数。"""
++
++    block = getattr(audit, "episode_deadline", None)
++    if block is None:
++        return None
++    block = dict(block)
++    scope = audit.physical_attempt_id or audit.session_id
++    if proxy is not None and scope and hasattr(proxy, "queue_wait_seconds_total"):
++        block["model_call_queue_wait_seconds_total"] = proxy.queue_wait_seconds_total(scope)
++    else:
++        block["model_call_queue_wait_seconds_total"] = None
++    return block
++
++
+ def write_execution_audit_record(proxy, audit, path) -> None:
+     """execution 终态审计（轮次 13 P0-5 + 轮次 14 事务化）：
+ 
+@@ -576,6 +631,8 @@ def write_execution_audit_record(proxy, audit, path) -> None:
+         "wall_end_monotonic": wall_end_monotonic,
+         "wall_clock_domain_id": PROCESS_CLOCK_DOMAIN,
+         "non_chargeable_intervals": list(audit.non_chargeable_intervals),
++        # 批 B（I03）：统一 episode 期限的观测块（可选键；B 线定预算数值的实测来源）
++        "episode_deadline": _episode_deadline_block(audit, proxy),
+         # F2-2：quiescence 事实 + Outcome v2（producer 产物随审计持久化；
+         # assembler 消费归 F2-5）。session_id 自 F2-2 复核起 = 非秘密
+         # internal sid（s- 前缀）；capability token 只认证不落任何持久面
+@@ -692,7 +749,7 @@ def make_per_rollout_adapter(registry, shared_adapter, hook):
+     class PerRolloutAdapter:
+         def open_session(
+             self, sid, *, sampling_defaults=None, max_context_tokens=0,
+-            physical_attempt_id=None, capability_token=None,
++            physical_attempt_id=None, capability_token=None, deadline_monotonic=None,
+         ):
+             # 轮次 13 P1-6：open 事务化——底层 open 失败必须回滚 registry
+             # 注册。F2-1a 熔断后收敛：paid 与 hook 同一原子注册、同一
+@@ -702,6 +759,7 @@ def make_per_rollout_adapter(registry, shared_adapter, hook):
+                 sid, hook,
+                 physical_attempt_id=physical_attempt_id,
+                 capability_token=capability_token,
++                deadline_monotonic=deadline_monotonic,  # 批 B：episode 期限显式下传 proxy
+             )
+             try:
+                 shared_adapter.open_session(
+@@ -1256,7 +1314,9 @@ class BringupService:
+             self.registry.model_call_proxy._artifact_sink is None
+         ):  # pragma: no cover - 上两行恒配置；防未来编辑退化
+             raise RuntimeError("正式链必须配置持久 artifact_sink（evidence_refs 不可悬空）。")
+-        self.registry.default_session_budget_seconds = float(AGENT_TIME_BUDGET_SEC)
++        # 批 B（I03）：不再设 default_session_budget_seconds（首次模型调用懒起表）——正式链的
++        # proxy deadline 由编排在资源占用时刻算好、经 open_session(deadline_monotonic=…) 显式
++        # 下传，只有一个起点。
+ 
+         runtime_barrier = None
+         if EXECUTION_MODE == "fa_formal":
+@@ -1298,6 +1358,8 @@ class BringupService:
+             session_poison_unsubscribe=self.registry.poison.unsubscribe,
+             # 轮次 11：清理完成后才归档 poison（真 ACK；unregister 不再释放）
+             session_poison_release=self.registry.poison.release,
++            # 批 B（I03）：poison 原因读取——episode_deadline_exhausted 归 hard_wall 而非 api_failure
++            session_poison_reason=self.registry.poison.reason,
+             # 轮次 12 P0 层 1：评分前交付账边界断言
+             capture_boundary_check=self.registry.assert_session_clean,
+             # 轮次 13 P0-5：execution 终态审计落盘（FA 路径不走 record_event）
+@@ -1346,6 +1408,8 @@ class BringupService:
+         record["harness_adapter_url"] = self.harness_adapter_url
+         record["execution_mode"] = EXECUTION_MODE
+         record["fork_threshold_tokens"] = FORK_THRESHOLD_TOKENS  # I01：B 路线接线值（供事件 join）
++        # 批 B（I03）：episode 预算（资源占用起表，含准备 / 引导 / 排队；数值 = SWE_AGENT_TIME_BUDGET_SEC）
++        record["episode_budget_seconds"] = AGENT_TIME_BUDGET_SEC
+         self.runtime_profile_record = record
+         write_runtime_profile_record(ARTIFACT_DIR / "runtime_profile.json", record)
+         if not record["ok"]:
+diff --git a/rh2/src/repoharness2/adapters/slime/capture_wire.py b/rh2/src/repoharness2/adapters/slime/capture_wire.py
+index 9810a158..4bfd649f 100644
+--- a/rh2/src/repoharness2/adapters/slime/capture_wire.py
++++ b/rh2/src/repoharness2/adapters/slime/capture_wire.py
+@@ -294,6 +294,7 @@ class CaptureRegistry:
+         hook: GenerationCaptureHook,
+         physical_attempt_id: str | None = None,
+         capability_token: str | None = None,
++        deadline_monotonic: float | None = None,
+     ) -> None:
+         """会话注册（F2-1a 熔断后所有权收敛版）：hook 与 paid **单锁原子
+         绑定**，同生命周期——重复 SID 在任何状态修改前拒绝；绑定发生在
+@@ -318,6 +319,10 @@ class CaptureRegistry:
+             if capability_token is not None:
+                 self._capability_tokens[capability_token] = sid
+                 self._capability_required.add(sid)
++            if deadline_monotonic is not None:
++                # 批 B（I03）：episode 期限由编排在资源占用时刻算好、随注册显式下传——proxy 的
++                # deadline_monotonic 从此读它，不再在首次模型调用时才懒起表。
++                self.session_deadlines[sid] = float(deadline_monotonic)
+ 
+     def assert_session_clean(self, sid: str) -> None:
+         problems: list[str] = []
+@@ -375,8 +380,9 @@ class CaptureRegistry:
+             return {sid: list(vs) for sid, vs in self.weight_versions.items()}
+ 
+     def session_deadline(self, sid: str | None) -> float | None:
+-        """会话 deadline（episode 预算传播）。首次调用即按默认预算起表——
+-        第一次模型调用 ≈ harness 启动后数秒，余量记入 notes。"""
++        """会话 deadline（episode 预算传播）。批 B（I03）起正式链由 register(deadline_monotonic=…)
++        显式设定（编排在资源占用时刻算好的绝对期限）；未显式设定且配置了
++        default_session_budget_seconds 时保留旧的首调懒起表（兼容 / 探针），两者都没有 → None。"""
+ 
+         if sid is None:
+             return None
+diff --git a/rh2/src/repoharness2/adapters/slime/docker_sandbox.py b/rh2/src/repoharness2/adapters/slime/docker_sandbox.py
+index ab88ff01..c105cd23 100644
+--- a/rh2/src/repoharness2/adapters/slime/docker_sandbox.py
++++ b/rh2/src/repoharness2/adapters/slime/docker_sandbox.py
+@@ -50,12 +50,26 @@ async def _run(*args: str, input_bytes: bytes | None = None, timeout: float | No
+     try:
+         stdout, stderr = await asyncio.wait_for(proc.communicate(input=input_bytes), timeout=timeout)
+     except (TimeoutError, asyncio.TimeoutError):
+-        proc.kill()
++        _kill_quietly(proc)
+         await proc.wait()
+         return 124, "", f"docker exec timeout after {timeout}s"
++    except asyncio.CancelledError:
++        # 批 B（I03；Codex R2 探针：此前外层取消时 kill/wait 均未调用，docker CLI 子进程
++        # 孤儿化）。episode 期限 / 关停取消到达时先回收本进程的子进程再传播取消。
++        # 注意：杀的是宿主侧 CLI，容器内命令不因此停止——容器本身由编排层按名字回收。
++        _kill_quietly(proc)
++        await proc.wait()
++        raise
+     return proc.returncode or 0, stdout.decode(errors="replace"), stderr.decode(errors="replace")
+ 
+ 
++def _kill_quietly(proc: asyncio.subprocess.Process) -> None:
++    try:
++        proc.kill()
++    except ProcessLookupError:  # 已退出
++        pass
++
++
+ class DockerSandbox:
+     """把一个已存在的 docker 容器适配成 slime Sandbox 协议。"""
+ 
+diff --git a/rh2/src/repoharness2/adapters/slime/generate.py b/rh2/src/repoharness2/adapters/slime/generate.py
+index fc3b7b9d..888e634c 100644
+--- a/rh2/src/repoharness2/adapters/slime/generate.py
++++ b/rh2/src/repoharness2/adapters/slime/generate.py
+@@ -66,6 +66,7 @@ SGLang 响应 = {"meta_info": {"id", "finish_reason": {"type"},
+ from __future__ import annotations
+ 
+ import asyncio
++import contextvars
+ import hashlib
+ import json
+ import math
+@@ -333,6 +334,19 @@ class StartupCheckError(SlimeBindingError):
+     """启动期守门失败（U-G renderer / U-H tape 探针）：必须 fail，禁止静默降级。"""
+ 
+ 
++# 批 B（I03）：slime `EXIT_TIME_BUDGET_EXCEEDED` 的同值常量（vendored harness 的 done-marker 轮询
++# 到点返回它；编排的绝对期限取消 harness 后也按它继续收口）。
++HARNESS_EXIT_TIME_BUDGET_EXCEEDED = -1
++
++# 批 B（I03）：harness 驱动回填的启动事实（task-local）：编排在创建 harness task 之前放一个空
++# dict，task 复制当前 context 后驱动往**同一个 dict** 写（mock 驱动不写也无妨）。键：
++# launched（bool）、bootstrap_seconds、remaining_at_launch。用途 = 区分"引导吃光预算、CC 从未
++# 启动"（hit_by=bootstrap）与"CC 已启动后到点"。
++HARNESS_LAUNCH_FACTS: contextvars.ContextVar[dict[str, Any] | None] = contextvars.ContextVar(
++    "rh2_harness_launch_facts", default=None
++)
++
++
+ def _now_utc() -> datetime:
+     return datetime.now(timezone.utc)
+ 
+@@ -2075,6 +2089,12 @@ class RolloutAudit:
+     # F2-2 复核 P1-4：终止 trigger 提示（slime exit=-1 = 时间预算耗尽 →
+     # hard_wall_timeout；不再误归 harness_crash/completed）
+     termination_kind_hint: str | None = None
++    # 批 B（I03）：统一 episode 期限（从 _generate_attempt 入口 = 资源占用起表）。本体 = 单调钟
++    # 绝对时刻；观测块随 execution audit 落盘（可选键 episode_deadline：budget_seconds /
++    # remaining_at_harness_start / remaining_at_harness_exit / hit_by / harness_launched /
++    # bootstrap_seconds / remaining_at_launch；bringup 再补 model_call_queue_wait_seconds_total）。
++    episode_deadline_monotonic: float | None = None
++    episode_deadline: dict[str, Any] | None = None
+     # B1：评分基线 digest（manifest 本体不进 audit——数万 entries；
+     # 内存 + B5 receipt 持久化）
+     baseline_manifest_digest: str | None = None
+@@ -2318,6 +2338,8 @@ class RolloutOrchestrator:
+         session_poison_subscribe: Callable[[str, Callable[[str, str], None]], None] | None = None,
+         session_poison_unsubscribe: Callable[[str], None] | None = None,
+         session_poison_release: Callable[[str], None] | None = None,
++        session_poison_reason: Callable[[str], str | None] | None = None,
++        clock: Callable[[], float] = time.monotonic,
+         capture_boundary_check: Callable[[str], None] | None = None,
+         audit_sink: Callable[[Any], None] | None = None,
+         runtime_quiescence_barrier: "RuntimeQuiescenceBarrier | None" = None,
+@@ -2425,6 +2447,10 @@ class RolloutOrchestrator:
+         # 轮次 11 身份 4：release = execution 清理 ACK——在 finally 的 sandbox
+         # 清理完成后调用（adapter drop_session 只是会话关闭，不算 ACK）
+         self._session_poison_release = session_poison_release
++        # 批 B（I03）：poison 原因读取（episode_deadline_exhausted → hard_wall 归因）；可注入时钟
++        # （测试用可控钟；生产 = time.monotonic，与 audit.started_monotonic 同域）。
++        self._session_poison_reason = session_poison_reason
++        self._clock = clock
+         # 轮次 12 P0 层 1：评分/Gate 前的交付账边界断言（glue 注入
+         # registry.assert_session_clean——pending/unfinalized draft 在场即
+         # poison + 缺员）
+@@ -2592,6 +2618,24 @@ class RolloutOrchestrator:
+         self.audits.append(audit)
+         audit_slot.append(audit)
+         audit.step("step1_custom_generate_invoked")
++        # 批 B（I03，06 A5-c，第一组）：episode 期限从这里起表——miles 已占并发槽、rh2 即将
++        # docker run，是当前链上最早的 rh2 可见资源占用事件。materialize / 驱动引导 / harness
++        # 运行整段受它**强制**约束（_await_within_episode_deadline / _await_harness_within_deadline
++        # 到点即取消并收口持有资源）；停止、drain、清理、评分不在其内，各用自己的有界预算。
++        # 数值 = task.time_budget_seconds（bringup 由 SWE_AGENT_TIME_BUDGET_SEC 填入，语义从
++        # "CC 启动后的运行预算"变为"资源占用起的 episode 预算"，T1）。
++        audit.episode_deadline_monotonic = self._clock() + float(task.time_budget_seconds)
++        audit.episode_deadline = {
++            "budget_seconds": task.time_budget_seconds,
++            "deadline_monotonic": audit.episode_deadline_monotonic,
++            "hit_by": "none",
++            "remaining_at_harness_start": None,
++            "remaining_at_harness_exit": None,
++            "harness_launched": None,
++            "harness_time_budget_seconds": None,
++            "bootstrap_seconds": None,
++            "remaining_at_launch": None,
++        }
+ 
+         hook = GenerationCaptureHook(
+             trajectory_id=trajectory_id,
+@@ -2665,7 +2709,10 @@ class RolloutOrchestrator:
+                     "——entry 契约破损，fail-closed（不评分不交付）。",
+                 )
+             stage = "materialize"
+-            sandbox = await self._materialize_rollout_sandbox(task, trajectory_id, audit)
++            sandbox = await self._await_within_episode_deadline(
++                self._materialize_rollout_sandbox(task, trajectory_id, audit),
++                audit=audit, phase="materialize",
++            )
+             audit.step("step2_workspace_materialized")
+             # B1（A-prime 第 2 条）：harness 获写权前生成评分基线唯一权威。
+             # 仅 FA 模式（s1_compat 零改动）；失败走既有异常收口（missing）。
+@@ -2706,6 +2753,22 @@ class RolloutOrchestrator:
+                 audit.mark("baseline_manifest_generated")
+ 
+             stage = "harness_run"
++            remaining_at_start = self._episode_remaining(audit)
++            audit.episode_deadline["remaining_at_harness_start"] = (
++                None if math.isinf(remaining_at_start) else round(remaining_at_start, 3)
++            )
++            if remaining_at_start <= 0:
++                # 批 B：准备阶段（materialize / 基线 census）已吃光 episode 预算——不开会话、不启动
++                # CC（不产生任何轮），记 hard_wall 事实并按已归因 task-local 收口（映射表 →
++                # hard_wall_timeout / missing，第一组：整组不训练）。
++                audit.episode_deadline["hit_by"] = "before_launch"
++                audit.termination_kind_hint = "hard_wall_timeout"
++                audit.mark("episode_deadline_before_launch")
++                raise SlimeBindingError(
++                    "episode_deadline_before_launch",
++                    f"episode 预算 {task.time_budget_seconds}s 在 harness 启动前已耗尽"
++                    f"（剩余 {remaining_at_start:.1f}s）——不启动 CC，整组不训练。",
++                )
+             launch = HarnessLaunchSpec(
+                 harness_name=self.config.harness_name,
+                 workspace_id=sandbox.handle.workspace_id,
+@@ -2717,31 +2780,45 @@ class RolloutOrchestrator:
+                     inject_env_var="ANTHROPIC_BASE_URL",
+                 ),
+                 env_injections={"BASH_ENV": materialize.BASH_ENV_PATH},
+-                time_budget_seconds=task.time_budget_seconds,
++                # 批 B：vendored harness 的相对整数秒只是兼容参数 = 此刻剩余（下取整、至少 1）；
++                # 真正的强制保护是下方按绝对期限的 _await_harness_within_deadline。
++                time_budget_seconds=(
++                    task.time_budget_seconds
++                    if math.isinf(remaining_at_start)
++                    else max(1, math.floor(remaining_at_start))
++                ),
+             )
+             audit.launch_spec = launch
++            # 批 B：驱动实际拿到的相对整数秒（与 remaining_at_harness_start 的 3 位舍入值可能差 1）
++            audit.episode_deadline["harness_time_budget_seconds"] = launch.time_budget_seconds
+             adapter.open_session(
+                 sid,
+                 physical_attempt_id=physical_attempt_id,
+                 sampling_defaults=session_defaults,
+                 max_context_tokens=self.config.max_context_len,
+                 capability_token=capability.token,  # F2-2：认证映射同事务绑定
++                deadline_monotonic=audit.episode_deadline_monotonic,  # 批 B：proxy 读同一期限
+             )
+             session_open = True
+             audit.mark("harness_started")
+-            harness_task = asyncio.ensure_future(
+-                self._harness_driver.run(
+-                    sandbox.workspace,
+-                    workdir=launch.workdir,
+-                    # F2-2：CC 侧拿**秘密 token**做 auth（guard 认证后重写为
+-                    # internal sid），launch_spec/audit 里的 session_id 是
+-                    # 非秘密 internal sid
+-                    session_id=capability.token,
+-                    adapter_url=launch.model_proxy.base_url,
+-                    time_budget_sec=launch.time_budget_seconds,
+-                    prompt=task.prompt,
++            launch_facts: dict[str, Any] = {}
++            facts_token = HARNESS_LAUNCH_FACTS.set(launch_facts)
++            try:
++                harness_task = asyncio.ensure_future(
++                    self._harness_driver.run(
++                        sandbox.workspace,
++                        workdir=launch.workdir,
++                        # F2-2：CC 侧拿**秘密 token**做 auth（guard 认证后重写为
++                        # internal sid），launch_spec/audit 里的 session_id 是
++                        # 非秘密 internal sid
++                        session_id=capability.token,
++                        adapter_url=launch.model_proxy.base_url,
++                        time_budget_sec=launch.time_budget_seconds,
++                        prompt=task.prompt,
++                    )
+                 )
+-            )
++            finally:
++                HARNESS_LAUNCH_FACTS.reset(facts_token)  # task 已复制 context；本 context 不留
+             if self._session_poison_subscribe is not None:
+                 # P0-4/轮次 10 P0-1：poison 即取消 harness。生产拓扑是双线程
+                 # （Ray actor loop 持 harness_task；poison 从 aiohttp adapter
+@@ -2754,9 +2831,28 @@ class RolloutOrchestrator:
+ 
+                 self._session_poison_subscribe(sid, _cancel_from_any_thread)
+             try:
+-                exit_code = await harness_task
++                exit_code = await self._await_harness_within_deadline(
++                    harness_task, audit=audit, launch_facts=launch_facts
++                )
+             except asyncio.CancelledError:
+                 if self._session_poison_check is not None and self._session_poison_check(sid):
++                    reason = (
++                        self._session_poison_reason(sid)
++                        if self._session_poison_reason is not None
++                        else None
++                    )
++                    if reason == "episode_deadline_exhausted":
++                        # 批 B：proxy 因 episode 期限中毒并取消 harness = 墙钟在模型调用（排队 /
++                        # 发送）中到点——记 hard_wall（不是 api_failure）；partial trace 仍作废，
++                        # completion 由事实推导为 missing，第一组：整组不训练。
++                        audit.episode_deadline["hit_by"] = "proxy"
++                        audit.termination_kind_hint = "hard_wall_timeout"
++                        audit.mark("episode_deadline_during_model_call")
++                        raise SlimeBindingError(
++                            "episode_deadline_during_model_call",
++                            f"session {sid} 的 episode 期限在模型调用中到点（proxy 中毒并终止 "
++                            "harness）——partial trace 作废，整组不训练。",
++                        ) from None
+                     # poison 触发的取消：收口为缺员（不是外层关停）
+                     raise SlimeBindingError(
+                         "session_poisoned_during_execution",
+@@ -2768,13 +2864,33 @@ class RolloutOrchestrator:
+                 if self._session_poison_unsubscribe is not None:
+                     self._session_poison_unsubscribe(sid)
+             audit.harness_exit_code = exit_code
+-            if exit_code == -1:
++            remaining_at_exit = self._episode_remaining(audit)
++            audit.episode_deadline["remaining_at_harness_exit"] = (
++                None if math.isinf(remaining_at_exit) else round(remaining_at_exit, 3)
++            )
++            audit.episode_deadline["harness_launched"] = launch_facts.get("launched")
++            audit.episode_deadline["bootstrap_seconds"] = launch_facts.get("bootstrap_seconds")
++            audit.episode_deadline["remaining_at_launch"] = launch_facts.get("remaining_at_launch")
++            if exit_code == HARNESS_EXIT_TIME_BUDGET_EXCEEDED:
+                 # F2-2 复核 P1-4：slime EXIT_TIME_BUDGET_EXCEEDED=-1 = 时间
+                 # 预算耗尽——按 D1a 记 hard_wall_timeout（仅 termination
+                 # trigger），completion 由完整性事实推导；不走 nonzero 拒绝
+                 # （那会误归 harness_crash），也不伪装 completed。处置留 D1b。
+                 audit.termination_kind_hint = "hard_wall_timeout"
+                 audit.mark("hard_wall_timeout_observed")
++                if audit.episode_deadline["hit_by"] == "none":
++                    audit.episode_deadline["hit_by"] = "harness_poll"  # vendored done-marker 轮询自己到点
++                if launch_facts.get("launched") is False:
++                    # 批 B：驱动引导（装 CLI / useradd / 写配置）吃光预算，CC 从未启动——没有任何
++                    # 轮，不走 drain / 装配，按已归因 task-local 收口（映射表 → hard_wall_timeout /
++                    # missing，整组不训练）。
++                    audit.episode_deadline["hit_by"] = "bootstrap"
++                    audit.mark("episode_deadline_in_bootstrap")
++                    raise SlimeBindingError(
++                        "episode_deadline_in_bootstrap",
++                        f"episode 预算在 harness 引导阶段耗尽（引导 {launch_facts.get('bootstrap_seconds')}s，"
++                        "CC 未启动）——整组不训练。",
++                    )
+             audit.step("step3_harness_completed")
+ 
+             stage = "assemble"
+@@ -3498,6 +3614,96 @@ class RolloutOrchestrator:
+                 in_flight=in_flight,
+             )
+ 
++    def _episode_remaining(self, audit: "RolloutAudit") -> float:
++        """批 B：episode 期限剩余秒数（无期限 = +inf）。"""
++
++        if audit.episode_deadline_monotonic is None:
++            return math.inf
++        return audit.episode_deadline_monotonic - self._clock()
++
++    async def _await_within_episode_deadline(
++        self, aw: Awaitable[Any], *, audit: "RolloutAudit", phase: str
++    ) -> Any:
++        """批 B（I03；Codex 计划审查 R2）：把一个准备阶段（materialize）圈进 episode 绝对期限。
++
++        到点 → 取消该阶段（阶段自己在取消路径上收口持有资源：容器按名字 rm -f、私网拆除）→
++        记 hit_by / hard_wall 事实 → 抛已归因 task-local 码（映射表 → hard_wall_timeout /
++        missing）。外层取消（关停）同样先取消阶段 task 再原样传播。用 asyncio.wait 而不是
++        wait_for：到点时由本函数取消并**等待**阶段 task 结束，保证收口真的跑完。
++        """
++
++        task = asyncio.ensure_future(aw)
++        remaining = self._episode_remaining(audit)
++        try:
++            done, _ = await asyncio.wait(
++                {task}, timeout=None if math.isinf(remaining) else max(remaining, 0.0)
++            )
++        except asyncio.CancelledError:
++            task.cancel()
++            await self._settle_cancelled_stage(task, audit, phase)
++            raise
++        if task in done:
++            return task.result()
++        task.cancel()
++        await self._settle_cancelled_stage(task, audit, phase)
++        audit.episode_deadline["hit_by"] = phase
++        audit.termination_kind_hint = "hard_wall_timeout"
++        audit.mark(f"episode_deadline_in_{phase}")
++        raise SlimeBindingError(
++            f"episode_deadline_in_{phase}",
++            f"episode 预算 {audit.episode_deadline['budget_seconds']}s 在 {phase} 阶段到点——"
++            "已取消该阶段并收口持有资源，整组不训练。",
++        )
++
++    async def _await_harness_within_deadline(
++        self, harness_task: "asyncio.Future[int]", *, audit: "RolloutAudit", launch_facts: dict[str, Any]
++    ) -> int:
++        """批 B：harness 运行（含驱动引导）受 episode 绝对期限约束。
++
++        到点时 harness task 仍在（引导未完成或 CC 仍在跑）→ 取消它（驱动内 docker exec 的宿主
++        子进程随 _run 的取消路径被 kill；CC 进程本身由后续屏障 / 清理终止）→ 按 vendored
++        EXIT_TIME_BUDGET_EXCEEDED 语义继续收口（drain → 装配 → 屏障），hit_by 按驱动回填的
++        launched 事实区分 bootstrap / harness_outer。poison 取消由 result() 重新抛出的
++        CancelledError 交给调用方既有分支；外层取消先取消 harness task 再传播。
++        """
++
++        remaining = self._episode_remaining(audit)
++        try:
++            done, _ = await asyncio.wait(
++                {harness_task}, timeout=None if math.isinf(remaining) else max(remaining, 0.0)
++            )
++        except asyncio.CancelledError:
++            harness_task.cancel()
++            await self._settle_cancelled_stage(harness_task, audit, "harness_run")
++            raise
++        if harness_task in done:
++            return harness_task.result()
++        harness_task.cancel()
++        await self._settle_cancelled_stage(harness_task, audit, "harness_run")
++        audit.episode_deadline["hit_by"] = (
++            "bootstrap" if launch_facts.get("launched") is False else "harness_outer"
++        )
++        audit.mark("episode_deadline_harness_cancelled")
++        return HARNESS_EXIT_TIME_BUDGET_EXCEEDED
++
++    async def _settle_cancelled_stage(
++        self, task: "asyncio.Future[Any]", audit: "RolloutAudit", phase: str
++    ) -> None:
++        """等待被取消的阶段 task 真正结束；它在取消路径上抛出的其它异常只落账，不掩盖期限首因。"""
++
++        try:
++            await task
++        except asyncio.CancelledError:
++            return
++        except Exception as exc:  # noqa: BLE001 —— 取消收口期间的次生异常
++            audit.failure_records.append(
++                RolloutFailureRecord(
++                    stage=phase,
++                    error_type=f"{type(exc).__name__}_during_deadline_cancel",
++                    detail=str(exc)[:500],
++                )
++            )
++
+     def _pre_finalize_exception_is_attributed(
+         self, exc: BaseException, *, audit: "RolloutAudit"
+     ) -> bool:
+@@ -3959,7 +4165,14 @@ class RolloutOrchestrator:
+                 name=name, network=network.name, image=task.image, labels=common_labels
+             )
+         start_started = time.monotonic()
+-        run = await self._docker(*run_args)
++        try:
++            run = await self._docker(*run_args)
++        except asyncio.CancelledError:
++            # 批 B（I03；Codex 计划审查 R2）：episode 期限（或关停）在 docker run 途中取消——
++            # 宿主 CLI 子进程已被 _run 杀掉，但 daemon 可能已经建出容器：按已生成的名字尽力
++            # 回收（rm -f 幂等，"No such container" 视为已不存在），再拆已登记的私网。
++            await self._reclaim_after_cancel(lease, name, audit)
++            raise
+         if run.exit_code != 0:
+             if network is not None:
+                 await self._teardown_attempt_network(name, audit)
+@@ -4094,6 +4307,10 @@ class RolloutOrchestrator:
+                         + "——不启动模型进程，run-halt（配置/实际未生效，补采无意义）。",
+                     )
+                 audit.mark("sandbox_prelaunch_check_passed")
++        except asyncio.CancelledError:
++            # 批 B：期限 / 关停取消——容器已存在，同样按名字回收（外层 finally 拿不到 sandbox）。
++            await self._reclaim_after_cancel(lease, name, audit)
++            raise
+         except Exception:
+             # 物化中途失败：容器已存在，立即按 Q7 清理（外层 finally 不再重复——
+             # sandbox 尚未返回给调用方，这里是唯一知道容器名的位置）。
+@@ -4107,6 +4324,40 @@ class RolloutOrchestrator:
+             container_name=name, lease=lease, handle=handle, workspace=workspace, network=network
+         )
+ 
++    async def _reclaim_after_cancel(self, lease: SandboxLease, name: str, audit: RolloutAudit) -> None:
++        """批 B：物化被取消时按名字回收（容器可能存在也可能不存在）。rm -f 成功或"No such
++        container"= 已不存在 → 记释放；其它失败落 cleanup_failures + 隔离队列；最后拆已登记的私网。
++        取消路径内不再抛异常（首因 = 期限 / 关停）。"""
++
++        if not audit.lease_released:
++            try:
++                rm = await asyncio.wait_for(
++                    self._docker("rm", "-f", name), timeout=lease.cleanup.timeout_seconds
++                )
++                if rm.exit_code == 0 or "No such container" in rm.stderr:
++                    audit.lease_released = True
++                    audit.note_rollout_container_released()
++                else:
++                    audit.cleanup_failures.append(
++                        CleanupFailureRecord(
++                            lease_id=lease.lease_id, step="remove_container",
++                            detail=f"cancel reclaim: {rm.stderr.strip()[-300:]}",
++                        )
++                    )
++                    if name not in self.cleanup_quarantine:
++                        self.cleanup_quarantine.append(name)
++            except Exception as exc:  # noqa: BLE001 —— 取消路径：只落账
++                audit.cleanup_failures.append(
++                    CleanupFailureRecord(
++                        lease_id=lease.lease_id, step="container_cleanup_exception",
++                        detail=f"cancel reclaim: {type(exc).__name__}: {exc}"[:300],
++                    )
++                )
++                if name not in self.cleanup_quarantine:
++                    self.cleanup_quarantine.append(name)
++        await self._teardown_attempt_network(name, audit)
++        audit.mark("materialize_cancelled_reclaimed")
++
+     async def _create_attempt_network(
+         self, container_name: str, *, labels: Sequence[str], audit: RolloutAudit
+     ) -> AttemptNetwork:
+diff --git a/rh2/src/repoharness2/adapters/slime/outcome_producer.py b/rh2/src/repoharness2/adapters/slime/outcome_producer.py
+index cc83b80e..3c1b08d8 100644
+--- a/rh2/src/repoharness2/adapters/slime/outcome_producer.py
++++ b/rh2/src/repoharness2/adapters/slime/outcome_producer.py
+@@ -58,6 +58,14 @@ __all__ = [
+ FAILURE_CODE_TERMINATION_MAP: dict[str, tuple[TerminationKind, RuntimeFailureCategory]] = {
+     # 模型代理面：poison = 不可归因中断（proxy 判定后毒化会话）
+     "session_poisoned_during_execution": ("api_failure", "model_proxy_failure"),
++    # 批 B（I03，第一组）：episode 期限（资源占用起表的宽墙钟）在不同环节到点——都是
++    # hard_wall_timeout（watchdog 族：整组不训练，不是 api/sandbox 故障）；capture 未闭合 ⇒
++    # completion 由事实推导为 missing，归因取执行事实集合里的 capture_incomplete（执行事实
++    # 未完整产生）。具体环节由 reason_code 与 audit.episode_deadline.hit_by 区分。
++    "episode_deadline_in_materialize": ("hard_wall_timeout", "capture_incomplete"),
++    "episode_deadline_before_launch": ("hard_wall_timeout", "capture_incomplete"),
++    "episode_deadline_in_bootstrap": ("hard_wall_timeout", "capture_incomplete"),
++    "episode_deadline_during_model_call": ("hard_wall_timeout", "capture_incomplete"),
+     # materialize 面（W3b/W3a 既有 typed 码：镜像 / 容器 / 私有网络 / 工作区 / 基线读取——
+     # docker 或任务镜像层面的单次失败）。此前经 STAGE_FALLBACK 归 sandbox_failure，
+     # 处置不变，改为显式登记。
+diff --git a/rh2/tests/adapters/test_async_worker.py b/rh2/tests/adapters/test_async_worker.py
+index f8c5bfa0..256a93fa 100644
+--- a/rh2/tests/adapters/test_async_worker.py
++++ b/rh2/tests/adapters/test_async_worker.py
+@@ -1342,3 +1342,108 @@ def test_snapshot_weight_versions_survives_concurrent_mutation():
+     t1.start(); t2.start()
+     t2.join(20); stop.set(); t1.join(5)
+     assert errors == []  # 修复前：RuntimeError(dictionary changed size)
++
++
++# ------------------------------------------------- 批 B（I03）：排队受期限约束 + 原因传递
++
++
++async def test_send_semaphore_wait_is_bounded_by_episode_deadline():
++    """model_call 额度排队不再无限等：剩余预算内拿不到额度 → episode_deadline_exhausted（typed，
++    不发请求、poison 原因正确、额度不泄漏）。此前 `_send` 先算 timeout 再无界等信号量。"""
++
++    import time
++
++    registry = SessionPoisonRegistry()
++    limits = ResourceLimits({"model_call": 1})
++    proxy = ModelCallProxy(
++        FakeCoordinator([_window(epoch=1, phase="ACTIVE", active="1")]),
++        sleeper=_no_sleep, limits=limits, attempt_timeout_seconds=None,
++    )
++    started, release = asyncio.Event(), asyncio.Event()
++
++    async def holder(attempt: int) -> dict:
++        started.set()
++        await release.wait()
++        return _ok_response([1], version="1")
++
++    calls: list[int] = []
++
++    async def second(attempt: int) -> dict:
++        calls.append(attempt)
++        return _ok_response([2], version="1")
++
++    holder_task = asyncio.create_task(
++        proxy.call("exec_H", "turn_0", holder, session_id="sid_H", poison_registry=registry)
++    )
++    await started.wait()
++    with pytest.raises(UnattributableModelCallError, match="episode_deadline_exhausted"):
++        await proxy.call(
++            "exec_W", "turn_0", second, session_id="sid_W", poison_registry=registry,
++            deadline_monotonic=time.monotonic() + 0.2, min_attempt_budget_seconds=0.0,
++        )
++    assert calls == []  # 一次都不发
++    assert registry.reason("sid_W") == "episode_deadline_exhausted"  # 经真实 proxy.call 的原因
++    assert proxy.queue_wait_seconds_total("exec_W") >= 0.15  # 排队耗时累计（审计来源）
++    release.set()
++    await holder_task  # 持有者不受影响
++    assert not limits._semaphores["model_call"].locked()  # 额度已归还，无泄漏
++
++
++async def test_send_timeout_recomputed_after_queue_and_attributed_to_deadline():
++    """拿到额度后按**剩余**重算 timeout；发送在期限到点被中断 → episode_deadline_exhausted，
++    不再被 _call_inner 改写成 no_overlapping_update_window（Codex 计划审查 R2 探针）。"""
++
++    import time
++
++    registry = SessionPoisonRegistry()
++    limits = ResourceLimits({"model_call": 1})
++    proxy = ModelCallProxy(
++        FakeCoordinator([_window(epoch=1, phase="ACTIVE", active="1")]),
++        sleeper=_no_sleep, limits=limits, attempt_timeout_seconds=None,
++    )
++    started, release = asyncio.Event(), asyncio.Event()
++
++    async def holder(attempt: int) -> dict:
++        started.set()
++        await release.wait()
++        return _ok_response([1], version="1")
++
++    async def slow(attempt: int) -> dict:
++        await asyncio.sleep(0.5)
++        return _ok_response([2], version="1")
++
++    holder_task = asyncio.create_task(
++        proxy.call("exec_H2", "turn_0", holder, session_id="sid_H2", poison_registry=registry)
++    )
++    await started.wait()
++    asyncio.get_running_loop().call_later(0.15, release.set)  # 排队 0.15s 后拿到额度
++    with pytest.raises(UnattributableModelCallError, match="episode_deadline_exhausted"):
++        await proxy.call(
++            "exec_S", "turn_0", slow, session_id="sid_S", poison_registry=registry,
++            deadline_monotonic=time.monotonic() + 0.35, min_attempt_budget_seconds=0.0,
++        )
++    assert registry.reason("sid_S") == "episode_deadline_exhausted"
++    await holder_task
++
++
++async def test_attempt_timeout_before_deadline_is_still_interruption_not_hard_wall():
++    """对照：期限未到时的单次 attempt_timeout 仍归中断 / 更新窗口守卫（api/inference 族）。"""
++
++    import time
++
++    registry = SessionPoisonRegistry()
++    proxy = ModelCallProxy(
++        FakeCoordinator([_window(epoch=1, phase="ACTIVE", active="1")]),
++        sleeper=_no_sleep, attempt_timeout_seconds=0.05,
++    )
++
++    async def slow(attempt: int) -> dict:
++        await asyncio.sleep(0.3)
++        return _ok_response([1], version="1")
++
++    with pytest.raises(UnattributableModelCallError, match="no_overlapping_update_window"):
++        await proxy.call(
++            "exec_T", "turn_0", slow, session_id="sid_T", poison_registry=registry,
++            deadline_monotonic=time.monotonic() + 100.0,
++        )
++    assert registry.reason("sid_T") == "no_overlapping_update_window"
+diff --git a/rh2/tests/adapters/test_capture_registry_fa.py b/rh2/tests/adapters/test_capture_registry_fa.py
+index ae920d73..3d3a1436 100644
+--- a/rh2/tests/adapters/test_capture_registry_fa.py
++++ b/rh2/tests/adapters/test_capture_registry_fa.py
+@@ -171,8 +171,19 @@ def test_double_commit_does_not_refinalize():
+ 
+ 
+ def test_session_deadline_starts_on_first_call_and_is_bounded():
++    """批 B（I03，T1 oracle 改动）：正式链的 deadline 由 register(deadline_monotonic=…) 显式设定
++    （编排在资源占用时刻算好）；旧的"首次调用按默认预算起表"只在配置了 default_session_budget_seconds
++    时保留（兼容 / 探针），两者都没有 → None，不再隐式起表。"""
++
+     registry = CaptureRegistry()
+-    registry.default_session_budget_seconds = 600.0
++    assert registry.session_deadline("sid_E") is None  # 无默认、未显式设定 → 不起表
++    registry.register("sid_E", FakeHook(), deadline_monotonic=4242.0)
++    assert registry.session_deadline("sid_E") == 4242.0
++    assert registry.session_deadline("sid_E") == 4242.0  # 稳定
++    registry.unregister("sid_E")
++    assert "sid_E" not in registry.session_deadlines  # 销毁即清理
++
++    registry.default_session_budget_seconds = 600.0  # 兼容路径
+     d1 = registry.session_deadline("sid_F")
+     d2 = registry.session_deadline("sid_F")
+     assert d1 == d2  # 同会话稳定
+diff --git a/rh2/tests/adapters/test_f2_2_capability.py b/rh2/tests/adapters/test_f2_2_capability.py
+index 5f40e4d4..07eb7b81 100644
+--- a/rh2/tests/adapters/test_f2_2_capability.py
++++ b/rh2/tests/adapters/test_f2_2_capability.py
+@@ -373,6 +373,7 @@ async def test_hard_wall_exit_records_trigger_not_crash():
+     await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+     audit = chain.orchestrator.audits[0]
+     assert audit.termination_kind_hint == "hard_wall_timeout"
++    assert audit.episode_deadline["hit_by"] == "harness_poll"  # 批 B：vendored 轮询自己到点
+     # 不是 crash：nonzero 拒绝没触发；正式路径屏障前不评分（P0-2——
+     # -1 后 setsid 的 CC 进程可能仍在写活动 workspace）
+     assert not any(
+diff --git a/rh2/tests/adapters/test_slime_generate.py b/rh2/tests/adapters/test_slime_generate.py
+index 9029eae7..9481cf6b 100644
+--- a/rh2/tests/adapters/test_slime_generate.py
++++ b/rh2/tests/adapters/test_slime_generate.py
+@@ -224,12 +224,15 @@ class MockSessionAdapter:
+         max_context_tokens: int = 0,
+         physical_attempt_id: str | None = None,
+         capability_token: str | None = None,  # F2-2：认证映射（mock 记录可选）
++        deadline_monotonic: float | None = None,  # 批 B：episode 期限显式下传（mock 记录）
+     ) -> None:
+         if sid in self.opened:  # 真实 BaseAdapter.open_session 的唯一性约束
+             raise ValueError(f"session_id {sid!r} already exists")
+         self.opened.append(sid)
+         self.opened_paids = getattr(self, "opened_paids", [])
+         self.opened_paids.append(physical_attempt_id)
++        self.opened_deadlines = getattr(self, "opened_deadlines", [])
++        self.opened_deadlines.append(deadline_monotonic)
+ 
+     async def run_all_turns(self) -> None:
+         """由 harness 替身调用：逐轮把 mock SGLang 响应喂给真实 capture 钩子。"""
+@@ -674,7 +677,10 @@ async def test_normal_path_a5_eight_questions_as_schema_instances():
+     assert launch.workdir == "/testbed"  # Q3 workdir 显式传入
+     driver_call = chain.driver.calls[0]
+     assert driver_call["workdir"] == "/testbed"
+-    assert driver_call["time_budget_sec"] == 900
++    # 批 B（I03，T1 oracle 改动）：vendored 相对整数秒 = harness 启动时刻的剩余 episode 预算
++    # （下取整、至少 1），不再是任务预算原值 900；真正的强制在编排层的绝对期限。
++    assert driver_call["time_budget_sec"] == audit.episode_deadline["harness_time_budget_seconds"]
++    assert 899 <= driver_call["time_budget_sec"] <= 900 == audit.episode_deadline["budget_seconds"]
+ 
+     proxy = launch.model_proxy  # Q4 模型代理注入
+     assert proxy.inject_env_var == "ANTHROPIC_BASE_URL"
+diff --git a/rh2/tests/adapters_miles/test_b2_mask_chain.py b/rh2/tests/adapters_miles/test_b2_mask_chain.py
+index 9e70e28f..2f101cf5 100644
+--- a/rh2/tests/adapters_miles/test_b2_mask_chain.py
++++ b/rh2/tests/adapters_miles/test_b2_mask_chain.py
+@@ -330,6 +330,7 @@ def _make_mask_wire_adapter(registry, hook, session_defaults):
+             max_context_tokens=0,
+             physical_attempt_id=None,
+             capability_token=None,
++            deadline_monotonic=None,
+         ):
+             # B2 收口哨兵：生产 commit 接线（capture_wire 安装的 rh2_record_turn
+             # 包装）必须在安装态——本测试的 commit 全部由它触发。若有人删掉
+diff --git a/rh2/tests/adapters_miles/test_batch_a_failure_routing.py b/rh2/tests/adapters_miles/test_batch_a_failure_routing.py
+index 388470e6..34e00bb6 100644
+--- a/rh2/tests/adapters_miles/test_batch_a_failure_routing.py
++++ b/rh2/tests/adapters_miles/test_batch_a_failure_routing.py
+@@ -46,7 +46,7 @@ async def _run_driver(driver: ClaudeCodeDriver) -> int:
+ 
+ 
+ async def test_driver_wraps_sandbox_exec_error_as_attributed_task_local(monkeypatch):
+-    async def _boom(self, sb):
++    async def _boom(self, sb, **kwargs):
+         raise SandboxExecError("docker exec", 124, "tar -xzf /tmp/cc-platform.tgz\ntimeout")
+ 
+     monkeypatch.setattr(ClaudeCodeDriver, "_install_native_cli", _boom)
+@@ -60,7 +60,7 @@ async def test_driver_wraps_sandbox_exec_error_as_attributed_task_local(monkeypa
+ async def test_driver_does_not_rename_unknown_runtime_error(monkeypatch):
+     """Codex R1 反例：安装函数内部的裸 RuntimeError（不变量）不是容器操作失败，不得改名成局部故障。"""
+ 
+-    async def _bug(self, sb):
++    async def _bug(self, sb, **kwargs):
+         raise RuntimeError("internal installation invariant")
+ 
+     monkeypatch.setattr(ClaudeCodeDriver, "_install_native_cli", _bug)
+@@ -70,7 +70,7 @@ async def test_driver_does_not_rename_unknown_runtime_error(monkeypatch):
+ 
+ 
+ async def test_driver_passes_typed_config_errors_through_unwrapped(monkeypatch):
+-    async def _mismatch(self, sb):
++    async def _mismatch(self, sb, **kwargs):
+         raise SlimeBindingError("cc_version_mismatch", "观测 '1.0.0' 不含期望 '2.1.205'")
+ 
+     monkeypatch.setattr(ClaudeCodeDriver, "_install_native_cli", _mismatch)
+@@ -116,7 +116,7 @@ async def test_real_driver_through_formal_orchestrator_routes_by_source(name, mo
+     notified: list = []
+     chain.orchestrator._notify_fatal_halt = notified.append
+ 
+-    async def install(self, sb):
++    async def install(self, sb, **kwargs):  # 批 B 起 _install_native_cli 带 timeout= 关键字
+         if origin == "install":
+             raise make_exc()
+ 
+diff --git a/rh2/tests/adapters_miles/test_f1_e2e_identity_chain.py b/rh2/tests/adapters_miles/test_f1_e2e_identity_chain.py
+index 86f7a73e..f11751c9 100644
+--- a/rh2/tests/adapters_miles/test_f1_e2e_identity_chain.py
++++ b/rh2/tests/adapters_miles/test_f1_e2e_identity_chain.py
+@@ -297,6 +297,7 @@ def _make_identity_wire_adapter(registry, hook, session_defaults, holder):
+             max_context_tokens=0,
+             physical_attempt_id=None,
+             capability_token=None,
++            deadline_monotonic=None,
+         ):
+             assert TrajectoryManager.record_turn.__name__ == "rh2_record_turn", (
+                 "capture_wire 的生产 commit+绑定接线（rh2_record_turn 包装）未安装"
+diff --git a/rh2/tests/adapters_miles/test_w1a_formal_chain.py b/rh2/tests/adapters_miles/test_w1a_formal_chain.py
+index 4d89a32d..45daa909 100644
+--- a/rh2/tests/adapters_miles/test_w1a_formal_chain.py
++++ b/rh2/tests/adapters_miles/test_w1a_formal_chain.py
+@@ -108,7 +108,7 @@ class _MockSessionAdapter:
+         pass
+ 
+     def open_session(self, sid, *, sampling_defaults=None, max_context_tokens=0,
+-                     physical_attempt_id=None, capability_token=None):
++                     physical_attempt_id=None, capability_token=None, deadline_monotonic=None):
+         if sid in self.opened:
+             raise ValueError(f"session_id {sid!r} already exists")
+         self.opened.append(sid)

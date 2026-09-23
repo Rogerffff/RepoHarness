@@ -4,7 +4,7 @@
 
 ## 引用范围与材料身份
 
-- R = .。
+- R = ${REPO_ROOT}。
 - P = R/runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-5839；Q = 对应 private/iterative__dvc-5839；下文源码相对 P/base。
 - O = R/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-5839。
 - T = R/runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-5839。

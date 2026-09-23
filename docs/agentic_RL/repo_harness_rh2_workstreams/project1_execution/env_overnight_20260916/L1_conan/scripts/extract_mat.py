@@ -1,7 +1,7 @@
 import json,os
-BASE='docs/agentic_RL/repo_harness_rh2_workstreams/s2'
-M='runs/env_overnight_20260916/L1_conan/mat'
-ASG=json.load(open('docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/ASSIGNMENT.json'))
+BASE='${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/s2'
+M='${REPO_ROOT}/runs/env_overnight_20260916/L1_conan/mat'
+ASG=json.load(open('${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/ASSIGNMENT.json'))
 want=set(ASG['tasks'])
 files={'public':f'{BASE}/ingest/public_bundles_v0.jsonl',
        'grading':f'{BASE}/ingest/grading_bundles_v2_v0.jsonl',

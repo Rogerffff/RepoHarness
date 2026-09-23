@@ -1,7 +1,7 @@
 # L1_moto_2 · 逐题静态审查小结（20 题，getmoto/moto）
 
 2026-09-16 夜 · 包 L1_moto_2 · 全部为**静态审查**（只读裸克隆 `git show/grep`，未起容器、未跑测试、未连远程）。
-逐题记录：`records/<instance_id>.json`；材料快照：`runs/env_overnight_20260916/L1_moto_2/mat/<instance_id>/`（problem_statement.txt / test.patch / gold.patch / hints.txt / grading.json）。
+逐题记录：`records/<instance_id>.json`；材料快照：`${REPO_ROOT}/runs/env_overnight_20260916/L1_moto_2/mat/<instance_id>/`（problem_statement.txt / test.patch / gold.patch / hints.txt / grading.json）。
 证据引用格式：`<commit>:<path>:<line>`（commit 为该题 `base_commit`），或 mat 快照相对路径。
 
 | task | 主要发现 | 建议处置 | 下一实验 |

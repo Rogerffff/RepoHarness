@@ -83,9 +83,9 @@ R2E 数据行 ──ingest_r2e_subset──► PublicTaskBundle            （�
 
 ### 3.2 parser、归一化与判定
 
-- `envpack/r2e_parsers.py`（与 `swegym_parsers.py` 并列、不复用）：`parse_r2e_pytest_summary(text)` 逐步复刻 Prime：去日志侧 ANSI 与 CR → 取 `short test summary info` 之后 → PASSED / FAILED / ERROR 三类行的取键规则 → 没有该段返回空映射。
+- `envpack/r2e_parsers.py`（与 `swegym_parsers.py` 并列、不复用）：`parse_log_pytest(text)` 逐字移植 Prime：取 `short test summary info` 之后 → PASSED / FAILED / ERROR 三类行的取键规则 → 没有该段返回空映射。（09-22 实施更正：原稿这里写的"先去日志侧 ANSI 与 CR"是照独立 runner 写的，固定的上游实现并不这么做；去色只发生在键上、两侧对称，见 §11.3 偏离 4。）
 - 键归一化只有一种：按固定的上游实现（两侧同规则去色、截 `" - "`）。**代码来源固定为 `prime-envs@c4d04dfe…` 的 `taskset.py`**（本地归档 `runs/env_probe_20260909_codex_backup/analysis/prime_taskset.py`，sha256 `b928139e…`）；数据 revision `e8b9fcbc…` 不能替代代码版本。版本写进 `grader_version`（`r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe`），不再扩报告契约，也不维护第二套实现。
-- `scoring.parse_eval_log_r2e(grading, log_text) -> EvalVerdict`：与 SWE v2 入口同纪律——**只解析 Start/End 标记段**；坏码或缺标记 → `apply_ok=False`。`EvalVerdict` 增两个带默认值的字段：`grading_semantics`（默认 `swe_f2p_p2p`）、`expected_match: ExpectedMapMatch | None`；R2E verdict 的 F2P/P2P 列表为空，`resolved = expected_match.resolved`，`num_parsed_tests = 观测键数`，`reference_missing = expected_match.missing`。
+- `scoring.parse_eval_log_r2e(grading, log_text) -> EvalVerdict`：与 SWE v2 入口同纪律——**只解析 Start/End 标记段**；缺标记 → `apply_ok=False`（09-22 实施更正：R2E 入口不检查 swebench 的四个坏码字符串，理由见 §11.3 偏离 5）。`EvalVerdict` 增两个带默认值的字段：`grading_semantics`（默认 `swe_f2p_p2p`）、`expected_match: ExpectedMapMatch | None`；R2E verdict 的 F2P/P2P 列表为空，`resolved = expected_match.resolved`，`num_parsed_tests = 观测键数`，`reference_missing = expected_match.missing`。
 - `grading_outcome_fields(verdict)` 按 `grading_semantics` 分派到既有 `grading_outcome_fields_r2e`。
 - **manager 的来源语义迁移（A 线 R2，必须随 R-b/R-c 一起做）**：① `GradingEnvSpec` 新增 `grading_semantics`，由 spec 构造入口在 parser 运行**之前**确定，`_grade_within_deadline` 的公共报告字段带上它——P-A 候选归因、提前 infra、冻结重放失败等所有分支的报告都是 `r2e_expected_map`，未知计数仍为 None；② `execution_failure_trigger` 对 R2E 按键在场关系判："参考全缺席" = 期望键非空且**没有任何期望键出现在观测里**；不借用空的 SWE 桶，也不用"状态匹配数为 0"代替"参考键在场数为 0"。反例：期望 `{test_a, test_b}`、观测只有 `test_a` → 是部分在场的 tests_failed / 0，不进 P-A。
 - 与 Prime `calculate_reward` 的差别只有一处：Prime 跳过空 parsed 键（键集不等也可能给 1），我们用并集口径更严；48 题实测 `n_missing / n_extra` 全为 0，未触发。对账时若出现分歧单列。
@@ -238,6 +238,7 @@ binary_v1 二值 reward；infra 族无 reward；SWE 路径的 F2P/P2P 官方口�
 | 2026-09-20 | Codex A 完成[计划复核与 CPU 探针](r2e_grading_wiring_review_20260920/README.md)：方向可行，2 项 P1 / 3 项 P2。DR2 复用了已于 09-09 撤回的 ESC 转录误读；固定 Prime 函数与本地 runner 重放 336 份既有日志，reward 全部一致，带 ANSI 的 pillow 六题 24 次 gold 均为 1。另需补 manager 的来源语义与全缺席判据、纠正同组混来源验收、24/48 输入路径、单镜像 chown 成本推断。 | 作者逐项修订后推进切片；建议 DR1/DR3 选 A、DR4 保持既定分期，DR2 撤回当前二选一。本行是审查意见，不是用户批准。未改生产代码、未运行 Docker/远端、未提交。 |
 | 2026-09-20 | Codex B 完成[独立复核](r2e_grading_wiring_review_20260920/B_review.md)：重跑 A 探针确认五项；补做 336 日志逐键一致与 48 gold 应用结果一致（补丁字节均不同）。补充 `.venv` 预检与基线先后、真实自定义 runner 收尾、12 题 dirty tree 等局部澄清；未新增架构或训练语义阻塞。 | 作者修订后按切片实施；DR1/DR3 推荐 A、DR4 保持来源对账、DR2 撤回。未改生产代码或配方，未跑 Docker/远端，未提交；不替用户批准。 |
 | 2026-09-20 | **按 A/B 线复核修订本页**（逐项处置见下表）；用户决定 DR1=A、DR2 撤回、DR3=A、DR4=接线阶段不处理题目。R-0（driver 收口状态外显）已实施：`replay_grade.final_exit_status`（最终仍有未关评分容器 → 退出码 3；停批 → 2；历史清理失败但最终已清 → 0 且留诊断）、CLI 把基线契约矛盾 / grader scope 无法确认终止转成停批退出码而不是 traceback、账本 `test` 块增 `exec_exit_code` / `segment_completed`（取自 A 线新增的 sidecar 事实）；B 线环境维修的两份实验脚本已适配被删除的 `orphan_min_age_seconds`（`replay_with_install_recipe.py` 容忍缺席，`probe_grading_namespace.py` 标注为修复前行为的历史反例）。本机验证（含 A 线未提交的 manager 修复）：ruff 无告警，非 Docker 1451 passed / 1 skipped，Docker 35 passed。未改 R2E 代码，未提交。 | R-a / R-b 开工（待用户指示）；派生镜像配方的派发由用户安排。 |
+| 2026-09-22 | **本机切片 R-a / R-b / R-c / R-d / R-e 已实施并本机验证**（细节、偏离与未决项见 §11.3）；R-0 复核的两项 driver 余项（CR1 / CR2）一并收口。48 题来源材料已入库到 `s2_r2e/`（pins + 提交记录两级代码锚）；固定上游规则源 `prime-envs@c4d04dfe` 逐字节 vendored（Apache-2.0）。验证：ruff 无告警；非 Docker 1584 passed / 1 skipped；Docker 53 passed（其中 R2E 形状夹具镜像的真实容器往返 4 例）；miles 双 lane 计数与 manifest 完全一致（A 461 / 342 skip，B 803 / 0）。未跑真机、未构建真实派生镜像、未提交。 | A/B 线 Codex 复核本机切片；派生镜像配方与构建（DR3，环境侧）→ 租机 → R-f 代表题对账 → 48×noop/gold。R-e 的组级验收（真实 miles buffer）待与 A 线协调 lane 计数后补（§11.3 未决项 1）。 |
 
 ### 11.1 对 A/B 线复核意见的处置（2026-09-20）
 
@@ -261,3 +262,40 @@ Codex A：[完整复核、探针与结果](r2e_grading_wiring_review_20260920/fo
 两项非阻塞 P2 留给 driver 后续窄改：CR1 未捕获异常/取消继续传播时，`finally` 仍可能打印 `final_status.exit_code=0`；CR2 scope 收口异常时，已经落盘的日志/sidecar 未挂入停批账本，取消分支的新 `test` 块也未填。建议由 B 在 R-f 异常对账或摘要消费者启用前补齐，不阻塞材料/parser 切片；保持既有停批和 reward 语义，不新增恢复机制。
 
 独立验证：21 个维护测试通过，8 案 CPU 控制流探针与 1 个真实 CLI 子进程；相关 ruff 通过，测试文件末尾多一空行留提交前清理。本轮未运行 Docker/远端/全套测试，未改生产代码或提交；这不是 R2E 实施验收。
+
+### 11.3 本机切片实施记录（2026-09-22，Claude）
+
+**已实施**（都未提交；共享文件只改了本片需要的接缝）：
+
+| 切片 | 落点 | 本机证据 |
+| --- | --- | --- |
+| R-a 来源材料 | `envpack/bundles_v2.py`（`TaskSource`、`PrivateGradingBundleR2E`、`r2e_hidden_tests_tree_digest`、包记录按评分面类型分派规则文件摘要）、新 `envpack/ingest_r2e_subset.py`、`training_view.py`（判别联合、来源 ↔ 评分面互检、多来源合并、`DEFAULT_TASK_SOURCES`）、`prepared_tasks.py`、`trusted_prep.py --sources`、`registry.py` / `inspect_s1.py`（登记新 schema）、新 `scripts/build_r2e_ingest.py`、`s2_r2e/{raw,vendor,ingest}` 与 `t1_input_pins_r2e_v1.json` | `tests/envpack/test_ingest_r2e_subset.py` 28 例：48 题经可信入口加载；公开面无期望原文 / gold / 非公开来源字段；12 种输入漂移 fail-closed；SWE 四面产物用新模型重新序列化与已提交文件逐字节相同；缺省来源仍是 216 题、R2E 显式选入（264 / 48）；gold 48/48 在来源旧文件上 `git apply` 后与来源 `new_file_content` 逐字相同，纳入文件集合与独立 runner 48/48 相同 |
+| R-b parser 与判定 | 新 `envpack/r2e_parsers.py`、`envpack/scoring.py`（`parse_eval_log_r2e`、`EvalVerdict.grading_semantics / expected_match`、`grading_outcome_fields` 分派、`ExpectedMapMatch.expected_present_count`）、`grading/manager.py`（`execution_failure_trigger` 的键在场判据、`GradingEnvSpec.grading_semantics` 进 `common`、parser 语义与 spec 互检） | `tests/envpack/test_r2e_parsers.py` 23 例：按 AST 取 vendored 原文件的四个函数对拍——入库 8 份真实日志与本机 336 份全量，解析映射 / 去色 / reward 零差异，RH2 并集口径与上游 reward 336/336 相同；§3.2 五条固定样本；`tests/grading/test_r2e_semantics_unit.py` 16 例：四种键在场形态 + 八类报告分支都带 `r2e_expected_map` |
+| R-c 评分脚本 | 新 `adapters/slime/r2e_grading_scripts.py`、`prepared_task_face.build_grading_spec_from_host_view`（按评分面类型分派）、`contracts/baseline_manifest.py`（`baseline_policy_r2e_v1`）、`baseline_census.py`、`manager.render_compile_probe_script(interpreter=…)` | `tests/adapters/test_r2e_grading_scripts_unit.py` 7 例；`tests/grading/test_r2e_docker.py` 真实容器 4 例（R2E 形状夹具镜像：`/testbed` 内嵌、初态脏树、`.venv` 在工作目录、隐藏测试在 0700 的 `/rh2_private`）：修复 → resolved 且入口退出码为 1；篡改入口 + 植入同名测试 / `conftest.py` 被覆盖，结果仍由真 runner 决定；隐藏测试与 bundle 不符 → infra 且候选段不启动；**census 之前预热 Python → 基线重建停批**（普通条目 3 = 3，差别只在排除区路径摘要）。容器内 `sha256sum` 流水线与 Python 侧树摘要同值 |
+| R-d 覆盖表与 driver | 新 `envpack/environment_overlay.py`、`adapters/slime/replay_grade.py`、`scripts/replay_grade.py`（`prepare --sources`、`run --image-overlays`） | `tests/adapters/test_r2e_replay_overlay.py` 13 例：两类容器都按确认过的 image ID 启动；三条预检以 agent 身份排在首次 census 之后，失败即不进候选阶段；五种覆盖条目不符 → `stage_error` 且不起任何容器 |
+| R-e 训练运输（单成员） | 只加测试 | `tests/adapters/test_r2e_transport.py` 4 例：真实 manager（grader profile）+ R2E 渲染脚本 → RewardFacts → gate → Outcome v2 → admission 载荷 → 交付叶；resolved / tests_failed / 缺标记 infra / 零解析未确定 |
+| R-0 余项 | `final_exit_status(aborted=…)` + `EXIT_ABORTED=4`；`_ContainerRecord.infra_eval_log_ref`；driver `_fill_halted_grading_refs` 与取消分支的 `test` 块 | 同上 overlay 测试文件内 4 例：带未捕获异常退出时摘要记 `aborted:<类型>` 而不是 `ok`；scope 终止失败停批时账本仍有已落盘日志 / sidecar / 候选段事实，且不造报告 |
+
+**不变性证据（SWE 侧）**：同一条旧 `trusted_prep` 命令在改动前（`cee933b4` 导出）后产出的 `prompts.jsonl` / `rollout_task_views.jsonl` / `host_grading_views.jsonl` 三个文件摘要逐字节相同（manifest 只差 `prepared_at_utc`）；216 题渲染出的评分脚本、脚本摘要（环境资格键）、编译复证、观测脚本合并摘要相同；`baseline_policy_v1 / v2` 的政策摘要不变（测试内钉死）。
+
+**T1 决策与偏离**（理由随附，可改）：
+
+1. `base_commit` 取自镜像实测事实表，不取来源行——48/48 行的 `old_commit_hash` 是符号形式 `"<commit>^"`，没有 40 位值。因此 R2E 的封板输入是四项：48 行原始行、revision 记录、M3 镜像事实表（逐字节副本，67 万字节，无本机私有信息）、vendored 规则源；两份输入之间能互检的都互检（镜像引用、revision、期望键数）。
+2. 评分面存 `expected_output_json` **原文**（摘要自证、禁重复键 / 空键 / 三态之外的状态），`expected_map()` 现解析；不预归一化。隐藏测试清单带逐文件 sha256，树摘要由清单重算——比计划多一层自证。ingest 时拒绝"归一化后键碰撞"（48 题为 0）。
+3. 数据身份与规则代码身份分开记：`spec_vendor_id=r2e_gym_subset_e8b9fcbc`（数据）、`rule_source_id=prime_envs_c4d04dfe`（代码）；包记录的 `spec_vendor_json_sha256` 对 R2E 取 vendored 规则源文件摘要（字段名是 SWE 时期留下的，含义已在字段说明里写明）。
+4. **不先剥日志侧 ANSI / CR**——计划 §3.2 第一条的这半句是照独立 runner 写的，固定的上游实现并不这么做；实现以上游为准（48 题期望键无 CR、无多参数 SGR，两种写法在 336 份语料上无差别）。
+5. **R2E 入口不检查 swebench 的四个坏码字符串**（计划写的是"坏码或缺标记"）：来源规则没有这组约定，RH2 的 R2E 渲染器也不打印它们；在候选可控的 stdout 里认一句字面量，只会多一条把负样本洗成 None 的路。缺标记仍是 `apply_ok=False` → manager 改判 infra。
+6. R2E 渲染器单独成模块（`r2e_grading_scripts.py`），不塞进 `prepared_task_face.py`；分派入口仍只有 `build_grading_spec_from_host_view` 一处。official 清单按路径排序（进脚本摘要，不随 bundle 内顺序变）。
+7. legacy diff 路径上"hygiene 非 clean 且 resolved"的降级对 R2E 改判 infra（`hygiene_downgrade_unsupported_for_r2e_expected_map`）：沿用"保留计数改 tests_failed"会产出 match == total 的 tests_failed，过不了报告契约而变成未捕获异常。R2E 只接 frozen-delta 正式链，这条是防崩保险，不是新功能。
+8. `trusted_prep` 的 stdout 摘要键集合不加 `sources`（既有测试钉死键集合，旧命令输出形状保持不变）。
+9. 覆盖表用 JSONL（一题一行），未进 schema 聚合注册表（它是 driver 的运行输入，不是训练工件）；`facts.hidden_tests_location` 必须等于 `/rh2_private/r2e_tests`——**这是对派生镜像配方的约定**，配方方需要照此放置并在表里如实填写树摘要。
+10. 来源缺陷照原样带入（DR4）：两个 gold=0（coveragepy `016af5f6`、datalad `58ba5165`）；coveragepy `97997d2c` 与 `f5eb5f21` 共用同一基线提交（同环境不同任务，本片不做重复簇）。
+
+**未决 / 需要协调**：
+
+1. **R-e 组级验收未做**：同批一个 SWE 组 + 一个 R2E 组、混来源组被 `mixed_group_members` 拒绝，要经真实 miles buffer（`tests/adapters_miles`）。那个目录的用例数由 A 线 `integration_base_manifest.json` 的精确计数管，且该文件眼下有 A 线未提交的改动——我没有动。训练侧消费者不读计数也不读 `grading_semantics`（已 grep 核对），混组拒绝规则按任务三元组判、与来源无关；顺带发现该规则目前**没有任何测试覆盖**。建议由 A 线加这一例并同步 lane 计数，或授权我加。
+2. **原始行文件 25 MB**（`s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl`）：严格加载入口与 SWE 同纪律，要求四项封板输入在场，所以它需要随仓库分发。是否进 git（SWE 的 3.5 MB 原始档是进的）留到提交时由用户定；不进的话要改成"加载期只核 pins 记录、原始行只在重新 ingest 时需要"。
+3. 真实镜像上未验证的三件事（都在 R-f）：48 张派生镜像里 `base64 / sha256sum / xargs -0 / sort -z` 是否齐全；`.venv` 排除区在真实镜像上的 census 耗时；正式 profile 下两侧初始化耗时与可写层增长。
+4. 环境资格记录仍缺（流水线产出）：R2E 的零解析 / 参考全缺席在资格缺席时一律走未确定（infra / None），与 SWE 同。
+
+**本轮没有改变的已定案语义**：binary_v1；infra 族 reward=None；SWE 路径的任何判定、脚本、parser 与产物字节；P-A 三路判定的证据要求；D2-3 投影规则；`test_globs=()`（P-B）；缺省来源集合与旧命令的产物；候选阶段 apply 失败不进 grader。

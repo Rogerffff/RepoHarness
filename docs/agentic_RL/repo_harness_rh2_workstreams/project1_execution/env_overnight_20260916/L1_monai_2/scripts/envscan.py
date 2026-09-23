@@ -1,9 +1,9 @@
 """对每题的 test_patch 目标测试文件做静态环境依赖扫描（下载/权重/数据/GPU/多进程/大张量）。"""
 import json,os,re,subprocess,sys
 PKG='L1_monai_2'
-R='runs/env_overnight_20260916/repos/MONAI'
-M=f'runs/env_overnight_20260916/{PKG}/mat'
-ASG=json.load(open(f'docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/{PKG}/ASSIGNMENT.json'))
+R='${REPO_ROOT}/runs/env_overnight_20260916/repos/MONAI'
+M=f'${REPO_ROOT}/runs/env_overnight_20260916/{PKG}/mat'
+ASG=json.load(open(f'${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/{PKG}/ASSIGNMENT.json'))
 PATTERNS=[
  ('DOWNLOAD', r'download_url|download_and_extract|testing_data_config|url=|\.tar\.gz|\.zip"|huggingface|torch\.hub|load_state_dict_from_url|hub_dir|model_zoo'),
  ('NET',      r'requests\.|urlopen|urlretrieve|http://(?!www\.apache)|https://(?!www\.apache)'),

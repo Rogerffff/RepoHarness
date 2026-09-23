@@ -4,7 +4,7 @@
 
 **复核结论：同意主审needs_review/static_review及重建单行映射候选的优先CPU实验。** 可以保留为受限的静态开发诊断候选，但原版题面尚不适合直接以reward解释模型能力：成功支持是合理修复方向，公开材料没有唯一确定它。Python容器行为的漏测有明确旧测试依据，历史局部回归原件也支持此风险；当前配方下的错误候选满分尚未证实。gold的元素schema钩子问题应保留为扩展范围疑点，不能宣称原int题已证gold错误。无需把所有普通覆盖限度都变成准入阻断门，也没有理由仅因这些疑点废弃原题。
 
-路径沿初判：`R=.`，`P=R/runs/swegym_quality_batch01_20260921_v2/public/pydantic__pydantic-5706`，`D`为同材料根private本题目录，`L=R/runs/env_recipe_repair_20260919/pydantic_v1/tasks/pydantic__pydantic-5706`，`O`为本review.md所在目录。下列源码引用相对`P/base/`。
+路径沿初判：`R=${REPO_ROOT}`，`P=R/runs/swegym_quality_batch01_20260921_v2/public/pydantic__pydantic-5706`，`D`为同材料根private本题目录，`L=R/runs/env_recipe_repair_20260919/pydantic_v1/tasks/pydantic__pydantic-5706`，`O`为本review.md所在目录。下列源码引用相对`P/base/`。
 
 ## 独立初判与后获内容
 

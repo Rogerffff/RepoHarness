@@ -2,7 +2,7 @@
 
 2026-09-21；主审 investigate_mypy。本文在获准读取本题旧调查前封存，之后不回写。仅做静态阅读与 JSON/散列校验，没有运行 mypy、pytest、安装、容器或模型。
 
-路径约定：R=`.`；P=`R/runs/swegym_quality_batch01_20260921_v2/public/python__mypy-10424`；V 为同材料根的 `private/python__mypy-10424`；下文源码均相对 `P/base`。运行原件根 E=`R/runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10424`，G/N 分别为其 `gold`/`noop`；gold 日志名 `evallog_replay-er19-iw1-python___6bca9f92.eval.log`，noop 为 `evallog_replay-er19-iw1-python___bbc494ef.eval.log`，均在各自 `eval_logs` 下。
+路径约定：R=`${REPO_ROOT}`；P=`R/runs/swegym_quality_batch01_20260921_v2/public/python__mypy-10424`；V 为同材料根的 `private/python__mypy-10424`；下文源码均相对 `P/base`。运行原件根 E=`R/runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10424`，G/N 分别为其 `gold`/`noop`；gold 日志名 `evallog_replay-er19-iw1-python___6bca9f92.eval.log`，noop 为 `evallog_replay-er19-iw1-python___bbc494ef.eval.log`，均在各自 `eval_logs` 下。
 
 ## 初判与八方面覆盖
 

@@ -1,8 +1,8 @@
 import json,os,re
 PKG='L1_monai_2'
-M=f'runs/env_overnight_20260916/{PKG}/mat'
-L='runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
-ASG=json.load(open(f'docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/{PKG}/ASSIGNMENT.json'))
+M=f'${REPO_ROOT}/runs/env_overnight_20260916/{PKG}/mat'
+L='${REPO_ROOT}/runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
+ASG=json.load(open(f'${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/{PKG}/ASSIGNMENT.json'))
 def paths(diff):
     return sorted(set(re.findall(r'^diff --git a/(\S+) b/\S+', diff, re.M)))
 out={}
@@ -37,7 +37,7 @@ for tid in ASG['tasks']:
                  'p2p_notpass':{x:sm[x] for x in p2p if x in sm and sm[x]!='PASSED'},
                  'skipped_all':sum(1 for vv in sm.values() if vv=='SKIPPED')}
     out[tid]=r
-json.dump(out,open(f'runs/env_overnight_20260916/{PKG}/scan/prescan.json','w'),ensure_ascii=False,indent=1)
+json.dump(out,open(f'${REPO_ROOT}/runs/env_overnight_20260916/{PKG}/scan/prescan.json','w'),ensure_ascii=False,indent=1)
 for tid,r in out.items():
     print(f"### {tid} v{r['version']} py{r['py']} f2p={r['f2p_n']} p2p={r['p2p_n']} ps={r['ps_chars']}ch hints={r['hints_chars']}ch")
     print(f"    tp={r['test_patch_paths']}")

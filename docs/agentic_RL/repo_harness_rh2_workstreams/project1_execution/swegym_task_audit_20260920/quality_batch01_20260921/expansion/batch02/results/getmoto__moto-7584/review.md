@@ -4,7 +4,7 @@
 
 本稿在三题 reviewer_initial 全部由协调者封存、统一开放后写成。独立初稿 SHA256 为 `36935247d795d340d7f32d8e732d36d164ef8a83ba3d22bb51bde99ef0b2ad3b`，未回写。对照了本题 public_read、analysis_before_history、old_findings_delta、card、screening_record，以及 history/refs 精确指向的 L1_moto_3 本题记录；未用多数意见裁决规范。主审的两项核心疑点与独立初稿一致，本稿将用途限制说得更明确。
 
-本文 ROOT 为 `.`；PUB/PRI 为 ROOT 下 `runs/swegym_quality_batch02_20260921_v2/{public,private}/getmoto__moto-7584`；E 为 `runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-7584`；S1 为 `runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-7584/gold/offline/a1`。下列源码均从 PUB/base 起算，完整第一阶段八方面证据保留在 reviewer_initial.md。
+本文 ROOT 为 `${REPO_ROOT}`；PUB/PRI 为 ROOT 下 `runs/swegym_quality_batch02_20260921_v2/{public,private}/getmoto__moto-7584`；E 为 `runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-7584`；S1 为 `runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-7584/gold/offline/a1`。下列源码均从 PUB/base 起算，完整第一阶段八方面证据保留在 reviewer_initial.md。
 
 ## 决定性主张及分歧
 

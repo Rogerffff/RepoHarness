@@ -1,9 +1,9 @@
 # 本包新增：扫 F2P/P2P 所在测试文件在 base 上的可选依赖 skip / 网络 / 编译扩展线索
 import json,os,re,subprocess
 PKG='L1_modin_pandas'
-M=f'runs/env_overnight_20260916/{PKG}/mat'
-REPOS='runs/env_overnight_20260916/repos'
-ASG=json.load(open(f'docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/{PKG}/ASSIGNMENT.json'))
+M=f'${REPO_ROOT}/runs/env_overnight_20260916/{PKG}/mat'
+REPOS='${REPO_ROOT}/runs/env_overnight_20260916/repos'
+ASG=json.load(open(f'${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/{PKG}/ASSIGNMENT.json'))
 PAT={
  'importorskip': re.compile(r'importorskip\(\s*["\']([\w\.\-]+)'),
  'skip_if_no': re.compile(r'skip_if_no\(\s*["\']([\w\.\-]+)'),
@@ -37,4 +37,4 @@ for tid in ASG['tasks']:
     out[tid]={'files':files,'signals':agg}
     print(f"### {tid} files={files}")
     for k,v in agg.items(): print(f"    {k}: {v}")
-json.dump(out,open(f'runs/env_overnight_20260916/{PKG}/optdeps.json','w'),ensure_ascii=False,indent=1)
+json.dump(out,open(f'${REPO_ROOT}/runs/env_overnight_20260916/{PKG}/optdeps.json','w'),ensure_ascii=False,indent=1)

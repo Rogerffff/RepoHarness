@@ -4,9 +4,9 @@
 
 实际读过的旧材料：
 
-- H = `docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_1/records/iterative__dvc-3620.json`，history refs 唯一指定的旧结论。
-- S = `runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3620`；gold/empty 的 `offline/a1/status_map.json` 全文，`test_output.txt` 的安装错误、测试命令/收集、CLI 失败与终态片段，gold 的 `eval.sh` 安装与恢复/测试命令。
-- 旧报告以省略路径引用的 `docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_probe_20260909/ledger/cc_candidate_grading.jsonl`，仅按本题 ID 提取，未找到本题行，未读其它题内容。
+- H = `${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_1/records/iterative__dvc-3620.json`，history refs 唯一指定的旧结论。
+- S = `${REPO_ROOT}/runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3620`；gold/empty 的 `offline/a1/status_map.json` 全文，`test_output.txt` 的安装错误、测试命令/收集、CLI 失败与终态片段，gold 的 `eval.sh` 安装与恢复/测试命令。
+- 旧报告以省略路径引用的 `${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_probe_20260909/ledger/cc_candidate_grading.jsonl`，仅按本题 ID 提取，未找到本题行，未读其它题内容。
 - 历史提出的同族 3527 等其它题材料没有打开；未读 prescan、旧仓 clone、其它旧质量报告。额外在本题 base 的 test_fs/test_remove/test_gc 静态查找权限/删除测试位置，不把搜索命中当全文审阅。
 
 | 旧主张 | 核对结论 | 当前决定性依据与处理 |

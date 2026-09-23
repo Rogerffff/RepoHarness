@@ -1,7 +1,7 @@
 import json,sys,re
-M='runs/env_overnight_20260916/L1_mypy_2/mat'
-PRE=json.load(open('runs/env_overnight_20260916/L1_mypy_2/prescan.json'))
-KS=json.load(open('runs/env_overnight_20260916/L1_mypy_2/kscan.json'))
+M='${REPO_ROOT}/runs/env_overnight_20260916/L1_mypy_2/mat'
+PRE=json.load(open('${REPO_ROOT}/runs/env_overnight_20260916/L1_mypy_2/prescan.json'))
+KS=json.load(open('${REPO_ROOT}/runs/env_overnight_20260916/L1_mypy_2/kscan.json'))
 tid=sys.argv[1]; part=sys.argv[2] if len(sys.argv)>2 else 'all'
 p=json.load(open(f'{M}/{tid}/public.json')); g=json.load(open(f'{M}/{tid}/grading.json'))
 v=json.load(open(f'{M}/{tid}/validation.json')); raw=json.load(open(f'{M}/{tid}/raw.json'))

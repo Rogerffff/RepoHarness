@@ -1,0 +1,58 @@
+{
+  "process_cancel": [
+    {
+      "case": "materialize_default_run_docker",
+      "cancelled": true,
+      "kill_calls": 0,
+      "wait_calls": 0
+    },
+    {
+      "case": "driver_docker_sandbox_run",
+      "cancelled": true,
+      "kill_calls": 1,
+      "wait_calls": 1
+    }
+  ],
+  "network_cancel": [
+    {
+      "case": "episode_deadline_during_network_create",
+      "stage_entered": true,
+      "reason_code": "episode_deadline_in_materialize",
+      "termination_kind": "hard_wall_timeout",
+      "aborted": true,
+      "daemon_networks_before_shutdown": 1,
+      "registered_networks_before_shutdown": 0,
+      "pool_slots_before_shutdown": 1,
+      "removed_networks_before_shutdown": 0,
+      "container_run_calls": 0,
+      "cleanup_completed": true,
+      "cleanup_failures": 0,
+      "quarantine": [],
+      "shutdown_networks_removed": 1,
+      "shutdown_failures": [],
+      "daemon_networks_after_shutdown": 0,
+      "registered_networks_after_shutdown": 0,
+      "pool_slots_after_shutdown": 1
+    },
+    {
+      "case": "episode_deadline_during_network_connect",
+      "stage_entered": true,
+      "reason_code": "episode_deadline_in_materialize",
+      "termination_kind": "hard_wall_timeout",
+      "aborted": true,
+      "daemon_networks_before_shutdown": 1,
+      "registered_networks_before_shutdown": 1,
+      "pool_slots_before_shutdown": 1,
+      "removed_networks_before_shutdown": 0,
+      "container_run_calls": 0,
+      "cleanup_completed": true,
+      "cleanup_failures": 0,
+      "quarantine": [],
+      "shutdown_networks_removed": 1,
+      "shutdown_failures": [],
+      "daemon_networks_after_shutdown": 0,
+      "registered_networks_after_shutdown": 1,
+      "pool_slots_after_shutdown": 1
+    }
+  ]
+}

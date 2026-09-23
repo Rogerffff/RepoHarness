@@ -2,7 +2,7 @@
 
 `needs_review` / `static_review` / `development_diagnostic`。在任何本题 public_read、主审初稿/delta/card/record、旧质量结论之前保存。全部结论来自静态源码、原始日志和stdlib文本/JSON/hash核对；未执行项目代码、测试、安装、网络、Docker或模型。
 
-ROOT=.；I3=ROOT/runs/swegym_quality_batch03_20260921_v1；IW=ROOT/runs/env_recipe_repair_20260919/install_wave1。下文 base 路径均指 I3/public/getmoto__moto-6408/base。
+ROOT=${REPO_ROOT}；I3=ROOT/runs/swegym_quality_batch03_20260921_v1；IW=ROOT/runs/env_recipe_repair_20260919/install_wave1。下文 base 路径均指 I3/public/getmoto__moto-6408/base。
 
 初判：问题、base、新增F2P相符，gold确实处理题面“两个manifest预先存在”的移动标签序列，历史真实RH2证据也支持此点。但测试只取第一个查询结果，没有证明标签唯一或旧镜像仍可访问；gold的“新manifest”分支保留了追加后再全局删标签的顺序，存在把新镜像删掉的静态路径。建议先做一个窄的状态语义诊断，再决定是否将此题作为完整标签移动诊断。没有发现新测试强迫gold内部实现或新增隐藏接口。
 

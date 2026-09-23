@@ -6,7 +6,7 @@
 
 以下缩写均为本题路径，源码行号均指未经修改的 base 导出。
 
-- `R` = `.`。
+- `R` = `${REPO_ROOT}`。
 - `P` = `R/runs/swegym_quality_batch01_20260921_v2/public/python__mypy-12417`；`S` = `P/base`。
 - `D` = `R/runs/swegym_quality_batch01_20260921_v2/private/python__mypy-12417`。
 - `O` = `R/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-12417`。

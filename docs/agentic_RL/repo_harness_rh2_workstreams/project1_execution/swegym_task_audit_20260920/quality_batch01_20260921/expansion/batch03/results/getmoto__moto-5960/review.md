@@ -4,7 +4,7 @@
 
 独立性：本人initial SHA256=`0b4e64757dc4c348ef5e1f9a4f63672598335d8c126d89ab108731a612430afe`。root于2026-09-20T22:03:11.721133+00:00确认整包封存并明确放行后，才读取本题public_read.md、analysis_before_history.md、old_findings_delta.md、card.md、screening_record.json及history/refs.json指定唯一旧单题记录 `docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_moto_2/records/getmoto__moto-5960.json`。未追其mat、repo_level、stage1、216题材料或聚合。initial未回写；环境摘要已有gold/noop结果暴露，不能称结果盲审。纯静态文本/源码/已有日志/stdlib JSON/hash，没有项目import/执行、测试、安装、网络、Docker/SSH、模型或配额操作。
 
-路径：ROOT=.；P=ROOT/runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960；V为对应private；E=ROOT/runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960。原件SHA、源码及展开函数范围沿封存initial。
+路径：ROOT=${REPO_ROOT}；P=ROOT/runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960；V为对应private；E=ROOT/runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-5960。原件SHA、源码及展开函数范围沿封存initial。
 
 ## 八方面对照及决定性判断
 

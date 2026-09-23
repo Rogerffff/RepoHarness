@@ -6,7 +6,7 @@
 """
 import os, subprocess, sys
 
-ROOT = "runs/env_overnight_20260916/L7_fake_fix_kits"
+ROOT = "${REPO_ROOT}/runs/env_overnight_20260916/L7_fake_fix_kits"
 WT = os.path.join(ROOT, "wt")
 PATCHES = os.path.join(ROOT, "patches")
 

@@ -1,6 +1,6 @@
 # pandas-dev__pandas-50319：读历史前的私有独立初稿
 
-状态：`needs_review / static_review`；用途：`development_diagnostic`。本稿在读取本题旧单题记录前保存，封存后不回写。2026-09-21。权威根目录为 `.`；默认 worktree 未作证据源。
+状态：`needs_review / static_review`；用途：`development_diagnostic`。本稿在读取本题旧单题记录前保存，封存后不回写。2026-09-21。权威根目录为 `${REPO_ROOT}`；默认 worktree 未作证据源。
 
 **暂定判断：存在明确的公开允许结果与隐藏断言冲突，先保留语义争议；已有 reference_v1 环境对照支持原 bug 和 gold 生效，但不能据此准入正式模型开发。** 题面明说可返回 `None` 或有效格式，新增测试只接受 `%d.%m.%Y %H:%M:%S.%f`。优先未来实验是保持旧行为、仅在无法安全处理点分日期 token 时返回 `None` 的一般化替代路线，分别核公开复现与原评分；本轮未写或执行候选。
 

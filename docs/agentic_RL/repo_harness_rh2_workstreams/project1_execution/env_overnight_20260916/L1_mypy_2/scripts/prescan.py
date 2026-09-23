@@ -1,8 +1,8 @@
 import json,os,re
-PKG='docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_2'
-M='runs/env_overnight_20260916/L1_mypy_2/mat'
-L='runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
-SIG=json.load(open('docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/task_signals_swegym.json'))
+PKG='${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_2'
+M='${REPO_ROOT}/runs/env_overnight_20260916/L1_mypy_2/mat'
+L='${REPO_ROOT}/runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
+SIG=json.load(open('${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/task_signals_swegym.json'))
 ids=json.load(open(f'{PKG}/ASSIGNMENT.json'))['tasks']
 sig = {s['instance_id']:s for s in SIG} if isinstance(SIG,list) else SIG
 def paths(diff):
@@ -39,7 +39,7 @@ for tid in ids:
                  'p2p_notpass':{x:sm[x] for x in p2p if x in sm and sm[x]!='PASSED'},
                  'extra':[x for x in sm if x not in f2p and x not in p2p]}
     out[tid]=r
-json.dump(out,open('runs/env_overnight_20260916/L1_mypy_2/prescan.json','w'),ensure_ascii=False,indent=1)
+json.dump(out,open('${REPO_ROOT}/runs/env_overnight_20260916/L1_mypy_2/prescan.json','w'),ensure_ascii=False,indent=1)
 for tid in ids:
     r=out[tid]
     print(f"### {tid} v{r['version']} py{r['py']} base={r['base_commit'][:9]} eval={r['eval_cmd']!r}")

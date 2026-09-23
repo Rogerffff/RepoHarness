@@ -7,7 +7,7 @@
 注意：stage1 是**离线**环境，与 SWE-Gym 原始构数据集时的环境不同，
 所以差异本身就是「环境漂移把哪些用例挤出了名单」的证据。"""
 import json,os,collections
-ROOT='.'
+ROOT='${REPO_ROOT}'
 S=f'{ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/s2'
 L=f'{ROOT}/runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
 tb=json.load(open(f'{ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/tasks_by_repo.json'))

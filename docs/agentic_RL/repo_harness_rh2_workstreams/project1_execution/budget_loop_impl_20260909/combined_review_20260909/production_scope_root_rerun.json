@@ -1,0 +1,359 @@
+[
+  {
+    "case": "normal",
+    "returned_samples": 1,
+    "removed_sample_count": 0,
+    "returned_rewards": [
+      1.0
+    ],
+    "eval_calls": 1,
+    "rm_calls": 1,
+    "kill_calls": 0,
+    "fatal_notices": [],
+    "cleanup_failures": [],
+    "grading_container_records": 1,
+    "grading_containers_unremoved": 0,
+    "rollout_cleanup_completed": true,
+    "rollout_containers_removed": 1,
+    "outcome_termination": "completed",
+    "grading_report_outcome": "resolved",
+    "grading_failure_detail": null
+  },
+  {
+    "case": "stopped",
+    "returned_samples": 1,
+    "removed_sample_count": 0,
+    "returned_rewards": [
+      1.0
+    ],
+    "eval_calls": 1,
+    "rm_calls": 1,
+    "kill_calls": 0,
+    "fatal_notices": [],
+    "cleanup_failures": [
+      "container_rm_failed:rh2-grading-exec_F22-310fb56e:daemon failed to remove container",
+      "container_scope_stopped_but_not_removed:rh2-grading-exec_F22-310fb56e:stopped"
+    ],
+    "grading_container_records": 1,
+    "grading_containers_unremoved": 1,
+    "rollout_cleanup_completed": true,
+    "rollout_containers_removed": 1,
+    "outcome_termination": "completed",
+    "grading_report_outcome": "resolved",
+    "grading_failure_detail": null
+  },
+  {
+    "case": "absent",
+    "returned_samples": 1,
+    "removed_sample_count": 0,
+    "returned_rewards": [
+      1.0
+    ],
+    "eval_calls": 1,
+    "rm_calls": 1,
+    "kill_calls": 0,
+    "fatal_notices": [],
+    "cleanup_failures": [
+      "container_rm_failed:rh2-grading-exec_F22-3ecbf1d7:daemon failed to remove container",
+      "container_scope_stopped_but_not_removed:rh2-grading-exec_F22-3ecbf1d7:absent"
+    ],
+    "grading_container_records": 1,
+    "grading_containers_unremoved": 1,
+    "rollout_cleanup_completed": true,
+    "rollout_containers_removed": 1,
+    "outcome_termination": "completed",
+    "grading_report_outcome": "resolved",
+    "grading_failure_detail": null
+  },
+  {
+    "case": "second_rm_ok",
+    "returned_samples": 1,
+    "removed_sample_count": 0,
+    "returned_rewards": [
+      1.0
+    ],
+    "eval_calls": 1,
+    "rm_calls": 2,
+    "kill_calls": 1,
+    "fatal_notices": [],
+    "cleanup_failures": [
+      "container_rm_failed:rh2-grading-exec_F22-e2c57fb2:daemon failed to remove container"
+    ],
+    "grading_container_records": 1,
+    "grading_containers_unremoved": 0,
+    "rollout_cleanup_completed": true,
+    "rollout_containers_removed": 1,
+    "outcome_termination": "completed",
+    "grading_report_outcome": "resolved",
+    "grading_failure_detail": null
+  },
+  {
+    "case": "running",
+    "exception_type": "FatalExecutionInfrastructureError",
+    "reason_code": "grading_scope_termination_failed",
+    "exception_detail": "grading_scope_termination_failed: 评分容器 scope 无法确认终止：grading_scope_termination_failed: 评分容器 rh2-grading-exec_F22-3c47db95 在有界收口（rm -f → kill → rm -f）后状态仍为 running——scope 无法确认终止，按 06 A4 run-halt（继续接新任务只",
+    "eval_calls": 1,
+    "rm_calls": 2,
+    "kill_calls": 1,
+    "fatal_notices": [
+      "grading_scope_termination_failed"
+    ],
+    "cleanup_failures": [
+      "container_rm_failed:rh2-grading-exec_F22-3c47db95:daemon failed to remove container",
+      "container_rm_failed:rh2-grading-exec_F22-3c47db95:daemon failed to remove container",
+      "container_scope_termination_failed:rh2-grading-exec_F22-3c47db95:running"
+    ],
+    "grading_container_records": 1,
+    "grading_containers_unremoved": 1,
+    "rollout_cleanup_completed": true,
+    "rollout_containers_removed": 1,
+    "outcome_termination": null,
+    "grading_report_outcome": null,
+    "grading_failure_detail": null
+  },
+  {
+    "case": "unknown",
+    "exception_type": "FatalExecutionInfrastructureError",
+    "reason_code": "grading_scope_termination_failed",
+    "exception_detail": "grading_scope_termination_failed: 评分容器 scope 无法确认终止：grading_scope_termination_failed: 评分容器 rh2-grading-exec_F22-eb16fbf0 在有界收口（rm -f → kill → rm -f）后状态仍为 unknown——scope 无法确认终止，按 06 A4 run-halt（继续接新任务只",
+    "eval_calls": 1,
+    "rm_calls": 1,
+    "kill_calls": 0,
+    "fatal_notices": [
+      "grading_scope_termination_failed"
+    ],
+    "cleanup_failures": [
+      "container_rm_failed:rh2-grading-exec_F22-eb16fbf0:daemon failed to remove container",
+      "container_scope_termination_failed:rh2-grading-exec_F22-eb16fbf0:unknown"
+    ],
+    "grading_container_records": 1,
+    "grading_containers_unremoved": 1,
+    "rollout_cleanup_completed": true,
+    "rollout_containers_removed": 1,
+    "outcome_termination": null,
+    "grading_report_outcome": null,
+    "grading_failure_detail": null
+  },
+  {
+    "case": "unknown_socket",
+    "returned_samples": 1,
+    "removed_sample_count": 0,
+    "returned_rewards": [
+      1.0
+    ],
+    "eval_calls": 1,
+    "rm_calls": 1,
+    "kill_calls": 0,
+    "fatal_notices": [],
+    "cleanup_failures": [
+      "container_rm_failed:rh2-grading-exec_F22-ab051859:daemon failed to remove container",
+      "container_scope_stopped_but_not_removed:rh2-grading-exec_F22-ab051859:absent"
+    ],
+    "grading_container_records": 1,
+    "grading_containers_unremoved": 1,
+    "rollout_cleanup_completed": true,
+    "rollout_containers_removed": 1,
+    "outcome_termination": "completed",
+    "grading_report_outcome": "resolved",
+    "grading_failure_detail": null
+  },
+  {
+    "case": "rm_raises",
+    "exception_type": "FatalExecutionInfrastructureError",
+    "reason_code": "pre_finalize_failure_unclassified",
+    "exception_detail": "pre_finalize_failure_unclassified: 结构契约异常（stage=finalize，OSError: docker transport spawn failed during cleanup）——我方接线/事实矛盾不得洗成 ABORTED 让补采掩盖，run-halt。",
+    "eval_calls": 1,
+    "rm_calls": 1,
+    "kill_calls": 0,
+    "fatal_notices": [
+      "pre_finalize_failure_unclassified"
+    ],
+    "cleanup_failures": [],
+    "grading_container_records": 1,
+    "grading_containers_unremoved": 1,
+    "rollout_cleanup_completed": true,
+    "rollout_containers_removed": 1,
+    "outcome_termination": null,
+    "grading_report_outcome": null,
+    "grading_failure_detail": null
+  },
+  {
+    "case": "block_rm",
+    "cleanup_config_seconds": 1,
+    "observed_wait_seconds": 1.052,
+    "pending_after_cleanup_budget": true,
+    "grading_worker_active": 1,
+    "fatal_notices_before_release": 0,
+    "exception_type": "FatalExecutionInfrastructureError",
+    "reason_code": "grading_scope_termination_failed",
+    "exception_detail": "grading_scope_termination_failed: 评分容器 scope 无法确认终止：grading_scope_termination_failed: 评分容器 rh2-grading-exec_F22-b8d4ab2e 在有界收口（rm -f → kill → rm -f）后状态仍为 running——scope 无法确认终止，按 06 A4 run-halt（继续接新任务只",
+    "eval_calls": 1,
+    "rm_calls": 2,
+    "kill_calls": 1,
+    "fatal_notices": [
+      "grading_scope_termination_failed"
+    ],
+    "cleanup_failures": [
+      "container_rm_failed:rh2-grading-exec_F22-b8d4ab2e:daemon failed to remove container",
+      "container_rm_failed:rh2-grading-exec_F22-b8d4ab2e:daemon failed to remove container",
+      "container_scope_termination_failed:rh2-grading-exec_F22-b8d4ab2e:running"
+    ],
+    "grading_container_records": 1,
+    "grading_containers_unremoved": 1,
+    "rollout_cleanup_completed": true,
+    "rollout_containers_removed": 1,
+    "outcome_termination": null,
+    "grading_report_outcome": null,
+    "grading_failure_detail": null
+  },
+  {
+    "case": "block_inspect",
+    "cleanup_config_seconds": 1,
+    "observed_wait_seconds": 1.052,
+    "pending_after_cleanup_budget": true,
+    "grading_worker_active": 1,
+    "fatal_notices_before_release": 0,
+    "exception_type": "FatalExecutionInfrastructureError",
+    "reason_code": "grading_scope_termination_failed",
+    "exception_detail": "grading_scope_termination_failed: 评分容器 scope 无法确认终止：grading_scope_termination_failed: 评分容器 rh2-grading-exec_F22-a3714066 在有界收口（rm -f → kill → rm -f）后状态仍为 running——scope 无法确认终止，按 06 A4 run-halt（继续接新任务只",
+    "eval_calls": 1,
+    "rm_calls": 2,
+    "kill_calls": 1,
+    "fatal_notices": [
+      "grading_scope_termination_failed"
+    ],
+    "cleanup_failures": [
+      "container_rm_failed:rh2-grading-exec_F22-a3714066:daemon failed to remove container",
+      "container_rm_failed:rh2-grading-exec_F22-a3714066:daemon failed to remove container",
+      "container_scope_termination_failed:rh2-grading-exec_F22-a3714066:running"
+    ],
+    "grading_container_records": 1,
+    "grading_containers_unremoved": 1,
+    "rollout_cleanup_completed": true,
+    "rollout_containers_removed": 1,
+    "outcome_termination": null,
+    "grading_report_outcome": null,
+    "grading_failure_detail": null
+  },
+  {
+    "case": "block_kill",
+    "cleanup_config_seconds": 1,
+    "observed_wait_seconds": 1.05,
+    "pending_after_cleanup_budget": true,
+    "grading_worker_active": 1,
+    "fatal_notices_before_release": 0,
+    "exception_type": "FatalExecutionInfrastructureError",
+    "reason_code": "grading_scope_termination_failed",
+    "exception_detail": "grading_scope_termination_failed: 评分容器 scope 无法确认终止：grading_scope_termination_failed: 评分容器 rh2-grading-exec_F22-dfe254a7 在有界收口（rm -f → kill → rm -f）后状态仍为 running——scope 无法确认终止，按 06 A4 run-halt（继续接新任务只",
+    "eval_calls": 1,
+    "rm_calls": 2,
+    "kill_calls": 1,
+    "fatal_notices": [
+      "grading_scope_termination_failed"
+    ],
+    "cleanup_failures": [
+      "container_rm_failed:rh2-grading-exec_F22-dfe254a7:daemon failed to remove container",
+      "container_rm_failed:rh2-grading-exec_F22-dfe254a7:daemon failed to remove container",
+      "container_scope_termination_failed:rh2-grading-exec_F22-dfe254a7:running"
+    ],
+    "grading_container_records": 1,
+    "grading_containers_unremoved": 1,
+    "rollout_cleanup_completed": true,
+    "rollout_containers_removed": 1,
+    "outcome_termination": null,
+    "grading_report_outcome": null,
+    "grading_failure_detail": null
+  },
+  {
+    "case": "cancel_submitter",
+    "generate_cancelled": true,
+    "grader_active_after_generate_cancel": 1,
+    "queue_worker_alive_after_scope_failure": true,
+    "eval_calls": 1,
+    "rm_calls": 2,
+    "kill_calls": 1,
+    "fatal_notices": [],
+    "cleanup_failures": [
+      "container_rm_failed:rh2-grading-exec_F22-14316e4b:daemon failed to remove container",
+      "container_rm_failed:rh2-grading-exec_F22-14316e4b:daemon failed to remove container",
+      "container_scope_termination_failed:rh2-grading-exec_F22-14316e4b:running"
+    ],
+    "grading_container_records": 1,
+    "grading_containers_unremoved": 1,
+    "rollout_cleanup_completed": true,
+    "rollout_containers_removed": 1,
+    "outcome_termination": null,
+    "grading_report_outcome": null,
+    "grading_failure_detail": null
+  },
+  {
+    "case": "test_timeout_rm_ok",
+    "returned_samples": 1,
+    "removed_sample_count": 0,
+    "returned_rewards": [
+      "NaN"
+    ],
+    "eval_calls": 1,
+    "rm_calls": 1,
+    "kill_calls": 0,
+    "fatal_notices": [],
+    "cleanup_failures": [],
+    "grading_container_records": 1,
+    "grading_containers_unremoved": 0,
+    "rollout_cleanup_completed": true,
+    "rollout_containers_removed": 1,
+    "outcome_termination": "completed",
+    "grading_report_outcome": "failed_to_grade",
+    "grading_failure_detail": "grading_test_timeout_after_0s"
+  },
+  {
+    "case": "test_timeout_running",
+    "exception_type": "FatalExecutionInfrastructureError",
+    "reason_code": "grading_scope_termination_failed",
+    "exception_detail": "grading_scope_termination_failed: 评分容器 scope 无法确认终止：grading_scope_termination_failed: 评分容器 rh2-grading-exec_F22-02f310c2 在有界收口（rm -f → kill → rm -f）后状态仍为 running——scope 无法确认终止，按 06 A4 run-halt（继续接新任务只",
+    "eval_calls": 1,
+    "rm_calls": 2,
+    "kill_calls": 1,
+    "fatal_notices": [
+      "grading_scope_termination_failed"
+    ],
+    "cleanup_failures": [
+      "container_rm_failed:rh2-grading-exec_F22-02f310c2:daemon failed to remove container",
+      "container_rm_failed:rh2-grading-exec_F22-02f310c2:daemon failed to remove container",
+      "container_scope_termination_failed:rh2-grading-exec_F22-02f310c2:running"
+    ],
+    "grading_container_records": 1,
+    "grading_containers_unremoved": 1,
+    "rollout_cleanup_completed": true,
+    "rollout_containers_removed": 1,
+    "outcome_termination": null,
+    "grading_report_outcome": null,
+    "grading_failure_detail": null
+  },
+  {
+    "case": "cancel_worker",
+    "exception_type": "FatalExecutionInfrastructureError",
+    "reason_code": "grading_scope_termination_failed",
+    "exception_detail": "grading_scope_termination_failed: 评分容器 scope 无法确认终止：grading_scope_termination_failed: 评分容器 rh2-grading-exec_F22-53476c7b 在有界收口（rm -f → kill → rm -f）后状态仍为 running——scope 无法确认终止，按 06 A4 run-halt（继续接新任务只",
+    "queue_close_pending_after_grade_unwound": true,
+    "queue_worker_alive_after_close_cancel": true,
+    "eval_calls": 1,
+    "rm_calls": 2,
+    "kill_calls": 1,
+    "fatal_notices": [
+      "grading_scope_termination_failed"
+    ],
+    "cleanup_failures": [
+      "container_rm_failed:rh2-grading-exec_F22-53476c7b:daemon failed to remove container",
+      "container_rm_failed:rh2-grading-exec_F22-53476c7b:daemon failed to remove container",
+      "container_scope_termination_failed:rh2-grading-exec_F22-53476c7b:running"
+    ],
+    "grading_container_records": 1,
+    "grading_containers_unremoved": 1,
+    "rollout_cleanup_completed": true,
+    "rollout_containers_removed": 1,
+    "outcome_termination": null,
+    "grading_report_outcome": null,
+    "grading_failure_detail": null
+  }
+]

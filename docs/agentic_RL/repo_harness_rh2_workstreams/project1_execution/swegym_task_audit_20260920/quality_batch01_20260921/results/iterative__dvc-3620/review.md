@@ -2,7 +2,7 @@
 
 2026-09-21，三题统一开放后的第二阶段。初判 `reviewer_initial.md` SHA-256=`dd7fb9dc950bc1617873254f7f18ac4343a89babb315f3344250234f9cdb872a`，保持封存。本轮只静态阅读和核元数据，未执行项目、安装、Docker、SSH、模型或新 CPU 实验。
 
-路径：`R=.`；`P=R/runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620`；`Q=同材料根/private/iterative__dvc-3620`；`E=R/runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620`。源码行号相对 `P/base`。`GL=E/gold/eval_logs/evallog_replay-er19-dv1-iterativ_9b423984.eval.log`；`NL=E/noop/eval_logs/evallog_replay-er19-dv1-iterativ_cf25aa49.eval.log`。`O` 为本报告所在目录。
+路径：`R=${REPO_ROOT}`；`P=R/runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620`；`Q=同材料根/private/iterative__dvc-3620`；`E=R/runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620`。源码行号相对 `P/base`。`GL=E/gold/eval_logs/evallog_replay-er19-dv1-iterativ_9b423984.eval.log`；`NL=E/noop/eval_logs/evallog_replay-er19-dv1-iterativ_cf25aa49.eval.log`。`O` 为本报告所在目录。
 
 ## 有界结论
 

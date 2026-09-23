@@ -4,7 +4,7 @@
 
 ## 1. 独立性、封存及暴露
 
-权威 ROOT=`.`；P=`ROOT/runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174`，Q=同根 `private/python__mypy-10174`；源码位置相对 P/base。独立初判 SHA256=`7c3c3267b5688fa42a023c5f7b07bafb4766cf61649d3533ab78f4774236ef5d`。三题整包经协调者 `2026-09-20T21:51:03.612934Z` 正式封存放行之后，才读取本题 public_read、主审 analysis_before_history、old_findings_delta、card、screening_record 有关字段，以及 I3/history/python__mypy-10174/refs.json 唯一指向的旧单题记录 `docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_1/records/python__mypy-10174.json`。
+权威 ROOT=`${REPO_ROOT}`；P=`ROOT/runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174`，Q=同根 `private/python__mypy-10174`；源码位置相对 P/base。独立初判 SHA256=`7c3c3267b5688fa42a023c5f7b07bafb4766cf61649d3533ab78f4774236ef5d`。三题整包经协调者 `2026-09-20T21:51:03.612934Z` 正式封存放行之后，才读取本题 public_read、主审 analysis_before_history、old_findings_delta、card、screening_record 有关字段，以及 I3/history/python__mypy-10174/refs.json 唯一指向的旧单题记录 `docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_1/records/python__mypy-10174.json`。
 
 旧记录出现其它任务名字、全仓统计及 stage1/dupidx/kcheck/p2p_mechanism 路径，已形成文字暴露；没有打开那些文件、其它任务结果或聚合，没有把转述算成已核事实。独立阶段已见本题 environment_record 的 gold/noop 摘要并核精确原运行资料，不称为结果盲审。封存初判未回写。全程仅静态文本/JSON/哈希与归档成员读取，未导入/执行项目、测试、安装、网络、容器、模型或候选。
 

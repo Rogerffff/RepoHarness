@@ -1,7 +1,7 @@
 # iterative__dvc-5839：旧结论增量
 
 前稿 analysis_before_history.md 已于开放历史前保存，SHA256=fdd4f5bf681fd17ab7bdc8ee733e32d8dd61c712da89fc4c1d3eee3dfbe8f911。本文件不修改前稿。2026-09-21 收到协调者单题放行后，读取 history/iterative__dvc-5839/refs.json 及其唯一引用：
-docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_2/records/iterative__dvc-5839.json（下称 H）。
+${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_2/records/iterative__dvc-5839.json（下称 H）。
 
 证据路径缩写沿前稿。没有跟随 H 的跨题 prescan、3677、4124 或旧全批汇总，也未执行 CPU 对照。
 

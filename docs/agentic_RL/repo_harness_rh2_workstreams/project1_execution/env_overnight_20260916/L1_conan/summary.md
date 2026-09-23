@@ -1,7 +1,7 @@
 # L1_conan 逐题静态审查小结
 
 2026-09-16 夜 · **12/12 题全部完成**（216 题里 `conan-io/conan` 恰好 12 题，`tasks_by_repo.json`，本包即全量覆盖）。
-题级记录：`records/<instance_id>.json`；仓库级共性事实：`repo_level_findings.md`；脚本：`scripts/`；中间产物：`runs/env_overnight_20260916/L1_conan/`（`mat/`、`prescan2.json`、`envscan.json`、`collide.json`）。
+题级记录：`records/<instance_id>.json`；仓库级共性事实：`repo_level_findings.md`；脚本：`scripts/`；中间产物：`${REPO_ROOT}/runs/env_overnight_20260916/L1_conan/`（`mat/`、`prescan2.json`、`envscan.json`、`collide.json`）。
 
 共同基线（12 题一致）：stage1 gold = RESOLVED_FULL（F2P/P2P 无缺席、无非 PASSED），empty = RESOLVED_NO；`eval_cmd` 都是 `pytest -n0 -rA <单个测试文件>`；`test_patch` 都只碰 **一个** 测试文件，`golden_patch` 都不碰测试路径 → **12 题的 `additional_exclusions` 全部为空**（第四组 B）。版本跨 1.51/1.54/1.60/2.0/2.1，`python_version` 全 3.10。
 

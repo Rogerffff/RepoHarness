@@ -4,7 +4,7 @@
 
 ## 引用与暴露
 
-R=.。P=R/runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-9395；Q=对应private/iterative__dvc-9395；源码路径默认相对P/base。O为本文件目录。
+R=${REPO_ROOT}。P=R/runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-9395；Q=对应private/iterative__dvc-9395；源码路径默认相对P/base。O为本文件目录。
 T=R/runs/env_recipe_repair_20260919/dvc_tail_v1/tasks/iterative__dvc-9395；GL=T/gold/eval_logs/evallog_replay-er19-dvc_tail_v1-_66688534.eval.log；NL=T/noop/eval_logs/evallog_replay-er19-dvc_tail_v1-_d7bf896d.eval.log。两账本为T/{gold,noop}/ledger.jsonl:1。
 
 已读本题public_read、公私有bundle、test/gold patch、validation、source/run refs。environment_record只展开环境字段、观察与recipe引用，接触verified_environment_pair标签、DVC_pygit2问题标签；未展开/跟随其analysis/history。共用协议和字段定义沿已读版本。没有读9395旧报告、其它题原件/结论、manifest、主计划或method_adjustments。前题知识不作本题证据。

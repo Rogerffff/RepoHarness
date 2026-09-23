@@ -4,7 +4,7 @@
 
 独立性：本人initial SHA256=`68f3fd5b8cbc9e992cace54efab0fc2e89608dc68075e5b88d6f3c9e0b4601d3`，root于2026-09-20T22:03:11.721133+00:00确认整包封存并明确放行后，才读本题public_read.md、analysis_before_history.md、old_findings_delta.md、card.md、screening_record.json，以及本题history/refs.json指定唯一旧记录 `docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_moto_2/records/getmoto__moto-6185.json`。没有追旧记录内master、repo_level_findings、mat、被提及其它题或聚合。initial保持原字节。本轮仍纯静态，没有项目import/执行、测试、安装、网络、Docker/SSH、模型或配额操作。
 
-路径约定：ROOT=.；P=ROOT/runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185；V为对应private；E=ROOT/runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6185。原阅读范围及原件SHA详见封存initial；environment_record自带gold/noop结果摘要的暴露继续适用，不称结果盲审。
+路径约定：ROOT=${REPO_ROOT}；P=ROOT/runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185；V为对应private；E=ROOT/runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6185。原阅读范围及原件SHA详见封存initial；environment_record自带gold/noop结果摘要的暴露继续适用，不称结果盲审。
 
 ## 决定性主张逐项核对
 

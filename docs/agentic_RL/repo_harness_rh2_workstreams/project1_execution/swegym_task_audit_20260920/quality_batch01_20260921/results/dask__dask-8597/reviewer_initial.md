@@ -15,10 +15,10 @@
 
 路径缩写（以下行号均属于这些固定原件）：
 
-- PUB = runs/swegym_quality_batch01_20260921_v2/public/dask__dask-8597
+- PUB = ${REPO_ROOT}/runs/swegym_quality_batch01_20260921_v2/public/dask__dask-8597
 - BASE = PUB/base
-- PRV = runs/swegym_quality_batch01_20260921_v2/private/dask__dask-8597
-- RUN = runs/env_recipe_repair_20260919/compat_v1/tasks/dask__dask-8597
+- PRV = ${REPO_ROOT}/runs/swegym_quality_batch01_20260921_v2/private/dask__dask-8597
+- RUN = ${REPO_ROOT}/runs/env_recipe_repair_20260919/compat_v1/tasks/dask__dask-8597
 - GOLD_LOG = RUN/gold/eval_logs/evallog_replay-er19-cv1-dask__da_cb209d73.eval.log
 - NOOP_LOG = RUN/noop/eval_logs/evallog_replay-er19-cv1-dask__da_50713119.eval.log
 

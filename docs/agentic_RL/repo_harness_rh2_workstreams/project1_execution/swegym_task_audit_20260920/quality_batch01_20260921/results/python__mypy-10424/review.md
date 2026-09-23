@@ -2,26 +2,26 @@
 
 2026-09-21；reviewer `/root/review_mypy10424`。协调者确认并登记初判后明确开放第二阶段，才读取本题主审产物和指定历史原件。**同意主审保持 `needs_review / static_review`，用途限定 `development_diagnostic`；不沿用旧 `needs_repair`，不宣布 `ready_for_probe`。** 当前有具体评分覆盖疑点和 actor 条件缺口，没有已执行的错误候选反例、合理解误拒或 gold 回归证据。
 
-第一阶段 [reviewer_initial.md](reviewer_initial.md) 保持 SHA256 `f39224dfa856ec534e7267bb091c2a9830b709c22f902ed62c8508e36e4c4c7a`，未回写。主审历史前稿 `4982fdb617b3e2c4495c553bb373ad8fae0dfad809a16523520f673c2b086a37`、配方补记 `00c4d384547796fe587e997d1852e311d5ef68001e26883974a40cb22e6fd95d` 也与已登记散列一致。本轮只新写本文件；没有执行历史项目、mypy、pytest、安装、Docker、SSH 或模型。下文 CPU 命令全部是待执行方案。
+第一阶段 [reviewer_initial.md](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-10424/reviewer_initial.md) 保持 SHA256 `f39224dfa856ec534e7267bb091c2a9830b709c22f902ed62c8508e36e4c4c7a`，未回写。主审历史前稿 `4982fdb617b3e2c4495c553bb373ad8fae0dfad809a16523520f673c2b086a37`、配方补记 `00c4d384547796fe587e997d1852e311d5ef68001e26883974a40cb22e6fd95d` 也与已登记散列一致。本轮只新写本文件；没有执行历史项目、mypy、pytest、安装、Docker、SSH 或模型。下文 CPU 命令全部是待执行方案。
 
 ## 决定性主张复核
 
 | 主张 | 复核处理与原始依据 |
 | --- | --- |
-| 核心需求、F2P、gold 一致，题面可供正常开发 | 同意。题面 `is not M` 后早退，存活路径就是 `is M` 成立；checker.py:4232（仅本地运行证据：`runs/swegym_quality_batch01_20260921_v2/public/python__mypy-10424/base/mypy/checker.py`） 交换否定比较的两侧映射，公开类对象文档允许 `Type[C]` 表示子类。因此正向分支期望不需要从 gold 注释倒推。 |
-| 唯一 F2P 内有 5 条行为断言，不是单一分支或空运行 | 同意。完整 test.patch 对 `is`/`is not` 的四个分支和末尾汇合均要求 `Type[__main__.C]`。collector 独立切 case，默认 builtins/typing fixture，真实 build，整段输出比较的链条已在独立初判核完。noop 日志:500（仅本地运行证据：`runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10424/noop/eval_logs/evallog_replay-er19-iw1-python___bbc494ef.eval.log`） 显示两条 `<nothing>` 与三条原已正确的类型；gold 日志:497（仅本地运行证据：`runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10424/gold/eval_logs/evallog_replay-er19-iw1-python___6bca9f92.eval.log`） 为同一 case PASS。 |
+| 核心需求、F2P、gold 一致，题面可供正常开发 | 同意。题面 `is not M` 后早退，存活路径就是 `is M` 成立；[checker.py:4232](${REPO_ROOT}/runs/swegym_quality_batch01_20260921_v2/public/python__mypy-10424/base/mypy/checker.py:4232) 交换否定比较的两侧映射，公开类对象文档允许 `Type[C]` 表示子类。因此正向分支期望不需要从 gold 注释倒推。 |
+| 唯一 F2P 内有 5 条行为断言，不是单一分支或空运行 | 同意。完整 test.patch 对 `is`/`is not` 的四个分支和末尾汇合均要求 `Type[__main__.C]`。collector 独立切 case，默认 builtins/typing fixture，真实 build，整段输出比较的链条已在独立初判核完。[noop 日志:500](${REPO_ROOT}/runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10424/noop/eval_logs/evallog_replay-er19-iw1-python___bbc494ef.eval.log:500) 显示两条 `<nothing>` 与三条原已正确的类型；[gold 日志:497](${REPO_ROOT}/runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10424/gold/eval_logs/evallog_replay-er19-iw1-python___6bca9f92.eval.log:497) 为同一 case PASS。 |
 | 没有锁定 gold 的插入点或实现形状 | 同意至已查范围。类型输出格式来自公开 `reveal_type`；可在比较约束层限定类对象/元类的处理，或在共享 narrow 层修复。两者均应保留普通实例收窄。未运行非 gold 合理解，不能把此项理解成穷尽接受性证明。 |
-| gold 可交付，未发现明确回归 | 同意至原例及已读旧行为。gold 只增加 TypeType 与元类 Instance 的保守分支；meet.py:53（仅本地运行证据：`runs/swegym_quality_batch01_20260921_v2/public/python__mypy-10424/base/mypy/meet.py`） 的非重叠、Union、Any、TypeType–TypeType 等前置处理保留；`is_metaclass()` 已在 base。原始 gold 账本（仅本地运行证据：`runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10424/gold/ledger.jsonl`） 投影仅 `mypy/meet.py`，无忽略。完整原例、泛型/联合/特殊元类边界与更宽回归未新跑。 |
-| 普通类型比较没有参考保护，适合先做窄负对照 | 同意。F2P 五条全要求维持类型，不能约束 `Any → int` 和 `Union[int,str] → int` 必须继续发生；公开旧测试:2594（仅本地运行证据：`runs/swegym_quality_batch01_20260921_v2/public/python__mypy-10424/base/test-data/unit/check-isinstance.test`） 给出这两个确定的旧语义。主审和我均在读历史前独立提出关闭 `find_type_equals_check` 的候选。候选得分仍未知，不能直接写 RH2 假阳性已证实。 |
+| gold 可交付，未发现明确回归 | 同意至原例及已读旧行为。gold 只增加 TypeType 与元类 Instance 的保守分支；[meet.py:53](${REPO_ROOT}/runs/swegym_quality_batch01_20260921_v2/public/python__mypy-10424/base/mypy/meet.py:53) 的非重叠、Union、Any、TypeType–TypeType 等前置处理保留；`is_metaclass()` 已在 base。原始 [gold 账本](${REPO_ROOT}/runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10424/gold/ledger.jsonl:1) 投影仅 `mypy/meet.py`，无忽略。完整原例、泛型/联合/特殊元类边界与更宽回归未新跑。 |
+| 普通类型比较没有参考保护，适合先做窄负对照 | 同意。F2P 五条全要求维持类型，不能约束 `Any → int` 和 `Union[int,str] → int` 必须继续发生；[公开旧测试:2594](${REPO_ROOT}/runs/swegym_quality_batch01_20260921_v2/public/python__mypy-10424/base/test-data/unit/check-isinstance.test:2594) 给出这两个确定的旧语义。主审和我均在读历史前独立提出关闭 `find_type_equals_check` 的候选。候选得分仍未知，不能直接写 RH2 假阳性已证实。 |
 | 历史运行证明环境已修复 | 限定为指定派生 **grader** 的一次 noop/gold 对照。安装完成、目标断言实际执行、角色/资源/原始日志哈希可核；不证明正式 actor 消费派生镜像，也不证明所有内部模块均从源码导入、反复运行稳定或全仓测试通过。 |
-| 源码-only 修复不受官方测试恢复限制 | 同意。test.patch 仅新增数据驱动测试；gold 日志:231（仅本地运行证据：`runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10424/gold/eval_logs/evallog_replay-er19-iw1-python___6bca9f92.eval.log`） 只恢复对应 `.test` 文件。public_hints 的禁改测试指令不妨碍本题源码路线，但其“全部测试修改都永不计分”的解释仍不能当当前机制全貌。 |
+| 源码-only 修复不受官方测试恢复限制 | 同意。test.patch 仅新增数据驱动测试；[gold 日志:231](${REPO_ROOT}/runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10424/gold/eval_logs/evallog_replay-er19-iw1-python___6bca9f92.eval.log:231) 只恢复对应 `.test` 文件。public_hints 的禁改测试指令不妨碍本题源码路线，但其“全部测试修改都永不计分”的解释仍不能当当前机制全貌。 |
 | 文件同名足以定任务同族；无 `.git`/空旧 hints 足以定无泄漏 | 不同意这些历史推断，同意主审保留未知。未核其他题补丁/祖先关系，不以同模块制定拆分规则；静态导出不包含真实镜像全部文件、Git 状态和实际 CLI 消息。 |
 
-对应主审 [analysis_before_history.md](analysis_before_history.md)、[recipe_before_history.md](recipe_before_history.md)、[old_findings_delta.md](old_findings_delta.md)、[card.md](card.md)、[screening_record.json](screening_record.json) 的关键结论均有上述范围内的原件支持。
+对应主审 [analysis_before_history.md](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-10424/analysis_before_history.md)、[recipe_before_history.md](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-10424/recipe_before_history.md)、[old_findings_delta.md](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-10424/old_findings_delta.md)、[card.md](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-10424/card.md)、[screening_record.json](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-10424/screening_record.json) 的关键结论均有上述范围内的原件支持。
 
 ## 与历史记录的差异
 
-第二阶段只读取 history/refs.json（仅本地运行证据：`runs/swegym_quality_batch01_20260921_v2/history/python__mypy-10424/refs.json`） 指定的 [09-16 本题旧记录](../../../../env_overnight_20260916/L1_mypy_1/records/python__mypy-10424.json#L1)，未沿旧记录的 dupidx、kcheck 等线索扩读其他任务或 acceptance。
+第二阶段只读取 [history/refs.json](${REPO_ROOT}/runs/swegym_quality_batch01_20260921_v2/history/python__mypy-10424/refs.json) 指定的 [09-16 本题旧记录](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_1/records/python__mypy-10424.json:1)，未沿旧记录的 dupidx、kcheck 等线索扩读其他任务或 acceptance。
 
 - 旧记录 16、31 行把 `is M` if 期望称为“题面缺口”。这遗漏了原例早退后的逻辑条件；主审 `old_findings_delta` 对该归因的推翻正确。复杂元类的其他边界没有在题面穷尽，并不能反过来使这个直接等价分支成为隐藏需求。
 - 旧记录 33、44、54 行断言全局 `return declared` 可以满分，并据此要求修订。它提出了合理静态攻击假设，但记录内没有候选运行；不能把预期 `RESOLVED_FULL` 写成观测。当前具体缺口是已读普通收窄旧语义未被选中，不是简单 `P2P=0`。主审改用影响范围更明确的比较入口候选，并要求通过冻结 reward 且损坏旧断言才确认，处理正确。
@@ -43,7 +43,7 @@
 
 ## 配方与镜像适用范围
 
-历史对照的完整条件来自 image.json（仅本地运行证据：`runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10424/image.json`）、build.log（仅本地运行证据：`runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10424/build.log`） 及两份 ledger:1：
+历史对照的完整条件来自 [image.json](${REPO_ROOT}/runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10424/image.json:2)、[build.log](${REPO_ROOT}/runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10424/build.log:15) 及两份 ledger:1：
 
 | 字段 | 已核值与限制 |
 | --- | --- |
@@ -83,7 +83,7 @@ diff --git a/mypy/checker.py b/mypy/checker.py
          def is_type_call(expr: CallExpr) -> bool:
 ```
 
-**A. 三组标准 RH2 得分。** 下列 flags/候选输入形式来自已获准读取的 run_install_wave1.py:54（仅本地运行证据：`runs/env_recipe_repair_20260919/install_wave1/run_install_wave1.py`）；保留原 grader 的 `pytest -n0 -rA -k testNarrowingUsingMetaclass`，不把下面额外旧测试偷偷并进 reward。
+**A. 三组标准 RH2 得分。** 下列 flags/候选输入形式来自已获准读取的 [run_install_wave1.py:54](${REPO_ROOT}/runs/env_recipe_repair_20260919/install_wave1/run_install_wave1.py:54)；保留原 grader 的 `pytest -n0 -rA -k testNarrowingUsingMetaclass`，不把下面额外旧测试偷偷并进 reward。
 
 CPU 负责人须先把 `CPU_RH2_PYTHON`、`CPU_REPLAY_SCRIPT`、`CPU_PREPARED_SUMMARY` 设为**同一受信 CPU 部署**的实际绝对路径；`CPU_GOLD_DIR` 和 `CPU_MUTANT_DIR` 分别包含且仅用于本题的 `python__mypy-10424.gold.patch`（前者为原 gold，后者为上面的负对照，各自记录 SHA）；`CPU_OUTPUT` 是新输出目录。不能把本机材料路径当成远端路径，也不能假设这些变量或该 local image ID 当前已存在。这是显式部署前提，未检查当前 host。
 

@@ -2,7 +2,7 @@
 
 2026-09-21，主审 investigate_dask。独立前稿先封存：SHA256 `17565f2cd330aeac81970ee2634cfeb17551a6b8f4ea8d7545b1becea9f68a52`，22437 bytes，mtime_ns `1789926332853483906`。协调者登记后才开放本题历史。本文件不回改前稿，也不读取 reviewer 产物。
 
-路径均相对 `.`。历史入口是 `runs/swegym_quality_batch01_20260921_v2/history/dask__dask-8801/refs.json`，按其只读：
+路径均相对 `${REPO_ROOT}`。历史入口是 `runs/swegym_quality_batch01_20260921_v2/history/dask__dask-8801/refs.json`，按其只读：
 
 - **H1**：`docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dask/records/dask__dask-8801.json`。
 - **H2**：`docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/dask_pilot/records/dask__dask-8801.json`。

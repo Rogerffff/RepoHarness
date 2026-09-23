@@ -1,6 +1,6 @@
 import json,re
-M='runs/env_overnight_20260916/L1_conan/mat'
-ASG=json.load(open('docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/ASSIGNMENT.json'))
+M='${REPO_ROOT}/runs/env_overnight_20260916/L1_conan/mat'
+ASG=json.load(open('${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/ASSIGNMENT.json'))
 def norm(s): return re.sub(r'\s+','',s)
 rows=[]
 for tid in ASG['tasks']:

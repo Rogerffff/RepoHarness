@@ -2,7 +2,7 @@
 
 本稿先于本题历史门禁保存；仅静态阅读，没有运行项目、测试、容器、安装或联网。暂定 `needs_review / static_review`，用途限 `development_diagnostic`。有两项具体题意—验收冲突，不能因已有 gold=1/noop=0 将本题列为可直接探针候选。
 
-路径约定（均相对 `.`）：`PUB=runs/swegym_quality_batch02_20260921_v2/public/getmoto__moto-7584`，`PRI=同包/private/getmoto__moto-7584`；`RUN=runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-7584`；`S2=docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest`；`RH2=rh2/src/repoharness2`。`GLOG=RUN/gold/eval_logs/evallog_replay-er19-iw1-getmoto__7e7ff56f.eval.log`；`NLOG=RUN/noop/eval_logs/evallog_replay-er19-iw1-getmoto__befbc4a3.eval.log`。下文公开源码路径从 `PUB/base/` 起算。
+路径约定（均相对 `${REPO_ROOT}`）：`PUB=runs/swegym_quality_batch02_20260921_v2/public/getmoto__moto-7584`，`PRI=同包/private/getmoto__moto-7584`；`RUN=runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-7584`；`S2=docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest`；`RH2=rh2/src/repoharness2`。`GLOG=RUN/gold/eval_logs/evallog_replay-er19-iw1-getmoto__7e7ff56f.eval.log`；`NLOG=RUN/noop/eval_logs/evallog_replay-er19-iw1-getmoto__befbc4a3.eval.log`。下文公开源码路径从 `PUB/base/` 起算。
 
 ## 1. 版本、公开输入与初态
 

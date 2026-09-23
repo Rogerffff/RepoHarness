@@ -2,7 +2,7 @@
 
 本题 `analysis_before_history.md` 已在历史开放前封存，SHA-256 `ea4bfdd3fd600f50f502fecbbf05ea68d3b5d3f540ed9e6087626ef8b3a8519d`，保存时间 `2026-09-20T18:41:17.535840+00:00`，22779 bytes。本文件在协调者明确放行后新增，前稿保持原字节。
 
-历史入口为 `runs/swegym_quality_batch01_20260921_v2/history/python__mypy-12417/refs.json`，唯一展开记录为 `docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_2/records/python__mypy-12417.json`。该记录没有可重放的本题 CPU 候选/评分日志，`materials_refs.runtime_evidence` 明确为无。历史中未给唯一完整路径及版本的 `kscan.json`、未带对应版本的 manager 行号、其他题关系均未进一步读取；不搜索其他题或全池材料来补旧主张。
+历史入口为 `${REPO_ROOT}/runs/swegym_quality_batch01_20260921_v2/history/python__mypy-12417/refs.json`，唯一展开记录为 `docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_2/records/python__mypy-12417.json`。该记录没有可重放的本题 CPU 候选/评分日志，`materials_refs.runtime_evidence` 明确为无。历史中未给唯一完整路径及版本的 `kscan.json`、未带对应版本的 manager 行号、其他题关系均未进一步读取；不搜索其他题或全池材料来补旧主张。
 
 以下 R/P/S/D/E/G/N/O 缩写沿前稿证据索引。新读原件只补了 S/mypy/checkpattern.py:112–140,179–206 的模式调用关系，并再次核对 checkexpr.py:253–277、early_non_match:669–670；没有运行项目或构造补丁。
 

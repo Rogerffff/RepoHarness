@@ -1,0 +1,60 @@
+{
+  "review_date": "2026-09-10",
+  "base_head": "0313991c90533920a0dd5a61d769ade359d63d69",
+  "root_head": "f7521d94ee25a6f6720e7b7994a4a29ea052db70",
+  "fix_commit": "01b7f351",
+  "fork_head": "4c04f997b60fd08c36941d8715db06bfc0ed0543",
+  "commands": [
+    {
+      "cwd": "rh2",
+      "command": "RH2_MILES_PATH=\"$PWD/../reference/miles-rh2-integration\" uv run --no-sync pytest tests/grading/ tests/adapters/test_w3a_formal_grading_freeze.py tests/adapters/test_budget_deadline.py tests/adapters_miles/test_w4_drop_event_summary.py --ignore=tests/grading/test_manager_docker.py --ignore=tests/grading/test_w3b_grader_profile_docker.py -m 'not docker' -q",
+      "passed": 204,
+      "failed": 0,
+      "skipped": 0,
+      "elapsed_seconds": 26.52,
+      "exit_code": 0,
+      "output_tail": "..................................             [100%]\n204 passed in 26.52s\n"
+    },
+    {
+      "cwd": "rh2",
+      "command": "uv run --no-sync ruff check src tests",
+      "chunk_id": "67064a",
+      "wall_time_seconds": 0.000001458,
+      "exit_code": 0,
+      "original_token_count": 5,
+      "output": "All checks passed!\n"
+    },
+    {
+      "cwd": "<repo>",
+      "command": "bash rh2/scripts/miles_integration_lanes.sh --checks-only",
+      "chunk_id": "a4d54b",
+      "wall_time_seconds": 0.100412125,
+      "exit_code": 0,
+      "original_token_count": 162,
+      "output": "integration base 校验通过：HEAD^{tree}=79e8ef6554441449b19fce7a23bfc5f14c646691,工作树干净\nrh2 patch digest 校验通过：d58ef1bde23939f2148f3606334a8c73b02453e8b5883936227b00167bd2908f\n语义 patch digest 校验通过：16 个（表：rh2_patches_f2, rh2_patches_focus, rh2_patches_g1, rh2_patches_i13, rh2_patches_pin, rh2_patches_prerental, rh2_patches_shutdown, rh2_patches_spans, rh2_patches_spans_strict, rh2_patches_w10, rh2_patches_w4, rh2_patches_w5b）\nreference/miles pin 校验通过：f2b7c79298a53c53861514d099f7def73bd29f4a\nC5 前置校验全部通过（--checks-only：未跑 pytest 双 lane，不构成 lane 资格）\n"
+    }
+  ],
+  "root_probes": [
+    {
+      "script": "r2_probe.py",
+      "cases": 9,
+      "exit_code": 0,
+      "root_reran": true,
+      "scope": "真实 queue/manager + frozen delta + formal grader profile；Docker I/O 替身；两类失败各三种交付/清理条件，加三项对照"
+    },
+    {
+      "script": "cost_closure_probe.py",
+      "exit_code": 0,
+      "root_reran": true,
+      "scope": "原成本交换反例、根因集合去重与顺序、缺失/全未知、同 task 消费与丢弃对照"
+    }
+  ],
+  "not_exercised": [
+    "作者全量 2252 项测试",
+    "完整双 lane",
+    "真实 Docker / SWE 镜像",
+    "真实 Claude Code / 模型 API",
+    "GPU 训练与性能"
+  ],
+  "source_worktree_diff": []
+}

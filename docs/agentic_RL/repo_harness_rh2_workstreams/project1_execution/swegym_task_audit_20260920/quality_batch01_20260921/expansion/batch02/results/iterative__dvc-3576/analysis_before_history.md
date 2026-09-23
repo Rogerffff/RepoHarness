@@ -6,7 +6,7 @@
 
 ## 证据路径约定与身份
 
-权威根 `ROOT=.`。下文所有相对路径均相对此根：
+权威根 `ROOT=${REPO_ROOT}`。下文所有相对路径均相对此根：
 
 - `P=runs/swegym_quality_batch02_20260921_v2/public/iterative__dvc-3576`，`B=P/base`。
 - `V=runs/swegym_quality_batch02_20260921_v2/private/iterative__dvc-3576`。

@@ -1,0 +1,30 @@
+WARNING:root:deep_ep is not installed, some functionalities may be limited.
+WARNING:miles_plugins.megatron_bridge:miles bridge shim _install_bridge_pp_group_unwrap not applied: No module named 'megatron'
+WARNING:miles_plugins.megatron_bridge.nemotron_h:miles nemotron_h shim _build_bridge_subclass not applied: No module named 'megatron'
+Traceback (most recent call last):
+  File "${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/batch4_scoring_20260910/chainfix_review_20260919/training/group_transport_probe.py", line 103, in <module>
+    asyncio.run(main())
+  File "${USER_HOME}/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "${USER_HOME}/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "${USER_HOME}/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/batch4_scoring_20260910/chainfix_review_20260919/training/group_transport_probe.py", line 80, in main
+    out[f"r1_{variant}"] = await run_group(world, f"r1_{variant}", bad_log=old._pa_log(r1["pytest"]["stdout"], test_rc=2),
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/batch4_scoring_20260910/chainfix_review_20260919/training/group_transport_probe.py", line 28, in run_group
+    chain = _build_chain(world, HERE / "group_cases" / name, grading_kinds={})
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "${REPO_ROOT}/rh2/tests/adapters_miles/test_w1b_group_admission.py", line 134, in _build_chain
+    fx = prepare_synthetic(tmp_path)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "${REPO_ROOT}/rh2/tests/w1b_synthetic_tasks.py", line 109, in prepare_synthetic
+    manifest = prepare_tasks(controller, out_dir=prepared_dir, private_dir=private_dir)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "${REPO_ROOT}/rh2/src/repoharness2/envpack/prepared_tasks.py", line 244, in prepare_tasks
+    raise PreparedTasksError(f"{out_dir / name} 已存在——trusted-prep 是一次性产物，不覆盖旧产物（换目录重跑）")
+repoharness2.envpack.prepared_tasks.PreparedTasksError: ${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/batch4_scoring_20260910/chainfix_review_20260919/training/group_cases/r1_bad/prepared/prepared_manifest.json 已存在——trusted-prep 是一次性产物，不覆盖旧产物（换目录重跑）

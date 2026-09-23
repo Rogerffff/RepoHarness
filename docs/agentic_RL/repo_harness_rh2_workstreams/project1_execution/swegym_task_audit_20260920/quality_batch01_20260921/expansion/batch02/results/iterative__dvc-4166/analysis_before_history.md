@@ -6,7 +6,7 @@
 
 ## 0. 范围、来源与可复核身份
 
-本文路径缩写均相对于权威根 `ROOT=.`，不是当前 worktree：
+本文路径缩写均相对于权威根 `ROOT=${REPO_ROOT}`，不是当前 worktree：
 
 - `I=runs/swegym_quality_batch02_20260921_v2`；`P=I/public/iterative__dvc-4166`；`V=I/private/iterative__dvc-4166`；`B=P/base`。
 - `B1=docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921`；`O=B1/expansion/batch02/results/iterative__dvc-4166`。

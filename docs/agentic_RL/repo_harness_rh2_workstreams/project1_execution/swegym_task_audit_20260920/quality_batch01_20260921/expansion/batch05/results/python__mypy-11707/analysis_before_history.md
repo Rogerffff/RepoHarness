@@ -11,10 +11,10 @@
 
 本稿路径简称：
 
-- `P` = `runs/swegym_quality_batch05_20260921_v1/public/python__mypy-11707`。
+- `P` = `${REPO_ROOT}/runs/swegym_quality_batch05_20260921_v1/public/python__mypy-11707`。
 - `V` = 同材料根的 `private/python__mypy-11707`。
-- `E` = `runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11707`。
-- `A` = `runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz`。下文 `A!路径:行` 为归档内原成员；只以 `tarfile.extractfile` 读取，未解包、导入或运行。
+- `E` = `${REPO_ROOT}/runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11707`。
+- `A` = `${REPO_ROOT}/runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz`。下文 `A!路径:行` 为归档内原成员；只以 `tarfile.extractfile` 读取，未解包、导入或运行。
 - `GLOG` = `E/gold/eval_logs/evallog_replay-er19-iw1-python___bab5562a.eval.log`；`NLOG` = `E/noop/eval_logs/evallog_replay-er19-iw1-python___521f6047.eval.log`。
 
 `P/public_bundle.json:1`、`P/base_identity.json:3–15`、`V/grading.json:1` 与 host grading 原账本第 193 行一致指定 base `5d71f58b9dc5a89862253fef3d82356a7370bf8e`；导出声明 tree 为 `880d3d6572dfa456a5a96e752e1e0e49431da4ca`，1747 个跟踪 blob，无 gitlinks/LFS 指针/.git。未重新穷举复算所有 blob。base `mypy/version.py:8` 是 `0.920+dev`；报告者写 0.910/Python 3.10，不能把报告者输出视作本 base 的运行证据。

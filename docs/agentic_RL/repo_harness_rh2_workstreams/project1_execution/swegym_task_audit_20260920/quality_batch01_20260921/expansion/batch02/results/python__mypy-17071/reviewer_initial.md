@@ -2,7 +2,7 @@
 
 2026-09-21。`disposition.scope=static_review`，`state=needs_review`，`usage.intended_use=development_diagnostic`。公开 bug、源码缺口和 2 个 F2P 的因果关系清楚，建议为静态诊断候选；剩余关键条件是正式 actor 开发入口验证，未验证不标 `ready_for_probe`。
 
-根目录 `.`；下文 `P=runs/swegym_quality_batch02_20260921_v2/public/python__mypy-17071`，`Q=.../private/python__mypy-17071`，`W=runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-17071`。源码行号均相对 `P/base`。`G=W/gold/eval_logs/evallog_replay-er19-iw1-python___9334e4a9.eval.log`；`N=W/noop/eval_logs/evallog_replay-er19-iw1-python___2965a84e.eval.log`。
+根目录 `${REPO_ROOT}`；下文 `P=runs/swegym_quality_batch02_20260921_v2/public/python__mypy-17071`，`Q=.../private/python__mypy-17071`，`W=runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-17071`。源码行号均相对 `P/base`。`G=W/gold/eval_logs/evallog_replay-er19-iw1-python___9334e4a9.eval.log`；`N=W/noop/eval_logs/evallog_replay-er19-iw1-python___2965a84e.eval.log`。
 
 ## 公开需求与初态
 

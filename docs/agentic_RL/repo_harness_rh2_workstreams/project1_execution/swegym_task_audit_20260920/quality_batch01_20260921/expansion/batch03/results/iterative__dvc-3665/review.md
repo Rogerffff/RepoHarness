@@ -6,7 +6,7 @@
 
 复核保存时间：UTC 2026-09-20T21:40:54.057106+00:00；SGT 2026-09-21T05:40:54.057106+08:00。
 
-权威 ROOT=`.`。下文 P=`runs/swegym_quality_batch03_20260921_v1/public/本题`，V=同批 `private/本题`，R=`runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/本题`，E=`runs/env_recipe_repair_20260919/dvc_install_v1c`；均相对 ROOT，日志短后缀唯一对应本题 run_refs。
+权威 ROOT=`${REPO_ROOT}`。下文 P=`runs/swegym_quality_batch03_20260921_v1/public/本题`，V=同批 `private/本题`，R=`runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/本题`，E=`runs/env_recipe_repair_20260919/dvc_install_v1c`；均相对 ROOT，日志短后缀唯一对应本题 run_refs。
 
 本 reviewer 先独立完成整包三份初判。协调者于 UTC 2026-09-20T21:34:52.575948+00:00（SGT 2026-09-21 05:34:52.575948+08:00）核哈希封存并明确开放后，才读取三题 public_read、analysis_before_history、old_findings_delta、card、screening_record 和各题 history/refs 唯一指向的旧记录。未回写初判，未读旧聚合/相邻题。environment_record 在独立阶段已带历史结果摘要，故独立性是未接触主审和历史质量结论，不是无结果暴露盲审。
 

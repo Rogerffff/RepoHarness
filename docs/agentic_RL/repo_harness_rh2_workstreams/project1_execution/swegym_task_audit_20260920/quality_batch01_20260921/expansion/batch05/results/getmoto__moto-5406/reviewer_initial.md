@@ -1,7 +1,7 @@
 # getmoto__moto-5406 — 独立初判（交叉复核前封存）
 
 - 角色：fresh independent reviewer；本文件在读取主审、公开读者或旧质量结论之前形成。当前仅为 `static_review`，用途 `development_diagnostic`。
-- 唯一权威根目录 `ROOT=.`。`P=ROOT/runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406`；`V=ROOT/runs/swegym_quality_batch05_20260921_v1/private/getmoto__moto-5406`；以下源码行号指 `P/base/`。
+- 唯一权威根目录 `ROOT=${REPO_ROOT}`。`P=ROOT/runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406`；`V=ROOT/runs/swegym_quality_batch05_20260921_v1/private/getmoto__moto-5406`；以下源码行号指 `P/base/`。
 - 已读角色卡、记录模板、actor 环境卡、质量协议；先读 P 题面/提示/环境说明和相关源码，再读 V 的 test/gold/grading/validation、原始环境运行材料。未读 `public_read.md`、`analysis_before_history.md`、`old_findings_delta.md`、`card.md`、`screening_record.json`、own history refs、旧质量报告、根质量汇总/handoff 或其他任务材料。
 - 限定操作：文本检索/读取、stdlib JSON/hash/AST、指定 frozen archive 的 `tarfile.extractfile` 只读。仅在内存核对补丁上下文及测试 AST，没有运行、导入或安装项目，没有网络、Docker、SSH、GPU、模型实验或子代理。唯一写入是本文件。
 

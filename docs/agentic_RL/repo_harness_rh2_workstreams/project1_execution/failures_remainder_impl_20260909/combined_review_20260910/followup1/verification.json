@@ -1,0 +1,64 @@
+{
+  "review_date": "2026-09-10",
+  "base_head": "06dd7c06936a74b59bb96de861fb27e65760675c",
+  "root_head": "0313991c90533920a0dd5a61d769ade359d63d69",
+  "fix_commit": "dc7a613b",
+  "fork_head": "4c04f997b60fd08c36941d8715db06bfc0ed0543",
+  "commands": [
+    {
+      "cwd": "rh2",
+      "command": "RH2_MILES_PATH=<repo>/reference/miles-rh2-integration uv run --no-sync pytest tests/grading/ tests/adapters/test_budget_deadline.py tests/adapters/test_w3a_formal_grading_freeze.py tests/adapters/test_w5a_shutdown_chain.py tests/adapters/test_attempt_cost_snapshot.py tests/adapters_miles/test_w5a_miles_dispose_chain.py tests/adapters_miles/test_w4_drop_event_summary.py tests/adapters_miles/test_faithful_dis_loss.py tests/adapters_miles/test_w9_cp_faithful_dis.py --ignore=tests/grading/test_manager_docker.py --ignore=tests/grading/test_w3b_grader_profile_docker.py -m \"not docker\" -q",
+      "passed": 316,
+      "skipped": 0,
+      "failed": 0,
+      "warnings": 14,
+      "elapsed_seconds": 38.82,
+      "exit_code": 0
+    },
+    {
+      "cwd": "rh2",
+      "command": "uv run --no-sync ruff check src tests",
+      "result": "All checks passed!",
+      "exit_code": 0
+    },
+    {
+      "cwd": "<repo>",
+      "command": "bash rh2/scripts/miles_integration_lanes.sh --checks-only",
+      "exit_code": 0,
+      "scope": "前置校验，不是完整双 lane 执行"
+    }
+  ],
+  "collection_issue": {
+    "initial_command": "上述 pytest 命令未带两个 --ignore 参数",
+    "exit_code": 2,
+    "errors": 2,
+    "cause": "两个 Docker 测试文件在收集期用 from conftest import requires_docker，解析到了 adapters_miles 的同名模块；-m 筛选晚于收集。改为忽略这两个本来不计划执行的 Docker 文件后，316 项通过。未修改测试源码。"
+  },
+  "root_probes": {
+    "n2_followup_probe.py": {
+      "cases": 16,
+      "exit_code": 0,
+      "note": "含一条确认原 R2 余项的反例；不是 16 项修复全部通过"
+    },
+    "n3_followup_probe.py": {
+      "cases": 7,
+      "exit_code": 0,
+      "owner_loop_bound": true
+    },
+    "observation_probe.py": {
+      "source": "上一级原探针，未修改",
+      "exit_code": 0,
+      "scalar_item_calls": 0
+    },
+    "cost_diagnostic_probe.py": {
+      "exit_code": 0,
+      "same_summary_when_collateral_costs_swap": true
+    }
+  },
+  "not_exercised": [
+    "真实 Docker daemon 与 SWE 镜像",
+    "真实 Claude Code / 模型 API",
+    "GPU 训练或性能"
+  ],
+  "source_worktree_diff": []
+}

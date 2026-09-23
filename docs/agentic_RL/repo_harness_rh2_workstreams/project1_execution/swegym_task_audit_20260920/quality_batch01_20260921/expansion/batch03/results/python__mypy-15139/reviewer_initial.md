@@ -1,7 +1,7 @@
 # python__mypy-15139：独立初判
 
 - 状态：`needs_review`；范围：`static_review`；用途：`development_diagnostic`。本稿在主审、公开审查和旧质量结论暴露前保存，不表示正式训练/评测准入。
-- 权威 ROOT：`.`。下文 P=`runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15139`，Q 为同根 `private/python__mypy-15139`，R=`runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15139`，A=`runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz`；相对路径均相对 ROOT。
+- 权威 ROOT：`${REPO_ROOT}`。下文 P=`runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15139`，Q 为同根 `private/python__mypy-15139`，R=`runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15139`，A=`runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz`；相对路径均相对 ROOT。
 - 暴露：已读四份共用方法、P 的全部顶层原件、Q 的全部顶层原件（含 gold/test/环境 gold-noop 摘要，以及 environment_record 内 history 的路径/批次元数据；未追该 analysis）、本题 inventory exact entry 与 common/install_wave1、这些原件精确指向的本题运行原件。不是无结果盲审。未读任何 `public_read.md`、`analysis_before_history.md`、`old_findings_delta.md`、`card.md`、`screening_record.json`、history 调查正文、其它题结论或批次聚合。仅静态文本/JSON/hash；未 import 项目、执行测试、解包归档、安装、联网或启动容器。
 
 ## 判断与优先下一步

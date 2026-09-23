@@ -2,8 +2,8 @@
 """从 s2 四面材料抽出 gold / test_patch，并打印题级事实。只读，不改任何上游文件。"""
 import json, os, sys
 
-ING = "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest"
-OUT = "runs/env_overnight_20260916/L7_fake_fix_kits/patches"
+ING = "${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest"
+OUT = "${REPO_ROOT}/runs/env_overnight_20260916/L7_fake_fix_kits/patches"
 
 def load(fn, ids):
     got = {}

@@ -1,0 +1,101 @@
+{
+  "date": "2026-09-09",
+  "reviewed_head": "d4af9d9a449555580e27126425391de2cf87fbf5",
+  "base_commit": "6b33efee38d2b0d785983e44136dccbdd9c49a60",
+  "source_and_maintenance_files_verified": 15,
+  "changed_files_during_review": [],
+  "tracked_source_and_test_diff": "",
+  "root_verification": {
+    "focused_maintenance_tests": {
+      "passed": 255,
+      "seconds": 16.31,
+      "exit_code": 0
+    },
+    "ruff_changed_python_files": {
+      "files": 15,
+      "exit_code": 0
+    },
+    "old_stop_evidence_cases": {
+      "cases": 7,
+      "exit_code": 0
+    },
+    "old_stop_cases": {
+      "cases": 8,
+      "exit_code": 0,
+      "late_confirmation_case": "当前 HEAD 仍 KEEP；owner 已选 A，待落实 DROP"
+    },
+    "production_fatal_probe": {
+      "cases": 15,
+      "exit_code": 0,
+      "confirmed_counterexamples": 2
+    },
+    "falsifier_probe": {
+      "stop_cases": 2,
+      "formal_lineage_cases": 3,
+      "real_git_producer_executed": true,
+      "jsonl_records": 7,
+      "exit_code": 0
+    },
+    "real_docker_profile_probe": {
+      "cases": 2,
+      "exit_code": 0,
+      "all_residual_zero": true
+    }
+  },
+  "docker_cleanup_final_check": {
+    "containers": {
+      "exit_code": 0,
+      "remaining": []
+    },
+    "networks": {
+      "exit_code": 0,
+      "remaining": []
+    }
+  },
+  "owner_decision": {
+    "option": "A",
+    "status": "已确认，待代码落实",
+    "rule": "只认控制端期限前收到的可信停止确认；kill 回包不得推断 KEEP；确认后的指纹与清理跨墙不改变处置"
+  },
+  "review_status": {
+    "r3_previous_two_defects": "closed",
+    "z1": "closed_with_local_docker_evidence",
+    "new_materialize_fatal_seam": "P1_open",
+    "missing_base_producer": "P2_backlog_nonblocking"
+  },
+  "limits": [
+    "没有重跑作者全量 2187 项",
+    "没有目标 SWE 镜像／真实 CC／模型 API／GPU 验收",
+    "CPU 故障时序使用外部 IO 替身，不声称真实生产发生频率"
+  ],
+  "local_document_links_checked": true,
+  "artifact_sha256": {
+    "README.md": "dcffdcbfd65d0552def07c8a5ce89040b7f6674af97d5e1b3366acb871d0ad68",
+    "docker_cleanup_verification.json": "ef77c80f79af0b51d3c53988fc56ccb12263f28206e3ce7fb6f7a30c6f981a4e",
+    "falsifier.md": "1ede5457b5c2a2bee32339983d43e461e0e8cf9022930b7548a247be211bee49",
+    "falsifier_probe.jsonl": "406389bd191657167236e54f072e352ce0470e891e034c98352c3b32d8cf6ff9",
+    "falsifier_probe.py": "b741041c44eaa2154d98b2ea760651126025ef0672d5c9aa15ad8e0ffdca2148",
+    "falsifier_probe_root.jsonl": "24d4988400a65b4117ec16cd6983b503f6484ac0b0696b3f1b7fc4503cac6101",
+    "falsifier_probe_root_stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "focused_tests.txt": "71e08e17e20041b9a3c9f4d151e3fd40f1c701e9dcd51e64eff3b8c2df9c49b0",
+    "init_profile_docker_probe.py": "639ef0f8a61b282399a4ffcd230d25353b790202911c5770d99cd98c0f2c2c92",
+    "init_profile_docker_result.json": "8c4a14be6202d6c13d4da8229e1ab8dc2fb56e7a6aff1d973a02b54f93a38d76",
+    "init_profile_docker_stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "init_profile_docker_stdout.txt": "8c4a14be6202d6c13d4da8229e1ab8dc2fb56e7a6aff1d973a02b54f93a38d76",
+    "production_probe.py": "ca53b614900524c7db455eeeb6a63db8f29de0f31abd9c3c5b0460fa53b5ddfe",
+    "production_probe_result.json": "be955fde233989160509a01ae3196125f33ff1c4be817409df4d9fc7f77350ff",
+    "production_probe_root.jsonl": "83e507cdae873de9639529fb387f6c88d19a72513ed6e1791bc52d6f00a77284",
+    "production_probe_root_stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "production_tracer.md": "32a93d2ef555195eff708626171cdf82a3e3d82acc5b281e5fdb91fc6f6dff9f",
+    "review_snapshot.json": "8550d17e3e1dbfedc6e887dbcadc2518a6cb70df6d79b242b1b650a1d1c995be",
+    "ruff.txt": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+    "stop_cases_replay.diff": "81eb561e09ec5be064ef3c324036ec234fcd003b0ececb76718e2f0b568bebd2",
+    "stop_cases_replay.jsonl": "34fe27b8fb34cf64a77a9ac9d167a521182883b046c8784d0c29f261ed5de489",
+    "stop_cases_replay.py": "ccdee9bae2cb6647018b0e83ac5b4f83a4fa61c7da48cc9ba91d7d1d84166fe8",
+    "stop_cases_stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stop_evidence_replay.diff": "f3b2367d8ea8ee70f709d1ab0b3f5713c5beeb466748d77808ac1f8edb8a75bd",
+    "stop_evidence_replay.jsonl": "218f2a55fa6013d46d8ffde544937012133590e6d21ebd98e9d87e261c7b8b24",
+    "stop_evidence_replay.py": "0b24fbc229dcd3956558b5c6c9f8bd8a6d6f6069ae3d173204aa3c4a448ab695",
+    "stop_evidence_stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

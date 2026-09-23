@@ -1,7 +1,7 @@
 import json,os,re,unicodedata
-M='runs/env_overnight_20260916/L1_pydantic/mat'
-L='runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
-ASG=json.load(open('docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_pydantic/ASSIGNMENT.json'))
+M='${REPO_ROOT}/runs/env_overnight_20260916/L1_pydantic/mat'
+L='${REPO_ROOT}/runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
+ASG=json.load(open('${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_pydantic/ASSIGNMENT.json'))
 SIG=json.load(open(f'{M}/signals.json'))
 def paths(diff):
     return sorted(set(re.findall(r'^diff --git a/(\S+) b/\S+', diff or '', re.M)))
@@ -35,7 +35,7 @@ for tid in ASG['tasks']:
                  'f2p_notpass':{x:sm[x] for x in f2p if x in sm and sm[x]!='PASSED'},
                  'p2p_notpass':{x:sm[x] for x in p2p if x in sm and sm[x]!='PASSED'}}
     out[tid]=r
-json.dump(out,open('runs/env_overnight_20260916/L1_pydantic/prescan.json','w'),ensure_ascii=False,indent=1)
+json.dump(out,open('${REPO_ROOT}/runs/env_overnight_20260916/L1_pydantic/prescan.json','w'),ensure_ascii=False,indent=1)
 for tid,r in out.items():
     s=r['sig']
     print(f"### {tid} v={r['version']} py={r['py']} ps={r['ps_chars']}c f2p={len(r['f2p'])} p2p={r['n_p2p']} in_e2={s['in_e2']} frag={s['fragile_reference_id']} ds={s['deepseek_candidate_oracle']}")

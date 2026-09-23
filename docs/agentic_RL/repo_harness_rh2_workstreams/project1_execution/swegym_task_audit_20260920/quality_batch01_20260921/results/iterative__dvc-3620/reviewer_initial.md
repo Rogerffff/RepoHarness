@@ -2,7 +2,7 @@
 
 2026-09-21。独立 reviewer；按 5839 → 9395 → 3620 顺序审查，前两题 initial 已封存。仅静态原件阅读与文件元数据校验，没有执行项目、安装、Docker、SSH 或模型；本文所有新增 CPU 方案均未执行。保存后不修改，三份 initial 全部完成前没有阅读其他角色结论。
 
-路径约定：`R=.`；`P=R/runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620`；`Q=同材料根/private/iterative__dvc-3620`；源码行号相对 P/base；`E=R/runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620`。
+路径约定：`R=${REPO_ROOT}`；`P=R/runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-3620`；`Q=同材料根/private/iterative__dvc-3620`；源码行号相对 P/base；`E=R/runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620`。
 
 ## 初判与用途
 

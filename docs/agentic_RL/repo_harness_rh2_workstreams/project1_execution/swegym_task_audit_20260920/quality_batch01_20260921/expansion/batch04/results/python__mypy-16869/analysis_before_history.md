@@ -1,6 +1,6 @@
 # python__mypy-16869：history 解封前静态调查
 
-2026-09-21；B4 fresh 私有主审。权威根为 `.`。本稿保存后封存，不回写。暂定 `needs_review / static_review`，用途限 `development_diagnostic`；不构成 actor 就绪、训练准入或所有合理解均可接受的证明。
+2026-09-21；B4 fresh 私有主审。权威根为 `${REPO_ROOT}`。本稿保存后封存，不回写。暂定 `needs_review / static_review`，用途限 `development_diagnostic`；不构成 actor 就绪、训练准入或所有合理解均可接受的证明。
 
 ## 范围、身份和证据层次
 

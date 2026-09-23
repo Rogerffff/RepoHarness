@@ -6,7 +6,7 @@
 
 ## 引用范围与决定性复核
 
-下列相对路径均以 `.` 为根。U=`runs/swegym_quality_batch02_20260921_v2/public/python__mypy-10308`，P 为同层 private 本题目录；M=`runs/env_recipe_repair_20260919/materials_v2`；G/N=`M/runs/python__mypy-10308-{gold,noop}`。主审文件均为本目录文件，本文只补写 review。
+下列相对路径均以 `${REPO_ROOT}` 为根。U=`runs/swegym_quality_batch02_20260921_v2/public/python__mypy-10308`，P 为同层 private 本题目录；M=`runs/env_recipe_repair_20260919/materials_v2`；G/N=`M/runs/python__mypy-10308-{gold,noop}`。主审文件均为本目录文件，本文只补写 review。
 
 | 主张 | 独立复核与影响 |
 | --- | --- |

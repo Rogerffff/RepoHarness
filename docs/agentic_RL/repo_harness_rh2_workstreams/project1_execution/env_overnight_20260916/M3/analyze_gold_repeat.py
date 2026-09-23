@@ -8,7 +8,7 @@ SKIPPED / XFAIL / XPASS 行是否在两次之间波动。
 import json, os, re
 from collections import Counter
 
-ROOT = "."
+ROOT = "${REPO_ROOT}"
 LEDGER = os.path.join(ROOT, "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl")
 LOGS = os.path.join(ROOT, "runs/env_overnight_20260916/M3/gold_ledger/logs_r2e")
 PKG = os.path.join(ROOT, "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M3")

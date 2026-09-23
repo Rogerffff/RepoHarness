@@ -1,7 +1,7 @@
 import json,os,collections
-L='runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
-M='runs/env_overnight_20260916/L1_dvc_2/mat'
-B='docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916'
+L='${REPO_ROOT}/runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
+M='${REPO_ROOT}/runs/env_overnight_20260916/L1_dvc_2/mat'
+B='${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916'
 ASG=json.load(open(f'{B}/L1_dvc_2/ASSIGNMENT.json'))
 out={}
 for tid in ASG['tasks']:
@@ -20,7 +20,7 @@ for tid in ASG['tasks']:
                  'ungraded_notpass':{k:v for k,v in ungraded.items() if v!='PASSED'},
                  'ungraded_pass_n':len([k for k,v in ungraded.items() if v=='PASSED'])}
     out[tid]=r
-json.dump(out,open('runs/env_overnight_20260916/L1_dvc_2/smstat.json','w'),ensure_ascii=False,indent=1)
+json.dump(out,open('${REPO_ROOT}/runs/env_overnight_20260916/L1_dvc_2/smstat.json','w'),ensure_ascii=False,indent=1)
 for tid,r in out.items():
     print('###',tid)
     for kind in ('gold','empty'):

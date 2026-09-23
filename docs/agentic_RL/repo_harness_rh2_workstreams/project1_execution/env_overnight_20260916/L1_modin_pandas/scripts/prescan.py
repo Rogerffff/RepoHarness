@@ -1,9 +1,9 @@
 # 改编自 L1_moto_1/scripts/prescan.py：加入 pandas/modin 特有信号（skip 统计、引擎、编译扩展）
 import json,os,re
 PKG='L1_modin_pandas'
-M=f'runs/env_overnight_20260916/{PKG}/mat'
-L='runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
-ASG=json.load(open(f'docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/{PKG}/ASSIGNMENT.json'))
+M=f'${REPO_ROOT}/runs/env_overnight_20260916/{PKG}/mat'
+L='${REPO_ROOT}/runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
+ASG=json.load(open(f'${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/{PKG}/ASSIGNMENT.json'))
 def paths(diff):
     return sorted(set(re.findall(r'^diff --git a/(\S+) b/\S+', diff or '', re.M)))
 def is_test(p):
@@ -39,7 +39,7 @@ for tid in ASG['tasks']:
                  'skipped_in_p2p':[x for x in p2p if sm.get(x)=='SKIPPED'],
                  'skipped_total':sum(1 for v in sm.values() if v=='SKIPPED')}
     out[tid]=r
-json.dump(out,open(f'runs/env_overnight_20260916/{PKG}/prescan.json','w'),ensure_ascii=False,indent=1)
+json.dump(out,open(f'${REPO_ROOT}/runs/env_overnight_20260916/{PKG}/prescan.json','w'),ensure_ascii=False,indent=1)
 for tid,r in out.items():
     print(f"### {tid} [{r['repo']} v{r['version']} py{r['py']}] F2P={r['n_f2p']} P2P={r['n_p2p']}")
     print(f"    tp={r['test_patch_paths']}")

@@ -9,7 +9,7 @@
 - 创建基线：`miles-migration@2a533b1f9b8e7cc8a9aca1a90b8ea1b32afb31f8`。
 - 初次来源记录提交：`4e9ab870706fc45d835843481491833741377176`。
 - 用户加入PDF的提交：`ed425b2eaaac02911e8d8b20b1610caea710c421`，作为本轮写入基线。
-- 仓库原始PDF（原文缓存未发布：`docs/harness_improve/external_paper_references/pdfs/frognano_technical_report.pdf`），本轮不修改原文件。
+- [仓库原始PDF](../pdfs/frognano_technical_report.pdf)，本轮不修改原文件。
 - 只维护本篇、作者检查及此获取记录；不合并到miles-migration，不修改共享README/catalog的完成数量、训练代码或实验定案。
 
 ## 2. 来源身份与本次实际校验

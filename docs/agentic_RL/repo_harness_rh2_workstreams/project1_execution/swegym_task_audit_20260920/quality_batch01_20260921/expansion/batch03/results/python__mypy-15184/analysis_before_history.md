@@ -4,7 +4,7 @@
 
 ## 身份与实际暴露
 
-ROOT=`.`，P=`runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184`，Q=同根 `private/python__mypy-15184`。源码位置以下相对P/base。先读本题已封存public_read.md，再读public_bundle/base_identity及Q的grading/test/gold/validation/run_refs/source_refs/environment_record。精确base=`13f35ad0915e70c2c299e2eb308968c86117132d`，tree=`a4e70a35d21d198daf4151d6b2aba79c41fc034d`；gold SHA256=`365adadcf2ad3dbed4dc98bf30ebda81f9c788a8ced939ff2a2abd8bfef1a280`。沿用父协调者材料和清单验收，未重做blob遍历。
+ROOT=`${REPO_ROOT}`，P=`runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184`，Q=同根 `private/python__mypy-15184`。源码位置以下相对P/base。先读本题已封存public_read.md，再读public_bundle/base_identity及Q的grading/test/gold/validation/run_refs/source_refs/environment_record。精确base=`13f35ad0915e70c2c299e2eb308968c86117132d`，tree=`a4e70a35d21d198daf4151d6b2aba79c41fc034d`；gold SHA256=`365adadcf2ad3dbed4dc98bf30ebda81f9c788a8ced939ff2a2abd8bfef1a280`。沿用父协调者材料和清单验收，未重做blob遍历。
 
 本题environment_record的 `verified_environment_pair`、noop=0/gold=1摘要已看见并披露；随后核精确原ledger/log/diagnostics和image.json。本稿不能自称未见运行结果。未打开本题history/refs或旧报告、reviewer/其他题结果/批聚合；同仓公共版本知识仅作导航，本题结论由本题源码与原件支持。前题历史曾提及本题“同messages.py热点/近base”，这条交叉信息已暴露但未用作质量/关系证据；未见本题旧实质结论。没有执行项目、导入项目模块、测试、安装、下载、网络、Docker/SSH或模型。
 

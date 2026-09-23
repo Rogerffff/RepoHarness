@@ -6,7 +6,7 @@
 
 ## 路径、身份及暴露
 
-- 权威根 `R=.`。
+- 权威根 `R=${REPO_ROOT}`。
 - `P=R/runs/swegym_quality_batch01_20260921_v2/public/pydantic__pydantic-8511`；`D=R/runs/swegym_quality_batch01_20260921_v2/private/pydantic__pydantic-8511`。
 - `L=R/runs/env_recipe_repair_20260919/pydantic_v1/tasks/pydantic__pydantic-8511`。
 - 已读共用 reviewer 卡、quality_review_protocol_20260920.md、actor_environment_card.md、record_template.md；另读 verification-before-completion 技能，仅用于文件封存核验。

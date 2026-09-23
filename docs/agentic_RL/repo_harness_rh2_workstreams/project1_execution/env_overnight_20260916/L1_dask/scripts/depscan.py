@@ -1,7 +1,7 @@
 import json,os,re,subprocess,sys,collections
-R='runs/env_overnight_20260916/repos/dask'
-M='runs/env_overnight_20260916/L1_dask/mat'
-ASG=json.load(open('docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dask/ASSIGNMENT.json'))
+R='${REPO_ROOT}/runs/env_overnight_20260916/repos/dask'
+M='${REPO_ROOT}/runs/env_overnight_20260916/L1_dask/mat'
+ASG=json.load(open('${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dask/ASSIGNMENT.json'))
 def show(c,p):
     r=subprocess.run(['git','-C',R,'show',f'{c}:{p}'],capture_output=True,text=True)
     return r.stdout if r.returncode==0 else None

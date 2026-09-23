@@ -206,4 +206,4 @@
 
 本轮无需把 §6 六项全部重新交用户批准：现有权限和参考规则直接沿用；正式评测划分、稳定性阈值、抽查比例留待试点证据；确遇未批语义或权限变化时再提出具体方案。
 
-代码证据：账本行身份与候选信息（对应生产源码未随本批发布：`rh2/src/repoharness2/adapters/slime/replay_grade.py`）、sidecar 提取（对应生产源码未随本批发布：`rh2/src/repoharness2/adapters/slime/replay_grade.py`）、[当前 diagnostics 字段](../../../../rh2/src/repoharness2/grading/manager.py#L1291)。本轮未重新精读外部原文，未将汇总中的实践升格为本项目必须采用的规则。
+代码证据：[账本行身份与候选信息](../../../../rh2/src/repoharness2/adapters/slime/replay_grade.py#L434)、[sidecar 提取](../../../../rh2/src/repoharness2/adapters/slime/replay_grade.py#L589)、[当前 diagnostics 字段](../../../../rh2/src/repoharness2/grading/manager.py#L1291)。本轮未重新精读外部原文，未将汇总中的实践升格为本项目必须采用的规则。

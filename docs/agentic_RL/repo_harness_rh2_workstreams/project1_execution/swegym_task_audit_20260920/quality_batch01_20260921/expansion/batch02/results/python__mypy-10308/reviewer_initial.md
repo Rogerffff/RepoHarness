@@ -2,7 +2,7 @@
 
 2026-09-21。`disposition.scope=static_review`，`state=needs_review`，`usage.intended_use=development_diagnostic`。建议保留为 **materials-v2 明确版本的静态诊断候选**；原始 S2 材料与已引用运行不是同一 grading digest，正式 actor 消费该版本尚未证明。不能标记 `ready_for_probe`。
 
-本文路径均相对 `.`（ROOT）。`P=runs/swegym_quality_batch02_20260921_v2/public/python__mypy-10308`，`Q=.../private/python__mypy-10308`，`M=runs/env_recipe_repair_20260919/materials_v2`，`W=runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10308`。源码行号均为 `P/base`。`G=M/runs/python__mypy-10308-gold/eval_logs/evallog_replay-er19-mat1-python__e8bba825.eval.log`；`N=M/runs/python__mypy-10308-noop/eval_logs/evallog_replay-er19-mat1-python__4cc880f8.eval.log`。
+本文路径均相对 `${REPO_ROOT}`（ROOT）。`P=runs/swegym_quality_batch02_20260921_v2/public/python__mypy-10308`，`Q=.../private/python__mypy-10308`，`M=runs/env_recipe_repair_20260919/materials_v2`，`W=runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10308`。源码行号均为 `P/base`。`G=M/runs/python__mypy-10308-gold/eval_logs/evallog_replay-er19-mat1-python__e8bba825.eval.log`；`N=M/runs/python__mypy-10308-noop/eval_logs/evallog_replay-er19-mat1-python__4cc880f8.eval.log`。
 
 ## 公开目标、材料与初态
 

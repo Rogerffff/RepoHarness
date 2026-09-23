@@ -4,13 +4,13 @@
 
 ## 封存、暴露与原件边界
 
-日期：2026-09-21；reviewer：review_mypy_tail，未参加本题主审。[独立初判](reviewer_initial.md) SHA-256 为 `f41bb7a2d7b5ff87156ae1c2b99a120eee0fdaa95876b3a7bdbd58fc501d2f3a`。两题初判全部完成并由协调者核 SHA 后才开始本阶段；初判保持原字节。
+日期：2026-09-21；reviewer：review_mypy_tail，未参加本题主审。[独立初判](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-12417/reviewer_initial.md) SHA-256 为 `f41bb7a2d7b5ff87156ae1c2b99a120eee0fdaa95876b3a7bdbd58fc501d2f3a`。两题初判全部完成并由协调者核 SHA 后才开始本阶段；初判保持原字节。
 
-本阶段完整读了本题 [public_read](public_read.md)、[analysis_before_history](analysis_before_history.md)、[old_findings_delta](old_findings_delta.md)、[card](card.md)、[screening_record](screening_record.json)，以及 history/refs（仅本地运行证据：`runs/swegym_quality_batch01_20260921_v2/history/python__mypy-12417/refs.json`） 唯一指定的 [历史原件](../../../../env_overnight_20260916/L1_mypy_2/records/python__mypy-12417.json)。另读同样获准的 16963 第二阶段材料；未读 10424、acceptance 或其余题历史/结论，没有沿 environment_record 中旧汇总链接扩展。
+本阶段完整读了本题 [public_read](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-12417/public_read.md)、[analysis_before_history](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-12417/analysis_before_history.md)、[old_findings_delta](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-12417/old_findings_delta.md)、[card](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-12417/card.md)、[screening_record](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-12417/screening_record.json)，以及 [history/refs](${REPO_ROOT}/runs/swegym_quality_batch01_20260921_v2/history/python__mypy-12417/refs.json) 唯一指定的 [历史原件](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_2/records/python__mypy-12417.json)。另读同样获准的 16963 第二阶段材料；未读 10424、acceptance 或其余题历史/结论，没有沿 environment_record 中旧汇总链接扩展。
 
 第一阶段已直接读本题 public/private、全部新增断言与 gold、相关旧测试/runner/fixture、指定 image/build/ledger/log，并作本地 JSON/patch/hash 核对。本阶段补核下文列出的 binder/分支/旧错误恢复代码、默认 typing/dataclasses stub 与 CLI 退出逻辑。主审另报告的 ingest 第 199 行三份逐对象匹配，本 reviewer 未重读三条原 ingest；不能算作我的新增独立核对。环境摘要的 both_roles=true 已暴露，指历史 gold/noop，未当作 actor/grader 两身份均通过。
 
-以下 `S=runs/swegym_quality_batch01_20260921_v2/public/python__mypy-12417/base`；`D=runs/swegym_quality_batch01_20260921_v2/private/python__mypy-12417`；`E=runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-12417`。所有源码位置限定 base `47b9f5e2f65d54d3187cbe0719f9619bf608a126`，mypy0.950、Python3.10。
+以下 `S=${REPO_ROOT}/runs/swegym_quality_batch01_20260921_v2/public/python__mypy-12417/base`；`D=${REPO_ROOT}/runs/swegym_quality_batch01_20260921_v2/private/python__mypy-12417`；`E=${REPO_ROOT}/runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-12417`。所有源码位置限定 base `47b9f5e2f65d54d3187cbe0719f9619bf608a126`，mypy0.950、Python3.10。
 
 **没有执行项目、安装、Docker、SSH、模型或任何新 CPU 实验。** 以下“历史执行”是重读冻结的 09-19 RH2 原件；候选输出全部是静态预测，不能与真实得分混写。
 
@@ -45,9 +45,9 @@
 
 这不是从 gold 输出猜测实现，已沿原始调用者核查：
 
-1. checkpattern.py:459（仅本地运行证据：`runs/swegym_quality_batch01_20260921_v2/public/python__mypy-12417/base/mypy/checkpattern.py`） 在 guard 前已经取得 `current_type = get_proper_type(self.type_context[-1])`；两候选可以在同一 None 入口返回，无需解析未绑定节点或处理位置/关键字子模式。捕获数量不改变能否到达 guard。
-2. checker.py:4109（仅本地运行证据：`runs/swegym_quality_batch01_20260921_v2/public/python__mypy-12417/base/mypy/checker.py`） 第一遍收集 captures、第二遍缩窄并检查 body。三方案 captures 均为空，不为 y/x 建立推断类型。
-3. P 的 type/rest_type 都是当前 object；conditional_types_to_typemaps:5730（仅本地运行证据：`runs/swegym_quality_batch01_20260921_v2/public/python__mypy-12417/base/mypy/checker.py`） 为 subject 建 object 映射，而非 None 不可达标记；push_type_map:5555–5560、binder.put:138–148 存该类型。checkexpr.py:4238–4260 读取限制，meet.py:58–65 在 declared==narrowed 时保留 object。因此首个 F2P 的 m reveal 预期是 object，且 body 仍可达。
+1. [checkpattern.py:459](${REPO_ROOT}/runs/swegym_quality_batch01_20260921_v2/public/python__mypy-12417/base/mypy/checkpattern.py:459) 在 guard 前已经取得 `current_type = get_proper_type(self.type_context[-1])`；两候选可以在同一 None 入口返回，无需解析未绑定节点或处理位置/关键字子模式。捕获数量不改变能否到达 guard。
+2. [checker.py:4109](${REPO_ROOT}/runs/swegym_quality_batch01_20260921_v2/public/python__mypy-12417/base/mypy/checker.py:4109) 第一遍收集 captures、第二遍缩窄并检查 body。三方案 captures 均为空，不为 y/x 建立推断类型。
+3. P 的 type/rest_type 都是当前 object；[conditional_types_to_typemaps:5730](${REPO_ROOT}/runs/swegym_quality_batch01_20260921_v2/public/python__mypy-12417/base/mypy/checker.py:5730) 为 subject 建 object 映射，而非 None 不可达标记；push_type_map:5555–5560、binder.put:138–148 存该类型。checkexpr.py:4238–4260 读取限制，meet.py:58–65 在 declared==narrowed 时保留 object。因此首个 F2P 的 m reveal 预期是 object，且 body 仍可达。
 4. E 的 helper 在 checkpattern.py:669–670 返回 UninhabitedType/current subject/空 captures；checker.py:4131–4134 调 push_type_map(None)，binder.py:150–162 标记不可达，visit_block:2139–2151 随后停止检查分支语句。因此 body reveal 及 y/x 的 Cannot determine type 都不会产生；更早的 Name 诊断不被删除。此预测限定无 guard 的现有 F2P，不能把所有 guarded 模式行为一概而论。
 5. gold 与 P 的空 captures 均让 y/x 保持未就绪；checkexpr.py:264–277 与 checker.py:405–419 解释后续 Cannot determine type/Any。P 仅保留已知 subject 的信息，并未自行给捕获变量补类型。三项 dataclass P2P 的 class_ref.node 非 None，三种局部 guard 静态都不改其原路径。
 
@@ -85,7 +85,7 @@
 | 交付评分 | gold 仅 checkpattern.py 投影；官方恢复 check-python310.test | helper/fixture 的实际防篡改、共享 runner 对照、真实资产泄漏。 |
 | 关系用途 | 修复内容已在 16963 base；所有私有暴露已标记 | 不据主题推重复，不据静态推模型难度/能力，不能正式准入。 |
 
-本题 配方（仅本地运行证据：`runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-12417/image.json`） 派生镜像为 `sha256:854faf11b77e78836444b9be7ef9c2fea5255da422fac6aa07dead9e7a63cca7`，只加入 setuptools72.1.0、wheel0.43.0、packaging24.1 的离线构建 wheels。历史 Python3.10.14、pytest8.3.2、xdist3.6.1；真实命令 `pytest -n0 -rA -k 'testMatchInvalidClassPattern or testMatchClassPatternCaptureDataclass'`。gold 安装/测试 rc=0/0、F2P1/1、P2P3/3、reward1；noop=0/1、F2P0/1、P2P3/3、reward0。均 rh2grader/54322、2CPU/4GiB、deny_all，import /testbed/mypy/__init__.py。不得套用 16963 的 eight-pin、Python3.12 或 11-worker 条件。源码收集门槛是运行解释器至少3.10，不是只设置 target version 即可。
+本题 [配方](${REPO_ROOT}/runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-12417/image.json) 派生镜像为 `sha256:854faf11b77e78836444b9be7ef9c2fea5255da422fac6aa07dead9e7a63cca7`，只加入 setuptools72.1.0、wheel0.43.0、packaging24.1 的离线构建 wheels。历史 Python3.10.14、pytest8.3.2、xdist3.6.1；真实命令 `pytest -n0 -rA -k 'testMatchInvalidClassPattern or testMatchClassPatternCaptureDataclass'`。gold 安装/测试 rc=0/0、F2P1/1、P2P3/3、reward1；noop=0/1、F2P0/1、P2P3/3、reward0。均 rh2grader/54322、2CPU/4GiB、deny_all，import /testbed/mypy/__init__.py。不得套用 16963 的 eight-pin、Python3.12 或 11-worker 条件。源码收集门槛是运行解释器至少3.10，不是只设置 target version 即可。
 
 **唯一优先 CPU 对照：同一固定配方、同一 base，隔离比较 base、原 gold、P、E 四种源码状态。** 此为对主审单组对照的扩充，未创建补丁、未执行：
 

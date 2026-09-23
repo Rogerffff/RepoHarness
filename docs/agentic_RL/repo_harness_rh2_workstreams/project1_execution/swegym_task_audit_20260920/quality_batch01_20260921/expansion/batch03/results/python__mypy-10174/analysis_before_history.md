@@ -4,7 +4,7 @@
 
 ## 身份、输入和暴露
 
-ROOT=`.`。P=`runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174`，Q=同根private/python__mypy-10174；下述源码相对P/base。先读本题封存public_read.md，再核public_bundle、base_identity及Q的grading/validation/test/gold/source_refs/run_refs/environment_record。base=`c8bae06919674b9846e3ff864b0a44592db888eb`，tree=`465ff7bfb889519de37d2ddc384fda40f39240a7`，版本0.820、spec Python3.9，gold SHA256=`7f94c5b71301dbbf5ccce1af8b274444ab5c0de5010f92109e11549154066f6c`。材料验收沿用父协调者，不重做blob清单遍历。
+ROOT=`${REPO_ROOT}`。P=`runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174`，Q=同根private/python__mypy-10174；下述源码相对P/base。先读本题封存public_read.md，再核public_bundle、base_identity及Q的grading/validation/test/gold/source_refs/run_refs/environment_record。base=`c8bae06919674b9846e3ff864b0a44592db888eb`，tree=`465ff7bfb889519de37d2ddc384fda40f39240a7`，版本0.820、spec Python3.9，gold SHA256=`7f94c5b71301dbbf5ccce1af8b274444ab5c0de5010f92109e11549154066f6c`。材料验收沿用父协调者，不重做blob清单遍历。
 
 已看见environment_record内verified_environment_pair及noop/gold摘要，随后核精确原ledger/log/diagnostics；本稿不声称未见运行结果。未看本题history/refs、旧质量报告、B1/B2、本批聚合、他题结果或reviewer；不把同仓前题判断当证据。未运行/导入项目、测试、安装/下载、联网、Docker/SSH或模型；只做文本/Git允许范围内静态阅读和文档写入。
 

@@ -4,7 +4,7 @@
 
 本 reviewer 的 `reviewer_initial.md` 已由协调者核验并封存，SHA256 `b70d8a8044e7894f49a012bded1921e2a9018faf7c939a770d64876ae3343afc`；本轮未改动。收到明确 release 后，才读取本题 public_read、analysis_before_history、old_findings_delta、card、screening_record，以及 history/refs.json 唯一允许的自身旧记录和原40项清单。没有跟随旧记录的其它题、聚合、外链或 repo-level 引用。全程仅静态文本、stdlib JSON/hash/AST 等读取；无项目执行、导入、网络、Docker、SSH、安装、模型或新 agent。唯一新增写入为本文件。
 
-路径简称：`ROOT=.`；`P=ROOT/runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406`；`V=同一run根/private/getmoto__moto-5406`；`O=ROOT/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406`；`L=ROOT/runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3`。源码行号均在 P/base。
+路径简称：`ROOT=${REPO_ROOT}`；`P=ROOT/runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406`；`V=同一run根/private/getmoto__moto-5406`；`O=ROOT/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406`；`L=ROOT/runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3`。源码行号均在 P/base。
 
 **主审决定性主张的逐项复核**
 

@@ -4,7 +4,7 @@
 
 独立性：本人initial SHA256=`04158158ea294a9dbd133a39f5f729716a1315d83856aec94121b7806bd18795`。root于2026-09-20T22:03:11.721133+00:00确认整包封存并明确放行后，才读取本题public_read.md、analysis_before_history.md、old_findings_delta.md、card.md、screening_record.json和本题history/refs.json指定唯一旧记录 `docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_moto_3/records/getmoto__moto-6408.json`。不追该旧记录的stage1、包级问题、全局索引、维护者hints或外部AWS说法。environment_record先前已有gold/noop摘要暴露，不能称结果盲审。initial保持原字节；未导入/执行项目、测试、安装、网络、Docker/SSH、模型或配额操作。
 
-路径：ROOT=.；P=ROOT/runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408；V为对应private；E=ROOT/runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6408。原件SHA和逐项阅读范围沿封存initial。
+路径：ROOT=${REPO_ROOT}；P=ROOT/runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408；V为对应private；E=ROOT/runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6408。原件SHA和逐项阅读范围沿封存initial。
 
 ## 同意、分歧与旧结论处置
 

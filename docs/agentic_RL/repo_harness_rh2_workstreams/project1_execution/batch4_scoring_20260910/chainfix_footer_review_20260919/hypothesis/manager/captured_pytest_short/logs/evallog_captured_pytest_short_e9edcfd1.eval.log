@@ -1,0 +1,55 @@
++ git checkout base -- tests/
+RH2_SETUP_RAN=1
++ echo RH2_PHASE_START=install
+RH2_PHASE_START=install
+RH2_TS_INSTALL_START=100.0
+RH2_INSTALL_RC=0
+RH2_TS_INSTALL_END=103.5
+RH2_PHASE_END=install
+RH2_TS_TEST_START=104.0
++ : '>>>>> Start Test Output'
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: /testbed
+configfile: ../../../../../../../../../pyproject.toml
+collected 2 items
+
+tests/test_thing.py F.                                                   [100%]
+
+=================================== FAILURES ===================================
+_____________________________ test_feature[after] ______________________________
+tests/test_thing.py:8: in test_feature
+    subprocess.run([sys.executable, "-B", "-m", "pytest", "-p", "no:cacheprovider", "child/test_child.py"], check=True)
+<USER_HOME>/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/subprocess.py:571: in run
+    raise CalledProcessError(retcode, process.args,
+E   subprocess.CalledProcessError: Command '['<REPO>/rh2/.venv/bin/python3', '-B', '-m', 'pytest', '-p', 'no:cacheprovider', 'child/test_child.py']' returned non-zero exit status 2.
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: <REPO>
+configfile: pyproject.toml
+collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+_ ERROR collecting docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/batch4_scoring_20260910/chainfix_footer_review_20260919/matrix/cases/captured_pytest_short/child/test_child.py _
+ImportError while importing test module '/testbed/child/test_child.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+<USER_HOME>/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+child/test_child.py:1: in <module>
+    import rh2_missing_child_module
+E   ModuleNotFoundError: No module named 'rh2_missing_child_module'
+=========================== short test summary info ============================
+ERROR child/test_child.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+=============================== 1 error in 0.05s ===============================
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_thing.py::test_stable[after]
+FAILED tests/test_thing.py::test_feature[after] - subprocess.CalledProcessErr...
+========================= 1 failed, 1 passed in 0.19s ==========================
++ : '>>>>> End Test Output'
+RH2_TEST_RC=1
+RH2_TS_TEST_END=110.25

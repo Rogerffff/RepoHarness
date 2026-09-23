@@ -1,0 +1,104 @@
+[
+  {
+    "case": "baseline_without_owner_cancel",
+    "entered": true,
+    "cancelled_by_episode_deadline": true,
+    "elapsed_seconds": 1.004,
+    "removed": 1,
+    "networks_remaining": 0,
+    "harness_calls": 0,
+    "hit_by": "materialize",
+    "termination_kind": "hard_wall_timeout",
+    "outcome_reason": "episode_deadline_in_materialize",
+    "remove_sample": [
+      true
+    ]
+  },
+  {
+    "case": "bootstrap_outer_cancel",
+    "install_entered": true,
+    "harness_launched": false,
+    "hit_by": "bootstrap",
+    "drain_calls": 0,
+    "finish_session_calls": 0,
+    "outcome_reason": "episode_deadline_in_bootstrap",
+    "termination_kind": "hard_wall_timeout",
+    "notifications": [],
+    "failure_records": [
+      {
+        "type": "SlimeBindingError",
+        "detail": "[episode_deadline_in_bootstrap] episode 预算在 harness 引导阶段耗尽（引导 0.559s，CC 未启动）——整组不训练。"
+      }
+    ],
+    "removed": 1,
+    "returned": true,
+    "sample_status": [
+      "aborted"
+    ]
+  },
+  {
+    "case": "bootstrap_fatal_during_cancel",
+    "install_entered": true,
+    "harness_launched": null,
+    "hit_by": "none",
+    "drain_calls": 0,
+    "finish_session_calls": 0,
+    "outcome_reason": null,
+    "termination_kind": null,
+    "notifications": [
+      "probe_cancel_cleanup_fatal"
+    ],
+    "failure_records": [],
+    "removed": 1,
+    "raised": "FatalExecutionInfrastructureError",
+    "raised_reason": "probe_cancel_cleanup_fatal"
+  },
+  {
+    "case": "rounded_bootstrap_timeout",
+    "exec_timeout": [
+      599.7
+    ],
+    "remaining": 0.0,
+    "facts": {
+      "launch_attempted": false,
+      "launched": false,
+      "bootstrap_exec_error": "docker exec failed (exit=124): id agent >/dev/null 2>&1 || useradd -m -s /bin/bash agent && chown -R agent:agent /home/agent /testbed && git config --s\n按收到的 timeout 到点",
+      "bootstrap_seconds": 600.0,
+      "remaining_at_launch": 0.0,
+      "bootstrap_deadline_reason": "bootstrap_step_timed_out_at_deadline"
+    },
+    "return_code": -1
+  },
+  {
+    "case": "queue_deadline",
+    "mode": "deadline",
+    "reason": "episode_deadline_exhausted",
+    "poison": "episode_deadline_exhausted",
+    "elapsed": 0.0367,
+    "queue_wait": 0.036384,
+    "capacity_restored": true
+  },
+  {
+    "case": "queue_cancel",
+    "mode": "cancel",
+    "reason": "CancelledError",
+    "poison": "client_cancelled",
+    "elapsed": 0.0169,
+    "queue_wait": 0.016668,
+    "capacity_restored": true
+  },
+  {
+    "case": "cancel_acquire_races",
+    "cases": {
+      "False": 25,
+      "True": 25
+    },
+    "capacity_restored": true
+  },
+  {
+    "case": "cross_loop_same_deadline",
+    "same_deadline": true,
+    "reason": "episode_deadline_exhausted",
+    "remaining_at_end": -0.0023
+  }
+]

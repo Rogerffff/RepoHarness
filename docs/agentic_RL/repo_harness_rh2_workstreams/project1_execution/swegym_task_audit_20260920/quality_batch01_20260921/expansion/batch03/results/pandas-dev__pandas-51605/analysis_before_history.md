@@ -1,6 +1,6 @@
 # pandas-dev__pandas-51605：读历史前的私有独立初稿
 
-2026-09-21；`needs_review / static_review`；仅 `development_diagnostic`。本稿在读本题旧单题记录前保存，封存后不回写。权威根目录 `.`，默认 worktree 未作证据源。
+2026-09-21；`needs_review / static_review`；仅 `development_diagnostic`。本稿在读本题旧单题记录前保存，封存后不回写。权威根目录 `${REPO_ROOT}`，默认 worktree 未作证据源。
 
 **暂定判断：隐藏断言与空列表目标相符，真实原评分可解释；gold 却引入未保护的无长度 iterator 回归，并没有修复 empty iterator，宜先作窄 CPU 语义对照。** 这是源码推导，尚未运行反例；历史 gold 13项通过不等于完整修复。新增测试使用2行索引，没有逐字覆盖公开3行例子；固定2个False的错误实现有具体漏测空间。保留合理替代实现，不以gold为唯一答案。
 

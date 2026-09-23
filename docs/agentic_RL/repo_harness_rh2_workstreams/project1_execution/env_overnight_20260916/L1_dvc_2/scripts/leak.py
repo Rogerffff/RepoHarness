@@ -1,6 +1,6 @@
 import json,re
-M='runs/env_overnight_20260916/L1_dvc_2/mat'
-B='docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916'
+M='${REPO_ROOT}/runs/env_overnight_20260916/L1_dvc_2/mat'
+B='${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916'
 ASG=json.load(open(f'{B}/L1_dvc_2/ASSIGNMENT.json'))
 def norm(s): return re.sub(r'\s+','',s)
 URL=re.compile(r'(github\.com/\S+|https?://\S+)')

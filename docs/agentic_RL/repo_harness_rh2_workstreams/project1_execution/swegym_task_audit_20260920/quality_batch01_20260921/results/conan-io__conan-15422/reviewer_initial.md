@@ -12,7 +12,7 @@
 - `PRIVATE` = `runs/swegym_quality_batch01_20260921_v2/private/conan-io__conan-15422`。
 - `L` = `runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w02-1/ledger.jsonl`。
 - `N`、`G` 分别是同一 worker 的 `eval_logs/evallog_replay-f216-baseline01-w_434a958a.eval.log`、`evallog_replay-f216-baseline01-w_e40da522.eval.log`。
-- 上述相对路径均以 `.` 为根。
+- 上述相对路径均以 `${REPO_ROOT}` 为根。
 
 已读角色卡、actor_environment_card、record_template、quality_review_protocol；本题 user_prompt、public_bundle、base_identity、environment_brief；test.patch 全文、grading 的全部 F2P/P2P ID、gold.patch/validation、run_refs/source_refs/environment_record；下述源码及测试。environment_record 只当引用元数据，其所指 scope_reconciliation 总结未打开，运行结论以 L/N/G 原件为依据。日志重点复读初态、候选差异、恢复/应用测试、安装及测试结果段；未逐行分析 `git show` 所打印的无关 base 提交差异。
 

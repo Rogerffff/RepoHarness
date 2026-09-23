@@ -4,7 +4,7 @@
 
 **初判：base 将绝对工作目录纳入 stage checksum，确有与旧无 wdir 文件不兼容的静态根因；gold 将序列化 wdir 改为相对路径，逻辑合理且历史 RH2 通过。唯一 F2P 实际失败点却是 `dumpd()["wdir"] == "."`，没有直接复现已保存的旧版本 checksum。应先验证“只在 checksum 内正规化”的合理替代路线是否被误拒，并验证真实非默认 wdir 的遗漏；不将当前参考 reward 直接等同向后兼容正确性。**
 
-路径约定：`ROOT=.`；`P=ROOT/runs/swegym_quality_batch02_20260921_v2/public/iterative__dvc-1681`；`Q=ROOT/runs/swegym_quality_batch02_20260921_v2/private/iterative__dvc-1681`；`R=ROOT/runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-1681`。源码行号相对 P/base，日志行号为 eval.log 原件。
+路径约定：`ROOT=${REPO_ROOT}`；`P=ROOT/runs/swegym_quality_batch02_20260921_v2/public/iterative__dvc-1681`；`Q=ROOT/runs/swegym_quality_batch02_20260921_v2/private/iterative__dvc-1681`；`R=ROOT/runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-1681`。源码行号相对 P/base，日志行号为 eval.log 原件。
 
 ## 门禁、材料与证据层次
 

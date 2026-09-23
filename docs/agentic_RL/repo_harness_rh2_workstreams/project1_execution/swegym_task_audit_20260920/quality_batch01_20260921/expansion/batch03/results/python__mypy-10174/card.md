@@ -16,7 +16,7 @@
 
 唯一优先实验（未执行）：核固定grader身份、解释器/源码及依赖后，对base、gold及一个non-strict关闭比较候选同时核官方得分与同开关的 `1 in ('x','y')` 负例；确认漏测再独立修订。旧全仓统计、三假补丁及整文件重建建议不直接继承。
 
-完整证据：[封存初稿](analysis_before_history.md)、[历史差异](old_findings_delta.md)、[机器记录](screening_record.json)。记录UTC：2026-09-20T21:35:11.383597+00:00。
+完整证据：[封存初稿](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-10174/analysis_before_history.md)、[历史差异](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-10174/old_findings_delta.md)、[机器记录](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-10174/screening_record.json)。记录UTC：2026-09-20T21:35:11.383597+00:00。
 
 协调者收束：保留受限静态候选和一个过宽候选的窄校准；未执行，不把静态路线写成已证满分反例。固定grader诊断可先行，正式actor资格另属模型开发门槛。切换strict-optional对照若以后追加，须同步移除输入内相反inline配置。
 

@@ -1,7 +1,7 @@
 # python__mypy-16869 — 独立 reviewer 初稿（解封前）
 
 - 日期：2026-09-21；角色：B4 fresh 独立 reviewer，非主审。
-- 权威根：`.`；base：`8c2ef9dde8aa803e04038427ad84f09664d9d93f`。
+- 权威根：`${REPO_ROOT}`；base：`8c2ef9dde8aa803e04038427ad84f09664d9d93f`。
 - 建议：`disposition.state=needs_review`，`disposition.scope=static_review`，`usage.intended_use=development_diagnostic`。这是有条件的静态诊断候选，不是 actor 条件已验或正式训练/评测批准。
 - 暴露：已读公开原件、完整 test/gold patch、完整 2 F2P/4 P2P 清单、本题环境记录及选定原日志；**不是 result-blind**。未读公开读稿、主审分析/卡片/结构化记录/delta/review、history/refs 或其他题质量结论。环境记录自带历史结果和原日志内 `git show` 不构成独立盲测。
 - 本轮仅文本/JSON/hash/tar 成员只读检查；未导入项目、运行 pytest/项目代码、安装、联网、执行容器或修改原题。仅写本文件；保存后冻结，待明确解封才写 `review.md`。

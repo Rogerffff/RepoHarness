@@ -1,0 +1,961 @@
+{
+  "status": "passed",
+  "source_head": "06dd7c06936a74b59bb96de861fb27e65760675c",
+  "real_cli_or_api_used": false,
+  "shrink_classification_controls": [
+    {
+      "fork_threshold": 0,
+      "old_prompt": 100,
+      "new_prompt": 40,
+      "drift_kind": "fork"
+    },
+    {
+      "fork_threshold": 1024,
+      "old_prompt": 100,
+      "new_prompt": 40,
+      "drift_kind": "fork"
+    }
+  ],
+  "cases": [
+    {
+      "case": "same_message_path_token_shrink",
+      "status": "passed",
+      "execution_mode": "fa_formal",
+      "reject_context_shrink": true,
+      "fork_threshold_tokens": 0,
+      "capture_prompt_lengths": [
+        100,
+        160,
+        40,
+        46
+      ],
+      "capture_output_lengths": [
+        3,
+        2,
+        4,
+        2
+      ],
+      "member_rows": [
+        2,
+        2
+      ],
+      "first_member": {
+        "rows": [
+          {
+            "branch_id": "b0",
+            "turn_indices": [
+              0,
+              1
+            ],
+            "turn_prompt_lengths": [
+              100,
+              160
+            ],
+            "row_prompt_length": 100,
+            "row_token_length": 162,
+            "row_trainable_tokens": 5,
+            "row_context_tokens_in_response": 57,
+            "every_action_input_equals_captured_prompt": true,
+            "branch_shrink_reasons": [],
+            "lineage": null,
+            "context_runs": []
+          },
+          {
+            "branch_id": "b1",
+            "turn_indices": [
+              2,
+              3
+            ],
+            "turn_prompt_lengths": [
+              40,
+              46
+            ],
+            "row_prompt_length": 40,
+            "row_token_length": 48,
+            "row_trainable_tokens": 6,
+            "row_context_tokens_in_response": 2,
+            "every_action_input_equals_captured_prompt": true,
+            "branch_shrink_reasons": [],
+            "lineage": null,
+            "context_runs": []
+          }
+        ],
+        "trained_capture_count_per_turn": {
+          "0": 1,
+          "1": 1,
+          "2": 1,
+          "3": 1
+        },
+        "session_shrink_reasons": [
+          "turn 2: prompt 40 < 0.6 x max_seen 160",
+          "turn 3: prompt 46 < 0.6 x max_seen 160"
+        ]
+      },
+      "turn_coverage": {
+        "fork_threshold_tokens": 0,
+        "turns_generated": 4,
+        "turns_trained": 4,
+        "turns_empty_output": 0,
+        "turns_dropped_realign": 0,
+        "turns_dropped_merge": 0,
+        "training_rows": 2,
+        "row_tokens": [
+          162,
+          48
+        ],
+        "row_trainable_tokens": [
+          5,
+          6
+        ],
+        "trainable_tokens_total": 11,
+        "input_tokens_total": 210,
+        "input_tokens_excluding_last_row": 162,
+        "fork_events": [
+          {
+            "turn_index": 3,
+            "prev_response_len": 2,
+            "divergence_offset_in_prev_response": -160,
+            "next_output_len": 4,
+            "position": "before_response"
+          }
+        ]
+      },
+      "projection_lineages": [
+        null,
+        null
+      ],
+      "projection_token_sources": [
+        [
+          {
+            "start": 0,
+            "end": 100,
+            "source_type": "prompt_context"
+          },
+          {
+            "start": 100,
+            "end": 103,
+            "source_type": "sampled_assistant"
+          },
+          {
+            "start": 103,
+            "end": 160,
+            "source_type": "tool_result"
+          },
+          {
+            "start": 160,
+            "end": 162,
+            "source_type": "sampled_assistant"
+          }
+        ],
+        [
+          {
+            "start": 0,
+            "end": 40,
+            "source_type": "prompt_context"
+          },
+          {
+            "start": 40,
+            "end": 44,
+            "source_type": "sampled_assistant"
+          },
+          {
+            "start": 44,
+            "end": 46,
+            "source_type": "tool_result"
+          },
+          {
+            "start": 46,
+            "end": 48,
+            "source_type": "sampled_assistant"
+          }
+        ]
+      ],
+      "rollout_ids": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "rollout_mask_sums": [
+        11,
+        11,
+        11,
+        11
+      ],
+      "raw_reward": [
+        1.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "same_execution_and_member_within_each_member": true,
+      "output_token_training_occurrences": {
+        "5000": 1,
+        "5001": 1,
+        "5002": 1,
+        "5100": 1,
+        "5101": 1,
+        "5200": 1,
+        "5201": 1,
+        "5202": 1,
+        "5203": 1,
+        "5300": 1,
+        "5301": 1
+      },
+      "summary_replay_control": null
+    },
+    {
+      "case": "summary_message_tree_branch",
+      "status": "passed",
+      "execution_mode": "fa_formal",
+      "reject_context_shrink": true,
+      "fork_threshold_tokens": 0,
+      "capture_prompt_lengths": [
+        100,
+        160,
+        40,
+        46
+      ],
+      "capture_output_lengths": [
+        3,
+        2,
+        4,
+        2
+      ],
+      "member_rows": [
+        2,
+        2
+      ],
+      "first_member": {
+        "rows": [
+          {
+            "branch_id": "b0",
+            "turn_indices": [
+              0,
+              1
+            ],
+            "turn_prompt_lengths": [
+              100,
+              160
+            ],
+            "row_prompt_length": 100,
+            "row_token_length": 162,
+            "row_trainable_tokens": 5,
+            "row_context_tokens_in_response": 57,
+            "every_action_input_equals_captured_prompt": true,
+            "branch_shrink_reasons": [],
+            "lineage": null,
+            "context_runs": []
+          },
+          {
+            "branch_id": "b1",
+            "turn_indices": [
+              2,
+              3
+            ],
+            "turn_prompt_lengths": [
+              40,
+              46
+            ],
+            "row_prompt_length": 40,
+            "row_token_length": 48,
+            "row_trainable_tokens": 6,
+            "row_context_tokens_in_response": 2,
+            "every_action_input_equals_captured_prompt": true,
+            "branch_shrink_reasons": [],
+            "lineage": null,
+            "context_runs": []
+          }
+        ],
+        "trained_capture_count_per_turn": {
+          "0": 1,
+          "1": 1,
+          "2": 1,
+          "3": 1
+        },
+        "session_shrink_reasons": [
+          "turn 2: prompt 40 < 0.6 x max_seen 160",
+          "turn 3: prompt 46 < 0.6 x max_seen 160"
+        ]
+      },
+      "turn_coverage": {
+        "fork_threshold_tokens": 0,
+        "turns_generated": 4,
+        "turns_trained": 4,
+        "turns_empty_output": 0,
+        "turns_dropped_realign": 0,
+        "turns_dropped_merge": 0,
+        "training_rows": 2,
+        "row_tokens": [
+          162,
+          48
+        ],
+        "row_trainable_tokens": [
+          5,
+          6
+        ],
+        "trainable_tokens_total": 11,
+        "input_tokens_total": 210,
+        "input_tokens_excluding_last_row": 162,
+        "fork_events": []
+      },
+      "projection_lineages": [
+        null,
+        null
+      ],
+      "projection_token_sources": [
+        [
+          {
+            "start": 0,
+            "end": 100,
+            "source_type": "prompt_context"
+          },
+          {
+            "start": 100,
+            "end": 103,
+            "source_type": "sampled_assistant"
+          },
+          {
+            "start": 103,
+            "end": 160,
+            "source_type": "tool_result"
+          },
+          {
+            "start": 160,
+            "end": 162,
+            "source_type": "sampled_assistant"
+          }
+        ],
+        [
+          {
+            "start": 0,
+            "end": 40,
+            "source_type": "prompt_context"
+          },
+          {
+            "start": 40,
+            "end": 44,
+            "source_type": "sampled_assistant"
+          },
+          {
+            "start": 44,
+            "end": 46,
+            "source_type": "tool_result"
+          },
+          {
+            "start": 46,
+            "end": 48,
+            "source_type": "sampled_assistant"
+          }
+        ]
+      ],
+      "rollout_ids": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "rollout_mask_sums": [
+        11,
+        11,
+        11,
+        11
+      ],
+      "raw_reward": [
+        1.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "same_execution_and_member_within_each_member": true,
+      "output_token_training_occurrences": {
+        "5000": 1,
+        "5001": 1,
+        "5002": 1,
+        "5100": 1,
+        "5101": 1,
+        "5200": 1,
+        "5201": 1,
+        "5202": 1,
+        "5203": 1,
+        "5300": 1,
+        "5301": 1
+      },
+      "summary_replay_control": null
+    },
+    {
+      "case": "shared_prefix_summary_branch",
+      "status": "passed",
+      "execution_mode": "fa_formal",
+      "reject_context_shrink": true,
+      "fork_threshold_tokens": 0,
+      "capture_prompt_lengths": [
+        100,
+        160,
+        40,
+        46
+      ],
+      "capture_output_lengths": [
+        3,
+        2,
+        4,
+        2
+      ],
+      "member_rows": [
+        2,
+        2
+      ],
+      "first_member": {
+        "rows": [
+          {
+            "branch_id": "b0",
+            "turn_indices": [
+              0,
+              1
+            ],
+            "turn_prompt_lengths": [
+              100,
+              160
+            ],
+            "row_prompt_length": 100,
+            "row_token_length": 162,
+            "row_trainable_tokens": 5,
+            "row_context_tokens_in_response": 57,
+            "every_action_input_equals_captured_prompt": true,
+            "branch_shrink_reasons": [],
+            "lineage": null,
+            "context_runs": []
+          },
+          {
+            "branch_id": "b1",
+            "turn_indices": [
+              2,
+              3
+            ],
+            "turn_prompt_lengths": [
+              40,
+              46
+            ],
+            "row_prompt_length": 40,
+            "row_token_length": 48,
+            "row_trainable_tokens": 6,
+            "row_context_tokens_in_response": 2,
+            "every_action_input_equals_captured_prompt": true,
+            "branch_shrink_reasons": [],
+            "lineage": null,
+            "context_runs": []
+          }
+        ],
+        "trained_capture_count_per_turn": {
+          "0": 1,
+          "1": 1,
+          "2": 1,
+          "3": 1
+        },
+        "session_shrink_reasons": [
+          "turn 2: prompt 40 < 0.6 x max_seen 160",
+          "turn 3: prompt 46 < 0.6 x max_seen 160"
+        ]
+      },
+      "turn_coverage": {
+        "fork_threshold_tokens": 0,
+        "turns_generated": 4,
+        "turns_trained": 4,
+        "turns_empty_output": 0,
+        "turns_dropped_realign": 0,
+        "turns_dropped_merge": 0,
+        "training_rows": 2,
+        "row_tokens": [
+          162,
+          48
+        ],
+        "row_trainable_tokens": [
+          5,
+          6
+        ],
+        "trainable_tokens_total": 11,
+        "input_tokens_total": 210,
+        "input_tokens_excluding_last_row": 162,
+        "fork_events": [
+          {
+            "turn_index": 3,
+            "prev_response_len": 3,
+            "divergence_offset_in_prev_response": -100,
+            "next_output_len": 4,
+            "position": "before_response"
+          }
+        ]
+      },
+      "projection_lineages": [
+        null,
+        null
+      ],
+      "projection_token_sources": [
+        [
+          {
+            "start": 0,
+            "end": 100,
+            "source_type": "prompt_context"
+          },
+          {
+            "start": 100,
+            "end": 103,
+            "source_type": "sampled_assistant"
+          },
+          {
+            "start": 103,
+            "end": 160,
+            "source_type": "tool_result"
+          },
+          {
+            "start": 160,
+            "end": 162,
+            "source_type": "sampled_assistant"
+          }
+        ],
+        [
+          {
+            "start": 0,
+            "end": 40,
+            "source_type": "prompt_context"
+          },
+          {
+            "start": 40,
+            "end": 44,
+            "source_type": "sampled_assistant"
+          },
+          {
+            "start": 44,
+            "end": 46,
+            "source_type": "tool_result"
+          },
+          {
+            "start": 46,
+            "end": 48,
+            "source_type": "sampled_assistant"
+          }
+        ]
+      ],
+      "rollout_ids": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "rollout_mask_sums": [
+        11,
+        11,
+        11,
+        11
+      ],
+      "raw_reward": [
+        1.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "same_execution_and_member_within_each_member": true,
+      "output_token_training_occurrences": {
+        "5000": 1,
+        "5001": 1,
+        "5002": 1,
+        "5100": 1,
+        "5101": 1,
+        "5200": 1,
+        "5201": 1,
+        "5202": 1,
+        "5203": 1,
+        "5300": 1,
+        "5301": 1
+      },
+      "summary_replay_control": null
+    },
+    {
+      "case": "main_long_then_subagent_short",
+      "status": "passed",
+      "execution_mode": "fa_formal",
+      "reject_context_shrink": true,
+      "fork_threshold_tokens": 0,
+      "capture_prompt_lengths": [
+        100,
+        160,
+        20,
+        25,
+        164
+      ],
+      "capture_output_lengths": [
+        3,
+        2,
+        3,
+        2,
+        2
+      ],
+      "member_rows": [
+        2,
+        2
+      ],
+      "first_member": {
+        "rows": [
+          {
+            "branch_id": "b0",
+            "turn_indices": [
+              0,
+              1,
+              4
+            ],
+            "turn_prompt_lengths": [
+              100,
+              160,
+              164
+            ],
+            "row_prompt_length": 100,
+            "row_token_length": 166,
+            "row_trainable_tokens": 7,
+            "row_context_tokens_in_response": 59,
+            "every_action_input_equals_captured_prompt": true,
+            "branch_shrink_reasons": [],
+            "lineage": null,
+            "context_runs": []
+          },
+          {
+            "branch_id": "b1",
+            "turn_indices": [
+              2,
+              3
+            ],
+            "turn_prompt_lengths": [
+              20,
+              25
+            ],
+            "row_prompt_length": 20,
+            "row_token_length": 27,
+            "row_trainable_tokens": 5,
+            "row_context_tokens_in_response": 2,
+            "every_action_input_equals_captured_prompt": true,
+            "branch_shrink_reasons": [],
+            "lineage": null,
+            "context_runs": []
+          }
+        ],
+        "trained_capture_count_per_turn": {
+          "0": 1,
+          "1": 1,
+          "4": 1,
+          "2": 1,
+          "3": 1
+        },
+        "session_shrink_reasons": [
+          "turn 2: prompt 20 < 0.6 x max_seen 160",
+          "turn 3: prompt 25 < 0.6 x max_seen 160"
+        ]
+      },
+      "turn_coverage": {
+        "fork_threshold_tokens": 0,
+        "turns_generated": 5,
+        "turns_trained": 5,
+        "turns_empty_output": 0,
+        "turns_dropped_realign": 0,
+        "turns_dropped_merge": 0,
+        "training_rows": 2,
+        "row_tokens": [
+          166,
+          27
+        ],
+        "row_trainable_tokens": [
+          7,
+          5
+        ],
+        "trainable_tokens_total": 12,
+        "input_tokens_total": 193,
+        "input_tokens_excluding_last_row": 166,
+        "fork_events": []
+      },
+      "projection_lineages": [
+        null,
+        null
+      ],
+      "projection_token_sources": [
+        [
+          {
+            "start": 0,
+            "end": 100,
+            "source_type": "prompt_context"
+          },
+          {
+            "start": 100,
+            "end": 103,
+            "source_type": "sampled_assistant"
+          },
+          {
+            "start": 103,
+            "end": 160,
+            "source_type": "tool_result"
+          },
+          {
+            "start": 160,
+            "end": 162,
+            "source_type": "sampled_assistant"
+          },
+          {
+            "start": 162,
+            "end": 164,
+            "source_type": "tool_result"
+          },
+          {
+            "start": 164,
+            "end": 166,
+            "source_type": "sampled_assistant"
+          }
+        ],
+        [
+          {
+            "start": 0,
+            "end": 20,
+            "source_type": "prompt_context"
+          },
+          {
+            "start": 20,
+            "end": 23,
+            "source_type": "sampled_assistant"
+          },
+          {
+            "start": 23,
+            "end": 25,
+            "source_type": "tool_result"
+          },
+          {
+            "start": 25,
+            "end": 27,
+            "source_type": "sampled_assistant"
+          }
+        ]
+      ],
+      "rollout_ids": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "rollout_mask_sums": [
+        12,
+        12,
+        12,
+        12
+      ],
+      "raw_reward": [
+        1.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "same_execution_and_member_within_each_member": true,
+      "output_token_training_occurrences": {
+        "5000": 1,
+        "5001": 1,
+        "5002": 1,
+        "5100": 1,
+        "5101": 1,
+        "5400": 1,
+        "5401": 1,
+        "5402": 1,
+        "5500": 1,
+        "5501": 1,
+        "5600": 1,
+        "5601": 1
+      },
+      "summary_replay_control": null
+    },
+    {
+      "case": "captured_summary_generation",
+      "status": "passed",
+      "execution_mode": "fa_formal",
+      "reject_context_shrink": true,
+      "fork_threshold_tokens": 0,
+      "capture_prompt_lengths": [
+        100,
+        160,
+        163,
+        40
+      ],
+      "capture_output_lengths": [
+        3,
+        2,
+        3,
+        4
+      ],
+      "member_rows": [
+        2,
+        2
+      ],
+      "first_member": {
+        "rows": [
+          {
+            "branch_id": "b0",
+            "turn_indices": [
+              0,
+              1,
+              2
+            ],
+            "turn_prompt_lengths": [
+              100,
+              160,
+              163
+            ],
+            "row_prompt_length": 100,
+            "row_token_length": 166,
+            "row_trainable_tokens": 8,
+            "row_context_tokens_in_response": 58,
+            "every_action_input_equals_captured_prompt": true,
+            "branch_shrink_reasons": [],
+            "lineage": null,
+            "context_runs": []
+          },
+          {
+            "branch_id": "b1",
+            "turn_indices": [
+              3
+            ],
+            "turn_prompt_lengths": [
+              40
+            ],
+            "row_prompt_length": 40,
+            "row_token_length": 44,
+            "row_trainable_tokens": 4,
+            "row_context_tokens_in_response": 0,
+            "every_action_input_equals_captured_prompt": true,
+            "branch_shrink_reasons": [],
+            "lineage": null,
+            "context_runs": []
+          }
+        ],
+        "trained_capture_count_per_turn": {
+          "0": 1,
+          "1": 1,
+          "2": 1,
+          "3": 1
+        },
+        "session_shrink_reasons": [
+          "turn 3: prompt 40 < 0.6 x max_seen 163"
+        ]
+      },
+      "turn_coverage": {
+        "fork_threshold_tokens": 0,
+        "turns_generated": 4,
+        "turns_trained": 4,
+        "turns_empty_output": 0,
+        "turns_dropped_realign": 0,
+        "turns_dropped_merge": 0,
+        "training_rows": 2,
+        "row_tokens": [
+          166,
+          44
+        ],
+        "row_trainable_tokens": [
+          8,
+          4
+        ],
+        "trainable_tokens_total": 12,
+        "input_tokens_total": 210,
+        "input_tokens_excluding_last_row": 166,
+        "fork_events": []
+      },
+      "projection_lineages": [
+        null,
+        null
+      ],
+      "projection_token_sources": [
+        [
+          {
+            "start": 0,
+            "end": 100,
+            "source_type": "prompt_context"
+          },
+          {
+            "start": 100,
+            "end": 103,
+            "source_type": "sampled_assistant"
+          },
+          {
+            "start": 103,
+            "end": 160,
+            "source_type": "tool_result"
+          },
+          {
+            "start": 160,
+            "end": 162,
+            "source_type": "sampled_assistant"
+          },
+          {
+            "start": 162,
+            "end": 163,
+            "source_type": "tool_result"
+          },
+          {
+            "start": 163,
+            "end": 166,
+            "source_type": "sampled_assistant"
+          }
+        ],
+        [
+          {
+            "start": 0,
+            "end": 40,
+            "source_type": "prompt_context"
+          },
+          {
+            "start": 40,
+            "end": 44,
+            "source_type": "sampled_assistant"
+          }
+        ]
+      ],
+      "rollout_ids": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "rollout_mask_sums": [
+        12,
+        12,
+        12,
+        12
+      ],
+      "raw_reward": [
+        1.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "same_execution_and_member_within_each_member": true,
+      "output_token_training_occurrences": {
+        "5000": 1,
+        "5001": 1,
+        "5002": 1,
+        "5100": 1,
+        "5101": 1,
+        "5700": 1,
+        "5701": 1,
+        "5702": 1,
+        "5200": 1,
+        "5201": 1,
+        "5202": 1,
+        "5203": 1
+      },
+      "summary_replay_control": {
+        "5700": {
+          "token_occurrences": 2,
+          "training_occurrences": 1
+        },
+        "5701": {
+          "token_occurrences": 2,
+          "training_occurrences": 1
+        },
+        "5702": {
+          "token_occurrences": 2,
+          "training_occurrences": 1
+        }
+      }
+    }
+  ]
+}

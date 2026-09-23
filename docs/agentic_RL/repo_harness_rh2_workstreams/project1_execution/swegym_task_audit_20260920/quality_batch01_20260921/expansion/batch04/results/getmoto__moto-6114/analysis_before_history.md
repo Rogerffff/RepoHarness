@@ -4,7 +4,7 @@
 
 ## 证据范围与身份
 
-所有相对路径以权威根 . 为准：
+所有相对路径以权威根 ${REPO_ROOT} 为准：
 
 - P = runs/swegym_quality_batch04_20260921_v1/public/getmoto__moto-6114；S = P/base。
 - V = runs/swegym_quality_batch04_20260921_v1/private/getmoto__moto-6114。

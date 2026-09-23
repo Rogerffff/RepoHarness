@@ -6,7 +6,7 @@
 
 ## 原件与暴露范围
 
-所有路径相对 ROOT=`.`。
+所有路径相对 ROOT=`${REPO_ROOT}`。
 
 - H：`docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_1/records/python__mypy-11236.json`，由 `runs/swegym_quality_batch02_20260921_v2/history/python__mypy-11236/refs.json` 精确开放。本阶段读取全文。它是旧审查意见，不是运行结果。
 - Raw：`docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl:201`，只抽取 `instance_id=python__mypy-11236` 行。repo/base/version 对应 python/mypy、209a7193feb4bbfa38d09232b0a5a916e9d2e605、0.920；problem_statement 长1257字符，hints_text 长14157字符，均在封存后全文读到。没有访问其中网页、其它 issue 或 PR。

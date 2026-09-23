@@ -2,7 +2,7 @@
 
 撰写时间：2026-09-20 21:37 UTC / 2026-09-21 05:37 SGT；保存后的实际封存时刻以协调者哈希登记/mtime为准，本文不回写。仅静态读取文本、已有日志和stdlib文本统计；未运行/导入项目、安装、网络、Docker/SSH、模型、配额或CPU反例。
 
-路径：`ROOT=.`；`P=ROOT/runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408`；`V=.../private/getmoto__moto-6408`；`E=ROOT/runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6408`。源码行均相对P/base。先读本题封存public_read；后读本题全部test/gold/grading/validation及run_refs、environment_record和原件。**environment_record已经显示gold/noop摘要，不能称无结果暴露盲审。** 未读本题history/refs或旧调查、其它题结果、reviewer及本批聚合。复用协议和同一冻结baseline的机制知识，不把前题质量结论用作本题证据。
+路径：`ROOT=${REPO_ROOT}`；`P=ROOT/runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408`；`V=.../private/getmoto__moto-6408`；`E=ROOT/runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6408`。源码行均相对P/base。先读本题封存public_read；后读本题全部test/gold/grading/validation及run_refs、environment_record和原件。**environment_record已经显示gold/noop摘要，不能称无结果暴露盲审。** 未读本题history/refs或旧调查、其它题结果、reviewer及本批聚合。复用协议和同一冻结baseline的机制知识，不把前题质量结论用作本题证据。
 
 ## 暂定处置
 

@@ -6,7 +6,7 @@
 
 ## 原件与阶段定位
 
-`ROOT=.`；`I=ROOT/runs/swegym_quality_batch02_20260921_v2`，`P=I/public/iterative__dvc-1681`，`V=I/private/iterative__dvc-1681`，`B=P/base`，`O`为本报告目录。`R=ROOT/runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-1681`。
+`ROOT=${REPO_ROOT}`；`I=ROOT/runs/swegym_quality_batch02_20260921_v2`，`P=I/public/iterative__dvc-1681`，`V=I/private/iterative__dvc-1681`，`B=P/base`，`O`为本报告目录。`R=ROOT/runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-1681`。
 
 - `G=R/gold/eval_logs/evallog_replay-er19-dv1-iterativ_ed4fa666.eval.log`，SHA `343e328a61dc9df9083d8c835b3cc861561964c6bf5cdd77bd31923c8477d21f`。
 - `N=R/noop/eval_logs/evallog_replay-er19-dv1-iterativ_ffddd94c.eval.log`，SHA `da0ebba65221c3983393ac9b2d94a9e2a383b41615632ea7fa17b1b3115dc43f`。

@@ -2,7 +2,7 @@
 
 2026-09-21。独立 reviewer；本包第二题，已先封存 5839。未读本包任何主审/公开读者/旧质量审查结论。第一阶段仅静态原件阅读与元数据校验；没有运行项目、安装、Docker、SSH 或模型。下述新 CPU 实验全部未执行，初判落盘后不改。
 
-路径约定：`R=.`；`P=R/runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-9395`；`Q=同材料根/private/iterative__dvc-9395`；源码行号相对 P/base；`E=R/runs/env_recipe_repair_20260919/dvc_tail_v1/tasks/iterative__dvc-9395`。
+路径约定：`R=${REPO_ROOT}`；`P=R/runs/swegym_quality_batch01_20260921_v2/public/iterative__dvc-9395`；`Q=同材料根/private/iterative__dvc-9395`；源码行号相对 P/base；`E=R/runs/env_recipe_repair_20260919/dvc_tail_v1/tasks/iterative__dvc-9395`。
 
 ## 独立结论
 

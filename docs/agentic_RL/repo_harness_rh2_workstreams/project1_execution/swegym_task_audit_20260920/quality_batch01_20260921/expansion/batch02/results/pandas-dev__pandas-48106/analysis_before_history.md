@@ -1,6 +1,6 @@
 # pandas-dev__pandas-48106：历史开放前分析
 
-日期：2026-09-21。角色：B2 私有主审。ROOT=`.`；下述仓库路径均相对此 ROOT。只静态读取文件、JSON、原始日志；未执行 pandas、测试、安装、容器、联网或模型，未改源码、测试、gold、reward。未读取历史目录、旧质量结论、reviewer 或其他题内容。公开视角来自本题 `public_read.md`，并自行复读下述决定性源码。材料身份与全 blob 核验沿协调者已完成的记录，不重复全量检查。
+日期：2026-09-21。角色：B2 私有主审。ROOT=`${REPO_ROOT}`；下述仓库路径均相对此 ROOT。只静态读取文件、JSON、原始日志；未执行 pandas、测试、安装、容器、联网或模型，未改源码、测试、gold、reward。未读取历史目录、旧质量结论、reviewer 或其他题内容。公开视角来自本题 `public_read.md`，并自行复读下述决定性源码。材料身份与全 blob 核验沿协调者已完成的记录，不重复全量检查。
 
 方法入口实际为 `swegym_task_audit_20260920/quality_review_protocol_20260920.md`（派发中的无日期同名路径不存在），另读 investigator、record_template、actor_environment_card 及记录定义/40项清单。
 

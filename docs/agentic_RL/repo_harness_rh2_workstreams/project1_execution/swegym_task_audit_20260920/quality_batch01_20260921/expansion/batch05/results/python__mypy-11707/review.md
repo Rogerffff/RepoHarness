@@ -6,14 +6,14 @@
 
 路径约定：
 
-- ROOT=`.`
-- O=`docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/python__mypy-11707`
-- P=`runs/swegym_quality_batch05_20260921_v1/public/python__mypy-11707`
-- V=`runs/swegym_quality_batch05_20260921_v1/private/python__mypy-11707`
-- E=`runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11707`
-- A=`runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz`
-- CHECKLIST=`docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/environment_screening_checklist_20260915.md`
-- OLD=`docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_1/records/python__mypy-11707.json`
+- ROOT=`${REPO_ROOT}`
+- O=`${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/python__mypy-11707`
+- P=`${REPO_ROOT}/runs/swegym_quality_batch05_20260921_v1/public/python__mypy-11707`
+- V=`${REPO_ROOT}/runs/swegym_quality_batch05_20260921_v1/private/python__mypy-11707`
+- E=`${REPO_ROOT}/runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11707`
+- A=`${REPO_ROOT}/runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz`
+- CHECKLIST=`${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/environment_screening_checklist_20260915.md`
+- OLD=`${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_1/records/python__mypy-11707.json`
 
 ## 主审决定性主张的逐项核验
 

@@ -2,7 +2,7 @@
 
 2026-09-21；角色：B4 fresh reviewer，非主审。建议 `needs_review / static_review`，用途 `development_diagnostic`。核心问题可定位，gold 与普通成功路径一致；验收只查 ARN 查询结果数量，未查对象身份，存在有具体反例设计的漏测。尚未执行反例或真实 actor，不能据此宣称题目已准入或已经实证错误计分。
 
-**阅读与暴露边界。** 权威根为 `.`。未读本题 public_read、主审 analysis/card/record/delta、review/history/refs、root 聚合或其他题原件。读取公开题面与 base 后读取全部 test.patch、gold.patch、F2P/P2P 清单；也读取了获准的本题环境记录和既有 gold/noop 结果，因此是“独立于既有质量结论”的初判，**并非 result blind**。只用标准库读取/解析文本、AST、JSON 与归档成员；没有项目 import、pytest、安装、网络、Docker、SSH、GPU、模型调用，未修改题目、源码、测试或评分。
+**阅读与暴露边界。** 权威根为 `${REPO_ROOT}`。未读本题 public_read、主审 analysis/card/record/delta、review/history/refs、root 聚合或其他题原件。读取公开题面与 base 后读取全部 test.patch、gold.patch、F2P/P2P 清单；也读取了获准的本题环境记录和既有 gold/noop 结果，因此是“独立于既有质量结论”的初判，**并非 result blind**。只用标准库读取/解析文本、AST、JSON 与归档成员；没有项目 import、pytest、安装、网络、Docker、SSH、GPU、模型调用，未修改题目、源码、测试或评分。
 
 本稿内路径缩写：
 

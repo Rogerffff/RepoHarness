@@ -16,4 +16,4 @@
 
 **唯一优先下一步（未执行）：**实现保留语义与正确导入的Unpack候选，先核公开原例/窄回归，再对照base、gold和候选的真实RH2六例得分，区分合法等价输出误拒与候选自身错误。当前不改测试/规格，不新增文件排除。
 
-协调者收口：采纳[独立复核](review.md)的受限候选建议。六例reward只能解释固定输出与已查回归；等价输出须另核，不能直接用作正确性标签。原文件CLI走create_source_list，不要求运行时导入模块；原例base/gold检查并入上述唯一Unpack对照。无新运行，actor门仍未验。
+协调者收口：采纳[独立复核](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/results/python__mypy-16869/review.md)的受限候选建议。六例reward只能解释固定输出与已查回归；等价输出须另核，不能直接用作正确性标签。原文件CLI走create_source_list，不要求运行时导入模块；原例base/gold检查并入上述唯一Unpack对照。无新运行，actor门仍未验。

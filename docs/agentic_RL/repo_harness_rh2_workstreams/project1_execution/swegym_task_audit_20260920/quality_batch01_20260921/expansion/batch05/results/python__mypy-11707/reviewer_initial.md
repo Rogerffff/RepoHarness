@@ -4,11 +4,11 @@
 
 路径约定（均在唯一权威 workspace）：
 
-- ROOT=`.`
-- P=`runs/swegym_quality_batch05_20260921_v1/public/python__mypy-11707`
-- V=`runs/swegym_quality_batch05_20260921_v1/private/python__mypy-11707`
-- ENV=`runs/env_recipe_repair_20260919/install_wave1`
-- FROZEN=`runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz`
+- ROOT=`${REPO_ROOT}`
+- P=`${REPO_ROOT}/runs/swegym_quality_batch05_20260921_v1/public/python__mypy-11707`
+- V=`${REPO_ROOT}/runs/swegym_quality_batch05_20260921_v1/private/python__mypy-11707`
+- ENV=`${REPO_ROOT}/runs/env_recipe_repair_20260919/install_wave1`
+- FROZEN=`${REPO_ROOT}/runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz`
 
 ## 独立判断
 

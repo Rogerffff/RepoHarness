@@ -2,7 +2,7 @@
 
 2026-09-21，仍未放行/读取质量 history。`analysis_before_history.md` 已落盘后协调者提供本题原始配方位置；保留前稿不改，本补记只补齐其中“配方原件待提供”的缺项。
 
-读取 `R/runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10424/image.json:1–12`、同目录 `build.log:1–32`，以及协调者限定的 `install_wave1/run_install_wave1.py:23–58`，R 为 `.`。
+读取 `R/runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10424/image.json:1–12`、同目录 `build.log:1–32`，以及协调者限定的 `install_wave1/run_install_wave1.py:23–58`，R 为 `${REPO_ROOT}`。
 
 - image.json 的 base digest 与本题 public bundle 相同，derived image ID 与两份原始账本相同（`sha256:362a2da70c5f90f6b7909ed92a8a8bceb9d9377cf822c0b170f45bc48f3e2a08`）。完整 Dockerfile 只 COPY wheels 到 `/opt/rh2/build-wheels` 并设置 `PIP_NO_INDEX=1`、`PIP_FIND_LINKS`，不修改业务源码、测试选择器或 expected。
 - 本题固定 wheel 为 setuptools 75.1.0、wheel 0.44.0、packaging 24.1。共享构建脚本 32–47 要求每 pin 恰有一 wheel，构建后断言旧层保留；本题 build.log 22–28 记录实际 COPY 和该 image ID 输出。构建的 ARG 缺默认值 warning 不等于构建失败。

@@ -4,7 +4,7 @@
 
 ## 路径、材料身份与暴露
 
-- `R=.`。
+- `R=${REPO_ROOT}`。
 - `P=R/runs/swegym_quality_batch01_20260921_v2/public/pydantic__pydantic-8511`；`Q=R/runs/swegym_quality_batch01_20260921_v2/private/pydantic__pydantic-8511`。
 - `O=R/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/pydantic__pydantic-8511`。
 - `E=R/runs/env_recipe_repair_20260919/pydantic_v1/tasks/pydantic__pydantic-8511`。下文这些缩写均展开为上述绝对路径后定位；源码行号指 `P/base/`。

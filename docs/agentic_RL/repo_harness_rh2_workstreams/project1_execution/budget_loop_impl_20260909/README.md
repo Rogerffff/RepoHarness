@@ -1,6 +1,6 @@
 # 预算终止闭环实施计划（Owner Brief）：I02/I03/I04 + I14 + 依赖的 I05/I12
 
-日期：2026-09-09。作者：Claude（A 线）。状态（Claude 对 Codex 第三次窄复核的收尾，2026-09-09）：**R3 上轮两处错判、Z1 已由 Codex 关闭；A、B、D-1、R1、R2、R4、R5 沿用。owner 选定的停止合同 A 已落实（`7bed1bc0`）：只认期限前收到的归零确认，"投递早、确认晚"推断删除，kill 字段降为诊断。F1（物化清理吞掉致命首因）已修（`6cf41951`）：回收所有权先于物化完成交给外层 finally，Fatal 先通知（一次）再有界清理，跨期限清理不再覆盖首因。P2（血缘脚本缺 base 对象只报命令失败）登记阶段 backlog；"s1_compat 完全不变"文案已更正。状态"已实施待 Codex 针对性复核"，本机通过不等于批准。** 当前审查结论见 [第三次窄复核](combined_review_20260909/followup3/README.md)。基线 I01 `297f1f59`、miles 集成 `98a0272e4` 不变；下文历史实施记录以其标注时点为准，当前合同见批 C 与 §6，修订记录见 §11。
+日期：2026-09-09。作者：Claude（A 线）；Codex 当前审查状态（HEAD `92d165aa`）：**第四次窄复核通过。停止合同 A（`7bed1bc0`）已落实；F1 的 episode 期限取消覆盖致命首因问题（`6cf41951`）关闭，本批没有新增阻塞，可进入下一切片。** A/B/D-1/R1/R2/R3 上轮两处/R4/R5/Z1 沿用原关闭结论。主审 258 项定向测试、4 文件 ruff、16 案 F1／正例、8+7+2 案停止回放通过；运行级再次取消慢清理的共享限制经两案对照登记为 P2，不把本轮结论扩大为任意关停条件下清理都完整。见 [第四次窄复核](combined_review_20260909/followup4/README.md)。基线 I01 `297f1f59`、miles 集成 `98a0272e4` 不变；下文历史记录按标注时点阅读。
 
 ## 0. 一句话
 
@@ -38,14 +38,14 @@
 | 边界 | 异常 | 处置 | 变化 |
 |---|---|---|---|
 | materialize | 局部运行故障 typed 码：`rollout_image_inspect_failed` / `rollout_image_ref_inspect_failed` / `rollout_container_start_failed` / `rollout_base_untracked_snapshot_failed` / `rollout_workspace_write_failed` / `rollout_egress_network_failed` / `rollout_egress_relay_connect_failed` / `rollout_git_sanitize_failed` / `rollout_trusted_init_failed` / `baseline_head_unreadable` | ABORTED，显式映射 `("sandbox_failure","sandbox_crash")` | 处置不变；从 stage 兜底改为显式表 |
-| materialize | 成功 inspect 后内容不符：`rollout_image_digest_mismatch` / `rollout_testbed_lineage_failed` | §6 已确认 FATAL；已实施，物化清理与期限取消接缝待修 | ABORTED → FATAL |
+| materialize | 成功 inspect 后内容不符：`rollout_image_digest_mismatch` / `rollout_testbed_lineage_failed` | §6 已确认 FATAL；F1 的 episode 期限／清理接缝经第四次窄复核关闭 | ABORTED → FATAL |
 | harness_run | `DockerSandbox` 自己的操作失败（`exec(check=True)` 非零 / 超时 124、`write_file` 非零；覆盖装 CLI、useradd/chown、slime 的 ensure_agent_user / write_config / spawn）→ typed `SandboxExecError` | driver **只**把它包成 `harness_bootstrap_failed` → ABORTED `("harness_crash","harness_crash")`；其它 `RuntimeError`（我方 / vendored 代码不变量）原样上抛 → 未归因 fatal（Codex 批 A 审查 R1：局部失败类型建立在能证明来源的操作边界上，不按异常类改名） | 处置不变；归因 typed 化 |
 | harness_run | CLI 版本不符（原裸 `RuntimeError`） | typed `cc_version_mismatch`，**不入表** → FATAL（run 级配置错误，每个 attempt 都会失败） | **变：ABORTED → FATAL**（Codex R1 例子） |
 | harness_run | 非零退出（无预算事实） | 不变 | — |
 | assemble | 第二组 §1 点名的两个账实矛盾 `leaf_facts_length_mismatch` / `capture_record_unknown_in_backfill` | 从表中移除 → FATAL | **变：ABORTED → FATAL** |
 | assemble | 其余已映射 capture 族码 | 不变 | — |
 | identity → assemble 任一阶段 | **未映射的 `SlimeBindingError` 码**（含身份 span / tape / 版本事实矛盾、配置守卫码）、**任何非 typed 异常** | **FATAL** `pre_finalize_failure_unclassified`（复用 `_structural_contract_fatal`：failure_record、mark、`_notify_fatal_halt`、不产 Outcome、不返回 ABORTED；finally 清理照跑） | **T1 oracle 变**：裸 `RuntimeError` 当"harness 崩溃"的测试改用 typed 码；裸异常改为 FATAL 反例 |
-| identity / 任一阶段 | `fa_identity_incomplete_in_formal_mode`、finalize 前 `ValidationError`、`frozen_artifact_persist_failed`、`sampling_mask_tape_missing_in_assembly` | §6 已确认 FATAL，已实施；物化中的 ValidationError 同受清理接缝影响 | ABORTED → FATAL |
+| identity / 任一阶段 | `fa_identity_incomplete_in_formal_mode`、finalize 前 `ValidationError`、`frozen_artifact_persist_failed`、`sampling_mask_tape_missing_in_assembly` | §6 已确认 FATAL；物化中的 ValidationError 经同一回收 owner 收口，跨期限对照通过 | ABORTED → FATAL |
 | 任一阶段 | `asyncio.CancelledError` | 原样传播 | — |
 | s1_compat | 兼容范围 | 非 finalize 的 ValidationError 仍 ABORTED；共享的 digest、血缘、显式 mask 缺 tape 分支已升 FATAL，不能统称逐字不变 | 如实登记共享异常分支变化，不为文案新增兼容分支 |
 
@@ -97,7 +97,7 @@ I12：receipt 写失败 → 仍抛 `finalization_receipt_write_failed`（fatal�
 | 一次计数查询返回 >0 | 发起时刻之后仍有 agent 进程（发起时刻 ≥ 期限 ⇒ 期限后仍有进程）| 进程在执行（可能是僵尸；见遗留 §8）|
 | 最终归零 | 现在可以安全冻结（屏障 ① 的用途）| 期限前已停止 |
 
-**当前合同（owner 2026-09-09 在 Codex 本轮明确选择 A；待代码落实）：** 预算强停时，只认控制端不晚于期限收到的可信归零确认（`confirmed_at <= deadline`）。kill 在期限前返回但第一次归零确认晚于期限，不再推断 KEEP。HEAD `d4af9d9a` 的 `stop_proven_before` 仍保留该推断 True，须删除并同步测试 oracle；上方 v2.7 记录是历史实现，不能替代本决定。
+**当前合同（owner 2026-09-09 选择 A；`7bed1bc0` 已实现，第四次窄复核通过）：** 预算强停时，只认控制端不晚于期限收到的可信归零确认（`confirmed_at <= deadline`）。kill 在期限前返回但第一次归零确认晚于期限，不再推断 KEEP。旧 `d4af9d9a` 的推断 True 已删除，测试 oracle 已同步；上方 v2.6／v2.7 段为历史说明。
 
 **v2.8 已落实（`7bed1bc0`）：** `stop_proven_before` 删除推断型 True，"投递早、确认晚"记 `zero_confirmation_after_deadline` 并判未证明；`kill_delivered_at` / `pkill_status` / `kill_returned_before_deadline` 只作诊断；测试 oracle `confirmation_after_wall` 改 hard wall / DROP（T1）。上表四行处置全部由维护测试覆盖；Codex 八案回放副本把该案期望改为 DROP 后通过。
 
@@ -108,7 +108,7 @@ I12：receipt 写失败 → 仍抛 `finalization_receipt_write_failed`（fatal�
 5. `kill_delivered_at`、`pkill_status` 可留作诊断，不再支持推断 KEEP。实际早停但回包晚的样本也可能被丢弃，**频率未知**，不称“损失微小”。此处只明确停止确认边界，不调整 600 秒／25 次，也不要求专项 GPU 实验。
 6. Z1 的 `docker run --init` 与屏障 `barrier_stop` 观测已通过本轮复核：归类消费真实零确认时刻，不以整个指纹步骤完成时间代替。真实 profile 的本机 Docker 正常／强停两案均归零；目标 SWE 镜像与真实 CC 全链仍由后续诊断验证。
 
-本轮另有 §6 物化 Fatal 的 P1，最小验收及停止条件见 [第三次窄复核](combined_review_20260909/followup3/README.md)。已关闭项不重开。
+§6 的 F1 已经第四次窄复核关闭；共享 run 级再次取消慢清理的限制只登记后续项，详见 [第四次窄复核](combined_review_20260909/followup4/README.md)。已关闭项不重开。
 
 ### 批 D：I04 处置注入 + grading 侧 I14
 
@@ -147,9 +147,9 @@ I12：receipt 写失败 → 仍抛 `finalization_receipt_write_failed`（fatal�
 | `tests/adapters_miles/test_bringup_vendor_only.py` | 扩：`service.adapter.max_turns_per_sid == MAX_TURNS_PER_SID` 且 `_check_turn_cap` 已被 capture_wire 包装。 |
 | `tests/adapters_miles/test_w1b_group_admission.py::test_truncated_member_fail_fast_without_injection_and_neutral_with`、`tests/governance/test_w1b_admission_disposition.py` | **不改**：库层中立性保持；注入发生在 bringup。 |
 
-## 6. 六项 FATAL：已确认并实施，物化清理接缝待修
+## 6. 六项 FATAL：已确认实施，F1 聚焦复核通过
 
-这六项已按 owner 2026-09-09 确认实施（`f96e3596`），不再请求重复确认。下表保留修前处置与已批目标。Codex 第三次窄复核确认直接分流，但发现物化内部先清理再外抛，期限取消可吞掉 digest／血缘 FATAL；通知、receipt 与持有资源须一起修正，见 [F1](combined_review_20260909/followup3/README.md#3-f1--p1物化阶段清理吞掉致命首因随后按普通超时补采)。
+这六项已按 owner 2026-09-09 确认实施（`f96e3596`），不再请求重复确认。第三次窄复核发现的 F1 已在 `6cf41951` 修复：容器启动成功后把回收引用提前交给外层，物化异常直接传播，通知／receipt 先于清理。第四次窄复核用 digest、血缘、真实 ValidationError 的跨期限反例及必要对照确认通过。这里关闭的是 episode 期限问题；run 级再次取消慢清理的共享限制列 P2 后续项，见 [本轮证据及范围](combined_review_20260909/followup4/README.md)。
 
 **v2.8：F1 已修（`6cf41951`）。** `_materialize_rollout_sandbox(owner=prepared)`：容器一启动成功就把临时 `_MaterializedSandbox(handle=None)` 交给外层 finally（回收所有权先于物化完成），异常路径不再就地 await 清理 → 外层 except 先定首因、通知 halt（一次）→ receipt（`fatal_run_halt` + 原码）→ finally 有界清理（B5 顺序不变；期限取消不再覆盖首因，也不再丢失回收）；物化成功后完整形态覆盖临时形态；无 owner 的直接调用保持旧就地清理；取消路径的 `_reclaim_after_cancel` 保留（幂等）。三案维护测试（digest / 血缘 / 物化期真实 `ValidationError`；真实 0.25s 期限 + rm 门控跨期限）。
 
@@ -164,7 +164,7 @@ I12：receipt 写失败 → 仍抛 `finalization_receipt_write_failed`（fatal�
 | `rollout_image_digest_mismatch` | ABORTED（`test_rollout_image_digest_mismatch_aborts_and_cleans`） | FATAL | inspect 成功读取后 digest 与冻结事实不符 = 确定性环境完整性矛盾，补采只会选择性丢掉这类任务（Codex R1） |
 | `rollout_testbed_lineage_failed` | ABORTED | FATAL | 同上：血缘核对成功读取后不符 |
 
-六项已从 task-local 映射移除，测试 oracle 变化已登记 T1；当前不等于整个异常时序验收通过。**实施约束**（Codex 批 A 审查 §4）：digest / 血缘两项切换时不能只删条目——`generate.py:4170-4178` 把第二次镜像 inspect **失败**与真实 digest **不符**合并在同一码，血缘的 `evaluate_probe` 也同时接受命令失败与内容不符；须在抛出点拆成“已识别局部查询失败（仍 ABORTED）”与“事实矛盾（FATAL）”两个码，避免把临时查询故障一并升级。
+六项已从 task-local 映射移除，测试 oracle 变化已登记 T1；本批聚焦异常时序已通过，共享 run 级再次取消的限制单独跟踪。**实施约束**（Codex 批 A 审查 §4）：digest / 血缘两项切换时不能只删条目——`generate.py:4170-4178` 把第二次镜像 inspect **失败**与真实 digest **不符**合并在同一码，血缘的 `evaluate_probe` 也同时接受命令失败与内容不符；须在抛出点拆成“已识别局部查询失败（仍 ABORTED）”与“事实矛盾（FATAL）”两个码，避免把临时查询故障一并升级。
 
 ## 7. 验证方式与预期
 
@@ -185,11 +185,11 @@ uv run ruff check src tests
 
 ## 8. 分级清单
 
-- **T0 当前状态**：§6 六项已确认；停止合同 A 已于本轮由 owner 明确选择，待落实；没有再次请求这两项批准。
+- **T0 当前状态**：§6 六项已确认；停止合同 A 已由 owner 明确选择并通过第四次窄复核；没有再次请求这两项批准。
 - **T1**：(1) turn cap 的拒绝形状 429→403 + 不可重试头，并由 capture_wire 包装 vendored `_check_turn_cap` 记录预算事实；(2) 守卫在计数已达 N 时先等 inflight 归零再拒绝第 N+1 次；(3) `SWE_AGENT_TIME_BUDGET_SEC` 语义从 CC 运行预算改为资源占用起的 episode 预算，且对 materialize/引导强制生效并在到期取消时清理持有资源；(4) proxy deadline 中毒的归因从 `api_failure` 改为 `hard_wall_timeout`（单次 attempt timeout 不变）；(5) 未归因异常 → `pre_finalize_failure_unclassified` fatal（含四处测试 oracle）、两个点名账实矛盾码与 `cc_version_mismatch` → fatal，局部引导故障的 typed 边界 = `SandboxExecError`；(6) receipt 失败仍清理（三处 oracle），且 receipt / termination 事实两条尾部 fatal 在清理 await 前先通知 halt；(7) 启动注入 KEEP/DROP 策略并拒绝冲突覆盖；(8) `rh2.fa.execution_audit.v1` 新增可选键 `termination`、`episode_deadline`（`schema_id` 不变）；(9) 批 B 第 5 条的 `failure_category` 选值；(10) grading 有界收口后仍运行 / 无法确认 → fatal 并继续清理；(11) 批 B 审查后：`grading.manager.run_docker` 的取消回收提前到 B（Codex 建议）；`episode_deadline` 观测块新增 `harness_launch_attempted`，`harness_launched` 改为 False / None 两态；`create_attempt_network` 新增 `cancel_report` 参数与 `reclaim_network_after_cancel` 辅助；批 A 的两个驱动测试改用非 124 的本地失败形态（124 在期限决定 timeout 的步骤上按构造归期限）。
 - **v2.6 作者登记（R3 尚未获准，2026-09-09 Codex 更正）**：(12) `KILL_SCRIPT` 回显 pkill 状态，当前对 0/1 的含义解释有误，不能证明整个 scope 已停；(13) 强停重试 `EXECUTION_SCOPE_STOP_MAX_ATTEMPTS = 3` / `EXECUTION_SCOPE_STOP_RETRY_INTERVAL_SEC = 1s`，每次自己的 30s 预算；(14) `hit_by` 新值 `quiescence_barrier`；(15) 实际墙前停止但确认晚 → 保守 DROP，**属于待确认的准入合同，不是已批 T1**；(16) 停止事实测试 oracle 改为三态 + 证据码 + 真实处置函数，须待合同明确后修正。
 - **僵尸问题（v2.7 已实施 `--init`）**：采用 Codex 推荐的 B（`docker run --init`，PID 1 = docker-init 回收孤儿），profile digest 随之变化、启动前核对 `HostConfig.Init`；作者用真实 profile 参数真机两案（正常完成 / 强停）均归零。不采用 A（只改计数不回收槽位）。
-- **停止合同 A（本轮 owner 已批准，待实施）**：期限前 kill 回包不足以 KEEP；只认期限前收到的归零确认。依据见批 C 当前合同及 [本轮决策记录](combined_review_20260909/followup3/README.md#2-本轮已确认的停止合同-a)。
+- **停止合同 A（owner 已批准，已实现并通过复核）**：期限前 kill 回包不足以 KEEP；只认期限前收到的归零确认。依据见批 C 当前合同及 [本轮决策记录](combined_review_20260909/followup3/README.md#2-本轮已确认的停止合同-a)。
 - **T1（v2.7 追加）**：(17) `stop_proven_before` 收紧：缺观测 / 投递后仍见进程都不是证明（新证据码两枚），(B-残) 改名 `kill_delivered_before_deadline_late_zero_confirmation`；(18) 屏障 `clock` 参数 + `audit.termination["barrier_stop"]` + 归类只看屏障归零确认时刻；(19) `docker run --init`（profile digest 变化）+ `HostConfig.Init` 启动前核对；(20) §6 六项改 FATAL 的测试 oracle 翻转（`test_slime_generate` ×2 + 新增 2、`test_b5_finalization`、`test_manager_docker` ×2、`test_w1a_formal_chain`、`test_f2_2_capability` ×2、`test_w1b_termination_facts_producer`、`test_w1b_delivery_face`）；(21) 新 task-local 码 `rollout_image_digest_inspect_failed` / `rollout_testbed_probe_failed`（原 mismatch 码下的查询失败子情形拆出，不是新增剔除面）。
 - **T1（v2.8 追加）**：(22) 合同 A 的测试 oracle 翻转（`confirmation_after_wall` KEEP → hard wall；纯函数案 4）与证据码 `zero_confirmation_after_deadline`；(23) F1：`_MaterializedSandbox.handle` 允许 None（临时形态）、`_materialize_rollout_sandbox(owner=)`、异常路径不再就地 await 清理（无 owner 的直接调用保持旧行为）。
 - **P2 backlog（Codex 复核 3 §5）**：血缘脚本缺 base 对象只返回 128 → `rollout_testbed_probe_failed`/ABORTED；后续局部改 producer 显式报告对象存在 / 不存在，不把任意非零升 FATAL。
@@ -206,6 +206,8 @@ uv run ruff check src tests
 Codex 计划审查已完成（[codex_plan_review.md](codex_plan_review.md)），R1–R4 全部 accepted，本稿即其停止条件要求的写回。之后按四个小批各自的行为边界做聚焦审查；修复后只复核对应问题与必要回归。本批完成的判据：§7 命令全过、§8 T1 项在 `infra.md` 登记、§6 的确认结果落到映射表。
 
 ## 11. 修订记录
+
+- 2026-09-09 Codex 第四次窄复核（HEAD `92d165aa`）：停止合同 A 与 F1 通过，本批无新增阻塞。主审 258 项定向测试、4 文件 ruff、F1 16 案、停止 8+7+2 案、共享 run 级取消 2 案对照均完成；没有重跑作者全量 2190 项、没有真实 Docker／CC／GPU。F1 关闭限定 episode 期限，不把既有 run 级再次取消慢清理的问题隐藏；后者与缺 base producer 留 P2 后续项。只更新审查与状态文档，无源码／测试变更和提交推送。见 [本轮报告](combined_review_20260909/followup4/README.md)。
 
 - 2026-09-09 Codex 第三次窄复核（HEAD `d4af9d9a`）：R3 上轮两处错判与 Z1 关闭；§6 新 P1 为物化清理中的期限取消吞掉 Fatal、通知与资源收口失效。owner 本轮选择 A，只认期限前停止确认；此决定与现行代码的差异已明确。主审 255 项维护测试、15 文件 ruff、7+8 停止回放、15 项失败路径探针、独立停止 2 案／血缘 3 案与真实 Docker 2 案；没有改业务代码。六项确认、兼容范围及“频率未知”已同步。缺 base 的 producer 覆盖只记 P2 backlog。见 [本轮报告](combined_review_20260909/followup3/README.md)。
 

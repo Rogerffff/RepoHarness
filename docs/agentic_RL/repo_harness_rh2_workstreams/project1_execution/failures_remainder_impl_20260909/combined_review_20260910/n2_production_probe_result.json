@@ -1,0 +1,180 @@
+[
+  {
+    "case": "control",
+    "report_outcome": "resolved",
+    "report_detail": null,
+    "created": [
+      "rh2-grading-exec_1-fcf7b1c0"
+    ],
+    "removed": [
+      "rh2-grading-exec_1-fcf7b1c0"
+    ],
+    "simulated_live_after_close": [],
+    "records": [
+      {
+        "name": "rh2-grading-exec_1-fcf7b1c0",
+        "removed": true
+      }
+    ],
+    "manager_close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0
+    },
+    "cancelled": [],
+    "regrade_events": 0,
+    "queue_active": 0
+  },
+  {
+    "case": "two_run_reply_losses",
+    "report_outcome": "failed_to_grade",
+    "report_detail": "grading_container_start_failed:error during connect: Post \"http://%2Fvar%2Frun%2Fdocker.sock/v1.45/containers/create\": read: connection reset by peer; first_attempt: grading_container_start_failed:error during connect: Post \"http://%2Fvar%2Frun%2Fdocker.sock/v1.45/containers/create\": read: connection reset by peer",
+    "created": [
+      "rh2-grading-exec_1-a3de0134",
+      "rh2-grading-exec_1-1ccb85bc"
+    ],
+    "removed": [
+      "rh2-grading-exec_1-a3de0134"
+    ],
+    "simulated_live_after_close": [
+      "rh2-grading-exec_1-1ccb85bc"
+    ],
+    "records": [
+      {
+        "name": "rh2-grading-exec_1-a3de0134",
+        "removed": true
+      }
+    ],
+    "manager_close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 1
+    },
+    "cancelled": [],
+    "regrade_events": 1,
+    "queue_active": 0
+  },
+  {
+    "case": "run_deadline_reply_loss",
+    "report_outcome": "failed_to_grade",
+    "report_detail": "grading_deadline_exhausted:container_start",
+    "created": [
+      "rh2-grading-exec_1-4e66f7d8"
+    ],
+    "removed": [],
+    "simulated_live_after_close": [
+      "rh2-grading-exec_1-4e66f7d8"
+    ],
+    "records": [],
+    "manager_close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0
+    },
+    "cancelled": [
+      "container_start"
+    ],
+    "regrade_events": 0,
+    "queue_active": 0
+  },
+  {
+    "case": "digest_inspect_hang",
+    "elapsed_since_hang_seconds": 0.25,
+    "work_budget_seconds": 0.1,
+    "submitter_done": false,
+    "queue_active": 1,
+    "simulated_live_before_forced_close": [
+      "rh2-grading-exec_1-8918b067"
+    ],
+    "removed_before_forced_close": [],
+    "cancelled_before_forced_close": [],
+    "queue_active_after_submitter_cancel": 1,
+    "manager_close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0
+    },
+    "cancelled_after_forced_close": [
+      "image_ref_inspect"
+    ],
+    "simulated_live_after_forced_close": []
+  },
+  {
+    "case": "profile_init_hang",
+    "elapsed_since_hang_seconds": 0.25,
+    "work_budget_seconds": 0.1,
+    "submitter_done": false,
+    "queue_active": 1,
+    "simulated_live_before_forced_close": [
+      "rh2-grading-exec_1-629aff67"
+    ],
+    "removed_before_forced_close": [],
+    "cancelled_before_forced_close": [],
+    "queue_active_after_submitter_cancel": 1,
+    "manager_close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [
+        "rh2-grading-exec_1-629aff67"
+      ],
+      "containers_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0
+    },
+    "cancelled_after_forced_close": [
+      "grader_trusted_init"
+    ],
+    "simulated_live_after_forced_close": []
+  },
+  {
+    "case": "peak_read_after_deadline",
+    "elapsed_since_hang_seconds": 0.25,
+    "work_budget_seconds": 0.1,
+    "submitter_done": false,
+    "queue_active": 1,
+    "simulated_live_before_forced_close": [
+      "rh2-grading-exec_1-c757d404"
+    ],
+    "removed_before_forced_close": [],
+    "cancelled_before_forced_close": [
+      "env_reset"
+    ],
+    "queue_active_after_submitter_cancel": 1,
+    "manager_close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0
+    },
+    "cancelled_after_forced_close": [
+      "env_reset",
+      "peak_memory_after_deadline"
+    ],
+    "simulated_live_after_forced_close": []
+  },
+  {
+    "case": "fatal_while_pull",
+    "pull_calls": 2,
+    "state_when_new_container_started": [
+      {
+        "fatal_seen": 1,
+        "accepting": false,
+        "grading_open": false,
+        "queue_closing": false,
+        "manager_closed": false
+      }
+    ],
+    "report_outcome": "resolved",
+    "regrade_events": 1,
+    "shutdown_ok": false,
+    "shutdown_first_cause": "FatalExecutionInfrastructureError(probe_fatal): probe_fatal: 探针首因"
+  }
+]

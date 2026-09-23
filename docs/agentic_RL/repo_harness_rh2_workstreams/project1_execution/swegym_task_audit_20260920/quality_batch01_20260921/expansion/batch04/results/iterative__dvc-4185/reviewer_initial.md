@@ -1,6 +1,6 @@
 # iterative__dvc-4185 — B4 独立初判（封存稿）
 
-审查日期：2026-09-21。角色：fresh 独立 reviewer；本稿先于主审、public_read 和本题历史调查的读取。权威根目录为 `.`。
+审查日期：2026-09-21。角色：fresh 独立 reviewer；本稿先于主审、public_read 和本题历史调查的读取。权威根目录为 `${REPO_ROOT}`。
 
 **初判：`needs_review / static_review`，用途仅 `development_diagnostic`。** 假值丢失的根因、gold 的局部修复与 7 个 F2P 一致；但公开题面还有“未变更的 get_base_dv 被 commit 提示依赖变化”这一独立要求。源码显示 gold 没有改到该路径，现有评分也没有覆盖它。优先验证这一具体缺口，再决定探针范围，不能把历史 gold 满分解释为完整修复题面。
 

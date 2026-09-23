@@ -2,7 +2,7 @@
 
 结论：**同意主审的 `needs_review / static_review`，同意先校准公开契约与验收，再考虑原版通用 solver 探针。** 题面明确要求 `verbose=False` 开关；三个 F2P 要求默认调用产生新的日志，gold 仍不接受该参数。这是可直接定位的公开要求与验收冲突。历史 gold 满分证明当前评分接受了这份补丁，不能证明题面功能完成。本轮用途仍为 `development_diagnostic`，未批准训练或正式评估。另有一项日志措辞表述建议，及 actor、历史讨论、评分控制面等保留事项，均列于下文。
 
-路径约定：`ROOT=.`；`P=ROOT/runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-14177`；`Q` 为同根 `private/conan-io__conan-14177`；`B=P/base`；`O=ROOT/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-14177`；`R=ROOT/runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-3`。下列源码行号属于本题精确 base，patch 行号属于独立 patch 文件。
+路径约定：`ROOT=${REPO_ROOT}`；`P=ROOT/runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-14177`；`Q` 为同根 `private/conan-io__conan-14177`；`B=P/base`；`O=ROOT/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-14177`；`R=ROOT/runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-3`。下列源码行号属于本题精确 base，patch 行号属于独立 patch 文件。
 
 **阅读顺序与初判保全。** 第一阶段只按授权读取本题原件、方法卡与既有运行日志，写成 `O/reviewer_initial.md` 后通知协调者。初判为 15,910 字节，SHA256=`5c0ed319748e1a7bd096d5349a84cbc12d117c15e7bda9964ab042d2a6ae7fd0`；第二阶段写 review 前重新核对，字节及哈希未变。本阶段才读本题 `public_read.md`、`analysis_before_history.md`、`old_findings_delta.md`、`card.md`、`screening_record.json`，以及 delta 指向的两份本题旧记录。主审历史前稿 SHA256=`db3fcdd8e945df75d903986ce7755bc1698b63ce00d2b39007988aff9af070fc`，与 delta 记录相符；未修改主审产物。
 

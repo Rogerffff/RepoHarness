@@ -4,11 +4,11 @@
 
 ## 封存、暴露与证据层次
 
-日期：2026-09-21；reviewer：review_mypy_tail，未参与本题主审。[独立初判](reviewer_initial.md) 已先于本题及 12417 的其他角色结论完成；封存 SHA-256 为 `c0067e6bbeca4d7fe47c26647e416b9447e13c993b516544440b22b638ad0617`，本复核不修改其字节。协调者确认两份初判均已登记后，才统一开放第二阶段。
+日期：2026-09-21；reviewer：review_mypy_tail，未参与本题主审。[独立初判](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-16963/reviewer_initial.md) 已先于本题及 12417 的其他角色结论完成；封存 SHA-256 为 `c0067e6bbeca4d7fe47c26647e416b9447e13c993b516544440b22b638ad0617`，本复核不修改其字节。协调者确认两份初判均已登记后，才统一开放第二阶段。
 
-第一阶段原件阅读与摘要核对以初判逐项记录为准。本阶段另完整读取本题 [public_read](public_read.md)、[analysis_before_history](analysis_before_history.md)、[old_findings_delta](old_findings_delta.md)、[card](card.md)、[screening_record](screening_record.json)，及 history/refs（仅本地运行证据：`runs/swegym_quality_batch01_20260921_v2/history/python__mypy-16963/refs.json`） 唯一指向的 [历史原件](../../../../env_overnight_20260916/L1_mypy_2/records/python__mypy-16963.json)。没有沿 environment_record 的旧汇总链接扩展，也未读 10424、acceptance 或其他题历史原件。本上下文另见 12417 的公开/私有材料与获准第二阶段结论，不是盲 solver。
+第一阶段原件阅读与摘要核对以初判逐项记录为准。本阶段另完整读取本题 [public_read](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-16963/public_read.md)、[analysis_before_history](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-16963/analysis_before_history.md)、[old_findings_delta](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-16963/old_findings_delta.md)、[card](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-16963/card.md)、[screening_record](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-16963/screening_record.json)，及 [history/refs](${REPO_ROOT}/runs/swegym_quality_batch01_20260921_v2/history/python__mypy-16963/refs.json) 唯一指向的 [历史原件](${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_2/records/python__mypy-16963.json)。没有沿 environment_record 的旧汇总链接扩展，也未读 10424、acceptance 或其他题历史原件。本上下文另见 12417 的公开/私有材料与获准第二阶段结论，不是盲 solver。
 
-以下缩写均限定本题：`S=runs/swegym_quality_batch01_20260921_v2/public/python__mypy-16963/base`；`D=runs/swegym_quality_batch01_20260921_v2/private/python__mypy-16963`；`E=runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-16963`。源码行号均属于 base `f19b5d3a026319687dd81a5c7c976698bbe948a8`，不是 issue 自报 0.910 的源码。
+以下缩写均限定本题：`S=${REPO_ROOT}/runs/swegym_quality_batch01_20260921_v2/public/python__mypy-16963/base`；`D=${REPO_ROOT}/runs/swegym_quality_batch01_20260921_v2/private/python__mypy-16963`；`E=${REPO_ROOT}/runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-16963`。源码行号均属于 base `f19b5d3a026319687dd81a5c7c976698bbe948a8`，不是 issue 自报 0.910 的源码。
 
 “历史执行”仅指初判已直接核读的 E/gold、E/noop 原始 ledger/log；不是本 reviewer 重跑。“冻结参考”仅指 grading 列明并在该运行选中的项。所有候选实现、完整原例及边界预测均为静态推断。主审另报告的三条 ingest 第 210 行逐对象核对，本 reviewer 没有重新读这三条 ingest；我独立核过本地 bundle/patch/validation/账本与日志摘要，不把主审附加核对冒充自己的读取。
 
@@ -36,7 +36,7 @@
 
 ## Boat 与返回精度：静态证据可推进到哪里
 
-原题 完整复现与 flags（仅本地运行证据：`runs/swegym_quality_batch01_20260921_v2/public/python__mypy-16963/user_prompt.txt`） 包含 Car、Boat、Truck，并要求无错。其 NamedTuple 替换后另一个问题的说明不构成明确删除原 TypedDict Boat 目标。主审与我独立保留这一题意边界，未替题面缩窄需求。
+原题 [完整复现与 flags](${REPO_ROOT}/runs/swegym_quality_batch01_20260921_v2/public/python__mypy-16963/user_prompt.txt:38) 包含 Car、Boat、Truck，并要求无错。其 NamedTuple 替换后另一个问题的说明不构成明确删除原 TypedDict Boat 目标。主审与我独立保留这一题意边界，未替题面缩窄需求。
 
 本阶段再次检查源码，并补读 TypeType 规范化与 union call：S/mypy/types.py:2984–2999 将 Type[Union] 规范化为 Type 的 union；checkexpr.py:3210–3224 逐分支检查调用，再 union 返回值。因此“gold 只有两行，所以不可能处理任何 Union”不成立。Car/Truck 的显式注解路线有现有 Union/子类型代码支持，但仍需原例实测。
 
@@ -87,7 +87,7 @@ python -m mypy --config-file /dev/null --no-incremental --show-error-codes --war
 
 另外两份小例用相同 flags。记录逐行诊断、退出码、解释器/target version、mypy 导入路径与 base/gold 差分；保留本次运行目标版本，勿把隐藏 case 默认 target 3.8 当成 issue 或宿主版本。若需对比 issue 的 target 3.9，单列条件，不能与首轮输出混算。只有该对照才能将“Boat 残留”升为实测问题，或撤销静态预测。
 
-本题配方是 image.json（仅本地运行证据：`runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-16963/image.json`）：派生镜像 `sha256:ab5d4a172a64f9969e2264af18f6389a7c688cad8e7cdfb417c96be961771add`；pins 为 setuptools68.2.2、wheel0.43.0、typing-extensions4.8.0、mypy-extensions1.0.0、tomli2.0.1、types-psutil5.9.5.17、types-setuptools68.2.0.0、packaging23.2。历史宿主 Python3.12.4，实际 -nauto 启动 11 workers 执行一项；没有 OOM 证据。不得套用 12417 的 Python3.10/packaging24.1 条件。
+本题配方是 [image.json](${REPO_ROOT}/runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-16963/image.json)：派生镜像 `sha256:ab5d4a172a64f9969e2264af18f6389a7c688cad8e7cdfb417c96be961771add`；pins 为 setuptools68.2.2、wheel0.43.0、typing-extensions4.8.0、mypy-extensions1.0.0、tomli2.0.1、types-psutil5.9.5.17、types-setuptools68.2.0.0、packaging23.2。历史宿主 Python3.12.4，实际 -nauto 启动 11 workers 执行一项；没有 OOM 证据。不得套用 12417 的 Python3.10/packaging24.1 条件。
 
 完成原例对照后，若需验证覆盖问题，才追加保持 constructor 参数签名、仅令新增 callable.ret_type=Any 的受控候选，同时跑原例与冻结 F2P：公开返回目标失败而 F2P 仍过，方可记具体错误解获分。可选 key 与旧 Type/TD 对照、等价诊断路线保留为条件性后续，不以未执行方案要求立即改题。原题、gold、expected、文件规则均未修改；actor 基本开发验证仍待统一工作流完成。
 

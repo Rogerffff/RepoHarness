@@ -2,7 +2,7 @@
 
 2026-09-21，B2 pandas reviewer，第二阶段。**建议保留受限静态候选：`state=needs_review`、`scope=static_review`、`intended_use=development_diagnostic`。** 同意主审保留目标命名空间未定和导出对象身份漏检两个独立问题；历史 grader 的正常 0/1 对照不消除它们。下一步优先级与主审不同：本 reviewer 优先验证把单例值误导出为类型是否仍能得分，理由见末节。不是正式训练、评测或 actor 启用批准。
 
-`ROOT=.`，以下相对路径以 ROOT 为根；`I=runs/swegym_quality_batch02_20260921_v2`，`B=I/public/pandas-dev__pandas-53958/base`，`P=I/private/pandas-dev__pandas-53958`。第一阶段初判 SHA256 `37a082fbe5196cde0fcb56636246c63a68b6f77a6d362decc358874f5e7707b3` 保持不变。全部三题封存后才读本题五份主审/公开成品和 history/refs 所指唯一旧记录。仅静态文件、JSON、文本核对；未项目导入、测试、安装、容器、联网、模型，未改 source/test/gold/reward。
+`ROOT=${REPO_ROOT}`，以下相对路径以 ROOT 为根；`I=runs/swegym_quality_batch02_20260921_v2`，`B=I/public/pandas-dev__pandas-53958/base`，`P=I/private/pandas-dev__pandas-53958`。第一阶段初判 SHA256 `37a082fbe5196cde0fcb56636246c63a68b6f77a6d362decc358874f5e7707b3` 保持不变。全部三题封存后才读本题五份主审/公开成品和 history/refs 所指唯一旧记录。仅静态文件、JSON、文本核对；未项目导入、测试、安装、容器、联网、模型，未改 source/test/gold/reward。
 
 ## 主审决定性论据的独立核对
 

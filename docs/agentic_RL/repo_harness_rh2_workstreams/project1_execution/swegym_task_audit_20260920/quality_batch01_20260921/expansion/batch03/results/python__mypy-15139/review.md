@@ -8,7 +8,7 @@
 
 放行后新增阅读本题 `public_read.md`、主审 `analysis_before_history.md`、`old_findings_delta.md`、`card.md`，`screening_record.json` 的issues/disposition/usage/file_rules/revision_refs，并按I3/history/python__mypy-15139/refs.json读取唯一旧单题 `env_overnight_20260916/L1_mypy_2/records/python__mypy-15139.json`。只读该旧记录内部提及的其它ID/路径文字，没有沿它访问其它题或聚合。独立阶段已见环境原件自带gold/noop摘要，故不称无结果盲审。本轮仍完全静态。
 
-下述源码均在权威ROOT `runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15139/base`，运行路径与完整身份见封存初判。
+下述源码均在权威ROOT `${REPO_ROOT}/runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15139/base`，运行路径与完整身份见封存初判。
 
 ## 对决定性主张的核对
 

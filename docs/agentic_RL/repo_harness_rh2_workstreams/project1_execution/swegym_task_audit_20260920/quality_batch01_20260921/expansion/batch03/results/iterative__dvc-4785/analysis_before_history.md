@@ -2,7 +2,7 @@
 
 本稿先于本题 history/refs 与旧质量记录保存；此时未读它们、reviewer 或批次聚合。已读本题 public_read.md；观点仍逐项返回原件。本轮仅静态文件/历史 Git 导出文本及 stdlib 元数据分析，没有运行项目、测试、安装、容器或模型。以下命令均是建议。用途仅 development_diagnostic，状态 needs_review / static_review。
 
-路径简写：P=`runs/swegym_quality_batch03_20260921_v1/public/iterative__dvc-4785`，V=同层 `private/iterative__dvc-4785`，E=`runs/env_recipe_repair_20260919/dvc_install_v1c`；所有路径相对 `.`。源码行号指 P/base 的指定 base，日志行号指 E/tasks/iterative__dvc-4785 下原件。未以当前 ROOT/rh2 代替历史运行源码。
+路径简写：P=`runs/swegym_quality_batch03_20260921_v1/public/iterative__dvc-4785`，V=同层 `private/iterative__dvc-4785`，E=`runs/env_recipe_repair_20260919/dvc_install_v1c`；所有路径相对 `${REPO_ROOT}`。源码行号指 P/base 的指定 base，日志行号指 E/tasks/iterative__dvc-4785 下原件。未以当前 ROOT/rh2 代替历史运行源码。
 
 ## 暂定判断
 

@@ -5,7 +5,7 @@
 被 get_eval_tests_report 当作「缺席」计为失败。换机器/换依赖就可能让 gold 假判 RESOLVED_NO。
 本扫描是静态近似：只看装饰器文本，不判断条件是否成立。"""
 import json,re,subprocess,collections,os
-ROOT='.'
+ROOT='${REPO_ROOT}'
 S=f'{ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/s2'
 REPOS=f'{ROOT}/runs/env_overnight_20260916/repos'
 REPO_DIR={'Project-MONAI/MONAI':'MONAI','python/mypy':'mypy','getmoto/moto':'moto','iterative/dvc':'dvc',

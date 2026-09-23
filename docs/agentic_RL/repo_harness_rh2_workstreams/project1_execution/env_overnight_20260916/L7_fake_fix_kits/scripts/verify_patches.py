@@ -4,7 +4,7 @@
 运行完自动 `git worktree remove --force`。结果写 verify_report.json。"""
 import json, os, subprocess, sys, glob
 
-ROOT = "runs/env_overnight_20260916"
+ROOT = "${REPO_ROOT}/runs/env_overnight_20260916"
 KIT = os.path.join(ROOT, "L7_fake_fix_kits")
 PATCHES = os.path.join(KIT, "patches")
 WT = os.path.join(KIT, "wt")

@@ -10,7 +10,7 @@
 
 ## 原件与范围
 
-所有路径以 `.` 为根。`PUBLIC`=`runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-14177`，`B`=`PUBLIC/base`；`PRIVATE` 为同批 private/conan-io__conan-14177。`L`=`runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-3/ledger.jsonl`；同 worker 的日志 `N`=`eval_logs/evallog_replay-f216-baseline01-w_be9aeaa5.eval.log`、`G`=`eval_logs/evallog_replay-f216-baseline01-w_7731a01a.eval.log`。
+所有路径以 `${REPO_ROOT}` 为根。`PUBLIC`=`runs/swegym_quality_batch01_20260921_v2/public/conan-io__conan-14177`，`B`=`PUBLIC/base`；`PRIVATE` 为同批 private/conan-io__conan-14177。`L`=`runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-3/ledger.jsonl`；同 worker 的日志 `N`=`eval_logs/evallog_replay-f216-baseline01-w_be9aeaa5.eval.log`、`G`=`eval_logs/evallog_replay-f216-baseline01-w_7731a01a.eval.log`。
 
 已读：既有 reviewer 角色卡及三份共用方法；本题 user_prompt/public_bundle/base_identity/environment_brief；test.patch、gold.patch、grading、validation、run_refs、source_refs、environment_record。environment_record 仅作元数据，其引用的 scope_reconciliation 总结未打开。读完 B/conan/tools/files/patches.py、B/conans/test/unittests/tools/files/test_patches.py 全文；追读 patch 导出、ConanOutput:1-190、ConanFileMock/RedirectedTestOutput、redirect_output；相关 functional/tools/test_files.py:1-375、functional/test_third_party_patch_flow.py:1-190、unittests/tools/files_patch_test.py:1-155；README 测试说明、test/README、requirements 三文件、pytest.ini、conftest 相关入口。未审全仓，也未逐行分析日志中 `git show` 打印的无关 base 提交差异。
 

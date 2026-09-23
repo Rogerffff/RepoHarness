@@ -1,0 +1,77 @@
+{
+  "reviewed_head": "6b33efee38d2b0d785983e44136dccbdd9c49a60",
+  "source_and_maintenance_test_hashes_unchanged": {
+    "rh2/src/repoharness2/adapters/slime/bringup.py": true,
+    "rh2/src/repoharness2/adapters/slime/capture_wire.py": true,
+    "rh2/src/repoharness2/adapters/slime/execution_scope.py": true,
+    "rh2/src/repoharness2/adapters/slime/generate.py": true,
+    "rh2/src/repoharness2/grading/queue.py": true,
+    "rh2/tests/adapters/test_budget_deadline.py": true,
+    "rh2/tests/adapters/test_w3b_bringup_sandbox_runtime.py": true,
+    "rh2/tests/adapters/test_w5a_shutdown_chain.py": true,
+    "rh2/tests/grading/test_queue.py": true
+  },
+  "tracked_source_and_test_diff_empty": true,
+  "independent_maintenance_tests": {
+    "passed": 196,
+    "seconds": 58.57,
+    "exit_code": 0,
+    "log": "focused_tests.txt"
+  },
+  "changed_python_ruff": {
+    "files": 9,
+    "exit_code": 0,
+    "log": "ruff.txt"
+  },
+  "independent_probes": [
+    {
+      "name": "production_http",
+      "cases": 6,
+      "exit_code": 0,
+      "result": "production_route_root_rerun.json"
+    },
+    {
+      "name": "queue_service",
+      "cases": 5,
+      "exit_code": 0,
+      "result": "production_queue_root_rerun.json"
+    },
+    {
+      "name": "stop_evidence",
+      "cases": 7,
+      "exit_code": 0,
+      "includes_assertions_reproducing_current_bugs": true,
+      "result": "stop_evidence_root_rerun.jsonl"
+    },
+    {
+      "name": "old_stop_replay",
+      "cases": 8,
+      "exit_code": 0,
+      "result": "stop_cases_replay.jsonl"
+    },
+    {
+      "name": "real_docker_zombie_controls",
+      "cases": 4,
+      "exit_code": 0,
+      "result": "zombie_docker_result.json"
+    }
+  ],
+  "review_containers_remaining": 0,
+  "review_readme_local_links_resolve": true,
+  "not_performed": [
+    "作者全量 2181 项重跑",
+    "真实 Claude Code",
+    "外部模型 API",
+    "GPU 或参数更新",
+    "业务代码修改",
+    "维护测试修改",
+    "提交或推送"
+  ],
+  "verdict": {
+    "R1": "closed",
+    "R5-F1": "closed",
+    "R3": "open_P1",
+    "Z1": "confirmed_P1_before_real_formal_diagnostic",
+    "uncertain_stop_DROP_contract": "owner_not_yet_approved"
+  }
+}

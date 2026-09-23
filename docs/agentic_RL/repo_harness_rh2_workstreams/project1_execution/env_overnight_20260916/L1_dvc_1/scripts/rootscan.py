@@ -1,7 +1,7 @@
 # 216 题：gold 侧实跑失败里有多少能归因到"以 root 执行"（os.access / 权限位语义）
 import json,os,glob,re,collections
-L='runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
-S2='docs/agentic_RL/repo_harness_rh2_workstreams/s2'
+L='${REPO_ROOT}/runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
+S2='${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/s2'
 G={}
 for line in open(f'{S2}/ingest/grading_bundles_v2_v0.jsonl'):
     d=json.loads(line); G[d['instance_id']]=d

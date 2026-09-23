@@ -1,0 +1,125 @@
+{
+  "R1_lifecycle": {
+    "producer_test_seconds": 40.0,
+    "producer_container_start_seconds": 3.5,
+    "actual_test_summary": null,
+    "actual_queue_depth_reported_as_seconds": 7.0,
+    "reproduced": true
+  },
+  "R2_grading": {
+    "actual_producer_grading": {
+      "outcome": "resolved",
+      "failure_category": null,
+      "reward": 1.0,
+      "timings": null
+    },
+    "audit_has_grading": false,
+    "reported_attempts_without_grading": 1,
+    "reported_grading_summary": null,
+    "expected_attempts_without_grading": 0,
+    "reproduced": true
+  },
+  "R4_runs": {
+    "actual_steps": 1,
+    "expected_steps": 2,
+    "actual_accepted_tokens": 16.0,
+    "expected_accepted_tokens": 56,
+    "scoped_r2_accepted_tokens_positive_control": 40.0,
+    "scoped_r2_audits": 2,
+    "expected_scoped_r2_audits": 1,
+    "reproduced": true
+  },
+  "R3_fanout_reward": {
+    "producer_group_event": {
+      "event": "rollout_group",
+      "run_id": "r1",
+      "rollout_id": 0,
+      "group_index": 0,
+      "instance_id": "task-1",
+      "sample_indices": [
+        10,
+        10,
+        10,
+        11
+      ],
+      "leaf_ordinals": [
+        0,
+        1,
+        2,
+        0
+      ],
+      "rewards": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "behavior_versions": [
+        [
+          "5"
+        ],
+        [
+          "5"
+        ],
+        [
+          "5"
+        ],
+        [
+          "5"
+        ]
+      ],
+      "weight_version_spans": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "statuses": [
+        "completed",
+        "completed",
+        "completed",
+        "completed"
+      ],
+      "response_lengths": [
+        1,
+        1,
+        1,
+        1
+      ],
+      "routing_tape": [
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "actual_member_count": 4,
+    "expected_member_count": 2,
+    "actual_reward_mean": 0.25,
+    "expected_reward_mean": 0.5,
+    "actual_advantage_signs": {
+      "positive": 1,
+      "negative": 3,
+      "zero": 0,
+      "note": "reward − 组均值 的符号近似；真实优势在 trainer 内部，不导出"
+    },
+    "expected_positive_negative_zero": [
+      1,
+      1,
+      0
+    ],
+    "group_join_unmatched_positive_control": 0,
+    "single_row_member_count_positive_control": 2,
+    "reproduced": true
+  },
+  "R5_conditional_tp_copies": {
+    "condition": "TP=2, DP=2；当前默认 TP=1 不触发",
+    "actual_accepted_tokens": 20,
+    "expected_accepted_tokens": 10,
+    "actual_provenance_tokens": 32,
+    "expected_provenance_tokens": 16,
+    "actual_compared_action_tokens": 32,
+    "expected_compared_action_tokens": 16,
+    "reproduced": true
+  }
+}

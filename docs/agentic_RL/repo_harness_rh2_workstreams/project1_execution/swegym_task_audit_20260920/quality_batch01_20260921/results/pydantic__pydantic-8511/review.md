@@ -4,7 +4,7 @@
 
 **复核结论：同意主审 needs_review/static_review 和先做定点继承对照的优先级。** 核心公开要求与 F2P 对齐，受限的静态开发诊断候选资格可以保留；没有证据要求废弃原题。主审的 G1 是比普通漏测更具体的 gold 回归嫌疑，足以优先安排小型 CPU 确认，但目前没有运行反例，不能写为已确认 gold 错误。默认 repr=True 的漏测、Python 3.10+ 跳过及 Annotated 等扩展组合不应各自被当作阻断门。正式模型探针仍需实际 actor 条件验证；历史 grader reward1 不能替代它。
 
-路径沿初判：`R=.`，`P=R/runs/swegym_quality_batch01_20260921_v2/public/pydantic__pydantic-8511`，`D` 为同材料根 private 本题目录，`L=R/runs/env_recipe_repair_20260919/pydantic_v1/tasks/pydantic__pydantic-8511`，`O` 为本 review.md 所在输出目录。下列源码引用相对 `P/base/`。
+路径沿初判：`R=${REPO_ROOT}`，`P=R/runs/swegym_quality_batch01_20260921_v2/public/pydantic__pydantic-8511`，`D` 为同材料根 private 本题目录，`L=R/runs/env_recipe_repair_20260919/pydantic_v1/tasks/pydantic__pydantic-8511`，`O` 为本 review.md 所在输出目录。下列源码引用相对 `P/base/`。
 
 ## 初判独立发现与第二阶段新获内容
 

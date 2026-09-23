@@ -6,7 +6,7 @@
 
 ## 证据定位
 
-权威根 `ROOT=.`；`I=ROOT/runs/swegym_quality_batch02_20260921_v2`，`P=I/public/iterative__dvc-4166`，`V=I/private/iterative__dvc-4166`，`B=P/base`，`O`为本报告目录。`R=ROOT/runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4166`。
+权威根 `ROOT=${REPO_ROOT}`；`I=ROOT/runs/swegym_quality_batch02_20260921_v2`，`P=I/public/iterative__dvc-4166`，`V=I/private/iterative__dvc-4166`，`B=P/base`，`O`为本报告目录。`R=ROOT/runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4166`。
 
 - `G=R/gold/eval_logs/evallog_replay-er19-dv1-iterativ_ce06dec1.eval.log`，SHA `6a9ef5059178cc9503e8ff7172d9a68cf086f2f964af68e6e4193ef61f06ab7a`。
 - `N=R/noop/eval_logs/evallog_replay-er19-dv1-iterativ_de73b04d.eval.log`，SHA `7689ee1dc5e2000b10d0e4bbef1dfe546e5993de9381f578717c18f2299affd7`。

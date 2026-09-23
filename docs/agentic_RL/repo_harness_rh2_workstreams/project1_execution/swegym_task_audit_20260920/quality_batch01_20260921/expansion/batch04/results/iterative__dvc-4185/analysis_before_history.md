@@ -2,7 +2,7 @@
 
 2026-09-21。结论范围：静态阅读＋复核既有真实 RH2 原件；本轮未运行项目、测试、安装或新反例。暂定 `needs_review / static_review`，仅 `development_diagnostic`。主要疑点是 **gold 和参考测试只处理题面第二个症状；第一个“未变参数仍被 commit 提示已变”有明确未修调用链**。在 CPU 定点对照前不把参考满分解释为题意已完成，也不自动判废本题。
 
-路径约定：权威 ROOT=`.`；P=`runs/swegym_quality_batch04_20260921_v1/public/iterative__dvc-4185`；V=同批 `private/iterative__dvc-4185`；E=`runs/env_recipe_repair_20260919/dvc_install_v1c`；B=本文件目录。下列路径均相对 ROOT，`base/...` 相对 P，L 是文件行号。
+路径约定：权威 ROOT=`${REPO_ROOT}`；P=`runs/swegym_quality_batch04_20260921_v1/public/iterative__dvc-4185`；V=同批 `private/iterative__dvc-4185`；E=`runs/env_recipe_repair_20260919/dvc_install_v1c`；B=本文件目录。下列路径均相对 ROOT，`base/...` 相对 P，L 是文件行号。
 
 ## 材料身份与公开目标
 

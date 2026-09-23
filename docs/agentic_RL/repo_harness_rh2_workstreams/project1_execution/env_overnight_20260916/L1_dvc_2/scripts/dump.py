@@ -1,5 +1,5 @@
 import json,sys,os
-M='runs/env_overnight_20260916/L1_dvc_2/mat'
+M='${REPO_ROOT}/runs/env_overnight_20260916/L1_dvc_2/mat'
 tid=sys.argv[1]; what=sys.argv[2] if len(sys.argv)>2 else 'all'
 p=json.load(open(f'{M}/{tid}/public.json')); g=json.load(open(f'{M}/{tid}/grading.json'))
 v=json.load(open(f'{M}/{tid}/validation.json')); raw=json.load(open(f'{M}/{tid}/raw.json'))

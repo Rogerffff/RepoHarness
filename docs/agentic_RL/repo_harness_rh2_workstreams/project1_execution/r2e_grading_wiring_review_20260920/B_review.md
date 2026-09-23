@@ -30,7 +30,7 @@
 **B3 · 两处来源事实及一处实现细节。**
 
 - 已跟踪脏树是 **aiohttp 5 + pandas 7，共 12/48**；计划引用的 3+3 是扩展 24 题的旧局部计数。当前 `image_embedded` 没有 reset/clean，文件系统 baseline 能保留这些兼容补丁，无需新增恢复机制。
-- pillow `3ac9396e` 自定义 runner **会输出 pytest 形状的收尾**。本地 runner 原文（仅本地运行证据：`runs/env_overnight_20260916/M3/facts/3ac9396e8c99/r2e_tests/unittest_custom_runner.py`）及既有 gold 日志都有 `11 passed in …s`，不是仅仅“缺收尾不必然 None”；计划中的事实前提本身也应更正。仍按真实日志与既有 P-A 规则处理，不为 unittest 新增拒绝规则。
+- pillow `3ac9396e` 自定义 runner **会输出 pytest 形状的收尾**。本地 [runner 原文](../../../../../runs/env_overnight_20260916/M3/facts/3ac9396e8c99/r2e_tests/unittest_custom_runner.py)及既有 gold 日志都有 `11 passed in …s`，不是仅仅“缺收尾不必然 None”；计划中的事实前提本身也应更正。仍按真实日志与既有 P-A 规则处理，不为 unittest 新增拒绝规则。
 - R2E root setup 没有 `git apply test_patch`，复用 `grader_trusted_setup_attest_lines` 时，应在复制、重写与摘要核验**全部成功之后**提供该 helper 所需成功状态；它的 `RH2_APPLY_RC` 缺省为 1。这是 R-c 的接线细节，已有 fixture 验收可覆盖，无需新增用户决策。
 
 ## 3. 不建议扩大的范围与开工顺序

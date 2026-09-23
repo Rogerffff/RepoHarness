@@ -3,8 +3,8 @@
 命中比例高说明晚题的初始仓库里直接包含早题的参考解。
 用法：python3 crossleak.py （需要 prescan.py 先生成 prescan.json）"""
 import json,re,subprocess,os
-BASE='runs/env_overnight_20260916/L1_pydantic'
-R='runs/env_overnight_20260916/repos/pydantic'
+BASE='${REPO_ROOT}/runs/env_overnight_20260916/L1_pydantic'
+R='${REPO_ROOT}/runs/env_overnight_20260916/repos/pydantic'
 P=json.load(open(f'{BASE}/prescan.json'))
 def show(c,p):
     r=subprocess.run(['git','-C',R,'show',f'{c}:{p}'],capture_output=True,text=True)

@@ -6,7 +6,7 @@ adapters/slime/prepared_task_face.py:199-210）；manager.py:566-577 只把它�
 trusted_projection.py:18-20 已把它登记为「已知不足（登记不修）」。
 base 里没有 conftest.py 的仓库暴露面最干净：候选新建即生效，且不会与任何既有内容冲突。"""
 import json,subprocess,collections
-ROOT='.'
+ROOT='${REPO_ROOT}'
 S=f'{ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/s2'
 REPOS=f'{ROOT}/runs/env_overnight_20260916/repos'
 RD={'Project-MONAI/MONAI':'MONAI','python/mypy':'mypy','getmoto/moto':'moto','iterative/dvc':'dvc',

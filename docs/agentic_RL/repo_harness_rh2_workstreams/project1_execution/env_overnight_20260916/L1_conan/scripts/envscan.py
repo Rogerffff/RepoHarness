@@ -1,8 +1,8 @@
 # 静态扫描：目标测试文件（base + test_patch 新增段）里的工具链标记 / 网络 / 家目录缓存线索
 import json,os,re,subprocess
-R='runs/env_overnight_20260916/repos/conan'
-M='runs/env_overnight_20260916/L1_conan/mat'
-ASG=json.load(open('docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/ASSIGNMENT.json'))
+R='${REPO_ROOT}/runs/env_overnight_20260916/repos/conan'
+M='${REPO_ROOT}/runs/env_overnight_20260916/L1_conan/mat'
+ASG=json.load(open('${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/ASSIGNMENT.json'))
 def show(c,p):
     r=subprocess.run(['git','-C',R,'show',f'{c}:{p}'],capture_output=True,text=True)
     return r.stdout if r.returncode==0 else None
@@ -34,7 +34,7 @@ for tid in ASG['tasks']:
         m=[l.strip() for l in added.split('\n') if re.search(pat,l)]
         if m: rec['test_patch_added'][name]=m[:8]
     out[tid]=rec
-json.dump(out,open('runs/env_overnight_20260916/L1_conan/envscan.json','w'),ensure_ascii=False,indent=1)
+json.dump(out,open('${REPO_ROOT}/runs/env_overnight_20260916/L1_conan/envscan.json','w'),ensure_ascii=False,indent=1)
 for tid,rec in out.items():
     print(f'### {tid}')
     for f,v in rec['files'].items():

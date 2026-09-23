@@ -11,9 +11,9 @@ import json, os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PKG = os.path.dirname(HERE)  # .../L7_fake_fix_kits
-RUNS = "runs/env_overnight_20260916/L7_fake_fix_kits"
+RUNS = "${REPO_ROOT}/runs/env_overnight_20260916/L7_fake_fix_kits"
 PATCHES = os.path.join(RUNS, "patches")
-SIGNALS = ("docs/agentic_RL/repo_harness_rh2_workstreams"
+SIGNALS = ("${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams"
            "/project1_execution/env_overnight_20260916/task_signals_swegym.json")
 
 # expected ∈ full_score / not_full / unknown

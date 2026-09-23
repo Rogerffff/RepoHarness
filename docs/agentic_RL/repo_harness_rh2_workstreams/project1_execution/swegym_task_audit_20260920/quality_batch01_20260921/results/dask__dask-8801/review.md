@@ -71,24 +71,24 @@
 
 本题可继续留作开发诊断材料，暂不优先运行以原奖励解释成功率的模型探针。正、负候选对照比新的模型尝试更直接回答现有质量疑点。对照并不批准正式训练/评测使用，也不替代实际 actor 的消息、工作区导入、UID/PATH、解释器/临时文件权限和公开局部验证。相关工作是本地 CPU/临时 YAML 操作，无运行期外部服务、模型资产或 GPU 需求；actor 仍需实测，不能从 grader 通过填写为已验。
 
-[initial]: docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/dask__dask-8801/reviewer_initial.md
-[prompt]: runs/swegym_quality_batch01_20260921_v2/public/dask__dask-8801/user_prompt.txt:145
-[config]: runs/swegym_quality_batch01_20260921_v2/public/dask__dask-8801/base/dask/config.py:150
-[patch]: runs/swegym_quality_batch01_20260921_v2/private/dask__dask-8801/test.patch:1
-[permissions]: runs/swegym_quality_batch01_20260921_v2/public/dask__dask-8801/base/dask/tests/test_config.py:99
-[grading]: runs/swegym_quality_batch01_20260921_v2/private/dask__dask-8801/grading.json
-[gold]: runs/swegym_quality_batch01_20260921_v2/private/dask__dask-8801/gold.patch:1
-[analysis]: docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/dask__dask-8801/analysis_before_history.md
-[publicread]: docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/dask__dask-8801/public_read.md
-[card]: docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/dask__dask-8801/card.md
-[record]: docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/dask__dask-8801/screening_record.json
-[goldlog]: runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-2/eval_logs/evallog_replay-f216-baseline01-w_61ac6118.eval.log:1395
-[nooplog]: runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-2/eval_logs/evallog_replay-f216-baseline01-w_8d250d15.eval.log:1400
-[ledger]: runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-2/ledger.jsonl:9
-[scoring]: rh2/src/repoharness2/envpack/scoring.py:250
-[manager]: rh2/src/repoharness2/grading/manager.py:1864
-[oldl1]: docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dask/records/dask__dask-8801.json
-[oldpilot]: docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/dask_pilot/records/dask__dask-8801.json
-[probe]: docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/dask_pilot/probe_8801_wording.json
-[delta]: docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/dask__dask-8801/old_findings_delta.md
+[initial]: ${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/dask__dask-8801/reviewer_initial.md
+[prompt]: ${REPO_ROOT}/runs/swegym_quality_batch01_20260921_v2/public/dask__dask-8801/user_prompt.txt:145
+[config]: ${REPO_ROOT}/runs/swegym_quality_batch01_20260921_v2/public/dask__dask-8801/base/dask/config.py:150
+[patch]: ${REPO_ROOT}/runs/swegym_quality_batch01_20260921_v2/private/dask__dask-8801/test.patch:1
+[permissions]: ${REPO_ROOT}/runs/swegym_quality_batch01_20260921_v2/public/dask__dask-8801/base/dask/tests/test_config.py:99
+[grading]: ${REPO_ROOT}/runs/swegym_quality_batch01_20260921_v2/private/dask__dask-8801/grading.json
+[gold]: ${REPO_ROOT}/runs/swegym_quality_batch01_20260921_v2/private/dask__dask-8801/gold.patch:1
+[analysis]: ${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/dask__dask-8801/analysis_before_history.md
+[publicread]: ${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/dask__dask-8801/public_read.md
+[card]: ${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/dask__dask-8801/card.md
+[record]: ${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/dask__dask-8801/screening_record.json
+[goldlog]: ${REPO_ROOT}/runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-2/eval_logs/evallog_replay-f216-baseline01-w_61ac6118.eval.log:1395
+[nooplog]: ${REPO_ROOT}/runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-2/eval_logs/evallog_replay-f216-baseline01-w_8d250d15.eval.log:1400
+[ledger]: ${REPO_ROOT}/runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-2/ledger.jsonl:9
+[scoring]: ${REPO_ROOT}/rh2/src/repoharness2/envpack/scoring.py:250
+[manager]: ${REPO_ROOT}/rh2/src/repoharness2/grading/manager.py:1864
+[oldl1]: ${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dask/records/dask__dask-8801.json
+[oldpilot]: ${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/dask_pilot/records/dask__dask-8801.json
+[probe]: ${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/dask_pilot/probe_8801_wording.json
+[delta]: ${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/dask__dask-8801/old_findings_delta.md
 

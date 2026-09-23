@@ -1,10 +1,10 @@
 # 生成三份佐证 JSON：截断/转义不一致 ID、跨题污染对、test_patch 新建文件
 import json,os,re,subprocess,collections
 PKG='L1_modin_pandas'
-BASE=f'docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/{PKG}'
-M=f'runs/env_overnight_20260916/{PKG}/mat'
-REPOS='runs/env_overnight_20260916/repos'
-L='runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
+BASE=f'${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/{PKG}'
+M=f'${REPO_ROOT}/runs/env_overnight_20260916/{PKG}/mat'
+REPOS='${REPO_ROOT}/runs/env_overnight_20260916/repos'
+L='${REPO_ROOT}/runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
 ASG=json.load(open(f'{BASE}/ASSIGNMENT.json'))['tasks']
 pat=re.compile(r'^(PASSED|FAILED|ERROR|SKIPPED|XFAIL|XPASS)\s+(\S.*)$')
 
@@ -49,7 +49,7 @@ for t,r in trunc.items(): print(' ',t,r['summary'])
 # ---- 2. 跨题污染：某题 gold 是否已存在于同仓库另一题的 base ----
 def repo_of(tid): return 'pandas' if 'pandas-dev' in tid else 'modin'
 contam=[]
-wt=f'runs/env_overnight_20260916/{PKG}/wt'
+wt=f'${REPO_ROOT}/runs/env_overnight_20260916/{PKG}/wt'
 for a in ASG:
     va=json.load(open(f'{M}/{a}/validation.json'))
     patch=va.get('golden_patch') or ''

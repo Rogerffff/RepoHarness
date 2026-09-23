@@ -2,7 +2,7 @@
 动机：MONAI 的 eval_cmd 是 `pytest -rA` + 整份测试文件（不是 -k 选择器），与 mypy 完全不同；
 test_patch 里的非 test_* 文件会被恢复步骤覆盖，MONAI 的两个还会被当 pytest 目标直接传入。"""
 import json,re,os,collections
-ROOT='.'
+ROOT='${REPO_ROOT}'
 S=f'{ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/s2'
 E=f'{ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916'
 tb=json.load(open(f'{E}/tasks_by_repo.json'))

@@ -1,0 +1,236 @@
+{
+  "scope": "CPU 反例复放与报告运输；非完整 CLI / 设备验证",
+  "single_positive_shape": {
+    "data_source": {
+      "error": null,
+      "dataset_is_none": true
+    },
+    "events": [
+      {
+        "op": "update_weights_call_noop"
+      },
+      {
+        "op": "eval",
+        "args": [
+          0
+        ]
+      },
+      {
+        "op": "dispose",
+        "args": []
+      }
+    ],
+    "precheck": {
+      "enabled": true,
+      "eval_only": true,
+      "error": null
+    }
+  },
+  "non_fully_async": {
+    "precheck": {
+      "enabled": false,
+      "error": "eval_only_requires_fully_async_driver"
+    },
+    "raw_driver_events": [
+      {
+        "op": "update_weights_call_noop"
+      },
+      {
+        "op": "eval",
+        "args": [
+          0
+        ]
+      },
+      {
+        "op": "training_generate",
+        "args": [
+          0
+        ]
+      },
+      {
+        "op": "dispose",
+        "args": []
+      }
+    ]
+  },
+  "skip_initial_eval": {
+    "precheck": {
+      "enabled": false,
+      "error": "eval_only_initial_eval_skipped"
+    },
+    "raw_driver_events": [
+      {
+        "op": "update_weights_call_noop"
+      },
+      {
+        "op": "dispose",
+        "args": []
+      }
+    ]
+  },
+  "default_data_source_no_training_file": {
+    "precheck": {
+      "enabled": false,
+      "error": "eval_only_global_dataset_without_prompt_data"
+    },
+    "data_source": {
+      "error": "TypeError",
+      "message": "expected string or bytes-like object, got 'NoneType'"
+    }
+  },
+  "effective_engine_configs": [
+    {
+      "precheck": {
+        "enabled": true,
+        "eval_only": true,
+        "error": null
+      },
+      "configured_checkpoint": "/ckpt/hf_step_20",
+      "engine_model_path": "/ckpt/hf_step_20",
+      "effective_load_format": "auto",
+      "dummy_env": false,
+      "dummy_cli": false
+    },
+    {
+      "precheck": {
+        "enabled": false,
+        "error": "eval_only_dummy_weight_load"
+      },
+      "configured_checkpoint": "/ckpt/hf_step_20",
+      "engine_model_path": "/ckpt/hf_step_20",
+      "effective_load_format": "dummy",
+      "dummy_env": true,
+      "dummy_cli": false
+    },
+    {
+      "precheck": {
+        "enabled": false,
+        "error": "eval_only_dummy_weight_load"
+      },
+      "configured_checkpoint": "/ckpt/hf_step_20",
+      "engine_model_path": "/ckpt/hf_step_20",
+      "effective_load_format": "dummy",
+      "dummy_env": false,
+      "dummy_cli": true
+    },
+    {
+      "precheck": {
+        "enabled": true,
+        "eval_only": true,
+        "error": null
+      },
+      "configured_checkpoint": "/ckpt/hf_step_20",
+      "engine_model_path": "/ckpt/other",
+      "effective_load_format": "auto",
+      "dummy_env": false,
+      "dummy_cli": false,
+      "boundary": "首版不支持；预检不拦拓扑覆盖，GPU 清单 A3 逐引擎检查"
+    }
+  ],
+  "training_eval_dummy_unrestricted": {
+    "enabled": true,
+    "eval_only": false,
+    "error": null
+  },
+  "model_source_transport": {
+    "audit_payload_equal": true,
+    "payload_configured_hf_checkpoint": "/ckpt/hf_step_20",
+    "summary_configured_hf_checkpoints": [
+      "/ckpt/hf_step_20"
+    ],
+    "complete": true,
+    "binding": "unverified",
+    "run_report": {
+      "status": "collected",
+      "reasons": [],
+      "attempt_rows": 1,
+      "by_eval_point": {
+        "lr2": {
+          "eval_rollout_ids": [
+            0
+          ],
+          "datasets": [
+            "review"
+          ],
+          "attempts": 1,
+          "result_classes": {
+            "graded": 1
+          },
+          "resolved": 1,
+          "unavailable_reasons": {},
+          "grading_failure_categories": {},
+          "observed_weight_versions": [
+            "0"
+          ],
+          "target_weight_versions": [
+            "None"
+          ],
+          "configured_hf_checkpoints": [
+            "/ckpt/hf_step_20"
+          ]
+        }
+      },
+      "eval_point_events": [
+        {
+          "rollout_id": 0,
+          "dataset": "review",
+          "eval_point_ids": [
+            "lr2"
+          ],
+          "planned_source": "eval_package",
+          "planned_prompts": 1,
+          "host_loaded_prompts": 1,
+          "prompts_not_loaded": 0,
+          "planned": 1,
+          "received": 1,
+          "graded": 1,
+          "resolved": 1,
+          "unresolved": 0,
+          "reward_unavailable": 0,
+          "execution_missing": 0,
+          "payload_missing": 0,
+          "missing_members": [],
+          "duplicate_members": [],
+          "resolved_rate_graded": 1.0,
+          "resolved_rate_planned": 1.0,
+          "configured_hf_checkpoints": [
+            "/ckpt/hf_step_20"
+          ],
+          "target_weight_version": null,
+          "observed_weight_versions": [
+            "0"
+          ],
+          "binding": "unverified",
+          "complete": true
+        }
+      ],
+      "points_complete": 1,
+      "points_incomplete": 0,
+      "points_binding": {
+        "unverified": 1
+      },
+      "eval_windows": [],
+      "grading_regrades": {
+        "events": 0,
+        "by_op_and_category": {}
+      }
+    }
+  },
+  "source_sha256": {
+    "reference/miles-rh2-integration/miles/ray/rollout/eval_dispatch.py": "ee832795678b243c8d8b257b899814d8c0162a63f208a58d0b0dc4891b1e5bd1",
+    "reference/miles-rh2-integration/miles/utils/misc.py": "746dac7c19177aa8500e8fd62c9f946e233decae24396bdbfe0eb6591f5bb0aa",
+    "reference/miles-rh2-integration/train_async.py": "4df6f1c5745297fd6aca4ff16aa36096ac53bbd5276c0236cfe0179223a2a7e7",
+    "reference/miles-rh2-integration/miles/backends/sglang_utils/sglang_engine.py": "7e318cf019699c25854e2877e9c7b20804fe20f80475d5fc8cb8eccc60a62678",
+    "rh2/src/repoharness2/adapters/slime/eval_wiring.py": "7266676a0a6d586539900eeb83be3a8333d0788e0db9c5b53b1a124162965692",
+    "rh2/src/repoharness2/adapters/slime/generate.py": "38c2d064ac78123d41aebce2d5d6625888e54d9b9632c073088d537744bfa86c",
+    "rh2/src/repoharness2/adapters/slime/eval_result.py": "7f9003af198257b3a80b0c3d6e87f28d3afc5564db9f3110aaf98a2d4ea4a852",
+    "rh2/src/repoharness2/adapters/slime/bringup.py": "ef751029ba887adaafd39065113aadbc1f95375d036e15118b90693c216975fc",
+    "rh2/src/repoharness2/adapters/miles/eval_report.py": "bbd2e811379542e0f1fa5fa10d91333639b31565ff4fc022ebdddf35951b7fad",
+    "rh2/src/repoharness2/adapters/miles/run_report.py": "d021aa5484b554ae68162930fb642d40459047f44cce481a19d91023a0866a66",
+    "reference/miles-rh2-integration/miles/rollout/data_source.py": "25ec9f89651a3580ca774656ad3b73b76fdfbabb5438a978c3565d9eb043e70c",
+    "reference/miles-rh2-integration/miles/utils/data.py": "19708053b2e9ba1768550e562135e5d9ea4510de4fa53ffe673b754ab97ea712",
+    "rh2/tests/adapters_miles/test_i21_eval_only_driver.py": "c248da88ee7fdffc07524d17b5b7a9b236e6c1a490885a991ff41496d4e77ac0",
+    "rh2/tests/adapters/test_i21_eval_wiring.py": "32f6cd85e3056bae30a1e54409487bbec549e26a3e6d36863418511c387ac662"
+  },
+  "prior_probe_sha256": "8d0662f7347127d409a12b47ad4e53747e96b055423754def663e924f7b24b8a"
+}

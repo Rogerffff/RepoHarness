@@ -2,7 +2,7 @@
 
 2026-09-21；B2 private investigator。**needs_review / static_review；intended_use=development_diagnostic；additional_exclusions=[]；未知cost=null。** 本稿保存前未打开本题history、旧调查或environment_record.json。只作静态原件/源码阅读、必要JSON与hash/文本比较；没有运行项目代码、测试、安装、网络、Docker/SSH或付费模型，没有修改源码、原测试、gold、reward或共享镜像。
 
-所有路径相对权威 ROOT=.。U=`runs/swegym_quality_batch02_20260921_v2/public/python__mypy-11236`；P=对应private/python__mypy-11236；`base/`指U/base。W=`runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236`；G=W/gold，N=W/noop；Glog=`G/eval_logs/evallog_replay-er19-iw1-python___74f1c394.eval.log`，Nlog=`N/eval_logs/evallog_replay-er19-iw1-python___32643f4f.eval.log`。Ga/Na为两侧 `artifacts/swe_gym_lite--python__mypy-11236/a1-c1f6bc21`、`a1-3d8f796c`。已读本题封存public_read.md，其提出的上下文推断路线与本稿gold路线独立区分；未把公开读者读过的所有文件算成本主审已读。
+所有路径相对权威 ROOT=${REPO_ROOT}。U=`runs/swegym_quality_batch02_20260921_v2/public/python__mypy-11236`；P=对应private/python__mypy-11236；`base/`指U/base。W=`runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236`；G=W/gold，N=W/noop；Glog=`G/eval_logs/evallog_replay-er19-iw1-python___74f1c394.eval.log`，Nlog=`N/eval_logs/evallog_replay-er19-iw1-python___32643f4f.eval.log`。Ga/Na为两侧 `artifacts/swe_gym_lite--python__mypy-11236/a1-c1f6bc21`、`a1-3d8f796c`。已读本题封存public_read.md，其提出的上下文推断路线与本稿gold路线独立区分；未把公开读者读过的所有文件算成本主审已读。
 
 ## 1. 公开目标、保持项与可解性
 

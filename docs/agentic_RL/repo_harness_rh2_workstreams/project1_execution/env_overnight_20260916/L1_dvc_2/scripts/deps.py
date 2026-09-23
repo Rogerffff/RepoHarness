@@ -1,6 +1,6 @@
 import json,os,re,collections
-L='runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
-B='docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916'
+L='${REPO_ROOT}/runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
+B='${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916'
 ASG=json.load(open(f'{B}/L1_dvc_2/ASSIGNMENT.json'))
 # 全部 dvc 题（两包），用 tasks_by_repo
 byrepo=json.load(open(f'{B}/tasks_by_repo.json'))

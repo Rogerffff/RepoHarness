@@ -8,7 +8,7 @@
 import json, os, re, sys, hashlib
 from collections import Counter, defaultdict
 
-ROOT = "."
+ROOT = "${REPO_ROOT}"
 FACTS = os.path.join(ROOT, "runs/env_overnight_20260916/M3/facts")
 L4 = os.path.join(ROOT, "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L4_r2e")
 OUT = os.path.join(ROOT, "runs/env_overnight_20260916/M3/r2e_image_facts.json")

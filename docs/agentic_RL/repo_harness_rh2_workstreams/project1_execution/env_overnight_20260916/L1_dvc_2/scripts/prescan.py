@@ -1,7 +1,7 @@
 import json,os,re
-M='runs/env_overnight_20260916/L1_dvc_2/mat'
-L='runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
-BASE='docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916'
+M='${REPO_ROOT}/runs/env_overnight_20260916/L1_dvc_2/mat'
+L='${REPO_ROOT}/runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910'
+BASE='${REPO_ROOT}/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916'
 ASG=json.load(open(f'{BASE}/L1_dvc_2/ASSIGNMENT.json'))
 SIG={d['instance_id']:d for d in json.load(open(f'{BASE}/task_signals_swegym.json'))}
 def paths(diff):
@@ -38,7 +38,7 @@ for tid in ASG['tasks']:
                  'f2p_notpass':{x:sm[x] for x in f2p if x in sm and sm[x]!='PASSED'},
                  'p2p_notpass':{x:sm[x] for x in p2p if x in sm and sm[x]!='PASSED'}}
     out[tid]=r
-json.dump(out,open('runs/env_overnight_20260916/L1_dvc_2/prescan.json','w'),ensure_ascii=False,indent=1)
+json.dump(out,open('${REPO_ROOT}/runs/env_overnight_20260916/L1_dvc_2/prescan.json','w'),ensure_ascii=False,indent=1)
 for tid,r in out.items():
     print(f"### {tid} base={r['base_commit'][:10]} ver={r['version']} py={r['py']} ps={r['ps_chars']} hints={r['hints_chars']} f2p={r['n_f2p']} p2p={r['n_p2p']}")
     print(f"    eval_cmd={r['eval_cmd']}")

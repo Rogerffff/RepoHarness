@@ -1,0 +1,26 @@
+--- followup/stop_facts_probe.py
++++ followup2/stop_cases_replay.py
+@@ -56,6 +56,7 @@
+                 if code:
+                     # docker exec 本身失败：真实 _DockerWorkspace.run_bash 原样返回 ExecResult。
+                     return ExecResult(code, "", "Error response from daemon: exec failed")
++                return ExecResult(0, "pkill_status=0\n", "")
+             else:
+                 events.append({"kind": "barrier_kill", "at": now[0]})
+         if args[0] == "exec" and "ps -o pid= -u agent" in args[-1]:
+@@ -126,13 +127,13 @@
+         verdicts = [decide_member_disposition(AdmissionPayloadV1.model_validate(s.metadata["rh2_admission"]), policy=make_disposition_policy()) for s in delivered]
+         result["member_verdicts"] = [{"verdict": v.verdict, "reason": v.reason_code} for v in verdicts]
+         assert result["barrier_passed"] and result["grading_calls"] == 1
+-        expected = "hard_wall_timeout" if kind in ("kill_effect_after_wall", "kill_reply_late_but_effect_before_wall") else "max_turns_exhausted"
++        expected = "hard_wall_timeout" if kind in ("kill_effect_after_wall", "kill_reply_late_but_effect_before_wall", "kill_failed_alive_after_wall", "kill_ok_positive_count_after_wall") else "max_turns_exhausted"
+         assert result["termination"] == expected
+         expected_verdict = "DROP_GROUP" if expected == "hard_wall_timeout" else "KEEP_FULL"
+         assert all(v.verdict == expected_verdict for v in verdicts)
+         if "positive_count" in kind or kind == "kill_failed_alive_after_wall":
+             assert any(e["kind"] == "count" and e["query_started_at"] > 900 and e["residual"] > 0 for e in events)
+-            assert expected_verdict == "KEEP_FULL"  # 复现当前错误，不作为修后期望。
++            assert expected_verdict == "DROP_GROUP"  # 本轮：旧强反例应被丢弃。
+     assert result["cleaned"] and result["harness_tasks_settled"]
+     return result
+ 

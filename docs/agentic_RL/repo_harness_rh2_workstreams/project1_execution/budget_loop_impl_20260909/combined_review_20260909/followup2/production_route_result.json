@@ -1,0 +1,230 @@
+[
+  {
+    "case": "sequential_inflight",
+    "entry": "BringupService.__init__ → real HTTP thread",
+    "preconstruct_method": "_run_turn",
+    "route_handler": "rh2_run_turn",
+    "route_uses_current_method": true,
+    "route_bound_to_service_adapter": true,
+    "real_http_thread_constructed": true,
+    "vendor_module": "rh2/src/slime/agent/adapters/common.py",
+    "cap": 1,
+    "http_observation": {
+      "case": "sequential_inflight",
+      "early": {
+        "refusal_before_generation_release": false,
+        "capture_count": 0,
+        "tree_turns": 0,
+        "notified": [],
+        "engine_calls": 1
+      },
+      "statuses": [
+        200,
+        403
+      ],
+      "captures": 1,
+      "tree_turns": 1,
+      "capture_status": [
+        "complete"
+      ],
+      "poison": null,
+      "abort_requests": 0,
+      "budget": {
+        "cap": 1,
+        "accepted": 1,
+        "exhausted": true,
+        "refused_count": 1,
+        "refused_at_monotonic": 788110.290235875
+      },
+      "leaf_count": 1,
+      "leaf_response_tokens": [
+        [
+          7,
+          8
+        ]
+      ],
+      "capture_bindings": 1
+    },
+    "http_thread_stopped": true
+  },
+  {
+    "case": "split_body_race",
+    "entry": "BringupService.__init__ → real HTTP thread",
+    "preconstruct_method": "_run_turn",
+    "route_handler": "rh2_run_turn",
+    "route_uses_current_method": true,
+    "route_bound_to_service_adapter": true,
+    "real_http_thread_constructed": true,
+    "vendor_module": "rh2/src/slime/agent/adapters/common.py",
+    "cap": 1,
+    "http_observation": {
+      "case": "split_body_race",
+      "early": {
+        "refusal_before_generation_release": false,
+        "capture_count": 0,
+        "tree_turns": 0,
+        "notified": [],
+        "engine_calls": 1
+      },
+      "statuses": [
+        200,
+        403
+      ],
+      "captures": 1,
+      "tree_turns": 1,
+      "capture_status": [
+        "complete"
+      ],
+      "poison": null,
+      "abort_requests": 0,
+      "budget": {
+        "cap": 1,
+        "accepted": 1,
+        "exhausted": true,
+        "refused_count": 1,
+        "refused_at_monotonic": 788112.789569583
+      },
+      "leaf_count": 1,
+      "leaf_response_tokens": [
+        [
+          7,
+          8
+        ]
+      ],
+      "capture_bindings": 1
+    },
+    "http_thread_stopped": true
+  },
+  {
+    "case": "parallel_multiple_refusals",
+    "entry": "BringupService.__init__ → real HTTP thread",
+    "preconstruct_method": "_run_turn",
+    "route_handler": "rh2_run_turn",
+    "route_uses_current_method": true,
+    "route_bound_to_service_adapter": true,
+    "real_http_thread_constructed": true,
+    "vendor_module": "rh2/src/slime/agent/adapters/common.py",
+    "cap": 3,
+    "http_observation": {
+      "case": "parallel_multiple_refusals",
+      "early": {
+        "engine_calls": 3,
+        "admitted_inflight": 3,
+        "waiting_responses_done": 0,
+        "notices": 0
+      },
+      "statuses": [
+        200,
+        200,
+        200,
+        403,
+        403
+      ],
+      "captures": 3,
+      "capture_status": [
+        "complete",
+        "complete",
+        "complete"
+      ],
+      "poison": null,
+      "abort_requests": 0,
+      "notifications": [
+        {
+          "captures": 3,
+          "admitted_inflight": 0
+        },
+        {
+          "captures": 3,
+          "admitted_inflight": 0
+        }
+      ],
+      "late_error": "rh2_session_revoked",
+      "accepted": 3
+    },
+    "http_thread_stopped": true
+  },
+  {
+    "case": "waiter_cancelled",
+    "entry": "BringupService.__init__ → real HTTP thread",
+    "preconstruct_method": "_run_turn",
+    "route_handler": "rh2_run_turn",
+    "route_uses_current_method": true,
+    "route_bound_to_service_adapter": true,
+    "real_http_thread_constructed": true,
+    "vendor_module": "rh2/src/slime/agent/adapters/common.py",
+    "cap": 1,
+    "http_observation": {
+      "case": "waiter_cancelled",
+      "early": {
+        "engine_calls": 1,
+        "admitted_inflight": 1,
+        "waiting_responses_done": 0,
+        "notices": 0
+      },
+      "statuses": [
+        200,
+        403,
+        "CancelledError"
+      ],
+      "captures": 1,
+      "capture_status": [
+        "complete"
+      ],
+      "poison": null,
+      "abort_requests": 0,
+      "notifications": [
+        {
+          "captures": 1,
+          "admitted_inflight": 0
+        }
+      ],
+      "late_error": "rh2_session_revoked",
+      "accepted": 1
+    },
+    "http_thread_stopped": true
+  },
+  {
+    "case": "admitted_cancel_poison",
+    "entry": "BringupService.__init__ → real HTTP thread",
+    "preconstruct_method": "_run_turn",
+    "route_handler": "rh2_run_turn",
+    "route_uses_current_method": true,
+    "route_bound_to_service_adapter": true,
+    "real_http_thread_constructed": true,
+    "vendor_module": "rh2/src/slime/agent/adapters/common.py",
+    "cap": 1,
+    "http_observation": {
+      "case": "admitted_cancel_poison",
+      "early": {
+        "engine_calls": 1,
+        "admitted_inflight": 1,
+        "waiting_responses_done": 0,
+        "notices": 0
+      },
+      "statuses": [
+        "CancelledError",
+        403
+      ],
+      "captures": 0,
+      "capture_status": [],
+      "poison": "client_cancelled",
+      "abort_requests": 1,
+      "notifications": [
+        {
+          "captures": 0,
+          "admitted_inflight": 0
+        }
+      ],
+      "late_error": "rh2_session_poisoned",
+      "accepted": 1
+    },
+    "http_thread_stopped": true
+  },
+  {
+    "case": "startup_rejects_stale_route",
+    "preconstruct_method": "_run_turn",
+    "reason_code": "turn_budget_wire_not_bound_to_route",
+    "detail": "[turn_budget_wire_not_bound_to_route] POST /v1/messages 绑定的 handler 不是当前的 BaseAdapter._run_turn（路由持有 _run_turn，当前为 rh2_run_turn）——adapter 在 turn budget wire 安装之前构造，在飞交付保护不在生产路由上。",
+    "adapter_threads_started": 0
+  }
+]

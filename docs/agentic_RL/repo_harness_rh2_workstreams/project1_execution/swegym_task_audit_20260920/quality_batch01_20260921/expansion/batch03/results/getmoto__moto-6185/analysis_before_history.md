@@ -2,7 +2,7 @@
 
 封存时间：2026-09-20 21:32 UTC / 2026-09-21 05:32 SGT。本稿写入后不回写。仅静态文件、归档成员文本和已有日志阅读；未导入/执行项目，未运行测试、安装、网络、Docker/SSH、模型或配额操作。
 
-路径约定：`ROOT=.`；`P=ROOT/runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185`；`V=.../private/getmoto__moto-6185`；`E=ROOT/runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6185`。源码行号均为 `P/base`。先读了本题已封存 `public_read.md`，再读本题私有 test/gold/grading/validation、run_refs、environment_record 和原运行证据。**environment_record 已显示 gold/noop 结果摘要；本稿不宣称无结果暴露盲审。** 尚未读取 history/refs、旧质量调查、其他题结果、reviewer 或批次质量聚合。
+路径约定：`ROOT=${REPO_ROOT}`；`P=ROOT/runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185`；`V=.../private/getmoto__moto-6185`；`E=ROOT/runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6185`。源码行号均为 `P/base`。先读了本题已封存 `public_read.md`，再读本题私有 test/gold/grading/validation、run_refs、environment_record 和原运行证据。**environment_record 已显示 gold/noop 结果摘要；本稿不宣称无结果暴露盲审。** 尚未读取 history/refs、旧质量调查、其他题结果、reviewer 或批次质量聚合。
 
 ## 暂定处置
 

@@ -1,0 +1,38 @@
+........................................................................ [  8%]
+........................................................................ [ 17%]
+........................................................................ [ 26%]
+........................................................................ [ 35%]
+........................................................................ [ 44%]
+........................................................................ [ 53%]
+........................................................................ [ 62%]
+........................................................................ [ 71%]
+........................................................................ [ 80%]
+........................................................................ [ 89%]
+........................................................................ [ 98%]
+.........                                                                [100%]
+=============================== warnings summary ===============================
+tests/adapters_miles/test_faithful_dis_loss.py: 14 warnings
+  <repo>/rh2/.venv/lib/python3.12/site-packages/torch/jit/_script.py:365: DeprecationWarning: `torch.jit.script_method` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/adapters_miles/test_postrun_probes.py::test_checkpoint_probe_reads_real_dcp_metadata
+tests/adapters_miles/test_postrun_probes.py::test_checkpoint_probe_rejects_corrupt_metadata
+tests/adapters_miles/test_postrun_probes.py::test_audited_false_red_torch_load_cannot_read_dcp_metadata
+  <repo>/rh2/.venv/lib/python3.12/site-packages/torch/distributed/checkpoint/utils.py:485: UserWarning: torch.distributed is disabled, unavailable or uninitialized, assuming the intent is to save in a single process.
+    return func(*args, **kwargs)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================= slowest 12 durations =============================
+3.82s call     tests/adapters_miles/test_b1_real_bootstrap.py::test_b1_lazy_bootstrap_reaches_rh2_generate
+2.32s call     tests/adapters_miles/test_w9_cp_faithful_dis.py::test_cp2_gloo_two_process_group_reconstructs_cp1
+2.03s call     tests/adapters_miles/test_w3b_formal_entry_vertical.py::test_fa_formal_entry_rejects_sandbox_verification_failure
+1.98s call     tests/adapters_miles/test_w1b_prepared_chain.py::test_w1b_bringup_builds_prepared_face_without_v1_loader
+1.98s call     tests/adapters_miles/test_w3b_formal_entry_vertical.py::test_fa_formal_entry_rejects_missing_prepared_artifacts_typed
+1.98s call     tests/adapters_miles/test_w3b_formal_entry_vertical.py::test_fa_formal_startup_accepts_complete_two_engine_worker_set
+1.96s call     tests/adapters_miles/test_w3b_formal_entry_vertical.py::test_fa_formal_entry_assembles_prepared_face_grader_profile_relay_and_orchestrator
+1.95s call     tests/adapters_miles/test_w5a_bringup_close_vendor.py::test_w5a_real_bringup_service_close_stops_thread_and_rejects_get
+1.93s call     tests/adapters_miles/test_w3b_formal_entry_vertical.py::test_fa_formal_startup_rejects_router_worker_count_mismatch[too_many]
+1.88s call     tests/adapters_miles/test_bringup_vendor_only.py::test_bringup_service_constructs_with_vendor_only
+1.88s call     tests/adapters_miles/test_w9_cp_faithful_dis.py::test_cp2_gloo_cross_rank_target_violation_raises_on_both_ranks
+1.83s call     tests/adapters_miles/test_w3b_formal_entry_vertical.py::test_fa_formal_entry_rejects_version_contract_off_and_rolls_back_relay
+801 passed, 17 warnings in 51.44s

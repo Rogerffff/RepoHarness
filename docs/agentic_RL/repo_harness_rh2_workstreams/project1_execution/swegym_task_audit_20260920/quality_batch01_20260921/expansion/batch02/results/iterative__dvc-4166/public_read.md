@@ -2,7 +2,7 @@
 
 本记录只依据角色卡和本题公开包，未运行项目代码、测试、安装、容器或网络请求。所有源码路径均相对本题 `PUBLIC_DIR`，不是继承的工作目录。静态证据足以定位调查入口；实际复现结果、依赖版本和运行条件仍未核验。
 
-- `PUBLIC_DIR`：`runs/swegym_quality_batch02_20260921_v2/public/iterative__dvc-4166/`
+- `PUBLIC_DIR`：`${REPO_ROOT}/runs/swegym_quality_batch02_20260921_v2/public/iterative__dvc-4166/`
 - 基线：`520e01f11305aba1994df354adef86e6d90180de`，见 `public_bundle.json:1`、`base_identity.json:3`。
 - 角色卡：`docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/roles/public_reader.md`。
 

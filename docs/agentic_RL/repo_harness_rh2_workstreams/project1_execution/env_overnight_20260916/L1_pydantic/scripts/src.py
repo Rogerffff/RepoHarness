@@ -1,6 +1,6 @@
 import json,sys,subprocess
-M='runs/env_overnight_20260916/L1_pydantic/mat'
-R='runs/env_overnight_20260916/repos/pydantic'
+M='${REPO_ROOT}/runs/env_overnight_20260916/L1_pydantic/mat'
+R='${REPO_ROOT}/runs/env_overnight_20260916/repos/pydantic'
 tid,path=sys.argv[1],sys.argv[2]
 c=json.load(open(f'{M}/{tid}/grading.json'))['base_commit']
 r=subprocess.run(['git','-C',R,'show',f'{c}:{path}'],capture_output=True,text=True)

@@ -4,7 +4,7 @@
 
 ## 1. 独立性、封存与新增暴露
 
-权威 ROOT=`.`；P=`ROOT/runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184`，Q=同根 `private/python__mypy-15184`。以下源码位置均相对 P/base。本题独立初判 SHA256=`084c547c99c12965f306d90a211e1010f25e25da28c8ebe44f1fe5495c998cd0`；三题整包经协调者于 `2026-09-20T21:51:03.612934Z` 正式封存并放行后，才读取本题 public_read、主审 analysis_before_history、old_findings_delta、card、screening_record 的有关字段，及 I3/history/python__mypy-15184/refs.json 唯一指向的旧单题记录 `docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_2/records/python__mypy-15184.json`。协调者此前转述主审的协议等价分歧，此时已获结论阅读许可。
+权威 ROOT=`${REPO_ROOT}`；P=`ROOT/runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184`，Q=同根 `private/python__mypy-15184`。以下源码位置均相对 P/base。本题独立初判 SHA256=`084c547c99c12965f306d90a211e1010f25e25da28c8ebe44f1fe5495c998cd0`；三题整包经协调者于 `2026-09-20T21:51:03.612934Z` 正式封存并放行后，才读取本题 public_read、主审 analysis_before_history、old_findings_delta、card、screening_record 的有关字段，及 I3/history/python__mypy-15184/refs.json 唯一指向的旧单题记录 `docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_2/records/python__mypy-15184.json`。协调者此前转述主审的协议等价分歧，此时已获结论阅读许可。
 
 独立阶段已见 environment_record 自带 gold/noop 摘要，也已查其精确日志，不能称为结果盲审。未看其它题结果或旧聚合；旧记录内提及其它任务的名字/全仓概括仅作暴露登记，未沿链接读取、未据其裁定关系。封存初判保持原字节。本轮只读文本/JSON/归档成员与计算文件哈希；未执行项目、测试、安装、网络、容器或模型。
 
