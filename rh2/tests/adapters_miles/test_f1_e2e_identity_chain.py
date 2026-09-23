@@ -202,7 +202,7 @@ def _make_fake_docker():
                     )
                     return ExecResult(0, probe, "")
                 if "cat > " in script:
-                    path = script.rsplit("cat > ", 1)[1].strip()
+                    path = script.rsplit("cat > ", 1)[1].strip().split()[0]  # #1：`cat > <path> && chmod 0644 <path>` 只取路径
                     self.writes[path] = input_bytes or b""
                     return ExecResult(0, "", "")
                 return ExecResult(0, "", "")
@@ -420,7 +420,7 @@ async def test_f1_e2e_live_turn_facts_survive_duplicate_tokens(world):
             name = "mock_harness"
 
             async def run(self, sandbox, *, workdir, session_id, adapter_url,
-                          time_budget_sec, prompt):
+                          time_budget_sec, prompt, env_injections=None, harness_log_dir=None):
                 await adapter_holder["adapter"].run_all_turns()
                 return 0
 

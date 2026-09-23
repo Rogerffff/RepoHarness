@@ -81,7 +81,7 @@ class _RecordingDriver:
         self.adapter_ref = adapter_ref
         self.prompts: list[str] = []
 
-    async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt):
+    async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt, env_injections=None, harness_log_dir=None):
         self.prompts.append(prompt)
         await self.adapter_ref["adapter"].run_all_turns()
         return 0

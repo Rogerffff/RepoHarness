@@ -396,7 +396,7 @@ class AgentViewDriver:
     root_grep: str = ""
     inspect_env_labels: str = ""
 
-    async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt):
+    async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt, env_injections=None, harness_log_dir=None):
         self.prompts.append(prompt)
         self.adapter_urls.append(adapter_url)
         script = (

@@ -166,6 +166,8 @@ def rollout_probe_output(profile: RolloutSandboxProfile, *, head: str, overrides
     lines += [f"NET_forbidden_{i}=DENIED" for i in range(len(profile.forbidden_probe_targets))]
     lines += ["NET_upstream_direct=DENIED", "DNS_EXTERNAL=DENIED", "HOME_WRITABLE=1", "TMP_WRITABLE=1"]
     lines += [f"HIDDEN_{i}=DENIED:{p}" for i, p in enumerate(profile.hidden_paths)]
+    # #1：激活文件（/rh2/bash_env，root 0644）对 agent 可读、不可写
+    lines += ["ACTIVATION_READ=1", "ACTIVATION_WRITE=DENIED", "ACTIVATION_STAT=0:644"]
     lines += [
         "GIT_REMOTES=0", "GIT_REFLOG=0", "GIT_REFS=1", f"GIT_HEAD={head}", "WORKDIR_WRITABLE=1",
         f"WORKDIR_OWNER={profile.agent_uid}", "RH2_PROBE_OK=1",
@@ -221,6 +223,7 @@ class ProfileFakeState:
     grader_profile: GraderSandboxProfile | None = None
     # 旋钮
     probe_overrides: dict[str, str] = field(default_factory=dict)  # rollout 探针事实覆盖（负例）
+    activation_overrides: dict[str, str] = field(default_factory=dict)  # #1 激活探针事实覆盖（负例）
     grader_probe_overrides: dict[str, str] = field(default_factory=dict)
     sanitize_overrides: dict[str, str] = field(default_factory=dict)
     inspect_mutator: Callable[[dict[str, Any]], None] | None = None  # 篡改合成 inspect（负例）
@@ -343,6 +346,17 @@ class ProfileFakeState:
         if sid == "rollout-prelaunch-probe":
             assert rp is not None
             return ExecResult(0, rollout_probe_output(rp, head=self.head, overrides=self.probe_overrides), "")
+        if sid == "rollout-activation-probe":
+            # #1：首次 census 之后的激活 / 解释器核对（默认 = swe_gym_lite 的 conda testbed 已激活）
+            facts = {
+                "ACT_EXPECTED_PREFIX": "/opt/miniconda3/envs/testbed",
+                "ACT_PYTHON": "/opt/miniconda3/envs/testbed/bin/python",
+                "ACT_SYS_EXECUTABLE": "/opt/miniconda3/envs/testbed/bin/python",
+                "ACT_SYS_PREFIX": "/opt/miniconda3/envs/testbed",
+                "ACT_CONDA_DEFAULT_ENV": "testbed", "ACT_VIRTUAL_ENV": "", "RH2_ACTIVATION_PROBE_OK": "1",
+            }
+            facts.update(self.activation_overrides)
+            return ExecResult(0, "".join(f"{k}={v}\n" for k, v in facts.items()), "")
         if sid == "rollout-extended-probe":
             return ExecResult(0, "ESCALATE_SU=DENIED\nESCALATE_SETUID=DENIED\nSU_SETUID_BIT=1\nPROXY_HTTP=HTTP/1.1 404 Not Found\nRH2_PROBE_OK=1\n", "")
         if sid == "grader-trusted-init":

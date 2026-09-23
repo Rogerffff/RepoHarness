@@ -47,10 +47,11 @@ from __future__ import annotations
 import asyncio
 import dataclasses
 import hashlib
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from datetime import datetime, timezone
 import json
 import os
+import shlex
 import re
 import time
 from pathlib import Path
@@ -369,6 +370,56 @@ _INJECTED_EVAL_SCRIPT = (
 # ---------------------------------------------------------------------------
 
 
+def claude_code_launch_env(
+    *, adapter_url: str, session_id: str, model_label: str, env_injections: Mapping[str, str],
+) -> dict[str, str]:
+    """CC 子进程环境（与 vendored ClaudeCodeHarness.launch_and_wait 同形）：ANTHROPIC_* + static_env +
+    进程级 SLIME_AGENT_CC_EXTRA_ENVS（训练守卫等 run 级常量）+ **逐 execution 注入**（最高优先级）。"""
+
+    from slime.agent.harness import ClaudeCodeHarness
+
+    env = {
+        "ANTHROPIC_BASE_URL": adapter_url,
+        "ANTHROPIC_AUTH_TOKEN": session_id,
+        "ANTHROPIC_MODEL": model_label,
+        **ClaudeCodeHarness.static_env,
+    }
+    extra_envs = os.environ.get(ClaudeCodeHarness.extra_envs_env, "").strip()
+    if extra_envs:
+        env.update(json.loads(extra_envs))
+    env.update({str(k): str(v) for k, v in env_injections.items()})
+    return env
+
+
+async def launch_claude_code(
+    sb, *, workdir: str, session_id: str, adapter_url: str, prompt: str, time_budget_sec: int,
+    env_injections: Mapping[str, str],
+) -> int:
+    """RS 层的 Claude Code 启动（#1）：按 vendored `BaseHarness.run` 的三步——ensure agent user → write config →
+    launch——但启动这一步自己拼命令与环境，把逐 execution 的 env 显式带上。**无状态**：不子类化单例
+    `ClaudeCodeHarness`，只借用它的常量与无状态的 `write_config`。#2 提交把 `run_agent` 换成宿主收集。"""
+
+    from slime.agent import sandbox as _sandbox
+    from slime.agent.harness import ClaudeCodeHarness
+    from slime.agent.harness import common as _harness_common
+
+    harness = ClaudeCodeHarness()  # 单例，只读其常量 / 无状态方法
+    await _sandbox.ensure_agent_user(sb, workdir)
+    ctx = _harness_common.HarnessContext(workdir=workdir, session_id=session_id, adapter_url=adapter_url)
+    await harness.write_config(sb, ctx)
+    cmd = f"/usr/local/bin/claude -p {shlex.quote(prompt)} {harness.launch_flags}"
+    extra_args = os.environ.get(harness.extra_args_env, "").strip()
+    if extra_args:
+        cmd = f"{cmd} {extra_args}"
+    env = claude_code_launch_env(
+        adapter_url=ctx.adapter_url, session_id=ctx.session_id, model_label=ctx.model_label,
+        env_injections=env_injections,
+    )
+    return await _harness_common.run_agent(
+        sb, workdir=ctx.workdir, start_cmd=cmd, env=env, time_budget_sec=time_budget_sec,
+    )
+
+
 class ClaudeCodeDriver:
     """HarnessDriver 形状 -> slime ClaudeCodeHarness。
 
@@ -429,8 +480,10 @@ class ClaudeCodeDriver:
                 self.cc_version_evidence_error = f"{type(exc).__name__}: {exc}"
                 print(f"[rh2-bringup] cc_version evidence 落盘失败：{exc}")
 
-    async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt):
-        from slime.agent.harness import ClaudeCodeHarness
+    async def run(
+        self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt,
+        env_injections=None, harness_log_dir=None,
+    ):
         from slime.agent.sandbox import EXIT_TIME_BUDGET_EXCEEDED
 
         from repoharness2.adapters.slime.docker_sandbox import SandboxExecError
@@ -502,14 +555,18 @@ class ClaudeCodeDriver:
                 return budget_exhausted("after_bootstrap")
             facts["bootstrap_seconds"] = round(time.monotonic() - started, 3)
             facts["remaining_at_launch"] = round(left, 3)
-            facts["launch_attempted"] = True  # 进入上游 run：ensure user / write config / spawn 仍在其中
-            return await ClaudeCodeHarness().run(
+            facts["launch_attempted"] = True  # 进入启动函数：ensure user / write config / spawn 仍在其中
+            # #1（基座探针修复）：逐 execution 的环境（BASH_ENV / HOME）由编排层经 HarnessLaunchSpec 传到这里，
+            # 再显式交给无状态启动函数——不经过进程级 SLIME_AGENT_CC_EXTRA_ENVS，也不放进任何单例实例
+            # （vendored BaseHarness 是 SingletonABCMeta 单例，Codex SR1）。harness_log_dir 在 #2 提交启用。
+            return await launch_claude_code(
                 sb,
                 workdir=workdir,
                 session_id=session_id,
                 adapter_url=adapter_url,
                 time_budget_sec=max(1, int(left)),
                 prompt=prompt,
+                env_injections=dict(env_injections or {}),
             )
         except asyncio.CancelledError:
             # 编排的绝对期限 / 关停在引导途中取消——尚未尝试启动就如实回填（编排据此跳过 drain / 装配）；
@@ -613,7 +670,10 @@ class SimpleLoopDriver:
 
     name = "mock_harness"
 
-    async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt):
+    async def run(
+        self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt,
+        env_injections=None, harness_log_dir=None,
+    ):
         sb = DockerSandbox(sandbox.container_name)
         await sb.write_file("/rh2/simple_agent.py", _SIMPLE_AGENT_PY)
         await sb.write_file("/rh2/prompt.txt", prompt)
@@ -624,6 +684,7 @@ class SimpleLoopDriver:
                 "RH2_SESSION_ID": session_id,
                 "RH2_WORKDIR": workdir,
                 "RH2_PROMPT_PATH": "/rh2/prompt.txt",
+                **{str(k): str(v) for k, v in (env_injections or {}).items()},  # #1：同一运输通道
             },
             timeout=time_budget_sec,
         )
@@ -762,6 +823,8 @@ def write_execution_audit_record(proxy, audit, path, *, model_name: str | None =
         "egress_network": getattr(audit, "egress_network", None),
         "sandbox_setup": getattr(audit, "sandbox_setup", None),
         "prelaunch_check": getattr(audit, "prelaunch_check", None),
+        # #1：首次 census 之后、harness 启动之前的解释器 / 激活核对（agent 身份、CC 同形 env）
+        "activation_check": getattr(audit, "activation_check", None),
         "session_plane_drained": audit.session_plane_drained,
         "runtime_quiescence_confirmed": audit.runtime_quiescence_confirmed,
         "capture_closed": audit.capture_closed,

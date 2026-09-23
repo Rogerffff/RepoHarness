@@ -223,7 +223,7 @@ class MockDriver:
     def __init__(self, adapter_ref: dict[str, MockAdapter]):
         self.adapter_ref = adapter_ref
 
-    async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt) -> int:
+    async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt, env_injections=None, harness_log_dir=None) -> int:
         await self.adapter_ref["adapter"].run_all_turns()
         return 0
 

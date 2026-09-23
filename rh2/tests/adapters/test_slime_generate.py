@@ -159,7 +159,8 @@ class FakeRolloutDocker:
                 )
                 return ExecResult(0, probe, "")
             if "cat > " in script:
-                path = script.rsplit("cat > ", 1)[1].strip()
+                # `cat > <path>` 之后可能跟 `&& chmod 0644 <path>`（#1：激活文件 root 只读）——只取路径
+                path = script.rsplit("cat > ", 1)[1].strip().split()[0]
                 self.writes[path] = input_bytes or b""
                 return ExecResult(0, "", "")
             return ExecResult(0, "", "")
@@ -294,9 +295,13 @@ class MockClaudeCodeDriver:
         adapter_url: str,
         time_budget_sec: int,
         prompt: str,
+        env_injections: dict[str, str] | None = None,  # #1：逐 execution 注入（编排必传）
+        harness_log_dir: str | None = None,  # #2：宿主侧日志目录
     ) -> int:
         self.calls.append(
             {
+                "env_injections": dict(env_injections or {}),
+                "harness_log_dir": harness_log_dir,
                 "workdir": workdir,
                 "session_id": session_id,
                 "adapter_url": adapter_url,
@@ -709,7 +714,7 @@ async def test_normal_path_a5_eight_questions_as_schema_instances():
     kinds = [m.bundle_kind for m in handle.mounted_bundles]  # Q6 bundle 挂载
     assert kinds == ["public_task_bundle"]
     assert chain.docker.writes["/rh2/public_task_bundle.json"].startswith(b'{"instance_id"')
-    assert "/root/.rh2_bash_env" in chain.docker.writes  # envpack 的 agent 环境注入
+    assert "/rh2/bash_env" in chain.docker.writes  # envpack 的 agent 环境注入（#1：root 0644，agent 可读不可写）
 
     assert lease.cleanup.owner == "slime_adapter"  # Q7 清理责任
     assert "remove_container" in lease.cleanup.steps

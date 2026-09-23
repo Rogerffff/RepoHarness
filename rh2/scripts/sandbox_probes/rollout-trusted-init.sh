@@ -16,5 +16,6 @@ if [ "$ACT" != "$UIDV" ]; then echo "RH2_INIT_ERROR=uid_mismatch:$ACT"; exit 3; 
 mkdir -p "/home/$U"
 git config --system --add safe.directory '*' >/dev/null 2>&1 || true
 chown -R 54321:54321 /home/agent || { echo "RH2_INIT_ERROR=chown_home_failed"; exit 4; }
+install -d -m 0755 -o 0 -g 0 /rh2 || { echo "RH2_INIT_ERROR=rh2_dir_failed"; exit 4; }
 if [ -d /testbed ]; then chown -R 54321:54321 /testbed || { echo "RH2_INIT_ERROR=chown_workdir_failed"; exit 4; }; echo "WORKDIR_PRESENT=1"; else echo "WORKDIR_PRESENT=0"; fi
 echo "RH2_INIT_OK=1"; echo "AGENT_UID=$ACT"

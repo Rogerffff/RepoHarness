@@ -41,14 +41,22 @@ from repoharness2.contracts._base import GitSha, Sha256Digest, StrictModel
 # agent 环境注入（与血缘校验同属"物化"动作，绑定层原样写进容器）
 # ---------------------------------------------------------------------------
 
-# 容器内 agent bash 环境激活文件的落点与内容：配合 harness env 的
-# BASH_ENV=/root/.rh2_bash_env，让 agent 每次非交互 bash 都先激活 conda testbed
-# 环境（否则 `python`/`pip` 落在 miniconda base 环境，测试根本跑不起来）。
-BASH_ENV_PATH = "/root/.rh2_bash_env"
+# 容器内 agent bash 环境激活文件的落点与内容：配合 harness env 的 BASH_ENV=<该路径>，让 agent 每次
+# 非交互 bash 都先 source 它（否则 `python`/`pip` 落在 miniconda base 环境，测试根本跑不起来）。
+#
+# 基座探针修复 #1（2026-09-23）：此前路径是 /root/.rh2_bash_env——而 rollout profile 把 /root 列为隐藏
+# 路径、启动前探针要求它对 agent DENIED，agent 根本读不到；且 BASH_ENV 只写进 HarnessLaunchSpec、没有
+# 运输到 CC 子进程。现在：文件放 /rh2/（root:root 0755）下，root:root 0644——agent 可读、不可写、不能
+# 删除或替换；启动前探针核对"可读 + 不可写"；env 经 launch spec → driver 按 execution 注入。
+# 内容按来源：下面的常量是 swe_gym_lite（conda testbed）的形态，写进 RolloutTaskSpec.env_activation_script
+# 的默认值；R2E 等其它来源由各自的任务面给出（.venv 激活），不把 conda 激活成功当作所有来源的前提。
+BASH_ENV_PATH = "/rh2/bash_env"
 BASH_ENV_CONTENT = (
     "# rh2 envpack: 让 agent 的每个非交互 bash 命令都运行在 conda testbed 环境里。\n"
     "source /opt/miniconda3/bin/activate testbed 2>/dev/null || true\n"
 )
+# 激活后 agent 应当得到的解释器前缀（启动前解释器核对用；同样按来源，R2E 为 /testbed/.venv）。
+SWE_GYM_INTERPRETER_PREFIX = "/opt/miniconda3/envs/testbed"
 
 _GIT_SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 

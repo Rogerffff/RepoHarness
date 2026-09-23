@@ -1027,6 +1027,8 @@ def rollout_trusted_init_script(profile: RolloutSandboxProfile) -> str:
         _marker("rollout-trusted-init") + "set -u\n" + body
         + f"chown -R {profile.agent_uid}:{profile.agent_uid} /home/{shlex.quote(profile.agent_user)} "
         "|| { echo \"RH2_INIT_ERROR=chown_home_failed\"; exit 4; }\n"
+        # #1：root 提供给 agent 的只读材料（激活文件等）的目录：root:root 0755，agent 不能在其中创建 / 删除
+        "install -d -m 0755 -o 0 -g 0 /rh2 || { echo \"RH2_INIT_ERROR=rh2_dir_failed\"; exit 4; }\n"
         f"if [ -d {wd} ]; then chown -R {profile.agent_uid}:{profile.agent_uid} {wd} "
         "|| { echo \"RH2_INIT_ERROR=chown_workdir_failed\"; exit 4; }; echo \"WORKDIR_PRESENT=1\"; "
         "else echo \"WORKDIR_PRESENT=0\"; fi\n"
@@ -1112,14 +1114,24 @@ def _forbidden_probe_lines(targets: Sequence[tuple[str, int]], extra: Sequence[t
     return "\n".join(lines) + "\n"
 
 
-def rollout_prelaunch_probe_script(profile: RolloutSandboxProfile) -> str:
-    """以 agent 身份运行的启动前探针（每个 rollout 容器一次，~150ms）。"""
+def rollout_prelaunch_probe_script(profile: RolloutSandboxProfile, *, activation_file: str | None = None) -> str:
+    """以 agent 身份运行的启动前探针（每个 rollout 容器一次，~150ms）。
+
+    基座探针修复 #1（2026-09-23）：`activation_file` 给出时追加两项无副作用检查——agent 对激活文件
+    **可读**（`[ -r ]`）且**不可写**（追加零字节 `: >>` 必须失败；即使意外可写也不改内容）。"""
 
     hidden = "\n".join(
         f"if ls {shlex.quote(p)} >/dev/null 2>&1 || cat {shlex.quote(p)} >/dev/null 2>&1; then "
         f"echo \"HIDDEN_{i}=READABLE:{p}\"; else echo \"HIDDEN_{i}=DENIED:{p}\"; fi"
         for i, p in enumerate(profile.hidden_paths)
     )
+    if activation_file is not None:
+        f = shlex.quote(activation_file)
+        hidden += (
+            f"\nif [ -r {f} ]; then echo \"ACTIVATION_READ=1\"; else echo \"ACTIVATION_READ=0\"; fi"
+            f"\nif ( : >> {f} ) 2>/dev/null; then echo \"ACTIVATION_WRITE=WRITABLE\"; else echo \"ACTIVATION_WRITE=DENIED\"; fi"
+            f"\necho \"ACTIVATION_STAT=$(stat -c %u:%a {f} 2>/dev/null)\""
+        )
     return (
         _marker("rollout-prelaunch-probe") + "set -u\n" + _PROBE_COMMON
         + f"probe relay {profile.relay_alias} {profile.model_proxy_listen_port}\n"
@@ -1565,13 +1577,19 @@ def check_rollout_inspect(
 
 def check_rollout_probe(
     facts: Mapping[str, str], profile: RolloutSandboxProfile, *, expected_head: str | None = None,
-    require_workdir: bool = True,
+    require_workdir: bool = True, activation_file: str | None = None,
 ) -> list[str]:
     """rollout 容器内探针事实核对（纯函数；输入 = parse_key_value_output 的结果）。"""
 
     v: list[str] = []
     if facts.get("RH2_PROBE_OK") != "1":
         v.append("探针未完整执行（RH2_PROBE_OK 缺失）")
+    if activation_file is not None:
+        # #1：激活文件必须对 agent 可读（否则 BASH_ENV 静默无效）且不可写（否则模型可改写自己的启动环境）
+        if facts.get("ACTIVATION_READ") != "1":
+            v.append(f"ACTIVATION_READ={facts.get('ACTIVATION_READ')!r}：激活文件 {activation_file} 对 agent 不可读")
+        if facts.get("ACTIVATION_WRITE") != "DENIED":
+            v.append(f"ACTIVATION_WRITE={facts.get('ACTIVATION_WRITE')!r}：激活文件 {activation_file} 对 agent 可写")
     if facts.get("UID") != str(profile.agent_uid):
         v.append(f"UID={facts.get('UID')!r} != {profile.agent_uid}（模型控制进程必须非 root 且为固定 uid）")
     if facts.get("CAPEFF", "").strip("0") != "":
@@ -1735,7 +1753,7 @@ async def _exec_as(docker: DockerRunner, name: str, script: str, *, user: str | 
 
 async def run_rollout_prelaunch_check(
     docker: DockerRunner, *, name: str, profile: RolloutSandboxProfile, network: str, expected_head: str | None = None,
-    require_workdir: bool = True,
+    require_workdir: bool = True, activation_file: str | None = None,
 ) -> PrelaunchReport:
     """容器创建 + 可信初始化之后、harness 启动之前：一次 inspect + 一次 agent 身份探针。"""
 
@@ -1748,15 +1766,84 @@ async def run_rollout_prelaunch_check(
         report.inspect_facts = _facts_from_inspect(container)
         report.violations += check_rollout_inspect(container, profile, expected_network=network)
     probe = await _exec_as(
-        docker, name, rollout_prelaunch_probe_script(profile), user=str(profile.agent_uid),
-        home=f"/home/{profile.agent_user}", timeout=profile.probe_timeout_seconds,
+        docker, name, rollout_prelaunch_probe_script(profile, activation_file=activation_file),
+        user=str(profile.agent_uid), home=f"/home/{profile.agent_user}", timeout=profile.probe_timeout_seconds,
     )
     if probe.exit_code != 0 and "RH2_PROBE_OK=1" not in probe.stdout:
         report.violations.append(f"探针执行失败 exit={probe.exit_code}：{(probe.stderr or probe.stdout).strip()[-300:]}")
     report.probe_facts = parse_key_value_output(probe.stdout)
     report.violations += check_rollout_probe(
         report.probe_facts, profile, expected_head=expected_head, require_workdir=require_workdir,
+        activation_file=activation_file,
     )
+    report.ok = not report.violations
+    report.seconds = time.monotonic() - started
+    return report
+
+
+def agent_shell_env(profile: RolloutSandboxProfile, *, activation_file: str) -> dict[str, str]:
+    """agent 非交互 shell 生效所需的最小环境（#1）：HOME 在 bash 启动**之前**就位（Codex SR3：镜像 HOME=/root
+    时 BASH_ENV 展开会读到 /root），BASH_ENV 指向 root 提供的激活文件。启动前解释器核对与最终 CC launcher
+    共用这一份，不各写一套常量；由编排层放进 HarnessLaunchSpec.env_injections 运输到 driver。"""
+
+    return {"HOME": f"/home/{profile.agent_user}", "BASH_ENV": activation_file}
+
+
+def rollout_activation_probe_script(env: Mapping[str, str], *, expected_interpreter_prefix: str) -> str:
+    """#1：以 agent 身份、用与 CC launcher 同一份 env 起一个非交互 bash，回报 `python` 解析到哪里。
+
+    放在首次基线 census **之后**、harness 启动之前运行（R2E §11.5）。cwd=/tmp、只 import sys、
+    PYTHONDONTWRITEBYTECODE=1——这些降低但**不保证**零副作用（site / 激活钩子仍会执行）；任何写入都会
+    落在运行后 census 的 delta 里被看见。"""
+
+    assigns = " ".join(f"{k}={shlex.quote(v)}" for k, v in sorted(env.items()))
+    inner = (
+        "cd /tmp || exit 3; "
+        "printf 'ACT_PYTHON=%s\\n' \"$(command -v python 2>/dev/null)\"; "
+        "python -c 'import sys; print(\"ACT_SYS_EXECUTABLE=\" + sys.executable); print(\"ACT_SYS_PREFIX=\" + sys.prefix)' 2>/dev/null; "
+        "printf 'ACT_CONDA_DEFAULT_ENV=%s\\n' \"${CONDA_DEFAULT_ENV-}\"; "
+        "printf 'ACT_VIRTUAL_ENV=%s\\n' \"${VIRTUAL_ENV-}\""
+    )
+    return (
+        _marker("rollout-activation-probe") + "set -u\n"
+        + f"echo \"ACT_EXPECTED_PREFIX={expected_interpreter_prefix}\"\n"
+        + f"env {assigns} PYTHONDONTWRITEBYTECODE=1 bash -c {shlex.quote(inner)}\n"
+        + "echo \"RH2_ACTIVATION_PROBE_OK=1\"\n"
+    )
+
+
+def check_rollout_activation(facts: Mapping[str, str], *, expected_interpreter_prefix: str) -> list[str]:
+    """纯函数：激活探针事实核对——`python` 必须解析到声明的解释器前缀之下。"""
+
+    v: list[str] = []
+    if facts.get("RH2_ACTIVATION_PROBE_OK") != "1":
+        v.append("激活探针未完整执行（RH2_ACTIVATION_PROBE_OK 缺失）")
+    exe = facts.get("ACT_SYS_EXECUTABLE", "")
+    prefix = expected_interpreter_prefix.rstrip("/") + "/"
+    if not exe:
+        v.append(f"ACT_SYS_EXECUTABLE 缺失：agent 的非交互 bash 里 `python` 不可用（ACT_PYTHON={facts.get('ACT_PYTHON')!r}）")
+    elif not exe.startswith(prefix):
+        v.append(f"ACT_SYS_EXECUTABLE={exe!r} 不在声明的解释器前缀 {expected_interpreter_prefix!r} 之下（激活未生效）")
+    return v
+
+
+async def run_rollout_activation_check(
+    docker: DockerRunner, *, name: str, profile: RolloutSandboxProfile, env: Mapping[str, str],
+    expected_interpreter_prefix: str,
+) -> PrelaunchReport:
+    """#1：首次 census 之后、harness 启动之前的解释器核对（agent 身份，CC 同形 env）。"""
+
+    started = time.monotonic()
+    report = PrelaunchReport(role="rollout", container_name=name, ok=False)
+    probe = await _exec_as(
+        docker, name, rollout_activation_probe_script(env, expected_interpreter_prefix=expected_interpreter_prefix),
+        user=str(profile.agent_uid), home=env.get("HOME", f"/home/{profile.agent_user}"),
+        timeout=profile.probe_timeout_seconds,
+    )
+    if probe.exit_code != 0 and "RH2_ACTIVATION_PROBE_OK=1" not in probe.stdout:
+        report.violations.append(f"激活探针执行失败 exit={probe.exit_code}：{(probe.stderr or probe.stdout).strip()[-300:]}")
+    report.probe_facts = parse_key_value_output(probe.stdout)
+    report.violations += check_rollout_activation(report.probe_facts, expected_interpreter_prefix=expected_interpreter_prefix)
     report.ok = not report.violations
     report.seconds = time.monotonic() - started
     return report

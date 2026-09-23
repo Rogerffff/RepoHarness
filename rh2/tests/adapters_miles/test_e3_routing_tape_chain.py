@@ -91,7 +91,7 @@ async def test_e3_routing_tape_survives_the_real_mask_chain_bit_for_bit(world, m
     class Driver:
         name = "mock_harness"
 
-        async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt):
+        async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt, env_injections=None, harness_log_dir=None):
             await holder["adapter"].run_all_turns()
             return 0
 

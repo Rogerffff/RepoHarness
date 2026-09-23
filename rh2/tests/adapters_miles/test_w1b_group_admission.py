@@ -82,7 +82,7 @@ class _SequencedExitDriver:
         self.adapter_ref = adapter_ref
         self._exit_codes = list(exit_codes)
 
-    async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt):
+    async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt, env_injections=None, harness_log_dir=None):
         await self.adapter_ref["adapter"].run_all_turns()
         return self._exit_codes.pop(0) if self._exit_codes else 0
 
@@ -125,13 +125,14 @@ class _Chain:
 
 
 def _build_chain(world, tmp_path, *, grading_kinds: dict[str, str],
-                 exit_codes: tuple[int, ...] = (0, 0), truncated_slots: tuple[int, ...] = ()) -> _Chain:
-    """一条 fa_formal 编排本体服务整组（经 prepared face + registry）：评分结果按 trajectory id 查表。"""
+                 exit_codes: tuple[int, ...] = (0, 0), truncated_slots: tuple[int, ...] = (), fx=None) -> _Chain:
+    """一条 fa_formal 编排本体服务整组（经 prepared face + registry）：评分结果按 trajectory id 查表。
+    fx 缺省时在 tmp_path 下现做合成 SWE 两题夹具；传入时直接用（如 SWE + R2E 混来源夹具）。"""
 
     from repoharness2.adapters.slime import RolloutOrchestrator, SlimeBindingConfig
     from repoharness2.adapters.slime.capture_wire import SessionPlaneDrainResult
 
-    fx = prepare_synthetic(tmp_path)
+    fx = prepare_synthetic(tmp_path) if fx is None else fx
     face, registry = _load_face_and_registry(fx)
     verify_calls: list = []
     real_verify = registry._verify_dispatch

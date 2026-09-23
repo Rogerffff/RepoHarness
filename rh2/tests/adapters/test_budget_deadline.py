@@ -49,6 +49,7 @@ from test_w1b_termination_facts_producer import _formal_chain, _steps  # noqa: E
 from repoharness2.adapters.slime import docker_sandbox  # noqa: E402
 from repoharness2.adapters.slime.async_worker import SessionPoisonRegistry  # noqa: E402
 from repoharness2.adapters.slime.bringup import ClaudeCodeDriver, make_per_rollout_adapter  # noqa: E402
+from repoharness2.adapters.slime import bringup as bringup_mod  # noqa: E402
 from repoharness2.adapters.slime.capture_wire import CaptureRegistry  # noqa: E402
 from repoharness2.adapters.slime.generate import (  # noqa: E402
     HARNESS_EXIT_TIME_BUDGET_EXCEEDED,
@@ -156,7 +157,7 @@ class _HangingLaunchedDriver:
         self.cancelled = False
         self.calls: list[dict] = []
 
-    async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt):
+    async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt, env_injections=None, harness_log_dir=None):
         self.calls.append({"time_budget_sec": time_budget_sec})
         HARNESS_LAUNCH_FACTS.get()["launch_attempted"] = True  # 进入上游 run；launched 保持未确认
         await self.adapter_ref["adapter"].run_all_turns()
@@ -197,7 +198,7 @@ class _BootstrapStarvedDriver:
     name = "claude_code"
     calls: list = []
 
-    async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt):
+    async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt, env_injections=None, harness_log_dir=None):
         facts = HARNESS_LAUNCH_FACTS.get()
         facts.update(launch_attempted=False, launched=False, bootstrap_seconds=12.5, remaining_at_launch=-0.5)
         return HARNESS_EXIT_TIME_BUDGET_EXCEEDED
@@ -375,7 +376,6 @@ async def test_docker_sandbox_run_kills_and_waits_cli_on_cancel(monkeypatch):
 
 
 async def test_driver_bootstrap_starved_returns_budget_exceeded_without_launching(monkeypatch):
-    from slime.agent.harness import ClaudeCodeHarness
 
     async def install(self, sb, **kwargs):
         return None
@@ -385,12 +385,13 @@ async def test_driver_bootstrap_starved_returns_budget_exceeded_without_launchin
         await asyncio.sleep(min(2.0, float(timeout)))
         return 124, "", f"docker exec timeout after {timeout}s"
 
-    async def must_not_launch(self, *a, **k):
+    async def must_not_launch(*a, **k):
         raise AssertionError("CC 不应启动")
 
     monkeypatch.setattr(ClaudeCodeDriver, "_install_native_cli", install)
     monkeypatch.setattr(docker_sandbox, "_run", slow_run)
-    monkeypatch.setattr(ClaudeCodeHarness, "launch_and_wait", must_not_launch)
+    # #1 起 driver 经 RS 层无状态 launch_claude_code 启动（不再调 vendored ClaudeCodeHarness.run）
+    monkeypatch.setattr(bringup_mod, "launch_claude_code", must_not_launch)
     monkeypatch.setenv("SLIME_AGENT_CC_EXTRA_ENVS", "{}")
     facts: dict = {}
     token = HARNESS_LAUNCH_FACTS.set(facts)
@@ -408,7 +409,6 @@ async def test_driver_bootstrap_starved_returns_budget_exceeded_without_launchin
 
 
 async def test_driver_launches_with_remaining_budget_when_bootstrap_is_fast(monkeypatch):
-    from slime.agent.harness import ClaudeCodeHarness
 
     async def install(self, sb, **kwargs):
         return None
@@ -418,13 +418,14 @@ async def test_driver_launches_with_remaining_budget_when_bootstrap_is_fast(monk
 
     seen: dict = {}
 
-    async def launch(self, sb, ctx, prompt, time_budget_sec):
-        seen["time_budget_sec"] = time_budget_sec
+    async def launch(sb, **kwargs):
+        seen["time_budget_sec"] = kwargs["time_budget_sec"]
+        seen["env_injections"] = dict(kwargs["env_injections"])
         return 0
 
     monkeypatch.setattr(ClaudeCodeDriver, "_install_native_cli", install)
     monkeypatch.setattr(docker_sandbox, "_run", fast_run)
-    monkeypatch.setattr(ClaudeCodeHarness, "launch_and_wait", launch)
+    monkeypatch.setattr(bringup_mod, "launch_claude_code", launch)  # #1：新的启动接缝
     monkeypatch.setenv("SLIME_AGENT_CC_EXTRA_ENVS", "{}")
     facts: dict = {}
     token = HARNESS_LAUNCH_FACTS.set(facts)
@@ -884,7 +885,7 @@ def _stop_chain(monkeypatch, *, kind: str, stop_timeout: float = 30.0):
     class Driver:
         name = "cpu_stop_probe"
 
-        async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt):
+        async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt, env_injections=None, harness_log_dir=None):
             facts["driver_tasks"].append(asyncio.current_task())
             adapter = chain.adapter_ref["adapter"]
             await adapter.run_all_turns()

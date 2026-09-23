@@ -26,6 +26,7 @@ from test_w1b_termination_facts_producer import _formal_chain, _steps  # noqa: E
 
 from repoharness2.adapters.slime.async_worker import FatalExecutionInfrastructureError  # noqa: E402
 from repoharness2.adapters.slime.bringup import ClaudeCodeDriver  # noqa: E402
+from repoharness2.adapters.slime import bringup  # noqa: E402
 from repoharness2.adapters.slime.docker_sandbox import SandboxExecError  # noqa: E402
 from repoharness2.adapters.slime.generate import SlimeBindingError  # noqa: E402
 from repoharness2.adapters.slime.outcome_producer import FAILURE_CODE_TERMINATION_MAP  # noqa: E402
@@ -128,13 +129,17 @@ async def test_real_driver_through_formal_orchestrator_routes_by_source(name, mo
         # 不用 124：批 B 起由期限决定 timeout 的步骤超时按构造归 episode 期限（另有测试）。
         return (1, "", "useradd: cannot lock /etc/passwd") if origin == "docker_exec" else (0, "", "")
 
-    async def launch(self, sb, ctx, prompt, time_budget_sec):
+    async def launch(sb, **kwargs):
         raise make_exc()
 
     monkeypatch.setattr(ClaudeCodeDriver, "_install_native_cli", install)
     monkeypatch.setattr(docker_sandbox, "_run", fake_run)
     if origin == "launch":
-        monkeypatch.setattr(ClaudeCodeHarness, "launch_and_wait", launch)
+        # #1（基座探针修复）起 driver 经 RS 层无状态 `bringup.launch_claude_code` 启动（模块全局，调用时查找），
+        # 不再调 vendored ClaudeCodeHarness.run / launch_and_wait；补丁落在新接缝上，否则真实启动会按 5s
+        # 轮询 done marker 直到 1800s（2026-09-23 曾因此挂起 lane A）。
+        monkeypatch.setattr(bringup, "launch_claude_code", launch)
+    assert ClaudeCodeHarness.name == "claude_code"  # 仍是同一个 vendored harness 类（常量与 write_config 被复用）
 
     if expected == "aborted":
         (out,) = await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))

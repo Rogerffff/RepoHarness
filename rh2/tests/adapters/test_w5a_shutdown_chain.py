@@ -157,7 +157,7 @@ class _BlockingDriver(MockClaudeCodeDriver):
         self.entered = asyncio.Event()
         self.release = asyncio.Event()
 
-    async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt) -> int:
+    async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt, env_injections=None, harness_log_dir=None) -> int:
         self.entered.set()
         await self.release.wait()
         await self.adapter_ref["adapter"].run_all_turns()

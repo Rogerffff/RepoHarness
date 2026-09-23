@@ -173,6 +173,8 @@ from repoharness2.adapters.slime.sandbox_profile import (
     create_attempt_network,
     rollout_trusted_init_script,
     run_git_sanitize,
+    agent_shell_env,
+    run_rollout_activation_check,
     run_rollout_prelaunch_check,
     run_trusted_init,
     teardown_attempt_network,
@@ -1688,6 +1690,10 @@ class HarnessDriver(Protocol):
         adapter_url: str,
         time_budget_sec: int,
         prompt: str,
+        # #1/#2（基座探针修复）：逐 execution 的 harness 环境注入（HarnessLaunchSpec.env_injections）与宿主侧
+        # harness 日志目录（从非秘密 trajectory 身份生成；#2 提交启用）。关键字可选，替身可忽略。
+        env_injections: Mapping[str, str] | None = None,
+        harness_log_dir: str | None = None,
     ) -> int: ...
 
 
@@ -1939,6 +1945,11 @@ class RolloutTaskSpec:
     # 要么显式 image_local_build 豁免；两者都缺 = 构造即拒（豁免不许静默）。
     image_manifest_digest: str | None = None
     image_local_build: bool = False
+    # #1（基座探针修复）：agent 每个非交互 bash 先 source 的激活脚本（写到 materialize.BASH_ENV_PATH，root 0644）
+    # 与激活后 `python` 应当落在的解释器前缀（启动前核对）。按来源给：默认 = swe_gym_lite 的 conda testbed；
+    # R2E 接入时由其任务面给 .venv 的激活与前缀。模型可见面：写入前过 forbidden marker 扫描。
+    env_activation_script: str = materialize.BASH_ENV_CONTENT
+    expected_interpreter_prefix: str = materialize.SWE_GYM_INTERPRETER_PREFIX
 
     def __post_init__(self) -> None:
         if (self.image_manifest_digest is None) == (not self.image_local_build):
@@ -2257,6 +2268,8 @@ class RolloutAudit:
     sandbox_setup: dict[str, Any] | None = None
     # W3b：启动前核对摘要（ok/violations/seconds；未通过时附完整 inspect/probe 事实）。
     prelaunch_check: dict[str, Any] | None = None
+    # #1：首次 census 之后、harness 启动之前的激活 / 解释器核对（agent 身份、CC 同形 env）
+    activation_check: dict[str, Any] | None = None
     # I01（B 路线观测）：本 execution 的动作覆盖与训练行成本（turn_identity.TurnCoverageSummary
     # 的 dict；bringup 经 execution audit 记录落盘）。非 bringup 链为 None。
     turn_coverage: dict[str, Any] | None = None
@@ -2931,7 +2944,12 @@ class RolloutOrchestrator:
                     session_id=sid,
                     inject_env_var="ANTHROPIC_BASE_URL",
                 ),
-                env_injections={"BASH_ENV": materialize.BASH_ENV_PATH},
+                # #1：HOME + BASH_ENV（与启动前解释器核对同一份构造；无 profile 的 legacy 路径只带 BASH_ENV）
+                env_injections=(
+                    agent_shell_env(self._sandbox_profile, activation_file=materialize.BASH_ENV_PATH)
+                    if self._sandbox_profile is not None
+                    else {"BASH_ENV": materialize.BASH_ENV_PATH}
+                ),
                 # 批 B：vendored harness 的相对整数秒只是兼容参数 = 此刻剩余（下取整、至少 1）；
                 # 真正的强制保护是下方按绝对期限的 _await_harness_within_deadline。
                 time_budget_seconds=(
@@ -2967,6 +2985,9 @@ class RolloutOrchestrator:
                         adapter_url=launch.model_proxy.base_url,
                         time_budget_sec=launch.time_budget_seconds,
                         prompt=task.prompt,
+                        # #1：逐 execution 注入（不走进程级变量）；#2：宿主侧日志目录（非秘密 trajectory 身份）
+                        env_injections=dict(launch.env_injections),
+                        harness_log_dir=self._harness_log_dir(audit),
                     )
                 )
             finally:
@@ -3882,6 +3903,43 @@ class RolloutOrchestrator:
             audit.baseline_entry_count = len(baseline_manifest.entries)
             audit.mark("baseline_manifest_generated")
             prepared["baseline_manifest"] = baseline_manifest  # 冻结导出 / hygiene / 交付要用
+            # #1（基座探针修复）：激活 / 解释器核对放在首次 census **之后**、harness 启动之前（R2E §11.5：
+            # 首次 census 前不加会写缓存的 Python 探针；Codex SR3：既有安全探针在物化函数内、census 之前，不动）。
+            await self._check_activation_after_census(task, sandbox, audit)
+
+    async def _check_activation_after_census(self, task: RolloutTaskSpec, sandbox: Any, audit: "RolloutAudit") -> None:
+        """以 agent 身份、与 CC launcher 同一份 env 起非交互 bash，核对 `python` 落在任务面声明的解释器前缀之下。
+
+        无 profile 的 legacy 路径没有可信初始化与探针面，不核对。未通过 → typed task-local
+        `rollout_activation_check_failed`（该任务环境的单次准备失败，不启动 harness；FAILURE_CODE_TERMINATION_MAP
+        已登记）。事实进 audit.activation_check，随 execution audit 落盘。"""
+
+        profile = self._sandbox_profile
+        if profile is None:
+            return
+        env = agent_shell_env(profile, activation_file=materialize.BASH_ENV_PATH)
+        report = await run_rollout_activation_check(
+            self._docker, name=sandbox.container_name, profile=profile, env=env,
+            expected_interpreter_prefix=task.expected_interpreter_prefix,
+        )
+        audit.activation_check = {
+            "ok": report.ok, "violations": list(report.violations), "seconds": round(report.seconds, 4),
+            "expected_interpreter_prefix": task.expected_interpreter_prefix, "facts": dict(report.probe_facts),
+        }
+        if not report.ok:
+            audit.mark("sandbox_activation_check_failed")
+            raise SlimeBindingError(
+                "rollout_activation_check_failed",
+                f"rollout 容器 {sandbox.container_name} 的激活核对未通过：" + "; ".join(report.violations)[:600],
+            )
+        audit.mark("sandbox_activation_check_passed")
+
+    def _harness_log_dir(self, audit: "RolloutAudit") -> str | None:
+        """#2：宿主侧 harness 日志目录（从非秘密 trajectory 身份生成；没有 artifact_dir 时为 None）。"""
+
+        if self.artifact_dir is None:
+            return None
+        return str(self.artifact_dir / _sanitize_for_name(audit.trajectory_id) / "harness")
 
     def _episode_remaining(self, audit: "RolloutAudit") -> float:
         """批 B：episode 期限剩余秒数（无期限 = +inf）。"""
@@ -4855,7 +4913,8 @@ class RolloutOrchestrator:
 
             for path, payload, what in (
                 (PUBLIC_BUNDLE_CONTAINER_PATH, task.public_bundle_payload, "public bundle"),
-                (materialize.BASH_ENV_PATH, materialize.BASH_ENV_CONTENT.encode(), "bash env"),
+                # #1：激活文件内容按来源取自任务面；root:root 0644 放在 /rh2（root 0755）——agent 可读、不可写
+                (materialize.BASH_ENV_PATH, task.env_activation_script.encode(), "bash env"),
             ):
                 write = await self._docker(
                     "exec",
@@ -4863,7 +4922,7 @@ class RolloutOrchestrator:
                     name,
                     "bash",
                     "-c",
-                    f"mkdir -p $(dirname {path}) && cat > {path}",
+                    f"mkdir -p $(dirname {path}) && cat > {path} && chmod 0644 {path}",
                     input_bytes=payload,
                 )
                 if write.exit_code != 0:
@@ -4896,6 +4955,7 @@ class RolloutOrchestrator:
                 assert network is not None
                 pre = await run_rollout_prelaunch_check(
                     self._docker, name=name, profile=profile, network=network.name, expected_head=check.head,
+                    activation_file=materialize.BASH_ENV_PATH,  # #1：agent 可读 + 不可写
                 )
                 audit.prelaunch_check = {
                     "ok": pre.ok, "violations": list(pre.violations), "seconds": round(pre.seconds, 4),

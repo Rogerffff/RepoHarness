@@ -76,6 +76,9 @@ FAILURE_CODE_TERMINATION_MAP: dict[str, tuple[TerminationKind, RuntimeFailureCat
     "rollout_workspace_write_failed": ("sandbox_failure", "sandbox_crash"),
     "rollout_git_sanitize_failed": ("sandbox_failure", "sandbox_crash"),
     "rollout_trusted_init_failed": ("sandbox_failure", "sandbox_crash"),
+    # #1（基座探针修复，2026-09-23）：首次 census 之后的激活 / 解释器核对未通过（agent 的非交互 bash 里
+    # `python` 不在任务面声明的解释器前缀之下）——该任务环境的单次准备失败，不启动 harness。
+    "rollout_activation_check_failed": ("sandbox_failure", "sandbox_crash"),
     "rollout_egress_network_failed": ("sandbox_failure", "sandbox_crash"),
     "rollout_egress_relay_connect_failed": ("sandbox_failure", "sandbox_crash"),
     "baseline_head_unreadable": ("sandbox_failure", "sandbox_crash"),

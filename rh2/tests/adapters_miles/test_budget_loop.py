@@ -275,7 +275,7 @@ class _CapThenExitDriver:
         self.adapter_ref, self.budget, self.exit_code = adapter_ref, budget, exit_code
         self.calls: list = []
 
-    async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt):
+    async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt, env_injections=None, harness_log_dir=None):
         self.calls.append(session_id)
         adapter = self.adapter_ref["adapter"]
         await adapter.run_all_turns()
@@ -316,7 +316,7 @@ async def test_cap_then_cc_hangs_is_force_stopped_within_grace(monkeypatch):
     cancelled = {"seen": False}
 
     class _CapThenHang(_CapThenExitDriver):
-        async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt):
+        async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt, env_injections=None, harness_log_dir=None):
             adapter = self.adapter_ref["adapter"]
             await adapter.run_all_turns()
             self.budget.exhaust(adapter.opened[-1])
@@ -354,7 +354,7 @@ async def test_cap_then_deadline_during_grace_is_hard_wall_not_keep():
     _wire_budget(chain.orchestrator, budget)
 
     class _CapThenHang(_CapThenExitDriver):
-        async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt):
+        async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt, env_injections=None, harness_log_dir=None):
             adapter = self.adapter_ref["adapter"]
             await adapter.run_all_turns()
             self.budget.exhaust(adapter.opened[-1])
@@ -411,7 +411,7 @@ async def test_cap_does_not_exempt_poison_or_capture_failures():
         return adapter
 
     class _CapThenPoisoned:
-        async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt):
+        async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt, env_injections=None, harness_log_dir=None):
             adapter = adapter_ref["adapter"]
             await adapter.run_all_turns()
             budget.exhaust(adapter.opened[-1])
@@ -746,7 +746,7 @@ class _HttpCapDriver:
         self.client, self.registry, self.engine, self.holder, self.race_first = client, registry, engine, holder, race_first
         self.rows: list[dict] = []
 
-    async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt):
+    async def run(self, sandbox, *, workdir, session_id, adapter_url, time_budget_sec, prompt, env_injections=None, harness_log_dir=None):
         self.engine.reset()
         sid = self.registry.resolve_capability(session_id)
         hook = self.holder["hook"]
