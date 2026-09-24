@@ -230,6 +230,24 @@ HARNESS_KIND = os.environ.get("RH2_BRINGUP_HARNESS", "claude_code")  # claude_co
 EXECUTION_MODE = os.environ.get("RH2_EXECUTION_MODE", "s1_compat")
 AGENT_TIME_BUDGET_SEC = int(os.environ.get("SWE_AGENT_TIME_BUDGET_SEC", "600"))
 MAX_TURNS_PER_SID = int(os.environ.get("RH2_MAX_TURNS_PER_SID", "25"))
+# #8(iv)（决策包 §8；Codex 实施复核 CI1）：CC 单次 Read 的 token 上限的**正式作业入口**——与窗口
+# （args.rollout_max_context_len）一样按作业配置给；未设置 = None = CC 默认 25,000（面向 200K 窗口）。
+CC_FILE_READ_MAX_OUTPUT_TOKENS_ENV = "RH2_CC_FILE_READ_MAX_OUTPUT_TOKENS"
+
+
+def cc_file_read_max_output_tokens_from_env(environ: Mapping[str, str] | None = None) -> int | None:
+    """解析 RH2_CC_FILE_READ_MAX_OUTPUT_TOKENS：空 / 未设 → None；非正整数 → 启动即炸（不静默退回默认）。"""
+
+    raw = (environ if environ is not None else os.environ).get(CC_FILE_READ_MAX_OUTPUT_TOKENS_ENV, "").strip()
+    if not raw:
+        return None
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise ValueError(f"{CC_FILE_READ_MAX_OUTPUT_TOKENS_ENV}={raw!r} 不是整数") from exc
+    if value <= 0:
+        raise ValueError(f"{CC_FILE_READ_MAX_OUTPUT_TOKENS_ENV}={raw!r} 必须是正整数")
+    return value
 # I01（2026-09-08 定案：B 路线）：vendor TrajectoryManager 的 fork 阈值。0 = 只有精确 token 前缀
 # 才合并，任何重渲染漂移都 FORK 新开训练行；REALIGN 覆盖与消息 rewrite-merge 两个销毁点同时关闭，
 # 每个真实生成轮在该 execution 的训练行并集中恰有一次 loss_mask=1 归属。这是决定值，不设 env 旋钮
@@ -1496,6 +1514,8 @@ class BringupService:
             moe_router_topk=moe_router_topk,
             policy_version=self.policy_version,
             max_context_len=self.max_context_len,
+            # #8(iv)：Read 上限的正式作业入口（CI1）——未设置时 None（CC 默认），随 cc_context_env 逐 execution 注入
+            cc_file_read_max_output_tokens=cc_file_read_max_output_tokens_from_env(os.environ),
             # W4 接缝（B-1）：consume-time 阈值的记录镜像（None = 未配置 → generate.py 哨兵行为）
             staleness_threshold=self.staleness_threshold_mirror,
             # FA-1 接线：正式链两旋钮（默认 0 = bring-up/S1 行为逐字不变；

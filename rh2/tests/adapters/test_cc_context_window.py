@@ -6,6 +6,7 @@ RH2 capture wire 真正溢出时回 Anthropic 形状的 400 "prompt is too long"
 from __future__ import annotations
 
 import json
+import os
 
 import pytest
 from aiohttp.test_utils import TestClient, TestServer
@@ -178,3 +179,56 @@ async def test_overflow_returns_prompt_too_long_400_without_fake_sampling_or_pen
         registry.unregister(sid)
     with pytest.raises(cw.CaptureWireOwnershipError):
         cw.install_capture_wire(cw.CaptureRegistry())
+
+
+async def test_read_cap_flows_from_the_formal_job_entry_to_the_collector_env(monkeypatch):
+    """CI1：正式作业入口 RH2_CC_FILE_READ_MAX_OUTPUT_TOKENS → bringup 的构造读取 → SlimeBindingConfig →
+    launch_spec.env_injections → claude_code_launch_env → launch_claude_code 交给收集器的 env；未设置的正控不注入。"""
+    from slime.agent import sandbox as slime_sandbox
+    from slime.agent.harness import ClaudeCodeHarness
+
+    from repoharness2.adapters.slime import bringup
+    from repoharness2.adapters.slime import docker_sandbox as ds
+
+    async def fake_ensure(sb, workdir):
+        return None
+
+    async def fake_write_config(self, sb, ctx):
+        return None
+
+    seen: list[dict] = []
+
+    async def fake_collect(*, container_name, user, workdir, env, cmd, stdout_path, stderr_path, deadline_seconds,
+                           time_budget_exit_code=-1, progress=None, socket_path=None, settle_seconds=None):
+        seen.append(dict(env))
+        return ds.ExecCollectedRun("e", 0, "exited", str(stdout_path), str(stderr_path), 1, 0, True, None, "", 0.1)
+
+    monkeypatch.setattr(slime_sandbox, "ensure_agent_user", fake_ensure)
+    monkeypatch.setattr(ClaudeCodeHarness, "write_config", fake_write_config)
+    monkeypatch.setattr(ds, "run_exec_collected", fake_collect)
+    monkeypatch.setenv("SLIME_AGENT_CC_EXTRA_ENVS", "{}")
+
+    class _Sb:
+        container_name = "c"
+
+        async def exec(self, *a, **k):
+            return 0, "", ""
+
+        async def write_file(self, *a, **k):
+            return None
+
+    for raw, expect in (("8000", "8000"), ("", None)):
+        monkeypatch.setenv(bringup.CC_FILE_READ_MAX_OUTPUT_TOKENS_ENV, raw)
+        cap = bringup.cc_file_read_max_output_tokens_from_env(os.environ)  # 与生产构造点同一读取函数
+        chain = build_dense_chain(config=dense_config(max_context_len=32768, cc_file_read_max_output_tokens=cap))
+        await chain.orchestrator.generate(_Args(), chain.base_sample, {**SAMPLING_PARAMS, "max_new_tokens": 4096})
+        inj = dict(chain.orchestrator.audits[0].launch_spec.env_injections)
+        await bringup.launch_claude_code(_Sb(), workdir="/testbed", session_id="tok", adapter_url="http://relay:1", prompt="p",
+                                         time_budget_sec=30, env_injections=inj)
+        env = seen[-1]
+        assert env.get("CLAUDE_CODE_FILE_READ_MAX_OUTPUT_TOKENS") == expect, (raw, env)
+        assert env["CLAUDE_CODE_MAX_CONTEXT_TOKENS"] == "32768" and env["CLAUDE_CODE_MAX_OUTPUT_TOKENS"] == "4096"
+    with pytest.raises(ValueError):
+        bringup.cc_file_read_max_output_tokens_from_env({bringup.CC_FILE_READ_MAX_OUTPUT_TOKENS_ENV: "0"})
+    with pytest.raises(ValueError):
+        bringup.cc_file_read_max_output_tokens_from_env({bringup.CC_FILE_READ_MAX_OUTPUT_TOKENS_ENV: "8k"})

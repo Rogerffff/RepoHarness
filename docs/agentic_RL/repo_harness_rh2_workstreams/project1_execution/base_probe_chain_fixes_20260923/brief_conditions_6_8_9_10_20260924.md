@@ -56,7 +56,7 @@
 | 单测 | `tests/adapters/test_cc_context_window.py` 3 例（映射与空配置；dense 链 launch_spec 注入；真实 vendored app + 真实 capture wire + 假引擎：溢出 → 400 形状、引擎未调、无 capture、无 inflight、无 poison、drain 无 pending，随后短请求照常 200） |
 | 真机 `s3r_C2`（被动，关掉主动压缩的测试条件） | 第 3 个请求 52,927 token > 32,768 → RH2 **400** → CC 被动压缩：摘要请求 29,347 token（**同一上限内**）→ 引擎摘要**只捕获一次**（capture 4 = T0、T1、摘要、收尾）→ 继续 → 退出 0；turn 预算 accepted 5（含被 400 的请求，沿 vendored 既有行为）；无 poison；装配 3 条叶链交付（loss 54 / 19 / 3）、评分 1 次 |
 | 真机 `s3r_C3`（主动） | usage 28,049 > 阈值 15,672（32,768 − 4,096 − 13,000）→ CC 主动压缩 → 同上收尾；无 400 |
-| 真机 `s3r_C1`（反例） | 窗口 8,192 + 输出预留 1,024 → 阈值为负 → CC 每轮压缩、熔断后退出 1、只发 1 个请求：窗口低于约 20K 在 2.1.205 下不可用 |
+| 真机 `s3r_C1`（反例） | 窗口 8,192 + 输出预留 1,024 + 本夹具固定输入（约 3.2K）→ 主动压缩阈值为负 → CC 每轮压缩、熔断后退出 1、只发 1 个请求。只说明这一组参数不可用；阈值还取决于输出预留与固定输入成本，不据此定统一的窗口下界，也不加启动闸门 |
 | 实际余量（测试参数 32,768 / 4,096） | 固定前缀（五工具 + system）3,171 token；主动阈值 15,672；一次约 28K 字符的 Bash 输出 ≈ 24.9K token；压缩后摘要请求 29.3K；不设"前缀 < 阈值一半"闸门 |
 | 未实测 | 真实模型生成的摘要长度；容量不足时的有界失败形态（本夹具摘要短）；413 等其它过长错误形式 |
 
@@ -67,7 +67,7 @@
 | 改动 | 新模块 `adapters/slime/rh2_anthropic_adapter.py`：`smoosh_system_reminders_into_last_tool_result(body)`（只并同一 user 消息里、紧跟最后一个 tool_result 之后、以 `<system-reminder>` 开头的连续 text 块；遇非提醒块即停）；`Rh2AnthropicAdapter._preprocess_body` = vendored fold → smoosh；bringup 改构造该子类（count_tokens 共用） |
 | 正式默认值变化 | 提醒从独立 user 轮变成 `<tool_response>` 尾巴；普通 user 文本、摘要指令、Skill 正文角色不变 |
 | 单测 | `tests/adapters/test_rh2_anthropic_adapter.py` 5 例（并入与翻译形状；vendored fold → 并入；摘要指令保持独立 user、提醒在指令之前才并、指令在前时两者都不动、Skill 正文不动；无 tool_result 不动、列表形 tool_result、两个 tool_result 只并最后一个之后；count 与生成共用） |
-| 回放（`p6_smoosh_acceptance.py`，B 线 23 条 Qwen3.6 尝试 597 相邻对，真实 Qwen3.6 tokenizer） | 新插入 72 次：清空 71 → **0**；全部相邻对清空 73 → 2（剩余 2 处 = Skill 正文，(a) 预期残余；#10 生效后不再出现）；前缀一致对 518 → 589；617 轮 prompt 合计 +5.8%；Codex 反例（真实压缩请求）：摘要指令仍是独立 user、不在任何 tool 内容里 |
+| 回放（`p6_smoosh_acceptance.py` v2，B 线 22 条 Qwen3.6 基座尝试的 617 个生成请求 / 595 相邻对，排除启动探针与夹在账本里的 count_tokens 记录；真实 Qwen3.6 tokenizer；`smoosh_acceptance_v2.json`） | 新插入 72 次：历史 thinking 清空 72 → **0**；全部相邻对清空 72 → 0；**prompt 前缀一致对**（上次 prompt 是本次 prompt 的前缀，不含 output，不是训练行归属）519 → 591；617 轮 prompt 合计 20,106,096 → 21,275,351（+5.8%，与决策包 §1.3 (a) 列一致）；Codex 反例（真实压缩请求）：摘要指令仍是独立 user、不在任何 tool 内容里。训练行 / 动作归属未在本片重测（决策包 §1.1 的回放口径） |
 | 未实测 | 真实模型看到历史 thinking 后的行为；新模型自由生成的分行数（不要求等于旧回放） |
 
 ### 3.5 本地回归与一处修正
@@ -75,3 +75,13 @@
 - 五目录 **1724 passed / 1 skipped**；双 lane 全绿（A 463p/343s、B 806p/0s）；ruff 通过；新增单测 4 个文件共 17 例；验证机同 17 例通过，S0 正控在最终代码上复检通过（`s3r_S0f`）。
 - 修正一次：`rh2_anthropic_adapter` 首版在模块顶层静态子类化 vendored `AnthropicAdapter`，lane A（conftest 在测试模块之间重置 vendored `slime.*`）下子类绑在过期基类上，bringup 的路由 / turn 预算 wire 启动核对失败；改为 `rh2_anthropic_adapter_cls()` 调用时按当前 vendored 类构造子类（与 bringup 里所有 vendored 类延迟导入同一纪律），加了对应用例。
 - 两个新测试模块按既有做法（`test_w3b_bringup_sandbox_runtime`）用 autouse fixture 把 capture / turn 预算 wire 的进程级单代归属重置成"新进程"。
+
+### 3.6 Codex 实施复核 §9 的两项 P2 收尾（2026-09-24）
+
+- **CI1（Read 上限缺正式作业来源）**：正式入口定为环境变量 `RH2_CC_FILE_READ_MAX_OUTPUT_TOKENS`（与 `RH2_MAX_TURNS_PER_SID` 等同一类作业配置；未设 = None = CC 默认 25,000；非正整数启动即炸）。bringup 的唯一生产构造点经 `cc_file_read_max_output_tokens_from_env(os.environ)` 读入 `SlimeBindingConfig.cc_file_read_max_output_tokens`，再由既有 `cc_context_env` 逐 execution 注入。`SLIME_AGENT_CC_EXTRA_ENVS` 仍能覆盖（进程级 extra envs 在 RH2 常量之后、逐 execution 注入之前）——它是通用透传，不是这项的正式来源。验收用例 `test_read_cap_flows_from_the_formal_job_entry_to_the_collector_env`：从该环境变量 → 生产读取函数 → 配置 → dense 链 launch_spec 注入 → `claude_code_launch_env` → `launch_claude_code` 交给收集器的 env，设置值 `8000` 与未设置正控各一次；`0` / `8k` 拒绝。
+- **CI2（回放分母与指标口径）**：v2 回放只取 22 条 `bp22-*` 尝试的 `/v1/messages` 生成请求（排除 `wire-test-q36-01` 与 2 条 count_tokens 记录），617 请求 / 595 对，与原回放分母一致；结果写新文件 `smoosh_acceptance_v2.json`，v1 保留；指标改名为 "prompt 前缀一致对"，不再作为训练行归属证据（§3.4 已改）。
+- 非阻塞两处：§3.3 的"低于约 20K 不可用"收窄为该组参数的失败结果；压缩证据的替身边界（引擎输出、评分、静止屏障、未接真实 model-call proxy / 权重发布；C2 为单测被动路径而关掉主动压缩）不支持"所有真实任务都能恢复"或"正式窗口已定"的说法。
+
+## 4. Codex 实施复核（2026-09-24）
+
+详见[原复核报告 §9](codex_stream_decision_review_20260924.md)。`145cb5fd` 核心实现认可，相关回归 189 passed，未发现 P0/P1。保留两个 P2 收尾：CI1 新 Read 字段缺正式 Bringup 来源（既有 extra env 通道可用，明确一种入口并验证即可）；CI2 回放混入计数/启动探针，且 prompt 前缀一致不能代替训练动作归属。另将“20K 以下不可用”收窄为已测条件。没有新增用户决策或准入规则；正式数值仍留作业配置。本条仅为独立复核指针，不把待修项写成已实施。
