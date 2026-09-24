@@ -261,3 +261,7 @@ IR1–IR3 判定通过；两项日志 P2 与一条非阻塞建议全部 accepted
 | 非阻塞：settle 轮询每次 inspect 传完整 settle 而非剩余量 | 每次 inspect 只给剩余时间（下限 0.05 s），sleep 也按剩余截断；文档改为"经验上限，不是严格总时长" | 慢 inspect（5 s）下 settle 0.4 s 在 1 s 内返回 `inspect_failed` |
 
 验证：`test_startup_fix_2_host_collected.py` 48 passed、`test_startup_fix_2_engine_exec_docker.py` 8 passed、`test_startup_fix_1_activation.py` 20 passed（本机 29.4.1 与验证机 29.8.1，76 passed）；本机五目录 **1699 passed / 1 skipped**；双 lane 全绿（A 463p/343s、B 806p/0s）；ruff 通过。日志目录形态现在是 `<artifact_dir>/<trajectory_id 前 24>/harness/<身份前 24>-<sha256 前 16>/{trajectory.jsonl,stderr.log}`。
+
+## 9. F1/F2 独立复验收口（2026-09-24，Codex）
+
+提交 `a07812e5` 通过。主审重跑以上 76 项相关测试（含 8 个真实 Docker 用例）及原独立反例：正式评测身份的日志互不覆盖；四类截断/坏流均记 partial，可信退出码保留；完整 raw/chunked 正控不变。证据与边界见[本轮复核](codex_stream_decision_review_20260924.md) §6。#1/#2 无剩余阻塞项，不再重复大型 daemon 对抗实验；#3 的流交付结论单独在本轮复核 §2 处理，不与宿主收集终态混为一项。

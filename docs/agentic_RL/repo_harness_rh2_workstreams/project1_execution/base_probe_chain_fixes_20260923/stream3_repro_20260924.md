@@ -1,5 +1,7 @@
 # #3 上游流中断：正式传输链复现事实表
 
+> 2026-09-24 Codex 复核补充：以下保留作者提交时的九案记录。多块响应补测推翻了 §3–§5 的部分概括；当前正式裸 FIN 仍正确拒绝，HTTP 正常收尾的残缺 SSE 则可能成功交付。最新结论见本文 §7 与[独立复核](codex_stream_decision_review_20260924.md)，不能继续引用“任何 message_delta 前截断都退出 1”。
+
 2026-09-24 / Claude（A 线）。**状态：事实表已完成；结论 = 正式链现状不需要新的准入规则或 relay 加固（见 §4），一条待 B 线核对的差异（§5）。** 依据：[交接包 §3](../base_model_probe_20260922_aline_handoff.md)（B 线观测）、[§14.2](../base_model_probe_20260922_aline_handoff.md)（Codex 收窄：保留"adapter 写出中途失败（未 commit）"与"服务端已 commit、下游未完整接收"两个边界；完整流正控、缺 `message_stop` 的干净 EOF、异常断连分别核对；`abort()` 只作 T1 候选须先验证）。
 
 ## 1. 夹具（只有引擎与 tokenizer 是替身，其余全是正式实现）
@@ -49,3 +51,18 @@
 ## 6. 本轮没有做的事
 
 没有跑真实 SGLang / GPU；评分执行是罐头报告（交付判定只看编排收口与 `remove_sample`）；没有测 CC 的其它版本；没有测 `message_start` 之前的断连（那是 HTTP 层错误，adapter 尚未 commit，与 A1 同类）。
+
+## 7. Codex 独立复核补充（2026-09-24）
+
+[完整报告与重跑工件](codex_stream_decision_review_20260924.md)见 §2。主审沿用夹具，仅让真实解析器产生完整 text 块后再跟 tool_use：完整流正控正常；工具块开始后截断且正常结束 HTTP（S5）时，真实 CC 退出 0、`is_error=false`，工具未执行，仍进入评分与交付；同一切点直接 FIN、没有 HTTP 终止 chunk（S3）则退出 1，正式链正确拒绝。
+
+因此，B 原始日志里的成功结束确有依据，不能归因于旧 launcher 标记；它与原表单个工具块中断的形态不同。S5 的正常 HTTP 收尾由故障器产生，当前纯 TCP relay 不生成这一结束标记，不能反过来宣称已证明正式主链自然故障会污染训练。正式侧暂不改 relay、不新增准入规则的窄处置可以保留；B 网关需修复残缺上游被正常收尾的路径。
+
+夹具边界还包括测试 `_Barrier()`，不是只有引擎/tokenizer 为替身；未接真实 model-call proxy 或异步权重发布。原九案未采到 `poisoned` 字段，不能据此说 poison 全未触发。真实评分未跑，罐头 reward=1 不能解释为真实 SWE 得分。以上修正不回写原始运行证据。
+
+## 8. A 线修正（2026-09-24，按 Codex 复核 R1）
+
+- **撤回**§3 第 2 条"`message_delta` 之前任何截断 → 退出码 1"与§3 第 3 条"现有非零退出检查挡住全部未交付工具轮"的概括，以及§5 对 B 旧案的归因。Codex 补测：完整 text 块 + 工具块开始后截断、HTTP 正常结束（多块 S5）→ CC 退出 0、`is_error=false`、工具未执行、仍评分交付；同切点裸 FIN（多块 S3）→ 退出 1、正式链拒绝。B 旧案的 `result` 本身就是 success，不能归因于旧 launcher 标记。
+- **保留**的窄处置：当前正式纯 TCP relay 不会自行产生 HTTP 终止 chunk，多块 S5 的正常收尾是故障器加工的实验条件（B 探针网关 `write_eof()` 是 production_observed，由 B 修）；A 侧不改 relay、不加准入规则。§3 第 4 条改为"当前未发现需要 `abort()` 加固的证据"（S1/S3 只证明 relay 把上游 RST/FIN 都变成 CC 侧 FIN，没有对 CC 直接施加 RST）。
+- **夹具描述更正**（§1）：替身还包括测试 `_Barrier()`（静止屏障）与罐头评分 `GradingSubmitStub`；registry 未接真实 model-call proxy 与异步权重发布；`collect()` 曾从不存在的 `audit.launch_spec` 取 sid，原九案没有采到 `poisoned` 字段——"poison 均未触发"撤回。
+- 夹具后续扩展（`--tokenizer-dir` 真实 tokenizer、count_tokens wire、`Rh2AnthropicAdapter`、`bringup_leaf_facts`、C1–C3 压缩场景）见 [brief_conditions_6_8_9_10_20260924.md](brief_conditions_6_8_9_10_20260924.md) §3；多块 S5 形态本表未补跑，以 Codex 的三案为准。

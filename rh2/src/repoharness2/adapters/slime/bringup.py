@@ -374,16 +374,20 @@ _INJECTED_EVAL_SCRIPT = (
 def claude_code_launch_env(
     *, adapter_url: str, session_id: str, model_label: str, env_injections: Mapping[str, str],
 ) -> dict[str, str]:
-    """CC 子进程环境（与 vendored ClaudeCodeHarness.launch_and_wait 同形）：ANTHROPIC_* + static_env +
-    进程级 SLIME_AGENT_CC_EXTRA_ENVS（训练守卫等 run 级常量）+ **逐 execution 注入**（最高优先级）。"""
+    """CC 子进程环境（与 vendored ClaudeCodeHarness.launch_and_wait 同形）：ANTHROPIC_* + vendored static_env +
+    RH2 启动常量（`cc_launch_conditions.CC_RH2_STATIC_ENV`，#9 关 auto-memory）+ 进程级 SLIME_AGENT_CC_EXTRA_ENVS
+    （训练守卫等 run 级常量）+ **逐 execution 注入**（最高优先级）。"""
 
     from slime.agent.harness import ClaudeCodeHarness
+
+    from repoharness2.adapters.slime.cc_launch_conditions import CC_RH2_STATIC_ENV
 
     env = {
         "ANTHROPIC_BASE_URL": adapter_url,
         "ANTHROPIC_AUTH_TOKEN": session_id,
         "ANTHROPIC_MODEL": model_label,
         **ClaudeCodeHarness.static_env,
+        **CC_RH2_STATIC_ENV,
     }
     extra_envs = os.environ.get(ClaudeCodeHarness.extra_envs_env, "").strip()
     if extra_envs:
@@ -418,7 +422,11 @@ async def launch_claude_code(
     await _sandbox.ensure_agent_user(sb, workdir)
     ctx = _harness_common.HarnessContext(workdir=workdir, session_id=session_id, adapter_url=adapter_url)
     await harness.write_config(sb, ctx)
-    cmd = f"/usr/local/bin/claude -p {shlex.quote(prompt)} {harness.launch_flags}"
+    # #10：工具面由 RH2 单一写入者决定（`--tools` 白名单，真正从请求的 tools 里移除其它工具）；
+    # SLIME_AGENT_CC_EXTRA_ARGS 只承载 max-turns 之类的作业参数
+    from repoharness2.adapters.slime.cc_launch_conditions import cc_tool_surface_args
+
+    cmd = f"/usr/local/bin/claude -p {shlex.quote(prompt)} {harness.launch_flags} {cc_tool_surface_args()}"
     extra_args = os.environ.get(harness.extra_args_env, "").strip()
     if extra_args:
         cmd = f"{cmd} {extra_args}"
@@ -1141,7 +1149,6 @@ class BringupService:
     _instance: "BringupService | None" = None
 
     def __init__(self, args: Any) -> None:
-        from slime.agent.adapters import AnthropicAdapter
         from slime.agent.aiohttp_threaded import FilteredAccessLogger, run_app_in_thread
         from slime.utils.processing_utils import load_tokenizer
 
@@ -1207,7 +1214,14 @@ class BringupService:
         #    再拒绝"包装（`install_turn_budget_wire` 包装 `_run_turn`）在"先构造、后安装"的顺序下根本不在
         #    生产路由上。先安装再构造，路由登记直接绑到包装；下面再用启动核对兜底。
         install_capture_wire(self.registry)
-        self.adapter = AnthropicAdapter(
+        # #8(i)（决策包 §8）：count_tokens 回真实计数——同样先安装后构造（路由在构造器里按模块名登记函数对象）
+        from repoharness2.adapters.slime.count_tokens_wire import bind_count_tokens_adapter, install_count_tokens_wire
+
+        install_count_tokens_wire()
+        # #6(a)（决策包 §8）：RH2 子类只把约定提醒并入相邻 tool_result（vendored 零改动；生成与 count_tokens 共用）
+        from repoharness2.adapters.slime.rh2_anthropic_adapter import rh2_anthropic_adapter_cls
+
+        self.adapter = rh2_anthropic_adapter_cls()(
             tokenizer=self.tokenizer,
             sglang_url=self.sglang_url,
             tool_parser=getattr(args, "sglang_tool_call_parser", None) or None,
@@ -1225,6 +1239,7 @@ class BringupService:
 
         ensure_no_404_middleware(self.adapter.app)
         assert_no_404_guard_installed(self.adapter.app)
+        bind_count_tokens_adapter(self.adapter)  # #8(i) 启动核对：路由绑的是 rh2_count_tokens 且 adapter 已挂
         # Codex 修后复核 R1 的启动核对：已登记的 POST 路由必须就是当前（已包装的）`_run_turn`；
         # 顺序再被改回去时这里 typed 停止，而不是带着失效的在飞交付保护进入 RUNNING
         try:

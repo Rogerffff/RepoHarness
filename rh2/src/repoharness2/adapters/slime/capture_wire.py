@@ -31,6 +31,7 @@ from __future__ import annotations
 import asyncio
 import contextvars
 import dataclasses
+import json
 import time
 import uuid
 from collections.abc import Awaitable, Callable
@@ -1237,14 +1238,28 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
         if session.max_context_tokens > 0:
             remaining = session.max_context_tokens - len(prompt_ids)
             if remaining <= 0:
+                # #8(iii)（决策包 §8）：真正溢出时回 Anthropic 形状的 400 "prompt is too long"，让 CC 走被动压缩
+                # （实测 2.1.205 认得它并压缩后重发）。此前回空 text + finish_reason=length：CC 会追加 "Output token
+                # limit hit. Resume directly…" 重发、4 次后自造 API Error 退出 1，且永不压缩。这里在引擎调用之前、
+                # pending 暂存之前抛出：不伪造采样、不留 pending、不进 capture；turn cap 的接纳计数沿 vendored 既有
+                # 行为（请求已被接纳）。
                 logger.warning(
-                    "[rh2-capture] sid=%s prompt exceeds max_context_tokens (%d >= %d)",
+                    "[rh2-capture] sid=%s prompt exceeds max_context_tokens (%d >= %d) -> 400 prompt_too_long",
                     session_id,
                     len(prompt_ids),
                     session.max_context_tokens,
                 )
-                return slime_common.TurnRecord(
-                    prompt_ids=list(prompt_ids), output_ids=[], finish_reason="length"
+                with registry._lock:
+                    registry.stats["prompt_too_long"] = registry.stats.get("prompt_too_long", 0) + 1
+                raise aiohttp_web.HTTPBadRequest(
+                    text=json.dumps({
+                        "type": "error",
+                        "error": {
+                            "type": "invalid_request_error",
+                            "message": f"prompt is too long: {len(prompt_ids)} tokens > {session.max_context_tokens} maximum",
+                        },
+                    }),
+                    content_type="application/json",
                 )
             sp["max_new_tokens"] = min(int(sp.get("max_new_tokens", remaining)), remaining)
 

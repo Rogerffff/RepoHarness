@@ -87,6 +87,7 @@ from typing import Any, Literal, Protocol
 
 from repoharness2.adapters.slime.async_worker import FatalExecutionInfrastructureError
 from repoharness2.adapters.slime.attempt_timing import AttemptLifecycleTiming
+from repoharness2.adapters.slime.cc_launch_conditions import cc_context_env
 from repoharness2.adapters.slime.execution_scope import (
     ScopeStopResult,
     merge_stop_results,
@@ -2054,6 +2055,8 @@ class SlimeBindingConfig:
     # S1 测试路径兼容；正式链启动断言强制其为 True（见 __init__）。
     reject_on_nonzero_harness_exit: bool = False
     max_context_len: int = 0
+    # #8(iv)（决策包 §8）：CC 单次 Read 的 token 上限（None = CC 默认 25,000，面向 200K 窗口）；与窗口一起按作业配置
+    cc_file_read_max_output_tokens: int | None = None
     name_prefix: str = "rh2-rollout"
     label_prefix: str = "rh2.rollout"
     cleanup_timeout_seconds: int = 120
@@ -2946,12 +2949,20 @@ class RolloutOrchestrator:
                     session_id=sid,
                     inject_env_var="ANTHROPIC_BASE_URL",
                 ),
-                # #1：HOME + BASH_ENV（与启动前解释器核对同一份构造；无 profile 的 legacy 路径只带 BASH_ENV）
-                env_injections=(
-                    agent_shell_env(self._sandbox_profile, activation_file=materialize.BASH_ENV_PATH)
-                    if self._sandbox_profile is not None
-                    else {"BASH_ENV": materialize.BASH_ENV_PATH}
-                ),
+                # #1：HOME + BASH_ENV（与启动前解释器核对同一份构造；无 profile 的 legacy 路径只带 BASH_ENV）；
+                # #8(ii)(iv)：CC 窗口 / 压缩窗口 / 输出预留 / Read 上限按本次作业配置注入（max_context_len 未配置时不注入）
+                env_injections={
+                    **(
+                        agent_shell_env(self._sandbox_profile, activation_file=materialize.BASH_ENV_PATH)
+                        if self._sandbox_profile is not None
+                        else {"BASH_ENV": materialize.BASH_ENV_PATH}
+                    ),
+                    **cc_context_env(
+                        max_context_len=int(self.config.max_context_len),
+                        max_new_tokens=session_defaults.get("max_new_tokens"),
+                        file_read_max_output_tokens=self.config.cc_file_read_max_output_tokens,
+                    ),
+                },
                 # 批 B：vendored harness 的相对整数秒只是兼容参数 = 此刻剩余（下取整、至少 1）；
                 # 真正的强制保护是下方按绝对期限的 _await_harness_within_deadline。
                 time_budget_seconds=(
