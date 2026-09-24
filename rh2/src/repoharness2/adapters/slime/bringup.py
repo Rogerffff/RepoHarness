@@ -1236,6 +1236,11 @@ class BringupService:
         from repoharness2.adapters.slime.count_tokens_wire import bind_count_tokens_adapter, install_count_tokens_wire
 
         install_count_tokens_wire()
+        # #5（T1）：可见末尾的 EOS 字面量剥掉、悬空 <tool_call> 置 ill_formed——按模块名替换 vendored parse_model_output
+        from repoharness2.adapters.slime.parse_wire import assert_parse_wire_installed, install_parse_wire
+
+        install_parse_wire(eos_token=getattr(self.tokenizer, "eos_token", None))
+        assert_parse_wire_installed()
         # #6(a)（决策包 §8）：RH2 子类只把约定提醒并入相邻 tool_result（vendored 零改动；生成与 count_tokens 共用）
         from repoharness2.adapters.slime.rh2_anthropic_adapter import rh2_anthropic_adapter_cls
 
