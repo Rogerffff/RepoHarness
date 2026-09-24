@@ -325,56 +325,63 @@ async def engine_hijack(
 
 class _FrameSource:
     """把 hijack 流解成 (stream_type, payload) 帧：8 字节头 = type(1) + pad(3) + 大端长度(4)。
-    200 + chunked 时先解 chunk 再解帧。EOF 返回 None。"""
+    200 + chunked 时先解 chunk 再解帧。EOF 返回 None。
+
+    只有**帧边界上**的 EOF（raw：缓冲为空时读到 EOF；chunked：读到终止块）才是干净结束；帧头 / payload 中途 EOF、
+    chunked 没有终止块、chunk 大小非法、连接层错误都记进 `error`——终态仍由 inspect 决定，但日志不能标完整
+    （Codex IR 复核 F2：执行完成事实与日志完整性是两个事实）。"""
 
     def __init__(self, reader: asyncio.StreamReader, *, chunked: bool) -> None:
         self._reader = reader
         self._chunked = chunked
         self._buf = bytearray()
         self._eof = False
-        self.error: str | None = None  # 连接层错误（reset 等）：按流结束处理，终态仍由 inspect 决定
+        self.error: str | None = None
 
-    async def _fill(self, need: int) -> bool:
+    def _end(self, error: str | None) -> bool:
+        self._eof = True
+        if error and self.error is None:
+            self.error = error
+        return False
+
+    async def _fill(self, need: int, *, what: str) -> bool:
         try:
-            return await self._fill_inner(need)
+            return await self._fill_inner(need, what)
         except asyncio.IncompleteReadError:
-            self._eof = True
-            return False
-        except (OSError, ValueError) as exc:  # ConnectionResetError 等 daemon 侧断连 / 畸形 chunk：按流结束处理
-            self.error = f"{type(exc).__name__}: {exc}"
-            self._eof = True
-            return False
+            return self._end(f"eof_inside_{what}")
+        except OSError as exc:  # ConnectionResetError 等 daemon 侧断连
+            return self._end(f"{type(exc).__name__}: {exc}")
+        except ValueError as exc:  # 畸形 chunk 大小
+            return self._end(f"bad_chunk_size: {exc}")
 
-    async def _fill_inner(self, need: int) -> bool:
+    async def _fill_inner(self, need: int, what: str) -> bool:
         while len(self._buf) < need:
             if self._eof:
                 return False
             if self._chunked:
                 size_line = await self._reader.readline()
                 if not size_line:
-                    self._eof = True
-                    return False
+                    return self._end("chunked_eof_without_terminator")
                 size = int(size_line.split(b";")[0].strip() or b"0", 16)
                 if size == 0:
-                    self._eof = True
-                    return False
+                    # 终止块：只有恰好落在帧边界（缓冲为空、正等下一帧头）才是干净结束
+                    return self._end(None if (what == "frame_header" and not self._buf) else f"eof_inside_{what}")
                 self._buf.extend(await self._reader.readexactly(size))
                 await self._reader.readline()
             else:
                 data = await self._reader.read(65536)
                 if not data:
-                    self._eof = True
-                    return False
+                    return self._end(None if (what == "frame_header" and not self._buf) else f"eof_inside_{what}")
                 self._buf.extend(data)
         return True
 
     async def next_frame(self) -> tuple[int, bytes] | None:
-        if not await self._fill(8):
+        if not await self._fill(8, what="frame_header"):
             return None
         stream_type, size = self._buf[0], int.from_bytes(self._buf[4:8], "big")
         del self._buf[:8]
-        if not await self._fill(size):
-            return None  # 帧被截断：按 EOF 处理，终态由 inspect 决定
+        if not await self._fill(size, what="frame_payload"):
+            return None  # 帧被截断：已记 error；终态由 inspect 决定
         payload = bytes(self._buf[:size])
         del self._buf[:size]
         return stream_type, payload
@@ -440,8 +447,8 @@ class ExecCollectedRun:
     stderr_path: str
     stdout_bytes: int  # 实际写入宿主文件的字节
     stderr_bytes: int
-    log_complete: bool  # exited 且两路都无写失败
-    log_partial_reason: str | None  # time_budget | cancelled | write_error:<...> | <exec_state>
+    log_complete: bool  # exited 且流干净结束（帧边界 EOF）且两路都无写失败
+    log_partial_reason: str | None  # time_budget | cancelled | write_error:<...> | stream_error:<...> | <exec_state>
     stderr_tail: str
     seconds: float
     inspect: dict[str, Any] | None = None  # 最后一次 exec inspect 的 Running / ExitCode / Pid
@@ -468,20 +475,24 @@ async def _inspect_exec(exec_id: str, *, socket_path: str | None, timeout: float
 async def _await_exec_terminal(
     exec_id: str, *, socket_path: str | None, settle_seconds: float,
 ) -> dict[str, Any] | None:
-    """流 EOF 之后：轮询同一 exec 的 inspect 直到 Running=false（正常几十毫秒内）；超过 settle 上限返回最后
-    一次观测（可能仍 Running=true = 连接丢失）；一次都没拿到返回 None。"""
+    """流 EOF 之后：轮询同一 exec 的 inspect 直到 Running=false（正常几十毫秒内）；每次 inspect 只给剩余时间，
+    整段大约以 settle 为界（经验上限，不是严格总时长）；超过后返回最后一次观测（可能仍 Running=true = 连接丢失）；
+    一次都没拿到返回 None。"""
 
     deadline = time.monotonic() + settle_seconds
     last: dict[str, Any] | None = None
     while True:
-        state = await _inspect_exec(exec_id, socket_path=socket_path, timeout=min(settle_seconds, _ENGINE_REQUEST_TIMEOUT))
+        remaining = deadline - time.monotonic()
+        state = await _inspect_exec(
+            exec_id, socket_path=socket_path, timeout=max(0.05, min(remaining, _ENGINE_REQUEST_TIMEOUT)),
+        )
         if state is not None:
             last = state
             if state.get("Running") is False:
                 return state
         if time.monotonic() >= deadline:
             return last
-        await asyncio.sleep(_EXEC_SETTLE_STEP)
+        await asyncio.sleep(min(_EXEC_SETTLE_STEP, max(0.0, deadline - time.monotonic())))
 
 
 async def run_exec_collected(
@@ -594,9 +605,14 @@ async def run_exec_collected(
             run.exec_state, run.exit_code = "exited", int(code)
         if run.exec_state != "exited":
             run.log_partial_reason = run.exec_state
-        elif write_errors:
-            run.log_partial_reason = "write_error:" + ";".join(write_errors)
-        run.log_complete = run.exec_state == "exited" and not write_errors
+        else:
+            reasons = []
+            if run.stream_error:
+                reasons.append(f"stream_error:{run.stream_error}")  # 坏流 + 可信终态：退出码保留，日志标 partial（F2）
+            if write_errors:
+                reasons.append("write_error:" + ";".join(write_errors))
+            run.log_partial_reason = ";".join(reasons) or None
+        run.log_complete = run.exec_state == "exited" and not write_errors and not run.stream_error
         return run
     except asyncio.CancelledError:
         # 外层取消（hard wall / poison / 关停 / cap 强停）：关本次连接后传播；容器内进程归既有 owner。

@@ -30,6 +30,7 @@ from repoharness2.adapters.slime import docker_sandbox as ds
 from repoharness2.adapters.slime.generate import (
     HARNESS_EXIT_TIME_BUDGET_EXCEEDED,
     HARNESS_LAUNCH_FACTS,
+    RolloutOrchestrator,
     SlimeBindingError,
 )
 from repoharness2.adapters.slime.outcome_producer import FAILURE_CODE_TERMINATION_MAP
@@ -54,10 +55,13 @@ class FakeEngine:
     `inspect`: 逐次应答的状态列表（用尽后驻留最后一个；元素 None = 404）；`mode`: "upgrade" | "chunked200"。"""
 
     def __init__(self, tmp_path: Path, *, frames=(), end="close", inspect=({"Running": False, "ExitCode": 0, "Pid": 7},),
-                 mode="upgrade", create_status=201, start_behavior="stream", inspect_delay=0.0, create_truncated=False):
+                 mode="upgrade", create_status=201, start_behavior="stream", inspect_delay=0.0, create_truncated=False,
+                 tail=b"", chunked_end="terminator"):
         self.start_behavior = start_behavior  # stream | hang（永不应答）| reset（收到请求即断开）
         self.inspect_delay = inspect_delay
         self.create_truncated = create_truncated  # create 回一个被截断的 chunked 响应体
+        self.tail = tail  # 帧之后、关连接之前再发的原始字节（截断帧头 / 截断 payload）
+        self.chunked_end = chunked_end  # terminator | none（没有终止块就关）| bad_size（非法 chunk 大小）
         # AF_UNIX 路径上限约 104 字节：pytest 的 tmp_path 在 macOS 上太长，socket 放短目录（tmp_path 只放日志）
         self._sock_dir = tempfile.mkdtemp(prefix="rh2eng", dir="/tmp")
         self.socket_path = str(Path(self._sock_dir) / "e.sock")
@@ -124,7 +128,13 @@ class FakeEngine:
                     await writer.drain()
                 if self.end == "close":
                     if self.mode == "chunked200":
-                        writer.write(b"0\r\n\r\n")
+                        if self.chunked_end == "terminator":
+                            writer.write(b"0\r\n\r\n")
+                        elif self.chunked_end == "bad_size":
+                            writer.write(b"zz\r\n")
+                        await writer.drain()
+                    elif self.tail:
+                        writer.write(self.tail)
                         await writer.drain()
                 else:
                     try:
@@ -546,6 +556,88 @@ async def test_launch_cancellation_leaves_facts_behind(monkeypatch, tmp_path):
     assert facts["harness_log"]["exec_state"] == "cancelled" and facts["harness_log"]["stdout_bytes"] == 2
 
 
+_BAD_STREAMS = {
+    "raw_truncated_header": {"tail": b"\x01\x00\x00"},
+    "raw_truncated_payload": {"tail": b"\x01\x00\x00\x00\x00\x00\x00\x09abc"},
+    "chunked_no_terminator": {"mode": "chunked200", "chunked_end": "none"},
+    "chunked_bad_size": {"mode": "chunked200", "chunked_end": "bad_size"},
+}
+
+
+@pytest.mark.parametrize("case", sorted(_BAD_STREAMS))
+async def test_bad_stream_with_trusted_exit_keeps_the_exit_code_but_never_claims_a_complete_log(tmp_path, case):
+    """Codex IR 复核 F2：执行完成事实（inspect）与日志完整性是两个事实——坏流 + 已退出：退出码保留、日志标 partial。"""
+    async with FakeEngine(tmp_path, frames=[(1, b"good\n", 0)], inspect=({"Running": False, "ExitCode": 0, "Pid": 123},), **_BAD_STREAMS[case]) as eng:
+        run = await _collect(eng, tmp_path)
+    assert run.exec_state == "exited" and run.exit_code == 0  # 处置不变
+    assert run.log_complete is False and run.stream_error and run.log_partial_reason.startswith("stream_error:")
+    assert (tmp_path / "h" / "trajectory.jsonl").read_bytes() == b"good\n" and run.stdout_bytes == 5  # 截断的部分不落盘
+
+
+@pytest.mark.parametrize("mode", ["upgrade", "chunked200"])
+async def test_clean_end_at_a_frame_boundary_is_complete(tmp_path, mode):
+    async with FakeEngine(tmp_path, frames=[(1, b"good\n", 0)], mode=mode) as eng:
+        run = await _collect(eng, tmp_path)
+    assert run.exec_state == "exited" and run.log_complete is True and run.stream_error is None and run.log_partial_reason is None
+
+
+async def test_settle_uses_remaining_time_per_inspect(tmp_path, monkeypatch):
+    """Codex 非阻塞建议：每次 inspect 只给剩余时间，整段以 settle 为界（慢 inspect 不会把 0.4 s 拉成 0.8 s）。"""
+    import time as _time
+
+    async with FakeEngine(tmp_path, frames=[(1, b"x\n", 0)], inspect=({"Running": True, "ExitCode": None, "Pid": 1},), inspect_delay=5.0) as eng:
+        started = _time.monotonic()
+        run = await _collect(eng, tmp_path, settle_seconds=0.4)
+        elapsed = _time.monotonic() - started  # 在假 daemon 关闭（等它的慢 handler 结束）之前量
+    assert run.exec_state == "inspect_failed" and elapsed < 1.0 and run.seconds < 1.0
+
+
+def test_harness_log_dir_separates_real_eval_and_retry_identities(tmp_path):
+    """Codex IR 复核 F1：`_sanitize_for_name` 截到 24 字符，真实评测身份的 slot / prompt / physical id 差异全在
+    截断之外。目录名带完整身份摘要后：同题两个评测 slot、单样本评测 prompt 100 / 101、同 execution 两个 physical id、
+    训练 ABORTED→retry，各有各的目录，两次写入互不覆盖。"""
+    import importlib.util
+    from types import SimpleNamespace
+
+    # identity.py 只用标准库，但 repoharness2.adapters.miles 包的 __init__ 会导入 miles（tests/adapters 里没有）：
+    # 按文件直接加载真实 minter，不经包 __init__（与 Codex 反例探针同一来源）
+    identity_path = Path(ds.__file__).resolve().parents[1] / "miles" / "identity.py"
+    spec = importlib.util.spec_from_file_location("rh2_identity_under_test", identity_path)
+    identity = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(identity)
+    mint_attempt_identity, mint_eval_attempt_identity = identity.mint_attempt_identity, identity.mint_eval_attempt_identity
+
+    def eval_identity(*, slot: int, prompt: int = 0, samples: int = 2) -> dict:
+        sample = SimpleNamespace(status="pending", metadata={"rh2_eval_dispatch": {
+            "eval_point_id": "0123456789ab", "dataset": "probe", "dataset_index": 0, "prompt_index": prompt,
+            "sample_slot": slot, "n_samples_per_eval_prompt": samples, "num_prompts": 200}})
+        return mint_eval_attempt_identity(sample)
+
+    def log_dir(identity: dict) -> Path:
+        audit = SimpleNamespace(trajectory_id=identity["rh2_rollout_execution_id"], physical_attempt_id=identity["rh2_physical_attempt_id"])
+        return Path(RolloutOrchestrator._harness_log_dir(SimpleNamespace(artifact_dir=tmp_path), audit))
+
+    train = SimpleNamespace(status="pending", group_index=7, index=28, metadata={})
+    first_train = mint_attempt_identity(train, n_samples_per_prompt=4)
+    train.status = "aborted"
+    retry_train = mint_attempt_identity(train, n_samples_per_prompt=4)
+    pairs = {
+        "eval_slots_0_1": (eval_identity(slot=0), eval_identity(slot=1)),
+        "eval_prompts_100_101_single_sample": (eval_identity(slot=0, prompt=100, samples=1), eval_identity(slot=0, prompt=101, samples=1)),
+        "same_eval_execution_two_physical_ids": (eval_identity(slot=0), eval_identity(slot=0)),
+        "train_retry": (first_train, retry_train),
+    }
+    for name, (a, b) in pairs.items():
+        da, db = log_dir(a), log_dir(b)
+        assert da != db, (name, da)
+        assert len(da.name) <= 24 + 1 + 16 and da.name.endswith(tuple("0123456789abcdef"))
+        for d, payload in ((da, b"first attempt\n"), (db, b"second attempt\n")):
+            fh = ds._open_log(d / "trajectory.jsonl")
+            fh.write(payload)
+            fh.close()
+        assert (da / "trajectory.jsonl").read_bytes() == b"first attempt\n" and (db / "trajectory.jsonl").read_bytes() == b"second attempt\n", name
+
+
 @pytest.mark.parametrize("case", ["create_404", "start_hang", "start_reset", "never_started"])
 async def test_spawn_failures_are_bootstrap_failures_through_the_real_driver(monkeypatch, tmp_path, case):
     """spawn 阶段的四种失败（建 exec 被拒 / 起流超时 / 起流断连 / OCI 没起来）经真实 ClaudeCodeDriver.run 都归因
@@ -707,11 +799,14 @@ def test_harness_log_dir_is_per_execution_and_per_physical_attempt(tmp_path):
     """对抗验证 D7：execution id 跨 retry 恒等，日志目录再按 physical attempt 分开。"""
     from types import SimpleNamespace
 
+    import hashlib
+
     chain = build_dense_chain(artifact_dir=tmp_path)
     orch = chain.orchestrator
-    assert orch._harness_log_dir(SimpleNamespace(trajectory_id="miles_g1_m2", physical_attempt_id="pa:7/x")).endswith(
-        "miles_g1_m2/harness/pa-7-x")  # _sanitize_for_name 把 : / 换成 -
-    assert orch._harness_log_dir(SimpleNamespace(trajectory_id="miles_g1_m2", physical_attempt_id=None)).endswith("miles_g1_m2/harness")
+    with_attempt = orch._harness_log_dir(SimpleNamespace(trajectory_id="miles_g1_m2", physical_attempt_id="pa:7/x"))
+    assert with_attempt.endswith("miles_g1_m2/harness/pa-7-x-" + hashlib.sha256(b"pa:7/x").hexdigest()[:16])  # 可读前缀 + 完整身份摘要
+    without = orch._harness_log_dir(SimpleNamespace(trajectory_id="miles_g1_m2", physical_attempt_id=None))
+    assert without.endswith("miles_g1_m2/harness/miles_g1_m2-" + hashlib.sha256(b"miles_g1_m2").hexdigest()[:16])
 
 
 def test_vendored_run_agent_and_cli_client_are_no_longer_on_the_claude_code_path():

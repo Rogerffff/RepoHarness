@@ -245,3 +245,19 @@ vendored `run_agent`（`slime/agent/harness/common.py:107–122`）在 `{workdir
 | D10 / D11 | 类型非 1/2 的帧被静默丢弃；超大帧约 3 倍内存 | 不改：真实 exec 只有类型 1/2，daemon 单帧 ≤ 32 KiB（记录为已知边界） |
 
 子代理对生产代码零改动；远端资源全部清理（探针容器 0 残留、无自建网络、live-restore 已恢复关闭、tmpfs 已卸载）。
+
+## 8. Codex 针对性复核（2026-09-24，提交 `8f790df6`）
+
+[复核结果与最小验收条件](codex_ir_followup_20260924.md)：原 IR1 执行终态、IR2 异常运输、IR3 短写计数修复通过；主审 157 项相关测试全过（含 8 个真实 Docker 用例），未发现新 P1。尚需补两项日志 P2：F1，正式评测身份经 24 字符截断后成员/题目目录碰撞，新增 physical attempt 层也被同样截断，`wb` 会覆盖另一份日志；F2，明确截断或已有 stream_error 的帧流，在 inspect 已退出时仍被记为完整。两项只修日志命名与完整性，不改变执行退出码和训练处置。无新 T0，#3 与后续决策包可并行，针对性正反控补齐后结束本片审查。原验收与作者对抗结果保持为历史证据，不回写。
+
+### 7.6 Codex IR 针对性复核（[原文](codex_ir_followup_20260924.md)，2026-09-24）的处置
+
+IR1–IR3 判定通过；两项日志 P2 与一条非阻塞建议全部 accepted 并实施：
+
+| 项 | 修法 | 用例 |
+| --- | --- | --- |
+| F1 / P2：`_sanitize_for_name` 截到 24 字符，真实评测身份 `eval-<12hex>-d0-p0_m0 / _m1`、单样本评测 prompt 100 / 101、同 execution 的两个 physical id 都落到同一目录并被 `wb` 互相覆盖 | `_harness_log_dir` 末级目录名 = 可读前缀（仍经 `_sanitize_for_name`，共用函数不改）+ **完整身份**（physical attempt id，缺省 trajectory id）的 sha256 前 16 位；消费者继续按 audit 里的实际路径读 | 用真实 `mint_eval_attempt_identity` / `mint_attempt_identity`（按文件加载，不经会导入 miles 的包 `__init__`）：同题两个评测 slot、prompt 100 / 101、同 execution 两个 physical id、训练 ABORTED→retry 四对身份目录互异，两次写入各自内容独立回读 |
+| F2 / P2：帧头 / payload 中途 EOF、chunked 缺终止块、chunk 大小非法仍标 `log_complete=true` | `_FrameSource` 区分帧边界上的干净 EOF（raw：缓冲为空时 EOF；chunked：终止块恰在帧边界）与截断（`eof_inside_frame_header / eof_inside_frame_payload / chunked_eof_without_terminator / bad_chunk_size` 与连接层错误一并进 `error`）；`exited` 时 `log_complete = 无写失败 且 无流错误`，`log_partial_reason` 带 `stream_error:<原因>`；**退出码与处置不变** | 四种坏流 + inspect `Running=false / ExitCode=0`：退出码 0 保留、`log_complete=False`、partial 以 `stream_error:` 开头、截断部分不落盘；两种完整流正控仍 complete |
+| 非阻塞：settle 轮询每次 inspect 传完整 settle 而非剩余量 | 每次 inspect 只给剩余时间（下限 0.05 s），sleep 也按剩余截断；文档改为"经验上限，不是严格总时长" | 慢 inspect（5 s）下 settle 0.4 s 在 1 s 内返回 `inspect_failed` |
+
+验证：`test_startup_fix_2_host_collected.py` 48 passed、`test_startup_fix_2_engine_exec_docker.py` 8 passed、`test_startup_fix_1_activation.py` 20 passed（本机 29.4.1 与验证机 29.8.1，76 passed）；本机五目录 **1699 passed / 1 skipped**；双 lane 全绿（A 463p/343s、B 806p/0s）；ruff 通过。日志目录形态现在是 `<artifact_dir>/<trajectory_id 前 24>/harness/<身份前 24>-<sha256 前 16>/{trajectory.jsonl,stderr.log}`。

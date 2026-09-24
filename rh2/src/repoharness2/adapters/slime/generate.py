@@ -3956,15 +3956,16 @@ class RolloutOrchestrator:
 
     def _harness_log_dir(self, audit: "RolloutAudit") -> str | None:
         """#2：宿主侧 harness 日志目录（从非秘密 trajectory 身份生成；没有 artifact_dir 时为 None）。
-        execution id 跨 retry 恒等，所以再按 physical attempt 分子目录：重派发的两次尝试各有各的日志
-        （对抗验证 D7；文件本身也按 "wb" 从空开始）。"""
+        execution id 跨 retry 恒等，所以再按 physical attempt 分子目录（对抗验证 D7）。末级目录名 =
+        可读前缀 + **完整身份**的 sha256 前 16 位：`_sanitize_for_name` 截到 24 字符（容器命名共用，不改），
+        真实评测身份 `eval-<12hex>-d0-p0_m0 / _m1`、prompt 100 / 101、同 execution 的不同 physical id 都会在
+        前缀处相撞（Codex IR 复核 F1）；摘要保证每次尝试各有各的目录，文件再按 "wb" 从空开始。"""
 
         if self.artifact_dir is None:
             return None
-        base = self.artifact_dir / _sanitize_for_name(audit.trajectory_id) / "harness"
-        if audit.physical_attempt_id:
-            base = base / _sanitize_for_name(str(audit.physical_attempt_id))
-        return str(base)
+        identity = str(audit.physical_attempt_id or audit.trajectory_id)
+        digest = hashlib.sha256(identity.encode("utf-8")).hexdigest()[:16]
+        return str(self.artifact_dir / _sanitize_for_name(audit.trajectory_id) / "harness" / f"{_sanitize_for_name(identity)}-{digest}")
 
     def _episode_remaining(self, audit: "RolloutAudit") -> float:
         """批 B：episode 期限剩余秒数（无期限 = +inf）。"""
