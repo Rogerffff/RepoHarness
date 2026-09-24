@@ -10,16 +10,20 @@ Claude（A 线）。依据 [第六组 README §8.2](../batch6_efficiency_2026092
 
 ```python
 from repoharness2.adapters.slime.count_tokens_wire import bind_count_tokens_adapter, install_count_tokens_wire
-from repoharness2.adapters.slime.parse_wire import assert_parse_wire_installed, install_parse_wire
+from repoharness2.adapters.slime.parse_wire import assert_parse_wire_installed, install_parse_wire, install_turn_terminal_publisher
 from repoharness2.adapters.slime.rh2_anthropic_adapter import rh2_anthropic_adapter_cls
 
 install_count_tokens_wire()                       # 1) 先装 count_tokens 路由（必须在构造 adapter 之前）
-install_parse_wire(eos_token=tokenizer.eos_token) # 2) #5：可见末尾 EOS 字面量剥掉、悬空 <tool_call> 置 ill_formed
+install_parse_wire(eos_token=tokenizer.eos_token, eos_token_id=tokenizer.eos_token_id)
+                                                  # 2) #5：只在"最后一个采样 id 是 EOS"时剥可见末尾字面量；悬空 <tool_call> 置 ill_formed
+install_turn_terminal_publisher()                 # 2b) 探针没装 capture wire：给 call_sglang_generate 包一层发布 EOS 事实（生产由 capture wire 发布）
 assert_parse_wire_installed()
 adapter = rh2_anthropic_adapter_cls()(tokenizer=..., sglang_url=..., tool_parser=..., reasoning_parser=...,
                                       fork_threshold_tokens=..., debug_callback=...)   # 3) #6(a) 生产子类
 bind_count_tokens_adapter(adapter)                # 4) count_tokens 绑到这个 adapter 实例
 ```
+
+- #5 修订（Codex R1/R2，2026-09-25）：字面量剥离不再靠字符串猜测——没有 EOS 事实（没装发布器）就**不剥**并计 `eos_fact_missing`；普通 token 拼出的 `<|im_end|>` 保留。悬空判据只看解析后可见残余的未闭合 `<tool_call>`（空 / `<function=` / `{` 续接），正文提到标签不算。
 
 - 顺序原因：`install_count_tokens_wire` 改的是 vendored 类，路由在 `__init__` 里建；`rh2_anthropic_adapter_cls()` 是延迟绑定的子类工厂（vendored 模块可能被重置，不要在模块顶层 `class X(AnthropicAdapter)`）。
 - **溢出 400 不在这四处里**：正式链的 "prompt is too long" 400 在 capture wire（`capture_wire.py` 的 `prompt_too_long` 分支）；vendored adapter 溢出时只记 warning 并返回 `finish_reason="length"` 的空输出（`slime/agent/adapters/common.py` `max_context_tokens` 分支），CC 拿不到 400 就不会走被动压缩。探针不装 capture wire 的话，需要 A 把这段判断抽成不依赖 capture registry 的小函数供探针复用——**A 待办**（见 §5），B 先不要自己复制一份。

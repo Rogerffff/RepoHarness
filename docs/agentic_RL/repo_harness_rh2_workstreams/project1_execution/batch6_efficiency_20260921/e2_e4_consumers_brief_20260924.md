@@ -1,6 +1,6 @@
 # Brief：E2 批量 census（I26）与 E4 完成历史释放（I29）——消费者梳理与切片设计
 
-2026-09-24 / Claude（A 线）。**状态：设计稿；只读梳理（sub-agent，本地 `runs/decision_package_20260924/e2_e4_survey/README.md` 与三个本机探针，git-ignore），我核过 census 调用点以 root 无 `-u` 执行、R2E 探针 `WRITE_VENV_BIN=ok` 证据、fork 无关。没有改代码、没跑 Docker / 远端。** 依据：[README §2 E2 / E4](README.md)、[README §8.1 第 5 条](README.md)（先做只读消费者梳理和 Brief，实施按文件 / 函数归属顺序落地；保留扫描语义、活动资源 owner、未消费结果与累计计数）。
+2026-09-24 / Claude（A 线）。**状态：设计稿（2026-09-25 按 [Codex 复核 R6 与 §5/§6](review_next_slices_20260924/README.md) 修订）；只读梳理（sub-agent，本地 `runs/decision_package_20260924/e2_e4_survey/README.md` 与三个本机探针，git-ignore），我核过 census 调用点以 root 无 `-u` 执行、R2E 探针 `WRITE_VENV_BIN=ok` 证据、fork 无关。没有改代码、没跑 Docker / 远端。** 依据：[README §2 E2 / E4](README.md)、[README §8.1 第 5 条](README.md)（先做只读消费者梳理和 Brief，实施按文件 / 函数归属顺序落地；保留扫描语义、活动资源 owner、未消费结果与累计计数）。
 
 ## 1. E2：批量 census
 
@@ -15,12 +15,12 @@
 
 不跟随软链、目录不进清单、`LC_ALL=C` 排序、按换行分隔；分类先 `-L` 再 `-f`，其余 UNSUPPORTED；软链摘要 = readlink 输出删全部换行后再算；执行位按 root `[ -x ]`（= 任一 x 位）；EXCL 只列普通文件、不剪排除区里的缓存目录（B 的 R2E prewarm 测试依赖）；缓存计数目录只数顶层、文件只数普通文件；无 EXCL 行时排除区摘要 None；宿主解码 `errors="replace"`；脚本无 pipefail。
 
-边界输入现状（本机实测；E2a 原样保留）：文件名含 TAB → `post_census_parse_failed`（单题失败）；含换行 → `unsupported_object_in_patch`（unsafe 通道）；目录不可遍历 → 脚本仍退出 0、子树静默漏掉；**文件名含 0x01 → 解析时 pydantic `ValidationError`，exporter 不捕获，按源码推断正式链升级为 `rh2_contract_validation_failed` 并停批——模型能让整场训练停下来**。这条不属于 E2，需要另立窄修（失败等级从停批降为单题的路由变化，**待用户 / Codex 决定**）。
+边界输入现状（本机实测；E2a 原样保留）：文件名含 TAB → `post_census_parse_failed`（单题失败）；含换行 → `unsupported_object_in_patch`（unsafe 通道）；目录不可遍历 → 脚本仍退出 0、子树静默漏掉；**文件名含 0x01 → 解析时 pydantic `ValidationError`，exporter 不捕获，按源码推断正式链升级为 `rh2_contract_validation_failed` 并停批——模型能让整场训练停下来**。这条不属于 E2。Codex §6 的处置：按**既有不支持候选工件的处置补漏**——在具体的候选路径解析边界给 typed 不支持原因，复用已批的 unsafe 通道（保留事实、无 reward、按完整组规则处理），不把整个 `ValidationError` 兜底降成单题损耗，我方身份 / 摘要 / 契约矛盾继续 fatal；实施验收补正常文件、该控制字符、我方契约矛盾三个对照。只有改成 reward 0、支持新文件名协议或新增处置通道才是新 T0。
 
 ### 1.3 可信执行入口与一个新风险
 
 - coreutils 在两类镜像都有使用先例（R2E `find -print0 | sort -z | xargs -0 sha256sum`；SWE-Gym 保护脚本 `stat -c`）；Python 位置因来源而异（SWE-Gym `/usr/bin/python3` + miniconda，R2E `/opt/py/<版本>` 而 `.venv/bin/python` 在 agent 可写目录）→ 两份方向复核选 coreutils 正确。
-- **新风险（推断，未用 Docker 复现）**：R2E 派生镜像的 PATH 以 `/testbed/.venv/bin` 开头，而该目录 agent 可写（`runs/r2e_env_repair_20260924/smoke/none2/*/agent_probe.log` 记 `WRITE_VENV_BIN=ok`）。root 执行的 `docker exec bash` 本身及脚本里的 `find` / `sha256sum` / `base64` / `cat` 都可能执行 agent 或候选放进去的同名程序；受影响的是运行后 census、内容抓取、grader 在候选代码跑完之后的 root 读取。这打破 exporter "不信任模型写过的树"的前提；SWE-Gym 的 PATH 目录不归 agent 所有，不受影响。**处置方向（T0，待用户）**：root exec 统一用绝对路径 / 可信 PATH（`env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin /bin/bash`）——影响安全边界与 B 的 E09 激活设计，先与 B 对齐。
+- **新风险（推断，未用 Docker 复现）**：R2E 派生镜像的 PATH 以 `/testbed/.venv/bin` 开头，而该目录 agent 可写（`runs/r2e_env_repair_20260924/smoke/none2/*/agent_probe.log` 记 `WRITE_VENV_BIN=ok`）。root 执行的 `docker exec bash` 本身及脚本里的 `find` / `sha256sum` / `base64` / `cat` 都可能执行 agent 或候选放进去的同名程序；受影响的是运行后 census、内容抓取、grader 在候选代码跑完之后的 root 读取。这打破 exporter "不信任模型写过的树"的前提；SWE-Gym 的 PATH 目录不归 agent 所有，不受影响。**处置（Codex §6：这是恢复"root 不执行候选可写程序"既有边界的 bug 修复，不是新的安全放宽 T0）**：root 的可信操作统一用绝对 shell 路径 + 可信工具 PATH（`/bin/bash`、`env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin`），**只**用于 root 的可信操作，不禁掉 agent 自己的 `.venv` 激活；与 B 的 E09 对齐，R2E 正式运行前修，不必等 E2 吞吐测量。当前证据是 B 的实际 PATH / 可写性加调用链，未做 Docker 攻击复现。
 - 镜像的 OS / coreutils / bash 版本、`sha256sum --zero` 可用性都没有记录，开工前做一次只读探针。
 
 ### 1.4 在制品相交
@@ -43,7 +43,7 @@
 3. **E2b**：census 与 root exec 改绝对路径 / 可信 PATH、`/bin/bash`——与 B 的 E09 及 E1 协调，等 §1.3 的 T0 决定。
 4. 抓取阶段批量化可选；0x01 窄修另立。
 
-验收：冻结现行脚本作对照，在覆盖各种权限位、各类软链、同名缓存文件与软链、排除区边界、空目录、特殊文件名、强制回退的语料树上比较新旧 stdout 逐字节相同；既有 census 测试（含 Docker 组与 B 的 R2E 测试）不改动即通过；目标机 root 跑最大真实镜像（pandas-56849、R2E numpy）与已落盘基线清单摘要对账，记 exec 次数与耗时（空闲 / 4 路并发各一组）。
+实现约束（Codex §5）：整批结果先私下收集并验证，成功才输出；失败回退不能先输出半批再追加旧路径。验收：冻结现行脚本作对照，在真实 Linux 上覆盖空树、含空格 / 反斜线 / TAB / LF 的文件名、各种权限位、各类软链、同名缓存文件与软链、排除区边界、空目录、单个摘要失败、强制回退的语料树上比较新旧 stdout 逐字节相同（保留脚本关键字让旧替身通过只能证明接线，不是等价证明）；既有 census 测试（含 Docker 组与 B 的 R2E 测试）不改动即通过；目标机 root 跑最大真实镜像（pandas-56849、R2E numpy）与已落盘基线清单摘要对账，记 exec 次数与耗时（空闲 / 4 路并发各一组）。
 
 ## 2. E4：完成历史释放
 
@@ -58,6 +58,7 @@
 
 - 全文日志已在 `58a14b00` 于 grade 的 finally 释放。仍留在记录上的：`parsed_verdict`（中位约 3 KB、最大约 0.4 MB）、`diagnostics`（与 sidecar 同内容，中位 2.6 KB、最大 238 KB）、`prelaunch`。
 - 三个释放条件：容器已清理（`record.removed`，可判）；已落盘（有日志引用，可判）；消费者已取走（**无信号**）→ 活记录永不裁剪；已删除的完成记录只保留最近 N 条（建议 256），更早整条丢掉。
+- **R6 补清（Codex 生命周期探针的两个反例）**：(1) 退役顺序按**完成顺序**（确认删除的时刻），不是创建顺序——早启动、最后完成的任务按创建序会刚完成就被丢掉；(2) GC / close 正在遍历 `_records` 并 `await _remove_container` 时不能原地 `_records[:] = kept` 裁剪——探针里 256 条历史 + 3 条活动记录、原地裁剪后 close 只删了 `active_0` / `active_2`，漏掉 `active_1`；遍历用快照（`list(self._records)`）或遍历结束后再裁剪，活动 / 未确认删除的记录永远保留。(3) `leases` 现在只有初始化与 append：随记录确认删除一起退役，或限量留摘要；无日志的启动失败记录不能因永远等不到"有日志引用"而永久保留。(4) `cleanup_failures`、queue events、audits 本片不释放 → "内存平台期"只限于本片裁剪的容器历史，不宣称整个 manager / run 内存已稳定。
 
 ### 2.3 不变量
 
@@ -65,10 +66,19 @@
 
 ### 2.4 切片与验收
 
-- **E4a（manager 历史有界）**，等 B 提交 `manager.py` / `replay_grade.py`：`_remove_container` 成功时把记录"退役"并按容量裁剪（`_records` 仍是 list）；新增累计数（已创建、已删除、leases、regrade_declined）；`cleanup_failures` 本片不截断；更新资源闭包报告；同文件的 CR1 诊断余项（owner A，八卡作业前）一并做（exec 结果先写进 record，再 inspect / 读 tee，两份输出取较长）。验收：FakeDocker 连评 N+50 次条数有界、累计数准确、每次 `[-1]` 事实都在；清理失败记录超容量仍保留、close 时晚清成功计数不变；取消与停批时 driver 账本行逐字段不变；CR1 探针两个取消窗口与短 tee 的断言翻转；CPU 上 tracemalloc 看内存平台期。
+- **E4a（manager 历史有界）**，等 B 提交 `manager.py` / `replay_grade.py`：`_remove_container` 成功时把记录"退役"（按确认删除的完成顺序进入有界历史；活动记录以 `removed` 标记区分；GC 遍历快照、遍历后裁剪）并释放对应 lease；新增累计数（已创建、已删除、leases、regrade_declined）；`cleanup_failures` 本片不截断；更新资源闭包报告；同文件的 CR1 诊断余项（owner A，八卡作业前）一并做（exec 结果先写进 record，再 inspect / 读 tee，两份输出取较长）。验收：FakeDocker 连评 N+50 次条数有界、累计数准确、每次 `[-1]` 事实都在（序列执行不足以覆盖遍历问题，另加"历史满 + 多条活动记录时 close 全部清完"与"早启动晚完成不被丢"两案，以及启动失败记录、取消 / 晚清成功）；清理失败记录超容量仍保留、close 时晚清成功计数不变；取消与停批时 driver 账本行逐字段不变；CR1 探针两个取消窗口与短 tee 的断言翻转；CPU 上 tracemalloc 看内存平台期。
 - **E4b（queue 事件）**：先加按轨迹索引与 `backpressure_total`，不删事件；删除需要"该执行已终局"信号，单独决定。
 - **E4c（audits）**：先测量再决定立项。
 
 ## 3. 未核实与风险
 
 镜像版本类事实缺记录；R2E PATH 劫持未用 Docker 复现；0x01 → 停批的最后一步只来自源码推断；E2 时间收益与 E4 内存数字都是估计。共享工作区同时有 B 在制品：E2a / E4a 等 B 提交后实施（或经用户同意在独立 worktree）。顺带疑点（未验证）：`bringup.record_event` 用执行 id 比对 `s-{paid}` 形式的会话 id，正式链里可能永远匹配不上 audit。
+
+## 4. Codex 设计复核（2026-09-25）
+
+**E2 批量化方向成立；E4 先补清 R6 的退役规则。** 详见[复核报告 §5–§6](review_next_slices_20260924/README.md)。
+
+- 拟议裁剪的反例：真实 gc 遍历时原地缩短 `_records` 会漏过一个活动容器；按创建序保留最近 256 条又可能立即删掉刚完成的长任务。这是未来实现的反例，当前尚未加入裁剪，不报告为现有清理 bug。明确完成顺序、遍历快照或遍历后裁剪；未确认删除的资源始终保留。
+- 写清 leases 如何随记录退役；只加累计数不释放 list。启动失败没有日志不能永久阻止释放。事件索引只提速而不删除时，不宣称内存有界。未证明当前 B 串行消费者丢读，不增加消费确认平台。
+- E2 保留整批成功才输出、失败无半批污染的规则，真实 Linux 差分覆盖特殊文件名和失败回退；按相关文件交接，不等待 B 所有无关工作结束。
+- root 的可信 PATH 修复落实已有边界，不是新的安全放宽 T0。`0x01` 先在候选路径校验边界复用既有不支持工件 / unsafe 处置，不整体降级 `ValidationError`；若要改 reward 或新增文件名协议，再作新决定。
