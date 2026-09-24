@@ -51,3 +51,24 @@ README 警告的"未用 rollout logprob 时改用 detached training logprob 作 
 ## 6. 不做的事
 
 不新建调度 / 观测平台；不改 faithful DIS、组分母、更新边界、I18 来源；不把效率档设为默认；不在无测量数据时宣称收益。无新增用户决策；效率档何时正式启用以作业计划里的实测数字为依据。
+
+## 7. Codex 设计复核（2026-09-25）
+
+**可实施。** 对照当前 fork 后，效率档只加 `--use-rollout-logprobs` 的结论成立。原样复跑既有 CPU 探针，受测优势 / loss / 梯度等价，额外 forward 与对拍消失、训练仍走 replay backward；这不是两步、多 PP 或 GPU 路由状态的完整验收。结果及具体约束见[复核报告 §4](review_next_slices_20260924/README.md)。
+
+- 三态由有效 flags 与真实 producer 给出：诊断缺事件仍是缺证据；效率档关闭才是按配置不可用，不借此宣称 G1 parity 已通过，训练 replay 的核对仍保留。
+- 训练 reward 列已做组内归一化，不能将公式说明读成原始二值分数直接广播。本文两步与非末级 PP 验收继续保留。
+- 不新增强制 profile 闸门或第二套配置事实来源；旧 launch 脚本不替代未来八卡作业方案。先交付配置 / 报告 / 清单，额外 producer 按缺口分片，未知量不由时间戳猜出。
+
+## 7. 实施记录（2026-09-25；sub-agent 实施、Claude 审阅与接线；Codex 复核 §4 四条收紧已落实）
+
+- **已实施**（本地 `runs/decision_package_20260924/e5_impl/README.md` 有 file:line 全表）：
+  - `rh2/src/repoharness2/adapters/miles/forward_profile.py`（新，纯标准库）：从**最终 args** 推导（token 流 `derive_from_tokens` / 进程内 `derive_from_namespace`）`profile`（diagnostic / efficiency / unsupported）、`extra_logprob_forward`、三个开关值、`unavailable_observations`、`unsupported_reasons`；效率档 18 条 fail-closed 守卫（PPO / OPD / KL / TIS / keep-old-actor / 读额外 forward 输出的开关）；`--skip-actor-forward-only` 与 `--get-mismatch-metrics` 两档都 unsupported；扫描 custom config YAML（文件或 `base64:` 内联）是否改写追踪键；消费者用 `interpret_recorded` 按同一函数重算核对。
+  - `launch.sh`：旋钮 `RH2_TRAIN_FORWARD_PROFILE` **非强制、缺省 diagnostic**（与 §4 "无默认值"的偏离，按 Codex 收紧 3），efficiency 只追加 `--use-rollout-logprobs`；P12 闸对提交给 `train_async.py` 的同一组 token 推导并与旋钮比对，不符或 unsupported 在 Ray 前红；`run_manifest.json` 写推导块，旋钮字符串不进证据。
+  - `bringup.py`（Claude 接线）：`derive_from_namespace(args)` 的结果进 `startup_evidence.json`（`forward_profile` 键），**只记录不拒绝**（P12 已在前面挡）。`repoharness2.adapters.miles` 包的 `__init__` 导入时拉 `miles`，没有 miles 的 CPU 进程（启动期测试）按文件路径加载同一纯模块（与 judge / launch 同法）；真实启动纵切测试断言该块落盘且可按同一函数重算。
+  - `run_report.py`：logprob 相关三态 present / unavailable_by_configuration / missing + 矛盾态 contradicts_configuration（只有配置已知且额外 forward 确认关闭、且确实无事件才记"按配置不可用"；诊断档缺事件仍是 `no_logprob_compare_events`，该面仍 partial）；每小时 / 每 GPU 小时速率（合格组、applied step、有效评分含可信 0 分）；learner 时间线（drain / train / step / update / publish）；重算 token 数、cache 命中、逐阶段显存明确 `not_collected`。
+  - `g1_acceptance.py`：新检查 `forward_profile_evidence`（块缺失 MISSING、无效或 unsupported FAIL）；效率档 logprob 两项 NOT_APPLICABLE（detail 以 `unavailable_by_configuration` 开头）；R3 链仍逐 rank 要求 fill / 每步 train_step 消费 / exhausted，只免 logprob_forward 一环；效率档出现 logprob 事件即 FAIL；效率档总判定最多 NOT_APPLICABLE、verdict 新增 `g1_parity`，judge 退出码非零。
+  - 测试：`tests/adapters_miles/test_e5_{forward_profile,run_report,g1_profile}.py`（61 双 lane + 3 integration_base）；`integration_base_manifest.json` 计数同步。
+- **CPU 等价探针**（`runs/decision_package_20260924/e5_impl/e5_cpu_equivalence_probe.*`，`all_checks_pass=true`）：09-06 探针在当前 fork 复跑一致；训练 reward 列是组内归一化后的 ±0.935（不是原始 0/1）；两步 + 末级 / 非末级 PP 的真实控制流（AST 提取的 `train_actor` 等）下两档每步 loss / 梯度 / 参数逐位相同，事件序列恰差 `replay_consume{logprob_forward}` 与 `logprob_compare` 两项；诊断档额外 forward 输出全换 NaN 训练量不变；负对照能检出差别；launch dry-run 两份参数表恰差一个 token。替身边界：GPU 数值、Megatron forward-only 对 MoE router 状态、真实时长与显存、CP/TP>1。
+- **偏离与已知行为**：旋钮有缺省（见上）；效率档会让 launch 整体非零退出（judge NOT_APPLICABLE 非零，post-run 打印原因）——是否给 NOT_APPLICABLE 独立退出码留后续；E5 之前的旧证据目录重跑 judge 得 INCOMPLETE（缺 `forward_profile` 块），历史证据不回写；不做 argparse 缩写检测（依赖 Megatron 解析器 `allow_abbrev=False`，本机无 Megatron 源码，间接证据）。
+- **未做**：逐阶段显存 fork patch、bringup 心跳、作业级采样器、`server_timing` 汇总（按 Codex 收紧 4 分别按缺口落地）。GPU 核验清单 F1–F8 已并入 [batch5 GPU 核验清单 §6](../batch5_launch_eval_20260919/gpu_verification_checklist_20260920.md)。

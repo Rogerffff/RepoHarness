@@ -61,6 +61,17 @@ V2（vendor refresh 第二批，per-token weight version spans）：
     合法，bootstrap 豁免）。staleness_max_versions 的逐项版本自动含区间
     全部版本（min over spans）。
 
+E5（第六组 I24，诊断 / 效率两份配置；Codex 复核 §4）：
+  - 档位事实只来自启动证据：run_manifest.json 的 forward_profile 块（launch P12 从**最终参数**推导，
+    含三个开关值与额外 forward 是否运行），judge 用 rh2 forward_profile.py（纯标准库，按文件路径
+    加载）同一函数重算核对（forward_profile_evidence）；块缺失 = MISSING，块无效 / unsupported = FAIL。
+  - 诊断档：原判定不变（logprob 对拍、R3 下逐 rank 的 logprob_forward 消费都是必需证据）。
+  - 效率档（最终参数只多 --use-rollout-logprobs）：logprob 两项检查记 NOT_APPLICABLE
+    （unavailable_by_configuration），R3 消费链仍逐 rank 要求 fill / 每 step train_step 消费 /
+    exhausted，只免 logprob_forward 一环；效率档却出现 logprob_compare 或 logprob_forward 消费 =
+    记录的配置与实际运行不符（FAIL）。效率档总判定最多 NOT_APPLICABLE：G1 parity 只在诊断档给结论，
+    不借"按配置不可用"得到 PASS（首轮完整 G1 用诊断档）；judge 退出码只在 PASS 时为 0。
+
 事件 -> 证据的联结关系（生产事件 schema 见 rh2_event_log 各 emit 调用点）：
   train_step            每 optimizer step、每 rank 一条：outcome、
                         optimizer_step_applied（真实 optimizer.step() 执行成功
@@ -89,7 +100,7 @@ V2（vendor refresh 第二批，per-token weight version spans）：
 
 证据契约（evidence 目录布局）：
   evidence/
-    run_manifest.json         launch.sh 在 Ray 启动前写入（run_id/代码事实）
+    run_manifest.json         launch.sh 在 Ray 启动前写入（run_id/代码事实；E5 起含 forward_profile 块）
     checkpoint_probe.json     postrun_probes.py checkpoint（launch post-run）
     shutdown_probe.json       postrun_probes.py shutdown（launch post-run）
     collected/                collect 原子发布的归一化证据目录：
@@ -109,6 +120,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import math
 import os
@@ -120,6 +132,23 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+# E5：forward 档位推导的唯一实现（rh2 侧纯标准库模块）；按文件路径加载，本脚本仍可用系统 python3 --self-test
+_FORWARD_PROFILE_PY = HERE.parents[1] / "src" / "repoharness2" / "adapters" / "miles" / "forward_profile.py"
+_FORWARD_PROFILE_MODULE = None
+
+
+def _forward_profile_module():
+    global _FORWARD_PROFILE_MODULE  # noqa: PLW0603 - 进程内只加载一次
+    if _FORWARD_PROFILE_MODULE is None:
+        spec = importlib.util.spec_from_file_location("rh2_forward_profile_for_g1", _FORWARD_PROFILE_PY)
+        if spec is None or spec.loader is None:
+            raise ImportError(f"无法加载 {_FORWARD_PROFILE_PY}")
+        module = importlib.util.module_from_spec(spec)
+        # 按文件路径加载的模块须先登记到 sys.modules：其中的 dataclass 在类创建时按 __module__ 回查
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+        _FORWARD_PROFILE_MODULE = module
+    return _FORWARD_PROFILE_MODULE
 
 PASS, FAIL, MISSING, NA = "PASS", "FAIL", "MISSING_EVIDENCE", "NOT_APPLICABLE"
 
@@ -462,7 +491,10 @@ def cmd_collect(args: argparse.Namespace) -> int:
             }
             _dedupe_fact(logprob_facts, _leaf_id(idx, ordinal), fact, "logprob_compare sample", conflicts)
     if not ev["logprob_compare"]:
-        missing.append("logprob_compare：无对拍事件（同版本 logprob 差无证据）")
+        missing.append(
+            "logprob_compare：无对拍事件（诊断档 = 缺证据；效率档 = 按配置不产生——由 judge 依 run_manifest.json 的 "
+            "forward_profile 判定）"
+        )
 
     # -- 逐样本 DIS token 记账（正控归因，P0-8）-------------------------------
     dis_facts: dict[str, dict] = {}
@@ -741,6 +773,8 @@ class Judge:
         self.th = th
         self.r3 = r3
         self.checks: list[dict] = []
+        # E5：由 _judge_forward_profile 从启动证据填入；未知时各检查按诊断档口径（缺事件 = 缺证据）
+        self.forward: dict = {"known": False, "profile": None, "extra_logprob_forward": None}
 
     def add(self, key: str, status: str, detail: str) -> None:
         self.checks.append({"check": key, "status": status, "detail": detail})
@@ -781,10 +815,15 @@ def cmd_judge(args: argparse.Namespace) -> int:
     # -- run 身份绑定（P0-1）：verdict 只绑定一次不可变 run --------------------
     _judge_run_identity(j, ev, coll, Path(args.thresholds))
 
+    # -- E5：额外 logprob forward 档位（启动证据 = 最终参数推导，不看旋钮）--------
+    _judge_forward_profile(j, ev)
+
     # -- collect 联结冲突（证据在场但互相矛盾 = FAIL，不是 MISSING）-----------
     report_path = coll / "collect_report.json"
+    event_counts: dict | None = None
     if report_path.exists():
         report = json.loads(report_path.read_text())
+        event_counts = report.get("event_counts") or {}
         conflicts = report.get("conflicts", [])
         if conflicts:
             j.add("collect_consistency", FAIL, "; ".join(conflicts[:6]))
@@ -986,7 +1025,7 @@ def cmd_judge(args: argparse.Namespace) -> int:
             )
 
     # -- logprob 对拍（P0-8：对齐 + 覆盖 + 上限三面）--------------------------
-    _judge_logprob(j, train_samples)
+    _judge_logprob(j, train_samples, (event_counts or {}).get("logprob_compare"))
 
     # -- routing tape（R3 显式选择对应的形状义务；只约束进入训练批的样本）-----
     _judge_routing(j, train_samples)
@@ -1082,9 +1121,17 @@ def cmd_judge(args: argparse.Namespace) -> int:
         for key in ("gpu_mem_peak_frac_max", "throughput_min_tokens_per_sec", "weight_update_seconds_max"):
             j.add(key, MISSING, "resource_summary.json 缺失")
 
+    overall = j.overall()
+    profile = j.forward.get("profile")
+    if profile == "efficiency" and overall == "PASS":
+        # E5：效率档的 logprob 对拍按配置不可用——其余检查全过也不构成 G1 通过
+        overall = NA
     verdict = {
-        "overall": j.overall(),
+        "overall": overall,
         "r3": args.r3,
+        # E5：档位来自 run_manifest.json 的 forward_profile（最终参数推导）；None = 证据缺失或无效
+        "forward_profile": profile,
+        "g1_parity": {"diagnostic": "applicable", "efficiency": "not_applicable"}.get(profile, "unknown"),
         "pre_formal_note": th.get("pre_formal_note"),
         "checks": j.checks,
     }
@@ -1092,7 +1139,8 @@ def cmd_judge(args: argparse.Namespace) -> int:
     if args.out:
         Path(args.out).write_text(out, encoding="utf-8")
     print(out)
-    print(f"OVERALL: {verdict['overall']}")
+    suffix = "（效率档：G1 parity 不适用，本 verdict 不构成 G1 通过）" if profile == "efficiency" else ""
+    print(f"OVERALL: {verdict['overall']}{suffix}")
     return 0 if verdict["overall"] == "PASS" else 1
 
 
@@ -1309,6 +1357,16 @@ def _judge_weight_version_spans(j: Judge, train_samples, publish) -> None:
             multi_span_samples += 1
     if problems:
         j.add(key, FAIL, "; ".join(problems[:4]))
+    elif j.forward.get("extra_logprob_forward") is False:
+        # E5：效率档没有 logprob_compare 的 loss_mask=1 计数，token 覆盖交叉校验无从做——如实写明
+        j.add(
+            key,
+            PASS,
+            f"{checked} 个训练样本的区间证据结构合法、与版本记账逐项一致（token 覆盖与训练 token 数的交叉"
+            "校验按配置不可用：效率档无 logprob_compare 计数；"
+            f"其中 {multi_span_samples} 个样本携带跨更新多版本证据；"
+            "引擎自身漏报区间无法从事件层证伪，由 sglang 侧测试覆盖）",
+        )
     else:
         j.add(
             key,
@@ -1317,6 +1375,61 @@ def _judge_weight_version_spans(j: Judge, train_samples, publish) -> None:
             f"token 数交叉相符（其中 {multi_span_samples} 个样本携带跨更新多版本证据；"
             "引擎自身漏报区间无法从事件层证伪，由 sglang 侧测试覆盖）",
         )
+
+
+def _judge_forward_profile(j: Judge, ev: Path) -> None:
+    """E5：本 run 的额外 logprob forward 档位——只读启动证据（launch P12 从最终参数推导的 forward_profile 块），
+    用 rh2 forward_profile.py 同一函数重算核对。诊断档 PASS；效率档 NOT_APPLICABLE（G1 parity 不适用）；
+    块缺失 MISSING（无法区分按配置关闭与证据丢失）；块无效 / unsupported FAIL。"""
+    key = "forward_profile_evidence"
+    manifest_path = ev / "run_manifest.json"
+    if not manifest_path.exists():
+        j.add(key, MISSING, "run_manifest.json 缺失——额外 logprob forward 的档位没有启动证据")
+        return
+    try:
+        manifest = json.loads(manifest_path.read_text())
+    except json.JSONDecodeError as exc:
+        j.add(key, FAIL, f"run_manifest.json 不是合法 JSON：{exc}")
+        return
+    block = manifest.get("forward_profile") if isinstance(manifest, dict) else None
+    if block is None:
+        j.add(
+            key,
+            MISSING,
+            "run_manifest.json 缺 forward_profile 块（E5 之前的 launch？）——证明不了运行的是诊断档，"
+            "logprob 缺失也分不清按配置关闭与证据丢失",
+        )
+        return
+    try:
+        fp = _forward_profile_module()
+    except Exception as exc:  # noqa: BLE001 - 加载失败即证据不可判
+        j.add(key, MISSING, f"无法加载 forward 档位推导模块 {_FORWARD_PROFILE_PY}：{exc}")
+        return
+    try:
+        info = fp.interpret_recorded(block)
+    except fp.ForwardProfileError as exc:
+        j.add(key, FAIL, f"forward_profile 证据块无效：{exc}")
+        return
+    j.forward = {
+        "known": True,
+        "profile": info["profile"],
+        "extra_logprob_forward": info["extra_logprob_forward"],
+        "unavailable_observations": info["unavailable_observations"],
+    }
+    sw = info["switches"]
+    flags = (
+        f"use_rollout_logprobs={sw['use_rollout_logprobs']} get_mismatch_metrics={sw['get_mismatch_metrics']} "
+        f"skip_actor_forward_only={sw['skip_actor_forward_only']}"
+    )
+    if info["profile"] == "diagnostic":
+        j.add(key, PASS, f"诊断档（最终参数 {flags}）：额外 logprob forward 运行，logprob 对拍与 logprob_forward "
+                         "replay 消费是必需证据，G1 parity 适用")
+    elif info["profile"] == "efficiency":
+        j.add(key, NA, f"效率档（最终参数 {flags}）：额外 forward 按配置关闭，{info['unavailable_observations']} 按配置"
+                       "不可用；G1 parity 不适用（本 verdict 不构成 G1 通过，首轮完整 G1 用诊断档）")
+    else:
+        codes = [r["code"] for r in info["unsupported_reasons"]]
+        j.add(key, FAIL, f"最终参数不在诊断 / 效率两档内（{codes}）——launch P12 本应拒绝，该 run 不能作 G1 证据")
 
 
 def _judge_run_identity(j: Judge, ev: Path, coll: Path, thresholds_path: Path) -> None:
@@ -1481,7 +1594,19 @@ def _check_publish_conservation(
     return (not problems, problems, prev_after)
 
 
-def _judge_logprob(j: Judge, train_samples: list[dict] | None) -> None:
+def _judge_logprob(j: Judge, train_samples: list[dict] | None, logprob_events: int | None = None) -> None:
+    if j.forward.get("extra_logprob_forward") is False:
+        # E5：启动证据证明额外 forward 按配置关闭（效率档）——这两项没有 producer，不是缺证据；
+        # 但若对拍事件仍然出现，说明记录的配置不是实际运行的配置。
+        present = bool(logprob_events) or any(s.get("has_logprob_entry") for s in (train_samples or []))
+        for key in ("logprob_same_version_mean_abs_diff_max", "logprob_alignment_and_coverage"):
+            if present:
+                j.add(key, FAIL, "启动证据（最终参数）称额外 logprob forward 按配置关闭，却出现 logprob_compare 对拍"
+                                 "——记录的配置与实际运行不符")
+            else:
+                j.add(key, NA, "unavailable_by_configuration：效率档（最终参数含 --use-rollout-logprobs）不跑额外 "
+                               "forward，没有同版本对拍——不是零、不是缺证据，也不构成对齐已验证")
+        return
     if train_samples is None:
         j.add("logprob_same_version_mean_abs_diff_max", MISSING, "sample_records.jsonl 缺失")
         j.add("logprob_alignment_and_coverage", MISSING, "sample_records.jsonl 缺失")
@@ -1887,6 +2012,13 @@ def _judge_replay(j: Judge, coll: Path, steps: list[dict] | None, train_samples:
         (c.get("rollout_id"), c.get("rank")) for c in consumes if c.get("phase") == "logprob_forward"
     }
     exhausted_keys = {(x.get("rollout_id"), x.get("rank")) for x in exhausted}
+    # E5：效率档（启动证据证明额外 forward 关闭）没有 logprob 前向消费；fill / train_step / exhausted 照常要求
+    logprob_forward_expected = j.forward.get("extra_logprob_forward") is not False
+    if not logprob_forward_expected and logprob_keys:
+        problems.append(
+            f"启动证据称额外 forward 按配置关闭，却有 {len(logprob_keys)} 个 (rollout, rank) 的 "
+            "replay_consume{phase=logprob_forward}——记录的配置与实际运行不符"
+        )
     for c in consumes:
         tag = f"consume {c.get('phase')} r{c.get('rollout_id')}s{c.get('step_id')} rank{c.get('rank')}"
         if c.get("phase") == "train_step":
@@ -1906,7 +2038,7 @@ def _judge_replay(j: Judge, coll: Path, steps: list[dict] | None, train_samples:
         for rank in sorted(expected_ranks):
             if (rid, rank) not in fill_keys:
                 problems.append(f"r{rid} rank{rank}: 无 replay_fill")
-            if (rid, rank) not in logprob_keys:
+            if logprob_forward_expected and (rid, rank) not in logprob_keys:
                 problems.append(f"r{rid} rank{rank}: 无 logprob_forward 消费事件")
             if (rid, rank) not in exhausted_keys:
                 problems.append(f"r{rid} rank{rank}: 无 replay_exhausted（队列是否耗尽无证据）")
@@ -1934,8 +2066,13 @@ def _judge_replay(j: Judge, coll: Path, steps: list[dict] | None, train_samples:
         ck,
         PASS if not problems else FAIL,
         (
-            f"{len(expected_ranks)} 个预期 trainer rank 逐一：fill/logprob 前向/"
-            f"{len(step_keys)} 个 step 消费/耗尽全链一致"
+            (
+                f"{len(expected_ranks)} 个预期 trainer rank 逐一：fill/logprob 前向/"
+                f"{len(step_keys)} 个 step 消费/耗尽全链一致"
+                if logprob_forward_expected
+                else f"{len(expected_ranks)} 个预期 trainer rank 逐一：fill/{len(step_keys)} 个 step 消费/耗尽全链一致"
+                "（logprob 前向消费按配置不可用：效率档无额外 forward）"
+            )
             if not problems
             else "; ".join(problems[:6])
         ),
@@ -2356,9 +2493,15 @@ def _wvs_entry(versions: list, total: int = 320) -> list | None:
     ]
 
 
-def _selftest_write_events(ev_dir: Path, *, mutate: str = "") -> None:
-    """生成与 miles rh2_event_log 生产 schema 同形的代表性事件文件。"""
+def _selftest_write_events(ev_dir: Path, *, mutate: str = "", profile: str = "diagnostic") -> None:
+    """生成与 miles rh2_event_log 生产 schema 同形的代表性事件文件。
+
+    E5：profile="efficiency" 时按生产 producer 的真实行为不发 logprob_compare 与
+    replay_consume{phase=logprob_forward}（actor.py 额外 forward 分支整段不执行），其余事件不变；
+    eff_logprob_compare_present / eff_logprob_forward_consume_present 两个 mutate 故意发出，做矛盾反例。"""
     events: list[dict] = []
+    emit_logprob_compare = profile != "efficiency" or mutate == "eff_logprob_compare_present"
+    emit_logprob_forward_consume = profile != "efficiency" or mutate == "eff_logprob_forward_consume_present"
 
     def emit(kind: str, **fields):
         events.append({"event": kind, "ts_unix": 0.0, "host": "h", "pid": 1, "run_id": _RUN_ID, **fields})
@@ -2539,8 +2682,9 @@ def _selftest_write_events(ev_dir: Path, *, mutate: str = "") -> None:
                                "length_mismatch": mismatch})
         if mutate == "logprob_partial_coverage":
             lp_entries = lp_entries[:1]
-        emit("logprob_compare", rollout_id=rid, dp_rank=0, trainer_current_version=version,
-             entries=lp_entries)
+        if emit_logprob_compare:
+            emit("logprob_compare", rollout_id=rid, dp_rank=0, trainer_current_version=version,
+                 entries=lp_entries)
 
         # 逐样本 DIS token 记账（正控归因）：正控组样本 accepted>0；
         # pc_zero_accepted 时正控组归零、其余组保持正数（"其他组驱动更新"）。
@@ -2695,10 +2839,11 @@ def _selftest_write_events(ev_dir: Path, *, mutate: str = "") -> None:
                  leaf_ordinals=[o for _, o in dp_samples],
                  sample_digests=digests)
             fwd = queue_len if mutate != "replay_zero_pops" else 0
-            emit("replay_consume", phase="logprob_forward", manager="routing", rollout_id=rid,
-                 rank=rank, dp_rank=dp_rank, num_streams=16,
-                 forward_pops_min=fwd, forward_pops_max=fwd,
-                 queue_len_min=queue_len, queue_len_max=queue_len)
+            if emit_logprob_forward_consume:
+                emit("replay_consume", phase="logprob_forward", manager="routing", rollout_id=rid,
+                     rank=rank, dp_rank=dp_rank, num_streams=16,
+                     forward_pops_min=fwd, forward_pops_max=fwd,
+                     queue_len_min=queue_len, queue_len_max=queue_len)
             for sid in range(_STEPS_PER_ROLLOUT):
                 if (mutate == "replay_missing_rank_step"
                         and rank == _TRAIN_GLOBAL_RANKS - 1 and rid == 0 and sid == 1):
@@ -2795,14 +2940,34 @@ def _selftest_write_events(ev_dir: Path, *, mutate: str = "") -> None:
     write_jsonl(ev_dir / "rh2_events_h_1.jsonl", events)
 
 
-def _selftest_evidence(tmp: Path, *, mutate: str = "") -> Path:
+def _selftest_forward_profile_block(*, profile: str = "diagnostic", mutate: str = "") -> dict | None:
+    """E5：按 launch.sh 本配方的 LOSS_ARGS 形状（R3 on）经 rh2 forward_profile 推导出的证据块。"""
+    fp = _forward_profile_module()
+    tokens = [
+        "--loss-type", "custom_loss", "--custom-loss-function-path", fp.FAITHFUL_DIS_LOSS_PATH,
+        "--kl-coef", "0.0", "--entropy-coef", "0.0", "--use-rollout-routing-replay",
+    ]
+    if profile == "efficiency" or mutate == "manifest_forward_profile_tampered":
+        tokens.append(fp.EFFICIENCY_FLAG)
+    if mutate == "manifest_forward_profile_unsupported":
+        tokens.append("--skip-actor-forward-only")
+    if mutate == "manifest_missing_forward_profile":
+        return None
+    block = fp.derive_from_tokens(tokens)
+    if mutate == "manifest_forward_profile_tampered":
+        # 推导字段被改写（记录的参数是效率档，推导字段却写成诊断档）：重算核对必须抓红
+        block = dict(block, profile="diagnostic", extra_logprob_forward=True, unavailable_observations=[])
+    return block
+
+
+def _selftest_evidence(tmp: Path, *, mutate: str = "", profile: str = "diagnostic") -> Path:
     global _SELFTEST_SEQ  # noqa: PLW0603 - self-test 专用序号
     _SELFTEST_SEQ += 1
-    base = tmp / f"case_{_SELFTEST_SEQ}_{mutate or 'good'}"
+    base = tmp / f"case_{_SELFTEST_SEQ}_{profile}_{mutate or 'good'}"
     events_dir = base / "events"
     ev_dir = base / "evidence"
     ev_dir.mkdir(parents=True)
-    _selftest_write_events(events_dir, mutate=mutate)
+    _selftest_write_events(events_dir, mutate=mutate, profile=profile)
     ns = argparse.Namespace(
         events_dir=str(events_dir), dmon_csv=None, gpu_mem_total_mb=None,
         out_dir=str(ev_dir / COLLECTED_DIR_NAME), run_id=_RUN_ID,
@@ -2824,6 +2989,9 @@ def _selftest_evidence(tmp: Path, *, mutate: str = "") -> Path:
         "run_id": _RUN_ID if mutate != "manifest_run_id_mismatch" else "another-run",
         "thresholds_sha256": hashlib.sha256((HERE / "thresholds.md").read_bytes()).hexdigest(),
     }
+    forward_block = _selftest_forward_profile_block(profile=profile, mutate=mutate)
+    if forward_block is not None:
+        manifest["forward_profile"] = forward_block
     if mutate == "manifest_missing_thresholds_sha":
         del manifest["thresholds_sha256"]
     elif mutate == "manifest_empty_thresholds_sha":
@@ -3156,6 +3324,39 @@ def cmd_selftest() -> int:
             check("run_identity" in failed_checks(v),
                   f"{mutate} 应 FAIL run_identity，got {failed_checks(v)}")
 
+        # --- E5：诊断 / 效率两档（forward_profile 启动证据 + 真实 producer 三态）------
+        v = _run_judge(_selftest_evidence(tmp))
+        check(v.get("forward_profile") == "diagnostic" and v.get("g1_parity") == "applicable",
+              f"好例应记诊断档且 G1 parity 适用，got {v.get('forward_profile')}/{v.get('g1_parity')}")
+        v = _run_judge(_selftest_evidence(tmp, profile="efficiency"))
+        st = {c["check"]: c["status"] for c in v["checks"]}
+        check(v["overall"] == NA and v.get("g1_parity") == "not_applicable",
+              f"效率档好例总判定应 NOT_APPLICABLE（不构成 G1 通过），得 {v['overall']}: "
+              + "; ".join(f"{c['check']}={c['status']}:{c['detail']}" for c in v["checks"] if c["status"] not in (PASS, NA)))
+        check(st.get("logprob_same_version_mean_abs_diff_max") == NA and st.get("logprob_alignment_and_coverage") == NA,
+              f"效率档 logprob 两项应 NOT_APPLICABLE（按配置不可用），got {st.get('logprob_same_version_mean_abs_diff_max')}/"
+              f"{st.get('logprob_alignment_and_coverage')}")
+        check(st.get("routing_replay_trainer_consumption") == PASS and st.get("forward_profile_evidence") == NA,
+              f"效率档 R3 消费链（fill/train_step/exhausted）应 PASS、档位检查应 NOT_APPLICABLE，got "
+              f"{st.get('routing_replay_trainer_consumption')}/{st.get('forward_profile_evidence')}")
+        for mutate, key in (
+            ("eff_logprob_compare_present", "logprob_same_version_mean_abs_diff_max"),
+            ("eff_logprob_forward_consume_present", "routing_replay_trainer_consumption"),
+            ("replay_missing_rank_step", "routing_replay_trainer_consumption"),
+            ("replay_not_exhausted", "routing_replay_trainer_consumption"),
+        ):
+            v = _run_judge(_selftest_evidence(tmp, mutate=mutate, profile="efficiency"))
+            check(key in failed_checks(v), f"效率档 {mutate} 应 FAIL {key}，got {failed_checks(v)}")
+        v = _run_judge(_selftest_evidence(tmp, mutate="drop_replay_events", profile="efficiency"))
+        check(v["overall"] == "INCOMPLETE", f"效率档删 replay 事件应 INCOMPLETE（训练 replay 仍必需），得 {v['overall']}")
+        v = _run_judge(_selftest_evidence(tmp, mutate="manifest_missing_forward_profile"))
+        check(v["overall"] == "INCOMPLETE"
+              and any(c["check"] == "forward_profile_evidence" and c["status"] == MISSING for c in v["checks"]),
+              f"启动证据缺 forward_profile 应 INCOMPLETE（MISSING），得 {v['overall']}")
+        for mutate in ("manifest_forward_profile_unsupported", "manifest_forward_profile_tampered"):
+            v = _run_judge(_selftest_evidence(tmp, mutate=mutate))
+            check("forward_profile_evidence" in failed_checks(v), f"{mutate} 应 FAIL 档位检查，got {failed_checks(v)}")
+
         v = _run_judge(_selftest_evidence(tmp, mutate="one_skipped_rollout"))
         check(v["overall"] == "PASS",
               f"全 SKIPPED 轮 + 显式不发布应 PASS（版本保持），得 {v['overall']}: "
@@ -3178,6 +3379,8 @@ def cmd_selftest() -> int:
         "身份字段缺失 INCOMPLETE）、trainer per-rank oracle（rank 缺失/额外/重复、每步重建 "
         "optimizer、scheduler 步进不精确、NaN loss/grad_norm、pp-last 指标未覆盖全 DP）、"
         "manifest thresholds digest 缺失/空/非法——全部命中；"
+        "E5 诊断/效率两档——效率档好例 NOT_APPLICABLE（logprob 两项按配置不可用、R3 消费链照常 PASS），"
+        "效率档出现对拍/logprob 前向消费、缺 step 消费/未耗尽、删 replay 事件、档位证据缺失/unsupported/被改写——全部命中；"
         "V2 weight-version spans 反例——跨更新 turn 只记单版本（staleness 自身绿时低报必由 "
         "spans 一致性抓红）、区间缝隙/重叠/越界、有更新窗口的 run 无 spans 证据——全部命中 "
         "FAIL，无更新窗口的 single_version_only 正例 PASS，基线含跨更新多区间正向覆盖）"

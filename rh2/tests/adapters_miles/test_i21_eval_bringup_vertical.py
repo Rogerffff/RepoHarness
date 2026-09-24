@@ -78,6 +78,12 @@ async def test_formal_startup_loads_the_eval_package_and_resolves_each_plane_fro
             assert evidence["eval_wiring"] == {"enabled": True, "eval_only": False, "dataset_name": "swe_dev", "eval_task_count": 1,
                                                "train_task_count": 2, "train_eval_task_overlap_count": 1,  # 交集只记数，不拒绝
                                                "eval_max_prompt_len": None}
+            # E5：最终 args 推导的 forward 档位块随启动证据落盘（只记录不拒绝），且能按同一函数重算核对
+            from repoharness2.adapters.miles.forward_profile import interpret_recorded
+
+            fp = evidence["forward_profile"]
+            assert fp["source"] == "args_namespace" and fp["schema_id"] == "rh2.forward_profile.v1"
+            assert interpret_recorded(fp)["profile"] == fp["profile"]
 
             # 评测 attempt 只能绑定评测题包里的题；训练 attempt 照旧走训练题包
             eval_tid1, _ = _assignment(idm, assignment_from_dispatch, train_fx.manifest.record(TID1).model_dump(mode="json"), evaluation=True)

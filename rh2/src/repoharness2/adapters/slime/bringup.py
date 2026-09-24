@@ -1189,6 +1189,31 @@ def expected_engine_count(args: Any) -> int | None:
     return gpus // per_engine
 
 
+def _load_forward_profile_module():
+    """E5：`forward_profile` 是纯标准库模块，但所在包 `repoharness2.adapters.miles` 的 `__init__` 导入时经 canonicalize
+    拉 `miles`。训练进程里 miles 在场 → 正常包导入；没有 miles 的 CPU 进程（启动期测试）→ 按文件路径加载同一文件
+    （与 G1 judge、launch.sh 同一做法），不把 bringup 的包导入面扩大到 miles。"""
+
+    try:
+        from repoharness2.adapters.miles import forward_profile
+
+        return forward_profile
+    except ModuleNotFoundError as exc:
+        if exc.name != "miles":
+            raise
+    import importlib.util
+    import sys
+
+    path = Path(__file__).resolve().parents[1] / "miles" / "forward_profile.py"
+    spec = importlib.util.spec_from_file_location("rh2_forward_profile_standalone", path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"无法加载 {path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module  # dataclass 创建时按 __module__ 回查
+    spec.loader.exec_module(module)
+    return module
+
+
 class BringupService:
     _instance: "BringupService | None" = None
 
@@ -1308,6 +1333,10 @@ class BringupService:
             raise RuntimeError(f"RH2_EXECUTION_MODE={EXECUTION_MODE!r} 不在三值枚举内。")
         # I21：评测接线预检（纯函数）。共享引擎形态下评测里的接线错误会原样上抛并停掉训练驱动，
         # 所以配置层能发现的全部在这里拒绝——而不是训到第 k 步 eval 才崩。
+        # E5（第六组 I24）：额外 logprob forward 的档位——从 miles 校验后的**最终 args** 推导（Codex 复核 §4 第 3 条），
+        # 只记录进 startup_evidence.json 供 run_report / G1 judge 对照；launch P12 已在 Ray 前按同一函数拒绝 unsupported，
+        # 这里不新增启动拒绝。
+        self.forward_profile = _load_forward_profile_module().derive_from_namespace(args)
         from repoharness2.adapters.slime.eval_wiring import EvalWiringError, validate_eval_wiring
 
         try:
@@ -1907,6 +1936,7 @@ class BringupService:
             name for name in ("RH2_REJECT_CONTEXT_SHRINK",) if os.environ.get(name) is not None
         )
         evidence["eval_wiring"] = self._eval_wiring_evidence()
+        evidence["forward_profile"] = getattr(self, "forward_profile", None)  # E5：最终 args 推导的档位块
         self.probe_evidence = evidence
         (ARTIFACT_DIR / "startup_evidence.json").write_text(
             json.dumps(evidence, indent=2, ensure_ascii=False)

@@ -30,6 +30,20 @@
 #                              # off = 不带该 flag；只验证基础运输链，结果不得记作
 #                              #       Migration-Go 的 R3 项（范围建议 §2.1）。
 #
+# 非强制选择（有缺省值；证据不记旋钮字符串，记最终参数推导结果）：
+#   RH2_TRAIN_FORWARD_PROFILE=diagnostic|efficiency（缺省 diagnostic）
+#                              # E5（第六组 I24）：actor 额外 logprob forward 的两份配置。
+#                              # diagnostic = 本脚本原配方（--use-rollout-logprobs /
+#                              #   --get-mismatch-metrics / --skip-actor-forward-only 都不设），
+#                              #   首轮完整 G1 只用这一档；
+#                              # efficiency = 原配方只多 --use-rollout-logprobs（额外 forward 不跑，
+#                              #   logprob_compare / replay_consume{logprob_forward} 与 miles
+#                              #   rollout/log_probs、perf/log_probs_* 按配置不可用），G1 judge
+#                              #   对它给 overall=NOT_APPLICABLE（不构成 G1 通过）。
+#                              # P12 用 rh2 forward_profile.py 从最终 token 流推导档位并与旋钮核对，
+#                              # run_manifest.json 的 forward_profile 块写推导结果（含三个开关值）。
+#                              # 注意：本脚本只是配方参考，不是八卡正式启动方案。
+#
 # 租期机型校准位（有默认值，但 preflight 会打印+落盘实际取值）：
 #   RH2_MEGATRON_PATH（默认 /root/Megatron-LM）、RH2_HF_CHECKPOINT、RH2_REF_LOAD、
 #   RH2_RENDERERS_PATH、RH2_DOCKER_CLI_DIR、SLIME_AGENT_CC_PLATFORM_TARBALL、
@@ -96,6 +110,13 @@ case "$RH2_GPU_SPIKE_R3" in
   on|off) ;;
   *) die "RH2_GPU_SPIKE_R3 必须显式设为 on 或 off（当前='${RH2_GPU_SPIKE_R3}'）。R3 是显式选择，不依赖默认值。" ;;
 esac
+# E5：forward 档位旋钮（非强制，缺省 diagnostic = 原配方）。它只决定 LOSS_ARGS 是否多追加
+# --use-rollout-logprobs；档位事实由 P12 从最终参数推导（旋钮只用于与推导结果比对）。
+RH2_TRAIN_FORWARD_PROFILE="${RH2_TRAIN_FORWARD_PROFILE:-diagnostic}"
+case "$RH2_TRAIN_FORWARD_PROFILE" in
+  diagnostic|efficiency) ;;
+  *) die "RH2_TRAIN_FORWARD_PROFILE 只能是 diagnostic 或 efficiency（当前='${RH2_TRAIN_FORWARD_PROFILE}'；缺省 diagnostic）" ;;
+esac
 
 # ---------------------------------------------------------------- 租期校准位
 MILES_ROOT="${RH2_MILES_ROOT:-$ROOT/reference/miles-rh2-integration}"
@@ -155,7 +176,7 @@ ROLLOUT_TOP_P="0.8"                                   # <1.0 = sampling-support 
 ROLLOUT_TOP_K="${RH2_SPIKE_ROLLOUT_TOP_K:-151936}"    # T0-A：有效 vocab size 作 spike 配置
 
 # ---------------------------------------------------------------- preflight
-say "== preflight（mode=$MODE, R3=${RH2_GPU_SPIKE_R3}）=="
+say "== preflight（mode=$MODE, R3=${RH2_GPU_SPIKE_R3}, forward 旋钮=${RH2_TRAIN_FORWARD_PROFILE}）=="
 
 # P1. manifest 前置（integration tree/干净工作树/patch digest/pin）——复用 lanes 脚本，
 #     不复制断言。注意 --checks-only ≠ lane 资格；租期开机前须完整跑一次双 lane。
@@ -441,6 +462,13 @@ LOSS_ARGS=(
 if [ "$RH2_GPU_SPIKE_R3" = "on" ]; then
   LOSS_ARGS+=(--use-rollout-routing-replay)
 fi
+if [ "$RH2_TRAIN_FORWARD_PROFILE" = "efficiency" ]; then
+  # E5 效率档：只多这一个开关——actor.py:625-627 的额外 forward 条件变假；faithful DIS 的
+  # behavior 本来就读 rollout_log_probs、current 在训练 forward 内重算（不读额外 forward 的输出）。
+  # --skip-actor-forward-only 与本配方不兼容（custom_loss + 每轮 2 步，miles 启动即 assert），
+  # --get-mismatch-metrics 没有消费者；二者都由 P12 拒绝。
+  LOSS_ARGS+=(--use-rollout-logprobs)
+fi
 OPTIMIZER_ARGS=(
   --optimizer adam
   --lr 1e-6
@@ -573,7 +601,21 @@ ENGINE_COUNT=$((ROLLOUT_GPUS / ROLLOUT_GPUS_PER_ENGINE))
 [ "$ENGINE_COUNT" -ge 1 ] \
   || die "engine 数=$ENGINE_COUNT 不合法"
 
-# P11 是 preflight 闭包的最后一段，成功宣告必须在它之后（P2 #2 排序修复）。
+# P12. E5 forward 档位闸（第六组 I24）：rh2 forward_profile.py（只依赖标准库，按文件路径执行、不经
+#      repoharness2 包 __init__）从**最终 token 流**（与 ray job submit 传给 train_async.py 的同一
+#      MODEL_ARGS + ALL_ARGS，含 --custom-config-path 指向的 YAML 键扫描）推导 diagnostic /
+#      efficiency / unsupported，并与旋钮比对——不在两档内（如 --skip-actor-forward-only、
+#      --get-mismatch-metrics、效率档叠加 PPO/OPD/KL/TIS/keep-old-actor 等）或与旋钮不符都在 Ray 前红。
+#      推导出的证据块原样写进 run_manifest.json 的 forward_profile（run_report 与 G1 judge 读它，
+#      用同一函数重算核对）；旋钮字符串不进证据（Codex 复核 §4 第 3 条）。
+FORWARD_PROFILE_PY="$RH2/src/repoharness2/adapters/miles/forward_profile.py"
+FORWARD_PROFILE_JSON="$(python3 "$FORWARD_PROFILE_PY" derive --compact --expect "$RH2_TRAIN_FORWARD_PROFILE" -- "${MODEL_ARGS[@]}" "${ALL_ARGS[@]}")" \
+  || die "E5 forward 档位闸未通过（见上方 [forward-profile] 行）：最终参数不在诊断 / 效率两档内，或与 RH2_TRAIN_FORWARD_PROFILE=$RH2_TRAIN_FORWARD_PROFILE 不符"
+FORWARD_PROFILE_SUMMARY="$(python3 -c 'import json,sys; b=json.loads(sys.argv[1]); s=b["switches"]; print("profile=%s extra_logprob_forward=%s use_rollout_logprobs=%s get_mismatch_metrics=%s skip_actor_forward_only=%s" % (b["profile"], b["extra_logprob_forward"], s["use_rollout_logprobs"], s["get_mismatch_metrics"], s["skip_actor_forward_only"]))' "$FORWARD_PROFILE_JSON")"
+FORWARD_PROFILE_DERIVED="$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["profile"])' "$FORWARD_PROFILE_JSON")"
+say "E5 forward 档位（由最终参数推导）：$FORWARD_PROFILE_SUMMARY"
+
+# P11/P12 是 preflight 闭包的最后两段，成功宣告必须在它们之后（P2 #2 排序修复）。
 say "preflight 全部通过"
 
 # ---------------------------------------------------------------- 输出/执行
@@ -592,6 +634,7 @@ if [ "$MODE" = "dry-run" ]; then
   printf '  %s\n' "${ALL_ARGS[@]}"
   say "（model args 共 ${#MODEL_ARGS[@]} 个 token，经 eval 解析后按数组传给进程）"
   say "拓扑：${ACTOR_GPUS} train + ${ROLLOUT_GPUS} rollout（TP${TP}/PP${PP}/CP${CP}/EP${EP}；engine 数=${ENGINE_COUNT}，per-engine=${ROLLOUT_GPUS_PER_ENGINE} 卡 ⇒ sglang TP${ROLLOUT_GPUS_PER_ENGINE}；router=miles）"
+  say "forward_profile 证据块（run 模式写入 run_manifest.json）：$FORWARD_PROFILE_JSON"
   say "run 模式训练结束后将自动执行 post-run 闭环（identity 核对/checkpoint 存读删/shutdown 探针/collect/judge），退出码逐步记录在 $EV/postrun_status.json"
   exit 0
 fi
@@ -612,6 +655,7 @@ LOG="$EV/train.log"
   echo "model_id=$RH2_MODEL_ID execution_mode=$RH2_EXECUTION_MODE (pre-formal,不翻闸门)"
   echo "prompt_data_sha256=$PROMPT_DATA_SHA_EXPECTED"
   echo "miles_tree_digest=$MILES_TREE_DIGEST"
+  echo "forward_profile(由最终参数推导) $FORWARD_PROFILE_SUMMARY"
   date -u +"started_utc=%Y-%m-%dT%H:%M:%SZ"
 } | tee "$EV/launch_facts.txt"
 printf '%s\n' "$MODEL_ARGS_STR" "${ALL_ARGS[@]}" > "$EV/launch_args_resolved.txt"
@@ -621,7 +665,7 @@ echo "$RUNTIME_ENV_JSON" > "$EV/runtime_env.json"
 # 本轮代码可确定的 root commit、miles tree（git tree + source digest，二者已在
 # preflight 与审计 manifest 对齐）、阈值页 digest、关键运行参数。远程资产字段
 # （镜像/wheel/模型 checkpoint 身份）按审查 §6 D6 留待下一轮随启动 profile 补充。
-python3 - "$EV/run_manifest.json" <<PYEOF
+python3 - "$EV/run_manifest.json" "$FORWARD_PROFILE_JSON" <<PYEOF
 import hashlib, json, subprocess, sys
 manifest = {
     "run_id": "$RUN_ID",
@@ -641,6 +685,8 @@ manifest = {
                  "rollout_engines": $ENGINE_COUNT, "use_miles_router": True,
                  "tp": $TP, "pp": $PP, "cp": $CP, "ep": $EP,
                  "num_rollout": $NUM_ROLLOUT, "global_batch_size": $GLOBAL_BATCH_SIZE},
+    # E5：P12 从最终参数推导的 forward 档位证据块（run_report / G1 judge 用同一函数重算核对）
+    "forward_profile": json.loads(sys.argv[2]),
 }
 json.dump(manifest, open(sys.argv[1], "w"), ensure_ascii=False, indent=1)
 PYEOF
@@ -718,6 +764,9 @@ echo "}" >> "$POSTRUN_STATUS.tmp"
 mv "$POSTRUN_STATUS.tmp" "$POSTRUN_STATUS"
 say "post-run 完成；各步退出码：$(cat "$POSTRUN_STATUS")"
 say "判定：$EV/g1_verdict.json；证据目录：$EV"
+if [ "$FORWARD_PROFILE_DERIVED" = "efficiency" ]; then
+  say "效率档：G1 judge 按设计不给 PASS——overall=NOT_APPLICABLE 表示其余检查全过但 G1 parity 不适用（logprob 对拍按配置不可用；首轮完整 G1 用诊断档），judge 退出码因此非零"
+fi
 # P0-1 fail-closed：训练非零、或任一必需 post-run 步骤非零，整次 launch 非零退出
 # （dmon_stop 是尽力步骤，不计入必需集合）。
 FINAL_RC=$(python3 - "$POSTRUN_STATUS" "$RC" <<'PYEOF'

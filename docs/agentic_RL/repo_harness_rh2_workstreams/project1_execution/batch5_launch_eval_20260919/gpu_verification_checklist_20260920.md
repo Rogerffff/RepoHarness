@@ -68,3 +68,16 @@
 ## 5. 记录方式
 
 每项核验后在"核验记录"列写：日期、run_id、结论（通过 / 不通过 / 不适用）与证据路径（事件文件、`startup_evidence.json`、run 报告输出）。不通过项另在 `infra.md` 记一条，指明接缝与复现条件。运行产物放 `runs/` 下的明确路径，不回写历史证据。
+
+## 6. E5 诊断 / 效率两份配置（第六组 I24；2026-09-25 并入，来自 [E5 Brief §7](../batch6_efficiency_20260921/e5_efficiency_profile_brief_20260924.md)）
+
+| # | 核验什么 | 怎么看 / 判据 | 本机证据止于 | 核验记录 |
+| --- | --- | --- | --- | --- |
+| F1 | 首轮完整 G1 用诊断档 | `run_manifest.json.forward_profile.profile=diagnostic`；judge `forward_profile_evidence=PASS`、`g1_parity=applicable`；`logprob_same_version_mean_abs_diff_max ≤ 0.05`、同版本全覆盖、无 length_mismatch；R3 链逐 rank 含 logprob_forward 消费 | self-test 与 CPU 探针 | |
+| F2 | 真实 CLI 接受效率档（同配置同题的一小段，可与冷恢复 R1 合并） | miles 启动不报错；P12 推导 efficiency；PP=3、R3、每轮 2 步正常；没有 `logprob_compare` / `replay_consume{logprob_forward}`；每 rank 有 fill、每步 `replay_consume{train_step}`、exhausted；judge `overall=NOT_APPLICABLE` 且无 FAIL / MISSING | dry-run 参数表与 CPU 控制流；真实参数解析未跑 | |
+| F3 | 数值与训练信号无系统性跳变 | 两档 `dis_*`、grad_norm、loss 有限且分布可比；比分布不比逐曲线（learner 变快会改变发布时刻与 staleness） | CPU 逐位等价（替身模型） | |
+| F4 | 省下的时间与额外 forward 窗口相符 | run_report `learner_timeline`：效率档 `train_start_to_first_step_start` 的下降 ≈ 诊断档 `train_start_to_logprob_compare`；明显不符时查 forward-only 对 router 状态、显存碎片等隐藏差异 | 合成事件用例 | |
+| F5 | 收益是否变成更多合格组 | 两档 `hourly_rates` 的合格组 / 有效评分（含可信 0 分）每小时与每 GPU 小时速率，结合 `drain_wait` 占比：rollout-bound 时省下的 forward 只会变成更长的 drain 等待 | 速率聚合用例 | |
+| F6 | forward-only 不改 MoE router 内部状态 | 同一 checkpoint、同一批数据分别在两档下跑一步：训练 forward 的 R3 回放一致，DIS log-ratio 分布无系统偏移 | 本机无 Megatron 源码，无证据 | |
+| F7 | 诊断数据的无效来源 | `rollout/prefix_cache_hit_rate` 是否恒 0（确认后标为无效来源）；`perf/log_probs_time` 只在诊断档出现 | 源码推断 | |
+| F8 | run 报告在真实目录上可用 | `python -m repoharness2.adapters.miles.run_report <run_dir>`：`forward_profile.status=known`、三态与档位一致、`hourly_rates.window` 与 `gpu_count` 非空、`learner_timeline.negative_intervals=0`、`hosts` 单一 | CLI 证据布局用例 | |

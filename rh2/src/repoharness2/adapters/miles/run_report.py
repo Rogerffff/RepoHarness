@@ -8,7 +8,15 @@
     engine_versions_after_publish / run_restarted / sample_dis_accounting；
   - `fa_execution_audit.jsonl`（rh2 bringup 的 execution 终态审计，每条 = 一个已结束 attempt；**不含评分**）；
   - `bringup_events.jsonl`（rh2 bringup `record_event`：每次交付一条，带 `grading` 块、`eligibility_class`、
-    `rollout_timings`；按 `session_id` = audit `trajectory_id` 关联）。
+    `rollout_timings`；按 `session_id` = audit `trajectory_id` 关联）；
+  - `run_manifest.json`（E5 起：launch 在 Ray 前写的启动证据；读其中 `forward_profile` 块——P12 从**最终参数**推导的
+    诊断 / 效率档与三个开关值——以及 `topology` 的卡数。按 manifest 自带的 `run_id` 归属到 run，用
+    `forward_profile.interpret_recorded` 按同一函数重算核对，不另写判断）。
+
+E5 口径（第六组 I24；Codex 复核 §4）：logprob 相关观测分三态——`present`（有事件）、`unavailable_by_configuration`（启动证据
+证明额外 forward 按配置关闭，且确实没有事件）、`missing`（配置为诊断档或未知而没有事件 = 缺证据）；启动证据称关闭却出现事件记
+`contradicts_configuration`。只有有效配置 + 真实 producer 一起才能给出"按配置不可用"，诊断档缺事件永远是缺证据。每小时速率与
+learner 时间线只用已有事件的计数与时间戳；时间戳只重建时间线，不推算重算 token 数或 cache 命中（没有 producer 的量保持不可用）。
 
 run 身份（R4）：事件行自带 `run_id`；audit / bringup 行不带，按所在 bundle 的事件 run_id 归属（bundle 内恰有一个
 run_id 才归属，否则"归属未知"）。默认输入含多个 run 时**不混连**：输出 per_run 子报告；`--run-id` 只取该 run 的事件
@@ -39,11 +47,13 @@ from repoharness2.adapters.miles.drop_events import (
     summarize_attempt_costs,
     summarize_group_events,
 )
+from repoharness2.adapters.miles.forward_profile import ForwardProfileError, interpret_recorded
 
 REPORT_SCHEMA_ID = "rh2.run_report.v1"
 AUDIT_FILE_NAME = "fa_execution_audit.jsonl"
 BRINGUP_EVENTS_FILE_NAME = "bringup_events.jsonl"
 EVENT_FILE_GLOB = "rh2_events_*.jsonl"
+LAUNCH_MANIFEST_FILE_NAME = "run_manifest.json"  # launch.sh 在 Ray 前写的启动证据（E5：forward_profile 块）
 
 TRAIN_STEP_EVENT = "train_step"
 TRAIN_STEP_CONSUMED_EVENT = "train_step_consumed"
@@ -58,6 +68,26 @@ GRADING_REGRADE_EVENT = "grading_regrade"
 EVAL_POINT_EVENT = "eval_point"
 EVAL_WINDOW_EVENT = "eval_window"
 SAMPLE_DIS_EVENT = "sample_dis_accounting"
+TRAIN_ROLLOUT_EVENT = "train_rollout"
+WEIGHT_PUBLISH_EVENT = "weight_publish"
+WEIGHT_PUBLISH_SKIPPED_EVENT = "weight_publish_skipped"
+REPLAY_FILL_EVENT = "replay_fill"
+
+# E5 三态（+矛盾）：有效配置（启动证据的 forward_profile）+ 真实 producer（事件是否出现）一起推导
+PRODUCER_PRESENT = "present"
+PRODUCER_UNAVAILABLE_BY_CONFIGURATION = "unavailable_by_configuration"
+PRODUCER_MISSING = "missing"
+PRODUCER_CONTRADICTS_CONFIGURATION = "contradicts_configuration"
+FORWARD_KNOWN, FORWARD_UNKNOWN, FORWARD_INVALID, FORWARD_CONFLICT = "known", "unknown", "invalid", "conflict"
+
+# 可信 0 分（contracts/grading.py:36-63 与 binary_v1 校验器）：outcome=unresolved、reward 恰为 0.0 的模型负样本归因；
+# infra 族（infra_failure / test_log_parse_failed）强制 reward=None，不算有效评分。与契约的一致性由测试钉住。
+TRUSTED_ZERO_FAILURE_CATEGORIES: tuple[str, ...] = (
+    "patch_apply_failed",
+    "tests_failed",
+    "test_execution_timeout",
+    "candidate_execution_failed",
+)
 
 COLLECTED, PARTIAL, NOT_COLLECTED = "collected", "partial", "not_collected"
 
@@ -112,6 +142,11 @@ CALIBER_NOTES: tuple[str, ...] = (
     "同版本 logprob 差异（logprob_compare.same_version）与跨版本差异分列；跨版本差不叫 KL。",
     "rollout_group 只代表已交付给 learner 的组，不是过滤前总体；过滤前总体没有来源（not_collected），不推造。",
     "本工具只诊断，不重采样、不改预算、不改准入。",
+    "E5：logprob 对拍三态 = 有事件 present / 启动证据（最终参数推导）证明额外 forward 关闭且无事件 unavailable_by_configuration / "
+    "诊断档或配置未知而无事件 missing（缺证据）；关闭却有事件记 contradicts_configuration。效率档不给 G1 parity 结论。",
+    "每小时速率的窗口 = 本 run rh2 事件 ts_unix 的首末（含启动与收尾段；进行中 run 截到最后一条事件）；合格组 = group_consumed"
+    "（buffer 交给 learner 的组）；有效评分 = resolved + 可信 0 分，reward 未知（infra 族）与评测 session 不计入。",
+    "learner 时间线只由事件时间戳与 duration 字段拼出；不从时间戳推算重算 token 数、cache 命中或显存，这些没有 producer 就是不可用。",
     "评测 attempt（audit 行带 evaluation 块 / 成本快照 evaluation=True）不进训练统计：各训练 facet 只看训练 attempt，"
     "评测单列在 evaluation facet；作业总成本 = 训练 + 评测两部分之和。评测点按 eval_point_id 区分（rollout_id 不是"
     "唯一调用标识），完整性与模型绑定分别给出，不把『已派发』当作评测完成。",
@@ -149,21 +184,26 @@ def load_run_inputs(paths: Iterable[Path | str]) -> dict[str, Any]:
     events: list[dict[str, Any]] = []
     audits: list[dict[str, Any]] = []
     bringup: list[dict[str, Any]] = []
-    sources: dict[str, Any] = {"bundles": [], "event_files": [], "audit_files": [], "bringup_files": [],
-                               "malformed_audit_rows": 0, "malformed_bringup_rows": 0}
+    manifests: list[dict[str, Any]] = []
+    sources: dict[str, Any] = {"bundles": [], "event_files": [], "audit_files": [], "bringup_files": [], "manifest_files": [],
+                               "malformed_audit_rows": 0, "malformed_bringup_rows": 0, "malformed_manifest_files": 0}
     for bundle_index, raw in enumerate(paths):
         path = Path(raw)
         event_files: list[Path] = []
         audit_files: list[Path] = []
         bringup_files: list[Path] = []
+        manifest_files: list[Path] = []
         if path.is_dir():
             event_files = sorted(path.rglob(EVENT_FILE_GLOB))
             audit_files = sorted(path.rglob(AUDIT_FILE_NAME))
             bringup_files = sorted(path.rglob(BRINGUP_EVENTS_FILE_NAME))
+            manifest_files = sorted(path.rglob(LAUNCH_MANIFEST_FILE_NAME))
         elif path.name == AUDIT_FILE_NAME:
             audit_files = [path]
         elif path.name == BRINGUP_EVENTS_FILE_NAME:
             bringup_files = [path]
+        elif path.name == LAUNCH_MANIFEST_FILE_NAME:
+            manifest_files = [path]
         else:
             event_files = [path]
         for row in iter_event_rows(event_files):
@@ -183,14 +223,27 @@ def load_run_inputs(paths: Iterable[Path | str]) -> dict[str, Any]:
             for row in rows:
                 row["_bundle"] = bundle_index
                 bringup.append(row)
+        for file in manifest_files:
+            try:
+                doc = json.loads(file.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                sources["malformed_manifest_files"] += 1
+                continue
+            if not isinstance(doc, dict):
+                sources["malformed_manifest_files"] += 1
+                continue
+            manifests.append({"_bundle": bundle_index, "_source_file": str(file), "run_id": doc.get("run_id"),
+                              "forward_profile": doc.get("forward_profile"), "topology": doc.get("topology")})
         sources["bundles"].append({"index": bundle_index, "path": str(path)})
         sources["event_files"] += [str(p) for p in event_files]
         sources["audit_files"] += [str(p) for p in audit_files]
         sources["bringup_files"] += [str(p) for p in bringup_files]
+        sources["manifest_files"] += [str(p) for p in manifest_files]
     sources["event_rows"] = len(events)
     sources["audit_rows"] = len(audits)
     sources["bringup_rows"] = len(bringup)
-    return {"events": events, "audits": audits, "bringup": bringup, "sources": sources}
+    sources["manifest_rows"] = len(manifests)
+    return {"events": events, "audits": audits, "bringup": bringup, "manifests": manifests, "sources": sources}
 
 
 # ---------------------------------------------------------------------------
@@ -265,6 +318,67 @@ def _lifecycle_timing(audit: Mapping[str, Any]) -> Mapping[str, Any] | None:
     timing = audit.get("timing_summary") or {}
     lifecycle = timing.get("lifecycle_timing") if isinstance(timing, dict) else None
     return lifecycle if isinstance(lifecycle, dict) else None
+
+
+# ---------------------------------------------------------------------------
+# E5：有效配置（启动证据）与三态
+# ---------------------------------------------------------------------------
+
+
+def _forward_profile_section(manifests: list[Mapping[str, Any]]) -> dict[str, Any]:
+    """本 run 的 forward 档位（只读启动证据；用 forward_profile.interpret_recorded 按同一函数重算核对）。
+
+    known 才能用于"按配置不可用"；unknown / invalid / conflict 一律当配置未知——缺事件仍是缺证据（fail-closed）。"""
+
+    out: dict[str, Any] = {
+        "status": FORWARD_UNKNOWN,
+        "source": "run_manifest.json 的 forward_profile（launch P12 从最终参数推导）",
+        "manifest_files": sorted({str(m.get("_source_file")) for m in manifests}),
+    }
+    if not manifests:
+        out["reason"] = "no_run_manifest: 本 run 没有归属的启动证据——额外 logprob forward 是否运行未知，缺对拍按缺证据处理"
+        return out
+    blocks = [m for m in manifests if m.get("forward_profile") is not None]
+    if not blocks:
+        out["reason"] = "run_manifest_without_forward_profile: 启动证据没有 forward_profile 块（E5 之前的启动器）——配置未知"
+        return out
+    interpreted: list[dict[str, Any]] = []
+    errors: list[str] = []
+    for m in blocks:
+        try:
+            interpreted.append(interpret_recorded(m["forward_profile"]))
+        except ForwardProfileError as exc:
+            errors.append(f"{m.get('_source_file')}: {exc}")
+    if errors:
+        out.update(status=FORWARD_INVALID, reason="forward_profile_invalid: 证据块缺字段 / 类型不对 / 与按记录参数重算的结果不一致",
+                   errors=errors[:5])
+        return out
+    if len({json.dumps(b, sort_keys=True, ensure_ascii=False) for b in interpreted}) > 1:
+        out.update(status=FORWARD_CONFLICT, reason="forward_profile_conflict: 同一 run 的多份启动证据推导结果不同——配置未知")
+        return out
+    block = interpreted[0]
+    out.update(
+        status=FORWARD_KNOWN,
+        profile=block["profile"],
+        extra_logprob_forward=block["extra_logprob_forward"],
+        switches=block["switches"],
+        rollout_replay=block["rollout_replay"],
+        unavailable_observations=block["unavailable_observations"],
+        unsupported_reasons=block["unsupported_reasons"],
+        note=("效率档：上列观测按配置不可用（不是零，也不是缺证据）；G1 parity 只在诊断档给结论"
+              if block["profile"] == "efficiency" else
+              "诊断档：额外 forward 运行，logprob 对拍是必需证据" if block["profile"] == "diagnostic" else
+              "unsupported：最终参数不在诊断 / 效率两档内（launch P12 本应拒绝）"),
+    )
+    return out
+
+
+def _producer_state(present: bool, forward: Mapping[str, Any]) -> str:
+    """三态（+矛盾）。只有启动证据 known 且证明额外 forward 关闭，缺事件才是"按配置不可用"；其余缺事件都是缺证据。"""
+
+    if forward.get("status") == FORWARD_KNOWN and forward.get("extra_logprob_forward") is False:
+        return PRODUCER_CONTRADICTS_CONFIGURATION if present else PRODUCER_UNAVAILABLE_BY_CONFIGURATION
+    return PRODUCER_PRESENT if present else PRODUCER_MISSING
 
 
 # ---------------------------------------------------------------------------
@@ -561,7 +675,8 @@ def _dedupe_compare_entries(compares: list[Mapping[str, Any]]) -> tuple[list[Map
     return kept, duplicates, conflicts
 
 
-def _facet_staleness(events_by_kind, execution) -> dict[str, Any]:
+def _facet_staleness(events_by_kind, execution, forward: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    forward = forward if forward is not None else {"status": FORWARD_UNKNOWN}
     out: dict[str, Any] = {"status": NOT_COLLECTED, "reasons": []}
     groups = execution.get("groups")
     if groups:
@@ -608,6 +723,8 @@ def _facet_staleness(events_by_kind, execution) -> dict[str, Any]:
             "note": "版本集合 = 成员全部叶的并集；有叶缺版本的成员其集合只是下界（single 不等于已确认单版本）",
         }
     compares = events_by_kind.get(LOGPROB_COMPARE_EVENT, [])
+    state = _producer_state(bool(compares), forward)
+    out["logprob_compare_state"] = state
     if compares:
         entries, duplicates, conflicts = _dedupe_compare_entries(compares)
         same = [e for e in entries if e.get("same_version") is True]
@@ -632,13 +749,24 @@ def _facet_staleness(events_by_kind, execution) -> dict[str, Any]:
             "no_comparable_same_version_samples": not same,
             "note": "same_version 按行的全部版本判断，不是逐 token 子集；完全异步时可能没有同版本样本；同身份副本（TP）按精确相等去重",
         }
-    else:
-        out["reasons"].append("no_logprob_compare_events")
+    if state == PRODUCER_MISSING:
+        out["reasons"].append("no_logprob_compare_events")  # 诊断档或配置未知：缺证据（原口径不变）
+    elif state == PRODUCER_UNAVAILABLE_BY_CONFIGURATION:
+        out["reasons"].append(
+            "logprob_compare_unavailable_by_configuration: 启动证据（最终参数含 --use-rollout-logprobs）证明额外 forward 按配置"
+            "关闭，本 run 没有同版本对拍——不是零，也不是缺证据；本面只剩 staleness，不能据此说对齐已验证"
+        )
+    elif state == PRODUCER_CONTRADICTS_CONFIGURATION:
+        out["reasons"].append(
+            "logprob_compare_contradicts_configuration: 启动证据称额外 forward 关闭，却出现 logprob_compare 事件——"
+            "记录的配置与实际运行不符"
+        )
+    # 状态公式不变：按配置不可用时本面只能是 partial（对齐那半面没有证据，不借 unavailable 升成 collected）
     out["status"] = COLLECTED if groups and compares else PARTIAL if (groups or rollout_groups or compares) else NOT_COLLECTED
     return out
 
 
-def _facet_optimizer(events_by_kind) -> dict[str, Any]:
+def _facet_optimizer(events_by_kind, forward: Mapping[str, Any] | None = None) -> dict[str, Any]:
     out: dict[str, Any] = {"status": NOT_COLLECTED, "reasons": []}
     steps = _dedupe_train_steps(events_by_kind.get(TRAIN_STEP_EVENT, []))
     if steps:
@@ -696,12 +824,14 @@ def _facet_optimizer(events_by_kind) -> dict[str, Any]:
         out["reasons"].append("no_weight_update_events")
     out["engine_version_checks"] = len(events_by_kind.get(ENGINE_VERSIONS_EVENT, []))
     out["run_restarts"] = len(events_by_kind.get(RUN_RESTARTED_EVENT, []))
+    out["learner_timeline"] = _learner_timeline(events_by_kind, forward if forward is not None else {"status": FORWARD_UNKNOWN})
     out["learning_rate"] = {"status": NOT_COLLECTED, "reason": "train_step 事件不带学习率"}
     out["status"] = COLLECTED if steps and updates else PARTIAL if (steps or updates or consumed) else NOT_COLLECTED
     return out
 
 
-def _facet_throughput(events_by_kind, audits, bringup, execution) -> dict[str, Any]:
+def _facet_throughput(events_by_kind, audits, bringup, execution, *, events=None, eval_audits=None,
+                      manifests=None) -> dict[str, Any]:
     out: dict[str, Any] = {"status": NOT_COLLECTED, "reasons": []}
     if audits:
         summary: dict[str, Any] = {}
@@ -772,8 +902,280 @@ def _facet_throughput(events_by_kind, audits, bringup, execution) -> dict[str, A
             for terminal, bucket in (costs.get("terminals") or {}).items()
         }
     out["gpu_and_container_resources"] = {"status": NOT_COLLECTED, "reason": "现有 logger / Docker 资源指标不在本工具输入内"}
+    out["hourly_rates"] = _hourly_rates(list(events or []), events_by_kind, execution, bringup, list(eval_audits or []),
+                                        list(manifests or []))
     out["status"] = COLLECTED if audits and bringup and drains else PARTIAL if (audits or bringup or drains) else NOT_COLLECTED
     return out
+
+
+# ---------------------------------------------------------------------------
+# E5 / I20：每小时速率与 learner 时间线（只用已有事件的计数与时间戳）
+# ---------------------------------------------------------------------------
+
+
+def _event_window(events: list[Mapping[str, Any]]) -> dict[str, Any] | None:
+    stamps = [_num(r.get("ts_unix")) for r in events if r.get("event") != "_malformed"]
+    known = [v for v in stamps if v is not None]
+    if len(known) < 2 or max(known) <= min(known):
+        return None
+    start, end = min(known), max(known)
+    return {"start_unix": start, "end_unix": end, "hours": round((end - start) / 3600.0, 6),
+            "event_rows_with_ts": len(known), "event_rows_without_ts": len(stamps) - len(known)}
+
+
+def _gpu_count(manifests: list[Mapping[str, Any]]) -> tuple[int | None, str | None]:
+    counts: set[int] = set()
+    for m in manifests:
+        topo = m.get("topology")
+        if not isinstance(topo, Mapping):
+            continue
+        actor, rollout = topo.get("actor_gpus"), topo.get("rollout_gpus")
+        if all(isinstance(v, int) and not isinstance(v, bool) and v >= 0 for v in (actor, rollout)):
+            counts.add(int(actor) + int(rollout))
+    if len(counts) == 1:
+        return next(iter(counts)), None
+    if not counts:
+        return None, "no_topology: 启动证据没有 topology.actor_gpus / rollout_gpus——每 GPU 小时速率不可用"
+    return None, f"topology_conflict: 同一 run 的启动证据卡数不一致 {sorted(counts)}"
+
+
+def _rate(count: float | None, window: Mapping[str, Any] | None, gpus: int | None) -> dict[str, Any]:
+    hours = window.get("hours") if window else None
+    per_hour = round(count / hours, 4) if count is not None and hours else None
+    per_gpu_hour = round(count / (hours * gpus), 4) if count is not None and hours and gpus else None
+    return {"count": count, "per_hour": per_hour, "per_gpu_hour": per_gpu_hour}
+
+
+def _classify_gradings(bringup: list[Mapping[str, Any]], eval_sessions: set) -> Counter:
+    """同 session 取最后一条（与 graded_attempts 同口径），按 binary_v1 契约分类；评测 session 单列不计。
+
+    没有 session_id 的行（bringup 生命周期事件与交付共用同一文件，`_append_event`）身份未知，单列计数、不进速率。"""
+
+    by_session: dict[Any, Mapping[str, Any]] = {}
+    counts: Counter = Counter()
+    for row in bringup:
+        if row.get("session_id") is None:
+            counts["rows_without_session_id"] += 1
+            continue
+        by_session[row.get("session_id")] = row
+    for sid, row in by_session.items():
+        if sid in eval_sessions:
+            counts["evaluation_sessions_excluded"] += 1
+            continue
+        grading = row.get("grading")
+        if not isinstance(grading, Mapping):
+            counts["delivered_without_grading_record"] += 1
+            continue
+        reward = _num(grading.get("reward"))
+        outcome = grading.get("outcome")
+        if reward is None:
+            counts["reward_unknown"] += 1  # infra 族 / failed_to_grade：评不了分，不是 0 分
+        elif outcome == "resolved" and reward == 1.0:
+            counts["resolved"] += 1
+        elif outcome == "unresolved" and reward == 0.0 and grading.get("failure_category") in TRUSTED_ZERO_FAILURE_CATEGORIES:
+            counts["trusted_zero"] += 1
+        else:
+            counts["inconsistent"] += 1  # 违反 binary_v1 的组合：不计入有效评分，单列
+    return counts
+
+
+def _hourly_rates(events, events_by_kind, execution, bringup, eval_audits, manifests) -> dict[str, Any]:
+    """合格组 / 有效评分（含可信 0 分）/ applied step 的每小时（与每 GPU 小时）速率。缺计数或缺窗口就是不可用，不填 0。"""
+
+    window = _event_window(events)
+    gpus, gpu_reason = _gpu_count(manifests)
+    out: dict[str, Any] = {
+        "window": window,
+        "window_note": "本 run rh2 事件 ts_unix 首末（含启动与收尾段；进行中 run 截到最后一条事件）；逐轮稳态看 learner_timeline",
+        "gpu_count": gpus,
+        "gpu_count_source": "run_manifest.json topology.actor_gpus + rollout_gpus",
+        "reasons": [],
+    }
+    if window is None:
+        out["reasons"].append("no_event_window: 少于两条带 ts_unix 的事件——速率不可用")
+    if gpu_reason:
+        out["reasons"].append(gpu_reason)
+    groups = execution.get("groups")
+    qualified = (groups or {}).get("totals", {}).get("accepted") if groups else None
+    if qualified is None:
+        out["reasons"].append("no_group_events: 没有 group_consumed / group_filtered 事件——合格组数未知（不是 0）")
+    out["qualified_groups"] = {**_rate(qualified, window, gpus), "source": "group_consumed（buffer 交给 learner 的组）"}
+    steps = _dedupe_train_steps(events_by_kind.get(TRAIN_STEP_EVENT, []))
+    applied = sum(1 for r in steps.values() if r.get("optimizer_step_applied") is True) if steps else None
+    out["applied_optimizer_steps"] = {**_rate(applied, window, gpus), "source": "train_step.optimizer_step_applied（多 rank 副本取一份）"}
+    if bringup:
+        eval_sessions = {a.get("trajectory_id") for a in eval_audits}
+        counts = _classify_gradings(bringup, eval_sessions)
+        resolved, zero = counts.get("resolved", 0), counts.get("trusted_zero", 0)
+        out["effective_gradings"] = {
+            "resolved": _rate(resolved, window, gpus),
+            "trusted_zero": _rate(zero, window, gpus),
+            "total": _rate(resolved + zero, window, gpus),
+            "source": "bringup_events grading 块（同 session 取最后一条）；可信 0 分 = unresolved + reward 0.0 + 模型负样本归因",
+        }
+        out["gradings_not_effective"] = {key: counts.get(key, 0) for key in (
+            "reward_unknown", "inconsistent", "delivered_without_grading_record", "evaluation_sessions_excluded",
+            "rows_without_session_id")}
+    else:
+        out["effective_gradings"] = None
+        out["gradings_not_effective"] = None
+        out["reasons"].append("no_bringup_events: 评分记录缺失——有效评分数未知（不是 0）")
+    return out
+
+
+def _max_ts(rows) -> float | None:
+    values = [v for v in (_num(r.get("ts_unix")) for r in rows) if v is not None]
+    return max(values) if values else None
+
+
+def _min_ts(rows) -> float | None:
+    values = [v for v in (_num(r.get("ts_unix")) for r in rows) if v is not None]
+    return min(values) if values else None
+
+
+def _gap(later: float | None, earlier: float | None) -> float | None:
+    return round(later - earlier, 3) if later is not None and earlier is not None else None
+
+
+_TIMELINE_INTERVALS: tuple[str, ...] = (
+    "drain_wait",
+    "drain_end_to_train_start",
+    "train_start_to_replay_fill",
+    "train_start_to_logprob_compare",
+    "logprob_compare_to_first_step_start",
+    "train_start_to_first_step_start",
+    "optimizer_steps_span",
+    "last_step_end_to_update_start",
+    "weight_update",
+    "update_end_to_publish",
+    "publish_to_next_train_start",
+)
+
+
+def _learner_timeline(events_by_kind, forward: Mapping[str, Any]) -> dict[str, Any]:
+    """按 rollout_id 从事件时间戳重建 learner 循环：drain → train_actor（fill / [诊断档额外 forward + 对拍] / 各 step）→
+    save 等 → weight_update → publish。锚点语义：
+
+    - drain_complete.ts = 等数据结束，elapsed_seconds = 本次 drain 时长（fully_async_rollout.py:496-507）；
+    - train_rollout.ts = train_actor 入口（actor.py:536-541，数据已取到）；replay_fill.ts = 队列填好（R3，actor.py:552-597）；
+    - logprob_compare.ts = 诊断档额外 forward 与对拍主机读取之后（actor.py:664-665；效率档按配置不可用）；
+    - train_step.ts / duration_seconds = 该 step 结束时刻与 step 内单调时长（model.py:724、1011-1025），多 rank 取包络；
+    - weight_update.ts / duration_seconds = 发布结束与整段时长（actor.py:916-941）；weight_publish.ts = driver 收尾（train_async.py:184）。
+
+    不推算重算 token 数、cache 命中或显存（没有 producer）；跨进程区间依赖同一时钟（多主机时看 hosts）。"""
+
+    rollout_ids: set[int] = set()
+
+    def by_rid(kind: str) -> dict[int, list[Mapping[str, Any]]]:
+        grouped: dict[int, list[Mapping[str, Any]]] = defaultdict(list)
+        for row in events_by_kind.get(kind, []):
+            rid = row.get("rollout_id")
+            if isinstance(rid, int) and not isinstance(rid, bool):
+                grouped[rid].append(row)
+                rollout_ids.add(rid)
+        return grouped
+
+    drains = by_rid(DRAIN_COMPLETE_EVENT)
+    starts = by_rid(TRAIN_ROLLOUT_EVENT)
+    fills = by_rid(REPLAY_FILL_EVENT)
+    compares = by_rid(LOGPROB_COMPARE_EVENT)
+    step_rows = by_rid(TRAIN_STEP_EVENT)
+    updates = by_rid(WEIGHT_UPDATE_EVENT)
+    publishes = by_rid(WEIGHT_PUBLISH_EVENT)
+    skipped = by_rid(WEIGHT_PUBLISH_SKIPPED_EVENT)
+    hosts = sorted({str(r.get("host")) for kind in (DRAIN_COMPLETE_EVENT, TRAIN_ROLLOUT_EVENT, TRAIN_STEP_EVENT,
+                                                     WEIGHT_UPDATE_EVENT, WEIGHT_PUBLISH_EVENT, LOGPROB_COMPARE_EVENT)
+                    for r in events_by_kind.get(kind, []) if r.get("host") is not None})
+
+    rollouts: list[dict[str, Any]] = []
+    ordered = sorted(rollout_ids)
+    for position, rid in enumerate(ordered):
+        drain_rows = drains.get(rid, [])
+        drain_end = _max_ts(drain_rows)
+        drain_wait = next((v for v in (_num(r.get("elapsed_seconds")) for r in drain_rows) if v is not None), None)
+        train_start = _min_ts(starts.get(rid, []))
+        fill_end = _max_ts(fills.get(rid, []))
+        compare_end = _max_ts(compares.get(rid, []))
+        steps: dict[Any, dict[str, float | None]] = {}
+        for row in step_rows.get(rid, []):
+            ts, dur = _num(row.get("ts_unix")), _num(row.get("duration_seconds"))
+            entry = steps.setdefault(row.get("step_id"), {"end_ts": None, "start_ts": None, "duration_seconds": None})
+            if ts is not None:
+                entry["end_ts"] = ts if entry["end_ts"] is None else max(entry["end_ts"], ts)
+                if dur is not None:
+                    start = ts - dur
+                    entry["start_ts"] = start if entry["start_ts"] is None else min(entry["start_ts"], start)
+            if dur is not None:
+                entry["duration_seconds"] = dur if entry["duration_seconds"] is None else max(entry["duration_seconds"], dur)
+        step_list = [{"step_id": sid, **vals} for sid, vals in sorted(steps.items(), key=lambda kv: _order_value(kv[0]))]
+        first_start = min((s["start_ts"] for s in step_list if s["start_ts"] is not None), default=None)
+        last_end = max((s["end_ts"] for s in step_list if s["end_ts"] is not None), default=None)
+        update_row = updates.get(rid, [None])[-1]
+        update = None
+        if update_row is not None:
+            end, dur = _num(update_row.get("ts_unix")), _num(update_row.get("duration_seconds"))
+            update = {"end_ts": end, "duration_seconds": dur,
+                      "start_ts": round(end - dur, 3) if end is not None and dur is not None else None}
+        publish = None
+        if publishes.get(rid):
+            publish = {"kind": WEIGHT_PUBLISH_EVENT, "ts": _max_ts(publishes[rid])}
+        elif skipped.get(rid):
+            publish = {"kind": WEIGHT_PUBLISH_SKIPPED_EVENT, "ts": _max_ts(skipped[rid])}
+        next_start = _min_ts(starts.get(ordered[position + 1], [])) if position + 1 < len(ordered) else None
+        compare_state = _producer_state(bool(compares.get(rid)), forward)
+        intervals = {
+            "drain_wait": drain_wait,
+            "drain_end_to_train_start": _gap(train_start, drain_end),
+            "train_start_to_replay_fill": _gap(fill_end, train_start),
+            "train_start_to_logprob_compare": _gap(compare_end, train_start),
+            "logprob_compare_to_first_step_start": _gap(first_start, compare_end),
+            "train_start_to_first_step_start": _gap(first_start, train_start),
+            "optimizer_steps_span": _gap(last_end, first_start),
+            "last_step_end_to_update_start": _gap(update["start_ts"] if update else None, last_end),
+            "weight_update": update["duration_seconds"] if update else None,
+            "update_end_to_publish": _gap(publish["ts"] if publish else None, update["end_ts"] if update else None),
+            "publish_to_next_train_start": _gap(next_start, publish["ts"] if publish else None),
+        }
+        rollouts.append({
+            "rollout_id": rid,
+            "drain_end_ts": drain_end,
+            "train_start_ts": train_start,
+            "replay_fill_end_ts": fill_end,
+            "logprob_compare": {"state": compare_state, "end_ts": compare_end},
+            "steps": step_list,
+            "weight_update": update,
+            "publish": publish,
+            "intervals_seconds": intervals,
+        })
+    negative = sum(1 for r in rollouts for v in r["intervals_seconds"].values() if v is not None and v < 0)
+    summary = {
+        name: _dist([r["intervals_seconds"][name] for r in rollouts if r["intervals_seconds"][name] is not None],
+                    unknown=sum(1 for r in rollouts if r["intervals_seconds"][name] is None))
+        for name in _TIMELINE_INTERVALS
+    }
+    bootstrap = [r for r in events_by_kind.get(WEIGHT_UPDATE_EVENT, []) if r.get("rollout_id") is None]
+    return {
+        "rollouts": rollouts[:200],
+        "rollouts_total": len(rollouts),
+        "intervals_seconds_summary": summary,
+        "negative_intervals": negative,
+        "bootstrap_updates": [{"ts": _num(r.get("ts_unix")), "duration_seconds": _num(r.get("duration_seconds"))} for r in bootstrap],
+        "hosts": hosts,
+        "notes": [
+            "区间由事件锚点相减；缺锚点记 unknown，不填 0。train_start_to_first_step_start 含 replay 填充、诊断档额外 forward 与对拍、"
+            "优势计算；诊断档可再拆成 train_start_to_logprob_compare 与 logprob_compare_to_first_step_start，效率档该锚点按配置不可用。",
+            "last_step_end_to_update_start 含 --save-interval 触发的 checkpoint 保存等；publish_to_next_train_start 含评测派发与下一轮"
+            " drain（fully-async 在发布之后才 drain，train_async.py:119-126）；miles perf/train_wait_time 是两次 train 之间的一切"
+            "（drain、发布、保存、摘要），不是纯等数据。",
+            "跨进程区间假定同一时钟；hosts 多于一个时存在时钟偏差风险，负区间计入 negative_intervals 而不改写。",
+        ],
+        "not_derivable": {
+            "recompute_tokens_after_publish": "not_collected：发布后重算 token 数需要引擎侧计数，时间戳推不出",
+            "prefix_cache_hit": "not_collected：miles rollout/prefix_cache_hit_rate 按源码推断在 rh2 路径恒为 0（E5 调查 §4 C3，待首个真实 "
+                                "run 确认），不作来源；SGLang /metrics 没有采集器",
+            "per_phase_gpu_memory": "not_collected：逐阶段显存需要 fork producer，不在本切片",
+        },
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -865,8 +1267,10 @@ def _facet_evaluation(events_by_kind, eval_audits, *, regrades=()) -> dict[str, 
     return out
 
 
-def _single_run_report(*, run_id, events, audits, bringup) -> dict[str, Any]:
+def _single_run_report(*, run_id, events, audits, bringup, manifests=()) -> dict[str, Any]:
     events_by_kind = _by_kind(events)
+    manifests = list(manifests)
+    forward = _forward_profile_section(manifests)
     # I21：评测 attempt 与训练 attempt 分开——训练各 facet 只看训练 attempt（评测不进 buffer、不产生训练行）
     eval_audits = [a for a in audits if isinstance(a.get("evaluation"), Mapping)]
     audits = [a for a in audits if not isinstance(a.get("evaluation"), Mapping)]
@@ -877,13 +1281,16 @@ def _single_run_report(*, run_id, events, audits, bringup) -> dict[str, Any]:
         "action_coverage": _facet_action_coverage(audits),
         "reward_and_distribution": _facet_reward(events_by_kind, audits, bringup),
         "dis_and_support": _facet_dis(events_by_kind),
-        "staleness_and_alignment": _facet_staleness(events_by_kind, execution),
-        "optimizer_and_publish": _facet_optimizer(events_by_kind),
-        "throughput_and_resources": _facet_throughput(events_by_kind, audits, bringup, execution),
+        "staleness_and_alignment": _facet_staleness(events_by_kind, execution, forward),
+        "optimizer_and_publish": _facet_optimizer(events_by_kind, forward),
+        "throughput_and_resources": _facet_throughput(events_by_kind, audits, bringup, execution, events=events,
+                                                      eval_audits=eval_audits, manifests=manifests),
         "evaluation": _facet_evaluation(events_by_kind, eval_audits, regrades=regrades_by_plane["evaluation"]),
     }
+    forward["observed_producers"] = {"logprob_compare": facets["staleness_and_alignment"]["logprob_compare_state"]}
     return {
         "run_id": run_id,
+        "forward_profile": forward,
         "event_kinds": dict(sorted(Counter(k for k in events_by_kind for _ in events_by_kind[k]).items())),
         "audit_rows": len(audits),  # 训练 attempt 的 audit 行
         "eval_audit_rows": len(eval_audits),
@@ -894,8 +1301,10 @@ def _single_run_report(*, run_id, events, audits, bringup) -> dict[str, Any]:
 
 
 def build_run_report(*, events: list[Mapping[str, Any]], audits: list[dict[str, Any]], run_id: str | None = None,
-                     bringup: list[dict[str, Any]] | None = None, sources: Mapping[str, Any] | None = None) -> dict[str, Any]:
+                     bringup: list[dict[str, Any]] | None = None, sources: Mapping[str, Any] | None = None,
+                     manifests: list[Mapping[str, Any]] | None = None) -> dict[str, Any]:
     bringup = list(bringup or [])
+    manifests = list(manifests or [])
     bundle_runs = _bundle_run_ids(events)
     run_ids = sorted({r.get("run_id") for r in events if r.get("event") != "_malformed"}, key=str)
     audits_by_run: dict[Any, list[dict[str, Any]]] = defaultdict(list)
@@ -916,18 +1325,27 @@ def build_run_report(*, events: list[Mapping[str, Any]], audits: list[dict[str, 
             unattributed_bringup += 1
             continue
         bringup_by_run[owner].append(row)
+    # E5：启动证据按其自带 run_id 归属（比 bundle 归属更强）；run_id 缺失或不属于任何事件 run 的只计数
+    manifests_by_run: dict[Any, list[Mapping[str, Any]]] = defaultdict(list)
+    unattributed_manifests = 0
+    for row in manifests:
+        if row.get("run_id") is not None and row.get("run_id") in run_ids:
+            manifests_by_run[row.get("run_id")].append(row)
+        else:
+            unattributed_manifests += 1
     header = {
         "schema_id": REPORT_SCHEMA_ID,
         "sources": dict(sources or {}),
         "runs_seen": run_ids,
         "unattributed_audit_rows": unattributed_audits,
         "unattributed_bringup_rows": unattributed_bringup,
+        "unattributed_manifest_rows": unattributed_manifests,
         "caliber_notes": list(CALIBER_NOTES),
     }
     if run_id is not None:
         selected_events = [r for r in events if r.get("run_id") == run_id or r.get("event") == "_malformed"]
         report = _single_run_report(run_id=run_id, events=selected_events, audits=audits_by_run.get(run_id, []),
-                                    bringup=bringup_by_run.get(run_id, []))
+                                    bringup=bringup_by_run.get(run_id, []), manifests=manifests_by_run.get(run_id, []))
         report["events_foreign_run"] = sum(1 for r in events if r.get("run_id") != run_id and r.get("event") != "_malformed")
         report["audit_rows_excluded_other_or_unknown_run"] = len(audits) - len(audits_by_run.get(run_id, []))
         return {**header, **report}
@@ -938,24 +1356,26 @@ def build_run_report(*, events: list[Mapping[str, Any]], audits: list[dict[str, 
             per_run[str(rid)] = _single_run_report(
                 run_id=rid, events=[r for r in events if r.get("run_id") == rid or r.get("event") == "_malformed"],
                 audits=audits_by_run.get(rid, []), bringup=bringup_by_run.get(rid, []),
+                manifests=manifests_by_run.get(rid, []),
             )
         return {**header, "multi_run": True, "run_id": None, "per_run": per_run,
                 "note": "输入含多个 run_id：不混连，逐 run 出子报告；用 --run-id 只看一个"}
     only = run_ids[0] if run_ids else None  # None = 没有任何事件：未绑定 run 的本地摘要（audit / bringup 全部进入）
-    report = _single_run_report(run_id=only, events=events, audits=audits_by_run.get(only, []), bringup=bringup_by_run.get(only, []))
+    report = _single_run_report(run_id=only, events=events, audits=audits_by_run.get(only, []), bringup=bringup_by_run.get(only, []),
+                                manifests=manifests_by_run.get(only, []))
     report["events_foreign_run"] = 0
     return {**header, "multi_run": False, **report}
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="I20 首版：离线 run 报告（七面基础摘要，只消费已有记录）")
-    parser.add_argument("paths", nargs="+", help="run 目录（递归找 rh2_events_*.jsonl / fa_execution_audit.jsonl / bringup_events.jsonl）或文件；每个路径 = 一个 bundle")
+    parser.add_argument("paths", nargs="+", help="run 目录（递归找 rh2_events_*.jsonl / fa_execution_audit.jsonl / bringup_events.jsonl / run_manifest.json）或文件；每个路径 = 一个 bundle")
     parser.add_argument("--run-id", default=None, help="只统计该 run_id（不指定且输入含多个 run 时逐 run 出子报告，不混连）")
     parser.add_argument("--json", default=None, help="把报告写到该文件（同时打印到 stdout）")
     args = parser.parse_args(argv)
     inputs = load_run_inputs(args.paths)
     report = build_run_report(events=inputs["events"], audits=inputs["audits"], bringup=inputs["bringup"], run_id=args.run_id,
-                              sources=inputs["sources"])
+                              sources=inputs["sources"], manifests=inputs["manifests"])
     text = json.dumps(report, ensure_ascii=False, indent=2, default=str)
     if args.json:
         Path(args.json).write_text(text + "\n", encoding="utf-8")
