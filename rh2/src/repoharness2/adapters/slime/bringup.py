@@ -630,11 +630,6 @@ class ClaudeCodeDriver:
             await self._install_native_cli(sb, timeout=bounded(180))
             if remaining() <= 0:
                 return budget_exhausted("after_install")
-            # 预建 agent 用户（与 slime ensure_agent_user 同一命令、宽超时）：
-            # slime 侧写死 timeout=60s，django 官方镜像 /testbed 数万文件的
-            # chown -R 在 overlay2 copy-up 下超时（run6 实测 8/8 django rollout
-            # exit=124 全灭）。本命令幂等（id agent 短路），预跑成功后 slime
-            # 内部那次变成 no-op。上限 900s 与剩余预算取 min（批 B）。
             # E1（I25）：一次 exec——profile 路径的可信初始化已整树 chown 并写完成标记 → 脚本内只读核对通过就不再 chown
             # （RH2_AGENT_USER_INIT=reused）；legacy（无 profile）路径没有标记 → 原整条命令逐字照跑，成功后写标记
             # （=chown），让随后 launch 的核对也能复用。超时上限与失败归因与改前相同。
@@ -927,6 +922,8 @@ def write_execution_audit_record(proxy, audit, path, *, model_name: str | None =
         "activation_check": getattr(audit, "activation_check", None),
         # #2：宿主收集的 harness 日志事实（路径 / 字节数 / complete / partial 原因 / CLI 退出类别）
         "harness_log": getattr(audit, "harness_log", None),
+        # E1（I25，Codex R3）：driver 预建 / launch 前核对的用户初始化事实（mode / recheck / seconds）
+        "agent_user_init": getattr(audit, "agent_user_init", None),
         "session_plane_drained": audit.session_plane_drained,
         "runtime_quiescence_confirmed": audit.runtime_quiescence_confirmed,
         "capture_closed": audit.capture_closed,
@@ -1268,7 +1265,10 @@ class BringupService:
         # #5（T1）：可见末尾的 EOS 字面量剥掉、悬空 <tool_call> 置 ill_formed——按模块名替换 vendored parse_model_output
         from repoharness2.adapters.slime.parse_wire import assert_parse_wire_installed, install_parse_wire
 
-        install_parse_wire(eos_token=getattr(self.tokenizer, "eos_token", None))
+        install_parse_wire(
+            eos_token=getattr(self.tokenizer, "eos_token", None),
+            eos_token_id=getattr(self.tokenizer, "eos_token_id", None),  # R1：剥字面量只认最后一个采样 id 是 EOS 的事实
+        )
         assert_parse_wire_installed()
         # #6(a)（决策包 §8）：RH2 子类只把约定提醒并入相邻 tool_result（vendored 零改动；生成与 count_tokens 共用）
         from repoharness2.adapters.slime.rh2_anthropic_adapter import rh2_anthropic_adapter_cls

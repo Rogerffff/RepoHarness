@@ -2275,6 +2275,9 @@ class RolloutAudit:
     activation_check: dict[str, Any] | None = None
     # #2：宿主收集的 harness 日志事实（HARNESS_LAUNCH_FACTS["harness_log"] 的副本）
     harness_log: dict[str, Any] | None = None
+    # E1（I25，Codex R3）：用户初始化事实 {"bootstrap": {...}, "launch": {...}}（driver / launch 交出的
+    # agent_user_init_* 的副本；未执行的阶段缺席，不补零）
+    agent_user_init: dict[str, Any] | None = None
     # I01（B 路线观测）：本 execution 的动作覆盖与训练行成本（turn_identity.TurnCoverageSummary
     # 的 dict；bringup 经 execution audit 记录落盘）。非 bringup 链为 None。
     turn_coverage: dict[str, Any] | None = None
@@ -3956,6 +3959,13 @@ class RolloutOrchestrator:
         """#2：driver 交出的宿主收集事实 → audit.harness_log；两份宿主文件进 artifact 清单（B 线分析改读宿主副本）。
         None = 未收集（替身驱动 / 未起流）。幂等。"""
 
+        init = {
+            key[len("agent_user_init_"):]: dict(value)
+            for key, value in launch_facts.items()
+            if key.startswith("agent_user_init_") and isinstance(value, dict)
+        }
+        if init:
+            audit.agent_user_init = init  # E1 / R3：与 harness_log 同一 finally 运输；取消时已交出的阶段照样进 audit
         log = launch_facts.get("harness_log")
         if not log:
             return

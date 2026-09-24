@@ -1060,14 +1060,14 @@ def _agent_user_recheck_header(workdir: str, user: str) -> str:
 
 
 def agent_user_recheck_script(workdir: str, *, user: str = "agent") -> str:
-    """E1（I25）launch 路径：只做只读核对；通过时顺带 safe.directory（幂等）并回 `AGENT_UID`，退出码恒 0，
+    """E1（I25）launch 路径：只做只读核对（复用分支不再跑 `git config --system --add`——它不幂等，可信初始化 /
+    整条命令已加过一次）；通过时回 `AGENT_UID`，退出码恒 0，
     由调用方（`bringup.ensure_agent_user_once`）决定跳过还是回退 vendored `ensure_agent_user`。
     "用户存在"不等于权限已正确：跳过的依据是 root 写下的 chown 完成事实加顶层属主复核。"""
 
     return (
         _agent_user_recheck_header(workdir, user)
-        + 'if [ "$STATE" = ok ]; then git config --system --add safe.directory \'*\' >/dev/null 2>&1 || true; '
-        'echo "AGENT_UID=$(sed -n "s/^uid=//p" "$M" | head -n1)"; fi\n'
+        + 'if [ "$STATE" = ok ]; then echo "AGENT_UID=$(sed -n "s/^uid=//p" "$M" | head -n1)"; fi\n'
         "exit 0\n"
     )
 
@@ -1079,8 +1079,7 @@ def agent_user_init_script(workdir: str, *, user: str = "agent") -> str:
 
     return (
         _agent_user_recheck_header(workdir, user)
-        + 'if [ "$STATE" = ok ]; then git config --system --add safe.directory \'*\' >/dev/null 2>&1 || true; '
-        "echo RH2_AGENT_USER_INIT=reused; exit 0; fi\n"
+        + 'if [ "$STATE" = ok ]; then echo RH2_AGENT_USER_INIT=reused; exit 0; fi\n'
         + DRIVER_AGENT_USER_INIT_CMD.format(workdir=workdir)
         + " && " + agent_user_ready_marker_script(workdir, user=user) + " && echo RH2_AGENT_USER_INIT=chown\n"
     )

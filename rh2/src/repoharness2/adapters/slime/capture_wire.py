@@ -1476,6 +1476,10 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
                         registry.stats.get("abandon_evidence_failures", 0) + 1
                     )
             raise
+        # #5 R1：在 _run_turn 的任务上下文里发布"最后一个采样 id 是否 EOS"的事实；parse wire 只据此剥可见末尾字面量
+        from repoharness2.adapters.slime.parse_wire import publish_turn_terminal
+
+        publish_turn_terminal(output_ids, finish)
         return slime_common.TurnRecord(
             prompt_ids=list(prompt_ids),
             output_ids=output_ids,

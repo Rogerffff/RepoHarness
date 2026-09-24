@@ -69,6 +69,9 @@ def test_trusted_init_writes_the_marker_after_the_workdir_chown_and_before_ok():
 def test_recheck_script_is_read_only_and_non_recursive():
     script = agent_user_recheck_script("/testbed")
     assert "chown" not in script and "useradd" not in script and "find " not in script
+    assert "git config" not in script  # Codex R3 文案修正：复用分支不再跑不幂等的 `git config --system --add`
+    init = agent_user_init_script("/testbed")
+    assert init.count("git config --system --add") == 1 and init.index("RH2_AGENT_USER_INIT=reused") < init.index("git config")
     assert 'stat -c %u "$WD"' in script and 'stat -c %u "/home/$U"' in script
     for state in ("no_marker", "workdir_mismatch", "uid_mismatch", "owner_mismatch", "ok"):
         assert f"echo {state}; return" in script or (state == "ok" and "  echo ok\n" in script)
@@ -159,6 +162,59 @@ async def test_driver_records_the_chown_mode_on_the_legacy_path(monkeypatch):
     runs, facts = await _run_driver(monkeypatch, init_output="RH2_AGENT_USER_RECHECK=no_marker\nRH2_AGENT_USER_INIT=chown\n")
     assert facts["agent_user_init_bootstrap"] == {"mode": "chown", "recheck": "no_marker", "seconds": facts["agent_user_init_bootstrap"]["seconds"]}
     assert facts["agent_user_init_bootstrap"]["seconds"] >= 0
+
+
+# ---- R3：两项初始化事实随 audit 落盘（真实编排 + writer，假 Docker / driver / 模型 / 评分） ----------------------------
+
+
+def _e1_facts():
+    return {
+        "agent_user_init_bootstrap": {"mode": "reused", "recheck": "ok", "seconds": 0.1234},
+        "agent_user_init_launch": {"mode": "chown", "recheck": "no_marker", "seconds": 0.0123},
+    }
+
+
+async def test_init_facts_travel_from_launch_facts_to_the_audit_and_the_persisted_record(tmp_path):
+    import json
+
+    from test_slime_generate import SAMPLING_PARAMS, _Args, build_dense_chain
+
+    from repoharness2.adapters.slime.bringup import write_execution_audit_record
+
+    audit_path = tmp_path / "execution_audit.jsonl"
+    chain = build_dense_chain(audit_sink=lambda audit: write_execution_audit_record(None, audit, audit_path))
+    original = chain.orchestrator._harness_driver
+
+    class EmitE1Driver:
+        async def run(self, *args, **kwargs):
+            facts = HARNESS_LAUNCH_FACTS.get()
+            assert facts is not None
+            facts.update(_e1_facts())
+            return await original.run(*args, **kwargs)
+
+    chain.orchestrator._harness_driver = EmitE1Driver()
+    await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    audit = chain.orchestrator.audits[-1]
+    expected = {"bootstrap": _e1_facts()["agent_user_init_bootstrap"], "launch": _e1_facts()["agent_user_init_launch"]}
+    assert audit.agent_user_init == expected
+    persisted = json.loads(audit_path.read_text().splitlines()[-1])
+    assert persisted["agent_user_init"] == expected
+
+
+def test_absorb_keeps_only_the_phases_that_ran_and_survives_a_cancel_before_the_stream():
+    from repoharness2.adapters.slime.generate import RolloutAudit, RolloutOrchestrator
+
+    audit = RolloutAudit.__new__(RolloutAudit)
+    audit.agent_user_init = None
+    audit.harness_log = None
+    audit.artifact_paths = []
+    # 引导已完成、起流前被取消：只有 bootstrap 一项，没有 harness_log → 仍进 audit，launch 缺席不补零
+    RolloutOrchestrator._absorb_harness_log(audit, {"agent_user_init_bootstrap": {"mode": "reused", "recheck": "ok", "seconds": 0.5}})
+    assert audit.agent_user_init == {"bootstrap": {"mode": "reused", "recheck": "ok", "seconds": 0.5}} and audit.harness_log is None
+    # 什么都没交出（替身驱动）→ 保持 None
+    audit.agent_user_init = None
+    RolloutOrchestrator._absorb_harness_log(audit, {"launch_attempted": False})
+    assert audit.agent_user_init is None
 
 
 # ---- 真容器（本机 docker + 镜像在场才跑；不拉镜像） ---------------------------------------------------------------------
