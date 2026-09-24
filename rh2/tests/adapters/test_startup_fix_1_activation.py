@@ -211,9 +211,13 @@ def test_execution_audit_record_persists_activation_check(tmp_path):
 
 
 class _Sandbox:
-    """ClaudeCodeDriver.run 只读 .container_name；exec/write_file 由 DockerSandbox 承担，这里被 monkeypatch 短路。"""
+    """ClaudeCodeDriver.run 只读 .container_name；exec/write_file 由 DockerSandbox 承担，这里被 monkeypatch 短路。
+    E1 之后 launch_claude_code 会先经 sb.exec 做一次只读核对：空输出 = 核对不通过 → 走（已替身的）vendored ensure_agent_user。"""
 
     container_name = "rollout-fake"
+
+    async def exec(self, cmd, *, user="root", env=None, timeout=120, check=False, idempotent=True):  # noqa: ARG002
+        return 0, "", ""
 
 
 def test_claude_code_launch_env_merge_order(monkeypatch):

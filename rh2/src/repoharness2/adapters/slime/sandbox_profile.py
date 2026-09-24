@@ -1017,6 +1017,93 @@ git config --system --add safe.directory '*' >/dev/null 2>&1 || true
 '''
 
 
+AGENT_USER_READY_MARKER = "/rh2/agent_user_ready"
+
+
+def agent_user_ready_marker_script(workdir: str, *, user: str = "agent") -> str:
+    """E1（I25）：root 写下"用户已建、HOME 与 workdir 已整树 chown"的完成事实（`/rh2` root 0755，agent 造不出）。
+    可信初始化成功后与 legacy 路径的 driver 预建成功后各写一次；内容两行 `uid=<n>` / `workdir=<path>`。"""
+
+    u = shlex.quote(user)
+    m = AGENT_USER_READY_MARKER
+    return (
+        f"install -d -m 0755 -o 0 -g 0 /rh2 && {{ echo \"uid=$(id -u {u})\"; echo \"workdir={shlex.quote(workdir)}\"; }} > {m} "
+        f"&& chmod 0644 {m}"
+    )
+
+
+DRIVER_AGENT_USER_INIT_CMD = (
+    "id agent >/dev/null 2>&1 || useradd -m -s /bin/bash agent && "
+    "chown -R agent:agent /home/agent {workdir} && "
+    "git config --system --add safe.directory '*' && id agent"
+)  # bringup driver 预建用户的整条命令（与 vendored ensure_agent_user 同文本；`(id || useradd) && chown -R` 用户已存在也整树 chown）
+
+
+def _agent_user_recheck_header(workdir: str, user: str) -> str:
+    """只读核对（非递归，不触发 overlay copy-up）：标记存在且 workdir 一致、用户 uid 与标记一致、workdir 与 HOME 顶层属主 = 该 uid
+    → `STATE=ok`；否则 `no_marker | workdir_mismatch | uid_mismatch | owner_mismatch`。总是打印 `RH2_AGENT_USER_RECHECK=<state>`。"""
+
+    return (
+        f"M={AGENT_USER_READY_MARKER}; WD={shlex.quote(workdir)}; U={shlex.quote(user)}\n"
+        "rh2_recheck() {\n"
+        '  [ -f "$M" ] || { echo no_marker; return; }\n'
+        '  MU=$(sed -n "s/^uid=//p" "$M" | head -n1); MW=$(sed -n "s/^workdir=//p" "$M" | head -n1)\n'
+        '  [ "$MW" = "$WD" ] || { echo workdir_mismatch; return; }\n'
+        '  ACT=$(id -u "$U" 2>/dev/null) || ACT=\n'
+        '  { [ -n "$MU" ] && [ "$ACT" = "$MU" ]; } || { echo uid_mismatch; return; }\n'
+        '  { [ "$(stat -c %u "$WD" 2>/dev/null)" = "$MU" ] && [ "$(stat -c %u "/home/$U" 2>/dev/null)" = "$MU" ]; } '
+        "|| { echo owner_mismatch; return; }\n"
+        "  echo ok\n"
+        "}\n"
+        'STATE=$(rh2_recheck); echo "RH2_AGENT_USER_RECHECK=$STATE"\n'
+    )
+
+
+def agent_user_recheck_script(workdir: str, *, user: str = "agent") -> str:
+    """E1（I25）launch 路径：只做只读核对；通过时顺带 safe.directory（幂等）并回 `AGENT_UID`，退出码恒 0，
+    由调用方（`bringup.ensure_agent_user_once`）决定跳过还是回退 vendored `ensure_agent_user`。
+    "用户存在"不等于权限已正确：跳过的依据是 root 写下的 chown 完成事实加顶层属主复核。"""
+
+    return (
+        _agent_user_recheck_header(workdir, user)
+        + 'if [ "$STATE" = ok ]; then git config --system --add safe.directory \'*\' >/dev/null 2>&1 || true; '
+        'echo "AGENT_UID=$(sed -n "s/^uid=//p" "$M" | head -n1)"; fi\n'
+        "exit 0\n"
+    )
+
+
+def agent_user_init_script(workdir: str, *, user: str = "agent") -> str:
+    """E1（I25）driver 预建：**一次 exec**——核对通过 → `RH2_AGENT_USER_INIT=reused` 退出 0（不 chown）；否则逐字执行
+    原整条命令（`DRIVER_AGENT_USER_INIT_CMD`），成功后写完成标记并打 `RH2_AGENT_USER_INIT=chown`；任一步失败 → 非零
+    （调用方 check=True，归因不变）。legacy（无 profile）路径没有可信初始化，标记由这里首次写下。"""
+
+    return (
+        _agent_user_recheck_header(workdir, user)
+        + 'if [ "$STATE" = ok ]; then git config --system --add safe.directory \'*\' >/dev/null 2>&1 || true; '
+        "echo RH2_AGENT_USER_INIT=reused; exit 0; fi\n"
+        + DRIVER_AGENT_USER_INIT_CMD.format(workdir=workdir)
+        + " && " + agent_user_ready_marker_script(workdir, user=user) + " && echo RH2_AGENT_USER_INIT=chown\n"
+    )
+
+
+def agent_user_init_mode(stdout: str) -> str:
+    """从 driver 预建脚本输出取模式（`reused` / `chown`）；没有该行 = `unreadable`。"""
+
+    for line in str(stdout or "").splitlines():
+        if line.startswith("RH2_AGENT_USER_INIT="):
+            return line.split("=", 1)[1].strip() or "unreadable"
+    return "unreadable"
+
+
+def agent_user_recheck_state(stdout: str) -> str:
+    """从核对脚本输出取状态；没有状态行 = `unreadable`（按不通过处理）。"""
+
+    for line in str(stdout or "").splitlines():
+        if line.startswith("RH2_AGENT_USER_RECHECK="):
+            return line.split("=", 1)[1].strip() or "unreadable"
+    return "unreadable"
+
+
 def rollout_trusted_init_script(profile: RolloutSandboxProfile) -> str:
     """root 可信初始化：按固定 uid 预建 agent 用户、safe.directory、chown -R /home/<agent> 与 workdir。
     幂等（slime ensure_agent_user 之后再跑是 no-op）。"""
@@ -1032,6 +1119,9 @@ def rollout_trusted_init_script(profile: RolloutSandboxProfile) -> str:
         f"if [ -d {wd} ]; then chown -R {profile.agent_uid}:{profile.agent_uid} {wd} "
         "|| { echo \"RH2_INIT_ERROR=chown_workdir_failed\"; exit 4; }; echo \"WORKDIR_PRESENT=1\"; "
         "else echo \"WORKDIR_PRESENT=0\"; fi\n"
+        # E1（I25）：完成事实——随后 driver 预建 / vendored ensure_agent_user 只读核对通过即跳过整树 chown
+        + agent_user_ready_marker_script(profile.workdir, user=profile.agent_user)
+        + " || { echo \"RH2_INIT_ERROR=ready_marker_failed\"; exit 4; }\n"
         "echo \"RH2_INIT_OK=1\"; echo \"AGENT_UID=$ACT\"\n"
     )
 

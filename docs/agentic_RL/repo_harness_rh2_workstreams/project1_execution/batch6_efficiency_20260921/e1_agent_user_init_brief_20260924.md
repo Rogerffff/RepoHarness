@@ -33,3 +33,13 @@
 ## 5. 边界与不做的事
 
 不改 grader 初始化；不改 ④；不预装 CC、不复用 HTTP 连接、不改轮询/网络（README E1 明确另看）；不改 profile 的 uid/能力集；与 B 派生镜像的属主配方无交集（E1+ 时再对齐）。
+
+## 6. 实施记录（2026-09-24，Claude；单测与真容器通过，待全量回归与 Codex 复核）
+
+- **与 §2 的一处偏离**：driver 预建（②）没有拆成"核对 exec + 整条命令 exec"两次，而是**一次 exec** 的脚本 `agent_user_init_script`：脚本内先只读核对，通过 → `RH2_AGENT_USER_INIT=reused` 退出 0；否则逐字执行原整条命令（`DRIVER_AGENT_USER_INIT_CMD`，与 vendored 文本相同）→ 写标记 → `=chown`。原因：保持 driver 引导只有这一次 exec，超时上限（`min(900, 剩余)`）、R3(3) 的分数秒期限判定与失败归因完全不变；现有 `test_budget_deadline` 等用例无需改动。
+- **launch 路径（③）**：`bringup.ensure_agent_user_once` 先跑 `agent_user_recheck_script`（只读，退出码恒 0），`ok` → 跳过；否则原样调用 vendored `ensure_agent_user`（文本、60s 上限不变）。vendored 模块零改动；`write_config`（④）不动。
+- **完成标记**：`rollout_trusted_init_script` 在 workdir chown 之后、`RH2_INIT_OK` 之前写 `/rh2/agent_user_ready`（`uid=` / `workdir=` 两行，root 0644；失败 → `RH2_INIT_ERROR=ready_marker_failed` 退出 4）。`scripts/sandbox_probes/rollout-trusted-init.sh` 已重新 dump。
+- **记录**：launch facts 新增 `agent_user_init_bootstrap`（②）与 `agent_user_init_launch`（③），各含 `mode`（`reused` / `chown`）、`recheck` 状态、`seconds`。
+- **验收**（`tests/adapters/test_e1_agent_user_init.py`，10 例）：脚本形状（标记位置、核对脚本无 chown/useradd/find、单次脚本内嵌原命令且只含一处 `chown -R`）；launch 路径 `ok` 跳过、五种不通过状态回退到逐字相同的 vendored 命令；driver 一次 exec、两种模式进 facts；**真容器**（`python:3.12-slim`，本机 Docker）：可信初始化 → 核对 `ok` 且 `AGENT_UID=54321`；agent 写不了 `/rh2`；改顶层属主 → `owner_mismatch`、改回 → `ok`；`/other` → `workdir_mismatch`；删标记 → `no_marker`；driver 脚本无标记时 `chown`（文件 ctime 变）、有标记时 `reused`（ctime 不变 = 没再 chown）。相关既有用例（deadline、host-collected、batch A 归因、w3b profile）115 + 43 passed。`test_startup_fix_2_host_collected` 的"零 exec"断言改为"只允许这一次只读核对"。
+- **没有测**：overlay2 上首次 chown 的 copy-up 成本与目标机耗时（E1+）；grader 侧不变。
+- **全量回归（2026-09-24）**：五目录（Docker 在线）首轮 1759 passed / 1 failed——`test_startup_fix_1_activation` 的假 sandbox 没有 `exec` 方法（该测试把 vendored 引导替身掉，从未需要 exec），给替身补一个返回空输出的 `exec`（= 核对不通过 → 走已替身的 vendored 路径）后再跑 **1760 passed / 1 skipped**；双 lane A 463p/343s、B 806p/0s（E1 改动后首轮即通过，测试修正只涉及 adapters 目录）；ruff 通过。计数含 B 线同工作区未提交的新增测试。

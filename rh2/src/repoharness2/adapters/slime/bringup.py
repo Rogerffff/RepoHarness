@@ -414,6 +414,24 @@ def claude_code_launch_env(
     return env
 
 
+async def ensure_agent_user_once(sb, workdir: str) -> dict:
+    """E1（I25）：先做只读核对（`agent_user_recheck_script`，非递归）；通过 → 跳过整树 chown；否则原样调用 vendored
+    `ensure_agent_user`（其它直接入口不经这里，行为不变）。返回 {"mode": "reused"|"chown", "recheck": 状态, "seconds"}。"""
+
+    from slime.agent import sandbox as _sandbox
+
+    from repoharness2.adapters.slime.sandbox_profile import agent_user_recheck_script, agent_user_recheck_state
+
+    started = time.monotonic()
+    res = await sb.exec(agent_user_recheck_script(workdir), user="root", check=True, timeout=60)
+    stdout = res[1] if isinstance(res, tuple) and len(res) >= 2 else getattr(res, "stdout", "")
+    state = agent_user_recheck_state(stdout)
+    if state == "ok":
+        return {"mode": "reused", "recheck": state, "seconds": round(time.monotonic() - started, 4)}
+    await _sandbox.ensure_agent_user(sb, workdir)
+    return {"mode": "chown", "recheck": state, "seconds": round(time.monotonic() - started, 4)}
+
+
 async def launch_claude_code(
     sb, *, workdir: str, session_id: str, adapter_url: str, prompt: str, time_budget_sec: int,
     env_injections: Mapping[str, str], harness_log_dir: str | None = None,
@@ -437,7 +455,11 @@ async def launch_claude_code(
     from repoharness2.adapters.slime.generate import HARNESS_LAUNCH_FACTS, SlimeBindingError
 
     harness = ClaudeCodeHarness()  # 单例，只读其常量 / 无状态方法
-    await _sandbox.ensure_agent_user(sb, workdir)
+    # E1（I25）：可信初始化 / driver 预建已写完成标记且顶层属主一致 → 跳过 vendored 的第三次整树 chown -R
+    agent_user_init = await ensure_agent_user_once(sb, workdir)
+    launch_facts = HARNESS_LAUNCH_FACTS.get()
+    if launch_facts is not None:
+        launch_facts["agent_user_init_launch"] = agent_user_init
     ctx = _harness_common.HarnessContext(workdir=workdir, session_id=session_id, adapter_url=adapter_url)
     await harness.write_config(sb, ctx)
     # #10：工具面由 RH2 单一写入者决定（`--tools` 白名单，真正从请求的 tools 里移除其它工具）；
@@ -557,6 +579,11 @@ class ClaudeCodeDriver:
         from slime.agent.sandbox import EXIT_TIME_BUDGET_EXCEEDED
 
         from repoharness2.adapters.slime.docker_sandbox import SandboxExecError
+        from repoharness2.adapters.slime.sandbox_profile import (
+            agent_user_init_mode,
+            agent_user_init_script,
+            agent_user_recheck_state,
+        )
         from repoharness2.adapters.slime.generate import (
             HARNESS_LAUNCH_FACTS,
             SlimeBindingError,
@@ -608,14 +635,16 @@ class ClaudeCodeDriver:
             # chown -R 在 overlay2 copy-up 下超时（run6 实测 8/8 django rollout
             # exit=124 全灭）。本命令幂等（id agent 短路），预跑成功后 slime
             # 内部那次变成 no-op。上限 900s 与剩余预算取 min（批 B）。
-            await sb.exec(
-                f"id agent >/dev/null 2>&1 || useradd -m -s /bin/bash agent && "
-                f"chown -R agent:agent /home/agent {workdir} && "
-                f"git config --system --add safe.directory '*' && id agent",
-                user="root",
-                check=True,
-                timeout=bounded(900),
-            )
+            # E1（I25）：一次 exec——profile 路径的可信初始化已整树 chown 并写完成标记 → 脚本内只读核对通过就不再 chown
+            # （RH2_AGENT_USER_INIT=reused）；legacy（无 profile）路径没有标记 → 原整条命令逐字照跑，成功后写标记
+            # （=chown），让随后 launch 的核对也能复用。超时上限与失败归因与改前相同。
+            init_started = time.monotonic()
+            init = await sb.exec(agent_user_init_script(workdir), user="root", check=True, timeout=bounded(900))
+            init_out = init[1] if isinstance(init, tuple) and len(init) >= 2 else ""
+            facts["agent_user_init_bootstrap"] = {
+                "mode": agent_user_init_mode(init_out), "recheck": agent_user_recheck_state(init_out),
+                "seconds": round(time.monotonic() - init_started, 4),
+            }
             # CC 训练守卫（重试 / fallback 三个键）合并进 SLIME_AGENT_CC_EXTRA_ENVS——slime
             # ClaudeCodeHarness 会把该 JSON 并入 CC 子进程环境；merged 存 self 供 evidence 采集。
             # 第三组 I19（owner 2026-09-10）：不再注入 DISABLE_COMPACT，压缩由 I01 B 表示分行处理。

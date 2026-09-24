@@ -512,7 +512,9 @@ async def test_launch_claude_code_execs_through_the_engine_api_and_leaves_no_in_
     assert body["Cmd"][:2] == ["bash", "-c"] and body["Cmd"][2].startswith("exec /usr/local/bin/claude -p 'fix it' --permission-mode bypassPermissions")
     assert (tmp_path / "harness").stat().st_mode & 0o777 == 0o700
     assert (tmp_path / "harness" / "trajectory.jsonl").read_text() == '{"type":"result"}\n'
-    assert sb.execs == []  # 容器内没有 launcher / done 标记 / .harness（bootstrap 已替身，其余一次 exec 都没有）
+    # 容器内没有 launcher / done 标记 / .harness（bootstrap 已替身）；E1 之后 launch 只多一次只读核对 exec（root，非递归）
+    assert [c for c in sb.execs if "RH2_AGENT_USER_RECHECK" not in c] == []
+    assert len(sb.execs) == 1 and "chown" not in sb.execs[0]
     assert facts["harness_log"]["exec_state"] == "exited" and facts["harness_log"]["log_complete"] is True
 
 
