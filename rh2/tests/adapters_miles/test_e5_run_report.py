@@ -194,8 +194,8 @@ def test_hourly_rates_count_qualified_groups_and_effective_gradings_including_tr
     assert (eff["resolved"]["count"], eff["trusted_zero"]["count"], eff["total"]["count"]) == (3, 2, 5)
     assert eff["total"]["per_hour"] == 2.5 and eff["trusted_zero"]["per_gpu_hour"] == 0.125
     assert rates["gradings_not_effective"] == {"reward_unknown": 1, "inconsistent": 1, "executions_without_grading_block": 1,
-                                               "evaluation_attempts_excluded": 1, "duplicate_execution_records_collapsed": 0,
-                                               "rows_without_session_id": 1}
+                                               "legacy_writer_unknown": 0, "evaluation_attempts_excluded": 1,
+                                               "duplicate_execution_records_collapsed": 0, "rows_without_session_id": 0}
     assert rates["effective_gradings"]["source"].startswith("旧 bringup_events")  # E5 之前的证据形态：回退路径
 
 
@@ -372,10 +372,10 @@ def test_eval_infra_and_duplicate_execution_records_are_not_counted_as_effective
     eff = rates["effective_gradings"]
     assert (eff["resolved"]["count"], eff["trusted_zero"]["count"], eff["total"]["count"]) == (1, 1, 2)
     assert rates["gradings_not_effective"] == {"reward_unknown": 1, "inconsistent": 0, "executions_without_grading_block": 1,
-                                               "evaluation_attempts_excluded": 1, "duplicate_execution_records_collapsed": 1,
-                                               "rows_without_session_id": 0}
+                                               "legacy_writer_unknown": 0, "evaluation_attempts_excluded": 1,
+                                               "duplicate_execution_records_collapsed": 1, "rows_without_session_id": 0}
     assert rates["grading_coverage"] == {"executions_audited": 4, "with_grading_block": 3, "without_grading_block": 1,
-                                         "audit_rows_without_grading_block": 1}
+                                         "legacy_writer_unknown": 0, "audit_rows_without_grading_block": 1}
     assert any(r.startswith("partial_grading_coverage: 3/4") for r in rates["reasons"])
     graded = report["facets"]["reward_and_distribution"]["graded_attempts"]
     assert graded["graded"] == 3 and graded["by_task"]["task-A"]["graded"] == 3 and graded["reward"]["unknown"] == 1
@@ -393,3 +393,46 @@ def test_audit_grading_blocks_take_precedence_over_legacy_bringup_rows():
     assert eff["total"]["count"] == 1 and eff["source"].startswith("execution audit")
     graded = report["facets"]["reward_and_distribution"]["graded_attempts"]
     assert graded["source"] == "execution_audit" and graded["graded"] == 1 and graded["delivery_records"] == 2
+
+
+# ---- Codex review_ef1_ns1 §3：OBS-1（生命周期行不是交付）/ COMPAT-1（混版本 writer 的覆盖分母） ---------------------------------
+
+
+def test_lifecycle_rows_next_to_real_audits_leave_delivery_fields_unknown_and_gradings_intact():
+    """OBS-1：正式 miles 形态——审计行带评分块、bringup_events 只有 shutdown 两行。交付记录 / 无评分交付 / eligibility 分布
+    都是未知（不是 1 条交付、eligibility {"None": 1}），评分总数不受影响。"""
+    from repoharness2.adapters.miles.run_report import build_run_report
+
+    audits = [_audit_row("a1", "resolved", None, 1.0), _audit_row("a2", "unresolved", "tests_failed", 0.0)]
+    lifecycle = [{"ts": 1.0, "event": "shutdown_started", "inflight": 0, "_bundle": 0},
+                 {"ts": 2.0, "event": "shutdown_completed", "_bundle": 0}]
+    report = build_run_report(events=_window_events(), audits=audits, bringup=lifecycle, manifests=[_manifest("diagnostic")])
+    reward = report["facets"]["reward_and_distribution"]
+    graded = reward["graded_attempts"]
+    assert graded["graded"] == 2 and graded["source"] == "execution_audit"
+    assert graded["delivery_records"] is None and graded["delivered_without_grading_record"] is None
+    assert graded["eligibility_classes"] is None and graded["audited_attempts_without_delivery_record"] is None
+    assert any(r.startswith("no_delivery_records") for r in reward["reasons"])
+    throughput = report["facets"]["throughput_and_resources"]
+    assert "delivery_wall_seconds" not in throughput
+    assert throughput["hourly_rates"]["effective_gradings"]["total"]["count"] == 2
+
+
+def test_mixed_writer_versions_count_old_rows_as_unknown_in_the_coverage_denominator():
+    """COMPAT-1：同一输入里一条新 writer 成功行 + 另一 attempt 的旧 writer 行（没有 grading 键）→ 覆盖 1/2、旧行评分未知、
+    给出混版本 partial reason；不显示成 1/1。旧行与新行同一 attempt 时不重复进分母。"""
+    from repoharness2.adapters.miles.run_report import build_run_report
+
+    old_writer = {"schema_id": "rh2.fa.execution_audit.v1", "trajectory_id": "traj-old", "physical_attempt_id": "old",
+                  "task_id": "task-A", "wall_end_epoch": 5.0, "evaluation": None, "_bundle": 0}
+    same_attempt_old = dict(old_writer, trajectory_id="traj-a1", physical_attempt_id="a1")  # 与新行同一 attempt：不重复计
+    audits = [_audit_row("a1", "resolved", None, 1.0), old_writer, same_attempt_old]
+    report = build_run_report(events=_window_events(), audits=audits, bringup=[], manifests=[_manifest("diagnostic")])
+    rates = report["facets"]["throughput_and_resources"]["hourly_rates"]
+    assert rates["grading_coverage"] == {"executions_audited": 2, "with_grading_block": 1, "without_grading_block": 0,
+                                         "legacy_writer_unknown": 1, "audit_rows_without_grading_block": 0}
+    assert rates["effective_gradings"]["total"]["count"] == 1
+    assert any(r.startswith("partial_grading_coverage: 1/2") and "混版本" in r for r in rates["reasons"])
+    graded = report["facets"]["reward_and_distribution"]["graded_attempts"]
+    assert graded["legacy_writer_unknown"] == 1 and any("混版本" in r for r in report["facets"]["reward_and_distribution"]["reasons"])
+

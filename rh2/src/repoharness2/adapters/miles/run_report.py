@@ -6,9 +6,12 @@
     not_collected，**不能显示成"没有损耗"**）：group_filtered / group_consumed / drain_complete / attempt_cost_snapshot /
     grading_regrade / rollout_group / train_step / train_step_consumed / weight_update / logprob_compare /
     engine_versions_after_publish / run_restarted / sample_dis_accounting；
-  - `fa_execution_audit.jsonl`（rh2 bringup 的 execution 终态审计，每条 = 一个已结束 attempt；**不含评分**）；
-  - `bringup_events.jsonl`（rh2 bringup `record_event`：每次交付一条，带 `grading` 块、`eligibility_class`、
-    `rollout_timings`；按 `session_id` = audit `trajectory_id` 关联）；
+  - `fa_execution_audit.jsonl`（rh2 bringup 的 execution 终态审计，每条 = 一个已结束 attempt；E5 / EF1 起带 `grading`
+    摘要块——评分总体、有效评分速率、评分分段耗时的**唯一来源**；E5 之前的行没有该键）；
+  - `bringup_events.jsonl`（两类行：旧包装 `record_event` 的**交付行**——每次交付一条，带 `session_id`、`grading` 块、
+    `eligibility_class`、`rollout_timings`，按 `session_id` = audit `trajectory_id` 关联；`_append_event` 的**生命周期行**
+    （带 `event` 键，如 shutdown），不是交付。正式 miles 路径只写生命周期行：交付记录 / eligibility 分布此时未知，
+    旧评分块只在没有任何新 writer audit 行时作回退）；
   - `run_manifest.json`（E5 起：launch 在 Ray 前写的启动证据；读其中 `forward_profile` 块——P12 从**最终参数**推导的
     诊断 / 效率档与三个开关值——以及 `topology` 的卡数。按 manifest 自带的 `run_id` 归属到 run，用
     `forward_profile.interpret_recorded` 按同一函数重算核对，不另写判断）。
@@ -137,7 +140,9 @@ CALIBER_NOTES: tuple[str, ...] = (
     "组、成员执行、训练行、token、optimizer step 是不同单位；rollout_group 逐叶写行，成员统计先按身份归并，行分布另列。",
     "train_step.metrics 是 ÷ num_rollouts 的每 execution 均值；本报告按 均值 × num_rollouts 还原总量，跨 step 比例用总量之和。",
     "多 rank 副本只取一份（同 (run_id, rollout_id, step_id) 取 pp 末段且 dp_rank 最小的一条）；连接 / 去重键都带 run 身份。",
-    "缺失记录、未匹配、未知版本不记 0；进行中的 attempt 不在 audit 里，未知就是未知；没有 bringup_events 时评分是『无法知道』而不是『没有评分』。",
+    "缺失记录、未匹配、未知版本不记 0；进行中的 attempt 不在 audit 里，未知就是未知。评分来自 execution audit 的 grading 块"
+    "（旧 bringup 评分块只作 E5 之前证据的回退），两者都没有时评分是『无法知道』而不是『没有评分』；bringup_events 里只有"
+    "生命周期行（带 event 键）时不算交付记录。",
     "context_length_drop_clues 是会话级 prompt 长度下降线索，不是压缩次数。",
     "同版本 logprob 差异（logprob_compare.same_version）与跨版本差异分列；跨版本差不叫 KL。",
     "rollout_group 只代表已交付给 learner 的组，不是过滤前总体；过滤前总体没有来源（not_collected），不推造。",
@@ -145,7 +150,7 @@ CALIBER_NOTES: tuple[str, ...] = (
     "E5：logprob 对拍三态 = 有事件 present / 启动证据（最终参数推导）证明额外 forward 关闭且无事件 unavailable_by_configuration / "
     "诊断档或配置未知而无事件 missing（缺证据）；关闭却有事件记 contradicts_configuration。效率档不给 G1 parity 结论。",
     "每小时速率的窗口 = 本 run rh2 事件 ts_unix 的首末（含启动与收尾段；进行中 run 截到最后一条事件）；合格组 = group_consumed"
-    "（buffer 交给 learner 的组）；有效评分 = resolved + 可信 0 分，reward 未知（infra 族）与评测 session 不计入。",
+    "（buffer 交给 learner 的组）；有效评分 = resolved + 可信 0 分，reward 未知（infra 族）与评测 attempt 不计入。",
     "learner 时间线只由事件时间戳与 duration 字段拼出；不从时间戳推算重算 token 数、cache 命中或显存，这些没有 producer 就是不可用。",
     "评测 attempt（audit 行带 evaluation 块 / 成本快照 evaluation=True）不进训练统计：各训练 facet 只看训练 attempt，"
     "评测单列在 evaluation facet；作业总成本 = 训练 + 评测两部分之和。评测点按 eval_point_id 区分（rollout_id 不是"
@@ -505,9 +510,11 @@ def _facet_reward(events_by_kind, audits, bringup, eval_audits=()) -> dict[str, 
     # 旧 bringup_events 的 grading 块只作 E5 之前证据的回退。两者都没有 = 无法知道，不是"没有评分"。
     eval_sessions = {a.get("trajectory_id") for a in (eval_audits or [])}
     graded_source = _grading_records(list(audits or []), list(bringup or []), eval_sessions, list(eval_audits or []))
+    deliveries = _delivery_rows(bringup)  # OBS-1：生命周期行不是交付
     by_session: dict[Any, Mapping[str, Any]] = {}
-    for row in bringup or []:
-        by_session[row.get("session_id")] = row  # 同 session 多条取最后一条（重复交付记录）
+    for row in deliveries:
+        if row.get("session_id") is not None:
+            by_session[row.get("session_id")] = row  # 同 session 多条取最后一条（重复交付记录）
     if graded_source["source"] is not None:
         graded = graded_source["records"]
         rewards = [_num(g["grading"].get("reward")) for g in graded]
@@ -529,27 +536,28 @@ def _facet_reward(events_by_kind, audits, bringup, eval_audits=()) -> dict[str, 
         coverage = graded_source["coverage"]
         out["graded_attempts"] = {
             "source": graded_source["source"],
-            "delivery_records": len(by_session) if bringup else None,
+            "delivery_records": len(by_session) if deliveries else None,
             "graded": len(graded),
             "executions_without_grading_record": coverage["without_grading_block"],
+            "legacy_writer_unknown": coverage["legacy_writer_unknown"],
             "delivered_without_grading_record": (
-                sum(1 for r in by_session.values() if not isinstance(r.get("grading"), dict)) if bringup else None),
+                sum(1 for r in by_session.values() if not isinstance(r.get("grading"), dict)) if deliveries else None),
             "outcomes": dict(sorted(Counter(str(g["grading"].get("outcome")) for g in graded).items())),
             "failure_categories": dict(sorted(Counter(str(g["grading"].get("failure_category")) for g in graded if g["grading"].get("failure_category")).items())),
             "reward": _dist(known, unknown=len(rewards) - len(known)),
             "reward_value_counts": dict(sorted(Counter(str(r) for r in known).items())),
-            "eligibility_classes": dict(sorted(Counter(str(r.get("eligibility_class")) for r in by_session.values()).items())) if bringup else None,
-            "audited_attempts_without_delivery_record": len(audit_sessions - set(by_session)) if (audits and bringup) else None,
+            "eligibility_classes": dict(sorted(Counter(str(r.get("eligibility_class")) for r in by_session.values()).items())) if deliveries else None,
+            "audited_attempts_without_delivery_record": len(audit_sessions - set(by_session)) if (audits and deliveries) else None,
             "by_task": dict(sorted(by_task.items())),
         }
-        if coverage["without_grading_block"]:
-            out["reasons"].append(
-                f"partial_grading_coverage: {coverage['with_grading_block']}/{coverage['executions_audited']} 个训练 execution 带评分块")
+        if coverage["without_grading_block"] or coverage["legacy_writer_unknown"]:
+            out["reasons"].append(_partial_coverage_reason(coverage))
     else:
         out["graded_attempts"] = None
         out["reasons"].append("no_grading_records: 没有带 grading 块的 execution audit（也没有旧 bringup_events 评分块）——评分总体无法知道（不是没有评分）")
-    if not bringup:
-        out["reasons"].append("no_bringup_events: 没有 bringup_events.jsonl——交付记录 / eligibility 分布无法知道")
+    if not deliveries:
+        out["reasons"].append("no_delivery_records: 没有旧 record_event 交付行（正式 miles 路径不写；bringup_events 只有生命周期行也算没有）"
+                              "——交付记录 / eligibility 分布无法知道")
     # ---- 已交付给 learner 的组：rollout_group（逐叶行 → 先归并成员）
     groups = events_by_kind.get(ROLLOUT_GROUP_EVENT, [])
     consumed_keys = {(r.get("run_id"), tuple(r.get("sample_indices") or [])) for r in events_by_kind.get(GROUP_CONSUMED_EVENT, [])}
@@ -596,7 +604,8 @@ def _facet_reward(events_by_kind, audits, bringup, eval_audits=()) -> dict[str, 
         out["delivered_groups"] = None
         out["reasons"].append("no_rollout_group_events")
     out["pre_filter_population"] = {"status": NOT_COLLECTED, "reason": "过滤前全组总体没有事件来源，不从已交付组推造"}
-    out["status"] = COLLECTED if bringup and groups else PARTIAL if (bringup or groups) else NOT_COLLECTED
+    graded_known = graded_source["source"] is not None
+    out["status"] = COLLECTED if graded_known and groups else PARTIAL if (graded_known or deliveries or groups) else NOT_COLLECTED
     return out
 
 
@@ -899,8 +908,9 @@ def _facet_throughput(events_by_kind, audits, bringup, execution, *, events=None
     else:
         out["grading_timings"] = None
         out["reasons"].append("no_grading_records: 评分分段耗时无法知道")
-    if bringup:
-        out["delivery_wall_seconds"] = _dist([v for v in (_num(r.get("wall_seconds")) for r in bringup) if v is not None])
+    deliveries = _delivery_rows(bringup)  # OBS-1
+    if deliveries:
+        out["delivery_wall_seconds"] = _dist([v for v in (_num(r.get("wall_seconds")) for r in deliveries) if v is not None])
     drains = events_by_kind.get(DRAIN_COMPLETE_EVENT, [])
     if drains:
         out["drain_complete"] = {
@@ -917,7 +927,9 @@ def _facet_throughput(events_by_kind, audits, bringup, execution, *, events=None
     out["gpu_and_container_resources"] = {"status": NOT_COLLECTED, "reason": "现有 logger / Docker 资源指标不在本工具输入内"}
     out["hourly_rates"] = _hourly_rates(list(events or []), events_by_kind, execution, bringup, list(eval_audits or []),
                                         list(manifests or []), audits=list(audits or []))
-    out["status"] = COLLECTED if audits and bringup and drains else PARTIAL if (audits or bringup or drains) else NOT_COLLECTED
+    graded_known = graded_source["source"] is not None
+    out["status"] = (COLLECTED if audits and graded_known and drains
+                     else PARTIAL if (audits or graded_known or deliveries or drains) else NOT_COLLECTED)
     return out
 
 
@@ -959,6 +971,13 @@ def _rate(count: float | None, window: Mapping[str, Any] | None, gpus: int | Non
     return {"count": count, "per_hour": per_hour, "per_gpu_hour": per_gpu_hour}
 
 
+def _delivery_rows(bringup: Sequence[Mapping[str, Any]] | None) -> list[Mapping[str, Any]]:
+    """旧 record_event 的交付行：带 `session_id` 键、没有 `event` 键。`_append_event` 写的生命周期行（shutdown 等）带 `event`、
+    不带 `session_id`，不是交付（Codex OBS-1：否则只有 shutdown 行也会被数成一条交付）。"""
+
+    return [r for r in (bringup or []) if isinstance(r, Mapping) and "event" not in r and "session_id" in r]
+
+
 GRADING_SOURCE_AUDIT = "execution_audit"
 GRADING_SOURCE_LEGACY = "bringup_events_legacy"
 
@@ -994,13 +1013,20 @@ def _grading_records(audits: list[Mapping[str, Any]], bringup: list[Mapping[str,
         records = [r for r in by_key.values() if r["grading"] is not None]
         # 调用方已把评测 attempt 分到 eval_audits（训练 facet 只看训练 attempt）：带评分块的评测行在此单列，不进速率
         excluded["evaluation_attempts_excluded"] += sum(1 for a in eval_audits if isinstance(a.get("grading"), Mapping))
-        coverage = {"executions_audited": len(by_key), "with_grading_block": len(records),
-                    "without_grading_block": len(by_key) - len(records), "audit_rows_without_grading_block": without}
+        # COMPAT-1：同一输入混入 E5 之前的 writer 行（没有 grading 键）——评分未知，计入覆盖分母，不当作"已覆盖"
+        legacy_writer_keys = {
+            a.get("physical_attempt_id") or a.get("trajectory_id")
+            for a in audit_rows if "grading" not in a and a.get("evaluation") is None
+        } - set(by_key)
+        coverage = {"executions_audited": len(by_key) + len(legacy_writer_keys), "with_grading_block": len(records),
+                    "without_grading_block": len(by_key) - len(records), "legacy_writer_unknown": len(legacy_writer_keys),
+                    "audit_rows_without_grading_block": without}
         return {"source": GRADING_SOURCE_AUDIT, "records": records, "coverage": coverage, "excluded": excluded}
-    legacy = [r for r in bringup if isinstance(r.get("grading"), Mapping)]
+    deliveries = _delivery_rows(bringup)
+    legacy = [r for r in deliveries if isinstance(r.get("grading"), Mapping)]
     if legacy:
         by_session: dict[Any, Mapping[str, Any]] = {}
-        for row in bringup:
+        for row in deliveries:
             if row.get("session_id") is None:
                 excluded["rows_without_session_id"] += 1
                 continue
@@ -1018,9 +1044,16 @@ def _grading_records(audits: list[Mapping[str, Any]], bringup: list[Mapping[str,
             records.append({"key": sid, "grading": dict(grading), "task_id": None, "trajectory_id": sid,
                             "instance_id": row.get("instance_id")})
         coverage = {"executions_audited": len(by_session), "with_grading_block": len(records),
-                    "without_grading_block": without, "audit_rows_without_grading_block": None}
+                    "without_grading_block": without, "legacy_writer_unknown": 0, "audit_rows_without_grading_block": None}
         return {"source": GRADING_SOURCE_LEGACY, "records": records, "coverage": coverage, "excluded": excluded}
     return {"source": None, "records": [], "coverage": None, "excluded": excluded}
+
+
+def _partial_coverage_reason(coverage: Mapping[str, Any]) -> str:
+    text = f"partial_grading_coverage: {coverage['with_grading_block']}/{coverage['executions_audited']} 个训练 execution 带评分块"
+    if coverage.get("legacy_writer_unknown"):
+        text += f"（其中 {coverage['legacy_writer_unknown']} 个来自 E5 之前的 writer、评分未知：混版本输入）"
+    return text
 
 
 def _classify_records(records: list[Mapping[str, Any]]) -> Counter:
@@ -1029,39 +1062,6 @@ def _classify_records(records: list[Mapping[str, Any]]) -> Counter:
     counts: Counter = Counter()
     for record in records:
         grading = record["grading"]
-        reward = _num(grading.get("reward"))
-        outcome = grading.get("outcome")
-        if reward is None:
-            counts["reward_unknown"] += 1  # infra 族 / failed_to_grade：评不了分，不是 0 分
-        elif outcome == "resolved" and reward == 1.0:
-            counts["resolved"] += 1
-        elif outcome == "unresolved" and reward == 0.0 and grading.get("failure_category") in TRUSTED_ZERO_FAILURE_CATEGORIES:
-            counts["trusted_zero"] += 1
-        else:
-            counts["inconsistent"] += 1  # 违反 binary_v1 的组合：不计入有效评分，单列
-    return counts
-
-
-def _classify_gradings(bringup: list[Mapping[str, Any]], eval_sessions: set) -> Counter:
-    """同 session 取最后一条（与 graded_attempts 同口径），按 binary_v1 契约分类；评测 session 单列不计。
-
-    没有 session_id 的行（bringup 生命周期事件与交付共用同一文件，`_append_event`）身份未知，单列计数、不进速率。"""
-
-    by_session: dict[Any, Mapping[str, Any]] = {}
-    counts: Counter = Counter()
-    for row in bringup:
-        if row.get("session_id") is None:
-            counts["rows_without_session_id"] += 1
-            continue
-        by_session[row.get("session_id")] = row
-    for sid, row in by_session.items():
-        if sid in eval_sessions:
-            counts["evaluation_sessions_excluded"] += 1
-            continue
-        grading = row.get("grading")
-        if not isinstance(grading, Mapping):
-            counts["delivered_without_grading_record"] += 1
-            continue
         reward = _num(grading.get("reward"))
         outcome = grading.get("outcome")
         if reward is None:
@@ -1124,15 +1124,14 @@ def _hourly_rates(events, events_by_kind, execution, bringup, eval_audits, manif
     out["gradings_not_effective"] = {
         "reward_unknown": counts.get("reward_unknown", 0), "inconsistent": counts.get("inconsistent", 0),
         "executions_without_grading_block": coverage["without_grading_block"],
+        "legacy_writer_unknown": coverage["legacy_writer_unknown"],
         "evaluation_attempts_excluded": graded["excluded"].get("evaluation_attempts_excluded", 0),
         "duplicate_execution_records_collapsed": graded["excluded"].get("duplicate_execution_records_collapsed", 0),
         "rows_without_session_id": graded["excluded"].get("rows_without_session_id", 0),
     }
     out["grading_coverage"] = coverage
-    if coverage["without_grading_block"]:
-        out["reasons"].append(
-            f"partial_grading_coverage: {coverage['with_grading_block']}/{coverage['executions_audited']} 个训练 execution 带评分块"
-            "——速率只覆盖这部分，不代表总体")
+    if coverage["without_grading_block"] or coverage["legacy_writer_unknown"]:
+        out["reasons"].append(_partial_coverage_reason(coverage) + "——速率只覆盖这部分，不代表总体")
     return out
 
 

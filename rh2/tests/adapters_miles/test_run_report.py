@@ -117,8 +117,10 @@ def test_real_bringup_events_carry_grading_and_audit_alone_means_unknown_not_ung
     rw = only_audits["facets"]["reward_and_distribution"]
     assert rw["graded_attempts"]["source"] == "execution_audit" and rw["graded_attempts"]["graded"] == 2
     assert rw["graded_attempts"]["executions_without_grading_record"] == 1 and rw["graded_attempts"]["delivery_records"] is None
-    assert any(r.startswith("no_bringup_events") for r in rw["reasons"])  # 交付记录 / eligibility 仍无法知道
-    full = build_run_report(events=[], audits=inputs["audits"], bringup=inputs["bringup"])
+    assert any(r.startswith("no_delivery_records") for r in rw["reasons"])  # 交付记录 / eligibility 仍无法知道
+    lifecycle = [{"ts": 1.0, "event": "shutdown_started", "inflight": 0, "_bundle": 0},
+                 {"ts": 2.0, "event": "shutdown_completed", "_bundle": 0}]
+    full = build_run_report(events=[], audits=inputs["audits"], bringup=inputs["bringup"] + lifecycle)
     graded = full["facets"]["reward_and_distribution"]["graded_attempts"]
     assert graded["source"] == "execution_audit"
     assert graded["delivery_records"] == 3 and graded["graded"] == 2 and graded["delivered_without_grading_record"] == 1
