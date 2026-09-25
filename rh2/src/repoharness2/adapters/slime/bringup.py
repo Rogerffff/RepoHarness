@@ -828,6 +828,22 @@ def _episode_deadline_block(audit: Any, proxy: Any) -> dict[str, Any] | None:
     return block
 
 
+def _grading_summary_block(finalized) -> dict[str, Any] | None:
+    """finalized.grading_report → 与旧 record_event 同形的评分摘要（outcome / failure_category / reward / timings + report_id）。"""
+
+    grading = getattr(finalized, "grading_report", None) if finalized is not None else None
+    if grading is None:
+        return None
+    timings = getattr(grading, "timings", None)
+    return {
+        "report_id": getattr(grading, "report_id", None),
+        "outcome": grading.outcome,
+        "failure_category": grading.failure_category,
+        "reward": grading.reward,
+        "timings": json.loads(timings.model_dump_json()) if timings is not None and hasattr(timings, "model_dump_json") else None,
+    }
+
+
 def write_execution_audit_record(proxy, audit, path, *, model_name: str | None = None) -> None:
     """execution 终态审计（轮次 13 P0-5 + 轮次 14 事务化）：
 
@@ -942,6 +958,10 @@ def write_execution_audit_record(proxy, audit, path, *, model_name: str | None =
         # I21：评测 attempt 的 typed 结果块（训练 attempt 为 None）。与交付叶上的 rh2_eval_result 载荷
         # 出自同一个纯函数、同一份 audit 事实；run 报告据此把评测 attempt 从训练统计里分出。
         "evaluation": derive_eval_attempt_result(audit, model_name=model_name),
+        # E5（Codex EF1）：评分摘要随每次 execution 的审计出口落盘——正式 miles 路径（Rh2MilesGenerateFn →
+        # rh2_custom_generate）不经旧 record_event，run 报告的评分总体与有效评分速率以本块为唯一来源；
+        # 与旧 bringup_events 的 grading 块同形。未 finalize / 没评分 = None（不是 0 分）。
+        "grading": _grading_summary_block(finalized),
         "model_call_attempts": [a.model_dump(mode="json") for a in attempts_snapshot],
     }
     with path.open("a", encoding="utf-8") as fh:

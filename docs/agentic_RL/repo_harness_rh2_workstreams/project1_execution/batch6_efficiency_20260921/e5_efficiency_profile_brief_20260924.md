@@ -72,3 +72,18 @@ README 警告的"未用 rollout logprob 时改用 detached training logprob 作 
 - **CPU 等价探针**（`runs/decision_package_20260924/e5_impl/e5_cpu_equivalence_probe.*`，`all_checks_pass=true`）：09-06 探针在当前 fork 复跑一致；训练 reward 列是组内归一化后的 ±0.935（不是原始 0/1）；两步 + 末级 / 非末级 PP 的真实控制流（AST 提取的 `train_actor` 等）下两档每步 loss / 梯度 / 参数逐位相同，事件序列恰差 `replay_consume{logprob_forward}` 与 `logprob_compare` 两项；诊断档额外 forward 输出全换 NaN 训练量不变；负对照能检出差别；launch dry-run 两份参数表恰差一个 token。替身边界：GPU 数值、Megatron forward-only 对 MoE router 状态、真实时长与显存、CP/TP>1。
 - **偏离与已知行为**：旋钮有缺省（见上）；效率档会让 launch 整体非零退出（judge NOT_APPLICABLE 非零，post-run 打印原因）——是否给 NOT_APPLICABLE 独立退出码留后续；E5 之前的旧证据目录重跑 judge 得 INCOMPLETE（缺 `forward_profile` 块），历史证据不回写；不做 argparse 缩写检测（依赖 Megatron 解析器 `allow_abbrev=False`，本机无 Megatron 源码，间接证据）。
 - **未做**：逐阶段显存 fork patch、bringup 心跳、作业级采样器、`server_timing` 汇总（按 Codex 收紧 4 分别按缺口落地）。GPU 核验清单 F1–F8 已并入 [batch5 GPU 核验清单 §6](../batch5_launch_eval_20260919/gpu_verification_checklist_20260920.md)。
+
+## 8. Codex 实施复核（2026-09-25）
+
+**配置、CPU 等价与 G1 三态主干通过；评分速率 EF1 / P2 待修，本机部分尚未全部收口。** [完整报告、反例与停止条件](review_followup_e5_20260925/README.md)。原作者 CPU 探针在独立输出目录复跑 `all_checks_pass=true`，真实 GPU / router 内部状态仍留 F1–F8。
+
+- 正式 miles 包装直接调用 `rh2_custom_generate`，绕过旧 `bringup.generate` 的评分摘要 writer。新报告把只有 shutdown 行的事件文件当成有评分观测，输出有效评分 0 / 小时。探针中两个 1 / 0 结果均未触发摘要 writer；关停前未知，关停后错误变零。
+- 在真实每 execution 审计出口补摘要，并按 attempt 身份和 train/eval 平面聚合；无评分观测保持未知、部分观测说明覆盖量，不按训练行或重评分重复计数。也可暂标未采集，但不能宣称已经提供该速率。沿实际 miles 包装验证成功、可信零分、infra、eval 与仅生命周期行即可，无需 GPU。
+- P12 是新增配方兼容预检，应如实记录配置拒绝变化；不是新增训练样本准入规则。效率档 G1 非零退出与未来 launcher 的衔接仍按已声明分期。
+
+## 8. Codex 聚焦复核 EF1 的修订（2026-09-25）：评分摘要走每次 execution 的审计出口
+
+- **问题**（[review_followup_e5 §1](review_followup_e5_20260925/README.md)）：正式 miles 路径（`Rh2MilesGenerateFn` → `rh2_custom_generate`）不经旧 `bringup.record_event`，带 `grading` 块的 `bringup_events` 行只由旧包装写；`_hourly_rates` 只判 `if bringup:`，两条 shutdown 生命周期行就让"有效评分"从未知变成 0 / 小时，且没有缺证据 reason。
+- **修法**：`write_execution_audit_record` 新增 `grading` 摘要块（`finalized.grading_report` 的 report_id / outcome / failure_category / reward / timings，与旧 record_event 同形；未 finalize = None）——这是每次 execution 都经过的审计出口。`run_report` 的评分总体（reward facet）、有效评分速率、评分分段耗时改为共用 `_grading_records`：唯一来源 = execution audit 的 grading 块（按 `physical_attempt_id` 去重取最后一条，重评分 / 多训练行不重复计数；评测 attempt 单列不计）；旧 bringup 块只在没有任何带 `grading` 键的 audit 行时作回退（E5 之前的证据）；两者都没有 → `effective_gradings=None` + `no_grading_records`，生命周期行不产生分母；部分 execution 无评分块 → `grading_coverage` 与 `partial_grading_coverage` reason，不把部分观察当总体。交付记录 / eligibility 分布仍只来自 bringup_events（没有就是 None）。
+- **验收**（`test_e5_run_report.py` +4，双 lane）：真实 `RolloutOrchestrator` + `write_execution_audit_record`（假 Docker / driver / 模型，评分替身给 resolved 与 infra 两种真实契约形态）→ `load_run_inputs` → 报告：resolved 1、infra 归 reward_unknown、来源 execution_audit、无 bringup 时交付记录为 None；只有 shutdown 两行 + 无 grading 键的旧 audit → 未知（速率、评分总体、分段耗时三处）；评测 / infra / 重复 execution 记录 / 无评分块的 aborted 各自单列，覆盖 3/4 有 reason；audit 与旧 bringup 块同时在场以 audit 为准。既有 `test_run_report` 的"只给 audit = 无法知道"口径同步改为"评分总体来自 audit，交付记录仍未知"。
+- **未做 / 提醒**：train / eval 平面按 audit 的 `evaluation` 块分；`startup_evidence.json` 的进程内档位块仍只由 launch 的 `run_manifest.json` 消费（未来正式 launcher 接同一证据）。Codex §4 的复杂度提醒（`save_debug_train_data` 等纯观测不足不宜一概扩成配置拒绝、少堆 YAML 关键词扫描）记为后续收敛项，本轮未改守卫。

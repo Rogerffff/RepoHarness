@@ -7,7 +7,7 @@
 | 项 | 内容 | 本文落点 |
 | --- | --- | --- |
 | 1A | 默认不提供被测项目自身的远端发行包；本地候选 `pip install -e .` 保留；已验证配方确需某个固定发行包时逐题单列允许；第三方依赖不按题目日期截断 | §3 索引网关的逐题封禁表 + 例外表 |
-| 2A | 评分保持"root 可信 setup / 官方测试注入在先"；随后候选安装段可用受控 PyPI；正式测试前撤掉出口；明确接受"私有测试已可读时仍可向供应服务发请求" | §4 grader 的接网—安装—撤网—测试单 shell 交接 |
+| 2A | 评分保持"root 可信 setup / 官方测试注入在先"；随后候选安装段可用受控 PyPI；正式测试前撤掉出口；明确接受"私有测试已可读时仍可向供应服务发请求" | §4 grader 的接网—安装 exec—撤网核对—测试 exec 交接 |
 
 不在本文范围（Codex §4 已列）：一般公网、GitHub、conda、apt、上传能力；原容器评分；216 题重跑；防泄漏的完整证明。
 
@@ -53,7 +53,7 @@ grader 容器  ──grading 内部网络──▶ run 包供应 relay（只监�
 1. 评分前：`create_attempt_network`（复用 rollout 的子网池与取消回收）→ 包供应 relay `connect --alias pkgidx`；grader 容器改以该网络启动（新的 lease `network_policy="supply_install_then_none"`；C1 决定了不能沿用 `none` 再接）。
 2. root 可信 setup / 保护控制面：照旧（root 步骤不取包）。
 3. 候选脚本安装段：可达 `http://pkgidx:3141/a/<token>/simple`；其余目标无路由。
-4. **撤出口**：宿主收到"安装段结束"信号 → `docker network disconnect` → `docker inspect` 核对 `Networks == {}` → 网关把 token 置 `withdrawn` → root 放行闸门（§4.2）。
+4. **撤出口**：安装 exec 结束 → `docker network disconnect` → `docker inspect` 核对 `Networks == {}` → 网关把 token 置 `withdrawn` → 核对成功后宿主才启动测试 exec（§4.2）。
 5. 正式测试：无网络；结束/取消/超时按现有清理，attempt 网络与 relay 连接走既有 `reclaim_network_after_cancel` 与 label 清扫。
 
 ### 4.2 阶段交接：宿主在断网核对后才启动测试段（两次 exec，状态由候选自己携带）
@@ -62,15 +62,15 @@ Codex §5.2 已证"机械拆两次 exec"会丢 `export`；R5 又证候选 shell 
 
 1. **安装 exec**（候选 UID，脚本前半段）：安装段照旧（`RH2_PHASE_START/END=install`、ERR trap、`RH2_INSTALL_RC`），段末由 root 写的脚本尾部（不是候选命令）把可携带状态落到候选自己的目录：`export -p > "$HOME/.rh2/env.sh"`、`declare -f > "$HOME/.rh2/funcs.sh"`、`pwd > "$HOME/.rh2/cwd"`，再打 `RH2_PHASE_HANDOFF=1`。exec 结束本身就是"安装段结束"的信号，不需要 0.5 s 轮询。
 2. **宿主**：记录安装 exec 的退出与输出 → `docker network disconnect` → `docker inspect` 核对 `Networks == {}` → 网关 token 置 withdrawn → **只有核对成功才启动测试 exec**。放行事实在宿主手里。
-3. **测试 exec**（候选 UID，脚本后半段）：先 `source` 三个携带文件（缺任一 = 安装段 shell 没走到尾部，按 §4.2.1 第一行处理），再执行既有官方 Start/End 标记、测试命令与 `RH2_TEST_RC`。
+3. **测试 exec**（候选 UID，脚本后半段）：**先保留来源 renderer 的可信前导**（`_V2_ENV_LINES` 的 `#!/bin/bash` + `set -xo pipefail` + 激活 + `cd /testbed` + safe.directory；R2E 用其来源的对应前导），再恢复携带状态——`source` env 与 funcs 文件、`cd "$(cat cwd)"`（cwd 用 `cd` 恢复，不 source）——然后执行既有官方 Start/End 标记、测试命令与 `RH2_TEST_RC`。携带文件缺任一 = 安装段 shell 没走到尾部，按 §4.2.1 第一行处理。**为什么前导必须保留**（Codex NS1 探针，真实 `getmoto__moto-6913` bundle → 当前 renderer → 两段 Bash → 真实 parser）：官方标记是冒号命令 `: '>>>>> Start Test Output'`，只有 xtrace 才进日志——只带 export / function / cwd 的第二段标记全缺、18 项解析成 0 项（`test_log_parse_failed`）；显式恢复 `set -xo pipefail` 后 18 项、manager 接受。不照搬测试夹具的 `set -u`（pandas 激活钩子已证不兼容）。
 
-保证范围（本机 Bash 探针 `rh2/experiments/batch6_network_20260924/env_carry/`）：exported 变量（含 MONAI 配方那类 `OMP_NUM_THREADS`）、PATH、函数、cwd 都能带到测试 exec；**不携带**未 `export` 的普通 shell 变量与 alias。代表配方若依赖未导出变量即为反例，届时把该配方列为例外或改配方；不做通用 shell 序列化。日志 = setup 输出 + 安装 exec 输出 + 测试 exec 输出顺序拼接，Start/End 标记与 parser 不变。预算：两段共用同一个 `test_timeout_seconds`，测试 exec 只拿剩余，不扩预算。
+保证范围（本机 Bash 探针 `rh2/experiments/batch6_network_20260924/env_carry/`）：exported 变量（含 MONAI 配方那类 `OMP_NUM_THREADS`）、PATH、函数、cwd 都能带到测试 exec；shell 选项由第二段自己的可信前导重新设置（不从携带文件恢复）；**不携带**未 `export` 的普通 shell 变量与 alias。代表配方若依赖未导出变量即为反例，届时把该配方列为例外或改配方；不做通用 shell 序列化。携带文件由候选 UID 写、候选 UID 读，只是候选自己的状态，不作为可信的"安装完成"证明；新 HOME 下的状态目录 `$HOME/.rh2/` 由脚本尾部先 `mkdir -p`。日志 = setup 输出 + 安装 exec 输出 + 测试 exec 输出顺序拼接，Start/End 标记与 parser 不变。预算：两段共用同一个 `test_timeout_seconds`，测试 exec 只拿剩余，不扩预算。
 
 #### 4.2.1 三个终点（同一评分 owner 收齐 exec、网络与监控，消费同一实际剩余期限）
 
 | 终点 | 处理 |
 | --- | --- |
-| 候选在安装段就退出（shell 没走到携带尾部，携带文件缺失） | 等价于今天单 shell 里"shell 已死、测试没跑"：不启动测试 exec，日志无 Start/End 标记，按既有 parser 规则不产生 reward；记事实 `install_shell_exited_early` 与安装 exec 退出码 |
+| 候选在安装段就退出（shell 没走到携带尾部，携带文件缺失） | 等价于今天单 shell 里"shell 已死、测试没跑"：不启动测试 exec，日志无 Start/End 标记，按既有 parser 规则不产生 reward；记事实 `install_shell_exited_early` 与安装 exec 退出码。要与"安装命令非零但 shell 继续（`RH2_INSTALL_RC≠0`，尾部照常写状态，测试照跑）"和"状态写入失败（尾部 `RH2_PHASE_HANDOFF` 缺失 / 写盘报错）"区分记录；归因沿用既有 P-A，携带文件与标记不重新定义 reward |
 | 撤网或核对失败 | 宿主直接记 typed infra `grader_supply_withdraw_failed`，不启动测试 exec，不产生 reward，不按离线评分交付；容器、网络、token 按既有清理 |
 | 外层取消 / 期限到点 | 同一 owner 终止当前 exec（安装或测试）、网络绑定与 token，收齐 exec 输出与 inspect 事实；未确认放行的作业不得按正常完成交付 |
 
@@ -89,7 +89,8 @@ Codex §5.2 已证"机械拆两次 exec"会丢 `export`；R5 又证候选 shell 
 - token 与网络绑定在取消、退出、评分结束时都释放，不把每次 attempt 的网关状态留到 run 末尾。
 - 归因沿用 P-A 的候选归因条件与资格基线："编译错误归候选"不扩成任何构建失败都给 0；网关自身故障也不能仅凭候选声称取包失败来证明因果；资格与新评分脚本摘要的对应列入 B 接线。
 - **观测身份（R4，P1）**：安装后的 `pip list` / 导入观测一律以**候选 UID** 执行（manager 已按 I1 把前后观测改成候选 UID 入口，直接复用）；root 只做可信静态读取、网络与宿主控制操作，绝不以 root 启动候选环境里的 Python / pip。观测只是诊断，不是不可伪造的安装证明；失败不产生新的 reward 判据。
-- 轮询：安装 exec 的结束就是信号，不需要每 0.5 s 一次 `docker exec`；若将来仍需轮询，先量其进程成本。
+- 信号：安装 exec 的结束就是"安装段结束"，不需要轮询容器内文件。
+- **分段验收（NS1）**：用真实 bundle 经当前 renderer 渲染两段脚本、本机 Bash 执行（测试命令替换为确定性 PASSED 文本）、真 `spec.parse_log` / `manager._parse_eval_log`——对照"原单 shell / 只携带状态 / 前导 + 携带"三形态，要求第三形态 Start/End 齐全且解析项数与单 shell 相同；另加 R2E（无安装段）一项正控。
 
 ## 5. 记录、失败分类与验证
 
@@ -102,9 +103,9 @@ Codex §5.2 已证"机械拆两次 exec"会丢 `export`；R5 又证候选 shell 
 
 | 归属 | 文件 | 改动 |
 | --- | --- | --- |
-| A | `sandbox_profile.py` | 包供应 relay 参数、grader 网络策略与启动前核对、`/rh2` 与闸门文件、撤网核对 |
-| A | `grading/manager.py`（B 当前有未提交改动，按 B 落地后顺序修改） | `_run_eval` 网络生命周期、信号轮询、闸门放行、`grader_supply_withdraw_failed`、facts |
-| A/B 单一写入者 | `prepared_task_face.py`（B 当前修改者） | 安装段后插入闸门行；评分面 `blocked_dists` / 例外表字段——由 B 在其在制品落地后按本节接入，A 审 |
+| A | `sandbox_profile.py` | 包供应 relay 参数、grader 网络策略与启动前核对、撤网核对 |
+| A | `grading/manager.py`（B 当前有未提交改动，按 B 落地后顺序修改） | `_run_eval` 两段 exec 生命周期（安装 exec → 撤网核对 → 测试 exec）、三个终点、`grader_supply_withdraw_failed`、facts |
+| A/B 单一写入者 | `prepared_task_face.py`（B 当前修改者） | 渲染拆成安装段（含状态携带尾部）与测试段（含来源前导 + 状态恢复）两份脚本；评分面 `blocked_dists` / 例外表字段——由 B 在其在制品落地后按本节接入，A 审 |
 | A | `pkg_index_gateway.py`（新） | token 登记、1A 封禁、日志、转发 |
 | A | `generate.py` / `bringup.py` | rollout 环境注入 `PIP_INDEX_URL` 等；`InternalService` 条目 |
 | B | 逐题 `blocked_dists` 与例外表、派生镜像 pip/uv 可用性、代表题 | 供应定义的数据侧 |
@@ -118,3 +119,11 @@ Codex §5.2 已证"机械拆两次 exec"会丢 `export`；R5 又证候选 shell 
 - R4 / P1：安装后 `pip list` 必须复用现有候选 UID 的观测入口；root 不能执行候选可写解释器、激活脚本或包。现有 S1-m / I1 已修过此边界，本文 root 观测写法应撤回。
 - R5 / P2：root 放行文件不能使候选 shell 的检查不可绕过；本机 Bash 已复现函数覆盖 `[` 后提前进入下一段。`[[ ... ]]` 只修这个例子。保留安装所需 shell 状态的同时，应明确宿主如何在断网确认后交付 / 启动正式测试段，以及 exec 和监控在提前退出、撤网失败、取消 / 期限时由谁终止并收齐。不能依赖 shell 退出 97 作为唯一收口。
 - 实施清单补 `contracts/sandbox.py` 的策略枚举与 validator、索引与文件入口同政策核对、attempt 结束时 token / 网络绑定释放；沿用 P-A 既有候选归因条件。这些都是已批范围内的具体接线，无需另立政策决策。
+
+## 8. Codex 修订复核（2026-09-25）
+
+**R4 的候选 UID 观测、R5 的宿主断网确认后启动测试、三个终点与共享期限方向接受；补 NS1 后可实施。** [完整报告 §2](review_followup_e5_20260925/README.md)。1A+2A 与继续推进已获批，不需要再请求“允许实现 grader 联网”；正式作业启用仍按 §6 单独安排，本轮未启用。
+
+- **NS1 / P2 设计补充**：第二个 exec 应保留来源 renderer 的可信 shell 前导。`export -p` / `declare -f` / cwd 不携带 `set -xo pipefail`；真实 SWE 的 Start/End 冒号命令依赖 xtrace 出现在日志中。本机真实 renderer / parser 对照中，缺前导时 18 项变为 0 项并报解析失败，恢复前导后正常。把这个对照加入验收，不照搬夹具的 `set -u`。
+- cwd 用 `cd` 恢复，状态目录先建立；状态恢复按候选 UID 执行，不作为可信完成证明。安装命令非零但原 shell 继续、提前退出、状态写入失败分别沿既有 P-A 归因；取消、撤网失败、期限到点不得启动第二 exec。
+- 同步清掉正文残留的“单 shell / root 放行文件 / 轮询”旧描述。实现验收沿现有源脚本与 parser，含无安装段正控；不需要通用 shell 状态平台。

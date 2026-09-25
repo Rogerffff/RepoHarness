@@ -193,8 +193,10 @@ def test_hourly_rates_count_qualified_groups_and_effective_gradings_including_tr
     eff = rates["effective_gradings"]
     assert (eff["resolved"]["count"], eff["trusted_zero"]["count"], eff["total"]["count"]) == (3, 2, 5)
     assert eff["total"]["per_hour"] == 2.5 and eff["trusted_zero"]["per_gpu_hour"] == 0.125
-    assert rates["gradings_not_effective"] == {"reward_unknown": 1, "inconsistent": 1, "delivered_without_grading_record": 1,
-                                               "evaluation_sessions_excluded": 1, "rows_without_session_id": 1}
+    assert rates["gradings_not_effective"] == {"reward_unknown": 1, "inconsistent": 1, "executions_without_grading_block": 1,
+                                               "evaluation_attempts_excluded": 1, "duplicate_execution_records_collapsed": 0,
+                                               "rows_without_session_id": 1}
+    assert rates["effective_gradings"]["source"].startswith("旧 bringup_events")  # E5 之前的证据形态：回退路径
 
 
 def test_rates_are_unavailable_not_zero_without_window_counts_or_topology():
@@ -292,3 +294,102 @@ def test_negative_intervals_are_counted_not_rewritten():
             _ev("train_rollout", ts=99.0, rollout_id=0, trainer_current_version=1)]  # 跨进程时钟偏差的形态
     tl = build_run_report(events=rows, audits=[])["facets"]["optimizer_and_publish"]["learner_timeline"]
     assert tl["rollouts"][0]["intervals_seconds"]["drain_end_to_train_start"] == -1.0 and tl["negative_intervals"] == 1
+
+
+# ---- Codex EF1：评分摘要走每次 execution 的审计出口；缺记录保持未知 ---------------------------------------------------------
+
+
+def _audit_row(key: str, outcome, category, reward, *, evaluation=None, ts: float = 10.0, task="task-A") -> dict:
+    """与 write_execution_audit_record 同形的最小行（只含报告读的键）。outcome=None = 审计了但没有评分块（例如 aborted）。"""
+    grading = None if outcome is None else {"report_id": f"rpt_{key}", "outcome": outcome, "failure_category": category,
+                                            "reward": reward, "timings": None}
+    return {"schema_id": "rh2.fa.execution_audit.v1", "trajectory_id": f"traj-{key}", "physical_attempt_id": key, "task_id": task,
+            "wall_end_epoch": ts, "evaluation": evaluation, "grading": grading, "_bundle": 0}
+
+
+def _window_events() -> list[dict]:
+    return [_ev("drain_complete", ts=1000.0, rollout_id=0, elapsed_seconds=5.0, target_groups=1),
+            _ev("weight_publish", ts=1000.0 + 3600.0, rollout_id=1)]  # 窗口 1 小时
+
+
+async def test_effective_gradings_travel_through_the_execution_audit_exit(tmp_path):
+    """真实 RolloutOrchestrator + write_execution_audit_record（假 Docker / driver / 模型；评分替身给 resolved 与 infra 两种真实
+    契约形态）→ load_run_inputs → build_run_report：不经过旧 bringup.record_event（正式 miles 路径就是这样）。"""
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "adapters"))  # 与同目录其它测试同法取 dense 链夹具
+    from test_slime_generate import SAMPLING_PARAMS, _Args, build_dense_chain
+
+    from repoharness2.adapters.miles.run_report import build_run_report, load_run_inputs
+    from repoharness2.adapters.slime.bringup import write_execution_audit_record
+
+    audit_path = tmp_path / "fa_execution_audit.jsonl"
+    for infra in (False, True):
+        chain = build_dense_chain(infra_grading=infra, audit_sink=lambda audit: write_execution_audit_record(None, audit, audit_path))
+        await chain.orchestrator.generate(_Args(), chain.base_sample, dict(SAMPLING_PARAMS))
+    inputs = load_run_inputs([tmp_path])
+    assert len(inputs["audits"]) == 2 and inputs["bringup"] == []  # 没有 bringup_events.jsonl
+    gradings = [a["grading"] for a in inputs["audits"]]
+    assert {g["outcome"] for g in gradings} == {"resolved", "failed_to_grade"} and all("report_id" in g for g in gradings)
+    report = build_run_report(events=_window_events(), audits=inputs["audits"], bringup=[], manifests=[_manifest("diagnostic")])
+    eff = report["facets"]["throughput_and_resources"]["hourly_rates"]["effective_gradings"]
+    assert (eff["resolved"]["count"], eff["trusted_zero"]["count"], eff["total"]["count"]) == (1, 0, 1)
+    assert eff["total"]["per_hour"] == 1.0 and eff["source"].startswith("execution audit")
+    assert report["facets"]["throughput_and_resources"]["hourly_rates"]["gradings_not_effective"]["reward_unknown"] == 1  # infra ≠ 0 分
+    graded = report["facets"]["reward_and_distribution"]["graded_attempts"]
+    assert graded["source"] == "execution_audit" and graded["graded"] == 2 and graded["outcomes"] == {"failed_to_grade": 1, "resolved": 1}
+    assert graded["delivery_records"] is None  # 交付记录来自 bringup_events，此处确实没有——不猜
+
+
+def test_lifecycle_rows_alone_keep_effective_gradings_unknown_not_zero():
+    """Codex EF1 反例：只有 shutdown 两行（无 session_id、无评分块）、没有任何带 grading 块的 audit → 未知，不是 0 / 小时。"""
+    from repoharness2.adapters.miles.run_report import build_run_report
+
+    lifecycle = [{"ts": 1.0, "event": "shutdown_started", "_bundle": 0}, {"ts": 2.0, "event": "shutdown_completed", "_bundle": 0}]
+    old_audit = {"trajectory_id": "t0", "task_id": "task-A", "_bundle": 0}  # E5 之前的审计行：没有 grading 键
+    report = build_run_report(events=_window_events(), audits=[old_audit], bringup=lifecycle, manifests=[_manifest("diagnostic")])
+    rates = report["facets"]["throughput_and_resources"]["hourly_rates"]
+    assert rates["effective_gradings"] is None and rates["gradings_not_effective"] is None and rates["grading_coverage"] is None
+    assert any(r.startswith("no_grading_records") for r in rates["reasons"])
+    reward = report["facets"]["reward_and_distribution"]
+    assert reward["graded_attempts"] is None and any(r.startswith("no_grading_records") for r in reward["reasons"])
+    assert report["facets"]["throughput_and_resources"]["grading_timings"] is None
+
+
+def test_eval_infra_and_duplicate_execution_records_are_not_counted_as_effective():
+    from repoharness2.adapters.miles.run_report import build_run_report
+
+    audits = [
+        _audit_row("a1", "resolved", None, 1.0),
+        _audit_row("a2", "unresolved", "tests_failed", 0.0),                      # 可信 0 分
+        _audit_row("a3", "failed_to_grade", "infra_failure", None),               # infra：reward 未知
+        _audit_row("a2", "unresolved", "tests_failed", 0.0, ts=20.0),             # 同一 execution 的重复记录（重评分）：只计一次
+        _audit_row("e1", "resolved", None, 1.0, evaluation={"eval": {"eval_point_id": "p0"}}),  # 评测 attempt：单列不计
+        _audit_row("a4", None, None, None),                                       # 审计了但没有评分块（aborted）
+    ]
+    report = build_run_report(events=_window_events(), audits=audits, bringup=[], manifests=[_manifest("diagnostic")])
+    rates = report["facets"]["throughput_and_resources"]["hourly_rates"]
+    eff = rates["effective_gradings"]
+    assert (eff["resolved"]["count"], eff["trusted_zero"]["count"], eff["total"]["count"]) == (1, 1, 2)
+    assert rates["gradings_not_effective"] == {"reward_unknown": 1, "inconsistent": 0, "executions_without_grading_block": 1,
+                                               "evaluation_attempts_excluded": 1, "duplicate_execution_records_collapsed": 1,
+                                               "rows_without_session_id": 0}
+    assert rates["grading_coverage"] == {"executions_audited": 4, "with_grading_block": 3, "without_grading_block": 1,
+                                         "audit_rows_without_grading_block": 1}
+    assert any(r.startswith("partial_grading_coverage: 3/4") for r in rates["reasons"])
+    graded = report["facets"]["reward_and_distribution"]["graded_attempts"]
+    assert graded["graded"] == 3 and graded["by_task"]["task-A"]["graded"] == 3 and graded["reward"]["unknown"] == 1
+
+
+def test_audit_grading_blocks_take_precedence_over_legacy_bringup_rows():
+    """两种来源同时在场（过渡期）：以 execution audit 为准，不把旧 bringup 块再算一遍。"""
+    from repoharness2.adapters.miles.run_report import build_run_report
+
+    audits = [_audit_row("a1", "resolved", None, 1.0)]
+    legacy = [{"ts": 1.0, "session_id": "traj-a1", "grading": {"outcome": "resolved", "failure_category": None, "reward": 1.0}, "_bundle": 0},
+              {"ts": 1.0, "session_id": "traj-zz", "grading": {"outcome": "resolved", "failure_category": None, "reward": 1.0}, "_bundle": 0}]
+    report = build_run_report(events=_window_events(), audits=audits, bringup=legacy, manifests=[_manifest("diagnostic")])
+    eff = report["facets"]["throughput_and_resources"]["hourly_rates"]["effective_gradings"]
+    assert eff["total"]["count"] == 1 and eff["source"].startswith("execution audit")
+    graded = report["facets"]["reward_and_distribution"]["graded_attempts"]
+    assert graded["source"] == "execution_audit" and graded["graded"] == 1 and graded["delivery_records"] == 2

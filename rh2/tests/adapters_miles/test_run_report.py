@@ -104,7 +104,8 @@ def test_real_audit_writer_lifecycle_segments_are_seconds_and_queue_depth_is_not
 
 
 def test_real_bringup_events_carry_grading_and_audit_alone_means_unknown_not_ungraded(tmp_path):
-    """R2：评分在 bringup_events.jsonl，不在 audit；只给 audit 时报"无法知道"，给了 bringup 才有已评分总体。"""
+    """R2（原口径）：评分只在 bringup_events.jsonl。E5 / Codex EF1 起真实 audit writer 也带 grading 块（正式 miles 路径只经审计出口），
+    评分总体以 execution audit 为唯一来源：只给 audit 也有已评分总体，交付记录 / eligibility 仍只来自 bringup（没有就是 None）。"""
 
     from repoharness2.adapters.miles.run_report import build_run_report, load_run_inputs
 
@@ -114,9 +115,12 @@ def test_real_bringup_events_carry_grading_and_audit_alone_means_unknown_not_ung
     inputs = load_run_inputs([tmp_path / "run"])
     only_audits = build_run_report(events=[], audits=inputs["audits"], bringup=[])
     rw = only_audits["facets"]["reward_and_distribution"]
-    assert rw["graded_attempts"] is None and any(r.startswith("no_bringup_events") for r in rw["reasons"])
+    assert rw["graded_attempts"]["source"] == "execution_audit" and rw["graded_attempts"]["graded"] == 2
+    assert rw["graded_attempts"]["executions_without_grading_record"] == 1 and rw["graded_attempts"]["delivery_records"] is None
+    assert any(r.startswith("no_bringup_events") for r in rw["reasons"])  # 交付记录 / eligibility 仍无法知道
     full = build_run_report(events=[], audits=inputs["audits"], bringup=inputs["bringup"])
     graded = full["facets"]["reward_and_distribution"]["graded_attempts"]
+    assert graded["source"] == "execution_audit"
     assert graded["delivery_records"] == 3 and graded["graded"] == 2 and graded["delivered_without_grading_record"] == 1
     assert graded["outcomes"] == {"resolved": 1, "unresolved": 1} and graded["reward"]["count"] == 2
     assert graded["by_task"]["task-B"]["reward_mean"] == 0.0 and graded["by_task"]["task-A"]["reward_mean"] == 1.0
