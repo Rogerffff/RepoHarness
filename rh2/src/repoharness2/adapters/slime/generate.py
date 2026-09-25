@@ -2416,12 +2416,24 @@ class _MaterializedSandbox:
     network: AttemptNetwork | None = None  # W3b：attempt 私有 egress 网络（legacy 路径为 None）
 
 
+# 第六组 E2b（Codex review_next_slices §6：恢复"root 不执行候选可写程序"的既有边界，是 bug 修复不是新政策）：rollout 容器里
+# 这条通道以镜像默认用户（root）执行，`docker exec` 继承镜像 ENV——R2E 派生镜像的 PATH 以 agent 可写的
+# `/testbed/.venv/bin` 开头，运行后 census、内容抓取、停止合同的 `pkill` / `ps`、静止指纹的 `git` 都可能执行候选放进去的
+# 同名程序（假 `pkill` + 假 `ps` 能让停止合同误判已停）。这里用 `env -i` 清空继承的环境、只给可信工具目录，bash 不读启动
+# 文件（`BASH_ENV` 也随 `-i` 清掉）。本机 R2E 三张派生镜像与验证机 SWE-Gym 三张镜像实测：所需工具全在 /usr/bin，
+# 且 root 的 `git rev-parse` / `git status` 照常（safe.directory 在 /etc/gitconfig）。agent 自己的激活不经过这条通道。
+TRUSTED_ROOT_EXEC_PREFIX: tuple[str, ...] = (
+    "/usr/bin/env", "-i", "PATH=/usr/sbin:/usr/bin:/sbin:/bin", "HOME=/root",
+    "/bin/bash", "--noprofile", "--norc", "-c",
+)
+
+
 @dataclass(frozen=True)
 class RolloutContainerWorkspace:
     """rollout 容器形态的 WorkspaceRunner（S1-4 manager 期望的同签名执行通道）。
 
-    与 grading.manager.HostWorkspace 对应：`docker exec <容器> bash -c "cd /testbed && ..."`，
-    评分的 patch 导出（EXPORT_PATCH_SCRIPT）直接复用本通道。
+    与 grading.manager.HostWorkspace 对应：`docker exec <容器> <可信环境前缀> "cd /testbed && ..."`，评分的 patch 导出
+    （EXPORT_PATCH_SCRIPT）、两次 census、内容抓取、停止合同与静止指纹都走本通道（E2b：不继承镜像 PATH，见上）。
     """
 
     docker: DockerRunner
@@ -2430,7 +2442,7 @@ class RolloutContainerWorkspace:
 
     async def run_bash(self, script: str) -> ExecResult:
         return await self.docker(
-            "exec", self.container_name, "bash", "-c", f"cd {self.testbed_path} && {script}"
+            "exec", self.container_name, *TRUSTED_ROOT_EXEC_PREFIX, f"cd {self.testbed_path} && {script}"
         )
 
 
