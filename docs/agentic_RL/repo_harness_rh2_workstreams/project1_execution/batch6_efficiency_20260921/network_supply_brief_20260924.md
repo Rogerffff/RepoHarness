@@ -127,3 +127,55 @@ Codex §5.2 已证"机械拆两次 exec"会丢 `export`；R5 又证候选 shell 
 - **NS1 / P2 设计补充**：第二个 exec 应保留来源 renderer 的可信 shell 前导。`export -p` / `declare -f` / cwd 不携带 `set -xo pipefail`；真实 SWE 的 Start/End 冒号命令依赖 xtrace 出现在日志中。本机真实 renderer / parser 对照中，缺前导时 18 项变为 0 项并报解析失败，恢复前导后正常。把这个对照加入验收，不照搬夹具的 `set -u`。
 - cwd 用 `cd` 恢复，状态目录先建立；状态恢复按候选 UID 执行，不作为可信完成证明。安装命令非零但原 shell 继续、提前退出、状态写入失败分别沿既有 P-A 归因；取消、撤网失败、期限到点不得启动第二 exec。
 - 同步清掉正文残留的“单 shell / root 放行文件 / 轮询”旧描述。实现验收沿现有源脚本与 parser，含无安装段正控；不需要通用 shell 状态平台。
+
+## 9. Codex NS1 修订复核（2026-09-25）
+
+**NS1 设计修订通过，可按已批 1A+2A 实施，无需再次请求实现授权。** [复核记录](review_ef1_ns1_20260925/README.md)。§4.2 已保留来源前导、正确恢复 cwd、明确状态目录和三种安装结束形态；§4.5 已列真实 renderer / parser 的三形态对照及 R2E 正控。宿主控制测试启动、候选 UID、共享预算的边界未变。
+
+本结论是设计验收，不是联网实现或运行验收；实际分段、撤网、失败清理、缓存冷 / 热与 R2E 正控仍在实现后逐项留证。正式作业启用按运行方案安排，当前默认配置未变。
+
+## 10. 实施记录一：网关 + 包供应 relay（§6 顺序第 1 步；2026-09-25，Claude）
+
+**状态：已实施、本机验证。** grader 两段 exec 生命周期（§4.2）要改 `grading/manager.py` 与 `prepared_task_face.py`，两者仍是 B 的未提交在制品，按 §6 等 B 落地后再做；默认配置全部未变（grader 仍 `--network none`，rollout relay 监听表不变，bringup 不起网关）。
+
+### 10.1 网关（`rh2/src/repoharness2/adapters/slime/pkg_index_gateway.py`，新）
+
+- 控制面：`SupplyGrant.build(attempt_id, task_id, plane∈{rollout,grading}, phase, blocked_dists, allowed_releases)` → `issue(grant)` 返回 token；`withdraw(token)`（之后 403，并中断该 token 的在途下载）；`release(token)`（释放签发表，之后 404，返回该 token 的统计摘要供写进 attempt / 评分事实）；`summary()`（上游、文件来源、累计计数，不含 token）；`start(host, port)` / `stop()`。
+- 路由只有 `/a/<token>/simple/<dist>/`（带不带尾斜杠都认）与 `/a/<token>/files/<fid>/<filename>[.metadata]`，外加无状态的 `/healthz`；`/a/<token>/simple/` 不给全量项目清单（404）。只接受 GET / HEAD，其它方法 405；候选的 query 与请求头不转发（上游 URL 由网关自己拼）。
+- 1A：dist 按 PEP 503 归一后命中封禁表 → 404 `blocked_by_policy`，不向上游发请求；例外表只放行列出的版本（页面里其余版本不签发），例外只能针对封禁表里的 dist（否则配置错误）。
+- **实施中的取舍（T1）**：
+  1. **文件只走本 token 签发的 fid**（比按路径判 dist 更强）：fid 只出现在网关生成的简单页里、不跨 token、同一上游文件在同一 token 内复用；已知上游文件 URL、猜 fid、`..`、百分号编码、大小写都拿不到封禁项目的文件。
+  2. **页面重新生成**为最小 PEP 503 HTML：只保留 href（改写为网关路径）、hash 片段、`data-requires-python`、`data-yanked`、PEP 658 元数据标记；外源链接、项目名与所请求 dist 不符的文件、pip 不用的格式（egg / exe）一律不签发，丢弃原因分类计数进日志。
+  3. 只向上游要 **HTML**（不做 PEP 691 JSON）：真实 pip 26.0.1 与 uv 0.11.26 都接受。
+  4. 文件请求要 `Accept-Encoding: identity`，带 `Content-Encoding` 时不转发长度——字节原样过网关，hash 由客户端按片段核对。
+  5. 撤销时在途下载直接断开连接（不发正常结尾），客户端报错而不会拿到"完整"的半截文件。
+- 日志：逐请求一行（attempt / task / 平面 / 阶段 / `token_ref` / dist / 文件名 / 判定 / 上游状态 / 字节 / 耗时 / 页面丢弃计数），**不写 token**；未路由的 404 / 405 由中间件补记，路径里的 token 段脱敏。上游故障分型：`upstream_not_found`（404）/ `upstream_error` / `upstream_not_html` / `upstream_unreachable`（502）/ `upstream_timeout`（504）/ `upstream_redirect_foreign`。
+
+### 10.2 包供应 relay（`sandbox_profile.py`）
+
+- relay 起停逻辑抽成共用的 `_start_relay_container`（起容器 → 在容器内探测监听端口 → 核对实际镜像 = 钉死的 digest → 任一步失败自清理，清理失败留 `leftover_containers`）。egress relay 的容器参数与 reason code 逐字不变（测试对照旧字面量）。
+- 新增 `supply_relay_run_args` / `start_supply_relay`：同镜像、同转发脚本、同加固，监听表**只有** `3141 → 网关` 一项；别名 `pkgidx`、label `rh2.supply.relay=1`、失败码 `supply_relay_*`；停用 `stop_egress_relay`。relay 映射格式是 `port:host:port`，IPv6 字面量主机不支持，直接拒绝。
+- 新增撤出口 `withdraw_container_network(docker, container, network)` → `NetworkWithdrawal`：`network disconnect` 后用 `inspect` 核对 `NetworkSettings.Networks == {}`，**只有核对为空才 ok**（断开报错但核对为空也算 ok，原文留痕）；核对不了或仍有网络一律不 ok，由调用方记 `grader_supply_withdraw_failed`、不启动测试 exec。不重试、不重连。manager 的两段 exec 生命周期接入时直接用它。
+
+### 10.3 验证（本机 macOS + Docker Desktop；组件级，不是 grader 联网验收）
+
+- `tests/adapters/test_pkg_index_gateway.py`（11 例，假上游 + 真实 HTTP）：页面重新生成与丢弃分类、fid 签发与不跨 token、1A 六种拼写全 404 且上游零请求、例外只放行列出版本、405 / query / 请求头不到上游、撤销 403 且在途下载报错、释放 404、上游故障分型、日志不含 token；**真实 pip** 经网关下到 wheel（hash 核对）、封禁项目 "No matching distribution"。
+- `tests/adapters/test_supply_relay.py`（16 例）：egress 参数逐字不变、供应 relay 只有网关一项且加固相同、主机 / 端口校验、启动与四种失败；撤出口七种 docker 结果（只有核对为空才 ok、先前已断开也 ok、残留网络 / `none` / 核对失败 / 核对不是对象 / 超时都不 ok，且只发一次断开一次核对）；**真容器撤网**：运行中的容器先能取到网关页面，撤出口后核对为空、同一请求失败，再撤一次仍 ok；**真容器供应**：接在 attempt internal 网络上的容器经 `pkgidx:3141` → 供应 relay → 宿主网关 → 假上游，pip 下载成功、封禁项目被拒、这个 relay 上没有模型代理端口（连接被拒）、直连 1.1.1.1 不可达、run label 零残留。
+- 真实上游冒烟（`rh2/experiments/batch6_network_20260924/gateway_real_upstream_smoke.py`，证据 `runs/network_supply_20260925/gateway_smoke/smoke_result.json`）：
+
+| 步骤 | 结果 |
+| --- | --- |
+| devpi-server 6.20.3 冷缓存下 wheel（six 1.16.0） | 成功，2.49 s |
+| 同包热缓存、新 token | 成功，0.21 s |
+| sdist + pip 构建依赖（同样经网关） | 成功 |
+| 封禁项目（requests） | 拒绝："No matching distribution" |
+| uv 0.11.26 经网关解析 | 成功 |
+| 直连 PyPI 解析 rich 13.7.1 及依赖（`install --dry-run`） | 成功；pip 经网关取了 4 份 PEP 658 元数据 |
+| PyPI 上的封禁项目（moto） | 拒绝 |
+
+  网关日志不含 token。本机 localhost 的耗时只说明缓存生效，不外推目标机。
+- **观察**：pip 自己的输出（`Looking in indexes` / `Downloading`）会打印带 token 的 URL，所以 token 会出现在候选的安装日志与 rollout 轨迹里。token 只对本 attempt 有效、释放后 404，持久化的日志里不留活的权限；若以后要让 token 完全不进日志 / 训练轨迹，可改为 URL userinfo 口令（pip 输出时会打码）+ 网关认 Basic 认证、文件链接不带 token——本轮不改，记为可选项。
+
+### 10.4 未做（按 §6 顺序）
+
+grader 两段 exec 生命周期、三个终点与 `grader_supply_withdraw_failed`（等 B 落地 `manager.py` / `prepared_task_face.py`）；`contracts/sandbox.py` 的 `NetworkPolicy` 迁移（与 manager 同批）；rollout 注入（`PIP_INDEX_URL` / uv 索引变量 + egress relay 的 `InternalService`、attempt 结束释放 token）；bringup 起停网关与供应 relay、run evidence 字段；逐题 `blocked_dists` 与例外表（B 的数据）；目标机 devpi 部署与代表题冷 / 热安装。

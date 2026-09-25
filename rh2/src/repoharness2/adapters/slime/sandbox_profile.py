@@ -836,6 +836,64 @@ async def connect_relay_to_network(
         raise SandboxNetworkError("egress_relay_connect_failed", f"{network.name}: {err}")
 
 
+@dataclass(frozen=True)
+class NetworkWithdrawal:
+    """撤出口的核对结果（`withdraw_container_network`）。`networks_after` = inspect 核对到的剩余网络名（None = 核对不了）。"""
+
+    ok: bool
+    networks_after: tuple[str, ...] | None
+    disconnect_error: str | None
+    inspect_error: str | None
+    seconds: float
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "ok": self.ok,
+            "networks_after": list(self.networks_after) if self.networks_after is not None else None,
+            "disconnect_error": self.disconnect_error,
+            "inspect_error": self.inspect_error,
+            "seconds": self.seconds,
+        }
+
+
+async def withdraw_container_network(
+    docker: DockerRunner, *, container: str, network: str, timeout: float = 30.0,
+) -> NetworkWithdrawal:
+    """第六组 2A 撤出口（Brief network_supply_brief_20260924 §4.1 第 4 步 / §4.2 第 2 步）：`docker network disconnect` 之后
+    用 `docker inspect` 核对容器**已没有任何网络**（`NetworkSettings.Networks == {}`，本机探针 A1–A5：此后名字解析与按 IP
+    连接都失败，断网前建立的连接也收发不了，D0–D4）。
+
+    只有核对为空才 ok——断开命令报错但核对已为空（例如先前已断开）也算 ok，报错原文留在 `disconnect_error`；核对不了或
+    仍有网络一律不 ok，调用方记 typed infra（`grader_supply_withdraw_failed`），不启动测试 exec。不重试、不重连（撤网只能
+    单向，探针 B1–B2 证明断开后还能再接，所以放行事实必须由宿主这一步给出）。"""
+
+    started = time.monotonic()
+    res = await _call(docker, "network", "disconnect", network, container, timeout=timeout)
+    disconnect_error = None if res.exit_code == 0 else ((res.stderr or res.stdout).strip()[-300:] or f"exit {res.exit_code}")
+    ins = await _call(docker, "inspect", "-f", "{{json .NetworkSettings.Networks}}", container, timeout=timeout)
+    if ins.exit_code != 0:
+        return NetworkWithdrawal(
+            ok=False, networks_after=None, disconnect_error=disconnect_error,
+            inspect_error=(ins.stderr or ins.stdout).strip()[-300:] or f"exit {ins.exit_code}",
+            seconds=round(time.monotonic() - started, 3),
+        )
+    try:
+        parsed = json.loads(ins.stdout.strip() or "null")
+    except json.JSONDecodeError:
+        parsed = "unparseable"
+    if not isinstance(parsed, dict):
+        return NetworkWithdrawal(
+            ok=False, networks_after=None, disconnect_error=disconnect_error,
+            inspect_error=f"NetworkSettings.Networks 不是对象：{ins.stdout.strip()[:200]!r}",
+            seconds=round(time.monotonic() - started, 3),
+        )
+    names = tuple(sorted(str(k) for k in parsed))
+    return NetworkWithdrawal(
+        ok=names == (), networks_after=names, disconnect_error=disconnect_error, inspect_error=None,
+        seconds=round(time.monotonic() - started, 3),
+    )
+
+
 async def teardown_attempt_network(
     docker: DockerRunner, *, network_name: str, relay: EgressRelayHandle | None, pool: EgressSubnetPool | None = None,
     subnet: str | None = None, timeout: float = 60.0,
@@ -898,17 +956,54 @@ asyncio.run(main())
 '''
 
 
-def relay_run_args(profile: RolloutSandboxProfile, *, name: str, labels: Sequence[str] = ()) -> list[str]:
-    """relay 容器参数：默认 bridge（能到宿主侧 adapter）、非 root、无能力、只读根、限额。"""
+def _relay_container_args(*, image: str, relay_map: str, role_label: str, name: str, labels: Sequence[str]) -> list[str]:
+    """relay 容器参数（egress / 包供应两种 relay 共用）：默认 bridge（能到宿主侧服务）、非 root、无能力、只读根、限额。"""
 
-    relay_map = ",".join(f"{lp}:{host}:{up}" for lp, host, up in profile.relay_listen_map())
     return [
         "run", "--detach", "--network", "bridge", "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
         "--read-only", "--user", "65534:65534", "--pids-limit", "64", "--memory", str(256 * _MIB),
         "--memory-swap", str(256 * _MIB), "--tmpfs", "/tmp:size=16777216,mode=1777",
-        "--env", f"RH2_RELAY_MAP={relay_map}", "--label", "rh2.egress.relay=1", *labels,
-        "--name", name, profile.relay_image, "python3", "-c", _RELAY_SCRIPT,
+        "--env", f"RH2_RELAY_MAP={relay_map}", "--label", role_label, *labels,
+        "--name", name, image, "python3", "-c", _RELAY_SCRIPT,
     ]
+
+
+def relay_run_args(profile: RolloutSandboxProfile, *, name: str, labels: Sequence[str] = ()) -> list[str]:
+    """rollout egress relay 的容器参数：监听表 = 模型代理 + internal_services。"""
+
+    relay_map = ",".join(f"{lp}:{host}:{up}" for lp, host, up in profile.relay_listen_map())
+    return _relay_container_args(
+        image=profile.relay_image, relay_map=relay_map, role_label="rh2.egress.relay=1", name=name, labels=labels,
+    )
+
+
+# 第六组 受控依赖供应（1A + 2A，Brief network_supply_brief_20260924 §2 / §4.1）：grader 安装段的包供应 relay。
+# 与 egress relay 同镜像、同转发脚本、同加固，但监听表**只有**宿主包索引网关一项——grader 容器接到它所在的网络时，
+# 摸不到模型代理或其它内部服务（Codex 方向复核 §5.1：同一 relay 会把整份监听表暴露给所有接入的网络）。
+SUPPLY_RELAY_ALIAS = "pkgidx"
+SUPPLY_RELAY_LISTEN_PORT = 3141
+
+
+def _check_supply_target(gateway_host: str, gateway_port: int, listen_port: int) -> None:
+    # RH2_RELAY_MAP 的格式是 `listen:host:port`（逗号分隔多项）：主机名里不能有 ':' / ','（IPv6 字面量不支持）
+    if not isinstance(gateway_host, str) or not gateway_host or any(c in gateway_host for c in ":, \t\n"):
+        raise SandboxProfileError("supply_relay_gateway_host_invalid", f"gateway_host={gateway_host!r}")
+    for label, port in (("gateway_port", gateway_port), ("listen_port", listen_port)):
+        if not isinstance(port, int) or isinstance(port, bool) or not (1 <= port <= 65535):
+            raise SandboxProfileError("supply_relay_port_invalid", f"{label}={port!r}")
+
+
+def supply_relay_run_args(
+    profile: RolloutSandboxProfile, *, name: str, gateway_host: str, gateway_port: int,
+    listen_port: int = SUPPLY_RELAY_LISTEN_PORT, labels: Sequence[str] = (),
+) -> list[str]:
+    """包供应 relay 的容器参数：监听表只有 `listen_port → gateway_host:gateway_port` 一项。"""
+
+    _check_supply_target(gateway_host, gateway_port, listen_port)
+    return _relay_container_args(
+        image=profile.relay_image, relay_map=f"{listen_port}:{gateway_host}:{gateway_port}",
+        role_label="rh2.supply.relay=1", name=name, labels=labels,
+    )
 
 
 async def start_egress_relay(
@@ -918,13 +1013,45 @@ async def start_egress_relay(
     """启动本 run 的 egress relay 并等它就绪（容器内 127.0.0.1:<listen_port> 可连）。失败 → SandboxNetworkError。"""
 
     name = f"rh2-egress-relay-{_sanitize_name(run_id, 40)}"
-    res = await _call(docker, *relay_run_args(profile, name=name, labels=labels), timeout=120.0)
+    return await _start_relay_container(
+        docker, name=name, run_args=relay_run_args(profile, name=name, labels=labels), image=profile.relay_image,
+        alias=profile.relay_alias, listen_map=profile.relay_listen_map(), check_port=profile.model_proxy_listen_port,
+        run_id=run_id, ready_timeout=ready_timeout, code_prefix="egress_relay",
+    )
+
+
+async def start_supply_relay(
+    docker: DockerRunner, profile: RolloutSandboxProfile, *, gateway_host: str, gateway_port: int, run_id: str,
+    labels: Sequence[str] = (), listen_port: int = SUPPLY_RELAY_LISTEN_PORT, ready_timeout: float = 30.0,
+) -> EgressRelayHandle:
+    """启动本 run 的包供应 relay（grader 安装段用；同镜像 digest 核对、同就绪探测、同失败自清理）。返回的 handle 以
+    `SUPPLY_RELAY_ALIAS` 接入 grader 网络（`connect_relay_to_network`），用 `stop_egress_relay` 停。"""
+
+    name = f"rh2-supply-relay-{_sanitize_name(run_id, 40)}"
+    args = supply_relay_run_args(
+        profile, name=name, gateway_host=gateway_host, gateway_port=gateway_port, listen_port=listen_port, labels=labels,
+    )
+    return await _start_relay_container(
+        docker, name=name, run_args=args, image=profile.relay_image, alias=SUPPLY_RELAY_ALIAS,
+        listen_map=((listen_port, gateway_host, gateway_port),), check_port=listen_port, run_id=run_id,
+        ready_timeout=ready_timeout, code_prefix="supply_relay",
+    )
+
+
+async def _start_relay_container(
+    docker: DockerRunner, *, name: str, run_args: list[str], image: str, alias: str,
+    listen_map: tuple[tuple[int, str, int], ...], check_port: int, run_id: str, ready_timeout: float, code_prefix: str,
+) -> EgressRelayHandle:
+    """起 relay 容器 → 等 `check_port` 在容器内可连 → 核对实际镜像 = 钉死的 digest。任一步失败自清理并抛
+    SandboxNetworkError（reason_code 前缀 = code_prefix；清理失败时残留名进 leftover_containers）。"""
+
+    res = await _call(docker, *run_args, timeout=120.0)
     if res.exit_code != 0:
-        raise SandboxNetworkError("egress_relay_start_failed", (res.stderr or res.stdout).strip()[-300:])
+        raise SandboxNetworkError(f"{code_prefix}_start_failed", (res.stderr or res.stdout).strip()[-300:])
     deadline = time.monotonic() + ready_timeout
     check = (
         "import socket,sys\n"
-        f"s=socket.create_connection(('127.0.0.1',{profile.model_proxy_listen_port}),timeout=2)\n"
+        f"s=socket.create_connection(('127.0.0.1',{check_port}),timeout=2)\n"
         "s.close()\nprint('RH2_RELAY_LISTENING')\n"
     )
 
@@ -943,27 +1070,27 @@ async def start_egress_relay(
             break
         if time.monotonic() > deadline:
             raise await _fail(
-                "egress_relay_not_ready", f"{name} 在 {ready_timeout}s 内未监听：{(probe.stderr or probe.stdout)[-200:]}"
+                f"{code_prefix}_not_ready", f"{name} 在 {ready_timeout}s 内未监听：{(probe.stderr or probe.stdout)[-200:]}"
             )
         await asyncio.sleep(0.25)
     # R2：核对实际运行镜像 = profile 钉死的 digest（tag 文本不变但 image ID 漂移即拒）。
     ref = await _call(docker, "inspect", "-f", "{{.Image}}", name, timeout=30.0)
     image_id = ref.stdout.strip()
     if ref.exit_code != 0 or not image_id:
-        raise await _fail("egress_relay_image_inspect_failed", (ref.stderr or ref.stdout).strip()[-200:])
+        raise await _fail(f"{code_prefix}_image_inspect_failed", (ref.stderr or ref.stdout).strip()[-200:])
     digests_res = await _call(docker, "image", "inspect", "-f", "{{json .RepoDigests}}", image_id, timeout=30.0)
     try:
         repo_digests = tuple(str(x) for x in (json.loads(digests_res.stdout or "[]") or []))
     except json.JSONDecodeError:
         repo_digests = ()
-    if digests_res.exit_code != 0 or profile.relay_image not in repo_digests:
+    if digests_res.exit_code != 0 or image not in repo_digests:
         raise await _fail(
-            "egress_relay_image_digest_mismatch",
-            f"relay 实际镜像 {image_id} 的 RepoDigests={list(repo_digests)} 不含 profile 钉死的 {profile.relay_image}",
+            f"{code_prefix}_image_digest_mismatch",
+            f"relay 实际镜像 {image_id} 的 RepoDigests={list(repo_digests)} 不含 profile 钉死的 {image}",
         )
     return EgressRelayHandle(
-        container_name=name, alias=profile.relay_alias, listen_map=profile.relay_listen_map(),
-        image=profile.relay_image, run_id=run_id, image_id=image_id, repo_digests=repo_digests,
+        container_name=name, alias=alias, listen_map=listen_map,
+        image=image, run_id=run_id, image_id=image_id, repo_digests=repo_digests,
     )
 
 
