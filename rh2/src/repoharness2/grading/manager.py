@@ -623,6 +623,10 @@ class GradingEnvSpec:
     #     （F3）；None = 不能复证 → 同样只能走未确定。框架无关的默认渲染见 render_compile_probe_script。
     env_qualification: "EnvQualification | None" = None
     render_compile_probe: Callable[[Sequence[str]], str] | None = None
+    # R2E 接线 R-b/R-c（2026-09-20，A 线 R2）：来源判定语义在 **spec 构造时**确定（parser 运行之前），进本次评分的
+    # 每一份报告——正常结论、P-A 候选归因、提前 infra、期限耗尽都带同一个值；不靠判分 helper 的字段字典带出
+    # （那样不经 helper 的分支会回落到默认的 swe_f2p_p2p）。parser 产出的 verdict 语义与它不符 = 评分链路错误。
+    grading_semantics: Literal["swe_f2p_p2p", "r2e_expected_map"] = "swe_f2p_p2p"
     # 运行期镜像 digest 比对（S1-7a 前置修复，codex#1）：二选一、必选其一——
     # 要么给出 envpack 冻结的 manifest digest（评分容器启动后与实际镜像的
     # RepoDigests 比对，不符即 infra_failure），要么显式声明 image_local_build
@@ -652,6 +656,8 @@ class GradingEnvSpec:
             )
         if self.checkout_mode == "clone_from_readonly_snapshot" and not self.snapshot_host_path:
             raise ValueError("clone_from_readonly_snapshot 模式必须提供 snapshot_host_path")
+        if self.grading_semantics not in ("swe_f2p_p2p", "r2e_expected_map"):
+            raise ValueError(f"未知 grading_semantics={self.grading_semantics!r}")
         if self.testbed_path != "/testbed":
             raise ValueError(
                 "S1-4 血缘探针（envpack.materialize.build_probe_script）固定探 /testbed，"
@@ -893,6 +899,10 @@ class _ContainerRecord:
     parsed_verdict: Any | None = None
     # R3：评分被取消时已落盘的日志引用（取消不产出 GradingReport，调用方从这里取证据）
     cancelled_eval_log_ref: Any | None = None
+    # R-0 复核 CR2（2026-09-20 / 09-23 补正常分支）：本次评分**已落盘**的日志引用——正常报告与 infra 收口两条分支
+    # 都记。收口后的 scope 关闭若无法确认终止，GradingScopeTerminationError 会**替换**已经组好的报告上抛——调用方
+    # 拿不到报告，只能从这里找回已落盘的证据（取消分支另记 cancelled_eval_log_ref）。
+    persisted_eval_log_ref: Any | None = None
     # 第四组 P-C：grader 重建 census 时省略的可再生缓存计数（只进诊断）
     omitted_cache: dict[str, int] | None = None
     # 第四组 P-A：资源事实（cgroup oom_kill 事件、容器 OOMKilled）、编译复证结果、三路判定（只进诊断 + 报告证据）
@@ -1044,7 +1054,9 @@ def env_qualification_status(spec: GradingEnvSpec) -> tuple[bool, str]:
     return True, f"ok:{q.source}"
 
 
-def render_compile_probe_script(paths: Sequence[str], *, env_lines: Sequence[str] = ()) -> str:
+def render_compile_probe_script(
+    paths: Sequence[str], *, env_lines: Sequence[str] = (), interpreter: str = "python",
+) -> str:
     """F3 编译复证脚本（框架无关）：对候选改动的 `.py` 路径逐个 `compile()`——内存内、不写字节码、不 import、
     不执行候选代码。以候选身份、在测试同一解释器下运行（调用方通过 env_lines 激活同一环境）。
 
@@ -1061,8 +1073,10 @@ def render_compile_probe_script(paths: Sequence[str], *, env_lines: Sequence[str
     # 都能被复证脚本执行。`-I`（隔离：不加脚本目录/cwd、忽略 PYTHON* 环境变量与 user site）+ `-S`（不导入 site，
     # 不加载 site-packages 与 sitecustomize/usercustomize/.pth）；脚本只用内建 `sys` 与 `compile`，路径清单以
     # Python 字面量嵌入，不再 import json。候选源码在复证里既不被 import 也不被执行。
+    # `interpreter`：测试所用的同一解释器。SWE 在激活的 conda 环境里就是 `python`（缺省，脚本逐字节不变）；
+    # R2E 没有环境激活这一步，测试入口写死 `.venv/bin/python`，复证也要点名同一个路径。
     lines += [
-        "python -I -S - <<'RH2_COMPILE_EOF'",
+        f"{interpreter} -I -S - <<'RH2_COMPILE_EOF'",
         "import sys",
         f"paths = {py_paths!r}",
         "print('RH2_COMPILE_INTERPRETER=' + sys.executable)",
@@ -1315,10 +1329,23 @@ def _path_mention_lines(log_text: str, paths: Sequence[str], limit: int = 3) -> 
 
 def execution_failure_trigger(verdict: "scoring.EvalVerdict") -> str | None:
     """P-A 钩子：零解析，或解析到了测试但参考清单里没有任何一条拿到结果（缺席 = 全局失败的迹象）。
-    v1 verdict 没有 reference_missing（恒空）→ 只可能触发 zero_parsed。"""
+    v1 verdict 没有 reference_missing（恒空）→ 只可能触发 zero_parsed。
+
+    R2E（`grading_semantics="r2e_expected_map"`，R2E 接线 R-b / A 线 R2）：四个 F2P/P2P 桶恒空，不能借用下面的
+    桶计数——那样只缺一个期望键也会被当成"全部缺席"。按**键在场关系**判：期望键非空，且没有任何期望键出现在
+    观测里。不用"状态匹配数为 0"代替"在场数为 0"：
+      期望 {a, b}、观测 {a: FAILED}        → 部分在场 → None（来源规则的 tests_failed / 0）；
+      期望 {a, b}、观测 {a: FAILED, b: FAILED} → 键全在、状态全错 → None；
+      期望 {a, b}、观测 {zzz: PASSED}        → 期望键全部缺席 → "reference_all_missing"。"""
 
     if verdict.num_parsed_tests == 0:
         return "zero_parsed"
+    if verdict.grading_semantics == "r2e_expected_map":
+        match = verdict.expected_match
+        assert match is not None  # EvalVerdict 校验器保证
+        if match.expected_count > 0 and match.expected_present_count == 0:
+            return "reference_all_missing"
+        return None
     bucketed = len(verdict.f2p_success) + len(verdict.f2p_failure) + len(verdict.p2p_success) + len(verdict.p2p_failure)
     missing = len(verdict.reference_missing)
     if missing > 0 and bucketed - missing <= 0:
@@ -1678,6 +1705,14 @@ class SWEGradingManager:
                 return eval_log_text
             return record.eval_log_partial if record is not None else None
 
+        def _remember_persisted_log(ref: Any | None) -> Any | None:
+            """落盘的日志引用顺手记到 record 上（见 _ContainerRecord.persisted_eval_log_ref）：正常报告与
+            infra 收口两条分支都经这里——报告随后被 scope 终止失败替换时，证据仍能按 record 找回。"""
+
+            if record is not None and ref is not None:
+                record.persisted_eval_log_ref = ref
+            return ref
+
         def _diagnostics(verdict: "scoring.EvalVerdict | None") -> dict[str, Any]:
             """S1-m 诊断 sidecar 内容（不进契约）：候选段事实、root 观测、控制面/可信 setup 自证、解析诊断、资源事实。"""
 
@@ -1715,6 +1750,9 @@ class SWEGradingManager:
                     "reference_missing": list(verdict.reference_missing),
                     "reference_skipped": list(verdict.reference_skipped),
                     "parser_source": verdict.parser_source,
+                    "grading_semantics": verdict.grading_semantics,
+                    # R2E：逐键差异进 sidecar（真机对账按键集合 / 状态 / 缺失与多出键逐题比，不只看 match/total）
+                    "expected_match": verdict.expected_match.model_dump(mode="json") if verdict.expected_match is not None else None,
                 }
             obs = diag["observations"] or {}
             pre, post = obs.get("RH2_OBS_RUNNER_DIGEST_PRE"), obs.get("RH2_OBS_RUNNER_DIGEST")
@@ -1759,6 +1797,7 @@ class SWEGradingManager:
             task_id=spec.task_id,
             grader_name=spec.grader_name,
             grader_version=spec.grader_version,
+            grading_semantics=spec.grading_semantics,  # 所有报告分支同值（A 线 R2）
         )
 
         try:
@@ -1868,6 +1907,7 @@ class SWEGradingManager:
 
             # 阶段 7：结论组装（A7 条 6/7 + hygiene 封顶）
             fields = scoring.grading_outcome_fields(verdict)
+            fields.pop("grading_semantics", None)  # 来源语义由 common 统一带出；一致性已在 _parse_eval_log 核过
             trigger = execution_failure_trigger(verdict)
             if trigger is not None:
                 # 第四组 P-A：零解析 / 参考清单全部缺席 = 候选测试段全局失败，三路判定
@@ -1888,6 +1928,7 @@ class SWEGradingManager:
                     fields = {
                         "outcome": "unresolved", "failure_category": "candidate_execution_failed", "reward": 0.0,
                         "f2p_pass_count": None, "f2p_total_count": None, "p2p_fail_count": None, "p2p_total_count": None,
+                        "expected_match_count": None, "expected_total_count": None,
                         "execution_failure_stage": decision["stage"], "execution_failure_evidence": list(decision["evidence"]),
                     }
                 elif decision["kind"] == "resource":
@@ -1906,6 +1947,12 @@ class SWEGradingManager:
                 # （contracts 校验器同样会拒绝 resolved+非 clean，这里是第一道闸）。
                 # W3a 注：FA frozen-delta 路径的 hygiene 描述的是**已重放的 candidate 子集**，
                 # 按可信评分投影构造恒为 clean；本分支只对 S1 diff 文本路径（冻结回退面）有效。
+                if spec.grading_semantics == "r2e_expected_map":
+                    # R2E 只接 frozen-delta 正式链（B 线复核：不为 R2E 另接旧 diff 入口）。真走到这里时不能沿用下面的
+                    # "保留计数改判 tests_failed"——match == total 的 tests_failed 过不了报告契约，会变成未捕获异常。
+                    raise GradingInfraError(
+                        "hygiene_downgrade_unsupported_for_r2e_expected_map", category="infra_failure",
+                    )
                 fields = {
                     **fields,
                     "outcome": "unresolved",
@@ -1916,7 +1963,9 @@ class SWEGradingManager:
                 **common,
                 **fields,
                 patch_hygiene=hygiene,
-                eval_log_ref=self._persist_eval_log(nonce, trajectory_id, eval_log_text, diagnostics=_diagnostics(verdict)),
+                eval_log_ref=_remember_persisted_log(
+                    self._persist_eval_log(nonce, trajectory_id, eval_log_text, diagnostics=_diagnostics(verdict))
+                ),
                 timings=_timings(),
                 graded_at_utc=_now_utc(),
             )
@@ -1952,7 +2001,7 @@ class SWEGradingManager:
                 patch_hygiene=_hygiene(),
                 # 候选测试从未启动时没有 eval 日志，但可信 setup / 权限布置的原始输出必须留下来
                 # （F2 判据挡下的那次，故障现场就在这段里）。
-                eval_log_ref=(
+                eval_log_ref=_remember_persisted_log(
                     self._persist_eval_log(nonce, trajectory_id, _infra_log_text(), diagnostics=_diagnostics(None))
                     if _infra_log_text() is not None
                     else None
@@ -3093,6 +3142,12 @@ class SWEGradingManager:
                 f"official_parser_exception:{type(exc).__name__}:{exc}",
                 category="test_log_parse_failed",
             ) from exc
+        if verdict.grading_semantics != spec.grading_semantics:
+            # spec 说这题按 A 语义判、parser 却交回 B 语义的结论：接线错误，不能让它带着错的计数形状进报告
+            raise GradingInfraError(
+                f"parser_semantics_mismatch:spec={spec.grading_semantics}:verdict={verdict.grading_semantics}",
+                category="test_log_parse_failed",
+            )
         if not verdict.apply_ok:
             # 我们的 git apply 已经成功，日志坏码（缺标记/RESET_FAILED/TESTS_ERROR/
             # TESTS_TIMEOUT）只能来自 eval 段自身 -> 评分链路问题（infra 族）。

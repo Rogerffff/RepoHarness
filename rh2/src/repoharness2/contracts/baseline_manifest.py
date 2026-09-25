@@ -27,6 +27,7 @@ from pydantic import Field, model_validator
 from ._base import GitSha, NonEmptyStr, Sha256Digest, StrictModel
 
 __all__ = [
+    "BASELINE_MANIFEST_POLICY_R2E_V1",
     "BASELINE_MANIFEST_POLICY_V1",
     "BaselineEntry",
     "BaselineManifestPolicy",
@@ -107,6 +108,20 @@ BASELINE_MANIFEST_POLICY_V1 = BaselineManifestPolicy(
 BASELINE_MANIFEST_POLICY_V2 = BaselineManifestPolicy(
     policy_version="baseline_policy_v2",
     excluded_namespaces=(".git/", ".harness/"),
+    regenerable_cache_dirs=(".pytest_cache", "__pycache__"),
+)
+
+
+# R2E 接线 R-c（2026-09-20）：R2E-Gym 镜像的环境本体 `/testbed/.venv`（数千到上万文件）就在工作目录里——
+# SWE-Gym 的环境在 /opt/miniconda3，没有这个问题。`.venv/` 进排除区：census 它既慢，又会把 agent 的
+# `pip install` 当成候选 delta；排除后 fresh grader 用镜像自带的 `.venv`，与"环境改动不重放"的既有口径一致。
+# 注意（B 线 B1）：排除 ≠ 不参与基线身份——排除区的**路径清单摘要**仍进 manifest，且排除区里的 `__pycache__`
+# 不剪。任何在首次 census 之前让 `.venv` 多出缓存文件的步骤（例如用解释器做预检）都会让 fresh grader 重建的基线
+# 摘要对不上并停批；R2E 专属预检因此放在首次 census 之后，并用 `python -B` 执行。
+# 新增版本，不改 v1 / v2 的摘要。已知后果：候选对 C / Cython 源码的修改会被重放但不会重建（R2E 没有安装段）。
+BASELINE_MANIFEST_POLICY_R2E_V1 = BaselineManifestPolicy(
+    policy_version="baseline_policy_r2e_v1",
+    excluded_namespaces=(".git/", ".harness/", ".venv/"),
     regenerable_cache_dirs=(".pytest_cache", "__pycache__"),
 )
 

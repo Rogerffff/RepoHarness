@@ -37,9 +37,11 @@ from repoharness2.adapters.slime.replay_grade import (  # noqa: E402
     load_context,
     prepare_for_replay,
     load_env_qualifications,
+    final_exit_status,
 )
 from repoharness2.adapters.slime.sandbox_profile import grader_profile_from_env, rollout_profile_from_env  # noqa: E402
-from repoharness2.grading.manager import GradingManagerConfig, SWEGradingManager  # noqa: E402
+from repoharness2.envpack.environment_overlay import load_environment_overlays  # noqa: E402
+from repoharness2.grading.manager import BaselineIntegrityError, GradingManagerConfig, SWEGradingManager  # noqa: E402
 
 
 def _split(csv: str | None) -> list[str]:
@@ -51,14 +53,17 @@ async def _run(ns: argparse.Namespace) -> int:
     env = os.environ
     rollout = rollout_profile_from_env(env, model_proxy_upstream_host="127.0.0.1", model_proxy_upstream_port=1)
     grader = grader_profile_from_env(env)
+    overlays_path = getattr(ns, "image_overlays", None)  # 旧的程序化调用方不带这个属性
     derived = DerivedImage(ref=ns.derived_image, recipe=ns.derived_image_recipe or "unspecified") if ns.derived_image else None
     ctx = load_context(
         prepared_dir=summary["prepared_dir"], private_dir=summary["private_dir"],
         manifest_sha256=summary["prepared_manifest_sha256"], rollout_profile=rollout, grader_profile=grader,
         artifacts_dir=ns.artifacts_dir, run_id=env.get("MILES_RH2_RUN_ID"), derived_image=derived,
         qualifications=load_env_qualifications(ns.qualification_ledger),
+        image_overlays=load_environment_overlays(overlays_path) if overlays_path else None,
     )
-    print(json.dumps({"qualifications": len(ctx.qualifications), "from": ns.qualification_ledger}, ensure_ascii=False), flush=True)
+    print(json.dumps({"qualifications": len(ctx.qualifications), "from": ns.qualification_ledger,
+                      "image_overlays": len(ctx.image_overlays)}, ensure_ascii=False), flush=True)
     manager = SWEGradingManager(GradingManagerConfig(eval_log_dir=Path(ns.eval_log_dir), sandbox_profile=grader))
     await manager.startup()
     budgets = ReplayBudgets(
@@ -69,6 +74,7 @@ async def _run(ns: argparse.Namespace) -> int:
     tasks = _split(ns.task_ids) or list(ctx.grading_views)
     rows = 0
     halted: str | None = None
+    aborted: str | None = None
     try:
         for ref in tasks:
             if halted:
@@ -83,17 +89,29 @@ async def _run(ns: argparse.Namespace) -> int:
                     halted = str(exc)  # I2：候选容器无法确认清理 → 停止本批（账本行已写）
                     print(json.dumps({"halt": halted}, ensure_ascii=False), flush=True)
                     break
+                except BaselineIntegrityError as exc:
+                    # R-0：基线契约矛盾 / grader scope 无法确认终止（GradingScopeTerminationError）= run-halt 通道。
+                    # 账本行已由 replay_one 写出；这里转成约定的停批退出码，而不是带 traceback 退出。
+                    halted = f"{type(exc).__name__}:{exc}"
+                    print(json.dumps({"halt": halted}, ensure_ascii=False), flush=True)
+                    break
                 rows += 1
                 rep = row.get("report") or {}
                 print(json.dumps({
                     "task_id": task_id, "attempt": attempt, "outcome": rep.get("outcome"), "reward": rep.get("reward"),
                     "apply_method": row["candidate"]["apply_method"], "stage_error": row.get("stage_error"),
                 }, ensure_ascii=False), flush=True)
+    except BaseException as exc:  # noqa: BLE001 - 只记下"正在带着异常 / 取消退出"，随后原样上抛
+        # R-0 复核 CR1：未捕获的异常或取消正在传播时，收尾摘要不能再说 reason="ok"（进程实际不会以 0 退出）。
+        aborted = f"{type(exc).__name__}:{str(exc)[:200]}"
+        raise
     finally:
         closed = await manager.close()
+        status = final_exit_status(halted=halted, manager_close=closed, aborted=aborted)
         print(json.dumps({"ledger": str(ns.ledger), "rows": rows, "manager_close": closed, "halted": halted,
-                          "cleanup_failures": grader_run.cleanup_failures}, ensure_ascii=False, default=str))
-    return 2 if halted else 0
+                          "aborted": aborted, "cleanup_failures": grader_run.cleanup_failures, "final_status": status},
+                         ensure_ascii=False, default=str), flush=True)
+    return int(status["exit_code"])
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -104,6 +122,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--out-dir", required=True)
     p.add_argument("--private-dir", required=True)
     p.add_argument("--task-ids", default=None, help="逗号分隔 source-qualified task_id（缺省全部）")
+    p.add_argument("--sources", default=None,
+                   help="逗号分隔的来源集合（缺省只有 swe_gym_lite；R2E 要显式写 r2e_gym_subset）")
     g = sub.add_parser("export-gold")
     g.add_argument("--ingest-dir", required=True)
     g.add_argument("--instance-ids", required=True)
@@ -122,11 +142,16 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--ledger", required=True)
     r.add_argument("--derived-image", default=None, help="D4=A 诊断性派生镜像引用（以 image_local_build 使用）")
     r.add_argument("--derived-image-recipe", default=None, help="派生镜像配方说明（进账本）")
+    r.add_argument("--image-overlays", default=None,
+                   help="环境覆盖表（JSONL，一题一条 EnvironmentOverlayV1）：有条目的题两类容器都用派生镜像，按确认过的 image ID 启动")
     r.add_argument("--qualification-ledger", action="append", default=[],
                    help="P-A 环境资格来源账本（可重复）：取 gold/noop 成功且参考缺席 0 的行；manager 核对镜像身份与脚本摘要")
     ns = parser.parse_args(argv)
     if ns.cmd == "prepare":
-        print(json.dumps(prepare_for_replay(repo_root=ns.repo_root, out_dir=ns.out_dir, private_dir=ns.private_dir, task_ids=_split(ns.task_ids)), ensure_ascii=False, indent=1))
+        print(json.dumps(prepare_for_replay(
+            repo_root=ns.repo_root, out_dir=ns.out_dir, private_dir=ns.private_dir, task_ids=_split(ns.task_ids),
+            sources=_split(ns.sources) or None,
+        ), ensure_ascii=False, indent=1))
         return 0
     if ns.cmd == "export-gold":
         print(json.dumps(export_gold_candidates(ingest_dir=ns.ingest_dir, instance_ids=_split(ns.instance_ids), out_dir=ns.out_dir), ensure_ascii=False, indent=1))

@@ -49,7 +49,7 @@ from pydantic import Field, StringConstraints, ValidationError, model_validator
 from repoharness2.contracts import scan_for_forbidden_markers
 from repoharness2.contracts._base import NonEmptyStr, SafeIdentifier, Sha256Digest, StrictModel
 from repoharness2.envpack.bundles import render_user_prompt
-from repoharness2.envpack.bundles_v2 import task_id_for
+from repoharness2.envpack.bundles_v2 import TaskSource, task_id_for
 from repoharness2.envpack.training_view import HostGradingView, RolloutTaskView, TrustedTaskController
 
 PREPARED_MANIFEST_SCHEMA_ID = "rh2.prepared_tasks_manifest.v1"
@@ -84,7 +84,7 @@ class PromptRowMetadata(StrictModel):
     """prompt 行的 metadata（miles 原样放进 Sample.metadata 的模型侧可见分派事实）。"""
 
     task_id: NonEmptyStr = Field(description='source-qualified 任务主键（"<source>::<instance_id>"）。')
-    source: Literal["swe_gym_lite"] = Field(description="数据源（与 EnvironmentPackageV1 同枚举）。")
+    source: TaskSource = Field(description="数据源（与 EnvironmentPackageV1 同枚举）。")
     instance_id: SafeIdentifier = Field(description="源内任务 id（只作人读/事件记录，不是 join 键）。")
     environment_package_digest: Sha256Digest = Field(description="EnvironmentPackageV1.digest()（join 锚）。")
     public_bundle_digest: Sha256Digest = Field(description="PublicTaskBundle.digest()（模型可见面内容锚）。")

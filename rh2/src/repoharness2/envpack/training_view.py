@@ -36,6 +36,11 @@ TrustedTaskController（本模块；host 进程内，不是新服务）
   都携带，且 `grading_view()` 要求调用方**交回**该 digest 才放行——身份锚
   不许只在入口核一次后丢失（后续 baseline/grading/eligibility join 复用）。
 
+多来源（R2E 接线 R-a，2026-09-20，用户决定 DR1=A）：`source` 是封闭枚举 `TaskSource`；评分视图的密封材料
+按 `schema_id` 判别（`PrivateGradingBundleV2 | PrivateGradingBundleR2E`），且视图校验器钉死"来源 ↔ 评分面
+类型"的对应关系。controller 可以合并多个来源，但 **`from_repo_root` 的默认来源集合只有 swe_gym_lite**——
+装上 R2E 适配器不会把尚未接好派生环境的 48 题自动混进 `trusted_prep` 的默认输入；R2E 必须显式选入。
+
 T1 决策（对 RolloutTaskSpec 的携带形态）：rollout 侧**只携带 opaque digest
 锚，不内嵌密封 grading bundle**。理由：RolloutTaskView 会被序列化进 actor
 进程/日志/prompt 组装路径，内嵌密封对象离"一次 model_dump 泄漏"只差一个
@@ -45,8 +50,9 @@ bug；digest 锚保留 join 一致性而零内容。密封内嵌只发生在 Hos
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import Field, model_validator
 
@@ -60,10 +66,21 @@ from repoharness2.contracts._base import (
 from repoharness2.envpack.bundles import PRIVATE_ONLY_FIELD_NAMES, PublicTaskBundle
 from repoharness2.envpack.bundles_v2 import (
     GOLDEN_FIELD_NAMES,
+    TASK_SOURCE_R2E_GYM_SUBSET,
+    TASK_SOURCE_SWE_GYM_LITE,
     EnvironmentPackageV1,
+    PrivateGradingBundleR2E,
     PrivateGradingBundleV2,
+    TaskSource,
     ValidationOnlyBundle,
+    expected_source_for_grading,
     task_id_for,
+)
+from repoharness2.envpack.ingest_r2e_subset import (
+    R2EIngestResult,
+    load_trusted_r2e_ingest_outputs,
+    verify_r2e_bundle_relations_non_authoritative,
+    verify_r2e_package_relations,
 )
 from repoharness2.envpack.ingest_swegym_lite import (
     IngestResult,
@@ -71,6 +88,9 @@ from repoharness2.envpack.ingest_swegym_lite import (
     verify_bundle_relations_non_authoritative,
     verify_package_relations,
 )
+
+# `from_repo_root` 的默认来源集合：保持接入 R2E 之前的行为（只有 SWE-Gym Lite）。
+DEFAULT_TASK_SOURCES: tuple[str, ...] = (TASK_SOURCE_SWE_GYM_LITE,)
 
 
 class TrustedViewError(ValueError):
@@ -91,7 +111,7 @@ class RolloutTaskView(StrictModel):
         default="rh2.rollout_task_view.v1", description="schema 判别字段。"
     )
     task_id: NonEmptyStr = Field(description='source-qualified 任务主键（"<source>::<instance_id>"）。')
-    source: Literal["swe_gym_lite"] = Field(description="数据源（与 EnvironmentPackageV1 同枚举）。")
+    source: TaskSource = Field(description="数据源（与 EnvironmentPackageV1 同枚举）。")
     instance_id: SafeIdentifier = Field(description="源内任务 id。")
     environment_package_digest: Sha256Digest = Field(
         description="EnvironmentPackageV1.digest()——贯穿 rollout→grading→"
@@ -150,16 +170,19 @@ class HostGradingView(StrictModel):
         default="rh2.host_grading_view.v1", description="schema 判别字段。"
     )
     task_id: NonEmptyStr = Field(description="source-qualified 任务主键（与 rollout 视图同锚）。")
-    source: Literal["swe_gym_lite"] = Field(description="数据源。")
+    source: TaskSource = Field(description="数据源（validator 钉死与评分面类型的对应关系）。")
     instance_id: SafeIdentifier = Field(description="源内任务 id。")
     environment_package_digest: Sha256Digest = Field(
         description="与 RolloutTaskView 同一 digest 锚（join 一致性）。"
     )
     grading_bundle_digest: Sha256Digest = Field(
-        description="PrivateGradingBundleV2.digest()（validator 重算比对，自证字段）。"
+        description="内嵌评分面的 digest()（validator 重算比对，自证字段）。"
     )
-    grading: PrivateGradingBundleV2 = Field(
-        description="密封评分面（test_patch/F2P/P2P/eval_cmd；不含 golden）。"
+    grading: Annotated[
+        PrivateGradingBundleV2 | PrivateGradingBundleR2E, Field(discriminator="schema_id")
+    ] = Field(
+        description="密封评分面，按 schema_id 判别：swe = test_patch/F2P/P2P/eval_cmd；"
+        "r2e = 期望状态映射 / run_tests.sh 原文 / 隐藏测试清单。都不含 golden。"
     )
 
     @model_validator(mode="after")
@@ -173,6 +196,11 @@ class HostGradingView(StrictModel):
             )
         if self.grading_bundle_digest != self.grading.digest():
             raise ValueError("grading_bundle_digest 与内嵌 grading bundle 重算 digest 不符")
+        if self.source != expected_source_for_grading(self.grading):
+            raise ValueError(
+                f"{self.instance_id}: source={self.source!r} 与评分面 {type(self.grading).__name__} 不匹配"
+                "——来源写 A、评分材料却是 B 形状的视图没有构造路径"
+            )
         return self
 
     def revalidated(self) -> "HostGradingView":
@@ -200,6 +228,18 @@ assert not set(HostGradingView.model_fields) & GOLDEN_FIELD_NAMES, (
 assert not set(PrivateGradingBundleV2.model_fields) & GOLDEN_FIELD_NAMES, (
     "PrivateGradingBundleV2 出现 golden 字段——v2 三分体系被破坏"
 )
+assert not set(PrivateGradingBundleR2E.model_fields) & GOLDEN_FIELD_NAMES, (
+    "PrivateGradingBundleR2E 出现 golden 字段——评分面不许见金标解"
+)
+
+
+def _verify_non_authoritative(pkg, public, grading, validation) -> None:
+    """test-only 入口的关系检查：按评分面类型分派到各来源的非权威校验。"""
+
+    if isinstance(grading, PrivateGradingBundleR2E):
+        verify_r2e_bundle_relations_non_authoritative(pkg, public, grading, validation)
+    else:
+        verify_bundle_relations_non_authoritative(pkg, public, grading, validation)
 
 
 # 构造令牌：只有本模块的 `_build` 能拿到；raw-map 直接构造被拒（二轮复核 F4）。
@@ -275,29 +315,75 @@ class TrustedTaskController:
     # ------------------------------------------------------------------ 构建
 
     @classmethod
-    def from_repo_root(cls, repo_root: Path) -> "TrustedTaskController":
-        """正式入口：完整 trusted loader（四面全量+全链验证）→ 剥离视图。
+    def from_repo_root(cls, repo_root: Path, *,
+                       sources: Sequence[str] = DEFAULT_TASK_SOURCES) -> "TrustedTaskController":
+        """正式入口：逐来源调完整 trusted loader（四面全量 + 全链验证）→ 剥离视图 → 合并。
 
-        loader 内部已逐包跑过 `verify_package_relations`；controller 不依赖
-        这一实现细节，用 loader 返回的可信 pins/image_store 再逐包重验一次
-        （消费期重验义务，与 ingest 模块"轮次 12"纪律一致）。
+        `sources` 缺省只有 swe_gym_lite（与接入 R2E 之前逐题相同）；R2E 要显式写
+        `sources=("swe_gym_lite", "r2e_gym_subset")` 或只写 R2E。loader 内部已逐包跑过各自的 strict 关系检查；
+        controller 不依赖这一实现细节，用 loader 返回的可信上下文再逐包重验一次（消费期重验义务）。
         """
-        trusted = load_trusted_ingest_outputs(repo_root)
+        wanted = list(sources)
+        if not wanted:
+            raise TrustedViewError("sources 为空——没有可加载的来源")
+        if len(set(wanted)) != len(wanted):
+            raise TrustedViewError(f"sources 存在重复: {wanted}")
+        parts: list[tuple[object, Callable[..., None]]] = []
+        for source in wanted:
+            if source == TASK_SOURCE_SWE_GYM_LITE:
+                trusted = load_trusted_ingest_outputs(repo_root)
 
-        def _strict_verify(pkg, public, grading, validation) -> None:
-            verify_package_relations(pkg, public, grading, validation,
-                                     pins=trusted.pins, image_store=trusted.image_store)
+                def _strict_verify_swe(pkg, public, grading, validation, _t=trusted) -> None:
+                    verify_package_relations(pkg, public, grading, validation,
+                                             pins=_t.pins, image_store=_t.image_store)
 
-        return cls._build(trusted.result, _strict_verify)
+                parts.append((trusted.result, _strict_verify_swe))
+            elif source == TASK_SOURCE_R2E_GYM_SUBSET:
+                trusted_r2e = load_trusted_r2e_ingest_outputs(repo_root)
+
+                def _strict_verify_r2e(pkg, public, grading, validation, _t=trusted_r2e) -> None:
+                    verify_r2e_package_relations(pkg, public, grading, validation,
+                                                 pins=_t.pins, image_facts=_t.image_facts, revisions=_t.revisions)
+
+                parts.append((trusted_r2e.result, _strict_verify_r2e))
+            else:
+                raise TrustedViewError(f"未知来源 {source!r}（封闭枚举：swe_gym_lite / r2e_gym_subset）")
+        return cls._build_many(parts, expected_sources=wanted)
 
     @classmethod
-    def build_for_tests_from_ingest_result(cls, result: IngestResult) -> "TrustedTaskController":
-        """**test-only**：合成 IngestResult → controller（非权威关系检查：
-        不核 T1 pins、不核镜像清单）。正式消费链一律走 `from_repo_root`。"""
-        return cls._build(result, verify_bundle_relations_non_authoritative)
+    def build_for_tests_from_ingest_result(
+        cls, result: IngestResult | R2EIngestResult, *more: IngestResult | R2EIngestResult,
+    ) -> "TrustedTaskController":
+        """**test-only**：合成 IngestResult（可给多个来源各一份）→ controller（非权威关系检查：
+        不核 pins、不核镜像清单 / 事实表）。正式消费链一律走 `from_repo_root`。"""
+        return cls._build_many([(r, _verify_non_authoritative) for r in (result, *more)], expected_sources=None)
 
     @classmethod
-    def _build(cls, result: IngestResult, verify) -> "TrustedTaskController":
+    def _build(cls, result, verify) -> "TrustedTaskController":
+        return cls._build_many([(result, verify)], expected_sources=None)
+
+    @classmethod
+    def _build_many(cls, parts, *, expected_sources: Sequence[str] | None) -> "TrustedTaskController":
+        rollout_views: dict[str, RolloutTaskView] = {}
+        grading_views: dict[str, HostGradingView] = {}
+        for index, (result, verify) in enumerate(parts):
+            r_views, g_views = cls._views_from_result(result, verify)
+            if expected_sources is not None:
+                stray = sorted({v.source for v in r_views.values()} - {expected_sources[index]})
+                if stray:
+                    raise TrustedViewError(
+                        f"来源 {expected_sources[index]!r} 的产物里混入了其它来源的任务: {stray}"
+                    )
+            clash = sorted(set(r_views) & set(rollout_views))[:3]
+            if clash:
+                raise TrustedViewError(f"多来源合并出现重复 task_id: {clash}")
+            rollout_views.update(r_views)
+            grading_views.update(g_views)
+        return cls(rollout_views=rollout_views, grading_views=grading_views,
+                   _token=_CONSTRUCTION_TOKEN)
+
+    @staticmethod
+    def _views_from_result(result, verify) -> tuple[dict[str, RolloutTaskView], dict[str, HostGradingView]]:
         def _index(models, face: str) -> dict[str, object]:
             out: dict[str, object] = {}
             for m in models:
@@ -354,8 +440,7 @@ class TrustedTaskController:
             )
             # ValidationOnlyBundle 到此为止：参与了关系检查，然后被丢弃。
             del validation
-        return cls(rollout_views=rollout_views, grading_views=grading_views,
-                   _token=_CONSTRUCTION_TOKEN)
+        return rollout_views, grading_views
 
     # ------------------------------------------------------------------ 消费
 
@@ -407,6 +492,7 @@ class TrustedTaskController:
 
 # 显式导出面：ValidationOnlyBundle 只为关系检查 import，不在导出面。
 __all__ = [
+    "DEFAULT_TASK_SOURCES",
     "HostGradingView",
     "RolloutTaskView",
     "TrustedTaskController",

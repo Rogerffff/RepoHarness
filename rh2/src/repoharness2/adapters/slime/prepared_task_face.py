@@ -27,6 +27,9 @@ eval_script 全文，命令全部按 `spec_vendor` 从 pinned JSON 派生。脚�
 
 from __future__ import annotations
 
+import dataclasses
+import hashlib
+import os
 import shlex
 from collections.abc import Mapping, Sequence
 from pathlib import Path
@@ -36,7 +39,13 @@ from repoharness2.adapters.slime.generate import RolloutTaskSpec
 from repoharness2.adapters.slime.sandbox_profile import grader_trusted_setup_attest_lines
 from repoharness2.envpack import scoring
 from repoharness2.envpack.bundles import render_user_prompt
-from repoharness2.envpack.bundles_v2 import PrivateGradingBundleV2
+from repoharness2.envpack.bundles_v2 import PrivateGradingBundleR2E, PrivateGradingBundleV2
+from repoharness2.envpack.environment_overlay import (
+    EnvironmentOverlayError,
+    EnvironmentOverlayV1,
+    env_requirement_mismatch,
+    parse_environment_overlays,
+)
 from repoharness2.envpack.prepared_tasks import (
     PreparedTasksError,
     PreparedTasksManifest,
@@ -304,11 +313,25 @@ def render_v2_compile_probe_script(paths: Sequence[str]) -> str:
 def build_grading_spec_from_host_view(
     view: HostGradingView, *, image: str, image_manifest_digest: str, env_qualification: "EnvQualification | None" = None,
 ) -> GradingEnvSpec:
-    """actor 内从 v2 safe view 构造评分 spec：parser 闭包只捕获 PrivateGradingBundleV2（无 golden）。
+    """actor 内从 safe view 构造评分 spec：parser 闭包只捕获评分面 bundle（无 golden）。
     `env_qualification`（P-A）：调用方（driver / 正式链）从资格账本取得的环境资格记录；manager 自行核对镜像身份
-    与脚本摘要，不符视同缺席。"""
+    与脚本摘要，不符视同缺席。
+
+    两个入口（replay driver、`PreparedTaskFace.grading_spec()`）共用这一处，按评分面的 `schema_id` 分派
+    （R2E 接线 §3.6）：R2E 走 `r2e_grading_scripts.build_r2e_grading_spec`，来源语义也在那里确定。"""
 
     grading = view.grading
+    if isinstance(grading, PrivateGradingBundleR2E):
+        from repoharness2.adapters.slime.r2e_grading_scripts import build_r2e_grading_spec
+
+        return build_r2e_grading_spec(
+            task_id=view.task_id, grading=grading, image=image,
+            image_manifest_digest=image_manifest_digest, env_qualification=env_qualification,
+        )
+    if not isinstance(grading, PrivateGradingBundleV2):
+        raise GradingMaterialsError(
+            "grading_bundle_type_unknown", f"{view.task_id}: 未知评分面类型 {type(grading).__name__}，拒绝构造评分 spec。"
+        )
     test_files = tuple(sorted(patch_touched_paths(grading.test_patch)))
 
     def _parse(log_text: str) -> scoring.EvalVerdict:
@@ -339,15 +362,66 @@ def build_grading_spec_from_host_view(
     )
 
 
-def rollout_spec_from_view(view: RolloutTaskView, *, time_budget_seconds: int) -> RolloutTaskSpec:
-    """RolloutTaskView → 模型侧任务面（grading_spec=None：只带 digest 锚）。"""
+# ---------------------------------------------------------------------------
+# R2E 正式 actor 任务面（E09 + D4=B，2026-09-25）
+# ---------------------------------------------------------------------------
+# R2E 的来源镜像不能直接给解题者：`/r2e_tests`（隐藏测试）对所有用户可读，git 的分支上有修复提交。环境侧为每题构建
+# 派生镜像（隐藏测试移到 root 私有目录、清掉修复提交、解释器搬出 /root），用覆盖表（EnvironmentOverlayV1）登记。
+# 回放评分早已按覆盖表用派生镜像；这里让正式 actor 的两侧（rollout 容器与评分容器）也只用派生镜像，并按 R2E 的
+# 实际环境给激活脚本与解释器前缀（/testbed/.venv，不是 SWE-Gym 的 conda testbed）。缺覆盖条目 = 构造即拒，不回退。
+R2E_TASK_SOURCE = "r2e_gym_subset"
+R2E_INTERPRETER_PREFIX = "/testbed/.venv"
+# 与派生镜像的 ENV（PATH 首项 /testbed/.venv/bin、VIRTUAL_ENV=/testbed/.venv）一致；经 BASH_ENV 显式给出，
+# 不依赖 exec 时是否继承镜像 ENV。不额外设 PYTHONPATH：部分仓库要 cwd=/testbed 或 `python -m pytest` 才能导入，
+# 这是来源环境本来的条件，写在中性环境说明里，不在这里悄悄改变。
+R2E_VENV_ACTIVATION = (
+    "# rh2 envpack (R2E): run every non-interactive bash command with the /testbed/.venv interpreter.\n"
+    "export VIRTUAL_ENV=/testbed/.venv\n"
+    'export PATH="/testbed/.venv/bin:$PATH"\n'
+)
+# 正式 actor 的覆盖表输入（与 prepared 产物同纪律：路径与摘要成对给出，缺一即拒）。bringup 目前不显式传参，
+# `PreparedTaskFace.load` 在调用方未传时从这两个环境变量读取。
+IMAGE_OVERLAYS_PATH_ENV = "RH2_IMAGE_OVERLAYS_PATH"
+IMAGE_OVERLAYS_SHA256_ENV = "RH2_IMAGE_OVERLAYS_SHA256"
+
+
+def overlay_binding_mismatch(overlay: EnvironmentOverlayV1, *, public: Any, grading: Any) -> str | None:
+    """覆盖条目与环境包 / 评分面的静态互检（回放与正式 actor 共用）；返回原因文本或 None。
+
+    - 派生镜像必须是从这道题记录的来源镜像构建的；
+    - R2E：隐藏测试的私有位置与树摘要要等于评分面，配方要自报已搬迁解释器、清理 git；本题修订若只在特定环境
+      下成立（`environment_overlay.REVISION_ENV_REQUIREMENTS`，例 orange3 的 r2e-mr-020 需要 SciPy 1.5.4），配方身份必须
+      带上那一步，配方内容摘要也必须是批准并复验过的那一份（Codex 批次三复核 F1、09-25 复核 R1）。"""
+
+    if (overlay.base_image_ref, overlay.base_image_manifest_digest) != (public.image, public.image_manifest_digest):
+        return "overlay:base_image_mismatch"  # 派生镜像不是从这道题的来源镜像构建的（或环境包记录的来源镜像已换）
+    if isinstance(grading, PrivateGradingBundleR2E):
+        from repoharness2.adapters.slime.r2e_grading_scripts import R2E_PRIVATE_HIDDEN_TESTS_DIR
+
+        if overlay.facts.hidden_tests_location != R2E_PRIVATE_HIDDEN_TESTS_DIR:
+            return f"overlay:hidden_tests_location_mismatch:{overlay.facts.hidden_tests_location}"
+        if overlay.facts.hidden_tests_tree_sha256 != grading.hidden_tests_tree_sha256:
+            return "overlay:hidden_tests_tree_mismatch"
+        if not (overlay.facts.interpreter_relocated and overlay.facts.git_scrubbed):
+            return "overlay:recipe_facts_incomplete"
+        env_error = env_requirement_mismatch(overlay.recipe_id, grading.material_revisions, recipe_sha256=overlay.recipe_sha256)
+        if env_error is not None:
+            return "overlay:" + env_error
+    return None
+
+
+def rollout_spec_from_view(
+    view: RolloutTaskView, *, time_budget_seconds: int, overlay: EnvironmentOverlayV1 | None = None,
+) -> RolloutTaskSpec:
+    """RolloutTaskView → 模型侧任务面（grading_spec=None：只带 digest 锚）。
+
+    R2E（E09 + D4=B）：必须给覆盖条目；镜像用派生镜像的 image ID（不可重指），走 `image_local_build` 豁免
+    registry digest 比对；激活脚本与解释器前缀用 R2E 的 `.venv`。其它来源不接受覆盖条目（未定义，不猜）。"""
 
     public = view.public
-    return RolloutTaskSpec(
+    common = dict(
         task_id=view.task_id,
-        image=public.image,
         base_commit=public.base_commit,
-        image_manifest_digest=public.image_manifest_digest,
         prompt=render_user_prompt(public),
         public_bundle_payload=public.model_dump_json(indent=2).encode("utf-8"),
         public_bundle_digest=view.public_bundle_digest,
@@ -355,6 +429,48 @@ def rollout_spec_from_view(view: RolloutTaskView, *, time_budget_seconds: int) -
         workdir=public.workdir,
         time_budget_seconds=time_budget_seconds,
     )
+    if view.source == R2E_TASK_SOURCE:
+        if overlay is None:
+            raise PreparedTasksError(
+                f"{view.task_id}: R2E 任务在正式 actor 里必须用派生镜像，但覆盖表里没有这道题——来源镜像里隐藏测试"
+                "与修复提交对解题者可见，拒绝回退到来源镜像"
+            )
+        if overlay.task_id != view.task_id:
+            raise PreparedTasksError(f"{view.task_id}: 覆盖条目属于 {overlay.task_id}")
+        if (overlay.base_image_ref, overlay.base_image_manifest_digest) != (public.image, public.image_manifest_digest):
+            raise PreparedTasksError(f"{view.task_id}: 覆盖条目的来源镜像与任务面记录不符（overlay:base_image_mismatch）")
+        return RolloutTaskSpec(
+            **common,
+            image=overlay.derived_image_id,
+            image_manifest_digest=None,
+            image_local_build=True,
+            env_activation_script=R2E_VENV_ACTIVATION,
+            expected_interpreter_prefix=R2E_INTERPRETER_PREFIX,
+        )
+    if overlay is not None:
+        raise PreparedTasksError(f"{view.task_id}: 来源 {view.source} 没有定义派生镜像覆盖，拒绝使用覆盖条目")
+    return RolloutTaskSpec(**common, image=public.image, image_manifest_digest=public.image_manifest_digest)
+
+
+def load_overlays_input(path: Path | str | None, sha256: str | None) -> dict[str, EnvironmentOverlayV1]:
+    """覆盖表输入：路径与文件摘要（裸 hex 或 `sha256:` 前缀）成对给出；都没给时读环境变量；都缺 = 空表。"""
+
+    if path is None and sha256 is None:
+        path, sha256 = os.environ.get(IMAGE_OVERLAYS_PATH_ENV) or None, os.environ.get(IMAGE_OVERLAYS_SHA256_ENV) or None
+    if path is None and sha256 is None:
+        return {}
+    if not path or not sha256:
+        raise PreparedTasksError(
+            f"覆盖表输入要求路径与摘要成对给出（{IMAGE_OVERLAYS_PATH_ENV} / {IMAGE_OVERLAYS_SHA256_ENV}），缺一即拒"
+        )
+    data = Path(path).read_bytes()
+    actual = hashlib.sha256(data).hexdigest()
+    if actual != sha256.removeprefix("sha256:"):
+        raise PreparedTasksError(f"覆盖表文件摘要不符：actual={actual[:16]}… expected={sha256.removeprefix('sha256:')[:16]}…")
+    try:
+        return parse_environment_overlays(data.decode("utf-8"), name=Path(path).name)
+    except EnvironmentOverlayError as exc:
+        raise PreparedTasksError(f"覆盖表内容非法：{exc}") from exc
 
 
 class PreparedTaskFace:
@@ -369,6 +485,7 @@ class PreparedTaskFace:
         time_budget_seconds: int,
     
         qualifications: Mapping[str, EnvQualification] | None = None,
+        image_overlays: Mapping[str, EnvironmentOverlayV1] | None = None,
     ) -> None:
         if set(rollout_views) != set(manifest.task_ids()) or set(host_grading_views) != set(manifest.task_ids()):
             raise PreparedTasksError("任务面两侧视图集合与 manifest 不一致，拒绝构造")
@@ -378,8 +495,19 @@ class PreparedTaskFace:
         # 第四组 P-A（A 线复核 R5）：正式 actor 的环境资格入口——按 task_id 的资格记录由流水线阶段随题包冻结后传入；
         # 缺席（当前默认）= 全局执行失败一律未确定（infra、无 reward），不会误判候选。
         self._qualifications: dict[str, EnvQualification] = dict(qualifications or {})
+        # E09 + D4=B：只取本题包里的题的覆盖条目（覆盖表可以覆盖整个来源池）；构造时静态互检，不符即拒
+        overlays = dict(image_overlays or {})
+        self._overlays: dict[str, EnvironmentOverlayV1] = {}
+        for tid in manifest.task_ids():
+            overlay = overlays.get(tid)
+            if overlay is None:
+                continue
+            error = overlay_binding_mismatch(overlay, public=rollout_views[tid].public, grading=host_grading_views[tid].grading)
+            if error is not None:
+                raise PreparedTasksError(f"{tid}: 覆盖条目与题包不配套（{error}），拒绝构造任务面")
+            self._overlays[tid] = overlay
         self._specs = {
-            tid: rollout_spec_from_view(view, time_budget_seconds=time_budget_seconds)
+            tid: rollout_spec_from_view(view, time_budget_seconds=time_budget_seconds, overlay=self._overlays.get(tid))
             for tid, view in rollout_views.items()
         }
 
@@ -393,11 +521,17 @@ class PreparedTaskFace:
         host_grading_sha256: str | None,
         time_budget_seconds: int,
         prompt_data_path: Any = None,
+        image_overlays_path: Path | str | None = None,
+        image_overlays_sha256: str | None = None,
     ) -> "PreparedTaskFace":
         """从两份产物加载（全部复核）。``manifest_sha256`` = trusted-prep 输出的外部 manifest
         digest（`RH2_PREPARED_TASKS_MANIFEST_SHA256`，输入身份而非授权闸门），缺失/不符即拒；
         ``prompt_data_path`` 非 None 时把 miles 数据源读的文件与 prep 的 prompts.jsonl 按内容
-        digest 绑定。"""
+        digest 绑定。
+
+        ``image_overlays_path`` / ``image_overlays_sha256``（E09 + D4=B）：派生镜像覆盖表与其文件摘要，成对给出；
+        都没传时从 `RH2_IMAGE_OVERLAYS_PATH` / `RH2_IMAGE_OVERLAYS_SHA256` 读取；只给一个或摘要不符即拒。
+        题包里有 R2E 题而没有覆盖表时，构造任务面即拒（不回退来源镜像）。"""
 
         if not host_grading_path or not host_grading_sha256:
             raise PreparedTasksError(
@@ -414,6 +548,7 @@ class PreparedTaskFace:
             rollout_views=rollout_views,
             host_grading_views=host_views,
             time_budget_seconds=time_budget_seconds,
+            image_overlays=load_overlays_input(image_overlays_path, image_overlays_sha256),
         )
 
     @property
@@ -465,20 +600,33 @@ class PreparedTaskFace:
                 "grading_view_revalidation_failed", f"{assignment.task_id}: host grading 视图消费时刻重验失败：{exc}"
             ) from exc
         rollout_view = self._rollout_views[assignment.task_id]
-        return build_grading_spec_from_host_view(
+        spec = build_grading_spec_from_host_view(
             view,
             image=rollout_view.public.image,
             image_manifest_digest=rollout_view.public.image_manifest_digest,
             env_qualification=self._qualifications.get(assignment.task_id),  # P-A 资格入口（R5）
         )
+        overlay = self._overlays.get(assignment.task_id)
+        if overlay is not None:
+            # E09 + D4=B：评分容器与 rollout 容器用同一张派生镜像，按 image ID 启动（不可重指），资格键随 ID
+            spec = dataclasses.replace(
+                spec, image=overlay.derived_image_id, image_manifest_digest=None, image_local_build=True,
+                image_local_build_id=overlay.derived_image_id,
+            )
+        return spec
 
 
 __all__ = [
+    "R2E_INTERPRETER_PREFIX",
+    "R2E_TASK_SOURCE",
+    "R2E_VENV_ACTIVATION",
     "V2_EVAL_END_MARKER",
     "V2_EVAL_START_MARKER",
     "GradingMaterialsError",
     "PreparedTaskFace",
     "build_grading_spec_from_host_view",
+    "load_overlays_input",
+    "overlay_binding_mismatch",
     "render_v2_candidate_test_script",
     "render_v2_eval_script",
     "render_v2_trusted_setup_script",

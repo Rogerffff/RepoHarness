@@ -105,11 +105,19 @@ def parse_census_omitted_counts(text: str) -> dict[str, int]:
 
 
 def baseline_policy_for_task_id(task_id: str) -> BaselineManifestPolicy:
-    """第四组 P-C：只有所选 Python SWE 来源（swe_gym_lite）用政策 v2（省略可再生缓存目录）；其它来源沿用 v1。"""
-    from repoharness2.contracts.baseline_manifest import BASELINE_MANIFEST_POLICY_V2
+    """第四组 P-C：所选 Python SWE 来源（swe_gym_lite）用政策 v2（省略可再生缓存目录）；R2E 接线 R-c：
+    r2e_gym_subset 用 r2e_v1（v2 + 排除 `.venv/`——环境本体在工作目录里）；其它来源沿用 v1。"""
+    from repoharness2.contracts.baseline_manifest import (
+        BASELINE_MANIFEST_POLICY_R2E_V1,
+        BASELINE_MANIFEST_POLICY_V2,
+    )
 
     source = task_id.split("::", 1)[0] if "::" in task_id else ""
-    return BASELINE_MANIFEST_POLICY_V2 if source == "swe_gym_lite" else BASELINE_MANIFEST_POLICY_V1
+    if source == "swe_gym_lite":
+        return BASELINE_MANIFEST_POLICY_V2
+    if source == "r2e_gym_subset":
+        return BASELINE_MANIFEST_POLICY_R2E_V1
+    return BASELINE_MANIFEST_POLICY_V1
 
 
 def parse_census_output(

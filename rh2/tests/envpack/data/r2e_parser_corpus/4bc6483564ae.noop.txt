@@ -1,0 +1,106 @@
+[1m============================= test session starts ==============================[0m
+platform linux -- Python 3.9.21, pytest-8.3.4, pluggy-1.5.0
+rootdir: /testbed
+configfile: setup.cfg
+plugins: cov-6.0.0
+collected 24 items
+
+r2e_tests/test_1.py [31mF[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                             [100%][0m
+
+=================================== FAILURES ===================================
+[31m[1m_________________________________ test_sanity __________________________________[0m
+
+    def test_sanity():
+    
+        ImageOps.autocontrast(hopper("L"))
+        ImageOps.autocontrast(hopper("RGB"))
+    
+        ImageOps.autocontrast(hopper("L"), cutoff=10)
+        ImageOps.autocontrast(hopper("L"), cutoff=(2, 10))
+        ImageOps.autocontrast(hopper("L"), ignore=[0, 255])
+        ImageOps.autocontrast(hopper("L"), mask=hopper("L"))
+        ImageOps.autocontrast(hopper("L"), preserve_tone=True)
+    
+        ImageOps.colorize(hopper("L"), (0, 0, 0), (255, 255, 255))
+        ImageOps.colorize(hopper("L"), "black", "white")
+    
+        ImageOps.pad(hopper("L"), (128, 128))
+        ImageOps.pad(hopper("RGB"), (128, 128))
+    
+        ImageOps.contain(hopper("L"), (128, 128))
+        ImageOps.contain(hopper("RGB"), (128, 128))
+    
+        ImageOps.crop(hopper("L"), 1)
+        ImageOps.crop(hopper("RGB"), 1)
+    
+        ImageOps.deform(hopper("L"), deformer)
+        ImageOps.deform(hopper("RGB"), deformer)
+    
+        ImageOps.equalize(hopper("L"))
+        ImageOps.equalize(hopper("RGB"))
+    
+        ImageOps.expand(hopper("L"), 1)
+        ImageOps.expand(hopper("RGB"), 1)
+        ImageOps.expand(hopper("L"), 2, "blue")
+        ImageOps.expand(hopper("RGB"), 2, "blue")
+    
+        ImageOps.fit(hopper("L"), (128, 128))
+        ImageOps.fit(hopper("RGB"), (128, 128))
+    
+        ImageOps.flip(hopper("L"))
+        ImageOps.flip(hopper("RGB"))
+    
+        ImageOps.grayscale(hopper("L"))
+        ImageOps.grayscale(hopper("RGB"))
+    
+>       ImageOps.invert(hopper("1"))
+
+[1m[31mr2e_tests/test_1.py[0m:66: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+[1m[31msrc/PIL/ImageOps.py[0m:528: in invert
+    return _lut(image, lut)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+image = <PIL.Image.Image image mode=1 size=128x128 at 0x7A9AD575A5E0>
+lut = [255, 254, 253, 252, 251, 250, ...]
+
+    def _lut(image, lut):
+        if image.mode == "P":
+            # FIXME: apply to lookup table, not image data
+            raise NotImplementedError("mode P support coming soon")
+        elif image.mode in ("L", "RGB"):
+            if image.mode == "RGB" and len(lut) == 256:
+                lut = lut + lut + lut
+            return image.point(lut)
+        else:
+>           raise OSError("not supported for this image mode")
+[1m[31mE           OSError: not supported for this image mode[0m
+
+[1m[31msrc/PIL/ImageOps.py[0m:58: OSError
+==================================== PASSES ====================================
+[36m[1m=========================== short test summary info ============================[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_1pxfit[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_fit_same_ratio[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_contain[new_size0][0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_contain[new_size1][0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_contain[new_size2][0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_pad[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_pil163[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_scale[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_expand_palette[10][0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_expand_palette[border1][0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_colorize_2color[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_colorize_2color_offset[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_colorize_3color_offset[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_exif_transpose[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_autocontrast_cutoff[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_autocontrast_mask_toy_input[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_autocontrast_mask_real_input[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_autocontrast_preserve_tone[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_autocontrast_preserve_gradient[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_autocontrast_preserve_one_color[color0][0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_autocontrast_preserve_one_color[color1][0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_autocontrast_preserve_one_color[color2][0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_autocontrast_preserve_one_color[color3][0m
+[31mFAILED[0m r2e_tests/test_1.py::[1mtest_sanity[0m - OSError: not supported for this image mode
+[31m========================= [31m[1m1 failed[0m, [32m23 passed[0m[31m in 0.58s[0m[31m =========================[0m

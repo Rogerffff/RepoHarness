@@ -1,0 +1,50 @@
+============================= test session starts ==============================
+platform linux -- Python 3.9.21, pytest-8.3.4, pluggy-1.5.0
+rootdir: /testbed
+configfile: tox.ini
+plugins: xdist-3.6.1, cov-6.0.0, fail-slow-0.6.0
+collected 4 items
+
+r2e_tests/test_1.py F.                                                   [ 50%]
+r2e_tests/test_2.py ..                                                   [100%]
+
+=================================== FAILURES ===================================
+____________________ test_alter_interface_docs_for_cmdline _____________________
+
+    def test_alter_interface_docs_for_cmdline():
+        alt = alter_interface_docs_for_cmdline(demo_doc)
+        alt_l = alt.split('\n')
+        # de-dented
+        assert_false(alt_l[0].startswith(' '))
+        assert_false(alt_l[-1].startswith(' '))
+        assert_not_in('PY', alt)
+        assert_not_in('CMD', alt)
+        assert_not_in('REFLOW', alt)
+        assert_in('a b', alt)
+        assert_in('not\n   reflowed', alt)
+        assert_in("Something for the cmdline only Multiline!", alt)
+        assert_not_in("Some Python-only bits", alt)
+        assert_not_in("just for Python", alt)
+        assert_in("just for the command line", alt)
+>       assert_in("multiline cli-only with [ brackets\n[] ]", alt)
+
+r2e_tests/test_1.py:34: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+first = 'multiline cli-only with [ brackets\n[] ]'
+second = 'Bla bla summary\n\nGeneric intro blurb. Ping pong ping pong ping pong ping pong.  Ping pong ping\npong ping pong ping... dong ding\ndong.  Ding dong ding dong ding dong.  Ding dong ding dong ding dong.  Ding\ndong ding dong ding dong.\n\n'
+msg = None
+
+    def assert_in(first, second, msg=None):
+        if msg is None:
+>           assert first in second
+E           AssertionError: assert 'multiline cli-only with [ brackets\n[] ]' in 'Bla bla summary\n\nGeneric intro blurb. Ping pong ping pong ping pong ping pong.  Ping pong ping\npong ping pong ping... dong ding\ndong.  Ding dong ding dong ding dong.  Ding dong ding dong ding dong.  Ding\ndong ding dong ding dong.\n\n'
+
+datalad/tests/utils_pytest.py:131: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED r2e_tests/test_1.py::test_name_generation
+PASSED r2e_tests/test_2.py::test_dedent
+PASSED r2e_tests/test_2.py::test_alter_interface_docs_for_api
+FAILED r2e_tests/test_1.py::test_alter_interface_docs_for_cmdline - Assertion...
+========================= 1 failed, 3 passed in 1.36s ==========================

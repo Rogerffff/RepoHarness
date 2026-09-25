@@ -27,7 +27,7 @@ import json
 import re
 import time
 import uuid
-from collections.abc import Awaitable, Callable, Iterable, Sequence
+from collections.abc import Awaitable, Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -39,7 +39,11 @@ from repoharness2.adapters.slime.baseline_census import (
     generate_baseline_manifest,
 )
 from repoharness2.adapters.slime.patch_exporter import PatchExportError, export_frozen_patch
-from repoharness2.adapters.slime.prepared_task_face import build_grading_spec_from_host_view
+from repoharness2.adapters.slime.prepared_task_face import build_grading_spec_from_host_view, overlay_binding_mismatch
+from repoharness2.adapters.slime.r2e_grading_scripts import (
+    evaluate_r2e_rollout_preflight,
+    render_r2e_rollout_preflight_script,
+)
 from repoharness2.adapters.slime.sandbox_profile import (
     GraderSandboxProfile,
     RolloutSandboxProfile,
@@ -49,7 +53,8 @@ from repoharness2.adapters.slime.sandbox_profile import (
 from repoharness2.contracts.frozen_patch import compute_frozen_patch_digest
 from repoharness2.contracts.scoring_projection import ProjectionContractError, classify_frozen_patch
 from repoharness2.envpack import materialize
-from repoharness2.envpack.bundles_v2 import ValidationOnlyBundle
+from repoharness2.envpack.bundles_v2 import PrivateGradingBundleR2E, ValidationOnlyBundle
+from repoharness2.envpack.environment_overlay import EnvironmentOverlayV1
 from repoharness2.envpack.prepared_tasks import (
     HOST_GRADING_FILE,
     PreparedTasksManifest,
@@ -59,7 +64,12 @@ from repoharness2.envpack.prepared_tasks import (
     manifest_file_sha256,
     prepare_tasks,
 )
-from repoharness2.envpack.training_view import HostGradingView, RolloutTaskView, TrustedTaskController
+from repoharness2.envpack.training_view import (
+    DEFAULT_TASK_SOURCES,
+    HostGradingView,
+    RolloutTaskView,
+    TrustedTaskController,
+)
 from repoharness2.grading.manager import (
     BaselineIntegrityError,
     ExecResult,
@@ -163,6 +173,8 @@ class ReplayContext:
     derived_image: DerivedImage | None = None
     # 第四组 P-A：按 task_id 的环境资格记录（load_env_qualifications 从账本构造；manager 自行核对身份与摘要）
     qualifications: dict[str, EnvQualification] = field(default_factory=dict)
+    # R2E 接线 R-d：按 task_id 的环境覆盖条目（逐题派生镜像）。有条目的题两类容器都用派生镜像（按确认过的 image ID 启动）。
+    image_overlays: dict[str, EnvironmentOverlayV1] = field(default_factory=dict)
 
     def resolve_task_id(self, ref: str) -> str:
         """接受 source-qualified task_id 或裸 instance_id。"""
@@ -186,6 +198,7 @@ def load_context(
     docker: DockerRunner = run_docker,
     derived_image: DerivedImage | None = None,
     qualifications: dict[str, EnvQualification] | None = None,
+    image_overlays: dict[str, EnvironmentOverlayV1] | None = None,
 ) -> ReplayContext:
     """走 actor 同一读取口（identity/digest/权限复核），不调完整 loader。"""
     manifest = load_prepared_manifest(prepared_dir, expected_sha256=manifest_sha256)
@@ -198,12 +211,19 @@ def load_context(
         rollout_profile=rollout_profile, grader_profile=grader_profile,
         run_id=run_id or uuid.uuid4().hex[:12], artifacts_dir=Path(artifacts_dir), docker=docker,
         derived_image=derived_image, qualifications=dict(qualifications or {}),
+        image_overlays=dict(image_overlays or {}),
     )
 
 
-def prepare_for_replay(*, repo_root: Path | str, out_dir: Path | str, private_dir: Path | str, task_ids: Iterable[str] | None) -> dict[str, Any]:
-    """受信准备（host 进程一次性）：与 `envpack.trusted_prep` 同一入口，附带写出 summary.json 供 run 子命令消费。"""
-    controller = TrustedTaskController.from_repo_root(Path(repo_root).resolve())
+def prepare_for_replay(
+    *, repo_root: Path | str, out_dir: Path | str, private_dir: Path | str, task_ids: Iterable[str] | None,
+    sources: Sequence[str] | None = None,
+) -> dict[str, Any]:
+    """受信准备（host 进程一次性）：与 `envpack.trusted_prep` 同一入口，附带写出 summary.json 供 run 子命令消费。
+    `sources` 缺省只有 swe_gym_lite（与接入 R2E 之前相同）；R2E 题要显式把 r2e_gym_subset 写进来源集合。"""
+    controller = TrustedTaskController.from_repo_root(
+        Path(repo_root).resolve(), sources=tuple(sources) if sources else DEFAULT_TASK_SOURCES,
+    )
     manifest = prepare_tasks(controller, out_dir=out_dir, private_dir=private_dir, task_ids=list(task_ids) if task_ids else None)
     summary = {
         "prepared_dir": str(Path(out_dir).resolve()),
@@ -292,7 +312,7 @@ class ReplayGrader:
     # ------------------------------------------------------------------ 候选阶段
     async def _candidate_stage(
         self, *, task_id: str, candidate: CandidateInput, container: str, stage: _CandidateStage, spec: GradingEnvSpec,
-        runtime_image_digest: str,
+        runtime_image_digest: str, candidate_image: str | None = None,
     ) -> None:
         ctx = self.ctx
         view = ctx.rollout_views[task_id]
@@ -301,7 +321,10 @@ class ReplayGrader:
         docker = ctx.docker
 
         stage.last_stage = "container_start"
-        image = ctx.derived_image.ref if ctx.derived_image is not None else public.image
+        if candidate_image is not None:
+            image = candidate_image  # 环境覆盖表：按确认过的 image ID 启动（tag 可重指，ID 不可）
+        else:
+            image = ctx.derived_image.ref if ctx.derived_image is not None else public.image
         run = await docker(*rp.docker_run_args(name=container, network="none", image=image, labels=run_labels_from_env()))
         if run.exit_code != 0:
             raise ReplayStageError("container_start", _tail(run.stderr))
@@ -333,6 +356,15 @@ class ReplayGrader:
             stage.omitted["baseline"] = base_omitted
         except BaselineCensusError as exc:
             raise ReplayStageError("baseline_census", str(exc)) from exc
+
+        if isinstance(ctx.grading_views[task_id].grading, PrivateGradingBundleR2E):
+            # R2E 专属三条预检：以 agent 身份、放在首次 census **之后**（`.venv/` 的路径清单摘要进基线身份——B 线 B1）。
+            # 失败 = 该题不进入候选阶段（派生环境没接好，评出来的分数没有意义）。
+            stage.last_stage = "r2e_preflight"
+            pre = await agent_ws.run_bash(render_r2e_rollout_preflight_script())
+            failures = evaluate_r2e_rollout_preflight(pre.stdout)
+            if failures:
+                raise ReplayStageError("r2e_preflight", ";".join(failures)[:300])
 
         stage.last_stage = "apply_candidate"
         if candidate.patch_text is not None:
@@ -439,15 +471,19 @@ class ReplayGrader:
         image_id_actual: str | None = None
         runtime_image_digest = public.image_manifest_digest
         derived_error: str | None = None
-        if ctx.derived_image is not None:
+        overlay = ctx.image_overlays.get(task_id)
+        derived_ref = overlay.derived_image_ref if overlay is not None else (ctx.derived_image.ref if ctx.derived_image else None)
+        if derived_ref is not None:
             # 派生镜像：先把 spec 切到 local_build（身份先按 tag，inspect 到 ID 后换成 ID）
-            spec = dataclasses.replace(spec, image=ctx.derived_image.ref, image_manifest_digest=None, image_local_build=True)
+            spec = dataclasses.replace(spec, image=derived_ref, image_manifest_digest=None, image_local_build=True)
         row: dict[str, Any] = {
             "schema_id": LEDGER_SCHEMA_ID, "run_id": ctx.run_id, "task_id": task_id, "instance_id": gview.instance_id,
             "source": gview.source, "attempt": attempt, "started_at_utc": started,
             "image_ref": spec.image, "image_digest_expected": public.image_manifest_digest,
             "image_id_actual": image_id_actual, "image_local_build": spec.image_local_build,
             "derived_image_recipe": ctx.derived_image.recipe if ctx.derived_image else None,
+            "overlay": ({"derived_image_ref": overlay.derived_image_ref, "derived_image_id": overlay.derived_image_id,
+                         "recipe_id": overlay.recipe_id, "recipe_sha256": overlay.recipe_sha256} if overlay is not None else None),
             "candidate": {"kind": candidate.kind, "origin": candidate.origin, "patch_sha256": candidate.patch_sha256,
                           "apply_method": None, "apply_user": f"{ctx.rollout_profile.agent_user}/{ctx.rollout_profile.agent_uid}",
                           "apply_stderr_tail": None},
@@ -462,11 +498,15 @@ class ReplayGrader:
             "env_qualification": env_qualification_status(spec)[1],
             "reference_missing_count": None, "execution_failure_decision": None, "resource_facts": None,
         }
-        if ctx.derived_image is not None:
+        candidate_image: str | None = None
+        if overlay is not None:
+            # 覆盖条目与环境包 / 评分面的静态互检（不符 = 该题不评分；账本行已建立）
+            derived_error = _overlay_static_mismatch(overlay, public=public, gview=gview, shadowed=ctx.derived_image is not None)
+        if derived_ref is not None and derived_error is None:
             # 接线页 §14.2 余项：账本行先建立，inspect 期间被取消也有落账；R5-P2：资格键用实际 image ID
             try:
                 ins = await asyncio.wait_for(
-                    ctx.docker("image", "inspect", "-f", "{{.Id}}", ctx.derived_image.ref), timeout=self.budgets.image_pull_seconds,
+                    ctx.docker("image", "inspect", "-f", "{{.Id}}", derived_ref), timeout=self.budgets.image_pull_seconds,
                 )
             except (TimeoutError, asyncio.TimeoutError):
                 derived_error = "derived_image:inspect_timeout"  # R4：inspect 也在镜像预算内
@@ -477,10 +517,18 @@ class ReplayGrader:
             else:
                 if ins.exit_code != 0 or not ins.stdout.strip().startswith("sha256:"):
                     derived_error = f"derived_image:not_inspectable:{_tail(ins.stderr, 200)}"
+                elif overlay is not None and ins.stdout.strip() != overlay.derived_image_id:
+                    # tag 被重指到了别的构建：表里登记的不是现在这张镜像
+                    row["image_id_actual"] = ins.stdout.strip()
+                    derived_error = f"overlay:image_id_mismatch:actual={ins.stdout.strip()[:19]}:table={overlay.derived_image_id[:19]}"
                 else:
                     image_id_actual = ins.stdout.strip()
                     runtime_image_digest = image_id_actual
                     spec = dataclasses.replace(spec, image_local_build_id=image_id_actual)
+                    if overlay is not None:
+                        # 两类容器都直接用确认过的 image ID 启动（关掉"检查之后、启动之前 tag 被重指"的窗口）
+                        spec = dataclasses.replace(spec, image=image_id_actual)
+                        candidate_image = image_id_actual
                     row["image_id_actual"] = image_id_actual
                     row["image_identity"] = grading_image_identity(spec)
                     row["env_qualification"] = env_qualification_status(spec)[1]
@@ -510,7 +558,7 @@ class ReplayGrader:
         try:
             await asyncio.wait_for(
                 self._candidate_stage(task_id=task_id, candidate=candidate, container=container, stage=stage, spec=spec,
-                                      runtime_image_digest=runtime_image_digest),
+                                      runtime_image_digest=runtime_image_digest, candidate_image=candidate_image),
                 timeout=self.budgets.candidate_stage_seconds,
             )
         except (TimeoutError, asyncio.TimeoutError):
@@ -592,6 +640,7 @@ class ReplayGrader:
             raise
         except BaselineIntegrityError as exc:
             row["stage_error"] = f"baseline_integrity:{getattr(exc, 'reason_code', '')}:{exc}"
+            self._fill_halted_grading_refs(row, trajectory_id)  # R-0 复核 CR2：manager 已落盘的日志 / 事实进账本，不造报告
             self._append(row)
             raise  # run-halt 通道：契约矛盾不继续下一题
         except Exception as exc:  # noqa: BLE001 - 记录首个失败原因后继续下一题
@@ -627,6 +676,28 @@ class ReplayGrader:
                 row["diagnostics_ref"] = str(side) if side.exists() else None
             if rec.candidate_facts is not None:
                 row["install"] = rec.candidate_facts
+                row["test"] = _test_block(rec.candidate_facts)  # R-0 复核 CR2：取消时也留候选段事实
+            break
+
+    def _fill_halted_grading_refs(self, row: dict[str, Any], trajectory_id: str) -> None:
+        """停批（基线契约矛盾 / grader scope 无法确认终止）时 manager 不交回报告——scope 终止失败会**替换**已经
+        组好的报告（正常结论或 infra 收口都一样）。但日志与 sidecar 可能已落盘、候选段事实也在 record 上：补进账本的
+        log / diagnostics_ref / install / test / resource_facts。**不**构造 report，也不构造 reward。"""
+
+        for rec in reversed(getattr(self.manager, "container_records", ())):
+            if rec.trajectory_id != trajectory_id:
+                continue
+            ref = getattr(rec, "persisted_eval_log_ref", None) or getattr(rec, "cancelled_eval_log_ref", None)
+            if ref is not None and self.manager.config.eval_log_dir is not None:
+                log_dir = Path(self.manager.config.eval_log_dir)
+                partial = bool((rec.candidate_facts or {}).get("log_partial", True))
+                row["log"] = {"path": str(log_dir / f"{ref.ref_id}.eval.log"), "sha256": ref.sha256, "partial": partial}
+                side = log_dir / f"{ref.ref_id}.diagnostics.json"
+                row["diagnostics_ref"] = str(side) if side.exists() else None
+            if rec.candidate_facts is not None:
+                row["install"] = rec.candidate_facts
+                row["test"] = _test_block(rec.candidate_facts)
+            row["resource_facts"] = getattr(rec, "resource_facts", None)
             break
 
     def _fill_from_report(self, row: dict[str, Any], report: Any) -> None:
@@ -638,6 +709,8 @@ class ReplayGrader:
             "execution_failure_stage": report.execution_failure_stage,
             "execution_failure_evidence": list(report.execution_failure_evidence),
             "grading_semantics": report.grading_semantics,
+            # R2E 接线 §3.6：expected 状态映射的匹配计数（swe_f2p_p2p 恒 None）
+            "expected_match": report.expected_match_count, "expected_total": report.expected_total_count,
         }
         row["regrade_total"] = getattr(self.manager, "regrade_total", None)
         timing = self.manager.take_grader_phase_timing(report.timings.record_id) if report.timings is not None else None
@@ -652,7 +725,8 @@ class ReplayGrader:
         if diag is not None:
             row["install"] = diag.get("candidate")
             cand = diag.get("candidate") or {}
-            row["test"] = {"rc": cand.get("test_rc"), "seconds": cand.get("test_seconds")} if cand else None
+            # A 线 09-20：候选段是否跑到收口、exec 的真实退出码（被信号终止 ≥128）进账本，对账时不只信 log_partial
+            row["test"] = _test_block(cand)
             row["verdict_diagnostics"] = diag.get("verdict")
             row["observations"] = diag.get("observations")
             row["runner_integrity_changed"] = diag.get("runner_integrity_changed")
@@ -691,6 +765,27 @@ class ReplayGrader:
             fh.write(json.dumps(row, ensure_ascii=False, sort_keys=True, default=str) + "\n")
 
 
+def _test_block(cand: Mapping[str, Any] | None) -> dict[str, Any] | None:
+    """账本 `test` 块：取自 manager 的候选段事实（三处填充口共用）。"""
+
+    if not cand:
+        return None
+    return {
+        "rc": cand.get("test_rc"), "seconds": cand.get("test_seconds"),
+        "exec_exit_code": cand.get("candidate_exec_exit_code"),
+        "segment_completed": cand.get("candidate_segment_completed"),
+    }
+
+
+def _overlay_static_mismatch(overlay: EnvironmentOverlayV1, *, public: Any, gview: HostGradingView, shadowed: bool) -> str | None:
+    """覆盖条目与环境包 / 评分面的静态互检；返回 stage_error 文本或 None。"""
+
+    if shadowed:
+        return "overlay:conflicts_with_batch_derived_image"  # 同一题既有逐题覆盖又有整批 --derived-image：不猜用哪个
+    # 来源镜像、R2E 隐藏测试位置 / 树摘要 / 配方自报，以及修订所需的环境步骤（Codex 批次三复核 F1）：与正式 actor 任务面共用
+    return overlay_binding_mismatch(overlay, public=public, grading=gview.grading)
+
+
 def _policy_of(g: GraderSandboxProfile) -> dict[str, Any]:
     return {
         "profile_id": g.profile_id, "grader_profile_digest": g.digest(), "network": "deny_all",
@@ -721,6 +816,43 @@ __all__ = [
     "ReplayHaltError", "ReplayStageError", "candidate_from_spec", "export_gold_candidates", "load_context",
     "prepare_for_replay",
 ]
+
+
+# R-0（2026-09-20，B 线 09-19 runtime finding 的 driver 半边）：CLI 退出码约定
+EXIT_OK = 0
+EXIT_HALTED = 2  # 停批：候选容器清理无法确认 / 工件持久化失败 / 基线契约矛盾 / grader scope 无法确认终止
+EXIT_GRADER_CONTAINERS_OPEN = 3  # 全部题目跑完，但收口时仍有未确认关闭的评分容器
+EXIT_ABORTED = 4  # 未捕获的异常 / 取消正在传播（进程随后带 traceback 或被取消退出；这个值只进收尾摘要）
+
+
+def final_exit_status(
+    *, halted: str | None, manager_close: Mapping[str, Any], aborted: str | None = None,
+) -> dict[str, Any]:
+    """把"这一批算不算正常结束"从账本外显到进程退出码。
+
+    - `manager.close()["containers_open"]` 是**最终状态**：非空 = 收口时仍有评分容器未确认关闭 → 非零退出，
+      派发方不得当成正常完成继续起下一条；
+    - `cleanup_failures` 是**累计历史**，包含之后已经清理成功的（A 线 09-20 说明）：最终无未关容器时只留诊断，
+      不算整批失败；
+    - `aborted`（R-0 复核 CR1）：driver 正带着未捕获的异常或取消退出。此时进程不会以 0 结束，收尾摘要也不能写
+      reason="ok"——如实记 `aborted:<异常类型>`，同时照常报告清理结果；
+    - 停批（halted）优先。逐题结论仍以账本行为准：`stage_error`、reward 0 与运行失败三者分别对账，退出码只回答
+      "能不能把这一批当作正常收口"。"""
+
+    open_now = list(manager_close.get("containers_open") or [])
+    history = list(manager_close.get("cleanup_failures") or [])
+    if halted:
+        code, reason = EXIT_HALTED, f"halted:{halted}"
+    elif aborted:
+        code, reason = EXIT_ABORTED, f"aborted:{aborted}"
+    elif open_now:
+        code, reason = EXIT_GRADER_CONTAINERS_OPEN, "grader_containers_open:" + ",".join(open_now[:5])
+    else:
+        code, reason = EXIT_OK, "ok"
+    return {
+        "exit_code": code, "reason": reason, "grader_containers_open": open_now,
+        "cleanup_failures_total": len(history), "cleanup_failures_resolved": bool(history) and not open_now,
+    }
 
 
 def load_env_qualifications(ledger_paths: Sequence[Path | str]) -> dict[str, EnvQualification]:

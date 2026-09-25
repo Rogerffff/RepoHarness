@@ -57,8 +57,42 @@ GRADER_NAME = "swebench_official_parser"
 ResolutionStatus = Literal["RESOLVED_FULL", "RESOLVED_PARTIAL", "RESOLVED_NO"]
 
 
+class ExpectedMapMatch(StrictModel):
+    """R2E 的判定原料：期望映射（测试 id → 状态）与观测映射逐键比对。
+
+    口径：`total_count` = 期望键 ∪ 观测键 的大小；`match_count` = 并集里"两边都在场且状态相等"的键数。
+    多出或缺少任何一个键都让 match < total——resolved 当且仅当 keys_equal 且 match == total > 0。"""
+
+    match_count: int = Field(ge=0)
+    total_count: int = Field(ge=0)
+    keys_equal: bool
+    expected_count: int = Field(ge=0, description="期望映射的键数（归一化后）。")
+    observed_count: int = Field(ge=0, description="观测映射的键数（归一化后）。")
+    mismatched: list[str] = Field(default_factory=list, description="状态不等的键（两边都在场）。")
+    missing: list[str] = Field(default_factory=list, description="期望里有、观测里没有的键。")
+    unexpected: list[str] = Field(default_factory=list, description="观测里有、期望里没有的键。")
+
+    @property
+    def resolved(self) -> bool:
+        return self.keys_equal and self.total_count > 0 and self.match_count == self.total_count
+
+    @property
+    def expected_present_count(self) -> int:
+        """期望键里**出现在观测里**的个数（不管状态对不对）。P-A 的"参考全缺席"按它判，
+        不用 match_count 代替：状态全错但键全在 = 测试正常跑完的 tests_failed，不是全局失败。"""
+
+        return self.expected_count - len(self.missing)
+
+
+GradingSemantics = Literal["swe_f2p_p2p", "r2e_expected_map"]
+
+
 class EvalVerdict(StrictModel):
-    """一次官方评分解析的完整结论（清单制：所有列表都是 F2P/P2P 清单内测试）。"""
+    """一次官方评分解析的完整结论。
+
+    `grading_semantics="swe_f2p_p2p"`（默认）：清单制，所有列表都是 F2P/P2P 清单内测试。
+    `grading_semantics="r2e_expected_map"`：判定原料在 `expected_match`，四个 F2P/P2P 列表恒空、两个 rate 恒 0.0，
+    `resolved == expected_match.resolved`，`num_parsed_tests` = 观测键数，`reference_missing` = 缺席的期望键。"""
 
     instance_id: NonEmptyStr = Field(description="被评分的 instance id。")
     apply_ok: bool = Field(
@@ -86,6 +120,30 @@ class EvalVerdict(StrictModel):
     parser_source: str = Field(
         default="swebench_installed", description="状态映射来自哪个 parser 实现（v1 = 安装的 swebench；v2 = swegym_parsers@<commit>）。"
     )
+    # R2E 接线 R-b（2026-09-20）：带默认值，SWE 两条入口不填、行为不变。
+    grading_semantics: GradingSemantics = Field(
+        default="swe_f2p_p2p", description="来源判定语义（与 GradingReport.grading_semantics 同枚举）。"
+    )
+    expected_match: ExpectedMapMatch | None = Field(
+        default=None, description="r2e_expected_map：期望 / 观测状态映射的逐键比对结果；swe_f2p_p2p 恒 None。"
+    )
+
+    @model_validator(mode="after")
+    def _check_semantics_shape(self) -> "EvalVerdict":
+        if self.grading_semantics == "swe_f2p_p2p":
+            if self.expected_match is not None:
+                raise ValueError("swe_f2p_p2p 语义下不得携带 expected_match。")
+            return self
+        if self.expected_match is None:
+            raise ValueError("r2e_expected_map 语义下 expected_match 必填。")
+        if self.f2p_success or self.f2p_failure or self.p2p_success or self.p2p_failure:
+            raise ValueError("r2e_expected_map 语义下 F2P/P2P 列表必须为空（来源合同是 expected 状态映射）。")
+        if self.apply_ok and self.resolved != self.expected_match.resolved:
+            raise ValueError(
+                f"r2e_expected_map：resolved={self.resolved} 与 expected_match.resolved="
+                f"{self.expected_match.resolved} 矛盾。"
+            )
+        return self
 
     @model_validator(mode="after")
     def _check_resolved_consistency(self) -> "EvalVerdict":
@@ -271,6 +329,82 @@ def parse_eval_log_v2(grading, log_text: str) -> EvalVerdict:
     )
 
 
+# R2E 候选测试段的起止标记：与 SWE v2 渲染器打印的是同一对字面量（`prepared_task_face.V2_EVAL_*_MARKER`）。
+# 这里不 import swebench——R2E 路径不依赖它。
+R2E_EVAL_START_MARKER = ">>>>> Start Test Output"
+R2E_EVAL_END_MARKER = ">>>>> End Test Output"
+R2E_GRADING_BUNDLE_SCHEMA_ID = "rh2.private_grading_bundle.r2e.v1"
+
+
+def parse_eval_log_r2e(grading, log_text: str) -> EvalVerdict:
+    """R2E 评分面入口（R2E 接线 R-b）：期望状态映射与观测状态映射的精确匹配。
+
+    与 SWE v2 入口同纪律：**只以 Start / End 标记之间的段作为状态来源**，段外能认出的行数只进诊断；
+    缺标记 → `apply_ok=False`（frozen-delta 正式链上由 manager 改判 infra）。与 v2 的差别：
+
+    1. parser 与键归一化来自 `envpack.r2e_parsers`（固定 prime-envs@c4d04dfe 的移植）；期望侧与观测侧走同一个
+       `normalize_status_map`，所以 pillow 六题期望键自带的 ANSI 序列两侧对称地删掉。
+    2. 不检查 swebench 的四个坏码字符串：R2E 的来源规则里没有这组约定，RH2 的 R2E 渲染器也不打印它们；
+       把候选可控的 stdout 里的一句字面量当成"评分链路坏了"只会多一条把负样本洗成 None 的路。
+    3. 判定口径是 `expected_map_matches` 的并集口径（比上游 `calculate_reward` 严一处，见 r2e_parsers 模块头）。
+
+    `grading` 是 `PrivateGradingBundleR2E`（鸭子：需要 schema_id / instance_id / expected_map()）。
+    例：期望 `{a: PASSED, b: PASSED}`、段内只解析出 `{a: FAILED}` → match 0/2、missing=[b]、`expected_present_count=1`
+    → tests_failed / 0，不是"参考全缺席"。
+    """
+
+    from repoharness2.envpack.r2e_parsers import (
+        R2E_PARSER_VERSION_TAG,
+        normalize_status_map,
+        parse_log_pytest,
+    )
+
+    if getattr(grading, "schema_id", None) != R2E_GRADING_BUNDLE_SCHEMA_ID:
+        raise ValueError(
+            f"{getattr(grading, 'instance_id', '?')}: parse_eval_log_r2e 只服务 {R2E_GRADING_BUNDLE_SCHEMA_ID!r}，"
+            f"得到 {getattr(grading, 'schema_id', None)!r}"
+        )
+    expected = normalize_status_map(grading.expected_map())
+
+    has_markers = R2E_EVAL_START_MARKER in log_text and R2E_EVAL_END_MARKER in log_text
+    if not has_markers:
+        observed: dict[str, str] = {}
+        outside: dict[str, str] = {}
+        apply_ok = False
+    else:
+        head, rest = log_text.split(R2E_EVAL_START_MARKER, 1)
+        if R2E_EVAL_END_MARKER in rest:
+            segment, tail = rest.split(R2E_EVAL_END_MARKER, 1)
+        else:
+            # End 标记只出现在 Start 之前：段不成立，按空段处理（与 v2 入口一致 → 零解析，交给 P-A 三路判定）
+            segment, tail = "", rest
+        observed = normalize_status_map(parse_log_pytest(segment))
+        outside = parse_log_pytest(head + tail)
+        apply_ok = True
+
+    match = expected_map_matches(expected, observed)
+    resolved = apply_ok and match.resolved
+    return EvalVerdict(
+        instance_id=str(grading.instance_id),
+        apply_ok=apply_ok,
+        resolution="RESOLVED_FULL" if resolved else "RESOLVED_NO",
+        resolved=resolved,
+        f2p_rate=0.0,
+        p2p_rate=0.0,
+        f2p_success=[],
+        f2p_failure=[],
+        p2p_success=[],
+        p2p_failure=[],
+        num_parsed_tests=len(observed),
+        num_parsed_outside_segment=len(outside),
+        reference_missing=list(match.missing),
+        reference_skipped=[],
+        parser_source=R2E_PARSER_VERSION_TAG,
+        grading_semantics="r2e_expected_map",
+        expected_match=match,
+    )
+
+
 def grading_outcome_fields(verdict: EvalVerdict) -> dict:
     """把 EvalVerdict 翻成 contracts.GradingReport 的结论字段组（A7 接口）。
 
@@ -288,6 +422,18 @@ def grading_outcome_fields(verdict: EvalVerdict) -> dict:
     本函数产出**——parser 只看得见日志，容器级故障归 S1-4 manager 判。
     """
 
+    if verdict.grading_semantics == "r2e_expected_map":
+        if not verdict.apply_ok:
+            # 与 SWE 同形（标记不齐 = 测试结果不可信）：不带任何计数。frozen-delta 正式链上 manager 会先把
+            # apply_ok=False 改判 infra（official_bad_codes_after_successful_replay），走不到这里。
+            return {
+                "outcome": "unresolved", "failure_category": "patch_apply_failed", "reward": 0.0,
+                "grading_semantics": "r2e_expected_map",
+                "expected_match_count": None, "expected_total_count": None,
+                "f2p_pass_count": None, "f2p_total_count": None, "p2p_fail_count": None, "p2p_total_count": None,
+            }
+        assert verdict.expected_match is not None  # EvalVerdict 校验器保证
+        return grading_outcome_fields_r2e(verdict.expected_match)
     if not verdict.apply_ok:
         return {
             "outcome": "unresolved",
@@ -314,24 +460,6 @@ def grading_outcome_fields(verdict: EvalVerdict) -> dict:
 # ---------------------------------------------------------------------------
 
 
-class ExpectedMapMatch(StrictModel):
-    """R2E 的判定原料：期望映射（测试 id → 状态）与观测映射逐键比对。
-
-    口径：`total_count` = 期望键 ∪ 观测键 的大小；`match_count` = 并集里"两边都在场且状态相等"的键数。
-    多出或缺少任何一个键都让 match < total——resolved 当且仅当 keys_equal 且 match == total > 0。"""
-
-    match_count: int = Field(ge=0)
-    total_count: int = Field(ge=0)
-    keys_equal: bool
-    mismatched: list[str] = Field(default_factory=list, description="状态不等的键（两边都在场）。")
-    missing: list[str] = Field(default_factory=list, description="期望里有、观测里没有的键。")
-    unexpected: list[str] = Field(default_factory=list, description="观测里有、期望里没有的键。")
-
-    @property
-    def resolved(self) -> bool:
-        return self.keys_equal and self.total_count > 0 and self.match_count == self.total_count
-
-
 def expected_map_matches(expected: Mapping[str, str], observed: Mapping[str, str]) -> ExpectedMapMatch:
     """逐键精确匹配（R2E-Gym 的 resolved 口径：观测状态映射与期望映射相等）。"""
 
@@ -343,6 +471,7 @@ def expected_map_matches(expected: Mapping[str, str], observed: Mapping[str, str
     match = sum(1 for k in union if k in exp_keys and k in obs_keys and expected[k] == observed[k])
     return ExpectedMapMatch(
         match_count=match, total_count=len(union), keys_equal=exp_keys == obs_keys,
+        expected_count=len(exp_keys), observed_count=len(obs_keys),
         mismatched=mismatched, missing=missing, unexpected=unexpected,
     )
 

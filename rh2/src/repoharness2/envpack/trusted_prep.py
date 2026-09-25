@@ -35,7 +35,7 @@ from repoharness2.envpack.prepared_tasks import (
     manifest_file_sha256,
     prepare_tasks,
 )
-from repoharness2.envpack.training_view import TrustedTaskController
+from repoharness2.envpack.training_view import DEFAULT_TASK_SOURCES, TrustedTaskController
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -48,9 +48,15 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="逗号分隔的 source-qualified task_id 子集（缺省 = controller 全部任务）",
     )
+    parser.add_argument(
+        "--sources",
+        default=",".join(DEFAULT_TASK_SOURCES),
+        help="逗号分隔的来源集合（缺省只有 swe_gym_lite，与接入 R2E 之前相同；R2E 要显式写 r2e_gym_subset）",
+    )
     ns = parser.parse_args(argv)
 
-    controller = TrustedTaskController.from_repo_root(Path(ns.repo_root).resolve())
+    sources = [x.strip() for x in ns.sources.split(",") if x.strip()]
+    controller = TrustedTaskController.from_repo_root(Path(ns.repo_root).resolve(), sources=sources)
     task_ids = [x.strip() for x in ns.task_ids.split(",") if x.strip()] if ns.task_ids else None
     manifest = prepare_tasks(
         controller,

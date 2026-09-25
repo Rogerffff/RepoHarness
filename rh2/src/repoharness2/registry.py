@@ -63,6 +63,7 @@ from repoharness2.envpack.bundles import (
 )
 from repoharness2.envpack.bundles_v2 import (
     EnvironmentPackageV1,
+    PrivateGradingBundleR2E,
     PrivateGradingBundleV2,
     ValidationOnlyBundle,
 )
@@ -86,6 +87,8 @@ EXTRA_SCHEMA_REGISTRY: dict[str, type[StrictModel]] = {
     "rh2.public_task_bundle.v1": PublicTaskBundle,
     "rh2.private_grading_bundle.v1": PrivateGradingBundle,
     "rh2.private_grading_bundle.v2": PrivateGradingBundleV2,
+    # R2E 接线 R-a（2026-09-20，DR1=A）：第二个来源的评分面
+    "rh2.private_grading_bundle.r2e.v1": PrivateGradingBundleR2E,
     "rh2.validation_only_bundle.v1": ValidationOnlyBundle,
     "rh2.environment_package.v1": EnvironmentPackageV1,
     "rh2.bundle_pair.v1": BundlePair,
@@ -129,6 +132,7 @@ FULL_SCHEMA_REGISTRY: dict[str, type[StrictModel]] = {
 FULL_MARKER_SCAN_EXEMPT_SCHEMAS: frozenset[str] = MARKER_SCAN_EXEMPT_SCHEMAS | {
     "rh2.private_grading_bundle.v1",
     "rh2.private_grading_bundle.v2",   # 评分材料本体（test_patch/F2P），同 v1 豁免
+    "rh2.private_grading_bundle.r2e.v1",  # 评分材料本体（期望映射 / 隐藏测试清单），同理豁免
     "rh2.validation_only_bundle.v1",   # 金标解本体，runtime-private，同理豁免
     "rh2.bundle_pair.v1",
     # EnvironmentPackageV1 不豁免：只含 digest/身份，扫描必须保持 0 命中

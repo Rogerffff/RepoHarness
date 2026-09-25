@@ -1,0 +1,49 @@
+============================= test session starts =============================
+platform linux -- Python 3.9.21
+rootdir: /testbed
+...=== orphaned temp file: /tmp/tempwa9f22hg.tiff
+....=== orphaned temp file: /tmp/tempfvp2zkl6.tif
+.=== orphaned temp file: /tmp/tempm_ikd9o1.tiff
+.=== orphaned temp file: /tmp/tempix9rovow.tiff
+=== orphaned temp file: /tmp/temp07wmakk9.tiff
+..
+collected 11 items
+
+=================================== ERRORS =====================================
+__________ TestFileTiffMetadata.test_exif_div_zero __________
+Traceback (most recent call last):
+  File "/root/.local/share/uv/python/cpython-3.9.21-linux-x86_64-gnu/lib/python3.9/unittest/case.py", line 59, in testPartExecutor
+    yield
+  File "/root/.local/share/uv/python/cpython-3.9.21-linux-x86_64-gnu/lib/python3.9/unittest/case.py", line 592, in run
+    self._callTestMethod(testMethod)
+  File "/root/.local/share/uv/python/cpython-3.9.21-linux-x86_64-gnu/lib/python3.9/unittest/case.py", line 550, in _callTestMethod
+    method()
+  File "/testbed/r2e_tests/test_1.py", line 194, in test_exif_div_zero
+    im.save(out, tiffinfo=info, compression='raw')
+  File "/testbed/PIL/Image.py", line 1675, in save
+    save_handler(self, fp, filename)
+  File "/testbed/PIL/TiffImagePlugin.py", line 1446, in _save
+    offset = ifd.save(fp)
+  File "/testbed/PIL/TiffImagePlugin.py", line 715, in save
+    data = self._write_dispatch[typ](self, *values)
+  File "/testbed/PIL/TiffImagePlugin.py", line 571, in <lambda>
+    b"".join(self._pack(fmt, value) for value in values))
+  File "/testbed/PIL/TiffImagePlugin.py", line 571, in <genexpr>
+    b"".join(self._pack(fmt, value) for value in values))
+  File "/testbed/PIL/TiffImagePlugin.py", line 546, in _pack
+    return struct.pack(self._endian + fmt, *values)
+struct.error: required argument is not an integer
+
+==================== short test summary info ====================
+PASSED test_1::TestFileTiffMetadata::test_empty_metadata
+ERROR test_1::TestFileTiffMetadata::test_exif_div_zero
+PASSED test_1::TestFileTiffMetadata::test_iccprofile
+PASSED test_1::TestFileTiffMetadata::test_iccprofile_binary
+PASSED test_1::TestFileTiffMetadata::test_no_duplicate_50741_tag
+PASSED test_1::TestFileTiffMetadata::test_read_metadata
+PASSED test_1::TestFileTiffMetadata::test_rt_metadata
+PASSED test_1::TestFileTiffMetadata::test_write_metadata
+PASSED test_2::Test_IFDRational::test_ifd_rational_save
+PASSED test_2::Test_IFDRational::test_nonetype
+PASSED test_2::Test_IFDRational::test_sanity
+=================== 1 error, 10 passed in 0.05s ===================

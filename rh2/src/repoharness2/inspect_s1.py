@@ -369,6 +369,7 @@ def verify(
     # S2-1 T2-b（2026-07-13）：bundle v2 三分体系（golden 面与 grading 面分离，
     # 执行计划 §3.0）。显式清单放行（不共享前缀，故不用前缀机制）。
     _post_s1_extra_ids = {
+        "rh2.private_grading_bundle.r2e.v1",  # R2E 接线 R-a（2026-09-20）：第二个来源的评分面
         "rh2.private_grading_bundle.v2",
         "rh2.validation_only_bundle.v1",
         "rh2.environment_package.v1",

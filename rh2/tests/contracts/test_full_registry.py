@@ -29,6 +29,7 @@ EXPECTED_EXTRA_IDS = {
     "rh2.public_task_bundle.v1",
     "rh2.private_grading_bundle.v1",
     "rh2.private_grading_bundle.v2",
+    "rh2.private_grading_bundle.r2e.v1",  # R2E 接线 R-a（2026-09-20）
     "rh2.validation_only_bundle.v1",
     "rh2.environment_package.v1",
     "rh2.bundle_pair.v1",
@@ -306,6 +307,38 @@ def _grading_v2_payload():
     }
 
 
+def _grading_r2e_payload():
+    import hashlib as _h
+
+    from repoharness2.envpack.bundles_v2 import r2e_hidden_tests_tree_digest
+
+    def _sha(text: str) -> str:
+        return "sha256:" + _h.sha256(text.encode("utf-8")).hexdigest()
+
+    expected = '{"TestA.test_x": "PASSED", "test_y": "FAILED"}'
+    entry = ".venv/bin/python -W ignore -m pytest -rA r2e_tests"
+    files = [{"path": "test_1.py", "sha256": _sha("print(1)")}]
+    return {
+        "schema_id": "rh2.private_grading_bundle.r2e.v1",
+        "instance_id": "coveragepy__" + "a" * 40,
+        "repo": "coveragepy",
+        "repo_key_lower": "coveragepy",
+        "base_commit": "0" * 40,
+        "source_commit_hash": "a" * 40,
+        "expected_output_json": expected,
+        "expected_output_json_sha256": _sha(expected),
+        "run_tests_sh": entry,
+        "run_tests_sh_sha256": _sha(entry),
+        "hidden_test_files": files,
+        "hidden_tests_tree_sha256": r2e_hidden_tests_tree_digest((f["path"], f["sha256"]) for f in files),
+        "parser_id": "r2e_prime_pytest_v1",
+        "normalization_version": "prime_decolor_v1",
+        "rule_source_id": "prime_envs_c4d04dfe",
+        "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+        "spec_vendor_id": "r2e_gym_subset_e8b9fcbc",
+    }
+
+
 def _validation_only_payload():
     import hashlib as _h
     patch = "diff --git a/m.py b/m.py\n-bug\n+fix\n"
@@ -384,6 +417,7 @@ def test_unknown_field_rejected_for_every_new_schema(schema_id, frozen_pair):
         "rh2.public_task_bundle.v1": lambda: frozen_pair.public.model_dump(mode="json"),
         "rh2.private_grading_bundle.v1": lambda: frozen_pair.private.model_dump(mode="json"),
         "rh2.private_grading_bundle.v2": _grading_v2_payload,
+        "rh2.private_grading_bundle.r2e.v1": _grading_r2e_payload,
         "rh2.validation_only_bundle.v1": _validation_only_payload,
         "rh2.environment_package.v1": _environment_package_payload,
         "rh2.bundle_pair.v1": lambda: frozen_pair.model_dump(mode="json"),

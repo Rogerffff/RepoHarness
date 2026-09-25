@@ -291,7 +291,9 @@ async def test_formal_profile_combination_fills_install_test_and_observations(pr
     assert "-name '__pycache__'" in execs[norm[0]] and "-name '.pytest_cache'" in execs[norm[0]] and "-prune -exec rm -rf -- {} +" in execs[norm[0]]
     assert "-path './.git' -prune -o" in execs[norm[0]]  # CR3：排除命名空间先剪枝
     assert manager.container_records[-1].eval_log_partial is None  # §14.2 余项：日志全文落盘后不再留在记录里
-    assert row["test"] == {"rc": 0, "seconds": 7.0}
+    assert row["test"]["rc"] == 0 and row["test"]["seconds"] == 7.0
+    # R-0 / A 线 09-20：exec 真实退出码与"候选段是否跑到收口"进账本
+    assert row["test"]["exec_exit_code"] == 0 and row["test"]["segment_completed"] is True
     assert row["observations"]["RH2_OBS_IMPORT_PATH"] == "/testbed/moto/__init__.py" and row["runner_integrity_changed"] is False
     assert row["policy"]["profile_id"] == make_grader_profile().profile_id and row["log"]["partial"] is False
 
@@ -525,3 +527,67 @@ async def test_pa_qualification_ledger_round_trip(prepared, tmp_path):
     # R5-P2：派生镜像的资格键用实际 image ID（inspect -f {{.Id}}），不是可重指的 tag
     assert row3["env_qualification"] == "image_identity_mismatch" and row3["image_identity"] == "local_build:sha256:" + "ab" * 32
     assert row3["image_id_actual"] == "sha256:" + "ab" * 32
+
+
+# ---- R-0（2026-09-20）：driver 把 manager 最终收口状态外显为退出码 ----
+
+
+def test_r0_final_exit_status_distinguishes_open_containers_from_resolved_history():
+    from repoharness2.adapters.slime.replay_grade import (
+        EXIT_GRADER_CONTAINERS_OPEN,
+        EXIT_HALTED,
+        EXIT_OK,
+        final_exit_status,
+    )
+
+    ok = final_exit_status(halted=None, manager_close={"containers_open": [], "cleanup_failures": []})
+    assert ok["exit_code"] == EXIT_OK and ok["reason"] == "ok" and ok["cleanup_failures_resolved"] is False
+    # 历史上出现过清理失败、最终已清成功：只留诊断，不算整批失败
+    healed = final_exit_status(halted=None, manager_close={"containers_open": [], "cleanup_failures": ["rm c1: timeout"]})
+    assert healed["exit_code"] == EXIT_OK and healed["cleanup_failures_total"] == 1 and healed["cleanup_failures_resolved"] is True
+    # 收口时仍有评分容器未确认关闭：非零退出，派发方不得继续起下一条
+    still_open = final_exit_status(halted=None, manager_close={"containers_open": ["rh2-grading-x"], "cleanup_failures": ["rm x"]})
+    assert still_open["exit_code"] == EXIT_GRADER_CONTAINERS_OPEN and still_open["grader_containers_open"] == ["rh2-grading-x"]
+    assert still_open["cleanup_failures_resolved"] is False and still_open["reason"].startswith("grader_containers_open:")
+    # 停批优先
+    halted = final_exit_status(halted="cand: cleanup unconfirmed", manager_close={"containers_open": ["rh2-grading-x"], "cleanup_failures": []})
+    assert halted["exit_code"] == EXIT_HALTED and halted["reason"].startswith("halted:")
+
+
+async def test_r0_cli_converts_grader_scope_termination_into_a_halt_exit_code(prepared, tmp_path, monkeypatch, capsys):
+    """grader scope 无法确认终止（GradingScopeTerminationError，run-halt 通道）→ CLI 停批并以约定退出码 2 结束，
+    摘要行带 final_status；不是 traceback，也不是 0。"""
+    import argparse
+    import importlib.util
+
+    from repoharness2.grading.manager import GradingScopeTerminationError
+
+    # 脚本导入时把 rh2/src 插到 sys.path 首位；换成副本，测试结束由 monkeypatch 还原原列表，
+    # 免得后续测试（例 reference/slime 的差分测试）按被污染的路径取到 vendored slime（Codex 09-24 批次二复核 F1）。
+    monkeypatch.setattr(sys, "path", list(sys.path))
+    spec = importlib.util.spec_from_file_location("replay_cli_r0", REPO_ROOT / "rh2" / "scripts" / "replay_grade.py")
+    cli = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cli)
+    summary = tmp_path / "replay_summary.json"
+    summary.write_text(json.dumps({
+        "prepared_dir": str(prepared["prepared"]), "private_dir": str(prepared["private"]), "prepared_manifest_sha256": prepared["sha"],
+    }), encoding="utf-8")
+    calls: list[str] = []
+
+    async def boom(self, task_ref, candidate, *, attempt=1):
+        calls.append(task_ref)
+        raise GradingScopeTerminationError("grading_scope_termination_unconfirmed", "rh2-grading-x: still running after kill")
+
+    monkeypatch.setattr(cli.ReplayGrader, "replay_one", boom)
+    ns = argparse.Namespace(
+        prepared_summary=str(summary), task_ids=None, candidate="noop", repeat=2, candidate_stage_seconds=5.0,
+        grading_deadline_seconds=5.0, cleanup_seconds=5.0, image_pull_seconds=5.0, eval_log_dir=str(tmp_path / "logs"),
+        artifacts_dir=str(tmp_path / "artifacts"), ledger=str(tmp_path / "ledger.jsonl"), derived_image=None,
+        derived_image_recipe=None, qualification_ledger=[],
+    )
+    code = await cli._run(ns)
+    out = [json.loads(line) for line in capsys.readouterr().out.splitlines() if line.startswith("{")]
+    assert code == 2 and len(calls) == 1  # 第一题即停批，不再开新尝试
+    assert any("halt" in line and "GradingScopeTerminationError" in line["halt"] for line in out)
+    assert out[-1]["final_status"]["exit_code"] == 2 and out[-1]["final_status"]["reason"].startswith("halted:")
+
