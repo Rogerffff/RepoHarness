@@ -88,3 +88,10 @@
 **E4 R6 的设计修订通过，可按文件交接进入实现。** [完整报告 §3](review_followup_e5_20260925/README.md)。完成顺序、GC 快照 / 遍历后裁剪、未确认删除的记录保留、leases 同步退役、无日志启动失败、累计计数与保留历史分开均已写清。内存有界结论限于本片容器历史，不增加消费确认协议。本文仍为设计验收，非实现验收。
 
 E2 §1.5 第 3 项残留“等 §1.3 T0 决定”已被 §4 的归类覆盖，应删旧措辞；可信 root PATH 继续与 B E09 顺序落地，不等待新的政策批准。E2 的 Linux 差分与失败回退验收不变。
+
+## 5. 控制字符文件名停批的窄修（§1.2 的发现；2026-09-25，Claude，已实施）
+
+- **复现**：候选在 /testbed 建含 `0x01` 的文件名，运行后 census 解析里构造条目时契约拒绝，旧 exporter 不捕获，真实 fa_formal 编排得到 `FatalExecutionInfrastructureError rh2_contract_validation_failed`（stage=assemble）——模型能让整场训练停下。此前是源码推断，现在由反证用例实测（新分支关掉即复现）。会落到这里的只有不被 `splitlines()` 切行的控制字符（`0x01`–`0x08`、`0x0e`–`0x1b`、`0x1f`、`0x7f`）；TAB 已是 `post_census_parse_failed`，换行 / 回车等已按畸形行或 unsafe 处理，本修不动它们。
+- **修法（`patch_exporter.export_frozen_patch`，按 Codex §6 的处置）**：解析抛 ValidationError 时，用契约自己的路径规则（`baseline_manifest._check_canonical_path`）逐条复查 post-run 的 regular / symlink 条目路径——**只有**确有候选条目路径过不了规则，才改判为既有 unsafe 通道的 `unsupported_object_in_patch`（新 object_type `unsupported_path_name`，证据路径把控制字符写成 `\xNN`，原 ValidationError 留在异常链）；否则原样上抛，我方身份 / 摘要 / 契约矛盾照旧 run-fatal。编排侧零改动（沿用 `unsupported_object_in_patch` 分支：present + 永久拒绝、不评分、拒绝证据内嵌 receipt）。与同文件里父子前缀冲突改判 `unsupported_delta_shape` 是同一种写法。
+- **验收**（`tests/adapters/test_patch_export_path_names.py`，8 例）：正常新文件照常导出；`0x01` / `0x1f` / `0x7f` / ESC 四种路径 → typed 不支持且证据无控制字符；两种我方矛盾（条目落在排除 namespace、同一路径两条）仍抛 ValidationError；真实 fa_formal 编排 → 交付不评分、receipt `delivery_prepared`、拒绝证据 `unsupported_path_name`、`unsafe_artifact_reasons` 带转义路径。反证：把新分支关掉，同一编排场景是 run-fatal。
+- **没做**：不改 census 脚本、解析器、契约（B 的在制品文件）；不新增处置通道、不改 reward；非 UTF-8 文件名（census 宿主解码 `errors="replace"`）的口径不在本修范围。

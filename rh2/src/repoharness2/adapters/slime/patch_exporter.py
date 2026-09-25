@@ -30,11 +30,15 @@ from repoharness2.contracts.baseline_manifest import (
     BaselineWorkspaceManifestV1,
     compute_baseline_manifest_digest,
 )
+from repoharness2.contracts.baseline_manifest import _check_canonical_path as _baseline_path_rule
 from pydantic import ValidationError
 
 from repoharness2.contracts.frozen_patch import FrozenPatchArtifactV1, PatchEntry
 
 __all__ = ["PatchExportError", "diff_census_against_baseline", "export_frozen_patch"]
+
+# 候选产出的路径名过不了基线路径规则（控制字符等）时的 typed 对象类型（走既有 unsafe 通道：present + 永久拒绝、不评分）
+UNSUPPORTED_PATH_NAME = "unsupported_path_name"
 
 
 class PatchExportError(RuntimeError):
@@ -124,6 +128,25 @@ def build_content_fetch_script(workdir: str, paths_regular: list[str],
     return "\n".join(lines) + "\n"
 
 
+def _first_rejected_entry_path(census_stdout: str) -> tuple[str, str] | None:
+    """post-run census 里第一条过不了基线路径规则的条目路径（regular / symlink 行）与规则原文；没有 → None。"""
+
+    for line in census_stdout.splitlines():
+        parts = line.split("\t")
+        if len(parts) == 4 and parts[0] in ("regular", "symlink"):
+            try:
+                _baseline_path_rule(parts[3])
+            except ValueError as exc:
+                return parts[3], str(exc)[:200]
+    return None
+
+
+def _escape_control_chars(path: str) -> str:
+    """证据里的路径：控制字符写成 `\\xNN`，其余原样（中文等不转义）。"""
+
+    return "".join(f"\\x{ord(ch):02x}" if ch < "\x20" or ch == "\x7f" else ch for ch in path)
+
+
 async def export_frozen_patch(
     workspace: Any,
     baseline: BaselineWorkspaceManifestV1,
@@ -180,6 +203,24 @@ async def export_frozen_patch(
                 object_type=exc.object_type,
             ) from exc
         raise PatchExportError("post_census_parse_failed", str(exc)) from exc
+    except ValidationError as exc:
+        # Codex review_next_slices §6（控制字符路径停批）：候选产出的路径名过不了基线路径规则时，在候选路径的解析边界给
+        # typed 不支持原因，复用既有 unsafe 通道（present + 永久拒绝、不评分；与换行文件名、FIFO 同一处置）。判据用契约
+        # 自己的路径规则逐条复查 post-run 条目路径——只有真有条目路径过不了规则才改判；没有候选路径违规的 ValidationError
+        # （我方身份 / 摘要 / 契约矛盾）原样上抛，保持 typed run-fatal。
+        rejected = _first_rejected_entry_path(result.stdout)
+        if rejected is None:
+            raise
+        if segment_sink is not None:
+            segment_sink["post_census"] = time.monotonic() - census_started
+        path, rule = rejected
+        shown = _escape_control_chars(path)
+        raise PatchExportError(
+            "unsupported_object_in_patch",
+            f"候选产出的路径名不被支持：{shown}（{rule}）",
+            object_path=shown,
+            object_type=UNSUPPORTED_PATH_NAME,
+        ) from exc
     if segment_sink is not None:
         segment_sink["post_census"] = time.monotonic() - census_started
     capture_started = time.monotonic()
