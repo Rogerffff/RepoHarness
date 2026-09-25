@@ -49,9 +49,25 @@ class BaselineCensusError(RuntimeError):
         super().__init__(f"{reason_code}: {message}")
 
 
+# 第六组 E2a：普通文件的摘要位先用这个占位（64 个 0），批量哈希后按位置替换。计划行只在脚本内部的临时文件里，不会输出。
+_CENSUS_DIGEST_PLACEHOLDER = "0" * 64
+
+
 def build_census_script(workdir: str, policy: BaselineManifestPolicy) -> str:
     """枚举脚本：每行 `<kind>\\t<perm>\\t<sha256>\\t<path>`；排除区行首用
-    EXCL 标记（独立 census）。遇到不支持对象类型输出 UNSUPPORTED 行。"""
+    EXCL 标记（独立 census）。遇到不支持对象类型输出 UNSUPPORTED 行。
+
+    第六组 E2a（E2/E4 Brief §1.5）：枚举、排序、逐行内建分类、软链处理照旧；普通文件的摘要不再逐个 `$(sha256sum | cut)`
+    起进程，而是把路径 NUL 分隔收集起来一次 `xargs -0 -r sha256sum`，按位置合并回计划行。整批结果先写进私有临时目录并
+    验证（xargs 成功、摘要行数 = 普通文件数、每个摘要是 64 位十六进制），成功才输出；任何一步不符（单个文件读不了、
+    临时目录建不了、工具报错）就整批丢弃、改走原来的逐文件路径，不会先输出半批再追加。两条路径在所有输入上逐字节同输出
+    （真实 Linux 差分：`tests/adapters/test_e2a_batched_census.py`）。`RH2_CENSUS_FORCE_FALLBACK` 非空时直接走逐文件路径
+    （只供差分测试；root 可信通道 `env -i` 清空环境，候选设置不了）。
+
+    同批修复（差分发现）：文件名含反斜线或回车时，GNU sha256sum 在输出行首加一个转义反斜线，旧脚本 `cut -d' ' -f1`
+    把它当成摘要的一部分（`\\<hash>`），契约的摘要格式拒绝它——候选建一个 `a\\b.py` 就会让解析抛字段级
+    ValidationError、升级为 run-fatal。两条路径都去掉这一个转义前缀：反斜线文件名照常作为普通文件；含回车的文件名交给
+    路径规则，走既有的不支持路径名处置。没有任何已落盘的基线清单含这类条目（旧脚本在生成时就会失败），既有摘要不变。"""
 
     prunes = " ".join(
         f"-path './{ns.rstrip('/')}' -prune -o" for ns in policy.excluded_namespaces
@@ -74,9 +90,12 @@ def build_census_script(workdir: str, policy: BaselineManifestPolicy) -> str:
         f"while IFS= read -r p; do printf 'EXCL\\t%s\\n' \"${{p#./}}\"; done"
         for ns in policy.excluded_namespaces
     )
+    find_cmd = f"find . {prunes} \\( -type f -o -type l -o \\( ! -type d ! -type f ! -type l \\) \\) -print | LC_ALL=C sort"
+    ph = _CENSUS_DIGEST_PLACEHOLDER
     return f"""set -e
 cd {workdir}
-find . {prunes} \\( -type f -o -type l -o \\( ! -type d ! -type f ! -type l \\) \\) -print | LC_ALL=C sort | while IFS= read -r p; do
+rh2_census_per_file() {{
+{find_cmd} | while IFS= read -r p; do
   rel="${{p#./}}"
   if [ -L "$p" ]; then
     tgt=$(readlink "$p" | tr -d '\\n' | sha256sum | cut -d' ' -f1)
@@ -84,12 +103,62 @@ find . {prunes} \\( -type f -o -type l -o \\( ! -type d ! -type f ! -type l \\) 
   elif [ -f "$p" ]; then
     if [ -x "$p" ]; then perm=100755; else perm=100644; fi
     sha=$(sha256sum "$p" | cut -d' ' -f1)
+    sha="${{sha#\\\\}}"
     printf 'regular\\t%s\\t%s\\t%s\\n' "$perm" "$sha" "$rel"
   else
     if [ -p "$p" ]; then t=fifo; elif [ -S "$p" ]; then t=socket; elif [ -b "$p" ]; then t=block_device; elif [ -c "$p" ]; then t=char_device; else t=unknown; fi
     printf 'UNSUPPORTED\\t%s\\t%s\\n' "$t" "$rel"
   fi
 done
+}}
+rh2_census_batched() {{
+  local d="$1" n_reg=0 n_sum=0 line h
+  {find_cmd} > "$d/list" || return 1
+  exec 4> "$d/reg" || return 1
+  while IFS= read -r p; do
+    rel="${{p#./}}"
+    if [ -L "$p" ]; then
+      tgt=$(readlink "$p" | tr -d '\\n' | sha256sum | cut -d' ' -f1)
+      printf 'symlink\\t120000\\t%s\\t%s\\n' "$tgt" "$rel"
+    elif [ -f "$p" ]; then
+      if [ -x "$p" ]; then perm=100755; else perm=100644; fi
+      printf 'regular\\t%s\\t{ph}\\t%s\\n' "$perm" "$rel"
+      printf '%s\\0' "$p" >&4
+      n_reg=$((n_reg + 1))
+    else
+      if [ -p "$p" ]; then t=fifo; elif [ -S "$p" ]; then t=socket; elif [ -b "$p" ]; then t=block_device; elif [ -c "$p" ]; then t=char_device; else t=unknown; fi
+      printf 'UNSUPPORTED\\t%s\\t%s\\n' "$t" "$rel"
+    fi
+  done < "$d/list" > "$d/plan" || {{ exec 4>&-; return 1; }}
+  exec 4>&-
+  xargs -0 -r sha256sum < "$d/reg" > "$d/sums" 2>/dev/null || return 1
+  while IFS= read -r line; do
+    h="${{line%% *}}"
+    h="${{h#\\\\}}"
+    case "$h" in *[!0-9a-f]*) return 1 ;; esac
+    [ "${{#h}}" -eq 64 ] || return 1
+    printf '%s\\n' "$h"
+    n_sum=$((n_sum + 1))
+  done < "$d/sums" > "$d/hashes" || return 1
+  [ "$n_sum" -eq "$n_reg" ] || return 1
+  exec 3< "$d/hashes" || return 1
+  while IFS= read -r line; do
+    case "$line" in
+      regular$'\\t'100755$'\\t'{ph}$'\\t'*|regular$'\\t'100644$'\\t'{ph}$'\\t'*)
+        IFS= read -r h <&3 || {{ exec 3<&-; return 1; }}
+        printf '%s%s%s\\n' "${{line:0:15}}" "$h" "${{line:79}}" ;;
+      *) printf '%s\\n' "$line" ;;
+    esac
+  done < "$d/plan" > "$d/out" || {{ exec 3<&-; return 1; }}
+  exec 3<&-
+}}
+rh2_census_tmp=$(mktemp -d 2>/dev/null || true)
+if [ -n "$rh2_census_tmp" ] && [ -d "$rh2_census_tmp" ] && [ -z "${{RH2_CENSUS_FORCE_FALLBACK:-}}" ] && rh2_census_batched "$rh2_census_tmp"; then
+  cat "$rh2_census_tmp/out"
+else
+  rh2_census_per_file
+fi
+if [ -n "$rh2_census_tmp" ]; then rm -rf "$rh2_census_tmp"; fi
 {excl_finds}
 {cache_count}"""
 
