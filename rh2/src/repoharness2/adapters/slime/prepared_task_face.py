@@ -243,6 +243,56 @@ def render_v2_candidate_test_script(grading: PrivateGradingBundleV2, test_files:
     return "\n".join([*_V2_ENV_LINES, *_v2_vendor_env_lines(grading), *_v2_install_lines(grading), *_v2_candidate_test_lines(grading)]) + "\n"
 
 
+# ---------------------------------------------------------------------------
+# 第六组 2A：安装段与测试段分两次 exec（network_supply_brief_20260924 §4.2；只在评分启用受控包供应时使用）
+# ---------------------------------------------------------------------------
+# 单 shell（`render_v2_candidate_test_script`）里安装段的 `export` 对测试有效；拆成两次 exec 后，宿主要在两次之间断网
+# 并核对。安装 exec 的脚本尾部（root 写的脚本文本，不是候选命令）把可携带状态——导出变量、函数、cwd——落到候选自己的
+# `$HOME/.rh2/`；测试 exec 先跑来源的可信前导（`set -xo pipefail` + 激活 + cd：官方 Start/End 冒号标记只有 xtrace 才进
+# 日志，Codex NS1），再恢复携带状态，然后是既有的 Start/End 标记与测试命令。**不携带**未导出的普通变量、alias 与 shell
+# 选项（选项由测试段前导重新设置）。携带文件由候选写、候选读，只是候选自己的状态，不是可信的"安装完成"证明；放行事实
+# 在宿主手里（安装 exec 结束 → 断网核对 → 才启动测试 exec）。
+#
+# 安装 exec 输出里的阶段行（manager 据此分三种安装结束形态，只进诊断与路由，不定义 reward）：
+#   没有 `RH2_PHASE_CARRY=start`       安装段 shell 没走到尾部（提前退出）
+#   有 start、没有 `RH2_PHASE_HANDOFF=1` 状态写入失败（`RH2_PHASE_CARRY_FAILED=1`）
+#   有 `RH2_PHASE_HANDOFF=1`            正常交接（`RH2_INSTALL_RC` 非零但 shell 继续的也在这里）
+SUPPLY_CARRY_TAIL_LINES: tuple[str, ...] = (
+    "echo RH2_PHASE_CARRY=start",
+    '{ mkdir -p "$HOME/.rh2" && export -p > "$HOME/.rh2/env.sh" && declare -f > "$HOME/.rh2/funcs.sh"'
+    ' && pwd > "$HOME/.rh2/cwd"; } && echo RH2_PHASE_HANDOFF=1 || echo RH2_PHASE_CARRY_FAILED=1',
+)
+SUPPLY_CARRY_RESTORE_LINES: tuple[str, ...] = (
+    "{ set +x; } 2>/dev/null",  # 恢复过程不进 xtrace（导出表很长，且含安装段的索引地址）
+    'if [ -f "$HOME/.rh2/env.sh" ] && [ -f "$HOME/.rh2/funcs.sh" ] && [ -f "$HOME/.rh2/cwd" ]; then',
+    '  . "$HOME/.rh2/env.sh"; . "$HOME/.rh2/funcs.sh"; cd "$(cat "$HOME/.rh2/cwd")"',
+    "else",
+    "  echo RH2_CARRY_MISSING=1",
+    "  exit 0",
+    "fi",
+    "set -x",
+)
+
+
+def render_v2_candidate_install_script(grading: PrivateGradingBundleV2) -> str | None:
+    """2A 安装 exec（候选用户）：可信前导 → vendor env → 安装段（与单 shell 同一组行）→ 携带尾部。没有安装段 → None
+    （这类题在受控供应下也不需要网络，评分走单 shell）。"""
+
+    if derive_install_cmd(grading.spec_vendor_id, grading.repo_key_lower, grading.version) is None:
+        return None
+    return "\n".join([*_V2_ENV_LINES, *_v2_vendor_env_lines(grading), *_v2_install_lines(grading),
+                      *SUPPLY_CARRY_TAIL_LINES]) + "\n"
+
+
+def render_v2_candidate_test_after_install_script(grading: PrivateGradingBundleV2) -> str | None:
+    """2A 测试 exec（候选用户，宿主断网核对之后）：可信前导 → 恢复携带状态 → 既有 Start/End 标记与测试命令。
+    没有安装段 → None。"""
+
+    if derive_install_cmd(grading.spec_vendor_id, grading.repo_key_lower, grading.version) is None:
+        return None
+    return "\n".join([*_V2_ENV_LINES, *SUPPLY_CARRY_RESTORE_LINES, *_v2_candidate_test_lines(grading)]) + "\n"
+
+
 _V2_OBS_ENV_LINES = (
     "#!/bin/bash",
     "set -o pipefail",  # 同上：conda 激活钩子不兼容 -u
@@ -347,6 +397,9 @@ def build_grading_spec_from_host_view(
         # F2：grader profile 路径按 root setup / 候选测试两步执行（与完整脚本同一组行）
         trusted_setup_script=render_v2_trusted_setup_script(grading, test_files),
         candidate_test_script=render_v2_candidate_test_script(grading, test_files),
+        # 第六组 2A：受控包供应下的两段脚本（manager 未启用供应时不使用；1A 的 supply_policy 待 B 的评分面字段接入）
+        candidate_install_script=render_v2_candidate_install_script(grading),
+        candidate_test_after_install_script=render_v2_candidate_test_after_install_script(grading),
         pre_candidate_observation_script=render_v2_pre_candidate_observation_script(grading),
         post_candidate_observation_script=render_v2_post_candidate_observation_script(grading),
         render_compile_probe=render_v2_compile_probe_script,
@@ -620,6 +673,8 @@ __all__ = [
     "R2E_INTERPRETER_PREFIX",
     "R2E_TASK_SOURCE",
     "R2E_VENV_ACTIVATION",
+    "SUPPLY_CARRY_RESTORE_LINES",
+    "SUPPLY_CARRY_TAIL_LINES",
     "V2_EVAL_END_MARKER",
     "V2_EVAL_START_MARKER",
     "GradingMaterialsError",
@@ -627,6 +682,8 @@ __all__ = [
     "build_grading_spec_from_host_view",
     "load_overlays_input",
     "overlay_binding_mismatch",
+    "render_v2_candidate_install_script",
+    "render_v2_candidate_test_after_install_script",
     "render_v2_candidate_test_script",
     "render_v2_eval_script",
     "render_v2_trusted_setup_script",

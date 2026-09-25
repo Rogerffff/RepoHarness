@@ -228,3 +228,51 @@ grader 两段 exec 生命周期、三个终点与 `grader_supply_withdraw_failed
 ### 12.4 未做（同 §10.4）
 
 grader 两段 exec 生命周期与三个终点（等 B 落地 `manager.py` / `prepared_task_face.py`）；`NetworkPolicy` 迁移；rollout 注入；bringup 起停网关与供应 relay、run evidence 字段；逐题封禁表与例外表（B 的数据）；目标机 devpi 部署与代表题冷 / 热安装。
+
+
+## 13. 实施记录三：grader 两段 exec 生命周期与 NetworkPolicy 迁移（§6 顺序第 2 步；2026-09-25，Claude）
+
+**状态：已实施、本机验证；未启用。** `GradingManagerConfig.supply` 默认 None：grader 仍 `--network none`，候选段仍是单 shell，bringup 不构造供应配置。启用还差五件事：B 的评分面 1A 字段（`supply_policy`）、bringup 起停网关与供应 relay、rollout 注入、代表题冷 / 热安装，以及用户放行。
+
+### 13.1 契约与 profile
+
+- `contracts/sandbox.py`：`NetworkPolicy` 新增 `supply_install_then_none`。grading 可取 `deny_all` 或它，rollout 不能取它；旧默认 `deny_all` 不变。
+- `sandbox_profile.py`：`GraderSandboxProfile.docker_run_args(network=…)` 默认 `none`。`check_grader_inspect(expected_network=…)` 要求容器恰好接在这张网络上。`check_grader_probe(supply_network=True)` 要求恰好一个带路由的接口（与 rollout 同一判据），禁止目标与外部 DNS 仍须不可达。全断网时的调用形状不变。
+
+### 13.2 渲染（`prepared_task_face.py`）
+
+- `render_v2_candidate_install_script`：可信前导 → vendor env → 安装段（与单 shell 同一组行）→ 携带尾部。尾部先打 `RH2_PHASE_CARRY=start`，把状态写进 `$HOME/.rh2/{env.sh,funcs.sh,cwd}`，成功打 `RH2_PHASE_HANDOFF=1`，失败打 `RH2_PHASE_CARRY_FAILED=1`。
+- `render_v2_candidate_test_after_install_script`：可信前导 → 恢复携带状态（不进 xtrace；文件缺失打 `RH2_CARRY_MISSING=1` 并退出、不跑测试）→ 既有 Start/End 标记与测试命令。
+- SWE spec 构造时填这两份，没有安装段的题为 None；`supply_policy` 等 B 接入。R2E 不变，它没有安装段。
+- 评分脚本摘要：本次评分实际走两段时，摘要加上这两份脚本（`grading_scripts_digest(two_stage=True)`）。单 shell 下取得的资格不自动延伸到"联网安装、断网测试"，对不上即资格缺席，P-A 全局失败只能走未确定。
+
+### 13.3 manager 生命周期（`grading/manager.py`）
+
+- **何时走两段**：启用了供应、在 grader profile 路径上、且该题两份脚本都在。缺 `supply_policy` 时起容器之前就 run-halt（`grader_supply_policy_missing`），不静默放开项目自身发行包。
+- **容器启动**：先建本次评分的 internal attempt 网络（与 rollout 同一子网池规则，取消时按名回收），再接入包供应 relay（别名 `pkgidx`），然后以该网络 `docker run`，最后做启动前核对。网络建不成是 infra（`grader_supply_network_failed`）；relay 不在是 run-halt（`grader_supply_relay_unavailable`）。租约的 `network_policy` 记 `supply_install_then_none`。
+- **候选段**：签发 token（attempt_id = 容器名，plane grading，phase install，带 1A 表）→ 安装 exec 只在这一次注入 `PIP_INDEX_URL` / `PIP_TRUSTED_HOST` / `UV_INDEX_URL` / `UV_DEFAULT_INDEX` → 断网并核对 `Networks == {}` → 网关撤销，随即 `release` 收齐终态摘要 → 只有核对成功且正常交接才启动测试 exec。测试 exec 只拿共用 `test_timeout_seconds` 的剩余，输出追加到同一个 tee 文件。
+- **三个终点**：
+  1. 安装段提前退出或状态没写成：不启动测试 exec，日志 = 安装输出，交既有 parser 与 P-A。用例对照了两种形态，结论都与单 shell 相同（`failed_to_grade` / `test_log_parse_failed`）。
+  2. 撤网或核对失败：infra `grader_supply_withdraw_failed`，不跑测试、没有 reward。
+  3. 超时或取消：沿用既有部分日志规则（与 CR1 同一机制）；token 与网络在容器收口里收尾。
+- **收尾**：容器收口之后（成功或失败），以及 `gc` 确认删除之后，释放交接时没释放的 token 并拆网络。失败进 `cleanup_failures`，不改判定。
+- **事实**：`record.supply` 与诊断 sidecar 的 `supply` 记网络名、`token_ref`、`policy_digest`、安装退出码与结束形态、撤网核对、网关终态摘要、各段耗时。token 本身不进事实。
+
+### 13.4 验证（本机 macOS + Docker Desktop；组件与 manager 级，不是代表题验收）
+
+| 测试 | 用例 | 覆盖 |
+| --- | --- | --- |
+| `tests/contracts/test_sandbox.py` | +1 | 新策略只给 grading |
+| `tests/adapters/test_supply_two_exec_renderer.py` | 7 | NS1 三形态（真实 `getmoto__moto-6913` bundle、当前 renderer、本机 Bash、真实 parser）：前导 + 携带与单 shell 解析项数相同，导出变量 / 函数 / cwd 带到测试段、未导出变量不带；去掉前导的反证解析 0 项；三种安装结束形态的阶段行；携带文件缺失时不跑测试；没有安装段时为 None |
+| `tests/grading/test_supply_two_stage_manager.py` | 12 | 正常交接的顺序与事实；两种无交接形态与单 shell 结论相同；撤网核对失败；安装超时；安装中取消；R2E 形态（无安装段）启用供应时仍单 shell、全断网；缺政策 run-halt；未启用供应时默认不变；网络建不成；relay 不在 |
+| `tests/grading/test_supply_two_stage_docker.py` | 1 | **真容器**：安装段经 `pkgidx` → relay → 网关 → 假上游用 pip 下到 wheel；导出变量带到测试段；测试段 `pkgidx` 不可达；网关日志按 attempt 归属；结束后没有残留的评分网络与容器 |
+
+全量：五目录 1881 passed / 1 skipped（Docker 在线；skip 是本机未设 SWE-Gym 解析语料），lane A 530p/346s、B 876p。`tests/grading` 既有用例不改动通过（profile 探针的调用形状在全断网时保持不变）。
+
+§1 的 D 类事实（断网前建立的连接断网后收发不了）沿用 2026-09-24 的本机探针，本轮没有在 manager 用例里重做。
+
+### 13.5 未做
+
+- `supply.installed`（安装后以候选 UID 跑 `pip list` 的观测）：现有候选后观测可以承载，随代表题验证补。
+- bringup：构造 `GraderSupplyConfig`（起停网关与供应 relay、共用子网池；网关必须与 manager 在同一事件循环里），以及 run evidence 的政策字段（devpi 版本、上游、1A+2A、封禁表摘要）。
+- rollout 注入；B 的 `supply_policy` 评分面字段、逐题封禁表 / 例外表、派生镜像 pip / uv 可用性与代表题；目标机 devpi 与冷 / 热安装；用户放行启用。

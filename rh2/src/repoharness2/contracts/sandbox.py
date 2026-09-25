@@ -38,7 +38,10 @@ OwnerParty = Literal[
 ]
 
 NetworkPolicy = Literal[
-    "deny_all",  # 全断网（评分沙箱的唯一合法值；rollout 默认值）
+    "deny_all",  # 全断网（评分沙箱的默认值；rollout 默认值）
+    # 第六组 2A（用户 2026-09-24 选 1A+2A；network_supply_brief_20260924 §4.5）：评分容器以 internal 网络启动，只有候选
+    # 安装段经包供应 relay 可达受控包索引；安装 exec 结束后宿主断网并核对 Networks == {}，之后的测试段无网络。只用于评分。
+    "supply_install_then_none",
     "allowlist",  # 白名单放行（必须写明理由，audit artifact 解释为什么允许）
     "host_open",  # 宿主网络直通（verifiers docker 旧形态——本契约禁止表示）
 ]
@@ -98,7 +101,8 @@ class SandboxLease(StrictModel):
 
     fail-closed 校验清单：
     1. network_policy=host_open 一律拒收（宿主网络直通没有审计边界）；
-    2. purpose=grading 时 network_policy 必须是 deny_all（P9：评分沙箱同等隔离）；
+    2. purpose=grading 时 network_policy 必须是 deny_all 或 supply_install_then_none（P9：评分沙箱同等隔离；后者
+       只在安装段接受控包索引，测试段前撤网）；supply_install_then_none 只用于 grading；
     3. network_policy=allowlist 必须写 network_allowlist_justification（审计解释）。
     """
 
@@ -132,10 +136,12 @@ class SandboxLease(StrictModel):
                 "network_policy=host_open 不可表示：宿主网络直通没有可审计边界"
                 "（verifiers docker 旧形态在 rh2 契约下必须先降为 allowlist/deny_all）。"
             )
-        if self.purpose == "grading" and self.network_policy != "deny_all":
+        if self.purpose == "grading" and self.network_policy not in ("deny_all", "supply_install_then_none"):
             raise ValueError(
-                f"评分容器必须全断网（P9），得到 network_policy={self.network_policy}。"
+                f"评分容器必须全断网或只在安装段接受控包索引（P9 / 2A），得到 network_policy={self.network_policy}。"
             )
+        if self.purpose != "grading" and self.network_policy == "supply_install_then_none":
+            raise ValueError("network_policy=supply_install_then_none 只用于评分容器（2A 的安装段 → 撤网 → 测试段）。")
         if self.network_policy == "allowlist" and self.network_allowlist_justification is None:
             raise ValueError("network_policy=allowlist 必须提供 network_allowlist_justification。")
         if self.network_policy != "allowlist" and self.network_allowlist_justification is not None:

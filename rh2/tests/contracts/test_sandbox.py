@@ -100,6 +100,17 @@ def test_grading_lease_must_deny_all_network():
         SandboxLease.model_validate(payload)
 
 
+def test_grading_lease_may_take_the_supply_install_then_none_policy_and_only_grading_may():
+    """第六组 2A（network_supply_brief_20260924 §4.5）：评分容器可以是 supply_install_then_none；rollout 不行。"""
+    payload = valid_sandbox_lease()
+    payload["purpose"] = "grading"
+    payload["network_policy"] = "supply_install_then_none"
+    assert SandboxLease.model_validate(payload).network_policy == "supply_install_then_none"
+    payload["purpose"] = "rollout"
+    with pytest.raises(ValidationError, match="只用于评分容器"):
+        SandboxLease.model_validate(payload)
+
+
 def test_host_open_network_not_representable():
     payload = valid_sandbox_lease()
     payload["network_policy"] = "host_open"

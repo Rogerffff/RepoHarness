@@ -586,12 +586,14 @@ class GraderSandboxProfile:
 
     def docker_run_args(
         self, *, name: str, image: str, labels: Sequence[str] = (),
-        declared_readonly_binds: Sequence[tuple[str, str]] = (),
+        declared_readonly_binds: Sequence[tuple[str, str]] = (), network: str = "none",
     ) -> list[str]:
+        # 第六组 2A：`network` 默认 none（全断网）；受控包供应的评分以本次评分的 internal attempt 网络启动（`--network none`
+        # 启动的容器之后不能再接网络，Brief §1 C1），安装 exec 结束后宿主断网并核对。
         # 2026-09-19 链路修复（B 线 216 题诊断）：grader 容器此前没有 `--init`，PID 1 是 `sleep`，候选测试
         # fork 出的孤儿进程退出后无人回收——dvc-2141 的 noop/gold 容器各累积 496–507 个僵尸，把 512 的进程配额
         # 撞满（配额拒绝 37–38 次），正确的 gold 被判 0。与 rollout 容器一致改用 docker-init（tini）当 PID 1。
-        args: list[str] = ["run", "--detach", "--init", "--network", "none", "--cap-drop", "ALL"]
+        args: list[str] = ["run", "--detach", "--init", "--network", network, "--cap-drop", "ALL"]
         for cap in self.trusted_init_caps:
             args += ["--cap-add", cap]
         args += ["--security-opt", "no-new-privileges"]
@@ -1957,8 +1959,11 @@ def _cgroup_violations(facts: Mapping[str, str], *, pids_limit: int, cpus: float
 
 def check_grader_inspect(
     container: Mapping[str, Any], profile: GraderSandboxProfile, *,
-    declared_readonly_binds: Sequence[tuple[str, str]] = (),
+    declared_readonly_binds: Sequence[tuple[str, str]] = (), expected_network: str | None = None,
 ) -> list[str]:
+    """`expected_network`：None = 全断网（NetworkMode none）；给出时 = 受控包供应的评分，容器必须恰好接在这张 internal
+    attempt 网络上（安装 exec 之后由宿主撤网核对）。"""
+
     hc = container.get("HostConfig") or {}
     v = _limits_inspect_violations(
         hc, pids_limit=profile.pids_limit, cpus=profile.cpus, memory_bytes=profile.memory_bytes,
@@ -1968,18 +1973,22 @@ def check_grader_inspect(
     if _norm_caps(hc.get("CapAdd")) != set(profile.trusted_init_caps):
         v.append(f"CapAdd={hc.get('CapAdd')!r} != trusted_init_caps {sorted(profile.trusted_init_caps)}")
     v += _security_opt_violations(hc.get("SecurityOpt"))
-    if hc.get("NetworkMode") != "none":
-        v.append(f"NetworkMode={hc.get('NetworkMode')!r} != 'none'（grader 全断网）")
+    want = expected_network or "none"
+    if hc.get("NetworkMode") != want:
+        v.append(f"NetworkMode={hc.get('NetworkMode')!r} != {want!r}" + ("（grader 全断网）" if expected_network is None else "（受控供应的评分网络）"))
     networks = sorted((container.get("NetworkSettings") or {}).get("Networks") or {})
-    if networks != ["none"]:
-        v.append(f"Networks={networks!r} != ['none']")
+    if networks != [want]:
+        v.append(f"Networks={networks!r} != [{want!r}]")
     v += _mounts_violations(container, declared_readonly_binds)
     if (container.get("State") or {}).get("Running") is not True:
         v.append("State.Running != True")
     return v
 
 
-def check_grader_probe(facts: Mapping[str, str], profile: GraderSandboxProfile) -> list[str]:
+def check_grader_probe(facts: Mapping[str, str], profile: GraderSandboxProfile, *, supply_network: bool = False) -> list[str]:
+    """`supply_network`：受控包供应的评分在启动时接着 internal attempt 网络——只允许恰好一个带路由的接口（与 rollout 同一
+    判据）；禁止目标与外部 DNS 照样必须不可达。全断网（默认）不允许任何带路由的接口。"""
+
     v: list[str] = []
     if facts.get("RH2_PROBE_OK") != "1":
         v.append("探针未完整执行（RH2_PROBE_OK 缺失）")
@@ -1991,7 +2000,9 @@ def check_grader_probe(facts: Mapping[str, str], profile: GraderSandboxProfile) 
         v.append(f"NoNewPrivs={facts.get('NNP')!r} != 1")
     v += _cgroup_violations(facts, pids_limit=profile.pids_limit, cpus=profile.cpus, memory_bytes=profile.memory_bytes)
     routed = {x for x in (facts.get("ROUTED_IFACES") or "").split(",") if x}
-    if routed:
+    if supply_network and len(routed) != 1:
+        v.append(f"ROUTED_IFACES={sorted(routed)!r}：受控供应的评分只允许恰好一个接口（评分 attempt 网络）有路由")
+    elif not supply_network and routed:
         v.append(f"ROUTED_IFACES={sorted(routed)!r}：grader 不得有任何带路由的接口（只允许 loopback）")
     for key, value in facts.items():
         if key.startswith("NET_") and value != "DENIED":
@@ -2162,7 +2173,7 @@ async def run_rollout_activation_check(
 
 async def run_grader_prelaunch_check(
     docker: DockerRunner, *, name: str, profile: GraderSandboxProfile,
-    declared_readonly_binds: Sequence[tuple[str, str]] = (),
+    declared_readonly_binds: Sequence[tuple[str, str]] = (), expected_network: str | None = None,
 ) -> PrelaunchReport:
     started = time.monotonic()
     report = PrelaunchReport(role="grader", container_name=name, ok=False)
@@ -2171,7 +2182,9 @@ async def run_grader_prelaunch_check(
         report.violations.append(f"docker inspect 失败：{err}")
     else:
         report.inspect_facts = _facts_from_inspect(container)
-        report.violations += check_grader_inspect(container, profile, declared_readonly_binds=declared_readonly_binds)
+        report.violations += check_grader_inspect(
+            container, profile, declared_readonly_binds=declared_readonly_binds, expected_network=expected_network,
+        )
     probe = await _exec_as(
         docker, name, grader_prelaunch_probe_script(profile), user=str(profile.candidate_exec_uid),
         home=f"/home/{profile.candidate_exec_user}", timeout=profile.probe_timeout_seconds,
@@ -2179,7 +2192,10 @@ async def run_grader_prelaunch_check(
     if probe.exit_code != 0 and "RH2_PROBE_OK=1" not in probe.stdout:
         report.violations.append(f"探针执行失败 exit={probe.exit_code}：{(probe.stderr or probe.stdout).strip()[-300:]}")
     report.probe_facts = parse_key_value_output(probe.stdout)
-    report.violations += check_grader_probe(report.probe_facts, profile)
+    if expected_network is None:
+        report.violations += check_grader_probe(report.probe_facts, profile)  # 全断网：调用形状不变
+    else:
+        report.violations += check_grader_probe(report.probe_facts, profile, supply_network=True)
     report.ok = not report.violations
     report.seconds = time.monotonic() - started
     return report

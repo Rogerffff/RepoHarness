@@ -56,7 +56,7 @@ import os
 import re
 import time
 import uuid
-from collections.abc import Awaitable, Callable, Sequence
+from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from fnmatch import fnmatch
@@ -646,6 +646,14 @@ class GradingEnvSpec:
     env_reset_timeout_seconds: float = 300.0
     apply_timeout_seconds: float = 120.0
     test_timeout_seconds: float = 1800.0  # P3：manager 内部分段 timeout，比外层 scoring_timeout 更严
+    # 第六组 2A（network_supply_brief_20260924 §4.2）：受控包供应下候选段拆成两次 exec——安装 exec（结尾把导出变量 /
+    # 函数 / cwd 落到候选自己的目录）与测试 exec（宿主断网核对之后才启动，先跑来源前导再恢复）。两者都在场才可能走两段；
+    # 没有安装段的题为 None（受控供应下也不需要网络，照旧单 shell、全断网）。manager 未启用供应时不使用。
+    candidate_install_script: str | None = None
+    candidate_test_after_install_script: str | None = None
+    # 1A 逐题政策（被测项目自身发行包的封禁表 + 已验证配方确需的例外；B 的评分面字段接入后由 renderer 填）。
+    # None = 未提供：供应启用时这类题拒绝评分（run-halt，配置缺陷），不静默放开项目自身发行包。
+    supply_policy: "SupplyPolicy | None" = None
 
     def __post_init__(self) -> None:
         if (self.image_manifest_digest is None) == (not self.image_local_build):
@@ -703,6 +711,50 @@ def build_swe_grading_spec(pair: bundles.BundlePair) -> GradingEnvSpec:
 # ---------------------------------------------------------------------------
 
 
+@dataclass(frozen=True)
+class SupplyPolicy:
+    """第六组 1A 逐题政策：`blocked_dists` = 被测项目自身的发行包名（多名并列）；`allowed_releases` = 已验证配方确需的
+    本项目固定发行包（dist → 版本）。归一与校验由网关的 `SupplyGrant.build` 做。"""
+
+    blocked_dists: tuple[str, ...]
+    allowed_releases: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class GraderSupplyConfig:
+    """第六组 2A：评分容器的受控包供应（`GradingManagerConfig.supply`；None = 不启用——grader 仍 `--network none`、
+    候选段单 shell）。对象由 run 的 owner（bringup）起停：网关与包供应 relay 是 run 级资源，manager 只按次评分借用；
+    每次评分自建 / 自拆 internal attempt 网络（与 rollout 同一子网池规则）并签发 / 释放一枚网关 token。
+    `gateway` 必须与 manager 在同一事件循环里（撤销 / 释放要取消网关的在途请求）。"""
+
+    gateway: Any  # PackageIndexGateway
+    relay: Any  # EgressRelayHandle（start_supply_relay；别名 pkgidx）
+    network_profile: Any  # RolloutSandboxProfile：attempt 网络的参数（isolated internal、子网前缀）
+    subnet_pool: Any  # EgressSubnetPool
+    index_port: int = 3141
+    withdraw_timeout_seconds: float = 30.0
+    release_timeout_seconds: float = 10.0
+    teardown_timeout_seconds: float = 60.0
+
+
+# 安装 exec 输出里的阶段行（renderer 的携带尾部打印；只进诊断与路由，不定义 reward）
+SUPPLY_INSTALL_HANDOFF = "handoff"
+SUPPLY_INSTALL_EXITED_EARLY = "install_shell_exited_early"
+SUPPLY_INSTALL_CARRY_WRITE_FAILED = "install_carry_write_failed"
+
+
+def supply_install_shape(install_log: str) -> str:
+    """安装 exec 的结束形态：没走到携带尾部（提前退出）/ 走到了但状态没写成 / 正常交接（安装命令非零但 shell 继续也算）。
+    只认整行（xtrace 的 `+ echo …` 行不算）。候选可以伪造这些行，但只影响它自己的测试段（携带文件缺失时测试段不跑）。"""
+
+    lines = set(install_log.splitlines())
+    if "RH2_PHASE_HANDOFF=1" in lines:
+        return SUPPLY_INSTALL_HANDOFF
+    if "RH2_PHASE_CARRY=start" in lines:
+        return SUPPLY_INSTALL_CARRY_WRITE_FAILED
+    return SUPPLY_INSTALL_EXITED_EARLY
+
+
 @dataclass
 class GradingManagerConfig:
     """manager 级配置（评分并发不在这里——那是 queue.py 的职责）。"""
@@ -714,6 +766,8 @@ class GradingManagerConfig:
     cleanup_timeout_seconds: int = 120
     # 第六组 E4a：已确认删除的容器记录只保留最近这么多条（按确认删除的完成顺序）；删除未获确认的记录永远保留。
     container_history_limit: int = 256
+    # 第六组 2A：受控包供应（None = 不启用，默认；启用由作业方案单独放行）
+    supply: GraderSupplyConfig | None = None
     # W3b（D2-2）：独立 grader Docker profile。None = 旧参数（--network none、root、无限额）——
     # 只给 s1_compat 冻结路径与既有单测；bringup 对非 s1 模式一律注入。
     sandbox_profile: "GraderSandboxProfile | None" = None
@@ -914,6 +968,12 @@ class _ContainerRecord:
     # 第六组 E4a：本容器的租约（`docker run` 成功后才有；随记录一起退役）与确认删除的完成序号（None = 删除未获确认）
     lease: SandboxLease | None = None
     retired_seq: int | None = None
+    # 第六组 2A：本次评分走受控包供应时的事实（安装结束形态、撤网核对、网关终态摘要、各段耗时）与资源
+    # （本次评分的 attempt 网络、网关 token——token 只在内存，不进事实与日志）。supply_released = 资源已收尾。
+    supply: dict[str, Any] | None = None
+    supply_network: Any | None = None
+    supply_token: str | None = None
+    supply_released: bool = False
 
 
 # W3a 生命周期计时：grader 内部六段（与 adapters/slime/attempt_timing.LIFECYCLE_SEGMENTS 同名）。
@@ -1044,17 +1104,23 @@ def grading_image_identity(spec: GradingEnvSpec) -> str:
     return f"local_build:{spec.image_local_build_id or spec.image}"
 
 
-def grading_scripts_digest(spec: GradingEnvSpec) -> str:
-    """评分脚本摘要：trusted_setup + candidate_test + eval_script 三段全文（任一改动即资格失效）。"""
+def grading_scripts_digest(spec: GradingEnvSpec, *, two_stage: bool = False) -> str:
+    """评分脚本摘要：trusted_setup + candidate_test + eval_script 三段全文（任一改动即资格失效）。
+
+    `two_stage`（第六组 2A）：本次评分实际走安装 / 测试两次 exec 时，摘要再加上这两份脚本——单 shell 下取得的资格
+    不自动延伸到两段执行（联网安装、断网测试），对不上即资格缺席，P-A 全局失败只能走未确定。"""
 
     h = hashlib.sha256()
-    for part in (spec.trusted_setup_script or "", spec.candidate_test_script or "", spec.eval_script):
+    parts = [spec.trusted_setup_script or "", spec.candidate_test_script or "", spec.eval_script]
+    if two_stage:
+        parts += ["rh2.two_stage.v1", spec.candidate_install_script or "", spec.candidate_test_after_install_script or ""]
+    for part in parts:
         h.update(part.encode("utf-8"))
         h.update(b"\0")
     return "sha256:" + h.hexdigest()
 
 
-def env_qualification_status(spec: GradingEnvSpec) -> tuple[bool, str]:
+def env_qualification_status(spec: GradingEnvSpec, *, two_stage: bool = False) -> tuple[bool, str]:
     """资格是否对本 spec 有效：(有效, 说明)。说明进诊断与报告证据。"""
 
     q = spec.env_qualification
@@ -1064,7 +1130,7 @@ def env_qualification_status(spec: GradingEnvSpec) -> tuple[bool, str]:
         return False, f"reference_missing_count={q.reference_missing_count}"
     if q.image_identity != grading_image_identity(spec):
         return False, "image_identity_mismatch"
-    if q.scripts_digest != grading_scripts_digest(spec):
+    if q.scripts_digest != grading_scripts_digest(spec, two_stage=two_stage):
         return False, "scripts_digest_mismatch"
     return True, f"ok:{q.source}"
 
@@ -1752,6 +1818,9 @@ class SWEGradingManager:
                 record.persisted_eval_log_ref = ref
             return ref
 
+        def _two_stage() -> bool:
+            return record is not None and record.supply is not None
+
         def _diagnostics(verdict: "scoring.EvalVerdict | None") -> dict[str, Any]:
             """S1-m 诊断 sidecar 内容（不进契约）：候选段事实、root 观测、控制面/可信 setup 自证、解析诊断、资源事实。"""
 
@@ -1774,8 +1843,9 @@ class SWEGradingManager:
                 "execution_failure_decision": record.execution_failure_decision if record is not None else None,
                 "resource_facts": record.resource_facts if record is not None else None,
                 "compile_probe": record.compile_probe if record is not None else None,
-                "env_qualification": env_qualification_status(spec)[1],
-                "scripts_digest": grading_scripts_digest(spec),
+                "env_qualification": env_qualification_status(spec, two_stage=_two_stage())[1],
+                "scripts_digest": grading_scripts_digest(spec, two_stage=_two_stage()),
+                "supply": record.supply if record is not None else None,
                 "image_identity": grading_image_identity(spec),
             }
             if verdict is None and record is not None and record.parsed_verdict is not None:
@@ -1846,6 +1916,7 @@ class SWEGradingManager:
             # 独立重算相等**，起容器前 fail-fast，矛盾 = BaselineIntegrityError
             # run-halt）。
             require_grading_time("queue")  # N2a：排队已耗尽期限 → 不起容器，直接 failed_to_grade
+            self._check_supply_policy(spec)  # 2A：供应已启用而该题缺 1A 政策 → run-halt（配置缺陷），起容器之前
             prep_start = time.monotonic()
             if frozen_delta is not None:
                 cleaned = None  # FA 路径无 diff 文本
@@ -2063,6 +2134,67 @@ class SWEGradingManager:
                     # 长批/正式训练下 `_records` 按评分数增长，全文日志是其中唯一的大对象；引用与事实字段保留。
                     record.eval_log_partial = None
 
+    # ------------------------------------------------------------------ 2A 受控包供应
+    def _supply_applies(self, spec: GradingEnvSpec) -> bool:
+        """本次评分是否走受控包供应的两段执行：manager 启用了供应、在 grader profile 路径上、且该题有安装段（两份脚本
+        都在场）。没有安装段的题（例如 R2E）照旧单 shell、全断网。"""
+
+        return (
+            self.config.supply is not None and self.config.sandbox_profile is not None
+            and spec.candidate_install_script is not None and spec.candidate_test_after_install_script is not None
+        )
+
+    def _check_supply_policy(self, spec: GradingEnvSpec) -> None:
+        if self._supply_applies(spec) and spec.supply_policy is None:
+            # 供应已启用而该题没有 1A 政策：每道同源题都会撞上，是配置 / 评分面接线缺陷，不洗成成员损耗；也不静默放开
+            # 项目自身发行包。
+            raise SandboxProfileViolation(
+                "grader_supply_policy_missing",
+                f"{spec.task_id}: 受控包供应已启用，但评分 spec 没有 supply_policy（1A 封禁表 / 例外表）。",
+            )
+
+    async def _release_supply_resources(self, record: _ContainerRecord) -> None:
+        """2A 资源收尾（幂等）：释放网关 token（撤销 + 有界收齐在途请求 + 终态摘要），断开包供应 relay 并删除本次评分的
+        attempt 网络。失败进 cleanup_failures 与 record.supply，不抛——评分结论不因收尾失败改变；残留网络带 run label，
+        run 末残留检查会看到。容器仍在运行时网络删不掉，照实记失败。"""
+
+        supply = self.config.supply
+        if supply is None or record.supply_released or (record.supply_network is None and record.supply_token is None):
+            return
+        record.supply_released = True
+        facts = record.supply if record.supply is not None else {}
+        record.supply = facts
+        token, record.supply_token = record.supply_token, None
+        if token is not None:
+            try:
+                summary = await supply.gateway.release(token, timeout=supply.release_timeout_seconds)
+            except Exception as exc:  # noqa: BLE001 - 收尾不改判定，如实记账
+                summary = None
+                self.cleanup_failures.append(f"supply_token_release_failed:{record.name}:{type(exc).__name__}")
+            if summary is not None:
+                facts["gateway"] = summary
+                if not summary.get("complete", True):
+                    self.cleanup_failures.append(f"supply_token_release_incomplete:{record.name}")
+        network = record.supply_network
+        if network is not None:
+            from repoharness2.adapters.slime.sandbox_profile import teardown_attempt_network
+
+            try:
+                failures = await asyncio.wait_for(
+                    teardown_attempt_network(
+                        self._docker, network_name=network.name, relay=supply.relay, pool=supply.subnet_pool,
+                        subnet=network.subnet, timeout=supply.teardown_timeout_seconds,
+                    ),
+                    timeout=supply.teardown_timeout_seconds * 2,
+                )
+            except (TimeoutError, asyncio.TimeoutError):
+                failures = ["teardown_timeout"]
+            except Exception as exc:  # noqa: BLE001
+                failures = [f"teardown_error:{type(exc).__name__}: {str(exc)[:160]}"]
+            facts["network_teardown_failures"] = list(failures)
+            for failure in failures:
+                self.cleanup_failures.append(f"supply_network_teardown_failed:{network.name}:{failure}")
+
     # ------------------------------------------------------------------ gc
     async def gc(
         self, trajectory_id: str | None = None, ttl_seconds: float | None = None
@@ -2082,6 +2214,7 @@ class SWEGradingManager:
             await self._remove_container(record)
             if record.removed:
                 removed.append(record.name)
+                await self._release_supply_resources(record)  # 2A：容器确认删除后收尾本次评分的网络与 token
         return removed
 
     # ------------------------------------------------------------------ 内部：镜像
@@ -2198,6 +2331,7 @@ class SWEGradingManager:
         # 租约先行：网络策略唯一来源是 SandboxLease（purpose=grading 在 schema 层
         # 锁死 deny_all，P9），docker 参数由租约推导——想开网先得改契约。
         profile = self.config.sandbox_profile
+        supply_mode = self._supply_applies(spec)
         image_id = await self._await_within_grading_deadline(
             self._docker("image", "inspect", "-f", "{{.Id}}", spec.image), phase="image_id_inspect"
         )
@@ -2208,7 +2342,7 @@ class SWEGradingManager:
             purpose="grading",
             created_by="grading_manager",
             network_policy_owner="grading_manager",
-            network_policy="deny_all",
+            network_policy="supply_install_then_none" if supply_mode else "deny_all",
             permission_policy_owner="grading_manager",
             # W3b：profile 在场时候选代码（官方 eval 脚本）以非 root 候选执行用户运行；可信步骤仍 root。
             run_as_user="root" if profile is None else profile.candidate_exec_user,
@@ -2220,7 +2354,7 @@ class SWEGradingManager:
             ),
             created_at_utc=_now_utc(),
         )
-        network_args = {"deny_all": ("--network", "none")}[lease.network_policy]
+        network_args = ("--network", "none")  # legacy（无 profile）路径恒全断网；profile 路径由 profile 组装
 
         labels: list[str] = [
             "--label",
@@ -2249,7 +2383,8 @@ class SWEGradingManager:
             # W3b：grader 容器参数只由独立 grader profile 组装（deny_all、cap-drop ALL + 可信初始化
             # 能力、no-new-privileges、PID/CPU/memory+swap/tmpfs 限额、只读声明挂载）。
             args = profile.docker_run_args(
-                name=name, image=spec.image, labels=labels, declared_readonly_binds=declared_binds
+                name=name, image=spec.image, labels=labels, declared_readonly_binds=declared_binds,
+                network=f"{name}-net" if supply_mode else "none",
             )
 
         # Codex 集成审查 R1（P1）：**所有权先于创建请求**——名字一旦可能到达 daemon，就必须已在本实例的清理记录里
@@ -2266,6 +2401,10 @@ class SWEGradingManager:
         self._records.append(record)
         self.containers_created_total += 1
         try:
+            if supply_mode:
+                # 2A：本次评分的 internal attempt 网络（与 rollout 同一子网池规则）+ 包供应 relay 以 pkgidx 接入；网络由 record
+                # 持有，容器收口时一并拆（_release_supply_resources）。
+                await self._create_supply_network(record, network_name=f"{name}-net", labels=labels)
             run = await self._await_within_grading_deadline(self._docker(*args), phase="container_start")
             if run.exit_code != 0:
                 raise GradingInfraError(
@@ -2275,14 +2414,51 @@ class SWEGradingManager:
             record.lease = lease
             self.leases_total += 1
             if profile is not None:
-                await self._grader_prelaunch(record, profile, declared_binds)
+                await self._grader_prelaunch(
+                    record, profile, declared_binds,
+                    expected_network=record.supply_network.name if record.supply_network is not None else None,
+                )
         except BaseException:
             await self._close_container_scope(record)
             raise
         return record
 
+    async def _create_supply_network(self, record: _ContainerRecord, *, network_name: str, labels: Sequence[str]) -> None:
+        from repoharness2.adapters.slime.sandbox_profile import (
+            EgressRelayUnavailable,
+            SandboxNetworkError,
+            connect_relay_to_network,
+            create_attempt_network,
+        )
+
+        supply = self.config.supply
+        assert supply is not None
+        record.supply = {"network": network_name, "policy": "supply_install_then_none"}
+        cancel_report: list[str] = []
+        try:
+            record.supply_network = await self._await_within_grading_deadline(
+                create_attempt_network(
+                    self._docker, profile=supply.network_profile, pool=supply.subnet_pool, name=network_name,
+                    labels=labels, cancel_report=cancel_report,
+                ),
+                phase="supply_network_create",
+            )
+            await self._await_within_grading_deadline(
+                connect_relay_to_network(self._docker, relay=supply.relay, network=record.supply_network),
+                phase="supply_relay_connect",
+            )
+        except EgressRelayUnavailable as exc:
+            # run 级包供应 relay 不在了：之后每次评分都会撞上——run-halt，不洗成成员损耗
+            raise SandboxProfileViolation("grader_supply_relay_unavailable", f"{record.name}: {str(exc)[:300]}") from exc
+        except SandboxNetworkError as exc:
+            raise GradingInfraError(f"grader_supply_network_failed:{exc.reason_code}:{str(exc)[:200]}") from exc
+        finally:
+            for note in cancel_report:
+                self.cleanup_failures.append(f"supply_network_after_cancel:{network_name}:{note}")
+
     async def _grader_prelaunch(
-        self, record: _ContainerRecord, profile: "GraderSandboxProfile", declared_binds: list[tuple[str, str]]
+        self, record: _ContainerRecord, profile: "GraderSandboxProfile", declared_binds: list[tuple[str, str]],
+        *, expected_network: str | None = None,
     ) -> None:
         """W3b：grader 容器创建后、任何评分步骤之前——root 可信初始化（建候选执行用户、safe.directory）
         + 一次 inspect + 一次候选用户身份探针（断网只剩 loopback、非 root、CapEff=0、限额）。
@@ -2315,7 +2491,8 @@ class SWEGradingManager:
             ) from exc
         report = await self._await_within_grading_deadline(
             run_grader_prelaunch_check(
-                self._docker, name=record.name, profile=profile, declared_readonly_binds=declared_binds
+                self._docker, name=record.name, profile=profile, declared_readonly_binds=declared_binds,
+                expected_network=expected_network,
             ),
             phase="grader_prelaunch_check",
         )
@@ -2415,6 +2592,13 @@ class SWEGradingManager:
         仍运行 → docker kill 再 rm -f 一次；最终仍运行或无法确认 → GradingScopeTerminationError（run-fatal，
         穿队列上抛）。停止与删除分开表述。"""
 
+        try:
+            await self._close_container_scope_inner(record)
+        finally:
+            # 2A：容器收口之后（成功或失败）收尾本次评分的网关 token 与 attempt 网络；有自己的有界预算，不抛
+            await self._release_supply_resources(record)
+
+    async def _close_container_scope_inner(self, record: _ContainerRecord) -> None:
         budget = float(self.config.cleanup_timeout_seconds)
         started = time.monotonic()
 
@@ -2461,7 +2645,9 @@ class SWEGradingManager:
         user: str | None = None,
         home: str | None = None,
         image_env: bool = False,
+        env: Mapping[str, str] | None = None,
     ) -> ExecResult:
+        # 2A：env = 只给这一次 exec 的环境变量（受控供应的安装 exec 注入包索引地址）。
         # W3b：user/home 只在"执行候选代码"（官方 eval 脚本、观测、编译复证）时给出——以候选执行用户身份运行，继承
         # 镜像 ENV。E2b：root（未给 user）默认走 `TRUSTED_ROOT_EXEC_PREFIX`，不继承镜像 ENV；只有来源自带、必须在镜像
         # 环境里跑的 root 脚本（可信 setup、legacy 单脚本 eval）显式传 image_env=True——两者都在候选代码运行之前。
@@ -2472,6 +2658,8 @@ class SWEGradingManager:
             args += ["-u", user]
         if home is not None:
             args += ["-e", f"HOME={home}"]
+        for key, value in (env or {}).items():
+            args += ["-e", f"{key}={value}"]
         if user is None and not image_env:
             args += [record.name, *TRUSTED_ROOT_EXEC_PREFIX, script]
         else:
@@ -2492,6 +2680,7 @@ class SWEGradingManager:
         home: str | None = None,
         image_env: bool = False,
         on_delivered: Callable[[ExecResult], None] | None = None,
+        env: Mapping[str, str] | None = None,
     ) -> ExecResult:
         """带分段超时（P3）与容器死亡检测（P4）的 exec：
         超时 -> infra；命令失败且容器已死 -> infra（killed）；其余交调用方定夺。
@@ -2503,7 +2692,9 @@ class SWEGradingManager:
         timeout = bounded_by_grading_deadline(timeout, phase)  # N2a：分段 timeout 与评分期限取小
         try:
             result = await asyncio.wait_for(
-                self._exec_bash(record, script, input_bytes=input_bytes, user=user, home=home, image_env=image_env),
+                self._exec_bash(
+                    record, script, input_bytes=input_bytes, user=user, home=home, image_env=image_env, env=env,
+                ),
                 timeout=timeout,
             )
         except (TimeoutError, asyncio.TimeoutError):
@@ -3067,9 +3258,18 @@ class SWEGradingManager:
                     f"grading_control_surface_protect_failed:{reason}:rc={protect.exit_code}:"
                     f"{protect_facts.get('RH2_PROTECT_ERROR', '')}:{protect.stderr.strip()[-200:]}"
                 )
-            await self._write_root_script(
-                record, script_path, spec.candidate_test_script, timeout=spec.apply_timeout_seconds
-            )
+            if record.supply is not None:
+                # 2A：安装 exec 与测试 exec 各一份脚本（root 写、候选只读）；单 shell 的候选脚本不写
+                await self._write_root_script(
+                    record, f"{script_path}.install", spec.candidate_install_script or "", timeout=spec.apply_timeout_seconds
+                )
+                await self._write_root_script(
+                    record, script_path, spec.candidate_test_after_install_script or "", timeout=spec.apply_timeout_seconds
+                )
+            else:
+                await self._write_root_script(
+                    record, script_path, spec.candidate_test_script, timeout=spec.apply_timeout_seconds
+                )
             # S1-m：候选输出的 tee 落点（候选用户属主；root 之后读回）+ 候选段之前的 root 观测（非致命）
             uid = profile.candidate_exec_uid
             await self._exec_bash_checked(
@@ -3094,63 +3294,76 @@ class SWEGradingManager:
 
         # CR1：候选段开始前的日志前缀（setup + 权限布置输出）；部分日志 = 前缀 + 已知的候选输出（重复记录不叠加）
         pre_candidate_log = record.eval_log_partial or setup_log
-        delivered_box: list[ExecResult] = []
+        candidate_user, candidate_home = str(profile.candidate_exec_uid), f"/home/{profile.candidate_exec_user}"
 
-        def _keep_delivered(delivered: ExecResult) -> None:
-            # 同步保存已交付的 exec 结果：之后任何 await 被取消，记录里都已有这份输出与退出码
-            delivered_box.append(delivered)
-            self._record_partial_candidate(
-                record, pre_candidate_log, _exec_text(delivered), exec_exit_code=delivered.exit_code,
-            )
+        async def _candidate_exec(
+            command: str, *, timeout: float, env: Mapping[str, str] | None = None, prior: str = "",
+        ) -> ExecResult:
+            """一次候选身份的 exec。`prior` = 同一候选段里此前已交付的输出（两段执行时的安装输出），部分日志按
+            前缀 + prior + 本次输出记。"""
 
-        async def _supplement_with_tee(known: str, exit_code: int | None) -> str:
-            # tee 只作补充：比已收到的输出更长才替换，更短的不覆盖（短 tee 不把已知的 test 阶段退回 install）
-            partial = await self._read_candidate_log_partial(record)
-            if len(partial) > len(known):
-                self._record_partial_candidate(record, pre_candidate_log, partial, exec_exit_code=exit_code)
-                return partial
-            return known
+            delivered_box: list[ExecResult] = []
 
-        try:
-            result = await self._exec_bash_checked(
-                record,
-                # 输出同时 tee 到候选属主文件；exec 退出码仍是候选脚本的退出码（PIPESTATUS[0]）
+            def _keep_delivered(delivered: ExecResult) -> None:
+                # 同步保存已交付的 exec 结果：之后任何 await 被取消，记录里都已有这份输出与退出码
+                delivered_box.append(delivered)
+                self._record_partial_candidate(
+                    record, pre_candidate_log, prior + _exec_text(delivered), exec_exit_code=delivered.exit_code,
+                )
+
+            async def _supplement_with_tee(known: str, exit_code: int | None) -> str:
+                # tee 只作补充：比已收到的输出更长才替换，更短的不覆盖（短 tee 不把已知的 test 阶段退回 install）
+                partial = await self._read_candidate_log_partial(record)
+                if len(partial) > len(known):
+                    self._record_partial_candidate(record, pre_candidate_log, partial, exec_exit_code=exit_code)
+                    return partial
+                return known
+
+            try:
+                return await self._exec_bash_checked(
+                    record, command, phase="test", timeout=timeout, user=candidate_user, home=candidate_home,
+                    on_delivered=_keep_delivered, env=env,
+                )
+            except GradingInfraError as exc:
+                # 超时：exec 通道拿不到已产生的输出（run_docker 取消即 kill），从 tee 文件读回部分日志。
+                # 容器死亡 / 状态未知：exec 已交付输出与退出码（已由 _keep_delivered 同步记下；异常也携带同一份），
+                # tee 只在更长时补充（真实容器实测：此前这里只剩 setup 日志、candidate_phase=unknown）。
+                delivered = exc.exec_result if exc.exec_result is not None else (delivered_box[-1] if delivered_box else None)
+                known = prior + (_exec_text(delivered) if delivered is not None else "")
+                exit_code = delivered.exit_code if delivered is not None else None
+                if delivered is not None and not delivered_box:
+                    self._record_partial_candidate(record, pre_candidate_log, known, exec_exit_code=exit_code)
+                elif delivered is None:
+                    self._record_partial_candidate(record, pre_candidate_log, prior, exec_exit_code=None)
+                partial = await _supplement_with_tee(known, exit_code)
+                # A2：安装段与测试段共用一份 test_timeout；归因文字注明超时发生在哪一段（判定仍是 infra）
+                raise GradingInfraError(
+                    f"{exc.detail}:candidate_phase={candidate_phase_at(partial)}", category=exc.category,
+                    op=exc.op, exit_code=exc.exit_code, stderr=exc.stderr, container_name=exc.container_name,
+                ) from exc
+            except asyncio.CancelledError:
+                # I4：外部取消（评分期限 / 关停）同样保留已产生的候选输出；读取用独立有界预算，再原样上抛。
+                # CR1：exec 已交付时（取消落在其后的 inspect 上）先用已交付的那份，tee 只在更长时补充。
+                delivered = delivered_box[-1] if delivered_box else None
+                if delivered is None:
+                    self._record_partial_candidate(record, pre_candidate_log, prior, exec_exit_code=None)
+                await _supplement_with_tee(
+                    prior + (_exec_text(delivered) if delivered is not None else ""),
+                    delivered.exit_code if delivered is not None else None,
+                )
+                raise
+
+        if record.supply is None:
+            # 输出同时 tee 到候选属主文件；exec 退出码仍是候选脚本的退出码（PIPESTATUS[0]）
+            result = await _candidate_exec(
                 f"bash {script_path} 2>&1 | tee {CANDIDATE_LOG_PATH}; exit ${{PIPESTATUS[0]}}",
-                phase="test",
                 timeout=spec.test_timeout_seconds,
-                user=str(profile.candidate_exec_uid),
-                home=f"/home/{profile.candidate_exec_user}",
-                on_delivered=_keep_delivered,
             )
-        except GradingInfraError as exc:
-            # 超时：exec 通道拿不到已产生的输出（run_docker 取消即 kill），从 tee 文件读回部分日志。
-            # 容器死亡 / 状态未知：exec 已交付输出与退出码（已由 _keep_delivered 同步记下；异常也携带同一份），
-            # tee 只在更长时补充（真实容器实测：此前这里只剩 setup 日志、candidate_phase=unknown）。
-            delivered = exc.exec_result if exc.exec_result is not None else (delivered_box[-1] if delivered_box else None)
-            known = _exec_text(delivered) if delivered is not None else ""
-            exit_code = delivered.exit_code if delivered is not None else None
-            if delivered is not None and not delivered_box:
-                self._record_partial_candidate(record, pre_candidate_log, known, exec_exit_code=exit_code)
-            elif delivered is None:
-                self._record_partial_candidate(record, pre_candidate_log, "", exec_exit_code=None)
-            partial = await _supplement_with_tee(known, exit_code)
-            # A2：安装段与测试段共用一份 test_timeout；归因文字注明超时发生在哪一段（判定仍是 infra）
-            raise GradingInfraError(
-                f"{exc.detail}:candidate_phase={candidate_phase_at(partial)}", category=exc.category,
-                op=exc.op, exit_code=exc.exit_code, stderr=exc.stderr, container_name=exc.container_name,
-            ) from exc
-        except asyncio.CancelledError:
-            # I4：外部取消（评分期限 / 关停）同样保留已产生的候选输出；读取用独立有界预算，再原样上抛。
-            # CR1：exec 已交付时（取消落在其后的 inspect 上）先用已交付的那份，tee 只在更长时补充。
-            delivered = delivered_box[-1] if delivered_box else None
-            if delivered is None:
-                self._record_partial_candidate(record, pre_candidate_log, "", exec_exit_code=None)
-            await _supplement_with_tee(
-                _exec_text(delivered) if delivered is not None else "",
-                delivered.exit_code if delivered is not None else None,
+            test_log = _exec_text(result)
+        else:
+            result, test_log = await self._run_two_stage_candidate(
+                record, spec, script_path=script_path, pre_candidate_log=pre_candidate_log, candidate_exec=_candidate_exec,
             )
-            raise
-        test_log = result.stdout if result.stdout else result.stderr
         facts = candidate_segment_facts(test_log, result.exit_code)
         # 候选段是否跑完以日志里的收口事实为准（见 candidate_segment_facts）。此前只要 exec 返回就记
         # log_partial=False——而容器被外部 `rm -f` 时，exec 以 137 返回、紧接着的 inspect 还可能看到 running
@@ -3176,6 +3389,82 @@ class SWEGradingManager:
         )
         record.observations = {**(record.observations or {}), **post}
         return setup_log + test_log, trusted_setup_seconds
+
+    async def _run_two_stage_candidate(
+        self, record: _ContainerRecord, spec: GradingEnvSpec, *, script_path: str, pre_candidate_log: str,
+        candidate_exec: Callable[..., Awaitable[ExecResult]],
+    ) -> tuple[ExecResult, str]:
+        """2A 候选段（network_supply_brief_20260924 §4.2）：签发网关 token → 安装 exec（注入包索引地址）→ 宿主断网并核对
+        `Networks == {}`、撤销 token → 只有核对成功且安装段正常交接才启动测试 exec（只拿共用 test_timeout 的剩余）。
+        返回 (最后一次 exec 的结果, 候选段合并日志)。
+
+        三个终点（§4.2.1）：
+        - 安装段 shell 提前退出 / 状态没写成：不启动测试 exec，日志 = 安装输出（无 Start/End），交既有 parser 与 P-A 规则
+          ——与今天单 shell 里"shell 已死、测试没跑"同一处理；结束形态进 record.supply。
+        - 撤网或核对失败：typed infra `grader_supply_withdraw_failed`，不启动测试 exec、不产生 reward。
+        - 超时 / 取消：由 candidate_exec 按既有规则收齐部分日志后上抛；token 与网络由容器收口统一收尾。"""
+
+        from repoharness2.adapters.slime.pkg_index_gateway import SupplyGrant
+        from repoharness2.adapters.slime.sandbox_profile import withdraw_container_network
+
+        supply = self.config.supply
+        policy = spec.supply_policy
+        assert supply is not None and policy is not None and record.supply is not None and record.supply_network is not None
+        facts = record.supply
+        stage_started = time.monotonic()
+        grant = SupplyGrant.build(
+            attempt_id=record.name, task_id=spec.task_id, plane="grading", phase="install",
+            blocked_dists=list(policy.blocked_dists), allowed_releases={k: list(v) for k, v in policy.allowed_releases.items()},
+        )
+        token = supply.gateway.issue(grant)
+        record.supply_token = token
+        facts.update(token_ref=hashlib.sha256(token.encode()).hexdigest()[:12], policy_digest=grant.policy_digest())
+        index = f"http://{supply.relay.alias}:{supply.index_port}{supply.gateway.index_path(token)}"
+        env = {"PIP_INDEX_URL": index, "PIP_TRUSTED_HOST": supply.relay.alias, "UV_INDEX_URL": index, "UV_DEFAULT_INDEX": index}
+        install = await candidate_exec(
+            f"bash {script_path}.install 2>&1 | tee {CANDIDATE_LOG_PATH}; exit ${{PIPESTATUS[0]}}",
+            timeout=spec.test_timeout_seconds, env=env,
+        )
+        install_log = _exec_text(install)
+        shape = supply_install_shape(install_log)
+        facts.update(install_exit_code=install.exit_code, install_shape=shape,
+                     install_seconds=round(time.monotonic() - stage_started, 3))
+
+        withdraw_started = time.monotonic()
+        withdrawal = await withdraw_container_network(
+            self._docker, container=record.name, network=record.supply_network.name,
+            timeout=bounded_by_grading_deadline(supply.withdraw_timeout_seconds, "supply_withdraw"),
+        )
+        supply.gateway.withdraw(token)  # 纵深：容器已离网之外，网关对这枚 token 也一律 403
+        facts.update(withdrawal=withdrawal.to_dict(), withdraw_seconds=round(time.monotonic() - withdraw_started, 3))
+        if not withdrawal.ok:
+            self._record_partial_candidate(record, pre_candidate_log, install_log, exec_exit_code=install.exit_code)
+            raise GradingInfraError(
+                f"grader_supply_withdraw_failed:networks_after={withdrawal.networks_after}:"
+                f"{(withdrawal.inspect_error or withdrawal.disconnect_error or '')[:200]}",
+                op="supply_withdraw",
+            )
+        # 容器已离网、token 已撤销：立刻收齐网关的终态摘要（进本次诊断），不留到收口
+        record.supply_token = None
+        summary = await supply.gateway.release(token, timeout=supply.release_timeout_seconds)
+        if summary is not None:
+            facts["gateway"] = summary
+
+        if shape != SUPPLY_INSTALL_HANDOFF:
+            facts["test_exec_started"] = False
+            return install, install_log
+        remaining = spec.test_timeout_seconds - (time.monotonic() - stage_started)
+        if remaining <= 0:
+            self._record_partial_candidate(record, pre_candidate_log, install_log, exec_exit_code=install.exit_code)
+            raise GradingInfraError(f"grading_test_timeout_after_{int(spec.test_timeout_seconds)}s:candidate_phase=install")
+        facts["test_exec_started"] = True
+        test_started = time.monotonic()
+        test = await candidate_exec(
+            f"bash {script_path} 2>&1 | tee -a {CANDIDATE_LOG_PATH}; exit ${{PIPESTATUS[0]}}",
+            timeout=remaining, prior=install_log,
+        )
+        facts["test_seconds"] = round(time.monotonic() - test_started, 3)
+        return test, install_log + _exec_text(test)
 
     @staticmethod
     def _record_partial_candidate(
@@ -3387,7 +3676,7 @@ class SWEGradingManager:
             unknown.append("test_rc")
         if unknown:
             missing.append("termination_facts_unknown:" + "+".join(unknown))
-        qual_ok, qual_note = env_qualification_status(spec)
+        qual_ok, qual_note = env_qualification_status(spec, two_stage=record.supply is not None)
         decision["qualification"] = qual_note
         if not qual_ok:
             missing.append(f"qualification:{qual_note}")
