@@ -31,7 +31,6 @@ from __future__ import annotations
 import asyncio
 import contextvars
 import dataclasses
-import json
 import time
 import uuid
 from collections.abc import Awaitable, Callable
@@ -1251,16 +1250,10 @@ def install_capture_wire(registry: CaptureRegistry) -> None:
                 )
                 with registry._lock:
                     registry.stats["prompt_too_long"] = registry.stats.get("prompt_too_long", 0) + 1
-                raise aiohttp_web.HTTPBadRequest(
-                    text=json.dumps({
-                        "type": "error",
-                        "error": {
-                            "type": "invalid_request_error",
-                            "message": f"prompt is too long: {len(prompt_ids)} tokens > {session.max_context_tokens} maximum",
-                        },
-                    }),
-                    content_type="application/json",
-                )
+                # 响应构造与没装 capture wire 的部署（基座探针）共用一份（prompt_overflow，交接 §6.1）
+                from repoharness2.adapters.slime.prompt_overflow import prompt_too_long_error
+
+                raise prompt_too_long_error(len(prompt_ids), session.max_context_tokens)
             sp["max_new_tokens"] = min(int(sp.get("max_new_tokens", remaining)), remaining)
 
         base_payload: dict[str, Any] = {
