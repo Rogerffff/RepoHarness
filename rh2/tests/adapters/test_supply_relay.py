@@ -329,3 +329,99 @@ async def test_withdraw_cuts_a_running_container_off_the_gateway_for_good(tmp_pa
             await sp.stop_egress_relay(docker, relay)
         await gateway.stop()
         await upstream.stop()
+
+
+# ---- NG2（Codex review_supply_components §2）：交出 handle 之前被取消 / 意外异常也按名字回收 ------------------------------------
+
+
+class _GatedRelayFake(_RelayFake):
+    """`gate` 那一步（run / readiness / inspect）一直阻塞到被取消；`exec_raises` 让就绪探测抛意外异常。"""
+
+    def __init__(self, *, gate: str | None = None, rm_fail: bool = False, exec_raises: Exception | None = None) -> None:
+        super().__init__(rm_fail=rm_fail)
+        self.gate, self.exec_raises = gate, exec_raises
+        self.entered = asyncio.Event()
+
+    async def __call__(self, *args: str, input_bytes: bytes | None = None) -> ExecResult:
+        step = {"run": "run", "exec": "readiness", "inspect": "inspect"}.get(args[0])
+        if step is not None and step == self.gate:
+            self.calls.append(args)
+            self.entered.set()
+            await asyncio.Event().wait()  # 永远阻塞，直到被取消
+        if args[0] == "exec" and self.exec_raises is not None:
+            self.calls.append(args)
+            raise self.exec_raises
+        return await super().__call__(*args, input_bytes=input_bytes)
+
+
+@pytest.mark.parametrize("gate", ["run", "readiness", "inspect"])
+async def test_cancel_before_the_handle_is_handed_over_reclaims_the_container_and_propagates(gate):
+    fake = _GatedRelayFake(gate=gate)
+    report: list[str] = []
+    task = asyncio.ensure_future(sp.start_supply_relay(
+        fake, make_rollout_profile(), gateway_host="h", gateway_port=4000, run_id="run3", cancel_report=report))
+    await asyncio.wait_for(fake.entered.wait(), 5)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert fake.calls[-1] == ("rm", "-f", "rh2-supply-relay-run3") and report == []
+
+
+async def test_failed_reclaim_after_cancel_is_reported_with_the_container_name():
+    fake = _GatedRelayFake(gate="readiness", rm_fail=True)
+    report: list[str] = []
+    task = asyncio.ensure_future(sp.start_egress_relay(fake, make_rollout_profile(), run_id="run4", cancel_report=report))
+    await asyncio.wait_for(fake.entered.wait(), 5)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert len(report) == 1 and report[0].startswith("relay_rm_after_cancel:rh2-egress-relay-run4:")
+
+
+@pytest.mark.parametrize("rm_fail", [False, True])
+async def test_unexpected_exception_reclaims_and_keeps_the_original_error(rm_fail):
+    fake = _GatedRelayFake(exec_raises=OSError("docker 通道断了"), rm_fail=rm_fail)
+    with pytest.raises(OSError, match="docker 通道断了") as err:
+        await sp.start_supply_relay(fake, make_rollout_profile(), gateway_host="h", gateway_port=4000, run_id="run5")
+    assert ("rm", "-f", "rh2-supply-relay-run5") in fake.calls
+    notes = getattr(err.value, "__notes__", [])
+    assert (len(notes) == 1 and "残留 rh2-supply-relay-run5" in notes[0]) if rm_fail else notes == []
+
+
+async def test_failed_docker_run_also_reclaims_a_possibly_created_container():
+    fake = _RelayFake(run_fail=True)
+    with pytest.raises(sp.SandboxNetworkError, match="supply_relay_start_failed") as err:
+        await sp.start_supply_relay(fake, make_rollout_profile(), gateway_host="h", gateway_port=4000, run_id="run6")
+    assert ("rm", "-f", "rh2-supply-relay-run6") in fake.calls and err.value.leftover_containers == ()
+
+
+@pytest.mark.docker
+@pytest.mark.skipif(not DOCKER_WITH_RELAY_IMAGE, reason="本机 docker 不可用或没有钉死的 relay 镜像（测试不拉镜像）")
+async def test_real_docker_cancel_while_waiting_for_readiness_removes_the_created_relay():
+    run_id = f"relaycancel-{uuid.uuid4().hex[:8]}"
+    name = f"rh2-supply-relay-{run_id}"
+    entered = asyncio.Event()
+
+    async def slow_readiness(*args: str, input_bytes: bytes | None = None):
+        if args[0] == "exec" and "RH2_RELAY_LISTENING" in args[-1]:
+            entered.set()
+            await asyncio.sleep(120)
+        return await sp.default_docker_runner(*args, input_bytes=input_bytes)
+
+    report: list[str] = []
+    task = asyncio.ensure_future(sp.start_supply_relay(
+        slow_readiness, make_rollout_profile(), gateway_host="127.0.0.1", gateway_port=9, run_id=run_id,
+        labels=("--label", f"rh2.run_id={run_id}"), cancel_report=report))
+    try:
+        await asyncio.wait_for(entered.wait(), 120)
+        running = subprocess.run(["docker", "inspect", "-f", "{{.State.Running}}", name], capture_output=True, text=True, timeout=60)
+        assert running.stdout.strip() == "true"  # 真实容器已建出、handle 尚未交出
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+        left = subprocess.run(["docker", "ps", "-a", "--filter", f"label=rh2.run_id={run_id}", "--format", "{{.Names}}"],
+                              capture_output=True, text=True, timeout=60)
+        assert left.stdout.strip() == "" and report == []
+    finally:
+        subprocess.run(["docker", "rm", "-f", name], capture_output=True, timeout=60)
+

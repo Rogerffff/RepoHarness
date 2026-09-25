@@ -16,6 +16,7 @@ import json
 import os
 import shutil
 import subprocess
+import time
 import zipfile
 from pathlib import Path
 
@@ -80,6 +81,11 @@ class FakeUpstream:
         self.requests: list[dict] = []
         self.port = 0
         self._runner: web.AppRunner | None = None
+        # NG1 夹具：/pause 先发 5 字节再等 resume；/stall 在发响应头之前等 headers_go
+        self.pause_started = asyncio.Event()
+        self.resume = asyncio.Event()
+        self.headers_waiting = asyncio.Event()
+        self.headers_go = asyncio.Event()
 
     def _record(self, request: web.Request) -> None:
         self.requests.append({"method": request.method, "path": request.path, "query": request.query_string,
@@ -94,6 +100,8 @@ class FakeUpstream:
             "rh2demo": f'<a href="/packages/{DEMO_WHEEL_NAME}#sha256={_sha(DEMO_WHEEL)}">{DEMO_WHEEL_NAME}</a>',
             "rh2blocked": '<a href="/packages/rh2blocked-1.0-py3-none-any.whl">rh2blocked-1.0-py3-none-any.whl</a>',
             "big": '<a href="/slow/big-1.0-py3-none-any.whl">big-1.0-py3-none-any.whl</a>',
+            "pausepkg": '<a href="/pause/pausepkg-1.0-py3-none-any.whl">pausepkg-1.0-py3-none-any.whl</a>',
+            "stallpkg": '<a href="/stall/stallpkg-1.0-py3-none-any.whl">stallpkg-1.0-py3-none-any.whl</a>',
         }
         if dist == "boom":
             return web.Response(status=500, text="boom")
@@ -122,17 +130,39 @@ class FakeUpstream:
         await out.write_eof()
         return out
 
+    async def _pause(self, request: web.Request) -> web.StreamResponse:
+        self._record(request)
+        out = web.StreamResponse()
+        out.content_length = 10
+        await out.prepare(request)
+        await out.write(b"12345")
+        self.pause_started.set()
+        await self.resume.wait()
+        await out.write(b"67890")
+        await out.write_eof()
+        return out
+
+    async def _stall(self, request: web.Request) -> web.Response:
+        self._record(request)
+        self.headers_waiting.set()
+        await self.headers_go.wait()
+        return web.Response(body=b"stalled-ok", content_type="application/octet-stream")
+
     async def start(self) -> None:
         app = web.Application()
         app.router.add_get("/simple/{dist}/", self._simple)
         app.router.add_get("/packages/{name}", self._package)
         app.router.add_get("/slow/{name}", self._slow)
+        app.router.add_get("/pause/{name}", self._pause)
+        app.router.add_get("/stall/{name}", self._stall)
         self._runner = web.AppRunner(app, access_log=None)
         await self._runner.setup()
         await web.TCPSite(self._runner, "127.0.0.1", 0).start()
         self.port = int(self._runner.addresses[0][1])
 
     async def stop(self) -> None:
+        self.resume.set()
+        self.headers_go.set()
         if self._runner is not None:
             await self._runner.cleanup()
 
@@ -329,10 +359,11 @@ async def test_withdraw_denies_everything_and_cuts_an_in_flight_download(gateway
                 await resp.read()
         assert (await _get(s, f"{gateway.test_base}/a/{token}/simple/requests/"))[0] == 403
         assert (await _get(s, gateway.test_base + href))[0] == 403
-    summary = gateway.release(token)
-    assert summary["final_state"] == "withdrawn" and summary["attempt_id"] == "att-1" and summary["plane"] == "grading"
-    assert summary["stats"]["decision:withdrawn_mid_stream"] == 1 and summary["stats"]["decision:token_withdrawn"] == 2
-    assert gateway.active_token_count() == 0 and gateway.release(token) is None
+    summary = await gateway.release(token)
+    assert summary["withdrawn_before_release"] is True and summary["attempt_id"] == "att-1" and summary["plane"] == "grading"
+    assert summary["complete"] is True and summary["inflight_unfinished"] == 0
+    assert summary["stats"]["decision:withdrawn_in_flight"] == 1 and summary["stats"]["decision:token_withdrawn"] == 2
+    assert gateway.active_token_count() == 0 and await gateway.release(token) is None
     async with aiohttp.ClientSession() as s:
         assert (await _get(s, f"{gateway.test_base}/a/{token}/simple/requests/"))[0] == 404  # 释放后不认识
     totals = gateway.summary()["totals"]
@@ -409,3 +440,171 @@ async def test_real_pip_downloads_through_the_gateway_and_is_refused_for_a_block
     assert rc != 0 and "No matching distribution found" in out, out
     assert upstream.saw("/simple/rh2blocked") == []
     assert token not in gateway._log_path.read_text()
+
+
+# ---- NG1（Codex review_supply_components §1）：释放 = 撤销 + 有界收齐在途请求 + 终态摘要 -------------------------------------------
+
+_DISCONNECTED = (aiohttp.ClientPayloadError, aiohttp.ServerDisconnectedError, aiohttp.ClientConnectionError)
+
+
+async def _file_href(session, gateway, token: str, dist: str) -> str:
+    _status, body, _h = await _get(session, f"{gateway.test_base}/a/{token}/simple/{dist}/")
+    return _anchors(body.decode())[0][0]["href"].split("#")[0]
+
+
+async def test_release_mid_download_cuts_it_and_the_final_summary_includes_its_bytes(gateway, upstream):
+    token = gateway.issue(_grant())
+    async with aiohttp.ClientSession() as s:
+        href = await _file_href(s, gateway, token, "pausepkg")
+        async with s.get(gateway.test_base + href) as resp:
+            assert resp.status == 200 and await resp.content.readexactly(5) == b"12345"
+            await asyncio.wait_for(upstream.pause_started.wait(), 5)
+            summary = await gateway.release(token, timeout=5)
+            upstream.resume.set()  # 上游恢复后，剩下的 5 字节也不会再经网关送达
+            with pytest.raises(_DISCONNECTED):
+                await asyncio.wait_for(resp.read(), 5)
+    assert summary["complete"] is True and summary["inflight_unfinished"] == 0 and summary["withdrawn_before_release"] is False
+    assert summary["stats"]["decision:withdrawn_in_flight"] == 1 and summary["stats"]["bytes"] == 5  # 终态统计已收齐
+    row = [r for r in _log_rows(gateway._log_path) if r["kind"] == "file"][-1]
+    assert row["decision"] == "withdrawn_in_flight" and row["bytes"] == 5 and row["response_started"] is True
+    assert gateway.active_token_count() == 0 and gateway.summary()["totals"].get("tokens_released_incomplete") is None
+
+
+async def test_withdraw_cuts_a_stalled_download_at_once_not_at_the_next_upstream_chunk(gateway, upstream):
+    token = gateway.issue(_grant(plane="grading", phase="install"))
+    async with aiohttp.ClientSession() as s:
+        href = await _file_href(s, gateway, token, "pausepkg")
+        async with s.get(gateway.test_base + href) as resp:
+            await resp.content.readexactly(5)
+            await asyncio.wait_for(upstream.pause_started.wait(), 5)
+            started = time.monotonic()
+            assert gateway.withdraw(token) is True
+            with pytest.raises(_DISCONNECTED):
+                await asyncio.wait_for(resp.read(), 5)
+            assert time.monotonic() - started < 2.0  # 上游仍停顿（resume 未设置）：断开来自撤销本身
+    summary = await gateway.release(token, timeout=5)
+    assert summary["withdrawn_before_release"] is True and summary["complete"] is True
+    assert summary["stats"]["decision:withdrawn_in_flight"] == 1 and summary["stats"]["bytes"] == 5
+
+
+async def test_release_cancels_a_request_still_waiting_for_upstream_headers(gateway, upstream):
+    """请求还在等上游响应头时释放：网关直接关连接、一个响应字节都不发。用裸 socket 观察服务端行为，不受客户端重试策略影响
+    （aiohttp 客户端会把响应头之前的断开当成可重试，见下一条）。"""
+    token = gateway.issue(_grant())
+    async with aiohttp.ClientSession() as s:
+        href = await _file_href(s, gateway, token, "stallpkg")
+    host, port = gateway.test_base.removeprefix("http://").rsplit(":", 1)
+    reader, writer = await asyncio.open_connection(host, int(port))
+    try:
+        writer.write(f"GET {href} HTTP/1.1\r\nHost: {host}:{port}\r\n\r\n".encode())
+        await writer.drain()
+        await asyncio.wait_for(upstream.headers_waiting.wait(), 5)
+        summary = await gateway.release(token, timeout=5)
+        try:
+            got = await asyncio.wait_for(reader.read(), 5)  # 读到 EOF
+        except ConnectionResetError:
+            got = b""
+        assert got == b""  # 连接被关、零响应字节（没有状态行）
+    finally:
+        writer.close()
+    assert summary["complete"] is True and summary["stats"]["decision:withdrawn_in_flight"] == 1
+    row = [r for r in _log_rows(gateway._log_path) if r["kind"] == "file"][-1]
+    assert row["decision"] == "withdrawn_in_flight" and "response_started" not in row and not row.get("bytes")
+
+
+async def test_a_client_retry_after_the_header_wait_cut_is_refused_and_never_reaches_upstream(gateway, upstream):
+    """真实客户端对响应头之前的断开可能重试幂等 GET（aiohttp 3.14.1 重试一次，已核对其 client 源码）。重试落在已释放的
+    token 上：网关直接 404（unknown_token），不转发上游；上游之后才放行的响应也送不到客户端。不重试的客户端则直接看到断开。"""
+    token = gateway.issue(_grant())
+    async with aiohttp.ClientSession() as s:
+        href = await _file_href(s, gateway, token, "stallpkg")
+        pending = asyncio.ensure_future(_get(s, gateway.test_base + href))
+        await asyncio.wait_for(upstream.headers_waiting.wait(), 5)
+        await gateway.release(token, timeout=5)
+        upstream.headers_go.set()  # 上游这时才发响应：已被取消的在途请求不会再转交
+        try:
+            status, body, _h = await asyncio.wait_for(pending, 5)
+        except _DISCONNECTED:
+            status, body = None, b""
+    assert status in (None, 404) and b"stalled-ok" not in body
+    decisions = [r["decision"] for r in _log_rows(gateway._log_path) if r["kind"] == "file"]
+    assert decisions == (["withdrawn_in_flight"] if status is None else ["withdrawn_in_flight", "unknown_token"])
+    assert len(upstream.saw("/stall/")) == 1  # 只有被切断的那一次到过上游；重试没有转发
+
+
+async def test_release_that_cannot_collect_an_inflight_request_says_so_instead_of_faking_a_final_summary(gateway):
+    """有界等待到时仍有在途请求没收尾（这里用一个吞掉取消的任务模拟）：摘要标 `complete=False` 并给数量，网关总计记一次
+    未收齐释放；token 照样释放（之后 404）。"""
+    token = gateway.issue(_grant())
+    release_gate = asyncio.Event()
+
+    async def stubborn() -> None:
+        try:
+            await asyncio.sleep(30)
+        except asyncio.CancelledError:
+            await release_gate.wait()  # 不按取消收尾
+
+    task = asyncio.ensure_future(stubborn())
+    await asyncio.sleep(0)
+    gateway._tokens[token].inflight.add(task)
+    summary = await gateway.release(token, timeout=0.2)
+    assert summary["complete"] is False and summary["inflight_unfinished"] == 1
+    assert gateway.summary()["totals"]["tokens_released_incomplete"] == 1 and gateway.active_token_count() == 0
+    async with aiohttp.ClientSession() as s:
+        status, _body, _h = await _get(s, f"{gateway.test_base}/a/{token}/simple/requests/")
+    assert status == 404
+    release_gate.set()
+    await asyncio.wait_for(task, 5)
+
+
+async def test_overlapping_releases_yield_one_final_summary_and_count_once(gateway, upstream):
+    token = gateway.issue(_grant())
+    async with aiohttp.ClientSession() as s:
+        href = await _file_href(s, gateway, token, "pausepkg")
+        async with s.get(gateway.test_base + href) as resp:
+            await resp.content.readexactly(5)
+            await asyncio.wait_for(upstream.pause_started.wait(), 5)
+            first, second = await asyncio.gather(gateway.release(token, timeout=5), gateway.release(token, timeout=5))
+    summaries = [x for x in (first, second) if x is not None]
+    assert len(summaries) == 1 and summaries[0]["complete"] is True and summaries[0]["stats"]["bytes"] == 5
+    assert gateway.summary()["totals"]["tokens_released"] == 1 and await gateway.release(token) is None
+
+
+async def test_gateway_stop_cuts_inflight_requests_at_once_instead_of_waiting_for_the_upstream(gateway, upstream):
+    """关停网关时仍有在途请求（上游还没发响应头）：立即断开并按 `cancelled_in_flight` 记日志，不等 aiohttp 默认最长
+    60 s 的优雅关停。"""
+    token = gateway.issue(_grant())
+    async with aiohttp.ClientSession() as s:
+        href = await _file_href(s, gateway, token, "stallpkg")
+    host, port = gateway.test_base.removeprefix("http://").rsplit(":", 1)
+    reader, writer = await asyncio.open_connection(host, int(port))
+    try:
+        writer.write(f"GET {href} HTTP/1.1\r\nHost: {host}:{port}\r\n\r\n".encode())
+        await writer.drain()
+        await asyncio.wait_for(upstream.headers_waiting.wait(), 5)
+        started = time.monotonic()
+        await asyncio.wait_for(gateway.stop(), 10)
+        assert time.monotonic() - started < 5.0
+        try:
+            got = await asyncio.wait_for(reader.read(), 5)
+        except ConnectionResetError:
+            got = b""
+        assert got == b""
+    finally:
+        writer.close()
+    row = [r for r in _log_rows(gateway._log_path) if r["kind"] == "file"][-1]
+    assert row["decision"] == "cancelled_in_flight" and "response_started" not in row
+
+
+async def test_normal_complete_download_then_release_reports_complete_final_stats(gateway):
+    token = gateway.issue(_grant())
+    async with aiohttp.ClientSession() as s:
+        _st, body, _h = await _get(s, f"{gateway.test_base}/a/{token}/simple/requests/")
+        href = {text: attrs["href"].split("#")[0] for attrs, text in _anchors(body.decode())}["requests-2.31.0-py3-none-any.whl"]
+        status, data, _h = await _get(s, gateway.test_base + href)
+        assert status == 200 and data == _file_bytes("requests-2.31.0-py3-none-any.whl")
+    summary = await gateway.release(token)
+    assert summary["complete"] is True and summary["withdrawn_before_release"] is False
+    assert summary["stats"]["decision:served_page"] == 1 and summary["stats"]["decision:served_file"] == 1
+    assert summary["stats"]["bytes"] == len(data)
+

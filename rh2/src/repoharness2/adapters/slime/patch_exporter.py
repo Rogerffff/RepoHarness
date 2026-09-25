@@ -128,17 +128,29 @@ def build_content_fetch_script(workdir: str, paths_regular: list[str],
     return "\n".join(lines) + "\n"
 
 
-def _first_rejected_entry_path(census_stdout: str) -> tuple[str, str] | None:
-    """post-run census 里第一条过不了基线路径规则的条目路径（regular / symlink 行）与规则原文；没有 → None。"""
+def _candidate_path_rejection(exc: ValidationError) -> tuple[str, str] | None:
+    """只认"契约的路径规则拒绝了这一条目的路径"（Codex review_supply_components PC1：不看全文是否碰巧另有坏路径）：错误来自
+    `BaselineEntry` 构造、每条错误都在模型层（loc 为空）、且该条目输入里的 path 用同一条路径规则复查确实不过。字段级错误
+    （摘要 / mode 不合法等）或路径合规的模型层错误（软链一致性等）都不是候选路径问题 → None（原异常上抛、保持 run-fatal）。"""
 
-    for line in census_stdout.splitlines():
-        parts = line.split("\t")
-        if len(parts) == 4 and parts[0] in ("regular", "symlink"):
-            try:
-                _baseline_path_rule(parts[3])
-            except ValueError as exc:
-                return parts[3], str(exc)[:200]
-    return None
+    if exc.title != "BaselineEntry":
+        return None
+    errors = exc.errors()
+    if not errors:
+        return None
+    found: tuple[str, str] | None = None
+    for err in errors:
+        payload = err.get("input")
+        path = payload.get("path") if isinstance(payload, dict) else None
+        if err.get("loc") != () or not isinstance(path, str):
+            return None
+        try:
+            _baseline_path_rule(path)
+        except ValueError as rule_error:
+            found = (path, str(rule_error)[:200])
+        else:
+            return None
+    return found
 
 
 def _escape_control_chars(path: str) -> str:
@@ -205,10 +217,10 @@ async def export_frozen_patch(
         raise PatchExportError("post_census_parse_failed", str(exc)) from exc
     except ValidationError as exc:
         # Codex review_next_slices §6（控制字符路径停批）：候选产出的路径名过不了基线路径规则时，在候选路径的解析边界给
-        # typed 不支持原因，复用既有 unsafe 通道（present + 永久拒绝、不评分；与换行文件名、FIFO 同一处置）。判据用契约
-        # 自己的路径规则逐条复查 post-run 条目路径——只有真有条目路径过不了规则才改判；没有候选路径违规的 ValidationError
-        # （我方身份 / 摘要 / 契约矛盾）原样上抛，保持 typed run-fatal。
-        rejected = _first_rejected_entry_path(result.stdout)
+        # typed 不支持原因，复用既有 unsafe 通道（present + 永久拒绝、不评分；与换行文件名、FIFO 同一处置）。判据只看捕获的
+        # 这条异常本身（PC1）：它必须正是路径规则对该条目路径的拒绝；其余 ValidationError（我方身份 / 摘要 / 契约矛盾，
+        # 包括"坏摘要 + 另一行坏路径"这类组合）原样上抛，保持 typed run-fatal。
+        rejected = _candidate_path_rejection(exc)
         if rejected is None:
             raise
         if segment_sink is not None:

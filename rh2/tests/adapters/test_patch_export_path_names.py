@@ -136,3 +136,40 @@ async def test_formal_chain_routes_the_control_character_path_to_the_unsafe_chan
     audit = chain.orchestrator.audits[-1]
     assert audit.unsafe_artifact_reasons == ["unsupported_object_in_patch:src/evil\\x01name.py:unsupported_path_name"]
     assert not chain.grading.calls  # 不评分
+
+
+# ---- PC1（Codex review_supply_components §3）：只认捕获的这条异常本身是路径规则拒绝 -------------------------------------------
+
+
+@pytest.mark.parametrize("first_line", [
+    "regular\t100644\tzz\tsrc/bad_digest.py\n",  # 摘要不合法（字段级错误）
+    "regular\t100600\t" + "a" * 64 + "\tsrc/bad_mode.py\n",  # mode 不合法（字段级错误）
+])
+async def test_another_contract_error_is_not_masked_by_a_later_bad_path(first_line):
+    later_bad_path, _ = _regular("src/evil\x01name.py")
+    with pytest.raises(ValidationError) as err:
+        await export_frozen_patch(_Ws(first_line + later_bad_path), _baseline(), rollout_execution_id="e",
+                                  physical_attempt_id="e#p1-aaaa")
+    assert not isinstance(err.value, PatchExportError)
+
+
+def test_only_a_path_rule_rejection_of_that_entry_is_retyped():
+    from repoharness2.adapters.slime.patch_exporter import _candidate_path_rejection
+    from repoharness2.contracts.baseline_manifest import BaselineEntry
+
+    def caught(**kw) -> ValidationError:
+        try:
+            BaselineEntry(**kw)
+        except ValidationError as exc:
+            return exc
+        raise AssertionError("应当抛 ValidationError")
+
+    bad_path = caught(path="src/a\x01b.py", object_type="regular", mode="100644", content_digest="sha256:" + "a" * 64)
+    assert _candidate_path_rejection(bad_path)[0] == "src/a\x01b.py"
+    # 模型层错误但路径合规（软链带了内容摘要）：不是候选路径问题
+    symlink = caught(path="src/l", object_type="symlink", mode="120000", content_digest="sha256:" + "a" * 64)
+    assert _candidate_path_rejection(symlink) is None
+    # 同一条目摘要坏 + 路径坏：字段级错误先报，路径规则没轮到 → 不改判
+    both = caught(path="src/a\x01b.py", object_type="regular", mode="100644", content_digest="sha256:zz")
+    assert _candidate_path_rejection(both) is None
+

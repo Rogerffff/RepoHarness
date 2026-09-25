@@ -60,6 +60,7 @@ import asyncio
 import hashlib
 import ipaddress
 import json
+import logging
 import os
 import re
 import shlex
@@ -137,6 +138,8 @@ TRUSTED_INIT_CAPS: tuple[str, ...] = ("CHOWN", "DAC_OVERRIDE", "DAC_READ_SEARCH"
 # 容器内脚本的首行标记：测试替身按它分派罐头输出，H7 按它对照脚本清单。
 SCRIPT_MARKER_PREFIX = "# rh2-sandbox-script: "
 
+logger = logging.getLogger(__name__)
+
 _GIB = 1024**3
 _MIB = 1024**2
 _RUN_LABEL_KEY = "rh2.run_id"  # 与 shutdown/run_residue.RUN_LABEL_KEY 相同（本模块不 import 它，保持零依赖）
@@ -145,10 +148,10 @@ _CAP_RE = re.compile(r"^[A-Z_]+$")
 # R2：relay 镜像必须是 digest-pinned 引用（`name@sha256:<64hex>`）——可变 tag（如 python:3.12-slim）在两次
 # run 之间可指向不同镜像而 profile digest 不变；relay 能看到全部模型请求/回复，是真实运行边界。
 _DIGEST_REF_RE = re.compile(r"^[a-z0-9][a-z0-9._/-]*(?::[0-9]+)?(?:/[a-z0-9._-]+)*@sha256:[0-9a-f]{64}$")
-# 来源：本机 2026-09-04 `docker image inspect python:3.12-slim -f '{{index .RepoDigests 0}}'`（OCI image index
-# 的 digest，多架构；`docker pull python@sha256:…` 在 x86_64 GPU 主机上解析到同一 index 的 amd64 清单）。
 # G1：rollout 的 /tmp、HOME 与 grader 的 /tmp 统一用这组 tmpfs 挂载标志（进 profile 参数与摘要；启动前探针核对实际挂载）。
 TMPFS_MOUNT_FLAGS = "exec,nosuid,nodev"
+# 来源：本机 2026-09-04 `docker image inspect python:3.12-slim -f '{{index .RepoDigests 0}}'`（OCI image index
+# 的 digest，多架构；`docker pull python@sha256:…` 在 x86_64 GPU 主机上解析到同一 index 的 amd64 清单）。
 RELAY_IMAGE_DEFAULT = "python@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea"
 _RELAY_MISSING_CONTAINER_MARKERS = ("no such container", "is not running")
 
@@ -1017,7 +1020,7 @@ def supply_relay_run_args(
 
 async def start_egress_relay(
     docker: DockerRunner, profile: RolloutSandboxProfile, *, run_id: str, labels: Sequence[str] = (),
-    ready_timeout: float = 30.0,
+    ready_timeout: float = 30.0, cancel_report: list[str] | None = None,
 ) -> EgressRelayHandle:
     """启动本 run 的 egress relay 并等它就绪（容器内 127.0.0.1:<listen_port> 可连）。失败 → SandboxNetworkError。"""
 
@@ -1025,13 +1028,14 @@ async def start_egress_relay(
     return await _start_relay_container(
         docker, name=name, run_args=relay_run_args(profile, name=name, labels=labels), image=profile.relay_image,
         alias=profile.relay_alias, listen_map=profile.relay_listen_map(), check_port=profile.model_proxy_listen_port,
-        run_id=run_id, ready_timeout=ready_timeout, code_prefix="egress_relay",
+        run_id=run_id, ready_timeout=ready_timeout, code_prefix="egress_relay", cancel_report=cancel_report,
     )
 
 
 async def start_supply_relay(
     docker: DockerRunner, profile: RolloutSandboxProfile, *, gateway_host: str, gateway_port: int, run_id: str,
     labels: Sequence[str] = (), listen_port: int = SUPPLY_RELAY_LISTEN_PORT, ready_timeout: float = 30.0,
+    cancel_report: list[str] | None = None,
 ) -> EgressRelayHandle:
     """启动本 run 的包供应 relay（grader 安装段用；同镜像 digest 核对、同就绪探测、同失败自清理）。返回的 handle 以
     `SUPPLY_RELAY_ALIAS` 接入 grader 网络（`connect_relay_to_network`），用 `stop_egress_relay` 停。"""
@@ -1043,35 +1047,80 @@ async def start_supply_relay(
     return await _start_relay_container(
         docker, name=name, run_args=args, image=profile.relay_image, alias=SUPPLY_RELAY_ALIAS,
         listen_map=((listen_port, gateway_host, gateway_port),), check_port=listen_port, run_id=run_id,
-        ready_timeout=ready_timeout, code_prefix="supply_relay",
+        ready_timeout=ready_timeout, code_prefix="supply_relay", cancel_report=cancel_report,
     )
+
+
+async def _reclaim_relay_by_name(docker: DockerRunner, name: str, *, timeout: float = 60.0) -> str | None:
+    """按预选名字有界回收 relay 容器。None = 已删除或本就不存在；否则返回失败描述。"""
+
+    try:
+        rm = await _call(docker, "rm", "-f", name, timeout=timeout)
+    except Exception as exc:  # noqa: BLE001 - docker 通道本身出错：如实返回，由调用方落账
+        return f"{type(exc).__name__}: {exc}"[:200]
+    if rm.exit_code == 0 or any(m in (rm.stderr or "").lower() for m in _RELAY_MISSING_CONTAINER_MARKERS):
+        return None
+    return (rm.stderr or rm.stdout).strip()[-200:] or f"exit {rm.exit_code}"
 
 
 async def _start_relay_container(
     docker: DockerRunner, *, name: str, run_args: list[str], image: str, alias: str,
     listen_map: tuple[tuple[int, str, int], ...], check_port: int, run_id: str, ready_timeout: float, code_prefix: str,
+    cancel_report: list[str] | None = None,
 ) -> EgressRelayHandle:
-    """起 relay 容器 → 等 `check_port` 在容器内可连 → 核对实际镜像 = 钉死的 digest。任一步失败自清理并抛
-    SandboxNetworkError（reason_code 前缀 = code_prefix；清理失败时残留名进 leftover_containers）。"""
+    """起 relay 容器 → 等 `check_port` 在容器内可连 → 核对实际镜像 = 钉死的 digest。
+
+    从发出 `docker run` 到交出 handle 之前，本函数是容器的唯一 owner（Codex review_supply_components NG2）：显式失败分支
+    （起不来 / 不就绪 / inspect 失败 / digest 不符）自清理并抛 SandboxNetworkError（reason_code 前缀 = code_prefix；清理
+    失败时残留名进 leftover_containers）；被取消或出现意外异常时同样按预选名字有界回收，回收失败写进 `cancel_report`
+    （取消）或异常注记（意外异常）并记 warning——原取消 / 原异常照常上抛，不吞首因。"""
+
+    try:
+        return await _start_relay_container_owned(
+            docker, name=name, run_args=run_args, image=image, alias=alias, listen_map=listen_map,
+            check_port=check_port, run_id=run_id, ready_timeout=ready_timeout, code_prefix=code_prefix,
+        )
+    except SandboxNetworkError:
+        raise  # 显式失败分支已自清理
+    except asyncio.CancelledError:
+        failure = await _reclaim_relay_by_name(docker, name)
+        if failure is not None:
+            note = f"relay_rm_after_cancel:{name}:{failure}"
+            if cancel_report is not None:
+                cancel_report.append(note)
+            logger.warning("relay 启动被取消且容器回收失败（残留 %s，run_id=%s）：%s", name, run_id, failure)
+        raise
+    except Exception as exc:
+        failure = await _reclaim_relay_by_name(docker, name)
+        if failure is not None:
+            exc.add_note(f"relay 容器回收失败（残留 {name}，带 rh2.run_id label）：{failure}")
+            logger.warning("relay 启动出现意外异常且容器回收失败（残留 %s，run_id=%s）：%s", name, run_id, failure)
+        raise
+
+
+async def _start_relay_container_owned(
+    docker: DockerRunner, *, name: str, run_args: list[str], image: str, alias: str,
+    listen_map: tuple[tuple[int, str, int], ...], check_port: int, run_id: str, ready_timeout: float, code_prefix: str,
+) -> EgressRelayHandle:
+    async def _fail(reason_code: str, message: str) -> SandboxNetworkError:
+        # F4：自行清理失败的容器不能"忘掉"——它带本 run label，留在错误对象里供调用方记证据。
+        failure = await _reclaim_relay_by_name(docker, name)
+        leftovers: tuple[str, ...] = ()
+        if failure is not None:
+            leftovers = (name,)
+            message += f"；且 relay 容器移除失败（残留 {name}，带 rh2.run_id label）：{failure}"
+        return SandboxNetworkError(reason_code, message, leftover_containers=leftovers)
 
     res = await _call(docker, *run_args, timeout=120.0)
     if res.exit_code != 0:
-        raise SandboxNetworkError(f"{code_prefix}_start_failed", (res.stderr or res.stdout).strip()[-300:])
+        # `docker run` 失败也可能已建出 Created 状态的容器：按名字回收（不存在即无残留）
+        raise await _fail(f"{code_prefix}_start_failed", (res.stderr or res.stdout).strip()[-300:])
     deadline = time.monotonic() + ready_timeout
     check = (
         "import socket,sys\n"
         f"s=socket.create_connection(('127.0.0.1',{check_port}),timeout=2)\n"
         "s.close()\nprint('RH2_RELAY_LISTENING')\n"
     )
-
-    async def _fail(reason_code: str, message: str) -> SandboxNetworkError:
-        # F4：自行清理失败的容器不能"忘掉"——它带本 run label，留在错误对象里供调用方记证据。
-        rm = await _call(docker, "rm", "-f", name, timeout=60.0)
-        leftovers: tuple[str, ...] = ()
-        if rm.exit_code != 0 and not any(m in (rm.stderr or "").lower() for m in _RELAY_MISSING_CONTAINER_MARKERS):
-            leftovers = (name,)
-            message += f"；且 relay 容器移除失败（残留 {name}，带 rh2.run_id label）：{(rm.stderr or rm.stdout).strip()[-200:]}"
-        return SandboxNetworkError(reason_code, message, leftover_containers=leftovers)
 
     while True:
         probe = await _call(docker, "exec", name, "python3", "-c", check, timeout=15.0)

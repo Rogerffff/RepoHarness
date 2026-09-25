@@ -179,3 +179,52 @@ Codex §5.2 已证"机械拆两次 exec"会丢 `export`；R5 又证候选 shell 
 ### 10.4 未做（按 §6 顺序）
 
 grader 两段 exec 生命周期、三个终点与 `grader_supply_withdraw_failed`（等 B 落地 `manager.py` / `prepared_task_face.py`）；`contracts/sandbox.py` 的 `NetworkPolicy` 迁移（与 manager 同批）；rollout 注入（`PIP_INDEX_URL` / uv 索引变量 + egress relay 的 `InternalService`、attempt 结束释放 token）；bringup 起停网关与供应 relay、run evidence 字段；逐题 `blocked_dists` 与例外表（B 的数据）；目标机 devpi 部署与代表题冷 / 热安装。
+
+
+## 11. Codex 第 1 步实施复核（2026-09-25）
+
+[复核与可复跑证据](review_supply_components_20260925/README.md)：正常供包、1A 路径 / fid 政策、独立供应 relay 与撤网核对通过；目前尚未接入正式 bringup / manager。接线前补 NG1（release 只拒绝新请求，不能直接当在途结束及最终统计屏障；withdraw 也只在下一 chunk 到来时截断）与 NG2（run 已建容器、readiness 中取消未自行清理，继承旧 egress helper 的缺口）。无需重开 1A+2A 或实现授权。
+
+本轮用本机 localhost 上游 / pip、真实 Docker 与确定性交错验证；没有公网供应服务、目标机部署或真实 grader 两段 exec 的验收结论。NG1/NG2 收口后按本 Brief 继续接线，实际启用仍随作业方案。
+
+
+## 12. 实施记录二：NG1 / NG2 与 PC1（§11 复核项；2026-09-25，Claude）
+
+**状态：已实施、本机验证。** 仍未接入正式 bringup / manager，默认配置不变（grader 仍 `--network none`，bringup 不起网关）。PC1 是控制字符改判的收紧，记在 [E2/E4 Brief 控制字符一节](e2_e4_consumers_brief_20260924.md)。
+
+### 12.1 NG1：释放收齐在途请求（`pkg_index_gateway.py`）
+
+- **在途请求归 token 所有**：请求通过授权即登记进该 token 的在途集合；请求结束（正常、出错或被取消）时由中间件摘除。
+- **`withdraw(token)`**：之后新请求 403，并**立即取消**该 token 的在途请求。正在流式下载的、上游停顿的、还在等上游响应头的都断开，不再等下一个上游 chunk。aiohttp 取消处理任务后直接关连接：带 Content-Length 的是短读，分块传输缺终止块，还没发响应头的一个字节都收不到。
+- **`release(token)` 改为 async**：撤销 → 有界等待在途请求收尾（默认 10 s）→ 释放签发表（之后 404）→ 返回终态摘要。摘要去掉 `final_state`，新增 `withdrawn_before_release`、`complete`、`inflight_unfinished`。
+  - 到时仍有请求没收尾：`complete=False` 并给数量，网关总计记 `tokens_released_incomplete`，token 照样释放。调用方如实记录，不把快照当终态。
+  - 同一 token 的重叠 release（例如取消清理与正常结束各调一次）只有一次出摘要，其余返回 None，总计只记一次。
+- **被取消的请求按实际进度记一行日志**：token 已撤销记 `withdrawn_in_flight`，其它取消（如网关关停）记 `cancelled_in_flight`；带已发字节，响应已开始的带 `response_started`。原 `withdrawn_mid_stream` 并入 `withdrawn_in_flight`。
+- **网关关停（复核之外的同类补漏）**：`stop` 在监听停止之后、aiohttp 优雅等待之前取消全部在途请求（记 `cancelled_in_flight`）；取消后仍不收尾的请求，aiohttp 的等待上限从默认 60 s 降到 5 s。修前由反证用例实测：上游还没发响应头时 `stop` 10 s 内不返回，整条用例耗时 71 s，等满了 aiohttp 默认的 60 s；优雅等待期间在途下载按原权限继续。
+- **调用约束**：`withdraw` / `release` 必须在网关所在的事件循环里调用（取消任务不是线程安全的）。接线时 attempt 的每种结束（含取消、退出）都 await `release`，把摘要连同 `complete` 写进 attempt / 评分事实。
+- **客户端重试**：aiohttp 3.14.1 对响应头之前的断开会自动重试一次幂等 GET（已核对其 client 源码）。重试落在已撤销 / 已释放的 token 上，得 403 / 404，不转发上游。
+
+### 12.2 NG2：relay 启动中被取消也回收容器（`sandbox_profile.py`）
+
+- `_start_relay_container` 拆成 owner 包装与原流程。从发出 `docker run` 到交出 handle 之前，本函数是容器唯一的 owner：
+  - 被取消：按预选名字有界 `docker rm -f`（60 s），原取消照常上抛。回收失败写进可选的 `cancel_report`（`relay_rm_after_cancel:<容器名>:<原因>`，与 `create_attempt_network` 的取消约定相同）并记 warning。
+  - 意外异常：同样回收，原异常照常上抛；回收失败写进异常注记并记 warning。
+  - `docker run` 失败也按名字回收：失败时可能已建出 Created 状态的容器，不存在即无残留。
+  - 显式失败分支（不就绪 / inspect 失败 / digest 不符）、原失败码与原清理不变。
+- `start_egress_relay` / `start_supply_relay` 加可选参数 `cancel_report`。回收不做 shield，回收途中再被取消会中断回收，与 `reclaim_network_after_cancel` 相同。容器名含 run_id；调用方按既有约定传 run label 时，run 级残留扫描也能按 label 找到残留。
+
+### 12.3 验证（本机 macOS + Docker Desktop；组件级，不是 grader 联网验收）
+
+| 测试文件 | 用例数 | 覆盖 |
+| --- | --- | --- |
+| `test_pkg_index_gateway.py` | 11 → 19 | 下载中途 release：摘要含已发的 5 字节且 `complete`；上游停顿时 withdraw 在 2 s 内断开（上游仍停着）；等上游响应头时 release：裸 socket 收到零字节、连接关闭；客户端重试落在已释放 token：404，上游只收到一次请求；正常完整下载后 release：统计完整；到时没收齐：`complete=False`、总计计数、之后仍 404；重叠 release：一份摘要、计一次；网关关停：在途请求立即断开，5 s 内返回，记 `cancelled_in_flight` |
+| `test_supply_relay.py` | 16 → 24 | run / readiness / inspect 三处取消：最后一步是 `rm -f <名>`，原取消上抛；回收失败：`cancel_report` 带容器名；意外异常：回收、原异常保留、回收失败才加注记；`docker run` 失败也回收；**真实 Docker**：容器已在运行、等就绪时取消，按 run label 查无残留 |
+| `test_patch_export_path_names.py` | 8 → 11 | PC1 的组合反控与单元对照，见 E2/E4 Brief |
+
+时序相关的 26 例连续重复 6 次全过；三个测试文件合计 54 例、无 skip。五目录 1847 passed / 1 skipped（Docker 在线；唯一的 skip 是本机未设 SWE-Gym 解析语料），lane A 530p/346s、B 876p（lane 不涉及本轮文件，计数不变）。
+
+真实上游冒烟用本版复跑（证据 `runs/network_supply_20260925/gateway_smoke_ng1/`，脚本随 release 改为 await）：devpi 冷 / 热缓存下 wheel、sdist、uv 解析、直连 PyPI 解析 rich 及依赖（经网关取 4 份 PEP 658 元数据）全部成功，两个封禁项目被拒（"No matching distribution"）；三份 token 摘要都是 `complete`、统计齐全，网关日志不含 token。
+
+### 12.4 未做（同 §10.4）
+
+grader 两段 exec 生命周期与三个终点（等 B 落地 `manager.py` / `prepared_task_face.py`）；`NetworkPolicy` 迁移；rollout 注入；bringup 起停网关与供应 relay、run evidence 字段；逐题封禁表与例外表（B 的数据）；目标机 devpi 部署与代表题冷 / 热安装。

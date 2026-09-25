@@ -11,8 +11,12 @@
   百分号编码、大小写都绕不过封禁；fid 不跨 token。页面里项目名与所请求 dist 不符的文件（pip 本来也会跳过）一律不签发。
 - **只接受 GET / HEAD**；丢弃 query string 与候选的请求头；上游页面解析后**重新生成**最小 PEP 503 HTML（只保留 href、hash、
   requires-python、yanked、PEP 658 元数据标记），不透传上游标记。这是缩小出站信息通道，不是"没有出站信息"的承诺（Brief §4.3）。
-- **撤销与释放**：`withdraw` 之后一律 403，并中断该 token 的在途下载（纵深；真正的隔离是 grader 断网）；`release` 连同签发表
-  一起释放（之后 404），不把 attempt 状态留到 run 末尾。
+- **撤销与释放**：token 已接纳的每个请求都登记为它的在途请求（唯一 owner = 该 token）。`withdraw` 之后新请求一律 403，并
+  **立即取消**在途请求——正在流式下载的、上游停顿的、还在等上游响应头的都会断开（客户端报错，不会拿到"完整"的半截文件）；
+  `release` = 撤销 + 有界等待在途请求收尾（它们各自记下实际进度的日志行）+ 给出终态摘要 + 释放签发表（之后 404）。摘要里
+  `complete` 说明在途请求是否都已收齐——没收齐（超时）就明说，不把快照冒充终态。撤销与释放都必须在网关所在的事件循环里
+  调用。网关关停（`stop`）同样先取消全部在途请求（记 `cancelled_in_flight`），不等 aiohttp 的优雅关停。纵深之外真正的
+  隔离仍是 grader 断网（宿主 disconnect + inspect），不由 token 状态代替。
 - **日志**：逐请求一行 JSONL（`log_path`），字段是 attempt / task / 平面 / 阶段 / dist / 文件名 / 判定 / 上游状态 / 字节 / 耗时；
   **不写 token 本身**（只写 `token_ref` = token 的 sha256 前 12 位，区分同一 attempt 的多次签发）。GET 日志只证明取过什么，
   不证明装进了哪个解释器（Brief §5.3 / Codex 方向复核 §5.3）。
@@ -55,8 +59,12 @@ _FILENAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+!~-]*$")  # 不含 '/'、�
 # pip 能直接使用的分发格式（egg / exe / msi 等 pip 本来就不用，一律不签发）
 SDIST_EXTENSIONS: tuple[str, ...] = (".tar.gz", ".tgz", ".zip", ".tar.bz2", ".tbz", ".tar.xz", ".txz", ".tar")
 _CHUNK = 64 * 1024
+# 关停时 aiohttp 对仍未结束的请求的等待上限（默认 60 s）。在途请求在 on_shutdown 里已被取消，这里只兜底取消后仍不收尾的
+_SHUTDOWN_GRACE_SECONDS = 5.0
 # 本请求已被某个路由处理器记过日志（未路由的 404/405 由中间件补记）；aiohttp 新版推荐 RequestKey，旧版退回字符串键
 _LOGGED_KEY: Any = web.RequestKey("rh2_logged", bool) if hasattr(web, "RequestKey") else "rh2_logged"
+# 本请求登记在哪个 token 的在途集合里：(token 状态, 日志条目, 请求任务)；中间件据此收尾
+_TRACK_KEY: Any = web.RequestKey("rh2_tracked", tuple) if hasattr(web, "RequestKey") else "rh2_tracked"
 
 
 class GatewayConfigError(ValueError):
@@ -195,6 +203,8 @@ class _TokenState:
     issued: dict[str, _IssuedFile] = field(default_factory=dict)
     fid_by_url: dict[str, str] = field(default_factory=dict)  # 同一 token 内同一上游文件复用 fid（重复取页不增长）
     stats: Counter = field(default_factory=Counter)
+    inflight: set = field(default_factory=set)  # 本 token 已接纳、尚未结束的请求任务（撤销时取消，释放时收齐）
+    releasing: bool = False  # 已有一次 release 在收尾：重叠的 release 不再出摘要、不重复计数
 
 
 @dataclass(frozen=True)
@@ -312,22 +322,42 @@ class PackageIndexGateway:
         return token
 
     def withdraw(self, token: str) -> bool:
-        """撤销（之后 403，并中断在途下载）。返回是否从 active 变为 withdrawn。"""
+        """撤销：之后新请求 403，并立即取消本 token 的在途请求（上游停顿、等响应头的也断开）。不等它们收尾（收尾由
+        `release` 负责）。返回是否从 active 变为 withdrawn。必须在网关所在的事件循环里调用。"""
 
         state = self._tokens.get(token)
         if state is None or state.state != TOKEN_ACTIVE:
             return False
         state.state = TOKEN_WITHDRAWN
         self._totals["tokens_withdrawn"] += 1
+        current = asyncio.current_task()
+        for task in list(state.inflight):
+            if task is not current and not task.done():
+                task.cancel()
         return True
 
-    def release(self, token: str) -> dict[str, Any] | None:
-        """释放 token 与签发表（之后 404）；返回该 token 的统计摘要（调用方写进 attempt / 评分事实）。未知 token → None。"""
+    async def release(self, token: str, *, timeout: float = 10.0) -> dict[str, Any] | None:
+        """结束本 token：撤销（停新请求 + 取消在途）→ 有界等在途请求收尾（各自按实际进度记一行日志、计入统计）→
+        释放签发表（之后 404）→ 返回终态摘要（调用方写进 attempt / 评分事实）。`complete=False` 表示超时仍有在途请求
+        没收齐，摘要不是终态（`inflight_unfinished` 给数量），调用方如实记录。未知 token，或同一 token 已有一次
+        release 在进行（重叠调用，例如取消清理与正常结束各调一次）→ None：终态摘要只出一份。"""
 
-        state = self._tokens.pop(token, None)
-        if state is None:
+        state = self._tokens.get(token)
+        if state is None or state.releasing:
             return None
+        state.releasing = True
+        withdrawn_before = state.state != TOKEN_ACTIVE
+        self.withdraw(token)
+        current = asyncio.current_task()
+        pending = {t for t in state.inflight if t is not current and not t.done()}
+        unfinished = 0
+        if pending:
+            _done, still = await asyncio.wait(pending, timeout=timeout)
+            unfinished = len(still)
+        self._tokens.pop(token, None)
         self._totals["tokens_released"] += 1
+        if unfinished:
+            self._totals["tokens_released_incomplete"] += 1
         return {
             "token_ref": state.token_ref,
             "attempt_id": state.grant.attempt_id,
@@ -335,7 +365,9 @@ class PackageIndexGateway:
             "plane": state.grant.plane,
             "phase": state.grant.phase,
             "policy_digest": state.grant.policy_digest(),
-            "final_state": state.state,
+            "withdrawn_before_release": withdrawn_before,
+            "complete": unfinished == 0,
+            "inflight_unfinished": unfinished,
             "files_issued": len(state.issued),
             "stats": dict(state.stats),
         }
@@ -368,6 +400,7 @@ class PackageIndexGateway:
         app.router.add_get("/a/{token}/simple/{dist}", self._simple)
         app.router.add_get("/a/{token}/files/{fid}/{filename}", self._file)
         app.on_startup.append(self._on_startup)
+        app.on_shutdown.append(self._on_shutdown)
         app.on_cleanup.append(self._on_cleanup)
         return app
 
@@ -376,7 +409,7 @@ class PackageIndexGateway:
 
         if self._runner is not None:
             raise GatewayConfigError("网关已经在运行")
-        self._runner = web.AppRunner(self.build_app(), access_log=None)
+        self._runner = web.AppRunner(self.build_app(), access_log=None, shutdown_timeout=_SHUTDOWN_GRACE_SECONDS)
         await self._runner.setup()
         site = web.TCPSite(self._runner, host, port)
         await site.start()
@@ -395,6 +428,14 @@ class PackageIndexGateway:
         if self._log_path is not None and self._log_fh is None:
             self._log_path.parent.mkdir(parents=True, exist_ok=True)
             self._log_fh = self._log_path.open("a", encoding="utf-8")
+
+    async def _on_shutdown(self, _app: web.Application) -> None:
+        # 关停 = 所有 token 的服务结束：监听已停、已到达的请求已开始处理之后，取消全部在途请求（各自按
+        # `cancelled_in_flight` 记日志），不让上游停顿的请求把关停拖到 aiohttp 的优雅等待上限，也不让下载在关停后继续。
+        for state in self._tokens.values():
+            for task in list(state.inflight):
+                if not task.done():
+                    task.cancel()
 
     async def _on_cleanup(self, _app: web.Application) -> None:
         if self._session is not None:
@@ -418,7 +459,8 @@ class PackageIndexGateway:
             state.stats["requests"] += 1
             state.stats[f"decision:{entry.get('decision')}"] += 1
             state.stats["bytes"] += int(entry.get("bytes") or 0)
-        row.update(entry)
+        row.update({k: v for k, v in entry.items() if not k.startswith("_")})
+        entry["_logged"] = True  # 同一请求只记一行（取消收尾时据此判断是否已记过）
         if started is not None:
             row["elapsed_seconds"] = round(time.monotonic() - started, 4)
         self._totals["requests"] += 1
@@ -436,6 +478,15 @@ class PackageIndexGateway:
     async def _unrouted_middleware(self, request: web.Request, handler):
         try:
             return await handler(request)
+        except asyncio.CancelledError:
+            tracked = request.get(_TRACK_KEY)
+            if tracked is not None:
+                state, entry, _task = tracked
+                if not entry.get("_logged"):
+                    entry.update(decision="withdrawn_in_flight" if state.state != TOKEN_ACTIVE else "cancelled_in_flight")
+                    entry.setdefault("status", None)
+                    self._write_log(entry, state)
+            raise
         except web.HTTPException as exc:
             if exc.status in (404, 405) and not request.get(_LOGGED_KEY):
                 entry = self._entry(request, "unrouted")
@@ -445,6 +496,10 @@ class PackageIndexGateway:
                 )
                 self._write_log(entry, None)
             raise
+        finally:
+            tracked = request.get(_TRACK_KEY)
+            if tracked is not None:
+                tracked[0].inflight.discard(tracked[2])
 
     def _authorize(self, request: web.Request, entry: dict[str, Any]) -> tuple[str, _TokenState | None, web.Response | None]:
         token = request.match_info.get("token", "")
@@ -453,6 +508,10 @@ class PackageIndexGateway:
             return token, None, self._deny(entry, None, 404, "unknown_token")
         if state.state != TOKEN_ACTIVE:
             return token, state, self._deny(entry, state, 403, "token_withdrawn")
+        task = asyncio.current_task()
+        if task is not None:  # 接纳 = 登记为本 token 的在途请求（中间件在请求结束时摘除）
+            state.inflight.add(task)
+            request[_TRACK_KEY] = (state, entry, task)
         return token, state, None
 
     # ---- 路由 ------------------------------------------------------------------------------------------------------
@@ -613,16 +672,18 @@ class PackageIndexGateway:
             if length is not None and length.isdigit() and not encoded:
                 out.content_length = int(length)
             await out.prepare(request)
+            entry.update(status=200, response_started=True, bytes=0)
             sent = 0
             decision = "served_file" if entry["kind"] == "file" else "served_metadata"
             if request.method != "HEAD":
                 try:
                     async for chunk in resp.content.iter_chunked(_CHUNK):
                         if state.state != TOKEN_ACTIVE:
-                            decision = "withdrawn_mid_stream"
+                            decision = "withdrawn_in_flight"
                             break
                         await out.write(chunk)
                         sent += len(chunk)
+                        entry["bytes"] = sent  # 被取消时的日志按实际已发字节记
                 except (ConnectionResetError, ConnectionError):
                     decision = "client_disconnected"
                 except (asyncio.TimeoutError, ClientError):
