@@ -104,3 +104,34 @@ E2 §1.5 第 3 项残留“等 §1.3 T0 决定”已被 §4 的归类覆盖，�
 - **兼容核对**：本机 R2E 派生镜像三张（aiohttp / pillow / coveragepy）与验证机 SWE-Gym 镜像三张（dvc / conan / moto）在可信 PATH 下 `find sha256sum readlink tr cut sort xargs base64 cat git pkill ps wc stat` 全部解析到 `/usr/bin`；SWE-Gym 镜像 PATH 以 `/opt/miniconda3/bin` 开头，但 `git` 本就是 `/usr/bin/git`（2.34.1），`git config --system` 写在 `/etc/gitconfig`，可信 PATH 下 root 的 `git rev-parse` / `git status` 在 agent 拥有的仓库上照常。
 - **验收**（`tests/adapters/test_trusted_root_exec.py`，2 例）：exec 形状逐项固定；**真容器**以 `-e PATH=/testbed/.venv/bin:…` 模拟 R2E 镜像 ENV、在 `.venv/bin` 放假 `find` / `pkill`：旧形状确实先找到假程序，本通道找到的是 `/usr/bin/find`、真实 census 不含假 `find` 注入的条目（候选放的文件照常作为普通文件记录）、停止合同脚本没有执行假 `pkill`。既有编排 / 导出 / 冻结测试不变。
 - **未做 / 交接给 B**：grader 侧同类通道在 `grading/manager.py`（B 的在制品）——候选代码跑完之后 root 的读取与重建同样应走可信环境；SWE-Gym 镜像的 PATH 以 `/opt/miniconda3/bin` 开头，若 grader 的候选可写前缀覆盖该目录，同一问题在 SWE-Gym 上也成立。`docker_sandbox.DockerSandbox` 的 root 调用只在 harness 启动前（镜像原样内容）使用，本轮不改。
+
+
+## 7. E2b 评分侧：评分容器的 root 执行不继承镜像 PATH（2026-09-25，Claude，已实施）
+
+- **面**：`grading/manager.py` 的 `_exec_bash`。候选身份的观测、测试、编译复证之后，root 还有三处读取：超时 / 取消后读回 tee 日志、cgroup 资源事实、内存峰值。旧形状 `docker exec <c> bash -c …` 连 `bash` 本身都按镜像 PATH 查找；R2E 派生镜像的 PATH 以候选可写的 `/testbed/.venv/bin` 开头。
+- **修法**：root（未给 user）默认走 `TRUSTED_ROOT_EXEC_PREFIX`（前缀定义移到 manager，rollout 工作区通道 re-export 同一份）。两个例外显式保留镜像环境：来源自带的可信 setup，以及 legacy 单脚本 eval。两者都在候选代码运行之前；那时镜像 PATH 目录仍是镜像原样内容，因为 R2E 的 `.venv` 在排除区，delta 写不进去。候选身份的 exec 照旧继承镜像 ENV。
+- **验收**（`tests/grading/test_e2b_grader_trusted_root_exec.py`，2 例）：一次完整 profile 评分里，除可信 setup 外的 root exec 全部带前缀，候选 exec 照旧 `bash -c`。**真容器**用 R2E 形态的 PATH，在 `.venv/bin` 放假 `bash` / `cat`：旧形状确实执行假 bash，manager 的三个 root 读取读到真实内容且不留标记。`tests/grading` 全部 242 例（含真实 Docker 组）不改动通过。
+- **交接给 B**：重放 driver 的 `DockerExecWorkspace`（`replay_grade.py`）仍是 `bash -c`、继承镜像 PATH。它在候选补丁 `git apply` 之后以 root 做运行后 census；候选代码不执行，但同一前缀可以直接复用。
+
+## 8. E4a 容器历史有界 + CR1 诊断余项（2026-09-25，Claude，已实施）
+
+- **E4a（`manager.py`）**：`_remove_container` 确认删除即退役，记完成序号。已退役记录超过 `container_history_limit`（默认 256）时，按**确认删除的完成顺序**丢最早的几条。删除未获确认的记录永远保留。裁剪换一个新列表对象，不原地缩短；`gc` 遍历快照。租约挂在记录上随之退役，`leases` 改为由保留记录导出的只读属性。
+  - 新累计数：`containers_created_total` / `containers_removed_total` / `leases_total` / `regrade_declined_total`。`close()` 报告新增前三项与 `container_history_retained`。
+  - 顺带修 §2.3 的小缺陷：`close()["regrade_declined"]` 改报累计数，此前取截到 256 条的列表长度。
+  - `cleanup_failures`、queue events、audits 本片不动；资源闭包把 `_records` / `leases` 标为有界，并另报 `total`。
+- **CR1（manager_cleanup_review_20260920 §3）**：候选测试 exec 返回后，结果在下一次可取消的 await（容器状态 inspect）之前同步记进 record。超时 / 死亡 / 状态未知 / 取消分支都先用已交付的输出，tee 只在更长时替换。部分日志的前缀在候选段开始前取一次，重复记录不叠加。
+- **验收**（`tests/grading/test_e4a_history_and_cr1.py`，11 例）：
+  - 连评 N+50 次，条数有界、累计数准确，每次 `[-1]` 事实完整。
+  - 早启动晚完成的记录不被丢。反证：按创建序裁剪即失败。
+  - 历史已满 + 三条删除失败的活动记录，之后 close 全部清完，失败累计不变。反证：原地裁剪 + 不遍历快照，漏删中间那条，即 Codex R6 反例。
+  - 起不来的容器同样退役、没有租约；`regrade_declined` 报累计数；资源闭包同时报长度与累计。
+  - CR1：两个取消窗口都保留 137 与已交付尾标记；短 tee 不再把 test 阶段退回 install；超时仍由 tee 补充。Codex 的 `interruption_probe.py` 对当前代码的两个取消案按预期翻转（旧 manager 仍丢，当前保留），短 tee 案报 `candidate_phase=test`。
+- **内存平台期**（CPU、FakeDocker profile 路径、每次评分带约 20 KB 日志；`rh2/experiments/batch6_e4a_20260925/memory_plateau.py`，证据 `runs/e4a_20260925/memory_plateau.jsonl`）：
+
+| 评分次数 | 有界（256）：记录数 / tracemalloc | 对照（不裁剪）：记录数 / tracemalloc |
+| --- | --- | --- |
+| 256 | 256 / 80.78 MiB | 256 / 80.78 MiB |
+| 400 | 256 / 80.79 MiB | 400 / 82.68 MiB |
+| 800 | 256 / 80.79 MiB | 800 / 87.95 MiB |
+
+  只证明本片容器历史的平台期，不宣称 manager 或 run 的总内存已稳定。测量时发现：替身 Docker 不挂起，同一批评分不回到事件循环，`wait_for` 的已取消定时器会暂时堆在 loop 里；真实 docker 调用会挂起，loop 随即清掉。实验每次评分后让出一轮，不是 manager 的增长。

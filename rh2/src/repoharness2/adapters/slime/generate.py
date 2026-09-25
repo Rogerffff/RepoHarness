@@ -158,6 +158,7 @@ from repoharness2.grading.manager import (
     BASE_UNTRACKED_SNAPSHOT_SCRIPT,
     DockerRunner,
     ExecResult,
+    TRUSTED_ROOT_EXEC_PREFIX,
     GradingEnvSpec,
     build_swe_grading_spec,
     run_docker,
@@ -2422,10 +2423,7 @@ class _MaterializedSandbox:
 # 同名程序（假 `pkill` + 假 `ps` 能让停止合同误判已停）。这里用 `env -i` 清空继承的环境、只给可信工具目录，bash 不读启动
 # 文件（`BASH_ENV` 也随 `-i` 清掉）。本机 R2E 三张派生镜像与验证机 SWE-Gym 三张镜像实测：所需工具全在 /usr/bin，
 # 且 root 的 `git rev-parse` / `git status` 照常（safe.directory 在 /etc/gitconfig）。agent 自己的激活不经过这条通道。
-TRUSTED_ROOT_EXEC_PREFIX: tuple[str, ...] = (
-    "/usr/bin/env", "-i", "PATH=/usr/sbin:/usr/bin:/sbin:/bin", "HOME=/root",
-    "/bin/bash", "--noprofile", "--norc", "-c",
-)
+# 前缀定义在 grading.manager（评分容器的 root 执行共用同一份），这里 re-export 给既有 import。
 
 
 @dataclass(frozen=True)

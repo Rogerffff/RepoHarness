@@ -712,6 +712,8 @@ class GradingManagerConfig:
     prepare_concurrency: int = 2  # P2：prepare 预热的有界信号量
     eval_log_dir: Path | None = None  # 非空时把 eval 原始日志落盘并出 ArtifactRef
     cleanup_timeout_seconds: int = 120
+    # 第六组 E4a：已确认删除的容器记录只保留最近这么多条（按确认删除的完成顺序）；删除未获确认的记录永远保留。
+    container_history_limit: int = 256
     # W3b（D2-2）：独立 grader Docker profile。None = 旧参数（--network none、root、无限额）——
     # 只给 s1_compat 冻结路径与既有单测；bringup 对非 s1 模式一律注入。
     sandbox_profile: "GraderSandboxProfile | None" = None
@@ -909,6 +911,9 @@ class _ContainerRecord:
     resource_facts: dict[str, Any] | None = None
     compile_probe: dict[str, Any] | None = None
     execution_failure_decision: dict[str, Any] | None = None
+    # 第六组 E4a：本容器的租约（`docker run` 成功后才有；随记录一起退役）与确认删除的完成序号（None = 删除未获确认）
+    lease: SandboxLease | None = None
+    retired_seq: int | None = None
 
 
 # W3a 生命周期计时：grader 内部六段（与 adapters/slime/attempt_timing.LIFECYCLE_SEGMENTS 同名）。
@@ -927,6 +932,16 @@ GRADER_PHASE_SEGMENTS: tuple[str, ...] = (
 _GRADER_PHASE_TIMING_RETENTION = 1024
 
 # S1-m：候选段输出同时 tee 到容器内文件（候选用户属主目录），超时后 root 仍能读回已产生的部分输出。
+# 第六组 E2b（Codex review_next_slices §6）：容器里 root 的可信操作不继承镜像 ENV。R2E 派生镜像的 PATH 以候选可写的
+# `/testbed/.venv/bin` 开头，`docker exec <c> bash -c …` 连 `bash` 本身都按镜像 PATH 查找——候选在那里放同名程序就会被
+# root 执行。`env -i` 清空继承的环境、只给系统工具目录，bash 不读启动文件（`BASH_ENV` 随 `-i` 清掉）。rollout 工作区
+# 通道（`generate.RolloutContainerWorkspace`）与评分容器的 root 执行共用这一前缀；本机 R2E 三张与验证机 SWE-Gym 三张
+# 镜像实测所需工具全在 /usr/bin。候选身份的执行（观测、测试、编译复证）照旧继承镜像 ENV（激活靠它）。
+TRUSTED_ROOT_EXEC_PREFIX: tuple[str, ...] = (
+    "/usr/bin/env", "-i", "PATH=/usr/sbin:/usr/bin:/sbin:/bin", "HOME=/root",
+    "/bin/bash", "--noprofile", "--norc", "-c",
+)
+
 CANDIDATE_LOG_DIR = "/rh2/candidate"
 CANDIDATE_LOG_PATH = f"{CANDIDATE_LOG_DIR}/eval.log"
 _CANDIDATE_LOG_PARTIAL_READ_TIMEOUT_SEC = 30.0
@@ -1381,6 +1396,12 @@ class GraderPhaseTiming:
         }
 
 
+def _exec_text(result: ExecResult) -> str:
+    """exec 交付的输出文本（候选脚本 2>&1 合并到 stdout；stdout 为空时退到 stderr，与既有取法一致）。"""
+
+    return result.stdout if result.stdout else result.stderr
+
+
 def _sanitize_for_name(text: str) -> str:
     cleaned = re.sub(r"[^a-zA-Z0-9_.-]", "-", text).strip("-.")
     return (cleaned or "traj")[:24]
@@ -1509,8 +1530,14 @@ class SWEGradingManager:
         self.cleanup_failures: list[str] = []  # Q8：清理失败必须留痕（S1-6 收口为 finding）
         self.regrade_events: list[dict[str, Any]] = []  # N2b：追加评分事实（**只保留最近 256 条**；消费者 = close() 报告 + 事件日志）
         self.regrade_total = 0  # N2b：本 run 追加评分累计次数（不随上面列表截断变化）
-        self.regrade_declined: list[dict[str, Any]] = []  # R4：本可追加但因停止事实放弃的次数（保留最近 256 条）
-        self.leases: list[SandboxLease] = []  # 评分容器租约 evidence（P9 deny_all 由 schema 锁死）
+        self.regrade_declined: list[dict[str, Any]] = []  # R4：本可追加但因停止事实放弃的事实（保留最近 256 条）
+        self.regrade_declined_total = 0  # E4a：放弃追加的累计次数（不随上面列表截断变化）
+        # E4a：累计数与保留历史分开——`_records` 只留删除未获确认的记录 + 最近 container_history_limit 条已确认删除的
+        # 记录（按确认删除的完成顺序退役）；租约挂在记录上随之退役（`leases` 由保留的记录导出）。
+        self.containers_created_total = 0
+        self.containers_removed_total = 0
+        self.leases_total = 0
+        self._retire_seq = 0
         self._closed = False  # W5a：close() 后 grade 走 typed 拒绝
         # W3a：grade() 内部分段计时暂存（record_id → GraderPhaseTiming），orchestrator 经
         # take_grader_phase_timing() 取走合并进 attempt 生命周期记录。
@@ -1555,12 +1582,24 @@ class SWEGradingManager:
             "cleanup_failures": list(self.cleanup_failures),
             "regrade_events": len(self.regrade_events),  # N2b：保留的追加评分事实条数（上限 256，不是累计总量）
             "regrade_total": self.regrade_total,  # N2b：本 run 追加评分累计次数
-            "regrade_declined": len(self.regrade_declined),  # R4：因停止事实放弃追加的次数
+            # R4：因停止事实放弃追加的次数。E4a：改取累计数——此前取截到 256 条的列表长度，超过后少计
+            "regrade_declined": self.regrade_declined_total,
+            # E4a：容器历史的累计数与保留长度分开报告
+            "containers_created_total": self.containers_created_total,
+            "containers_removed_total": self.containers_removed_total,
+            "container_history_retained": len(self._records),
+            "leases_total": self.leases_total,
         }
 
     @property
     def closed(self) -> bool:
         return self._closed
+
+    @property
+    def leases(self) -> list[SandboxLease]:
+        """评分容器租约 evidence（P9 deny_all 由 schema 锁死）：保留记录上的租约，按创建顺序。累计数见 leases_total。"""
+
+        return [r.lease for r in self._records if r.lease is not None]
 
     def _stop_requested(self) -> bool:
         """R4：是否已有停止事实——本实例已关停，或 bringup 注入的 lifecycle 谓词为真（run-fatal 已发生 / 评分面已
@@ -2032,7 +2071,8 @@ class SWEGradingManager:
 
         now = time.monotonic()
         removed: list[str] = []
-        for record in self._records:
+        # E4a：遍历快照——遍历中 await 删除时，退役裁剪会换掉 `_records`（不原地缩短），快照保证每条活动记录都被访问
+        for record in list(self._records):
             if record.removed:
                 continue
             if trajectory_id is not None and record.trajectory_id != trajectory_id:
@@ -2133,6 +2173,7 @@ class SWEGradingManager:
                     }
                     self.regrade_declined.append(declined)
                     del self.regrade_declined[:-256]
+                    self.regrade_declined_total += 1
                     raise
                 require_grading_time("regrade")  # 共用同一评分期限：耗尽即不再追加
                 first_failure = exc
@@ -2223,6 +2264,7 @@ class SWEGradingManager:
             created_monotonic=time.monotonic(),
         )
         self._records.append(record)
+        self.containers_created_total += 1
         try:
             run = await self._await_within_grading_deadline(self._docker(*args), phase="container_start")
             if run.exit_code != 0:
@@ -2230,7 +2272,8 @@ class SWEGradingManager:
                     f"grading_container_start_failed:{run.stderr.strip()[-300:]}",
                     op="container_start", exit_code=run.exit_code, stderr=run.stderr, container_name=name,
                 )
-            self.leases.append(lease)
+            record.lease = lease
+            self.leases_total += 1
             if profile is not None:
                 await self._grader_prelaunch(record, profile, declared_binds)
         except BaseException:
@@ -2302,6 +2345,7 @@ class SWEGradingManager:
             return
         if rm.exit_code == 0:
             record.removed = True
+            self._retire(record)
             return
         err = (rm.stderr or rm.stdout or "").strip().lower()
         if ("no such container" in err or "no such object" in err) and record.name.lower() in err:
@@ -2309,11 +2353,28 @@ class SWEGradingManager:
             # "absent" 同一判据（连接类诊断里的 "no such" 指 socket，不在此列）；不算清理失败。
             record.removed = True
             record.absent_on_remove = True
+            self._retire(record)
             return
         # Q8：清理失败不许静默——留痕供 S1-6 收口为 runtime finding。
         self.cleanup_failures.append(
             f"container_rm_failed:{record.name}:{rm.stderr.strip()[-200:]}"
         )
+
+    def _retire(self, record: _ContainerRecord) -> None:
+        """E4a：删除已确认的记录退役——记完成序号；已退役记录超过上限时，按**确认删除的完成顺序**丢最早的几条
+        （不是创建顺序：早启动、最后完成的记录刚退役就是最新的一条）。删除未获确认的记录永远保留。裁剪换一个新列表
+        对象，不原地缩短——gc / close 正在遍历的快照不受影响；刚退役的这条是最新的，调用方随后仍能读到完整事实。"""
+
+        if record.retired_seq is not None:
+            return
+        self._retire_seq += 1
+        record.retired_seq = self._retire_seq
+        self.containers_removed_total += 1
+        retired = [r for r in self._records if r.retired_seq is not None]
+        excess = len(retired) - max(1, int(self.config.container_history_limit))
+        if excess > 0:
+            dropped = {id(r) for r in sorted(retired, key=lambda r: r.retired_seq)[:excess]}
+            self._records = [r for r in self._records if id(r) not in dropped]
 
     async def _container_state(self, record: _ContainerRecord, *, timeout: float | None = None) -> str:
         """批 D-2：容器状态三分——"running" / "stopped"（存在但已退出）/ "absent"（已删除）/
@@ -2399,9 +2460,11 @@ class SWEGradingManager:
         input_bytes: bytes | None = None,
         user: str | None = None,
         home: str | None = None,
+        image_env: bool = False,
     ) -> ExecResult:
-        # W3b：user/home 只在"执行候选代码"（官方 eval 脚本）时给出——以候选执行用户身份运行；
-        # 未给出时参数形状与 W3b 之前逐字相同（可信步骤仍 root）。
+        # W3b：user/home 只在"执行候选代码"（官方 eval 脚本、观测、编译复证）时给出——以候选执行用户身份运行，继承
+        # 镜像 ENV。E2b：root（未给 user）默认走 `TRUSTED_ROOT_EXEC_PREFIX`，不继承镜像 ENV；只有来源自带、必须在镜像
+        # 环境里跑的 root 脚本（可信 setup、legacy 单脚本 eval）显式传 image_env=True——两者都在候选代码运行之前。
         args: list[str] = ["exec"]
         if input_bytes is not None:
             args.append("-i")
@@ -2409,7 +2472,10 @@ class SWEGradingManager:
             args += ["-u", user]
         if home is not None:
             args += ["-e", f"HOME={home}"]
-        args += [record.name, "bash", "-c", script]
+        if user is None and not image_env:
+            args += [record.name, *TRUSTED_ROOT_EXEC_PREFIX, script]
+        else:
+            args += [record.name, "bash", "-c", script]
         if input_bytes is not None:
             return await self._docker(*args, input_bytes=input_bytes)
         return await self._docker(*args)
@@ -2424,15 +2490,21 @@ class SWEGradingManager:
         input_bytes: bytes | None = None,
         user: str | None = None,
         home: str | None = None,
+        image_env: bool = False,
+        on_delivered: Callable[[ExecResult], None] | None = None,
     ) -> ExecResult:
         """带分段超时（P3）与容器死亡检测（P4）的 exec：
-        超时 -> infra；命令失败且容器已死 -> infra（killed）；其余交调用方定夺。"""
+        超时 -> infra；命令失败且容器已死 -> infra（killed）；其余交调用方定夺。
+
+        CR1（manager_cleanup_review_20260920 §3）：`on_delivered` 在 exec 返回后、下一次可取消的 await（容器状态
+        inspect）之前同步调用——取消落在 inspect 上时，已交付的输出与退出码已经由调用方保存。"""
 
         base_timeout = timeout
         timeout = bounded_by_grading_deadline(timeout, phase)  # N2a：分段 timeout 与评分期限取小
         try:
             result = await asyncio.wait_for(
-                self._exec_bash(record, script, input_bytes=input_bytes, user=user, home=home), timeout=timeout
+                self._exec_bash(record, script, input_bytes=input_bytes, user=user, home=home, image_env=image_env),
+                timeout=timeout,
             )
         except (TimeoutError, asyncio.TimeoutError):
             if timeout < base_timeout:
@@ -2441,6 +2513,8 @@ class SWEGradingManager:
             raise GradingInfraError(
                 f"grading_{phase}_timeout_after_{int(timeout)}s"
             ) from None
+        if on_delivered is not None:
+            on_delivered(result)
         if result.exit_code != 0:
             state = await self._container_state(
                 record, timeout=min(30.0, float(self.config.cleanup_timeout_seconds))
@@ -2911,6 +2985,7 @@ class SWEGradingManager:
                 f"bash {script_path} 2>&1",
                 phase="test",
                 timeout=spec.test_timeout_seconds,
+                image_env=True,  # legacy（S1 冻结路径）：官方单脚本以 root 在镜像环境里跑，形状不变
             )
             phase.add("grader_trusted_setup", 0.0)
             return (result.stdout if result.stdout else result.stderr), 0.0
@@ -2951,6 +3026,9 @@ class SWEGradingManager:
                 f"bash {setup_path} 2>&1",
                 phase="trusted_setup",
                 timeout=spec.env_reset_timeout_seconds,
+                # 来源自带的可信 setup 依赖镜像环境（激活、git 配置）；此时候选代码尚未运行、镜像 PATH 目录仍是镜像
+                # 原样内容（R2E 的 .venv 在排除区，delta 写不进去），形状保持不变。
+                image_env=True,
             )
             setup_log = setup.stdout if setup.stdout else setup.stderr
             record.eval_log_partial = setup_log
@@ -3014,6 +3092,25 @@ class SWEGradingManager:
             trusted_setup_seconds = time.monotonic() - setup_started
             phase.add("grader_trusted_setup", trusted_setup_seconds)
 
+        # CR1：候选段开始前的日志前缀（setup + 权限布置输出）；部分日志 = 前缀 + 已知的候选输出（重复记录不叠加）
+        pre_candidate_log = record.eval_log_partial or setup_log
+        delivered_box: list[ExecResult] = []
+
+        def _keep_delivered(delivered: ExecResult) -> None:
+            # 同步保存已交付的 exec 结果：之后任何 await 被取消，记录里都已有这份输出与退出码
+            delivered_box.append(delivered)
+            self._record_partial_candidate(
+                record, pre_candidate_log, _exec_text(delivered), exec_exit_code=delivered.exit_code,
+            )
+
+        async def _supplement_with_tee(known: str, exit_code: int | None) -> str:
+            # tee 只作补充：比已收到的输出更长才替换，更短的不覆盖（短 tee 不把已知的 test 阶段退回 install）
+            partial = await self._read_candidate_log_partial(record)
+            if len(partial) > len(known):
+                self._record_partial_candidate(record, pre_candidate_log, partial, exec_exit_code=exit_code)
+                return partial
+            return known
+
         try:
             result = await self._exec_bash_checked(
                 record,
@@ -3023,27 +3120,35 @@ class SWEGradingManager:
                 timeout=spec.test_timeout_seconds,
                 user=str(profile.candidate_exec_uid),
                 home=f"/home/{profile.candidate_exec_user}",
+                on_delivered=_keep_delivered,
             )
         except GradingInfraError as exc:
             # 超时：exec 通道拿不到已产生的输出（run_docker 取消即 kill），从 tee 文件读回部分日志。
-            # 容器死亡：容器已不在、tee 文件读不回——用 exec 返回时已交付的输出与退出码（真实容器实测：此前这里
-            # 只剩 setup 日志、candidate_phase=unknown，被谁在哪一段打断无从判断）。
-            partial = await self._read_candidate_log_partial(record)
-            delivered = exc.exec_result
-            if not partial and delivered is not None:
-                partial = delivered.stdout if delivered.stdout else delivered.stderr
-            self._record_partial_candidate(
-                record, setup_log, partial, exec_exit_code=delivered.exit_code if delivered is not None else None,
-            )
+            # 容器死亡 / 状态未知：exec 已交付输出与退出码（已由 _keep_delivered 同步记下；异常也携带同一份），
+            # tee 只在更长时补充（真实容器实测：此前这里只剩 setup 日志、candidate_phase=unknown）。
+            delivered = exc.exec_result if exc.exec_result is not None else (delivered_box[-1] if delivered_box else None)
+            known = _exec_text(delivered) if delivered is not None else ""
+            exit_code = delivered.exit_code if delivered is not None else None
+            if delivered is not None and not delivered_box:
+                self._record_partial_candidate(record, pre_candidate_log, known, exec_exit_code=exit_code)
+            elif delivered is None:
+                self._record_partial_candidate(record, pre_candidate_log, "", exec_exit_code=None)
+            partial = await _supplement_with_tee(known, exit_code)
             # A2：安装段与测试段共用一份 test_timeout；归因文字注明超时发生在哪一段（判定仍是 infra）
             raise GradingInfraError(
                 f"{exc.detail}:candidate_phase={candidate_phase_at(partial)}", category=exc.category,
                 op=exc.op, exit_code=exc.exit_code, stderr=exc.stderr, container_name=exc.container_name,
             ) from exc
         except asyncio.CancelledError:
-            # I4：外部取消（评分期限 / 关停）同样保留已产生的候选输出；读取用独立有界预算，再原样上抛
-            partial = await self._read_candidate_log_partial(record)
-            self._record_partial_candidate(record, setup_log, partial)
+            # I4：外部取消（评分期限 / 关停）同样保留已产生的候选输出；读取用独立有界预算，再原样上抛。
+            # CR1：exec 已交付时（取消落在其后的 inspect 上）先用已交付的那份，tee 只在更长时补充。
+            delivered = delivered_box[-1] if delivered_box else None
+            if delivered is None:
+                self._record_partial_candidate(record, pre_candidate_log, "", exec_exit_code=None)
+            await _supplement_with_tee(
+                _exec_text(delivered) if delivered is not None else "",
+                delivered.exit_code if delivered is not None else None,
+            )
             raise
         test_log = result.stdout if result.stdout else result.stderr
         facts = candidate_segment_facts(test_log, result.exit_code)
@@ -3074,12 +3179,15 @@ class SWEGradingManager:
 
     @staticmethod
     def _record_partial_candidate(
-        record: _ContainerRecord, setup_log: str, partial: str, *, exec_exit_code: int | None = None,
+        record: _ContainerRecord, prefix: str, partial: str, *, exec_exit_code: int | None = None,
     ) -> None:
-        facts = candidate_segment_facts(partial, exec_exit_code)  # exec_exit_code=None：exec 没有返回（超时 / 取消）
+        """候选段没有正常收尾时的部分事实。`prefix` = 候选段开始前的日志（setup + 权限布置输出）；同一次评分内重复调用
+        以最后一次为准，不叠加。exec_exit_code=None：未记录到 exec 退出码（超时 / 取消在 exec 返回之前）。"""
+
+        facts = candidate_segment_facts(partial, exec_exit_code)
         facts["log_partial"] = True
         record.candidate_facts = facts
-        record.eval_log_partial = setup_log + (record.eval_log_partial or "")[len(setup_log):] + partial
+        record.eval_log_partial = prefix + partial
 
     async def _observe(
         self, record: _ContainerRecord, script: str | None, *, phase: str, timeout: float,

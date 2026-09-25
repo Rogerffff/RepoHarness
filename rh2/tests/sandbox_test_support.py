@@ -292,7 +292,8 @@ class ProfileFakeState:
             user = None
             if "-u" in args:
                 user = args[args.index("-u") + 1]
-            name = args[args.index("bash") - 1]
+            # 容器名在 shell 入口之前：继承镜像 ENV 的 `bash -c`，或 E2b 可信前缀 `/usr/bin/env -i … /bin/bash`
+            name = args[args.index("bash" if "bash" in args else "/usr/bin/env") - 1]
             self.exec_scripts.append((name, user, sid))
             return self._exec_script(sid, user, script)
         return None

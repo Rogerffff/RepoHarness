@@ -14,8 +14,9 @@
    这里最重要的不是数值，而是随 attempt 增长的集合清单（`GROWING_COLLECTIONS`）
    ——就绪稿 §2.8 第 1 条要求"盘点该生产路径上会随 attempt/group/turn 增长的
    内存集合"，其中 `RolloutOrchestrator.audits` / `.outcomes` /
-   `SWEGradingManager.leases` / `._records` / `GradingQueue.events` 在生产代码里
-   **没有上界**（generate.py / manager.py / queue.py 都只 append 不裁剪）。本模块
+   `GradingQueue.events` 在生产代码里 **没有上界**（generate.py / queue.py 都只
+   append 不裁剪）；`SWEGradingManager._records` / `.leases` 自第六组 E4a 起有界
+   （已确认删除的记录按完成顺序只留最近 256 条，累计数另报 `total`）。本模块
    在关闭时把它们的实际长度也取一次（`collect_growth_facts`），上界估算与实测
    长度放在同一个文件里，30~50 step 能否接受由 judge 按 profile 判。
 
@@ -68,9 +69,12 @@ GROWING_COLLECTIONS: dict[str, tuple[str, str, bool, str]] = {
         "RolloutOrchestrator", "cleanup_quarantine", False, "receipt 写失败/清理异常保留的容器名",
     ),
     "grading_manager_records": (
-        "SWEGradingManager", "_records", False, "每次评分一个 _ContainerRecord（removed 标记但不删）",
+        "SWEGradingManager", "_records", True,
+        "第六组 E4a：删除未获确认的记录 + 最近 container_history_limit（256）条已确认删除的记录（按完成顺序退役）",
     ),
-    "grading_manager_leases": ("SWEGradingManager", "leases", False, "每次评分一个 SandboxLease"),
+    "grading_manager_leases": (
+        "SWEGradingManager", "leases", True, "第六组 E4a：由保留的容器记录导出，随记录退役",
+    ),
     "grading_manager_cleanup_failures": ("SWEGradingManager", "cleanup_failures", False, "清理失败字符串"),
     "grading_queue_events": ("GradingQueue", "events", False, "每次队列打满一个 BackpressureEvent"),
     "proxy_audit_artifacts": (
@@ -201,6 +205,13 @@ def estimate_memory(inputs: MemoryEstimateInputs) -> dict[str, Any]:
     }
 
 
+# 第六组 E4a：有界集合旁边的累计数（保留长度与累计数分开报告）
+CUMULATIVE_COUNTERS: dict[str, tuple[str, str]] = {
+    "grading_manager_records": ("SWEGradingManager", "containers_created_total"),
+    "grading_manager_leases": ("SWEGradingManager", "leases_total"),
+}
+
+
 def _len_of(obj: Any, attr: str) -> int | None:
     if obj is None:
         return None
@@ -241,6 +252,10 @@ def collect_growth_facts(
             "length": _len_of(objects.get(owner), attr),
             "note": note,
         }
+        if name in CUMULATIVE_COUNTERS:
+            counter_owner, counter_attr = CUMULATIVE_COUNTERS[name]
+            total = getattr(objects.get(counter_owner), counter_attr, None)
+            facts[name]["total"] = total if isinstance(total, int) else None
     return facts
 
 
