@@ -45,6 +45,8 @@
 
 harness 侧代理地址 = `http://rh2-egress-relay:18001`（`harness_adapter_url()`）。
 
+> **更正（2026-09-25，G1）**：上表 `tmp_tmpfs_bytes` / `home_tmpfs_bytes` 两行的落法当时没写挂载标志，Docker `--tmpfs` 默认因此是 `noexec`——agent 在 `/tmp`、`/home/agent` 里构建出来的程序不能执行（任务二 Conan 功能测试实证）。现在两处都显式带 `exec,nosuid,nodev`（`sandbox_profile.TMPFS_MOUNT_FLAGS`，进 profile 参数 `tmpfs_mount_flags` 与 runtime_profile_digest），inspect `Tmpfs` 仍逐字相等；启动前探针以 agent 身份读回 `/proc/mounts`（`MOUNT_TMP` / `MOUNT_HOME`：须有 nosuid、nodev，不得有 noexec）并在两处各执行一个脚本（`TMP_EXEC` / `HOME_EXEC` 须为 1）。grader 的 `/tmp` 同样处理（见 §1.2）。权限边界靠 nosuid / nodev + `--cap-drop ALL` + no-new-privileges，不靠 noexec。
+
 ### 1.2 `GraderSandboxProfile`（`profile_id = rh2.grader_sandbox_profile.v1`）
 
 | 参数 | env（`RH2_GRADER_*`） | 本地默认 | 落法 / 核对 |
@@ -56,6 +58,8 @@ harness 侧代理地址 = `http://rh2-egress-relay:18001`（`harness_adapter_url
 | 网络 | 固定 | `--network none`（deny_all，契约锁死） | inspect `NetworkMode=none`；探针 `ROUTED_IFACES=""`（`/proc/net/route` 无任何带路由接口）、全部目标 DENIED、DNS DENIED |
 | bind mount | 固定 | 只许 manager **显式声明**的只读快照（`clone_from_readonly_snapshot` 模式） | inspect `Binds` ⊆ 声明集且 `:ro`、`Mounts.RW=False` |
 | 不继承 agent 状态 / 不跨 attempt 污染 / 不复用活动容器 | 既有（W3a fresh grader） | — | 每次评分 fresh 容器，输入只有持久化 frozen artifact（W3a 测试已钉死） |
+
+> **更正（2026-09-25，G1）**：grader 的 `/tmp` tmpfs 同样由 Docker 默认成 `noexec`；现与 rollout 同一组标志 `exec,nosuid,nodev`。不改的话，候选在 actor 里能跑通的"在 /tmp 构建再执行"测试，评分时会因挂载失败——与官方评测环境不一致的假阴性。grader 的 HOME 在可写层上（不是 tmpfs），探针只核 `/tmp` 的挂载标志，两处都以候选执行用户（uid 54322）真的执行一次。参数 `tmpfs_mount_flags` 进摘要。
 
 `runtime_profile_digest` = `sha256(canonical JSON{schema, rollout.parameters, grader.parameters})`。
 

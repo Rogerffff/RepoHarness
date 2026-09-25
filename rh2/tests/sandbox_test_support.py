@@ -165,6 +165,10 @@ def rollout_probe_output(profile: RolloutSandboxProfile, *, head: str, overrides
     lines += ["IFACES=eth0,lo,", "ROUTED_IFACES=eth0,", "NET_relay=CONNECTED"]
     lines += [f"NET_forbidden_{i}=DENIED" for i in range(len(profile.forbidden_probe_targets))]
     lines += ["NET_upstream_direct=DENIED", "DNS_EXTERNAL=DENIED", "HOME_WRITABLE=1", "TMP_WRITABLE=1"]
+    # G1：/tmp 与 HOME 的实际挂载（exec、nosuid、nodev）与以 agent 身份执行的结果
+    lines += ["MOUNT_TMP=rw,nosuid,nodev,relatime,size=1048576k",
+              f"MOUNT_HOME=rw,nosuid,nodev,relatime,size=262144k,mode=750,uid={profile.agent_uid},gid={profile.agent_uid}",
+              "TMP_EXEC=1", "HOME_EXEC=1"]
     lines += [f"HIDDEN_{i}=DENIED:{p}" for i, p in enumerate(profile.hidden_paths)]
     # #1：激活文件（/rh2/bash_env，root 0644）对 agent 可读、不可写
     lines += ["ACTIVATION_READ=1", "ACTIVATION_WRITE=DENIED", "ACTIVATION_STAT=0:644"]
@@ -188,6 +192,7 @@ def grader_probe_output(profile: GraderSandboxProfile, *, overrides: dict[str, s
         "CAPEFF=0000000000000000", "CAPPRM=0000000000000000", "CAPBND=0000000000000000", "NNP=1",
         _cg(profile.pids_limit, profile.cpus, profile.memory_bytes).rstrip("\n"),
         "IFACES=lo,sit0,tunl0,", "ROUTED_IFACES=", "DNS_EXTERNAL=DENIED", "HOME_WRITABLE=1", "TMP_WRITABLE=1",
+        "MOUNT_TMP=rw,nosuid,nodev,relatime,size=1048576k", "TMP_EXEC=1", "HOME_EXEC=1",  # G1
     ]
     lines += [f"NET_forbidden_{i}=DENIED" for i in range(len(profile.forbidden_probe_targets))]
     lines.append("RH2_PROBE_OK=1")

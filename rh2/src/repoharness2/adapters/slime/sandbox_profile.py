@@ -147,6 +147,8 @@ _CAP_RE = re.compile(r"^[A-Z_]+$")
 _DIGEST_REF_RE = re.compile(r"^[a-z0-9][a-z0-9._/-]*(?::[0-9]+)?(?:/[a-z0-9._-]+)*@sha256:[0-9a-f]{64}$")
 # 来源：本机 2026-09-04 `docker image inspect python:3.12-slim -f '{{index .RepoDigests 0}}'`（OCI image index
 # 的 digest，多架构；`docker pull python@sha256:…` 在 x86_64 GPU 主机上解析到同一 index 的 amd64 清单）。
+# G1：rollout 的 /tmp、HOME 与 grader 的 /tmp 统一用这组 tmpfs 挂载标志（进 profile 参数与摘要；启动前探针核对实际挂载）。
+TMPFS_MOUNT_FLAGS = "exec,nosuid,nodev"
 RELAY_IMAGE_DEFAULT = "python@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea"
 _RELAY_MISSING_CONTAINER_MARKERS = ("no such container", "is not running")
 
@@ -421,6 +423,7 @@ class RolloutSandboxProfile:
             "swap_bytes": 0,
             "tmp_tmpfs_bytes": self.tmp_tmpfs_bytes,
             "home_tmpfs_bytes": self.home_tmpfs_bytes,
+            "tmpfs_mount_flags": TMPFS_MOUNT_FLAGS,
             "writable_layer_quota_bytes": self.writable_layer_quota_bytes,
             "require_writable_layer_quota": self.require_writable_layer_quota,
             "network": {
@@ -459,9 +462,13 @@ class RolloutSandboxProfile:
         return tuple(entries)
 
     def expected_tmpfs(self) -> dict[str, str]:
+        # G1（2026-09-25）：Docker 的 --tmpfs 默认 noexec，/tmp 与 HOME 里构建出来的程序跑不了（Conan 功能测试实证）。
+        # 显式 exec；nosuid / nodev 照旧显式保留（权限边界靠它们 + cap-drop ALL + no-new-privileges，不靠 noexec）。
         return {
-            "/tmp": f"size={self.tmp_tmpfs_bytes},mode=1777",
-            f"/home/{self.agent_user}": f"size={self.home_tmpfs_bytes},mode=0750,uid={self.agent_uid},gid={self.agent_uid}",
+            "/tmp": f"size={self.tmp_tmpfs_bytes},mode=1777,{TMPFS_MOUNT_FLAGS}",
+            f"/home/{self.agent_user}": (
+                f"size={self.home_tmpfs_bytes},mode=0750,uid={self.agent_uid},gid={self.agent_uid},{TMPFS_MOUNT_FLAGS}"
+            ),
         }
 
     def docker_run_args(self, *, name: str, network: str, image: str, labels: Sequence[str] = ()) -> list[str]:
@@ -558,6 +565,7 @@ class GraderSandboxProfile:
             "writable_layer_quota_bytes": self.writable_layer_quota_bytes,
             "require_writable_layer_quota": self.require_writable_layer_quota,
             "shm_size_bytes": self.shm_size_bytes,
+            "tmpfs_mount_flags": TMPFS_MOUNT_FLAGS,
             "candidate_writable_prefixes": list(self.candidate_writable_prefixes),
             "network": {"mode": "deny_all", "forbidden_probe_targets": [f"{h}:{p}" for h, p in self.forbidden_probe_targets]},
             "bind_mounts_allowed": ["declared_readonly_snapshot_only"],
@@ -570,7 +578,8 @@ class GraderSandboxProfile:
         return _sha256(self.to_parameters())
 
     def expected_tmpfs(self) -> dict[str, str]:
-        return {"/tmp": f"size={self.tmp_tmpfs_bytes},mode=1777"}
+        # G1：与 rollout 同一组挂载标志——actor 里能跑的"在 /tmp 构建再执行"测试，评分时也必须能跑（否则是假阴性）
+        return {"/tmp": f"size={self.tmp_tmpfs_bytes},mode=1777,{TMPFS_MOUNT_FLAGS}"}
 
     def docker_run_args(
         self, *, name: str, image: str, labels: Sequence[str] = (),
@@ -1318,6 +1327,20 @@ probe() { if timeout 3 bash -c "exec 3<>/dev/tcp/$2/$3" 2>/dev/null; then echo "
 if getent hosts example.com >/dev/null 2>&1; then echo "DNS_EXTERNAL=RESOLVED"; else echo "DNS_EXTERNAL=DENIED"; fi
 echo "HOME_WRITABLE=$( [ -n "${HOME:-}" ] && [ -w "$HOME" ] && echo 1 || echo 0 )"
 echo "TMP_WRITABLE=$( [ -w /tmp ] && echo 1 || echo 0 )"
+# G1：/tmp 与 HOME 的实际挂载选项（/proc/mounts，纯 bash 读取）+ 以探针身份在两处各建一个脚本真的执行一次
+while read -r _dev _mnt _fs _opts _rest; do
+  [ "$_mnt" = /tmp ] && echo "MOUNT_TMP=$_opts"
+  [ -n "${HOME:-}" ] && [ "$_mnt" = "$HOME" ] && echo "MOUNT_HOME=$_opts"
+done < /proc/mounts
+rh2_exec_probe() {
+  _f="$1/.rh2_exec_probe_$$"
+  if printf '#!/bin/sh\necho RH2_EXEC_PROBE_OK\n' > "$_f" 2>/dev/null && chmod 0700 "$_f" 2>/dev/null; then
+    if [ "$("$_f" 2>/dev/null)" = RH2_EXEC_PROBE_OK ]; then echo "$2_EXEC=1"; else echo "$2_EXEC=0"; fi
+  else echo "$2_EXEC=UNWRITABLE"; fi
+  rm -f "$_f"
+}
+rh2_exec_probe /tmp TMP
+if [ -n "${HOME:-}" ]; then rh2_exec_probe "$HOME" HOME; else echo "HOME_EXEC=NO_HOME"; fi
 '''
 
 
@@ -1846,6 +1869,27 @@ def check_rollout_probe(
         v.append("HOME 对 agent 不可写")
     if facts.get("TMP_WRITABLE") != "1":
         v.append("/tmp 对 agent 不可写")
+    v += _tmpfs_exec_violations(facts, who="agent", tmpfs_keys=("MOUNT_TMP", "MOUNT_HOME"))
+    return v
+
+
+def _tmpfs_exec_violations(facts: Mapping[str, str], *, who: str, tmpfs_keys: Sequence[str]) -> list[str]:
+    """G1：/tmp 与 HOME 以探针身份真的能执行程序；tmpfs 挂载保留 nosuid、nodev，且没有 noexec。"""
+
+    v: list[str] = []
+    for key, place in (("TMP_EXEC", "/tmp"), ("HOME_EXEC", "HOME")):
+        if facts.get(key) != "1":
+            v.append(f"{key}={facts.get(key)!r}：{who} 在 {place} 里建的程序不能执行（G1：tmpfs noexec？）")
+    for key in tmpfs_keys:
+        opts = set((facts.get(key) or "").split(","))
+        if not facts.get(key):
+            v.append(f"{key} 缺失：/proc/mounts 里没有这个挂载点")
+            continue
+        missing = {"nosuid", "nodev"} - opts
+        if missing:
+            v.append(f"{key}={facts.get(key)!r}：缺 {sorted(missing)}")
+        if "noexec" in opts:
+            v.append(f"{key}={facts.get(key)!r}：仍是 noexec")
     return v
 
 
@@ -1907,6 +1951,8 @@ def check_grader_probe(facts: Mapping[str, str], profile: GraderSandboxProfile) 
         v.append(f"DNS_EXTERNAL={facts.get('DNS_EXTERNAL')!r}")
     if facts.get("HOME_WRITABLE") != "1":
         v.append("HOME 对候选执行用户不可写（eval 脚本写 ~/.gitconfig 会失败）")
+    # G1：grader 的 HOME 在可写层上（不是 tmpfs），只核 /tmp 的挂载标志；两处都要能执行
+    v += _tmpfs_exec_violations(facts, who="候选执行用户", tmpfs_keys=("MOUNT_TMP",))
     return v
 
 

@@ -24,6 +24,20 @@ probe() { if timeout 3 bash -c "exec 3<>/dev/tcp/$2/$3" 2>/dev/null; then echo "
 if getent hosts example.com >/dev/null 2>&1; then echo "DNS_EXTERNAL=RESOLVED"; else echo "DNS_EXTERNAL=DENIED"; fi
 echo "HOME_WRITABLE=$( [ -n "${HOME:-}" ] && [ -w "$HOME" ] && echo 1 || echo 0 )"
 echo "TMP_WRITABLE=$( [ -w /tmp ] && echo 1 || echo 0 )"
+# G1：/tmp 与 HOME 的实际挂载选项（/proc/mounts，纯 bash 读取）+ 以探针身份在两处各建一个脚本真的执行一次
+while read -r _dev _mnt _fs _opts _rest; do
+  [ "$_mnt" = /tmp ] && echo "MOUNT_TMP=$_opts"
+  [ -n "${HOME:-}" ] && [ "$_mnt" = "$HOME" ] && echo "MOUNT_HOME=$_opts"
+done < /proc/mounts
+rh2_exec_probe() {
+  _f="$1/.rh2_exec_probe_$$"
+  if printf '#!/bin/sh\necho RH2_EXEC_PROBE_OK\n' > "$_f" 2>/dev/null && chmod 0700 "$_f" 2>/dev/null; then
+    if [ "$("$_f" 2>/dev/null)" = RH2_EXEC_PROBE_OK ]; then echo "$2_EXEC=1"; else echo "$2_EXEC=0"; fi
+  else echo "$2_EXEC=UNWRITABLE"; fi
+  rm -f "$_f"
+}
+rh2_exec_probe /tmp TMP
+if [ -n "${HOME:-}" ]; then rh2_exec_probe "$HOME" HOME; else echo "HOME_EXEC=NO_HOME"; fi
 probe forbidden_0 169.254.169.254 80
 probe forbidden_1 1.1.1.1 443
 probe forbidden_2 172.17.0.1 18001
