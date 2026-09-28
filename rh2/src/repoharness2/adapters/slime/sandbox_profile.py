@@ -154,6 +154,9 @@ TMPFS_MOUNT_FLAGS = "exec,nosuid,nodev"
 # 的 digest，多架构；`docker pull python@sha256:…` 在 x86_64 GPU 主机上解析到同一 index 的 amd64 清单）。
 RELAY_IMAGE_DEFAULT = "python@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea"
 _RELAY_MISSING_CONTAINER_MARKERS = ("no such container", "is not running")
+# AR1（Codex review_a_remainder_20260928）：每次启动 relay 都给容器打一个一次性的启动 ID。失败 / 取消 / 意外异常时只回收
+# 带本次 ID 的容器——预选名字不是所有权证明：同一 run_id 的第二次启动撞名失败时，同名容器是第一次仍在服务的 relay。
+RELAY_START_ID_LABEL = "rh2.relay.start_id"
 
 
 class SandboxProfileError(RuntimeError):
@@ -1053,16 +1056,36 @@ async def start_supply_relay(
     )
 
 
-async def _reclaim_relay_by_name(docker: DockerRunner, name: str, *, timeout: float = 60.0) -> str | None:
-    """按预选名字有界回收 relay 容器。None = 已删除或本就不存在；否则返回失败描述。"""
+async def _reclaim_relay_if_ours(
+    docker: DockerRunner, name: str, start_id: str, *, timeout: float = 60.0,
+) -> tuple[str | None, bool]:
+    """只回收本次启动建出的 relay 容器（AR1）。返回 (失败描述或 None, 同名容器是否属于别人)。
+
+    先按名字读启动 ID label：对象不存在 → 无需回收；label 不是本次的 → 同名的是别的启动者的容器（例如同 run_id 仍在
+    服务的 relay，或本机制之前建的、没有这个 label 的容器），一律不动；是本次的 → `rm -f`。读不到归属（守护进程报错、
+    通道异常）时不删，如实返回失败描述——可能残留的是本次容器，由调用方记证据。"""
 
     try:
-        rm = await _call(docker, "rm", "-f", name, timeout=timeout)
+        ins = await _call(
+            docker, "inspect", "-f", '{{index .Config.Labels "' + RELAY_START_ID_LABEL + '"}}', name,
+            timeout=min(timeout, 30.0),
+        )
     except Exception as exc:  # noqa: BLE001 - docker 通道本身出错：如实返回，由调用方落账
-        return f"{type(exc).__name__}: {exc}"[:200]
+        return f"ownership_check_failed:{type(exc).__name__}: {exc}"[:200], False
+    if ins.exit_code != 0:
+        err = (ins.stderr or ins.stdout or "").lower()
+        if "no such object" in err or "no such container" in err:
+            return None, False
+        return f"ownership_check_failed:{(ins.stderr or ins.stdout).strip()[-160:]}", False
+    if ins.stdout.strip() != start_id:
+        return None, True
+    try:
+        rm = await _call(docker, "rm", "-f", name, timeout=timeout)
+    except Exception as exc:  # noqa: BLE001
+        return f"{type(exc).__name__}: {exc}"[:200], False
     if rm.exit_code == 0 or any(m in (rm.stderr or "").lower() for m in _RELAY_MISSING_CONTAINER_MARKERS):
-        return None
-    return (rm.stderr or rm.stdout).strip()[-200:] or f"exit {rm.exit_code}"
+        return None, False
+    return (rm.stderr or rm.stdout).strip()[-200:] or f"exit {rm.exit_code}", False
 
 
 async def _start_relay_container(
@@ -1072,20 +1095,27 @@ async def _start_relay_container(
 ) -> EgressRelayHandle:
     """起 relay 容器 → 等 `check_port` 在容器内可连 → 核对实际镜像 = 钉死的 digest。
 
-    从发出 `docker run` 到交出 handle 之前，本函数是容器的唯一 owner（Codex review_supply_components NG2）：显式失败分支
-    （起不来 / 不就绪 / inspect 失败 / digest 不符）自清理并抛 SandboxNetworkError（reason_code 前缀 = code_prefix；清理
-    失败时残留名进 leftover_containers）；被取消或出现意外异常时同样按预选名字有界回收，回收失败写进 `cancel_report`
-    （取消）或异常注记（意外异常）并记 warning——原取消 / 原异常照常上抛，不吞首因。"""
+    从发出 `docker run` 到交出 handle 之前，本函数对**本次建出的**容器负责（Codex review_supply_components NG2）：显式
+    失败分支（起不来 / 不就绪 / inspect 失败 / digest 不符）自清理并抛 SandboxNetworkError（reason_code 前缀 = code_prefix；
+    清理失败时残留名进 leftover_containers）；被取消或出现意外异常时同样有界回收，回收失败写进 `cancel_report`（取消）
+    或异常注记（意外异常）并记 warning——原取消 / 原异常照常上抛，不吞首因。
 
+    AR1（review_a_remainder_20260928）：所有回收都先核对容器上的一次性启动 ID（`RELAY_START_ID_LABEL`），只删本次建出
+    的；同名撞车时（同一 run_id 的另一次启动仍在服务）报启动失败但不动已有容器。"""
+
+    start_id = uuid.uuid4().hex
+    at = run_args.index("--name")
+    run_args = [*run_args[:at], "--label", f"{RELAY_START_ID_LABEL}={start_id}", *run_args[at:]]
     try:
         return await _start_relay_container_owned(
             docker, name=name, run_args=run_args, image=image, alias=alias, listen_map=listen_map,
             check_port=check_port, run_id=run_id, ready_timeout=ready_timeout, code_prefix=code_prefix,
+            start_id=start_id,
         )
     except SandboxNetworkError:
         raise  # 显式失败分支已自清理
     except asyncio.CancelledError:
-        failure = await _reclaim_relay_by_name(docker, name)
+        failure, _foreign = await _reclaim_relay_if_ours(docker, name, start_id)
         if failure is not None:
             note = f"relay_rm_after_cancel:{name}:{failure}"
             if cancel_report is not None:
@@ -1093,7 +1123,7 @@ async def _start_relay_container(
             logger.warning("relay 启动被取消且容器回收失败（残留 %s，run_id=%s）：%s", name, run_id, failure)
         raise
     except Exception as exc:
-        failure = await _reclaim_relay_by_name(docker, name)
+        failure, _foreign = await _reclaim_relay_if_ours(docker, name, start_id)
         if failure is not None:
             exc.add_note(f"relay 容器回收失败（残留 {name}，带 rh2.run_id label）：{failure}")
             logger.warning("relay 启动出现意外异常且容器回收失败（残留 %s，run_id=%s）：%s", name, run_id, failure)
@@ -1103,11 +1133,14 @@ async def _start_relay_container(
 async def _start_relay_container_owned(
     docker: DockerRunner, *, name: str, run_args: list[str], image: str, alias: str,
     listen_map: tuple[tuple[int, str, int], ...], check_port: int, run_id: str, ready_timeout: float, code_prefix: str,
+    start_id: str,
 ) -> EgressRelayHandle:
     async def _fail(reason_code: str, message: str) -> SandboxNetworkError:
         # F4：自行清理失败的容器不能"忘掉"——它带本 run label，留在错误对象里供调用方记证据。
-        failure = await _reclaim_relay_by_name(docker, name)
+        failure, foreign = await _reclaim_relay_if_ours(docker, name, start_id)
         leftovers: tuple[str, ...] = ()
+        if foreign:
+            message += f"；同名容器 {name} 不是本次启动建的（例如同一 run_id 的 relay 仍在服务），保留未动"
         if failure is not None:
             leftovers = (name,)
             message += f"；且 relay 容器移除失败（残留 {name}，带 rh2.run_id label）：{failure}"
@@ -1115,7 +1148,7 @@ async def _start_relay_container_owned(
 
     res = await _call(docker, *run_args, timeout=120.0)
     if res.exit_code != 0:
-        # `docker run` 失败也可能已建出 Created 状态的容器：按名字回收（不存在即无残留）
+        # `docker run` 失败也可能已建出 Created 状态的容器：只回收带本次启动 ID 的（不存在即无残留；撞名时同名的是别人的）
         raise await _fail(f"{code_prefix}_start_failed", (res.stderr or res.stdout).strip()[-300:])
     deadline = time.monotonic() + ready_timeout
     check = (

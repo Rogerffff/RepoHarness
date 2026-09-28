@@ -340,7 +340,11 @@ class PackageIndexGateway:
         """结束本 token：撤销（停新请求 + 取消在途）→ 有界等在途请求收尾（各自按实际进度记一行日志、计入统计）→
         释放签发表（之后 404）→ 返回终态摘要（调用方写进 attempt / 评分事实）。`complete=False` 表示超时仍有在途请求
         没收齐，摘要不是终态（`inflight_unfinished` 给数量），调用方如实记录。未知 token，或同一 token 已有一次
-        release 在进行（重叠调用，例如取消清理与正常结束各调一次）→ None：终态摘要只出一份。"""
+        release 在进行（重叠调用，例如取消清理与正常结束各调一次）→ None：终态摘要只出一份。
+
+        AR2（Codex review_a_remainder_20260928）：调用方在等在途请求收尾时被取消（或等待本身出错），签发表照样移除这枚
+        token（在途请求已由撤销取消），网关总计记一次被打断的释放，异常照常上抛——调用方拿不到摘要，但不会留下
+        "正在释放"却永远不移除、之后每次 release 都返回 None 的 token。"""
 
         state = self._tokens.get(token)
         if state is None or state.releasing:
@@ -351,13 +355,22 @@ class PackageIndexGateway:
         current = asyncio.current_task()
         pending = {t for t in state.inflight if t is not current and not t.done()}
         unfinished = 0
-        if pending:
-            _done, still = await asyncio.wait(pending, timeout=timeout)
-            unfinished = len(still)
-        self._tokens.pop(token, None)
-        self._totals["tokens_released"] += 1
-        if unfinished:
-            self._totals["tokens_released_incomplete"] += 1
+        interrupted = False
+        try:
+            if pending:
+                _done, still = await asyncio.wait(pending, timeout=timeout)
+                unfinished = len(still)
+        except BaseException:
+            interrupted = True
+            unfinished = sum(1 for t in pending if not t.done())
+            raise
+        finally:
+            self._tokens.pop(token, None)
+            self._totals["tokens_released"] += 1
+            if unfinished or interrupted:
+                self._totals["tokens_released_incomplete"] += 1
+            if interrupted:
+                self._totals["tokens_release_interrupted"] += 1
         return {
             "token_ref": state.token_ref,
             "attempt_id": state.grant.attempt_id,
@@ -371,6 +384,11 @@ class PackageIndexGateway:
             "files_issued": len(state.issued),
             "stats": dict(state.stats),
         }
+
+    def is_issued(self, token: str) -> bool:
+        """签发表里是否还有这枚 token（撤销但未释放的也算）。调用方据此判断释放是否已真正生效。"""
+
+        return token in self._tokens
 
     def active_token_count(self) -> int:
         return len(self._tokens)

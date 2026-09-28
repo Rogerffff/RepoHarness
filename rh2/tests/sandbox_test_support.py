@@ -462,6 +462,14 @@ class SandboxRuntimeFakeDocker:
             if name in self.containers:
                 self.containers[name]["removed"] = True
             return ExecResult(0, "", "")
+        if cmd == "inspect" and "{{index .Config.Labels" in " ".join(args):
+            # AR1：relay 回收前按名字读一次性启动 ID
+            name = args[-1]
+            c = self.containers.get(name)
+            if c is None or c["removed"]:
+                return ExecResult(1, "", f"Error: No such object: {name}")
+            key = " ".join(args).split('"')[1]
+            return ExecResult(0, c["labels"].get(key, "<no value>") + "\n", "")
         if cmd == "ps":
             label = ""
             for i, a in enumerate(args):

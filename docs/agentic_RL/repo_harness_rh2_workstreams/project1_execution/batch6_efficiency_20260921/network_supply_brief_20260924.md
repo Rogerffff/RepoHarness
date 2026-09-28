@@ -276,3 +276,58 @@ grader 两段 exec 生命周期与三个终点（等 B 落地 `manager.py` / `pr
 - `supply.installed`（安装后以候选 UID 跑 `pip list` 的观测）：现有候选后观测可以承载，随代表题验证补。
 - bringup：构造 `GraderSupplyConfig`（起停网关与供应 relay、共用子网池；网关必须与 manager 在同一事件循环里），以及 run evidence 的政策字段（devpi 版本、上游、1A+2A、封禁表摘要）。
 - rollout 注入；B 的 `supply_policy` 评分面字段、逐题封禁表 / 例外表、派生镜像 pip / uv 可用性与代表题；目标机 devpi 与冷 / 热安装；用户放行启用。
+
+## 14. Codex 修后与两段执行复核（2026-09-28）
+
+[完整报告与反例](review_a_remainder_20260928/README.md)。检查 `0adac07d` / `8f31caee`，基准 HEAD `23f5586d`；原 NG1/NG2 正常及取消反例已修、两段执行主顺序通过，但本轮不能整体标记收口。
+
+- **AR1 / P1，先修**：名称冲突时按名清理会删掉先前仍在运行的 relay。本机 Docker 在 supply 与当前默认 egress 两入口都复现。必须区分本次创建与已有对象，不以预选名字代替所有权。
+- **AR2 / P2，供应启用前修**：release/网络 teardown 第一次取消后，过早清句柄、置完成标志与容器退役会留下 token/网络/子网槽位，close 又跳过记录。token 已撤销，不是授权失效或奖励污染；默认 supply 未启用，不阻塞离线筛查。
+- **O1 观测尾项**：finally 后补的 gateway / teardown 事实未进入此前已写的 sidecar；随 AR2 对照落盘收口。§13.3 的事实完备性暂不成立。
+- **停止条件**：只复核报告列出的冲突与取消位置及正控，不重开 1A+2A，不新增恢复平台/准入规则。正式接线和代表题仍按 §13.5 后续推进。
+
+主审 127 项聚焦检查通过（含本机真实 Docker、localhost 假上游）；无公网、远端或 GPU。生产代码与测试 oracle 本轮未改。
+
+
+## 15. 实施记录四：AR1 / AR2 / O1（§14 复核项；2026-09-28，Claude）
+
+**状态：已实施、本机验证、待 Codex 聚焦复核。** 包供应仍默认关闭；§13.5 的正式接线没有动。本节修完后，§13.3"每个终点的事实都进诊断"的说法才重新成立。
+
+### 15.1 AR1：只回收本次启动建出的 relay（`sandbox_profile.py`）
+
+- 每次启动都给 relay 容器打一个一次性的启动 ID（label `rh2.relay.start_id`）。启动失败、被取消或出现意外异常时，先按名字读这个 label：
+  - 对象不存在：无需回收。
+  - label 不是本次的：同名容器属于别人（例如同一 run_id 仍在服务的 relay，或本机制之前建的、没有这个 label 的容器），保留不动，启动失败的信息里写明"保留未动"。
+  - label 是本次的：`rm -f`。
+  - 读不到归属：不删，如实报告可能残留。
+- egress 与包供应两个入口共用这段逻辑；正常启动的参数只多一个 label。修前（`0adac07d`）对任何非零的 `docker run` 都按预选名字 `rm -f`。
+
+### 15.2 AR2：取消不让收尾失去责任方（`pkg_index_gateway.py`、`grading/manager.py`）
+
+- **网关 release**：等在途请求收尾时被取消或出错，签发表照样移除这枚 token（在途请求已由撤销取消），总计记 `tokens_release_interrupted`，异常照常上抛。不再留下"正在释放"却永远不移除的 token。新增查询口 `is_issued(token)`。
+- **manager 正常阶段的 release**：句柄一直留到 release 真正返回；被打断时事实记 `token_release=release_interrupted`。
+- **manager 收尾**：放进独立任务，调用方经 `asyncio.shield` 等它。评分任务被取消只让调用方不再等，收尾本身照样按各步的有界超时做完。token 与网络都确认释放才置 `supply_released`；网络删不掉就保留句柄，子网槽位也不归还。
+- **gc / close**：`gc` 对"容器已删、供应资源没收齐"的记录重试收尾。`close` 先等进行中的收尾（上限 = release 超时 + 两次拆网超时 + 5 s），仍没收齐的列进返回值 `supply_open`，并记 `supply_resources_open_at_close`。E4a 的历史裁剪不丢这类记录。
+
+### 15.3 O1：最终事实进落盘 sidecar
+
+- 收尾结束后，把最终的 `supply` 事实原子替换进同一份 `*.diagnostics.json`。正常报告、infra 报告与取消三种 sidecar 都覆盖，不另起日志协议。
+- 事实字段：
+  - `token_release`：`not_issued` / `issued` / `released` / `released_incomplete` / `release_interrupted` / `release_failed:<类型>` / `already_released`。
+  - `network_teardown`：`pending` / `done` / `failed`（失败原因在 `network_teardown_failures`）。
+  - `cleanup`：`pending` / `done` / `incomplete`。
+
+### 15.4 验证（本机 macOS + Docker Desktop）
+
+| 测试 | 用例 | 覆盖 |
+| --- | --- | --- |
+| `tests/adapters/test_supply_relay.py` | 24 → 33 | AR1：两个入口 × 两种已有容器（同 run_id 带启动 ID / 旧的无 label）撞名，都报失败、不删、写明保留；每次启动的 ID 不同；`run` 失败但留下 Created 容器会回收，没建出容器就不删。**真实 Docker**：两个入口同名第二次启动失败、第一次的 relay 仍在运行；入口程序不存在留下 Created 容器，照样回收；readiness 中取消照样回收（既有） |
+| `tests/grading/test_supply_cleanup_ownership.py` | 9（新） | 真实网关 release + 两段执行替身。三个正控（正常、安装超时、签发 token 之前就失败）资源归零，sidecar 能区分三种状态；三个取消位置（正常 release、超时后收尾里的 release、收尾拆网）最终 token / 网络 / 子网槽位都是 0；拆网调用一直不应答时 close 如实报 open，恢复后再 close 清零；历史上限为 1 时没收齐的记录不被裁剪；网关层被打断的 release 仍移除 token |
+
+- **反证**：把上面 9 例改成只断言资源计数与记录标志（不读新增字段），在修前源码上 6 个取消 / 所有权用例失败（token、网络、子网槽位残留），3 个正控通过；修后 9 例全过。
+- **Codex 探针副本**：修后运行，tracer 四案收尾后 token / 网络 / 槽位都是 0。falsifier（拆网调用永不返回、默认 60 s 超时）不再给出空失败清单，而是明确记拆网超时与 `supply_resources_open_at_close`，并保留句柄。egress 撞名探针的"第一次 relay 被删"断言在修后不再成立（第一次仍在）。证据在 `runs/review_a_remainder_fix_20260928/`。
+- **全量**：五目录 1920 passed / 1 skipped（Docker 在线；skip 是本机未设 SWE-Gym 解析语料），lane A 530p/346s、B 876p。
+
+### 15.5 未做
+
+- 同 §13.5。另：`close()` 新增的 `supply_open` 目前还没有 bringup 消费者（供应尚未接入 bringup），接线时一并纳入关停判定。

@@ -974,6 +974,8 @@ class _ContainerRecord:
     supply_network: Any | None = None
     supply_token: str | None = None
     supply_released: bool = False
+    # AR2（Codex review_a_remainder_20260928）：本条记录的供应收尾任务（独立任务、调用方被取消也照样做完）
+    supply_cleanup: "asyncio.Task[None] | None" = None
 
 
 # W3a 生命周期计时：grader 内部六段（与 adapters/slime/attempt_timing.LIFECYCLE_SEGMENTS 同名）。
@@ -1567,6 +1569,22 @@ def _check_control_surface_attest(
     return None
 
 
+def _supply_outstanding(record: _ContainerRecord) -> bool:
+    """AR2：本条记录还握着没释放的供应资源（网关 token 或 attempt 网络）。"""
+
+    return record.supply_network is not None or record.supply_token is not None
+
+
+def _note_release_summary(facts: dict[str, Any], summary: dict[str, Any] | None) -> None:
+    """把 release 的结果写成可区分的事实：完整摘要 / 在途没收齐 / 已被别处释放（None）。"""
+
+    if summary is None:
+        facts["token_release"] = "already_released"
+        return
+    facts["gateway"] = summary
+    facts["token_release"] = "released" if summary.get("complete", True) else "released_incomplete"
+
+
 class SWEGradingManager:
     """进程级评分管理器：prepare（可选预热）/ grade（评分本体）/ gc（记账回收）。
 
@@ -1588,6 +1606,7 @@ class SWEGradingManager:
         self._stop_requested_hook = stop_requested
         self.run_id = uuid.uuid4().hex[:12]  # 本实例的 owner 标识（owner label：诊断与归属，不用于清扫别人）
         self._records: list[_ContainerRecord] = []
+        self._supply_cleanup_tasks: set[asyncio.Task] = set()  # AR2：进行中的供应收尾（强引用；close 等它们）
         self._images_ready: set[str] = set()
         self._image_locks: dict[str, asyncio.Lock] = {}
         self._prepare_sem = asyncio.Semaphore(self.config.prepare_concurrency)
@@ -1640,11 +1659,30 @@ class SWEGradingManager:
         if pending:
             await asyncio.gather(*pending, return_exceptions=True)
         removed = await self.gc()
+        # AR2：还在跑的供应收尾（例如评分任务被取消后留下的）等它们按各自的有界超时做完；做不完的如实列出，不假称清理完成
+        running = [t for t in self._supply_cleanup_tasks if not t.done()]
+        if running:
+            await asyncio.wait(running, timeout=self._supply_cleanup_bound())
+        supply_open = [
+            {
+                "container": r.name,
+                "network": r.supply_network.name if r.supply_network is not None else None,
+                "token_outstanding": r.supply_token is not None,
+                "cleanup_running": r.supply_cleanup is not None and not r.supply_cleanup.done(),
+            }
+            for r in self._records if _supply_outstanding(r)
+        ]
+        for item in supply_open:
+            self.cleanup_failures.append(
+                f"supply_resources_open_at_close:{item['container']}:network={item['network']}:"
+                f"token={item['token_outstanding']}:running={item['cleanup_running']}"
+            )
         self._closed = True
         return {
             "prepare_cancelled": len(pending),
             "containers_removed": removed,
             "containers_open": [r.name for r in self._records if not r.removed],
+            "supply_open": supply_open,
             "cleanup_failures": list(self.cleanup_failures),
             "regrade_events": len(self.regrade_events),  # N2b：保留的追加评分事实条数（上限 256，不是累计总量）
             "regrade_total": self.regrade_total,  # N2b：本 run 追加评分累计次数
@@ -2154,27 +2192,60 @@ class SWEGradingManager:
             )
 
     async def _release_supply_resources(self, record: _ContainerRecord) -> None:
-        """2A 资源收尾（幂等）：释放网关 token（撤销 + 有界收齐在途请求 + 终态摘要），断开包供应 relay 并删除本次评分的
-        attempt 网络。失败进 cleanup_failures 与 record.supply，不抛——评分结论不因收尾失败改变；残留网络带 run label，
-        run 末残留检查会看到。容器仍在运行时网络删不掉，照实记失败。"""
+        """2A 资源收尾（幂等、取消安全）：释放网关 token（撤销 + 有界收齐在途请求 + 终态摘要），断开包供应 relay 并删除本次
+        评分的 attempt 网络。失败进 cleanup_failures 与 record.supply，不抛——评分结论不因收尾失败改变；残留网络带 run
+        label，run 末残留检查会看到。容器仍在运行时网络删不掉，照实记失败。
+
+        AR2（Codex review_a_remainder_20260928）：收尾在独立任务里跑，调用方经 `asyncio.shield` 等它——评分任务被取消只让
+        调用方不再等，收尾本身照样按各步的有界超时做完。只有 token 与网络都确认释放才置 supply_released；没收齐的句柄
+        留在 record 上，gc / close 重试或如实报告，E4a 的历史裁剪不丢这类记录。"""
+
+        if self.config.supply is None or not _supply_outstanding(record):
+            return
+        task = record.supply_cleanup
+        if task is None or task.done():
+            task = asyncio.ensure_future(self._supply_cleanup(record))
+            record.supply_cleanup = task
+            self._supply_cleanup_tasks.add(task)
+            task.add_done_callback(self._supply_cleanup_tasks.discard)
+        await asyncio.shield(task)
+
+    def _supply_cleanup_bound(self) -> float:
+        supply = self.config.supply
+        if supply is None:
+            return 0.0
+        return supply.release_timeout_seconds + 2 * supply.teardown_timeout_seconds + 5.0
+
+    def _drop_token_handle_if_released(self, record: _ContainerRecord, token: str) -> None:
+        """release 返回 / 抛出之后：网关确认已不再持有这枚 token 才放下句柄（没有查询口的网关按 release 的约定视为已移除）。"""
 
         supply = self.config.supply
-        if supply is None or record.supply_released or (record.supply_network is None and record.supply_token is None):
-            return
-        record.supply_released = True
+        holds = getattr(supply.gateway, "is_issued", None) if supply is not None else None
+        if holds is None or not holds(token):
+            record.supply_token = None
+
+    async def _supply_cleanup(self, record: _ContainerRecord) -> None:
+        supply = self.config.supply
+        assert supply is not None
         facts = record.supply if record.supply is not None else {}
         record.supply = facts
-        token, record.supply_token = record.supply_token, None
+        token = record.supply_token
         if token is not None:
             try:
                 summary = await supply.gateway.release(token, timeout=supply.release_timeout_seconds)
+            except asyncio.CancelledError:
+                # 收尾任务本身被取消（例如事件循环关停）：网关已移除 token；网络留给 close 报告
+                facts["token_release"] = "release_interrupted"
+                self._drop_token_handle_if_released(record, token)
+                raise
             except Exception as exc:  # noqa: BLE001 - 收尾不改判定，如实记账
-                summary = None
+                facts["token_release"] = f"release_failed:{type(exc).__name__}"
                 self.cleanup_failures.append(f"supply_token_release_failed:{record.name}:{type(exc).__name__}")
-            if summary is not None:
-                facts["gateway"] = summary
-                if not summary.get("complete", True):
+            else:
+                _note_release_summary(facts, summary)
+                if summary is not None and not summary.get("complete", True):
                     self.cleanup_failures.append(f"supply_token_release_incomplete:{record.name}")
+            self._drop_token_handle_if_released(record, token)
         network = record.supply_network
         if network is not None:
             from repoharness2.adapters.slime.sandbox_profile import teardown_attempt_network
@@ -2192,8 +2263,39 @@ class SWEGradingManager:
             except Exception as exc:  # noqa: BLE001
                 failures = [f"teardown_error:{type(exc).__name__}: {str(exc)[:160]}"]
             facts["network_teardown_failures"] = list(failures)
-            for failure in failures:
-                self.cleanup_failures.append(f"supply_network_teardown_failed:{network.name}:{failure}")
+            if failures:
+                facts["network_teardown"] = "failed"
+                for failure in failures:
+                    self.cleanup_failures.append(f"supply_network_teardown_failed:{network.name}:{failure}")
+            else:
+                facts["network_teardown"] = "done"
+                record.supply_network = None  # 只有确认删掉（子网槽位已归还）才放下句柄
+        record.supply_released = not _supply_outstanding(record)
+        facts["cleanup"] = "done" if record.supply_released else "incomplete"
+        self._refresh_supply_sidecar(record)
+
+    def _refresh_supply_sidecar(self, record: _ContainerRecord) -> None:
+        """O1（review_a_remainder_20260928）：供应收尾在诊断 sidecar 写出之后才结束（grade 的 finally 里），收尾后把最终的
+        supply 事实补进同一份 sidecar（原子替换），不另起日志协议。没有落盘条件 / 没有已写出的 sidecar 时只更新内存。"""
+
+        if record.diagnostics is not None:
+            record.diagnostics["supply"] = record.supply
+        if self.config.eval_log_dir is None:
+            return
+        ref = record.persisted_eval_log_ref or record.cancelled_eval_log_ref
+        if ref is None:
+            return
+        path = Path(self.config.eval_log_dir) / f"{ref.ref_id}.diagnostics.json"
+        if not path.is_file():
+            return
+        try:
+            doc = json.loads(path.read_text(encoding="utf-8"))
+            doc["supply"] = record.supply
+            tmp = path.with_name(path.name + ".tmp")
+            tmp.write_text(json.dumps(doc, ensure_ascii=False, indent=1, sort_keys=True, default=str), encoding="utf-8")
+            os.replace(tmp, path)
+        except (OSError, ValueError) as exc:
+            self.cleanup_failures.append(f"supply_sidecar_refresh_failed:{record.name}:{type(exc).__name__}")
 
     # ------------------------------------------------------------------ gc
     async def gc(
@@ -2205,9 +2307,12 @@ class SWEGradingManager:
         removed: list[str] = []
         # E4a：遍历快照——遍历中 await 删除时，退役裁剪会换掉 `_records`（不原地缩短），快照保证每条活动记录都被访问
         for record in list(self._records):
-            if record.removed:
-                continue
             if trajectory_id is not None and record.trajectory_id != trajectory_id:
+                continue
+            if record.removed:
+                if _supply_outstanding(record):
+                    # AR2：容器已删、供应资源（token / 网络）没收齐的，重试收尾（有界，失败照实记账）
+                    await self._release_supply_resources(record)
                 continue
             if ttl_seconds is not None and (now - record.created_monotonic) < ttl_seconds:
                 continue
@@ -2433,7 +2538,11 @@ class SWEGradingManager:
 
         supply = self.config.supply
         assert supply is not None
-        record.supply = {"network": network_name, "policy": "supply_install_then_none"}
+        # 收尾状态从一开始就写明：token 未签发 / 网络待拆 / 收尾未完成（O1：落盘事实能区分"没签发"与"没收齐"）
+        record.supply = {
+            "network": network_name, "policy": "supply_install_then_none", "token_release": "not_issued",
+            "network_teardown": "pending", "cleanup": "pending",
+        }
         cancel_report: list[str] = []
         try:
             record.supply_network = await self._await_within_grading_deadline(
@@ -2547,7 +2656,8 @@ class SWEGradingManager:
         self._retire_seq += 1
         record.retired_seq = self._retire_seq
         self.containers_removed_total += 1
-        retired = [r for r in self._records if r.retired_seq is not None]
+        # AR2：供应资源（token / 网络）还没收齐的记录不裁剪——它们是 gc / close 重试与报告的唯一句柄
+        retired = [r for r in self._records if r.retired_seq is not None and not _supply_outstanding(r)]
         excess = len(retired) - max(1, int(self.config.container_history_limit))
         if excess > 0:
             dropped = {id(r) for r in sorted(retired, key=lambda r: r.retired_seq)[:excess]}
@@ -3418,6 +3528,7 @@ class SWEGradingManager:
         )
         token = supply.gateway.issue(grant)
         record.supply_token = token
+        facts["token_release"] = "issued"
         facts.update(token_ref=hashlib.sha256(token.encode()).hexdigest()[:12], policy_digest=grant.policy_digest())
         index = f"http://{supply.relay.alias}:{supply.index_port}{supply.gateway.index_path(token)}"
         env = {"PIP_INDEX_URL": index, "PIP_TRUSTED_HOST": supply.relay.alias, "UV_INDEX_URL": index, "UV_DEFAULT_INDEX": index}
@@ -3444,11 +3555,16 @@ class SWEGradingManager:
                 f"{(withdrawal.inspect_error or withdrawal.disconnect_error or '')[:200]}",
                 op="supply_withdraw",
             )
-        # 容器已离网、token 已撤销：立刻收齐网关的终态摘要（进本次诊断），不留到收口
-        record.supply_token = None
-        summary = await supply.gateway.release(token, timeout=supply.release_timeout_seconds)
-        if summary is not None:
-            facts["gateway"] = summary
+        # 容器已离网、token 已撤销：立刻收齐网关的终态摘要（进本次诊断），不留到收口。AR2：句柄一直留到 release 真正
+        # 返回；release 在任何退出路径上都会把 token 移出签发表，所以返回或被打断之后都放下句柄，被打断时如实记下。
+        try:
+            summary = await supply.gateway.release(token, timeout=supply.release_timeout_seconds)
+        except BaseException:
+            facts["token_release"] = "release_interrupted"
+            raise
+        finally:
+            self._drop_token_handle_if_released(record, token)
+        _note_release_summary(facts, summary)
 
         if shape != SUPPLY_INSTALL_HANDOFF:
             facts["test_exec_started"] = False

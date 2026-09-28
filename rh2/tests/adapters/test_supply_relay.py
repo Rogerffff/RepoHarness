@@ -78,29 +78,67 @@ def test_supply_relay_listens_only_on_the_gateway_entry_with_the_same_hardening(
 # ---- 启动层（替身 docker） ---------------------------------------------------------------------------------------------
 
 
+START_ID_QUERY = '{{index .Config.Labels "' + sp.RELAY_START_ID_LABEL + '"}}'
+
+
+def _labels_of(args: tuple[str, ...]) -> dict[str, str]:
+    out: dict[str, str] = {}
+    for i, a in enumerate(args):
+        if a == "--label" and i + 1 < len(args):
+            k, _, v = args[i + 1].partition("=")
+            out[k] = v
+    return out
+
+
 class _RelayFake:
+    """relay 启动的 docker 替身。`containers` = 守护进程里现有的容器（名字 → label），撞名时 `run` 按真实 daemon 报
+    Conflict；`run_fail_leaves_created` 模拟 `run` 报错但已建出 Created 状态的容器（带本次 label）。"""
+
     def __init__(self, *, digests: tuple[str, ...] | None = None, never_ready: bool = False, run_fail: bool = False,
-                 rm_fail: bool = False) -> None:
+                 rm_fail: bool = False, run_fail_leaves_created: bool = False,
+                 existing: dict[str, dict[str, str]] | None = None) -> None:
         self.digests = digests
         self.never_ready = never_ready
         self.run_fail = run_fail
         self.rm_fail = rm_fail
+        self.run_fail_leaves_created = run_fail_leaves_created
+        self.containers: dict[str, dict[str, str]] = {k: dict(v) for k, v in (existing or {}).items()}
         self.calls: list[tuple[str, ...]] = []
+
+    def _create(self, args: tuple[str, ...]) -> ExecResult | None:
+        name = args[args.index("--name") + 1]
+        if name in self.containers:
+            return ExecResult(125, "", f'docker: Error response from daemon: Conflict. The container name "/{name}" '
+                                       'is already in use by container "0123abcd". You have to remove (or rename) that container.')
+        if self.run_fail:
+            if self.run_fail_leaves_created:
+                self.containers[name] = _labels_of(args)
+            return ExecResult(1, "", "pull access denied")
+        self.containers[name] = _labels_of(args)
+        return None
 
     async def __call__(self, *args: str, input_bytes: bytes | None = None) -> ExecResult:
         self.calls.append(args)
         cmd = args[0]
         if cmd == "run":
-            return ExecResult(1, "", "pull access denied") if self.run_fail else ExecResult(0, "cid\n", "")
+            return self._create(args) or ExecResult(0, "cid\n", "")
         if cmd == "exec":
             return ExecResult(1, "", "ConnectionRefusedError") if self.never_ready else ExecResult(0, "RH2_RELAY_LISTENING\n", "")
+        if cmd == "inspect" and START_ID_QUERY in args:
+            name = args[-1]
+            if name not in self.containers:
+                return ExecResult(1, "", f"Error: No such object: {name}")
+            return ExecResult(0, self.containers[name].get(sp.RELAY_START_ID_LABEL, "<no value>") + "\n", "")
         if cmd == "inspect":
             return ExecResult(0, "sha256:relayimage\n", "")
         if cmd == "image":
             digests = self.digests if self.digests is not None else (make_rollout_profile().relay_image,)
             return ExecResult(0, json.dumps(list(digests)) + "\n", "")
         if cmd == "rm":
-            return ExecResult(1, "", "device or resource busy") if self.rm_fail else ExecResult(0, "", "")
+            if self.rm_fail:
+                return ExecResult(1, "", "device or resource busy")
+            self.containers.pop(args[-1], None)
+            return ExecResult(0, "", "")
         raise AssertionError(f"未预期的 docker 调用：{args}")
 
 
@@ -343,9 +381,13 @@ class _GatedRelayFake(_RelayFake):
         self.entered = asyncio.Event()
 
     async def __call__(self, *args: str, input_bytes: bytes | None = None) -> ExecResult:
-        step = {"run": "run", "exec": "readiness", "inspect": "inspect"}.get(args[0])
+        step = {"run": "run", "exec": "readiness"}.get(args[0])
+        if args[0] == "inspect" and "{{.Image}}" in args:
+            step = "inspect"  # 只拦启动时核镜像那一次；回收时读启动 ID 的 inspect 不拦
         if step is not None and step == self.gate:
             self.calls.append(args)
+            if step == "run":
+                self._create(args)  # 请求已到守护进程、容器已建出，CLI 还没返回
             self.entered.set()
             await asyncio.Event().wait()  # 永远阻塞，直到被取消
         if args[0] == "exec" and self.exec_raises is not None:
@@ -388,11 +430,47 @@ async def test_unexpected_exception_reclaims_and_keeps_the_original_error(rm_fai
     assert (len(notes) == 1 and "残留 rh2-supply-relay-run5" in notes[0]) if rm_fail else notes == []
 
 
-async def test_failed_docker_run_also_reclaims_a_possibly_created_container():
-    fake = _RelayFake(run_fail=True)
+async def test_failed_docker_run_reclaims_the_created_container_it_left_behind():
+    fake = _RelayFake(run_fail=True, run_fail_leaves_created=True)
     with pytest.raises(sp.SandboxNetworkError, match="supply_relay_start_failed") as err:
         await sp.start_supply_relay(fake, make_rollout_profile(), gateway_host="h", gateway_port=4000, run_id="run6")
     assert ("rm", "-f", "rh2-supply-relay-run6") in fake.calls and err.value.leftover_containers == ()
+    assert "rh2-supply-relay-run6" not in fake.containers
+
+
+async def test_failed_docker_run_that_created_nothing_removes_nothing():
+    fake = _RelayFake(run_fail=True)
+    with pytest.raises(sp.SandboxNetworkError, match="supply_relay_start_failed"):
+        await sp.start_supply_relay(fake, make_rollout_profile(), gateway_host="h", gateway_port=4000, run_id="run6b")
+    assert not any(c[0] == "rm" for c in fake.calls)
+
+
+# ---- AR1（Codex review_a_remainder_20260928）：撞名失败不删别人仍在服务的 relay -----------------------------------------------
+
+
+@pytest.mark.parametrize("entry", ["egress", "supply"])
+@pytest.mark.parametrize("existing_labels", [
+    {"rh2.run_id": "dup", sp.RELAY_START_ID_LABEL: "first-start"},  # 同一 run_id 的前一次启动，仍在服务
+    {"rh2.run_id": "dup"},  # 本机制之前建的、没有启动 ID 的容器
+])
+async def test_name_collision_reports_failure_and_leaves_the_existing_relay_alone(entry, existing_labels):
+    name = f"rh2-{entry}-relay-dup"
+    fake = _RelayFake(existing={name: existing_labels})
+    with pytest.raises(sp.SandboxNetworkError, match=f"{entry}_relay_start_failed") as err:
+        if entry == "egress":
+            await sp.start_egress_relay(fake, make_rollout_profile(), run_id="dup")
+        else:
+            await sp.start_supply_relay(fake, make_rollout_profile(), gateway_host="h", gateway_port=4000, run_id="dup")
+    assert "already in use" in str(err.value) and "保留未动" in str(err.value) and err.value.leftover_containers == ()
+    assert not any(c[0] == "rm" for c in fake.calls) and fake.containers[name] == existing_labels
+
+
+async def test_each_start_stamps_a_fresh_start_id_on_its_container():
+    fake = _RelayFake()
+    await sp.start_egress_relay(fake, make_rollout_profile(), run_id="s1")
+    await sp.start_egress_relay(fake, make_rollout_profile(), run_id="s2")
+    ids = [fake.containers[f"rh2-egress-relay-s{i}"][sp.RELAY_START_ID_LABEL] for i in (1, 2)]
+    assert len(set(ids)) == 2 and all(len(i) == 32 for i in ids)
 
 
 @pytest.mark.docker
@@ -425,3 +503,62 @@ async def test_real_docker_cancel_while_waiting_for_readiness_removes_the_create
     finally:
         subprocess.run(["docker", "rm", "-f", name], capture_output=True, timeout=60)
 
+
+
+@pytest.mark.docker
+@pytest.mark.skipif(not DOCKER_WITH_RELAY_IMAGE, reason="本机 docker 不可用或没有钉死的 relay 镜像（测试不拉镜像）")
+@pytest.mark.parametrize("entry", ["egress", "supply"])
+async def test_real_docker_second_start_with_the_same_name_fails_and_the_first_relay_keeps_running(entry):
+    """AR1 真容器：同一 run_id 启动两次，第二次撞名失败；第一次的 relay 仍在运行（修前被第二次的失败清理删掉）。"""
+
+    docker = sp.default_docker_runner
+    run_id = f"dupstart-{uuid.uuid4().hex[:8]}"
+    labels = ("--label", f"rh2.run_id={run_id}")
+    profile = make_rollout_profile()
+
+    async def start():
+        if entry == "egress":
+            return await sp.start_egress_relay(docker, profile, run_id=run_id, labels=labels)
+        return await sp.start_supply_relay(docker, profile, gateway_host="127.0.0.1", gateway_port=9, run_id=run_id,
+                                           labels=labels)
+
+    try:
+        first = await start()
+        with pytest.raises(sp.SandboxNetworkError, match=f"{entry}_relay_start_failed") as err:
+            await start()
+        assert "保留未动" in str(err.value)
+        running = await docker("inspect", "-f", "{{.State.Running}}", first.container_name)
+        assert running.exit_code == 0 and running.stdout.strip() == "true"
+    finally:
+        left = subprocess.run(["docker", "ps", "-aq", "--filter", f"label=rh2.run_id={run_id}"],
+                              capture_output=True, text=True, timeout=60).stdout.split()
+        if left:
+            subprocess.run(["docker", "rm", "-f", *left], capture_output=True, timeout=60)
+
+
+@pytest.mark.docker
+@pytest.mark.skipif(not DOCKER_WITH_RELAY_IMAGE, reason="本机 docker 不可用或没有钉死的 relay 镜像（测试不拉镜像）")
+async def test_real_docker_run_that_creates_but_cannot_start_the_relay_is_cleaned_up():
+    """正控（AR1 修后保持）：`docker run` 建出容器但启动失败（入口程序不存在）→ 留下 Created 状态的本次容器，照样回收。"""
+
+    run_id = f"createdonly-{uuid.uuid4().hex[:8]}"
+
+    async def broken_entrypoint(*args: str, input_bytes: bytes | None = None):
+        if args[0] == "run":
+            at = args.index("python3")
+            args = (*args[:at], "/rh2-no-such-binary", *args[at + 1:])
+        return await sp.default_docker_runner(*args, input_bytes=input_bytes)
+
+    try:
+        with pytest.raises(sp.SandboxNetworkError, match="egress_relay_start_failed") as err:
+            await sp.start_egress_relay(broken_entrypoint, make_rollout_profile(), run_id=run_id,
+                                        labels=("--label", f"rh2.run_id={run_id}"))
+        assert err.value.leftover_containers == ()
+        left = subprocess.run(["docker", "ps", "-aq", "--filter", f"label=rh2.run_id={run_id}"],
+                              capture_output=True, text=True, timeout=60)
+        assert left.stdout.strip() == ""
+    finally:
+        left = subprocess.run(["docker", "ps", "-aq", "--filter", f"label=rh2.run_id={run_id}"],
+                              capture_output=True, text=True, timeout=60).stdout.split()
+        if left:
+            subprocess.run(["docker", "rm", "-f", *left], capture_output=True, timeout=60)
