@@ -3,6 +3,7 @@
 用法（容器内，工作目录 /testbed）：python /in/make_candidate.py <候选名>
 正对照：c3_serpass（本页替代正对照，待他人核实）、upstream261（上游 2.6.1 #8710 写法）、c3_reorder（改在注解排序处，查误拒）。
 错误候选：gold 之外的 n_* 都是为检验测试强度构造的退化或部分修复，不是合理实现。
+复核候选 rv_*（09-29 独立复核构造，本页按 review.md §1 描述重建）：rv_pv_first 错误、rv_ser_to_end 边缘、rv_condwrap 合理。
 """
 import sys
 from pathlib import Path
@@ -116,6 +117,24 @@ PLAIN = {
 
         serialization = _LAST_SERIALIZATION[0]
 ''' + TAIL_BOTH,
+    # 复核候选（按 review.md §1 描述重建）：内层 schema 任意位置带 serialization 时才委托，否则保持 base；合理实现
+    "rv_condwrap": HEAD + '''        from .errors import PydanticSchemaGenerationError
+
+        def _has_serialization(obj: Any) -> bool:
+            if isinstance(obj, dict):
+                return 'serialization' in obj or any(_has_serialization(v) for v in obj.values())
+            if isinstance(obj, (list, tuple)):
+                return any(_has_serialization(v) for v in obj)
+            return False
+
+        try:
+            inner = handler(source_type)
+        except PydanticSchemaGenerationError:
+            inner = None
+        serialization = None
+        if inner is not None and _has_serialization(inner):
+            serialization = core_schema.wrap_serializer_function_ser_schema(function=lambda v, h: h(v), schema=inner)
+''' + TAIL_BOTH,
 }
 
 GS_ANCHOR = '''        res = self._get_prepare_pydantic_annotations_for_known_type(source_type, tuple(annotations))
@@ -155,6 +174,41 @@ REORDER_CALL = {
                     "        if len(annotations) == 2:\n"
                     "            annotations = _move_serializers_after_plain_validator(annotations)\n"),
 }
+
+# 复核候选（按 review.md §1 描述重建），都在 _apply_annotations 的 prepare 之后调用
+RV_REORDER = {
+    # 错误：把最后一个 PlainValidator 挪到元数据最内层；原在其左侧、按文档不应运行的验证器与约束变成包在外面运行
+    "rv_pv_first": '''
+
+def _plain_validator_first(annotations: list[Any]) -> list[Any]:
+    from ..functional_validators import PlainValidator
+
+    plain = [i for i, a in enumerate(annotations) if isinstance(a, PlainValidator)]
+    if not plain:
+        return annotations
+    i = plain[-1]
+    return [annotations[i]] + annotations[:i] + annotations[i + 1 :]
+''',
+    # 边缘：把 PlainValidator 之前的 serializer 移到整个列表末尾（而不是其紧后）；PV 两侧都有 serializer 时内侧生效
+    "rv_ser_to_end": '''
+
+def _move_serializers_to_end(annotations: list[Any]) -> list[Any]:
+    from ..functional_serializers import PlainSerializer, WrapSerializer
+    from ..functional_validators import PlainValidator
+
+    plain = [i for i, a in enumerate(annotations) if isinstance(a, PlainValidator)]
+    if not plain:
+        return annotations
+    last = plain[-1]
+    before = annotations[:last]
+    moved = [a for a in before if isinstance(a, (PlainSerializer, WrapSerializer))]
+    if not moved:
+        return annotations
+    kept = [a for a in before if not isinstance(a, (PlainSerializer, WrapSerializer))]
+    return kept + annotations[last:] + moved
+''',
+}
+RV_CALL = {"rv_pv_first": "_plain_validator_first", "rv_ser_to_end": "_move_serializers_to_end"}
 
 
 def sub(path: Path, old: str, new: str) -> None:
@@ -196,6 +250,14 @@ elif name == "n_field_only":
     anchor = "\n\ndef apply_validators("
     assert s.count(anchor) == 1
     GS.write_text(s.replace(anchor, REORDER_HELPER + anchor))
+elif name in RV_REORDER:
+    sub(GS, "            source_type, annotations = res\n\n        pydantic_js_annotation_functions: list[GetJsonSchemaFunction] = []\n",
+        "            source_type, annotations = res\n        annotations = " + RV_CALL[name] + "(annotations)\n"
+        "\n        pydantic_js_annotation_functions: list[GetJsonSchemaFunction] = []\n")
+    s = GS.read_text()
+    anchor = "\n\ndef apply_validators("
+    assert s.count(anchor) == 1
+    GS.write_text(s.replace(anchor, RV_REORDER[name] + anchor))
 elif name in REORDER_CALL:
     sub(GS, "            source_type, annotations = res\n\n        pydantic_js_annotation_functions: list[GetJsonSchemaFunction] = []\n",
         REORDER_CALL[name] + "\n        pydantic_js_annotation_functions: list[GetJsonSchemaFunction] = []\n")
