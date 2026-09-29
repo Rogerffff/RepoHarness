@@ -1,0 +1,28 @@
+diff --git a/dask/dataframe/partitionquantiles.py b/dask/dataframe/partitionquantiles.py
+--- a/dask/dataframe/partitionquantiles.py
++++ b/dask/dataframe/partitionquantiles.py
+@@ -341,6 +341,12 @@
+             q_weights = np.cumsum(weights)
+             q_target = np.linspace(q_weights[0], q_weights[-1], npartitions + 1)
+             rv = np.interp(q_target, q_weights, vals)
++            if np.issubdtype(vals.dtype, np.integer):
++                # np.interp works in float64, which cannot hold every large
++                # integer: keep the exact endpoints and stay within them.
++                lo, hi = int(vals[0]), int(vals[-1])
++                inner = [min(max(int(x), lo), hi) for x in rv[1:-1]]
++                rv = np.array([lo] + inner + [hi], dtype=vals.dtype)
+         else:
+             # Distribute the empty partitions
+             duplicated_index = np.linspace(
+@@ -413,9 +419,9 @@
+     if is_categorical_dtype(data):
+         data = data.codes
+         interpolation = "nearest"
++    elif np.issubdtype(data.dtype, np.integer):
++        interpolation = "nearest"
+     vals, n = _percentile(data, qs, interpolation=interpolation)
+-    if interpolation == "linear" and np.issubdtype(data.dtype, np.integer):
+-        vals = np.round(vals).astype(data.dtype)
+     vals_and_weights = percentiles_to_weights(qs, vals, length)
+     return vals_and_weights
+ 
