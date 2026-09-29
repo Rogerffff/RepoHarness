@@ -29,6 +29,7 @@
 
   两者都来自快照提交，在历史批次中用过；本目录未修改它们。
 - rh2 虚拟环境：`uv sync --frozen --no-dev --group swe --group data --python 3.12`。评分不需要 torch 等开发依赖，因此不装 dev 组。
+- 路径：`semantic_spec*.json`、评分审计与日志中的 `/home/user/RepoHarness` 是云端容器里的仓库根目录，不是用户本机路径。本地复跑时，把它换成本地仓库根目录即可。`grade_r2e.py` 已改为按脚本自身位置查找 `rh2/src`。
 
 ## 3．证据层级（本目录统一用法）
 

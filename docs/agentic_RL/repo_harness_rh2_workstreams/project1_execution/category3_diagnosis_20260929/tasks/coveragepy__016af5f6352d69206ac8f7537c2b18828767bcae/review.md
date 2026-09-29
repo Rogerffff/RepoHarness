@@ -147,3 +147,100 @@
 - Python 2 兼容性；
 - 插件文件追踪器（`add_file_tracers`）与动态上下文名（公开读者 A5）；
 - v1swap 下 `lines_only`、`ascii_only`、`wr_latin1`、`wr_hardcode` 的实跑结果。
+
+## v2 聚焦复核（2026-09-29）
+
+**对象**：
+- 修订测试 `hidden_test_1_revised_v2.py`（sha256 `ccdd7d89…`）；
+- 主审生成的 7 个复核候选补丁；
+- `evidence/revised_v2/grades.jsonl`、`evidence/examples_v1/`、`evidence/g1_v1/`；
+- 重写后的 `result.md`（10:02 版）。
+
+**方式**：同前，一次性容器、断网、root，私有模拟，没有跑正式评分。本节新增评分运行共 34 次：
+- v2 × 14 个候选；
+- gold、`convert`、`rv_collector_warn` 在 v2 下各重复 2 次（连同首轮各 3 次，全为 1）；
+- 2 个边缘候选 × v2；
+- 可选加固变体 × 12 个候选。
+
+另做 7 组补丁等价检查和 3 组边缘探针。
+
+**总判断：同意 v2 作为修订草案交第2类，无阻断项。** v2 如实实现了 B1 的修法，也吸收了建议 1、2。我没有发现新的误拒；与 v1 相比，没有候选从 0 变为 1。grades.jsonl 与 result.md 的表格 42 格全部一致。result.md 对复核意见的处理基本准确，只剩几处措辞和引用瑕疵（见第 4 点）。v2 仍需正式评分链、新公开读者验收与 Codex 复核。
+
+### 1. v2 是否如实实现修法，有无新的误拒或放过
+
+**文件对照**：
+- v2 与复核者私测的 `reviewer_probe_v1plus.py` 只差第 579–580 行注释；
+- 相对 v1 有三处改动：对调两行 `exec`，让 `\udc80\udc81_other.py` 先执行（B1）；可编码名改为 `caf\xe9_中.py`（建议 1）；用 `coverage.CoverageData().read()` 读回数据文件并断言（建议 2）；
+- 仍在同一个测试函数内，键集不变。
+
+**实跑**：我用 v2 原文件对 14 个候选各跑一次，结果与 `grades.jsonl` 的 `h2_rev2` 逐一相同。
+
+- **得 1（6 个）**：gold、`skip_write`、`convert`、`rv_skip_write`、`rv_convert`、`rv_collector_warn`。
+- **得 0（8 个），失败位置都在预期断言上**：
+  - base、`catch_save`：原测试部分的 `\udcff` `UnicodeEncodeError`；
+  - `lines_only`、`wr_hardcode`：分支模式下 `\udc80\udc81` 的 `UnicodeEncodeError`；
+  - `ascii_only`、`wr_latin1`、`wr_swallow_flush`、`wr_loop_abort`：`assert 'café_中.py' in ['bug891b.py']`。
+
+**误拒**：没有发现新的误拒。
+- 得 1 的合理实现覆盖跳过类 4 个（gold、`skip_write`、`rv_skip_write`、`rv_collector_warn`）和转换类 2 个（`convert`、`rv_convert`）。
+- v2 仍然不断言不可编码文件是否被记录、以何种形式记录，也不断言报告成功。
+- 读回断言只检查 `bug891b.py` 和 `café_中.py` 两个可编码名。
+- gold、`convert`、`rv_collector_warn` 各 3 次全为 1。
+
+**放过**：
+- grades.jsonl 中没有候选从 v1 的 0 变为 v2 的 1，合理实现也没有从 1 变为 0。
+- 我另造了 2 个边缘错误候选，它们在 v2 下都得 1。这两个缺口在原测试和 v1 下同样存在，不是 v2 引入的：
+  - `wr_escape_range`：只把 U+DC80–U+DCFF 当作不可编码。探针中 `\ud800.py`、`\udc00.py` 仍然崩溃。这类孤立代理只能由人为的 `compile()` 名得到，从文件系统按 surrogateescape 解码不会产生；
+  - `wr_basename_only`：只检查 basename。探针中 `/tmp/\udcff_dir/x.py`（目录名不可编码）仍然崩溃。
+
+  两者都属于边缘输入，建议记 T3，不阻断。
+- **可选加固（已私测）**：把 `"\udc80\udc81_other.py"` 改为 `"\udc80\udc81_dir/other.py"`。结果：gold、`skip_write`、`convert`、三个 `rv_*` 为 1；base、`lines_only`、`wr_swallow_flush`、`wr_loop_abort`、`wr_basename_only` 为 0；`wr_escape_range` 仍为 1。按 §5"不追着候选改分"，这不是必需项。
+
+**补充**：在 v2 的 14 个候选里，没有一个是被读回断言判负的。两个吞错候选都因为顺序对调，先在内存断言 `café_中.py` 处失败。读回断言的拦截作用只在 v1 顺序下演示过：本文第 3 节的 v1disk 中，`wr_swallow_flush` 失败于 `assert 'bug891b.py' in []`。在 v2 里它是加固项。
+
+### 2. 生成的补丁是否与复核构造等价
+
+**等价。**
+- `reviewer_cands/` 下 8 个文件（含 `_lib.py`）与复核者原件的 sha256 逐一相同。
+- 7 个候选分别在 base 上执行两种方式：一是跑我的编辑脚本，二是 `git apply` 主审生成的 `.patch`。两种方式改动的文件相同，改后文件的 sha256 也相同。
+- 7 个候选是 `rv_collector_warn`、`rv_convert`、`rv_skip_write`、`wr_hardcode`、`wr_latin1`、`wr_loop_abort`、`wr_swallow_flush`。
+
+### 3. grades.jsonl 与 result.md 表格是否一致
+
+**一致。**
+- result.md §2（2）表的 14 行 × 3 列共 42 格，与 `grades.jsonl` 全部相同。
+- 我的独立结果也与之吻合：原测试、v1 两列此前已逐项跑过（相同候选全部相同）；v2 列本节重跑，14 格全部相同。
+- 日志也证实各列用的测试版本正确：`ascii_only` 的 `h1_rev1.out` 失败于 `'café.py'`，`h2_rev2.out` 失败于 `'café_中.py'`。
+- 说明：`grade_r2e.py` 的 `reward` 用的是 `prime_calculate_reward`，即上游口径。RH2 模块注明它只用于对拍，生产判定用 `scoring.expected_map_matches`（并集口径）。我逐条核查了 42 条记录，都是 `n_parsed = n_expected = 15`、`unexpected` 为空，两种口径结论相同。建议在 result.md 注明这一点。
+
+### 4. result.md 对复核意见的处理
+
+| 复核意见 | result.md 的处理 | 判断 |
+| --- | --- | --- |
+| B1 对调 `exec` 顺序，正式评分复验，保留父版本与触发反例 | 已改为 v2；版本链 `72b69833…` → v1 `c7f272d5…` → v2 `ccdd7d89…`；交接单列出正式评分的预期值 | 准确 |
+| 建议 1 非 Latin-1 字符 | v2 已用 `café_中.py`，`wr_latin1` 为 0 | 准确 |
+| 建议 2 数据文件读回 | 已加入 | 已实施。措辞需修正：result.md 写"v1 → v2 的改动来自独立复核 B1"，又说读回"挡住只保留内存、磁盘丢数据的吞错实现"。实际上 B1 只要求对调顺序，另两项来自建议 1、2；在 v2 中挡住两个吞错候选的是顺序对调，读回不是任何候选的决定性断言 |
+| 建议 3 G1／T3 | 已补记；`evidence/g1_v1/` 显示 base、gold、`skip_write` 在 run 时崩溃（rc=1），`convert`、`rv_skip_write` 不崩溃 | 准确，与我的探针一致。附注：`g1_v1/*.out` 中的 `[report rc=…]` 是 `tail` 的退出码；`convert` 的报告实际以 "No source for code … Aborting" 中止，却显示 rc=0 |
+| 建议 4 证据整理 | 已写明 `rc.json`／`summary.json` 是退出码，得分以 `grades.jsonl` 为准；`examples_v1/` 已归档（原例在 base、gold 下都正常保存，修订示例 base rc=1、gold rc=0）；sha256 已更正为 `e654fab9…d1e1`（我重算相符） | 准确 |
+| 建议 5 `ascii_only` 的公开依据 | 已补 `UnicodeFilePathsTest` 与 CHANGES 4.0.2 | 准确 |
+| 建议 6 不断言报告成功或处置形式 | 已写入 §4 | 准确 |
+| 建议 7 本机绝对路径 | 没有提及。`grade_r2e.py` 第 3 行与 4 份 `semantic_spec*.json` 含 `/home/user/RepoHarness/...`，现已随 cov016 目录提交 | 未处理，非阻断：建议改为相对路径 |
+
+**其它小瑕疵（非阻断）**：
+- 首段说"6 个合理实现（跳过类与转换类各三个）"，实际是跳过类 4 个、转换类 2 个。
+- 首段说"8 个错误候选都得 0"，这 8 个里含 noop（base），应写"noop 与 7 个错误候选都得 0"。
+- 开头"主审和独立复核都还没做"已过时；§5"v2 本身还没有经过复核"应改为指向本节。
+- §2 写"run_tests.sh（sha256 `0ed7b9a4…`）"，这是带结尾换行的本地副本的值；评分包字段为 `8285765f…`，两者只差结尾换行。
+
+### 结论
+
+- **阻断项：无。**
+- **非阻断建议**：
+  - 按上表修正措辞与引用；
+  - 把 `wr_escape_range`、`wr_basename_only` 记为 T3；目录名实例的加固可选；
+  - 去掉提交文件中的本机绝对路径。
+- **未查**：
+  - 正式评分链与派生镜像；
+  - UID 54321 下的开发条件；
+  - 新公开读者对修订题面的验收；
+  - v2 在 PyTracer 下的行为。

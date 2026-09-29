@@ -54,7 +54,7 @@ pillow 首轮的结论是“可转第1类”，被独立复核推翻，改判为
 | [SWE dvc-9395](tasks/iterative__dvc-9395/result.md) | 辨别实验 | **转第2类**（主审） | T1：精确断言 `checkout` 调用次数，误拒合理实现，R-b 删除该断言；gold 的 `--dry`／无 remote 回归登记 S2。只有私有模拟，dvc_tail_v1 配方在云端无法完整重建 | 进行中 |
 | [R2E pillow__3a61c9e9](tasks/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/result.md) | 辨别实验 | **转第2类**（首轮“可转第1类”被推翻） | N1：RGBA 调色板加整数透明索引时，gold 的 `remap_palette` 抛 `ValueError`，上游 11.0 才修好，判 S1。R-c v1 新增一键，正对照改为 C1，上游式 U11 作第二正对照 | 复核不同意首轮，已改判；v2 聚焦复核进行中 |
 | [R2E coveragepy__5dbbe143](tasks/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/result.md) | 公开目标核定（P5） | **待用户决定** | slug 与消息两种读法都有公开依据。可选：A 按 slug（推荐）、B 按消息、C 不修订。与读法无关的 R-c 已由 R2E 线落地 | 沿用多方已有的 P5 判定 |
-| [R2E coveragepy__016af5f6](tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/result.md) | 质量调查 | **转第2类** | P4：题面原例不复现，走 R-f。原测试下 6 个错误候选得 1。R-c v2 下 6 个合理实现得 1，8 个错误候选得 0 | 复核部分同意，B1 已按 v2 处理；v2 聚焦复核进行中 |
+| [R2E coveragepy__016af5f6](tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/result.md) | 质量调查 | **转第2类** | P4：题面原例不复现，走 R-f。原测试下 6 个错误候选得 1。R-c v2 下 6 个合理实现得 1，noop 与 7 个错误候选得 0 | 复核部分同意，B1 已按 v2 处理；v2 聚焦复核无阻断 |
 
 独立复核：每题由不继承本会话上下文的新子代理进行，先读原件形成初判，再核对本目录的结论，只针对关键判断寻找反证（v1 §7.3）。复核发现阻断项时，主审修改后再请同一复核者做聚焦复核。
 

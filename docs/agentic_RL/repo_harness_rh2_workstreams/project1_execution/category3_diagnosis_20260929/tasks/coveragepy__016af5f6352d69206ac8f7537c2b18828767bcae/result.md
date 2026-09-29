@@ -1,8 +1,8 @@
 # R2E coveragepy__016af5f6：第3类质量调查结果（v2，按独立复核修订）
 
-2026-09-29 / Claude（云端，第3类负责人）。原分类：第3类“题目质量调查未完成”。R2E 线的公开读者稿已经保存（[public_read.md](../../../r2e_lifecycle_20260929/results/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/public_read.md)），但文中提到的 `commands.json` 缺失，主审和独立复核都还没做。
+2026-09-29 / Claude（云端，第3类负责人）。原分类：第3类“题目质量调查未完成”。本批开始前，R2E 线的公开读者稿已经保存（[public_read.md](../../../r2e_lifecycle_20260929/results/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/public_read.md)），但文中提到的 `commands.json` 缺失，主审和独立复核都还没做。本页即本批的主审；独立复核及 v2 聚焦复核见 §5。
 
-**结论：问题和修法已明确，建议转第2类。** 修订测试已按独立复核的阻断项 B1 更新到 v2。
+**结论：问题和修法已明确，建议转第2类。** 修订测试已按独立复核的阻断项 B1 更新到 v2，v2 聚焦复核无阻断。
 
 - **P4，已实跑确认**：题面原例照抄在 base 上不崩溃。
 - **S1**：原测试下，**6 个错误候选得 1**：
@@ -15,7 +15,7 @@
   - R-f 修正题面示例；
   - R-c v2 在原测试函数内补四类检查：分支模式、另一种不可编码名、执行顺序上排在它之后的可编码非 Latin-1 名、数据文件读回。
 
-  私有评分下，6 个合理实现（跳过类与转换类各三个）都得 1，8 个错误候选都得 0。gold 仍作正对照。
+  私有评分下，6 个合理实现（跳过类 4 个、转换类 2 个）都得 1；noop 与 7 个错误候选都得 0。gold 仍作正对照。
 
 公开读者担心的“隐藏测试只接受跳过或转换中的一种”已消除：两类做法在原测试、v1、v2 下都能通过。
 
@@ -29,7 +29,7 @@
 
 - 源镜像：`namanjain12/coveragepy_final@sha256:71895ed4…5a39`，与冻结摘要一致。
 - 方式：root、断网、一次性容器。隐藏测试取自镜像 `/r2e_tests`（`test_1.py` 的 sha256 为 `72b69833…`，与评分包一致）。
-- **私有评分**：复制到 `/testbed/r2e_tests`，运行评分包里的 `run_tests.sh`（sha256 `0ed7b9a4…`），按 RH2 移植的上游解析器（`parse_log_pytest`＋`prime_calculate_reward`，[`grade_r2e.py`](../../../../../../../rh2/experiments/category3_cloud_20260929/cov016/grade_r2e.py)），逐键对照评分包的期望映射（15 键，含 `r2e-mr-001`）。这是按同一命令和期望映射做的**私有模拟**，不是 R2E 正式评分链。
+- **私有评分**：复制到 `/testbed/r2e_tests`，运行评分包里的 `run_tests.sh`。本地副本的 sha256 为 `0ed7b9a4…`，评分包字段为 `8285765f…`，两者只差结尾换行。按 RH2 移植的上游解析器（`parse_log_pytest`＋`prime_calculate_reward`，[`grade_r2e.py`](../../../../../../../rh2/experiments/category3_cloud_20260929/cov016/grade_r2e.py)），逐键对照评分包的期望映射（15 键，含 `r2e-mr-001`）。这是按同一命令和期望映射做的**私有模拟**，不是 R2E 正式评分链。`grade_r2e.py` 用的是上游口径 `prime_calculate_reward`，不是 RH2 生产判定的并集口径；复核逐条核过 42 条记录，两种口径结论相同。
 - 注意：各 `rc.json`、`summary.json` 里的值是容器内管道末端命令的退出码，**不代表测试结果**；得分以 `grades.jsonl` 为准。
 
 **（1）示例复现**（`evidence/examples_v1/`）：
@@ -80,6 +80,7 @@
   - 现象：`--source` 目录里有一个未执行、文件名含 `0xff` 字节的 `.py` 时，`coverage run` 在 gold 下仍经 `_post_save_work → touch_file` 抛 `UnicodeEncodeError`（rc=1）。
   - 版本对照：base、`skip_write` 相同；`convert`、`rv_skip_write` 不崩溃（`evidence/g1_v1/`）。
   - 结论：gold 没有覆盖这条罕见路径，但这不是回归。补断言需要按 D4 另找正对照，不值得。
+  - 注意：输出里的 `[report rc=…]` 是 `tail` 的退出码。`convert` 的报告实际已中止（“No source for code … Aborting report output”），与下文 §4 关于报告的说明一致。
 
 ## 4．修法（交第2类，走 R2E 已有的材料修订机制）
 
@@ -91,10 +92,10 @@
   - 以 `branch=True` 运行一个模块。它先 exec `\udc80\udc81_other.py`，再 exec `caf\xe9_中.py`，也就是先不可编码名、后可编码的非 Latin-1 名；
   - 保存后断言：内存中的 `measured_files()` 含模块本身和 `café_中.py`；
   - 再用新的 `coverage.CoverageData().read()` 读回数据文件，断言两者都在。
-- v1 → v2 的改动来自独立复核 B1：
-  - 对调两行 exec 的顺序，挡住 `wr_loop_abort`；
-  - 可编码名加入非 Latin-1 字符，挡住 `wr_latin1`；
-  - 加入数据文件读回，挡住只保留内存、磁盘丢数据的吞错实现。
+- v1 → v2 的三处改动都来自独立复核：
+  - 对调两行 exec 的顺序（阻断项 B1）：`wr_swallow_flush`、`wr_loop_abort` 在 v2 中因此失败，失败在内存断言 `café_中.py` 处；
+  - 可编码名加入非 Latin-1 字符（建议 1）：挡住 `wr_latin1`；
+  - 加入数据文件读回（建议 2）：在本批候选中没有决定任何结果，属于加固，防止只保留内存、磁盘丢数据的实现。
 
   v2 与复核者私测的 v1plus 只差一行注释。
 - 不断言 `\udcff` 类文件是否被记录、以何种形式记录，所以跳过和转换两类做法都被接受。**以后的修订也不应断言 `coverage report` 成功**：转换做法之后报告会提示缺源码，这是 base 的既有行为，题面允许这类“内部处理”（复核 §2.3）。
@@ -130,7 +131,17 @@
   - 修订题面 sha256 笔误：已更正；
   - 修订示例的运行输出：已归档；
   - `rc.json` 的含义：已写明。
-- v2 本身还没有经过复核。v2 只按复核者提出的修法实现，所以交第2类时由 Codex 复核一并确认。
+- **v2 聚焦复核**（review.md 末尾）：**无阻断**。
+  - v2 如实实现了修法；复核者用 v2 原文件重跑 14 个候选，结果与 `grades.jsonl` 相同，正对照重复 3 次都是 1；
+  - 补丁与复核者的编辑脚本等价；
+  - 表格 42 格与 `grades.jsonl` 一致。
+
+  本页已按其非阻断意见修正措辞：v1 → v2 的改动来源、4＋2 的计数、“noop 与 7 个错误候选”、`run_tests.sh` 摘要说明、G1 报告退出码说明、评分口径说明。
+- **新增 T3（复核发现，原测试、v1、v2 同样存在，不阻断）**：
+  - `wr_escape_range`：只把 U+DC80–U+DCFF 当作不可编码，遇到人为构造的其它孤立代理字符仍然崩溃；
+  - `wr_basename_only`：只检查文件名末段，目录名不可编码时仍然崩溃。
+
+  可选加固：把 `"\udc80\udc81_other.py"` 改成 `"\udc80\udc81_dir/other.py"`。复核私测表明，这能挡住 `wr_basename_only`，合理实现仍都为 1。是否采用由第2类落地时决定，本页不再升版。
 
 ## 6．当前用途与未做
 
