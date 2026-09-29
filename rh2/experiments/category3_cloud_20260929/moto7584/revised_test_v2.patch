@@ -1,0 +1,90 @@
+diff --git a/tests/test_sns/test_application_boto3.py b/tests/test_sns/test_application_boto3.py
+--- a/tests/test_sns/test_application_boto3.py
++++ b/tests/test_sns/test_application_boto3.py
+@@ -438,6 +438,86 @@ def test_publish_to_disabled_platform_endpoint(api_key=None):
+             conn.delete_platform_application(PlatformApplicationArn=application_arn)
+ 
+ 
++def _assert_endpoint_does_not_exist(err, endpoint_arn):
++    # The issue gives the error code and the "Endpoint does not exist for endpoint {endpoint_arn}"
++    # template; do not pin whether AWS omits the space between "arn" and the ARN.
++    assert err["Code"] == "InvalidParameter"
++    assert "Endpoint does not exist" in err["Message"]
++    assert endpoint_arn in err["Message"]
++
++
++@pytest.mark.aws_verified
++@sns_aws_verified
++def test_publish_to_deleted_platform_endpoint(api_key=None):
++    conn = boto3.client("sns", region_name="us-east-1")
++    platform_name = str(uuid4())[0:6]
++    topic_name = "topic_" + str(uuid4())[0:6]
++    application_arn = None
++    try:
++        platform_application = conn.create_platform_application(
++            Name=platform_name,
++            Platform="GCM",
++            Attributes={"PlatformCredential": api_key},
++        )
++        application_arn = platform_application["PlatformApplicationArn"]
++
++        endpoint_arn = conn.create_platform_endpoint(
++            PlatformApplicationArn=application_arn,
++            Token="some_unique_id",
++            Attributes={"Enabled": "false"},
++        )["EndpointArn"]
++
++        topic_arn = conn.create_topic(Name=topic_name)["TopicArn"]
++
++        conn.delete_endpoint(EndpointArn=endpoint_arn)
++
++        # A deleted endpoint that was never subscribed
++        with pytest.raises(ClientError) as exc:
++            conn.subscribe(
++                TopicArn=topic_arn,
++                Endpoint=endpoint_arn,
++                Protocol="application",
++            )
++        _assert_endpoint_does_not_exist(exc.value.response["Error"], endpoint_arn)
++
++        # The example from the issue: subscribe, delete the endpoint, subscribe again
++        endpoint_arn = conn.create_platform_endpoint(
++            PlatformApplicationArn=application_arn,
++            Token="some_other_unique_id",
++        )["EndpointArn"]
++        conn.subscribe(
++            TopicArn=topic_arn,
++            Endpoint=endpoint_arn,
++            Protocol="application",
++        )
++        conn.delete_endpoint(EndpointArn=endpoint_arn)
++        with pytest.raises(ClientError) as exc:
++            conn.subscribe(
++                TopicArn=topic_arn,
++                Endpoint=endpoint_arn,
++                Protocol="application",
++            )
++        _assert_endpoint_does_not_exist(exc.value.response["Error"], endpoint_arn)
++
++        # An endpoint ARN that was never created
++        missing_arn = endpoint_arn.rsplit("/", 1)[0] + "/" + str(uuid4())
++        with pytest.raises(ClientError) as exc:
++            conn.subscribe(
++                TopicArn=topic_arn,
++                Endpoint=missing_arn,
++                Protocol="application",
++            )
++        _assert_endpoint_does_not_exist(exc.value.response["Error"], missing_arn)
++
++        # Other protocols do not refer to platform endpoints and still subscribe
++        conn.subscribe(TopicArn=topic_arn, Endpoint="someone@example.com", Protocol="email")
++    finally:
++        if application_arn is not None:
++            conn.delete_topic(TopicArn=topic_arn)
++
++            conn.delete_platform_application(PlatformApplicationArn=application_arn)
++
++
+ @mock_aws
+ def test_set_sms_attributes():
+     conn = boto3.client("sns", region_name="us-east-1")

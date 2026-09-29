@@ -1,0 +1,35 @@
+{
+ "image": "xingyaoww/sweb.eval.x86_64.pydantic_s_pydantic-9066:latest",
+ "python_prefix": "/opt/miniconda3/envs/testbed",
+ "variants": {
+  "base": [],
+  "gold": [
+   "git apply /in/gold.patch"
+  ],
+  "fallback": [
+   "git apply /in/fallback.patch"
+  ]
+ },
+ "files": {
+  "gold.patch": "/home/user/RepoHarness/runs/category3_cloud_20260929/pydantic9066/gold/pydantic__pydantic-9066.gold.patch",
+  "fallback.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic9066/fallback.patch",
+  "behavior.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic9066/behavior.py"
+ },
+ "commands": [
+  {
+   "id": "b1_behavior",
+   "cmd": "python -c 'import runpy; runpy.run_path(\"/in/behavior.py\", run_name=\"__main__\")'",
+   "timeout_s": 600
+  },
+  {
+   "id": "b2_public_json_schema",
+   "cmd": "python -m pytest -p no:cacheprovider -q -rf tests/test_json_schema.py",
+   "timeout_s": 1800
+  },
+  {
+   "id": "b3_public_related",
+   "cmd": "python -m pytest -p no:cacheprovider -q -rf tests/test_dataclasses.py tests/test_networks.py tests/test_types_typeddict.py tests/test_main.py",
+   "timeout_s": 2400
+  }
+ ]
+}

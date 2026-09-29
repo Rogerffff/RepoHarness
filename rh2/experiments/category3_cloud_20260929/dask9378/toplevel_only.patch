@@ -1,0 +1,37 @@
+diff --git a/dask/array/creation.py b/dask/array/creation.py
+index dba3aafe1..f3b9eb7e1 100644
+--- a/dask/array/creation.py
++++ b/dask/array/creation.py
+@@ -73,6 +73,10 @@ def empty_like(a, dtype=None, order="C", chunks=None, name=None, shape=None):
+     """
+ 
+     a = asarray(a, name=False)
++    if shape is None and chunks is None and isinstance(a._meta, np.ma.MaskedArray):
++        return a.map_blocks(
++            partial(np.ma.core.empty_like, dtype=dtype, order=order), dtype=(dtype or a.dtype)
++        )
+     shape, chunks = _get_like_function_shapes_chunks(a, chunks, shape)
+     return empty(
+         shape,
+@@ -122,6 +126,10 @@ def ones_like(a, dtype=None, order="C", chunks=None, name=None, shape=None):
+     """
+ 
+     a = asarray(a, name=False)
++    if shape is None and chunks is None and isinstance(a._meta, np.ma.MaskedArray):
++        return a.map_blocks(
++            partial(np.ma.core.ones_like, dtype=dtype, order=order), dtype=(dtype or a.dtype)
++        )
+     shape, chunks = _get_like_function_shapes_chunks(a, chunks, shape)
+     return ones(
+         shape,
+@@ -171,6 +179,10 @@ def zeros_like(a, dtype=None, order="C", chunks=None, name=None, shape=None):
+     """
+ 
+     a = asarray(a, name=False)
++    if shape is None and chunks is None and isinstance(a._meta, np.ma.MaskedArray):
++        return a.map_blocks(
++            partial(np.ma.core.zeros_like, dtype=dtype, order=order), dtype=(dtype or a.dtype)
++        )
+     shape, chunks = _get_like_function_shapes_chunks(a, chunks, shape)
+     return zeros(
+         shape,

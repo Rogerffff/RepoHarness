@@ -1,0 +1,43 @@
+{
+ "image": "xingyaoww/sweb.eval.x86_64.dask_s_dask-9378:latest",
+ "python_prefix": "/opt/miniconda3/envs/testbed",
+ "variants": {
+  "base": [],
+  "gold": [
+   "git apply /in/gold.patch"
+  ],
+  "ma_mask_none": [
+   "git apply /in/ma_mask_none.patch"
+  ],
+  "ma_mask_invert": [
+   "git apply /in/ma_mask_invert.patch"
+  ],
+  "toplevel_only": [
+   "git apply /in/toplevel_only.patch"
+  ]
+ },
+ "files": {
+  "gold.patch": "/home/user/RepoHarness/runs/category3_cloud_20260929/dask9378/gold/dask__dask-9378.gold.patch",
+  "behavior.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask9378/behavior.py",
+  "ma_mask_none.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask9378/ma_mask_none.patch",
+  "ma_mask_invert.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask9378/ma_mask_invert.patch",
+  "toplevel_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask9378/toplevel_only.patch"
+ },
+ "commands": [
+  {
+   "id": "b1_behavior",
+   "cmd": "python -c 'import runpy; runpy.run_path(\"/in/behavior.py\", run_name=\"__main__\")'",
+   "timeout_s": 600
+  },
+  {
+   "id": "b2_public_masked",
+   "cmd": "python -m pytest -p no:cacheprovider -n0 -q dask/array/tests/test_masked.py",
+   "timeout_s": 1200
+  },
+  {
+   "id": "b3_public_creation_like",
+   "cmd": "python -m pytest -p no:cacheprovider -n0 -q dask/array/tests/test_creation.py -k 'arr_like'",
+   "timeout_s": 1200
+  }
+ ]
+}

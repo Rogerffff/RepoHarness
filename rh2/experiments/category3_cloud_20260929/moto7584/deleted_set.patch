@@ -1,0 +1,26 @@
+diff --git a/moto/sns/models.py b/moto/sns/models.py
+index 25b1bf93d..7f0f1dc18 100644
+--- a/moto/sns/models.py
++++ b/moto/sns/models.py
+@@ -511,6 +511,11 @@ class SNSBackend(BaseBackend):
+             if not is_e164(reduced_endpoint):
+                 raise SNSInvalidParameter(f"Invalid SMS endpoint: {endpoint}")
+ 
++        if protocol == "application" and endpoint in getattr(self, "_deleted_endpoints", set()):
++            raise SNSInvalidParameter(
++                f"Invalid parameter: Endpoint Reason: Endpoint does not exist for endpoint {endpoint}"
++            )
++
+         # AWS doesn't create duplicates
+         old_subscription = self._find_subscription(topic_arn, endpoint, protocol)
+         if old_subscription:
+@@ -712,6 +717,9 @@ class SNSBackend(BaseBackend):
+         return endpoint
+ 
+     def delete_endpoint(self, arn: str) -> None:
++        if not hasattr(self, "_deleted_endpoints"):
++            self._deleted_endpoints = set()
++        self._deleted_endpoints.add(arn)
+         try:
+             del self.platform_endpoints[arn]
+         except KeyError:

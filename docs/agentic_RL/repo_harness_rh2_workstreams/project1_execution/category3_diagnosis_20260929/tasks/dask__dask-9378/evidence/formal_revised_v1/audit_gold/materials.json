@@ -1,0 +1,10 @@
+{
+  "original_patch_sha256": "7ea58fb7fdaf7bf74a6de2160e4d4bf3c63a66fb45196e7f6114c8dbf8f613e5",
+  "test_patch": "diff --git a/dask/array/tests/test_masked.py b/dask/array/tests/test_masked.py\n--- a/dask/array/tests/test_masked.py\n+++ b/dask/array/tests/test_masked.py\n@@ -427,3 +427,22 @@ def test_count():\n         res = da.ma.count(dx, axis=axis)\n         sol = np.ma.count(x, axis=axis)\n         assert_eq(res, sol, check_dtype=sys.platform != \"win32\")\n+\n+\n+@pytest.mark.parametrize(\"funcname\", [\"ones_like\", \"zeros_like\", \"empty_like\"])\n+def test_like_funcs(funcname):\n+    mask = np.array([[True, False], [True, True], [False, True]])\n+    data = np.arange(6).reshape((3, 2))\n+    a = np.ma.array(data, mask=mask)\n+    d_a = da.ma.masked_array(data=data, mask=mask, chunks=2)\n+\n+    da_func = getattr(da.ma, funcname)\n+    np_func = getattr(np.ma.core, funcname)\n+\n+    res = da_func(d_a)\n+    sol = np_func(a)\n+\n+    # The issue asks for mask-preserving versions: compare the element-wise mask for all three\n+    assert_eq(da.ma.getmaskarray(res), np.ma.getmaskarray(sol))\n+    if \"empty\" not in funcname:\n+        assert_eq(res, sol)\n",
+  "revised_patch_sha256": "673937334faffd75005d039ec52f331096733350c8e62eaf2f5e21a459576a75",
+  "reason": "T2b: ones/zeros wrong-mask candidates reward 1 because assert_eq uses np.ma.allclose(masked_equal=True); add element-wise mask comparison (R-c)",
+  "positive_control": "gold",
+  "original_grading_digest": "sha256:c38ca93fdd5582ee9c93cff21f5c3d8861a369a110f8fff6191fb0063e9e0a5b",
+  "revised_grading_digest": "sha256:f4f812b96dbb34ae502a6fdd6bfe9bdfe3c44ebd3c07c9b000e3885e7f086f7d",
+  "scope": "versioned diagnostic GradingEnvSpec; source prepared package preserved; refreeze before production"
+}
