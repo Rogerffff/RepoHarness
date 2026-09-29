@@ -22,6 +22,8 @@ for v, rcs in summary.items():
             exc = exc[:60] + "…"
         cwd = "restored" if r["cwd_restored"] else "LEAKED->" + r["cwd_after"]
         src = "" if r["source_folder_unchanged"] else " SOURCE_FOLDER_CHANGED"
+        if r.get("failure_code_returned_to_candidate"):
+            src += " (failure returned as exit code)"
         lines.append("  {:26s} runs=[{}] exc={} cwd={}{}".format(k, runs, exc, cwd, src))
 text = "\n".join(lines) + "\n"
 (out / "matrix_summary.txt").write_text(text)

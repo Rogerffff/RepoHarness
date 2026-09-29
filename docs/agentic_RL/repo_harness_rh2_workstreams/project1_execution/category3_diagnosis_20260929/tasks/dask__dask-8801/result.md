@@ -48,7 +48,11 @@
   - 本机 image ID 为 `sha256:695d2cc2…`，已打标签 `c3keep/dask8801:src`；
   - 09-19 修复目录中没有本题，因此不用配方，也不用派生镜像。
 - 镜像内是 Python 3.9.19、PyYAML 6.0.2、pytest 8.3.2。`distributed` 已安装但无法导入，不影响本题。`/etc/dask`、`sys.prefix/etc/dask`、`~/.config/dask` 都不存在。
-- 代码为分支 `claude/category3-20260929` 的 `fb0b3de`。正式评分路径与 `a31cdcd` 逐字相同，已用 `git diff` 核对。评分 profile 为 UID 54322（`rh2grader`）、deny_all、2 CPU／4 GiB。
+- 代码：
+  - 运行期间，分支 `claude/category3-20260929` 的 HEAD 从 `fb0b3de` 起经过负责人的几次快照提交。
+  - 正式评分路径与 `a31cdcd` 逐字相同，已用 `git diff` 核对。核对范围是 `grading/`、`adapters/slime/replay_grade.py`、`prepared_task_face.py`、`envpack/`（R2E 摄入除外）和 `scripts/replay_grade.py`。
+  - 诊断包装是 `semantic_control.py`（`b8cce4c3…`）和 `replay_with_install_recipe.py`（`fc570d89…`），与环境说明所记相同。
+  - 评分 profile 为 UID 54322（`rh2grader`）、deny_all、2 CPU／4 GiB。
 - 原材料的哈希：
   - gold `e8124cc2…5ce8`；
   - test_patch `43d46603…29a1`；
@@ -226,7 +230,47 @@
 
 用 `replay_with_install_recipe.py --materials materials_revised_v3.json` 评分。评分器版本带后缀 `+c3-dask8801-diagnosis-semantics-v3`，F2P／P2P 名单与测试命令不变。
 
-@@V3_TABLE@@
+20 次评分全部满足以下条件：
+
+- 参考缺席 0；
+- 安装 rc=0；
+- 测试段完整，解析出 45 项；
+- 清理成功；
+- 候选补丁 sha256 与 `candidates.json` 一致。
+
+“推算”列是在 v3 基础上再把两项权限测试加入 P2P 后的结果，按同一份日志逐项计算。
+
+| 候选 | 原材料 | v3 reward | v3 F2P | 推算：v3＋P2P 追加 | v3 失败位置（评分日志逐字；“哪一例”由私有对照对应） |
+| --- | --- | --- | --- | --- | --- |
+| noop | 0 | 0 | 0/2 | 0 | 语法错误：`assert fil_path in str(rec.value)`，消息是 `while parsing a flow node ...`，不含路径；顶层非映射：`DID NOT RAISE <class 'Exception'>` |
+| gold（正对照） | 1 | **1** | 2/2 | 1 | |
+| `syn_repr` | 0 | **1** | 2/2 | 1 | |
+| `gold_plain` | 0 | **1** | 2/2 | 1 | |
+| `syn_plain` | 0 | **1** | 2/2 | 1 | |
+| `typeerror` | 0 | **1** | 2/2 | 1 | |
+| `chain_cause` | 0 | **1** | 2/2 | 1 | |
+| `stream_load` | 0 | **1** | 2/2 | 1 | |
+| `warn_skip` | 0 | 0 | 0/2 | 0 | 两项都是 `DID NOT RAISE <class 'Exception'>` |
+| `silent_skip` | 0 | 0 | 0/2 | 0 | 同上 |
+| `lists_only` | **1** | 0 | 1/2 | 0 | `DID NOT RAISE`（`hello` 一例） |
+| `str_only` | 0 | 0 | 1/2 | 0 | `DID NOT RAISE`（`[1234]` 一例） |
+| `list_str_only` | **1** | 0 | 1/2 | 0 | `DID NOT RAISE`（`1234` 一例） |
+| `none_raises` | **1** | 0 | 1/2 | 0 | 空文件一例抛 `ValueError: ... got a NoneType instead` |
+| `oserr_fatal` | **1** | **1** | 2/2 | **0** | v3 的 F2P／P2P 全部通过；未计分的 `permission_errors[file]` 失败 |
+| `typeonly` | 0 | 0 | 1/2 | 0 | `assert fil_path in str(rec.value)`，消息是原 `ParserError`，不含路径 |
+| `noreason` | 0 | 0 | 0/2 | 0 | `assert parse_error.value.problem in _displayed_error(...)`；`assert "dict" in rest or ...`，消息为 `invalid dask config file ''` |
+| `parsererror_only` | **1** | 0 | 1/2 | 0 | `assert fil_path in str(rec.value)`，消息是 `while scanning for the next token`／`found character '\t' that cannot start any token` |
+| `wrong_file` | **1** | 0 | 1/2 | 0 | `assert fil_path in msg`：消息点名的是 `b.yaml` |
+| `import_swallow` | **1** | 0 | 1/2 | 0 | `assert proc.returncode != 0`，实际 `0 != 0` |
+
+**合计**：
+
+- gold 与 6 个合理实现在 v3 上都是 1。
+- noop、`warn_skip` 与 11 个错误候选中，12 个在 v3 上正式得 0。
+- `oserr_fatal` 在 v3 上仍为 1，把权限测试加入 P2P 后推算为 0。
+- 原材料上得 1 的 7 个错误候选里，6 个已被 v3 拦下，第 7 个 `oserr_fatal` 要靠 P2P 追加。
+
+审计记录 `formal_revised_v3/audit_*/materials.json`：原评分摘要 `sha256:4c2e4615…7370`，修订后评分摘要 `sha256:84b80660…fcf7eb`。
 
 ### R-f：修订题面草案 v1（尚未由新公开读者验收）
 
@@ -297,7 +341,11 @@
 - 模型求解；
 - R-f 的新公开读者验收；
 - P2P 追加项的正式诊断评分（只从日志推算）；
-- 修订测试在 root 评分器下的表现。已知其中的权限项在 root 下失败；新增的两个 F2P 在 root 下的表现未查。
+- 修订测试在 root 下的表现只查了 gold 与 noop（`semantic_root_v3/`）：
+  - v3 的两个 F2P 分别为通过和失败，与非 root 时一致；
+  - 权限两项在 root 下失败，base 同样如此。
+
+  其余候选在 root 下未查。
 
 **证据**：
 
@@ -307,6 +355,6 @@
   - `formal/`：原材料评分，20 份账本与日志；
   - `formal_revised_v3/`：v3 诊断评分；
   - `semantic_v1/`、`semantic_v2/`、`semantic_v3/`：私有对照，v3 覆盖全部 20 个版本和 5 组测试；
-  - `semantic_root_perm/`：root 下的权限测试；
+  - `semantic_root_perm/`、`semantic_root_v3/`：root 下的权限测试与 v3 测试；
   - `testfiles/`：各版本 `test_config.py`；
   - 全部文件的 sha256 见 `evidence_manifest.json`。

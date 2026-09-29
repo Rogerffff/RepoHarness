@@ -1,0 +1,420 @@
+== base
+   mapping        ok {'x': 1, 'y': {'a': 2}}
+   empty          ok {}
+   comment_only   ok {}
+   falsy_zero     ok {}
+   syntax_brace   ParserError[NOPATH,reason-tb] | collect:ParserError
+   list           AttributeError[NOPATH] | collect:AttributeError
+   str            AttributeError[NOPATH] | collect:AttributeError
+   int            AttributeError[NOPATH] | collect:AttributeError
+   order:list     AttributeError[NOPATH] | collect:AttributeError
+   order:str      AttributeError[NOPATH] | collect:AttributeError
+   order:int      AttributeError[NOPATH] | collect:AttributeError
+   import:bad_str_dir            rc=1 '' AttributeError: 'str' object has no attribute 'items'
+   import:bad_syntax_dir         rc=1 ''      ^
+   import:commented_default_dir  rc=0 'None' 
+   import:valid_dir              rc=0 '42' 
+   b2_public_base_tests_nobody: {'n': 43, 'not_passed': [], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b3_original_hidden_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_malformed_file', 'test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b4_revised_v1_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_malformed_file', 'test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b5_revised_v2_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_malformed_file', 'test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b6_revised_v3_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_malformed_file', 'test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+== chain_cause
+   mapping        ok {'x': 1, 'y': {'a': 2}}
+   empty          ok {}
+   comment_only   ok {}
+   falsy_zero     ValueError[path,repr,dict/mapping] | collect:ValueError
+   syntax_brace   ValueError[path,repr,reason-tb] | collect:ValueError
+   list           ValueError[path,repr,dict/mapping] | collect:ValueError
+   str            ValueError[path,repr,dict/mapping] | collect:ValueError
+   int            ValueError[path,repr,dict/mapping] | collect:ValueError
+   order:list     ValueError[path,repr,dict/mapping] | collect:ValueError
+   order:str      ValueError[path,repr,dict/mapping] | collect:ValueError
+   order:int      ValueError[path,repr,dict/mapping] | collect:ValueError
+   import:bad_str_dir            rc=1 '' ValueError: The Dask config file '/tmp/tmpa5ef9dp0/a.yaml' must contain a mapping at the top level, not a str
+   import:bad_syntax_dir         rc=1 '' ValueError: Could not parse the Dask config file '/tmp/tmp9kfd6_pp/a.yaml'
+   import:commented_default_dir  rc=0 'None' 
+   import:valid_dir              rc=0 '42' 
+   b2_public_base_tests_nobody: {'n': 43, 'not_passed': [], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b3_original_hidden_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_malformed_file', 'test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b4_revised_v1_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+   b5_revised_v2_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+   b6_revised_v3_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+== gold
+   mapping        ok {'x': 1, 'y': {'a': 2}}
+   empty          ok {}
+   comment_only   ok {}
+   falsy_zero     ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   syntax_brace   ValueError[path,repr,reason-tb,phr:malformed+message] | collect:ValueError
+   list           ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   str            ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   int            ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:list     ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:str      ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:int      ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   import:bad_str_dir            rc=1 '' ValueError: A dask config file at '/tmp/tmpmrafaayg/a.yaml' is malformed - config files must have a dict as th
+   import:bad_syntax_dir         rc=1 ''      ^
+   import:commented_default_dir  rc=0 'None' 
+   import:valid_dir              rc=0 '42' 
+   b2_public_base_tests_nobody: {'n': 43, 'not_passed': [], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b3_original_hidden_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+   b4_revised_v1_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+   b5_revised_v2_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+   b6_revised_v3_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+== gold_plain
+   mapping        ok {'x': 1, 'y': {'a': 2}}
+   empty          ok {}
+   comment_only   ok {}
+   falsy_zero     ValueError[path,dict/mapping,phr:malformed+dict] | collect:ValueError
+   syntax_brace   ValueError[path,reason-tb,phr:malformed+message] | collect:ValueError
+   list           ValueError[path,dict/mapping,phr:malformed+dict] | collect:ValueError
+   str            ValueError[path,dict/mapping,phr:malformed+dict] | collect:ValueError
+   int            ValueError[path,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:list     ValueError[path,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:str      ValueError[path,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:int      ValueError[path,dict/mapping,phr:malformed+dict] | collect:ValueError
+   import:bad_str_dir            rc=1 '' ValueError: A dask config file at /tmp/tmpixdlgyxk/a.yaml is malformed - config files must have a dict as the 
+   import:bad_syntax_dir         rc=1 ''      ^
+   import:commented_default_dir  rc=0 'None' 
+   import:valid_dir              rc=0 '42' 
+   b2_public_base_tests_nobody: {'n': 43, 'not_passed': [], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b3_original_hidden_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_malformed_file', 'test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b4_revised_v1_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+   b5_revised_v2_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+   b6_revised_v3_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+== import_swallow
+   mapping        ok {'x': 1, 'y': {'a': 2}}
+   empty          ok {}
+   comment_only   ok {}
+   falsy_zero     ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   syntax_brace   ValueError[path,repr,reason-tb,phr:malformed+message] | collect:ValueError
+   list           ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   str            ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   int            ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:list     ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:str      ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:int      ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   import:bad_str_dir            rc=0 ''   warnings.warn(f"Ignoring Dask configuration files: {exc}")
+   import:bad_syntax_dir         rc=0 ''   warnings.warn(f"Ignoring Dask configuration files: {exc}")
+   import:commented_default_dir  rc=0 'None' 
+   import:valid_dir              rc=0 '42' 
+   b2_public_base_tests_nobody: {'n': 43, 'not_passed': [], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b3_original_hidden_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+   b4_revised_v1_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+   b5_revised_v2_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+   b6_revised_v3_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '1/2', 'p2p': '41/41'}
+== list_str_only
+   mapping        ok {'x': 1, 'y': {'a': 2}}
+   empty          ok {}
+   comment_only   ok {}
+   falsy_zero     AttributeError[NOPATH] | collect:AttributeError
+   syntax_brace   ValueError[path,repr,reason-tb,phr:malformed+message] | collect:ValueError
+   list           ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   str            ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   int            AttributeError[NOPATH] | collect:AttributeError
+   order:list     ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:str      ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:int      AttributeError[NOPATH] | collect:AttributeError
+   import:bad_str_dir            rc=1 '' ValueError: A dask config file at '/tmp/tmpnocso3ek/a.yaml' is malformed - config files must have a dict as th
+   import:bad_syntax_dir         rc=1 ''      ^
+   import:commented_default_dir  rc=0 'None' 
+   import:valid_dir              rc=0 '42' 
+   b2_public_base_tests_nobody: {'n': 43, 'not_passed': [], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b3_original_hidden_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+   b4_revised_v1_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '1/2', 'p2p': '41/41'}
+   b5_revised_v2_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '1/2', 'p2p': '41/41'}
+   b6_revised_v3_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '1/2', 'p2p': '41/41'}
+== lists_only
+   mapping        ok {'x': 1, 'y': {'a': 2}}
+   empty          ok {}
+   comment_only   ok {}
+   falsy_zero     AttributeError[NOPATH] | collect:AttributeError
+   syntax_brace   ValueError[path,repr,reason-tb,phr:malformed+message] | collect:ValueError
+   list           ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   str            AttributeError[NOPATH] | collect:AttributeError
+   int            AttributeError[NOPATH] | collect:AttributeError
+   order:list     ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:str      AttributeError[NOPATH] | collect:AttributeError
+   order:int      AttributeError[NOPATH] | collect:AttributeError
+   import:bad_str_dir            rc=1 '' AttributeError: 'str' object has no attribute 'items'
+   import:bad_syntax_dir         rc=1 ''      ^
+   import:commented_default_dir  rc=0 'None' 
+   import:valid_dir              rc=0 '42' 
+   b2_public_base_tests_nobody: {'n': 43, 'not_passed': [], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b3_original_hidden_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+   b4_revised_v1_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '1/2', 'p2p': '41/41'}
+   b5_revised_v2_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '1/2', 'p2p': '41/41'}
+   b6_revised_v3_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '1/2', 'p2p': '41/41'}
+== none_raises
+   mapping        ok {'x': 1, 'y': {'a': 2}}
+   empty          ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   comment_only   ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   falsy_zero     ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   syntax_brace   ValueError[path,repr,reason-tb,phr:malformed+message] | collect:ValueError
+   list           ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   str            ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   int            ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:list     ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:str      ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:int      ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   import:bad_str_dir            rc=1 '' ValueError: A dask config file at '/tmp/tmpz95edaa_/a.yaml' is malformed - config files must have a dict as th
+   import:bad_syntax_dir         rc=1 ''      ^
+   import:commented_default_dir  rc=1 '' ValueError: A dask config file at '/tmp/tmpvtwpj6rz/dask.yaml' is malformed - config files must have a dict as
+   import:valid_dir              rc=0 '42' 
+   b2_public_base_tests_nobody: {'n': 43, 'not_passed': [], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b3_original_hidden_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+   b4_revised_v1_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '1/2', 'p2p': '41/41'}
+   b5_revised_v2_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '1/2', 'p2p': '41/41'}
+   b6_revised_v3_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '1/2', 'p2p': '41/41'}
+== noreason
+   mapping        ok {'x': 1, 'y': {'a': 2}}
+   empty          ok {}
+   comment_only   ok {}
+   falsy_zero     ValueError[path,repr] | collect:ValueError
+   syntax_brace   ValueError[path,repr,NOREASON-tb] | collect:ValueError
+   list           ValueError[path,repr] | collect:ValueError
+   str            ValueError[path,repr] | collect:ValueError
+   int            ValueError[path,repr] | collect:ValueError
+   order:list     ValueError[path,repr] | collect:ValueError
+   order:str      ValueError[path,repr] | collect:ValueError
+   order:int      ValueError[path,repr] | collect:ValueError
+   import:bad_str_dir            rc=1 '' ValueError: Invalid Dask config file '/tmp/tmpr3s1j7kx/a.yaml'
+   import:bad_syntax_dir         rc=1 '' ValueError: Invalid Dask config file '/tmp/tmpkm1objgo/a.yaml'
+   import:commented_default_dir  rc=0 'None' 
+   import:valid_dir              rc=0 '42' 
+   b2_public_base_tests_nobody: {'n': 43, 'not_passed': [], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b3_original_hidden_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_malformed_file', 'test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b4_revised_v1_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_malformed_file', 'test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b5_revised_v2_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_malformed_file', 'test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b6_revised_v3_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_malformed_file', 'test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+== oserr_fatal
+   mapping        ok {'x': 1, 'y': {'a': 2}}
+   empty          ok {}
+   comment_only   ok {}
+   falsy_zero     ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   syntax_brace   ValueError[path,repr,reason-tb,phr:malformed+message] | collect:ValueError
+   list           ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   str            ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   int            ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:list     ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:str      ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:int      ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   import:bad_str_dir            rc=1 '' ValueError: A dask config file at '/tmp/tmp2e07or31/a.yaml' is malformed - config files must have a dict as th
+   import:bad_syntax_dir         rc=1 ''      ^
+   import:commented_default_dir  rc=0 'None' 
+   import:valid_dir              rc=0 '42' 
+   b2_public_base_tests_nobody: {'n': 43, 'not_passed': ['test_collect_yaml_permission_errors[file]'], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b3_original_hidden_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_permission_errors[file]'], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+   b4_revised_v1_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_permission_errors[file]'], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+   b5_revised_v2_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_permission_errors[file]'], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+   b6_revised_v3_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_permission_errors[file]'], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+== parsererror_only
+   mapping        ok {'x': 1, 'y': {'a': 2}}
+   empty          ok {}
+   comment_only   ok {}
+   falsy_zero     ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   syntax_brace   ValueError[path,repr,reason-tb,phr:malformed+message] | collect:ValueError
+   list           ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   str            ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   int            ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:list     ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:str      ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:int      ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   import:bad_str_dir            rc=1 '' ValueError: A dask config file at '/tmp/tmpm9dz6cq5/a.yaml' is malformed - config files must have a dict as th
+   import:bad_syntax_dir         rc=1 ''      ^
+   import:commented_default_dir  rc=0 'None' 
+   import:valid_dir              rc=0 '42' 
+   b2_public_base_tests_nobody: {'n': 43, 'not_passed': [], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b3_original_hidden_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+   b4_revised_v1_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_malformed_file'], 'sim_reward': 0, 'f2p': '1/2', 'p2p': '41/41'}
+   b5_revised_v2_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_malformed_file'], 'sim_reward': 0, 'f2p': '1/2', 'p2p': '41/41'}
+   b6_revised_v3_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_malformed_file'], 'sim_reward': 0, 'f2p': '1/2', 'p2p': '41/41'}
+== silent_skip
+   mapping        ok {'x': 1, 'y': {'a': 2}}
+   empty          ok {}
+   comment_only   ok {}
+   falsy_zero     ok {}
+   syntax_brace   ok {}
+   list           ok {}
+   str            ok {}
+   int            ok {}
+   order:list     ok {'b_key': 1}
+   order:str      ok {'b_key': 1}
+   order:int      ok {'b_key': 1}
+   import:bad_str_dir            rc=0 '' 
+   import:bad_syntax_dir         rc=0 '' 
+   import:commented_default_dir  rc=0 'None' 
+   import:valid_dir              rc=0 '42' 
+   b2_public_base_tests_nobody: {'n': 43, 'not_passed': [], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b3_original_hidden_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_malformed_file', 'test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b4_revised_v1_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_malformed_file', 'test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b5_revised_v2_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_malformed_file', 'test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b6_revised_v3_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_malformed_file', 'test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+== str_only
+   mapping        ok {'x': 1, 'y': {'a': 2}}
+   empty          ok {}
+   comment_only   ok {}
+   falsy_zero     AttributeError[NOPATH] | collect:AttributeError
+   syntax_brace   ValueError[path,repr,reason-tb,phr:malformed+message] | collect:ValueError
+   list           AttributeError[NOPATH] | collect:AttributeError
+   str            ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   int            AttributeError[NOPATH] | collect:AttributeError
+   order:list     AttributeError[NOPATH] | collect:AttributeError
+   order:str      ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:int      AttributeError[NOPATH] | collect:AttributeError
+   import:bad_str_dir            rc=1 '' ValueError: A dask config file at '/tmp/tmpy_h7bsra/a.yaml' is malformed - config files must have a dict as th
+   import:bad_syntax_dir         rc=1 ''      ^
+   import:commented_default_dir  rc=0 'None' 
+   import:valid_dir              rc=0 '42' 
+   b2_public_base_tests_nobody: {'n': 43, 'not_passed': [], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b3_original_hidden_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '1/2', 'p2p': '41/41'}
+   b4_revised_v1_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '1/2', 'p2p': '41/41'}
+   b5_revised_v2_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '1/2', 'p2p': '41/41'}
+   b6_revised_v3_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '1/2', 'p2p': '41/41'}
+== stream_load
+   mapping        ok {'x': 1, 'y': {'a': 2}}
+   empty          ok {}
+   comment_only   ok {}
+   falsy_zero     ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   syntax_brace   ParserError[path,reason-tb] | collect:ParserError
+   list           ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   str            ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   int            ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:list     ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:str      ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:int      ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   import:bad_str_dir            rc=1 '' ValueError: A dask config file at '/tmp/tmpfn4qlh45/a.yaml' is malformed - config files must have a dict as th
+   import:bad_syntax_dir         rc=1 ''   in "/tmp/tmpv4ci7by1/a.yaml", line 1, column 2
+   import:commented_default_dir  rc=0 'None' 
+   import:valid_dir              rc=0 '42' 
+   b2_public_base_tests_nobody: {'n': 43, 'not_passed': [], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b3_original_hidden_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_malformed_file'], 'sim_reward': 0, 'f2p': '1/2', 'p2p': '41/41'}
+   b4_revised_v1_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+   b5_revised_v2_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+   b6_revised_v3_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+== syn_plain
+   mapping        ok {'x': 1, 'y': {'a': 2}}
+   empty          ok {}
+   comment_only   ok {}
+   falsy_zero     ValueError[path,dict/mapping] | collect:ValueError
+   syntax_brace   ValueError[path,reason-tb] | collect:ValueError
+   list           ValueError[path,dict/mapping] | collect:ValueError
+   str            ValueError[path,dict/mapping] | collect:ValueError
+   int            ValueError[path,dict/mapping] | collect:ValueError
+   order:list     ValueError[path,dict/mapping] | collect:ValueError
+   order:str      ValueError[path,dict/mapping] | collect:ValueError
+   order:int      ValueError[path,dict/mapping] | collect:ValueError
+   import:bad_str_dir            rc=1 '' ValueError: Invalid Dask configuration at /tmp/tmpvvb53i6q/a.yaml: expected a mapping at the document root, go
+   import:bad_syntax_dir         rc=1 ''      ^
+   import:commented_default_dir  rc=0 'None' 
+   import:valid_dir              rc=0 '42' 
+   b2_public_base_tests_nobody: {'n': 43, 'not_passed': [], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b3_original_hidden_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_malformed_file', 'test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b4_revised_v1_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+   b5_revised_v2_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+   b6_revised_v3_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+== syn_repr
+   mapping        ok {'x': 1, 'y': {'a': 2}}
+   empty          ok {}
+   comment_only   ok {}
+   falsy_zero     ValueError[path,repr,dict/mapping] | collect:ValueError
+   syntax_brace   ValueError[path,repr,reason-tb] | collect:ValueError
+   list           ValueError[path,repr,dict/mapping] | collect:ValueError
+   str            ValueError[path,repr,dict/mapping] | collect:ValueError
+   int            ValueError[path,repr,dict/mapping] | collect:ValueError
+   order:list     ValueError[path,repr,dict/mapping] | collect:ValueError
+   order:str      ValueError[path,repr,dict/mapping] | collect:ValueError
+   order:int      ValueError[path,repr,dict/mapping] | collect:ValueError
+   import:bad_str_dir            rc=1 '' ValueError: Invalid Dask configuration at '/tmp/tmpiyjcbutg/a.yaml': expected a mapping at the document root, 
+   import:bad_syntax_dir         rc=1 ''      ^
+   import:commented_default_dir  rc=0 'None' 
+   import:valid_dir              rc=0 '42' 
+   b2_public_base_tests_nobody: {'n': 43, 'not_passed': [], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b3_original_hidden_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_malformed_file', 'test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b4_revised_v1_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+   b5_revised_v2_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+   b6_revised_v3_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+== typeerror
+   mapping        ok {'x': 1, 'y': {'a': 2}}
+   empty          ok {}
+   comment_only   ok {}
+   falsy_zero     TypeError[path,repr,dict/mapping,phr:malformed+dict] | collect:TypeError
+   syntax_brace   ValueError[path,repr,reason-tb,phr:malformed+message] | collect:ValueError
+   list           TypeError[path,repr,dict/mapping,phr:malformed+dict] | collect:TypeError
+   str            TypeError[path,repr,dict/mapping,phr:malformed+dict] | collect:TypeError
+   int            TypeError[path,repr,dict/mapping,phr:malformed+dict] | collect:TypeError
+   order:list     TypeError[path,repr,dict/mapping,phr:malformed+dict] | collect:TypeError
+   order:str      TypeError[path,repr,dict/mapping,phr:malformed+dict] | collect:TypeError
+   order:int      TypeError[path,repr,dict/mapping,phr:malformed+dict] | collect:TypeError
+   import:bad_str_dir            rc=1 '' TypeError: A dask config file at '/tmp/tmpvletf_xi/a.yaml' is malformed - config files must have a dict as the
+   import:bad_syntax_dir         rc=1 ''      ^
+   import:commented_default_dir  rc=0 'None' 
+   import:valid_dir              rc=0 '42' 
+   b2_public_base_tests_nobody: {'n': 43, 'not_passed': [], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b3_original_hidden_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '1/2', 'p2p': '41/41'}
+   b4_revised_v1_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+   b5_revised_v2_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+   b6_revised_v3_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+== typeonly
+   mapping        ok {'x': 1, 'y': {'a': 2}}
+   empty          ok {}
+   comment_only   ok {}
+   falsy_zero     ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   syntax_brace   ParserError[NOPATH,reason-tb] | collect:ParserError
+   list           ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   str            ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   int            ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:list     ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:str      ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:int      ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   import:bad_str_dir            rc=1 '' ValueError: A dask config file at '/tmp/tmpx2r9s1cj/a.yaml' is malformed - config files must have a dict as th
+   import:bad_syntax_dir         rc=1 ''      ^
+   import:commented_default_dir  rc=0 'None' 
+   import:valid_dir              rc=0 '42' 
+   b2_public_base_tests_nobody: {'n': 43, 'not_passed': [], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b3_original_hidden_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_malformed_file'], 'sim_reward': 0, 'f2p': '1/2', 'p2p': '41/41'}
+   b4_revised_v1_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_malformed_file'], 'sim_reward': 0, 'f2p': '1/2', 'p2p': '41/41'}
+   b5_revised_v2_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_malformed_file'], 'sim_reward': 0, 'f2p': '1/2', 'p2p': '41/41'}
+   b6_revised_v3_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_malformed_file'], 'sim_reward': 0, 'f2p': '1/2', 'p2p': '41/41'}
+== warn_skip
+   mapping        ok {'x': 1, 'y': {'a': 2}}
+   empty          ok {}
+   comment_only   ok {}
+   falsy_zero     ok {} warn1
+   syntax_brace   ok {} warn1
+   list           ok {} warn1
+   str            ok {} warn1
+   int            ok {} warn1
+   order:list     ok {'b_key': 1} warn1
+   order:str      ok {'b_key': 1} warn1
+   order:int      ok {'b_key': 1} warn1
+   import:bad_str_dir            rc=0 ''   warnings.warn(
+   import:bad_syntax_dir         rc=0 ''   warnings.warn(f"Skipping malformed Dask config file {path!r}: {exc}")
+   import:commented_default_dir  rc=0 'None' 
+   import:valid_dir              rc=0 '42' 
+   b2_public_base_tests_nobody: {'n': 43, 'not_passed': [], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b3_original_hidden_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_malformed_file', 'test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b4_revised_v1_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+   b5_revised_v2_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_malformed_file', 'test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b6_revised_v3_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_malformed_file', 'test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+== wrong_file
+   mapping        ok {'x': 1, 'y': {'a': 2}}
+   empty          ok {}
+   comment_only   ok {}
+   falsy_zero     ok {}
+   syntax_brace   ValueError[path,repr,reason-tb,phr:malformed+message] | collect:ValueError
+   list           ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   str            ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   int            ValueError[path,repr,dict/mapping,phr:malformed+dict] | collect:ValueError
+   order:list     ValueError[NOPATH,dict/mapping,phr:malformed+dict,NAMES-b.yaml] | collect:ValueError
+   order:str      ValueError[NOPATH,dict/mapping,phr:malformed+dict,NAMES-b.yaml] | collect:ValueError
+   order:int      ValueError[NOPATH,dict/mapping,phr:malformed+dict,NAMES-b.yaml] | collect:ValueError
+   import:bad_str_dir            rc=1 '' ValueError: A dask config file at '/tmp/tmp4dfaxq0y/a.yaml' is malformed - config files must have a dict as th
+   import:bad_syntax_dir         rc=1 ''      ^
+   import:commented_default_dir  rc=0 'None' 
+   import:valid_dir              rc=0 '42' 
+   b2_public_base_tests_nobody: {'n': 43, 'not_passed': [], 'sim_reward': 0, 'f2p': '0/2', 'p2p': '41/41'}
+   b3_original_hidden_tests_nobody: {'n': 45, 'not_passed': [], 'sim_reward': 1, 'f2p': '2/2', 'p2p': '41/41'}
+   b4_revised_v1_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '1/2', 'p2p': '41/41'}
+   b5_revised_v2_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '1/2', 'p2p': '41/41'}
+   b6_revised_v3_tests_nobody: {'n': 45, 'not_passed': ['test_collect_yaml_no_top_level_dict'], 'sim_reward': 0, 'f2p': '1/2', 'p2p': '41/41'}
