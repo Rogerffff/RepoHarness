@@ -1,0 +1,58 @@
+diff --git a/tests/func/test_zz_review_probe.py b/tests/func/test_zz_review_probe.py
+new file mode 100644
+index 0000000..7577f7e
+--- /dev/null
++++ b/tests/func/test_zz_review_probe.py
+@@ -0,0 +1,52 @@
++"""Reviewer-only probes (not proposed as-is for grading)."""
++import os
++
++from dvc.stage.cache import RunCacheNotSupported
++from dvc.utils.fs import remove
++
++
++def _pipeline(tmp_dir, dvc):
++    (foo,) = tmp_dir.dvc_gen("foo", "foo")
++    dvc.stage.add(
++        name="copy-foo", cmd="cp foo bar && echo x >> bar", deps=["foo"], outs=["bar"]
++    )
++    (copy_foo,) = dvc.reproduce()
++    return foo, copy_foo
++
++
++def test_probe_modified_source_kept(tmp_dir, dvc, local_remote):
++    _pipeline(tmp_dir, dvc)
++    dvc.push()
++    (tmp_dir / "foo").write_text("modified")
++    dvc.reproduce(pull=True)
++    assert (tmp_dir / "foo").read_text() == "modified"
++    assert (tmp_dir / "bar").read_text() == "modifiedx\n"
++
++
++def test_probe_continue_without_run_cache(tmp_dir, dvc, mocker, local_remote):
++    # same idea as upstream 2.58 test_repro_pulls_continue_without_run_cache
++    (foo,) = tmp_dir.dvc_gen("foo", "foo")
++    dvc.push()
++    mocker.patch.object(dvc.stage_cache, "pull", side_effect=RunCacheNotSupported("x"))
++    dvc.stage.add(name="copy-foo", cmd="cp foo bar", deps=["foo"], outs=["bar"])
++    remove("foo")
++    remove(foo.outs[0].cache_path)
++    assert dvc.reproduce(pull=True)
++    assert (tmp_dir / "bar").read_text() == "foo"
++
++
++def test_probe_dry_no_side_effects(tmp_dir, dvc, local_remote):
++    _, copy_foo = _pipeline(tmp_dir, dvc)
++    dvc.push(run_cache=True)
++    remove("bar")
++    remove(copy_foo.outs[0].cache_path)
++    remove(dvc.stage_cache.cache_dir)
++    dvc.reproduce(pull=True, dry=True)
++    assert not (tmp_dir / "bar").exists()
++    assert not os.path.exists(copy_foo.outs[0].cache_path)
++    assert not os.path.exists(dvc.stage_cache.cache_dir)
++
++
++def test_probe_no_remote_up_to_date(tmp_dir, dvc):
++    _pipeline(tmp_dir, dvc)
++    assert dvc.reproduce(pull=True) == []

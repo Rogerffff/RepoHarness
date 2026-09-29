@@ -1,0 +1,39 @@
+{
+ "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-9395:latest",
+ "python_prefix": "/opt/miniconda3/envs/testbed",
+ "variants": {
+  "base": [
+   "python -m pip install --no-index --no-deps /in/pygit2-1.14.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl -q"
+  ],
+  "gold": [
+   "python -m pip install --no-index --no-deps /in/pygit2-1.14.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl -q",
+   "git apply /in/gold.patch"
+  ],
+  "c3_missing_only": [
+   "python -m pip install --no-index --no-deps /in/pygit2-1.14.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl -q",
+   "git apply /in/c3_missing_only.patch"
+  ],
+  "mine_ondemand": [
+   "python -m pip install --no-index --no-deps /in/pygit2-1.14.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl -q",
+   "git apply /in/mine_ondemand.patch"
+  ],
+  "mine_retry": [
+   "python -m pip install --no-index --no-deps /in/pygit2-1.14.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl -q",
+   "git apply /in/mine_retry.patch"
+  ]
+ },
+ "files": {
+  "pygit2-1.14.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl": "/home/user/RepoHarness/runs/category3_cloud_20260929/dvc9395/wheels/pygit2-1.14.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+  "gold.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dvc9395/gold.patch",
+  "c3_missing_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dvc9395/c3_missing_only.patch",
+  "mine_ondemand.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dvc9395/reviewer_cands/mine_ondemand.patch",
+  "mine_retry.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dvc9395/reviewer_cands/mine_retry.patch"
+ },
+ "commands": [
+  {
+   "id": "pub_regression",
+   "cmd": "python -m pytest -rA -p no:cacheprovider -q tests/func/test_repro.py tests/func/test_repro_multistage.py tests/func/test_run_cache.py tests/unit/repo/test_reproduce.py tests/func/test_data_cloud.py tests/unit/command/test_repro.py tests/func/test_import.py tests/unit/stage/test_cache.py > /tmp/p.out 2>&1; tail -3 /tmp/p.out; grep -E '^(PASSED|FAILED|ERROR|SKIPPED|XFAIL|XPASS) ' /tmp/p.out | sort",
+   "timeout_s": 2400
+  }
+ ]
+}
