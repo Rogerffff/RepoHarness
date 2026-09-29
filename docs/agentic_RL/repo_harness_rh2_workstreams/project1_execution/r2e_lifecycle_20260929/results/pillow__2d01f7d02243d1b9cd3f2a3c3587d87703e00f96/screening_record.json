@@ -1,0 +1,539 @@
+{
+ "schema_id": "rh2.r2e_screening_record.v1",
+ "task_id": "r2e_gym_subset::pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+ "instance_id": "pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+ "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0（无材料修订；v3–v7 材料对本题相同；expected sha256:28da3c259354012c9989afbeb731f9eea95a7913ac43ff8fd8a2a41ebce9df15；hidden_tests_tree sha256:d1a4b96545e014c490119ec3e6cf2be0330cfbe440b3644717988cb51ababf0c）",
+ "source_adapter_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/{public_bundles_v0,grading_bundles_r2e_v0,validation_bundles_v0}.jsonl（grading / validation 第 38 行；parser r2e_prime_pytest_v1，prime_decolor_v1；grader r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe）",
+ "recipe_ref": {
+  "derived_image": "r2e_derive_v1+sysconfig_v1",
+  "image_ref": "rh2-r2e-derived/pillow:2d01f7d02243-r2e_derive_v1s",
+  "image_id": "sha256:2a98172896162bd7da0bd6fa95dacac1d656bbef0d4f54481f8ad2432d8db785",
+  "resources": "default（2 CPU / 4 GiB / /tmp 1 GiB）",
+  "previous_image": "rh2-r2e-derived/pillow:2d01f7d02243-r2e_derive_v1（sha256:b4030960febe9aa6653e2cb77f73deec2fbd22265b93a1ae51309aa7b24e68b1，09-23/24 旧机器，只作对照）"
+ },
+ "code_snapshot_ref": "候选评分：/work/code_v7/rh2 scripts/replay_grade.py（runs/r2e_lifecycle_20260929/inv/pillow_2d01/run.sh），scripts_digest sha256:19c2f64250fedab0f20314f23e6bc768c2dc3b5c6d7c0f4afed7267246c4efe9，grader_profile_digest sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94；devcheck：experiments/r2e_actor_20260925/r2e_devcheck.py，overlays all_v6 sha256:2e120b959866317499414110dda87b2b6959c9c61ef33fd4eae860cfad424ddf，profile_digest sha256:f8b682bbb560b8224adad6fe541b0501ee744455d3c4a156986744603232934b，Claude Code 2.1.205",
+ "facts_ref": {
+  "grading_current_new_machine": [
+   "runs/r2e_lifecycle_20260929/env_verify/ledger_l1_noop.jsonl 第 10 行（noop，0.0，60/62，mismatched = test_photometric[1] / [L]）",
+   "runs/r2e_lifecycle_20260929/env_verify/ledger_l1_gold.jsonl 第 10 行（gold，1.0，62/62）"
+  ],
+  "grading_current_old_machine": [
+   "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl 第 38 行 + eval log …noop-p_0edb86ea（sha256:4411a919…）",
+   "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl 第 38 行 + eval log …gold-p_6fdf1e36（sha256:2e91098d…）",
+   "runs/r2e_env_repair_20260924/_rerun2/ledger_noop.jsonl、ledger_gold.jsonl 第 38 行"
+  ],
+  "independent_reference": "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl 第 11、59 行（来源镜像 gold 2 次，结果一致）",
+  "candidates": [
+   "runs/r2e_lifecycle_20260929/inv/pillow_2d01/ledger_D.jsonl 第 1 行 + logs_D/evallog_replay-r2e-inv-2d01-D-09_dff20a74.eval.log（1.0，62/62）",
+   "runs/r2e_lifecycle_20260929/inv/pillow_2d01/ledger_C1.jsonl 第 1 行 + logs_C1/evallog_replay-r2e-inv-2d01-C1-0_3411fadd.eval.log（1.0，62/62）",
+   "runs/r2e_lifecycle_20260929/inv/pillow_2d01/ledger_C3.jsonl 第 1 行 + logs_C3/evallog_replay-r2e-inv-2d01-C3-0_72ef598e.eval.log（1.0，62/62）",
+   "runs/r2e_lifecycle_20260929/inv/pillow_2d01/ledger_C2.jsonl 第 1 行 + logs_C2/evallog_replay-r2e-inv-2d01-C2-0_9bed30ef.eval.log（0.0，60/62，失败于 test_1.py:457 got different content）"
+  ],
+  "private_behavior_checks": "runs/r2e_lifecycle_20260929/inv/pillow_2d01/pcheck_{default_photometric_kept,explicit1}_{gold,D}.json、pcheck_{compressed_path_observe,g4_whiteiszero_roundtrip}_{gold,C3}.json（root、不联网、一次性容器，不是评分）",
+  "devcheck": "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/（devcheck.log、orig/attempt.json、orig/captures/*.out、private_control.json）",
+  "history": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/{screening_record.json,findings.md,facts.json}",
+  "cross_task_scans": "runs/r2e_static_prep_20260924/cross_task_gold_scan.json、cross_task_test_scan.json（已用同仓公开包 grep 核实）",
+  "analysis": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/{analysis_before_history.md,old_findings_delta.md,card.md}"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v3/private/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/hidden_tests/test_1.py:450-458",
+    "runs/r2e_static_prep_20260924/v3/private/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/gold.patch"
+   ],
+   "note": "隐藏测试 = base Tests/test_file_tiff.py + test_photometric；helper.py 与 base 逐字相同；gold 只改 TiffImagePlugin._save；题面、base、bundle 的提交一致",
+   "by": "主审（静态）"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_l1_noop.jsonl:10",
+    "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/orig/captures/repro_issue_mode_l.out",
+    "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/orig/captures/repro_mode_1.out"
+   ],
+   "note": "noop 两个目标键失败于 test_1.py:456 assert 1 == 0；agent 身份复现：tag262 1 … pixel00 0 后 AssertionError",
+   "by": "当前真实评分 + devcheck"
+  },
+  "3": {
+   "status": "unknown",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v3/public/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/user_prompt.txt"
+   ],
+   "note": "只核了静态渲染；devcheck 用的是合成指令，没有捕获模型实际收到的题面消息",
+   "by": "主审"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/ledger_C1.jsonl:1"
+   ],
+   "note": "合法修复只需改 src/PIL/TiffImagePlugin.py；六次候选与 gold 的 included_paths 都是这个文件",
+   "by": "当前真实评分"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/cross_task_gold_scan.json",
+    "runs/r2e_static_prep_20260924/cross_task_test_scan.json"
+   ],
+   "note": "X1：本题 gold 与 test_photometric 出现在 4bc64835 / 3a61c9e9 / f9d3ee0f / a682ceaf 的公开初态（已 grep 核实）；本题 base 含 2b061b68、3ac9396e 的修复",
+   "by": "主审"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/orig/captures/env.out"
+   ],
+   "note": "pytest 8.3.4、packaging 可用；没有 pip，本题不需要装包",
+   "by": "devcheck"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_6fdf1e36.eval.log"
+   ],
+   "note": "Tests/images 资产齐全；只缺 string_dimension.tiff，对应测试 SKIPPED，不成键",
+   "by": "历史真实评分"
+  },
+  "8": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/orig/attempt.json"
+   ],
+   "note": "agent（54321）经正式启动路径运行；激活文件对 agent 不可写；评分侧以 agent/54321 身份应用补丁，RH2_SETUP_APPLY_RC=0",
+   "by": "devcheck + 当前真实评分"
+  },
+  "9": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/orig/captures/env_import.out",
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/ledger_D.jsonl:1"
+   ],
+   "note": "agent 与评分用户都从 /testbed/src/PIL/__init__.py 导入（可编辑安装）；core 为 /testbed/src/PIL/_imaging.cpython-39-x86_64-linux-gnu.so",
+   "by": "devcheck + 当前真实评分（observations）"
+  },
+  "10": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/devcheck.log",
+    "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/orig/captures/public_tiff_tests.out"
+   ],
+   "note": "公开命令全部运行（all_commands_ran=true）；libtiff True 4.3.0，压缩路径可以自测；public_tiff_tests 为 2 failed / 80 passed / 2 skipped，两个失败都是 pytest.warns(None) 基线失败，gold 对照相同。唯一为假的 all_match_expect 来自公开读者的预期错误",
+   "by": "devcheck"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/ledger_D.jsonl:1"
+   ],
+   "note": "准备、解题、安装、测试四个阶段都不需要网络；评分 network=deny_all",
+   "by": "主审 + 评分配置"
+  },
+  "12": {
+   "status": "not_applicable",
+   "note": "不依赖外部服务",
+   "by": "主审"
+  },
+  "13": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_l1_gold.jsonl:10"
+   ],
+   "note": "内存峰值约 503 MB / 4 GiB；测试阶段 2–3 s；主要耗时在 grader_trusted_setup（41–82 s）",
+   "by": "当前真实评分"
+  },
+  "14": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl:38",
+    "runs/r2e_env_repair_20260924/_rerun2/ledger_noop.jsonl:38",
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_l1_noop.jsonl:10"
+   ],
+   "note": "noop、gold 在两台机器上共各 3 次，M3 gold 2 次，差异集合完全一致；没有时间或随机敏感的键",
+   "by": "历史与当前真实评分"
+  },
+  "16": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/logs_D/evallog_replay-r2e-inv-2d01-D-09_dff20a74.eval.log"
+   ],
+   "note": "log 头部为 M src/PIL/TiffImagePlugin.py；projection included_paths 正确，没有 unsupported shape",
+   "by": "当前真实评分"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/logs_C1/evallog_replay-r2e-inv-2d01-C1-0_3411fadd.eval.log"
+   ],
+   "note": "RH2_SETUP_OK=1，隐藏测试文件 4/4；可信恢复不覆盖源码",
+   "by": "当前真实评分"
+  },
+  "18": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/ledger_C2.jsonl:1"
+   ],
+   "note": "收集 64 项，62 项成键；segment_completed；目标键的测试体确实执行了（C2 失败在第 457 行）",
+   "by": "当前真实评分"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v3/private/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/expected_output.json"
+   ],
+   "note": "keys_equal=true；期望键带 ANSI 转义，parser 已去色；2 个期望 FAILED 键是 pytest 8.3.4 下 pytest.warns(None) 抛 TypeError 的死键（T5，正确修复翻不动，无害）",
+   "by": "当前真实评分 + 主审"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_l1_noop.jsonl:10",
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_l1_gold.jsonl:10"
+   ],
+   "note": "noop 为 0 只来自两个目标键；gold 为 1",
+   "by": "当前真实评分"
+  },
+  "21": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/logs_C2/evallog_replay-r2e-inv-2d01-C2-0_9bed30ef.eval.log"
+   ],
+   "note": "逐键失败原因可读（标签断言 / 像素断言 / 死键 TypeError）",
+   "by": "当前真实评分"
+  },
+  "22": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl:11"
+   ],
+   "note": "独立 runner 在来源镜像上 gold 结果与 RH2 逐键一致（历史 R15 对账 agree）",
+   "by": "M3 + 历史对账"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v3/public/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/user_prompt.txt",
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/ledger_C2.jsonl:1"
+   ],
+   "note": "P4：题面没写像素语义；隐藏测试要求像素往返，这一要求有公开依据（读取端反相、公开测试把两种 photometric 断言为同一图像、base 本就往返一致）。只改标签的 C2 得 0，属于正确拒绝",
+   "by": "主审"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/ledger_C1.jsonl:1"
+   ],
+   "note": "比 gold 范围更窄、改用 1;I packer 的替代解 C1 得 1；测试没有绑定 gold 的实现方式",
+   "by": "当前真实评分"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/ledger_D.jsonl:1",
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/pcheck_explicit1_D.json",
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/pcheck_default_photometric_kept_D.json",
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/ledger_C3.jsonl:1",
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/pcheck_compressed_path_observe_C3.json",
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/pcheck_g4_whiteiszero_roundtrip_C3.json"
+   ],
+   "note": "退化候选 D 得 1 → S1（T2b）；部分实现 C3 得 1 但压缩保存崩溃 → 第 4 步 S1",
+   "by": "当前真实评分 + 私有对照"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/pcheck_default_photometric_kept_D.json"
+   ],
+   "note": "'1'/'L' 默认写 1、显式 1 保持这两项旧行为没有键保护（R-c1 补）；压缩写出路径没有键保护（R-c2 补）",
+   "by": "主审 + 私有对照"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/pcheck_explicit1_gold.json",
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/pcheck_default_photometric_kept_gold.json",
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/pcheck_compressed_path_observe_gold.json",
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/pcheck_g4_whiteiszero_roundtrip_gold.json"
+   ],
+   "note": "gold 满足全部公开要求（原例、两种模式、默认值、显式 1、LZW 与 G4 压缩往返）。G1 注记：gold 对所有模式和取值都尊重用户给的 262（例如 RGB 配 {262: 0} 会写出打不开的文件）；'1' 用逐像素循环；libtiff 分支反相后不再合并原图标签。这些都没有测试，也不是题面要求",
+   "by": "私有对照 + 主审"
+  },
+  "28": {
+   "status": "pass",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/analysis_before_history.md"
+   ],
+   "note": "拟加的 R-c1 / R-c2 断言各有公开依据（题面 retain the specified…、SAVE_INFO 默认值、文档 compression 选项），验收同时用替代解 C1 与错误解 D、C3、C2",
+   "by": "主审"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/orig/attempt.json"
+   ],
+   "note": "git_sanitize：refs、remote、reflog、unreachable 均为 0，HEAD=5db0969f；预检显示隐藏测试不可读、无子提交。fix_present 与镜像自带 pyc 的来源本轮没有复查",
+   "by": "devcheck"
+  },
+  "30": {
+   "status": "not_applicable",
+   "note": "解题侧不联网",
+   "by": "主审"
+  },
+  "31": {
+   "status": "not_checked",
+   "note": "通用控制面（例如 agent 可写 /testbed/.venv 里的 site-packages，见历史 R07）归 A 线；本题只核了：隐藏测试 helper 不受候选影响，根目录 conftest 会导入 Tests.helper",
+   "by": "主审"
+  },
+  "32": {
+   "status": "pass",
+   "note": "断言检查的是行为（读回的标签与像素），不是匹配文本；不足之处是覆盖面，已记在 25 与 26",
+   "by": "主审"
+  },
+  "33": {
+   "status": "not_checked",
+   "note": "devcheck 只验证了真实 Claude Code 加桩端点的启动与工具链路，没有真实模型求解",
+   "by": "主审"
+  }
+ },
+ "issues": [
+  {
+   "code": "T2b",
+   "severity": "S1",
+   "category": "test_gap",
+   "scope": "task",
+   "summary": "隐藏测试不检查 '1'/'L' 在不给 tiffinfo 或显式 262=1 时仍写 1。退化候选 D（在 gold 的修改位置对 '1'/'L' 一律写 262=0 并反相像素，结果与输入无关）正式评分 1.0（62/62）。它违反题面『retain the specified photometric interpretation』：explicit1 输出 tag262 0；同时改掉了 base 的默认值：default_photometric_kept 输出 L 0 77 | 1 0 255",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/ledger_D.jsonl:1",
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/logs_D/evallog_replay-r2e-inv-2d01-D-09_dff20a74.eval.log",
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/pcheck_explicit1_D.json",
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/pcheck_default_photometric_kept_D.json"
+   ],
+   "proposed_action": "R-c1（见 revision_proposals[0]）",
+   "status": "open"
+  },
+  {
+   "code": "T2（v1 §4 第 4 步）",
+   "severity": "S1",
+   "category": "test_gap",
+   "scope": "task",
+   "summary": "隐藏测试没有一项走 libtiff 写出路径。C3 是 gold 漏掉 encoderconfig 提升的版本，也是最自然的漏改，正式评分 1.0（62/62）。但镜像 libtiff 4.3.0 可用，C3 在 'L'+tiff_lzw 和 '1'+group4 两种保存上都抛 AttributeError: encoderconfig；gold 在同样输入上 tag262 0，往返一致",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/ledger_C3.jsonl:1",
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/pcheck_compressed_path_observe_C3.json",
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/pcheck_g4_whiteiszero_roundtrip_C3.json",
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/pcheck_g4_whiteiszero_roundtrip_gold.json",
+    "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/orig/captures/env_import.out"
+   ],
+   "proposed_action": "R-c2（见 revision_proposals[1]），与 R-c1 同一轮完成",
+   "status": "open"
+  },
+  {
+   "code": "P4",
+   "severity": "registered",
+   "category": "prompt",
+   "scope": "task",
+   "summary": "题面只说标签要保留，没写像素语义。目标键同时断言像素往返（test_1.py:457）。这一要求有公开依据：读取端对 262=0 反相解码；公开测试断言 262=0 与 262=1 的两份文件解出同一张图；base 在题面原例上本就往返一致。只改标签的 C2 得 0，失败于 test_1.py:457 got different content，属于正确拒绝，不是误拒。公开读者曾认为两种读法都可以，所以题面措辞会让一部分解题者走错",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/ledger_C2.jsonl:1",
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/logs_C2/evallog_replay-r2e-inv-2d01-C2-0_9bed30ef.eval.log",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/public_read.md"
+   ],
+   "proposed_action": "登记，不交用户；R-f 补一句像素往返说明为可选项，不作为进训练的前置条件。只有独立复核给出支持『只改标签』的公开依据时，才按 P5 交用户",
+   "status": "registered"
+  },
+  {
+   "code": "T5",
+   "severity": "harmless",
+   "category": "reference",
+   "scope": "task",
+   "summary": "期望 FAILED 键 test_closed_file、test_context_manager：pytest 8.3.4 下 pytest.warns(None) 抛 TypeError，失败发生在执行任何项目代码之前。所有候选结果一致，正确修复翻不动",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/pillow_2d01/logs_C1/evallog_replay-r2e-inv-2d01-C1-0_3411fadd.eval.log"
+   ],
+   "proposed_action": "不改（沿用 09-24 决定）；可选 R-a（同时删除测试与期望键）",
+   "status": "registered"
+  },
+  {
+   "code": "T3",
+   "severity": "S2",
+   "category": "test_gap",
+   "scope": "task",
+   "summary": "以下情形没有覆盖：tiffinfo 用 IFD 对象或元组值；其它模式或取值（例如 RGB 配 262=0、'L' 配 262=2）；多帧保存；保存时调用方图像被就地改动（像素断言比较的是保存后的 im，没有构造候选验证）",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/analysis_before_history.md"
+   ],
+   "proposed_action": "登记，按 v1 §8 抽查",
+   "status": "registered"
+  },
+  {
+   "code": "X1",
+   "severity": "registered",
+   "category": "relation",
+   "scope": "repo:pillow",
+   "summary": "本题 gold（21–23/24 行）与 test_photometric 出现在 pillow 4bc64835、3a61c9e9、f9d3ee0f、a682ceaf 的公开初态。其中 4bc64835 的题面正是『模式 1 调 ImageOps.invert 报 OSError』，也就是 gold 用逐像素循环绕开的限制。本题 base 含 2b061b68、3ac9396e 的修复",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/cross_task_gold_scan.json",
+    "runs/r2e_static_prep_20260924/cross_task_test_scan.json"
+   ],
+   "proposed_action": "训练时控制同仓重复采样；留出按仓库划分（D3），pillow 整仓同侧",
+   "status": "registered"
+  },
+  {
+   "code": "G1",
+   "severity": "registered",
+   "category": "gold",
+   "scope": "task",
+   "summary": "gold 对所有模式和取值都尊重用户给的 262（超出题面范围，可能写出打不开的文件）；'1' 用 O(W·H) 的 Python 循环反相；libtiff 分支反相后不再合并原图的 tag_v2 / tag。这些都没有测试，不影响评分",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v3/private/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/gold.patch"
+   ],
+   "proposed_action": "不作处置依据；修订测试时不要求其它实现复刻这些行为",
+   "status": "registered"
+  },
+  {
+   "code": "E（解题侧条件）",
+   "severity": "registered",
+   "category": "solver_condition",
+   "scope": "task",
+   "summary": "公开 Tests/test_file_tiff.py 在 base 和修复后都有 2 个与本题无关的失败（pytest.warns(None)）；公开读者给 public_tiff_tests 写的 expect: zero 是命令预期错误",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/orig/captures/public_tiff_tests.out",
+    "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/private_control.json"
+   ],
+   "proposed_action": "开发说明如实交代；开发核对命令改用 public_tiff_tests_v2（--deselect 两个基线失败，见 analysis §8.1，未实跑）",
+   "status": "registered"
+  },
+  {
+   "code": "H1",
+   "severity": "registered",
+   "category": "candidate_hygiene",
+   "scope": "task",
+   "summary": "照原样运行题面示例，会在 /testbed 留下 temp.tif",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v3/public/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/user_prompt.txt"
+   ],
+   "proposed_action": "交训练设计，本模板不处理",
+   "status": "registered"
+  }
+ ],
+ "revision_proposals": [
+  {
+   "id": "R-c1",
+   "template": "R-c",
+   "target_file": "hidden_tests/test_1.py（放在 test_photometric 之后）",
+   "patch_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/analysis_before_history.md 附录 B.1",
+   "adds_keys_expected_passed": [
+    "TestFileTiff.test_photometric_blackiszero_kept[1-default]",
+    "TestFileTiff.test_photometric_blackiszero_kept[L-default]",
+    "TestFileTiff.test_photometric_blackiszero_kept[1-explicit1]",
+    "TestFileTiff.test_photometric_blackiszero_kept[L-explicit1]"
+   ],
+   "public_basis": "题面 user_prompt.txt:7,26『retain / accurately reflecting the specified photometric interpretation』（覆盖显式 1）；TiffImagePlugin.py:1459-1460 SAVE_INFO 与 Tests/test_file_libtiff.py:151-152 注释（默认值）；题面只涉及『已指定 0』",
+   "triggering_counterexample": "D（ledger_D.jsonl:1，1.0）"
+  },
+  {
+   "id": "R-c2",
+   "template": "R-c",
+   "target_file": "hidden_tests/test_1.py（放在 R-c1 之后）",
+   "patch_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/analysis_before_history.md 附录 B.2",
+   "adds_keys_expected_passed": [
+    "TestFileTiff.test_photometric_compressed[1-group4]",
+    "TestFileTiff.test_photometric_compressed[L-tiff_lzw]"
+   ],
+   "public_basis": "题面对压缩方式没有限制；docs/handbook/image-file-formats.rst:906-912 的 compression 选项；覆盖 262 的那一行在两条写出路径分叉之前；公开 test_g4_write 的往返惯例（Tests/test_file_libtiff.py:110-122）",
+   "precondition": "派生镜像 libtiff 可用（09-29 实测 4.3.0）；gold 预核已通过（pcheck_compressed_path_observe_gold、pcheck_g4_whiteiszero_roundtrip_gold）",
+   "triggering_counterexample": "C3（ledger_C3.jsonl:1，1.0）"
+  }
+ ],
+ "revision_acceptance_plan": {
+  "expected_total_after": 68,
+  "runs": {
+   "gold": "1（正对照）",
+   "C1": "1（替代正对照；R-c2 在 '1'+group4 上走 1;I packer，为静态预期，须实跑确认）",
+   "noop": "0（目标键与 R-c2 键失败，R-c1 键 PASSED）",
+   "D": "0（R-c1 四键失败）",
+   "C3": "0（R-c2 两键 AttributeError）",
+   "C2": "0（按 P4：目标键与 R-c2 键失败于像素断言）"
+  },
+  "also_required": "保存新版本、父版本 expected_v0、理由与触发反例；Codex 复核；修订后作『标明版本的自建题』",
+  "optional": "R-a 删除两个死键（测试与期望键同时删）；R-f 补一句像素往返说明"
+ },
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "没有证据需要额外的路径规则",
+  "evidence_refs": [],
+  "applied_version": null
+ },
+ "revision_refs": [],
+ "disposition": {
+  "state": "needs_repair",
+  "scope": "static_review",
+  "reason": "两个 S1 已由当前材料上的真实评分与私有对照证实：v1 §4 第 3 步退化候选 D 得 1（T2b）；第 4 步部分实现 C3 得 1 但压缩保存崩溃。修订走预授权模板 R-c1 + R-c2，待实施、验收与 Codex 复核。评分链与解题侧开发条件已核（新机器 noop 0 / gold 1；devcheck）。P4 登记，不交用户",
+  "evidence_refs": [
+   "runs/r2e_lifecycle_20260929/inv/pillow_2d01/ledger_D.jsonl:1",
+   "runs/r2e_lifecycle_20260929/inv/pillow_2d01/ledger_C3.jsonl:1",
+   "runs/r2e_lifecycle_20260929/env_verify/ledger_l1_noop.jsonl:10",
+   "runs/r2e_lifecycle_20260929/env_verify/ledger_l1_gold.jsonl:10",
+   "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/devcheck.log"
+  ],
+  "reviewer": null,
+  "prior_draft": "analysis_before_history.md：needs_review，严重度 conditional（D、C3 待实跑；第 4 步曾保留判 S2 的余地）。实跑确认两处 S1 后改为 needs_repair；理由见 old_findings_delta.md §2"
+ },
+ "usage": {
+  "intended_use": "development_diagnostic",
+  "exposure_notes": "主审读过 gold、隐藏测试、期望映射、原始评分日志和 09-24 环境审查记录；四个候选补丁与 R-c 草案由主审构造。这些都不提供给 solver",
+  "v1": {
+   "problem_localization": {
+    "value": "yes",
+    "note": null
+   },
+   "capability_comparison": {
+    "value": "conditional",
+    "condition": "二选一：(a) 用 R-c1+R-c2 验收后的版本，并标明版本；(b) 在原版上预登记事后审计，所有得 1 的补丁核对『默认值与显式 262=1 仍写 1』与『压缩保存可用、仍写 0』，原始 reward 与审计结果分列。开发路径与本批评分条件已核",
+    "evidence": [
+     "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/devcheck.log",
+     "runs/r2e_lifecycle_20260929/env_verify/ledger_l1_gold.jsonl:10",
+     "runs/r2e_lifecycle_20260929/inv/pillow_2d01/ledger_D.jsonl:1"
+    ]
+   },
+   "training_candidate": {
+    "value": "no",
+    "condition": "当前版本有两个未处理的 S1。R-c1+R-c2 验收（gold 1、C1 1、noop 0、D 0、C3 0、C2 0）并经 Codex 复核后重新评估；预计转为 yes，前提是 S2 缺口（T3）已登记",
+    "evidence": [
+     "runs/r2e_lifecycle_20260929/inv/pillow_2d01/ledger_D.jsonl:1",
+     "runs/r2e_lifecycle_20260929/inv/pillow_2d01/ledger_C3.jsonl:1"
+    ]
+   },
+   "heldout_candidate": {
+    "value": "no",
+    "condition": "先要满足训练候选的条件。另外 4 道更晚的 pillow 题的初态含本题答案，pillow 必须整仓留出（D3）；修订后只能作为『标明版本的自建题』",
+    "evidence": [
+     "runs/r2e_static_prep_20260924/cross_task_gold_scan.json"
+    ]
+   }
+  }
+ },
+ "costs": {
+  "container_wall_seconds": {
+   "grading_new_machine_phases_sum": {
+    "noop": 89.8,
+    "gold": 90.4,
+    "D": 49.8,
+    "C1": 62.7,
+    "C3": 55.4,
+    "C2": 50.3
+   },
+   "devcheck_solve_seconds": 15.1,
+   "minimal_public_validation_seconds": "public_tiff_tests 1.02 s；其余公开命令各约 1 s"
+  },
+  "agent_tokens": null,
+  "human_decisions": 0,
+  "source_refs": [
+   "runs/r2e_lifecycle_20260929/env_verify/ledger_l1_noop.jsonl:10",
+   "runs/r2e_lifecycle_20260929/env_verify/ledger_l1_gold.jsonl:10",
+   "runs/r2e_lifecycle_20260929/inv/pillow_2d01/ledger_D.jsonl:1",
+   "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/orig/attempt.json"
+  ]
+ }
+}

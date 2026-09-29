@@ -1,0 +1,34 @@
+diff --git a/datalad/support/network.py b/datalad/support/network.py
+index 88fbba7..763b6f6 100644
+--- a/datalad/support/network.py
++++ b/datalad/support/network.py
+@@ -348,10 +348,16 @@ class URL(object):
+         pref = 'ssh:implicit://'
+         assert(url.startswith(pref))
+         url = url[len(pref):]
+-        # and we should replace leading /
+-        url = url.replace('/',
+-                          ':/' if self.path.startswith('/') else ':',
+-                          1)
++        # and we should replace leading / after the hostname
++        # Will preserve hostname as is, since we are trying to be as silly as ssh
++        # where it tries to resolve hostnames with /
++        lhostname = len(self.hostname)
++
++        url = url[:lhostname] + \
++              url[lhostname:].replace(
++                  '/',
++                  ':/' if self.path.startswith('/') else ':',
++                  1)
+         return url
+ 
+     def __str_datalad__(self):
+@@ -537,7 +543,7 @@ class URL(object):
+     def __eq__(self, other):
+         if not isinstance(other, URL):
+             other = URL(other)
+-        return other._fields == self._fields
++        return str(other) == str(self)
+ 
+     def __ne__(self, other):
+         return not (self == other)

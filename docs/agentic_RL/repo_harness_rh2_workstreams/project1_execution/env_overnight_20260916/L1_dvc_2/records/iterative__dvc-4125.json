@@ -1,0 +1,290 @@
+{
+ "task_id": "iterative__dvc-4125",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+  "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+  "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+  "raw": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc",
+  "base_commit": "e4dafb8552d52f8e9d2dd20976de079e891851e4",
+  "version": "1.1",
+  "python_version": "3.9",
+  "eval_cmd": "pytest -rA",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-4125:latest",
+  "workdir": "/testbed",
+  "test_patch_paths": [
+   "tests/func/test_ignore.py"
+  ],
+  "gold_paths": [
+   "dvc/output/local.py"
+  ],
+  "n_f2p": 1,
+  "n_p2p": 18,
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4125/{gold,empty}/offline/a1/",
+  "signals": {
+   "in_e2": [],
+   "fragile_reference_id": false,
+   "stage1": {
+    "empty": {
+     "verdict": "RESOLVED_NO",
+     "rc_install": 0
+    },
+    "gold": {
+     "verdict": "RESOLVED_FULL",
+     "rc_install": 0,
+     "p2p_missing": 0,
+     "f2p_missing": 0
+    }
+   },
+   "deepseek_candidate_oracle": null
+  }
+ },
+ "public_view": {
+  "目标行为": "`.dvcignore` 里被忽略的目录/文件，在 `dvc add <父目录>` 时不应被读取/搬进 cache；用户的具体症状是对无读权限的 `.exports/` 文件抛 `PermissionError`。",
+  "约束": "题面给了 `.dvcignore` 内容（两条 `*/*/...` 目录模式）、完整调用栈（stage/__init__.py:413 → output/base.py:281 → remote/base.py:_save_dir → utils/fs.py:103 `shutil.move`）、最终 `PermissionError: [Errno 13]`、以及 dvc version 全量输出。",
+  "公开材料无法确定的点": [
+   "根因层次：题面读起来像『move 时权限不足』，真正的根因是 `dvc add` 走的 output 层没有用带 dvcignore 的 repo tree，导致忽略规则在『已被 add 的目录内部』失效（这是 652f5ab 引入的回归，题面与可见材料都没写）。",
+   "期望验收：F2P 检查的是 `dvc.tree.exists(ignored)` 为 False 以及 `dvc add` + `checkout` 后不恢复被忽略路径——『checkout 不应恢复被忽略文件』这条要求题面完全没提。",
+   "与权限无关的等价复现：题面里的 PermissionError 只是症状之一，公开材料没有给出不依赖权限的复现路径。"
+  ],
+  "base 关键代码": "dvc/output/local.py:LocalOutput.__init__ 在 base 里不设 `self.tree`，于是沿用 BaseOutput 的裸 LocalRemoteTree（无 dvcignore）；dvc/scm/tree.py:40 `is_working_tree` 在 base 已存在，gold 直接复用。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "repos/dvc 91f3036cf1b14a42b6ca5219d0d72e16299e53ea `output: local: use repo tree if possible (#4125)` --stat: dvc/output/local.py 3+, tests/func/test_ignore.py 25+",
+    "base tests/func/test_ignore.py 已 import shutil 与 PathInfo（第 2、14 行）"
+   ],
+   "note": "gold+test_patch 与上游一致，无丢件；test_patch 用到的 `shutil`、`PathInfo` 在 base 测试文件里已 import，不会 NameError。",
+   "by": "L1_dvc_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base:dvc/output/local.py 无 self.tree 赋值",
+    "stage1 empty: test_ignore_in_added_dir=FAILED"
+   ],
+   "note": "缺陷在 base 存在。",
+   "by": "L1_dvc_2"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 2517 字符：含 .dvcignore、完整 traceback、最终异常、dvc version 全量输出"
+   ],
+   "note": "题面结构完整、代码块闭合、无外链图片。缺的是根因方向而不是格式。",
+   "by": "L1_dvc_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 仅 tests/func/test_ignore.py",
+    "gold 仅 dvc/output/local.py"
+   ],
+   "note": "零交集。additional_exclusions 空。",
+   "by": "L1_dvc_2"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh git checkout 目标"
+   ],
+   "note": "纯测试文件恢复。",
+   "by": "L1_dvc_2"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "git merge-base --is-ancestor 3a469f2e9(4066 gold) e4dafb8552(4125 base) → true",
+    "4066/4125/4166 共用 tests/func/test_ignore.py"
+   ],
+   "note": "4066 → 4125 → 4166 同族；本题 base 已含 4066 的参考解。划分同侧。",
+   "by": "L1_dvc_2"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement（PermissionError + move 栈）",
+    "test_patch: `dvc.add(\"dir\"); shutil.rmtree(ignored_path); dvc.checkout(); assert not ignored_path.exists()`"
+   ],
+   "note": "F2P 的后半段（add → 删掉被忽略目录 → checkout → 它不应被恢复）在题面里毫无依据。题面描述的是 add 阶段的权限错误，F2P 验的是 checkout 阶段的恢复行为。两者都源自同一个根因（output 层没用带 dvcignore 的 tree），但从公开材料推不出这条验收。",
+   "by": "L1_dvc_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 只在 __init__ 里设 self.tree",
+    "test_patch 断言都是 exists/不存在"
+   ],
+   "note": "F2P 断言对外行为，不锁 helper 名与调用顺序。注意 test_patch 里有一行 `dvc.tree.__dict__.pop(\"dvcignore\", None)`——它直接戳 funcy cached_property 的缓存，属于测试对内部实现的耦合，但耦合的是 base 已有的结构，不是 gold 新增的。",
+   "by": "L1_dvc_2"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "F2P 只有 1 条",
+    "P2P 18 条全部是既有 dvcignore 用例"
+   ],
+   "note": "题面的原始症状（对不可读文件 add 时报 PermissionError）**零覆盖**：F2P 用的是普通权限的文件。因此『在 `_save_file`/`move` 处 catch PermissionError 并跳过』这类完全不同、且会掩盖真实错误的修复无法被区分——它过不了 F2P，但反过来说 F2P 也无法证明用户的症状消失了。",
+   "by": "L1_dvc_2"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "smstat.json 4125: gold real=22, PASSED 19 / FAILED 3",
+    "stage1 gold test_output.txt:2092-2094 `FAILED ... - re.error: redefinition of group name 'ps_d' as group 2; was group 1 at position 46`（test_match_nested / test_ignore_blank_line / test_pattern_trie_tree）"
+   ],
+   "note": "**P2P 的 18 条是『整文件跑后双侧 PASSED』的残余**。同文件里另外 3 条因为镜像装的 pathspec 版本太新（dvc 1.x 的 setup.py 只写 `pathspec>=0.6.0`，无上界）在 gold 下就崩，于是被自动排除——其中 `test_ignore_blank_line` 正是 iterative__dvc-4066 的 F2P。也就是说同一条测试在 4066 镜像里是判分依据，在 4125 镜像里是环境坏死项。另外 gold 改的是 output 层，`tests/func/test_add.py`、`tests/func/test_checkout.py` 一条都没进 P2P。",
+   "by": "L1_dvc_2"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "上游 --stat 3+/25+",
+    "base:dvc/scm/tree.py:40 已有 is_working_tree"
+   ],
+   "note": "gold 三行、不依赖未交付改动。",
+   "by": "L1_dvc_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak.py: gold_added=3 ps_match=0 hints_match=0"
+   ],
+   "note": "题面无修复代码；hints（不可见）直接点名了引入回归的 commit 652f5ab439d2 并给出 bash 复现脚本。",
+   "by": "L1_dvc_2"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "base:setup.py:66 `\"pathspec>=0.6.0\"`（无上界）",
+    "stage1 gold 三条 re.error: redefinition of group name 'ps_d'",
+    "repos/dvc 97809661b `setup: pathspec <0.9.0 (#6331)`、2a3a93314 `pathspec 0.9.0 quickfix (#6689)`"
+   ],
+   "note": "**镜像的依赖没有按历史锁定**：dvc 1.x 把多条 `.dvcignore` 模式的正则用 `\"|\".join(...)` 拼起来（dvc/ignore.py），而新版 pathspec 的 `pattern_to_regex` 会产生命名组 `(?P<ps_d>...)`，拼接后同名组重复，Python `re` 直接报错。上游后来先封顶 `<0.9.0` 再适配。这是 checklist 第 6 项『固定浮动依赖』的典型反例。",
+   "by": "L1_dvc_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 内容"
+   ],
+   "note": "无外部资产。",
+   "by": "L1_dvc_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 无 URL/requests"
+   ],
+   "note": "测试段纯本地。",
+   "by": "L1_dvc_2"
+  },
+  "18": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh `pytest -rA tests/func/test_ignore.py`；gold real=22 ⊇ F2P 1 + P2P 18"
+   ],
+   "note": "无漏选；过选 3 条 pathspec 坏死用例，不计分。",
+   "by": "L1_dvc_2"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "伪键 'Could'/'No'"
+   ],
+   "note": "同 3677。",
+   "by": "L1_dvc_2"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "empty 18 PASSED/4 FAILED；gold 19 PASSED/3 FAILED"
+   ],
+   "note": "分差恰为 test_ignore_in_added_dir 一条；3 条坏死项两侧一致。",
+   "by": "L1_dvc_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "依赖未锁定导致回归集坏死",
+   "severity": "P1",
+   "evidence_refs": [
+    "base:setup.py:66",
+    "stage1 gold `re.error: redefinition of group name 'ps_d'`",
+    "上游 97809661b / 2a3a93314"
+   ],
+   "proposed_action": "仓库级：给 dvc 1.x 的镜像配方补 `pathspec<0.9.0`（或按 base 时间点的 pip freeze 快照安装），然后重算 P2P。当前 P2P 是在一个坏环境下筛出来的通过集。",
+   "next_experiment": "在 4125 镜像里 `pip install 'pathspec<0.9.0'` 后重跑 tests/func/test_ignore.py，统计恢复的用例数与新的双侧通过集。"
+  },
+  {
+   "category": "题意-评分错位",
+   "severity": "P2",
+   "evidence_refs": [
+    "problem_statement vs test_ignore_in_added_dir 后半段"
+   ],
+   "proposed_action": "题面补上 hints 里维护者的归纳（『原始问题不是 add 失败，而是 dvcignore 没有忽略目标目录』）以及 checkout 不应恢复被忽略文件这条要求。",
+   "next_experiment": "盲解一次，看候选是否停在 `move`/权限层做 catch。"
+  },
+  {
+   "category": "症状零覆盖",
+   "severity": "P2",
+   "evidence_refs": [
+    "F2P 只用普通权限文件"
+   ],
+   "proposed_action": "补一条用 `os.chmod(0o000)` 制造不可读文件的端到端回归，验证题面症状消失。",
+   "next_experiment": "在 base/gold 上各跑该新测试。"
+  },
+  {
+   "category": "跨题测试状态不一致",
+   "severity": "P2",
+   "evidence_refs": [
+    "test_ignore_blank_line 在 4066 镜像是 F2P 且 PASSED，在 4125 镜像 gold 下 FAILED"
+   ],
+   "proposed_action": "记录同名测试跨镜像状态不一致；重建 P2P 前先统一依赖。",
+   "next_experiment": "同上 pathspec 实验后复查该条。"
+  },
+  {
+   "category": "同族",
+   "severity": "P2",
+   "evidence_refs": [
+    "merge-base 结果"
+   ],
+   "proposed_action": "4066/4125/4166 同侧。",
+   "next_experiment": "无。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只有 tests/func/test_ignore.py；gold 只改 dvc/output/local.py。沿用第四组 B 默认空。",
+  "evidence_refs": [
+   "test_patch",
+   "golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/func/test_add.py 中 add 目录的一族（test_add_directory / TestAddDirectoryRecursive / test_should_collect_dir_cache_only_once）",
+   "reason": "gold 改的是 LocalOutput.__init__ 的 tree 选择，直接影响所有 add 目录路径；当前 P2P 一条都没覆盖 output 层。"
+  },
+  {
+   "id": "tests/func/test_checkout.py 中恢复目录的用例",
+   "reason": "F2P 的后半段就是 checkout 行为，但 P2P 没有任何 checkout 回归。"
+  },
+  {
+   "id": "tests/unit/output/test_local.py",
+   "reason": "直接覆盖被改的类。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "题面与 F2P 的验收方向错位（add 权限错误 vs checkout 不恢复），题面症状零覆盖；更重要的是镜像里 pathspec 未锁版本，导致同文件 3 条用例在 gold 下崩溃并被静默移出 P2P。先修依赖再重算 P2P，然后补题面。"
+ },
+ "costs": {
+  "minutes": 22
+ },
+ "by": "L1_dvc_2 (Claude Opus 5, 2026-09-16, 静态审查)"
+}

@@ -1,0 +1,986 @@
+[
+  {
+    "instance_id": "aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52",
+    "classification": "solver_condition",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  },
+  {
+    "instance_id": "aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac",
+    "classification": "solver_condition",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  },
+  {
+    "instance_id": "aiohttp__240da100151933883d7dea0528d45877df025b92",
+    "classification": "solver_condition",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {
+      "HttpClientConnectorTests.test_tcp_connector": "FAILED",
+      "HttpClientConnectorTests.test_unix_connector": "FAILED"
+    },
+    "R06": {
+      "status": "pass",
+      "note": "2 个期望 FAILED 键逐键归因：HttpClientConnectorTests.test_tcp_connector（connector.py:290 TypeError: cannot 'yield from' a coroutine object in a non-coroutine generator）、HttpClientConnectorTests.test_unix_connector（protocol.py:650 AttributeError: 'NoneType' object has no attribute 'write'，捕获日志里 parsers.py:246 asyncio.StreamWriter 断言失败）→ 分类：上游该提交在本解释器（Python 3.9）下本来就失败（2014 年代码与 3.9 asyncio 不兼容），不是缺依赖 / 网络 / 资源 / 顺序。来源宿主机记录新旧提交同样 FAILED、同样原因；RH2 noop / gold 均 FAILED，稳定，与解无关。要让它们翻成 PASSED 需同时修多处 3.9 兼容问题，顺手改到的概率低。",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-a_508fe701.eval.log",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl",
+        "runs/r2e_env_repair_20260924/p1/dev_probe_posthoc2/aiohttp__240da100151933883d7dea0528d45877df025b92/dev_probe.json"
+      ],
+      "by": "p1-subagent"
+    }
+  },
+  {
+    "instance_id": "aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a",
+    "classification": "solver_condition",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {
+      "test_c_parser_loaded": "FAILED",
+      "test_invalid_character[pyloop]": "FAILED",
+      "test_invalid_linebreak[pyloop]": "FAILED"
+    },
+    "R06": {
+      "status": "pass",
+      "note": "3 个期望 FAILED 键逐键归因：test_c_parser_loaded（AssertionError: 'HttpRequestParserC' not in dir(aiohttp.http_parser)）、test_invalid_character[pyloop] 与 test_invalid_linebreak[pyloop]（NameError: name 'HttpRequestParserC' is not defined；二者 skipif(NO_EXTENSIONS)，而环境变量未设、NO_EXTENSIONS=False）→ 分类：缺可选编译扩展（C 解析器未构建），是镜像属性。noop / gold 均 FAILED，稳定。注意：来源宿主机记录里这三键 PASSED（宿主机建了 C 扩展、多出 c-parser 参数化用例共 230 个），期望却与发布镜像一致（129 键）——期望的来源不统一。",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-a_075a4ed9.eval.log",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl",
+        "runs/env_overnight_20260916/M3/facts/4075c653fb67/r2e_tests/test_1.py"
+      ],
+      "by": "p1-subagent"
+    }
+  },
+  {
+    "instance_id": "aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2",
+    "classification": "solver_condition",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  },
+  {
+    "instance_id": "coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae",
+    "classification": "material",
+    "disposition": "held_material",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "issue",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {
+      "MockingProtectionTest.test_os_path_exists": "FAILED"
+    },
+    "R06": {
+      "status": "issue",
+      "note": "1 个期望 FAILED 键 MockingProtectionTest.test_os_path_exists：在发布镜像里 13 次观测全 PASSED（gold 日志里子进程输出正是断言要的 in test / bug416a.py / 23 / 17）。来源宿主机执行记录里新旧提交都 FAILED，原因是子进程 coverage run bug416.py 报 ModuleNotFoundError: No module named 'mock'，解释器是 /home/gcpuser/…/.venv/bin/python（宿主机检出，非发布镜像）；期望与这份宿主机记录逐键相同。分类：来源参考环境差异（参考状态问题），不是上游本就失败、不是本镜像缺依赖。已写材料修订提案。",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-c_2c95f1f9.eval.log",
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-c_493fab23.eval.log",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl",
+        "runs/env_overnight_20260916/M3/facts/016af5f6352d/facts/pip_freeze.txt",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae.md"
+      ],
+      "by": "p1-subagent"
+    }
+  },
+  {
+    "instance_id": "coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9",
+    "classification": "env_ok",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  },
+  {
+    "instance_id": "coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266",
+    "classification": "env_ok",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  },
+  {
+    "instance_id": "coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5",
+    "classification": "solver_condition",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  },
+  {
+    "instance_id": "coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96",
+    "classification": "env_ok",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  },
+  {
+    "instance_id": "datalad__16c1ffc349df566151db0beb6d355ca27266bb8c",
+    "classification": "solver_condition",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {
+      "test_dirty": "FAILED",
+      "test_filter_unmodified": "FAILED",
+      "test_get_dataset_directories": "FAILED",
+      "test_paths_by_dataset": "FAILED",
+      "test_save_hierarchy": "FAILED"
+    },
+    "R06": {
+      "status": "pass",
+      "note": "5 个 FAILED 键（test_dirty / test_paths_by_dataset / test_save_hierarchy / test_get_dataset_directories / test_filter_unmodified）在 noop 与 gold 下原因相同：TypeError: …got multiple values for argument 'path'。隐藏 conftest 的 `path` fixture 与 datalad nose 风格装饰器（@with_tempfile / @with_tree 把临时路径按位置参数追加）冲突——R2E 转成 pytest 的产物，确定性、与环境无关（不缺依赖 / 网络 / 资源）。公开模块里同样 5 个用例 ERROR（fixture 'path' not found）。这 5 键永远 FAILED，不区分解答，只是让它们的用例体从不执行。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/facts.json",
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-d_dff48178.eval.log",
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-d_ff9ede96.eval.log",
+        "runs/r2e_env_repair_20260924/p2/pubtests/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c.log",
+        "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+      ],
+      "by": "p2-subagent"
+    }
+  },
+  {
+    "instance_id": "datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb",
+    "classification": "solver_condition",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  },
+  {
+    "instance_id": "datalad__58ba5165234cb16de0e8463ee75097362099835f",
+    "classification": "material",
+    "disposition": "held_material",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "issue",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  },
+  {
+    "instance_id": "datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb",
+    "classification": "solver_condition",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {
+      "test_get_local_file_url_linux": "FAILED"
+    },
+    "R06": {
+      "status": "pass",
+      "note": "1 个 FAILED 键 test_get_local_file_url_linux：'file:///a~' != 'file:///a%7E'。Python 3.7 起 urllib.parse.quote 把 ~ 视为非保留字符不再转义（镜像 3.7.9 实测 quote('/a~') == '/a~'，get_local_file_url 用 urlquote），上游用例按 ≤3.6 行为写——在该解释器版本下上游本就失败，确定性，noop / gold 与公开运行一致。不是环境缺口（解释器版本由来源镜像决定）。注意：若解答顺手让 ~ 转义成 %7E，该键会变 PASSED 反而判 0（P2P-FAILED 语义）；与题面无关，风险低。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/facts.json",
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-d_9fbcea90.eval.log",
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-d_df2e5fa5.eval.log",
+        "runs/r2e_env_repair_20260924/p2/followups/followups.log",
+        "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+      ],
+      "by": "p2-subagent"
+    }
+  },
+  {
+    "instance_id": "datalad__9ba5de094ea326e6fd5773f21c7de1776ec0fa69",
+    "classification": "solver_condition",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {
+      "test_dirty": "FAILED",
+      "test_filter_unmodified": "FAILED",
+      "test_get_dataset_directories": "FAILED",
+      "test_paths_by_dataset": "FAILED",
+      "test_save_hierarchy": "FAILED"
+    },
+    "R06": {
+      "status": "pass",
+      "note": "5 个 FAILED 键与 16c1ffc3 相同（test_dirty 等），原因相同：隐藏 conftest 的 `path` fixture 与 nose 风格 @with_tempfile / @with_tree 冲突，TypeError: …got multiple values for argument 'path'；noop / gold 一致，确定性、与环境无关。公开模块同 5 个用例 ERROR（fixture 'path' not found）。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/datalad__9ba5de094ea326e6fd5773f21c7de1776ec0fa69/facts.json",
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-d_f1dce2a0.eval.log",
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-d_445b5729.eval.log",
+        "runs/r2e_env_repair_20260924/p2/pubtests/datalad__9ba5de094ea326e6fd5773f21c7de1776ec0fa69.log",
+        "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+      ],
+      "by": "p2-subagent"
+    }
+  },
+  {
+    "instance_id": "numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9",
+    "classification": "solver_condition",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  },
+  {
+    "instance_id": "numpy__2f4a965019722c3c56f43433bfa4a99c4c083138",
+    "classification": "resource",
+    "disposition": "qualified_with_recipe",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  },
+  {
+    "instance_id": "numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d",
+    "classification": "solver_condition",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  },
+  {
+    "instance_id": "numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb",
+    "classification": "solver_condition",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  },
+  {
+    "instance_id": "numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764",
+    "classification": "solver_condition",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  },
+  {
+    "instance_id": "numpy__d805e9b66228e68a0eb14d901cd350159c49af18",
+    "classification": "solver_condition",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  },
+  {
+    "instance_id": "numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd",
+    "classification": "solver_condition",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  },
+  {
+    "instance_id": "orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237",
+    "classification": "env_ok",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  },
+  {
+    "instance_id": "orange3__4014f2483e3bab0621c9ae0f994947c008183253",
+    "classification": "env_ok",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  },
+  {
+    "instance_id": "orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e",
+    "classification": "env_ok",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  },
+  {
+    "instance_id": "orange3__9b5494e26f407b75e79699c9d40be6df1d80a040",
+    "classification": "material",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {
+      "TestLogisticRegressionLearner.test_LogisticRegression": "FAILED",
+      "TestLogisticRegressionLearner.test_coefficients": "FAILED",
+      "TestLogisticRegressionLearner.test_learner_scorer": "FAILED",
+      "TestLogisticRegressionLearner.test_learner_scorer_multiclass": "FAILED"
+    },
+    "R06": {
+      "status": "issue",
+      "note": "期望 4 个 FAILED（test_LogisticRegression、test_coefficients、test_learner_scorer、test_learner_scorer_multiclass），gold / noop / 参考 old 与 new 两次运行都失败。归因：依赖版本不兼容——scikit-learn 0.22.2.post1 + SciPy 1.7.3，lbfgs 未收敛时 sklearn/utils/optimize.py:243 对 str 调 .decode → AttributeError（test_coefficients），交叉验证的该折留下未初始化预测值 → accuracy_score ValueError（test_LogisticRegression）；两个 scorer 测试是特征排序不符（推断同一依赖组合下优化结果不同，未单独验证）。不是缺依赖 / 网络 / 资源；材料修订提案（推荐维持现状 A）见 material_revisions。",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-o_f0536903.eval.log",
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-o_fec8687a.eval.log",
+        "runs/r2e_env_repair_20260924/p3/fixture_check/orange3_9b5494e2_versions.txt",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/orange3__9b5494e26f407b75e79699c9d40be6df1d80a040.md"
+      ],
+      "by": "p3-subagent"
+    }
+  },
+  {
+    "instance_id": "orange3__c3fb72ba464880e0354cf33f8b3d3773865c2bf6",
+    "classification": "env_ok",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  },
+  {
+    "instance_id": "orange3__f237f9688e06ae46fe98d195b134d01f5b38b2e0",
+    "classification": "env_ok",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {
+      "TestOWSelectRows.test_end_support_for_version_1": "FAILED",
+      "TestOWSelectRows.test_minimum_size": "FAILED",
+      "test_filename": "ERROR"
+    },
+    "R06": {
+      "status": "pass",
+      "note": "期望 1 个 ERROR + 2 个 FAILED，gold / noop / 参考 old 与 new 都一致，逐键归因均为上游测试自身的确定性伪影，不是缺依赖 / 网络 / 资源：① test_filename ERROR——测试模块 from Orange.tests import test_filename 引入的辅助函数被 pytest 当成测试收集，setup 报 fixture 'path' not found；② TestOWSelectRows.test_end_support_for_version_1 FAILED——定时提醒测试，time.gmtime() >= 2022-02-02 即 fail（“Happy 22/2/2!”）；③ TestOWSelectRows.test_minimum_size FAILED——widget 最小宽度 815 ≥ 800 px，取决于镜像字体与 Qt 平台（QT_QPA_PLATFORM=minimal），同一镜像下确定。不写材料修订提案。",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-o_fda27ddb.eval.log",
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-o_688e4f12.eval.log",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl"
+      ],
+      "by": "p3-subagent"
+    }
+  },
+  {
+    "instance_id": "orange3__f5026689551be7f0a43ad5f0d129e5bcfff7999c",
+    "classification": "env_ok",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  },
+  {
+    "instance_id": "pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf",
+    "classification": "material",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {
+      "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[1.5]": "ERROR",
+      "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[1]": "ERROR",
+      "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[2018]": "ERROR",
+      "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[2020]": "ERROR",
+      "TestLoc2.test_loc_getitem_iterable[Index]": "ERROR",
+      "TestLoc2.test_loc_getitem_iterable[Series]": "ERROR",
+      "TestLoc2.test_loc_getitem_iterable[array]": "ERROR",
+      "TestLoc2.test_loc_getitem_iterable[iter]": "ERROR",
+      "TestLoc2.test_loc_getitem_time_object": "ERROR",
+      "TestLocSeries.test_basic_setitem_with_labels": "ERROR",
+      "TestLocSeries.test_loc_getitem": "ERROR",
+      "TestLocSeries.test_loc_getitem_iterator": "ERROR",
+      "TestLocSeries.test_loc_getitem_not_monotonic": "ERROR",
+      "TestLocSeries.test_loc_setitem_boolean": "ERROR",
+      "TestLocSeries.test_loc_setitem_corner": "ERROR",
+      "TestLocSetitemWithExpansion.test_loc_setitem_categorical_column_retains_dtype": "ERROR",
+      "TestLocWithMultiIndex.test_loc_preserve_names": "ERROR"
+    },
+    "R06": {
+      "status": "issue",
+      "note": "期望 17/155 个 ERROR 键，逐键看 gold 日志全部是 setup 阶段 fixture 不可达（frame_or_series×5、string_series×4、float_frame×4、datetime_series×2、ordered×1、multiindex_year_month_day_dataframe_random_data×1；除注明外定义在 pandas/conftest.py 或 pandas/tests/**/conftest.py）。机制：隐藏测试在 /testbed/r2e_tests/ 下，pytest 只加载 rootdir 到该目录路径上的 conftest（都不存在），pandas 自己的 conftest 不在路径上。noop / gold / 参考一致，确定性。归类：缺 fixture（来源把测试移出原目录的伪影），不是缺可选依赖、网络或资源。fixture 可达时的状态：pandas/tests/indexing/test_loc.py 原位 12 个同名测试（24 项）全部 PASSED——若补上 fixture，expected 会变（ERROR→PASSED，且带 fixture 参数化的键会展开成多个键）。另有 9 个测试因 “Missing SciPy requirement” skip，不在 expected 里——若环境装上 SciPy 它们会成为 expected 之外的键（键集不等 → reward 0），所以 expected 也绑定“无 SciPy”这一环境事实。材料修订提案见 material_revisions。",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_c9cd4c5a.eval.log",
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_f021bb69.eval.log",
+        "runs/r2e_env_repair_20260924/p3/fixture_check/pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf/result.txt",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf.md"
+      ],
+      "by": "p3-subagent"
+    }
+  },
+  {
+    "instance_id": "pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b",
+    "classification": "material",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {
+      "test_info": "ERROR"
+    },
+    "R06": {
+      "status": "issue",
+      "note": "期望 1/21 个 ERROR 键，逐键看 gold 日志全部是 setup 阶段 fixture 不可达（float_frame×1；除注明外定义在 pandas/conftest.py 或 pandas/tests/**/conftest.py）。机制：隐藏测试在 /testbed/r2e_tests/ 下，pytest 只加载 rootdir 到该目录路径上的 conftest（都不存在），pandas 自己的 conftest 不在路径上。noop / gold / 参考一致，确定性。归类：缺 fixture（来源把测试移出原目录的伪影），不是缺可选依赖、网络或资源。fixture 可达时的状态：pandas/tests/io/formats/test_info.py 原位 test_info PASSED——若补上 fixture，expected 会变（ERROR→PASSED，且带 fixture 参数化的键会展开成多个键）。材料修订提案见 material_revisions。",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_aa73a0d2.eval.log",
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_26e130c1.eval.log",
+        "runs/r2e_env_repair_20260924/p3/fixture_check/pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b/result.txt",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b.md"
+      ],
+      "by": "p3-subagent"
+    }
+  },
+  {
+    "instance_id": "pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0",
+    "classification": "material",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {
+      "TestDataFrameAnalytics.test_any_all[all]": "ERROR",
+      "TestDataFrameAnalytics.test_any_all[any]": "ERROR",
+      "TestDataFrameAnalytics.test_idxmax": "ERROR",
+      "TestDataFrameAnalytics.test_idxmin": "ERROR",
+      "TestDataFrameAnalytics.test_mean_corner": "ERROR",
+      "TestDataFrameAnalytics.test_median": "ERROR",
+      "TestDataFrameAnalytics.test_sem": "ERROR",
+      "TestDataFrameAnalytics.test_stat_op_api": "ERROR",
+      "TestDataFrameAnalytics.test_stat_op_calc": "ERROR",
+      "TestDataFrameAnalytics.test_stats_mixed_type": "ERROR",
+      "TestDataFrameAnalytics.test_sum_bool": "ERROR",
+      "TestDataFrameAnalytics.test_sum_object": "ERROR",
+      "TestDataFrameAnalytics.test_var_std": "ERROR"
+    },
+    "R06": {
+      "status": "issue",
+      "note": "期望 13/92 个 ERROR 键，逐键看 gold 日志全部是 setup 阶段 fixture 不可达（float_frame×6、datetime_frame×2、float_frame_with_na×2、bool_frame_with_na×2、float_string_frame×1；除注明外定义在 pandas/conftest.py 或 pandas/tests/**/conftest.py）。机制：隐藏测试在 /testbed/r2e_tests/ 下，pytest 只加载 rootdir 到该目录路径上的 conftest（都不存在），pandas 自己的 conftest 不在路径上。noop / gold / 参考一致，确定性。归类：缺 fixture（来源把测试移出原目录的伪影），不是缺可选依赖、网络或资源。fixture 可达时的状态：pandas/tests/frame/test_analytics.py 原位 12 个同名测试（13 项）全部 PASSED——若补上 fixture，expected 会变（ERROR→PASSED，且带 fixture 参数化的键会展开成多个键）。另有 1 个测试因 “Missing SciPy requirement” skip，不在 expected 里——若环境装上 SciPy 它们会成为 expected 之外的键（键集不等 → reward 0），所以 expected 也绑定“无 SciPy”这一环境事实。材料修订提案见 material_revisions。",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_c1ac93bc.eval.log",
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_75e948f0.eval.log",
+        "runs/r2e_env_repair_20260924/p3/fixture_check/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/result.txt",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0.md"
+      ],
+      "by": "p3-subagent"
+    }
+  },
+  {
+    "instance_id": "pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199",
+    "classification": "material",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {
+      "test_groupby_quantile_NA_float": "ERROR",
+      "test_groupby_quantile_NA_int": "ERROR"
+    },
+    "R06": {
+      "status": "issue",
+      "note": "期望 2/226 个 ERROR 键，逐键看 gold 日志全部是 setup 阶段 fixture 不可达（any_float_dtype×1、any_int_ea_dtype×1；除注明外定义在 pandas/conftest.py 或 pandas/tests/**/conftest.py）。机制：隐藏测试在 /testbed/r2e_tests/ 下，pytest 只加载 rootdir 到该目录路径上的 conftest（都不存在），pandas 自己的 conftest 不在路径上。noop / gold / 参考一致，确定性。归类：缺 fixture（来源把测试移出原目录的伪影），不是缺可选依赖、网络或资源。fixture 可达时的状态：这两个测试是修复提交新增的，base 版公开文件里没有（原位核对 not_found）——若补上 fixture，expected 会变（ERROR→PASSED，且带 fixture 参数化的键会展开成多个键）。材料修订提案见 material_revisions。",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_bb99de50.eval.log",
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_e47e4f78.eval.log",
+        "runs/r2e_env_repair_20260924/p3/fixture_check/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/result.txt",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199.md"
+      ],
+      "by": "p3-subagent"
+    }
+  },
+  {
+    "instance_id": "pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af",
+    "classification": "material",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {
+      "TestRangeIndexSetOps.test_intersection": "ERROR",
+      "TestRangeIndexSetOps.test_intersection_empty": "ERROR",
+      "TestRangeIndexSetOps.test_intersection_non_overlapping_gcd": "ERROR",
+      "TestRangeIndexSetOps.test_union_noncomparable": "ERROR"
+    },
+    "R06": {
+      "status": "issue",
+      "note": "期望 4/34 个 ERROR 键，逐键看 gold 日志全部是 setup 阶段 fixture 不可达（sort×4；除注明外定义在 pandas/conftest.py 或 pandas/tests/**/conftest.py）。机制：隐藏测试在 /testbed/r2e_tests/ 下，pytest 只加载 rootdir 到该目录路径上的 conftest（都不存在），pandas 自己的 conftest 不在路径上。noop / gold / 参考一致，确定性。归类：缺 fixture（来源把测试移出原目录的伪影），不是缺可选依赖、网络或资源。fixture 可达时的状态：pandas/tests/indexes/ranges/test_setops.py 原位 4 个同名测试（16 项）全部 PASSED——若补上 fixture，expected 会变（ERROR→PASSED，且带 fixture 参数化的键会展开成多个键）。材料修订提案见 material_revisions。",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_73855f0f.eval.log",
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_e7b0f0f8.eval.log",
+        "runs/r2e_env_repair_20260924/p3/fixture_check/pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af/result.txt",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af.md"
+      ],
+      "by": "p3-subagent"
+    }
+  },
+  {
+    "instance_id": "pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d",
+    "classification": "material",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {
+      "TestJoinMultiMulti.test_join_multi_empty_frames": "ERROR",
+      "TestJoinMultiMulti.test_join_multi_multi": "ERROR",
+      "TestMergeMulti.test_merge_on_multikey": "ERROR",
+      "test_join_level[other0]": "ERROR",
+      "test_join_level[other1]": "ERROR",
+      "test_join_level[other2]": "ERROR",
+      "test_join_level_corner_case": "ERROR",
+      "test_join_self": "ERROR",
+      "test_join_self_unique": "ERROR"
+    },
+    "R06": {
+      "status": "issue",
+      "note": "期望 9/34 个 ERROR 键，逐键看 gold 日志全部是 setup 阶段 fixture 不可达（idx×6（pandas/tests/indexes/multi/conftest.py）、join_type×3；除注明外定义在 pandas/conftest.py 或 pandas/tests/**/conftest.py）。机制：隐藏测试在 /testbed/r2e_tests/ 下，pytest 只加载 rootdir 到该目录路径上的 conftest（都不存在），pandas 自己的 conftest 不在路径上。noop / gold / 参考一致，确定性。归类：缺 fixture（来源把测试移出原目录的伪影），不是缺可选依赖、网络或资源。fixture 可达时的状态：pandas/tests/indexes/multi/test_join.py 与 pandas/tests/reshape/merge/test_multi.py 原位 7 个同名测试（33 项）全部 PASSED——若补上 fixture，expected 会变（ERROR→PASSED，且带 fixture 参数化的键会展开成多个键）。材料修订提案见 material_revisions。",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_abe4707c.eval.log",
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_8d2d23b7.eval.log",
+        "runs/r2e_env_repair_20260924/p3/fixture_check/pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d/result.txt",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d.md"
+      ],
+      "by": "p3-subagent"
+    }
+  },
+  {
+    "instance_id": "pandas__f656217a06b31e48474702036e0a5c49f664186c",
+    "classification": "material",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {
+      "TestJoin.test_join_index_mixed": "ERROR",
+      "TestJoin.test_join_multi_to_multi": "ERROR",
+      "TestMerge.test_join_append_timedeltas": "ERROR",
+      "TestMerge.test_merge_left_empty_right_empty[kwarg0]": "ERROR",
+      "TestMerge.test_merge_left_empty_right_empty[kwarg1]": "ERROR",
+      "TestMerge.test_merge_left_empty_right_empty[kwarg2]": "ERROR",
+      "TestMerge.test_merge_left_empty_right_empty[kwarg3]": "ERROR",
+      "TestMerge.test_merge_nocopy": "ERROR",
+      "TestMergeCategorical.test_dtype_on_merged_different[<lambda>0]": "ERROR",
+      "TestMergeCategorical.test_dtype_on_merged_different[<lambda>1]": "ERROR",
+      "TestMergeCategorical.test_dtype_on_merged_different[<lambda>2]": "ERROR",
+      "test_join_multiindex_one_level": "ERROR"
+    },
+    "R06": {
+      "status": "issue",
+      "note": "期望 12/323 个 ERROR 键，逐键看 gold 日志全部是 setup 阶段 fixture 不可达（join_type×10、using_array_manager×2；除注明外定义在 pandas/conftest.py 或 pandas/tests/**/conftest.py）。机制：隐藏测试在 /testbed/r2e_tests/ 下，pytest 只加载 rootdir 到该目录路径上的 conftest（都不存在），pandas 自己的 conftest 不在路径上。noop / gold / 参考一致，确定性。归类：缺 fixture（来源把测试移出原目录的伪影），不是缺可选依赖、网络或资源。fixture 可达时的状态：pandas/tests/reshape/merge/test_join.py 与 test_merge.py 原位 7 个同名测试（42 项）全部 PASSED——若补上 fixture，expected 会变（ERROR→PASSED，且带 fixture 参数化的键会展开成多个键）。材料修订提案见 material_revisions。",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_96f21ba3.eval.log",
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_7bcf14f0.eval.log",
+        "runs/r2e_env_repair_20260924/p3/fixture_check/pandas__f656217a06b31e48474702036e0a5c49f664186c/result.txt",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__f656217a06b31e48474702036e0a5c49f664186c.md"
+      ],
+      "by": "p3-subagent"
+    }
+  },
+  {
+    "instance_id": "pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8",
+    "classification": "material",
+    "disposition": "needs_decision",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {
+      "TestImage.test_no_resource_warning_on_save": "FAILED",
+      "TestImage.test_show_deprecation": "FAILED"
+    },
+    "R06": {
+      "status": "pass",
+      "note": "期望 2 个 FAILED 键 TestImage.test_no_resource_warning_on_save / test_show_deprecation：gold 与 noop 的原因行都是 `TypeError: exceptions must be derived from Warning, not <class 'NoneType'>`（pytest 8 移除 `pytest.warns(None)`，测试写法与镜像 pytest 8.3.4 不兼容）→ 分类：上游测试在该镜像工具链下本就失败；与候选代码无关的死键，合法源码改动翻不动；公开 Tests/test_image.py 同样 2 例失败（52 passed）。未掩盖资产 / 依赖缺口，无未跟踪资产目录。期望键带 ANSI（仓库 setup.cfg 开 `--color=yes`），parser 两侧去色后比较，对账一致；collate_facts 的 non_passed_reasons 为空是因日志行带颜色码（工具缺口，见包 README）。",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_d21a126c.eval.log",
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_90eb28b3.eval.log",
+        "runs/r2e_env_repair_20260924/p4/targeted_public_tests/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/agent_probe.log"
+      ],
+      "by": "P4 sub-agent"
+    }
+  },
+  {
+    "instance_id": "pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+    "classification": "solver_condition",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {
+      "TestFileTiff.test_closed_file": "FAILED",
+      "TestFileTiff.test_context_manager": "FAILED"
+    },
+    "R06": {
+      "status": "pass",
+      "note": "期望 2 个 FAILED 键 TestFileTiff.test_closed_file / test_context_manager：gold 与 noop 原因行均为 `TypeError: exceptions must be derived from Warning, not <class 'NoneType'>`（`pytest.warns(None)` 与 pytest 8.3.4 不兼容）→ 上游测试在该镜像工具链下本就失败，死键；公开 Tests/test_file_tiff.py 同样 2 例。另有 2 个 SKIPPED（“Extra image files not installed”——pillow-depends 额外图像未装；“Windows only”），SKIPPED 不产出键、不影响评分。期望键带 ANSI（setup.cfg `--color=yes`），parser 两侧去色，对账一致。",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_6fdf1e36.eval.log",
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_0edb86ea.eval.log",
+        "runs/r2e_env_repair_20260924/p4/targeted_public_tests/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/agent_probe.log"
+      ],
+      "by": "P4 sub-agent"
+    }
+  },
+  {
+    "instance_id": "pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07",
+    "classification": "solver_condition",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  },
+  {
+    "instance_id": "pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605",
+    "classification": "solver_condition",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  },
+  {
+    "instance_id": "pillow__4bc6483564ae1a254911e98280b9a501f047a2e0",
+    "classification": "solver_condition",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  },
+  {
+    "instance_id": "pillow__a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90",
+    "classification": "solver_condition",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  },
+  {
+    "instance_id": "pillow__f9d3ee0f4888f7618071c0a5315c916062e78854",
+    "classification": "solver_condition",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  },
+  {
+    "instance_id": "scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67",
+    "classification": "solver_condition",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  },
+  {
+    "instance_id": "scrapy__9a15fcf89a151811de8ac783419df0512c863d5e",
+    "classification": "material",
+    "disposition": "needs_decision",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {
+      "ResponseTypesTest.test_from_args": "FAILED",
+      "ResponseTypesTest.test_from_headers": "FAILED"
+    },
+    "R06": {
+      "status": "issue",
+      "note": "期望 2 个 FAILED 键 ResponseTypesTest.test_from_args / test_from_headers：gold 与 noop 原因行都是 from_content_type 里 `TypeError: a bytes-like object is required, not 'str'`（Headers 值在 py3 是 bytes，代码用 str 切分）→ 上游该提交在 Python 3 下本就失败（py3 移植未完成）。不涉及资产 / 网络；但这两个键能被合法源码改动翻成 PASSED：P4 实测候选“gold + from_content_type / from_content_disposition 先把 bytes 解码”→ 隐藏测试 7/7 PASSED、reward 0（mismatched 恰为这两个键）。公开 tests/test_responsetypes.py 在 base 上同样 2 例失败，求解者看得到 → 顺手修掉会被判 0。",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_798f95c6.eval.log",
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-s_49e74388.eval.log",
+        "runs/r2e_env_repair_20260924/p4/targeted_public_tests/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log",
+        "runs/r2e_env_repair_20260924/p4/targeted2_cmds/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log"
+      ],
+      "by": "P4 sub-agent"
+    }
+  },
+  {
+    "instance_id": "scrapy__a95a338eeada7275a5289cf036136610ebaf07eb",
+    "classification": "solver_condition",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {
+      "UtilsMiscPy3TestCase.test_generators_return_something": "FAILED",
+      "UtilsMiscPy3TestCase.test_indentation_error": "FAILED"
+    },
+    "R06": {
+      "status": "pass",
+      "note": "期望 2 个 FAILED 键 UtilsMiscPy3TestCase.test_generators_return_something / test_indentation_error：gold 与 noop 原因都是 `AssertionError: 0 != 1`，断言的是 `warnings.catch_warnings(record=True)` 里记录到的警告数；评分入口 `PYTHONWARNINGS=… python -W ignore -m pytest` 把全局过滤器设成 ignore，而这两个用例没有 simplefilter('always') → 记录 0 条。求解者条件下（不加 -W ignore）公开同名用例 4/4 passed。分类：评分入口的 harness 伪影，合法源码改动翻不动（死键），不掩盖资产 / 依赖缺口。",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_9377378e.eval.log",
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-s_b7461f67.eval.log",
+        "runs/r2e_env_repair_20260924/p4/targeted_public_tests/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/agent_probe.log"
+      ],
+      "by": "P4 sub-agent"
+    }
+  },
+  {
+    "instance_id": "scrapy__cfed9b6659c90e0799361911b1d72ed127edf471",
+    "classification": "material",
+    "disposition": "needs_decision",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {
+      "MiddlewareManagerTest.test_enabled_from_settings": "FAILED",
+      "MiddlewareManagerTest.test_instances_from_settings": "FAILED",
+      "UtilsMiscTestCase.test_walk_modules_egg": "FAILED"
+    },
+    "R06": {
+      "status": "issue",
+      "note": "期望 3 个 FAILED 键都是 R2E 把测试搬进 r2e_tests/ 的伪影：① UtilsMiscTestCase.test_walk_modules_egg → `ModuleNotFoundError: No module named 'testegg'`（夹具 test.egg 按 `os.path.dirname(__file__)` 找，随测试搬迁后 r2e_tests/ 下没有；公开原位置 tests/test_utils_misc/__init__.py 4 passed）→ 缺 fixture；② MiddlewareManagerTest.test_enabled_from_settings、③ test_instances_from_settings → 测试用字符串 'tests.test_middleware.M1' 加载的是公开旧模块里的类，与 r2e_tests.test_2.M1 不是同一对象 → 断言失败（公开原位置 tests/test_middleware.py 4 passed）。三者 gold / noop 都失败、合法源码改动翻不动（死键），评分一致；但题面主体“中间件接受对象 / 实例”没有活键，只改 load_object 的部分解按键集推断即可拿 1（推断，未实跑）。",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_915fb3c8.eval.log",
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-s_6f09d8ff.eval.log",
+        "runs/r2e_env_repair_20260924/p4/targeted_public_tests/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/agent_probe.log",
+        "runs/r2e_env_repair_20260924/p4/targeted2_cmds/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/agent_probe.log"
+      ],
+      "by": "P4 sub-agent"
+    }
+  },
+  {
+    "instance_id": "scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4",
+    "classification": "solver_condition",
+    "disposition": "environment_qualified",
+    "qualification_checks": {
+      "R01": "pass",
+      "R02": "pass",
+      "R08": "pass",
+      "R13": "pass",
+      "R15": "pass"
+    },
+    "nonpassed_expected": {},
+    "R06": null
+  }
+]

@@ -1,0 +1,206 @@
+{
+ "task_id": "pydantic__pydantic-8793",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_pydantic (Claude Opus 5, 2026-09-16 夜)",
+ "materials_refs": [
+  "s2/ingest/*_bundles_v0.jsonl (pydantic__pydantic-8793)",
+  "repos/pydantic@832225b90672c68e2d4067bd0ffecf834d62b48b",
+  "runs/env_probe_stage1_20260910/.../pydantic__pydantic-8793/{gold,empty}/offline/a1/",
+  "runs/env_probe_20260909_final_sync/ledger/logs_cc/pydantic__pydantic-8793/"
+ ],
+ "public_view": {
+  "目标行为": "用 create_model 传 (Annotated[int, Field(...)], ...) 声明的字段，model_json_schema() 的 required 列表里应该包含它；即 Annotated + Field 组合不应让字段变成可选。",
+  "约束": "题面只给 create_model 的例子，没提 BaseModel 类体声明；也没说 FieldInfo.default 本身应该变成什么。",
+  "公开材料无法确定的点": [
+   "修复应落在 create_model、FieldInfo.from_annotated_attribute 还是 merge_field_infos（题面只给现象）",
+   "`a: int = ...` 这种 BaseModel 类体写法是否同样在范围内（题面没提，但 F2P 测了）",
+   "修复后 model_fields['bar'].default 的期望值（PydanticUndefined 还是保留 Ellipsis）"
+  ],
+  "base 定位": "pydantic/fields.py:401-407 `merge_field_infos` 的 len(field_infos)==1 捷径分支用 `setattr(field_info, k, v)` 直接写 default，绕过了 `FieldInfo.__init__`:184-188 的 `if default is Ellipsis: self.default = PydanticUndefined` 归一化；于是 default 留成 Ellipsis，`is_required()`（:519 `self.default is PydanticUndefined and ...`）返回 False。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show 832225b9...:tests/test_json_schema.py、pydantic/fields.py 均存在"
+   ],
+   "note": "对应同一问题。注意 test_patch 顺带把两处多行 import 折成单行（纯格式），因为整个测试文件会被恢复，无影响。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "fields.py:401-407 vs :184-188",
+    "stage1 empty：3 条 F2P 全 FAILED"
+   ],
+   "note": "base 确有缺陷，机制已定位到具体行。",
+   "by": "static+stage1log"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 1866 字符，含例子与实际/期望 JSON 输出"
+   ],
+   "note": "无外链、无截断。hints_text 只给了相关 issue 链接 8534 与“欢迎 PR”，无解法信息，且 hints 不可见也不影响可解性。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只碰 tests/test_json_schema.py；F2P+P2P 367 条全在该文件；gold 只碰 pydantic/fields.py"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "static"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "同 test_patch 文件的还有 5706/6043/9066，gold 分别是 _generate_schema.py / json_schema.py / json_schema.py"
+   ],
+   "note": "不同修复。",
+   "by": "static"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "install rc=2。",
+   "by": "stage1log"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "测试第三方 import：pytest / pydantic_core / dirty_equals"
+   ],
+   "note": "dirty_equals 镜像已预装（stage1 gold 全绿）。",
+   "by": "static+stage1log"
+  },
+  "10": {
+   "status": "issue",
+   "evidence_refs": [
+    "logs_cc/pydantic__pydantic-8793/stream.jsonl: No module named pytest / dirty_equals / typing_extensions"
+   ],
+   "note": "同 R3。",
+   "by": "trajectory"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "只有 install 需要网络。",
+   "by": "stage1log"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 例子与 test_required_fields_in_annotated_with_create_model 完全一致"
+   ],
+   "note": "题面原例被 F2P 原样采纳（与 8500 相反）。唯一超出题面的是第三条 F2P 的 BaseModel 类体写法，但它是同一根因的自然推广，且不需要额外未公开信息就能修到。",
+   "by": "static"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "gold 在 merge_field_infos 捷径分支里特判 default"
+   ],
+   "note": "不强制唯一实现：在 overrides 循环里对 k=='default' 特判、或把捷径分支改成 `FieldInfo(**{**field_infos[0]._attributes_set, **overrides})`，都能通过三条 F2P。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "test_required_fields_in_annotated_with_basemodel 只断言 model_fields[x].is_required()",
+    "fields.py:519 is_required 实现",
+    "F2P/P2P 全在 tests/test_json_schema.py；tests/test_annotated.py:261/293/320 的三条 merge_field_infos 专项测试、tests/test_config.py:788 的调用点都不在判分面",
+    "静态复核：对 base 测试文件 + test_patch 做断言级扫描（见 summary.md 的“静态复核补强”）"
+   ],
+   "note": "P2 **已静态复核**：在判分文件 tests/test_json_schema.py（base + test_patch）里 grep `.default` 与 `PydanticUndefined`，**命中 0 次**——判分面没有任何一条断言检查 FieldInfo.default 本身的值。因此把 is_required() 改成 `self.default in (PydanticUndefined, Ellipsis) and ...` 这种表面修复，能让三条 F2P 与 364 条 P2P 全绿，而 FieldInfo.default 仍是 Ellipsis（错误状态会流向 repr、序列化默认值、model_construct 等）。此外 tests/test_annotated.py:261/293/320 的三条 merge_field_infos 专项测试与 tests/test_config.py:788 的调用点都不在判分面。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "merge_field_infos 在 pydantic/fields.py 的 4 个调用点：:288 :345 :361 :375；tests/test_annotated.py 三条专项测试；tests/test_config.py:788"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "static"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "golden_patch：`field_info._attributes_set.update(overrides)` 在 `overrides.pop('default', ...)` 之前"
+   ],
+   "note": "P3：gold 修好了 field_info.default，但 `_attributes_set['default']` 仍留着 Ellipsis。后续再次 merge 时走 `new_kwargs.update(field_info._attributes_set)` → `FieldInfo(**new_kwargs)`，因为 __init__ 会归一化所以目前无害；属于 gold 的不彻底处，不影响本题判分。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak 扫描 0 命中；题面无 URL；hints 的 URL 指向相关 issue 8534，不是本题修复 PR"
+   ],
+   "note": "无泄漏。",
+   "by": "static"
+  },
+  "31": {
+   "status": "issue",
+   "evidence_refs": [
+    "R4"
+   ],
+   "note": "静态残余面。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "oracle_accepts_wrong_fix",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 25"
+   ],
+   "proposed_action": "在判分面补 `Model.model_fields['bar'].default is PydanticUndefined` 一类的状态断言，或把 tests/test_annotated.py 的 merge_field_infos 三条并入 P2P",
+   "next_experiment": "在镜像里只改 is_required()，跑官方 367 条确认全绿"
+  },
+  {
+   "category": "official_test_coverage_gap",
+   "severity": "P3",
+   "evidence_refs": [
+    "check 26"
+   ],
+   "proposed_action": "扩 P2P 到 tests/test_annotated.py",
+   "next_experiment": "同上"
+  },
+  {
+   "category": "gold_incomplete",
+   "severity": "P3",
+   "evidence_refs": [
+    "check 27"
+   ],
+   "proposed_action": "只记录，不改测试标准",
+   "next_experiment": "无"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 仅纯测试文件，gold 仅生产代码，判分面与恢复面一致。",
+  "evidence_refs": [
+   "grading.json.test_patch",
+   "validation.json.golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  "tests/test_annotated.py::test_merge_field_infos_type_adapter / ::test_merge_field_infos_model / ::test_merge_field_infos_ordering — 选择依据：直接针对被 gold 修改的函数，且在 base 已通过",
+  "tests/test_config.py::(第 788 行所在测试) — 选择依据：merge_field_infos 的另一个生产调用点（with_config/override_fields 路径），gold 改了它的公共行为",
+  "新增：`Model.model_fields['bar'].default is PydanticUndefined` 与 `... .default_factory is None` — 选择依据：把“default 本身被归一化”写成检查，排除只改 is_required() 的表面修复（检查 25）",
+  "新增：`Field(default=...)` 显式传 Ellipsis 与 `Field()` 不传 default 两种情况下 merge 后 default 的值 — 选择依据：gold 的 `default_override is PydanticUndefined` 分支官方未测"
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "题面原例被 F2P 原样覆盖、根因单点明确、gold 对应题面、判分面无混合职责；唯一缺口是缺少对 default 值本身的断言，属于可通过扩 P2P 收紧的 P2，不阻塞真机探针。"
+ },
+ "costs": {
+  "minutes": 20
+ }
+}

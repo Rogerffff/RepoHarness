@@ -1,0 +1,258 @@
+{
+ "task_id": "swe_gym_lite::Project-MONAI__MONAI-6756",
+ "instance_id": "Project-MONAI__MONAI-6756",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_monai_2 (Claude Opus 5, 静态审查)",
+ "materials_refs": {
+  "base_commit": "de0530c3ad399373f28230dc85f9081b01184099",
+  "version": "1.2",
+  "python_version": "3.8",
+  "eval_cmd": "pytest -rA  tests/test_cldice_loss.py tests/test_config_parser.py（两个整文件）",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/Project-MONAI__MONAI-6756/{gold,empty}/offline/a1/",
+  "created_at": "2023-07-21"
+ },
+ "public_view": {
+  "目标行为": "`ConfigParser.get_parsed_content(id, default=...)` 在 id 不存在时应返回 default，实际抛 `AttributeError: 'int' object has no attribute 'get_config'`——`look_up_option` 把 default 值本身当成 ConfigItem 往下传了。",
+  "约束": "题面给出 6 行可运行复现与完整 traceback，终点是 reference_resolver.py:130 `item_config = item.get_config()`。",
+  "公开材料无法确定的点": [
+   "default 是原样返回还是也要走一遍解析",
+   "default 为 ConfigItem 时怎么处理",
+   "是否要同时改 config_parser 一侧"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "issue",
+   "evidence_refs": [
+    "grading.test_patch 同时触碰 tests/test_config_parser.py 与 tests/test_cldice_loss.py",
+    "validation.golden_patch 只碰 monai/bundle/reference_resolver.py"
+   ],
+   "note": "P2：**test_patch 打包了一处与本题无关的改动**——把 tests/test_cldice_loss.py 的 TEST_CASES 从 `torch.ones((100,3,256,256))` 缩到 `(7,3,11,10)`（纯性能优化，来自同一上游 PR），与 gold 修的 `get_parsed_content(default=...)` 毫无关系。后果是 `eval_cmd` 每次评分都要额外跑整个 cldice 文件。目标文件在 base 都存在，无二进制/LFS/子模块材料。",
+   "by": "L1_monai_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base de0530c3 monai/bundle/reference_resolver.py:127-130 拿到 look_up_option 的 default 后直接 `item.get_config()`",
+    "stage1 empty: test_parse_0 FAILED"
+   ],
+   "note": "初态确实含题面缺陷。",
+   "by": "L1_monai_2"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "public.problem_statement 1048 字符，含 6 行可运行复现与完整 traceback"
+   ],
+   "note": "渲染完整、无外链无图片无截断；hints_text 为空。题面质量好。",
+   "by": "L1_monai_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 两个路径都是 tests/ 下的纯测试文件"
+   ],
+   "note": "无非测试源码被恢复覆盖；gold 不碰测试样路径。additional_exclusions 保持空。",
+   "by": "L1_monai_2"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh: git checkout <base> tests/test_cldice_loss.py tests/test_config_parser.py"
+   ],
+   "note": "恢复清单两个都是纯测试文件，无混合职责。",
+   "by": "L1_monai_2"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "scan/monai_cross_index.txt"
+   ],
+   "note": "P2：与 **MONAI-5932** 同 gold 文件同测试文件；本题 base 已含 5932 的 gold，本题 P2P 里的 `test_substring_reference_0` 正是 5932 的唯一 F2P。两题必须同侧划分。",
+   "by": "L1_monai_2"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "public.problem_statement 的复现",
+    "test_patch 在既有 test_parse 里加一行 `self.assertEqual(parser.get_parsed_content(id=\"abcd\", default=1), 1)`"
+   ],
+   "note": "F2P 断言就是题面复现的同型最小化，可由公开材料推出。",
+   "by": "L1_monai_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只加一行 assertEqual"
+   ],
+   "note": "不锁实现。在 reference_resolver 里判 isinstance、在 config_parser 里提前返回、或让 look_up_option 包一层，都能通过。",
+   "by": "L1_monai_2"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "grading.fail_to_pass 只有 test_parse_0，且新增断言只有一行"
+   ],
+   "note": "P2：只验 `default=1`（一个 int）。default 为 dict/ConfigItem/可调用对象、以及 id 存在时 default 不应生效等情形都没验。把 `_resolve_one_item` 开头改成 `return kwargs.get('default')` 之类的过度修复会被 P2P 挡住（P2P 覆盖整两个文件），但更细的错误分支仍可漏过。",
+   "by": "L1_monai_2"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.pass_to_pass 21 条 = 两个测试文件的其余全部通过用例"
+   ],
+   "note": "P2P 等于两文件通过集，config_parser 侧 18 条覆盖引用解析的各条分支，有实质判别力。",
+   "by": "L1_monai_2"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "validation.golden_patch 第二个 hunk 只是把 `if self.allow_missing_reference: ... else: raise` 反写成 `if not ...: raise` + 顺序调整"
+   ],
+   "note": "P3：gold 含一处**与题无关的纯风格重构**（控制流等价）。不影响正确性，但按 check 27 应记录：参考解不是最小改动。",
+   "by": "L1_monai_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "public.problem_statement 全文；raw.hints_text 长度 0"
+   ],
+   "note": "题面含 traceback，不含修复代码与 PR 链接。",
+   "by": "L1_monai_2"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 install rc=0（两侧）"
+   ],
+   "note": "离线镜像内 rc=0。",
+   "by": "L1_monai_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "scan/envscan.txt"
+   ],
+   "note": "无权重、无外部数据下载。",
+   "by": "L1_monai_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "scan/envscan.txt"
+   ],
+   "note": "不需要网络。",
+   "by": "L1_monai_2"
+  },
+  "13": {
+   "status": "issue",
+   "evidence_refs": [
+    "stage1 gold test 段 72.5s（本包最慢，第二名 5932 是 22.5s）",
+    "base tests/test_cldice_loss.py:41-48 test_with_cuda 用 torch.ones((100,3,256,256)) 两个张量（各约 78.6 MB），且 test_patch **没有**缩小它",
+    "grading.pass_to_pass 含 tests/test_cldice_loss.py::TestclDiceLoss::test_with_cuda",
+    "base tests/test_config_parser.py:42 @TimedCall(seconds=100, force_quit=True) 会 spawn 子进程，test_pdb 在 P2P"
+   ],
+   "note": "P1：单条 P2P `test_with_cuda` 主导了整场评分的耗时。它名叫 cuda 但**没有 skip 守卫**，CUDA 不可用时照样在 CPU 上跑 SoftclDiceLoss/SoftDiceclDiceLoss 的多轮软骨架化，输入是 100×3×256×256（7860 万元素、约 78.6 MB/张量），中间量是它的数倍。上游 PR 把 TEST_CASES 缩小了却漏掉了 test_with_cuda。在内存或时限受限的 runner 上它会 OOM/超时，并被记成 **P2P 失败（候选弄坏了东西）**而不是资源不足。另外 `test_pdb` 通过 TimedCall spawn 子进程，是第二个多进程依赖点。",
+   "by": "L1_monai_2"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "base tests/test_config_parser.py:148-150 `@skipUnless(has_tv, \"Requires torchvision >= 0.8.0.\")` 修饰 test_parse",
+    "grading.fail_to_pass 只有 test_parse_0",
+    "swegym_parsers.py 丢弃 SKIPPED 行的 nodeid；scoring.py 缺席计失败"
+   ],
+   "note": "P1：**本题唯一的 F2P 被可选依赖守卫**。torchvision 缺失或版本 <0.8.0 时 `test_parse_0` 会 SKIPPED → 在 status_map 中缺席 → 按『缺席计失败』记 0，**无论候选补丁对不对**，且日志里只有一行 `SKIPPED [n] file:line` 无法归因。P2P 里的 `test_parse_json_*` 4 条同样被 `@skipUnless(has_yaml)` 守卫。stage1 机器上 torchvision 0.14.1 与 pyyaml 都在，22 条全通过。",
+   "by": "L1_monai_2"
+  },
+  "31": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_monai_2/scan/control_surface.txt",
+    "stage1 eval.sh 只 `git checkout <base> <test_patch 路径>`",
+    "grading.test_patch 不含 tests/utils.py"
+   ],
+   "note": "P2：本题测试从 **tests/utils.py** import `TimedCall`，而 test_patch 的恢复清单只含本题的测试文件本身，**tests/utils.py 不被恢复**，保持候选写过的状态。弱暴露：这些 helper 只影响跳过/超时行为，改它对候选没有正收益（跳过的 nodeid 会缺席→按缺席计失败）。 另：base 里没有 tests/conftest.py，候选可新建一个注入 hook。此处只记录观测与建议，不据怀疑扣分。",
+   "by": "L1_monai_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "唯一 F2P 依赖可选包",
+   "severity": "P1",
+   "evidence_refs": [
+    "test_parse 的 skipUnless(has_tv)"
+   ],
+   "proposed_action": "在题级 facts 记录『F2P 需要 torchvision≥0.8.0』；评分面补一条：参考 ID 全部或关键 ID 缺席且日志含 `SKIPPED [n]` 时归 environment，不记 0。更彻底的修订是把新断言移到一个不依赖 torchvision 的测试里。",
+   "next_experiment": "在镜像里临时屏蔽 torchvision 跑一次，确认 verdict 变成 0 且报告中无可见原因。"
+  },
+  {
+   "category": "单条 P2P 主导评分成本与 OOM 风险",
+   "severity": "P1",
+   "evidence_refs": [
+    "72.5s 总耗时",
+    "test_with_cuda 的 (100,3,256,256) 张量未被 test_patch 缩小"
+   ],
+   "proposed_action": "把 test_with_cuda 的资源画像写进配方（建议内存≥4GB、单题超时≥180s），或在修订版里一并缩小它/加 skip_if_no_cuda 守卫。对 RL rollout 而言，每次评分多花约 50s 跑一个与本题无关的测试是可观成本。",
+   "next_experiment": "单独跑 `pytest -rA tests/test_cldice_loss.py::TestclDiceLoss::test_with_cuda` 并记录墙钟与峰值 RSS。"
+  },
+  {
+   "category": "test_patch 打包无关改动",
+   "severity": "P2",
+   "evidence_refs": [
+    "test_patch 的 tests/test_cldice_loss.py hunk 与 gold 无关"
+   ],
+   "proposed_action": "记录即可（这是上游 PR 的事实），但在成本核算里要把 cldice 文件算进本题开销。",
+   "next_experiment": "无。"
+  },
+  {
+   "category": "跨题顺序依赖",
+   "severity": "P2",
+   "evidence_refs": [
+    "本题 base 含 5932 的 gold；P2P 含 5932 的 F2P"
+   ],
+   "proposed_action": "5932 与 6756 绑为同一划分单元。",
+   "next_experiment": "无。"
+  },
+  {
+   "category": "评分控制面（test_patch 之外的测试依赖）",
+   "severity": "P3",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_monai_2/scan/control_surface.txt"
+   ],
+   "proposed_action": "记录即可：本题对该文件的暴露没有正收益。",
+   "next_experiment": "无。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 的两个路径都是 tests/ 下的纯测试文件，无混合职责；gold 不碰测试样路径。按第四组 B 默认为空。 补充：测试从 tests/utils.py import `TimedCall`，该文件不在恢复清单内；但这些 helper 只影响跳过/超时，改它对候选没有正收益，因此仍保持 additional_exclusions 为空。",
+  "evidence_refs": [
+   "grading.test_patch",
+   "validation.golden_patch",
+   "runs/env_overnight_20260916/L1_monai_2/scan/control_surface.txt"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/test_config_item.py",
+   "reason": "ConfigItem/ConfigComponent 是 `isinstance(item, ConfigItem)` 判定的另一侧。"
+  },
+  {
+   "id": "新增：default 为 dict / 可调用对象 / ConfigItem 的用例",
+   "reason": "当前只验 default=1。"
+  },
+  {
+   "id": "tests/test_bundle_get_data.py、tests/test_integration_bundle_run.py",
+   "reason": "get_parsed_content 的真实调用者。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_review",
+  "reason": "题面与 gold 对应良好、P2P 覆盖两文件通过集；但唯一 F2P 被 torchvision 守卫（缺失即无条件判 0 且不可见），且一条与本题无关的 P2P 用 78MB 张量主导了 72.5s 的评分成本。这两点需要先决定处置（记 facts + 改归因，还是修订测试）。"
+ },
+ "costs": {
+  "minutes": 22
+ }
+}

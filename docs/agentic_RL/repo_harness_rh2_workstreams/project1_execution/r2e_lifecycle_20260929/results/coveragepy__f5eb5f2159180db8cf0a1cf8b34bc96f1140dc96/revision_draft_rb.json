@@ -1,0 +1,179 @@
+{
+ "instance_id": "coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96",
+ "template": "R-c + R-b（窄版）",
+ "status": "备选草案，待用户决定（revision_plan.md §6 选项 A）；用户未采纳前不落正式材料。试跑结果见 acceptance",
+ "relation_to_rc": "revisions 是一条合并条目：第 1 处 edit 与 revision_draft.json 的 R-c edit 逐字相同，后 4 处是 R-b。正式修订单同一题同一目标只许一条修订（rh2/src/repoharness2/envpack/ingest_r2e_subset.py:415-418），采纳时用这一条整体替换 R-c 的隐藏测试条目；期望映射与 R-c 相同（6 键），期望修订条目不变",
+ "items": [
+  {
+   "id": "R-c-1",
+   "new_key": "JsonReportTest.test_branch_totals_count_branch_arcs",
+   "note": "同 revision_draft.json"
+  },
+  {
+   "id": "R-c-2",
+   "new_key": "JsonReportTest.test_branch_totals_from_saved_branch_data",
+   "note": "同 revision_draft.json"
+  },
+  {
+   "id": "R-b-1",
+   "key": "JsonReportTest.test_branch_coverage",
+   "change": "_assert_expected_json_report 增加 optional_summary：列出的文件的每文件 summary 若出现两键之一，两键必须同时出现且等于给定值；核对后移除，其余仍整字典相等"
+  },
+  {
+   "id": "R-b-2",
+   "key": "JsonReportTest.test_branch_coverage",
+   "change": "test_branch_coverage 传 optional_summary={'a.py': {'covered_branches': 1, 'missing_branches': 1}}；行模式与 contexts 两个测试不传，行模式下每文件仍不许出现分支键"
+  },
+  {
+   "id": "R-b-3",
+   "key": "JsonReportTest.test_branch_totals_count_branch_arcs",
+   "change": "BRANCHY 的每文件 summary 若出现两键之一，必须是 4/2（挡住每文件两值写错的 C1swap）"
+  }
+ ],
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "    def test_context_relative(self):\n        self.run_context_test(relative_files=True)\n",
+     "new": "    def test_context_relative(self):\n        self.run_context_test(relative_files=True)\n\n    # R2E revision (2026-09-29, R-c): the issue asks for totals that give\n    # \"detailed branch coverage information\", so the counts are checked on a\n    # program other than the issue's one-branch example.  In BRANCHY, f and g\n    # take both branches of their `if`, and h never runs.\n    BRANCHY = \"\"\"\\\n        def f(x):\n            if x:\n                return 1\n            return 2\n\n        def g(x):\n            if x:\n                return 1\n            return 2\n\n        def h(x):\n            if x:\n                return 1\n            return 2\n\n        f(0)\n        f(1)\n        g(0)\n        g(1)\n        \"\"\"\n\n    def _branchy_report(self, modname, report_from_saved_data=False):\n        \"\"\"Measure BRANCHY with branch=True and return the parsed JSON report.\"\"\"\n        self.make_file(modname + \".py\", self.BRANCHY)\n        data_file = os.path.join(self.temp_dir, modname + \".coverage\")\n        cov = coverage.Coverage(branch=True, data_file=data_file)\n        mod = self.start_import_stop(cov, modname)\n        if report_from_saved_data:\n            # Like `coverage run --branch` followed by a separate `coverage json`:\n            # the reporting object's own config does not set branch.\n            cov.save()\n            cov = coverage.Coverage(data_file=data_file)\n            cov.load()\n        output_path = os.path.join(self.temp_dir, modname + \".json\")\n        cov.json_report(mod, outfile=output_path)\n        with open(output_path) as result_file:\n            return json.load(result_file)\n\n    def test_branch_totals_count_branch_arcs(self):\n        # 6 branch destinations (two per `if`), 4 taken, 2 never taken.  h's `if`\n        # never runs, so it is not a partial branch.\n        report = self._branchy_report(\"branchy\")\n        totals = report['totals']\n        assert totals['num_branches'] == 6\n        assert totals['num_partial_branches'] == 0\n        assert totals['covered_branches'] == 4\n        assert totals['missing_branches'] == 2\n\n    def test_branch_totals_from_saved_branch_data(self):\n        # R2E revision (2026-09-29, R-c): the report follows the measured data,\n        # as the other reporters do, not the reporting object's own settings.\n        report = self._branchy_report(\"branchy_saved\", report_from_saved_data=True)\n        assert report['meta']['branch_coverage'] is True\n        assert report['totals']['covered_branches'] == 4\n        assert report['totals']['missing_branches'] == 2\n"
+    },
+    {
+     "old": "    def _assert_expected_json_report(self, cov, expected_result):\n",
+     "new": "    def _assert_expected_json_report(self, cov, expected_result, optional_summary=None):\n"
+    },
+    {
+     "old": "        del (parsed_result['meta']['timestamp'])\n        assert parsed_result == expected_result\n",
+     "new": "        del (parsed_result['meta']['timestamp'])\n        # R2E revision (2026-09-29, R-b): a per-file summary may also carry the\n        # two branch counts that the issue asks for in totals.  When it does,\n        # both must be there with this file's values; everything else is\n        # still compared exactly.\n        for filename, counts in (optional_summary or {}).items():\n            summary = parsed_result['files'][filename]['summary']\n            if any(key in summary for key in counts):\n                assert {key: summary.pop(key, None) for key in counts} == counts\n        assert parsed_result == expected_result\n"
+    },
+    {
+     "old": "                'missing_branches': 1\n            }\n        }\n        self._assert_expected_json_report(cov, expected_result)\n",
+     "new": "                'missing_branches': 1\n            }\n        }\n        self._assert_expected_json_report(\n            cov, expected_result,\n            optional_summary={'a.py': {'covered_branches': 1, 'missing_branches': 1}},\n        )\n"
+    },
+    {
+     "old": "        assert totals['covered_branches'] == 4\n        assert totals['missing_branches'] == 2\n",
+     "new": "        assert totals['covered_branches'] == 4\n        assert totals['missing_branches'] == 2\n        # R2E revision (2026-09-29, R-b): if the per-file summary also carries\n        # the two counts, they must be this file's counts.\n        summary = report['files']['branchy.py']['summary']\n        if 'covered_branches' in summary or 'missing_branches' in summary:\n            assert summary.get('covered_branches') == 4\n            assert summary.get('missing_branches') == 2\n"
+    }
+   ]
+  }
+ ],
+ "expected_after": {
+  "JsonReportTest.test_context_relative": "PASSED",
+  "JsonReportTest.test_context_non_relative": "PASSED",
+  "JsonReportTest.test_branch_coverage": "PASSED",
+  "JsonReportTest.test_simple_line_coverage": "PASSED",
+  "JsonReportTest.test_branch_totals_count_branch_arcs": "PASSED",
+  "JsonReportTest.test_branch_totals_from_saved_branch_data": "PASSED"
+ },
+ "formal_expected_change": {
+  "changed": {},
+  "added": {
+   "JsonReportTest.test_branch_totals_count_branch_arcs": "PASSED",
+   "JsonReportTest.test_branch_totals_from_saved_branch_data": "PASSED"
+  },
+  "removed": []
+ },
+ "positive_control": "gold",
+ "acceptance": {
+  "gold": {
+   "role": "正对照",
+   "expected_score": 1,
+   "expected_fail_keys": [],
+   "trial": "trials/rb_gold.json",
+   "trial_verdict": "match 6/6",
+   "patch": "runs/r2e_static_prep_20260924/v3/private/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/gold.patch"
+  },
+  "noop": {
+   "role": "空补丁",
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "JsonReportTest.test_branch_coverage",
+    "JsonReportTest.test_branch_totals_count_branch_arcs",
+    "JsonReportTest.test_branch_totals_from_saved_branch_data"
+   ],
+   "trial": "trials/rb_noop.json",
+   "trial_verdict": "mismatch 6/6; missing=[] extra=[]; JsonReportTest.test_branch_coverage FAILED: AssertionError: assert {'files': {'a...hes': 2, ...}} == {'files': {'a....hes': 1, ...}} (r2e_tests/test_1.py:43); JsonReportTest.test_branch_totals_count_branch_arcs FAILED: KeyError: 'covered_branches' (r2e_tests/test_1.py:222); JsonReportTest.test_branch_totals_from_saved_branch_data FAILED: KeyError: 'covered_branches' (r2e_tests/test_1.py:236)",
+   "patch": "none"
+  },
+  "C1": {
+   "role": "每文件 summary 对称加两键、值正确：R-b 要纠正的误判",
+   "expected_score": 1,
+   "expected_fail_keys": [],
+   "trial": "trials/rb_C1.json",
+   "trial_verdict": "match 6/6",
+   "patch": "cands/coveragepy_f5eb_C1.patch"
+  },
+  "C1swap": {
+   "role": "totals 同 gold，每文件两值对调：R-b 放宽后的负对照",
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "JsonReportTest.test_branch_totals_count_branch_arcs"
+   ],
+   "trial": "trials/rb_C1swap.json",
+   "trial_verdict": "mismatch 6/6; missing=[] extra=[]; JsonReportTest.test_branch_totals_count_branch_arcs FAILED: AssertionError: assert 2 == 4 (r2e_tests/test_1.py:228)",
+   "patch": "cands/coveragepy_f5eb_C1swap.patch"
+  },
+  "D0": {
+   "role": "同 R-c",
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "JsonReportTest.test_branch_totals_count_branch_arcs",
+    "JsonReportTest.test_branch_totals_from_saved_branch_data"
+   ],
+   "trial": "trials/rb_D0.json",
+   "trial_verdict": "mismatch 6/6; missing=[] extra=[]; JsonReportTest.test_branch_totals_count_branch_arcs FAILED: AssertionError: assert 1 == 4 (r2e_tests/test_1.py:222); JsonReportTest.test_branch_totals_from_saved_branch_data FAILED: AssertionError: assert 1 == 4 (r2e_tests/test_1.py:236)",
+   "patch": "cands/coveragepy_f5eb_D0.patch"
+  },
+  "C2": {
+   "role": "同 R-c",
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "JsonReportTest.test_branch_totals_count_branch_arcs",
+    "JsonReportTest.test_branch_totals_from_saved_branch_data"
+   ],
+   "trial": "trials/rb_C2.json",
+   "trial_verdict": "mismatch 6/6; missing=[] extra=[]; JsonReportTest.test_branch_totals_count_branch_arcs FAILED: AssertionError: assert 6 == 4 (r2e_tests/test_1.py:222); JsonReportTest.test_branch_totals_from_saved_branch_data FAILED: AssertionError: assert 6 == 4 (r2e_tests/test_1.py:236)",
+   "patch": "cands/coveragepy_f5eb_C2.patch"
+  },
+  "C3": {
+   "role": "同 R-c",
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "JsonReportTest.test_branch_totals_from_saved_branch_data"
+   ],
+   "trial": "trials/rb_C3.json",
+   "trial_verdict": "mismatch 6/6; missing=[] extra=[]; JsonReportTest.test_branch_totals_from_saved_branch_data FAILED: KeyError: 'covered_branches' (r2e_tests/test_1.py:236)",
+   "patch": "cands/coveragepy_f5eb_C3.patch"
+  }
+ },
+ "paths_note": "trials/ 与 cands/ 相对本题目录；runs/ 开头的路径相对仓库根。acceptance 只含修订版试跑；当前材料上的对照见 revision_plan.md §5.1。试跑工具不是正式评分（rh2/experiments/r2e_lifecycle_20260929/trial_grade.py 文件头）",
+ "candidate_patch_sha256": {
+  "gold": "sha256:c8fa460d421020f5230fcf5c776bd85f449bb2d8bbfc4b37d98fa3eff1250e59",
+  "C1": "sha256:08b92222ef69517acc0f683513730017e8291ee3b6b26aecc164757a62678be4",
+  "C1swap": "sha256:6389c07a741e0a8bb194327a43ced0e7d853aa6509702b0c1e39dbb8f25e6201",
+  "D0": "sha256:1644ae7c1312a6c6dcba74aacc5e76d41870e8942707fa5cfbcf9e2ce54d7cc9",
+  "C2": "sha256:85d59dd2b43dee28d2c13134a4732d75190fefac16b3e7b997557d7c86a9e792",
+  "C3": "sha256:55e34064e36ad8804beb5667248f4653f2029eefbab0969ec6b55bf3b2f83d10"
+ },
+ "parent_material": {
+  "hidden_test_file": "runs/r2e_static_prep_20260924/v3/private/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/hidden_tests/test_1.py",
+  "hidden_test_file_sha256": "sha256:ee874f37abb9e6f5307bb02b9b6a3c760218f674d557a51f7f27f5c68298418f",
+  "hidden_test_file_lines": 159,
+  "hidden_tests_tree_sha256": "sha256:d03ee4ffb0204204cf875db18b6fe452351263cfcb6241dc07718c0161ae963c",
+  "expected_output_sha256": "sha256:9e555e5145c096ac323d33fdd3d22d7b769a4b3a34c3cc9b92ba70c1949a384c",
+  "expected_n": 4,
+  "material_revisions": [],
+  "formal_material_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl:10（test_1.py 与 expected 摘要同上；material_revisions_v1–v7 无本题条目）"
+ },
+ "trial_image": {
+  "image_id": "sha256:98b19b5a2ce42f98230caf958b852d58bcf898a01c61604ab93fd506caafe19c",
+  "recipe_id": "r2e_derive_v1+sysconfig_v1"
+ },
+ "trial_draft_sha256": {
+  "draft_rb.json": "sha256:8ba385dee2034b7ba5ebc166bcc33d65a4bd4594638ac6ce60ba001514f46635",
+  "expected_after.json": "sha256:8e622411e3f784f35caf5c9fe76d8b9beb52ac513825d56605bd5388ee3988a3"
+ },
+ "revised_test_file_sha256": "sha256:f73a756199f116b5887c4fb4f2ca386bc13c556b9871a927ece2125ad8b91500",
+ "revised_test_file_lines": 237
+}

@@ -1,0 +1,57 @@
+{
+ "task_id": "getmoto__moto-5835",
+ "source": "SWE-Gym lite (s2 ingest v0)",
+ "task_revision": "upstream",
+ "by": "L1_moto_2 (Opus 5, 静态审查, 2026-09-16)",
+ "materials_refs": {
+  "snapshot": "runs/env_overnight_20260916/L1_moto_2/mat/getmoto__moto-5835/",
+  "base_commit": "6da12892a3c18248a2cfe55bc7d2cb3039817684",
+  "version": "4.1",
+  "eval_cmd": "pytest -n0 -rA",
+  "repo_level": "docs/.../env_overnight_20260916/L1_moto_2/repo_level_findings.md",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5835/{empty,gold}/offline/a1/"
+ },
+ "public_view": {
+  "目标行为": "ssm put_parameter 对非法 Type（如 'str'）要抛 ValidationException，Message 为 \"1 validation error detected: Value 'str' at 'type' failed to satisfy constraint: Member must satisfy enum value set: [SecureString, StringList, String]\"。",
+  "约束": "只改 moto/ 源码。",
+  "公开材料可推断": "base 的 SimpleSystemManagerBackend.put_parameter 只校验 name 前缀与 data_type，没有任何 Type 枚举校验（6da12892a3:moto/ssm/models.py:1794-1806 一带，且同文件已有 _valid_parameter_data_type 作为可照搬的范式）。题面的 Expected behavior 里**逐字给出**了 AWS 的异常消息，是可直接照抄的规格。",
+  "公开材料无法确定的点": [
+   "题面没说校验应放在 Type 校验与 DataType 校验的哪个先后位置（同时非法时先报哪个）。",
+   "题面没说 Type 缺省（不传 Type）或 Overwrite=True 覆盖既有参数时是否也要校验——这正是 gold 出问题的地方，见检查 27。",
+   "F2P 还断言 ex.operation_name 与 HTTPStatusCode=400；这些由 moto 的 ValidationException 基类决定，题面的 traceback 隐含但没明说。"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5835/test.patch", "mat/getmoto__moto-5835/gold.patch"], "note": "test_patch 只在 tests/test_ssm/test_ssm_boto3.py 追加 1 个测试，gold 只碰 moto/ssm/models.py；base 均存在、同一问题。", "by": "static"},
+  "2": {"status": "pass", "evidence_refs": ["6da12892a3:moto/ssm/models.py（put_parameter 无 Type 校验）", "runs/env_probe_stage1_20260910/.../getmoto__moto-5835/empty/offline/a1/status_map.json"], "note": "base 确无 Type 枚举校验。阶段一 empty 的逐测试结果为 80 PASSED / 1 FAILED，失败的正是 F2P `test_put_parameter_invalid_type`，初态含问题证据直接。", "by": "static+stage1"},
+  "3": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5835/problem_statement.txt"], "note": "题面 1561 字符，含复现脚本与完整期望 traceback（异常消息逐字），无外链/截断。", "by": "static"},
+  "4": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5835/test.patch"], "note": "合法解在 moto/ssm/models.py 或 moto/ssm/responses.py，均不在恢复范围。", "by": "static"},
+  "5": {"status": "issue", "evidence_refs": ["本包 5502/5752 同判分文件同源文件"], "note": "与 5502、5752 共用 tests/test_ssm/test_ssm_boto3.py 与 moto/ssm/models.py，P2P 高度重叠；非同一修复。", "by": "static"},
+  "6": {"status": "issue", "evidence_refs": ["repo_level_findings.md#R2", "runs/env_probe_stage1_20260910/.../getmoto__moto-5835/gold/offline/a1/test_output.txt:431-461"], "note": "moto 4.1 的 `make init` 在离线下必然 rc=2（`pip install -e .` 需联网取 setuptools 做构建隔离）。属配方与离线条件不匹配，不是本题特有；详见 R2。", "by": "stage1"},
+  "9": {"status": "pass", "evidence_refs": ["repo_level_findings.md#R3", "runs/env_probe_stage1_20260910/.../getmoto__moto-5835/{empty,gold}/offline/a1/status_map.json"], "note": "**本题正是 R3 的证据来源**：同一 rc=2 条件下 empty 与 gold 的逐测试结果不同（80/1 → 81/0），证明测试执行的是 /testbed 候选代码，安装非零是假报警。", "by": "stage1"},
+  "11": {"status": "pass", "evidence_refs": ["6da12892a3:tests/test_ssm/test_ssm_boto3.py"], "note": "无 network marker、无真实端点。", "by": "static"},
+  "17": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5835/test.patch"], "note": "只恢复 1 个纯测试文件。", "by": "static"},
+  "19": {"status": "issue", "evidence_refs": ["repo_level_findings.md#R8"], "note": "P2P 含 15 个被空格截断的参数化 ID；阶段一日志核对为一一对应、未塌缩，但 ID 不稳定。", "by": "static+stage1"},
+  "23": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5835/problem_statement.txt", "mat/getmoto__moto-5835/test.patch"], "note": "F2P 断言的精确消息字符串逐字出现在题面的 Expected behavior traceback 里，要求充分且可由公开材料推断。", "by": "static"},
+  "24": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5835/test.patch", "mat/getmoto__moto-5835/gold.patch"], "note": "F2P 断言精确字符串，但该字符串是 AWS 的真实错误格式且在题面给出，属有依据的格式约定而非无依据约束。gold 新增的 helper 名 `_valid_parameter_type` 没有被任何测试引用，替代实现（写在 responses.py、或内联判断）同样通过。", "by": "static"},
+  "25": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5835/test.patch", "6da12892a3:tests/test_ssm/test_ssm_boto3.py"], "note": "80 个同文件 P2P 里有 72 处 put_parameter 调用（全部传合法 Type，含 parametrize 的 String/SecureString/StringList 场景），所以\"一律抛 ValidationException\"或\"把枚举写错\"的假修复会大面积失败。精确消息断言也挡住了消息格式敷衍的实现。", "by": "static"},
+  "26": {"status": "issue", "evidence_refs": ["6da12892a3:moto/ssm/responses.py:273-283"], "note": "判分集合没有覆盖\"不传 Type\"与\"Overwrite=True 覆盖既有参数\"两条路径——恰好是 gold 会误伤的路径（检查 27）。见 proposed_regression_tests。", "by": "static"},
+  "27": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-5835/gold.patch", "master:moto/ssm/models.py:2246-2254", "6da12892a3:moto/ssm/responses.py:277"], "note": "**gold 过严，上游后来自己放宽了。** gold 无条件执行 `if not _valid_parameter_type(parameter_type): raise ValidationException(...)`。而 responses.py 的 `type_ = self._get_param(\"Type\")` 在未传 Type 时返回 None，于是 gold 会让\"Overwrite=True 覆盖既有参数且不重传 Type\"这类合法调用抛出 \"Value 'None' at 'type' ...\"。同一仓库 master 分支的同一函数现在写成 `if (not _valid_parameter_type(parameter_type) and not overwrite and name not in self._parameters)`（master:moto/ssm/models.py:2246-2254），即上游事后补了 overwrite / 已存在参数的豁免。base 版本的测试集里 72 处 put_parameter 全部显式传了合法 Type，所以这个缺陷不会被判分发现。", "by": "static"},
+  "28": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5835/test.patch"], "note": "新增断言全部有题面依据（消息字符串、400、operation_name），未引入审查者自定要求。", "by": "static"},
+  "29": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-5835/hints.txt"], "note": "hints_text 4309 字符，是完整的 issue 讨论串，含多个上游源码行号链接，并在末尾由维护者列出\"我会加进单测的细节\"——即 F2P 的四条断言逐条给出。按约定 hints 不可见，当前无泄漏；若并入题面等于把验收清单交给求解者。", "by": "static"},
+  "7": {"status": "not_applicable", "evidence_refs": [], "note": "无外部资产。", "by": "static"}
+ },
+ "issues": [
+  {"category": "gold 缺陷（过严）", "severity": "P2", "evidence_refs": ["mat/getmoto__moto-5835/gold.patch", "master:moto/ssm/models.py:2246-2254"], "proposed_action": "记录为\"参考解本身有缺陷\"的已证实案例（有上游后续修正作旁证）。不改 F2P/P2P；可作为检查 27 的校准样本。注意：若求解者写出**更正确**的实现（带 overwrite 豁免），F2P/P2P 一样通过，所以本题不会误杀正确解，只是参考解不够好。", "next_experiment": "在 gold 之上跑 `put_parameter(Name=x, Value=v, Type='String')` 后再 `put_parameter(Name=x, Value=v2, Overwrite=True)`（不传 Type），预期抛 \"Value 'None' at 'type'\"。"},
+  {"category": "安装配方与离线条件不匹配", "severity": "P2", "evidence_refs": ["repo_level_findings.md#R2"], "proposed_action": "见 R2/R3：moto 4.1 配方改 `pip install -e . --no-build-isolation` 或预置 setuptools wheel；当前不影响判分。", "next_experiment": "在一台机器上对单题验证 --no-build-isolation 后 rc=0 且逐测试结果不变。"},
+  {"category": "参考 ID 身份", "severity": "P3", "evidence_refs": ["repo_level_findings.md#R8"], "proposed_action": "同 R8。", "next_experiment": "同 R8。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只碰 1 个纯测试文件。", "evidence_refs": ["mat/getmoto__moto-5835/test.patch"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_ssm/test_ssm_boto3.py::test_put_parameter_china", "reason": "另一条 put_parameter 路径（不同 partition），确认新增校验没有把区域相关流程一起挡掉。"},
+  {"id": "新增：put_parameter 后用 Overwrite=True 且不传 Type 再写一次", "reason": "直接覆盖 gold 的缺陷路径（检查 27）；上游 master 正是为这条加了豁免条件。当前判分集合与整个 tests/test_ssm 都没有这条。"},
+  {"id": "tests/test_ssm/test_ssm_parameter_store.py", "reason": "参数存储的另一测试文件，覆盖 put/get 的其它组合，验证校验插入位置没有改变既有错误的优先级。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "材料一致、初态含问题（有逐测试证据）、题面给出精确规格、判分防护充分。gold 自身过严（P2）不影响求解者通过判分，属可记录的参考解缺陷；安装 rc=2 已被 R3 解释为假报警。"},
+ "costs": {"minutes": 24}
+}

@@ -1,0 +1,38 @@
+diff --git a/dvc/repo/__init__.py b/dvc/repo/__init__.py
+index 863979c6..c8200a34 100644
+--- a/dvc/repo/__init__.py
++++ b/dvc/repo/__init__.py
+@@ -149,6 +149,11 @@ class Repo:
+             "repo_factory": repo_factory,
+         }
+ 
++        if rev and not scm:
++            from dvc.scm import SCM
++
++            scm = SCM(root_dir or os.curdir)
++
+         self.root_dir, self.dvc_dir, self.tmp_dir = self._get_repo_dirs(
+             root_dir=root_dir, scm=scm, rev=rev, uninitialized=uninitialized
+         )
+diff --git a/tests/func/test_api.py b/tests/func/test_api.py
+index 6050e1a3..3847a070 100644
+--- a/tests/func/test_api.py
++++ b/tests/func/test_api.py
+@@ -162,6 +162,17 @@ def test_open_scm_controlled(tmp_dir, erepo_dir):
+         assert fd.read() == "file content"
+ 
+ 
++def test_open_rev_local(tmp_dir, scm, dvc):
++    tmp_dir.dvc_gen("version", "master", commit="add version")
++
++    with tmp_dir.branch("branch", new=True):
++        tmp_dir.dvc_gen("version", "branchver", commit="add version")
++
++    assert api.read("version", repo=os.fspath(tmp_dir), rev="branch") == (
++        "branchver"
++    )
++
++
+ def test_open_not_cached(dvc):
+     metric_file = "metric.txt"
+     metric_content = "0.6"

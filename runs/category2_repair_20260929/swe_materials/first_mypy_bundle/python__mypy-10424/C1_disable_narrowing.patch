@@ -1,0 +1,12 @@
+diff --git a/mypy/checker.py b/mypy/checker.py
+index 18a7cfdac..c53754aed 100644
+--- a/mypy/checker.py
++++ b/mypy/checker.py
+@@ -3966,6 +3966,7 @@ class TypeChecker(NodeVisitor[None], CheckerPluginInterface):
+             expr_indices: The list of indices of expressions in ``node`` that are being
+                 compared
+         """
++        return {}, {}  # C1: disable type(x)== narrowing entirely
+         type_map = self.type_map
+ 
+         def is_type_call(expr: CallExpr) -> bool:

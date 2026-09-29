@@ -1,0 +1,16 @@
+{
+  "allowed_tools": [
+    "bash",
+    "edit"
+  ],
+  "base_commit": "96fda39bb0dc45a6bd0116cfaf19047d12fcdac4",
+  "image": "namanjain12/orange3_final:22e98f8f4cccc25f0d0217f9f4251b66d49b4237",
+  "image_manifest_digest": "sha256:7eb0b9127698aa0c907f90fd0218253634aa3a489f5e98051d3ca8685b103984",
+  "instance_id": "orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237",
+  "problem_statement": "[ISSUE]\n\n**Title:** Incorrect Mapping in `unique_in_order_mapping` Function\n\n**Description:**\nThe `unique_in_order_mapping` function is intended to return a list of unique elements from the input while preserving their order of first appearance, along with a mapping that associates each original element to its corresponding unique element index.\n\nHowever, when provided with the input `[2, 3, 1]`, the function incorrectly assigns the mapping indices.\n\n**Example Code:**\n```python\nfrom Orange.widgets.data.owcreateclass import unique_in_order_mapping\n\nprint(unique_in_order_mapping([2, 3, 1]))\n```\n\n**Expected Behavior:**\nFor the input `[2, 3, 1]`, the function should return the unique elements `[2, 3, 1]` and the mapping `[0, 1, 2]`.\nThis mapping correctly associates each element in the original list to its index in the list of unique elements.\n\n**Actual Behavior:**\nWith the current implementation, the example prints:\n```\n(array([2, 3, 1]), array([2, 0, 1]))\n```\nThe unique elements are correct, but the mapping `[2, 0, 1]` does not accurately represent the association between the original elements and their unique indices.\n\n[/ISSUE]",
+  "problem_statement_sha256": "sha256:f8701d3a4322270fde2618cc7cfc094460c9a5f1ec874e400c5bfaeef9ec7199",
+  "public_hints": "You are a software engineer fixing a real GitHub issue in the repository checked out at /testbed (your bash tool already runs there).\n- The project's Python environment is the virtualenv at /testbed/.venv: `python` and the repo's test tools already point at it. There is no network access and `pip` may be unavailable, so work with the packages that are already installed.\n- Explore the code, find the root cause, and edit NON-TEST source files to fix the issue.\n- Do NOT modify the repository's test files: the fix is judged by a separate set of tests.\n- You may run tests to verify your fix, but keep runs narrow (a single test file or module) to save time; run them from /testbed with `python -m pytest`.\n- When you are confident the fix is complete, reply with a short summary and stop calling tools.",
+  "repo": "orange3",
+  "schema_id": "rh2.public_task_bundle.v1",
+  "workdir": "/testbed"
+}

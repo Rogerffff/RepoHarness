@@ -1,0 +1,44 @@
+[
+  {
+    "id": "env_import_version",
+    "timeout_s": 120,
+    "expect": "zero",
+    "purpose": "确认解释器、numpy、pandas 与已编译的 pandas._libs.groupby 扩展可导入，且 pandas 来自 /testbed（可编辑安装）。修复前后输出应相同：预计 python 为 /testbed/.venv/bin/python、3.8.20；pandas.__file__ 在 /testbed/pandas/ 下；libgroupby 是 /testbed/pandas/_libs/ 下的 .so。numpy 版本 environment_brief 未写，install.sh 第 2 组组合暗示 1.20.*（推测，以输出为准）。",
+    "cmd": "PYTHONDONTWRITEBYTECODE=1 python -c 'import sys, numpy, pandas; import pandas._libs.groupby as libgroupby; print(\"python\", sys.executable, sys.version.split()[0]); print(\"numpy\", numpy.__version__); print(\"pandas\", pandas.__version__, pandas.__file__); print(\"libgroupby\", libgroupby.__file__)'"
+  },
+  {
+    "id": "repro_issue_example",
+    "timeout_s": 120,
+    "expect": "nonzero",
+    "purpose": "按题面原样复现，并断言 NA 被忽略、组 1 的中位数为 2.5。修复前（base）：stderr 先出现 FutureWarning “Dropping invalid columns in SeriesGroupBy.quantile is deprecated...”，随后 TypeError: float() argument must be a string or a number, not 'NAType'，退出码 1。修复后：打印一行 Series（索引为 group=1.0，值 2.5）及其 dtype，末行 REPRO_OK，退出码 0。断言只看数值，不限定结果 dtype（题面未规定，见 public_read.md 需求 R7）。",
+    "cmd": "PYTHONDONTWRITEBYTECODE=1 python -c 'import pandas as pd\ndf = pd.DataFrame({\"group\": [1, 1], \"values\": [2.5, pd.NA]}, dtype=\"Float64\")\nresult = df.groupby(\"group\")[\"values\"].quantile(0.5)\nprint(repr(result))\nprint(\"result dtype:\", result.dtype, \"| index:\", repr(result.index))\nassert result.tolist() == [2.5], result.tolist()\nprint(\"REPRO_OK: NA ignored, group 1 -> 2.5\")'"
+  },
+  {
+    "id": "locate_root_cause",
+    "timeout_s": 120,
+    "expect": "nonzero",
+    "purpose": "定位原始出错点。base 上 TypeError 会在 _get_cythonized_result 里被捕获、发 FutureWarning 后按原消息重抛，普通 traceback 的末帧只指向重抛处。把 FutureWarning 升级为错误后，链式 traceback 的第一段会露出原始 TypeError 的位置：pandas/core/groupby/groupby.py 第 2957 行 blk_func 中的 vals = vals.astype(cython_dtype, copy=False)，随后是 “During handling of the above exception” 和 FutureWarning。修复后：不再报警告，打印结果（组 1.0 -> 2.5），退出码 0。若更早出现与本题无关的 FutureWarning，以 traceback 末帧为准，退回按 groupby.py 第 2928-2960 行阅读。",
+    "cmd": "PYTHONDONTWRITEBYTECODE=1 python -W error::FutureWarning -c 'import pandas as pd\ndf = pd.DataFrame({\"group\": [1, 1], \"values\": [2.5, pd.NA]}, dtype=\"Float64\")\nprint(df.groupby(\"group\")[\"values\"].quantile(0.5))'"
+  },
+  {
+    "id": "variants_float_masked",
+    "timeout_s": 180,
+    "expect": "nonzero",
+    "purpose": "对同一缺口的合理延伸逐项打印 OK/BAD/ERR 与结果 dtype（只比数值，不限定 dtype）：SeriesGroupBy 标量 q、列表 q、DataFrameGroupBy、Float32、全 NA 组（应为缺失值）、掩码位置底层数据不是 NaN 的 Float64（Int64 转 Float64 后掩码位存的是 1.0，正确中位数为 2.0）、混合列 DataFrame 不应再静默丢掉 Float64 列，以及 base 上已可用的无 NA Float64 基线。修复前：前 6 项 ERR（TypeError ... NAType），mixed_frame_keeps_float64 为 BAD（只得到 [1.5]，Float64 列被丢弃），无 NA 基线 OK（dtype float64），退出码 1。修复后：8 项全部 OK，退出码 0；若只把掩码位原样的底层数据交给 Cython 内核，masked_slot_not_nan 会得到 1.0（BAD）。",
+    "cmd": "PYTHONDONTWRITEBYTECODE=1 python -W ignore::FutureWarning -c 'import sys\nimport pandas as pd\n\ndef run(name, func, expected):\n    try:\n        res = func()\n        got = [None if pd.isna(v) else float(v) for v in res.tolist()]\n    except Exception as err:\n        print(\"ERR \", name, \"->\", type(err).__name__ + \":\", err)\n        return False\n    ok = got == expected\n    print(\"OK  \" if ok else \"BAD \", name, \"->\", got, \"| dtype:\", res.dtype)\n    return ok\n\nkeys = [\"x\"] * 3 + [\"y\"] * 3\ndf = pd.DataFrame({\"a\": keys, \"b\": pd.array([1.0, 0.0, None] * 2, dtype=\"Float64\")})\ndf32 = pd.DataFrame({\"a\": keys, \"b\": pd.array([1.0, 0.0, None] * 2, dtype=\"Float32\")})\nallna = pd.Series(pd.array([1.0, 3.0, None, None], dtype=\"Float64\"))\nstale = pd.Series(pd.array([1, None, 3], dtype=\"Int64\")).astype(\"Float64\")\nmixed = pd.DataFrame({\"k\": [1, 1], \"f\": [1.0, 2.0], \"g\": pd.array([2.5, None], dtype=\"Float64\")})\nnona = pd.Series([2.5, 3.5], dtype=\"Float64\")\nchecks = [\n    (\"series_scalar_q\", lambda: df.groupby(\"a\")[\"b\"].quantile(0.5), [0.5, 0.5]),\n    (\"series_list_q\", lambda: df.groupby(\"a\")[\"b\"].quantile([0.0, 0.5, 1.0]), [0.0, 0.5, 1.0, 0.0, 0.5, 1.0]),\n    (\"frame_scalar_q\", lambda: df.groupby(\"a\").quantile(0.5)[\"b\"], [0.5, 0.5]),\n    (\"float32_scalar_q\", lambda: df32.groupby(\"a\")[\"b\"].quantile(0.5), [0.5, 0.5]),\n    (\"all_na_group\", lambda: allna.groupby([\"x\", \"x\", \"y\", \"y\"]).quantile(0.5), [2.0, None]),\n    (\"masked_slot_not_nan\", lambda: stale.groupby([0, 0, 0]).quantile(0.5), [2.0]),\n    (\"mixed_frame_keeps_float64\", lambda: mixed.groupby(\"k\").quantile(0.5).iloc[0], [1.5, 2.5]),\n    (\"no_na_float64_baseline\", lambda: nona.groupby([1, 1]).quantile(0.5), [3.0]),\n]\nresults = [run(*c) for c in checks]\nsys.exit(0 if all(results) else 1)'"
+  },
+  {
+    "id": "public_test_quantile",
+    "timeout_s": 600,
+    "expect": "zero",
+    "purpose": "现有公开测试回归：覆盖插值方式、列表 q、object 列报 TypeError 且带 FutureWarning、Int64/boolean 可空数组结果为 float64 等应保留的旧行为。修复前后都应通过；按静态计数预计约 222 passed、2 skipped（test_quantile.py 第 38-41 行的 nearest/0.5 组合），数字以实际输出为准。缺少原 pytest 配置时可能出现 unknown marker 之类的警告，不影响结果。",
+    "cmd": "PYTHONDONTWRITEBYTECODE=1 python -m pytest pandas/tests/groupby/test_quantile.py -q -p no:cacheprovider"
+  },
+  {
+    "id": "related_quantile_paths",
+    "timeout_s": 600,
+    "expect": "zero",
+    "purpose": "同一实现的其他入口回归：只读缓冲区上的 groupby agg quantile（test_cython.py 的 test_read_only_buffer_source_agg[quantile]），以及经 groupby(...).aggregate(\"quantile\") 实现的 Resampler.quantile（resample/test_base.py 中名称含 quantile 的用例）。修复前后都应通过。",
+    "cmd": "PYTHONDONTWRITEBYTECODE=1 python -m pytest pandas/tests/groupby/aggregate/test_cython.py pandas/tests/resample/test_base.py -q -p no:cacheprovider -k quantile"
+  }
+]

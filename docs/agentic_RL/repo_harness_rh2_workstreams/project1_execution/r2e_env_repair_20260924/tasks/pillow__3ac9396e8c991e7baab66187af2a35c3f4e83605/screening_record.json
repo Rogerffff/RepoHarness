@@ -1,0 +1,269 @@
+{
+ "schema_id": "rh2.r2e_screening_record.v1",
+ "task_id": "r2e_gym_subset::pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605",
+ "instance_id": "pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605",
+ "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0",
+ "source_adapter_ref": "s2_r2e ingest_manifest_v0 (pin ea567fec…)",
+ "recipe_ref": {
+  "derived_image": "r2e_derive_v1",
+  "resources": "default"
+ },
+ "code_snapshot_ref": "runs/r2e_snapshot_20260923.sha256 (388 files) + r2e_env_tools.sha256（远端 run_dev_probe.py / dev_probe_agent.sh sha 与本地一致）",
+ "facts_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/facts.json",
+ "dev_probe_ref": "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/dev_probe.json",
+ "checks": {
+  "R01": {
+   "status": "pass",
+   "note": "派生镜像 21 项复核通过；覆盖表 / 隐藏测试树 / 入口脚本 / HEAD 与评分面一致；探针复核：容器镜像 = 派生镜像 sha256:7a80aa717582…，GIT_HEAD = base_commit 48e4e0722e6a",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/facts.json",
+    "runs/r2e_rf_20260923/remote/r2e_derived/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/facts.json",
+    "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/dev_probe.json"
+   ],
+   "by": "collate_facts.py + P4 探针复核"
+  },
+  "R02": {
+   "status": "pass",
+   "note": "noop 0 来自 1 个 mismatched 键（无 missing、无零解析）（num_parsed_tests=11）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_081055e4.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_081055e4.diagnostics.json"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R03": {
+   "status": "pass",
+   "note": "题面 1137 字符、含示例（示例用 hopper.png，复现改用内存图像），公开复现在 base 上得到题面所述 `struct.error: required argument is not an integer`。run_tests.sh 可见（`.venv/bin/python -W ignore r2e_tests/unittest_custom_runner.py`，只泄漏隐藏目录名与入口），install.sh 无修复内容；conda 提示为全局 E09。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/prepared_r2e/prompts.jsonl",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605.py",
+    "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p4/image_readout/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605.txt"
+   ],
+   "by": "P4 sub-agent"
+  },
+  "R04": {
+   "status": "pass",
+   "note": "hygiene test_files = r2e_tests/{__init__.py, helper.py, test_1.py, test_2.py, unittest_custom_runner.py} + run_tests.sh（rh2/src/repoharness2/adapters/slime/r2e_grading_scripts.py 的 official 文件清单；日志 RH2_SETUP_EXPECTED_TEST_FILES=6）；gold 触碰 ['PIL/TiffImagePlugin.py', 'PIL/TiffTags.py']，都是库源码、与之不相交；解题不需要改 r2e_tests 以外的测试辅助文件。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/facts.json",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_8fa0290e.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_8fa0290e.diagnostics.json",
+    "rh2/src/repoharness2/adapters/slime/r2e_grading_scripts.py"
+   ],
+   "by": "P4 sub-agent"
+  },
+  "R05": {
+   "status": "pass",
+   "note": "python → /testbed/.venv/bin/python 3.9.21 /testbed/.venv /opt/py/cpython-3.9.21-linux-x86_64-gnu（PATH 首项 /testbed/.venv/bin）；pytest 8.3.4；pip 缺失（PIP_VERSION=“/testbed/.venv/bin/python: No module named pip”，原始日志 WHICH_pip / pip3 / uv = MISSING；注意 dev_probe.json 的 derived.pip_ok=true 是工具误判，见包 README）；导入方式 editable finder，cwd=/testbed 与 cwd=/tmp 都导入 /testbed/PIL/__init__.py；gcc / make / git 在（原始日志 WHICH_*）。包目录 /testbed/PIL（非 src/）、editable finder 安装；PIL.__file__=/testbed/PIL/__init__.py；Pillow 3.1 的 PIL 包只有 PILLOW_VERSION（复现打印 3.1.0.dev0）没有 `__version__`，这就是 grader 侧 pkg_version=\"?\" 的原因（不是导入异常）；Image.core=/testbed/PIL/_imaging.cpython-39-x86_64-linux-gnu.so（树内编译扩展，cwd=/tmp 可加载）。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/agent_probe.log",
+    "runs/r2e_env_repair_20260924/p4/image_readout/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605.txt"
+   ],
+   "by": "run_dev_probe.py + P4 sub-agent"
+  },
+  "R06": {
+   "status": "pass",
+   "note": "期望 11 个键全 PASSED，无非 PASSED 键；noop 日志里的 “orphaned temp file” 行来自测试 helper 的临时文件清理提示，无害；无未跟踪资产目录。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_8fa0290e.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_081055e4.eval.log",
+    "runs/r2e_env_repair_20260924/p4/targeted_public_tests/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/agent_probe.log",
+    "runs/r2e_env_repair_20260924/p4/targeted2_cmds/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/agent_probe.log"
+   ],
+   "by": "P4 sub-agent"
+  },
+  "R07": {
+   "status": "pass",
+   "note": "派生镜像 facts：agent / grader uid 解释器可执行、私有目录 ls / cat 均 denied；探针（agent/54321，chown 后）：/testbed=ok、site-packages=ok、.venv/bin=ok、home=ok、/tmp=ok、/usr/local=denied（site-packages 在 /testbed/.venv 内，chown 后 agent 可写——反作弊面另议）。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/facts.json",
+    "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/dev_probe.json"
+   ],
+   "by": "collate_facts.py + run_dev_probe.py + P4 sub-agent"
+  },
+  "R08": {
+   "status": "pass",
+   "note": "导入 /testbed/PIL/__init__.py；gold 11/11",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_8fa0290e.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_8fa0290e.diagnostics.json"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R09": {
+   "status": "pass",
+   "note": "入口是自定义 unittest runner，自己打印 pytest 形态的 `short test summary info` 段（`PASSED test_1::Class::method`），parser 取 `::` 之后的段得到 `Class.method` 键：11 个键全解析、与独立 runner 逐键一致。公开测试：pytest 能收集 / 运行 Tests/test_000_sanity.py（1 passed）与 Tests/test_tiff_ifdrational.py（2 passed）；但相关文件 Tests/test_file_tiff_metadata.py 在 pytest 8 下 3 例假失败（Tests/helper.py 的 delete_tempfile 读 `currentResult.errors`，pytest 的 TestCaseFunction 没有该属性，凡写临时文件的用例都失败）；`cd Tests && python -m unittest` 因夹具路径相对仓库根而 5 errors；在 /testbed 下 `python Tests/test_file_tiff_metadata.py` 7 tests OK。公开复现 REPRO_OBSERVED=1。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p4/targeted_public_tests/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/agent_probe.log",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605.py",
+    "runs/r2e_env_repair_20260924/p4/targeted2_cmds/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/agent_probe.log"
+   ],
+   "by": "run_dev_probe.py + P4 sub-agent"
+  },
+  "R10": {
+   "status": "pass",
+   "note": "NET_CONNECT_RC=1、NET_DNS_RC=2（无出网；评分容器同为 --network none）；期望非 PASSED 键无一与网络有关；解题 / 测试不需要下载。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/dev_probe.json",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_8fa0290e.eval.log"
+   ],
+   "by": "run_dev_probe.py + P4 sub-agent"
+  },
+  "R11": {
+   "status": "pass",
+   "note": "不依赖外部服务；非 PASSED 键（若有）原因见 R06，均非服务不可达。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_8fa0290e.eval.log"
+   ],
+   "by": "P4 sub-agent"
+  },
+  "R12": {
+   "status": "pass",
+   "note": "峰值 362 MB / 限额 4 GiB = 0.088; setup 22s test 0s；探针 chown -R /testbed 29.27 s（与其它包、中央复跑并行，耗时不作校准，E08）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_8fa0290e.diagnostics.json",
+    "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/root_init.log"
+   ],
+   "by": "collate_facts.py + run_dev_probe.py + P4 sub-agent"
+  },
+  "R13": {
+   "status": "pass",
+   "note": "noop / gold 同条件各 3 次（r2e-rf-reps / requal / all；reps 用重建前的镜像 ID，requal / all 用当前派生镜像）reward 与差异集合一致。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-reps-noop-_8990d155.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-reps-gold-_a578def6.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-requal-noo_93b56006.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-requal-gol_39c520d7.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_081055e4.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_8fa0290e.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R14": {
+   "status": "pass",
+   "note": "每次评分都是 fresh 容器（replay_grade）；omitted_cache_count：pillow 镜像自带的 __pycache__（baseline 与 post 计数相同；pyc 头的源码 mtime / size 与 base 源码逐个相符，是 base 源码编译产物，不是泄漏载体）；探针与定向运行前后 git status 行数 2→2（复现脚本与公开测试未弄脏工作区）；并发只记录：本轮 4 包 + 中央复跑并行。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl",
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl",
+    "runs/r2e_env_repair_20260924/p4/image_readout/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605.txt",
+    "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p4/targeted_public_tests/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/agent_probe.log"
+   ],
+   "by": "P4 sub-agent"
+  },
+  "R15": {
+   "status": "pass",
+   "note": "2 行 agree（reward、差异集合、观测映射逐键相同）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.json",
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.md"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R16": {
+   "status": "pass",
+   "note": "目标键 1：TestFileTiffMetadata.test_exif_div_zero（noop 为 ERROR，原因 `struct.error: required argument is not an integer`）与题面一致；gold 后无残留不符键。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_081055e4.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_8fa0290e.eval.log",
+    "runs/r2e_rf_20260923/remote/prepared_r2e/prompts.jsonl"
+   ],
+   "by": "collate_facts.py + P4 sub-agent"
+  },
+  "R17": {
+   "status": "pass",
+   "note": "派生镜像：fix_present=no、私有目录 700 root、HEAD 无子提交；探针：GIT_HEAD_CHILDREN_WORDS=1、refs=0、reflog=0、stash=0、remotes=“”、无 *.orig/*.rej/*.patch/*.diff 残留；`?? install.sh` 是通用安装脚本（uv venv + uv pip install，全文见 image_readout），不含修复；run_tests.sh 只泄漏隐藏目录名与入口命令。镜像自带 pyc 均由 base 源码编译（见 R14）。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/facts.json",
+    "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p4/image_readout/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605.txt"
+   ],
+   "by": "run_dev_probe.py + P4 sub-agent"
+  },
+  "R18": {
+   "status": "pass",
+   "note": "本题记录的处置类别：solver_condition；材料修订只出提案，未改 expected / 隐藏测试 / gold / 题面；无资源配方。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/packages/p4/README.md"
+   ],
+   "by": "P4 sub-agent"
+  },
+  "R19": {
+   "status": "pass",
+   "note": "命令与证据：探针 unit r2e-p4-probe-1825（run_dev_probe.py --activation none --repro-dir）、定向公开测试 r2e-p4-probe-1832、跟进 r2e-p4-probe-1841；R-f 账本 run_id r2e-rf-all-noop / r2e-rf-all-gold；复现脚本 sha 见 repros.sha256。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p4/probe_1825.log",
+    "runs/r2e_env_repair_20260924/p4/targeted_1832.log",
+    "runs/r2e_env_repair_20260924/p4/followup_1841.log",
+    "runs/r2e_env_repair_20260924/p4/repros.sha256"
+   ],
+   "by": "P4 sub-agent"
+  },
+  "R20": {
+   "status": "pass",
+   "note": "无资源配方；提案只针对本题。同族现象（pytest.warns(None) 死键、入口 -W ignore 死键、Scrapy 1.1 与 Twisted 不兼容、venv 无 pip）按题记录，同仓不同版本不自动继承。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/packages/p4/README.md"
+   ],
+   "by": "P4 sub-agent"
+  }
+ },
+ "issues": [
+  {
+   "category": "solver_condition",
+   "scope": "repo:pillow",
+   "summary": "venv 无 pip（install.sh 用 `uv venv` + `uv pip`；`python -m pip` → No module named pip；pip / pip3 / uv 均不在 PATH），而公开提示写“`python`, `pip` and the repo's test tools already point at it”（另有 conda 措辞，全局 E09）",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/agent_probe.log",
+    "runs/r2e_env_repair_20260924/p4/image_readout/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605.txt",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl"
+   ],
+   "proposed_action": "任务面 / 系统提示声明“无 pip、无网络、不需要安装依赖”（与 E09 conda 措辞一并修）；本题解题不需要装包",
+   "status": "open"
+  },
+  {
+   "category": "solver_condition",
+   "scope": "task",
+   "summary": "公开 Tests/ 用 pytest 跑会假失败（Pillow 3.1 的 Tests/helper.py 与 pytest 8 不兼容：写临时文件的用例 AttributeError）；在 Tests/ 里跑 unittest 夹具路径又失效；可用方式是在 /testbed 下 `python Tests/test_<name>.py`",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p4/targeted_public_tests/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/agent_probe.log",
+    "runs/r2e_env_repair_20260924/p4/targeted2_cmds/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/agent_probe.log"
+   ],
+   "proposed_action": "写入 solver_conditions；是否写进题包 / 提示由任务面决定（E10）",
+   "status": "open"
+  }
+ ],
+ "solver_conditions": {
+  "cwd_required": "none（cwd=/tmp 也导入 /testbed 下的包）",
+  "interpreter": "/testbed/.venv/bin/python 3.9.21（PATH 首项；docker exec 继承镜像 ENV）",
+  "pip": "absent（uv venv；pip / pip3 / uv 均不可用）",
+  "network": "none（NET_CONNECT_RC=1、DNS 失败）；loopback 可用",
+  "public_tests": "pytest：Tests/test_000_sanity.py collect / run rc 0，Tests/test_tiff_ifdrational.py 2 passed，Tests/test_file_tiff_metadata.py 3 假失败 / 4 passed（helper 与 pytest 8 不兼容）；`python Tests/test_file_tiff_metadata.py`（cwd=/testbed）7 tests OK；`cd Tests && python -m unittest …` 5 errors（夹具路径相对仓库根）",
+  "repro": "REPRO_OBSERVED=1（SAVE=raised error: required argument is not an integer）",
+  "notes": "Pillow 3.1.0.dev0；包 /testbed/PIL（editable finder）；无 `PIL.__version__`（grader pkg_version=\"?\" 属正常）；评分入口是隐藏的自定义 unittest runner"
+ },
+ "classification": "solver_condition",
+ "revision_refs": [],
+ "disposition": {
+  "state": "environment_qualified",
+  "scope": "环境资格（不含题目质量 / 训练准入）",
+  "reason": "R01/R02/R08/R13/R15 pass（R13 已有 3 次同条件运行）、探针最小条件满足；解题侧条件：公开测试须以脚本方式运行（见 solver_conditions）",
+  "evidence_refs": [
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/facts.json",
+   "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/dev_probe.json",
+   "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_8fa0290e.eval.log",
+   "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_081055e4.eval.log"
+  ],
+  "reviewer": null
+ },
+ "costs": {
+  "probe_seconds": 33.86,
+  "targeted_seconds": 61.14,
+  "rerun_attempts": 0,
+  "rerun_seconds": 0
+ }
+}

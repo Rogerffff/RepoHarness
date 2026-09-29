@@ -1,0 +1,1146 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B线三任务夜间汇报 · 2026-09-25</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap">
+<style>
+:root{
+  --bg:#f4f5f2; --panel:#ffffff; --ink:#1d2320; --muted:#5b6862; --line:#d7ddd9; --soft:#e9edea;
+  --accent:#1f5f8b; --accent-soft:#dde9f3;
+  --ok:#2e7d46; --ok-soft:#e0f1e5; --warn:#a86b12; --warn-soft:#f8ecd6; --bad:#b83c2b; --bad-soft:#f7e1dc; --info:#5a4fa0; --info-soft:#e8e5f6;
+  --sans:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --serif:"Noto Serif SC","Songti SC",serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){color-scheme:dark;
+  --bg:#131817; --panel:#1b2220; --ink:#e3e9e6; --muted:#9aa8a2; --line:#2f3a37; --soft:#232c2a;
+  --accent:#6fb0dc; --accent-soft:#18303f; --ok:#61c07c; --ok-soft:#18301f; --warn:#e2a64a; --warn-soft:#352914; --bad:#ea7b66; --bad-soft:#3a1f1a; --info:#a79cf0; --info-soft:#262240;}}
+:root[data-theme="dark"]{color-scheme:dark;
+  --bg:#131817; --panel:#1b2220; --ink:#e3e9e6; --muted:#9aa8a2; --line:#2f3a37; --soft:#232c2a;
+  --accent:#6fb0dc; --accent-soft:#18303f; --ok:#61c07c; --ok-soft:#18301f; --warn:#e2a64a; --warn-soft:#352914; --bad:#ea7b66; --bad-soft:#3a1f1a; --info:#a79cf0; --info-soft:#262240;}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.7;padding-inline:16px;margin:0}
+.wrap{max-width:1060px;margin:0 auto;padding-block:28px 64px}
+h1,h2,h3{font-family:var(--serif);line-height:1.3;margin:0;text-wrap:balance}
+h1{font-size:29px} h2{font-size:21px;margin-bottom:4px} h3{font-size:16.5px}
+p{margin:0} .muted{color:var(--muted)}
+code{font-family:var(--mono);font-size:.86em;background:var(--soft);padding:1px 5px;border-radius:4px}
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);margin-inline:-16px;padding:8px 16px}
+nav .in{max-width:1060px;margin:0 auto;display:flex;gap:6px;flex-wrap:wrap}
+nav a{color:var(--muted);text-decoration:none;font-size:13px;padding:3px 10px;border-radius:99px}
+nav a:hover,nav a:focus-visible{background:var(--accent-soft);color:var(--accent);outline:none}
+section{margin-top:40px;display:grid;gap:14px}
+.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--accent);font-weight:700}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:16px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.tile b{display:block;font-family:var(--mono);font-size:26px;line-height:1.2}
+.tile span{color:var(--muted);font-size:13px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 20px}
+.box ol,.box ul{margin:6px 0 0;padding-left:1.3em;display:grid;gap:6px}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:9px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+th{font-size:12px;color:var(--muted);background:var(--soft);white-space:nowrap}
+tr:last-child td{border-bottom:none}
+.pill{display:inline-block;font-size:12px;padding:1px 9px;border-radius:99px;font-weight:500;white-space:nowrap}
+.s-ok{background:var(--ok-soft);color:var(--ok)} .s-derived{background:var(--accent-soft);color:var(--accent)}
+.s-limit{background:var(--warn-soft);color:var(--warn)} .s-pre{background:var(--info-soft);color:var(--info)} .s-dispute{background:var(--bad-soft);color:var(--bad)}
+.flow{display:flex;flex-wrap:wrap;gap:8px}
+.step{flex:1 1 170px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13.5px}
+.step b{display:block;color:var(--accent);font-size:14px}
+.filters{display:flex;flex-wrap:wrap;gap:6px}
+.filters button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:99px;padding:3px 12px;cursor:pointer}
+.filters button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.filters button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.group-title{margin-top:10px;font-family:var(--serif);font-size:17px;color:var(--muted)}
+details.task{background:var(--panel);border:1px solid var(--line);border-radius:10px}
+details.task summary{cursor:pointer;list-style:none;padding:12px 16px;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}
+details.task summary::-webkit-details-marker{display:none}
+details.task summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:10px}
+details.task summary h3::before{content:"▸ ";color:var(--accent);font-family:var(--mono)}
+details.task[open] summary h3::before{content:"▾ "}
+details.task summary .one{flex-basis:100%;color:var(--muted);font-size:14px}
+.body{border-top:1px solid var(--line);padding:12px 16px 16px;display:grid;gap:8px}
+.kv{display:grid;grid-template-columns:6.5em 1fr;gap:6px 14px;font-size:14px}
+.kv dt{color:var(--muted)} .kv dd{margin:0}
+.cards{display:grid;gap:10px}
+.issue{border-left:4px solid var(--c);background:var(--panel);border-radius:8px;padding:12px 16px;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.issue h3{color:var(--c);margin-bottom:4px}
+pre{font-family:var(--mono);font-size:12.5px;background:var(--soft);padding:10px 12px;border-radius:8px;overflow-x:auto;margin:6px 0 0}
+footer{margin-top:44px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+@media (max-width:640px){.kv{grid-template-columns:1fr}.kv dt{font-weight:600}h1{font-size:24px}}
+/* R2E 部分（任务三，09-25 追加） */
+.part{margin-top:64px;padding-top:26px;border-top:3px solid var(--accent);display:grid;gap:8px}
+.part-title{font-size:26px}
+nav .sep{color:var(--line);padding:3px 2px;font-size:13px}
+.r2e-table{min-width:640px}
+/* 窄屏防溢出：网格子项允许收缩，长路径与长标识符可断行 */
+.cards>*,.flow>*{min-width:0}
+.kv dd,footer code,.issue p code{overflow-wrap:anywhere}
+section,.part{scroll-margin-top:92px}
+.box ul ul{margin-top:4px;gap:3px}
+
+/* Codex 任务一：独立筛选作用域，避免影响原任务二/R2E */
+.task1-header{display:grid;gap:14px;margin-bottom:12px}
+.task1-header .tiles{margin-top:0}
+.task1-note{border-left:4px solid var(--accent)}
+.task1-caption{caption-side:top;text-align:left;font-size:13px;color:var(--muted);padding:10px 12px}
+.task1-controls{display:flex;flex-wrap:wrap;gap:12px;align-items:end;background:var(--panel);border:1px solid var(--line);padding:14px;border-radius:10px}
+.task1-controls label{display:grid;gap:4px;font-size:12.5px;color:var(--muted)}
+.task1-controls select,.task1-controls input{font:inherit;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line);padding:8px 10px;border-radius:7px;min-height:40px;max-width:100%}
+.task1-search-label{flex:1 1 250px}
+.task1-controls button,.task1-toolbar button{font:inherit;font-size:13px;color:var(--ink);background:var(--panel);border:1px solid var(--line);padding:7px 12px;border-radius:7px;cursor:pointer}
+.task1-controls :focus-visible,.task1-toolbar :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.task1-toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;color:var(--muted);font-size:13px}
+.task1-toolbar>div{display:flex;flex-wrap:wrap;gap:8px}
+.task1-group{display:grid;gap:10px;min-width:0}
+.task1-next-kind{font-size:12px;margin-left:auto}
+.task1-links{display:flex;flex-wrap:wrap;gap:6px 18px}
+.task1-header a,#task1-how a,#task1-tasks a,#task1-handoff a,#task1-wiring a{color:var(--accent);text-underline-offset:3px}
+#task1-tasks .kv dd,#task1-wiring td{overflow-wrap:anywhere}
+#task1-tasks [hidden]{display:none!important}
+.task1-wiring-table{min-width:700px}
+.task1-wiring-table th{white-space:normal;min-width:130px}
+#task1{scroll-margin-top:110px}
+#top{margin-top:64px;padding-top:26px;border-top:3px solid var(--accent);scroll-margin-top:110px}
+@media(max-width:640px){.task1-next-kind{margin-left:0;flex-basis:100%}.task1-controls>label{flex:1 1 130px;min-width:0}.task1-controls .task1-search-label{flex-basis:100%}section,.part,#task1,#top{scroll-margin-top:175px}}
+@media print{nav,.task1-controls,.task1-toolbar{display:none}.task1-card{break-inside:avoid}}
+
+</style>
+<aside id="current-report-entry" style="background:#edf5f1;color:#202c31;border-bottom:1px solid #cddfd6;padding:14px 20px;font:16px/1.6 -apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif">
+<strong>此页保留历史批次记录。</strong> SWE-Gym、R2E 的当前逐题状态、探针准备和处理规则已统一到
+<a href="screening_standard_v1.html#overview" style="color:#246459;font-weight:600">新的汇报入口</a>（2026-09-28）。本页旧结论须结合后续更正阅读。
+</aside>
+
+
+<nav><div class="in"><a href="#task1">任务一概览</a><a href="#task1-tasks">32题静态明细</a><a href="#task1-wiring">接线总览</a><span class="sep">|</span><a href="#top">任务二概览</a><a href="#latest">任务二最新结论</a><a href="#cats">问题分类</a><a href="#ready">能否进探针</a><a href="#how">怎么验证的</a><a href="#matrix">总表</a><a href="#tasks">逐题</a><a href="#found">重要发现</a><a href="#wiring">探针接线</a><a href="#next">待决定</a><span class="sep">|</span><a href="#r2e">R2E 概览</a><a href="#r2e-tasks">R2E 逐题</a><a href="#r2e-found">R2E 发现</a><a href="#r2e-wiring">R2E 接线</a><a href="#r2e-next">R2E 待决定</a><span class="sep">|</span><a href="#r2e2">R2E 第二批</a><a href="#r2e2-tasks">第二批逐题</a><a href="#r2e2-found">第二批发现</a><a href="#r2e2-next">第二批待决定</a><span class="sep">|</span><a href="screening_standard_v1.html" style="color:var(--accent)">审查标准 v1（新页面）</a></div></nav>
+
+<div class="wrap">
+<!-- CODEX TASK1 REPORT START · 2026-09-25 -->
+<header id="task1" class="task1-header">
+  <div class="eyebrow">项目一 · B线 · 任务一 · Codex / 原质量审查协调任务 · 09-25 夜</div>
+  <h1>新增32道 SWE-Gym 题，逐题静态质量审查</h1>
+  <p class="muted" style="max-width:76ch;margin-top:10px">从216题中排除此前已审40题，选出 MONAI、Conan、Dask、Pydantic 各8题。每题重新从公开要求、源码、隐藏验收和参考补丁入手，再核对旧调查与历史真实RH2日志。<b>32题已交付并经根任务复核；本批没有新增环境或模型运行。</b></p>
+  <div class="tiles"><div class="tile"><b>32</b><span>新增题，全部静态收口</span></div><div class="tile"><b>4</b><span>仓库，各8题</span></div><div class="tile"><b>12</b><span>有条件开发候选</span></div><div class="tile"><b>20</b><span>先处理具体质量疑点</span></div><div class="tile"><b>72</b><span>加旧40题的独立题数</span></div></div>
+  <div class="box task1-note"><b>怎样读这份三任务报告</b><p>本节是任务一的<b>新32题静态审查</b>；下方保留 Claude 的<a href="#top">任务二21题开发实测</a>与<a href="#r2e">R2E首批8题</a>。任务二的21题来自旧题池，不能把各栏候选数直接相加称为“训练合格题”。先看本节逐题结论，再看<a href="#task1-wiring">接线完成与剩余项</a>。</p></div>
+</header>
+
+<section id="task1-how">
+  <div class="eyebrow">任务一 · 做了什么</div><h2>同一套问题，分角色从原件审起</h2>
+  <div class="flow">
+    <div class="step"><b>① 固定题目与版本</b>绑定原题、base源码、gold、测试、参考集合和精确历史日志；材料准备中发现的跨题候选引用已在私有审查前修正。</div>
+    <div class="step"><b>② 每题公开读者</b>只看公开包，判断用户要求、可推知的约束、合理修法和开发需求，不看答案及旧结论。</div>
+    <div class="step"><b>③ 私有主审</b>同仓2–3题小包；核需求与断言、误拒/漏检、参考修复和回归风险，封存初判后再读各题历史。</div>
+    <div class="step"><b>④ 独立复核</b>新上下文先读原件、封存整包初判，再交叉看主审与历史；不同意的地方回源码核对，不按投票决定。</div>
+    <div class="step"><b>⑤ 根任务抽验</b>按首12、后9、末11分批核关键证据与结论边界，修正过强推断，给每题一个最有价值的下一步。</div>
+  </div>
+  <p class="muted">审查子agent显式配置为 GPT-6 Astra / high，新上下文；协调者不充当独立读者。提示限制不等于操作系统文件隔离。P2P大集合按风险阅读，未冒称每条旧断言都人工通读。</p>
+  <div class="scroll"><table><caption class="task1-caption">结果按仓库拆分</caption><thead><tr><th>仓库</th><th>已审</th><th>有条件候选</th><th>质量优先</th></tr></thead><tbody><tr><th scope="row">MONAI</th><td>8</td><td>4</td><td>4</td></tr><tr><th scope="row">Conan</th><td>8</td><td>3</td><td>5</td></tr><tr><th scope="row">Dask</th><td>8</td><td>2</td><td>6</td></tr><tr><th scope="row">Pydantic</th><td>8</td><td>3</td><td>5</td></tr><tr><th scope="row">合计</th><td><b>32</b></td><td><b>12</b></td><td><b>20</b></td></tr></tbody></table></div>
+  <div class="box"><b>两类状态怎样理解</b><ul><li><b>有条件候选</b>：公开核心要求与局部修复有正证据，可优先取得实际actor（解题进程）的开发证据；仍不是模型探针或训练准入。32题当前都未由任务一标为运行就绪。</li><li><b>质量优先</b>：存在应先查清的规格、断言或参考补丁问题，包含待运行风险；不等于20道确定坏题。本批是定向选样，不能据此估计全池坏题率。</li><li><b>历史对照</b>：noop是未打修复的基线，gold是来源参考补丁；下列数字是原选定命令的测试摘要，不是模型分数，也不一定等于参考键总数。历史grader通过不证明当前actor可开发。</li></ul></div>
+</section>
+
+<section id="task1-tasks">
+  <div class="eyebrow">任务一 · 逐题</div><h2>32题具体查了什么、得出了什么</h2>
+  <p class="muted">点开题卡查看结论、历史证据及后续。源码已能确定的机制与尚未运行的风险分别注明。搜索支持题号、仓库和关键词。</p>
+  <div class="task1-controls">
+    <label>仓库<select id="task1-repo"><option value="all">全部仓库</option><option value="MONAI">MONAI</option><option value="Conan">Conan</option><option value="Dask">Dask</option><option value="Pydantic">Pydantic</option></select></label>
+    <label>状态<select id="task1-status"><option value="all">全部状态</option><option value="candidate">有条件候选 · 12</option><option value="quality">质量优先 · 20</option></select></label>
+    <label class="task1-search-label">题号 / 关键词<input type="search" id="task1-search" placeholder="例如 5686、梯度、alias" autocomplete="off"></label>
+    <button type="button" id="task1-reset">重置筛选</button>
+  </div>
+  <div class="task1-toolbar"><span id="task1-count" role="status" aria-live="polite">显示32 / 32题</span><div><button type="button" id="task1-expand">展开当前结果</button><button type="button" id="task1-collapse">收起全部</button></div></div>
+  <p id="task1-empty" class="box" hidden>没有符合当前筛选的题目。可清除关键词或切换仓库。</p>
+  <div class="task1-group" data-repo="MONAI"><h3 class="group-title">MONAI · 8题</h3><div class="cards">
+<details class="task task1-card" id="task1-monai-2446" data-repo="MONAI" data-kind="candidate" data-next="actor" data-search="Project-MONAI__MONAI-2446 SmartCacheDataset 打乱了调用者的输入列表 对照外部列表不变、内部仍要 shuffle、缓存替换三项要求，阅读数据集代码与对应断言。 gold 在打乱前浅复制外层列表，核心方向成立。但目标测试用数组列表，内部 shuffle 回归测试用字典列表，缺少“同类输入同时保证两者”的联合约束；未实测错误候选。 正式 actor 中核初态、工作区导入与兼容依赖，并执行公开 shuffle/输入保留流程；不是只检查 import。 MONAI">
+<summary><h3>MONAI2446</h3><span class="pill s-derived">有条件候选</span><span class="muted task1-next-kind">下一步：验证公开开发流程</span><span class="one">SmartCacheDataset 打乱了调用者的输入列表</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>对照外部列表不变、内部仍要 shuffle、缓存替换三项要求，阅读数据集代码与对应断言。</dd>
+<dt>结论与限制</dt><dd>gold 在打乱前浅复制外层列表，核心方向成立。但目标测试用数组列表，内部 shuffle 回归测试用字典列表，缺少“同类输入同时保证两者”的联合约束；未实测错误候选。</dd>
+<dt>历史对照</dt><dd>compat_v1：noop 1失败/7通过 → gold 8通过；NiBabel 兼容问题在该历史组合中已解决。不能据旧失败记录继续判此环境坏。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>正式 actor 中核初态、工作区导入与兼容依赖，并执行公开 shuffle/输入保留流程；不是只检查 import。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-2446/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-2446/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack01_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-2446/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-monai-3715" data-repo="MONAI" data-kind="quality" data-next="contract" data-search="Project-MONAI__MONAI-3715 Evaluator 的 mode 不接受字符串 把公开 train 示例与新增 eval 测试逐项对照，检查模式规范化、forward 时训练状态与梯度。 gold 的规范化合理，但目标验收只测 eval 字符串，核心 train 行为没测；不能把“修好 eval”当作完成整个公开需求。 补清公开 train 行为验收：forward 时模式、梯度状态及结束后恢复，不强制某个内部函数对象或实现形状。 MONAI">
+<summary><h3>MONAI3715</h3><span class="pill s-limit">质量优先处理</span><span class="muted task1-next-kind">下一步：先对齐需求与验收</span><span class="one">Evaluator 的 mode 不接受字符串</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>把公开 train 示例与新增 eval 测试逐项对照，检查模式规范化、forward 时训练状态与梯度。</dd>
+<dt>结论与限制</dt><dd>gold 的规范化合理，但目标验收只测 eval 字符串，核心 train 行为没测；不能把“修好 eval”当作完成整个公开需求。</dd>
+<dt>历史对照</dt><dd>noop 1失败/1通过 → gold 2通过。这个差分证明 eval 路径，不证明 train 路径。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>补清公开 train 行为验收：forward 时模式、梯度状态及结束后恢复，不强制某个内部函数对象或实现形状。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-3715/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-3715/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack01_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-3715/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-monai-5686" data-repo="MONAI" data-kind="quality" data-next="cpu" data-search="Project-MONAI__MONAI-5686 SSIMLoss 的结果没有可用梯度 追踪单通道/多通道递归中的 detach；对照新测试的 requires_grad 与实际 backward 需求。 新增断言只看 requires_grad 标志。源码表明多通道递归仍会 detach，gold 可能保留题面 C5 场景的原缺陷；这是参考修复不完整的疑点，不是已运行证明的新回归。 私有 CPU 对照 B1C1/B1C5：固定不带梯度的 data_range，比较前向值、backward 和输入梯度；不放宽容差。 MONAI">
+<summary><h3>MONAI5686</h3><span class="pill s-limit">质量优先处理</span><span class="muted task1-next-kind">下一步：选择性私有 CPU 对照</span><span class="one">SSIMLoss 的结果没有可用梯度</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>追踪单通道/多通道递归中的 detach；对照新测试的 requires_grad 与实际 backward 需求。</dd>
+<dt>结论与限制</dt><dd>新增断言只看 requires_grad 标志。源码表明多通道递归仍会 detach，gold 可能保留题面 C5 场景的原缺陷；这是参考修复不完整的疑点，不是已运行证明的新回归。</dd>
+<dt>历史对照</dt><dd>noop 2失败/8通过 → gold 10通过；现有常量前向与标志检查不能证明输入梯度正确。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>私有 CPU 对照 B1C1/B1C5：固定不带梯度的 data_range，比较前向值、backward 和输入梯度；不放宽容差。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-5686/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-5686/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack01_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-5686/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-monai-1121" data-repo="MONAI" data-kind="quality" data-next="contract" data-search="Project-MONAI__MONAI-1121 给所有支持的神经网络补 TorchScript 测试 对照题面全网络范围、允许交付的文件、六个测试路径及历史 materials-v1 的具体修订。 公开任务要求增加测试，却与预定非测试交付范围/部分网络验收存在接缝。历史修订还给 helper 增加 __test__=False，改变测试收集；不能只称为安装环境修复。这里的“网络”指神经网络。 先对齐公开范围、合法交付和验收版本；实际 actor 收到的 hints 也须另证。不能把题面直接改成私有失败案例来凑一致。 MONAI">
+<summary><h3>MONAI1121</h3><span class="pill s-limit">质量优先处理</span><span class="muted task1-next-kind">下一步：先对齐需求与验收</span><span class="one">给所有支持的神经网络补 TorchScript 测试</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>对照题面全网络范围、允许交付的文件、六个测试路径及历史 materials-v1 的具体修订。</dd>
+<dt>结论与限制</dt><dd>公开任务要求增加测试，却与预定非测试交付范围/部分网络验收存在接缝。历史修订还给 helper 增加 __test__=False，改变测试收集；不能只称为安装环境修复。这里的“网络”指神经网络。</dd>
+<dt>历史对照</dt><dd>修订材料下 noop 1失败/39通过 → gold 40通过；参考集合之外另有4项通过。不能推广为原测试补丁原样通过或全部网络被覆盖。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>先对齐公开范围、合法交付和验收版本；实际 actor 收到的 hints 也须另证。不能把题面直接改成私有失败案例来凑一致。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack05_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-1121/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-monai-3566" data-repo="MONAI" data-kind="quality" data-next="contract" data-search="Project-MONAI__MONAI-3566 读取 DICOM 序列时需要可用的元数据标签 对照默认 LoadImage/ITKReader 示例、隐藏参数 series_meta、读取阶段与标签断言。 题面按默认调用期待标签；gold 新增的 series_meta 默认却是 False，目标测试显式传 True。合理解是否必须猜中这个参数需要明确；不能只靠环境跑通解决接口分歧。 明确标签应默认返回还是采用公开 opt-in 接口，再对齐验收；不擅自要求唯一的首片/全片合并策略。 MONAI">
+<summary><h3>MONAI3566</h3><span class="pill s-limit">质量优先处理</span><span class="muted task1-next-kind">下一步：先对齐需求与验收</span><span class="one">读取 DICOM 序列时需要可用的元数据标签</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>对照默认 LoadImage/ITKReader 示例、隐藏参数 series_meta、读取阶段与标签断言。</dd>
+<dt>结论与限制</dt><dd>题面按默认调用期待标签；gold 新增的 series_meta 默认却是 False，目标测试显式传 True。合理解是否必须猜中这个参数需要明确；不能只靠环境跑通解决接口分歧。</dd>
+<dt>历史对照</dt><dd>itk_v2：noop 1失败/25通过 → gold 26通过；noop 失败在读取阶段，并非已经执行到标签值断言。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>明确标签应默认返回还是采用公开 opt-in 接口，再对齐验收；不擅自要求唯一的首片/全片合并策略。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-3566/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-3566/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack05_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-3566/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-monai-4583" data-repo="MONAI" data-kind="candidate" data-next="actor" data-search="Project-MONAI__MONAI-4583 多类别 mask 转 box 时取错标签 核前景坐标选择、2D/3D 公共约定、稀疏输入和 NumPy/Tensor 参数化。 从一个真实前景点取类别可解决根因，保留候选。新增断言只直接覆盖稀疏2D；CUDA 条件还会覆盖原 NumPy 参数，测试 ID 相同不保证实际类型相同。 同一次公开开发验证中跑题面2D和同机制稀疏3D小例，记录 box/label、dtype 和设备；CPU 即可。 MONAI">
+<summary><h3>MONAI4583</h3><span class="pill s-derived">有条件候选</span><span class="muted task1-next-kind">下一步：验证公开开发流程</span><span class="one">多类别 mask 转 box 时取错标签</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>核前景坐标选择、2D/3D 公共约定、稀疏输入和 NumPy/Tensor 参数化。</dd>
+<dt>结论与限制</dt><dd>从一个真实前景点取类别可解决根因，保留候选。新增断言只直接覆盖稀疏2D；CUDA 条件还会覆盖原 NumPy 参数，测试 ID 相同不保证实际类型相同。</dd>
+<dt>历史对照</dt><dd>noop 4失败/5通过 → gold 9通过；未新增稀疏3D、精确 dtype 或 GPU 实验。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>同一次公开开发验证中跑题面2D和同机制稀疏3D小例，记录 box/label、dtype 和设备；CPU 即可。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-4583/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-4583/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack05_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-4583/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-monai-5932" data-repo="MONAI" data-kind="candidate" data-next="actor" data-search="Project-MONAI__MONAI-5932 ConfigParser 无法处理同前缀的长短引用 追踪整串 replace 的顺序、依赖收集与新增算式断言。 短 ID 先替换会破坏长 ID；gold 先处理长引用有明确依据。只反转出现顺序的半修复可能通过唯一目标测试，另一种顺序仍失败；此错误候选未运行。 实际 actor 运行公开配置算式，合并核对长引用在前/在后两种顺序；接受不采用排序的合理实现。 MONAI">
+<summary><h3>MONAI5932</h3><span class="pill s-derived">有条件候选</span><span class="muted task1-next-kind">下一步：验证公开开发流程</span><span class="one">ConfigParser 无法处理同前缀的长短引用</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>追踪整串 replace 的顺序、依赖收集与新增算式断言。</dd>
+<dt>结论与限制</dt><dd>短 ID 先替换会破坏长 ID；gold 先处理长引用有明确依据。只反转出现顺序的半修复可能通过唯一目标测试，另一种顺序仍失败；此错误候选未运行。</dd>
+<dt>历史对照</dt><dd>noop 1个目标 SyntaxError/14通过 → gold 15通过。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>实际 actor 运行公开配置算式，合并核对长引用在前/在后两种顺序；接受不采用排序的合理实现。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-5932/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-5932/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack09_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-5932/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-monai-6975" data-repo="MONAI" data-kind="candidate" data-next="actor" data-search="Project-MONAI__MONAI-6975 Dataset 调用忽略 Compose 的 lazy=True 追踪 Dataset→apply_transform→Compose 的 lazy 参数，核日志测试与返回图像。 把 helper 默认 False 改为 None 可恢复 Compose 自身设置。4个目标测试主要看日志并丢弃返回值，正确执行后返回错误图像也可能漏检；尚未运行该候选。 用内存图像和确定性 Flipd，在公开 actor 流程同时核返回图像及 lazy 模式；不把操作记录长度当重采样调用次数。 MONAI">
+<summary><h3>MONAI6975</h3><span class="pill s-derived">有条件候选</span><span class="muted task1-next-kind">下一步：验证公开开发流程</span><span class="one">Dataset 调用忽略 Compose 的 lazy=True</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>追踪 Dataset→apply_transform→Compose 的 lazy 参数，核日志测试与返回图像。</dd>
+<dt>结论与限制</dt><dd>把 helper 默认 False 改为 None 可恢复 Compose 自身设置。4个目标测试主要看日志并丢弃返回值，正确执行后返回错误图像也可能漏检；尚未运行该候选。</dd>
+<dt>历史对照</dt><dd>noop 4个日志断言失败/59通过 → gold 63通过；不等于输出图像和实际重采样次数全部正确。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>用内存图像和确定性 Flipd，在公开 actor 流程同时核返回图像及 lazy 模式；不把操作记录长度当重采样调用次数。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-6975/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-6975/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack09_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-6975/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+</div></div><div class="task1-group" data-repo="Conan"><h3 class="group-title">Conan · 8题</h3><div class="cards">
+<details class="task task1-card" id="task1-conan-11594" data-repo="Conan" data-kind="candidate" data-next="actor" data-search="conan-io__conan-11594 Ninja 多配置下 cmake.test() 无法执行 核默认 test target、多配置身份、命令中的配置参数，以及短参考键的绑定修订。 gold 保留多配置身份并修默认 target。测试只检查 mock 命令，未证明 --config 或真实 CMake 测试执行；精确引号格式可能过约束。 实际 actor 用无外部依赖的 Ninja Multi-Config 小 recipe，检查默认 test、Release 配置和测试真的执行。 Conan">
+<summary><h3>Conan11594</h3><span class="pill s-derived">有条件候选</span><span class="muted task1-next-kind">下一步：验证公开开发流程</span><span class="one">Ninja 多配置下 cmake.test() 无法执行</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>核默认 test target、多配置身份、命令中的配置参数，以及短参考键的绑定修订。</dd>
+<dt>结论与限制</dt><dd>gold 保留多配置身份并修默认 target。测试只检查 mock 命令，未证明 --config 或真实 CMake 测试执行；精确引号格式可能过约束。</dd>
+<dt>历史对照</dt><dd>reference_v1：noop 1失败/5通过 → gold 6通过；5个参考键对应6个真实测试，短 Ninja 组需两项都通过。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>实际 actor 用无外部依赖的 Ninja Multi-Config 小 recipe，检查默认 test、Release 配置和测试真的执行。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-11594/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-11594/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack02_report.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/conan-io__conan-11594/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-conan-13230" data-repo="Conan" data-kind="candidate" data-next="actor" data-search="conan-io__conan-13230 交叉编译时 AutotoolsToolchain 误进 Apple 分支 核 build Macos/host Linux 的条件、最终 flags 和 Android 属性测试。 根因是仅按 build 平台进入 Apple 分支。标题归因不能扩大为额外 compiler 选择要求；noop 的 xcrun 127 可能由错误逻辑触发，不意味着必须装 Apple SDK。 实际 actor 按公开 Macos build/Linux host profiles 执行 generate；题面故意 raise 展示 flags，按 payload 与失败位置判断，不机械要求退出0。 Conan">
+<summary><h3>Conan13230</h3><span class="pill s-derived">有条件候选</span><span class="muted task1-next-kind">下一步：验证公开开发流程</span><span class="one">交叉编译时 AutotoolsToolchain 误进 Apple 分支</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>核 build Macos/host Linux 的条件、最终 flags 和 Android 属性测试。</dd>
+<dt>结论与限制</dt><dd>根因是仅按 build 平台进入 Apple 分支。标题归因不能扩大为额外 compiler 选择要求；noop 的 xcrun 127 可能由错误逻辑触发，不意味着必须装 Apple SDK。</dd>
+<dt>历史对照</dt><dd>noop 1失败/34通过 → gold 35通过；隐藏例为 Android，公开 Linux 最终 flags 未直接验。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>实际 actor 按公开 Macos build/Linux host profiles 执行 generate；题面故意 raise 展示 flags，按 payload 与失败位置判断，不机械要求退出0。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-13230/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-13230/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack02_report.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/conan-io__conan-13230/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-conan-13721" data-repo="Conan" data-kind="candidate" data-next="actor" data-search="conan-io__conan-13721 模板渲染需要知道当前 profile_name 核普通文件、软链接和 with-context 模板的公开用途，检查名称断言与旧讨论。 核心功能有正证据，但新增五步安装都用普通文件，软链接/with-context 没测；名称后缀约定仍不清。部分旧断言恒真，新 substring 也未约束结尾。 先在实际 actor 用无后缀 alpha/beta 软链接共享模板，核公开 with-context 流程；后缀约定另保留，不靠私有提示指定答案。 Conan">
+<summary><h3>Conan13721</h3><span class="pill s-derived">有条件候选</span><span class="muted task1-next-kind">下一步：验证公开开发流程</span><span class="one">模板渲染需要知道当前 profile_name</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>核普通文件、软链接和 with-context 模板的公开用途，检查名称断言与旧讨论。</dd>
+<dt>结论与限制</dt><dd>核心功能有正证据，但新增五步安装都用普通文件，软链接/with-context 没测；名称后缀约定仍不清。部分旧断言恒真，新 substring 也未约束结尾。</dd>
+<dt>历史对照</dt><dd>noop 1失败/6通过 → gold 7通过；noop 在首个断言停止，不能把后四步说成也执行失败。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>先在实际 actor 用无后缀 alpha/beta 软链接共享模板，核公开 with-context 流程；后缀约定另保留，不靠私有提示指定答案。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-13721/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-13721/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack02_report.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/conan-io__conan-13721/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-conan-11560" data-repo="Conan" data-kind="quality" data-next="contract" data-search="conan-io__conan-11560 Bazel 生成器对同包多个静态库链接失败 对照公开链接目标、alwayslink 建议、生成库顺序与4个新注释断言。 目标测试强制小写保序注释，却没有真正互相依赖的双静态库链接。alwayslink 是题面建议，不是唯一合法方案；也不能反过来声称 gold 注释一定无效。 先明确失败流程、是否经过外部排序及库符号依赖，再设计行为验收；不为不清楚的场景先堆 CPU 实验。 Conan">
+<summary><h3>Conan11560</h3><span class="pill s-limit">质量优先处理</span><span class="muted task1-next-kind">下一步：先对齐需求与验收</span><span class="one">Bazel 生成器对同包多个静态库链接失败</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>对照公开链接目标、alwayslink 建议、生成库顺序与4个新注释断言。</dd>
+<dt>结论与限制</dt><dd>目标测试强制小写保序注释，却没有真正互相依赖的双静态库链接。alwayslink 是题面建议，不是唯一合法方案；也不能反过来声称 gold 注释一定无效。</dd>
+<dt>历史对照</dt><dd>noop 4失败/3通过 → gold 7通过；通过的是生成文本，真实 Bazel 链接未验证。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>先明确失败流程、是否经过外部排序及库符号依赖，再设计行为验收；不为不清楚的场景先堆 CPU 实验。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-11560/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-11560/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack06_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/conan-io__conan-11560/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-conan-12397" data-repo="Conan" data-kind="quality" data-next="cpu" data-search="conan-io__conan-12397 Meson 的 C++ 链接参数缺少 -stdlib 核 cpp/objcpp 各配置键、Apple 与 Linux 路径，以及字符串断言的匹配范围。 断言没有限定键开头，cpp_link_args 子串可以命中 objcpp_link_args；只修 Objective-C++ 的错误候选可能被放过。gold 的局部方向正确，漏洞尚未经候选评分证明。 私有 CPU 比较 base/gold/只修 objcpp 的候选，按完整键解析 Apple 与 Linux 生成物；无需先装完整编译工具链。 Conan">
+<summary><h3>Conan12397</h3><span class="pill s-limit">质量优先处理</span><span class="muted task1-next-kind">下一步：选择性私有 CPU 对照</span><span class="one">Meson 的 C++ 链接参数缺少 -stdlib</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>核 cpp/objcpp 各配置键、Apple 与 Linux 路径，以及字符串断言的匹配范围。</dd>
+<dt>结论与限制</dt><dd>断言没有限定键开头，cpp_link_args 子串可以命中 objcpp_link_args；只修 Objective-C++ 的错误候选可能被放过。gold 的局部方向正确，漏洞尚未经候选评分证明。</dd>
+<dt>历史对照</dt><dd>noop 1失败/2通过 → gold 3通过；旧 cpp_args 断言同样可能借 objcpp_args 匹配。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>私有 CPU 比较 base/gold/只修 objcpp 的候选，按完整键解析 Apple 与 Linux 生成物；无需先装完整编译工具链。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-12397/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-12397/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack06_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/conan-io__conan-12397/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-conan-13403" data-repo="Conan" data-kind="quality" data-next="cpu" data-search="conan-io__conan-13403 Autotools.autoreconf 需要指定执行目录 核新参数插入位置、旧位置 args 调用、chdir mock 与真实进入/退出上下文。 gold 把目录参数放到旧 args 之前，非空位置列表会被送入 os.path.join，源码已支持兼容问题。mock 仅查工厂被调用，不证明 run 时 cwd 改了；本夜未运行。 一个私有 CPU 诊断核旧非空位置参数、args=、目录、run 时 cwd 与恢复；不混称 GNU 工具链验收。 Conan">
+<summary><h3>Conan13403</h3><span class="pill s-limit">质量优先处理</span><span class="muted task1-next-kind">下一步：选择性私有 CPU 对照</span><span class="one">Autotools.autoreconf 需要指定执行目录</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>核新参数插入位置、旧位置 args 调用、chdir mock 与真实进入/退出上下文。</dd>
+<dt>结论与限制</dt><dd>gold 把目录参数放到旧 args 之前，非空位置列表会被送入 os.path.join，源码已支持兼容问题。mock 仅查工厂被调用，不证明 run 时 cwd 改了；本夜未运行。</dd>
+<dt>历史对照</dt><dd>noop 1失败 → gold 1通过。P2P 虽为空，这个目标测试内仍保留旧 configure/default 断言，不能称完全没有回归保护。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>一个私有 CPU 诊断核旧非空位置参数、args=、目录、run 时 cwd 与恢复；不混称 GNU 工具链验收。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-13403/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-13403/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack06_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/conan-io__conan-13403/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-conan-13610" data-repo="Conan" data-kind="quality" data-next="contract" data-search="conan-io__conan-13610 规范化 Conan 日志级别 核无参数、裸 -v、显式 verbose 的行为矩阵及帮助说明。 公开请求未说清裸 -v 应代表什么；gold 改成 status，却仍保留旧帮助“-v or -vverbose”。不是 gold 新增了帮助文本，而是行为修改后帮助未同步。 先明确 CLI 约定并同步验收/帮助；CPU 不能替用户选择这项产品语义。 Conan">
+<summary><h3>Conan13610</h3><span class="pill s-limit">质量优先处理</span><span class="muted task1-next-kind">下一步：先对齐需求与验收</span><span class="one">规范化 Conan 日志级别</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>核无参数、裸 -v、显式 verbose 的行为矩阵及帮助说明。</dd>
+<dt>结论与限制</dt><dd>公开请求未说清裸 -v 应代表什么；gold 改成 status，却仍保留旧帮助“-v or -vverbose”。不是 gold 新增了帮助文本，而是行为修改后帮助未同步。</dd>
+<dt>历史对照</dt><dd>noop 1失败/1通过 → gold 2通过；目标差分在裸 -v，gold 的完整级别矩阵已执行。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>先明确 CLI 约定并同步验收/帮助；CPU 不能替用户选择这项产品语义。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-13610/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-13610/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack10_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/conan-io__conan-13610/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-conan-13788" data-repo="Conan" data-kind="quality" data-next="cpu" data-search="conan-io__conan-13788 lockfile 中同名 build_requires 的多个版本 核 host/build 索引、Requirement.build_require_context 与子节点继承的 Node.context。 同名双 context 的局部修复有依据；但普通依赖的 context 字段为空，gold 默认按 host 查锁，可能破坏 build 工具的普通子依赖。具体源码风险成立，实际回归仍待运行。 私有双 profile 对照 root→build T→普通 D 的锁创建/重放，记录实际上下文和失败位置，避免完整旧锁强制重建的混淆。 Conan">
+<summary><h3>Conan13788</h3><span class="pill s-limit">质量优先处理</span><span class="muted task1-next-kind">下一步：选择性私有 CPU 对照</span><span class="one">lockfile 中同名 build_requires 的多个版本</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>核 host/build 索引、Requirement.build_require_context 与子节点继承的 Node.context。</dd>
+<dt>结论与限制</dt><dd>同名双 context 的局部修复有依据；但普通依赖的 context 字段为空，gold 默认按 host 查锁，可能破坏 build 工具的普通子依赖。具体源码风险成立，实际回归仍待运行。</dd>
+<dt>历史对照</dt><dd>noop 1失败/9通过 → gold 10通过；现有用例没有上述带普通子依赖的 build 工具。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>私有双 profile 对照 root→build T→普通 D 的锁创建/重放，记录实际上下文和失败位置，避免完整旧锁强制重建的混淆。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-13788/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-13788/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack10_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/conan-io__conan-13788/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+</div></div><div class="task1-group" data-repo="Dask"><h3 class="group-title">Dask · 8题</h3><div class="cards">
+<details class="task task1-card" id="task1-dask-6626" data-repo="Dask" data-kind="candidate" data-next="actor" data-search="dask__dask-6626 空类别数据的 set_index 得到错误索引 核题面两条 set_index 流程、新空类别 fixture、dtype 断言和历史兼容配方。 gold 修复空类别 Series 的局部路径；两条公开完整流程没被直接验。空 CategoricalIndex 是相邻旧边界，不能凭缺测试直接判 gold 新回归。 实际 actor 跑公开两条 set_index 流程，保存类别元数据、compute 结果、初态和导入位置。 Dask">
+<summary><h3>Dask6626</h3><span class="pill s-derived">有条件候选</span><span class="muted task1-next-kind">下一步：验证公开开发流程</span><span class="one">空类别数据的 set_index 得到错误索引</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>核题面两条 set_index 流程、新空类别 fixture、dtype 断言和历史兼容配方。</dd>
+<dt>结论与限制</dt><dd>gold 修复空类别 Series 的局部路径；两条公开完整流程没被直接验。空 CategoricalIndex 是相邻旧边界，不能凭缺测试直接判 gold 新回归。</dd>
+<dt>历史对照</dt><dd>compat_v1：noop 1失败/15通过 → gold 16通过；额外 sparse 两侧均过。历史 runner 摘要变化原因未完全解释，不能混作 actor 证明。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>实际 actor 跑公开两条 set_index 流程，保存类别元数据、compute 结果、初态和导入位置。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-6626/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-6626/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack03_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/dask__dask-6626/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-dask-7656" data-repo="Dask" data-kind="candidate" data-next="actor" data-search="dask__dask-7656 dataclass 的 init=False 字段让 delayed 出错 核 dataclass 字段采集、初始化/已有状态、嵌套求值与目标函数输出。 目标和修复相符，保留候选。但只验最终 a==3 没有约束完整返回状态；旧“gold 保留全部已有字段/过滤 init 必丢状态”的强结论已撤回。 实际 actor 跑 Entry→delayed fun→compute，连同默认字段和嵌套求值；已有非 init 字段状态仍保留边界。 Dask">
+<summary><h3>Dask7656</h3><span class="pill s-derived">有条件候选</span><span class="muted task1-next-kind">下一步：验证公开开发流程</span><span class="one">dataclass 的 init=False 字段让 delayed 出错</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>核 dataclass 字段采集、初始化/已有状态、嵌套求值与目标函数输出。</dd>
+<dt>结论与限制</dt><dd>目标和修复相符，保留候选。但只验最终 a==3 没有约束完整返回状态；旧“gold 保留全部已有字段/过滤 init 必丢状态”的强结论已撤回。</dd>
+<dt>历史对照</dt><dd>compat_v2b：noop 1失败/49通过/2预期失败 → gold 50通过/2预期失败，不能写52项全通过。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>实际 actor 跑 Entry→delayed fun→compute，连同默认字段和嵌套求值；已有非 init 字段状态仍保留边界。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7656/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7656/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack03_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/dask__dask-7656/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-dask-9378" data-repo="Dask" data-kind="quality" data-next="cpu" data-search="dask__dask-9378 masked array 的 *_like 函数应保留 mask 追踪 assert_eq 到 np.ma.allclose，区分 ones/zeros 与 empty 的掩码断言。 ones/zeros 使用 masked_equal=True，未直接比 mask；错误掩码可能被放过。empty 另有显式 mask 断言，不能把同一缺口套给全部函数。 私有 CPU 只改变 ones/zeros 掩码而保持其他属性，比较原断言与显式 mask 比较；完整 RH2 分数另证。 Dask">
+<summary><h3>Dask9378</h3><span class="pill s-limit">质量优先处理</span><span class="muted task1-next-kind">下一步：选择性私有 CPU 对照</span><span class="one">masked array 的 *_like 函数应保留 mask</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>追踪 assert_eq 到 np.ma.allclose，区分 ones/zeros 与 empty 的掩码断言。</dd>
+<dt>结论与限制</dt><dd>ones/zeros 使用 masked_equal=True，未直接比 mask；错误掩码可能被放过。empty 另有显式 mask 断言，不能把同一缺口套给全部函数。</dd>
+<dt>历史对照</dt><dd>noop 3失败/134通过 → gold 137通过；noop 实际失败于 ma 新入口缺失，不是已跑出题面 mask 行为。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>私有 CPU 只改变 ones/zeros 掩码而保持其他属性，比较原断言与显式 mask 比较；完整 RH2 分数另证。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-9378/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-9378/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack03_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/dask__dask-9378/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-dask-6801" data-repo="Dask" data-kind="quality" data-next="cpu" data-search="dask__dask-6801 to_parquet(schema=infer) 重复执行上游计算 核共享 delayed 图、HLG 合并、PyArrow 推断采样与新增列裁剪图断言。 普通共享图有修复正证据；infer 在特定 Arrow/对象采样条件仍可能提前 compute。这个未改路径是旧缺陷残留，不能说是 gold 新引入；目标测试没数执行次数。 私有 CPU 用公开共享 delayed 例、显式 meta，分普通/infer 和建图/执行阶段记次数，并核写出内容。 Dask">
+<summary><h3>Dask6801</h3><span class="pill s-limit">质量优先处理</span><span class="muted task1-next-kind">下一步：选择性私有 CPU 对照</span><span class="one">to_parquet(schema=infer) 重复执行上游计算</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>核共享 delayed 图、HLG 合并、PyArrow 推断采样与新增列裁剪图断言。</dd>
+<dt>结论与限制</dt><dd>普通共享图有修复正证据；infer 在特定 Arrow/对象采样条件仍可能提前 compute。这个未改路径是旧缺陷残留，不能说是 gold 新引入；目标测试没数执行次数。</dd>
+<dt>历史对照</dt><dd>noop 8失败/355通过/1跳过/7预期失败 → gold 363通过/1跳过/7预期失败；旧缺 fastparquet 不适用于该修复组合。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>私有 CPU 用公开共享 delayed 例、显式 meta，分普通/infer 和建图/执行阶段记次数，并核写出内容。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-6801/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-6801/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack07_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/dask__dask-6801/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-dask-7138" data-repo="Dask" data-kind="quality" data-next="reference" data-search="dask__dask-7138 ravel 应接受 array_like 而不只接受 Dask array 核输入转换、旧调用签名、derived_from 装饰器及新样本内容。 新输入转换有价值，但 gold 把形参 array 改为 array_like，破坏旧 array= 关键字；装饰器只改文档，不补别名。新非 Dask 样本全零，也不足以核一般内容顺序。 维护参考兼容：保留旧关键字同时支持新输入，并版本化处理。Python 参数绑定已静态明确，无需为此单独重跑 CPU。 Dask">
+<summary><h3>Dask7138</h3><span class="pill s-limit">质量优先处理</span><span class="muted task1-next-kind">下一步：维护参考兼容性</span><span class="one">ravel 应接受 array_like 而不只接受 Dask array</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>核输入转换、旧调用签名、derived_from 装饰器及新样本内容。</dd>
+<dt>结论与限制</dt><dd>新输入转换有价值，但 gold 把形参 array 改为 array_like，破坏旧 array= 关键字；装饰器只改文档，不补别名。新非 Dask 样本全零，也不足以核一般内容顺序。</dd>
+<dt>历史对照</dt><dd>noop 1失败/560通过 → gold 561通过；旧关键字不在这些验收里。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>维护参考兼容：保留旧关键字同时支持新输入，并版本化处理。Python 参数绑定已静态明确，无需为此单独重跑 CPU。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7138/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7138/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack07_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/dask__dask-7138/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-dask-7305" data-repo="Dask" data-kind="quality" data-next="cpu" data-search="dask__dask-7305 大 unsigned integer 的分区分位点不精确 核精确整数、nearest 插值、唯一值不足时 np.interp 和 set_index 的 min/max 覆盖。 nearest 有局部作用，但大整数参考测试虽调用 quantiles，结果随后被 min/max 覆盖，所以 noop 也能过；唯一值不足时的精度残留仍待证。 私有 CPU 直接调用 partition_quantiles，比较1与3输出分区的精确整数端点、顺序和 dtype，避免浮点 allclose 掩盖低位错误。 Dask">
+<summary><h3>Dask7305</h3><span class="pill s-limit">质量优先处理</span><span class="muted task1-next-kind">下一步：选择性私有 CPU 对照</span><span class="one">大 unsigned integer 的分区分位点不精确</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>核精确整数、nearest 插值、唯一值不足时 np.interp 和 set_index 的 min/max 覆盖。</dd>
+<dt>结论与限制</dt><dd>nearest 有局部作用，但大整数参考测试虽调用 quantiles，结果随后被 min/max 覆盖，所以 noop 也能过；唯一值不足时的精度残留仍待证。</dd>
+<dt>历史对照</dt><dd>noop 1失败/104通过/3慢测跳过 → gold 105通过/3跳过；大 uint 测试确在回归集合，不能误说未执行。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>私有 CPU 直接调用 partition_quantiles，比较1与3输出分区的精确整数端点、顺序和 dtype，避免浮点 allclose 掩盖低位错误。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7305/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7305/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack07_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/dask__dask-7305/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-dask-7894" data-repo="Dask" data-kind="quality" data-next="cpu" data-search="dask__dask-7894 map_overlap 删除轴后裁剪错误 核 drop_axis/new_axis 顺序、depth/boundary 重映射与 trim 切片。 drop0/new0 时原轴1仍在输出1，gold 却将其 depth 压到输出0，有具体新回归风险。另一个 none 边界漏测属于半修复风险；两者不能混为一个已证结果。 私有 base/gold 小数组对照 drop_axis=0/new_axis=0，同时记录 lazy shape/chunks 和 compute 结果或异常。 Dask">
+<summary><h3>Dask7894</h3><span class="pill s-limit">质量优先处理</span><span class="muted task1-next-kind">下一步：选择性私有 CPU 对照</span><span class="one">map_overlap 删除轴后裁剪错误</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>核 drop_axis/new_axis 顺序、depth/boundary 重映射与 trim 切片。</dd>
+<dt>结论与限制</dt><dd>drop0/new0 时原轴1仍在输出1，gold 却将其 depth 压到输出0，有具体新回归风险。另一个 none 边界漏测属于半修复风险；两者不能混为一个已证结果。</dd>
+<dt>历史对照</dt><dd>noop 5失败/75通过 → gold 80通过；上述 drop+new 特例未在本夜运行。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>私有 base/gold 小数组对照 drop_axis=0/new_axis=0，同时记录 lazy shape/chunks 和 compute 结果或异常。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack11_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/dask__dask-7894/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-dask-9212" data-repo="Dask" data-kind="quality" data-next="cpu" data-search="dask__dask-9212 Enum 需要确定性 token 核普通 Enum 注册、类型身份、pure delayed 建键和 collection 去重。 gold 只保留短类名/成员名/值；跨 module 同名 Enum 会得到相同表示，可能合并可观察不同的任务。不是随机 hash 碰撞；实际 compute 结果尚未测。 私有对照用同一个 pure delayed 函数返回类型 module，一次联合 compute；保存确定性配置，区分 base 的 UUID fallback。 Dask">
+<summary><h3>Dask9212</h3><span class="pill s-limit">质量优先处理</span><span class="muted task1-next-kind">下一步：选择性私有 CPU 对照</span><span class="one">Enum 需要确定性 token</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>核普通 Enum 注册、类型身份、pure delayed 建键和 collection 去重。</dd>
+<dt>结论与限制</dt><dd>gold 只保留短类名/成员名/值；跨 module 同名 Enum 会得到相同表示，可能合并可观察不同的任务。不是随机 hash 碰撞；实际 compute 结果尚未测。</dd>
+<dt>历史对照</dt><dd>noop 2失败/124通过/3跳过 → gold 126通过/3跳过；公开题面已有修法建议，不能当作私有泄漏，也不能据此推模型难度。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>私有对照用同一个 pure delayed 函数返回类型 module，一次联合 compute；保存确定性配置，区分 base 的 UUID fallback。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-9212/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-9212/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack11_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/dask__dask-9212/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+</div></div><div class="task1-group" data-repo="Pydantic"><h3 class="group-title">Pydantic · 8题</h3><div class="cards">
+<details class="task task1-card" id="task1-pydantic-5386" data-repo="Pydantic" data-kind="quality" data-next="contract" data-search="pydantic__pydantic-5386 类定义过程中无法读取已建立的字段 核字段何时就绪、新 hook 名称、继承字段和新增测试的实际读取行为。 公开需求是定义时读字段，隐藏测试却强制题面未命名的 hook，并用无字段类只检查 calls。存在接口误拒与核心漏测风险；环境修好不能消解接口争议。 先确定公开字段就绪接口及接受范围，再验继承/新增字段与 examples；前向引用全解析不能被无条件保证。 Pydantic">
+<summary><h3>Pydantic5386</h3><span class="pill s-limit">质量优先处理</span><span class="muted task1-next-kind">下一步：先对齐需求与验收</span><span class="one">类定义过程中无法读取已建立的字段</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>核字段何时就绪、新 hook 名称、继承字段和新增测试的实际读取行为。</dd>
+<dt>结论与限制</dt><dd>公开需求是定义时读字段，隐藏测试却强制题面未命名的 hook，并用无字段类只检查 calls。存在接口误拒与核心漏测风险；环境修好不能消解接口争议。</dd>
+<dt>历史对照</dt><dd>noop 1失败/120通过/29跳过/9预期失败 → gold 121通过/29跳过/9预期失败。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>先确定公开字段就绪接口及接受范围，再验继承/新增字段与 examples；前向引用全解析不能被无条件保证。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack04_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/pydantic__pydantic-5386/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-pydantic-6283" data-repo="Pydantic" data-kind="candidate" data-next="actor" data-search="pydantic__pydantic-6283 RootModel 的构造与 model_construct 结果不等 核内部字典污染、equality、post-init、私有属性与共享 BaseModel 构造。 目标 equality 有直接断言，gold 保留 post-init 并清除内部污染，保留候选。private×construct 和共享构造仍有覆盖边界；construct 本就跳过验证，不能强制所有输入两路等值。 实际 actor 跑公开 RootModel 子类与 BaseModel 对照；候选触及共享构造时再有针对性核公开回归。 Pydantic">
+<summary><h3>Pydantic6283</h3><span class="pill s-derived">有条件候选</span><span class="muted task1-next-kind">下一步：验证公开开发流程</span><span class="one">RootModel 的构造与 model_construct 结果不等</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>核内部字典污染、equality、post-init、私有属性与共享 BaseModel 构造。</dd>
+<dt>结论与限制</dt><dd>目标 equality 有直接断言，gold 保留 post-init 并清除内部污染，保留候选。private×construct 和共享构造仍有覆盖边界；construct 本就跳过验证，不能强制所有输入两路等值。</dd>
+<dt>历史对照</dt><dd>noop 1失败/40通过/3预期失败 → gold 41通过/3预期失败。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>实际 actor 跑公开 RootModel 子类与 BaseModel 对照；候选触及共享构造时再有针对性核公开回归。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-6283/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-6283/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack04_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/pydantic__pydantic-6283/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-pydantic-8567" data-repo="Pydantic" data-kind="quality" data-next="cpu" data-search="pydantic__pydantic-8567 PlainSerializer 放在 PlainValidator 前不生效 核 schema 生成、plain 验证路径和序列化顺序，追查无自定义 schema 的类型。 新断言只验 Python dump 为 str，没验 JSON 和值。gold 无条件生成内层 schema，可能让原先由 PlainValidator 接管的 Custom 类型在类构建时失败；未实测回归。 私有 base/gold 对照普通 Custom+PlainValidator 的类构建与精确异常，固定对应 core 版本和默认配置。 Pydantic">
+<summary><h3>Pydantic8567</h3><span class="pill s-limit">质量优先处理</span><span class="muted task1-next-kind">下一步：选择性私有 CPU 对照</span><span class="one">PlainSerializer 放在 PlainValidator 前不生效</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>核 schema 生成、plain 验证路径和序列化顺序，追查无自定义 schema 的类型。</dd>
+<dt>结论与限制</dt><dd>新断言只验 Python dump 为 str，没验 JSON 和值。gold 无条件生成内层 schema，可能让原先由 PlainValidator 接管的 Custom 类型在类构建时失败；未实测回归。</dd>
+<dt>历史对照</dt><dd>noop 1失败/164通过 → gold 165通过；生成 schema 不等于执行内层 validator。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>私有 base/gold 对照普通 Custom+PlainValidator 的类构建与精确异常，固定对应 core 版本和默认配置。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8567/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8567/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack04_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/pydantic__pydantic-8567/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-pydantic-5662" data-repo="Pydantic" data-kind="candidate" data-next="actor" data-search="pydantic__pydantic-5662 BaseModel 不能与 unittest.mock.ANY 正确比较 核 NotImplemented 的反射比较、原模型分支和一般 matcher 的真假返回。 gold 的委托方向成立，保留候选。唯一新测试只验 ANY，ANY 特判仍可能漏检；旧测试已有 dict 不等，不能说所有回归都只比模型。 实际 actor 一起核公开 ANY、一般 matcher 返回 True/False、dict/object 护栏，不能把所有非模型比较强制改成 True。 Pydantic">
+<summary><h3>Pydantic5662</h3><span class="pill s-derived">有条件候选</span><span class="muted task1-next-kind">下一步：验证公开开发流程</span><span class="one">BaseModel 不能与 unittest.mock.ANY 正确比较</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>核 NotImplemented 的反射比较、原模型分支和一般 matcher 的真假返回。</dd>
+<dt>结论与限制</dt><dd>gold 的委托方向成立，保留候选。唯一新测试只验 ANY，ANY 特判仍可能漏检；旧测试已有 dict 不等，不能说所有回归都只比模型。</dd>
+<dt>历史对照</dt><dd>noop 1失败/141通过/26跳过 → gold 142通过/26跳过。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>实际 actor 一起核公开 ANY、一般 matcher 返回 True/False、dict/object 护栏，不能把所有非模型比较强制改成 True。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5662/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5662/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack08_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/pydantic__pydantic-5662/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-pydantic-6043" data-repo="Pydantic" data-kind="quality" data-next="contract" data-search="pydantic__pydantic-6043 生成尽量确定排序的 JSON Schema 核递归字典排序、properties 字段序、列表位置和批量 wrapper。 新题要排序，旧公开文档却承诺保字段声明顺序，优先级未明确。新测试只验一层 properties；不排列表可合理保护语义，固定非字典序也不等于不确定。 先定 properties 与最终 wrapper 的排序范围，再设计递归验收；不拿隐藏新断言代替公开规格裁决。 Pydantic">
+<summary><h3>Pydantic6043</h3><span class="pill s-limit">质量优先处理</span><span class="muted task1-next-kind">下一步：先对齐需求与验收</span><span class="one">生成尽量确定排序的 JSON Schema</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>核递归字典排序、properties 字段序、列表位置和批量 wrapper。</dd>
+<dt>结论与限制</dt><dd>新题要排序，旧公开文档却承诺保字段声明顺序，优先级未明确。新测试只验一层 properties；不排列表可合理保护语义，固定非字典序也不等于不确定。</dd>
+<dt>历史对照</dt><dd>noop 1失败/305通过/1预期失败 → gold 306通过/1预期失败；不能由这些结果决定契约冲突。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>先定 properties 与最终 wrapper 的排序范围，再设计递归验收；不拿隐藏新断言代替公开规格裁决。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-6043/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-6043/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack08_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/pydantic__pydantic-6043/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-pydantic-8316" data-repo="Pydantic" data-kind="quality" data-next="cpu" data-search="pydantic__pydantic-8316 to_snake 对缩写边界处理不正确 核正则修改如何传播到 validation_alias/serialization_alias，尤其大写加数字。 gold 修缩写同时把 A1 从 a_1 变为 a1，这是静态事实；是否破坏必须保留的旧键工作流仍未运行/裁决。旧数字样本均小写，不能保护此分支。 私有 base/gold 比较 A1 字段的别名输入与导出，带 HTTPResponse 原例作控制；不扩成任意 key 归一化要求。 Pydantic">
+<summary><h3>Pydantic8316</h3><span class="pill s-limit">质量优先处理</span><span class="muted task1-next-kind">下一步：选择性私有 CPU 对照</span><span class="one">to_snake 对缩写边界处理不正确</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>核正则修改如何传播到 validation_alias/serialization_alias，尤其大写加数字。</dd>
+<dt>结论与限制</dt><dd>gold 修缩写同时把 A1 从 a_1 变为 a1，这是静态事实；是否破坏必须保留的旧键工作流仍未运行/裁决。旧数字样本均小写，不能保护此分支。</dd>
+<dt>历史对照</dt><dd>noop 1失败/158通过/14跳过 → gold 159通过/14跳过。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>私有 base/gold 比较 A1 字段的别名输入与导出，带 HTTPResponse 原例作控制；不扩成任意 key 归一化要求。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8316/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8316/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack08_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/pydantic__pydantic-8316/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-pydantic-8793" data-repo="Pydantic" data-kind="candidate" data-next="actor" data-search="pydantic__pydantic-8793 Annotated 字段没有在 Schema 中标 required 核单 FieldInfo 合并、Ellipsis/Undefined、is_required 与运行时缺值校验链。 gold 处理 Ellipsis override 可修原例，保留候选；新测试主要看 schema/is_required，没有覆盖实际缺值。它不会把任何内层真实 default 都重置为必填，不能过度概括。 实际 actor 跑 create_model 原例，合并核 required、is_required、缺值 ValidationError 与有效输入；Python3.8 用 typing_extensions.Annotated。 Pydantic">
+<summary><h3>Pydantic8793</h3><span class="pill s-derived">有条件候选</span><span class="muted task1-next-kind">下一步：验证公开开发流程</span><span class="one">Annotated 字段没有在 Schema 中标 required</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>核单 FieldInfo 合并、Ellipsis/Undefined、is_required 与运行时缺值校验链。</dd>
+<dt>结论与限制</dt><dd>gold 处理 Ellipsis override 可修原例，保留候选；新测试主要看 schema/is_required，没有覆盖实际缺值。它不会把任何内层真实 default 都重置为必填，不能过度概括。</dd>
+<dt>历史对照</dt><dd>noop 3失败/377通过 → gold 380通过；另有1跳过/1预期失败，均非参考集合。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>实际 actor 跑 create_model 原例，合并核 required、is_required、缺值 ValidationError 与有效输入；Python3.8 用 typing_extensions.Annotated。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack12_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+<details class="task task1-card" id="task1-pydantic-9066" data-repo="Pydantic" data-kind="quality" data-next="cpu" data-search="pydantic__pydantic-9066 IP 默认对象不能正确写入 JSON Schema 核默认值序列化、TypeAdapter 配置限制、dataclass 实例和异常捕获层级。 这不是 IP 输入解析问题。gold 的通用 TypeAdapter 路径对普通 dataclass 默认实例可能抛未捕获的配置异常；源码链明确，base 成功及 gold 实际回归仍待对照。 私有 base/gold 用标准 dataclass 实例 default 做 model_json_schema，带原 IP 控制，保存 schema、warning 和异常 code。 Pydantic">
+<summary><h3>Pydantic9066</h3><span class="pill s-limit">质量优先处理</span><span class="muted task1-next-kind">下一步：选择性私有 CPU 对照</span><span class="one">IP 默认对象不能正确写入 JSON Schema</span></summary>
+<div class="body"><dl class="kv">
+<dt>查了什么</dt><dd>核默认值序列化、TypeAdapter 配置限制、dataclass 实例和异常捕获层级。</dd>
+<dt>结论与限制</dt><dd>这不是 IP 输入解析问题。gold 的通用 TypeAdapter 路径对普通 dataclass 默认实例可能抛未捕获的配置异常；源码链明确，base 成功及 gold 实际回归仍待对照。</dd>
+<dt>历史对照</dt><dd>noop 2失败/380通过 → gold 382通过；另有1跳过/1预期失败。按 IP 类型的合法局部修复不必被迫照搬通用 gold。 <span class="muted">（复读既有日志，本夜未重跑）</span></dd>
+<dt>下一步</dt><dd>私有 base/gold 用标准 dataclass 实例 default 做 model_json_schema，带原 IP 控制，保存 schema、warning 和异常 code。 <span class="muted">（建议，未在任务一执行）</span></dd>
+<dt>证据入口</dt><dd class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-9066/card.md">题卡</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-9066/review.md">独立复核</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack12_followups.md">具体后续方案</a><a href="../swegym_quality_expansion_20260925/public/pydantic__pydantic-9066/user_prompt.txt">公开原题</a></dd>
+</dl></div></details>
+</div></div>
+</section>
+
+<section id="task1-handoff">
+  <div class="eyebrow">任务一 · 后续交接</div><h2>把静态疑点变成可回答的问题</h2>
+  <div class="tiles"><div class="tile"><b>12</b><span>公开开发流程验证</span></div><div class="tile"><b>12</b><span>选择性私有CPU对照</span></div><div class="tile"><b>7</b><span>需求与验收范围讨论</span></div><div class="tile"><b>1</b><span>参考实现兼容维护</span></div></div>
+  <div class="box"><p>这是每题当前优先下一步的分类，<b>不是32道统一的准入闸门</b>。候选可择优交给任务二；不必完成所有质量诊断才开始模型探针。涉及改题面、测试或参考补丁时另立明确版本，不能为了本次模型或满分直接改规格。</p><p style="margin-top:8px">本任务修正的是材料引用和审查结论，<b>没有修改原题、gold、生产评分或训练代码</b>。私有gold对照、题卡和隐藏断言不交给独立solver；实际开发条件由真实解题身份下的公开命令另证。</p></div>
+  <p class="task1-links"><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/root_final_review.md">根收口报告</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/probe_candidates.json">12题候选清单</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/cpu_queue.json">逐题后续队列</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/final_acceptance_errata.md">两处摘要勘误</a><a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/environment_batch_20260925.md">三任务交接页</a></p>
+</section>
+
+<section id="task1-wiring">
+  <div class="eyebrow">接线总览 · 按负责人区分</div><h2>接上了什么，哪些还不能算整链通过</h2>
+  <p class="muted">下面汇总本夜已提交的接线记录；Codex本次回读了相关代码、报告及W1–W4原始JSON，未重新运行接线测试。任务一负责静态审查；探针实现由Claude任务二负责，R2E来源接线由其已有线程负责。</p>
+  <div class="scroll"><table class="task1-wiring-table"><thead><tr><th>部分 / 负责人</th><th>已完成的工作</th><th>验证与仍未完成的部分</th></tr></thead><tbody>
+  <tr><th scope="row">静态材料与交接<br>Codex任务一</th><td>固定32题及公开/私有材料；逐题初判、复核、历史纠正、候选和选择性后续归档；全部根验收。</td><td><span class="pill s-derived">静态交付完成</span><br>不是新生产接口或运行流水线；32题未新增actor/模型执行。证据见上方逐题链接。</td></tr>
+  <tr><th scope="row">Qwen adapter<br>Claude任务二</th><td>按正式构造顺序接入count_tokens、parse wire、EOS终止事实发布器及RH2 adapter子类，绑定当前tokenizer，记录实际包装配置。</td><td><span class="pill s-ok">W1–W3有CPU证据</span><br>短/长输入计数14/209；采样EOS末尾被剥除，普通token拼出的同名字面量保留。采用受控上游+真实tokenizer，<b>工具与thinking解析尚未验证</b>。<a href="runs/wiring/wiring_check.json">原始JSON</a></td></tr>
+  <tr><th scope="row">上下文溢出<br>A公共函数 → B消费</th><td>配置如实记录<code>overflow_400=false</code>，已有超窗对照。</td><td><span class="pill s-limit">仍未接通</span><br>6009-token输入对3000窗口仍回HTTP200、空文本、max_tokens；CC不能据此触发400路径的被动压缩。<b>W4是缺口观测，不是功能验收通过。</b></td></tr>
+  <tr><th scope="row">solve_attempt入口<br>Claude任务二</th><td>改用正式激活脚本及启动检查；按次注入shell/上下文环境；轨迹从宿主收集；删除旧诊断变体与重复工具参数；暴露窗口/输出预算参数。</td><td><span class="pill s-derived">代码已接入</span><br>真实CC桩端点的开发证据见<a href="#how">任务二</a>；仍需真实模型请求回读工具列表、窗口与预算。CC窗口必须与adapter一致。</td></tr>
+  <tr><th scope="row">网关残缺流<br>Claude任务二</th><td>上游即使正常结束HTTP，只要SSE缺message_stop，也中止下游连接，避免交付伪完整回复。</td><td><span class="pill s-derived">代码及作者CPU报告</span><br>作者报告完整流正常、缺结束事件及中途断连均为ClientPayloadError；本页未独立重跑。真实CC退出形态沿用A事实表，不由普通HTTP客户端代替。<a href="../../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md">报告</a></td></tr>
+  <tr><th scope="row">R2E正式actor<br>R2E线程</th><td>逐题派生镜像按image ID消费；接入.venv前缀、R2E公开提示及环境/材料互检；隐藏测试与未来git提交移出公开解题面。</td><td><span class="pill s-pre">已实施，待A审</span><br>作者报告8题真实CC桩开发核对通过；经Qwen adapter、generate预检等仍有未完成项。完整证据和限制保留在<a href="#r2e-wiring">R2E接线原报告</a>。</td></tr>
+  </tbody></table></div>
+  <div class="box"><b>下一轮模型探针前最有价值的收口</b><p>先落实超窗行为与预算配置，完成实际Qwen工具/推理解析及首请求回读；按候选使用的环境版本补开发证据。R2E须消费其已核对的派生镜像和公开任务面。不同任务的“静态完成”“CPU检查通过”“真实模型可用”继续分别记录。</p></div>
+</section>
+<!-- CODEX TASK1 REPORT END -->
+
+
+<header id="top">
+  <div class="eyebrow">项目一 · B 线 · 任务二（09-25 夜 + 09-25 白天续做）</div>
+  <h1>21 道 SWE-Gym 题的开发条件实测</h1>
+  <p class="muted" style="max-width:70ch;margin-top:8px">目标：在下一轮 GPU 探针之前，确认每道题在<b>正式解题环境</b>里能不能正常开发。检查三件事：能否复现题面缺陷、相关测试能否真正执行、修好后能否看到效果。21 题 = 首轮已跑过的 8 题 + 21 个候选中还没求解过的 13 题。同一晚还完成了探针接线。</p>
+  <div class="tiles">
+    <div class="tile"><b>21</b><span>题全部实测</span></div>
+    <div class="tile"><b>19</b><span>题可进探针（最新）</span></div>
+    <div class="tile"><b>6</b><span>题需要 actor 派生镜像</span></div>
+    <div class="tile"><b>2</b><span>题只作诊断</span></div>
+    <div class="tile"><b>5</b><span>题得 1 后需事后审计</span></div>
+    <div class="tile"><b>0</b><span>个未解决的通用阻断（G1 已修）</span></div>
+  </div>
+</header>
+
+
+<section id="latest">
+  <div class="eyebrow">任务二 · 最新结论（续做之后）</div>
+  <h2>每道题现在的结论</h2>
+  <p class="muted" style="max-width:72ch">续做内容：修复 Codex 复核提出的 F1–F4；接上超窗 400；A 线已修好 G1（临时目录 noexec）；用首轮全部候选补丁逐个实测，完成首轮 7 题的行为裁决；完成 mypy10424、pydantic8511 的语义对照；T0 已按你的授权逐题裁决。下表是每道题的最终状态，覆盖下方总表里的旧状态。</p>
+  <div class="scroll"><table>
+    <tr><th>题目</th><th>最新状态</th><th>结论</th><th>进探针时要注意</th></tr>
+    <tr><td>mypy10174</td><td><span class="pill s-ok">可进探针</span></td><td>缺陷能复现，测试能执行，gold 对照通过</td><td>—</td></tr>
+    <tr><td>mypy16869</td><td><span class="pill s-ok">可进探针</span></td><td>同上</td><td>—</td></tr>
+    <tr><td>mypy10308</td><td><span class="pill s-ok">可进探针</span></td><td>同上</td><td>—</td></tr>
+    <tr><td>moto5960</td><td><span class="pill s-ok">可进探针</span></td><td>同上</td><td>—</td></tr>
+    <tr><td>moto6408</td><td><span class="pill s-ok">可进探针</span></td><td>同上</td><td>—</td></tr>
+    <tr><td>pandas48106</td><td><span class="pill s-ok">可进探针</span></td><td>同上</td><td>—</td></tr>
+    <tr><td>pandas56849</td><td><span class="pill s-ok">可进探针</span></td><td>同上；agent 能自己重编 C 扩展（约 19 秒）</td><td>—</td></tr>
+    <tr><td>Dask8597</td><td><span class="pill s-derived">可进（派生镜像）</span></td><td>换成 pytest 7.4.4 后，测试全部可执行</td><td>用 <code>actor_dask8597_v1</code></td></tr>
+    <tr><td>DVC6954</td><td><span class="pill s-derived">可进（派生镜像）</span></td><td>换成 pygit2 1.14.1；6 个成功候选在题面场景下与 gold 一致</td><td>用 <code>actor_dvc6954_v1</code></td></tr>
+    <tr><td>DVC5839</td><td><span class="pill s-derived">可进（派生镜像）</span></td><td>换成 pathspec 0.8.1；10 个成功候选的 CLI 输出与 gold 逐项相同</td><td>用 <code>actor_dvc5839_v2</code></td></tr>
+    <tr><td>DVC4166</td><td><span class="pill s-derived">可进（派生镜像）</span></td><td>pathspec 与评分侧对齐（0.8.1），并做了 networkx 兼容修改</td><td>用 <code>actor_dvc4166_v1</code></td></tr>
+    <tr><td>Moto5134</td><td><span class="pill s-derived">可进（派生 + 审计）</span></td><td>8 个成功候选与 gold 在全部输入上一致；Coder 的失败候选还破坏了评分范围外的 archive 测试</td><td>用 <code>actor_moto5134_v1</code>；得 1 的补丁加跑 <code>test_events.py</code></td></tr>
+    <tr><td>Conan15422</td><td><span class="pill s-derived">可进（派生 + 审计）</span></td><td>G1 修好后功能测试 10/10 通过；首轮 12 个满分候选里有 5 个语义缺口，已全部实测确认</td><td>用 <code>actor_conan15422_v2</code>；得 1 的补丁跑 jobs 输入矩阵</td></tr>
+    <tr><td>mypy10424</td><td><span class="pill s-limit">可进（需审计）</span></td><td><b>已实测到评分漏收</b>：把收窄整个关掉的错误补丁拿到满分（P2P 为 0 条）</td><td>得 1 的补丁加跑公开的 TypeEquals 测试</td></tr>
+    <tr><td>mypy17071</td><td><span class="pill s-limit">可进（需审计）</span></td><td><b>已实测到评分漏收</b>：直接关掉检查的补丁拿到满分；首轮 4 个成功候选都是真修复</td><td>得 1 的补丁加跑 <code>testUnboundTypeVar</code> 和负例</td></tr>
+    <tr><td>pydantic8511</td><td><span class="pill s-limit">可进（需审计）</span></td><td><b>gold 自身有回归</b>：子类继承字段时装饰失败；窄修正版和 gold 都拿满分</td><td>得 1 的补丁跑继承矩阵，和 gold 有同一回归的单独标出</td></tr>
+    <tr><td>mypy15184</td><td><span class="pill s-limit">可进（有限制）</span></td><td>题面原例在该版本上不复现，需要自己构造复现</td><td>分析时单独看模型能否自己造出复现</td></tr>
+    <tr><td>DVC1681</td><td><span class="pill s-limit">可进（有限制）</span></td><td>题面原例无法原样重跑，需要自己构造复现</td><td>同上</td></tr>
+    <tr><td>pandas53958</td><td><span class="pill s-limit">可进（有限制）</span></td><td>正确的修复会让公开的 <code>test_api.py</code> 失败</td><td>模型需要同步更新 API 名单；不能因此判定改错</td></tr>
+    <tr><td>Moto5752</td><td><span class="pill s-dispute">只作诊断</span></td><td>6 个候选都修好了题面问题，全部倒在一条题面没提的 <code>BeginsWith</code> 断言上</td><td>不进比较分母和训练池</td></tr>
+    <tr><td>mypy11236</td><td><span class="pill s-dispute">只作诊断</span></td><td>"被误拒"的 3 个候选里有 2 个本身修得不完整；3 个都没处理 Final</td><td>不进比较分母和训练池</td></tr>
+  </table></div>
+</section>
+
+<section id="cats">
+  <div class="eyebrow">任务二 · 问题分类</div>
+  <h2>有问题的题分几类，怎么处理</h2>
+  <div class="scroll"><table>
+    <tr><th>问题类别</th><th>涉及题目</th><th>是什么</th><th>处理（已裁决）</th></tr>
+    <tr><td><b>A. 解题环境与评分环境不一致</b></td><td>Dask8597、Moto5134、DVC6954、DVC5839、DVC4166、Conan15422</td><td>解题镜像里的依赖或工具与评分侧版本不同，或者缺了东西，导致相关测试跑不了；DVC4166 甚至因为 pathspec 版本不同，题目行为本身就不一样</td><td><b>已修</b>：actor 派生镜像只加公开依赖或工具链，下载物核对 sha256；修完后用同一份清单复验，并做 gold 对照</td></tr>
+    <tr><td><b>B. 评分漏收（错误补丁能拿满分）</b></td><td>mypy10424、mypy17071、Conan15422、Moto5134（潜在）</td><td>回归测试太少，或者没覆盖被修改的逻辑，所以"直接关掉检查"或只修了一半的补丁也能拿 1 分</td><td><b>方向已定、暂不实施</b>：补现成的公开测试或新断言。实施需要新建 SWE-Gym 题目修订机制，属于评分契约的改动，风险大。<b>眼下的做法</b>：对得 1 的补丁单独做事后审计，结果单列</td></tr>
+    <tr><td><b>C. 参考答案本身有问题</b></td><td>pydantic8511</td><td>gold 修好了题面问题，但引入了继承场景下的回归</td><td><b>不改评分</b>：加测试会让 gold 自己失败，需要连参考答案一起修订。题目照常可用，因为更好的解不会被误拒；事后审计会标出和 gold 有同一回归的补丁</td></tr>
+    <tr><td><b>D. 断言超出题面（误拒）</b></td><td>Moto5752、mypy11236</td><td>评分要求了题面没提到的行为，合理的修复会被判 0</td><td><b>只作诊断</b>：断言和题面都不改，也不进比较分母和训练池</td></tr>
+    <tr><td><b>E. 公开验证路径有缺口</b></td><td>mypy15184、DVC1681、pandas53958</td><td>题面原例不复现，或无法原样重跑，或公开测试与正确修复冲突</td><td><b>不改题面</b>：保留真实开发情境；分析时单独看模型会不会自造复现、会不会同步更新测试</td></tr>
+    <tr><td><b>F. 通用沙箱问题</b></td><td>全部题（实测影响 Conan）</td><td>临时目录是 noexec，构建出的程序无法执行</td><td><b>已修</b>：A 线 <code>83760b15</code>，Codex 复核已接受</td></tr>
+    <tr><td><b>G. 探针脚本问题</b></td><td>全部题</td><td>导出失败被当成空补丁；清理失败不停止派发；终局事件判断不严；镜像自带的改动混进候选；超窗不回 400</td><td><b>已修</b>：每项都做了窄对照，并用真实 CC + 桩把"解题 → 导出 → 评分"整条链路冒烟了一遍</td></tr>
+  </table></div>
+  <p class="muted" style="font-size:13.5px">逐项依据与证据见 <code>task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md</code>；事后审计命令在 <code>rh2/experiments/task2_swegym_dev_20260925/post_hoc_audits.json</code>。</p>
+</section>
+
+<section id="ready">
+  <div class="eyebrow">任务二 · 能否进探针</div>
+  <h2>结论：SWE-Gym 这条线已就绪，可以进入受控的小批探针；开跑前还差一次 GPU 冒烟</h2>
+  <div class="cards">
+    <div class="issue" style="--c:var(--ok)"><h3>已就绪</h3><ul style="margin:4px 0 0;padding-left:1.2em">
+      <li><b>题目</b>：SWE-Gym 的 19 道题都在正式解题环境下验证过开发条件，6 个派生镜像的配方都已固定。</li>
+      <li><b>链路</b>：A 线的修复都已在正式路径上生效，包括解释器、宿主日志收集、工具面、自动记忆、count_tokens、EOS、超窗 400 和 G1。探针脚本的接线和 F1–F4 修复已完成，"解题 → 导出 → 评分"整条链路用真实 CC 冒烟通过。</li>
+      <li><b>分析方法</b>：B、C 两类问题由事后审计兜底；D 类题不进比较分母。</li>
+    </ul></div>
+    <div class="issue" style="--c:var(--warn)"><h3>开跑前还差的步骤</h3><ol style="margin:4px 0 0;padding-left:1.2em">
+      <li><b>租 GPU 做一次冒烟</b>：两款 Qwen 模型真实经过 adapter，核对工具调用与推理的解析，以及首个请求里实际生效的窗口和工具面。这一步 CPU 上验证不了。</li>
+      <li><b>在 GPU 机上重建派生镜像</b>：配方和 sha256 都在仓库里，但镜像 ID 会变，需要记下新 ID。</li>
+      <li><b>预算按 A 线 #8 的配置</b>：窗口、输出预留、回合数、墙钟时间在运行配置里写清楚，并确保 adapter 用同一个窗口。</li>
+    </ol></div>
+    <div class="issue" style="--c:var(--accent)"><h3>建议的首批规模</h3>
+      <p>从这 19 题中先取 12 题左右，覆盖 7 个仓库。两款本地模型每题各跑 2 次，约 48 次尝试。先选"可进探针"里没有限制的题，再加入 Conan、mypy10424、mypy17071 这几道带审计的题，检验审计能不能抓到问题。R2E 的候选和任务一的 12 个新候选，等各自线程补齐实际 actor 证据后再加入。首批跑完先消化轨迹，再扩大规模。</p></div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="eyebrow">怎么验证的</div>
+  <h2>每道题走的四步</h2>
+  <div class="flow">
+    <div class="step"><b>① 真实解题环境</b>走正式启动路径，用真实 Claude Code 2.1.205，只把模型换成"按清单发命令"的桩。命令以 agent 身份（UID 54321）在 CC 的子 shell 里执行，和模型解题时条件一致。</div>
+    <div class="step"><b>② 逐条命令记结果</b>每题一份命令清单：看解释器与导入来源、跑题面原例、跑相关公开测试、看工作区改动。每条命令单独记录退出码和输出，不看整体退出码。</div>
+    <div class="step"><b>③ 只修环境阻断</b>派生镜像只加公开的依赖或工具链，下载物都核对 sha256，不带答案。修完后用<b>同一份</b>清单复跑，base 仍要能暴露缺陷。</div>
+    <div class="step"><b>④ 私有 gold 对照</b>另起一个断网的一次性容器，只应用 gold 的源码部分，跑同样的命令，确认失败是题目缺陷造成的，不是命令或环境的问题。这个容器不会交给求解者。</div>
+  </div>
+  <p class="muted" style="font-size:13.5px">容器资源按正式默认值：2 CPU、4 GiB 内存，已回读确认。机器是 Spheron 的 x86 CPU 机（16 vCPU / 62 GB）。Docker 的镜像存储改回了 overlay2，镜像 ID 可以和历史记录直接比对。</p>
+</section>
+
+<section id="matrix">
+  <div class="eyebrow">总表</div>
+  <h2>21 题一览（09-25 夜的状态，最新状态见上方"任务二最新结论"）</h2>
+  <div class="scroll"><table>
+    <tr><th>题目</th><th>来源</th><th>原条件问题</th><th>修订</th><th>状态</th></tr>
+    <tr><td>Dask8597</td><td>首轮</td><td>pytest 8 不认旧写法，2 个测试失败</td><td>pytest 7.4.4</td><td><span class="pill s-derived">派生后可进</span></td></tr>
+    <tr><td>Moto5134</td><td>首轮</td><td>boto3 新版与旧 moto 协议不合，3 个 SQS 测试失败</td><td>对齐评分侧 boto3 组</td><td><span class="pill s-derived">派生后可进</span></td></tr>
+    <tr><td>DVC6954</td><td>首轮</td><td>pygit2 新版少了常量，git 相关命令全挂</td><td>pygit2 1.14.1</td><td><span class="pill s-derived">派生后可进</span></td></tr>
+    <tr><td>Conan15422</td><td>首轮</td><td>没有 <code>conan</code> 命令；缺 CMake 3.23</td><td>补命令入口 + CMake 3.23.5</td><td><span class="pill s-limit">派生后可进，有限制</span></td></tr>
+    <tr><td>DVC5839</td><td>首轮</td><td>pathspec 新版让 CLI 全挂</td><td>pathspec 0.8.1</td><td><span class="pill s-derived">派生后可进</span></td></tr>
+    <tr><td>Moto5752</td><td>首轮</td><td>无</td><td>—</td><td><span class="pill s-dispute">题意争议待裁定</span></td></tr>
+    <tr><td>mypy17071</td><td>首轮</td><td>无</td><td>—</td><td><span class="pill s-dispute">题意争议待裁定</span></td></tr>
+    <tr><td>mypy11236</td><td>首轮</td><td>无</td><td>—</td><td><span class="pill s-dispute">题意争议待裁定</span></td></tr>
+    <tr><td>mypy10174</td><td>新</td><td>无</td><td>—</td><td><span class="pill s-ok">可进</span></td></tr>
+    <tr><td>mypy10424</td><td>新</td><td>无</td><td>—</td><td><span class="pill s-pre">语义对照待做</span></td></tr>
+    <tr><td>mypy15184</td><td>新</td><td>题面原例在该版本不复现</td><td>—</td><td><span class="pill s-limit">可进，有限制</span></td></tr>
+    <tr><td>mypy16869</td><td>新</td><td>无</td><td>—</td><td><span class="pill s-ok">可进</span></td></tr>
+    <tr><td>moto5960</td><td>新</td><td>无</td><td>—</td><td><span class="pill s-ok">可进</span></td></tr>
+    <tr><td>moto6408</td><td>新</td><td>无</td><td>—</td><td><span class="pill s-ok">可进</span></td></tr>
+    <tr><td>DVC4166</td><td>新</td><td>pathspec 与评分侧不一致；networkx 导入失败</td><td>pathspec 0.8.1 + networkx 兼容修改</td><td><span class="pill s-derived">派生后可进</span></td></tr>
+    <tr><td>DVC1681</td><td>新</td><td>题面原例依赖老版本文件</td><td>—</td><td><span class="pill s-limit">可进，有限制</span></td></tr>
+    <tr><td>pydantic8511</td><td>新</td><td>无</td><td>—</td><td><span class="pill s-pre">语义对照待做</span></td></tr>
+    <tr><td>mypy10308</td><td>新</td><td>无</td><td>—</td><td><span class="pill s-ok">可进</span></td></tr>
+    <tr><td>pandas56849</td><td>新</td><td>无（C 扩展可由 agent 重编）</td><td>—</td><td><span class="pill s-ok">可进</span></td></tr>
+    <tr><td>pandas48106</td><td>新</td><td>无</td><td>—</td><td><span class="pill s-ok">可进</span></td></tr>
+    <tr><td>pandas53958</td><td>新</td><td>正确修复会让公开测试失败</td><td>—</td><td><span class="pill s-limit">可进，有限制</span></td></tr>
+  </table></div>
+</section>
+
+<section id="tasks">
+  <div class="eyebrow">逐题</div>
+  <h2>每道题具体情况</h2>
+  <div class="filters" role="group" aria-label="按状态筛选">
+    <button type="button" data-f="all" aria-pressed="true">全部</button>
+    <button type="button" data-f="derived" aria-pressed="false">需要派生</button>
+    <button type="button" data-f="ok" aria-pressed="false">直接可进</button>
+    <button type="button" data-f="limit" aria-pressed="false">有限制</button>
+    <button type="button" data-f="pre" aria-pressed="false">语义对照待做</button>
+    <button type="button" data-f="dispute" aria-pressed="false">题意争议</button>
+  </div>
+
+  <div class="group-title">首轮已跑过的 8 题</div>
+  <div class="cards">
+
+  <details class="task" data-s="derived"><summary><h3>Dask8597</h3><span class="pill s-derived">派生后可进</span><span class="one">数组切片遇到 0 或 NaN 维度时崩溃</span></summary><div class="body"><dl class="kv">
+    <dt>原条件</dt><dd>题面原例报 <code>OverflowError</code>，缺陷能复现。2 个相关测试因 <code>TypeError: exceptions must be derived from Warning</code> 失败：镜像里是 pytest 8.3.2，不认仓库旧测试的 <code>pytest.warns(None)</code> 写法。</dd>
+    <dt>修订</dt><dd><code>actor_dask8597_v1</code>：只把 pytest 换成 7.4.4，与评分侧用的是同一个 wheel（sha256 一致）。</dd>
+    <dt>复验</dt><dd>原例仍报错；相关测试 3 个全过；整个测试文件 118 通过、0 失败。</dd>
+    <dt>gold 对照</dt><dd>原例、相关测试、整个文件全部通过。</dd></dl></div></details>
+
+  <details class="task" data-s="derived"><summary><h3>Moto5134</h3><span class="pill s-derived">派生后可进</span><span class="one">事件过滤 <code>exists:true</code> 匹配不上值为 null 的字段</span></summary><div class="body"><dl class="kv">
+    <dt>原条件</dt><dd>公开 API 原例：null / 有值 / 缺键 三种情况得到 <code>[False, True, False]</code>，缺陷能复现；端到端 Events→Logs 投递 0 条。3 个 SQS 集成测试报 <code>KeyError: 'QueueUrl'</code>：botocore 1.35 对 SQS 改用 JSON 协议，这个旧版 moto 只会返回 query 格式。</dd>
+    <dt>修订</dt><dd><code>actor_moto5134_v1</code>：换成 boto3 1.28.57 / botocore 1.31.57 / s3transfer 0.7.0 / urllib3 1.26.20，四个 wheel 与评分侧 sha256 一致。</dd>
+    <dt>复验</dt><dd>两个原例仍暴露缺陷；集成测试 4/4 通过；评分选集外的 archive 回归面 103 通过。</dd>
+    <dt>gold 对照</dt><dd>全部通过。限制：端到端需要自己设 <code>AWS_DEFAULT_REGION</code>，这是题目本身就要求的。</dd></dl></div></details>
+
+  <details class="task" data-s="derived"><summary><h3>DVC6954</h3><span class="pill s-derived">派生后可进</span><span class="one">params.py 里的负数参数解析不了</span></summary><div class="body"><dl class="kv">
+    <dt>原条件</dt><dd>题面 CLI 路径（stage add → repro）报 <code>Parameters … are missing</code>，缺陷能复现。镜像里的 pygit2 1.15.1 已经移除了 <code>GIT_OBJ_COMMIT</code>，而源码还在导入它，所以凡是要解析 git 修订的命令都会报错；<code>tests/func/params</code> 16 个失败。</dd>
+    <dt>修订</dt><dd><code>actor_dvc6954_v1</code>：pygit2 1.14.1，这是保留该常量的最后一个系列。同仓库别的题用过这个版本，但本题是实测验证后才采用的。</dd>
+    <dt>复验</dt><dd>原例仍暴露缺陷；<code>params diff HEAD</code> 能跑了；功能测试 24/24 通过。</dd>
+    <dt>gold 对照</dt><dd>dvc.lock 里正确记下 <code>my_int: -1</code>、<code>my_float: -0.5</code>，其余命令全部通过。</dd></dl></div></details>
+
+  <details class="task" data-s="limit"><summary><h3>Conan15422</h3><span class="pill s-limit">派生后可进，有限制</span><span class="one">CMake 预设文件里缺 <code>jobs</code> 并行数</span></summary><div class="body"><dl class="kv">
+    <dt>原条件</dt><dd><b>agent 没有 <code>conan</code> 命令</b>：testbed 环境没装这个包，源码只是靠当前目录导入。所以题面 CLI 和"用真实 CMake 消费预设"两条路径都跑不了。另有 6 个功能测试报 ERROR：Conan 的测试约定在 <code>/usr/share/cmake-3.23.5</code> 找 CMake 3.23，镜像里没有。</dd>
+    <dt>修订</dt><dd><code>actor_conan15422_v2</code>：在解释器目录补一个 <code>conan</code> 入口（等价于 setup.py 声明的入口，不改 /testbed）；装官方 CMake 3.23.5（核对 sha256），并设为默认 cmake。系统自带的 3.22.1 读不了 Conan 生成的预设。</dd>
+    <dt>复验</dt><dd>题面 CLI 得 <code>jobs=None</code>，缺陷能复现；真实 CMake 能完成 configure 和 build；功能测试 8 过、2 失败，这 2 个失败都是 /tmp noexec 造成的（见重要发现 G1）。</dd>
+    <dt>gold 对照</dt><dd>得到 <code>('conan-release', 42)</code>，其余通过。另外，首轮发现的覆盖缺口（缺三条断言）仍待你裁定。</dd></dl></div></details>
+
+  <details class="task" data-s="derived"><summary><h3>DVC5839</h3><span class="pill s-derived">派生后可进</span><span class="one"><code>dvc metrics show --precision</code> 不生效</span></summary><div class="body"><dl class="kv">
+    <dt>原条件</dt><dd>公开镜像下，<code>dvc metrics show</code> 的 5 种参数组合全部报 <code>redefinition of group name 'ps_d'</code>（rc=255），与首轮一致。原因是镜像里的 pathspec 0.12.1 与这个 dvc 版本不兼容。</dd>
+    <dt>修订</dt><dd><code>actor_dvc5839_v2</code>：pathspec 0.8.1，沿用首轮的做法，这次按 sha256 重新构建。</dd>
+    <dt>复验</dt><dd>5 种组合全部 rc=0，窄测试 2 个通过。首轮在诊断环境里得出的结论可以迁移到正式环境。</dd>
+    <dt>gold 对照</dt><dd>通过。</dd></dl></div></details>
+
+  <details class="task" data-s="dispute"><summary><h3>Moto5752</h3><span class="pill s-dispute">题意争议待裁定</span><span class="one">SSM 按标签过滤，结果和过滤器顺序有关</span></summary><div class="body"><dl class="kv">
+    <dt>正式环境</dt><dd>按题面 MWE 原样执行：<code>hello</code> 放第二时返回 1 条，放第一时返回 2 条，缺陷能复现。SSM 相关测试 28 通过。首轮的检查脚本只核了导入，这次补上了原例和测试。</dd>
+    <dt>gold 对照</dt><dd>两种顺序都返回 1 条。</dd>
+    <dt>状态</dt><dd>开发条件没问题。首轮的争议仍在：评分测试里有一条 BeginsWith 断言，题面没有提到，需要你决定怎么处理。</dd></dl></div></details>
+
+  <details class="task" data-s="dispute"><summary><h3>mypy17071</h3><span class="pill s-dispute">题意争议待裁定</span><span class="one">回调返回 TypeGuard[T] 时误报未绑定的 TypeVar</span></summary><div class="body"><dl class="kv">
+    <dt>正式环境</dt><dd>题面原例报 <code>A function returning TypeVar should receive at least one argument…</code>，缺陷能复现；相关测试 135 通过。</dd>
+    <dt>gold 对照</dt><dd>通过。</dd>
+    <dt>状态</dt><dd>开发条件没问题。首轮的覆盖缺口仍在：P2P 测试根本走不到被检查的函数，"把检查关掉"的假修复也能拿满分。要不要补负例由你决定。</dd></dl></div></details>
+
+  <details class="task" data-s="dispute"><summary><h3>mypy11236</h3><span class="pill s-dispute">题意争议待裁定</span><span class="one">Union[Tuple[Literal]] 作返回值时误报类型不兼容</span></summary><div class="body"><dl class="kv">
+    <dt>正式环境</dt><dd>按题面原 flags（<code>--strict --python-version 3.7</code>）报 <code>Incompatible return value type</code>，缺陷能复现；相关测试 18 通过。</dd>
+    <dt>gold 对照</dt><dd>结果为 <code>Success</code>。</dd>
+    <dt>状态</dt><dd>开发条件没问题。首轮的两处争议仍在：Final 相关断言和错误消息措辞，题面都没有提到，需要你决定。</dd></dl></div></details>
+  </div>
+
+  <div class="group-title">尚未求解的 13 题</div>
+  <div class="cards">
+  <details class="task" data-s="ok"><summary><h3>mypy10174</h3><span class="pill s-ok">可进</span><span class="one">关掉 strict-optional 时 strict-equality 误报</span></summary><div class="body"><dl class="kv">
+    <dt>结果</dt><dd>原例报 <code>Non-overlapping container check</code>，缺陷能复现；相关测试 32 通过；gold 对照通过。公开镜像即可，不需要修订。</dd>
+    <dt>另记</dt><dd>最初我的匹配串大小写写错了，导致显示"没复现"，已改正并重跑。它的"严格比较负例"语义诊断还没做，但不影响开发。</dd></dl></div></details>
+
+  <details class="task" data-s="pre"><summary><h3>mypy10424</h3><span class="pill s-pre">语义对照待做</span><span class="one"><code>type(t) is not M</code> 错误地把 t 收窄成 &lt;nothing&gt;</span></summary><div class="body"><dl class="kv">
+    <dt>结果</dt><dd>原例 <code>reveal_type</code> 得到 <code>&lt;nothing&gt;</code>，缺陷能复现；收窄相关测试 133 通过；gold 对照通过。</dd>
+    <dt>前提</dt><dd>首批候选说明要求先做窄化对照：一个完全关掉 type 比较收窄的错误补丁，能不能拿满分。这个对照做完之前，不进模型能力比较。</dd></dl></div></details>
+
+  <details class="task" data-s="limit"><summary><h3>mypy15184</h3><span class="pill s-limit">可进，有限制</span><span class="one">assert_type 遇到同名类型时，消息应该给全限定名</span></summary><div class="body"><dl class="kv">
+    <dt>结果</dt><dd><b>题面原例在这个版本上不复现</b>：默认、3.8、3.11 三个目标版本都输出 <code>Success</code>，3.7 下则报 <code>typing.SupportsIndex</code> 未定义。原因是自带的 typeshed 在 3.8 及以上直接复用 <code>typing.SupportsIndex</code>，题面里的两个名字其实是同一个类型。</dd>
+    <dt>替代复现</dt><dd>两个模块各定义一个同名类 <code>C</code>，再对它们用 <code>assert_type</code>，得到 <code>Expression is of type "C", not "C"</code>，正是题目要修的缺陷。相关测试 6 通过；gold 对照通过。</dd>
+    <dt>限制</dt><dd>模型没法用题面原例来验证自己的修复，得自己构造复现。要不要在题面里补一句说明，由你决定。</dd></dl></div></details>
+
+  <details class="task" data-s="ok"><summary><h3>mypy16869</h3><span class="pill s-ok">可进</span><span class="one">stubgen 处理 <code>Generic[*_Ts]</code> 时崩溃</span></summary><div class="body"><dl class="kv">
+    <dt>结果</dt><dd>公开 CLI <code>stubgen</code> 崩溃，报 <code>TypeError: sequence item 0: expected str…</code>，位置与题面一致；stubgen 测试 29 通过；gold 对照通过。"精确文本断言会不会误拒合法输出"这个语义诊断另外再做。</dd></dl></div></details>
+
+  <details class="task" data-s="ok"><summary><h3>moto5960</h3><span class="pill s-ok">可进</span><span class="one">DynamoDB GSI 的 scan 没按投影类型过滤属性</span></summary><div class="body"><dl class="kv">
+    <dt>结果</dt><dd>题面给的两个 pytest 用例（INCLUDE、KEYS_ONLY）都失败，缺陷能复现；DynamoDB 相关测试 29 通过；gold 对照通过。</dd></dl></div></details>
+
+  <details class="task" data-s="ok"><summary><h3>moto6408</h3><span class="pill s-ok">可进</span><span class="one">ECR 把已有 tag 移到另一个镜像时的回归</span></summary><div class="body"><dl class="kv">
+    <dt>结果</dt><dd>题面的回归用例失败，<code>batch_get_image</code> 仍返回旧镜像；ECR 相关测试 29 通过；gold 对照通过。</dd></dl></div></details>
+
+  <details class="task" data-s="derived"><summary><h3>DVC4166</h3><span class="pill s-derived">派生后可进</span><span class="one">.dvcignore 先全部排除、再用否定规则放回时失效</span></summary><div class="body"><dl class="kv">
+    <dt>原条件</dt><dd><code>/*</code> + <code>!/scripts/</code> 这种写法会把 scripts 下的文件隐藏，缺陷能复现。但<b>解题环境的 pathspec 是 0.12.1，评分环境是 0.8.1</b>，两个版本对 .dvcignore 的匹配结果不一样。另外 4 个相关测试失败：3 个是 pathspec 不兼容，1 个是 networkx 2.3 在 Python 3.9 下导入失败。</dd>
+    <dt>修订</dt><dd><code>actor_dvc4166_v1</code>：pathspec 0.8.1，与评分侧一致；networkx 2.3 用 PyPI 源码包安装（核对 sha256），再做评分侧记录的同一处 <code>gcd</code> 兼容修改。</dd>
+    <dt>复验</dt><dd>缺陷仍能复现；相关测试 29 通过；gold 对照通过。</dd>
+    <dt>纠正</dt><dd>gold 对照纠正了我一个判断：题面列出的几种写法并不等价。<code>*</code> + <code>!scripts</code> 按 gitignore 语义本来就会隐藏目录里的文件，gold 也是这样。所以断言只检查按语义应该可见的两种写法。</dd></dl></div></details>
+
+  <details class="task" data-s="limit"><summary><h3>DVC1681</h3><span class="pill s-limit">可进，有限制</span><span class="one">升级后 <code>dvc status</code> 对老文件误报 changed checksum</span></summary><div class="body"><dl class="kv">
+    <dt>结果</dt><dd>题面原例依赖老版本 dvc 生成的文件和大文件，没法原样重跑。我构造了一个公开可复现的形态：把同一个仓库复制到另一个绝对路径，<code>dvc status</code> 就会报 <code>changed checksum</code>，这就是题目缺陷。status/stage 相关测试通过；gold 对照通过。</dd>
+    <dt>限制</dt><dd>模型需要自己构造复现。</dd></dl></div></details>
+
+  <details class="task" data-s="pre"><summary><h3>pydantic8511</h3><span class="pill s-pre">语义对照待做</span><span class="one"><code>Field(repr=False)</code> 在 pydantic dataclass 里不生效</span></summary><div class="body"><dl class="kv">
+    <dt>结果</dt><dd>原例输出 <code>a(b=1, c=2)</code>，缺陷能复现；dataclasses 测试通过；gold 对照通过。</dd>
+    <dt>前提</dt><dd>首批候选要求先查清 gold 在继承场景（G1）下会不会装饰失败。查清之前，不进模型能力比较。</dd></dl></div></details>
+
+  <details class="task" data-s="ok"><summary><h3>mypy10308</h3><span class="pill s-ok">可进</span><span class="one">两个相关 Protocol 都定义 <code>__add__</code> 时 mypy 内部错误</span></summary><div class="body"><dl class="kv">
+    <dt>结果</dt><dd>题面原例（按 Python 3.8）触发内部断言错误，缺陷能复现；协议相关测试 15 通过；gold 对照通过。它在 CPU 队列里的待验问题"base 是否崩溃、gold 是否修好"也因此有了答案：是的。</dd></dl></div></details>
+
+  <details class="task" data-s="ok"><summary><h3>pandas56849</h3><span class="pill s-ok">可进</span><span class="one"><code>freq="m"</code>（已弃用 "M" 的别名）报错</span></summary><div class="body"><dl class="kv">
+    <dt>结果</dt><dd>原例报 <code>Invalid frequency: m</code>，缺陷能复现；相关测试 119 通过；gold 对照通过。</dd>
+    <dt>关键</dt><dd>修复要改 Cython 文件 <code>offsets.pyx</code>。实测 agent 能自己完成增量重编：碰一下这个文件后执行 import，meson 会自动重新编译该模块，约 19 秒。</dd></dl></div></details>
+
+  <details class="task" data-s="ok"><summary><h3>pandas48106</h3><span class="pill s-ok">可进</span><span class="one">Categorical Series 扩增时赋数值抛内部错误</span></summary><div class="body"><dl class="kv">
+    <dt>结果</dt><dd>原例抛 <code>TypeError: type.__new__() takes exactly 3 arguments</code>，缺陷能复现；相关测试 14 通过；gold 对照通过。修复在纯 Python 文件里，不需要重编。</dd></dl></div></details>
+
+  <details class="task" data-s="limit"><summary><h3>pandas53958</h3><span class="pill s-limit">可进，有限制</span><span class="one">NaTType / NAType 所在的包不一致</span></summary><div class="body"><dl class="kv">
+    <dt>结果</dt><dd>题面给了两种方案，没指定唯一答案，所以只记录现状：<code>_libs</code> 里有 NaTType，没有 NAType；<code>api.typing</code> 里两个都没有。gold 的做法是把两个都加进 <code>api.typing</code>。</dd>
+    <dt>限制</dt><dd>公开的 <code>test_api.py</code> 在 base 上 11 个都通过，<b>但在 gold 下会失败</b>，因为这个旧测试写死了原来的 API 名单。评分用的是更新过的隐藏测试。模型修对之后，需要理解这一点并同步更新名单。</dd></dl></div></details>
+  </div>
+</section>
+
+<section id="found">
+  <div class="eyebrow">重要发现</div>
+  <h2>需要你知道的几件事</h2>
+  <div class="cards">
+    <div class="issue" style="--c:var(--bad)"><h3>G1：正式沙箱的 /tmp 和 HOME 不能执行程序</h3>
+      <p>agent 容器里 <code>/tmp</code> 和 <code>/home/agent</code> 都挂成了 <code>noexec</code>。原因是 Docker 的 <code>--tmpfs</code> 默认带这个选项，而正式 profile 没有写 <code>exec</code>。</p>
+      <pre>tmpfs /tmp tmpfs rw,nosuid,nodev,noexec,relatime,size=1048576k
+tmpfs /home/agent tmpfs rw,nosuid,nodev,noexec,...</pre>
+      <p style="margin-top:6px">影响：凡是在临时目录里编译再运行的开发路径都跑不了。已实证 Conan 的 2 个测试因此失败。推断 <code>pip install --user</code> 装出的命令、建在 /tmp 的虚拟环境也会受影响。这属于安全边界，已移交 A 线评估，最终由你决定。</p></div>
+    <div class="issue" style="--c:var(--warn)"><h3>解题环境和评分环境的依赖版本不一致，会改变题意</h3>
+      <p>DVC4166 的解题侧 pathspec 是 0.12.1，评分侧是 0.8.1，两者对 .dvcignore 的匹配结果不同，模型开发时看到的行为会和评分时不一样。Dask、Moto5134 的派生也是同一个道理：把解题环境对齐到评分环境。</p></div>
+    <div class="issue" style="--c:var(--warn)"><h3>4 道题的公开验证路径有缺口</h3>
+      <p>mypy15184 的原例不复现；DVC1681 的原例没法重跑；pandas53958 的公开测试与正确修复冲突；Conan15422 原本没有 CLI。这几题模型都能做，但要额外自己构造复现或理解测试的变化。要不要在题面里说明，属于需要你决定的事项。</p></div>
+    <div class="issue" style="--c:var(--accent)"><h3>A 线的修复已在正式路径生效</h3>
+      <p>所有题的 agent 都拿到了项目解释器（testbed），代码从 /testbed 导入；容器里不再有 .harness 目录；每次跑完都没有残留容器或网络。命令执行到一半收到 SIGTERM 时，也能完整清理。</p></div>
+  </div>
+</section>
+
+<section id="wiring">
+  <div class="eyebrow">探针接线</div>
+  <h2>同一晚完成的探针入口改造</h2>
+  <div class="box"><ul>
+    <li><b>adapter</b>：按正式链的顺序装上 RH2 的四个包装。CPU 验证结果：启动时自检正常；<code>count_tokens</code> 返回真实计数（14 / 209，之前恒为 0）；末尾的 EOS 字面量只在采样结果确实是 EOS 时才剥掉。</li>
+    <li><b>超窗</b>：目前返回空回复（HTTP 200），不是 400，所以 CC 不会触发被动压缩。这需要等 A 线提供共用函数，已如实记为 <code>overflow_400=false</code>。</li>
+    <li><b>solve_attempt</b>：改成正式链的激活方式，环境按次注入，轨迹从宿主机收集；上下文窗口必须和 adapter 设成同一个数。</li>
+    <li><b>网关</b>：上游干净结束但缺 <code>message_stop</code> 时，现在也会中止下游连接，不再把残缺回复当成完整回复交出去。本地三种形态都验证过。</li>
+    <li><b>尚未验证</b>：工具调用解析、真实模型冒烟、真实请求里的工具列表和窗口变量是否生效。这几项要等租到 GPU 后再测。</li>
+  </ul></div>
+</section>
+
+<section id="next">
+  <div class="eyebrow">待决定</div>
+  <h2>需要你拍板或安排的事</h2>
+  <div class="box"><ol>
+    <li>G1 noexec 的处理方式（A 线评估后由你决定）。</li>
+    <li>4 道有限制的题，要不要在题面补说明（T0）。</li>
+    <li>三道争议题（Moto5752、mypy11236、mypy17071）和 Conan 覆盖缺口，沿用首轮处置卡的选项。</li>
+    <li>是否继续用这台 CPU 机补做：mypy10424 / pydantic8511 的语义对照、首轮题的行为裁决脚本、19 个先诊断项。不做的话可以销毁（Spheron 不能暂停，证据已传回本地）。</li>
+  </ol></div>
+</section>
+
+<header class="part" id="r2e">
+  <div class="eyebrow">项目一 · B 线 · 任务三 R2E（09-25 凌晨）</div>
+  <h2 class="part-title">R2E 首批 8 题：静态审查、真实环境核对与正式接线</h2>
+  <p class="muted" style="max-width:70ch;margin-top:8px">目标：先用 8 道题校准 R2E 的静态审查方法，之后再按仓库推进。8 题 = 6 道带已知线索的题 + 2 道对照题：前者检验方法能不能查出、查准已知问题，后者看普通题上的工作量和误报。每题由三个不继承上下文的新会话审：公开读者、私有主审、独立复核。协调线程只做协调、材料、接线和执行核对，不当审查角色。同一晚还完成了 R2E 进正式 actor 的接线。</p>
+  <div class="tiles">
+    <div class="tile"><b>8</b><span>题走完三角色审查</span></div>
+    <div class="tile"><b>2</b><span>题可进探针，附条件</span></div>
+    <div class="tile"><b>5</b><span>题只作诊断：评分误拒或题面矛盾</span></div>
+    <div class="tile"><b>1</b><span>题题面泄漏答案</span></div>
+    <div class="tile"><b>8/8</b><span>题真实 CC 开发核对通过</span></div>
+    <div class="tile"><b>26</b><span>次候选修复真实评分</span></div>
+  </div>
+</header>
+
+<section id="r2e-how">
+  <div class="eyebrow">R2E · 怎么做的</div>
+  <h2>每道题走的五步</h2>
+  <div class="flow">
+    <div class="step"><b>① 公开读者</b>只读公开包（题面、初始工作树、环境说明），写出需求、能从公开材料推知的约束和开发要用的操作，不接触答案。</div>
+    <div class="step"><b>② 私有主审</b>读隐藏测试、期望映射、gold 和原始评分日志，先封存一份"读历史前的初判"，再读环境阶段的历史结论逐条核对，最后写题卡。</div>
+    <div class="step"><b>③ 独立复核</b>先从原件独立写初判，再对照主审逐项核对主张，补查主审漏掉的范围，分歧如实保留。</div>
+    <div class="step"><b>④ 真实环境开发核对</b>与任务二同一入口（真实 CC 2.1.205 + 桩），只加一层 R2E 任务面：派生镜像、<code>.venv</code>。先跑 R2E 预检，再跑题面原例和相关公开测试；另做私有 gold 对照。</div>
+    <div class="step"><b>⑤ 候选修复真实评分</b>把主审和复核提出的"合理替代解"与"错误实现"写成补丁，用正式评分代码在派生镜像上各评 1 次，把静态推断变成执行证据。</div>
+  </div>
+  <p class="muted" style="font-size:13.5px">执行中的两个问题：宿主不允许子会话写报告文件，由协调者从被拒的写入调用里原样取出保存，不改正文；安全过滤 4 次拦截或中止会话（scrapy、coveragepy 两位主审各 2 次），第二步改由新会话接续，封存的初判原文不受影响。第二波起每题的主审、复核都单独一个会话。机器是 A 线借给 B 线的 x86 CPU 机（8 vCPU / 31 GB），容器资源按正式默认值 2 CPU、4 GiB。</p>
+</section>
+
+<section id="r2e-matrix">
+  <div class="eyebrow">R2E · 总表</div>
+  <h2>8 题一览</h2>
+  <div class="scroll"><table class="r2e-table">
+    <colgroup><col style="width:24%"><col style="width:24%"><col style="width:36%"><col style="width:16%"></colgroup>
+    <tr><th>题目 · 选题理由</th><th>题目内容</th><th>审查结论</th><th>状态</th></tr>
+    <tr><td>pillow <code>2b061b68</code><br><span class="muted" style="font-size:12.5px">已知：题面与目标测试矛盾（T0-3）</span></td><td><code>Image.open</code> 新增 <code>formats</code> 参数</td><td>题面误导，且与目标断言冲突；两个死测试放过有害改动</td><td><span class="pill s-dispute">只作诊断 · 待裁定</span></td></tr>
+    <tr><td>scrapy <code>9a15fcf8</code><br><span class="muted" style="font-size:12.5px">已知：期望里的 FAILED 键惩罚更完整的修复（T0-4）</span></td><td><code>application/x-json</code> 应识别为文本响应</td><td>两个 py3 下必然报错的死测试被写成"必须失败"，修得更全反而判 0</td><td><span class="pill s-dispute">只作诊断 · 待裁定</span></td></tr>
+    <tr><td>coveragepy <code>5dbbe143</code><br><span class="muted" style="font-size:12.5px">已知：隐藏测试依赖修复前的测试辅助</span></td><td><code>_warn</code> 新增 <code>once</code> 参数</td><td>题面没说按什么判定"重复"，按消息去重的合理实现判 0；原已知问题影响很小，建议关闭</td><td><span class="pill s-dispute">只作诊断 · 待裁定</span></td></tr>
+    <tr><td>pandas <code>32dd55cb</code><br><span class="muted" style="font-size:12.5px">批次三修订题，另有题面线索</span></td><td>EA 列在 <code>numeric_only=True</code> 时归约报错</td><td>目标测试要求 gold 专有的报错文字，与公开旧测试相反</td><td><span class="pill s-dispute">只作诊断 · 待裁定</span></td></tr>
+    <tr><td>orange3 <code>9b5494e2</code><br><span class="muted" style="font-size:12.5px">已知：两个 scorer 键原因未定、环境配方</span></td><td>L1 惩罚项时自动选能用的 solver</td><td>目标测试钉死了题面没写的接口细节；scorer 两键是上游过时期望</td><td><span class="pill s-dispute">只作诊断 · 待裁定</span></td></tr>
+    <tr><td>orange3 <code>22e98f8f</code><br><span class="muted" style="font-size:12.5px">题面可能泄漏修法</span></td><td><code>unique_in_order_mapping</code> 映射算错</td><td>题面里的"有 bug 的代码"逐字等于 gold</td><td><span class="pill s-dispute">不作能力题</span></td></tr>
+    <tr><td>numpy <code>18b7cd9d</code><br><span class="muted" style="font-size:12.5px">对照：无已知线索</span></td><td><code>poly1d</code> 与非 poly1d 比较时崩溃</td><td>题意一致；隐藏测试只比较了 None，两种错误实现也能得满分</td><td><span class="pill s-limit">可进探针 · 附条件</span></td></tr>
+    <tr><td>aiohttp <code>61833518</code><br><span class="muted" style="font-size:12.5px">对照：无已知线索，工作树带兼容改写</span></td><td>deflate + chunked 响应发出空块、提前结束</td><td>标题说的场景没被隐藏测试覆盖，只修一半也得满分</td><td><span class="pill s-limit">可进探针 · 附条件</span></td></tr>
+  </table></div>
+  <p class="muted" style="font-size:13.5px">8 题静态处置都是 <code>needs_review</code>，这只是静态审查范围的结论，不是训练或评测批准。"只作诊断"指可以用来观察模型行为：保留原始 reward，失败键模式只用来筛出"疑似规格争议"的样本，核实候选语义后才标"合理误拒"，不能按失败位置自动免除（Codex 复核 R2）。修订前不作训练 reward。</p>
+</section>
+
+<section id="r2e-tasks">
+  <div class="eyebrow">R2E · 逐题</div>
+  <h2>每道题具体情况</h2>
+  <p class="muted" style="font-size:13.5px">"开发核对"都在正式启动路径下取得：agent 身份（UID 54321）、派生镜像、<code>.venv</code> 解释器，8 题的 R2E 预检三项（解释器可执行、隐藏测试不可读、HEAD 没有子提交）全部通过，被测包都从 <code>/testbed</code> 导入。"gold 对照"在断网的一次性私有容器里做，不交给求解者。</p>
+
+  <div class="group-title">可进探针，附条件（对照题）</div>
+  <div class="cards">
+
+  <details class="task" data-s="r2e-probe"><summary><h3>numpy 18b7cd9d</h3><span class="pill s-limit">可进探针 · 附条件</span><span class="one"><code>poly1d == None</code> 报 AttributeError，应返回 False 或 NotImplemented</span></summary><div class="body"><dl class="kv">
+    <dt>材料</dt><dd>配方 <code>r2e_derive_v1</code>，今晚新建派生镜像；期望 11 键，全部 PASSED；目标测试 <code>TestDocs.test_poly_eq</code>。</dd>
+    <dt>审查</dt><dd>题面、目标测试、gold 三者一致，noop 的失败正是题面的报错。缺口：题面没提 <code>!=</code>；隐藏测试只比较了 <code>None</code>，只比较了同一对象；<code>test_doctests</code> 是永远通过的死键。复核同意，另补了两处没测的范围：不同长度多项式的比较、同时特判 None 和标量的实现。</dd>
+    <dt>开发核对</dt><dd>Python 3.7.9，numpy 1.13.0.dev0 从 <code>/testbed</code> 导入；nose 1.3.7；没有 pip；pytest 7.4.4。题面原例 base 报 <code>AttributeError</code>，gold 下得 <code>False</code>；公开回归测试 9 过、10 过，gold 下相同，也就是说公开测试区分不了修复前后。</dd>
+    <dt>候选评分</dt><dd>对非 poly1d 返回 False：<b>1</b>。只让 <code>__eq__</code> 返回 NotImplemented：<b>0</b>（<code>p != None</code> 得 False，得 0 是应该的）。只特判 None：<b>1</b>，但 <code>p == 3</code> 仍抛错。删掉 <code>__eq__</code>/<code>__ne__</code> 退回身份比较：<b>1</b>，但系数相同的两个多项式不再相等。</dd>
+    <dt>用途</dt><dd>可列为基座探针候选，是一道易题。得 1 的补丁用逐项行为检查复核（12 项，每项单独运行；不要求照 gold 返回 NotImplemented），脚本已写好：gold 与 A 通过，D、N、I 和 base 都不通过。只有打算用于训练时才考虑补测试。</dd></dl></div></details>
+
+  <details class="task" data-s="r2e-probe"><summary><h3>aiohttp 61833518</h3><span class="pill s-limit">可进探针 · 附条件</span><span class="one">deflate 压缩 + 分块传输时发出空块，响应提前结束</span></summary><div class="body"><dl class="kv">
+    <dt>材料</dt><dd>配方 <code>r2e_derive_v1</code>，今晚新建派生镜像；期望 47 键，全部 PASSED。初始工作树带来源镜像的兼容改写：4 个已跟踪文件 + 1 个未跟踪脚本。</dd>
+    <dt>审查</dt><dd>两个目标测试都走 Content-Length 写出器，标题说的"压缩在后 + chunked 写出器 → 正文开头就是终止块"没有被测到。题面示例的断言 <code>all(write.mock_calls)</code> 按字面写恒为真，照抄会以为复现不了。另外，评分会按初态重放改动，候选如果还原了兼容改写（<code>client.py</code>、<code>client_reqrep.py</code>），<code>import aiohttp</code> 会失败而得 0。复核同意，并把漏测从推断升级为已证实。</dd>
+    <dt>开发核对</dt><dd>0.17.0a0 从 <code>/testbed</code> 导入；没有 pip；pytest 8.3.4。公开读者写的复现 C2（题面配置）base 有空写入，gold 下没有；C3（chunked）base 正文以终止块开头，gold 下正常。<code>test_http_protocol.py</code> 47 过，gold 下相同；<code>test_web_response.py</code> 有 3 个 cookie 测试失败，与本题无关，gold 下也一样。</dd>
+    <dt>候选评分</dt><dd>gold：1。只在 Content-Length 写出器跳过空块：<b>1</b>，但 C3 仍以终止块开头（标题说的 bug 还在）。两个写出器都跳过空块：1，C3 正常。</dd>
+    <dt>用途</dt><dd>可列为基座探针候选。得 1 的补丁加跑语义化的 C3（分块完整、终止块唯一且在末尾、解压等于原载荷；不要求字节等于 gold），脚本已写好：gold 与 AP2 通过，AP1 和 base 不通过。原始 reward 和按 C3 修正后的结果分两列报；因还原兼容改写而得 0 的，按环境陷阱计，不算模型失败。用于训练前要先补标题场景的测试（修订 Q2，由你决定）。</dd></dl></div></details>
+  </div>
+
+  <div class="group-title">只作诊断：合理修复被判 0 已由执行证实</div>
+  <div class="cards">
+
+  <details class="task" data-s="r2e-diag"><summary><h3>pandas 32dd55cb</h3><span class="pill s-dispute">只作诊断 · 待裁定</span><span class="one">DataFrame 含 Int64 等扩展数组列时，<code>mean(numeric_only=True)</code> 报错</span></summary><div class="body"><dl class="kv">
+    <dt>材料</dt><dd>批次三修订题：私有 conftest 补回隐藏测试搬家后找不到的 fixture，13 个原本恒为 ERROR 的键变成活的回归键；配方 <code>+material_v2</code>。期望 92 键，全部 PASSED。</dd>
+    <dt>审查</dt><dd>目标测试 T2 要求 Period 列 <code>mean</code> 报 gold 路线特有的文字 "mean is not implemented for Period"；公开旧测试（<code>test_analytics.py:899</code>）要求的恰好是另一句，题面也没提。所以"只对数值型扩展数组分派"这类合理修法会判 0。另一个目标测试 T1 没覆盖缺失值和其它归约。主审还发现：环境阶段批次三写回把这个问题误标成了"已解决"。复核同意，并建议新断言放进 T1 函数体内，这样键集和期望都不变。</dd>
+    <dt>开发核对</dt><dd>pandas 从 <code>/testbed</code> 导入（版本带 <code>.dirty</code>）；有 pip 24.0。题面原例 base 报 <code>ValueError</code>（sum 不支持 dtype），gold 下得到均值。</dd>
+    <dt>gold 对照</dt><dd>公开 <code>frame/test_analytics.py</code> base 91 过；<b>gold 下 1 败 90 过，失败的恰是 T2 对应的旧测试</b>。这说明公开旧测试和隐藏测试不可能同时通过。</dd>
+    <dt>候选评分</dt><dd>只对数值型扩展数组调 <code>_reduce</code>：<b>0</b>（91/92，只有 T2 不符）。按主审推断，这个修法能修好题面例子并让公开测试全过（这一点未实跑）。</dd>
+    <dt>待定</dt><dd>修订草案：放宽 T2 的文字匹配，让两种报错都能通过，同时在 T1 里补缺失值和 sum 的断言。环境记录已按事实改回（见下方"重要发现"）。</dd></dl></div></details>
+
+  <details class="task" data-s="r2e-diag"><summary><h3>coveragepy 5dbbe143</h3><span class="pill s-dispute">只作诊断 · 待裁定</span><span class="one"><code>_warn()</code> 不认 <code>once</code> 参数；带 once 的警告应只显示一次</span></summary><div class="body"><dl class="kv">
+    <dt>材料</dt><dd>配方 <code>r2e_derive_v1</code>，今晚新建派生镜像；期望 75 键，全部 PASSED。</dd>
+    <dt>审查</dt><dd>题面只说 "only once each"，没说按什么判定重复；隐藏测试要求同一 slug、不同消息的第二条也被压掉，也就是按 slug 去重。复核核对了来源原文：题面生成器拿到了"按 slug 判定"的信息，却没写进题面。环境阶段留下的"隐藏测试依赖修复前测试辅助"问题只影响越界改法，建议关闭。</dd>
+    <dt>开发核对</dt><dd>coverage 5.0.2a1，在 <code>/testbed</code> 和 <code>/tmp</code> 下都从 <code>/testbed</code> 导入；有 pip 19.3.1；pytest 4.6.6。题面原例 base 报 <code>TypeError</code>。gold 下只打印第一条警告，第二条被压掉，与题面 "each" 的说法有落差。</dd>
+    <dt>候选评分</dt><dd>gold：1。按消息去重：<b>0</b>（74/75，<code>test_warn_once</code>）。按 slug 去重：1。过粗（第一次 once 之后所有 once 警告都不显示）：<b>1</b>，漏测。</dd>
+    <dt>待定</dt><dd>现有修订机制改不了题面：要么先加一个能改题面的机制，要么隔离这题。</dd></dl></div></details>
+
+  <details class="task" data-s="r2e-diag"><summary><h3>orange3 9b5494e2</h3><span class="pill s-dispute">只作诊断 · 待裁定</span><span class="one"><code>LogisticRegressionLearner(penalty='l1')</code> 报 solver 不支持 l1</span></summary><div class="body"><dl class="kv">
+    <dt>材料</dt><dd>修订 <code>r2e-mr-020</code> + 环境配方 <code>+env_v2</code>（SciPy 1.5.4），修订只在这个环境下成立。期望 13 键，其中 2 个 FAILED：<code>test_learner_scorer</code>、<code>test_learner_scorer_multiclass</code>。</dd>
+    <dt>审查</dt><dd>唯一的目标测试 <code>test_auto_solver</code> 钉死了题面没写的四个细节：参数字面值 <code>solver="auto"</code>；在私有方法 <code>_initialize_wrapped()</code> 返回时已经选好；L1 必须用 liblinear；<code>penalty=None</code> 原样传。两个 FAILED 的 scorer 键是上游测试期望过时，与默认 solver 绑定。另外，同仓 5 道较晚的题，公开初始代码里逐字含本题 gold 和目标测试。复核同意，保留一处分歧：只改 scorer 所用模型也可能让那两键翻转，未测。</dd>
+    <dt>开发核对</dt><dd>Orange 从 <code>/testbed</code> 导入；sklearn 0.22.2.post1、scipy 1.5.4，<code>+env_v2</code> 生效；有 pip 24.0 和 xvfb-run。题面原例 base 报 <code>ValueError</code>，gold 下输出模型。公开 <code>test_logistic_regression.py</code> base 3 败，gold 下 2 败，就是那两个 scorer 测试。另有 3 个 Qt 控件测试修复前后都失败（orange-widget-base 版本较新），当不了开发信号。</dd>
+    <dt>候选评分</dt><dd>被判 <b>0</b> 的合理修复有 4 个：保留 lbfgs 只在 L1 时改 liblinear；L1 选 saga；在 <code>fit</code> 里再选；用映射表。前两个实测修好了题面例子，后两个按代码推断也能修好。静默把 L1 改成 L2：0。在构造函数里就选好、gold 再加 elasticnet 两种：1。只把默认 solver 改成 liblinear：0，<b>且两个 scorer 键翻成 PASSED</b>；gold 再把默认 <code>multi_class</code> 改成 ovr：1，两键仍失败。</dd>
+    <dt>待定</dt><dd>只作诊断，不作留出评测。只错 <code>test_auto_solver</code> 的补丁只标"疑似接口不符"，要核 L1 是否真的生效：W1 同样只错这一键，却把 L1 换成了 L2。修订方向待定：Codex 认为行为级测试比把 <code>auto</code> 和私有钩子写进题面更能保留解法空间，且要保留 L1 要求。</dd></dl></div></details>
+
+  <details class="task" data-s="r2e-diag"><summary><h3>pillow 2b061b68</h3><span class="pill s-dispute">只作诊断 · 待裁定</span><span class="one">给 <code>Image.open</code> 新增 <code>formats</code> 参数，只尝试列出的格式</span></summary><div class="body"><dl class="kv">
+    <dt>材料</dt><dd>配方 <code>r2e_derive_v1</code>，今晚新建派生镜像；期望 55 键：53 PASSED、2 FAILED。</dd>
+    <dt>审查</dt><dd>题面把 pytest 的 <code>warns(None)</code> 报错写成了库的缺陷，示例说"PNG 配 formats=['JPEG'] 应正常打开"，目标测试要求的恰恰是抛 <code>UnidentifiedImageError</code>。题面的四项主张里有三项与事实不符。两个期望 FAILED 的键是死测试：执行到 <code>pytest.warns(None)</code> 就失败，后面的断言都不执行。复核同意修订题面，并把"新进程里首次打开"的漏测上调为中。</dd>
+    <dt>开发核对</dt><dd>Python 3.9；PIL 和已编译的 <code>_imaging</code> 在 <code>/testbed/src</code>；没有 pip；pytest 8.3.4；没有图像查看器。<b>题面原例 base 报 <code>TypeError</code>（缺 formats），gold 下仍然失败</b>（<code>UnidentifiedImageError</code>）。可区分修复前后的正例：JPEG 文件配 <code>formats=['JPEG']</code>，base 报错，gold 输出 <code>JPEG</code>。</dd>
+    <dt>候选评分</dt><dd>gold：1。列出的格式都不匹配时回退到全部格式：<b>0</b>（它只符合题面"PNG 配 JPEG 能打开"那一句，违反"限制格式"那一句，单列为遵循冲突示例的候选，不算完整合理修复）。<code>list(ID)</code> 快照：<b>1</b>，但在新进程里第一次打开 PNG、TIFF 都失败。gold 再让 <code>show()</code> 发弃用警告：<b>1</b>，这正是公开测试本想禁止的改动。</dd>
+    <dt>待定</dt><dd>T0-3：修订公开题面，隐藏测试与期望不改。快照类漏测靠题面修订修不掉，是否补检查另定。同池另有 5 道 pillow 题的初态已含上游终版实现。</dd></dl></div></details>
+
+  <details class="task" data-s="r2e-diag"><summary><h3>scrapy 9a15fcf8</h3><span class="pill s-dispute">只作诊断 · 待裁定</span><span class="one"><code>application/x-json</code> 被当成普通 Response，应为 TextResponse</span></summary><div class="body"><dl class="kv">
+    <dt>材料</dt><dd>配方 <code>r2e_derive_v1</code>，今晚新建派生镜像；期望 7 键，其中 <code>test_from_headers</code>、<code>test_from_args</code> 被写成 FAILED。</dd>
+    <dt>审查</dt><dd>这两个测试在 py3 下必然报 TypeError，不保护任何行为。把它们也修好的更完整修复，反而因为"本该失败的通过了"判 0：环境阶段有一个诊断补丁实测过，7/7 通过、reward 0，单次运行。复核同意全部事实结论，要求把这条证据标明为单次诊断补丁。</dd>
+    <dt>开发核对</dt><dd>scrapy 1.1.0dev1 从 <code>/testbed</code> 导入；没有 pip；pytest 8.3.4。题面原例 base 得 <code>Response</code>，gold 下得 <code>TextResponse</code>。公开 <code>tests/test_responsetypes.py</code> 必须显式给路径才会收集，2 败 5 过，gold 下相同。</dd>
+    <dt>待定</dt><dd>T0-4：推荐修订 B，对称删去这两个死测试，修订后跑 4 个候选各 2 次验收；退路是 D（隔离）。修订前作诊断用时，得 0 且不符的恰好是这两键，只标"疑似过度修复误判"，还要核候选是否保持公开行为：把 <code>Headers.normvalue</code> 改成返回 str 的错误实现也命中这个模式，但公开的 bytes 契约测试会失败（Codex 复核 R2）。</dd></dl></div></details>
+  </div>
+
+  <div class="group-title">当前题面不作能力题</div>
+  <div class="cards">
+  <details class="task" data-s="r2e-leak"><summary><h3>orange3 22e98f8f</h3><span class="pill s-dispute">不作能力题</span><span class="one"><code>unique_in_order_mapping([2, 3, 1])</code> 的映射算错</span></summary><div class="body"><dl class="kv">
+    <dt>材料</dt><dd>配方 <code>r2e_derive_v1</code>，今晚新建派生镜像；期望 23 键，全部 PASSED；评分侧 noop、gold 多次运行与独立参考逐键一致，没有问题。</dd>
+    <dt>审查</dt><dd>题面里标为 "Example Buggy Code" 的函数逐字等于 gold 修复，还与题面写的 "Actual Behavior" 矛盾。复核同意；补充说明同仓题的关系是双向的，属于按时间先后的弱关系，按仓库或时间统一划分即可。</dd>
+    <dt>开发核对</dt><dd>Orange 和 Cython 扩展在 <code>/testbed</code>；numpy 1.17.5；有 pip 24.0；pytest 7.4.4。仓库函数对 <code>[2,3,1]</code> 在 base 下给出 mapping <code>[2,0,1]</code>，gold 下为 <code>[0,1,2]</code>（gold 返回 list，base 返回 ndarray）。<b>题面那段"有 bug 的代码"逐字运行，输出的就是正确的 <code>[0,1,2]</code></b>。相关公开测试修复前后都通过，区分不了。</dd>
+    <dt>待定</dt><dd>修订公开题面，隐藏测试与期望不动；修订后可作为静态候选进 actor 验证。</dd></dl></div></details>
+  </div>
+</section>
+
+<section id="r2e-found">
+  <div class="eyebrow">R2E · 重要发现</div>
+  <h2>需要你知道的几件事</h2>
+  <div class="cards">
+    <div class="issue" style="--c:var(--bad)"><h3>R2E 的题面由模型生成，8 题都与测试有出入，程度不同</h3>
+      <p>误导：pillow 把测试框架问题写成库缺陷，aiohttp 的示例断言恒为真。漏说关键约束：coveragepy 的去重键、pandas 的报错文字、orange3 <code>9b5494e2</code> 的接口细节、numpy 的 <code>!=</code>。直接泄漏答案：orange3 <code>22e98f8f</code>。用于能力比较时，要把"合理修复被判 0"单独统计。</p></div>
+    <div class="issue" style="--c:var(--bad)"><h3>评分会误拒合理修复，也会放过错误实现</h3>
+      <p>26 次候选真实评分：合理修复被判 0 的有 6 个（pandas 1、coveragepy 1、orange3 <code>9b5494e2</code> 4）；错误或不完整的修复有 6 个得满分（pillow 2、coveragepy 1、numpy 2、aiohttp 1）。pillow 的回退语义候选只符合题面里互相矛盾的一句，单列为"遵循冲突示例的候选被拒"；orange3 把默认 solver 改成 liblinear 的修复也得 0，是否算合理有争议，没有计入。注意失败位置相同不等于同样合理：orange3 W1 与合理的 V1 都只错同一个键，但 W1 把 L1 静默换成 L2，是错误修复。原因集中在两类：期望里写死的 FAILED 键（scrapy 惩罚更完整的修复，orange3 的 scorer 两键跟默认 solver 绑定，pillow 的死测试放过有害改动），以及目标测试只覆盖了题面的一部分。</p></div>
+    <div class="issue" style="--c:var(--warn)"><h3>同仓不同提交的题互相包含对方的修复</h3>
+      <p>pillow、orange3 里，较晚那题的初始代码已经含有较早那题的 gold 和目标测试。训练问题不大，但留出评测应按仓库或时间划分。另外，48 题的题面代码块与 gold 新增行逐行比对，只有 orange3 <code>22e98f8f</code> 命中（7/7 行）。这个比对只查逐字，查不到改写过的泄漏。</p></div>
+    <div class="issue" style="--c:var(--warn)"><h3>环境记录更正：pandas 32dd55cb</h3>
+      <p>批次三写回时，我把这题的题意问题与 fixture 问题一并标成了"已解决"，解决说明是从另一条照抄的。已按事实改回"评分正常、有未完成项"，原值保留在更正字段里；环境侧计数由 32/2/10/4 改为 32/2/9/5。其余记录里的 16 处同类翻转逐项看过，都有修订支撑。</p></div>
+    <div class="issue" style="--c:var(--accent)"><h3>正式环境下 R2E 的开发条件整体可用</h3>
+      <p>8 题的 agent 都拿到了 <code>/testbed/.venv</code> 的解释器，包从 <code>/testbed</code> 导入，隐藏测试读不到，git 里找不到修复提交，激活文件 agent 改不了，跑完没有残留。按题的差异：pip 只有 pandas、coveragepy、orange3 有；pytest 有 8.3.4、7.4.4、4.6.6 三种；4 题有与本题无关、恒失败的公开测试；6 题的相关公开测试区分不了修复前后，要靠自己写复现。</p></div>
+  </div>
+</section>
+
+<section id="r2e-wiring">
+  <div class="eyebrow">R2E · 正式接线</div>
+  <h2>R2E 进正式 actor 的接线（已实施，待 A 审）</h2>
+  <div class="box"><ul>
+    <li><b>开工核对时发现的问题</b>：正式 actor 用的是 R2E 的来源镜像。里面 <code>/r2e_tests</code>（隐藏测试）对所有用户可读，git 里能直接找到修复提交；以 pandas 为例，<code>git show 294cbc8d</code> 就是答案。解释器前缀默认是 conda，R2E 的 <code>.venv</code> 会被启动前核查拒绝。公开提示写着 conda、pip 可用、"评分会重置测试文件"，对 R2E 都不成立。</li>
+    <li><b>任务面</b>：R2E 题按派生镜像的 image ID 启动，tag 改指向也不受影响；激活脚本和解释器前缀改为 <code>/testbed/.venv</code>，评分侧用同一张派生镜像。R2E 题缺派生镜像记录就直接拒绝，不回退到来源镜像；非 R2E 题给了记录也拒绝。派生镜像记录表的路径和摘要必须成对给出。</li>
+    <li><b>互检</b>：回放评分和正式 actor 共用同一处核对：来源镜像、隐藏测试树摘要、配方事实、修订所需的环境步骤。orange3 <code>9b5494e2</code> 的修订只在 <code>+env_v2</code> 下成立，构建、回放、正式 actor 三处都拒绝旧环境（Codex 批次三复核 F1）。</li>
+    <li><b>提示</b>：R2E 用单独的公开提示：<code>.venv</code>、不联网、pip 可能没有、不要改仓库的测试文件、用 <code>python -m pytest</code>。48 题的摄入面重新生成，只变提示和对应摘要。</li>
+    <li><b>材料核验</b>：静态审查材料的核验改成重算实际文件，再与清单和镜像比对（Codex 复核 F2）；8 个反例都按预期报错。</li>
+    <li><b>已验证</b>：新增 9 个单测，全量非 Docker 测试 2453 过、347 跳、0 失败；不建网络的真实核对 2 题通过；8 题都经真实 CC 启动链（桩端点）跑通，容器实际镜像等于派生镜像 ID，R2E 预检三项全过。</li>
+    <li><b>尚未验证、请 A 审</b>：
+      <ul>
+        <li>经 Qwen adapter 的链路没有跑。</li>
+        <li>A 的验收脚本调任务面时不带派生镜像记录，R2E 题会被拒；我是在外层包了一层，没改 A 的文件。</li>
+        <li>R2E 预检还没加进 <code>generate.py</code>。</li>
+        <li>探针机要本地先建好派生镜像，因为 rollout 不拉取镜像。</li>
+        <li>派生镜像记录表经环境变量传入，还是由 bringup 显式传参，由 A 定。</li>
+      </ul></li>
+  </ul></div>
+</section>
+
+<section id="r2e-next">
+  <div class="eyebrow">R2E · 待决定</div>
+  <h2>需要你拍板或安排的事</h2>
+  <p class="muted" style="font-size:13.5px">09-25 上午 Codex 复核完毕：接线和调查证据成立，26 条评分没有被推翻；三处要收紧的口径（R1 接线、R2 诊断归因、R3 pillow P1）都已接受。你已决定有问题的题先不修，继续审剩下的题：第二批 12 道无已知线索的题，口径修正、后检脚本和新提示材料先做，R1 并行修。</p>
+<div class="box"><ol>
+    <li><b>题目处置</b>（T0）：
+      <ul>
+        <li>pillow 修订题面（T0-3）；</li>
+        <li>scrapy 选 B 还是 D（T0-4）；</li>
+        <li>pandas 放宽 T2 并补断言；</li>
+        <li>coveragepy 先加改题面的机制，还是隔离；</li>
+        <li>orange3 两题是否修订题面；</li>
+        <li>aiohttp 是否补标题场景的测试。</li>
+      </ul></li>
+    <li><b>两道探针候选</b>（numpy <code>18b7cd9d</code>、aiohttp <code>61833518</code>）的前提：
+      <ul>
+        <li>A 审过接线；</li>
+        <li>探针机本地建好派生镜像；</li>
+        <li>捕获一次模型实际收到的完整题面；</li>
+        <li>得 1 的补丁用已写好的后检脚本复核（numpy 逐项行为检查、aiohttp 语义化 C3）。</li>
+      </ul></li>
+    <li>请把 <code>r2e_actor_wiring_20260925.md</code> 转给 A 审。文档写好了，但还没人通知 A。</li>
+    <li>A 线机器上 B 线的镜像与目录何时清理：新增的 5 张来源镜像、6 个派生镜像已登记在本地私有记录里。</li>
+  </ol></div>
+</section>
+
+<header class="part" id="r2e2">
+  <div class="eyebrow">项目一 · B 线 · 任务三 R2E 第二批（09-25 下午）</div>
+  <h2 class="part-title">R2E 第二批 12 题：没有已知线索的普通题</h2>
+  <p class="muted" style="max-width:70ch;margin-top:8px">你上午决定：有问题的题先不修，继续审剩下的题。第二批从 21 道"无已知线索"的题里按仓库均衡取 12 道（期望全 PASSED、没有材料修订、没有环境配方），用来补充可用题的供应，也看普通题上的真实问题率。流程与首批相同，每题三个新会话（公开读者、私有主审、独立复核，都是 Opus），并发上限 6；材料换成带新提示的 v3。首批是专挑的已知问题题，两批分开统计。</p>
+  <div class="tiles">
+    <div class="tile"><b>12</b><span>题走完三角色审查</span></div>
+    <div class="tile"><b>12/12</b><span>题都有错误或不完整的修复得满分</span></div>
+    <div class="tile"><b>2</b><span>题实测有合理修复被判 0</span></div>
+    <div class="tile"><b>4</b><span>题 gold 自身有缺陷或回归</span></div>
+    <div class="tile"><b>1</b><span>个新环境缺陷：agent 重建不了 C 扩展</span></div>
+    <div class="tile"><b>81</b><span>次正式评分（含 noop、gold 与重复实验）</span></div>
+  </div>
+</header>
+
+<section id="r2e2-matrix">
+  <div class="eyebrow">R2E 第二批 · 总表</div>
+  <h2>12 题一览</h2>
+  <div class="scroll"><table class="r2e-table">
+    <colgroup><col style="width:22%"><col style="width:26%"><col style="width:36%"><col style="width:16%"></colgroup>
+    <tr><th>题目</th><th>题目内容</th><th>主要问题</th><th>状态</th></tr>
+    <tr><td>orange3 <code>4014f248</code></td><td>数值极接近时等频离散化断言失败</td><td>只改 <code>.pyx</code> 的根因修复评分 0；agent 在解题环境里也重建不了扩展</td><td><span class="pill s-dispute">只作诊断 · 有误拒</span></td></tr>
+    <tr><td>aiohttp <code>22a12cc2</code></td><td>HTTPS 指纹不符时没有报错</td><td>题面误导；两个语义正确的修复因测试替身细节判 0，什么都没修的补丁得 1</td><td><span class="pill s-dispute">只作诊断 · 有误拒</span></td></tr>
+    <tr><td>numpy <code>5e8301c2</code></td><td><code>einsum</code> 在 <code>optimize=True</code> 时长度 1 的维度报错</td><td>只测一个方向；gold 本身修不全</td><td><span class="pill s-limit">只作诊断 · gold 有缺陷</span></td></tr>
+    <tr><td>scrapy <code>e9387529</code></td><td>binary 模式导出时键没转成 bytes</td><td>dict item 不生效的修复也得 1；gold 在两种情形抛 <code>TypeError</code></td><td><span class="pill s-limit">只作诊断 · gold 有缺陷</span></td></tr>
+    <tr><td>scrapy <code>75450e75</code></td><td>asyncio reactor 下 shell 的 fetch 报"没有事件循环"</td><td>掩盖报错的修复得 1；gold 把协程放在不运行的循环上，第二次 fetch 会挂起</td><td><span class="pill s-limit">只作诊断 · gold 有缺陷</span></td></tr>
+    <tr><td>pillow <code>3ac9396e</code></td><td>TIFF 元数据存 <code>IFDRational(0, 0)</code> 时报错</td><td>题面把原因说成零分母；部分修复与错误修复都得 1；gold 顺带改了整数的类型码</td><td><span class="pill s-limit">只作诊断 · gold 有缺陷</span></td></tr>
+    <tr><td>coveragepy <code>97997d2c</code></td><td>经插件改不了 <code>paths</code> 配置</td><td>只修一半的两种实现都得 1；替换还是合并测不出</td><td><span class="pill s-pre">只作诊断 · 测试偏宽</span></td></tr>
+    <tr><td>aiohttp <code>1c1c0ea3</code></td><td><code>run_app()</code> 既抛出异常又记日志，重复记录</td><td>Ctrl+C 后把 cleanup 错误静默吞掉的修复得 1</td><td><span class="pill s-pre">只作诊断 · 测试偏宽</span></td></tr>
+    <tr><td>numpy <code>a5ea773e</code></td><td>重复次数全为 1 时 <code>tile()</code> 不复制</td><td>只测 1-D 加 <code>reps=1</code>；四种不完整修复都得 1</td><td><span class="pill s-pre">只作诊断 · 测试偏宽</span></td></tr>
+    <tr><td>datalad <code>19f5b450</code></td><td><code>datalad run</code> 失败时退出码不对</td><td>只断言退出码 3；硬编码 3、改回抛异常、缺字段退出 0 都得 1</td><td><span class="pill s-pre">只作诊断 · 测试偏宽</span></td></tr>
+    <tr><td>pillow <code>3a61c9e9</code></td><td>RGBA 调色板的 <code>remap_palette</code> 出错</td><td>只比恒等映射后的 Python 层字节；四种错误实现都得 1，含就地改坏原图</td><td><span class="pill s-pre">只作诊断 · 测试偏宽</span></td></tr>
+    <tr><td>coveragepy <code>ea6906b0</code></td><td>HTML 报告目录缺 <code>.gitignore</code></td><td>只查文件存在：空文件也得 1</td><td><span class="pill s-pre">只作诊断 · 测试偏宽</span></td></tr>
+  </table></div>
+  <p class="muted" style="font-size:13.5px">12 题静态处置都是 <code>needs_review</code>、开发诊断用途，诊断用途不需要修订材料；这是静态审查范围的结论，不是训练或评测批准。复核对 12 题的处置都同意。各题 <code>card.md</code> 写于候选实跑之前，实跑结果以批次目录的 <code>grader_candidates.md</code> 为准。</p>
+</section>
+
+<section id="r2e2-tasks">
+  <div class="eyebrow">R2E 第二批 · 逐题</div>
+  <h2>每道题具体情况</h2>
+  <p class="muted" style="font-size:13.5px">"候选评分"都用正式评分代码在第二批派生镜像（derived9）上各跑 1 次，数字是 reward（括号里是期望键匹配）。"核对"在断网的一次性私有容器里做（root），不计入 reward，用来看候选的真实行为。</p>
+
+  <div class="group-title">合理修复被判 0（已实测）</div>
+  <div class="cards">
+
+  <details class="task" data-s="r2e2-reject"><summary><h3>orange3 4014f248</h3><span class="pill s-dispute">只作诊断 · 有误拒</span><span class="one">数值极接近时，等频离散化产生重复切点，<code>_fmt_interval</code> 断言失败</span></summary><div class="body"><dl class="kv">
+    <dt>材料</dt><dd>期望 27 键，全部 PASSED；目标键 <code>TestEqualFreq.test_below_precision</code>。</dd>
+    <dt>审查</dt><dd>题意与测试相符。根因在 Cython 写的 <code>split_eq_freq</code>（<code>_discretize.pyx</code>），gold 改在 Python 层。只改 <code>.pyx</code> 的根因修复在评分时不生效，因为评分不重新编译扩展，导出的补丁也不带编译产物。复核同意，补两点：这类 rollout 的失败键与 noop 相同，要看补丁改了哪些文件才能认出来；将来如果评分重建扩展，必须以 uid 54322 在候选测试阶段做。复核还更正：C3 在小量级数据下会把 100 个值并成一个区间。</dd>
+    <dt>核对</dt><dd>以 agent 身份走正式启动链：只改 <code>.pyx</code> 后跑 <code>build_ext</code>，Cython 转换和编译都成功，<b>链接失败：<code>cannot find -lpython3.7m</code></b>。原因见下方"重要发现"。改完再复现，仍是原来的断言错误。导出补丁里只有 <code>.pyx</code>。</dd>
+    <dt>候选评分</dt><dd>gold：1。只改 <code>.pyx</code>：<b>0</b>（26/27），但以 root 先构建再跑隐藏测试是 27/27。在 <code>create_discretized_var</code> 去重：1。<code>EqualFreq</code> 里取整后去重：1。只在 n 不小于不同值个数时去重：0。</dd>
+    <dt>待定</dt><dd>派生配方修复编译配置；评分是否重建改动过的扩展。</dd></dl></div></details>
+
+  <details class="task" data-s="r2e2-reject"><summary><h3>aiohttp 22a12cc2</h3><span class="pill s-dispute">只作诊断 · 有误拒</span><span class="one">设了服务器指纹的 HTTPS 连接，指纹不符时没有报错</span></summary><div class="body"><dl class="kv">
+    <dt>材料</dt><dd>期望 18 键，全部 PASSED；目标键 <code>TestProxy.test_https_connect_fingerprint_mismatch</code>。</dd>
+    <dt>审查</dt><dd>题面误导：示例里的 <code>fingerprint='incorrect_fingerprint'</code> 在构造时就报 <code>ValueError</code>，直连本来也会校验指纹。真实缺陷只在经 HTTP 代理（CONNECT 后再 <code>start_tls</code>）的路径上，题面没提代理。目标测试把 <code>_get_fingerprint</code> 换成 Mock、让 <code>check</code> 直接抛异常，只检查"有没有调用"。复核同意，另指出测试替身只实现了 <code>close()</code>，这本身也是约束。</dd>
+    <dt>核对</dt><dd>本地起 HTTPS 源站和 HTTP 代理实际握手：base 经代理配错误指纹仍然连通；gold、K1、K2、改用 <code>abort()</code> 的版本都会报错；K3 与 base 一样连通；K4 连正确指纹也拒绝。</dd>
+    <dt>候选评分</dt><dd>gold：1。K1（在代理路径上校验 TLS 连接）：1。<b>K2（不经 <code>_get_fingerprint</code> 取指纹）：0</b>。<b>gold 改用 <code>abort()</code>：0</b>（测试替身没实现 <code>abort</code>，报 <code>NotImplementedError</code>）。K3（校验连到代理的原始 TCP 连接，实际什么都没修）：<b>1</b>。K4（一律拒绝）：<b>1</b>。</dd>
+    <dt>待定</dt><dd>修订前本题 reward 不计入探针成功率，得 1 的补丁另跑代理场景核对。若改测试：指纹通过公开配置注入，替身要支持 <code>abort()</code> 和 <code>is_closing()</code>。</dd></dl></div></details>
+  </div>
+
+  <div class="group-title">gold 自身有缺陷或回归</div>
+  <div class="cards">
+
+  <details class="task" data-s="r2e2-gold"><summary><h3>numpy 5e8301c2</h3><span class="pill s-limit">只作诊断 · gold 有缺陷</span><span class="one"><code>einsum(optimize=True)</code> 遇到长度为 1 的维度报 "Size of label … does not match"</span></summary><div class="body"><dl class="kv">
+    <dt>材料</dt><dd>期望 35 键，全部 PASSED；15 个目标键测的是同一条断言（题面原例，长度 1 的操作数放在第二位）。</dd>
+    <dt>审查</dt><dd>题面、测试、gold 相符，没发现误拒。测试只测一个方向，gold 也只修了一部分。复核同意，只做精度修正。</dd>
+    <dt>核对</dt><dd>交换操作数顺序：gold 正常，只放宽一个方向的修复仍报错。求和维度长度为 1、走 BLAS（<code>'ij,jk->ik'</code>，形状 (2,3) 与 (1,4)）：<b>gold 报 <code>shape-mismatch for sum</code></b>。更简单的 <code>np.einsum('i,i', [2., 3.], [4.])</code>：本 base 默认 <code>optimize=True</code>，<b>gold 下也报错</b>，只有 gold 再关掉 BLAS 的 C-A 得 20.0。</dd>
+    <dt>候选评分</dt><dd>gold：1。只放宽一个方向：<b>1</b>。C-A：1。</dd>
+    <dt>待定</dt><dd>是否补交换顺序断言（补了之后 gold / noop / 只放宽一个方向 / C-A 预期为 1 / 0 / 0 / 1）。</dd></dl></div></details>
+
+  <details class="task" data-s="r2e2-gold"><summary><h3>scrapy e9387529</h3><span class="pill s-limit">只作诊断 · gold 有缺陷</span><span class="one"><code>PythonItemExporter(binary=True)</code> 导出时键仍是 str</span></summary><div class="body"><dl class="kv">
+    <dt>材料</dt><dd>期望 62 键，全部 PASSED；目标键 <code>PythonItemExporterTest.test_export_binary</code>，noop 只错这一键。</dd>
+    <dt>审查</dt><dd>只测了顶层 Item 这一个例子，dict item 不生效的修复也能过。<b>gold 有未测回归</b>：<code>export_empty_fields</code> 遇到缺失字段、或字段 serializer 返回 int 时抛 <code>TypeError</code>，base 不会。复核把 C1 改认为合理替代解，并指出键不是 str 时 C1 也会抛错，这一条不只是 gold 的问题。</dd>
+    <dt>核对</dt><dd>上述两种情形 gold 抛 <code>TypeError</code>，C1 和 C2 正常；dict item 的键：gold 转成 bytes，C2 仍是 str。</dd>
+    <dt>候选评分</dt><dd>gold：1。C1（binary 时转顶层键）：1。<b>C2（只对 Item 生效）：1</b>。C3（不看 binary 总是转）：0（3 键）。复核者的版本（嵌套键也转）：1。</dd></dl></div></details>
+
+  <details class="task" data-s="r2e2-gold"><summary><h3>scrapy 75450e75</h3><span class="pill s-limit">只作诊断 · gold 有缺陷</span><span class="one">asyncio reactor 下 <code>scrapy shell</code> 里 fetch 报 "There is no current event loop"</span></summary><div class="body"><dl class="kv">
+    <dt>材料</dt><dd>期望 17 键，全部 PASSED；目标键 <code>ShellTest.test_shell_fetch_async</code>。</dd>
+    <dt>审查</dt><dd>目标测试只查退出码和 stderr 里没有那句报错。gold 在 reactor 线程里新建了一个从不运行的事件循环，协程排在上面不会执行。复核补充：题面提示会把解题者引向 gold 这种做法，得 1 可能系统性地奖励这个缺陷。</dd>
+    <dt>核对</dt><dd>gold 下 fetch 后 scraper 槽位一直不空闲；把 <code>SCRAPER_SLOT_MAX_ACTIVE_SIZE</code> 设为 1000 后，<b>第二次 fetch 60 秒超时挂起</b>。复用 reactor 自身循环的 K1、K1b 两次 fetch 都完成且没有报错。另有一个公开测试在 base 和 gold 下都失败（Twisted 版本问题，与本题无关）。</dd>
+    <dt>候选评分</dt><dd>gold：1。K1：1。K1b：1。K2（只修一半）重复 5 次都是 0。<b>K3（把报错吞掉）：1</b>。</dd></dl></div></details>
+
+  <details class="task" data-s="r2e2-gold"><summary><h3>pillow 3ac9396e</h3><span class="pill s-limit">只作诊断 · gold 有缺陷</span><span class="one">未注册 TIFF 标签存 <code>IFDRational(0, 0)</code>，保存时报 <code>struct.error</code></span></summary><div class="body"><dl class="kv">
+    <dt>材料</dt><dd>期望 11 键，全部 PASSED；目标键 <code>TestFileTiffMetadata.test_exif_div_zero</code>（noop 下是 ERROR）。</dd>
+    <dt>审查</dt><dd>题面把原因说成"零分母"，实测非零分母同样失败。只修零分母、只登记 41988 这一个标签的修复都能过。gold 还顺带把未注册整数标签的类型码从 LONG 改成 SHORT，没有测试覆盖。复核认为"把整数也当有理数"的 C6 是错误实现，不只是部分实现；若补测防它，要断言 <code>type(v[0]) is int</code>，因为 <code>IFDRational(5, 1) == 5</code> 为真。</dd>
+    <dt>核对</dt><dd>base 两种分母都报错；gold、K1 都能保存并读回；<b>K2 存 <code>IFDRational(1, 2)</code> 仍报错</b>。未注册标签存整数 5：base 读回类型 4，gold 读回类型 3，<b>C6 读回 <code>5.0</code>、类型 5</b>。</dd>
+    <dt>候选评分</dt><dd>noop：0。gold：1。K1、K1b：1。<b>K2（只修零分母）：1</b>。K3（加 <code>__index__</code>）：0。登记 41988 长度写 1：0；<b>长度写 0：1</b>。<b>C6：1</b>。</dd></dl></div></details>
+  </div>
+
+  <div class="group-title">测试偏宽：错误或不完整的修复得满分</div>
+  <div class="cards">
+
+  <details class="task" data-s="r2e2-loose"><summary><h3>coveragepy 97997d2c</h3><span class="pill s-pre">只作诊断 · 测试偏宽</span><span class="one">实例化后经 <code>set_option</code> / 插件改不了 <code>paths</code> 配置</span></summary><div class="body"><dl class="kv">
+    <dt>材料</dt><dd>期望 44 键，全部 PASSED；唯一目标键 <code>ConfigTest.test_tweaks_paths_after_constructor</code>。</dd>
+    <dt>审查</dt><dd>目标测试只经 <code>Coverage</code> 包装调用，而且从空 <code>paths</code> 起步。复核补充：主审提议的补测堵不住 W2；<code>coverage/backunittest.py</code> 是候选能改到的测试依赖；<code>f5eb5f21</code> 与本题初态相同。</dd>
+    <dt>核对</dt><dd>W1：插件拿到的 <code>CoverageConfig</code> 仍报 <code>No such option: 'paths'</code>。W2：设进去的值不进 <code>combine()</code>，路径没有映射。已有 <code>[paths]</code> 配置时，gold 是替换，M 是合并。</dd>
+    <dt>候选评分</dt><dd>gold：1。<b>W1（只改包装层）：1</b>。<b>W2（存到旁路属性）：1</b>。A1（复制并展开 <code>~</code>）：1。<b>M（合并）：1</b>。N1（加到配置文件选项表）：0（28 键）。</dd>
+    <dt>待定</dt><dd>替换还是合并（两位审查者意见不同，需你定）；是否补测。</dd></dl></div></details>
+
+  <details class="task" data-s="r2e2-loose"><summary><h3>aiohttp 1c1c0ea3</h3><span class="pill s-pre">只作诊断 · 测试偏宽</span><span class="one"><code>run_app()</code> 既抛出异常又把它记进日志，重复记录</span></summary><div class="body"><dl class="kv">
+    <dt>材料</dt><dd>期望 56 键，全部 PASSED；唯一目标键 <code>test_run_app_raises_exception[pyloop]</code>。</dd>
+    <dt>审查</dt><dd>题意、目标键、gold 一致。漏测：Ctrl+C 之后 cleanup 抛出的错误被静默吞掉，测试发现不了。gold 把这类错误从"报告"改成了"抛出"。另有一个时序敏感的键，在源数据集的裸机上失败过两次，保持观察。同仓 <code>22a12cc2</code> 的初态已含本题修复和目标测试。</dd>
+    <dt>核对</dt><dd>cleanup 在 Ctrl+C 后抛错：base 和 C1 交给异常处理器报告，gold 从 <code>run_app</code> 抛出，<b>C3 两者都没有，错误丢失</b>。同一台机器并行跑 6 次 gold，时序键每次都通过。</dd>
+    <dt>候选评分</dt><dd>gold：1。C1（主任务已结束就不再取消）：1。<b>C3（gather 吞掉异常）：1</b>。C5（删掉取消主任务的一行）：0（7 个关停相关键）。</dd>
+    <dt>待定</dt><dd>是否补"抛出或报告二选一"的断言。</dd></dl></div></details>
+
+  <details class="task" data-s="r2e2-loose"><summary><h3>numpy a5ea773e</h3><span class="pill s-pre">只作诊断 · 测试偏宽</span><span class="one">重复次数全为 1 时 <code>np.tile</code> 返回视图，改结果会改到原数组</span></summary><div class="body"><dl class="kv">
+    <dt>材料</dt><dd>期望 32 键，全部 PASSED；唯一目标键 <code>TestTile.test_tile_one_repetition_on_array_gh4679</code>。</dd>
+    <dt>审查</dt><dd>目标键只测 1-D 数组加 <code>reps=1</code> 这一种写法。本题修复和目标测试已经以重构后的形式出现在另外 6 道 numpy 题的初态里，上午的逐字比对漏报了。</dd>
+    <dt>核对</dt><dd>gold 下各种全 1 写法都不共享内存、形状正确。部分修复里：<code>tile(a, (1,))</code>、<code>(1, 1)</code> 仍共享内存，或 <code>(1, 1)</code> 的形状变成 <code>(5,)</code>、0 维输入的形状变成 <code>()</code>。</dd>
+    <dt>候选评分</dt><dd>noop：0。gold：1。无条件复制：1。<b>只处理整数 1：1</b>。<b>全 1 时直接返回副本：1</b>。<b>复核者的两个变体：1、1</b>。负对照：0。</dd>
+    <dt>待定</dt><dd>用于训练前，由你选：接受、修订或排除。</dd></dl></div></details>
+
+  <details class="task" data-s="r2e2-loose"><summary><h3>datalad 19f5b450</h3><span class="pill s-pre">只作诊断 · 测试偏宽</span><span class="one"><code>datalad run</code> 执行的命令失败时，退出码总是 1</span></summary><div class="body"><dl class="kv">
+    <dt>材料</dt><dd>期望 19 键，全部 PASSED；目标键 <code>test_run_exit_code</code>，只断言退出码 3。</dd>
+    <dt>审查</dt><dd>测试只覆盖题面原例。复核把"stderr 必须为空"这一约束单列：题面示例要求 Python 层的 stderr 为空，但公开文档又说命令失败要"像直接运行命令一样"报告，两边都有依据。</dd>
+    <dt>核对</dt><dd>五种情形的进程退出码：gold 为 3、3、0、1、0。K2 在 <code>--on-failure ignore</code> 下退出 3，公开测试 <code>test_basics</code>、<code>test_run_failure</code> 失败；K3 在输入缺失时退出 0；硬编码版在输入缺失时退出 3。</dd>
+    <dt>候选评分</dt><dd>gold：1。K1（合理替代）：1。<b>K2（改回抛 <code>CommandError</code>）：1</b>。<b>K3（缺字段不回退）：1</b>。<b>硬编码 3：1</b>。K4（gold 再往 stderr 打一行）：0。</dd>
+    <dt>待定</dt><dd>是否补三条命令行检查（<code>exit 5</code> 退出 5、输入缺失退出 1、ignore 模式退出 0）。</dd></dl></div></details>
+
+  <details class="task" data-s="r2e2-loose"><summary><h3>pillow 3a61c9e9</h3><span class="pill s-pre">只作诊断 · 测试偏宽</span><span class="one">RGBA 调色板的图像调用 <code>remap_palette</code> 后调色板出错</span></summary><div class="body"><dl class="kv">
+    <dt>材料</dt><dd>期望 71 键，全部 PASSED；目标键 <code>TestImage.test_remap_palette</code>，与题面示例逐字相同。</dd>
+    <dt>审查</dt><dd>测试只比较恒等映射后 Python 层的调色板字节，而且在调用之后才读原图的调色板。复核建议补测时用字面量或调用前的快照；7 道 pillow 题放在划分的同一侧。</dd>
+    <dt>核对</dt><dd>W1 保存 GIF 出错，公开 GIF 测试也发现不了；W2 的 C 层丢了 alpha，渲染不一致；W3 非恒等映射仍是旧行为；W5 把调用者的原图就地改成了 RGB。</dd>
+    <dt>候选评分</dt><dd>noop：0。gold：1。合理替代 C1：1。<b>W1、W2、W3、W5：都是 1</b>。</dd>
+    <dt>待定</dt><dd>用于训练前是否补测。</dd></dl></div></details>
+
+  <details class="task" data-s="r2e2-loose"><summary><h3>coveragepy ea6906b0</h3><span class="pill s-pre">只作诊断 · 测试偏宽</span><span class="one">HTML 报告目录没有 <code>.gitignore</code>，报告文件会被 git 跟踪</span></summary><div class="body"><dl class="kv">
+    <dt>材料</dt><dd>期望 46 键，全部 PASSED；noop 错 6 个 <code>HtmlDeltaTest</code> 键。</dd>
+    <dt>审查</dt><dd>与 <code>.gitignore</code> 有关的只有一句 <code>assert_exists("htmlcov/.gitignore")</code>，不查内容。复核补充：提前建目录的实现破坏了"没有数据时不建目录"的旧行为，也能得 1。</dd>
+    <dt>核对</dt><dd>空 <code>.gitignore</code> 什么都没忽略：报告目录下仍有 9 个文件出现在 <code>git status</code> 里。提前建目录的候选在没有数据时也建出了 <code>htmlcov/</code>，公开旧测试 <code>test_no_data_to_report_on_html</code> 会失败。</dd>
+    <dt>候选评分</dt><dd>noop：0。gold：1。只在目录原本为空时写：1。<b>写空文件：1</b>。<b>提前建目录：1</b>。加 <code>encoding="utf-8"</code>：0（测试把 <code>open</code> 换成了不收 encoding 的替身；公开测试也一样，按公开约束处理，不算误拒）。</dd></dl></div></details>
+  </div>
+</section>
+
+<section id="r2e2-found">
+  <div class="eyebrow">R2E 第二批 · 重要发现</div>
+  <h2>需要你知道的几件事</h2>
+  <div class="cards">
+    <div class="issue" style="--c:var(--bad)"><h3>新的环境缺陷：agent 重建不了任何 C 扩展</h3>
+      <p>派生镜像把解释器从 <code>/root/.local/share/uv/python/...</code> 搬到了 <code>/opt/py/...</code>，但 Python 编译配置（<code>sysconfig</code>）里的 <code>LIBDIR</code> 仍指向 <code>/root</code> 下的旧路径。<code>/root</code> 是 <code>drwx------</code>，agent 进不去，所以链接时找不到 <code>libpython3.7m</code>。root 能构建成功，是因为它读得到旧路径。凡是自然修复落在编译代码里的题（orange3、pandas 的 <code>.pyx</code>，numpy、pillow 的 C 源码），agent 在本地验证不了，交付后评分也不重建。按你"先不修"的安排只做了登记。</p></div>
+    <div class="issue" style="--c:var(--bad)"><h3>测试偏宽是普遍问题</h3>
+      <p>12 题每题都有至少一个错误或不完整的候选实跑得 1。原始 reward 只能说明题面那一例修好了。这些题用于诊断或探针时，得 1 的补丁要配本题的语义核对（脚本和命令都已写好，可复用）；用于训练 reward 前要先决定是否补测。</p></div>
+    <div class="issue" style="--c:var(--warn)"><h3>合理修复被判 0 的只有两题，比首批少得多</h3>
+      <p>orange3 <code>4014f248</code> 是交付问题（见上）；aiohttp <code>22a12cc2</code> 是测试与实现细节耦合，有两个候选。另有两处按公开约束单列，不算误拒：coveragepy <code>ea6906b0</code> 的 <code>encoding=</code>、datalad 的 stderr 约束。首批 6 道已知线索题里有 5 题出现误拒；两批的选题方式不同，分开统计，不合起来估全池。</p></div>
+    <div class="issue" style="--c:var(--warn)"><h3>gold 本身有缺陷的题有 4 道</h3>
+      <p>numpy <code>5e8301c2</code> 修不全，scrapy <code>e9387529</code> 有 <code>TypeError</code> 回归，scrapy <code>75450e75</code> 会挂起，pillow <code>3ac9396e</code> 改了整数的类型码。这不影响正确候选得分，但在探针里，gold 式的补丁得 1 不代表行为正确。</p></div>
+    <div class="issue" style="--c:var(--accent)"><h3>同仓跨题包含：全池 36/48 题</h3>
+      <p>上午只按逐字代码比对，报 32 题，漏掉了"上游后来重构了修复"的情况（例如 numpy <code>a5ea773e</code> 被另外 6 题包含）。补做了测试名比对，两份合并后是 36/48。审查者还补出了机器比对漏掉的几对关系。留出评测按仓库或时间划分。</p></div>
+    <div class="issue" style="--c:var(--accent)"><h3>我自己的差错，已更正</h3>
+      <p>生成核对命令时给 pytest 多插了 <code>-p no:cacheprovider</code>，与 coveragepy 两题配置里的 <code>--failed-first</code> 冲突，造成 4 条伪失败；已去掉参数、以 agent 身份重跑，全部通过。结果页上一版写"agent 可以自己构建扩展"，依据是一次没改源码的构建，是错的，已更正。一次唤醒两位复核者，并发到了 8（上限 6），当场暂停了两位。</p></div>
+  </div>
+</section>
+
+<section id="r2e2-next">
+  <div class="eyebrow">R2E 第二批 · 待决定</div>
+  <h2>需要你拍板或安排的事</h2>
+  <div class="box"><ol>
+    <li><b>C 扩展重建</b>（环境与评分语义，T0）：
+      <ul>
+        <li>派生配方是否修 <code>sysconfig</code>，让 agent 能重建扩展（建议修：改动小，改后要重建镜像、重跑环境核对）；</li>
+        <li>评分是否重建改动过的扩展（如果重建，须以 uid 54322 在候选测试阶段做）。</li>
+      </ul></li>
+    <li><b>补测试</b>：只在这些题要作训练 reward 时需要，逐题方向见批次 README §3.1。</li>
+    <li><b>coveragepy <code>97997d2c</code></b>：<code>set_option("paths")</code> 应该替换还是合并。</li>
+    <li><b>探针若用本批题</b>：得 1 的补丁配本题的语义核对，原始 reward 与核对后结果分两列报；aiohttp <code>22a12cc2</code> 修订前不计入成功率。</li>
+    <li>A 线机器上 B 线的镜像与目录何时清理：第二批又加了 12 个派生镜像，已登记在本地私有记录里；机器上 0 容器、0 任务单元。</li>
+    <li>仍在等的两件事：R2E 接线文档还没转给 A 审；R-f 机器的主机密钥问题需要你在控制台确认。</li>
+  </ol></div>
+</section>
+
+<section id="std">
+  <div class="eyebrow">B 线 · 题目与环境审查标准（09-26）</div>
+  <h2>当前审查规则：怎么处理、怎么修、怎样验收</h2>
+  <div class="box" style="border-left:4px solid var(--accent)">
+    <p><a href="screening_standard_v1.html" style="color:var(--accent)"><b>打开规则速览</b></a>。先看发现问题后的处理方式，再按需查看六类修订、验收条件、执行安排和真实例子。09-27 已重新整理，取消全文转录、行号与讨论史；关键限制保留在正文中。</p>
+    <ul>
+      <li>规则原文 <code>docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md</code>，以它为准，Codex 核对的也是这份 md。</li>
+      <li>规则已确认并完成 Codex 文字核对；修订机制是否实现、具体题目是否验收，以各自执行记录为准。</li>
+      <li>上面两批 R2E 报告保留原样，不回写。规则原文的首次套用列出的是拟修订去向，不代表修订已经完成。</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  详细记录：<code>docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md</code>；执行计划与 Codex 复核在同一目录；脚本在 <code>rh2/experiments/task2_swegym_dev_20260925/</code>；原始证据在本地 <code>runs/task2_swegym_dev_20260925/</code>。<br>R2E 部分：入口 <code>docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/README.md</code>（§7 逐题表与次晨候选），逐题产物在同目录 <code>results/</code>，真实环境核对 <code>actor_devcheck.md</code>，候选评分 <code>grader_candidates.md</code>；接线说明 <code>project1_execution/r2e_actor_wiring_20260925.md</code>；原始证据在本地 <code>runs/r2e_actor_20260925/</code>。<br>R2E 第二批：入口 <code>docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/README.md</code>（§3 结果），候选评分与私有核对 <code>grader_candidates.md</code>，逐题产物在同目录 <code>results/</code>；评分证据在本地 <code>runs/r2e_actor_20260925/grader/</code>，开发核对在 <code>runs/r2e_actor_20260925/devcheck/</code>。<br>审查标准 v1：页面 <code>runs/task2_swegym_dev_20260925/screening_standard_v1.html</code>，09-27 按读者问题重新编写；依据 <code>task_screening_standard_v1_20260925.md</code>，规则以 md 为准，旧全文生成器不再更新此页。没有提交任何改动。
+</footer>
+</div>
+
+<script>
+(function(){
+  var btns=document.querySelectorAll('.filters button'), cards=document.querySelectorAll('#tasks details.task');
+  btns.forEach(function(b){b.addEventListener('click',function(){
+    var f=b.getAttribute('data-f');
+    btns.forEach(function(x){x.setAttribute('aria-pressed', x===b?'true':'false');});
+    cards.forEach(function(c){c.hidden = !(f==='all' || c.getAttribute('data-s')===f);});
+  });});
+})();
+</script>
+
+<script>
+(function(){
+  var root=document.getElementById('task1-tasks'); if(!root)return;
+  var cards=Array.from(root.querySelectorAll('.task1-card'));
+  var repo=document.getElementById('task1-repo'),state=document.getElementById('task1-status'),search=document.getElementById('task1-search');
+  function filter(){
+    var term=search.value.trim().toLocaleLowerCase(),n=0;
+    cards.forEach(function(card){var show=(repo.value==='all'||card.dataset.repo===repo.value)&&(state.value==='all'||card.dataset.kind===state.value)&&(!term||card.dataset.search.toLocaleLowerCase().includes(term));card.hidden=!show;if(show)n++;});
+    root.querySelectorAll('.task1-group').forEach(function(group){group.hidden=!Array.from(group.querySelectorAll('.task1-card')).some(function(card){return !card.hidden;});});
+    document.getElementById('task1-count').textContent='显示'+n+' / '+cards.length+'题';document.getElementById('task1-empty').hidden=n!==0;
+  }
+  repo.addEventListener('change',filter);state.addEventListener('change',filter);search.addEventListener('input',filter);
+  document.getElementById('task1-reset').addEventListener('click',function(){repo.value='all';state.value='all';search.value='';filter();});
+  document.getElementById('task1-expand').addEventListener('click',function(){cards.forEach(function(c){if(!c.hidden)c.open=true;});});
+  document.getElementById('task1-collapse').addEventListener('click',function(){cards.forEach(function(c){c.open=false;});});
+  function revealHash(){var id=decodeURIComponent(location.hash.slice(1));var card=document.getElementById(id);if(card&&card.classList.contains('task1-card')){repo.value='all';state.value='all';search.value='';filter();card.open=true;card.scrollIntoView();}}
+  window.addEventListener('hashchange',revealHash);filter();revealHash();
+})();
+</script>

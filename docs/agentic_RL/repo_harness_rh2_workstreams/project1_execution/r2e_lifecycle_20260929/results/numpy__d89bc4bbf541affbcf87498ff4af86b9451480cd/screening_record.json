@@ -1,0 +1,243 @@
+{
+ "schema_id": "rh2.r2e_screening_record.v1",
+ "review_round": "r2e_lifecycle_20260929（单题闭环试行，统一标准 v1）",
+ "task_id": "r2e_gym_subset::numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd",
+ "instance_id": "numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd",
+ "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0（本题无材料修订，v3–v7 材料相同）；隐藏测试树 sha256:b55abfbe649c29fec6d295c4320780689f5d751261c49d65f8ebbe58430d9032；expected sha256:f7c02eef293092275b65c75b540a2d9f231baa4eab964fbf3a58726725ae7b40；gold sha256:b00869e783b50fe3677273d5dbb545e951508d28f119d83656deefa7e51fd7bf",
+ "source_adapter_ref": {
+  "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl:22",
+  "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/validation_bundles_v0.jsonl:22",
+  "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl（line_sha256 947c10718257…）",
+  "spec_vendor_id": "r2e_gym_subset_e8b9fcbc",
+  "base_commit": "a56c4e6251d6e607759788727ede2fe2f10a417b"
+ },
+ "recipe_ref": {
+  "derived_image": {
+   "image_id": "sha256:ea786809c49d091eee03032bf590c8aa411dea2bbd961cacef6e723e5fdf57f9",
+   "ref": "rh2-r2e-derived/numpy:d89bc4bbf541-r2e_derive_v1s",
+   "recipe_id": "r2e_derive_v1+sysconfig_v1",
+   "evidence": "runs/r2e_lifecycle_20260929/devcheck/numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd/orig/attempt.json（overlay）"
+  },
+  "previous_derived_image": {
+   "image_id": "sha256:1bd248e6c0ebb41a6a17dac5dcba40e6758c7d1282428a779f754485c5ec957f",
+   "recipe_id": "r2e_derive_v1",
+   "note": "09-23 / 09-24 的运行用这张镜像，noop / gold 结果与新镜像逐键相同"
+  },
+  "base_image": "namanjain12/numpy_final:d89bc4bbf541affbcf87498ff4af86b9451480cd（manifest sha256:8b2a87e17b33…）",
+  "resources": "默认：2 CPU / 4 GiB / /tmp 1 GiB，没有逐题资源配方"
+ },
+ "code_snapshot_ref": {
+  "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+  "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+  "rollout_profile_digest": "sha256:2d077e1a6c9550d247025c6efea3e302ac5db6f9b55169dc076c4780852d060d",
+  "devcheck_layer": "experiments/r2e_actor_20260925/r2e_devcheck.py",
+  "claude_code_version": "2.1.205",
+  "task_surface": "v7（本题材料在 v3–v7 中相同）"
+ },
+ "facts_ref": [
+  {"ref": "runs/r2e_lifecycle_20260929/env_verify/ledger_l1_noop.jsonl", "line": 6, "role": "noop，当前镜像", "result": "reward 0，72/78，6 个目标键不符"},
+  {"ref": "runs/r2e_lifecycle_20260929/env_verify/ledger_l1_gold.jsonl", "line": 6, "role": "gold，当前镜像", "result": "reward 1，78/78"},
+  {"ref": "runs/r2e_lifecycle_20260929/inv/numpy_d89b/ledger_DEG.jsonl", "line": 1, "role": "退化候选 DEG（v1 §4 第 3 步）", "result": "reward 1，78/78", "log": "runs/r2e_lifecycle_20260929/inv/numpy_d89b/logs_DEG/evallog_replay-r2e-inv-d89b-DEG-_2ed65f25.eval.log"},
+  {"ref": "runs/r2e_lifecycle_20260929/inv/numpy_d89b/ledger_REN.jsonl", "line": 1, "role": "构造候选 REN（v1 §4 第 4 步）", "result": "reward 1，78/78", "log": "runs/r2e_lifecycle_20260929/inv/numpy_d89b/logs_REN/evallog_replay-r2e-inv-d89b-REN-_863c3ec3.eval.log"},
+  {"ref": "runs/r2e_lifecycle_20260929/inv/numpy_d89b/ledger_ORD.jsonl", "line": 1, "role": "合理替代解 ORD（T1 探测）", "result": "reward 0，77/78，不符键只有 TestHistogramdd.test_density_non_uniform_1d", "log": "runs/r2e_lifecycle_20260929/inv/numpy_d89b/logs_ORD/evallog_replay-r2e-inv-d89b-ORD-_9e8064fe.eval.log:38-54,134-135"},
+  {"ref": "runs/r2e_lifecycle_20260929/inv/numpy_d89b/ledger_DEP.jsonl", "line": 1, "role": "合理替代解 DEP（弃用 normed 的读法）", "result": "reward 1，78/78", "log": "runs/r2e_lifecycle_20260929/inv/numpy_d89b/logs_DEP/evallog_replay-r2e-inv-d89b-DEP-_6ba1df81.eval.log"},
+  {"ref": "runs/r2e_lifecycle_20260929/inv/numpy_d89b/pcheck_DEG_DEG.json", "role": "私有行为对照（root、断网）", "result": "integral 0.75，随后 AssertionError；gold 为 1.0（pcheck_DEG_gold.json）"},
+  {"ref": "runs/r2e_lifecycle_20260929/inv/numpy_d89b/pcheck_REN_REN.json", "role": "私有行为对照", "result": "TypeError: histogram2d() got an unexpected keyword argument 'normed'；gold 下 normed 可用（pcheck_REN_gold.json）"},
+  {"ref": "runs/r2e_lifecycle_20260929/inv/numpy_d89b/pcheck_ORD_ORD.json", "role": "私有行为对照", "result": "[0.1, 0.1, 0.09999999999999999, 0.1] 对 [0.1]*4，allclose 成立，bitwise_equal False；gold 为 True（pcheck_ORD_gold.json）"},
+  {"ref": "runs/r2e_lifecycle_20260929/devcheck/numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd/orig/attempt.json", "role": "devcheck（真实 CC 2.1.205＋桩端点，agent 54321，正式启动链，base）", "result": "checks 13 项全为真；公开测试 6 / 15 passed；两条复现命令报 TypeError"},
+  {"ref": "runs/r2e_lifecycle_20260929/devcheck/numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd/private_control.json", "role": "devcheck 私有 gold 对照（root、断网）", "result": "两条复现命令通过，积分为 1.0；公开测试与兼容检查通过"},
+  {"ref": "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl", "line": 22, "role": "noop，前一镜像", "result": "reward 0，72/78"},
+  {"ref": "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl", "line": 22, "role": "gold，前一镜像", "result": "reward 1，78/78"},
+  {"ref": "runs/r2e_env_repair_20260924/_rerun2/ledger_noop.jsonl", "line": 22, "role": "noop 复跑，前一镜像", "result": "reward 0，72/78"},
+  {"ref": "runs/r2e_env_repair_20260924/_rerun2/ledger_gold.jsonl", "line": 22, "role": "gold 复跑，前一镜像", "result": "reward 1，78/78"},
+  {"ref": "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl", "line": "40,87", "role": "独立 runner，来源镜像", "result": "gold 两次均为 78 passed"},
+  {"ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd/facts.json", "role": "09-24 环境事实（历史）", "result": "见 old_findings_delta.md"}
+ ],
+ "checks": {
+  "1": {"status": "pass", "note": "私有件的哈希与摄入面一致；各轮日志中的隐藏测试树都是 b55abfbe…"},
+  "2": {"status": "pass", "note": "noop 的 6 个目标键失败都是题面所述的 density TypeError；devcheck 在 base 上复现成功"},
+  "3": {"status": "unknown", "note": "只有 user_prompt.txt 的静态渲染；devcheck 首条请求是脚本化指令，模型实际收到的题面消息没有捕获"},
+  "4": {"status": "pass", "note": "合法修复只涉及两份纯 Python 源码；所有候选的投影都包含这两份，ignored 为空"},
+  "5": {"status": "issue", "note": "X1：43e333e2 的初态逐字包含本题 gold；本题初态包含 4 题的修复（见 issues）"},
+  "6": {"status": "pass", "note": "就地构建的 numpy 在镜像中；pytest 7.4.4、hypothesis 6.79.4；解题侧与评分侧用同一镜像"},
+  "7": {"status": "not_applicable", "note": "不需要资产"},
+  "8": {"status": "pass", "note": "agent 54321 下 devcheck 命令全部符合预期；评分用户下 gold 通过"},
+  "9": {"status": "pass", "note": "gold 与四个候选都改变了评分结果；numpy 从 /testbed/numpy 导入"},
+  "10": {"status": "pass", "note": "公开复现、公开测试与兼容检查都能跑；gold 私有对照下两条复现命令转为通过"},
+  "11": {"status": "pass", "note": "准备、解题、安装、测试各阶段都不需要网络"},
+  "12": {"status": "not_applicable"},
+  "13": {"status": "pass", "note": "内存峰值 312–317 MB，测试段 1.8–3.4 s（新机器）"},
+  "14": {"status": "pass", "note": "noop / gold 在 09-23、09-24、09-28（新镜像）三轮逐键一致；M3 gold 两次一致；未设种子的随机键断言与数据无关"},
+  "15": {"status": "not_checked"},
+  "16": {"status": "pass", "note": "四个候选补丁都以 agent 身份 git_apply 成功（apply_ok），投影为两份源码"},
+  "17": {"status": "pass", "note": "隐藏测试只注入到 r2e_tests/，不覆盖源码"},
+  "18": {"status": "pass", "note": "collected 78，segment_completed，日志完整"},
+  "19": {"status": "pass", "note": "78 个唯一键，解析 78 个，没有撞键"},
+  "20": {"status": "pass", "note": "noop 与 gold 只在 6 个目标键上不同，原因就是题面的 TypeError"},
+  "21": {"status": "pass"},
+  "22": {"status": "pass", "note": "M3 独立 runner 的 gold 为 78 passed；noop 一侧的参考没有核对"},
+  "23": {"status": "pass", "note": "需求可以由公开材料推出；normed 与 density 冲突时的处理没有约定，但不计分"},
+  "24": {"status": "issue", "note": "T1：合理解 ORD 只因运算顺序导致的末位差异，在 test_density_non_uniform_1d 被判 0"},
+  "25": {"status": "issue", "note": "退化候选 DEG 与删掉 normed 的 REN 都得 1"},
+  "26": {"status": "issue", "note": "隐藏测试不保护 normed 旧接口；2D 带权、density=False 也没有断言"},
+  "27": {"status": "pass", "note": "gold 满足全部公开要求，没有无关改动"},
+  "28": {"status": "unknown", "note": "R-c1 / R-c2 / R-b 草案都写明了公开依据与正反对照计划，尚未实施、验收与 Codex 复核"},
+  "29": {"status": "pass", "note": "git 清理与预检三项 ok，初态 diff 为 0，隐藏测试 agent 不可读"},
+  "30": {"status": "not_checked", "note": "本题不需要网络；运行期答案可达性属于共用链路（A 线），没有逐题测"},
+  "31": {"status": "not_checked", "note": "共用控制面（根目录 conftest.py / pytest.ini）属于 A 线"},
+  "32": {"status": "pass", "note": "断言检查数值行为，不比对 gold 文本；覆盖缺口记在 25 与 26"},
+  "33": {"status": "not_checked"},
+  "34": {"status": "not_checked"},
+  "35": {"status": "not_checked"},
+  "36": {"status": "not_checked"},
+  "37": {"status": "not_checked", "note": "修订尚未实施；实施后记为测试标准修订，任务定义不变"},
+  "38": {"status": "not_checked", "note": "修订验收待做（见 disposition.next_actions）"}
+ },
+ "issues": [
+  {
+   "id": "T2b_outlier_normalization",
+   "v1_code": "T2",
+   "v1_step": "§4 第 3 步（退化探测）",
+   "severity": "S1",
+   "status": "confirmed",
+   "summary": "所有密度用例都没有区间外样本。退化候选 DEG 在 gold 修改的归一化块里改用含离群格的整张直方图作分母，在 78 键上与 gold 结果相同，得 1；但它违反题面\"the integral over the range is 1\"。",
+   "evidence_level": "当前 CPU：正式评分＋私有行为对照",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/numpy_d89b/ledger_DEG.jsonl:1",
+    "runs/r2e_lifecycle_20260929/inv/numpy_d89b/logs_DEG/evallog_replay-r2e-inv-d89b-DEG-_2ed65f25.eval.log:7,22,107",
+    "runs/r2e_lifecycle_20260929/inv/numpy_d89b/pcheck_DEG_DEG.json",
+    "runs/r2e_lifecycle_20260929/inv/numpy_d89b/pcheck_DEG_gold.json"
+   ],
+   "trigger_patch_sha256": "sha256:59b72fc01054af836017273211e698b86179d34230dbd4079a22c778afd53101",
+   "proposed_action": "R-c1：两个隐藏文件各加一个 test_density_outliers，含区间外样本，ND 版覆盖带权与不带权（card.md 附录）"
+  },
+  {
+   "id": "T2_normed_regression_unprotected",
+   "v1_code": "T2",
+   "v1_step": "§4 第 4 步（构造候选破坏有文档、常用的公开行为）",
+   "severity": "S1",
+   "status": "confirmed",
+   "summary": "隐藏测试把 2D/ND 的 normed=True 全部改成了 density=True。把 normed 直接改名为 density 的 REN 得 1，但 normed=True 从此抛 TypeError，破坏 base 文档写明、6 个公开测试在用的接口。",
+   "evidence_level": "当前 CPU：正式评分＋私有行为对照",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/numpy_d89b/ledger_REN.jsonl:1",
+    "runs/r2e_lifecycle_20260929/inv/numpy_d89b/pcheck_REN_REN.json",
+    "runs/r2e_lifecycle_20260929/inv/numpy_d89b/pcheck_REN_gold.json"
+   ],
+   "trigger_patch_sha256": "sha256:021f87daae92415b16f460e794a4d3d8950d6ae9a48e0e65cbabd8db4145db43",
+   "proposed_action": "R-c2：两个隐藏文件各加一个 test_normed_still_accepted，要求 normed=True 返回与 density=True 相同的密度，放行三类弃用告警，不测两者同时传入"
+  },
+  {
+   "id": "T1_bitwise_equality_1d",
+   "v1_code": "T1",
+   "severity": "误拒合理解（按 §3 T1 走 R-b；不属于 S1/S2 分级）",
+   "status": "confirmed",
+   "summary": "ORD 满足全部公开要求，只把运算顺序换成先除总数再除格宽。test_density_non_uniform_1d 要求与一维 histogram 逐位相等，3/10/3 = 0.09999999999999999 ≠ 0.1，结果 77/78 判 0。",
+   "evidence_level": "当前 CPU：正式评分＋私有行为对照",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/numpy_d89b/ledger_ORD.jsonl:1",
+    "runs/r2e_lifecycle_20260929/inv/numpy_d89b/logs_ORD/evallog_replay-r2e-inv-d89b-ORD-_9e8064fe.eval.log:38-54,134-135",
+    "runs/r2e_lifecycle_20260929/inv/numpy_d89b/pcheck_ORD_ORD.json",
+    "runs/r2e_lifecycle_20260929/inv/numpy_d89b/pcheck_ORD_gold.json"
+   ],
+   "trigger_patch_sha256": "sha256:fe60bdb9c376aa72f2f96282f2467ff43a1ccc848a953ca090033103cb1ad321",
+   "proposed_action": "R-b：该键中的 assert_equal(hist, hist_dd) 改为 assert_allclose"
+  },
+  {
+   "id": "T3_secondary_gaps",
+   "v1_code": "T3",
+   "severity": "S2",
+   "status": "registered",
+   "summary": "density=False 返回计数、histogram2d 带权、原位置参数兼容都没有隐藏断言；目前没有候选利用这些缺口。",
+   "evidence_level": "静态推断",
+   "proposed_action": "登记；可选扩展（2D 带权）另议，不在本轮"
+  },
+  {
+   "id": "X1_cross_task",
+   "v1_code": "X1",
+   "severity": null,
+   "status": "registered",
+   "summary": "numpy__43e333e2 的公开初态逐字包含本题 gold 的 25 行非平凡新增行，以及本题的新测试名（逐行核对）；本题初态包含 18b7cd9d、2f4a9650、5e8301c2、d805e9b6 的修复与 2f4a9650、a5ea773e 的新测试名（来自扫描，未读它们的私有件）。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/cross_task_gold_scan.json",
+    "runs/r2e_static_prep_20260924/cross_task_test_scan.json",
+    "runs/r2e_static_prep_20260924/v3/public/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/worktree/numpy/lib/histograms.py:944-945,1107-1115"
+   ],
+   "proposed_action": "同进训练时控制重复采样；按仓库划分（D3）时同侧"
+  },
+  {
+   "id": "solver_conditions",
+   "v1_code": null,
+   "category": "solver_condition",
+   "severity": null,
+   "status": "verified",
+   "summary": "/testbed 须在 sys.path 上，测试要用 python -m pytest；环境里没有 pip；整文件跑 numpy/lib/tests/test_histograms.py 会出现 21 个与本题无关的 nose-setup ERROR（09-24 实测）。不需要环境修复。",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/devcheck/numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd/orig/captures/env.out",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd/findings.md:9,13"
+   ],
+   "proposed_action": "探针分析时按\"与本题无关的恒失败公开测试\"解读"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": []
+ },
+ "revision_refs": [],
+ "disposition": {
+  "scope": "static_review",
+  "state": "needs_repair",
+  "reason": "静态审查已完成。环境与解题侧开发路径已核对：09-28 新镜像上 noop 0 / gold 1，devcheck 全部检查为真。正式评分确认 2 个 S1（T2b 的 DEG、§4 第 4 步的 REN）和 1 个 T1（ORD）。要修的是测试（R-c1、R-c2 必做，R-b 同轮做），不是环境；修订版验收并经 Codex 复核之前不作训练候选。",
+  "severity_summary": {"S1": 2, "T1": 1, "S2_registered": 1},
+  "revision_required": {"R-c1": "必做", "R-c2": "必做", "R-b": "同轮做"},
+  "next_actions": [
+   "协调者实施 R-c1＋R-c2＋R-b（card.md 附录的 diff），期望映射新增 4 个 PASSED 键，合计 82 键",
+   "按 card.md §6 的矩阵跑正式评分：gold 1、noop 0、DEG 0、REN 0、ORD 1、DEP 1；核对新键不撞键、没有 unexpected 键",
+   "保存新版本、父版本（expected_v0 / b55abfbe…）、修订理由与四个触发补丁",
+   "Codex 复核；另开新会话做独立复核"
+  ],
+  "prior_disposition": {
+   "state": "environment_qualified",
+   "scope": "09-24 环境资格，不含题目质量",
+   "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd/screening_record.json:227"
+  },
+  "reviewer": null,
+  "evidence_refs": [
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd/analysis_before_history.md",
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd/old_findings_delta.md",
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd/card.md"
+  ]
+ },
+ "usage": {
+  "intended_use": "development_diagnostic",
+  "reviewer_exposure": "主审看过 gold、隐藏测试、期望映射、09-24 环境审查历史，以及本轮候选的评分与私有对照；这些材料不提供给求解模型",
+  "v1": {
+   "problem_localization": "yes",
+   "capability_comparison": "conditional",
+   "training_candidate": "conditional",
+   "heldout_candidate": "conditional"
+  },
+  "v1_conditions": {
+   "capability_comparison": "原版：必须预登记事后审计才能用——得 1 的补丁查是否删掉 normed、归一化是否排除区间外样本（对应 issues T2b 与 T2）；只错 test_density_non_uniform_1d 的补丁查是否只差末位（对应 T1）。原始 reward 与审计结果分列。修订版验收后为 yes。",
+   "training_candidate": "原版为 no（2 个未处理 S1）。R-c1＋R-c2＋R-b 修订版按 card.md §6 验收、经 Codex 复核后才是训练候选；另需对 X1（43e333e2）控制采样。",
+   "heldout_candidate": "条件同训练候选；按仓库划分时与 43e333e2 同侧；修订版只能作\"标明版本的自建评测\"；上游 numpy 1.16 已公开此改动，不能排除预训练见过。"
+  }
+ },
+ "costs": {
+  "review_tokens": null,
+  "review_cost_usd": null,
+  "formal_gradings_this_round": {
+   "count": 6,
+   "grader_phase_seconds_sum": 311.7,
+   "note": "env_verify 的 noop / gold 两次各约 75 s；DEG、REN、ORD、DEP 四次各 36–45 s，按账本 phases 求和"
+  },
+  "private_behavior_checks": {"count": 6, "seconds_each": "2.2–2.4"},
+  "devcheck": {"attempts": 1, "solve_seconds": 18.199}
+ },
+ "review_notes": [
+  {
+   "by": "Claude（私有主审）",
+   "at": "2026-09-29",
+   "change": "读历史之前的前稿把 S1 ×2 记为 conditional、T1 记为风险；09-28 的正式评分与私有对照与预测逐条一致，改为已确认，R-b 由\"视 ORD 结果而定\"改为同轮实施。读历史没有改变任何判断方向。"
+  }
+ ]
+}

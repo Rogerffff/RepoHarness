@@ -1,0 +1,206 @@
+[
+  {
+    "name": "receipt_only_pause",
+    "checkpoint": {
+      "receipt_failure_recorded": true,
+      "fatal_notifications": [
+        "finalization_receipt_write_failed"
+      ],
+      "accepting": false,
+      "container_removed": false
+    },
+    "final_code": "finalization_receipt_write_failed",
+    "notifications": [
+      "finalization_receipt_write_failed"
+    ],
+    "events": [
+      "notify:finalization_receipt_write_failed",
+      "drop_enter",
+      "drop_return",
+      "docker_rm",
+      "audit_sink"
+    ],
+    "failure_codes": [
+      "SlimeBindingError",
+      "finalization_receipt_write_failed"
+    ],
+    "cleanup_steps": [
+      "finalization_receipt_write_failed"
+    ],
+    "lease_released": true,
+    "quarantine_count": 0,
+    "poison_release_count": 0,
+    "registry_unregistered": true,
+    "cleanup_append_count": 0
+  },
+  {
+    "name": "receipt_and_drop_error",
+    "checkpoint": null,
+    "final_code": "finalization_receipt_write_failed",
+    "notifications": [
+      "finalization_receipt_write_failed"
+    ],
+    "events": [
+      "notify:finalization_receipt_write_failed",
+      "drop_enter",
+      "docker_rm",
+      "audit_sink"
+    ],
+    "failure_codes": [
+      "SlimeBindingError",
+      "finalization_receipt_write_failed"
+    ],
+    "cleanup_steps": [
+      "finalization_receipt_write_failed",
+      "drop_session"
+    ],
+    "lease_released": true,
+    "quarantine_count": 0,
+    "poison_release_count": 0,
+    "registry_unregistered": true,
+    "cleanup_append_count": 0
+  },
+  {
+    "name": "receipt_and_rm_nonzero",
+    "checkpoint": null,
+    "final_code": "finalization_receipt_write_failed",
+    "notifications": [
+      "finalization_receipt_write_failed"
+    ],
+    "events": [
+      "notify:finalization_receipt_write_failed",
+      "drop_enter",
+      "drop_return",
+      "docker_rm",
+      "audit_sink"
+    ],
+    "failure_codes": [
+      "SlimeBindingError",
+      "finalization_receipt_write_failed"
+    ],
+    "cleanup_steps": [
+      "finalization_receipt_write_failed",
+      "remove_container"
+    ],
+    "lease_released": false,
+    "quarantine_count": 1,
+    "poison_release_count": 0,
+    "registry_unregistered": true,
+    "cleanup_append_count": 0
+  },
+  {
+    "name": "receipt_and_rm_exception",
+    "checkpoint": null,
+    "final_code": "finalization_receipt_write_failed",
+    "notifications": [
+      "finalization_receipt_write_failed"
+    ],
+    "events": [
+      "notify:finalization_receipt_write_failed",
+      "drop_enter",
+      "drop_return",
+      "docker_rm",
+      "audit_sink"
+    ],
+    "failure_codes": [
+      "SlimeBindingError",
+      "finalization_receipt_write_failed"
+    ],
+    "cleanup_steps": [
+      "finalization_receipt_write_failed",
+      "container_cleanup_exception"
+    ],
+    "lease_released": false,
+    "quarantine_count": 1,
+    "poison_release_count": 0,
+    "registry_unregistered": true,
+    "cleanup_append_count": 0
+  },
+  {
+    "name": "primary_fatal_and_receipt_and_cleanup_errors",
+    "checkpoint": {
+      "receipt_failure_recorded": true,
+      "fatal_notifications": [
+        "probe_primary_fatal"
+      ],
+      "accepting": false,
+      "container_removed": false
+    },
+    "final_code": "probe_primary_fatal",
+    "notifications": [
+      "probe_primary_fatal"
+    ],
+    "events": [
+      "notify:probe_primary_fatal",
+      "drop_enter",
+      "docker_rm",
+      "audit_sink"
+    ],
+    "failure_codes": [
+      "finalization_receipt_write_failed",
+      "audit_sink_failed_secondary"
+    ],
+    "cleanup_steps": [
+      "finalization_receipt_write_failed",
+      "drop_session",
+      "container_cleanup_exception"
+    ],
+    "lease_released": false,
+    "quarantine_count": 1,
+    "poison_release_count": 0,
+    "registry_unregistered": true,
+    "cleanup_append_count": 0
+  },
+  {
+    "name": "after_early_release",
+    "checkpoint": null,
+    "final_code": "finalization_receipt_write_failed",
+    "notifications": [
+      "finalization_receipt_write_failed"
+    ],
+    "events": [
+      "docker_rm",
+      "notify:finalization_receipt_write_failed",
+      "drop_enter",
+      "drop_return",
+      "audit_sink"
+    ],
+    "failure_codes": [
+      "finalization_receipt_write_failed"
+    ],
+    "cleanup_steps": [
+      "finalization_receipt_write_failed"
+    ],
+    "lease_released": true,
+    "quarantine_count": 0,
+    "poison_release_count": 0,
+    "registry_unregistered": true,
+    "cleanup_append_count": 0
+  },
+  {
+    "name": "after_release_and_drop_error",
+    "checkpoint": null,
+    "final_code": "finalization_receipt_write_failed",
+    "notifications": [
+      "finalization_receipt_write_failed"
+    ],
+    "events": [
+      "docker_rm",
+      "notify:finalization_receipt_write_failed",
+      "drop_enter",
+      "audit_sink"
+    ],
+    "failure_codes": [
+      "finalization_receipt_write_failed"
+    ],
+    "cleanup_steps": [
+      "finalization_receipt_write_failed",
+      "drop_session"
+    ],
+    "lease_released": true,
+    "quarantine_count": 0,
+    "poison_release_count": 0,
+    "registry_unregistered": true,
+    "cleanup_append_count": 0
+  }
+]

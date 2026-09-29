@@ -1,0 +1,248 @@
+{
+ "task_id": "iterative__dvc-3665",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "docs/.../s2/ingest/public_bundles_v0.jsonl#iterative__dvc-3665",
+  "grading": "docs/.../s2/ingest/grading_bundles_v2_v0.jsonl#iterative__dvc-3665",
+  "validation": "docs/.../s2/ingest/validation_bundles_v0.jsonl#iterative__dvc-3665",
+  "raw": "docs/.../s2/raw/swe_gym_lite_full_f70b1a29.jsonl#iterative__dvc-3665",
+  "base_commit": "a2de48bdfbba80a7e41e96a44c67d51ff36f0810",
+  "version": "0.93",
+  "python_version": "3.8",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-3665:latest",
+  "eval_cmd": "pytest -rA",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3665/{gold,empty}/offline/a1/",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc"
+ },
+ "public_view": {
+  "目标行为": "写进 `.dvc/config` 的 cache dir（以及 remote url）路径，在 Windows 与 Linux 上应当一致，统一用 POSIX 风格的正斜杠。",
+  "约束": "base `dvc/config.py::Config._save_paths` 里有一个内嵌函数 `rel(path)`：URL 原样返回，相对路径或 `RelPath` 走 `relpath(path, conf_dir)`，绝对路径原样返回——全程用 `os.path` 的本地分隔符。",
+  "公开材料无法确定的点": [
+   "**题面只要求\"输出用正斜杠\"，完全没有要求把 `rel()` 抽成一个名叫 `Config._to_relpath(conf_dir, path)` 的静态方法**——而 F2P 正是直接调用这个私有静态方法；",
+   "绝对路径（如 `/testbed`）要不要也做转换，题面没说（题面只讲相对路径的例子）；",
+   "URL 形式（`ssh://some/path`）保持原样是既有行为，题面没提。"
+  ],
+  "相关模块": "dvc/config.py（Config._save_paths / _map_dirs / RelPath）、dvc/path_info.py（PathInfo.as_posix）。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3665/grading.json#test_patch",
+    "mat/iterative__dvc-3665/validation.json#golden_patch",
+    "git show a2de48bdfb:dvc/config.py"
+   ],
+   "note": "test_patch 动 tests/func/test_cache.py、tests/func/test_remote.py（base 存在）并**新建** tests/unit/test_config.py；gold 只动 dvc/config.py。同一问题。无二进制/LFS/子模块。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show a2de48bdfb:dvc/config.py::_save_paths 的内嵌 `rel()`",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3665/empty/offline/a1/status_map.json"
+   ],
+   "note": "base 全程使用 `os.path`，在 Windows 上会写出反斜杠；empty 侧 4 条 F2P 全 FAILED（`Config._to_relpath` 在 base 根本不存在）。",
+   "by": "static"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3665/public.json#problem_statement"
+   ],
+   "note": "题面 494 字符，含版本、平台、两侧实际写出的 config 片段，渲染完整、无截断、无外链。hints 为空。",
+   "by": "static"
+  },
+  "4": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-3665/grading.json#test_patch（`new file mode` for tests/unit/test_config.py）",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3665/gold/offline/a1/eval.sh:17,90",
+    "rh2/src/repoharness2/grading/manager.py:656 `test_files = tuple(sorted(patch_touched_paths(private.test_patch)))`",
+    "rh2/src/repoharness2/grading/trusted_projection.py:82 `if path in rules.test_files: return \"official_test_file\"`"
+   ],
+   "note": "触碰的三个路径都是纯测试职责。**要点：`tests/unit/test_config.py` 在 base 不存在**，stage1 的 eval.sh 只 `git checkout` 了另外两个已有文件（第 17 行），新文件靠 `git apply` 引入。现行 RH2 接线把它算进 `hygiene.test_files`（manager.py:656 由 `patch_touched_paths` 生成，含 new file 的 b 侧路径），投影时归类为 `official_test_file` 并**不重放**候选对它的改动，所以候选自己在该路径建文件不会让 `git apply` 冲突——这一面已被覆盖，`additional_exclusions` 保持空是正确的。",
+   "by": "static"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "rh2/src/repoharness2/grading/manager.py:1180-1201（缺失即拒 + apply rc 复核）"
+   ],
+   "note": "恢复/注入链路：两个已有文件从 base 恢复，新文件由 official test_patch 带入；manager 要求 apply rc=0、official test 文件一个不缺，且全是普通文件。",
+   "by": "static"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dvc_1/prescan.json",
+    "mat/iterative__dvc-1808/grading.json#test_patch"
+   ],
+   "note": "**与 dvc-1808（0.33）在同一测试文件上重叠**：本题 P2P 里的 `tests/func/test_remote.py::TestRemote::test_overwrite` 正是 dvc-1808 的 F2P（本题 base 已含 1808 的 gold），另外 `TestRemote::test_relative_path` 在两题里都出现。不是同一 PR，但 {1808, 3665} 有明确的前后依赖，划分需同侧。",
+   "by": "static"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-3665/grading.json#fail_to_pass（`test_to_relpath[/testbed-/testbed]`）",
+    "mat/iterative__dvc-3665/grading.json#test_patch（参数是 `os.getcwd()`）",
+    "mat/iterative__dvc-3665/public.json#workdir = /testbed"
+   ],
+   "note": "**本题有一个新形态的脆弱测试 ID**：参数化用的是 `os.getcwd()`，于是测试 ID 里嵌了仓库的绝对签出路径 —— 冻结下来的常量是 `test_to_relpath[/testbed-/testbed]`。只要评分时 workdir 不是 `/testbed`（换挂载点、换镜像布局、在宿主机复现），运行时 ID 就变成 `test_to_relpath[/其它路径-/其它路径]`，参考清单对不上 → F2P 缺失 → 假阴性。与 dvc-4185 的反斜杠转义问题是不同机理的同类风险。",
+   "by": "static"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-3665/grading.json#test_patch（`Config._to_relpath(os.path.join(\".\", \"config\"), path)`）"
+   ],
+   "note": "**F2P 要求一个题面没有提及的私有静态方法**：`Config._to_relpath(conf_dir, path)`，名字与参数顺序都被钉死。题面只说\"config 里的路径要用正斜杠\"。",
+   "by": "static"
+  },
+  "24": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-3665/grading.json#test_patch",
+    "mat/iterative__dvc-3665/validation.json#golden_patch"
+   ],
+   "note": "**本包\"强制唯一实现\"最严重的一题**：最小且自然的修法是在 base 既有的内嵌 `rel()` 末尾加一次 `.replace(os.sep, \"/\")` 或 `PathInfo(path).as_posix()`，完全不必抽方法。这样改之后 `dvc cache dir` 的行为完全正确，但 F2P 会直接 `AttributeError: type object 'Config' has no attribute '_to_relpath'` 判 0。也就是说**测试考的是\"照抄 upstream 的重构\"而不是\"修好这个 bug\"**。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-3665/grading.json#test_patch（tests/func 两处只加了 `.replace(\"\\\\\", \"/\")`）"
+   ],
+   "note": "两个功能文件的改动在 POSIX 上是**空操作**（`rel.replace(\"\\\\\",\"/\")` 在 Linux 上等于 `rel`），所以它们既不是 F2P 也提供不了新保护；真正的判分全靠新建的单元测试。反过来，一个只让 `Config._to_relpath` 返回 posix、却没有被 `_save_paths` 使用的实现也能满分（F2P 直接调静态方法，不经过 `_save_paths`）。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3665/gold/offline/a1/status_map.json",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3665/empty/offline/a1/status_map.json",
+    "runs/env_overnight_20260916/L1_dvc_1/p2pcov.json"
+   ],
+   "note": "**P2P 漏收 11 条**：`TestExternalCacheDir::test`、`TestSharedCacheDir::test`、`TestCacheLinkType::test`、`TestCmdCacheDir::test_relative_path`、`test_shared_cache[False-493]`、`test_shared_cache[True-509]`、`TestRemoteShouldHandleUppercaseRemoteName::test`、`test_partial_push_n_pull`、`test_raise_on_too_many_open_files`、`test_external_dir_resource_on_no_cache`、`test_push_order` —— 这 11 条在 empty 与 gold 两侧都 PASSED，却不在 P2P 里。本包其余 16 题的 `passed_but_ungraded` 都是 0（4185 是 1，且由 ID 转义引起），说明这里是上游冻结清单本身偏小，不是本地环境问题。其中 `TestCmdCacheDir::test_relative_path` 正是 test_patch 改过的那条，最该进 P2P。",
+   "by": "static"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-3665/validation.json#golden_patch"
+   ],
+   "note": "gold 的功能改动正确（`PathInfo(path).as_posix()`）。附带：整块 import 重排（isort 风格）与新增 `from functools import partial`、`from dvc.path_info import PathInfo`，其中 import 重排与题目无关。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3665/public.json#problem_statement",
+    "mat/iterative__dvc-3665/raw.json#hints_text（空）"
+   ],
+   "note": "题面无修复代码、无 PR/commit 链接；hints 为空。",
+   "by": "static"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3665/gold/offline/a1/test_output.txt（33 passed in 7.30s）"
+   ],
+   "note": "安装与测试正常，无依赖漂移症状。",
+   "by": "static"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3665/gold/offline/a1/test_output.txt（无 SKIPPED）"
+   ],
+   "note": "F2P/P2P 用的都是本地目录与本地 remote，无真实网络。",
+   "by": "static"
+  },
+  "7": {
+   "status": "not_applicable",
+   "evidence_refs": [],
+   "note": "test_patch 不带外部资产。",
+   "by": "static"
+  },
+  "8": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3665/gold/offline/a1/test_output.txt"
+   ],
+   "note": "本题无依赖 `os.access` 的用例，root 身份未造成失败。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "测试强制照抄 upstream 重构(23/24)",
+   "severity": "P1",
+   "evidence_refs": [
+    "mat/iterative__dvc-3665/grading.json#test_patch（`Config._to_relpath(os.path.join(\".\", \"config\"), path)`）",
+    "git show a2de48bdfb:dvc/config.py::_save_paths（base 只有内嵌 `rel()`）"
+   ],
+   "note": "F2P 直接调用 gold 新抽出来的私有静态方法。题面只要求输出正斜杠，任何不做这次重构的正确修法（在内嵌 `rel()` 里加 `as_posix()`）都会 AttributeError 判 0。",
+   "proposed_action": "把 F2P 换成行为级：构造一个 conf dict 走 `Config._save_paths(conf, \"./config\")`（这是 base 就有的公共入口），断言输出里没有反斜杠；或干脆用 CLI 级 `main([\"cache\",\"dir\",\"../xyz\"])` 后读 `.dvc/config`。",
+   "next_experiment": "写\"内嵌 rel() 里加 PathInfo(path).as_posix()\"的实现跑 F2P，预期 4 条全部 AttributeError，形成合法解被拒的反例。"
+  },
+  {
+   "category": "测试身份依赖签出路径(19)",
+   "severity": "P1",
+   "evidence_refs": [
+    "mat/iterative__dvc-3665/grading.json#fail_to_pass（`test_to_relpath[/testbed-/testbed]`）",
+    "mat/iterative__dvc-3665/grading.json#test_patch（`os.getcwd()` 作为参数化取值）"
+   ],
+   "note": "测试 ID 里嵌了绝对签出路径。只要评分 workdir 不是 `/testbed`，ID 就对不上、F2P 缺失、判假阴性。这是与 dvc-4185 反斜杠转义并列但机理不同的脆弱 ID。",
+   "proposed_action": "(a) 评分侧把 workdir 固定为 `/testbed` 并在 spec 里显式断言；(b) 更稳的做法是给该参数加 `ids=`（如 `ids=[\"rel\",\"reldots\",\"abs\",\"url\"]`），并重新冻结参考清单。建议对 216 题全量扫一遍\"ID 里含绝对路径/主机名/时间戳\"的用例。",
+   "next_experiment": "在非 `/testbed` 的 workdir 下 `pytest --collect-only -q tests/unit/test_config.py`，确认 ID 随之改变；再对 216 题的 F2P∪P2P 做一次正则扫描（`\\[/|\\[[A-Za-z]:\\\\`）统计同类风险。"
+  },
+  {
+   "category": "P2P 漏收(26)",
+   "severity": "P1",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dvc_1/p2pcov.json（passed_but_ungraded=11）",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3665/empty/offline/a1/status_map.json",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3665/gold/offline/a1/status_map.json"
+   ],
+   "note": "11 条在 base 与 gold 两侧都通过的用例不在 P2P 里，包括 test_patch 自己改过的 `TestCmdCacheDir::test_relative_path`。本包其余题的漏收数都是 0，说明是上游冻结清单偏小而非本地环境差异。",
+   "proposed_action": "按镜像实跑重建 P2P：取 base 与 gold 双侧 PASSED 的交集，减去 F2P。",
+   "next_experiment": "用现有的 empty/gold status_map 直接算交集，和冻结 P2P 比对（本包已算出本题差 11 条），再推广到 216 题统计总缺口。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "三个 test_patch 路径都是纯官方测试文件；新建的 tests/unit/test_config.py 已被 `patch_touched_paths` 纳入 `hygiene.test_files`（manager.py:656），投影时按 official_test_file 不重放候选改动（trusted_projection.py:82），不存在候选抢占该路径的缺口。gold 不触碰测试样路径。按第四组 B 保持为空。",
+  "evidence_refs": [
+   "mat/iterative__dvc-3665/grading.json#test_patch",
+   "rh2/src/repoharness2/grading/manager.py:656",
+   "rh2/src/repoharness2/grading/trusted_projection.py:82"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/func/test_cache.py::TestCmdCacheDir::test_relative_path",
+   "reason": "test_patch 专门改过它，且两侧都通过却没进 P2P——最该补的一条。"
+  },
+  {
+   "id": "tests/func/test_cache.py::TestExternalCacheDir::test",
+   "reason": "外部 cache dir 是 `_save_paths` 的另一条主要输入形态，两侧都通过却未入 P2P。"
+  },
+  {
+   "id": "tests/func/test_remote.py::TestRemote::test_relative_path",
+   "reason": "已在 P2P；remote url 与 cache dir 共用 `_map_dirs`，是最直接的同族回归。"
+  },
+  {
+   "id": "（新增）tests/unit/test_config.py::test_save_paths_posix",
+   "reason": "针对 check 24 的缺口：从 base 就存在的 `Config._save_paths` 入口断言输出无反斜杠，不依赖新抽出的私有方法名。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "题面清楚、gold 正确、环境干净；但 F2P 直接调用 gold 新抽的私有静态方法（等于要求照抄重构），测试 ID 里嵌了绝对签出路径 `/testbed`，且 P2P 漏收 11 条双侧通过的用例。三处都需要改材料或改接线。"
+ },
+ "costs": {
+  "minutes": 26
+ },
+ "by": "L1_dvc_1 (Claude Opus 5, 静态审查)"
+}

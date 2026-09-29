@@ -1,0 +1,184 @@
+{
+  "scope": "CPU; CLI 指定选项注册 + 真 data source/Dataset + 驱动/参数组装原函数体 + 恢复入口; 非完整 CLI/设备运行",
+  "selected_cli_defaults": {
+    "fully_async": false,
+    "num_rollout": 0,
+    "rollout_global_dataset": true,
+    "start_rollout_id": null,
+    "skip_eval_before_train": false,
+    "debug_rollout_only": true
+  },
+  "fully_async_positive": {
+    "precheck": true,
+    "events": [
+      {
+        "op": "update_weights_call_noop"
+      },
+      {
+        "op": "eval",
+        "args": [
+          0
+        ]
+      },
+      {
+        "op": "dispose",
+        "args": []
+      }
+    ]
+  },
+  "non_fully_async": {
+    "precheck": true,
+    "events": [
+      {
+        "op": "update_weights_call_noop"
+      },
+      {
+        "op": "eval",
+        "args": [
+          0
+        ]
+      },
+      {
+        "op": "training_generate",
+        "args": [
+          0
+        ]
+      },
+      {
+        "op": "dispose",
+        "args": []
+      }
+    ]
+  },
+  "skip_initial_eval": {
+    "precheck": true,
+    "events": [
+      {
+        "op": "update_weights_call_noop"
+      },
+      {
+        "op": "dispose",
+        "args": []
+      }
+    ]
+  },
+  "default_data_source_without_training_file": {
+    "rollout_global_dataset": true,
+    "error": "TypeError",
+    "message": "expected string or bytes-like object, got 'NoneType'"
+  },
+  "disabled_data_source_without_training_file": {
+    "rollout_global_dataset": false,
+    "error": null,
+    "dataset_is_none": true
+  },
+  "engine_configs": [
+    {
+      "precheck": true,
+      "configured_checkpoint": "/ckpt/hf_step_20",
+      "engine_model_path": "/ckpt/hf_step_20",
+      "effective_load_format": "auto",
+      "dummy_env": false,
+      "dummy_cli": false
+    },
+    {
+      "precheck": true,
+      "configured_checkpoint": "/ckpt/hf_step_20",
+      "engine_model_path": "/ckpt/hf_step_20",
+      "effective_load_format": "dummy",
+      "dummy_env": true,
+      "dummy_cli": false
+    },
+    {
+      "precheck": true,
+      "configured_checkpoint": "/ckpt/hf_step_20",
+      "engine_model_path": "/ckpt/hf_step_20",
+      "effective_load_format": "dummy",
+      "dummy_env": false,
+      "dummy_cli": true
+    },
+    {
+      "precheck": true,
+      "configured_checkpoint": "/ckpt/hf_step_20",
+      "engine_model_path": "/ckpt/other",
+      "effective_load_format": "auto",
+      "dummy_env": false,
+      "dummy_cli": false
+    }
+  ],
+  "recovery": [
+    {
+      "explicit": 21,
+      "loaded": 10,
+      "error": "RecoveryStartMismatch",
+      "state_read_ids": []
+    },
+    {
+      "explicit": 5,
+      "loaded": 2,
+      "error": "RecoveryStartMismatch",
+      "state_read_ids": []
+    },
+    {
+      "explicit": 5,
+      "loaded": -1,
+      "error": "RecoveryStartMismatch",
+      "state_read_ids": []
+    },
+    {
+      "explicit": 1,
+      "loaded": 3,
+      "error": "RecoveryStartMismatch",
+      "state_read_ids": []
+    },
+    {
+      "explicit": 5,
+      "loaded": 4,
+      "initial_counter": 6,
+      "error": null,
+      "state_read_ids": [
+        4
+      ]
+    },
+    {
+      "explicit": null,
+      "loaded": 4,
+      "initial_counter": 6,
+      "error": null,
+      "state_read_ids": [
+        4
+      ]
+    },
+    {
+      "explicit": 0,
+      "loaded": 9,
+      "initial_counter": 0,
+      "error": null,
+      "state_read_ids": []
+    },
+    {
+      "explicit": 5,
+      "loaded": null,
+      "initial_counter": 6,
+      "error": null,
+      "state_read_ids": [
+        4
+      ]
+    }
+  ],
+  "source_sha256": {
+    "reference/miles-rh2-integration/miles/utils/arguments.py": "0ddc6dcc19c34dbc121664edf392e91ca394fadd7a03e6315692ab6c304c5616",
+    "reference/miles-rh2-integration/miles/ray/rollout/eval_dispatch.py": "ee832795678b243c8d8b257b899814d8c0162a63f208a58d0b0dc4891b1e5bd1",
+    "reference/miles-rh2-integration/miles/utils/misc.py": "746dac7c19177aa8500e8fd62c9f946e233decae24396bdbfe0eb6591f5bb0aa",
+    "reference/miles-rh2-integration/train_async.py": "4df6f1c5745297fd6aca4ff16aa36096ac53bbd5276c0236cfe0179223a2a7e7",
+    "reference/miles-rh2-integration/miles/backends/sglang_utils/sglang_engine.py": "7e318cf019699c25854e2877e9c7b20804fe20f80475d5fc8cb8eccc60a62678",
+    "rh2/src/repoharness2/adapters/slime/eval_wiring.py": "bee45dd8720f43c751a4f876c9f92d487952538a6a9f188af431e5a43313461c",
+    "rh2/src/repoharness2/adapters/slime/generate.py": "88c7ce2cb962ced5099e9c3f62510a70208515311cf2e7838404fb93fd913cde",
+    "rh2/src/repoharness2/adapters/slime/eval_result.py": "73dac98e224c915e4a0ea1b108f08906d1af9344482967b3c74a292eee5cda2f",
+    "rh2/src/repoharness2/adapters/miles/eval_report.py": "cddd75c33d0ab0bea70506ee62b13c28d0a854d6c72ba103255eb54446ab66e3",
+    "rh2/src/repoharness2/adapters/miles/run_report.py": "4c4b57c81e486c862269a1144dd32f290582a900dd6acaabef0d0bbc49c8b6bb",
+    "reference/miles-rh2-integration/miles/utils/rh2_recovery.py": "05dd883df393add3d0a75b2455e398c16f2705785587824692dd3a5e03f983d1",
+    "reference/miles-rh2-integration/miles/rollout/data_source.py": "25ec9f89651a3580ca774656ad3b73b76fdfbabb5438a978c3565d9eb043e70c",
+    "reference/miles-rh2-integration/miles/utils/data.py": "19708053b2e9ba1768550e562135e5d9ea4510de4fa53ffe673b754ab97ea712"
+  }
+}

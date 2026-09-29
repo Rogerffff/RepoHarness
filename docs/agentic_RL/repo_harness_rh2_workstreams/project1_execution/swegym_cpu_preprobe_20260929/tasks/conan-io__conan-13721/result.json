@@ -1,0 +1,546 @@
+{
+  "task": "conan-io__conan-13721",
+  "date": "2026-09-29",
+  "run": "reserve6-v1",
+  "scope": "CPU actor/private/formal final; existing static review reused, not fresh blind audit",
+  "state": {
+    "owner_readback": "complete",
+    "independent_review": "complete",
+    "root_parser": "matched",
+    "transport": "verified joint manifest",
+    "d6": "not implemented",
+    "root_acceptance": "CPU scope complete; no model/training qualification"
+  },
+  "classification": {
+    "semantic": "S1",
+    "coverage": "T2b",
+    "confirmed_false_positive": true,
+    "p5_unresolved": true
+  },
+  "actor": {
+    "image": "sha256:e5e14326d6e58a37cc8c39bcaf67a4130d49a2cd8116f0decd60f6cd9a4c48f4",
+    "base_commit": "0efbe7e49fdf554da4d897735b357d85b2a75aca",
+    "image_facts": {
+      "image": "sha256:e5e14326d6e58a37cc8c39bcaf67a4130d49a2cd8116f0decd60f6cd9a4c48f4",
+      "inspect": "sha256:e5e14326d6e58a37cc8c39bcaf67a4130d49a2cd8116f0decd60f6cd9a4c48f4 [\"xingyaoww/sweb.eval.x86_64.conan-io_s_conan-13721@sha256:05df007b940aa6495e4ee237a820125c046c683c3b782f0ea8b39290bf6837e5\"]",
+      "inspect_rc": 0,
+      "initial_worktree": "HEAD=0efbe7e49fdf554da4d897735b357d85b2a75aca\nPORCELAIN_BEGIN\nPORCELAIN_RC=0\n",
+      "initial_worktree_rc": 0
+    },
+    "commands_result": [
+      {
+        "id": "identity",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 892,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "公开固定base、实际解释器/包路径/版本及原始dirty状态"
+      },
+      {
+        "id": "public_profiles",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 1673,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "公开真实CLI完整诊断；打印原始输出及精确payload，观察不等于语义通过"
+      },
+      {
+        "id": "public_regression",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 1135,
+        "output_truncated_to": 200000,
+        "pytest": {
+          "passed": 6
+        },
+        "purpose": "公开base既有整模块6项，不加入隐藏测试"
+      }
+    ],
+    "checks": {
+      "interpreter_in_tool_result": false,
+      "host_log_present": true,
+      "no_harness_dir_in_container": true,
+      "no_launcher_or_done_marker": true,
+      "message_start_matches_stub_requests": true,
+      "exit_code_zero": true,
+      "result_event_present": true,
+      "log_complete": true,
+      "bashenv_denied_for_agent": false,
+      "all_commands_ran": true,
+      "all_match_expect": true
+    },
+    "cleanup": {
+      "container_rm": 0,
+      "network_failures": [],
+      "relay_failures": [],
+      "stub_rc": 0,
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "residual_after_force": []
+    },
+    "post_run_facts": {
+      "RH2_HARNESS_DIR": "ABSENT",
+      "RH2_RUN_SH": "ABSENT",
+      "RH2_RUN_DONE": "ABSENT",
+      "RH2_GIT_STATUS_LINES": "0",
+      "RH2_AGENT_PROCS": "0",
+      "RH2_NEWER_FILES": "409"
+    },
+    "cc_version_observed": "2.1.205 (Claude Code)",
+    "effective_profile": {
+      "cpus": 2.0,
+      "memory_bytes": 4294967296,
+      "tmp_tmpfs_bytes": 1073741824,
+      "home_tmpfs_bytes": 268435456,
+      "writable_layer_quota_bytes": 8589934592,
+      "pids_limit": 512
+    },
+    "identity": {
+      "conan": "/testbed/conan/__init__.py",
+      "conan_version": "2.0.4",
+      "conans": "/testbed/conans/__init__.py",
+      "jinja2": "3.1.4",
+      "pytest": "6.2.5",
+      "python": "/opt/miniconda3/envs/testbed/bin/python",
+      "uid": 54321,
+      "version": "3.10.14"
+    },
+    "public_observations": [
+      {
+        "rendered": "",
+        "requested": "alpha",
+        "symlink_target": "_generator"
+      },
+      {
+        "rendered": "",
+        "requested": "beta",
+        "symlink_target": "_generator"
+      }
+    ],
+    "activation": {
+      "role": "rollout",
+      "container_name": "rh2acc-conan-io__conan-13721-daf58b77",
+      "ok": true,
+      "violations": [],
+      "inspect_facts": {},
+      "probe_facts": {
+        "ACT_EXPECTED_PREFIX": "/opt/miniconda3/envs/testbed",
+        "ACT_PYTHON": "/opt/miniconda3/envs/testbed/bin/python",
+        "ACT_SYS_EXECUTABLE": "/opt/miniconda3/envs/testbed/bin/python",
+        "ACT_SYS_PREFIX": "/opt/miniconda3/envs/testbed",
+        "ACT_CONDA_DEFAULT_ENV": "testbed",
+        "ACT_VIRTUAL_ENV": "",
+        "RH2_ACTIVATION_PROBE_OK": "1"
+      },
+      "seconds": 0.447
+    },
+    "tool_calls": {
+      "Bash": 3
+    },
+    "public_regression_summary": [
+      "============================== 6 passed in 1.04s ==============================="
+    ]
+  },
+  "private": {
+    "base": {
+      "image": "sha256:e5e14326d6e58a37cc8c39bcaf67a4130d49a2cd8116f0decd60f6cd9a4c48f4",
+      "preparation_rc": [
+        0,
+        0,
+        0
+      ],
+      "commands": [
+        {
+          "id": "matrix",
+          "rc": 0,
+          "seconds": 4.171714815001906,
+          "stdout_bytes": 2964,
+          "stderr_bytes": 0
+        }
+      ],
+      "inner_commands": {
+        "public_profiles": 0,
+        "public_regression": 0
+      },
+      "observations": [
+        {
+          "rendered": "",
+          "requested": "alpha",
+          "symlink_target": "_generator"
+        },
+        {
+          "rendered": "",
+          "requested": "beta",
+          "symlink_target": "_generator"
+        }
+      ],
+      "source_sha256": "90783561327c6930ede55d6b9124eecdfd01ed583b3b6803d3561fc66d61b18a",
+      "old_test_ids": [
+        "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template",
+        "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_variables",
+        "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_import",
+        "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_include",
+        "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_profile_dir",
+        "conans/test/integration/configuration/test_profile_jinja.py::test_profile_version"
+      ],
+      "summary": [
+        "============================== 6 passed in 1.69s ==============================="
+      ],
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      },
+      "log": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-13721/reserve6-v1/private_base/base/matrix.out"
+    },
+    "gold": {
+      "image": "sha256:e5e14326d6e58a37cc8c39bcaf67a4130d49a2cd8116f0decd60f6cd9a4c48f4",
+      "preparation_rc": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "commands": [
+        {
+          "id": "matrix",
+          "rc": 0,
+          "seconds": 4.435836291999294,
+          "stdout_bytes": 2991,
+          "stderr_bytes": 0
+        }
+      ],
+      "inner_commands": {
+        "public_profiles": 0,
+        "public_regression": 0
+      },
+      "observations": [
+        {
+          "rendered": "alpha",
+          "requested": "alpha",
+          "symlink_target": "_generator"
+        },
+        {
+          "rendered": "beta",
+          "requested": "beta",
+          "symlink_target": "_generator"
+        }
+      ],
+      "source_sha256": "8a9adf4ba9b122fdda24ef4afa874eb610eb4dd5d7f3c8561c2a1e1a7c3f55f6",
+      "old_test_ids": [
+        "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template",
+        "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_variables",
+        "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_import",
+        "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_include",
+        "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_profile_dir",
+        "conans/test/integration/configuration/test_profile_jinja.py::test_profile_version"
+      ],
+      "summary": [
+        "============================== 6 passed in 1.75s ==============================="
+      ],
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      },
+      "log": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-13721/reserve6-v1/private_gold/gold/matrix.out"
+    },
+    "degenerate": {
+      "image": "sha256:e5e14326d6e58a37cc8c39bcaf67a4130d49a2cd8116f0decd60f6cd9a4c48f4",
+      "preparation_rc": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "commands": [
+        {
+          "id": "matrix",
+          "rc": 0,
+          "seconds": 4.776126557997486,
+          "stdout_bytes": 3030,
+          "stderr_bytes": 0
+        }
+      ],
+      "inner_commands": {
+        "public_profiles": 0,
+        "public_regression": 0
+      },
+      "observations": [
+        {
+          "rendered": "_generator",
+          "requested": "alpha",
+          "symlink_target": "_generator"
+        },
+        {
+          "rendered": "_generator",
+          "requested": "beta",
+          "symlink_target": "_generator"
+        }
+      ],
+      "source_sha256": "ef928b72a7cf6981d36f95f6bec30c5dc03a754735a8dfe6cfbc3ed78358c11d",
+      "old_test_ids": [
+        "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template",
+        "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_variables",
+        "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_import",
+        "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_include",
+        "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_profile_dir",
+        "conans/test/integration/configuration/test_profile_jinja.py::test_profile_version"
+      ],
+      "summary": [
+        "============================== 6 passed in 2.32s ==============================="
+      ],
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      },
+      "log": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-13721/reserve6-v1/private_degenerate/degenerate/matrix.out"
+    }
+  },
+  "formal_summary": {
+    "noop": {
+      "reward": 0.0,
+      "test_rc": 1,
+      "f2p_pass": 0,
+      "f2p_total": 1,
+      "p2p_fail": 0,
+      "p2p_total": 6,
+      "log_sha256": "d798ca719fad2f92c7c910f09b4fb1efb5ea7745b69acbc386bad35b3ad28ca2",
+      "source": []
+    },
+    "gold": {
+      "reward": 1.0,
+      "test_rc": 0,
+      "f2p_pass": 1,
+      "f2p_total": 1,
+      "p2p_fail": 0,
+      "p2p_total": 6,
+      "log_sha256": "a8cf4dfe1f4a5877ec912f9ac347acae27fe3d8659ade95293f9fefeed65d90d",
+      "source": [
+        {
+          "path": "conans/client/profile_loader.py",
+          "bytes": 16848,
+          "sha256": "8a9adf4ba9b122fdda24ef4afa874eb610eb4dd5d7f3c8561c2a1e1a7c3f55f6",
+          "mode": "100644",
+          "whole_bytes_equal_base_plus_patch": true,
+          "matches_private_actual_source": true,
+          "candidate_patch_matches_input_bytes": true,
+          "patch_sha256": "4ed4032efc9be2909456c033f64464ccd3666a0dc190c7cba99895f891c3545d"
+        }
+      ]
+    },
+    "degenerate": {
+      "reward": 1.0,
+      "test_rc": 0,
+      "f2p_pass": 1,
+      "f2p_total": 1,
+      "p2p_fail": 0,
+      "p2p_total": 6,
+      "log_sha256": "bf23e00d8d005e2407cbee98b45b817f458a9aee1f73856f8c0b3caa50a0cf51",
+      "source": [
+        {
+          "path": "conans/client/profile_loader.py",
+          "bytes": 16866,
+          "sha256": "ef928b72a7cf6981d36f95f6bec30c5dc03a754735a8dfe6cfbc3ed78358c11d",
+          "mode": "100644",
+          "whole_bytes_equal_base_plus_patch": true,
+          "matches_private_actual_source": true,
+          "candidate_patch_matches_input_bytes": true,
+          "patch_sha256": "ecd0017435c2e6f760aeb0ec08be0397b752e2b478cf64e6c1cbe0160a010ee3"
+        }
+      ]
+    }
+  },
+  "current_use": "diagnostic-only",
+  "qualification": {
+    "unrestricted_model_comparison": false,
+    "training": false,
+    "holdout": false,
+    "restricted_comparison_authorized": false,
+    "p5_must_be_resolved_before_any_comparison": true
+  },
+  "remaining": [
+    "D6版本化来源测试修订未实施",
+    "完整pip check、题面/public_hints真实交付、自主模型和训练资格未验证",
+    "后缀是否应保留仍为P5公开范围歧义；本轮无后缀软链正反对照不解除该限制。"
+  ],
+  "evidence_audit": "evidence_audit.json",
+  "root_parser": {
+    "path": "runs/swegym_cpu_preprobe_20260929/analysis/conan13721_final_v1.json",
+    "per_reference_and_report_matches": true
+  },
+  "transport": {
+    "source": "runs/swegym_cpu_preprobe_20260929/analysis/evidence_manifest_final3_v1.json",
+    "scope": "two Conan tasks plus MONAI6975 setup1800 recovery, joint total not per-task count",
+    "files": 239,
+    "bytes": 3529295,
+    "verified": true,
+    "local_mismatches": []
+  },
+  "resource_samples": {
+    "source": "runs/swegym_cpu_preprobe_20260929/analysis/resource_final3_v1.json",
+    "rows": [
+      {
+        "task": "conan-io__conan-13721",
+        "ledger": "results/conan-io__conan-13721/reserve6-v1/grade_degenerate/ledger.jsonl",
+        "report_id": "rpt_grading_a471f9e5",
+        "samples": 7,
+        "first": 1790634180.583195,
+        "last": 1790634271.599576,
+        "max_sample_gap_seconds": 15.171516418457031,
+        "observed_memory_peak_bytes": 309362688,
+        "observed_pids_peak": 8,
+        "memory.events": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "pids.events": {
+          "max": 0
+        },
+        "ledger_resource": {
+          "mem_peak_mb": 347.473,
+          "mem_peak_unavailable_or_zero": false
+        },
+        "ledger_resource_facts": null,
+        "limits": {
+          "Memory": 4294967296,
+          "NanoCpus": 2000000000,
+          "PidsLimit": 512,
+          "ShmSize": 67108864,
+          "Tmpfs": {
+            "/tmp": "size=1073741824,mode=1777,exec,nosuid,nodev"
+          }
+        },
+        "phases": {
+          "delta_apply": 0.388614,
+          "grader_baseline_rebuild": 0.589719,
+          "grader_cleanup": 0.740189,
+          "grader_start_and_verify": 1.888314,
+          "grader_trusted_setup": 107.296281,
+          "parser_and_report": 1.58882,
+          "test": 5.804074
+        }
+      },
+      {
+        "task": "conan-io__conan-13721",
+        "ledger": "results/conan-io__conan-13721/reserve6-v1/grade_gold/ledger.jsonl",
+        "report_id": "rpt_grading_036c9deb",
+        "samples": 8,
+        "first": 1790634044.108099,
+        "last": 1790634150.2655783,
+        "max_sample_gap_seconds": 15.173567533493042,
+        "observed_memory_peak_bytes": 363593728,
+        "observed_pids_peak": 8,
+        "memory.events": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "pids.events": {
+          "max": 0
+        },
+        "ledger_resource": {
+          "mem_peak_mb": 346.75,
+          "mem_peak_unavailable_or_zero": false
+        },
+        "ledger_resource_facts": null,
+        "limits": {
+          "Memory": 4294967296,
+          "NanoCpus": 2000000000,
+          "PidsLimit": 512,
+          "ShmSize": 67108864,
+          "Tmpfs": {
+            "/tmp": "size=1073741824,mode=1777,exec,nosuid,nodev"
+          }
+        },
+        "phases": {
+          "delta_apply": 0.390559,
+          "grader_baseline_rebuild": 0.61358,
+          "grader_cleanup": 0.831795,
+          "grader_start_and_verify": 1.993303,
+          "grader_trusted_setup": 109.62523,
+          "parser_and_report": 1.609538,
+          "test": 5.290867
+        }
+      },
+      {
+        "task": "conan-io__conan-13721",
+        "ledger": "results/conan-io__conan-13721/reserve6-v1/grade_noop/ledger.jsonl",
+        "report_id": "rpt_grading_e1512ea1",
+        "samples": 8,
+        "first": 1790633907.6457822,
+        "last": 1790634013.8363109,
+        "max_sample_gap_seconds": 15.175981521606445,
+        "observed_memory_peak_bytes": 349515776,
+        "observed_pids_peak": 8,
+        "memory.events": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "pids.events": {
+          "max": 0
+        },
+        "ledger_resource": {
+          "mem_peak_mb": 345.312,
+          "mem_peak_unavailable_or_zero": false
+        },
+        "ledger_resource_facts": null,
+        "limits": {
+          "Memory": 4294967296,
+          "NanoCpus": 2000000000,
+          "PidsLimit": 512,
+          "ShmSize": 67108864,
+          "Tmpfs": {
+            "/tmp": "size=1073741824,mode=1777,exec,nosuid,nodev"
+          }
+        },
+        "phases": {
+          "delta_apply": 0.183987,
+          "grader_baseline_rebuild": 0.6213,
+          "grader_cleanup": 0.781624,
+          "grader_start_and_verify": 1.906492,
+          "grader_trusted_setup": 108.10009,
+          "parser_and_report": 1.652056,
+          "test": 5.249174
+        }
+      }
+    ],
+    "whole_lifecycle_inference": false,
+    "scope": "15 second samples including preparation; retain ledger peak rather than replacing with lower sampled peak"
+  },
+  "confirmed_gap": "realpath取名通过原普通文件/目录/include五次install，仍把公开软链入口alpha/beta渲染成共同目标_generator。",
+  "reusable_revision_seed": "runs/swegym_cpu_preprobe_20260929/task_inputs_reserve6_v1/conan-io__conan-13721/public_repro.py",
+  "independent_review": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/reserve6_conan_pair_final_review.md",
+    "status": "complete",
+    "scope": "raw-first cross-package review and final-card alignment; not fresh blind review"
+  },
+  "root_acceptance_at": "2026-09-28T22:54:41.381526+00:00"
+}

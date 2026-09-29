@@ -1,0 +1,152 @@
+{
+ "instance_id": "pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07",
+ "template": "R-c",
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "        im.putpalette(list(range(256)) * 4, \"RGBA\")\n        im_remapped = im.remap_palette(list(range(256)))\n        assert_image_equal(im, im_remapped)\n        assert im.palette.palette == im_remapped.palette.palette\n",
+     "new": "        im.putpalette(list(range(256)) * 4, \"RGBA\")\n        # Snapshot the source palette and its RGBA rendering before the call\n        palette_before = bytes(im.palette.palette)\n        rgba_before = im.convert(\"RGBA\").tobytes()\n        im_remapped = im.remap_palette(list(range(256)))\n        assert_image_equal(im, im_remapped)\n        assert im.palette.palette == im_remapped.palette.palette\n        # The result keeps the original RGBA palette ...\n        assert im_remapped.palette.palette == palette_before\n        # ... and the palette used for rendering keeps the alpha values\n        assert im_remapped.convert(\"RGBA\").tobytes() == rgba_before\n"
+    },
+    {
+     "old": "    def test_remap_palette_transparency(self):\n",
+     "new": "    def test_remap_palette_rgba_reorder(self):\n        # Test a non-identity transform with an RGBA palette: entries move as\n        # whole RGBA entries and the image renders with the same colours\n        im = Image.new(\"P\", (2, 1))\n        im.putpixel((1, 0), 1)\n        im.putpalette((10, 20, 30, 40, 50, 60, 70, 80), \"RGBA\")\n        im_remapped = im.remap_palette([1, 0])\n        assert list(im_remapped.getdata()) == [1, 0]\n        assert bytes(im_remapped.palette.palette[:8]) == bytes(\n            (50, 60, 70, 80, 10, 20, 30, 40)\n        )\n        assert list(im_remapped.convert(\"RGBA\").getdata()) == [\n            (10, 20, 30, 40),\n            (50, 60, 70, 80),\n        ]\n\n    def test_remap_palette_rgba_gif_save(self):\n        # Saving a P image with an RGBA palette as GIF optimizes the palette\n        # through remap_palette with an RGB source_palette; colours must survive\n        im = Image.new(\"P\", (4, 1))\n        for x, v in enumerate((10, 20, 30, 40)):\n            im.putpixel((x, 0), v)\n        im.putpalette(\n            [c for i in range(256) for c in (i, 255 - i, i // 2, 128)], \"RGBA\"\n        )\n        out = io.BytesIO()\n        im.save(out, \"GIF\")\n        out.seek(0)\n        with Image.open(out) as reloaded:\n            assert list(reloaded.convert(\"RGB\").getdata()) == [\n                (10, 245, 5),\n                (20, 235, 10),\n                (30, 225, 15),\n                (40, 215, 20),\n            ]\n\n    def test_remap_palette_transparency(self):\n"
+    }
+   ]
+  }
+ ],
+ "expected_after": {
+  "\u001b[1mTestImage.test__new\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_alpha_composite\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_alpha_inplace\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_bad_mode\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_categories_deprecation\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_check_size\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_comparison_with_other_type\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_constants_deprecation\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_dump\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_effect_mandelbrot\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_effect_mandelbrot_bad_arguments\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_effect_noise\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_effect_spread\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_effect_spread_zero\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_empty_exif\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_exception_inheritance\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_exif_ifd\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_exif_interop\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_exif_jpeg\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_exif_load_from_fp\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_exif_png\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_exif_webp\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_expand_x\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_expand_xy\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_fli_overrun2\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_fp_name\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_getbands\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_getbbox\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_getchannel\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_getchannel_wrong_params\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_image_modes_fail\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_image_modes_success\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_internals\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_invalid_image\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_linear_gradient\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_linear_gradient_wrong_mode\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_load_on_nonexclusive_multiframe\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_ne\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_no_new_file_on_error\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_no_resource_warning_on_save\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_one_item_tuple\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_open_formats\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_overrun[01r_00.pcx]\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_overrun[fli_overrun.bin]\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_overrun[ossfuzz-4836216264589312.pcx]\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_overrun[pcx_overrun.bin]\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_overrun[pcx_overrun2.bin]\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_overrun[sgi_overrun.bin]\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_overrun[sgi_overrun_expandrow.bin]\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_overrun[sgi_overrun_expandrow2.bin]\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_p_from_rgb_rgba\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_radial_gradient\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_radial_gradient_wrong_mode\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_readonly_save\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_register_extensions\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_registered_extensions\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_registered_extensions_uninitialized\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_remap_palette\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_remap_palette_rgba_gif_save\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_remap_palette_rgba_reorder\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_remap_palette_transparency\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_repr_pretty\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_sanity\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_storage_neg\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_stringio\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_tempfile\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_unknown_extension\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_width_height\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_zero_tobytes[size0]\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_zero_tobytes[size1]\u001b[0m": "PASSED",
+  "\u001b[1mTestImage.test_zero_tobytes[size2]\u001b[0m": "PASSED",
+  "\u001b[1mTestRegistry.test_encode_registry\u001b[0m": "PASSED",
+  "\u001b[1mTestRegistry.test_encode_registry_fail\u001b[0m": "PASSED"
+ },
+ "positive_control": "gold",
+ "acceptance": {
+  "gold": {
+   "patch": "runs/r2e_static_prep_20260924/v3/private/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/gold.patch",
+   "expected_score": 1,
+   "trial": "trials/rev_gold.json",
+   "trial_verdict": "match 73/73"
+  },
+  "noop": {
+   "patch": null,
+   "expected_score": 0,
+   "trial": "trials/rev_noop.json",
+   "trial_verdict": "mismatch：TestImage.test_remap_palette PASSED→FAILED；TestImage.test_remap_palette_rgba_reorder PASSED→FAILED（GIF 键应 PASSED：base 保存 GIF 本来正确）"
+  },
+  "C1_rgb_plus_alphas": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/pillow_3a61_C1_rgb_plus_alphas.patch",
+   "expected_score": 1,
+   "trial": "trials/rev_C1.json",
+   "trial_verdict": "match 73/73（合理替代解：C 层先写 RGB 再用 putpalettealphas 补 alpha，补齐项 alpha 为 255）"
+  },
+  "A1u_unpadded_putpalette": {
+   "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/pillow_3a61_A1u_unpadded_putpalette.patch",
+   "expected_score": 1,
+   "trial": "trials/rev_A1u.json",
+   "trial_verdict": "match 73/73（合理替代解：gold 去掉补齐到 256 项，即上游后续版本写法；检查新断言不约束补齐。试跑用的补丁 sha256 12e49af5e367067c9b598b1ffb42ec6d0675b024bc6a50b4851e874728530e89，本目录副本只差空白上下文行，git apply 结果相同）"
+  },
+  "W1_mode_for_explicit_source": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/pillow_3a61_W1_mode_for_explicit_source.patch",
+   "expected_score": 0,
+   "trial": "trials/rev_W1.json",
+   "trial_verdict": "mismatch：只有 TestImage.test_remap_palette_rgba_gif_save PASSED→FAILED（GIF 读回颜色错位）；现材料上为 1"
+  },
+  "W2_python_layer_only": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/pillow_3a61_W2_python_layer_only.patch",
+   "expected_score": 0,
+   "trial": "trials/rev_W2.json",
+   "trial_verdict": "mismatch：TestImage.test_remap_palette PASSED→FAILED（渲染断言）；TestImage.test_remap_palette_rgba_reorder PASSED→FAILED（渲染 alpha 为 255）；现材料上为 1"
+  },
+  "W3_identity_shortcut": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/pillow_3a61_W3_identity_shortcut.patch",
+   "expected_score": 0,
+   "trial": "trials/rev_W3.json",
+   "trial_verdict": "mismatch：只有 TestImage.test_remap_palette_rgba_reorder PASSED→FAILED（交换后仍按 3 字节搬）；现材料上为 1"
+  },
+  "W5_mutate_source_to_rgb": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/pillow_3a61_W5_mutate_source_to_rgb.patch",
+   "expected_score": 0,
+   "trial": "trials/rev_W5.json",
+   "trial_verdict": "mismatch：TestImage.test_remap_palette PASSED→FAILED（调用前快照断言）；TestImage.test_remap_palette_rgba_reorder PASSED→FAILED；现材料上为 1"
+  }
+ },
+ "local_private_copy_sha256": {
+  "note": "本机私有副本 runs/r2e_static_prep_20260924/v3/private/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/ 的摘要，仅供核对；正式修订单的 sha256_before 以来源行原文为准",
+  "test_1.py_before": "sha256:17ececcd4da49d30953b7dacab62735b070e05859b954935a460d11722ef7955",
+  "test_1.py_after": "sha256:04f44d8a2dfba96806ebd181d7df72a8f303303d3fb69b30ae4019ca98d234db",
+  "expected_output.json_before": "sha256:0421915b48d86f7e1335f001214ce2ba54c195176a2028d0ce3cb7d0e205581d"
+ }
+}

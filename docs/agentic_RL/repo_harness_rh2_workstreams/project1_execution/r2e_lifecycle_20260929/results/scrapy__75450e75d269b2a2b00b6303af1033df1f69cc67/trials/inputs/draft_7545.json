@@ -1,0 +1,19 @@
+{
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "    @defer.inlineCallbacks\n    def test_shell_fetch_async(self):\n        reactor_path = \"twisted.internet.asyncioreactor.AsyncioSelectorReactor\"\n        url = self.url('/html')\n        code = f\"fetch('{url}')\"\n        args = [\"-c\", code, \"--set\", f\"TWISTED_REACTOR={reactor_path}\"]\n        _, _, err = yield self.execute(args, check_code=True)\n        self.assertNotIn(\n            b\"RuntimeError: There is no current event loop in thread\", err\n        )\n",
+     "new": "    @defer.inlineCallbacks\n    def test_shell_fetch_async(self):\n        reactor_path = \"twisted.internet.asyncioreactor.AsyncioSelectorReactor\"\n        url = self.url('/html')\n        code = f\"fetch('{url}')\"\n        args = [\"-c\", code, \"--set\", f\"TWISTED_REACTOR={reactor_path}\"]\n        _, _, err = yield self.execute(args, check_code=True)\n        self.assertNotIn(\n            b\"RuntimeError: There is no current event loop in thread\", err\n        )\n\n    @defer.inlineCallbacks\n    def test_shell_fetch_async_coroutine_runs(self):\n        # With the asyncio reactor, a Scrapy coroutine that awaits asyncio (here the\n        # process_request coroutine of a downloader middleware) must run to completion.\n        reactor_path = \"twisted.internet.asyncioreactor.AsyncioSelectorReactor\"\n        mw_path = \"r2e_tests.shell_asyncio_mw.AsyncioSleepDownloaderMiddleware\"\n        url = self.url('/html')\n        code = (\n            \"(__import__('signal').alarm(60), \"\n            f\"fetch('{url}'), \"\n            \"print('R2E_MW_DONE', request.meta.get('r2e_asyncio_mw_done'), response.status, flush=True))\"\n        )\n        args = [\n            \"-c\", code,\n            \"--set\", f\"TWISTED_REACTOR={reactor_path}\",\n            \"--set\", 'DOWNLOADER_MIDDLEWARES={\"%s\": 543}' % mw_path,\n        ]\n        _, out, _ = yield self.execute(args, check_code=True)\n        self.assertIn(b\"R2E_MW_DONE True 200\", out)\n\n    @defer.inlineCallbacks\n    def test_shell_fetch_async_twice(self):\n        # With the asyncio reactor, processing of a fetched response must finish, so a second\n        # fetch is not held back by the SCRAPER_SLOT_MAX_ACTIVE_SIZE soft limit.\n        reactor_path = \"twisted.internet.asyncioreactor.AsyncioSelectorReactor\"\n        url = self.url('/html')\n        code = (\n            \"(__import__('signal').alarm(60), \"\n            f\"fetch('{url}'), print('R2E_FETCH_1', response.status, flush=True), \"\n            f\"fetch('{url}'), print('R2E_FETCH_2', response.status, flush=True))\"\n        )\n        args = [\n            \"-c\", code,\n            \"--set\", f\"TWISTED_REACTOR={reactor_path}\",\n            \"--set\", \"SCRAPER_SLOT_MAX_ACTIVE_SIZE=1000\",\n        ]\n        _, out, _ = yield self.execute(args, check_code=True)\n        self.assertIn(b\"R2E_FETCH_1 200\", out)\n        self.assertIn(b\"R2E_FETCH_2 200\", out)\n"
+    }
+   ]
+  },
+  {
+   "kind": "hidden_test_file_add",
+   "target": "shell_asyncio_mw.py",
+   "content": "import asyncio\n\n\nclass AsyncioSleepDownloaderMiddleware:\n    # Used by ShellTest.test_shell_fetch_async_coroutine_runs: the process_request\n    # coroutine awaits asyncio and marks the request only after the await has finished.\n\n    async def process_request(self, request, spider):\n        await asyncio.sleep(0.1)\n        request.meta['r2e_asyncio_mw_done'] = True\n        return None\n"
+  }
+ ]
+}

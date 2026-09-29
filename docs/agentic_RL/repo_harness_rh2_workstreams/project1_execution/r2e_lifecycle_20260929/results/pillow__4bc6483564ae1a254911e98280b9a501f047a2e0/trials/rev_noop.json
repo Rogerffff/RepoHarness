@@ -1,0 +1,60 @@
+{
+ "task": "pillow__4bc6483564ae1a254911e98280b9a501f047a2e0",
+ "image": "sha256:d6de40456fb7254f4e21b0f5018a35b52b9a5619e14f1ed4f9a87e66f4fd0b44",
+ "recipe_id": "r2e_derive_v1+sysconfig_v1",
+ "patch": "none",
+ "edits": "/work/r2e/trials/lc_pillow_4bc6/4bc64835/draft.json",
+ "expected": "/work/r2e/trials/lc_pillow_4bc6/4bc64835/expected_after.json",
+ "kind": "trial_not_formal_grading",
+ "edits_apply": "RH2_TRIAL_EDITS_APPLIED=1\n",
+ "test_seconds": 2.3,
+ "markers": true,
+ "observed": {
+  "test_1pxfit": "PASSED",
+  "test_autocontrast_cutoff": "PASSED",
+  "test_autocontrast_mask_real_input": "PASSED",
+  "test_autocontrast_mask_toy_input": "PASSED",
+  "test_autocontrast_preserve_gradient": "PASSED",
+  "test_autocontrast_preserve_one_color[color0]": "PASSED",
+  "test_autocontrast_preserve_one_color[color1]": "PASSED",
+  "test_autocontrast_preserve_one_color[color2]": "PASSED",
+  "test_autocontrast_preserve_one_color[color3]": "PASSED",
+  "test_autocontrast_preserve_tone": "PASSED",
+  "test_colorize_2color": "PASSED",
+  "test_colorize_2color_offset": "PASSED",
+  "test_colorize_3color_offset": "PASSED",
+  "test_contain[new_size0]": "PASSED",
+  "test_contain[new_size1]": "PASSED",
+  "test_contain[new_size2]": "PASSED",
+  "test_exif_transpose": "PASSED",
+  "test_expand_palette[10]": "PASSED",
+  "test_expand_palette[border1]": "PASSED",
+  "test_fit_same_ratio": "PASSED",
+  "test_invert_mode_1": "FAILED",
+  "test_pad": "PASSED",
+  "test_pil163": "PASSED",
+  "test_sanity": "FAILED",
+  "test_scale": "PASSED"
+ },
+ "n_observed": 25,
+ "log_tail": "RH2_INSTALL_SKIPPED=1\n>>>>> Start Test Output\n\u001b[1m============================= test session starts ==============================\u001b[0m\nplatform linux -- Python 3.9.21, pytest-8.3.4, pluggy-1.5.0\nrootdir: /testbed\nconfigfile: setup.cfg\nplugins: cov-6.0.0\ncollected 25 items\n\nr2e_tests/test_1.py \u001b[31mF\u001b[0m\u001b[32m.\u001b[0m\u001b[32m.\u001b[0m\u001b[32m.\u001b[0m\u001b[32m.\u001b[0m\u001b[32m.\u001b[0m\u001b[32m.\u001b[0m\u001b[32m.\u001b[0m\u001b[32m.\u001b[0m\u001b[32m.\u001b[0m\u001b[32m.\u001b[0m\u001b[32m.\u001b[0m\u001b[32m.\u001b[0m\u001b[32m.\u001b[0m\u001b[32m.\u001b[0m\u001b[32m.\u001b[0m\u001b[32m.\u001b[0m\u001b[32m.\u001b[0m\u001b[32m.\u001b[0m\u001b[32m.\u001b[0m\u001b[32m.\u001b[0m\u001b[32m.\u001b[0m\u001b[32m.\u001b[0m\u001b[32m.\u001b[0m\u001b[31mF\u001b[0m\u001b[31m                            [100%]\u001b[0m\n\n=================================== FAILURES ===================================\n\u001b[31m\u001b[1m_________________________________ test_sanity __________________________________\u001b[0m\n\n    def test_sanity():\n    \n        ImageOps.autocontrast(hopper(\"L\"))\n        ImageOps.autocontrast(hopper(\"RGB\"))\n    \n        ImageOps.autocontrast(hopper(\"L\"), cutoff=10)\n        ImageOps.autocontrast(hopper(\"L\"), cutoff=(2, 10))\n        ImageOps.autocontrast(hopper(\"L\"), ignore=[0, 255])\n        ImageOps.autocontrast(hopper(\"L\"), mask=hopper(\"L\"))\n        ImageOps.autocontrast(hopper(\"L\"), preserve_tone=True)\n    \n        ImageOps.colorize(hopper(\"L\"), (0, 0, 0), (255, 255, 255))\n        ImageOps.colorize(hopper(\"L\"), \"black\", \"white\")\n    \n        ImageOps.pad(hopper(\"L\"), (128, 128))\n        ImageOps.pad(hopper(\"RGB\"), (128, 128))\n    \n        ImageOps.contain(hopper(\"L\"), (128, 128))\n        ImageOps.contain(hopper(\"RGB\"), (128, 128))\n    \n        ImageOps.crop(hopper(\"L\"), 1)\n        ImageOps.crop(hopper(\"RGB\"), 1)\n    \n        ImageOps.deform(hopper(\"L\"), deformer)\n        ImageOps.deform(hopper(\"RGB\"), deformer)\n    \n        ImageOps.equalize(hopper(\"L\"))\n        ImageOps.equalize(hopper(\"RGB\"))\n    \n        ImageOps.expand(hopper(\"L\"), 1)\n        ImageOps.expand(hopper(\"RGB\"), 1)\n        ImageOps.expand(hopper(\"L\"), 2, \"blue\")\n        ImageOps.expand(hopper(\"RGB\"), 2, \"blue\")\n    \n        ImageOps.fit(hopper(\"L\"), (128, 128))\n        ImageOps.fit(hopper(\"RGB\"), (128, 128))\n    \n        ImageOps.flip(hopper(\"L\"))\n        ImageOps.flip(hopper(\"RGB\"))\n    \n        ImageOps.grayscale(hopper(\"L\"))\n        ImageOps.grayscale(hopper(\"RGB\"))\n    \n>       ImageOps.invert(hopper(\"1\"))\n\n\u001b[1m\u001b[31mr2e_tests/test_1.py\u001b[0m:66: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\u001b[1m\u001b[31msrc/PIL/ImageOps.py\u001b[0m:528: in invert\n    return _lut(image, lut)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nimage = <PIL.Image.Image image mode=1 size=128x128 at 0x7A3DD2E2ABE0>\nlut = [255, 254, 253, 252, 251, 250, ...]\n\n    def _lut(image, lut):\n        if image.mode == \"P\":\n            # FIXME: apply to lookup table, not image data\n            raise NotImplementedError(\"mode P support coming soon\")\n        elif image.mode in (\"L\", \"RGB\"):\n            if image.mode == \"RGB\" and len(lut) == 256:\n                lut = lut + lut + lut\n            return image.point(lut)\n        else:\n>           raise OSError(\"not supported for this image mode\")\n\u001b[1m\u001b[31mE           OSError: not supported for this image mode\u001b[0m\n\n\u001b[1m\u001b[31msrc/PIL/ImageOps.py\u001b[0m:58: OSError\n\u001b[31m\u001b[1m______________________________ test_invert_mode_1 ______________________________\u001b[0m\n\n    def test_invert_mode_1():\n        # canonical 0/255 bilevel image, not the issue's literal example\n        im = hopper(\"1\")\n        original = im.copy()\n        expected = Image.frombytes(\n            \"L\", im.size, bytes(255 - v for v in im.convert(\"L\").tobytes())\n        )\n    \n>       out = ImageOps.invert(im)\n\n\u001b[1m\u001b[31mr2e_tests/test_1.py\u001b[0m:486: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\u001b[1m\u001b[31msrc/PIL/ImageOps.py\u001b[0m:528: in invert\n    return _lut(image, lut)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nimage = <PIL.Image.Image image mode=1 size=128x128 at 0x7A3DD220A250>\nlut = [255, 254, 253, 252, 251, 250, ...]\n\n    def _lut(image, lut):\n        if image.mode == \"P\":\n            # FIXME: apply to lookup table, not image data\n            raise NotImplementedError(\"mode P support coming soon\")\n        elif image.mode in (\"L\", \"RGB\"):\n            if image.mode == \"RGB\" and len(lut) == 256:\n                lut = lut + lut + lut\n            return image.point(lut)\n        else:\n>           raise OSError(\"not supported for this image mode\")\n\u001b[1m\u001b[31mE           OSError: not supported for this image mode\u001b[0m\n\n\u001b[1m\u001b[31msrc/PIL/ImageOps.py\u001b[0m:58: OSError\n==================================== PASSES ====================================\n\u001b[36m\u001b[1m=========================== short test summary info ============================\u001b[0m\n\u001b[32mPASSED\u001b[0m r2e_tests/test_1.py::\u001b[1mtest_1pxfit\u001b[0m\n\u001b[32mPASSED\u001b[0m r2e_tests/test_1.py::\u001b[1mtest_fit_same_ratio\u001b[0m\n\u001b[32mPASSED\u001b[0m r2e_tests/test_1.py::\u001b[1mtest_contain[new_size0]\u001b[0m\n\u001b[32mPASSED\u001b[0m r2e_tests/test_1.py::\u001b[1mtest_contain[new_size1]\u001b[0m\n\u001b[32mPASSED\u001b[0m r2e_tests/test_1.py::\u001b[1mtest_contain[new_size2]\u001b[0m\n\u001b[32mPASSED\u001b[0m r2e_tests/test_1.py::\u001b[1mtest_pad\u001b[0m\n\u001b[32mPASSED\u001b[0m r2e_tests/test_1.py::\u001b[1mtest_pil163\u001b[0m\n\u001b[32mPASSED\u001b[0m r2e_tests/test_1.py::\u001b[1mtest_scale\u001b[0m\n\u001b[32mPASSED\u001b[0m r2e_tests/test_1.py::\u001b[1mtest_expand_palette[10]\u001b[0m\n\u001b[32mPASSED\u001b[0m r2e_tests/test_1.py::\u001b[1mtest_expand_palette[border1]\u001b[0m\n\u001b[32mPASSED\u001b[0m r2e_tests/test_1.py::\u001b[1mtest_colorize_2color\u001b[0m\n\u001b[32mPASSED\u001b[0m r2e_tests/test_1.py::\u001b[1mtest_colorize_2color_offset\u001b[0m\n\u001b[32mPASSED\u001b[0m r2e_tests/test_1.py::\u001b[1mtest_colorize_3color_offset\u001b[0m\n\u001b[32mPASSED\u001b[0m r2e_tests/test_1.py::\u001b[1mtest_exif_transpose\u001b[0m\n\u001b[32mPASSED\u001b[0m r2e_tests/test_1.py::\u001b[1mtest_autocontrast_cutoff\u001b[0m\n\u001b[32mPASSED\u001b[0m r2e_tests/test_1.py::\u001b[1mtest_autocontrast_mask_toy_input\u001b[0m\n\u001b[32mPASSED\u001b[0m r2e_tests/test_1.py::\u001b[1mtest_autocontrast_mask_real_input\u001b[0m\n\u001b[32mPASSED\u001b[0m r2e_tests/test_1.py::\u001b[1mtest_autocontrast_preserve_tone\u001b[0m\n\u001b[32mPASSED\u001b[0m r2e_tests/test_1.py::\u001b[1mtest_autocontrast_preserve_gradient\u001b[0m\n\u001b[32mPASSED\u001b[0m r2e_tests/test_1.py::\u001b[1mtest_autocontrast_preserve_one_color[color0]\u001b[0m\n\u001b[32mPASSED\u001b[0m r2e_tests/test_1.py::\u001b[1mtest_autocontrast_preserve_one_color[color1]\u001b[0m\n\u001b[32mPASSED\u001b[0m r2e_tests/test_1.py::\u001b[1mtest_autocontrast_preserve_one_color[color2]\u001b[0m\n\u001b[32mPASSED\u001b[0m r2e_tests/test_1.py::\u001b[1mtest_autocontrast_preserve_one_color[color3]\u001b[0m\n\u001b[31mFAILED\u001b[0m r2e_tests/test_1.py::\u001b[1mtest_sanity\u001b[0m - OSError: not supported for this image mode\n\u001b[31mFAILED\u001b[0m r2e_tests/test_1.py::\u001b[1mtest_invert_mode_1\u001b[0m - OSError: not supported for this image mode\n\u001b[31m========================= \u001b[31m\u001b[1m2 failed\u001b[0m, \u001b[32m23 passed\u001b[0m\u001b[31m in 0.90s\u001b[0m\u001b[31m =========================\u001b[0m\n>>>>> End Test Output\nRH2_TEST_RC=1\n",
+ "stderr_tail": "",
+ "expected_n": 25,
+ "missing": [],
+ "extra": [],
+ "status_diff": [
+  [
+   "test_invert_mode_1",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "test_sanity",
+   "PASSED",
+   "FAILED"
+  ]
+ ],
+ "match": false,
+ "verdict": "mismatch",
+ "seconds": 62.0
+}

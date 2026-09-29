@@ -1,0 +1,48 @@
+{
+ "task_id": "getmoto__moto-7495",
+ "source": "SWE-Gym lite (swe_gym_lite_full_f70b1a29)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "s2/ingest/public_bundles_v0.jsonl#getmoto__moto-7495",
+  "grading": "s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-7495",
+  "validation": "s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-7495",
+  "base_commit": "009d0191f9591c4d4b44c3b94f54bb69bb3c05b2",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-7495/gold/offline/a1/"
+ },
+ "public_view": {
+  "goal": "EC2 实例 stop() 之后，describe 返回的 StateTransitionReason 是空串；期望像 AWS 一样返回 'User initiated (YYYY-MM-DD HH:MM:SS UTC)'。",
+  "constraints": ["题面给出了期望格式的样例"],
+  "unknowns_from_public_only": ["题面没说 terminate 之后是否也应有值（base 同样设置了 _reason，模板同样丢弃）"]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 只碰 tests/test_ec2/test_instances.py（base 已存在，F2P test_instance_start_and_stop 是 base 已有测试名——本包第五例）", "golden_patch 只碰 moto/ec2/responses/instances.py:466"], "note": "无二进制/LFS/子模块，与题面同一问题。", "by": "L1_moto_3"},
+  "2": {"status": "pass", "evidence_refs": ["base moto/ec2/models/instances.py:374 `self._reason = f\"User initiated ({utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')})\"` —— 模型层**已经算好了正确的值**", "base moto/ec2/responses/instances.py:466 模板写的是空元素 `<reason/>`"], "note": "base 确有缺陷，且缺陷位置与题面现象一致：值被算出来但在 XML 序列化时被丢掉。", "by": "L1_moto_3"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 964 字符，含复现片段、实际输出与期望格式，无外链/图片/截断", "hints_text 为空"], "note": "题面自足。", "by": "L1_moto_3"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 触碰路径全集：tests/test_ec2/test_instances.py"], "note": "无非测试源码路径；gold 触碰 moto/ec2/responses/instances.py，非测试样路径。", "by": "L1_moto_3"},
+  "17": {"status": "pass", "evidence_refs": ["同 4"], "note": "additional_exclusions 空。", "by": "L1_moto_3"},
+  "5": {"status": "issue", "evidence_refs": ["同测试文件 tests/test_ec2/test_instances.py：getmoto__moto-4975、5347、5980", "同 gold 文件 moto/ec2/responses/instances.py：getmoto__moto-5347", "ancestry：5347 的 base 是 7495 的 base 的祖先"], "note": "四题共用同一个测试文件，划分需成组。把 5347 的 golden_patch 反向应用到本题 base 上 `git apply -R --check` 失败（上下文漂移），故“5347 的答案是否在本题 base 里”为 unknown。", "by": "L1_moto_3"},
+  "23": {"status": "pass", "evidence_refs": ["F2P `assert instance1.state_transition_reason.startswith('User initiated')`；题面给的期望值就是 'User initiated (2019-04-08 14:29:07 UTC)'"], "note": "要求充分且一致，且断言只查前缀，比题面宽松。", "by": "L1_moto_3"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 只查前缀"], "note": "不强制唯一实现：改模板、或在 responses 层组装、或改 to_dict 都能过。", "by": "L1_moto_3"},
+  "25": {"status": "issue", "evidence_refs": ["F2P 只断言 startswith('User initiated')，不校验括号里的时间戳", "grep 确认整个 tests/test_ec2/ 目录里没有第二处 state_transition_reason / StateTransitionReason 断言"], "note": "P3：把模板写死成 `<reason>User initiated</reason>` 即可满分，时间戳部分完全不被验证；题面明确给了带时间戳的期望格式，判分却没覆盖。", "by": "L1_moto_3"},
+  "26": {"status": "pass", "evidence_refs": ["collected 95 items = F2P 1 + P2P 94，全过"], "note": "只跑 test_instances.py；同目录其它 ec2 测试文件不跑。", "by": "L1_moto_3"},
+  "27": {"status": "issue", "evidence_refs": ["golden_patch 单行 `<reason/>` → `<reason>{{ instance._reason }}</reason>`", "grep 确认 moto/ec2/responses/ 下 `<reason` 只此一处，故没有遗漏的同类模板", "base moto/ec2/models/instances.py:424 terminate() 也设置了 _reason"], "note": "gold 正确、最小、对应题面，且该模板是唯一的一处。两点小瑕：(a) 模板直接渲染私有属性 `instance._reason`，绕过了模型的公开接口（同文件 523-526 行的 `<stateReason>` 用的是 `instance._state_reason.*`，风格一致，属仓库既有惯例）；(b) terminate 之后的 reason 同样会被这行修复带出来，但无任何用例验证，属未覆盖的连带行为。", "by": "L1_moto_3"},
+  "29": {"status": "pass", "evidence_refs": ["hints_text 为空；题面无 PR/commit 链接、无修复代码"], "note": "无静态泄漏。", "by": "L1_moto_3"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold 95 passed，10.78s"], "note": "纯 mock。", "by": "L1_moto_3"},
+  "7": {"status": "issue", "evidence_refs": ["本包共性 install rc=2"], "note": "见包级 issue。", "by": "L1_moto_3"},
+  "11": {"status": "pass", "evidence_refs": ["EC2 测试全部进程内 mock，使用 EXAMPLE_AMI_ID 常量"], "note": "无外部服务。", "by": "L1_moto_3"}
+ },
+ "issues": [
+  {"category": "test_too_permissive", "severity": "P3", "evidence_refs": ["F2P 只查 startswith('User initiated')；仓库内无第二处相关断言"], "proposed_action": "纳入扩展回归（校验时间戳格式），不改上游判分。", "next_experiment": "构造把模板写死成 `<reason>User initiated</reason>` 的补丁跑 F2P+P2P，确认满分（预期满分）。"},
+  {"category": "uncovered_side_effect", "severity": "P3", "evidence_refs": ["models/instances.py:424 terminate() 同样设置 _reason，但无用例"], "proposed_action": "纳入扩展回归。", "next_experiment": "无。"},
+  {"category": "dataset_split_grouping", "severity": "P2", "evidence_refs": ["4975/5347/5980/7495 共用 tests/test_ec2/test_instances.py"], "proposed_action": "四题成组，同进一侧。", "next_experiment": "无。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只含测试文件；沿用默认空排除。", "evidence_refs": ["test_patch 路径全集 = tests/test_ec2/test_instances.py"]},
+ "proposed_regression_tests": [
+  {"id": "新增：stop 后用正则校验 StateTransitionReason 形如 `User initiated \\(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2} UTC\\)`", "reason": "堵住“写死 User initiated”的假修复（见检查 25），也正是题面给出的期望格式。"},
+  {"id": "新增：terminate 后的 StateTransitionReason", "reason": "models/instances.py:424 走同一条路径，是 gold 的连带影响面，当前零覆盖。"},
+  {"id": "新增：刚创建（running）的实例 StateTransitionReason 应为空", "reason": "models/instances.py:106/360 把 _reason 初始化为空串；修复后必须仍然是空，避免渲染出 'None'。"},
+  {"id": "tests/test_ec2/test_instances.py 里 describe_instances 的其它字段断言（P2P 已含）", "reason": "gold 改的是 EC2_DESCRIBE_INSTANCES 模板，整份响应的结构不能被破坏。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "题面自足、base 缺陷定位明确（值已算好、模板丢弃）、gold 单行且是唯一的同类模板、文件边界干净。唯一保留是 F2P 只查前缀，写死字符串即可满分，建议配上面第一条正则回归。"},
+ "costs": {"minutes": 12}
+}

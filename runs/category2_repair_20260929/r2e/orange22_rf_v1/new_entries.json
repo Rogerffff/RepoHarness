@@ -1,0 +1,34 @@
+[
+ {
+  "revision_id": "r2e-mr-064",
+  "instance_id": "orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237",
+  "kind": "statement_text_replace",
+  "target": "problem_statement",
+  "edits": [
+   {
+    "old": "**Example Buggy Code:**\n```python\ndef unique_in_order_mapping(a):\n    first_position = {}\n    unique_in_order = []\n    mapping = []\n    for e in a:\n        if e not in first_position:\n            first_position[e] = len(unique_in_order)\n            unique_in_order.append(e)\n        mapping.append(first_position[e])\n    return unique_in_order, mapping\n\n# Example usage\nunique_elements, mapping = unique_in_order_mapping([2, 3, 1])\nprint(\"Unique Elements:\", unique_elements)\nprint(\"Mapping:\", mapping)\n```",
+    "new": "**Example Code:**\n```python\nfrom Orange.widgets.data.owcreateclass import unique_in_order_mapping\n\nprint(unique_in_order_mapping([2, 3, 1]))\n```"
+   },
+   {
+    "old": "For the input `[2, 3, 1]`, the function should return:\n```\nUnique Elements: [2, 3, 1]\nMapping: [0, 1, 2]\n```\n",
+    "new": "For the input `[2, 3, 1]`, the function should return the unique elements `[2, 3, 1]` and the mapping `[0, 1, 2]`.\n"
+   },
+   {
+    "old": "With the current implementation, the function returns:\n```\nUnique Elements: [2, 3, 1]\nMapping: [2, 0, 1]\n```\nThis incorrect mapping does not accurately represent",
+    "new": "With the current implementation, the example prints:\n```\n(array([2, 3, 1]), array([2, 0, 1]))\n```\nThe unique elements are correct, but the mapping `[2, 0, 1]` does not accurately represent"
+   }
+  ],
+  "sha256_before": "sha256:0d196bc2ef106b2f053da4acdc09718b142561e72c912d9d36f86f98d0296698",
+  "sha256_after": "sha256:f8701d3a4322270fde2618cc7cfc094460c9a5f1ec874e400c5bfaeef9ec7199",
+  "revised_file": null,
+  "expected_change": null,
+  "decision_ref": "task_screening_standard_v1_20260925.md §5 R-f / §9 D4,D6：已授权；本批category2修复执行",
+  "reason": "删除直接实现答案，换为base已验证的公开症状；要求与评分材料不变；新上下文公开读者已核。",
+  "evidence": [
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/revision_draft.json",
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_orange3.md",
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/reviews/orange22_public_reading.md",
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/r2e/orange3_22e98_closeout.md"
+  ]
+ }
+]

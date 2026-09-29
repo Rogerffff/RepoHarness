@@ -1,0 +1,140 @@
+{
+ "instance_id": "numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764",
+ "template": "R-c",
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "        b += 2\n        assert_equal(a, np.arange(5))\n",
+     "new": "        b += 2\n        assert_equal(a, np.arange(5))\n        # all-ones reps given as a tuple\n        for reps in [(1,), (1, 1)]:\n            a = np.arange(5)\n            b = tile(a, reps)\n            b += 2\n            assert_equal(a, np.arange(5))\n"
+    },
+    {
+     "old": "    def test_empty(self):\n",
+     "new": "        # len(reps) > A.ndim: A is promoted as documented\n        assert_equal(tile(np.arange(5), (1, 1)).shape, (1, 5))\n\n    def test_empty(self):\n"
+    }
+   ]
+  }
+ ],
+ "expected_after": {
+  "TestApplyAlongAxis.test_3d": "PASSED",
+  "TestApplyAlongAxis.test_simple": "PASSED",
+  "TestApplyAlongAxis.test_simple101": "PASSED",
+  "TestApplyOverAxes.test_simple": "PASSED",
+  "TestArraySplit.test_index_split_high_bound": "PASSED",
+  "TestArraySplit.test_index_split_low_bound": "PASSED",
+  "TestArraySplit.test_index_split_simple": "PASSED",
+  "TestArraySplit.test_integer_0_split": "PASSED",
+  "TestArraySplit.test_integer_split": "PASSED",
+  "TestArraySplit.test_integer_split_2D_cols": "PASSED",
+  "TestArraySplit.test_integer_split_2D_default": "PASSED",
+  "TestArraySplit.test_integer_split_2D_rows": "PASSED",
+  "TestSplit.test_equal_split": "PASSED",
+  "TestSplit.test_unequal_split": "PASSED",
+  "TestDstack.test_0D_array": "PASSED",
+  "TestDstack.test_1D_array": "PASSED",
+  "TestDstack.test_2D_array": "PASSED",
+  "TestDstack.test_2D_array2": "PASSED",
+  "TestHsplit.test_0D_array": "PASSED",
+  "TestHsplit.test_1D_array": "PASSED",
+  "TestHsplit.test_2D_array": "PASSED",
+  "TestVsplit.test_1D_array": "PASSED",
+  "TestVsplit.test_2D_array": "PASSED",
+  "TestDsplit.test_2D_array": "PASSED",
+  "TestDsplit.test_3D_array": "PASSED",
+  "TestSqueeze.test_basic": "PASSED",
+  "TestKron.test_return_type": "PASSED",
+  "TestTile.test_basic": "PASSED",
+  "TestTile.test_empty": "PASSED",
+  "TestTile.test_kroncompare": "PASSED",
+  "TestTile.test_tile_one_repetition_on_array_gh4679": "PASSED",
+  "TestMayShareMemory.test_basic": "PASSED"
+ },
+ "positive_control": "gold",
+ "acceptance": {
+  "gold": {
+   "expected_score": 1,
+   "trial": "trials/rev_gold.json",
+   "trial_verdict": "match",
+   "patch": "runs/r2e_static_prep_20260924/v3/private/numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764/gold.patch",
+   "note": "positive control",
+   "trial_before_revision": "trials/cur_gold.json",
+   "trial_before_revision_verdict": "match"
+  },
+  "A_always_copy": {
+   "expected_score": 1,
+   "trial": "trials/rev_A.json",
+   "trial_verdict": "match",
+   "patch": "runs/r2e_actor_20260925/grader_cands/numpy_a5ea_A_always_copy.patch",
+   "note": "reasonable alternative; checks no false rejection"
+  },
+  "noop": {
+   "expected_score": 0,
+   "trial": "trials/rev_noop.json",
+   "trial_verdict": "mismatch",
+   "patch": "none",
+   "note": "fails test_1.py:331 (original example)",
+   "trial_before_revision": "trials/cur_noop.json",
+   "trial_before_revision_verdict": "mismatch"
+  },
+  "D_identity_check_negative": {
+   "expected_score": 0,
+   "trial": "trials/rev_D.json",
+   "trial_verdict": "mismatch",
+   "patch": "runs/r2e_actor_20260925/grader_cands/numpy_a5ea_D_identity_check_negative.patch",
+   "note": "known wrong, 0 before revision; fails test_1.py:331"
+  },
+  "B_scalar_one_only": {
+   "expected_score": 0,
+   "trial": "trials/rev_B.json",
+   "trial_verdict": "mismatch",
+   "patch": "runs/r2e_actor_20260925/grader_cands/numpy_a5ea_B_scalar_one_only.patch",
+   "note": "trigger for edit 1; was 1 before revision; fails test_1.py:337 (reps=(1,) still aliases)",
+   "trial_before_revision": "trials/cur_B.json",
+   "trial_before_revision_verdict": "match"
+  },
+  "RC2_copy_if_tup_is_1": {
+   "expected_score": 0,
+   "trial": "trials/rev_RC2.json",
+   "trial_verdict": "mismatch",
+   "patch": "runs/r2e_actor_20260925/grader_cands/numpy_a5ea_RC2_copy_if_tup_is_1.patch",
+   "note": "trigger for edit 1; was 1 before revision; fails test_1.py:337 (reps=(1, 1) still aliases)",
+   "trial_before_revision": "trials/cur_RC2.json",
+   "trial_before_revision_verdict": "match"
+  },
+  "C_all_ones_return_copy": {
+   "expected_score": 0,
+   "trial": "trials/rev_C.json",
+   "trial_verdict": "mismatch",
+   "patch": "runs/r2e_actor_20260925/grader_cands/numpy_a5ea_C_all_ones_return_copy.patch",
+   "note": "trigger for edit 2; was 1 before revision; fails test_1.py:340 (shape (5,) instead of (1, 5))",
+   "trial_before_revision": "trials/cur_C.json",
+   "trial_before_revision_verdict": "match"
+  },
+  "RC3_early_return_no_ndmin": {
+   "expected_score": 0,
+   "trial": "trials/rev_RC3.json",
+   "trial_verdict": "mismatch",
+   "patch": "runs/r2e_actor_20260925/grader_cands/numpy_a5ea_RC3_early_return_no_ndmin.patch",
+   "note": "trigger for edit 2; was 1 before revision; fails test_1.py:340 (shape (5,) instead of (1, 5))",
+   "trial_before_revision": "trials/cur_RC3.json",
+   "trial_before_revision_verdict": "match"
+  }
+ },
+ "parent": {
+  "hidden_test": "test_1.py",
+  "sha256": "c032efe66357041e5e913a61a8b1a3a4fc432c6f54da747ea251633e0aef4120",
+  "expected_output": "unchanged (current formal material)",
+  "material_revisions": []
+ },
+ "revised_hidden_test_sha256": "c068c691f51d651859cbeb0b61ab3bb8a412a1921c8acad29454c62fb43830e5",
+ "trial_image": "sha256:22b7741c5263cc27bfaa4c491a98a62fbfc9c697902223c268890566afe4164c",
+ "trial_recipe_id": "r2e_derive_v1+sysconfig_v1",
+ "trial_tool": "rh2/experiments/r2e_lifecycle_20260929/trial_grade.py (trial, not formal grading)",
+ "environment_check_current_material": {
+  "noop": "trials/cur_noop.json",
+  "gold": "trials/cur_gold.json"
+ },
+ "status": "draft_trialed; needs formal revision sheet, formal grading and Codex review"
+}

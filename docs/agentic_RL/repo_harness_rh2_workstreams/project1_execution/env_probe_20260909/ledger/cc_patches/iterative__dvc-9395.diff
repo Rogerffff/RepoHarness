@@ -1,0 +1,50 @@
+diff --git a/dvc/commands/repro.py b/dvc/commands/repro.py
+index fdb0659e..cbf2d255 100644
+--- a/dvc/commands/repro.py
++++ b/dvc/commands/repro.py
+@@ -132,7 +132,7 @@ and then the stage name name.
+         default=False,
+         help=(
+             "Try automatically pulling missing cache for outputs restored "
+-            "from the run-cache."
++            "from the run-cache, and for missing data source outputs."
+         ),
+     )
+     repro_parser.add_argument(
+diff --git a/dvc/stage/__init__.py b/dvc/stage/__init__.py
+index d9828594..334c7bd0 100644
+--- a/dvc/stage/__init__.py
++++ b/dvc/stage/__init__.py
+@@ -581,6 +581,8 @@ class Stage(params.StageParams):
+             args = ("outputs", "frozen ") if self.frozen else ("data sources", "")
+             logger.info("Verifying %s in %s%s", *args, self)
+             if not dry:
++                if kwargs.get("pull"):
++                    self.pull_missing_outputs()
+                 self._check_missing_outputs()
+ 
+         if not dry:
+@@ -614,6 +616,23 @@ class Stage(params.StageParams):
+     def _check_missing_outputs(self) -> None:
+         check_missing_outputs(self)
+ 
++    def pull_missing_outputs(self) -> None:
++        """Pull missing outputs for data source stages from the remote."""
++        missing = [out for out in self.outs if not out.exists]
++        if not missing:
++            return
++
++        used = defaultdict(set)
++        for out in missing:
++            for odb, objs in out.get_used_objs(force=True).items():
++                used[odb].update(objs)
++
++        for odb, objs in used.items():
++            self.repo.cloud.pull(objs, odb=odb)
++
++        for out in missing:
++            out.checkout()
++
+     def filter_outs(self, fs_path) -> Iterable["Output"]:
+         def _func(o):
+             return o.fs.path.isin_or_eq(fs_path, o.fs_path)

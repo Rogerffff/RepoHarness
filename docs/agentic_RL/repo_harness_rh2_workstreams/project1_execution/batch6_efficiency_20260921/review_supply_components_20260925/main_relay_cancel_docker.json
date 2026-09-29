@@ -1,0 +1,11 @@
+{
+  "scope": "真实本机 Docker：供应 relay 创建后、readiness await 中取消。\n\n只延迟 readiness DockerRunner 调用；镜像、run 参数、Docker daemon 为真实。\n不拉镜像、不接入题目网络，finally 只清理本探针的随机命名容器。\n",
+  "cancellation_propagated": true,
+  "helper_commands": [
+    "run",
+    "exec"
+  ],
+  "running_after_cancel": "true",
+  "inspect_exit": 0,
+  "probe_cleanup_confirmed": true
+}

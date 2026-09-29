@@ -1,0 +1,319 @@
+{
+ "schema_id": "rh2.r2e_screening_record.v1",
+ "task_id": "r2e_gym_subset::coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae",
+ "instance_id": "coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae",
+ "task_revision": "r2e_gym_subset_e8b9fcbc/material_revisions_v1:r2e-mr-001",
+ "source_adapter_ref": "s2_r2e ingest_manifest v2（t1_input_pins_r2e_v2 pin 60e187a0…；manifest pin 706abc8a…；含 material_revisions_v1）",
+ "recipe_ref": {
+  "derived_image": "r2e_derive_v1",
+  "resources": "default"
+ },
+ "code_snapshot_ref": "runs/r2e_snapshot_20260923.sha256 (388 files) + r2e_env_tools.sha256（远端核对 TOOLS_OK）",
+ "facts_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/facts.json",
+ "dev_probe_ref": "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/dev_probe.json",
+ "posthoc_refs": [
+  "runs/r2e_t0_revisions_20260924/replay/ledger_t0_noop.jsonl",
+  "runs/r2e_t0_revisions_20260924/replay/ledger_t0_gold.jsonl",
+  "runs/r2e_t0_revisions_20260924/reconcile/reconcile.json",
+  "runs/r2e_t0_revisions_20260924/derived/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/facts.json"
+ ],
+ "checks": {
+  "R01": {
+   "status": "pass",
+   "note": "修订后复核：09-24 在 A 线机器按同一配方 r2e_derive_v1（recipe sha256:0da821a1…，与 R-f 相同）重建，派生复核全部通过，隐藏测试树 e7a15331… 与评分面一致（期望修订不改镜像）；镜像 ID 565a8f36… 与 R-f 的 2020169d… 不同，原因是换了构建宿主。R-f 时的复核见 previous。",
+   "evidence_refs": [
+    "runs/r2e_t0_revisions_20260924/derived/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/facts.json",
+    "runs/r2e_t0_revisions_20260924/derived/results.json",
+    "runs/r2e_rf_20260923/remote/r2e_derived/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/facts.json"
+   ],
+   "by": "Claude（B 线，T0 实施验收）",
+   "previous": {
+    "status": "pass",
+    "note": "派生镜像 21 项复核通过；覆盖表 / 隐藏测试树 / 入口脚本 / HEAD 与评分面一致；探针 GIT_HEAD=5bb5da50b182 与 base_commit 一致"
+   }
+  },
+  "R02": {
+   "status": "pass",
+   "note": "修订后 noop 0 来自 1 个 mismatched 键（目标键 ExecTest.test_unencodable_filename），无 missing、无零解析；两次相同。",
+   "evidence_refs": [
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-n_9c775b7c.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-n_5af6d11f.eval.log"
+   ],
+   "by": "Claude（B 线，T0 实施验收）",
+   "previous": {
+    "status": "pass",
+    "note": "noop 0 来自 2 个 mismatched 键（无 missing、无零解析）"
+   }
+  },
+  "R03": {
+   "status": "pass",
+   "note": "题面对缺陷（不可 UTF-8 编码的文件名导致 save() UnicodeEncodeError）描述准确；但示例顺序有误：exec(compile(...,'\\udcff.py')) 写在 cov.start() 之前，原样运行不复现（A：saved）；放到 start / stop 之间即复现（B：UnicodeEncodeError）。conda 措辞为全局问题（E09）。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/prepared_r2e/prompts.jsonl",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae.py",
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/dev_probe.json"
+   ],
+   "by": "p1-subagent"
+  },
+  "R04": {
+   "status": "pass",
+   "note": "hygiene test_files = 隐藏测试 r2e_tests/{__init__.py,test_1.py}（评分时由私有目录恢复）+ run_tests.sh；gold 只触碰 ['coverage/inorout.py']，不在其中；解题不需要改 r2e_tests 以外的测试辅助文件。来源镜像的既有脏改动属于基线（正式链 FrozenDeltaSource 按基线 census 求 delta，不会被卷进候选补丁；代码阅读，未经真实 rollout 验证）。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/facts.json",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-c_2c95f1f9.eval.log",
+    "rh2/src/repoharness2/contracts/baseline_manifest.py"
+   ],
+   "by": "p1-subagent"
+  },
+  "R05": {
+   "status": "pass",
+   "note": "python → /testbed/.venv/bin/python 3.7.9；pytest 4.6.6；pip 19.3.1，pip check 无问题；包从 /testbed 导入 /testbed/coverage/__init__.py 5.0.2a1，从 /tmp 导入可（editable finder）；gcc / make / git 有，uv 无（WHICH_* 见 agent_probe.log）。pytest 4.6.6 + xdist（setup.cfg addopts 带 -n 与 --failed-first；探针把 cache 目录指到 /tmp）；mock 3.0.5 已装（M3 pip freeze）。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/agent_probe.log",
+    "runs/env_overnight_20260916/M3/facts/016af5f6352d/pkgsrc.txt"
+   ],
+   "by": "p1-subagent"
+  },
+  "R06": {
+   "status": "pass",
+   "note": "修订后（r2e-mr-001，用户 09-24 批准 T0-1 方案 A）：期望里唯一的非 PASSED 键 MockingProtectionTest.test_os_path_exists 已改为 PASSED，修订后期望没有非 PASSED 键；A 线机器 noop ×2 / gold ×2 该键全部 PASSED。修订前的判定（issue：期望取自来源宿主机检出，子进程缺 mock）见 previous 与 issues[0]。",
+   "evidence_refs": [
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-n_9c775b7c.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-n_5af6d11f.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-g_6b039c38.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-g_d4c7fad4.eval.log",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v1.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae.md"
+   ],
+   "by": "Claude（B 线，T0 实施验收）",
+   "previous": {
+    "status": "issue",
+    "note": "1 个期望 FAILED 键 MockingProtectionTest.test_os_path_exists：在发布镜像里 13 次观测全 PASSED（gold 日志里子进程输出正是断言要的 in test / bug416a.py / 23 / 17）。来源宿主机执行记录里新旧提交都 FAILED，原因是子进程 coverage run bug416.py 报 ModuleNotFoundError: No module named 'mock'，解释器是 /home/gcpuser/…/.venv/bin/python（宿主机检出，非发布镜像）；期望与这份宿主机记录逐键相同。分类：来源参考环境差异（参考状态问题），不是上游本就失败、不是本镜像缺依赖。已写材料修订提案。"
+   }
+  },
+  "R07": {
+   "status": "pass",
+   "note": "派生镜像复核：agent uid 解释器 ok、/rh2_private 700 root 且 agent 读取被拒；探针（agent/54321）：chown 后 /testbed、site-packages、home、/tmp 可写，/usr/local 拒绝；PRIVATE_LS=ls: cannot open directory '/rh2_private'…；r2e_tests 在根与工作区都不存在。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/facts.json",
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/dev_probe.json"
+   ],
+   "by": "p1-subagent"
+  },
+  "R08": {
+   "status": "pass",
+   "note": "修订后 gold 15/15、reward 1（两次）；候选代码生效（目标键在 gold 下 PASSED）；grader 侧导入路径 /testbed/coverage/__init__.py（账本 observations.RH2_OBS_IMPORT_PATH，两次相同）。",
+   "evidence_refs": [
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-g_6b039c38.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-g_d4c7fad4.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/ledger_t0_gold.jsonl"
+   ],
+   "by": "Claude（B 线，T0 实施验收）",
+   "previous": {
+    "status": "issue",
+    "note": "gold 14/15、reward 0；候选代码生效（导入 /testbed/coverage/__init__.py，目标键 ExecTest.test_unencodable_filename 在 gold 下翻成 PASSED）。gold≠1 完全来自 R06 的参考状态键，归因为材料（期望），不是环境。"
+   }
+  },
+  "R09": {
+   "status": "pass",
+   "note": "公开测试 tests/test_annotate.py 收集 4、运行 rc 0（xdist）；公开复现 REPRO_OBSERVED=1（变体 B）。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/dev_probe.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae.py"
+   ],
+   "by": "p1-subagent"
+  },
+  "R10": {
+   "status": "pass",
+   "note": "NET_CONNECT_RC=1、NET_DNS_RC=2（无出网）；R06 无\"需网络\"的键。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/dev_probe.json"
+   ],
+   "by": "p1-subagent"
+  },
+  "R11": {
+   "status": "pass",
+   "note": "期望 FAILED 键与外部服务无关（来源侧是子进程缺 mock）。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl"
+   ],
+   "by": "p1-subagent"
+  },
+  "R12": {
+   "status": "pass",
+   "note": "峰值 291 MB / 限额 4 GiB = 0.071; setup 16s test 2s；探针 chown -R /testbed 21.88 s（与其它包并发，不作校准）；/tmp tmpfs 1 GiB 够用（本题无大临时文件）。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-c_2c95f1f9.diagnostics.json",
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/dev_probe.json"
+   ],
+   "by": "collate_facts.py + p1-subagent"
+  },
+  "R13": {
+   "status": "pass",
+   "note": "修订后同条件（覆盖表镜像 565a8f36…、期限 1800/1800）noop 两次都是 14/15 且只差目标键，gold 两次都是 15/15；reward 与差异集合一致。修订前 R-f 两轮也一致（旧引用保留）。",
+   "evidence_refs": [
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-n_9c775b7c.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-n_5af6d11f.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-g_6b039c38.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-g_d4c7fad4.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-reps-noop-_caf77d3d.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-c_493fab23.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-reps-gold-_a5b7bb15.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-c_2c95f1f9.eval.log"
+   ],
+   "by": "Claude（B 线，T0 实施验收）",
+   "previous": {
+    "status": "pass",
+    "note": "noop：noop 同条件 2 次 reward 与差异集合一致；gold：gold 同条件 2 次 reward 与差异集合一致。"
+   }
+  },
+  "R14": {
+   "status": "pass",
+   "note": "每次评分都是 fresh 容器（cleanup_removed=true）；coveragepy 镜像基线自带 /testbed/coverage/__pycache__（33 个文件，镜像构建时 install.sh 的 import coverage 留下），census 按 baseline_policy_r2e_v1 剪除，R-f 账本 omitted_cache_count 基线 / 后置都是 1 目录 33 文件、前后不变；字面上不是 0，但不来自候选、不影响评分。探针前后 git status 行数 2 → 2；探针容器已删除（container_removed=true）。并发只记录：本轮 4 包与中央复跑并行。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/dev_probe.json",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-c_493fab23.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-c_2c95f1f9.eval.log"
+   ],
+   "by": "p1-subagent"
+  },
+  "R15": {
+   "status": "pass",
+   "note": "修订后 4 行（noop ×2 / gold ×2）与 M3 逐键一致（reward、差异集合、观测映射都相同；两侧都按修订后期望重算）。M3 账本自报 gold 0 是按来源期望算的：对账工具 09-24 改为用倒放出的来源期望互核 M3 账本，gold 两行结果自洽（reference_ledger_consistent=True；noop 行 M3 账本没有 reward，记 None）。09-09 runner 没跑这题。",
+   "evidence_refs": [
+    "runs/r2e_t0_revisions_20260924/reconcile/reconcile.json",
+    "runs/r2e_t0_revisions_20260924/reconcile/reconcile.md"
+   ],
+   "by": "Claude（B 线，T0 实施验收）",
+   "previous": {
+    "status": "pass",
+    "note": "2 行 agree（reward、差异集合、观测映射逐键相同）；参考日志数 noop 2 / gold 2。更正：09-09 runner 没跑这题（只覆盖 coveragepy ea6906b0 / f5eb5f21 与 aiohttp 22a12cc2 / 61833518），独立参考只有 M3（noop_x2 两份、gold_ledger a1/a2）。"
+   }
+  },
+  "R16": {
+   "status": "pass",
+   "note": "修订后 noop 只差目标键 ExecTest.test_unencodable_filename（UnicodeEncodeError … surrogates not allowed，对应题面），gold 全部符合；修订前多出的参考状态键已由 r2e-mr-001 消除。",
+   "evidence_refs": [
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-n_9c775b7c.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-n_5af6d11f.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-g_6b039c38.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-g_d4c7fad4.eval.log"
+   ],
+   "by": "Claude（B 线，T0 实施验收）",
+   "previous": {
+    "status": "issue",
+    "note": "目标键 ExecTest.test_unencodable_filename（noop：UnicodeEncodeError … surrogates not allowed）↔ 题面；gold 仍不符的键 MockingProtectionTest.test_os_path_exists 单列，归因为参考状态（见 R06 与材料修订提案）。"
+   }
+  },
+  "R17": {
+   "status": "pass",
+   "note": "探针：HEAD 子提交词数 1（只有自身）、remote 空、refs 0、reflog 0、stash 0、无 *.orig/*.rej/*.patch/*.diff 残留；派生镜像 fix_present=no。脏树 2 行：`?? install.sh`（uv venv / pip install -e . / igor.py zip_mods 的构建脚本；函数名里的 3.9 / 3.7 与实际版本对不上，但无修复内容）、`?? run_tests.sh`。无修复痕迹（gold 改 coverage/inorout.py）。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/dev_probe.json",
+    "runs/r2e_rf_20260923/remote/r2e_derived/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/facts.json"
+   ],
+   "by": "p1-subagent"
+  },
+  "R18": {
+   "status": "pass",
+   "note": "按用户 09-24 批准的 T0-1 方案 A 实施为封板修订单 r2e-mr-001（t1_input_pins_r2e_v2；ingest 从来源原文重放、前后摘要核对；评分面 material_revisions=['r2e-mr-001']）。不改环境、不改镜像。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v1.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/t1_input_pins_r2e_v2.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/decisions.md"
+   ],
+   "by": "Claude（B 线，T0 实施验收）",
+   "previous": {
+    "status": "pass",
+    "note": "只出材料修订提案（T0，expected 单键 FAILED → PASSED 的修订版），不改环境、不改 s2_r2e。"
+   }
+  },
+  "R19": {
+   "status": "pass",
+   "note": "结论都有命令与证据路径：探针命令 /work/code/rh2/.venv/bin/python /work/code/rh2/scripts/r2e_env/run_dev_probe.py --repo-root /work/code --overlays /work/r2e_derived/overlays.jsonl --task-ids <P1 十题> --out-dir /work/envrepair/p1/dev_probe --repro-dir /work/envrepair/p1/repros --activation none（systemd unit r2e-p1-probe-1828）；R-f 账本 run_id r2e-rf-all-gold, r2e-rf-all-noop, r2e-rf-reps-gold, r2e-rf-reps-noop。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/dev_probe.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae.py",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/facts.json"
+   ],
+   "by": "p1-subagent"
+  },
+  "R20": {
+   "status": "pass",
+   "note": "提案只适用于本题；\"来源期望取自宿主机检出而非发布镜像\"是题池级风险，建议作为扩充 R2E 时的自动比对项（只标候选、逐键人工归因）。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/dev_probe.json"
+   ],
+   "by": "p1-subagent"
+  }
+ },
+ "issues": [
+  {
+   "category": "reference",
+   "scope": "task",
+   "summary": "期望 MockingProtectionTest.test_os_path_exists=FAILED 来自宿主机检出的执行（子进程缺 mock），发布镜像里 13/13 PASSED → gold 14/15、reward 0。",
+   "proposed_action": "材料修订提案：该题 expected_v1 把该键改为 PASSED（方案 A）；备选 B（移出评分，需改隐藏测试或 grader）/ C（隔离）。T0，用户决定。",
+   "status": "verified",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-c_2c95f1f9.eval.log",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl",
+    "runs/env_overnight_20260916/M3/facts/016af5f6352d/facts/pip_freeze.txt",
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v1.json",
+    "runs/r2e_t0_revisions_20260924/reconcile/reconcile.json",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-g_6b039c38.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-g_d4c7fad4.eval.log"
+   ],
+   "resolution": "用户 09-24 批准方案 A；实施为 r2e-mr-001（期望该键 FAILED→PASSED）。A 线机器真实 grader noop 0（14/15）×2、gold 1（15/15）×2；与 M3 逐键一致。"
+  }
+ ],
+ "solver_conditions": {
+  "cwd_required": "不要求（editable finder，/tmp 下也能导入 /testbed/coverage）",
+  "interpreter": "/testbed/.venv/bin/python（PATH 首项，镜像 ENV；3.7.9）",
+  "pip": "present（pip 19.3.1, pip check ok）",
+  "network": "none（NET_CONNECT_RC≠0、DNS 失败）；--network none 仍保留回环接口（aiohttp 22a12cc2 事后诊断实测 127.0.0.1 可起 TLS 服务与代理，其它题未单独测）",
+  "public_tests": "tests/test_annotate.py：collect 4 / run rc 0（xdist）",
+  "repro": "REPRO_RC=0；REPRO_OBSERVED=1 (UnicodeEncodeError on save in variant(s) ['B'])",
+  "notes": "coverage 以 editable finder 安装，/testbed 外也能导入；gcc / make / git / pip 有，uv 无；无出网。setup.cfg 带 --failed-first 与 -n（xdist），自带 pytest cache 要可写（探针指到 /tmp）。"
+ },
+ "classification": "material",
+ "revision_refs": [
+  "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v1.json#r2e-mr-001",
+  "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae.md"
+ ],
+ "disposition": {
+  "state": "qualified_with_revision",
+  "scope": "材料 material_revisions_v1（r2e-mr-001）+ r2e_derive_v1 + 默认 rollout profile",
+  "reason": "唯一的材料问题（参考状态键）已按用户批准的修订解决；修订后真实评分 noop 0 / gold 1 各两次一致，与 M3 逐键一致；探针十项最小条件满足，无未完成项。",
+  "pending_checks": [],
+  "evidence_refs": [
+   "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v1.json",
+   "runs/r2e_t0_revisions_20260924/reconcile/reconcile.json",
+   "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-n_9c775b7c.eval.log",
+   "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-n_5af6d11f.eval.log",
+   "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-g_6b039c38.eval.log",
+   "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-g_d4c7fad4.eval.log"
+  ],
+  "decided_by": "用户 09-24 批准 T0-1 方案 A；Claude 实施与验证",
+  "previous_state": "held_material",
+  "reviewer": null
+ },
+ "costs": {
+  "probe_seconds": 30.67,
+  "probe_runs": 1,
+  "rerun_attempts": 0,
+  "rerun_seconds": 0
+ },
+ "reviewed_by": "p1-subagent",
+ "reviewed_at_utc": "2026-09-23T18:50Z",
+ "order_note": "E06 先后：先读 facts.json（含期望键名与 gold 触碰路径）与公开题面、公开工作区源码，写好 repros/<iid>.py 后才读隐藏测试源码、gold 日志与来源执行记录。",
+ "review_notes": [
+  {
+   "by": "Claude（B 线，T0 实施验收）",
+   "at": "2026-09-24",
+   "change": "disposition held_material → qualified_with_revision：r2e-mr-001 已实施并用真实 grader 验证（noop 0 ×2 / gold 1 ×2，对账 4/4 一致）；R01/R02/R06/R08/R13/R15/R16/R18 按修订后证据更新，旧值留在各项 previous"
+  }
+ ]
+}

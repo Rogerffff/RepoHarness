@@ -1,0 +1,69 @@
+{
+ "task_id": "Project-MONAI__MONAI-3690",
+ "source": "SWE-Gym lite / Project-MONAI/MONAI PR 3690 (created_at 2022-01-20)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "50c201c17e526a34240f20ca4512763baf9c94d0",
+  "version": "0.8", "python_version": "3.8",
+  "eval_cmd": "pytest -rA ", "actual_test_cmd": "pytest -rA  tests/min_tests.py tests/test_prepare_batch_default.py tests/test_prepare_batch_default_dist.py",
+  "f2p": ["tests/test_prepare_batch_default.py::TestPrepareBatchDefault::test_empty_data", "tests/test_prepare_batch_default_dist.py::DistributedPrepareBatchDefault::test_compute_1"],
+  "p2p": ["tests/test_prepare_batch_default.py::TestPrepareBatchDefault::test_content", "tests/test_prepare_batch_default_dist.py::DistributedPrepareBatchDefault::test_compute_0"],
+  "test_patch_paths": ["tests/min_tests.py", "tests/test_prepare_batch_default.py", "tests/test_prepare_batch_default_dist.py（new file mode）"],
+  "gold_paths": ["monai/engines/workflow.py"],
+  "stage1": "gold=RESOLVED_FULL（4/4 PASSED，19.06s）/ empty=RESOLVED_NO（2 PASSED + 2 FAILED，失败集合等于 F2P），rc_install=0"
+ },
+ "public_view": {
+  "goal": "题面 504 字符：验证集为空（没有样本）时希望跳过 evaluator，不要报错，以便只用少量样本做 (re)training。",
+  "constraints": ["纯 feature request，无报错、无复现代码、无文件指向", "题面说的是『skip the evaluator』，没说要发警告，也没说 epoch_length=0 这个具体判据"],
+  "unknowns_from_public_only": [
+   "判空的依据是 `len(data_loader)==0` 还是 `state.epoch_length == 0`？gold 选后者",
+   "跳过时要不要发 warning？gold 发了（且警告里点明了分布式下 all-gather 可能 hang），题面没要求",
+   "分布式下部分 rank 有数据、部分没有的情形，题面完全没提，但 F2P 的 test_compute_1 正是这种情形"
+  ],
+  "base_code_evidence": [
+   "50c201c17:monai/engines/workflow.py Workflow.run() 直接 `super().run(data=self.data_loader, max_epochs=...)`，空 dataloader 会走进 ignite 的迭代逻辑并报错",
+   "50c201c17:tests/utils.py DistCall.__init__ 的 `self.master_port = np.random.randint(10000, 20000)`（无重试）、`backend = 'gloo'`（无 CUDA 时）"
+  ]
+ },
+ "checks": {
+  "1": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["test_patch 含 `new file mode` 的 tests/test_prepare_batch_default_dist.py", "test_patch 还改 tests/min_tests.py（把新文件加进 exclude_cases 列表）"], "note": "材料对应正常，但有两个形状问题：(a) 新建测试文件 → 命中恢复机制的缺口（见检查 17）；(b) tests/min_tests.py 是测试**清单**文件而不是用例文件，却被当作 pytest 目标传入（eval.sh 的测试命令里有它），实跑 `collected 4 items` 说明它没贡献用例，只是被 import 一次。无二进制/LFS/子模块。", "by": "L1_monai_1"},
+  "2": {"status": "pass", "evidence_refs": ["50c201c17:monai/engines/workflow.py run()", "stage1 empty 侧 2 条 F2P FAILED"], "note": "base 确实无法处理空 dataloader。", "by": "L1_monai_1"},
+  "3": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["problem_statement 504 字符全文", "raw hints_text 为空"], "note": "信息少：无报错、无复现、无文件指向。无外链/图片/截断。定位难度主要来自题面。", "by": "L1_monai_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 三个路径全在 tests/ 下"], "note": "tests/min_tests.py 是测试基础设施而非产品源码，被恢复覆盖是正确的。gold 只碰 monai/engines/workflow.py，无交集。additional_exclusions 保持空。", "by": "L1_monai_1"},
+  "17": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["tests/test_prepare_batch_default_dist.py 在 base 不存在（test_patch 是 new file mode）", "rh2/src/repoharness2/adapters/slime/prepared_task_face.py:199-210：base 不存在的 official test 路径跳过恢复", "rh2/src/repoharness2/adapters/slime/sandbox_profile.py:1289 apply 失败即 exit 3"], "note": "**与 MONAI-2454 同型的恢复缺口**：若候选在 tests/test_prepare_batch_default_dist.py 这个路径上写了自己的文件，恢复步骤不会删它，随后 official test_patch 的 `new file mode` hunk 就 apply 失败，整题按 official_test_patch_apply_failed 判 0。216 题里这种形状共 8 道（见 runs/env_overnight_20260916/L1_monai_1/newfile_scan.txt），本包占 2 道。", "by": "L1_monai_1"},
+  "5": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["runs/env_overnight_20260916/L1_monai_1/dupidx.txt：tests/test_prepare_batch_default.py 同时被 Project-MONAI__MONAI-3690 与 Project-MONAI__MONAI-3715 触碰", "3715 的 base（2022-01-26）晚于本题（2022-01-20），且 3715 的 P2P 就是本题新增的 test_empty_data"], "note": "**与 MONAI-3715 是紧邻的一对**：3715 的 base 已含本题的 gold 与本题新增的用例。两题同在本包内。训练/评测划分必须同侧，否则会出现『评测题的答案在训练题的 base 里』。不是重复题（gold 改的文件不同：workflow.py vs evaluator.py）。", "by": "L1_monai_1"},
+  "23": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["题面只说『验证集为空时跳过 evaluator』", "F2P 的 test_compute_1 是分布式场景：rank0 有 5 个样本、rank1 有 0 个"], "note": "分布式那一半要求在题面里没有任何依据。好在实现上是同一个判据（epoch_length==0 就 return），做对单机就自然做对分布式，所以这个缺口不会误伤。", "by": "L1_monai_1"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 只要求 `evaluator.run()` 不抛异常（test_empty_data 没有断言）"], "note": "不强制唯一实现：按 `len(self.data_loader)==0` 或按 `state.epoch_length==0` 提前返回都能过。", "by": "L1_monai_1"},
+  "25": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["F2P 的 test_empty_data 只调用 `evaluator.run()`，**没有任何断言**", "P2P 的 test_content / test_compute_0 断言非空数据下 output 正确"], "note": "F2P 本身是纯『不抛异常』断言。好在 P2P 的两条挡住了『run() 直接 return』这种最粗暴的假修复（非空数据必须照跑）。真正漏掉的是：gold 的 warning 内容、以及『跳过后 state 应保持什么样』都无覆盖。整体强度尚可，但靠的是 P2P 而不是 F2P。", "by": "L1_monai_1"},
+  "26": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["P2P 只有 2 条"], "note": "Workflow.run 是所有 trainer/evaluator 的公共入口，只有 2 条回归偏少。见 proposed_regression_tests。", "by": "L1_monai_1"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 只在 Workflow.run 开头加 7 行"], "note": "改动最小、精确对应、不依赖未交付改动。瑕疵：warning 文本里有拼写错误 `is emply or`（应为 empty）——若将来有测试逐字比对这句话会踩坑，目前没有。", "by": "L1_monai_1"},
+  "29": {"status": "pass", "evidence_refs": ["题面无链接、无代码；hints_text 为空"], "note": "无泄漏。", "by": "L1_monai_1"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 rc_install=0"], "note": "安装离线可完成。", "by": "L1_monai_1"},
+  "7": {"status": "pass", "evidence_refs": ["测试用内存 tensor 构造，不读盘不下载"], "note": "无外部资产。", "by": "L1_monai_1"},
+  "11": {"status": "pass", "evidence_refs": ["stage1 离线 4/4 通过"], "note": "**不需要外网**，但需要本机回环网络（见检查 10）。", "by": "L1_monai_1"},
+  "10": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["tests/test_prepare_batch_default_dist.py 用 `@DistCall(nnodes=1, nproc_per_node=2, node_rank=0)`，F2P 与 P2P 各占其中一条", "50c201c17:tests/utils.py DistCall：`master_port = np.random.randint(10000, 20000)`（无冲突重试）、`backend='gloo'`、用 multiprocessing 起 2 个进程", "stage1 整题 19.06s，其中大头是两次 2 进程的 dist 启动"], "note": "**F2P 一半依赖 torch.distributed 多进程**：需要能起 2 个进程、能绑定回环端口、gloo 可用。两个风险：(a) `master_port` 是 numpy 随机数且**不重试**，如果同一进程里先跑过 `set_determinism`（MONAI 测试常做）会让端口变成可复现的固定值，重复冲突就会稳定复现；(b) 同机并发多个评分容器时若共享网络命名空间会撞端口。当前在独立容器里跑通了一次，但只有一次样本。", "by": "L1_monai_1"},
+  "20": {"status": "pass", "evidence_refs": ["gold 4/4 PASSED、empty 2 PASSED + 2 FAILED，失败集合恰好等于 F2P"], "note": "分差干净、无噪声失败。", "by": "L1_monai_1"}
+ },
+ "issues": [
+  {"category": "harness_restore_gap", "severity": "P1",
+   "evidence_refs": ["test_patch 的 new file mode", "prepared_task_face.py:199-210", "sandbox_profile.py:1289"],
+   "proposed_action": "与 MONAI-2454 同一条：恢复步骤应对『base 不存在但 official test_patch 要新建』的路径显式 `rm -f` 再 apply。本题的路径 tests/test_prepare_batch_default_dist.py 名字很具体，候选自发撞名的概率低于 2454 的 tests/test_to_tensor.py，但机制缺口相同。",
+   "next_experiment": "见 MONAI-2454 记录的同名实验，一次验证覆盖 8 道题。"},
+  {"category": "multiprocess_dependency", "severity": "P2",
+   "evidence_refs": ["DistCall(nproc_per_node=2)；F2P 的 test_compute_1 就是分布式那条", "tests/utils.py 的随机 master_port 无重试"],
+   "proposed_action": "本题是本包唯一一道 **F2P 依赖 torch.distributed 多进程** 的题。上训练机前需要确认：评分容器允许起子进程、回环端口可用、gloo 已编译。建议同时给 DistCall 的端口加冲突重试（这属于改上游测试工具，不是改题，需用户拍板）。",
+   "next_experiment": "同机并发 6 个评分容器各跑本题 10 次，统计 test_compute_0/1 的失败率与端口冲突次数。"},
+  {"category": "cross_task_adjacency", "severity": "P2",
+   "evidence_refs": ["dupidx.txt：3690 与 3715 共用 tests/test_prepare_batch_default.py；3715 的 P2P = 3690 新增的 test_empty_data"],
+   "proposed_action": "3690 与 3715 必须划在数据集的同一侧。更一般地，MONAI 26 题里共用测试文件的还有 5932/6756、4676/6523、763/907、5686/5908 四对，建议统一按『共用 test 文件或 gold 文件』做连通分量再划分。",
+   "next_experiment": "无需实验；用 dupidx.txt 直接生成连通分量清单。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 三个路径全在 tests/ 下（含清单文件 tests/min_tests.py），gold 只碰 monai/engines/workflow.py，无交集。风险在恢复机制而不是排除规则。", "evidence_refs": ["grading_bundles_v2_v0:Project-MONAI__MONAI-3690 test_patch", "validation_bundles_v0:Project-MONAI__MONAI-3690 golden_patch"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_integration_workflows.py（该版本存在时）", "reason": "Workflow.run 是所有 trainer/evaluator 的公共入口，需要一条真跑训练循环的回归。"},
+  {"id": "新增：epoch_length>0 但 dataloader 为空 / epoch_length=0 但 dataloader 非空 两种错配", "reason": "gold 只看 epoch_length，这两种错配下的行为当前无定义也无覆盖。"},
+  {"id": "新增：跳过时确实发出了 warning", "reason": "gold 的唯一用户可见行为（除了不报错），当前无断言；顺便能发现 `emply` 拼写错误。"}
+ ],
+ "disposition_hint": {"state": "needs_review", "reason": "题目本身干净（离线、分差精确、F2P/P2P 搭配合理），但有两个流程性事项要先定：新建测试文件的恢复缺口（P1，与 2454 共用一个修法）、F2P 一半依赖 2 进程 torch.distributed（P2，需要在真实训练机上验证稳定性）。另外与 3715 必须同侧。"},
+ "costs": {"minutes": 23}
+}

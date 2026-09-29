@@ -1,0 +1,38 @@
+{
+  "report": "pack11_report.md",
+  "tasks": {
+    "dask__dask-7894": {
+      "classification": "quality_first",
+      "card_replacements": [
+        ["均unknown，reviewer未读。", "均unknown；主审出稿时未读reviewer，独立交叉复核现已完成。"],
+        ["new_axis是邻近未验边界，无已证gold新增回归；", "独立review给出drop_axis=0/new_axis=0的具体映射回归疑点，尚无base/gold运行证明；"],
+        ["任务二在私有CPU副本对base/gold/depth-only候选做原选择＋确定性混合none边界例，核值、shape、chunks，验证是否实际漏接收不完整修复。", "任务二在私有CPU副本先做review的drop_axis=0/new_axis=0最小base/gold对照，核值、shape、chunks及异常，判断是否新增用户结果回归。"]
+      ],
+      "card_append": "协调裁定：quality_first，ready_for_probe=false。采用review更具体的轴映射疑点作为唯一优先项：先删原轴0再插入输出轴0时，原轴1仍在输出1，gold却把它的depth移到输出0。源码差异已核，运行后果未知，26/27继续unknown。boundary=none漏测仍成立，但暂不另排depth-only候选实验；优先级分歧与原主审建议保留在封存稿/review。",
+      "checks": {
+        "26": {"status": "unknown", "note": "具体静态风险：ones((5,10),chunks=(5,5))配合mean(0)[None,:]、depth=(0,1)、reflect、drop_axis=0/new_axis=0，base字典与输出轴对应，gold改为{0:1}后裁新轴。实际base成功/gold错误尚未运行。kwargs.pop外部字典副作用说法已纠正。"},
+        "40": {"status": "unknown", "note": "独立交叉复核及协调裁定已完成；封存/来源校验不证明无漏检、误拒或抽样偏差，不构成全局质量认证。"}
+      },
+      "issue_updates": {
+        "boundary_uncertainty": {"scope": "具体drop_axis/new_axis轴映射风险；迭代器drop交互仍未验证", "proposed_action": "唯一优先私有base/gold对照review的drop0/new0例，记录lazy shape/chunks、实际数组或异常及RC；26暂unknown。", "status": "open_static_inference", "evidence_level": "static mapping and slicing divergence confirmed; runtime consequence unknown"}
+      },
+      "record_overrides": [
+        [["issues", 0, "proposed_action"], "保留boundary=none的静态漏测结论；若优先new_axis对照未支持新增回归，再决定是否做depth-only漏接收验证，不新增第二项当前CPU排程。"],
+        [["issues", 1, "proposed_action"], "在唯一new_axis对照中同时保存lazy shape/chunks与实际数组；不要求相同内部图布局。"]
+      ],
+      "disposition": {"reason": "核心drop修复有静态/历史正证据，但drop+new_axis有具体未运行gold风险，boundary漏测另保留。", "unique_priority_next_step": "任务二私有base/gold的drop_axis=0/new_axis=0例，比较源码来源、lazy shape/chunks、实际数组或异常及RC。", "reviewer_disagreement": "resolved by coordinator priority choice: review's concrete drop+new_axis regression diagnostic first; main's boundary false-acceptance proposal retained but not separately queued"},
+      "changes": ["附独立review SHA及协调暴露，归档main原card/record", "采用有具体源码路径的new_axis诊断优先项，保留主审boundary漏测和排序分歧", "26/27维持unknown，不把静态映射差异写成实测用户回归", "更新reviewer状态和40边界，未改封存稿或追加第二项CPU"]
+    },
+    "dask__dask-9212": {
+      "classification": "quality_first",
+      "card_replacements": [["unknown，reviewer未读。", "unknown；主审出稿时未读reviewer，独立交叉复核现已完成。"]],
+      "card_append": "协调裁定：quality_first，ready_for_probe=false。不同module的同名枚举得到相同规范化表示是静态可证事实；同一个pure delayed函数的联合compute是否给出错误结果未运行，26/27保持unknown。独立review采用该具体私有对照，替代其初判的泛actor核验优先项。题面自带修法属计划公开材料，不冒称actual actor消息或私有泄露。",
+      "checks": {
+        "25": {"status": "issue", "note": "四种枚举类型分别只构造一个Color及RED=1/BLUE=2，缺跨类型同短名成员比较；复杂值/strict/hook范围也未穷尽。两个int子类P2P不证明gold Enum handler覆盖它们或保留精确旧token字节。"},
+        "40": {"status": "unknown", "note": "独立交叉复核及协调裁定已完成；封存/来源校验不证明无漏检、误拒或抽样偏差，不构成全局质量认证。"}
+      },
+      "disposition": {"reason": "同名不同module枚举的表示碰撞有具体任务图后果假说；优先同函数pure delayed的私有base/gold对照。核心历史正证据与actual actor未知保留。", "reviewer_disagreement": "resolved in review: reviewer adopts main's concrete same-function pure-delayed comparison over initial generic actor-first action"},
+      "changes": ["附独立review SHA及协调暴露，归档main原card/record", "26/27保持unknown，区分已证表示碰撞与未运行用户结果", "细化四参数覆盖说明，更新reviewer/40状态", "保留唯一私有pure delayed对照，无额外全仓或模型门"]
+    }
+  }
+}

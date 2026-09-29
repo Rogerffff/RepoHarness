@@ -1,0 +1,47 @@
+{
+ "task_id": "getmoto__moto-6387",
+ "source": "SWE-Gym lite (swe_gym_lite_full_f70b1a29)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "s2/ingest/public_bundles_v0.jsonl#getmoto__moto-6387",
+  "grading": "s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-6387",
+  "validation": "s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-6387",
+  "base_commit": "7b4cd492ffa6768dfbd733b3ca5f55548d308d00",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-6387/gold/offline/a1/"
+ },
+ "public_view": {
+  "goal": "CloudFront create_invalidation 只传一个 Path 时，响应把字符串按字符切开：Items=['/','p','a','t','h','1']、Quantity=6。要求返回 Items=['/path1']、Quantity=1。",
+  "constraints": ["多个 Path 的既有行为必须不变"],
+  "unknowns_from_public_only": ["几乎没有：题面已经点名 xmltodict 单元素返回字符串、CloudFrontResponse 类、CREATE_INVALIDATION_TEMPLATE 里的 Jinja for 循环，等于给了定位和根因"]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 只碰 tests/test_cloudfront/test_cloudfront_invalidation.py（base 已存在，含 test_create_invalidation）", "golden_patch 只碰 moto/cloudfront/responses.py:17"], "note": "无二进制/LFS/子模块。test_patch 同时把 base 的 test_create_invalidation 改名为 test_create_invalidation_with_multiple_paths（该新名字出现在 P2P 里）。", "by": "L1_moto_3"},
+  "2": {"status": "pass", "evidence_refs": ["base moto/cloudfront/responses.py:16-17 `xmltodict.parse(self.body, dict_constructor=dict)` 无 force_list", "base responses.py:109 `paths = ((params.get('Paths') or {}).get('Items') or {}).get('Path') or []`", "base responses.py:613-615 模板 `{{ invalidation.paths|length }}` 与 `{% for path in invalidation.paths %}`"], "note": "单个 <Path> 时 xmltodict 返回 str，len(str) 与 for-in-str 正好产生题面所述的 6 与逐字符列表。base 确有缺陷。", "by": "L1_moto_3"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 1811 字符，无外链/图片/截断", "hints_text 为空字符串"], "note": "hints 为空，题面自足且信息量大（见 29）。", "by": "L1_moto_3"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 触碰路径全集：tests/test_cloudfront/test_cloudfront_invalidation.py"], "note": "无非测试源码路径；gold 触碰 moto/cloudfront/responses.py，非测试样路径。", "by": "L1_moto_3"},
+  "17": {"status": "pass", "evidence_refs": ["同 4"], "note": "additional_exclusions 空。", "by": "L1_moto_3"},
+  "5": {"status": "pass", "evidence_refs": ["全局索引：同测试文件 + 同 gold 文件的另一题是 getmoto__moto-5699（不在本包）"], "note": "需要另一包在审查 5699 时交叉确认二者是否同一 PR；本题 gold 只改 _get_xml_body 一行，未见重叠。", "by": "L1_moto_3"},
+  "23": {"status": "pass", "evidence_refs": ["F2P 断言 InvalidationBatch == {'Paths': {'Quantity': 1, 'Items': ['/path1']}, 'CallerReference': 'ref2'}", "题面 'What I expected to happen' 就是这个形状"], "note": "要求充分且一致。", "by": "L1_moto_3"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 只做黑盒断言"], "note": "替代实现可过：在 create_invalidation 里 `if isinstance(paths, str): paths = [paths]`，或在模板/模型层归一化。gold 的 force_list='Path' 只是其中一种。不强制唯一实现。", "by": "L1_moto_3"},
+  "25": {"status": "pass", "evidence_refs": ["F2P 单路径 + P2P test_create_invalidation_with_multiple_paths 双路径，两个方向都被钉住"], "note": "硬编码空间小。", "by": "L1_moto_3"},
+  "26": {"status": "issue", "evidence_refs": ["eval 只跑 tests/test_cloudfront/test_cloudfront_invalidation.py：collected 4 items = F2P 1 + P2P 3", "base moto/cloudfront/responses.py:43（create_distribution）、:92（update_distribution）、:108（create_invalidation）都调用 _get_xml_body", "同目录未被跑的测试：test_cloudfront_distributions.py、test_cloudfront_dist_tags.py、test_cloudfront.py、test_server.py"], "note": "**判分面过窄**：gold 改的是三处调用共用的 _get_xml_body，但判分只看 invalidation 这 4 个用例。解题者把 _get_xml_body 改成会破坏 distribution 解析的形式（例如 force_list 传成元组/通配、或改 dict_constructor），仍可得满分。", "by": "L1_moto_3"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 单行加 force_list='Path'"], "note": "无无关改动、不依赖其它改动。作用域是整个 CloudFront XML 解析，但仓库里 `Path` 标签只出现在 invalidation（grep 确认 moto/cloudfront 内只有 responses.py:109 与 :615 两处），因此实际副作用小。", "by": "L1_moto_3"},
+  "29": {"status": "issue", "evidence_refs": ["problem_statement 原文：'I found this to be a pitfall of the `xmltodict` module used in the `CloudFrontResponse` class. If there is only one `<Path>` tag nested, a string is returned.' 以及 '`{% for path in invalidation.paths %}<Path>{{ path }}</Path>{% endfor %}` - which can be found in the `CREATE_INVALIDATION_TEMPLATE`'"], "note": "题面本身把根因、出问题的类名、模板常量名和那行 Jinja 都写出来了。不是泄漏 gold 代码，但把定位成本降到近乎为零；配合单行修复，本题难度明显偏低。用于难度分层时应标记。", "by": "L1_moto_3"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold 4 passed"], "note": "纯 mock。", "by": "L1_moto_3"},
+  "7": {"status": "issue", "evidence_refs": ["本包共性 install rc=2"], "note": "见包级 issue。", "by": "L1_moto_3"},
+  "11": {"status": "pass", "evidence_refs": ["测试仅用 cloudfront_test_scaffolding 生成本地配置"], "note": "无外部服务。", "by": "L1_moto_3"}
+ },
+ "issues": [
+  {"category": "grading_scope_too_narrow", "severity": "P2", "evidence_refs": ["_get_xml_body 三处调用点 vs 仅跑 invalidation 一个测试文件"], "proposed_action": "把 tests/test_cloudfront/test_cloudfront_distributions.py 与 test_cloudfront_dist_tags.py 纳入本题的扩展回归（不改上游 P2P，作为 RH2 侧的附加校验）。", "next_experiment": "构造一个把 _get_xml_body 改成 `force_list=True`（对所有元素强制列表）的补丁，跑本题 F2P+P2P 确认满分，再跑 test_cloudfront_distributions.py 确认大面积失败——用来量化判分面窄的代价。"},
+  {"category": "difficulty_too_low", "severity": "P3", "evidence_refs": ["题面自带根因、类名、模板常量名；gold 为单行"], "proposed_action": "标记为低难度样本，用于难度分层，不作缺陷处理。", "next_experiment": "无。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只含测试文件；沿用默认空排除。", "evidence_refs": ["test_patch 路径全集 = tests/test_cloudfront/test_cloudfront_invalidation.py"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_cloudfront/test_cloudfront_distributions.py", "reason": "create_distribution 走同一个被改的 _get_xml_body（responses.py:43），是最大的未覆盖调用者。"},
+  {"id": "tests/test_cloudfront/test_cloudfront_dist_tags.py", "reason": "DistributionConfigWithTags 分支（responses.py:44-48）同样依赖 _get_xml_body 的解析形状。"},
+  {"id": "tests/test_cloudfront/test_cloudfront.py::（update_distribution 相关）", "reason": "responses.py:92 的第三个调用点。"},
+  {"id": "新增：Paths Quantity=0 / Items 缺失的 invalidation", "reason": "responses.py:109 的 `or []` 分支，单/多路径之外的第三种形状。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "材料、gold、文件边界都干净，要求与题面一致。两点需在纳入时标注：判分只覆盖 4 个用例而 gold 改的是共用解析函数（建议补回归）；题面已给根因，难度偏低。"},
+ "costs": {"minutes": 13}
+}

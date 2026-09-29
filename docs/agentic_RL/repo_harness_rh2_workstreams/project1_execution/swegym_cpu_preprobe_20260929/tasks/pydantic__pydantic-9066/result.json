@@ -1,0 +1,342 @@
+{
+  "instance_id": "pydantic__pydantic-9066",
+  "date": "2026-09-29",
+  "status": "cpu_complete_independently_reviewed_s1",
+  "run": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-9066/reserve6_v1_20260928T205304Z-4f3c46",
+  "quality": {
+    "severity": "S1",
+    "codes": [
+      "T2",
+      "G1"
+    ],
+    "basis": "v1 section4 step4: gold receives 1 but breaks documented standard dataclass + BaseModel/default-schema combination under default config",
+    "gold_is_proven_full_positive_control": false,
+    "task_proven_unsolvable": false,
+    "separate_degenerate_candidate_executed": false,
+    "strict_example_only": "IPv6 reference is a genuine non-original instance; not classified T2c"
+  },
+  "usage": {
+    "diagnosis": "yes",
+    "capability_comparison": "conditional",
+    "training": "no",
+    "holdout": "no",
+    "comparison_conditions": "Common task set/budget/valid denominator and actual public task delivery must be verified; preregister uniform public semantic controls for all reward1 candidates, keep raw reward separate; gold compatibility failure must be disclosed and a semantically valid positive control independently established before repaired-task claims",
+    "reason": "S1 remains; private controls do not implement formal D6 repair"
+  },
+  "actor_private_audit": "actual_partial.json",
+  "formal": {
+    "noop": {
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 0,
+        "f2p_total": 2,
+        "failure_category": "tests_failed",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": 0,
+        "p2p_total": 367,
+        "report_id": "rpt_grading_f3acc0f4",
+        "reward": 0.0
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 4.927,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 7.15
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 7.15,
+        "segment_completed": true
+      },
+      "phases": {
+        "delta_apply": 0.178056,
+        "grader_baseline_rebuild": 0.472635,
+        "grader_cleanup": 1.45686,
+        "grader_start_and_verify": 1.654742,
+        "grader_trusted_setup": 296.098764,
+        "parser_and_report": 1.754639,
+        "test": 13.540441
+      },
+      "resource": {
+        "mem_peak_mb": 824.445,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "resource_facts": null,
+      "observations": {
+        "RH2_OBS_CPU29_CORE": "2.16.3",
+        "RH2_OBS_IMPORT_PATH": "/testbed/pydantic/__init__.py",
+        "RH2_OBS_INSTALL_PROBE": "absent",
+        "RH2_OBS_INSTALL_PROBE_PRE": "absent",
+        "RH2_OBS_PKG_VERSION": "2.7.0a1",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "d5eb18bb38fd14ad32a6fa0b27231b03753e9c31921a29f55abea680d363d809",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "d5eb18bb38fd14ad32a6fa0b27231b03753e9c31921a29f55abea680d363d809"
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "raw_counts": {
+        "PASSED": 380,
+        "SKIPPED": 1,
+        "XFAIL": 1,
+        "FAILED": 2
+      },
+      "actual_source": [],
+      "manager_close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "supply_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0,
+        "containers_created_total": 1,
+        "containers_removed_total": 1,
+        "container_history_retained": 1,
+        "leases_total": 1
+      },
+      "log_sha256": "794ebc8b28fa8d459949d39ef5a0da55eaa0af58f0a2ffac4ab1d0d601531b31"
+    },
+    "gold": {
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 2,
+        "f2p_total": 2,
+        "failure_category": null,
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "resolved",
+        "p2p_fail": 0,
+        "p2p_total": 367,
+        "report_id": "rpt_grading_3752b8f3",
+        "reward": 1.0
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 4.62,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 6.218
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 6.218,
+        "segment_completed": true
+      },
+      "phases": {
+        "delta_apply": 0.36507,
+        "grader_baseline_rebuild": 0.445291,
+        "grader_cleanup": 1.547633,
+        "grader_start_and_verify": 1.701382,
+        "grader_trusted_setup": 300.853159,
+        "parser_and_report": 1.632834,
+        "test": 12.22018
+      },
+      "resource": {
+        "mem_peak_mb": 811.203,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "resource_facts": null,
+      "observations": {
+        "RH2_OBS_CPU29_CORE": "2.16.3",
+        "RH2_OBS_IMPORT_PATH": "/testbed/pydantic/__init__.py",
+        "RH2_OBS_INSTALL_PROBE": "absent",
+        "RH2_OBS_INSTALL_PROBE_PRE": "absent",
+        "RH2_OBS_PKG_VERSION": "2.7.0a1",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "d5eb18bb38fd14ad32a6fa0b27231b03753e9c31921a29f55abea680d363d809",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "d5eb18bb38fd14ad32a6fa0b27231b03753e9c31921a29f55abea680d363d809"
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "raw_counts": {
+        "PASSED": 382,
+        "SKIPPED": 1,
+        "XFAIL": 1
+      },
+      "actual_source": [
+        {
+          "path": "pydantic/json_schema.py",
+          "bytes": 103620,
+          "sha256": "1dcdfe4f2143ae0b089030c5bc98332f99fd0d686cffa23a9cbeb2ce51126c80",
+          "private_source_equal": true,
+          "base_plus_gold_verified_in_partial": true
+        }
+      ],
+      "manager_close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "supply_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0,
+        "containers_created_total": 1,
+        "containers_removed_total": 1,
+        "container_history_retained": 1,
+        "leases_total": 1
+      },
+      "log_sha256": "07e756f77d496ace55261bcf53762763955a54cb268099b9baa98ebcd3ecb506"
+    }
+  },
+  "images": {
+    "base": "sha256:5a05759a5549cc7d65c471fb5d57d8fc554485b6c178a389a1fd373111ff3f4d",
+    "grader": "sha256:53b96f8194676b2732552c3196debd32c02984797a90cb1cfe4a78fbd0c414f0",
+    "base_layers": 13,
+    "grader_layers": 14,
+    "original_layers_unchanged": true
+  },
+  "evidence_audit": "evidence_audit.json",
+  "acceptance": {
+    "owner_original_review": "complete",
+    "root_frozen_parser": "runs/swegym_cpu_preprobe_20260929/analysis/pyd9066_final_v1.json",
+    "root_frozen_parser_status": "complete_read_and_aligned",
+    "root_transport_sha": {
+      "status": "complete",
+      "manifest": "runs/swegym_cpu_preprobe_20260929/analysis/evidence_manifest_reserve_pyd_v1.json",
+      "joint_task_count": 2,
+      "files": 156,
+      "bytes": 1361362,
+      "mismatches": 0,
+      "scope": "two ended Pydantic runs, excludes wheel/image payloads; host MONAI tasks ongoing"
+    },
+    "independent_actor_private_review": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/reserve6_pydantic_behavior_review.md",
+    "independent_formal_final_card": {
+      "status": "complete",
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/reserve6_pydantic_final_review.md"
+    }
+  },
+  "remaining": [
+    "D6 formal input/test revision not implemented; needs separately versioned full-reference acceptance",
+    "Independently verify a repair/alternative positive control retaining the demonstrated public compatibility behavior; do not weaken assertions to save gold",
+    "Actual full public prompt/public_hints delivery and autonomous solver",
+    "GPU/model/budget/common denominator; cross-task relation and training/holdout split; actual solver difficulty/cost",
+    "Full pip-check and full-lifetime resource observations not covered"
+  ],
+  "sampled_resources": {
+    "source": "runs/swegym_cpu_preprobe_20260929/analysis/resource_reserve_pyd_v1.json",
+    "scope": "15-second samples matched only grading report suffix; preparation included; missing stays null; not full lifetime",
+    "rows": [
+      {
+        "task": "pydantic__pydantic-9066",
+        "ledger": "results/pydantic__pydantic-9066/reserve6_v1_20260928T205304Z-4f3c46/grade_gold/ledger.jsonl",
+        "report_id": "rpt_grading_3752b8f3",
+        "samples": 21,
+        "ledger_resource": {
+          "mem_peak_mb": 811.203,
+          "mem_peak_unavailable_or_zero": false
+        },
+        "ledger_resource_facts": null,
+        "limits": {
+          "Memory": 4294967296,
+          "NanoCpus": 2000000000,
+          "PidsLimit": 512,
+          "ShmSize": 67108864,
+          "Tmpfs": {
+            "/tmp": "size=1073741824,mode=1777,exec,nosuid,nodev"
+          }
+        },
+        "first": 1790629186.1058042,
+        "last": 1790629489.430354,
+        "max_sample_gap_seconds": 15.184086084365845,
+        "observed_memory_peak_bytes": 850608128,
+        "observed_pids_peak": 8,
+        "memory.events": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "pids.events": {
+          "max": 0
+        }
+      },
+      {
+        "task": "pydantic__pydantic-9066",
+        "ledger": "results/pydantic__pydantic-9066/reserve6_v1_20260928T205304Z-4f3c46/grade_noop/ledger.jsonl",
+        "report_id": "rpt_grading_f3acc0f4",
+        "samples": 21,
+        "ledger_resource": {
+          "mem_peak_mb": 824.445,
+          "mem_peak_unavailable_or_zero": false
+        },
+        "ledger_resource_facts": null,
+        "limits": {
+          "Memory": 4294967296,
+          "NanoCpus": 2000000000,
+          "PidsLimit": 512,
+          "ShmSize": 67108864,
+          "Tmpfs": {
+            "/tmp": "size=1073741824,mode=1777,exec,nosuid,nodev"
+          }
+        },
+        "first": 1790628852.3872683,
+        "last": 1790629155.7947407,
+        "max_sample_gap_seconds": 15.18381118774414,
+        "observed_memory_peak_bytes": 864493568,
+        "observed_pids_peak": 9,
+        "memory.events": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "pids.events": {
+          "max": 0
+        }
+      }
+    ]
+  }
+}

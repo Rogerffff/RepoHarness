@@ -1,0 +1,385 @@
+{
+ "schema_id": "rh2.r2e_screening_record.v1",
+ "task_id": "r2e_gym_subset::scrapy__cfed9b6659c90e0799361911b1d72ed127edf471",
+ "instance_id": "scrapy__cfed9b6659c90e0799361911b1d72ed127edf471",
+ "task_revision": "r2e_gym_subset_e8b9fcbc/material_revisions_v2:r2e-mr-003,r2e-mr-004,r2e-mr-005",
+ "source_adapter_ref": "s2_r2e ingest_manifest v3（t1_input_pins_r2e_v3 pin 5f6ed8d6…；manifest pin e8d305f0…；含 material_revisions_v2）",
+ "recipe_ref": {
+  "derived_image": "r2e_derive_v1+material_v2",
+  "resources": "default"
+ },
+ "code_snapshot_ref": "runs/r2e_snapshot_20260923.sha256 (388 files) + r2e_env_tools.sha256（远端 run_dev_probe.py / dev_probe_agent.sh sha 与本地一致）",
+ "facts_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/facts.json",
+ "dev_probe_ref": "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/dev_probe.json",
+ "checks": {
+  "R01": {
+   "status": "pass",
+   "note": "修订后复核：09-24 晚在 A 线机器按 r2e_derive_v1+material_v2（recipe sha256:783e51d4…）重建；材料步骤新增 test.egg、替换 test_2.py（build.log：RH2_MATERIAL_ADDED=test.egg、APPLIED=test_2.py、TREE=aa727a50…），私有隐藏测试树与评分面一致；派生复核全部通过。",
+   "evidence_refs": [
+    "runs/r2e_t0_batch2_20260924/derived3/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/facts.json",
+    "runs/r2e_t0_batch2_20260924/derived3/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/build.log",
+    "runs/r2e_t0_batch2_20260924/derived3/results.json"
+   ],
+   "by": "Claude（B 线，批次二验收）",
+   "previous": {
+    "status": "pass",
+    "note": "派生镜像 21 项复核通过；覆盖表 / 隐藏测试树 / 入口脚本 / HEAD 与评分面一致；探针复核：容器镜像 = 派生镜像 sha256:a4c801146176…，GIT_HEAD = base_commit 54216d7afe9d"
+   }
+  },
+  "R02": {
+   "status": "pass",
+   "note": "修订后 noop 0 来自 2 个 mismatched 键（test_load_object、test_instances_from_settings），无 missing、无零解析；两次相同。",
+   "evidence_refs": [
+    "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_fbaff172.eval.log",
+    "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_89ea0834.eval.log"
+   ],
+   "by": "Claude（B 线，批次二验收）",
+   "previous": {
+    "status": "pass",
+    "note": "noop 0 来自 1 个 mismatched 键（无 missing、无零解析）（num_parsed_tests=9）"
+   }
+  },
+  "R03": {
+   "status": "pass",
+   "note": "题面 1279 字符；示例直接调用抽象基类 `MiddlewareManager.from_settings(dict)`，修复前后都是 NotImplementedError，不可直接运行；等价路径在 base 上复现题面错误：load_object(类 / 实例) → `AttributeError: … has no attribute 'rindex'`，DownloaderMiddlewareManager 以类作键 → `… no attribute 'startswith'`。conda 提示为全局 E09；install.sh 无修复内容。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/prepared_r2e/prompts.jsonl",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471.py",
+    "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p4/image_readout/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471.txt"
+   ],
+   "by": "P4 sub-agent"
+  },
+  "R04": {
+   "status": "pass",
+   "note": "hygiene test_files = r2e_tests/{__init__.py, test_1.py, test_2.py} + run_tests.sh（rh2/src/repoharness2/adapters/slime/r2e_grading_scripts.py 的 official 文件清单；日志 RH2_SETUP_EXPECTED_TEST_FILES=4）；gold 触碰 ['scrapy/middleware.py', 'scrapy/utils/misc.py']，都是库源码、与之不相交；解题不需要改 r2e_tests 以外的测试辅助文件。隐藏 test_2 以字符串路径 'tests.test_middleware.M1' 加载类，依赖公开模块 tests/test_middleware.py（不在 hygiene test_files 里）；求解者没有理由改它，改了也不会让这些键变绿（类对象身份不同）。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/facts.json",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_915fb3c8.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_915fb3c8.diagnostics.json",
+    "rh2/src/repoharness2/adapters/slime/r2e_grading_scripts.py"
+   ],
+   "by": "P4 sub-agent"
+  },
+  "R05": {
+   "status": "pass",
+   "note": "python → /testbed/.venv/bin/python 3.9.21 /testbed/.venv /opt/py/cpython-3.9.21-linux-x86_64-gnu（PATH 首项 /testbed/.venv/bin）；pytest 8.3.4；pip 缺失（PIP_VERSION=“/testbed/.venv/bin/python: No module named pip”，原始日志 WHICH_pip / pip3 / uv = MISSING；注意 dev_probe.json 的 derived.pip_ok=true 是工具误判，见包 README）；导入方式 editable finder，cwd=/testbed 与 cwd=/tmp 都导入 /testbed/scrapy/__init__.py；gcc / make / git 在（原始日志 WHICH_*）。Scrapy 1.1.0dev1 与镜像内 Twisted 24.11 / zope.interface 不兼容，HTTP 下载处理器加载失败，抓取类公开测试 3/4 失败；本题目标路径（load_object / MiddlewareManager）不经过下载器。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/agent_probe.log",
+    "runs/r2e_env_repair_20260924/p4/image_readout/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471.txt"
+   ],
+   "by": "run_dev_probe.py + P4 sub-agent"
+  },
+  "R06": {
+   "status": "pass",
+   "note": "修订后期望没有非 PASSED 键：来源里 3 个 FAILED 键（test_walk_modules_egg、test_enabled_from_settings、test_instances_from_settings）全是搬迁伪影，r2e-mr-003（补回 test.egg）与 r2e-mr-004（自引用改为 r2e_tests.test_2）修好支撑后，按修复后 gold 重新核定为 PASSED（r2e-mr-005）。修订前的判定见 previous。",
+   "evidence_refs": [
+    "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_fbaff172.eval.log",
+    "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_89ea0834.eval.log",
+    "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_6cb57d77.eval.log",
+    "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_f8bc4a13.eval.log",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v2.json"
+   ],
+   "by": "Claude（B 线，批次二验收）",
+   "previous": {
+    "status": "issue",
+    "note": "期望 3 个 FAILED 键都是 R2E 把测试搬进 r2e_tests/ 的伪影：① UtilsMiscTestCase.test_walk_modules_egg → `ModuleNotFoundError: No module named 'testegg'`（夹具 test.egg 按 `os.path.dirname(__file__)` 找，随测试搬迁后 r2e_tests/ 下没有；公开原位置 tests/test_utils_misc/__init__.py 4 passed）→ 缺 fixture；② MiddlewareManagerTest.test_enabled_from_settings、③ test_instances_from_settings → 测试用字符串 'tests.test_middleware.M1' 加载的是公开旧模块里的类，与 r2e_tests.test_2.M1 不是同一对象 → 断言失败（公开原位置 tests/test_middleware.py 4 passed）。三者 gold / noop 都失败、合法源码改动翻不动（死键），评分一致；但题面主体“中间件接受对象 / 实例”没有活键，只改 load_object 的部分解按键集推断即可拿 1（推断，未实跑）。"
+   }
+  },
+  "R07": {
+   "status": "pass",
+   "note": "派生镜像 facts：agent / grader uid 解释器可执行、私有目录 ls / cat 均 denied；探针（agent/54321，chown 后）：/testbed=ok、site-packages=ok、.venv/bin=ok、home=ok、/tmp=ok、/usr/local=denied（site-packages 在 /testbed/.venv 内，chown 后 agent 可写——反作弊面另议）。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/facts.json",
+    "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/dev_probe.json"
+   ],
+   "by": "collate_facts.py + run_dev_probe.py + P4 sub-agent"
+  },
+  "R08": {
+   "status": "pass",
+   "note": "修订后 gold 9/9、reward 1（两次）；grader 侧导入路径 /testbed/scrapy/__init__.py（账本 observations.RH2_OBS_IMPORT_PATH，两次相同）。",
+   "evidence_refs": [
+    "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_6cb57d77.eval.log",
+    "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_f8bc4a13.eval.log",
+    "runs/r2e_t0_batch2_20260924/replay_b3/ledger_b3_gold.jsonl"
+   ],
+   "by": "Claude（B 线，批次二验收）",
+   "previous": {
+    "status": "pass",
+    "note": "导入 /testbed/scrapy/__init__.py；gold 9/9"
+   }
+  },
+  "R09": {
+   "status": "pass",
+   "note": "探针公开文件 tests/test_closespider.py collect rc 0、run rc 1（Twisted 不兼容，与本题无关）；相关文件 tests/test_utils_misc/__init__.py 4 passed、tests/test_middleware.py 4 passed；公开复现 REPRO_OBSERVED=1。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p4/targeted_public_tests/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/agent_probe.log",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471.py",
+    "runs/r2e_env_repair_20260924/p4/targeted2_cmds/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/agent_probe.log"
+   ],
+   "by": "run_dev_probe.py + P4 sub-agent"
+  },
+  "R10": {
+   "status": "pass",
+   "note": "NET_CONNECT_RC=1、NET_DNS_RC=2（无出网；评分容器同为 --network none）；期望非 PASSED 键无一与网络有关；解题 / 测试不需要下载。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/dev_probe.json",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_915fb3c8.eval.log"
+   ],
+   "by": "run_dev_probe.py + P4 sub-agent"
+  },
+  "R11": {
+   "status": "pass",
+   "note": "不依赖外部服务；非 PASSED 键（若有）原因见 R06，均非服务不可达。scrapy 测试的 mockserver 在 loopback。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_915fb3c8.eval.log"
+   ],
+   "by": "P4 sub-agent"
+  },
+  "R12": {
+   "status": "pass",
+   "note": "峰值 220 MB / 限额 4 GiB = 0.054; setup 15s test 1s；探针 chown -R /testbed 22.84 s（与其它包、中央复跑并行，耗时不作校准，E08）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_915fb3c8.diagnostics.json",
+    "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/root_init.log"
+   ],
+   "by": "collate_facts.py + run_dev_probe.py + P4 sub-agent"
+  },
+  "R13": {
+   "status": "pass",
+   "note": "修订后同条件（覆盖表镜像 5e1679ba…、期限 1800/1800）noop 两次都是 7/9（只差 test_load_object、test_instances_from_settings），gold 两次都是 9/9；reward 与差异集合一致。",
+   "evidence_refs": [
+    "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_fbaff172.eval.log",
+    "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_89ea0834.eval.log",
+    "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_6cb57d77.eval.log",
+    "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_f8bc4a13.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_2046d6fe.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_30f716f6.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_915fb3c8.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-s_6f09d8ff.eval.log"
+   ],
+   "by": "Claude（B 线，批次二验收）",
+   "previous": {
+    "status": "pass",
+    "note": "noop: noop 同条件 2 次 reward 与差异集合一致; gold: gold 同条件 2 次 reward 与差异集合一致"
+   }
+  },
+  "R14": {
+   "status": "pass",
+   "note": "每次评分都是 fresh 容器（replay_grade）；omitted_cache_count：0；探针与定向运行前后 git status 行数 2→2（复现脚本与公开测试未弄脏工作区）；并发只记录：本轮 4 包 + 中央复跑并行。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl",
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl",
+    "runs/r2e_env_repair_20260924/p4/image_readout/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471.txt",
+    "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p4/targeted_public_tests/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/agent_probe.log"
+   ],
+   "by": "P4 sub-agent"
+  },
+  "R15": {
+   "status": "pass",
+   "note": "隐藏测试修订后没有同版本的独立 runner 参考：对账工具把这 4 行单列、不计入一致总数。修订版的对照是一次性容器试跑（按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）：正式链两次 noop / gold 与试跑逐键相同。只加 egg 时 test_walk_modules_egg 在 gold 下变 PASSED，只改路径时两个中间件键变 PASSED。",
+   "evidence_refs": [
+    "runs/r2e_t0_batch2_20260924/reconcile/reconcile.json",
+    "runs/r2e_t0_batch2_20260924/dryrun_b2/scrapy_noop_fix_a.test.log",
+    "runs/r2e_t0_batch2_20260924/dryrun_b2/scrapy_gold_fix_a.test.log",
+    "runs/r2e_t0_batch2_20260924/dryrun_b2/scrapy_gold_egg_only.test.log",
+    "runs/r2e_t0_batch2_20260924/dryrun_b2/scrapy_gold_path_only.test.log",
+    "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_fbaff172.eval.log",
+    "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_89ea0834.eval.log",
+    "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_6cb57d77.eval.log",
+    "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_f8bc4a13.eval.log"
+   ],
+   "by": "Claude（B 线，批次二验收）",
+   "previous": {
+    "status": "pass",
+    "note": "2 行 agree（reward、差异集合、观测映射逐键相同）"
+   }
+  },
+  "R16": {
+   "status": "pass",
+   "note": "修订后 noop 不符 {test_load_object, test_instances_from_settings}，gold 全符合：除 load_object 外，题面主体（中间件接受实例）第一次有了活键。源码推断（未实跑）：只改 load_object 的部分解会在 test_instances_from_settings 上失败——base 的 MiddlewareManager 对非类对象仍走 mwcls()，测试里的 M3 没有 __call__ / from_settings，且测试用 assertIs 要求原实例；gold 为此在 middleware.py 加了 isclass 分支。",
+   "evidence_refs": [
+    "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_fbaff172.eval.log",
+    "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_89ea0834.eval.log",
+    "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_6cb57d77.eval.log",
+    "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_f8bc4a13.eval.log"
+   ],
+   "by": "Claude（B 线，批次二验收）",
+   "previous": {
+    "status": "pass",
+    "note": "目标键 1：UtilsMiscTestCase.test_load_object（noop 原因 `'int' object has no attribute 'rindex'`；测试断言 `load_object(1000) is 1000`，即任何非字符串原样返回）与题面 rindex 报错一致；题面主体（MiddlewareManager 接受实例）的验证键是死键，见 R06。"
+   }
+  },
+  "R17": {
+   "status": "pass",
+   "note": "派生镜像：fix_present=no、私有目录 700 root、HEAD 无子提交；探针：GIT_HEAD_CHILDREN_WORDS=1、refs=0、reflog=0、stash=0、remotes=“”、无 *.orig/*.rej/*.patch/*.diff 残留；`?? install.sh` 是通用安装脚本（uv venv + uv pip install，全文见 image_readout），不含修复；run_tests.sh 只泄漏隐藏目录名与入口命令。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/facts.json",
+    "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p4/image_readout/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471.txt"
+   ],
+   "by": "run_dev_probe.py + P4 sub-agent"
+  },
+  "R18": {
+   "status": "pass",
+   "note": "按用户 09-24 晚批准的 T0-5（修复搬迁支撑）实施为封板修订单 r2e-mr-003（新增 test.egg，取自 base 提交 54216d7a 的 tests/test_utils_misc/test.egg）、r2e-mr-004（test_2.py 两处自引用改为 r2e_tests.test_2）、r2e-mr-005（期望 3 键 FAILED→PASSED）；派生配方 r2e_derive_v1+material_v2。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v2.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/t1_input_pins_r2e_v3.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/decisions.md"
+   ],
+   "by": "Claude（B 线，批次二验收）",
+   "previous": {
+    "status": "pass",
+    "note": "本题记录的处置类别：material、solver_condition；材料修订只出提案，未改 expected / 隐藏测试 / gold / 题面；无资源配方。"
+   }
+  },
+  "R19": {
+   "status": "pass",
+   "note": "命令与证据：探针 unit r2e-p4-probe-1825（run_dev_probe.py --activation none --repro-dir）、定向公开测试 r2e-p4-probe-1832、跟进 r2e-p4-probe-1841；R-f 账本 run_id r2e-rf-all-noop / r2e-rf-all-gold；复现脚本 sha 见 repros.sha256。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p4/probe_1825.log",
+    "runs/r2e_env_repair_20260924/p4/targeted_1832.log",
+    "runs/r2e_env_repair_20260924/p4/followup_1841.log",
+    "runs/r2e_env_repair_20260924/p4/repros.sha256"
+   ],
+   "by": "P4 sub-agent"
+  },
+  "R20": {
+   "status": "pass",
+   "note": "无资源配方；提案只针对本题。同族现象（pytest.warns(None) 死键、入口 -W ignore 死键、Scrapy 1.1 与 Twisted 不兼容、venv 无 pip）按题记录，同仓不同版本不自动继承。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/packages/p4/README.md"
+   ],
+   "by": "P4 sub-agent"
+  }
+ },
+ "issues": [
+  {
+   "category": "material",
+   "scope": "task",
+   "summary": "3 个期望 FAILED 键是测试搬迁伪影（test.egg 未随迁；自引用 'tests.test_middleware.M1' 指向公开旧模块）；题面主体无活键，部分解可得满分（按键集推断）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_915fb3c8.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-s_6f09d8ff.eval.log",
+    "runs/r2e_env_repair_20260924/p4/targeted_public_tests/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/agent_probe.log",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v2.json",
+    "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_6cb57d77.eval.log",
+    "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_f8bc4a13.eval.log"
+   ],
+   "proposed_action": "材料修订提案（T0，推荐本轮不改）：docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471.md",
+   "status": "verified",
+   "resolution": "用户 09-24 晚批准修复搬迁支撑；实施为 r2e-mr-003/004/005 + material_v2。真实 grader noop 0（7/9）×2、gold 1（9/9）×2，与试跑逐键相同；test_instances_from_settings 成为中间件实例修复的活键。"
+  },
+  {
+   "category": "solver_condition",
+   "scope": "repo:scrapy",
+   "summary": "venv 无 pip（install.sh 用 `uv venv` + `uv pip`；`python -m pip` → No module named pip；pip / pip3 / uv 均不在 PATH），而公开提示写“`python`, `pip` and the repo's test tools already point at it”（另有 conda 措辞，全局 E09）",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/agent_probe.log",
+    "runs/r2e_env_repair_20260924/p4/image_readout/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471.txt",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl"
+   ],
+   "proposed_action": "任务面 / 系统提示声明“无 pip、无网络、不需要安装依赖”（与 E09 conda 措辞一并修）；本题解题不需要装包",
+   "status": "open"
+  },
+  {
+   "category": "solver_condition",
+   "scope": "repo:scrapy@1.1.0dev1（9a15fcf8 / cfed9b66 / e9387529）",
+   "summary": "Scrapy 1.1.0dev1 与镜像内 Twisted 24.11 / zope.interface 不兼容：抓取类公开测试恒失败（与本题无关）",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p4/targeted2_cmds/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/agent_probe.log",
+    "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/agent_probe.log"
+   ],
+   "proposed_action": "写入 solver_conditions；不改依赖",
+   "status": "open"
+  }
+ ],
+ "solver_conditions": {
+  "cwd_required": "none（cwd=/tmp 也导入 /testbed 下的包）",
+  "interpreter": "/testbed/.venv/bin/python 3.9.21（PATH 首项；docker exec 继承镜像 ENV）",
+  "pip": "absent（uv venv；pip / pip3 / uv 均不可用）",
+  "network": "none（NET_CONNECT_RC=1、DNS 失败）；loopback 可用",
+  "public_tests": "tests/test_closespider.py：collect rc 0 / run rc 1（3 failed / 1 passed：Twisted / zope.interface 不兼容）；tests/test_utils_misc/__init__.py：4 passed；tests/test_middleware.py：4 passed",
+  "repro": "REPRO_OBSERVED=1（LOAD_OBJECT_CLASS / INSTANCE → AttributeError 'rindex'；DOWNLOADER_MW_CLASS_KEY → AttributeError 'startswith'；题面字面示例 → NotImplementedError）",
+  "notes": "Scrapy 1.1.0dev1 跑在 Python 3.9；题面字面示例调用抽象基类，不可直接运行"
+ },
+ "classification": "material",
+ "revision_refs": [
+  "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471.md"
+ ],
+ "disposition": {
+  "state": "qualified_with_revision",
+  "scope": "材料 material_revisions_v2（r2e-mr-003/004/005）+ r2e_derive_v1+material_v2 + 默认 rollout profile",
+  "reason": "搬迁伪影（缺夹具、自引用）按用户批准的修订修好，期望按修复后 gold 重新核定；修订后真实评分 noop 0 / gold 1 各两次一致，与试跑逐键相同；探针十项最小条件满足。venv 无 pip、Scrapy 1.1 与镜像 Twisted 不兼容导致抓取类公开测试恒失败，都是与本题无关的解题侧条件。",
+  "pending_checks": [],
+  "evidence_refs": [
+   "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v2.json",
+   "runs/r2e_t0_batch2_20260924/derived3/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/build.log",
+   "runs/r2e_t0_batch2_20260924/reconcile/reconcile.json",
+   "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_fbaff172.eval.log",
+   "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_89ea0834.eval.log",
+   "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_6cb57d77.eval.log",
+   "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_f8bc4a13.eval.log"
+  ],
+  "decided_by": "用户 09-24 晚批准 T0-5；Claude 实施与验证",
+  "previous_state": "needs_decision",
+  "resolved_items": [
+   {
+    "kind": "support_pending_decision",
+    "decision_ref": "T0-5",
+    "summary": "环境层 R01/R02/R08/R15 pass、探针最小条件满足；3 个期望 FAILED 键是搬迁伪影，已写材料修订提案（T0，推荐本轮不改）；R13 待中央复跑并入（记录时 unknown），若复跑与 R-f 不一致则需重判",
+    "evidence_refs": [
+     "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471.md"
+    ],
+    "next": "T0-5 待用户决定",
+    "resolved": {
+     "at": "2026-09-24",
+     "by": "Claude（B 线，批次二验收）",
+     "how": "T0-5 修复搬迁支撑（r2e-mr-003/004/005）",
+     "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v2.json",
+      "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_fbaff172.eval.log",
+      "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_89ea0834.eval.log",
+      "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_6cb57d77.eval.log",
+      "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_f8bc4a13.eval.log"
+     ]
+    }
+   }
+  ],
+  "reviewer": null
+ },
+ "costs": {
+  "probe_seconds": 31.93,
+  "targeted_seconds": 49.85,
+  "rerun_attempts": 0,
+  "rerun_seconds": 0
+ },
+ "review_notes": [
+  {
+   "by": "Claude（验收，apply_r13.py）",
+   "at": "2026-09-23",
+   "change": "R13 由中央复跑并入：pass；disposition.state 'needs_decision' → 'needs_decision'"
+  },
+  {
+   "by": "Claude（B 线，批次二验收）",
+   "at": "2026-09-24",
+   "change": "disposition needs_decision → qualified_with_revision：T0-5 修订 r2e-mr-003/004/005 已实施并用真实 grader 验证；R01/R02/R06/R08/R13/R15/R16/R18 按修订后证据更新，旧值留在各项 previous"
+  }
+ ],
+ "posthoc_refs": [
+  "runs/r2e_t0_batch2_20260924/replay_b3/ledger_b3_noop.jsonl",
+  "runs/r2e_t0_batch2_20260924/replay_b3/ledger_b3_gold.jsonl",
+  "runs/r2e_t0_batch2_20260924/derived3/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/facts.json",
+  "runs/r2e_t0_batch2_20260924/derived3/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/build.log",
+  "runs/r2e_t0_batch2_20260924/reconcile/reconcile.json",
+  "runs/r2e_t0_batch2_20260924/dryrun_b2/scrapy_noop_fix_a.test.log",
+  "runs/r2e_t0_batch2_20260924/dryrun_b2/scrapy_gold_fix_a.test.log",
+  "runs/r2e_t0_batch2_20260924/dryrun_b2/scrapy_gold_egg_only.test.log",
+  "runs/r2e_t0_batch2_20260924/dryrun_b2/scrapy_gold_path_only.test.log"
+ ]
+}

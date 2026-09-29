@@ -1,0 +1,528 @@
+{
+  "review_date": "2026-09-15",
+  "base_commit": "acb0e4bfec83a1fc155eb7892dfe76e13731a27a",
+  "scope": "复核 §6.12 对 §13 R1–R4 的修复；本机测试、FakeDocker 原反例与运行手册隔离目录；e1 前本地验收",
+  "production_edits_by_reviewer": false,
+  "source_sha256": {
+    "rh2/scripts/sandbox_probes/grader-protect-control-surface.sh": "2eebce8f0d067c9938b681608f9d973ca5b9ddb5a166e688e4771f91da7ef62b",
+    "rh2/src/repoharness2/adapters/slime/prepared_task_face.py": "9ada92f85e43a9d4b252157d093399a04e1940937299d994d293e9a5741f33f0",
+    "rh2/src/repoharness2/adapters/slime/sandbox_profile.py": "0c485f683971a95324957b046378d3cd3e88c77569cd004d484f35dcaa21a5ec",
+    "rh2/src/repoharness2/envpack/scoring.py": "ddd2bbfa1a75c0b27edbf07e42a68dd65612ff6bba0bce8f86ea954e5346e33f",
+    "rh2/src/repoharness2/envpack/spec_vendor.py": "8e0037b27c87268ed7df97ef64d261d0e6dac7375bc85fd5badd0fecdb94d41d",
+    "rh2/src/repoharness2/grading/manager.py": "bf02d0a2a6a450eed9dc4e49ae7961280fcf65726c3025ee46fdd5049599aa02",
+    "rh2/tests/adapters/test_w3b_sandbox_profile.py": "d726b6b489fc080629c851b8bf8deafc833eb3dc264b522a86a237334349d55c",
+    "rh2/tests/envpack/test_vendor_specs.py": "71e15527aeb8fb94784ce3edec1e2a666bc2ce3737cec2c8c42b26af0d651b29",
+    "rh2/tests/grading/grading_fixtures.py": "56e5743d802889b0f6d709a903442d2c32d5fd159c2ec1faf2ed43d767352a9c",
+    "rh2/tests/grading/test_w3b_grader_profile_docker.py": "2c62f9bb5763b2ecd2b980a62c37eca8e9ddd10e2f985ff374627da69e0f5808",
+    "rh2/tests/grading/test_w3b_grader_profile_unit.py": "265ec130885f1fa39fd1b5989d8ccd4517396e891ed91bc7d08ab94914d50b58",
+    "rh2/tests/sandbox_test_support.py": "81fc40e2a7116173ac196145eb547facf3f5c91dc2983258be83027e8cdf6d3d",
+    "rh2/scripts/replay_grade.py": "d4bea627116b750681c6a1aecbf5cc940c8806738deaac1ace40dae8a68a43c8",
+    "rh2/src/repoharness2/adapters/slime/replay_grade.py": "0d4187fb90ce924f5a27b1244c85a2817222602519a9038b4efdbe278d99cee2",
+    "rh2/src/repoharness2/envpack/swegym_parsers.py": "995bb6aae58a94f9553946c2f9aea59a158ad4fdf4d7fc0137802c11362b2276",
+    "rh2/tests/adapters/test_replay_grade.py": "bdf3212c8a9ea3a11abd6177d68113870d5679e4e124c17e8f26829b3b830be4",
+    "rh2/tests/adapters/test_w1b_prepared_task_face_v2.py": "ae380b1e8c2e7c328a2095ed5d7290a1b26b23d97640e7418906bdac8e31da7c",
+    "rh2/tests/envpack/test_swegym_parsers.py": "537896484e46b9d747ea0660bb5d8d1c0e42a560f865a5a2b7cf438bdc813346",
+    "rh2/pyproject.toml": "99e221e739a208ed39e17afe6d72a1b6b433edb64983828a5040101f28db77a0",
+    "rh2/uv.lock": "8ed1ce4fcb2347ef1c05e6ab592a7ef03366a968a5dd934bd9925a08f06b0577",
+    "rh2/requirements-replay.lock": "0147f13992cb5a7da5a980f91ee5f009d6ce8f0c375cb404b7ed5583823b0040",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swe_grading_wiring_20260915/runbook_s1e.md": "2d687c1406471295edaca6f817546e2403e5baf2714753c2426f96247dfdd9a9"
+  },
+  "tests": {
+    "focused": "........................................................................ [ 51%]\n...........................................................s.........    [100%]\n140 passed, 1 skipped in 19.57s",
+    "docker": "..............................                                           [100%]\n30 passed in 37.82s",
+    "runbook_isolated_layout": ".................s.........                                              [100%]\n26 passed, 1 skipped in 1.65s",
+    "ruff": "All checks passed!"
+  },
+  "driver_original_cases_root_rerun": {
+    "persist_failure_cleans_up_and_halts": {
+      "rc": 2,
+      "exception": null,
+      "summary": {
+        "ledger": "runs/swe_grading_wiring_fix2_review_20260915/root/probe_20260915T132656_108155Z/persist_failure/ledger.jsonl",
+        "rows": 0,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0
+        },
+        "halted": "rh2-replay-cand-getmoto__moto-6913-cef74a51: 工件持久化失败（NotADirectoryError:: 'runs/swe_grading_wiring_fix2_review_20260915/root/probe_20260915T132656_108155Z/persist_failure/artifacts/swe_gym_lite--getmoto__moto-6913/a1-cef74a51'），停止本批",
+        "cleanup_failures": []
+      },
+      "manager_records": 0,
+      "candidate_created": [
+        "rh2-replay-cand-getmoto__moto-6913-cef74a51"
+      ],
+      "removed": [
+        "rh2-replay-cand-getmoto__moto-6913-cef74a51"
+      ],
+      "rm_calls": [
+        [
+          "rm",
+          "-f",
+          "rh2-replay-cand-getmoto__moto-6913-cef74a51"
+        ]
+      ],
+      "ledger_rows": 1
+    },
+    "old_i2_halt_and_persist_order": {
+      "rc": 2,
+      "exception": null,
+      "summary": {
+        "ledger": "runs/swe_grading_wiring_fix2_review_20260915/root/probe_20260915T132656_108155Z/cleanup_halt/ledger.jsonl",
+        "rows": 0,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0
+        },
+        "halted": "rh2-replay-cand-getmoto__moto-6913-0c3b23e7: 候选容器未能确认移除（cannot remove rh2-replay-cand-getmoto__moto-6913-0c3b23e7: fake failure），停止本批",
+        "cleanup_failures": [
+          "rh2-replay-cand-getmoto__moto-6913-0c3b23e7: cannot remove rh2-replay-cand-getmoto__moto-6913-0c3b23e7: fake failure"
+        ]
+      },
+      "manager_records": 0,
+      "candidate_count": 1,
+      "grade_starts": 0,
+      "ledger_rows": 1,
+      "cleanup": {
+        "detail": "cannot remove rh2-replay-cand-getmoto__moto-6913-0c3b23e7: fake failure",
+        "removed": false,
+        "steps": [
+          "rm:failed:cannot remove rh2-replay-cand-getmoto__moto-6913-0c3b23e7: fake failure",
+          "kill:ok"
+        ]
+      },
+      "frozen_patch_exists_before_each_rm": true
+    },
+    "candidate_cancel": {
+      "cancel_propagated": true,
+      "ledger_rows": 1,
+      "stage_errors": [
+        "cancelled:trusted_init"
+      ],
+      "candidate_created": [
+        "rh2-replay-cand-getmoto__moto-6913-4ff18735"
+      ],
+      "removed": [
+        "rh2-replay-cand-getmoto__moto-6913-4ff18735"
+      ],
+      "manager_close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "diagnostics_ref": null,
+      "sidecar_count": 0
+    },
+    "grading_cancel": {
+      "cancel_propagated": true,
+      "ledger_rows": 1,
+      "stage_errors": [
+        "cancelled:grading"
+      ],
+      "candidate_created": [
+        "rh2-replay-cand-getmoto__moto-6913-ab077955"
+      ],
+      "removed": [
+        "rh2-replay-cand-getmoto__moto-6913-ab077955",
+        "rh2-grading-replay-t-getmoto__moto-6-daedb9e7"
+      ],
+      "manager_close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "diagnostics_ref": "runs/swe_grading_wiring_fix2_review_20260915/root/probe_20260915T132656_108155Z/grading_cancel/logs/evallog_replay-t-getmoto__moto-6_daedb9e7.diagnostics.json",
+      "sidecar_count": 1
+    },
+    "cleanup_cancel": {
+      "cancel_propagated": true,
+      "ledger_rows": 1,
+      "stage_errors": [
+        "cancelled:cleanup"
+      ],
+      "candidate_created": [
+        "rh2-replay-cand-getmoto__moto-6913-a064bc0f"
+      ],
+      "removed": [
+        "rh2-replay-cand-getmoto__moto-6913-a064bc0f"
+      ],
+      "manager_close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "diagnostics_ref": null,
+      "sidecar_count": 0
+    },
+    "pull_cancel": {
+      "cancel_propagated": true,
+      "ledger_rows": 1,
+      "stage_errors": [
+        "cancelled:image_pull"
+      ],
+      "candidate_created": [],
+      "removed": [],
+      "manager_close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0
+      },
+      "cleanup": null,
+      "diagnostics_ref": null,
+      "sidecar_count": 0
+    },
+    "image_inspect_within_budget": {
+      "configured_image_budget": 0.02,
+      "completed_by_seconds": 0.02133533312007785,
+      "candidate_started_before_release": false,
+      "eventual_image_pull": {
+        "pulled": false,
+        "error": "timeout"
+      },
+      "eventual_stage_error": "image_pull:timeout"
+    }
+  },
+  "manager_original_cases_root_rerun": {
+    "scope": "local fixture and FakeDocker only; no Docker, remote, permission tests, or production edits",
+    "bound_observations_and_rc": {
+      "observation_calls": 2,
+      "users": [
+        "54322",
+        "54322"
+      ],
+      "home": "HOME=/home/rh2grader",
+      "reward_with_test_rc_7": 1.0,
+      "shell_exit_code": 0,
+      "captured_test_rc": 7
+    },
+    "total_deadline_and_regular_read": {
+      "detail": "grading_deadline_exhausted:test:candidate_phase=install",
+      "reward": null,
+      "partial_saved": true,
+      "plain_file_read_exact": true,
+      "read_guard": "if [ -f /rh2/candidate/eval.log ] && [ ! -L /rh2/candidate/eval.log ]; then cat /rh2/candidate/eval.log; else echo RH2_PARTIAL_LOG_UNAVAILABLE=irregular_or_missing; fi",
+      "container_removed": true,
+      "elapsed_seconds": 0.162
+    },
+    "candidate_cancellation": {
+      "cancelled_error_propagated": true,
+      "container_removed": true,
+      "partial_read_calls": 1,
+      "candidate_segment_ran_once": true,
+      "partial_kept_in_memory": true,
+      "test_log_kept_in_memory": false,
+      "candidate_facts": {
+        "install_rc_last_command": null,
+        "install_skipped": false,
+        "install_seconds": null,
+        "test_rc": null,
+        "test_seconds": null,
+        "markers_seen": [
+          "RH2_TS_INSTALL_START"
+        ],
+        "log_partial": true
+      },
+      "diagnostics_in_record": {
+        "schema_id": "rh2.grading_diagnostics.v1",
+        "trajectory_id": "cancel-candidate",
+        "task_id": "rh2-fixture.tiny-0001",
+        "grader_version": "swebench-4.1.0",
+        "candidate": {
+          "install_rc_last_command": null,
+          "install_skipped": false,
+          "install_seconds": null,
+          "test_rc": null,
+          "test_seconds": null,
+          "markers_seen": [
+            "RH2_TS_INSTALL_START"
+          ],
+          "log_partial": true
+        },
+        "observations": {},
+        "control_surface": {
+          "EXPECTED_FILES": "1",
+          "PROTECTED_FILES": "1",
+          "PROTECTED_DIRS": "2",
+          "MISSING_FILES": "",
+          "MISSING_FILES_COUNT": "0",
+          "IRREGULAR_FILES": "",
+          "TESTBED_STAT": "0 1777",
+          "RH2_PROTECT_OK": "1"
+        },
+        "trusted_setup": {
+          "RH2_SETUP_APPLY_RC": "0",
+          "RH2_SETUP_RESTORED": "1",
+          "RH2_SETUP_EXPECTED_TEST_FILES": "1",
+          "RH2_SETUP_TEST_FILES": "1",
+          "RH2_SETUP_ABSENT_TEST_FILES": "0",
+          "RH2_SETUP_IRREGULAR_TEST_FILES": "",
+          "RH2_SETUP_OK": "1"
+        },
+        "peak_memory_mb": 0.0,
+        "peak_memory_unavailable_or_zero": true,
+        "phase_segments_seconds": {
+          "grader_start_and_verify": 0.000302,
+          "grader_baseline_rebuild": null,
+          "delta_apply": 1.1e-05,
+          "grader_trusted_setup": 6.3e-05,
+          "test": null,
+          "parser_and_report": null,
+          "grader_cleanup": null
+        },
+        "verdict": null,
+        "runner_integrity_changed": null
+      },
+      "persisted_files": [
+        "cancel_candidate/evallog_cancel-candidate_a3eef023.diagnostics.json",
+        "cancel_candidate/evallog_cancel-candidate_a3eef023.eval.log"
+      ],
+      "log_sha256_matches": true
+    },
+    "post_observation_cancellation": {
+      "cancelled_error_propagated": true,
+      "container_removed": true,
+      "partial_read_calls": 0,
+      "candidate_segment_ran_once": true,
+      "partial_kept_in_memory": false,
+      "test_log_kept_in_memory": true,
+      "candidate_facts": {
+        "install_rc_last_command": null,
+        "install_skipped": false,
+        "install_seconds": null,
+        "test_rc": 0,
+        "test_seconds": null,
+        "markers_seen": [
+          "RH2_TEST_RC"
+        ],
+        "log_partial": false
+      },
+      "diagnostics_in_record": {
+        "schema_id": "rh2.grading_diagnostics.v1",
+        "trajectory_id": "cancel-post_observation",
+        "task_id": "rh2-fixture.tiny-0001",
+        "grader_version": "swebench-4.1.0",
+        "candidate": {
+          "install_rc_last_command": null,
+          "install_skipped": false,
+          "install_seconds": null,
+          "test_rc": 0,
+          "test_seconds": null,
+          "markers_seen": [
+            "RH2_TEST_RC"
+          ],
+          "log_partial": false
+        },
+        "observations": {},
+        "control_surface": {
+          "EXPECTED_FILES": "1",
+          "PROTECTED_FILES": "1",
+          "PROTECTED_DIRS": "2",
+          "MISSING_FILES": "",
+          "MISSING_FILES_COUNT": "0",
+          "IRREGULAR_FILES": "",
+          "TESTBED_STAT": "0 1777",
+          "RH2_PROTECT_OK": "1"
+        },
+        "trusted_setup": {
+          "RH2_SETUP_APPLY_RC": "0",
+          "RH2_SETUP_RESTORED": "1",
+          "RH2_SETUP_EXPECTED_TEST_FILES": "1",
+          "RH2_SETUP_TEST_FILES": "1",
+          "RH2_SETUP_ABSENT_TEST_FILES": "0",
+          "RH2_SETUP_IRREGULAR_TEST_FILES": "",
+          "RH2_SETUP_OK": "1"
+        },
+        "peak_memory_mb": 0.0,
+        "peak_memory_unavailable_or_zero": true,
+        "phase_segments_seconds": {
+          "grader_start_and_verify": 0.000157,
+          "grader_baseline_rebuild": null,
+          "delta_apply": 1e-05,
+          "grader_trusted_setup": 4.2e-05,
+          "test": null,
+          "parser_and_report": null,
+          "grader_cleanup": null
+        },
+        "verdict": null,
+        "runner_integrity_changed": null
+      },
+      "persisted_files": [
+        "cancel_post_observation/evallog_cancel-post_observation_74b17c17.diagnostics.json",
+        "cancel_post_observation/evallog_cancel-post_observation_74b17c17.eval.log"
+      ],
+      "log_sha256_matches": true
+    },
+    "source_sha256": {
+      "rh2/src/repoharness2/grading/manager.py": "bf02d0a2a6a450eed9dc4e49ae7961280fcf65726c3025ee46fdd5049599aa02",
+      "rh2/src/repoharness2/adapters/slime/prepared_task_face.py": "9ada92f85e43a9d4b252157d093399a04e1940937299d994d293e9a5741f33f0",
+      "rh2/tests/grading/test_w3b_grader_profile_unit.py": "265ec130885f1fa39fd1b5989d8ccd4517396e891ed91bc7d08ab94914d50b58",
+      "rh2/tests/adapters/test_w1b_prepared_task_face_v2.py": "ae380b1e8c2e7c328a2095ed5d7290a1b26b23d97640e7418906bdac8e31da7c"
+    }
+  },
+  "remaining_diagnostic_cases_root_rerun": {
+    "derived_inspect_cancel": {
+      "cancel_propagated": true,
+      "ledger_rows": 0,
+      "candidate_count": 0,
+      "manager_close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0
+      }
+    },
+    "post_observation_cancel": {
+      "cancel_propagated": true,
+      "ledger_rows": 1,
+      "candidate_count": 1,
+      "manager_close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0
+      },
+      "full_log_saved": true,
+      "log_ref_digest_matches": true,
+      "ledger_partial": true,
+      "sidecar_partial": false,
+      "candidate_removed": true
+    }
+  },
+  "retention_control_root_rerun": {
+    "scope": "3 normal calls per variant; 64 KiB fixture output; no RSS or OOM claim; one assignment removed only in a bound in-memory method",
+    "current": {
+      "calls": [
+        {
+          "retained_chars": 65920,
+          "saved_bytes": 65920
+        },
+        {
+          "retained_chars": 65920,
+          "saved_bytes": 65920
+        },
+        {
+          "retained_chars": 65920,
+          "saved_bytes": 65920
+        }
+      ],
+      "retained_chars_after_gc_and_close": [
+        65920,
+        65920,
+        65920
+      ],
+      "retained_chars_total": 197760,
+      "all_records_removed": true,
+      "all_reports_resolved": true,
+      "input_log_chars": 65874
+    },
+    "without_r3_assignment_control": {
+      "calls": [
+        {
+          "retained_chars": 189,
+          "saved_bytes": 65920
+        },
+        {
+          "retained_chars": 189,
+          "saved_bytes": 65920
+        },
+        {
+          "retained_chars": 189,
+          "saved_bytes": 65920
+        }
+      ],
+      "retained_chars_after_gc_and_close": [
+        189,
+        189,
+        189
+      ],
+      "retained_chars_total": 567,
+      "all_records_removed": true,
+      "all_reports_resolved": true,
+      "input_log_chars": 65874
+    },
+    "new_retained_chars": 197193,
+    "normal_saved_bytes_equal": true,
+    "source_unchanged": true
+  },
+  "runbook": {
+    "prepare_export": [
+      {
+        "command": "prepare",
+        "exit_code": 0
+      },
+      {
+        "command": "export-gold",
+        "exit_code": 0
+      }
+    ],
+    "gold_patch_files": 4,
+    "uv_sync_locked_offline_dry_run_exit": 0,
+    "uv_sync_linux_x86_64_locked_offline_dry_run_exit": 0,
+    "dry_run_only_not_fresh_linux_install": true,
+    "locked_export_requirements_match": true,
+    "export_difference": "仅生成命令注释多 --offline；有效依赖行相同",
+    "swebench": "4.1.0",
+    "verifiers_git_rev": "5885ab9c54152e707af2a11797aa52c3eb1752da"
+  },
+  "raw_evidence_root": "runs/swe_grading_wiring_fix2_review_20260915/root",
+  "limits": [
+    "Docker 套件使用本机 ARM fixture；没有远端 x86 SWE 镜像和性能证据。",
+    "单测中 1 skipped 是未设置全量 441 语料目录；本轮没有重跑该扩展语料，parser 实现相对上轮未变。",
+    "镜像预算/取消/写盘故障用真实 driver/CLI 和 FakeDocker 运输层；不是实际 Docker daemon 故障注入。",
+    "内存对照只测活跃引用保留的字符数，不声称实测 RSS/OOM；只在函数内存副本移除单一赋值。",
+    "主审探针首跑分别修正了 ArtifactRef 的 sha256: 前缀比较、冻结 context 的替换方式；未改生产代码，失败输出保留于原运行目录。",
+    "没有新建或安装真实 Linux 依赖；已验证锁解析、有效导出依赖及复制目录的准备/导出入口。"
+  ]
+}

@@ -1,0 +1,207 @@
+{
+  "status": "complete_static_selection",
+  "scope": "static_review_only",
+  "intended_use": "development_diagnostic",
+  "candidates": [
+    {
+      "instance_id": "conan-io__conan-15422",
+      "task_revision": "upstream",
+      "base_commit": "f08b9924712cf0c2f27b93cbb5206d56d0d824d8",
+      "reason": "公开字段目标、唯一F2P及历史noop/gold分差对应；独立复核同意有限Linux字段传递诊断。默认/追加/实际构建覆盖限度保留，不称完整任务质量通过。",
+      "evidence_refs": [
+        "results/conan-io__conan-15422/card.md",
+        "results/conan-io__conan-15422/analysis_before_history.md",
+        "results/conan-io__conan-15422/reviewer_initial.md",
+        "results/conan-io__conan-15422/review.md",
+        "runs/swegym_quality_batch01_20260921_v2/private/conan-io__conan-15422/run_refs.json"
+      ],
+      "actor_pending": [
+        "统一入口/实际镜像身份与原始shell环境",
+        "agent/54321下解释器、工作区导入、临时权限与公开复现",
+        "两个显式值、默认值和多配置更新的公开检查"
+      ],
+      "grader_pending": [
+        "条件写jobs的部分修复与原官方评分对照，升级漏收结论时需要；不必阻塞范围明确的字段诊断",
+        "候选实际生效、投影和当前环境资格身份"
+      ],
+      "intended_use": "development_diagnostic",
+      "state": "needs_review",
+      "scope": "static_review",
+      "cpu_queue_ids": [
+        "actor-conan15422"
+      ]
+    },
+    {
+      "instance_id": "dask__dask-8597",
+      "task_revision": "upstream",
+      "base_commit": "c1c88f066672c0b216fc24862a2b36a0a9fb4e22",
+      "reason": "公开原例、合理 gold 和原配方 noop/gold 对照成立；独立 reviewer 保留受限开发诊断候选，但先用具体部分修复校准官方参考遗漏，尚不可直接启动模型。",
+      "evidence_refs": [
+        "results/dask__dask-8597/card.md",
+        "results/dask__dask-8597/analysis_before_history.md",
+        "results/dask__dask-8597/reviewer_initial.md",
+        "results/dask__dask-8597/review.md",
+        "runs/swegym_quality_batch01_20260921_v2/private/dask__dask-8597/run_refs.json"
+      ],
+      "actor_pending": [
+        "正式入口与 agent/54321 的实际 shell、导入和可写权限",
+        "compat_v1 revised_install/pytest 7.4.4 的真实消费",
+        "公开原例和窄切片测试可执行，记录原 bug 与环境失败区别"
+      ],
+      "grader_pending": [
+        "模型运行前先完成 semantics-dask8597-config，核实际 reward、默认警告及 True 空轴行为",
+        "当前候选投影、生效、环境/评分器身份"
+      ],
+      "intended_use": "development_diagnostic",
+      "state": "needs_review",
+      "scope": "static_review",
+      "cpu_queue_ids": [
+        "semantics-dask8597-config",
+        "actor-dask8597"
+      ],
+      "model_start_condition": "先取得指定语义 CPU/RH2 结果，再决定原版/修订版用途并核 actor。"
+    },
+    {
+      "instance_id": "pydantic__pydantic-8511",
+      "task_revision": "upstream",
+      "base_commit": "e4fa099d5adde70acc80238ff810c87a5cec7ebf",
+      "reason": "公开Field(repr=False)与F2P对齐，独立复核认可受限诊断用途；模型前先核具体gold继承假设，不把奖励等同dataclass全部API正确。",
+      "evidence_refs": [
+        "results/pydantic__pydantic-8511/card.md",
+        "results/pydantic__pydantic-8511/analysis_before_history.md",
+        "results/pydantic__pydantic-8511/reviewer_initial.md",
+        "results/pydantic__pydantic-8511/review.md"
+      ],
+      "actor_pending": [
+        "真实actor入口/消息、agent身份与源码导入",
+        "Python/core和pydantic-install-v1配方消费",
+        "公开repr复现及窄继承检查"
+      ],
+      "grader_pending": [
+        "模型前先完成semantics-pydantic8511-inheritance",
+        "如发现差异，再并列原RH2参考得分"
+      ],
+      "intended_use": "development_diagnostic",
+      "state": "needs_review",
+      "scope": "static_review",
+      "cpu_queue_ids": [
+        "semantics-pydantic8511-inheritance"
+      ],
+      "model_start_condition": "先收敛G1与实际actor条件；普通覆盖空白不设全量门。"
+    },
+    {
+      "instance_id": "python__mypy-10424",
+      "task_revision": "upstream",
+      "base_commit": "4518b55663bc689646280a0ab2247c4a724bf3c0",
+      "reason": "公开目标、五条F2P断言和局部gold一致，主审/独立review同意受限开发诊断；先核具体普通比较收窄漏测，不以零P2P定无效。",
+      "evidence_refs": [
+        "results/python__mypy-10424/card.md",
+        "results/python__mypy-10424/analysis_before_history.md",
+        "results/python__mypy-10424/reviewer_initial.md",
+        "results/python__mypy-10424/review.md"
+      ],
+      "actor_pending": [
+        "实际agent入口、镜像/recipe消费、解释器与源码导入",
+        "公共原例和两个公开旧行为测试、工作区/依赖权限、实际消息"
+      ],
+      "grader_pending": [
+        "先完成semantics-mypy10424-narrowing",
+        "保持原镜像初态；直接诊断与正式RH2条件逐项对齐"
+      ],
+      "intended_use": "development_diagnostic",
+      "state": "needs_review",
+      "scope": "static_review",
+      "cpu_queue_ids": [
+        "semantics-mypy10424-narrowing"
+      ],
+      "model_start_condition": "指定窄CPU对照后决定评分解释/修订用途，再核正式actor；不要求全仓回归。"
+    },
+    {
+      "instance_id": "iterative__dvc-5839",
+      "task_revision": "upstream",
+      "base_commit": "daf07451f8e8f3e76a791c696b0ea175e8ed3ac1",
+      "reason": "公开小数位契约、漏传根因及gold/noop分差明确；独立复核认可字典指标参数传递的窄诊断，真实CLI和actor待验。单一Mock值不足以代表全部精度行为，但不自动阻断这一有限用途。",
+      "evidence_refs": [
+        "results/iterative__dvc-5839/card.md",
+        "results/iterative__dvc-5839/analysis_before_history.md",
+        "results/iterative__dvc-5839/reviewer_initial.md",
+        "results/iterative__dvc-5839/review.md"
+      ],
+      "actor_pending": [
+        "真实统一入口、agent身份/解释器/导入与dvc_install_v1c消费",
+        "固定YAML默认/4/8的表格、Markdown和JSON公开行为"
+      ],
+      "grader_pending": [
+        "若扩大评分解释，再校准命令层固定8候选；不是窄参数传递观察的强制先验门"
+      ],
+      "intended_use": "development_diagnostic",
+      "state": "needs_review",
+      "scope": "static_review",
+      "cpu_queue_ids": [
+        "actor-dvc5839"
+      ],
+      "model_start_condition": "先完成真实actor与公开CLI验收；用途明确限制字典指标参数传递。"
+    }
+  ],
+  "note": "5个受限静态候选，不是ready_for_probe。Conan15422/DVC5839先核actor；另三题先做指定语义CPU再决定模型用途。全批14个选择性队列条目不要求全部先跑，也没有本轮CPU或模型结果。",
+  "updated_at": "2026-09-20T19:10:26.495871+00:00",
+  "not_prioritized": [
+    {
+      "instance_id": "conan-io__conan-14177",
+      "reason": "公开verbose opt-in与默认日志验收冲突；先厘清契约并做合理API替代对照。",
+      "review_ref": "results/conan-io__conan-14177/review.md",
+      "cpu_queue_ids": [
+        "semantics-conan14177-contract"
+      ]
+    },
+    {
+      "instance_id": "dask__dask-8801",
+      "reason": "先校准错误措辞与原字符串路径，尚不把当前奖励直接作功能质量判断。",
+      "review_ref": "results/dask__dask-8801/review.md",
+      "cpu_queue_ids": [
+        "semantics-dask8801-message",
+        "semantics-dask8801-original-string"
+      ]
+    },
+    {
+      "instance_id": "pydantic__pydantic-5706",
+      "reason": "可观察受限选路；成功/拒绝方向未定。历史漏测已有原件，当前配方RH2适用性待核。",
+      "review_ref": "results/pydantic__pydantic-5706/review.md",
+      "cpu_queue_ids": [
+        "semantics-pydantic5706-sequence"
+      ]
+    },
+    {
+      "instance_id": "iterative__dvc-9395",
+      "reason": "gold新增dry/no-remote静态疑点优先；旧PARTIAL不是次数误拒证据。",
+      "review_ref": "results/iterative__dvc-9395/review.md",
+      "cpu_queue_ids": [
+        "semantics-dvc9395-dry"
+      ]
+    },
+    {
+      "instance_id": "iterative__dvc-3620",
+      "reason": "有限symlink诊断可用但未优先排模型；保留hardlink解释差异，评分校准选数据后置条件负对照。",
+      "review_ref": "results/iterative__dvc-3620/review.md",
+      "cpu_queue_ids": [
+        "semantics-dvc3620-links"
+      ]
+    },
+    {
+      "instance_id": "python__mypy-16963",
+      "reason": "先核完整公开原例和Boat返回路径；不因零P2P自动否定。",
+      "review_ref": "results/python__mypy-16963/review.md",
+      "cpu_queue_ids": [
+        "semantics-mypy16963-public-examples"
+      ]
+    },
+    {
+      "instance_id": "python__mypy-12417",
+      "reason": "两种可定位恢复替代均未实测，先做四实现窄对照，未认定误拒。",
+      "review_ref": "results/python__mypy-12417/review.md",
+      "cpu_queue_ids": [
+        "semantics-mypy12417-recovery"
+      ]
+    }
+  ]
+}

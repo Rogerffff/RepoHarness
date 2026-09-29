@@ -1,0 +1,272 @@
+{
+ "schema_id": "rh2.r2e_screening_record.v1",
+ "task_id": "r2e_gym_subset::coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9",
+ "instance_id": "coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9",
+ "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0",
+ "source_adapter_ref": "s2_r2e ingest_manifest_v0（t1_input_pins_r2e_v1：raw_archive sha256 dc90e8c1…）",
+ "recipe_ref": {
+  "derived_image": "r2e_derive_v1",
+  "resources": "default"
+ },
+ "code_snapshot_ref": "runs/r2e_snapshot_20260923.sha256 (388 files) + r2e_env_tools.sha256（远端核对 TOOLS_OK）",
+ "facts_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/facts.json",
+ "dev_probe_ref": "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/dev_probe.json",
+ "posthoc_refs": [],
+ "checks": {
+  "R01": {
+   "status": "pass",
+   "note": "派生镜像 21 项复核通过；覆盖表 / 隐藏测试树 / 入口脚本 / HEAD 与评分面一致；探针 GIT_HEAD=8240c58c90a0 与 base_commit 一致",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/facts.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/facts.json",
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/dev_probe.json"
+   ],
+   "by": "collate_facts.py + p1-subagent 复核"
+  },
+  "R02": {
+   "status": "pass",
+   "note": "noop 0 来自 1 个 mismatched 键（无 missing、无零解析）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-c_9844300f.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R03": {
+   "status": "pass",
+   "note": "题面带可运行示例，原样运行即复现 TypeError: _warn() got an unexpected keyword argument 'once'（REPRO_OBSERVED=1）。conda 措辞为全局问题（E09）。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/prepared_r2e/prompts.jsonl",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9.py",
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/dev_probe.json"
+   ],
+   "by": "p1-subagent"
+  },
+  "R04": {
+   "status": "issue",
+   "note": "扫描发现：隐藏测试依赖的仓库测试辅助 tests/coveragetest.py 在修复提交里改过（假 _warn 加 once 参数），工作区是修复前版本。gold 不受影响；顺带在别处用 once=True 的候选可能在 assert_warnings 用例上被误判（推断，未实跑）。修订前 R04 的 pass 见 previous。",
+   "evidence_refs": [
+    "runs/r2e_t0_batch2_20260924/scan/hidden_support_scan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl"
+   ],
+   "by": "Claude（B 线，批次二验收）",
+   "previous": {
+    "status": "pass",
+    "note": "hygiene test_files = 隐藏测试 r2e_tests/{__init__.py,test_1.py,test_2.py}（评分时由私有目录恢复）+ run_tests.sh；gold 只触碰 ['coverage/control.py']，不在其中；解题不需要改 r2e_tests 以外的测试辅助文件。来源镜像的既有脏改动属于基线（正式链 FrozenDeltaSource 按基线 census 求 delta，不会被卷进候选补丁；代码阅读，未经真实 rollout 验证）。"
+   }
+  },
+  "R05": {
+   "status": "pass",
+   "note": "python → /testbed/.venv/bin/python 3.7.9；pytest 4.6.6；pip 19.3.1，pip check 无问题；包从 /testbed 导入 /testbed/coverage/__init__.py 5.0.2a1，从 /tmp 导入可（editable finder）；gcc / make / git 有，uv 无（WHICH_* 见 agent_probe.log）。pytest 4.6.6 + xdist。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/agent_probe.log",
+    "runs/env_overnight_20260916/M3/facts/5dbbe1430c16/pkgsrc.txt"
+   ],
+   "by": "p1-subagent"
+  },
+  "R06": {
+   "status": "not_applicable",
+   "note": "期望 75 键全 PASSED；无资产目录。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/facts.json",
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/dev_probe.json"
+   ],
+   "by": "p1-subagent"
+  },
+  "R07": {
+   "status": "pass",
+   "note": "派生镜像复核：agent uid 解释器 ok、/rh2_private 700 root 且 agent 读取被拒；探针（agent/54321）：chown 后 /testbed、site-packages、home、/tmp 可写，/usr/local 拒绝；PRIVATE_LS=ls: cannot open directory '/rh2_private'…；r2e_tests 在根与工作区都不存在。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/facts.json",
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/dev_probe.json"
+   ],
+   "by": "p1-subagent"
+  },
+  "R08": {
+   "status": "pass",
+   "note": "导入 /testbed/coverage/__init__.py；gold 75/75（gold 入口 rc=0）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-c_b3411386.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R09": {
+   "status": "pass",
+   "note": "公开测试 tests/test_annotate.py 收集 4、运行 rc 0；公开复现 REPRO_OBSERVED=1。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/dev_probe.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9.py"
+   ],
+   "by": "p1-subagent"
+  },
+  "R10": {
+   "status": "pass",
+   "note": "NET_CONNECT_RC=1、NET_DNS_RC=2（无出网）；R06 无\"需网络\"的键。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/dev_probe.json"
+   ],
+   "by": "p1-subagent"
+  },
+  "R11": {
+   "status": "not_applicable",
+   "note": "期望无非 PASSED 键。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/facts.json"
+   ],
+   "by": "p1-subagent"
+  },
+  "R12": {
+   "status": "pass",
+   "note": "峰值 301 MB / 限额 4 GiB = 0.073; setup 17s test 4s；探针 chown -R /testbed 24.12 s（与其它包并发，不作校准）；/tmp tmpfs 1 GiB 够用（本题无大临时文件）。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-c_b3411386.diagnostics.json",
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/dev_probe.json"
+   ],
+   "by": "collate_facts.py + p1-subagent"
+  },
+  "R13": {
+   "status": "pass",
+   "note": "noop: noop 同条件 2 次 reward 与差异集合一致; gold: gold 同条件 2 次 reward 与差异集合一致",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_53c27c0b.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_ce6fdfd2.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-c_b3411386.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-c_9844300f.eval.log"
+   ],
+   "by": "collate_facts.py（中央复跑并入）"
+  },
+  "R14": {
+   "status": "pass",
+   "note": "每次评分都是 fresh 容器（cleanup_removed=true）；coveragepy 镜像基线自带 /testbed/coverage/__pycache__（33 个文件，镜像构建时 install.sh 的 import coverage 留下），census 按 baseline_policy_r2e_v1 剪除，R-f 账本 omitted_cache_count 基线 / 后置都是 1 目录 33 文件、前后不变；字面上不是 0，但不来自候选、不影响评分。探针前后 git status 行数 2 → 2；探针容器已删除（container_removed=true）。并发只记录：本轮 4 包与中央复跑并行。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/dev_probe.json",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-c_9844300f.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-c_b3411386.eval.log"
+   ],
+   "by": "p1-subagent"
+  },
+  "R15": {
+   "status": "pass",
+   "note": "2 行 agree（reward、差异集合、观测映射逐键相同）；参考日志数 noop 2 / gold 2。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R16": {
+   "status": "pass",
+   "note": "目标键 ApiTest.test_warn_once（noop：TypeError: _warn() got an unexpected keyword argument 'once'）↔ 题面。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-c_9844300f.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-c_b3411386.eval.log",
+    "runs/r2e_rf_20260923/remote/prepared_r2e/prompts.jsonl"
+   ],
+   "by": "p1-subagent"
+  },
+  "R17": {
+   "status": "pass",
+   "note": "探针：HEAD 子提交词数 1（只有自身）、remote 空、refs 0、reflog 0、stash 0、无 *.orig/*.rej/*.patch/*.diff 残留；派生镜像 fix_present=no。脏树 2 行：`?? install.sh`（构建脚本，无修复）、`?? run_tests.sh`。无修复痕迹（gold 改 coverage/control.py）。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/dev_probe.json",
+    "runs/r2e_rf_20260923/remote/r2e_derived/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/facts.json"
+   ],
+   "by": "p1-subagent"
+  },
+  "R18": {
+   "status": "pass",
+   "note": "本题没有资源配方、材料修订或解题侧特殊条件；不改环境。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/dev_probe.json"
+   ],
+   "by": "p1-subagent"
+  },
+  "R19": {
+   "status": "pass",
+   "note": "结论都有命令与证据路径：探针命令 /work/code/rh2/.venv/bin/python /work/code/rh2/scripts/r2e_env/run_dev_probe.py --repo-root /work/code --overlays /work/r2e_derived/overlays.jsonl --task-ids <P1 十题> --out-dir /work/envrepair/p1/dev_probe --repro-dir /work/envrepair/p1/repros --activation none（systemd unit r2e-p1-probe-1828）；R-f 账本 run_id r2e-rf-all-gold, r2e-rf-all-noop。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/dev_probe.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9.py",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/facts.json"
+   ],
+   "by": "p1-subagent"
+  },
+  "R20": {
+   "status": "pass",
+   "note": "无配方，不涉及共享修复。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/dev_probe.json"
+   ],
+   "by": "p1-subagent"
+  }
+ },
+ "issues": [
+  {
+   "category": "material",
+   "scope": "task",
+   "summary": "隐藏 test_1.py 从仓库测试辅助模块 tests/coveragetest.py 导入 CoverageTest；上游修复提交同时改了它（assert_warnings 里的假 _warn 加了 once 参数），gold 按规则不含测试路径，工作区是修复前版本。gold 本身不在 assert_warnings 块里带 once 调 _warn，所以 gold=1 不受影响；但若候选顺带把别处警告改成 once=True，用到 assert_warnings 的用例会因旧假函数不接受 once 而 TypeError，正确解可能被判 0（源码推断，未实跑）。",
+   "evidence_refs": [
+    "runs/r2e_t0_batch2_20260924/scan/hidden_support_scan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl"
+   ],
+   "proposed_action": "低风险，交静态筛查判断；需要时可用材料修订给隐藏测试补修复后的 capture_warning（同 datalad 58ba5165 的做法）。",
+   "status": "open",
+   "found_by": "scan_hidden_support.py S3（09-24 晚批量扫描）"
+  }
+ ],
+ "solver_conditions": {
+  "cwd_required": "不要求（editable finder，/tmp 下也能导入 /testbed/coverage）",
+  "interpreter": "/testbed/.venv/bin/python（PATH 首项，镜像 ENV；3.7.9）",
+  "pip": "present（pip 19.3.1, pip check ok）",
+  "network": "none（NET_CONNECT_RC≠0、DNS 失败）；--network none 仍保留回环接口（aiohttp 22a12cc2 事后诊断实测 127.0.0.1 可起 TLS 服务与代理，其它题未单独测）",
+  "public_tests": "tests/test_annotate.py：collect 4 / run rc 0（xdist）",
+  "repro": "REPRO_RC=0；REPRO_OBSERVED=1 (TypeError on once=)",
+  "notes": "coverage editable 安装，/testbed 外也能导入；gcc / make / git / pip 有，uv 无；无出网。"
+ },
+ "classification": "material",
+ "revision_refs": [],
+ "disposition": {
+  "state": "grading_ok_open_items",
+  "scope": "本题当前材料（expected_v0）+ r2e_derive_v1 + 默认 rollout profile",
+  "reason": "来源评分可复现（两轮一致、与参考逐键一致），探针十项满足；09-24 晚批量扫描发现隐藏测试依赖的测试辅助是修复前版本（低风险支撑缺口），按口径列为未完成项。",
+  "pending_checks": [],
+  "evidence_refs": [
+   "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/dev_probe.json",
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/facts.json"
+  ],
+  "reviewer": null,
+  "previous_state": "environment_qualified",
+  "open_items": [
+   {
+    "kind": "support_pending_decision",
+    "summary": "隐藏 test_1.py 从仓库测试辅助模块 tests/coveragetest.py 导入 CoverageTest；上游修复提交同时改了它（assert_warnings 里的假 _warn 加了 once 参数），gold 按规则不含测试路径，工作区是修复前版本。gold 本身不在 assert_warnings 块里带 once 调 _warn，所以 gold=1 不受影响；但若候选顺带把别处警告改成 once=True，用到 assert_warnings 的用例会因旧假函数不接受 once 而 TypeError，正确解可能被判 0（源码推断，未实跑）。",
+    "evidence_refs": [
+     "runs/r2e_t0_batch2_20260924/scan/hidden_support_scan.md",
+     "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl"
+    ],
+    "next": "交静态筛查判断是否需要修订；环境阶段不改。",
+    "deferred_to": "题意与评分质量筛查"
+   }
+  ]
+ },
+ "costs": {
+  "probe_seconds": 34.21,
+  "probe_runs": 1,
+  "rerun_attempts": 0,
+  "rerun_seconds": 0
+ },
+ "reviewed_by": "p1-subagent",
+ "reviewed_at_utc": "2026-09-23T18:50Z",
+ "order_note": "E06 先后：先读 facts.json（含期望键名与 gold 触碰路径）与公开题面、公开工作区源码，写好 repros/<iid>.py 后才读隐藏测试源码、gold 日志与来源执行记录。",
+ "review_notes": [
+  {
+   "by": "Claude（验收，apply_r13.py）",
+   "at": "2026-09-23",
+   "change": "R13 由中央复跑并入：pass；disposition.state 'unknown' → 'environment_qualified'"
+  },
+  {
+   "by": "Claude（B 线，批次二验收）",
+   "at": "2026-09-24",
+   "change": "批量扫描发现旧测试辅助（S3）：disposition environment_qualified → grading_ok_open_items，classification env_ok → material，R04 改 issue"
+  }
+ ]
+}

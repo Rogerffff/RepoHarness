@@ -1,0 +1,214 @@
+{
+  "instance_id": "pydantic__pydantic-5706",
+  "run": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-5706/symptom_v2_20260928T201808Z-232b80",
+  "status": "partial_actor_private_noop_gold_verified",
+  "prior_failed_run_preserved": "followup_20260928T200118Z-72c261",
+  "old_evidence_sha_verified": {
+    "remote_run": "results/pydantic__pydantic-5706/followup_20260928T200118Z-72c261",
+    "scope": "Reuse original identity and regression evidence only; original symptom command failed due to wrong expected exception; not a passing old run.",
+    "files": {
+      "status.json": "89f2a9c8bb56769618a815892f3e206300a235bb669da56e07d150549adb374f",
+      "base_inspect.json": "bf031469c14e51809ad9a0f892d9d27aa2b5d32801c9db68bd555bf7ce693b3b",
+      "actor_original/attempt.json": "fb04a759be3f60c8f0a5aaa28363ceb2f8ad6c5c642945344d75845bd0f05515",
+      "actor_original/prelaunch.json": "7cf2fc93c62ef653dce16ba93a7aed85baf2ba415efe9f4db65a98a66fe38be5",
+      "actor_original/activation_check.json": "4c773fa632bdf08e2d801e3ecaf6d21d0803e7dcaacf06c94c362e73e9ed649c",
+      "actor_original/harness/trajectory.jsonl": "c275a3d4fa98c3bfc20e9ec3a29ff68fe2b1de058c3cefc96c86edf72bfd03a3",
+      "actor_original/captures/public_identity.out": "ef5a11782effb883a2814cc78f629c4282fb16728ee3a7132e027d814cb97d7b",
+      "actor_original/captures/public_sequence_regression.out": "94b18ea4bc8f7ca1f7d55044b90aa2e63a743c1eca89e675bc3755ef762ad062",
+      "actor_original/captures/public_original_symptoms.out": "30d0302d3337ff407f4fc24ffd704e296f17927f7b4d724bfa37a346c6aa5871",
+      "actor_original/captures/public_existing_sequence_tests.out": "62595e1568acf963f016c01ff927a90ada2243983f2fbc15fc921d79489fefb8"
+    }
+  },
+  "new_actor": {
+    "image": "sha256:3e3b78ae4098882290d0d7b6d544e81816337295d3a7f0245db7ea58355985d4",
+    "base_commit": "70e7e99ca1861ad71520cc8fcf1a2fb913abbc10",
+    "commands_result": [
+      {
+        "id": "public_original_symptoms",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 402,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "固定base/core0.31.0诊断：schema精确IsInstanceSchema错误与JSON精确NotImplementedError；题面core0.25.0异常不同，0仅表示本版本症状复现，不选择支持或拒绝方向。"
+      }
+    ],
+    "cleanup": {
+      "container_rm": 0,
+      "network_failures": [],
+      "relay_failures": [],
+      "stub_rc": 0,
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "residual_after_force": []
+    },
+    "post_run_facts": {
+      "RH2_HARNESS_DIR": "ABSENT",
+      "RH2_RUN_SH": "ABSENT",
+      "RH2_RUN_DONE": "ABSENT",
+      "RH2_GIT_STATUS_LINES": "2",
+      "RH2_AGENT_PROCS": "0",
+      "RH2_NEWER_FILES": "50"
+    },
+    "container_inspect": "sha256:3e3b78ae4098882290d0d7b6d544e81816337295d3a7f0245db7ea58355985d4 2000000000 4294967296"
+  },
+  "new_actor_scope": "one corrected symptom command only; prior identity and two regression commands reused",
+  "private": {
+    "base": {
+      "scope": "private root behavior only",
+      "spec_sha256": "09821a7886f89b5159594ec3ec100673d64ae914e3a550086d3e43337c0744b1",
+      "started_at": 1790626717.7236276,
+      "variants": {
+        "base": {
+          "container": "rh2-cpu29-private-973ab435ef1a",
+          "started_at": 1790626717.7732222,
+          "preparation": [
+            {
+              "step": "pwd; git rev-parse HEAD; git status --short; git diff --stat; python - <<'PY'\nimport os,sys,json,pathlib\nimport pydantic,pydantic_core\nprint('PY_CHECK',json.dumps(dict(uid=os.getuid(),cwd=os.getcwd(),python=sys.executable,version=sys.version,pydantic_file=pydantic.__file__,core=pydantic_core.__version__)))\nassert str(pathlib.Path(pydantic.__file__).resolve()).startswith('/testbed/')\nassert pydantic_core.__version__=='0.31.0'\nassert os.access('pydantic/_internal/_std_types_schema.py',os.W_OK)\n\nPY",
+              "rc": 0
+            },
+            {
+              "step": "python -m pytest --collect-only -q tests/test_types.py -k test_sequence_success",
+              "rc": 0
+            }
+          ],
+          "commands": [
+            {
+              "id": "private_matrix",
+              "rc": 0,
+              "seconds": 1.643593487000544,
+              "stdout_bytes": 1092,
+              "stderr_bytes": 0
+            }
+          ],
+          "status": "executed_interpret_separately",
+          "cleanup": {
+            "rm_rc": 0,
+            "query_rc": 0,
+            "remaining": [],
+            "stderr": ""
+          },
+          "finished_at": 1790626723.706222
+        }
+      },
+      "image_id_actual": "sha256:3e3b78ae4098882290d0d7b6d544e81816337295d3a7f0245db7ea58355985d4",
+      "finished_at": 1790626723.7068944
+    },
+    "gold": {
+      "scope": "private root behavior only",
+      "spec_sha256": "9feaaebed03b345daef53cd666eb830eccec39069455de81e9fffb8f30238e11",
+      "started_at": 1790626723.8695536,
+      "variants": {
+        "gold": {
+          "container": "rh2-cpu29-private-8ddfe2b1094c",
+          "started_at": 1790626723.9198096,
+          "preparation": [
+            {
+              "step": "git apply /in/candidate.patch",
+              "rc": 0
+            },
+            {
+              "step": "pwd; git rev-parse HEAD; git status --short; git diff --stat; python - <<'PY'\nimport os,sys,json,pathlib\nimport pydantic,pydantic_core\nprint('PY_CHECK',json.dumps(dict(uid=os.getuid(),cwd=os.getcwd(),python=sys.executable,version=sys.version,pydantic_file=pydantic.__file__,core=pydantic_core.__version__)))\nassert str(pathlib.Path(pydantic.__file__).resolve()).startswith('/testbed/')\nassert pydantic_core.__version__=='0.31.0'\nassert os.access('pydantic/_internal/_std_types_schema.py',os.W_OK)\n\nPY",
+              "rc": 0
+            },
+            {
+              "step": "python -m pytest --collect-only -q tests/test_types.py -k test_sequence_success",
+              "rc": 0
+            }
+          ],
+          "commands": [
+            {
+              "id": "private_matrix",
+              "rc": 0,
+              "seconds": 1.404994734999491,
+              "stdout_bytes": 595,
+              "stderr_bytes": 0
+            }
+          ],
+          "status": "executed_interpret_separately",
+          "cleanup": {
+            "rm_rc": 0,
+            "query_rc": 0,
+            "remaining": [],
+            "stderr": ""
+          },
+          "finished_at": 1790626729.7090719
+        }
+      },
+      "image_id_actual": "sha256:3e3b78ae4098882290d0d7b6d544e81816337295d3a7f0245db7ea58355985d4",
+      "finished_at": 1790626729.7098272
+    },
+    "sequence_list": {
+      "scope": "private root behavior only",
+      "spec_sha256": "b23fc42852ceafc0ac105df032a850c76d3270d2821e9d9b41af916a61855a3d",
+      "started_at": 1790626729.8606694,
+      "variants": {
+        "sequence_list": {
+          "container": "rh2-cpu29-private-9263409c002e",
+          "started_at": 1790626729.9086452,
+          "preparation": [
+            {
+              "step": "git apply /in/candidate.patch",
+              "rc": 0
+            },
+            {
+              "step": "pwd; git rev-parse HEAD; git status --short; git diff --stat; python - <<'PY'\nimport os,sys,json,pathlib\nimport pydantic,pydantic_core\nprint('PY_CHECK',json.dumps(dict(uid=os.getuid(),cwd=os.getcwd(),python=sys.executable,version=sys.version,pydantic_file=pydantic.__file__,core=pydantic_core.__version__)))\nassert str(pathlib.Path(pydantic.__file__).resolve()).startswith('/testbed/')\nassert pydantic_core.__version__=='0.31.0'\nassert os.access('pydantic/_internal/_std_types_schema.py',os.W_OK)\n\nPY",
+              "rc": 0
+            },
+            {
+              "step": "python -m pytest --collect-only -q tests/test_types.py -k test_sequence_success",
+              "rc": 0
+            }
+          ],
+          "commands": [
+            {
+              "id": "private_matrix",
+              "rc": 0,
+              "seconds": 1.7055473440013884,
+              "stdout_bytes": 6547,
+              "stderr_bytes": 0
+            }
+          ],
+          "status": "executed_interpret_separately",
+          "cleanup": {
+            "rm_rc": 0,
+            "query_rc": 0,
+            "remaining": [],
+            "stderr": ""
+          },
+          "finished_at": 1790626736.3764699
+        }
+      },
+      "image_id_actual": "sha256:3e3b78ae4098882290d0d7b6d544e81816337295d3a7f0245db7ea58355985d4",
+      "finished_at": 1790626736.377308
+    }
+  },
+  "private_interpretation": {
+    "base": "core0.31 schema/JSON failure precisely confirmed; container/value controls and six old tests pass",
+    "gold": "container/value controls and six old tests pass; base symptom diagnostic intentionally excluded",
+    "sequence_list": "tuple/deque become list; range ValidationError/list_type; old test_sequence_success 4 failed2passed645deselected",
+    "source_binding_limit": "private helper records fixed input file binding and git apply rc0, no independent full-source SHA capture in private container; formal exported bytes await review"
+  },
+  "formal_noop_audit": "evidence_audit_v2_partial.json",
+  "image_identity": {
+    "base": "sha256:3e3b78ae4098882290d0d7b6d544e81816337295d3a7f0245db7ea58355985d4",
+    "grader": "sha256:d8e8a4475e62b5c38ec3629a6ed33bad147ef915084d311f1571325285dbb943",
+    "base_repo_digests": [
+      "xingyaoww/sweb.eval.x86_64.pydantic_s_pydantic-5706@sha256:480f09d76fedfdb406fc845aab7d5e539d8af6ee905c562ce5ba7cc01203b86b"
+    ]
+  },
+  "limitations": [
+    "P5 support/reject JSON target unresolved",
+    "S1 quality restriction retained; no capability comparison admission via private postchecks",
+    "Formal gold complete and checked; sequence_list not yet reviewed",
+    "D6 not implemented; CPU does not prove solver/training/model/GPU qualification"
+  ],
+  "pending": [
+    "sequence_list formal complete original evidence",
+    "formal candidate full exports and all references/installation/dual cleanup",
+    "root frozen parser and transport SHA",
+    "independent final cross-package review"
+  ]
+}

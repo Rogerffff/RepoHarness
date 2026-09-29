@@ -1,0 +1,220 @@
+{
+ "task_id": "conan-io__conan-11560",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "345be91a038e1bda707e07a19889953412d358dc",
+  "version": "1.51",
+  "image": "xingyaoww/sweb.eval.x86_64.conan-io_s_conan-11560:latest",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/conan-io__conan-11560/{gold,empty}/offline/a1/",
+  "pkg_scans": "runs/env_overnight_20260916/L1_conan/{prescan2,envscan,collide}.json"
+ },
+ "public_view": {
+  "目标行为": "题面标题是 bazel generator not usable for packages with multiple libs, like openssl：BazelDeps 生成的 BUILD 文件里 libcrypto.a 与 libssl.a 对链接器的顺序不对，libcurl 依赖 openssl 时链不上。题面带一节 ## Solution，明确写出应该在 cc_import 上加 alwayslink = True，并给了改前/改后的 BUILD 片段。相关代码是 conan/tools/google/bazeldeps.py::_get_dependency_buildfile_content 里的 jinja 模板。",
+  "约束": "只改非测试源码。",
+  "公开材料无法确定的点": [
+   "题面给的方案（alwayslink = True）与判分要求的方案不是同一个东西，公开材料完全没有提示真正要做什么。",
+   "题面最后还提了 visibility = [\"//visibility:public\"] 的可选改动，并说那可能是另一个 issue。"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "public.problem_statement 的 ## Solution 一节要求加 alwayslink = True",
+    "validation.golden_patch 完全不含 alwayslink，只做了两件事：给 {{ library_type }} = \"{{ filepath }}\" 补一个逗号；在 deps = [ 里插一行 # do not sort",
+    "git grep alwayslink 345be91a -- conan/ conans/ 无输出：base 也没有"
+   ],
+   "note": "gold 与 test_patch 严格互相对应（同一 PR），但与题面写死的解决方案不是一回事。题面说的是让链接器忽略顺序（alwayslink），gold 做的是阻止 buildifier 重排 deps（# do not sort）。",
+   "by": "L1_conan"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base 模板里 deps = [ 后直接是 {% for lib in libs %}，无 # do not sort",
+    "stage1 empty：4 条 F2P 全 FAILED"
+   ],
+   "note": "base 确实没有 gold 要加的内容。但要注意：base 是否真的含题面所述缺陷（链接顺序）无法用这组测试验证，测试只比字符串。",
+   "by": "L1_conan"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 1333 字符，含两段完整代码块",
+    "raw.hints_text 为空"
+   ],
+   "note": "题面渲染完整、无外链图片。",
+   "by": "L1_conan"
+  },
+  "4_17": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan2.json: test_patch 只碰 conans/test/unittests/tools/google/test_bazeldeps.py"
+   ],
+   "note": "纯测试文件，gold 不碰测试路径。",
+   "by": "L1_conan"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "本包内无其它 bazeldeps 题"
+   ],
+   "note": "无同族题。",
+   "by": "L1_conan"
+  },
+  "23": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "F2P 断言含精确字符串 'deps = [\\n        # do not sort\\n    \\n    \":lib1_precompiled\",'",
+    "problem_statement 全文不含 sort / buildifier / 注释 等字样"
+   ],
+   "note": "公开材料不仅推不出 F2P，而且明确把求解者引向另一个方案。这是误导题面，不是信息不足。",
+   "by": "L1_conan"
+  },
+  "24": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "test_patch 的 4 处断言都是逐字符比对，含 # do not sort 的字面文本与两级缩进（8 空格）",
+    "test_bazeldeps_dependency_transitive 用正则 r'deps =\\s*\\[\\s*# do not sort\\s*\":lib1_precompiled\"'"
+   ],
+   "note": "这是本包里最强的唯一实现约束：求解者必须猜中一段自由文本注释的内容（# do not sort）和它的缩进。任何真正解决链接顺序问题的实现（加 alwayslink、按依赖拓扑排序 libs、改 cc_library 为 cc_import + linkstatic）都会被 F2P 拒绝。",
+   "by": "L1_conan"
+  },
+  "25": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "F2P 只检查生成文本里有没有 # do not sort 与逗号"
+   ],
+   "note": "反向漏洞同样成立：在模板里硬塞一行 # do not sort 就能全过，不需要理解 bazel 的链接顺序语义，也不会真的解决题面报的 libcurl 链不上的问题。",
+   "by": "L1_conan"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "P2P 3 条：test_bazeldeps_main_buildfile / build_dependency_buildfiles / interface_buildfiles，覆盖同文件其余生成路径"
+   ],
+   "note": "回归面很窄（同文件只有 7 个测试），建议扩展见 proposed_regression_tests。",
+   "by": "L1_conan"
+  },
+  "27": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "golden_patch 只有 2 行有效改动"
+   ],
+   "note": "gold 本身不解决题面报告的问题：# do not sort 只是给 buildifier 的格式化指令，libs.items() 的顺序仍由 cpp_info.libs 决定；题面里 libssl 在 libcrypto 之前的顺序问题没有被处理。gold 与题目对应关系弱。",
+   "by": "L1_conan"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "scripts/leak.py: 1 行 gold 新增，0 命中题面",
+    "题面与 hints 无 PR/commit 指针"
+   ],
+   "note": "无静态泄漏。",
+   "by": "L1_conan"
+  },
+  "30": {
+   "status": "not_applicable",
+   "evidence_refs": [],
+   "note": "本题没有 DeepSeek 轨迹，无法做污染对照。",
+   "by": "L1_conan"
+  },
+  "6_7_11": {
+   "status": "pass",
+   "evidence_refs": [
+    "envscan.json: test_bazeldeps.py 无 @pytest.mark.tool、无 http/网络/子进程命中",
+    "stage1 gold 7/7 PASSED、0 SKIPPED"
+   ],
+   "note": "不需要 bazel 可执行文件，只比对生成的 BUILD 文本；不访问 conancenter。",
+   "by": "L1_conan"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "scripts/collide.py 无 COLLISION/TRUNCATED/SKIP 输出"
+   ],
+   "note": "7 个参考 ID 无参数化、无空格。",
+   "by": "L1_conan"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan2.json: gold 7/7 PASSED；empty 3 PASSED + 4 FAILED（= 4 条 F2P）"
+   ],
+   "note": "分差来自目标行为（此处即 # do not sort 文本）。",
+   "by": "L1_conan"
+  },
+  "31": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "conans/test/.gitignore 第 1 行就是 conftest_user.py（1.51/1.54/1.60/2.0/2.1 五个 base 一致）",
+    "conans/test/conftest.py 用 from conans.test.conftest_user import tools_locations（1.x）/ tools_locations + default_profiles（2.x）并 merge 覆盖默认值",
+    "scripts 补扫：本题目标测试文件里无模块级 pytestmark、无 pytest.mark.tool、无 pytest.skip(、无 sys.exit/os._exit、无 conftest_user 引用"
+   ],
+   "note": "发现一个仓库级控制面：候选可以在 /testbed 新建 conans/test/conftest_user.py，它被官方 conftest 无条件 import 并 merge，而且它在 conans/test/.gitignore 里、也不在 test_patch 路径内，所以既不会被 git checkout <base> -- <path> 恢复，也不会被不带 -x 的 git clean 删掉；文件里的任意代码会在 pytest 收集阶段执行。本题是 conan 1.x：tools.py 不消费 default_profiles，可改的只有 tools_locations（把工具标记从 fail 变成 skip）。 本题是用 Mock 的单元测试，不依赖 default_profiles，改 conftest_user 更可能弄坏自己而不是刷分。 本题的 F2P/P2P 本身没有可被跳过或提前退出的入口（见上条补扫）。按第四组 B，未发现依据前不新增排除清单，只记录观测。",
+   "by": "L1_conan"
+  }
+ },
+ "issues": [
+  {
+   "category": "misleading_problem_statement",
+   "severity": "P1",
+   "evidence_refs": [
+    "public.problem_statement ## Solution 段",
+    "validation.golden_patch"
+   ],
+   "proposed_action": "建议 reject_revision 或重写题面。最小修法：把题面的 ## Solution 段改成描述真实约束（生成的 BUILD 文件会被 buildifier 重排 deps，导致静态库顺序丢失，需要在 deps 列表里保留顺序），否则求解者照题面做必然 0 分。",
+   "next_experiment": "盲解一次：只给现有题面，看模型是否会去加 alwayslink；再给改写题面盲解一次，对比。两次都跑官方 F2P。"
+  },
+  {
+   "category": "test_forces_single_implementation",
+   "severity": "P1",
+   "evidence_refs": [
+    "grading.test_patch 的 4 处逐字符断言"
+   ],
+   "proposed_action": "若保留，把断言从字面注释文本改成行为检查（例如断言 deps 列表里 :lib1_precompiled 出现在 @TransitiveDepName 之前）。",
+   "next_experiment": "写一个用 alwayslink = True 的合法替代解，跑官方 F2P 记录被拒的具体 ID，作为过严测试反例入库。"
+  },
+  {
+   "category": "control_surface_conftest_user",
+   "severity": "P2",
+   "evidence_refs": [
+    "conans/test/.gitignore:1",
+    "conans/test/conftest.py 的 conftest_user import 段",
+    "conans/test/utils/tools.py 的 from conans.test.conftest import default_profiles（仅 2.x）"
+   ],
+   "proposed_action": "仓库级处置，见 repo_level_findings.md §10：建议在 conan 的评分配方里，在可信 setup 阶段删除 /testbed/conans/test/conftest_user.py（或对整个 conans/test/ 做 git clean -xfd 后再 checkout），而不是逐题加 additional_exclusions。",
+   "next_experiment": "在 conan 镜像里写一个 conftest_user.py（例如 tools_locations={'cmake':{'disabled':True}} 或 2.x 下改 default_profiles['Linux'] 的 compiler），跑本题官方 eval，确认它是否改变逐 ID 结果；同时确认 RH2 的恢复步骤之后该文件是否仍在。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰纯测试文件 conans/test/unittests/tools/google/test_bazeldeps.py；gold 不碰测试路径。",
+  "evidence_refs": [
+   "runs/env_overnight_20260916/L1_conan/prescan2.json"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "conans/test/integration/toolchains/google/test_bazeltoolchain.py",
+   "reason": "BazelDeps 与 BazelToolchain 共用 conan/tools/google 的生成路径，改模板后应确认 toolchain 侧生成物未被波及。"
+  },
+  {
+   "id": "conans/test/unittests/tools/google/test_bazeldeps.py::test_bazeldeps_main_buildfile",
+   "reason": "已在 P2P；它覆盖 BUILD 主文件（不含 deps 段），能区分改动是否溢出到别的模板。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "题面写死的解决方案与判分要求相反，且 F2P 逐字符比对一段自由文本注释；不改题面则本题只能靠记忆上游 PR 通过。"
+ },
+ "costs": {
+  "minutes": 25
+ }
+}

@@ -1,0 +1,106 @@
+{
+  "instance_id": "conan-io__conan-13721",
+  "old_record_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/records/conan-io__conan-13721.json",
+  "environment": {
+    "status": "verified_original_baseline_outside_repair_scope",
+    "recipe": "full216/baseline01 原始对照；无已知环境修复需求",
+    "status_ref": "runs/env_recipe_repair_20260919/scope_reconciliation_20260920.json#outside_repair_ids",
+    "analysis_ref": "runs/full216_rh2_diagnostic_20260919/analysis_final_1011/coverage_216.json#conan-io__conan-13721",
+    "scope": "原始 noop 有目标失败且安装审计无失败；gold 完整命令退出 0，不等于题目质量或稳定性认证。",
+    "existing_observations": {
+      "noop": {
+        "reward": 0.0,
+        "test_rc": 1,
+        "log": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-1/eval_logs/evallog_replay-f216-baseline01-w_df99f252.eval.log",
+        "sha256": "42e71383f31f8a5db9777056d2988d7566dfe666b8e86657e93d214b78d55a3e"
+      },
+      "gold": {
+        "reward": 1.0,
+        "test_rc": 0,
+        "log": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-1/eval_logs/evallog_replay-f216-baseline01-w_c52e208f.eval.log",
+        "sha256": "30c8221727ba84b9ebb8a8847838f3412e4b3b8ebbd2838139a4217fce3ba006"
+      }
+    }
+  },
+  "requirements": "Jinja profile 渲染应提供当前 profile 的名称，使按名称命名的一组文件或 symlink 能共用模板生成配置。名称应对应用户选中的 profile，而不是模板目标文件；既有 include/import/profile_dir 行为需要保留。",
+  "public_sufficiency": "核心要求充分，保留扩展名也有仓库约定依据：_load_profile 接受实际 profile 文件名且所有文件先经 Jinja 渲染，没有 .jinja 专用剥后缀分支；profile_dir 已从同一路径派生。题面手写 generate 参数是 stem，不足以证明新增全局变量必须同样剥掉扩展名，后缀处理仍值得单独观测。",
+  "test_assessment": "F2P 覆盖五次 install：相对路径、含扩展名、默认/cache 名称及 include 后当前配置覆盖；没有要求用 os.path.basename 实现。没有 symlink 用例，而这恰是题面目的；已有 6 个 P2P 中 test_profile_template 的两个 assert 是非空字符串，不能泛称 P2P 全面可靠。",
+  "old_claim_reviews": [
+    {
+      "old_claim": "checks.23：题面唯一语义线索是去扩展名，保留 foo.profile 没有公开依据。",
+      "status": "refuted",
+      "assessment": "手动 macro 参数不等于新增全局变量定义。仓库对 profile_name 的读取、查找和创建都使用实际文件名，且所有文件均渲染；basename 保留扩展名有可见依据。仍不把 gold 细节当强制文本规范。",
+      "evidence": [
+        "public.problem_statement",
+        "base:conans/client/profile_loader.py:147-166,197-220",
+        "base:conan/cli/commands/profile.py:42-61"
+      ]
+    },
+    {
+      "old_claim": "checks.23：include 场景下的 profile_name 完全无法推知。",
+      "status": "refuted",
+      "assessment": "基线递归调用 _load_profile(include,cwd)，每个文件单独创建上下文；随后当前 profile 的 conf 覆盖继承值。官方 include 测试的最终 include_default 符合既有组合语义，并非隐藏的全局父名称传播规则。",
+      "evidence": [
+        "base:conans/client/profile_loader.py:173-190,283-299",
+        "grading.test_patch"
+      ]
+    },
+    {
+      "old_claim": "checks.25：官方没有验证按名称生成配置这一核心使用场景。",
+      "status": "confirmed",
+      "assessment": "它验证变量可读取，却没有题面明确提出的 symlink 共用模板；静态上 realpath 取名会误处理该用例，需另行最小对照。",
+      "evidence": [
+        "public.problem_statement 最后一段",
+        "grading.test_patch"
+      ]
+    },
+    {
+      "old_claim": "ready_for_probe 的依据是 P2P 6 条充分。",
+      "status": "unresolved",
+      "assessment": "数量属实但不证明充分；其中 test_profile_template 的 assert 只是非空常量，另 5 条仍提供实际 include/import/profile_dir 等检查。本轮保留探针建议，理由改为可推导需求与直接 F2P，而非 P2P 数量。",
+      "evidence": [
+        "base:conans/test/integration/configuration/test_profile_jinja.py:10-24,27-105"
+      ]
+    },
+    {
+      "old_claim": "checks.31 / control_surface_conftest_user：候选新增配置可进入测试控制面。",
+      "status": "unresolved",
+      "assessment": "旧仓库线索与本轮题意审查分开；没有执行新的篡改反例，也未据此给本题降级。可信边界的现实风险应沿统一评分链审查，不能把安装/参考键已验误写成安全已验。",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/CODEX_REVIEW_20260916.md#2",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/records/conan-io__conan-13721.json#checks.31"
+      ]
+    }
+  ],
+  "recommendation": "probe_candidate",
+  "recommendation_scope": "本轮模型探针/反例调查建议，不是训练准入、剔题或修改正式题包决定。",
+  "next_action": [
+    "作为补充模型探针，记录候选对扩展名的解释；不因选择 stem 就先归为环境或模型无能。",
+    "最小行为反例诊断（未运行）：两个不同命名的 symlink 指向同一 Jinja 模板，模板输出 profile_name；应分别得到 symlink 的名称。用 basename(realpath(profile_path)) 的候选预计通过现有普通文件 F2P，却在该诊断返回共同目标名称；另让 include 文件输出自己的独立 conf 键，确认各次渲染按自身 profile 名称运行。"
+  ],
+  "evidence_level": {
+    "task_quality": "static",
+    "environment": "existing_run",
+    "new_counterexamples": "not_run",
+    "local_verification": "16 份所引用既有评分日志的 SHA256 与当前归档一致；未新增 Docker/远端/模型运行。"
+  },
+  "unknowns": [
+    "未实跑 symlink、stem 或 realpath 反例；题面示例的 .jinja 后缀如何交给其 macro 处理未被官方 F2P 覆盖。"
+  ],
+  "materials": {
+    "base_commit": "0efbe7e49fdf554da4d897735b357d85b2a75aca",
+    "source_repository": "runs/env_overnight_20260916/repos/conan（只用 git show 读取精确 base）",
+    "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl:34",
+    "test_patch_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:34",
+    "gold_reference_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl:34",
+    "reference_counts": {
+      "f2p": 1,
+      "p2p": 6
+    },
+    "base_source_refs": [
+      "conans/client/profile_loader.py:141-220",
+      "conan/cli/commands/profile.py:42-61",
+      "conans/test/integration/configuration/test_profile_jinja.py:10-105"
+    ]
+  }
+}

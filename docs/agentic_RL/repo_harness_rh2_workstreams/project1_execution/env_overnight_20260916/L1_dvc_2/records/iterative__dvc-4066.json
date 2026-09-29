@@ -1,0 +1,262 @@
+{
+ "task_id": "iterative__dvc-4066",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+  "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+  "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+  "raw": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc",
+  "base_commit": "51a8c782aeac0b758adef9a161ae97b17503cb01",
+  "version": "1.0",
+  "python_version": "3.9",
+  "eval_cmd": "pytest -rA",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-4066:latest",
+  "workdir": "/testbed",
+  "test_patch_paths": [
+   "tests/func/test_ignore.py"
+  ],
+  "gold_paths": [
+   "dvc/ignore.py"
+  ],
+  "n_f2p": 1,
+  "n_p2p": 10,
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4066/{gold,empty}/offline/a1/",
+  "signals": {
+   "in_e2": [],
+   "fragile_reference_id": false,
+   "stage1": {
+    "empty": {
+     "verdict": "RESOLVED_NO",
+     "rc_install": 0
+    },
+    "gold": {
+     "verdict": "RESOLVED_FULL",
+     "rc_install": 0,
+     "p2p_missing": 0,
+     "f2p_missing": 0
+    }
+   },
+   "deepseek_candidate_oracle": null
+  }
+ },
+ "public_view": {
+  "目标行为": "`.dvcignore` 里的空行不应让所有 dvc 命令崩溃；空行应被当作无模式忽略掉，其余模式照常生效。",
+  "约束": "题面给了完整 traceback（定位到 `dvc/ignore.py:39` 的 listcomp）、最小 `.dvcignore` 复现样例、明确的 TL;DR，以及版本/平台信息。",
+  "公开材料无法确定的点": [
+   "只差『空行以外的空白行（例如只有空格的行）要不要一起处理』与『注释行 `#` 的既有行为』这两点细节；其余都能从 traceback + base 代码直接推出。"
+  ],
+  "base 关键代码": "dvc/ignore.py:32-41：`GitWildMatchPattern.pattern_to_regex` 对空行返回 `(None, None)`，随后 `groupby(..., lambda x: x[1])` 把 None 当成一个分组键，`\"|\".join(item[0] for item in group)` 里 `item[0]` 是 None，于是 `TypeError: sequence item 0: expected str instance, NoneType found`，与题面 traceback 完全吻合。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "repos/dvc 3a469f2e93b8b15f631ece356792acf95b57b3fa `dvcignore: ignore empty (None) patterns (#4066)` --stat: dvc/ignore.py 1+, tests/func/test_ignore.py 7+"
+   ],
+   "note": "gold+test_patch 与上游 commit 逐字一致，无丢件。",
+   "by": "L1_dvc_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base:dvc/ignore.py:32-41",
+    "stage1 empty: test_ignore_blank_line=FAILED"
+   ],
+   "note": "缺陷在 base 确实存在，且与题面 traceback 的行号一一对应。",
+   "by": "L1_dvc_2"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 3436 字符，含完整 traceback 与 .dvcignore 样例，三个代码块均闭合"
+   ],
+   "note": "本包题面质量最好的一题：症状、复现、根因文件行号、用户自己的定位过程都在，无外链图片、无截断。",
+   "by": "L1_dvc_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 仅 tests/func/test_ignore.py",
+    "gold 仅 dvc/ignore.py"
+   ],
+   "note": "零交集。additional_exclusions 空。",
+   "by": "L1_dvc_2"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh git checkout 目标为 tests/func/test_ignore.py"
+   ],
+   "note": "纯测试文件恢复。",
+   "by": "L1_dvc_2"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "prescan.json: 4066/4125/4166 的 test_patch 都含 tests/func/test_ignore.py；4066 与 4166 的 gold 都是 dvc/ignore.py",
+    "git merge-base --is-ancestor 3a469f2e9 520e01f113 → true（4166 的 base 含本题 gold）",
+    "同样 3a469f2e9 是 4125 base e4dafb8552 的祖先"
+   ],
+   "note": "**本包最强的同族关系**：4066 → 4125 → 4166 三题在同一条 dvcignore 历史上，后两题的 base 都已包含本题的参考解，且共用同一个测试文件。划分训练/评测必须同侧，且不能把 4166 当作对 4066 的独立泛化测试。",
+   "by": "L1_dvc_2"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement traceback 与 .dvcignore 样例",
+    "F2P test_ignore_blank_line 的断言 `_files_set(\"dir\", dvc.tree) == {\"dir/other\"}`"
+   ],
+   "note": "公开材料足以推出 F2P 检查的行为：空行不崩溃 + 其它模式仍生效。",
+   "by": "L1_dvc_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 一行 `if ignore is not None`"
+   ],
+   "note": "F2P 只断言对外行为，不锁实现。至少两种合法替代解（在 `path_spec_lines` 上先过滤 `line.strip()`；或在 listcomp 里过滤 `item[0] is not None`）都能通过。",
+   "by": "L1_dvc_2"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "raw hints_text 的维护者复现（含 `monkeypatch.chdir(\"dir\")` 后再断言 `_files_set(\".\", dvc.tree) == {\"./other\"}`）",
+    "test_patch 只保留了前半段，并把模式顺序从 `dir/ignored\\n\\nfoo` 改成 `foo\\n\\ndir/ignored`"
+   ],
+   "note": "交付的 F2P 比维护者自己在 issue 里写的复现**弱一半**：丢掉了 chdir 后相对路径仍正确的第二段断言。另外 F2P 只覆盖『空行在中间』，不覆盖首行空行、行尾空行、只含空格的行、只含 `#` 注释的行。一个只在『空行恰好位于两个模式之间』时生效的窄修复能满分。",
+   "by": "L1_dvc_2"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "smstat.json: gold 下 tests/func/test_ignore.py 有 3 条既有 FAILED（test_dvcignore_in_out_dir / test_match_nested / test_ignore_external），不在 P2P",
+    "stage1 gold real=14 counts={'PASSED':11,'FAILED':3}"
+   ],
+   "note": "P2P 10 条是『整文件跑后双侧 PASSED』的自然产物，覆盖了 rename/remove/branch/unicode 等 dvcignore 行为，判别力尚可。缺口：`dvc/ignore.py` 还被 tests/unit/test_ignore.py 覆盖（4166 的 test_patch 就用了它），本题没纳入；且 3 条既有失败在这个镜像下长期红着，没人解释。",
+   "by": "L1_dvc_2"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "上游 commit --stat 只有两个文件"
+   ],
+   "note": "gold 一行、无夹带、不依赖未交付改动。",
+   "by": "L1_dvc_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak.py: iterative__dvc-4066 gold_added=1 ps_match=0 hints_match=0；题面与 hints 都无 URL"
+   ],
+   "note": "题面不含修复代码也不含 PR 链接。hints（不可见）直接给出了几乎就是 F2P 的测试代码——若将来把 hints 纳入可见材料，本题就等于送分。",
+   "by": "L1_dvc_2"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "stage1 eval.sh install 段"
+   ],
+   "note": "install 段需要网络；离线下靠镜像预装兜底。",
+   "by": "L1_dvc_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只用 tmp_dir/dvc fixture 现场生成文件"
+   ],
+   "note": "无外部资产。",
+   "by": "L1_dvc_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 内容无 URL/requests/boto3"
+   ],
+   "note": "测试段纯本地。",
+   "by": "L1_dvc_2"
+  },
+  "18": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh `pytest -rA tests/func/test_ignore.py`",
+    "gold real=14 ⊇ F2P 1 + P2P 10"
+   ],
+   "note": "整文件跑，无漏选；过选 3 条既有失败用例，不计分。",
+   "by": "L1_dvc_2"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "stage1 gold status_map 伪键 'Could'/'No'（pip 的 ERROR: 行）"
+   ],
+   "note": "同 3677：parser 吃整份日志产生伪键，不影响判分。",
+   "by": "L1_dvc_2"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "empty 10 PASSED/4 FAILED；gold 11 PASSED/3 FAILED"
+   ],
+   "note": "分差恰为 test_ignore_blank_line 一条。",
+   "by": "L1_dvc_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "测试弱于维护者复现",
+   "severity": "P2",
+   "evidence_refs": [
+    "hints_text 复现 vs test_patch"
+   ],
+   "proposed_action": "把维护者复现的第二段（chdir 后相对路径断言）补进 F2P，并补首行/末行空行、纯空格行两个 case。",
+   "next_experiment": "写一个只处理『中间空行』的窄修复（例如只在 groupby 前把连续空行合并），跑当前 F2P，预期满分。"
+  },
+  {
+   "category": "同族/划分约束",
+   "severity": "P1",
+   "evidence_refs": [
+    "merge-base 结果",
+    "三题共用 tests/func/test_ignore.py"
+   ],
+   "proposed_action": "4066 / 4125 / 4166 标为同族，训练/评测划分同侧；不把 4166 当作 4066 的独立泛化评测。",
+   "next_experiment": "无（静态可判）。"
+  },
+  {
+   "category": "镜像既有失败",
+   "severity": "P2",
+   "evidence_refs": [
+    "smstat.json 4066/4125/4166 gold 下同样 3 条 FAILED"
+   ],
+   "proposed_action": "查清 test_dvcignore_in_out_dir / test_match_nested / test_ignore_external 在这三个镜像里为什么长期失败（同一组失败跨三个不同 base 复现，像是环境而非代码）。",
+   "next_experiment": "在其中一个镜像里单跑这 3 条取 traceback。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只有 tests/func/test_ignore.py；gold 只改 dvc/ignore.py。沿用第四组 B 默认空。",
+  "evidence_refs": [
+   "test_patch",
+   "golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/unit/test_ignore.py 全文件（4166 的 test_patch 使用的同一模块单测）",
+   "reason": "直接覆盖 DvcIgnorePatterns 的模式匹配语义，比 func 层更细，且本题改的就是模式编译。"
+  },
+  {
+   "id": "tests/func/test_ignore.py::test_ignore_collecting_dvcignores 一族（已在 P2P）+ 首行/末行/纯空格空行新 case",
+   "reason": "补上 F2P 未覆盖的空行位置。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "题面质量最好（完整 traceback + 最小复现 + 行号），gold 与上游一致、只有一行，F2P 行为化不锁实现，empty/gold 分差单一。待办只是补覆盖与记同族，不阻塞探针。"
+ },
+ "costs": {
+  "minutes": 16
+ },
+ "by": "L1_dvc_2 (Claude Opus 5, 2026-09-16, 静态审查)"
+}

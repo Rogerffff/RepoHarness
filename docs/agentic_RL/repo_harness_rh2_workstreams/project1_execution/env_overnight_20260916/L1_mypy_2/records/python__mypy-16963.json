@@ -1,0 +1,261 @@
+{
+ "task_id": "python__mypy-16963",
+ "source": "SWE-Gym lite / python/mypy PR 16963（Type[TypedDict] 无法实例化）",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "f19b5d3a026319687dd81a5c7c976698bbe948a8",
+  "version": "1.10",
+  "python_version": "3.12",
+  "eval_cmd": "pytest -rA -k",
+  "f2p": [
+   "mypy/test/testcheck.py::TypeCheckSuite::check-typeddict.test::testInitTypedDictFromType"
+  ],
+  "p2p": [],
+  "gold_paths": [
+   "mypy/checkexpr.py"
+  ],
+  "test_patch_paths": [
+   "test-data/unit/check-typeddict.test"
+  ],
+  "runtime_evidence": "无（不在 stage1 样本、in_e2 空、无 DeepSeek 候选）"
+ },
+ "public_view": {
+  "goal": "把 TypedDict 类型当成 `type[D]` 传来传去并调用时，mypy 报 'Cannot instantiate type \"Type[D]\"' 等一串错误；题面要求这些错误全部消失。",
+  "constraints": [
+   "题面 4561 字符（本包最长），含两段小复现 + 一份 40 行的完整复现脚本，无外链、无图片、无截断",
+   "题面列了 **5 条**期望消失的错误"
+  ],
+  "unknowns_from_public_only": [
+   "题面的 5 条错误里哪几条属于本次修复范围——gold 只有 2 行，只解决 'Cannot instantiate type' 这一族；`Incompatible types in assignment (Union[Type[Point], Type[PointDict]] vs 同一个 Union)` 那条明显是另一个 bug",
+   "修好之后 `Type[TypedDict]` 调用应按什么签名检查（F2P 要求关键字必填、多余关键字报错、位置参数报错），题面完全没说",
+   "题面版本是 0.910，hints 里补充说 1.7.1 上 5 条已经变成 3 条 —— base 是 1.10，真实初态与题面不一致"
+  ],
+  "base_code_evidence": [
+   "f19b5d3a0:mypy/checkexpr.py:1850-1860 analyze_type_type_callee：对 TupleType 有特判，对 TypedDictType 没有，直接落到 self.msg.unsupported_type_type(item, context) → 'Cannot instantiate type'",
+   "f19b5d3a0:mypy/checkexpr.py:949 typeddict_callable_from_context(callee: TypedDictType) 在 base 已存在 —— gold 只是把它接到缺失的分支上"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "test-data/unit/check-typeddict.test 在 base 存在（232 个 case）",
+    "gold 目标 mypy/checkexpr.py:1855-1860 在 base 逐行一致；依赖的 typeddict_callable_from_context 在 :949 已存在"
+   ],
+   "note": "无二进制/LFS/子模块；F2P 是新增 case。",
+   "by": "L1_mypy_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "f19b5d3a0:mypy/checkexpr.py:1850-1860 缺 TypedDictType 分支"
+   ],
+   "note": "静态确认 base 含题面所述的 'Cannot instantiate type' 缺陷（其余 4 条未逐条核对）。",
+   "by": "L1_mypy_2"
+  },
+  "3": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "problem_statement 4561 字符，含一份 40 行完整脚本与 5 条错误清单",
+    "raw hints_text 689 字符：作者自己回来更新了'Actual Behavior'，在 mypy 1.7.1 上只剩 3 条错误"
+   ],
+   "note": "题面的错误清单是 0.910 时代的，与 base(1.10) 的真实初态不符；更新后的清单只在 hints 里。agent 按题面去追那 5 条会白费力气（其中至少 2 条在 base 上已经不复现）。",
+   "by": "L1_mypy_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只碰 test-data/unit/check-typeddict.test"
+   ],
+   "note": "无非测试源码；gold 不碰测试样路径。",
+   "by": "L1_mypy_2"
+  },
+  "17": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "同 file_rules"
+   ],
+   "note": "仓库级。",
+   "by": "L1_mypy_2"
+  },
+  "5": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "python__mypy-16963 的上游修复 commit 正是 python__mypy-16966 的 base_commit（两题 base 相隔一个 PR，见 L1_mypy_1 的 cross_task_leak 结论）"
+   ],
+   "note": "16963 与 16966 是紧邻的两题：训练/评测划分必须同侧，否则 16966 的 base 里已经含有 16963 的答案。",
+   "by": "L1_mypy_2"
+  },
+  "23": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "F2P 断言 `cls(1, 2)  # E: Too many positional arguments`、`cls(x=1)  # E: Missing named argument \"y\"`、`cls(x=1, y=2, error=\"\")  # E: Unexpected keyword argument \"error\"`"
+   ],
+   "note": "题面只要求'别报 Cannot instantiate'，推不出'实例化后还要按 TypedDict 的键做完整的关键字参数校验'这三条。反过来说这三条正是 gold 复用 typeddict_callable_from_context 的自然结果。",
+   "by": "L1_mypy_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 断言的是标准诊断文本与 reveal_type 结果"
+   ],
+   "note": "不强制唯一实现，但复用 base 已有的 typeddict_callable_from_context 几乎是唯一能一次满足四条断言的走法。",
+   "by": "L1_mypy_2"
+  },
+  "25": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "F2P=1、P2P=0；check-typeddict.test 232 个既有 case 一条未入 P2P"
+   ],
+   "note": "F2P 本身有正反两侧（既要求 cls(x=1,y=2) 通过，也要求三种误用报错），挡住了'一律返回 AnyType'的假修复。剩余风险：agent 若把 analyze_type_type_callee 的兜底 unsupported_type_type 整体删掉，`Type[Tuple[int, str]]` 之类本该报错的情形会静默通过，无任何 P2P 发现。",
+   "by": "L1_mypy_2"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "P2P=0"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_mypy_2"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 只有 2 行；依赖函数在 base 已存在"
+   ],
+   "note": "gold 正确、最小、不依赖未交付改动。但它**没有覆盖题面的全部 5 条错误**（例如 Union 赋值那条），属于 gold 范围小于题面。",
+   "by": "L1_mypy_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 无 PR/commit 链接、无修复代码"
+   ],
+   "note": "题面无泄漏。",
+   "by": "L1_mypy_2"
+  },
+  "6": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "未实跑安装。",
+   "by": "L1_mypy_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P case 用 [typing fixtures/typing-full.pyi] 与 [builtins fixtures/tuple.pyi]，均在仓库内"
+   ],
+   "note": "无外部依赖。",
+   "by": "L1_mypy_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "case 正文无网络调用"
+   ],
+   "note": "纯离线。",
+   "by": "L1_mypy_2"
+  },
+  "18": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "eval_cmd 缺 -n0；f19b5d3a0:pyproject.toml addopts = \"-nauto ...\"",
+    "kscan.json:python__mypy-16963 over_select=[]"
+   ],
+   "note": "并行口径问题；无 -k 过选。",
+   "by": "L1_mypy_2"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "nodeid 4 段；f19b5d3a0:mypy/test/data.py 含 DataFileCollector"
+   ],
+   "note": "形状一致。",
+   "by": "L1_mypy_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "stale_problem_statement",
+   "severity": "P2",
+   "evidence_refs": [
+    "题面 5 条错误清单来自 mypy 0.910；hints 里作者更新为 1.7.1 上的 3 条；base 是 1.10"
+   ],
+   "proposed_action": "把题面的 Actual Behavior 换成 base 版本的真实输出，或在题面里点明只需修 'Cannot instantiate type' 一族。",
+   "next_experiment": "在 base 镜像上对题面那份 40 行脚本跑 `mypy --show-error-codes --warn-return-any`，记录真实错误清单，与题面逐条比对。"
+  },
+  {
+   "category": "grading_coverage",
+   "severity": "P2",
+   "evidence_refs": [
+    "P2P=0；232 个既有 case 未入 P2P"
+   ],
+   "proposed_action": "补 P2P：check-typeddict.test 全文件 + check-classes.test 里 Type[...] 实例化相关 case。",
+   "next_experiment": "删掉 unsupported_type_type 兜底的假修复跑当前 F2P（预期满分），再跑 check-classes.test（预期出现 Type[Tuple] 之类不再报错）。"
+  },
+  {
+   "category": "dataset_split",
+   "severity": "P2",
+   "evidence_refs": [
+    "16963 的上游修复 commit == 16966 的 base_commit"
+   ],
+   "proposed_action": "把 16963 与 16966 绑在同一侧划分。",
+   "next_experiment": "无（元数据核对即可）。"
+  },
+  {
+   "category": "eval_cmd_parallelism",
+   "severity": "P2",
+   "evidence_refs": [
+    "eval_cmd 'pytest -rA -k'（无 -n0）",
+    "base pyproject.toml addopts = \"-nauto --strict-markers --strict-config\"",
+    "test-requirements.in 含 pytest>=7.4.0 与 pytest-xdist>=1.34.0"
+   ],
+   "proposed_action": "本题会在 pytest-xdist 全核并行下评分（本包 5 题、40 题里 6 题如此）。建议统一补 -n0 或明确记录并行口径。",
+   "next_experiment": "同机对比带/不带 -n0 的逐 case 状态、墙钟耗时与峰值内存。"
+  },
+  {
+   "category": "file_boundary",
+   "severity": "P1",
+   "evidence_refs": [
+    "rh2/src/repoharness2/grading/manager.py:656/672/581"
+   ],
+   "proposed_action": "建议把 mypy/test/* 与 test-data/* 纳入 hygiene 保护（40 题 gold 均不触碰）。",
+   "next_experiment": "构造只改 mypy/test/helpers.py::assert_string_arrays_equal 的候选 patch 走一次评分，确认当前会判满分。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 test-data/unit/ 下的 .test 数据文件，gold 只碰 mypy/ 源码，两者无交集，按第四组 B 默认保持空。仓库级建议（需用户裁定、对 40 题统一生效）：把 'mypy/test/*' 与 'test-data/*' 加入 hygiene.test_globs——40 题 gold 无一触碰这两处（已对 validation_bundles 全量核对），而当前 agent 改 mypy/test/helpers.py、mypy/test/data.py 或 test-data/unit/fixtures/*.pyi 既不被 eval 的 git checkout 还原，也不被判 rejected_test_tampering。副作用：agent 在 test-data/ 下建临时文件会让整份提交作废，需一并决定。",
+  "evidence_refs": [
+   "rh2/src/repoharness2/grading/manager.py:656、:672、:581",
+   "rh2/src/repoharness2/contracts/grading.py:118-121"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "mypy/test/testcheck.py::TypeCheckSuite::check-typeddict.test 全文件（232 个 case）",
+   "reason": "gold 改的是 TypedDict 可调用性的入口。"
+  },
+  {
+   "id": "check-classes.test 里所有 `Type[X]()` 实例化用例",
+   "reason": "analyze_type_type_callee 是所有 Type[...] 调用的公共路径，兜底分支被动过就要复核。"
+  },
+  {
+   "id": "新增：`Type[Tuple[int, str]]` 等仍应报 'Cannot instantiate type'",
+   "reason": "钉住兜底分支没有被一并删掉。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_review",
+  "reason": "gold 只有 2 行且正确，F2P 正反两侧齐全；但题面的错误清单对不上 base 版本（作者自己在 hints 里更正过），并且与 16966 base 相邻。先核对题面真实初态再定。"
+ },
+ "costs": {
+  "minutes": 27
+ }
+}

@@ -1,0 +1,52 @@
+{
+ "task_id": "getmoto__moto-6408",
+ "source": "SWE-Gym lite (swe_gym_lite_full_f70b1a29)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "s2/ingest/public_bundles_v0.jsonl#getmoto__moto-6408",
+  "grading": "s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-6408",
+  "validation": "s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-6408",
+  "base_commit": "1dfbeed5a72a4bd57361e44441d0d06af6a2e58a",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-6408/gold/offline/a1/"
+ },
+ "public_view": {
+  "goal": "ECR put_image：把一个已存在的 tag 移到另一个 manifest 上时，旧镜像仍保留该 tag，导致 batch_get_image 仍返回旧镜像。要求 tag 只属于一个镜像。",
+  "constraints": ["题面给出完整复现函数，断言 initial_image != new_image", "题面说明是 4.1.11 引入的回归"],
+  "unknowns_from_public_only": [
+   "题面复现代码引用 `_create_image_manifest()` 但未给定义（它在 tests/test_ecr/test_ecr_boto3.py 里，需要 agent 自己找）",
+   "题面只要求“两次结果不同”，没说应该返回哪一个镜像、旧镜像的 tag 应被移除还是旧镜像整体删除",
+   "题面没说 image_tags（多 tag）与 image_tag（主 tag）两个字段的期望关系"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 只碰 tests/test_ecr/test_ecr_boto3.py（base 已存在）", "golden_patch 只碰 moto/ecr/models.py 的 put_image"], "note": "无二进制/LFS/子模块，与题面同一问题。", "by": "L1_moto_3"},
+  "2": {"status": "pass", "evidence_refs": ["base moto/ecr/models.py:591-606：manifest 不存在的分支里会 `batch_delete_image(image_ids=[{'imageTag': image_tag}])` 去抢 tag", "base moto/ecr/models.py:608-621：manifest 已存在的分支只 `image.update_tag(image_tag)`，不去别的镜像上摘 tag", "base models.py:310-313 update_tag 只追加，不影响其它镜像"], "note": "base 确有缺陷：两个分支不对称，重新打 tag 到已存在的 manifest 时会出现两个镜像共享同一 tag。", "by": "L1_moto_3"},
+  "3": {"status": "issue", "evidence_refs": ["problem_statement 1628 字符，复现代码直接调用未定义的 `_create_image_manifest()`"], "note": "P3：题面复现片段依赖测试私有 helper，agent 必须先在 tests/test_ecr/test_ecr_boto3.py 找到它才能跑通复现。无外链/图片/截断。", "by": "L1_moto_3"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 触碰路径全集：tests/test_ecr/test_ecr_boto3.py"], "note": "无非测试源码路径；gold 触碰 moto/ecr/models.py，非测试样路径。", "by": "L1_moto_3"},
+  "17": {"status": "pass", "evidence_refs": ["同 4"], "note": "additional_exclusions 空。", "by": "L1_moto_3"},
+  "5": {"status": "pass", "evidence_refs": ["全局索引：tests/test_ecr/test_ecr_boto3.py 与 moto/ecr/models.py 在 216 题里只被本题使用"], "note": "无重复/派生。", "by": "L1_moto_3"},
+  "23": {"status": "pass", "evidence_refs": ["F2P 断言 `initial_image['imageManifest'] == image_manifests['image_001']` 与 `new_image['imageManifest'] == image_manifests['image_002']`"], "note": "比题面的 `initial_image != new_image` 更明确，但方向一致，可从题面推出。", "by": "L1_moto_3"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 只做黑盒断言，不检查内部字段"], "note": "不强制唯一实现。", "by": "L1_moto_3"},
+  "25": {"status": "issue", "evidence_refs": ["F2P 用 `new_image, *_ = client.batch_get_image(...)['images']` 取第一个，多个匹配会被静默吞掉", "F2P 注释写着 'the shared tag should be removed from the first image'，但没有任何断言去验证这一点（没查 image_001 的 tag 列表，也没查 describe_images）"], "note": "**只改返回顺序就能过**：例如让 batch_get_image 优先返回最近更新的镜像、或把重新打 tag 的镜像挪到 repository.images 末尾/开头，F2P 全过而 tag 仍同时挂在两个镜像上，与题目标题 'ensure_tags_exist_only_on_one_image' 相反。P2。", "by": "L1_moto_3"},
+  "26": {"status": "pass", "evidence_refs": ["collected 96 items = F2P 1 + P2P 95，全过"], "note": "同文件的 ECR 用例面很宽，P2P 包含 test_put_same_image_with_same_tag、batch_delete_image 系列等。", "by": "L1_moto_3"},
+  "27": {"status": "issue", "evidence_refs": ["golden_patch 两个 hunk：(a) `lambda x: x.response_object['imageTag'] == image_tag` → `lambda x: image_tag in x.image_tags`；(b) 在 else 分支加 batch_delete_image", "base models.py:669-775 batch_delete_image 对找不到的 tag 只写 failures，不抛异常"], "note": "hunk (b) 单独就能让 F2P 通过（推理：第二次 put 时 else 分支先 batch_delete_image 摘掉 image_001 的 mock-tag，再 update_tag 到 image_002；第一次 put 时该 tag 不存在，batch_delete_image 只返回 failures 不抛错）。也就是说 **gold 的 hunk (a) 不被任何判分用例覆盖**；只写 hunk (a) 的解答会失败，只写 hunk (b) 的解答得满分。gold 本身正确且对应题目，但判分无法区分完整修复与一半修复。另记一个与真实 AWS 的偏差（属 moto 既有约定，不是本次引入）：batch_delete_image 在旧镜像只有这一个 tag 时会把镜像整体删除（models.py:751-755 `repository.images.remove(image)`），真实 AWS 是保留为 untagged。", "by": "L1_moto_3"},
+  "29": {"status": "pass", "evidence_refs": ["hints_text 指出回归来自 PR #6342，并把 gold 的两个 hunk 用自然语言说了一遍：'we don't correctly search if the tag exists in images with multiple tags, and we also do not re-assign/remove the tag if it exists in an existing manifest'"], "note": "hints 对 agent 不可见，故不算泄漏；但若 hints 被拼进提示词，本题等于直给答案。题面本身只说“4.1.11 引入的回归”，没有指向具体 PR。", "by": "L1_moto_3"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold 96 passed"], "note": "纯 mock。", "by": "L1_moto_3"},
+  "7": {"status": "issue", "evidence_refs": ["本包共性 install rc=2"], "note": "见包级 issue。", "by": "L1_moto_3"},
+  "11": {"status": "pass", "evidence_refs": ["ECR 测试全部走 moto mock，manifest 由本地 helper 生成"], "note": "无外部服务。", "by": "L1_moto_3"}
+ },
+ "issues": [
+  {"category": "test_too_permissive", "severity": "P2", "evidence_refs": ["F2P 只断言 batch_get_image 返回的第一个镜像的 manifest，未断言旧镜像的 tag 被移除"], "proposed_action": "作为扩展回归补断言（RH2 侧附加，不改上游 P2P）。若要用该题做训练信号，注意它奖励“改顺序”这类假修复。", "next_experiment": "构造只改返回顺序（例如 batch_get_image 反向遍历 repository.images）的补丁，跑 F2P+P2P 确认满分（预期满分），以此量化假阳性。"},
+  {"category": "gold_partially_ungraded", "severity": "P3", "evidence_refs": ["gold hunk (a) 的 image_tags 成员判断未被任何判分用例触发"], "proposed_action": "记录“判分无法区分完整/部分修复”，用于难度与信号质量统计。", "next_experiment": "构造只含 hunk (b) 的补丁跑 F2P+P2P，确认满分（预期满分）。"},
+  {"category": "public_statement_dependency", "severity": "P3", "evidence_refs": ["题面复现代码引用未定义的 _create_image_manifest()"], "proposed_action": "仅记录。", "next_experiment": "无。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只含测试文件；沿用默认空排除。", "evidence_refs": ["test_patch 路径全集 = tests/test_ecr/test_ecr_boto3.py"]},
+ "proposed_regression_tests": [
+  {"id": "新增：重新打 tag 后，对旧镜像的 digest 调 batch_get_image / describe_images，断言该 tag 不再出现在旧镜像的 imageTags 里", "reason": "直接堵住“只改顺序”的假修复（见检查 25），也正是 F2P 注释声称但未验证的性质。"},
+  {"id": "tests/test_ecr/test_ecr_boto3.py::test_put_same_image_with_same_tag", "reason": "已在 P2P，钉住 ImageAlreadyExistsException 分支不被 gold 的新 batch_delete_image 调用破坏。"},
+  {"id": "tests/test_ecr/test_ecr_boto3.py 里 batch_delete_image / list_images / describe_images 系列", "reason": "gold 在 put_image 里新增了对 batch_delete_image 的调用，这些是它的直接被调用者与状态观察点。"},
+  {"id": "新增：旧镜像只有这一个 tag 时重新打 tag，断言旧镜像的处置（删除 vs 保留为 untagged）", "reason": "gold 在该子情形下会整体删除旧镜像（models.py:751-755），与真实 AWS 不同，需要一条用例把当前约定固定下来。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "材料干净、base 确有缺陷、gold 对应题目。主要保留意见是 F2P 只看返回顺序不看 tag 归属，存在明确的假修复通道；建议纳入时配上面第一条扩展回归。"},
+ "costs": {"minutes": 17}
+}

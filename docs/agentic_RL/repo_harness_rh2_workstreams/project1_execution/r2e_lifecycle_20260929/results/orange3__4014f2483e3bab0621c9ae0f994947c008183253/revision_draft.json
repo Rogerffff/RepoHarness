@@ -1,0 +1,163 @@
+{
+ "instance_id": "orange3__4014f2483e3bab0621c9ae0f994947c008183253",
+ "template": "R-c",
+ "items": [
+  {
+   "id": "R-c-1",
+   "fixes": "T2b（v1 §4 第 3 步：退化候选 DG『split_eq_freq 之后切点有重复就置为 []』在当前材料正式评分 1.0，27/27）",
+   "target_key": "TestEqualFreq.test_below_precision",
+   "new_key": null,
+   "revised_lines": "r2e_tests/test_1.py 第 68-81 行（第三段），新断言在第 80、81 行"
+  }
+ ],
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "        var = discretize.EqualFreq(n=8)(table, table.domain[0])\n        points = var.compute_value.points\n        self.assertEqual(len(np.unique(points)), len(points))\n",
+     "new": "        var = discretize.EqualFreq(n=8)(table, table.domain[0])\n        points = var.compute_value.points\n        self.assertEqual(len(np.unique(points)), len(points))\n\n        # Test with near-duplicate values among clearly distinct values\n        # (n >= number of distinct values): making the points unique must\n        # not drop the thresholds between the distinct values, so 0 and 2\n        # still fall into intervals below and above all values around 1\n        X = np.array([[0], [1], [1 + eps], [1 + 2 * eps], [1 + 3 * eps], [2]])\n        # Test the test: check that these are indeed distinct values\n        assert len(np.unique(X).flatten()) == 6\n        table = data.Table.from_numpy(None, X)\n        var = discretize.EqualFreq(n=6)(table, table.domain[0])\n        points = var.compute_value.points\n        self.assertEqual(len(np.unique(points)), len(points))\n        bins = var.compute_value.transform(X.flatten())\n        self.assertLess(bins[0], min(bins[1:5]))\n        self.assertGreater(bins[5], max(bins[1:5]))\n"
+    }
+   ]
+  }
+ ],
+ "expected_change": {
+  "added": [],
+  "changed": [],
+  "removed": [],
+  "note": "期望映射不变：新断言并进已有目标测试，不新增键；正式修订单只需 hidden_test_text_replace，不需要 expected_file_replace"
+ },
+ "expected_after": {
+  "TestEqualFreq.test_below_precision": "PASSED",
+  "TestEqualFreq.test_equifreq_100_to_4": "PASSED",
+  "TestEqualFreq.test_equifreq_with_k_instances": "PASSED",
+  "TestEqualFreq.test_equifreq_with_too_few_values": "PASSED",
+  "TestEqualWidth.test_equalwidth_100_to_4": "PASSED",
+  "TestEqualWidth.test_equalwidth_const_value": "PASSED",
+  "TestEqualWidth.test_equalwidth_on_two_values": "PASSED",
+  "TestEntropyMDL.test_entropy": "PASSED",
+  "TestEntropyMDL.test_entropy_constant": "PASSED",
+  "TestEntropyMDL.test_entropy_with_two_values": "PASSED",
+  "TestEntropyMDL.test_entropy_with_two_values_useless": "PASSED",
+  "TestDiscretizer.test_create_discretized_var": "PASSED",
+  "TestDiscretizer.test_create_discretized_var_formatting": "PASSED",
+  "TestDiscretizer.test_discretize_class": "PASSED",
+  "TestDiscretizer.test_discretize_metas": "PASSED",
+  "TestDiscretizer.test_discretizer_computation": "PASSED",
+  "TestDiscretizer.test_discretizer_computation_sparse": "PASSED",
+  "TestDiscretizer.test_discretizer_computation_sparse_no_points": "PASSED",
+  "TestDiscretizer.test_keep_constant": "PASSED",
+  "TestDiscretizer.test_remove_constant": "PASSED",
+  "TestDiscretizer.test_transform": "PASSED",
+  "TestDiscretizeTable.test_discretize_class": "PASSED",
+  "TestDiscretizeTable.test_discretize_exclude_constant": "PASSED",
+  "TestDiscretizeTable.test_fixed": "PASSED",
+  "TestDiscretizeTable.test_leave_discrete": "PASSED",
+  "TestDiscretizeTable.test_method": "PASSED",
+  "TestInstanceConversion.test_single_instance": "PASSED"
+ },
+ "positive_control": "gold",
+ "acceptance": {
+  "gold": {
+   "expected_score": 1,
+   "expected_fail_keys": [],
+   "trial": "trials/rev_gold.json",
+   "trial_verdict": "match 27/27",
+   "patch": "runs/r2e_static_prep_20260924/v3/private/orange3__4014f2483e3bab0621c9ae0f994947c008183253/gold.patch"
+  },
+  "noop": {
+   "expected_score": 0,
+   "expected_fail_keys": ["TestEqualFreq.test_below_precision"],
+   "expected_fail_at": "r2e_tests/test_1.py:55（第一段，与修订前相同）",
+   "trial": "trials/rev_noop.json",
+   "trial_verdict": "mismatch 27/27; FAILED=TestEqualFreq.test_below_precision（test_1.py:55 → discretize.py:53，low = high = 1.0000000000000004）",
+   "patch": "none"
+  },
+  "DG": {
+   "expected_score": 0,
+   "expected_fail_keys": ["TestEqualFreq.test_below_precision"],
+   "expected_fail_at": "r2e_tests/test_1.py:80（只在新断言）",
+   "trial": "trials/rev_DG.json",
+   "trial_verdict": "mismatch 27/27; FAILED=TestEqualFreq.test_below_precision（test_1.py:80，AssertionError: 0.0 not less than 0.0）",
+   "patch": "cands/orange3_4014_DG_dup_to_empty.patch"
+  },
+  "pyx_build": {
+   "expected_score": 1,
+   "expected_fail_keys": [],
+   "trial": "trials/rev_pyx_build.json",
+   "trial_verdict": "match 27/27（git apply 5 个文件含新 .so，全部 cleanly）",
+   "patch": "remote:/work/r2e/probe_proto/runs/orange3_4014_pyx_build/attempt/candidate/orange3__4014f2483e3bab0621c9ae0f994947c008183253.diff",
+   "patch_local_copy": "runs/r2e_lifecycle_20260929/probe_proto/runs/orange3_4014_pyx_build/attempt/candidate/orange3__4014f2483e3bab0621c9ae0f994947c008183253.diff"
+  },
+  "pyx_only": {
+   "expected_score": 0,
+   "expected_fail_keys": ["TestEqualFreq.test_below_precision"],
+   "expected_fail_at": "r2e_tests/test_1.py:55（第一段，与 noop 同栈，与修订前相同）",
+   "trial": "trials/rev_pyx_only.json",
+   "trial_verdict": "mismatch 27/27; FAILED=TestEqualFreq.test_below_precision（test_1.py:55 → discretize.py:53，low = high = 1.0000000000000004）",
+   "patch": "remote:/work/r2e/probe_proto/runs/orange3_4014_pyx_only/attempt/candidate/orange3__4014f2483e3bab0621c9ae0f994947c008183253.diff",
+   "patch_local_copy": "runs/r2e_lifecycle_20260929/probe_proto/runs/orange3_4014_pyx_only/attempt/candidate/orange3__4014f2483e3bab0621c9ae0f994947c008183253.diff"
+  },
+  "C1": {
+   "expected_score": 1,
+   "expected_fail_keys": [],
+   "trial": "trials/rev_C1.json",
+   "trial_verdict": "match 27/27",
+   "patch": "runs/r2e_actor_20260925/grader_cands/orange3_4014_C1_dedupe_in_create_var.patch"
+  },
+  "C4": {
+   "expected_score": 0,
+   "expected_fail_keys": ["TestEqualFreq.test_below_precision"],
+   "expected_fail_at": "r2e_tests/test_1.py:64（第二段，与修订前相同）",
+   "trial": "trials/rev_C4.json",
+   "trial_verdict": "mismatch 27/27; FAILED=TestEqualFreq.test_below_precision（test_1.py:64 → discretize.py:53）",
+   "patch": "runs/r2e_actor_20260925/grader_cands/orange3_4014_C4_unique_only_when_n_ge_len.patch"
+  },
+  "C3": {
+   "expected_score": 1,
+   "expected_fail_keys": [],
+   "role_note": "S2 缺口候选（小量级分辨率），本轮不针对；得 1 说明 S2 登记不变",
+   "trial": "trials/rev_C3.json",
+   "trial_verdict": "match 27/27",
+   "patch": "runs/r2e_actor_20260925/grader_cands/orange3_4014_C3_round_dedupe.patch"
+  }
+ },
+ "paths_note": "trials/、cands/、static_check_seg3.py 相对本题目录；runs/ 开头的路径相对仓库根；remote: 为试跑机上的原件（协调者指定直接使用）。acceptance 只含修订版试跑（试跑工具，不是正式评分）；当前材料上的对照见 revision_plan.md §5.1",
+ "candidate_patch_sha256": {
+  "gold": "sha256:431cc37d5563157822ba0ec35b3ace799af5c305a81527f8552f5dae11d18397",
+  "DG": "sha256:06b31ab2801b8a065f25672be92de2adc655b19650c1e8f285ea72abf3aaac4f",
+  "pyx_build_local_copy": "sha256:372f4982da9dedb605a8ac7619a95e238fac8757b9da3e8b4847dcb0f3c6c94b",
+  "pyx_only_local_copy": "sha256:34624751a646327339e7ca7bd6d37724ac072473a934fcecee0a17a283f43bf6",
+  "C1": "sha256:e7cf1161cc162928db23099fc9503810281fecc62ade5faf801a622cfe91e748",
+  "C3": "sha256:6f230913d1c1024e04bef131ecbbbc7ade90c36d9a4cd663b2de46f8b01d59cb",
+  "C4": "sha256:eae852458d9f70f6d3b12664af99645f1e4bb87ba9458e9388c3bf553e59aeb4",
+  "note": "两份探针原型补丁的本地副本与探针正式账本 candidate_patch_sha256 相同；试跑用的远端原件没有另测哈希"
+ },
+ "parent_material": {
+  "grading_bundle_row": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl:24",
+  "hidden_test_file": "runs/r2e_static_prep_20260924/v3/private/orange3__4014f2483e3bab0621c9ae0f994947c008183253/hidden_tests/test_1.py",
+  "hidden_test_file_sha256": "sha256:4321647a12f141f56c4e32d6d4c544ce85d2cf343f541fd9f5a0998386b47168",
+  "hidden_test_file_lines": 347,
+  "hidden_tests_tree_sha256": "sha256:98a4a29ee2afb2859e3673ae30814ce5bbc48cd9b2c13ecdcd5c3b17cffcdb53",
+  "expected_output_sha256": "sha256:07f34ad40f871b27517af4fb1bf7939409fcc8ddd303771784e8f8425e5da490",
+  "expected_n": 27,
+  "material_revisions": []
+ },
+ "revised_test_file_sha256": "sha256:477e4252d38c780cab7edbc5e0ddfe40d236a9b06fecde9de5123692fb57ad6c",
+ "revised_test_file_lines": 362,
+ "trial_image": {
+  "image_id": "sha256:3cab63e6b382189c941fb390b97ba8168633a6d9c034b55da0b39cfd07dfe248",
+  "image_ref": "rh2-r2e-derived/orange3:4014f2483e3b-r2e_derive_v1s",
+  "recipe_id": "r2e_derive_v1+sysconfig_v1"
+ },
+ "trial_draft_sha256": {
+  "draft.json": "sha256:43bfc0ea86e609873dab0aa3786fd2ea3f6a3f82998dede418614721511035c1",
+  "expected_after.json": "sha256:fdd48c66f70dd1e15172a2a69b47e17d433778a67e0f8a7c18774ba60f6874e3",
+  "note": "expected_after.json 与父版本 expected_output.json 逐键相同，只是排版不同所以文件哈希不同；远端目录 /work/r2e/trials/lc_orange3_4014/4014f248/"
+ },
+ "static_check": {
+  "script": "static_check_seg3.py",
+  "sha256": "sha256:c6f4300e5afbffe1d8252e6627347167766bffc0a3741a5894d9ae6c56e744fd"
+ }
+}

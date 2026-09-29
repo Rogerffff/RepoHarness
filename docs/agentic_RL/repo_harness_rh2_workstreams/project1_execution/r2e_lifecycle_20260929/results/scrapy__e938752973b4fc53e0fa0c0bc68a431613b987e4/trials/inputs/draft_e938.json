@@ -1,0 +1,14 @@
+{
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "    def test_export_binary(self):\n        exporter = PythonItemExporter(binary=True)\n        value = TestItem(name=u'John\\xa3', age=u'22')\n        expected = {b'name': b'John\\xc2\\xa3', b'age': b'22'}\n        self.assertEqual(expected, exporter.export_item(value))\n",
+     "new": "    def test_export_binary(self):\n        exporter = PythonItemExporter(binary=True)\n        value = TestItem(name=u'John\\xa3', age=u'22')\n        expected = {b'name': b'John\\xc2\\xa3', b'age': b'22'}\n        self.assertEqual(expected, exporter.export_item(value))\n\n    def test_export_binary_dict_item(self):\n        exporter = PythonItemExporter(binary=True)\n        value = {'title': u'Caf\\xe9', 'price': u'3'}\n        expected = {b'title': b'Caf\\xc3\\xa9', b'price': b'3'}\n        self.assertEqual(expected, exporter.export_item(value))\n\n    def test_export_binary_empty_fields(self):\n        exporter = PythonItemExporter(binary=True, export_empty_fields=True)\n        value = TestItem(name=u'Maria')\n        expected = {b'name': b'Maria', b'age': None}\n        self.assertEqual(expected, exporter.export_item(value))\n\n    def test_export_binary_serializer_output(self):\n        class CustomFieldItem(Item):\n            name = Field()\n            age = Field(serializer=lambda value: int(value) + 2)\n\n        exporter = PythonItemExporter(binary=True)\n        value = CustomFieldItem(name=u'Maria', age=u'22')\n        expected = {b'name': b'Maria', b'age': 24}\n        self.assertEqual(expected, exporter.export_item(value))\n"
+    }
+   ]
+  }
+ ]
+}

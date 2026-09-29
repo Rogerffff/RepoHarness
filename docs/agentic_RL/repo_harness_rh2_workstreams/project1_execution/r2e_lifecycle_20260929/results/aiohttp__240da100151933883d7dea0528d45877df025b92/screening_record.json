@@ -1,0 +1,644 @@
+{
+  "schema_note": "沿 environment_screening_definition_20260915 §1 的既有字段；instance_id、revision_proposals、prior_records、record_refs 是调查附加字段，不是生产 schema。路径相对仓库根。",
+  "task_id": "r2e_gym_subset::aiohttp__240da100151933883d7dea0528d45877df025b92",
+  "instance_id": "aiohttp__240da100151933883d7dea0528d45877df025b92",
+  "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0；材料 v3（本题 material_revisions 为空，v3–v5 逐字相同）",
+  "source_adapter_ref": {
+    "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl 第 3 行（line_sha256 60848c05aa7d700aa487ea118d96a35cc4fd6130142b33425203ad120974df59）",
+    "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl（line_sha256 965e7f1ccff3aaf379e12ebe52033096e54cc0ffd2fdfc3869435184545f3854）",
+    "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/validation_bundles_v0.jsonl 第 3 行（line_sha256 bc6bc7262a303c112558e55321188c879c49a9a83f47dc3cbb9188a15644e326）",
+    "static_packages": "runs/r2e_static_prep_20260924/v3/{public,private}/aiohttp__240da100151933883d7dea0528d45877df025b92/",
+    "hidden_tests_tree_sha256": "sha256:b74735a5daa24446307ee80a01e2a9b3d6056b5d42a7206bdeb56b776f0412af",
+    "expected_sha256": "sha256:5444ee2acbf99088cb932eaf1daf171855dfb3feba081b7b25fa04290bedec31",
+    "gold_patch_sha256": "sha256:df75d1d24bc411e2ce46712930054181bb5b6321f6f1892961f3ee75cd0b3739"
+  },
+  "recipe_ref": {
+    "derived_image_recipe": "r2e_derive_v1+sysconfig_v1",
+    "recipe_sha256": "sha256:e2e17bf12b0edf5d1f77eb315a7c8cd91e36dde70b6a272c81b04976b98a7270",
+    "derived_image_ref": "rh2-r2e-derived/aiohttp:240da1001519-r2e_derive_v1s",
+    "derived_image_id": "sha256:a6dee3349d2715d2d2a16d1ee087421f9289d0eda8b6b48558cf4e9bafd19711",
+    "base_image": "namanjain12/aiohttp_final:240da100151933883d7dea0528d45877df025b92@sha256:bb629a91571e2f0dcefd44470a726c2006c42a1e70203d72d663d982f6f088ab",
+    "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+    "actor_profile_digest_devcheck": "sha256:fdb8d4312484c21e5f5bee2f01528c2a81f9c79f0d0c8472ac5f4a2405d7222d",
+    "resources": "默认（2 CPU / 4 GiB / /tmp 1 GiB / pids 512）；无逐题资源配方",
+    "grading_budgets_seconds": {
+      "candidate_stage": 900,
+      "grading_deadline": 3600
+    },
+    "superseded_environment": "旧机器 r2e_derive_v1（sha256:0da821a1…；image 0189a61de356… 与 2b75db7b16ca…；profile 1bb8e0cf…）上的 noop / gold 各 3 次只作对照"
+  },
+  "code_snapshot_ref": "账本 scripts_digest sha256:a003cea42fa4de679fbe55f3414a614c887521c0f965eb2f6f837fd2ace84996；runner digest 067c6080788af8288ff8c5d9cf94560b3bf62d24f37833995ec57b7ba74633e9；本记录没有单独核对代码快照",
+  "facts_ref": [
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_noop.jsonl:3（grader 侧观测，noop）",
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_gold.jsonl:3（grader 侧观测，gold）",
+    "runs/r2e_lifecycle_20260929/devcheck/aiohttp__240da100151933883d7dea0528d45877df025b92/orig/attempt.json（actor 侧，agent 身份，正式启动路径，真实 CC 2.1.205 + 桩端点）",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/aiohttp__240da100151933883d7dea0528d45877df025b92/facts.json（09-24 环境审查汇总，旧镜像）",
+    "runs/env_overnight_20260916/M3/facts/240da1001519/facts/initial.diff（来源镜像初态改动原件）"
+  ],
+  "checks": {
+    "1": {
+      "status": "pass",
+      "note": "题面 / base / gold / 隐藏测试 / expected / 镜像对应同一任务；评分日志里的隐藏测试树 b74735a5… 与入口 8285765f… 同评分面一致；gold git_apply rc 0",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/env_verify/ledger_gold.jsonl:3",
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-a_508fe701.eval.log:8-10",
+        "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl:8"
+      ],
+      "by": "私有主审"
+    },
+    "2": {
+      "status": "pass",
+      "note": "noop 的唯一不符键失败信息正是题面症状（'http://localhost/path' != 'http://localhost:1234/path'）；actor 侧 mock 复现在 base 上 rc 1；脏树 6 行来自来源镜像的 3.9 兼容改写（不可回退，回退会导致 SyntaxError），已记录",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-a_fd1119cd.eval.log:199-205",
+        "runs/r2e_lifecycle_20260929/env_verify/ledger_noop.jsonl:3",
+        "runs/r2e_lifecycle_20260929/devcheck/aiohttp__240da100151933883d7dea0528d45877df025b92/orig/captures/repro_port_mocked.out",
+        "runs/env_overnight_20260916/M3/facts/240da1001519/facts/initial.diff"
+      ],
+      "by": "私有主审"
+    },
+    "3": {
+      "status": "unknown",
+      "note": "公开文件完整；真实题面的实际渲染没有捕获：devcheck 用的是固定的 devcheck 提示（stub messages_000 的用户消息只有一句 devcheck 指令）。题面示例导入写法有误，记在 23",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/devcheck/aiohttp__240da100151933883d7dea0528d45877df025b92/orig/stub/requests/messages_000.json"
+      ],
+      "by": "私有主审"
+    },
+    "4": {
+      "status": "pass",
+      "note": "合法修复落在 aiohttp/connector.py（或 client.py），都是非测试文件；投影如实交付；不需要额外排除规则",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/env_verify/ledger_gold.jsonl:3",
+        "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/ledger_WR1.jsonl:1"
+      ],
+      "by": "私有主审"
+    },
+    "5": {
+      "status": "issue",
+      "note": "X1：618335186f22 的公开初态已含本题修复（connector.py:597-600）和同一测试（tests/test_connector.py:1063-1080）；1c1c0ea3、22a12cc2、4075c653 含后代测试（tests/test_proxy.py）但不含本题代码层面的修复；反向单行命中没有核对（不读他题私有包）",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/cross_task_gold_scan.json",
+        "runs/r2e_static_prep_20260924/cross_task_test_scan.json",
+        "runs/r2e_static_prep_20260924/v3/public/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/worktree/aiohttp/connector.py:597-600"
+      ],
+      "by": "私有主审"
+    },
+    "6": {
+      "status": "pass",
+      "note": "venv 为 Python 3.9.21 + pytest 8.3.4，可用；没有 pip（解题侧条件）",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/devcheck/aiohttp__240da100151933883d7dea0528d45877df025b92/orig/captures/env.out"
+      ],
+      "by": "私有主审"
+    },
+    "7": {
+      "status": "not_applicable",
+      "note": "本题不需要资产：相关测试全用 mock，tests/sample.crt 与 sample.key 不参与",
+      "evidence_refs": [],
+      "by": "私有主审"
+    },
+    "8": {
+      "status": "pass",
+      "note": "actor：agent uid 54321 经 CC Bash 运行全部命令，/rh2/bash_env 不可写；grader：uid 54322",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/devcheck/aiohttp__240da100151933883d7dea0528d45877df025b92/orig/captures/env.out",
+        "runs/r2e_lifecycle_20260929/env_verify/ledger_gold.jsonl:3"
+      ],
+      "by": "私有主审"
+    },
+    "9": {
+      "status": "pass",
+      "note": "导入路径是 /testbed/aiohttp/__init__.py；SC1 把 tcp 键的失败原因从 TypeError 变成 AttributeError，说明评分执行的确实是候选代码",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/env_verify/ledger_gold.jsonl:3",
+        "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/logs_SC1/evallog_replay-r2e-inv-240d-SC1-_68d7cf9a.eval.log:94"
+      ],
+      "by": "私有主审"
+    },
+    "10": {
+      "status": "pass",
+      "note": "6 条公开命令全部符合预期：repro_port_mocked 在 base 上 rc 1，私有 gold 对照 rc 0；ProxyConnectorTests 13 passed（pytest 计时 0.36 s）；tests/test_connector.py 30 passed / 2 failed（已知死键）",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/devcheck/aiohttp__240da100151933883d7dea0528d45877df025b92/orig/attempt.json",
+        "runs/r2e_lifecycle_20260929/devcheck/aiohttp__240da100151933883d7dea0528d45877df025b92/private_control.json"
+      ],
+      "by": "私有主审"
+    },
+    "11": {
+      "status": "pass",
+      "note": "准备、解题、安装、测试各阶段都不需要网络；grader 为 deny_all",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/env_verify/ledger_gold.jsonl:3"
+      ],
+      "by": "私有主审"
+    },
+    "12": {
+      "status": "not_applicable",
+      "note": "不依赖外部服务：代理连接全用 mock；两个端到端死键只用本机测试服务",
+      "evidence_refs": [],
+      "by": "私有主审"
+    },
+    "13": {
+      "status": "pass",
+      "note": "内存峰值约 171 MB / 4 GiB；测试阶段 2.0–2.7 s；grader 全程约 26 s（noop / gold），候选 35–41 s",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/env_verify/ledger_gold.jsonl:3",
+        "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/ledger_AL1.jsonl:1"
+      ],
+      "by": "私有主审"
+    },
+    "14": {
+      "status": "pass",
+      "note": "旧镜像 noop / gold 各 3 次、新镜像各 1 次，逐键状态一致；四个候选运行中两个死键状态也一致",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl:3",
+        "runs/r2e_rf_20260923/remote/ledger_r2e_reps_noop.jsonl:3",
+        "runs/r2e_env_repair_20260924/_rerun2/ledger_noop.jsonl:3",
+        "runs/r2e_lifecycle_20260929/env_verify/ledger_noop.jsonl:3",
+        "runs/r2e_lifecycle_20260929/env_verify/ledger_gold.jsonl:3"
+      ],
+      "by": "私有主审"
+    },
+    "15": {
+      "status": "not_checked",
+      "note": "每次评分都用 fresh 容器；没有做连续复用或并发对照",
+      "evidence_refs": [],
+      "by": "私有主审"
+    },
+    "16": {
+      "status": "pass",
+      "note": "patch 重放路径：以 agent 身份应用补丁 → 冻结 / 投影 → fresh grader，投影只含改动的文件（connector.py 或 client.py），脏树三文件不进投影；真实 CC 编辑后的导出没有单测（共享机制）",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/ledger_DG1.jsonl:1",
+        "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/ledger_WR1.jsonl:1"
+      ],
+      "by": "私有主审"
+    },
+    "17": {
+      "status": "pass",
+      "note": "RH2_SETUP_RESTORED=2，ENTRY_SHA256 与评分面一致；base 版 tests/test_client_functional.py 与 aiohttp/test_utils.py 在评分时不重置，作为依赖登记（见 issues I9）",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/logs_DG1/evallog_replay-r2e-inv-240d-DG1-_4f82b581.eval.log:8-13"
+      ],
+      "by": "私有主审"
+    },
+    "18": {
+      "status": "pass",
+      "note": "33 项收集，测试段完整，short test summary 齐全",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/logs_DG1/evallog_replay-r2e-inv-240d-DG1-_4f82b581.eval.log:29, 213-216"
+      ],
+      "by": "私有主审"
+    },
+    "19": {
+      "status": "pass",
+      "note": "33 键全部解析；两个期望 FAILED 键按日志归因为 py3.9 不兼容",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-a_fd1119cd.eval.log:33-179"
+      ],
+      "by": "私有主审"
+    },
+    "20": {
+      "status": "pass",
+      "note": "noop 的 0 只来自目标键",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/env_verify/ledger_noop.jsonl:3"
+      ],
+      "by": "私有主审"
+    },
+    "21": {
+      "status": "pass",
+      "note": "所有运行 stage_error 为空、日志完整；测试退出码 1 来自两个死键，得分由逐键映射决定",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/env_verify/ledger_gold.jsonl:3"
+      ],
+      "by": "私有主审"
+    },
+    "22": {
+      "status": "pass",
+      "note": "M3 独立 runner 在来源镜像上跑 gold 两次，状态相同；09-24 对账为 agree",
+      "evidence_refs": [
+        "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl:8",
+        "runs/env_overnight_20260916/M3/gold_ledger/logs_r2e/aiohttp/240da1001519/gold/a1/test_output.txt"
+      ],
+      "by": "私有主审"
+    },
+    "23": {
+      "status": "issue",
+      "note": "P4：题面示例原样跑不起来：顶层没有 ClientRequest（ImportError）；真实事件循环在 3.9 上 TypeError；也没有网络。公开测试给出 mock 模板，可以消解",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/devcheck/aiohttp__240da100151933883d7dea0528d45877df025b92/orig/captures/literal_example_probe.out"
+      ],
+      "by": "私有主审"
+    },
+    "24": {
+      "status": "pass",
+      "note": "没有只在隐藏测试里出现的约束；替代解 AL1（端口不是默认值时才补）正式评分 1.0",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/ledger_AL1.jsonl:1"
+      ],
+      "by": "私有主审"
+    },
+    "25": {
+      "status": "issue",
+      "note": "T2c + T2b：唯一的目标断言就是题面示例；退化候选 DG1 正式评分 1.0",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/v3/private/aiohttp__240da100151933883d7dea0528d45877df025b92/hidden_tests/test_1.py:570-584",
+        "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/ledger_DG1.jsonl:1",
+        "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/pcheck_DG1.json"
+      ],
+      "by": "私有主审"
+    },
+    "26": {
+      "status": "issue",
+      "note": "WR1 破坏 ClientRequest 的 host/port 语义与直连显式端口，但正式评分 1.0（v1 §4 第 4 步 S1）",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/ledger_WR1.jsonl:1",
+        "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/pcheck_WR1.json"
+      ],
+      "by": "私有主审"
+    },
+    "27": {
+      "status": "pass",
+      "note": "gold 正确且改动最小，没有无关改动；未测的旧问题（https 被改写成绝对形式、连接池复用、CONNECT 的 Host 头）都在题面之外",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/v3/private/aiohttp__240da100151933883d7dea0528d45877df025b92/gold.patch",
+        "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/pcheck_gold.json"
+      ],
+      "by": "私有主审"
+    },
+    "28": {
+      "status": "not_checked",
+      "note": "R-c 草案待实施、验收和 Codex 复核",
+      "evidence_refs": [],
+      "by": "私有主审"
+    },
+    "29": {
+      "status": "pass",
+      "note": "git 净化后 REFS_REMAINING=0、REMOTES=0、REFLOG_ENTRIES=0、UNREACHABLE_OBJECTS=0；预检三项 ok（HEAD 没有子提交，隐藏测试不可读）",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/devcheck/aiohttp__240da100151933883d7dea0528d45877df025b92/orig/attempt.json"
+      ],
+      "by": "私有主审"
+    },
+    "30": {
+      "status": "not_checked",
+      "note": "共享机制；本题解答不需要网络，没有单独测试出网",
+      "evidence_refs": [],
+      "by": "私有主审"
+    },
+    "31": {
+      "status": "not_checked",
+      "note": "共享控制面（根目录 conftest、parser）没有逐题复审；测试辅助依赖已登记",
+      "evidence_refs": [],
+      "by": "私有主审"
+    },
+    "32": {
+      "status": "issue",
+      "note": "verifier 只校验题面示例的字面值，与 25 同一根因",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/ledger_DG1.jsonl:1"
+      ],
+      "by": "私有主审"
+    },
+    "33": {
+      "status": "not_checked",
+      "note": "没有真实模型求解（33–36 同）",
+      "evidence_refs": [],
+      "by": "私有主审"
+    },
+    "39": {
+      "status": "not_applicable",
+      "note": "提议的修订是逐题的，不是共享修复",
+      "evidence_refs": [],
+      "by": "私有主审"
+    }
+  },
+  "issues": [
+    {
+      "id": "I1",
+      "code": "T2c",
+      "severity": "S1",
+      "category": "test_strength",
+      "scope": "task",
+      "summary": "唯一的目标断言 test_request_port 与题面示例逐字相同（同一 URL、同一代理、同样直接调用 _create_connection、同一期望串）；隐藏测试里没有第二个带显式端口的目标 URL",
+      "evidence_level": "静态（测试文本）；noop / gold 执行",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/v3/private/aiohttp__240da100151933883d7dea0528d45877df025b92/hidden_tests/test_1.py:570-584",
+        "runs/r2e_static_prep_20260924/v3/public/aiohttp__240da100151933883d7dea0528d45877df025b92/user_prompt.txt:18-24"
+      ],
+      "proposed_action": "R-c 第 1 项（revision_proposals[0]）",
+      "status": "confirmed"
+    },
+    {
+      "id": "I2",
+      "code": "T2b",
+      "severity": "S1",
+      "category": "test_strength",
+      "scope": "task",
+      "summary": "退化候选 DG1（connector.py:343 只在 req.port == 1234 时补 ':1234'）正式评分 1.0，33/33；私有对照显示两个 8080 端口的 URL 仍丢端口，正是题面症状",
+      "evidence_level": "当前 CPU 正式评分 + 私有行为对照",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/ledger_DG1.jsonl:1",
+        "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/logs_DG1/evallog_replay-r2e-inv-240d-DG1-_4f82b581.eval.log",
+        "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/pcheck_DG1.json"
+      ],
+      "proposed_action": "R-c 第 1 项（同 I1）",
+      "status": "confirmed"
+    },
+    {
+      "id": "I3",
+      "code": "T2（v1 §4 第 4 步）",
+      "severity": "S1",
+      "category": "test_strength",
+      "scope": "task",
+      "summary": "WR1（client.py:251 改成 self.host = self.netloc）正式评分 1.0；私有对照显示有显式端口时 req.host 带上端口，直连 TCPConnector 的目标变成 ('localhost:1234', 1234)；https 经代理时 CONNECT 目标会变成 host:port:port（源码推断）。这破坏了有公开测试的 host/port 语义（tests/test_client.py:332-346）和直连显式端口这一常用行为",
+      "evidence_level": "当前 CPU 正式评分 + 私有行为对照；CONNECT 部分为源码推断",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/ledger_WR1.jsonl:1",
+        "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/pcheck_WR1.json"
+      ],
+      "proposed_action": "R-c 第 2 项（revision_proposals[1]）",
+      "status": "confirmed"
+    },
+    {
+      "id": "I4",
+      "code": "T5",
+      "severity": "registered",
+      "category": "expected_non_passed_keys",
+      "scope": "task",
+      "summary": "HttpClientConnectorTests.test_tcp_connector / test_unix_connector 期望 FAILED：原因是 2014 年代码在 py3.9 上不兼容（connector.py:290 TypeError；parsers.py:246 断言后 protocol.py:650 AttributeError），与修复无关。SC1（gold + 给 TCPConnector._create_connection 加 @asyncio.coroutine）正式评分 1.0，tcp 键失败原因变成 AttributeError，状态仍是 FAILED",
+      "evidence_level": "执行（RH2 旧 3+3、新 1+1、SC1；M3 两次）",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-a_fd1119cd.eval.log:33-179",
+        "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/ledger_SC1.jsonl:1",
+        "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/logs_SC1/evallog_replay-r2e-inv-240d-SC1-_68d7cf9a.eval.log:94"
+      ],
+      "proposed_action": "R-a 可选；真实候选让这两个键翻转时改为必做",
+      "status": "explained"
+    },
+    {
+      "id": "I5",
+      "code": "P4",
+      "severity": "registered",
+      "category": "problem_statement",
+      "scope": "task",
+      "summary": "题面示例原样跑不起来：from aiohttp import ClientRequest 报 ImportError；真实事件循环调用 _create_connection 在 3.9 上 TypeError；也没有网络。公开测试给出 mock 模板，公开读者的 repro_port_mocked 能区分修复前后",
+      "evidence_level": "actor 侧 devcheck 实测",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/devcheck/aiohttp__240da100151933883d7dea0528d45877df025b92/orig/captures/literal_example_probe.out",
+        "runs/r2e_lifecycle_20260929/devcheck/aiohttp__240da100151933883d7dea0528d45877df025b92/orig/captures/repro_port_mocked.out"
+      ],
+      "proposed_action": "登记；探针分析时，原例不能复现不算模型的错",
+      "status": "registered"
+    },
+    {
+      "id": "I6",
+      "code": "T3",
+      "severity": "S2（登记）",
+      "category": "coverage_gap",
+      "scope": "task",
+      "summary": "以下边缘行为没有断言：查询串随 req.path 保留、目标 URL 的 user:pass@ 不进请求行、自定义 Host 头时请求行仍按 URL；显式默认端口与 https 的 req.path 两种写法都合理，刻意不测",
+      "evidence_level": "静态",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/analysis_before_history.md"
+      ],
+      "proposed_action": "登记，按 v1 §8 抽查",
+      "status": "registered"
+    },
+    {
+      "id": "I7",
+      "code": "X1",
+      "severity": "registered",
+      "category": "task_relation",
+      "scope": "repo:aiohttp",
+      "summary": "618335186f22 的初态已含本题修复与测试；1c1c0ea3 / 22a12cc2 / 4075c653 含后代测试；反向的单行机械命中没有核对",
+      "evidence_level": "公开包实读",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/cross_task_gold_scan.json",
+        "runs/r2e_static_prep_20260924/cross_task_test_scan.json"
+      ],
+      "proposed_action": "训练时控制重复采样；留出按仓库划分（v1 D3）",
+      "status": "registered"
+    },
+    {
+      "id": "I8",
+      "code": "solver_condition（环境事实，不是缺陷）",
+      "severity": "registered",
+      "category": "solver_condition",
+      "scope": "task",
+      "summary": "没有 pip；/testbed 必须在 sys.path 上（在 /testbed 下用 python -m pytest）；真实 HTTP 客户端 / 服务端在 3.9 上不可用；tests/test_client.py 与 tests/test_worker.py 不能收集；初态脏树（asyncio.create_task 改写）不能回退。v3 提示已覆盖主要几条",
+      "evidence_level": "actor 侧 devcheck 实测 + 源码",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/devcheck/aiohttp__240da100151933883d7dea0528d45877df025b92/orig/captures/env.out",
+        "runs/r2e_lifecycle_20260929/devcheck/aiohttp__240da100151933883d7dea0528d45877df025b92/orig/captures/public_client_file_collect.out"
+      ],
+      "proposed_action": "沿用 09-24 的解题侧条件记录；不改环境",
+      "status": "verified"
+    },
+    {
+      "id": "I9",
+      "code": "测试辅助依赖（登记）",
+      "severity": "registered",
+      "category": "grading_boundary",
+      "scope": "task",
+      "summary": "隐藏测试导入 base 版的 tests.test_client_functional.Functional，并在 tearDown 调用 aiohttp.test_utils.run_briefly；评分时这两个文件都不重置，候选改坏它们会改变键状态",
+      "evidence_level": "静态",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/v3/private/aiohttp__240da100151933883d7dea0528d45877df025b92/hidden_tests/test_1.py:17, 253-258, 298-303"
+      ],
+      "proposed_action": "登记；R-a 若实施，可顺带删去只为死键服务的 Functional 导入",
+      "status": "registered"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "没有证据支持增加路径规则",
+    "evidence_refs": [],
+    "applied_version": null
+  },
+  "revision_refs": [],
+  "revision_proposals": [
+    {
+      "id": "R-c-1",
+      "template": "R-c",
+      "required": true,
+      "fixes": ["I1", "I2"],
+      "public_basis": [
+        "user_prompt.txt:9 的一般表述 \"a URL that includes a specific port\"",
+        "user_prompt.txt:29-31 的期望行为"
+      ],
+      "change": {
+        "file": "私有隐藏测试 r2e_tests/test_1.py 的 ProxyConnectorTests",
+        "add_test": "test_request_port_other_url：目标 http://www.python.org:8080/some/path，经 connector.connect(req)，断言 req.path == 'http://www.python.org:8080/some/path'",
+        "expected_add": {
+          "ProxyConnectorTests.test_request_port_other_url": "PASSED"
+        },
+        "code_ref": "card.md 附录 A"
+      },
+      "deliberately_not_asserted": [
+        "显式默认端口保留还是省略",
+        "https 目标的 req.path",
+        "代理请求的 Host 头是否带端口"
+      ]
+    },
+    {
+      "id": "R-c-2",
+      "template": "R-c",
+      "required": true,
+      "fixes": ["I3"],
+      "public_basis": [
+        "公开 tests/test_connector.py:468-493 的 test_https_connect（CONNECT 目标为 host:port）",
+        "aiohttp/connector.py:354-361 的注释与实现",
+        "公开 tests/test_client.py:332-346 的 test_host_port（host 不含端口）"
+      ],
+      "change": {
+        "file": "私有隐藏测试 r2e_tests/test_1.py 的 ProxyConnectorTests",
+        "add_test": "test_https_connect_port：目标 https://www.python.org:8443，经 connector._create_connection(req)，断言 proxy_req.method == 'CONNECT' 且 proxy_req.path == 'www.python.org:8443'",
+        "expected_add": {
+          "ProxyConnectorTests.test_https_connect_port": "PASSED"
+        },
+        "code_ref": "card.md 附录 A",
+        "alternative": "把公开的 ClientRequestTests.test_host_port 原样搬进隐藏测试（换一个不撞键的类名）；它挡不住在 _create_connection 里就地改 req.host 的写法，所以作备选"
+      }
+    },
+    {
+      "id": "R-a-optional",
+      "template": "R-a",
+      "required": false,
+      "fixes": ["I4"],
+      "change": "删除隐藏测试中的 HttpClientConnectorTests（test_1.py:247-289）与期望里对应的两个键；可顺带删 test_1.py:17 的 Functional 导入",
+      "trigger_to_required": "真实候选让这两个键翻转（参照 scrapy 9a15fcf8）",
+      "acceptance": "gold 1、noop 0、没有 unexpected 键、SC1 仍为 1"
+    }
+  ],
+  "revision_acceptance_plan": {
+    "applies_to": ["R-c-1", "R-c-2"],
+    "expected_key_count_after": 35,
+    "positive_controls": {
+      "gold": 1.0,
+      "AL1": 1.0
+    },
+    "noop": "0.0；不符的键为 ProxyConnectorTests.test_request_port 与 ProxyConnectorTests.test_request_port_other_url",
+    "known_wrong_candidates": {
+      "DG1": "0.0；不符的键为 ProxyConnectorTests.test_request_port_other_url",
+      "WR1": "0.0；不符的键为 ProxyConnectorTests.test_https_connect_port"
+    },
+    "unchanged_candidates": {
+      "SC1": 1.0
+    },
+    "protected_public_requirements_after": [
+      "显式端口保留（示例与非示例两个实例）",
+      "无端口 URL 不补 :80",
+      "连代理失败时不改请求",
+      "代理认证头迁移",
+      "CONNECT 目标为 host:port（默认端口与显式端口）"
+    ],
+    "records": "保存新版本、父版本（材料 v3）、理由与触发反例（DG1、WR1）；Codex 复核",
+    "candidate_patches": "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/aiohttp_240d_{DG1,WR1,AL1,SC1}.patch"
+  },
+  "disposition": {
+    "state": "needs_repair",
+    "scope": "static_review",
+    "reason": "测试层有可以复现的 S1：唯一目标断言只用题面示例（T2c）；退化候选 DG1 与破坏 host/port 语义的 WR1 都正式评分 1.0（T2b、v1 §4 第 4 步）。修法是预授权的 R-c 两项，由协调者实施并验收、Codex 复核。环境不是阻塞项：新镜像 r2e_derive_v1+sysconfig_v1 上 noop 0 / gold 1，devcheck 全部符合预期。旧的 09-24 environment_qualified 只是环境层结论。",
+    "evidence_refs": [
+      "runs/r2e_lifecycle_20260929/env_verify/ledger_noop.jsonl:3",
+      "runs/r2e_lifecycle_20260929/env_verify/ledger_gold.jsonl:3",
+      "runs/r2e_lifecycle_20260929/devcheck/aiohttp__240da100151933883d7dea0528d45877df025b92/orig/attempt.json",
+      "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/ledger_DG1.jsonl:1",
+      "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/ledger_WR1.jsonl:1",
+      "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/ledger_AL1.jsonl:1",
+      "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/ledger_SC1.jsonl:1"
+    ],
+    "reviewer": null,
+    "open_items": [
+      "R-c-1 与 R-c-2 实施与合并验收（协调者）并经 Codex 复核",
+      "独立复核（v1 §7.3，reviewer 角色）",
+      "真实题面渲染与真实模型求解未捕获（批次共性）"
+    ],
+    "prior_draft": "analysis_before_history.md 暂定 needs_review；实跑证实缺陷可复现、运行条件已核，改为 needs_repair（old_findings_delta.md §2）"
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "exposure_notes": "主审读过 gold、隐藏测试、期望映射、09-24 环境审查记录，以及本轮候选的正式评分与私有对照；本记录与候选补丁不提供给解题模型",
+    "v1": {
+      "problem_localization": {
+        "value": "yes",
+        "note": "无门槛"
+      },
+      "capability_comparison": {
+        "value": "conditional",
+        "met": [
+          "公开开发路径：devcheck 以 agent 身份、正式启动路径运行，6 条命令全部符合预期",
+          "评分依据：目标键与两个死键都已解释",
+          "当前环境：新镜像 noop 0 / gold 1"
+        ],
+        "missing": "二选一：（a）用原版时预先登记后检：对得 1 的补丁跑私有行为对照（private_check_9_2.py，从标准输入在 /testbed 运行），出现任一 BAD 行即判语义不通过，原始 reward 与语义结果分列；（b）改用 R-c 验收后的修订版",
+        "evidence_refs": [
+          "runs/r2e_lifecycle_20260929/devcheck/aiohttp__240da100151933883d7dea0528d45877df025b92/orig/attempt.json",
+          "runs/r2e_lifecycle_20260929/env_verify/ledger_gold.jsonl:3",
+          "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/private_check_9_2.py"
+        ]
+      },
+      "training_candidate": {
+        "value": "no",
+        "reason": "当前材料有三条未处理的 S1（I1–I3）",
+        "path_to_yes": "R-c-1 与 R-c-2 合并验收通过并经 Codex 复核后重判；届时正面覆盖证据齐全（核心断言、noop 0 / gold 1、第 2、3 步结果、未查范围）"
+      },
+      "heldout_candidate": {
+        "value": "no",
+        "reason": "同 training_candidate；修订版只能作为标明版本的自建评测；与 618335186f22 等同仓题须按仓库分到同一组（I7）"
+      }
+    }
+  },
+  "costs": {
+    "container_wall_seconds": {
+      "grader_env_verify": {
+        "noop": 26.07,
+        "gold": 25.65
+      },
+      "grader_candidates": {
+        "DG1": 34.85,
+        "WR1": 36.49,
+        "AL1": 41.36,
+        "SC1": 36.73
+      },
+      "devcheck_attempt": 61,
+      "devcheck_cc_solve": 20.493,
+      "private_checks": {
+        "none": 3.1,
+        "gold": 4.4,
+        "DG1": 4.7,
+        "WR1": 4.6,
+        "AL1": 4.2,
+        "SC1": 2.9
+      },
+      "note": "grader 为账本 phases 之和；devcheck 为 attempt 起止（2026-09-28T19:01:11Z–19:02:12Z）；私有对照为 pcheck 的 seconds"
+    },
+    "agent_tokens": null,
+    "human_decisions": null,
+    "source_refs": [
+      "runs/r2e_lifecycle_20260929/env_verify/ledger_noop.jsonl:3",
+      "runs/r2e_lifecycle_20260929/env_verify/ledger_gold.jsonl:3",
+      "runs/r2e_lifecycle_20260929/inv/aiohttp_240d/ledger_DG1.jsonl:1",
+      "runs/r2e_lifecycle_20260929/devcheck/aiohttp__240da100151933883d7dea0528d45877df025b92/orig/attempt.json"
+    ]
+  },
+  "prior_records": [
+    {
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/aiohttp__240da100151933883d7dea0528d45877df025b92/screening_record.json",
+      "state": "environment_qualified",
+      "scope": "09-24 环境审查（expected_v0 + r2e_derive_v1 + 默认 rollout profile）",
+      "delta": "环境层确认；'无影响判分的缺口'按 v1 口径推翻；见 old_findings_delta.md"
+    }
+  ],
+  "record_refs": {
+    "analysis_before_history": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/analysis_before_history.md",
+    "old_findings_delta": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/old_findings_delta.md",
+    "card": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/card.md",
+    "public_read": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/public_read.md"
+  },
+  "reviewed_by": "R2E 私有主审（Claude，单题闭环试行）",
+  "reviewed_at_utc": "2026-09-29"
+}

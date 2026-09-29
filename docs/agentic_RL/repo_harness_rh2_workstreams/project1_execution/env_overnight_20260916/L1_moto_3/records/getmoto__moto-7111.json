@@ -1,0 +1,48 @@
+{
+ "task_id": "getmoto__moto-7111",
+ "source": "SWE-Gym lite (swe_gym_lite_full_f70b1a29)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "s2/ingest/public_bundles_v0.jsonl#getmoto__moto-7111",
+  "grading": "s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-7111",
+  "validation": "s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-7111",
+  "base_commit": "90850bc57314b2c7fa62b4917577b1a24a528f25",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-7111/gold/offline/a1/",
+  "contamination_check": "runs/env_overnight_20260916/L1_moto_3/contamination_pairs.json"
+ },
+ "public_view": {
+  "goal": "mock_lambda 下用 ZipFile 创建的函数，list_functions/get_function 的返回里缺少 PackageType 字段（真实 AWS 会返回 'Zip'）。要求补上默认值。",
+  "constraints": ["显式指定 PackageType 的函数（Image 型）行为不能变"],
+  "unknowns_from_public_only": ["题面没有直接写出期望值字符串 'Zip'，但这是 AWS 仅有的非 Image 取值，易推出"]
+ },
+ "checks": {
+  "1": {"status": "issue", "evidence_refs": ["test_patch 触碰 tests/test_awslambda/__init__.py（base 是一行 '# This file is intentionally left blank.'，被整体替换为 108 行的 lambda_aws_verified 装饰器模块）与 tests/test_awslambda/test_lambda.py", "golden_patch 只碰 moto/awslambda/models.py:623"], "note": "材料与题面同一问题，但 **test_patch 的绝大部分内容与本题无关**：它顺带引入了上游的 aws_verified 测试基建（IAM 角色创建/删除、waiter、重试 sleep）。真正与 PackageType 有关的只有三处断言（our_functions[0]['PackageType'] == 'Zip'、循环断言、两处期望 dict 里加 'PackageType': 'Zip'）。无二进制/LFS/子模块。", "by": "L1_moto_3"},
+  "2": {"status": "pass", "evidence_refs": ["base moto/awslambda/models.py:623 `self.package_type = spec.get('PackageType', None)`", "base models.py:756 `'PackageType': self.package_type` → None → JSON null → botocore 丢键"], "note": "base 确有缺陷，机制与题面贴出的 JSON 输出一致。", "by": "L1_moto_3"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 2626 字符，含测试代码、被测代码与完整响应 JSON，无外链/图片/截断"], "note": "题面自足。", "by": "L1_moto_3"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 触碰路径全集：tests/test_awslambda/__init__.py、tests/test_awslambda/test_lambda.py"], "note": "两条都在 tests/ 下，无非测试源码路径被恢复覆盖；gold 触碰 moto/awslambda/models.py，非测试样路径。additional_exclusions 仍为空。注意 __init__.py 是该测试包的包初始化文件，同目录其它测试模块 import 它。", "by": "L1_moto_3"},
+  "17": {"status": "pass", "evidence_refs": ["同 4"], "note": "additional_exclusions 空。", "by": "L1_moto_3"},
+  "5": {"status": "issue", "evidence_refs": ["与 getmoto__moto-6585 共用 tests/test_awslambda/test_lambda.py 与 moto/awslambda/models.py（6585 也在本包）", "**已实测**：把 6585 的 golden_patch 拿到本题 base 上 `git apply -R --check` 成功 → 6585 的修复原文就在本题 base 的 moto/awslambda/models.py:364-377（ImageConfig.working_directory = None + 条件包含）"], "note": "不是重复题（修的是不同字段），但构成 **train/eval 污染**：解本题的 agent 会在同一文件里直接读到 6585 的标准答案。详见包级 issue。", "by": "L1_moto_3"},
+  "23": {"status": "pass", "evidence_refs": ["F2P 断言 PackageType == 'Zip'"], "note": "题面虽未写出 'Zip' 字面量，但 AWS 只有 Zip/Image 两种取值，可推出。", "by": "L1_moto_3"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 只做黑盒断言"], "note": "在 __init__ 给默认值、或在 config 组装处补默认，都能过。不强制唯一实现。", "by": "L1_moto_3"},
+  "25": {"status": "pass", "evidence_refs": ["P2P 含 test_create_function_from_image 等 Image 型用例（base 里断言 ImageConfigResponse）", "base models.py:770 `if self.package_type == 'Image'`"], "note": "把 PackageType 恒定写成 'Zip' 会破坏 Image 分支，被 P2P 拒。判分够紧。", "by": "L1_moto_3"},
+  "26": {"status": "pass", "evidence_refs": ["collected 68 items = F2P 3 + P2P 65，全过"], "note": "见 proposed_regression_tests。", "by": "L1_moto_3"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 单行 `spec.get('PackageType', None)` → `spec.get('PackageType', 'Zip')`"], "note": "无无关改动、不依赖其它改动。", "by": "L1_moto_3"},
+  "29": {"status": "pass", "evidence_refs": ["hints_text：'we do not return a default value. Marking it as a bug.'，无代码、无 PR 链接"], "note": "无静态泄漏。", "by": "L1_moto_3"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold 68 passed，19.28s"], "note": "本包最慢的测试文件之一。", "by": "L1_moto_3"},
+  "7": {"status": "issue", "evidence_refs": ["本包共性 install rc=2"], "note": "见包级 issue。", "by": "L1_moto_3"},
+  "11": {"status": "issue", "evidence_refs": ["test_patch 写入的 tests/test_awslambda/__init__.py 里：`allow_aws_request = os.environ.get('MOTO_TEST_ALLOW_AWS_REQUEST', 'false').lower() == 'true'`，为真时 **不进入 mock 上下文，直接打真实 AWS**（创建/删除 IAM role、创建/删除 Lambda 函数）", "同一模式在 base 仓库里已广泛存在：tests/test_kms/__init__.py:19、tests/test_sns/__init__.py:23、tests/test_s3/__init__.py:31、tests/test_timestreamwrite/__init__.py:20、tests/test_lakeformation/__init__.py:14、tests/test_logs/test_export_tasks.py:16", "同文件 check_iam_role_is_ready_to_use 含 `for _ in range(15): ... sleep(1)`，以及 test_list_functions 里新增的 `conn.get_waiter('function_active').wait(...)`"], "note": "**P2 环境风险**：只要评测容器里 MOTO_TEST_ALLOW_AWS_REQUEST=true（或被 agent 写进环境），moto 的一大批测试会尝试真实 AWS 调用。默认 'false' 时安全，且离线容器里即使为真也只会失败。另记：新引入的 waiter + sleep 使本题测试对“函数状态不是立即 Active”的实现变化敏感。", "by": "L1_moto_3"}
+ },
+ "issues": [
+  {"category": "train_eval_contamination", "severity": "P2", "evidence_refs": ["contamination_pairs.json：6585 的 golden_patch 在本题 base 上可 `git apply -R --check` 成功", "本题 base moto/awslambda/models.py:364-377 与 6585 的 gold 逐字一致"], "proposed_action": "数据划分时按“共用 gold 文件 + 祖先关系”成组，整组同进 train 或同进 eval。见包级 issue 里 moto 全量 35 对的清单。", "next_experiment": "对全部 216 题跑本包的 contam.py 流程（runs/env_overnight_20260916/L1_moto_3/contam.py），产出全量污染对清单。"},
+  {"category": "test_material_enables_real_aws_calls", "severity": "P2", "evidence_refs": ["tests/test_awslambda/__init__.py 的 MOTO_TEST_ALLOW_AWS_REQUEST 分支；仓库内 6+ 处同模式"], "proposed_action": "在评测容器里显式把 MOTO_TEST_ALLOW_AWS_REQUEST 置空/false，并把它列入“禁止 agent 修改的环境变量”清单。", "next_experiment": "在镜像里 `env | grep -i MOTO_TEST` 确认未设置；并确认 RH2 的执行环境不会透传宿主环境变量。"},
+  {"category": "test_patch_scope_creep", "severity": "P3", "evidence_refs": ["108 行的 aws_verified 基建 vs 3 处 PackageType 断言"], "proposed_action": "记录：本题的 test_patch 大部分是与题无关的测试基建重构，会让“测试改动量”类指标失真。", "next_experiment": "无。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 的两条路径都在 tests/ 下（一个测试模块 + 一个测试包的 __init__），没有非测试源码；沿用第四组 B 的默认空排除。", "evidence_refs": ["test_patch 路径全集 = tests/test_awslambda/__init__.py, tests/test_awslambda/test_lambda.py"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_awslambda/test_lambda.py::test_create_function_from_image（及其它 Image 型用例）", "reason": "已在 P2P，是防止“恒定返回 Zip”的对照组，也覆盖 models.py:770 的 Image 分支。"},
+  {"id": "tests/test_awslambda/ 全目录（test_lambda_invoke.py、test_lambda_layers.py 等）", "reason": "PackageType 默认值影响 get_function/list_functions/publish_version 等所有返回 config 的路径，且它们共享被 test_patch 重写的 __init__.py。"},
+  {"id": "tests/test_cloudformation 中 AWS::Lambda::Function 相关用例", "reason": "CloudFormation 创建 Lambda 时同样走 spec.get('PackageType')，是未被覆盖的第二个入口。"}
+ ],
+ "disposition_hint": {"state": "needs_review", "reason": "题目本身干净（题面自足、gold 单行、F2P/P2P 有有效对照）。需要裁定的是两件环境/数据问题：本题 base 里含 6585 的标准答案（污染），以及 test_patch 引入的 MOTO_TEST_ALLOW_AWS_REQUEST 真实 AWS 分支。"},
+ "costs": {"minutes": 22}
+}

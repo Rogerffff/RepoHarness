@@ -57,3 +57,6 @@
 - 验收：真实 `RolloutOrchestrator` + `write_execution_audit_record`（假 Docker / driver / 模型 / 评分）一次正常结束 → audit 与落盘 JSON 都有两项且值一致；`_absorb_harness_log` 直测"引导完成、起流前取消"（只有 bootstrap、无 harness_log）与"替身驱动什么都没交出"（保持 None）。
 - 文案：复用分支去掉 `git config --system --add`（脚本真正只读；R3 指出 `--add` 不幂等）；bringup 里"id 短路后 chown 变 no-op"的旧注释已删。
 
+## 8. Codex 修复复核（2026-09-25）
+
+**R3 通过，E1 本片收口。** [完整报告与证据](review_followup_e5_20260925/README.md)。真实编排与 audit writer 的正常结束、bootstrap 完成后期限取消两案均保留已执行的初始化事实，未执行的 launch 阶段保持缺席；移除复用分支的 `git config --system --add` 接受。相关维护测试含本机 Docker 正控。E1+ 的目标存储测量仍按原分期，不以本轮结果代替。

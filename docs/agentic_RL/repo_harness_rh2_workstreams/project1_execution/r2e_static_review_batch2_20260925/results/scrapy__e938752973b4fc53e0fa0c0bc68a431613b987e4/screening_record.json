@@ -1,0 +1,406 @@
+{
+  "schema_note": "按 quality_batch01 的 record_template.md 既有字段填写，不是生产 schema；checks 用 40 项清单编号、稀疏记录，状态只用 not_checked / pass / issue / unknown / not_applicable",
+  "task_id": "r2e_gym_subset::scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4",
+  "task_revision": {
+    "source": "r2e_gym_subset_e8b9fcbc",
+    "material": "原版（material_revisions 为空，revisions.json 为 []）",
+    "expected_sha256": "sha256:51436068b6603499581b8d7a6a15deda94dc9742e73dfe53b8966bd7a78b1541",
+    "hidden_tests_tree_sha256": "sha256:58e496ececeac8aa4b3502022909fe4e29a932caa12941e7c04ae4792e4a550a",
+    "run_tests_sh_sha256": "sha256:8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+    "golden_patch_sha256": "sha256:19ae84d47080cd35b10ddee58fdf1f6907e4bc58bb3ceadf97329582601b44a3"
+  },
+  "source_adapter_ref": {
+    "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl 第 48 行（line_sha256 c15cae24f076df8240a69e4284f58c31395a76cfa50c07cfc3e2081b5a7dc22d）",
+    "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/validation_bundles_v0.jsonl 第 48 行（line_sha256 8474d2b3292189159eba28fb414ab371332e86bd7eceb586072dad7d83c4844e）",
+    "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl（line_sha256 988722d0ecd1244ddabce4f496ec4c1e312eccf2b6c75fcd8174fda0d802ce8f）",
+    "parser_id": "r2e_prime_pytest_v1",
+    "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe"
+  },
+  "recipe_ref": {
+    "derived_image_recipe": "r2e_derive_v1（recipe_sha256 sha256:0da821a15fa389289f524c60d3a421bc940cce753e4ecf3d53560b7ab6b31df9）",
+    "env_recipe": null,
+    "resource_recipe": null,
+    "resources": "默认 2 CPU / 4 GiB / /tmp 1 GiB",
+    "image_ids_observed": {
+      "grading_runs_and_p4_probe": "sha256:1517a0c482781fb9b71aff5a87239019ed2646384d237ead02bede4ba713bc10",
+      "actor_devcheck_and_private_gold_control": "sha256:a2fe6dfea0e8c4ac51b0dd7f039f23ba2bf1b5feb1db6d34030d46ff7e4b0399",
+      "note": "两者都是派生镜像，但 ID 不同；a2fe6dfe 上还没有隐藏测试评分"
+    }
+  },
+  "code_snapshot_ref": "静态材料 runs/r2e_static_prep_20260924/v3/public/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4 与 v3/private 下的同名目录；base_commit 2514973242e35831fd90493b3db17227c3c0195e（base_tree 62931e65d7978174e364498caa38e01a61fc417b）",
+  "facts_ref": {
+    "grading_runs": [
+      {
+        "ledger": "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl",
+        "line": 48,
+        "role": "noop",
+        "condition": "当前材料，镜像 1517a0c4，默认资源",
+        "result": "reward 0，61/62，不符键只有 PythonItemExporterTest.test_export_binary",
+        "log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-s_00a6188f.eval.log"
+      },
+      {
+        "ledger": "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl",
+        "line": 48,
+        "role": "gold",
+        "condition": "当前材料，镜像 1517a0c4，默认资源",
+        "result": "reward 1，62/62，投影只含 scrapy/exporters.py",
+        "log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_805ea475.eval.log"
+      },
+      {
+        "ledger": "runs/r2e_env_repair_20260924/_rerun2/ledger_noop.jsonl",
+        "line": 48,
+        "role": "noop 复跑",
+        "condition": "同上",
+        "result": "与首次逐键相同",
+        "log": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_a2b07d39.eval.log"
+      },
+      {
+        "ledger": "runs/r2e_env_repair_20260924/_rerun2/ledger_gold.jsonl",
+        "line": 48,
+        "role": "gold 复跑",
+        "condition": "同上",
+        "result": "与首次逐键相同",
+        "log": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_ba98167e.eval.log"
+      }
+    ],
+    "independent_reference": [
+      {
+        "ledger": "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl",
+        "line": 41,
+        "role": "gold 第 1 次（来源镜像，M3 独立 runner）",
+        "result": "62 passed"
+      },
+      {
+        "ledger": "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl",
+        "line": 89,
+        "role": "gold 第 2 次（来源镜像，M3 独立 runner）",
+        "result": "62 passed"
+      },
+      {
+        "ref": "runs/r2e_rf_20260923/reconcile_all/reconcile.json",
+        "role": "RH2 与独立 runner 对账",
+        "result": "noop、gold 两行都是 agree"
+      }
+    ],
+    "actor_devcheck": {
+      "ref": "runs/r2e_actor_20260925/devcheck/scrapy__e938752973b4fc53e0fa0c0bc68a4316/orig/",
+      "condition": "正式启动路径，真实 Claude Code 2.1.205 + 桩端点，agent 54321，镜像 a2fe6dfe",
+      "result": "预检三项 ok；公开命令都返回 rc 0，输出与公开读者对修复前的推导一致"
+    },
+    "private_gold_control": {
+      "ref": "runs/r2e_actor_20260925/devcheck/scrapy__e938752973b4fc53e0fa0c0bc68a4316/private_gold/private_control.json",
+      "condition": "同一镜像，root，不联网，已应用 gold",
+      "result": "命令 A 输出 True；命令 B 各层的键都是 bytes；公开测试 61 passed"
+    },
+    "historical_environment_record": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4/（screening_record.json、findings.md、facts.json）",
+    "historical_probe_logs": [
+      "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4/agent_probe.log",
+      "runs/r2e_env_repair_20260924/p4/targeted_public_tests/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4/agent_probe.log",
+      "runs/r2e_env_repair_20260924/p4/targeted2_cmds/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4/agent_probe.log",
+      "runs/r2e_env_repair_20260924/p4/image_readout/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4.txt"
+    ],
+    "cross_task_scans": [
+      "runs/r2e_static_prep_20260924/cross_task_gold_scan.json",
+      "runs/r2e_static_prep_20260924/cross_task_test_scan.json"
+    ],
+    "review_documents": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/results/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4/（public_read.md、analysis_before_history.md、old_findings_delta.md、card.md）"
+  },
+  "checks": {
+    "1": {
+      "status": "pass",
+      "note": "题面、base、gold、隐藏测试、expected 对应同一任务版本；隐藏文件等于公开的 tests/test_exporters.py 加一个新增的 test_export_binary（另有一行没用到的 import）",
+      "evidence": "隐藏文件与公开文件的 diff；grading_bundle 与 public_bundle 的 base_commit 相同"
+    },
+    "2": {
+      "status": "pass",
+      "note": "noop 下目标键的失败原因与题面 Actual Behavior 相同；在真实启动链下公开复现也成立",
+      "evidence": "R-f noop log 第 34 行；devcheck captures/pr1_1_cmd.out"
+    },
+    "3": {
+      "status": "unknown",
+      "note": "user_prompt.txt 只是静态渲染；devcheck 用的是专用指令，没有捕获本题题面；public_hints 写进容器里的文件、不进系统提示，模型能否看到还没验证。当前提示措辞与环境事实一致，旧记录里 pip / conda 的矛盾已过时",
+      "evidence": "devcheck stub/requests/messages_000.json；public_bundle.json；环境卡 §2"
+    },
+    "4": {
+      "status": "pass",
+      "note": "合法修复只需改 scrapy/exporters.py，不在排除范围内；额外排除为空",
+      "evidence": "gold 账本 projection.included_paths"
+    },
+    "5": {
+      "status": "issue",
+      "note": "同仓包含关系：本题修复和 test_export_binary 出现在 a95a338e、75450e75 的公开初态里；本题初态含 9a15fcf8 的修复；与 cfed9b66 互不包含",
+      "evidence": "见 issues I3"
+    },
+    "6": {
+      "status": "pass",
+      "note": "six、lxml、twisted、pytest 8.3.4 都已安装；没有 pip，本题也不需要装包",
+      "evidence": "devcheck captures/env.out；公开测试 61 passed"
+    },
+    "7": {
+      "status": "not_applicable",
+      "note": "不需要数据、权重或其它外部文件"
+    },
+    "8": {
+      "status": "pass",
+      "note": "以 agent 54321 身份，导入、复现和公开测试都能跑；评分用户下 62 个键都执行了",
+      "evidence": "devcheck；环境卡 §1"
+    },
+    "9": {
+      "status": "pass",
+      "note": "评分时导入的是 /testbed/scrapy/__init__.py（1.1.0dev1）",
+      "evidence": "账本 observations.RH2_OBS_IMPORT_PATH"
+    },
+    "10": {
+      "status": "pass",
+      "note": "公开读者建议的命令在真实启动链下都能跑；命令 A、B 能区分修复前后；相关公开测试全部通过",
+      "evidence": "devcheck captures；private_gold_control"
+    },
+    "11": {
+      "status": "pass",
+      "note": "准备、解题、安装、测试各阶段都不需要网络；actor 的外网访问被拒绝",
+      "evidence": "devcheck prelaunch.json 的 probe_facts"
+    },
+    "12": {
+      "status": "not_applicable",
+      "note": "不依赖外部服务"
+    },
+    "13": {
+      "status": "pass",
+      "note": "评分时内存峰值约 209 MB（限额 4 GiB），测试约 1 秒",
+      "evidence": "账本 resource 与 test.seconds"
+    },
+    "14": {
+      "status": "pass",
+      "note": "noop、gold 各跑两次，逐键一致；M3 另有两次 gold。重复次数有限",
+      "evidence": "facts_ref.grading_runs 与 independent_reference"
+    },
+    "15": {
+      "status": "not_checked"
+    },
+    "16": {
+      "status": "pass",
+      "note": "gold 经冻结与投影交付，投影只含 scrapy/exporters.py；actor 产出的候选的交付没有验证",
+      "evidence": "gold 账本 projection"
+    },
+    "17": {
+      "status": "pass",
+      "note": "评分时整个 r2e_tests 目录被替换；gold 不碰测试路径",
+      "evidence": "eval log 的 RH2_SETUP_* 各行；账本 candidate_test_like_paths 为空"
+    },
+    "18": {
+      "status": "pass",
+      "note": "收集到 62 项、解析出 62 个键；返回码与结果一致，日志完整",
+      "evidence": "eval log；账本 log.partial=false"
+    },
+    "19": {
+      "status": "pass",
+      "note": "62 个键没有重复、没有颜色码，全部 PASSED；本题只有一个隐藏文件，不会撞键"
+    },
+    "20": {
+      "status": "pass",
+      "note": "noop 与 gold 只差目标键，这个差异来自未修复的行为"
+    },
+    "21": {
+      "status": "pass",
+      "note": "没有安装、导入、超时或平台错误"
+    },
+    "22": {
+      "status": "pass",
+      "note": "与 M3 独立 runner 逐键一致",
+      "evidence": "reconcile.json 里本题两行都是 agree"
+    },
+    "23": {
+      "status": "pass",
+      "note": "需求清楚，唯一的目标断言就是题面原例；嵌套 dict 的键、非 str 键、键的编码都没有约定，但也都没有测，不影响评分"
+    },
+    "24": {
+      "status": "pass",
+      "note": "静态判断：测试不约束内部 helper 名、调用顺序或返回类型；C1 待正式评分实跑确认"
+    },
+    "25": {
+      "status": "issue",
+      "note": "binary 模式只测了顶层原例；只处理 Item 的不完整实现也能得 1（静态推断，C2 待实跑）",
+      "evidence": "见 issues I1"
+    },
+    "26": {
+      "status": "issue",
+      "note": "gold 在 binary 模式下引入了未测回归（静态推断，E1 待实跑）",
+      "evidence": "见 issues I2"
+    },
+    "27": {
+      "status": "issue",
+      "note": "gold 修到了原例，也没有无关改动，但不是没有回归的参考实现",
+      "evidence": "见 issues I2"
+    },
+    "28": {
+      "status": "not_applicable",
+      "note": "没有修订，也不建议新增断言"
+    },
+    "29": {
+      "status": "pass",
+      "note": "容器里没有修复残留：fix_present=no，HEAD 没有子提交，没有 refs、remote、reflog。跨题可见性记在第 5 项",
+      "evidence": "派生镜像 facts.json；devcheck attempt.json 的 git_sanitize"
+    },
+    "30": {
+      "status": "pass",
+      "note": "actor 没有外网，拿不到上游的修复",
+      "evidence": "devcheck prelaunch.json"
+    },
+    "31": {
+      "status": "unknown",
+      "note": "本题没有题目特有的评分入口；共享评分机制沿用平台层审查，不在本题判定"
+    },
+    "32": {
+      "status": "pass",
+      "note": "断言比较的是导出结果本身，不是文本或文件是否存在"
+    },
+    "33": {
+      "status": "not_checked"
+    },
+    "34": {
+      "status": "not_checked"
+    },
+    "35": {
+      "status": "not_checked"
+    },
+    "36": {
+      "status": "not_checked"
+    },
+    "37": {
+      "status": "not_applicable",
+      "note": "没有修订"
+    },
+    "38": {
+      "status": "not_applicable",
+      "note": "没有修订"
+    },
+    "39": {
+      "status": "not_checked"
+    },
+    "40": {
+      "status": "not_checked"
+    }
+  },
+  "issues": [
+    {
+      "id": "I1",
+      "category": "test_coverage",
+      "severity": "low",
+      "evidence_level": "静态推断（C2 待正式评分实跑）",
+      "summary": "binary=True 只出现在目标键里，而且只测了题面的顶层原例；dict 形式的 item、fields_to_export、export_empty_fields、嵌套的 Item 或 dict、非默认 encoding 都没测。只在 item 是 BaseItem 时才转键的不完整实现也能得 1",
+      "evidence": [
+        "hidden_tests/test_1.py 第 119-123 行（唯一的 binary=True 用例）",
+        "hidden_tests/test_1.py 第 84-86 行（其余 Python exporter 用例都固定 binary=False）"
+      ],
+      "proposed_action": "只登记，不补测试（题面只给了顶层例）；用 C2 实跑确认",
+      "status": "open"
+    },
+    {
+      "id": "I2",
+      "category": "gold_untested_regression",
+      "severity": "low",
+      "evidence_level": "静态推断（E1 待私有容器实跑）",
+      "summary": "gold 在 binary 模式下对所有值再调一遍 _serialize_value，由此带来几处变化：export_empty_fields=True 且字段缺失时，对 None 调 to_bytes 抛 TypeError（base 返回 None）；字段 serializer 返回非字符串时也抛 TypeError（base 原样保留）；dict item 里的非 str 键同样抛错；键用默认 utf-8 编码，值却用 self.encoding。隐藏测试都不覆盖这些情况，不影响任何键",
+      "evidence": [
+        "gold.patch",
+        "worktree scrapy/exporters.py 第 54-78 行、第 257-278 行",
+        "worktree scrapy/utils/python.py 第 47-68 行、第 110-120 行",
+        "worktree docs/topics/exporters.rst 第 204-210 行"
+      ],
+      "proposed_action": "登记为 gold 的限制；不为此补测试（题面没提，补了就是加进审查者自己的要求）；E1 实跑",
+      "status": "open"
+    },
+    {
+      "id": "I3",
+      "category": "task_relation",
+      "severity": "medium",
+      "evidence_level": "人工核实公开工作树 + 机械比对",
+      "summary": "本题的修复（gold 5 行里 4 行逐字相同，另 1 行只是方法改名为 _serialize_item）和 test_export_binary 出现在 scrapy__a95a338e（2.7.0）、scrapy__75450e75（2.7.1）的公开初态里；本题初态 scrapy/responsetypes.py 第 27 行已经含有 scrapy__9a15fcf8 的修复；本题与 scrapy__cfed9b66 互不包含",
+      "evidence": [
+        "runs/r2e_static_prep_20260924/cross_task_gold_scan.json",
+        "runs/r2e_static_prep_20260924/cross_task_test_scan.json",
+        "v3/public/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/worktree 的 scrapy/exporters.py 与 tests/test_exporters.py 第 182 行",
+        "v3/public/scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67/worktree 的同名文件与行"
+      ],
+      "proposed_action": "划分数据时按同族处理：不要把本题与 a95a338e、75450e75 分别放在训练和留出评测两侧",
+      "status": "open"
+    },
+    {
+      "id": "I4",
+      "category": "solver_condition",
+      "severity": "low",
+      "evidence_level": "实测（镜像 1517a0c4；a2fe6dfe 上只复核了没有 pip 和 exporters 测试通过这两点）",
+      "summary": "venv 里没有 pip；Scrapy 1.1 与镜像里的 Twisted 24.11 不兼容，tests/test_closespider.py 等抓取类公开测试恒失败，与本题无关；相关文件 tests/test_exporters.py 61 passed",
+      "evidence": [
+        "runs/r2e_env_repair_20260924/p4/targeted2_cmds/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4/agent_probe.log",
+        "runs/r2e_actor_20260925/devcheck/scrapy__e938752973b4fc53e0fa0c0bc68a4316/orig/captures/env.out",
+        "runs/r2e_actor_20260925/devcheck/scrapy__e938752973b4fc53e0fa0c0bc68a4316/orig/captures/pr3_3_pytest.out"
+      ],
+      "proposed_action": "沿用历史记录的 solver_conditions；公开提示已要求只跑单个测试文件",
+      "status": "open"
+    },
+    {
+      "id": "I5",
+      "category": "unverified_condition",
+      "severity": "unknown",
+      "evidence_level": "未知",
+      "summary": "模型实际收到的题面和 public_hints 还没有捕获；devcheck 和私有 gold 对照用的镜像 ID 与评分运行不同，前者上还没有做过隐藏测试评分",
+      "evidence": [
+        "runs/r2e_actor_20260925/devcheck/scrapy__e938752973b4fc53e0fa0c0bc68a4316/orig/stub/requests/messages_000.json",
+        "runs/r2e_actor_20260925/devcheck/scrapy__e938752973b4fc53e0fa0c0bc68a4316/orig/prelaunch.json 的 inspect_facts.image",
+        "账本的 image_id_actual"
+      ],
+      "proposed_action": "在 actor 阶段核对实际消息；在 a2fe6dfe 上补一次 noop 与 gold 正式评分，或者确认两张镜像内容等价",
+      "status": "open"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": []
+  },
+  "revision_refs": [],
+  "disposition": {
+    "scope": "static_review",
+    "state": "needs_review",
+    "reason": "静态候选，待 actor 验证（不是题意或测试争议）：需求清楚，唯一的目标断言就是题面原例，没有发现误拒；已知限制是漏测（I1）和 gold 的未测回归（I2），两者都不影响合理解的得分；同族关系见 I3",
+    "static_candidate_for_probe": true,
+    "ready_for_probe": false,
+    "pending": [
+      "用正式评分代码实跑 C1、C2（可同批加 C3）",
+      "在私有容器里跑 E1 对照",
+      "actor 真实求解与实际消息核对（清单第 3 项、第 33–36 项）"
+    ],
+    "previous_disposition": {
+      "scope": "环境资格（r2e_env_repair_20260924，P4 包）",
+      "state": "environment_qualified",
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4/screening_record.json",
+      "relation": "本审复核其证据成立；两者范围不同，不冲突"
+    },
+    "history_changed_judgment": false,
+    "history_updates": [
+      "在 /testbed 以外能否导入：旧探针实测 cwd=/tmp 时可以导入（editable 安装）",
+      "补入抓取类公开测试的噪声，作为解题侧条件",
+      "旧记录里的提示与环境矛盾已过时"
+    ],
+    "reviewer": null,
+    "next_step": "用正式评分代码一批实跑 C1、C2（C3 可以同批），同时在私有容器里跑 E1"
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "reviewer_exposure": "主审读过：公开包、隐藏测试全文、expected、gold、运行账本与日志、devcheck 与私有 gold 对照、同仓另外 4 题的公开包、本题的历史环境记录；没有读其它题的私有包和其它审查目录",
+    "provide_to_solver": false,
+    "note": "不是正式训练或评测的批准"
+  },
+  "costs": {
+    "review_tokens": null,
+    "review_usd": null,
+    "cpu_seconds": null,
+    "note": "本审只做了静态阅读与已有证据核对，没有执行 CPU 命令；token 与费用都没有工具观测"
+  },
+  "coordinator_notes": [
+    {
+      "date": "2026-09-25",
+      "by": "Claude B（协调者）",
+      "note": "本记录写于候选实跑之前，'待实跑''预期'为当时推断。实跑结果见 docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/grader_candidates.md，主审与复核的对照见同目录 results/<instance_id>/review.md，批次结论见 README.md §3。协调者未改动本记录的其它字段。"
+    }
+  ]
+}

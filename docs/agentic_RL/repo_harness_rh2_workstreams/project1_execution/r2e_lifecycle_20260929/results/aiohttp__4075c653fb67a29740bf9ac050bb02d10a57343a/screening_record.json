@@ -1,0 +1,217 @@
+{
+ "schema_id": "rh2.r2e_screening_record.v1",
+ "task_id": "r2e_gym_subset::aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a",
+ "instance_id": "aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a",
+ "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0（无材料修订；expected sha256:79a761b437b1af932ed7ca3efa83c14de20bffc0340246a9c3d6430aa482c92c，129 键 = 126 PASSED + 3 FAILED；hidden tests tree sha256:eb81f695920fd6afc55d70a55a6e96720d54e011aa6d1eb0e6b0243757ffe805；v3–v7 材料对本题相同）",
+ "source_adapter_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl L4（line sha256:4673d55a902fa4d1…）；validation_bundles_v0.jsonl L4（gold sha256:f99fe9252adaf4d6…）；public_bundles_v0.jsonl（line sha256:c88310220a71bc6b…）",
+ "recipe_ref": {
+  "derived_image_ref": "rh2-r2e-derived/aiohttp:4075c653fb67-r2e_derive_v1s",
+  "derived_image_id": "sha256:f483bab46f9e13f3ebb6897143e4cdd548c47380a8221f969be72957543dddea",
+  "recipe_id": "r2e_derive_v1+sysconfig_v1",
+  "resources": "default（2 CPU / 4 GiB / /tmp 1 GiB；grader deny_all）",
+  "superseded": {
+   "derived_image_id": "sha256:0d7854428a34dc930a630716daac32bfa6be8942f6e4bbe3c9f7c7afd266b94f",
+   "recipe_id": "r2e_derive_v1",
+   "note": "旧机器 09-23/24 的运行只作对照"
+  }
+ },
+ "code_snapshot_ref": "正式评分用 /work/code_v7/rh2（HEAD a31cdcd0，加未跟踪的实验目录；快照清单在 runs/r2e_lifecycle_20260929/code_snapshots/，调用见 runs/r2e_lifecycle_20260929/inv/aiohttp_4075/run.sh）；grader_version r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe；scripts_digest sha256:a3d70afcf279…",
+ "facts_ref": [
+  "runs/r2e_lifecycle_20260929/env_verify/ledger_noop.jsonl L4（noop 0，127/129）",
+  "runs/r2e_lifecycle_20260929/env_verify/ledger_gold.jsonl L4（gold 1，129/129）",
+  "runs/r2e_lifecycle_20260929/devcheck/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/devcheck.log（checks 全真）",
+  "runs/r2e_lifecycle_20260929/inv/aiohttp_4075/ledger_DG1.jsonl L1（1.0）",
+  "runs/r2e_lifecycle_20260929/inv/aiohttp_4075/ledger_ALT1.jsonl L1（1.0）",
+  "runs/r2e_lifecycle_20260929/inv/aiohttp_4075/pcheck_matrix_{none,gold,DG1,ALT1}.json（私有行为矩阵，root，不联网）",
+  "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/facts.json（旧机器，只作对照）"
+ ],
+ "checks": {
+  "1": {"status": "pass", "note": "材料哈希与评分面一致。隐藏测试等于公开 tests/test_http_parser.py 加两处新增，conftest 逐字相同；gold 是上游修复提交去掉 CHANGES 片段和测试后的部分", "evidence_refs": ["runs/r2e_static_prep_20260924/v3/private/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/grading_bundle.json", "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl L18"], "by": "私有主审"},
+  "2": {"status": "pass", "note": "noop 下两个目标键的失败原因都是 DID NOT RAISE，与题面一致（旧机、新机都是）", "evidence_refs": ["runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-a_ad0193bb.eval.log L236-256", "runs/r2e_lifecycle_20260929/env_verify/ledger_noop.jsonl L4"], "by": "私有主审"},
+  "3": {"status": "issue", "note": "P4：题面例 1 的字面代码把 bytes 放进 f-string，在 base 上已经抛 InvalidHeader，照抄复现不出问题；题面 L22 的文字能消解。模型实际收到的完整消息未捕获（devcheck 用的是桩）", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/orig/captures/repro_parser_issue_cases.out"], "by": "私有主审"},
+  "4": {"status": "pass", "note": "合法修复只涉及 aiohttp/http_parser.py；gold、DG1、ALT1 正式评分的投影 included_paths 都是这一个文件", "evidence_refs": ["runs/r2e_lifecycle_20260929/env_verify/ledger_gold.jsonl L4", "runs/r2e_lifecycle_20260929/inv/aiohttp_4075/ledger_DG1.jsonl L1", "runs/r2e_lifecycle_20260929/inv/aiohttp_4075/ledger_ALT1.jsonl L1"], "by": "私有主审"},
+  "5": {"status": "issue", "note": "X1：同仓 1c1c0ea3、22a12cc2 的公开初态含本题修复（重构后的写法）和两个隐藏目标测试原文；240da100 的新测试名出现在本题初态里，只是名字层面命中。机械 gold 比对因上游重构而漏报", "evidence_refs": ["runs/r2e_static_prep_20260924/cross_task_test_scan.json", "runs/r2e_static_prep_20260924/cross_task_gold_scan.json"], "by": "私有主审"},
+  "6": {"status": "pass", "note": "依赖齐全：pytest 7.4.2，pytest-cov、brotli、trustme 都已安装，pip 23.2.1；不需要新依赖", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/orig/captures/env_import_versions.out"], "by": "私有主审"},
+  "7": {"status": "not_applicable", "note": "本题不涉及资产", "evidence_refs": [], "by": "私有主审"},
+  "8": {"status": "pass", "note": "devcheck 以 agent（uid 54321）身份走正式启动链，命令全部跑完且符合预期", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/devcheck.log"], "by": "协调者运行 / 私有主审判读"},
+  "9": {"status": "pass", "note": "测试导入的是 /testbed/aiohttp/__init__.py。私有矩阵里各候选行为不同，说明候选代码确实生效", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/aiohttp_4075/pcheck_matrix_gold.json", "runs/r2e_lifecycle_20260929/env_verify/ledger_gold.jsonl L4"], "by": "私有主审"},
+  "10": {"status": "pass", "note": "公开开发路径可用：解析器层与服务端都能复现问题；公开测试在修复前后都通过（test_http_parser 124 passed，相关测试 135 passed）；7 条命令约 27 秒跑完", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/orig/captures", "runs/r2e_lifecycle_20260929/devcheck/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/private_control.json"], "by": "私有主审"},
+  "11": {"status": "pass", "note": "准备、解题、测试三个阶段都不需要网络；回环接口可用", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/orig/captures/repro_server_400_py_parser.out"], "by": "私有主审"},
+  "12": {"status": "not_applicable", "note": "不依赖外部服务", "evidence_refs": [], "by": "私有主审"},
+  "13": {"status": "pass", "note": "内存峰值约 438 MB，上限 4 GiB；新机测试段 12–14 秒", "evidence_refs": ["runs/r2e_lifecycle_20260929/env_verify/ledger_gold.jsonl L4"], "by": "私有主审"},
+  "14": {"status": "pass", "note": "旧机 noop、gold 各 2 次，新机各 1 次，M3 独立 runner 的 gold 2 次，逐键一致", "evidence_refs": ["runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl L4", "runs/r2e_env_repair_20260924/_rerun2/ledger_noop.jsonl L4", "runs/r2e_lifecycle_20260929/env_verify/ledger_noop.jsonl L4", "runs/r2e_lifecycle_20260929/env_verify/ledger_gold.jsonl L4"], "by": "私有主审"},
+  "16": {"status": "pass", "note": "delta 应用 rc=0，投影只含 aiohttp/http_parser.py（replay 路径，不是真实 rollout 导出）", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/aiohttp_4075/ledger_DG1.jsonl L1"], "by": "私有主审"},
+  "17": {"status": "pass", "note": "RH2_SETUP_RESTORED=3，隐藏测试树哈希与评分面一致", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/aiohttp_4075/logs_DG1/evallog_replay-r2e-inv-4075-DG1-_74541a2c.eval.log"], "by": "私有主审"},
+  "18": {"status": "pass", "note": "收集 134 项，排除 3 项、跳过 2 项，解析出 129 个键；测试段正常结束", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/aiohttp_4075/logs_ALT1/evallog_replay-r2e-inv-4075-ALT1_d5b1a7a1.eval.log L25、L475"], "by": "私有主审"},
+  "19": {"status": "pass", "note": "键与状态可解释。3 个期望 FAILED 键是 C 扩展缺失造成的死键（T5），正确修复（含更严的 ALT1）不会翻转；只有改动扩展检测或构建出 .so 的候选才会让它们变成 SKIPPED/PASSED", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/aiohttp_4075/logs_ALT1/evallog_replay-r2e-inv-4075-ALT1_d5b1a7a1.eval.log L472-474"], "by": "私有主审"},
+  "20": {"status": "pass", "note": "noop 为 0 恰好来自两个目标键，没有缺键、也没有零解析", "evidence_refs": ["runs/r2e_lifecycle_20260929/env_verify/ledger_noop.jsonl L4"], "by": "私有主审"},
+  "21": {"status": "pass", "note": "各次运行都没有 stage_error 或 execution_failure", "evidence_refs": ["runs/r2e_lifecycle_20260929/env_verify/ledger_noop.jsonl L4"], "by": "私有主审"},
+  "22": {"status": "pass", "note": "M3 独立 runner 在来源镜像上得到同样的 3 failed / 126 passed", "evidence_refs": ["runs/env_overnight_20260916/M3/gold_ledger/logs_r2e/aiohttp/4075c653fb67/gold/a1/test_output.txt L458"], "by": "私有主审"},
+  "23": {"status": "issue", "note": "要求本身清楚，但有两点：P4（字面例 1 误导）；R2 的一般表述覆盖到请求目标里的 LF/FF，而隐藏测试没有覆盖这种情形（见 I4）", "evidence_refs": ["runs/r2e_static_prep_20260924/v3/public/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/user_prompt.txt L4、L7、L22-23、L26"], "by": "私有主审"},
+  "24": {"status": "pass", "note": "没有误拒合理解（T1）：异常类是题面点名的，没有消息、mock 或 helper 约束；比 gold 更严的 ALT1 得 1.0", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/aiohttp_4075/ledger_ALT1.jsonl L1"], "by": "私有主审"},
+  "25": {"status": "issue", "note": "T2c ×2 + T2b：两条核心断言只用示例字面值；只拒示例字节的退化候选 DG1 正式评分 1.0（129/129）", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/aiohttp_4075/ledger_DG1.jsonl L1", "runs/r2e_lifecycle_20260929/inv/aiohttp_4075/pcheck_matrix_DG1.json"], "by": "私有主审"},
+  "26": {"status": "issue", "note": "gold 引入了未被测到的回归：请求目标里夹 LF/FF/CR/TAB 的请求，base 抛 BadStatusLine，gold 接受", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/aiohttp_4075/pcheck_matrix_none.json", "runs/r2e_lifecycle_20260929/inv/aiohttp_4075/pcheck_matrix_gold.json"], "by": "私有主审"},
+  "27": {"status": "issue", "note": "G1：gold 修到了原例，但在同一核心要求的另一类实例上回归（经 v1 §4 第 4 步判为 S1）", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/aiohttp_4075/pcheck_matrix_gold.json"], "by": "私有主审"},
+  "28": {"status": "unknown", "note": "R-c 草案已写明公开依据和双向对照计划（正对照 ALT1、ALT2；负对照 DG1、gold），尚待实施、实跑验收和 Codex 复核", "evidence_refs": ["docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/card.md"], "by": "私有主审"},
+  "29": {"status": "unknown", "note": "git 已清理（refs、remotes、reflog 都是 0，没有未来提交）；但镜像里的 install.sh、process_aiohttp_updateasyncio.py 没有导出，内容没查", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/orig/attempt.json"], "by": "私有主审"},
+  "30": {"status": "pass", "note": "解题时不联网", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/orig/attempt.json"], "by": "私有主审"},
+  "31": {"status": "issue", "note": "通用控制面暴露，本题只记适用性：隐藏 conftest 通过 pytest_plugins 加载候选能改的 aiohttp/pytest_plugin.py，setup.cfg [tool:pytest] 也来自候选工作树。已列入事后审计项", "evidence_refs": ["runs/r2e_static_prep_20260924/v3/private/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/hidden_tests/conftest.py L25"], "by": "私有主审"},
+  "32": {"status": "issue", "note": "verifier 只检查题面示例的字面输入（同 25）", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/aiohttp_4075/ledger_DG1.jsonl L1"], "by": "私有主审"},
+  "33": {"status": "unknown", "note": "真实 CC 2.1.205 配桩端点的链路已通（devcheck）；真实模型求解没做", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/devcheck.log"], "by": "私有主审"},
+  "37": {"status": "not_applicable", "note": "还没有实施修订；草案属于测试层纠错（R-c），不改变任务范围", "evidence_refs": [], "by": "私有主审"}
+ },
+ "issues": [
+  {
+   "id": "I1",
+   "category": "T2c",
+   "severity": "S1",
+   "scope": "task",
+   "summary": "R1 的核心断言只用题面示例 ÿ（UTF-8 c3 bf，位于字段名首位），其余键里没有别的非 ASCII 字段名",
+   "evidence_refs": ["runs/r2e_static_prep_20260924/v3/private/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/hidden_tests/test_1.py L171-187", "runs/r2e_lifecycle_20260929/inv/aiohttp_4075/pcheck_matrix_DG1.json（hdr_name_cyr_o、hdr_name_raw_e9 两行为 ACCEPT）"],
+   "proposed_action": "R-c #1：在 test_bad_headers 加 pytest.param(\"f\\N{CYRILLIC SMALL LETTER O}o: bar\", id=\"nonascii-mid-name\")，expected 新增该键为 PASSED（card.md 附录 C、E）",
+   "status": "confirmed"
+  },
+  {
+   "id": "I2",
+   "category": "T2c",
+   "severity": "S1",
+   "scope": "task",
+   "summary": "R2 的核心断言只用题面示例那一行（LF 在方法后、FF 在版本前）",
+   "evidence_refs": ["runs/r2e_static_prep_20260924/v3/private/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/hidden_tests/test_1.py L683-686", "runs/r2e_lifecycle_20260929/inv/aiohttp_4075/pcheck_matrix_DG1.json（reqline_vt_sep、reqline_tab_sep 两行为 ACCEPT）"],
+   "proposed_action": "R-c #2：新增 test_http_request_bad_status_line_other_whitespace，两例 ff-separator、vt-separator，都要求 BadStatusLine（card.md 附录 C、E）",
+   "status": "confirmed"
+  },
+  {
+   "id": "I3",
+   "category": "T2b",
+   "severity": "S1",
+   "scope": "task",
+   "summary": "退化候选 DG1 只把示例字节（c3 bf、LF、FF）加进拒绝条件，正式评分 1.0（129/129）；投影与测试执行都有效",
+   "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/aiohttp_4075/ledger_DG1.jsonl L1", "runs/r2e_lifecycle_20260929/inv/aiohttp_4075/logs_DG1/evallog_replay-r2e-inv-4075-DG1-_74541a2c.eval.log L39、L89、L475"],
+   "proposed_action": "由 R-c #1、#2 纠正；验收时 DG1 应为 0",
+   "status": "confirmed"
+  },
+  {
+   "id": "I4",
+   "category": "G1 -> T2（v1 §4 第 4 步）",
+   "severity": "S1",
+   "scope": "task",
+   "summary": "gold 改为按单个 SP 切分请求行后，请求目标里夹 LF/FF/CR/TAB 的请求被接受（例如 ('GET', '/pa\\nth', [])）；base 对这些请求原本抛 BadStatusLine。题面一般表述为：status line 含不当空白或控制字符就应抛 BadStatusLine",
+   "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/aiohttp_4075/pcheck_matrix_none.json", "runs/r2e_lifecycle_20260929/inv/aiohttp_4075/pcheck_matrix_gold.json", "runs/r2e_static_prep_20260924/v3/public/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/user_prompt.txt L4、L7、L23"],
+   "proposed_action": "R-c #3：新增 test_http_request_ctl_in_target_rejected，两例 lf-in-target、ff-in-target，断言 BadHttpMessage（card.md 附录 D、E）。gold 预期判 0 并记录在案；按 D4 用 ALT1（已跑，1.0）或 ALT2（gold 加请求行控制字符检查，未跑）作正对照。复核者若给出公开依据证明可以接受这类请求，则降为 S2 并撤回",
+   "status": "confirmed_pending_review"
+  },
+  {
+   "id": "I5",
+   "category": "P4",
+   "severity": "register",
+   "scope": "task",
+   "summary": "题面例 1 的字面代码（bytes 放进 f-string）在 base 上已经抛 InvalidHeader，复现不出问题；题面 L22 的文字能消解",
+   "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/orig/captures/repro_parser_issue_cases.out"],
+   "proposed_action": "登记；可选 R-f：去掉例 1 里的 .encode()（base 上的证据已齐）",
+   "status": "confirmed"
+  },
+  {
+   "id": "I6",
+   "category": "T5",
+   "severity": "register",
+   "scope": "task",
+   "summary": "3 个期望 FAILED 键（test_c_parser_loaded、test_invalid_character[pyloop]、test_invalid_linebreak[pyloop]）来自 C 扩展缺失且 NO_EXTENSIONS=False，正确修复不会翻转。风险：候选如果改动扩展检测或构建出 .so，会改变键集（离线构建可能性低，未核实）",
+   "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/aiohttp_4075/logs_ALT1/evallog_replay-r2e-inv-4075-ALT1_d5b1a7a1.eval.log L472-474"],
+   "proposed_action": "登记；不做 R-a（没有误拒案例）；探针分析时按 T5 解释",
+   "status": "confirmed"
+  },
+  {
+   "id": "I7",
+   "category": "T3",
+   "severity": "register",
+   "scope": "task",
+   "summary": "旧缺口（base 与 gold 都接受）：字段名里的 / 和 ?；请求目标里的 \\x01；版本号里的 FF（VERSRE 的 . 没转义）；空字段名会抛 IndexError（http_parser.py L145）",
+   "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/aiohttp_4075/pcheck_matrix_gold.json"],
+   "proposed_action": "登记，不纳入修订；ALT1 在这些点上更严，与 R-c 断言和公开回归都不冲突（card.md 附录 H）",
+   "status": "registered"
+  },
+  {
+   "id": "I8",
+   "category": "X1",
+   "severity": "register",
+   "scope": "repo:aiohttp",
+   "summary": "同仓 1c1c0ea3、22a12cc2 的公开初态含本题修复和隐藏目标测试原文；240da100 的测试名出现在本题初态里",
+   "evidence_refs": ["runs/r2e_static_prep_20260924/v3/public/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/worktree/aiohttp/http_parser.py L172、L572", "runs/r2e_static_prep_20260924/v3/public/aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac/worktree/tests/test_http_parser.py L824-827"],
+   "proposed_action": "登记；训练时控制重复采样；留出按仓库整体划分（D3）",
+   "status": "registered"
+  },
+  {
+   "id": "I9",
+   "category": "E3（通用，交 A 线）",
+   "severity": "posthoc_audit_item",
+   "scope": "source:r2e（本题只记适用性）",
+   "summary": "评分时会加载候选能改的 aiohttp/pytest_plugin.py 和 setup.cfg [tool:pytest]",
+   "evidence_refs": ["runs/r2e_static_prep_20260924/v3/private/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/hidden_tests/conftest.py L25"],
+   "proposed_action": "探针事后审计标记对这两个文件及 aiohttp/test_utils.py 的改动",
+   "status": "registered"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "没有证据支持增加路径规则；合法修复只涉及 aiohttp/http_parser.py",
+  "evidence_refs": ["runs/r2e_lifecycle_20260929/env_verify/ledger_gold.jsonl L4"],
+  "applied_version": null
+ },
+ "revision_refs": [],
+ "disposition": {
+  "state": "needs_repair",
+  "scope": "static_review",
+  "reason": "环境与评分条件已在新机器复验（noop 0 / gold 1，devcheck checks 全真）；测试层有 3 个 S1：I1、I2（T2c）+ I3（T2b，DG1 实跑 1.0），以及 I4（第 4 步，gold 回归）。修订全在预授权模板 R-c #1–#3 内，必做；R-c #3 按 D4 用 ALT1/ALT2 作正对照。待协调者实施、实跑验收并经 Codex 复核；独立复核未做",
+  "evidence_refs": [
+   "runs/r2e_lifecycle_20260929/inv/aiohttp_4075/ledger_DG1.jsonl L1",
+   "runs/r2e_lifecycle_20260929/inv/aiohttp_4075/pcheck_matrix_gold.json",
+   "runs/r2e_lifecycle_20260929/devcheck/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/devcheck.log"
+  ],
+  "reviewer": null
+ },
+ "usage": {
+  "intended_use": "development_diagnostic",
+  "exposure_notes": "主审读过 gold、隐藏测试、期望映射、旧环境审查记录和全部运行原件；本记录不提供给解题模型",
+  "v1": {
+   "problem_localization": {"value": "yes", "note": "无门槛"},
+   "capability_comparison": {
+    "value": "conditional",
+    "missing": [
+     "独立复核（v1 §7.3）尚未进行",
+     "二选一：用原版时预登记事后审计（私有矩阵 hdr_name_cyr_o、reqline_vt_sep、target_lf/ff/cr/tab 任一行为 ACCEPT 即 FAIL；另查对 pytest_plugin.py、test_utils.py、setup.cfg、扩展检测的改动）；或者等修订版验收通过"
+    ],
+    "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/devcheck.log", "runs/r2e_lifecycle_20260929/env_verify/ledger_gold.jsonl L4"]
+   },
+   "training_candidate": {
+    "value": "no",
+    "note": "I1–I4 都是 S1、尚未修订。R-c #1–#3 在修订版上验收通过后可改为 yes：noop 0；ALT1/ALT2 为 1；DG1 为 0；gold 为 0 并记录在案；ALT1/ALT2 的公开测试私有对照无回归；再经 Codex 复核"
+   },
+   "heldout_candidate": {
+    "value": "no",
+    "note": "同上的 S1；修订后只能作标明版本的自建题；X1 使答案和目标测试出现在同仓两题初态里，只能按仓库整体留出"
+   }
+  }
+ },
+ "costs": {
+  "container_wall_seconds": {
+   "grading_noop_new": 108.4,
+   "grading_gold_new": 107.8,
+   "grading_DG1": 101.2,
+   "grading_ALT1": 120.2,
+   "devcheck_solve": 27.2,
+   "private_matrix_total": 12.8
+  },
+  "agent_tokens": null,
+  "human_decisions": 0,
+  "source_refs": [
+   "runs/r2e_lifecycle_20260929/env_verify/ledger_noop.jsonl L4（phases 之和）",
+   "runs/r2e_lifecycle_20260929/inv/aiohttp_4075/ledger_DG1.jsonl L1（phases 之和）",
+   "runs/r2e_lifecycle_20260929/devcheck/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/orig/attempt.json（solve_seconds）",
+   "runs/r2e_lifecycle_20260929/inv/aiohttp_4075/pcheck_matrix_*.json（seconds 2.4 + 5.1 + 3.4 + 1.9）"
+  ]
+ },
+ "reviewed_by": "R2E 私有主审（单题闭环试行，Opus 5.5）",
+ "reviewed_at_utc": "2026-09-29",
+ "order_note": "先封存 analysis_before_history.md，之后才读历史引用和新机运行结果；改判理由见 old_findings_delta.md §2"
+}

@@ -1,0 +1,51 @@
+{
+ "task_id": "getmoto__moto-7273",
+ "source": "SWE-Gym lite (swe_gym_lite_full_f70b1a29)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "s2/ingest/public_bundles_v0.jsonl#getmoto__moto-7273",
+  "grading": "s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-7273",
+  "validation": "s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-7273",
+  "base_commit": "d46b3f35e31eae7efd6ff5b5dee621a1017898ff",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-7273/gold/offline/a1/"
+ },
+ "public_view": {
+  "goal": "DynamoDB query 同时用 Limit=1 与 ScanIndexForward=False 时，5.0.0 返回的是最小 SK（SK1）而不是最大 SK（SK3）。要求 Limit 与倒序组合时返回倒序的第一条。",
+  "constraints": ["不带 Limit 的正序/倒序查询已正确，不能改坏", "Limit + 正序也已正确"],
+  "unknowns_from_public_only": [
+   "题面完全没提 ScannedCount；而 F2P 断言 ScannedCount == 1",
+   "题面没说修复方向：先排序后截断、还是把排序前移到筛选之前"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 只碰 tests/test_dynamodb/test_dynamodb.py（base 已存在）", "golden_patch 只碰 moto/dynamodb/models/table.py 的 query()"], "note": "无二进制/LFS/子模块，与题面同一问题。F2P 是 base 已有的 test_query_filter（本包第三例“F2P 不是新测试名”）。", "by": "L1_moto_3"},
+  "2": {"status": "pass", "evidence_refs": ["base moto/dynamodb/models/table.py:646-794：SORT 与 `if scan_index_forward is False: results.reverse()` 在 766-782 行，位于 FILTER 循环之后", "FILTER 循环在 728-731 行用 `reached_length_limit = len(results) == limit` 提前 break"], "note": "base 先按 all_items() 的原始顺序截到 limit 条，再对这 limit 条排序/反转，所以 Limit=1 + 倒序拿到的是“原始顺序第一条”而不是“倒序第一条”。与题面现象一致。", "by": "L1_moto_3"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 3098 字符，含完整可运行复现与失败输出，无外链/图片/截断"], "note": "题面自足（但不含 ScannedCount，见 23）。", "by": "L1_moto_3"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 触碰路径全集：tests/test_dynamodb/test_dynamodb.py"], "note": "无非测试源码路径；gold 触碰 moto/dynamodb/models/table.py，非测试样路径。", "by": "L1_moto_3"},
+  "17": {"status": "pass", "evidence_refs": ["同 4"], "note": "additional_exclusions 空。", "by": "L1_moto_3"},
+  "5": {"status": "issue", "evidence_refs": ["全局索引：同测试文件的另两题是 getmoto__moto-5960、getmoto__moto-7484；同 gold 文件的还有 getmoto__moto-6185", "ancestry 检查：5960 → 6185 → 7273 → 7484 的 base_commit 构成祖先链"], "note": "**7484 也在本包**，两题共用 test_dynamodb.py 与 models/table.py。不是同一修复（7484 见其记录），但同属一条祖先链，划分时必须成组。把 7273 的 golden_patch 反向应用到 7484 的 base 上 `git apply -R --check` 失败（上下文漂移），故“7273 的答案是否在 7484 的 base 里”结论为 unknown，不能判为不含。", "by": "L1_moto_3"},
+  "23": {"status": "issue", "evidence_refs": ["F2P 断言 `response['ScannedCount'] == 1`（正序与倒序各一次）", "problem_statement 全文没有 ScannedCount", "hints_text 指出回归来自 PR #7208 'in an attempt to correct the scan-count'"], "note": "**P2**：题面只要求返回的 Items 正确，没有任何关于 ScannedCount 的要求。最自然的修法之一——“先收集全部 possible_results，排序反转后再截到 limit”——会让 Items 正确但 ScannedCount 变成 3，被 F2P 拒。这条隐含约束只在不可见的 hints 里有线索。", "by": "L1_moto_3"},
+  "24": {"status": "issue", "evidence_refs": ["同 23"], "note": "与 23 同源：F2P 把“Limit 必须在排序之后的顺序上提前截断（因而 ScannedCount 等于实际扫描数）”变成硬约束，排除了“后截断”这一类实现。P2，与 23 合并处理。", "by": "L1_moto_3"},
+  "25": {"status": "pass", "evidence_refs": ["F2P 同时验证 ScanIndexForward=False 与 True 两个方向的 Items 与 ScannedCount", "P2P 含大量 query/scan 分页用例（161 条里 test_dynamodb.py 的 query 系列）"], "note": "只反转不排序、或只处理倒序一个方向的部分修复会被正序那半条拒。", "by": "L1_moto_3"},
+  "26": {"status": "issue", "evidence_refs": ["collected 162 items，但 graded（F2P+P2P）只有 161；差额来自跨题问题 A 的 id 塌缩", "stage1 日志 555-556 行是两条不同用例 test_set_attribute_is_dropped_if_empty_after_update_expression[use attribute name] 与 [use expression attribute name]", "status_map.json 只有 161 个键，其中唯一的截断键是 ...[use"], "note": "本题有两条参数化用例在判分里被合并成一条，后写覆盖先写。见 summary.md 跨题发现 A。", "by": "L1_moto_3"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 把 SORT + reverse 块整体从 FILTER 之后（原 766-782 行）前移到 FILTER 之前（作用于 possible_results）"], "note": "正确且对应：先在全量候选上排序反转，再按 limit 边扫描边截断，所以 ScannedCount 反映真实扫描数、last_evaluated_key 取的是排序后最后一条。无无关改动。`index_range_key` 在 `if index_name:` 分支内有定义，前移后仍在作用域内。", "by": "L1_moto_3"},
+  "29": {"status": "issue", "evidence_refs": ["hints_text 直接给出 'it was already broken in 4.2.14 because of this PR: https://github.com/getmoto/moto/pull/7208'"], "note": "hints 含指向上游 PR 的链接（检查 29 关心的“指向上游 PR/commit”）。对 agent 不可见故不构成泄漏，但若 hints 进入提示词，agent 可顺着 PR 号找到 diff。题面本身无链接。", "by": "L1_moto_3"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold 162 passed，28.25s"], "note": "纯 mock；本包最慢的测试文件。", "by": "L1_moto_3"},
+  "7": {"status": "issue", "evidence_refs": ["本包共性 install rc=2"], "note": "见包级 issue。", "by": "L1_moto_3"},
+  "11": {"status": "pass", "evidence_refs": ["DynamoDB 测试全部进程内 mock"], "note": "无外部服务。", "by": "L1_moto_3"}
+ },
+ "issues": [
+  {"category": "requirement_underspecified", "severity": "P2", "evidence_refs": ["F2P 的 ScannedCount==1 断言 vs 题面无此要求"], "proposed_action": "标记为“F2P 含题面之外的隐含约束”。若用于训练，注意它会惩罚“先取全量、排序后截断”这一类正确但 ScannedCount 语义不同的解答。", "next_experiment": "构造“收集全部 possible_results → 排序 → 反转 → results[:limit]”的补丁跑 F2P，确认 Items 断言通过而 ScannedCount 断言失败（预期如此）。"},
+  {"category": "grading_id_collapse", "severity": "P1", "evidence_refs": ["status_map.json 161 键 vs collected 162", "swegym_parsers.py:52-55 `line.split()` + 后写覆盖"], "proposed_action": "见 summary.md 跨题发现 A：修 status_map 解析。", "next_experiment": "造一个让 [use attribute name] 失败而 [use expression attribute name] 通过的补丁，看判分是否仍报 RESOLVED_FULL。"},
+  {"category": "dataset_split_grouping", "severity": "P2", "evidence_refs": ["5960 → 6185 → 7273 → 7484 祖先链共用 moto/dynamodb/models/table.py"], "proposed_action": "四题成组，同进 train 或同进 eval。", "next_experiment": "无。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只含测试文件；沿用默认空排除。", "evidence_refs": ["test_patch 路径全集 = tests/test_dynamodb/test_dynamodb.py"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_dynamodb/test_dynamodb.py 里 query 分页相关用例（ExclusiveStartKey / LastEvaluatedKey）", "reason": "gold 把排序前移，直接改变 last_evaluated_key 取自哪一条（table.py:730-733 `self._get_last_evaluated_key(results[-1], index_name)`），分页是最容易被改坏的面。"},
+  {"id": "tests/test_dynamodb/test_dynamodb_query.py、tests/test_dynamodb/test_dynamodb_indexes.py（若存在）", "reason": "gold 的 SORT 块含 index_range_key 分支，GSI/LSI 上的倒序 + Limit 未被本题任何用例覆盖。"},
+  {"id": "新增：GSI 上 Limit + ScanIndexForward=False", "reason": "同上，index 分支是 gold 改动的一半，完全无覆盖。"},
+  {"id": "新增：Limit 大于结果数、Limit 触发 RESULT_SIZE_LIMIT 的用例", "reason": "table.py:729 的 size 限制分支与 limit 分支共用同一 break，前移排序后其语义也变了。"}
+ ],
+ "disposition_hint": {"state": "needs_review", "reason": "题面自足、base 缺陷明确、gold 正确且对应。需要裁定两点：F2P 的 ScannedCount 断言是题面之外的隐含约束；本题是 id 塌缩问题（跨题发现 A）的受影响样本之一。"},
+ "costs": {"minutes": 20}
+}

@@ -1,0 +1,75 @@
+{
+ "instance_id": "scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67",
+ "template": "R-c",
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "    @defer.inlineCallbacks\n    def test_shell_fetch_async(self):\n        reactor_path = \"twisted.internet.asyncioreactor.AsyncioSelectorReactor\"\n        url = self.url('/html')\n        code = f\"fetch('{url}')\"\n        args = [\"-c\", code, \"--set\", f\"TWISTED_REACTOR={reactor_path}\"]\n        _, _, err = yield self.execute(args, check_code=True)\n        self.assertNotIn(\n            b\"RuntimeError: There is no current event loop in thread\", err\n        )\n",
+     "new": "    @defer.inlineCallbacks\n    def test_shell_fetch_async(self):\n        reactor_path = \"twisted.internet.asyncioreactor.AsyncioSelectorReactor\"\n        url = self.url('/html')\n        code = f\"fetch('{url}')\"\n        args = [\"-c\", code, \"--set\", f\"TWISTED_REACTOR={reactor_path}\"]\n        _, _, err = yield self.execute(args, check_code=True)\n        self.assertNotIn(\n            b\"RuntimeError: There is no current event loop in thread\", err\n        )\n\n    @defer.inlineCallbacks\n    def test_shell_fetch_async_coroutine_runs(self):\n        # With the asyncio reactor, a Scrapy coroutine that awaits asyncio (here the\n        # process_request coroutine of a downloader middleware) must run to completion.\n        reactor_path = \"twisted.internet.asyncioreactor.AsyncioSelectorReactor\"\n        mw_path = \"r2e_tests.shell_asyncio_mw.AsyncioSleepDownloaderMiddleware\"\n        url = self.url('/html')\n        code = (\n            \"(__import__('signal').alarm(60), \"\n            f\"fetch('{url}'), \"\n            \"print('R2E_MW_DONE', request.meta.get('r2e_asyncio_mw_done'), response.status, flush=True))\"\n        )\n        args = [\n            \"-c\", code,\n            \"--set\", f\"TWISTED_REACTOR={reactor_path}\",\n            \"--set\", 'DOWNLOADER_MIDDLEWARES={\"%s\": 543}' % mw_path,\n        ]\n        _, out, _ = yield self.execute(args, check_code=True)\n        self.assertIn(b\"R2E_MW_DONE True 200\", out)\n\n    @defer.inlineCallbacks\n    def test_shell_fetch_async_twice(self):\n        # With the asyncio reactor, processing of a fetched response must finish, so a second\n        # fetch is not held back by the SCRAPER_SLOT_MAX_ACTIVE_SIZE soft limit.\n        reactor_path = \"twisted.internet.asyncioreactor.AsyncioSelectorReactor\"\n        url = self.url('/html')\n        code = (\n            \"(__import__('signal').alarm(60), \"\n            f\"fetch('{url}'), print('R2E_FETCH_1', response.status, flush=True), \"\n            f\"fetch('{url}'), print('R2E_FETCH_2', response.status, flush=True))\"\n        )\n        args = [\n            \"-c\", code,\n            \"--set\", f\"TWISTED_REACTOR={reactor_path}\",\n            \"--set\", \"SCRAPER_SLOT_MAX_ACTIVE_SIZE=1000\",\n        ]\n        _, out, _ = yield self.execute(args, check_code=True)\n        self.assertIn(b\"R2E_FETCH_1 200\", out)\n        self.assertIn(b\"R2E_FETCH_2 200\", out)\n"
+    }
+   ]
+  },
+  {
+   "kind": "hidden_test_file_add",
+   "target": "shell_asyncio_mw.py",
+   "content": "import asyncio\n\n\nclass AsyncioSleepDownloaderMiddleware:\n    # Used by ShellTest.test_shell_fetch_async_coroutine_runs: the process_request\n    # coroutine awaits asyncio and marks the request only after the await has finished.\n\n    async def process_request(self, request, spider):\n        await asyncio.sleep(0.1)\n        request.meta['r2e_asyncio_mw_done'] = True\n        return None\n"
+  }
+ ],
+ "expected_after": {
+  "ShellTest.test_dns_failures": "PASSED",
+  "ShellTest.test_empty": "PASSED",
+  "ShellTest.test_fetch_redirect_follow_302": "PASSED",
+  "ShellTest.test_fetch_redirect_not_follow_302": "PASSED",
+  "ShellTest.test_local_file": "PASSED",
+  "ShellTest.test_local_nofile": "PASSED",
+  "ShellTest.test_redirect": "PASSED",
+  "ShellTest.test_redirect_follow_302": "PASSED",
+  "ShellTest.test_redirect_not_follow_302": "PASSED",
+  "ShellTest.test_request_replace": "PASSED",
+  "ShellTest.test_response_body": "PASSED",
+  "ShellTest.test_response_encoding_gb18030": "PASSED",
+  "ShellTest.test_response_selector_html": "PASSED",
+  "ShellTest.test_response_type_html": "PASSED",
+  "ShellTest.test_response_type_text": "PASSED",
+  "ShellTest.test_scrapy_import": "PASSED",
+  "ShellTest.test_shell_fetch_async": "PASSED",
+  "ShellTest.test_shell_fetch_async_coroutine_runs": "PASSED",
+  "ShellTest.test_shell_fetch_async_twice": "PASSED"
+ },
+ "positive_control": "runs/r2e_actor_20260925/grader_cands/scrapy_7545_K1_reuse_reactor_loop.patch",
+ "acceptance": {
+  "K1": {
+   "expected_score": 1,
+   "trial": "trials/draft_K1.json",
+   "trial_verdict": "match 19/19（复跑 trials/draft_K1_r2.json 同为 match）"
+  },
+  "K1b": {
+   "expected_score": 1,
+   "trial": "trials/draft_K1b.json",
+   "trial_verdict": "match 19/19"
+  },
+  "noop": {
+   "expected_score": 0,
+   "trial": "trials/draft_noop.json",
+   "trial_verdict": "mismatch：test_shell_fetch_async、test_shell_fetch_async_coroutine_runs 两键 PASSED→FAILED（后者 shell 退出码 1，RuntimeError no current event loop）"
+  },
+  "gold": {
+   "expected_score": 0,
+   "trial": "trials/draft_gold.json",
+   "trial_verdict": "mismatch：test_shell_fetch_async_coroutine_runs（第一次 fetch 挂起，60 秒闹钟终止，stdout 为空）、test_shell_fetch_async_twice（只有 R2E_FETCH_1）两键 PASSED→FAILED（当前材料下为 match 17/17，见 trials/cur_gold.json）"
+  },
+  "K2": {
+   "expected_score": 0,
+   "trial": "trials/draft_K2.json",
+   "trial_verdict": "mismatch：仅 test_shell_fetch_async PASSED→FAILED（与修订前相同）"
+  },
+  "K3": {
+   "expected_score": 0,
+   "trial": "trials/draft_K3.json",
+   "trial_verdict": "mismatch：仅 test_shell_fetch_async_coroutine_runs PASSED→FAILED（RuntimeError: await wasn't used with future，shell 退出码 1；当前材料下为 match 17/17，见 trials/cur_K3.json）"
+  }
+ }
+}

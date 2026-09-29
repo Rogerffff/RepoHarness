@@ -1,0 +1,28 @@
+{
+  "rc": 4,
+  "summary": {
+    "body": "1 passed",
+    "counts": {
+      "passed": 1
+    },
+    "no_tests_ran": false
+  },
+  "reward": 0.0,
+  "decision": {
+    "candidate_python_paths": null,
+    "compile_probe": null,
+    "evidence": [],
+    "install_rc_baseline": null,
+    "kind": "source_rule",
+    "missing": [
+      "shape_undetermined"
+    ],
+    "qualification": null,
+    "referenced_candidate_paths": null,
+    "resource": null,
+    "rule": null,
+    "stage": null,
+    "trigger": "reference_all_missing"
+  },
+  "log": "ImportError while loading conftest '/testbed/tests/conftest.py'.\ntests/conftest.py:3: in <module>\n    from src.thing import VALUE\nsrc/thing.py:1: in <module>\n    from rh2_missing_fixture_dependency import VALUE\nE   ModuleNotFoundError: No module named 'rh2_missing_fixture_dependency'\n============================= test session starts ==============================\nplatform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0\nrootdir: <REPO>\nconfigfile: pyproject.toml\ncollected 1 item\n\nchild/test_child.py .                                                    [100%]\n\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED child/test_child.py::test_child\n============================== 1 passed in 0.01s ===============================\n"
+}

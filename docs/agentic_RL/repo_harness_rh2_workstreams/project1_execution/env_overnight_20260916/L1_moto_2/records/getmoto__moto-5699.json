@@ -1,0 +1,53 @@
+{
+ "task_id": "getmoto__moto-5699",
+ "source": "SWE-Gym lite (s2 ingest v0)",
+ "task_revision": "upstream",
+ "by": "L1_moto_2 (Opus 5, 静态审查, 2026-09-16)",
+ "materials_refs": {
+  "snapshot": "runs/env_overnight_20260916/L1_moto_2/mat/getmoto__moto-5699/",
+  "base_commit": "b4f59b771cc8a89976cbea8c889758c132d405d0",
+  "version": "4.0",
+  "eval_cmd": "pytest -n0 -rA",
+  "repo_level": "docs/.../env_overnight_20260916/L1_moto_2/repo_level_findings.md"
+ },
+ "public_view": {
+  "目标行为": "CloudFront list_invalidations 在没有任何 invalidation 时，响应的 InvalidationList 不应包含 Items 键（AWS 真实行为是整块省略），Quantity 仍为 0。",
+  "约束": "只改 moto/ 源码。",
+  "公开材料可推断": "base 的 INVALIDATIONS_TEMPLATE 无条件渲染 <Items>...</Items>（b4f59b771c:moto/cloudfront/responses.py:622-637），空列表时产生空的 <Items> 元素，botocore 解析成 Items=[]。把 Items 块包在 {% if invalidations %} 里即可。",
+  "公开材料无法确定的点": [
+   "题面没说有 invalidation 时的输出必须保持不变（这由 P2P 的 test_list_invalidations 保证，属私有材料）。",
+   "题面没说 Quantity/MaxItems/IsTruncated 是否也要跟着调整；从复现断言看不变。"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5699/test.patch", "mat/getmoto__moto-5699/gold.patch"], "note": "test_patch 只改 tests/test_cloudfront/test_cloudfront_invalidation.py 一行断言，gold 只改 moto/cloudfront/responses.py 的模板；两者 base 均存在、指向同一问题。", "by": "static"},
+  "2": {"status": "issue", "evidence_refs": ["b4f59b771c:tests/test_cloudfront/test_cloudfront_invalidation.py:66-80", "b4f59b771c:moto/cloudfront/responses.py:622-637"], "note": "base 代码确实产出空 <Items>，符合题面描述。但需要注意本题形态是**行为规格变更**而不是\"功能缺失\"：base 里同名测试 test_list_invalidations__no_entries 已存在且**断言的是旧行为** `Items == []`，test_patch 把这一行翻转成 `shouldnt.have.key(\"Items\")`。因此 F2P 在 base 上\"失败\"完全来自注入的新期望，而不是原有测试暴露缺陷。这是合法的上游改动，但把它当作\"初态含 bug\"的证据要加限定。", "by": "static"},
+  "3": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5699/problem_statement.txt"], "note": "题面 903 字符，含完整复现（与 F2P 测试体几乎逐行一致）、moto/boto3/botocore 版本，无外链/截断。", "by": "static"},
+  "4": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5699/test.patch"], "note": "合法解在 moto/cloudfront/responses.py。", "by": "static"},
+  "5": {"status": "issue", "evidence_refs": ["本包 getmoto__moto-5737 也属 tests/test_cloudfront/ 且 gold 改 moto/cloudfront/"], "note": "与 5737 同属 CloudFront 模块但判分文件不同（invalidation vs distributions）、gold 文件不同（responses.py vs models.py）、不同 PR，不是派生。", "by": "static"},
+  "11": {"status": "pass", "evidence_refs": ["b4f59b771c:tests/test_cloudfront/test_cloudfront_invalidation.py"], "note": "无 network marker、无真实端点。", "by": "static"},
+  "17": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5699/test.patch"], "note": "只恢复 1 个纯测试文件。", "by": "static"},
+  "23": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5699/problem_statement.txt", "mat/getmoto__moto-5699/test.patch"], "note": "题面复现里的断言与 F2P 完全对应，需求充分且一致。", "by": "static"},
+  "24": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5699/test.patch"], "note": "只断言 boto3 解析结果，不约束用模板条件、用两套模板还是在 responses 层裁剪。", "by": "static"},
+  "25": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5699/grading.json"], "note": "最诱人的错误修复是\"永远不渲染 Items\"，会被 P2P 的 tests/test_cloudfront/test_cloudfront_invalidation.py::test_list_invalidations（有 1 条 invalidation，断言 Items 长度 1 和各字段）打掉。另一条 P2P test_create_invalidation 覆盖创建路径。判分集合虽小（1 F2P + 2 P2P），但恰好卡住主要的错误方向。", "by": "static"},
+  "26": {"status": "issue", "evidence_refs": ["b4f59b771c:moto/cloudfront/responses.py:118-124"], "note": "只有 3 个判分 ID，全在同一文件；CloudFront 其它响应模板（distributions、tags）未覆盖。见 proposed_regression_tests。", "by": "static"},
+  "27": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5699/gold.patch"], "note": "gold 只加一对 {% if %}/{% endif %}，无夹带、不依赖其它改动。", "by": "static"},
+  "29": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5699/hints.txt"], "note": "hints_text 为空；题面不含修复代码或 PR 链接（但题面复现＝F2P 测试体，等于把验收标准完整交给求解者，这降低难度而非泄漏答案）。", "by": "static"},
+  "6": {"status": "pass", "evidence_refs": ["repo_level_findings.md#R2"], "note": "4.0，离线 rc=0。", "by": "static+stage1"},
+  "7": {"status": "not_applicable", "evidence_refs": [], "note": "无外部资产。", "by": "static"},
+  "9": {"status": "pass", "evidence_refs": ["repo_level_findings.md#R3"], "note": "仓库级共性证据。", "by": "static+stage1"},
+  "36": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-5699/problem_statement.txt", "mat/getmoto__moto-5699/gold.patch"], "note": "难度信号：题面给出完整验收断言、缺陷在单个模板里一眼可见、参考解 2 行。判分集合只有 3 个 ID。预计基座成功率高、区分度低。", "by": "static"}
+ },
+ "issues": [
+  {"category": "初态语义（规格变更型题目）", "severity": "P3", "evidence_refs": ["b4f59b771c:tests/test_cloudfront/test_cloudfront_invalidation.py:66-80"], "proposed_action": "在题级事实里标注\"F2P 由既有测试断言翻转产生\"，与\"新增测试暴露缺陷\"分开计数；这类题对\"no-op 得 0 来自缺陷未修\"的解释需要额外一句限定。", "next_experiment": "用 L0 事实工具统计全池中\"F2P ID 在 base 已存在且 base 上通过\"的题数。"},
+  {"category": "样本难度/区分度", "severity": "P3", "evidence_refs": ["mat/getmoto__moto-5699/gold.patch"], "proposed_action": "标为低难度样本。", "next_experiment": "目标基座跑一次。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只碰 1 个纯测试文件。", "evidence_refs": ["mat/getmoto__moto-5699/test.patch"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_cloudfront/test_cloudfront_distributions.py::test_list_distributions_without_any", "reason": "同一 responses.py 里的兄弟模板同样有\"空列表仍渲染 Items\"的形态；确认本次只改 invalidations 而没有顺手改坏/漏改分发列表。"},
+  {"id": "tests/test_cloudfront/test_cloudfront.py", "reason": "CloudFront 主流程测试，覆盖 create/update/delete distribution 的模板渲染，验证 Jinja 条件块没有破坏 XML 结构。"},
+  {"id": "tests/test_cloudfront/test_cloudfront_invalidation.py::test_list_invalidations", "reason": "唯一能否决\"永远不渲染 Items\"这种错误修复的用例；已在 P2P，列此强调它是决定性对照。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "材料一致、gold 正确最小、判分虽小但卡住主要错误方向；保留项是规格变更型初态语义与低难度（均 P3）。"},
+ "costs": {"minutes": 13}
+}

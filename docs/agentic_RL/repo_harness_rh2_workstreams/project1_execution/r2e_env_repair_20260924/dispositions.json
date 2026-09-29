@@ -1,0 +1,203 @@
+{
+ "scope": "本轮对 R2E 48 题的处置记录。~~未修改正式题池或摄入面~~（旧表述，已不成立）：09-24 起经用户逐项批准的材料修订改了摄入面（修订单 v1 / v2 / v3，pins v2 / v3 / v4），见 decisions E13 / E16；正式题池仍未建立。隔离不等于修复通过，也不免除在跑对照的审阅。 环境侧状态不等于入池：静态筛查、基座探针和后续可能的修复之前，没有筛选好的环境池（用户 09-24 晚）。",
+ "decision": "Claude 09-24 E05：材料修订只出提案，处置状态等用户决定后更新；09-24 用户批准 T0-1（A）/ T0-2（B1），两题已实施并验证，状态改为 qualified_with_revision（E13）；09-24 晚：用户批准 T0-5 修复、T0-6 先做代表题修复（两题已实施并验证，qualified_with_revision），T0-3 / T0-4 留给后续题意与评分质量筛查（转为 grading_ok_open_items，带 deferred_to），T0-7 先做诊断（已完成，待决定）；09-24 夜：用户按 Claude / Codex 一致建议批准 T0-6 第二步（另 6 道 pandas 照做，已实施并验证，qualified_with_revision）与 T0-7 方案 B（orange3 9b5494e2：SciPy 1.5.4 环境配方 + 两个恢复键的期望修订，已实施并验证；两个 scorer 键保持未完成项，仍为 grading_ok_open_items）",
+ "tasks": {
+  "coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae": {
+   "status": "qualified_with_revision",
+   "reason": "期望单键（MockingProtectionTest.test_os_path_exists=FAILED）来自与发布镜像不同的宿主机环境（子进程缺 mock）；镜像里 13 次观测全 PASSED，gold 恒 14/15。环境无缺口。",
+   "evidence": [
+    "material_revisions/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae.md",
+    "tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/screening_record.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v1.json#r2e-mr-001",
+    "runs/r2e_t0_revisions_20260924/reconcile/reconcile.md",
+    "runs/r2e_t0_revisions_20260924/replay/ledger_t0_gold.jsonl"
+   ],
+   "decided_by": "用户 09-24 批准 T0-1 方案 A；Claude 实施与验证",
+   "previous_status": "held_material",
+   "resolution": "修订单 r2e-mr-001（该键改 PASSED，镜像不变）；A 线机器真实 grader noop 0（14/15）×2、gold 1（15/15）×2，与 M3 逐键一致。"
+  },
+  "datalad__58ba5165234cb16de0e8463ee75097362099835f": {
+   "status": "qualified_with_revision",
+   "reason": "隐藏 test_1 依赖仓库内修复前的 demo_doc（支撑模块未随修复更新），cmdline 键在任何源码修复下都 FAILED，gold 3/4；环境无缺口。",
+   "evidence": [
+    "material_revisions/datalad__58ba5165234cb16de0e8463ee75097362099835f.md",
+    "runs/r2e_env_repair_20260924/p2/dryrun_58ba/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v1.json#r2e-mr-002",
+    "runs/r2e_t0_revisions_20260924/derived/datalad__58ba5165234cb16de0e8463ee75097362099835f/build.log",
+    "runs/r2e_t0_revisions_20260924/replay/ledger_t0_gold.jsonl"
+   ],
+   "decided_by": "用户 09-24 批准 T0-2 方案 B1；Claude 实施与验证",
+   "previous_status": "held_material",
+   "resolution": "修订单 r2e-mr-002（test_1.py 一行导入）+ 派生配方 r2e_derive_v1+material_v1；A 线机器真实 grader noop 0（2/4）×2、gold 1（4/4）×2，与沙盒 B1 逐键相同。"
+  },
+  "pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8": {
+   "status": "grading_ok_open_items",
+   "reason": "公开题面与目标测试矛盾（题面说 formats=['JPEG'] 打开 PNG 应成功，测试要求抛 UnidentifiedImageError），且把 pytest 8 拒绝 pytest.warns(None) 的伪影写成库缺陷；环境与评分本身可用。",
+   "evidence": [
+    "material_revisions/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8.md"
+   ],
+   "decided_by": "用户 09-24 晚",
+   "previous_status": "needs_decision",
+   "resolution": "用户 09-24 晚决定 T0-3 留给后续题意与评分质量筛查；环境阶段不改材料。"
+  },
+  "scrapy__9a15fcf89a151811de8ac783419df0512c863d5e": {
+   "status": "grading_ok_open_items",
+   "reason": "期望 2 个 FAILED 键可被更完整的正确修复翻成 PASSED（实测 over-fix 候选 7/7 却 reward 0）；环境本身可用。",
+   "evidence": [
+    "material_revisions/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e.md",
+    "runs/r2e_env_repair_20260924/p4/ledger_overfix.jsonl"
+   ],
+   "decided_by": "用户 09-24 晚",
+   "previous_status": "needs_decision",
+   "resolution": "用户 09-24 晚决定 T0-4 留给后续题意与评分质量筛查；环境阶段不改材料。"
+  },
+  "scrapy__cfed9b6659c90e0799361911b1d72ed127edf471": {
+   "status": "qualified_with_revision",
+   "reason": "3 个期望 FAILED 键是隐藏测试搬迁伪影：test_walk_modules_egg 与 test_enabled_from_settings 在 noop / gold 下失败原因相同，test_instances_from_settings 在 noop / gold 下失败位置不同（Codex R2 更正，原写\"三个死键\"不准确）；题面主体（中间件接受实例）原先没有活键。09-24 夜已按 T0-5 修复（见 resolution）。",
+   "evidence": [
+    "material_revisions/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v2.json#r2e-mr-003..005",
+    "runs/r2e_t0_batch2_20260924/replay_b3/ledger_b3_gold.jsonl"
+   ],
+   "decided_by": "用户 09-24 晚批准 T0-5；Claude 实施与验证",
+   "previous_status": "needs_decision",
+   "resolution": "修订单 r2e-mr-003（补回 test.egg）/ 004（自引用改 r2e_tests.test_2）/ 005（期望 3 键改 PASSED）+ material_v2；真实 grader noop 0（7/9）×2、gold 1（9/9）×2，与试跑逐键相同。"
+  },
+  "pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199": {
+   "status": "qualified_with_revision",
+   "previous_status": "grading_ok_open_items",
+   "reason": "隐藏测试搬出原目录后两个 fixture 不可达，被掩盖的正是题面场景的两个用例（T0-6 代表题）。",
+   "resolution": "修订单 r2e-mr-006（私有 conftest 原样摘出 base 的两个 fixture）/ 007（期望删 2 个 ERROR 键、加 13 个参数化键）+ material_v2；真实 grader noop 0（233/237）×2、gold 1（237/237）×2，与试跑逐键相同。",
+   "evidence": [
+    "material_revisions/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v2.json#r2e-mr-006..007",
+    "runs/r2e_t0_batch2_20260924/replay_b3/ledger_b3_gold.jsonl"
+   ],
+   "decided_by": "用户 09-24 晚批准 T0-6 代表修复；Claude 实施与验证"
+  },
+  "orange3__9b5494e26f407b75e79699c9d40be6df1d80a040": {
+   "status": "grading_ok_open_items",
+   "reason": "期望里 4 个 FAILED 键：诊断证实其中 test_LogisticRegression / test_coefficients 两键来自 scikit-learn 0.22 与 SciPy 1.7.3 的不兼容（SciPy 1.4.1 或 1.5.4 下两键在 noop / gold 都变 PASSED），另两个 scorer 键另有原因、未定位。",
+   "restore_when": [
+    "用户按 T0-7 决定：B = 派生配方固定 SciPy 1.5.4 + 期望修订这 2 键改 PASSED；或 A = 继续显式暂缓"
+   ],
+   "evidence": [
+    "material_revisions/orange3__9b5494e26f407b75e79699c9d40be6df1d80a040.md",
+    "runs/r2e_t0_batch2_20260924/diag_orange3/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/recipes/env_pins_v2.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v3.json#r2e-mr-020",
+    "runs/r2e_t0_batch3_20260924/replay_b5/ledger_b5_gold.jsonl"
+   ],
+   "decided_by": "用户 09-24 夜批准 T0-7 方案 B；Claude 实施与验证",
+   "previous_status": "grading_ok_open_items",
+   "resolution": "用户 09-24 夜批准 T0-7 方案 B：环境配方 env_pins_v2（SciPy 1.5.4，环境步骤 env_v2）+ 修订单 r2e-mr-020（test_LogisticRegression、test_coefficients 改 PASSED）；真实 grader noop 0（11/13）×2、gold 1（13/13）×2，与试跑逐键相同。两个 scorer 键仍 FAILED、原因未定位，保持未完成项，交后续题意与评分质量筛查。"
+  },
+  "coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9": {
+   "status": "grading_ok_open_items",
+   "reason": "09-24 晚批量扫描发现：隐藏测试依赖的仓库测试辅助 tests/coveragetest.py 是修复前版本（修复提交给假 _warn 加了 once 参数）；gold 不受影响，顺带在别处用 once=True 的候选可能被误判（推断）。低风险。",
+   "restore_when": [
+    "静态筛查判断是否需要材料修订"
+   ],
+   "evidence": [
+    "runs/r2e_t0_batch2_20260924/scan/hidden_support_scan.md"
+   ],
+   "decided_by": "交后续题意与评分质量筛查"
+  },
+  "pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf": {
+   "status": "qualified_with_revision",
+   "reason": "隐藏测试搬出原目录后 fixture 不可达，期望里 17 个 ERROR 键没有回归信号；环境无缺口。",
+   "evidence": [
+    "material_revisions/pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf.md",
+    "tasks/pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf/screening_record.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v3.json#r2e-mr-008",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "runs/r2e_t0_batch3_20260924/replay_b5/ledger_b5_gold.jsonl",
+    "runs/r2e_t0_batch3_20260924/reconcile/reconcile.md"
+   ],
+   "decided_by": "用户 09-24 夜批准 T0-6 第二步；Claude 实施与验证",
+   "previous_status": "grading_ok_open_items",
+   "resolution": "修订单 r2e-mr-008（私有 conftest 原样摘出 fixture datetime_series, float_frame, frame_or_series, multiindex_year_month_day_dataframe_random_data, ordered, string_series）/ r2e-mr-009（期望删 6 键、加 13 键、11 键改状态）+ material_v2；真实 grader noop 0（161/162）×2、gold 1（162/162）×2，与试跑逐键相同。"
+  },
+  "pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b": {
+   "status": "qualified_with_revision",
+   "reason": "隐藏测试搬出原目录后 fixture 不可达，期望里 1 个 ERROR 键没有回归信号；环境无缺口。",
+   "evidence": [
+    "material_revisions/pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b.md",
+    "tasks/pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b/screening_record.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v3.json#r2e-mr-010",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "runs/r2e_t0_batch3_20260924/replay_b5/ledger_b5_gold.jsonl",
+    "runs/r2e_t0_batch3_20260924/reconcile/reconcile.md"
+   ],
+   "decided_by": "用户 09-24 夜批准 T0-6 第二步；Claude 实施与验证",
+   "previous_status": "grading_ok_open_items",
+   "resolution": "修订单 r2e-mr-010（私有 conftest 原样摘出 fixture float_frame）/ r2e-mr-011（期望删 0 键、加 0 键、1 键改状态）+ material_v2；真实 grader noop 0（20/21）×2、gold 1（21/21）×2，与试跑逐键相同。"
+  },
+  "pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d": {
+   "status": "qualified_with_revision",
+   "reason": "隐藏测试搬出原目录后 fixture 不可达，期望里 9 个 ERROR 键没有回归信号；环境无缺口。",
+   "evidence": [
+    "material_revisions/pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d.md",
+    "tasks/pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d/screening_record.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v3.json#r2e-mr-012",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "runs/r2e_t0_batch3_20260924/replay_b5/ledger_b5_gold.jsonl",
+    "runs/r2e_t0_batch3_20260924/reconcile/reconcile.md"
+   ],
+   "decided_by": "用户 09-24 夜批准 T0-6 第二步；Claude 实施与验证",
+   "previous_status": "grading_ok_open_items",
+   "resolution": "修订单 r2e-mr-012（私有 conftest 原样摘出 fixture idx, join_type）/ r2e-mr-013（期望删 8 键、加 32 键、1 键改状态）+ material_v2；真实 grader noop 0（56/58）×2、gold 1（58/58）×2，与试跑逐键相同。"
+  },
+  "pandas__f656217a06b31e48474702036e0a5c49f664186c": {
+   "status": "qualified_with_revision",
+   "reason": "隐藏测试搬出原目录后 fixture 不可达，期望里 12 个 ERROR 键没有回归信号；环境无缺口。",
+   "evidence": [
+    "material_revisions/pandas__f656217a06b31e48474702036e0a5c49f664186c.md",
+    "tasks/pandas__f656217a06b31e48474702036e0a5c49f664186c/screening_record.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v3.json#r2e-mr-014",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "runs/r2e_t0_batch3_20260924/replay_b5/ledger_b5_gold.jsonl",
+    "runs/r2e_t0_batch3_20260924/reconcile/reconcile.md"
+   ],
+   "decided_by": "用户 09-24 夜批准 T0-6 第二步；Claude 实施与验证",
+   "previous_status": "grading_ok_open_items",
+   "resolution": "修订单 r2e-mr-014（私有 conftest 原样摘出 fixture join_type, using_array_manager）/ r2e-mr-015（期望删 10 键、加 40 键、2 键改状态）+ material_v2；真实 grader noop 0（350/353）×2、gold 1（353/353）×2，与试跑逐键相同。"
+  },
+  "pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0": {
+   "status": "grading_ok_open_items",
+   "reason": "隐藏测试搬出原目录后 fixture 不可达，期望里 13 个 ERROR 键没有回归信号；环境无缺口。",
+   "evidence": [
+    "material_revisions/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0.md",
+    "tasks/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/screening_record.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v3.json#r2e-mr-016",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "runs/r2e_t0_batch3_20260924/replay_b5/ledger_b5_gold.jsonl",
+    "runs/r2e_t0_batch3_20260924/reconcile/reconcile.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/card.md"
+   ],
+   "decided_by": "用户 09-24 夜批准 T0-6 第二步；Claude 实施与验证",
+   "previous_status": "grading_ok_open_items",
+   "resolution": "修订单 r2e-mr-016（私有 conftest 原样摘出 fixture bool_frame_with_na, datetime_frame, float_frame, float_frame_with_na, float_string_frame, int_frame, mixed_float_frame）/ r2e-mr-017（期望删 0 键、加 0 键、13 键改状态）+ material_v2；真实 grader noop 0（90/92）×2、gold 1（92/92）×2，与试跑逐键相同。",
+   "correction_20260925": {
+    "by": "Claude（B 线 R2E，09-25 更正）",
+    "previous_status": "qualified_with_revision",
+    "note": "批次三后这里记为 qualified_with_revision 有误：修订只修了 fixture 支撑；目标键 test_mean_datetimelike_numeric_only_false 的题面缺口（Period 报错文字，题面没提且与公开旧测试相反）仍在。改为 grading_ok_open_items，未完成项 statement_conflict 交题意与评分质量筛查；静态审查处置 needs_review，见 r2e_static_review_20260925/results/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/card.md。"
+   }
+  },
+  "pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af": {
+   "status": "qualified_with_revision",
+   "reason": "隐藏测试搬出原目录后 fixture 不可达，期望里 4 个 ERROR 键没有回归信号；环境无缺口。",
+   "evidence": [
+    "material_revisions/pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af.md",
+    "tasks/pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af/screening_record.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v3.json#r2e-mr-018",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "runs/r2e_t0_batch3_20260924/replay_b5/ledger_b5_gold.jsonl",
+    "runs/r2e_t0_batch3_20260924/reconcile/reconcile.md"
+   ],
+   "decided_by": "用户 09-24 夜批准 T0-6 第二步；Claude 实施与验证",
+   "previous_status": "grading_ok_open_items",
+   "resolution": "修订单 r2e-mr-018（私有 conftest 原样摘出 fixture names, sort）/ r2e-mr-019（期望删 4 键、加 16 键、0 键改状态）+ material_v2；真实 grader noop 0（44/46）×2、gold 1（46/46）×2，与试跑逐键相同。"
+  }
+ }
+}

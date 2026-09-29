@@ -1,0 +1,99 @@
+{
+ "instance_id": "numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9",
+ "template": "R-c",
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "        assert_equal(p != p2, True)\n",
+     "new": "        assert_equal(p != p2, True)\n        # non-poly1d objects other than None\n        other = object()\n        assert_equal(p == other, False)\n        assert_equal(p != other, True)\n        assert_equal(p == 3, False)\n        assert_equal(p != 3, True)\n"
+    },
+    {
+     "old": "        assert_equal(p == p, True)\n",
+     "new": "        assert_equal(p == p, True)\n        # a different poly1d object with the same coefficients\n        assert_equal(p == np.poly1d([1, 2, 3]), True)\n        assert_equal(p != np.poly1d([1, 2, 3]), False)\n"
+    }
+   ]
+  }
+ ],
+ "expected_after": {
+  "TestDocs.test_complex": "PASSED",
+  "TestDocs.test_doctests": "PASSED",
+  "TestDocs.test_integ_coeffs": "PASSED",
+  "TestDocs.test_objects": "PASSED",
+  "TestDocs.test_poly": "PASSED",
+  "TestDocs.test_poly_eq": "PASSED",
+  "TestDocs.test_poly_int_overflow": "PASSED",
+  "TestDocs.test_polyfit": "PASSED",
+  "TestDocs.test_roots": "PASSED",
+  "TestDocs.test_str_leading_zeros": "PASSED",
+  "TestDocs.test_zero_dims": "PASSED"
+ },
+ "positive_control": "gold",
+ "acceptance": {
+  "gold": {
+   "expected_score": 1,
+   "trial": "trials/rev_gold.json",
+   "trial_verdict": "match",
+   "patch": "runs/r2e_static_prep_20260924/v3/private/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/gold.patch",
+   "note": "positive control"
+  },
+  "A_eq_returns_false": {
+   "expected_score": 1,
+   "trial": "trials/rev_A.json",
+   "trial_verdict": "match",
+   "patch": "runs/r2e_actor_20260925/grader_cands/numpy_18b7_A_eq_returns_false.patch",
+   "note": "reasonable alternative; checks no false rejection"
+  },
+  "noop": {
+   "expected_score": 0,
+   "trial": "trials/rev_noop.json",
+   "trial_verdict": "mismatch",
+   "patch": "none",
+   "note": "TestDocs.test_poly_eq FAILED at test_1.py:219 (AttributeError)",
+   "trial_before_revision": "trials/cur_noop.json",
+   "trial_before_revision_verdict": "mismatch"
+  },
+  "D_eq_notimplemented_ne_unchanged": {
+   "expected_score": 0,
+   "trial": "trials/rev_D.json",
+   "trial_verdict": "mismatch",
+   "patch": "runs/r2e_actor_20260925/grader_cands/numpy_18b7_D_eq_notimplemented_ne_unchanged.patch",
+   "note": "known wrong, 0 before revision; fails test_1.py:220 (p != None)"
+  },
+  "N_special_case_none": {
+   "expected_score": 0,
+   "trial": "trials/rev_N.json",
+   "trial_verdict": "mismatch",
+   "patch": "runs/r2e_actor_20260925/grader_cands/numpy_18b7_N_special_case_none.patch",
+   "note": "trigger for edit 1; was 1 before revision; fails test_1.py:229 (p == other, AttributeError)",
+   "trial_before_revision": "trials/cur_N.json",
+   "trial_before_revision_verdict": "match"
+  },
+  "I_delete_eq_ne": {
+   "expected_score": 0,
+   "trial": "trials/rev_I.json",
+   "trial_verdict": "mismatch",
+   "patch": "runs/r2e_actor_20260925/grader_cands/numpy_18b7_I_delete_eq_ne.patch",
+   "note": "trigger for edit 2; was 1 before revision; fails test_1.py:223 (p == np.poly1d([1, 2, 3]))",
+   "trial_before_revision": "trials/cur_I.json",
+   "trial_before_revision_verdict": "match"
+  }
+ },
+ "parent": {
+  "hidden_test": "test_1.py",
+  "sha256": "4a86bd4b2d557834c384730be8594ef0dbdcd150e4eb958d09ec78f12c741c25",
+  "expected_output": "unchanged (current formal material)",
+  "material_revisions": []
+ },
+ "revised_hidden_test_sha256": "aab99f010b8a175cf0d257bc79d02707ced2b9f51452152904243c648d77c841",
+ "trial_image": "sha256:c86794602d47e67eca2e5f28feaf2bde59b71d8be7cd8960353464959d324fdf",
+ "trial_recipe_id": "r2e_derive_v1+sysconfig_v1",
+ "trial_tool": "rh2/experiments/r2e_lifecycle_20260929/trial_grade.py (trial, not formal grading)",
+ "environment_check_current_material": {
+  "noop": "trials/cur_noop.json",
+  "gold": "trials/cur_gold.json"
+ },
+ "status": "draft_trialed; needs formal revision sheet, formal grading and Codex review"
+}

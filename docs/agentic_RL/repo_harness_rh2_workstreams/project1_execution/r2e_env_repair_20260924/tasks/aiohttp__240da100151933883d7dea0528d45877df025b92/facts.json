@@ -1,0 +1,537 @@
+{
+ "schema_id": "rh2.r2e_env_facts.v1",
+ "generated_at_utc": "2026-09-23T19:41:12Z",
+ "generator": {
+  "script": "rh2/scripts/r2e_env/collate_facts.py",
+  "sha256": "e21d4465331c7ed02c9ae9918894231324009cb9b220da5f6efd53809098d1fc"
+ },
+ "evidence_roots": [
+  "runs/r2e_rf_20260923",
+  "runs/r2e_env_repair_20260924/_rerun2"
+ ],
+ "m3_root": "runs/env_overnight_20260916/M3",
+ "identity": {
+  "task_id": "r2e_gym_subset::aiohttp__240da100151933883d7dea0528d45877df025b92",
+  "instance_id": "aiohttp__240da100151933883d7dea0528d45877df025b92",
+  "repo": "aiohttp",
+  "module": "aiohttp",
+  "base_commit": "ef756ce29cc40a9b69e5e794eda722e252a62b4d",
+  "source_commit_hash": "240da100151933883d7dea0528d45877df025b92",
+  "base_image_ref": "namanjain12/aiohttp_final:240da100151933883d7dea0528d45877df025b92",
+  "base_image_manifest_digest": "sha256:bb629a91571e2f0dcefd44470a726c2006c42a1e70203d72d663d982f6f088ab",
+  "derived_image_ref": "rh2-r2e-derived/aiohttp:240da1001519-r2e_derive_v1",
+  "derived_image_id": "sha256:0189a61de356339d5efeefbe98046a23dba5e73f7eefcd00158f78c0de827882",
+  "recipe_id": "r2e_derive_v1",
+  "recipe_sha256": "sha256:0da821a15fa389289f524c60d3a421bc940cce753e4ecf3d53560b7ab6b31df9",
+  "hidden_tests_tree_sha256": "sha256:b74735a5daa24446307ee80a01e2a9b3d6056b5d42a7206bdeb56b776f0412af",
+  "run_tests_sh_sha256": "sha256:8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+  "head_commit_m3": "ef756ce29cc40a9b69e5e794eda722e252a62b4d",
+  "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe"
+ },
+ "source": {
+  "expected_total": 33,
+  "expected_status_counts": {
+   "PASSED": 31,
+   "FAILED": 2
+  },
+  "expected_non_passed": {
+   "HttpClientConnectorTests.test_tcp_connector": "FAILED",
+   "HttpClientConnectorTests.test_unix_connector": "FAILED"
+  },
+  "hidden_test_files": [
+   "__init__.py",
+   "test_1.py"
+  ],
+  "runner_kind": "pytest",
+  "runner_prefix": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning'",
+  "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+  "problem_statement_chars": 1051,
+  "problem_statement_has_code_block": true,
+  "public_prompt_chars": 1154,
+  "public_hints_mention_conda": true
+ },
+ "environment": {
+  "python_version": "3.9.21",
+  "interpreter_source_path": "/root/.local/share/uv/python/cpython-3.9.21-linux-x86_64-gnu/bin/python3.9",
+  "interpreter_derived_path": "/opt/py/cpython-3.9.21-linux-x86_64-gnu/bin/python3.9",
+  "install_mode_m3": "unknown",
+  "pth_line_m3": null,
+  "import_outside_testbed_ok_m3": false,
+  "import_path_grader": "/testbed/aiohttp/__init__.py",
+  "pkg_version_grader": "0.9.1dev",
+  "dirty_tree_lines": [
+   " M aiohttp/client.py",
+   " M aiohttp/server.py",
+   " M aiohttp/worker.py",
+   "?? install.sh",
+   "?? process_aiohttp_updateasyncio.py",
+   "?? run_tests.sh"
+  ],
+  "testbed_owner_derived": "root",
+  "metacopy": "N"
+ },
+ "derived_image": {
+  "ok": true,
+  "failures": [],
+  "checks_total": 20,
+  "checks_failed": [],
+  "build_seconds": 0.8,
+  "base_size_bytes": 1705462021,
+  "derived_size_bytes": 1800617504,
+  "built_at_utc": "2026-09-23T13:41:21.904977Z",
+  "preflight_stdout": [
+   "RH2_PREFLIGHT_INTERPRETER=ok",
+   "RH2_PREFLIGHT_HIDDEN_TESTS=ok",
+   "RH2_PREFLIGHT_GIT_HISTORY=ok"
+  ]
+ },
+ "rh2_runs": [
+  {
+   "run_id": "r2e-rf-reps-noop",
+   "ledger": "ledger_r2e_reps_noop.jsonl",
+   "kind": "noop",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T13:28:18.975728+00:00",
+   "stage_error": null,
+   "reward": 0.0,
+   "outcome": "unresolved",
+   "failure_category": "tests_failed",
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 32,
+   "expected_total": 33,
+   "num_parsed_tests": 33,
+   "resolution": "RESOLVED_NO",
+   "mismatched": [
+    "ProxyConnectorTests.test_request_port"
+   ],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 1,
+   "test_seconds": 0.968,
+   "setup_seconds": 5.214767,
+   "grader_seconds_total": 8.626,
+   "mem_peak_mb": 171.418,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:2b75db7b16cadb6b3b32678234cab1c800c8a85e191dbe6321b526cb7f34b272",
+   "import_path_grader": "/testbed/aiohttp/__init__.py",
+   "pkg_version_grader": "0.9.1dev",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-reps-noop-_8d7cc1d6.eval.log",
+   "diagnostics": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-reps-noop-_8d7cc1d6.diagnostics.json",
+   "non_passed_reasons": {
+    "HttpClientConnectorTests.test_tcp_connector": "FAILED: Ty...",
+    "HttpClientConnectorTests.test_unix_connector": "FAILED: A...",
+    "ProxyConnectorTests.test_request_port": "FAILED: Assertio..."
+   },
+   "dirty_tree_lines": [
+    " M aiohttp/client.py",
+    " M aiohttp/server.py",
+    " M aiohttp/worker.py",
+    "?? install.sh",
+    "?? process_aiohttp_updateasyncio.py",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": []
+  },
+  {
+   "run_id": "r2e-rf-reps-gold",
+   "ledger": "ledger_r2e_reps_gold.jsonl",
+   "kind": "gold",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T13:31:37.424960+00:00",
+   "stage_error": null,
+   "reward": 1.0,
+   "outcome": "resolved",
+   "failure_category": null,
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 33,
+   "expected_total": 33,
+   "num_parsed_tests": 33,
+   "resolution": "RESOLVED_FULL",
+   "mismatched": [],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 1,
+   "test_seconds": 1.029,
+   "setup_seconds": 6.104537,
+   "grader_seconds_total": 9.849,
+   "mem_peak_mb": 171.02,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:2b75db7b16cadb6b3b32678234cab1c800c8a85e191dbe6321b526cb7f34b272",
+   "import_path_grader": "/testbed/aiohttp/__init__.py",
+   "pkg_version_grader": "0.9.1dev",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-reps-gold-_5292482f.eval.log",
+   "diagnostics": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-reps-gold-_5292482f.diagnostics.json",
+   "non_passed_reasons": {
+    "HttpClientConnectorTests.test_tcp_connector": "FAILED: Ty...",
+    "HttpClientConnectorTests.test_unix_connector": "FAILED: A..."
+   },
+   "dirty_tree_lines": [
+    " M aiohttp/client.py",
+    " M aiohttp/connector.py",
+    " M aiohttp/server.py",
+    " M aiohttp/worker.py",
+    "?? install.sh",
+    "?? process_aiohttp_updateasyncio.py",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": [
+    "aiohttp/connector.py"
+   ]
+  },
+  {
+   "run_id": "r2e-rf-all-noop",
+   "ledger": "ledger_r2e_all_noop.jsonl",
+   "kind": "noop",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T14:25:09.470116+00:00",
+   "stage_error": null,
+   "reward": 0.0,
+   "outcome": "unresolved",
+   "failure_category": "tests_failed",
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 32,
+   "expected_total": 33,
+   "num_parsed_tests": 33,
+   "resolution": "RESOLVED_NO",
+   "mismatched": [
+    "ProxyConnectorTests.test_request_port"
+   ],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 1,
+   "test_seconds": 1.104,
+   "setup_seconds": 6.192602,
+   "grader_seconds_total": 9.609,
+   "mem_peak_mb": 172.289,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:0189a61de356339d5efeefbe98046a23dba5e73f7eefcd00158f78c0de827882",
+   "import_path_grader": "/testbed/aiohttp/__init__.py",
+   "pkg_version_grader": "0.9.1dev",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-a_fd1119cd.eval.log",
+   "diagnostics": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-a_fd1119cd.diagnostics.json",
+   "non_passed_reasons": {
+    "HttpClientConnectorTests.test_tcp_connector": "FAILED: Ty...",
+    "HttpClientConnectorTests.test_unix_connector": "FAILED: A...",
+    "ProxyConnectorTests.test_request_port": "FAILED: Assertio..."
+   },
+   "dirty_tree_lines": [
+    " M aiohttp/client.py",
+    " M aiohttp/server.py",
+    " M aiohttp/worker.py",
+    "?? install.sh",
+    "?? process_aiohttp_updateasyncio.py",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": []
+  },
+  {
+   "run_id": "r2e-rf-all-gold",
+   "ledger": "ledger_r2e_all_gold.jsonl",
+   "kind": "gold",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T14:25:09.902732+00:00",
+   "stage_error": null,
+   "reward": 1.0,
+   "outcome": "resolved",
+   "failure_category": null,
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 33,
+   "expected_total": 33,
+   "num_parsed_tests": 33,
+   "resolution": "RESOLVED_FULL",
+   "mismatched": [],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 1,
+   "test_seconds": 0.974,
+   "setup_seconds": 6.240952,
+   "grader_seconds_total": 9.814,
+   "mem_peak_mb": 170.664,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:0189a61de356339d5efeefbe98046a23dba5e73f7eefcd00158f78c0de827882",
+   "import_path_grader": "/testbed/aiohttp/__init__.py",
+   "pkg_version_grader": "0.9.1dev",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-a_508fe701.eval.log",
+   "diagnostics": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-a_508fe701.diagnostics.json",
+   "non_passed_reasons": {
+    "HttpClientConnectorTests.test_tcp_connector": "FAILED: Ty...",
+    "HttpClientConnectorTests.test_unix_connector": "FAILED: A..."
+   },
+   "dirty_tree_lines": [
+    " M aiohttp/client.py",
+    " M aiohttp/connector.py",
+    " M aiohttp/server.py",
+    " M aiohttp/worker.py",
+    "?? install.sh",
+    "?? process_aiohttp_updateasyncio.py",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": [
+    "aiohttp/connector.py"
+   ]
+  },
+  {
+   "run_id": "r2e-envrepair-rerun-noop",
+   "ledger": "ledger_noop.jsonl",
+   "kind": "noop",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T18:07:30.541079+00:00",
+   "stage_error": null,
+   "reward": 0.0,
+   "outcome": "unresolved",
+   "failure_category": "tests_failed",
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 32,
+   "expected_total": 33,
+   "num_parsed_tests": 33,
+   "resolution": "RESOLVED_NO",
+   "mismatched": [
+    "ProxyConnectorTests.test_request_port"
+   ],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 1,
+   "test_seconds": 1.149,
+   "setup_seconds": 5.803753,
+   "grader_seconds_total": 9.22,
+   "mem_peak_mb": 171.703,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:0189a61de356339d5efeefbe98046a23dba5e73f7eefcd00158f78c0de827882",
+   "import_path_grader": "/testbed/aiohttp/__init__.py",
+   "pkg_version_grader": "0.9.1dev",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_fb3ab1e2.eval.log",
+   "diagnostics": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_fb3ab1e2.diagnostics.json",
+   "non_passed_reasons": {
+    "HttpClientConnectorTests.test_tcp_connector": "FAILED: Ty...",
+    "HttpClientConnectorTests.test_unix_connector": "FAILED: A...",
+    "ProxyConnectorTests.test_request_port": "FAILED: Assertio..."
+   },
+   "dirty_tree_lines": [
+    " M aiohttp/client.py",
+    " M aiohttp/server.py",
+    " M aiohttp/worker.py",
+    "?? install.sh",
+    "?? process_aiohttp_updateasyncio.py",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": []
+  },
+  {
+   "run_id": "r2e-envrepair-rerun-gold",
+   "ledger": "ledger_gold.jsonl",
+   "kind": "gold",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T18:07:31.104518+00:00",
+   "stage_error": null,
+   "reward": 1.0,
+   "outcome": "resolved",
+   "failure_category": null,
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 33,
+   "expected_total": 33,
+   "num_parsed_tests": 33,
+   "resolution": "RESOLVED_FULL",
+   "mismatched": [],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 1,
+   "test_seconds": 1.018,
+   "setup_seconds": 5.792706,
+   "grader_seconds_total": 9.376,
+   "mem_peak_mb": 170.656,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:0189a61de356339d5efeefbe98046a23dba5e73f7eefcd00158f78c0de827882",
+   "import_path_grader": "/testbed/aiohttp/__init__.py",
+   "pkg_version_grader": "0.9.1dev",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_3031169c.eval.log",
+   "diagnostics": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_3031169c.diagnostics.json",
+   "non_passed_reasons": {
+    "HttpClientConnectorTests.test_tcp_connector": "FAILED: Ty...",
+    "HttpClientConnectorTests.test_unix_connector": "FAILED: A..."
+   },
+   "dirty_tree_lines": [
+    " M aiohttp/client.py",
+    " M aiohttp/connector.py",
+    " M aiohttp/server.py",
+    " M aiohttp/worker.py",
+    "?? install.sh",
+    "?? process_aiohttp_updateasyncio.py",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": [
+    "aiohttp/connector.py"
+   ]
+  }
+ ],
+ "latest_default_profile": {
+  "noop": "r2e-rf-all-noop",
+  "gold": "r2e-rf-all-gold"
+ },
+ "reference": {
+  "m3_facts_available": true,
+  "reconcile": [
+   {
+    "kind": "noop",
+    "ledger": "ledger_r2e_all_noop_local.jsonl",
+    "agree": true,
+    "reward_equal": true,
+    "diff_sets_equal": true,
+    "observed_maps_equal": true,
+    "reference_ledger_consistent": null,
+    "reference_log_count": 2,
+    "notes": null,
+    "reference_prime_rewards": [
+     0.0,
+     0.0
+    ],
+    "ref": "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   },
+   {
+    "kind": "gold",
+    "ledger": "ledger_r2e_all_gold_local.jsonl",
+    "agree": true,
+    "reward_equal": true,
+    "diff_sets_equal": true,
+    "observed_maps_equal": true,
+    "reference_ledger_consistent": true,
+    "reference_log_count": 2,
+    "notes": null,
+    "reference_prime_rewards": [
+     1.0,
+     1.0
+    ],
+    "ref": "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   }
+  ]
+ },
+ "auto_checks": {
+  "R01_identity": {
+   "status": "pass",
+   "note": "派生镜像 21 项复核通过；覆盖表 / 隐藏测试树 / 入口脚本 / HEAD 与评分面一致",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/aiohttp__240da100151933883d7dea0528d45877df025b92/facts.json"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R02_noop_shows_problem": {
+   "status": "pass",
+   "note": "noop 0 来自 1 个 mismatched 键（无 missing、无零解析）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-a_fd1119cd.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R08_candidate_code_effective": {
+   "status": "pass",
+   "note": "导入 /testbed/aiohttp/__init__.py；gold 33/33",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-a_508fe701.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R12_resources": {
+   "status": "pass",
+   "note": "峰值 171 MB / 限额 4 GiB = 0.042; setup 6s test 1s",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-a_508fe701.diagnostics.json"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R13_repeat_noop": {
+   "status": "pass",
+   "note": "noop 同条件 3 次 reward 与差异集合一致",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-reps-noop-_8d7cc1d6.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-a_fd1119cd.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_fb3ab1e2.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R13_repeat_gold": {
+   "status": "pass",
+   "note": "gold 同条件 3 次 reward 与差异集合一致",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-reps-gold-_5292482f.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-a_508fe701.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_3031169c.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R15_reference_parse": {
+   "status": "pass",
+   "note": "2 行 agree（reward、差异集合、观测映射逐键相同）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R16_f2p_keys": {
+   "status": "pass",
+   "note": "目标键 1：['ProxyConnectorTests.test_request_port']",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-a_fd1119cd.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-a_508fe701.eval.log"
+   ],
+   "by": "collate_facts.py"
+  }
+ },
+ "flags": [
+  "dirty_tree_gt2",
+  "expected_has_non_passed_keys",
+  "testbed_must_be_on_sys_path"
+ ]
+}

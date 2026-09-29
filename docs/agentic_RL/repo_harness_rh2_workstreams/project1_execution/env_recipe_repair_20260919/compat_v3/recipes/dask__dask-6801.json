@@ -1,0 +1,12 @@
+{
+  "instance_id": "dask__dask-6801",
+  "original_install": "python -m pip install --no-deps -e .",
+  "revised_install": "rh2_compat_install() {\n python -m pip install --no-index --find-links=/opt/rh2/compat-wheels --no-deps pandas==1.1.5 fastparquet==0.5.0 pytest==7.4.4 || return $?\n python -I -c 'import importlib.metadata as m,json; print(\"RH2_COMPAT_VERSIONS=\"+json.dumps({x:m.version(x) for x in ['\"'\"'pandas'\"'\"', '\"'\"'fastparquet'\"'\"', '\"'\"'pytest'\"'\"']}))'\n python -m pip install --no-deps -e .\n local original_rc=$?\n python -I -c 'import importlib.metadata as m,json; print(\"RH2_COMPAT_VERSIONS=\"+json.dumps({x:m.version(x) for x in ['\"'\"'pandas'\"'\"', '\"'\"'fastparquet'\"'\"', '\"'\"'pytest'\"'\"']}))'\n return \"$original_rc\"\n}\nrh2_compat_install",
+  "pins": [
+    "pandas==1.1.5",
+    "fastparquet==0.5.0",
+    "pytest==7.4.4"
+  ],
+  "decision": "E11 / compat_v3",
+  "reason": "0.4.1 changes partition filtering; examine next historical minor, keep failing evidence"
+}

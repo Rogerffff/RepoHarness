@@ -1,0 +1,137 @@
+{
+  "scope": "Unix fake daemon; actual collector; all inspect states terminal exit 0",
+  "cases": [
+    {
+      "case": "valid_raw",
+      "requests": [
+        "POST /v1.44/containers/review-only/exec",
+        "POST /v1.44/exec/same-exec-id/start",
+        "GET /v1.44/exec/same-exec-id/json"
+      ],
+      "exec_id": "same-exec-id",
+      "exec_state": "exited",
+      "exit_code": 0,
+      "stdout_bytes": 5,
+      "stderr_bytes": 0,
+      "log_complete": true,
+      "log_partial_reason": null,
+      "stream_error": null,
+      "inspect": {
+        "Running": false,
+        "ExitCode": 0,
+        "Pid": 123
+      },
+      "stdout": "good\n"
+    },
+    {
+      "case": "truncated_frame_header",
+      "requests": [
+        "POST /v1.44/containers/review-only/exec",
+        "POST /v1.44/exec/same-exec-id/start",
+        "GET /v1.44/exec/same-exec-id/json"
+      ],
+      "exec_id": "same-exec-id",
+      "exec_state": "exited",
+      "exit_code": 0,
+      "stdout_bytes": 5,
+      "stderr_bytes": 0,
+      "log_complete": true,
+      "log_partial_reason": null,
+      "stream_error": null,
+      "inspect": {
+        "Running": false,
+        "ExitCode": 0,
+        "Pid": 123
+      },
+      "stdout": "good\n"
+    },
+    {
+      "case": "truncated_frame_payload",
+      "requests": [
+        "POST /v1.44/containers/review-only/exec",
+        "POST /v1.44/exec/same-exec-id/start",
+        "GET /v1.44/exec/same-exec-id/json"
+      ],
+      "exec_id": "same-exec-id",
+      "exec_state": "exited",
+      "exit_code": 0,
+      "stdout_bytes": 5,
+      "stderr_bytes": 0,
+      "log_complete": true,
+      "log_partial_reason": null,
+      "stream_error": null,
+      "inspect": {
+        "Running": false,
+        "ExitCode": 0,
+        "Pid": 123
+      },
+      "stdout": "good\n"
+    },
+    {
+      "case": "valid_chunked",
+      "requests": [
+        "POST /v1.44/containers/review-only/exec",
+        "POST /v1.44/exec/same-exec-id/start",
+        "GET /v1.44/exec/same-exec-id/json"
+      ],
+      "exec_id": "same-exec-id",
+      "exec_state": "exited",
+      "exit_code": 0,
+      "stdout_bytes": 5,
+      "stderr_bytes": 0,
+      "log_complete": true,
+      "log_partial_reason": null,
+      "stream_error": null,
+      "inspect": {
+        "Running": false,
+        "ExitCode": 0,
+        "Pid": 123
+      },
+      "stdout": "good\n"
+    },
+    {
+      "case": "chunked_missing_terminator",
+      "requests": [
+        "POST /v1.44/containers/review-only/exec",
+        "POST /v1.44/exec/same-exec-id/start",
+        "GET /v1.44/exec/same-exec-id/json"
+      ],
+      "exec_id": "same-exec-id",
+      "exec_state": "exited",
+      "exit_code": 0,
+      "stdout_bytes": 5,
+      "stderr_bytes": 0,
+      "log_complete": true,
+      "log_partial_reason": null,
+      "stream_error": null,
+      "inspect": {
+        "Running": false,
+        "ExitCode": 0,
+        "Pid": 123
+      },
+      "stdout": "good\n"
+    },
+    {
+      "case": "chunked_invalid_size",
+      "requests": [
+        "POST /v1.44/containers/review-only/exec",
+        "POST /v1.44/exec/same-exec-id/start",
+        "GET /v1.44/exec/same-exec-id/json"
+      ],
+      "exec_id": "same-exec-id",
+      "exec_state": "exited",
+      "exit_code": 0,
+      "stdout_bytes": 5,
+      "stderr_bytes": 0,
+      "log_complete": true,
+      "log_partial_reason": null,
+      "stream_error": "ValueError: invalid literal for int() with base 16: b'not-hex'",
+      "inspect": {
+        "Running": false,
+        "ExitCode": 0,
+        "Pid": 123
+      },
+      "stdout": "good\n"
+    }
+  ]
+}

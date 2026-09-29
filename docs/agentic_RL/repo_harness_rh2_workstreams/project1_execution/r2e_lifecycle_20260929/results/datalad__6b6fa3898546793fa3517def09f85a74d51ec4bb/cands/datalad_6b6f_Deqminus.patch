@@ -1,0 +1,13 @@
+diff --git a/datalad/support/network.py b/datalad/support/network.py
+index 88fbba7..0125a97 100644
+--- a/datalad/support/network.py
++++ b/datalad/support/network.py
+@@ -537,7 +537,7 @@ class URL(object):
+     def __eq__(self, other):
+         if not isinstance(other, URL):
+             other = URL(other)
+-        return other._fields == self._fields
++        return str(other) == str(self)
+ 
+     def __ne__(self, other):
+         return not (self == other)

@@ -1,0 +1,84 @@
+{
+  "R1_closed": {
+    "test_seconds": 40,
+    "container_start_seconds": 3.5,
+    "queue_depth_count": 7,
+    "queue_depth_is_not_seconds": true
+  },
+  "R2_closed": {
+    "graded": 1,
+    "without_grading_record": 0,
+    "missing_bringup_is_unknown": true
+  },
+  "R4_remaining_eventless_bundle": {
+    "runs_seen": [
+      "r1"
+    ],
+    "actual_r1_audits": 2,
+    "expected_r1_audits": 1,
+    "unattributed_audits": 0,
+    "expected_unattributed_audits": 1,
+    "actual_r1_bringup_rows": 2,
+    "task_names_in_r1_report": [
+      "task-s-1",
+      "task-s-2"
+    ],
+    "reproduced": true
+  },
+  "R4_positive_controls": {
+    "per_run_tokens": {
+      "r1": 16.0,
+      "r2": 40.0
+    },
+    "scoped_audits": 1,
+    "mixed_parent_audits_marked_unknown": 2
+  },
+  "R3_closed": {
+    "members": 2,
+    "training_rows": 4,
+    "reward_mean": 0.5,
+    "positive": 1,
+    "negative": 1
+  },
+  "R5_closed_with_limitation": {
+    "compared_action_tokens": 16,
+    "sample_dis_limitation": "unsupported: 事件不带 rollout_id / rank，TP>1 时各 TP rank 各发一份副本无法用现有键去重；当前只在 TP=1 下验证（R5）",
+    "sample_dis_raw_accepted_sum_still_contains_tp_copies": 20
+  },
+  "R6_member_version_regression": {
+    "two_leaf_versions": [
+      [
+        "5"
+      ],
+      [
+        "6"
+      ]
+    ],
+    "actual": {
+      "single_version": 1,
+      "multi_version": 0,
+      "unknown": 0
+    },
+    "expected": {
+      "single_version": 0,
+      "multi_version": 1,
+      "unknown": 0
+    },
+    "same_member_first_leaf_single": {
+      "single_version": 1,
+      "multi_version": 0,
+      "unknown": 0
+    },
+    "same_member_leaf_order_reversed": {
+      "single_version": 0,
+      "multi_version": 1,
+      "unknown": 0
+    },
+    "single_version_positive_control": {
+      "single_version": 1,
+      "multi_version": 0,
+      "unknown": 0
+    },
+    "reproduced": true
+  }
+}

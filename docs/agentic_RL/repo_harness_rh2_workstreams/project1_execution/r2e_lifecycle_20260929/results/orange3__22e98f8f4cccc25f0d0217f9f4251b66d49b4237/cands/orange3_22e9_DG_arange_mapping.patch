@@ -1,0 +1,13 @@
+diff --git a/Orange/widgets/data/owcreateclass.py b/Orange/widgets/data/owcreateclass.py
+index bbf2009..cfa2caf 100644
+--- a/Orange/widgets/data/owcreateclass.py
++++ b/Orange/widgets/data/owcreateclass.py
+@@ -154,7 +154,7 @@ def unique_in_order_mapping(a):
+     """
+     u, idx, inv = np.unique(a, return_index=True, return_inverse=True)
+     unique_in_order = u[np.argsort(idx)]
+-    mapping = np.argsort(idx)[inv]
++    mapping = np.arange(len(a))
+     return unique_in_order, mapping
+ 
+ 

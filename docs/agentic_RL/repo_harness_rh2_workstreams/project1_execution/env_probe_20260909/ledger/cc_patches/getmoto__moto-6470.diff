@@ -1,0 +1,147 @@
+diff --git a/moto/batch/models.py b/moto/batch/models.py
+index 5aaeab2a1..668a84979 100644
+--- a/moto/batch/models.py
++++ b/moto/batch/models.py
+@@ -1225,9 +1225,11 @@ class BatchBackend(BaseBackend):
+         # Ok by this point, everything is legit, so if its Managed then start some instances
+         if _type == "MANAGED" and "FARGATE" not in compute_resources["type"]:
+             cpus = int(
+-                compute_resources.get("desiredvCpus", compute_resources["minvCpus"])
++                compute_resources.get(
++                    "desiredvCpus", compute_resources.get("minvCpus", 0)
++                )
+             )
+-            instance_types = compute_resources["instanceTypes"]
++            instance_types = compute_resources.get("instanceTypes", ["optimal"])
+             needed_instance_types = self.find_min_instances_to_meet_vcpus(
+                 instance_types, cpus
+             )
+@@ -1246,7 +1248,7 @@ class BatchBackend(BaseBackend):
+                     region_name=self.region_name,
+                     subnet_id=next(subnet_cycle),
+                     key_name=compute_resources.get("ec2KeyPair", "AWS_OWNED"),
+-                    security_group_ids=compute_resources["securityGroupIds"],
++                    security_group_ids=compute_resources.get("securityGroupIds", []),
+                     is_instance_type_default=False,
+                 )
+ 
+@@ -1267,31 +1269,35 @@ class BatchBackend(BaseBackend):
+         :param cr: computeResources
+         :type cr: dict
+         """
+-        if int(cr["maxvCpus"]) < 0:
++        if int(cr.get("maxvCpus", 0)) < 0:
+             raise InvalidParameterValueException("maxVCpus must be positive")
+         if "FARGATE" not in cr["type"]:
+             # Most parameters are not applicable to jobs that are running on Fargate resources:
+             # non exhaustive list: minvCpus, instanceTypes, imageId, ec2KeyPair, instanceRole, tags
+-            for profile in self.iam_backend.get_instance_profiles():
+-                if profile.arn == cr["instanceRole"]:
+-                    break
+-            else:
+-                raise InvalidParameterValueException(
+-                    f"could not find instanceRole {cr['instanceRole']}"
+-                )
++            instance_role = cr.get("instanceRole")
++            if instance_role:
++                for profile in self.iam_backend.get_instance_profiles():
++                    if profile.arn == instance_role:
++                        break
++                else:
++                    raise InvalidParameterValueException(
++                        f"could not find instanceRole {instance_role}"
++                    )
+ 
+-            if int(cr["minvCpus"]) < 0:
++            min_vcpus = int(cr.get("minvCpus", 0))
++            if min_vcpus < 0:
+                 raise InvalidParameterValueException("minvCpus must be positive")
+-            if int(cr["maxvCpus"]) < int(cr["minvCpus"]):
++            if int(cr.get("maxvCpus", 0)) < min_vcpus:
+                 raise InvalidParameterValueException(
+                     "maxVCpus must be greater than minvCpus"
+                 )
+ 
+-            if len(cr["instanceTypes"]) == 0:
++            instance_types = cr.get("instanceTypes", ["optimal"])
++            if len(instance_types) == 0:
+                 raise InvalidParameterValueException(
+                     "At least 1 instance type must be provided"
+                 )
+-            for instance_type in cr["instanceTypes"]:
++            for instance_type in instance_types:
+                 if instance_type == "optimal":
+                     pass  # Optimal should pick from latest of current gen
+                 elif (
+@@ -1302,24 +1308,20 @@ class BatchBackend(BaseBackend):
+                         f"Instance type {instance_type} does not exist"
+                     )
+ 
+-        for sec_id in cr["securityGroupIds"]:
++        for sec_id in cr.get("securityGroupIds", []):
+             if self.ec2_backend.get_security_group_from_id(sec_id) is None:
+                 raise InvalidParameterValueException(
+                     f"security group {sec_id} does not exist"
+                 )
+-        if len(cr["securityGroupIds"]) == 0:
+-            raise InvalidParameterValueException(
+-                "At least 1 security group must be provided"
+-            )
+ 
+-        for subnet_id in cr["subnets"]:
++        for subnet_id in cr.get("subnets", []):
+             try:
+                 self.ec2_backend.get_subnet(subnet_id)
+             except InvalidSubnetIdError:
+                 raise InvalidParameterValueException(
+                     f"subnet {subnet_id} does not exist"
+                 )
+-        if len(cr["subnets"]) == 0:
++        if len(cr.get("subnets", [])) == 0:
+             raise InvalidParameterValueException("At least 1 subnet must be provided")
+ 
+         if cr["type"] not in {"EC2", "SPOT", "FARGATE", "FARGATE_SPOT"}:
+diff --git a/tests/test_batch/test_batch_compute_envs.py b/tests/test_batch/test_batch_compute_envs.py
+index e493d7754..8d80258e5 100644
+--- a/tests/test_batch/test_batch_compute_envs.py
++++ b/tests/test_batch/test_batch_compute_envs.py
+@@ -55,6 +55,39 @@ def test_create_managed_compute_environment():
+     assert our_env["ecsClusterArn"] in all_clusters
+ 
+ 
++@mock_ec2
++@mock_ecs
++@mock_iam
++@mock_batch
++def test_create_managed_compute_environment_with_minimal_compute_resources():
++    ec2_client, iam_client, ecs_client, _, batch_client = _get_clients()
++    _, subnet_id, _, iam_arn = _setup(ec2_client, iam_client)
++
++    compute_name = str(uuid4())
++    resp = batch_client.create_compute_environment(
++        computeEnvironmentName=compute_name,
++        type="MANAGED",
++        state="ENABLED",
++        computeResources={
++            "type": "EC2",
++            "maxvCpus": 1,
++            "subnets": [subnet_id],
++        },
++        serviceRole=iam_arn,
++    )
++    assert "computeEnvironmentArn" in resp
++    assert resp["computeEnvironmentName"] == compute_name
++
++    our_env = batch_client.describe_compute_environments(
++        computeEnvironments=[compute_name]
++    )["computeEnvironments"][0]
++
++    assert our_env["computeResources"]["type"] == "EC2"
++    # Should have created 1 ECS cluster
++    all_clusters = ecs_client.list_clusters()["clusterArns"]
++    assert our_env["ecsClusterArn"] in all_clusters
++
++
+ @mock_ec2
+ @mock_ecs
+ @mock_iam

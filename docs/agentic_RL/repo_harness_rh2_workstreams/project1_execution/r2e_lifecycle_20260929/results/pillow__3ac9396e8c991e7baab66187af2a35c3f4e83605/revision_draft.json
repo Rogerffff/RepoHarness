@@ -1,0 +1,181 @@
+{
+ "instance_id": "pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605",
+ "template": "R-c",
+ "round": "2（A+B+C；按 codex_reviews/review_revision_pillow.md §1 补 C）",
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "        reloaded = Image.open(out)\n        self.assertEqual(0, reloaded.tag_v2[41988][0].numerator)\n        self.assertEqual(0, reloaded.tag_v2[41988][0].denominator)\n",
+     "new": "        reloaded = Image.open(out)\n        self.assertEqual(0, reloaded.tag_v2[41988][0].numerator)\n        self.assertEqual(0, reloaded.tag_v2[41988][0].denominator)\n\n    def test_div_zero_other_unregistered_tag(self):\n        # Same zero-denominator round trip on another tag that has no\n        # TAGS_V2 entry (private tag 65000), not only the example tag.\n        im = hopper()\n        info = TiffImagePlugin.ImageFileDirectory_v2()\n        info[65000] = TiffImagePlugin.IFDRational(0,0)\n\n        out = self.tempfile('temp.tiff')\n        im.save(out, tiffinfo=info, compression='raw')\n\n        reloaded = Image.open(out)\n        self.assertEqual(0, reloaded.tag_v2[65000][0].numerator)\n        self.assertEqual(0, reloaded.tag_v2[65000][0].denominator)\n\n    def test_div_zero_in_rational_sequence(self):\n        # A zero-denominator value inside a sequence of rationals on one\n        # tag with no TAGS_V2 entry; every value must round trip.\n        # 0/0 never compares equal, so numerator and denominator are\n        # compared.\n        im = hopper()\n        info = TiffImagePlugin.ImageFileDirectory_v2()\n        info[65000] = (TiffImagePlugin.IFDRational(0,0),\n                       TiffImagePlugin.IFDRational(1,2))\n\n        out = self.tempfile('temp.tiff')\n        im.save(out, tiffinfo=info, compression='raw')\n\n        reloaded = Image.open(out)\n        self.assertEqual([(0, 0), (1, 2)],\n                         [(v.numerator, v.denominator)\n                          for v in reloaded.tag_v2[65000]])\n\n    def test_unregistered_int_tag_type(self):\n        # Integer values on a tag with no TAGS_V2 entry are still detected\n        # as integers and read back as int. IFDRational(5, 1) == 5, so the\n        # value type is checked, not only equality.\n        im = hopper()\n        info = TiffImagePlugin.ImageFileDirectory_v2()\n        info[65000] = 5\n\n        out = self.tempfile('temp.tiff')\n        im.save(out, tiffinfo=info, compression='raw')\n\n        reloaded = Image.open(out)\n        value = reloaded.tag_v2[65000][0]\n        self.assertEqual(5, value)\n        self.assertIsInstance(value, int)\n"
+    }
+   ]
+  }
+ ],
+ "expected_after": {
+  "TestFileTiffMetadata.test_div_zero_in_rational_sequence": "PASSED",
+  "TestFileTiffMetadata.test_div_zero_other_unregistered_tag": "PASSED",
+  "TestFileTiffMetadata.test_empty_metadata": "PASSED",
+  "TestFileTiffMetadata.test_exif_div_zero": "PASSED",
+  "TestFileTiffMetadata.test_iccprofile": "PASSED",
+  "TestFileTiffMetadata.test_iccprofile_binary": "PASSED",
+  "TestFileTiffMetadata.test_no_duplicate_50741_tag": "PASSED",
+  "TestFileTiffMetadata.test_read_metadata": "PASSED",
+  "TestFileTiffMetadata.test_rt_metadata": "PASSED",
+  "TestFileTiffMetadata.test_unregistered_int_tag_type": "PASSED",
+  "TestFileTiffMetadata.test_write_metadata": "PASSED",
+  "Test_IFDRational.test_ifd_rational_save": "PASSED",
+  "Test_IFDRational.test_nonetype": "PASSED",
+  "Test_IFDRational.test_sanity": "PASSED"
+ },
+ "positive_control": "gold",
+ "acceptance": {
+  "gold": {
+   "patch": "runs/r2e_static_prep_20260924/v3/private/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/gold.patch",
+   "score_current_materials": {
+    "score": 1,
+    "source": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/grader_candidates.md:56",
+    "note": "09-25 正式评分，11 键"
+   },
+   "score_round1_ab_trial": {
+    "score": 1,
+    "trial": "trials/round1/ab_gold.json"
+   },
+   "expected_score": 1,
+   "trial": "trials/abc_gold.json",
+   "trial_verdict": "match 14/14（正对照）"
+  },
+  "K1_rational_type_5": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/pillow_3ac9_K1_rational_type_5.patch",
+   "score_current_materials": {
+    "score": 1,
+    "source": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/grader_candidates.md:87",
+    "note": "09-25 正式评分，11 键"
+   },
+   "score_round1_ab_trial": {
+    "score": 1,
+    "trial": "trials/round1/ab_K1.json"
+   },
+   "expected_score": 1,
+   "trial": "trials/abc_K1.json",
+   "trial_verdict": "match 14/14（合理替代解（类型 5））"
+  },
+  "K1b_rational_type_10": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/pillow_3ac9_K1b_rational_type_10.patch",
+   "score_current_materials": {
+    "score": 1,
+    "source": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/grader_candidates.md:88",
+    "note": "09-25 正式评分，11 键"
+   },
+   "score_round1_ab_trial": {
+    "score": 1,
+    "trial": "trials/round1/ab_K1b.json"
+   },
+   "expected_score": 1,
+   "trial": "trials/abc_K1b.json",
+   "trial_verdict": "match 14/14（合理替代解（类型 10）：不固定类型码）"
+  },
+  "noop": {
+   "patch": null,
+   "score_current_materials": {
+    "score": 0,
+    "source": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/grader_candidates.md:55",
+    "note": "09-25 正式评分，11 键"
+   },
+   "score_round1_ab_trial": {
+    "score": 0,
+    "trial": "trials/round1/ab_noop.json"
+   },
+   "expected_score": 0,
+   "trial": "trials/abc_noop.json",
+   "trial_verdict": "mismatch：test_div_zero_in_rational_sequence ERROR；test_div_zero_other_unregistered_tag ERROR；test_exif_div_zero ERROR（B 应 PASSED：base 整数读回整数）"
+  },
+  "K2_zero_denominator_only": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/pillow_3ac9_K2_zero_denominator_only.patch",
+   "score_current_materials": {
+    "score": 1,
+    "source": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/grader_candidates.md:89",
+    "note": "09-25 正式评分，11 键"
+   },
+   "score_round1_ab_trial": {
+    "score": 1,
+    "trial": "trials/round1/ab_K2.json"
+   },
+   "expected_score": 0,
+   "trial": "trials/abc_K2.json",
+   "trial_verdict": "mismatch：test_div_zero_in_rational_sequence ERROR（触发反例 C：只在全部元素都是零分母时才选有理数类型）"
+  },
+  "K3_index_on_rational": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/pillow_3ac9_K3_index_on_rational.patch",
+   "score_current_materials": {
+    "score": 0,
+    "source": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/grader_candidates.md:90",
+    "note": "09-25 正式评分，11 键"
+   },
+   "score_round1_ab_trial": {
+    "score": 0,
+    "trial": "trials/round1/ab_K3.json"
+   },
+   "expected_score": 0,
+   "trial": "trials/abc_K3.json",
+   "trial_verdict": "mismatch：test_div_zero_in_rational_sequence FAILED；test_div_zero_other_unregistered_tag FAILED；test_exif_div_zero FAILED（已知错误：值被当整数写）"
+  },
+  "K4_tag_len_1": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/pillow_3ac9_K4_tag_len_1.patch",
+   "score_current_materials": {
+    "score": 0,
+    "source": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/grader_candidates.md:91",
+    "note": "09-25 正式评分，11 键"
+   },
+   "score_round1_ab_trial": {
+    "score": 0,
+    "trial": "trials/round1/ab_K4.json"
+   },
+   "expected_score": 0,
+   "trial": "trials/abc_K4.json",
+   "trial_verdict": "mismatch：test_div_zero_in_rational_sequence ERROR；test_div_zero_other_unregistered_tag ERROR；test_exif_div_zero ERROR（已知错误：只登记 41988 且长度 1）"
+  },
+  "K4b_tag_len_0": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/pillow_3ac9_K4b_tag_len_0.patch",
+   "score_current_materials": {
+    "score": 1,
+    "source": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/grader_candidates.md:92",
+    "note": "09-25 正式评分，11 键"
+   },
+   "score_round1_ab_trial": {
+    "score": 0,
+    "trial": "trials/round1/ab_K4b.json"
+   },
+   "expected_score": 0,
+   "trial": "trials/abc_K4b.json",
+   "trial_verdict": "mismatch：test_div_zero_in_rational_sequence ERROR；test_div_zero_other_unregistered_tag ERROR（触发反例 A：只登记 41988）"
+  },
+  "RC6_gold_with_numbers_rational": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/pillow_3ac9_RC6_gold_with_numbers_rational.patch",
+   "score_current_materials": {
+    "score": 1,
+    "source": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/grader_candidates.md:93",
+    "note": "09-25 正式评分，11 键"
+   },
+   "score_round1_ab_trial": {
+    "score": 0,
+    "trial": "trials/round1/ab_RC6.json"
+   },
+   "expected_score": 0,
+   "trial": "trials/abc_RC6.json",
+   "trial_verdict": "mismatch：test_unregistered_int_tag_type FAILED（触发反例 B：整数也按有理数写）"
+  }
+ },
+ "trial_image": {
+  "image": "sha256:6f98a901ad4e56f30f567b45ff1c4e39a234dc8a8d7ca89e1410de74cf2ba6f9",
+  "recipe_id": "r2e_derive_v1+sysconfig_v1"
+ },
+ "local_private_copy_sha256": {
+  "note": "本机私有副本 runs/r2e_static_prep_20260924/v3/private/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/ 的摘要，仅供核对；正式修订单的 sha256_before 以来源行原文为准",
+  "test_1.py_before": "sha256:887ed0de8fbbc9740f09a312628675f6cd1e638f46f0b573b60063e71d5c91f8",
+  "test_1.py_after": "sha256:974e5bccdada9504cd98066f3f8826f76f877002490c357f75dcbb0616b0250a",
+  "expected_output.json_before": "sha256:11a665803be78c9c0d5c5668725c6570914449e6d9b6145dfc4f2bb661fd7d67"
+ }
+}

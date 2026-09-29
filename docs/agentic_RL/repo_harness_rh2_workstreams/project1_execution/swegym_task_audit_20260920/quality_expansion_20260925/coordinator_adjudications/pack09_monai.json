@@ -1,0 +1,69 @@
+{
+  "report": "pack09_report.md",
+  "tasks": {
+    "Project-MONAI__MONAI-5932": {
+      "classification": "conditional_static_development_candidate",
+      "card_replacements": [
+        [
+          "未读reviewer，无reviewer结论。",
+          "主审出稿时未读reviewer；独立交叉复核随后完成，协调结论如下。"
+        ]
+      ],
+      "card_append": "协调裁定：保留有条件静态开发候选，ready_for_probe=false；独立review已完成。check27统一为unknown，保留核心源码及历史正证据，完整性未证。实际actor公开验证应覆盖题面算式和长短引用交换顺序；无需另设私有CPU前置。",
+      "checks": {
+        "18": {
+          "status": "pass",
+          "note": "本题历史所选15项均执行并有expected状态，无skip/xfail；不代表实际actor已运行。"
+        },
+        "23": {
+          "status": "pass",
+          "note": "公开同式短长引用应独立求值；A/A_B断言4直接对应公开数值语义，未规定排序实现。"
+        },
+        "27": {
+          "status": "unknown",
+          "note": "长度降序保护已定义完整ID有静态与历史正证据；多前缀变体未全验，缺失前缀风险为原有路径，完整性未知。"
+        }
+      },
+      "disposition": {
+        "reason": "公开目标与核心修复有原件支持；独立review完成。保留具体覆盖限制，下一步用实际actor公开开发流程核验，非训练或评测准入。"
+      },
+      "changes": [
+        "附独立review SHA与协调暴露/裁定，保留原main档案及所有封存稿",
+        "check27从局部pass收为unknown，保留核心正证据",
+        "18/23说明按本题收窄，避免同包泛化；保留唯一actual actor后续"
+      ]
+    },
+    "Project-MONAI__MONAI-6975": {
+      "classification": "conditional_static_development_candidate",
+      "card_replacements": [
+        [
+          "未读旧模型轨迹或reviewer，不能宣称真实替代解已复验。",
+          "主审出稿时未读reviewer；独立交叉复核随后完成。旧模型轨迹未读，不能宣称真实替代解已复验。"
+        ]
+      ],
+      "card_append": "协调裁定：保留有条件静态开发候选，ready_for_probe=false；独立review已完成。check27统一为unknown，保留核心源码及历史正证据，完整性未证。日志缺返回值是实质漏测，下一步在同一实际actor公开流程联合检查Flipd返回图像和True/False/None模式；applied_operations长度不等于重采样次数。无需另设私有CPU前置，也不扩大为所有Dataset必须修改。",
+      "checks": {
+        "18": {
+          "status": "pass",
+          "note": "本题历史63项均执行并有expected状态，无skip/xfail；空测试仍被执行，其无判别力归25。"
+        },
+        "23": {
+          "status": "pass",
+          "note": "普通Dataset应尊重Compose lazy设置；题面重复内容一致，log_stats公开可见。不能据gold公共默认值反推全Dataset必须修改。"
+        },
+        "27": {
+          "status": "unknown",
+          "note": "None透传保留Compose实例配置有静态和历史日志正证据；返回图像及其他helper调用者完整性未知，未证gold新增回归。"
+        }
+      },
+      "disposition": {
+        "reason": "公开目标与核心修复有原件支持；独立review完成。保留具体覆盖限制，下一步用实际actor公开开发流程核验，非训练或评测准入。"
+      },
+      "changes": [
+        "附独立review SHA与协调暴露/裁定，保留原main档案及所有封存稿",
+        "check27从局部pass收为unknown，保留核心正证据",
+        "18/23说明按本题收窄，避免同包泛化；保留唯一actual actor后续"
+      ]
+    }
+  }
+}

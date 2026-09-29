@@ -1,0 +1,419 @@
+[
+  {
+    "case": "control",
+    "elapsed_seconds": 0.474,
+    "outcome": "resolved",
+    "detail": null,
+    "created": 1,
+    "removed": 1,
+    "live": [],
+    "cancelled": [],
+    "queue_active": 0,
+    "regrade_total": 0,
+    "records": [
+      true
+    ],
+    "peak_reads": 1,
+    "close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0
+    }
+  },
+  {
+    "case": "two_run_reply_losses",
+    "elapsed_seconds": 0.0,
+    "outcome": "failed_to_grade",
+    "detail": "grading_container_start_failed:error during connect: Post \"http://%2Fvar%2Frun%2Fdocker.sock/v1.45/containers/create\": read: connection reset by peer; first_attempt: grading_container_start_failed:error during connect: Post \"http://%2Fvar%2Frun%2Fdocker.sock/v1.45/containers/create\": read: connection reset by peer",
+    "created": 2,
+    "removed": 2,
+    "live": [],
+    "cancelled": [],
+    "queue_active": 0,
+    "regrade_total": 1,
+    "records": [
+      true,
+      true
+    ],
+    "peak_reads": 0,
+    "close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 1,
+      "regrade_total": 1,
+      "regrade_declined": 0
+    }
+  },
+  {
+    "case": "run_deadline_reply_loss",
+    "elapsed_seconds": 0.102,
+    "outcome": "failed_to_grade",
+    "detail": "grading_deadline_exhausted:container_start",
+    "created": 1,
+    "removed": 1,
+    "live": [],
+    "cancelled": [
+      "container_start"
+    ],
+    "queue_active": 0,
+    "regrade_total": 0,
+    "records": [
+      true
+    ],
+    "peak_reads": 0,
+    "close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0
+    }
+  },
+  {
+    "case": "second_run_deadline",
+    "elapsed_seconds": 0.101,
+    "outcome": "failed_to_grade",
+    "detail": "grading_deadline_exhausted:container_start; first_attempt: grading_container_start_failed:error during connect: Post \"http://%2Fvar%2Frun%2Fdocker.sock/v1.45/containers/create\": read: connection reset by peer",
+    "created": 2,
+    "removed": 2,
+    "live": [],
+    "cancelled": [
+      "second_container_start"
+    ],
+    "queue_active": 0,
+    "regrade_total": 1,
+    "records": [
+      true,
+      true
+    ],
+    "peak_reads": 0,
+    "close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 1,
+      "regrade_total": 1,
+      "regrade_declined": 0
+    }
+  },
+  {
+    "case": "digest_inspect_hang",
+    "elapsed_seconds": 0.102,
+    "outcome": "failed_to_grade",
+    "detail": "grading_deadline_exhausted:image_ref_inspect",
+    "created": 1,
+    "removed": 1,
+    "live": [],
+    "cancelled": [
+      "image_ref_inspect"
+    ],
+    "queue_active": 0,
+    "regrade_total": 0,
+    "records": [
+      true
+    ],
+    "peak_reads": 0,
+    "close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0
+    }
+  },
+  {
+    "case": "digest_second_inspect_hang",
+    "elapsed_seconds": 0.101,
+    "outcome": "failed_to_grade",
+    "detail": "grading_deadline_exhausted:image_digest_inspect",
+    "created": 1,
+    "removed": 1,
+    "live": [],
+    "cancelled": [
+      "image_digest_inspect"
+    ],
+    "queue_active": 0,
+    "regrade_total": 0,
+    "records": [
+      true
+    ],
+    "peak_reads": 0,
+    "close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0
+    }
+  },
+  {
+    "case": "profile_init_hang",
+    "elapsed_seconds": 0.101,
+    "outcome": "failed_to_grade",
+    "detail": "grading_deadline_exhausted:grader_trusted_init",
+    "created": 1,
+    "removed": 1,
+    "live": [],
+    "cancelled": [
+      "grader_trusted_init"
+    ],
+    "queue_active": 0,
+    "regrade_total": 0,
+    "records": [
+      true
+    ],
+    "peak_reads": 0,
+    "close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0
+    }
+  },
+  {
+    "case": "prelaunch_probe_hang",
+    "elapsed_seconds": 0.101,
+    "outcome": "failed_to_grade",
+    "detail": "grading_deadline_exhausted:grader_prelaunch_check",
+    "created": 1,
+    "removed": 1,
+    "live": [],
+    "cancelled": [
+      "grader_prelaunch_check"
+    ],
+    "queue_active": 0,
+    "regrade_total": 0,
+    "records": [
+      true
+    ],
+    "peak_reads": 0,
+    "close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0
+    }
+  },
+  {
+    "case": "peak_read_after_deadline",
+    "elapsed_seconds": 0.101,
+    "outcome": "failed_to_grade",
+    "detail": "grading_deadline_exhausted:env_reset",
+    "created": 1,
+    "removed": 1,
+    "live": [],
+    "cancelled": [
+      "env_reset"
+    ],
+    "queue_active": 0,
+    "regrade_total": 0,
+    "records": [
+      true
+    ],
+    "peak_reads": 0,
+    "close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0
+    }
+  },
+  {
+    "case": "cleanup_consumes_work_budget",
+    "elapsed_seconds": 0.151,
+    "outcome": "failed_to_grade",
+    "detail": "grading_deadline_exhausted:regrade",
+    "created": 1,
+    "removed": 1,
+    "live": [],
+    "cancelled": [],
+    "queue_active": 0,
+    "regrade_total": 0,
+    "records": [
+      true
+    ],
+    "peak_reads": 0,
+    "close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0
+    }
+  },
+  {
+    "case": "run_deadline_reply_loss",
+    "created": 1,
+    "removed_calls": 1,
+    "live": [],
+    "records": [
+      true
+    ],
+    "queue_active": 0,
+    "fatals": [],
+    "cancelled": [
+      "container_start"
+    ],
+    "close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0
+    }
+  },
+  {
+    "case": "profile_init_hang",
+    "created": 1,
+    "removed_calls": 1,
+    "live": [],
+    "records": [
+      true
+    ],
+    "queue_active": 0,
+    "fatals": [],
+    "cancelled": [
+      "grader_trusted_init"
+    ],
+    "close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0
+    }
+  },
+  {
+    "case": "prelaunch_probe_hang",
+    "created": 1,
+    "removed_calls": 1,
+    "live": [],
+    "records": [
+      true
+    ],
+    "queue_active": 0,
+    "fatals": [],
+    "cancelled": [
+      "grader_prelaunch_check"
+    ],
+    "close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0
+    }
+  },
+  {
+    "case": "run_cancel_cleanup_unknown",
+    "created": 1,
+    "removed_calls": 1,
+    "live": [
+      "rh2-grading-exec_1-6f6aa293"
+    ],
+    "records": [
+      false
+    ],
+    "queue_active": 0,
+    "fatals": [
+      "GradingScopeTerminationError"
+    ],
+    "cancelled": [
+      "container_start"
+    ],
+    "close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [
+        "rh2-grading-exec_1-6f6aa293"
+      ],
+      "containers_open": [],
+      "cleanup_failures": [
+        "container_rm_failed:rh2-grading-exec_1-6f6aa293:Cannot connect to the Docker daemon",
+        "container_scope_termination_failed:rh2-grading-exec_1-6f6aa293:unknown"
+      ],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0
+    }
+  },
+  {
+    "case": "fatal_while_pull",
+    "before_release": {
+      "fatal_seen": 1,
+      "accepting": false,
+      "grading_open": false,
+      "manager_closed": false
+    },
+    "outcome": "failed_to_grade",
+    "pulls": 1,
+    "created": 0,
+    "regrade_declined": [
+      {
+        "trajectory_id": "exec_1",
+        "op": "image_pull",
+        "category": "registry_transport",
+        "attempt": 1,
+        "reason": "stop_requested",
+        "detail": "grading_image_pull_failed:fake-image:v1:Error response from daemon: Get \"https://registry-1.docker.io/v2/\": net/http: TLS handshake timeout"
+      }
+    ],
+    "shutdown_ok": false
+  },
+  {
+    "case": "prelaunch_violation_rm_hang",
+    "work_budget": 0.1,
+    "cleanup_budget": 1,
+    "elapsed_seconds": 1.251,
+    "submitter_done": false,
+    "queue_active": 1,
+    "live": [
+      "rh2-grading-exec_1-5eb20dd7"
+    ],
+    "records": [
+      {
+        "name": "rh2-grading-exec_1-5eb20dd7",
+        "removed": false
+      }
+    ],
+    "cleanup_failures": [],
+    "after_forced_close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0
+    }
+  }
+]

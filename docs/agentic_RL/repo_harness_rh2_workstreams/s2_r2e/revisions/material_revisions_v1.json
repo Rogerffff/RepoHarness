@@ -1,0 +1,43 @@
+{
+ "schema_id": "rh2.s2_r2e.material_revisions.v1",
+ "purpose": "R2E-Gym-Subset 48 题的材料修订单：每条都经用户逐项批准，ingest 从来源原文重放并核对前后摘要。来源原件（原始行、镜像事实表）不改。",
+ "revisions": [
+  {
+   "revision_id": "r2e-mr-001",
+   "instance_id": "coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae",
+   "kind": "expected_text_replace",
+   "target": "expected_output_json",
+   "old": "\"MockingProtectionTest.test_os_path_exists\": \"FAILED\"",
+   "new": "\"MockingProtectionTest.test_os_path_exists\": \"PASSED\"",
+   "sha256_before": "sha256:effd25a22106cba51f1c6486eb24854cc7d1c3baa984fd47e612c2da6cbfa212",
+   "sha256_after": "sha256:f353157ec8e86a79e172920a44f6cbbdc8d1bb049c77f8292f7bd70dfc713e3e",
+   "revised_file": null,
+   "decision_ref": "T0-1：用户 2026-09-24 批准方案 A（修订版期望，只改这一个键）",
+   "reason": "该键在来源记录里是 FAILED，原因是来源方宿主机检出环境里测试子进程缺 mock（ModuleNotFoundError）；发布镜像的 venv 装有 mock 3.0.5，RH2 4 次 + M3 9 次实测全部 PASSED，gold 按原期望恒为 14/15、永远拿不到 1。改为 PASSED 后预计 gold 15/15、noop 只剩目标键 ExecTest.test_unencodable_filename 不符。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl（该题 execution_result_content 的 new/old_commit_res_stdout）",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-c_2c95f1f9.eval.log",
+    "runs/env_overnight_20260916/M3/facts/016af5f6352d/"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-002",
+   "instance_id": "datalad__58ba5165234cb16de0e8463ee75097362099835f",
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "old": "from datalad.interface.tests.test_docs import (\n",
+   "new": "from .test_2 import (\n",
+   "sha256_before": "sha256:6b6cf385b043da6815a4cef0b07386a8460422d46043bb62bb537a7fa1f0bda5",
+   "sha256_after": "sha256:c06d1682256c135df3c23c5bf935c794e8fff23ebbbcb2f42ec339d24508aa9d",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/datalad__58ba5165234cb16de0e8463ee75097362099835f/r2e_tests/test_1.py",
+   "decision_ref": "T0-2：用户 2026-09-24 批准方案 B1（隐藏测试一行导入改为同目录 test_2，expected 不变）",
+   "reason": "隐藏 test_1.py 从仓库内 datalad.interface.tests.test_docs 导入 demo_doc 等常量；上游修复提交同时改了该模块，但 gold 按规则不含测试路径，工作区里是修复前的常量，导致 test_alter_interface_docs_for_cmdline 在任何源码修复下都 FAILED（gold 3/4）。隐藏测试目录里的 test_2.py 与上游修复后的 test_docs.py 逐字节相同（sha256 2a3a29f7…），改为从它导入即恢复修复后的支撑材料。沙盒 dry-run：noop 2/4、gold 4/4。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/datalad__58ba5165234cb16de0e8463ee75097362099835f.md",
+    "runs/r2e_env_repair_20260924/p2/dryrun_58ba/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/datalad__58ba5165234cb16de0e8463ee75097362099835f/r2e_tests/test_1.py.diff"
+   ]
+  }
+ ]
+}

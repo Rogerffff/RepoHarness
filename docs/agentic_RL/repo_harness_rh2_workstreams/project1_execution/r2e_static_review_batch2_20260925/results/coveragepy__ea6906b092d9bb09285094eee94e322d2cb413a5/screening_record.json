@@ -1,0 +1,325 @@
+{
+  "task_id": "r2e_gym_subset::coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5",
+  "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0（material_revisions=[]；expected sha256:7ab45968…，hidden_tests_tree sha256:31eb58fe…）",
+  "source_adapter_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl 第 9 行（line_sha256 d735239d…；spec_vendor_id r2e_gym_subset_e8b9fcbc；parser_id r2e_prime_pytest_v1）",
+  "recipe_ref": {
+    "derived_image": "r2e_derive_v1",
+    "resources": "default（2 CPU / 4 GiB / /tmp 1 GiB / pids 512）",
+    "grading_image_id": "sha256:7471c22d4814197697819c627088892cae7ca8c338a050d58ee18e20a0140af0",
+    "actor_devcheck_image_id": "sha256:cd000a54807f5b6b28a9719efa251d4bf6a93d750b8461c0d6bf0d31467648a9",
+    "note": "两个镜像 ID 同配方、不同构建，未逐字节核对等价"
+  },
+  "code_snapshot_ref": "本仓库 HEAD 9d741bd4 加上工作区未提交改动（baseline_census.py、baseline_manifest.py、manager.py 有修改，r2e_grading_scripts.py 未跟踪）；只读代码，没有运行",
+  "facts_ref": [
+    "runs/r2e_static_prep_20260924/v3/private/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/run_refs.json",
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl#L9（noop，reward 0.0，40/46）",
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl#L9（gold，reward 1.0，46/46）",
+    "runs/r2e_env_repair_20260924/_rerun2/ledger_noop.jsonl#L9（noop 复跑，0.0，40/46）",
+    "runs/r2e_env_repair_20260924/_rerun2/ledger_gold.jsonl#L9（gold 复跑，1.0，46/46）",
+    "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl#L42,L90（M3 来源镜像 gold ×2）",
+    "runs/r2e_actor_20260925/devcheck/coveragepy__ea6906b092d9bb09285094eee94e/orig/（正式启动路径，真实 CC 2.1.205 + 桩端点，agent 身份）",
+    "runs/r2e_actor_20260925/devcheck/coveragepy__ea6906b092d9bb09285094eee94e/plainpytest/（原样 pytest 补跑，均 rc 0）",
+    "runs/r2e_actor_20260925/devcheck/coveragepy__ea6906b092d9bb09285094eee94e/private_gold/private_control.json（root，一次性容器，应用 gold 后执行公开命令）",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/facts.json（历史环境事实）"
+  ],
+  "checks": {
+    "1": {
+      "status": "pass",
+      "note": "gold.patch、expected、run_tests.sh、hidden test_1.py 的摘要都与 grading / validation bundle 一致；base 中 coverage/html.py 的 blob 6246a9b9 等于 gold 的 index 行；日志中 RH2_SETUP_HIDDEN_TESTS_TREE=31eb58fe…"
+    },
+    "2": {
+      "status": "pass",
+      "note": "noop 两次都是 6 个目标键 FAILED，原因为 AssertionError: File 'htmlcov/.gitignore' should exist；devcheck 的 C2 / C3 在 agent 身份下复现（报告目录无 .gitignore，git status 列出 8 个 ??）；初态差异为空"
+    },
+    "3": {
+      "status": "unknown",
+      "note": "render_user_prompt 只含题面、不含 public_hints（envpack/bundles.py:282-289）；环境卡说 hints 写进 /rh2/public_task_bundle.json、不注入系统提示；devcheck 首条用户消息是 devcheck 指令。模型实际收到的完整消息没有捕获（共享机制）"
+    },
+    "4": {
+      "status": "pass",
+      "note": "R2E 控制面只有 r2e_tests/<隐藏文件> 与 run_tests.sh（r2e_grading_scripts.py:274-279，test_globs=()）；gold 投影出的 included_paths=['coverage/html.py']；合法修复只涉及非测试源码"
+    },
+    "5": {
+      "status": "issue",
+      "note": "同仓包含关系：本题初态包含 5dbbe143（7/7）、97997d2c（4/4）、f5eb5f21（2/2）的 gold 行（机械比对，并抽查了 control.py:355 与 jsonreport.py:65-66），test scan 另提示可能包含 016af5f6；本题修复不在任何其它题初态中（5 个工作树 grep gitignore 均无命中）。划分训练 / 评测时需按同族处理；对本题自身有效性没有影响"
+    },
+    "6": {
+      "status": "pass",
+      "note": "Python 3.7.9、pytest 6.2.5、xdist、flaky 可用；无 pip（本题不需要装包）"
+    },
+    "7": {
+      "status": "pass",
+      "note": "公开 gold 目录 tests/gold/html/* 在工作树中；无外部资产"
+    },
+    "8": {
+      "status": "pass",
+      "note": "actor（uid 54321）经正式启动路径实测可以导入、复现、跑公开测试；评分用户 54322 跑隐藏测试 4 次（RH2），逐键结果稳定"
+    },
+    "9": {
+      "status": "pass",
+      "note": "coverage 以 editable 方式安装：cwd=/ 时也导入 /testbed/coverage；评分侧 import_path_grader=/testbed/coverage/__init__.py；RH2_INSTALL_SKIPPED=1"
+    },
+    "10": {
+      "status": "pass",
+      "note": "在 base 上以 agent 身份、正式路径执行：C2 / C3 复现 rc 0；原样 python -m pytest tests/test_html.py（46 个点）、-k HtmlDeltaTest（7 个点）、test_process UnicodeFilePathsTest（2）、test_plugins test_local_files_are_importable（1），全部 rc 0。用的是桩端点，不是真实模型"
+    },
+    "11": {
+      "status": "pass",
+      "note": "各阶段都不需要网络；外部 DNS 被拒（prelaunch）"
+    },
+    "12": {
+      "status": "not_applicable"
+    },
+    "13": {
+      "status": "pass",
+      "note": "内存峰值 357–368 MB / 4 GiB，测试段 2.1–2.4 s（账本第 9 行）"
+    },
+    "14": {
+      "status": "pass",
+      "note": "noop 两次逐键一致，gold 两次都是 46/46；另有 M3 在来源镜像上 gold 两次都是 46 passed。时间敏感键 test_has_date_stamp_in_files 有 120 s 窗口，风险低"
+    },
+    "15": {
+      "status": "not_checked",
+      "note": "历史 R14 称每次都是新容器且缓存剪除前后不变，本审未核实"
+    },
+    "16": {
+      "status": "unknown",
+      "note": "按代码配置，正式 rollout 交付走 export_frozen_patch（census，不经 git，generate.py:3479），会交付被 gitignore 的点文件；本题候选的正式导出没有实跑（可选实验 C-D）"
+    },
+    "17": {
+      "status": "pass",
+      "note": "评分前 rm -rf r2e_tests，再从私有目录恢复，并按 bundle 重写 run_tests.sh；日志 RH2_SETUP_OK=1"
+    },
+    "18": {
+      "status": "pass",
+      "note": "46 个键全部收集并执行；segment_completed=true；-n3 下 xdist 起 3 个 worker"
+    },
+    "19": {
+      "status": "pass",
+      "note": "short test summary 中 46 条 PASSED / FAILED 与 expected 的 46 个键一一对应；没有参数化，没有撞键"
+    },
+    "20": {
+      "status": "pass",
+      "note": "分差只来自 :147 的存在性断言；6 个目标键实际测的是同一件事"
+    },
+    "21": {
+      "status": "pass",
+      "note": "账本 failure_category=tests_failed，没有 infra 错误"
+    },
+    "22": {
+      "status": "pass",
+      "note": "M3 独立 runner 在来源镜像上 gold 46 passed ×2；历史称共 5 份参考日志对账一致，其中 09-09 日志与 reconcile.json 本审未核"
+    },
+    "23": {
+      "status": "pass",
+      "note": "要求清楚。两处小瑕疵：示例写成模块级 coverage.html_report；'被 git 跟踪'说法不准确。已有 .gitignore 时覆盖还是保留、无数据时写不写，题面没说，但测试也不约束"
+    },
+    "24": {
+      "status": "pass",
+      "note": "没有隐藏测试独有的唯一实现约束。公开可见的约束：测试替身 FileWriteTracker.open(filename, mode='r') 会让 coverage/html.py 中带 encoding= 的 open 在 7 个 HtmlDeltaTest 键上报 TypeError，公开测试同样失败（C-C 待实跑）"
+    },
+    "25": {
+      "status": "issue",
+      "note": "目标断言只有 os.path.exists('htmlcov/.gitignore')（H/test_1.py:147；tests/coveragetest.py:276-279）。空文件或 '*.html' 这类不忽略全部内容的实现预计也得 1（静态推断，C-B 待实跑）；CLI 与非默认目录没有目标断言"
+    },
+    "26": {
+      "status": "issue",
+      "note": "低：gold 每次都无条件覆盖输出目录里已有的 .gitignore（例如 -d . 会把用户项目的 .gitignore 换成 *）；没有测试，不影响得分；静态推断"
+    },
+    "27": {
+      "status": "pass",
+      "note": "gold 修到了题面要求（私有对照：内容 '*'，git status 无输出）；没有无关改动，不依赖未交付的修改"
+    },
+    "28": {
+      "status": "not_applicable",
+      "note": "本审只提出修订建议，没有实施"
+    },
+    "29": {
+      "status": "pass",
+      "note": "预检三项 ok；GIT_REFS / REFLOG / REMOTES 都为 0；HEAD 没有子提交。packfile 里的对象没有逐个检查（共享机制）"
+    },
+    "30": {
+      "status": "pass",
+      "note": "不联网，外部 DNS 被拒"
+    },
+    "31": {
+      "status": "issue",
+      "note": "共享的已知缺口在本题适用：隐藏测试导入 base 版 tests/coveragetest.py（assert_exists）、tests/goldtest.py 与 tests/gold/html/*，这些不在控制面内，候选改动会被重放（trusted_projection.py:18-20 已登记）；根目录 conftest.py 与 setup.cfg 的 addopts 同理。只做观测（candidate_test_like_paths），不据此扣分"
+    },
+    "32": {
+      "status": "issue",
+      "note": "verifier 只查文件存在，没有检查'忽略全部内容'这一目标性质；与 25 同源"
+    },
+    "33": {
+      "status": "not_checked",
+      "note": "真实模型求解与 Qwen adapter 链路未验"
+    },
+    "34": {
+      "status": "not_checked"
+    },
+    "35": {
+      "status": "not_checked"
+    },
+    "36": {
+      "status": "not_checked"
+    },
+    "37": {
+      "status": "not_applicable",
+      "note": "没有材料修订"
+    }
+  },
+  "issues": [
+    {
+      "id": "target_check_existence_only",
+      "category": "test_coverage",
+      "checks": [
+        "25",
+        "32"
+      ],
+      "severity": "medium",
+      "summary": "唯一的新增断言是 assert_exists('htmlcov/.gitignore')（os.path.exists），不检查内容是否忽略全部文件，也不检查 CLI 和非默认目录；空 .gitignore 预计得 1。",
+      "evidence_level": "static_inference（高置信）；待正式评分实跑 C-B",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/v3/private/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/hidden_tests/test_1.py:139-147",
+        "runs/r2e_static_prep_20260924/v3/public/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/worktree/tests/coveragetest.py:276-279"
+      ],
+      "proposed_action": "实跑 C-B / C-A；用于评测或 reward 时注明'只验存在性'；可选修订（需用户决定）：补一条 git check-ignore 语义断言，并用 C-A / C-B 做正反校验",
+      "status": "proposed"
+    },
+    {
+      "id": "public_visible_open_signature_constraint",
+      "category": "implementation_constraint",
+      "checks": [
+        "24"
+      ],
+      "severity": "low",
+      "summary": "测试替身 FileWriteTracker.open(filename, mode='r') 被 patch 到 coverage.html.open；在 html.py 中带 encoding= 写文件，7 个 HtmlDeltaTest 键会报 TypeError。公开测试同样失败，所以不算隐藏测试独有的误拒。",
+      "evidence_level": "static_inference；待 C-C 实跑",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/v3/private/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/hidden_tests/test_1.py:99-137"
+      ],
+      "proposed_action": "不改题；只记录",
+      "status": "proposed"
+    },
+    {
+      "id": "gold_overwrites_existing_gitignore",
+      "category": "gold_quality",
+      "checks": [
+        "26"
+      ],
+      "severity": "low",
+      "summary": "gold 每次都无条件写 .gitignore；输出目录是用户目录时（例如 -d .）会覆盖用户已有的 .gitignore。没有测试，不影响得分。",
+      "evidence_level": "static_inference",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/v3/private/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/gold.patch"
+      ],
+      "proposed_action": "只记录",
+      "status": "proposed"
+    },
+    {
+      "id": "shared_control_plane_helpers",
+      "category": "grading_boundary",
+      "checks": [
+        "31"
+      ],
+      "severity": "low",
+      "scope": "shared_mechanism",
+      "summary": "隐藏测试依赖 base 版 tests/ 辅助与 gold 文件，候选改动会被重放；例如把 assert_exists 改成空操作，不实现功能也能得 1。",
+      "evidence_level": "code_configuration",
+      "evidence_refs": [
+        "rh2/src/repoharness2/grading/trusted_projection.py:18-20",
+        "rh2/src/repoharness2/adapters/slime/r2e_grading_scripts.py:274-279"
+      ],
+      "proposed_action": "按平台已登记的缺口处理；本题只报告具体入口",
+      "status": "proposed"
+    },
+    {
+      "id": "same_repo_containment",
+      "category": "task_relation",
+      "checks": [
+        "5"
+      ],
+      "severity": "low",
+      "summary": "本题初态包含 coveragepy 5dbbe143、97997d2c、f5eb5f21（可能还有 016af5f6）的修复；本题修复不在其它题里。",
+      "evidence_level": "机械比对 + 两处抽查",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/cross_task_gold_scan.json",
+        "runs/r2e_static_prep_20260924/cross_task_test_scan.json"
+      ],
+      "proposed_action": "划分训练 / 评测时按同族处理",
+      "status": "proposed"
+    },
+    {
+      "id": "model_message_hints_unverified",
+      "category": "actual_input",
+      "checks": [
+        "3"
+      ],
+      "severity": "unknown",
+      "scope": "shared_mechanism",
+      "summary": "正式链下模型实际收到的消息没有捕获；public_hints 是否进入消息未知。",
+      "evidence_level": "code_configuration + 环境卡",
+      "evidence_refs": [
+        "rh2/src/repoharness2/envpack/bundles.py:282-289",
+        "runs/r2e_actor_20260925/devcheck/coveragepy__ea6906b092d9bb09285094eee94e/orig/stub/requests/messages_000.json"
+      ],
+      "proposed_action": "由共享机制的核查处理",
+      "status": "proposed"
+    },
+    {
+      "id": "solver_condition_no_pip",
+      "category": "solver_condition",
+      "checks": [
+        "6",
+        "10"
+      ],
+      "severity": "low",
+      "summary": "venv 里没有 pip，uv 也不在 PATH，不联网；本题不需要装包。历史结论已确认，v3 公开提示已写明'pip may be unavailable'。",
+      "evidence_level": "execution（devcheck env.out）",
+      "evidence_refs": [
+        "runs/r2e_actor_20260925/devcheck/coveragepy__ea6906b092d9bb09285094eee94e/plainpytest/captures/env.out"
+      ],
+      "proposed_action": "沿用历史处理（E10）",
+      "status": "confirmed"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": []
+  },
+  "revision_refs": [],
+  "disposition": {
+    "scope": "static_review",
+    "state": "needs_review",
+    "reason": "静态候选，待 actor 验证（真实模型与 Qwen adapter 未验；桩端点下开发条件已实测）；目标检查只验存在性，比题面宽松。不是题意或测试争议，不需要改题就能用于开发诊断。",
+    "prior_disposition": "09-24 环境审查为 environment_qualified：在环境范围内确认，与本处置不冲突",
+    "pending_experiments": [
+      "C-B：make_local_static_report_files 中只 open(os.path.join(self.directory, '.gitignore'), 'w').close() → 预期 1（46/46）",
+      "C-A：report() 开头记录 directory_was_empty，make_local_static_report_files() 之后仅在该值为真时写 '*\\n' → 预期 1（46/46）",
+      "C-C：gold 改用 open(..., 'w', encoding='utf-8') → 预期 0，HtmlDeltaTest 7 个键 FAILED（TypeError）",
+      "C-E（可选）：在 Coverage.html_report 的 override_config 块之外，用 self.config.html_dir 写 .gitignore → 预期 0，HtmlGoldTest 13 个键 FAILED（test_omit_5 除外）"
+    ],
+    "next_step": "用正式评分实跑 C-B，同批带上 C-A 与 C-C"
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "suitability_note": "低难度的链路或开发诊断候选；reward 只检查'存在 .gitignore'，不宜当作能区分能力的评测题",
+    "reviewer_exposure": "主审读过 gold、隐藏测试、expected、R-f / envrepair / M3 日志、devcheck（含私有 gold 对照）、历史环境审查记录；审查材料不提供给解题模型",
+    "not_approved_for": [
+      "formal_training",
+      "formal_evaluation"
+    ]
+  },
+  "costs": {
+    "reviewer_tokens": null,
+    "reviewer_cost_usd": null,
+    "cpu_seconds_by_reviewer": null,
+    "note": "本审没有运行项目代码；devcheck 与评分运行由协调者或历史执行，本审没有观测到其费用"
+  },
+  "coordinator_notes": [
+    {
+      "date": "2026-09-25",
+      "by": "Claude B（协调者）",
+      "note": "本记录写于候选实跑之前，'待实跑''预期'为当时推断。实跑结果见 docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/grader_candidates.md，主审与复核的对照见同目录 results/<instance_id>/review.md，批次结论见 README.md §3。协调者未改动本记录的其它字段。"
+    }
+  ]
+}

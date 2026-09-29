@@ -1,0 +1,82 @@
+{
+  "instance_id": "pydantic__pydantic-5386",
+  "audit_date": "2026-09-20",
+  "old_record": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_pydantic/records/pydantic__pydantic-5386.json",
+  "source_refs": {
+    "public": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl#pydantic__pydantic-5386",
+    "grading": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl#pydantic__pydantic-5386",
+    "validation_reference_only": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl#pydantic__pydantic-5386",
+    "base_commit": "6cbd8d69609bcc5b4b383830736790f9b8087e36",
+    "F2P": 1,
+    "P2P": 106
+  },
+  "environment": {
+    "catalog_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json#tasks[instance_id=pydantic__pydantic-5386]",
+    "status": "verified_environment_pair",
+    "selected_batch": "pydantic_v1",
+    "recipe": "pydantic-install-v1",
+    "verified_existing_pair": "noop=0 / gold=1；两次安装rc=0，gold测试rc=0；日志SHA256已本轮复算。",
+    "verification_ref": "verification.json#environment.pydantic__pydantic-5386",
+    "boundary": "环境对照有效，不等于题意/评分质量或actor正式准入；选定配方仍需冻结消费。"
+  },
+  "requirements": [
+    "在定义 BaseModel 子类时，能够通过类对象取得字段名称和字段信息，无须先实例化。",
+    "题面以检查字段是否提供 example 为用途；示例缺少 class 关键字，但这个目标仍可辨认。",
+    "题面没有选择新增钩子的名称及调用协议，基线也没有声明这个新增 API。"
+  ],
+  "old_claim_reviews": [
+    {
+      "original_claim": "验收新增 __pydantic_init_subclass__，其精确名称、classmethod 和 super 链式调用契约没有公开依据。",
+      "status": "confirmed",
+      "evidence": [
+        "public_bundles_v0.jsonl 本题全文只提 __init_subclass__ 与定义期字段访问；public_hints 不提供额外接口约定。",
+        "pydantic@6cbd8d69609bcc5b4b383830736790f9b8087e36:pydantic/main.py:109-154：type.__new__ 先创建类，之后 set_model_fields/complete_model_class；在精确 base 全仓 git grep __pydantic_init_subclass__ 无命中。",
+        "test_patch::test_pydantic_init_subclass 显式声明并 super 调用该新方法，断言两种 hook 的精确名称、先后顺序及 a=1 kwargs。"
+      ]
+    },
+    {
+      "original_claim": "任何满足字段访问目标的其他实现都会被拒，因此模型不可能解出。",
+      "status": "unresolved",
+      "evidence": [
+        "测试确实绑定一个未公开的新接口，支持 needs_revision；但尚未实现并实跑一个充分满足原题的替代方案，不能把模型解不出或所有替代方案均拒绝写成已证事实。",
+        "新增接口的外部名称可以是公开规格的一部分；metaclass 的调用算法和 gold 代码不是必须披露的信息。"
+      ]
+    },
+    {
+      "original_claim": "F2P只有一条，仅覆盖一个直接子类，反向约束较薄（check25）。",
+      "status": "confirmed",
+      "evidence": [
+        "本题 test_patch 的 MyModel/MySubModel 都没有模型字段；全部新增断言只检查 calls，不读取 model_fields 或 example。",
+        "把同名回调放在 set_model_fields 前但 type.__new__ 后，可能仍满足新增断言；这是待做的行为负例，不声称已获满分。"
+      ]
+    },
+    {
+      "original_claim": "5386、5662、9134 因共用 tests/test_main.py 应自动归为同一泄漏簇。",
+      "status": "refuted",
+      "evidence": [
+        "同测试文件不足以证明答案复用；这些题分别涉及类初始化、比较协议和实例私有属性。",
+        "pydantic@0346ddb6a35770007f32815d8e4a179b778e0ef4:pydantic/main.py:179-182,295 确含 5386 后置 hook；这是具体来源包含关系，是否构成实际训练/评测暴露还取决于后续数据划分及轨迹。"
+      ]
+    },
+    {
+      "original_claim": "旧记录install rc=2或只有联网才能安装，构成当前环境阻塞。",
+      "status": "superseded_env",
+      "evidence": [
+        "repair_catalog本题选择pydantic_v1/pydantic-install-v1，在deny_all、uid54322、2CPU/4GiB下已有noop/gold成对结果；本轮校验该题两份原始日志SHA256匹配目录。",
+        "这只替代已修的安装结论；旧actor PATH及初始脏树应在真正启动探针时核对，不能由grader对照擅自宣称已修。"
+      ]
+    }
+  ],
+  "recommendation": "needs_revision",
+  "next_action": [
+    "先确定是否把新增公开 hook 作为任务目标；若保留，仅补接口名称、类方法语义、字段可用时机及 kwargs/super 协作契约，不写 metaclass 实现。",
+    "将原用途变成最小行为检查：子类含一个带 example 和一个不带 example 的字段，在回调内读取两者；以“回调在字段初始化前触发”作负例。"
+  ],
+  "unknowns": [
+    "没有新的模型探针或完整替代解运行，不能据此估算猜中接口的概率。",
+    "完整多层继承/泛型协议尚未运行验证。"
+  ],
+  "evidence_level": "static_or_existing_run",
+  "verification_scope": "本轮读取精确base源码、实际公开题面/test_patch/gold、已归档运行证据；新增仅本地纯Python探针与日志重解析，未启动Docker/远端/模型/真实RH2。",
+  "formal_admission": false
+}

@@ -1,0 +1,203 @@
+{
+  "status": "pass",
+  "trusted_task_count": 48,
+  "artifact_comparison": {
+    "environment_packages_v0.jsonl": {
+      "rebuild_exact": true,
+      "changed": [
+        "pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199",
+        "scrapy__cfed9b6659c90e0799361911b1d72ed127edf471"
+      ],
+      "unchanged_count": 46
+    },
+    "public_bundles_v0.jsonl": {
+      "rebuild_exact": true,
+      "changed": [],
+      "unchanged_count": 48
+    },
+    "grading_bundles_r2e_v0.jsonl": {
+      "rebuild_exact": true,
+      "changed": [
+        "pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199",
+        "scrapy__cfed9b6659c90e0799361911b1d72ed127edf471"
+      ],
+      "unchanged_count": 46
+    },
+    "validation_bundles_v0.jsonl": {
+      "rebuild_exact": true,
+      "changed": [],
+      "unchanged_count": 48
+    }
+  },
+  "tasks": {
+    "pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199": {
+      "expected_delta": {
+        "changed": [],
+        "added": [
+          [
+            "test_groupby_quantile_NA_float[Float32]",
+            "PASSED"
+          ],
+          [
+            "test_groupby_quantile_NA_float[Float64]",
+            "PASSED"
+          ],
+          [
+            "test_groupby_quantile_NA_float[float32]",
+            "PASSED"
+          ],
+          [
+            "test_groupby_quantile_NA_float[float64]",
+            "PASSED"
+          ],
+          [
+            "test_groupby_quantile_NA_float[float]",
+            "PASSED"
+          ],
+          [
+            "test_groupby_quantile_NA_int[Int16]",
+            "PASSED"
+          ],
+          [
+            "test_groupby_quantile_NA_int[Int32]",
+            "PASSED"
+          ],
+          [
+            "test_groupby_quantile_NA_int[Int64]",
+            "PASSED"
+          ],
+          [
+            "test_groupby_quantile_NA_int[Int8]",
+            "PASSED"
+          ],
+          [
+            "test_groupby_quantile_NA_int[UInt16]",
+            "PASSED"
+          ],
+          [
+            "test_groupby_quantile_NA_int[UInt32]",
+            "PASSED"
+          ],
+          [
+            "test_groupby_quantile_NA_int[UInt64]",
+            "PASSED"
+          ],
+          [
+            "test_groupby_quantile_NA_int[UInt8]",
+            "PASSED"
+          ]
+        ],
+        "removed": [
+          "test_groupby_quantile_NA_float",
+          "test_groupby_quantile_NA_int"
+        ]
+      },
+      "manifest": "conftest.py\t-\t632b5ee3769b3615c8bffd93070b6eac1375ddde14fcc964d138fa44454528e4\n",
+      "recipe_sha256": "sha256:b5a70d0414502a1dbf1eafcd948628d49e62e058b3f10e8cd46690405b4546dd",
+      "hidden_tree": "sha256:6a8597546224ce8bf2e6176d6adcc99354bc853239012935a7634d207fc20ecb",
+      "image_id": "sha256:b4ff94834fe0174d29355cb8fe18b7cf7d9cd0a723fc8b4b2ef6d18d03b3278f",
+      "scripts_digest": "sha256:37e0907d550a21f2d128abcf40811d67e3a685c38f59e78c8f46aab84338f5f1",
+      "observations": [
+        {
+          "candidate": "noop",
+          "attempt": 1,
+          "match": 233,
+          "total": 237,
+          "log": "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-pan_4ae6eaa6.eval.log",
+          "protected_files": 3
+        },
+        {
+          "candidate": "noop",
+          "attempt": 2,
+          "match": 233,
+          "total": 237,
+          "log": "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-pan_c3f7181e.eval.log",
+          "protected_files": 3
+        },
+        {
+          "candidate": "gold",
+          "attempt": 1,
+          "match": 237,
+          "total": 237,
+          "log": "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-pan_0ac6a231.eval.log",
+          "protected_files": 3
+        },
+        {
+          "candidate": "gold",
+          "attempt": 2,
+          "match": 237,
+          "total": 237,
+          "log": "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-pan_3b39925f.eval.log",
+          "protected_files": 3
+        }
+      ]
+    },
+    "scrapy__cfed9b6659c90e0799361911b1d72ed127edf471": {
+      "expected_delta": {
+        "changed": [
+          [
+            "MiddlewareManagerTest.test_enabled_from_settings",
+            "FAILED",
+            "PASSED"
+          ],
+          [
+            "MiddlewareManagerTest.test_instances_from_settings",
+            "FAILED",
+            "PASSED"
+          ],
+          [
+            "UtilsMiscTestCase.test_walk_modules_egg",
+            "FAILED",
+            "PASSED"
+          ]
+        ],
+        "added": [],
+        "removed": []
+      },
+      "manifest": "test.egg\t-\t4b1ddd46f6768d2c41f5ccb5cee26e7e833c1139273d83a36a3bbe5801897676\ntest_2.py\t6575ec0baafa4e6033fed017eb1eda70536b31a09760877e108c3025e0080af2\t7135f2f4b94eeb00235713812e3ef38fbf4a2dd40b22439f9c268f5274451019\n",
+      "recipe_sha256": "sha256:783e51d42d48b2fcd0ff475d9a6c1368024506935cc9446fb86f98154ff80829",
+      "hidden_tree": "sha256:aa727a506d6ae720e2cde49478db0911380ffa75e5496c952f77c6330a1618fd",
+      "image_id": "sha256:5e1679ba7a2041b364d75732c4233ff85f679795fb6fedb44c9ca5a7465aa8a7",
+      "scripts_digest": "sha256:757a6f999c5124fdcf4f505ae416ae829ffb047ababb90daa57ea81fbcf41820",
+      "observations": [
+        {
+          "candidate": "noop",
+          "attempt": 1,
+          "match": 7,
+          "total": 9,
+          "log": "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_fbaff172.eval.log",
+          "protected_files": 5
+        },
+        {
+          "candidate": "noop",
+          "attempt": 2,
+          "match": 7,
+          "total": 9,
+          "log": "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_89ea0834.eval.log",
+          "protected_files": 5
+        },
+        {
+          "candidate": "gold",
+          "attempt": 1,
+          "match": 9,
+          "total": 9,
+          "log": "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_6cb57d77.eval.log",
+          "protected_files": 5
+        },
+        {
+          "candidate": "gold",
+          "attempt": 2,
+          "match": 9,
+          "total": 9,
+          "log": "runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-scr_f8bc4a13.eval.log",
+          "protected_files": 5
+        }
+      ]
+    }
+  },
+  "failure_boundaries": {
+    "undeclared_expected_key": "pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/r2e-mr-007: 实际的逐键变化与修订单声明的 expected_change 不符",
+    "add_existing_file": "scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/r2e-mr-003: 新增的隐藏测试文件 test_1.py 在来源清单里已存在"
+  },
+  "scope": "本机读现有材料与 evidence；未起 Docker、未访问远端；未审 reconcile。"
+}

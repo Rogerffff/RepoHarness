@@ -1,0 +1,271 @@
+{
+ "task_id": "iterative__dvc-5004",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+  "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+  "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+  "raw": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc",
+  "base_commit": "7c45711e34f565330be416621037f983d0034bef",
+  "version": "1.10",
+  "python_version": "3.9",
+  "eval_cmd": "pytest -rA",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-5004:latest",
+  "workdir": "/testbed",
+  "test_patch_paths": [
+   "tests/func/test_stage_resolver.py",
+   "tests/unit/test_context.py"
+  ],
+  "gold_paths": [
+   "dvc/parsing/interpolate.py"
+  ],
+  "n_f2p": 3,
+  "n_p2p": 30,
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-5004/{gold,empty}/offline/a1/",
+  "signals": {
+   "in_e2": [],
+   "fragile_reference_id": false,
+   "stage1": {
+    "empty": {
+     "verdict": "RESOLVED_NO",
+     "rc_install": 0
+    },
+    "gold": {
+     "verdict": "RESOLVED_FULL",
+     "rc_install": 0,
+     "p2p_missing": 0,
+     "f2p_missing": 0
+    }
+   },
+   "deepseek_candidate_oracle": null
+  }
+ },
+ "public_view": {
+  "目标行为": "params 里的布尔值在插值进 `cmd` 时不应被 Python 的 `str()` 变成 `True`/`False`；题面的期望是 dvc『忠实地把 params 当字符串保存，只在需要输出统计时才做类型转换』，示例里 `opt1: true` 被渲染成 `True` 而不是 `true`。",
+  "约束": "题面给了 dvc.yaml、params.yaml、`dvc repro -f` 的实际输出与 julia 的类型打印，明确说这是 bool 的边角情况，并主动表示『不打算修也可以关掉』。",
+  "公开材料无法确定的点": [
+   "改在哪一层：题面提出的方案是『忠实存字符串，只在输出统计时转换』（即改 params 读取层），gold 实际改的是**插值层** `dvc/parsing/interpolate.py` 的 `str_interpolate`，把 `str(value)` 换成一个对 bool 特判的 `to_str`。两者不是同一件事。",
+   "非 cmd 字段怎么办：F2P 的 `test_set` 同时断言 `always_changed` 字段仍保持 Python 的 `True`/`False`（即整值插值 `${item}` 保持原类型），只有嵌在字符串里的才转小写。这条区分题面没写。",
+   "其它类型（None、float）是否也要改：gold 不改，P2P 里的 `test_set[None]`、`test_set[3.141592653589793]` 固化了这一点。"
+  ],
+  "base 关键代码": "dvc/parsing/interpolate.py:106 `buf += template[index:start] + str(value)`；`Context.resolve_str` 在整串就是一个 `${x}` 时直接返回原对象（所以 `context.resolve_str(\"${enabled}\") is True` 在 base 与 gold 都成立）。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "repos/dvc 3a3fa7cdde43ad2e8e31827c46160c8ce86876a0 `parametrization: convert bool to string as \"true\"/\"false\" (#5004)` --stat: dvc/parsing/interpolate.py 13, tests/func/test_stage_resolver.py 6, tests/unit/test_context.py 11"
+   ],
+   "note": "gold+test_patch 与上游一致，无丢件。",
+   "by": "L1_dvc_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base:dvc/parsing/interpolate.py:106",
+    "stage1 empty: 3 条 F2P 全 FAILED"
+   ],
+   "note": "缺陷在 base 存在。",
+   "by": "L1_dvc_2"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 1493 字符，含 dvc.yaml/params.yaml/console 输出/version"
+   ],
+   "note": "题面完整、无截断、无外链图片。",
+   "by": "L1_dvc_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch: tests/func/test_stage_resolver.py + tests/unit/test_context.py",
+    "gold: dvc/parsing/interpolate.py"
+   ],
+   "note": "两个 test_patch 路径均为纯测试文件，零交集。additional_exclusions 空。",
+   "by": "L1_dvc_2"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh git checkout 两个测试文件"
+   ],
+   "note": "纯测试恢复。注意 test_patch **修改的是既有用例 test_set 的断言**（引入 stringified_value），不是纯新增；恢复顺序正确。",
+   "by": "L1_dvc_2"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan.json 本包路径表"
+   ],
+   "note": "本包无第二题触碰 dvc/parsing/ 或这两个测试文件。",
+   "by": "L1_dvc_2"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "P2P 含键 `'tests/func/test_stage_resolver.py::test_set[To'`",
+    "stage1 gold test_output.txt:8636 `PASSED tests/func/test_stage_resolver.py::test_set[To set or not to set]`",
+    "base:tests/func/test_stage_resolver.py `@pytest.mark.parametrize(\"value\", [\"value\", \"To set or not to set\", 3, pi, True, False, None])`"
+   ],
+   "note": "参数 `\"To set or not to set\"` 含空格，nodeid 被 `parse_log_pytest` 截成 `test_set[To`。参考集与 status_map 同样截断，判分当前正确；无碰撞（其余参数首 token 互异）。但键丢失了参数信息。伪键还有 'Could'（pip ERROR 行）。",
+   "by": "L1_dvc_2"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement 的方案陈述『faithfully stores the params as strings, and only does type conversion ... when it needs to output some statistics』",
+    "golden_patch 改的是 dvc/parsing/interpolate.py 的插值层"
+   ],
+   "note": "题面提出的方案与 gold 的实际修法是**两件不同的事**。更关键的是 F2P 里 `test_set` 还要求 `always_changed` 字段保持 Python 的 `True`/`False`（整值插值保持原类型），只有嵌在字符串中的才小写化——这条『两种插值语义不同』的规则公开材料里没有任何依据，要从 base 的 `Context.resolve_str` 行为倒推。",
+   "by": "L1_dvc_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 用 functools.singledispatch 实现 to_str",
+    "F2P 断言的是渲染后的字符串与字段值"
+   ],
+   "note": "F2P 只断言结果，不锁 `singledispatch`、不锁函数名。直接 `\"true\" if value is True else ...` 的写法同样能过。",
+   "by": "L1_dvc_2"
+  },
+  "25": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P test_resolve_resolves_boolean_value 四条断言：`resolve_str(\"${enabled}\") is True`、`is False`、`\"--flag ${enabled}\" == \"--flag true\"`、`\"--flag ${disabled}\" == \"--flag false\"`",
+    "P2P 含 test_set[3]/[3.141592653589793]/[None]/[value]/[To"
+   ],
+   "note": "覆盖较好：`is True` 的身份断言堵住了『一律转成字符串』的过度修复；P2P 的其它参数化堵住了『所有类型都小写化 str』的做法。题面原例（`opt1: true` 渲染成 `true`）被 `--flag ${enabled}` 那条等价覆盖。",
+   "by": "L1_dvc_2"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "smstat.json 5004: gold real=52，PASSED 33 / FAILED 19",
+    "stage1 gold: 19 条 FAILED 全在 tests/func/test_stage_resolver.py，reason 为 `re.error: redefinition of group name 'ps_d'`（部分行被 pytest 截断）",
+    "P2P 组成: tests/unit/test_context.py 18 条 + tests/func/test_stage_resolver.py 12 条"
+   ],
+   "note": "P2P 的 unit 部分（18 条 Context 语义）质量好；func 部分被 pathspec 依赖问题砍掉 19 条（test_simple、test_vars_import、test_vars_load_partial 全系列等），这些正是 `str_interpolate` 的主要回归面。",
+   "by": "L1_dvc_2"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "上游 --stat 三文件"
+   ],
+   "note": "gold 13 行、不依赖未交付改动；`singledispatch` 是新引入但属标准库。",
+   "by": "L1_dvc_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak.py: gold_added=8 ps_match=0 hints_match=0"
+   ],
+   "note": "题面不含修复代码。hints（不可见）含 dvc/schema.py 链接与一张 githubusercontent 图片链接（题面里没有）。",
+   "by": "L1_dvc_2"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "deps_scan2.txt: iterative__dvc-5004 pathspec_ps_d=19",
+    "stage1 gold 19 FAILED"
+   ],
+   "note": "pathspec 未锁版本，导致 tests/func/test_stage_resolver.py 里 19 条在 gold 下崩溃并被排除出 P2P。",
+   "by": "L1_dvc_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 用 tmp_dir/dvc fixture 与内存 dict"
+   ],
+   "note": "无外部资产。",
+   "by": "L1_dvc_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 无 URL/requests"
+   ],
+   "note": "测试段纯本地。",
+   "by": "L1_dvc_2"
+  },
+  "18": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh 追加两个测试文件；gold real=52 ⊇ F2P 3 + P2P 30"
+   ],
+   "note": "无漏选；过选 19 条 pathspec 坏死用例，不计分。",
+   "by": "L1_dvc_2"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "empty 30 PASSED/22 FAILED；gold 33 PASSED/19 FAILED"
+   ],
+   "note": "分差恰为 3 条 F2P。",
+   "by": "L1_dvc_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "题面方案与 gold 修法不同层",
+   "severity": "P2",
+   "evidence_refs": [
+    "problem_statement 的方案陈述",
+    "golden_patch 位置"
+   ],
+   "proposed_action": "题面补一句：期望在**插值渲染**时把 bool 写成 `true`/`false`，而整值插值 `${item}` 仍保持原类型。否则按题面去改 params 读取层的解答会打挂 P2P 的 Context 用例。",
+   "next_experiment": "写一个在 params 加载处把 bool 转成字符串 'true'/'false' 的实现，跑 F2P+P2P，预期 `test_resolve_resolves_boolean_value` 的 `is True` 断言失败。"
+  },
+  {
+   "category": "依赖未锁定",
+   "severity": "P1",
+   "evidence_refs": [
+    "deps_scan2.txt pathspec_ps_d=19"
+   ],
+   "proposed_action": "同其它 dvc 1.x 题：锁 `pathspec<0.9.0` 后重算 P2P，恢复 test_stage_resolver.py 的 19 条。",
+   "next_experiment": "降级 pathspec 后重跑该文件。"
+  },
+  {
+   "category": "参考 ID 截断",
+   "severity": "P3",
+   "evidence_refs": [
+    "P2P 键 `test_set[To`"
+   ],
+   "proposed_action": "与 L2 方案合并处理；当前无碰撞。",
+   "next_experiment": "无。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "两个 test_patch 文件都在 tests/ 下且为纯测试；gold 只改 dvc/parsing/interpolate.py。沿用第四组 B 默认空。",
+  "evidence_refs": [
+   "test_patch",
+   "golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/func/test_stage_resolver.py 的 test_simple / test_vars_import / test_vars_load_partial 全系列（修好 pathspec 后）",
+   "reason": "它们是 `str_interpolate` 的主要回归面，目前全部因依赖问题被排除。"
+  },
+  {
+   "id": "tests/unit/test_context.py 的 18 条（已在 P2P）",
+   "reason": "Context 的解析/合并/追踪语义，判别力真实，已覆盖。"
+  },
+  {
+   "id": "新增：`${item}` 为 list/dict 时仍应报 `Cannot interpolate data of type` 的用例",
+   "reason": "gold 改的是同一个 `str_interpolate` 分支的相邻行，需确认错误路径未被误改。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_review",
+  "reason": "F2P/P2P 的语义设计不错（`is True` 身份断言 + 其它类型参数化），题面完整；但题面给的方案与 gold 修法不在同一层，且 19 条 func 回归因 pathspec 依赖问题坏死。修依赖并补一句题面即可转 ready_for_probe。"
+ },
+ "costs": {
+  "minutes": 18
+ },
+ "by": "L1_dvc_2 (Claude Opus 5, 2026-09-16, 静态审查)"
+}

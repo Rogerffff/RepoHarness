@@ -1,0 +1,89 @@
+{
+  "instance_id": "pydantic__pydantic-6283",
+  "audit_date": "2026-09-20",
+  "old_record": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_pydantic/records/pydantic__pydantic-6283.json",
+  "source_refs": {
+    "public": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl#pydantic__pydantic-6283",
+    "grading": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl#pydantic__pydantic-6283",
+    "validation_reference_only": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl#pydantic__pydantic-6283",
+    "base_commit": "a29286609e79c79b2ecd71bc7272eea43ed9fccd",
+    "F2P": 1,
+    "P2P": 38
+  },
+  "environment": {
+    "catalog_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json#tasks[instance_id=pydantic__pydantic-6283]",
+    "status": "verified_environment_pair",
+    "selected_batch": "pydantic_v1",
+    "recipe": "pydantic-install-v1",
+    "verified_existing_pair": "noop=0 / gold=1；两次安装rc=0，gold测试rc=0；日志SHA256已本轮复算。",
+    "verification_ref": "verification.json#environment.pydantic__pydantic-6283",
+    "boundary": "环境对照有效，不等于题意/评分质量或actor正式准入；选定配方仍需冻结消费。"
+  },
+  "requirements": [
+    "对相同有效输入，RootModel 正常初始化与 model_construct 得到的模型应相等。",
+    "题面同时给出 BaseModel 正常工作的对照，其已有构造和相等语义应保留。",
+    "RootModel 直接子类与参数化子类都是公开用法；验收可比较结果，不需要限定修复落在 BaseModel 或 RootModel。"
+  ],
+  "old_claim_reviews": [
+    {
+      "original_claim": "题面与新增相等断言一致，根因可从公共源码定位。",
+      "status": "confirmed",
+      "evidence": [
+        "题面用 class Model(RootModel): root:int 并断言 Model(42)==Model.model_construct(42)；test_patch 在 test_root_model_equality 加 RootModel[int] 等价断言。",
+        "pydantic@a29286609e79c79b2ecd71bc7272eea43ed9fccd:pydantic/main.py:214-223 无条件写内部属性；pydantic@a29286609e79c79b2ecd71bc7272eea43ed9fccd:pydantic/root_model.py:35-37,48-66 类属性遮蔽内部slots并委托 BaseModel.construct/eq。",
+        "合法替代解可在 RootModel 的构造路径避免多余内部项；无需复制 gold 的两个 if 形状。"
+      ]
+    },
+    {
+      "original_claim": "P2P 没覆盖带 PrivateAttr 的 RootModel.model_construct，部分修复可能漏过。",
+      "status": "confirmed",
+      "evidence": [
+        "pydantic@a29286609e79c79b2ecd71bc7272eea43ed9fccd:tests/test_root_model.py:253-275,315-323 私有属性及其相等测试只调用 Model(42)，没有 model_construct。",
+        "pydantic@a29286609e79c79b2ecd71bc7272eea43ed9fccd:tests/test_root_model.py:182-202 构造测试覆盖嵌套与无验证行为，但未组合 PrivateAttr；这是具体覆盖缺口，未据此判题无效。"
+      ]
+    },
+    {
+      "original_claim": "gold 让 RootModel 不再设置 __pydantic_private__，所以含私有属性分支行为本身可疑。",
+      "status": "refuted",
+      "evidence": [
+        "pydantic@a29286609e79c79b2ecd71bc7272eea43ed9fccd:pydantic/main.py:218-223 首先检查 __pydantic_post_init__ 并调用 model_post_init；gold 仅限制没有此回调时写 None 的 fallback，不是跳过实际私有属性初始化。"
+      ]
+    },
+    {
+      "original_claim": "只修无私有属性分支的候选已经能够全绿。",
+      "status": "unresolved",
+      "evidence": [
+        "未找到本题对应的实际部分修复补丁与运行日志；目前仅有未覆盖组合，不能冒充已运行的坏解反例。"
+      ]
+    },
+    {
+      "original_claim": "5662/6283/9214属于同族，应同侧划分（issues.same_family_split）。",
+      "status": "refuted",
+      "evidence": [
+        "5662 是非模型比较委托，9214 是schema描述优先级；不能仅凭RootModel或相等主题定泄漏簇。",
+        "39条是覆盖范围事实；本题明确需求没有已证的评分失真，不据测试数量自动降级。"
+      ]
+    },
+    {
+      "original_claim": "旧记录install rc=2或只有联网才能安装，构成当前环境阻塞。",
+      "status": "superseded_env",
+      "evidence": [
+        "repair_catalog本题选择pydantic_v1/pydantic-install-v1，在deny_all、uid54322、2CPU/4GiB下已有noop/gold成对结果；本轮校验该题两份原始日志SHA256匹配目录。",
+        "这只替代已修的安装结论；旧actor PATH及初始脏树应在真正启动探针时核对，不能由grader对照擅自宣称已修。"
+      ]
+    }
+  ],
+  "recommendation": "probe_candidate",
+  "probe_role": "小范围构造语义修复，配一个私有属性组合诊断。",
+  "next_action": [
+    "首轮探针保留原官方计分，并额外观察 RootModel[int] 子类含 PrivateAttr(default=\"abc\") 时的 model_construct/正常构造相等及私有值。",
+    "若要验证覆盖风险，构造仅跳过无私有字段模型内部项的部分修复，先证明它违反上述组合行为，再看官方是否接受；本轮不实施。"
+  ],
+  "unknowns": [
+    "本题暂无目标模型运行和已证的坏解满分。",
+    "合法替代修复尚未在完整 Pydantic 或最新 RH2 环境实跑。"
+  ],
+  "evidence_level": "static_or_existing_run",
+  "verification_scope": "本轮读取精确base源码、实际公开题面/test_patch/gold、已归档运行证据；新增仅本地纯Python探针与日志重解析，未启动Docker/远端/模型/真实RH2。",
+  "formal_admission": false
+}

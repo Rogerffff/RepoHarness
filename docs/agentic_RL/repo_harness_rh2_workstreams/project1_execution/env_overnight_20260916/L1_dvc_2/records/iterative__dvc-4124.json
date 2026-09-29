@@ -1,0 +1,263 @@
+{
+ "task_id": "iterative__dvc-4124",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+  "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+  "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+  "raw": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc",
+  "base_commit": "35e0dd920614f9f1194c82f61eeaa829f6593fb6",
+  "version": "1.1",
+  "python_version": "3.9",
+  "eval_cmd": "pytest -rA",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-4124:latest",
+  "workdir": "/testbed",
+  "test_patch_paths": [
+   "tests/unit/command/test_diff.py",
+   "tests/unit/command/test_metrics.py",
+   "tests/unit/command/test_params.py"
+  ],
+  "gold_paths": [
+   "dvc/utils/diff.py"
+  ],
+  "n_f2p": 6,
+  "n_p2p": 28,
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4124/{gold,empty}/offline/a1/",
+  "signals": {
+   "in_e2": [],
+   "fragile_reference_id": false,
+   "stage1": {
+    "empty": {
+     "verdict": "RESOLVED_NO",
+     "rc_install": 0
+    },
+    "gold": {
+     "verdict": "RESOLVED_FULL",
+     "rc_install": 0,
+     "p2p_missing": 0,
+     "f2p_missing": 0
+    }
+   },
+   "deepseek_candidate_oracle": null
+  }
+ },
+ "public_view": {
+  "目标行为": "`dvc metrics diff --show-md` 的输出末尾应带换行，使 `>> doc.md` 追加后后续内容不会被并进 markdown 表格。",
+  "约束": "题面是一句用户提问（389 字符），没有给期望输出、没有给命令输出样例、没有说其它 `--show-md` 命令是否同样处理。",
+  "公开材料无法确定的点": [
+   "范围：题面只提 `metrics diff`，没说 `dvc diff --show-md` 与 `params diff --show-md` 是否也要改（F2P 三者都要）。",
+   "非 markdown（plain）输出要不要也加换行（gold：不加；P2P 会拦住加了的实现）。",
+   "空表（无行）时 markdown 是否也要带换行（gold：要）。"
+  ],
+  "base 关键代码": "三条命令的 `--show-md` 全部汇聚到 dvc/utils/diff.py:88 `table(header, rows, markdown=False)`：dvc/command/diff.py:26 `table([\"Status\",\"Path\"], rows, True)`、dvc/command/metrics.py:104、dvc/command/params.py:29。因此一次改在共享 helper 上就同时覆盖三者——这一点从 base 代码可读出，题面没写。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "repos/dvc d809723bc959d7cfbaa6c14efdd6b0cd5b21527c `dvc: add trailing newline in --show-md (#4124)` --stat 4 文件 17+/7-"
+   ],
+   "note": "gold（dvc/utils/diff.py 8 行）与 test_patch（三个测试文件）合起来与上游 commit 完全一致，无丢件。",
+   "by": "L1_dvc_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base:dvc/utils/diff.py:91 直接 `return tabulate(...)`",
+    "stage1 empty：6 条 F2P 全 FAILED"
+   ],
+   "note": "base 的 `table()` 直接返回 tabulate 结果，无尾换行，与题面症状一致。",
+   "by": "L1_dvc_2"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement 389 字符，全文即一段提问"
+   ],
+   "note": "题面完整无截断，但信息量极低：没有实际输出样例、没有期望输出、没有版本信息。它甚至不是一个结论而是一个疑问句（`Is there maybe a newline character missing...?`）。这道题的可解性主要靠 base 代码自明，而不是题面。",
+   "by": "L1_dvc_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 三个文件全在 tests/unit/command/",
+    "gold 仅 dvc/utils/diff.py"
+   ],
+   "note": "零交集，无混合职责。additional_exclusions 空。",
+   "by": "L1_dvc_2"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 路径列表"
+   ],
+   "note": "恢复集合是三个纯测试文件。注意这里 test_patch **修改的是既有断言**（把不带 `\\n` 的期望改成带 `\\n`），不是新增用例——恢复顺序若出错会让 F2P 用旧期望跑，但 eval.sh 的 `git checkout <base> <files>` + `git apply` 顺序正确。",
+   "by": "L1_dvc_2"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "prescan.json: iterative__dvc-5839 的 test_patch 也是 tests/unit/command/test_metrics.py，gold 是 dvc/command/metrics.py"
+   ],
+   "note": "与 5839（`--precision` 传递）共用 tests/unit/command/test_metrics.py，且 5839 的 base（daf07451f8, 2.0）远在本题之后，已含本题 gold。非同一修复，但同文件同族，划分注意。",
+   "by": "L1_dvc_2"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement 只提 `dvc metrics diff --show-md`",
+    "F2P 含 tests/unit/command/test_diff.py::test_show_md 与 test_params.py::test_params_diff_markdown"
+   ],
+   "note": "题面只说 metrics，评分要求 diff / metrics / params 三条命令都改。实际上因为三者共用 `dvc/utils/diff.py::table`，在共享点修就自动覆盖；但在 `dvc/command/metrics.py` 里对返回值补 `\\n` 的等价合法修复只能过 2/6 条 F2P。这个范围要求题面没有交代。",
+   "by": "L1_dvc_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 六条断言都是 `_show_md(...)/_show_diff(...) == <精确字符串>`"
+   ],
+   "note": "断言的是对外输出格式本身（markdown 表格文本），这正是本题的目标行为，属于『真正的公共格式约定』，不算无依据地强制唯一实现。它不约束在哪一层加换行。",
+   "by": "L1_dvc_2"
+  },
+  "25": {
+   "status": "pass",
+   "evidence_refs": [
+    "P2P 含 test_metrics_diff / test_params_diff / test_metrics_diff_precision 等 plain 模式断言（无尾换行）",
+    "gold `if markdown: ret += \"\\n\"`"
+   ],
+   "note": "P2P 在这里有真实判别力：无条件 `ret += \"\\n\"` 的粗暴修复会让所有 plain 模式 P2P 失败。题面症状（追加到 md 文件后内容被吞进表格）被 F2P 直接覆盖。",
+   "by": "L1_dvc_2"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "smstat.json: gold 34/34 PASSED，empty 28 PASSED/6 FAILED",
+    "P2P 28 条横跨三个命令的 diff/show/json/precision 路径"
+   ],
+   "note": "整文件跑三个 unit 测试文件，无既有失败，P2P 覆盖 `table()` 的 plain 与 json 两条旁路。这是本包回归覆盖最健康的一题。",
+   "by": "L1_dvc_2"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "上游 --stat"
+   ],
+   "note": "gold 8 行、带解释性注释、无夹带改动、不依赖未交付改动。",
+   "by": "L1_dvc_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak.py: gold_added=2 ps_match=0 hints_match=0"
+   ],
+   "note": "题面无修复代码、无 PR 链接。hints 里维护者直接说 `md table is not complete without the trailing newline ... Will send a fix ASAP`，几乎就是答案，但 hints 不可见。",
+   "by": "L1_dvc_2"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "stage1 eval.sh install 段"
+   ],
+   "note": "install 段需要网络。",
+   "by": "L1_dvc_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 纯字符串断言"
+   ],
+   "note": "无外部资产。",
+   "by": "L1_dvc_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 无 URL/requests"
+   ],
+   "note": "测试段纯本地、纯内存。",
+   "by": "L1_dvc_2"
+  },
+  "18": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh 追加三个测试文件；gold real=34 = F2P 6 + P2P 28"
+   ],
+   "note": "收集集合与 F2P∪P2P 完全相等，零过选零漏选——本包唯一一道完全对齐的题。",
+   "by": "L1_dvc_2"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "伪键 'Could'/'No'"
+   ],
+   "note": "同 3677：pip 的 ERROR 行进了 status_map，不影响判分。",
+   "by": "L1_dvc_2"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "empty 28 PASSED/6 FAILED；gold 34/34"
+   ],
+   "note": "分差恰为 6 条 F2P。",
+   "by": "L1_dvc_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "题面范围不足",
+   "severity": "P2",
+   "evidence_refs": [
+    "problem_statement",
+    "F2P 跨三个命令"
+   ],
+   "proposed_action": "题面补一句『所有 `--show-md` 输出（dvc diff / metrics diff / params diff）都应如此』，或把 F2P 缩到 metrics 一条。",
+   "next_experiment": "写一个只在 dvc/command/metrics.py 的 `_show_diff` 返回值上补 `\\n` 的修复，跑 6 条 F2P，预期 2 过 4 挂。"
+  },
+  {
+   "category": "题面信息量低",
+   "severity": "P3",
+   "evidence_refs": [
+    "problem_statement 389 字符、疑问句结尾"
+   ],
+   "proposed_action": "补一段实际输出样例与期望输出；当前题面几乎不提供可验证的验收标准。",
+   "next_experiment": "无。"
+  },
+  {
+   "category": "同族",
+   "severity": "P3",
+   "evidence_refs": [
+    "prescan.json 5839"
+   ],
+   "proposed_action": "4124 与 5839 共用 tests/unit/command/test_metrics.py，划分注意。",
+   "next_experiment": "无。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 三个文件全在 tests/unit/command/ 下、全是纯测试；gold 只改 dvc/utils/diff.py。沿用第四组 B 默认空。",
+  "evidence_refs": [
+   "test_patch",
+   "golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/func/test_metrics.py / tests/func/test_diff.py 里走 CLI `--show-md` 的端到端用例",
+   "reason": "当前 F2P/P2P 全在 unit 层直接调 `_show_md`/`_show_diff`，没有一条验证 CLI 真正打印出的字节流（含 logger/print 是否再补一个换行导致两个空行）。"
+  },
+  {
+   "id": "tests/unit/command/test_diff.py::test_show_json / test_show_hash（已在 P2P）",
+   "reason": "确认 markdown 之外的输出通道不受影响，已覆盖。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "判分链路本包最干净（收集集合与 F2P∪P2P 完全相等、gold 34/34 全绿、P2P 对 plain 模式有真实判别力）；唯一待办是题面范围（只写了 metrics）与题面信息量低，不阻塞探针。"
+ },
+ "costs": {
+  "minutes": 15
+ },
+ "by": "L1_dvc_2 (Claude Opus 5, 2026-09-16, 静态审查)"
+}

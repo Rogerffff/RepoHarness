@@ -1,0 +1,50 @@
+{
+ "task_id": "getmoto__moto-6701",
+ "source": "SWE-Gym lite (swe_gym_lite_full_f70b1a29)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "s2/ingest/public_bundles_v0.jsonl#getmoto__moto-6701",
+  "grading": "s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-6701",
+  "validation": "s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-6701",
+  "base_commit": "5e1b166f2521eacd737f2ccb241fbc0b2e8bb931",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-6701/gold/offline/a1/"
+ },
+ "public_view": {
+  "goal": "IoT 里含 URL 保留字符的 id（如 thingGroupName='test:group'）在创建时从 URL 取值、以 url-encoded 形式存进后端；而后续把同一 id 放在请求体里的操作（add_thing_to_thing_group、create_thing_group 的 parentGroupName 等）传的是未编码值，导致找不到。要求两边一致。",
+  "constraints": ["题面给了两个具体失败调用与各自的 quote() 绕过写法", "不含保留字符的既有用例必须保持通过"],
+  "unknowns_from_public_only": [
+   "题面没说该在哪一端统一：把 URL 取到的值解码（存解码值），还是把请求体里的值编码",
+   "题面没说修复范围：只改 iot，还是改 moto.core.BaseResponse._get_param 这一全局入口"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 只碰 tests/test_iot/test_iot_thing_groups.py（base 已存在）", "golden_patch 只碰 moto/iot/responses.py 的 5 个方法：describe_thing_group、create_thing_group、delete_thing_group、update_thing_group（以及同段落）"], "note": "无二进制/LFS/子模块，与题面同一问题。", "by": "L1_moto_3"},
+  "2": {"status": "pass", "evidence_refs": ["base moto/core/responses.py:505-525 `_get_param` 取值顺序是 querystring → JSON body → `self.uri_match.group(param_name)`，且对 uri_match 的结果不做 unquote", "base moto/iot/responses.py:584/591/612/635 这些方法都用 `self._get_param('thingGroupName')`；boto3 把 thingGroupName 放在 URI 而不是 body，所以取到的是 url-encoded 值"], "note": "base 确有缺陷，机制与题面描述一致。", "by": "L1_moto_3"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 1377 字符，含可直接运行的复现脚本，无外链/图片/截断"], "note": "题面自足。hints 里有更多信息（见 29），但题面已足够定位。", "by": "L1_moto_3"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 触碰路径全集：tests/test_iot/test_iot_thing_groups.py"], "note": "无非测试源码路径；gold 触碰 moto/iot/responses.py，非测试样路径。", "by": "L1_moto_3"},
+  "17": {"status": "pass", "evidence_refs": ["同 4"], "note": "additional_exclusions 空。", "by": "L1_moto_3"},
+  "5": {"status": "pass", "evidence_refs": ["全局索引：该测试文件与 moto/iot/responses.py 在 216 题里只被本题使用"], "note": "无重复/派生。", "by": "L1_moto_3"},
+  "23": {"status": "pass", "evidence_refs": ["10 条 F2P 全部是 base 已存在的测试，test_patch 只把里面的组名字面量从 'my-group-name-1a' 改成 'my-group:name-1a'", "F2P 之一 test_thing_groups 覆盖了题面第一个失败示例（base 测试文件 398-425 行的 add_thing_to_thing_group / remove_thing_from_thing_group）"], "note": "要求与题面一致，且覆盖了题面给出的两个失败调用（add_thing_to_thing_group 与 parentGroupName，后者经 generate_thing_group_tree 的 params['parentGroupName'] 走到）。", "by": "L1_moto_3"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 全是黑盒调用断言"], "note": "不强制唯一实现。可通过的写法至少有三种：gold 的 `unquote(self.path.split('/thing-groups/')[-1])`、在 iot 内部统一 unquote(self._get_param(...))、以及 hints 里报告者提的全局 `_get_param` 里 unquote。", "by": "L1_moto_3"},
+  "25": {"status": "issue", "evidence_refs": ["评测只跑 tests/test_iot/test_iot_thing_groups.py（collected 17 = F2P 10 + P2P 7）", "hints 里报告者给的全局补丁改的是 moto/core/responses.py:_get_param，维护者明确回避了这条路：'that's a change that will affect everything'"], "note": "**判分无法区分“只修 iot”与“改全局 _get_param”**：后者会影响所有 service 的路径参数取值，却能让本题 17 条用例全过。这不是“错误修复”，而是“风险远大于判分面的修复”，训练信号上会奖励高风险改动。P2。", "by": "L1_moto_3"},
+  "26": {"status": "issue", "evidence_refs": ["gold 改了 iot 的 5 个方法，但只跑 thing_groups 一个测试文件；同目录未跑：tests/test_iot/test_iot_things.py、test_iot_thing_types.py、test_iot_policies.py、test_iot_jobs.py 等"], "note": "覆盖面窄，尤其对“改全局 _get_param”这类解答完全没有拦截能力。见 proposed_regression_tests。", "by": "L1_moto_3"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 5 处统一改为 `unquote(self.path.split('/thing-groups/')[-1])`"], "note": "正确且对应：把 URL 侧的值解码后再入库/查库，使体内传的未编码值与库里一致；请求体侧（add_thing_to_thing_group 等）不用改。无无关改动。轻微脆弱点：靠字符串切分 '/thing-groups/' 定位，而不是用 uri_match 分组。", "by": "L1_moto_3"},
+  "29": {"status": "issue", "evidence_refs": ["hints_text 含报告者的完整 git diff（moto/core/responses.py 里给 uri_match 结果加 unquote），以及维护者给出的近似最终方案 'Something like: thing_group_name = unquote(self.uri.split(\"/\")[-1])'"], "note": "hints 对 agent 不可见，因此不构成泄漏；但它几乎等同于 gold。需确认 hints 不进入提示词。题面本身不含任何修复代码。", "by": "L1_moto_3"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold 17 passed"], "note": "纯 mock。", "by": "L1_moto_3"},
+  "7": {"status": "issue", "evidence_refs": ["本包共性 install rc=2"], "note": "见包级 issue。", "by": "L1_moto_3"},
+  "11": {"status": "pass", "evidence_refs": ["IoT 测试全部走 moto mock"], "note": "无外部服务。", "by": "L1_moto_3"}
+ },
+ "issues": [
+  {"category": "grading_cannot_distinguish_blast_radius", "severity": "P2", "evidence_refs": ["hints 里的全局 _get_param 补丁 vs gold 的 iot 局部补丁；两者都能过本题 17 条用例"], "proposed_action": "把 moto/core/responses.py 列为本题的“高影响面文件”，若解答触及它，应触发额外回归（至少跑 tests/test_iot/ 全目录 + 另外 2-3 个 service 的测试）。这属于 RH2 侧的附加校验，不改上游判分。", "next_experiment": "打 hints 里那个全局补丁，跑本题 F2P+P2P（预期全过），再跑 tests/test_s3、tests/test_ec2 若干文件，看是否出现回归——用来量化“判分面 vs 改动面”的差距。"},
+  {"category": "f2p_are_preexisting_tests", "severity": "P3", "evidence_refs": ["10 条 F2P 全部是 base 已有的测试名，test_patch 只改字面量"], "proposed_action": "记录该模式：任何“F2P 必为新增测试名”的假设在本题（以及本包 getmoto__moto-6226）不成立。", "next_experiment": "无（静态可判定）。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只含测试文件；沿用默认空排除。", "evidence_refs": ["test_patch 路径全集 = tests/test_iot/test_iot_thing_groups.py"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_iot/ 全目录", "reason": "gold 改的是 iot/responses.py 里 5 个方法，things/thing_types/policies/jobs 等同一 responses 文件的其它方法共享 _get_param 取值约定，是最直接的传播面。"},
+  {"id": "tests/test_core/test_responses.py（若存在）+ 任意两个其它 service 的测试文件", "reason": "专门用于拦截“改全局 moto/core/responses.py:_get_param”的解答（见检查 25）。"},
+  {"id": "新增：thingName / thingTypeName 含 ':' 的同类用例", "reason": "题面说 'there are probably many more'；gold 只修了 thing-group 一族，同类缺陷在 thing / thing-type 上是否仍在，当前无证据（not_checked）。"},
+  {"id": "tests/test_iot/test_iot_thing_groups.py::test_thing_groups", "reason": "已在 F2P，是唯一覆盖 add_thing_to_thing_group / remove_thing_from_thing_group 的用例。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "题面自足、base 缺陷明确、gold 对应且最小、文件边界干净。保留意见是判分面只有一个测试文件，无法区分“局部修 iot”与“改全局 _get_param”这类高风险解答，建议纳入时配上面的附加回归。"},
+ "costs": {"minutes": 16}
+}

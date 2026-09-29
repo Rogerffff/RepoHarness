@@ -1,0 +1,54 @@
+{
+ "task": "scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67",
+ "image": "sha256:5a68023b6eba7cd71a6524b1b31ea531858efef1aa12e6174061f4e9187618d8",
+ "recipe_id": "r2e_derive_v1+sysconfig_v1",
+ "patch": "none",
+ "edits": "/work/r2e/trials/scrapy/75450e75/draft_7545.json",
+ "expected": "/work/r2e/trials/scrapy/75450e75/expected_7545.json",
+ "kind": "trial_not_formal_grading",
+ "edits_apply": "RH2_TRIAL_EDITS_APPLIED=2\n",
+ "test_seconds": 36.5,
+ "markers": true,
+ "observed": {
+  "ShellTest.test_dns_failures": "PASSED",
+  "ShellTest.test_empty": "PASSED",
+  "ShellTest.test_fetch_redirect_follow_302": "PASSED",
+  "ShellTest.test_fetch_redirect_not_follow_302": "PASSED",
+  "ShellTest.test_local_file": "PASSED",
+  "ShellTest.test_local_nofile": "PASSED",
+  "ShellTest.test_redirect": "PASSED",
+  "ShellTest.test_redirect_follow_302": "PASSED",
+  "ShellTest.test_redirect_not_follow_302": "PASSED",
+  "ShellTest.test_request_replace": "PASSED",
+  "ShellTest.test_response_body": "PASSED",
+  "ShellTest.test_response_encoding_gb18030": "PASSED",
+  "ShellTest.test_response_selector_html": "PASSED",
+  "ShellTest.test_response_type_html": "PASSED",
+  "ShellTest.test_response_type_text": "PASSED",
+  "ShellTest.test_scrapy_import": "PASSED",
+  "ShellTest.test_shell_fetch_async": "FAILED",
+  "ShellTest.test_shell_fetch_async_coroutine_runs": "FAILED",
+  "ShellTest.test_shell_fetch_async_twice": "PASSED"
+ },
+ "n_observed": 19,
+ "log_tail": " = True\n\n    def _process_finished(self, pp, cmd, check_code):\n        if pp.exitcode and check_code:\n            msg = f\"process {cmd} exit with code {pp.exitcode}\"\n            msg += f\"\\n>>> stdout <<<\\n{pp.out}\"\n            msg += \"\\n\"\n            msg += f\"\\n>>> stderr <<<\\n{pp.err}\"\n>           raise RuntimeError(msg)\nE           RuntimeError: process ['/testbed/.venv/bin/python', '-m', 'scrapy.cmdline', 'shell', '-c', \"(__import__('signal').alarm(60), fetch('http://localhost:38969/html'), print('R2E_MW_DONE', request.meta.get('r2e_asyncio_mw_done'), response.status, flush=True))\", '--set', 'TWISTED_REACTOR=twisted.internet.asyncioreactor.AsyncioSelectorReactor', '--set', 'DOWNLOADER_MIDDLEWARES={\"r2e_tests.shell_asyncio_mw.AsyncioSleepDownloaderMiddleware\": 543}'] exit with code 1\nE           >>> stdout <<<\nE           b''\nE           \nE           >>> stderr <<<\nE           b'/testbed/scrapy/cmdline.py:6: DeprecationWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html\\n  import pkg_resources\\n2026-09-28 18:32:16 [scrapy.utils.log] INFO: Scrapy 2.7.1 started (bot: scrapybot)\\n2026-09-28 18:32:16 [scrapy.utils.log] INFO: Versions: lxml 5.3.0.0, libxml2 2.12.9, cssselect 1.2.0, parsel 1.9.1, w3lib 2.2.1, Twisted 24.11.0, Python 3.9.21 (main, Jan 14 2025, 22:48:24) - [Clang 19.1.6 ], pyOpenSSL 25.0.0 (OpenSSL 3.4.0 22 Oct 2024), cryptography 44.0.0, Platform Linux-6.8.0-59-generic-x86_64-with-glibc2.35\\n2026-09-28 18:32:16 [scrapy.crawler] INFO: Overridden settings:\\n{\\'DUPEFILTER_CLASS\\': \\'scrapy.dupefilters.BaseDupeFilter\\',\\n \\'LOGSTATS_INTERVAL\\': 0,\\n \\'TWISTED_REACTOR\\': \\'twisted.internet.asyncioreactor.AsyncioSelectorReactor\\'}\\n/testbed/scrapy/utils/request.py:231: ScrapyDeprecationWarning: \\'2.6\\' is a deprecated value for the \\'REQUEST_FINGERPRINTER_IMPLEMENTATION\\' setting.\\n\\nIt is also the default value. In other words, it is normal to get this warning if you have not defined a value for the \\'REQUEST_FINGERPRINTER_IMPLEMENTATION\\' setting. This is so for backward compatibility reasons, but it will change in a future version of Scrapy.\\n\\nSee the documentation of the \\'REQUEST_FINGERPRINTER_IMPLEMENTATION\\' setting for information on how to handle this deprecation.\\n  return cls(crawler)\\n2026-09-28 18:32:16 [asyncio] DEBUG: Using selector: EpollSelector\\n2026-09-28 18:32:16 [scrapy.utils.log] DEBUG: Using reactor: twisted.internet.asyncioreactor.AsyncioSelectorReactor\\n2026-09-28 18:32:16 [scrapy.utils.log] DEBUG: Using asyncio event loop: asyncio.unix_events._UnixSelectorEventLoop\\n2026-09-28 18:32:16 [scrapy.extensions.telnet] INFO: Telnet Password: 30d4b20d19dd07cd\\n2026-09-28 18:32:16 [scrapy.middleware] INFO: Enabled extensions:\\n[\\'scrapy.extensions.corestats.CoreStats\\',\\n \\'scrapy.extensions.telnet.TelnetConsole\\',\\n \\'scrapy.extensions.memusage.MemoryUsage\\']\\n2026-09-28 18:32:16 [scrapy.middleware] INFO: Enabled downloader middlewares:\\n[\\'scrapy.downloadermiddlewares.httpauth.HttpAuthMiddleware\\',\\n \\'scrapy.downloadermiddlewares.downloadtimeout.DownloadTimeoutMiddleware\\',\\n \\'scrapy.downloadermiddlewares.defaultheaders.DefaultHeadersMiddleware\\',\\n \\'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware\\',\\n \\'r2e_tests.shell_asyncio_mw.AsyncioSleepDownloaderMiddleware\\',\\n \\'scrapy.downloadermiddlewares.retry.RetryMiddleware\\',\\n \\'scrapy.downloadermiddlewares.redirect.MetaRefreshMiddleware\\',\\n \\'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware\\',\\n \\'scrapy.downloadermiddlewares.redirect.RedirectMiddleware\\',\\n \\'scrapy.downloadermiddlewares.cookies.CookiesMiddleware\\',\\n \\'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware\\',\\n \\'scrapy.downloadermiddlewares.stats.DownloaderStats\\']\\n2026-09-28 18:32:16 [scrapy.middleware] INFO: Enabled spider middlewares:\\n[\\'scrapy.spidermiddlewares.httperror.HttpErrorMiddleware\\',\\n \\'scrapy.spidermiddlewares.offsite.OffsiteMiddleware\\',\\n \\'scrapy.spidermiddlewares.referer.RefererMiddleware\\',\\n \\'scrapy.spidermiddlewares.urllength.UrlLengthMiddleware\\',\\n \\'scrapy.spidermiddlewares.depth.DepthMiddleware\\']\\n2026-09-28 18:32:16 [scrapy.middleware] INFO: Enabled item pipelines:\\n[]\\n2026-09-28 18:32:16 [scrapy.extensions.telnet] INFO: Telnet console listening on 127.0.0.1:6023\\n2026-09-28 18:32:16 [scrapy.core.engine] INFO: Spider opened\\nTraceback (most recent call last):\\n  File \"/opt/py/cpython-3.9.21-linux-x86_64-gnu/lib/python3.9/runpy.py\", line 197, in _run_module_as_main\\n    return _run_code(code, main_globals, None,\\n  File \"/opt/py/cpython-3.9.21-linux-x86_64-gnu/lib/python3.9/runpy.py\", line 87, in _run_code\\n    exec(code, run_globals)\\n  File \"/testbed/scrapy/cmdline.py\", line 178, in <module>\\n    execute()\\n  File \"/testbed/scrapy/cmdline.py\", line 155, in execute\\n    _run_print_help(parser, _run_command, cmd, args, opts)\\n  File \"/testbed/scrapy/cmdline.py\", line 110, in _run_print_help\\n    func(*a, **kw)\\n  File \"/testbed/scrapy/cmdline.py\", line 163, in _run_command\\n    cmd.run(args, opts)\\n  File \"/testbed/scrapy/commands/shell.py\", line 74, in run\\n    shell.start(url=url, redirect=not opts.no_redirect)\\n  File \"/testbed/scrapy/shell.py\", line 52, in start\\n    print(eval(self.code, globals(), self.vars))\\n  File \"<string>\", line 1, in <module>\\n  File \"/testbed/scrapy/shell.py\", line 110, in fetch\\n    response, spider = threads.blockingCallFromThread(\\n  File \"/testbed/.venv/lib/python3.9/site-packages/twisted/internet/threads.py\", line 135, in blockingCallFromThread\\n    result.raiseException()\\n  File \"/testbed/.venv/lib/python3.9/site-packages/twisted/python/failure.py\", line 455, in raiseException\\n    raise self.value.with_traceback(self.tb)\\n  File \"/testbed/.venv/lib/python3.9/site-packages/twisted/internet/defer.py\", line 2017, in _inlineCallbacks\\n    result = context.run(gen.send, result)\\n  File \"/testbed/scrapy/core/downloader/middleware.py\", line 41, in process_request\\n    response = yield deferred_from_coro(method(request=request, spider=spider))\\n  File \"/testbed/scrapy/utils/defer.py\", line 270, in deferred_from_coro\\n    event_loop = get_asyncio_event_loop_policy().get_event_loop()\\n  File \"/opt/py/cpython-3.9.21-linux-x86_64-gnu/lib/python3.9/asyncio/events.py\", line 642, in get_event_loop\\n    raise RuntimeError(\\'There is no current event loop in thread %r.\\'\\nRuntimeError: There is no current event loop in thread \\'Thread-1\\'.\\n'\n\n/testbed/scrapy/utils/testproc.py:30: RuntimeError\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED r2e_tests/test_1.py::ShellTest::test_dns_failures\nPASSED r2e_tests/test_1.py::ShellTest::test_empty\nPASSED r2e_tests/test_1.py::ShellTest::test_fetch_redirect_follow_302\nPASSED r2e_tests/test_1.py::ShellTest::test_fetch_redirect_not_follow_302\nPASSED r2e_tests/test_1.py::ShellTest::test_local_file\nPASSED r2e_tests/test_1.py::ShellTest::test_local_nofile\nPASSED r2e_tests/test_1.py::ShellTest::test_redirect\nPASSED r2e_tests/test_1.py::ShellTest::test_redirect_follow_302\nPASSED r2e_tests/test_1.py::ShellTest::test_redirect_not_follow_302\nPASSED r2e_tests/test_1.py::ShellTest::test_request_replace\nPASSED r2e_tests/test_1.py::ShellTest::test_response_body\nPASSED r2e_tests/test_1.py::ShellTest::test_response_encoding_gb18030\nPASSED r2e_tests/test_1.py::ShellTest::test_response_selector_html\nPASSED r2e_tests/test_1.py::ShellTest::test_response_type_html\nPASSED r2e_tests/test_1.py::ShellTest::test_response_type_text\nPASSED r2e_tests/test_1.py::ShellTest::test_scrapy_import\nPASSED r2e_tests/test_1.py::ShellTest::test_shell_fetch_async_twice\nFAILED r2e_tests/test_1.py::ShellTest::test_shell_fetch_async - twisted.trial...\nFAILED r2e_tests/test_1.py::ShellTest::test_shell_fetch_async_coroutine_runs\n======================== 2 failed, 17 passed in 33.51s =========================\n>>>>> End Test Output\nRH2_TEST_RC=1\n",
+ "stderr_tail": "",
+ "expected_n": 19,
+ "missing": [],
+ "extra": [],
+ "status_diff": [
+  [
+   "ShellTest.test_shell_fetch_async",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ShellTest.test_shell_fetch_async_coroutine_runs",
+   "PASSED",
+   "FAILED"
+  ]
+ ],
+ "match": false,
+ "verdict": "mismatch",
+ "seconds": 115.8
+}

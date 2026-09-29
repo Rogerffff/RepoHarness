@@ -1,0 +1,27 @@
+# Pydantic 定向后续提案（未执行或派发）
+
+本文件仅为任务一静态审查的证据需求。运行与环境工作由任务二Claude B负责；规格改动需维护方决定。本轮不修改原题、测试、gold或评分。
+
+## 5386：先明确字段就绪接口
+
+公开目标是在子类定义阶段、不创建实例就能读取本类字段与metadata。维护方须决定可接受的接口：明确发布一个字段就绪hook，或允许满足相同公开行为的既有hook改良/其他接口。不能从私有gold倒推solver必须猜中新名称；也不能声称所有不同代码形状均会被拒绝。
+
+验收提案应在回调中实际读取继承字段、新增字段及Field(examples=...)信息，并区分旧类映射和当前子类映射；保留普通hook的kwargs与调用行为。单纯记录空字段类的调用顺序不足以证明字段已就绪。字段metadata可读不等于所有前向引用均已解析、模型一定可实例化。公开草图可修正语法，但任何正式题面或接口修订应另建版本记录。
+
+上述缺测和未公开命名约束已由源码、test.patch静态确定，无需先重复gold运行来证明它们存在。本题实际actor入口仍未验；优先级是接口与验收决策，不是把私有接口答案补进独立solver上下文。
+
+## 6283：公开RootModel与BaseModel对照
+
+在实际actor入口保存消息、工作树初态及其来源、命令RC、解释器和工作区包来源，原样执行题面的显式RootModel子类与BaseModel比较。比较的是相同构造内容；model_construct仍跳过验证，不能要求非幂等validator处理前后的同一输入必然相等。
+
+候选若修改共享BaseModel.model_construct，按改动路径选取公开test_construction.py中的默认值、extra、显式_fields_set及post-init相关验证，并关注RootModel的private×construct组合。_fields_set本来允许显式指定，不为相等强行归一化；gold保留有post-init时的调用。无需为静态缺少selector这件事先跑全仓，已有P2P通过也不代表上述组合已测。
+
+## 8567：一项私有未知类型构建对照
+
+在匹配本base的私有CPU副本中比较base与gold，绑定Python、工作区Pydantic以及pyproject要求的pydantic-core 2.15.0。定义不提供core schema的普通Custom类，保持默认arbitrary_types_allowed=False；构造含Annotated[Custom, PlainValidator(lambda v: Custom())]字段的BaseModel，不加PlainSerializer，以隔离新引入的内层schema前置条件。
+
+分别记录模型类能否创建、异常类型/位置和完整命令RC；若创建成功，再记录验证后是否为Custom。静态预期是旧plain不需要生成Custom的内层schema，而gold新增handler(source_type)可能在_unknown_type_schema处报错。运行前预期与实际结果分开，不能预先把它写成已证gold回归。结果结合plain替代内层验证的公开文档判断，不以配置放宽或给Custom加schema来绕开待验证条件。
+
+公开两种PlainSerializer/PlainValidator顺序的JSON和值仍需在实际actor开发验证中观察，包括内部bool及输出"0"/"1"；这与上述私有参考诊断是不同证据。只查Python dump的str类型不足以证明它们，但不为每个缺口机械安排一项实验。无需GPU、外部数据、模型调用或全仓测试。
+
+任何私有base/gold诊断都不能认证actor可开发、正式探针或训练资格；含gold及隐藏断言的材料不能交给独立solver。

@@ -1,0 +1,4 @@
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+COPY mypy_build/ /opt/rh2/build-wheels/
+ENV PIP_NO_INDEX=1 PIP_FIND_LINKS=/opt/rh2/build-wheels

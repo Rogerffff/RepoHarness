@@ -1,0 +1,113 @@
+{
+ "task": "scrapy__9a15fcf89a151811de8ac783419df0512c863d5e",
+ "image": "sha256:1de7669dacf64c8a067200844da065064e3f840d4afb009bab4361b2c2891af8",
+ "recipe_id": "r2e_derive_v1+sysconfig_v1",
+ "patch": "/work/r2e/trials/scrapy/9a15fcf8/scrapy_9a15_bad_headers_str.patch",
+ "edits": "/work/r2e/trials/scrapy/9a15fcf8/draft_9a15_final.json",
+ "expected": "/work/r2e/trials/scrapy/9a15fcf8/expected_9a15_final.json",
+ "kind": "trial_not_formal_grading",
+ "apply": "Checking patch scrapy/http/headers.py...\nChecking patch scrapy/responsetypes.py...\nApplied patch scrapy/http/headers.py cleanly.\nApplied patch scrapy/responsetypes.py cleanly.\nRH2_APPLY_RC=0\n",
+ "edits_apply": "RH2_TRIAL_EDITS_APPLIED=2\n",
+ "test_seconds": 3.2,
+ "markers": true,
+ "observed": {
+  "HeadersTest.test_appendlist": "FAILED",
+  "HeadersTest.test_basics": "FAILED",
+  "HeadersTest.test_copy": "PASSED",
+  "HeadersTest.test_delete_and_contains": "PASSED",
+  "HeadersTest.test_encode_latin1": "FAILED",
+  "HeadersTest.test_encode_multiple": "FAILED",
+  "HeadersTest.test_encode_utf8": "FAILED",
+  "HeadersTest.test_int_value": "FAILED",
+  "HeadersTest.test_invalid_value": "PASSED",
+  "HeadersTest.test_iterables": "FAILED",
+  "HeadersTest.test_multivalue": "FAILED",
+  "HeadersTest.test_none_value": "PASSED",
+  "HeadersTest.test_setdefault": "FAILED",
+  "HeadersTest.test_setlist": "FAILED",
+  "HeadersTest.test_setlistdefault": "FAILED",
+  "HeadersTest.test_single_value": "FAILED",
+  "HeadersTest.test_update": "FAILED",
+  "ResponseTypesTest.test_custom_mime_types_loaded": "PASSED",
+  "ResponseTypesTest.test_from_body": "PASSED",
+  "ResponseTypesTest.test_from_content_disposition": "PASSED",
+  "ResponseTypesTest.test_from_content_type": "PASSED",
+  "ResponseTypesTest.test_from_filename": "PASSED"
+ },
+ "n_observed": 22,
+ "log_tail": "hod=test_encode_multiple>\n\n    def test_encode_multiple(self):\n        h = Headers({u'key': [u'\\xa3']}, encoding='utf-8')\n        key, val = dict(h).popitem()\n>       self.assertEqual(val[0], b'\\xc2\\xa3')\nE       AssertionError: '£' != b'\\xc2\\xa3'\n\n/testbed/r2e_tests/test_2.py:55: AssertionError\n_________________________ HeadersTest.test_encode_utf8 _________________________\n\nself = <r2e_tests.test_2.HeadersTest testMethod=test_encode_utf8>\n\n    def test_encode_utf8(self):\n        h = Headers({u'key': u'\\xa3'}, encoding='utf-8')\n        key, val = dict(h).popitem()\n        assert isinstance(key, bytes), key\n>       assert isinstance(val[0], bytes), val[0]\nE       AssertionError: £\n\n/testbed/r2e_tests/test_2.py:44: AssertionError\n__________________________ HeadersTest.test_int_value __________________________\n\nself = <r2e_tests.test_2.HeadersTest testMethod=test_int_value>\n\n    def test_int_value(self):\n        h1 = Headers({'hey': 5})\n        h1['foo'] = 1\n        h1.setdefault('bar', 2)\n        h1.setlist('buz', [1, 'dos', 3])\n>       self.assertEqual(h1.getlist('foo'), [b'1'])\nE       AssertionError: Lists differ: ['1'] != [b'1']\nE       \nE       First differing element 0:\nE       '1'\nE       b'1'\nE       \nE       - ['1']\nE       + [b'1']\nE       ?  +\n\n/testbed/r2e_tests/test_2.py:144: AssertionError\n__________________________ HeadersTest.test_iterables __________________________\n\nself = <r2e_tests.test_2.HeadersTest testMethod=test_iterables>\n\n    def test_iterables(self):\n        idict = {'Content-Type': 'text/html', 'X-Forwarded-For': ['ip1', 'ip2']}\n    \n        h = Headers(idict)\n>       self.assertDictEqual(dict(h),\n                             {b'Content-Type': [b'text/html'],\n                              b'X-Forwarded-For': [b'ip1', b'ip2']})\nE       AssertionError: {b'Content-Type': ['text/html'], b'X-Forwarded-For': ['ip1', 'ip2']} != {b'Content-Type': [b'text/html'], b'X-Forwarded-For': [b'ip1', b'ip2']}\nE       - {b'Content-Type': ['text/html'], b'X-Forwarded-For': ['ip1', 'ip2']}\nE       + {b'Content-Type': [b'text/html'], b'X-Forwarded-For': [b'ip1', b'ip2']}\nE       ?                    +                                   +       +\n\n/testbed/r2e_tests/test_2.py:80: AssertionError\n_________________________ HeadersTest.test_multivalue __________________________\n\nself = <r2e_tests.test_2.HeadersTest testMethod=test_multivalue>\n\n    def test_multivalue(self):\n        h = Headers()\n        h['X-Forwarded-For'] = hlist = ['ip1', 'ip2']\n>       self.assertEqual(h['X-Forwarded-For'], b'ip2')\nE       AssertionError: 'ip2' != b'ip2'\n\n/testbed/r2e_tests/test_2.py:35: AssertionError\n_________________________ HeadersTest.test_setdefault __________________________\n\nself = <r2e_tests.test_2.HeadersTest testMethod=test_setdefault>\n\n    def test_setdefault(self):\n        h = Headers()\n        hlist = ['ip1', 'ip2']\n        olist = h.setdefault('X-Forwarded-For', hlist)\n        assert h.getlist('X-Forwarded-For') is not hlist\n        assert h.getlist('X-Forwarded-For') is olist\n    \n        h = Headers()\n        olist = h.setdefault('X-Forwarded-For', 'ip1')\n>       self.assertEqual(h.getlist('X-Forwarded-For'), [b'ip1'])\nE       AssertionError: Lists differ: ['ip1'] != [b'ip1']\nE       \nE       First differing element 0:\nE       'ip1'\nE       b'ip1'\nE       \nE       - ['ip1']\nE       + [b'ip1']\nE       ?  +\n\n/testbed/r2e_tests/test_2.py:73: AssertionError\n___________________________ HeadersTest.test_setlist ___________________________\n\nself = <r2e_tests.test_2.HeadersTest testMethod=test_setlist>\n\n    def test_setlist(self):\n        h1 = Headers({'header1': 'value1'})\n>       self.assertEqual(h1.getlist('header1'), [b'value1'])\nE       AssertionError: Lists differ: ['value1'] != [b'value1']\nE       \nE       First differing element 0:\nE       'value1'\nE       b'value1'\nE       \nE       - ['value1']\nE       + [b'value1']\nE       ?  +\n\n/testbed/r2e_tests/test_2.py:120: AssertionError\n_______________________ HeadersTest.test_setlistdefault ________________________\n\nself = <r2e_tests.test_2.HeadersTest testMethod=test_setlistdefault>\n\n    def test_setlistdefault(self):\n        h1 = Headers({'header1': 'value1'})\n        h1.setlistdefault('header1', ['value2', 'value3'])\n        h1.setlistdefault('header2', ['value2', 'value3'])\n>       self.assertEqual(h1.getlist('header1'), [b'value1'])\nE       AssertionError: Lists differ: ['value1'] != [b'value1']\nE       \nE       First differing element 0:\nE       'value1'\nE       b'value1'\nE       \nE       - ['value1']\nE       + [b'value1']\nE       ?  +\n\n/testbed/r2e_tests/test_2.py:128: AssertionError\n________________________ HeadersTest.test_single_value _________________________\n\nself = <r2e_tests.test_2.HeadersTest testMethod=test_single_value>\n\n    def test_single_value(self):\n        h = Headers()\n        h['Content-Type'] = 'text/html'\n>       self.assertEqual(h['Content-Type'], b'text/html')\nE       AssertionError: 'text/html' != b'text/html'\n\n/testbed/r2e_tests/test_2.py:28: AssertionError\n___________________________ HeadersTest.test_update ____________________________\n\nself = <r2e_tests.test_2.HeadersTest testMethod=test_update>\n\n    def test_update(self):\n        h = Headers()\n        h.update({'Content-Type': 'text/html',\n                  'X-Forwarded-For': ['ip1', 'ip2']})\n>       self.assertEqual(h.getlist('Content-Type'), [b'text/html'])\nE       AssertionError: Lists differ: ['text/html'] != [b'text/html']\nE       \nE       First differing element 0:\nE       'text/html'\nE       b'text/html'\nE       \nE       - ['text/html']\nE       + [b'text/html']\nE       ?  +\n\n/testbed/r2e_tests/test_2.py:97: AssertionError\n=============================== warnings summary ===============================\n.venv/lib/python3.9/site-packages/_pytest/config/__init__.py:1441\n  /testbed/.venv/lib/python3.9/site-packages/_pytest/config/__init__.py:1441: PytestConfigWarning: Unknown config option: twisted\n  \n    self._warn_or_fail_if_strict(f\"Unknown config option: {key}\\n\")\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED r2e_tests/test_1.py::ResponseTypesTest::test_custom_mime_types_loaded\nPASSED r2e_tests/test_1.py::ResponseTypesTest::test_from_body\nPASSED r2e_tests/test_1.py::ResponseTypesTest::test_from_content_disposition\nPASSED r2e_tests/test_1.py::ResponseTypesTest::test_from_content_type\nPASSED r2e_tests/test_1.py::ResponseTypesTest::test_from_filename\nPASSED r2e_tests/test_2.py::HeadersTest::test_copy\nPASSED r2e_tests/test_2.py::HeadersTest::test_delete_and_contains\nPASSED r2e_tests/test_2.py::HeadersTest::test_invalid_value\nPASSED r2e_tests/test_2.py::HeadersTest::test_none_value\nFAILED r2e_tests/test_2.py::HeadersTest::test_appendlist - AssertionError: Li...\nFAILED r2e_tests/test_2.py::HeadersTest::test_basics - AssertionError: '*/*' ...\nFAILED r2e_tests/test_2.py::HeadersTest::test_encode_latin1 - AssertionError:...\nFAILED r2e_tests/test_2.py::HeadersTest::test_encode_multiple - AssertionErro...\nFAILED r2e_tests/test_2.py::HeadersTest::test_encode_utf8 - AssertionError: £\nFAILED r2e_tests/test_2.py::HeadersTest::test_int_value - AssertionError: Lis...\nFAILED r2e_tests/test_2.py::HeadersTest::test_iterables - AssertionError: {b'...\nFAILED r2e_tests/test_2.py::HeadersTest::test_multivalue - AssertionError: 'i...\nFAILED r2e_tests/test_2.py::HeadersTest::test_setdefault - AssertionError: Li...\nFAILED r2e_tests/test_2.py::HeadersTest::test_setlist - AssertionError: Lists...\nFAILED r2e_tests/test_2.py::HeadersTest::test_setlistdefault - AssertionError...\nFAILED r2e_tests/test_2.py::HeadersTest::test_single_value - AssertionError: ...\nFAILED r2e_tests/test_2.py::HeadersTest::test_update - AssertionError: Lists ...\n=================== 13 failed, 9 passed, 1 warning in 2.03s ====================\n>>>>> End Test Output\nRH2_TEST_RC=1\n",
+ "stderr_tail": "",
+ "expected_n": 22,
+ "missing": [],
+ "extra": [],
+ "status_diff": [
+  [
+   "HeadersTest.test_appendlist",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "HeadersTest.test_basics",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "HeadersTest.test_encode_latin1",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "HeadersTest.test_encode_multiple",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "HeadersTest.test_encode_utf8",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "HeadersTest.test_int_value",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "HeadersTest.test_iterables",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "HeadersTest.test_multivalue",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "HeadersTest.test_setdefault",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "HeadersTest.test_setlist",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "HeadersTest.test_setlistdefault",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "HeadersTest.test_single_value",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "HeadersTest.test_update",
+   "PASSED",
+   "FAILED"
+  ]
+ ],
+ "match": false,
+ "verdict": "mismatch",
+ "seconds": 70.7
+}

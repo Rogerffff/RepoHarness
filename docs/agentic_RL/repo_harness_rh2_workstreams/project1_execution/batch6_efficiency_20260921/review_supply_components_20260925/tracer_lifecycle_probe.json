@@ -1,0 +1,84 @@
+{
+  "scope": "components only; gateway is not wired into production bringup/manager",
+  "gateway": [
+    {
+      "action": "release",
+      "future_request_status": 404,
+      "still_open_200ms_after_action_while_upstream_paused": true,
+      "inflight_outcome": "complete",
+      "inflight_delivered_bytes": 10,
+      "active_tokens_after_release": 0,
+      "release_summary": {
+        "token_ref": "7177ba85c3e1",
+        "attempt_id": "probe-release",
+        "task_id": "demo",
+        "plane": "grading",
+        "phase": "install",
+        "policy_digest": "sha256:45f23bf2822225ff4ad8879c3b5e9d9a3f1f2531ff2b5ca25ff42d4a0a8debf3",
+        "final_state": "active",
+        "files_issued": 1,
+        "stats": {
+          "requests": 1,
+          "decision:served_page": 1,
+          "bytes": 0
+        }
+      },
+      "logged_file_decisions": [
+        "unknown_token",
+        "served_file"
+      ],
+      "logged_attempt_file_bytes": 10
+    },
+    {
+      "action": "withdraw",
+      "future_request_status": 403,
+      "still_open_200ms_after_action_while_upstream_paused": true,
+      "inflight_outcome": "ClientPayloadError",
+      "inflight_delivered_bytes": 5,
+      "active_tokens_after_release": 0,
+      "release_summary": {
+        "token_ref": "76c90f1c3605",
+        "attempt_id": "probe-withdraw",
+        "task_id": "demo",
+        "plane": "grading",
+        "phase": "install",
+        "policy_digest": "sha256:45f23bf2822225ff4ad8879c3b5e9d9a3f1f2531ff2b5ca25ff42d4a0a8debf3",
+        "final_state": "withdrawn",
+        "files_issued": 1,
+        "stats": {
+          "requests": 3,
+          "decision:served_page": 1,
+          "bytes": 5,
+          "decision:token_withdrawn": 1,
+          "decision:withdrawn_mid_stream": 1
+        }
+      },
+      "logged_file_decisions": [
+        "token_withdrawn",
+        "withdrawn_mid_stream"
+      ],
+      "logged_attempt_file_bytes": 5
+    }
+  ],
+  "relay": [
+    {
+      "case": "cancel_during_ready",
+      "error": "CancelledError",
+      "docker_commands": [
+        "run",
+        "exec"
+      ],
+      "fake_container_left_alive": true
+    },
+    {
+      "case": "not_ready_control",
+      "error": "supply_relay_not_ready",
+      "docker_commands": [
+        "run",
+        "exec",
+        "rm"
+      ],
+      "fake_container_left_alive": false
+    }
+  ]
+}

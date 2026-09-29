@@ -1,0 +1,3 @@
+#!/bin/bash
+cd /testbed && PYTHONDONTWRITEBYTECODE=1 python -c "from PIL import Image; a=Image.new('L', (8, 8), 77); b=Image.new('1', (8, 8), 255); c=Image.new('RGB', (8, 8), (1, 2, 3)); a.save('/tmp/r2e_pi_def_L.tif'); b.save('/tmp/r2e_pi_def_1.tif'); c.save('/tmp/r2e_pi_def_RGB.tif'); ra=Image.open('/tmp/r2e_pi_def_L.tif'); rb=Image.open('/tmp/r2e_pi_def_1.tif'); rc=Image.open('/tmp/r2e_pi_def_RGB.tif'); print('L', ra.tag_v2[262], ra.getpixel((0, 0)), '| 1', rb.tag_v2[262], rb.getpixel((0, 0)), '| RGB', rc.tag_v2[262], rc.getpixel((0, 0))); assert (ra.tag_v2[262], rb.tag_v2[262], rc.tag_v2[262]) == (1, 1, 2); assert ra.tobytes() == a.tobytes() and rb.tobytes() == b.tobytes() and rc.tobytes() == c.tobytes()"
+echo RH2_CMD_RC=$?

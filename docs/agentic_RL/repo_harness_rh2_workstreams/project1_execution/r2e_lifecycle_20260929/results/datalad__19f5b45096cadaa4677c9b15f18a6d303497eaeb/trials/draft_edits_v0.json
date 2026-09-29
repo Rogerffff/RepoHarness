@@ -1,0 +1,14 @@
+{
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "# https://github.com/datalad/datalad/issues/6814\n",
+     "new": "# R2E material revision (R-c): the exit-code relay must hold beyond the\n# example literal (another code, plain call without --explicit), and the\n# documented exit codes of non-command failures and of '--on-failure ignore'\n# must be preserved.\n@with_tempfile(mkdir=True)\ndef test_run_exit_code_other_value(tempdir=None):\n    create(dataset=tempdir, annex=False)\n    with chpwd(tempdir):\n        run_main(['run', 'exit 5'], exit_code=5)\n\n\n@with_tempfile(mkdir=True)\ndef test_run_missing_input_exit_code(tempdir=None):\n    # input preparation fails, the command is never executed:\n    # \"Incomplete results (exit code 1)\"\n    create(dataset=tempdir, annex=False)\n    with chpwd(tempdir):\n        run_main(['run', '--explicit', '-i', 'does-not-exist', 'exit 3'],\n                 exit_code=1)\n\n\n@with_tempfile(mkdir=True)\ndef test_run_on_failure_ignore_exit_code(tempdir=None):\n    # 'ignore': the error is logged but does not lead to a non-zero exit code\n    create(dataset=tempdir, annex=False)\n    with chpwd(tempdir):\n        run_main(['--on-failure', 'ignore', 'run', '--explicit', 'exit 3'],\n                 exit_code=0)\n\n\n# https://github.com/datalad/datalad/issues/6814\n"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,52 @@
+{
+ "task_id": "getmoto__moto-6508",
+ "source": "SWE-Gym lite (swe_gym_lite_full_f70b1a29)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "s2/ingest/public_bundles_v0.jsonl#getmoto__moto-6508",
+  "grading": "s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-6508",
+  "validation": "s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-6508",
+  "base_commit": "1b2dfbaf569d21c5a3a1c35592325b09b3c697f4",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-6508/gold/offline/a1/"
+ },
+ "public_view": {
+  "goal": "用 mock_cloudfront 创建一个不带 OriginReadTimeout / OriginKeepaliveTimeout 的 distribution 后，botocore 解析响应时 `int('None')` 抛 ValueError。要求响应能被 botocore 正常解析。",
+  "constraints": ["真实 AWS 下同样代码可用；即 moto 的响应缺了 AWS 会给的东西"],
+  "unknowns_from_public_only": [
+   "题面没说这两个字段缺省时应该填什么值；'不输出该元素' 与 '填 AWS 默认值' 都是合理读法",
+   "AWS 的默认值 30（ReadTimeout）/ 5（KeepaliveTimeout）不在题面里，需要外部 AWS 领域知识",
+   "题面复现代码依赖用户本地模块 EnableRootObjectCloudfront.lambda_handler，未提供，无法照搬运行"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 触碰 tests/test_cloudfront/cloudfront_test_scaffolding.py 与 tests/test_cloudfront/test_cloudfront_distributions.py（base 都存在）", "golden_patch 只碰 moto/cloudfront/models.py:104/106"], "note": "无二进制/LFS/子模块，与题面同一问题。scaffolding 是 tests/ 下的共享夹具模块（被同目录 4 个测试文件 import），不是被测源码。", "by": "L1_moto_3"},
+  "2": {"status": "pass", "evidence_refs": ["base moto/cloudfront/models.py:104 `self.keep_alive = config.get('OriginKeepaliveTimeout')`、:106 `self.read_timeout = config.get('OriginReadTimeout')`（缺省为 None）", "base moto/cloudfront/responses.py:237-238 模板无条件渲染 `<OriginReadTimeout>{{ origin.custom_origin.read_timeout }}</OriginReadTimeout>`"], "note": "None 被 Jinja 渲染成字符串 'None'，botocore 的 _handle_integer 对 integer shape 做 int('None') 即题面 traceback。base 确有缺陷。", "by": "L1_moto_3"},
+  "3": {"status": "issue", "evidence_refs": ["problem_statement 7330 字符，主体是 botocore traceback；复现代码 `from EnableRootObjectCloudfront import lambda_handler` 引用未提供的本地模块"], "note": "P3：复现代码不自足（缺 lambda_handler 实现），但 traceback 已足以定位到 integer 字段渲染成 'None'。无外链/图片；traceback 未截断。hints_text 为空。", "by": "L1_moto_3"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 触碰路径全集：tests/test_cloudfront/cloudfront_test_scaffolding.py、tests/test_cloudfront/test_cloudfront_distributions.py", "eval.sh:17/120 `git checkout <base> <这两个文件>`；eval.sh:118 `pytest -n0 -rA <这两个文件>`"], "note": "两条都在 tests/ 下，没有非测试源码路径被恢复覆盖，因此 additional_exclusions 仍为空。两点值得记下：(a) scaffolding 是共享夹具，agent 对它的任何改动都会被 checkout 丢弃（这正是期望行为）；(b) pytest 命令里包含了不含测试的 scaffolding 文件，pytest 从中收集 0 项，无副作用。", "by": "L1_moto_3"},
+  "17": {"status": "pass", "evidence_refs": ["同 4"], "note": "additional_exclusions 空；gold 触碰 moto/cloudfront/models.py，非测试样路径。", "by": "L1_moto_3"},
+  "5": {"status": "unknown", "evidence_refs": ["全局索引：同两个测试文件 + 同 gold 文件的另一题是 getmoto__moto-5737（不在本包）"], "note": "三个文件全重合，重合度是本包里最高的一对。本包无法读 5737 的判分细节以外的上下文，建议由负责 5737 的包交叉确认是否同一 PR 系列（本题创建于 2023-07-10）。", "by": "L1_moto_3"},
+  "23": {"status": "issue", "evidence_refs": ["F2P `assert custom_config['OriginReadTimeout'] == 30` 与 `assert custom_config['OriginKeepaliveTimeout'] == 5`", "problem_statement 全文无 30 / 5"], "note": "**P2**：要求“缺省时填 AWS 默认值 30 / 5”完全不在公开材料里，需要 CloudFront 领域知识。公开材料支持的另一种读法“字段缺省时干脆不输出该 XML 元素”同样能消除 ValueError，但会让 F2P 在 `custom_config['OriginReadTimeout']` 处抛 KeyError。", "by": "L1_moto_3"},
+  "24": {"status": "issue", "evidence_refs": ["同 23"], "note": "与 23 同源：F2P 的精确取值把实现方向锁死为“补默认值”，排除了“省略元素”“把 shape 改成可选”等合理替代。严重度同 P2，一并处理。", "by": "L1_moto_3"},
+  "25": {"status": "pass", "evidence_refs": ["test_patch 同时把既有夹具 example_dist_custom_config 的 OriginKeepaliveTimeout 5→10、OriginReadTimeout 30→15，并在 P2P 的 test_create_distribution_custom_config 里新增断言 ==15 / ==10"], "note": "设计得很好：正因为显式值被改成 10/15、默认值是 5/30，'直接在模板里写死 30/5' 的错误修复会被 P2P 拒绝。F2P 还额外对比了 create 与 get_distribution 两次返回的 custom_config 相等，堵住只改一条响应路径的部分修复。", "by": "L1_moto_3"},
+  "26": {"status": "pass", "evidence_refs": ["collected 55 items = F2P 1 + P2P 54，全过"], "note": "只跑 test_cloudfront_distributions.py；同目录的 test_cloudfront.py / test_cloudfront_invalidation.py / test_cloudfront_dist_tags.py 不跑，而它们也 import 同一个 scaffolding、并走同一个 CustomOriginConfig。见 proposed_regression_tests。", "by": "L1_moto_3"},
+  "27": {"status": "issue", "evidence_refs": ["golden_patch `config.get('OriginKeepaliveTimeout') or 5`、`config.get('OriginReadTimeout') or 30`"], "note": "P3：gold 用 `or` 而不是 `is None`，显式传 0 会被静默替换成 5 / 30。真实 AWS 对这两个字段的下限是 1，所以实际影响小，但这与本包 getmoto__moto-6469 修的正是同一类 falsy 短路问题，模式上自相矛盾。除此之外 gold 最小、无无关改动。", "by": "L1_moto_3"},
+  "29": {"status": "pass", "evidence_refs": ["hints_text 为空；problem_statement 无 PR/commit 链接、无修复代码"], "note": "无静态泄漏。", "by": "L1_moto_3"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold 55 passed"], "note": "纯 mock。", "by": "L1_moto_3"},
+  "7": {"status": "issue", "evidence_refs": ["本包共性 install rc=2"], "note": "见包级 issue。", "by": "L1_moto_3"},
+  "11": {"status": "pass", "evidence_refs": ["测试只用本地 scaffolding 生成配置"], "note": "无外部服务。", "by": "L1_moto_3"}
+ },
+ "issues": [
+  {"category": "requirement_underspecified_needs_domain_knowledge", "severity": "P2", "evidence_refs": ["F2P 断言 30 / 5；题面无此信息"], "proposed_action": "标记为“需要 AWS 领域知识而非仅凭仓库可推导”的题。若要保留，接受这是对模型 AWS 先验的考察；若要求“仅凭仓库可解”，则应判 needs_review。", "next_experiment": "把“缺省时不输出该 XML 元素”的补丁跑一遍 F2P，确认在 `custom_config['OriginReadTimeout']` 处 KeyError（预期失败）——用来量化这条隐含要求的代价。"},
+  {"category": "gold_style_inconsistency", "severity": "P3", "evidence_refs": ["gold 用 `or 5` / `or 30`"], "proposed_action": "仅记录：显式 0 会被吞掉。", "next_experiment": "无。"},
+  {"category": "public_repro_not_self_contained", "severity": "P3", "evidence_refs": ["题面 import 未提供的 EnableRootObjectCloudfront"], "proposed_action": "仅记录。", "next_experiment": "无。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 的两条路径都在 tests/ 下（一个测试模块 + 一个共享夹具模块），没有会被恢复覆盖的非测试源码；夹具被重置正是期望行为。沿用第四组 B 的默认空排除。", "evidence_refs": ["test_patch 路径全集 = tests/test_cloudfront/cloudfront_test_scaffolding.py, tests/test_cloudfront/test_cloudfront_distributions.py", "eval.sh:17 的 git checkout 覆盖这两条路径"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_cloudfront/test_cloudfront.py、tests/test_cloudfront/test_cloudfront_invalidation.py、tests/test_cloudfront/test_cloudfront_dist_tags.py", "reason": "这三个文件 import 同一个被 test_patch 改过的 scaffolding（夹具里 5→10、30→15 的改动会影响它们），但一个都不跑；改动的传播面未被验证。"},
+  {"id": "tests/test_cloudfront/test_cloudfront.py::（update_distribution 相关）", "reason": "update_distribution 会重建 CustomOriginConfig，是 gold 改动的另一个调用者，F2P 只覆盖 create + get。"},
+  {"id": "新增：显式传 OriginReadTimeout=0 / OriginKeepaliveTimeout=0", "reason": "钉住 gold 的 `or` 语义（见检查 27），避免以后改成 `is None` 时无声变更行为。"},
+  {"id": "新增：S3OriginConfig-only 的 distribution", "reason": "models.py:125/134 的另一条分支，确认解题者没有把 origin 解析改坏。"}
+ ],
+ "disposition_hint": {"state": "needs_review", "reason": "材料、文件边界、gold 都干净，且 test_patch 用“改夹具显式值”的手法有效堵住了写死默认值的假修复（设计质量高）。唯一需要裁定的是：F2P 要求的 30 / 5 只能靠 AWS 领域知识得到，公开材料支持的另一种合理修法（省略元素）会被判错。"},
+ "costs": {"minutes": 18}
+}

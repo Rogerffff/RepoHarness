@@ -1,0 +1,168 @@
+{
+  "platform": "macOS-26.3.1-arm64-arm-64bit",
+  "python": "3.12.13",
+  "tree": "/var/folders/jd/vtj552xj0816twm4_26bv9s40000gn/T/rh2-e3-review-_a5yj8za/e3b/rh2/src",
+  "turns": 25,
+  "rows_max": 32768,
+  "leaves": 2,
+  "layers": 48,
+  "topk": 8,
+  "torch": "2.13.0",
+  "phase_a_capture": {
+    "per_turn": [
+      {
+        "rows": 1310,
+        "ms": 4.4,
+        "heartbeat_max_delay_ms": 3.8
+      },
+      {
+        "rows": 2621,
+        "ms": 7.3,
+        "heartbeat_max_delay_ms": 7.3
+      },
+      {
+        "rows": 3932,
+        "ms": 10.7,
+        "heartbeat_max_delay_ms": 10.1
+      },
+      {
+        "rows": 5242,
+        "ms": 14.0,
+        "heartbeat_max_delay_ms": 14.0
+      },
+      {
+        "rows": 6553,
+        "ms": 17.6,
+        "heartbeat_max_delay_ms": 17.7
+      },
+      {
+        "rows": 7864,
+        "ms": 21.4,
+        "heartbeat_max_delay_ms": 11.5
+      },
+      {
+        "rows": 9175,
+        "ms": 25.3,
+        "heartbeat_max_delay_ms": 25.3
+      },
+      {
+        "rows": 10485,
+        "ms": 29.8,
+        "heartbeat_max_delay_ms": 19.9
+      },
+      {
+        "rows": 11796,
+        "ms": 33.7,
+        "heartbeat_max_delay_ms": 33.8
+      },
+      {
+        "rows": 13107,
+        "ms": 35.9,
+        "heartbeat_max_delay_ms": 26.0
+      },
+      {
+        "rows": 14417,
+        "ms": 41.0,
+        "heartbeat_max_delay_ms": 41.0
+      },
+      {
+        "rows": 15728,
+        "ms": 50.2,
+        "heartbeat_max_delay_ms": 50.2
+      },
+      {
+        "rows": 17039,
+        "ms": 57.6,
+        "heartbeat_max_delay_ms": 57.5
+      },
+      {
+        "rows": 18350,
+        "ms": 50.6,
+        "heartbeat_max_delay_ms": 50.6
+      },
+      {
+        "rows": 19660,
+        "ms": 54.0,
+        "heartbeat_max_delay_ms": 44.1
+      },
+      {
+        "rows": 20971,
+        "ms": 59.4,
+        "heartbeat_max_delay_ms": 59.4
+      },
+      {
+        "rows": 22282,
+        "ms": 59.1,
+        "heartbeat_max_delay_ms": 58.2
+      },
+      {
+        "rows": 23592,
+        "ms": 65.3,
+        "heartbeat_max_delay_ms": 55.4
+      },
+      {
+        "rows": 24903,
+        "ms": 67.9,
+        "heartbeat_max_delay_ms": 67.8
+      },
+      {
+        "rows": 26214,
+        "ms": 73.0,
+        "heartbeat_max_delay_ms": 72.8
+      },
+      {
+        "rows": 27525,
+        "ms": 77.4,
+        "heartbeat_max_delay_ms": 67.5
+      },
+      {
+        "rows": 28835,
+        "ms": 80.7,
+        "heartbeat_max_delay_ms": 80.4
+      },
+      {
+        "rows": 30146,
+        "ms": 88.5,
+        "heartbeat_max_delay_ms": 88.5
+      },
+      {
+        "rows": 31457,
+        "ms": 83.9,
+        "heartbeat_max_delay_ms": 83.5
+      },
+      {
+        "rows": 32768,
+        "ms": 89.4,
+        "heartbeat_max_delay_ms": 89.4
+      }
+    ],
+    "total_ms": 1198.1,
+    "heartbeat_max_delay_ms": 89.4,
+    "tracemalloc_current_mib": null,
+    "tracemalloc_peak_mib": null,
+    "maxrss_mib": 1887.2
+  },
+  "phase_b_leaves": {
+    "per_leaf": [
+      {
+        "backfill_ms": 1.1,
+        "backfill_heartbeat_max_delay_ms": 1.1,
+        "projection_ms": 17.0,
+        "projection_heartbeat_max_delay_ms": 16.6
+      },
+      {
+        "backfill_ms": 1.2,
+        "backfill_heartbeat_max_delay_ms": 1.2,
+        "projection_ms": 16.9,
+        "projection_heartbeat_max_delay_ms": 16.5
+      }
+    ],
+    "tracemalloc_current_mib": null,
+    "tracemalloc_peak_mib": null,
+    "maxrss_mib": 1888.3
+  },
+  "note": "tracemalloc 只计 Python 分配器可见的内存（torch 张量存储不在其中）；maxrss 是整个进程累计峰值。本脚本保留 hook 的记录 / tape / store 与各叶张量、分支工件，与一个 session 的生产保留对象一致；不外推到多并发。",
+  "distribution": "experts128",
+  "tracemalloc_enabled": false,
+  "heartbeat_note": "fixture 构造后先结算两个心跳周期；计时仍只包生产入口"
+}

@@ -1,0 +1,52 @@
+{
+ "task_id": "getmoto__moto-5502",
+ "source": "SWE-Gym lite (s2 ingest v0)",
+ "task_revision": "upstream",
+ "by": "L1_moto_2 (Opus 5, 静态审查, 2026-09-16)",
+ "materials_refs": {
+  "snapshot": "runs/env_overnight_20260916/L1_moto_2/mat/getmoto__moto-5502/",
+  "base_commit": "76b127bba65771c1d3f279cd2c69309959b675d8",
+  "version": "4.0",
+  "eval_cmd": "pytest -n0 -rA",
+  "repo_level": "docs/.../env_overnight_20260916/L1_moto_2/repo_level_findings.md"
+ },
+ "public_view": {
+  "目标行为": "ssm list_commands / send_command 返回的 Command 对象要包含 DeliveryTimedOutCount 字段，题面示例断言其为 0。",
+  "约束": "只改 moto/ 源码。",
+  "公开材料可推断": "base 的 Command.response_object 字典按字母序列出各字段，唯独没有 DeliveryTimedOutCount（76b127bba6:moto/ssm/models.py:633-655；全仓 grep DeliveryTimedOut 为 0 命中）。补一个键即可。",
+  "公开材料无法确定的点": [
+   "moto 完全不模拟投递超时，因此该字段该用真实计数还是常量 0，公开材料没说；题面只断言 ==0，隐含常量 0 可接受。",
+   "题面只示范 list_commands，没说 send_command 响应也要有；两者共用同一个 response_object，读代码可知。"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5502/test.patch", "mat/getmoto__moto-5502/gold.patch"], "note": "test_patch 只碰 tests/test_ssm/test_ssm_boto3.py，gold 只碰 moto/ssm/models.py，两者 base 均存在，指向同一问题。", "by": "static"},
+  "2": {"status": "pass", "evidence_refs": ["76b127bba6 全仓 `git grep DeliveryTimedOut` = 0 命中", "76b127bba6:moto/ssm/models.py:633-655"], "note": "base 确实缺该键，读取会 KeyError。", "by": "static"},
+  "3": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5502/problem_statement.txt"], "note": "题面 461 字符，含完整可运行复现脚本，无外链/截断。", "by": "static"},
+  "4": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5502/test.patch"], "note": "合法解在 moto/ssm/models.py。", "by": "static"},
+  "5": {"status": "issue", "evidence_refs": ["本包 5752、5835 同样改 moto/ssm/models.py 且同样的 test_patch 目标文件 tests/test_ssm/test_ssm_boto3.py"], "note": "本包有 3 道题（5502/5752/5835）共用同一个测试文件 tests/test_ssm/test_ssm_boto3.py 与同一个源文件 moto/ssm/models.py。三者 gold hunk 不重叠、属不同 PR/不同功能（5502 加字段、5752 见该题记录、5835 校验 Type 枚举），不构成同一修复的派生；但它们的 P2P 集合高度重叠（同文件 77/79/80 个 ID），作为训练/评测样本彼此相关性高，划分留出集时应按文件而非仅按题号考虑。", "by": "static"},
+  "11": {"status": "pass", "evidence_refs": ["76b127bba6:tests/test_ssm/test_ssm_boto3.py"], "note": "无 network marker、无真实端点。", "by": "static"},
+  "17": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5502/test.patch"], "note": "只恢复 1 个纯测试文件。", "by": "static"},
+  "23": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5502/problem_statement.txt", "mat/getmoto__moto-5502/test.patch"], "note": "F2P 检查的正是题面断言的字段与值（0）。字段名、期望值都在题面里。", "by": "static"},
+  "24": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5502/test.patch"], "note": "只断言 boto3 响应字典的键与值，不约束实现位置。", "by": "static"},
+  "25": {"status": "not_applicable", "evidence_refs": ["mat/getmoto__moto-5502/gold.patch"], "note": "gold 本身就是常量 `\"DeliveryTimedOutCount\": 0`（moto 不模拟投递超时），所以\"硬编码\"就是参考解，没有可区分的\"错误但通过\"的实现空间。这项检查在本题不成立，而不是通过。", "by": "static"},
+  "26": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5502/gold.patch"], "note": "改动是往响应字典里加键，理论回归面只有 SSM command 响应本身；77 个同文件 P2P 已覆盖 send_command/list_commands/invocation 等主要路径。仍列出 1 条跨文件建议。", "by": "static"},
+  "27": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5502/gold.patch"], "note": "gold 一行、无夹带、不依赖其它改动。", "by": "static"},
+  "29": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5502/hints.txt"], "note": "hints 只是维护者说\"标记为 enhancement\"，不含代码或位置；题面无泄漏。", "by": "static"},
+  "6": {"status": "pass", "evidence_refs": ["repo_level_findings.md#R2"], "note": "4.0，离线 rc=0。", "by": "static+stage1"},
+  "7": {"status": "not_applicable", "evidence_refs": [], "note": "无外部资产。", "by": "static"},
+  "9": {"status": "pass", "evidence_refs": ["repo_level_findings.md#R3"], "note": "仓库级共性证据。", "by": "static+stage1"},
+  "36": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-5502/gold.patch"], "note": "难度信号：参考解是 1 行常量字段、题面给出字段名和期望值、定位只需一次 grep。作为 RL 训练样本几乎没有推理成分，预计基座成功率很高、区分度低。这是难度评估线索，不是环境无效。", "by": "static"}
+ },
+ "issues": [
+  {"category": "样本难度/区分度", "severity": "P3", "evidence_refs": ["mat/getmoto__moto-5502/gold.patch"], "proposed_action": "标为低难度样本；选课程/留出集时与 5478 这类\"加一个字段\"题一起归类。", "next_experiment": "目标基座上跑一次，观察是否近 100% 通过。"},
+  {"category": "同文件题目相关性", "severity": "P3", "evidence_refs": ["本包 5502/5752/5835 均以 tests/test_ssm/test_ssm_boto3.py 为判分文件"], "proposed_action": "按测试文件而非题号做训练/留出划分，避免同文件三题跨集合泄漏难度信息。", "next_experiment": "在 216 题全池上统计\"共用同一判分文件\"的题组。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只碰 1 个纯测试文件。", "evidence_refs": ["mat/getmoto__moto-5502/test.patch"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_ssm/test_ssm_docs.py", "reason": "同一 SSM backend 的另一组响应路径，确认往 response_object 加键没有影响文档相关响应。"},
+  {"id": "tests/test_ssm/test_ssm_boto3.py::test_get_command_invocation", "reason": "invocation_response 与 response_object 同属 Command 类的输出路径（76b127bba6:moto/ssm/models.py:658+），验证未被误改。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "材料一致、初态含问题、gold 与题面严格对应、边界干净。唯一保留是难度过低（P3），属训练适用性而非环境资格。"},
+ "costs": {"minutes": 12}
+}

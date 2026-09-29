@@ -1,0 +1,293 @@
+{
+  "instance_id": "pydantic__pydantic-9066",
+  "status": "actor_private_complete_formal_not_reviewed",
+  "source_run": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-9066/reserve6_v1_20260928T205304Z-4f3c46",
+  "scope": "local original review only; no new execution",
+  "actor": {
+    "image": "sha256:5a05759a5549cc7d65c471fb5d57d8fc554485b6c178a389a1fd373111ff3f4d",
+    "base_commit": "a3b7214a1d6ac8e32c29e9d4436ea6a9e253ead7",
+    "cc_version_observed": "2.1.205 (Claude Code)",
+    "container_inspect": "sha256:5a05759a5549cc7d65c471fb5d57d8fc554485b6c178a389a1fd373111ff3f4d 2000000000 4294967296",
+    "commands_result": [
+      {
+        "id": "public_identity",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 315,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "公开base身份、checkout导入、精确core与源码写权限；保存实际UID和初始dirty状态。"
+      },
+      {
+        "id": "public_ip_default",
+        "rc": 1,
+        "status": "nonzero",
+        "expect": "nonzero",
+        "matches_expect": true,
+        "output_bytes": 444,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "公开原IPv4Address默认值例：保存schema及warning；base预期缺default和精确non-serializable-default警告。"
+      },
+      {
+        "id": "public_existing_ip",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 137,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "公开旧IP schema行为，核全部九类既有测试的真实执行。"
+      }
+    ],
+    "cleanup": {
+      "container_rm": 0,
+      "network_failures": [],
+      "relay_failures": [],
+      "stub_rc": 0,
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "residual_after_force": []
+    },
+    "post_run_facts": {
+      "RH2_HARNESS_DIR": "ABSENT",
+      "RH2_RUN_SH": "ABSENT",
+      "RH2_RUN_DONE": "ABSENT",
+      "RH2_GIT_STATUS_LINES": "2",
+      "RH2_AGENT_PROCS": "0",
+      "RH2_NEWER_FILES": "67"
+    }
+  },
+  "private": {
+    "base": {
+      "scope": "private root behavior only",
+      "spec_sha256": "bb71a0a9adece13b0d6d805eeaa9101812edaaad7f3f65d141e82e8ce7a39650",
+      "started_at": 1790628823.1000042,
+      "variants": {
+        "base": {
+          "container": "rh2-cpu29-private-270569e248d8",
+          "started_at": 1790628823.1495795,
+          "preparation": [
+            {
+              "step": "python - <<'PY'\nimport os,sys,json,pathlib,subprocess\nimport pydantic,pydantic_core\nhead=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()\nprint('PY_CHECK',json.dumps(dict(uid=os.getuid(),cwd=os.getcwd(),python=sys.executable,version=sys.version,pydantic_file=pydantic.__file__,core=pydantic_core.__version__,head=head)))\nassert head == 'a3b7214a1d6ac8e32c29e9d4436ea6a9e253ead7'\nassert sys.executable == '/opt/miniconda3/envs/testbed/bin/python'\nassert pathlib.Path(pydantic.__file__).resolve() == pathlib.Path('/testbed/pydantic/__init__.py')\nassert pydantic_core.__version__ == '2.16.3'\nassert os.access('pydantic/json_schema.py',os.W_OK)\nsubprocess.run(['git','status','--short'],check=True)\nPY",
+              "rc": 0
+            },
+            {
+              "step": "python - <<'PY'\nimport hashlib,json,pathlib\np=pathlib.Path('pydantic/json_schema.py')\ndata=p.read_bytes()\nprint('PRIVATE_SOURCE_SHA256',json.dumps(dict(path=str(p),bytes=len(data),sha256=hashlib.sha256(data).hexdigest())))\nPY",
+              "rc": 0
+            },
+            {
+              "step": "python -m pytest --collect-only -q tests/test_json_schema.py -k 'ipv4address_type or ipv6address_type or ipvanyaddress_type or ipv4interface_type or ipv6interface_type or ipvanyinterface_type or ipv4network_type or ipv6network_type or ipvanynetwork_type'",
+              "rc": 0
+            }
+          ],
+          "commands": [
+            {
+              "id": "private_matrix",
+              "rc": 0,
+              "seconds": 2.3902416809996794,
+              "stdout_bytes": 1190,
+              "stderr_bytes": 0
+            }
+          ],
+          "status": "executed_interpret_separately",
+          "cleanup": {
+            "rm_rc": 0,
+            "query_rc": 0,
+            "remaining": [],
+            "stderr": ""
+          },
+          "finished_at": 1790628831.1363208
+        }
+      },
+      "image_id_actual": "sha256:5a05759a5549cc7d65c471fb5d57d8fc554485b6c178a389a1fd373111ff3f4d",
+      "finished_at": 1790628831.137062
+    },
+    "gold": {
+      "scope": "private root behavior only",
+      "spec_sha256": "3c508cfe409666f036691d151c703d873bece1fcfabbbaf2104cbcaddb363736",
+      "started_at": 1790628831.260926,
+      "variants": {
+        "gold": {
+          "container": "rh2-cpu29-private-ef68fbb526dd",
+          "started_at": 1790628831.3044913,
+          "preparation": [
+            {
+              "step": "git apply /in/candidate.patch",
+              "rc": 0
+            },
+            {
+              "step": "python - <<'PY'\nimport os,sys,json,pathlib,subprocess\nimport pydantic,pydantic_core\nhead=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()\nprint('PY_CHECK',json.dumps(dict(uid=os.getuid(),cwd=os.getcwd(),python=sys.executable,version=sys.version,pydantic_file=pydantic.__file__,core=pydantic_core.__version__,head=head)))\nassert head == 'a3b7214a1d6ac8e32c29e9d4436ea6a9e253ead7'\nassert sys.executable == '/opt/miniconda3/envs/testbed/bin/python'\nassert pathlib.Path(pydantic.__file__).resolve() == pathlib.Path('/testbed/pydantic/__init__.py')\nassert pydantic_core.__version__ == '2.16.3'\nassert os.access('pydantic/json_schema.py',os.W_OK)\nsubprocess.run(['git','status','--short'],check=True)\nPY",
+              "rc": 0
+            },
+            {
+              "step": "python - <<'PY'\nimport hashlib,json,pathlib\np=pathlib.Path('pydantic/json_schema.py')\ndata=p.read_bytes()\nprint('PRIVATE_SOURCE_SHA256',json.dumps(dict(path=str(p),bytes=len(data),sha256=hashlib.sha256(data).hexdigest())))\nPY",
+              "rc": 0
+            },
+            {
+              "step": "python -m pytest --collect-only -q tests/test_json_schema.py -k 'ipv4address_type or ipv6address_type or ipvanyaddress_type or ipv4interface_type or ipv6interface_type or ipvanyinterface_type or ipv4network_type or ipv6network_type or ipvanynetwork_type'",
+              "rc": 0
+            }
+          ],
+          "commands": [
+            {
+              "id": "private_matrix",
+              "rc": 0,
+              "seconds": 2.4604213459988387,
+              "stdout_bytes": 1179,
+              "stderr_bytes": 0
+            }
+          ],
+          "status": "executed_interpret_separately",
+          "cleanup": {
+            "rm_rc": 0,
+            "query_rc": 0,
+            "remaining": [],
+            "stderr": ""
+          },
+          "finished_at": 1790628839.74552
+        }
+      },
+      "image_id_actual": "sha256:5a05759a5549cc7d65c471fb5d57d8fc554485b6c178a389a1fd373111ff3f4d",
+      "finished_at": 1790628839.7462082
+    }
+  },
+  "source_hash_verified_against_base_plus_input_patch": true,
+  "files": {
+    "actor_original/activation_check.json": {
+      "bytes": 511,
+      "sha256": "ac81568077073797decbd36fc697dd1d348681083384bf48080d7a0c911a59e4"
+    },
+    "actor_original/attempt.json": {
+      "bytes": 11405,
+      "sha256": "3fd68aab5964caf12cae782810eae1d180278f0c8cc790355d7d0ba8a5431b73"
+    },
+    "actor_original/bringup_artifacts/cc_version_observed.json": {
+      "bytes": 60,
+      "sha256": "c2b9bcf966c47d9a00227877026cb90b76afed482fd0df4e0ac12caab786bacb"
+    },
+    "actor_original/captures/public_existing_ip.out": {
+      "bytes": 137,
+      "sha256": "c939f21b41d960b4fb848c6eb72672743e215855e0f65ee9d304212dcf9d4917"
+    },
+    "actor_original/captures/public_identity.out": {
+      "bytes": 315,
+      "sha256": "5907336155be8ed0224666a2438ea5fc5d0e943c9ceda5593ddadc805fb1bec4"
+    },
+    "actor_original/captures/public_ip_default.out": {
+      "bytes": 444,
+      "sha256": "f90d6a6fb1838b1446e97c98e1f1fac3c0d9d6fdd50c5588870dd792db792c43"
+    },
+    "actor_original/harness/stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "actor_original/harness/trajectory.jsonl": {
+      "bytes": 21993,
+      "sha256": "8fd8134e59666e798cbbee5def67ad5d4fa33b7b3556d8233c9ed0fd2fc773ba"
+    },
+    "actor_original/post_run_facts_root.txt": {
+      "bytes": 1137,
+      "sha256": "14e091a9b72d23947a5e74c2c2fad13adc3de21a60470f70c1088ed4b9b8cb5a"
+    },
+    "actor_original/prelaunch.json": {
+      "bytes": 2250,
+      "sha256": "e460cae3f4c4f0cfd7dd33048411b0872256cfc2789d2c2f7cdf5fbd0bb5c0e3"
+    },
+    "actor_original/stub/requests/messages_000.json": {
+      "bytes": 12570,
+      "sha256": "840d8700171c140bdd079098660d74546651829590fc407829f21dcc64d9f7d6"
+    },
+    "actor_original/stub/requests/messages_001.json": {
+      "bytes": 14639,
+      "sha256": "f5448072f6e229d951b422221186748909237dc7a3b5993a0ffbe66c7fda01f9"
+    },
+    "actor_original/stub/requests/messages_002.json": {
+      "bytes": 16756,
+      "sha256": "383c3a25f2c8904cffffba470e9c4658fba01494aef688616a9b1c31679c171a"
+    },
+    "actor_original/stub/requests/messages_003.json": {
+      "bytes": 18028,
+      "sha256": "452d0bedae07790ab0fa2f8a95268e7890a63f41171e3a9d618ac5c2649932ee"
+    },
+    "actor_original/stub/stub_log.json": {
+      "bytes": 9913,
+      "sha256": "55bde9a5d8c7392092c29f697464c860d10a19c7dc417bad3d951c91a63cda4c"
+    },
+    "actor_original/stub_script.json": {
+      "bytes": 3897,
+      "sha256": "a3949e1f244179f86008ee748a93d64f655100c3a7dfba5f605ec426ad9c2916"
+    },
+    "actor_original/stub_stdout.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "base_inspect.json": {
+      "bytes": 4485,
+      "sha256": "a72972ad72b5c552244d927b992675b3a871e10f19051f759c0e685b60fd995f"
+    },
+    "base_private_spec.json": {
+      "bytes": 8563,
+      "sha256": "bb71a0a9adece13b0d6d805eeaa9101812edaaad7f3f65d141e82e8ce7a39650"
+    },
+    "gold_private_spec.json": {
+      "bytes": 8727,
+      "sha256": "3c508cfe409666f036691d151c703d873bece1fcfabbbaf2104cbcaddb363736"
+    },
+    "private_base/base/initial.txt": {
+      "bytes": 110,
+      "sha256": "7d3525b7b712d34d882dcc81f4a51f58ced761f09b4f294d49ffc36e6ccb0951"
+    },
+    "private_base/base/prep_0.out": {
+      "bytes": 311,
+      "sha256": "7781e3bfd9405df5116665cfd27ba1a3ac3d460ab26da0b9fb11e7d89065d9dc"
+    },
+    "private_base/base/prep_1.out": {
+      "bytes": 153,
+      "sha256": "0b2374e7a2dc603aa578ec6418bb634bf58f33c0a6e1f074172e3d47715f8704"
+    },
+    "private_base/base/prep_2.out": {
+      "bytes": 515,
+      "sha256": "7e6f391886f77545b4ebd0073b512ce08015e6fc91e9daa990c3c1178d74c307"
+    },
+    "private_base/base/private_matrix.out": {
+      "bytes": 1190,
+      "sha256": "67173ce63dd80bd234c3486c38eccb7743bb56ad2b451fc6643774affa8018ce"
+    },
+    "private_base/summary.json": {
+      "bytes": 2267,
+      "sha256": "382484d37f5a42182b0ecc9f7a06d3609ec7d7f0f1ed937be0cb6d2a1f7e8e53"
+    },
+    "private_gold/gold/initial.txt": {
+      "bytes": 110,
+      "sha256": "7d3525b7b712d34d882dcc81f4a51f58ced761f09b4f294d49ffc36e6ccb0951"
+    },
+    "private_gold/gold/prep_0.out": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "private_gold/gold/prep_1.out": {
+      "bytes": 338,
+      "sha256": "65c88f9bc64e98995ca86c6410d495a13c99a8e348a6e0a4120a77f49f524d82"
+    },
+    "private_gold/gold/prep_2.out": {
+      "bytes": 153,
+      "sha256": "9b52ac6e1d57b9fae1344706c2ea21933edafeee3174bbe9c262329d697382ae"
+    },
+    "private_gold/gold/prep_3.out": {
+      "bytes": 515,
+      "sha256": "ce71299210c6ef08274385f076f6cfc658d1e033a4dbee24b424cd6510b40092"
+    },
+    "private_gold/gold/private_matrix.out": {
+      "bytes": 1179,
+      "sha256": "fe554b45ad86be01b4aba0bc631d3b477c751bbd552da3844ec3b59bcd2e407b"
+    },
+    "private_gold/summary.json": {
+      "bytes": 2355,
+      "sha256": "3f925344e128478fb3831c1148590f607a6bc89544a5bc895aa29c8dfad368e2"
+    }
+  }
+}

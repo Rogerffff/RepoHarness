@@ -1,0 +1,438 @@
+{
+  "head": "a31cdcd0",
+  "scope": "real manager/real gateway release; bounds=0.3s from maintenance fixture; fake Docker; one artificial inflight drain delay; no network",
+  "cases": [
+    {
+      "case": "normal_control",
+      "outcome": {
+        "returned": "resolved",
+        "reward": 1.0,
+        "infra": null
+      },
+      "sidecar_supply": {
+        "cleanup": "done",
+        "gateway": {
+          "attempt_id": "rh2-grading-tracer-normal_control-5f922e40",
+          "complete": true,
+          "files_issued": 0,
+          "inflight_unfinished": 0,
+          "phase": "install",
+          "plane": "grading",
+          "policy_digest": "sha256:ac95ca9cd9694c381815206262f5135f306f06a660baa77a2a213ec57f2e548e",
+          "stats": {},
+          "task_id": "rh2-fixture.tiny-0001",
+          "token_ref": "c022857ecee8",
+          "withdrawn_before_release": true
+        },
+        "install_exit_code": 0,
+        "install_seconds": 0.0,
+        "install_shape": "handoff",
+        "network": "rh2-grading-tracer-normal_control-5f922e40-net",
+        "network_teardown": "done",
+        "network_teardown_failures": [],
+        "policy": "supply_install_then_none",
+        "policy_digest": "sha256:ac95ca9cd9694c381815206262f5135f306f06a660baa77a2a213ec57f2e548e",
+        "test_exec_started": true,
+        "test_seconds": 0.0,
+        "token_ref": "c022857ecee8",
+        "token_release": "released",
+        "withdraw_seconds": 0.0,
+        "withdrawal": {
+          "disconnect_error": null,
+          "inspect_error": null,
+          "networks_after": [],
+          "ok": true,
+          "seconds": 0.0
+        }
+      },
+      "before_close": {
+        "container_removed": true,
+        "supply_released": true,
+        "manager_has_token_handle": false,
+        "gateway_tokens": 0,
+        "gateway_states": [],
+        "release_calls": 1,
+        "network_count": 0,
+        "subnet_slots": 0,
+        "cleanup_failures": [],
+        "supply_fact_keys": [
+          "cleanup",
+          "gateway",
+          "install_exit_code",
+          "install_seconds",
+          "install_shape",
+          "network",
+          "network_teardown",
+          "network_teardown_failures",
+          "policy",
+          "policy_digest",
+          "test_exec_started",
+          "test_seconds",
+          "token_ref",
+          "token_release",
+          "withdraw_seconds",
+          "withdrawal"
+        ],
+        "test_started": true
+      },
+      "after_close": {
+        "container_removed": true,
+        "supply_released": true,
+        "manager_has_token_handle": false,
+        "gateway_tokens": 0,
+        "gateway_states": [],
+        "release_calls": 1,
+        "network_count": 0,
+        "subnet_slots": 0,
+        "cleanup_failures": [],
+        "supply_fact_keys": [
+          "cleanup",
+          "gateway",
+          "install_exit_code",
+          "install_seconds",
+          "install_shape",
+          "network",
+          "network_teardown",
+          "network_teardown_failures",
+          "policy",
+          "policy_digest",
+          "test_exec_started",
+          "test_seconds",
+          "token_ref",
+          "token_release",
+          "withdraw_seconds",
+          "withdrawal"
+        ],
+        "test_started": true
+      },
+      "close_report": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "supply_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0,
+        "containers_created_total": 1,
+        "containers_removed_total": 1,
+        "container_history_retained": 1,
+        "leases_total": 1
+      },
+      "order": [
+        "network_create",
+        "network_connect",
+        "run:rh2-grading-tracer-normal_control-5f922e40-net",
+        "install_exec",
+        "withdraw",
+        "test_exec",
+        "network_rm"
+      ]
+    },
+    {
+      "case": "cancel_normal_release",
+      "outcome": {
+        "raised": "CancelledError"
+      },
+      "sidecar_supply": {
+        "cleanup": "done",
+        "install_exit_code": 0,
+        "install_seconds": 0.0,
+        "install_shape": "handoff",
+        "network": "rh2-grading-tracer-cancel_normal_rel-4203d9c3-net",
+        "network_teardown": "done",
+        "network_teardown_failures": [],
+        "policy": "supply_install_then_none",
+        "policy_digest": "sha256:ac95ca9cd9694c381815206262f5135f306f06a660baa77a2a213ec57f2e548e",
+        "token_ref": "56b2080f4b4e",
+        "token_release": "release_interrupted",
+        "withdraw_seconds": 0.0,
+        "withdrawal": {
+          "disconnect_error": null,
+          "inspect_error": null,
+          "networks_after": [],
+          "ok": true,
+          "seconds": 0.0
+        }
+      },
+      "before_close": {
+        "container_removed": true,
+        "supply_released": true,
+        "manager_has_token_handle": false,
+        "gateway_tokens": 0,
+        "gateway_states": [],
+        "release_calls": 1,
+        "network_count": 0,
+        "subnet_slots": 0,
+        "cleanup_failures": [],
+        "supply_fact_keys": [
+          "cleanup",
+          "install_exit_code",
+          "install_seconds",
+          "install_shape",
+          "network",
+          "network_teardown",
+          "network_teardown_failures",
+          "policy",
+          "policy_digest",
+          "token_ref",
+          "token_release",
+          "withdraw_seconds",
+          "withdrawal"
+        ],
+        "test_started": false
+      },
+      "after_close": {
+        "container_removed": true,
+        "supply_released": true,
+        "manager_has_token_handle": false,
+        "gateway_tokens": 0,
+        "gateway_states": [],
+        "release_calls": 1,
+        "network_count": 0,
+        "subnet_slots": 0,
+        "cleanup_failures": [],
+        "supply_fact_keys": [
+          "cleanup",
+          "install_exit_code",
+          "install_seconds",
+          "install_shape",
+          "network",
+          "network_teardown",
+          "network_teardown_failures",
+          "policy",
+          "policy_digest",
+          "token_ref",
+          "token_release",
+          "withdraw_seconds",
+          "withdrawal"
+        ],
+        "test_started": false
+      },
+      "close_report": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "supply_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0,
+        "containers_created_total": 1,
+        "containers_removed_total": 1,
+        "container_history_retained": 1,
+        "leases_total": 1
+      },
+      "order": [
+        "network_create",
+        "network_connect",
+        "run:rh2-grading-tracer-cancel_normal_rel-4203d9c3-net",
+        "install_exec",
+        "withdraw",
+        "network_rm"
+      ]
+    },
+    {
+      "case": "timeout_control",
+      "outcome": {
+        "returned": "failed_to_grade",
+        "reward": null,
+        "infra": "grading_test_timeout_after_0s:candidate_phase=unknown"
+      },
+      "sidecar_supply": {
+        "cleanup": "done",
+        "gateway": {
+          "attempt_id": "rh2-grading-tracer-timeout_control-3285d3dd",
+          "complete": true,
+          "files_issued": 0,
+          "inflight_unfinished": 0,
+          "phase": "install",
+          "plane": "grading",
+          "policy_digest": "sha256:ac95ca9cd9694c381815206262f5135f306f06a660baa77a2a213ec57f2e548e",
+          "stats": {},
+          "task_id": "rh2-fixture.tiny-0001",
+          "token_ref": "fb5437dcbee2",
+          "withdrawn_before_release": false
+        },
+        "network": "rh2-grading-tracer-timeout_control-3285d3dd-net",
+        "network_teardown": "done",
+        "network_teardown_failures": [],
+        "policy": "supply_install_then_none",
+        "policy_digest": "sha256:ac95ca9cd9694c381815206262f5135f306f06a660baa77a2a213ec57f2e548e",
+        "token_ref": "fb5437dcbee2",
+        "token_release": "released"
+      },
+      "before_close": {
+        "container_removed": true,
+        "supply_released": true,
+        "manager_has_token_handle": false,
+        "gateway_tokens": 0,
+        "gateway_states": [],
+        "release_calls": 1,
+        "network_count": 0,
+        "subnet_slots": 0,
+        "cleanup_failures": [],
+        "supply_fact_keys": [
+          "cleanup",
+          "gateway",
+          "network",
+          "network_teardown",
+          "network_teardown_failures",
+          "policy",
+          "policy_digest",
+          "token_ref",
+          "token_release"
+        ],
+        "test_started": false
+      },
+      "after_close": {
+        "container_removed": true,
+        "supply_released": true,
+        "manager_has_token_handle": false,
+        "gateway_tokens": 0,
+        "gateway_states": [],
+        "release_calls": 1,
+        "network_count": 0,
+        "subnet_slots": 0,
+        "cleanup_failures": [],
+        "supply_fact_keys": [
+          "cleanup",
+          "gateway",
+          "network",
+          "network_teardown",
+          "network_teardown_failures",
+          "policy",
+          "policy_digest",
+          "token_ref",
+          "token_release"
+        ],
+        "test_started": false
+      },
+      "close_report": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "supply_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0,
+        "containers_created_total": 1,
+        "containers_removed_total": 1,
+        "container_history_retained": 1,
+        "leases_total": 1
+      },
+      "order": [
+        "network_create",
+        "network_connect",
+        "run:rh2-grading-tracer-timeout_control-3285d3dd-net",
+        "install_exec",
+        "network_rm"
+      ]
+    },
+    {
+      "case": "cancel_timeout_cleanup_release",
+      "outcome": {
+        "raised": "CancelledError"
+      },
+      "sidecar_supply": {
+        "cleanup": "done",
+        "gateway": {
+          "attempt_id": "rh2-grading-tracer-cancel_timeout_cl-03cb317a",
+          "complete": false,
+          "files_issued": 0,
+          "inflight_unfinished": 1,
+          "phase": "install",
+          "plane": "grading",
+          "policy_digest": "sha256:ac95ca9cd9694c381815206262f5135f306f06a660baa77a2a213ec57f2e548e",
+          "stats": {},
+          "task_id": "rh2-fixture.tiny-0001",
+          "token_ref": "794c194bc79e",
+          "withdrawn_before_release": false
+        },
+        "network": "rh2-grading-tracer-cancel_timeout_cl-03cb317a-net",
+        "network_teardown": "done",
+        "network_teardown_failures": [],
+        "policy": "supply_install_then_none",
+        "policy_digest": "sha256:ac95ca9cd9694c381815206262f5135f306f06a660baa77a2a213ec57f2e548e",
+        "token_ref": "794c194bc79e",
+        "token_release": "released_incomplete"
+      },
+      "before_close": {
+        "container_removed": true,
+        "supply_released": false,
+        "manager_has_token_handle": true,
+        "gateway_tokens": 1,
+        "gateway_states": [
+          {
+            "state": "withdrawn",
+            "releasing": true,
+            "inflight": 1
+          }
+        ],
+        "release_calls": 1,
+        "network_count": 1,
+        "subnet_slots": 1,
+        "cleanup_failures": [],
+        "supply_fact_keys": [
+          "cleanup",
+          "network",
+          "network_teardown",
+          "policy",
+          "policy_digest",
+          "token_ref",
+          "token_release"
+        ],
+        "test_started": false
+      },
+      "after_close": {
+        "container_removed": true,
+        "supply_released": true,
+        "manager_has_token_handle": false,
+        "gateway_tokens": 0,
+        "gateway_states": [],
+        "release_calls": 1,
+        "network_count": 0,
+        "subnet_slots": 0,
+        "cleanup_failures": [
+          "supply_token_release_incomplete:rh2-grading-tracer-cancel_timeout_cl-03cb317a"
+        ],
+        "supply_fact_keys": [
+          "cleanup",
+          "gateway",
+          "network",
+          "network_teardown",
+          "network_teardown_failures",
+          "policy",
+          "policy_digest",
+          "token_ref",
+          "token_release"
+        ],
+        "test_started": false
+      },
+      "close_report": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "supply_open": [],
+        "cleanup_failures": [
+          "supply_token_release_incomplete:rh2-grading-tracer-cancel_timeout_cl-03cb317a"
+        ],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0,
+        "containers_created_total": 1,
+        "containers_removed_total": 1,
+        "container_history_retained": 1,
+        "leases_total": 1
+      },
+      "order": [
+        "network_create",
+        "network_connect",
+        "run:rh2-grading-tracer-cancel_timeout_cl-03cb317a-net",
+        "install_exec",
+        "network_rm"
+      ]
+    }
+  ]
+}

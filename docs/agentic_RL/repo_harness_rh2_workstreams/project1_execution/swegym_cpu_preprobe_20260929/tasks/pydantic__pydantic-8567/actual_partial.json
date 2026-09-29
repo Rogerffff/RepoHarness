@@ -1,0 +1,328 @@
+{
+  "instance_id": "pydantic__pydantic-8567",
+  "status": "actor_private_complete_formal_not_reviewed",
+  "source_run": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8567/reserve6_v1_20260928T205304Z-725caa",
+  "scope": "local original review only; no new execution",
+  "actor": {
+    "image": "sha256:abbc218b579f2221817266e312e8df981459ee1cea4e5bc4f4b120942c62cf7a",
+    "base_commit": "8060fa1cff965850e5e08a67ca73d5272dcdcf9f",
+    "cc_version_observed": "2.1.205 (Claude Code)",
+    "container_inspect": "sha256:abbc218b579f2221817266e312e8df981459ee1cea4e5bc4f4b120942c62cf7a 2000000000 4294967296",
+    "commands_result": [
+      {
+        "id": "public_identity",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 315,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "公开base身份、checkout导入、精确core与源码写权限；保存实际UID和初始dirty状态。"
+      },
+      {
+        "id": "public_serializer_orders",
+        "rc": 1,
+        "status": "nonzero",
+        "expect": "nonzero",
+        "matches_expect": true,
+        "output_bytes": 232,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "公开题面两种排列，核实际内部bool及Python/JSON精确字符串；base应准确失败于y未序列化。"
+      },
+      {
+        "id": "public_existing_validators",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 137,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "公开旧PlainValidator行为与with-info field_name；收集非空且完成通过。"
+      },
+      {
+        "id": "public_existing_serializers",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 137,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "公开相邻plain/wrap、always/json模式回归；原题面JSON输出开发依据。"
+      }
+    ],
+    "cleanup": {
+      "container_rm": 0,
+      "network_failures": [],
+      "relay_failures": [],
+      "stub_rc": 0,
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "residual_after_force": []
+    },
+    "post_run_facts": {
+      "RH2_HARNESS_DIR": "ABSENT",
+      "RH2_RUN_SH": "ABSENT",
+      "RH2_RUN_DONE": "ABSENT",
+      "RH2_GIT_STATUS_LINES": "2",
+      "RH2_AGENT_PROCS": "0",
+      "RH2_NEWER_FILES": "70"
+    }
+  },
+  "private": {
+    "base": {
+      "scope": "private root behavior only",
+      "spec_sha256": "b55be0de2391a2df8e3a01ee794b9f868cd18b0004c5eabe2965bb70aa7db7c4",
+      "started_at": 1790628825.7588508,
+      "variants": {
+        "base": {
+          "container": "rh2-cpu29-private-ba6b45a35934",
+          "started_at": 1790628825.8058805,
+          "preparation": [
+            {
+              "step": "python - <<'PY'\nimport os,sys,json,pathlib,subprocess\nimport pydantic,pydantic_core\nhead=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()\nprint('PY_CHECK',json.dumps(dict(uid=os.getuid(),cwd=os.getcwd(),python=sys.executable,version=sys.version,pydantic_file=pydantic.__file__,core=pydantic_core.__version__,head=head)))\nassert head == '8060fa1cff965850e5e08a67ca73d5272dcdcf9f'\nassert sys.executable == '/opt/miniconda3/envs/testbed/bin/python'\nassert pathlib.Path(pydantic.__file__).resolve() == pathlib.Path('/testbed/pydantic/__init__.py')\nassert pydantic_core.__version__ == '2.15.0'\nassert os.access('pydantic/functional_validators.py',os.W_OK)\nsubprocess.run(['git','status','--short'],check=True)\nPY",
+              "rc": 0
+            },
+            {
+              "step": "python - <<'PY'\nimport hashlib,json,pathlib\np=pathlib.Path('pydantic/functional_validators.py')\ndata=p.read_bytes()\nprint('PRIVATE_SOURCE_SHA256',json.dumps(dict(path=str(p),bytes=len(data),sha256=hashlib.sha256(data).hexdigest())))\nPY",
+              "rc": 0
+            },
+            {
+              "step": "python -m pytest --collect-only -q tests/test_validators.py -k 'annotated_validator_plain or annotated_validator_typing_cache or plain_validator_field_name'",
+              "rc": 0
+            },
+            {
+              "step": "python -m pytest --collect-only -q tests/test_serialize.py -k serializer_annotated",
+              "rc": 0
+            }
+          ],
+          "commands": [
+            {
+              "id": "private_matrix",
+              "rc": 0,
+              "seconds": 3.2428003269997134,
+              "stdout_bytes": 991,
+              "stderr_bytes": 0
+            }
+          ],
+          "status": "executed_interpret_separately",
+          "cleanup": {
+            "rm_rc": 0,
+            "query_rc": 0,
+            "remaining": [],
+            "stderr": ""
+          },
+          "finished_at": 1790628836.2381508
+        }
+      },
+      "image_id_actual": "sha256:abbc218b579f2221817266e312e8df981459ee1cea4e5bc4f4b120942c62cf7a",
+      "finished_at": 1790628836.2388463
+    },
+    "gold": {
+      "scope": "private root behavior only",
+      "spec_sha256": "b7b68fe8889d64d2cc726f2ac14f6c7f76d23d8bed147b378628ac594b865576",
+      "started_at": 1790628836.3505716,
+      "variants": {
+        "gold": {
+          "container": "rh2-cpu29-private-4d826c8363aa",
+          "started_at": 1790628836.3977525,
+          "preparation": [
+            {
+              "step": "git apply /in/candidate.patch",
+              "rc": 0
+            },
+            {
+              "step": "python - <<'PY'\nimport os,sys,json,pathlib,subprocess\nimport pydantic,pydantic_core\nhead=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()\nprint('PY_CHECK',json.dumps(dict(uid=os.getuid(),cwd=os.getcwd(),python=sys.executable,version=sys.version,pydantic_file=pydantic.__file__,core=pydantic_core.__version__,head=head)))\nassert head == '8060fa1cff965850e5e08a67ca73d5272dcdcf9f'\nassert sys.executable == '/opt/miniconda3/envs/testbed/bin/python'\nassert pathlib.Path(pydantic.__file__).resolve() == pathlib.Path('/testbed/pydantic/__init__.py')\nassert pydantic_core.__version__ == '2.15.0'\nassert os.access('pydantic/functional_validators.py',os.W_OK)\nsubprocess.run(['git','status','--short'],check=True)\nPY",
+              "rc": 0
+            },
+            {
+              "step": "python - <<'PY'\nimport hashlib,json,pathlib\np=pathlib.Path('pydantic/functional_validators.py')\ndata=p.read_bytes()\nprint('PRIVATE_SOURCE_SHA256',json.dumps(dict(path=str(p),bytes=len(data),sha256=hashlib.sha256(data).hexdigest())))\nPY",
+              "rc": 0
+            },
+            {
+              "step": "python -m pytest --collect-only -q tests/test_validators.py -k 'annotated_validator_plain or annotated_validator_typing_cache or plain_validator_field_name'",
+              "rc": 0
+            },
+            {
+              "step": "python -m pytest --collect-only -q tests/test_serialize.py -k serializer_annotated",
+              "rc": 0
+            }
+          ],
+          "commands": [
+            {
+              "id": "private_matrix",
+              "rc": 0,
+              "seconds": 3.4998534829992423,
+              "stdout_bytes": 1545,
+              "stderr_bytes": 0
+            }
+          ],
+          "status": "executed_interpret_separately",
+          "cleanup": {
+            "rm_rc": 0,
+            "query_rc": 0,
+            "remaining": [],
+            "stderr": ""
+          },
+          "finished_at": 1790628846.9726198
+        }
+      },
+      "image_id_actual": "sha256:abbc218b579f2221817266e312e8df981459ee1cea4e5bc4f4b120942c62cf7a",
+      "finished_at": 1790628846.9733815
+    }
+  },
+  "source_hash_verified_against_base_plus_input_patch": true,
+  "files": {
+    "actor_original/activation_check.json": {
+      "bytes": 511,
+      "sha256": "25bd8929ae1569f081416dd7cebfb5ab25e4b968e9c8be2e6c8b7ab272f55e49"
+    },
+    "actor_original/attempt.json": {
+      "bytes": 12072,
+      "sha256": "75d5fd452dc0fac91ef53672576a03bbfd3b5f9c0a299cce990ee7a1169d4946"
+    },
+    "actor_original/bringup_artifacts/cc_version_observed.json": {
+      "bytes": 60,
+      "sha256": "c2b9bcf966c47d9a00227877026cb90b76afed482fd0df4e0ac12caab786bacb"
+    },
+    "actor_original/captures/public_existing_serializers.out": {
+      "bytes": 137,
+      "sha256": "8524df9720e8244b16cd9345ee1a942682b358496ab7cf652d04af48f3ddb8e4"
+    },
+    "actor_original/captures/public_existing_validators.out": {
+      "bytes": 137,
+      "sha256": "b39e8347f5776d1c6fa9daf8afc9db3b0f4ce8828c60c2c696eec5085e571447"
+    },
+    "actor_original/captures/public_identity.out": {
+      "bytes": 315,
+      "sha256": "33bdbf52e7080e85cc0e517096831907557b8dc56873a39b13794befad7a0c1c"
+    },
+    "actor_original/captures/public_serializer_orders.out": {
+      "bytes": 232,
+      "sha256": "dc945e7f3fd9ad0100e265646829a5ca931d877ce440b7ade4c64b013818dbc8"
+    },
+    "actor_original/harness/stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "actor_original/harness/trajectory.jsonl": {
+      "bytes": 26596,
+      "sha256": "70eacd894c0b7e368cbbac84929e20577edf0661fbe3e53895db1f27074b8b26"
+    },
+    "actor_original/post_run_facts_root.txt": {
+      "bytes": 1059,
+      "sha256": "bedd924b6ec926df8537438abf368c5949e4ff4d8c4d797a7eadffc4589962d2"
+    },
+    "actor_original/prelaunch.json": {
+      "bytes": 2251,
+      "sha256": "70053bb370895aa6e2d58c00ef66af665f6ab3527a133b3d95423e2df1ee30fa"
+    },
+    "actor_original/stub/requests/messages_000.json": {
+      "bytes": 12635,
+      "sha256": "bf0e7abbdb205c0d556cf99d22b8a3991ec0447a88cc56e6ae45fc6800f6eb3f"
+    },
+    "actor_original/stub/requests/messages_001.json": {
+      "bytes": 14714,
+      "sha256": "f0d84fe4929a2553a3808cdfc82669e96674d23a6cafe436263a696dbcbcd217"
+    },
+    "actor_original/stub/requests/messages_002.json": {
+      "bytes": 16810,
+      "sha256": "775a3e3b3eac1c3c042b1b319c842c68fdf0fb2a47dfefac2cc3c970d161a672"
+    },
+    "actor_original/stub/requests/messages_003.json": {
+      "bytes": 18088,
+      "sha256": "acdf34385863ac1212bd4afb17dfcff9cac3f6d7137547bb834e3227f63724d4"
+    },
+    "actor_original/stub/requests/messages_004.json": {
+      "bytes": 19293,
+      "sha256": "ff13ee9938958be154b7034830b33e476bdadcc1fbfac5f0b43178a8abee349c"
+    },
+    "actor_original/stub/stub_log.json": {
+      "bytes": 12175,
+      "sha256": "c5578f8098b7f1fa6a5d2305905449b632dba6e126325b5ea8928f652335b3cc"
+    },
+    "actor_original/stub_script.json": {
+      "bytes": 4918,
+      "sha256": "b0ad92bd03693f069f98b22b7357d214eda7ec35c0ea9585e5c8fba3ab713253"
+    },
+    "actor_original/stub_stdout.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "base_inspect.json": {
+      "bytes": 4485,
+      "sha256": "13878f045a5efaf65c21fb04a1395a16c5948df676a526f6fdd8629dac89a845"
+    },
+    "base_private_spec.json": {
+      "bytes": 8740,
+      "sha256": "b55be0de2391a2df8e3a01ee794b9f868cd18b0004c5eabe2965bb70aa7db7c4"
+    },
+    "gold_private_spec.json": {
+      "bytes": 8904,
+      "sha256": "b7b68fe8889d64d2cc726f2ac14f6c7f76d23d8bed147b378628ac594b865576"
+    },
+    "private_base/base/initial.txt": {
+      "bytes": 110,
+      "sha256": "0097731ccc416f5fa36abb30bc91ec4d86db390a7cb2a9b9750398cfa189db05"
+    },
+    "private_base/base/prep_0.out": {
+      "bytes": 311,
+      "sha256": "8e05c38f6d65c187342b1ca19846285c56ad74165a3d5413b276440bcfddb03b"
+    },
+    "private_base/base/prep_1.out": {
+      "bytes": 162,
+      "sha256": "2681f5a41f280e3a58ac284c9b942021b42dbaca5b561efc8973751482a7d01c"
+    },
+    "private_base/base/prep_2.out": {
+      "bytes": 533,
+      "sha256": "ac0c0b54687762c2092a0d73dc3ad99f134778490c3f92e284ccaea4e05e68dc"
+    },
+    "private_base/base/prep_3.out": {
+      "bytes": 490,
+      "sha256": "39a6317b5fe3476eb6e4321215c8eb255f044eb22e540f31ecec10594a391be6"
+    },
+    "private_base/base/private_matrix.out": {
+      "bytes": 991,
+      "sha256": "97dcdaaffa2be18ca6a80b945dba961d06886b945bc3600ac72a4043df2c4e70"
+    },
+    "private_base/summary.json": {
+      "bytes": 2332,
+      "sha256": "0ea576aa5f16469018348487b70c7bc297af08a71805363420fcea3194c6fbdf"
+    },
+    "private_gold/gold/initial.txt": {
+      "bytes": 110,
+      "sha256": "0097731ccc416f5fa36abb30bc91ec4d86db390a7cb2a9b9750398cfa189db05"
+    },
+    "private_gold/gold/prep_0.out": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "private_gold/gold/prep_1.out": {
+      "bytes": 348,
+      "sha256": "e928380a98239d31ae61f92b9a3edd99a377a272199fec63b9aae73036ca36e7"
+    },
+    "private_gold/gold/prep_2.out": {
+      "bytes": 162,
+      "sha256": "826beea8121e10b74854e75adea423404a3374f6ab48bb2b3a4b74828354050d"
+    },
+    "private_gold/gold/prep_3.out": {
+      "bytes": 533,
+      "sha256": "ac0c0b54687762c2092a0d73dc3ad99f134778490c3f92e284ccaea4e05e68dc"
+    },
+    "private_gold/gold/prep_4.out": {
+      "bytes": 490,
+      "sha256": "fc4b5fb7d4e73b986835e59a80b5ec12d8c55fbeca97d0e1a2092f11c5ab81ef"
+    },
+    "private_gold/gold/private_matrix.out": {
+      "bytes": 1545,
+      "sha256": "a65334c6182fd089779d04a077d807d07115673c176449b5fff7869bdd8eaae3"
+    },
+    "private_gold/summary.json": {
+      "bytes": 2423,
+      "sha256": "dda53e383b5e72482642f6902033a4d9ae16b100281f771f424cc2ccdab51a51"
+    }
+  }
+}

@@ -1,0 +1,287 @@
+diff --git a/pdm.lock b/pdm.lock
+index ce64bd60..3c0a4f79 100644
+--- a/pdm.lock
++++ b/pdm.lock
+@@ -4,8 +4,11 @@
+ [metadata]
+ groups = ["default", "docs", "email", "linting", "memray", "mypy", "testing", "testing-extra"]
+ strategy = ["cross_platform"]
+-lock_version = "4.4.1"
+-content_hash = "sha256:1d8b0d645879375c44d6b986caa1d0f1e6ab6303825552152bae3e20f3a53051"
++lock_version = "4.5.0"
++content_hash = "sha256:04a382521f82ebe2799bfcdeab2678fa5d891c85477121bbd97f3ac7815792b2"
++
++[[metadata.targets]]
++requires_python = ">=3.8"
+ 
+ [[package]]
+ name = "annotated-types"
+@@ -25,6 +28,10 @@ name = "ansi2html"
+ version = "1.9.1"
+ requires_python = ">=3.7"
+ summary = "Convert text with ANSI color codes to HTML or to LaTeX"
++dependencies = [
++    "importlib-metadata; python_version < \"3.8\"",
++    "typing-extensions; python_version < \"3.8\"",
++]
+ files = [
+     {file = "ansi2html-1.9.1-py3-none-any.whl", hash = "sha256:29ccdb1e83520d648ebdc9c9544059ea4d424ecc33d3ef723657f7f5a9ae5225"},
+     {file = "ansi2html-1.9.1.tar.gz", hash = "sha256:5c6837a13ecc1903aab7a545353312049dfedfe5105362ad3a8d9d207871ec71"},
+@@ -36,6 +43,7 @@ version = "2.4.1"
+ summary = "Annotate AST trees with source code positions"
+ dependencies = [
+     "six>=1.12.0",
++    "typing; python_version < \"3.5\"",
+ ]
+ files = [
+     {file = "asttokens-2.4.1-py2.py3-none-any.whl", hash = "sha256:051ed49c3dcae8913ea7cd08e46a606dba30b79993209636c4875bc1d637bc24"},
+@@ -166,6 +174,16 @@ files = [
+     {file = "cffi-1.15.1.tar.gz", hash = "sha256:d400bfb9a37b1351253cb402671cea7e89bdecc294e8016a707f6d1d8ac934f9"},
+ ]
+ 
++[[package]]
++name = "cfgv"
++version = "3.4.0"
++requires_python = ">=3.8"
++summary = "Validate configuration and produce human readable error messages."
++files = [
++    {file = "cfgv-3.4.0-py2.py3-none-any.whl", hash = "sha256:b7265b1f29fd3316bfcd2b330d63d024f2bfd8bcb8b0272f8e19a504856c48f9"},
++    {file = "cfgv-3.4.0.tar.gz", hash = "sha256:e52591d4c5f5dead8e0f673fb16db7949d2cfb3f7da4582893288f0ded8fe560"},
++]
++
+ [[package]]
+ name = "charset-normalizer"
+ version = "3.3.2"
+@@ -258,6 +276,7 @@ requires_python = ">=3.7"
+ summary = "Composable command line interface toolkit"
+ dependencies = [
+     "colorama; platform_system == \"Windows\"",
++    "importlib-metadata; python_version < \"3.8\"",
+ ]
+ files = [
+     {file = "click-8.1.7-py3-none-any.whl", hash = "sha256:ae74fb96c20a0277a1d615f1e4d73c8414f5a98db8b799a7931d1582f3390c28"},
+@@ -437,6 +456,15 @@ files = [
+     {file = "dirty_equals-0.7.1.post0.tar.gz", hash = "sha256:78ff80578a46163831ecb3255cf30d03d1dc2fbca8e67f820105691a1bc556dc"},
+ ]
+ 
++[[package]]
++name = "distlib"
++version = "0.3.8"
++summary = "Distribution utilities"
++files = [
++    {file = "distlib-0.3.8-py2.py3-none-any.whl", hash = "sha256:034db59a0b96f8ca18035f36290806a9a6e6bd9d1ff91e45a7f172eb17e51784"},
++    {file = "distlib-0.3.8.tar.gz", hash = "sha256:1530ea13e350031b6312d8580ddb6b27a104275a31106523b8f123787f494f64"},
++]
++
+ [[package]]
+ name = "dnspython"
+ version = "2.4.2"
+@@ -596,6 +624,16 @@ files = [
+     {file = "griffe-0.38.0.tar.gz", hash = "sha256:9b97487b583042b543d1e28196caee638ecd766c8c4c98135071806cb5333ac2"},
+ ]
+ 
++[[package]]
++name = "identify"
++version = "2.6.1"
++requires_python = ">=3.8"
++summary = "File identification library for Python"
++files = [
++    {file = "identify-2.6.1-py2.py3-none-any.whl", hash = "sha256:53863bcac7caf8d2ed85bd20312ea5dcfc22226800f6d6881f232d861db5a8f0"},
++    {file = "identify-2.6.1.tar.gz", hash = "sha256:91478c5fb7c3aac5ff7bf9b4344f803843dc586832d5f110d672b19aa1984c98"},
++]
++
+ [[package]]
+ name = "idna"
+ version = "3.4"
+@@ -612,6 +650,7 @@ version = "6.8.0"
+ requires_python = ">=3.8"
+ summary = "Read metadata from Python packages"
+ dependencies = [
++    "typing-extensions>=3.6.4; python_version < \"3.8\"",
+     "zipp>=0.5",
+ ]
+ files = [
+@@ -758,6 +797,7 @@ summary = "A memory profiler for Python applications"
+ dependencies = [
+     "jinja2>=2.9",
+     "rich>=11.2.0",
++    "typing-extensions; python_version < \"3.8.0\"",
+ ]
+ files = [
+     {file = "memray-1.10.0-cp310-cp310-macosx_10_14_x86_64.whl", hash = "sha256:843a688877691746f9d1835cfa8a65139948471bdd78720435808d20bc30a1cc"},
+@@ -838,6 +878,7 @@ dependencies = [
+     "platformdirs>=2.2.0",
+     "pyyaml-env-tag>=0.1",
+     "pyyaml>=5.1",
++    "typing-extensions>=3.10; python_version < \"3.8\"",
+     "watchdog>=2.0",
+ ]
+ files = [
+@@ -984,6 +1025,7 @@ summary = "Optional static typing for Python"
+ dependencies = [
+     "mypy-extensions>=1.0.0",
+     "tomli>=1.1.0; python_version < \"3.11\"",
++    "typed-ast<2,>=1.4.0; python_version < \"3.8\"",
+     "typing-extensions>=3.10",
+ ]
+ files = [
+@@ -1021,6 +1063,16 @@ files = [
+     {file = "mypy_extensions-1.0.0.tar.gz", hash = "sha256:75dbf8955dc00442a438fc4d0666508a9a97b6bd41aa2f0ffe9d2f2725af0782"},
+ ]
+ 
++[[package]]
++name = "nodeenv"
++version = "1.9.1"
++requires_python = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
++summary = "Node.js virtual environment builder"
++files = [
++    {file = "nodeenv-1.9.1-py2.py3-none-any.whl", hash = "sha256:ba11c9782d29c27c70ffbdda2d7415098754709be8a7056d79a737cd901155c9"},
++    {file = "nodeenv-1.9.1.tar.gz", hash = "sha256:6ec12890a2dab7946721edbfbcd91f3319c6ccc9aec47be7c7e6b7011ee6645f"},
++]
++
+ [[package]]
+ name = "packaging"
+ version = "24.0"
+@@ -1054,6 +1106,9 @@ name = "platformdirs"
+ version = "4.0.0"
+ requires_python = ">=3.7"
+ summary = "A small Python package for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
++dependencies = [
++    "typing-extensions>=4.7.1; python_version < \"3.8\"",
++]
+ files = [
+     {file = "platformdirs-4.0.0-py3-none-any.whl", hash = "sha256:118c954d7e949b35437270383a3f2531e99dd93cf7ce4dc8340d3356d30f173b"},
+     {file = "platformdirs-4.0.0.tar.gz", hash = "sha256:cb633b2bcf10c51af60beb0ab06d2f1d69064b43abf4c185ca6b28865f3f9731"},
+@@ -1069,6 +1124,23 @@ files = [
+     {file = "pluggy-1.4.0.tar.gz", hash = "sha256:8c85c2876142a764e5b7548e7d9a0e0ddb46f5185161049a79b7e974454223be"},
+ ]
+ 
++[[package]]
++name = "pre-commit"
++version = "3.5.0"
++requires_python = ">=3.8"
++summary = "A framework for managing and maintaining multi-language pre-commit hooks."
++dependencies = [
++    "cfgv>=2.0.0",
++    "identify>=1.0.0",
++    "nodeenv>=0.11.1",
++    "pyyaml>=5.1",
++    "virtualenv>=20.10.0",
++]
++files = [
++    {file = "pre_commit-3.5.0-py2.py3-none-any.whl", hash = "sha256:841dc9aef25daba9a0238cd27984041fa0467b4199fc4852e27950664919f660"},
++    {file = "pre_commit-3.5.0.tar.gz", hash = "sha256:5804465c675b659b0862f07907f96295d490822a450c4c40e747d0b1c6ebcb32"},
++]
++
+ [[package]]
+ name = "py-cpuinfo"
+ version = "9.0.0"
+@@ -1256,6 +1328,7 @@ summary = "pytest: simple powerful testing with Python"
+ dependencies = [
+     "colorama; sys_platform == \"win32\"",
+     "exceptiongroup>=1.0.0rc8; python_version < \"3.11\"",
++    "importlib-metadata>=0.12; python_version < \"3.8\"",
+     "iniconfig",
+     "packaging",
+     "pluggy<2.0,>=0.12",
+@@ -1272,8 +1345,10 @@ version = "4.0.0"
+ requires_python = ">=3.7"
+ summary = "A ``pytest`` fixture for benchmarking code. It will group the tests into rounds that are calibrated to the chosen timer."
+ dependencies = [
++    "pathlib2; python_version < \"3.4\"",
+     "py-cpuinfo",
+     "pytest>=3.8",
++    "statistics; python_version < \"3.4\"",
+ ]
+ files = [
+     {file = "pytest-benchmark-4.0.0.tar.gz", hash = "sha256:fb0785b83efe599a6a956361c0691ae1dbb5318018561af10f3e915caa0048d1"},
+@@ -1622,6 +1697,7 @@ requires_python = ">=3.7"
+ summary = "Database Abstraction Library"
+ dependencies = [
+     "greenlet!=0.4.17; platform_machine == \"win32\" or platform_machine == \"WIN32\" or platform_machine == \"AMD64\" or platform_machine == \"amd64\" or platform_machine == \"x86_64\" or platform_machine == \"ppc64le\" or platform_machine == \"aarch64\"",
++    "importlib-metadata; python_version < \"3.8\"",
+     "typing-extensions>=4.6.0",
+ ]
+ files = [
+@@ -1718,6 +1794,22 @@ files = [
+     {file = "verspec-0.1.0.tar.gz", hash = "sha256:c4504ca697b2056cdb4bfa7121461f5a0e81809255b41c03dda4ba823637c01e"},
+ ]
+ 
++[[package]]
++name = "virtualenv"
++version = "20.26.5"
++requires_python = ">=3.7"
++summary = "Virtual Python Environment builder"
++dependencies = [
++    "distlib<1,>=0.3.7",
++    "filelock<4,>=3.12.2",
++    "importlib-metadata>=6.6; python_version < \"3.8\"",
++    "platformdirs<5,>=3.9.1",
++]
++files = [
++    {file = "virtualenv-20.26.5-py3-none-any.whl", hash = "sha256:4f3ac17b81fba3ce3bd6f4ead2749a72da5929c01774948e243db9ba41df4ff6"},
++    {file = "virtualenv-20.26.5.tar.gz", hash = "sha256:ce489cac131aa58f4b25e321d6d186171f78e6cb13fafbf32a840cee67733ff4"},
++]
++
+ [[package]]
+ name = "watchdog"
+ version = "3.0.0"
+diff --git a/pydantic/json_schema.py b/pydantic/json_schema.py
+index 3e63ecc0..b137e8e0 100644
+--- a/pydantic/json_schema.py
++++ b/pydantic/json_schema.py
+@@ -1392,8 +1392,10 @@ class GenerateJsonSchema:
+             json_schema = self.generate_inner(schema['schema'])
+ 
+         json_schema_extra = config.get('json_schema_extra')
++        description = None
+         if cls.__pydantic_root_model__:
+-            root_json_schema_extra = cls.model_fields['root'].json_schema_extra
++            root_field = cls.model_fields['root']
++            root_json_schema_extra = root_field.json_schema_extra
+             if json_schema_extra and root_json_schema_extra:
+                 raise ValueError(
+                     '"model_config[\'json_schema_extra\']" and "Field.json_schema_extra" on "RootModel.root"'
+@@ -1401,8 +1403,11 @@ class GenerateJsonSchema:
+                 )
+             if root_json_schema_extra:
+                 json_schema_extra = root_json_schema_extra
++            description = root_field.description
+ 
+-        json_schema = self._update_class_schema(json_schema, title, config.get('extra', None), cls, json_schema_extra)
++        json_schema = self._update_class_schema(
++            json_schema, title, config.get('extra', None), cls, json_schema_extra, description
++        )
+ 
+         return json_schema
+ 
+@@ -1413,6 +1418,7 @@ class GenerateJsonSchema:
+         extra: Literal['allow', 'ignore', 'forbid'] | None,
+         cls: type[Any],
+         json_schema_extra: JsonDict | JsonSchemaExtraCallable | None,
++        description: str | None = None,
+     ) -> JsonSchemaValue:
+         if '$ref' in json_schema:
+             schema_to_update = self.get_schema_from_definitions(JsonRef(json_schema['$ref'])) or json_schema
+@@ -1423,6 +1429,9 @@ class GenerateJsonSchema:
+             # referenced_schema['title'] = title
+             schema_to_update.setdefault('title', title)
+ 
++        if description is not None:
++            schema_to_update['description'] = description
++
+         if 'additionalProperties' not in schema_to_update:
+             if extra == 'allow':
+                 schema_to_update['additionalProperties'] = True
+diff --git a/pyproject.toml b/pyproject.toml
+index be6e63b1..1fd98139 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -49,6 +49,7 @@ dependencies = [
+     'typing-extensions>=4.6.1',
+     'annotated-types>=0.4.0',
+     "pydantic-core==2.18.1",
++    "pre-commit>=3.5.0",
+ ]
+ dynamic = ['version', 'readme']
+ 

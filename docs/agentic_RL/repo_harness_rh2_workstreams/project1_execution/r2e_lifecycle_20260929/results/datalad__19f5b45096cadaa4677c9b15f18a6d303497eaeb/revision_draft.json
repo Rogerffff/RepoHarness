@@ -1,0 +1,249 @@
+{
+ "instance_id": "datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb",
+ "template": "R-c",
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "# https://github.com/datalad/datalad/issues/6814\n",
+     "new": "# R2E material revision (R-c): the exit-code relay must hold beyond the\n# example literal (another code, plain call without --explicit), and the\n# documented exit codes of non-command failures and of '--on-failure ignore'\n# must be preserved. Only the exit code is asserted in these three tests.\n@with_tempfile(mkdir=True)\ndef test_run_exit_code_other_value(tempdir=None):\n    create(dataset=tempdir, annex=False)\n    with chpwd(tempdir):\n        run_main(['run', 'exit 5'], exit_code=5, expect_stderr=True)\n\n\n@with_tempfile(mkdir=True)\ndef test_run_missing_input_exit_code(tempdir=None):\n    # input preparation fails, the command is never executed:\n    # \"Incomplete results (exit code 1)\"\n    create(dataset=tempdir, annex=False)\n    with chpwd(tempdir):\n        run_main(['run', '--explicit', '-i', 'does-not-exist', 'exit 3'],\n                 exit_code=1, expect_stderr=True)\n\n\n@with_tempfile(mkdir=True)\ndef test_run_on_failure_ignore_exit_code(tempdir=None):\n    # 'ignore': the error is logged but does not lead to a non-zero exit code\n    create(dataset=tempdir, annex=False)\n    with chpwd(tempdir):\n        run_main(['--on-failure', 'ignore', 'run', '--explicit', 'exit 3'],\n                 exit_code=0, expect_stderr=True)\n\n\n# https://github.com/datalad/datalad/issues/6814\n"
+    }
+   ]
+  }
+ ],
+ "expected_after": {
+  "test_version": "PASSED",
+  "test_dashh": "PASSED",
+  "test_dashh_clone": "PASSED",
+  "test_usage_on_insufficient_args": "PASSED",
+  "test_subcmd_usage_on_unknown_args": "PASSED",
+  "test_combined_short_option": "PASSED",
+  "test_run_exit_code": "PASSED",
+  "test_run_exit_code_other_value": "PASSED",
+  "test_run_missing_input_exit_code": "PASSED",
+  "test_run_on_failure_ignore_exit_code": "PASSED",
+  "test_conflicting_short_option": "PASSED",
+  "test_incorrect_option[opts0-error: (invalid|too few arguments|unrecognized argument)]": "PASSED",
+  "test_incorrect_option[opts1-error: (invalid|too few arguments|unrecognized argument)]": "PASSED",
+  "test_incorrect_option[opts2-error: (invalid|too few arguments|unrecognized argument)]": "PASSED",
+  "test_incorrect_option[opts3-error: (invalid|too few arguments|unrecognized argument)]": "PASSED",
+  "test_script_shims[datalad]": "PASSED",
+  "test_script_shims[git-annex-remote-datalad-archives]": "PASSED",
+  "test_script_shims[git-annex-remote-datalad]": "PASSED",
+  "test_cfg_override": "PASSED",
+  "test_incorrect_cfg_override": "PASSED",
+  "test_librarymode": "PASSED",
+  "test_completion": "PASSED"
+ },
+ "positive_control": "gold",
+ "acceptance": {
+  "gold": {
+   "expected_score": 1,
+   "trial": "trials/rev_gold.json",
+   "trial_verdict": "match",
+   "observed_failing_keys": [],
+   "missing": [],
+   "extra": [],
+   "expected_failing_keys": [],
+   "patch": "runs/r2e_static_prep_20260924/v3/private/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/gold.patch",
+   "patch_sha256": "adfb3a3bca4e3904cd3ffe21099db887433a15b6a1ccb49dff75dbdc128cf58e",
+   "as_expected": true,
+   "note": "positive control (gold satisfies every new assertion)",
+   "before_revision": {
+    "trial": "trials/base_gold_current.json",
+    "trial_verdict": "match",
+    "formal": {
+     "ledger": "runs/r2e_actor_20260925/grader/ledger_d19f5_gold.jsonl",
+     "reward": 1.0,
+     "expected_match": "19/19",
+     "image_id": "sha256:851a10b63cec8c004768bdbc44f222c8e7332e089f9ce417cafbf8d81b2320df",
+     "kind": "formal grading, batch 2 (r2e_static_review_batch2_20260925), current material"
+    }
+   }
+  },
+  "noop": {
+   "expected_score": 0,
+   "trial": "trials/rev_noop.json",
+   "trial_verdict": "mismatch",
+   "observed_failing_keys": [
+    "test_run_exit_code",
+    "test_run_exit_code_other_value"
+   ],
+   "missing": [],
+   "extra": [],
+   "expected_failing_keys": [
+    "test_run_exit_code",
+    "test_run_exit_code_other_value"
+   ],
+   "patch": "none",
+   "as_expected": true,
+   "note": "base exits 1 for a failing command; still passes the missing-input (1) and ignore (0) keys",
+   "before_revision": {
+    "trial": "trials/base_noop_current.json",
+    "trial_verdict": "mismatch"
+   }
+  },
+  "K1_communicate_first_run_error": {
+   "expected_score": 1,
+   "trial": "trials/rev_K1.json",
+   "trial_verdict": "match",
+   "observed_failing_keys": [],
+   "missing": [],
+   "extra": [],
+   "expected_failing_keys": [],
+   "patch": "runs/r2e_actor_20260925/grader_cands/datalad_19f5_K1_communicate_first_run_error.patch",
+   "patch_sha256": "76da16ac598a669cae7936733aba94660d5458b0982631e74c6b05e0501366b3",
+   "as_expected": true,
+   "note": "reasonable alternative (only action=='run' CommandError, reported via fd 2); checks no new false rejection",
+   "before_revision": {
+    "formal": {
+     "ledger": "runs/r2e_actor_20260925/grader/ledger_d19f5_K1_communicate_first_run_error.jsonl",
+     "reward": 1.0,
+     "expected_match": "19/19",
+     "image_id": "sha256:851a10b63cec8c004768bdbc44f222c8e7332e089f9ce417cafbf8d81b2320df",
+     "kind": "formal grading, batch 2 (r2e_static_review_batch2_20260925), current material"
+    }
+   }
+  },
+  "K2_propagate_command_error": {
+   "expected_score": 0,
+   "trial": "trials/rev_K2.json",
+   "trial_verdict": "mismatch",
+   "observed_failing_keys": [
+    "test_run_on_failure_ignore_exit_code"
+   ],
+   "missing": [],
+   "extra": [],
+   "expected_failing_keys": [
+    "test_run_on_failure_ignore_exit_code"
+   ],
+   "patch": "runs/r2e_actor_20260925/grader_cands/datalad_19f5_K2_propagate_command_error.patch",
+   "patch_sha256": "18d8b1fc0535cf52eef69bec411154a278c8777cfde372986ed9dab5f873721a",
+   "as_expected": true,
+   "note": "trigger for G3: was 1; '--on-failure ignore' still exits 3 (CommandError propagates)",
+   "before_revision": {
+    "formal": {
+     "ledger": "runs/r2e_actor_20260925/grader/ledger_d19f5_K2_propagate_command_error.jsonl",
+     "reward": 1.0,
+     "expected_match": "19/19",
+     "image_id": "sha256:851a10b63cec8c004768bdbc44f222c8e7332e089f9ce417cafbf8d81b2320df",
+     "kind": "formal grading, batch 2 (r2e_static_review_batch2_20260925), current material"
+    }
+   }
+  },
+  "K3_first_failed_exit_code_no_fallback": {
+   "expected_score": 0,
+   "trial": "trials/rev_K3.json",
+   "trial_verdict": "mismatch",
+   "observed_failing_keys": [
+    "test_run_missing_input_exit_code"
+   ],
+   "missing": [],
+   "extra": [],
+   "expected_failing_keys": [
+    "test_run_missing_input_exit_code"
+   ],
+   "patch": "runs/r2e_actor_20260925/grader_cands/datalad_19f5_K3_first_failed_exit_code_no_fallback.patch",
+   "patch_sha256": "b3d00aab34e168e435a4ec245a2e0ab5227a7607ec4fa8ced7c459e3e7163fb2",
+   "as_expected": true,
+   "note": "trigger for G2: was 1; missing input -> sys.exit(None) (process exit 0)",
+   "before_revision": {
+    "formal": {
+     "ledger": "runs/r2e_actor_20260925/grader/ledger_d19f5_K3_first_failed_exit_code_no_fallback.jsonl",
+     "reward": 1.0,
+     "expected_match": "19/19",
+     "image_id": "sha256:851a10b63cec8c004768bdbc44f222c8e7332e089f9ce417cafbf8d81b2320df",
+     "kind": "formal grading, batch 2 (r2e_static_review_batch2_20260925), current material"
+    }
+   }
+  },
+  "H_hardcode_exit_3": {
+   "expected_score": 0,
+   "trial": "trials/rev_H.json",
+   "trial_verdict": "mismatch",
+   "observed_failing_keys": [
+    "test_run_exit_code_other_value",
+    "test_run_missing_input_exit_code"
+   ],
+   "missing": [],
+   "extra": [],
+   "expected_failing_keys": [
+    "test_run_exit_code_other_value",
+    "test_run_missing_input_exit_code"
+   ],
+   "patch": "runs/r2e_actor_20260925/grader_cands/datalad_19f5_H_hardcode_exit_3.patch",
+   "patch_sha256": "f84d6fdd24ffbc1f44fdb0c9ca946a7cb8c33d26d494be29367300eca309fd65",
+   "as_expected": true,
+   "note": "trigger for G1 (and G2): was 1; always exits 3",
+   "before_revision": {
+    "formal": {
+     "ledger": "runs/r2e_actor_20260925/grader/ledger_d19f5_H_hardcode_exit_3.jsonl",
+     "reward": 1.0,
+     "expected_match": "19/19",
+     "image_id": "sha256:851a10b63cec8c004768bdbc44f222c8e7332e089f9ce417cafbf8d81b2320df",
+     "kind": "formal grading, batch 2 (r2e_static_review_batch2_20260925), current material"
+    }
+   }
+  },
+  "K4_gold_plus_stderr_print": {
+   "expected_score": 0,
+   "trial": "trials/rev_K4.json",
+   "trial_verdict": "mismatch",
+   "observed_failing_keys": [
+    "test_run_exit_code"
+   ],
+   "missing": [],
+   "extra": [],
+   "expected_failing_keys": [
+    "test_run_exit_code"
+   ],
+   "patch": "runs/r2e_actor_20260925/grader_cands/datalad_19f5_K4_gold_plus_stderr_print.patch",
+   "patch_sha256": "ca816938b96f808c7e85da62752bbe2bcab25889553f3a09fe17d66a92c7515c",
+   "as_expected": true,
+   "note": "already 0 (Python-level stderr on the original key); new keys assert only exit codes, so it fails exactly the same key as before",
+   "before_revision": {
+    "formal": {
+     "ledger": "runs/r2e_actor_20260925/grader/ledger_d19f5_K4_gold_plus_stderr_print.jsonl",
+     "reward": 0.0,
+     "expected_match": "18/19",
+     "image_id": "sha256:851a10b63cec8c004768bdbc44f222c8e7332e089f9ce417cafbf8d81b2320df",
+     "kind": "formal grading, batch 2 (r2e_static_review_batch2_20260925), current material"
+    }
+   }
+  }
+ },
+ "expected_change": {
+  "added": {
+   "test_run_exit_code_other_value": "PASSED",
+   "test_run_missing_input_exit_code": "PASSED",
+   "test_run_on_failure_ignore_exit_code": "PASSED"
+  },
+  "changed": {},
+  "removed": []
+ },
+ "parent": {
+  "hidden_test": "test_1.py",
+  "sha256": "b2c90c1b48789330875141a734bd619f502a9649e86155472285ec7934bb084f",
+  "expected_output_sha256": "42b8016a185a44e753aab46db7f2fc96d81f110605eb0bd3cb8172baa1079a77",
+  "material_revisions": [],
+  "note": "no prior material revision for this task (revisions.json is []), so nothing to merge"
+ },
+ "revised_hidden_test_sha256": "6f1d831dea1f254513c6f0cc4f2efdc45883af7cb14742708b325363b58b2f61",
+ "expected_after_sha256": "ae8aef576a096376f277978fb1b4d9771fe99a1b0f675b0e6f1858796a9603e3",
+ "trial_image": "sha256:77f982d03e3a7149d468a5da410984d0f4594159560106feaa8cf6f3e9c30a7f",
+ "trial_recipe_id": "r2e_derive_v1+sysconfig_v1",
+ "trial_tool": "rh2/experiments/r2e_lifecycle_20260929/trial_grade.py (trial, not formal grading)",
+ "environment_check_current_material": {
+  "noop": "trials/base_noop_current.json",
+  "gold": "trials/base_gold_current.json"
+ },
+ "superseded_draft_v0": {
+  "edits": "trials/draft_edits_v0.json",
+  "difference": "v0 kept run_main's default expect_stderr=False in the three new tests; v1 asserts only the exit code (expect_stderr=True)",
+  "gold": "trials/v0_draft_gold.json",
+  "noop": "trials/v0_draft_noop.json"
+ },
+ "status": "draft_trialed; needs Codex review, formal revision sheet, derived-image material step and formal grading"
+}

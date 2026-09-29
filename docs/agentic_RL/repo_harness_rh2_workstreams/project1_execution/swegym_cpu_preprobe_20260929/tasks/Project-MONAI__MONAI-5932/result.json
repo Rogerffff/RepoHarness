@@ -1,0 +1,1351 @@
+{
+  "schema": "swegym_cpu_final_result.v1",
+  "date": "2026-09-29",
+  "instance_id": "Project-MONAI__MONAI-5932",
+  "run": "mixed-v1",
+  "state": "cpu_complete_quality_gap_confirmed_independently_reviewed",
+  "review_kind": "owner full original-evidence readback; cross-package final review complete",
+  "base_commit": "3c8f6c6b94ba26f8c9df5b7c96089494de6f69cb",
+  "image": {
+    "id": "sha256:833da815aeee5132d737c83e3af72b822b5a2e0498368287014919cef084dd49",
+    "repo_digests": [
+      "xingyaoww/sweb.eval.x86_64.project-monai_s_monai-5932@sha256:84a4d4afe3f663633da40359ddb8ff5c0e951144e103bed27b907481f9cee6f4"
+    ],
+    "repair": "none; original image/install recipe retained"
+  },
+  "actor": {
+    "result": "ran",
+    "checks": {
+      "interpreter_in_tool_result": false,
+      "host_log_present": true,
+      "no_harness_dir_in_container": true,
+      "no_launcher_or_done_marker": true,
+      "message_start_matches_stub_requests": true,
+      "exit_code_zero": true,
+      "result_event_present": true,
+      "log_complete": true,
+      "bashenv_denied_for_agent": false,
+      "all_commands_ran": true,
+      "all_match_expect": true
+    },
+    "cleanup": {
+      "container_rm": 0,
+      "network_failures": [],
+      "relay_failures": [],
+      "stub_rc": 0,
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "residual_after_force": []
+    },
+    "profile": {
+      "cpus": 2.0,
+      "memory_bytes": 4294967296,
+      "tmp_tmpfs_bytes": 1073741824,
+      "home_tmpfs_bytes": 268435456,
+      "writable_layer_quota_bytes": 8589934592,
+      "pids_limit": 512
+    },
+    "cc": "2.1.205 (Claude Code)",
+    "commands": [
+      {
+        "id": "identity",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 535,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "实际actor身份、激活、工作区加载、版本与可写性；不单独当开发合格"
+      },
+      {
+        "id": "short_first",
+        "rc": 1,
+        "status": "nonzero",
+        "expect": "nonzero",
+        "matches_expect": true,
+        "output_bytes": 1184,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "公开数值原例/交换顺序，各命令独立，记录目标SyntaxError与实际数值"
+      },
+      {
+        "id": "long_first",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 16,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "公开数值原例/交换顺序，各命令独立，记录目标SyntaxError与实际数值"
+      },
+      {
+        "id": "public_existing",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 6175,
+        "output_truncated_to": 200000,
+        "pytest": {
+          "passed": 18,
+          "warning": 26
+        },
+        "purpose": "公开窄解析器回归，逐项解释skip/失败"
+      }
+    ],
+    "identity": {
+      "cwd": "/testbed",
+      "home": "/home/agent",
+      "monai": "/testbed/monai/__init__.py",
+      "path": "/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "uid": 54321,
+      "versions": {
+        "monai": "1.1.0+50.g3c8f6c6b.dirty",
+        "numpy": "1.24.4",
+        "parameterized": "0.9.0",
+        "pytest": "8.3.3",
+        "torch": "1.13.1"
+      }
+    },
+    "initial_worktree": "HEAD=3c8f6c6b94ba26f8c9df5b7c96089494de6f69cb\nPORCELAIN_BEGIN\n M requirements-dev.txt\nPORCELAIN_RC=0\n",
+    "initial_worktree_interpretation": "requirements-dev.txt already modified before actor; not pristine. Historical record identifies MetricsReloaded URL removal; current actor capture lists path but does not include full diff.",
+    "short_first_failure": "target SyntaxError from replacing shorter identifier inside longer identifier; not dependency import/collection failure",
+    "long_first_result": 4,
+    "public_tests": {
+      "passed": 18,
+      "warnings": 26,
+      "failed": 0,
+      "skipped": 0
+    },
+    "prompt_scope": "Devcheck control text, not proved complete formal issue/public_hints delivery"
+  },
+  "private": {
+    "scope": "root behavior only; not actor permissions",
+    "image": "sha256:833da815aeee5132d737c83e3af72b822b5a2e0498368287014919cef084dd49",
+    "variants": {
+      "base": {
+        "container": "rh2-cpu29-private-6c30aaedbdf8",
+        "started_at": 1790622010.6040938,
+        "preparation": [
+          {
+            "step": "git config --global --add safe.directory /testbed",
+            "rc": 0
+          },
+          {
+            "step": "python - <<'PY_CHECK'\nimport os,sys,json,pathlib,subprocess,importlib.metadata as m\nimport numpy,torch,monai\nprint('PY_CHECK',sys.executable)\nprint(json.dumps({'uid':os.getuid(),'cwd':os.getcwd(),'home':os.environ.get('HOME'),'path':os.environ.get('PATH'),'monai':monai.__file__,'versions':{x:m.version(x) for x in ['numpy','torch','monai','parameterized','pytest']}},sort_keys=True))\nassert pathlib.Path(monai.__file__).resolve().is_relative_to(pathlib.Path('/testbed')) if hasattr(pathlib.Path(), 'is_relative_to') else str(pathlib.Path(monai.__file__).resolve()).startswith('/testbed/')\nprint(subprocess.check_output(['git','rev-parse','HEAD'],text=True));print(subprocess.check_output(['git','status','--porcelain'],text=True))\nfor f in ['monai', '/tmp']:\n print('writable',f,os.access(f,os.W_OK))\nPY_CHECK",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'monai/bundle/reference_resolver.py'\"'\"', '\"'\"'c3c197d829de11bb7c4ca85e8e46350c60c4d92397494811d3e3eec2079e245e'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          }
+        ],
+        "commands": [
+          {
+            "id": "short_first",
+            "rc": 1,
+            "seconds": 6.071974737999881,
+            "stdout_bytes": 0,
+            "stderr_bytes": 1184
+          },
+          {
+            "id": "long_first",
+            "rc": 0,
+            "seconds": 6.0433554999999615,
+            "stdout_bytes": 16,
+            "stderr_bytes": 0
+          }
+        ],
+        "status": "executed_interpret_separately",
+        "cleanup": {
+          "rm_rc": 0,
+          "query_rc": 0,
+          "remaining": [],
+          "stderr": ""
+        },
+        "finished_at": 1790622032.6163802
+      },
+      "gold": {
+        "container": "rh2-cpu29-private-9a1825be2f12",
+        "started_at": 1790622032.6174297,
+        "preparation": [
+          {
+            "step": "git config --global --add safe.directory /testbed",
+            "rc": 0
+          },
+          {
+            "step": "python - <<'PY_CHECK'\nimport os,sys,json,pathlib,subprocess,importlib.metadata as m\nimport numpy,torch,monai\nprint('PY_CHECK',sys.executable)\nprint(json.dumps({'uid':os.getuid(),'cwd':os.getcwd(),'home':os.environ.get('HOME'),'path':os.environ.get('PATH'),'monai':monai.__file__,'versions':{x:m.version(x) for x in ['numpy','torch','monai','parameterized','pytest']}},sort_keys=True))\nassert pathlib.Path(monai.__file__).resolve().is_relative_to(pathlib.Path('/testbed')) if hasattr(pathlib.Path(), 'is_relative_to') else str(pathlib.Path(monai.__file__).resolve()).startswith('/testbed/')\nprint(subprocess.check_output(['git','rev-parse','HEAD'],text=True));print(subprocess.check_output(['git','status','--porcelain'],text=True))\nfor f in ['monai', '/tmp']:\n print('writable',f,os.access(f,os.W_OK))\nPY_CHECK",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'monai/bundle/reference_resolver.py'\"'\"', '\"'\"'c3c197d829de11bb7c4ca85e8e46350c60c4d92397494811d3e3eec2079e245e'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          },
+          {
+            "step": "git apply --check /in/gold.patch",
+            "rc": 0
+          },
+          {
+            "step": "git apply /in/gold.patch",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'monai/bundle/reference_resolver.py'\"'\"', '\"'\"'fc8481487a9ddc33e1b7ff718b240866ae5e891af3c2f5eefa286f7d263c9b6d'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          }
+        ],
+        "commands": [
+          {
+            "id": "short_first",
+            "rc": 0,
+            "seconds": 6.488063652999699,
+            "stdout_bytes": 16,
+            "stderr_bytes": 0
+          },
+          {
+            "id": "long_first",
+            "rc": 0,
+            "seconds": 6.175605689999429,
+            "stdout_bytes": 16,
+            "stderr_bytes": 0
+          }
+        ],
+        "status": "executed_interpret_separately",
+        "cleanup": {
+          "rm_rc": 0,
+          "query_rc": 0,
+          "remaining": [],
+          "stderr": ""
+        },
+        "finished_at": 1790622055.8281274
+      },
+      "degenerate": {
+        "container": "rh2-cpu29-private-e21d0f5483d0",
+        "started_at": 1790622055.8299162,
+        "preparation": [
+          {
+            "step": "git config --global --add safe.directory /testbed",
+            "rc": 0
+          },
+          {
+            "step": "python - <<'PY_CHECK'\nimport os,sys,json,pathlib,subprocess,importlib.metadata as m\nimport numpy,torch,monai\nprint('PY_CHECK',sys.executable)\nprint(json.dumps({'uid':os.getuid(),'cwd':os.getcwd(),'home':os.environ.get('HOME'),'path':os.environ.get('PATH'),'monai':monai.__file__,'versions':{x:m.version(x) for x in ['numpy','torch','monai','parameterized','pytest']}},sort_keys=True))\nassert pathlib.Path(monai.__file__).resolve().is_relative_to(pathlib.Path('/testbed')) if hasattr(pathlib.Path(), 'is_relative_to') else str(pathlib.Path(monai.__file__).resolve()).startswith('/testbed/')\nprint(subprocess.check_output(['git','rev-parse','HEAD'],text=True));print(subprocess.check_output(['git','status','--porcelain'],text=True))\nfor f in ['monai', '/tmp']:\n print('writable',f,os.access(f,os.W_OK))\nPY_CHECK",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'monai/bundle/reference_resolver.py'\"'\"', '\"'\"'c3c197d829de11bb7c4ca85e8e46350c60c4d92397494811d3e3eec2079e245e'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          },
+          {
+            "step": "git apply --check /in/degenerate_reverse_order.patch",
+            "rc": 0
+          },
+          {
+            "step": "git apply /in/degenerate_reverse_order.patch",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'monai/bundle/reference_resolver.py'\"'\"', '\"'\"'bd0d4a13404a980ac00822601d2245cb73d003238c599c83a8771d793a21bc0a'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          }
+        ],
+        "commands": [
+          {
+            "id": "short_first",
+            "rc": 0,
+            "seconds": 6.442196262000834,
+            "stdout_bytes": 16,
+            "stderr_bytes": 0
+          },
+          {
+            "id": "long_first",
+            "rc": 1,
+            "seconds": 6.225880074999623,
+            "stdout_bytes": 0,
+            "stderr_bytes": 1146
+          }
+        ],
+        "status": "executed_interpret_separately",
+        "cleanup": {
+          "rm_rc": 0,
+          "query_rc": 0,
+          "remaining": [],
+          "stderr": ""
+        },
+        "finished_at": 1790622079.942399
+      }
+    },
+    "matrix": {
+      "base": {
+        "short_first": "target SyntaxError",
+        "long_first": 4
+      },
+      "gold": {
+        "short_first": 4,
+        "long_first": 4
+      },
+      "degenerate": {
+        "short_first": 4,
+        "long_first": "target SyntaxError"
+      }
+    },
+    "source_post_sha256": {
+      "base": "c3c197d829de11bb7c4ca85e8e46350c60c4d92397494811d3e3eec2079e245e",
+      "gold": "fc8481487a9ddc33e1b7ff718b240866ae5e891af3c2f5eefa286f7d263c9b6d",
+      "degenerate": "bd0d4a13404a980ac00822601d2245cb73d003238c599c83a8771d793a21bc0a"
+    }
+  },
+  "formal": {
+    "noop": {
+      "ledger": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_noop/ledger.jsonl",
+      "reward": 0.0,
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 0,
+        "f2p_total": 1,
+        "failure_category": "tests_failed",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": 0,
+        "p2p_total": 14,
+        "report_id": "rpt_grading_8426cf4b",
+        "reward": 0.0
+      },
+      "reference_status": {
+        "fail_to_pass": {
+          "tests/test_config_parser.py::TestConfigParser::test_substring_reference_0": "FAILED"
+        },
+        "pass_to_pass": {
+          "tests/test_config_parser.py::TestConfigParser::test_list_expressions": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_parse_0": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_builtin": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_contains": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_function_0": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_get_via_attributes": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_pdb": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_allow_missing_reference_0": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_config_content": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_error_instance": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_macro_replace": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_non_str_target": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_relative_id_0": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_lambda_reference": "PASSED"
+        }
+      },
+      "reference_exact_count": 15,
+      "parsed_outside_test_segment": [],
+      "log": {
+        "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_noop/eval_logs/evallog_replay-cpu29-project-mon_8426cf4b.eval.log",
+        "bytes": 72798,
+        "sha256": "f2f95163246cebefeb53458d67a617d6fb0070549e3649326bf3a00e14be157f",
+        "matches_ledger": true,
+        "partial": false
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 9.882,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 34.229
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 34.229,
+        "segment_completed": true
+      },
+      "phases": {
+        "delta_apply": 0.201324,
+        "grader_baseline_rebuild": 0.721586,
+        "grader_cleanup": 5.691599,
+        "grader_start_and_verify": 2.038473,
+        "grader_trusted_setup": 722.174483,
+        "parser_and_report": 1.596295,
+        "test": 51.145585
+      },
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/monai/__init__.py",
+        "RH2_OBS_PKG_VERSION": "1.1.0+50.g3c8f6c6b.dirty",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "1cfac6828a8ce1101528108a0a3379da1fe8e2b0ba4a9021ea32c5ffc26e13a4",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "1cfac6828a8ce1101528108a0a3379da1fe8e2b0ba4a9021ea32c5ffc26e13a4"
+      },
+      "projection": {
+        "frozen_patch_digest": "sha256:997304264a7e312a1de88ea09484ba5b16e6a3151d005bcef569df71ed2898eb",
+        "ignored_paths": [],
+        "included_paths": [],
+        "unsupported_shape_reasons": []
+      },
+      "export": {
+        "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_noop/artifacts/swe_gym_lite--Project-MONAI__MONAI-5932/a1-5f1d1ff5/frozen_patch.json",
+        "excluded_pathset_changed": false,
+        "entries": [],
+        "decoded_source_sha256": null,
+        "source_matches_private_applied": null,
+        "candidate_patch_matches_input_bytes": null
+      },
+      "candidate_cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "driver_close": {
+        "ledger": "/work/swegym_cpu_preprobe_20260929/results/Project-MONAI__MONAI-5932/mixed-v1/grade_noop/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "resource": {
+        "mem_peak_mb": 4096.0,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "resource_facts": null,
+      "verdict_diagnostics": {
+        "apply_ok": true,
+        "expected_match": null,
+        "grading_semantics": "swe_f2p_p2p",
+        "num_parsed_outside_segment": 0,
+        "num_parsed_tests": 15,
+        "parser_source": "swegym_parsers@242429c1",
+        "reference_missing": [],
+        "reference_skipped": [],
+        "resolution": "RESOLVED_NO"
+      },
+      "budget": {
+        "instance_id": "Project-MONAI__MONAI-5932",
+        "before": 300.0,
+        "after": 900.0,
+        "test_seconds_unchanged": 1800.0,
+        "scope": "CPU host preparation/reset/observation budget only; whole-grading CLI deadline independent",
+        "reason": "observed overlay2 metacopy=N prefix chown preparation timeout; no kernel or permission change"
+      }
+    },
+    "gold": {
+      "ledger": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_gold/ledger.jsonl",
+      "reward": 1.0,
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 1,
+        "f2p_total": 1,
+        "failure_category": null,
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "resolved",
+        "p2p_fail": 0,
+        "p2p_total": 14,
+        "report_id": "rpt_grading_b6e675d6",
+        "reward": 1.0
+      },
+      "reference_status": {
+        "fail_to_pass": {
+          "tests/test_config_parser.py::TestConfigParser::test_substring_reference_0": "PASSED"
+        },
+        "pass_to_pass": {
+          "tests/test_config_parser.py::TestConfigParser::test_list_expressions": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_parse_0": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_builtin": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_contains": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_function_0": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_get_via_attributes": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_pdb": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_allow_missing_reference_0": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_config_content": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_error_instance": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_macro_replace": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_non_str_target": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_relative_id_0": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_lambda_reference": "PASSED"
+        }
+      },
+      "reference_exact_count": 15,
+      "parsed_outside_test_segment": [],
+      "log": {
+        "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_gold/eval_logs/evallog_replay-cpu29-project-mon_b6e675d6.eval.log",
+        "bytes": 70968,
+        "sha256": "82e8f25d7af84a3aae8ba68a61d732e250f779a3626609e9717c24d211e3e634",
+        "matches_ledger": true,
+        "partial": false
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 9.689,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 27.447
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 27.447,
+        "segment_completed": true
+      },
+      "phases": {
+        "delta_apply": 0.372188,
+        "grader_baseline_rebuild": 0.702216,
+        "grader_cleanup": 3.607081,
+        "grader_start_and_verify": 1.991306,
+        "grader_trusted_setup": 505.765064,
+        "parser_and_report": 1.488523,
+        "test": 43.807282
+      },
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/monai/__init__.py",
+        "RH2_OBS_PKG_VERSION": "1.1.0+50.g3c8f6c6b.dirty",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "1cfac6828a8ce1101528108a0a3379da1fe8e2b0ba4a9021ea32c5ffc26e13a4",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "1cfac6828a8ce1101528108a0a3379da1fe8e2b0ba4a9021ea32c5ffc26e13a4"
+      },
+      "projection": {
+        "frozen_patch_digest": "sha256:66ed23dba461e8ea2b99e98e2bf7583f7f21f1868939bd620ead5fed1507c7ef",
+        "ignored_paths": [],
+        "included_paths": [
+          "monai/bundle/reference_resolver.py"
+        ],
+        "unsupported_shape_reasons": []
+      },
+      "export": {
+        "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_gold/artifacts/swe_gym_lite--Project-MONAI__MONAI-5932/a1-5686efa4/frozen_patch.json",
+        "excluded_pathset_changed": false,
+        "entries": [
+          {
+            "path": "monai/bundle/reference_resolver.py",
+            "operation": "modify",
+            "object_type": "regular",
+            "mode": "100644",
+            "content_digest": "sha256:fc8481487a9ddc33e1b7ff718b240866ae5e891af3c2f5eefa286f7d263c9b6d"
+          }
+        ],
+        "decoded_source_sha256": "fc8481487a9ddc33e1b7ff718b240866ae5e891af3c2f5eefa286f7d263c9b6d",
+        "source_matches_private_applied": true,
+        "candidate_patch_matches_input_bytes": true
+      },
+      "candidate_cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "driver_close": {
+        "ledger": "/work/swegym_cpu_preprobe_20260929/results/Project-MONAI__MONAI-5932/mixed-v1/grade_gold/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "resource": {
+        "mem_peak_mb": 4096.0,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "resource_facts": null,
+      "verdict_diagnostics": {
+        "apply_ok": true,
+        "expected_match": null,
+        "grading_semantics": "swe_f2p_p2p",
+        "num_parsed_outside_segment": 0,
+        "num_parsed_tests": 15,
+        "parser_source": "swegym_parsers@242429c1",
+        "reference_missing": [],
+        "reference_skipped": [],
+        "resolution": "RESOLVED_FULL"
+      },
+      "budget": {
+        "instance_id": "Project-MONAI__MONAI-5932",
+        "before": 300.0,
+        "after": 900.0,
+        "test_seconds_unchanged": 1800.0,
+        "scope": "CPU host preparation/reset/observation budget only; whole-grading CLI deadline independent",
+        "reason": "observed overlay2 metacopy=N prefix chown preparation timeout; no kernel or permission change"
+      }
+    },
+    "degenerate": {
+      "ledger": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_degenerate/ledger.jsonl",
+      "reward": 1.0,
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 1,
+        "f2p_total": 1,
+        "failure_category": null,
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "resolved",
+        "p2p_fail": 0,
+        "p2p_total": 14,
+        "report_id": "rpt_grading_250fb090",
+        "reward": 1.0
+      },
+      "reference_status": {
+        "fail_to_pass": {
+          "tests/test_config_parser.py::TestConfigParser::test_substring_reference_0": "PASSED"
+        },
+        "pass_to_pass": {
+          "tests/test_config_parser.py::TestConfigParser::test_list_expressions": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_parse_0": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_builtin": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_contains": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_function_0": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_get_via_attributes": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_pdb": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_allow_missing_reference_0": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_config_content": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_error_instance": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_macro_replace": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_non_str_target": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_relative_id_0": "PASSED",
+          "tests/test_config_parser.py::TestConfigParser::test_lambda_reference": "PASSED"
+        }
+      },
+      "reference_exact_count": 15,
+      "parsed_outside_test_segment": [],
+      "log": {
+        "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_degenerate/eval_logs/evallog_replay-cpu29-project-mon_250fb090.eval.log",
+        "bytes": 70791,
+        "sha256": "76114e35e21cf5d9d93449c8b7e1d11c28382dfdd573dd35328db0a11e516ab2",
+        "matches_ledger": true,
+        "partial": false
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 9.578,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 27.782
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 27.782,
+        "segment_completed": true
+      },
+      "phases": {
+        "delta_apply": 0.582259,
+        "grader_baseline_rebuild": 0.715515,
+        "grader_cleanup": 3.352559,
+        "grader_start_and_verify": 1.86549,
+        "grader_trusted_setup": 476.790237,
+        "parser_and_report": 1.514308,
+        "test": 43.914973
+      },
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/monai/__init__.py",
+        "RH2_OBS_PKG_VERSION": "1.1.0+50.g3c8f6c6b.dirty",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "1cfac6828a8ce1101528108a0a3379da1fe8e2b0ba4a9021ea32c5ffc26e13a4",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "1cfac6828a8ce1101528108a0a3379da1fe8e2b0ba4a9021ea32c5ffc26e13a4"
+      },
+      "projection": {
+        "frozen_patch_digest": "sha256:682112573120f8575e156f3e8818568aa8c332f66d0e7fada438d524d60837b7",
+        "ignored_paths": [],
+        "included_paths": [
+          "monai/bundle/reference_resolver.py"
+        ],
+        "unsupported_shape_reasons": []
+      },
+      "export": {
+        "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_degenerate/artifacts/swe_gym_lite--Project-MONAI__MONAI-5932/a1-dccca999/frozen_patch.json",
+        "excluded_pathset_changed": false,
+        "entries": [
+          {
+            "path": "monai/bundle/reference_resolver.py",
+            "operation": "modify",
+            "object_type": "regular",
+            "mode": "100644",
+            "content_digest": "sha256:bd0d4a13404a980ac00822601d2245cb73d003238c599c83a8771d793a21bc0a"
+          }
+        ],
+        "decoded_source_sha256": "bd0d4a13404a980ac00822601d2245cb73d003238c599c83a8771d793a21bc0a",
+        "source_matches_private_applied": true,
+        "candidate_patch_matches_input_bytes": true
+      },
+      "candidate_cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "driver_close": {
+        "ledger": "/work/swegym_cpu_preprobe_20260929/results/Project-MONAI__MONAI-5932/mixed-v1/grade_degenerate/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "resource": {
+        "mem_peak_mb": 4096.0,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "resource_facts": null,
+      "verdict_diagnostics": {
+        "apply_ok": true,
+        "expected_match": null,
+        "grading_semantics": "swe_f2p_p2p",
+        "num_parsed_outside_segment": 0,
+        "num_parsed_tests": 15,
+        "parser_source": "swegym_parsers@242429c1",
+        "reference_missing": [],
+        "reference_skipped": [],
+        "resolution": "RESOLVED_FULL"
+      },
+      "budget": {
+        "instance_id": "Project-MONAI__MONAI-5932",
+        "before": 300.0,
+        "after": 900.0,
+        "test_seconds_unchanged": 1800.0,
+        "scope": "CPU host preparation/reset/observation budget only; whole-grading CLI deadline independent",
+        "reason": "observed overlay2 metacopy=N prefix chown preparation timeout; no kernel or permission change"
+      }
+    }
+  },
+  "allowed_use": [
+    "CPU development/environment diagnosis on original image with setup/reset900",
+    "grading coverage diagnosis; no unconditional correctness comparison or training reward qualification"
+  ],
+  "remaining": [
+    "D6 quality treatment and new-version validation if authorized; current formal tests unchanged",
+    "formal issue/public_hints delivery and autonomous model evidence",
+    "full pip_check and complete resource-event observation remain unperformed",
+    "separate model/GPU/budget/training qualification"
+  ],
+  "evidence": [
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/diagnostics/host_memory_pressure_0312.json",
+      "sha256": "1485ea76506be4cc5c6da788e0a94951a20c50a21c1548cf4971e946b2e485b5"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/actor_original/attempt.json",
+      "sha256": "d82833286faaf95da95724d04744ebd300ed1414fb6155c21f16826ef02851d5"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/actor_original/captures/identity.out",
+      "sha256": "8b3d78672205dea7da86c9f03eeb93c2c5a806ba44500d45e7cf0a83eeef5f73"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/actor_original/captures/long_first.out",
+      "sha256": "29bbfb90f680a9f7e61ee61f5011bb977f71b3b9ef84ea8cc346493482805bc5"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/actor_original/captures/public_existing.out",
+      "sha256": "6d0bafe94c231e6be18311218dd4d32178cbdab820e6911f3a402eff0fefab91"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/actor_original/captures/short_first.out",
+      "sha256": "e9a7f22c066983403e28bf508947ce34926675d48d238cca0b79ce056c61e552"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/actor_original/post_run_facts_root.txt",
+      "sha256": "deda79a759b77ee97073b4918e07260419ccf968daba99ebac487ff3736787c2"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/actor_original/stub/requests/messages_000.json",
+      "sha256": "a49655ae8f05466249828e02f1128f3d782b9d7368ec0f18478d07ec67ccb85c"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_degenerate/artifacts/swe_gym_lite--Project-MONAI__MONAI-5932/a1-dccca999/baseline_manifest.json",
+      "sha256": "ca0d4724cf2ab9787ad6d84e7d216633b77b0a4a07013db7aba039c4391c7a70"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_degenerate/artifacts/swe_gym_lite--Project-MONAI__MONAI-5932/a1-dccca999/candidate.patch",
+      "sha256": "00e221311a9249e2a35bc24b171b9e1eac5581188f693d5451f03a9161d3b9cb"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_degenerate/artifacts/swe_gym_lite--Project-MONAI__MONAI-5932/a1-dccca999/classification.json",
+      "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_degenerate/artifacts/swe_gym_lite--Project-MONAI__MONAI-5932/a1-dccca999/frozen_patch.json",
+      "sha256": "c57995638fd5c571b2acd56e1425528f156c57f8c57075dd4d2e3ec4cceb8f9f"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_degenerate/artifacts/swe_gym_lite--Project-MONAI__MONAI-5932/a1-dccca999/projection.json",
+      "sha256": "2082465df72ad1c3cb20f779451974219f8ddbebb49138986dfd3cf6b18c496d"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_degenerate/artifacts/swe_gym_lite--Project-MONAI__MONAI-5932/a1-dccca999/stage.json",
+      "sha256": "efb49df0839c5de7148c9bf9bff026d56fcd730c99fa5e8d95a4e6f801fe1f5b"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_degenerate/budget/Project-MONAI__MONAI-5932.json",
+      "sha256": "10ed6bf6f95425cd5f03cdf0d6daa9f66f5cb9c11692cc6652ac348a6b01cd39"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_degenerate/driver_close_checked.json",
+      "sha256": "e40b16a6f65325eb4221693ccb6722827ca7fcbe2203d3c979e7197a872cfbf1"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_degenerate/eval_logs/evallog_replay-cpu29-project-mon_250fb090.diagnostics.json",
+      "sha256": "e3aa372d3aaba1f7bdb9b49b603fe218b054b36b3c5f3532e60ccad6b4f433e4"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_degenerate/eval_logs/evallog_replay-cpu29-project-mon_250fb090.eval.log",
+      "sha256": "76114e35e21cf5d9d93449c8b7e1d11c28382dfdd573dd35328db0a11e516ab2"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_degenerate/frozen_source_checked.json",
+      "sha256": "3ea34babc61570ced53c57fafd941ee4824527bd8f003a1ec7b00a6e19a357d0"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_degenerate/ledger.jsonl",
+      "sha256": "e558e7602929741b303993cfa53ea30a3130f40431568b7645a2b365cbd5b454"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_degenerate.log",
+      "sha256": "98b563d5b4329e3679c051ef63e8a2e5f02deb725c90653567fa5bf3ea2da814"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_gold/artifacts/swe_gym_lite--Project-MONAI__MONAI-5932/a1-5686efa4/baseline_manifest.json",
+      "sha256": "ca0d4724cf2ab9787ad6d84e7d216633b77b0a4a07013db7aba039c4391c7a70"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_gold/artifacts/swe_gym_lite--Project-MONAI__MONAI-5932/a1-5686efa4/candidate.patch",
+      "sha256": "811f539ac23d7a2a76fb6b541abfaa7912579730f8683574cf08cad634e2534e"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_gold/artifacts/swe_gym_lite--Project-MONAI__MONAI-5932/a1-5686efa4/classification.json",
+      "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_gold/artifacts/swe_gym_lite--Project-MONAI__MONAI-5932/a1-5686efa4/frozen_patch.json",
+      "sha256": "ba53579c990ff5618a497479a64b08bd06a6dcb104bf101e9fa89cc72aa8efd1"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_gold/artifacts/swe_gym_lite--Project-MONAI__MONAI-5932/a1-5686efa4/projection.json",
+      "sha256": "d46a4dbe0a45ef19cc36b36d30b993f25b86e09dc6a10fc369efdfb5221cc3e3"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_gold/artifacts/swe_gym_lite--Project-MONAI__MONAI-5932/a1-5686efa4/stage.json",
+      "sha256": "efb49df0839c5de7148c9bf9bff026d56fcd730c99fa5e8d95a4e6f801fe1f5b"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_gold/budget/Project-MONAI__MONAI-5932.json",
+      "sha256": "10ed6bf6f95425cd5f03cdf0d6daa9f66f5cb9c11692cc6652ac348a6b01cd39"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_gold/driver_close_checked.json",
+      "sha256": "3f2a899ce8609d80adaeeccc6385a7fd7cc175528c28251cc158ebac9353c76c"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_gold/eval_logs/evallog_replay-cpu29-project-mon_b6e675d6.diagnostics.json",
+      "sha256": "4d35d6b3149745c59bbbd77db6449dc9154897b1e1f872481a035c897db5e59d"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_gold/eval_logs/evallog_replay-cpu29-project-mon_b6e675d6.eval.log",
+      "sha256": "82e8f25d7af84a3aae8ba68a61d732e250f779a3626609e9717c24d211e3e634"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_gold/frozen_source_checked.json",
+      "sha256": "91694ed6ce1bc2887d75a45c0b832e727adebd4bab9dbfad0f67235a55aa0c8f"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_gold/ledger.jsonl",
+      "sha256": "e6ed6281c726b2e1c392107de8166a84bdc7cd1433c6a1bdecef2f0af63aa21c"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_gold.log",
+      "sha256": "a539677a429fe0e1ac48c01035977510f35f711e4b38a0162ba64d2770aefc36"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_noop/artifacts/swe_gym_lite--Project-MONAI__MONAI-5932/a1-5f1d1ff5/baseline_manifest.json",
+      "sha256": "ca0d4724cf2ab9787ad6d84e7d216633b77b0a4a07013db7aba039c4391c7a70"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_noop/artifacts/swe_gym_lite--Project-MONAI__MONAI-5932/a1-5f1d1ff5/classification.json",
+      "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_noop/artifacts/swe_gym_lite--Project-MONAI__MONAI-5932/a1-5f1d1ff5/frozen_patch.json",
+      "sha256": "d9f10dc98268ebef96e07bee7cafcc0a829c306d427a04fce2f063ae9e00668c"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_noop/artifacts/swe_gym_lite--Project-MONAI__MONAI-5932/a1-5f1d1ff5/projection.json",
+      "sha256": "1185bc51f69fd57b223422b4f723678145a27eeb808e634988daf6090024e931"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_noop/artifacts/swe_gym_lite--Project-MONAI__MONAI-5932/a1-5f1d1ff5/stage.json",
+      "sha256": "fe3d228e7b7a6a0564b51143ee390e14f5057b475f780b3d83d08c639b1843a6"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_noop/budget/Project-MONAI__MONAI-5932.json",
+      "sha256": "10ed6bf6f95425cd5f03cdf0d6daa9f66f5cb9c11692cc6652ac348a6b01cd39"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_noop/driver_close_checked.json",
+      "sha256": "f2a0f2640a570b2a18dad536f03e9e49fb9b8520fa385b831a7962b145333ce9"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_noop/eval_logs/evallog_replay-cpu29-project-mon_8426cf4b.diagnostics.json",
+      "sha256": "bfb61de38eb318dde58b81e45bfb0f7de7b96c8b0b9180812e04e96479aa0019"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_noop/eval_logs/evallog_replay-cpu29-project-mon_8426cf4b.eval.log",
+      "sha256": "f2f95163246cebefeb53458d67a617d6fb0070549e3649326bf3a00e14be157f"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_noop/ledger.jsonl",
+      "sha256": "453e676473c6778755fec28a366e82846a5af02e4461b310ca42b969cff1bc5a"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/grade_noop.log",
+      "sha256": "db5f86427abcd7d4905f1291ea44a38397f24631fe4110341432a306f47041a3"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/original_image.json",
+      "sha256": "9f8f8e160e0f4134587d517b8056755ab3f5a8cbad6d6b8abe94415f9a81db60"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/base/long_first.out",
+      "sha256": "29bbfb90f680a9f7e61ee61f5011bb977f71b3b9ef84ea8cc346493482805bc5"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/base/prep_0.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/base/prep_1.out",
+      "sha256": "55cc19cedbf4bd773826bff7522968cccf61399582b04e781ddaf23059885648"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/base/prep_2.out",
+      "sha256": "25d70cb2004f9836dafd5e6a68a24eec520173fb48ecdce20d508fd01763a88b"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/base/short_first.out",
+      "sha256": "e9a7f22c066983403e28bf508947ce34926675d48d238cca0b79ce056c61e552"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/degenerate/long_first.out",
+      "sha256": "2b6a06340207bfc75348bf05a75ed70afcc845444771eda94d0ff646d7c4788b"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/degenerate/prep_0.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/degenerate/prep_1.out",
+      "sha256": "55cc19cedbf4bd773826bff7522968cccf61399582b04e781ddaf23059885648"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/degenerate/prep_2.out",
+      "sha256": "25d70cb2004f9836dafd5e6a68a24eec520173fb48ecdce20d508fd01763a88b"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/degenerate/prep_3.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/degenerate/prep_4.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/degenerate/prep_5.out",
+      "sha256": "88df650d03f83b764e26aed3d24a07cc6409531f1a05e429f93093020db455b3"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/degenerate/short_first.out",
+      "sha256": "29bbfb90f680a9f7e61ee61f5011bb977f71b3b9ef84ea8cc346493482805bc5"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/gold/long_first.out",
+      "sha256": "29bbfb90f680a9f7e61ee61f5011bb977f71b3b9ef84ea8cc346493482805bc5"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/gold/prep_0.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/gold/prep_1.out",
+      "sha256": "55cc19cedbf4bd773826bff7522968cccf61399582b04e781ddaf23059885648"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/gold/prep_2.out",
+      "sha256": "25d70cb2004f9836dafd5e6a68a24eec520173fb48ecdce20d508fd01763a88b"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/gold/prep_3.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/gold/prep_4.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/gold/prep_5.out",
+      "sha256": "ff1f50a9e8d01d5d6d546f4b94bf4f76c628585795d084999334b571687b7918"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/gold/short_first.out",
+      "sha256": "29bbfb90f680a9f7e61ee61f5011bb977f71b3b9ef84ea8cc346493482805bc5"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/summary.json",
+      "sha256": "39354efcf68511360dbee4a34405fd7af106a86cafde6679ea5f1e50a12af20c"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior_spec.json",
+      "sha256": "49271f6f9ee62c0d6a845c7c3da73b96482be23c0b8f171163516531c2fb3d78"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/status.json",
+      "sha256": "940a06eb70ad49c380f5a4fc0fd8a175631b755c4f29a46018ccb5edd7a89f51"
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-5932/grading.json",
+      "sha256": "b1c10ef2186ec77d37844c59c291287da2cdf44ee7430e3760d24cca03e4b73a"
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-5932/test.patch",
+      "sha256": "02d19ce0af297aa91a325ae216fcff1a1929f7a10a65ce7af79668141047d006"
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-5932/base/monai/bundle/reference_resolver.py",
+      "sha256": "c3c197d829de11bb7c4ca85e8e46350c60c4d92397494811d3e3eec2079e245e"
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-5932/base/tests/test_config_parser.py",
+      "sha256": "6caaa9aed02125194c104f90747c1d75b5e5d85195e5185e61e25e01bdeea746"
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-5932/user_prompt.txt",
+      "sha256": "002ad049f64d57254360ac329e28cda66b4ff76c4d4be3303ff5b6e73d9b2775"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/analysis/monai5932_final_v1.json",
+      "sha256": "704a5e975b9eae582e3bf5d0033e6ec6981a0b93d92a4c62ed1a978cf31dbd6f"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/analysis/evidence_manifest_monai5932_v1.json",
+      "sha256": "10272ba5115d52d5de93e61dfc2d2da6019a2a09cb9c3ae9f3b4f99cecc1d89c"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/analysis/resource_monai_pair_v1.json",
+      "sha256": "29475bf55a671c80e712781e3262a75f067489d16fdbd6e82756ae8c9d6c1c55"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/monai5932_result_review.md",
+      "sha256": "f54c6d2d1b0b18fd3919d46f5df84e0a4c54f761dcca95b378ec8e5d2238ce98"
+    }
+  ],
+  "quality": {
+    "classification": "S1",
+    "finding": "reverse-order candidate earns reward 1 despite breaking base-passing long-first expression",
+    "public_basis": "runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-5932/user_prompt.txt",
+    "requirement": "ConfigParser must resolve references sharing a prefix in one expression; the issue does not restrict operand order",
+    "counterexample": "same original numeric values and reference names, only swap first two addends; expected 4 remains unchanged",
+    "formal_gap": "new test_substring_reference_0 uses only $@training#A + @training#A_B + 1; no long-first shared-prefix case in 14 old P2P tests",
+    "oracle_scope": "base passes long_first, gold passes both, degenerate fails long_first with target SyntaxError; no claim on arbitrary expressions",
+    "private_scope": "root behavior, not actor permission or autonomous solver proof",
+    "formal_tests_modified": false
+  },
+  "resource_boundary": {
+    "whole_grading_seconds": 1800,
+    "setup_reset_seconds": 900,
+    "prior_setup_reset_seconds": 300,
+    "test_seconds_unchanged": 1800,
+    "ledger_peak_mib_each": 4096,
+    "formal_resource_facts_each": null,
+    "snapshot_path": "runs/swegym_cpu_preprobe_20260929/remote/diagnostics/host_memory_pressure_0312.json",
+    "snapshot_variant": "noop",
+    "snapshot_container": "/rh2-grading-replay-cpu29-project-mon-8426cf4b",
+    "memory_current_bytes": 4294946816,
+    "file_bytes": 4035452928,
+    "anon_bytes": 1216512,
+    "io_wbytes": 6114652160,
+    "pgscan_direct": 496960,
+    "pgsteal_direct": 496960,
+    "memory_events_max": 1942,
+    "memory_events_oom": 0,
+    "memory_events_oom_kill": 0,
+    "pids_events_max": 0,
+    "active_process": "chown",
+    "limitation": "snapshot is not full-run monitoring and not gold/degenerate; 4GiB limit pressure does not prove OOM or test-process requirement; consistent with preparation copy-up file-cache pressure",
+    "sampled_observations": {
+      "path": "runs/swegym_cpu_preprobe_20260929/analysis/resource_monai_pair_v1.json",
+      "scope": "15-second observations matched only grading report container suffix; not full lifetime, missing stays null. Preparation file cache included, not test-only demand.",
+      "rows": [
+        {
+          "task": "Project-MONAI__MONAI-5932",
+          "ledger": "results/Project-MONAI__MONAI-5932/mixed-v1/grade_degenerate/ledger.jsonl",
+          "report_id": "rpt_grading_250fb090",
+          "samples": 34,
+          "ledger_resource": {
+            "mem_peak_mb": 4096.0,
+            "mem_peak_unavailable_or_zero": false
+          },
+          "ledger_resource_facts": null,
+          "limits": {
+            "Memory": 4294967296,
+            "NanoCpus": 2000000000,
+            "PidsLimit": 512,
+            "ShmSize": 67108864,
+            "Tmpfs": {
+              "/tmp": "size=1073741824,mode=1777,exec,nosuid,nodev"
+            }
+          },
+          "first": 1790623487.711902,
+          "last": 1790623986.7258558,
+          "max_sample_gap_seconds": 15.151848554611206,
+          "observed_memory_peak_bytes": 4294967296,
+          "observed_pids_peak": 85,
+          "memory.events": {
+            "high": 0,
+            "low": 0,
+            "max": 3626,
+            "oom": 0,
+            "oom_group_kill": 0,
+            "oom_kill": 0
+          },
+          "pids.events": {
+            "max": 0
+          }
+        },
+        {
+          "task": "Project-MONAI__MONAI-5932",
+          "ledger": "results/Project-MONAI__MONAI-5932/mixed-v1/grade_gold/ledger.jsonl",
+          "report_id": "rpt_grading_b6e675d6",
+          "samples": 36,
+          "ledger_resource": {
+            "mem_peak_mb": 4096.0,
+            "mem_peak_unavailable_or_zero": false
+          },
+          "ledger_resource_facts": null,
+          "limits": {
+            "Memory": 4294967296,
+            "NanoCpus": 2000000000,
+            "PidsLimit": 512,
+            "ShmSize": 67108864,
+            "Tmpfs": {
+              "/tmp": "size=1073741824,mode=1777,exec,nosuid,nodev"
+            }
+          },
+          "first": 1790622912.5007896,
+          "last": 1790623442.4173002,
+          "max_sample_gap_seconds": 15.22245478630066,
+          "observed_memory_peak_bytes": 4294967296,
+          "observed_pids_peak": 85,
+          "memory.events": {
+            "high": 0,
+            "low": 0,
+            "max": 3634,
+            "oom": 0,
+            "oom_group_kill": 0,
+            "oom_kill": 0
+          },
+          "pids.events": {
+            "max": 0
+          }
+        },
+        {
+          "task": "Project-MONAI__MONAI-5932",
+          "ledger": "results/Project-MONAI__MONAI-5932/mixed-v1/grade_noop/ledger.jsonl",
+          "report_id": "rpt_grading_8426cf4b",
+          "samples": 51,
+          "ledger_resource": {
+            "mem_peak_mb": 4096.0,
+            "mem_peak_unavailable_or_zero": false
+          },
+          "ledger_resource_facts": null,
+          "limits": {
+            "Memory": 4294967296,
+            "NanoCpus": 2000000000,
+            "PidsLimit": 512,
+            "ShmSize": 67108864,
+            "Tmpfs": {
+              "/tmp": "size=1073741824,mode=1777,exec,nosuid,nodev"
+            }
+          },
+          "first": 1790622108.5650115,
+          "last": 1790622867.0553238,
+          "max_sample_gap_seconds": 15.196860790252686,
+          "observed_memory_peak_bytes": 4294967296,
+          "observed_pids_peak": 85,
+          "memory.events": {
+            "high": 0,
+            "low": 0,
+            "max": 3660,
+            "oom": 0,
+            "oom_group_kill": 0,
+            "oom_kill": 0
+          },
+          "pids.events": {
+            "max": 0
+          }
+        }
+      ]
+    }
+  },
+  "root_reconciliation": {
+    "parser": "runs/swegym_cpu_preprobe_20260929/analysis/monai5932_final_v1.json",
+    "all_45_statuses_match_owner_readback": true,
+    "transport_manifest": "runs/swegym_cpu_preprobe_20260929/analysis/evidence_manifest_monai5932_v1.json",
+    "files": 88,
+    "bytes": 1373282,
+    "verified": true,
+    "local_mismatches": []
+  },
+  "independent_review": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/monai5932_result_review.md",
+    "status": "complete",
+    "finding": "final card consistent with original evidence; scope and limitations unchanged"
+  }
+}

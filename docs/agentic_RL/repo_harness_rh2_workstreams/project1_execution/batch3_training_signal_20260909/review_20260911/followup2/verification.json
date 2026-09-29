@@ -1,0 +1,58 @@
+{
+  "date": "2026-09-15",
+  "head": "4529ebd77fa27bc4c3bb4f1bffe9657c0af78abb",
+  "reviewed_state": "工作区未提交修复，字节见 source_snapshot.json",
+  "source_snapshot_unchanged": true,
+  "head_unchanged": true,
+  "checks": [
+    {
+      "name": "focused_pytest",
+      "cwd": "rh2",
+      "command": "RH2_MILES_PATH=\"$PWD/../reference/miles-rh2-integration\" .venv/bin/python -m pytest -q tests/adapters_miles/test_run_report.py tests/adapters_miles/test_run_report_real_emitters.py tests/adapters_miles/test_i19_compaction_representation.py tests/adapters_miles/test_w4_consume_time_staleness.py tests/adapters_miles/test_w4_drop_event_summary.py tests/adapters_miles/test_logprob_compare_masked.py",
+      "exit_code": 0,
+      "result": "73 passed in 5.51s",
+      "evidence": "focused_tests.txt"
+    },
+    {
+      "name": "writer_emitter_acceptance_probe",
+      "cwd": ".",
+      "command": "rh2/.venv/bin/python docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/batch3_training_signal_20260909/review_20260911/followup2/verify_fixes.py",
+      "exit_code": 0,
+      "evidence": "verify_fixes_result.json"
+    },
+    {
+      "name": "ruff",
+      "cwd": "rh2",
+      "command": ".venv/bin/ruff check src/repoharness2/adapters/miles/run_report.py tests/adapters_miles/test_run_report.py ../docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/batch3_training_signal_20260909/review_20260911/followup2/verify_fixes.py",
+      "exit_code": 0,
+      "evidence": "ruff.txt"
+    },
+    {
+      "name": "lanes_prechecks_only",
+      "cwd": ".",
+      "command": "bash rh2/scripts/miles_integration_lanes.sh --checks-only",
+      "exit_code": 0,
+      "evidence": "lanes_checks.txt"
+    }
+  ],
+  "closure": {
+    "R4": "passed",
+    "R6": "passed",
+    "I20": "首版实施审查收口，既有限制保留"
+  },
+  "not_run": [
+    "作者全量 2266 测试",
+    "完整双 lane pytest",
+    "真实 run 文件",
+    "Claude Code",
+    "Docker",
+    "API",
+    "GPU"
+  ],
+  "unchanged_limitations": [
+    "sample_dis_accounting TP>1 不支持",
+    "I18 未定",
+    "目标 CC 真实压缩请求面待基座诊断核对"
+  ],
+  "committed": false
+}

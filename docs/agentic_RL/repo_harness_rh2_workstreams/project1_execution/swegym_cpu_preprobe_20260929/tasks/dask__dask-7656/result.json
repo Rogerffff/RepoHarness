@@ -1,0 +1,1489 @@
+{
+  "task": "dask__dask-7656",
+  "date": "2026-09-29",
+  "status": "cpu_evidence_complete_task_owner_and_independent_reviewed",
+  "independent_final_review": "complete; see independent_review.path",
+  "formal_run": "runs/swegym_cpu_preprobe_20260929/remote/results/dask__dask-7656/grading_setup900_v1",
+  "parser_replay": "runs/swegym_cpu_preprobe_20260929/analysis/dask7656_setup900_v1.json",
+  "D6_implemented": false,
+  "model_or_training_qualified": false,
+  "formal": {
+    "gold": {
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 1,
+        "f2p_total": 1,
+        "failure_category": null,
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "resolved",
+        "p2p_fail": 0,
+        "p2p_total": 48,
+        "report_id": "rpt_grading_7fbfb239",
+        "reward": 1.0
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 9.364,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 2.64
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 2.64,
+        "segment_completed": true
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "resources": {
+        "mem_peak_mb": 2065.551,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "resource_facts": null,
+      "policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "phases": {
+        "delta_apply": 0.42022,
+        "grader_baseline_rebuild": 0.48725,
+        "grader_cleanup": 2.267039,
+        "grader_start_and_verify": 1.627975,
+        "grader_trusted_setup": 355.130818,
+        "parser_and_report": 1.713204,
+        "test": 13.745627
+      },
+      "runner_integrity_changed": false,
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/dask/__init__.py",
+        "RH2_OBS_INSTALL_PROBE": "absent",
+        "RH2_OBS_INSTALL_PROBE_PRE": "absent",
+        "RH2_OBS_PKG_VERSION": "2021.04.1+24.g07d5ad0ab.dirty",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "f42f077db8e6148dc3319c685c359cf5d5f001b5e92b8e3529a977deeb82d8cc",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "f42f077db8e6148dc3319c685c359cf5d5f001b5e92b8e3529a977deeb82d8cc"
+      },
+      "references": {
+        "f2p": [
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_with_dataclass",
+            "status": "PASSED"
+          }
+        ],
+        "p2p": [
+          {
+            "id": "dask/tests/test_delayed.py::test_pickle[f0]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_finalize_name",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_literates",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_keys_from_array",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_attributes",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_decorator_on_method",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_cloudpickle[f1]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_pure",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_common_subexpressions",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_nout_with_tasks[x4]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_errors",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_lists",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_custom_delayed",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_name_on_call",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_iterators",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_literates_keys",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_cloudpickle[f0]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_dask_layers",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_name_consistent_across_instances",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_nout",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_sensitive_to_partials",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_kwargs",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_attribute_of_attribute",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_compute_forward_kwargs",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_callable_obj",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_lists_are_concrete",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_to_task_dask",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_nout_with_tasks[x2]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_visualise_warn",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_methods",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_method_getattr_call_same_task",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_method_descriptor",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_cloudpickle[f2]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_nout_with_tasks[x0]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_nout_with_tasks[x3]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_callable",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_name",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_np_dtype_of_delayed",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_picklable",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_optimize",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_traverse_false",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_nout_with_tasks[x1]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_array_bag_delayed",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_operators",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_dask_layers_to_delayed",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_pure_global_setting",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_array_delayed",
+            "status": "PASSED"
+          }
+        ]
+      },
+      "reference_counts": {
+        "f2p": {
+          "PASSED": 1
+        },
+        "p2p": {
+          "PASSED": 48
+        }
+      },
+      "outside_reference_failures": [],
+      "pretest_errors": [],
+      "log_sha256_verified": true,
+      "source_candidate": {
+        "apply_method": "git_apply",
+        "apply_stderr_tail": null,
+        "apply_user": "agent/54321",
+        "kind": "gold",
+        "origin": "/work/swegym_cpu_preprobe_20260929/gold/v1/dask__dask-7656.gold.patch",
+        "patch_sha256": "sha256:2f6f59d094834f3e8db2d1e5332f1415ff65d151678d5cc6c6590f1883de63e9"
+      },
+      "exported_patch_matches_input": true,
+      "exported_patch_sha256": "2f6f59d094834f3e8db2d1e5332f1415ff65d151678d5cc6c6590f1883de63e9",
+      "frozen_source_verified_public_base_plus_patch": true,
+      "frozen_paths": [
+        "dask/delayed.py"
+      ],
+      "frozen_source_sha256": {
+        "dask/delayed.py": "cc3bb7df44ea7648215bbaeedc1da2a38f80cdbd8b7fac92530191746b16c256"
+      }
+    },
+    "noop": {
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 0,
+        "f2p_total": 1,
+        "failure_category": "tests_failed",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": 0,
+        "p2p_total": 48,
+        "report_id": "rpt_grading_d9aaad40",
+        "reward": 0.0
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 8.156,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 2.828
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 2.828,
+        "segment_completed": true
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "resources": {
+        "mem_peak_mb": 2882.219,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "resource_facts": null,
+      "policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "phases": {
+        "delta_apply": 0.199637,
+        "grader_baseline_rebuild": 0.460904,
+        "grader_cleanup": 2.142753,
+        "grader_start_and_verify": 1.629413,
+        "grader_trusted_setup": 347.768943,
+        "parser_and_report": 1.650325,
+        "test": 12.804837
+      },
+      "runner_integrity_changed": false,
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/dask/__init__.py",
+        "RH2_OBS_INSTALL_PROBE": "absent",
+        "RH2_OBS_INSTALL_PROBE_PRE": "absent",
+        "RH2_OBS_PKG_VERSION": "2021.04.1+24.g07d5ad0ab.dirty",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "f42f077db8e6148dc3319c685c359cf5d5f001b5e92b8e3529a977deeb82d8cc",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "f42f077db8e6148dc3319c685c359cf5d5f001b5e92b8e3529a977deeb82d8cc"
+      },
+      "references": {
+        "f2p": [
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_with_dataclass",
+            "status": "FAILED"
+          }
+        ],
+        "p2p": [
+          {
+            "id": "dask/tests/test_delayed.py::test_pickle[f0]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_finalize_name",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_literates",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_keys_from_array",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_attributes",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_decorator_on_method",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_cloudpickle[f1]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_pure",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_common_subexpressions",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_nout_with_tasks[x4]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_errors",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_lists",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_custom_delayed",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_name_on_call",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_iterators",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_literates_keys",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_cloudpickle[f0]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_dask_layers",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_name_consistent_across_instances",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_nout",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_sensitive_to_partials",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_kwargs",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_attribute_of_attribute",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_compute_forward_kwargs",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_callable_obj",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_lists_are_concrete",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_to_task_dask",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_nout_with_tasks[x2]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_visualise_warn",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_methods",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_method_getattr_call_same_task",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_method_descriptor",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_cloudpickle[f2]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_nout_with_tasks[x0]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_nout_with_tasks[x3]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_callable",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_name",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_np_dtype_of_delayed",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_picklable",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_optimize",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_traverse_false",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_nout_with_tasks[x1]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_array_bag_delayed",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_operators",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_dask_layers_to_delayed",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_pure_global_setting",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_array_delayed",
+            "status": "PASSED"
+          }
+        ]
+      },
+      "reference_counts": {
+        "f2p": {
+          "FAILED": 1
+        },
+        "p2p": {
+          "PASSED": 48
+        }
+      },
+      "outside_reference_failures": [],
+      "pretest_errors": [],
+      "log_sha256_verified": true,
+      "source_candidate": {
+        "apply_method": "noop",
+        "apply_stderr_tail": null,
+        "apply_user": "agent/54321",
+        "kind": "noop",
+        "origin": "noop",
+        "patch_sha256": null
+      },
+      "exported_patch_matches_input": null,
+      "frozen_source_verified_public_base_plus_patch": true,
+      "frozen_paths": [],
+      "frozen_source_sha256": {}
+    },
+    "opaque": {
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 0,
+        "f2p_total": 1,
+        "failure_category": "tests_failed",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": 0,
+        "p2p_total": 48,
+        "report_id": "rpt_grading_5cb9bb48",
+        "reward": 0.0
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 14.101,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 4.602
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 4.602,
+        "segment_completed": true
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "resources": {
+        "mem_peak_mb": 2069.871,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "resource_facts": null,
+      "policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "phases": {
+        "delta_apply": 0.358607,
+        "grader_baseline_rebuild": 0.436626,
+        "grader_cleanup": 4.272386,
+        "grader_start_and_verify": 1.527639,
+        "grader_trusted_setup": 531.684837,
+        "parser_and_report": 1.753592,
+        "test": 20.5575
+      },
+      "runner_integrity_changed": false,
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/dask/__init__.py",
+        "RH2_OBS_INSTALL_PROBE": "absent",
+        "RH2_OBS_INSTALL_PROBE_PRE": "absent",
+        "RH2_OBS_PKG_VERSION": "2021.04.1+24.g07d5ad0ab.dirty",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "f42f077db8e6148dc3319c685c359cf5d5f001b5e92b8e3529a977deeb82d8cc",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "f42f077db8e6148dc3319c685c359cf5d5f001b5e92b8e3529a977deeb82d8cc"
+      },
+      "references": {
+        "f2p": [
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_with_dataclass",
+            "status": "FAILED"
+          }
+        ],
+        "p2p": [
+          {
+            "id": "dask/tests/test_delayed.py::test_pickle[f0]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_finalize_name",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_literates",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_keys_from_array",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_attributes",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_decorator_on_method",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_cloudpickle[f1]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_pure",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_common_subexpressions",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_nout_with_tasks[x4]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_errors",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_lists",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_custom_delayed",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_name_on_call",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_iterators",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_literates_keys",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_cloudpickle[f0]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_dask_layers",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_name_consistent_across_instances",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_nout",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_sensitive_to_partials",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_kwargs",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_attribute_of_attribute",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_compute_forward_kwargs",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_callable_obj",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_lists_are_concrete",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_to_task_dask",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_nout_with_tasks[x2]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_visualise_warn",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_methods",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_method_getattr_call_same_task",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_method_descriptor",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_cloudpickle[f2]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_nout_with_tasks[x0]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_nout_with_tasks[x3]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_callable",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_name",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_np_dtype_of_delayed",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_picklable",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_optimize",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_traverse_false",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_nout_with_tasks[x1]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_array_bag_delayed",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_operators",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_dask_layers_to_delayed",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_pure_global_setting",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_array_delayed",
+            "status": "PASSED"
+          }
+        ]
+      },
+      "reference_counts": {
+        "f2p": {
+          "FAILED": 1
+        },
+        "p2p": {
+          "PASSED": 48
+        }
+      },
+      "outside_reference_failures": [],
+      "pretest_errors": [],
+      "log_sha256_verified": true,
+      "source_candidate": {
+        "apply_method": "git_apply",
+        "apply_stderr_tail": null,
+        "apply_user": "agent/54321",
+        "kind": "cc",
+        "origin": "/work/swegym_cpu_preprobe_20260929/inputs_v1/dask__dask-7656/opaque_dataclass.patch",
+        "patch_sha256": "sha256:f6a357f6b5a69c91d4d9b5e40d3df13e79e0099f75265537a9ffa1241b1cae84"
+      },
+      "exported_patch_matches_input": true,
+      "exported_patch_sha256": "f6a357f6b5a69c91d4d9b5e40d3df13e79e0099f75265537a9ffa1241b1cae84",
+      "frozen_source_verified_public_base_plus_patch": true,
+      "frozen_paths": [
+        "dask/delayed.py"
+      ],
+      "frozen_source_sha256": {
+        "dask/delayed.py": "7daf1429ba7059cabbd5ec1a872cd097f59a61e45ed94de41480668848ea464b"
+      }
+    },
+    "wrong_result_type": {
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 1,
+        "f2p_total": 1,
+        "failure_category": null,
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "resolved",
+        "p2p_fail": 0,
+        "p2p_total": 48,
+        "report_id": "rpt_grading_4f635af8",
+        "reward": 1.0
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 12.125,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 3.585
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 3.585,
+        "segment_completed": true
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "resources": {
+        "mem_peak_mb": 2041.305,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "resource_facts": null,
+      "policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "phases": {
+        "delta_apply": 0.405148,
+        "grader_baseline_rebuild": 0.452743,
+        "grader_cleanup": 2.799346,
+        "grader_start_and_verify": 1.784975,
+        "grader_trusted_setup": 505.692721,
+        "parser_and_report": 1.744501,
+        "test": 17.611115
+      },
+      "runner_integrity_changed": false,
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/dask/__init__.py",
+        "RH2_OBS_INSTALL_PROBE": "absent",
+        "RH2_OBS_INSTALL_PROBE_PRE": "absent",
+        "RH2_OBS_PKG_VERSION": "2021.04.1+24.g07d5ad0ab.dirty",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "f42f077db8e6148dc3319c685c359cf5d5f001b5e92b8e3529a977deeb82d8cc",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "f42f077db8e6148dc3319c685c359cf5d5f001b5e92b8e3529a977deeb82d8cc"
+      },
+      "references": {
+        "f2p": [
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_with_dataclass",
+            "status": "PASSED"
+          }
+        ],
+        "p2p": [
+          {
+            "id": "dask/tests/test_delayed.py::test_pickle[f0]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_finalize_name",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_literates",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_keys_from_array",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_attributes",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_decorator_on_method",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_cloudpickle[f1]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_pure",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_common_subexpressions",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_nout_with_tasks[x4]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_errors",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_lists",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_custom_delayed",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_name_on_call",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_iterators",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_literates_keys",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_cloudpickle[f0]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_dask_layers",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_name_consistent_across_instances",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_nout",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_sensitive_to_partials",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_kwargs",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_attribute_of_attribute",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_compute_forward_kwargs",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_callable_obj",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_lists_are_concrete",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_to_task_dask",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_nout_with_tasks[x2]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_visualise_warn",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_methods",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_method_getattr_call_same_task",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_method_descriptor",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_cloudpickle[f2]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_nout_with_tasks[x0]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_nout_with_tasks[x3]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_callable",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_name",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_np_dtype_of_delayed",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_picklable",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_delayed_optimize",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_traverse_false",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_nout_with_tasks[x1]",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_array_bag_delayed",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_operators",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_dask_layers_to_delayed",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_pure_global_setting",
+            "status": "PASSED"
+          },
+          {
+            "id": "dask/tests/test_delayed.py::test_array_delayed",
+            "status": "PASSED"
+          }
+        ]
+      },
+      "reference_counts": {
+        "f2p": {
+          "PASSED": 1
+        },
+        "p2p": {
+          "PASSED": 48
+        }
+      },
+      "outside_reference_failures": [],
+      "pretest_errors": [],
+      "log_sha256_verified": true,
+      "source_candidate": {
+        "apply_method": "git_apply",
+        "apply_stderr_tail": null,
+        "apply_user": "agent/54321",
+        "kind": "cc",
+        "origin": "/work/swegym_cpu_preprobe_20260929/inputs_v1/dask__dask-7656/wrong_result_type.patch",
+        "patch_sha256": "sha256:d422554ec399b5540bc3492c8fcddf0b2c06246ec842545f6fb33ff7cc38d066"
+      },
+      "exported_patch_matches_input": true,
+      "exported_patch_sha256": "d422554ec399b5540bc3492c8fcddf0b2c06246ec842545f6fb33ff7cc38d066",
+      "frozen_source_verified_public_base_plus_patch": true,
+      "frozen_paths": [
+        "dask/delayed.py"
+      ],
+      "frozen_source_sha256": {
+        "dask/delayed.py": "c73fe0f15c5f4cff15fde2d8d21053934f4c15a22407f4079ea0ba84e0a98709"
+      }
+    }
+  },
+  "evidence_sha256": {
+    "runs/swegym_cpu_preprobe_20260929/remote/results/dask__dask-7656/grading_setup900_v1/gold/artifacts/swe_gym_lite--dask__dask-7656/a1-1a5f8a11/candidate.patch": "2f6f59d094834f3e8db2d1e5332f1415ff65d151678d5cc6c6590f1883de63e9",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/dask__dask-7656/grading_setup900_v1/gold/ledger.jsonl": "4316a79c08f5af1ef719f9b98386c5177ab768e59f618b2218176ce75871f17d",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/dask__dask-7656/grading_setup900_v1/gold/eval_logs/evallog_replay-cpu29-dask7656-se_7fbfb239.eval.log": "eb84be857dad1cac130e386eb90c019483d662dd09eaf64b7f52af36f96ef522",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/dask__dask-7656/grading_setup900_v1/noop/ledger.jsonl": "2a42473e15a6196cab1de39e5bd297881676989b8481beb8f3df088587bef4cb",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/dask__dask-7656/grading_setup900_v1/noop/eval_logs/evallog_replay-cpu29-dask7656-se_d9aaad40.eval.log": "38f8de1c95bcd8e93d2a11108040b82c92c19af44f06d1173b7fbea9344b9b4e",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/dask__dask-7656/grading_setup900_v1/opaque/artifacts/swe_gym_lite--dask__dask-7656/a1-98965356/candidate.patch": "f6a357f6b5a69c91d4d9b5e40d3df13e79e0099f75265537a9ffa1241b1cae84",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/dask__dask-7656/grading_setup900_v1/opaque/ledger.jsonl": "14b6a9cb100b2990750870ad7dbb56cc5a512ab6dcfc8ed8e11940c256cab53e",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/dask__dask-7656/grading_setup900_v1/opaque/eval_logs/evallog_replay-cpu29-dask7656-se_5cb9bb48.eval.log": "be4ed69bce1251b556b710be7a3532356c72919ed9c7af1e2a5411b30cf79889",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/dask__dask-7656/grading_setup900_v1/wrong_result_type/artifacts/swe_gym_lite--dask__dask-7656/a1-ce66e8e8/candidate.patch": "d422554ec399b5540bc3492c8fcddf0b2c06246ec842545f6fb33ff7cc38d066",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/dask__dask-7656/grading_setup900_v1/wrong_result_type/ledger.jsonl": "24d7852c118db2eb9992d6b815c79a57c48818c2d313654355644c139d9a03ab",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/dask__dask-7656/grading_setup900_v1/wrong_result_type/eval_logs/evallog_replay-cpu29-dask7656-se_4f635af8.eval.log": "a1e61a096050d82157557e8a84d84f6f0ee993868c5d90f07ce3d967e5819d7d",
+    "runs/swegym_cpu_preprobe_20260929/analysis/dask7656_setup900_v1.json": "b02f41d14c230ed0587046c4d9531d709edd08c14cf051ea47dd3107f05896bb",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/dask__dask-7656/result_partial.json": "d09037e4f61cfee0d51a43ee6e9da6a3805fffb8a40690b10c75ece1b6a03960",
+    "runs/swegym_cpu_preprobe_20260929/analysis/resource_dask_pair_v1.json": "b2a9b7130fa684a09127c0e85bc77dce2906ebbbc8374df876c453cbaa2b64ef",
+    "runs/swegym_cpu_preprobe_20260929/analysis/evidence_manifest_dask_pair_v1.json": "3f171d534d0b50052a10b9fcfee6a1d4183524a8c870f006e0aadd9074a9463f"
+  },
+  "remaining": [
+    "full problem/public_hints actual actor delivery",
+    "scope-limited dependencies with pip_check conflicts retained",
+    "no autonomous model or training/GPU result",
+    "D6 test/scoring revision proposal not implemented",
+    "existing init=False/post_init state remains outside demonstrated target"
+  ],
+  "quality_conclusion": "confirmed formal false positive: wrong_result_type gets reward1 while reconstructed argument passed to delayed function loses original dataclass type",
+  "current_use": "CPU environment/behavior calibration and grading coverage diagnostic; no unrestricted correctness or training qualification",
+  "private": {
+    "base": {
+      "original_rc": 1,
+      "enhanced_rc": 1,
+      "public_tests": "3 passed",
+      "nested_reached": false
+    },
+    "gold": {
+      "original_rc": 0,
+      "enhanced_rc": 0,
+      "public_tests": "3 passed",
+      "nested_reached": true
+    },
+    "opaque": {
+      "original_rc": 0,
+      "enhanced_rc": 1,
+      "failure": "nested Delayed not computed",
+      "public_tests": "1 failed, 2 passed",
+      "nested_reached": true
+    },
+    "wrong_result_type": {
+      "original_rc": 0,
+      "enhanced_rc": 1,
+      "failure": "inspect_entry receives SimpleNamespace instead of Entry for its first reconstructed argument",
+      "public_tests": "3 passed",
+      "nested_reached": false
+    }
+  },
+  "resource_sampling": {
+    "source": "runs/swegym_cpu_preprobe_20260929/analysis/resource_dask_pair_v1.json",
+    "scope": "Grading containers matched to report suffix; sampled values do not guarantee coverage through final exit. Ledger peaks kept separately. No missing data filled zero.",
+    "rows": [
+      {
+        "ledger": "results/dask__dask-7656/calibration_v1/noop/ledger.jsonl",
+        "report_id": "rpt_grading_0a96de51",
+        "reward": null,
+        "samples": 20,
+        "observed_memory_peak_mib": 1652.25390625,
+        "ledger_memory_peak_mib": 1676.48,
+        "observed_pids_peak": 8,
+        "memory_events": {
+          "max": 0,
+          "oom_kill": 0,
+          "low": 0,
+          "oom_group_kill": 0,
+          "oom": 0,
+          "high": 0
+        },
+        "pids_events": {
+          "max": 0
+        },
+        "max_sample_gap": 15.213203430175781,
+        "first": 1790617211.946863,
+        "last": 1790617500.390743
+      },
+      {
+        "ledger": "results/dask__dask-7656/grading_setup900_v1/gold/ledger.jsonl",
+        "report_id": "rpt_grading_7fbfb239",
+        "reward": 1.0,
+        "samples": 24,
+        "observed_memory_peak_mib": 2031.2109375,
+        "ledger_memory_peak_mib": 2065.551,
+        "observed_pids_peak": 8,
+        "memory_events": {
+          "max": 0,
+          "oom_kill": 0,
+          "low": 0,
+          "oom_group_kill": 0,
+          "oom": 0,
+          "high": 0
+        },
+        "pids_events": {
+          "max": 0
+        },
+        "max_sample_gap": 15.246465921401978,
+        "first": 1790618422.967882,
+        "last": 1790618771.36574
+      },
+      {
+        "ledger": "results/dask__dask-7656/grading_setup900_v1/noop/ledger.jsonl",
+        "report_id": "rpt_grading_d9aaad40",
+        "reward": 0.0,
+        "samples": 24,
+        "observed_memory_peak_mib": 2878.68359375,
+        "ledger_memory_peak_mib": 2882.219,
+        "observed_pids_peak": 8,
+        "memory_events": {
+          "max": 0,
+          "oom_kill": 0,
+          "low": 0,
+          "oom_group_kill": 0,
+          "oom": 0,
+          "high": 0
+        },
+        "pids_events": {
+          "max": 0
+        },
+        "max_sample_gap": 15.164535999298096,
+        "first": 1790618044.6318033,
+        "last": 1790618392.718136
+      },
+      {
+        "ledger": "results/dask__dask-7656/grading_setup900_v1/opaque/ledger.jsonl",
+        "report_id": "rpt_grading_5cb9bb48",
+        "reward": 0.0,
+        "samples": 37,
+        "observed_memory_peak_mib": 2069.87109375,
+        "ledger_memory_peak_mib": 2069.871,
+        "observed_pids_peak": 53,
+        "memory_events": {
+          "max": 0,
+          "oom_kill": 0,
+          "low": 0,
+          "oom_group_kill": 0,
+          "oom": 0,
+          "high": 0
+        },
+        "pids_events": {
+          "max": 0
+        },
+        "max_sample_gap": 15.20736026763916,
+        "first": 1790618801.6890683,
+        "last": 1790619348.09173
+      },
+      {
+        "ledger": "results/dask__dask-7656/grading_setup900_v1/wrong_result_type/ledger.jsonl",
+        "report_id": "rpt_grading_4f635af8",
+        "reward": 1.0,
+        "samples": 35,
+        "observed_memory_peak_mib": 2039.23828125,
+        "ledger_memory_peak_mib": 2041.305,
+        "observed_pids_peak": 8,
+        "memory_events": {
+          "max": 0,
+          "oom_kill": 0,
+          "low": 0,
+          "oom_group_kill": 0,
+          "oom": 0,
+          "high": 0
+        },
+        "pids_events": {
+          "max": 0
+        },
+        "max_sample_gap": 15.211947202682495,
+        "first": 1790619378.4349313,
+        "last": 1790619894.6003716
+      }
+    ]
+  },
+  "cross_task_evidence_sync": {
+    "manifest": "runs/swegym_cpu_preprobe_20260929/analysis/evidence_manifest_dask_pair_v1.json",
+    "files": 293,
+    "bytes": 2338594,
+    "verification": "root reported remote/local SHA equality for ended evidence"
+  },
+  "minimum_public_acceptance_draft": {
+    "commands_file": "runs/swegym_cpu_preprobe_20260929/task_inputs/dask__dask-7656/public_commands.json",
+    "command_ids": [
+      "issue_original",
+      "default_nested",
+      "public_regression"
+    ],
+    "basis": {
+      "issue_original": "original problem Entry fields and delayed call",
+      "type_preservation": "base delayed.py reconstructs typ",
+      "default_value": "original problem other_field=4",
+      "nested_delayed": "base test_delayed_with_dataclass"
+    },
+    "formal_integration": "D6 not implemented",
+    "existing_evidence": "positive gold and both negative candidates executed"
+  },
+  "independent_review": {
+    "status": "complete",
+    "path": "../../reviews/dask_pair_final_review.md",
+    "scope": "cross-package reuse of existing static context; not fresh blind audit"
+  }
+}

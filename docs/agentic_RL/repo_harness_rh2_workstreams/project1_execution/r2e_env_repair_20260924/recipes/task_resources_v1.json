@@ -1,0 +1,37 @@
+{
+  "schema_id": "rh2.r2e_task_resources.v1",
+  "scope": "R2E 逐题 grader 资源配方（决定 E04）。只覆盖默认 profile（2 CPU / 4 GiB / /tmp 1 GiB tmpfs / shm 64 MiB / pids 512）不够的题；未列出的题用默认值。值以 GraderSandboxProfile 的环境变量表达（RH2_GRADER_TMP_TMPFS_BYTES / RH2_GRADER_MEMORY_BYTES），正式消费方式（题包字段或运行期覆盖）由流水线接入时决定；本文件不改全局默认。",
+  "status_vocabulary": {
+    "verified_config_minimum_untested": "该配置下 noop/gold 与参考逐键一致；更小的配置没有测过",
+    "proposed": "只有分析依据，尚无该配置下的真实评分证据"
+  },
+  "tasks": {
+    "numpy__2f4a965019722c3c56f43433bfa4a99c4c083138": {
+      "grader": {
+        "RH2_GRADER_TMP_TMPFS_BYTES": 6442450944,
+        "RH2_GRADER_MEMORY_BYTES": 12884901888
+      },
+      "rollout": null,
+      "status": "verified_config_minimum_untested",
+      "why": "test_big_arrays 经 _savez 先写临时 .npy 再复制进 .npz，两个副本合计略大于 4 GiB（Codex 09-24）；默认 1 GiB /tmp tmpfs 下 OSError，gold 141/142；tmpfs 页计入 cgroup 内存，故内存同步放大。峰值内存约 4.3 GiB，最小充分配置未测。",
+      "evidence": [
+        "runs/r2e_rf_20260923/remote/ledger_r2e_numpy_bigtmp_noop.jsonl（09-23：noop 0，141/142，仅目标键 TestSaveTxt.test_0D_3D 不符，峰值 4439 MB）",
+        "runs/r2e_rf_20260923/remote/ledger_r2e_numpy_bigtmp_gold.jsonl（09-23：gold 1，142/142，峰值 4435 MB）",
+        "runs/r2e_rf_20260923/reconcile_numpy_bigtmp/（09-23：两行与参考逐键一致）",
+        "runs/r2e_env_repair_20260924/_rerun2/ledger_numpy_bigtmp_noop.jsonl（09-24 复验：noop 0，141/142，仅目标键 TestSaveTxt.test_0D_3D 不符，峰值 4437 MB）",
+        "runs/r2e_env_repair_20260924/_rerun2/ledger_numpy_bigtmp_gold.jsonl（09-24 复验：gold 1，142/142，峰值 4429 MB，同一派生镜像 ID）"
+      ],
+      "decided_by": "用户 09-19 逐题资源归流水线；Claude 09-24 E04（T1）",
+      "verified_runs": {
+        "noop": 2,
+        "gold": 2,
+        "peak_memory_mb_observed": [
+          4439,
+          4435,
+          4437,
+          4429
+        ]
+      }
+    }
+  }
+}

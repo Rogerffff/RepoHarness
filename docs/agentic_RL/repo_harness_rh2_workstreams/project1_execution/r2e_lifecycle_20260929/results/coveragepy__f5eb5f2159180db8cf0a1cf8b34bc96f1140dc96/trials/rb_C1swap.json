@@ -1,0 +1,37 @@
+{
+ "task": "coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96",
+ "image": "sha256:98b19b5a2ce42f98230caf958b852d58bcf898a01c61604ab93fd506caafe19c",
+ "recipe_id": "r2e_derive_v1+sysconfig_v1",
+ "patch": "/work/r2e/trials/lc_coveragepy_f5eb/f5eb5f21/coveragepy_f5eb_C1swap.patch",
+ "edits": "/work/r2e/trials/lc_coveragepy_f5eb/f5eb5f21/draft_rb.json",
+ "expected": "/work/r2e/trials/lc_coveragepy_f5eb/f5eb5f21/expected_after.json",
+ "kind": "trial_not_formal_grading",
+ "apply": "Checking patch coverage/jsonreport.py...\nApplied patch coverage/jsonreport.py cleanly.\nRH2_APPLY_RC=0\n",
+ "edits_apply": "RH2_TRIAL_EDITS_APPLIED=1\n",
+ "test_seconds": 3.4,
+ "markers": true,
+ "observed": {
+  "JsonReportTest.test_branch_coverage": "PASSED",
+  "JsonReportTest.test_branch_totals_count_branch_arcs": "FAILED",
+  "JsonReportTest.test_branch_totals_from_saved_branch_data": "PASSED",
+  "JsonReportTest.test_context_non_relative": "PASSED",
+  "JsonReportTest.test_context_relative": "PASSED",
+  "JsonReportTest.test_simple_line_coverage": "PASSED"
+ },
+ "n_observed": 6,
+ "log_tail": "RH2_INSTALL_SKIPPED=1\n>>>>> Start Test Output\nbringing up nodes...\nbringing up nodes...\n\n.F....                                                                   [100%]\n=================================== FAILURES ===================================\n_____________ JsonReportTest.test_branch_totals_count_branch_arcs ______________\n[gw1] linux -- Python 3.7.9 /testbed/.venv/bin/python\n\nself = <r2e_tests.test_1.JsonReportTest testMethod=test_branch_totals_count_branch_arcs>\n\n    def test_branch_totals_count_branch_arcs(self):\n        # 6 branch destinations (two per `if`), 4 taken, 2 never taken.  h's `if`\n        # never runs, so it is not a partial branch.\n        report = self._branchy_report(\"branchy\")\n        totals = report['totals']\n        assert totals['num_branches'] == 6\n        assert totals['num_partial_branches'] == 0\n        assert totals['covered_branches'] == 4\n        assert totals['missing_branches'] == 2\n        # R2E revision (2026-09-29, R-b): if the per-file summary also carries\n        # the two counts, they must be this file's counts.\n        summary = report['files']['branchy.py']['summary']\n        if 'covered_branches' in summary or 'missing_branches' in summary:\n>           assert summary.get('covered_branches') == 4\nE           AssertionError: assert 2 == 4\nE            +  where 2 = <built-in method get of dict object at 0x7d25d7b7f6e0>('covered_branches')\nE            +    where <built-in method get of dict object at 0x7d25d7b7f6e0> = {'covered_branches': 2, 'covered_lines': 13, 'excluded_lines': 0, 'missing_branches': 4, ...}.get\n\nr2e_tests/test_1.py:228: AssertionError\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_from_saved_branch_data\nPASSED r2e_tests/test_1.py::JsonReportTest::test_branch_coverage\nPASSED r2e_tests/test_1.py::JsonReportTest::test_context_non_relative\nPASSED r2e_tests/test_1.py::JsonReportTest::test_context_relative\nPASSED r2e_tests/test_1.py::JsonReportTest::test_simple_line_coverage\nFAILED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_count_branch_arcs\n1 failed, 5 passed in 1.33 seconds\n>>>>> End Test Output\nRH2_TEST_RC=1\n",
+ "stderr_tail": "",
+ "expected_n": 6,
+ "missing": [],
+ "extra": [],
+ "status_diff": [
+  [
+   "JsonReportTest.test_branch_totals_count_branch_arcs",
+   "PASSED",
+   "FAILED"
+  ]
+ ],
+ "match": false,
+ "verdict": "mismatch",
+ "seconds": 30.4
+}

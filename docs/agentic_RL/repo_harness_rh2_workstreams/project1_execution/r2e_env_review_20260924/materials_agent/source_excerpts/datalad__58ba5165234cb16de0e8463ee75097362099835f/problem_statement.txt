@@ -1,0 +1,26 @@
+[ISSUE]
+**Title:** Brackets in PY and CMD Doc Markups Cause Documentation Parsing Failures
+
+**Description:**
+Using brackets within `[PY: ... PY]` and `[CMD: ... CMD]` doc markups leads to incorrect parsing of documentation. This results in parts of the documentation being improperly processed or removed, causing incomplete or malformed documentation output.
+
+**Example Code:**
+```python
+demo_doc = """\
+And an example for in-line markup: [PY: just for Python PY] and
+the other one [CMD: just for the command line CMD]. [PY: multiline
+python-only with [ brackets [] ] PY][CMD: multiline cli-only with [ brackets
+[] ] CMD]. End of demo.
+"""
+
+processed_docs = alter_interface_docs_for_cmdline(demo_doc)
+print(processed_docs)
+```
+
+**Expected Behavior:**
+The documentation processor should correctly handle brackets inside `[PY: ... PY]` and `[CMD: ... CMD]` markups, preserving the internal brackets and properly processing the surrounding documentation.
+
+**Actual Behavior:**
+Brackets within the `[PY: ... PY]` and `[CMD: ... CMD]` sections cause the parser to fail, stripping out or misinterpreting the content. This leads to incomplete documentation and causes related tests to fail.
+
+[/ISSUE]

@@ -1,0 +1,13 @@
+diff --git a/src/PIL/ImageOps.py b/src/PIL/ImageOps.py
+index c6201d8..d5aac51 100644
+--- a/src/PIL/ImageOps.py
++++ b/src/PIL/ImageOps.py
+@@ -50,7 +50,7 @@ def _lut(image, lut):
+     if image.mode == "P":
+         # FIXME: apply to lookup table, not image data
+         raise NotImplementedError("mode P support coming soon")
+-    elif image.mode in ("L", "RGB"):
++    elif image.mode in ("1", "L", "RGB"):
+         if image.mode == "RGB" and len(lut) == 256:
+             lut = lut + lut + lut
+         return image.point(lut)

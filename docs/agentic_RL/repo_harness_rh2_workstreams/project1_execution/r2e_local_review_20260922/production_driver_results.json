@@ -1,0 +1,313 @@
+[
+  {
+    "case": "noop",
+    "image_id": "sha256:e5672b2a83bbd129acbaa061a2e37472cc6b77f70897e49d95b25b53e3e35837",
+    "stage_error": null,
+    "report": {
+      "report_id": "rpt_grading_4edda70c",
+      "outcome": "unresolved",
+      "failure_category": "tests_failed",
+      "reward": 0.0,
+      "f2p_pass": null,
+      "f2p_total": null,
+      "p2p_fail": null,
+      "p2p_total": null,
+      "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+      "infra_failure_detail": null,
+      "execution_failure_stage": null,
+      "execution_failure_evidence": [],
+      "grading_semantics": "r2e_expected_map",
+      "expected_match": 1,
+      "expected_total": 2
+    },
+    "candidate": {
+      "kind": "noop",
+      "origin": "review-fixture",
+      "patch_sha256": null,
+      "apply_method": "noop",
+      "apply_user": "agent/54321",
+      "apply_stderr_tail": null
+    },
+    "test": {
+      "rc": 1,
+      "seconds": 0.01,
+      "exec_exit_code": 0,
+      "segment_completed": true
+    },
+    "log": {
+      "path": "/tmp/r2e-production-review-20260922/noop/logs/evallog_replay-production-review_4edda70c.eval.log",
+      "sha256": "sha256:88cb039245e0594a49084d2e498f9fcd54b4dc14b7fd6e8afb0e32df7bdbbae1",
+      "partial": false
+    },
+    "cleanup": {
+      "removed": true,
+      "detail": "",
+      "steps": [
+        "rm:ok"
+      ]
+    },
+    "manager_close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0
+    },
+    "preflight": [
+      {
+        "args": [
+          "exec",
+          "-u",
+          "54321",
+          "-e",
+          "HOME=/home/agent",
+          "rh2-replay-cand-fixture__fffffffffffffff-9bb7650c",
+          "bash",
+          "-c",
+          "#!/bin/bash\ncd /testbed || { echo RH2_PREFLIGHT_INTERPRETER=fail:no_testbed; exit 0; }\nif /testbed/.venv/bin/python -B -I -S -c pass >/dev/null 2>&1; then echo RH2_PREFLIGHT_INTERPRETER=ok; else echo RH2_PREFLIGHT_INTERPRETER=fail:not_executable_as_agent; fi\nif [ -e /r2e_tests ]; then echo RH2_PREFLIGHT_HIDDEN_TESTS=fail:root_copy_present; elif [ -e /testbed/r2e_tests ]; then echo RH2_PREFLIGHT_HIDDEN_TESTS=fail:workdir_copy_present; elif ls /rh2_private/r2e_tests >/dev/null 2>&1 || [ -r /rh2_private/r2e_tests ]; then echo RH2_PREFLIGHT_HIDDEN_TESTS=fail:private_location_readable; else echo RH2_PREFLIGHT_HIDDEN_TESTS=ok; fi\nRH2_HEAD=$(git rev-parse HEAD 2>/dev/null) || RH2_HEAD=\"\"\nif [ -z \"$RH2_HEAD\" ]; then echo RH2_PREFLIGHT_GIT_HISTORY=fail:no_head;\nelif ! RH2_CHILDREN=$(git rev-list --children --all 2>/dev/null); then echo RH2_PREFLIGHT_GIT_HISTORY=fail:rev_list_failed;\nelif [ \"$(printf '%s\\n' \"$RH2_CHILDREN\" | grep \"^$RH2_HEAD\" | wc -w | tr -d \" \")\" != \"1\" ]; then echo RH2_PREFLIGHT_GIT_HISTORY=fail:head_has_children_or_is_unlisted;\nelse echo RH2_PREFLIGHT_GIT_HISTORY=ok; fi\n"
+        ],
+        "rc": 0,
+        "stdout": "RH2_PREFLIGHT_INTERPRETER=ok\nRH2_PREFLIGHT_HIDDEN_TESTS=ok\nRH2_PREFLIGHT_GIT_HISTORY=ok\n",
+        "stderr": ""
+      }
+    ],
+    "container_run_images": [
+      "sha256:e5672b2a83bbd129acbaa061a2e37472cc6b77f70897e49d95b25b53e3e35837",
+      "sha256:e5672b2a83bbd129acbaa061a2e37472cc6b77f70897e49d95b25b53e3e35837"
+    ]
+  },
+  {
+    "case": "fixed",
+    "image_id": "sha256:e5672b2a83bbd129acbaa061a2e37472cc6b77f70897e49d95b25b53e3e35837",
+    "stage_error": null,
+    "report": {
+      "report_id": "rpt_grading_dda9c9a2",
+      "outcome": "resolved",
+      "failure_category": null,
+      "reward": 1.0,
+      "f2p_pass": null,
+      "f2p_total": null,
+      "p2p_fail": null,
+      "p2p_total": null,
+      "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+      "infra_failure_detail": null,
+      "execution_failure_stage": null,
+      "execution_failure_evidence": [],
+      "grading_semantics": "r2e_expected_map",
+      "expected_match": 2,
+      "expected_total": 2
+    },
+    "candidate": {
+      "kind": "gold",
+      "origin": "review-fixture",
+      "patch_sha256": "sha256:3f98c42e890706ed7fc6d41e0b4fb5eb3b5bf57bdd2b98aff352b321822075ee",
+      "apply_method": "git_apply",
+      "apply_user": "agent/54321",
+      "apply_stderr_tail": null
+    },
+    "test": {
+      "rc": 1,
+      "seconds": 0.01,
+      "exec_exit_code": 0,
+      "segment_completed": true
+    },
+    "log": {
+      "path": "/tmp/r2e-production-review-20260922/fixed/logs/evallog_replay-production-review_dda9c9a2.eval.log",
+      "sha256": "sha256:1e435067f42e9447ddaafef38822a0ab69b4fc1edfad926d98f47d01480bbfbf",
+      "partial": false
+    },
+    "cleanup": {
+      "removed": true,
+      "detail": "",
+      "steps": [
+        "rm:ok"
+      ]
+    },
+    "manager_close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0
+    },
+    "preflight": [
+      {
+        "args": [
+          "exec",
+          "-u",
+          "54321",
+          "-e",
+          "HOME=/home/agent",
+          "rh2-replay-cand-fixture__fffffffffffffff-f3d523fe",
+          "bash",
+          "-c",
+          "#!/bin/bash\ncd /testbed || { echo RH2_PREFLIGHT_INTERPRETER=fail:no_testbed; exit 0; }\nif /testbed/.venv/bin/python -B -I -S -c pass >/dev/null 2>&1; then echo RH2_PREFLIGHT_INTERPRETER=ok; else echo RH2_PREFLIGHT_INTERPRETER=fail:not_executable_as_agent; fi\nif [ -e /r2e_tests ]; then echo RH2_PREFLIGHT_HIDDEN_TESTS=fail:root_copy_present; elif [ -e /testbed/r2e_tests ]; then echo RH2_PREFLIGHT_HIDDEN_TESTS=fail:workdir_copy_present; elif ls /rh2_private/r2e_tests >/dev/null 2>&1 || [ -r /rh2_private/r2e_tests ]; then echo RH2_PREFLIGHT_HIDDEN_TESTS=fail:private_location_readable; else echo RH2_PREFLIGHT_HIDDEN_TESTS=ok; fi\nRH2_HEAD=$(git rev-parse HEAD 2>/dev/null) || RH2_HEAD=\"\"\nif [ -z \"$RH2_HEAD\" ]; then echo RH2_PREFLIGHT_GIT_HISTORY=fail:no_head;\nelif ! RH2_CHILDREN=$(git rev-list --children --all 2>/dev/null); then echo RH2_PREFLIGHT_GIT_HISTORY=fail:rev_list_failed;\nelif [ \"$(printf '%s\\n' \"$RH2_CHILDREN\" | grep \"^$RH2_HEAD\" | wc -w | tr -d \" \")\" != \"1\" ]; then echo RH2_PREFLIGHT_GIT_HISTORY=fail:head_has_children_or_is_unlisted;\nelse echo RH2_PREFLIGHT_GIT_HISTORY=ok; fi\n"
+        ],
+        "rc": 0,
+        "stdout": "RH2_PREFLIGHT_INTERPRETER=ok\nRH2_PREFLIGHT_HIDDEN_TESTS=ok\nRH2_PREFLIGHT_GIT_HISTORY=ok\n",
+        "stderr": ""
+      }
+    ],
+    "container_run_images": [
+      "sha256:e5672b2a83bbd129acbaa061a2e37472cc6b77f70897e49d95b25b53e3e35837",
+      "sha256:e5672b2a83bbd129acbaa061a2e37472cc6b77f70897e49d95b25b53e3e35837"
+    ]
+  },
+  {
+    "case": "drift",
+    "image_id": "sha256:e5672b2a83bbd129acbaa061a2e37472cc6b77f70897e49d95b25b53e3e35837",
+    "stage_error": null,
+    "report": {
+      "report_id": "rpt_grading_9120e938",
+      "outcome": "failed_to_grade",
+      "failure_category": "infra_failure",
+      "reward": null,
+      "f2p_pass": null,
+      "f2p_total": null,
+      "p2p_fail": null,
+      "p2p_total": null,
+      "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+      "infra_failure_detail": "grading_trusted_setup_failed:setup_exit_code:rc=3:",
+      "execution_failure_stage": null,
+      "execution_failure_evidence": [],
+      "grading_semantics": "r2e_expected_map",
+      "expected_match": null,
+      "expected_total": null
+    },
+    "candidate": {
+      "kind": "gold",
+      "origin": "review-fixture",
+      "patch_sha256": "sha256:3f98c42e890706ed7fc6d41e0b4fb5eb3b5bf57bdd2b98aff352b321822075ee",
+      "apply_method": "git_apply",
+      "apply_user": "agent/54321",
+      "apply_stderr_tail": null
+    },
+    "test": null,
+    "log": {
+      "path": "/tmp/r2e-production-review-20260922/drift/logs/evallog_replay-production-review_9120e938.eval.log",
+      "sha256": "sha256:19a33202f6641beb439f1dc2ad467e41e2a5ab98b35a732cc539ca35ebfd5f71",
+      "partial": false
+    },
+    "cleanup": {
+      "removed": true,
+      "detail": "",
+      "steps": [
+        "rm:ok"
+      ]
+    },
+    "manager_close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0
+    },
+    "preflight": [
+      {
+        "args": [
+          "exec",
+          "-u",
+          "54321",
+          "-e",
+          "HOME=/home/agent",
+          "rh2-replay-cand-fixture__fffffffffffffff-614a47eb",
+          "bash",
+          "-c",
+          "#!/bin/bash\ncd /testbed || { echo RH2_PREFLIGHT_INTERPRETER=fail:no_testbed; exit 0; }\nif /testbed/.venv/bin/python -B -I -S -c pass >/dev/null 2>&1; then echo RH2_PREFLIGHT_INTERPRETER=ok; else echo RH2_PREFLIGHT_INTERPRETER=fail:not_executable_as_agent; fi\nif [ -e /r2e_tests ]; then echo RH2_PREFLIGHT_HIDDEN_TESTS=fail:root_copy_present; elif [ -e /testbed/r2e_tests ]; then echo RH2_PREFLIGHT_HIDDEN_TESTS=fail:workdir_copy_present; elif ls /rh2_private/r2e_tests >/dev/null 2>&1 || [ -r /rh2_private/r2e_tests ]; then echo RH2_PREFLIGHT_HIDDEN_TESTS=fail:private_location_readable; else echo RH2_PREFLIGHT_HIDDEN_TESTS=ok; fi\nRH2_HEAD=$(git rev-parse HEAD 2>/dev/null) || RH2_HEAD=\"\"\nif [ -z \"$RH2_HEAD\" ]; then echo RH2_PREFLIGHT_GIT_HISTORY=fail:no_head;\nelif ! RH2_CHILDREN=$(git rev-list --children --all 2>/dev/null); then echo RH2_PREFLIGHT_GIT_HISTORY=fail:rev_list_failed;\nelif [ \"$(printf '%s\\n' \"$RH2_CHILDREN\" | grep \"^$RH2_HEAD\" | wc -w | tr -d \" \")\" != \"1\" ]; then echo RH2_PREFLIGHT_GIT_HISTORY=fail:head_has_children_or_is_unlisted;\nelse echo RH2_PREFLIGHT_GIT_HISTORY=ok; fi\n"
+        ],
+        "rc": 0,
+        "stdout": "RH2_PREFLIGHT_INTERPRETER=ok\nRH2_PREFLIGHT_HIDDEN_TESTS=ok\nRH2_PREFLIGHT_GIT_HISTORY=ok\n",
+        "stderr": ""
+      }
+    ],
+    "container_run_images": [
+      "sha256:e5672b2a83bbd129acbaa061a2e37472cc6b77f70897e49d95b25b53e3e35837",
+      "sha256:e5672b2a83bbd129acbaa061a2e37472cc6b77f70897e49d95b25b53e3e35837"
+    ]
+  },
+  {
+    "case": "timeout",
+    "image_id": "sha256:e5672b2a83bbd129acbaa061a2e37472cc6b77f70897e49d95b25b53e3e35837",
+    "stage_error": null,
+    "report": {
+      "report_id": "rpt_grading_04c8aa5b",
+      "outcome": "failed_to_grade",
+      "failure_category": "infra_failure",
+      "reward": null,
+      "f2p_pass": null,
+      "f2p_total": null,
+      "p2p_fail": null,
+      "p2p_total": null,
+      "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+      "infra_failure_detail": "grading_deadline_exhausted:test:candidate_phase=test",
+      "execution_failure_stage": null,
+      "execution_failure_evidence": [],
+      "grading_semantics": "r2e_expected_map",
+      "expected_match": null,
+      "expected_total": null
+    },
+    "candidate": {
+      "kind": "gold",
+      "origin": "review-fixture",
+      "patch_sha256": "sha256:f0e02b6fc16b548aebcfa8931ccac46b8b18d21bfcd3ad56ca5227fdfa47e719",
+      "apply_method": "git_apply",
+      "apply_user": "agent/54321",
+      "apply_stderr_tail": null
+    },
+    "test": {
+      "rc": null,
+      "seconds": null,
+      "exec_exit_code": null,
+      "segment_completed": false
+    },
+    "log": {
+      "path": "/tmp/r2e-production-review-20260922/timeout/logs/evallog_replay-production-review_04c8aa5b.eval.log",
+      "sha256": "sha256:e1be222502f9d5336c3e62c11c0e9d102643418a0fcfd03428a45d1e6990baf4",
+      "partial": true
+    },
+    "cleanup": {
+      "removed": true,
+      "detail": "",
+      "steps": [
+        "rm:ok"
+      ]
+    },
+    "manager_close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0
+    },
+    "preflight": [
+      {
+        "args": [
+          "exec",
+          "-u",
+          "54321",
+          "-e",
+          "HOME=/home/agent",
+          "rh2-replay-cand-fixture__fffffffffffffff-cbf4546a",
+          "bash",
+          "-c",
+          "#!/bin/bash\ncd /testbed || { echo RH2_PREFLIGHT_INTERPRETER=fail:no_testbed; exit 0; }\nif /testbed/.venv/bin/python -B -I -S -c pass >/dev/null 2>&1; then echo RH2_PREFLIGHT_INTERPRETER=ok; else echo RH2_PREFLIGHT_INTERPRETER=fail:not_executable_as_agent; fi\nif [ -e /r2e_tests ]; then echo RH2_PREFLIGHT_HIDDEN_TESTS=fail:root_copy_present; elif [ -e /testbed/r2e_tests ]; then echo RH2_PREFLIGHT_HIDDEN_TESTS=fail:workdir_copy_present; elif ls /rh2_private/r2e_tests >/dev/null 2>&1 || [ -r /rh2_private/r2e_tests ]; then echo RH2_PREFLIGHT_HIDDEN_TESTS=fail:private_location_readable; else echo RH2_PREFLIGHT_HIDDEN_TESTS=ok; fi\nRH2_HEAD=$(git rev-parse HEAD 2>/dev/null) || RH2_HEAD=\"\"\nif [ -z \"$RH2_HEAD\" ]; then echo RH2_PREFLIGHT_GIT_HISTORY=fail:no_head;\nelif ! RH2_CHILDREN=$(git rev-list --children --all 2>/dev/null); then echo RH2_PREFLIGHT_GIT_HISTORY=fail:rev_list_failed;\nelif [ \"$(printf '%s\\n' \"$RH2_CHILDREN\" | grep \"^$RH2_HEAD\" | wc -w | tr -d \" \")\" != \"1\" ]; then echo RH2_PREFLIGHT_GIT_HISTORY=fail:head_has_children_or_is_unlisted;\nelse echo RH2_PREFLIGHT_GIT_HISTORY=ok; fi\n"
+        ],
+        "rc": 0,
+        "stdout": "RH2_PREFLIGHT_INTERPRETER=ok\nRH2_PREFLIGHT_HIDDEN_TESTS=ok\nRH2_PREFLIGHT_GIT_HISTORY=ok\n",
+        "stderr": ""
+      }
+    ],
+    "container_run_images": [
+      "sha256:e5672b2a83bbd129acbaa061a2e37472cc6b77f70897e49d95b25b53e3e35837",
+      "sha256:e5672b2a83bbd129acbaa061a2e37472cc6b77f70897e49d95b25b53e3e35837"
+    ]
+  }
+]

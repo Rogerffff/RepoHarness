@@ -1,0 +1,25 @@
+{
+ "instance_id": "pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8",
+ "template": "R-f",
+ "statement_edits": [
+  {
+   "old": "**Title:** TypeError When Handling Warnings After Adding `formats` Parameter to `Image.open`",
+   "new": "**Title:** `Image.open` Has No `formats` Parameter to Restrict the Image Formats It Tries"
+  },
+  {
+   "old": "After introducing the `formats` parameter to `Image.open` to restrict the supported image formats, handling warnings during image operations leads to a `TypeError`. Specifically, when attempting to save an image or trigger deprecation warnings, an error is raised indicating that exceptions must be derived from `Warning`, not `NoneType`.",
+   "new": "`Image.open` has no option to restrict which image formats it tries when identifying a file. A `formats` parameter should be added to `Image.open` for this purpose."
+  },
+  {
+   "old": "\n\n# Attempt to save the image\nimage.save('output.jpg')\n\n# Attempt to use a deprecated method\nimage.show()",
+   "new": ""
+  },
+  {
+   "old": "**Expected Behavior:**\n- Opening an image with the specified formats should work without issues.\n- Saving the image should handle any necessary warnings gracefully without raising errors.\n- Using deprecated methods like `show()` should trigger appropriate warnings without causing a `TypeError`.\n\n**Actual Behavior:**\n- Saving the image raises the following error:\n  ```\n  TypeError: exceptions must be derived from Warning, not <class 'NoneType'>\n  ```\n- Attempting to use the deprecated `show()` method results in the same `TypeError`.",
+   "new": "**Expected Behavior:**\n- `formats` is a list or tuple of format names (for example `\"JPEG\"` or `\"PNG\"`); only the listed formats are tried when identifying the file.\n- If none of the listed formats can open the file, `Image.open` fails as it does for any file it cannot identify, by raising `PIL.UnidentifiedImageError`. In the example, `hopper.png` is a PNG file, so opening it with `formats=['JPEG']` raises `PIL.UnidentifiedImageError`.\n- `formats=None` (the default) tries all supported formats, as `Image.open` does today.\n- A `formats` value that is not `None`, a list or a tuple raises `TypeError`.\n\n**Actual Behavior:**\n- `Image.open` does not accept a `formats` argument, so the example fails before any format is tried:\n  ```\n  TypeError: open() got an unexpected keyword argument 'formats'\n  ```"
+  }
+ ],
+ "basis": "P2（题面与目标测试矛盾）按统一标准 v1 §5 R-f 第 1 类（删改对 base 与公开行为的错误陈述，须有实跑证据）处理，另按第 3 类补入解题必需、有公开依据的 API 约定；隐藏测试与期望映射不变。（1）题面称 formats 已引入、保存与 show() 会抛 'exceptions must be derived from Warning' 的 TypeError，均与 base 不符：base 签名为 def open(fp, mode=\"r\")（src/PIL/Image.py:2839）；以 agent 身份在派生镜像上实跑：OPEN_SIGNATURE_HAS_FORMATS False、SAVE_JPEG=ok warnings=[]、SHOW_NOARGS=ok warnings=[]、SHOW_COMMAND=ok warnings=['DeprecationWarning']、REPRO_OBSERVED=0（runs/r2e_env_repair_20260924/p4/dev_probe/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/agent_probe.log:122-129）；该 TypeError 出自 pytest 8.3.4 拒绝 pytest.warns(None)，只出现在两个期望 FAILED 的键里（runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_90eb28b3.eval.log:85,127,185-186）。无参 show() 并未弃用：docs/deprecations.rst:15-20 只弃用 command 参数，公开 Tests/test_image.py:763-773 断言无参 show() 不告警。（2）题面原例 Image.open('hopper.png', formats=['JPEG']) 在 base 上实跑为 TypeError: open() got an unexpected keyword argument 'formats'（runs/r2e_actor_20260925/devcheck/pillow__2b061b68dbbf4fb590ab532b6fdffea8/orig/captures/mcve_statement.out:3，真实 CC、agent 身份；noop 评分日志 evallog_replay-r2e-rf-all-noop-p_90eb28b3.eval.log:40 同样报此错），新 Actual 按此改写。（3）\"Opening an image with the specified formats should work\" 与同一题面的 \"restrict the supported image formats\" 互相矛盾，也与目标断言相反；v1 §11 已定按限制读法删改该句（不是 P5：回退读法唯一的依据就是这句错误陈述）。新 Expected 四条的依据：只试列出的格式——原题面 \"restrict\"；无法识别时抛 PIL.UnidentifiedImageError——base 文档 src/PIL/Image.py:2856-2857；list 或 tuple、None 表示全部格式、其它类型抛 TypeError——Pillow 该参数发布后的公开 API 文档（同仓后续版本公开工作树 runs/r2e_static_prep_20260924/v3/public/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/worktree/src/PIL/Image.py:2938-2940,2949）；格式名取注册 ID（register_open 统一转大写，src/PIL/Image.py:3048），示例 'JPEG' 原题面已有。护栏：不写大小写不敏感、不写按需 init()（gold 不满足）；不写隐藏测试里的输入（123、('JPEG',)、hopper.jpg）与断言细节；原例调用本就公开，只改正它的预期结果。参考实现限度（如实登记，不据此收窄题面）：gold 对调用时尚未注册的格式名抛 KeyError（小写名，或新进程里 preinit() 未载入的 'TIFF'），静态推断自 base src/PIL/Image.py:2894-2913 与 gold，未实跑；隐藏测试不覆盖。触发反例：P1（不匹配时回退到全部格式，runs/r2e_actor_20260925/grader_cands/pillow_2b06_P1_fallback_to_all_formats.patch）在现材料上 54/55 得 0；修订后它违反新题面第 1、2 条，0 分有公开依据。评分材料不变，不需试跑。R-f 不能消除本题另两处 S1（P2 快照回归、P3 show() 警告漏测），见 revision_plan.md §6。",
+ "statement_sha256_before": "sha256:8c7172a7750ab5e8e926ff20436fb142ea8645d33a071b6bf6334bbdb28989ec",
+ "statement_sha256_after": "sha256:7aa068984a214a8793afce9190782eb6e035547db8b206f2968865e082a79c95"
+}

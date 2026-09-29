@@ -1,0 +1,15 @@
++ git checkout base -- tests/
+RH2_SETUP_RAN=1
++ echo RH2_PHASE_START=install
+RH2_PHASE_START=install
+RH2_TS_INSTALL_START=100.0
+RH2_INSTALL_RC=0
+RH2_TS_INSTALL_END=103.5
+RH2_PHASE_END=install
+RH2_TS_TEST_START=104.0
++ : '>>>>> Start Test Output'
+PASSED tests/test_thing.py::test_stable
+_________________ ERROR collecting tests/test_other.py _________________
++ : '>>>>> End Test Output'
+RH2_TEST_RC=2
+RH2_TS_TEST_END=110.25

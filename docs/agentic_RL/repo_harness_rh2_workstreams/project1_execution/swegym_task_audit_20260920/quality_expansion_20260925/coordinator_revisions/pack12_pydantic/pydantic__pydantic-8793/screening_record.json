@@ -1,0 +1,522 @@
+{
+  "task_id": "swe_gym_lite::pydantic__pydantic-8793",
+  "task_revision": "upstream",
+  "source_adapter_ref": {
+    "source": "swe_gym_lite",
+    "spec_vendor_id": "swegym_constants_242429c1",
+    "source_refs": "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/source_refs.json",
+    "grading_bundle_ref": "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/grading.json",
+    "parser_version": "swegym_parsers@242429c1",
+    "scope": "exported task and historical H19; current actor input unknown"
+  },
+  "recipe_ref": {
+    "environment_record": "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/environment_record.json",
+    "run_refs": "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/run_refs.json",
+    "historical_derived_recipe": "pydantic-install-v1",
+    "notes": "editable pip + candidate testing/testing-extra with offline wheelhouse; no audit modifications"
+  },
+  "code_snapshot_ref": {
+    "base_commit": "832225b90672c68e2d4067bd0ffecf834d62b48b",
+    "base_identity_ref": "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/base_identity.json",
+    "gold_sha256": "db816cd4802bd14e7428d09fff82141fdb3a2ee631a7fe3b809a12f701df273e",
+    "test_patch_sha256": "9998aa0c19304a159da5642bc3df24a6ab3b9de129f8ac4f6bd71c2e140041a8",
+    "historical_code_snapshot_ref": "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/environment_record.json#/historical_code_snapshot",
+    "archive_content_independently_read": false,
+    "actual_actor_worktree": "unknown",
+    "actual_actor_image_id": null
+  },
+  "facts_ref": {
+    "analysis_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/analysis_before_history.md",
+    "analysis_sha256": "c12547018acb4df0b9c271c2ebc4a3da40648037ad9e37c2c0ce8020a591f793",
+    "old_findings_delta_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/old_findings_delta.md",
+    "public_read_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/public_read.md",
+    "historical_review_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_pydantic/records/pydantic__pydantic-8793.json",
+    "historical_review_sha256": "9d3f323be6432aa01c1a44e21e14d110669efc0890929b69581c2c5e4a2085f4",
+    "runtime_evidence": [
+      {
+        "candidate_kind": "gold",
+        "ledger_ref": "runs/env_recipe_repair_20260919/pydantic_v1/tasks/pydantic__pydantic-8793/gold/ledger.jsonl:1",
+        "log_ref": "runs/env_recipe_repair_20260919/pydantic_v1/tasks/pydantic__pydantic-8793/gold/eval_logs/evallog_replay-er19-pyd1-pydanti_cec5f167.eval.log",
+        "log_sha256": "176d846e9cb287423e9215e277bde6fb1ca645c63591389193b9c5df64f70634",
+        "run_id": "er19-pyd1-pydantic__pydantic-8793-gold",
+        "image_manifest_digest_expected": "sha256:bdd9a2ddbca3a265f115d7f704eff78d39282f38d5be34bb8e338b717cc41b5c",
+        "actual_historical_grader_image_id": "sha256:3ed9b0685fbbd4dbbefcee77ac6c80f3f58b41d8e0722f54bc58c98267c5b0ed",
+        "derived_image_recipe": "pydantic-install-v1",
+        "scripts_digest": "sha256:d035288b46cb26f6bf90cd1dda959bb9ee44bc10a92edb4887f372f8b9542506",
+        "policy": {
+          "candidate_writable_prefixes": [
+            "/opt/miniconda3/envs/testbed"
+          ],
+          "cpus": 2.0,
+          "grader_profile_digest": "sha256:1bb8e0cf80ce48b15401fdf79d18f4f4c08a5f01001d8b0756311c58de25c19a",
+          "memory_bytes": 4294967296,
+          "network": "deny_all",
+          "pids_limit": 512,
+          "profile_id": "rh2.grader_sandbox_profile.v1",
+          "shm_bytes": 67108864,
+          "tmpfs_bytes": 1073741824,
+          "uid": 54322,
+          "user": "rh2grader"
+        },
+        "install_rc": 0,
+        "test_rc": 0,
+        "f2p_pass": 3,
+        "f2p_total": 3,
+        "p2p_fail": 0,
+        "p2p_total": 364,
+        "projection": {
+          "frozen_patch_digest": "sha256:e22994e0ef14da4c5a2a3a761762f4a304318452c1733726807fc905b003edc0",
+          "ignored_paths": [],
+          "included_paths": [
+            "pydantic/fields.py"
+          ],
+          "unsupported_shape_reasons": []
+        },
+        "scope": "historical RH2 grader only; not current actor qualification"
+      },
+      {
+        "candidate_kind": "noop",
+        "ledger_ref": "runs/env_recipe_repair_20260919/pydantic_v1/tasks/pydantic__pydantic-8793/noop/ledger.jsonl:1",
+        "log_ref": "runs/env_recipe_repair_20260919/pydantic_v1/tasks/pydantic__pydantic-8793/noop/eval_logs/evallog_replay-er19-pyd1-pydanti_8fa63264.eval.log",
+        "log_sha256": "a4973021409fca874461057e2274d9cd8b15150cf1bcc08b2e558b612599c8a5",
+        "run_id": "er19-pyd1-pydantic__pydantic-8793-noop",
+        "image_manifest_digest_expected": "sha256:bdd9a2ddbca3a265f115d7f704eff78d39282f38d5be34bb8e338b717cc41b5c",
+        "actual_historical_grader_image_id": "sha256:3ed9b0685fbbd4dbbefcee77ac6c80f3f58b41d8e0722f54bc58c98267c5b0ed",
+        "derived_image_recipe": "pydantic-install-v1",
+        "scripts_digest": "sha256:d035288b46cb26f6bf90cd1dda959bb9ee44bc10a92edb4887f372f8b9542506",
+        "policy": {
+          "candidate_writable_prefixes": [
+            "/opt/miniconda3/envs/testbed"
+          ],
+          "cpus": 2.0,
+          "grader_profile_digest": "sha256:1bb8e0cf80ce48b15401fdf79d18f4f4c08a5f01001d8b0756311c58de25c19a",
+          "memory_bytes": 4294967296,
+          "network": "deny_all",
+          "pids_limit": 512,
+          "profile_id": "rh2.grader_sandbox_profile.v1",
+          "shm_bytes": 67108864,
+          "tmpfs_bytes": 1073741824,
+          "uid": 54322,
+          "user": "rh2grader"
+        },
+        "install_rc": 0,
+        "test_rc": 1,
+        "f2p_pass": 0,
+        "f2p_total": 3,
+        "p2p_fail": 0,
+        "p2p_total": 364,
+        "projection": {
+          "frozen_patch_digest": "sha256:e6beea038dfb08445559010ef737829bebeffdb53b0cb59003e976ae40f558f3",
+          "ignored_paths": [],
+          "included_paths": [],
+          "unsupported_shape_reasons": []
+        },
+        "scope": "historical RH2 grader only; not current actor qualification"
+      }
+    ],
+    "actual_actor_messages": "unknown",
+    "evidence_scope": "static reading and explicitly authorized historical RH2 originals; no current project execution"
+  },
+  "checks": {
+    "1": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/base_identity.json",
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/grading.json",
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/gold.patch",
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/run_refs.json"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "公开base、test/gold bundle逐字一致及原候选hash/HEAD对应；仅静态材料和指定H19身份。"
+    },
+    "2": {
+      "status": "pass",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/analysis_before_history.md#运行原件附录逐题独立非旧质量结论",
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/run_refs.json"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "源码解释与H19每个F2P目标失败一致，不声称当前actor复现。"
+    },
+    "3": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/environment_brief.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "实际system/user消息、hints及工具呈现未捕获；计划prompt完整属于23。"
+    },
+    "4": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/public_bundle.json",
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/gold.patch",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/analysis_before_history.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "声明NON-TEST边界可容纳修复，H19只投影源码；actor真实写权限未知。"
+    },
+    "5": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/analysis_before_history.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/old_findings_delta.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "本包9066基线含8793修复/测试，目标不同但相关；其他旧跨题/划分重叠主张未授权复核，未判无泄露。"
+    },
+    "6": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/environment_record.json",
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/run_refs.json",
+        "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/environment_brief.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "修订H19本地wheelhouse+deny_all安装/窄测试可用是条件限定正证据；实际actor依赖/资产/权限/网络/资源及开发入口未核，不继承旧安装失败或反推actor成功。"
+    },
+    "7": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/environment_record.json",
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/run_refs.json",
+        "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/environment_brief.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "修订H19本地wheelhouse+deny_all安装/窄测试可用是条件限定正证据；实际actor依赖/资产/权限/网络/资源及开发入口未核，不继承旧安装失败或反推actor成功。"
+    },
+    "8": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/environment_record.json",
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/run_refs.json",
+        "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/environment_brief.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "修订H19本地wheelhouse+deny_all安装/窄测试可用是条件限定正证据；实际actor依赖/资产/权限/网络/资源及开发入口未核，不继承旧安装失败或反推actor成功。"
+    },
+    "10": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/environment_record.json",
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/run_refs.json",
+        "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/environment_brief.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "修订H19本地wheelhouse+deny_all安装/窄测试可用是条件限定正证据；实际actor依赖/资产/权限/网络/资源及开发入口未核，不继承旧安装失败或反推actor成功。"
+    },
+    "11": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/environment_record.json",
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/run_refs.json",
+        "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/environment_brief.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "修订H19本地wheelhouse+deny_all安装/窄测试可用是条件限定正证据；实际actor依赖/资产/权限/网络/资源及开发入口未核，不继承旧安装失败或反推actor成功。"
+    },
+    "13": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/environment_record.json",
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/run_refs.json",
+        "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/environment_brief.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "修订H19本地wheelhouse+deny_all安装/窄测试可用是条件限定正证据；实际actor依赖/资产/权限/网络/资源及开发入口未核，不继承旧安装失败或反推actor成功。"
+    },
+    "9": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/run_refs.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/analysis_before_history.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "指定H19的候选hash、源码投影、HEAD与/testbed/pydantic导入证据匹配；当前actor候选未知。"
+    },
+    "16": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/run_refs.json"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "仅指定noop/gold：gold原candidate.patch与本题gold字节一致，投影单源码；不证明任意未来候选完整。"
+    },
+    "17": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/run_refs.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/analysis_before_history.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "仅H19：base测试恢复并apply patch，setup RC0/restored1/expected1/absent0；未改源码解答。"
+    },
+    "18": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/run_refs.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/analysis_before_history.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "H19选择tests/test_json_schema.py实际执行到结束；分别保留install/test RC、收集/失败/skip/xfail，非全仓资格。"
+    },
+    "19": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/grading.json",
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/run_refs.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/analysis_before_history.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "按verbose原行精确核所有F2P/P2P身份；expected无missing/skipped。原总状态数与parser数差8不等于expected缺失；未完整审计parser。"
+    },
+    "20": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/test.patch",
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/run_refs.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/analysis_before_history.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "每个F2P由目标warning-as-error或is_required差异失败，gold对应通过，未以总分代替目标trace。"
+    },
+    "21": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/run_refs.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/analysis_before_history.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "H19单次noop/gold安装RC0、测试RC1/0及目标失败位置保留，没有以重试/总分掩盖失败。"
+    },
+    "22": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/old_findings_delta.md",
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/run_refs.json"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "O16早期runner日志未获本轮扩读；H19配方修订已明确，无法完整解释所有来源差异。"
+    },
+    "23": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/public_bundle.json",
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/test.patch",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/analysis_before_history.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "原例及既有公开API语义支持全部新增要求；gold不是规格；扩展争议按前稿限定。"
+    },
+    "24": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/test.patch",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/analysis_before_history.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/old_findings_delta.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "未见断言强制gold算法，存在合理非gold方向；未执行替代解，不能证明普遍无误拒。"
+    },
+    "25": {
+      "status": "issue",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/analysis_before_history.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/old_findings_delta.md",
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/test.patch"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "新增断言与已读P2P覆盖有限；只记录具体遗漏，不因采用非gold局部实现就判错误。"
+    },
+    "26": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/analysis_before_history.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/old_findings_delta.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "覆盖风险不等于已证gold新增回归。内外default组合规格歧义及已有metadata行为未证新增破坏。"
+    },
+    "27": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/gold.patch",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/analysis_before_history.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/old_findings_delta.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "gold对应题面且H19局部正证据充分，完整性/全局回归未证明；纠正旧gold_incomplete泛化。"
+    },
+    "28": {
+      "status": "pass",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/old_findings_delta.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/analysis_before_history.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "未增加生产断言或规格；拒绝以gold内部状态/通用实现作为额外硬门。"
+    },
+    "29": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/environment_brief.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/old_findings_delta.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "实际actor工作树/消息和未来修复可见性未捕获；审查者授权私有暴露单列usage。"
+    },
+    "30": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/environment_brief.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "未联网搜答案，实际actor工具/网络能否取得答案未知。"
+    },
+    "31": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/run_refs.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/old_findings_delta.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "H19保护/runner完整性仅局部正证据；旧R4未核，未完整审计当前控制面。"
+    },
+    "33": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/environment_brief.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/analysis_before_history.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "无实际actor/真实模型解题结果，不做能力、诚实完整性或训练阶段资格判断。"
+    },
+    "34": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/environment_brief.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/analysis_before_history.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "无实际actor/真实模型解题结果，不做能力、诚实完整性或训练阶段资格判断。"
+    },
+    "35": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/environment_brief.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/analysis_before_history.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "无实际actor/真实模型解题结果，不做能力、诚实完整性或训练阶段资格判断。"
+    },
+    "36": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/environment_brief.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/analysis_before_history.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "无实际actor/真实模型解题结果，不做能力、诚实完整性或训练阶段资格判断。"
+    },
+    "37": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/run_refs.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/old_findings_delta.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "指定H19修订为安装/离线依赖入口，test/gold与公开目标未改；本审查无题目/配方修订。"
+    },
+    "38": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/analysis_before_history.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "无本轮干净actor复验；H19单次条件可定位但不证明当前复现。"
+    },
+    "39": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/analysis_before_history.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/old_findings_delta.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "未执行共享修订跨题复验；不同任务版本不能互相替代。"
+    },
+    "40": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/analysis_before_history.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/old_findings_delta.md"
+      ],
+      "by": "main_pack12_pydantic",
+      "note": "语义P2P风险抽样、运行/替代解缺项仍可能漏检/误拒/偏差；封存合规不支持完整筛查pass。"
+    }
+  },
+  "issues": [
+    {
+      "category": "coverage",
+      "scope": "目标断言与相关旧行为，非全库语义覆盖",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/analysis_before_history.md",
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/test.patch",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/old_findings_delta.md"
+      ],
+      "proposed_action": "在后续解答审查中保留前稿双向需求—断言表的具体未覆盖行为；不机械扩张公开规格或评分。",
+      "status": "open",
+      "evidence_level": "static semantic review plus scoped historical RH2 statuses"
+    },
+    {
+      "category": "actor_environment_unknown",
+      "scope": "actual actor messages/worktree/PATH/permissions/assets/development workflow",
+      "evidence_refs": [
+        "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/environment_brief.md",
+        "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/environment_record.json"
+      ],
+      "proposed_action": "由任务二按正式actor入口取得消息/初态和题面公开API的运行证据，区分历史grader用户与actor。",
+      "status": "open",
+      "evidence_level": "not observed; historical grader is not actor evidence"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": [],
+    "evidence_refs": [
+      "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/public_bundle.json",
+      "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/test.patch",
+      "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/gold.patch"
+    ],
+    "rationale": "计划NON-TEST源码修复；本题可信恢复仅tests/test_json_schema.py；无新增排除依据。"
+  },
+  "revision_refs": [],
+  "disposition": {
+    "state": "needs_review",
+    "scope": "static_review",
+    "reason": "静态目标与H19局部对照成立，覆盖有限且实际actor开发条件未核。",
+    "unique_priority_next_step": "正式actor核验公开create_model原例、缺值ValidationError及初态/导入来源；Python3.8用typing_extensions.Annotated。",
+    "reviewer_status": "not read; no reviewer findings incorporated"
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "solver_eligible_material": false,
+    "reviewer_exposure": {
+      "gold": true,
+      "hidden_test_patch": true,
+      "expected_test_ids": true,
+      "authorized_historical_run_logs": true,
+      "authorized_prior_quality_record": true,
+      "independent_public_read": true,
+      "other_reviewer_outputs": false,
+      "root_aggregate": false
+    },
+    "exposure_scope": "Only this package two authorized tasks and explicitly released own historical records. Do not pass audit outputs to independent solver. Actual actor leakage remains unknown.",
+    "history_release": "Explicit parent release received after both analysis hashes verified; sealed drafts unchanged."
+  },
+  "costs": {
+    "tokens": null,
+    "estimated_usd": null,
+    "cpu_seconds": null,
+    "wall_time_seconds": null,
+    "note": "No current project execution or observed token/cost totals; old review minutes are not reused."
+  }
+}

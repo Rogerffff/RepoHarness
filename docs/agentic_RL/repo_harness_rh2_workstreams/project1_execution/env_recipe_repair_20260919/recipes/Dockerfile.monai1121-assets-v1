@@ -1,0 +1,8 @@
+# 只预置当前 torchvision 实际请求的权重；不改测试、MONAI 或资源档位。
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+ENV TORCH_HOME=/opt/rh2/torch
+RUN mkdir -p /opt/rh2/torch/hub/checkpoints \
+ && /opt/miniconda3/envs/testbed/bin/python -c "import urllib.request; urllib.request.urlretrieve('https://download.pytorch.org/models/resnet50-0676ba61.pth', '/opt/rh2/torch/hub/checkpoints/resnet50-0676ba61.pth')" \
+ && chmod -R a+rX /opt/rh2/torch \
+ && sha256sum /opt/rh2/torch/hub/checkpoints/resnet50-0676ba61.pth

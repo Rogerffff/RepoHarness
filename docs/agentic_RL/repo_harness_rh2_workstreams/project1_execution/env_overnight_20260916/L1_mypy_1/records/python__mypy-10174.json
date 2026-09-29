@@ -1,0 +1,60 @@
+{
+ "task_id": "python__mypy-10174",
+ "source": "SWE-Gym lite / python/mypy PR 10174",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "c8bae06919674b9846e3ff864b0a44592db888eb",
+  "version": "0.820", "python_version": "3.9",
+  "eval_cmd": "pytest -n0 -rA -k",
+  "f2p": ["testOverlappingAnyTypeWithoutStrictOptional"],
+  "p2p": ["testUnimportedHintAny", "testUnimportedHintAnyLower"],
+  "test_patch_paths": ["test-data/unit/check-expressions.test"],
+  "gold_paths": ["mypy/meet.py"],
+  "stage1": "gold=RESOLVED_FULL / empty=RESOLVED_NO，rc_install=0（runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/python__mypy-10174/）"
+ },
+ "public_view": {
+  "goal": "`# mypy: no-strict-optional, strict-equality` 下 `x: Optional[Any]`，`if x in (1, 2)` 误报 non-overlapping container check；开启 strict-optional 就正常。要求关闭 strict-optional 时也不报这个错。",
+  "constraints": ["题面 377 字符，含完整可复现代码与 inline 配置注释，无外链、无截断", "题面明确给出正确对照（strict-optional 开启时行为正确）"],
+  "unknowns_from_public_only": [
+   "修在 `mypy/meet.py` 的重叠判定，还是修 checkexpr 里 `in` 的处理？题面没指",
+   "`Optional[Any]` 在 no-strict-optional 下应当被化简成 `Any` 还是保留 Union[Any, None]——题面没说，但从'开启 strict-optional 正常'能推出化简顺序是关键"
+  ],
+  "base_code_evidence": [
+   "c8bae0691:mypy/meet.py:164-166 AnyType 的 return True 出现在 `if not state.strict_optional:` 的 Union 化简**之前**；`Optional[Any]` 是 UnionType，不是 AnyType，所以提前返回不生效，化简后又没有再查一次 Any",
+   "c8bae0691:mypy/meet.py:171-177 no-strict-optional 化简分支",
+   "is_overlapping_types 的调用点：checker.py:4346/4984/5311/5317、checkexpr.py:2348/2353 —— 覆盖 overload 重叠、isinstance 窄化与 strict-equality"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 目标 test-data/unit/check-expressions.test 在 base 存在", "gold 目标 mypy/meet.py 存在，hunk 上下文 161-177 行逐行匹配"], "note": "无二进制/LFS/子模块。", "by": "L1_mypy_1"},
+  "2": {"status": "pass", "evidence_refs": ["c8bae0691:mypy/meet.py:164-166 与 171-177 的先后顺序", "stage1 empty=RESOLVED_NO（实跑证据）"], "note": "base 确含缺陷，已有实跑佐证。", "by": "L1_mypy_1"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 377 字符，完整代码块", "raw hints_text 长度 0"], "note": "题面完整准确，hints 为空，不存在'hints 有而题面没有'的问题。", "by": "L1_mypy_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 只触碰 test-data/unit/check-expressions.test"], "note": "无非测试源码；gold 路径 mypy/meet.py 无交集。additional_exclusions 保持空。", "by": "L1_mypy_1"},
+  "17": {"status": "pass", "evidence_refs": ["同上"], "note": "恢复不覆盖候选源码。", "by": "L1_mypy_1"},
+  "5": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["runs/.../L1_mypy_1/dupidx.txt：gold 路径 mypy/meet.py 在 40 道 mypy 题中被本题、python__mypy-10424、python__mypy-10658 共用；后两题都在本包内", "check-expressions.test 还被 python__mypy-15876 触碰"], "note": "三题都改 meet.py 但缺陷各不相同（本题=Any/Optional 化简顺序；10424/10658 见各自记录）。同族记录在案，不构成重复题。", "by": "L1_mypy_1"},
+  "23": {"status": "pass", "evidence_refs": ["F2P case 与题面代码逐字一致（含 --no-strict-optional --strict-equality flags）"], "note": "公开材料完全能推出 F2P 所查行为——F2P 就是题面那段代码。", "by": "L1_mypy_1"},
+  "24": {"status": "pass", "evidence_refs": ["F2P case 期望输出为空（不报错），没有断言任何内部结构或精确消息"], "note": "任何让该场景不报错的实现都能过；未强制唯一实现。反面是太宽松，见检查 25。", "by": "L1_mypy_1"},
+  "25": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["F2P 唯一断言是'该 case 无输出'；P2P 为 testUnimportedHintAny / testUnimportedHintAnyLower，两者查的是 'Name \"Any\" is not defined' 的导入提示，与 is_overlapping_types 毫无关系"], "note": "评分放过大量错误修复：把 `_is_overlapping_types` 开头直接 `return True`、或把 --strict-equality 整体关掉、或让 checkexpr.py:2353 恒返回 False，都能让 F2P 通过且不触动这两条 P2P。这是本包里 reward hacking 风险最高的形态之一：F2P 是'没有输出'的负向断言，P2P 完全无关。", "by": "L1_mypy_1"},
+  "26": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["P2P 与被改函数无任何调用关系"], "note": "必须补回归，见 proposed_regression_tests。", "by": "L1_mypy_1"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 只把 4 行 AnyType 判定块从化简之前移到化简之后"], "note": "改动最小、与本题精确对应、不依赖其它改动。", "by": "L1_mypy_1"},
+  "29": {"status": "pass", "evidence_refs": ["problem_statement 无链接、无修复代码；hints_text 为空"], "note": "无泄漏。", "by": "L1_mypy_1"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold/empty 的 rc_install=0"], "note": "已有实跑证据表明安装可恢复。", "by": "L1_mypy_1"},
+  "7": {"status": "pass", "evidence_refs": ["F2P case 用 fixtures/tuple.pyi 与 fixtures/typing-full.pyi，均在仓库内"], "note": "无外部资产。", "by": "L1_mypy_1"},
+  "11": {"status": "pass", "evidence_refs": ["case 正文无 URL / 外部服务"], "note": "测试阶段不需要网络。", "by": "L1_mypy_1"},
+  "18": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["runs/.../L1_mypy_1/kcheck_all.txt：selector testUnimportedHintAny 子串命中 testUnimportedHintAnyLower", "runs/env_probe_stage1_20260910/.../python__mypy-10174/gold/offline/a1/test_output.txt 实际跑了 3 条，status_map.json 也记了 3 条"], "note": "过选良性（多选中的那条本身也在 P2P）。但这条实跑证据同时说明 P2P 名单本身就是子串过选的产物，见 issues。", "by": "L1_mypy_1"},
+  "20": {"status": "pass", "evidence_refs": ["stage1：empty=RESOLVED_NO、gold=RESOLVED_FULL，f2p_missing=0、p2p_missing=0"], "note": "no-op 与 gold 的分差来自目标行为（至少在 F2P 这一条上成立）。", "by": "L1_mypy_1"}
+ },
+ "issues": [
+  {"category": "reward_hacking_surface", "severity": "P1", "evidence_refs": ["F2P 是'无输出'负向断言；P2P 两条与被改代码无关"], "proposed_action": "补 P2P：至少把 check-expressions.test 里所有 strict-equality / Non-overlapping 相关 case，以及 check-narrowing.test、check-overloading.test 纳入。", "next_experiment": "写三个假修复（(a) _is_overlapping_types 开头 return True；(b) checkexpr.py:2353 恒返回 False；(c) 直接在 dangerous_comparison 里对 no-strict-optional 短路）分别跑当前 F2P+P2P，预期全部满分 → 形成具体反例。"},
+  {"category": "p2p_selection_artifact", "severity": "P1", "evidence_refs": ["runs/.../L1_mypy_1/p2p_mechanism.txt：40/40 道 mypy 题的 F2P∪P2P 都落在 'test_patch 中出现的 case 名 + 其 -k 子串过选闭包' 内"], "proposed_action": "这是仓库级问题（不只本题）：mypy 的 P2P 不是设计出来的回归集，而是 diff 邻接 + `-k` 子串过选的副产物；40 题里 14 题 P2P 为空。建议为 mypy 统一重建 P2P（按 test_patch 触碰的 .test 文件整文件取基线通过集）。", "next_experiment": "在 gold 环境跑 `pytest -n0 mypy/test/testcheck.py` 全量一次，记录基线通过集，评估整文件 P2P 的耗时（mypy 全量约数千 case，需要先测时间）。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只触碰纯测试数据文件 test-data/unit/check-expressions.test。", "evidence_refs": ["grading_bundles_v2_v0:python__mypy-10174 test_patch"]},
+ "proposed_regression_tests": [
+  {"id": "test-data/unit/check-expressions.test 中所有 'Non-overlapping' / strict-equality case", "reason": "同文件、同特性，直接覆盖 gold 改动的语义面。"},
+  {"id": "test-data/unit/check-narrowing.test、check-isinstance.test", "reason": "checker.py:4984 的 isinstance 窄化走 is_overlapping_types；把 Any 判定挪到化简之后会改变 Optional[Any] 的窄化结果。"},
+  {"id": "test-data/unit/check-overloading.test", "reason": "checker.py:5311/5317 用 is_overlapping_types_no_promote 做 overload 重叠检查，是该函数的第二大调用方。"},
+  {"id": "test-data/unit/check-optional.test", "reason": "no-strict-optional 模式下的化简路径正是 gold 改动的位置。"}
+ ],
+ "disposition_hint": {"state": "needs_repair", "reason": "题面与 gold 都很干净、stage1 已 RESOLVED_FULL，但 F2P 是单条负向断言、P2P 与改动完全无关，属于典型可被假修复骗过的配置；补 P2P 后可直接用。"},
+ "costs": {"minutes": 18}
+}

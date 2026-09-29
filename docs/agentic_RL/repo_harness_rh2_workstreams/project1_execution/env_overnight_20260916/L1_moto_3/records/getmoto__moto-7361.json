@@ -1,0 +1,52 @@
+{
+ "task_id": "getmoto__moto-7361",
+ "source": "SWE-Gym lite (swe_gym_lite_full_f70b1a29)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "s2/ingest/public_bundles_v0.jsonl#getmoto__moto-7361",
+  "grading": "s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-7361",
+  "validation": "s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-7361",
+  "base_commit": "b9622875f5734088dbe213add3b06b19425b2f1b",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-7361/gold/offline/a1/"
+ },
+ "public_view": {
+  "goal": "功能请求：apigateway 的 update_usage_plan 支持 `{'op': 'add', 'path': '/apiStages', 'value': '<apiId>:<stage>'}`，把 api-gw 挂到 usage plan 上。题面明确 value 的格式是 `f'{api_gw_id}:{api_gw_stage}'`。",
+  "constraints": ["题面只要求 /apiStages 这一条路径的 add 操作", "真实 boto3 下该调用可用"],
+  "unknowns_from_public_only": [
+   "题面没说 add 操作还要支持 /productCode、/quota/limit、/quota/offset、/quota/period、/throttle/burstLimit、/throttle/rateLimit —— 而 F2P 全都断言了",
+   "题面没说 /quota/offset 这条路径（base 连 replace 都不支持）",
+   "题面没说 throttle 的值需要转成 int"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 只碰 tests/test_apigateway/test_apigateway.py（base 已存在，F2P test_update_usage_plan 是 base 已有的测试名——本包第四例）", "golden_patch 只碰 moto/apigateway/models.py 的 UsagePlan.apply_patch_operations 与 update_usage_plan 的 docstring"], "note": "无二进制/LFS/子模块。", "by": "L1_moto_3"},
+  "2": {"status": "pass", "evidence_refs": ["base moto/apigateway/models.py:873-891 apply_patch_operations 只处理 `op == 'replace'`，完全没有 add 分支，也没有 /apiStages 分支"], "note": "base 确实不支持题面所求的功能（功能缺失型题目，不是 bug 修复）。", "by": "L1_moto_3"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 509 字符，给出了确切调用与 value 格式，无外链/图片/截断", "hints_text 为空"], "note": "题面简短但自足 —— 就它自己要求的那一条功能而言。", "by": "L1_moto_3"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 触碰路径全集：tests/test_apigateway/test_apigateway.py"], "note": "无非测试源码路径；gold 触碰 moto/apigateway/models.py，非测试样路径。", "by": "L1_moto_3"},
+  "5": {"status": "pass", "evidence_refs": ["全局索引：该测试文件与 moto/apigateway/models.py 在 216 题里只被本题使用"], "note": "无重复/派生。", "by": "L1_moto_3"},
+  "17": {"status": "pass", "evidence_refs": ["同 4"], "note": "additional_exclusions 空。", "by": "L1_moto_3"},
+  "23": {"status": "issue", "evidence_refs": ["题面只要求 /apiStages 的 add", "F2P 断言 add['apiStages']、add['productCode']、add['quota'] == {'limit':1,'offset':2,'period':'DAY'}、add['throttle'] == {'burstLimit':11,'rateLimit':12}", "gold 为此新增了 `if op['op'] in ['add','replace']` 的共享分支、新增 `/quota/offset` 路径、并把 throttle 两项改成 int(value)"], "note": "**P1 要求远超题面**：题面是一个单点功能请求，判分却要求把整个 add 操作族补齐（6 条额外路径），其中 `/quota/offset` 连 base 的 replace 都不支持、题面也从未出现。只实现题面所求（/apiStages 的 add）会在第 2 条断言就失败。", "by": "L1_moto_3"},
+  "24": {"status": "issue", "evidence_refs": ["gold 把 throttle 的两项从 `= value` 改成 `= int(value)`，而同一个函数里 quota 的 limit/period/offset 仍然是原样 `= value`", "base 的既有断言 `assert response['quota']['limit'] == 1000`（对 replace 传的字符串 '1000'）在 base 上就通过 —— 说明 integer shape 的字符串→数字转换发生在 botocore 侧，moto 不需要转", "新断言 `add['throttle'] == {'burstLimit': 11, 'rateLimit': 12}` 则需要 moto 自己转"], "note": "**P2**：同一函数里两组字段的处理方式不一致（quota 不转、throttle 要转），差异源于 botocore 对 integer 与 double shape 的不同处理，既不在题面也不在代码注释里。照抄上面 quota 那几行写法（`self.throttle['rateLimit'] = value`）的合理实现会被拒。", "by": "L1_moto_3"},
+  "25": {"status": "pass", "evidence_refs": ["test_patch 把 create_usage_plan 的 payload 里 quota/throttle/apiStages 三项删掉，使 add 从空状态开始", "F2P 后半段仍保留 base 原有的 replace 断言"], "note": "设计上有意让 add 与 replace 两条路径都被验证，且初始状态为空可排除“值本来就对”的假通过。硬编码空间小。", "by": "L1_moto_3"},
+  "26": {"status": "pass", "evidence_refs": ["collected 69 items = F2P 1 + P2P 68，全过"], "note": "只跑 test_apigateway.py；同目录 test_apigateway_stage.py、test_apigateway_deployments.py 等不跑。见 proposed_regression_tests。", "by": "L1_moto_3"},
+  "27": {"status": "issue", "evidence_refs": ["golden_patch 除了加 add 支持，还把 productCode 从 replace-only 块移进共享块、新增 /quota/offset、把 throttle 改 int(value)，并在 update_usage_plan 上加了一段说明支持范围的 docstring"], "note": "gold 正确、不依赖其它改动；但它明显超出题面所述问题（题面只要 /apiStages）。按检查 27 的口径记为 issue：gold 含题面未要求的功能扩展，而这些扩展恰恰被 F2P 强制。另：base 第 876 行 `value = op['value']` 对没有 value 的操作（如 remove）会 KeyError，gold 未处理，也无用例。", "by": "L1_moto_3"},
+  "29": {"status": "pass", "evidence_refs": ["hints_text 为空；题面无 PR/commit 链接、无修复代码"], "note": "无静态泄漏。", "by": "L1_moto_3"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold 69 passed，3.49s"], "note": "纯 mock。", "by": "L1_moto_3"},
+  "7": {"status": "issue", "evidence_refs": ["本包共性 install rc=2"], "note": "见包级 issue。", "by": "L1_moto_3"},
+  "11": {"status": "pass", "evidence_refs": ["apigateway 测试全部进程内 mock"], "note": "无外部服务。", "by": "L1_moto_3"}
+ },
+ "issues": [
+  {"category": "grading_far_exceeds_statement", "severity": "P1", "evidence_refs": ["题面只求 /apiStages 的 add；F2P 额外要求 6 条路径 + /quota/offset 新路径 + throttle 的 int 转换"], "proposed_action": "标记为“判分要求远超题面”的样本。若要用作训练/评测，应改写题面把 add 操作族与 /quota/offset 写进去；否则解题率会被这条不可见要求压低。", "next_experiment": "只实现题面所求（add + /apiStages 拆分）的补丁跑 F2P，确认在 `assert add['productCode'] == 'mypc'` 处失败（预期失败）。"},
+  {"category": "hidden_type_coercion_requirement", "severity": "P2", "evidence_refs": ["gold 对 throttle 用 int(value)、对 quota 不转；base 已有断言证明 quota 的转换在 botocore 侧"], "proposed_action": "随 P1 一并在题面里点明，或接受为难度噪声。", "next_experiment": "把 throttle 两行写成 `= value` 跑 F2P，确认 `add['throttle']` 断言失败（预期失败）。"},
+  {"category": "residual_robustness_gap", "severity": "P3", "evidence_refs": ["models.py:876 `value = op['value']` 对 remove/copy 操作会 KeyError；gold 的新 docstring 自述 remove/copy 'Nothing yet'"], "proposed_action": "仅记录。", "next_experiment": "无。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只含测试文件；沿用默认空排除。", "evidence_refs": ["test_patch 路径全集 = tests/test_apigateway/test_apigateway.py"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_apigateway/test_apigateway.py::test_usage_plan_keys 与其余 usage plan 用例", "reason": "已在 P2P，覆盖 UsagePlan.to_json 的其它消费路径，防止解题者改坏 api_stages 的结构。"},
+  {"id": "新增：`{'op': 'remove', 'path': '/apiStages', 'value': 'foo:bar'}` 与不带 value 的操作", "reason": "apply_patch_operations 第一行就无条件取 op['value']（models.py:876），remove/copy 会 KeyError；gold 的 docstring 自己承认未支持，但无任何用例把这个边界钉住。"},
+  {"id": "新增：对同一 apiId:stage 重复 add", "reason": "gold 用 `self.api_stages.append(...)` 无去重，重复 add 会产生重复条目，真实 AWS 不会；无用例覆盖。"},
+  {"id": "tests/test_apigateway/ 目录下其余文件（test_apigateway_stage.py 等）", "reason": "usage plan 与 stage 的关联在这些文件里，是 /apiStages 语义的下游观察点，当前都不跑。"}
+ ],
+ "disposition_hint": {"state": "needs_review", "reason": "base 确实缺该功能、gold 正确、文件边界干净、F2P/P2P 对照设计合理；但判分要求比题面多出 6 条 add 路径、一条全新的 /quota/offset，以及只对 throttle 生效的 int 转换，这些公开材料一概推不出。是否接受这种“题面单点、判分整族”的落差需要裁定。"},
+ "costs": {"minutes": 17}
+}

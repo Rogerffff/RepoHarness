@@ -1,0 +1,586 @@
+{
+  "task_id": "r2e_gym_subset::coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266",
+  "instance_id": "coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266",
+  "record_kind": "static_review（沿用环境筛查记录字段，不是生产 schema）",
+  "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0；material_revisions=[]；expected sha256:2388143c5142b42bf2ae3a204347e7be37dac6cfda35e22fccc072dc52e6c176；hidden_tests_tree sha256:ddfa078c0bb2122146e75f9ce12459d501723bb74c69dbe87d6d7f4c198f7bb4",
+  "source_adapter_ref": {
+    "spec_vendor_id": "r2e_gym_subset_e8b9fcbc",
+    "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+    "source_commit_hash": "97997d2cd6801d0335e3fa162b719d6f8c160266",
+    "base_commit": "17204597c33db2cc396d32b8f9931c35f2518675",
+    "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl（line_sha256 85282b9c…）",
+    "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl:8（line_sha256 61d3b372…）",
+    "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/validation_bundles_v0.jsonl:8（line_sha256 41baba5a…）",
+    "parser_id": "r2e_prime_pytest_v1",
+    "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe"
+  },
+  "recipe_ref": {
+    "derived_image": "r2e_derive_v1",
+    "recipe_sha256": "sha256:0da821a15fa389289f524c60d3a421bc940cce753e4ecf3d53560b7ab6b31df9",
+    "derived_image_ref": "rh2-r2e-derived/coveragepy:97997d2cd680-r2e_derive_v1",
+    "grading_image_id": "sha256:ab9a4d0fc2c9ed4903167565cb7ddfa9e65de26818d54dcf08a8b0aa6c7c4b96",
+    "devcheck_image_id": "sha256:59ba67259eabd5f95679b56059b093b2c6d4a5a0bde8c23cc5332abc1d214300（同一 ref 与配方的另一次构建）",
+    "base_image_digest": "sha256:802b61d54cb5b90b73065ba66d5458bfa04b678a79918eaf5bb5a84d86b2c42d",
+    "resources": "default（2 CPU / 4 GiB / /tmp 1 GiB / pids 512）"
+  },
+  "code_snapshot_ref": {
+    "static_materials": "runs/r2e_static_prep_20260924/v3/{public,private}/coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266/",
+    "grader_scripts_digest": "sha256:ecf73086eaecd24dd678b93ed9cccfb8761d21c0360fed8a0d0e34be989859f9（R-f noop 账本第 8 行 scripts_digest）",
+    "env_round_snapshot": "runs/r2e_snapshot_20260923.sha256（沿用环境轮记录，本轮未复核）"
+  },
+  "facts_ref": {
+    "env_round_record": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266/screening_record.json",
+      "role": "环境轮旧记录（environment_qualified）；逐条对照见 old_findings_delta.md"
+    },
+    "env_round_facts": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266/facts.json",
+      "role": "环境轮汇总；本轮用下列原账本与日志复核"
+    },
+    "rf_noop": {
+      "ledger": "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl",
+      "line": 8,
+      "role": "noop",
+      "condition": "当前材料；r2e_derive_v1（镜像 ab9a4d0f）；默认 profile；grader uid 54322；network deny_all",
+      "log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-c_8ee3ccfc.eval.log",
+      "log_sha256": "sha256:290d88a6479a3938ae8d4802e3a2e117e7ef19415e227532080ccb042c796ae8",
+      "result": "reward 0；43/44；只错 ConfigTest.test_tweaks_paths_after_constructor（config.py:463 抛 No such option: 'paths'）"
+    },
+    "rf_gold": {
+      "ledger": "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl",
+      "line": 8,
+      "role": "gold",
+      "condition": "同 rf_noop",
+      "log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-c_10174c98.eval.log",
+      "log_sha256": "sha256:8bcbaa113516808cc504892577b3589fcae410a8d21961758e6e86fab9387bfd",
+      "result": "reward 1；44/44；projection.included_paths=['coverage/config.py']"
+    },
+    "rerun_noop": {
+      "ledger": "runs/r2e_env_repair_20260924/_rerun2/ledger_noop.jsonl",
+      "line": 8,
+      "role": "noop（中央复跑）",
+      "condition": "同 rf_noop",
+      "log": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_4e5c6a85.eval.log",
+      "log_sha256": "sha256:5ac5d933f7e899756a9dc646f04915f4fcfa1ca4a204386105696bb1df1b76f3",
+      "result": "reward 0；43/44；与 rf_noop 逐键相同"
+    },
+    "rerun_gold": {
+      "ledger": "runs/r2e_env_repair_20260924/_rerun2/ledger_gold.jsonl",
+      "line": 8,
+      "role": "gold（中央复跑）",
+      "condition": "同 rf_noop",
+      "log": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_f2cf72dd.eval.log",
+      "log_sha256": "sha256:3a0f3e74da687bf5a5bb533d57f760f16c24a4eae14a1162ebb871a58bc0e209",
+      "result": "reward 1；44/44；与 rf_gold 逐键相同"
+    },
+    "m3_gold": {
+      "ledger": "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl",
+      "lines": [
+        29,
+        76
+      ],
+      "role": "独立 runner 参考（来源镜像 digest 802b61d5…，来源版材料，network none）",
+      "logs": [
+        "runs/env_overnight_20260916/M3/gold_ledger/logs_r2e/coveragepy/97997d2cd680/gold/a1/test_output.txt",
+        "runs/env_overnight_20260916/M3/gold_ledger/logs_r2e/coveragepy/97997d2cd680/gold/a2/test_output.txt"
+      ],
+      "result": "gold 两次都是 44 passed；a1/git_gold.diff 与 gold.patch 逐字节相同"
+    },
+    "devcheck_agent": {
+      "path": "runs/r2e_actor_20260925/devcheck/coveragepy__97997d2cd6801d0335e3fa162b71/orig/",
+      "role": "正式启动路径 + Claude Code 2.1.205 + 桩端点；agent uid 54321；镜像 59ba6725",
+      "files": [
+        "commands_with_preflight.json",
+        "captures/*.out",
+        "prelaunch.json",
+        "activation_check.json",
+        "attempt.json",
+        "stub/requests/messages_000.json"
+      ]
+    },
+    "devcheck_private_gold": {
+      "path": "runs/r2e_actor_20260925/devcheck/coveragepy__97997d2cd6801d0335e3fa162b71/private_gold/private_control.json",
+      "role": "同一派生镜像的一次性私有容器；root；不联网；应用 gold 后执行同一批公开命令"
+    },
+    "old_probe": {
+      "path": "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266/agent_probe.log",
+      "role": "环境轮 P1 探针（镜像 ab9a4d0f；agent 54321；network none）；公开测试命令见 rh2/scripts/r2e_env/dev_probe_agent.sh:84–87"
+    },
+    "cross_task_scan": {
+      "path": "runs/r2e_static_prep_20260924/cross_task_gold_scan.json",
+      "role": "机械比对线索"
+    },
+    "other_public_packages": {
+      "paths": [
+        "runs/r2e_static_prep_20260924/v3/public/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/worktree/（coverage/config.py:428,459；tests/test_config.py:339–361；doc/changes.rst:75–88）",
+        "runs/r2e_static_prep_20260924/v3/public/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/worktree/（与本题 diff -rq 无差异）"
+      ],
+      "role": "同仓其它题的公开包（未读私有包）"
+    },
+    "review_files": {
+      "dir": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/results/coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266/",
+      "files": [
+        "public_read.md",
+        "analysis_before_history.md",
+        "old_findings_delta.md",
+        "card.md"
+      ]
+    }
+  },
+  "checks": {
+    "1": {
+      "status": "pass",
+      "note": "题面、base、gold、隐藏测试、expected、run_tests.sh 对应上游 97997d2c；gold.patch 与 M3 git_gold.diff 逐字节相同；隐藏测试 = 公开 tests/test_config.py + 目标测试；各哈希与评分面一致",
+      "evidence_refs": [
+        "rf_gold",
+        "m3_gold",
+        "review_files"
+      ]
+    },
+    "2": {
+      "status": "pass",
+      "note": "initial_diff 为 0 字节；noop 只错目标键，在 config.py:463 的 get_option 处抛出与题面逐字相同的异常",
+      "evidence_refs": [
+        "rf_noop",
+        "rerun_noop"
+      ]
+    },
+    "3": {
+      "status": "unknown",
+      "note": "模型实际收到的消息没有捕获：devcheck 的首条 user 消息是核对指令，user_prompt.txt 是静态渲染。v3 公开提示已是 .venv 措辞，旧 conda 措辞已过时",
+      "evidence_refs": [
+        "devcheck_agent"
+      ]
+    },
+    "4": {
+      "status": "pass",
+      "note": "合法修复只改 coverage/ 下的源码；gold 投影 included_paths=['coverage/config.py']、ignored_paths=[]；不需要额外排除",
+      "evidence_refs": [
+        "rf_gold"
+      ]
+    },
+    "5": {
+      "status": "issue",
+      "note": "见 ISS-2：与 f5eb5f21 同一初态；本题修复与加强版测试在 ea6906b0 初态中；本题初态含 5dbbe143、016af5f6 的修复",
+      "evidence_refs": [
+        "cross_task_scan",
+        "other_public_packages"
+      ]
+    },
+    "6": {
+      "status": "pass",
+      "note": "Python 3.7.9 venv；pytest 4.6.6 + xdist 1.30.0 / flaky 3.6.1 / hypothesis 4.41.2 / forked 1.6.0；mock、unittest_mixins、toml 可用（正式链 devcheck）",
+      "evidence_refs": [
+        "devcheck_agent",
+        "old_probe"
+      ]
+    },
+    "7": {
+      "status": "pass",
+      "note": "不需要外部资产；测试在临时目录里生成文件；tests/modules 在工作树中",
+      "evidence_refs": [
+        "devcheck_agent"
+      ]
+    },
+    "8": {
+      "status": "pass",
+      "note": "agent 54321 下复现与公开测试可跑；grader 54322 下评分可跑",
+      "evidence_refs": [
+        "devcheck_agent",
+        "rf_noop",
+        "rf_gold"
+      ]
+    },
+    "9": {
+      "status": "pass",
+      "note": "grader 与 actor 都从 /testbed/coverage 导入（开发式安装，cwd=/ 也一样）；gold 生效",
+      "evidence_refs": [
+        "rf_gold",
+        "devcheck_agent"
+      ]
+    },
+    "10": {
+      "status": "pass",
+      "note": "正式链上 pr1_1、pr4_2、pr7_7 能区分修复前后；test_config.py 用 -o addopts='' 跑 43 passed；默认 addopts 的原命令形式由旧探针在同一派生镜像实测可用（test_annotate.py：xdist 起节点、rc 0）。devcheck 里 pr5_* 的 rc=4 是伪影：核对命令加了 -p no:cacheprovider，与 setup.cfg 的 --failed-first 冲突",
+      "evidence_refs": [
+        "devcheck_agent",
+        "devcheck_private_gold",
+        "old_probe"
+      ]
+    },
+    "11": {
+      "status": "pass",
+      "note": "各阶段都不需要网络；grader 为 deny_all；actor 的外部 DNS 与直连都被拒绝",
+      "evidence_refs": [
+        "rf_gold",
+        "devcheck_agent"
+      ]
+    },
+    "12": {
+      "status": "not_applicable",
+      "note": "不涉及外部服务"
+    },
+    "13": {
+      "status": "pass",
+      "note": "内存峰值 272–282 MB（4 行账本）；测试阶段约 2–3 s",
+      "evidence_refs": [
+        "rf_noop",
+        "rf_gold",
+        "rerun_noop",
+        "rerun_gold"
+      ]
+    },
+    "14": {
+      "status": "pass",
+      "note": "RH2 noop 两次、gold 两次与 M3 gold 两次逐键一致，只有 xdist 顺序不同",
+      "evidence_refs": [
+        "rf_noop",
+        "rerun_noop",
+        "rf_gold",
+        "rerun_gold",
+        "m3_gold"
+      ]
+    },
+    "15": {
+      "status": "not_checked",
+      "note": "并发与缓存复用没测；每次评分都是 fresh 容器"
+    },
+    "16": {
+      "status": "pass",
+      "note": "重放层面：gold 补丁经投影交付，只含 coverage/config.py，基线的未跟踪文件没带入；正式 rollout 的冻结与投影未在本题实测",
+      "evidence_refs": [
+        "rf_gold"
+      ]
+    },
+    "17": {
+      "status": "pass",
+      "note": "grader 只替换 r2e_tests/，不恢复也不覆盖源码",
+      "evidence_refs": [
+        "rf_gold"
+      ]
+    },
+    "18": {
+      "status": "pass",
+      "note": "segment_completed；44 个键在段内解析；num_parsed_outside_segment=0",
+      "evidence_refs": [
+        "rf_noop",
+        "rf_gold"
+      ]
+    },
+    "19": {
+      "status": "pass",
+      "note": "44 个键唯一、只有一个隐藏文件、没有 SKIP/XFAIL；期望全是 PASSED",
+      "evidence_refs": [
+        "rf_gold"
+      ]
+    },
+    "20": {
+      "status": "pass",
+      "note": "noop 与 gold 只在目标键上不同，原因就是目标行为",
+      "evidence_refs": [
+        "rf_noop",
+        "rf_gold"
+      ]
+    },
+    "21": {
+      "status": "pass",
+      "note": "4 次运行都没有执行失败",
+      "evidence_refs": [
+        "rf_noop",
+        "rf_gold",
+        "rerun_noop",
+        "rerun_gold"
+      ]
+    },
+    "22": {
+      "status": "pass",
+      "note": "M3 在来源镜像上 gold 两次 44 passed，与 RH2 一致",
+      "evidence_refs": [
+        "m3_gold"
+      ]
+    },
+    "23": {
+      "status": "pass",
+      "note": "要求充分，可由公开材料推断；歧义 A1–A6 不妨碍开发；题面说异常在 set 时抛出，实际先在 get 抛出，消息相同"
+    },
+    "24": {
+      "status": "pass",
+      "note": "精确断言都来自题面示例或公开旧测试；A1 静态预期 1，待实跑",
+      "evidence_refs": [
+        "review_files"
+      ]
+    },
+    "25": {
+      "status": "issue",
+      "note": "见 ISS-1：目标测试只经 Coverage 对象、从空起点做一次往返；W1、W2 静态推断得 1",
+      "evidence_refs": [
+        "review_files"
+      ]
+    },
+    "26": {
+      "status": "pass",
+      "note": "gold 只加特判；43 个回归键 = 公开 test_config.py；K5、K6 不参与评分，但 gold 没碰这两条路径",
+      "evidence_refs": [
+        "rf_gold"
+      ]
+    },
+    "27": {
+      "status": "pass",
+      "note": "gold 满足 R1–R7；私有 gold 对照 pr1_1、pr4_2、pr7_7 都成功",
+      "evidence_refs": [
+        "devcheck_private_gold"
+      ]
+    },
+    "28": {
+      "status": "not_applicable",
+      "note": "无修订"
+    },
+    "29": {
+      "status": "pass",
+      "note": "git 清理后 refs、remotes、reflog 都是 0，不可达对象 0，HEAD 无子提交；system 中的 gitStatus 只列到 base；共享机制引用其它审查",
+      "evidence_refs": [
+        "devcheck_agent",
+        "old_probe"
+      ]
+    },
+    "30": {
+      "status": "pass",
+      "note": "不联网；但修复自 coverage 5.1（issue 967）起公开，预训练是否见过未知",
+      "evidence_refs": [
+        "other_public_packages"
+      ]
+    },
+    "31": {
+      "status": "unknown",
+      "note": "共享控制面：隐藏测试导入候选可改的 tests/coveragetest.py，评分时 pytest 读候选可改的 setup.cfg；本题只记适用，未做攻击验证"
+    },
+    "32": {
+      "status": "pass",
+      "note": "目标测试验证的是行为（get/set 往返），不是文本或文件存在；覆盖不足记在 25"
+    },
+    "33": {
+      "status": "not_checked",
+      "note": "需要真实模型"
+    },
+    "34": {
+      "status": "not_checked",
+      "note": "需要真实模型"
+    },
+    "35": {
+      "status": "not_checked",
+      "note": "需要真实模型；通过的真实解要检查是否属于 W1 型"
+    },
+    "36": {
+      "status": "not_checked",
+      "note": "需要目标基座"
+    }
+  },
+  "issues": [
+    {
+      "id": "ISS-1",
+      "checks": [
+        "25"
+      ],
+      "kind": "test_coverage_gap",
+      "severity": "medium（作 reward 使用时）/ low（诊断用途）",
+      "summary": "唯一目标键 ConfigTest.test_tweaks_paths_after_constructor 只经 Coverage 对象、从空的 [paths] 起点做一次 set→get 往返，没有覆盖以下公开要求：插件拿到 CoverageConfig 时可用（R5）、设置的值被 combine() 使用（R6）、替换语义（R4，属规格歧义）、配置文件读入的 [paths] 可经 get 取回（R7）",
+      "public_basis": "标题 'via Plugins'；control.py:271–276；plugin.py:207–219；control.py:673–678；doc/config.rst 的 [paths] 一节",
+      "counterexamples": [
+        "W1",
+        "W2"
+      ],
+      "evidence_level": "静态推断（高把握）；待当前 CPU 正式评分",
+      "impact": "可能把只修转发层或旁路存储的不完整修复记为成功；gold 与评分确定性不受影响",
+      "next": "实跑 W1（优先）、W2、A1；可选修订见 REV1"
+    },
+    {
+      "id": "ISS-2",
+      "checks": [
+        "5"
+      ],
+      "kind": "task_family_and_cross_task_exposure",
+      "severity": "medium（数据划分）",
+      "summary": "与 f5eb5f21 的初始工作树逐字节相同（修复不同）；本题修复（4/4 行）和加强版目标测试已在 ea6906b0 初态中；本题初态包含 5dbbe143 的修复（tests/coveragetest.py:264 的 capture_warning 已有 once 参数）和 016af5f6 的修复（只有机械比对）",
+      "evidence_level": "直接比对公开包 + 机械比对",
+      "impact": "若同族题一题用于训练、另一题用于评测，存在答案暴露；与评分正确性无关",
+      "next": "按同族划分（SPLIT1）"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": []
+  },
+  "revision_refs": [],
+  "disposition": {
+    "scope": "static_review",
+    "state": "needs_review",
+    "reason": "静态候选待 actor 验证",
+    "summary": "材料一致，gold 正确完整，44 个期望键全是 PASSED，评分稳定，开发条件在正式链上实测可用；目标测试覆盖不足（ISS-1），需按同族划分（ISS-2）",
+    "conditions": [
+      "诊断解释时注意：目标测试会放过 W1 型部分修复",
+      "与 f5eb5f21、ea6906b0（以及 016af5f6、5dbbe143）放在同一划分",
+      "通过的真实解要检查补丁是否改在 CoverageConfig"
+    ],
+    "open_items": [
+      {
+        "type": "cpu_counterexample",
+        "items": [
+          "W1",
+          "W2",
+          "A1",
+          "N1"
+        ]
+      },
+      {
+        "type": "actor_unverified",
+        "items": [
+          "模型实际收到的消息",
+          "真实模型求解（清单 33–36）"
+        ]
+      },
+      {
+        "type": "optional_revision_pending_user",
+        "items": [
+          "REV1"
+        ]
+      }
+    ],
+    "static_probe_candidate": true,
+    "prior_dispositions": [
+      {
+        "scope": "environment（r2e_env_repair_20260924）",
+        "state": "environment_qualified",
+        "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266/screening_record.json"
+      }
+    ],
+    "next_step": "用正式评分代码实跑 W1",
+    "reviewer": null
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "reviewer_exposure": "主审读过 gold、隐藏测试、expected、全部运行日志和 devcheck 私有 gold 对照；初判保存后才读环境轮旧记录；读过同仓其它 4 题的公开包，没读它们的私有包和审查产物",
+    "solver_visibility": "本记录和审查草稿不提供给解题模型",
+    "approval": "不是正式训练或评测准入"
+  },
+  "costs": {
+    "reviewer_tokens": null,
+    "reviewer_usd": null,
+    "new_cpu_seconds": null,
+    "new_runs": 0,
+    "note": "本轮没有执行任何项目命令；引用的运行成本见环境轮记录和 devcheck，未计入"
+  },
+  "suggestion_queue": [
+    {
+      "id": "W1",
+      "kind": "cpu_counterexample",
+      "priority": 1,
+      "patch": "只改 coverage/control.py：Coverage.get_option 开头加 `if option_name == 'paths': return self.config.paths`；Coverage.set_option 开头加 `if option_name == 'paths': self.config.paths = value; return`；coverage/config.py 不动",
+      "expected_reward": 1,
+      "expected_mismatched_keys": [],
+      "violates": "R5：当前秒为奇数时插件拿到 CoverageConfig，config.get_option('paths') 仍抛 No such option: 'paths'",
+      "decides": "得 1 → 确认 ISS-1；得 0 → 静态推断有误，需查日志"
+    },
+    {
+      "id": "W2",
+      "kind": "cpu_counterexample",
+      "priority": 2,
+      "patch": "只改 coverage/config.py：CoverageConfig.set_option 开头加 `if option_name == 'paths': self._paths_override = value; return`；CoverageConfig.get_option 开头加 `if option_name == 'paths': return getattr(self, '_paths_override', self.paths)`",
+      "expected_reward": 1,
+      "expected_mismatched_keys": [],
+      "violates": "R6：combine() 仍读 self.paths，设置的别名不生效（公开读者 D5 命令会输出 ['ci/girder/g1.py']）",
+      "decides": "得 1 → 确认目标测试不检查 combine 生效"
+    },
+    {
+      "id": "A1",
+      "kind": "cpu_alternative_correct",
+      "priority": 2,
+      "patch": "只改 coverage/config.py：CoverageConfig.set_option 开头加 `if option_name == 'paths': self.paths = collections.OrderedDict((k, [os.path.expanduser(p) for p in v]) for k, v in value.items()); return`；CoverageConfig.get_option 开头加 `if option_name == 'paths': return collections.OrderedDict(self.paths)`",
+      "expected_reward": 1,
+      "expected_mismatched_keys": [],
+      "violates": "无",
+      "decides": "得 1 → 确认测试不要求返回同一活对象，也不排斥规范化（无误拒）"
+    },
+    {
+      "id": "N1",
+      "kind": "cpu_negative_control",
+      "priority": 3,
+      "patch": "只在 coverage/config.py 的 CoverageConfig.CONFIG_FILE_OPTIONS 列表末尾加一项 `('paths', 'paths')`，其它不动",
+      "expected_reward": 0,
+      "expected_mismatched_keys": [
+        "ConfigTest.test_config_file",
+        "ConfigTest.test_named_config_file",
+        "ConfigTest.test_toml_config_file",
+        "ConfigTest.test_config_file_then_args",
+        "ConfigTest.test_data_file_from_environment",
+        "ConfigTest.test_debug_from_environment",
+        "ConfigTest.test_rcfile_from_environment",
+        "ConfigTest.test_environment_vars_in_config",
+        "ConfigTest.test_environment_vars_in_toml_config",
+        "ConfigTest.test_tilde_in_config",
+        "ConfigTest.test_tilde_in_toml_config",
+        "ConfigTest.test_unknown_option",
+        "ConfigTest.test_unknown_option_toml",
+        "ConfigTest.test_misplaced_option",
+        "ConfigTest.test_unknown_option_in_other_ini_file",
+        "ConfigTest.test_note_is_obsolete",
+        "ConfigFileTest.test_config_file_settings",
+        "ConfigFileTest.test_config_file_settings_in_setupcfg",
+        "ConfigFileTest.test_config_file_settings_in_toxini",
+        "ConfigFileTest.test_config_file_settings_in_setupcfg_if_coveragerc_specified",
+        "ConfigFileTest.test_config_file_settings_in_tox_if_coveragerc_specified",
+        "ConfigFileTest.test_setupcfg_only_if_not_coveragerc",
+        "ConfigFileTest.test_toxini_only_if_not_coveragerc",
+        "ConfigFileTest.test_setupcfg_only_if_prefixed",
+        "ConfigFileTest.test_toxini_only_if_prefixed",
+        "ConfigFileTest.test_tox_ini_even_if_setup_cfg",
+        "ConfigFileTest.test_read_prefixed_sections_from_explicit_file",
+        "ConfigFileTest.test_non_ascii"
+      ],
+      "violates": "K1/K4：读任何配置文件时 where.split(':') 拆包失败，报 Couldn't read config file",
+      "decides": "得 0 且不符键如上（静态推断 28 个 FAILED，目标键 PASSED）→ 确认回归键能拒绝破坏配置读取的做法"
+    },
+    {
+      "id": "DC1",
+      "kind": "devcheck_rerun",
+      "priority": 4,
+      "what": "以 agent 身份、不加 -p no:cacheprovider 重跑公开读者的三条 pytest 命令（tests/test_config.py；tests/test_plugins.py -k ConfigurerPluginTest；tests/test_api.py -k test_ordered_combine）"
+    },
+    {
+      "id": "REV1",
+      "kind": "optional_revision",
+      "priority": 5,
+      "what": "（改测试标准，需用户决定）目标测试补对 cov.config 的 get/set 断言（依据 R5），并采用上游后来版本从非空 [paths] 起步的写法（依据 R4/R7，见 ea6906b0 工作树 tests/test_config.py:339–361）；不建议强制加 combine() 断言"
+    },
+    {
+      "id": "SPLIT1",
+      "kind": "split_constraint",
+      "what": "本题与 f5eb5f21、ea6906b0（以及 016af5f6、5dbbe143）归为同族，训练与评测不跨族划分"
+    },
+    {
+      "id": "PASS-AUDIT",
+      "kind": "trajectory_audit",
+      "what": "真实解通过时检查补丁是否改在 CoverageConfig，排除 W1 型"
+    }
+  ],
+  "history": {
+    "initial_judgment_ref": "analysis_before_history.md",
+    "delta_ref": "old_findings_delta.md",
+    "changed_after_history": [
+      "清单 10：默认 addopts 的原命令形式由 actor 待验升为镜像层面已实测（旧探针，同一派生镜像）",
+      "清单 5：与 5dbbe143 的包含关系由线索升为测试辅助部分已核实"
+    ],
+    "disagreements_with_history": [
+      "旧环境记录 issues 为空、R16 pass：本轮新增 ISS-1（测试覆盖不足）与 ISS-2（同族与跨题暴露），原因是审查范围不同",
+      "旧 R03 输入 pass：本轮记清单 3 为 unknown，因为模型实际收到的消息没有捕获；旧 conda 措辞对 v3 材料已过时",
+      "旧 disposition.reason 仍写'只差 R13'：文本已过时"
+    ]
+  },
+  "reviewed_by": "私有主审（Claude，静态审查）",
+  "reviewed_at": "2026-09-25",
+  "coordinator_notes": [
+    {
+      "date": "2026-09-25",
+      "by": "Claude B（协调者）",
+      "note": "本记录写于候选实跑之前，'待实跑''预期'为当时推断。实跑结果见 docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/grader_candidates.md，主审与复核的对照见同目录 results/<instance_id>/review.md，批次结论见 README.md §3。协调者未改动本记录的其它字段。"
+    }
+  ]
+}

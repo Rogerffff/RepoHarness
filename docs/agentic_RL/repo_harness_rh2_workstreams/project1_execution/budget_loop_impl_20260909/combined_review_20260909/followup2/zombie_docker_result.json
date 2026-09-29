@@ -1,0 +1,151 @@
+{
+  "docker_version": "29.4.1",
+  "kernel": "6.12.76-linuxkit",
+  "docker_arch": "arm64",
+  "image_id": "sha256:9059d9d7db987b86299e052ff6630cd95e5a770336967c21110e53289a877433",
+  "image_arch": "arm64",
+  "cases": [
+    {
+      "case": "sleep_pid1_natural",
+      "container_name": "rh2-review-stop-e0de246fe4",
+      "pid1": "1     0 Ss   sleep",
+      "natural_exit_code": 0,
+      "stop": {
+        "residual": 1,
+        "kill_returned_at": 787805.015591708,
+        "kill_exit_code": 0,
+        "pkill_status": 0,
+        "kill_delivered_at": 787805.015591708,
+        "confirmed_at": null,
+        "observations": [
+          {
+            "issued_at": 787805.015619916,
+            "returned_at": 787805.076850958,
+            "residual": 1
+          },
+          {
+            "issued_at": 787805.177985791,
+            "returned_at": 787805.241091,
+            "residual": 1
+          },
+          {
+            "issued_at": 787805.342210083,
+            "returned_at": 787805.402323375,
+            "residual": 1
+          }
+        ],
+        "timed_out": false,
+        "elapsed_seconds": 0.542,
+        "attempts": 1
+      },
+      "helper_verified": false,
+      "processes_after_stop": "46     1 Zs   bash",
+      "current_count": 1,
+      "count_excluding_zombies": 0,
+      "container_removed": true
+    },
+    {
+      "case": "sleep_pid1_forced",
+      "container_name": "rh2-review-stop-ccafc419c7",
+      "pid1": "1     0 Ss   sleep",
+      "before_stop_states": [
+        "Ss",
+        "S"
+      ],
+      "stop": {
+        "residual": 2,
+        "kill_returned_at": 787806.202923958,
+        "kill_exit_code": 0,
+        "pkill_status": 0,
+        "kill_delivered_at": 787806.202923958,
+        "confirmed_at": null,
+        "observations": [
+          {
+            "issued_at": 787806.20294675,
+            "returned_at": 787806.257340875,
+            "residual": 2
+          },
+          {
+            "issued_at": 787806.35846225,
+            "returned_at": 787806.415356916,
+            "residual": 2
+          },
+          {
+            "issued_at": 787806.516500875,
+            "returned_at": 787806.578880666,
+            "residual": 2
+          }
+        ],
+        "timed_out": false,
+        "elapsed_seconds": 0.531,
+        "attempts": 1
+      },
+      "helper_verified": false,
+      "processes_after_stop": "52     1 Zs   bash\n   53     1 Z    sleep",
+      "current_count": 2,
+      "count_excluding_zombies": 0,
+      "container_removed": true
+    },
+    {
+      "case": "init_natural",
+      "container_name": "rh2-review-stop-252e541ea5",
+      "pid1": "1     0 Ss   docker-init",
+      "natural_exit_code": 0,
+      "stop": {
+        "residual": 0,
+        "kill_returned_at": 787812.434379166,
+        "kill_exit_code": 0,
+        "pkill_status": 1,
+        "kill_delivered_at": 787812.434379166,
+        "confirmed_at": 787812.500717583,
+        "observations": [
+          {
+            "issued_at": 787812.434402166,
+            "returned_at": 787812.500717583,
+            "residual": 0
+          }
+        ],
+        "timed_out": false,
+        "elapsed_seconds": 0.131,
+        "attempts": 1
+      },
+      "helper_verified": true,
+      "processes_after_stop": "",
+      "current_count": 0,
+      "count_excluding_zombies": 0,
+      "container_removed": true
+    },
+    {
+      "case": "init_forced",
+      "container_name": "rh2-review-stop-2d178e53a7",
+      "pid1": "1     0 Ss   docker-init",
+      "before_stop_states": [
+        "Ss",
+        "S"
+      ],
+      "stop": {
+        "residual": 0,
+        "kill_returned_at": 787813.1852125,
+        "kill_exit_code": 0,
+        "pkill_status": 0,
+        "kill_delivered_at": 787813.1852125,
+        "confirmed_at": 787813.238136125,
+        "observations": [
+          {
+            "issued_at": 787813.185235,
+            "returned_at": 787813.238136125,
+            "residual": 0
+          }
+        ],
+        "timed_out": false,
+        "elapsed_seconds": 0.112,
+        "attempts": 1
+      },
+      "helper_verified": true,
+      "processes_after_stop": "",
+      "current_count": 0,
+      "count_excluding_zombies": 0,
+      "container_removed": true
+    }
+  ]
+}

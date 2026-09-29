@@ -1,0 +1,177 @@
+WARNING:root:deep_ep is not installed, some functionalities may be limited.
+WARNING:miles_plugins.megatron_bridge:miles bridge shim _install_bridge_pp_group_unwrap not applied: No module named 'megatron'
+WARNING:miles_plugins.megatron_bridge.nemotron_h:miles nemotron_h shim _build_bridge_subclass not applied: No module named 'megatron'
+{
+  "miles_head": "4c04f997b60fd08c36941d8715db06bfc0ed0543",
+  "with_qualification": {
+    "qualification_injected_for_experiment": true,
+    "reports": [
+      {
+        "trajectory_id": "miles_g0_m0",
+        "outcome": "resolved",
+        "failure_category": null,
+        "reward": 1.0
+      },
+      {
+        "trajectory_id": "miles_g0_m1",
+        "outcome": "unresolved",
+        "failure_category": "candidate_execution_failed",
+        "reward": 0.0
+      }
+    ],
+    "decisions": [
+      null,
+      {
+        "trigger": "reference_all_missing",
+        "kind": "candidate",
+        "stage": "test_collection",
+        "rule": "pytest_error_collecting",
+        "evidence": [
+          "_________________ ERROR collecting tests/test_thing.py _________________",
+          "test_rc=2",
+          "compile_probe:src/thing.py:SyntaxError:line=1:invalid syntax",
+          "env_qualification:ok:conditional-fixture:gold"
+        ],
+        "missing": [],
+        "resource": {
+          "oom_kill_events": null,
+          "container_oom_killed": null,
+          "test_rc": 2,
+          "signal_exit": false
+        },
+        "qualification": "ok:conditional-fixture:gold",
+        "compile_probe": {
+          "error": null,
+          "ok": [],
+          "error_paths": [
+            "src/thing.py:SyntaxError:line=1:invalid syntax"
+          ],
+          "missing": [],
+          "interpreter": null,
+          "paths_probed": [
+            "src/thing.py"
+          ]
+        },
+        "candidate_python_paths": [
+          "src/thing.py"
+        ],
+        "install_rc_baseline": 0
+      }
+    ],
+    "group_buffered": true,
+    "recycled": 0,
+    "metrics": {
+      "rollout/fully_async/queue_size": 1,
+      "rollout/fully_async/aborted_groups_filtered": 0,
+      "rollout/fully_async/stale_groups_filtered": 0
+    },
+    "train_data": {
+      "raw_reward": [
+        1.0,
+        0.0
+      ],
+      "loss_masks": [
+        [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      ]
+    }
+  },
+  "without_qualification": {
+    "qualification_injected_for_experiment": false,
+    "reports": [
+      {
+        "trajectory_id": "miles_g0_m0",
+        "outcome": "resolved",
+        "failure_category": null,
+        "reward": 1.0
+      },
+      {
+        "trajectory_id": "miles_g0_m1",
+        "outcome": "failed_to_grade",
+        "failure_category": "test_log_parse_failed",
+        "reward": null
+      }
+    ],
+    "decisions": [
+      null,
+      {
+        "trigger": "reference_all_missing",
+        "kind": "unattributed",
+        "stage": "test_collection",
+        "rule": "pytest_error_collecting",
+        "evidence": [],
+        "missing": [
+          "qualification:absent"
+        ],
+        "resource": {
+          "oom_kill_events": null,
+          "container_oom_killed": null,
+          "test_rc": 2,
+          "signal_exit": false
+        },
+        "qualification": "absent",
+        "compile_probe": null,
+        "candidate_python_paths": [
+          "src/thing.py"
+        ],
+        "install_rc_baseline": 0
+      }
+    ],
+    "group_buffered": false,
+    "recycled": 0,
+    "metrics": {
+      "rollout/fully_async/queue_size": 0,
+      "rollout/fully_async/aborted_groups_filtered": 0,
+      "rollout/fully_async/stale_groups_filtered": 0,
+      "rollout/dynamic_filter/drop_admission_reward_scope_none": 1
+    }
+  }
+}

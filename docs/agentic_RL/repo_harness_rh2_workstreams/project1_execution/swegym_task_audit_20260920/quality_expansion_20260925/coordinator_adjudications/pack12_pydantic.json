@@ -1,0 +1,29 @@
+{
+  "report": "pack12_report.md",
+  "tasks": {
+    "pydantic__pydantic-8793": {
+      "classification": "conditional_static_development_candidate",
+      "card_replacements": [["reviewer结果未读，未合并。", "主审出稿时未读reviewer；独立交叉复核现已完成。"]],
+      "card_append": "协调裁定：有条件静态开发候选，ready_for_probe=false。check4收为unknown，保留计划NON-TEST边界和历史源码投影的正证据，实际actor可读/可改/可提交范围未验。26/27继续unknown；唯一优先项为真实actor公开原例及缺值验证。review补核test_config.py:788是test_partial_creation_with_defer_build内create_partial helper，非生产with_config调用；该旧测试未在历史选择器内，不新增必跑门。",
+      "checks": {
+        "4": {"status": "unknown", "note": "计划NON-TEST范围允许源码修复，H19原候选只投影fields.py；实际actor可读/可改/可提交范围及权限未取得。保留前述局部正证据，不把声明范围pass扩为实际权限通过。"},
+        "18": {"status": "pass", "note": "H19单文件实际382 collected：noop3failed/377passed，gold380passed，各另1skip/1xfail；367 expected均有状态且无expected skip/xfail。不是当前actor或全仓验证。"},
+        "25": {"status": "issue", "note": "新增只验schema/is_required，缺目标缺值验证及Annotated默认值/工厂/复用组合。test_config.py:788是测试内create_partial的default=None合并约束，未进本题H19选择器；不据内部状态不同认定非gold解错误。"}
+      },
+      "disposition": {"reason": "公开核心要求、gold静态链及H19目标对照成立；保留覆盖边界，下一步取得实际actor公开开发证据。独立review完成，不批准探针/训练/正式评测。"},
+      "changes": ["附独立review SHA及协调暴露，归档main原card/record", "check4收为unknown并保留计划范围正证据", "细化历史expected/skip范围与test_config测试内helper勘误", "保留26/27 unknown及唯一actor公开流程，不为内部实现差异新增CPU门"]
+    },
+    "pydantic__pydantic-9066": {
+      "classification": "quality_first",
+      "card_replacements": [["本稿未读reviewer、未执行项目；", "主审出稿时未读reviewer，独立交叉复核现已完成；本轮未执行项目；"]],
+      "card_append": "协调裁定：quality_first，ready_for_probe=false。check4收为unknown，实际actor读写提交范围未验；26/27保持unknown。唯一私有CPU提案核标准库dataclass默认实例的base/gold公共API结果并带IP控制；角色一致不增加运行证据。合法IP类别局部解可接受，不能为迫使采用TypeAdapter扩张为任意非IP新需求。",
+      "checks": {
+        "4": {"status": "unknown", "note": "计划NON-TEST范围允许源码修复，H19原候选只投影json_schema.py；实际actor可读/可改/可提交范围及权限未取得。保留局部正证据，不把声明范围pass扩为实际权限通过。"},
+        "18": {"status": "pass", "note": "H19单文件实际384 collected：noop2failed/380passed，gold382passed，各另1skip/1xfail；369 expected均有状态且无expected skip/xfail。不是当前actor或全仓验证。"},
+        "25": {"status": "issue", "note": "两IP默认值F2P及风险P2P提供局部护栏；标准dataclass实例默认值未覆盖。已有不可序列化值/带serializer默认值有行为断言，不能称新except及两侧完全零覆盖；未测动态分支覆盖率。"}
+      },
+      "disposition": {"reason": "IP目标静态/历史对照成立，但标准dataclass默认实例的配置异常存在具体未运行路径；优先一项私有base/gold对照，actual actor独立未知。"},
+      "changes": ["附独立review SHA及协调暴露，归档main原card/record", "check4收为unknown并保留计划范围正证据", "细化expected/skip及既有错误回退覆盖，否定零覆盖过强说法", "26/27保持unknown，保留一个私有dataclass对照，不扩非IP规格"]
+    }
+  }
+}

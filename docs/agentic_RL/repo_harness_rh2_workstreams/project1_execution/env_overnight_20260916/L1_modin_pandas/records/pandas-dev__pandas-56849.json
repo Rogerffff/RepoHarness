@@ -1,0 +1,71 @@
+{
+ "task_id": "pandas-dev__pandas-56849",
+ "source": "SWE-Gym lite (s2 ingest v0)",
+ "task_revision": "upstream",
+ "materials_refs": [
+  "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/{public,grading_bundles_v2,validation}_*_v0.jsonl",
+  "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-56849/{gold,empty}/offline/a1/",
+  "runs/env_overnight_20260916/repos/pandas@612823e824805b97a2dbe258ba808dc572083d49"
+ ],
+ "public_view": {
+  "goal": "pd.date_range(..., freq='m')（小写 m，已废弃别名 M 的小写形式）在 2.2/main 抛 ValueError: Invalid frequency: m；2.1.2 还能用。",
+  "constraints_from_statement": [
+   "题面 traceback 精确点到 pandas/_libs/tslibs/offsets.pyx 的 to_offset 与 _get_offset（行号 4715/4721/4730/4864/4872），定位成本极低。",
+   "题面给出 2.1.2 的旧输出：返回 DatetimeIndex 且 freq='M'。"
+  ],
+  "unknowns_from_public_only": [
+   "修好之后应该静默接受还是发 FutureWarning —— 题面没说（F2P 要求必须发 FutureWarning）。",
+   "警告文本里应该回显用户输入的小写 'm' 还是规范化后的 'M' —— 题面没说，而 F2P 用 match 精确要求是 'm'（见 issues）。",
+   "只有 m 还是所有废弃别名的小写形式都要支持 —— 题面只举 m。",
+   "结果的 freq 属性应是 'M' 还是 'ME' —— 题面显示的是 2.1.2 的 'M'，F2P 要求 'ME'。"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["pandas@612823e8:pandas/_libs/tslibs/offsets.pyx L4862-4871", "pandas@612823e8:pandas/tests/indexes/datetimes/test_date_range.py, pandas/tests/tslibs/test_to_offset.py"], "note": "gold 目标 offsets.pyx、test_patch 的两个目标文件在 base 都存在且与题面同一问题。", "by": "L1_modin_pandas"},
+  "2": {"status": "pass", "evidence_refs": ["pandas@612823e8:pandas/_libs/tslibs/offsets.pyx L4863 if is_period is False and name in c_OFFSET_DEPR_FREQSTR", "stage1 empty/status_map.json: F2P FAILED"], "note": "base 用 name in c_OFFSET_DEPR_FREQSTR 直接匹配，小写 'm' 不在映射里，于是落到 _get_offset 抛 KeyError('M') -> ValueError；empty 侧 F2P FAILED。", "by": "L1_modin_pandas"},
+  "3": {"status": "pass", "evidence_refs": ["public_bundles_v0.jsonl problem_statement", "raw hints_text"], "note": "题面 3053 字符，traceback 完整、无外链、无图片、无截断。hints_text（233 字符）只有维护者一句『这个别名从来没写进文档，但既然有人用，最好给个好消息』，没有额外定位信息。", "by": "L1_modin_pandas"},
+  "4": {"status": "pass", "evidence_refs": ["grading.test_patch"], "note": "test_patch 触碰 pandas/tests/indexes/datetimes/test_date_range.py 与 pandas/tests/tslibs/test_to_offset.py，都是纯测试路径。", "by": "L1_modin_pandas"},
+  "17": {"status": "pass", "evidence_refs": ["validation.golden_patch"], "note": "gold 只触碰 pandas/_libs/tslibs/offsets.pyx；additional_exclusions 保持空。", "by": "L1_modin_pandas"},
+  "5": {"status": "pass", "evidence_refs": ["tasks_by_repo.json"], "note": "与本包其余 pandas 题不同 PR、不同模块。", "by": "L1_modin_pandas"},
+  "23": {"status": "issue", "evidence_refs": ["stage1 gold/offline/a1/eval.sh 里 test_patch 的 test_to_offset_with_lowercase_deprecated_freq 全文", "public_bundles_v0.jsonl problem_statement"], "note": "F2P 断言三件事：(a) 必须发 FutureWarning；(b) 警告文本必须逐字匹配 \"'m' is deprecated and will be removed in a future version, please use 'ME' instead.\"；(c) 结果 freq 为 'ME'。三件事题面一件都没写（题面只说 2.1.2 能用、结果 freq 是 'M'）。要求严重不足。", "by": "L1_modin_pandas"},
+  "24": {"status": "issue", "evidence_refs": ["validation.golden_patch", "stage1 gold/offline/a1/eval.sh 的 test_patch"], "note": "F2P 用 tm.assert_produces_warning(FutureWarning, match=msg) 且 msg 里是小写 'm'。gold 的做法是查表用 name.upper()、但警告文本里仍用原始 name，所以回显 'm'。一个同样合理的实现『先 name = name.upper() 再走原逻辑』会回显 'M'，功能完全正确却被 F2P 拒绝。这是测试把实现细节（警告里回显哪种大小写）固化成了判分标准。", "by": "L1_modin_pandas"},
+  "25": {"status": "pass", "evidence_refs": ["grading.test_patch", "grading.pass_to_pass"], "note": "题面原例被 F2P 直接覆盖；419 条 P2P 包含 test_to_offset 与 test_date_range 的大批既有用例，能挡住『把所有 name 无条件 upper()』这类会改坏 is_period 分支或大小写敏感别名（如 'm' vs 'M' vs 'min'）的粗暴修复。", "by": "L1_modin_pandas"},
+  "26": {"status": "pass", "evidence_refs": ["pandas@612823e8"], "note": "见 proposed_regression_tests。", "by": "L1_modin_pandas"},
+  "27": {"status": "pass", "evidence_refs": ["validation.golden_patch"], "note": "gold 只把 c_OFFSET_DEPR_FREQSTR 的三处查表键换成 name.upper()，不依赖未交付改动，无无关改动。局限：只处理 is_period is False 分支，紧邻的 is_period is True 分支（c_REVERSE_OFFSET_DEPR_FREQSTR）仍是大小写敏感的，gold 没有对齐 —— F2P 也没要求。", "by": "L1_modin_pandas"},
+  "29": {"status": "pass", "evidence_refs": ["runs/env_overnight_20260916/L1_modin_pandas/leak.json"], "note": "题面不含 gold 新增代码（leak 扫描 0 命中）、不指向上游 PR/commit。traceback 是正常故障信息。", "by": "L1_modin_pandas"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold/offline/a1/test_output.txt: meson setup --reconfigure ... [3/4] Compiling C object pandas/_libs/tslibs/offsets.cpython-310-x86_64-linux-gnu.so.p/meson-generated_pandas__libs_tslibs_offsets.pyx.c.o", "phase 计时 install=49.7s test=6.5s"], "note": "该 base commit 用 meson-python + 镜像内 /testbed/build/cp310 缓存，改一个 .pyx 只增量重编该目标（日志里是 [3/4]），install 49.7 秒。对照 setuptools 后端的 48106/50319/51605 要 780–830 秒。install 命令里没有 pip install 'numpy<2' 这一步。", "by": "L1_modin_pandas"},
+  "7": {"status": "pass", "evidence_refs": ["runs/env_overnight_20260916/L1_modin_pandas/optdeps.json"], "note": "两个测试文件都无 importorskip / skip_if_no / datapath / S3；URL 只在注释里。test_date_range.py 有 1 处 @pytest.mark.slow。", "by": "L1_modin_pandas"},
+  "11": {"status": "issue", "evidence_refs": ["runs/env_overnight_20260916/L1_modin_pandas/collide_detail.json"], "note": "420 个常量对应 426 个运行时测试；15 个 P2P 常量方括号不配平，4 个截断键各吞掉 1–2 个 ID（最大 3 个，如 test_to_offset[2h 与 test_to_offset_whitespace[ ）。原因是这些参数值本身含空格（'2h 30min'、'  2 D 3 h  '），被上游按空白切断。", "by": "L1_modin_pandas"}
+ },
+ "issues": [
+  {"category": "test_forces_implementation_detail", "severity": "P1",
+   "evidence_refs": ["stage1 gold/offline/a1/eval.sh 里 test_patch 的 msg 定义", "validation.golden_patch"],
+   "note": "F2P 用 match 精确要求警告文本里回显小写 'm'。功能等价但先规范化大小写再查表的实现会回显 'M' 而被拒。题面对警告文本零信息。",
+   "proposed_action": "把 match 放宽成只匹配 is deprecated ... please use 'ME' instead，或在题面里写明『警告要回显用户传入的原始别名』。",
+   "next_experiment": "真机上写一个先 name = name.upper() 的替代补丁跑一次评分，确认它会被判 RESOLVED_NO —— 这能量化『合理解答被拒』的比例。"},
+  {"category": "requirement_insufficient", "severity": "P1",
+   "evidence_refs": ["public_bundles_v0.jsonl problem_statement", "grading.test_patch"],
+   "note": "F2P 要求发 FutureWarning、警告文本逐字、freq 为 'ME'；题面只展示 2.1.2 下 freq='M' 且无警告。照题面复原旧行为（静默接受、freq='M'）必然失败。",
+   "proposed_action": "题面补一句『按 2.2 的废弃策略，小写别名应被接受并发出与大写别名相同的 FutureWarning』。",
+   "next_experiment": "无需跑；题面改写决定。"},
+  {"category": "test_patch_load_bearing_for_p2p", "severity": "P2",
+   "evidence_refs": ["stage1 gold/offline/a1/eval.sh 里 test_patch 给 test_to_offset 加的 @pytest.mark.filterwarnings(\"ignore:.*'m' is deprecated.*:FutureWarning\")", "pandas@612823e8:pyproject.toml filterwarnings 含 error:::pandas"],
+   "note": "pandas 3.0 的 pytest 配置把 pandas 自己发出的任何警告转成错误（filterwarnings 第一条是 error:::pandas）。修复引入的新 FutureWarning 会让 test_to_offset 的既有用例报错，所以 test_patch 专门加了一条 filterwarnings 豁免。也就是说：P2P 能全绿依赖 test_patch 里的这条豁免，而不是候选补丁本身。候选若把警告文本写得不匹配该豁免的正则（例如不含 'm' is deprecated），P2P 会大面积变红 —— 这是一条隐藏的、agent 不可见的实现约束。",
+   "proposed_action": "在题级记录里登记这条耦合；评估替代实现时必须连同 test_patch 的 filterwarnings 一起判断。",
+   "next_experiment": "真机上把警告文本改成 \"Freq 'm' is deprecated...\"（前缀不同）跑一次，观察 P2P 里 test_to_offset 系列是否转红。"},
+  {"category": "reference_id_truncation", "severity": "P3",
+   "evidence_refs": ["runs/env_overnight_20260916/L1_modin_pandas/collide_detail.json"],
+   "note": "4 个 P2P 键各代表 2–3 个运行时测试（参数值含空格）。规模小。",
+   "proposed_action": "与其它 pandas 题一起用 junitxml 取 ID。",
+   "next_experiment": "一次收集即可覆盖。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只在 pandas/tests/，gold 只在 pandas/_libs/，不交叉；沿用默认空集。", "evidence_refs": ["grading.test_patch", "validation.golden_patch"]},
+ "proposed_regression_tests": [
+  {"id": "pandas/tests/tslibs/test_to_offset.py", "reason": "整份文件（已在 P2P），gold 改的就是 to_offset 的解析主循环。"},
+  {"id": "pandas/tests/indexes/period/test_period_range.py", "reason": "覆盖 is_period is True 的那条分支，gold 没有对齐它的大小写处理，这里最容易暴露不一致。"},
+  {"id": "pandas/tests/frame/methods/test_asfreq.py", "reason": "asfreq 是 to_offset 的重要下游调用者，验证废弃别名的大小写处理在真实 API 上一致。"},
+  {"id": "pandas/tests/resample/test_datetime_index.py", "reason": "resample 大量使用频率字符串，能抓到 upper() 对其它别名（如 'min' vs 'MIN'）的误伤。"}
+ ],
+ "disposition_hint": {"state": "needs_review", "reason": "判分链干净（420 个 ID 全部命中、gold RESOLVED_FULL、成本仅 56 秒），但 F2P 把『警告里回显小写 m』这个实现细节固化成判分标准，而题面对警告只字未提。要么放宽 match，要么补题面，否则合理解答会被判 0。"},
+ "costs": {"minutes": 25}
+}

@@ -1,0 +1,351 @@
+{
+  "task_id": "r2e_gym_subset::scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67",
+  "instance_id": "scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67",
+  "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0（无材料修订；expected sha256:3fea4d14…，隐藏测试树 sha256:d49355ac…；公开材料 v3）",
+  "source_adapter_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl（line_sha256 0f58c303…）",
+  "recipe_ref": {
+    "derived_image": "rh2-r2e-derived/scrapy:75450e75d269-r2e_derive_v1",
+    "grader_image_id": "sha256:2e6e1f3b507ed2bc49e7d7b81304f84c3a81aa7310680a2e366a545a8a351336",
+    "devcheck_image_id": "sha256:21da38a7c58d73aef9551b3a25a631afa2a5c88fe39f5ca3db3c6b9fa31d3bfe",
+    "image_equivalence": "未核：同 tag / recipe、版本一致（py 3.9.21 / Twisted 24.11.0 / pytest 8.3.4 / scrapy 2.7.1），内容等价未核对",
+    "env_recipe": null,
+    "resources": "default"
+  },
+  "code_snapshot_ref": null,
+  "facts_ref": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67/facts.json（历史环境事实，collate_facts.py）",
+    "runs/r2e_static_prep_20260924/v3/private/scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67/run_refs.json",
+    "runs/r2e_actor_20260925/devcheck/scrapy__75450e75d269b2a2b00b6303af1033df/（真实 Claude Code 2.1.205 + 桩端点，agent 身份；private_gold/ 为 root 一次性容器）"
+  ],
+  "checks": {
+    "1": {
+      "status": "pass",
+      "note": "题面 / base / gold / 隐藏测试 / expected 对应；日志 RH2_SETUP_HIDDEN_TESTS_TREE=d49355ac… 与 run_refs 一致",
+      "evidence": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-s_41b13d0c.eval.log"
+      ]
+    },
+    "2": {
+      "status": "pass",
+      "note": "noop 目标键失败原因即题面报错：scrapy/utils/defer.py:270 deferred_from_coro 在 Thread-1 抛 RuntimeError，被记为 Spider error 日志，退出码 0（日志第 59 行）；noop 共 4/4 为 0（RH2 2 次 + M3 参考 2 次）",
+      "evidence": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-s_41b13d0c.eval.log",
+        "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_42d7de6f.eval.log"
+      ]
+    },
+    "3": {
+      "status": "unknown",
+      "note": "public_hints 已是 v3 的 R2E 措辞（代码配置）；devcheck 首个请求用的是 devcheck 专用提示，本题实际渲染消息未捕获（actor 待验）"
+    },
+    "4": {
+      "status": "pass",
+      "note": "合法修复只涉及 scrapy/ 下的普通跟踪源码；file_rules 额外排除为空"
+    },
+    "5": {
+      "status": "pass",
+      "note": "本题 gold 不在同仓其它题初态里（扫描 + grep set_asyncio_event_loop / test_shell_fetch_async 均无命中）；反向：本题初态含 a95a338e（5/5 行、test_partial）与 e9387529（4/5 行、test_export_binary）的修复，暴露的是那两题的答案，9a15fcf8 只中 1 行，可能是巧合",
+      "evidence": [
+        "runs/r2e_static_prep_20260924/cross_task_gold_scan.json",
+        "runs/r2e_static_prep_20260924/cross_task_test_scan.json"
+      ]
+    },
+    "6": {
+      "status": "pass",
+      "note": "Twisted 24.11.0 比 scrapy 2.7.1 的年代新，本题目标路径与 16 个回归键不受影响；副作用见 10"
+    },
+    "7": {
+      "status": "pass",
+      "note": "tests/sample_data/test_site/index.html 可经 file:// 读取；testsite 在回环地址可起（devcheck C1 / C4）"
+    },
+    "8": {
+      "status": "pass",
+      "note": "agent uid 54321 下解释器、导入、公开测试均实测可用；评分用户 54322 下 gold 17/17"
+    },
+    "9": {
+      "status": "pass",
+      "note": "scrapy 从 /testbed/scrapy/__init__.py 导入（devcheck env.out；评分日志）"
+    },
+    "10": {
+      "status": "issue",
+      "note": "低、不阻塞：公开测试 tests/test_crawler.py::CrawlerProcessSubprocess::test_default_loop_asyncio_deferred_signal 在 base 和 gold 下都失败，原因是 Twisted 24.11 没有 reactor._handleSignals（ossignal.py:19）；装信号处理器的 CrawlerProcess.start() 在本环境都会崩。shell 公开测试 16 passed，test_utils_defer / test_utils_asyncio --reactor=asyncio 均通过",
+      "evidence": [
+        "runs/r2e_actor_20260925/devcheck/scrapy__75450e75d269b2a2b00b6303af1033df/orig/captures/pr6_9_pytest.out",
+        "runs/r2e_actor_20260925/devcheck/scrapy__75450e75d269b2a2b00b6303af1033df/private_gold/private_control.json"
+      ]
+    },
+    "11": {
+      "status": "pass",
+      "note": "解题与评分都不需要出网；actor 外部 DNS 被拒、回环可用（prelaunch）。test_dns_failures 依赖评分网络对不存在的主机名解析失败：若网络能解析任意主机名，这个键会 SKIPPED 而缺键，所有候选判 0；当前稳定为 PASSED"
+    },
+    "13": {
+      "status": "pass",
+      "note": "峰值 281 MB / 4 GiB；测试约 13–14 s（历史 facts，未重测）"
+    },
+    "14": {
+      "status": "pass",
+      "note": "noop 0 与 gold 1 各 4/4（RH2 2 次 + M3 2 次）。目标键依赖子进程退出前报错已写进 stderr；noop 的报错在同步链里发生，风险很低。对部分修复（K2）未验证"
+    },
+    "15": {
+      "status": "not_checked"
+    },
+    "16": {
+      "status": "pass",
+      "note": "引用环境卡与评分日志：gold 触碰路径与 hygiene 文件不相交"
+    },
+    "17": {
+      "status": "pass",
+      "note": "grader 只替换 r2e_tests 与 run_tests.sh"
+    },
+    "18": {
+      "status": "pass",
+      "note": "collected 17 items，全部执行，short test summary 完整"
+    },
+    "19": {
+      "status": "pass",
+      "note": "17 个键全 PASSED，单文件单类，无参数化、无 ANSI、无撞键"
+    },
+    "20": {
+      "status": "pass",
+      "note": "noop 与 gold 只在目标键 ShellTest.test_shell_fetch_async 上不同"
+    },
+    "21": {
+      "status": "pass"
+    },
+    "22": {
+      "status": "pass",
+      "note": "与独立 runner 对账 agree（引用历史 facts.json reference.reconcile，未重开）"
+    },
+    "23": {
+      "status": "issue",
+      "note": "低：题面说 fetch 'raises'，实际是 ERROR 日志加退出码 0；示例 execute 与无端口 URL 不能原样运行；'within the new thread' 是方向提示，但没说复用哪个循环。不影响可解性"
+    },
+    "24": {
+      "status": "pass",
+      "note": "静态：两条断言（退出码 0、stderr 不含题面报错文本）都有公开依据，不要求函数名或内部结构；复用 reactor 循环的修法（K1）预计 1，待实跑"
+    },
+    "25": {
+      "status": "issue",
+      "note": "目标断言过宽：只查一句报错文本。掩盖根因的修法 K3（RuntimeError 时退回 ensureDeferred）预计 1；协程是否真的执行不受检查。静态推断，待 K3 实跑"
+    },
+    "26": {
+      "status": "issue",
+      "note": "低：16 个回归键全在默认 reactor 下；主线程 asyncio 路径、ASYNCIO_EVENT_LOOP 自定义循环、多次 fetch 都没有回归键"
+    },
+    "27": {
+      "status": "issue",
+      "note": "gold 在 reactor 线程里用 policy.new_event_loop() 新建循环并设为当前循环；该循环从不运行，协程 Task 永不执行，scraper 槽位不空闲（devcheck 私有 gold 对照 C2 输出 (None, None, False)，base 为 True，各 1 次）。按源码推断，槽位累计超过 SCRAPER_SLOT_MAX_ACTIVE_SIZE 后下一次 fetch 会永久阻塞（待 E1）；设置 ASYNCIO_EVENT_LOOP 时每次 fetch 新建一个循环（推断）",
+      "evidence": [
+        "runs/r2e_actor_20260925/devcheck/scrapy__75450e75d269b2a2b00b6303af1033df/private_gold/private_control.json",
+        "runs/r2e_actor_20260925/devcheck/scrapy__75450e75d269b2a2b00b6303af1033df/orig/captures/pr2_3_cmd.out"
+      ]
+    },
+    "28": {
+      "status": "not_applicable",
+      "note": "未提议新增断言"
+    },
+    "29": {
+      "status": "pass",
+      "note": "R2E 预检三项 ok；refs / reflog / remotes 均为 0；隐藏测试不可读（devcheck prelaunch / r2e_preflight）"
+    },
+    "30": {
+      "status": "pass",
+      "note": "actor 外部网络被拒（NET_forbidden_* DENIED、DNS_EXTERNAL DENIED），只有 relay 可连；提示词之外的访问限制已实测"
+    },
+    "31": {
+      "status": "unknown",
+      "note": "隐藏测试依赖 scrapy/utils/testproc.py、scrapy/utils/testsite.py（非测试路径，候选可改，评分不重置）、tests/__init__.py 与根 conftest.py；属通用漏洞面，未做攻击实验"
+    },
+    "32": {
+      "status": "issue",
+      "note": "verifier 只看退出码和一句报错文本是否出现，不看协程是否执行、是否还有其它 spider error；同 25"
+    },
+    "33": {
+      "status": "not_checked"
+    },
+    "34": {
+      "status": "not_checked"
+    },
+    "35": {
+      "status": "not_checked",
+      "note": "由于 25 / 27，通过本题的补丁需抽查修法语义"
+    },
+    "36": {
+      "status": "not_checked"
+    },
+    "37": {
+      "status": "not_applicable",
+      "note": "无材料修订"
+    }
+  },
+  "issues": [
+    {
+      "id": "I1",
+      "checks": [
+        "25",
+        "32"
+      ],
+      "category": "test_too_weak",
+      "severity": "medium",
+      "summary": "目标键只断言退出码 0 与 stderr 不含 'RuntimeError: There is no current event loop in thread'；gold 式修法（新建不运行的循环）、正确修法（复用 reactor 循环）和掩盖根因的修法（RuntimeError 时退回 ensureDeferred）都得 1",
+      "evidence_level": "静态推断；待 K3 正式评分",
+      "next": "正式评分跑 K3（预计 1）"
+    },
+    {
+      "id": "I2",
+      "checks": [
+        "27"
+      ],
+      "category": "gold_semantic_defect",
+      "severity": "medium",
+      "summary": "gold 为 reactor 线程新建一个不运行的事件循环，协程 Task 永不执行，scraper 槽位不空闲；推断槽位累计超过 SCRAPER_SLOT_MAX_ACTIVE_SIZE 后 fetch 永久阻塞，违反题面 'allowing asynchronous operations to proceed as intended'",
+      "evidence_level": "当前 CPU 一次执行（devcheck 私有 gold 对照 C2 输出 (None, None, False)）+ 源码推断（挂起）",
+      "next": "私有容器跑 E1（base / gold / K1，SCRAPER_SLOT_MAX_ACTIVE_SIZE=1000，timeout -k 5 60）"
+    },
+    {
+      "id": "I3",
+      "checks": [
+        "26"
+      ],
+      "category": "regression_coverage_gap",
+      "severity": "low",
+      "summary": "回归键全在默认 reactor 下；asyncio 主线程路径与自定义循环没有回归键",
+      "evidence_level": "静态"
+    },
+    {
+      "id": "I4",
+      "checks": [
+        "23"
+      ],
+      "category": "statement_imprecise",
+      "severity": "low",
+      "summary": "题面称 fetch 'raises'，实际为 ERROR 日志加退出码 0；示例依赖测试辅助 execute 与测试站点；'within the new thread' 提示方向但没说复用哪个循环",
+      "evidence_level": "评分日志 + devcheck C1 / C4"
+    },
+    {
+      "id": "I5",
+      "checks": [
+        "10"
+      ],
+      "category": "solver_condition",
+      "severity": "low",
+      "summary": "Twisted 24.11 没有 reactor._handleSignals，公开测试 test_default_loop_asyncio_deferred_signal 在 base 与 gold 下都失败（与本题无关）；装信号处理器的 CrawlerProcess.start() 在本环境会崩",
+      "evidence_level": "当前 CPU 实测（agent 身份 + 私有 gold 对照）"
+    },
+    {
+      "id": "I6",
+      "checks": [
+        "11"
+      ],
+      "category": "environment_sensitive_key",
+      "severity": "low",
+      "summary": "ShellTest.test_dns_failures 依赖评分网络对不存在的主机名解析失败；若网络能解析，这个键会 SKIPPED 而缺键，所有候选判 0；当前稳定",
+      "evidence_level": "静态 + 4 次评分稳定"
+    },
+    {
+      "id": "I7",
+      "checks": [
+        "5"
+      ],
+      "category": "cross_task_relation",
+      "severity": "low",
+      "summary": "本题初态包含 scrapy a95a338e、e9387529 的修复（暴露的是那两题的答案）；本题 gold 不在其它题初态里",
+      "evidence_level": "机械比对 + grep"
+    },
+    {
+      "id": "H1",
+      "checks": [
+        "3"
+      ],
+      "category": "solver_condition",
+      "severity": "low",
+      "summary": "历史 issue '公开提示说 pip already points at it / conda 措辞' 已过时：v3 public_hints 改为 .venv、'pip may be unavailable'",
+      "status": "resolved_by_prompt_v3"
+    }
+  ],
+  "candidates_to_run": [
+    {
+      "id": "K1",
+      "kind": "reasonable_alternative",
+      "change": "scrapy/commands/shell.py Command._start_crawler_thread：线程目标改为内部函数；若 is_asyncio_reactor_installed()，先 asyncio.set_event_loop(reactor._asyncioEventloop)，再调用 self.crawler_process.start(stop_after_crawl=False, install_signal_handlers=False)",
+      "expected_reward": 1,
+      "expected_mismatch": []
+    },
+    {
+      "id": "K1b",
+      "kind": "reasonable_alternative_optional",
+      "change": "scrapy/utils/defer.py deferred_from_coro 与 deferred_to_future：先 asyncio.get_running_loop()，RuntimeError 时退回 get_asyncio_event_loop_policy().get_event_loop()",
+      "expected_reward": 1,
+      "expected_mismatch": []
+    },
+    {
+      "id": "K2",
+      "kind": "incomplete_fix",
+      "change": "只按 K1b 改 deferred_from_coro，deferred_to_future 不改",
+      "repeats": 5,
+      "expected_reward": 0,
+      "expected_mismatch": [
+        "ShellTest.test_shell_fetch_async"
+      ],
+      "note": "任一次得 1 即记为时序导致的假通过"
+    },
+    {
+      "id": "K3",
+      "kind": "root_cause_masking",
+      "change": "scrapy/utils/defer.py：deferred_from_coro 取策略循环时 except RuntimeError: return ensureDeferred(o)；maybe_deferred_to_future 的 asyncio 分支 try deferred_to_future(d) except RuntimeError: return d",
+      "expected_reward": 1,
+      "expected_mismatch": [],
+      "note": "预计得 1，证明测试过宽"
+    }
+  ],
+  "diagnostics_to_run": [
+    {
+      "id": "E1",
+      "code_states": [
+        "base",
+        "gold",
+        "K1"
+      ],
+      "timeout": "timeout -k 5 60",
+      "command_ref": "card.md §6",
+      "expected": {
+        "base": "rc=0，FIRST_DONE 与 SECOND_DONE 都打印，crawled=2，loop_err=4",
+        "gold": "rc=124，只打印 FIRST_DONE，crawled=1，loop_err=0",
+        "K1": "rc=0，FIRST_DONE 与 SECOND_DONE 都打印，crawled=2，loop_err=0"
+      }
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": []
+  },
+  "revision_refs": [],
+  "disposition": {
+    "scope": "static_review",
+    "state": "needs_review",
+    "reason": "静态候选待 actor 验证；另有两条质量问题（I1 目标测试过宽、I2 gold 语义不完整），待 K1 / K2 / K3 正式评分与 E1 确认。不建议为惩罚 gold 式修法而修订隐藏测试（会改变任务定义，需同时改 gold 与 expected，属 37，由用户决定）",
+    "probe_candidate": "可作开发诊断的基座探针候选；reward=1 不区分修法语义，通过的补丁需抽查",
+    "history_relation": "确认历史（P4 环境审查）的环境资格结论；补充 I5、I6；关闭已过时的 pip 提示 issue；I1、I2 是历史未覆盖的范围",
+    "reviewer": null,
+    "next_step": "正式评分跑 K1、K3 与 K2（K2 重复 5 次），同时私有容器跑 E1"
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "reviewer_exposure": "私有主审见过 gold.patch、隐藏测试、expected、评分日志、devcheck 私有 gold 对照与历史环境审查记录；本记录不提供给解题模型",
+    "not_approved_for": [
+      "正式训练",
+      "正式评测"
+    ]
+  },
+  "costs": {
+    "tokens": null,
+    "usd": null,
+    "cpu_seconds_new": null,
+    "note": "本次静态审查未执行任何命令；引用的运行都来自已有证据"
+  },
+  "coordinator_notes": [
+    {
+      "date": "2026-09-25",
+      "by": "Claude B（协调者）",
+      "note": "本记录写于候选实跑之前，'待实跑''预期'为当时推断。实跑结果见 docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/grader_candidates.md，主审与复核的对照见同目录 results/<instance_id>/review.md，批次结论见 README.md §3。协调者未改动本记录的其它字段。"
+    }
+  ]
+}

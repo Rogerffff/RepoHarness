@@ -1,0 +1,12 @@
+diff --git a/mypy/checker.py b/mypy/checker.py
+index 5d243195d..790798260 100644
+--- a/mypy/checker.py
++++ b/mypy/checker.py
+@@ -1421,6 +1421,7 @@ class TypeChecker(NodeVisitor[None], CheckerPluginInterface):
+ 
+     def check_unbound_return_typevar(self, typ: CallableType) -> None:
+         """Fails when the return typevar is not defined in arguments."""
++        return  # C1: disable the check entirely
+         if isinstance(typ.ret_type, TypeVarType) and typ.ret_type in typ.variables:
+             arg_type_visitor = CollectArgTypeVarTypes()
+             for argtype in typ.arg_types:

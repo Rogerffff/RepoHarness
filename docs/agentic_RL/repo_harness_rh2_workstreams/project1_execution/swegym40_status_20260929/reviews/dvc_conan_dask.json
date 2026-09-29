@@ -1,0 +1,1286 @@
+[
+  {
+    "instance_id": "conan-io__conan-15422",
+    "goal": "生成CMake build presets的jobs供外部CMake并行构建",
+    "static_findings": [
+      "唯一F2P只测显式42、单配置首次生成；默认CPU数及多配置追加未测。",
+      "与14177存在后题公开base含前题gold关键日志行为的跨题材料关系，非重复需求。"
+    ],
+    "development_evidence": {
+      "latest_actor_run_found": true,
+      "date": "2026-09-25",
+      "identity": "实际CC2.1.205、UID54321、正式actor入口；项目从/testbed导入；2CPU/4GiB",
+      "image": "rh2-task2/actor_conan15422_v2:20260925",
+      "base_commit": "f08b9924712cf0c2f27b93cbb5206d56d0d824d8",
+      "commands": [
+        {
+          "id": "env",
+          "rc": 0,
+          "purpose": "解释器、conan 来源、cmake / 编译器位置与版本、Conan 测试约定路径是否存在"
+        },
+        {
+          "id": "mcve_cli",
+          "rc": 1,
+          "purpose": "题面公开 CLI：配置 tools.build:jobs=42 后 CMakePresets.json 的 buildPresets 应带 jobs；base 应暴露缺陷"
+        },
+        {
+          "id": "consume",
+          "rc": 0,
+          "purpose": "生成的预设能否被真实 CMake 消费（configure + build）"
+        },
+        {
+          "id": "integ_presets",
+          "rc": 0,
+          "purpose": "相关公开集成测试（CMakeToolchain / presets）"
+        },
+        {
+          "id": "func_cmake",
+          "rc": 0,
+          "purpose": "相关公开功能测试（含 @tool(cmake,3.23) 与默认 3.15 用例），看执行 / 跳过 / 错误分布"
+        },
+        {
+          "id": "tree",
+          "rc": 0,
+          "purpose": "运行后工作区改动"
+        }
+      ],
+      "checks": {
+        "interpreter_in_tool_result": true,
+        "host_log_present": true,
+        "no_harness_dir_in_container": true,
+        "no_launcher_or_done_marker": true,
+        "message_start_matches_stub_requests": true,
+        "exit_code_zero": true,
+        "result_event_present": true,
+        "log_complete": true,
+        "bashenv_denied_for_agent": false,
+        "all_commands_ran": true,
+        "all_match_expect": true
+      },
+      "cleanup": {
+        "container_rm": 0,
+        "network_failures": [],
+        "relay_failures": [],
+        "stub_rc": 0,
+        "labeled_containers_left": [],
+        "labeled_networks_left": [],
+        "residual_after_force": []
+      },
+      "environment_capture": "uid=54321(agent) gid=54321(agent) groups=54321(agent)\nRH2_SYS_EXECUTABLE=/opt/miniconda3/envs/testbed/bin/python\nconans /testbed/conans/__init__.py\n/opt/miniconda3/envs/testbed/bin/conan\n/usr/local/bin/cmake\n/usr/bin/gcc\ncmake version 3.23.5\n/usr/share/cmake-3.22\n/usr/share/cmake-3.23.5\n",
+      "private_gold_commands": {
+        "mcve_cli": {
+          "rc": 0
+        },
+        "consume": {
+          "rc": 0
+        },
+        "integ_presets": {
+          "rc": 0
+        }
+      },
+      "private_gold_scope": "一次性默认用户容器，不是同身份同profile actor正对照",
+      "old_records_superseded": "静态卡actor待验已由本次正式入口取代；09-22 bash_env_v1不是当前环境资格。",
+      "derived_build": {
+        "image_id": "sha256:5fe4796de1ab58ffcb9a7d2e4bdbc23cebbd55b1c1a2b687f91915ff7d1deacf",
+        "base_id": "sha256:bb264f88ffc338f8b33c58e15a5f0373761abfe75145e7ae201e360031a8b9c8",
+        "base_layers_preserved": true,
+        "pip_check_rc": 0,
+        "pip_check": "No broken requirements found.\n"
+      },
+      "current_machine_preparation": {
+        "image_present": false,
+        "source": "root本轮只读机器核查回传，本review未远端核",
+        "historical_validation_retained": true,
+        "action": "下一次派发前按已验配方/固定wheel或文件重建并核身份；当前未执行重建。"
+      }
+    },
+    "model_evidence": {
+      "cells": {
+        "deepseek-v4-pro": "4/4/4",
+        "qwen3-coder-30b-a3b-instruct": "4/4/4",
+        "qwen3.6-35b-a3b": "4/4/4"
+      },
+      "verdict": "coverage_gap",
+      "gold_equivalent_successes": 7,
+      "semantic_gap_successes": 5,
+      "false_negatives": 0,
+      "attempted": true,
+      "scope": "09-22固定预算三模型历史样本；后续开发修复不追改旧分。",
+      "latest_t0_correction": "旧5/12是gold差异，不是5/12确定错误；DS a4生成器范围差异不算错，其余3条需求遗漏＋1条schema兼容风险分列。",
+      "later_behavior_review": "09-25按RESULT逐项复核，不以summary check=0当语义全过。"
+    },
+    "verified_repairs": [
+      "新增真实conan入口与官方CMake3.23.5，actor_v2真实configure/build和集成可运行。",
+      "G1提交83760b15已修exec挂载；conan_rc的原2失败变2通过，选择组10通过/8跳过/27未选，pytest自身rc0。旧noexec不再列未修。"
+    ],
+    "confirmed_open_issues": [
+      "12个正式1中已实测3条遗漏公开需求（DS a1多配置、Coder a1/a3默认jobs），Q36 a2另有schema4/最低CMake3.25兼容风险。原卡5条gold差异包含DS a4，T0已明确其生成器范围差异不算错。",
+      "来源评分未实施版本化补充；比较须预登记事后审计，原reward1不能单独判完整修复。"
+    ],
+    "unexecuted_questions": [
+      "跨生成器真实构建、连续多配置更新、0/负jobs边界未穷举；不由这些未测点自动否定任务。"
+    ],
+    "current_use": {
+      "diagnostic": "yes",
+      "comparison": "conditional",
+      "training": "no",
+      "holdout": "no"
+    },
+    "conditions": {
+      "diagnostic": "问题定位可继续，不并入模型能力分数；未执行与静态疑点不等于坏题。",
+      "comparison": "旧19为有条件比较；使用已验开发条件、共同题单/预算/有效分母并单列争议；不因模型真实错误剔除尝试。 得1候选必须按已定默认CPU/多配置jobs/schema事后审计，MSVC范围只记录；新profile部署不可沿用旧B代码。 root当前机器核查未保留该actor派生镜像，下次派发需重建准备条件；历史验证仍有效。",
+      "training": "没有本次训练准入；§2核心要求映射、版本化noop0/正对照1、§4第2/3步、未查范围及跨题关系需形成正面证据。当前S1未处理，D6未实施。",
+      "holdout": "已用于模型比较，不能再视作未接触留出。"
+    },
+    "next_action": "保持条件比较：派生actor_v2＋已修G1的当前profile，对得1候选按已定jobs/schema矩阵审计；不新增实验/评分修订。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-15422/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-15422/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-15422/screening_record.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+      "runs/task2_swegym_dev_20260925/runs/conan15422/actor_v2/attempt.json",
+      "runs/task2_swegym_dev_20260925/runs/conan15422/actor_v2/captures/env.out",
+      "runs/task2_swegym_dev_20260925/runs/private/conan15422_gold.json",
+      "runs/task2_swegym_dev_20260925/runs/conan15422/actor_v2/captures/func_cmake.out",
+      "runs/task2_swegym_dev_20260925/runs/conan15422/actor_v2/captures/mcve_cli.out",
+      "runs/task2_swegym_dev_20260925/runs/conan15422/actor_v2/captures/consume.out",
+      "runs/task2_swegym_dev_20260925/runs/conan15422/actor_v2/captures/integ_presets.out",
+      "runs/task2_swegym_dev_20260925/runs/conan15422/actor_v2/captures/tree.out",
+      "runs/task2_swegym_dev_20260925/derived/actor_conan15422_v2/image.json",
+      "runs/base_probe_20260922/analysis/conan-io__conan-15422/task_card.md",
+      "runs/task2_swegym_dev_20260925/runs/behavior/conan15422/summary.json",
+      "runs/task2_swegym_dev_20260925/runs/behavior/conan15422/base/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/conan15422/coder_a1/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/conan15422/coder_a2/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/conan15422/coder_a3/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/conan15422/coder_a4/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/conan15422/ds_a1/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/conan15422/ds_a2/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/conan15422/ds_a3/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/conan15422/ds_a4/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/conan15422/gold/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/conan15422/q36_a1/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/conan15422/q36_a2/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/conan15422/q36_a3/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/conan15422/q36_a4/check.out",
+      "runs/task2_swegym_dev_20260925/g1_exec/evidence/devcheck/conan_rc/attempt.json",
+      "runs/task2_swegym_dev_20260925/g1_exec/evidence/devcheck/conan_rc/captures/func_rc.out"
+    ],
+    "review_scope": "2026-09-29 historical-context reconciliation, not fresh blind review; no execution or original card edits",
+    "historical_19_pool": true
+  },
+  {
+    "instance_id": "conan-io__conan-14177",
+    "goal": "apply_conandata_patches新增默认关闭的verbose，开启时逐文件标识补丁",
+    "static_findings": [
+      "题面verbose=False与默认新增日志验收冲突；gold未改签名，13参考均不传verbose。",
+      "新multiple测试使用Mock，无真实文件修改及第二个带description文件名断言；合理公开开关解可能被拒。"
+    ],
+    "development_evidence": {
+      "latest_actor_run_found": false,
+      "historical_grader_not_actor": true,
+      "scope": "09-21卡/review引用的历史grader；本次未重跑。",
+      "current_actor_status": "unknown / unexecuted in located task2 evidence",
+      "new_cpu0929_result": null,
+      "negative_evidence_scope": "固定scope无09-29结果；task2 runs无本题/短名，model task card未找到；不是声称所有历史从未运行。"
+    },
+    "model_evidence": {
+      "attempted": false,
+      "scope": "无本题09-22模型尝试，不以未知判坏题。"
+    },
+    "verified_repairs": [
+      "历史原grader安装及13项运行已完成；无本题actor修复证据，不套用15422的CLI/CMake需求。"
+    ],
+    "confirmed_open_issues": [
+      "公开接口与gold/测试的结构性冲突已由源码＋历史gold13/13接受确认；不等于显式verbose调用已实跑。"
+    ],
+    "unexecuted_questions": [
+      "真实默认/False/True行为、两文件内容变化和题面实现的正式评分尚未执行；actor未知。"
+    ],
+    "current_use": {
+      "diagnostic": "yes",
+      "comparison": "no",
+      "training": "no",
+      "holdout": "conditional"
+    },
+    "conditions": {
+      "diagnostic": "问题定位可继续，不并入模型能力分数；未执行与静态疑点不等于坏题。",
+      "comparison": "当前先诊断具体语义/验收疑点及actor路径，尚无准入证据；不是永久拒题，也不要求全套CPU方案全部完成。",
+      "training": "没有本次训练准入；§2核心要求映射、版本化noop0/正对照1、§4第2/3步、未查范围及跨题关系需形成正面证据。",
+      "holdout": "需满足训练质量条件、核未用于选模型/调提示/配方并按D3隔离；静态审查本身不等于实际solver泄漏。"
+    },
+    "next_action": "保持needs_review；下一项是公开开关语义与实际patch应用的窄对照，先明确当前契约，不把放宽日志子串当修复。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-14177/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-14177/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-14177/screening_record.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md"
+    ],
+    "review_scope": "2026-09-29 historical-context reconciliation, not fresh blind review; no execution or original card edits",
+    "historical_19_pool": false
+  },
+  {
+    "instance_id": "dask__dask-8597",
+    "goal": "零宽数组经整数列表索引得到与NumPy一致的空结果",
+    "static_findings": [
+      "单形状默认配置F2P；split=True空轴、默认警告和返回Array边界仍有静态部分修复假说。"
+    ],
+    "development_evidence": {
+      "latest_actor_run_found": true,
+      "date": "2026-09-25",
+      "identity": "实际CC2.1.205、UID54321、正式actor入口；项目从/testbed导入；2CPU/4GiB",
+      "image": "rh2-task2/actor_dask8597_v1:20260925",
+      "base_commit": "c1c88f066672c0b216fc24862a2b36a0a9fb4e22",
+      "commands": [
+        {
+          "id": "env",
+          "rc": 0,
+          "purpose": "解释器、包来源（须为 /testbed）、pytest/numpy 版本、身份"
+        },
+        {
+          "id": "mcve",
+          "rc": 1,
+          "purpose": "题面原例（公开 API）：零宽数组整数列表索引，base 应暴露目标缺陷"
+        },
+        {
+          "id": "narrow",
+          "rc": 0,
+          "purpose": "相关公开窄测试：两项默认警告旧测试（首轮在 pytest 8.3.2 下因 warns(None) 抛 TypeError）"
+        },
+        {
+          "id": "file",
+          "rc": 0,
+          "purpose": "整份 test_slicing.py（评分同文件），看执行数量与失败分布"
+        },
+        {
+          "id": "tree",
+          "rc": 0,
+          "purpose": "运行后工作区改动（开发命令不应写业务文件）"
+        }
+      ],
+      "checks": {
+        "interpreter_in_tool_result": true,
+        "host_log_present": true,
+        "no_harness_dir_in_container": true,
+        "no_launcher_or_done_marker": true,
+        "message_start_matches_stub_requests": true,
+        "exit_code_zero": true,
+        "result_event_present": true,
+        "log_complete": true,
+        "bashenv_denied_for_agent": false,
+        "all_commands_ran": true,
+        "all_match_expect": true
+      },
+      "cleanup": {
+        "container_rm": 0,
+        "network_failures": [],
+        "relay_failures": [],
+        "stub_rc": 0,
+        "labeled_containers_left": [],
+        "labeled_networks_left": [],
+        "residual_after_force": []
+      },
+      "environment_capture": "uid=54321(agent) gid=54321(agent) groups=54321(agent)\nHOME=/home/agent\nRH2_SYS_EXECUTABLE=/opt/miniconda3/envs/testbed/bin/python\ndask /testbed/dask/__init__.py\nnumpy 1.26.4 pytest 7.4.4\n",
+      "private_gold_commands": {
+        "mcve": {
+          "rc": 0
+        },
+        "narrow": {
+          "rc": 0
+        },
+        "file": {
+          "rc": 0
+        }
+      },
+      "private_gold_scope": "一次性默认用户容器，不是同身份同profile actor正对照",
+      "old_records_superseded": "静态卡actor待验已由本次正式入口取代；09-22 bash_env_v1不是当前环境资格。",
+      "derived_build": {
+        "image_id": "sha256:1af84acd8c8389997a7293ff94dd4e130a99c7b65679fe26de14fb8e4ec428a7",
+        "base_id": "sha256:f6d90e1b058c229be30e9c328c44d652dbe22db36493dc823c2d1567d7647fd7",
+        "base_layers_preserved": true,
+        "pip_check_rc": 1,
+        "pip_check": "distributed 2024.8.0 has requirement dask==2024.8.0, but you have dask 2022.1.0+10.gc1c88f066.\n"
+      },
+      "current_machine_preparation": {
+        "image_present": false,
+        "source": "root本轮只读机器核查回传，本review未远端核",
+        "historical_validation_retained": true,
+        "action": "下一次派发前按已验配方/固定wheel或文件重建并核身份；当前未执行重建。"
+      }
+    },
+    "model_evidence": {
+      "cells": {
+        "deepseek-v4-pro": "2/2/2",
+        "qwen3-coder-30b-a3b-instruct": "2/2/2",
+        "qwen3.6-35b-a3b": "2/2/2"
+      },
+      "verdict": "keep",
+      "gold_equivalent_successes": 6,
+      "semantic_gap_successes": 0,
+      "false_negatives": 0,
+      "attempted": true,
+      "scope": "09-22固定预算三模型历史样本；后续开发修复不追改旧分。"
+    },
+    "verified_repairs": [
+      "actor_dask8597_v1固定pytest7.4.4，消除原warns(None)两处TypeError；原例仍准确OverflowError，旧整文件118通过/2skip/2xfail，gold原例(1,0)。"
+    ],
+    "confirmed_open_issues": [
+      "派生镜像pip check仍有distributed2024.8.0要求dask2024.8.0与本题旧dask冲突；本地数组命令已验，不泛称环境全健康。"
+    ],
+    "unexecuted_questions": [
+      "仅split=True计算阈值的退化仍未构造/评分；训练需要§2正面覆盖证据而非6/6全对替代。"
+    ],
+    "current_use": {
+      "diagnostic": "yes",
+      "comparison": "conditional",
+      "training": "conditional",
+      "holdout": "no"
+    },
+    "conditions": {
+      "diagnostic": "问题定位可继续，不并入模型能力分数；未执行与静态疑点不等于坏题。",
+      "comparison": "旧19为有条件比较；使用已验开发条件、共同题单/预算/有效分母并单列争议；不因模型真实错误剔除尝试。 用actor_dask8597_v1；distributed依赖冲突限制到已验本地数组路径。 root当前机器核查未保留该actor派生镜像，下次派发需重建准备条件；历史验证仍有效。",
+      "training": "没有本次训练准入；§2核心要求映射、版本化noop0/正对照1、§4第2/3步、未查范围及跨题关系需形成正面证据。",
+      "holdout": "已用于模型比较，不能再视作未接触留出。"
+    },
+    "next_action": "保留能力比较/环境校准用途，使用已验镜像并标范围；训练前补正面覆盖证据，静态退化未跑不新增本轮比较闸门。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/dask__dask-8597/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/dask__dask-8597/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/dask__dask-8597/screening_record.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+      "runs/task2_swegym_dev_20260925/runs/dask8597/actor_v1/attempt.json",
+      "runs/task2_swegym_dev_20260925/runs/dask8597/actor_v1/captures/env.out",
+      "runs/task2_swegym_dev_20260925/runs/private/dask8597_gold.json",
+      "runs/task2_swegym_dev_20260925/runs/dask8597/actor_v1/captures/file.out",
+      "runs/task2_swegym_dev_20260925/runs/dask8597/actor_v1/captures/narrow.out",
+      "runs/task2_swegym_dev_20260925/runs/dask8597/actor_v1/captures/tree.out",
+      "runs/task2_swegym_dev_20260925/runs/dask8597/actor_v1/captures/mcve.out",
+      "runs/task2_swegym_dev_20260925/derived/actor_dask8597_v1/image.json",
+      "runs/base_probe_20260922/analysis/dask__dask-8597/task_card.md"
+    ],
+    "review_scope": "2026-09-29 historical-context reconciliation, not fresh blind review; no execution or original card edits",
+    "historical_19_pool": true
+  },
+  {
+    "instance_id": "dask__dask-8801",
+    "goal": "坏配置造成import合并str.items失败时提供可定位诊断",
+    "static_findings": [
+      "缺原坏文件且报错/跳过政策未唯一规定；F2P仅给list，额外锁ValueError、repr路径与英文片段。",
+      "历史局部同义措辞误拒，完整RH2替代候选未验；lists-only漏修仅静态推演。"
+    ],
+    "development_evidence": {
+      "latest_actor_run_found": false,
+      "historical_grader_not_actor": true,
+      "scope": "09-21卡/review引用的历史grader；本次未重跑。",
+      "current_actor_status": "unknown / unexecuted in located task2 evidence",
+      "new_cpu0929_result": null,
+      "negative_evidence_scope": "固定scope无09-29结果；task2 runs无本题/短名，model task card未找到；不是声称所有历史从未运行。"
+    },
+    "model_evidence": {
+      "attempted": false,
+      "scope": "无本题09-22模型尝试，不以未知判坏题。"
+    },
+    "verified_repairs": [
+      "历史原graderpytest8.3.2可跑，gold45通过，2F2P/41P2P；无须照搬8597的pytest修复。"
+    ],
+    "confirmed_open_issues": [
+      "原参考确实锁文案/异常形态，当前公开依据不足以唯一化；不把局部拒绝升级为完整正常解实测误拒。"
+    ],
+    "unexecuted_questions": [
+      "同义措辞完整评分、原字符串fresh import、lists-only候选及actor均未验。"
+    ],
+    "current_use": {
+      "diagnostic": "yes",
+      "comparison": "no",
+      "training": "conditional",
+      "holdout": "conditional"
+    },
+    "conditions": {
+      "diagnostic": "问题定位可继续，不并入模型能力分数；未执行与静态疑点不等于坏题。",
+      "comparison": "当前先诊断具体语义/验收疑点及actor路径，尚无准入证据；不是永久拒题，也不要求全套CPU方案全部完成。",
+      "training": "没有本次训练准入；§2核心要求映射、版本化noop0/正对照1、§4第2/3步、未查范围及跨题关系需形成正面证据。",
+      "holdout": "需满足训练质量条件、核未用于选模型/调提示/配方并按D3隔离；静态审查本身不等于实际solver泄漏。"
+    },
+    "next_action": "保持语义诊断；优先只改措辞且保留path/type/原因的对照，未知未执行不判坏题。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/dask__dask-8801/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/dask__dask-8801/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/dask__dask-8801/screening_record.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md"
+    ],
+    "review_scope": "2026-09-29 historical-context reconciliation, not fresh blind review; no execution or original card edits",
+    "historical_19_pool": false
+  },
+  {
+    "instance_id": "iterative__dvc-5839",
+    "goal": "metrics show --precision按小数点后n位生效并保留默认5",
+    "static_findings": [
+      "F2P仅Mock查空数据helper收到8；P2P保护默认/4/7数值；硬编码8仍是可选静态校准。"
+    ],
+    "development_evidence": {
+      "latest_actor_run_found": true,
+      "date": "2026-09-25",
+      "identity": "实际CC2.1.205、UID54321、正式actor入口；项目从/testbed导入；2CPU/4GiB",
+      "image": "rh2-task2/actor_dvc5839_v2:20260925",
+      "base_commit": "daf07451f8e8f3e76a791c696b0ea175e8ed3ac1",
+      "commands": [
+        {
+          "id": "env",
+          "rc": 0,
+          "purpose": "解释器、dvc 来源、身份"
+        },
+        {
+          "id": "first_round_devsh",
+          "rc": 0,
+          "purpose": "首轮在 bash_env_v1 下用过的同一份开发检查脚本（原样复用），在正式入口下重跑以核对结论能否迁移"
+        },
+        {
+          "id": "tree",
+          "rc": 0,
+          "purpose": "运行后工作区改动"
+        }
+      ],
+      "checks": {
+        "interpreter_in_tool_result": true,
+        "host_log_present": true,
+        "no_harness_dir_in_container": true,
+        "no_launcher_or_done_marker": true,
+        "message_start_matches_stub_requests": true,
+        "exit_code_zero": true,
+        "result_event_present": true,
+        "log_complete": true,
+        "bashenv_denied_for_agent": false,
+        "all_commands_ran": true,
+        "all_match_expect": true
+      },
+      "cleanup": {
+        "container_rm": 0,
+        "network_failures": [],
+        "relay_failures": [],
+        "stub_rc": 0,
+        "labeled_containers_left": [],
+        "labeled_networks_left": [],
+        "residual_after_force": []
+      },
+      "environment_capture": "uid=54321(agent) gid=54321(agent) groups=54321(agent)\nPython 3.9.19\nRH2_SYS_EXECUTABLE=/opt/miniconda3/envs/testbed/bin/python\ndvc /testbed/dvc/__init__.py\nboto3                     1.35.26\nbotocore                  1.35.26\npathspec                  0.8.1\npytest                    6.2.3\n",
+      "private_gold_commands": {
+        "first_round_devsh": {
+          "rc": 0
+        }
+      },
+      "private_gold_scope": "一次性默认用户容器，不是同身份同profile actor正对照",
+      "old_records_superseded": "静态卡actor待验已由本次正式入口取代；09-22 bash_env_v1不是当前环境资格。",
+      "derived_build": {
+        "image_id": "sha256:584203725591d6ca3d2bb5bae17f1f1d1c00c591f8836f9d76d7c70d71eedb93",
+        "base_id": "sha256:72d057b24145afd4f0e88b1c1972780e22ba275b380ef9ece3b722980fcf1e0d",
+        "base_layers_preserved": true,
+        "pip_check_rc": 0,
+        "pip_check": "No broken requirements found.\n"
+      },
+      "current_machine_preparation": {
+        "image_present": false,
+        "source": "root本轮只读机器核查回传，本review未远端核",
+        "historical_validation_retained": true,
+        "action": "下一次派发前按已验配方/固定wheel或文件重建并核身份；当前未执行重建。"
+      }
+    },
+    "model_evidence": {
+      "cells": {
+        "deepseek-v4-pro": "2/4/4",
+        "qwen3-coder-30b-a3b-instruct": "4/4/4",
+        "qwen3.6-35b-a3b": "4/4/4"
+      },
+      "verdict": "keep",
+      "gold_equivalent_successes": 10,
+      "semantic_gap_successes": 0,
+      "false_negatives": 0,
+      "attempted": true,
+      "scope": "09-22固定预算三模型历史样本；后续开发修复不追改旧分。",
+      "later_behavior_review": "09-25按RESULT逐项复核，不以summary check=0当语义全过。"
+    },
+    "verified_repairs": [
+      "actor_dvc5839_v2固定pathspec0.8.1，原CLI五种参数redefinition错误消除；五种CLI内部rc0、窄2测通过。",
+      "09-25行为原件补齐默认/4/8/2、Markdown/JSON：10个成功候选与gold逐项一致；DS两失败是有效数字替代小数位真实回归。"
+    ],
+    "confirmed_open_issues": [],
+    "unexecuted_questions": [
+      "硬编码8官方评分未执行；标量float既有不舍入不算新gold缺陷。"
+    ],
+    "current_use": {
+      "diagnostic": "yes",
+      "comparison": "conditional",
+      "training": "conditional",
+      "holdout": "no"
+    },
+    "conditions": {
+      "diagnostic": "问题定位可继续，不并入模型能力分数；未执行与静态疑点不等于坏题。",
+      "comparison": "旧19为有条件比较；使用已验开发条件、共同题单/预算/有效分母并单列争议；不因模型真实错误剔除尝试。 root当前机器核查未保留该actor派生镜像，下次派发需重建准备条件；历史验证仍有效。",
+      "training": "没有本次训练准入；§2核心要求映射、版本化noop0/正对照1、§4第2/3步、未查范围及跨题关系需形成正面证据。",
+      "holdout": "已用于模型比较，不能再视作未接触留出。"
+    },
+    "next_action": "保留条件比较及对照，使用actor_v2；可选硬编码校准不机械变当前比较闸门，训练仍需正面覆盖与跨题登记。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-5839/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-5839/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-5839/screening_record.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+      "runs/task2_swegym_dev_20260925/runs/dvc5839/actor_v2/attempt.json",
+      "runs/task2_swegym_dev_20260925/runs/dvc5839/actor_v2/captures/env.out",
+      "runs/task2_swegym_dev_20260925/runs/private/iterative__dvc-5839_gold.json",
+      "runs/task2_swegym_dev_20260925/runs/dvc5839/actor_v2/captures/first_round_devsh.out",
+      "runs/task2_swegym_dev_20260925/runs/dvc5839/actor_v2/captures/tree.out",
+      "runs/task2_swegym_dev_20260925/derived/actor_dvc5839_v2/image.json",
+      "runs/base_probe_20260922/analysis/iterative__dvc-5839/task_card.md",
+      "runs/task2_swegym_dev_20260925/runs/behavior/dvc5839/summary.json",
+      "runs/task2_swegym_dev_20260925/runs/behavior/dvc5839/base/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/dvc5839/coder_a1/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/dvc5839/coder_a2/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/dvc5839/coder_a3/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/dvc5839/coder_a4/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/dvc5839/ds_a1/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/dvc5839/ds_a2/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/dvc5839/ds_a3/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/dvc5839/ds_a4/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/dvc5839/gold/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/dvc5839/q36_a1/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/dvc5839/q36_a2/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/dvc5839/q36_a3/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/dvc5839/q36_a4/check.out"
+    ],
+    "review_scope": "2026-09-29 historical-context reconciliation, not fresh blind review; no execution or original card edits",
+    "historical_19_pool": true
+  },
+  {
+    "instance_id": "iterative__dvc-4166",
+    "goal": "修复.dvcignore目录专属规则和否定匹配",
+    "static_findings": [
+      "目录与同名文件边界未完整保护；两条前导空格节点被旧parser合并，当前两项均PASS，不是已证错误reward。"
+    ],
+    "development_evidence": {
+      "latest_actor_run_found": true,
+      "date": "2026-09-25",
+      "identity": "实际CC2.1.205、UID54321、正式actor入口；项目从/testbed导入；2CPU/4GiB",
+      "image": "rh2-task2/actor_dvc4166_v1:20260925",
+      "base_commit": "520e01f11305aba1994df354adef86e6d90180de",
+      "commands": [
+        {
+          "id": "env",
+          "rc": 0,
+          "purpose": "解释器、dvc 来源（须为 /testbed）、关键依赖版本、身份"
+        },
+        {
+          "id": "mcve",
+          "rc": 1,
+          "purpose": "题面原例（公开 Tree API）：按 gitignore 语义应重新包含 scripts/ 内文件的写法（`/*`+`!/scripts`、`/*`+`!/scripts/`）；`*`+`!scripts` 只记录不断言"
+        },
+        {
+          "id": "ignore_tests",
+          "rc": 0,
+          "purpose": "相关公开测试：dvcignore"
+        },
+        {
+          "id": "tree",
+          "rc": 0,
+          "purpose": "运行后工作区改动"
+        }
+      ],
+      "checks": {
+        "interpreter_in_tool_result": true,
+        "host_log_present": true,
+        "no_harness_dir_in_container": true,
+        "no_launcher_or_done_marker": true,
+        "message_start_matches_stub_requests": true,
+        "exit_code_zero": true,
+        "result_event_present": true,
+        "log_complete": true,
+        "bashenv_denied_for_agent": false,
+        "all_commands_ran": true,
+        "all_match_expect": true
+      },
+      "cleanup": {
+        "container_rm": 0,
+        "network_failures": [],
+        "relay_failures": [],
+        "stub_rc": 0,
+        "labeled_containers_left": [],
+        "labeled_networks_left": [],
+        "residual_after_force": []
+      },
+      "environment_capture": "uid=54321(agent) gid=54321(agent) groups=54321(agent)\nPython 3.9.19\nRH2_SYS_EXECUTABLE=/opt/miniconda3/envs/testbed/bin/python\ndvc /testbed/dvc/__init__.py\nGitPython                 3.1.43\npathspec                  0.8.1\npydantic_core             2.23.4\npytest                    7.4.4\npytest-xdist              3.6.1\ntyping_extensions         4.12.2\n",
+      "private_gold_commands": {
+        "mcve": {
+          "rc": 0
+        },
+        "ignore_tests": {
+          "rc": 0
+        }
+      },
+      "private_gold_scope": "一次性默认用户容器，不是同身份同profile actor正对照",
+      "old_records_superseded": "静态卡actor待验已由本次正式入口取代；09-22 bash_env_v1不是当前环境资格。",
+      "derived_build": {
+        "image_id": "sha256:d7997ec4365892c7679cf9b3a7e4ef3243e380b8ebc639fb5f29b47c65b287ba",
+        "base_id": "sha256:ebc31e1cb2f3ec7efeb74b5a236e8b31135e71d62d399f1dd40f04f4b7bf261a",
+        "base_layers_preserved": true,
+        "pip_check_rc": 0,
+        "pip_check": "No broken requirements found.\n"
+      },
+      "current_machine_preparation": {
+        "image_present": false,
+        "source": "root本轮只读机器核查回传，本review未远端核",
+        "historical_validation_retained": true,
+        "action": "下一次派发前按已验配方/固定wheel或文件重建并核身份；当前未执行重建。"
+      }
+    },
+    "model_evidence": {
+      "attempted": false,
+      "scope": "无本题09-22模型尝试，不以未知判坏题。"
+    },
+    "verified_repairs": [
+      "actor_dvc4166_v1固定pathspec0.8.1并对networkx2.3作与grader2.3+rh2.1代码等价兼容修复，pip check0、ignore29通过。",
+      "公开assert修正：*+!scripts在gold也隐藏内部文件，符合gitignore；/*+!/scripts/才是base缺陷，gold恢复。"
+    ],
+    "confirmed_open_issues": [
+      "pathspec版本改变题目语义，未来必须保持actor0.8.1与grader一致。",
+      "初态setup.py预改仍存在；不能把镜像dirty算候选业务修改。"
+    ],
+    "unexecuted_questions": [
+      "仅去掉正向规则尾斜线的候选与文件/目录成对矩阵未评分；parser碰撞对混合PASS/FAIL的实际影响未验。"
+    ],
+    "current_use": {
+      "diagnostic": "yes",
+      "comparison": "conditional",
+      "training": "conditional",
+      "holdout": "conditional"
+    },
+    "conditions": {
+      "diagnostic": "问题定位可继续，不并入模型能力分数；未执行与静态疑点不等于坏题。",
+      "comparison": "旧19为有条件比较；使用已验开发条件、共同题单/预算/有效分母并单列争议；不因模型真实错误剔除尝试。 pathspec0.8.1及等价networkx修订固定，初态setup.py差异保持。 root当前机器核查未保留该actor派生镜像，下次派发需重建准备条件；历史验证仍有效。",
+      "training": "没有本次训练准入；§2核心要求映射、版本化noop0/正对照1、§4第2/3步、未查范围及跨题关系需形成正面证据。",
+      "holdout": "需满足训练质量条件、核未用于选模型/调提示/配方并按D3隔离；静态审查本身不等于实际solver泄漏。"
+    },
+    "next_action": "保留条件比较，明确版本/初态与修正后的公开判据；无需为所有静态假说重跑整题，训练前补目标映射及退化证据。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/iterative__dvc-4166/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/iterative__dvc-4166/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/iterative__dvc-4166/screening_record.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+      "runs/task2_swegym_dev_20260925/runs/dvc4166/actor_v1/attempt.json",
+      "runs/task2_swegym_dev_20260925/runs/dvc4166/actor_v1/captures/env.out",
+      "runs/task2_swegym_dev_20260925/runs/private/iterative__dvc-4166_gold.json",
+      "runs/task2_swegym_dev_20260925/runs/dvc4166/actor_v1/captures/tree.out",
+      "runs/task2_swegym_dev_20260925/runs/dvc4166/actor_v1/captures/ignore_tests.out",
+      "runs/task2_swegym_dev_20260925/runs/dvc4166/actor_v1/captures/mcve.out",
+      "runs/task2_swegym_dev_20260925/derived/actor_dvc4166_v1/image.json"
+    ],
+    "review_scope": "2026-09-29 historical-context reconciliation, not fresh blind review; no execution or original card edits",
+    "historical_19_pool": true
+  },
+  {
+    "instance_id": "iterative__dvc-1681",
+    "goal": "旧.dvc升级或绝对检出位置变化后未改数据不应changed checksum",
+    "static_findings": [
+      "F2P先锁dumpd()[wdir]==\".\"，未固定旧md5；仅在checksum规范化的合理路线有未实测误拒疑点。"
+    ],
+    "development_evidence": {
+      "latest_actor_run_found": true,
+      "date": "2026-09-25",
+      "identity": "实际CC2.1.205、UID54321、正式actor入口；项目从/testbed导入；2CPU/4GiB",
+      "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-1681:latest",
+      "base_commit": "9175c45b1472070e02521380e4db8315d7c910c4",
+      "commands": [
+        {
+          "id": "env",
+          "rc": 0,
+          "purpose": "解释器、dvc 来源（须为 /testbed）、关键依赖版本、身份"
+        },
+        {
+          "id": "mcve",
+          "rc": 1,
+          "purpose": "题面缺陷的公开可构造形态：同一仓库换一个绝对路径检出后 dvc status 不应报 changed checksum（原例依赖旧版本生成的 .dvc 与大文件，无法原样重跑）"
+        },
+        {
+          "id": "status_stage",
+          "rc": 0,
+          "purpose": "相关公开测试：status / stage"
+        },
+        {
+          "id": "tree",
+          "rc": 0,
+          "purpose": "运行后工作区改动"
+        }
+      ],
+      "checks": {
+        "interpreter_in_tool_result": true,
+        "host_log_present": true,
+        "no_harness_dir_in_container": true,
+        "no_launcher_or_done_marker": true,
+        "message_start_matches_stub_requests": true,
+        "exit_code_zero": true,
+        "result_event_present": true,
+        "log_complete": true,
+        "bashenv_denied_for_agent": false,
+        "all_commands_ran": true,
+        "all_match_expect": true
+      },
+      "cleanup": {
+        "container_rm": 0,
+        "network_failures": [],
+        "relay_failures": [],
+        "stub_rc": 0,
+        "labeled_containers_left": [],
+        "labeled_networks_left": [],
+        "residual_after_force": []
+      },
+      "environment_capture": "uid=54321(agent) gid=54321(agent) groups=54321(agent)\nPython 3.8.19\nRH2_SYS_EXECUTABLE=/opt/miniconda3/envs/testbed/bin/python\ndvc /testbed/dvc/__init__.py\nGitPython                3.1.43\npathspec                 0.12.1\npytest                   7.4.4\ntyping_extensions        4.12.2\n",
+      "private_gold_commands": {
+        "mcve": {
+          "rc": 0
+        },
+        "status_stage": {
+          "rc": 0
+        }
+      },
+      "private_gold_scope": "一次性默认用户容器，不是同身份同profile actor正对照",
+      "old_records_superseded": "静态卡actor待验已由本次正式入口取代；09-22 bash_env_v1不是当前环境资格。"
+    },
+    "model_evidence": {
+      "attempted": false,
+      "scope": "无本题09-22模型尝试，不以未知判坏题。"
+    },
+    "verified_repairs": [
+      "公开原镜像正式actor可用；复制仓库到另一绝对路径的status复现changed checksum；gold恢复两处干净，status/stage12测通过。",
+      "-n0不被识别是诊断命令错误，已删参重跑，不算缺依赖。"
+    ],
+    "confirmed_open_issues": [
+      "题面原例依赖旧版产物及大文件，本轮无法原样重跑；已有公开替代复现，不等于题无效。"
+    ],
+    "unexecuted_questions": [
+      "checksum-only合理候选、固定旧元数据样本与真实非默认目录差分未做，不一律列比较前置。"
+    ],
+    "current_use": {
+      "diagnostic": "yes",
+      "comparison": "conditional",
+      "training": "conditional",
+      "holdout": "conditional"
+    },
+    "conditions": {
+      "diagnostic": "问题定位可继续，不并入模型能力分数；未执行与静态疑点不等于坏题。",
+      "comparison": "旧19为有条件比较；使用已验开发条件、共同题单/预算/有效分母并单列争议；不因模型真实错误剔除尝试。 保留需自造复现标注，不改题面。",
+      "training": "没有本次训练准入；§2核心要求映射、版本化noop0/正对照1、§4第2/3步、未查范围及跨题关系需形成正面证据。",
+      "holdout": "需满足训练质量条件、核未用于选模型/调提示/配方并按D3隔离；静态审查本身不等于实际solver泄漏。"
+    },
+    "next_action": "按既定T0保留带需自造复现标注的比较候选；未来若验训练，优先核内部表示是否误拒，不为获取原大文件盲装工具。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/iterative__dvc-1681/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/iterative__dvc-1681/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/iterative__dvc-1681/screening_record.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+      "runs/task2_swegym_dev_20260925/runs/dvc1681/orig/attempt.json",
+      "runs/task2_swegym_dev_20260925/runs/dvc1681/orig/captures/env.out",
+      "runs/task2_swegym_dev_20260925/runs/private/iterative__dvc-1681_gold.json",
+      "runs/task2_swegym_dev_20260925/runs/dvc1681/orig/captures/status_stage.out",
+      "runs/task2_swegym_dev_20260925/runs/dvc1681/orig/captures/tree.out",
+      "runs/task2_swegym_dev_20260925/runs/dvc1681/orig/captures/mcve.out"
+    ],
+    "review_scope": "2026-09-29 historical-context reconciliation, not fresh blind review; no execution or original card edits",
+    "historical_19_pool": true
+  },
+  {
+    "instance_id": "iterative__dvc-6954",
+    "goal": "Python负整数/负浮点参数可经run/repro进入lock并随值更新",
+    "static_findings": [
+      "原参考仅负整数＋12旧类型，float/CLI/lock未直接计分；int-only退化尚未评分。",
+      "3665保存接线在4785公开base及本题演化版本可见，需登记跨题关系，未证明实际solver污染。"
+    ],
+    "development_evidence": {
+      "latest_actor_run_found": true,
+      "date": "2026-09-25",
+      "identity": "实际CC2.1.205、UID54321、正式actor入口；项目从/testbed导入；2CPU/4GiB",
+      "image": "rh2-task2/actor_dvc6954_v1:20260925",
+      "base_commit": "28dd39a1a0d710585ff21bf66199208b1b83cbde",
+      "commands": [
+        {
+          "id": "env",
+          "rc": 0,
+          "purpose": "解释器、dvc 来源、pygit2 / libgit2 / scmrepo 版本"
+        },
+        {
+          "id": "mcve_cli",
+          "rc": 255,
+          "purpose": "题面公开 CLI 路径：params.py 负数参数经 stage add / repro 记入 dvc.lock；base 应暴露缺陷"
+        },
+        {
+          "id": "git_rev",
+          "rc": 0,
+          "purpose": "需要解析 git 修订的公开命令（pygit2 后端）：有提交后的 params diff"
+        },
+        {
+          "id": "unit_serialize",
+          "rc": 0,
+          "purpose": "相关公开单测：序列化（params.py 解析）"
+        },
+        {
+          "id": "func_params",
+          "rc": 0,
+          "purpose": "相关公开功能测试（首轮 actor 下因 pygit2 缺 GIT_OBJ_COMMIT 不可运行）"
+        },
+        {
+          "id": "tree",
+          "rc": 0,
+          "purpose": "运行后工作区改动"
+        }
+      ],
+      "checks": {
+        "interpreter_in_tool_result": true,
+        "host_log_present": true,
+        "no_harness_dir_in_container": true,
+        "no_launcher_or_done_marker": true,
+        "message_start_matches_stub_requests": true,
+        "exit_code_zero": true,
+        "result_event_present": true,
+        "log_complete": true,
+        "bashenv_denied_for_agent": false,
+        "all_commands_ran": true,
+        "all_match_expect": true
+      },
+      "cleanup": {
+        "container_rm": 0,
+        "network_failures": [],
+        "relay_failures": [],
+        "stub_rc": 0,
+        "labeled_containers_left": [],
+        "labeled_networks_left": [],
+        "residual_after_force": []
+      },
+      "environment_capture": "uid=54321(agent) gid=54321(agent) groups=54321(agent)\nRH2_SYS_EXECUTABLE=/opt/miniconda3/envs/testbed/bin/python\ndvc /testbed/dvc/__init__.py 2.8.4.dev20+g28dd39a1a\npygit2 1.14.1 libgit2 1.7.2 GIT_OBJ_COMMIT True\ndulwich                  0.22.1\nGitPython                3.1.43\npygit2                   1.14.1\n",
+      "private_gold_commands": {
+        "mcve_cli": {
+          "rc": 0
+        },
+        "git_rev": {
+          "rc": 0
+        },
+        "func_params": {
+          "rc": 0
+        },
+        "unit_serialize": {
+          "rc": 0
+        }
+      },
+      "private_gold_scope": "一次性默认用户容器，不是同身份同profile actor正对照",
+      "old_records_superseded": "静态卡actor待验已由本次正式入口取代；09-22 bash_env_v1不是当前环境资格。",
+      "derived_build": {
+        "image_id": "sha256:92433fa5406920b4e44d596ec2967a636435621ac391d044948334b639e1319e",
+        "base_id": "sha256:e89b73204cdd3e6635369a72520d7f5d2dea1f22ec96c984c6baadd7b73c2fd1",
+        "base_layers_preserved": true,
+        "pip_check_rc": 0,
+        "pip_check": "No broken requirements found.\n"
+      },
+      "invalid_observation": "可选非法表达式-'a'的behavior gold CLI记录被shell引号错误干扰，rc255不能当gold正确CLI正对照；不影响正常数值链。",
+      "invalid_observation_scope": "诊断脚本引号错误，不是DVC本体缺陷；不从该条推导gold正确或错误。",
+      "current_machine_preparation": {
+        "image_present": false,
+        "source": "root本轮只读机器核查回传，本review未远端核",
+        "historical_validation_retained": true,
+        "action": "下一次派发前按已验配方/固定wheel或文件重建并核身份；当前未执行重建。"
+      }
+    },
+    "model_evidence": {
+      "cells": {
+        "deepseek-v4-pro": "2/2/3",
+        "qwen3-coder-30b-a3b-instruct": "2/2/2",
+        "qwen3.6-35b-a3b": "2/2/2"
+      },
+      "verdict": "keep",
+      "gold_equivalent_successes": 6,
+      "semantic_gap_successes": 0,
+      "false_negatives": 0,
+      "attempted": true,
+      "scope": "09-22固定预算三模型历史样本；后续开发修复不追改旧分。",
+      "valid_denominator": "6成功/6有效/7尝试，1上游流中断排除；非法operand不追加评分断言。",
+      "later_behavior_review": "09-25按RESULT逐项复核，不以summary check=0当语义全过。"
+    },
+    "verified_repairs": [
+      "actor_dvc6954_v1固定pygit21.14.1/libgit2 1.7.2，GIT_OBJ_COMMIT恢复；git_rev可运行，params功能24通过、序列化2通过、pip check0。",
+      "09-25三方/自然候选行为补齐负int/float/nested、lock、不变跳过、改值重跑与dvc run；6个成功在题面范围与gold一致。",
+      "DS初次流中断已标infra并重跑，不能把其noop0混入模型失败分母。"
+    ],
+    "confirmed_open_issues": [],
+    "unexecuted_questions": [
+      "int-only错误候选官方评分未做；非法operand是否跳过按T0缺乏足够公开依据，不新增必修要求。"
+    ],
+    "current_use": {
+      "diagnostic": "yes",
+      "comparison": "conditional",
+      "training": "conditional",
+      "holdout": "no"
+    },
+    "conditions": {
+      "diagnostic": "问题定位可继续，不并入模型能力分数；未执行与静态疑点不等于坏题。",
+      "comparison": "旧19为有条件比较；使用已验开发条件、共同题单/预算/有效分母并单列争议；不因模型真实错误剔除尝试。 root当前机器核查未保留该actor派生镜像，下次派发需重建准备条件；历史验证仍有效。",
+      "training": "没有本次训练准入；§2核心要求映射、版本化noop0/正对照1、§4第2/3步、未查范围及跨题关系需形成正面证据。",
+      "holdout": "已用于模型比较，不能再视作未接触留出。"
+    },
+    "next_action": "保留条件比较/校准；使用已验派生镜像和有效尝试分母，非法输入只可选质量观察，勿靠追加弱依据断言造区分度。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-6954/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-6954/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-6954/screening_record.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+      "runs/task2_swegym_dev_20260925/runs/dvc6954/actor_v1/attempt.json",
+      "runs/task2_swegym_dev_20260925/runs/dvc6954/actor_v1/captures/env.out",
+      "runs/task2_swegym_dev_20260925/runs/private/dvc6954_gold.json",
+      "runs/task2_swegym_dev_20260925/runs/dvc6954/actor_v1/captures/mcve_cli.out",
+      "runs/task2_swegym_dev_20260925/runs/dvc6954/actor_v1/captures/unit_serialize.out",
+      "runs/task2_swegym_dev_20260925/runs/dvc6954/actor_v1/captures/git_rev.out",
+      "runs/task2_swegym_dev_20260925/runs/dvc6954/actor_v1/captures/func_params.out",
+      "runs/task2_swegym_dev_20260925/runs/dvc6954/actor_v1/captures/tree.out",
+      "runs/task2_swegym_dev_20260925/derived/actor_dvc6954_v1/image.json",
+      "runs/base_probe_20260922/analysis/iterative__dvc-6954/task_card.md",
+      "runs/task2_swegym_dev_20260925/runs/behavior/dvc6954/summary.json",
+      "runs/task2_swegym_dev_20260925/runs/behavior/dvc6954/base/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/dvc6954/coder_a1/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/dvc6954/coder_a2/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/dvc6954/ds_a2/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/dvc6954/ds_a3/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/dvc6954/gold/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/dvc6954/q36_a1/check.out",
+      "runs/task2_swegym_dev_20260925/runs/behavior/dvc6954/q36_a2/check.out"
+    ],
+    "review_scope": "2026-09-29 historical-context reconciliation, not fresh blind review; no execution or original card edits",
+    "historical_19_pool": true
+  },
+  {
+    "instance_id": "iterative__dvc-9395",
+    "goal": "repro --pull恢复缺失数据源并保留运行缓存恢复",
+    "static_findings": [
+      "gold在dry前pull/fetch/checkout及无需恢复仍拉remote：具体静态回归疑点，未执行。",
+      "精确checkout三次耦合内部路径；旧候选实际停在缺bar，不是已证次数误拒。"
+    ],
+    "development_evidence": {
+      "latest_actor_run_found": false,
+      "historical_grader_not_actor": true,
+      "scope": "09-21卡/review引用的历史grader；本次未重跑。",
+      "current_actor_status": "unknown / unexecuted in located task2 evidence",
+      "new_cpu0929_result": null,
+      "negative_evidence_scope": "固定scope无09-29结果；task2 runs无本题/短名，model task card未找到；不是声称所有历史从未运行。"
+    },
+    "model_evidence": {
+      "attempted": false,
+      "scope": "无本题09-22模型尝试，不以未知判坏题。"
+    },
+    "verified_repairs": [
+      "历史dvc_tail_v1固定pygit2 1.14.1、实际离线安装成功；gold30通过、noop3失败27通过，29参考；旧pygit2永久失败判断过时。"
+    ],
+    "confirmed_open_issues": [],
+    "unexecuted_questions": [
+      "pull+dry文件快照与dry=False正控、无remote对照尚未跑；actor未验证。"
+    ],
+    "current_use": {
+      "diagnostic": "yes",
+      "comparison": "no",
+      "training": "conditional",
+      "holdout": "conditional"
+    },
+    "conditions": {
+      "diagnostic": "问题定位可继续，不并入模型能力分数；未执行与静态疑点不等于坏题。",
+      "comparison": "当前先诊断具体语义/验收疑点及actor路径，尚无准入证据；不是永久拒题，也不要求全套CPU方案全部完成。",
+      "training": "没有本次训练准入；§2核心要求映射、版本化noop0/正对照1、§4第2/3步、未查范围及跨题关系需形成正面证据。",
+      "holdout": "需满足训练质量条件、核未用于选模型/调提示/配方并按D3隔离；静态审查本身不等于实际solver泄漏。"
+    },
+    "next_action": "保持needs_review；下一项优先base/gold本地remote的dry快照控制，不把未运行静态回归写成已证坏题。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-9395/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-9395/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-9395/screening_record.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md"
+    ],
+    "review_scope": "2026-09-29 historical-context reconciliation, not fresh blind review; no execution or original card edits",
+    "historical_19_pool": false
+  },
+  {
+    "instance_id": "iterative__dvc-3620",
+    "goal": "解除symlink输出保护时保持缓存只读、输出内容与数据安全",
+    "static_findings": [
+      "hardlink立即只读推广与公开旧契约有范围歧义；7个实际测试未查内容/断链。"
+    ],
+    "development_evidence": {
+      "latest_actor_run_found": false,
+      "historical_grader_not_actor": true,
+      "scope": "09-21卡/review引用的历史grader；本次未重跑。",
+      "current_actor_status": "unknown / unexecuted in located task2 evidence",
+      "new_cpu0929_result": null,
+      "negative_evidence_scope": "固定scope无09-29结果；task2 runs无本题/短名，model task card未找到；不是声称所有历史从未运行。"
+    },
+    "model_evidence": {
+      "attempted": false,
+      "scope": "无本题09-22模型尝试，不以未知判坏题。"
+    },
+    "verified_repairs": [
+      "历史dvc_install_v1c非root grader安装及测试可运行；gold7过/noop3败4过，6参考；旧root前置失败不再代表新配方。"
+    ],
+    "confirmed_open_issues": [],
+    "unexecuted_questions": [
+      "数据丢失退化的正式校准、非空文本链接断开/写入不改缓存未跑；symlink-only不能单凭CPU决定hardlink规格。"
+    ],
+    "current_use": {
+      "diagnostic": "yes",
+      "comparison": "no",
+      "training": "conditional",
+      "holdout": "conditional"
+    },
+    "conditions": {
+      "diagnostic": "问题定位可继续，不并入模型能力分数；未执行与静态疑点不等于坏题。",
+      "comparison": "当前先诊断具体语义/验收疑点及actor路径，尚无准入证据；不是永久拒题，也不要求全套CPU方案全部完成。",
+      "training": "没有本次训练准入；§2核心要求映射、版本化noop0/正对照1、§4第2/3步、未查范围及跨题关系需形成正面证据。",
+      "holdout": "需满足训练质量条件、核未用于选模型/调提示/配方并按D3隔离；静态审查本身不等于实际solver泄漏。"
+    },
+    "next_action": "保持诊断；先以非root非空文本核数据后置条件并校准，不能仅按测试数量或未跑actor拒题。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-3620/screening_record.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md"
+    ],
+    "review_scope": "2026-09-29 historical-context reconciliation, not fresh blind review; no execution or original card edits",
+    "historical_19_pool": false
+  },
+  {
+    "instance_id": "iterative__dvc-3576",
+    "goal": "metrics diff容忍旧指标缺失，保留可用新值并分离结果/非结果输出",
+    "static_findings": [
+      "唯一F2P锁_show_diff({})==空串；没有真实CLI流捕获，命令层分流合理路线可能被拒。",
+      "gold沉默不必然违背stderr要求；缺旧值显示仍有静态数字表现疑点。"
+    ],
+    "development_evidence": {
+      "latest_actor_run_found": false,
+      "historical_grader_not_actor": true,
+      "scope": "09-21卡/review引用的历史grader；本次未重跑。",
+      "current_actor_status": "unknown / unexecuted in located task2 evidence",
+      "new_cpu0929_result": null,
+      "negative_evidence_scope": "固定scope无09-29结果；task2 runs无本题/短名，model task card未找到；不是声称所有历史从未运行。"
+    },
+    "model_evidence": {
+      "attempted": false,
+      "scope": "无本题09-22模型尝试，不以未知判坏题。"
+    },
+    "verified_repairs": [
+      "历史修订grader配方安装成功、7参考完整，noop0/gold1；旧安装脏日志不能冒称clean。"
+    ],
+    "confirmed_open_issues": [],
+    "unexecuted_questions": [
+      "base/gold/命令层替代解的CLI输出与正式分数未对照；真实Git/JSON路径和actor未知。"
+    ],
+    "current_use": {
+      "diagnostic": "yes",
+      "comparison": "no",
+      "training": "conditional",
+      "holdout": "conditional"
+    },
+    "conditions": {
+      "diagnostic": "问题定位可继续，不并入模型能力分数；未执行与静态疑点不等于坏题。",
+      "comparison": "当前先诊断具体语义/验收疑点及actor路径，尚无准入证据；不是永久拒题，也不要求全套CPU方案全部完成。",
+      "training": "没有本次训练准入；§2核心要求映射、版本化noop0/正对照1、§4第2/3步、未查范围及跨题关系需形成正面证据。",
+      "holdout": "需满足训练质量条件、核未用于选模型/调提示/配方并按D3隔离；静态审查本身不等于实际solver泄漏。"
+    },
+    "next_action": "保持诊断备选；先核外部CLI再判断helper断言，不因gold未发stderr直接判错。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/iterative__dvc-3576/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/iterative__dvc-3576/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/iterative__dvc-3576/screening_record.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md"
+    ],
+    "review_scope": "2026-09-29 historical-context reconciliation, not fresh blind review; no execution or original card edits",
+    "historical_19_pool": false
+  },
+  {
+    "instance_id": "iterative__dvc-3665",
+    "goal": "Windows/Unix保存相对cache.dir格式一致且目标位置保持",
+    "static_findings": [
+      "4F2P直接调用题面未要求的新增私有_to_relpath，base四处AttributeError；Linux旧行为已过，未测Windows核心路径。",
+      "无helper内联修复可能误拒，未接保存链的helper可能满分，均未执行。"
+    ],
+    "development_evidence": {
+      "latest_actor_run_found": false,
+      "historical_grader_not_actor": true,
+      "scope": "09-21卡/review引用的历史grader；本次未重跑。",
+      "current_actor_status": "unknown / unexecuted in located task2 evidence",
+      "new_cpu0929_result": null,
+      "negative_evidence_scope": "固定scope无09-29结果；task2 runs无本题/短名，model task card未找到；不是声称所有历史从未运行。"
+    },
+    "model_evidence": {
+      "attempted": false,
+      "scope": "无本题09-22模型尝试，不以未知判坏题。"
+    },
+    "verified_repairs": [
+      "历史dvc_install_v1c实际editable安装成功；gold33过/noop4败29过，22参考；42parser键含9业务ERROR伪键但不撞引用。"
+    ],
+    "confirmed_open_issues": [
+      "验收强制内部helper及Windows行为未受当前Linux测试直接保护，是已确认结构性限制，尚无动态误拒/漏收。"
+    ],
+    "unexecuted_questions": [
+      "无helper合理解的Windows行为＋原RH2对照未跑；actor未知。"
+    ],
+    "current_use": {
+      "diagnostic": "yes",
+      "comparison": "no",
+      "training": "conditional",
+      "holdout": "conditional"
+    },
+    "conditions": {
+      "diagnostic": "问题定位可继续，不并入模型能力分数；未执行与静态疑点不等于坏题。",
+      "comparison": "当前先诊断具体语义/验收疑点及actor路径，尚无准入证据；不是永久拒题，也不要求全套CPU方案全部完成。",
+      "training": "没有本次训练准入；§2核心要求映射、版本化noop0/正对照1、§4第2/3步、未查范围及跨题关系需形成正面证据。",
+      "holdout": "需满足训练质量条件、核未用于选模型/调提示/配方并按D3隔离；静态审查本身不等于实际solver泄漏。"
+    },
+    "next_action": "保持需求/验收诊断，优先合理内联解对照；跨3665/4785/6954代码关系登记，不能直接宣告重复。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-3665/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-3665/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-3665/screening_record.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md"
+    ],
+    "review_scope": "2026-09-29 historical-context reconciliation, not fresh blind review; no execution or original card edits",
+    "historical_19_pool": false
+  },
+  {
+    "instance_id": "iterative__dvc-4785",
+    "goal": "HTTP exists让401/403报错，成功True、404 False并保留HEAD受限回退",
+    "static_findings": [
+      "401未输入F2P；同一Response Mock不能验证HEAD/GET差异状态。",
+      "HEAD405→GET404时gold抛405是静态回归疑点；冲突HEAD404/GET403策略未定。"
+    ],
+    "development_evidence": {
+      "latest_actor_run_found": false,
+      "historical_grader_not_actor": true,
+      "scope": "09-21卡/review引用的历史grader；本次未重跑。",
+      "current_actor_status": "unknown / unexecuted in located task2 evidence",
+      "new_cpu0929_result": null,
+      "negative_evidence_scope": "固定scope无09-29结果；task2 runs无本题/短名，model task card未找到；不是声称所有历史从未运行。"
+    },
+    "model_evidence": {
+      "attempted": false,
+      "scope": "无本题09-22模型尝试，不以未知判坏题。"
+    },
+    "verified_repairs": [
+      "历史dvc_install_v1c双侧真实离线安装，gold9通过/noop1败8过、9参考无缺席；共同moto pin预改保留。"
+    ],
+    "confirmed_open_issues": [
+      "异常类型解释有公开争议：题面提raise_for_status，现有CLI用DVC异常；不等于任意Requests路线都合法或已误拒。"
+    ],
+    "unexecuted_questions": [
+      "分离HEAD/GET响应的405→404窄控制未跑；只修403候选及原生异常CLI差分未跑。"
+    ],
+    "current_use": {
+      "diagnostic": "yes",
+      "comparison": "no",
+      "training": "conditional",
+      "holdout": "conditional"
+    },
+    "conditions": {
+      "diagnostic": "问题定位可继续，不并入模型能力分数；未执行与静态疑点不等于坏题。",
+      "comparison": "当前先诊断具体语义/验收疑点及actor路径，尚无准入证据；不是永久拒题，也不要求全套CPU方案全部完成。",
+      "training": "没有本次训练准入；§2核心要求映射、版本化noop0/正对照1、§4第2/3步、未查范围及跨题关系需形成正面证据。",
+      "holdout": "需满足训练质量条件、核未用于选模型/调提示/配方并按D3隔离；静态审查本身不等于实际solver泄漏。"
+    },
+    "next_action": "保持诊断，优先405→404并以405→200及同状态作控制；运行确认行为但不替代契约判断。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-4785/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-4785/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-4785/screening_record.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md"
+    ],
+    "review_scope": "2026-09-29 historical-context reconciliation, not fresh blind review; no execution or original card edits",
+    "historical_19_pool": false
+  },
+  {
+    "instance_id": "iterative__dvc-4185",
+    "goal": "同时消除未变参数commit误报及false参数反复status new",
+    "static_findings": [
+      "gold仅fill_values，commit仍走文件hash比较的强静态链；7F2P只验不变status空，不测commit。",
+      "恒空status退化和真变值/删键缺保护是未跑假说；空YAML文本为null而非空字符串。"
+    ],
+    "development_evidence": {
+      "latest_actor_run_found": false,
+      "historical_grader_not_actor": true,
+      "scope": "09-21卡/review引用的历史grader；本次未重跑。",
+      "current_actor_status": "unknown / unexecuted in located task2 evidence",
+      "new_cpu0929_result": null,
+      "negative_evidence_scope": "固定scope无09-29结果；task2 runs无本题/短名，model task card未找到；不是声称所有历史从未运行。"
+    },
+    "model_evidence": {
+      "attempted": false,
+      "scope": "无本题09-22模型尝试，不以未知判坏题。"
+    },
+    "verified_repairs": [
+      "历史dvc_install_v1c＋reference-bindings-v1解决旧networkx及转义ID阻塞；gold49过2skip，noop7败42过2skip，参考7+22。"
+    ],
+    "confirmed_open_issues": [],
+    "unexecuted_questions": [
+      "base/gold重新加载后的status与不带force commit双症状尚未跑，不能写gold已实测漏修。"
+    ],
+    "current_use": {
+      "diagnostic": "yes",
+      "comparison": "no",
+      "training": "conditional",
+      "holdout": "conditional"
+    },
+    "conditions": {
+      "diagnostic": "问题定位可继续，不并入模型能力分数；未执行与静态疑点不等于坏题。",
+      "comparison": "当前先诊断具体语义/验收疑点及actor路径，尚无准入证据；不是永久拒题，也不要求全套CPU方案全部完成。",
+      "training": "没有本次训练准入；§2核心要求映射、版本化noop0/正对照1、§4第2/3步、未查范围及跨题关系需形成正面证据。",
+      "holdout": "需满足训练质量条件、核未用于选模型/调提示/配方并按D3隔离；静态审查本身不等于实际solver泄漏。"
+    },
+    "next_action": "保持needs_review；优先公开双症状base/gold对照附改值正控，不静默删除commit目标。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/results/iterative__dvc-4185/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/results/iterative__dvc-4185/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/results/iterative__dvc-4185/screening_record.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md"
+    ],
+    "review_scope": "2026-09-29 historical-context reconciliation, not fresh blind review; no execution or original card edits",
+    "historical_19_pool": false
+  }
+]

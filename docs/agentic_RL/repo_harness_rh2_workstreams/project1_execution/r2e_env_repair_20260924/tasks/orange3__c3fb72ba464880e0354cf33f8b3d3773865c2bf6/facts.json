@@ -1,0 +1,396 @@
+{
+ "schema_id": "rh2.r2e_env_facts.v1",
+ "generated_at_utc": "2026-09-23T19:41:12Z",
+ "generator": {
+  "script": "rh2/scripts/r2e_env/collate_facts.py",
+  "sha256": "e21d4465331c7ed02c9ae9918894231324009cb9b220da5f6efd53809098d1fc"
+ },
+ "evidence_roots": [
+  "runs/r2e_rf_20260923",
+  "runs/r2e_env_repair_20260924/_rerun2"
+ ],
+ "m3_root": "runs/env_overnight_20260916/M3",
+ "identity": {
+  "task_id": "r2e_gym_subset::orange3__c3fb72ba464880e0354cf33f8b3d3773865c2bf6",
+  "instance_id": "orange3__c3fb72ba464880e0354cf33f8b3d3773865c2bf6",
+  "repo": "orange3",
+  "module": "Orange",
+  "base_commit": "419b1882cef9856fa26bf6c847b7a1630e2bc996",
+  "source_commit_hash": "c3fb72ba464880e0354cf33f8b3d3773865c2bf6",
+  "base_image_ref": "namanjain12/orange3_final:c3fb72ba464880e0354cf33f8b3d3773865c2bf6",
+  "base_image_manifest_digest": "sha256:8a67c1ca77215185b2faf6657e5108c96b6f2b7c10e7b381d44658a27fc7e2a9",
+  "derived_image_ref": "rh2-r2e-derived/orange3:c3fb72ba4648-r2e_derive_v1",
+  "derived_image_id": "sha256:c12e2576877105368fea3dfc7153368d39603f7427ff02ea8702eafc2bf8e467",
+  "recipe_id": "r2e_derive_v1",
+  "recipe_sha256": "sha256:0da821a15fa389289f524c60d3a421bc940cce753e4ecf3d53560b7ab6b31df9",
+  "hidden_tests_tree_sha256": "sha256:3ddc95ff3b3660673bbef5c1d9cc08a579dab2c412ae5ed809afa9f45a31ca56",
+  "run_tests_sh_sha256": "sha256:5dee57d9beda24a5401b433fa66b74f423c4ab79eb04046265b0f5447d3b1315",
+  "head_commit_m3": "419b1882cef9856fa26bf6c847b7a1630e2bc996",
+  "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe"
+ },
+ "source": {
+  "expected_total": 44,
+  "expected_status_counts": {
+   "PASSED": 44
+  },
+  "expected_non_passed": {},
+  "hidden_test_files": [
+   "__init__.py",
+   "test_1.py"
+  ],
+  "runner_kind": "xvfb_pytest",
+  "runner_prefix": "QT_QPA_PLATFORM=minimal PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' xvfb-run --auto-servernum",
+  "run_tests_sh": "QT_QPA_PLATFORM=minimal PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' xvfb-run --auto-servernum .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+  "problem_statement_chars": 946,
+  "problem_statement_has_code_block": true,
+  "public_prompt_chars": 1049,
+  "public_hints_mention_conda": true
+ },
+ "environment": {
+  "python_version": "3.8.20",
+  "interpreter_source_path": "/root/.local/share/uv/python/cpython-3.8.20-linux-x86_64-gnu/bin/python3.8",
+  "interpreter_derived_path": "/opt/py/cpython-3.8.20-linux-x86_64-gnu/bin/python3.8",
+  "install_mode_m3": "path_entry",
+  "pth_line_m3": "/testbed",
+  "import_outside_testbed_ok_m3": true,
+  "import_path_grader": "/testbed/Orange/__init__.py",
+  "pkg_version_grader": "3.37.0.dev",
+  "dirty_tree_lines": [
+   "?? datasets",
+   "?? install.sh",
+   "?? run_tests.sh"
+  ],
+  "testbed_owner_derived": "root",
+  "metacopy": "N"
+ },
+ "derived_image": {
+  "ok": true,
+  "failures": [],
+  "checks_total": 20,
+  "checks_failed": [],
+  "build_seconds": 18.1,
+  "base_size_bytes": 5452047375,
+  "derived_size_bytes": 5754885203,
+  "built_at_utc": "2026-09-23T14:01:52.965312Z",
+  "preflight_stdout": [
+   "RH2_PREFLIGHT_INTERPRETER=ok",
+   "RH2_PREFLIGHT_HIDDEN_TESTS=ok",
+   "RH2_PREFLIGHT_GIT_HISTORY=ok"
+  ]
+ },
+ "rh2_runs": [
+  {
+   "run_id": "r2e-rf-all-gold",
+   "ledger": "ledger_r2e_all_gold.jsonl",
+   "kind": "gold",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T15:12:07.671109+00:00",
+   "stage_error": null,
+   "reward": 1.0,
+   "outcome": "resolved",
+   "failure_category": null,
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 44,
+   "expected_total": 44,
+   "num_parsed_tests": 44,
+   "resolution": "RESOLVED_FULL",
+   "mismatched": [],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 0,
+   "test_seconds": 7.904,
+   "setup_seconds": 172.686193,
+   "grader_seconds_total": 194.95,
+   "mem_peak_mb": 2579.758,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:c12e2576877105368fea3dfc7153368d39603f7427ff02ea8702eafc2bf8e467",
+   "import_path_grader": "/testbed/Orange/__init__.py",
+   "pkg_version_grader": "3.37.0.dev",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-o_3980735d.eval.log",
+   "diagnostics": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-o_3980735d.diagnostics.json",
+   "non_passed_reasons": {},
+   "dirty_tree_lines": [
+    " M Orange/widgets/visualize/owlinearprojection.py",
+    "?? datasets",
+    "?? install.sh",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": [
+    "Orange/widgets/visualize/owlinearprojection.py"
+   ]
+  },
+  {
+   "run_id": "r2e-rf-all-noop",
+   "ledger": "ledger_r2e_all_noop.jsonl",
+   "kind": "noop",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T15:12:08.398998+00:00",
+   "stage_error": null,
+   "reward": 0.0,
+   "outcome": "unresolved",
+   "failure_category": "tests_failed",
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 43,
+   "expected_total": 44,
+   "num_parsed_tests": 44,
+   "resolution": "RESOLVED_NO",
+   "mismatched": [
+    "LinProjVizRankTests.test_vizrank_n_attrs"
+   ],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 1,
+   "test_seconds": 7.356,
+   "setup_seconds": 172.731041,
+   "grader_seconds_total": 195.213,
+   "mem_peak_mb": 2500.816,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:c12e2576877105368fea3dfc7153368d39603f7427ff02ea8702eafc2bf8e467",
+   "import_path_grader": "/testbed/Orange/__init__.py",
+   "pkg_version_grader": "3.37.0.dev",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-o_c29d3a04.eval.log",
+   "diagnostics": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-o_c29d3a04.diagnostics.json",
+   "non_passed_reasons": {
+    "LinProjVizRankTests.test_vizrank_n_attrs": "FAILED: Asser..."
+   },
+   "dirty_tree_lines": [
+    "?? datasets",
+    "?? install.sh",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": []
+  },
+  {
+   "run_id": "r2e-envrepair-rerun-gold",
+   "ledger": "ledger_gold.jsonl",
+   "kind": "gold",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T18:58:02.261062+00:00",
+   "stage_error": null,
+   "reward": 1.0,
+   "outcome": "resolved",
+   "failure_category": null,
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 44,
+   "expected_total": 44,
+   "num_parsed_tests": 44,
+   "resolution": "RESOLVED_FULL",
+   "mismatched": [],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 0,
+   "test_seconds": 9.723,
+   "setup_seconds": 215.839881,
+   "grader_seconds_total": 240.316,
+   "mem_peak_mb": 2551.348,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:c12e2576877105368fea3dfc7153368d39603f7427ff02ea8702eafc2bf8e467",
+   "import_path_grader": "/testbed/Orange/__init__.py",
+   "pkg_version_grader": "3.37.0.dev",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_c4fffcbe.eval.log",
+   "diagnostics": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_c4fffcbe.diagnostics.json",
+   "non_passed_reasons": {},
+   "dirty_tree_lines": [
+    " M Orange/widgets/visualize/owlinearprojection.py",
+    "?? datasets",
+    "?? install.sh",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": [
+    "Orange/widgets/visualize/owlinearprojection.py"
+   ]
+  },
+  {
+   "run_id": "r2e-envrepair-rerun-noop",
+   "ledger": "ledger_noop.jsonl",
+   "kind": "noop",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T18:58:03.470396+00:00",
+   "stage_error": null,
+   "reward": 0.0,
+   "outcome": "unresolved",
+   "failure_category": "tests_failed",
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 43,
+   "expected_total": 44,
+   "num_parsed_tests": 44,
+   "resolution": "RESOLVED_NO",
+   "mismatched": [
+    "LinProjVizRankTests.test_vizrank_n_attrs"
+   ],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 1,
+   "test_seconds": 10.33,
+   "setup_seconds": 213.622722,
+   "grader_seconds_total": 243.205,
+   "mem_peak_mb": 2542.09,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:c12e2576877105368fea3dfc7153368d39603f7427ff02ea8702eafc2bf8e467",
+   "import_path_grader": "/testbed/Orange/__init__.py",
+   "pkg_version_grader": "3.37.0.dev",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_f6c10e54.eval.log",
+   "diagnostics": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_f6c10e54.diagnostics.json",
+   "non_passed_reasons": {
+    "LinProjVizRankTests.test_vizrank_n_attrs": "FAILED: Asser..."
+   },
+   "dirty_tree_lines": [
+    "?? datasets",
+    "?? install.sh",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": []
+  }
+ ],
+ "latest_default_profile": {
+  "noop": "r2e-rf-all-noop",
+  "gold": "r2e-rf-all-gold"
+ },
+ "reference": {
+  "m3_facts_available": true,
+  "reconcile": [
+   {
+    "kind": "noop",
+    "ledger": "ledger_r2e_all_noop_local.jsonl",
+    "agree": true,
+    "reward_equal": true,
+    "diff_sets_equal": true,
+    "observed_maps_equal": true,
+    "reference_ledger_consistent": null,
+    "reference_log_count": 2,
+    "notes": null,
+    "reference_prime_rewards": [
+     0.0,
+     0.0
+    ],
+    "ref": "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   },
+   {
+    "kind": "gold",
+    "ledger": "ledger_r2e_all_gold_local.jsonl",
+    "agree": true,
+    "reward_equal": true,
+    "diff_sets_equal": true,
+    "observed_maps_equal": true,
+    "reference_ledger_consistent": true,
+    "reference_log_count": 2,
+    "notes": null,
+    "reference_prime_rewards": [
+     1.0,
+     1.0
+    ],
+    "ref": "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   }
+  ]
+ },
+ "auto_checks": {
+  "R01_identity": {
+   "status": "pass",
+   "note": "派生镜像 21 项复核通过；覆盖表 / 隐藏测试树 / 入口脚本 / HEAD 与评分面一致",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/orange3__c3fb72ba464880e0354cf33f8b3d3773865c2bf6/facts.json"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R02_noop_shows_problem": {
+   "status": "pass",
+   "note": "noop 0 来自 1 个 mismatched 键（无 missing、无零解析）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-o_c29d3a04.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R08_candidate_code_effective": {
+   "status": "pass",
+   "note": "导入 /testbed/Orange/__init__.py；gold 44/44",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-o_3980735d.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R12_resources": {
+   "status": "issue",
+   "note": "峰值 2580 MB / 限额 4 GiB = 0.63; setup 173s test 8s（提示：memory.peak 含 chown 产生的可回收页缓存，不等于资源需求；P3 实测 orange3 2 GiB 限额仍通过——需人工判定）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-o_3980735d.diagnostics.json"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R13_repeat_noop": {
+   "status": "pass",
+   "note": "noop 同条件 2 次 reward 与差异集合一致",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-o_c29d3a04.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_f6c10e54.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R13_repeat_gold": {
+   "status": "pass",
+   "note": "gold 同条件 2 次 reward 与差异集合一致",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-o_3980735d.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_c4fffcbe.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R15_reference_parse": {
+   "status": "pass",
+   "note": "2 行 agree（reward、差异集合、观测映射逐键相同）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R16_f2p_keys": {
+   "status": "pass",
+   "note": "目标键 1：['LinProjVizRankTests.test_vizrank_n_attrs']",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-o_c29d3a04.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-o_3980735d.eval.log"
+   ],
+   "by": "collate_facts.py"
+  }
+ },
+ "flags": [
+  "dirty_tree_gt2",
+  "memory_headroom_low",
+  "xvfb_pytest"
+ ]
+}

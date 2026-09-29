@@ -1,0 +1,4 @@
+{'real_manager_tokens': [1, 2, 3, 4, 5, 6, 7], 'loss_mask': [1, 1, 0, 1, 1], 'behavior_logprobs': [-0.1, -0.2, 0.0, -0.3, -0.4], 'original_first_turn_decode_routes': [1, 1], 'final_first_turn_response_routes': tensor([[[7]],
+
+        [[7]]], dtype=torch.int32), 'weight_versions': ['10', '11'], 'scope': '真实TrajectoryManager→backfill;使用人工两轮tape证明选列;不证明真实GPU不同轮路由差异'}
+真实builder CLEAN/REALIGN 三步均保持 tokens=当前prompt+output；FORK以新builder同构。因此未复现中间token裁剪错位。

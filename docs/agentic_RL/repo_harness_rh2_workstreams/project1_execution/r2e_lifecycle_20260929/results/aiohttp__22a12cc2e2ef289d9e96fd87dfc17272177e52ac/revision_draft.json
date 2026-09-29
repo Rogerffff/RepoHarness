@@ -1,0 +1,175 @@
+{
+ "instance_id": "aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac",
+ "template": "R-e",
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "import gc\n",
+     "new": "import gc\nimport hashlib\n"
+    },
+    {
+     "old": "\n\nclass TestProxy(unittest.TestCase):\n",
+     "new": "\n\n_PEER_CERT_DER = b\"DER-encoded certificate presented by the server\"\n_PEER_FINGERPRINT = hashlib.sha256(_PEER_CERT_DER).digest()\n_OTHER_FINGERPRINT = hashlib.sha256(b\"some other certificate\").digest()\n\n\nclass _SSLObjectStub:\n    \"\"\"``ssl_object`` of a TLS connection: only the peer certificate is used.\"\"\"\n\n    def getpeercert(self, binary_form: bool = False) -> Any:\n        return _PEER_CERT_DER if binary_form else {}\n\n\nclass _TransportStub(asyncio.Transport):\n    \"\"\"In-memory transport that serves ``get_extra_info()`` and records closing.\n\n    The connection to the proxy is plain TCP (no ``sslcontext``); the transport\n    returned by ``loop.start_tls()`` exposes ``sslcontext``, ``ssl_object`` and\n    ``peername`` the way a real TLS transport does.\n    \"\"\"\n\n    _start_tls_compatible = True\n\n    def __init__(self, extra: Any = None) -> None:\n        super().__init__(extra)\n        self.closed = False\n\n    def close(self) -> None:\n        self.closed = True\n\n    def abort(self) -> None:\n        self.closed = True\n\n    def is_closing(self) -> bool:\n        return self.closed\n\n\nclass TestProxy(unittest.TestCase):\n"
+    },
+    {
+     "old": "    @mock.patch(\"aiohttp.connector.ClientRequest\")\n    @mock.patch(\n        \"aiohttp.connector.aiohappyeyeballs.start_connection\",\n        autospec=True,\n        spec_set=True,\n    )\n    def test_https_connect_fingerprint_mismatch(\n        self, start_connection: mock.Mock, ClientRequestMock: mock.Mock\n    ) -> None:\n        async def make_conn() -> aiohttp.TCPConnector:\n            return aiohttp.TCPConnector(enable_cleanup_closed=cleanup)\n\n        for cleanup in (True, False):\n            with self.subTest(cleanup=cleanup):\n                proxy_req = ClientRequest(\n                    \"GET\", URL(\"http://proxy.example.com\"), loop=self.loop\n                )\n                ClientRequestMock.return_value = proxy_req\n\n                class TransportMock(asyncio.Transport):\n                    def close(self) -> None:\n                        pass\n\n                proxy_resp = ClientResponse(\n                    \"get\",\n                    URL(\"http://proxy.example.com\"),\n                    request_info=mock.Mock(),\n                    writer=mock.Mock(),\n                    continue100=None,\n                    timer=TimerNoop(),\n                    traces=[],\n                    loop=self.loop,\n                    session=mock.Mock(),\n                )\n                fingerprint_mock = mock.Mock(spec=Fingerprint, auto_spec=True)\n                fingerprint_mock.check.side_effect = aiohttp.ServerFingerprintMismatch(\n                    b\"exp\", b\"got\", \"example.com\", 8080\n                )\n                with mock.patch.object(\n                    proxy_req,\n                    \"send\",\n                    autospec=True,\n                    spec_set=True,\n                    return_value=proxy_resp,\n                ), mock.patch.object(\n                    proxy_resp,\n                    \"start\",\n                    autospec=True,\n                    spec_set=True,\n                    return_value=mock.Mock(status=200),\n                ):\n                    connector = self.loop.run_until_complete(make_conn())\n                    host = [\n                        {\n                            \"hostname\": \"hostname\",\n                            \"host\": \"127.0.0.1\",\n                            \"port\": 80,\n                            \"family\": socket.AF_INET,\n                            \"proto\": 0,\n                            \"flags\": 0,\n                        }\n                    ]\n                    with mock.patch.object(\n                        connector,\n                        \"_resolve_host\",\n                        autospec=True,\n                        spec_set=True,\n                        return_value=host,\n                    ), mock.patch.object(\n                        connector,\n                        \"_get_fingerprint\",\n                        autospec=True,\n                        spec_set=True,\n                        return_value=fingerprint_mock,\n                    ), mock.patch.object(  # Called on connection to http://proxy.example.com\n                        self.loop,\n                        \"create_connection\",\n                        autospec=True,\n                        spec_set=True,\n                        return_value=(mock.Mock(), mock.Mock()),\n                    ), mock.patch.object(  # Called on connection to https://www.python.org\n                        self.loop,\n                        \"start_tls\",\n                        autospec=True,\n                        spec_set=True,\n                        return_value=TransportMock(),\n                    ):\n                        req = ClientRequest(\n                            \"GET\",\n                            URL(\"https://www.python.org\"),\n                            proxy=URL(\"http://proxy.example.com\"),\n                            loop=self.loop,\n                        )\n                        with self.assertRaises(aiohttp.ServerFingerprintMismatch):\n                            self.loop.run_until_complete(\n                                connector._create_connection(\n                                    req, [], aiohttp.ClientTimeout()\n                                )\n                            )\n\n",
+     "new": "    def _connect_via_proxy(\n        self, connector_ssl: Any, request_ssl: Any = True, cleanup: bool = False\n    ) -> Any:\n        \"\"\"``connector._create_connection()`` for https://www.python.org through\n        the HTTP proxy http://proxy.example.com (CONNECT, then TLS upgrade).\n\n        The fingerprint is configured only through the public ``ssl=``\n        parameters and checked by the real ``Fingerprint``; only the network is\n        replaced (see ``_TransportStub``).  Returns the protocol of the new\n        connection.\n        \"\"\"\n\n        async def start_tls(\n            transport: Any, protocol: Any, sslcontext: Any, **kwargs: Any\n        ) -> _TransportStub:\n            return _TransportStub(\n                {\n                    \"sslcontext\": sslcontext,\n                    \"ssl_object\": _SSLObjectStub(),\n                    \"peername\": (\"127.0.0.1\", 80),\n                }\n            )\n\n        async def make_conn() -> aiohttp.TCPConnector:\n            return aiohttp.TCPConnector(\n                ssl=connector_ssl, enable_cleanup_closed=cleanup\n            )\n\n        proxy_req = ClientRequest(\n            \"GET\", URL(\"http://proxy.example.com\"), loop=self.loop\n        )\n        proxy_resp = ClientResponse(\n            \"get\",\n            URL(\"http://proxy.example.com\"),\n            request_info=mock.Mock(),\n            writer=None,\n            continue100=None,\n            timer=TimerNoop(),\n            traces=[],\n            loop=self.loop,\n            session=mock.Mock(),\n        )\n        host = [\n            {\n                \"hostname\": \"hostname\",\n                \"host\": \"127.0.0.1\",\n                \"port\": 80,\n                \"family\": socket.AF_INET,\n                \"proto\": 0,\n                \"flags\": 0,\n            }\n        ]\n        with mock.patch(\n            \"aiohttp.connector.ClientRequest\", return_value=proxy_req\n        ), mock.patch(\n            \"aiohttp.connector.aiohappyeyeballs.start_connection\",\n            autospec=True,\n            spec_set=True,\n        ), mock.patch.object(\n            proxy_req,\n            \"send\",\n            autospec=True,\n            spec_set=True,\n            return_value=proxy_resp,\n        ), mock.patch.object(\n            proxy_resp,\n            \"start\",\n            autospec=True,\n            spec_set=True,\n            return_value=mock.Mock(status=200),\n        ):\n            connector = self.loop.run_until_complete(make_conn())\n            with mock.patch.object(\n                connector,\n                \"_resolve_host\",\n                autospec=True,\n                spec_set=True,\n                return_value=host,\n            ), mock.patch.object(  # Called on connection to http://proxy.example.com\n                self.loop,\n                \"create_connection\",\n                autospec=True,\n                spec_set=True,\n                return_value=(\n                    _TransportStub({\"peername\": (\"127.0.0.1\", 80)}),\n                    mock.Mock(),\n                ),\n            ), mock.patch.object(  # TLS upgrade for https://www.python.org\n                self.loop, \"start_tls\", start_tls\n            ):\n                req = ClientRequest(\n                    \"GET\",\n                    URL(\"https://www.python.org\"),\n                    proxy=URL(\"http://proxy.example.com\"),\n                    loop=self.loop,\n                    ssl=request_ssl,\n                )\n                return self.loop.run_until_complete(\n                    connector._create_connection(req, [], aiohttp.ClientTimeout())\n                )\n\n    def test_https_connect_fingerprint_mismatch(self) -> None:\n        # Connector-level pin that does not match the server certificate.\n        for cleanup in (True, False):\n            with self.subTest(cleanup=cleanup):\n                with self.assertRaises(aiohttp.ServerFingerprintMismatch) as ctx:\n                    self._connect_via_proxy(\n                        Fingerprint(_OTHER_FINGERPRINT), cleanup=cleanup\n                    )\n                self.assertEqual(ctx.exception.expected, _OTHER_FINGERPRINT)\n                self.assertEqual(ctx.exception.got, _PEER_FINGERPRINT)\n\n    def test_https_connect_fingerprint_match(self) -> None:\n        # Connector-level pin that matches: the connection is established.\n        proto = self._connect_via_proxy(Fingerprint(_PEER_FINGERPRINT))\n        self.assertTrue(proto.is_connected())\n\n    def test_https_connect_fingerprint_mismatch_request_ssl(self) -> None:\n        # ssl= given with the request overrides the connector's default.\n        with self.assertRaises(aiohttp.ServerFingerprintMismatch) as ctx:\n            self._connect_via_proxy(\n                Fingerprint(_PEER_FINGERPRINT),\n                request_ssl=Fingerprint(_OTHER_FINGERPRINT),\n            )\n        self.assertEqual(ctx.exception.expected, _OTHER_FINGERPRINT)\n        self.assertEqual(ctx.exception.got, _PEER_FINGERPRINT)\n\n    def test_https_connect_fingerprint_match_request_ssl(self) -> None:\n        # ssl= given with the request overrides the connector's default.\n        proto = self._connect_via_proxy(\n            Fingerprint(_OTHER_FINGERPRINT),\n            request_ssl=Fingerprint(_PEER_FINGERPRINT),\n        )\n        self.assertTrue(proto.is_connected())\n\n"
+    }
+   ]
+  }
+ ],
+ "expected_after": {
+  "TestProxy.test_connect": "PASSED",
+  "TestProxy.test_https_auth": "PASSED",
+  "TestProxy.test_https_connect": "PASSED",
+  "TestProxy.test_https_connect_certificate_error": "PASSED",
+  "TestProxy.test_https_connect_fingerprint_match": "PASSED",
+  "TestProxy.test_https_connect_fingerprint_match_request_ssl": "PASSED",
+  "TestProxy.test_https_connect_fingerprint_mismatch": "PASSED",
+  "TestProxy.test_https_connect_fingerprint_mismatch_request_ssl": "PASSED",
+  "TestProxy.test_https_connect_http_proxy_error": "PASSED",
+  "TestProxy.test_https_connect_pass_ssl_context": "PASSED",
+  "TestProxy.test_https_connect_resp_start_error": "PASSED",
+  "TestProxy.test_https_connect_ssl_error": "PASSED",
+  "TestProxy.test_proxy_auth": "PASSED",
+  "TestProxy.test_proxy_auth_property": "PASSED",
+  "TestProxy.test_proxy_auth_property_default": "PASSED",
+  "TestProxy.test_proxy_connection_error": "PASSED",
+  "TestProxy.test_proxy_dns_error": "PASSED",
+  "TestProxy.test_proxy_headers": "PASSED",
+  "TestProxy.test_proxy_server_hostname_default": "PASSED",
+  "TestProxy.test_proxy_server_hostname_override": "PASSED",
+  "TestProxy.test_request_port": "PASSED"
+ },
+ "positive_control": "gold",
+ "acceptance": {
+  "gold": {
+   "expected_score": 1,
+   "trial": "trials/rev_gold.json",
+   "trial_verdict": "match 21/21",
+   "materials": "revised"
+  },
+  "noop": {
+   "expected_score": 0,
+   "trial": "trials/rev_noop.json",
+   "trial_verdict": "mismatch 21/21; FAILED=TestProxy.test_https_connect_fingerprint_mismatch, TestProxy.test_https_connect_fingerprint_mismatch_request_ssl",
+   "materials": "revised"
+  },
+  "K3": {
+   "expected_score": 0,
+   "trial": "trials/rev_K3.json",
+   "trial_verdict": "mismatch 21/21; FAILED=TestProxy.test_https_connect_fingerprint_mismatch, TestProxy.test_https_connect_fingerprint_mismatch_request_ssl",
+   "materials": "revised"
+  },
+  "K4": {
+   "expected_score": 0,
+   "trial": "trials/rev_K4.json",
+   "trial_verdict": "mismatch 21/21; FAILED=TestProxy.test_https_connect_fingerprint_match, TestProxy.test_https_connect_fingerprint_match_request_ssl, TestProxy.test_https_connect_fingerprint_mismatch, TestProxy.test_https_connect_fingerprint_mismatch_request_ssl",
+   "materials": "revised"
+  },
+  "K1": {
+   "expected_score": 1,
+   "trial": "trials/rev_K1.json",
+   "trial_verdict": "match 21/21",
+   "materials": "revised"
+  },
+  "K2": {
+   "expected_score": 1,
+   "trial": "trials/rev_K2.json",
+   "trial_verdict": "match 21/21",
+   "materials": "revised"
+  },
+  "RC": {
+   "expected_score": 1,
+   "trial": "trials/rev_RC.json",
+   "trial_verdict": "match 21/21",
+   "materials": "revised"
+  },
+  "IC": {
+   "expected_score": 1,
+   "trial": "trials/rev_IC.json",
+   "trial_verdict": "match 21/21",
+   "materials": "revised"
+  },
+  "noop@current": {
+   "expected_score": 0,
+   "trial": "trials/env_noop_current.json",
+   "trial_verdict": "mismatch 18/18; FAILED=TestProxy.test_https_connect_fingerprint_mismatch",
+   "materials": "current"
+  },
+  "gold@current": {
+   "expected_score": 1,
+   "trial": "trials/env_gold_current.json",
+   "trial_verdict": "match 18/18",
+   "materials": "current"
+  },
+  "K2@current": {
+   "expected_score": 0,
+   "trial": "trials/cur_K2.json",
+   "trial_verdict": "mismatch 18/18; FAILED=TestProxy.test_https_connect_fingerprint_mismatch",
+   "materials": "current"
+  },
+  "RC@current": {
+   "expected_score": 0,
+   "trial": "trials/cur_RC.json",
+   "trial_verdict": "mismatch 18/18; FAILED=TestProxy.test_https_connect_fingerprint_mismatch",
+   "materials": "current"
+  },
+  "K3@current": {
+   "expected_score": 1,
+   "trial": "trials/cur_K3.json",
+   "trial_verdict": "match 18/18",
+   "materials": "current"
+  },
+  "K4@current": {
+   "expected_score": 1,
+   "trial": "trials/cur_K4.json",
+   "trial_verdict": "match 18/18",
+   "materials": "current"
+  }
+ },
+ "candidate_patches": {
+  "gold": {
+   "path": "runs/r2e_static_prep_20260924/v3/private/aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac/gold.patch",
+   "sha256": "sha256:f05eb489483c7552286f34ab0d521fcc08c16c69a440b21d1c1a0404fffa7b55"
+  },
+  "K1": {
+   "path": "runs/r2e_actor_20260925/grader_cands/aiohttp_22a1_K1_check_tls_transport_in_proxy_path.patch",
+   "sha256": "sha256:eed6e58c487161f07050ebc5ab6bfd25587ec9f41c94bbc56996826484227ba5"
+  },
+  "K2": {
+   "path": "runs/r2e_actor_20260925/grader_cands/aiohttp_22a1_K2_fingerprint_without_helper.patch",
+   "sha256": "sha256:4fb0eb46c32f64385f1c8fb3300752c948bee97a5759f8219e7fae7bb7468608"
+  },
+  "K3": {
+   "path": "runs/r2e_actor_20260925/grader_cands/aiohttp_22a1_K3_check_raw_proxy_transport.patch",
+   "sha256": "sha256:f4cec4ea3696c4dc031f8d4e155645e5866a1be94529229de10a4693dd24d636"
+  },
+  "K4": {
+   "path": "runs/r2e_actor_20260925/grader_cands/aiohttp_22a1_K4_reject_any_fingerprint.patch",
+   "sha256": "sha256:7e4a08430ee0cf7162c0a90411328ad7f48a80d01b0527eca2fd5a544aaca10e"
+  },
+  "RC": {
+   "path": "runs/r2e_actor_20260925/grader_cands/aiohttp_22a1_RC_gold_but_abort.patch",
+   "sha256": "sha256:fddc01ee8c8ab2a31772a15f2206df8ee77b6ecf8b5b8c850fc8a91922a1d14d"
+  },
+  "IC": {
+   "path": "cands/aiohttp_22a1_IC_gold_but_is_closing_close.patch",
+   "sha256": "sha256:78b108015ba36b0feb0195166379e6fce0bffe38f3dfa0d880e72fd1ebb2d0ce"
+  }
+ },
+ "parent_material": {
+  "hidden_test_file": "runs/r2e_static_prep_20260924/v3/private/aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac/hidden_tests/test_1.py",
+  "hidden_test_file_sha256": "sha256:987f91186bc9e1b9ee8bbe81c18583b45db087cbb8e767775237fe4048441ea5",
+  "expected_output_sha256": "sha256:351982fca712bba1e2043f739f4ab4395908eeaae0c02d44264f137baa23622a",
+  "expected_n": 18
+ },
+ "trial_draft_sha256": {
+  "draft.json": "sha256:20994e57440d39e6821f41537e30208b622f2e59b1e732f731fde4008ce7c3d1",
+  "expected_after.json": "sha256:65e732be9ae44d090f1426dc21cc2179bd53a0d93434fdd1a9b47ee57aa4ccef"
+ },
+ "revised_test_file_sha256": "sha256:ff4bf0d81c8d9bccaa9548162565f98f009fc897ab859a7d9f1a11d1de361b88"
+}

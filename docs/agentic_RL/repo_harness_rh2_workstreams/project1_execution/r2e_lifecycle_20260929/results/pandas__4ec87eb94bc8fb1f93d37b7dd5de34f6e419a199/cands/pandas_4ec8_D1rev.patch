@@ -1,0 +1,21 @@
+diff --git a/pandas/core/groupby/groupby.py b/pandas/core/groupby/groupby.py
+index 42de513..ecbf57c 100644
+--- a/pandas/core/groupby/groupby.py
++++ b/pandas/core/groupby/groupby.py
+@@ -63,6 +63,7 @@ from pandas.util._decorators import (
+ from pandas.core.dtypes.common import (
+     is_bool_dtype,
+     is_datetime64_dtype,
++    is_float_dtype,
+     is_integer_dtype,
+     is_numeric_dtype,
+     is_object_dtype,
+@@ -2439,7 +2440,7 @@ class GroupBy(BaseGroupBy[FrameOrSeries]):
+                 )
+ 
+             inference: np.dtype | None = None
+-            if is_integer_dtype(vals.dtype):
++            if is_integer_dtype(vals.dtype) or (isinstance(vals, ExtensionArray) and is_float_dtype(vals.dtype)):
+                 if isinstance(vals, ExtensionArray):
+                     out = vals.to_numpy(dtype=float, na_value=np.nan)
+                 else:

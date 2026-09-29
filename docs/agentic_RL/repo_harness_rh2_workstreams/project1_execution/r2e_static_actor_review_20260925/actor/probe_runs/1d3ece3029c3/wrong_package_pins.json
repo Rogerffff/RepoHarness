@@ -1,0 +1,29 @@
+{
+  "schema_id": "rh2.r2e_env_pins.v1",
+  "tasks": {
+    "orange3__9b5494e26f407b75e79699c9d40be6df1d80a040": {
+      "pins": [
+        {
+          "dist": "hypothesis",
+          "version": "6.24.1",
+          "wheel": "hypothesis-6.24.1-py3-none-any.whl",
+          "sha256": "ecbf7197ef85f0024b8c3dc947cfbf8296a5d1e6138562fc2f04d71ac9a96333",
+          "url": "https://files.pythonhosted.org/packages/23/df/b10b922532146902e7fb1c3163d90472fd61f79688d5fb02f760504b5567/hypothesis-6.24.1-py3-none-any.whl"
+        }
+      ],
+      "venv_changed_globs": [
+        "lib/python3.7/site-packages/hypothesis/*",
+        "lib/python3.7/site-packages/hypothesis-*.dist-info/*",
+        "lib/python3.7/site-packages/_hypothesis_*",
+        "bin/hypothesis"
+      ],
+      "why": "来源镜像的 install.sh 装的是不固定版本的最新 hypothesis（6.124.1）与 pytest（8.3.4），仓库自己的 test_requirements.txt 写的是 hypothesis==6.24.1、pytest==6.2.5。新版 hypothesis 对 numpy/conftest.py 里的 HealthCheck.all() 发弃用警告，被 pytest.ini 的 filterwarnings=error 变成错误，仓库自带测试收集即失败（rc 4），与本题修复对应的 numpy/ma/tests/test_extras.py::TestAverage 不能按常规运行。只把 hypothesis 固定回 6.24.1（pytest 不动）即可收集：78 passed / 10 failed，失败在与本题无关的 TestCorrcoef / TestCov（pytest 8 不调用旧式 setup），TestAverage 6 passed；隐藏测试 noop 87/88、gold 88/88 与原镜像相同。同时把 pytest 也换回 6.2.5 能让整个模块 88 passed，但会改变评分所用的 pytest 大版本，本配方不采用（改动面更大；需要时另立 env_v2）。",
+      "evidence": [
+        "runs/r2e_t0_revisions_20260924/diag43b/",
+        "runs/r2e_env_repair_20260924/p2/pubtests/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d.log"
+      ],
+      "decided_by": "Claude 09-24 E15（T1 环境配方，属 Codex 09-24 复核建议的环境修复范围；用户 09-24 同意继续修复）",
+      "env_step": "env_v2.sh"
+    }
+  }
+}

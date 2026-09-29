@@ -1,0 +1,220 @@
+{
+ "task_id": "iterative__dvc-1712",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "docs/.../s2/ingest/public_bundles_v0.jsonl#iterative__dvc-1712",
+  "grading": "docs/.../s2/ingest/grading_bundles_v2_v0.jsonl#iterative__dvc-1712",
+  "validation": "docs/.../s2/ingest/validation_bundles_v0.jsonl#iterative__dvc-1712",
+  "raw": "docs/.../s2/raw/swe_gym_lite_full_f70b1a29.jsonl#iterative__dvc-1712",
+  "base_commit": "5c39c6b8bd01f543a27abe1d3091640d4e844bf8",
+  "version": "0.31",
+  "python_version": "3.8",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-1712:latest",
+  "eval_cmd": "pytest -rA",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1712/{gold,empty}/offline/a1/",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc"
+ },
+ "public_view": {
+  "目标行为": "`dvc run` 在 inode 大于 `2**63-1` 的文件系统上不再抛 `sqlite3.IntegrityError: UNIQUE constraint failed: state.inode`。",
+  "约束": "base `dvc/state.py` 的 `_to_sqlite`（第 146 行）把无符号 inode 折成 sqlite 的有符号整数，写入路径的 6 处（第 283、351、380、399、467、513 行）都调用了它；**只有查询路径 `get_state_record_for_inode`（第 409-410 行）没有调用**，于是\"查不到 → 再插一条 → 主键冲突\"。题面的 Debug 日志里 `INSERT INTO state(inode, ...) VALUES (-1475089811426947668, ...)` 与 `Path ... inode 12123207390858225349` 这一正一负正是这个转换。",
+  "公开材料无法确定的点": [
+   "题面没给复现步骤（用户自己也说不清触发条件），可复现序列 `dvc destroy / dvc init / 连续两次 dvc run --remove-outs --overwrite-dvcfile` 只在不可见的 hints 里；",
+   "题面没说修法应落在方法内部还是调用点；",
+   "`dvc/remote/local.py:706` 也直接调用 `get_state_record_for_inode`，题面完全没提到这个调用点。"
+  ],
+  "相关模块": "dvc/state.py（_to_sqlite / _from_sqlite / _do_update / _insert_new_state_record / get_state_record_for_inode）、dvc/remote/local.py:706。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-1712/grading.json#test_patch",
+    "mat/iterative__dvc-1712/validation.json#golden_patch",
+    "git show 5c39c6b8bd:dvc/state.py:409"
+   ],
+   "note": "test_patch 只动 tests/test_state.py（base 存在，44 行 3 个类）；gold 只动 dvc/state.py。同一问题。无二进制/LFS/子模块。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show 5c39c6b8bd:dvc/state.py:409-410（`cmd.format(self.STATE_TABLE, inode)`，无 _to_sqlite）",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1712/empty/offline/a1/status_map.json"
+   ],
+   "note": "base 第 410 行确实缺 `_to_sqlite`，与题面 traceback 的 `_insert_new_state_record` → `UNIQUE constraint failed` 链路一致；empty 侧 F2P FAILED。",
+   "by": "static"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-1712/public.json#problem_statement",
+    "mat/iterative__dvc-1712/raw.json#hints_text"
+   ],
+   "note": "题面 4911 字符，含完整 Debug SQL 日志与完整 traceback（到 `state.py:139 _execute`），代码块完整、无截断、无外链图片——**本包信息量最好的题面**。缺口：可复现步骤与维护者的根因判断（\"in `get_state_record_for_inode` we don't apply `self._to_sqlite(inode)`\"）都只在 hints 里。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-1712/grading.json#test_patch"
+   ],
+   "note": "test_patch 只触碰 tests/test_state.py；gold 不触碰测试样路径。",
+   "by": "static"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-1712/grading.json#test_patch"
+   ],
+   "note": "恢复清单 = {tests/test_state.py}，官方测试文件。",
+   "by": "static"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dvc_1/prescan.json"
+   ],
+   "note": "本包唯一 version=0.31、唯一改 dvc/state.py 的题。",
+   "by": "static"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-1712/grading.json#test_patch",
+    "git show 5c39c6b8bd:dvc/state.py:146-165"
+   ],
+   "note": "F2P `test_transforms_inode` 把 `dvc.state.get_inode` mock 成返回 `MAX_INT + 2`，然后 `state.update(path)` 再 `state.get_state_record_for_inode(inode)` 断言非 None——这正是题面日志里那个\"写进去是负数、查的时候用正数\"的场景，能从公开材料推出。",
+   "by": "static"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show 5c39c6b8bd:dvc/state.py:307",
+    "git show 5c39c6b8bd:dvc/remote/local.py:706"
+   ],
+   "note": "**这里的\"唯一实现\"约束是有依据的**：F2P 用未转换的原始 inode 直接调 `state.get_state_record_for_inode(inode)`，因此只在调用点（`state.py:307`）补 `_to_sqlite` 的修法过不了——而那种修法本来就是错的，会漏掉 `dvc/remote/local.py:706` 这个调用点。测试只引用了 base 已有的 `_to_sqlite` 与 `MAX_INT`，没有强加新名字。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-1712/grading.json#pass_to_pass（2 条）",
+    "git show 5c39c6b8bd:tests/test_state.py（全文件仅 3 条用例）"
+   ],
+   "note": "F2P 只断言\"能查到记录\"，不断言查到的内容正确。把 `get_state_record_for_inode` 改成 `WHERE inode={} OR 1=1`（返回任意一行）也能过。P2P 只有 2 条，且**整个 tests/test_state.py 一共只有 3 条用例**，P2P 已经取满，没有可加的同文件回归。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1712/gold/offline/a1/test_output.txt（3 passed, 12 warnings in 3.84s）"
+   ],
+   "note": "回归池天然很小：整文件 3 条，P2P 2 条（`TestState::test_update` 文件 md5 更新、`TestStateOverflow::test` row_limit 清理）。gold 改的是所有 state 查询的入口，但 `dvc/remote/local.py:706`（link state 校验）与 `dvc/state.py:307`（update 主路径）两个调用点在同文件内都无覆盖，需要跨文件补。",
+   "by": "static"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-1712/validation.json#golden_patch"
+   ],
+   "note": "gold 一行 `cmd.format(self.STATE_TABLE, self._to_sqlite(inode))`，与题目精确对应，无无关改动，不依赖未交付改动；且与 base 里其余 6 处 `_to_sqlite` 用法一致。",
+   "by": "static"
+  },
+  "29": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-1712/raw.json#hints_text"
+   ],
+   "note": "题面本身不含修复代码、不含 PR/commit 链接。**hints 逐字给出了根因与修法**（\"the bug itself ... is that in `get_state_record_for_inode` we don't apply `self._to_sqlite(inode)`\"）；hints 不可见，记录以备将来合并题面时注意。",
+   "by": "static"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1712/gold/offline/a1/test_output.txt（3 passed）"
+   ],
+   "note": "安装与测试正常。test_patch 用 `import mock`（独立 mock 包而非 unittest.mock），实跑通过，说明依赖齐备。",
+   "by": "static"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1712/gold/offline/a1/test_output.txt（无 SKIPPED）"
+   ],
+   "note": "纯本地 sqlite/文件操作，无网络。",
+   "by": "static"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1712/gold/offline/a1/status_map.json（键 `Could`、`No`，值 `ERROR:`）"
+   ],
+   "note": "安装阶段的 `ERROR: Could not open requirements file ...` / `ERROR: No matching distribution ...` 被 parser 记成测试结果（见跨题发现 B）；未与 F2P/P2P 冲突。",
+   "by": "static"
+  },
+  "7": {
+   "status": "not_applicable",
+   "evidence_refs": [],
+   "note": "test_patch 不带外部资产。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "回归池过小(25/26)",
+   "severity": "P2",
+   "evidence_refs": [
+    "git show 5c39c6b8bd:tests/test_state.py（全文件 3 条用例）",
+    "mat/iterative__dvc-1712/grading.json#pass_to_pass"
+   ],
+   "note": "P2P 只有 2 条且已取满同文件。`get_state_record_for_inode` 是 state 查询的唯一入口，被 `dvc/state.py:307` 与 `dvc/remote/local.py:706` 两处调用，都没有回归覆盖；F2P 也只断言\"非 None\"而不校验内容。",
+   "proposed_action": "把 `tests/test_add.py`（走 state 写入+查询全链路）或 `tests/unit/test_state.py`（若后续版本有）纳入 P2P；F2P 补一条 `self.assertEqual(ret[2], md5)` 之类的内容断言。",
+   "next_experiment": "base/gold 各跑一次 `pytest -rA tests/test_add.py tests/test_state.py`，取双侧 PASSED 交集作为扩充 P2P；再写 `WHERE inode={} OR 1=1` 的假修复验证当前 F2P 会放行。"
+  },
+  {
+   "category": "题面缺复现步骤(3)",
+   "severity": "P3",
+   "evidence_refs": [
+    "mat/iterative__dvc-1712/raw.json#hints_text（`dvc destroy` / `dvc init` / 连续两次 `dvc run --remove-outs --overwrite-dvcfile`）"
+   ],
+   "note": "题面信息量已经很好（完整 Debug SQL + traceback），只缺可复现序列；不影响可解性，但会让 agent 多花时间构造复现。",
+   "proposed_action": "把 hints 里用户提供的那段复现序列并入题面（它是报告者的回复，不含答案）；**不要**并入维护者那段直接点名 `_to_sqlite` 的诊断。",
+   "next_experiment": "无需实验；属于题面修订。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 tests/test_state.py；gold 不触碰测试样路径。按第四组 B 保持为空。",
+  "evidence_refs": [
+   "mat/iterative__dvc-1712/grading.json#test_patch",
+   "mat/iterative__dvc-1712/validation.json#golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/test_add.py",
+   "reason": "`dvc add` 端到端会经过 state 的写入与查询全链路（`_do_update` → `get_state_record_for_inode`），是覆盖 `dvc/state.py:307` 调用点最直接的方式。"
+  },
+  {
+   "id": "tests/test_checkout.py -k relink",
+   "reason": "`dvc/remote/local.py:706` 的 `get_state_record_for_inode` 用于 link state 校验，checkout/relink 路径会触发。"
+  },
+  {
+   "id": "tests/test_state.py::TestStateOverflow::test",
+   "reason": "已在 P2P；row_limit 清理会大量读写 state 表，能挡住\"查询恒返回一行\"的假修复。"
+  },
+  {
+   "id": "（新增）tests/test_state.py::TestGetStateRecordForInode::test_returns_correct_record",
+   "reason": "针对 check 25 的缺口：断言查到的 md5/size 与写入一致，而不只是非 None。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "题面信息最完整（Debug SQL + 完整 traceback）、gold 一行且与 base 其余 6 处用法一致、F2P 的实现约束有正当理由（覆盖第二个调用点）；唯一短板是回归池只有 2 条且无内容断言，属可补不属必修。"
+ },
+ "costs": {
+  "minutes": 20
+ },
+ "by": "L1_dvc_1 (Claude Opus 5, 静态审查)"
+}

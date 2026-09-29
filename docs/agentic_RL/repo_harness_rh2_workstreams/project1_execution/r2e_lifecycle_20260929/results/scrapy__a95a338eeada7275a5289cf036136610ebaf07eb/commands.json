@@ -1,0 +1,44 @@
+[
+  {
+    "id": "env_python_scrapy",
+    "timeout_s": 120,
+    "expect": "zero",
+    "purpose": "确认解释器与导入来源：预计打印 /testbed/.venv/bin/python 与 3.9.21、scrapy 2.7.0 且 __file__ 为 /testbed/scrapy/__init__.py，并显示本环境 inspect.isgeneratorfunction 会穿透 functools.partial（True）。修复前后输出应相同；若 scrapy 不是从 /testbed 导入，后面的复现结论不可用。",
+    "cmd": "cd /testbed && PYTHONDONTWRITEBYTECODE=1 python -c \"import sys, functools, inspect, scrapy; print(sys.executable, sys.version.split()[0]); print('scrapy', scrapy.__version__, scrapy.__file__); print('isgeneratorfunction(partial(generator)) =', inspect.isgeneratorfunction(functools.partial(lambda x: (yield x), 1)))\""
+  },
+  {
+    "id": "repro_issue_example",
+    "timeout_s": 120,
+    "expect": "nonzero",
+    "purpose": "题面示例原样放进 /tmp 下的 .py 文件运行（inspect.getsource 需要真实源文件，不能用 python -c）。修复前：traceback 末行为 TypeError: module, class, method, function, traceback, frame, or code object was expected, got partial，退出码非 0。修复后：打印 '-> False' 与 OK，退出码 0。",
+    "cmd": "cat > /tmp/r2e_partial_repro.py <<'EOF'\nimport sys\nsys.path.insert(0, \"/testbed\")\nfrom functools import partial\n\nimport scrapy\nfrom scrapy.utils.misc import is_generator_with_return_value\n\n\ndef generator_func(arg1, arg2):\n    yield {}\n\n\npartial_gen = partial(generator_func, arg1=42)\nprint(\"scrapy imported from:\", scrapy.__file__)\nresult = is_generator_with_return_value(partial_gen)\nprint(\"is_generator_with_return_value(partial_gen) ->\", repr(result))\nassert result is False, \"expected False, got %r\" % (result,)\nprint(\"OK: partial of a generator without return value -> False\")\nEOF\ncd /testbed && PYTHONDONTWRITEBYTECODE=1 python /tmp/r2e_partial_repro.py"
+  },
+  {
+    "id": "diag_partial_variants",
+    "timeout_s": 120,
+    "expect": "any",
+    "purpose": "逐项打印题面未明示的相邻情形，只看输出。修复前（静态推断）：A True、B False；C/D/E/G/H 均为 EXC TypeError （got partial）；F 为 False（Python 3.9 的 isgeneratorfunction 不穿透 partial 包装的绑定方法，所以不报错）。修复后：C 必须为 False、G 必须为 []（题面明示及其直接推论）；D 合理推知为 True；E、F、H 题面未约定（E 可能 True 或仍 TypeError；F 可能 False 或 True；H 可能 1 条警告，也可能因 partial 没有 __name__ 抛 AttributeError）。",
+    "cmd": "cat > /tmp/r2e_partial_diag.py <<'EOF'\nimport sys\nsys.path.insert(0, \"/testbed\")\nimport warnings\nfrom functools import partial\n\nfrom scrapy.utils.misc import is_generator_with_return_value, warn_on_generator_with_return_value\n\n\ndef gen_no_ret(arg1, arg2):\n    yield {}\n\n\ndef gen_ret(arg1, arg2):\n    yield {}\n    return 1\n\n\nclass Holder:\n    def meth_ret(self, arg1):\n        yield {}\n        return 1\n\n\ndef show(label, func):\n    try:\n        print(label, \"->\", repr(func()))\n    except Exception as exc:\n        print(label, \"-> EXC\", type(exc).__name__ + \":\", exc)\n\n\ndef warn_messages(callable_):\n    with warnings.catch_warnings(record=True) as caught:\n        warnings.simplefilter(\"always\")\n        warn_on_generator_with_return_value(None, callable_)\n    return [str(w.message)[:70] for w in caught]\n\n\nprint(\"python\", sys.version.split()[0])\nshow(\"A plain gen_ret (control)\", lambda: is_generator_with_return_value(gen_ret))\nshow(\"B plain gen_no_ret (control)\", lambda: is_generator_with_return_value(gen_no_ret))\nshow(\"C partial(gen_no_ret) [issue example]\", lambda: is_generator_with_return_value(partial(gen_no_ret, arg1=42)))\nshow(\"D partial(gen_ret)\", lambda: is_generator_with_return_value(partial(gen_ret, arg1=42)))\nshow(\"E partial(partial(gen_ret))\", lambda: is_generator_with_return_value(partial(partial(gen_ret, 1), 2)))\nshow(\"F partial(bound method with return)\", lambda: is_generator_with_return_value(partial(Holder().meth_ret, 1)))\nshow(\"G warn_on_generator_with_return_value(None, partial(gen_no_ret))\", lambda: warn_messages(partial(gen_no_ret, arg1=42)))\nshow(\"H warn_on_generator_with_return_value(None, partial(gen_ret))\", lambda: warn_messages(partial(gen_ret, arg1=42)))\nEOF\ncd /testbed && PYTHONDONTWRITEBYTECODE=1 python /tmp/r2e_partial_diag.py"
+  },
+  {
+    "id": "crawl_partial_callback",
+    "timeout_s": 180,
+    "expect": "nonzero",
+    "purpose": "经公开 API CrawlerProcess 跑一次本地 file:// 抓取（不联网），回调是 functools.partial 包装的普通生成器函数，走 scrapy/core/scraper.py 的 call_spider -> warn_on_generator_with_return_value 真实路径。修复前：stderr 有 'Spider error processing <GET file:///tmp/r2e_partial_page.html>' 和同一条 TypeError，打印 item_scraped_count: 0、spider_exceptions: {'spider_exceptions/TypeError': 1}，退出码 1。修复后：item_scraped_count: 1、spider_exceptions: {}，退出码 0。约需 5–10 秒（引擎空闲检测周期）。若修复前退出码非 0 但没有这条 TypeError，说明是环境问题，不能算复现。",
+    "cmd": "cat > /tmp/r2e_partial_crawl.py <<'EOF'\nimport sys\nsys.path.insert(0, \"/testbed\")\nfrom functools import partial\nfrom pathlib import Path\n\nimport scrapy\nfrom scrapy.crawler import CrawlerProcess\n\nPAGE = Path(\"/tmp/r2e_partial_page.html\")\nPAGE.write_text(\"<html><body><p>partial callback</p></body></html>\")\n\n\ndef parse_with_extra(response, extra):\n    yield {\"extra\": extra, \"url\": response.url}\n\n\nclass PartialCallbackSpider(scrapy.Spider):\n    name = \"partial_cb\"\n\n    def start_requests(self):\n        yield scrapy.Request(PAGE.as_uri(), callback=partial(parse_with_extra, extra=42))\n\n\nprocess = CrawlerProcess(settings={\n    \"LOG_LEVEL\": \"ERROR\",\n    \"TELNETCONSOLE_ENABLED\": False,\n    \"REQUEST_FINGERPRINTER_IMPLEMENTATION\": \"2.7\",\n})\ncrawler = process.create_crawler(PartialCallbackSpider)\nprocess.crawl(crawler)\nprocess.start()\nstats = crawler.stats.get_stats()\nitems = stats.get(\"item_scraped_count\", 0)\nerrors = {k: v for k, v in stats.items() if k.startswith(\"spider_exceptions/\")}\nprint(\"item_scraped_count:\", items)\nprint(\"spider_exceptions:\", errors)\nsys.exit(0 if items == 1 and not errors else 1)\nEOF\ncd /testbed && PYTHONDONTWRITEBYTECODE=1 python /tmp/r2e_partial_crawl.py"
+  },
+  {
+    "id": "pytest_generator_return_tests",
+    "timeout_s": 300,
+    "expect": "zero",
+    "purpose": "仓库现有公开测试（4 个用例），作为非 partial 行为的回归护栏：修复前后都应 4 passed。注意 conftest.py 会在 tests/keys/ 下重新生成 git-ignore 的 localhost.key/.crt；tests/__init__.py 导入时会做一次注定失败的 DNS 查询，断网下可能多等几秒。-p no:cacheprovider 只是为了不写 .pytest_cache。",
+    "cmd": "cd /testbed && PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider -rA tests/test_utils_misc/test_return_with_argument_inside_generator.py"
+  },
+  {
+    "id": "pytest_utils_misc_and_doctest",
+    "timeout_s": 300,
+    "expect": "zero",
+    "purpose": "更宽一点的同模块回归：tests/test_utils_misc 包（__init__.py 9 个 + 上面 4 个）加 scrapy/utils/misc.py 的 doctest（md5sum，1 个），预计修复前后都是 14 passed、无失败。",
+    "cmd": "cd /testbed && PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider -q tests/test_utils_misc scrapy/utils/misc.py"
+  }
+]

@@ -1,0 +1,7 @@
+{
+  "instance_id": "pandas-dev__pandas-48106",
+  "original_install": "python -m pip install 'numpy<2'; python -m pip install -ve . --no-build-isolation -Ceditable-verbose=true; pip uninstall pytest-qt -y;",
+  "revised_install": "rh2_meta_install() {\n python -m pip install --no-index --find-links=/opt/rh2/compat-wheels --no-deps fastparquet==0.8.3 Fiona==1.9.6 click-plugins==1.1.1 cligj==0.7.2 || return $?\n python -m pip install 'numpy<2'; python -m pip install -ve . --no-build-isolation -Ceditable-verbose=true; pip uninstall pytest-qt -y;\n local rc=$?\n [ \"$rc\" -eq 0 ] || return \"$rc\"\n python -I -m pip check\n}\nrh2_meta_install",
+  "decision": "E19",
+  "reason": "Retain development version identity; fastparquet0.8.3 accepts pandas>=1.1.0; restore missing Fiona declared by installed GeoPandas. No fake package version or relaxed metadata."
+}

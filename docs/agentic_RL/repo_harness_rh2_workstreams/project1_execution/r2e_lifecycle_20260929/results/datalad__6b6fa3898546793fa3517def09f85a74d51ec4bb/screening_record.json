@@ -1,0 +1,232 @@
+{
+  "task_id": "r2e_gym_subset::datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb",
+  "instance_id": "datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb",
+  "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0（本题无材料修订；v3–v11 材料对本题相同；隐藏测试树 sha256:8af0fcf7…，期望 sha256:15da45ba…）",
+  "source_adapter_ref": "s2_r2e ingest：grading_bundles_r2e_v0.jsonl:14（line_sha256 5f2f4028…）、public_bundles_v0.jsonl（line_sha256 f35baa1e…）、validation_bundles_v0.jsonl:14；parser r2e_prime_pytest_v1；grader_version r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+  "recipe_ref": {
+    "derived_image_ref": "rh2-r2e-derived/datalad:6b6fa3898546-r2e_derive_v1s",
+    "derived_image_id": "sha256:2ec5e89b69b2737921ff5750adea40c451084030dd5ef29e11507be4c5a3a547",
+    "recipe_id": "r2e_derive_v1+sysconfig_v1",
+    "resources": "默认 rollout / grader profile（2 CPU / 4 GiB / /tmp 1 GiB）",
+    "chain_condition": "本机正式评分须 replay_grade_budget.py --env-reset-timeout 1200；默认 300 s 下 noop 与 gold 都报 infra_failure（grading_control_surface_protect_timeout_after_300s）",
+    "historical": "09-23 旧机：r2e_derive_v1，镜像 ID sha256:acb73dcd…（见 PRIV/run_refs.json 的 current 行）"
+  },
+  "code_snapshot_ref": "code_v9（远端 /work/code_v9/rh2，HEAD a31cdcd0 加未跟踪实验目录；与 runs/r2e_lifecycle_20260929/code_snapshots/ 的对应关系由协调者登记）",
+  "facts_ref": {
+    "current": [
+      "runs/r2e_lifecycle_20260929/budget_v5/ledger_noop.jsonl#L4",
+      "runs/r2e_lifecycle_20260929/budget_v5/ledger_gold.jsonl#L4",
+      "runs/r2e_lifecycle_20260929/env_verify/ledger_l2_noop.jsonl#L3",
+      "runs/r2e_lifecycle_20260929/env_verify/ledger_l2_gold.jsonl#L3",
+      "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/",
+      "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/"
+    ],
+    "historical": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/facts.json（09-23，旧镜像，环境侧）"
+  },
+  "checks": {
+    "1": {"status": "pass", "note": "base / 来源提交 / gold / 隐藏测试 / 期望一致；日志的 RH2_SETUP_HIDDEN_TESTS_TREE 与评分面一致；M3 独立 runner 在来源镜像上 gold 两次通过", "evidence_refs": ["PRIV/grading_bundle.json", "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/logs_Deq/evallog_replay-r2e-inv-6b6f-Deq-_664c1700.eval.log#L4", "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl#L27"], "by": "私有主审"},
+    "2": {"status": "pass", "note": "初态 diff 为 0 字节；agent 身份复现题面症状 ('file:implicit', '', 'weired_url:/')；noop 在 HT:206 失败", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck_rev/unrev/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/orig/captures/repro_issue_example.out", "runs/r2e_lifecycle_20260929/budget_v5/ledger_noop.jsonl#L4", "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-d_df2e5fa5.eval.log#L86-L102"], "by": "私有主审"},
+    "3": {"status": "unknown", "note": "只有静态渲染 PUB/user_prompt.txt；devcheck 发给模型的用户消息是 devcheck 指令，不是题面，所以实际渲染没核", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck_rev/unrev/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/orig/stub/requests/messages_000.json"], "by": "私有主审"},
+    "4": {"status": "pass", "note": "合法修复只改 datalad/support/network.py；gold 与 5 个候选的投影 included_paths 都是该文件；不需要额外排除", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/datalad_6b6f/ledger_CA_budget1200.jsonl#L1", "runs/r2e_lifecycle_20260929/budget_v5/ledger_gold.jsonl#L4"], "by": "私有主审"},
+    "5": {"status": "issue", "note": "X1：本修复在 datalad 16c1ffc3 / 9ba5de09（判断式逐字相同，公开测试含本题两条目标断言的 RI 版本）与 19f5b450 / 58ba5165（演化后的规则）的初态里；两份机械扫描都没报", "evidence_refs": ["runs/r2e_static_prep_20260924/v3/public/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/worktree/datalad/support/network.py#L301-L305", "runs/r2e_static_prep_20260924/v3/public/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/worktree/datalad/support/network.py#L379-L382", "runs/r2e_static_prep_20260924/cross_task_gold_scan.json"], "by": "私有主审"},
+    "6": {"status": "pass", "note": ".venv Python 3.7.9、pytest 7.4.4、nose / mock 等测试依赖可导入（agent 身份）", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck_rev/unrev/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/orig/captures/env.out", "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/orig/captures/repro_check_url_helper.out"], "by": "私有主审"},
+    "7": {"status": "not_applicable", "note": "本题不需要资产", "evidence_refs": [], "by": "私有主审"},
+    "8": {"status": "pass", "note": "解题侧 uid 54321，评分侧 uid 54322；agent 不能写 bash_env", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck_rev/unrev/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/orig/captures/env.out", "runs/r2e_lifecycle_20260929/budget_v5/ledger_gold.jsonl#L4"], "by": "私有主审"},
+    "9": {"status": "pass", "note": "导入 /testbed/datalad/__init__.py；候选日志的告警行号随补丁变化（base 531、C-B 533、C-A 535、D-eq 537、gold 539），说明加载的是候选代码", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck_rev/unrev/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/orig/captures/import_env.out", "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/logs_Deq/evallog_replay-r2e-inv-6b6f-Deq-_664c1700.eval.log#L48"], "by": "私有主审"},
+    "10": {"status": "pass", "note": "公开复现、公开测试助手、边界观察、公开测试文件都能以 agent 身份运行；公开读者 5 条命令加协调者 2 条标准命令经真实 CC 共约 20 s。公开测试文件在修复前后都是 16 passed / 1 failed（~）/ 1 xfailed，不能区分修复前后", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck_rev/unrev/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/devcheck.log", "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/orig/attempt.json"], "by": "私有主审"},
+    "11": {"status": "pass", "note": "准备、解题、安装、测试四个阶段都不需要网络；评分 network=deny_all", "evidence_refs": ["runs/r2e_lifecycle_20260929/budget_v5/ledger_gold.jsonl#L4"], "by": "私有主审"},
+    "13": {"status": "issue", "note": "链路（E3）：本机 grader_trusted_setup 实测 155–324 s，默认 300 s 控制面保护时限下 noop 与 gold 都报 infra_failure；放宽到 1200 s 后全部完成。test 段 3–5 s，内存峰值约 570 MB / 4 GiB", "evidence_refs": ["runs/r2e_lifecycle_20260929/env_verify/ledger_l2_noop.jsonl#L3", "runs/r2e_lifecycle_20260929/env_verify/ledger_l2_gold.jsonl#L3", "runs/r2e_lifecycle_20260929/budget_v5/ledger_noop.jsonl#L4", "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/ledger_CA_budget1200.jsonl#L1"], "by": "私有主审"},
+    "14": {"status": "pass", "note": "旧机 noop 与 gold 各 2 次；新机 1200 s 下 noop 与 gold 各 1 次，另有 5 个候选；M3 gold 2 次；逐键结果都可按补丁内容解释", "evidence_refs": ["PRIV/run_refs.json", "runs/r2e_lifecycle_20260929/budget_v5/ledger_noop.jsonl#L4", "runs/r2e_lifecycle_20260929/budget_v5/ledger_gold.jsonl#L4"], "by": "私有主审"},
+    "16": {"status": "pass", "note": "候选补丁确已交付：日志首行为 ' M datalad/support/network.py'，RH2_SETUP_APPLY_RC=0，补丁与日志的 sha256 都与账本一致", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/datalad_6b6f/logs_CA/evallog_replay-r2e-inv-6b6f-CA-0_df7c9247.eval.log#L1-L6"], "by": "私有主审"},
+    "17": {"status": "pass", "note": "RH2_SETUP_RESTORED=3，隐藏测试树摘要与评分面一致", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/datalad_6b6f/logs_CA/evallog_replay-r2e-inv-6b6f-CA-0_df7c9247.eval.log#L4-L12"], "by": "私有主审"},
+    "18": {"status": "pass", "note": "目标键 test_url_samples 在每次运行都确已执行（失败行或 PASSES 段可见）；yield 测试为 XFAIL [NOTRUN]，不成键", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/datalad_6b6f/logs_Deq/evallog_replay-r2e-inv-6b6f-Deq-_664c1700.eval.log#L46-L69"], "by": "私有主审"},
+    "19": {"status": "pass", "note": "17 个键解析完整；期望 FAILED 的键 test_get_local_file_url_linux 有固定解释（T5）", "evidence_refs": ["PRIV/expected_output.json"], "by": "私有主审"},
+    "20": {"status": "pass", "note": "noop 的 0 来自目标键，失败原因是题面症状", "evidence_refs": ["runs/r2e_lifecycle_20260929/budget_v5/ledger_noop.jsonl#L4", "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-d_df2e5fa5.eval.log#L86-L102"], "by": "私有主审"},
+    "21": {"status": "pass", "note": "默认时限下的超时记为 failed_to_grade / infra_failure，没有记成 0", "evidence_refs": ["runs/r2e_lifecycle_20260929/env_verify/ledger_l2_noop.jsonl#L3"], "by": "私有主审"},
+    "22": {"status": "pass", "note": "M3 独立 runner（来源镜像）与 RH2 逐键一致", "evidence_refs": ["runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl#L27", "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl#L75"], "by": "私有主审"},
+    "23": {"status": "issue", "note": "P3：HT:216-217 的要求超出题面；P4：题面把缺陷说宽，'hostname undefined' 实为空串", "evidence_refs": ["PUB/user_prompt.txt", "PRIV/hidden_tests/test_1.py#L211-L217"], "by": "私有主审"},
+    "24": {"status": "issue", "note": "T1：满足全部公开要求的替代解 C-A 判 0.0，失败在 test_1.py:217 经 115 行", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/datalad_6b6f/ledger_CA_budget1200.jsonl#L1", "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/logs_CA/evallog_replay-r2e-inv-6b6f-CA-0_df7c9247.eval.log#L98-L115", "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/pcheck_public4_CA.json"], "by": "私有主审"},
+    "25": {"status": "issue", "note": "S1：核心要求只有示例字面值（T2c）；D-eq（不修解析器）判 1.0（第 4 步）", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/datalad_6b6f/ledger_Deq_budget1200.jsonl#L1", "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/pcheck_repro_Deq.json"], "by": "私有主审"},
+    "26": {"status": "issue", "note": "T3：gold 让 '/some/dir:x'、'rel_dir/sub:x' 变成 ssh 且 is_url=True，让 query 含冒号的模板抛 ValueError；base 与 C-A 都保持 file。测试都不保护", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck_rev/unrev/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/orig/captures/edge_case_survey.out#L9-L12", "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/pcheck_public4_gold.json", "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/pcheck_public4_CA.json"], "by": "私有主审"},
+    "27": {"status": "issue", "note": "gold 满足题面，但 __str_ssh__ hunk 与 '/' 主机名分类是题面没要求的设计，上游后来推翻了它（19f5b450 / 58ba5165 的公开测试）；另有 T3 的边缘回归", "evidence_refs": ["PRIV/gold.patch", "runs/r2e_static_prep_20260924/v3/public/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/worktree/datalad/support/tests/test_network.py#L355-L367"], "by": "私有主审"},
+    "28": {"status": "not_checked", "note": "修订草案（card.md 附录 A）逐条附了公开依据，待实施、实跑附录 B 与 Codex 复核", "evidence_refs": [], "by": "私有主审"},
+    "29": {"status": "pass", "note": "预检 GIT_HISTORY=ok（HEAD 无子提交）、HIDDEN_TESTS=ok；跨题包含另记在第 5 项", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck_rev/unrev/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/orig/captures/r2e_preflight.out"], "by": "私有主审"},
+    "30": {"status": "pass", "note": "解题与评分都断网（沿用历史 R10 与当前 profile，本轮没另测出网）", "evidence_refs": ["docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/screening_record.json"], "by": "私有主审"},
+    "31": {"status": "unknown", "note": "共享机制：隐藏测试依赖候选可写的 datalad/tests/utils.py 与 /testbed/.venv 里的 nose，评分不重置；逐题没测，引用 A 线审查", "evidence_refs": [], "by": "私有主审"},
+    "32": {"status": "issue", "note": "verifier 通过候选可改的 URL.__eq__ 判定核心要求（D-eq 判 1.0）", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/datalad_6b6f/logs_Deq/evallog_replay-r2e-inv-6b6f-Deq-_664c1700.eval.log#L62"], "by": "私有主审"},
+    "33": {"status": "not_checked", "note": "没做真实模型求解", "evidence_refs": [], "by": "私有主审"}
+  },
+  "issues": [
+    {
+      "code": "T1",
+      "root_cause": "P3",
+      "category": "test_semantics",
+      "scope": "task",
+      "severity": "误拒；修订前不进能力比较与训练",
+      "summary": "HT:216-217 要求 'example.com/path/sp1:fname' 判为 ssh:implicit、主机名为 'example.com/path/sp1'，并能原样往返（需要 gold 的 __str_ssh__ hunk）。题面没有这个要求；它与 base 行为（file:implicit）、git 的 scp 式约定、上游后续实现（19f5b450 / 58ba5165 把它判为 PathRI）都相反。满足全部公开要求的 C-A 判 0.0；gold 式最小修复 C-B 也判 0.0",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/ledger_CA_budget1200.jsonl#L1",
+        "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/logs_CA/evallog_replay-r2e-inv-6b6f-CA-0_df7c9247.eval.log#L98-L115",
+        "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/pcheck_public4_CA.json",
+        "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/logs_CB/evallog_replay-r2e-inv-6b6f-CB-0_458282dd.eval.log#L98-L113",
+        "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/orig/captures/edge_case_survey.out#L9-L10",
+        "runs/r2e_static_prep_20260924/v3/public/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/worktree/datalad/support/tests/test_network.py#L355-L367"
+      ],
+      "proposed_action": "R-b：把 HT:211-217 换成只要求解析出的字段能重建原串的断言（card.md 附录 A3）；R-a 备选是整段删除（此时 C-B 会得 1）",
+      "status": "open"
+    },
+    {
+      "code": "T2c",
+      "category": "test_semantics",
+      "scope": "task",
+      "severity": "S1（v1 §4 第 2 步）",
+      "summary": "按题面一般读法，有依据的核心目标断言只有示例字面值 'weired_url:/'（HT:206）。唯一的非示例目标实例是无依据的 216-217。D-hard（写死示例）与 D-eq-minus 都通过了 206 行，只被 216-217 挡住",
+      "evidence_refs": [
+        "PRIV/hidden_tests/test_1.py#L204-L217",
+        "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/logs_Dhard/evallog_replay-r2e-inv-6b6f-Dhar_db01a871.eval.log#L98-L115",
+        "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/logs_Deqminus/evallog_replay-r2e-inv-6b6f-Deqm_e0a5a3a6.eval.log#L98-L115"
+      ],
+      "proposed_action": "R-c：在 HT:206 后补非示例实例 'my_host:path/sp1' 与 'data_server.example.org:/srv/ds'（card.md 附录 A2）",
+      "status": "open"
+    },
+    {
+      "code": "T2",
+      "category": "test_semantics",
+      "scope": "task",
+      "severity": "S1（v1 §4 第 4 步）",
+      "summary": "_check_url 用 eq_(URL(url), url_) 判定解析结果，走的是候选可改的 URL.__eq__。D-eq 把 __eq__ 改成比较字符串、再带上 gold 的 __str_ssh__，完全不修解析器，判 1.0（17/17，test_url_samples 确已执行）；题面原例仍然失败，输出与 noop 相同",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/ledger_Deq_budget1200.jsonl#L1",
+        "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/logs_Deq/evallog_replay-r2e-inv-6b6f-Deq-_664c1700.eval.log#L46-L62",
+        "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/pcheck_repro_Deq.json",
+        "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/pcheck_repro_none.json"
+      ],
+      "proposed_action": "R-c：在 _check_url 里直接逐字段比较解析结果与期望（card.md 附录 A1）；可选加 is_url 断言（附录 A4）",
+      "status": "open"
+    },
+    {
+      "code": "T3",
+      "root_cause": "G1",
+      "category": "gold_regression",
+      "scope": "task",
+      "severity": "S2（边缘输入，登记）",
+      "summary": "gold 让冒号前带 '/' 的本地路径变成 ssh 且 is_url=True（install 会把它当 URL），让 query 含冒号的爬虫模板抛 ValueError，用户名加含 '/' 主机名时往返也错（最后一项是源码推断）；测试都不保护",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/pcheck_public4_gold.json",
+        "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/private_control.json",
+        "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/orig/captures/edge_case_survey.out#L9-L12"
+      ],
+      "proposed_action": "登记；探针后检读补丁时关注这类输入；修订不约束冒号前带 '/' 输入的分类",
+      "status": "registered"
+    },
+    {
+      "code": "T5",
+      "category": "expected_non_passed_key",
+      "scope": "task",
+      "severity": "登记",
+      "summary": "test_get_local_file_url_linux 期望 FAILED：Python 3.7 起 quote 不转义 '~'，上游用例按 ≤ 3.6 写。本题的正确修复不会翻转它；上游后来把期望改成 'file:///a~'，所以把 '~' 转义并不更正确",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/logs_Deq/evallog_replay-r2e-inv-6b6f-Deq-_664c1700.eval.log#L25-L42",
+        "runs/r2e_static_prep_20260924/v3/public/datalad__58ba5165234cb16de0e8463ee75097362099835f/worktree/datalad/support/tests/test_network.py#L477-L487"
+      ],
+      "proposed_action": "不修订；探针分析把改 get_local_file_url 视为越界，公开测试里这一个失败不算模型改错",
+      "status": "registered"
+    },
+    {
+      "code": "E3",
+      "category": "chain",
+      "scope": "machine_and_chain（本题在本机）",
+      "severity": "链路条件",
+      "summary": "本机 grader_trusted_setup 155–324 s，超过默认 300 s 的控制面保护时限：noop 与 gold 都报 infra_failure；放宽到 1200 s 后 noop 为 0、gold 为 1",
+      "evidence_refs": [
+        "runs/r2e_lifecycle_20260929/env_verify/ledger_l2_noop.jsonl#L3",
+        "runs/r2e_lifecycle_20260929/env_verify/ledger_l2_gold.jsonl#L3",
+        "runs/r2e_lifecycle_20260929/budget_v5/ledger_noop.jsonl#L4",
+        "runs/r2e_lifecycle_20260929/budget_v5/ledger_gold.jsonl#L4"
+      ],
+      "proposed_action": "交 A 线（默认时限或 trusted setup 耗时）；在此之前，本题评分用 --env-reset-timeout 1200，超时不计 0 分",
+      "status": "open"
+    },
+    {
+      "code": "X1",
+      "category": "task_relation",
+      "scope": "repo:datalad（5 题）",
+      "severity": "登记",
+      "summary": "本修复的判断式逐字出现在 16c1ffc3 / 9ba5de09 的初态（network.py:301-305），两题的公开测试还含本题两条目标断言的 RI 版本；19f5b450 / 58ba5165 的初态含演化后的规则。cross_task_gold_scan 与 cross_task_test_scan 都没报",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/v3/public/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/worktree/datalad/support/tests/test_network.py#L266-L276",
+        "runs/r2e_static_prep_20260924/v3/public/datalad__9ba5de094ea326e6fd5773f21c7de1776ec0fa69/worktree/datalad/support/network.py#L301-L305",
+        "runs/r2e_static_prep_20260924/v3/public/datalad__58ba5165234cb16de0e8463ee75097362099835f/worktree/datalad/support/network.py#L379-L382"
+      ],
+      "proposed_action": "训练时控制与这 4 题的重复采样；留出按 D3 整仓同划分",
+      "status": "registered"
+    },
+    {
+      "code": "P4",
+      "category": "prompt",
+      "scope": "task",
+      "severity": "登记",
+      "summary": "题面说所有 'hostname:path' 都被误判，实际上只有 urlparse 不认作 scheme 的主机名才会；'leaving the hostname undefined' 实为空串；在 base 上也不抛错。公开材料能消解（公开测试里 'weired:/' 本来就对）",
+      "evidence_refs": ["PUB/user_prompt.txt", "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/orig/captures/edge_case_survey.out#L6"],
+      "proposed_action": "登记，不修订题面",
+      "status": "registered"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "没有证据支持增加路径规则；合法修复只涉及 datalad/support/network.py，投影正确",
+    "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/datalad_6b6f/ledger_CA_budget1200.jsonl#L1"],
+    "applied_version": null
+  },
+  "revision_refs": [],
+  "disposition": {
+    "state": "needs_repair",
+    "scope": "static_review",
+    "reason": "测试材料缺陷已由当前 CPU 实跑坐实：T1（C-A 判 0.0），S1（第 2 步 T2c；第 4 步 D-eq 判 1.0 而题面原例仍失败）。按 v1 §5 预授权做 R-b + R-c（card.md 附录 A），按附录 B 验收，经 Codex 复核后再评用途；修订前只作问题定位。另有链路条件：本机评分须放宽控制面时限到 1200 s。历史处置 environment_qualified 只是环境侧结论，不沿用为训练资格",
+    "evidence_refs": [
+      "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/ledger_CA_budget1200.jsonl#L1",
+      "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/ledger_Deq_budget1200.jsonl#L1",
+      "runs/r2e_lifecycle_20260929/budget_v5/ledger_noop.jsonl#L4",
+      "runs/r2e_lifecycle_20260929/budget_v5/ledger_gold.jsonl#L4"
+    ],
+    "revision_mandatory": true,
+    "pending": [
+      "实施 R-b + R-c，重建派生镜像（配方加 +material_vN）",
+      "附录 B 矩阵：gold、C-A 应为 1；noop、C-B、D-eq、D-eq-minus、D-hard 应为 0；键集 17 个不变，~ 键仍为 FAILED",
+      "在新镜像 ID 上复核 r2e_preflight 与 import_env",
+      "Codex 复核修订；复核者出终稿",
+      "A 线处理 300 s 默认时限"
+    ],
+    "reviewer": null
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "exposure_notes": "主审读过 gold、隐藏测试、期望映射、同仓其它 4 题的公开包、历史环境审查记录，并构造了 5 个候选；这些材料不提供给解题模型",
+    "v1": {
+      "problem_localization": {"value": "yes"},
+      "capability_comparison": {
+        "value": "conditional",
+        "missing": "修订版（R-b + R-c）按附录 B 验收通过并经 Codex 复核；评分用 1200 s 时限，超时不计入分母。原版不进比较分母，因为它把满足公开要求的 C-A 判 0、把未修原例的 D-eq 判 1",
+        "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/datalad_6b6f/ledger_CA_budget1200.jsonl#L1", "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/ledger_Deq_budget1200.jsonl#L1"]
+      },
+      "training_candidate": {
+        "value": "conditional",
+        "missing": "满足上一条；在修订版上复核 §4 第 2–4 步（D-hard、D-eq、D-eq-minus 都为 0）；X1 重复采样控制写进训练计划；S2 缺口（冒号前带 '/' 的输入不约束分类、query 含冒号、A1 / A2 边界、gold 自身回归）已登记。训练价值另评",
+        "evidence_refs": ["card.md#附录-b验收矩阵"]
+      },
+      "heldout_candidate": {
+        "value": "no",
+        "reason": "原版不满足训练候选的质量条件；修订后只能作标明版本的自建题；与另外 4 道 datalad 题互相包含（X1），若要留出，须按 D3 整仓同划分，并由用户决定"
+      }
+    }
+  },
+  "costs": {
+    "container_wall_seconds": null,
+    "agent_tokens": null,
+    "human_decisions": 0,
+    "source_refs": [
+      "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/ledger_CA_budget1200.jsonl",
+      "runs/r2e_lifecycle_20260929/budget_v5/ledger_gold.jsonl"
+    ]
+  }
+}

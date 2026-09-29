@@ -1,0 +1,489 @@
+{
+  "schema": "swegym_cpu_partial_result.v1",
+  "date": "2026-09-29",
+  "instance_id": "getmoto__moto-5406",
+  "run": "mixed-v1",
+  "state": "actor_private_reviewed_formal_incomplete",
+  "review_kind": "owner readback; independent review pending",
+  "actor": {
+    "actor_original": {
+      "result": "ran",
+      "checks": {
+        "interpreter_in_tool_result": false,
+        "host_log_present": true,
+        "no_harness_dir_in_container": true,
+        "no_launcher_or_done_marker": true,
+        "message_start_matches_stub_requests": true,
+        "exit_code_zero": true,
+        "result_event_present": true,
+        "log_complete": true,
+        "bashenv_denied_for_agent": false,
+        "all_commands_ran": true,
+        "all_match_expect": true
+      },
+      "commands_result": [
+        {
+          "id": "identity",
+          "rc": 0,
+          "status": "rc0",
+          "expect": "zero",
+          "matches_expect": true,
+          "output_bytes": 177,
+          "output_truncated_to": 200000,
+          "pytest": null,
+          "purpose": "实际actor身份、激活、本地源码与SDK版本"
+        },
+        {
+          "id": "us_east_2",
+          "rc": 1,
+          "status": "nonzero",
+          "expect": "nonzero",
+          "matches_expect": true,
+          "output_bytes": 429,
+          "output_truncated_to": 200000,
+          "pytest": null,
+          "purpose": "公开地区ARN、Create/Describe一致及另一地区隔离；base East2目标失败/East1正常"
+        },
+        {
+          "id": "us_east_1",
+          "rc": 0,
+          "status": "rc0",
+          "expect": "zero",
+          "matches_expect": true,
+          "output_bytes": 340,
+          "output_truncated_to": 200000,
+          "pytest": null,
+          "purpose": "公开地区ARN、Create/Describe一致及另一地区隔离；base East2目标失败/East1正常"
+        },
+        {
+          "id": "public_east1",
+          "rc": 0,
+          "status": "rc0",
+          "expect": "zero",
+          "matches_expect": true,
+          "output_bytes": 2164,
+          "output_truncated_to": 200000,
+          "pytest": {
+            "passed": 1,
+            "warning": 5
+          },
+          "purpose": "已有公开East1 ARN断言，独立于原27项评分"
+        }
+      ],
+      "image_facts": {
+        "image": "sha256:808c60d962cb94330e499404720a0813fa400a2e86464aabdb47fcaa05aad5f6",
+        "inspect": "sha256:808c60d962cb94330e499404720a0813fa400a2e86464aabdb47fcaa05aad5f6 [\"xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5406@sha256:727caa5dba157d41b1e839a5044106f0ad7ea1fe824c9a5f562e2f74113339d6\"]",
+        "inspect_rc": 0,
+        "initial_worktree": "HEAD=87683a786f0d3a0280c92ea01fecce8a3dd4b0fd\nPORCELAIN_BEGIN\nPORCELAIN_RC=0\n",
+        "initial_worktree_rc": 0
+      },
+      "base_commit": "87683a786f0d3a0280c92ea01fecce8a3dd4b0fd",
+      "cc_version_observed": "2.1.205 (Claude Code)",
+      "effective_profile": {
+        "cpus": 2.0,
+        "memory_bytes": 4294967296,
+        "tmp_tmpfs_bytes": 1073741824,
+        "home_tmpfs_bytes": 268435456,
+        "writable_layer_quota_bytes": 8589934592,
+        "pids_limit": 512
+      },
+      "post_run_facts": {
+        "RH2_HARNESS_DIR": "ABSENT",
+        "RH2_RUN_SH": "ABSENT",
+        "RH2_RUN_DONE": "ABSENT",
+        "RH2_GIT_STATUS_LINES": "0",
+        "RH2_AGENT_PROCS": "0",
+        "RH2_NEWER_FILES": "84"
+      },
+      "cleanup": {
+        "container_rm": 0,
+        "network_failures": [],
+        "relay_failures": [],
+        "stub_rc": 0,
+        "labeled_containers_left": [],
+        "labeled_networks_left": [],
+        "residual_after_force": []
+      }
+    }
+  },
+  "private": {
+    "scope": "private root behavior only",
+    "spec_sha256": "34801a50b12c4c26960287e668784bb375becf8ede32c5cf75380041c7891bec",
+    "started_at": 1790624542.0553946,
+    "variants": {
+      "base": {
+        "container": "rh2-cpu29-private-27a098a1d63c",
+        "started_at": 1790624542.1056948,
+        "preparation": [
+          {
+            "step": "git config --global --add safe.directory /testbed",
+            "rc": 0
+          },
+          {
+            "step": "TEST_SERVER_MODE=false MOTO_ACCOUNT_ID=123456789012 AWS_EC2_METADATA_DISABLED=true AWS_ACCESS_KEY_ID=testing AWS_SECRET_ACCESS_KEY=testing AWS_SESSION_TOKEN=testing python - <<'PY_CHECK'\nimport os,sys,subprocess,boto3,botocore,moto\nprint('PY_CHECK',sys.executable);print('IDENTITY',os.getuid(),os.getcwd(),os.environ.get('HOME'));print('VERSIONS',boto3.__version__,botocore.__version__,moto.__file__);assert moto.__file__.startswith('/testbed/')\nprint(subprocess.check_output(['git','rev-parse','HEAD'],text=True));print(subprocess.check_output(['git','status','--porcelain'],text=True))\nPY_CHECK",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'moto/dynamodb/models/__init__.py'\"'\"', '\"'\"'87a558769bc0786464aeaca26fc29217c718971f447d6ddfc4ced9a3977d4f23'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          }
+        ],
+        "commands": [
+          {
+            "id": "us_east_2",
+            "rc": 1,
+            "seconds": 1.9844334290000916,
+            "stdout_bytes": 340,
+            "stderr_bytes": 89
+          },
+          {
+            "id": "us_east_1",
+            "rc": 0,
+            "seconds": 1.1317118599999958,
+            "stdout_bytes": 340,
+            "stderr_bytes": 0
+          },
+          {
+            "id": "public_east1",
+            "rc": 0,
+            "seconds": 1.496725195000181,
+            "stdout_bytes": 2164,
+            "stderr_bytes": 0
+          }
+        ],
+        "status": "executed_interpret_separately",
+        "cleanup": {
+          "rm_rc": 0,
+          "query_rc": 0,
+          "remaining": [],
+          "stderr": ""
+        },
+        "finished_at": 1790624549.5134115
+      },
+      "gold": {
+        "container": "rh2-cpu29-private-07b089aa96a5",
+        "started_at": 1790624549.5146089,
+        "preparation": [
+          {
+            "step": "git config --global --add safe.directory /testbed",
+            "rc": 0
+          },
+          {
+            "step": "TEST_SERVER_MODE=false MOTO_ACCOUNT_ID=123456789012 AWS_EC2_METADATA_DISABLED=true AWS_ACCESS_KEY_ID=testing AWS_SECRET_ACCESS_KEY=testing AWS_SESSION_TOKEN=testing python - <<'PY_CHECK'\nimport os,sys,subprocess,boto3,botocore,moto\nprint('PY_CHECK',sys.executable);print('IDENTITY',os.getuid(),os.getcwd(),os.environ.get('HOME'));print('VERSIONS',boto3.__version__,botocore.__version__,moto.__file__);assert moto.__file__.startswith('/testbed/')\nprint(subprocess.check_output(['git','rev-parse','HEAD'],text=True));print(subprocess.check_output(['git','status','--porcelain'],text=True))\nPY_CHECK",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'moto/dynamodb/models/__init__.py'\"'\"', '\"'\"'87a558769bc0786464aeaca26fc29217c718971f447d6ddfc4ced9a3977d4f23'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          },
+          {
+            "step": "git apply --check /in/gold.patch",
+            "rc": 0
+          },
+          {
+            "step": "git apply /in/gold.patch",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'moto/dynamodb/models/__init__.py'\"'\"', '\"'\"'2fd7febd19be90e561f79b324508cc934b05922fc32c8daab7f5097d25234b5c'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          }
+        ],
+        "commands": [
+          {
+            "id": "us_east_2",
+            "rc": 0,
+            "seconds": 1.9561308379998081,
+            "stdout_bytes": 340,
+            "stderr_bytes": 0
+          },
+          {
+            "id": "us_east_1",
+            "rc": 0,
+            "seconds": 1.1524616400001833,
+            "stdout_bytes": 340,
+            "stderr_bytes": 0
+          },
+          {
+            "id": "public_east1",
+            "rc": 0,
+            "seconds": 1.5724874750003437,
+            "stdout_bytes": 2164,
+            "stderr_bytes": 0
+          }
+        ],
+        "status": "executed_interpret_separately",
+        "cleanup": {
+          "rm_rc": 0,
+          "query_rc": 0,
+          "remaining": [],
+          "stderr": ""
+        },
+        "finished_at": 1790624557.6557605
+      },
+      "degenerate": {
+        "container": "rh2-cpu29-private-8feec447c8a5",
+        "started_at": 1790624557.6570396,
+        "preparation": [
+          {
+            "step": "git config --global --add safe.directory /testbed",
+            "rc": 0
+          },
+          {
+            "step": "TEST_SERVER_MODE=false MOTO_ACCOUNT_ID=123456789012 AWS_EC2_METADATA_DISABLED=true AWS_ACCESS_KEY_ID=testing AWS_SECRET_ACCESS_KEY=testing AWS_SESSION_TOKEN=testing python - <<'PY_CHECK'\nimport os,sys,subprocess,boto3,botocore,moto\nprint('PY_CHECK',sys.executable);print('IDENTITY',os.getuid(),os.getcwd(),os.environ.get('HOME'));print('VERSIONS',boto3.__version__,botocore.__version__,moto.__file__);assert moto.__file__.startswith('/testbed/')\nprint(subprocess.check_output(['git','rev-parse','HEAD'],text=True));print(subprocess.check_output(['git','status','--porcelain'],text=True))\nPY_CHECK",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'moto/dynamodb/models/__init__.py'\"'\"', '\"'\"'87a558769bc0786464aeaca26fc29217c718971f447d6ddfc4ced9a3977d4f23'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          },
+          {
+            "step": "git apply --check /in/degenerate_constant_east2.patch",
+            "rc": 0
+          },
+          {
+            "step": "git apply /in/degenerate_constant_east2.patch",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'moto/dynamodb/models/__init__.py'\"'\"', '\"'\"'4bd4d6450546ba4a497c938023bea94b7bd81c774e089c0a0db690c461c66253'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          }
+        ],
+        "commands": [
+          {
+            "id": "us_east_2",
+            "rc": 0,
+            "seconds": 2.4544350300002407,
+            "stdout_bytes": 340,
+            "stderr_bytes": 0
+          },
+          {
+            "id": "us_east_1",
+            "rc": 1,
+            "seconds": 1.0524075650000668,
+            "stdout_bytes": 340,
+            "stderr_bytes": 89
+          },
+          {
+            "id": "public_east1",
+            "rc": 1,
+            "seconds": 1.7268324739998206,
+            "stdout_bytes": 6457,
+            "stderr_bytes": 0
+          }
+        ],
+        "status": "executed_interpret_separately",
+        "cleanup": {
+          "rm_rc": 0,
+          "query_rc": 0,
+          "remaining": [],
+          "stderr": ""
+        },
+        "finished_at": 1790624566.3683403
+      }
+    },
+    "image_id_actual": "sha256:808c60d962cb94330e499404720a0813fa400a2e86464aabdb47fcaa05aad5f6",
+    "finished_at": 1790624566.3694558
+  },
+  "private_source_checks": [
+    {
+      "variant": "base",
+      "all_prepare_rc_zero": true,
+      "source_sha_verified_in_raw": true,
+      "cleaned": true
+    },
+    {
+      "variant": "gold",
+      "all_prepare_rc_zero": true,
+      "source_sha_verified_in_raw": true,
+      "cleaned": true
+    },
+    {
+      "variant": "degenerate",
+      "all_prepare_rc_zero": true,
+      "source_sha_verified_in_raw": true,
+      "cleaned": true
+    }
+  ],
+  "formal": {
+    "status": "three-way not complete at readback; no final score/use conclusion accepted"
+  },
+  "scope": "CPU deterministic public Devcheck plus separate root private behavior; no autonomous solver or formal issue/public_hints delivery proof",
+  "remaining": [
+    "complete formal three-way logs, actual exports, exact references, installation and two-layer cleanup",
+    "independent review and root parser/transport verification",
+    "unrun behavior variants remain unrun; no full pip_check or full-lifetime resource health claim",
+    "model/GPU/budget/training and final-use decision separate"
+  ],
+  "environment": {
+    "repair": "none; original baseline01 make init; not install_wave1",
+    "source_image": [
+      "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5406@sha256:727caa5dba157d41b1e839a5044106f0ad7ea1fe824c9a5f562e2f74113339d6"
+    ],
+    "actual_image_id": "sha256:808c60d962cb94330e499404720a0813fa400a2e86464aabdb47fcaa05aad5f6"
+  },
+  "behavior_matrix": {
+    "base": {
+      "us_east_2": "ARN mismatch: both create/describe report east1",
+      "us_east_1": "correct ARN and other-region empty",
+      "public_east1": "1 passed"
+    },
+    "gold": {
+      "us_east_2": "correct ARN and other-region empty",
+      "us_east_1": "correct ARN and other-region empty",
+      "public_east1": "1 passed"
+    },
+    "degenerate": {
+      "us_east_2": "correct ARN and other-region empty",
+      "us_east_1": "ARN mismatch: both create/describe report east2",
+      "public_east1": "1 target ARN assertion failed"
+    }
+  },
+  "evidence": [
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/actor_original/attempt.json",
+      "sha256": "660725d661e2997582790a766fb4617c9a580f8563bf759e61d139d4412407af"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/actor_original/captures/identity.out",
+      "sha256": "99f3a032c83ccf2acffd03aadfae93c7868fe69ef02aeb0bf13f5bf3347c0579"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/actor_original/captures/public_east1.out",
+      "sha256": "3c2c2cf33c84412f61d6ff4315c55269ecd52579b770fbe1b0ffa68b1d994654"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/actor_original/captures/us_east_1.out",
+      "sha256": "61dc2fee978a390e48f6504cd605edfeb2836b15a1274c9d37c103e81be80bdd"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/actor_original/captures/us_east_2.out",
+      "sha256": "d480db50001eeff76379c14fad2b1b8721677eee8a42c88aa8753f9f943a85a9"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/original_image.json",
+      "sha256": "2ce538d05f6a19d2f58415150f093f6f85f1fbf7ccbc7bc036895b07970fa7ba"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/private_behavior/base/prep_0.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/private_behavior/base/prep_1.out",
+      "sha256": "521991a68ad0e36b677dfeda39b7a0868e40f0788a4e55029bb2613864f8329c"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/private_behavior/base/prep_2.out",
+      "sha256": "74c66d5ad06296b6979cccad6dfa6437265c189718a357a187681135307e798c"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/private_behavior/base/public_east1.out",
+      "sha256": "7ba777688eb2d983940e6c9bfa1f8b3027f95d3c2bae1b6154e323837ac84c40"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/private_behavior/base/us_east_1.out",
+      "sha256": "61dc2fee978a390e48f6504cd605edfeb2836b15a1274c9d37c103e81be80bdd"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/private_behavior/base/us_east_2.out",
+      "sha256": "d480db50001eeff76379c14fad2b1b8721677eee8a42c88aa8753f9f943a85a9"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/private_behavior/degenerate/prep_0.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/private_behavior/degenerate/prep_1.out",
+      "sha256": "521991a68ad0e36b677dfeda39b7a0868e40f0788a4e55029bb2613864f8329c"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/private_behavior/degenerate/prep_2.out",
+      "sha256": "74c66d5ad06296b6979cccad6dfa6437265c189718a357a187681135307e798c"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/private_behavior/degenerate/prep_3.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/private_behavior/degenerate/prep_4.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/private_behavior/degenerate/prep_5.out",
+      "sha256": "da882ff1238bed7954d4bcdb08a08c1913cce9b7fed3f876fef7b9932aba7d12"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/private_behavior/degenerate/public_east1.out",
+      "sha256": "33a88cd41fa5856186a1962d20694b09a6706bb4a27e879b3ff681996aafce8f"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/private_behavior/degenerate/us_east_1.out",
+      "sha256": "93146878774ccba0c913feeb960ce092f650f5b3e7c62c0cc88af33bc7aae244"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/private_behavior/degenerate/us_east_2.out",
+      "sha256": "4b7e977171a3008df40c34335cc86e440892c439c1a7f5e80b3265ac221e1b04"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/private_behavior/gold/prep_0.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/private_behavior/gold/prep_1.out",
+      "sha256": "521991a68ad0e36b677dfeda39b7a0868e40f0788a4e55029bb2613864f8329c"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/private_behavior/gold/prep_2.out",
+      "sha256": "74c66d5ad06296b6979cccad6dfa6437265c189718a357a187681135307e798c"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/private_behavior/gold/prep_3.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/private_behavior/gold/prep_4.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/private_behavior/gold/prep_5.out",
+      "sha256": "078717ec23a99d59c3ad38952ccf928efb84c059204ea3f38a5f0c7cdd3d9692"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/private_behavior/gold/public_east1.out",
+      "sha256": "ce9f3fff2030f1d80a3241ada19f5587ab740edd04cc81baeac3013b8c181973"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/private_behavior/gold/us_east_1.out",
+      "sha256": "61dc2fee978a390e48f6504cd605edfeb2836b15a1274c9d37c103e81be80bdd"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/private_behavior/gold/us_east_2.out",
+      "sha256": "4b7e977171a3008df40c34335cc86e440892c439c1a7f5e80b3265ac221e1b04"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-5406/mixed-v1/private_behavior/summary.json",
+      "sha256": "d3167c1be4862cdf91bce329f5dc8376705e8977c8cd399166622ad89510c7d1"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/task_inputs/getmoto__moto-5406/buildplan.json",
+      "sha256": "2f2adfecac9dca91f16e1ca95e102b312e75a7724ba92afde0cf274c18b2a5b2"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/task_inputs/getmoto__moto-5406/private/behavior_commands.json",
+      "sha256": "d540f939fc0d408d7730ccaaa3191fc5101fa3414a71302a8170227c4456d4fc"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/task_inputs/getmoto__moto-5406/private/patch_validation.json",
+      "sha256": "c82ca6794062884cadf198b0715a4f7207b9b3c11b520110603dadbd9d9789c4"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/task_inputs/getmoto__moto-5406/public_commands.json",
+      "sha256": "ab34520028214c61f1b9648d0db60f0b3d5bfa6a0924b63c0076d684047a6695"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/task_inputs/getmoto__moto-5406/recovery.json",
+      "sha256": "0560aa53dfc244af806f9886f01804bc0b699941061059554260ccc5e4dc497a"
+    }
+  ]
+}

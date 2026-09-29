@@ -1,0 +1,1552 @@
+{
+  "schema": "swegym_cpu_final_result.v1",
+  "date": "2026-09-29",
+  "instance_id": "conan-io__conan-11594",
+  "run": "ninja-v1",
+  "state": "cpu_complete_quality_gap_confirmed_independently_reviewed",
+  "review_kind": "owner full original evidence readback; cross-package independent final review completed; root frozen-parser replay with bindings and transport SHA reconciliation completed",
+  "repair": {
+    "scope": "only install Ninja wheel; CMake/public commands/base source unchanged",
+    "wheel": {
+      "metadata_url": "https://pypi.org/pypi/ninja/1.10.2.4/json",
+      "metadata_sha256": "eab4a44e844001e9f60ab98513a8f1cbdb0347fda1c284b43be8400fe0170d87",
+      "project": "ninja",
+      "distribution_version": "1.10.2.4",
+      "filename": "ninja-1.10.2.4-py2.py3-none-manylinux_2_5_x86_64.manylinux1_x86_64.whl",
+      "url": "https://files.pythonhosted.org/packages/48/d2/5c106c854b0f2366679747b2a9c5377cc59e03e2b80d72e41588d143abbc/ninja-1.10.2.4-py2.py3-none-manylinux_2_5_x86_64.manylinux1_x86_64.whl",
+      "sha256": "327c319176c5a4af21908b727b776e9f5caf275680403da632821ba071fd6296",
+      "bytes": 120718,
+      "python": "3.10.14 (main, May  6 2024, 19:42:50) [GCC 11.2.0]",
+      "selection": "best compatible wheel by pip vendored packaging.sys_tags",
+      "verified": true
+    },
+    "metadata_receipt_locally_verified": true,
+    "wheel_bytes_locally_available": false,
+    "base_layers": 13,
+    "derived_layers": 15,
+    "base_layer_prefix_identical": true,
+    "source_id": "sha256:292bf28a71ae6e3b9c52dcb25ed28020bf0c2ff90fc47a6c0761720b89c1f516",
+    "derived_id": "sha256:97eb7ca6700c1ee0e789fdfdffe69587f7d6e35d3b22e7215cb96e2f17e781d0",
+    "tools_before": {
+      "cmake": {
+        "mode": 493,
+        "path": "/usr/bin/cmake",
+        "rc": 0,
+        "realpath": "/usr/bin/cmake",
+        "sha256": "fd22547781b64bb2db04370970b93db1f3fada1e41e60873b015ee0747009fc0",
+        "stderr": "",
+        "stdout": "cmake version 3.22.1\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake).\n"
+      },
+      "ninja": {
+        "path": null
+      },
+      "python": "/opt/miniconda3/envs/testbed/bin/python",
+      "python_version": "3.10.14 (main, May  6 2024, 19:42:50) [GCC 11.2.0]"
+    },
+    "tools_after": {
+      "cmake": {
+        "mode": 493,
+        "path": "/usr/bin/cmake",
+        "rc": 0,
+        "realpath": "/usr/bin/cmake",
+        "sha256": "fd22547781b64bb2db04370970b93db1f3fada1e41e60873b015ee0747009fc0",
+        "stderr": "",
+        "stdout": "cmake version 3.22.1\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake).\n"
+      },
+      "ninja": {
+        "mode": 493,
+        "path": "/opt/miniconda3/envs/testbed/bin/ninja",
+        "rc": 0,
+        "realpath": "/opt/miniconda3/envs/testbed/bin/ninja",
+        "sha256": "ed8ffb1a8f4f0a6a4fe85557708b71a3cf0a1b21d0a89534a45d9ed8c9b142f4",
+        "stderr": "",
+        "stdout": "1.10.2.git.kitware.jobserver-1\n"
+      },
+      "python": "/opt/miniconda3/envs/testbed/bin/python",
+      "python_version": "3.10.14 (main, May  6 2024, 19:42:50) [GCC 11.2.0]"
+    },
+    "cmake_binary_unchanged": true
+  },
+  "actor": {
+    "result": "ran",
+    "checks": {
+      "interpreter_in_tool_result": false,
+      "host_log_present": true,
+      "no_harness_dir_in_container": true,
+      "no_launcher_or_done_marker": true,
+      "message_start_matches_stub_requests": true,
+      "exit_code_zero": true,
+      "result_event_present": true,
+      "log_complete": true,
+      "bashenv_denied_for_agent": false,
+      "all_commands_ran": true,
+      "all_match_expect": true
+    },
+    "commands_result": [
+      {
+        "id": "identity",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 165,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "实际actor身份和源码来源"
+      },
+      {
+        "id": "toolchain",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 7298,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "核实际CMake/Ninja及Multi-Config可用；不套用15422工具配方"
+      },
+      {
+        "id": "real_cmake",
+        "rc": 1,
+        "status": "nonzero",
+        "expect": "nonzero",
+        "matches_expect": true,
+        "output_bytes": 3832,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "base应在RUN_TESTS未知target失败；修复后应真实执行Release测试并写marker；安装失败不是目标失败"
+      },
+      {
+        "id": "public_existing",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 1358,
+        "output_truncated_to": 200000,
+        "pytest": {
+          "passed": 4,
+          "warning": 1
+        },
+        "purpose": "公开新旧helper兼容与透传"
+      }
+    ],
+    "cleanup": {
+      "container_rm": 0,
+      "network_failures": [],
+      "relay_failures": [],
+      "stub_rc": 0,
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "residual_after_force": []
+    },
+    "image_facts": {
+      "image": "sha256:97eb7ca6700c1ee0e789fdfdffe69587f7d6e35d3b22e7215cb96e2f17e781d0",
+      "inspect": "sha256:97eb7ca6700c1ee0e789fdfdffe69587f7d6e35d3b22e7215cb96e2f17e781d0 []",
+      "inspect_rc": 0,
+      "initial_worktree": "HEAD=4ed1bee0fb81b2826208e8c1c824c99fb6d69be8\nPORCELAIN_BEGIN\nPORCELAIN_RC=0\n",
+      "initial_worktree_rc": 0
+    },
+    "base_commit": "4ed1bee0fb81b2826208e8c1c824c99fb6d69be8",
+    "cc_version_observed": "2.1.205 (Claude Code)",
+    "post_run_facts": {
+      "RH2_HARNESS_DIR": "ABSENT",
+      "RH2_RUN_SH": "ABSENT",
+      "RH2_RUN_DONE": "ABSENT",
+      "RH2_GIT_STATUS_LINES": "0",
+      "RH2_AGENT_PROCS": "0",
+      "RH2_NEWER_FILES": "484"
+    },
+    "effective_profile": {
+      "cpus": 2.0,
+      "memory_bytes": 4294967296,
+      "tmp_tmpfs_bytes": 1073741824,
+      "home_tmpfs_bytes": 268435456,
+      "writable_layer_quota_bytes": 8589934592,
+      "pids_limit": 512
+    }
+  },
+  "private": {
+    "scope": "private root behavior only",
+    "spec_sha256": "ac50623edb6941838f19ae3df27efaa312d963ef89263d29c18ab671688cbef5",
+    "started_at": 1790624129.7655814,
+    "variants": {
+      "base": {
+        "container": "rh2-cpu29-private-2d8100320c8d",
+        "started_at": 1790624129.8143659,
+        "preparation": [
+          {
+            "step": "git config --global --add safe.directory /testbed",
+            "rc": 0
+          },
+          {
+            "step": "PYTHONPATH=. python - <<'PY_CHECK'\nimport os,sys,conan,conans,subprocess\nprint('PY_CHECK',sys.executable);print(os.getuid(),os.environ.get('HOME'));print(conan.__file__,conans.__file__)\nassert conans.__file__.startswith('/testbed/')\nprint(subprocess.check_output(['git','rev-parse','HEAD'],text=True));print(subprocess.check_output(['git','status','--porcelain'],text=True))\nPY_CHECK",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'conan/tools/cmake/cmake.py'\"'\"', '\"'\"'461786181aa4a64467e6eb2e87e5f41f0b3bc1d6cc9a18ce53efc407c288c1e4'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          }
+        ],
+        "commands": [
+          {
+            "id": "real_cmake",
+            "rc": 1,
+            "seconds": 2.0093265519999477,
+            "stdout_bytes": 1962,
+            "stderr_bytes": 1870
+          }
+        ],
+        "status": "executed_interpret_separately",
+        "cleanup": {
+          "rm_rc": 0,
+          "query_rc": 0,
+          "remaining": [],
+          "stderr": ""
+        },
+        "finished_at": 1790624134.4508197
+      },
+      "gold": {
+        "container": "rh2-cpu29-private-a9d8c546ea91",
+        "started_at": 1790624134.4518795,
+        "preparation": [
+          {
+            "step": "git config --global --add safe.directory /testbed",
+            "rc": 0
+          },
+          {
+            "step": "PYTHONPATH=. python - <<'PY_CHECK'\nimport os,sys,conan,conans,subprocess\nprint('PY_CHECK',sys.executable);print(os.getuid(),os.environ.get('HOME'));print(conan.__file__,conans.__file__)\nassert conans.__file__.startswith('/testbed/')\nprint(subprocess.check_output(['git','rev-parse','HEAD'],text=True));print(subprocess.check_output(['git','status','--porcelain'],text=True))\nPY_CHECK",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'conan/tools/cmake/cmake.py'\"'\"', '\"'\"'461786181aa4a64467e6eb2e87e5f41f0b3bc1d6cc9a18ce53efc407c288c1e4'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          },
+          {
+            "step": "git apply --check /in/gold.patch",
+            "rc": 0
+          },
+          {
+            "step": "git apply /in/gold.patch",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'conan/tools/cmake/cmake.py'\"'\"', '\"'\"'cdaa63180dac106f736603cd63ef2c4eb307b9ad374ca127df34f6b86f7d20bf'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          }
+        ],
+        "commands": [
+          {
+            "id": "real_cmake",
+            "rc": 0,
+            "seconds": 2.0542150570008744,
+            "stdout_bytes": 1989,
+            "stderr_bytes": 0
+          }
+        ],
+        "status": "executed_interpret_separately",
+        "cleanup": {
+          "rm_rc": 0,
+          "query_rc": 0,
+          "remaining": [],
+          "stderr": ""
+        },
+        "finished_at": 1790624139.8522444
+      },
+      "degenerate": {
+        "container": "rh2-cpu29-private-4a505116315d",
+        "started_at": 1790624139.8533933,
+        "preparation": [
+          {
+            "step": "git config --global --add safe.directory /testbed",
+            "rc": 0
+          },
+          {
+            "step": "PYTHONPATH=. python - <<'PY_CHECK'\nimport os,sys,conan,conans,subprocess\nprint('PY_CHECK',sys.executable);print(os.getuid(),os.environ.get('HOME'));print(conan.__file__,conans.__file__)\nassert conans.__file__.startswith('/testbed/')\nprint(subprocess.check_output(['git','rev-parse','HEAD'],text=True));print(subprocess.check_output(['git','status','--porcelain'],text=True))\nPY_CHECK",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'conan/tools/cmake/cmake.py'\"'\"', '\"'\"'461786181aa4a64467e6eb2e87e5f41f0b3bc1d6cc9a18ce53efc407c288c1e4'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          },
+          {
+            "step": "git apply --check /in/degenerate_drop_config.patch",
+            "rc": 0
+          },
+          {
+            "step": "git apply /in/degenerate_drop_config.patch",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'conan/tools/cmake/cmake.py'\"'\"', '\"'\"'052f0805959b19c186fcd9536a998ea6e847b7ce1639dbcec24fd5fe5ce96118'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          }
+        ],
+        "commands": [
+          {
+            "id": "real_cmake",
+            "rc": 1,
+            "seconds": 2.1220672469999045,
+            "stdout_bytes": 2577,
+            "stderr_bytes": 2485
+          }
+        ],
+        "status": "executed_interpret_separately",
+        "cleanup": {
+          "rm_rc": 0,
+          "query_rc": 0,
+          "remaining": [],
+          "stderr": ""
+        },
+        "finished_at": 1790624145.2959569
+      }
+    },
+    "image_id_actual": "sha256:97eb7ca6700c1ee0e789fdfdffe69587f7d6e35d3b22e7215cb96e2f17e781d0",
+    "finished_at": 1790624145.2972116
+  },
+  "behavior_interpretation": {
+    "base": "configure succeeds; RUN_TESTS unknown target",
+    "gold": "real CTest Release behavior passes and marker checked",
+    "degenerate": "test target reached but actual ctest -C Debug fails release_behavior; not import/configure failure"
+  },
+  "formal": {
+    "noop": {
+      "ledger": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_noop/ledger.jsonl",
+      "reward": 0.0,
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 0,
+        "f2p_total": 1,
+        "failure_category": "tests_failed",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+reference-bindings-v1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": 0,
+        "p2p_total": 4,
+        "report_id": "rpt_grading_87b997d6",
+        "reward": 0.0
+      },
+      "full_node_status": {
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[NMake Makefiles-test]": "PASSED",
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja Makefiles-test]": "PASSED",
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Unix Makefiles-test]": "PASSED",
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Visual Studio 14 2015-RUN_TESTS]": "PASSED",
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Xcode-RUN_TESTS]": "PASSED",
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja Multi-Config-test]": "FAILED"
+      },
+      "reference_status": {
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja": {
+          "members": {
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja Makefiles-test]": "PASSED",
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja Multi-Config-test]": "FAILED"
+          },
+          "status": "FAILED"
+        },
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[NMake": {
+          "members": {
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[NMake Makefiles-test]": "PASSED"
+          },
+          "status": "PASSED"
+        },
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Unix": {
+          "members": {
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Unix Makefiles-test]": "PASSED"
+          },
+          "status": "PASSED"
+        },
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Xcode-RUN_TESTS]": {
+          "members": {
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Xcode-RUN_TESTS]": "PASSED"
+          },
+          "status": "PASSED"
+        },
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Visual": {
+          "members": {
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Visual Studio 14 2015-RUN_TESTS]": "PASSED"
+          },
+          "status": "PASSED"
+        }
+      },
+      "binding_audit": {
+        "version": "reference-bindings-v1",
+        "original": {
+          "instance_id": "conan-io__conan-11594",
+          "apply_ok": true,
+          "resolution": "RESOLVED_NO",
+          "resolved": false,
+          "f2p_rate": 0.0,
+          "p2p_rate": 1.0,
+          "f2p_success": [],
+          "f2p_failure": [
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja"
+          ],
+          "p2p_success": [
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[NMake",
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Unix",
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Xcode-RUN_TESTS]",
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Visual"
+          ],
+          "p2p_failure": [],
+          "num_parsed_tests": 5,
+          "num_parsed_outside_segment": 0,
+          "reference_missing": [],
+          "reference_skipped": [],
+          "parser_source": "swegym_parsers@242429c1",
+          "grading_semantics": "swe_f2p_p2p",
+          "expected_match": null
+        },
+        "revised": {
+          "instance_id": "conan-io__conan-11594",
+          "apply_ok": true,
+          "resolution": "RESOLVED_NO",
+          "resolved": false,
+          "f2p_rate": 0.0,
+          "p2p_rate": 1.0,
+          "f2p_success": [],
+          "f2p_failure": [
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja"
+          ],
+          "p2p_success": [
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[NMake",
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Unix",
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Xcode-RUN_TESTS]",
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Visual"
+          ],
+          "p2p_failure": [],
+          "num_parsed_tests": 5,
+          "num_parsed_outside_segment": 0,
+          "reference_missing": [],
+          "reference_skipped": [],
+          "parser_source": "swegym_parsers@242429c1+reference-bindings-v1",
+          "grading_semantics": "swe_f2p_p2p",
+          "expected_match": null
+        },
+        "bindings": {
+          "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja": [
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja Makefiles-test]",
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja Multi-Config-test]"
+          ]
+        },
+        "raw_node_states": {
+          "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja Makefiles-test]": [
+            "PASSED"
+          ],
+          "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja Multi-Config-test]": [
+            "FAILED"
+          ]
+        }
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 2.067,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 1.13
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 1.13,
+        "segment_completed": true
+      },
+      "phases": {
+        "delta_apply": 0.20196,
+        "grader_baseline_rebuild": 0.689137,
+        "grader_cleanup": 0.821313,
+        "grader_start_and_verify": 1.672934,
+        "grader_trusted_setup": 75.944293,
+        "parser_and_report": 1.674392,
+        "test": 4.870713
+      },
+      "resource": {
+        "mem_peak_mb": 352.527,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "resource_facts": null,
+      "policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/conans/__init__.py",
+        "RH2_OBS_PKG_VERSION": "1.51.0-dev",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "9c7467b6f377ed0bd4f1924f872a3b3647d9769d51f1b60ab9e2911c4bac8792",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "9c7467b6f377ed0bd4f1924f872a3b3647d9769d51f1b60ab9e2911c4bac8792"
+      },
+      "verdict_diagnostics": {
+        "apply_ok": true,
+        "expected_match": null,
+        "grading_semantics": "swe_f2p_p2p",
+        "num_parsed_outside_segment": 0,
+        "num_parsed_tests": 5,
+        "parser_source": "swegym_parsers@242429c1+reference-bindings-v1",
+        "reference_missing": [],
+        "reference_skipped": [],
+        "resolution": "RESOLVED_NO"
+      },
+      "image_identity": "local_build:sha256:97eb7ca6700c1ee0e789fdfdffe69587f7d6e35d3b22e7215cb96e2f17e781d0",
+      "log": {
+        "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_noop/eval_logs/evallog_replay-cpu29-conan-io-co_87b997d6.eval.log",
+        "bytes": 30084,
+        "sha256": "8ef3ddd3ceaa2edbbe64df740aea9e76ea88a53233acd28916b72d7f42e79d70",
+        "matches_ledger": true,
+        "partial": false
+      },
+      "export": {
+        "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_noop/artifacts/swe_gym_lite--conan-io__conan-11594/a1-41c619e1/frozen_patch.json",
+        "entries": [],
+        "excluded_pathset_changed": false,
+        "decoded_source_sha256": null,
+        "matches_private_applied_source": null,
+        "candidate_patch_matches_input_bytes": null
+      },
+      "candidate_cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "driver_close": {
+        "ledger": "/work/swegym_cpu_preprobe_20260929/results/conan-io__conan-11594/ninja-v1/grade_noop/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "budget": {
+        "instance_id": "conan-io__conan-11594",
+        "before": 300.0,
+        "after": 900.0,
+        "test_seconds_unchanged": 1800.0,
+        "scope": "CPU host preparation/reset/observation budget only; whole-grading CLI deadline independent",
+        "reason": "observed overlay2 metacopy=N prefix chown preparation timeout; no kernel or permission change"
+      }
+    },
+    "gold": {
+      "ledger": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_gold/ledger.jsonl",
+      "reward": 1.0,
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 1,
+        "f2p_total": 1,
+        "failure_category": null,
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+reference-bindings-v1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "resolved",
+        "p2p_fail": 0,
+        "p2p_total": 4,
+        "report_id": "rpt_grading_23131871",
+        "reward": 1.0
+      },
+      "full_node_status": {
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[NMake Makefiles-test]": "PASSED",
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja Makefiles-test]": "PASSED",
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja Multi-Config-test]": "PASSED",
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Unix Makefiles-test]": "PASSED",
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Visual Studio 14 2015-RUN_TESTS]": "PASSED",
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Xcode-RUN_TESTS]": "PASSED"
+      },
+      "reference_status": {
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja": {
+          "members": {
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja Makefiles-test]": "PASSED",
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja Multi-Config-test]": "PASSED"
+          },
+          "status": "PASSED"
+        },
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[NMake": {
+          "members": {
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[NMake Makefiles-test]": "PASSED"
+          },
+          "status": "PASSED"
+        },
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Unix": {
+          "members": {
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Unix Makefiles-test]": "PASSED"
+          },
+          "status": "PASSED"
+        },
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Xcode-RUN_TESTS]": {
+          "members": {
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Xcode-RUN_TESTS]": "PASSED"
+          },
+          "status": "PASSED"
+        },
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Visual": {
+          "members": {
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Visual Studio 14 2015-RUN_TESTS]": "PASSED"
+          },
+          "status": "PASSED"
+        }
+      },
+      "binding_audit": {
+        "version": "reference-bindings-v1",
+        "original": {
+          "instance_id": "conan-io__conan-11594",
+          "apply_ok": true,
+          "resolution": "RESOLVED_FULL",
+          "resolved": true,
+          "f2p_rate": 1.0,
+          "p2p_rate": 1.0,
+          "f2p_success": [
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja"
+          ],
+          "f2p_failure": [],
+          "p2p_success": [
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[NMake",
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Unix",
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Xcode-RUN_TESTS]",
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Visual"
+          ],
+          "p2p_failure": [],
+          "num_parsed_tests": 5,
+          "num_parsed_outside_segment": 0,
+          "reference_missing": [],
+          "reference_skipped": [],
+          "parser_source": "swegym_parsers@242429c1",
+          "grading_semantics": "swe_f2p_p2p",
+          "expected_match": null
+        },
+        "revised": {
+          "instance_id": "conan-io__conan-11594",
+          "apply_ok": true,
+          "resolution": "RESOLVED_FULL",
+          "resolved": true,
+          "f2p_rate": 1.0,
+          "p2p_rate": 1.0,
+          "f2p_success": [
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja"
+          ],
+          "f2p_failure": [],
+          "p2p_success": [
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[NMake",
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Unix",
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Xcode-RUN_TESTS]",
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Visual"
+          ],
+          "p2p_failure": [],
+          "num_parsed_tests": 5,
+          "num_parsed_outside_segment": 0,
+          "reference_missing": [],
+          "reference_skipped": [],
+          "parser_source": "swegym_parsers@242429c1+reference-bindings-v1",
+          "grading_semantics": "swe_f2p_p2p",
+          "expected_match": null
+        },
+        "bindings": {
+          "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja": [
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja Makefiles-test]",
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja Multi-Config-test]"
+          ]
+        },
+        "raw_node_states": {
+          "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja Makefiles-test]": [
+            "PASSED"
+          ],
+          "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja Multi-Config-test]": [
+            "PASSED"
+          ]
+        }
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 2.186,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 1.009
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 1.009,
+        "segment_completed": true
+      },
+      "phases": {
+        "delta_apply": 0.39231,
+        "grader_baseline_rebuild": 0.703572,
+        "grader_cleanup": 0.779722,
+        "grader_start_and_verify": 1.659641,
+        "grader_trusted_setup": 76.791113,
+        "parser_and_report": 1.597528,
+        "test": 4.935729
+      },
+      "resource": {
+        "mem_peak_mb": 352.164,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "resource_facts": null,
+      "policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/conans/__init__.py",
+        "RH2_OBS_PKG_VERSION": "1.51.0-dev",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "9c7467b6f377ed0bd4f1924f872a3b3647d9769d51f1b60ab9e2911c4bac8792",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "9c7467b6f377ed0bd4f1924f872a3b3647d9769d51f1b60ab9e2911c4bac8792"
+      },
+      "verdict_diagnostics": {
+        "apply_ok": true,
+        "expected_match": null,
+        "grading_semantics": "swe_f2p_p2p",
+        "num_parsed_outside_segment": 0,
+        "num_parsed_tests": 5,
+        "parser_source": "swegym_parsers@242429c1+reference-bindings-v1",
+        "reference_missing": [],
+        "reference_skipped": [],
+        "resolution": "RESOLVED_FULL"
+      },
+      "image_identity": "local_build:sha256:97eb7ca6700c1ee0e789fdfdffe69587f7d6e35d3b22e7215cb96e2f17e781d0",
+      "log": {
+        "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_gold/eval_logs/evallog_replay-cpu29-conan-io-co_23131871.eval.log",
+        "bytes": 28764,
+        "sha256": "44dbac5fb92c89e06a014076d6c8c71c977e22719f4904f298ab2ae92fc3a5ed",
+        "matches_ledger": true,
+        "partial": false
+      },
+      "export": {
+        "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_gold/artifacts/swe_gym_lite--conan-io__conan-11594/a1-35559175/frozen_patch.json",
+        "entries": [
+          {
+            "path": "conan/tools/cmake/cmake.py",
+            "operation": "modify",
+            "mode": "100644",
+            "content_digest": "sha256:cdaa63180dac106f736603cd63ef2c4eb307b9ad374ca127df34f6b86f7d20bf"
+          }
+        ],
+        "excluded_pathset_changed": false,
+        "decoded_source_sha256": "cdaa63180dac106f736603cd63ef2c4eb307b9ad374ca127df34f6b86f7d20bf",
+        "matches_private_applied_source": true,
+        "candidate_patch_matches_input_bytes": true
+      },
+      "candidate_cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "driver_close": {
+        "ledger": "/work/swegym_cpu_preprobe_20260929/results/conan-io__conan-11594/ninja-v1/grade_gold/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "budget": {
+        "instance_id": "conan-io__conan-11594",
+        "before": 300.0,
+        "after": 900.0,
+        "test_seconds_unchanged": 1800.0,
+        "scope": "CPU host preparation/reset/observation budget only; whole-grading CLI deadline independent",
+        "reason": "observed overlay2 metacopy=N prefix chown preparation timeout; no kernel or permission change"
+      }
+    },
+    "degenerate": {
+      "ledger": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_degenerate/ledger.jsonl",
+      "reward": 1.0,
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 1,
+        "f2p_total": 1,
+        "failure_category": null,
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+reference-bindings-v1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "resolved",
+        "p2p_fail": 0,
+        "p2p_total": 4,
+        "report_id": "rpt_grading_a1f806d6",
+        "reward": 1.0
+      },
+      "full_node_status": {
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[NMake Makefiles-test]": "PASSED",
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja Makefiles-test]": "PASSED",
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja Multi-Config-test]": "PASSED",
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Unix Makefiles-test]": "PASSED",
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Visual Studio 14 2015-RUN_TESTS]": "PASSED",
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Xcode-RUN_TESTS]": "PASSED"
+      },
+      "reference_status": {
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja": {
+          "members": {
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja Makefiles-test]": "PASSED",
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja Multi-Config-test]": "PASSED"
+          },
+          "status": "PASSED"
+        },
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[NMake": {
+          "members": {
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[NMake Makefiles-test]": "PASSED"
+          },
+          "status": "PASSED"
+        },
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Unix": {
+          "members": {
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Unix Makefiles-test]": "PASSED"
+          },
+          "status": "PASSED"
+        },
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Xcode-RUN_TESTS]": {
+          "members": {
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Xcode-RUN_TESTS]": "PASSED"
+          },
+          "status": "PASSED"
+        },
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Visual": {
+          "members": {
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Visual Studio 14 2015-RUN_TESTS]": "PASSED"
+          },
+          "status": "PASSED"
+        }
+      },
+      "binding_audit": {
+        "version": "reference-bindings-v1",
+        "original": {
+          "instance_id": "conan-io__conan-11594",
+          "apply_ok": true,
+          "resolution": "RESOLVED_FULL",
+          "resolved": true,
+          "f2p_rate": 1.0,
+          "p2p_rate": 1.0,
+          "f2p_success": [
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja"
+          ],
+          "f2p_failure": [],
+          "p2p_success": [
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[NMake",
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Unix",
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Xcode-RUN_TESTS]",
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Visual"
+          ],
+          "p2p_failure": [],
+          "num_parsed_tests": 5,
+          "num_parsed_outside_segment": 0,
+          "reference_missing": [],
+          "reference_skipped": [],
+          "parser_source": "swegym_parsers@242429c1",
+          "grading_semantics": "swe_f2p_p2p",
+          "expected_match": null
+        },
+        "revised": {
+          "instance_id": "conan-io__conan-11594",
+          "apply_ok": true,
+          "resolution": "RESOLVED_FULL",
+          "resolved": true,
+          "f2p_rate": 1.0,
+          "p2p_rate": 1.0,
+          "f2p_success": [
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja"
+          ],
+          "f2p_failure": [],
+          "p2p_success": [
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[NMake",
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Unix",
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Xcode-RUN_TESTS]",
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Visual"
+          ],
+          "p2p_failure": [],
+          "num_parsed_tests": 5,
+          "num_parsed_outside_segment": 0,
+          "reference_missing": [],
+          "reference_skipped": [],
+          "parser_source": "swegym_parsers@242429c1+reference-bindings-v1",
+          "grading_semantics": "swe_f2p_p2p",
+          "expected_match": null
+        },
+        "bindings": {
+          "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja": [
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja Makefiles-test]",
+            "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja Multi-Config-test]"
+          ]
+        },
+        "raw_node_states": {
+          "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja Makefiles-test]": [
+            "PASSED"
+          ],
+          "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja Multi-Config-test]": [
+            "PASSED"
+          ]
+        }
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 2.619,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 1.142
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 1.142,
+        "segment_completed": true
+      },
+      "phases": {
+        "delta_apply": 0.38091,
+        "grader_baseline_rebuild": 0.689377,
+        "grader_cleanup": 1.067165,
+        "grader_start_and_verify": 1.808281,
+        "grader_trusted_setup": 76.161242,
+        "parser_and_report": 1.765394,
+        "test": 5.468635
+      },
+      "resource": {
+        "mem_peak_mb": 352.047,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "resource_facts": null,
+      "policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/conans/__init__.py",
+        "RH2_OBS_PKG_VERSION": "1.51.0-dev",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "9c7467b6f377ed0bd4f1924f872a3b3647d9769d51f1b60ab9e2911c4bac8792",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "9c7467b6f377ed0bd4f1924f872a3b3647d9769d51f1b60ab9e2911c4bac8792"
+      },
+      "verdict_diagnostics": {
+        "apply_ok": true,
+        "expected_match": null,
+        "grading_semantics": "swe_f2p_p2p",
+        "num_parsed_outside_segment": 0,
+        "num_parsed_tests": 5,
+        "parser_source": "swegym_parsers@242429c1+reference-bindings-v1",
+        "reference_missing": [],
+        "reference_skipped": [],
+        "resolution": "RESOLVED_FULL"
+      },
+      "image_identity": "local_build:sha256:97eb7ca6700c1ee0e789fdfdffe69587f7d6e35d3b22e7215cb96e2f17e781d0",
+      "log": {
+        "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_degenerate/eval_logs/evallog_replay-cpu29-conan-io-co_a1f806d6.eval.log",
+        "bytes": 29080,
+        "sha256": "b6c14376fc11ac431fb79c3fd65c09bc5562e84f27a6573e25f6093d71f9ec61",
+        "matches_ledger": true,
+        "partial": false
+      },
+      "export": {
+        "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_degenerate/artifacts/swe_gym_lite--conan-io__conan-11594/a1-0b5d2d03/frozen_patch.json",
+        "entries": [
+          {
+            "path": "conan/tools/cmake/cmake.py",
+            "operation": "modify",
+            "mode": "100644",
+            "content_digest": "sha256:052f0805959b19c186fcd9536a998ea6e847b7ce1639dbcec24fd5fe5ce96118"
+          }
+        ],
+        "excluded_pathset_changed": false,
+        "decoded_source_sha256": "052f0805959b19c186fcd9536a998ea6e847b7ce1639dbcec24fd5fe5ce96118",
+        "matches_private_applied_source": true,
+        "candidate_patch_matches_input_bytes": true
+      },
+      "candidate_cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "driver_close": {
+        "ledger": "/work/swegym_cpu_preprobe_20260929/results/conan-io__conan-11594/ninja-v1/grade_degenerate/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "budget": {
+        "instance_id": "conan-io__conan-11594",
+        "before": 300.0,
+        "after": 900.0,
+        "test_seconds_unchanged": 1800.0,
+        "scope": "CPU host preparation/reset/observation budget only; whole-grading CLI deadline independent",
+        "reason": "observed overlay2 metacopy=N prefix chown preparation timeout; no kernel or permission change"
+      }
+    }
+  },
+  "remaining": [
+    "D6 treatment/new-version validation if authorized; formal tests unchanged",
+    "full pip_check unperformed; local wheel bytes unavailable; complete resource-event observations not claimed",
+    "formal issue/public_hints delivery; autonomous model/GPU/budget/training evidence separate"
+  ],
+  "evidence": [
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/mixed-v1/actor_original/attempt.json",
+      "sha256": "0a39ba8baa3cb3b15d283ceb077770bbf3711832dd8ce8d86d4734595d05034e"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/actor_revised/attempt.json",
+      "sha256": "5eaf5288a279021ffdaec8d27d8ca20b819d00c67c7fe955caae058d610000d4"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/actor_revised/captures/identity.out",
+      "sha256": "69fc19cfc585725105002f40c9f8665347fbbd812e24c73138fd8ff0080e1832"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/actor_revised/captures/public_existing.out",
+      "sha256": "3c2961b1e2d15e403957200ba6f17def13c8c07a5b69766682b0758a87a92c13"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/actor_revised/captures/real_cmake.out",
+      "sha256": "2e125739a81f4269695de718adc82f01dfa65f4e4a32bbc4092ba422a1ae0dd9"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/actor_revised/captures/toolchain.out",
+      "sha256": "ab1d1a56b5158daafc610c3f8cfed4dec9538c9e6e8cd59194acafd9ab68f3af"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/build_ninja.log",
+      "sha256": "30cc132757fe528bfa96919f016f38e87cead9100b398b20cb18484d0ffc89d7"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/dependency_build/Dockerfile",
+      "sha256": "8fbd43d6ce50d591b36eb943e986392a0d4c11f0faa376fac550ba15adacefb4"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/dependency_build/image.json",
+      "sha256": "846e1254915cb4ea4265cab20b84e60499fc644d729db7b8ddb14b212cb32bd7"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/dependency_build/pypi_metadata.json",
+      "sha256": "eab4a44e844001e9f60ab98513a8f1cbdb0347fda1c284b43be8400fe0170d87"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/dependency_build/recipe.json",
+      "sha256": "c2cb1226adb6f08cd4249024d7d91d4e753978f3a925ab4e14246ba3823412c0"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/dependency_build/wheel_selection.json",
+      "sha256": "15c44ed300205cc40f42f66fc629f2600bf3519ae083cbc5aac39db50d78052d"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/dependency_build/wheel_verified.json",
+      "sha256": "0595a331b68ddc9e33f31355387c0c5d253c06a019c521a8e268d2393d14ec48"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/download_wheel.log",
+      "sha256": "c4a84bac99756fe445830a9dbf05de9df5ea1f6e18b92de94781d19c8366924f"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/download_wheel_cleanup.json",
+      "sha256": "15c50b4de587b71b06829d9100fc3ba13668ae580bece0109cbc284c9714a9d6"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_degenerate/artifacts/swe_gym_lite--conan-io__conan-11594/a1-0b5d2d03/baseline_manifest.json",
+      "sha256": "28aca7abb2cb01dd9a36356d717d72c2184c6fa8912b4ab4d6d42afd7f15417d"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_degenerate/artifacts/swe_gym_lite--conan-io__conan-11594/a1-0b5d2d03/candidate.patch",
+      "sha256": "f4445e51d087748cf00cd647bcf2ddf13a592c1be343561ad6956a367ef408e1"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_degenerate/artifacts/swe_gym_lite--conan-io__conan-11594/a1-0b5d2d03/classification.json",
+      "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_degenerate/artifacts/swe_gym_lite--conan-io__conan-11594/a1-0b5d2d03/frozen_patch.json",
+      "sha256": "546681b6823384376b594b4bc5fd0846b1c4fee8f30a5e762dd56358e6d11264"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_degenerate/artifacts/swe_gym_lite--conan-io__conan-11594/a1-0b5d2d03/projection.json",
+      "sha256": "847b41310c8058a1658a4d508cd1bc46a6a8b97e78d8cfb5485b812d024df6d8"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_degenerate/artifacts/swe_gym_lite--conan-io__conan-11594/a1-0b5d2d03/stage.json",
+      "sha256": "793ee3185c838e723a9d2877d72aa595684c257d6e0e496cb5ecd964a26b8fdd"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_degenerate/budget/conan-io__conan-11594.json",
+      "sha256": "cd80bde5b8ba9d17f1220050f7bcacaf1be42824114ec55edb6aedb1bbf8d813"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_degenerate/driver_close_checked.json",
+      "sha256": "37529ed27a786a439b62cd0193510fe1a766a0095d86696481cb2749dfe9115f"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_degenerate/eval_logs/evallog_replay-cpu29-conan-io-co_a1f806d6.diagnostics.json",
+      "sha256": "969b21f1d576099cdcca8424c2cf08a7a26cbf2cf9477dd0ae03995d994e9637"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_degenerate/eval_logs/evallog_replay-cpu29-conan-io-co_a1f806d6.eval.log",
+      "sha256": "b6c14376fc11ac431fb79c3fd65c09bc5562e84f27a6573e25f6093d71f9ec61"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_degenerate/frozen_source_checked.json",
+      "sha256": "872617db6f2a3d226a601dee9456fd3a00693b30d209c81d9794a8c8cb90485e"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_degenerate/ledger.jsonl",
+      "sha256": "54100c90dd0cb49ccba294fb9c43de8e82e5ae594fc1cb03d71b4a6629bef4f9"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_degenerate/recipe/conan-io__conan-11594.reference.json",
+      "sha256": "eb516d6679347e2715ea565030a2cd28c6f2fdcbdc9c1b9e000b38257bb95675"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_degenerate/recipe/diagnostic_grading_namespace.json",
+      "sha256": "0eec4a22234d2269009bec49c07db962ce4504e3422b633d01f05391cae2e919"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_degenerate/recipe/reference_bindings.json",
+      "sha256": "cc7ba7340ab7d249be75d6ddad97e1753a1bd9191339d5b1a28f0671c808642d"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_degenerate.log",
+      "sha256": "57a623c98025559a94fd593d5cb8e654982129d092d2cf5b3828466fd8fcd669"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_gold/artifacts/swe_gym_lite--conan-io__conan-11594/a1-35559175/baseline_manifest.json",
+      "sha256": "28aca7abb2cb01dd9a36356d717d72c2184c6fa8912b4ab4d6d42afd7f15417d"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_gold/artifacts/swe_gym_lite--conan-io__conan-11594/a1-35559175/candidate.patch",
+      "sha256": "e49265e4fd430f627dd2293f1f79b3b6c30b30d36c8a6a066c992f4d4b48abfa"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_gold/artifacts/swe_gym_lite--conan-io__conan-11594/a1-35559175/classification.json",
+      "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_gold/artifacts/swe_gym_lite--conan-io__conan-11594/a1-35559175/frozen_patch.json",
+      "sha256": "b2789f5ccc52b000c2d9c3ac53c14e675b4e42c990e622a7c9a094d10fb0ff9a"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_gold/artifacts/swe_gym_lite--conan-io__conan-11594/a1-35559175/projection.json",
+      "sha256": "c83d3fe3c35124867121da149cd5dd6532a887aa6b3eab0f512aed66be9d3e20"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_gold/artifacts/swe_gym_lite--conan-io__conan-11594/a1-35559175/stage.json",
+      "sha256": "793ee3185c838e723a9d2877d72aa595684c257d6e0e496cb5ecd964a26b8fdd"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_gold/budget/conan-io__conan-11594.json",
+      "sha256": "cd80bde5b8ba9d17f1220050f7bcacaf1be42824114ec55edb6aedb1bbf8d813"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_gold/driver_close_checked.json",
+      "sha256": "e432c1f8ed5f1598e45cdd54be22d6528277f2046a794f7d0c080b3fced72d5c"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_gold/eval_logs/evallog_replay-cpu29-conan-io-co_23131871.diagnostics.json",
+      "sha256": "f6930a91ee18b62047241e7242f6693163c1df2e2dc237c671a3a7cc7bc64629"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_gold/eval_logs/evallog_replay-cpu29-conan-io-co_23131871.eval.log",
+      "sha256": "44dbac5fb92c89e06a014076d6c8c71c977e22719f4904f298ab2ae92fc3a5ed"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_gold/frozen_source_checked.json",
+      "sha256": "b4640124e10bebf3bc4241bdb9a143029b2836e3d2172c2064c158fb320f075b"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_gold/ledger.jsonl",
+      "sha256": "e145220a63210174f8811000fb5d58ae1ca08033604b801522eecaa4a489f263"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_gold/recipe/conan-io__conan-11594.reference.json",
+      "sha256": "eb516d6679347e2715ea565030a2cd28c6f2fdcbdc9c1b9e000b38257bb95675"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_gold/recipe/diagnostic_grading_namespace.json",
+      "sha256": "0b60ce16dbfcec1dace232f3f149aa3625ce12f6688f1023c1b1fdb1355f83b6"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_gold/recipe/reference_bindings.json",
+      "sha256": "cc7ba7340ab7d249be75d6ddad97e1753a1bd9191339d5b1a28f0671c808642d"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_gold.log",
+      "sha256": "3ccf98099242053f5aa5b2846aafcb9b103a85221470b89a083c1826910d270e"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_noop/artifacts/swe_gym_lite--conan-io__conan-11594/a1-41c619e1/baseline_manifest.json",
+      "sha256": "28aca7abb2cb01dd9a36356d717d72c2184c6fa8912b4ab4d6d42afd7f15417d"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_noop/artifacts/swe_gym_lite--conan-io__conan-11594/a1-41c619e1/classification.json",
+      "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_noop/artifacts/swe_gym_lite--conan-io__conan-11594/a1-41c619e1/frozen_patch.json",
+      "sha256": "2c1cd396ceee75f824678bdc5e466600ebfdcd749af11479641121882f551d36"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_noop/artifacts/swe_gym_lite--conan-io__conan-11594/a1-41c619e1/projection.json",
+      "sha256": "0da5d12f3790da9be718f712967b7412aa812d6fde173b7453f69c2e32450012"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_noop/artifacts/swe_gym_lite--conan-io__conan-11594/a1-41c619e1/stage.json",
+      "sha256": "518cb1527ec7878f69567f40596981398a0dda423e1e75f8b79c46538a54febf"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_noop/budget/conan-io__conan-11594.json",
+      "sha256": "cd80bde5b8ba9d17f1220050f7bcacaf1be42824114ec55edb6aedb1bbf8d813"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_noop/driver_close_checked.json",
+      "sha256": "4f9b98c1ebb3fc5b54f26710ad49b2a2714f4122748fd751106dbfc72cc8e94c"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_noop/eval_logs/evallog_replay-cpu29-conan-io-co_87b997d6.diagnostics.json",
+      "sha256": "619bf8742520b862e1ac696ef88f4c003e4f9b9385ca230cb9660f5a1eee1a97"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_noop/eval_logs/evallog_replay-cpu29-conan-io-co_87b997d6.eval.log",
+      "sha256": "8ef3ddd3ceaa2edbbe64df740aea9e76ea88a53233acd28916b72d7f42e79d70"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_noop/ledger.jsonl",
+      "sha256": "3092955f4a598f63f995d579cd027a3f1c17b592c7f5aa8f7b7053ed7e5df928"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_noop/recipe/conan-io__conan-11594.reference.json",
+      "sha256": "3485953279a18563c2574a78d429a3d1190a40a7d1a9c4cde9f78aa69a2ab4c0"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_noop/recipe/diagnostic_grading_namespace.json",
+      "sha256": "f52c23ae4609506f9864a2ca0c9080ee46532ddbc7c735c6bbc2c3dba6318e3f"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_noop/recipe/reference_bindings.json",
+      "sha256": "cc7ba7340ab7d249be75d6ddad97e1753a1bd9191339d5b1a28f0671c808642d"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/grade_noop.log",
+      "sha256": "af398f797ec8906b0866d68083ecf404f9264ecd9c5534af5cca1f463ce678d2"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/original_image.json",
+      "sha256": "e4bd3dd97b5da2579800bce7b54fe2a84e601f930905ece6173657fc04e49903"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/private_behavior/base/initial.txt",
+      "sha256": "6dc577717f49bc5b570307abb2a0e82bd34277b7ad7689286e8a5dff632c0b57"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/private_behavior/base/prep_0.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/private_behavior/base/prep_1.out",
+      "sha256": "015854f39f2f27a06e8151f65b33f53dd5652326d10bf42cd7b31d520a5aaeda"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/private_behavior/base/prep_2.out",
+      "sha256": "593e1dee585e1c8118c709d2a786cc614c9c25f31fe1513e1d527baece5e72ba"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/private_behavior/base/real_cmake.out",
+      "sha256": "f1c3c22009fac94c923bc4634d499c2c8a78ae01a157d73800e9752f3c9f687a"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/private_behavior/degenerate/initial.txt",
+      "sha256": "6dc577717f49bc5b570307abb2a0e82bd34277b7ad7689286e8a5dff632c0b57"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/private_behavior/degenerate/prep_0.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/private_behavior/degenerate/prep_1.out",
+      "sha256": "015854f39f2f27a06e8151f65b33f53dd5652326d10bf42cd7b31d520a5aaeda"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/private_behavior/degenerate/prep_2.out",
+      "sha256": "593e1dee585e1c8118c709d2a786cc614c9c25f31fe1513e1d527baece5e72ba"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/private_behavior/degenerate/prep_3.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/private_behavior/degenerate/prep_4.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/private_behavior/degenerate/prep_5.out",
+      "sha256": "438cf5410d47e305d7a44eef566d580b3eee8afc2374c9df3916bc6b569b0798"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/private_behavior/degenerate/real_cmake.out",
+      "sha256": "9f3ee0d8bca7eba80e26ae13e99eaf0e60b0f2fde0f51c176113a2cdbfdf23b0"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/private_behavior/gold/initial.txt",
+      "sha256": "6dc577717f49bc5b570307abb2a0e82bd34277b7ad7689286e8a5dff632c0b57"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/private_behavior/gold/prep_0.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/private_behavior/gold/prep_1.out",
+      "sha256": "015854f39f2f27a06e8151f65b33f53dd5652326d10bf42cd7b31d520a5aaeda"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/private_behavior/gold/prep_2.out",
+      "sha256": "593e1dee585e1c8118c709d2a786cc614c9c25f31fe1513e1d527baece5e72ba"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/private_behavior/gold/prep_3.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/private_behavior/gold/prep_4.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/private_behavior/gold/prep_5.out",
+      "sha256": "a5ecd7638ddf2e9cd3bf7e262755018ab2823cf772a4e410594bbda057f001ee"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/private_behavior/gold/real_cmake.out",
+      "sha256": "e04892b2041ad74afda9df8da1a5ad96dcbafe900f27cd3804cfef4d6f1a0fdd"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/private_behavior/summary.json",
+      "sha256": "d37e54c949816a57b9bdc49bc2c0ea57f1404b70385ad3abf608d12f0f72b129"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/status.json",
+      "sha256": "dcffe97d2fe32406869334094172b49777c5c763aa8b00b957a1fc6580ce7bff"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/tools_after.json",
+      "sha256": "e804d9755870277f67dd665bf70d3f478e71bc7d4833e93d24349694493185e0"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/tools_after_cleanup.json",
+      "sha256": "499ef2b88c61973595eb7c736b361d460016c19f844ceeca732ed372958b3246"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/tools_before.json",
+      "sha256": "6a422554940558a21348ff645aaab1fd2ebe9ce199fb76288e62aeb471fca795"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/tools_before_cleanup.json",
+      "sha256": "a117f9480041672b4ec982ce03117bdcfe133357a1457d80825887fd9ab2c5cb"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja_inventory_v1/base/initial.txt",
+      "sha256": "6dc577717f49bc5b570307abb2a0e82bd34277b7ad7689286e8a5dff632c0b57"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja_inventory_v1/base/tool_inventory.out",
+      "sha256": "3f00ab437b475d4de7ba18fddcd4b67af707626d67f00144569d4b2c25ddb7af"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja_inventory_v1/summary.json",
+      "sha256": "1800dbe3c31c9b8f825317c983b20fd18171c9ff0f7f92baa07dd0fcd691ced2"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/task_inputs/conan-io__conan-11594/private/patch_validation.json",
+      "sha256": "665e54f54b6260604b20b904efa989030a7df400a2e68a84c125aafcda55831b"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/task_inputs/conan-io__conan-11594/private/reference_bindings.json",
+      "sha256": "ca0987bd0bdde5926b33eabf31bf51b1e704165036e1441e66ff97e6f9630bcc"
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/private/conan-io__conan-11594/grading.json",
+      "sha256": "f07106ae02ba19382b603f0ae4331e22264bb181cc18d88d906efe44cec3d3e4"
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/private/conan-io__conan-11594/test.patch",
+      "sha256": "ec6de8505d349e44baa83a6a7505f4900a282d6b5bee28eaa4f8be85f9a2ceef"
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/conan-io__conan-11594/base/conan/tools/cmake/cmake.py",
+      "sha256": "461786181aa4a64467e6eb2e87e5f41f0b3bc1d6cc9a18ce53efc407c288c1e4"
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/conan-io__conan-11594/user_prompt.txt",
+      "sha256": "53659643a6a2c7be7baefbe1675a437a0262670b54a8722af06520b773cb1357"
+    }
+  ],
+  "ordered_attempts": [
+    {
+      "run": "mixed-v1",
+      "state": "original actor failed environment before target; old four tests passed; cleaned",
+      "evidence": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/mixed-v1/actor_original/attempt.json"
+    },
+    {
+      "run": "ninja_inventory_v1",
+      "state": "read-only inventory confirms no Ninja binary/package; CMake3.22.1 available; cleaned",
+      "evidence": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja_inventory_v1/summary.json"
+    },
+    {
+      "run": "ninja-v1",
+      "state": "only Ninja dependency repaired; actor/private/formal complete; original inputs retained",
+      "evidence": "runs/swegym_cpu_preprobe_20260929/remote/results/conan-io__conan-11594/ninja-v1/status.json"
+    }
+  ],
+  "quality": {
+    "classification": "S1",
+    "finding": "drop_config earns 1 but real requested Release test executes Debug and fails",
+    "public_requirement": "cmake.test() must execute tests for the configured multi-config build; original issue explicitly used --config Release; public base docstring states --config Release for multi-config builds",
+    "test_gap": "all six reference tests use ConanFileMock and assert only target substring; do not execute CTest or assert preserved build configuration",
+    "counterexample": "same documented Ninja Multi-Config and Release; CMake project NONE with one actual Release assertion and output marker",
+    "binding_not_cause": "explicit Ninja alias includes both complete nodes; both really pass for mutant",
+    "no_formal_test_change": true,
+    "private_scope": "root behavior; not actor proof"
+  },
+  "allowed_use": [
+    "CPU development/environment and grading coverage diagnosis with documented derived Ninja image",
+    "no unconditional correctness comparison or training reward qualification before D6 quality treatment"
+  ],
+  "review": {
+    "status": "complete",
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/conan11594_result_review.md",
+    "final_card_aligned": true,
+    "root_parser": "runs/swegym_cpu_preprobe_20260929/analysis/conan11594_final_v1.json",
+    "root_transport_manifest": "runs/swegym_cpu_preprobe_20260929/analysis/evidence_manifest_conan11594_v1.json",
+    "root_transport_scope": "134 unique finished evidence files, 1517020 bytes; excludes wheel bytes; environment subset already included"
+  }
+}

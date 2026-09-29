@@ -1,0 +1,279 @@
+{
+ "schema_id": "rh2.r2e_screening_record.v1",
+ "task_id": "r2e_gym_subset::aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52",
+ "instance_id": "aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52",
+ "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0",
+ "source_adapter_ref": "s2_r2e ingest_manifest_v0（t1_input_pins_r2e_v1：raw_archive sha256 dc90e8c1…）",
+ "recipe_ref": {
+  "derived_image": "r2e_derive_v1",
+  "resources": "default"
+ },
+ "code_snapshot_ref": "runs/r2e_snapshot_20260923.sha256 (388 files) + r2e_env_tools.sha256（远端核对 TOOLS_OK）",
+ "facts_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/facts.json",
+ "dev_probe_ref": "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/dev_probe.json",
+ "posthoc_refs": [
+  "runs/r2e_env_repair_20260924/p1/dev_probe_posthoc3/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/dev_probe.json",
+  "runs/r2e_t0_batch2_20260924/replay_b2/ledger_watch1c1c_gold.jsonl",
+  "runs/r2e_t0_batch2_20260924/replay_b2/ledger_watch1c1c_noop.jsonl",
+  "runs/r2e_t0_batch2_20260924/reconcile/reconcile.json",
+  "runs/r2e_t0_batch2_20260924/provenance/expected_provenance.md"
+ ],
+ "checks": {
+  "R01": {
+   "status": "pass",
+   "note": "派生镜像 21 项复核通过；覆盖表 / 隐藏测试树 / 入口脚本 / HEAD 与评分面一致；探针 GIT_HEAD=87342c791dfd 与 base_commit 一致",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/facts.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/facts.json",
+    "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/dev_probe.json"
+   ],
+   "by": "collate_facts.py + p1-subagent 复核"
+  },
+  "R02": {
+   "status": "pass",
+   "note": "noop 0 来自 1 个 mismatched 键（无 missing、无零解析）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-a_745bf9bf.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R03": {
+   "status": "pass",
+   "note": "题面 1114 字、带可运行示例；按题面原样运行（仅加 print=None 关横幅、SIGALRM 兜底）即复现：抛出 RuntimeError 且 asyncio 记一次 ERROR（REPRO_OBSERVED=1）。public_hints 的 conda 措辞是全局问题（decisions E09），不计入本题。run_tests.sh / install.sh / process_aiohttp_updateasyncio.py 在工作区可见，内容是构建步骤与文本替换脚本，无修复。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/prepared_r2e/prompts.jsonl",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52.py",
+    "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/dev_probe.json"
+   ],
+   "by": "p1-subagent"
+  },
+  "R04": {
+   "status": "pass",
+   "note": "hygiene test_files = 隐藏测试 r2e_tests/{__init__.py,conftest.py,test_1.py}（评分时由私有目录恢复）+ run_tests.sh；gold 只触碰 ['aiohttp/web.py']，不在其中；解题不需要改 r2e_tests 以外的测试辅助文件。来源镜像的既有脏改动属于基线（正式链 FrozenDeltaSource 按基线 census 求 delta，不会被卷进候选补丁；代码阅读，未经真实 rollout 验证）。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/facts.json",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-a_dcbb1d7a.eval.log",
+    "rh2/src/repoharness2/contracts/baseline_manifest.py"
+   ],
+   "by": "p1-subagent"
+  },
+  "R05": {
+   "status": "pass",
+   "note": "python → /testbed/.venv/bin/python 3.9.21；pytest 8.3.2；pip 23.2.1，pip check 无问题；包从 /testbed 导入 /testbed/aiohttp/__init__.py 3.10.6.dev0，从 /tmp 导入不可（ModuleNotFoundError: No module named 'aiohttp'）；gcc / make / git 有，uv 无（WHICH_* 见 agent_probe.log）。C 扩展未确认（本题不涉及）。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/agent_probe.log",
+    "runs/env_overnight_20260916/M3/facts/1c1c0ea35304/pkgsrc.txt"
+   ],
+   "by": "p1-subagent"
+  },
+  "R06": {
+   "status": "not_applicable",
+   "note": "期望 56 键全 PASSED，没有非 PASSED 键可分类；工作区未跟踪文件只有 install.sh / process_aiohttp_updateasyncio.py / run_tests.sh，无资产目录。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/facts.json",
+    "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/dev_probe.json"
+   ],
+   "by": "p1-subagent"
+  },
+  "R07": {
+   "status": "pass",
+   "note": "派生镜像复核：agent uid 解释器 ok、/rh2_private 700 root 且 agent 读取被拒；探针（agent/54321）：chown 后 /testbed、site-packages、home、/tmp 可写，/usr/local 拒绝；PRIVATE_LS=ls: cannot open directory '/rh2_private'…；r2e_tests 在根与工作区都不存在。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/facts.json",
+    "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/dev_probe.json"
+   ],
+   "by": "p1-subagent"
+  },
+  "R08": {
+   "status": "pass",
+   "note": "导入 /testbed/aiohttp/__init__.py；gold 56/56（gold 入口 rc=0）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-a_dcbb1d7a.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R09": {
+   "status": "pass",
+   "note": "公开测试 tests/test_base_protocol.py 收集 20、运行 20 passed；公开复现 REPRO_OBSERVED=1（raised + logged 1 次）。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/dev_probe.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52.py"
+   ],
+   "by": "p1-subagent"
+  },
+  "R10": {
+   "status": "pass",
+   "note": "NET_CONNECT_RC=1、NET_DNS_RC=2（无出网）；R06 无\"需网络\"的键。run_app 在 startup 阶段就抛异常，不绑定端口；题面与测试都不需要网络。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/dev_probe.json"
+   ],
+   "by": "p1-subagent"
+  },
+  "R11": {
+   "status": "not_applicable",
+   "note": "期望无非 PASSED 键；目标测试不依赖外部服务。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/facts.json"
+   ],
+   "by": "p1-subagent"
+  },
+  "R12": {
+   "status": "pass",
+   "note": "峰值 513 MB / 限额 4 GiB = 0.125; setup 45s test 32s；探针 chown -R /testbed 54.76 s（与其它包并发，不作校准）；/tmp tmpfs 1 GiB 够用（本题无大临时文件）。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-a_dcbb1d7a.diagnostics.json",
+    "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/dev_probe.json"
+   ],
+   "by": "collate_facts.py + p1-subagent"
+  },
+  "R13": {
+   "status": "pass",
+   "note": "noop: noop 同条件 2 次 reward 与差异集合一致; gold: gold 同条件 2 次 reward 与差异集合一致；09-24 晚补跑 gold 5 次、noop 5 次（真实 grader，与其它作业并发）：reward 与差异集合全部一致，来源宿主机记为 FAILED 的 TestShutdown.test_shutdown_handler_cancellation_suppressed 10/10 PASSED，发布镜像里累计 14/14 PASSED。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_4acb1e5d.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_a5baf932.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-a_dcbb1d7a.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-a_745bf9bf.eval.log",
+    "runs/r2e_t0_batch2_20260924/replay_b2/ledger_watch1c1c_gold.jsonl",
+    "runs/r2e_t0_batch2_20260924/replay_b2/ledger_watch1c1c_noop.jsonl",
+    "runs/r2e_t0_batch2_20260924/replay_b2/eval_logs/evallog_replay-r2e-watch-1c1c-ai_56719154.eval.log",
+    "runs/r2e_t0_batch2_20260924/replay_b2/eval_logs/evallog_replay-r2e-watch-1c1c-ai_5c53632c.eval.log"
+   ],
+   "by": "collate_facts.py（中央复跑并入）"
+  },
+  "R14": {
+   "status": "pass",
+   "note": "每次评分都是 fresh 容器（cleanup_removed=true）；R-f 账本 omitted_cache_count 基线 / 后置 0 / 0。探针前后 git status 行数 4 → 4；探针容器已删除（container_removed=true）。并发只记录：本轮 4 包与中央复跑并行。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/dev_probe.json",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-a_745bf9bf.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-a_dcbb1d7a.eval.log"
+   ],
+   "by": "p1-subagent"
+  },
+  "R15": {
+   "status": "pass",
+   "note": "2 行 agree（reward、差异集合、观测映射逐键相同）；参考日志数 noop 2 / gold 2。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R16": {
+   "status": "pass",
+   "note": "目标键 test_run_app_raises_exception[pyloop]（noop：assert not True，即断言不应有日志记录）↔ 题面\"run_app 应抛出但不记日志\"。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-a_745bf9bf.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-a_dcbb1d7a.eval.log",
+    "runs/r2e_rf_20260923/remote/prepared_r2e/prompts.jsonl"
+   ],
+   "by": "p1-subagent"
+  },
+  "R17": {
+   "status": "pass",
+   "note": "探针：HEAD 子提交词数 1（只有自身）、remote 空、refs 0、reflog 0、stash 0、无 *.orig/*.rej/*.patch/*.diff 残留；派生镜像 fix_present=no。脏树 4 行：` M Makefile`（5 处 python -m pip → uv pip，构建工具）、`?? install.sh`、`?? process_aiohttp_updateasyncio.py`（把 aiohttp/ 下 asyncio.async( 换成 asyncio.create_task(，本版本无命中）、`?? run_tests.sh`（只暴露隐藏测试目录名与命令）。无修复痕迹（gold 改 aiohttp/web.py，脏树不含）。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/dev_probe.json",
+    "runs/r2e_rf_20260923/remote/r2e_derived/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/facts.json",
+    "runs/env_overnight_20260916/M3/facts/1c1c0ea35304/facts/initial.diff"
+   ],
+   "by": "p1-subagent"
+  },
+  "R18": {
+   "status": "pass",
+   "note": "本题没有资源配方或材料修订；发现的条件都归为解题侧条件（记在 solver_conditions，E10），不改环境、不改 s2_r2e。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/dev_probe.json"
+   ],
+   "by": "p1-subagent"
+  },
+  "R19": {
+   "status": "pass",
+   "note": "结论都有命令与证据路径：探针命令 /work/code/rh2/.venv/bin/python /work/code/rh2/scripts/r2e_env/run_dev_probe.py --repo-root /work/code --overlays /work/r2e_derived/overlays.jsonl --task-ids <P1 十题> --out-dir /work/envrepair/p1/dev_probe --repro-dir /work/envrepair/p1/repros --activation none（systemd unit r2e-p1-probe-1828）；R-f 账本 run_id r2e-rf-all-gold, r2e-rf-all-noop；事后诊断用同一探针工具换 --repro-dir（unit r2e-p1-probe-1837 / 1841 / 1856）。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/dev_probe.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52.py",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/facts.json"
+   ],
+   "by": "p1-subagent"
+  },
+  "R20": {
+   "status": "pass",
+   "note": "解题侧条件按题记录；\"导入需 cwd=/testbed\"适用于本池 5 张 aiohttp 镜像（同一 install.sh），无 pip 只适用于实测无 pip 的镜像；同仓不同版本不自动继承。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/dev_probe.json"
+   ],
+   "by": "p1-subagent"
+  }
+ },
+ "issues": [
+  {
+   "category": "solver_condition",
+   "scope": "repo:aiohttp",
+   "summary": "aiohttp 没装进 venv（site-packages 无副本、无 .pth），只有 cwd=/testbed（python -c / -m pytest）时可导入；/tmp 下 ModuleNotFoundError；放在 /testbed 以外的脚本要自己把 /testbed 加进 sys.path（或 PYTHONPATH=/testbed）。裸 `pytest`（venv 入口脚本，sys.path[0] 是 .venv/bin）收集即 ImportError（3.x：加载 tests/conftest.py 失败 rc 4；0.x：导入测试模块失败 rc 2），`python -m pytest` 或 `PYTHONPATH=/testbed pytest` 正常（事后诊断 posthoc3 在 1c1c0ea3 / 22a12cc2 / 240da100 / 61833518 实测；4075c653 同一 install.sh、未单测）。隐藏测试入口用的是 `python -m pytest`，评分不受影响。本池 5 张 aiohttp 镜像同一 install.sh（其中 make .develop 没有留下 editable 安装；原因未查）。",
+   "proposed_action": "作为解题侧条件写进题包 / 系统提示（E10，由任务面决定）；不改环境。",
+   "status": "proposed",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/dev_probe.json",
+    "runs/env_overnight_20260916/M3/facts/1c1c0ea35304/pkgsrc.txt",
+    "runs/r2e_env_repair_20260924/p1/dev_probe_posthoc3/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p1/posthoc3/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52.py"
+   ]
+  },
+  {
+   "category": "reference",
+   "scope": "task",
+   "summary": "期望里 TestShutdown.test_shutdown_handler_cancellation_suppressed=PASSED，但来源宿主机记录新旧提交都 FAILED（0.4 s 超时下 ConnectionRefusedError）；RH2 / M3 至今都 PASSED。时序敏感嫌疑，可能在高负载下翻转成 gold=0。",
+   "proposed_action": "中央复跑（R13）看该键；若出现翻转，再考虑逐题资源档位或材料提案。",
+   "status": "open",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-a_dcbb1d7a.eval.log"
+   ]
+  }
+ ],
+ "solver_conditions": {
+  "cwd_required": "/testbed，且跑测试用 `python -m pytest`（或 PYTHONPATH=/testbed）：包没装进 venv，/tmp 下 ModuleNotFoundError，裸 `pytest` 收集即 ImportError",
+  "interpreter": "/testbed/.venv/bin/python（PATH 首项，镜像 ENV；3.9.21）",
+  "pip": "present（pip 23.2.1, pip check ok）",
+  "network": "none（NET_CONNECT_RC≠0、DNS 失败）；--network none 仍保留回环接口（aiohttp 22a12cc2 事后诊断实测 127.0.0.1 可起 TLS 服务与代理，其它题未单独测）",
+  "public_tests": "tests/test_base_protocol.py：collect 20 / run rc 0（20 passed）",
+  "repro": "REPRO_RC=0；REPRO_OBSERVED=1 (exception raised AND logged 1 time(s))",
+  "notes": "gcc / make / git / pip 有，uv 无；无出网。"
+ },
+ "classification": "solver_condition",
+ "revision_refs": [],
+ "disposition": {
+  "state": "environment_qualified",
+  "scope": "本题当前材料（expected_v0）+ r2e_derive_v1 + 默认 rollout profile",
+  "reason": "只差 R13：同条件只有 R-f 一次运行，待中央复跑并入；其余 R01/R02/R08/R15 pass、探针十项最小条件满足、issue 均已归因。若中央复跑逐键一致 → environment_qualified。",
+  "pending_checks": [],
+  "evidence_refs": [
+   "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/dev_probe.json",
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/facts.json"
+  ],
+  "reviewer": null
+ },
+ "costs": {
+  "probe_seconds": 152.08,
+  "probe_runs": 2,
+  "rerun_attempts": 0,
+  "rerun_seconds": 0
+ },
+ "reviewed_by": "p1-subagent",
+ "reviewed_at_utc": "2026-09-23T18:50Z",
+ "order_note": "E06 先后：先读 facts.json（含期望键名与 gold 触碰路径）与公开题面、公开工作区源码，写好 repros/<iid>.py 后才读隐藏测试源码、gold 日志与来源执行记录。",
+ "review_notes": [
+  {
+   "by": "Claude（验收，apply_r13.py）",
+   "at": "2026-09-23",
+   "change": "R13 由中央复跑并入：pass；disposition.state 'unknown' → 'environment_qualified'"
+  },
+  {
+   "by": "Claude（B 线，批次二验收）",
+   "at": "2026-09-24",
+   "change": "R13 补充：时序敏感键 10 次复跑全部 PASSED（累计 14/14），与独立 runner 逐键一致 10/10；知识库族 timing_sensitive_key_watch 关闭"
+  }
+ ]
+}

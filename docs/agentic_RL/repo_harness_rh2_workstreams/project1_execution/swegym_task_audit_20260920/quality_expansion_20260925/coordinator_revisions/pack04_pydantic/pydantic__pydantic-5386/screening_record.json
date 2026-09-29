@@ -1,0 +1,684 @@
+{
+  "task_id": "pydantic__pydantic-5386",
+  "task_revision": {
+    "kind": "upstream_unmodified",
+    "base_commit": "6cbd8d69609bcc5b4b383830736790f9b8087e36",
+    "version": "2.01"
+  },
+  "source_adapter_ref": {
+    "source": "swe_gym_lite",
+    "grading_bundle": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/grading.json",
+    "spec_vendor_id": "swegym_constants_242429c1",
+    "scope": "bundle identity; full adapter implementation not reviewed"
+  },
+  "recipe_ref": {
+    "name": "pydantic-install-v1",
+    "run_refs": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/run_refs.json",
+    "source_image_tag": "xingyaoww/sweb.eval.x86_64.pydantic_s_pydantic-5386:latest",
+    "source_manifest_digest_expected": "sha256:f4849755e4214d2e7572050cbcc129c6709198d9a1d6b4fd147bcc3126d05fb0",
+    "actor_recipe_qualification": "unknown"
+  },
+  "code_snapshot_ref": {
+    "base_commit": "6cbd8d69609bcc5b4b383830736790f9b8087e36",
+    "base_identity_ref": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-5386/base_identity.json",
+    "initial_analysis_ref": "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md",
+    "initial_analysis_sha256": "f6313f84d67dd0f2f8e127c8d8090cb5715111128dabb505ea35d3b795caeb9f",
+    "actual_actor_head": null,
+    "actual_actor_worktree": "unknown",
+    "actual_actor_image_id": null
+  },
+  "facts_ref": {
+    "selected_original_runs": [
+      {
+        "candidate_kind": "gold",
+        "ledger": {
+          "path": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/env_recipe_repair_20260919/pydantic_v1/tasks/pydantic__pydantic-5386/gold/ledger.jsonl",
+          "line": 1,
+          "sha256": "1d09955b2b59175f9e3e6b25f4076602417d3ed8c848aed829dbc2c6cb0d5e32"
+        },
+        "log": {
+          "path": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/env_recipe_repair_20260919/pydantic_v1/tasks/pydantic__pydantic-5386/gold/eval_logs/evallog_replay-er19-pyd1-pydanti_9f284c5e.eval.log",
+          "sha256": "fb311d767abbc60429dfb706d677ec3bae7576611a1c9a554b51770a00ec0e88"
+        },
+        "run_id": "er19-pyd1-pydantic__pydantic-5386-gold",
+        "started_at_utc": "2026-09-19T06:29:32.928128+00:00",
+        "image_id_actual": "sha256:1342cb8e8c0a223999d7c644d0966dfa1f5d506fe4daf9a02225edc11c31e2ca",
+        "scripts_digest": "sha256:59aa9df1ba71508d81cedd98a3c46596c46ab981cd8bda178e390636aa445acb",
+        "recipe": "pydantic-install-v1",
+        "policy": {
+          "candidate_writable_prefixes": [
+            "/opt/miniconda3/envs/testbed"
+          ],
+          "cpus": 2.0,
+          "grader_profile_digest": "sha256:1bb8e0cf80ce48b15401fdf79d18f4f4c08a5f01001d8b0756311c58de25c19a",
+          "memory_bytes": 4294967296,
+          "network": "deny_all",
+          "pids_limit": 512,
+          "profile_id": "rh2.grader_sandbox_profile.v1",
+          "shm_bytes": 67108864,
+          "tmpfs_bytes": 1073741824,
+          "uid": 54322,
+          "user": "rh2grader"
+        },
+        "budgets": {
+          "candidate_stage_seconds": 900.0,
+          "cleanup_seconds": 120.0,
+          "grading_deadline_seconds": 3600.0,
+          "image_pull_seconds": 1800.0
+        },
+        "install": {
+          "install_rc_last_command": 0,
+          "install_seconds": 4.587,
+          "install_skipped": false,
+          "log_partial": false,
+          "markers_seen": [
+            "RH2_INSTALL_RC",
+            "RH2_TEST_RC",
+            "RH2_TS_INSTALL_END",
+            "RH2_TS_INSTALL_START",
+            "RH2_TS_TEST_END",
+            "RH2_TS_TEST_START"
+          ],
+          "test_rc": 0,
+          "test_seconds": 2.995
+        },
+        "test": {
+          "rc": 0,
+          "seconds": 2.995
+        },
+        "report": {
+          "execution_failure_evidence": [],
+          "execution_failure_stage": null,
+          "f2p_pass": 1,
+          "f2p_total": 1,
+          "failure_category": null,
+          "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+          "grading_semantics": "swe_f2p_p2p",
+          "infra_failure_detail": null,
+          "outcome": "resolved",
+          "p2p_fail": 0,
+          "p2p_total": 106,
+          "report_id": "rpt_grading_9f284c5e",
+          "reward": 1.0
+        },
+        "parser": {
+          "apply_ok": true,
+          "num_parsed_outside_segment": 0,
+          "num_parsed_tests": 116,
+          "parser_source": "swegym_parsers@242429c1",
+          "reference_missing": [],
+          "reference_skipped": [],
+          "resolution": "RESOLVED_FULL"
+        },
+        "resource": {
+          "mem_peak_mb": 142.719,
+          "mem_peak_unavailable_or_zero": false
+        },
+        "projection": {
+          "frozen_patch_digest": "sha256:b5b94bd1e6eefefeec4fa6c31f1e5b9e287adc45d03691ee908b912eb48b79be",
+          "ignored_paths": [],
+          "included_paths": [
+            "pydantic/main.py"
+          ],
+          "unsupported_shape_reasons": []
+        },
+        "scope": "selected historical grader only; not current actor"
+      },
+      {
+        "candidate_kind": "noop",
+        "ledger": {
+          "path": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/env_recipe_repair_20260919/pydantic_v1/tasks/pydantic__pydantic-5386/noop/ledger.jsonl",
+          "line": 1,
+          "sha256": "b9bd60a476f6a217346621bc8a7cf32665e6f0854e44a03c16690e7c1b503489"
+        },
+        "log": {
+          "path": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/env_recipe_repair_20260919/pydantic_v1/tasks/pydantic__pydantic-5386/noop/eval_logs/evallog_replay-er19-pyd1-pydanti_bb4d29b6.eval.log",
+          "sha256": "898dd893f40a285e45d003361b31c1f6831b73752864a176f6e25b0bfe37fadb"
+        },
+        "run_id": "er19-pyd1-pydantic__pydantic-5386-noop",
+        "started_at_utc": "2026-09-19T06:29:09.330712+00:00",
+        "image_id_actual": "sha256:1342cb8e8c0a223999d7c644d0966dfa1f5d506fe4daf9a02225edc11c31e2ca",
+        "scripts_digest": "sha256:59aa9df1ba71508d81cedd98a3c46596c46ab981cd8bda178e390636aa445acb",
+        "recipe": "pydantic-install-v1",
+        "policy": {
+          "candidate_writable_prefixes": [
+            "/opt/miniconda3/envs/testbed"
+          ],
+          "cpus": 2.0,
+          "grader_profile_digest": "sha256:1bb8e0cf80ce48b15401fdf79d18f4f4c08a5f01001d8b0756311c58de25c19a",
+          "memory_bytes": 4294967296,
+          "network": "deny_all",
+          "pids_limit": 512,
+          "profile_id": "rh2.grader_sandbox_profile.v1",
+          "shm_bytes": 67108864,
+          "tmpfs_bytes": 1073741824,
+          "uid": 54322,
+          "user": "rh2grader"
+        },
+        "budgets": {
+          "candidate_stage_seconds": 900.0,
+          "cleanup_seconds": 120.0,
+          "grading_deadline_seconds": 3600.0,
+          "image_pull_seconds": 1800.0
+        },
+        "install": {
+          "install_rc_last_command": 0,
+          "install_seconds": 4.048,
+          "install_skipped": false,
+          "log_partial": false,
+          "markers_seen": [
+            "RH2_INSTALL_RC",
+            "RH2_TEST_RC",
+            "RH2_TS_INSTALL_END",
+            "RH2_TS_INSTALL_START",
+            "RH2_TS_TEST_END",
+            "RH2_TS_TEST_START"
+          ],
+          "test_rc": 1,
+          "test_seconds": 3.232
+        },
+        "test": {
+          "rc": 1,
+          "seconds": 3.232
+        },
+        "report": {
+          "execution_failure_evidence": [],
+          "execution_failure_stage": null,
+          "f2p_pass": 0,
+          "f2p_total": 1,
+          "failure_category": "tests_failed",
+          "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+          "grading_semantics": "swe_f2p_p2p",
+          "infra_failure_detail": null,
+          "outcome": "unresolved",
+          "p2p_fail": 0,
+          "p2p_total": 106,
+          "report_id": "rpt_grading_bb4d29b6",
+          "reward": 0.0
+        },
+        "parser": {
+          "apply_ok": true,
+          "num_parsed_outside_segment": 0,
+          "num_parsed_tests": 116,
+          "parser_source": "swegym_parsers@242429c1",
+          "reference_missing": [],
+          "reference_skipped": [],
+          "resolution": "RESOLVED_NO"
+        },
+        "resource": {
+          "mem_peak_mb": 138.297,
+          "mem_peak_unavailable_or_zero": false
+        },
+        "projection": {
+          "frozen_patch_digest": "sha256:16c59beb0765640aff0fc5f4680ca01f4b8e296caf3f631ef74d0ee0b75bce90",
+          "ignored_paths": [],
+          "included_paths": [],
+          "unsupported_shape_reasons": []
+        },
+        "scope": "selected historical grader only; not current actor"
+      }
+    ],
+    "public_read_ref": "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/public_read.md",
+    "analysis_ref": "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md",
+    "old_findings_delta_ref": "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/old_findings_delta.md",
+    "history_sources_verified": [
+      {
+        "path": "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_pydantic/records/pydantic__pydantic-5386.json",
+        "sha256": "fc5978e797c2bbbc5bcf606de3d3e2cb41a0fdeafc73f1f24331cdc54c87a8ce"
+      },
+      {
+        "path": "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/pydantic_pilot/records/pydantic__pydantic-5386.json",
+        "sha256": "ef2bb4cbea0c98add062d1404bed5b66062fb1b3e388533dcd30777ce8105a41"
+      }
+    ],
+    "current_actor_observation": null
+  },
+  "checks": {
+    "1": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-5386/base_identity.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/grading.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/run_refs.json"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "仅base/patch/指定历史运行身份对应；actual actor版本未核"
+    },
+    "2": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#1",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/run_refs.json"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "指定历史noop目标失败与公开源码链支持初态缺陷，非本轮运行"
+    },
+    "3": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-5386/environment_brief.md"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "actual actor实际用户/system消息、public_hints与工具呈现未捕获"
+    },
+    "4": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-5386/environment_brief.md"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "指定gold合法源码投影成立；actual actor读写提交权限未验证"
+    },
+    "5": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/old_findings_delta.md"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "未核跨题派生/留出划分；共文件/主题不构成证明"
+    },
+    "6": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/run_refs.json"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "仅09-19pydantic-install-v1指定两角色安装RC0；不是actor依赖恢复资格"
+    },
+    "7": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-5386/environment_brief.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#5"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "最小任务无额外服务需求，actor依赖/忽略资产位置权限未捕获"
+    },
+    "8": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-5386/environment_brief.md"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "实际actor用户权限下安装与执行未验"
+    },
+    "9": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/run_refs.json"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "仅指定历史导入/testbed源码与gold投影；不是当前actor代码生效证据"
+    },
+    "10": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#5",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-5386/environment_brief.md"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "已给公开开发需求/最小命令，实际actor未运行"
+    },
+    "11": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-5386/environment_brief.md"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "历史grader deny_all+本地wheel可用；实际actor各阶段网络与新增依赖供应未验"
+    },
+    "12": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#5"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "未作外部服务稳定性实验；本地路径无必须在线服务证据"
+    },
+    "13": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/run_refs.json"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "仅指定历史窄测试在记录预算内完成，resource原字段保留，不认证actor资源"
+    },
+    "14": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#7"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "未作同状态重复评分"
+    },
+    "15": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#7"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "未做并发/缓存/重置系统性实验"
+    },
+    "16": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#8",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/run_refs.json"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "仅本gold原件字节相符、git_apply、单源码投影与stage记录；不推广任意候选"
+    },
+    "17": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#7",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/run_refs.json"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "仅指定受测文件恢复+补丁apply与setup attest；未证明全树fixture或控制面完整"
+    },
+    "18": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#8",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/grading.json"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "指定F2P/P2P每个期望ID在原日志有状态，RC/skip/xfail范围已区分"
+    },
+    "19": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#8"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "核对所列expected和原日志；parser与collected数量差异未隐去，未审共享parser全部实现"
+    },
+    "20": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#2",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/run_refs.json"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "noop/gold指定分差直接来自唯一目标断言；两安装RC0"
+    },
+    "21": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#8"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "指定记录各自一次、test_rc分开，目标失败未被最终shell RC掩盖"
+    },
+    "22": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#7"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "未重建来源runner同条件对照"
+    },
+    "28": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#3",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/old_findings_delta.md"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "改进建议回溯公开目标/合理旧行为；不当作新增已授权计分要求"
+    },
+    "29": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-5386/environment_brief.md"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "actual actor答案暴露未验证；本审查授权私有暴露在usage记录"
+    },
+    "30": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#7"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "未联网/验证可取得答案的工具或网络面"
+    },
+    "31": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/old_findings_delta.md"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "未审完整评分控制面，未继承旧R4结论"
+    },
+    "32": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#4"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "未作全控制面/捷径验证；弱断言具体问题归25"
+    },
+    "33": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-5386/environment_brief.md"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "没有真实Claude Code actor开发/交付轨迹"
+    },
+    "34": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#7"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "没有真实求解结果用于能力/环境归因"
+    },
+    "35": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#7"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "没有真实模型已通过解的完整性材料"
+    },
+    "36": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#7"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "不作基座/训练阶段资格判断"
+    },
+    "37": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#8"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "所读修订是安装/wheel层，指定test/gold定义未改变；不扩推其它版本"
+    },
+    "38": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-5386/environment_brief.md"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "当前actor或干净条件复验未执行"
+    },
+    "39": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#7"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "不审其它题或共用修改跨题影响"
+    },
+    "40": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/old_findings_delta.md"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "封存与release合规不证明无漏检、误杀或抽样偏差；独立reviewer未读"
+    },
+    "23": {
+      "status": "issue",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#3",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#4",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/test.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/gold.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/old_findings_delta.md"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "公开没有唯一的新hook名称/协议；题面有语法草图但目标可辨"
+    },
+    "24": {
+      "status": "issue",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#3",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#4",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/test.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/gold.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/old_findings_delta.md"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "不同命名或调整原生hook的合理路线存在静态误拒机制；未执行替代解"
+    },
+    "25": {
+      "status": "issue",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#3",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#4",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/test.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/gold.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/old_findings_delta.md"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "新增测试无字段，仅calls轨迹，可能放过字段未就绪的回调"
+    },
+    "26": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#3",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#4",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/test.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/gold.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/old_findings_delta.md"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "广泛影响与覆盖缺口不是已证gold回归"
+    },
+    "27": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#3",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#4",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/test.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/gold.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/old_findings_delta.md"
+      ],
+      "by": "e25_main_pydantic / independent static review / 2026-09-25",
+      "note": "仅字段就绪及父类分派静态路径+指定gold历史运行；不保证全部边界"
+    }
+  },
+  "issues": [
+    {
+      "category": "spec_underspecified_api",
+      "scope": "public_spec_vs_hidden_test",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/test.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-5386/user_prompt.txt"
+      ],
+      "proposed_action": "公开接口名称、类方法语义和字段可用时机需规格维护方决策。",
+      "status": "issue",
+      "evidence_level": "static_inference; no candidate counterexample executed"
+    },
+    {
+      "category": "official_test_coverage_gap",
+      "scope": "hook_field_availability",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/test.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-5386/base/pydantic/main.py:109",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-5386/base/pydantic/main.py:148"
+      ],
+      "proposed_action": "按公开用途评估钩子内含继承/新增字段及examples的行为检查；不在本轮改测试。",
+      "status": "issue",
+      "evidence_level": "static_inference; no candidate counterexample executed"
+    },
+    {
+      "category": "public_example_quality",
+      "scope": "public_example",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-5386/user_prompt.txt"
+      ],
+      "proposed_action": "若修订题面，纠正class与Field(examples=...)语法但保留原意。",
+      "status": "issue",
+      "evidence_level": "static_inference; no candidate counterexample executed"
+    },
+    {
+      "category": "actor_development_unverified",
+      "scope": "actual_actor_messages_worktree_permissions_import_assets",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-5386/environment_brief.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5386/analysis_before_history.md#5"
+      ],
+      "proposed_action": "由任务二按正式actor入口核公开开发路径及实际初态；本轮不执行/派发。",
+      "status": "unknown",
+      "evidence_level": "missing_current_actor_observation"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": [],
+    "evidence_refs": [
+      "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/test.patch",
+      "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/gold.patch",
+      "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/run_refs.json"
+    ],
+    "scope": "no new rules; only stated NON-TEST submission and observed historical single-file recovery"
+  },
+  "revision_refs": [],
+  "disposition": {
+    "scope": "static_review",
+    "state": "needs_review",
+    "reason": "题意/验收争议：隐藏接口名称未公开唯一规定且字段就绪核心行为缺测；当前actor开发条件另为unknown。",
+    "unique_priority_next_step": "由规格维护方明确字段就绪接口契约及可接受实现范围，解决固定私有命名与核心字段断言缺席；本轮不改题面/测试/评分。",
+    "reviewer_status": "not_read_pending_independent_review",
+    "formal_admission": false
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "authorized_reviewer_exposure": [
+      "own public bundle/base and sealed public_read",
+      "own gold/test/grading/validation and exact historical run originals",
+      "history sources released after three sealed initial analyses"
+    ],
+    "history_release": "explicit coordinator message after verifying all three initial SHA256; no initial edits",
+    "excluded_from_independent_solver": true,
+    "actual_actor_answer_exposure": "unknown",
+    "actual_actor_messages": "unknown",
+    "cross_task_leakage": "not_checked",
+    "network_answer_access": "not_checked",
+    "prohibited_scope_not_read": [
+      "reviewer outputs",
+      "other task packages",
+      "root summaries",
+      "linked cross-task history"
+    ],
+    "static_only": true,
+    "task_two_executed_or_dispatched": false
+  },
+  "costs": {
+    "tokens": null,
+    "usd": null,
+    "current_cpu_seconds": null,
+    "runtime_experiments_executed": 0,
+    "note": "Only local stdlib text/JSON/hash reading and document writing; no project execution/import/tests or new runtime qualification."
+  }
+}

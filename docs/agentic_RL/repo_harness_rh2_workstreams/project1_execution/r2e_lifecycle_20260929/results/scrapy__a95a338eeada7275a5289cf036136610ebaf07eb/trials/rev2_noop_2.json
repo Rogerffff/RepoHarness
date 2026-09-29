@@ -1,0 +1,35 @@
+{
+ "task": "scrapy__a95a338eeada7275a5289cf036136610ebaf07eb",
+ "image": "sha256:d7f8d826ef87da4804790cd08ff8746bf2ee7df6b02bdecff878bf9d190012ac",
+ "recipe_id": "r2e_derive_v1+sysconfig_v1",
+ "patch": "none",
+ "edits": "/work/r2e/trials/lc_scrapy_a95a/a95a338e/draft_a95a_r1r2_v2.json",
+ "expected": "/work/r2e/trials/lc_scrapy_a95a/a95a338e/expected_after_a95a.json",
+ "kind": "trial_not_formal_grading",
+ "edits_apply": "RH2_TRIAL_EDITS_APPLIED=1\n",
+ "test_seconds": 2.8,
+ "markers": true,
+ "observed": {
+  "UtilsMiscPy3TestCase.test_generators_return_none": "PASSED",
+  "UtilsMiscPy3TestCase.test_generators_return_none_with_decorator": "PASSED",
+  "UtilsMiscPy3TestCase.test_generators_return_something": "PASSED",
+  "UtilsMiscPy3TestCase.test_indentation_error": "PASSED",
+  "UtilsMiscPy3TestCase.test_partial": "FAILED"
+ },
+ "n_observed": 5,
+ "log_tail": "RH2_INSTALL_SKIPPED=1\n>>>>> Start Test Output\n============================= test session starts ==============================\nplatform linux -- Python 3.9.21, pytest-8.3.4, pluggy-1.5.0\nrootdir: /testbed\nconfigfile: pytest.ini\ncollected 5 items\n\nr2e_tests/test_1.py ....F                                                [100%]\n\n=================================== FAILURES ===================================\n______________________ UtilsMiscPy3TestCase.test_partial _______________________\n\nself = <r2e_tests.test_1.UtilsMiscPy3TestCase testMethod=test_partial>\n\n    def test_partial(self):\n        def cb(arg1, arg2):\n            yield {}\n    \n        partial_cb = partial(cb, arg1=42)\n>       assert not is_generator_with_return_value(partial_cb)\n\n/testbed/r2e_tests/test_1.py:272: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n/testbed/scrapy/utils/misc.py:229: in is_generator_with_return_value\n    src = inspect.getsource(callable)\n/opt/py/cpython-3.9.21-linux-x86_64-gnu/lib/python3.9/inspect.py:1024: in getsource\n    lines, lnum = getsourcelines(object)\n/opt/py/cpython-3.9.21-linux-x86_64-gnu/lib/python3.9/inspect.py:1006: in getsourcelines\n    lines, lnum = findsource(object)\n/opt/py/cpython-3.9.21-linux-x86_64-gnu/lib/python3.9/inspect.py:817: in findsource\n    file = getsourcefile(object)\n/opt/py/cpython-3.9.21-linux-x86_64-gnu/lib/python3.9/inspect.py:697: in getsourcefile\n    filename = getfile(object)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nobject = functools.partial(<function UtilsMiscPy3TestCase.test_partial.<locals>.cb at 0x76c5a9e35d30>, arg1=42)\n\n    def getfile(object):\n        \"\"\"Work out which source or compiled file an object was defined in.\"\"\"\n        if ismodule(object):\n            if getattr(object, '__file__', None):\n                return object.__file__\n            raise TypeError('{!r} is a built-in module'.format(object))\n        if isclass(object):\n            if hasattr(object, '__module__'):\n                module = sys.modules.get(object.__module__)\n                if getattr(module, '__file__', None):\n                    return module.__file__\n            raise TypeError('{!r} is a built-in class'.format(object))\n        if ismethod(object):\n            object = object.__func__\n        if isfunction(object):\n            object = object.__code__\n        if istraceback(object):\n            object = object.tb_frame\n        if isframe(object):\n            object = object.f_code\n        if iscode(object):\n            return object.co_filename\n>       raise TypeError('module, class, method, function, traceback, frame, or '\n                        'code object was expected, got {}'.format(\n                        type(object).__name__))\nE       TypeError: module, class, method, function, traceback, frame, or code object was expected, got partial\n\n/opt/py/cpython-3.9.21-linux-x86_64-gnu/lib/python3.9/inspect.py:677: TypeError\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED r2e_tests/test_1.py::UtilsMiscPy3TestCase::test_generators_return_none\nPASSED r2e_tests/test_1.py::UtilsMiscPy3TestCase::test_generators_return_none_with_decorator\nPASSED r2e_tests/test_1.py::UtilsMiscPy3TestCase::test_generators_return_something\nPASSED r2e_tests/test_1.py::UtilsMiscPy3TestCase::test_indentation_error\nFAILED r2e_tests/test_1.py::UtilsMiscPy3TestCase::test_partial - TypeError: m...\n========================= 1 failed, 4 passed in 0.39s ==========================\n>>>>> End Test Output\nRH2_TEST_RC=1\n",
+ "stderr_tail": "",
+ "expected_n": 5,
+ "missing": [],
+ "extra": [],
+ "status_diff": [
+  [
+   "UtilsMiscPy3TestCase.test_partial",
+   "PASSED",
+   "FAILED"
+  ]
+ ],
+ "match": false,
+ "verdict": "mismatch",
+ "seconds": 40.6
+}

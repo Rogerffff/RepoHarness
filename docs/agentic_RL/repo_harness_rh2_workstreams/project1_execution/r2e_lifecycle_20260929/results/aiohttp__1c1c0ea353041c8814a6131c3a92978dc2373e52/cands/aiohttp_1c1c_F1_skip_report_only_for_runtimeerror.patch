@@ -1,0 +1,16 @@
+--- a/aiohttp/web.py
++++ b/aiohttp/web.py
+@@ -519,7 +519,12 @@
+     except (GracefulExit, KeyboardInterrupt):  # pragma: no cover
+         pass
+     finally:
+-        _cancel_tasks({main_task}, loop)
++        if not (
++            main_task.done()
++            and not main_task.cancelled()
++            and isinstance(main_task.exception(), RuntimeError)
++        ):
++            _cancel_tasks({main_task}, loop)
+         _cancel_tasks(asyncio.all_tasks(loop), loop)
+         loop.run_until_complete(loop.shutdown_asyncgens())
+         loop.close()

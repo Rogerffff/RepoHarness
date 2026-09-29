@@ -1,0 +1,104 @@
+{
+ "instance_id": "coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5",
+ "template": "R-c",
+ "revisions": [
+  {
+   "kind": "hidden_test_file_add",
+   "target": "test_2.py",
+   "content": "# Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0\n# For details: https://github.com/nedbat/coveragepy/blob/master/NOTICE.txt\n\n\"\"\"R2E revision tests (2026-09-29) for the .gitignore in the HTML report directory.\n\nHtmlGitignoreTest: the generated .gitignore really makes git ignore the report files.\nReportingTest.test_no_data_to_report_on_html: copied unchanged from the public\ntests/test_coverage.py (no data: a nice message, and no output directory).\n\"\"\"\n\nimport os\nimport subprocess\n\nimport pytest\n\nimport coverage\nfrom coverage.exceptions import CoverageException\n\nfrom tests.coveragetest import CoverageTest\n\n\ndef run_git(*args):\n    \"\"\"Run git in the current directory, isolated from user and system config.\"\"\"\n    env = dict(os.environ)\n    env[\"GIT_CONFIG_NOSYSTEM\"] = \"1\"\n    env[\"HOME\"] = os.getcwd()\n    for name in (\"XDG_CONFIG_HOME\", \"GIT_DIR\", \"GIT_WORK_TREE\", \"GIT_INDEX_FILE\"):\n        env.pop(name, None)\n    return subprocess.run(\n        [\"git\"] + list(args),\n        stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, env=env,\n    )\n\n\nclass HtmlGitignoreTest(CoverageTest):\n    \"\"\"The .gitignore in the HTML output directory makes git ignore the report.\"\"\"\n\n    def test_html_report_is_ignored_by_git(self):\n        init = run_git(\"init\", \"-q\", \".\")\n        assert init.returncode == 0, init.stderr\n        self.make_file(\"main_file.py\", \"\"\"\\\n            import helper1\n            helper1.func1(12)\n            \"\"\")\n        self.make_file(\"helper1.py\", \"\"\"\\\n            def func1(x):\n                if x % 2:\n                    print(\"odd\")\n            \"\"\")\n        cov = coverage.Coverage()\n        self.start_import_stop(cov, \"main_file\")\n        cov.html_report(directory=\"report_out\")\n\n        report_files = [f for f in os.listdir(\"report_out\") if f != \".gitignore\"]\n        assert \"index.html\" in report_files\n        status = run_git(\"status\", \"--porcelain\", \"--untracked-files=all\", \"--\", \"report_out\")\n        assert status.returncode == 0, status.stderr\n        not_ignored = sorted(\n            line[3:] for line in status.stdout.splitlines()\n            if line[3:] != \"report_out/.gitignore\"\n        )\n        assert not_ignored == []\n\n\nclass ReportingTest(CoverageTest):\n    \"\"\"Tests of some reporting behavior.\"\"\"\n\n    def test_no_data_to_report_on_html(self):\n        # Reporting with no data produces a nice message and no output\n        # directory.\n        with pytest.raises(CoverageException, match=\"No data to report.\"):\n            self.command_line(\"html -d htmlcov\")\n        self.assert_doesnt_exist(\"htmlcov\")\n"
+  }
+ ],
+ "expected_after": {
+  "HtmlDeltaTest.test_html_created": "PASSED",
+  "HtmlDeltaTest.test_html_delta_from_coverage_change": "PASSED",
+  "HtmlDeltaTest.test_html_delta_from_source_change": "PASSED",
+  "HtmlDeltaTest.test_html_delta_from_settings_change": "PASSED",
+  "HtmlDeltaTest.test_file_becomes_100": "PASSED",
+  "HtmlDeltaTest.test_html_delta_from_coverage_version_change": "PASSED",
+  "HtmlTitleTest.test_title_set_in_config_file": "PASSED",
+  "HtmlDeltaTest.test_status_format_change": "PASSED",
+  "HtmlTitleTest.test_default_title": "PASSED",
+  "HtmlWithUnparsableFilesTest.test_dotpy_not_python": "PASSED",
+  "HtmlTitleTest.test_non_ascii_title_set_in_config_file": "PASSED",
+  "HtmlTitleTest.test_title_set_in_args": "PASSED",
+  "HtmlWithUnparsableFilesTest.test_dotpy_not_python_ignored": "PASSED",
+  "HtmlWithUnparsableFilesTest.test_execed_liar_ignored_indentation_error": "PASSED",
+  "HtmlWithUnparsableFilesTest.test_decode_error": "PASSED",
+  "HtmlWithUnparsableFilesTest.test_formfeeds": "PASSED",
+  "HtmlTest.test_missing_source_file_incorrect_message": "PASSED",
+  "HtmlTest.test_report_skip_covered": "PASSED",
+  "HtmlTest.test_html_skip_covered": "PASSED",
+  "HtmlTest.test_report_skip_covered_branches": "PASSED",
+  "HtmlTest.test_report_skip_covered_100": "PASSED",
+  "HtmlTest.test_extensionless_file_collides_with_extension": "PASSED",
+  "HtmlTest.test_report_skip_empty": "PASSED",
+  "HtmlTest.test_has_date_stamp_in_files": "PASSED",
+  "HtmlTest.test_html_skip_empty": "PASSED",
+  "HtmlTest.test_reporting_on_unmeasured_file": "PASSED",
+  "HtmlGoldTest.test_a": "PASSED",
+  "HtmlGoldTest.test_bom": "PASSED",
+  "HtmlWithUnparsableFilesTest.test_dothtml_not_python": "PASSED",
+  "HtmlGoldTest.test_b_branch": "PASSED",
+  "HtmlGoldTest.test_isolatin1": "PASSED",
+  "HtmlWithUnparsableFilesTest.test_execed_liar_ignored": "PASSED",
+  "HtmlGoldTest.test_omit_1": "PASSED",
+  "HtmlGoldTest.test_omit_4": "PASSED",
+  "HtmlGoldTest.test_omit_2": "PASSED",
+  "HtmlGoldTest.test_omit_3": "PASSED",
+  "HtmlGoldTest.test_omit_5": "PASSED",
+  "HtmlGoldTest.test_partial": "PASSED",
+  "HtmlGoldTest.test_tabbed": "PASSED",
+  "HtmlGoldTest.test_styled": "PASSED",
+  "HtmlGoldTest.test_other": "PASSED",
+  "HtmlWithContextsTest.test_filtered_dynamic_contexts": "PASSED",
+  "HtmlGoldTest.test_unicode": "PASSED",
+  "HtmlWithContextsTest.test_dynamic_contexts": "PASSED",
+  "HtmlWithContextsTest.test_dynamic_contexts_relative_files": "PASSED",
+  "HtmlWithContextsTest.test_no_contexts_warns_no_contexts": "PASSED",
+  "HtmlGitignoreTest.test_html_report_is_ignored_by_git": "PASSED",
+  "ReportingTest.test_no_data_to_report_on_html": "PASSED"
+ },
+ "positive_control": "gold",
+ "acceptance": {
+  "gold": {
+   "expected_score": 1,
+   "candidate_patch": "gold.patch (private)",
+   "trial": "trials/rev_gold.json",
+   "trial_verdict": "match (48 observed / 48 expected)"
+  },
+  "noop": {
+   "expected_score": 0,
+   "candidate_patch": "none",
+   "trial": "trials/rev_noop.json",
+   "trial_verdict": "mismatch (48 observed / 48 expected; status_diff: HtmlDeltaTest.test_html_created PASSED->FAILED, HtmlDeltaTest.test_html_delta_from_coverage_change PASSED->FAILED, HtmlDeltaTest.test_html_delta_from_coverage_version_change PASSED->FAILED, HtmlDeltaTest.test_html_delta_from_settings_change PASSED->FAILED, HtmlDeltaTest.test_html_delta_from_source_change PASSED->FAILED, HtmlDeltaTest.test_status_format_change PASSED->FAILED, HtmlGitignoreTest.test_html_report_is_ignored_by_git PASSED->FAILED)"
+  },
+  "CA_only_if_dir_was_empty": {
+   "expected_score": 1,
+   "candidate_patch": "runs/r2e_actor_20260925/grader_cands/coveragepy_ea69_CA_only_if_dir_was_empty.patch",
+   "trial": "trials/rev_CA.json",
+   "trial_verdict": "match (48 observed / 48 expected)",
+   "note": "reasonable alternative (writes '*' only into a previously empty directory): must not be misrejected"
+  },
+  "CB_empty_gitignore": {
+   "expected_score": 0,
+   "candidate_patch": "runs/r2e_actor_20260925/grader_cands/coveragepy_ea69_CB_empty_gitignore.patch",
+   "trial": "trials/rev_CB.json",
+   "trial_verdict": "mismatch (48 observed / 48 expected; status_diff: HtmlGitignoreTest.test_html_report_is_ignored_by_git PASSED->FAILED)",
+   "note": "was 1 on current materials (ledger_cea69_CB_empty_gitignore.jsonl); must fail only the git key"
+  },
+  "RE_gitignore_before_data_check": {
+   "expected_score": 0,
+   "candidate_patch": "runs/r2e_actor_20260925/grader_cands/coveragepy_ea69_RE_gitignore_before_data_check.patch",
+   "trial": "trials/rev_RE.json",
+   "trial_verdict": "mismatch (48 observed / 48 expected; status_diff: ReportingTest.test_no_data_to_report_on_html PASSED->FAILED)",
+   "note": "was 1 on current materials (ledger_cea69_RE_gitignore_before_data_check.jsonl); must fail only the no-data key"
+  },
+  "CC_gold_with_encoding": {
+   "expected_score": 0,
+   "candidate_patch": "runs/r2e_actor_20260925/grader_cands/coveragepy_ea69_CC_gold_with_encoding.patch",
+   "trial": "trials/rev_CC.json",
+   "trial_verdict": "mismatch (48 observed / 48 expected; status_diff: HtmlDeltaTest.test_file_becomes_100 PASSED->FAILED, HtmlDeltaTest.test_html_created PASSED->FAILED, HtmlDeltaTest.test_html_delta_from_coverage_change PASSED->FAILED, HtmlDeltaTest.test_html_delta_from_coverage_version_change PASSED->FAILED, HtmlDeltaTest.test_html_delta_from_settings_change PASSED->FAILED, HtmlDeltaTest.test_html_delta_from_source_change PASSED->FAILED, HtmlDeltaTest.test_status_format_change PASSED->FAILED)",
+   "note": "public-visible test-double constraint control, was already 0 on the same 7 HtmlDeltaTest keys; revision does not change it"
+  }
+ }
+}

@@ -1,0 +1,44 @@
+diff --git a/src/PIL/TiffImagePlugin.py b/src/PIL/TiffImagePlugin.py
+index 6df4c36..8facd05 100644
+--- a/src/PIL/TiffImagePlugin.py
++++ b/src/PIL/TiffImagePlugin.py
+@@ -133,10 +133,10 @@ COMPRESSION_INFO_REV = {v: k for k, v in COMPRESSION_INFO.items()}
+ OPEN_INFO = {
+     # (ByteOrder, PhotoInterpretation, SampleFormat, FillOrder, BitsPerSample,
+     #  ExtraSamples) => mode, rawmode
+-    (II, 0, (1,), 1, (1,), ()): ("1", "1;I"),
+-    (MM, 0, (1,), 1, (1,), ()): ("1", "1;I"),
+-    (II, 0, (1,), 2, (1,), ()): ("1", "1;IR"),
+-    (MM, 0, (1,), 2, (1,), ()): ("1", "1;IR"),
++    (II, 0, (1,), 1, (1,), ()): ("1", "1"),
++    (MM, 0, (1,), 1, (1,), ()): ("1", "1"),
++    (II, 0, (1,), 2, (1,), ()): ("1", "1;R"),
++    (MM, 0, (1,), 2, (1,), ()): ("1", "1;R"),
+     (II, 1, (1,), 1, (1,), ()): ("1", "1"),
+     (MM, 1, (1,), 1, (1,), ()): ("1", "1"),
+     (II, 1, (1,), 2, (1,), ()): ("1", "1;R"),
+@@ -157,10 +157,10 @@ OPEN_INFO = {
+     (MM, 1, (1,), 1, (4,), ()): ("L", "L;4"),
+     (II, 1, (1,), 2, (4,), ()): ("L", "L;4R"),
+     (MM, 1, (1,), 2, (4,), ()): ("L", "L;4R"),
+-    (II, 0, (1,), 1, (8,), ()): ("L", "L;I"),
+-    (MM, 0, (1,), 1, (8,), ()): ("L", "L;I"),
+-    (II, 0, (1,), 2, (8,), ()): ("L", "L;IR"),
+-    (MM, 0, (1,), 2, (8,), ()): ("L", "L;IR"),
++    (II, 0, (1,), 1, (8,), ()): ("L", "L"),
++    (MM, 0, (1,), 1, (8,), ()): ("L", "L"),
++    (II, 0, (1,), 2, (8,), ()): ("L", "L;R"),
++    (MM, 0, (1,), 2, (8,), ()): ("L", "L;R"),
+     (II, 1, (1,), 1, (8,), ()): ("L", "L"),
+     (MM, 1, (1,), 1, (8,), ()): ("L", "L"),
+     (II, 1, (1,), 2, (8,), ()): ("L", "L;R"),
+@@ -1568,7 +1568,8 @@ def _save(im, fp, filename):
+     if format != 1:
+         ifd[SAMPLEFORMAT] = format
+ 
+-    ifd[PHOTOMETRIC_INTERPRETATION] = photo
++    if PHOTOMETRIC_INTERPRETATION not in ifd:
++        ifd[PHOTOMETRIC_INTERPRETATION] = photo
+ 
+     if im.mode in ["P", "PA"]:
+         lut = im.im.getpalette("RGB", "RGB;L")

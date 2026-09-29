@@ -1,0 +1,230 @@
+{
+ "task_id": "swe_gym_lite::Project-MONAI__MONAI-4688",
+ "instance_id": "Project-MONAI__MONAI-4688",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_monai_2 (Claude Opus 5, 静态审查)",
+ "materials_refs": {
+  "base_commit": "3b12a2403286b8681d9a98ea97c5a47c0ec9c742",
+  "version": "0.9",
+  "python_version": "3.8",
+  "eval_cmd": "pytest -rA  tests/test_list_data_collate.py（整文件跑）",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/Project-MONAI__MONAI-4688/{gold,empty}/offline/a1/",
+  "created_at": "2022-07-13"
+ },
+ "public_view": {
+  "目标行为": "题面标题 `collate_meta_tensor can't work with ImageDataset`，正文给出 `decollate_batch` 的完整 traceback，终点是 `TypeError: iteration over a 0-d array`。ImageDataset 返回的是 **tuple**（image, label），collate 后元数据没有正确批处理，导致后续 decollate 崩溃。",
+  "约束": "标题已把责任函数点名为 `collate_meta_tensor`，traceback 给出 monai/data/utils.py 的具体行号。",
+  "公开材料无法确定的点": [
+   "修好之后 tuple 输入应返回 list 还是 tuple",
+   "批处理后的 MetaTensor 是否必须设置 is_batch=True（题面未提）",
+   "是否要同时修 decollate_batch 一侧"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.test_patch tests/test_list_data_collate.py",
+    "validation.golden_patch monai/data/utils.py:433-436"
+   ],
+   "note": "题面 traceback 里的 monai/data/utils.py 就是 gold 目标文件，base 存在。无二进制/LFS/子模块材料。",
+   "by": "L1_monai_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base 3b12a240 monai/data/utils.py:422-437 collate_meta_tensor 只处理 MetaObj 与 Mapping，tuple/list 落到 default_collate",
+    "stage1 empty: test_type_shape_1 FAILED"
+   ],
+   "note": "初态确实缺 tuple/list 递归分支。",
+   "by": "L1_monai_2"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "public.problem_statement 1514 字符，含完整 traceback"
+   ],
+   "note": "题面完整、无外链无图片；hints_text 为空。**但题面没有给可直接运行的最小复现**（traceback 来自用户的 unet_training_array.py），求解者需要自己构造 ImageDataset/tuple 场景。",
+   "by": "L1_monai_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.test_patch 只触碰 tests/test_list_data_collate.py"
+   ],
+   "note": "纯测试文件；gold 只碰 monai/data/utils.py。additional_exclusions 保持空。",
+   "by": "L1_monai_2"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh setup 段"
+   ],
+   "note": "恢复清单只有一个纯测试文件。",
+   "by": "L1_monai_2"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_monai_2/scan/monai_cross_index.txt"
+   ],
+   "note": "P3：与 **MONAI-763**（L1_monai_1 的题）同 gold 文件 monai/data/utils.py，但函数不同（763 改的是 DataLoader/worker 相关路径），时间相隔两年，不构成同一修复。仍建议标为同文件同族以便划分时留意。",
+   "by": "L1_monai_2"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "public.problem_statement",
+    "test_patch 新增断言 self.assertTrue(isinstance(label, MetaTensor)) 与 self.assertTrue(label.is_batch, True)"
+   ],
+   "note": "P2：题面（decollate 的 traceback）推不出『collate 后 label 必须仍是 MetaTensor 且 is_batch 为真』这条具体断言——虽然它是根因的合理推论。另外题面从未说 tuple 输入应返回 list，而测试沿用 base 的 expected_type=list。",
+   "by": "L1_monai_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只断言 list_data_collate 返回值的类型与形状"
+   ],
+   "note": "不锁 helper 名、不锁调用顺序、不查字符串。gold 之外的实现（例如在 list_data_collate 里先把 tuple 转成 dict 再走既有路径）同样能过。",
+   "by": "L1_monai_2"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "grading.fail_to_pass 1 条 / pass_to_pass 1 条（整个文件只有 2 个用例）",
+    "题面根因函数 decollate_batch 零覆盖"
+   ],
+   "note": "P1：**评分面只有 2 个用例**。题面真正崩的是 `decollate_batch`，而测试完全不调用 decollate——把 collate 改对但 decollate 仍崩的修复（或反之）都无法被区分。`assertTrue(label.is_batch, True)` 还是 **assertTrue 的误用**（第二个实参是 msg 不是期望值），所以它只断言 `is_batch` 为真值，写成 `is_batch=1` 也算过。",
+   "by": "L1_monai_2"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "grading.pass_to_pass = ['tests/test_list_data_collate.py::TestListDataCollate::test_type_shape_0']",
+    "base monai/data/utils.py:439-470 list_data_collate 是 MONAI 所有 DataLoader 的默认 collate"
+   ],
+   "note": "P1：**回归保护严重不足**。`collate_meta_tensor` 是 MONAI 全线 DataLoader 的默认合并函数，P2P 只有同文件的另一个用例（而且它也被 test_patch 改写过，不是原样的既有行为）。gold 新增的 `isinstance(elem_0, (tuple, list))` 分支插在 `default_collate` 之前，会**抢走 torch `default_collate` 的 namedtuple 特判**（torch 对带 `_fields` 的 tuple 会用 `elem_type(*(...))` 保留字段名，gold 一律返回普通 list），这类回归当前零覆盖。",
+   "by": "L1_monai_2"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "validation.golden_patch 新增 3 行"
+   ],
+   "note": "P2：gold 能修好题面场景，但引入上面说的 namedtuple 降级副作用，且没有一并修 `decollate_batch`（题面 traceback 的直接现场）。属于『gold 本身不完整』，按 check 27 记录而不是压低测试标准。",
+   "by": "L1_monai_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "public.problem_statement 全文；raw.hints_text 长度 0"
+   ],
+   "note": "题面含 traceback 与文件行号（合法 bug 报告信息），不含修复代码与 PR 链接。",
+   "by": "L1_monai_2"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 install rc=0（两侧）"
+   ],
+   "note": "离线镜像内 rc=0。",
+   "by": "L1_monai_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_monai_2/scan/envscan.txt：tests/test_list_data_collate.py 47 行，零命中"
+   ],
+   "note": "无权重、无外部数据、无 tempfile/subprocess。",
+   "by": "L1_monai_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "envscan 零 DOWNLOAD/NET 命中"
+   ],
+   "note": "不需要网络。",
+   "by": "L1_monai_2"
+  },
+  "13": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 gold test 段 6.6s / 2 passed；envscan 无 DataLoader/num_workers 命中"
+   ],
+   "note": "最轻的一题：3 元素小张量、无多进程、无 shm 需求。",
+   "by": "L1_monai_2"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 gold status_map.json 2 条，与 F2P+P2P 一一对应"
+   ],
+   "note": "无 SKIPPED，无伪键。",
+   "by": "L1_monai_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "评分面过窄",
+   "severity": "P1",
+   "evidence_refs": [
+    "F2P=1、P2P=1，整文件只有 2 个用例"
+   ],
+   "proposed_action": "扩评分面：把 tests/test_decollate.py（题面真正崩的函数）与 tests/test_dataloader.py、tests/test_image_dataset.py 纳入 P2P；并新增一条『collate→decollate 往返』的 F2P，直接对应题面 traceback。",
+   "next_experiment": "在 base 与 gold 上各跑 `pytest -rA tests/test_decollate.py tests/test_dataloader.py tests/test_image_dataset.py`，取双侧通过集作为候选 P2P。"
+  },
+  {
+   "category": "gold 引入未覆盖的回归",
+   "severity": "P2",
+   "evidence_refs": [
+    "validation.golden_patch 把 (tuple,list) 分支插在 default_collate 之前",
+    "torch default_collate 的 namedtuple 特判"
+   ],
+   "proposed_action": "补一条 namedtuple 批输入的回归测试；或在题目修订里要求 gold 保留 namedtuple 类型。",
+   "next_experiment": "构造 `collections.namedtuple('S','a b')` 的 batch，在 base/gold 上各跑 list_data_collate，比较返回类型。"
+  },
+  {
+   "category": "测试断言误用",
+   "severity": "P3",
+   "evidence_refs": [
+    "test_patch: self.assertTrue(label.is_batch, True)"
+   ],
+   "proposed_action": "改成 assertTrue(label.is_batch) 或 assertEqual(label.is_batch, True)（属于改题，需记为修订）。",
+   "next_experiment": "无。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰纯测试文件；gold 不碰测试样路径。",
+  "evidence_refs": [
+   "grading.test_patch",
+   "validation.golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/test_decollate.py",
+   "reason": "题面 traceback 的直接现场；collate 改动的语义下游。"
+  },
+  {
+   "id": "tests/test_dataloader.py",
+   "reason": "list_data_collate 是 DataLoader 默认 collate，最直接的调用者。"
+  },
+  {
+   "id": "tests/test_image_dataset.py",
+   "reason": "题面点名的 ImageDataset（tuple 返回）场景。"
+  },
+  {
+   "id": "tests/test_pad_collation.py、tests/test_meta_tensor.py::test_collate_*",
+   "reason": "同一 collate 路径的其它分支（padding、MetaTensor 批处理）。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "题面与 gold 对应良好，但整个评分面只有 2 个用例、题面根因函数 decollate_batch 零覆盖、gold 还带一个未覆盖的 namedtuple 降级副作用；补 P2P 与往返用例后可入池。"
+ },
+ "costs": {
+  "minutes": 19
+ }
+}

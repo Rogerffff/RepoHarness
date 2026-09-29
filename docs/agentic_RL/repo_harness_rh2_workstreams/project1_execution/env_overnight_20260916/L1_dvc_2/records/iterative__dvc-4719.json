@@ -1,0 +1,281 @@
+{
+ "task_id": "iterative__dvc-4719",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+  "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+  "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+  "raw": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc",
+  "base_commit": "6a79111047a838b2e7daee0861570ffe01c38d02",
+  "version": "1.8",
+  "python_version": "3.9",
+  "eval_cmd": "pytest -rA",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-4719:latest",
+  "workdir": "/testbed",
+  "test_patch_paths": [
+   "tests/unit/stage/test_cache.py"
+  ],
+  "gold_paths": [
+   "dvc/stage/cache.py"
+  ],
+  "n_f2p": 1,
+  "n_p2p": 0,
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4719/{gold,empty}/offline/a1/",
+  "signals": {
+   "in_e2": [],
+   "fragile_reference_id": false,
+   "stage1": {
+    "empty": {
+     "verdict": "RESOLVED_NO",
+     "rc_install": 0
+    },
+    "gold": {
+     "verdict": "RESOLVED_FULL",
+     "rc_install": 0,
+     "p2p_missing": 0,
+     "f2p_missing": 0
+    }
+   },
+   "deepseek_candidate_oracle": null
+  }
+ },
+ "public_view": {
+  "目标行为": "`always_changed: true` / callback stage 应该每次都真正执行，不应被 run-cache 顶掉。题面给了完整的命令序列复现：加了 params 后 `dvc repro` 变成『Restored stage from run-cache / Skipping run』。",
+  "约束": "题面说了这是『令人困惑且不一致』，并留了余地『如果这是期望行为，文档里应该写清楚』——即题面自己没断言这是 bug。",
+  "公开材料无法确定的点": [
+   "修哪一侧：是『不要 restore always_changed』还是『不要 save always_changed』。base 里 `restore()` 已经有 `if stage.is_callback or stage.always_changed: raise RunCacheNotFoundError`（dvc/stage/cache.py restore 首行），所以 restore 侧早就修好了；要改的是 `save()`。这个事实要读 base 代码才知道，题面读起来像是 restore 的问题。",
+   "为什么 save 也要停：维护者关于『always_changed 的 run-cache 只会产生永不使用的垃圾』的论证只在不可见 hints 里。",
+   "验收形态：F2P 是一条对 `StageCache` 的纯单元测试（Mock 的 Repo），与题面的端到端复现毫无形似之处。"
+  ],
+  "base 关键代码": "dvc/stage/cache.py:`StageCache.__init__` 把 `self.cache_dir = os.path.join(repo.cache.local.cache_dir, \"runs\")` 直接算在构造里；`save()` 无 always_changed 守卫；`restore()` 首行已有守卫。dvc/repo/__init__.py:130 `self.cache = Cache(self)` 是**实例属性**，Repo 类上没有 `cache`。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "repos/dvc 32cef509b7de0eefdc673b24c66a666466007fc0 `run-cache: don't save always_changed stages (#4719)` --stat: dvc/stage/cache.py 10, tests/unit/stage/test_cache.py 18"
+   ],
+   "note": "gold+test_patch 与上游一致，无丢件。",
+   "by": "L1_dvc_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base:dvc/stage/cache.py save() 无守卫",
+    "stage1 empty: test_always_changed FAILED"
+   ],
+   "note": "缺陷（save 仍写 run-cache）在 base 存在。但要注意 empty 侧失败的直接原因可能是构造期 AttributeError 而非行为差异，见 check 24。",
+   "by": "L1_dvc_2"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 1762 字符，含完整 shell 复现与 dvc version"
+   ],
+   "note": "题面完整、代码块闭合、无外链图片。",
+   "by": "L1_dvc_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 仅 tests/unit/stage/test_cache.py",
+    "gold 仅 dvc/stage/cache.py"
+   ],
+   "note": "零交集。additional_exclusions 空。",
+   "by": "L1_dvc_2"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh git checkout 目标"
+   ],
+   "note": "纯测试文件恢复。",
+   "by": "L1_dvc_2"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan.json 本包路径表"
+   ],
+   "note": "本包无第二题触碰 dvc/stage/cache.py 或 tests/unit/stage/test_cache.py。",
+   "by": "L1_dvc_2"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "base:dvc/stage/cache.py restore() 首行已有 always_changed 守卫",
+    "hints_text：`currently (as of 1.8.2) we don't restore always_changed stages, but we still save them to the run-cache`"
+   ],
+   "note": "题面的现象（repro 被 run-cache 顶掉）指向 restore，而 restore 在 base 已经有守卫；真正要改的 `save` 侧、以及『为什么 save 也不该存』的论证，都只在不可见 hints 的讨论里。公开材料能推出『某处要按 always_changed 短路』，但推不出必须在 save。",
+   "by": "L1_dvc_2"
+  },
+  "24": {
+   "status": "issue",
+   "evidence_refs": [
+    "golden_patch 第一段：把 `self.cache_dir = ...` 从 __init__ 改成 `@cached_property`",
+    "test_patch: `repo = mocker.Mock(spec=Repo); cache = StageCache(repo)`",
+    "base:dvc/repo/__init__.py:130 `self.cache = Cache(self)`（实例属性，Repo 类上无 `cache`）"
+   ],
+   "note": "**F2P 强制了一个与题目行为无关的结构改动**：`Mock(spec=Repo)` 只按 `dir(Repo)` 提供属性，`cache` 不在其中，所以 base 的 `StageCache.__init__` 里 `repo.cache.local.cache_dir` 会直接 AttributeError。因此**只在 `save()` 里加 `if stage.is_callback or stage.always_changed: return`（即题目真正要求的修复）仍然过不了 F2P**，必须同时把 `cache_dir` 改成惰性属性。这个要求在题面里零依据。",
+   "by": "L1_dvc_2"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "test_patch: `assert get_stage_hash.not_called`（两处）",
+    "F2P 只 1 条；P2P=0"
+   ],
+   "note": "两个问题：(a) `assert get_stage_hash.not_called` 是**永远为真的空断言**——`mocker.patch` 返回的是 MagicMock，`.not_called` 是自动生成的属性而不是 `assert_not_called()` 调用，所以这两行不检查任何东西，测试的实际内容只剩 `cache.save(stage) is None` 与 `restore` 抛 `RunCacheNotFoundError`（后者在 base 就成立）。(b) 题面的端到端症状（加了 params 后 `dvc repro` 不执行 callback stage）**零覆盖**，没有任何 repro 层测试。",
+   "by": "L1_dvc_2"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "P2P = 0",
+    "smstat.json 4719: gold real=5，PASSED 1 / FAILED 4",
+    "stage1 gold: 4 条 `re.error: redefinition of group name 'ps_d'`（test_stage_cache / test_stage_cache_params / test_stage_cache_wdir / test_shared_stage_cache）"
+   ],
+   "note": "**本包最危险的回归缺口**：P2P 为空，而同文件另外 4 条（run-cache 的核心正向用例）在 gold 下因 pathspec 依赖问题全部崩溃。也就是说 `RESOLVED_FULL` 完全由一条测试决定，而那条测试的两个断言里有两个是空断言、一个在 base 就成立。在 `StageCache.save` 开头无条件 `return` 的破坏性改动（彻底关掉 run-cache）也能拿满分。",
+   "by": "L1_dvc_2"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "golden_patch 两段"
+   ],
+   "note": "gold 与上游一致，但**第一段（cache_dir → cached_property）不是题目要求的行为修复，而是为了让新单测能用 Mock 构造 StageCache**。它本身无害（惰性化甚至更好），但把它算进 gold 会让『参考解』与『题目要求』不再等价，见 check 24。",
+   "by": "L1_dvc_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak.py: gold_added=5 ps_match=0 hints_match=0；题面与 hints 均无 URL"
+   ],
+   "note": "题面不含修复代码。hints（不可见）里维护者明确写了 `I'll send a patch to stop saving run-cache for always_changed soon`，等于答案。",
+   "by": "L1_dvc_2"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "stage1 gold 4 条 `re.error: redefinition of group name 'ps_d'`",
+    "deps_scan2.txt"
+   ],
+   "note": "pathspec 未锁版本，导致该文件 4/5 用例在 gold 下崩溃。",
+   "by": "L1_dvc_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 用 mocker.Mock"
+   ],
+   "note": "F2P 无外部资产；但同文件其它用例要真实 dvc repo。",
+   "by": "L1_dvc_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 无 URL/requests"
+   ],
+   "note": "测试段纯本地。",
+   "by": "L1_dvc_2"
+  },
+  "18": {
+   "status": "issue",
+   "evidence_refs": [
+    "stage1 eval.sh `pytest -rA tests/unit/stage/test_cache.py`；gold real=5，其中 4 条 FAILED"
+   ],
+   "note": "选择器正确（整文件），但『执行完』的实际结果是 80% 的用例在收集后崩在依赖问题上。",
+   "by": "L1_dvc_2"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "伪键 'Could'"
+   ],
+   "note": "同 3677：pip ERROR 行进 status_map。",
+   "by": "L1_dvc_2"
+  },
+  "20": {
+   "status": "issue",
+   "evidence_refs": [
+    "empty: 5 条全 FAILED；gold: 1 PASSED / 4 FAILED"
+   ],
+   "note": "empty→gold 的分差只有 F2P 一条，方向正确；但 P2P=0 意味着『保持原有通过行为』这一半完全没有约束，而且 gold 侧本来就有 4 条红的。",
+   "by": "L1_dvc_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "测试强制唯一实现",
+   "severity": "P1",
+   "evidence_refs": [
+    "golden_patch 第一段",
+    "test_patch `mocker.Mock(spec=Repo)`",
+    "dvc/repo/__init__.py:130"
+   ],
+   "proposed_action": "要么把 F2P 改成不依赖 `Mock(spec=Repo)` 构造（例如用真实 tmp repo fixture，或 `Mock()` 不带 spec），要么在题面里明确『StageCache 构造不得触碰 repo.cache』。当前状态下正确的行为修复也会判 0。",
+   "next_experiment": "只在 `save()` 里加 always_changed 守卫、不动 `cache_dir`，跑 F2P，预期在 `StageCache(repo)` 构造处 AttributeError（验证强制结构）。"
+  },
+  {
+   "category": "零回归保护",
+   "severity": "P1",
+   "evidence_refs": [
+    "P2P=0",
+    "同文件 4/5 在 gold 下 FAILED"
+   ],
+   "proposed_action": "先修 pathspec 依赖让 test_stage_cache 一族恢复，再把它们纳入 P2P。否则 `StageCache.save` 开头无条件 return 也是满分。",
+   "next_experiment": "写 `def save(self, stage): return` 的破坏性假修复跑当前 F2P+P2P，预期 RESOLVED_FULL。"
+  },
+  {
+   "category": "测试断言无效",
+   "severity": "P2",
+   "evidence_refs": [
+    "`assert get_stage_hash.not_called`"
+   ],
+   "proposed_action": "改成 `get_stage_hash.assert_not_called()`；这是上游的笔误，修它会让测试真正检查『不计算 stage hash』。",
+   "next_experiment": "在 gold 上把该行改成真断言，确认仍通过；在『只加 restore 守卫不加 save 守卫』的假修复上确认失败。"
+  },
+  {
+   "category": "症状零覆盖",
+   "severity": "P2",
+   "evidence_refs": [
+    "problem_statement 的 shell 复现",
+    "F2P 是纯单测"
+   ],
+   "proposed_action": "补一条 func 层回归：`dvc run --always-changed` 后 `dvc repro` 必须重新执行（而非 Restored from run-cache）。",
+   "next_experiment": "在 base/gold 上各跑该新测试。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只有 tests/unit/stage/test_cache.py；gold 只改 dvc/stage/cache.py。沿用第四组 B 默认空。",
+  "evidence_refs": [
+   "test_patch",
+   "golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/unit/stage/test_cache.py::test_stage_cache / test_stage_cache_params / test_stage_cache_wdir / test_shared_stage_cache（修好 pathspec 后）",
+   "reason": "run-cache 的核心正向路径，正是 gold 的 `save()` 早退可能误伤的对象；当前四条全部因依赖崩溃而被排除。"
+  },
+  {
+   "id": "tests/func/test_repro.py 中 always_changed / callback stage 的用例",
+   "reason": "直接覆盖题面症状所在的 repro 路径。"
+  },
+  {
+   "id": "tests/func/test_run_cache.py（若存在于该版本）",
+   "reason": "验证关闭 always_changed 的保存后，普通 stage 的 run-cache 仍然工作。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "P2P=0 且同文件 4/5 用例在 gold 下就崩，判分完全靠一条包含两个空断言的单测；更严重的是该单测通过 `Mock(spec=Repo)` 强制了一个与题目无关的结构改动（cache_dir 惰性化），使正确的行为修复也会判 0。"
+ },
+ "costs": {
+  "minutes": 23
+ },
+ "by": "L1_dvc_2 (Claude Opus 5, 2026-09-16, 静态审查)"
+}

@@ -1,0 +1,100 @@
+diff --git a/dask/base.py b/dask/base.py
+index 5ebc9209..7ebaeed8 100644
+--- a/dask/base.py
++++ b/dask/base.py
+@@ -431,6 +431,7 @@ def unpack_collections(*args, **kwargs):
+                         [
+                             [f.name, _unpack(getattr(expr, f.name))]
+                             for f in fields(expr)
++                            if f.init
+                         ],
+                     ),
+                 )
+diff --git a/dask/delayed.py b/dask/delayed.py
+index da185b58..15157635 100644
+--- a/dask/delayed.py
++++ b/dask/delayed.py
+@@ -109,7 +109,7 @@ def unpack_collections(expr):
+ 
+     if is_dataclass(expr):
+         args, collections = unpack_collections(
+-            [[f.name, getattr(expr, f.name)] for f in fields(expr)]
++            [[f.name, getattr(expr, f.name)] for f in fields(expr) if f.init]
+         )
+ 
+         return (apply, typ, (), (dict, args)), collections
+@@ -187,7 +187,7 @@ def to_task_dask(expr):
+ 
+     if is_dataclass(expr):
+         args, dsk = to_task_dask(
+-            [[f.name, getattr(expr, f.name)] for f in fields(expr)]
++            [[f.name, getattr(expr, f.name)] for f in fields(expr) if f.init]
+         )
+ 
+         return (apply, typ, (), (dict, args)), dsk
+diff --git a/dask/tests/test_base.py b/dask/tests/test_base.py
+index c0b3f8cf..7794825e 100644
+--- a/dask/tests/test_base.py
++++ b/dask/tests/test_base.py
+@@ -527,6 +527,28 @@ def test_unpack_collections():
+     repack([(fail, 1)])  # Smoketest results that look like tasks
+ 
+ 
++def test_unpack_collections_dataclass_init_false():
++    dataclasses = pytest.importorskip("dataclasses")
++
++    # Fields with init=False are not accepted by the generated __init__, and
++    # may not even exist on the instance when no default is provided.
++    ADataClass = dataclasses.make_dataclass(
++        "ADataClass",
++        [
++            ("primary_key", int, dataclasses.field(init=False, repr=False)),
++            ("other_field", int, dataclasses.field(default=4)),
++        ],
++    )
++
++    obj = ADataClass()
++    collections, repack = unpack_collections(obj)
++    assert collections == []
++
++    result = repack(collections)[0]
++    assert not hasattr(result, "primary_key")
++    assert result.other_field == 4
++
++
+ def test_get_collection_names():
+     class DummyCollection:
+         def __init__(self, dsk, keys):
+diff --git a/dask/tests/test_delayed.py b/dask/tests/test_delayed.py
+index 83830283..957ca8f0 100644
+--- a/dask/tests/test_delayed.py
++++ b/dask/tests/test_delayed.py
+@@ -113,6 +113,28 @@ def test_delayed_with_dataclass():
+     assert final.compute() == 3
+ 
+ 
++def test_delayed_with_dataclass_init_false():
++    dataclasses = pytest.importorskip("dataclasses")
++
++    # Fields with init=False are not accepted by the generated __init__, and
++    # may not even exist on the instance when no default is provided.
++    ADataClass = dataclasses.make_dataclass(
++        "ADataClass",
++        [
++            ("primary_key", int, dataclasses.field(init=False, repr=False)),
++            ("other_field", int, dataclasses.field(default=4)),
++        ],
++    )
++
++    obj = ADataClass()
++
++    @delayed
++    def return_other_field(entry):
++        return entry.other_field
++
++    assert return_other_field(obj).compute() == 4
++
++
+ def test_operators():
+     a = delayed([1, 2, 3])
+     assert a[0].compute() == 1

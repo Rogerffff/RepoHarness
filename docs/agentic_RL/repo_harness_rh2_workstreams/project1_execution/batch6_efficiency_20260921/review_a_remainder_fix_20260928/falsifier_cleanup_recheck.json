@@ -1,0 +1,210 @@
+{
+  "head": "a31cdcd0",
+  "scope": "CPU actual manager + real gateway.release + existing Docker fixture",
+  "cases": [
+    {
+      "mode": "normal",
+      "grade_result": "resolved",
+      "first_close": {
+        "seconds": 0.0,
+        "supply_open_count": 0,
+        "containers_open_count": 0,
+        "cleanup_failure_kinds": []
+      },
+      "first_state": {
+        "container_removed": true,
+        "supply_released": true,
+        "tokens": 0,
+        "networks": 0,
+        "slots": 0,
+        "cleanup_tasks_running": 0,
+        "teardown_calls": 1,
+        "sidecar": {
+          "token_release": "released",
+          "network_teardown": "done",
+          "cleanup": "done"
+        }
+      },
+      "second_close": {
+        "seconds": 0.0,
+        "supply_open_count": 0,
+        "containers_open_count": 0,
+        "cleanup_failure_kinds": []
+      },
+      "second_state": {
+        "container_removed": true,
+        "supply_released": true,
+        "tokens": 0,
+        "networks": 0,
+        "slots": 0,
+        "cleanup_tasks_running": 0,
+        "teardown_calls": 1,
+        "sidecar": {
+          "token_release": "released",
+          "network_teardown": "done",
+          "cleanup": "done"
+        }
+      },
+      "final_close": {
+        "seconds": 0.0,
+        "supply_open_count": 0,
+        "containers_open_count": 0,
+        "cleanup_failure_kinds": []
+      },
+      "final_state": {
+        "container_removed": true,
+        "supply_released": true,
+        "tokens": 0,
+        "networks": 0,
+        "slots": 0,
+        "cleanup_tasks_running": 0,
+        "teardown_calls": 1,
+        "sidecar": {
+          "token_release": "released",
+          "network_teardown": "done",
+          "cleanup": "done"
+        }
+      },
+      "gateway_tokens_released": 1
+    },
+    {
+      "mode": "cancel_then_resume",
+      "grade_result": "CancelledError",
+      "first_close": {
+        "seconds": 0.0008,
+        "supply_open_count": 0,
+        "containers_open_count": 0,
+        "cleanup_failure_kinds": []
+      },
+      "first_state": {
+        "container_removed": true,
+        "supply_released": true,
+        "tokens": 0,
+        "networks": 0,
+        "slots": 0,
+        "cleanup_tasks_running": 0,
+        "teardown_calls": 1,
+        "sidecar": {
+          "token_release": "released",
+          "network_teardown": "done",
+          "cleanup": "done"
+        }
+      },
+      "second_close": {
+        "seconds": 0.0,
+        "supply_open_count": 0,
+        "containers_open_count": 0,
+        "cleanup_failure_kinds": []
+      },
+      "second_state": {
+        "container_removed": true,
+        "supply_released": true,
+        "tokens": 0,
+        "networks": 0,
+        "slots": 0,
+        "cleanup_tasks_running": 0,
+        "teardown_calls": 1,
+        "sidecar": {
+          "token_release": "released",
+          "network_teardown": "done",
+          "cleanup": "done"
+        }
+      },
+      "final_close": {
+        "seconds": 0.0,
+        "supply_open_count": 0,
+        "containers_open_count": 0,
+        "cleanup_failure_kinds": []
+      },
+      "final_state": {
+        "container_removed": true,
+        "supply_released": true,
+        "tokens": 0,
+        "networks": 0,
+        "slots": 0,
+        "cleanup_tasks_running": 0,
+        "teardown_calls": 1,
+        "sidecar": {
+          "token_release": "released",
+          "network_teardown": "done",
+          "cleanup": "done"
+        }
+      },
+      "gateway_tokens_released": 1
+    },
+    {
+      "mode": "cancel_then_timeout",
+      "grade_result": "CancelledError",
+      "first_close": {
+        "seconds": 0.3017,
+        "supply_open_count": 1,
+        "containers_open_count": 0,
+        "cleanup_failure_kinds": [
+          "supply_network_teardown_failed",
+          "supply_resources_open_at_close"
+        ]
+      },
+      "first_state": {
+        "container_removed": true,
+        "supply_released": false,
+        "tokens": 0,
+        "networks": 1,
+        "slots": 1,
+        "cleanup_tasks_running": 0,
+        "teardown_calls": 1,
+        "sidecar": {
+          "token_release": "released",
+          "network_teardown": "failed",
+          "cleanup": "incomplete"
+        }
+      },
+      "second_close": {
+        "seconds": 0.3028,
+        "supply_open_count": 1,
+        "containers_open_count": 0,
+        "cleanup_failure_kinds": [
+          "supply_network_teardown_failed",
+          "supply_resources_open_at_close"
+        ]
+      },
+      "second_state": {
+        "container_removed": true,
+        "supply_released": false,
+        "tokens": 0,
+        "networks": 1,
+        "slots": 1,
+        "cleanup_tasks_running": 0,
+        "teardown_calls": 2,
+        "sidecar": {
+          "token_release": "released",
+          "network_teardown": "failed",
+          "cleanup": "incomplete"
+        }
+      },
+      "final_close": {
+        "seconds": 0.0011,
+        "supply_open_count": 0,
+        "containers_open_count": 0,
+        "cleanup_failure_kinds": [
+          "supply_network_teardown_failed",
+          "supply_resources_open_at_close"
+        ]
+      },
+      "final_state": {
+        "container_removed": true,
+        "supply_released": true,
+        "tokens": 0,
+        "networks": 0,
+        "slots": 0,
+        "cleanup_tasks_running": 0,
+        "teardown_calls": 3,
+        "sidecar": {
+          "token_release": "released",
+          "network_teardown": "done",
+          "cleanup": "done"
+        }
+      },
+      "gateway_tokens_released": 1
+    }
+  ]
+}

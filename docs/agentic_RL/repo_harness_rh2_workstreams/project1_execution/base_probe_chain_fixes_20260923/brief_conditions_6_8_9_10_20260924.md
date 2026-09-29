@@ -1,6 +1,6 @@
 # Brief：#10 工具面 / #9 auto-memory / #8 计数与窗口 / #6 提醒并入——已批准决定的实施切片
 
-2026-09-24 / Claude（A 线）。**状态：实施中。** 依据：[决策包 §8](decision_package_6_8_9_10_20260924.md)（用户已批准）与 [Codex 复核 §8](codex_stream_decision_review_20260924.md) 的三条修订。方向不再请示；每片给实际改动、测试参数、正式默认值是否变化、模型可见输入的变化、尚未实测的效果。顺序：#10 → #9 → #8(i) → #8 窗口/溢出/Read 接线 → #6(a)。
+2026-09-24 / Claude（A 线）。**状态：已实施，CI1/CI2 的 Codex 针对性复核通过（见 §4；限定为本机与已记录的协议验收范围）。** 依据：[决策包 §8](decision_package_6_8_9_10_20260924.md)（用户已批准）与 [Codex 复核 §8](codex_stream_decision_review_20260924.md) 的三条修订。方向不再请示；每片给实际改动、测试参数、正式默认值是否变化、模型可见输入的变化、尚未实测的效果。顺序：#10 → #9 → #8(i) → #8 窗口/溢出/Read 接线 → #6(a)。
 
 ## 0. 两点版本绑定的提醒（不是异议）
 
@@ -78,10 +78,12 @@
 
 ### 3.6 Codex 实施复核 §9 的两项 P2 收尾（2026-09-24）
 
-- **CI1（Read 上限缺正式作业来源）**：正式入口定为环境变量 `RH2_CC_FILE_READ_MAX_OUTPUT_TOKENS`（与 `RH2_MAX_TURNS_PER_SID` 等同一类作业配置；未设 = None = CC 默认 25,000；非正整数启动即炸）。bringup 的唯一生产构造点经 `cc_file_read_max_output_tokens_from_env(os.environ)` 读入 `SlimeBindingConfig.cc_file_read_max_output_tokens`，再由既有 `cc_context_env` 逐 execution 注入。`SLIME_AGENT_CC_EXTRA_ENVS` 仍能覆盖（进程级 extra envs 在 RH2 常量之后、逐 execution 注入之前）——它是通用透传，不是这项的正式来源。验收用例 `test_read_cap_flows_from_the_formal_job_entry_to_the_collector_env`：从该环境变量 → 生产读取函数 → 配置 → dense 链 launch_spec 注入 → `claude_code_launch_env` → `launch_claude_code` 交给收集器的 env，设置值 `8000` 与未设置正控各一次；`0` / `8k` 拒绝。
+- **CI1（Read 上限缺正式作业来源）**：正式入口定为环境变量 `RH2_CC_FILE_READ_MAX_OUTPUT_TOKENS`（与 `RH2_MAX_TURNS_PER_SID` 等同一类作业配置；未设 = None；若通用透传也未提供值，则使用 CC 默认 25,000；非正整数启动即炸）。bringup 的唯一生产构造点经 `cc_file_read_max_output_tokens_from_env(os.environ)` 读入 `SlimeBindingConfig.cc_file_read_max_output_tokens`，再由既有 `cc_context_env` 逐 execution 注入。配置窗口且 RH2 显式给值时，逐 execution 注入优先于 `SLIME_AGENT_CC_EXTRA_ENVS`；RH2 未给值时，通用透传仍可提供该 CC 环境变量。验收用例 `test_read_cap_flows_from_the_formal_job_entry_to_the_collector_env`：从该环境变量 → 生产读取函数 → 配置 → dense 链 launch_spec 注入 → `claude_code_launch_env` → `launch_claude_code` 交给收集器的 env，设置值 `8000` 与未设置正控各一次；`0` / `8k` 拒绝。
 - **CI2（回放分母与指标口径）**：v2 回放只取 22 条 `bp22-*` 尝试的 `/v1/messages` 生成请求（排除 `wire-test-q36-01` 与 2 条 count_tokens 记录），617 请求 / 595 对，与原回放分母一致；结果写新文件 `smoosh_acceptance_v2.json`，v1 保留；指标改名为 "prompt 前缀一致对"，不再作为训练行归属证据（§3.4 已改）。
 - 非阻塞两处：§3.3 的"低于约 20K 不可用"收窄为该组参数的失败结果；压缩证据的替身边界（引擎输出、评分、静止屏障、未接真实 model-call proxy / 权重发布；C2 为单测被动路径而关掉主动压缩）不支持"所有真实任务都能恢复"或"正式窗口已定"的说法。
 
 ## 4. Codex 实施复核（2026-09-24）
 
 详见[原复核报告 §9](codex_stream_decision_review_20260924.md)。`145cb5fd` 核心实现认可，相关回归 189 passed，未发现 P0/P1。保留两个 P2 收尾：CI1 新 Read 字段缺正式 Bringup 来源（既有 extra env 通道可用，明确一种入口并验证即可）；CI2 回放混入计数/启动探针，且 prompt 前缀一致不能代替训练动作归属。另将“20K 以下不可用”收窄为已测条件。没有新增用户决策或准入规则；正式数值仍留作业配置。本条仅为独立复核指针，不把待修项写成已实施。
+
+**后续收口：** `716c94d5` 的 CI1/CI2 已通过[针对性复核 §10](codex_stream_decision_review_20260924.md)。主审实际构造表达式九案、29 项相关维护测试通过；617 请求回放重算与作者 v2 完全一致，旧证据保留。四片在本机与已记录的协议验收范围内收口，无剩余阻塞项；真实模型/GPU 效果和正式数值继续后置。上段保留首次实施审查的历史状态。

@@ -1,0 +1,83 @@
+{
+  "platform": "macOS-26.3.1-arm64-arm-64bit",
+  "python": "3.12.13",
+  "tree": "/var/folders/jd/vtj552xj0816twm4_26bv9s40000gn/T/rh2-e3-review-_a5yj8za/old/rh2/src",
+  "turns": 8,
+  "rows_max": 8192,
+  "leaves": 2,
+  "layers": 48,
+  "topk": 8,
+  "torch": "2.13.0",
+  "phase_a_capture": {
+    "per_turn": [
+      {
+        "rows": 1024,
+        "ms": 18.9,
+        "heartbeat_max_delay_ms": 18.8
+      },
+      {
+        "rows": 2048,
+        "ms": 36.5,
+        "heartbeat_max_delay_ms": 36.5
+      },
+      {
+        "rows": 3072,
+        "ms": 56.9,
+        "heartbeat_max_delay_ms": 57.0
+      },
+      {
+        "rows": 4096,
+        "ms": 116.8,
+        "heartbeat_max_delay_ms": 117.0
+      },
+      {
+        "rows": 5120,
+        "ms": 108.2,
+        "heartbeat_max_delay_ms": 98.4
+      },
+      {
+        "rows": 6144,
+        "ms": 118.5,
+        "heartbeat_max_delay_ms": 117.7
+      },
+      {
+        "rows": 7168,
+        "ms": 146.1,
+        "heartbeat_max_delay_ms": 136.2
+      },
+      {
+        "rows": 8192,
+        "ms": 132.7,
+        "heartbeat_max_delay_ms": 122.8
+      }
+    ],
+    "total_ms": 734.6,
+    "heartbeat_max_delay_ms": 136.2,
+    "tracemalloc_current_mib": null,
+    "tracemalloc_peak_mib": null,
+    "maxrss_mib": 1071.0
+  },
+  "phase_b_leaves": {
+    "per_leaf": [
+      {
+        "backfill_ms": 96.9,
+        "backfill_heartbeat_max_delay_ms": 96.9,
+        "projection_ms": 370.7,
+        "projection_heartbeat_max_delay_ms": 370.8
+      },
+      {
+        "backfill_ms": 95.3,
+        "backfill_heartbeat_max_delay_ms": 95.3,
+        "projection_ms": 331.1,
+        "projection_heartbeat_max_delay_ms": 331.2
+      }
+    ],
+    "tracemalloc_current_mib": null,
+    "tracemalloc_peak_mib": null,
+    "maxrss_mib": 1249.8
+  },
+  "note": "tracemalloc 只计 Python 分配器可见的内存（torch 张量存储不在其中）；maxrss 是整个进程累计峰值。本脚本保留 hook 的记录 / tape / store 与各叶张量、分支工件，与一个 session 的生产保留对象一致；不外推到多并发。",
+  "distribution": "random32",
+  "tracemalloc_enabled": false,
+  "heartbeat_note": "fixture 构造后先结算两个心跳周期；计时仍只包生产入口"
+}

@@ -1,0 +1,213 @@
+{
+ "task_id": "dask__dask-8820",
+ "source": "SWE-Gym lite (dask/dask 2022.02)",
+ "task_revision": "upstream",
+ "materials_refs": [
+  "s2/ingest/public_bundles_v0.jsonl (problem_statement 408 字符，本包最短)",
+  "s2/ingest/grading_bundles_v2_v0.jsonl (F2P=1; P2P=45)",
+  "s2/ingest/validation_bundles_v0.jsonl (golden_patch 8 行)",
+  "s2/raw/swe_gym_lite_full_f70b1a29.jsonl (hints_text 为空)",
+  "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/dask__dask-8820/{gold,empty}/offline/a1/"
+ ],
+ "public_view": {
+  "goal": "被 `@delayed` 装饰的函数取 `__name__` 会抛 `AttributeError: Attribute __name__ not found`；期望像 functools.wraps 一样返回原函数名。",
+  "constraints": [
+   "题面给出 4 行复现与期望输出。"
+  ],
+  "unknown_from_public": [
+   "题面**只提 `__name__`**，F2P 还断言 `__doc__ == 'This is a docstring'`（见检查 23）。",
+   "题面没说该属性应实现在哪个类上（DelayedLeaf 还是 Delayed）；也没说 `@delayed` 包装类/方法时该如何表现。"
+  ],
+  "by": "L1_dask"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "4e5dfe7463028a39a90e026c7fb9220969093ab3:dask/delayed.py:643-662",
+    "4e5dfe7463028a39a90e026c7fb9220969093ab3:dask/tests/test_delayed.py:730+"
+   ],
+   "note": "test_patch 只在 test_delayed.py 末尾新增一条用例，gold 只在 dask/delayed.py 的 DelayedLeaf 上加两个 property，base 均存在。无二进制/LFS/子模块。",
+   "by": "L1_dask"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "4e5dfe7463028a39a90e026c7fb9220969093ab3:dask/delayed.py:643-662"
+   ],
+   "note": "base 的 DelayedLeaf 没有 `__name__`/`__doc__`，取属性会落到 Delayed.__getattr__ 的 DelayedAttr 路径并报 'Attribute __name__ not found'；缺陷成立，empty 侧 F2P FAILED。",
+   "by": "L1_dask"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-8820.problem_statement"
+   ],
+   "note": "题面短但完整，无截断/图片/外链；hints_text 为空。",
+   "by": "L1_dask"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-8820.test_patch"
+   ],
+   "note": "test_patch 仅碰测试文件；gold 仅碰源码。",
+   "by": "L1_dask"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "同上"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "L1_dask"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "4e5dfe7463028a39a90e026c7fb9220969093ab3:dask/delayed.py:112-116,194-198",
+    "runs/env_overnight_20260916/L1_dask/mat/dask__dask-7656/validation.json"
+   ],
+   "note": "与 dask__dask-7656 改同一对文件，且**本题 base 已包含 7656 的 gold**（`if hasattr(expr, f.name)  # if init=False, field might not exist` 在 delayed.py:114 与 :196 逐字可见）。两题 P2P 交集 43/45。必须同侧划分，否则 7656 的答案在 8820 的工作树里直接可读。",
+   "by": "L1_dask"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-8820.problem_statement",
+    "grading_bundles_v2_v0.jsonl:dask__dask-8820.test_patch"
+   ],
+   "note": "小幅不充分：题面只要求 `__name__`，F2P 还要求 `__doc__`。题面里 'similar to functools.wraps' 一句算是弱线索（wraps 会同时复制 `__doc__`），但不是明确要求。只实现 `__name__` 的候选会失败。",
+   "by": "L1_dask"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-8820.test_patch"
+   ],
+   "note": "不强制实现方式：加 property、在 __init__ 里赋值、用 functools.update_wrapper 都能过（`__slots__` 限制使得直接赋值需要一并调整，但不止一种写法）。断言只看两个字符串值。",
+   "by": "L1_dask"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-8820.{fail_to_pass,pass_to_pass}"
+   ],
+   "note": "F2P 只覆盖 `@delayed` 装饰**普通函数**的情形。`delayed` 还能包装类、实例方法、内建函数（`delayed(sum)` 的 `sum.__doc__` 存在但 `__name__` 也存在；`delayed(np.array([1]))` 这种非可调用对象没有 `__name__`）。gold 的 property 对没有 `__name__` 的 `_obj` 会抛 AttributeError —— 这个退化路径没有断言覆盖，一个只在 `hasattr` 时才转发的更稳妥实现与 gold 同样满分，反之亦然。P2P 里有 `test_delayed_decorator_on_method`、`test_attributes` 等同族用例可部分兜底。",
+   "by": "L1_dask"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "4e5dfe7463028a39a90e026c7fb9220969093ab3:dask/tests/test_delayed.py"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_dask"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "validation_bundles_v0.jsonl:dask__dask-8820.golden_patch"
+   ],
+   "note": "gold 8 行，只加 `__name__`/`__doc__` 两个 property，无无关改动、不依赖未交付改动。次要：把 `__doc__` 定义成 property 会覆盖 DelayedLeaf 类自身的 docstring 访问（`DelayedLeaf.__doc__` 变成 property 对象），属副作用但无害。",
+   "by": "L1_dask"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-8820.problem_statement"
+   ],
+   "note": "题面不含修复代码、无 PR/commit 号；hints 为空。",
+   "by": "L1_dask"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-8820/gold/offline/a1/test_output.txt (install rc=0)"
+   ],
+   "note": "安装 rc=0；Python 3.9.19 + pytest-8.3.2。",
+   "by": "L1_dask"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "4e5dfe7463028a39a90e026c7fb9220969093ab3:dask/tests/test_delayed.py"
+   ],
+   "note": "无 mark.network / URL 下载 / requests / boto3；importorskip 命中 numpy / dask.array / dataclasses / cloudpickle 等本地包。",
+   "by": "L1_dask"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-8820/gold/offline/a1/status_map.json"
+   ],
+   "note": "gold 侧 53 条结果行、0 SKIPPED、0 伪键；F2P + 45 条 P2P 全 PASSED。另有 2 条 XFAIL（test_pickle[modlevel_delayed1/2]）与 1 条恒 FAILED（test_check_meta_flag，上游库 API 变更），均不在参考集内。",
+   "by": "L1_dask"
+  },
+  "9": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-8820/{gold,empty}/offline/a1/status_map.json"
+   ],
+   "note": "empty→F2P FAILED，gold→PASSED，45 条 P2P 两侧全 PASSED。",
+   "by": "L1_dask"
+  }
+ },
+ "issues": [
+  {
+   "category": "要求略不充分",
+   "severity": "P3",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-8820.problem_statement"
+   ],
+   "proposed_action": "题面加一句“`__doc__` 同理”即可；或接受 'similar to functools.wraps' 作为足够线索。",
+   "next_experiment": "只实现 `__name__` 的版本跑 F2P，确认第二条断言失败。"
+  },
+  {
+   "category": "退化路径无覆盖",
+   "severity": "P3",
+   "evidence_refs": [
+    "validation_bundles_v0.jsonl:dask__dask-8820.golden_patch"
+   ],
+   "proposed_action": "仅记录：`delayed` 包装无 `__name__` 的对象时 gold 会抛 AttributeError，无断言约束。",
+   "next_experiment": "gold 树上执行 `delayed(functools.partial(print)).__name__`，记录行为。"
+  },
+  {
+   "category": "跨题泄漏",
+   "severity": "P2",
+   "evidence_refs": [
+    "4e5dfe7463028a39a90e026c7fb9220969093ab3:dask/delayed.py:114,196"
+   ],
+   "proposed_action": "dask__dask-7656 与 dask__dask-8820 必须同侧（8820 的 base 含 7656 的 gold，P2P 交集 43/45）。",
+   "next_experiment": "对 216 题做“A 的 gold 是否已在 B 的 base 里”的全量交叉检查。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰测试文件，gold 只碰源码；按第四组 B 默认保持空。",
+  "evidence_refs": [
+   "grading_bundles_v2_v0.jsonl:dask__dask-8820.test_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "dask/tests/test_delayed.py::test_attributes",
+   "reason": "已在 P2P；断言 `Delayed` 的属性访问仍走 DelayedAttr（`a.attr` 返回 Delayed 而非真实属性），能拦住“把 __getattr__ 整个改成透传”的过度修复。"
+  },
+  {
+   "id": "dask/tests/test_delayed.py::test_delayed_decorator_on_method",
+   "reason": "已在 P2P；覆盖 `@delayed` 装饰方法的场景，是 `_obj` 不一定有 `__name__` 的最近邻。"
+  },
+  {
+   "id": "dask/tests/test_delayed.py::test_delayed_callable / test_delayed_name_on_call（新增）",
+   "reason": "覆盖 `delayed(非函数对象)` 的退化路径，验证不会因为新 property 抛 AttributeError。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "题面短小可复现、gold 8 行、链路健康、判据清晰。保留项只有两条小的：F2P 多要求了题面未提的 `__doc__`；与 dask__dask-7656 存在 base 含 gold 的跨题泄漏，划分须同侧。"
+ },
+ "costs": {
+  "minutes": 17
+ }
+}

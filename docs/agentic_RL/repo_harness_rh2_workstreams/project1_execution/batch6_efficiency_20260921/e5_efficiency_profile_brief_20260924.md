@@ -87,3 +87,9 @@ README 警告的"未用 rollout logprob 时改用 detached training logprob 作 
 - **修法**：`write_execution_audit_record` 新增 `grading` 摘要块（`finalized.grading_report` 的 report_id / outcome / failure_category / reward / timings，与旧 record_event 同形；未 finalize = None）——这是每次 execution 都经过的审计出口。`run_report` 的评分总体（reward facet）、有效评分速率、评分分段耗时改为共用 `_grading_records`：唯一来源 = execution audit 的 grading 块（按 `physical_attempt_id` 去重取最后一条，重评分 / 多训练行不重复计数；评测 attempt 单列不计）；旧 bringup 块只在没有任何带 `grading` 键的 audit 行时作回退（E5 之前的证据）；两者都没有 → `effective_gradings=None` + `no_grading_records`，生命周期行不产生分母；部分 execution 无评分块 → `grading_coverage` 与 `partial_grading_coverage` reason，不把部分观察当总体。交付记录 / eligibility 分布仍只来自 bringup_events（没有就是 None）。
 - **验收**（`test_e5_run_report.py` +4，双 lane）：真实 `RolloutOrchestrator` + `write_execution_audit_record`（假 Docker / driver / 模型，评分替身给 resolved 与 infra 两种真实契约形态）→ `load_run_inputs` → 报告：resolved 1、infra 归 reward_unknown、来源 execution_audit、无 bringup 时交付记录为 None；只有 shutdown 两行 + 无 grading 键的旧 audit → 未知（速率、评分总体、分段耗时三处）；评测 / infra / 重复 execution 记录 / 无评分块的 aborted 各自单列，覆盖 3/4 有 reason；audit 与旧 bringup 块同时在场以 audit 为准。既有 `test_run_report` 的"只给 audit = 无法知道"口径同步改为"评分总体来自 audit，交付记录仍未知"。
 - **未做 / 提醒**：train / eval 平面按 audit 的 `evaluation` 块分；`startup_evidence.json` 的进程内档位块仍只由 launch 的 `run_manifest.json` 消费（未来正式 launcher 接同一证据）。Codex §4 的复杂度提醒（`save_debug_train_data` 等纯观测不足不宜一概扩成配置拒绝、少堆 YAML 关键词扫描）记为后续收敛项，本轮未改守卫。
+
+## 9. Codex EF1 修复复核（2026-09-25）
+
+**EF1 通过，本轮无 GPU 部分收口。** [完整复核与证据](review_ef1_ns1_20260925/README.md)。真实 miles 入口 → prepared 身份绑定 → fa_formal 编排 → 审计 writer → 报告的五案通过：成功、可信零分各计一次；infra / 无评分 / eval 分列；不同 physical attempt 不误折叠、重复行不重复计数；只有 shutdown 行仍未知，分段耗时共用同一评分来源。
+
+相关维护测试 33 passed，正式入口 CPU 运输探针通过，模型 / 资源 / grader 为明确替身。旧交付字段将生命周期行当成交付，以及同一 run 混版本审计的覆盖量边界，登记为报告 §3 的非阻塞收敛项；不把它们重新扩大成 EF1 阻塞。GPU F1–F8、I18 和已列观测缺项仍按原分期。

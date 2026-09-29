@@ -1,0 +1,488 @@
+{
+  "instance_id": "pydantic__pydantic-8793",
+  "date": "2026-09-29",
+  "status": "cpu_diagnosis_complete_confirmed_false_positive",
+  "finding": {
+    "code": "T2b",
+    "severity": "S1",
+    "rule": "v1 §4 step3；同一候选破坏有公开依据的常用默认值行为，也符合step4",
+    "fact": "把合并分支所有default覆盖写成PydanticUndefined的source-only候选正式得1，但真实default=5不可省略，旧Annotated默认值测试2失败。",
+    "not_claimed": [
+      "不是环境失效",
+      "不是gold新增回归",
+      "不是正式评分已修复",
+      "不是实际模型能力结论"
+    ]
+  },
+  "usage": {
+    "problem_diagnosis": {
+      "status": "yes"
+    },
+    "capability_comparison": {
+      "status": "conditional",
+      "allowed_scope": "可列受限能力比较候选，不因T2b自动等于题意争议；依v1 §10/§11先登记审计和计分口径。当前未批准/运行模型比较。",
+      "conditions": [
+        "本次CPU结果独立复核已完成，见acceptance；后续模型比较仍须满足下列未完成条件",
+        "实际模型任务的题面/public_hints交付、公共GPU入口和预算另验；本次actor是devcheck控制消息",
+        "使用共同题单/预算/有效分母；原reward与下述预登记语义审计结果分列"
+      ]
+    },
+    "training": {
+      "status": "no",
+      "reason": "未处理S1/T2b；D6正式SWE修订入口本夜未获实施授权"
+    },
+    "held_out_evaluation": {
+      "status": "no",
+      "reason": "未满足训练候选质量；跨题关系与split也未核；任何将来修订须标明自建版本"
+    }
+  },
+  "preregistered_semantic_audit": {
+    "scope": "后续受限比较中本题所有原reward=1的候选；不看候选身份挑选是否审计",
+    "checks": [
+      "同一公开required/缺值/合法输入脚本 public_required.py",
+      "public_commands.json public_defaults（真实默认5与工厂7）",
+      "若触及共享字段合并，沿本次相同公开test_annotated/test_create_model窄回归读结果"
+    ],
+    "reporting": "原reward原样保留；语义审计分列pass/fail/unverified及证据，fail不得称完整解；不把私有后检冒充正式benchmark修好。未完成有效执行的审计为unverified。"
+  },
+  "formal_runs": [
+    {
+      "candidate": "noop",
+      "reward": 0.0,
+      "f2p": {
+        "passed": 0,
+        "total": 3
+      },
+      "p2p": {
+        "passed": 364,
+        "total": 364
+      },
+      "all_367_raw_id_status_verified": true,
+      "reference_rows_sha256": "a083ec69bc437d0f169345403158ad320659da07476dd629bbf2c470b60507bc",
+      "reference_material": "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/grading.json",
+      "raw_pytest": {
+        "passed": 377,
+        "failed": 3,
+        "skipped": 1,
+        "xfailed": 1
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 5.151,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 9.088
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 9.088,
+        "segment_completed": true
+      },
+      "resource": {
+        "mem_peak_mb": 1294.172,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "resource_facts": null,
+      "phases": {
+        "delta_apply": 0.184743,
+        "grader_baseline_rebuild": 0.476681,
+        "grader_cleanup": 1.675803,
+        "grader_start_and_verify": 1.725326,
+        "grader_trusted_setup": 282.232127,
+        "parser_and_report": 4.69811,
+        "test": 15.717092
+      },
+      "candidate_identity": {
+        "apply_method": "noop",
+        "apply_stderr_tail": null,
+        "apply_user": "agent/54321",
+        "kind": "noop",
+        "origin": "noop",
+        "patch_sha256": null
+      },
+      "projection": {
+        "frozen_patch_digest": "sha256:27bcc06b01725c700cb470ec0604c9a82671b6140dccd6e943c0d4fbf7e953fa",
+        "ignored_paths": [],
+        "included_paths": [],
+        "unsupported_shape_reasons": []
+      },
+      "exported_source_contents": [],
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/pydantic/__init__.py",
+        "RH2_OBS_INSTALL_PROBE": "absent",
+        "RH2_OBS_INSTALL_PROBE_PRE": "absent",
+        "RH2_OBS_PKG_VERSION": "2.7.0a1",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "d5eb18bb38fd14ad32a6fa0b27231b03753e9c31921a29f55abea680d363d809",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "d5eb18bb38fd14ad32a6fa0b27231b03753e9c31921a29f55abea680d363d809"
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "manager_close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "supply_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0,
+        "containers_created_total": 1,
+        "containers_removed_total": 1,
+        "container_history_retained": 1,
+        "leases_total": 1
+      },
+      "evidence": {
+        "ledger": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/noop/ledger.jsonl",
+        "ledger_sha256": "8fb75b7d40b1c894d7421b99d9e10fe6ef0c39d80ae96e73de8238fde9694c39",
+        "log": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/noop/eval_logs/evallog_replay-cpu29-cal-pydanti_ee27b994.eval.log",
+        "log_sha256": "5a383e68d72f30c4e7d1d433537b2bf5eea9e4fee720b74fc8a4e9402ce2edfb",
+        "frozen_patch": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/noop/artifacts/swe_gym_lite--pydantic__pydantic-8793/a1-e4be31f1/frozen_patch.json",
+        "frozen_patch_sha256": "8b506f16378b1376369eed5c5af48781a01c1debcc2e93c239d221f298926c60"
+      }
+    },
+    {
+      "candidate": "gold",
+      "reward": 1.0,
+      "f2p": {
+        "passed": 3,
+        "total": 3
+      },
+      "p2p": {
+        "passed": 364,
+        "total": 364
+      },
+      "all_367_raw_id_status_verified": true,
+      "reference_rows_sha256": "288a465c0e72b14905d9ea05f0231ff10e9ce1224464bc04adc6ddc3497503a9",
+      "reference_material": "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/grading.json",
+      "raw_pytest": {
+        "passed": 380,
+        "failed": 0,
+        "skipped": 1,
+        "xfailed": 1
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 4.353,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 5.838
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 5.838,
+        "segment_completed": true
+      },
+      "resource": {
+        "mem_peak_mb": 808.289,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "resource_facts": null,
+      "phases": {
+        "delta_apply": 0.394637,
+        "grader_baseline_rebuild": 0.516514,
+        "grader_cleanup": 1.246613,
+        "grader_start_and_verify": 1.843903,
+        "grader_trusted_setup": 216.97935,
+        "parser_and_report": 1.578418,
+        "test": 11.617575
+      },
+      "candidate_identity": {
+        "apply_method": "git_apply",
+        "apply_stderr_tail": null,
+        "apply_user": "agent/54321",
+        "kind": "gold",
+        "origin": "/work/swegym_cpu_preprobe_20260929/gold/v1/pydantic__pydantic-8793.gold.patch",
+        "patch_sha256": "sha256:db816cd4802bd14e7428d09fff82141fdb3a2ee631a7fe3b809a12f701df273e"
+      },
+      "projection": {
+        "frozen_patch_digest": "sha256:7f00f8b80da676d2365270eaaf75475f11fc19f71de77b2b1d7e488284753431",
+        "ignored_paths": [],
+        "included_paths": [
+          "pydantic/fields.py"
+        ],
+        "unsupported_shape_reasons": []
+      },
+      "exported_source_contents": [
+        {
+          "path": "pydantic/fields.py",
+          "sha256": "d813d8cc32cb50056a1197e5972af774304ee40e347b100fc01fc4f1449530f1",
+          "bytes": 46217
+        }
+      ],
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/pydantic/__init__.py",
+        "RH2_OBS_INSTALL_PROBE": "absent",
+        "RH2_OBS_INSTALL_PROBE_PRE": "absent",
+        "RH2_OBS_PKG_VERSION": "2.7.0a1",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "d5eb18bb38fd14ad32a6fa0b27231b03753e9c31921a29f55abea680d363d809",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "d5eb18bb38fd14ad32a6fa0b27231b03753e9c31921a29f55abea680d363d809"
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "manager_close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "supply_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0,
+        "containers_created_total": 1,
+        "containers_removed_total": 1,
+        "container_history_retained": 1,
+        "leases_total": 1
+      },
+      "evidence": {
+        "ledger": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/gold/ledger.jsonl",
+        "ledger_sha256": "d32d35b4c6c95fac493ee6622ed5db3a6e547cf31efa24e967b08e35e7a89fc1",
+        "log": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/gold/eval_logs/evallog_replay-cpu29-cal-pydanti_60d69a7b.eval.log",
+        "log_sha256": "583b69c57b96dfbd439df23e993ddee9b3bdcb0755b1911c3339283df11dec1d",
+        "frozen_patch": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/gold/artifacts/swe_gym_lite--pydantic__pydantic-8793/a1-9bc6e129/frozen_patch.json",
+        "frozen_patch_sha256": "d848c4574c138e2d0f05b39329a54015fb56e27db19f840794d57c55443cd73d"
+      }
+    },
+    {
+      "candidate": "forced_required",
+      "reward": 1.0,
+      "f2p": {
+        "passed": 3,
+        "total": 3
+      },
+      "p2p": {
+        "passed": 364,
+        "total": 364
+      },
+      "all_367_raw_id_status_verified": true,
+      "reference_rows_sha256": "288a465c0e72b14905d9ea05f0231ff10e9ce1224464bc04adc6ddc3497503a9",
+      "reference_material": "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/grading.json",
+      "raw_pytest": {
+        "passed": 380,
+        "failed": 0,
+        "skipped": 1,
+        "xfailed": 1
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 4.479,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 5.799
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 5.799,
+        "segment_completed": true
+      },
+      "resource": {
+        "mem_peak_mb": 807.289,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "resource_facts": null,
+      "phases": {
+        "delta_apply": 0.37971,
+        "grader_baseline_rebuild": 0.473267,
+        "grader_cleanup": 1.303771,
+        "grader_start_and_verify": 1.680564,
+        "grader_trusted_setup": 189.364309,
+        "parser_and_report": 1.628517,
+        "test": 11.743454
+      },
+      "candidate_identity": {
+        "apply_method": "git_apply",
+        "apply_stderr_tail": null,
+        "apply_user": "agent/54321",
+        "kind": "cc",
+        "origin": "/work/swegym_cpu_preprobe_20260929/inputs_v1/pydantic__pydantic-8793/private_degenerate_force_required.patch",
+        "patch_sha256": "sha256:248e5947705576b7b12499d96bb2ad327a09c1edb3561e72af19b4b125e6185f"
+      },
+      "projection": {
+        "frozen_patch_digest": "sha256:8b8b3760ef5b8caa281b5661959a14d196602ea7b96feb0165a30041695a933c",
+        "ignored_paths": [],
+        "included_paths": [
+          "pydantic/fields.py"
+        ],
+        "unsupported_shape_reasons": []
+      },
+      "exported_source_contents": [
+        {
+          "path": "pydantic/fields.py",
+          "sha256": "5e46653351a916e9e2d070d1d882624ee6c5308b1c941bf9a9b6b230fc1b01c5",
+          "bytes": 46007
+        }
+      ],
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/pydantic/__init__.py",
+        "RH2_OBS_INSTALL_PROBE": "absent",
+        "RH2_OBS_INSTALL_PROBE_PRE": "absent",
+        "RH2_OBS_PKG_VERSION": "2.7.0a1",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "d5eb18bb38fd14ad32a6fa0b27231b03753e9c31921a29f55abea680d363d809",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "d5eb18bb38fd14ad32a6fa0b27231b03753e9c31921a29f55abea680d363d809"
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "manager_close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "supply_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0,
+        "containers_created_total": 1,
+        "containers_removed_total": 1,
+        "container_history_retained": 1,
+        "leases_total": 1
+      },
+      "evidence": {
+        "ledger": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/forced_required/ledger.jsonl",
+        "ledger_sha256": "f725a31df9aca22eeed234bfa5ef4db9ddad387396ea61d4cae38dbaa6c7ffd0",
+        "log": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/forced_required/eval_logs/evallog_replay-cpu29-cal-pydanti_bdffb287.eval.log",
+        "log_sha256": "5908550515ca26a99ac7662bb71e69026a87febccf50eede2425317a76ebd287",
+        "frozen_patch": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/forced_required/artifacts/swe_gym_lite--pydantic__pydantic-8793/a1-ec527b3c/frozen_patch.json",
+        "frozen_patch_sha256": "f2b0a9981f65daf308c9a7a389fc12ab765d4753494162fce58f6d798353e33e"
+      }
+    }
+  ],
+  "private_behavior": {
+    "summary": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/private_behavior/summary.json",
+    "summary_sha256": "1a4a45e6224fdebacc531be927c9c93361b086c2d8b82f51f3f02366ff68d624",
+    "base": "原例三缺陷；default控制通过；72passed1skip",
+    "gold": "原例全部修复；default控制通过；72passed1skip",
+    "forced_required": "原例全部修复；Defaults.x缺值ValidationError(type=missing)；旧测试2failed70passed1skip",
+    "cleanup": "三variant rm/query0，remaining空",
+    "boundary_observation": "内层Field(3)+外层Ellipsis：base=Ellipsis、gold=3、退化=PydanticUndefined。公开文档/旧测试优先级边界未由本实验裁决，不加硬规范。"
+  },
+  "minimal_revision_draft": {
+    "status": "proposal_only_not_applied",
+    "template": "R-c",
+    "public_basis": [
+      "base docs/concepts/fields.md默认值语义",
+      "base tests/test_annotated.py::test_annotated 的两项default=5约束",
+      "base tests/test_create_model.py::test_create_model_usage 的缺省默认值行为"
+    ],
+    "behavior_assertion": "from typing_extensions import Annotated\nfrom pydantic import Field, create_model\nM = create_model('Defaults', x=(Annotated[int, Field(description='x')], 5))\nassert M().x == 5\nassert not M.model_fields['x'].is_required()\n",
+    "scope": "只保护真实默认值可以省略；原必填F2P全部保留。不规定内部helper、repr精确形状或内层default/外层Ellipsis优先级。",
+    "cpu_acceptance_after_implementation_authorized": [
+      "独立版本材料/参考与父版本明确，原件不改",
+      "在同一有效环境正式noop0/gold1/forced_required0；确认退化因新增默认值断言拒绝，而不是安装/投影错误",
+      "原F2P3+P2P364仍实际执行，已知错误候选均为0、清理完成",
+      "独立复核；若改变环境先补该变化影响的资格证据，不拿私有root结果代actor"
+    ]
+  },
+  "environment": {
+    "actor_result_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/pydantic__pydantic-8793/actor_original_v1_review.json",
+    "grader_image_id": "sha256:039bc9c34cdf14c690f6ec0c955fee93bdaed598eda3253dd76b895b173f671e",
+    "scripts_digest": "sha256:d69e1d2c8a957d6988c11fa206a00c2b9627071081d6f1a0e57ccc9bc91234a5",
+    "policy": {
+      "candidate_writable_prefixes": [
+        "/opt/miniconda3/envs/testbed"
+      ],
+      "cpus": 2.0,
+      "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+      "memory_bytes": 4294967296,
+      "network": "deny_all",
+      "pids_limit": 512,
+      "profile_id": "rh2.grader_sandbox_profile.v1",
+      "shm_bytes": 67108864,
+      "tmpfs_bytes": 1073741824,
+      "uid": 54322,
+      "user": "rh2grader"
+    },
+    "wheelhouse": "8公开wheel固定hash已在远端恢复；不含历史1021-byte私有canary",
+    "cold_rebuild": "本次固定upstream + 8wheel新构建成功，三方正式运行有效；不是历史9wheel镜像字节同一",
+    "efficiency": "trusted_setup三次282.232/216.979/189.364秒；测试9.088/5.838/5.799秒。preown优化未用；当前有效0/1不因准备慢作废。"
+  },
+  "remaining": [
+    {
+      "owner": "root/用户D6",
+      "item": "SWE正式材料修订入口成本/设计与实施授权；本夜仅草案，不改参考"
+    },
+    {
+      "owner": "实施者+独立复核",
+      "item": "授权后R-c材料与参考版本化、三方CPU验收，S1关闭前不训练"
+    },
+    {
+      "owner": "root/A-B公共前置",
+      "item": "正式题面/提示交付、GPU求解接线和预算；本次非模型成绩"
+    },
+    {
+      "owner": "题主/数据分组",
+      "item": "跨题关系/训练留出split、真实难度/成本待后续，不以CPU结果代替"
+    },
+    {
+      "owner": "root/A线效率",
+      "item": "逐版本调查控制面chown成本；不自动更换镜像或套preown层"
+    },
+    {
+      "owner": "题主",
+      "item": "默认值之外覆盖保持既有边界；内外默认优先级只记录，不扩新规格"
+    }
+  ],
+  "acceptance": {
+    "status": "completed_for_current_cpu_evidence",
+    "completed_item": "本题本次结果独立验收；root冻结parser重放与本文原ID逐条验证交叉确认",
+    "independent_review": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/pydantic8793_result_review.md",
+    "root_frozen_parser": "runs/swegym_cpu_preprobe_20260929/analysis/pydantic8793_calibration_v1.json",
+    "root_transport_sha": "runs/swegym_cpu_preprobe_20260929/analysis/evidence_manifest_pyd8793_v1.json",
+    "scope": "本次CPU三方原件独立验收及冻结parser重放已完成，原件日志SHA一致；不解除D6、正式交付、环境边界或模型/训练资格。"
+  }
+}

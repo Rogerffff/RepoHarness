@@ -1,0 +1,271 @@
+{
+ "task_id": "swe_gym_lite::Project-MONAI__MONAI-4925",
+ "instance_id": "Project-MONAI__MONAI-4925",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_monai_2 (Claude Opus 5, 静态审查)",
+ "materials_refs": {
+  "base_commit": "55caf941eeeb1a5a3040791c1a150de0ca708a41",
+  "version": "0.9",
+  "python_version": "3.8",
+  "eval_cmd": "pytest -rA  tests/test_fl_exchange_object.py（整文件跑）",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/Project-MONAI__MONAI-4925/{gold,empty}/offline/a1/",
+  "created_at": "2022-08-17"
+ },
+ "public_view": {
+  "目标行为": "`ExchangeObject` 继承自 dict 但数据都存在实例属性里，`print(data)` 只显示 `{}`。题面要求改进打印与 summary，让有数据时不再显示空字典。",
+  "约束": "题面只有一句功能描述（497 字符），没有给出期望的输出格式。",
+  "公开材料无法确定的点": [
+   "summary/打印的**具体格式**（题面完全没给样例输出）",
+   "weights 这种大字典是显示长度、类型还是摘要",
+   "weight_type 枚举怎么呈现",
+   "summary() 的返回类型是否要从 dir(self) 改掉（题面未提）",
+   "键的顺序"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.test_patch tests/test_fl_exchange_object.py",
+    "validation.golden_patch monai/fl/utils/exchange_object.py"
+   ],
+   "note": "同一 PR，目标文件 base 存在。无二进制/LFS/子模块材料。",
+   "by": "L1_monai_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base 55caf941 monai/fl/utils/exchange_object.py:85-86 `def summary(self): return dir(self)`；类继承 dict 且 `super().__init__()` 后始终为空"
+   ],
+   "note": "初态确实是题面描述的状态：repr 走 dict 的空字典、summary 返回 dir() 列表。stage1 empty: test_init_1 FAILED。",
+   "by": "L1_monai_2"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "public.problem_statement 497 字符"
+   ],
+   "note": "渲染完整、无外链无图片无截断；hints_text 为空。但**信息量极低**：只有一句『不要显示空字典』，没有任何期望输出样例。",
+   "by": "L1_monai_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.test_patch 只触碰 tests/test_fl_exchange_object.py"
+   ],
+   "note": "纯测试文件；gold 只碰 monai/fl/utils/exchange_object.py。additional_exclusions 保持空。",
+   "by": "L1_monai_2"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh setup 段"
+   ],
+   "note": "恢复清单只有一个纯测试文件。",
+   "by": "L1_monai_2"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "scan/monai_cross_index.txt"
+   ],
+   "note": "26 道 MONAI 题里只有本题触碰 monai/fl/ 子树。",
+   "by": "L1_monai_2"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "public.problem_statement 无任何期望输出",
+    "test_patch 断言 assertEqual(repr(eo), \"{'weights': 122, 'optim': 2, 'metrics': 1, 'weight_type': fl_weight_diff, 'statistics': 1}\")"
+   ],
+   "note": "P1：**要求完全不可从公开材料推出**。F2P 逐字匹配一个字符串，其中每一项都是无依据的设计选择：dict 值显示 `len()`（weights=122、optim=2、metrics=1、statistics=1）、WeightType 显示枚举值本身、键顺序固定为 weights/optim/metrics/weight_type/statistics。题面一个样例都没给。任何合理的替代格式（如 `'weights': 148 params`、JSON、按字母序）都拿 0 分。",
+   "by": "L1_monai_2"
+  },
+  "24": {
+   "status": "issue",
+   "evidence_refs": [
+    "同上"
+   ],
+   "note": "P1：精确字符串断言把实现钉死到 gold 的 `_add_to_summary` 逻辑与 zip 顺序。构造一个满足题面要求但格式不同的合法实现必被拒。",
+   "by": "L1_monai_2"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "grading.fail_to_pass 只有 test_init_1"
+   ],
+   "note": "P2：另一面同样成立——只要凑出这一个字符串就满分。例如直接写 `__repr__` 返回 `str({k: len(v) if isinstance(v, dict) else v for k, v in [...] if v})` 即可，不需要实现题面说的 summary 改进；`summary()` 仍返回 `dir(self)` 也照样通过（测试只调用 `eo.summary()` 不检查返回值）。",
+   "by": "L1_monai_2"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "grading.pass_to_pass 4 条 = test_init_0 + test_failures_0/1/2"
+   ],
+   "note": "P2：P2P 等于整文件其余用例，但这个文件本身只有 5 个用例，且 3 条是构造期的 ValueError 校验，与打印逻辑无关。`ExchangeObject` 的真正消费者（monai/fl/client/monai_algo.py 等）零覆盖；gold 把 `summary()` 的返回类型从 `list`（dir）改成 `dict`，这是**对外行为的不兼容改动**，没有任何测试守住调用者。",
+   "by": "L1_monai_2"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "validation.golden_patch: `self._summary.update(self)`",
+    "gold 的 `_summary` 在实例上累积、不在 summary() 开头清空"
+   ],
+   "note": "P2：gold 有两处瑕疵。(a) `self._summary.update(self)` 是死代码——`ExchangeObject` 作为 dict 始终为空（`super().__init__()` 无参，属性都存在 `self._xxx` 上）。(b) `_summary` 跨调用累积且不重置，属性改成 falsy 之后再 `summary()` 仍保留旧键。两处都无测试覆盖。",
+   "by": "L1_monai_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "public.problem_statement 全文；raw.hints_text 长度 0"
+   ],
+   "note": "题面不含修复代码与 PR 链接。",
+   "by": "L1_monai_2"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 install rc=0（两侧）",
+    "stage1 gold 日志 466 行：torchvision 0.14.1 already satisfied"
+   ],
+   "note": "离线镜像内 rc=0，torchvision/ignite 都已装。",
+   "by": "L1_monai_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch: network = models.resnet18()（无 pretrained/weights 参数）",
+    "stage1 gold 日志中无任何 'Downloading' 行"
+   ],
+   "note": "**与 MONAI-1121 的已知反例不同**：本题的 `models.resnet18()` 不带 pretrained，只构造随机初始化网络，不下载权重。已在 stage1 日志里核对过无下载行。",
+   "by": "L1_monai_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "scan/envscan.txt：tests/test_fl_exchange_object.py 无 DOWNLOAD/NET 命中，只有 SKIPDEC"
+   ],
+   "note": "不需要网络。",
+   "by": "L1_monai_2"
+  },
+  "13": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 gold test 段 6.8s / 5 passed"
+   ],
+   "note": "resnet18 随机初始化约 11.7M 参数（~45MB）在 CPU 上构造，无多进程、无 shm 需求。",
+   "by": "L1_monai_2"
+  },
+  "12": {
+   "status": "issue",
+   "evidence_refs": [
+    "test_patch 期望串里的 'weights': 122 与 'optim': 2"
+   ],
+   "note": "P2（外部库行为耦合）：`122` 是 torchvision 0.14.1 下 `resnet18().state_dict()` 的条目数，`2` 是该 torch 版本 `Adam.state_dict()` 的键数。两者都是**第三方库内部结构**，换版本就断。属于『测试依赖外部行为』的静态版本。",
+   "by": "L1_monai_2"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "base tests/test_fl_exchange_object.py:45-46 类级 @SkipIfNoModule(\"torchvision\") 与 @SkipIfNoModule(\"ignite\")",
+    "rh2/src/repoharness2/envpack/swegym_parsers.py:47-58",
+    "rh2/src/repoharness2/envpack/scoring.py:201 缺席计失败"
+   ],
+   "note": "P1（风险，非当前失败）：整个类被两个可选依赖守卫。若评分机上 torchvision 或 ignite 缺失，**全部 5 条 F2P+P2P 都会 SKIPPED**；而 pytest `-rA` 的跳过摘要不含 nodeid（`SKIPPED [5] file:line: reason`），parser 取不到这些 ID，它们全部落入 `reference_missing` 并按『缺席计失败』记 0——失败原因在报告里完全不可见，会被误判成候选做错。",
+   "by": "L1_monai_2"
+  },
+  "31": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_monai_2/scan/control_surface.txt",
+    "stage1 eval.sh 只 `git checkout <base> <test_patch 路径>`",
+    "grading.test_patch 不含 tests/utils.py"
+   ],
+   "note": "P2：本题测试从 **tests/utils.py** import `SkipIfNoModule`，而 test_patch 的恢复清单只含本题的测试文件本身，**tests/utils.py 不被恢复**，保持候选写过的状态。弱暴露：这些 helper 只影响跳过/超时行为，改它对候选没有正收益（跳过的 nodeid 会缺席→按缺席计失败）。 另：base 里没有 tests/conftest.py，候选可新建一个注入 hook。此处只记录观测与建议，不据怀疑扣分。",
+   "by": "L1_monai_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "要求不可推断 + 精确字符串锁死实现",
+   "severity": "P1",
+   "evidence_refs": [
+    "public.problem_statement（无样例输出）",
+    "test_patch 的 assertEqual(repr(eo), ...)"
+   ],
+   "proposed_action": "要么把期望的 summary 格式写进题面（形成修订版），要么把断言放宽成结构检查（键集合、weights 项是正整数），否则本题不适合作为盲解样本。",
+   "next_experiment": "让 3 个独立求解上下文各实现一次，统计逐字命中该字符串的次数（预期 0）。"
+  },
+  {
+   "category": "测试与第三方库内部结构耦合",
+   "severity": "P2",
+   "evidence_refs": [
+    "'weights': 122（torchvision 0.14.1 resnet18 state_dict 条目数）",
+    "'optim': 2（torch Adam state_dict 键数）"
+   ],
+   "proposed_action": "改成 `len(network.state_dict())` 动态计算而不是写死 122（属于改题）。",
+   "next_experiment": "在另一 torchvision 版本下构造 resnet18 并打印 len(state_dict())，确认是否仍是 122。"
+  },
+  {
+   "category": "可选依赖缺失会被记成候选失败",
+   "severity": "P1",
+   "evidence_refs": [
+    "类级双 SkipIfNoModule",
+    "parser 丢弃 SKIPPED 的 nodeid",
+    "scoring 缺席计失败"
+   ],
+   "proposed_action": "在题级 facts 里记录『本题全部参考测试依赖 torchvision + ignite』，并在评分面补一条诊断：参考 ID 缺席且日志里出现 `SKIPPED [n]` 时单列为 environment 归因，不直接记 0。",
+   "next_experiment": "在镜像里临时屏蔽 ignite（重命名 site-packages 目录）跑一次，观察 status_map 与 verdict。"
+  },
+  {
+   "category": "gold 自身缺陷",
+   "severity": "P2",
+   "evidence_refs": [
+    "`self._summary.update(self)` 死代码",
+    "_summary 跨调用累积"
+   ],
+   "proposed_action": "记入 check 27，不因为保 gold 而降低标准；修订版可要求 summary() 每次重建。",
+   "next_experiment": "对同一 ExchangeObject 先设 weights 再置 None，连续调 summary() 两次，确认旧键残留。"
+  },
+  {
+   "category": "评分控制面（test_patch 之外的测试依赖）",
+   "severity": "P3",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_monai_2/scan/control_surface.txt"
+   ],
+   "proposed_action": "记录即可：本题对该文件的暴露没有正收益。",
+   "next_experiment": "无。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰纯测试文件；gold 不碰测试样路径。 补充：测试从 tests/utils.py import `SkipIfNoModule`，该文件不在恢复清单内；但这些 helper 只影响跳过/超时，改它对候选没有正收益，因此仍保持 additional_exclusions 为空。",
+  "evidence_refs": [
+   "grading.test_patch",
+   "validation.golden_patch",
+   "runs/env_overnight_20260916/L1_monai_2/scan/control_surface.txt"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/test_fl_monai_algo.py、tests/test_fl_monai_algo_dist.py",
+   "reason": "ExchangeObject 的真正消费者；gold 把 summary() 返回类型从 list 改成 dict，需要确认调用者不受影响。"
+  },
+  {
+   "id": "tests/test_fl_monai_algo_stats.py",
+   "reason": "统计路径同样构造并打印 ExchangeObject。"
+  },
+  {
+   "id": "新增：对同一对象重复调用 summary() 的幂等性用例",
+   "reason": "gold 的 `_summary` 跨调用累积，这是最可能出问题的地方。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "reject_revision",
+  "reason": "题面只有一句『不要显示空字典』，F2P 却逐字匹配一个含 torchvision/torch 内部条目数的精确字符串；要求既不可推断也强制唯一实现。除非改题面给出格式约定或放宽断言，否则不适合入池。"
+ },
+ "costs": {
+  "minutes": 21
+ }
+}

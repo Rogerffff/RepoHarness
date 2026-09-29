@@ -1,0 +1,205 @@
+{
+ "task_id": "pydantic__pydantic-8525",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_pydantic (Claude Opus 5, 2026-09-16 夜)",
+ "materials_refs": [
+  "s2/ingest/*_bundles_v0.jsonl (pydantic__pydantic-8525)",
+  "repos/pydantic@54d1185f(见 grading.base_commit)",
+  "runs/env_probe_stage1_20260910/.../pydantic__pydantic-8525/"
+ ],
+ "public_view": {
+  "目标行为": "`model_construct(**values)` 里若 values 含私有属性名（如 `_a`），应把它写进 `__pydantic_private__` 而不是丢弃；题面场景是把 model_serialize（dict(self) + __pydantic_private__）的结果再 model_construct 回来。",
+  "约束": "不能改变普通字段与 extra 的处理。",
+  "公开材料无法确定的点": [
+   "题面自己的诊断“This seems caused by inheritance”是**错的**：真正的区分是有无默认值/工厂（`_mail_nickname` 有 default_factory 所以被 model_post_init 填上，`_requestor` 没有所以缺失），与继承无关。按题面的诊断去查会走弯路。",
+   "私有属性名与字段名同名时的优先级"
+  ],
+  "base 定位": "pydantic/main.py:238-243 `model_construct`：`if cls.__pydantic_post_init__: m.model_post_init(None)`，model_post_init 只按 __private_attributes__ 的默认值初始化，values 里的私有属性名被 `fields_values.update(values)` 塞进 __dict__ 或直接忽略，从不进 __pydantic_private__。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "tests/test_construction.py、pydantic/main.py 在 base 均存在"
+   ],
+   "note": "对应同一问题。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "main.py:238-243",
+    "stage1 empty：test_initialize_with_private_attr FAILED"
+   ],
+   "note": "base 确有缺陷。",
+   "by": "static+stage1log"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement 5092 字符（本包最长），含 uuid4/computed_field/alias_generator/constr/继承 等大量与缺陷无关的元素",
+    "题面自述 'This seems caused by inheritance'"
+   ],
+   "note": "P2：实际输入噪声大且**自带错误诊断**。最小复现只需 3 行（F2P 就是），题面却给了一个 60 行、依赖 6 个额外特性的例子，并把根因归给继承。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只碰 tests/test_construction.py；F2P+P2P 46 条全在该文件；gold 只碰 pydantic/main.py"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "static"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "8525 的 base(54d1185f, 2024-01-09) 的 pydantic/main.py::model_construct **逐行包含 8500(2024-01-05) 的 gold**（fields_set 累加写法，main.py:211-224）",
+    "两题 test_patch 同为 tests/test_construction.py，且 8525 的 test_patch hunk 上下文里就是 8500 新增的 test_retain_order_of_fields"
+   ],
+   "note": "P1 跨题答案泄漏：8525 的初始仓库里直接可见 8500 的参考解。若 8500 用于评测而 8525 出现在训练/轨迹里（反之亦然），评测被污染。这不是个例，见仓库级 R8（本包 20 对同类关系）。",
+   "by": "static"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "install rc=2。",
+   "by": "stage1log"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "测试第三方 import：pytest / pydantic_core"
+   ],
+   "note": "无外部资产。",
+   "by": "static"
+  },
+  "10": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "无本题轨迹。",
+   "by": "-"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "只有 install 需要网络。",
+   "by": "stage1log"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "题面的错误诊断（继承）",
+    "F2P 用的是单个类、无继承的 3 行最小例"
+   ],
+   "note": "P2：题面与验收面在**场景**上不一致（题面强调继承，F2P 无继承），且题面的因果解释是错的。可解性不受影响（根因同一个），但会误导定位。",
+   "by": "static"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 断言 `m._a == 'a'` 与 `'_a' in m.__pydantic_private__`"
+   ],
+   "note": "不强制唯一实现，但第二条断言确实钉住了私有值必须落在 __pydantic_private__ 而不是别处——这有题面依据（题面最后两行正是断言 __pydantic_private__.get(...)）。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "F2P 只有 1 条、P2P 45 条全在 tests/test_construction.py",
+    "tests/test_private_attributes.py 不在判分面",
+    "gold 新增的循环只在 `if cls.__pydantic_post_init__:` 分支内；该分支的反面（无私有属性的模型）与“私有属性名同时是字段名”的情形无断言"
+   ],
+   "note": "P2：判分面窄。一个只对**无默认值**私有属性生效的部分修复、或一个把 values 里所有下划线开头的键都塞进 private 的过度修复，都能通过这 46 条。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "同 25"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "static"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 全文"
+   ],
+   "note": "gold 只在 post_init 分支后补一个按 __private_attributes__ 过滤的回填循环，无题外改动。注意它不会从 `values` 里 pop，所以私有属性名同时也会留在 fields_values/__dict__ 里（extra != 'allow' 时 `fields_values.update(values)`）——这一点判分面没有断言。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak 扫描 0 命中；题面无 URL；hints 为空"
+   ],
+   "note": "题面本身无泄漏；跨题泄漏见 check 5。",
+   "by": "static"
+  },
+  "31": {
+   "status": "issue",
+   "evidence_refs": [
+    "R4"
+   ],
+   "note": "静态残余面。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "cross_task_answer_leak",
+   "severity": "P1",
+   "evidence_refs": [
+    "check 5"
+   ],
+   "proposed_action": "8500 与 8525 必须同侧；更一般地按 R8 的 18 对关系做同族划分",
+   "next_experiment": "对全部 216 题跑同样的“早题 gold 是否出现在晚题 base”扫描"
+  },
+  {
+   "category": "problem_statement_quality",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 3",
+    "check 23"
+   ],
+   "proposed_action": "题面自带错误根因诊断且噪声大；若保留，在 public_view 里注明“与继承无关，区别在私有属性有无默认值”",
+   "next_experiment": "无"
+  },
+  {
+   "category": "oracle_surface_narrow",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 25"
+   ],
+   "proposed_action": "把 tests/test_private_attributes.py 并入 P2P",
+   "next_experiment": "构造只对无默认值私有属性生效的部分修复，跑官方 46 条"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 仅纯测试文件、gold 仅生产代码、判分面与恢复面一致。",
+  "evidence_refs": [
+   "grading.json.test_patch",
+   "validation.json.golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  "带 default_factory 的私有属性经 model_construct 传值后**被覆盖**为传入值（题面 _mail_nickname 场景）— 选择依据：gold 的回填在 model_post_init 之后执行，覆盖语义只有这条能固定",
+  "继承场景：父类声明私有属性、子类实例化后 model_construct 回填 — 选择依据：题面强调继承，判分面无继承用例",
+  "私有属性名不应同时出现在 __dict__ 里 — 选择依据：gold 不从 values 里 pop，这是它的已知副作用，判分面零覆盖",
+  "tests/test_private_attributes.py 全量 — 选择依据：私有属性主回归文件，不在判分面"
+ ],
+ "disposition_hint": {
+  "state": "needs_review",
+  "reason": "缺陷与 gold 对应，但存在 P1 跨题答案泄漏（base 含 8500 的 gold）、题面自带错误诊断、判分面 46 条且不含私有属性主回归文件。先解决划分与 public_view 再入。"
+ },
+ "costs": {
+  "minutes": 18
+ }
+}

@@ -1,0 +1,106 @@
+{
+  "instance_id": "conan-io__conan-13403",
+  "old_record_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/records/conan-io__conan-13403.json",
+  "environment": {
+    "status": "verified_original_baseline_outside_repair_scope",
+    "recipe": "full216/baseline01 原始对照；无已知环境修复需求",
+    "status_ref": "runs/env_recipe_repair_20260919/scope_reconciliation_20260920.json#outside_repair_ids",
+    "analysis_ref": "runs/full216_rh2_diagnostic_20260919/analysis_final_1011/coverage_216.json#conan-io__conan-13403",
+    "scope": "原始 noop 有目标失败且安装审计无失败；gold 完整命令退出 0，不等于题目质量或稳定性认证。",
+    "existing_observations": {
+      "noop": {
+        "reward": 0.0,
+        "test_rc": 1,
+        "log": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-3/eval_logs/evallog_replay-f216-baseline01-w_956632ce.eval.log",
+        "sha256": "723f00c331489c2648fad75efe3ef60dead069d10be4277e746da43a1c028ac2"
+      },
+      "gold": {
+        "reward": 1.0,
+        "test_rc": 0,
+        "log": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-3/eval_logs/evallog_replay-f216-baseline01-w_ce904c96.eval.log",
+        "sha256": "a9ac373afbd38d4be0774f63a7777bb17d3ed91ea8e55750d80c012d82a10d67"
+      }
+    }
+  },
+  "requirements": "允许 autoreconf 选择 configure.ac 所在目录，尤其 recipe 的 build_folder，而非始终进入 source_folder。使用方式可参照 configure(build_script_folder=...)，保留默认 source_folder 和既有参数传递。",
+  "public_sufficiency": "充分：题面直接指出缺少与 configure 对应的目录参数；基线 configure 文档和 os.path.join 逻辑给出相对/绝对路径约定，不需要把 gold 的签名次序当唯一规范。",
+  "test_assessment": "只有 1 个 F2P、0 P2P，但该 F2P 同时检查 configure 输出、autoreconf 自定义子目录、默认目录和默认参数，存在有限回归保护。chdir Mock 固定调用位置和 positional args，且只验证工厂被调用，未证明 context 已进入、命令确在目标 cwd 执行。",
+  "old_claim_reviews": [
+    {
+      "old_claim": "no_p2p_guard / checks.25：P2P 为空，因此回归保护为零，configure 和默认 autoreconf 可任意坏掉。",
+      "status": "refuted",
+      "assessment": "P2P 计数为 0 属实，但单个 F2P 的旧 configure 断言仍在，另新增默认 autoreconf 的 source path 与 command 断言；不能把回归保护等同于 P2P 数量。",
+      "evidence": [
+        "grading.test_patch"
+      ]
+    },
+    {
+      "old_claim": "checks.24：Mock 钉死 chdir 的模块和位置参数调用。",
+      "status": "confirmed",
+      "assessment": "真实 chdir(conanfile,newdir) 支持等价关键字传参，assert_called_with(autotools,path) 却要求 positional 形状；没有题面或公有契约支持该形状限制。",
+      "evidence": [
+        "grading.test_patch",
+        "base:conan/tools/files/files.py:289-303"
+      ]
+    },
+    {
+      "old_claim": "checks.24：os.path.abspath 会因规范化路径而失败。",
+      "status": "refuted",
+      "assessment": "测试输入 /path/to/sources 与 subfolder 拼出的已经是规范绝对路径，abspath 得到同一字符串；旧报告这个具体反例不成立。Path 对象或参数形状可以另论。",
+      "evidence": [
+        "grading.test_patch",
+        "base:conan/tools/gnu/autotools.py:46-47"
+      ]
+    },
+    {
+      "old_claim": "只有新增目录功能存在即可得分，需补行为覆盖。",
+      "status": "confirmed",
+      "assessment": "存在更具体缺口：mock context 工厂被调用不代表 __enter__ 生效，测试没有读取执行 cwd；应先验证该反例，而非先扩大工具链依赖的全量测试。",
+      "evidence": [
+        "grading.test_patch",
+        "base:conan/tools/files/files.py:298-303"
+      ]
+    },
+    {
+      "old_claim": "checks.31 / control_surface_conftest_user：候选新增配置可进入测试控制面。",
+      "status": "unresolved",
+      "assessment": "旧仓库线索与本轮题意审查分开；没有执行新的篡改反例，也未据此给本题降级。可信边界的现实风险应沿统一评分链审查，不能把安装/参考键已验误写成安全已验。",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/CODEX_REVIEW_20260916.md#2",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/records/conan-io__conan-13403.json#checks.31"
+      ]
+    }
+  ],
+  "recommendation": "needs_counterexample",
+  "recommendation_scope": "本轮模型探针/反例调查建议，不是训练准入、剔题或修改正式题包决定。",
+  "next_action": [
+    "最小等价拒绝反例（未运行）：保留 gold 逻辑，仅将 with chdir(self, script_folder) 改为 with chdir(conanfile=self, newdir=script_folder)；真实 helper 参数语义相同，但 assert_called_with 的 positional 期望拒绝。",
+    "最小错误通过反例（未运行）：计算 script_folder 并调用 chdir(self, script_folder)，但不进入返回的 context manager，随后 run(command)；预计 Mock 断言通过但 cwd 未切换。独立诊断应在真实临时 source/build 目录让 run 记录 os.getcwd()，检查绝对 build_folder、默认目录及结束后 cwd 恢复；若证实，修订测试应观察这些行为。"
+  ],
+  "evidence_level": {
+    "task_quality": "static",
+    "environment": "existing_run",
+    "new_counterexamples": "not_run",
+    "local_verification": "16 份所引用既有评分日志的 SHA256 与当前归档一致；未新增 Docker/远端/模型运行。"
+  },
+  "unknowns": [
+    "未执行两种反例或真实 autoreconf；只靠静态调用分析，尚不能声称正式 reward 误判。",
+    "同一测试中更广的 make/install、异常恢复和绝对路径行为未覆盖；是否扩充正式参考需另作版本化决定。"
+  ],
+  "materials": {
+    "base_commit": "55163679ad1fa933f671ddf186e53b92bf39bbdb",
+    "source_repository": "runs/env_overnight_20260916/repos/conan（只用 git show 读取精确 base）",
+    "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl:32",
+    "test_patch_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:32",
+    "gold_reference_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl:32",
+    "reference_counts": {
+      "f2p": 1,
+      "p2p": 0
+    },
+    "base_source_refs": [
+      "conan/tools/gnu/autotools.py:36-59,101-111",
+      "conan/tools/files/files.py:289-303",
+      "conans/test/unittests/tools/gnu/autotools_test.py:1-26"
+    ]
+  }
+}

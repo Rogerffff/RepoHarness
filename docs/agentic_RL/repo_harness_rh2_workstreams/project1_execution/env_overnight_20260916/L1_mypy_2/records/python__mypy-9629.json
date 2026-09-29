@@ -1,0 +1,250 @@
+{
+ "task_id": "python__mypy-9629",
+ "source": "SWE-Gym lite / python/mypy PR 9629（*args/**kwargs 可能为空）",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "af3c8be98f9a3fad3fd9c7a9839278c8c1d74455",
+  "version": "0.800",
+  "python_version": "3.9",
+  "eval_cmd": "pytest -n0 -rA -k",
+  "f2p": [
+   "mypy/test/testcheck.py::TypeCheckSuite::testPassingEmptyDictWithStars"
+  ],
+  "p2p": [
+   "mypy/test/testcheck.py::TypeCheckSuite::testTypedDictNonMappingMethods_python2",
+   "mypy/test/testcheck.py::TypeCheckSuite::testTypedDictNonMappingMethods"
+  ],
+  "gold_paths": [
+   "mypy/checkexpr.py"
+  ],
+  "test_patch_paths": [
+   "test-data/unit/check-ctypes.test",
+   "test-data/unit/check-kwargs.test",
+   "test-data/unit/check-typeddict.test"
+  ],
+  "runtime_evidence": "无（不在 stage1 样本、in_e2 空、无 DeepSeek 候选）"
+ },
+ "public_view": {
+  "goal": "`object(*[])` / `object(**{})` 被报 'Too many arguments'；要求这类可能为空的解包不再误报。",
+  "constraints": [
+   "**problem_statement 是两份不同 issue 的正文拼接**：前半是 'mypy fails to consider the case where *args or **kwds contains zero elements'（含多重继承 MRO 例子），后半是另一篇 'Spurious \"Too many arguments\" when unpacking empty dicts'（含 lambda/NamedTuple 例子）。两段之间没有分隔说明",
+   "后半段自述 `*[]` 在 0.761/0.770 已修好，只剩 `**{}`"
+  ],
+  "unknowns_from_public_only": [
+   "前半段的多重继承诉求**已被维护者明确否定**（hints 里：mypy 只按签名检查，`super().__init__(**kwds)` 不能假定为空）——但这条否定不在题面里，agent 会以为要一起修",
+   "是只放行字面空 dict，还是放行所有 `**` 实参（gold 选后者：对任何 ARG_STAR2 都不报 extra actual）",
+   "`Dict[Any, Any]`、TypedDict 等具体类型的 `**` 解包要不要一并放行（这正是 4 条未评分 case 的内容）"
+  ],
+  "base_code_evidence": [
+   "af3c8be98:mypy/checkexpr.py:1401-1410 check_for_extra_actual_arguments 只对 ARG_STAR 做'可能为空'豁免，ARG_STAR2 不豁免",
+   "af3c8be98:mypy/checkexpr.py:3934-3951 is_valid_keyword_var_arg 只判 Mapping[str, Any]（py2 额外判 unicode），空 dict 推成 Dict[<nothing>, <nothing>] 时因 Mapping 键不变而不成立"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "3 个 test_patch 目标文件在 base 均存在",
+    "gold 的两处 hunk 在 base 逐行一致"
+   ],
+   "note": "无二进制/LFS/子模块。",
+   "by": "L1_mypy_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "af3c8be98:mypy/checkexpr.py:1401-1410 与 :3934-3951"
+   ],
+   "note": "静态确认 base 含题面缺陷。",
+   "by": "L1_mypy_2"
+  },
+  "3": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "problem_statement 2179 字符，由两篇 issue 正文直接拼接",
+    "raw hints_text 1266 字符，其中维护者对**前半段**的诉求给出否定结论：'mypy only looks at your source code ... Mypy type-checks calls purely on the basis of the given signature'"
+   ],
+   "note": "两个问题：(a) 题面把两篇 issue 粘在一起，读者无法分辨哪一半是本次要修的；(b) 前半段的诉求被维护者否定、gold 也确实没修多重继承那一类，而这条否定只在不可见的 hints 里。agent 很可能把力气花在错误的一半上。",
+   "by": "L1_mypy_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 3 个路径全在 test-data/unit/"
+   ],
+   "note": "无非测试源码；gold 不碰测试样路径。",
+   "by": "L1_mypy_2"
+  },
+  "17": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "同 file_rules"
+   ],
+   "note": "仓库级。两条 P2P 的宿主文件 check-typeddict.test 在 test_patch 里，受保护。",
+   "by": "L1_mypy_2"
+  },
+  "5": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "python__mypy-12222（0.940）也改 kwargs 相关消息并改 check-kwargs.test"
+   ],
+   "note": "主题相邻但改的函数与目标不同，不算重复。",
+   "by": "L1_mypy_2"
+  },
+  "23": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "F2P 只有 `f(**{})` / `g(**{})` 两行，全为'无错误'断言"
+   ],
+   "note": "题面给的 6 个复现（lambda、NamedTuple、Dict[str,str] 变量、object(*[]) 等）一个都没进 F2P；F2P 用的是最小化的自定义函数。",
+   "by": "L1_mypy_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 是纯负向断言，不锁实现"
+   ],
+   "note": "不强制唯一实现——但过于宽松，见 25。",
+   "by": "L1_mypy_2"
+  },
+  "25": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "scripts/tpcases.py python__mypy-9629：test_patch 改了 **6 个 case**，只有新增的 testPassingEmptyDictWithStars 进 F2P，**5 个未参与评分**",
+    "未评分的 4 条正是删除了 `# E: Too many arguments` 断言的既有 case：testCtypesArrayConstructorKwargs（`intarr4(**x)`，x 是 Dict[str,int]）、testPassingKeywordVarArgsToVarArgsOnlyFunction（`f(**d)`，d 是 Dict[Any,Any]）、testTypedDictAsStarStarAndDictAsStarStar（两条）；第 5 条 testCallingFunctionWithKeywordVarArgs 新增了一条应报错的断言 `f(**{'x': B()})`",
+    "两条 P2P（testTypedDictNonMappingMethods 与其 _python2 变体）与本次改动无关，是 check-typeddict.test 那段 hunk 尾部上下文里出现 [case] 行被顺带选中的"
+   ],
+   "note": "评分只覆盖 gold 行为改变的 1/5。具体后果：一个**只对字面空 dict 特判**的实现（例如判断实参是空 DictExpr）可以拿满分，却完全没解决题面真正抱怨的 `Dict[str,str]` 变量解包；反过来，一个**过度放宽**到连 `f(**{'x': B()})` 的类型不匹配也不报的实现，同样不会被这 1 条 F2P 抓到。",
+   "by": "L1_mypy_2"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "5/6 被改 case 未评分；P2P 无判别力"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_mypy_2"
+  },
+  "27": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "golden_patch 第二个 hunk 把 is_valid_keyword_var_arg 整体重写，包括 py2 分支的结构调整"
+   ],
+   "note": "gold 正确、不依赖未交付改动；两处 hunk 缺一不可（第一处去掉 ARG_STAR2 的 extra-actual 报错，第二处让 Dict[<nothing>, <nothing>] 通过 mapping 校验）。瑕疵是第二个 hunk 顺带重排了 py2 分支，diff 比必要的大。",
+   "by": "L1_mypy_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 无 PR/commit 链接、无修复代码"
+   ],
+   "note": "题面无泄漏。",
+   "by": "L1_mypy_2"
+  },
+  "6": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "未实跑安装。",
+   "by": "L1_mypy_2"
+  },
+  "7": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "未评分的 testCtypesArrayConstructorKwargs 依赖 [builtins fixtures/floatdict.pyi] 与 ctypes stub",
+    "P2P 的 _python2 变体需要 py2 模式（typed_ast）"
+   ],
+   "note": "评分项本身（F2P + 两条 P2P）只需仓库内 fixtures；但 P2P 的 `_python2` 变体走 typed_ast 的 py2 解析路径，与 5617 同样构成环境依赖。",
+   "by": "L1_mypy_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "case 正文无网络调用"
+   ],
+   "note": "纯离线。",
+   "by": "L1_mypy_2"
+  },
+  "18": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "kscan.json:python__mypy-9629：`testTypedDictNonMappingMethods` 过选出 `testTypedDictNonMappingMethods_python2`"
+   ],
+   "note": "过选出的那条也在 P2P 里，不改判分。",
+   "by": "L1_mypy_2"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P/P2P nodeid 为 3 段（file::Suite::case）；该 base 的 mypy/test/data.py 不含 DataFileCollector"
+   ],
+   "note": "0.800 版本段常量与运行时形状一致（1.x 段为 4 段）。",
+   "by": "L1_mypy_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "problem_statement_concatenated",
+   "severity": "P1",
+   "evidence_refs": [
+    "problem_statement 由两篇 issue 正文拼接；hints 里维护者否定了前半段的诉求"
+   ],
+   "proposed_action": "拆题面：只保留 'unpacking empty dicts' 那一篇，或在题面里写明多重继承那一类不在本次范围内。",
+   "next_experiment": "让模型只读题面作答，统计它去改多重继承/MRO 相关代码的比例。"
+  },
+  {
+   "category": "grading_coverage",
+   "severity": "P1",
+   "evidence_refs": [
+    "6 个被改 case 只有 1 个进 F2P；两条 P2P 与改动无关"
+   ],
+   "proposed_action": "把 4 条删除了 'Too many arguments' 断言的既有 case 补进 F2P，把新增应报错的 `f(**{'x': B()})` 所在 case 也补进 F2P。",
+   "next_experiment": "写'只特判字面空 dict'的实现跑当前 F2P（预期满分），再跑那 4 条（预期全挂）。"
+  },
+  {
+   "category": "file_boundary",
+   "severity": "P1",
+   "evidence_refs": [
+    "rh2/src/repoharness2/grading/manager.py:656/672/581"
+   ],
+   "proposed_action": "建议把 mypy/test/* 与 test-data/* 纳入 hygiene 保护（40 题 gold 均不触碰）。",
+   "next_experiment": "构造只改 mypy/test/helpers.py::assert_string_arrays_equal 的候选 patch 走一次评分，确认当前会判满分。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 test-data/unit/ 下的 .test 数据文件，gold 只碰 mypy/ 源码，两者无交集，按第四组 B 默认保持空。仓库级建议（需用户裁定、对 40 题统一生效）：把 'mypy/test/*' 与 'test-data/*' 加入 hygiene.test_globs——40 题 gold 无一触碰这两处（已对 validation_bundles 全量核对），而当前 agent 改 mypy/test/helpers.py、mypy/test/data.py 或 test-data/unit/fixtures/*.pyi 既不被 eval 的 git checkout 还原，也不被判 rejected_test_tampering。副作用：agent 在 test-data/ 下建临时文件会让整份提交作废，需一并决定。",
+  "evidence_refs": [
+   "rh2/src/repoharness2/grading/manager.py:656、:672、:581",
+   "rh2/src/repoharness2/contracts/grading.py:118-121"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "test_patch 改过的全部 6 个 case",
+   "reason": "它们才是 gold 行为改变的完整描述。"
+  },
+  {
+   "id": "check-kwargs.test 与 check-varargs.test 全文件",
+   "reason": "gold 改的是 check_for_extra_actual_arguments 与 is_valid_keyword_var_arg，两个函数覆盖所有 * / ** 调用检查。"
+  },
+  {
+   "id": "新增：`f(**{'wrong': 1})` 对无 **kwargs 形参的函数仍应报 Unexpected keyword argument",
+   "reason": "gold 对 ARG_STAR2 一律不报 extra actual，需要一条边界用例确认没有把真正的错用也放行。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "题面是两篇 issue 的拼接且前半段诉求已被维护者否定（只在 hints 里）；评分只覆盖 gold 行为改变的 1/5，部分修复与过度修复都检不出来。两处都可低成本修（拆题面 + 补 F2P）。"
+ },
+ "costs": {
+  "minutes": 33
+ }
+}

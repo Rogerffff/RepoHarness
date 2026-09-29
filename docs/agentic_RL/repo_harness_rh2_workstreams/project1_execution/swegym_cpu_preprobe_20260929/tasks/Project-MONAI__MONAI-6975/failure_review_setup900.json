@@ -1,0 +1,93 @@
+{
+  "task": "Project-MONAI__MONAI-6975",
+  "run": "reserve6-v1",
+  "review": "local original evidence only; no remote execution",
+  "formal_noop_report": {
+    "execution_failure_evidence": [],
+    "execution_failure_stage": null,
+    "expected_match": null,
+    "expected_total": null,
+    "f2p_pass": null,
+    "f2p_total": null,
+    "failure_category": "infra_failure",
+    "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+    "grading_semantics": "swe_f2p_p2p",
+    "infra_failure_detail": "grading_control_surface_protect_timeout_after_900s",
+    "outcome": "failed_to_grade",
+    "p2p_fail": null,
+    "p2p_total": null,
+    "report_id": "rpt_grading_81498995",
+    "reward": null
+  },
+  "phases": {
+    "delta_apply": 0.191889,
+    "grader_baseline_rebuild": 0.810293,
+    "grader_cleanup": 6.431271,
+    "grader_start_and_verify": 2.048117,
+    "grader_trusted_setup": 901.136589,
+    "parser_and_report": 0.421289,
+    "test": null
+  },
+  "candidate_cleanup": {
+    "detail": "",
+    "removed": true,
+    "steps": [
+      "rm:ok"
+    ]
+  },
+  "driver_footer": {
+    "ledger": "/work/swegym_cpu_preprobe_20260929/results/Project-MONAI__MONAI-6975/reserve6-v1/grade_noop/ledger.jsonl",
+    "rows": 1,
+    "manager_close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "supply_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0,
+      "containers_created_total": 1,
+      "containers_removed_total": 1,
+      "container_history_retained": 1,
+      "leases_total": 1
+    },
+    "halted": null,
+    "aborted": null,
+    "cleanup_failures": [],
+    "final_status": {
+      "exit_code": 0,
+      "reason": "ok",
+      "grader_containers_open": [],
+      "cleanup_failures_total": 0,
+      "cleanup_failures_resolved": false
+    }
+  },
+  "resource_facts": {
+    "container_oom_killed": false,
+    "oom_kill_events": 0,
+    "pids_events_max": 0
+  },
+  "peak_memory_mb": 4096.0,
+  "log_sha256_verified": true,
+  "no_install_or_test_start": true,
+  "driver_close_checked_file_present": false,
+  "outer_error": "formal reference counts differ",
+  "outer_error_cause": "experiment checks f2p_total/p2p_total before infra/reward; totals null after setup failure",
+  "valid_prior_evidence": [
+    "original actor",
+    "private base/gold/degenerate",
+    "independent behavior review"
+  ],
+  "proposed_followup": {
+    "status": "proposed_not_executed",
+    "separate_output_directory": true,
+    "setup_seconds": 1800,
+    "test_seconds": 1800,
+    "whole_seconds": 3600,
+    "image_and_source_and_permissions_and_inputs": "unchanged",
+    "concurrency": "only after MONAI4583 has closed; run alone",
+    "repeat_actor_private": false
+  },
+  "decision": "no critical objection to this bounded CPU preparation diagnostic; no grading/qualification conclusion"
+}

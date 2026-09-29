@@ -1,0 +1,109 @@
+{
+ "task": "coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5",
+ "image": "sha256:ac0f93404ee941081735bff14e9e89ae99a64bb2061a8fe5f4ed3d326caae9e1",
+ "recipe_id": "r2e_derive_v1+sysconfig_v1",
+ "patch": "/work/r2e/trials/coveragepy/ea6906b0/coveragepy_ea69_CC_gold_with_encoding.patch",
+ "edits": "/work/r2e/trials/coveragepy/ea6906b0/draft.json",
+ "expected": "/work/r2e/trials/coveragepy/ea6906b0/expected_after.json",
+ "kind": "trial_not_formal_grading",
+ "apply": "Checking patch coverage/html.py...\nApplied patch coverage/html.py cleanly.\nRH2_APPLY_RC=0\n",
+ "edits_apply": "RH2_TRIAL_EDITS_APPLIED=1\n",
+ "test_seconds": 6.1,
+ "markers": true,
+ "observed": {
+  "HtmlDeltaTest.test_file_becomes_100": "FAILED",
+  "HtmlDeltaTest.test_html_created": "FAILED",
+  "HtmlDeltaTest.test_html_delta_from_coverage_change": "FAILED",
+  "HtmlDeltaTest.test_html_delta_from_coverage_version_change": "FAILED",
+  "HtmlDeltaTest.test_html_delta_from_settings_change": "FAILED",
+  "HtmlDeltaTest.test_html_delta_from_source_change": "FAILED",
+  "HtmlDeltaTest.test_status_format_change": "FAILED",
+  "HtmlGitignoreTest.test_html_report_is_ignored_by_git": "PASSED",
+  "HtmlGoldTest.test_a": "PASSED",
+  "HtmlGoldTest.test_b_branch": "PASSED",
+  "HtmlGoldTest.test_bom": "PASSED",
+  "HtmlGoldTest.test_isolatin1": "PASSED",
+  "HtmlGoldTest.test_omit_1": "PASSED",
+  "HtmlGoldTest.test_omit_2": "PASSED",
+  "HtmlGoldTest.test_omit_3": "PASSED",
+  "HtmlGoldTest.test_omit_4": "PASSED",
+  "HtmlGoldTest.test_omit_5": "PASSED",
+  "HtmlGoldTest.test_other": "PASSED",
+  "HtmlGoldTest.test_partial": "PASSED",
+  "HtmlGoldTest.test_styled": "PASSED",
+  "HtmlGoldTest.test_tabbed": "PASSED",
+  "HtmlGoldTest.test_unicode": "PASSED",
+  "HtmlTest.test_extensionless_file_collides_with_extension": "PASSED",
+  "HtmlTest.test_has_date_stamp_in_files": "PASSED",
+  "HtmlTest.test_html_skip_covered": "PASSED",
+  "HtmlTest.test_html_skip_empty": "PASSED",
+  "HtmlTest.test_missing_source_file_incorrect_message": "PASSED",
+  "HtmlTest.test_report_skip_covered": "PASSED",
+  "HtmlTest.test_report_skip_covered_100": "PASSED",
+  "HtmlTest.test_report_skip_covered_branches": "PASSED",
+  "HtmlTest.test_report_skip_empty": "PASSED",
+  "HtmlTest.test_reporting_on_unmeasured_file": "PASSED",
+  "HtmlTitleTest.test_default_title": "PASSED",
+  "HtmlTitleTest.test_non_ascii_title_set_in_config_file": "PASSED",
+  "HtmlTitleTest.test_title_set_in_args": "PASSED",
+  "HtmlTitleTest.test_title_set_in_config_file": "PASSED",
+  "HtmlWithContextsTest.test_dynamic_contexts": "PASSED",
+  "HtmlWithContextsTest.test_dynamic_contexts_relative_files": "PASSED",
+  "HtmlWithContextsTest.test_filtered_dynamic_contexts": "PASSED",
+  "HtmlWithContextsTest.test_no_contexts_warns_no_contexts": "PASSED",
+  "HtmlWithUnparsableFilesTest.test_decode_error": "PASSED",
+  "HtmlWithUnparsableFilesTest.test_dothtml_not_python": "PASSED",
+  "HtmlWithUnparsableFilesTest.test_dotpy_not_python": "PASSED",
+  "HtmlWithUnparsableFilesTest.test_dotpy_not_python_ignored": "PASSED",
+  "HtmlWithUnparsableFilesTest.test_execed_liar_ignored": "PASSED",
+  "HtmlWithUnparsableFilesTest.test_execed_liar_ignored_indentation_error": "PASSED",
+  "HtmlWithUnparsableFilesTest.test_formfeeds": "PASSED",
+  "ReportingTest.test_no_data_to_report_on_html": "PASSED"
+ },
+ "n_observed": 48,
+ "log_tail": "e_local_static_report_files(self):\n        \"\"\"Make local instances of static files for HTML report.\"\"\"\n        # The files we provide must always be copied.\n        for static in self.STATIC_FILES:\n            shutil.copyfile(data_filename(static), os.path.join(self.directory, static))\n    \n        # .gitignore can't be copied from the source tree because it would\n        # prevent the static files from being checked in.\n>       with open(os.path.join(self.directory, \".gitignore\"), \"w\", encoding=\"utf-8\") as fgi:\nE       TypeError: open() got an unexpected keyword argument 'encoding'\n\n/testbed/coverage/html.py:229: TypeError\n----------------------------- Captured stdout call -----------------------------\nx is 12\n----------------------------- Captured stdout call -----------------------------\nx is 12\n==================================== PASSES ====================================\n_________________ HtmlTitleTest.test_title_set_in_config_file __________________\n[gw2] linux -- Python 3.7.9 /testbed/.venv/bin/python\n----------------------------- Captured stdout call -----------------------------\nx is 12\n_______________________ HtmlTitleTest.test_default_title _______________________\n[gw0] linux -- Python 3.7.9 /testbed/.venv/bin/python\n----------------------------- Captured stdout call -----------------------------\nx is 12\n_____________________ HtmlTitleTest.test_title_set_in_args _____________________\n[gw0] linux -- Python 3.7.9 /testbed/.venv/bin/python\n----------------------------- Captured stdout call -----------------------------\nx is 12\n_____________ HtmlTest.test_missing_source_file_incorrect_message ______________\n[gw0] linux -- Python 3.7.9 /testbed/.venv/bin/python\n----------------------------- Captured stdout call -----------------------------\nanother\n____________ HtmlTitleTest.test_non_ascii_title_set_in_config_file _____________\n[gw1] linux -- Python 3.7.9 /testbed/.venv/bin/python\n----------------------------- Captured stdout call -----------------------------\nx is 12\n__________________ HtmlTest.test_reporting_on_unmeasured_file __________________\n[gw1] linux -- Python 3.7.9 /testbed/.venv/bin/python\n----------------------------- Captured stdout call -----------------------------\nx is 12\n______________________ HtmlTest.test_report_skip_covered _______________________\n[gw1] linux -- Python 3.7.9 /testbed/.venv/bin/python\n----------------------------- Captured stdout call -----------------------------\nz\n_______________________ HtmlTest.test_html_skip_covered ________________________\n[gw1] linux -- Python 3.7.9 /testbed/.venv/bin/python\n----------------------------- Captured stdout call -----------------------------\nz\n__________________ HtmlTest.test_report_skip_covered_branches __________________\n[gw1] linux -- Python 3.7.9 /testbed/.venv/bin/python\n----------------------------- Captured stdout call -----------------------------\nz\n_____________ HtmlWithUnparsableFilesTest.test_dothtml_not_python ______________\n[gw2] linux -- Python 3.7.9 /testbed/.venv/bin/python\n----------------------------- Captured stdout call -----------------------------\n\nNo data to report.\n\n____________________ HtmlTest.test_report_skip_covered_100 _____________________\n[gw1] linux -- Python 3.7.9 /testbed/.venv/bin/python\n----------------------------- Captured stdout call -----------------------------\nz\n___________ HtmlTest.test_extensionless_file_collides_with_extension ___________\n[gw0] linux -- Python 3.7.9 /testbed/.venv/bin/python\n----------------------------- Captured stdout call -----------------------------\n\nWrote HTML report to htmlcov/index.html\n\n_______________________ HtmlTest.test_report_skip_empty ________________________\n[gw1] linux -- Python 3.7.9 /testbed/.venv/bin/python\n----------------------------- Captured stdout call -----------------------------\nz\n____________________ HtmlTest.test_has_date_stamp_in_files _____________________\n[gw0] linux -- Python 3.7.9 /testbed/.venv/bin/python\n----------------------------- Captured stdout call -----------------------------\nx is 12\n________________________ HtmlTest.test_html_skip_empty _________________________\n[gw1] linux -- Python 3.7.9 /testbed/.venv/bin/python\n----------------------------- Captured stdout call -----------------------------\nz\n___________________________ HtmlGoldTest.test_other ____________________________\n[gw0] linux -- Python 3.7.9 /testbed/.venv/bin/python\n----------------------------- Captured stdout call -----------------------------\nThis is the other src!\n=========================== short test summary info ============================\nPASSED r2e_tests/test_1.py::HtmlTitleTest::test_title_set_in_config_file\nPASSED r2e_tests/test_1.py::HtmlWithUnparsableFilesTest::test_dotpy_not_python\nPASSED r2e_tests/test_1.py::HtmlTitleTest::test_default_title\nPASSED r2e_tests/test_1.py::HtmlWithUnparsableFilesTest::test_dotpy_not_python_ignored\nPASSED r2e_tests/test_1.py::HtmlTitleTest::test_title_set_in_args\nPASSED r2e_tests/test_1.py::HtmlWithUnparsableFilesTest::test_formfeeds\nPASSED r2e_tests/test_1.py::HtmlTest::test_missing_source_file_incorrect_message\nPASSED r2e_tests/test_1.py::HtmlTitleTest::test_non_ascii_title_set_in_config_file\nPASSED r2e_tests/test_1.py::HtmlTest::test_reporting_on_unmeasured_file\nPASSED r2e_tests/test_1.py::HtmlTest::test_report_skip_covered\nPASSED r2e_tests/test_1.py::HtmlTest::test_html_skip_covered\nPASSED r2e_tests/test_1.py::HtmlTest::test_report_skip_covered_branches\nPASSED r2e_tests/test_1.py::HtmlWithUnparsableFilesTest::test_dothtml_not_python\nPASSED r2e_tests/test_1.py::HtmlTest::test_report_skip_covered_100\nPASSED r2e_tests/test_1.py::HtmlWithUnparsableFilesTest::test_execed_liar_ignored\nPASSED r2e_tests/test_1.py::HtmlTest::test_extensionless_file_collides_with_extension\nPASSED r2e_tests/test_1.py::HtmlTest::test_report_skip_empty\nPASSED r2e_tests/test_1.py::HtmlWithUnparsableFilesTest::test_execed_liar_ignored_indentation_error\nPASSED r2e_tests/test_1.py::HtmlTest::test_has_date_stamp_in_files\nPASSED r2e_tests/test_1.py::HtmlTest::test_html_skip_empty\nPASSED r2e_tests/test_1.py::HtmlWithUnparsableFilesTest::test_decode_error\nPASSED r2e_tests/test_1.py::HtmlGoldTest::test_a\nPASSED r2e_tests/test_1.py::HtmlGoldTest::test_b_branch\nPASSED r2e_tests/test_1.py::HtmlGoldTest::test_isolatin1\nPASSED r2e_tests/test_1.py::HtmlGoldTest::test_bom\nPASSED r2e_tests/test_1.py::HtmlGoldTest::test_omit_2\nPASSED r2e_tests/test_1.py::HtmlGoldTest::test_omit_1\nPASSED r2e_tests/test_1.py::HtmlGoldTest::test_omit_5\nPASSED r2e_tests/test_1.py::HtmlGoldTest::test_omit_3\nPASSED r2e_tests/test_1.py::HtmlGoldTest::test_omit_4\nPASSED r2e_tests/test_1.py::HtmlGoldTest::test_styled\nPASSED r2e_tests/test_1.py::HtmlGoldTest::test_partial\nPASSED r2e_tests/test_1.py::HtmlGoldTest::test_tabbed\nPASSED r2e_tests/test_1.py::HtmlGoldTest::test_other\nPASSED r2e_tests/test_1.py::HtmlGoldTest::test_unicode\nPASSED r2e_tests/test_1.py::HtmlWithContextsTest::test_filtered_dynamic_contexts\nPASSED r2e_tests/test_1.py::HtmlWithContextsTest::test_dynamic_contexts\nPASSED r2e_tests/test_1.py::HtmlWithContextsTest::test_no_contexts_warns_no_contexts\nPASSED r2e_tests/test_1.py::HtmlWithContextsTest::test_dynamic_contexts_relative_files\nPASSED r2e_tests/test_2.py::ReportingTest::test_no_data_to_report_on_html\nPASSED r2e_tests/test_2.py::HtmlGitignoreTest::test_html_report_is_ignored_by_git\nFAILED r2e_tests/test_1.py::HtmlDeltaTest::test_html_created - TypeError: ope...\nFAILED r2e_tests/test_1.py::HtmlDeltaTest::test_html_delta_from_coverage_change\nFAILED r2e_tests/test_1.py::HtmlDeltaTest::test_html_delta_from_source_change\nFAILED r2e_tests/test_1.py::HtmlDeltaTest::test_html_delta_from_settings_change\nFAILED r2e_tests/test_1.py::HtmlDeltaTest::test_file_becomes_100 - TypeError:...\nFAILED r2e_tests/test_1.py::HtmlDeltaTest::test_html_delta_from_coverage_version_change\nFAILED r2e_tests/test_1.py::HtmlDeltaTest::test_status_format_change - TypeEr...\n7 failed, 41 passed in 4.02s\n>>>>> End Test Output\nRH2_TEST_RC=1\n",
+ "stderr_tail": "",
+ "expected_n": 48,
+ "missing": [],
+ "extra": [],
+ "status_diff": [
+  [
+   "HtmlDeltaTest.test_file_becomes_100",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "HtmlDeltaTest.test_html_created",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "HtmlDeltaTest.test_html_delta_from_coverage_change",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "HtmlDeltaTest.test_html_delta_from_coverage_version_change",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "HtmlDeltaTest.test_html_delta_from_settings_change",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "HtmlDeltaTest.test_html_delta_from_source_change",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "HtmlDeltaTest.test_status_format_change",
+   "PASSED",
+   "FAILED"
+  ]
+ ],
+ "match": false,
+ "verdict": "mismatch",
+ "seconds": 121.0
+}

@@ -1,0 +1,137 @@
+{
+  "method": "真实pytest；测试字节不变、只改候选label；真实manager、容器替身；无资格",
+  "test_source": "import pytest\nimport subprocess\nimport sys\nfrom src.id_source import label\n@pytest.mark.parametrize(\"case\", [label], ids=[label])\ndef test_feature(case):\n    if case == \"after\":\n        subprocess.run([sys.executable, \"-c\", \"import rh2_missing_child_module\"], check=True)\n@pytest.mark.parametrize(\"case\", [label], ids=[label])\ndef test_stable(case):\n    assert isinstance(case, str)\n",
+  "test_sha256_before": "77250a67d6b9db8226bb7fd471909f58c438f5345ebe36c2b8e4d3276fea5202",
+  "test_sha256_after": "77250a67d6b9db8226bb7fd471909f58c438f5345ebe36c2b8e4d3276fea5202",
+  "baseline": {
+    "returncode": 0,
+    "stdout": "..                                                                       [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_thing.py::test_feature[before]\nPASSED tests/test_thing.py::test_stable[before]\n2 passed in 0.01s\n"
+  },
+  "candidate": {
+    "returncode": 1,
+    "stdout": "F.                                                                       [100%]\n=================================== FAILURES ===================================\n_____________________________ test_feature[after] ______________________________\n\ncase = 'after'\n\n    @pytest.mark.parametrize(\"case\", [label], ids=[label])\n    def test_feature(case):\n        if case == \"after\":\n>           subprocess.run([sys.executable, \"-c\", \"import rh2_missing_child_module\"], check=True)\n\ntests/test_thing.py:8: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\ninput = None, capture_output = False, timeout = None, check = True\npopenargs = (['<REPO>/rh2/.venv/bin/python', '-c', 'import rh2_missing_child_module'],)\nkwargs = {}\n\n    def run(*popenargs,\n            input=None, capture_output=False, timeout=None, check=False, **kwargs):\n        \"\"\"Run command with arguments and return a CompletedProcess instance.\n    \n        The returned instance will have attributes args, returncode, stdout and\n        stderr. By default, stdout and stderr are not captured, and those attributes\n        will be None. Pass stdout=PIPE and/or stderr=PIPE in order to capture them,\n        or pass capture_output=True to capture both.\n    \n        If check is True and the exit code was non-zero, it raises a\n        CalledProcessError. The CalledProcessError object will have the return code\n        in the returncode attribute, and output & stderr attributes if those streams\n        were captured.\n    \n        If timeout (seconds) is given and the process takes too long,\n         a TimeoutExpired exception will be raised.\n    \n        There is an optional argument \"input\", allowing you to\n        pass bytes or a string to the subprocess's stdin.  If you use this argument\n        you may not also use the Popen constructor's \"stdin\" argument, as\n        it will be used internally.\n    \n        By default, all communication is in bytes, and therefore any \"input\" should\n        be bytes, and the stdout and stderr will be bytes. If in text mode, any\n        \"input\" should be a string, and stdout and stderr will be strings decoded\n        according to locale encoding, or by \"encoding\" if set. Text mode is\n        triggered by setting any of text, encoding, errors or universal_newlines.\n    \n        The other arguments are the same as for the Popen constructor.\n        \"\"\"\n        if input is not None:\n            if kwargs.get('stdin') is not None:\n                raise ValueError('stdin and input arguments may not both be used.')\n            kwargs['stdin'] = PIPE\n    \n        if capture_output:\n            if kwargs.get('stdout') is not None or kwargs.get('stderr') is not None:\n                raise ValueError('stdout and stderr arguments may not be used '\n                                 'with capture_output.')\n            kwargs['stdout'] = PIPE\n            kwargs['stderr'] = PIPE\n    \n        with Popen(*popenargs, **kwargs) as process:\n            try:\n                stdout, stderr = process.communicate(input, timeout=timeout)\n            except TimeoutExpired as exc:\n                process.kill()\n                if _mswindows:\n                    # Windows accumulates the output in a single blocking\n                    # read() call run on child threads, with the timeout\n                    # being done in a join() on those threads.  communicate()\n                    # _after_ kill() is required to collect that and add it\n                    # to the exception.\n                    exc.stdout, exc.stderr = process.communicate()\n                else:\n                    # POSIX _communicate already populated the output so\n                    # far into the TimeoutExpired exception.\n                    process.wait()\n                raise\n            except:  # Including KeyboardInterrupt, communicate handled that.\n                process.kill()\n                # We don't call process.wait() as .__exit__ does that for us.\n                raise\n            retcode = process.poll()\n            if check and retcode:\n>               raise CalledProcessError(retcode, process.args,\n                                         output=stdout, stderr=stderr)\nE               subprocess.CalledProcessError: Command '['<REPO>/rh2/.venv/bin/python', '-c', 'import rh2_missing_child_module']' returned non-zero exit status 1.\n\n<USER_HOME>/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/subprocess.py:571: CalledProcessError\n----------------------------- Captured stderr call -----------------------------\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\nModuleNotFoundError: No module named 'rh2_missing_child_module'\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_thing.py::test_stable[after]\nFAILED tests/test_thing.py::test_feature[after] - subprocess.CalledProcessErr...\n1 failed, 1 passed in 0.04s\n"
+  },
+  "grade": {
+    "verdict": {
+      "instance_id": "getmoto__moto-0001",
+      "apply_ok": true,
+      "resolution": "RESOLVED_NO",
+      "resolved": false,
+      "f2p_rate": 0.0,
+      "p2p_rate": 0.0,
+      "f2p_success": [],
+      "f2p_failure": [
+        "tests/test_thing.py::test_feature[before]"
+      ],
+      "p2p_success": [],
+      "p2p_failure": [
+        "tests/test_thing.py::test_stable[before]"
+      ],
+      "num_parsed_tests": 2,
+      "num_parsed_outside_segment": 0,
+      "reference_missing": [
+        "tests/test_thing.py::test_feature[before]",
+        "tests/test_thing.py::test_stable[before]"
+      ],
+      "reference_skipped": [],
+      "parser_source": "swegym_parsers@242429c1"
+    },
+    "source_fields": {
+      "outcome": "unresolved",
+      "failure_category": "tests_failed",
+      "reward": 0.0,
+      "f2p_pass_count": 0,
+      "f2p_total_count": 1,
+      "p2p_fail_count": 1,
+      "p2p_total_count": 1
+    },
+    "shape": {
+      "stage": "test_startup",
+      "rule": "python_traceback_startup_error",
+      "evidence": [
+        "ModuleNotFoundError: No module named 'rh2_missing_child_module'",
+        "test_rc=1"
+      ]
+    },
+    "trigger": "reference_all_missing",
+    "report": {
+      "schema_id": "rh2.grading_report.v1",
+      "report_id": "rpt_grading_69ba9dae",
+      "trajectory_id": "r4_fixed_tests",
+      "task_id": "rh2-fixture.tiny-0001",
+      "grader_name": "swebench_official_parser",
+      "grader_version": "swebench-4.1.0",
+      "outcome": "failed_to_grade",
+      "failure_category": "test_log_parse_failed",
+      "reward": null,
+      "reward_scale_version": "binary_v1",
+      "f2p_pass_count": null,
+      "f2p_total_count": null,
+      "p2p_fail_count": null,
+      "p2p_total_count": null,
+      "execution_failure_stage": null,
+      "execution_failure_evidence": [],
+      "grading_semantics": "swe_f2p_p2p",
+      "expected_match_count": null,
+      "expected_total_count": null,
+      "patch_hygiene": {
+        "cleaned_patch_digest": "sha256:a7a96c243586fce6712ce0b9ecd903c3070184a350a0a2e798f22a1a97a89a12",
+        "digest_kind": "cleaned_diff_text",
+        "replayed_on_clean_checkout": true,
+        "test_files_modified": false,
+        "forbidden_path_touched": false,
+        "forbidden_paths": [],
+        "verdict": "clean"
+      },
+      "infra_failure_detail": "reference_all_missing:unattributed:qualification:absent,no_candidate_path_in_failure_evidence",
+      "eval_log_ref": {
+        "ref_id": "evallog_r4_fixed_tests_69ba9dae",
+        "sha256": "sha256:664e4870eb8b9f1f0d6091a8e9fed1256977819151071c1e5f68cf8c7fdb5a59",
+        "byte_size": 5342
+      },
+      "timings": {
+        "schema_id": "rh2.grading_timing_record.v1",
+        "record_id": "timing_69ba9dae",
+        "trajectory_id": "r4_fixed_tests",
+        "task_id": "rh2-fixture.tiny-0001",
+        "image_pull_seconds": 0.0,
+        "env_reset_seconds": 0.0,
+        "prep_seconds": 0.0,
+        "test_seconds": 0.0,
+        "total_grading_seconds": 0.002,
+        "queue_wait_seconds": 0.0,
+        "container_peak_memory_mb": 1.0,
+        "queue_depth_at_enqueue": null,
+        "backpressure_triggered": false
+      },
+      "graded_at_utc": "2026-09-19T06:50:39.230845Z"
+    },
+    "decision": {
+      "candidate_python_paths": [
+        "src/id_source.py"
+      ],
+      "compile_probe": null,
+      "evidence": [],
+      "install_rc_baseline": 0,
+      "kind": "unattributed",
+      "missing": [
+        "qualification:absent",
+        "no_candidate_path_in_failure_evidence"
+      ],
+      "qualification": "absent",
+      "referenced_candidate_paths": [],
+      "resource": {
+        "container_oom_killed": false,
+        "oom_kill_events": 0,
+        "pids_events_max": 0,
+        "signal_exit": false,
+        "test_rc": 1
+      },
+      "rule": "python_traceback_startup_error",
+      "stage": "test_startup",
+      "trigger": "reference_all_missing"
+    },
+    "compile_runs": [],
+    "resource_reads": 1
+  }
+}

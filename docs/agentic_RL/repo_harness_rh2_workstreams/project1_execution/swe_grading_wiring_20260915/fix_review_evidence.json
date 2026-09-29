@@ -1,0 +1,334 @@
+{
+  "review_date": "2026-09-15",
+  "base_commit": "acb0e4bfec83a1fc155eb7892dfe76e13731a27a",
+  "scope": "复核 §6.11 / I1–I7 / A1–A3；本地测试与正常 fixture，不含远端真实 SWE 镜像",
+  "production_edits_by_reviewer": false,
+  "source_sha256": {
+    "rh2/scripts/sandbox_probes/grader-protect-control-surface.sh": "2eebce8f0d067c9938b681608f9d973ca5b9ddb5a166e688e4771f91da7ef62b",
+    "rh2/src/repoharness2/adapters/slime/prepared_task_face.py": "9ada92f85e43a9d4b252157d093399a04e1940937299d994d293e9a5741f33f0",
+    "rh2/src/repoharness2/adapters/slime/sandbox_profile.py": "0c485f683971a95324957b046378d3cd3e88c77569cd004d484f35dcaa21a5ec",
+    "rh2/src/repoharness2/envpack/scoring.py": "ddd2bbfa1a75c0b27edbf07e42a68dd65612ff6bba0bce8f86ea954e5346e33f",
+    "rh2/src/repoharness2/envpack/spec_vendor.py": "8e0037b27c87268ed7df97ef64d261d0e6dac7375bc85fd5badd0fecdb94d41d",
+    "rh2/src/repoharness2/grading/manager.py": "960ad63b26d785d2ca932d5540ff95ea3cb52fa767616b2b020178d89fa6e44b",
+    "rh2/tests/adapters/test_w3b_sandbox_profile.py": "d726b6b489fc080629c851b8bf8deafc833eb3dc264b522a86a237334349d55c",
+    "rh2/tests/envpack/test_vendor_specs.py": "71e15527aeb8fb94784ce3edec1e2a666bc2ce3737cec2c8c42b26af0d651b29",
+    "rh2/tests/grading/grading_fixtures.py": "3c856d752facc84a1e720b4661936ac444b8ad44c9f5a84fac5c22f4530f65f9",
+    "rh2/tests/grading/test_w3b_grader_profile_docker.py": "2c62f9bb5763b2ecd2b980a62c37eca8e9ddd10e2f985ff374627da69e0f5808",
+    "rh2/tests/grading/test_w3b_grader_profile_unit.py": "2a560af19e52ec434c428b3594f54fb79bfd32dbf8e69818d25ab32a27d6d2b8",
+    "rh2/tests/sandbox_test_support.py": "81fc40e2a7116173ac196145eb547facf3f5c91dc2983258be83027e8cdf6d3d",
+    "rh2/scripts/replay_grade.py": "d4bea627116b750681c6a1aecbf5cc940c8806738deaac1ace40dae8a68a43c8",
+    "rh2/src/repoharness2/adapters/slime/replay_grade.py": "15d86e831370d54e80e3f46524cf4c615964debab965e4243778618fa0034597",
+    "rh2/src/repoharness2/envpack/swegym_parsers.py": "995bb6aae58a94f9553946c2f9aea59a158ad4fdf4d7fc0137802c11362b2276",
+    "rh2/tests/adapters/test_replay_grade.py": "a319d537949abab1ca1c93c65b6a0c409daa3e4430cb194d39c86686b13b5d02",
+    "rh2/tests/adapters/test_w1b_prepared_task_face_v2.py": "ae380b1e8c2e7c328a2095ed5d7290a1b26b23d97640e7418906bdac8e31da7c",
+    "rh2/tests/envpack/test_swegym_parsers.py": "537896484e46b9d747ea0660bb5d8d1c0e42a560f865a5a2b7cf438bdc813346"
+  },
+  "tests": {
+    "focused": "........................................................................ [ 53%]\n.....................................................s.........          [100%]\n134 passed, 1 skipped in 16.78s",
+    "docker": "..............................                                           [100%]\n30 passed in 37.72s",
+    "full_441_corpus": ".                                                                        [100%]\n1 passed in 0.68s",
+    "runbook_layout_after_only_raw_added": ".................s.........                                              [100%]\n26 passed, 1 skipped in 1.48s"
+  },
+  "runbook_layout_before_raw": {
+    "passed": 23,
+    "skipped": 1,
+    "errors": 3,
+    "missing": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl"
+  },
+  "deadline_real_docker": {
+    "segment_timeout": {
+      "outcome": "failed_to_grade",
+      "failure_detail": "grading_test_timeout_after_3s:candidate_phase=test",
+      "install_marker_retained": true,
+      "candidate_marker_retained": true,
+      "candidate_diagnostics": {
+        "install_rc_last_command": 0,
+        "install_seconds": null,
+        "install_skipped": false,
+        "log_partial": true,
+        "markers_seen": [
+          "RH2_INSTALL_RC"
+        ],
+        "test_rc": null,
+        "test_seconds": null
+      },
+      "removed": true,
+      "tee_file_had_install_marker": true,
+      "tee_file_had_candidate_marker": true
+    },
+    "grading_deadline": {
+      "outcome": "failed_to_grade",
+      "failure_detail": "grading_deadline_exhausted:test:candidate_phase=test",
+      "install_marker_retained": true,
+      "candidate_marker_retained": true,
+      "candidate_diagnostics": {
+        "install_rc_last_command": 0,
+        "install_seconds": null,
+        "install_skipped": false,
+        "log_partial": true,
+        "markers_seen": [
+          "RH2_INSTALL_RC"
+        ],
+        "test_rc": null,
+        "test_seconds": null
+      },
+      "removed": true,
+      "tee_file_had_install_marker": true,
+      "tee_file_had_candidate_marker": true
+    }
+  },
+  "driver_cpu_root_rerun": {
+    "persist_failure_skips_cleanup": {
+      "rc": null,
+      "summary": {
+        "rows": 0,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0
+        },
+        "cleanup_failures": []
+      },
+      "manager_records": 0,
+      "candidate_created": [
+        "rh2-replay-cand-getmoto__moto-6913-1d118ba3"
+      ],
+      "removed": [],
+      "rm_calls": [],
+      "ledger_rows": 0,
+      "exception_type": "NotADirectoryError"
+    },
+    "old_i2_halt_and_persist_order": {
+      "rc": 2,
+      "exception": null,
+      "summary": {
+        "rows": 0,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0
+        },
+        "cleanup_failures": [
+          "rh2-replay-cand-getmoto__moto-6913-841e169a: cannot remove rh2-replay-cand-getmoto__moto-6913-841e169a: fake failure"
+        ]
+      },
+      "manager_records": 0,
+      "candidate_count": 1,
+      "grade_starts": 0,
+      "ledger_rows": 1,
+      "cleanup": {
+        "detail": "cannot remove rh2-replay-cand-getmoto__moto-6913-841e169a: fake failure",
+        "removed": false,
+        "steps": [
+          "rm:failed:cannot remove rh2-replay-cand-getmoto__moto-6913-841e169a: fake failure",
+          "kill:ok"
+        ]
+      },
+      "frozen_patch_exists_before_each_rm": true
+    },
+    "candidate_cancel": {
+      "cancel_propagated": true,
+      "ledger_rows": 1,
+      "stage_errors": [
+        "cancelled:trusted_init"
+      ],
+      "candidate_created": [
+        "rh2-replay-cand-getmoto__moto-6913-4b98e287"
+      ],
+      "removed": [
+        "rh2-replay-cand-getmoto__moto-6913-4b98e287"
+      ],
+      "manager_close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "diagnostics_ref": null,
+      "sidecar_count": 0
+    },
+    "grading_cancel": {
+      "cancel_propagated": true,
+      "ledger_rows": 1,
+      "stage_errors": [
+        "cancelled:grading"
+      ],
+      "candidate_created": [
+        "rh2-replay-cand-getmoto__moto-6913-81e7a549"
+      ],
+      "removed": [
+        "rh2-replay-cand-getmoto__moto-6913-81e7a549",
+        "rh2-grading-replay-t-getmoto__moto-6-cd2b85eb"
+      ],
+      "manager_close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "diagnostics_ref": null,
+      "sidecar_count": 0
+    },
+    "cleanup_cancel": {
+      "cancel_propagated": true,
+      "ledger_rows": 0,
+      "stage_errors": [],
+      "candidate_created": [
+        "rh2-replay-cand-getmoto__moto-6913-fed40c99"
+      ],
+      "removed": [],
+      "manager_close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0
+      },
+      "cleanup": null,
+      "diagnostics_ref": null,
+      "sidecar_count": 0
+    },
+    "pull_cancel": {
+      "cancel_propagated": true,
+      "ledger_rows": 0,
+      "stage_errors": [],
+      "candidate_created": [],
+      "removed": [],
+      "manager_close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0
+      },
+      "cleanup": null,
+      "diagnostics_ref": null,
+      "sidecar_count": 0
+    },
+    "image_inspect_outside_budget": {
+      "configured_image_budget": 0.02,
+      "pending_after_seconds": 0.1011176670435816,
+      "candidate_started_before_release": false,
+      "eventual_image_pull": {
+        "pulled": false,
+        "seconds": 0.101
+      },
+      "eventual_stage_error": null
+    }
+  },
+  "manager_cpu_root_rerun": {
+    "scope": "local fixture and FakeDocker only; no Docker, remote, permission tests, or production edits",
+    "bound_observations_and_rc": {
+      "observation_calls": 2,
+      "users": [
+        "54322",
+        "54322"
+      ],
+      "home": "HOME=/home/rh2grader",
+      "reward_with_test_rc_7": 1.0,
+      "shell_exit_code": 0,
+      "captured_test_rc": 7
+    },
+    "total_deadline_and_regular_read": {
+      "detail": "grading_deadline_exhausted:test:candidate_phase=install",
+      "reward": null,
+      "partial_saved": true,
+      "plain_file_read_exact": true,
+      "read_guard": "if [ -f /rh2/candidate/eval.log ] && [ ! -L /rh2/candidate/eval.log ]; then cat /rh2/candidate/eval.log; else echo RH2_PARTIAL_LOG_UNAVAILABLE=irregular_or_missing; fi",
+      "container_removed": true,
+      "elapsed_seconds": 0.164
+    },
+    "candidate_cancellation": {
+      "cancelled_error_propagated": true,
+      "container_removed": true,
+      "partial_read_calls": 1,
+      "candidate_segment_ran_once": true,
+      "partial_kept_in_memory": true,
+      "test_log_kept_in_memory": false,
+      "candidate_facts": {
+        "install_rc_last_command": null,
+        "install_skipped": false,
+        "install_seconds": null,
+        "test_rc": null,
+        "test_seconds": null,
+        "markers_seen": [
+          "RH2_TS_INSTALL_START"
+        ],
+        "log_partial": true
+      },
+      "diagnostics_in_record": null,
+      "persisted_files": []
+    },
+    "post_observation_cancellation": {
+      "cancelled_error_propagated": true,
+      "container_removed": true,
+      "partial_read_calls": 0,
+      "candidate_segment_ran_once": true,
+      "partial_kept_in_memory": false,
+      "test_log_kept_in_memory": false,
+      "candidate_facts": {
+        "install_rc_last_command": null,
+        "install_skipped": false,
+        "install_seconds": null,
+        "test_rc": 0,
+        "test_seconds": null,
+        "markers_seen": [
+          "RH2_TEST_RC"
+        ],
+        "log_partial": false
+      },
+      "diagnostics_in_record": null,
+      "persisted_files": []
+    },
+    "source_sha256": {
+      "rh2/src/repoharness2/grading/manager.py": "960ad63b26d785d2ca932d5540ff95ea3cb52fa767616b2b020178d89fa6e44b",
+      "rh2/src/repoharness2/adapters/slime/prepared_task_face.py": "9ada92f85e43a9d4b252157d093399a04e1940937299d994d293e9a5741f33f0",
+      "rh2/tests/grading/test_w3b_grader_profile_unit.py": "2a560af19e52ec434c428b3594f54fb79bfd32dbf8e69818d25ab32a27d6d2b8",
+      "rh2/tests/adapters/test_w1b_prepared_task_face_v2.py": "ae380b1e8c2e7c328a2095ed5d7290a1b26b23d97640e7418906bdac8e31da7c"
+    }
+  },
+  "dependency_reproducibility": {
+    "pip_group_spec": "swebench>=4.1,<5; project dependency verifiers (no commit in Requires-Dist)",
+    "lock_export_command": "uv export --frozen --offline --no-default-groups --group swe --no-hashes",
+    "lock_export_swebench": "4.1.0",
+    "lock_export_verifiers": "5885ab9c54152e707af2a11797aa52c3eb1752da"
+  },
+  "raw_evidence_root": "runs/swe_grading_wiring_fix_review_20260915",
+  "limitations": [
+    "Docker 套件使用本地 ARM fixture，不证明 x86 SWE 环境或新机安装成功。",
+    "隔离同步目录用本机现有依赖运行，验证文件闭包；未执行 fresh pip 安装。",
+    "主审复跑7个 driver探针；子审额外nested-finally修法控制未改生产文件。"
+  ]
+}

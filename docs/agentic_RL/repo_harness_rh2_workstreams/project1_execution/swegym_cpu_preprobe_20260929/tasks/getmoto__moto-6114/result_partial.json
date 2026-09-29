@@ -1,0 +1,559 @@
+{
+  "schema": "swegym_cpu_partial_result.v1",
+  "date": "2026-09-29",
+  "instance_id": "getmoto__moto-6114",
+  "run": "mixed-v1",
+  "state": "actor_private_reviewed_formal_incomplete",
+  "review_kind": "owner readback; independent review pending",
+  "actor": {
+    "actor_original": {
+      "result": "ran",
+      "checks": {
+        "interpreter_in_tool_result": false,
+        "host_log_present": true,
+        "no_harness_dir_in_container": true,
+        "no_launcher_or_done_marker": true,
+        "message_start_matches_stub_requests": true,
+        "exit_code_zero": true,
+        "result_event_present": true,
+        "log_complete": true,
+        "bashenv_denied_for_agent": false,
+        "all_commands_ran": true,
+        "all_match_expect": true
+      },
+      "commands_result": [
+        {
+          "id": "identity",
+          "rc": 0,
+          "status": "rc0",
+          "expect": "zero",
+          "matches_expect": true,
+          "output_bytes": 177,
+          "output_truncated_to": 200000,
+          "pytest": null,
+          "purpose": "实际actor身份、激活、本地源码与SDK版本"
+        },
+        {
+          "id": "target_identity",
+          "rc": 1,
+          "status": "nonzero",
+          "expect": "nonzero",
+          "matches_expect": true,
+          "output_bytes": 766,
+          "output_truncated_to": 200000,
+          "pytest": null,
+          "purpose": "两个实际集群，查询B实际ARN，比较Identifier/ARN；不比较创建与查询时会变化的完整对象"
+        },
+        {
+          "id": "public_existing",
+          "rc": 0,
+          "status": "rc0",
+          "expect": "zero",
+          "matches_expect": true,
+          "output_bytes": 2879,
+          "output_truncated_to": 200000,
+          "pytest": {
+            "passed": 4,
+            "deselected": 31,
+            "warning": 21
+          },
+          "purpose": "公开旧名称/列表/不存在名称路径"
+        }
+      ],
+      "image_facts": {
+        "image": "sha256:fefec492f58ed0f8385a7e72234d296bd84d295031ce7e019f63fc33973ec249",
+        "inspect": "sha256:fefec492f58ed0f8385a7e72234d296bd84d295031ce7e019f63fc33973ec249 [\"xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6114@sha256:cb35f7e131f8e46c8a6865e8fb618c09032ce5ee27f1122f79010a7cfae8ef9a\"]",
+        "inspect_rc": 0,
+        "initial_worktree": "HEAD=f01709f9ba656e7cf4399bcd1a0a07fd134b0aec\nPORCELAIN_BEGIN\nPORCELAIN_RC=0\n",
+        "initial_worktree_rc": 0
+      },
+      "base_commit": "f01709f9ba656e7cf4399bcd1a0a07fd134b0aec",
+      "cc_version_observed": "2.1.205 (Claude Code)",
+      "effective_profile": {
+        "cpus": 2.0,
+        "memory_bytes": 4294967296,
+        "tmp_tmpfs_bytes": 1073741824,
+        "home_tmpfs_bytes": 268435456,
+        "writable_layer_quota_bytes": 8589934592,
+        "pids_limit": 512
+      },
+      "post_run_facts": {
+        "RH2_HARNESS_DIR": "ABSENT",
+        "RH2_RUN_SH": "ABSENT",
+        "RH2_RUN_DONE": "ABSENT",
+        "RH2_GIT_STATUS_LINES": "0",
+        "RH2_AGENT_PROCS": "0",
+        "RH2_NEWER_FILES": "172"
+      },
+      "cleanup": {
+        "container_rm": 0,
+        "network_failures": [],
+        "relay_failures": [],
+        "stub_rc": 0,
+        "labeled_containers_left": [],
+        "labeled_networks_left": [],
+        "residual_after_force": []
+      }
+    },
+    "actor_revised": {
+      "result": "ran",
+      "checks": {
+        "interpreter_in_tool_result": false,
+        "host_log_present": true,
+        "no_harness_dir_in_container": true,
+        "no_launcher_or_done_marker": true,
+        "message_start_matches_stub_requests": true,
+        "exit_code_zero": true,
+        "result_event_present": true,
+        "log_complete": true,
+        "bashenv_denied_for_agent": false,
+        "all_commands_ran": true,
+        "all_match_expect": true
+      },
+      "commands_result": [
+        {
+          "id": "identity",
+          "rc": 0,
+          "status": "rc0",
+          "expect": "zero",
+          "matches_expect": true,
+          "output_bytes": 177,
+          "output_truncated_to": 200000,
+          "pytest": null,
+          "purpose": "实际actor身份、激活、本地源码与SDK版本"
+        },
+        {
+          "id": "target_identity",
+          "rc": 1,
+          "status": "nonzero",
+          "expect": "nonzero",
+          "matches_expect": true,
+          "output_bytes": 766,
+          "output_truncated_to": 200000,
+          "pytest": null,
+          "purpose": "两个实际集群，查询B实际ARN，比较Identifier/ARN；不比较创建与查询时会变化的完整对象"
+        },
+        {
+          "id": "public_existing",
+          "rc": 0,
+          "status": "rc0",
+          "expect": "zero",
+          "matches_expect": true,
+          "output_bytes": 2879,
+          "output_truncated_to": 200000,
+          "pytest": {
+            "passed": 4,
+            "deselected": 31,
+            "warning": 21
+          },
+          "purpose": "公开旧名称/列表/不存在名称路径"
+        }
+      ],
+      "image_facts": {
+        "image": "sha256:aaf97ca9107336dc68a964386be07361bf363f3a4684998d3727d704c20cd5a0",
+        "inspect": "sha256:aaf97ca9107336dc68a964386be07361bf363f3a4684998d3727d704c20cd5a0 []",
+        "inspect_rc": 0,
+        "initial_worktree": "HEAD=f01709f9ba656e7cf4399bcd1a0a07fd134b0aec\nPORCELAIN_BEGIN\nPORCELAIN_RC=0\n",
+        "initial_worktree_rc": 0
+      },
+      "base_commit": "f01709f9ba656e7cf4399bcd1a0a07fd134b0aec",
+      "cc_version_observed": "2.1.205 (Claude Code)",
+      "effective_profile": {
+        "cpus": 2.0,
+        "memory_bytes": 4294967296,
+        "tmp_tmpfs_bytes": 1073741824,
+        "home_tmpfs_bytes": 268435456,
+        "writable_layer_quota_bytes": 8589934592,
+        "pids_limit": 512
+      },
+      "post_run_facts": {
+        "RH2_HARNESS_DIR": "ABSENT",
+        "RH2_RUN_SH": "ABSENT",
+        "RH2_RUN_DONE": "ABSENT",
+        "RH2_GIT_STATUS_LINES": "0",
+        "RH2_AGENT_PROCS": "0",
+        "RH2_NEWER_FILES": "172"
+      },
+      "cleanup": {
+        "container_rm": 0,
+        "network_failures": [],
+        "relay_failures": [],
+        "stub_rc": 0,
+        "labeled_containers_left": [],
+        "labeled_networks_left": [],
+        "residual_after_force": []
+      }
+    }
+  },
+  "private": {
+    "scope": "private root behavior only",
+    "spec_sha256": "40cdfd95cc006879bcc408d629fdd4e8d1983c1bde9595fca2503c7dac36a408",
+    "started_at": 1790624613.938195,
+    "variants": {
+      "base": {
+        "container": "rh2-cpu29-private-f7312c582393",
+        "started_at": 1790624613.9887962,
+        "preparation": [
+          {
+            "step": "git config --global --add safe.directory /testbed",
+            "rc": 0
+          },
+          {
+            "step": "TEST_SERVER_MODE=false MOTO_ACCOUNT_ID=123456789012 AWS_EC2_METADATA_DISABLED=true AWS_ACCESS_KEY_ID=testing AWS_SECRET_ACCESS_KEY=testing AWS_SESSION_TOKEN=testing python - <<'PY_CHECK'\nimport os,sys,subprocess,boto3,botocore,moto\nprint('PY_CHECK',sys.executable);print('IDENTITY',os.getuid(),os.getcwd(),os.environ.get('HOME'));print('VERSIONS',boto3.__version__,botocore.__version__,moto.__file__);assert moto.__file__.startswith('/testbed/')\nprint(subprocess.check_output(['git','rev-parse','HEAD'],text=True));print(subprocess.check_output(['git','status','--porcelain'],text=True))\nPY_CHECK",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'moto/rds/models.py'\"'\"', '\"'\"'a614a137f21dce20445cad98611e578b435d4f09a592ced584d887d9edb9250c'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          }
+        ],
+        "commands": [
+          {
+            "id": "target_identity",
+            "rc": 1,
+            "seconds": 2.0463763429997925,
+            "stdout_bytes": 87,
+            "stderr_bytes": 679
+          }
+        ],
+        "status": "executed_interpret_separately",
+        "cleanup": {
+          "rm_rc": 0,
+          "query_rc": 0,
+          "remaining": [],
+          "stderr": ""
+        },
+        "finished_at": 1790624618.771794
+      },
+      "gold": {
+        "container": "rh2-cpu29-private-08f48577b72b",
+        "started_at": 1790624618.7728965,
+        "preparation": [
+          {
+            "step": "git config --global --add safe.directory /testbed",
+            "rc": 0
+          },
+          {
+            "step": "TEST_SERVER_MODE=false MOTO_ACCOUNT_ID=123456789012 AWS_EC2_METADATA_DISABLED=true AWS_ACCESS_KEY_ID=testing AWS_SECRET_ACCESS_KEY=testing AWS_SESSION_TOKEN=testing python - <<'PY_CHECK'\nimport os,sys,subprocess,boto3,botocore,moto\nprint('PY_CHECK',sys.executable);print('IDENTITY',os.getuid(),os.getcwd(),os.environ.get('HOME'));print('VERSIONS',boto3.__version__,botocore.__version__,moto.__file__);assert moto.__file__.startswith('/testbed/')\nprint(subprocess.check_output(['git','rev-parse','HEAD'],text=True));print(subprocess.check_output(['git','status','--porcelain'],text=True))\nPY_CHECK",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'moto/rds/models.py'\"'\"', '\"'\"'a614a137f21dce20445cad98611e578b435d4f09a592ced584d887d9edb9250c'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          },
+          {
+            "step": "git apply --check /in/gold.patch",
+            "rc": 0
+          },
+          {
+            "step": "git apply /in/gold.patch",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'moto/rds/models.py'\"'\"', '\"'\"'00e61d1980f71fb4b0f37fa8e517a1fd3778c8ac5d687e4847d27217c5bc1c5b'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          }
+        ],
+        "commands": [
+          {
+            "id": "target_identity",
+            "rc": 0,
+            "seconds": 2.2346402359999047,
+            "stdout_bytes": 199,
+            "stderr_bytes": 0
+          }
+        ],
+        "status": "executed_interpret_separately",
+        "cleanup": {
+          "rm_rc": 0,
+          "query_rc": 0,
+          "remaining": [],
+          "stderr": ""
+        },
+        "finished_at": 1790624624.4032578
+      },
+      "degenerate": {
+        "container": "rh2-cpu29-private-fa7499da1fbb",
+        "started_at": 1790624624.4047713,
+        "preparation": [
+          {
+            "step": "git config --global --add safe.directory /testbed",
+            "rc": 0
+          },
+          {
+            "step": "TEST_SERVER_MODE=false MOTO_ACCOUNT_ID=123456789012 AWS_EC2_METADATA_DISABLED=true AWS_ACCESS_KEY_ID=testing AWS_SECRET_ACCESS_KEY=testing AWS_SESSION_TOKEN=testing python - <<'PY_CHECK'\nimport os,sys,subprocess,boto3,botocore,moto\nprint('PY_CHECK',sys.executable);print('IDENTITY',os.getuid(),os.getcwd(),os.environ.get('HOME'));print('VERSIONS',boto3.__version__,botocore.__version__,moto.__file__);assert moto.__file__.startswith('/testbed/')\nprint(subprocess.check_output(['git','rev-parse','HEAD'],text=True));print(subprocess.check_output(['git','status','--porcelain'],text=True))\nPY_CHECK",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'moto/rds/models.py'\"'\"', '\"'\"'a614a137f21dce20445cad98611e578b435d4f09a592ced584d887d9edb9250c'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          },
+          {
+            "step": "git apply --check /in/degenerate_first_object.patch",
+            "rc": 0
+          },
+          {
+            "step": "git apply /in/degenerate_first_object.patch",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'moto/rds/models.py'\"'\"', '\"'\"'a5e0c305e9981b61209a2fc3bc4e2c40944fade972a4ff28b5ed0fc54b81815e'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          }
+        ],
+        "commands": [
+          {
+            "id": "target_identity",
+            "rc": 1,
+            "seconds": 2.232000653999421,
+            "stdout_bytes": 199,
+            "stderr_bytes": 89
+          }
+        ],
+        "status": "executed_interpret_separately",
+        "cleanup": {
+          "rm_rc": 0,
+          "query_rc": 0,
+          "remaining": [],
+          "stderr": ""
+        },
+        "finished_at": 1790624630.0853732
+      }
+    },
+    "image_id_actual": "sha256:aaf97ca9107336dc68a964386be07361bf363f3a4684998d3727d704c20cd5a0",
+    "finished_at": 1790624630.0864806
+  },
+  "private_source_checks": [
+    {
+      "variant": "base",
+      "all_prepare_rc_zero": true,
+      "source_sha_verified_in_raw": true,
+      "cleaned": true
+    },
+    {
+      "variant": "gold",
+      "all_prepare_rc_zero": true,
+      "source_sha_verified_in_raw": true,
+      "cleaned": true
+    },
+    {
+      "variant": "degenerate",
+      "all_prepare_rc_zero": true,
+      "source_sha_verified_in_raw": true,
+      "cleaned": true
+    }
+  ],
+  "formal": {
+    "status": "three-way not complete at readback; no final score/use conclusion accepted"
+  },
+  "scope": "CPU deterministic public Devcheck plus separate root private behavior; no autonomous solver or formal issue/public_hints delivery proof",
+  "remaining": [
+    "complete formal three-way logs, actual exports, exact references, installation and two-layer cleanup",
+    "independent review and root parser/transport verification",
+    "unrun behavior variants remain unrun; no full pip_check or full-lifetime resource health claim",
+    "model/GPU/budget/training and final-use decision separate"
+  ],
+  "environment": {
+    "restoration": "historical install_wave1 COPY-only wheels and pip env; original make init retained",
+    "not_observed_repair": "original actor already all_match_expect; expected target DBClusterNotFoundFault and old tests pass; no new dependency failure observed",
+    "actor_revalidation": "same commands and observed behavior on derived image; aligns actor/private/formal image",
+    "source_id": "sha256:fefec492f58ed0f8385a7e72234d296bd84d295031ce7e019f63fc33973ec249",
+    "derived_id": "sha256:aaf97ca9107336dc68a964386be07361bf363f3a4684998d3727d704c20cd5a0",
+    "base_layers": 13,
+    "derived_layers": 14,
+    "base_prefix_identical": true,
+    "pins": [
+      "setuptools==72.1.0",
+      "wheel==0.43.0",
+      "packaging==24.1"
+    ],
+    "wheel_manifest": [
+      {
+        "name": "packaging-24.1-py3-none-any.whl",
+        "sha256": "5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124",
+        "bytes": 53985
+      },
+      {
+        "name": "wheel-0.43.0-py3-none-any.whl",
+        "sha256": "55c570405f142630c6b9f72fe09d9b67cf1477fcf543ae5b8dcb1f5b7377da81",
+        "bytes": 65775
+      },
+      {
+        "name": "setuptools-72.1.0-py3-none-any.whl",
+        "sha256": "5a03e1860cf56bb6ef48ce186b0e557fdba433237481a9a625176c2831be15d1",
+        "bytes": 2337965
+      }
+    ],
+    "wheel_bytes_locally_available": false,
+    "asset_verification_scope": "runner verified exact filenames/hash/bytes before build; local manifest and build evidence read, wheel bytes not rehashed locally",
+    "download_cleanup": {
+      "rm_rc": 0,
+      "query_rc": 0,
+      "remaining": [],
+      "stderr": "Error response from daemon: No such container: cpu29-download-getmoto-moto-6114-mixed-v1\n"
+    }
+  },
+  "behavior_matrix": {
+    "base": "name lookup B succeeds; ARN lookup B raises DBClusterNotFoundFault",
+    "gold": "ARN B returns exactly one B with actual expected ARN",
+    "degenerate": "ARN B returns exactly one A with A ARN; identity assertion fails"
+  },
+  "evidence": [
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/actor_original/attempt.json",
+      "sha256": "d271a91b965bba72db2fa90d6cec7f47fb75f17d7de073a196c43ee14d1b4339"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/actor_original/captures/identity.out",
+      "sha256": "a9d026122d51b0dad2d99fc0240e637d85226515afd2fa7d628ff66c40b82155"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/actor_original/captures/public_existing.out",
+      "sha256": "9d9015fb893a60620daeeb01a89dae71d9cf57506f4b322fa941f362ed59f4dc"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/actor_original/captures/target_identity.out",
+      "sha256": "d1354935e9b591296af0cf3cded38c71388663342f5f4518dad1d0ebd8d11153"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/actor_revised/attempt.json",
+      "sha256": "33d42995eec21a7ee06bfaaa7a899f7c7c1ac621dc38e02565593142fb714856"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/actor_revised/captures/identity.out",
+      "sha256": "a9d026122d51b0dad2d99fc0240e637d85226515afd2fa7d628ff66c40b82155"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/actor_revised/captures/public_existing.out",
+      "sha256": "cd3046f74187f3701226ca227efc2cbcffe491de706ec37350e482437049d3df"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/actor_revised/captures/target_identity.out",
+      "sha256": "d1354935e9b591296af0cf3cded38c71388663342f5f4518dad1d0ebd8d11153"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/build_dependencies.log",
+      "sha256": "2cba6f02dbb6f772d66c0d27422984715fe047102b6d6b3f3bdb2149d4a3f94c"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/dependency_build/Dockerfile",
+      "sha256": "352caaf2eae8dc6fdb3291e9afaf85281a0b0199d6b3ee091d9e3d3247d44993"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/dependency_build/download_cleanup.json",
+      "sha256": "c9466f1e7d5e0408950486ebb40f4d61348ca65a887113b0ca917187ded8661c"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/dependency_build/image.json",
+      "sha256": "b9a7deccac6bde376124f994f65fdb3ecb5250918638dd68f3bb21f572354b93"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/download_wheels.log",
+      "sha256": "b3e2c5ad291151f8d1a1b51b119b591bd45c51b4def9c10316cb4b3fba0bb4ba"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/original_image.json",
+      "sha256": "9ece462e8edf3254fc522143cc64832d95e6038549c76b07dcf8e91e058caa71"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/base/prep_0.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/base/prep_1.out",
+      "sha256": "f600e6483d0c198ae09e4f0634c4f1fe82e69eaee4afb0e6ea22b01645a4b114"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/base/prep_2.out",
+      "sha256": "eb244963ad3b2e37c814bff580411111e4cfb90bf9ef852fda5516265ed5c4bb"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/base/target_identity.out",
+      "sha256": "d1354935e9b591296af0cf3cded38c71388663342f5f4518dad1d0ebd8d11153"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/degenerate/prep_0.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/degenerate/prep_1.out",
+      "sha256": "f600e6483d0c198ae09e4f0634c4f1fe82e69eaee4afb0e6ea22b01645a4b114"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/degenerate/prep_2.out",
+      "sha256": "eb244963ad3b2e37c814bff580411111e4cfb90bf9ef852fda5516265ed5c4bb"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/degenerate/prep_3.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/degenerate/prep_4.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/degenerate/prep_5.out",
+      "sha256": "901fd79131197b07c143edc5320c9d3e8e84cc23f0286dc4693272605f99e913"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/degenerate/target_identity.out",
+      "sha256": "1529fd2550883c6d79ba1dd943ac61a4b0893b88911fe9be9b3259a44156ca89"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/gold/prep_0.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/gold/prep_1.out",
+      "sha256": "f600e6483d0c198ae09e4f0634c4f1fe82e69eaee4afb0e6ea22b01645a4b114"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/gold/prep_2.out",
+      "sha256": "eb244963ad3b2e37c814bff580411111e4cfb90bf9ef852fda5516265ed5c4bb"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/gold/prep_3.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/gold/prep_4.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/gold/prep_5.out",
+      "sha256": "570df1d6db530bdd95b86b6cfc646f2196df302cf0a2b82a526e2a0e15b6ac46"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/gold/target_identity.out",
+      "sha256": "99fc61d1a3eef4d8b3b8d1512fa89ceb5030b6c9c220508190635ca940369817"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/summary.json",
+      "sha256": "02e4f9c2b3157b4c6e344886bd666b0420afe39bd2dd5cf47d4f48ca9d505618"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/task_inputs/getmoto__moto-6114/buildplan.json",
+      "sha256": "376ef6864e3151d68645164770e6b2590b311ce64c94eb952f2d8b1d2abd9b3b"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/task_inputs/getmoto__moto-6114/private/behavior_commands.json",
+      "sha256": "72c4d101b54a4848930d2c14ec5e67dd5dd94f8d1c0ff0394bca45ead373bef7"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/task_inputs/getmoto__moto-6114/private/patch_validation.json",
+      "sha256": "d0c8cf81af16b8c529561b40b4c86c4232bddee937fe8f5c165e4d224e799067"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/task_inputs/getmoto__moto-6114/public_commands.json",
+      "sha256": "c102412f815fea5a87c99dc8b686eddbe32c1d63bef7925939c7a0ec5416539a"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/task_inputs/getmoto__moto-6114/recovery.json",
+      "sha256": "23b12ee8b31fdf1013a717108f7411fea4a9067865affe42e577f2613b260af5"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/task_inputs/getmoto__moto-6114/wheel_manifest.json",
+      "sha256": "660fa7aa83d8c3cedeb5e188ef7a4de0621e6011a37be48958813a6c50425a55"
+    }
+  ]
+}

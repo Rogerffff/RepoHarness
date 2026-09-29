@@ -1,0 +1,405 @@
+{
+  "task_id": "r2e_gym_subset::numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764",
+  "instance_id": "numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764",
+  "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0（无材料修订）",
+  "source_adapter_ref": {
+    "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl（行 sha256 34a4c44844ad72554bf4ee6b237e8912243d97d255f7c6da64e3c0a7a21d915b）",
+    "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl:20（行 sha256 502b1dc9b35988682faeb8f0972ef57e7b4f69cc399386c7b3f146b88a3a58dc）",
+    "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/validation_bundles_v0.jsonl:20（行 sha256 fddeda991b95055df698fa3eb00ab27f11764fe101113a8281220773b4350baf）",
+    "spec_vendor_id": "r2e_gym_subset_e8b9fcbc",
+    "parser_id": "r2e_prime_pytest_v1",
+    "materials": {
+      "expected_sha256": "sha256:136e84d7873e5e3822dee3868e08c4b1038907f86b464cf60f1209c48f5a29dd",
+      "hidden_tests_tree_sha256": "sha256:2ac136fc162611cb276f4cce4ec3d6657aa859beca6c53701d1330d2c0891fb7",
+      "gold_patch_sha256": "sha256:9e91a9e4f37c94fc25b48bc55a7c3d2e2de8a848503c89cede40a4920007f3a0",
+      "run_tests_sh_sha256": "sha256:8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf"
+    }
+  },
+  "recipe_ref": {
+    "derived_image_recipe": "r2e_derive_v1",
+    "recipe_sha256": "sha256:0da821a15fa389289f524c60d3a421bc940cce753e4ecf3d53560b7ab6b31df9",
+    "current_overlay_image_id": "sha256:4bd9cf429e30cff34f1eab07c87dd83c87840d7f6e1f8b8ae3c5c29afd0bad55",
+    "earlier_build_image_id": "sha256:cb0ee55ecd7978a10f39f7e451264be9aed2a09513b15598000a2dbd9442079b",
+    "env_recipe": null,
+    "resource_recipe": null,
+    "resources": "默认：2 CPU / 4 GiB / /tmp 1 GiB（rollout 另有 home 256 MiB tmpfs）"
+  },
+  "code_snapshot_ref": {
+    "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+    "grader_scripts_digest": "sha256:7c4686eef0ed359ffbd5f91a4a3904b16deb925ce8a6196f487fcba32305576d",
+    "grader_profile_digest": "sha256:1bb8e0cf80ce48b15401fdf79d18f4f4c08a5f01001d8b0756311c58de25c19a",
+    "rollout_profile_digest": "sha256:149b3abeddcf74304e6ec7e524a5fc2f33e04d3d9b98ede8f864c5d8ad7bbcec",
+    "claude_code_version": "2.1.205",
+    "prompt_rendering_read_at": "rh2/src/repoharness2/envpack/bundles.py:282-289 与 rh2/src/repoharness2/adapters/slime/generate.py:1976（HEAD 9d741bd4）；rh2/src/repoharness2/envpack/ingest_r2e_subset.py:197-201（工作区未跟踪文件）"
+  },
+  "facts_ref": [
+    "runs/r2e_static_prep_20260924/v3/private/numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764/run_refs.json",
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl:20（noop，cb0ee55e，reward 0，31/32）",
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl:20（gold，cb0ee55e，reward 1，32/32）",
+    "runs/r2e_env_repair_20260924/_rerun2/ledger_noop.jsonl:20（noop，cb0ee55e，reward 0，31/32）",
+    "runs/r2e_env_repair_20260924/_rerun2/ledger_gold.jsonl:20（gold，cb0ee55e，reward 1，32/32）",
+    "runs/r2e_actor_20260925/grader/ledger_na5ea_noop.jsonl:1（noop，4bd9cf42，reward 0，31/32）",
+    "runs/r2e_actor_20260925/grader/ledger_na5ea_gold.jsonl:1（gold，4bd9cf42，reward 1，32/32）",
+    "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl:35,80（M3 独立 runner，来源镜像，gold ×2，32/32）",
+    "runs/r2e_actor_20260925/devcheck/numpy__a5ea773e66110cf335c9ed37e8ccdc14f/orig/（正式启动路径，agent 身份，真实 Claude Code 2.1.205 + 桩端点）",
+    "runs/r2e_actor_20260925/devcheck/numpy__a5ea773e66110cf335c9ed37e8ccdc14f/private_gold/private_control.json（同镜像一次性容器，root，gold 后跑公开命令）",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764/facts.json（环境审查第一轮）",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764/agent_probe.log",
+    "runs/r2e_env_repair_20260924/p2/followups/followups.log",
+    "runs/r2e_env_repair_20260924/p2/followups/bare_pytest.log"
+  ],
+  "checks": {
+    "1": {
+      "status": "pass",
+      "note": "题面提交前缀 d770034969e3 就是 base_commit。隐藏测试 = 公开 numpy/lib/tests/test_shape_base.py 再加 1 个测试。材料哈希与 bundle 一致。gold 与上游修复提交的源码部分一致（M3 gold_matches_git_diff_changed_lines=true）。",
+      "evidence": "执行 + 代码",
+      "refs": [
+        "runs/r2e_static_prep_20260924/v3/private/numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764/grading_bundle.json",
+        "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl:35"
+      ]
+    },
+    "2": {
+      "status": "pass",
+      "note": "noop 下目标键的失败值 x: array([2, 3, 4, 5, 6]) 与题面的 Actual output 一致。devcheck 以 agent 身份复现，输出 [2 3 4 5 6] True。",
+      "evidence": "执行",
+      "refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-n_aaa92dfe.eval.log:123-128",
+        "runs/r2e_actor_20260925/devcheck/numpy__a5ea773e66110cf335c9ed37e8ccdc14f/orig/captures/pr1_1_cmd.out"
+      ]
+    },
+    "3": {
+      "status": "unknown",
+      "note": "user_prompt.txt 只是静态渲染。正式链的用户消息只含 render_user_prompt 的结果（开头一行加题面）；public_hints 只写入 /rh2/public_task_bundle.json，不进系统提示。真实任务消息未捕获：devcheck 的首条用户消息是 devcheck 指令。",
+      "evidence": "代码",
+      "refs": [
+        "rh2/src/repoharness2/adapters/slime/generate.py:1976",
+        "rh2/src/repoharness2/envpack/bundles.py:282-289",
+        "runs/r2e_actor_20260925/devcheck/numpy__a5ea773e66110cf335c9ed37e8ccdc14f/orig/stub/requests/messages_000.json"
+      ]
+    },
+    "4": {
+      "status": "pass",
+      "note": "修复只需改已跟踪的 numpy/lib/shape_base.py，三次 gold 投影的 included_paths 都含它。评分只替换 r2e_tests 和 run_tests.sh，改仓库测试文件不影响得分。不加额外路径规则。",
+      "evidence": "执行",
+      "refs": [
+        "runs/r2e_actor_20260925/grader/ledger_na5ea_gold.jsonl:1"
+      ]
+    },
+    "5": {
+      "status": "issue",
+      "note": "同仓 6/6 道较新 numpy 题（18b7cd9d、2f4a9650、43e333e2、5e8301c2、d805e9b6、d89bc4bb）的公开工作树里，都有本题修复的重构版本（注释逐字相同）和目标测试 test_tile_one_repetition_on_array_gh4679。cross_task_gold_scan.json 漏报：逐字代码行只命中 1/3。这是需要登记的关系，不是本题缺陷。其它来源的重复未查。",
+      "evidence": "执行（文件比对）",
+      "refs": [
+        "runs/r2e_static_prep_20260924/cross_task_gold_scan.json",
+        "runs/r2e_static_prep_20260924/v3/public/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/worktree/numpy/lib/shape_base.py:860-863"
+      ]
+    },
+    "6": {
+      "status": "pass",
+      "note": "不需要新依赖。venv 里已有 pytest 7.4.4、hypothesis 6.79.4；没有 pip。",
+      "evidence": "执行",
+      "refs": [
+        "runs/r2e_actor_20260925/devcheck/numpy__a5ea773e66110cf335c9ed37e8ccdc14f/orig/captures/env.out",
+        "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+      ]
+    },
+    "7": {
+      "status": "not_applicable",
+      "note": "没有资产、夹具或外部文件。"
+    },
+    "8": {
+      "status": "pass",
+      "note": "两侧身份都已实测：devcheck 用 agent（uid 54321），评分用 rh2grader（uid 54322）。",
+      "evidence": "执行",
+      "refs": [
+        "runs/r2e_actor_20260925/devcheck/numpy__a5ea773e66110cf335c9ed37e8ccdc14f/orig/prelaunch.json",
+        "runs/r2e_actor_20260925/grader/ledger_na5ea_noop.jsonl:1"
+      ]
+    },
+    "9": {
+      "status": "pass",
+      "note": "RH2_OBS_IMPORT_PATH=/testbed/numpy/__init__.py；gold 翻转了目标键。评分侧 RH2_INSTALL_SKIPPED=1，所以 C 源码改动不会被编译，本题也不需要改 C。",
+      "evidence": "执行",
+      "refs": [
+        "runs/r2e_actor_20260925/grader/ledger_na5ea_gold.jsonl:1"
+      ]
+    },
+    "10": {
+      "status": "pass",
+      "note": "复现命令能区分修复前后：[2 3 4 5 6] True → [0 1 2 3 4] False。用 python -m pytest 跑相关模块是 31 passed，但修复前后结果相同。脚本放在 /testbed 之外时要设 PYTHONPATH=/testbed。裸 pytest 收集失败（18b7cd9d 实测，本题推断）。",
+      "evidence": "执行",
+      "refs": [
+        "runs/r2e_actor_20260925/devcheck/numpy__a5ea773e66110cf335c9ed37e8ccdc14f/orig/captures/pr5_4_pytest.out",
+        "runs/r2e_actor_20260925/devcheck/numpy__a5ea773e66110cf335c9ed37e8ccdc14f/private_gold/private_control.json",
+        "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764/agent_probe.log:122",
+        "runs/r2e_env_repair_20260924/p2/followups/bare_pytest.log"
+      ]
+    },
+    "11": {
+      "status": "pass",
+      "note": "所有阶段都不需要网络。rollout 的外部 DNS 和直连都被拒，只能连模型 relay；评分侧是 deny_all。",
+      "evidence": "执行",
+      "refs": [
+        "runs/r2e_actor_20260925/devcheck/numpy__a5ea773e66110cf335c9ed37e8ccdc14f/orig/prelaunch.json"
+      ]
+    },
+    "12": {
+      "status": "not_applicable",
+      "note": "没有外部服务。"
+    },
+    "13": {
+      "status": "pass",
+      "note": "评分内存峰值约 272 MB，测试耗时不到 1.5 s。",
+      "evidence": "执行",
+      "refs": [
+        "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl:20"
+      ]
+    },
+    "14": {
+      "status": "pass",
+      "note": "noop 和 gold 各 3 次（cb0ee55e 上 2 次，4bd9cf42 上 1 次），逐键结果相同；日志除时间戳和耗时外逐字相同。",
+      "evidence": "执行",
+      "refs": [
+        "runs/r2e_actor_20260925/grader/eval_logs/evallog_replay-207011670b44-nump_2e5abeb7.eval.log",
+        "runs/r2e_actor_20260925/grader/eval_logs/evallog_replay-d2b1538aacd1-nump_61b967f8.eval.log"
+      ]
+    },
+    "16": {
+      "status": "pass",
+      "note": "gold 的形态（修改单个已跟踪文件）已经走过冻结、投影、评分全流程，实测 3 次。新增文件、删除文件等形态本题用不到。",
+      "evidence": "执行"
+    },
+    "17": {
+      "status": "pass",
+      "note": "评分先删 /testbed/r2e_tests，再放入隐藏测试和 run_tests.sh（RH2_SETUP_RESTORED=2），不碰 shape_base.py。",
+      "evidence": "执行"
+    },
+    "18": {
+      "status": "pass",
+      "note": "collected 32 items，得到 32 个结果；rc 与结果一致；num_parsed_outside_segment=0。",
+      "evidence": "执行"
+    },
+    "19": {
+      "status": "pass",
+      "note": "32 键逐键对账，keys_equal=true。没有 SKIP / XFAIL，没有参数化，没有跨文件撞键。",
+      "evidence": "执行"
+    },
+    "20": {
+      "status": "pass",
+      "note": "noop 与 gold 只差目标键；noop 的失败原因就是题面描述的症状。",
+      "evidence": "执行"
+    },
+    "21": {
+      "status": "pass",
+      "note": "失败原因（断言值）在日志里可见，没有被隐藏的失败。",
+      "evidence": "执行"
+    },
+    "22": {
+      "status": "pass",
+      "note": "M3 独立 runner 在来源镜像上跑 gold 两次，都是 32/32，逐键与 RH2 的 gold 相同。noop 一侧的参考原件未读，历史记录 R15 称一致。",
+      "evidence": "执行（gold 侧）",
+      "refs": [
+        "runs/env_overnight_20260916/M3/gold_ledger/logs_r2e/numpy/a5ea773e6611/gold/a1/test_output.txt"
+      ]
+    },
+    "23": {
+      "status": "pass",
+      "note": "主需求清楚，前后一致。升维、空 reps、子类三种边界题面没有约定；隐藏测试也没测这些，所以不影响评分。",
+      "evidence": "代码"
+    },
+    "24": {
+      "status": "pass",
+      "note": "期望全是 PASSED，唯一新增的断言只检查输入有没有被改。没有发现强制唯一实现的断言；候选 A 待实跑确认。",
+      "evidence": "推断"
+    },
+    "25": {
+      "status": "issue",
+      "note": "唯一的目标键就是题面原例。只处理标量 reps=1 的候选 B 预计也能得 1，但它违反了题面的 in all dimensions。",
+      "evidence": "推断（依据隐藏测试全文），待正式评分实跑",
+      "refs": [
+        "runs/r2e_static_prep_20260924/v3/private/numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764/hidden_tests/test_1.py:315-349"
+      ]
+    },
+    "26": {
+      "status": "issue",
+      "note": "全 1 分支的旧行为（升维后的形状、0-d 输入的输出形状、子类）没有任何键保护。丢掉 ndmin 的候选 C 预计也能得 1。gold 本身没有发现回归。",
+      "evidence": "推断，待正式评分实跑"
+    },
+    "27": {
+      "status": "pass",
+      "note": "gold 只有一个 hunk，没有无关改动。私有对照中 12 个情形全部不再共享内存，形状和类型都不变。gold 只对 ndarray 复制，与题面 on a NumPy array 的范围一致。",
+      "evidence": "执行 + 代码",
+      "refs": [
+        "runs/r2e_actor_20260925/devcheck/numpy__a5ea773e66110cf335c9ed37e8ccdc14f/private_gold/private_control.json"
+      ]
+    },
+    "28": {
+      "status": "not_applicable",
+      "note": "没有材料修订，也没有新增断言。"
+    },
+    "29": {
+      "status": "pass",
+      "note": "派生镜像里 refs、remotes、reflog、unreachable 都是 0，HEAD 没有子提交；隐藏测试 agent 读不到；7 道 numpy 题的 install.sh 摘要相同，是通用脚本。镜像里别处是否还有新版 numpy 的副本，未查。",
+      "evidence": "执行",
+      "refs": [
+        "runs/r2e_actor_20260925/devcheck/numpy__a5ea773e66110cf335c9ed37e8ccdc14f/orig/attempt.json",
+        "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+      ]
+    },
+    "30": {
+      "status": "pass",
+      "note": "rollout 没有外网，只能连模型 relay。修好的代码就是现代 numpy 的 tile 原文，模型从记忆里就能取到；这不是工具通道，记在 issues N2。",
+      "evidence": "执行"
+    },
+    "31": {
+      "status": "unknown",
+      "note": "隐藏测试的断言函数来自 numpy/testing/utils.py，候选可以改它，评分时又不会重置；另外，运行 pytest r2e_tests 时会加载根目录的 conftest.py。这是共享机制，没有逐题验证。",
+      "evidence": "代码"
+    },
+    "32": {
+      "status": "pass",
+      "note": "目标断言检查的是正确的性质（修改结果之后输入不变），不是比对文本或检查文件是否存在。",
+      "evidence": "代码"
+    },
+    "33": {
+      "status": "not_checked",
+      "note": "需要真实模型。"
+    },
+    "34": {
+      "status": "not_checked",
+      "note": "需要真实模型。"
+    },
+    "35": {
+      "status": "not_checked",
+      "note": "需要真实模型；检查成功补丁时，要看是否只修了标量 reps=1，以及有没有改 numpy/testing/ 或根目录的 conftest.py。"
+    },
+    "36": {
+      "status": "not_checked",
+      "note": "需要目标基座模型。"
+    },
+    "37": {
+      "status": "not_applicable",
+      "note": "没有修订。"
+    }
+  },
+  "issues": [
+    {
+      "id": "N1",
+      "category": "test_coverage",
+      "checks": [
+        "25",
+        "26"
+      ],
+      "summary": "隐藏测试里唯一的目标键就是题面原例（1-D 数组配标量 reps=1）。题面写了 in all dimensions，但 (1,)、[1]、2-D 数组配 1、升维、0-d 这些形式都没测；全 1 分支的旧行为也没有键保护。",
+      "evidence_level": "静态推断（依据隐藏测试全文与 base 源码），待正式评分实跑候选 B、C",
+      "impact": "reward=1 不能证明修复完整。只处理标量 reps=1 的实现，或者丢掉升维的实现，预计也能得 1。",
+      "proposed_action": "实跑候选 B、C。如果证实，诊断解释时要读补丁；是否另加不进 reward 的补充检查（依据题面与 docstring：(1,)、[1]、(1,1) 的形状以及是否共享内存，0-d 输入的形状；不包括子类），由协调者和用户决定。不改评分测试。",
+      "status": "open"
+    },
+    {
+      "id": "N2",
+      "category": "task_relation",
+      "checks": [
+        "5",
+        "30"
+      ],
+      "summary": "同仓 6 道较新 numpy 题的公开工作树里，都有本题修复的重构版本和目标测试：代码是 all(x == 1 for x in tup) 与 return _nx.array(A, copy=True, subok=True, ndmin=d)，注释逐字相同。本题 base（1.10.0.dev）在 7 题中最早，所以反方向不成立。机械比对只按逐字代码行计算，命中 1/3，因而漏报。",
+      "evidence_level": "执行（公开工作树文件比对）",
+      "impact": "不影响本题评分。做留出评测划分时要登记这一关系；另外修复就是现代 numpy 的原文，模型从记忆里就能取到，只影响把本题当作独立能力测量的用途。",
+      "proposed_action": "在划分记录中登记；向协调者反馈比对方法会漏掉上游后来重构过的修复。",
+      "status": "verified"
+    },
+    {
+      "id": "N3",
+      "category": "public_input",
+      "checks": [
+        "3"
+      ],
+      "scope": "链路级（所有 R2E 题）",
+      "summary": "正式链的用户消息只有题面，public_hints 不进入模型消息（只写入容器文件）。真实任务消息仍未捕获。",
+      "evidence_level": "代码",
+      "impact": "对本题影响小：模型默认不知道要用 python -m pytest，也不知道没有 pip、没有网络，但可以自行恢复。",
+      "proposed_action": "由链路负责方决定是否注入提示；首次真实求解时捕获实际消息。",
+      "status": "open"
+    },
+    {
+      "id": "S1",
+      "category": "solver_condition",
+      "checks": [
+        "10"
+      ],
+      "scope": "repo:numpy（本批 7 题）",
+      "summary": "numpy 是就地构建的，没有装进 venv：/testbed 必须在 sys.path 上，脚本放在 /testbed 之外时要设 PYTHONPATH=/testbed。裸 pytest 收集会失败（18b7cd9d 实测；本题推断，因为 numpy/lib/tests/ 同样没有 __init__.py）。没有 pip。公开测试的噪声只出现在无关的 numpy/tests/test_ctypeslib.py（1 个 ERROR）。",
+      "evidence_level": "执行（历史探针 + devcheck）",
+      "proposed_action": "只记录解题侧条件（E10），不写进题面。",
+      "status": "verified"
+    },
+    {
+      "id": "N4",
+      "category": "shared_control_plane",
+      "checks": [
+        "31"
+      ],
+      "scope": "共享机制",
+      "summary": "隐藏测试的断言函数来自候选可以改、评分时不会重置的 numpy/testing/utils.py。",
+      "evidence_level": "代码",
+      "proposed_action": "请协调者确认共享审查是否覆盖了库自带测试工具被候选改写的情况。如果没有覆盖，可以用一个让 assert_array_compare 直接返回的候选做验证（推断预期得 1）。",
+      "status": "open"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": []
+  },
+  "revision_refs": [],
+  "disposition": {
+    "scope": "static_review",
+    "state": "needs_review",
+    "reason": "静态候选，待 actor 验证。已核：材料；两次构建上的评分；开发条件（正式启动路径 + 真实 Claude Code + 桩模型）。未验：真实模型求解与真实任务消息。没有题意或测试争议，不需要材料修订；覆盖窄作为使用限制记录（N1）。",
+    "static_probe_candidate": true,
+    "probe_candidate_conditions": [
+      "诊断时读补丁，不以 reward=1 断言修复完整（N1）",
+      "留出评测划分时登记 N2",
+      "解题侧条件见 S1"
+    ],
+    "environment_disposition_ref": {
+      "state": "environment_qualified",
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764/screening_record.json",
+      "note": "环境资格在当前覆盖表镜像 4bd9cf42 上重新成立（协调者 09-25 正式评分：noop 0 / gold 1）"
+    },
+    "judgment_changed_after_history": false,
+    "change_note": "读历史后未改判。关闭了\"当前构建无评分\"这一未知项（协调者实测）；补充了解题侧条件\"脚本在 /testbed 之外须设 PYTHONPATH\"（历史探针证据）。",
+    "next_step": "用正式评分代码实跑候选 A、B；C、D 可放在同一批。见 card.md §5。",
+    "independent_review": null
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "reviewer_exposure": "主审读过 gold、隐藏测试、期望映射、评分账本与日志、devcheck 与私有 gold 对照、环境审查历史记录，以及同仓 6 题的公开工作树。本记录与草稿不提供给模型 solver。",
+    "limitations": [
+      "reward 只认证题面原例（N1）",
+      "修复及目标测试出现在同仓 6 道较新题的初态中，模型记忆也能取到（N2）",
+      "公开提示不进入模型消息（N3）"
+    ],
+    "not_an_approval": "不是正式训练或评测准入"
+  },
+  "costs": {
+    "review_tokens": null,
+    "review_usd": null,
+    "reviewer_cpu_seconds": null,
+    "note": "本审查只做静态阅读，没有执行命令。下列耗时来自协调者运行的原件。",
+    "observed_runs_by_coordinator": {
+      "devcheck_wall_seconds": 15,
+      "devcheck_solve_seconds": 4.462,
+      "grader_4bd9cf42_test_seconds": {
+        "noop": 0.77,
+        "gold": 0.695
+      }
+    }
+  },
+  "coordinator_notes": [
+    {
+      "date": "2026-09-25",
+      "by": "Claude B（协调者）",
+      "note": "本记录写于候选实跑之前，'待实跑''预期'为当时推断。实跑结果见 docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/grader_candidates.md，主审与复核的对照见同目录 results/<instance_id>/review.md，批次结论见 README.md §3。协调者未改动本记录的其它字段。"
+    }
+  ]
+}

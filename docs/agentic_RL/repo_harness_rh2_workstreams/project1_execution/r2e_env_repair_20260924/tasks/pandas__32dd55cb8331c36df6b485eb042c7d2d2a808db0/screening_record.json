@@ -1,0 +1,429 @@
+{
+ "schema_id": "rh2.r2e_screening_record.v1",
+ "task_id": "r2e_gym_subset::pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0",
+ "instance_id": "pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0",
+ "task_revision": "r2e_gym_subset_e8b9fcbc/material_revisions_v3:r2e-mr-016,r2e-mr-017",
+ "source_adapter_ref": "s2_r2e ingest_manifest v3（t1_input_pins_r2e_v4 pin 91bcf90c…；manifest pin adbd27a1…；含 material_revisions_v3）",
+ "recipe_ref": {
+  "derived_image": "r2e_derive_v1+material_v2",
+  "resources": "default"
+ },
+ "code_snapshot_ref": "runs/r2e_snapshot_20260923.sha256 (388 files) + r2e_env_tools.sha256",
+ "facts_ref": "tasks/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/facts.json",
+ "dev_probe_ref": "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/dev_probe.json",
+ "checks": {
+  "R01": {
+   "status": "pass",
+   "note": "修订后复核：09-24 夜在 A 线机器按 r2e_derive_v1+material_v2（recipe sha256:401541cb…）重建；材料步骤新增私有 conftest.py，私有隐藏测试树与评分面一致；派生复核全部通过。",
+   "evidence_refs": [
+    "runs/r2e_t0_batch3_20260924/derived7/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/facts.json",
+    "runs/r2e_t0_batch3_20260924/derived7/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/build.log",
+    "runs/r2e_t0_batch3_20260924/derived7/results.json"
+   ],
+   "by": "Claude（B 线，批次三）",
+   "previous": {
+    "status": "pass",
+    "note": "派生镜像 21 项复核通过；覆盖表 / 隐藏测试树 / 入口脚本 / HEAD 与评分面一致"
+   }
+  },
+  "R02": {
+   "status": "pass",
+   "note": "修订后 noop 0 来自 2 个 mismatched 键（TestDataFrameAnalytics.test_mean_datetimelike_numeric_only_false, TestDataFrameAnalytics.test_mean_extensionarray_numeric_only_true），无 missing、无零解析；两次相同。",
+   "evidence_refs": [
+    "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-69e318acd762-pand_e72257bb.eval.log",
+    "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-69e318acd762-pand_1d03fd8e.eval.log"
+   ],
+   "by": "Claude（B 线，批次三）",
+   "previous": {
+    "status": "pass",
+    "note": "noop 0 来自 2 个 mismatched 键（无 missing、无零解析）"
+   }
+  },
+  "R03": {
+   "status": "pass",
+   "note": "公开 prompt 1225 字、题面 1123 字、含代码块=True；public_hints 的“pre-activated conda env named testbed”对 R2E 不成立（全局 E09，不计入本题）；工作区可见 run_tests.sh（yes，只暴露 r2e_tests 目录名与命令）与 install.sh（构建脚本，本仓库各题同一内容，无修复内容）。题面示例可原样运行。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/prepared_r2e/prompts.jsonl",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl",
+    "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/agent_probe.log",
+    "runs/r2e_env_repair_20260924/p3/hygiene_check/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0.txt"
+   ],
+   "by": "p3-subagent"
+  },
+  "R04": {
+   "status": "pass",
+   "note": "hygiene test_files = r2e_tests/{test_1.py} + run_tests.sh（diagnostics control_surface.EXPECTED_FILES=2，PROTECTED_FILES 同数）；gold 只触碰 pandas/core/frame.py，不在其中；解题不需要改 r2e_tests 以外的测试辅助文件。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_c1ac93bc.diagnostics.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/facts.json"
+   ],
+   "by": "p3-subagent"
+  },
+  "R05": {
+   "status": "pass",
+   "note": "python → /testbed/.venv/bin/python 3.7.9 /testbed/.venv /opt/py/cpython-3.7.9-linux-x86_64-gnu；pytest 7.4.4；pip：pip 24.0 from /testbed/.venv/lib/python3.7/site-packages/pip (python 3.7)，pip check rc=0（No broken requirements found.），26 个包；导入方式 path_entry（.pth 行 /testbed）：cwd=/testbed → /testbed/pandas/__init__.py 0+untagged.22966.gb7f061c.dirty（rc=0），cwd=/tmp → /testbed/pandas/__init__.py 0+untagged.22966.gb7f061c.dirty（rc=0）；gcc=/usr/bin/gcc、make=/usr/bin/make、xvfb-run=MISSING、uv=MISSING（WHICH_* 值：远端运行时的解析器丢掉了这些键，本地已用主会话更新后的 run_dev_probe.py --reparse 重算 dev_probe.json，原始 agent_probe.log 不变）。pandas 由来源 install.sh 在工作区内编译（setup.py build_ext --inplace 后 pip install -e .），pkg_version_grader 带 .dirty；venv 里有 Cython 0.29.37，无 SciPy（hygiene_check）。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/agent_probe.log",
+    "runs/r2e_env_repair_20260924/p3/hygiene_check/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0.txt"
+   ],
+   "by": "p3-subagent"
+  },
+  "R06": {
+   "status": "pass",
+   "note": "修订后期望没有非 PASSED 键：来源里 13 个 ERROR 键（fixture 不可达）由 r2e-mr-016 的私有 conftest 修好支撑，按修复后 gold 核定全为 PASSED（r2e-mr-017：删 0 键、加 0 个参数化键、13 键只改状态；其余 79 键与来源期望逐键相同）。修订前的判定见 previous。",
+   "evidence_refs": [
+    "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-69e318acd762-pand_e72257bb.eval.log",
+    "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-69e318acd762-pand_1d03fd8e.eval.log",
+    "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-caf6d2fe3186-pand_9b708f26.eval.log",
+    "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-caf6d2fe3186-pand_28cafc33.eval.log",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v3.json"
+   ],
+   "by": "Claude（B 线，批次三）",
+   "previous": {
+    "status": "issue",
+    "note": "期望 13/92 个 ERROR 键，逐键看 gold 日志全部是 setup 阶段 fixture 不可达（float_frame×6、datetime_frame×2、float_frame_with_na×2、bool_frame_with_na×2、float_string_frame×1；除注明外定义在 pandas/conftest.py 或 pandas/tests/**/conftest.py）。机制：隐藏测试在 /testbed/r2e_tests/ 下，pytest 只加载 rootdir 到该目录路径上的 conftest（都不存在），pandas 自己的 conftest 不在路径上。noop / gold / 参考一致，确定性。归类：缺 fixture（来源把测试移出原目录的伪影），不是缺可选依赖、网络或资源。fixture 可达时的状态：pandas/tests/frame/test_analytics.py 原位 12 个同名测试（13 项）全部 PASSED——若补上 fixture，expected 会变（ERROR→PASSED，且带 fixture 参数化的键会展开成多个键）。另有 1 个测试因 “Missing SciPy requirement” skip，不在 expected 里——若环境装上 SciPy 它们会成为 expected 之外的键（键集不等 → reward 0），所以 expected 也绑定“无 SciPy”这一环境事实。材料修订提案见 material_revisions。"
+   }
+  },
+  "R07": {
+   "status": "pass",
+   "note": "派生镜像复核：agent uid 解释器 isolated/normal 均 ok、/rh2_private ls/cat denied、私有目录 root:root 700；探针（agent/54321，chown 后）：/testbed=ok、site-packages=ok、.venv/bin=ok、HOME=ok、/tmp=ok、/usr/local=denied；cgroup memory.max=4294967296、cpu.max=200000 100000、pids.max=512、/tmp 1048576 KB。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/facts.json",
+    "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/dev_probe.json"
+   ],
+   "by": "derived_image + run_dev_probe.py"
+  },
+  "R08": {
+   "status": "pass",
+   "note": "修订后 gold 92/92、reward 1（两次）；grader 侧导入路径 /testbed/pandas/__init__.py。",
+   "evidence_refs": [
+    "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-caf6d2fe3186-pand_9b708f26.eval.log",
+    "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-caf6d2fe3186-pand_28cafc33.eval.log",
+    "runs/r2e_t0_batch3_20260924/replay_b5/ledger_b5_gold.jsonl"
+   ],
+   "by": "Claude（B 线，批次三）",
+   "previous": {
+    "status": "pass",
+    "note": "导入 /testbed/pandas/__init__.py；gold 92/92；gold 达到来源定义（reward 1），对账 agree。"
+   }
+  },
+  "R09": {
+   "status": "pass",
+   "note": "公开测试 pandas/tests/test_aggregation.py：收集 rc=0（8 tests collected in 0.02s），限量运行 rc=0（8 passed in 0.01s）；公开复现脚本 rc=0、REPRO_OBSERVED=1：EXC=ValueError the 'dtype' parameter is not supported in the pandas implementation of sum() / REPRO_REASON=reduction raised about unsupported 'dtype' parameter",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/agent_probe.log",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0.py"
+   ],
+   "by": "p3-subagent"
+  },
+  "R10": {
+   "status": "pass",
+   "note": "探针 NET_CONNECT_RC=1、NET_DNS_RC=2（无出网）；期望里没有因网络失败的键；gold 在无网络的 grader 里达到来源定义；解题不需要下载。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/dev_probe.json",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_c1ac93bc.eval.log"
+   ],
+   "by": "p3-subagent"
+  },
+  "R11": {
+   "status": "pass",
+   "note": "期望键不依赖外部服务（数据库 / 服务端）。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_c1ac93bc.eval.log"
+   ],
+   "by": "p3-subagent"
+  },
+  "R12": {
+   "status": "pass",
+   "note": "自动检查原文（pass）：峰值 714 MB / 限额 4 GiB = 0.174; setup 28s test 2s。人工复核：探针 chown -R /testbed 39.92 s（4 包并行、与中央复跑争 CPU，不作校准）；峰值 17–22% 限额，余量充足；内存构成见包 README §2.3（pandas 19c5eea5 的分阶段实测：chown 后 file 684 MB，测试段 anon 峰值 192 MB）。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_c1ac93bc.diagnostics.json",
+    "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/root_init.log"
+   ],
+   "by": "collate_facts.py + p3-subagent"
+  },
+  "R13": {
+   "status": "pass",
+   "note": "修订后同条件（覆盖表镜像 3d40959d5f08…、期限 1800/1800）noop 两次都是 90/92，gold 两次都是 92/92；reward 与差异集合一致。",
+   "evidence_refs": [
+    "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-69e318acd762-pand_e72257bb.eval.log",
+    "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-69e318acd762-pand_1d03fd8e.eval.log",
+    "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-caf6d2fe3186-pand_9b708f26.eval.log",
+    "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-caf6d2fe3186-pand_28cafc33.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_473e7c85.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_ff211a42.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_c1ac93bc.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_75e948f0.eval.log"
+   ],
+   "by": "Claude（B 线，批次三）",
+   "previous": {
+    "status": "pass",
+    "note": "noop: noop 同条件 2 次 reward 与差异集合一致; gold: gold 同条件 2 次 reward 与差异集合一致"
+   }
+  },
+  "R14": {
+   "status": "pass",
+   "note": "每次评分都是 fresh 容器（账本 cleanup removed=true）；探针前后 git status 行数 7 → 7；账本 omitted_cache_count 的 baseline 与 post 相同（baseline=post={dirs 36, files 196}），计的是镜像自带的 __pycache__ / .pytest_cache 目录，非 0 属正常（checks_r2e R14 09-24 修订后的判据）；并发只记录。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/dev_probe.json",
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl",
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl"
+   ],
+   "by": "p3-subagent"
+  },
+  "R15": {
+   "status": "pass",
+   "note": "隐藏测试修订后没有同版本的独立 runner 参考：对账工具把这 4 行单列（hidden_revised）。修订版的对照是一次性容器试跑（原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）：正式链两次 noop / gold 与试跑逐键相同。",
+   "evidence_refs": [
+    "runs/r2e_t0_batch3_20260924/reconcile/reconcile.json",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3r2/pandas_32dd55cb_noop_fix_a.test.log",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3r2/pandas_32dd55cb_gold_fix_a.test.log",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3/pandas_32dd55cb_gold_orig.test.log",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-69e318acd762-pand_e72257bb.eval.log",
+    "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-69e318acd762-pand_1d03fd8e.eval.log",
+    "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-caf6d2fe3186-pand_9b708f26.eval.log",
+    "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-caf6d2fe3186-pand_28cafc33.eval.log"
+   ],
+   "by": "Claude（B 线，批次三）",
+   "previous": {
+    "status": "pass",
+    "note": "2 行 agree（reward、差异集合、观测映射逐键相同）"
+   }
+  },
+  "R16": {
+   "status": "issue",
+   "note": "2026-09-25 更正：批次三写回把本项误改为 pass。r2e-mr-016/017 只恢复了 fixture 支撑，没有处理目标键 TestDataFrameAnalytics.test_mean_datetimelike_numeric_only_false：它要求 Period 列 mean 报 gold 路线特有的文字（mean is not implemented for Period），题面没提，且与公开旧测试 pandas/tests/frame/test_analytics.py:899 的要求相反；私有 gold 对照里公开 test_analytics.py 恰好这一条失败（1 败 90 过）。静态审查处置 needs_review（主审与复核一致）。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/card.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/review.md",
+    "runs/r2e_actor_20260925/devcheck/pandas__32dd55cb8331c36df6b485eb042c7d2d/private_gold/private_control.json",
+    "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-69e318acd762-pand_e72257bb.eval.log"
+   ],
+   "by": "Claude（B 线 R2E，09-25 更正）",
+   "previous": {
+    "status": "pass",
+    "note": "修订后目标键不变（TestDataFrameAnalytics.test_mean_datetimelike_numeric_only_false, TestDataFrameAnalytics.test_mean_extensionarray_numeric_only_true：noop 失败、gold 通过，与修订前相同）；fixture 可达后新活过来的键在 noop 下都 PASSED，是回归信号，不改变题目的判别键。",
+    "evidence_refs": [
+     "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-69e318acd762-pand_e72257bb.eval.log",
+     "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-69e318acd762-pand_1d03fd8e.eval.log",
+     "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-caf6d2fe3186-pand_9b708f26.eval.log",
+     "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-caf6d2fe3186-pand_28cafc33.eval.log",
+     "runs/r2e_t0_batch3_20260924/analysis_b3.json"
+    ],
+    "by": "Claude（B 线，批次三）",
+    "previous": {
+     "status": "issue",
+     "note": "目标键 2：['TestDataFrameAnalytics.test_mean_datetimelike_numeric_only_false', 'TestDataFrameAnalytics.test_mean_extensionarray_numeric_only_true']；两个目标键里 test_mean_extensionarray_numeric_only_true 对应题面；test_mean_datetimelike_numeric_only_false 题面没有描述——它在 noop 下失败只因 Period 列 mean 的报错文案（期望 “mean is not implemented for Period”，base 给 “reduction operation 'mean' not allowed for this dtype”），换一种修 EA 的写法可能不改这条文案而得 0（事后读私有测试与 gold 得知）。属题意覆盖问题，不属环境。"
+    }
+   }
+  },
+  "R17": {
+   "status": "pass",
+   "note": "派生镜像：git 已清理、fix_present=no、refs/remotes/reflog=0、私有目录 700；探针：HEAD 子提交词数=1（1=无子提交）、refs=0、reflog=0、stash=0、remotes=''、残留补丁文件=无；工作区 7 行：5 个已跟踪改动全部来自来源镜像的 install.sh（versioneer install + rm -f pyproject.toml）——staged 的 pandas/__init__.py 末尾加 3 行取版本号、pandas/_version.py 与 versioneer.py 换成 versioneer 0.23 生成的版本；unstaged 的 setup.cfg 只剩 [versioneer] 段、pyproject.toml 被删。7 题逐题核对 diff（hygiene_check/pandas_dirty_diffs.txt），都不触及 gold 修改的文件、不含修复痕迹；另 2 个未跟踪项 install.sh / run_tests.sh，7 题 install.sh 同一内容。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/facts.json",
+    "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p3/hygiene_check/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0.txt",
+    "runs/r2e_env_repair_20260924/p3/hygiene_check/pandas_dirty_diffs.txt"
+   ],
+   "by": "p3-subagent"
+  },
+  "R18": {
+   "status": "pass",
+   "note": "按用户 09-24 夜批准的 T0-6 第二步实施为 r2e-mr-016（新增私有 r2e_tests/conftest.py，原样摘出 fixture ['bool_frame_with_na', 'datetime_frame', 'float_frame', 'float_frame_with_na', 'float_string_frame', 'int_frame', 'mixed_float_frame']）与 r2e-mr-017（期望文本替换）；派生配方 r2e_derive_v1+material_v2。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v3.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/t1_input_pins_r2e_v4.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/decisions.md"
+   ],
+   "by": "Claude（B 线，批次三）",
+   "previous": {
+    "status": "pass",
+    "note": "唯一提案是材料修订（fixture 不可达导致的 ERROR 键；推荐 A 维持现状）；无资源配方、无解题侧条件变更。"
+   }
+  },
+  "R19": {
+   "status": "pass",
+   "note": "探针：/work/code/rh2/.venv/bin/python /work/code/rh2/scripts/r2e_env/run_dev_probe.py --repo-root /work/code --overlays /work/r2e_derived/overlays.jsonl --task-ids <P3 pandas 批> --out-dir /work/envrepair/p3/dev_probe --repro-dir /work/envrepair/p3/repros --activation none（systemd unit r2e-p3-probe-1825）；逐键原因来自 R-f gold/noop 日志；补充核对脚本在 runs/r2e_env_repair_20260924/p3/{hygiene_check,fixture_check,memprobe}/ 并随结果回传。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p3/logs/probe_pandas.log"
+   ],
+   "by": "p3-subagent"
+  },
+  "R20": {
+   "status": "pass",
+   "note": "同一机制覆盖本包全部 7 道 pandas 题（族级提案，逐题数字不同）；其它仓库未见。R2E 其它包若有“隐藏测试依赖仓库 conftest fixture”的题也适用同一判断，需逐题看日志。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/packages/p3/README.md"
+   ],
+   "by": "p3-subagent"
+  }
+ },
+ "issues": [
+  {
+   "category": "material",
+   "scope": "repo:pandas（本包 7 题同一机制）",
+   "summary": "期望 13/92 个 ERROR 键来自隐藏测试移出原目录后 fixture 不可达；这些键对任何候选恒为 ERROR（无回归信号），且候选若新增根目录 conftest.py 会让它们翻成 PASSED 而得 0。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_c1ac93bc.eval.log",
+    "runs/r2e_env_repair_20260924/p3/fixture_check/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/result.txt",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v3.json",
+    "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-caf6d2fe3186-pand_9b708f26.eval.log",
+    "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-caf6d2fe3186-pand_28cafc33.eval.log"
+   ],
+   "proposed_action": "材料修订提案（推荐 A 维持现状）；本轮不改 expected / 隐藏测试。",
+   "status": "verified",
+   "resolution": "用户 09-24 夜批准 T0-6 第二步；实施为 r2e-mr-016,r2e-mr-017 + material_v2。真实 grader noop 0（90/92）×2、gold 1（92/92）×2，与试跑逐键相同；期望里已无 ERROR 键，候选在根目录建 conftest 翻转键的路径随之消失。"
+  },
+  {
+   "category": "material",
+   "scope": "task",
+   "summary": "目标键 test_mean_datetimelike_numeric_only_false 检查 Period 列 mean 的报错文案，题面没有描述（隐含要求）。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_75e948f0.eval.log",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v3.json",
+    "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-caf6d2fe3186-pand_9b708f26.eval.log",
+    "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-caf6d2fe3186-pand_28cafc33.eval.log",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/card.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/review.md"
+   ],
+   "proposed_action": "交后续题意质量筛查（题面补充或剔除该键需走材料修订）；本轮不动。",
+   "status": "open",
+   "resolution": null,
+   "correction_20260925": {
+    "by": "Claude（B 线 R2E，09-25 更正）",
+    "previous": {
+     "status": "verified",
+     "resolution": "用户 09-24 夜批准 T0-6 第二步；实施为 r2e-mr-016,r2e-mr-017 + material_v2。真实 grader noop 0（90/92）×2、gold 1（92/92）×2，与试跑逐键相同；期望里已无 ERROR 键，候选在根目录建 conftest 翻转键的路径随之消失。"
+    },
+    "note": "批次三写回把本条与 issues[0]（fixture 不可达）一并标为 verified，并复制了同一段 resolution；本条没有被 r2e-mr-016/017 处理，恢复为 open，交静态审查。"
+   }
+  }
+ ],
+ "solver_conditions": {
+  "cwd_required": "否（.pth 路径项 /testbed；cwd=/tmp 也导入 /testbed 下的包）",
+  "interpreter": "/testbed/.venv/bin/python（3.7.9；镜像 ENV 让 PATH 首项为 /testbed/.venv/bin，VIRTUAL_ENV=/testbed/.venv）",
+  "pip": "present（pip 24.0，pip check 通过；无网络，装不了新包）",
+  "network": "none（探针 NET_CONNECT_RC=1、DNS rc=2）",
+  "public_tests": "pandas/tests/test_aggregation.py 收集 rc=0 / 运行 rc=0",
+  "repro": "repros/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0.py rc=0，REPRO_OBSERVED=1",
+  "xvfb": "不需要（入口无 xvfb 前缀，镜像里也没有 xvfb-run）",
+  "notes": "in-tree 编译的 pandas（Cython 0.29.37、gcc、make 都在）：本题 gold 只改 .py，若改 .pyx 需自行 python setup.py build_ext --inplace；pandas.__version__ 形如 0+untagged.<n>.g<sha>.dirty（git 历史无 tag + 来源镜像自带改动）；工作区有 5 个来源镜像自带的已跟踪改动（versioneer 重写的 pandas/__init__.py、_version.py、versioneer.py、setup.cfg，删掉的 pyproject.toml），是构建环境的一部分，不要 reset / stash（回退后果未测）；setup.cfg 被重写后 pandas 自带的 pytest 配置（[tool:pytest] 或 pyproject 里的 ini_options）不生效，跑公开测试的口径与上游 CI 不同。"
+ },
+ "classification": "material",
+ "revision_refs": [
+  "material_revisions/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0.md"
+ ],
+ "disposition": {
+  "state": "grading_ok_open_items",
+  "scope": "材料 material_revisions_v3（r2e-mr-016,r2e-mr-017）+ r2e_derive_v1+material_v2 + 默认 rollout profile",
+  "reason": "修订 r2e-mr-016/017 + material_v2 后评分可复现（真实 grader noop 0 / gold 1 各两次，与试跑逐键相同），环境层证据成立；但目标键 test_mean_datetimelike_numeric_only_false 的题面缺口没有被修订处理（09-25 更正：原写“无未完成项”有误），交题意与评分质量筛查。",
+  "pending_checks": [],
+  "evidence_refs": [
+   "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v3.json",
+   "runs/r2e_t0_batch3_20260924/derived7/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/build.log",
+   "runs/r2e_t0_batch3_20260924/reconcile/reconcile.json",
+   "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-69e318acd762-pand_e72257bb.eval.log",
+   "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-69e318acd762-pand_1d03fd8e.eval.log",
+   "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-caf6d2fe3186-pand_9b708f26.eval.log",
+   "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-caf6d2fe3186-pand_28cafc33.eval.log"
+  ],
+  "decided_by": "用户 09-24 夜批准 T0-6 第二步；Claude 实施与验证",
+  "previous_state": "qualified_with_revision",
+  "resolved_items": [
+   {
+    "kind": "support_pending_decision",
+    "decision_ref": "T0-6",
+    "summary": "期望里 13 个 ERROR 键全是隐藏测试搬出原目录后 fixture 不可达（pytest 不加载 pandas/ 下的 conftest）；评分确定、gold=1，但这些键没有回归信号，候选在 /testbed 根目录新建 conftest 有让键翻转的静态可达路径（未实测）。",
+    "evidence_refs": [
+     "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0.md",
+     "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v2.json",
+     "runs/r2e_env_repair_20260924/p3/fixture_check/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/result.txt"
+    ],
+    "next": "T0-6 第二步待用户决定：代表题 pandas 4ec87eb9 已按 B 修复并验证（r2e-mr-006/007，私有 conftest 原样摘出缺失的 fixture，期望按修复后 gold 重新核定）；本题是否照做。照做时要逐题核对缺失 fixture 的定义与依赖、参数化展开后的键集，并跑 noop / gold。",
+    "resolved": {
+     "at": "2026-09-24",
+     "by": "Claude（B 线，批次三）",
+     "how": "T0-6 第二步（r2e-mr-016,r2e-mr-017）",
+     "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v3.json",
+      "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-69e318acd762-pand_e72257bb.eval.log",
+      "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-69e318acd762-pand_1d03fd8e.eval.log",
+      "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-caf6d2fe3186-pand_9b708f26.eval.log",
+      "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-caf6d2fe3186-pand_28cafc33.eval.log"
+     ]
+    }
+   }
+  ],
+  "reviewer": null,
+  "correction_20260925": {
+   "by": "Claude（B 线 R2E，09-25 更正）",
+   "previous": {
+    "state": "qualified_with_revision",
+    "reason": "fixture 不可达的支撑缺口按用户批准的 T0-6 第二步修好，期望按修复后 gold 重新核定；修订后真实评分 noop 0 / gold 1 各两次一致，与试跑逐键相同；探针十项最小条件满足，无未完成项。",
+    "pending_checks": []
+   }
+  },
+  "open_items": [
+   {
+    "kind": "statement_conflict",
+    "decision_ref": null,
+    "summary": "目标键 test_mean_datetimelike_numeric_only_false 要求 Period 列 mean 报 gold 路线特有的文字，题面没提，且与公开旧测试相反；只对数值 EA 分派等合理修法预计判 0（静态推断，C1 待 CPU 运行）。",
+    "evidence_refs": [
+     "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/card.md",
+     "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/review.md",
+     "runs/r2e_actor_20260925/devcheck/pandas__32dd55cb8331c36df6b485eb042c7d2d/private_gold/private_control.json"
+    ],
+    "next": "静态审查 needs_review（09-25）：修订草案（放宽 T2 文字并在 T1 内补断言）与 CPU 候选 C1 待定；用户决定前不作 reward 题。",
+    "deferred_to": "题意与评分质量筛查",
+    "decided_by": null
+   }
+  ]
+ },
+ "costs": {
+  "probe_seconds": 55.84,
+  "chown_seconds": 39.92,
+  "rerun_attempts": 0,
+  "rerun_seconds": 0
+ },
+ "review_notes": [
+  {
+   "by": "Claude（验收，apply_r13.py）",
+   "at": "2026-09-23",
+   "change": "R13 由中央复跑并入：pass；disposition.state 'unknown' → 'environment_qualified'"
+  },
+  {
+   "by": "Claude（09-24 Codex R1 更正）",
+   "at": "2026-09-24",
+   "change": "disposition.state 'environment_qualified' → 'grading_ok_open_items'：待决定的支撑缺口不计入环境合格"
+  },
+  {
+   "by": "Claude（B 线，批次二验收）",
+   "at": "2026-09-24",
+   "change": "open_items.next 更新：T0-6 代表题已修复并验证，本题待用户决定是否照做"
+  },
+  {
+   "by": "Claude（B 线，批次三）",
+   "at": "2026-09-24",
+   "change": "disposition grading_ok_open_items → qualified_with_revision：T0-6 第二步 r2e-mr-016,r2e-mr-017 已实施并用真实 grader 验证；R01/R02/R06/R08/R13/R15/R16/R18 按修订后证据更新"
+  }
+ ],
+ "posthoc_refs": [
+  "runs/r2e_t0_batch3_20260924/replay_b5/ledger_b5_noop.jsonl",
+  "runs/r2e_t0_batch3_20260924/replay_b5/ledger_b5_gold.jsonl",
+  "runs/r2e_t0_batch3_20260924/derived7/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/facts.json",
+  "runs/r2e_t0_batch3_20260924/derived7/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/build.log",
+  "runs/r2e_t0_batch3_20260924/derived7/results.json",
+  "runs/r2e_t0_batch3_20260924/dryrun_b3r2/pandas_32dd55cb_noop_fix_a.test.log",
+  "runs/r2e_t0_batch3_20260924/dryrun_b3r2/pandas_32dd55cb_gold_fix_a.test.log",
+  "runs/r2e_t0_batch3_20260924/dryrun_b3/pandas_32dd55cb_gold_orig.test.log",
+  "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+  "runs/r2e_t0_batch3_20260924/reconcile/reconcile.json"
+ ]
+}

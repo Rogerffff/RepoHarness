@@ -1,0 +1,50 @@
+{
+  "review_date": "2026-09-10",
+  "base": "92d165aa1dae5a660557f5f07cc702c3dee62ea3",
+  "root_head": "06dd7c06936a74b59bb96de861fb27e65760675c",
+  "branch": "miles-migration",
+  "fork_head": "4c04f997b60fd08c36941d8715db06bfc0ed0543",
+  "fork_tree": "79e8ef6554441449b19fce7a23bfc5f14c646691",
+  "fork_worktree_diff": "",
+  "reviewed_source_worktree_diff": "",
+  "independent_checks": [
+    {
+      "command": "cd rh2 && RH2_MILES_PATH=<repo>/reference/miles-rh2-integration uv run --no-sync pytest tests/ -m \"not docker\" -q",
+      "exit_code": 0,
+      "passed": 2190,
+      "deselected": 40,
+      "warnings": 17,
+      "seconds": 117.45,
+      "scope": "非 Docker 标记全量；包含集成树的 adapters_miles 测试"
+    },
+    {
+      "command": "cd rh2 && env -u RH2_MILES_PATH uv run --no-sync pytest tests/adapters_miles/ -q",
+      "exit_code": 0,
+      "passed": 401,
+      "skipped": 315,
+      "warnings": 3,
+      "seconds": 38.12,
+      "scope": "默认 pin 兼容"
+    },
+    {
+      "command": "cd rh2 && uv run --no-sync ruff check src tests",
+      "exit_code": 0,
+      "result": "All checks passed!"
+    },
+    {
+      "command": "bash rh2/scripts/miles_integration_lanes.sh --checks-only",
+      "exit_code": 0,
+      "scope": "仅前置树、工作区、patch 与 pin 校验，不声称本轮完整执行双 lane 脚本"
+    }
+  ],
+  "not_exercised": [
+    "真实 Docker daemon / SWE 镜像",
+    "真实 Claude Code / 模型 API",
+    "GPU 性能或正式训练"
+  ],
+  "review_roles": {
+    "production_tracer": "remainder_impl_production",
+    "falsifier": "remainder_impl_falsifier"
+  },
+  "evidence_note": "测试数取自本轮主审查者的新鲜工具输出；该 JSON 是结果摘要，不伪装为完整原始 stdout。"
+}

@@ -1,0 +1,44 @@
+[
+  {
+    "id": "env_versions",
+    "timeout_s": 60,
+    "expect": "zero",
+    "purpose": "看解释器与导入来源：预计 python 为 /testbed/.venv/bin/python、3.7.9；coverage 为 5.0.5a0，来自 /testbed/coverage/__init__.py（从 /testbed 运行时 cwd 在 sys.path 首位，测的就是工作树代码）；CTracer 可用或回退 PyTracer 都不影响本题。修复前后输出相同。",
+    "cmd": "cd /testbed && python -c \"import sys, coverage; from coverage.collector import CTracer; print('python', sys.executable, sys.version.split()[0]); print('coverage', coverage.__version__, coverage.__file__); print('CTracer', 'available' if CTracer else 'unavailable (PyTracer fallback)')\""
+  },
+  {
+    "id": "pytest_version",
+    "timeout_s": 60,
+    "expect": "zero",
+    "purpose": "看 setup.cfg 的 addopts（-n3 需要 pytest-xdist，--no-flaky-report 需要 flaky，--failed-first 需要 cacheprovider）能否被解析，并看 pytest 与插件版本（requirements/pytest.pip 期望 pytest 4.6.6、pytest-xdist 1.30.0、flaky 3.6.1；4.x 的 --version 会列出插件）。预计退出 0。若报 unrecognized arguments: -n3 或 --no-flaky-report，说明插件缺失，后两条 pytest 命令需按公开依据改为加 -o addopts= 清空 ini 选项后再跑。修复前后无差别。",
+    "cmd": "cd /testbed && python -m pytest --version 2>&1"
+  },
+  {
+    "id": "repro_api_totals",
+    "timeout_s": 120,
+    "expect": "nonzero",
+    "purpose": "按题面示例走公开 API（Coverage(branch=True) → start/stop → json_report），被测代码借用公开测试夹具（tests/test_json.py:21-25），报告只限探针模块（同 tests/test_json.py:28 传 morfs 的做法，避免 venv 里被执行的其他非标准库代码混进 totals）。修复前：totals 只有 covered_lines 2、excluded_lines 0、missing_lines 1、num_branches 2、num_partial_branches 1、num_statements 3、percent_covered 60.0 七个键，打印 RESULT: BUG PRESENT，以 FAIL 信息退出码 1。修复后：totals 另含 covered_branches 1、missing_branches 1，RESULT: OK，退出码 0。file summaries 一行只用于观察每文件 summary 是否也加了这两个键（题面未要求，属多解项）。若退出非 0 但没打印 totals（如 ImportError），不是原 bug 现象。",
+    "cmd": "cd /testbed && rm -rf /tmp/rh2_cov_json && mkdir -p /tmp/rh2_cov_json && printf \"a = {'b': 1}\\nif a.get('a'):\\n    b = 1\\n\" > /tmp/rh2_cov_json/rh2_json_probe.py && PYTHONDONTWRITEBYTECODE=1 python -c \"import json, sys; sys.path.insert(0, '/tmp/rh2_cov_json'); import coverage; print('coverage', coverage.__version__, coverage.__file__); cov = coverage.Coverage(branch=True, data_file='/tmp/rh2_cov_json/.coverage'); cov.start(); import rh2_json_probe as m; cov.stop(); cov.json_report(m, outfile='/tmp/rh2_cov_json/coverage.json'); r = json.load(open('/tmp/rh2_cov_json/coverage.json')); t = r['totals']; print('totals:', json.dumps(t, sort_keys=True)); print('file summaries:', json.dumps(dict((k, v['summary']) for k, v in r['files'].items()), sort_keys=True)); ok = t.get('covered_branches') == 1 and t.get('missing_branches') == 1; print('RESULT:', 'OK totals has covered_branches=1 missing_branches=1' if ok else 'BUG PRESENT'); sys.exit(0 if ok else 'FAIL: totals lacks covered_branches/missing_branches == 1')\""
+  },
+  {
+    "id": "repro_cli_json",
+    "timeout_s": 120,
+    "expect": "zero",
+    "purpose": "经命令行出口看同一现象：coverage run --branch 采集后单独执行 coverage json（json 子命令没有 --branch 选项，配置里 branch 为假，但数据文件含弧），--include 只报告探针文件。修复前：退出 0，totals 与 file summaries 都没有 covered_branches / missing_branches。修复后：退出 0，totals 含 covered_branches 1、missing_branches 1。若 repro_api_totals 已出现两键而这里没有，说明新键按配置 branch 而不是按数据 has_arcs() 门控，与现有分支键的门控（coverage/jsonreport.py:59、94）不一致。",
+    "cmd": "cd /testbed && rm -rf /tmp/rh2_cov_cli && mkdir -p /tmp/rh2_cov_cli && printf \"a = {'b': 1}\\nif a.get('a'):\\n    b = 1\\n\" > /tmp/rh2_cov_cli/rh2_cli_probe.py && export COVERAGE_FILE=/tmp/rh2_cov_cli/.coverage PYTHONDONTWRITEBYTECODE=1 && python -m coverage run --branch /tmp/rh2_cov_cli/rh2_cli_probe.py && python -m coverage json -o /tmp/rh2_cov_cli/coverage.json --include='/tmp/rh2_cov_cli/*' && python -c \"import json; r = json.load(open('/tmp/rh2_cov_cli/coverage.json')); print('totals:', json.dumps(r['totals'], sort_keys=True)); print('file summaries:', json.dumps(dict((k, v['summary']) for k, v in r['files'].items()), sort_keys=True))\""
+  },
+  {
+    "id": "public_test_json",
+    "timeout_s": 300,
+    "expect": "zero",
+    "purpose": "跑现有公开 JSON 测试（沿用 setup.cfg addopts，即 -n3 xdist；--failed-first 的缓存改写到 /tmp）。修复前预计 4 passed。修复后预计 test_branch_coverage 失败：它用整字典相等锁定旧的 files/totals 形状（tests/test_json.py:35、45-69），这是预期结果，按提示不得修改测试；test_simple_line_coverage、test_context_non_relative、test_context_relative 必须仍通过，若它们也失败，说明在非分支模式下也加了键或改动了其他字段。",
+    "cmd": "cd /testbed && PYTHONDONTWRITEBYTECODE=1 python -m pytest tests/test_json.py -rA -o cache_dir=/tmp/rh2_pytest_cache"
+  },
+  {
+    "id": "public_test_results",
+    "timeout_s": 300,
+    "expect": "zero",
+    "purpose": "Numbers 等结果汇总的公开单测（coverage/results.py）。修复前后都应全部通过；若解法改动了 Numbers（例如新增计数属性），用它防回归。",
+    "cmd": "cd /testbed && PYTHONDONTWRITEBYTECODE=1 python -m pytest tests/test_results.py -o cache_dir=/tmp/rh2_pytest_cache"
+  }
+]

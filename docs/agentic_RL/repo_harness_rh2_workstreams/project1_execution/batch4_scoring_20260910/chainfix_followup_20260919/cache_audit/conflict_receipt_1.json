@@ -1,0 +1,86 @@
+{
+  "schema_id": "rh2.fa.finalization_receipt.v1",
+  "receipt_id": "rcpt_exec_F22_p1-cafe1234",
+  "task_id": "swe_gym_lite::falsifier",
+  "trajectory_id": "exec_F22",
+  "session_id": "s-exec_F22#p1-cafe1234",
+  "physical_attempt_id": "exec_F22#p1-cafe1234",
+  "attempt_disposition": "delivery_prepared",
+  "terminal_reason_code": null,
+  "rejection_evidence": {
+    "reason_code": "unsupported_delta_shape",
+    "object_path": "config'quote/default.json",
+    "object_type": "prefix_conflict"
+  },
+  "outcome_v2": {
+    "schema_id": "rh2.fa.rollout_attempt_outcome.v2",
+    "outcome_id": "ov2_exec_F22#p1-cafe1234",
+    "identity": {
+      "schema_id": "rh2.fa.execution_identity.v1",
+      "prompt_group_id": "pg_F22",
+      "group_index": 5,
+      "rollout_execution_id": "exec_F22",
+      "branch_id": null,
+      "parent_rollout_id": null,
+      "physical_attempt_id": "exec_F22#p1-cafe1234",
+      "physical_attempt_seq": 1
+    },
+    "member_slot": 2,
+    "attempt_number": 1,
+    "completion_class": "present_complete",
+    "termination_kind": "completed",
+    "failure_category": null,
+    "reason_code": "unsafe_artifact_permanent_rejection",
+    "failed_component": "patch_hygiene",
+    "recovery_scope": "none",
+    "task_outcome": "unknown",
+    "reward_unavailable": true,
+    "turn_weight_versions": [
+      "5",
+      "5"
+    ],
+    "intra_execution_version_span": 0,
+    "current_version_at_finalize": "5",
+    "current_version_at_consume": null,
+    "worst_token_lag": null,
+    "eligibility_report_id": null,
+    "evidence_refs": [
+      "audit:exec_F22",
+      "snapshot:sha256:abc",
+      "s",
+      "drain_receipt:drain_exec_F22_p1-cafe1234",
+      "unsupported_delta_shape",
+      "object:config'quote/default.json:prefix_conflict"
+    ]
+  },
+  "frozen_patch_digest": null,
+  "baseline_manifest_digest": "sha256:ac9069e40e8be30ea71fc9fd4c2b9ebcbc58eb535a7051a8521289c980ea3a6d",
+  "artifact_bodies_persisted": false,
+  "grading_report_id": null,
+  "grading_outcome": null,
+  "eligibility_report_id": null,
+  "delivered_sample_count": 1,
+  "runtime_quiescence_confirmed": true,
+  "drain_receipt_ref": "drain_exec_F22_p1-cafe1234",
+  "drain_receipt": {
+    "schema_id": "rh2.fa.session_drain_receipt.v1",
+    "receipt_id": "drain_exec_F22_p1-cafe1234",
+    "session_id": "s-exec_F22#p1-cafe1234",
+    "physical_attempt_id": "exec_F22#p1-cafe1234",
+    "trajectory_id": "exec_F22",
+    "task_id": "swe_gym_lite::falsifier",
+    "revoke_enforced": true,
+    "late_requests_rejected_after_revoke": 0,
+    "pending_turns_after_drain": 0,
+    "unfinalized_drafts_after_drain": 0,
+    "poison_clean": true,
+    "capture_record_count": 2,
+    "turn_seq_high_water": 2,
+    "weight_versions_seen": [
+      "5"
+    ],
+    "drained_at_utc": "2026-09-19T07:22:05.604998Z"
+  },
+  "started_epoch_seconds": 1789802525.604301,
+  "finalized_at_utc": "2026-09-19T07:22:05.605257Z"
+}

@@ -1,0 +1,163 @@
+{
+ "instance_id": "aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2",
+ "template": "R-c",
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "    def test_write_drain(self):\n",
+     "new": "    def _chunked_body_payload(self, body):\n        \"\"\"Payload carried by an HTTP/1.1 chunked body.\n\n        The zero-size chunk ends the body, so it must come last and appear\n        exactly once; a zero-size chunk before the data is a premature EOF.\n        \"\"\"\n        payload = b''\n        pos = 0\n        while True:\n            eol = body.find(b'\\r\\n', pos)\n            self.assertNotEqual(-1, eol, 'chunk size line is missing')\n            size = int(body[pos:eol], 16)\n            pos = eol + 2\n            if size == 0:\n                self.assertEqual(b'\\r\\n', body[pos:],\n                                 'data after the terminating chunk')\n                return payload\n            self.assertEqual(b'\\r\\n', body[pos + size:pos + size + 2])\n            payload += body[pos:pos + size]\n            pos += size + 2\n\n    def test_write_payload_deflate_chunked_encoding(self):\n        # chunked transfer encoding + deflate, no chunking filter\n        write = self.transport.write = unittest.mock.Mock()\n        msg = protocol.Response(self.transport, 200)\n        msg.enable_chunked_encoding()\n        msg.add_compression_filter('deflate')\n        msg.send_headers()\n\n        msg.write(b'data')\n        msg.write_eof()\n\n        chunks = [c[1][0] for c in list(write.mock_calls)]\n        self.assertTrue(all(chunks))\n        content = b''.join(chunks)\n        payload = self._chunked_body_payload(\n            content.split(b'\\r\\n\\r\\n', 1)[-1])\n        self.assertEqual(b'data', zlib.decompress(payload, -zlib.MAX_WBITS))\n\n    def test_write_payload_deflate_chunked_encoding_multiple_writes(self):\n        # HTTP/1.1 without Content-Length selects chunked transfer encoding\n        write = self.transport.write = unittest.mock.Mock()\n        msg = protocol.Response(self.transport, 200)\n        msg.add_compression_filter('deflate')\n        msg.send_headers()\n\n        msg.write(b'data1')\n        msg.write(b'data2')\n        msg.write_eof()\n\n        chunks = [c[1][0] for c in list(write.mock_calls)]\n        self.assertTrue(all(chunks))\n        content = b''.join(chunks)\n        payload = self._chunked_body_payload(\n            content.split(b'\\r\\n\\r\\n', 1)[-1])\n        self.assertEqual(b'data1data2',\n                         zlib.decompress(payload, -zlib.MAX_WBITS))\n\n    def test_write_drain(self):\n"
+    }
+   ]
+  }
+ ],
+ "expected_after": {
+  "TestHttpMessage.test_add_header": "PASSED",
+  "TestHttpMessage.test_add_header_invalid_value_type": "PASSED",
+  "TestHttpMessage.test_add_header_non_ascii": "PASSED",
+  "TestHttpMessage.test_add_header_with_spaces": "PASSED",
+  "TestHttpMessage.test_add_headers": "PASSED",
+  "TestHttpMessage.test_add_headers_connection_keepalive": "PASSED",
+  "TestHttpMessage.test_add_headers_hop_headers": "PASSED",
+  "TestHttpMessage.test_add_headers_length": "PASSED",
+  "TestHttpMessage.test_add_headers_upgrade": "PASSED",
+  "TestHttpMessage.test_add_headers_upgrade_websocket": "PASSED",
+  "TestHttpMessage.test_default_headers": "PASSED",
+  "TestHttpMessage.test_default_headers_chunked": "PASSED",
+  "TestHttpMessage.test_default_headers_connection_close": "PASSED",
+  "TestHttpMessage.test_default_headers_connection_keep_alive": "PASSED",
+  "TestHttpMessage.test_default_headers_connection_upgrade": "PASSED",
+  "TestHttpMessage.test_default_headers_server": "PASSED",
+  "TestHttpMessage.test_default_headers_useragent": "PASSED",
+  "TestHttpMessage.test_default_headers_useragent_custom": "PASSED",
+  "TestHttpMessage.test_dont_override_request_headers_with_default_values": "PASSED",
+  "TestHttpMessage.test_dont_override_response_headers_with_default_values": "PASSED",
+  "TestHttpMessage.test_force_chunked": "PASSED",
+  "TestHttpMessage.test_force_close": "PASSED",
+  "TestHttpMessage.test_keep_alive": "PASSED",
+  "TestHttpMessage.test_keep_alive_http10": "PASSED",
+  "TestHttpMessage.test_prepare_chunked_force": "PASSED",
+  "TestHttpMessage.test_prepare_chunked_no_length": "PASSED",
+  "TestHttpMessage.test_prepare_eof": "PASSED",
+  "TestHttpMessage.test_prepare_length": "PASSED",
+  "TestHttpMessage.test_send_headers": "PASSED",
+  "TestHttpMessage.test_send_headers_nomore_add": "PASSED",
+  "TestHttpMessage.test_send_headers_non_ascii": "PASSED",
+  "TestHttpMessage.test_start_request": "PASSED",
+  "TestHttpMessage.test_start_response": "PASSED",
+  "TestHttpMessage.test_start_response_with_reason": "PASSED",
+  "TestHttpMessage.test_start_response_with_unknown_reason": "PASSED",
+  "TestHttpMessage.test_write_auto_send_headers": "PASSED",
+  "TestHttpMessage.test_write_drain": "PASSED",
+  "TestHttpMessage.test_write_payload_chunked": "PASSED",
+  "TestHttpMessage.test_write_payload_chunked_and_deflate": "PASSED",
+  "TestHttpMessage.test_write_payload_chunked_filter": "PASSED",
+  "TestHttpMessage.test_write_payload_chunked_filter_mutiple_chunks": "PASSED",
+  "TestHttpMessage.test_write_payload_chunked_large_chunk": "PASSED",
+  "TestHttpMessage.test_write_payload_chunked_multiple": "PASSED",
+  "TestHttpMessage.test_write_payload_deflate_and_chunked": "PASSED",
+  "TestHttpMessage.test_write_payload_deflate_chunked_encoding": "PASSED",
+  "TestHttpMessage.test_write_payload_deflate_chunked_encoding_multiple_writes": "PASSED",
+  "TestHttpMessage.test_write_payload_deflate_filter": "PASSED",
+  "TestHttpMessage.test_write_payload_eof": "PASSED",
+  "TestHttpMessage.test_write_payload_length": "PASSED"
+ },
+ "positive_control": "gold",
+ "acceptance": {
+  "gold": {
+   "expected_score": 1,
+   "trial": "trials/rev_gold.json",
+   "trial_verdict": "match 49/49",
+   "materials": "revised"
+  },
+  "noop": {
+   "expected_score": 0,
+   "trial": "trials/rev_noop.json",
+   "trial_verdict": "mismatch 49/49; FAILED=TestHttpMessage.test_write_payload_chunked_and_deflate, TestHttpMessage.test_write_payload_deflate_chunked_encoding, TestHttpMessage.test_write_payload_deflate_chunked_encoding_multiple_writes, TestHttpMessage.test_write_payload_deflate_filter",
+   "materials": "revised"
+  },
+  "AP1": {
+   "expected_score": 0,
+   "trial": "trials/rev_AP1.json",
+   "trial_verdict": "mismatch 49/49; FAILED=TestHttpMessage.test_write_payload_deflate_chunked_encoding, TestHttpMessage.test_write_payload_deflate_chunked_encoding_multiple_writes",
+   "materials": "revised"
+  },
+  "AP1m": {
+   "expected_score": 0,
+   "trial": "trials/rev_AP1m.json",
+   "trial_verdict": "mismatch 49/49; FAILED=TestHttpMessage.test_write_payload_deflate_chunked_encoding, TestHttpMessage.test_write_payload_deflate_chunked_encoding_multiple_writes",
+   "materials": "revised"
+  },
+  "AP2": {
+   "expected_score": 1,
+   "trial": "trials/rev_AP2.json",
+   "trial_verdict": "match 49/49",
+   "materials": "revised"
+  },
+  "A1": {
+   "expected_score": 1,
+   "trial": "trials/rev_A1.json",
+   "trial_verdict": "match 49/49",
+   "materials": "revised"
+  },
+  "noop@current": {
+   "expected_score": 0,
+   "trial": "trials/env_noop_current.json",
+   "trial_verdict": "mismatch 47/47; FAILED=TestHttpMessage.test_write_payload_chunked_and_deflate, TestHttpMessage.test_write_payload_deflate_filter",
+   "materials": "current"
+  },
+  "gold@current": {
+   "expected_score": 1,
+   "trial": "trials/env_gold_current.json",
+   "trial_verdict": "match 47/47",
+   "materials": "current"
+  },
+  "AP1@current": {
+   "expected_score": 1,
+   "trial": "trials/cur_AP1.json",
+   "trial_verdict": "match 47/47",
+   "materials": "current"
+  },
+  "AP1m@current": {
+   "expected_score": 1,
+   "trial": "trials/cur_AP1m.json",
+   "trial_verdict": "match 47/47",
+   "materials": "current"
+  }
+ },
+ "candidate_patches": {
+  "gold": {
+   "path": "runs/r2e_static_prep_20260924/v3/private/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/gold.patch",
+   "sha256": "sha256:ce89afa45fb0c1558a8acd2276666d8b1c021dd0c94f8742683a99ad054cdb79"
+  },
+  "AP1": {
+   "path": "runs/r2e_actor_20260925/grader_cands/aiohttp_6183_AP1_skip_empty_in_length_writer_only.patch",
+   "sha256": "sha256:62fb5c2c2ee0a2dc208fb2257a37e655c5fab2ffa5a50fa2e50b3418dae6f849"
+  },
+  "AP2": {
+   "path": "runs/r2e_actor_20260925/grader_cands/aiohttp_6183_AP2_skip_empty_in_both_writers.patch",
+   "sha256": "sha256:0548e104256c9f358b312c24e5b319d99b19c78cbaafac85ae708fd11c1db08e"
+  },
+  "A1": {
+   "path": "cands/aiohttp_6183_A1_skip_empty_in_compression_filter.patch",
+   "sha256": "sha256:5b38357b44e604a5823d436f030f871490b84e7c471c279a40a4636fdb5232e7"
+  },
+  "AP1m": {
+   "path": "cands/aiohttp_6183_AP1m_length_skip_plus_single_write_frames.patch",
+   "sha256": "sha256:05e094d58842721675e8be34a1bb262ca5058305cbbd6c07130b863382bb4413"
+  }
+ },
+ "parent_material": {
+  "hidden_test_file": "runs/r2e_static_prep_20260924/v3/private/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/hidden_tests/test_1.py",
+  "hidden_test_file_sha256": "sha256:89f3cf5e75a01ab7a58f1c3655b3e5b0b57871f789354e3ed3df1c2151a7d10b",
+  "expected_output_sha256": "sha256:f0423107d3ac110a22186706dc57fc21361db65a5d7d457da010531f1dcabc53",
+  "expected_n": 47
+ },
+ "trial_draft_sha256": {
+  "draft.json": "sha256:f89b2aae6fc2b6ef755022acaff4d771b92afb50745463b85fcedc71f00f8124",
+  "expected_after.json": "sha256:290db09b96a67d41fddc4740736c489769e86c0e4686055cc16c11ad45f9afce"
+ },
+ "revised_test_file_sha256": "sha256:89702c7cfc631e25064909832a8a7e344675c0937c64b48dc032a259f58f1eba"
+}

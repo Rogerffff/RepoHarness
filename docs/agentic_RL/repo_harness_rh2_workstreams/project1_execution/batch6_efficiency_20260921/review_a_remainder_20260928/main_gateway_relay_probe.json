@@ -1,0 +1,55 @@
+{
+  "release": [
+    {
+      "cancel_owner": false,
+      "owner_result": "returned",
+      "client_result": "ClientPayloadError",
+      "summary": {
+        "token_ref": "f44fc3ad900d",
+        "attempt_id": "review",
+        "task_id": "demo",
+        "plane": "grading",
+        "phase": "install",
+        "policy_digest": "sha256:45f23bf2822225ff4ad8879c3b5e9d9a3f1f2531ff2b5ca25ff42d4a0a8debf3",
+        "withdrawn_before_release": false,
+        "complete": true,
+        "inflight_unfinished": 0,
+        "files_issued": 1,
+        "stats": {
+          "requests": 2,
+          "decision:served_page": 1,
+          "bytes": 5,
+          "decision:withdrawn_in_flight": 1
+        }
+      },
+      "retry_summary": null,
+      "token_count_after_retry": 0,
+      "new_request_status": 404,
+      "state_after_retry": null
+    },
+    {
+      "cancel_owner": true,
+      "owner_result": "CancelledError",
+      "client_result": "ClientPayloadError",
+      "summary": null,
+      "retry_summary": null,
+      "token_count_after_retry": 1,
+      "new_request_status": 403,
+      "state_after_retry": {
+        "state": "withdrawn",
+        "releasing": true,
+        "inflight": 0
+      }
+    }
+  ],
+  "relay_collision": {
+    "second_start": {
+      "reason": "supply_relay_start_failed",
+      "name_conflict": true
+    },
+    "first_running_before": true,
+    "first_inspect_exit_after": 1,
+    "first_stdout_after": "",
+    "first_stderr_after": "error: no such object: rh2-supply-relay-codex-owner-e05ebebb"
+  }
+}

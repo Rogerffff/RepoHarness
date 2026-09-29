@@ -1,0 +1,518 @@
+{
+ "task_id": "r2e_gym_subset::numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9",
+ "instance_id": "numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9",
+ "task_revision": {
+  "id": "r2e_gym_subset_e8b9fcbc/expected_v0",
+  "material_revisions": [],
+  "base_commit": "6a3edf3210b439a4d1a51acb4e01bac017697ee6",
+  "source_commit_hash": "18b7cd9df7a4d960550b18faa14d5473e7d5c3d9",
+  "expected_sha256": "sha256:bbf6d58d63647e76bd18649545d92cdc9c171734d0efe382b78a5fb130a2b22f",
+  "hidden_tests_tree_sha256": "sha256:219751051c84e6b787feb7a8e8e8418302c5e7101890601daf0910381642f4dc",
+  "run_tests_sh_sha256": "sha256:8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+  "gold_patch_sha256": "sha256:07bbe5f4f6e2c87adb0e3df091e74774c1bb2db52ebf36666f5cf75613118953"
+ },
+ "source_adapter_ref": {
+  "spec_vendor_id": "r2e_gym_subset_e8b9fcbc",
+  "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+  "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl#L16 (line sha256 72a20fdb67f0413f79b4e7055c8ae6e08d82f08789f1fd6b7908794494cccf8f)",
+  "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl (line sha256 d829ea69146bca3f2069d83d6556a7ab108e489961d1592309c4e24d3ed9a74a)",
+  "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/validation_bundles_v0.jsonl#L16 (line sha256 3b5c1869f9352e82326194d7839a6231d82ec302ce11aff8858c060d8700f961)",
+  "parser_id": "r2e_prime_pytest_v1",
+  "rule_source_id": "prime_envs_c4d04dfe",
+  "normalization_version": "prime_decolor_v1"
+ },
+ "recipe_ref": {
+  "derived_image_recipe": "r2e_derive_v1",
+  "recipe_sha256": "sha256:0da821a15fa389289f524c60d3a421bc940cce753e4ecf3d53560b7ab6b31df9",
+  "env_recipe": null,
+  "resource_recipe": null,
+  "resources": "默认档位：评分为 2 CPU / 4 GiB / /tmp 1 GiB；rollout 另有 home 256 MiB、pids 512",
+  "base_image": "namanjain12/numpy_final:18b7cd9df7a4d960550b18faa14d5473e7d5c3d9@sha256:f0258fc6e47aceef2d27aea7fd4c68a74ac4075e66c201c90221fc9612dd9ca4",
+  "grading_derived_image_id": "sha256:61363b4562d8e4aae919eec7c9279f41fe297bad6df0820165d4bb5119a6064b",
+  "actor_devcheck_derived_image_id": "sha256:065c0cc83bc5bae72141811c1550f82ed11d9c97c03e165dff84f814a0a48d92",
+  "note": "两个派生镜像 ID 是同一配方在不同机器上的两次构建，内容没有逐字节核对；devcheck 自检项 image_is_overlay_derived_id 为 true"
+ },
+ "code_snapshot_ref": {
+  "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+  "grader_scripts_digest": "sha256:773065081993c08216601bbf3e517c26eda44185d49937b405224c66331491b8",
+  "actor_devcheck_layer": "experiments/r2e_actor_20260925/r2e_devcheck.py",
+  "actor_profile_digest": "sha256:149b3abeddcf74304e6ec7e524a5fc2f33e04d3d9b98ede8f864c5d8ad7bbcec",
+  "actor_env_activation_script_sha256": "sha256:18b28c16aaba873fe60f2ea39846d13ee625038c0752df182e0bfb3bc44ba5b7",
+  "claude_code_version": "2.1.205",
+  "claude_code_platform_tarball_sha256": "sha256:d3dadfa9cde294ac82c755eb6d889291228849180bac5d677ad1a4027aca1bc4"
+ },
+ "facts_ref": [
+  "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/facts.json（历史机器汇总：宿主侧账本加 parser 推导）",
+  "runs/r2e_static_prep_20260924/v2/private/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/run_refs.json（当前材料的原始运行引用）",
+  "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/attempt.json（actor 正式启动路径 devcheck：候选侧输出加宿主侧检查）"
+ ],
+ "checks": {
+  "1": {
+   "status": "pass",
+   "note": "隐藏测试、期望映射、gold、入口脚本的 sha 与 grading bundle、账本、日志一致；base 6a3edf32 是修复提交的父提交（M3 gold_meta，head_is_parent_of_fix=yes）；隐藏测试就是 base 的 test_polynomial.py 加上 test_poly_eq",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/grading_bundle.json",
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl#L16",
+    "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl#L1"
+   ],
+   "by": "Claude 私有主审（静态审查）"
+  },
+  "2": {
+   "status": "pass",
+   "note": "initial_diff 为 0 字节。noop（RH2 ×2、独立 runner ×5）都在 test_1.py:219 失败，报错与题面相同：polynomial.py:1202 抛 AttributeError。devcheck 以 agent 身份复现了题面原例",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/public/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/worktree_manifest.json",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-n_3cdaf461.eval.log#L24-L42",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_f466e78b.eval.log#L24-L42",
+    "runs/env_overnight_20260916/M3/facts/18b7cd9df7a4/noop_x2/out1.txt",
+    "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/captures/mcve_statement.out"
+   ],
+   "by": "Claude 私有主审（引用执行证据）"
+  },
+  "3": {
+   "status": "unknown",
+   "note": "user_prompt.txt 里的题面和代码块完整。真实渲染的消息没有捕获，因为 devcheck 用的是合成的用户消息。public_hints 中 conda、pip 可用和测试会被重置的说法对 R2E 不成立（属于全局 E09 的措辞部分），是否已改未核实",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/public/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/user_prompt.txt",
+    "runs/r2e_static_prep_20260924/v2/public/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/public_bundle.json",
+    "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/stub/requests/messages_000.json"
+   ],
+   "by": "Claude 私有主审（静态审查）"
+  },
+  "4": {
+   "status": "pass",
+   "note": "合法修复只需改 numpy/lib/polynomial.py；gold 账本的 projection.included_paths 收入了它，ignored_paths 为空；不需要额外排除",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl#L16",
+    "runs/r2e_env_repair_20260924/_rerun2/ledger_gold.jsonl#L16"
+   ],
+   "by": "Claude 私有主审（静态审查）"
+  },
+  "5": {
+   "status": "pass",
+   "note": "本池 48 题中，只有本题的 gold 触及 numpy/lib/polynomial.py 或 poly1d（对各题 gold.patch 做了 grep）。跨来源重复与预训练污染没有查",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/（各题 gold.patch）"
+   ],
+   "by": "Claude 私有主审（静态审查）"
+  },
+  "6": {
+   "status": "pass",
+   "note": "不需要新依赖；.venv 已预建，其中有 nose 1.3.7、pytest 7.4.4、hypothesis 6.79.4；没有 pip / uv，属于解题侧条件",
+   "evidence_refs": [
+    "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/captures/env.out",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-n_d91e0720.eval.log#L16-L19",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/agent_probe.log#L9-L31"
+   ],
+   "by": "Claude 私有主审（引用执行证据）"
+  },
+  "7": {
+   "status": "not_applicable",
+   "note": "不需要权重、数据或外部文件；rundocs 只读测试文件本身",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/hidden_tests/test_1.py"
+   ],
+   "by": "Claude 私有主审（静态审查）"
+  },
+  "8": {
+   "status": "pass",
+   "note": "正式启动路径：uid 54321；工作目录属主为 54321 且可写；HOME 与 /tmp 可写；能力全部丢弃并设 no-new-privileges；/rh2/bash_env 对 agent 只读。评分以 uid 54322 运行",
+   "evidence_refs": [
+    "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/prelaunch.json",
+    "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/captures/env.out",
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl#L16"
+   ],
+   "by": "Claude 私有主审（引用执行证据）"
+  },
+  "9": {
+   "status": "pass",
+   "note": "评分时导入的是 /testbed/numpy/__init__.py（1.13.0.dev0+6a3edf3）；回溯路径 numpy/lib/polynomial.py:1202 来自工作树；gold 与 noop 下目标键结果不同",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl#L16",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-n_3cdaf461.eval.log#L36-L42",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-n_d91e0720.eval.log#L31"
+   ],
+   "by": "Claude 私有主审（引用执行证据）"
+  },
+  "10": {
+   "status": "pass",
+   "note": "devcheck（真实 Claude Code 2.1.205 加桩端点，agent 身份）：复现命令 rc 1，报错与题面相同；python -m pytest numpy/lib/tests/test_polynomial.py 10 passed；test_regression.py -k poly 9 passed。私有 gold 对照（root 身份、一次性容器）跑同一批命令：复现命令输出 False，其它入口输出 True False False False NotImplemented，两条公开测试仍全部通过",
+   "evidence_refs": [
+    "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/attempt.json",
+    "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/captures/test_polynomial.out",
+    "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/captures/test_regression_poly.out",
+    "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/private_gold/private_control.json"
+   ],
+   "by": "Claude 私有主审（引用执行证据）"
+  },
+  "11": {
+   "status": "pass",
+   "note": "解题、安装、测试都不需要网络。正式链只有模型中转可连，外部 DNS、禁止目标和上游直连都是 DENIED；评分为 network=deny_all",
+   "evidence_refs": [
+    "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/prelaunch.json",
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl#L16"
+   ],
+   "by": "Claude 私有主审（引用执行证据）"
+  },
+  "12": {
+   "status": "not_applicable",
+   "note": "隐藏测试与修复都不涉及外部服务",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/hidden_tests/test_1.py"
+   ],
+   "by": "Claude 私有主审（静态审查）"
+  },
+  "13": {
+   "status": "pass",
+   "note": "评分内存峰值 296–305 MB（上限 4 GiB），test 耗时 0.71–0.95 s；devcheck 在 rollout 档位（2 CPU / 4 GiB / /tmp 1 GiB / pids 512）下，每条命令都在 1 s 内完成",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl#L16",
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl#L16",
+    "runs/r2e_env_repair_20260924/_rerun2/ledger_noop.jsonl#L16",
+    "runs/r2e_env_repair_20260924/_rerun2/ledger_gold.jsonl#L16",
+    "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/attempt.json"
+   ],
+   "by": "Claude 私有主审（引用执行证据）"
+  },
+  "14": {
+   "status": "pass",
+   "note": "当前材料下 noop ×2、gold ×2 逐键相同（同一派生镜像，可能在同一台主机）；独立 runner 的 noop ×5、gold ×5 与 RH2 的观测映射相同；test_poly 固定了随机种子，各数值键在上述多次运行中结果一致",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-n_3cdaf461.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_f466e78b.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-n_d91e0720.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_f34c3153.eval.log",
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.json（本题 noop、gold 两条）"
+   ],
+   "by": "Claude 私有主审（引用执行证据）"
+  },
+  "15": {
+   "status": "not_checked",
+   "note": "没有专门检查并发与缓存复用；已有运行都用 fresh 容器，且 cleanup.removed=true",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl#L16"
+   ],
+   "by": "Claude 私有主审（静态审查）"
+  },
+  "16": {
+   "status": "pass",
+   "note": "gold 以 git_apply 交付；projection 收入了 numpy/lib/polynomial.py，frozen_patch_digest 记在账本里。只验证了单文件修改这一种形态",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl#L16",
+    "runs/r2e_env_repair_20260924/_rerun2/ledger_gold.jsonl#L16"
+   ],
+   "by": "Claude 私有主审（引用执行证据）"
+  },
+  "17": {
+   "status": "pass",
+   "note": "日志中的 RH2_SETUP_HIDDEN_TESTS_TREE 与评分面一致，RESTORED=2、TEST_FILES=3、ABSENT=0；评分只替换 r2e_tests 与 run_tests.sh，不覆盖源码",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-n_d91e0720.eval.log#L4-L12"
+   ],
+   "by": "Claude 私有主审（引用执行证据）"
+  },
+  "18": {
+   "status": "pass",
+   "note": "收集 11 项、解析 11 项，num_parsed_outside_segment 为 0，log_partial 为 false；返回码与结果一致",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl#L16",
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl#L16"
+   ],
+   "by": "Claude 私有主审（引用执行证据）"
+  },
+  "19": {
+   "status": "pass",
+   "note": "键为 TestDocs.<name>，共 11 个；单文件、单类，没有撞键；keys_equal 为 true；没有 SKIP / XFAIL",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/expected_output.json",
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl#L16"
+   ],
+   "by": "Claude 私有主审（引用执行证据）"
+  },
+  "20": {
+   "status": "pass",
+   "note": "noop 得 0，原因是目标键 test_poly_eq 以题面报错失败，不是安装、收集或解析问题；gold 11/11",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-n_3cdaf461.eval.log#L24-L56",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-n_d91e0720.eval.log#L22-L37"
+   ],
+   "by": "Claude 私有主审（引用执行证据）"
+  },
+  "21": {
+   "status": "pass",
+   "note": "failure_category 为 tests_failed，execution_failure_stage 与 stage_error 都是 null",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl#L16"
+   ],
+   "by": "Claude 私有主审（引用执行证据）"
+  },
+  "22": {
+   "status": "pass",
+   "note": "在 reconcile 中，M3 来源镜像的 noop ×2、gold ×2 和旧探针的 noop ×3、gold ×3 都与 RH2 的观测映射逐键相同",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.json（本题 noop、gold 两条）",
+    "runs/env_overnight_20260916/M3/facts/18b7cd9df7a4/noop_x2/out1.txt",
+    "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl#L1"
+   ],
+   "by": "Claude 私有主审（引用执行证据）"
+  },
+  "23": {
+   "status": "pass",
+   "note": "题面足以定位并修复。`!=` 的要求可以由题面的“表示不相等”和 __ne__ 调用 __eq__ 推知，公开读者也独立推出了这一点；返回 False 或 NotImplemented 都被允许。题面给出了修法方向，属易题",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/public/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/user_prompt.txt",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/public_read.md"
+   ],
+   "by": "Claude 私有主审（静态审查）"
+  },
+  "24": {
+   "status": "pass",
+   "note": "断言只看比较表达式的结果，不约束返回类型、helper 名或报错文案。A、C、F 类实现静态推断可过；D 在第 220 行被拒，有公开依据（p != None 得到 False，等于声称两者相等）。A 与 D 的真实评分待出",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/hidden_tests/test_1.py#L216-L223",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/analysis_before_history.md"
+   ],
+   "by": "Claude 私有主审（静态审查）"
+  },
+  "25": {
+   "status": "issue",
+   "note": "按静态推断，反例 N（只特判 None）和 I（删除 __eq__ / __ne__）都能得 1，但分别违背公开要求和旧行为；另外 test_doctests 是死键。真实评分由协调者安排。见 issues 中的 N、I、dead_doctests",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/hidden_tests/test_1.py#L1-L90",
+    "runs/r2e_static_prep_20260924/v2/private/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/hidden_tests/test_1.py#L216-L223",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/card.md"
+   ],
+   "by": "Claude 私有主审（静态审查）"
+  },
+  "26": {
+   "status": "pass",
+   "note": "gold 没有破坏旧行为（静态推断：仓库非测试代码中没有依赖 poly1d == 的调用者，poly1d 之间的比较逻辑不变）。值相等缺少评分保护这一点计入检查 25 和 32",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/gold.patch",
+    "runs/r2e_static_prep_20260924/v2/public/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/worktree/numpy/lib/polynomial.py#L1201-L1207"
+   ],
+   "by": "Claude 私有主审（静态审查）"
+  },
+  "27": {
+   "status": "pass",
+   "note": "gold 共 4 行，只改 polynomial.py；修到了原例和 !=，反射比较也正确；私有 gold 对照的输出与静态推断一致",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/gold.patch",
+    "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/private_gold/private_control.json"
+   ],
+   "by": "Claude 私有主审（静态审查 + 引用执行证据）"
+  },
+  "28": {
+   "status": "not_applicable",
+   "note": "本审查没有引入修订。建议的断言只列在 issues 里，需要用户决定并做双向复验",
+   "evidence_refs": [],
+   "by": "Claude 私有主审（静态审查）"
+  },
+  "29": {
+   "status": "pass",
+   "note": "正式启动路径的 devcheck 用的是派生镜像：隐藏测试不存在且不可读；HEAD 没有子提交；refs、remotes、reflog 都为 0；不可达对象为 0。公开工作树没有 .git，也没有修复痕迹。正式 actor 的派生镜像切换还待 A 线审查",
+   "evidence_refs": [
+    "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/captures/r2e_preflight.out",
+    "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/attempt.json",
+    "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/prelaunch.json"
+   ],
+   "by": "Claude 私有主审（引用执行证据）"
+  },
+  "30": {
+   "status": "pass",
+   "note": "正式链实测无出网，无法下载上游修复；真实模型轨迹没有观测",
+   "evidence_refs": [
+    "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/prelaunch.json"
+   ],
+   "by": "Claude 私有主审（引用执行证据）"
+  },
+  "31": {
+   "status": "unknown",
+   "note": "属于共享机制。候选可以改仓库内的 numpy/testing（assert_equal、rundocs），或新建 /testbed/conftest.py，评分都不会重置；agent 也能写 /testbed/.venv 的 site-packages（见 devcheck 的 post_run 文件列表），评分侧是否带上 venv 的改动由共享的投影规则决定。本题没有特例，合法解也不需要这些改动",
+   "evidence_refs": [
+    "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/post_run_facts_root.txt",
+    "rh2/src/repoharness2/adapters/slime/r2e_grading_scripts.py（_restore_lines，按环境卡引用，本审查未读源码）"
+   ],
+   "by": "Claude 私有主审（静态审查）"
+  },
+  "32": {
+   "status": "issue",
+   "note": "verifier 对 poly1d 之间的比较只用了同一对象（p == p）和系数不同的 p2，按身份比较也能通过（反例 I）；与检查 25 同源",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/hidden_tests/test_1.py#L216-L223"
+   ],
+   "by": "Claude 私有主审（静态审查）"
+  },
+  "33": {
+   "status": "not_checked",
+   "note": "没有做真实模型求解；devcheck 用的是桩端点",
+   "evidence_refs": [],
+   "by": "Claude 私有主审（静态审查）"
+  },
+  "34": {
+   "status": "not_checked",
+   "note": "没有做真实模型求解",
+   "evidence_refs": [],
+   "by": "Claude 私有主审（静态审查）"
+  },
+  "35": {
+   "status": "not_checked",
+   "note": "没有真实模型的通过补丁；探针之后需逐个检查通过的补丁是否属于 N 类或 I 类",
+   "evidence_refs": [],
+   "by": "Claude 私有主审（静态审查）"
+  },
+  "36": {
+   "status": "not_checked",
+   "note": "没有做目标基座的求解",
+   "evidence_refs": [],
+   "by": "Claude 私有主审（静态审查）"
+  },
+  "37": {
+   "status": "not_applicable",
+   "note": "没有材料修订",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/revisions.json"
+   ],
+   "by": "Claude 私有主审（静态审查）"
+  },
+  "38": {
+   "status": "not_applicable",
+   "note": "没有修复需要复验",
+   "evidence_refs": [],
+   "by": "Claude 私有主审（静态审查）"
+  },
+  "39": {
+   "status": "not_applicable",
+   "note": "本审查没有引入共享修复",
+   "evidence_refs": [],
+   "by": "Claude 私有主审（静态审查）"
+  }
+ },
+ "issues": [
+  {
+   "id": "N",
+   "category": "test_coverage_gap",
+   "scope": "task",
+   "summary": "目标键只用 None 测试与非 poly1d 的比较。只在 poly1d.__eq__ 开头加 `if other is None: return False` 的部分修复预期可得 11/11，但 p == 3、p == 'a'、p == [1, 2, 3] 仍抛 AttributeError，违背题面对 non-poly1d 的泛称要求；公开测试也抓不到它",
+   "evidence_level": "static_inference（未执行；真实评分由协调者安排）",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/hidden_tests/test_1.py#L216-L223",
+    "runs/r2e_static_prep_20260924/v2/public/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/worktree/numpy/lib/polynomial.py#L1201-L1207",
+    "runs/r2e_static_prep_20260924/v2/public/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/user_prompt.txt#L18"
+   ],
+   "proposed_action": "核对候选 N 的真实评分。若得 1：诊断用途下记为覆盖限度，探针之后逐个复核通过的补丁；训练用途由用户决定是否修订测试，加入 assert_equal(p == 3, False) 与 assert_equal(p != 3, True)，修订后用 gold、A、C、D、N、I 双向复验",
+   "status": "open"
+  },
+  {
+   "id": "I",
+   "category": "test_coverage_gap",
+   "scope": "task",
+   "summary": "poly1d 之间只比较了同一对象（p == p）和系数不同的 p2。删除 poly1d.__eq__ 与 __ne__、退回身份比较，预期可得 11/11，但 poly1d([1,2,3]) == poly1d([1,2,3]) 会变成 False，破坏按值比较的旧行为。按静态推断，公开 test_regression.py 的 test_poly1d 与 test_poly_div 会因此失败，但它们不计分",
+   "evidence_level": "static_inference（未执行；真实评分由协调者安排）",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/hidden_tests/test_1.py#L216-L223",
+    "runs/r2e_static_prep_20260924/v2/public/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/worktree/numpy/lib/tests/test_regression.py#L18-L21",
+    "runs/r2e_static_prep_20260924/v2/public/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/worktree/numpy/lib/tests/test_regression.py#L74-L79"
+   ],
+   "proposed_action": "核对候选 I 的真实评分；训练用途下的修订可加入 assert_equal(p == np.poly1d([1, 2, 3]), True)，依据是旧行为",
+   "status": "open"
+  },
+  {
+   "id": "dead_doctests",
+   "category": "dead_key",
+   "scope": "task（上游原样）",
+   "summary": "TestDocs.test_doctests 永远 PASSED。test_1.py 第 1 行是 from __future__，所以第 3–80 行的 >>> 字符串不是模块 docstring，rundocs() 实际运行 0 个例子；poly1d 的 repr、加减除、__call__、__array__ 因此没有评分保护",
+   "evidence_level": "static_inference + synthetic（本机 python3.12 的 ast 解析与合成模块对照，不是项目代码，也没有进容器）",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/hidden_tests/test_1.py#L1-L90",
+    "runs/r2e_static_prep_20260924/v2/public/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/worktree/numpy/testing/utils.py#L1110-L1153"
+   ],
+   "proposed_action": "记为覆盖限度，不单独修订",
+   "status": "open"
+  },
+  {
+   "id": "solver_conditions",
+   "category": "solver_condition",
+   "scope": "repo:numpy（本批 7 题；本题已实测）",
+   "summary": "numpy 是就地构建的，没有装进 venv，所以 /testbed 必须在 sys.path 上：在 /testbed 下用 python -c 或 python -m pytest 可以，直接运行 pytest 收集会失败。venv 没有 pip / uv，也没有出网",
+   "evidence_level": "execution（历史 P2 探针经 docker exec；正式启动路径 devcheck）",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/agent_probe.log#L24-L27",
+    "runs/r2e_env_repair_20260924/p2/followups/bare_pytest.log",
+    "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/captures/env.out",
+    "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/prelaunch.json"
+   ],
+   "proposed_action": "沿用 E10：记入解题侧条件；是否写进提示由任务面决定",
+   "status": "verified"
+  },
+  {
+   "id": "hints_wording",
+   "category": "input_wording",
+   "scope": "global（全部 R2E 题）",
+   "summary": "public_hints 写的是 conda、pip 可用和 grading resets the test files，与 R2E 实际（.venv、没有 pip、评分只替换 r2e_tests）不符。正式链的解释器前缀已改为 /testbed/.venv（devcheck 实测），但真实渲染的消息没有捕获",
+   "evidence_level": "code_fact + execution（解释器前缀部分）；措辞部分未核实",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/public/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/public_bundle.json",
+    "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/activation_check.json"
+   ],
+   "proposed_action": "由 A 线或任务面在正式链上捕获一次真实渲染的提示并核对；这不影响本题的合法解",
+   "status": "open"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "合法修复只需改 numpy/lib/polynomial.py，gold 账本的 projection.included_paths 已收入它；没有证据需要额外排除",
+  "evidence_refs": [
+   "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl#L16",
+   "runs/r2e_env_repair_20260924/_rerun2/ledger_gold.jsonl#L16"
+  ],
+  "applied_version": null
+ },
+ "revision_refs": [],
+ "disposition": {
+  "state": "needs_review",
+  "scope": "static_review",
+  "reason": "静态候选（development_diagnostic，可列为基座探针候选）。题意、目标测试与 gold 一致，noop 的失败就是题面报错；开发条件已由正式启动路径的 devcheck 实测（真实 Claude Code、桩端点、agent 身份）。还有三件事待办：A 线审查正式 actor 的派生镜像切换；核对真实渲染的提示；候选 A / D / N / I 的真实评分（预期依次为 1 / 0 / 1 / 1），用来确认两处覆盖缺口。本题没有题意争议；覆盖缺口和死键是已知限度，不阻塞诊断用途。历史环境审查的处置 environment_qualified 在环境范围内得到确认",
+  "evidence_refs": [
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/card.md",
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/analysis_before_history.md",
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/old_findings_delta.md",
+   "runs/r2e_static_prep_20260924/v2/private/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/run_refs.json",
+   "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/attempt.json",
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/screening_record.json"
+  ],
+  "reviewer": null,
+  "postcheck": {
+   "script": "rh2/experiments/r2e_actor_20260925/postcheck/numpy_18b7cd9d_behavior.py",
+   "runner": "rh2/experiments/r2e_actor_20260925/postcheck/run_postcheck.py",
+   "validated": {
+    "pass": [
+     "gold",
+     "A"
+    ],
+    "fail": [
+     "base",
+     "D",
+     "N",
+     "I"
+    ]
+   },
+   "added_at": "2026-09-25",
+   "source": "Codex 复核 r2e_static_actor_review_20260925/README.md"
+  }
+ },
+ "usage": {
+  "intended_use": "development_diagnostic",
+  "exposure_notes": "主审看过 gold、隐藏测试、期望映射、全部当前与参考运行日志、历史环境审查（refs.json 所列）以及 actor devcheck（含私有 gold 对照输出）；这些记录不提供给 solver 上下文。候选 A / D / N / I 是审查者写的验证补丁描述，不算独立求解。本记录不是正式的训练或评测批准。题面给出了修法方向，属易题"
+ },
+ "costs": {
+  "container_wall_seconds": null,
+  "agent_tokens": null,
+  "human_decisions": null,
+  "source_refs": [
+   "本静态审查没有运行容器，也没有观测到本审查的 token 用量",
+   "既有评分运行不属于本审查，grader 耗时合计（facts.json 的 grader_seconds_total）：R-f noop 22.9 s、gold 22.7 s；复跑 noop 27.4 s、gold 28.1 s",
+   "actor devcheck 不属于本审查：runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/attempt.json，2026-09-24T18:44:29Z 至 18:44:43Z，solve_seconds 4.317，桩端点共 7 条消息"
+  ]
+ }
+}

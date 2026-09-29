@@ -1,0 +1,326 @@
+{
+  "cache_matrix": [
+    {
+      "path": ".pytest_cache",
+      "before": "absent",
+      "after": "regular",
+      "baseline_omitted": {
+        "dirs": 0,
+        "files": 0
+      },
+      "delta": [
+        [
+          ".pytest_cache",
+          "add",
+          "regular"
+        ]
+      ],
+      "phases": [
+        "census",
+        "normalization",
+        "delta"
+      ],
+      "outcome": "resolved",
+      "reward": 1.0
+    },
+    {
+      "path": ".pytest_cache",
+      "before": "directory",
+      "after": "regular",
+      "baseline_omitted": {
+        "dirs": 1,
+        "files": 1
+      },
+      "delta": [
+        [
+          ".pytest_cache",
+          "add",
+          "regular"
+        ]
+      ],
+      "phases": [
+        "census",
+        "normalization",
+        "delta"
+      ],
+      "outcome": "resolved",
+      "reward": 1.0
+    },
+    {
+      "path": "__pycache__",
+      "before": "directory",
+      "after": "symlink",
+      "baseline_omitted": {
+        "dirs": 1,
+        "files": 1
+      },
+      "delta": [
+        [
+          "__pycache__",
+          "add",
+          "symlink"
+        ]
+      ],
+      "phases": [
+        "census",
+        "normalization",
+        "delta"
+      ],
+      "outcome": "resolved",
+      "reward": 1.0
+    },
+    {
+      "path": "pkg/__pycache__",
+      "before": "directory",
+      "after": "regular",
+      "baseline_omitted": {
+        "dirs": 1,
+        "files": 1
+      },
+      "delta": [
+        [
+          "pkg/__pycache__",
+          "add",
+          "regular"
+        ]
+      ],
+      "phases": [
+        "census",
+        "normalization",
+        "delta"
+      ],
+      "outcome": "resolved",
+      "reward": 1.0
+    },
+    {
+      "path": ".pytest_cache",
+      "before": "regular",
+      "after": "regular",
+      "baseline_omitted": {
+        "dirs": 0,
+        "files": 0
+      },
+      "delta": [
+        [
+          ".pytest_cache",
+          "modify",
+          "regular"
+        ]
+      ],
+      "phases": [
+        "census",
+        "normalization",
+        "delta"
+      ],
+      "outcome": "resolved",
+      "reward": 1.0
+    },
+    {
+      "path": "__pycache__",
+      "before": "symlink",
+      "after": "regular",
+      "baseline_omitted": {
+        "dirs": 0,
+        "files": 0
+      },
+      "delta": [
+        [
+          "__pycache__",
+          "modify",
+          "regular"
+        ]
+      ],
+      "phases": [
+        "census",
+        "normalization",
+        "delta"
+      ],
+      "outcome": "resolved",
+      "reward": 1.0
+    },
+    {
+      "path": "config",
+      "policy": "v1",
+      "before": "regular",
+      "after": "directory",
+      "delta": [
+        [
+          "config",
+          "delete",
+          "regular"
+        ],
+        [
+          "config/default.json",
+          "add",
+          "regular"
+        ]
+      ],
+      "phases": [
+        "census",
+        "delta",
+        "delta"
+      ],
+      "outcome": "resolved"
+    },
+    {
+      "path": "config",
+      "policy": "v2",
+      "before": "regular",
+      "after": "directory",
+      "delta": [
+        [
+          "config",
+          "delete",
+          "regular"
+        ],
+        [
+          "config/default.json",
+          "add",
+          "regular"
+        ]
+      ],
+      "phases": [
+        "census",
+        "normalization",
+        "delta",
+        "delta"
+      ],
+      "outcome": "resolved"
+    }
+  ],
+  "namespace_boundary": {
+    "real_phases": [
+      "census",
+      "normalization"
+    ],
+    "noop_artifact_entries": 0,
+    "fixture_report_outcome": "resolved",
+    "report_limit": "评分测试输出由维护 FakeDocker 提供；Git 状态与删除是本机真实结果",
+    "baseline_omitted": {
+      "dirs": 2,
+      "files": 2
+    },
+    "scoreable_entries_equal": true,
+    "excluded_digest_before": "sha256:404a9a48b59506bf6842a1bf5c0f4e7e16e5d2d2a4e37f0361f274c46336f0f5",
+    "excluded_digest_after": "sha256:404a9a48b59506bf6842a1bf5c0f4e7e16e5d2d2a4e37f0361f274c46336f0f5",
+    "manifest_digest_equal_after_normalization": true,
+    "head_before_rc": 0,
+    "head_after_rc": 0,
+    "head_after_stderr": "",
+    "active_branch_deleted": false,
+    "harness_private_file_deleted": false,
+    "regular_same_name_preserved": true,
+    "symlinks_not_followed": true,
+    "outside_sentinel_preserved": true,
+    "local_alternative": {
+      "script": "find . -mindepth 1 \\( -path ./.git -o -path ./.harness \\) -prune -o -type d \\( -name .pytest_cache -o -name __pycache__ \\) -prune -exec rm -rf -- {} +",
+      "rc": 0,
+      "active_head_preserved": true,
+      "all_manifest_identity_preserved": true,
+      "scoreable_caches_still_removed": true,
+      "production_source_modified": false
+    }
+  },
+  "conflict_persistence": [
+    {
+      "ancestor": "config",
+      "child": "config/default.json",
+      "receipt_rejection_evidence": {
+        "reason_code": "unsupported_delta_shape",
+        "object_path": "config/default.json",
+        "object_type": "prefix_conflict"
+      },
+      "receipt_has_full_conflict": false,
+      "durable_audit_reason": "unsupported_delta_shape:config/default.json:prefix_conflict:ancestor=config(add/regular):child=config/default.json(delete/regular):prefix_conflict",
+      "audit_receipt_attempt_id_equal": true,
+      "workspace_removed": true,
+      "group_disposition": "DROP_GROUP",
+      "in_memory_omitted_counts": {
+        "baseline": {
+          "dirs": 2,
+          "files": 3
+        },
+        "post": {
+          "dirs": 4,
+          "files": 5
+        }
+      },
+      "durable_audit_has_omitted_counts": true
+    },
+    {
+      "ancestor": "config'quote",
+      "child": "config'quote/default.json",
+      "receipt_rejection_evidence": {
+        "reason_code": "unsupported_delta_shape",
+        "object_path": "config'quote/default.json",
+        "object_type": "prefix_conflict"
+      },
+      "receipt_has_full_conflict": false,
+      "durable_audit_reason": "unsupported_delta_shape:config'quote/default.json:prefix_conflict:ancestor=config'quote(add/regular):child=config'quote/default.json(delete/regular):prefix_conflict",
+      "audit_receipt_attempt_id_equal": true,
+      "workspace_removed": true,
+      "group_disposition": "DROP_GROUP",
+      "in_memory_omitted_counts": {
+        "baseline": {
+          "dirs": 2,
+          "files": 3
+        },
+        "post": {
+          "dirs": 4,
+          "files": 5
+        }
+      },
+      "durable_audit_has_omitted_counts": true
+    },
+    {
+      "ancestor": "config\"quote",
+      "child": "config\"quote/default.json",
+      "receipt_rejection_evidence": {
+        "reason_code": "unsupported_delta_shape",
+        "object_path": "config\"quote/default.json",
+        "object_type": "prefix_conflict"
+      },
+      "receipt_has_full_conflict": false,
+      "durable_audit_reason": "unsupported_delta_shape:config\"quote/default.json:prefix_conflict:ancestor=config\"quote(add/regular):child=config\"quote/default.json(delete/regular):prefix_conflict",
+      "audit_receipt_attempt_id_equal": true,
+      "workspace_removed": true,
+      "group_disposition": "DROP_GROUP",
+      "in_memory_omitted_counts": {
+        "baseline": {
+          "dirs": 2,
+          "files": 3
+        },
+        "post": {
+          "dirs": 4,
+          "files": 5
+        }
+      },
+      "durable_audit_has_omitted_counts": true
+    },
+    {
+      "ancestor": "config\\name",
+      "child": "config\\name/default.json",
+      "receipt_rejection_evidence": {
+        "reason_code": "unsupported_delta_shape",
+        "object_path": "config\\name/default.json",
+        "object_type": "prefix_conflict"
+      },
+      "receipt_has_full_conflict": false,
+      "durable_audit_reason": "unsupported_delta_shape:config\\name/default.json:prefix_conflict:ancestor=config\\name(add/regular):child=config\\name/default.json(delete/regular):prefix_conflict",
+      "audit_receipt_attempt_id_equal": true,
+      "workspace_removed": true,
+      "group_disposition": "DROP_GROUP",
+      "in_memory_omitted_counts": {
+        "baseline": {
+          "dirs": 2,
+          "files": 3
+        },
+        "post": {
+          "dirs": 4,
+          "files": 5
+        }
+      },
+      "durable_audit_has_omitted_counts": true
+    }
+  ]
+}

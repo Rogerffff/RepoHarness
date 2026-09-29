@@ -1,0 +1,177 @@
+{
+ "instance_id": "pillow__4bc6483564ae1a254911e98280b9a501f047a2e0",
+ "template": "R-c",
+ "round": 1,
+ "items": [
+  {
+   "id": "R-c-1",
+   "fixes": "T2a + T2b（v1 §4 第 1、3 步）：隐藏测试对 mode \"1\" 只有 HT:66 一行冒烟调用，不检查输出；退化候选 D1（mode \"1\" 返回 image.copy()）在当前材料正式评分 1.0（24/24）",
+   "new_key": "test_invert_mode_1",
+   "revised_lines": "HT':478-490（规范输入 480；独立 oracle 482-484；调用 486；模式 488、尺寸 489、像素 490）"
+  },
+  {
+   "id": "R-c-2",
+   "fixes": "v1 §4 第 4 步 S1（与 R-c-1 同根，同一新测试）：W1（反相结果正确，但原地改掉调用者的图）在当前材料正式评分 1.0（24/24）",
+   "new_key": "test_invert_mode_1（与 R-c-1 同一键）",
+   "revised_lines": "HT':481 调用前快照；HT':491 输入不变断言"
+  }
+ ],
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "    )  # single color 10 cutoff\n    assert_image_equal(img, out)\n",
+     "new": "    )  # single color 10 cutoff\n    assert_image_equal(img, out)\n\n\ndef test_invert_mode_1():\n    # canonical 0/255 bilevel image, not the issue's literal example\n    im = hopper(\"1\")\n    original = im.copy()\n    expected = Image.frombytes(\n        \"L\", im.size, bytes(255 - v for v in im.convert(\"L\").tobytes())\n    )\n\n    out = ImageOps.invert(im)\n\n    assert out.mode == \"1\"\n    assert out.size == im.size\n    assert_image_equal(out.convert(\"L\"), expected)\n    assert_image_equal(im, original)  # the caller's image is left untouched\n"
+    }
+   ]
+  }
+ ],
+ "expected_after": {
+  "\u001b[1mtest_sanity\u001b[0m": "PASSED",
+  "\u001b[1mtest_1pxfit\u001b[0m": "PASSED",
+  "\u001b[1mtest_fit_same_ratio\u001b[0m": "PASSED",
+  "\u001b[1mtest_contain[new_size0]\u001b[0m": "PASSED",
+  "\u001b[1mtest_contain[new_size1]\u001b[0m": "PASSED",
+  "\u001b[1mtest_contain[new_size2]\u001b[0m": "PASSED",
+  "\u001b[1mtest_pad\u001b[0m": "PASSED",
+  "\u001b[1mtest_pil163\u001b[0m": "PASSED",
+  "\u001b[1mtest_scale\u001b[0m": "PASSED",
+  "\u001b[1mtest_expand_palette[10]\u001b[0m": "PASSED",
+  "\u001b[1mtest_expand_palette[border1]\u001b[0m": "PASSED",
+  "\u001b[1mtest_colorize_2color\u001b[0m": "PASSED",
+  "\u001b[1mtest_colorize_2color_offset\u001b[0m": "PASSED",
+  "\u001b[1mtest_colorize_3color_offset\u001b[0m": "PASSED",
+  "\u001b[1mtest_exif_transpose\u001b[0m": "PASSED",
+  "\u001b[1mtest_autocontrast_cutoff\u001b[0m": "PASSED",
+  "\u001b[1mtest_autocontrast_mask_toy_input\u001b[0m": "PASSED",
+  "\u001b[1mtest_autocontrast_mask_real_input\u001b[0m": "PASSED",
+  "\u001b[1mtest_autocontrast_preserve_tone\u001b[0m": "PASSED",
+  "\u001b[1mtest_autocontrast_preserve_gradient\u001b[0m": "PASSED",
+  "\u001b[1mtest_autocontrast_preserve_one_color[color0]\u001b[0m": "PASSED",
+  "\u001b[1mtest_autocontrast_preserve_one_color[color1]\u001b[0m": "PASSED",
+  "\u001b[1mtest_autocontrast_preserve_one_color[color2]\u001b[0m": "PASSED",
+  "\u001b[1mtest_autocontrast_preserve_one_color[color3]\u001b[0m": "PASSED",
+  "\u001b[1mtest_invert_mode_1\u001b[0m": "PASSED"
+ },
+ "expected_change": {
+  "added": {
+   "\u001b[1mtest_invert_mode_1\u001b[0m": "PASSED"
+  },
+  "changed": {},
+  "removed": []
+ },
+ "positive_control": "gold",
+ "acceptance": {
+  "gold": {
+   "expected_score": 1,
+   "expected_fail_keys": [],
+   "expected_fail_line": null,
+   "trial": "trials/rev_gold.json",
+   "trial_verdict": "match 25/25",
+   "patch": "runs/r2e_static_prep_20260924/v3/private/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/gold.patch",
+   "role": "正对照（规范输入上逐位反相、模式 \"1\"、不改输入；非规范取值的读法分歧登记为 S2，见 revision_plan.md §6）"
+  },
+  "noop": {
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "test_sanity",
+    "test_invert_mode_1"
+   ],
+   "expected_fail_line": "HT:66 与 HT':486（OSError: not supported for this image mode）",
+   "trial": "trials/rev_noop.json",
+   "trial_verdict": "mismatch 25/25; FAILED=test_invert_mode_1（HT':486 OSError）, test_sanity（HT:66 OSError）",
+   "patch": "none",
+   "role": "未修复基线"
+  },
+  "D1": {
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "test_invert_mode_1"
+   ],
+   "expected_fail_line": "HT':490（AssertionError: got different content；输出等于输入，没有反相）",
+   "trial": "trials/rev_D1.json",
+   "trial_verdict": "mismatch 25/25; FAILED=test_invert_mode_1（HT':490 AssertionError: got different content）",
+   "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/cands/pillow_4bc6_D1.patch",
+   "role": "第 3 步退化候选，R-c-1 的触发反例（当前材料正式评分 1.0）"
+  },
+  "W1": {
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "test_invert_mode_1"
+   ],
+   "expected_fail_line": "HT':491（AssertionError: got different content；调用者的图被原地改掉，HT':488-490 已通过）",
+   "trial": "trials/rev_W1.json",
+   "trial_verdict": "mismatch 25/25; FAILED=test_invert_mode_1（HT':491 AssertionError: got different content）",
+   "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/cands/pillow_4bc6_W1.patch",
+   "role": "第 4 步错误候选，R-c-2 的触发反例（当前材料正式评分 1.0）"
+  },
+  "A1": {
+   "expected_score": 1,
+   "expected_fail_keys": [],
+   "expected_fail_line": null,
+   "trial": "trials/rev_A1.json",
+   "trial_verdict": "match 25/25",
+   "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/cands/pillow_4bc6_A1.patch",
+   "role": "合理替代解（按 1-bit 值归一后反相：point(lambda v: 0 if v else 255)）"
+  },
+  "A2": {
+   "expected_score": 1,
+   "expected_fail_keys": [],
+   "expected_fail_line": null,
+   "trial": "trials/rev_A2.json",
+   "trial_verdict": "match 25/25",
+   "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/cands/pillow_4bc6_A2.patch",
+   "role": "合理替代解（_lut 放行 mode \"1\"；复核 review.md §2.4 要求实跑）"
+  }
+ },
+ "paths_note": "trials/ 相对本题目录；acceptance.*.patch 与 parent_material.* 相对仓库根。HT = 父版本隐藏测试 test_1.py（475 行），HT' = 修订后（491 行）。acceptance 只含修订草案下的试跑（期望取 expected_after，25 键）；当前材料上的对照见 revision_plan.md §5.1。试跑工具不是正式评分",
+ "candidate_patch_sha256": {
+  "gold": "sha256:9b5c56bc1da956f655422fe7c211dc3a553f8a7da51c96ac07130d697c05c94d",
+  "D1": "sha256:86a322361e83314426ab75a8d30f3943e42952da4983b2fb66bb6d2262f3d1c3",
+  "W1": "sha256:e012bee3a794ceca2400ee61471760cd8ecfb8e76cb0e6f085d4379758367464",
+  "A1": "sha256:1fdcfb22f73cf8080d39c746313db213f232e7b7a08d4423cc5017c5dec3fbc4",
+  "A2": "sha256:12e542d5d141daf9fddfff1cc9c85b63928ed484be4d461b56b1a5cfba24dca2",
+  "note": "与协调者正式评分所用的 runs/r2e_lifecycle_20260929/inv/pillow_4bc6/pillow_4bc6_*.patch 逐字节相同"
+ },
+ "parent_material": {
+  "source_row": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl:41",
+  "source_row_sha256": "sha256:b89fc34812b841bf12388f63a346a8a4b6dce6bb0a3405aece51b07579656ecf",
+  "hidden_test_file": "runs/r2e_static_prep_20260924/v3/private/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/hidden_tests/test_1.py",
+  "hidden_test_file_sha256": "sha256:016c2b0601ea1a1cb39d715c162b81cb898f99c1d013e9ecdc58d1834b5ee2ce",
+  "hidden_helper_sha256_unchanged": "sha256:d462a9050f881a40120bfe5015449c222c4f41c4a913ace75813c87916de925c",
+  "hidden_tests_tree_sha256": "sha256:7e15b7397614f03b7e1d1efa29ee1576b444cc4bd67d3ec0ea695c65539f3f3c",
+  "expected_output_sha256": "sha256:d8bc5a2b3bfd24eb0dd83abb99d0a0e0e0cfca2e4e6f3bf310ab8a5dccbf2e8c",
+  "expected_n": 24,
+  "material_revisions": []
+ },
+ "revised_hidden_test_sha256": "sha256:9bdba0cc8fb1defd5ae387c85a5e67357611a6b198d65c9407566d5cc3862ea3",
+ "revised_hidden_test_lines": 491,
+ "revised_expected_output_sha256": "sha256:b2a68136bdf5e8bd900f9cbfc8bd63c31cac150f5ef9c10e91d8a58942dac7ab",
+ "trial_image": {
+  "image_id": "sha256:d6de40456fb7254f4e21b0f5018a35b52b9a5619e14f1ed4f9a87e66f4fd0b44",
+  "recipe_id": "r2e_derive_v1+sysconfig_v1",
+  "note": "与 runs/r2e_lifecycle_20260929/inv/pillow_4bc6/ 四本正式账本的 image_id_actual 相同"
+ },
+ "trial_draft_sha256": {
+  "draft.json": "sha256:0073c532e2641a510189cff14bb4825a1fbc13b8c02139613ef79457833de3cd",
+  "expected_after.json": "sha256:b2a68136bdf5e8bd900f9cbfc8bd63c31cac150f5ef9c10e91d8a58942dac7ab",
+  "note": "expected_after.json 按父版本同一格式序列化（json.dumps(indent=4)，无尾换行），字节即修订后的 expected_output.json；远端副本在 /work/r2e/trials/lc_pillow_4bc6/4bc64835/"
+ },
+ "trial_env_check": {
+  "noop": "trials/env_noop_current.json（当前材料，mismatch 24/24，只差 test_sanity，HT:66 OSError）",
+  "gold": "trials/env_gold_current.json（当前材料，match 24/24）"
+ },
+ "formalization_note": {
+  "hidden_test_text_replace": "只有这一条：test_1.py 此前没有修订。old 取 HT:474-475 两行，因为单行 `    assert_image_equal(img, out)\\n` 在 HT:458 与 HT:475 各出现一次、不唯一；new = old + 新测试（HT':476-491）。可用 revised_hidden_test_sha256 核对重算结果",
+  "expected_output_json": "新增 1 键 test_invert_mode_1: PASSED（沿用 ANSI 键形），其余 24 键逐键不变，合计 25 键；changed、removed 为空",
+  "image_rebuild": "隐藏测试随派生镜像放在 /rh2_private/r2e_tests，落地后需重建本题派生镜像再做正式评分"
+ },
+ "user_decision_pending": {
+  "question": "是否要求非规范存储值（mode \"1\" 图里 1–254 的字节，例如题面示例 color=1）也按 1-bit 语义反相",
+  "recommendation": "不要求（维持默认口径，复核 review.md §2.2 与主审 card.md 一致）",
+  "blocking": false,
+  "detail": "revision_plan.md §7"
+ }
+}

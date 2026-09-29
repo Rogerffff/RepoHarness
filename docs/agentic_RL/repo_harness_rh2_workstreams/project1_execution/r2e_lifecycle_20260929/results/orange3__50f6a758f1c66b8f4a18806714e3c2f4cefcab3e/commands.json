@@ -1,0 +1,30 @@
+[
+ {
+  "id": "env_import",
+  "timeout_s": 180,
+  "expect": "zero",
+  "purpose": "导入与版本：确认 python 指向 /testbed/.venv/bin/python（3.7.9），Orange 从 /testbed 导入（含 .gitignore 忽略、工作树里没有的编译扩展与 Orange/version.py），AnyQt 选中 pyqt5，owcolor 可导入。修复前后预计相同：打印解释器路径与 3.7.9、Orange 3.32.0 开发版版本串与 /testbed/Orange/__init__.py、Qt API pyqt5、/testbed/Orange/widgets/data/owcolor.py；只导入不建 QApplication。",
+  "cmd": "cd /testbed && QT_QPA_PLATFORM=minimal python -c \"import sys, Orange, AnyQt; from Orange.widgets.data import owcolor; print(sys.executable, sys.version.split()[0]); print('Orange', Orange.__version__, Orange.__file__); print('Qt API', AnyQt.USED_API); print(owcolor.__file__)\""
+ },
+ {
+  "id": "repro_unused_vars_warning",
+  "timeout_s": 300,
+  "expect": "nonzero",
+  "purpose": "题面复现（区分修复前后）：在 /tmp 写一个 WidgetTest 探针并只跑其中 3 例（-k r2eprobe），全部打补丁拦住 QMessageBox.warning / critical 与 QFileDialog.getOpenFileName，避免模态框卡住。例 1 = 题面原样示例，未加载数据，直接调 _parse_var_defs；例 2 = 加载 iris 后经公开的 load() 读 /tmp 下同内容的 .colors 文件；两例都断言 critical 未被调用、某次 QMessageBox.warning 的实参同时提到 foo 和 bar（不查措辞、引号或顺序）。例 3 = iris + 混合文件（iris 改名为 species，另有未用的 foo/bar），只断言无 critical、已匹配变量的改名照常生效，warning 调用只打印不断言（混合文件是否应警告有歧义，见 public_read.md）。修复前预计：例 1、例 2 失败，报 AssertionError: False is not true : []（没有任何警告，也没有 TypeError），例 3 通过，退出码 1。修复后预计：3 passed，退出码 0，PASSES 段打印出含 foo、bar 的警告正文。本探针假定警告走 QMessageBox.warning（与同函数另两处警告及公开测试的 call_args[0][2] 写法一致）；如果修复只用控件消息栏等其它通道，例 1、例 2 仍会失败。",
+  "cmd": "cd /testbed || exit 2\ncat > /tmp/test_r2e_owcolor_unused.py <<'PY'\nimport json\nfrom unittest.mock import patch\n\nfrom Orange.data import Table\nfrom Orange.widgets.data import owcolor\nfrom Orange.widgets.tests import base as wbase\n\nEXAMPLE = {\"categorical\": {\"foo\": {\"renamed_values\": {}},\n                           \"bar\": {\"renamed_values\": {}}},\n           \"numeric\": {}}\nFNAME = \"/tmp/r2e_owcolor_defs.colors\"\n\n\ndef texts(mock):\n    # all call arguments except the parent widget, joined into one string\n    return [\" | \".join(str(a) for a in list(c[0][1:]) + list(c[1].values()))\n            for c in mock.call_args_list]\n\n\nclass TestUnusedVarDefs(wbase.WidgetTest):\n    def setUp(self):\n        self.widget = self.create_widget(owcolor.OWColor)\n\n    def _parse(self, js):\n        with patch.object(owcolor.QMessageBox, \"warning\") as warn, \\\n                patch.object(owcolor.QMessageBox, \"critical\") as crit:\n            self.widget._parse_var_defs(js)\n        return texts(warn), texts(crit)\n\n    def _load(self, js):\n        with open(FNAME, \"w\") as f:\n            json.dump(js, f)\n        with patch.object(owcolor.QFileDialog, \"getOpenFileName\",\n                          return_value=(FNAME, \"*.colors\")), \\\n                patch.object(owcolor.QMessageBox, \"warning\") as warn, \\\n                patch.object(owcolor.QMessageBox, \"critical\") as crit:\n            self.widget.load()\n        return texts(warn), texts(crit)\n\n    def test_r2eprobe_1_parse_example_no_data(self):\n        warns, crits = self._parse(EXAMPLE)\n        print(\"warning calls:\", warns, \"| critical calls:\", crits)\n        self.assertEqual(crits, [])\n        self.assertTrue(any(\"foo\" in t and \"bar\" in t for t in warns), warns)\n\n    def test_r2eprobe_2_load_example_iris(self):\n        self.send_signal(self.widget.Inputs.data, Table(\"iris\"))\n        warns, crits = self._load(EXAMPLE)\n        print(\"warning calls:\", warns, \"| critical calls:\", crits)\n        self.assertEqual(crits, [])\n        self.assertIsNotNone(self.get_output(self.widget.Outputs.data))\n        self.assertTrue(any(\"foo\" in t and \"bar\" in t for t in warns), warns)\n\n    def test_r2eprobe_3_load_mixed_keeps_used_defs(self):\n        self.send_signal(self.widget.Inputs.data, Table(\"iris\"))\n        js = {\"categorical\": {\"iris\": {\"rename\": \"species\"},\n                              \"foo\": {\"renamed_values\": {}}},\n              \"numeric\": {\"bar\": {\"colors\": \"linear_viridis\"}}}\n        warns, crits = self._load(js)\n        print(\"mixed file (informational) warning calls:\", warns,\n              \"| critical calls:\", crits)\n        self.assertEqual(crits, [])\n        out = self.get_output(self.widget.Outputs.data)\n        self.assertEqual(out.domain.class_var.name, \"species\")\nPY\nQT_QPA_PLATFORM=minimal xvfb-run --auto-servernum python -m pytest -p no:cacheprovider -q -rA -k r2eprobe /tmp/test_r2e_owcolor_unused.py"
+ },
+ {
+  "id": "public_owcolor_tests_except_conflict",
+  "timeout_s": 600,
+  "expect": "zero",
+  "purpose": "相关公开测试（回归保护）：跑 test_owcolor.py 全文件，只排除与题面冲突的 test_parse_var_defs_no_rename（由下一条单独观察）。覆盖 test_parse_var_defs、test_parse_var_defs_invalid（这两例没有给 QMessageBox 打补丁）、test_parse_var_defs_shows_warnings、test_load 等。修复前后都预计全部通过、1 deselected、退出码 0。若修复在全部变量都匹配的文件或非法文件上也弹出真实的 QMessageBox，在 minimal 平台下模态框可能卡住直到超时（推断）。",
+  "cmd": "cd /testbed && QT_QPA_PLATFORM=minimal xvfb-run --auto-servernum python -m pytest -p no:cacheprovider -q -rA Orange/widgets/data/tests/test_owcolor.py -k \"not test_parse_var_defs_no_rename\""
+ },
+ {
+  "id": "public_no_rename_conflict",
+  "timeout_s": 300,
+  "expect": "zero",
+  "purpose": "观察公开测试与题面的冲突：test_owcolor.py:885-888 用含未使用数值变量 \"var not\" 的文件调 _parse_var_defs，并断言 QMessageBox.warning 未被调用。修复前预计通过（base 静默跳过未用变量），退出码 0。修复后若按题面对所有未使用变量都弹 QMessageBox.warning，预计在第 888 行失败（AssertionError: Expected 'warning' to not have been called. Called 1 times.）。这是旧断言与新需求的冲突，不一定是回归；解题者不能改测试文件。",
+  "cmd": "cd /testbed && QT_QPA_PLATFORM=minimal xvfb-run --auto-servernum python -m pytest -p no:cacheprovider -q -rA \"Orange/widgets/data/tests/test_owcolor.py::TestOWColor::test_parse_var_defs_no_rename\""
+ }
+]

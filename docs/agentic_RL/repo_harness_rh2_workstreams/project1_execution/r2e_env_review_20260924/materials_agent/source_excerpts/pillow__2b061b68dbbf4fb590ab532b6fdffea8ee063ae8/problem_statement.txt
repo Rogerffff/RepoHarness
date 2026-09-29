@@ -1,0 +1,33 @@
+[ISSUE]
+**Title:** TypeError When Handling Warnings After Adding `formats` Parameter to `Image.open`
+
+**Description:**
+After introducing the `formats` parameter to `Image.open` to restrict the supported image formats, handling warnings during image operations leads to a `TypeError`. Specifically, when attempting to save an image or trigger deprecation warnings, an error is raised indicating that exceptions must be derived from `Warning`, not `NoneType`.
+
+**Example Code:**
+```python
+from PIL import Image
+
+# Open an image with restricted formats
+image = Image.open('hopper.png', formats=['JPEG'])
+
+# Attempt to save the image
+image.save('output.jpg')
+
+# Attempt to use a deprecated method
+image.show()
+```
+
+**Expected Behavior:**
+- Opening an image with the specified formats should work without issues.
+- Saving the image should handle any necessary warnings gracefully without raising errors.
+- Using deprecated methods like `show()` should trigger appropriate warnings without causing a `TypeError`.
+
+**Actual Behavior:**
+- Saving the image raises the following error:
+  ```
+  TypeError: exceptions must be derived from Warning, not <class 'NoneType'>
+  ```
+- Attempting to use the deprecated `show()` method results in the same `TypeError`.
+
+[/ISSUE]

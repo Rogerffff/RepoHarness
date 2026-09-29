@@ -1,0 +1,29 @@
+{
+  "report": "pack10_report.md",
+  "tasks": {
+    "conan-io__conan-13610": {
+      "classification": "quality_first",
+      "card_replacements": [["未读reviewer、reviewer意见未取得。", "主审出稿时未读reviewer；独立交叉复核现已完成。"]],
+      "card_append": "协调裁定：quality_first，ready_for_probe=false。check26=issue仅限源码可证的新帮助说明不一致，其他功能回归仍unknown；check27 unknown保留局部正证据。唯一优先项为明确公开的无参数、裸-v、显式verbose和帮助契约，不增设重复CPU实验。",
+      "checks": {
+        "26": {"status": "issue", "note": "静态用户帮助回归：未改帮助把-v与-vverbose视为等价，gold却映射不同级别。该说明错误由源码对照证明；其他运行功能回归未证。"},
+        "28": {"status": "pass", "note": "沿用公开日志级别与帮助契约评估；未强制gold字典结构或任意新日志策略。裸-v新语义的公开依据仍归check23。"}
+      },
+      "disposition": {"reviewer_result": "completed; independent review accepted with explicit scope distinctions", "reason": "公开裸-v语义选择未定，gold新增帮助不一致已静态确认；优先澄清验收契约。当前actor仍未知。"},
+      "changes": ["附独立review SHA及协调暴露，归档main原card/record", "限定26已证范围，28说明按本题收窄", "更新reviewer状态，保留唯一契约澄清优先项"]
+    },
+    "conan-io__conan-13788": {
+      "classification": "quality_first",
+      "card_replacements": [
+        ["gold对context=None统一查host；", "gold对Requirement.build_require_context=None统一查host；"],
+        ["reviewer未读、意见未取得。", "主审出稿时未读reviewer；独立交叉复核现已完成。"],
+        ["任务二用root→build工具T→普通依赖D的两profile公开CLI锁重放，做同条件base/gold对照并检查边context/错误位置。", "任务二私下使用公开CLI，以root→build工具T→普通依赖D的两profile锁重放做同条件base/gold对照，检查边context/错误位置。"]
+      ],
+      "card_append": "协调裁定：quality_first，ready_for_probe=false。26/27维持unknown：普通Requirement.build_require_context与继承的Node.context不同，现有静态路径尚无实际CLI复现。唯一私有CPU提案采用lock create生成待构建锁，再install --build；若改用install生成已有prev的完整锁，不应无条件强制重建而混入另一限制。主审不可变delta中的Requirement.context简称由review明确纠正，原稿保留。",
+      "checks": {"28": {"status": "pass", "note": "按公开合法双context和profile覆盖行为评估，未引入全局同名版本禁止；旧context缺失迁移契约未证，不额外强加。"}},
+      "issue_updates": {"potential_gold_regression": {"proposed_action": "唯一优先项：任务二私有base/gold对照root -> build T -> ordinary D，两profile lock create后install --build；记录实际T→D上下文、RC和错误位置。若采用install生成已有prev的锁，避免无条件强制重建。未执行或派发。"}},
+      "disposition": {"reviewer_result": "completed; independent review accepted with terminology and fixture-scope corrections", "reason": "build-context普通依赖有具体未运行gold回归风险；优先一个私有锁重放对照。局部历史分差成立，当前actor和完整性未知。", "unique_priority_next_step": "任务二私有base/gold双profile root→build T→ordinary D锁重放；采用lock create待构建锁路线，保存RC/context/错误位置。"},
+      "changes": ["附独立review SHA及协调暴露，归档main原card/record", "纠正可变card字段为Requirement.build_require_context；不可变delta由review记录勘误", "保留26/27 unknown及唯一私有CPU提案，限定prev/强制重建条件", "更新reviewer状态与本题28范围"]
+    }
+  }
+}

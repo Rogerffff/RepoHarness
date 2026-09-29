@@ -1,0 +1,217 @@
+{
+ "task_id": "pydantic__pydantic-8583",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_pydantic (Claude Opus 5, 2026-09-16 夜)",
+ "materials_refs": [
+  "s2/ingest/*_bundles_v0.jsonl (pydantic__pydantic-8583)",
+  "repos/pydantic@e131d53a(见 grading.base_commit)",
+  "runs/env_probe_stage1_20260910/.../pydantic__pydantic-8583/"
+ ],
+ "public_view": {
+  "目标行为": "用 TypeAdapter/GenerateJsonSchema.generate_definitions 生成 JSON schema 时，带 Field(discriminator=...) 的 Union 应保留 discriminator（propertyName + mapping）；2.3→2.5 之后不见了。",
+  "约束": "既有 discriminated union 的校验行为不变。",
+  "公开材料无法确定的点": [
+   "题面只给了 OpenAPI yaml 的前后对比与一段不可运行的示例（含字面量 XXX 占位、类名 List 覆盖 typing.List、temType 拼写错误）",
+   "根因（definitions 的收集顺序导致 discriminator 元数据在 $ref 归并时丢失）完全无法从题面推出"
+  ],
+  "base 定位": "pydantic/_internal/_generate_schema.py:433-440 clean_schema：collect_definitions → simplify_schema_references → apply_discriminators → validate_core_schema，definitions 的顺序决定了 $ref 归并时谁被保留。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "tests/test_discriminated_union.py、pydantic/_internal/_generate_schema.py 在 base 均存在"
+   ],
+   "note": "对应同一问题。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 empty：F2P FAILED"
+   ],
+   "note": "base 确有缺陷（静态只定位到 clean_schema，未静态证明顺序即根因）。",
+   "by": "stage1log"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement 的 Example Code 含字面量 XXX、temType.ITEM1（拼写错误）、以及把类命名为 List"
+   ],
+   "note": "P2：题面示例不可运行，只能靠 yaml 前后对比理解现象；复现需要 agent 自己重写例子。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只碰 tests/test_discriminated_union.py；F2P+P2P 52 条全在该文件；gold 只碰生产代码"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "static"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "同 gold 文件 _generate_schema.py 的还有 5706/6104/9193/9214；R8 扫描显示 6104 的 gold 5/5 行出现在 8583 的 base"
+   ],
+   "note": "P2 跨题答案泄漏：8583 的 base 里 modify_model_json_schema 含 6104 的完整 gold。",
+   "by": "static"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "install rc=2。",
+   "by": "stage1log"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "测试第三方 import：pytest / pydantic_core / dirty_equals"
+   ],
+   "note": "无外部资产。",
+   "by": "static"
+  },
+  "8": {
+   "status": "pass",
+   "evidence_refs": [
+    "gold status_map：PASSED 52 + SKIPPED 5，SKIPPED 全是 test_discriminated_union_enum[*]，其 skipif 条件是 sys.version_info[:2] == (3,8)"
+   ],
+   "note": "**由此确定判分环境是 Python 3.8**，与 grading.python_version 字段一致；这条结论被本包其它题引用（8511）。",
+   "by": "stage1log"
+  },
+  "10": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "无本题轨迹。",
+   "by": "-"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "只有 install 需要网络。",
+   "by": "stage1log"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "同 check 3",
+    "F2P 断言的是 GenerateJsonSchema().generate_definitions(...) 的完整返回字典（约 60 行）"
+   ],
+   "note": "P2：题面讲的是 FastAPI/OpenAPI 场景的现象，验收面用的是 GenerateJsonSchema().generate_definitions 这个内部 API 的精确输出；两者之间的桥接（TypeAdapter + Annotated[..., FieldInfo(examples=...)]）题面没有任何线索。",
+   "by": "static"
+  },
+  "24": {
+   "status": "issue",
+   "evidence_refs": [
+    "F2P 断言 definitions 字典完全相等，包括 3 个模型 schema 的每一个键、required 的顺序（['type','id']）与 discriminator 的 mapping"
+   ],
+   "note": "P2：这是本包约束最强的一条断言。任何让 discriminator 回来但 required 顺序不同、或多一个少一个键的合法实现都会被拒；而 gold 恰恰是靠 list(reversed(...)) 改顺序达成的，说明这条断言把一个实现顺序细节变成了验收条件。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "F2P 只有 1 条、P2P 51 条全在同文件"
+   ],
+   "note": "P2：只有一个场景（TypeAdapter + generate_definitions）被检查；题面真正关心的 model_json_schema() / FastAPI 路径没有断言。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "gold 改的是 clean_schema，所有 core schema 的公共出口"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "static"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "golden_patch 全文：if 'definitions' in schema: schema['definitions'] = list(reversed(schema['definitions']))"
+   ],
+   "note": "**P1 gold 质量存疑**：这不是对根因的修复，而是把 definitions 列表整体反转的经验性变通，没有解释为什么反转是正确的。任何后续改动 definitions 收集顺序的重构都会再次打破它。把这种补丁当参考解，会教模型用顺序 hack 换绿灯。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak 扫描 0 命中；题面无指向修复 PR 的 URL（只有一个 127.0.0.1 本地地址）"
+   ],
+   "note": "题面无泄漏；跨题泄漏见 check 5。",
+   "by": "static"
+  },
+  "31": {
+   "status": "issue",
+   "evidence_refs": [
+    "R4"
+   ],
+   "note": "静态残余面。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "gold_is_workaround",
+   "severity": "P1",
+   "evidence_refs": [
+    "check 27"
+   ],
+   "proposed_action": "本题不宜作为参考解即正确解的样本；若保留，需在记录里明确 gold 是顺序变通，并把验收面从精确字典改成 discriminator 存在且 mapping 正确",
+   "next_experiment": "在镜像里把 reversed 换成别的顺序（如按 ref 名排序），看 F2P 是否仍绿——若绿则证明断言绑定的是顺序而非语义"
+  },
+  {
+   "category": "oracle_over_constrained",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 24"
+   ],
+   "proposed_action": "把约 60 行精确字典断言收敛到 discriminator 子结构",
+   "next_experiment": "同上"
+  },
+  {
+   "category": "problem_statement_not_runnable",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 3"
+   ],
+   "proposed_action": "题面示例含 XXX 占位与拼写错误，需补全",
+   "next_experiment": "无"
+  },
+  {
+   "category": "cross_task_answer_leak",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 5",
+    "R8"
+   ],
+   "proposed_action": "6104 与 8583 同侧划分",
+   "next_experiment": "无"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 仅纯测试文件、gold 仅生产代码、判分面与恢复面一致。",
+  "evidence_refs": [
+   "grading.json.test_patch",
+   "validation.json.golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  "同一模型走 model_json_schema()（而非 generate_definitions）时 discriminator 也在 — 选择依据：题面真正的 FastAPI 场景，判分面零覆盖",
+  "三个及以上成员的 discriminated union、以及嵌套 union — 选择依据：reversed 的正确性依赖成员数量与顺序，两成员是最容易蒙对的情形",
+  "tests/test_json_schema.py 里的 $defs 顺序相关条目 — 选择依据：gold 改的是 clean_schema 公共出口，definitions 顺序变化会传导到所有 $defs 输出，不在判分面",
+  "tests/test_discriminated_union.py::test_discriminated_union_enum（当前在 3.8 上 SKIPPED）— 选择依据：判分环境跳过了 5 条，需在 3.9+ 环境另行确认"
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "gold 是 list(reversed(definitions)) 的顺序变通而非根因修复，F2P 又是约 60 行精确字典断言，等于把一个实现顺序细节固化成验收条件；加上题面示例不可运行。需重写验收面或剔除。"
+ },
+ "costs": {
+  "minutes": 17
+ }
+}

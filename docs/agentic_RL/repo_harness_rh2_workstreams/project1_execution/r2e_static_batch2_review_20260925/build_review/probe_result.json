@@ -1,0 +1,142 @@
+{
+  "scope": "CPU-only：原始证据校验、R1/O1 纯函数/构建前拒绝、真实本机哨兵文件冻结导出与字节重放；无原生编译/容器/网络。",
+  "checks": [
+    {
+      "name": "C2_grader_log_and_patch_identity",
+      "passed": true,
+      "log_path": "runs/r2e_actor_20260925/grader/eval_logs/evallog_replay-a9d37fc8d56d-oran_e45af2b2.eval.log",
+      "patch_sha256": "sha256:a616c5bd7c413c6af98956c6cad02bbc8c0e946a9c3064949bb3b1f7809ec7fa",
+      "log_sha256": "sha256:50ce1f305145b229b24f892affa0519a59b9379f64fba2cec51895164c2e5be9"
+    },
+    {
+      "name": "C2_grader_original_result",
+      "passed": true,
+      "matched": 26,
+      "total": 27,
+      "mismatch": {
+        "TestEqualFreq.test_below_precision": {
+          "expected": "PASSED",
+          "observed": "FAILED"
+        }
+      },
+      "included_paths": [
+        "Orange/preprocess/_discretize.pyx"
+      ],
+      "install_skipped": true
+    },
+    {
+      "name": "o4014_C2_nobuild",
+      "passed": true,
+      "user": "root",
+      "expected_match": 26,
+      "expected_total": 27,
+      "build_rc": null,
+      "cythonized": null,
+      "note": "核对既有 root 实跑记录；本轮未重跑容器或构建。"
+    },
+    {
+      "name": "o4014_C2_build",
+      "passed": true,
+      "user": "root",
+      "expected_match": 27,
+      "expected_total": 27,
+      "build_rc": 0,
+      "cythonized": [
+        "[1/1] Cythonizing Orange/preprocess/_discretize.pyx"
+      ],
+      "note": "核对既有 root 实跑记录；本轮未重跑容器或构建。"
+    },
+    {
+      "name": "o4014_gold_build",
+      "passed": true,
+      "user": "root",
+      "expected_match": 27,
+      "expected_total": 27,
+      "build_rc": 0,
+      "cythonized": [],
+      "note": "核对既有 root 实跑记录；本轮未重跑容器或构建。"
+    },
+    {
+      "name": "agent_link_failure_is_specific_and_recorded",
+      "passed": true,
+      "build_log": "runs/r2e_actor_20260925/devcheck/orange3__4014f2483e3bab0621c9ae0f994947c/agentpath2/captures/build_full_error.out",
+      "linker_facts": "runs/r2e_actor_20260925/devcheck/orange3__4014f2483e3bab0621c9ae0f994947c/agentpath2/captures/linker_facts.out"
+    },
+    {
+      "name": "candidate_stage_has_no_automatic_rebuild",
+      "passed": true
+    },
+    {
+      "name": "O1_verified_bytes_read_once",
+      "passed": true,
+      "read_bytes_count": 1
+    },
+    {
+      "name": "R1_real_approved_overlay_accepted",
+      "passed": true,
+      "approved_recipe_sha256": "sha256:5122771965c2cb69f748b63f874b514b99b33e731a40d8e568a1af05de9e6fbc"
+    },
+    {
+      "name": "R1_same_step_wrong_digest_rejected",
+      "passed": true,
+      "error": "overlay:env_recipe_not_approved:r2e-mr-020:recipe_sha256=sha256:0000000000000000000000000000000000000000000000000000000000000000:approved_pins=scipy==1.5.4"
+    },
+    {
+      "name": "R1_digest_recomputed_matches_approved_real_build",
+      "passed": true,
+      "recipe_sha256": "sha256:5122771965c2cb69f748b63f874b514b99b33e731a40d8e568a1af05de9e6fbc"
+    },
+    {
+      "name": "R1_build_rejects_wrong_content_before_Docker",
+      "passed": true,
+      "failures": [
+        "env_recipe_not_approved:r2e-mr-020:recipe_sha256=sha256:e7f5eb063da3c8b2a7b9fe1ff4a352630041690eda934fe5695a00e8843a0da3:approved_pins=scipy==1.5.4"
+      ]
+    },
+    {
+      "name": "frozen_export_keeps_ignored_binary_and_generated_files",
+      "passed": true,
+      "artifact_paths": [
+        "Orange/preprocess/_discretize.c",
+        "Orange/preprocess/_discretize.cpython-37m-x86_64-linux-gnu.so",
+        "Orange/preprocess/_discretize.pyx",
+        "build/temp.linux-x86_64-3.7/Orange/preprocess/_discretize.o"
+      ],
+      "policy": {
+        "policy_version": "baseline_policy_r2e_v1",
+        "excluded_namespaces": [
+          ".git/",
+          ".harness/",
+          ".venv/"
+        ],
+        "regenerable_cache_dirs": [
+          ".pytest_cache",
+          "__pycache__"
+        ]
+      },
+      "note": "真实本机文件 census/export；所有 .so/.o 内容为哨兵字节，未编译或导入。"
+    },
+    {
+      "name": "r2e_projection_and_apply_preserve_binary_bytes",
+      "passed": true,
+      "candidate_paths": [
+        "Orange/preprocess/_discretize.c",
+        "Orange/preprocess/_discretize.cpython-37m-x86_64-linux-gnu.so",
+        "Orange/preprocess/_discretize.pyx",
+        "build/temp.linux-x86_64-3.7/Orange/preprocess/_discretize.o"
+      ],
+      "ignored_paths": [],
+      "apply_completed": true,
+      "byte_digests": {
+        "Orange/preprocess/_discretize.cpython-37m-x86_64-linux-gnu.so": "sha256:fcbb7f4bd813db888bd9fc9a745a6053f6d5fe6aa08282a3dcc694647797cf66",
+        "Orange/preprocess/_discretize.pyx": "sha256:5a9bd73b6ce17090b33dcd517296e93ebdec84d506f08f9632412e4221d805f1",
+        "Orange/preprocess/_discretize.c": "sha256:c7f438757794287e6102c02205d04f28a5756907ce6c4c3a9c3152a4d97c7572",
+        "build/temp.linux-x86_64-3.7/Orange/preprocess/_discretize.o": "sha256:6ffa74b3f91c5fa94fdb438dad82c70748a0227f802e66466ceba57cc0d36f74"
+      }
+    },
+    {
+      "name": "unchanged_initial_untracked_file_not_exported",
+      "passed": true
+    }
+  ]
+}

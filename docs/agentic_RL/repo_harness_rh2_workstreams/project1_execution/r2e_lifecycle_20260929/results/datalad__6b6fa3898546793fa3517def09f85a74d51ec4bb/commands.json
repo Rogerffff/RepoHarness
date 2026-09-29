@@ -1,0 +1,37 @@
+[
+  {
+    "id": "import_env",
+    "timeout_s": 60,
+    "expect": "zero",
+    "purpose": "确认 .venv 的 Python 版本和导入链依赖（six、requests、appdirs）齐全，并确认导入的是 /testbed 下的 datalad（这样改动才会生效）。预计打印 3.7.9、一个版本号（0.2.dev1 或 git describe 的结果）和 /testbed/datalad/__init__.py；修复前后输出相同。",
+    "cmd": "python -B -c \"import sys, six, requests, appdirs, datalad; from datalad.support.network import URL, is_url; print(sys.version.split()[0], datalad.__version__, datalad.__file__)\""
+  },
+  {
+    "id": "repro_issue_example",
+    "timeout_s": 60,
+    "expect": "nonzero",
+    "purpose": "用公开 API 复现题面示例并断言期望值：scheme/hostname/path 三个值、全部字段相等、由字段构造的 URL 往返成 'weired_url:/'。修复前预计先打印 URL(path='weired_url:/', scheme='file:implicit') is_url=False，再以 AssertionError: ('file:implicit', '', 'weired_url:/') 退出；修复后预计打印 URL(hostname='weired_url', path='/', scheme='ssh:implicit') is_url=True 和 OK，退出码 0。第三条断言在 base 上已经成立，只用来确认修复没有破坏往返。",
+    "cmd": "python -B -c \"from datalad.support.network import URL, is_url; u = URL('weired_url:/'); print(repr(u), 'is_url=%s' % is_url('weired_url:/')); assert (u.scheme, u.hostname, u.path) == ('ssh:implicit', 'weired_url', '/'), (u.scheme, u.hostname, u.path); assert u == URL(scheme='ssh:implicit', hostname='weired_url', path='/'), u.fields; assert str(URL(scheme='ssh:implicit', hostname='weired_url', path='/')) == 'weired_url:/'; print('OK')\""
+  },
+  {
+    "id": "repro_check_url_helper",
+    "timeout_s": 120,
+    "expect": "nonzero",
+    "purpose": "不改测试文件，直接调用公开测试助手 _check_url，跑 datalad/tests/test_network.py:206 被注释掉的那条用例（比较全部字段、与字符串相等、str 精确往返）。修复前预计 AssertionError: URL(path='weired_url:/', scheme='file:implicit') != URL(hostname='weired_url', path='/', scheme='ssh:implicit')；如果报的是 ImportError 或 ModuleNotFoundError（nose、mock、git、patoolib 等），说明测试依赖缺失，不算复现。修复后预计打印 OK，退出码 0。",
+    "cmd": "python -B -W ignore -c \"from datalad.tests.test_network import _check_url; _check_url('weired_url:/', scheme='ssh:implicit', hostname='weired_url', path='/'); print('OK')\""
+  },
+  {
+    "id": "edge_case_survey",
+    "timeout_s": 60,
+    "expect": "any",
+    "purpose": "只观察，不判定：逐行打印 12 个输入的 repr(URL(s)) 和 is_url(s)。base 上预计：weired_url:/、weired_url:path、/some/dir:x、rel_dir/sub:x、a\\:b（反斜线加冒号）、weired_url:/p?x=1、openfmri_s3?_url=s3://b/k 都是 file:implicit，is_url=False；user@weired_url:/ 和 weired:/ 已经是 ssh:implicit，is_url=True；like@sshlogin 显示 EXC AssertionError，is_url=False；weired:// 得到 URL(hostname='weired', scheme='ssh:implicit')，is_url=True，stderr 上有 WARNING（Parsed version of url ... differs）；host1:22 在 Python 3.7.x 上推断为 file:implicit（未验证）。合理修复后预计：前两项变为 ssh:implicit（hostname='weired_url'，path 分别为 '/' 和 'path'），is_url=True；带 '/' 的两项、openfmri_s3 模板串、user@weired_url:/、weired:/、like@sshlogin、weired:// 保持不变；host1:22、weired_url:/p?x=1、a\\:b 是题面未约定的边界，结果随实现而异。",
+    "cmd": "python -B -W ignore - <<'PY'\nfrom datalad.support.network import URL, is_url\ncases = ['weired_url:/', 'weired_url:path', 'user@weired_url:/', 'weired:/', 'host1:22', 'weired_url:/p?x=1', '/some/dir:x', 'rel_dir/sub:x', 'a' + chr(92) + ':b', 'openfmri_s3?_url=s3://b/k', 'like@sshlogin', 'weired://']\nfor s in cases:\n    try:\n        r = repr(URL(s))\n    except Exception as e:\n        r = 'EXC %s: %s' % (type(e).__name__, e)\n    print('%-28r -> %s | is_url=%s' % (s, r, is_url(s)))\nPY\n"
+  },
+  {
+    "id": "public_test_network",
+    "timeout_s": 300,
+    "expect": "any",
+    "purpose": "相关公开测试，只做回归检查：目标用例在 test_network.py:206 被注释掉了，所以这个文件不能区分修复前后。预计修复前后都是 16 passed、1 failed、1 xfailed。failed 是 test_get_local_file_url_linux：从 Python 3.7 起 urllib.parse.quote 不再转义 ~，得到 'file:///a~'，而测试期望 'file:///a%7E'，与本题无关。xfailed 是 nose 式 yield 测试 test_get_url_straight_filename，pytest 4-7 不执行它并给出收集警告。出现其它失败或导入错误时，记为环境差异。",
+    "cmd": "python -B -W ignore -m pytest -p no:cacheprovider -rA datalad/tests/test_network.py"
+  }
+]

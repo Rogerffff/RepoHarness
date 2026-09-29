@@ -1,0 +1,26 @@
+# 09-25 方法记录
+
+216减night_totals五批task_ids并集40=176。旧new_review_status不是排除依据，repair_catalog仅定位环境配方。32题按四仓各8登记，首12各3；预定剩余20在根验收前不派发。没有沿用旧截止时刻、额度重置授权或自动化。
+
+本轮所有子agent显式请求GPT-6 Astra/high；公开每题fresh，主审与reviewer按同仓3题fresh包复用版本知识，包内全部原件初稿封存后才放行任何历史/其它质量结论。角色只拿各自允许路径，不把协调者的旧结论传入。工具实际请求、返回标识、阶段与暴露限制写入assignments；不是OS权限隔离或模型服务端配置的独立验收。
+
+精确Git base、计划渲染消息与实际actor初态/消息分开。新批环境卡保留实际状态未知；历史安装维修只支持对应grader条件。不重新租机或重复任务二实验，不把缺少导出文件说成镜像中没有资产。
+
+沿既有40项check编号和七文件约定，采用需求—断言双向表、具体合理替代路线和相关回归/开发需求。静态推断、直接原件事实、历史运行及未知分开。唯一后续步骤按问题选，不要求每题两个反例或全池闸门。
+
+
+## 候选工件引用的绑定修正
+
+首次导出以worker目录glob列候选补丁，造成71条错误canonical引用（66跨题、5将本题gold列入noop）。协调者在任何私有质量角色读取前发现，材料agent修正，协调者复核首12全部24条原ledger：noop无patch；gold以instance_id/task_id、candidate.kind、attempt、ledger patch_sha256及同attempt baseline/stage/projection绑定。39个被改本批文件前后hash见material_reference_correction.json，原始证据、public全树、manifest和history refs未改。以后先验引用身份，再发私有材料；文件hash一致本身不证明归题正确。
+
+## 首包后记录收口约定
+
+MONAI独立review发现主审后稿缺checks.by和issues处置字段；协调者保留六份原版、记录前后hash后补齐，并把check40从pass改unknown。中性模板现显式列出这些已有要求，后续角色派发消息也已说明；不回改封存初判。actual actor暴露与授权私有阅读始终分开，私有gold诊断不赋予actor资格。根任务在root_pack01_review.md已接受本包静态交付。
+
+Conan13721的后稿历史概括过强与后续顺序分歧在交叉复核中定位：旧pilot仍保留后缀留白；无后缀双软链接公开验证不必等带后缀规范裁决。协调者只改card/record并保留原版和delta，避免把审查迭代伪装成最初就一致。
+
+## 首12收口补充（2026-09-25）
+
+同包复用结构时，逐题检查recipe和checks中的任务号/专属例子，清除跨题模板残句但保留归档。记录13个必需顶层字段，额外协调元数据不改变必备字段计数。局部gold正证据与check27整体正确/完整的问题区分；若整体未证，用unknown并保留局部正证据。主审usage描述其落稿时暴露，协调者后续阅读另记，不回改封存稿。
+
+收口新增stdlib校验：verify_material_freeze.py逐本地Git树复查8422个blob/模式/路径及材料与历史hash；verify_revision_provenance.py要求首12每题card/record均有完整、唯一的原版到最终版hash链。仅验证材料与过程，不验证实际actor或语义正确性。

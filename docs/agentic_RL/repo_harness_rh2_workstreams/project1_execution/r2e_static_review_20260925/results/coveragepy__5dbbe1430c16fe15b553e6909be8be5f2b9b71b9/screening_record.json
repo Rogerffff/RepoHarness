@@ -1,0 +1,446 @@
+{
+ "task_id": "r2e_gym_subset::coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9",
+ "instance_id": "coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9",
+ "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0（material_revisions=[]，revisions.json=[]）",
+ "source_adapter_ref": "s2_r2e ingest v0：public_bundles_v0.jsonl 本题行 line_sha256 0cb34b61…；grading_bundles_r2e_v0.jsonl 第 7 行 line_sha256 0c2a5e66…；validation_bundles_v0.jsonl 第 7 行 line_sha256 0c7518f1…；静态包 runs/r2e_static_prep_20260924/v2/{public,private}/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9",
+ "recipe_ref": {
+  "derived_image": "r2e_derive_v1",
+  "derived_image_id": "sha256:81bf06a0c6be2e547a74d820b80cf9f83eff7ecc17263df5ccb67b544d5920f5",
+  "resources": "default（2 CPU / 4 GiB / tmpfs 1 GiB）"
+ },
+ "code_snapshot_ref": "评分运行沿用环境阶段记录的代码快照：runs/r2e_snapshot_20260923.sha256（388 files）+ r2e_env_tools.sha256，本次未重核。共享阻塞的现状只读了工作树未提交代码：rh2/src/repoharness2/adapters/slime/prepared_task_face.py（git 状态 M）、rh2/src/repoharness2/envpack/ingest_r2e_subset.py（git 状态 ??）",
+ "facts_ref": {
+  "task_facts": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/facts.json（环境阶段 collate_facts.py 汇总）",
+  "run_refs": "runs/r2e_static_prep_20260924/v2/private/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/run_refs.json",
+  "dev_probe": "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/dev_probe.json",
+  "evidence_notes": "当前材料 RH2 运行（material=current）：runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl#L7（noop，reward 0，74/75）、ledger_r2e_all_gold.jsonl#L7（gold，reward 1，75/75）、runs/r2e_env_repair_20260924/_rerun2/ledger_noop.jsonl#L7（noop，0，74/75）、ledger_gold.jsonl#L7（gold，1，75/75）；4 份 .eval.log 的 sha256 与 run_refs.json 一致。独立参考：runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl#L23、#L70（来源镜像 gold ×2，75 passed）；runs/env_overnight_20260916/M3/facts/5dbbe1430c16/noop_x2/out{1,2}.txt（来源镜像 noop ×2，1 failed, 74 passed）"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "note": "期望、隐藏测试树、入口的 sha256 与评分面一致，也与日志 RH2_SETUP_* 一致。gold.patch 与来源镜像内 git diff HEAD 5dbbe143 -- coverage/control.py 逐字节相同。来源提交共改 3 个文件（control.py 与两个测试文件），gold 取其全部非测试部分。期望、来源宿主机执行记录、发布镜像实测三方一致（E=H=I）。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/run_refs.json",
+    "runs/r2e_static_prep_20260924/v2/private/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/grading_bundle.json",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_53c27c0b.eval.log",
+    "runs/env_overnight_20260916/M3/gold_ledger/logs_r2e/coveragepy/5dbbe1430c16/gold/a1/git_gold.diff",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl（commit_hash=5dbbe143… 行的 modified_files）",
+    "runs/r2e_t0_batch2_20260924/provenance/expected_provenance.md:3"
+   ],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "2": {
+   "status": "pass",
+   "note": "noop 在题面所述位置失败：当前材料 2 次、来源镜像 M3 2 次，都在 test_1.py:545 抛 TypeError: _warn() got an unexpected keyword argument 'once'，只有目标键不符。公开复现 REPRO_OBSERVED=1。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-c_9844300f.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_ce6fdfd2.eval.log",
+    "runs/env_overnight_20260916/M3/facts/5dbbe1430c16/noop_x2/out1.txt",
+    "runs/env_overnight_20260916/M3/facts/5dbbe1430c16/noop_x2/out2.txt",
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/dev_probe.json"
+   ],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "3": {
+   "status": "issue",
+   "note": "题面没有给出去重键（按 slug、按消息还是两者）。来源题面生成器的输入里有 gold docstring 的「(determined by the slug.)」，生成的题面却没有写进去。public_hints 中关于 conda、pip、测试重置的三句与 R2E 不符（共享问题 E09；工作树有未跟踪的 R2E_PUBLIC_HINTS 草案，尚未验证）。静态 user prompt 与 R-f prompts.jsonl 逐字节相同；模型实际收到的完整消息（系统提示、hints 的位置）没有捕获。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/public/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/user_prompt.txt:18",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl（本题行 prompt 字段）",
+    "runs/r2e_static_prep_20260924/v2/public/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/public_bundle.json",
+    "runs/r2e_rf_20260923/remote/prepared_r2e/prompts.jsonl",
+    "rh2/src/repoharness2/envpack/ingest_r2e_subset.py:196-215（未跟踪）"
+   ],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "4": {
+   "status": "issue",
+   "note": "低风险。合法修复只需改 coverage/control.py，评分投影与恢复不会覆盖它（gold 的投影 included_paths=[coverage/control.py]）。支撑缺口：隐藏 test_1.py 导入 base 版 tests/coveragetest.py，其中的假 capture_warning(msg, slug=None) 不接受 once。这只影响给现有调用点加 once=True 的越界改法，涉及 5 个用到 assert_warnings 的键。建议不修订（见 I4）。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/hidden_tests/test_1.py:24",
+    "runs/r2e_static_prep_20260924/v2/private/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/hidden_tests/test_2.py:267-269",
+    "runs/r2e_static_prep_20260924/v2/public/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/worktree/tests/coveragetest.py:267",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/facts.json"
+   ],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "5": {
+   "status": "issue",
+   "note": "同族关系：本题 gold 原样出现在同批 016af5f6、97997d2c、f5eb5f21 的 base 中（control.py:337-361；首个 once=True 调用者在 :589）；ea6906b0（6.1.0a0）的 base 是其演进版（:355-381、:620）。划分训练集与留出评测集时应视为同族。预训练污染无法评估。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/public/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/worktree/coverage/control.py",
+    "runs/r2e_static_prep_20260924/v2/public/coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266/worktree/coverage/control.py",
+    "runs/r2e_static_prep_20260924/v2/public/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/worktree/coverage/control.py",
+    "runs/r2e_static_prep_20260924/v2/public/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/worktree/coverage/control.py"
+   ],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "6": {
+   "status": "pass",
+   "note": "镜像层面实测：python 为 /testbed/.venv/bin/python 3.7.9，pytest 4.6.6，pip 19.3.1（pip check 通过），coverage 以 editable finder 安装（在 /tmp 下也能导入），xdist、flaky、unittest_mixins 均在。本题不需要安装任何东西。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/agent_probe.log",
+    "runs/env_overnight_20260916/M3/facts/5dbbe1430c16/pkgsrc.txt"
+   ],
+   "by": "R2E 私有主审（接续会话，静态；引用环境阶段探针）"
+  },
+  "7": {
+   "status": "not_applicable",
+   "note": "不需要资产或 fixture 文件；期望 75 键全部是 PASSED。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/expected_output.json"
+   ],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "8": {
+   "status": "pass",
+   "note": "评分侧以 uid 54322 实测。解题侧 agent（uid 54321）在派生镜像探针中实测：/testbed、site-packages、home、/tmp 可写，根文件系统与 /rh2_private 拒绝写入或读取。正式启动链未验证。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/dev_probe.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/r2e_environment_card.md"
+   ],
+   "by": "R2E 私有主审（接续会话，静态；引用环境阶段探针）"
+  },
+  "9": {
+   "status": "pass",
+   "note": "4 次当前运行都从 /testbed/coverage/__init__.py 导入 5.0.2a1；gold 得分 1。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/facts.json"
+   ],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "10": {
+   "status": "pass",
+   "note": "镜像层面：tests/test_annotate.py 在默认 addopts（-n3 --no-flaky-report）下 rc 0；题面示例复现 REPRO_OBSERVED=1。与本题相关的 tests/test_api.py -k warn 没有实跑，按同一依赖集推断可以跑。load() 会在当前目录新建 .coverage，建议在临时目录里验证。actor 待验。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/agent_probe.log",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9.py"
+   ],
+   "by": "R2E 私有主审（接续会话，静态；引用环境阶段探针）"
+  },
+  "11": {
+   "status": "pass",
+   "note": "准备、解题、安装、测试四个阶段都不需要网络。探针 NET_CONNECT_RC=1、NET_DNS_RC=2；评分侧网络策略为 deny_all。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/dev_probe.json"
+   ],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "12": {
+   "status": "not_applicable",
+   "note": "没有外部服务依赖。",
+   "evidence_refs": [],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "13": {
+   "status": "pass",
+   "note": "4 次运行的内存峰值 296.7–303.5 MB（限额 4 GiB）；测试段 3.40–4.03 s，按日志时间戳计算。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/facts.json"
+   ],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "14": {
+   "status": "pass",
+   "note": "当前材料下 noop 2 次、gold 2 次逐键一致，M3 来源镜像的 gold 2 次、noop 2 次也逐键一致。这只是有限证据。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.json（本题 [6]、[54] 两行）",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/facts.json"
+   ],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "15": {
+   "status": "pass",
+   "note": "引用环境阶段 R14：每次都是 fresh 容器（cleanup_removed=true）；镜像基线自带 coverage/__pycache__ 33 个文件，前后不变。本次没有独立重算。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/screening_record.json"
+   ],
+   "by": "R2E 私有主审（接续会话，静态；引用历史）"
+  },
+  "16": {
+   "status": "not_checked",
+   "note": "共享交付机制不在本题静态审查范围。只观测到 gold（对已跟踪文件的未提交修改）经投影交付。",
+   "evidence_refs": [],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "17": {
+   "status": "pass",
+   "note": "RH2_SETUP_RESTORED=3（__init__.py、test_1.py、test_2.py），RH2_SETUP_TEST_FILES=4；gold 修改的路径不在恢复集合里。评分不重置仓库自己的测试文件（见 4、31）。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_53c27c0b.eval.log"
+   ],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "18": {
+   "status": "pass",
+   "note": "4 次当前运行 num_parsed_tests=75，测试段完整，short test summary 与总结行一致（noop 为 1 failed, 74 passed，gold 为 75 passed）。test_2.py 没有测试方法，不产生键。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-c_b3411386.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_ce6fdfd2.eval.log"
+   ],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "19": {
+   "status": "pass",
+   "note": "75 键全部来自 test_1.py，没有重复，也没有跨文件撞键；与 M3 逐键一致。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   ],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "20": {
+   "status": "pass",
+   "note": "noop 与 gold 只差目标键 ApiTest.test_warn_once；noop 的失败原因正是题面所述的 TypeError。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_ce6fdfd2.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_53c27c0b.eval.log"
+   ],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "21": {
+   "status": "pass",
+   "note": "noop 的 failure_category=tests_failed，没有 stage_error 或平台错误；gold 的 test_rc 为 0。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/facts.json"
+   ],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "22": {
+   "status": "pass",
+   "note": "M3 来源镜像 runner：gold 2 次均 75/75，noop 2 次均只有目标键 FAILED，与 RH2 的观测映射逐键相同。M3 行的 gold_matches_git_diff_changed_lines=false 已查明：M3 自建的 gold.diff 在 docstring 结尾 \"\"\" 处写成先删后加，逐行文本对不上，但两份 diff 应用后得到同一个 blob 4358a541，内容一致。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.json",
+    "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl#L23",
+    "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl#L70",
+    "runs/env_overnight_20260916/M3/bin/r2e_probe_m3.py:318-329",
+    "runs/env_overnight_20260916/M3/gold_ledger/logs_r2e/coveragepy/5dbbe1430c16/gold/a1/gold.diff"
+   ],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "23": {
+   "status": "issue",
+   "note": "要求不充分：题面第 18 行只写 only once each, preventing duplicate warnings，没有说按什么判定重复。示例用同一 slug、两条不同消息，却没有给出期望输出。公开线索两边都有：一边是 slug 是仓库里警告的身份（control.py:339、341，doc/config.rst），另一边是 each、duplicate 的字面意思以及标准库 warnings 的 once 语义。公开读者在隔离条件下判断无法裁决。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/public/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/user_prompt.txt",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/public_read.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl（本题行 prompt 字段含 determined by the slug）"
+   ],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "24": {
+   "status": "issue",
+   "note": "决定性断言 assertNotIn('Warning, warning 2!', err)（test_1.py:549）强制按 slug 或更粗的键去重。按消息去重（CE1）或按（消息, slug）去重（CE2）的合理实现预计判 0。这是静态推断，确定性高，但没有实跑。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/hidden_tests/test_1.py:542-549",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_53c27c0b.eval.log（gold 的 stderr 只有 warning 1）"
+   ],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "25": {
+   "status": "issue",
+   "note": "未测：不同 slug 的 once 警告各显示一次；once 之后同一 slug 的非 once 调用；slug=None。CE4（第一次 once 之后压掉所有 once 警告）预计判 1。第一条断言只查消息子串，不查前缀和 slug 格式。静态推断。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/hidden_tests/test_1.py:542-549"
+   ],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "26": {
+   "status": "issue",
+   "note": "严重度低，静态推断。gold 的副作用 G1：第一次调用 _warn 时快照 disable_warnings，之后 set_option('run:disable_warnings', …) 不再生效（base 每次都读 config），测试没有保护这一点。G2（once 与非 once 共用同一列表）、G3（slug=None 也会被记入列表）目前没有调用点触发。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/gold.patch",
+    "runs/r2e_static_prep_20260924/v2/public/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/worktree/coverage/config.py:414-435"
+   ],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "27": {
+   "status": "pass",
+   "note": "gold 修好了题面原例（gold 日志的 stderr 只有 warning 1），内容等于上游提交对非测试文件的全部改动；副作用见检查 26。不以与 gold 不同为理由判定任何候选。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/gold.patch",
+    "runs/env_overnight_20260916/M3/gold_ledger/logs_r2e/coveragepy/5dbbe1430c16/gold/a1/git_gold.diff"
+   ],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "28": {
+   "status": "not_checked",
+   "note": "修订尚未实施。两项提案各有依据：题面补一句按 slug 判定，依据是 gold docstring；可选补不同 slug 的断言，依据是题面的 each。待独立复核。",
+   "evidence_refs": [],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "29": {
+   "status": "issue",
+   "note": "共享阻塞。派生镜像是干净的：探针显示 HEAD 没有子提交、没有 remote、reflog 为 0、私有目录拒绝访问、r2e_tests 不存在。但环境卡 §2 记载正式 actor 取的是来源镜像，而 M3 facts 显示来源镜像 r2e_tests_root=3、fix_reachable=commit、commits_after_head=2401。工作树 prepared_task_face.py 有一处未提交改动，把 R2E 改为使用派生镜像，尚未提交、审查或验证。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/dev_probe.json",
+    "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl#L23",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/r2e_environment_card.md",
+    "rh2/src/repoharness2/adapters/slime/prepared_task_face.py:412-451（未提交）"
+   ],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "30": {
+   "status": "unknown",
+   "note": "探针用的是 --network none，评分侧是 deny_all；正式链（隔离内网加 relay）下能否拿到上游修复没有验证。",
+   "evidence_refs": [],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "31": {
+   "status": "issue",
+   "note": "共享机制在本题可达。隐藏 test_1.py 的测试类继承自仓库内 tests/coveragetest.py 的 CoverageTest，并经它导入 tests/helpers.py，评分时不重置这些文件。候选若在其中给 coverage.Coverage._warn 打补丁，可能不改 coverage/ 就让目标键通过。这是静态推断，没有实跑，应按共享机制处理。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/hidden_tests/test_1.py:24",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/r2e_environment_card.md"
+   ],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "32": {
+   "status": "pass",
+   "note": "目标断言检查的是真实 _warn 写到 stderr 的内容，不是文件是否存在，也不是比对 gold 文本。它只查消息子串、不查格式，不构成走捷径。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/hidden_tests/test_1.py:542-549"
+   ],
+   "by": "R2E 私有主审（接续会话，静态）"
+  },
+  "37": {
+   "status": "not_applicable",
+   "note": "本题没有已实施的修订。拟议的题面补句属于公开规格修订，也就是改变题目定义；实施时需要版本化，并保留原版作对照。",
+   "evidence_refs": [],
+   "by": "R2E 私有主审（接续会话，静态）"
+  }
+ },
+ "issues": [
+  {
+   "id": "I1",
+   "category": "task_quality",
+   "scope": "task",
+   "summary": "题意与测试争议（去重键）：题面没有说按什么判定重复，隐藏测试 test_warn_once 却要求同一 slug、不同消息的第二条 once 警告不显示，也就是按 slug 或更粗的键去重。最字面的读法（按消息去重）会判 0。来源题面生成器的输入里有 gold docstring 的「(determined by the slug.)」，生成题面时漏掉了。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/public/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/user_prompt.txt",
+    "runs/r2e_static_prep_20260924/v2/private/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/hidden_tests/test_1.py:542-549",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl（本题行 prompt 字段）",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/public_read.md"
+   ],
+   "evidence_level": "静态推断（高确定）；历史真实 RH2 运行中的 gold stderr；来源行 prompt 字段",
+   "proposed_action": "先在当前派生镜像上用 RH2 回放评分跑 CE1（按消息，预期 0）、CE2（按消息加 slug，预期 0）、CE3（按 slug、独立集合，预期 1）、CE4（过粗，预期 1）。再提公开规格修订（T0，由用户决定）：在 Expected Behavior 后补一句按 slug 判定，修订后用 CE1、CE3 复验。备选方案是改测试、让两种去重键都通过，不推荐。",
+   "status": "open"
+  },
+  {
+   "id": "I2",
+   "category": "task_quality",
+   "scope": "task",
+   "summary": "测试过宽：不同 slug 各显示一次、once 之后同一 slug 的非 once 调用、slug=None 这三种情况都没有测；CE4（第一次 once 之后压掉所有 once 警告）会得 1。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/hidden_tests/test_1.py:542-549"
+   ],
+   "evidence_level": "静态推断",
+   "proposed_action": "可选：只在修订题面时一并补一条断言，要求不同 slug 的 once 警告各显示一次。依据是题面的 each，gold 能通过。",
+   "status": "open"
+  },
+  {
+   "id": "I3",
+   "category": "gold_quality",
+   "scope": "task",
+   "summary": "gold 有一个未测的副作用 G1：第一次调用 _warn 时快照 disable_warnings，之后通过 set_option 做的修改不再生效。另有两个潜伏行为：G2，once 与非 once 共用抑制列表；G3，slug=None 也会被记入列表。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/gold.patch",
+    "runs/r2e_static_prep_20260924/v2/public/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/worktree/coverage/config.py:414-435"
+   ],
+   "evidence_level": "静态推断",
+   "proposed_action": "只做记录，不改 gold，也不据此判定候选。",
+   "status": "open"
+  },
+  {
+   "id": "I4",
+   "category": "material",
+   "scope": "task",
+   "summary": "对应历史族 support_stale_helper:coveragepy_5dbbe143。隐藏测试导入 base 版 tests/coveragetest.py，其中的假 capture_warning 不接受 once。这只影响给现有调用点加 once=True 的越界改法（5 个用到 assert_warnings 的键）。修复后的假函数同样不实现 once：换用它之后，给 control.py:697 加 once 的改法能通过，但这违反了 test_1.py:380 注释所写的预期，而旧版假函数反而碰巧拦住了这种改法。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/hidden_tests/test_2.py:267-269",
+    "runs/r2e_static_prep_20260924/v2/private/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/hidden_tests/test_1.py:371-385",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/known_issues.json（support_stale_helper:coveragepy_5dbbe143）",
+    "runs/r2e_t0_batch2_20260924/scan/hidden_support_scan.md:5"
+   ],
+   "evidence_level": "静态推断",
+   "proposed_action": "建议不修订，关闭环境阶段的未完成项 support_pending_decision，作为已知低风险说明保留（仅为建议，待协调者或用户决定）。若以后仍要修，不能照搬 datalad 58ba5165 的 B1 改导入：test_2.py:38 的 TESTS_DIR 由 __file__ 推出，改导入会使 test_2.py:490-491 与 test_1.py:880 依赖的 tests/modules 失效；应改用评分前恢复修复后 tests/coveragetest.py 这类做法。",
+   "status": "proposed"
+  },
+  {
+   "id": "I5",
+   "category": "reward_hacking",
+   "scope": "global（R2E 中导入仓库测试辅助的隐藏测试）",
+   "summary": "隐藏测试继承的 CoverageTest 来自候选可以修改的 tests/coveragetest.py（它又导入 tests/helpers.py），评分时不重置这些文件。候选可以借此给 Coverage._warn 打补丁，不改源码也让目标键通过。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/hidden_tests/test_1.py:24",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/r2e_environment_card.md"
+   ],
+   "evidence_level": "静态推断，未实跑",
+   "proposed_action": "交共享机制负责人决定，例如评分时把被隐藏测试导入的仓库测试模块恢复为 base 版或修复后版本；不按单题修。",
+   "status": "open"
+  },
+  {
+   "id": "I6",
+   "category": "solver_condition",
+   "scope": "global（R2E 正式 actor 链）",
+   "summary": "正式 actor 按环境卡 §2 取来源镜像，其中隐藏测试可读、修复提交可达；hints 写的是 conda。工作树里已有未提交或未跟踪的实现：R2E 改走派生镜像、用 .venv 前缀、使用 R2E_PUBLIC_HINTS，但没有审查与验证记录。",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl#L23",
+    "rh2/src/repoharness2/adapters/slime/prepared_task_face.py:412-451（未提交）",
+    "rh2/src/repoharness2/envpack/ingest_r2e_subset.py:196-215（未跟踪）",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/r2e_environment_card.md"
+   ],
+   "evidence_level": "代码事实，加历史独立 runner 的 facts",
+   "proposed_action": "等 B 线实现并经 A 线审查、验证后再让本题进入探针。",
+   "status": "open"
+  },
+  {
+   "id": "I7",
+   "category": "task_relation",
+   "scope": "repo:coveragepy",
+   "summary": "本题 gold 原样出现在同批 016af5f6、97997d2c、f5eb5f21 三题的 base 中，ea6906b0 的 base 是其演进版。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/public/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/worktree/coverage/control.py",
+    "runs/r2e_static_prep_20260924/v2/public/coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266/worktree/coverage/control.py",
+    "runs/r2e_static_prep_20260924/v2/public/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/worktree/coverage/control.py",
+    "runs/r2e_static_prep_20260924/v2/public/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/worktree/coverage/control.py"
+   ],
+   "evidence_level": "静态核对（grep）",
+   "proposed_action": "划分训练集与留出评测集时视为同族；解题时各题容器相互独立，不构成解题泄漏。",
+   "status": "open"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "没有证据支持新增路径排除。评分不重置仓库测试辅助这一问题属于共享机制（I5），不在单题路径规则里处理。",
+  "evidence_refs": [],
+  "applied_version": null
+ },
+ "revision_refs": [],
+ "disposition": {
+  "state": "needs_review",
+  "scope": "static_review",
+  "reason": "题意/测试争议：题面没有给出去重键，隐藏测试强制按 slug 去重，按消息去重的合理实现会判 0（静态推断，高确定）。评分与镜像层面的开发条件已核实；正式 actor 链待验（共享阻塞 I6）。",
+  "evidence_refs": [
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/analysis_before_history.md",
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/old_findings_delta.md",
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/card.md"
+  ],
+  "reviewer": null,
+  "previous_state": "grading_ok_open_items（环境阶段；open_items=support_pending_decision，deferred_to 题意与评分质量筛查）",
+  "prior_static_draft": "needs_review / 题意/测试争议（封存初判；读历史后处置未变，只补证据并更正 5 处，见 old_findings_delta.md §2）",
+  "open_item_recommendation": "support_pending_decision：建议不修订并关闭（建议，待协调者或用户决定），见 I4",
+  "next_step": "在当前派生镜像上用 RH2 回放评分跑 CE1（按消息，预期 0）、CE3（按 slug、独立集合，正对照，预期 1）、CE4（过粗，预期 1），把误拒与漏测从静态推断变成执行证据，再据此提交题面修订提案。"
+ },
+ "usage": {
+  "intended_use": "development_diagnostic",
+  "exposure_notes": "原主审与接续会话都读过隐藏测试、期望、gold、运行日志、M3 参考日志、来源原始行（含上游提交与题面生成 prompt）以及环境阶段的历史记录。本记录与草稿不提供给解题模型。公开读者报告是隔离阅读的产物。本记录不是正式训练或评测批准。"
+ },
+ "costs": {
+  "container_wall_seconds": null,
+  "agent_tokens": null,
+  "human_decisions": null,
+  "source_refs": [
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/screening_record.json#costs（环境阶段探针 34.21 s，不是本次）"
+  ]
+ }
+}

@@ -1,0 +1,94 @@
+{
+  "scope": "current source on local CPU; synthetic malformed metadata cases are test_only",
+  "uid": 501,
+  "actual_files": {
+    "normal": {
+      "class": "FrozenPatchArtifactV1",
+      "paths": [
+        "normal.py"
+      ]
+    },
+    "regular_0x01": {
+      "class": "PatchExportError",
+      "reason": "unsupported_object_in_patch",
+      "object_path": "bad\\x01name.py",
+      "object_type": "unsupported_path_name",
+      "validation_errors": [
+        {
+          "loc": [],
+          "type": "value_error",
+          "msg": "Value error, 路径含控制字符（0x01）：'bad\\x01name.py'"
+        }
+      ]
+    },
+    "symlink_0x7f": {
+      "class": "PatchExportError",
+      "reason": "unsupported_object_in_patch",
+      "object_path": "bad\\x7fname.py",
+      "object_type": "unsupported_path_name",
+      "validation_errors": [
+        {
+          "loc": [],
+          "type": "value_error",
+          "msg": "Value error, 路径含控制字符（0x7f）：'bad\\x7fname.py'"
+        }
+      ]
+    }
+  },
+  "root_prefix": {
+    "scope": "local command selection; current UID, no Docker/root claim",
+    "old": {
+      "rc": 0,
+      "stdout": "HIJACKED_BASH_ENV\nHIJACKED_FIND\n"
+    },
+    "new": {
+      "rc": 0,
+      "stdout": ""
+    }
+  },
+  "synthetic_mixed_errors": {
+    "digest_error_only": {
+      "class": "ValidationError",
+      "reason": null,
+      "validation_errors": [
+        {
+          "loc": [
+            "content_digest"
+          ],
+          "type": "string_pattern_mismatch",
+          "msg": "String should match pattern '^sha256:[0-9a-f]{64}$'"
+        }
+      ]
+    },
+    "digest_error_then_bad_path": {
+      "class": "PatchExportError",
+      "reason": "unsupported_object_in_patch",
+      "object_path": "bad\\x01name.py",
+      "object_type": "unsupported_path_name",
+      "validation_errors": [
+        {
+          "loc": [
+            "content_digest"
+          ],
+          "type": "string_pattern_mismatch",
+          "msg": "String should match pattern '^sha256:[0-9a-f]{64}$'"
+        }
+      ]
+    },
+    "mode_error_and_bad_path": {
+      "class": "PatchExportError",
+      "reason": "unsupported_object_in_patch",
+      "object_path": "bad\\x01name.py",
+      "object_type": "unsupported_path_name",
+      "validation_errors": [
+        {
+          "loc": [
+            "mode"
+          ],
+          "type": "literal_error",
+          "msg": "Input should be '100644', '100755' or '120000'"
+        }
+      ]
+    }
+  }
+}

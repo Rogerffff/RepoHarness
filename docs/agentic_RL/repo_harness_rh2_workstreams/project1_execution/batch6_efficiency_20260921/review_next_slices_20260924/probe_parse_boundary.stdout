@@ -1,0 +1,300 @@
+{
+  "tokenizer_eos_id": 248046,
+  "scope": "real HTTP adapter, tokenizer, parser and trajectory; engine stub only",
+  "cases": {
+    "true_eos": {
+      "raw": "Finished.<|im_end|>",
+      "eos_in_ids": true,
+      "engine_finish": "stop",
+      "old": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Finished.<|im_end|>"
+          }
+        ],
+        "stop_reason": "end_turn",
+        "manager_message": {
+          "role": "assistant",
+          "content": "Finished.<|im_end|>"
+        },
+        "ill_formed": false,
+        "output_ids_preserved": true,
+        "finish": "stop"
+      },
+      "new": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Finished."
+          }
+        ],
+        "stop_reason": "end_turn",
+        "manager_message": {
+          "role": "assistant",
+          "content": "Finished."
+        },
+        "ill_formed": false,
+        "output_ids_preserved": true,
+        "finish": "stop"
+      }
+    },
+    "ordinary_literal_length": {
+      "raw": "The token is <|im_end|>",
+      "eos_in_ids": false,
+      "engine_finish": "length",
+      "old": {
+        "content": [
+          {
+            "type": "text",
+            "text": "The token is <|im_end|>"
+          }
+        ],
+        "stop_reason": "max_tokens",
+        "manager_message": {
+          "role": "assistant",
+          "content": "The token is <|im_end|>"
+        },
+        "ill_formed": false,
+        "output_ids_preserved": true,
+        "finish": "length"
+      },
+      "new": {
+        "content": [
+          {
+            "type": "text",
+            "text": "The token is"
+          }
+        ],
+        "stop_reason": "max_tokens",
+        "manager_message": {
+          "role": "assistant",
+          "content": "The token is"
+        },
+        "ill_formed": false,
+        "output_ids_preserved": true,
+        "finish": "length"
+      }
+    },
+    "normal_text_with_tag": {
+      "raw": "Use the literal tag <tool_call> in a parser test.<|im_end|>",
+      "eos_in_ids": true,
+      "engine_finish": "stop",
+      "old": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Use the literal tag <tool_call> in a parser test.<|im_end|>"
+          }
+        ],
+        "stop_reason": "end_turn",
+        "manager_message": {
+          "role": "assistant",
+          "content": "Use the literal tag <tool_call> in a parser test.<|im_end|>"
+        },
+        "ill_formed": false,
+        "output_ids_preserved": true,
+        "finish": "stop"
+      },
+      "new": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Use the literal tag <tool_call> in a parser test."
+          }
+        ],
+        "stop_reason": "end_turn",
+        "manager_message": {
+          "role": "assistant",
+          "content": "Use the literal tag <tool_call> in a parser test."
+        },
+        "ill_formed": true,
+        "output_ids_preserved": true,
+        "finish": "stop"
+      }
+    },
+    "one_good_one_dangling": {
+      "raw": "<tool_call>\n<function=Bash>\n<parameter=command>\necho ok\n</parameter>\n</function>\n</tool_call>\n<tool_call><|im_end|>",
+      "eos_in_ids": true,
+      "engine_finish": "stop",
+      "old": {
+        "content": [
+          {
+            "type": "text",
+            "text": "<tool_call><|im_end|>"
+          },
+          {
+            "type": "tool_use",
+            "id": "toolu_1ce4168b71bbf7b0",
+            "name": "Bash",
+            "input": {
+              "command": "echo ok"
+            }
+          }
+        ],
+        "stop_reason": "tool_use",
+        "manager_message": {
+          "role": "assistant",
+          "content": "<tool_call><|im_end|>",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "Bash",
+                "arguments": {
+                  "command": "echo ok"
+                }
+              }
+            }
+          ]
+        },
+        "ill_formed": false,
+        "output_ids_preserved": true,
+        "finish": "stop"
+      },
+      "new": {
+        "content": [
+          {
+            "type": "text",
+            "text": "<tool_call>"
+          },
+          {
+            "type": "tool_use",
+            "id": "toolu_3f39a1b22bbd51c0",
+            "name": "Bash",
+            "input": {
+              "command": "echo ok"
+            }
+          }
+        ],
+        "stop_reason": "tool_use",
+        "manager_message": {
+          "role": "assistant",
+          "content": "<tool_call>",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "Bash",
+                "arguments": {
+                  "command": "echo ok"
+                }
+              }
+            }
+          ]
+        },
+        "ill_formed": false,
+        "output_ids_preserved": true,
+        "finish": "stop"
+      }
+    },
+    "dangling_only": {
+      "raw": "Starting a tool: <tool_call><|im_end|>",
+      "eos_in_ids": true,
+      "engine_finish": "stop",
+      "old": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Starting a tool: <tool_call><|im_end|>"
+          }
+        ],
+        "stop_reason": "end_turn",
+        "manager_message": {
+          "role": "assistant",
+          "content": "Starting a tool: <tool_call><|im_end|>"
+        },
+        "ill_formed": false,
+        "output_ids_preserved": true,
+        "finish": "stop"
+      },
+      "new": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Starting a tool: <tool_call>"
+          }
+        ],
+        "stop_reason": "end_turn",
+        "manager_message": {
+          "role": "assistant",
+          "content": "Starting a tool: <tool_call>"
+        },
+        "ill_formed": true,
+        "output_ids_preserved": true,
+        "finish": "stop"
+      }
+    },
+    "normal_tool": {
+      "raw": "<tool_call>\n<function=Bash>\n<parameter=command>\necho ok\n</parameter>\n</function>\n</tool_call><|im_end|>",
+      "eos_in_ids": true,
+      "engine_finish": "stop",
+      "old": {
+        "content": [
+          {
+            "type": "text",
+            "text": "<|im_end|>"
+          },
+          {
+            "type": "tool_use",
+            "id": "toolu_04671f25558da4d1",
+            "name": "Bash",
+            "input": {
+              "command": "echo ok"
+            }
+          }
+        ],
+        "stop_reason": "tool_use",
+        "manager_message": {
+          "role": "assistant",
+          "content": "<|im_end|>",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "Bash",
+                "arguments": {
+                  "command": "echo ok"
+                }
+              }
+            }
+          ]
+        },
+        "ill_formed": false,
+        "output_ids_preserved": true,
+        "finish": "stop"
+      },
+      "new": {
+        "content": [
+          {
+            "type": "tool_use",
+            "id": "toolu_56852e3f64ce3e8a",
+            "name": "Bash",
+            "input": {
+              "command": "echo ok"
+            }
+          }
+        ],
+        "stop_reason": "tool_use",
+        "manager_message": {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "type": "function",
+              "function": {
+                "name": "Bash",
+                "arguments": {
+                  "command": "echo ok"
+                }
+              }
+            }
+          ]
+        },
+        "ill_formed": false,
+        "output_ids_preserved": true,
+        "finish": "stop"
+      }
+    }
+  }
+}

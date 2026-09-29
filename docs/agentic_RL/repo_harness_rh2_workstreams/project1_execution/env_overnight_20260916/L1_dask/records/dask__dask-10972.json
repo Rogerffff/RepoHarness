@@ -1,0 +1,237 @@
+{
+ "task_id": "dask__dask-10972",
+ "source": "SWE-Gym lite (dask/dask 2024.2)",
+ "task_revision": "upstream",
+ "materials_refs": [
+  "s2/ingest/public_bundles_v0.jsonl (problem_statement 659 字符; image xingyaoww/sweb.eval.x86_64.dask_s_dask-10972:latest; workdir /testbed)",
+  "s2/ingest/grading_bundles_v2_v0.jsonl (test_patch; F2P=2; P2P=150; eval_cmd 'pytest -n0 -rA  --color=no'; version 2024.2)",
+  "s2/ingest/validation_bundles_v0.jsonl (golden_patch)",
+  "s2/raw/swe_gym_lite_full_f70b1a29.jsonl (hints_text 363 字符)",
+  "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/dask__dask-10972/{gold,empty}/offline/a1/"
+ ],
+ "public_view": {
+  "goal": "题面字面要求：让 `test_encoding_gh601[utf-16]` 这个 strict xfail 不再时灵时不灵（作者观察到在 s390x 大端机上有时会 XPASS）。作者给的可接受结果是二选一：'xfails always fail' 或 'the xfail is removed'。",
+  "constraints": [
+   "题面没有 MCVE、没有 traceback、没有错误输出；只有一句猜测 'Is the problem then just that something is missing a byteswap?'。",
+   "题面 Environment 写 dask 2.30.0 / Fedora 33，而本题 base 是 2024.2。"
+  ],
+  "unknown_from_public": [
+   "公开材料完全推不出真正的判据：gold 改的是 dask/dataframe/io/csv.py 里 `b_lineterminator = lineterminator.encode()` 没有剥掉 BOM 的问题，题面一个字都没提 lineterminator / read_bytes / BOM。",
+   "题面给出的两条可接受动作（改 xfail 严格性 / 删 xfail）**都只能改测试文件**，而 public_hints 明确禁止改测试文件且评分前会恢复。",
+   "题面归因 s390x 大端；评测镜像是 x86_64 小端，agent 在容器里根本复现不出题面描述的现象。"
+  ],
+  "by": "L1_dask"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "9c20facdfb5f20e28f0e9259147283f8a7982728:dask/dataframe/io/csv.py:484,560",
+    "9c20facdfb5f20e28f0e9259147283f8a7982728:dask/dataframe/io/tests/test_csv.py:1158-1183"
+   ],
+   "note": "test_patch 只改 dask/dataframe/io/tests/test_csv.py，gold 只改 dask/dataframe/io/csv.py，base 均存在；无二进制/LFS/子模块。但两者与题面**不是同一个问题**（见检查 23）。",
+   "by": "L1_dask"
+  },
+  "2": {
+   "status": "issue",
+   "evidence_refs": [
+    "9c20facdfb5f20e28f0e9259147283f8a7982728:dask/dataframe/io/csv.py:571(b_lineterminator = lineterminator.encode())",
+    "runs/env_probe_stage1_20260910/.../dask__dask-10972/empty/offline/a1/status_map.json"
+   ],
+   "note": "base 确有一个真实缺陷（BOM 编码下 read_bytes 的 delimiter 带上了 BOM），empty 侧 utf-16 / utf-16-le 两条 FAILED 可证。但**题面描述的缺陷（strict xfail 在大端机上偶发 XPASS）在本镜像里不存在也无法复现**：镜像为 x86_64。题面缺陷 ≠ base 缺陷。",
+   "by": "L1_dask"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-10972.problem_statement",
+    "s2/raw/swe_gym_lite_full_f70b1a29.jsonl:dask__dask-10972.hints_text"
+   ],
+   "note": "题面无外链图片、无截断，但信息量极低（659 字符，无复现、无栈）。**关键信息只在不可见的 hints 里**：hints 指向 issue #5787 并引用 TomAugspurger 的判断 'somewhere in the blocksize splitting, we've split in the middle of a two byte character sequence'——这条线索（问题出在 blocksize 切分 / 多字节编码）是题面完全没有的，而且它本身也只是部分正确（gold 的根因是 delimiter 前缀带 BOM，不是切在字符中间）。",
+   "by": "L1_dask"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-10972.test_patch"
+   ],
+   "note": "test_patch 只碰 dask/dataframe/io/tests/test_csv.py（纯测试）；gold 只碰 dask/dataframe/io/csv.py（纯源码）。无混合职责。",
+   "by": "L1_dask"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "同上"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "L1_dask"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dask/prescan.json (dask__dask-6818 与本题 test_patch/gold 路径相同)"
+   ],
+   "note": "与本包 dask__dask-6818 改同一对文件（dask/dataframe/io/csv.py + 同一测试文件），且 6818 的 P2P 里含 `test_encoding_gh601[utf-16-be]`、本题的 F2P 正是 6818 时代还被 xfail 标着的 utf-16/utf-16-le。两题相隔 3 年多、不是同一 PR，但**同测试文件、P2P 大量重叠（6818 的 122 条与本题 152 条同源）**，划分必须同侧。",
+   "by": "L1_dask"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-10972.problem_statement",
+    "validation_bundles_v0.jsonl:dask__dask-10972.golden_patch"
+   ],
+   "note": "**本包要求最不充分的一题**：从公开材料无法推出 F2P 检查的行为。题面要的是“让 xfail 行为一致”，F2P 要的是“在 utf-16/utf-16-le 下 dd.read_csv(blocksize=1000) 的结果与 pd.read_csv 相等”。题面给出的两条可接受方案都落在被禁止且会被恢复的测试文件上；照题面做必得 0 分。",
+   "by": "L1_dask"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-10972.test_patch"
+   ],
+   "note": "断言只比较 DataFrame 内容（assert_eq(d, a)），不锁 helper 名、不锁内部调用顺序；任何能让 delimiter 不带 BOM 的实现都能过（例如按 codecs.BOM_UTF16 常量剥离、或改用 encode('utf-16-le') 再补序）。",
+   "by": "L1_dask"
+  },
+  "25": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-10972.{fail_to_pass,pass_to_pass}",
+    "runs/env_probe_stage1_20260910/.../dask__dask-10972/empty/offline/a1/status_map.json"
+   ],
+   "note": "参数化划分得当：新增的 `utf-8-sig` 与既有 `utf-16-be` 在 base 就通过，被自动放进 P2P，构成对“BOM 剥离过头/剥错”的反向保护（例如无条件砍掉前 N 字节会让 utf-16-be 失败）。硬编码 encoding 白名单能过 F2P 但会被 utf-8-sig/utf-16-be 的 P2P 约束一部分。",
+   "by": "L1_dask"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "9c20facdfb5f20e28f0e9259147283f8a7982728:dask/dataframe/io/csv.py:568-575"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_dask"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "validation_bundles_v0.jsonl:dask__dask-10972.golden_patch"
+   ],
+   "note": "gold 只动 read_pandas 的 b_lineterminator 计算，无无关改动、不依赖未交付改动；把计算从 line 571 前移到 484 只是为了在 kwargs['encoding'] 还在作用域时使用。",
+   "by": "L1_dask"
+  },
+  "29": {
+   "status": "issue",
+   "evidence_refs": [
+    "s2/raw/swe_gym_lite_full_f70b1a29.jsonl:dask__dask-10972.hints_text"
+   ],
+   "note": "hints 直接指向上游 issue #5787（外部 PR 线索）。题面本身不泄漏。由于 hints 不可见，这条只影响“若将来把 hints 并入题面”的判断。",
+   "by": "L1_dask"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-10972/gold/offline/a1/test_output.txt:485-515"
+   ],
+   "note": "`python -m pip install --no-deps -e .` 在离线下 **rc=1**：dask 2024.2 的 pyproject 走 PEP 517 构建隔离，要现下载 `setuptools>=62.6`，DNS 解析失败 → `ERROR: No matching distribution found for setuptools>=62.6`。本包 14 题里只有这一题（唯一 2024.x）如此。结论与 moto 4.1 同型：镜像自带的 editable 安装已指向 /testbed，安装失败不影响候选代码被测（gold 仍 RESOLVED_FULL），**rc_install 不能作为健康度信号**。风险：候选若新增第三方依赖，离线下装不上且无明确报错路径。",
+   "by": "L1_dask"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "9c20facdfb5f20e28f0e9259147283f8a7982728:dask/dataframe/io/tests/test_csv.py"
+   ],
+   "note": "无 mark.network、无真实 s3/http 端点；文件内 fsspec 用法是本地 memory://、file:// 与 `pytest.importorskip` 守卫的本地包。",
+   "by": "L1_dask"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-10972/gold/offline/a1/test_output.txt (SKIPPED [1]/[2] 行)",
+    "runs/env_overnight_20260916/L1_dask/prescan.json"
+   ],
+   "note": "gold 侧 160 条结果行只解析出 155 个键：其中 2 个是**伪键** `[1]`/`[2]`（见 repo_level_findings.md#R2）。跳过原因是 `dataframe.convert-string requires pandas>=2.0`、`compress function not provided for lz4/lzma`、`need --runslow option to run`、`unconditional skip`——即 lz4/lzma 可选依赖缺失。所幸被跳过的用例都不在 F2P/P2P 里（参考集是在同一镜像上生成的，跳过的用例自动落选）。**但这意味着参考集对 lz4/lzma/pyarrow-strings 相关路径零覆盖**。",
+   "by": "L1_dask"
+  },
+  "12": {
+   "status": "issue",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-10972.pass_to_pass"
+   ],
+   "note": "3 条 P2P 是**被空白截断的 ID**（见 repo_level_findings.md#R1）：`test_skiprows_as_list[read_csv-read_csv-files0-str,`、`test_read_csv[read_table-read_table-name`、`test_skiprows_as_list[read_table-read_table-files1-str\\t`。本次日志里它们各自仍一一对应（未塌缩），但 ID 不稳定：`test_read_csv[read_table-read_table-name` 同时是另一条真实 ID（`...name\\tamount\\n...`，无空格因而未被截断）的前缀，任何参数化改动都可能让两者塌缩成一个键。task_signals 的 `fragile_reference_id` 对本题记 false，属漏检。",
+   "by": "L1_dask"
+  },
+  "9": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-10972/{gold,empty}/offline/a1/status_map.json"
+   ],
+   "note": "empty→2 条 F2P FAILED，gold→全 PASSED，150 条 P2P 两侧全 PASSED；判据可区分（且在 rc_install=1 的条件下仍可区分，见检查 6）。",
+   "by": "L1_dask"
+  }
+ },
+ "issues": [
+  {
+   "category": "题面与评分不对应",
+   "severity": "P1",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-10972.problem_statement",
+    "validation_bundles_v0.jsonl:dask__dask-10972.golden_patch"
+   ],
+   "proposed_action": "reject_revision：除非把题面换成“BOM 编码下 dd.read_csv(blocksize=...) 结果与 pandas 不一致”的可复现描述（例如直接用 F2P 的 4 行代码），否则本题不适合作为训练或评测样本——照题面做的唯一动作是改测试文件，必然触发 rejected_test_tampering 或被恢复后判 0。",
+   "next_experiment": "把题面原样喂给基座模型 3 次，统计有几次去改 dask/dataframe/io/csv.py（预期 0）。"
+  },
+  {
+   "category": "题面现象不可复现",
+   "severity": "P1",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-10972.problem_statement（s390x / big-endian）"
+   ],
+   "proposed_action": "同上；若保留本题，至少在题面加一句“在 x86_64 上用 blocksize 切分即可复现”。",
+   "next_experiment": "在镜像里按题面字面跑 `pytest -k 'gh601 and utf-16'`，确认 base 上是 xfail-as-expected（不是 XPASS），即题面现象不存在。"
+  },
+  {
+   "category": "安装失败（离线 PEP 517）",
+   "severity": "P2",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-10972/gold/offline/a1/test_output.txt:485-515"
+   ],
+   "proposed_action": "dask 2024.x 配方的安装命令改为 `python -m pip install --no-deps --no-build-isolation -e .`，或在镜像预置 setuptools wheel；改动只影响 2024.x 题，需按检查 39 重验。",
+   "next_experiment": "在本题镜像里对比两种安装命令的 rc 与 `pip show dask` 指向路径。"
+  },
+  {
+   "category": "参考 ID 不稳定",
+   "severity": "P2",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-10972.pass_to_pass"
+   ],
+   "proposed_action": "随 repo_level_findings.md#R1 一起处理（观测标注 / 改 parser / JUnit 逐 ID）。",
+   "next_experiment": "用 `--junitxml` 跑同一命令，比对逐 ID 集合与当前 status_map 的差集。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰测试文件，gold 只碰源码，按第四组 B 默认保持空。注意 dask 的 `conftest.py` / `dask/conftest.py` 不在 test_patch 内，因而不属控制面（已知不足，见 repo_level_findings.md#R5），但这不是本题该加 additional_exclusions 的理由——加了会把合法解答路径也排除。",
+  "evidence_refs": [
+   "grading_bundles_v2_v0.jsonl:dask__dask-10972.test_patch",
+   "rh2/src/repoharness2/grading/trusted_projection.py:22-24"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "dask/dataframe/io/tests/test_csv.py::test_encoding_gh601[utf-8-sig]",
+   "reason": "已在 P2P；它是“BOM 存在但行终止符单字节”的分支，能拦住无条件剥前缀的错误实现。"
+  },
+  {
+   "id": "dask/dataframe/io/tests/test_csv.py::test_read_csv_slash_r",
+   "reason": "覆盖自定义 lineterminator 分支（gold 改的正是 lineterminator→b_lineterminator 的计算），当前在同文件但需确认是否已在 P2P。"
+  },
+  {
+   "id": "dask/dataframe/io/tests/test_csv.py::test_windows_line_terminator",
+   "reason": "同上，覆盖 lineterminator 非默认值时 encoding 不在 kwargs 的分支（gold 的 else 分支）。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "reject_revision",
+  "reason": "链路本身正常（判据可区分、P2P 划分合理），但题面与评分目标不是同一个问题，且题面字面方案只能改被禁止的测试文件、所述现象在 x86_64 镜像上不可复现。不改题面就不该进训练或评测集。"
+ },
+ "costs": {
+  "minutes": 26
+ }
+}

@@ -1,0 +1,621 @@
+{
+  "status": "complete_static_handoff",
+  "execution_status": "not_executed",
+  "owner": "总协调者另行安排授权机器与执行者",
+  "scope": "selective_future_cpu_plans_only_no_execution",
+  "common_conditions": {
+    "authority": "本文件是后续可执行方案草案，本审查未运行项目代码、容器或模型。",
+    "actor": "复用 generate.py 的物化、Git sanitize、trusted init、prelaunch 和正式 rollout profile；实际身份 agent/54321、HOME/cwd/shell/env 与将使用的 harness 一致。薄诊断入口尚未实现，若另写须记录与正式路径差异。",
+    "environment_identity": "固定 image ID、recipe、base/HEAD、初态已跟踪及未跟踪差异；不可将 grader 成功或派生镜像存在视为 actor 已消费修复配方。",
+    "candidate_effect": "记录解释器、目标模块路径与内容身份；用候选前后有意义行为差异核实际生效。目录位于 site-packages 本身不等于不生效。",
+    "public_scope": "actor 只收冻结 public bundle/base 与中性公开材料。审查报告、gold、隐藏测试、特权诊断候选留在私有执行侧。",
+    "grading": "需要判定误拒/漏测时，候选走真实冻结、投影和 grader；保留正式原题、原断言、原参考及二值 reward。扩展诊断测试单独记录。",
+    "result_interpretation": "原 bug 的预期异常与依赖/权限/安装失败分别记录；进程退出、账本逐题 outcome/reward/stage_error 与清理状态共同核对，不单看 final_status 摘要。",
+    "evidence_to_save": [
+      "入口与源码摘要",
+      "实际镜像 ID/recipe/HEAD/初态差异",
+      "effective profile/UID/HOME/cwd/shell/PATH",
+      "公开资产与可写位置",
+      "命令/退出码/完整日志",
+      "候选补丁与代码生效证据",
+      "账本逐行引用及测试身份",
+      "资源与精确清理"
+    ],
+    "entry_plan_ref": "acceptance/cpu_entry_plan.md (总协调者所有，仅后续实施单，尚未实现/执行)",
+    "recipe_replay": "派生题重放须核 revised_install：需要时用 rh2/experiments/env_recipe_repair_20260919/replay_with_install_recipe.py --code-root <rh2根目录> --recipe <原件recipe.json> --audit-dir <本次私有audit目录> -- run <现成replay参数>；仅传 --derived-image 不证明修复安装步骤被消费。"
+  },
+  "items": [
+    {
+      "queue_id": "actor-conan15422",
+      "instance_id": "conan-io__conan-15422",
+      "priority": 1,
+      "status": "mature_for_cpu_handoff",
+      "question": "实际 agent/54321 是否能导入当前源码、生成并读取 CMake 预设，以及运行相关公开回归？",
+      "source_condition": {
+        "base_commit": "f08b9924712cf0c2f27b93cbb5206d56d0d824d8",
+        "recipe": "原 public 镜像；不套用派生修复",
+        "public_ref": "results/conan-io__conan-15422/public_read.md C0–C4",
+        "actor_entry": "acceptance/cpu_entry_plan.md；薄入口未实现"
+      },
+      "command_draft": [
+        "python -c 'import sys, conan, conans; from conan.tools.cmake import presets; print(sys.executable, sys.version); print(conan.__file__, conans.__file__, presets.__file__)'",
+        "python - <<'PYCODE'\nimport json\nfrom conans.test.assets.genconanfile import GenConanfile\nfrom conans.test.utils.tools import TestClient\nc = TestClient()\nc.save({'conanfile.py': GenConanfile().with_settings('os', 'arch', 'compiler', 'build_type').with_generator('CMakeToolchain')})\nc.run('install . -s build_type=RelWithDebInfo -c tools.cmake.cmaketoolchain:generator=\"Unix Makefiles\" -c tools.build:jobs=2')\np = json.loads(c.load('CMakePresets.json'))['buildPresets'][0]\nprint(p)\nassert p['name'] == 'conan-relwithdebinfo'\nassert p['configurePreset'] == 'conan-relwithdebinfo'\nassert type(p.get('jobs')) is int and p['jobs'] == 2, p\nPYCODE",
+        "python -m pytest -q conans/test/unittests/tools/cmake/test_cmake_cmd_line_args.py conans/test/integration/tools/cpu_count_test.py",
+        "python -m pytest -q conans/test/integration/toolchains/cmake/test_cmaketoolchain.py -k \"test_cmake_presets_singleconfig or test_cmake_presets_multiconfig\""
+      ],
+      "controls": [
+        "原 base：生成成功且保留名称/关联，但最后 jobs 断言预期失败；未跑。",
+        "修复候选：配置 jobs=2 后字段正确；另以 jobs=7 验配置消费；默认值只与同 actor 的 build_jobs 结果比较，不硬编码 CPU 数。",
+        "可选真实 CMake 构建留为扩展，本题最低开发可用性不要求下载包/编译。"
+      ],
+      "expected_distinction": "生成字段缺失属于目标 feature；导入失败、helper 收集依赖、权限或 recipe 初始化错误属于开发环境问题。",
+      "evidence_to_save": [
+        "共用 actor 事实",
+        "生成的 JSON",
+        "公开窄测试逐条状态",
+        "默认/两个显式 jobs 的差异",
+        "代码生效标记及 fresh replay，若执行"
+      ],
+      "depends_on": [
+        "成熟单题角色链",
+        "独立 CPU/Docker 机器与入口授权",
+        "冻结原镜像实际 ID、有效 shell/env 与公开资产"
+      ],
+      "review_ref": "results/conan-io__conan-15422/review.md"
+    },
+    {
+      "queue_id": "actor-dask8597",
+      "instance_id": "dask__dask-8597",
+      "priority": 1,
+      "status": "mature_for_cpu_handoff",
+      "question": "compat_v1 的安装修复是否真实被 actor 消费，公开空轴索引及窄测试能否区分目标 bug 与环境失败？",
+      "source_condition": {
+        "base_commit": "c1c88f066672c0b216fc24862a2b36a0a9fb4e22",
+        "recipe_ref": "runs/env_recipe_repair_20260919/compat_v1/tasks/dask__dask-8597/gold/recipe/recipe.json",
+        "recipe_limit": "派生层 COPY wheels 不等于已安装 pytest7.4.4，需 revised_install 与明确安装用户/可写策略",
+        "public_ref": "results/dask__dask-8597/public_read.md C1–C4",
+        "actor_entry": "acceptance/cpu_entry_plan.md；薄入口未实现"
+      },
+      "command_draft": [
+        "python -c 'import sys,numpy,dask,pytest; import dask.array.slicing as s; print(sys.executable,sys.version); print(numpy.__version__,dask.__version__,pytest.__version__); print(dask.__file__,s.__file__)'",
+        "python - <<'PYCODE'\nimport numpy as np\nimport dask.array as da\nfrom dask.array.utils import assert_eq\nx = np.zeros((3, 0))\ny = da.from_array(x)[[0]]\nassert isinstance(y, da.Array)\nassert y.shape == (1, 0)\nassert y.dtype == x.dtype\nassert_eq(y, x[[0]])\nprint(y.shape, y.dtype, y.chunks)\nPYCODE",
+        "python -m pytest -q dask/array/tests/test_slicing.py -k \"take or getitem_avoids_large_chunks or empty or negative_list_slicing or boolean_list_slicing or oob_check\""
+      ],
+      "controls": [
+        "原 base：导入成功后构图发生 OverflowError 或对应警告升级异常；未跑。",
+        "gold/候选：NumPy 数值、形状、dtype、合法块元信息一致。",
+        "若扩展检查：不同零轴位置、列表和 split-large-chunks 三态；普通非空公开测试保留。"
+      ],
+      "expected_distinction": "历史 grader 的 pytest 降级成功不能证明 actor 已消费；公开复现的原 bug 必须与导入/安装/收集失败分开。",
+      "evidence_to_save": [
+        "共用 actor 事实",
+        "revised_install 日志和实际 pytest 版本",
+        "工作区导入/候选生效",
+        "NumPy 对照和公开测试状态",
+        "派生镜像身份与精确清理"
+      ],
+      "depends_on": [
+        "独立 CPU/Docker 机器与入口授权",
+        "冻结 compat_v1 实际镜像 ID/wheels",
+        "actor 安装策略与有效 shell/env"
+      ],
+      "review_ref": "results/dask__dask-8597/review.md",
+      "reviewed_at": "2026-09-20T18:05:07.421178+00:00"
+    },
+    {
+      "queue_id": "semantics-dask8597-config",
+      "instance_id": "dask__dask-8597",
+      "priority": 1,
+      "status": "mature_for_cpu_handoff",
+      "question": "只在 split=True 时计算阈值的部分修复，是否在原 RH2 得1分，同时丢失默认大块警告及 True 下的空轴支持？",
+      "source_condition": {
+        "base_commit": "c1c88f066672c0b216fc24862a2b36a0a9fb4e22",
+        "recipe_ref": "runs/env_recipe_repair_20260919/compat_v1/tasks/dask__dask-8597/gold/recipe/recipe.json",
+        "candidate_change": {
+          "path": "dask/array/slicing.py",
+          "old": "if math.isnan(other_numel):",
+          "new": "if math.isnan(other_numel) or config.get(\"array.slicing.split-large-chunks\", None) is not True:",
+          "note": "私有诊断变体；在 fresh base 的隔离副本应用并导出 <instance_id>.diff，本轮未创建或执行"
+        }
+      },
+      "command_draft": [
+        "rh2/.venv/bin/python rh2/experiments/env_recipe_repair_20260919/replay_with_install_recipe.py --code-root rh2 --recipe <frozen_recipe.json> --audit-dir <private_run_dir>/recipe-audit -- run --prepared-summary <prepared_summary.json> --task-ids dask__dask-8597 --candidate patch-dir:<private_candidate_dir> --derived-image <frozen_actual_image_id> --derived-image-recipe compat-v1:dask__dask-8597 --eval-log-dir <private_run_dir>/eval_logs --artifacts-dir <private_run_dir>/artifacts --ledger <private_run_dir>/ledger.jsonl",
+        "python -m pytest -q dask/array/tests/test_slicing.py::test_getitem_avoids_large_chunks",
+        "python -c 'import numpy as np,dask,dask.array as da; from dask.array.utils import assert_eq; x=np.zeros((3,0)); dask.config.set({\"array.slicing.split-large-chunks\": True}); assert_eq(da.from_array(x)[[0]],x[[0]])'"
+      ],
+      "controls": [
+        "base/noop：原 F2P 失败；gold：原 F2P/P2P和两项扩展检查成功（扩展尚未执行）",
+        "partial：官方参考是否全部成功与扩展失败分开记录；不因为全模块 rc=1 预先写 reward=0",
+        "如镜像/recipe/脚本身份变化，旧资格账本不适用，需先重新核对控制条件"
+      ],
+      "expected_distinction": "P2P缺少两个实际执行测试是已核事实；部分修复能否仍获reward=1必须以本次真实RH2结果裁定。",
+      "evidence_to_save": [
+        "原始补丁与SHA",
+        "实际安装及导入身份",
+        "完整模块退出码/测试状态",
+        "F2P/P2P逐ID和reward",
+        "独立公开扩展行为",
+        "清理记录"
+      ],
+      "depends_on": [
+        "CPU/Docker执行授权与隔离副本",
+        "兼容安装wrapper及冻结环境身份"
+      ],
+      "review_ref": "results/dask__dask-8597/review.md",
+      "reviewed_at": "2026-09-20T18:05:07.421178+00:00"
+    },
+    {
+      "queue_id": "semantics-conan14177-contract",
+      "instance_id": "conan-io__conan-14177",
+      "priority": 1,
+      "status": "mature_for_cpu_handoff",
+      "question": "公开开关语义的合理实现是否被原三个F2P拒绝，同时gold虽满分却仍拒绝verbose参数？",
+      "source_condition": {
+        "base_commit": "b43eb83956f053a47cc3897cfdd57b9da13a16e6",
+        "recipe": "原镜像及原安装命令",
+        "candidate_spec": "在 apply_conandata_patches 增加 verbose=False；仅 True 时用清楚且含文件名的日志记录每个已选补丁，保留底层 patch 默认输出、版本筛选、参数、数据不变与真实应用。Applying 只为公开举例措辞，不作为补充 oracle 的固定字符串。两种成功路径日志时机不作隐含约束。",
+        "public_controls_ref": "results/conan-io__conan-14177/public_read.md 第4节临时真实文本补丁"
+      },
+      "command_draft": [
+        "python -c 'from types import SimpleNamespace; from conan.tools.files import apply_conandata_patches; apply_conandata_patches(SimpleNamespace(conan_data={\"patches\": []}), verbose=True)'",
+        "python -m pytest -q conans/test/unittests/tools/files/test_patches.py",
+        "rh2/.venv/bin/python rh2/scripts/replay_grade.py run --prepared-summary <prepared_summary.json> --task-ids conan-io__conan-14177 --candidate patch-dir:<private_candidate_dir> --eval-log-dir <private_run_dir>/eval_logs --artifacts-dir <private_run_dir>/artifacts --ledger <private_run_dir>/ledger.jsonl"
+      ],
+      "controls": [
+        "分别使用base、gold、公开规范替代解；每个变体fresh副本，保留原正式测试/参考不变。",
+        "公开侧省略参数、False、True及第二位置参数；现场文本和两份本地patch含有/无description，核真实文本变化和文件名日志，错误/版本/数据不变做窄回归。",
+        "分别保存原公开旧测试结果与正式注入后的结果，不能把两者混为同一测试版本。"
+      ],
+      "expected_distinction": "接口冲突及gold源码缺参数为静态确证，gold满分为历史真实RH2证据；替代解的实得分仍待CPU对照。补充测试/题面修订仅作为下一版本提案，不改变本轮原题。",
+      "evidence_to_save": [
+        "替代解patch及SHA",
+        "公开功能矩阵输出与真实文本",
+        "原始/官方注入测试版本身份",
+        "完整RH2账本/分项状态/退出码",
+        "安装导入来源与清理"
+      ],
+      "depends_on": [
+        "reviewer独立核对契约冲突",
+        "CPU/Docker授权与原环境身份",
+        "受控公开功能脚本和私有替代解冻结"
+      ],
+      "review_ref": "results/conan-io__conan-14177/review.md"
+    },
+    {
+      "queue_id": "semantics-dask8801-message",
+      "instance_id": "dask__dask-8801",
+      "priority": 1,
+      "status": "mature_for_cpu_handoff",
+      "question": "同样拒绝无效 YAML/顶层非映射、保留 ValueError、path!r 和清楚原因，仅替换固定英文措辞，是否被原 F2P 拒绝？",
+      "source_condition": {
+        "base_commit": "9634da11a5a6e5eb64cf941d2088aabffe504adb",
+        "recipe": "原baseline环境，不套用8597的compat_v1",
+        "candidate_spec": "以 gold 行为为对照，首个变体仅替换两处 ValueError 英文文字，保持原 path!r、解析原因、类型检查、异常类型与正常/空/权限行为；不包含固定 is malformed/original error message/must have a dict 词组。路径引号若需验证，另立只改变路径格式的第二变体，不能混作首个措辞对照。各变体是特权诊断，不是独立模型解。"
+      },
+      "command_draft": [
+        "python -m pytest -q dask/tests/test_config.py",
+        "rh2/.venv/bin/python rh2/scripts/replay_grade.py run --prepared-summary <prepared_summary.json> --task-ids dask__dask-8801 --candidate patch-dir:<private_candidate_dir> --eval-log-dir <private_run_dir>/eval_logs --artifacts-dir <private_run_dir>/artifacts --ledger <private_run_dir>/ledger.jsonl"
+      ],
+      "controls": [
+        "base/noop、gold、只改英文措辞的变体分别 fresh 评分；首个变体保留 path!r 和其他逻辑，保持原题/断言/参考不变。",
+        "另以临时配置检查语法错误、非空顶层字符串、列表、正常嵌套映射、空文件；保留明确路径及原因，不以吞掉全部配置为合理替代。",
+        "以非root核公开文件/目录权限用例；两项历史PASS但未入41 P2P，分列执行与reward范围。"
+      ],
+      "expected_distinction": "若公开行为与gold一致而仅F2P文字失败，支持误拒；缺真实原始坏配置仍是题面复现条件限度。不能拿改文案后得0反推其它错误处理策略都应接受。",
+      "evidence_to_save": [
+        "文案变体patch/SHA",
+        "各类公开配置的行为/诊断",
+        "完整测试及F2P/P2P状态",
+        "真实RH2账本与reward",
+        "非root权限及清理事实"
+      ],
+      "depends_on": [
+        "CPU/Docker执行授权",
+        "原环境及候选生效核对"
+      ],
+      "review_ref": "results/dask__dask-8801/review.md",
+      "reviewed_at": "2026-09-20T18:05:07.421178+00:00"
+    },
+    {
+      "queue_id": "semantics-dask8801-original-string",
+      "instance_id": "dask__dask-8801",
+      "priority": 2,
+      "status": "mature_for_cpu_handoff",
+      "question": "仅拒绝列表顶层而遗漏原 issue 的字符串顶层，是否仍能通过冻结评分参考？",
+      "source_condition": {
+        "base_commit": "9634da11a5a6e5eb64cf941d2088aabffe504adb",
+        "recipe": "原 baseline 环境",
+        "candidate_spec": "保留 gold 的 YAML 解析错误处理和原错误文字，只将顶层非 dict 检查收窄为 isinstance(data, list)。在隔离副本中形成私有诊断补丁，本轮未创建或执行。"
+      },
+      "command_draft": [
+        "rh2/.venv/bin/python rh2/scripts/replay_grade.py run --prepared-summary <prepared_summary.json> --task-ids dask__dask-8801 --candidate patch-dir:<private_candidate_dir> --eval-log-dir <private_run_dir>/eval_logs --artifacts-dir <private_run_dir>/artifacts --ledger <private_run_dir>/ledger.jsonl",
+        "用独立临时文件写非空 YAML 字符串，调用 collect(paths=[<file>], env={}) 检查加载到合并的链；列表、嵌套合法值和空输入作控制。可选 fresh import 须记录并隔离 HOME、DASK_CONFIG、DASK_ROOT_CONFIG、系统及解释器前缀搜索目录，单设 DASK_CONFIG 不足。"
+      ],
+      "controls": [
+        "base、gold、lists-only 变体分别 fresh 对照；原 F2P/P2P 和扩展公开字符串检查分列。",
+        "保留非空字符串，避免 YAML 空值/假值通过原 data or {} 分支。",
+        "原 issue 缺实际坏配置，构造的字符串诊断只证明所选代表输入，不能假称已拿到原文件。"
+      ],
+      "expected_distinction": "若变体取得 reward=1 而字符串仍到 str.items() 失败，支持原例类型漏测造成误收；仅源码可达推断不足以宣称真实得分。",
+      "evidence_to_save": [
+        "变体补丁及 SHA",
+        "原 F2P/P2P 逐 ID 状态与 reward",
+        "字符串及 fresh import 日志",
+        "解释器/安装/身份与配置路径",
+        "清理事实"
+      ],
+      "depends_on": [
+        "CPU/Docker 执行授权与原环境身份",
+        "优先措辞实验；不阻塞其他成熟任务"
+      ],
+      "review_ref": "results/dask__dask-8801/review.md",
+      "reviewed_at": "2026-09-20T18:05:07.421178+00:00"
+    },
+    {
+      "queue_id": "semantics-pydantic8511-inheritance",
+      "instance_id": "pydantic__pydantic-8511",
+      "priority": 1,
+      "status": "mature_for_cpu_handoff",
+      "question": "gold 在实际 Python3.8 配方下是否使无本地注解的 dataclass 子类继承 required/default_factory FieldInfo 时装饰失败，而 base 和只读本地注解的窄修正版正常？",
+      "source_condition": {
+        "base_commit": "e4fa099d5adde70acc80238ff810c87a5cec7ebf",
+        "recipe_ref": "runs/env_recipe_repair_20260919/pydantic_v1/tasks/pydantic__pydantic-8511/gold/recipe/recipe.json",
+        "candidate_spec": "三个隔离副本为原 base、原 gold、以 gold 为基础仅将 getattr(cls, __annotations__, []) 的取值改为 cls.__dict__.get(__annotations__, {}) 的诊断修正版；实际字符串引号按源码保留。本轮未生成或执行候选。",
+        "primary_ref": "results/pydantic__pydantic-8511/analysis_before_history.md G1/第7节"
+      },
+      "command_draft": [
+        "python -c 'import sys,pydantic,pydantic_core; print(sys.executable,sys.version,pydantic.__file__,pydantic.__version__,pydantic_core.__version__)'",
+        "python - <<'PYCODE'\nfrom pydantic import Field\nfrom pydantic.dataclasses import dataclass\n\nfor make_field, kwargs, expected in [\n    (lambda: Field(), {'x': '3'}, 3),\n    (lambda: Field(repr=False), {'x': '3'}, 3),\n    (lambda: Field(default_factory=lambda: 3), {}, 3),\n    (lambda: Field(default=3), {}, 3),  # 已有P2P形状的控制\n]:\n    @dataclass\n    class Parent:\n        x: int = make_field()\n\n    @dataclass\n    class Child(Parent):\n        pass\n\n    assert Child(**kwargs).x == expected\nPYCODE",
+        "python -m pytest -q tests/test_dataclasses.py",
+        "rh2/.venv/bin/python rh2/experiments/env_recipe_repair_20260919/replay_with_install_recipe.py --code-root rh2 --recipe <frozen_recipe.json> --audit-dir <private_run_dir>/recipe-audit -- run --prepared-summary <prepared_summary.json> --task-ids pydantic__pydantic-8511 --candidate patch-dir:<private_candidate_dir> --derived-image <frozen_actual_image_id> --derived-image-recipe pydantic-install-v1 --eval-log-dir <private_run_dir>/eval_logs --artifacts-dir <private_run_dir>/artifacts --ledger <private_run_dir>/ledger.jsonl"
+      ],
+      "controls": [
+        "矩阵每种 Field() / repr=False / default_factory / 显式默认值独立记录；若首例停止，分开执行余例，不能冒称整个矩阵通过。",
+        "保留官方 repr F2P 与现有工厂/继承 P2P，确认窄修正不撤销目标功能。",
+        "首先使用历史实际 Python3.8；>=3.10 的不同注解行为和 kw_only/slots 属后续范围，不把历史 skip 写成通过。",
+        "独立记录Child的repr/隐藏行为及字段值；先做短继承矩阵，出现差异后再并列同RH2参考得分。"
+      ],
+      "expected_distinction": "若 base 正常、gold 仅在 required/工厂空子类失败且窄修正版恢复，支持具体 gold 回归；若不成立，撤回该静态假设。官方 reward 与扩展继承结果分列。",
+      "evidence_to_save": [
+        "候选 diff/SHA 与 base/镜像/recipe 身份",
+        "实际 Python、pydantic/core、标准库 dataclasses 文件与相关源码",
+        "每个继承组合的类定义、异常阶段/traceback和字段值",
+        "官方测试逐项状态、RC、F2P/P2P和真实 reward",
+        "安装/权限/候选生效及清理"
+      ],
+      "depends_on": [
+        "CPU/Docker授权与隔离入口",
+        "同配方原始控制条件核验"
+      ],
+      "review_ref": "results/pydantic__pydantic-8511/review.md",
+      "reviewed_at": "2026-09-20T18:46:42.710605+00:00"
+    },
+    {
+      "queue_id": "actor-dvc5839",
+      "instance_id": "iterative__dvc-5839",
+      "priority": 1,
+      "status": "mature_for_cpu_handoff",
+      "question": "实际 actor 是否可从当前源码执行 metrics show，并让默认5位、显式4/8位的普通/Markdown输出区别于原 bug，保留JSON原值？",
+      "source_condition": {
+        "base_commit": "daf07451f8e8f3e76a791c696b0ea175e8ed3ac1",
+        "recipe_ref": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-5839/gold/recipe/recipe.json",
+        "public_ref": "results/iterative__dvc-5839/public_read.md",
+        "actor_entry": "acceptance/cpu_entry_plan.md；入口未实现或执行",
+        "entry_fact": "CmdMetricsBase.UNINITIALIZED=True 允许临时目录中显式指标文件，无需为最低CLI复现创建Git提交。"
+      },
+      "command_draft": [
+        "python -c 'import sys,dvc; from dvc.command.metrics import _show_metrics; print(sys.executable,sys.version,dvc.__file__)'",
+        "(\naudit_metrics_dir=$(mktemp -d)\ncat > \"$audit_metrics_dir/metrics.yaml\" <<'YAML'\nmae: 1.4832495253358502e-05\nmse: 5.0172572763074186e-09\nYAML\ncd \"$audit_metrics_dir\"\nDVC_TEST=true PYTHONPATH=/testbed python -m dvc metrics show metrics.yaml\nDVC_TEST=true PYTHONPATH=/testbed python -m dvc metrics show metrics.yaml --precision 4\nDVC_TEST=true PYTHONPATH=/testbed python -m dvc metrics show metrics.yaml --precision 8\nDVC_TEST=true PYTHONPATH=/testbed python -m dvc metrics show metrics.yaml --precision 8 --show-md\nDVC_TEST=true PYTHONPATH=/testbed python -m dvc metrics show metrics.yaml --precision 8 --show-json\n)",
+        "DVC_TEST=true python -m pytest -q tests/unit/command/test_metrics.py::test_metrics_show_precision tests/unit/command/test_metrics.py::test_metrics_diff_precision"
+      ],
+      "controls": [
+        "原 base 与 gold/候选使用同一临时 YAML、解释器、源码关联和显示模式。",
+        "按小数点后位数比较数值：原例 precision8 应得到 1.483e-05、1e-08；不要把题面笔误或科学计数法字面拼写设为oracle。",
+        "JSON保持原始精度；命令涉及的临时目录仅清理本次创建路径，不修改全局Git配置。",
+        "可选私有评分校准：仅在CmdMetricsShow传常量8的部分实现走原RH2，预期可能过参考而违背默认/4；此项不自动阻塞受限字段传递诊断。",
+        "只作字典指标参数传递诊断；scalar float已有跳过舍入边界不增作本题必修。默认/4/8按实际数值契约判断，不能只要求输出两两不同。"
+      ],
+      "expected_distinction": "导入/插件/权限失败属于actor环境；base按默认精度输出而忽略显式值是目标缺陷。历史helper P2P通过不能代替实际CLI输出。",
+      "evidence_to_save": [
+        "真实actor profile/UID/HOME/PATH和导入来源",
+        "派生配方消费、依赖/候选身份",
+        "YAML输入和各模式输出/退出码",
+        "公开窄测试状态",
+        "可选RH2候选diff/逐ID/reward",
+        "临时目录清理"
+      ],
+      "depends_on": [
+        "CPU/Docker入口授权与冻结环境",
+        "DVC修复安装配方由实际actor消费"
+      ],
+      "review_ref": "results/iterative__dvc-5839/review.md",
+      "reviewed_at": "2026-09-20T19:10:26.495871+00:00"
+    },
+    {
+      "queue_id": "semantics-pydantic5706-sequence",
+      "instance_id": "pydantic__pydantic-5706",
+      "priority": 1,
+      "status": "mature_for_cpu_handoff",
+      "question": "仅在类型映射加入 collections.abc.Sequence: list 的 source-only 候选，能否在当前配方原RH2获分，同时破坏公开 range/tuple/deque 语义？",
+      "source_condition": {
+        "base_commit": "70e7e99ca1861ad71520cc8fcf1a2fb913abbc10",
+        "recipe_ref": "runs/env_recipe_repair_20260919/pydantic_v1/tasks/pydantic__pydantic-5706/gold/recipe/recipe.json",
+        "python": "3.8, pydantic-core 0.31.0；先核实际版本",
+        "candidate_spec": "从精确base仅重建历史已核的 collections.abc.Sequence: list 生产映射；不复制旧候选内的测试、pdm.lock或pyproject改动。原base/gold/候选使用同配方安装。",
+        "evidence_ref": "results/pydantic__pydantic-5706/old_findings_delta.md",
+        "candidate_change": {
+          "path": "pydantic/_internal/_std_types_schema.py",
+          "mapping": "SEQUENCE_ORIGIN_MAP",
+          "insertion_after": "typing.Sequence: list,",
+          "insert": "collections.abc.Sequence: list,",
+          "evidence": "runs/env_probe_20260909_codex_backup/ledger/logs_cc/pydantic__pydantic-5706/candidate.diff:2387-2398"
+        },
+        "historical_raw_evidence_ref": "acceptance/pydantic5706_historical_evidence.json"
+      },
+      "command_draft": [
+        "python - <<'PYCODE'\nfrom collections import deque\nfrom typing import Sequence\nfrom pydantic import BaseModel\n\nclass Model(BaseModel):\n    values: Sequence[int]\n\nassert Model(values=range(3)).values == [0, 1, 2]\nassert Model(values=(1, 2, 3)).values == (1, 2, 3)\nassert Model(values=deque([1, 2, 3])).values == deque([1, 2, 3])\nPYCODE",
+        "python -m pytest -q tests/test_json_schema.py",
+        "rh2/.venv/bin/python rh2/experiments/env_recipe_repair_20260919/replay_with_install_recipe.py --code-root rh2 --recipe <frozen_recipe.json> --audit-dir <private_run_dir>/recipe-audit -- run --prepared-summary <prepared_summary.json> --task-ids pydantic__pydantic-5706 --candidate patch-dir:<private_candidate_dir> --derived-image <frozen_actual_image_id> --derived-image-recipe pydantic-install-v1 --eval-log-dir <private_run_dir>/eval_logs --artifacts-dir <private_run_dir>/artifacts --ledger <private_run_dir>/ledger.jsonl"
+      ],
+      "controls": [
+        "每项容器行为独立记录，base的schema预期失败不得阻止Python行为对照。",
+        "公开支持/拒绝方向歧义须另作需求决定，CPU得分不能替代；generator文档冲突保留次级，不默默新增硬评分。",
+        "保留原273 P2P与2 F2P，range/tuple/deque诊断单列；已回读的09-16source-only矩阵与09-09完整候选满分原件，不冒充当前受控RH2。",
+        "历史矩阵已核12份原日志，当前目标仅为现配方、投影和真实RH2适用性；不重复旧脚本以重证同一旧事实。pytest原日志不含UID/网络启动表头，身份条件按索引说明分层。"
+      ],
+      "expected_distinction": "同环境官方得分与公开容器语义是否分离；同时控制历史混合候选的元数据/测试更改。",
+      "evidence_to_save": [
+        "单行生产候选完整diff/SHA",
+        "镜像/recipe/解释器/core及工作树环境差异",
+        "各容器类型/值与schema/JSON输出",
+        "原逐ID结果/缺席/skip、RC和reward",
+        "安装生效与清理"
+      ],
+      "depends_on": [
+        "CPU/Docker执行授权",
+        "精确单行映射位置与源码身份冻结"
+      ],
+      "review_ref": "results/pydantic__pydantic-5706/review.md",
+      "reviewed_at": "2026-09-20T18:46:42.710605+00:00"
+    },
+    {
+      "queue_id": "semantics-dvc9395-dry",
+      "instance_id": "iterative__dvc-9395",
+      "priority": 1,
+      "status": "mature_for_cpu_handoff",
+      "question": "gold的新增pull是否在 pull=True,dry=True 时实际恢复数据或下载cache/run-cache，违反公开dry行为？",
+      "source_condition": {
+        "base_commit": "c75a5583b3840ba90a8e800a0f42c1cb120916db",
+        "recipe_ref": "runs/env_recipe_repair_20260919/dvc_tail_v1/tasks/iterative__dvc-9395/gold/recipe/recipe.json",
+        "scenario": "各自fresh base/gold复本固定本地remote。按新增missing_data_source的公开操作建内容foo的.dvc源和cp foo bar消费者，push后移走foo及对应本地缓存，remote不变；保存foo/bar、lock、对象cache和runs的存在性/字节快照。 若观察run-cache下载，先生成并push一个确定相关记录，然后每份初态删除本地runs，remote内容一致。",
+        "primary_ref": "results/iterative__dvc-9395/analysis_before_history.md 第4节"
+      },
+      "command_draft": [
+        "python -c 'import sys,dvc,pygit2; print(sys.executable,sys.version,dvc.__file__,pygit2.__version__)'",
+        "在上述隔离fixture中分别调用 repo.reproduce(pull=True, dry=True)，保存调用前后工作区及对象/run-cache快照；保留返回值、异常和完整日志。fixture仅本地remote，不引入公网。",
+        "在另建的同初态base/gold复本分别调用 repo.reproduce(pull=True, dry=False)作正对照；base预期缺源，gold应恢复并完成。",
+        "python -m pytest -q tests/func/test_repro_multistage.py tests/func/test_run_cache.py"
+      ],
+      "controls": [
+        "dry与非dry、base与gold共四组独立初态；每次操作前核对应模块代码生效。",
+        "主要判据是真实文件/缓存副作用，不以pull或checkout调用数建立新oracle。",
+        "无remote且无缺失、用户修改、checkout精确3次等其他疑点分别保留，不加入本首个实验为强制全量门。",
+        "公开旧test_restore_pull期待checkout两次，私有补丁改三次；actor公开旧测试失败须定位契约变更，不要求solver获知私有次数。",
+        "09-19原日志定位以review.md校正表为准：gold 2434–2468，noop 2950–2984；封存主稿曾误用旧日志行号。"
+      ],
+      "expected_distinction": "若base dry保持缺失而gold dry恢复对象，且非dry正对照满足预期，支持具体gold回归；若gold无副作用，撤回这一静态推断并记录实际阻止路径。",
+      "evidence_to_save": [
+        "base/gold源码与镜像/recipe身份",
+        "本地fixture/remote内容及初态快照",
+        "dry前后foo/bar/lock/cache/runs差异和异常",
+        "非dry正对照与官方测试结果",
+        "真实用户/导入/安装条件及清理"
+      ],
+      "depends_on": [
+        "CPU/Docker授权与隔离入口",
+        "冻结dvc_tail_v1及pygit21.14.1等实际安装条件"
+      ],
+      "review_ref": "results/iterative__dvc-9395/review.md",
+      "reviewed_at": "2026-09-20T19:10:26.495871+00:00"
+    },
+    {
+      "queue_id": "semantics-mypy10424-narrowing",
+      "instance_id": "python__mypy-10424",
+      "priority": 1,
+      "status": "mature_for_cpu_handoff",
+      "question": "完全关闭 type 比较收窄的错误候选是否通过唯一 F2P，同时破坏已存在的普通类型收窄？",
+      "source_condition": {
+        "base_commit": "4518b55663bc689646280a0ab2247c4a724bf3c0",
+        "recipe_ref": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10424/image.json",
+        "candidate_spec": "只在 mypy/checker.py 的 find_type_equals_check 入口立即 return {}, {}，不改测试、其他代码或参考。",
+        "primary_ref": "results/python__mypy-10424/analysis_before_history.md",
+        "reference_ids": {
+          "fail_to_pass": [
+            "mypy/test/testcheck.py::TypeCheckSuite::testNarrowingUsingMetaclass"
+          ],
+          "pass_to_pass": []
+        },
+        "execution_entry": "install_wave1 only COPY wheels + ENV PIP_NO_INDEX/FIND_LINKS；原 replay_grade.py 直接 --derived-image；不套 revised_install wrapper。",
+        "candidate_diff_ref": "results/python__mypy-10424/review.md#有界-cpu-三组方案全部未执行"
+      },
+      "command_draft": [
+        "各实现先独立检查题面公开 metaclass 原例；只在特权侧应用冻结 test.patch。",
+        "python -m pytest -n0 -rA mypy/test/testcheck.py -k testNarrowingUsingMetaclass",
+        "python -m pytest -n0 -rA mypy/test/testcheck.py -k 'testTypeEqualsNarrowingUnionWithElse or testTypeEqualsCheckUsingIs'",
+        "再经当前原 replay_grade.py --derived-image <image.json冻结的镜像ID> 对错误候选记录唯一F2P与原reward。"
+      ],
+      "controls": [
+        "base、gold、候选如有，各用隔离 fresh 工作树与相同实际依赖；安装、导入、收集失败单列，不冒充语义结果。",
+        "保留冻结官方参考和原奖励；额外公开检查单列诊断，逐 ID 保存实际执行/skip/缺席。",
+        "这些是选择性诊断建议，不要求全部覆盖缺口先跑完才允许有限用途。",
+        "CPU最小语义对照可使用 -n0 限制开销；原 RH2 评分仍使用冻结原命令，并披露两者差异。",
+        "三个固定build wheel不是完整依赖锁；使用核过身份的原base派生镜像，保持初态types-typing-extensions要求；原三组replay命令和精确pytest节点见review。"
+      ],
+      "expected_distinction": "只有候选通过 F2P/原reward 且普通 Union/Any 旧行为退化，而 base/gold 保留旧行为，才升级为实测漏收。",
+      "evidence_to_save": [
+        "源码与补丁 SHA、实际镜像/recipe和解释器身份",
+        "初态差异、导入路径与安装实际消费",
+        "每组完整输出/退出码及逐 ID 结果",
+        "原 RH2 得分与附加公开行为分开记录",
+        "运行身份、限制和清理"
+      ],
+      "depends_on": [
+        "CPU/Docker执行授权与隔离入口"
+      ],
+      "review_ref": "results/python__mypy-10424/review.md",
+      "reviewed_at": "2026-09-20T19:03:57.869422+00:00"
+    },
+    {
+      "queue_id": "semantics-mypy16963-public-examples",
+      "instance_id": "python__mypy-16963",
+      "priority": 1,
+      "status": "mature_for_cpu_handoff",
+      "question": "gold是否满足全部公开 TypedDict/Union 原例及返回类型承诺，特别是 Boat 条件推断？",
+      "source_condition": {
+        "base_commit": "f19b5d3a026319687dd81a5c7c976698bbe948a8",
+        "recipe_ref": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-16963/image.json",
+        "candidate_spec": "先只做 base/gold；从公开题面逐字提取两个 f/g 最小例与完整 Car/Boat/Truck 例，最小例仅补所需 typing 导入；不先猜新补丁。",
+        "primary_ref": "results/python__mypy-16963/analysis_before_history.md",
+        "reference_ids": {
+          "fail_to_pass": [
+            "mypy/test/testcheck.py::TypeCheckSuite::check-typeddict.test::testInitTypedDictFromType"
+          ],
+          "pass_to_pass": []
+        },
+        "execution_entry": "install_wave1 only COPY wheels + ENV PIP_NO_INDEX/FIND_LINKS；原 replay_grade.py 直接 --derived-image；不套 revised_install wrapper。"
+      },
+      "command_draft": [
+        "在隔离诊断目录分别保存公开 f、g、完整 Car/Boat/Truck 三份代码，保留来源与SHA。",
+        "python -m mypy --config-file /dev/null --no-incremental --show-error-codes --warn-return-any <public_f_example.py>",
+        "python -m mypy --config-file /dev/null --no-incremental --show-error-codes --warn-return-any <public_g_example.py>",
+        "python -m mypy --config-file /dev/null --no-incremental --show-error-codes --warn-return-any <public_car_boat_truck_example.py>",
+        "python -m pytest -n0 -rA mypy/test/testcheck.py -k testInitTypedDictFromType",
+        "原 RH2 另外按冻结 pytest -rA -k 命令评分，不将 -n0 诊断命令当原执行入口。"
+      ],
+      "controls": [
+        "base、gold、候选如有，各用隔离 fresh 工作树与相同实际依赖；安装、导入、收集失败单列，不冒充语义结果。",
+        "保留冻结官方参考和原奖励；额外公开检查单列诊断，逐 ID 保存实际执行/skip/缺席。",
+        "这些是选择性诊断建议，不要求全部覆盖缺口先跑完才允许有限用途。",
+        "CPU最小语义对照可使用 -n0 限制开销；原 RH2 评分仍使用冻结原命令，并披露两者差异。",
+        "不预加Boat属性注解；显式无配置/无增量为诊断隔离条件，记录解释器和target。不得把数据驱动fixture默认target3.8当宿主Python3.12或issue3.9。"
+      ],
+      "expected_distinction": "若 gold 过唯一 F2P 但 Boat 仍 Any/object 或报错，支持完整公开要求覆盖不齐；若原例全过则撤回该具体完整性疑点。零P2P、total=False和替代错误措辞不自动判坏。",
+      "evidence_to_save": [
+        "源码与补丁 SHA、实际镜像/recipe和解释器身份",
+        "初态差异、导入路径与安装实际消费",
+        "每组完整输出/退出码及逐 ID 结果",
+        "原 RH2 得分与附加公开行为分开记录",
+        "运行身份、限制和清理"
+      ],
+      "depends_on": [
+        "CPU/Docker执行授权与隔离入口"
+      ],
+      "review_ref": "results/python__mypy-16963/review.md",
+      "reviewed_at": "2026-09-20T19:10:26.495871+00:00"
+    },
+    {
+      "queue_id": "semantics-mypy12417-recovery",
+      "instance_id": "python__mypy-12417",
+      "priority": 1,
+      "status": "mature_for_cpu_handoff",
+      "question": "局部恢复guard保留subject当前类型或跳过无效body，是否满足公开修复要求却只因附带恢复输出被拒？",
+      "source_condition": {
+        "base_commit": "47b9f5e2f65d54d3187cbe0719f9619bf608a126",
+        "recipe_ref": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-12417/image.json",
+        "candidate_spec": "四份隔离实现：base、gold、P=在class_ref.node is None返回PatternType(current_type,current_type,{})、E=同处返回self.early_non_match()。两候选均来自已有公开恢复路径，尚未证明完整合理性；不得改Name主错误、正常TypeInfo/TypeAlias、测试或参考。",
+        "primary_ref": "results/python__mypy-12417/analysis_before_history.md",
+        "reference_ids": {
+          "fail_to_pass": [
+            "mypy/test/testcheck.py::TypeCheckSuite::check-python310.test::testMatchInvalidClassPattern"
+          ],
+          "pass_to_pass": [
+            "mypy/test/testcheck.py::TypeCheckSuite::check-python310.test::testMatchClassPatternCaptureDataclassPartialMatchArgs",
+            "mypy/test/testcheck.py::TypeCheckSuite::check-python310.test::testMatchClassPatternCaptureDataclass",
+            "mypy/test/testcheck.py::TypeCheckSuite::check-python310.test::testMatchClassPatternCaptureDataclassNoMatchArgs"
+          ]
+        },
+        "execution_entry": "install_wave1 only COPY wheels + ENV PIP_NO_INDEX/FIND_LINKS；原 replay_grade.py 直接 --derived-image；不套 revised_install wrapper。"
+      },
+      "command_draft": [
+        "python -m mypy --config-file /dev/null --no-incremental --python-version 3.10 --show-error-codes --show-traceback <public_zero_capture_original.py>",
+        "python -m pytest -n0 -rA mypy/test/testcheck.py -k 'testMatchInvalidClassPattern or testMatchClassPatternCaptureDataclass'",
+        "python -m pytest -n0 -rA mypy/test/testcheck.py -k 'testMatchClassPatternIsNotType or testMatchClassPatternCaptureFilledGenericTypeAlias'",
+        "在特权侧逐条记录 F2P 两种捕获、两条Name错误、五条附带恢复输出和三个P2P，再经原RH2记录四项参考得分。",
+        "独立观察输入含object subject、无效xyz(y) body的subject reveal及 n: int = \"bad\"、随后case int() reveal、match后subject reveal；四实现记录body可达性和后续分支。输入的普通类型错误退出1不等于pytest校验失败。"
+      ],
+      "controls": [
+        "base、gold、候选如有，各用隔离 fresh 工作树与相同实际依赖；安装、导入、收集失败单列，不冒充语义结果。",
+        "保留冻结官方参考和原奖励；额外公开检查单列诊断，逐 ID 保存实际执行/skip/缺席。",
+        "这些是选择性诊断建议，不要求全部覆盖缺口先跑完才允许有限用途。",
+        "CPU最小语义对照可使用 -n0 限制开销；原 RH2 评分仍使用冻结原命令，并披露两者差异。",
+        "P静态预计只把一条subject reveal从Any改object；E预计少五条body输出。以真实结果为准；跳过body已有先例，不单凭少报独立错误判不合理。"
+      ],
+      "expected_distinction": "只有替代无崩溃、保留Name主错误及相关旧/后续行为，却仅因未指定恢复选择被拒，才形成有界误拒证据；若替代损害必要兼容性则撤回。",
+      "evidence_to_save": [
+        "源码与补丁 SHA、实际镜像/recipe和解释器身份",
+        "初态差异、导入路径与安装实际消费",
+        "每组完整输出/退出码及逐 ID 结果",
+        "原 RH2 得分与附加公开行为分开记录",
+        "运行身份、限制和清理"
+      ],
+      "depends_on": [
+        "CPU/Docker执行授权与隔离入口"
+      ],
+      "review_ref": "results/python__mypy-12417/review.md",
+      "reviewed_at": "2026-09-20T19:10:26.495871+00:00"
+    },
+    {
+      "queue_id": "semantics-dvc3620-links",
+      "instance_id": "iterative__dvc-3620",
+      "priority": 2,
+      "status": "mature_for_cpu_handoff",
+      "question": "只删除链接并返回、丢失输出数据的错误控制，是否满足六个冻结参考而绕过额外CLI失败？",
+      "source_condition": {
+        "base_commit": "e05157f8e05e856d2e9966c30a3150c26b32b86f",
+        "recipe_ref": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3620/gold/recipe/recipe.json",
+        "candidate_spec": "优先评分校准：gold与错误控制。错误控制只在dvc/remote/local.py的_unprotect_file链接分支os.unlink(path)后立即return，跳过复制/rename；其余不变。只操作新建临时fixture。必要时base作原始失败控制。",
+        "primary_ref": "results/iterative__dvc-3620/analysis_before_history.md",
+        "reference_ids": {
+          "fail_to_pass": [
+            "tests/unit/remote/test_local.py::test_is_protected[symlink]",
+            "tests/unit/remote/test_local.py::test_is_protected[hardlink]"
+          ],
+          "pass_to_pass": [
+            "tests/unit/remote/test_local.py::test_protect_ignore_errors[1]",
+            "tests/unit/remote/test_local.py::test_status_download_optimization",
+            "tests/unit/remote/test_local.py::test_protect_ignore_errors[13]",
+            "tests/unit/remote/test_local.py::test_protect_ignore_erofs"
+          ]
+        },
+        "alternative_not_mandatory": "主审base/gold/symlink-only对照保留为范围量化选项，CPU不能裁定hardlink公开义务，不要求与首个数据后置条件对照同时执行。"
+      },
+      "command_draft": [
+        "固定Linux非root，gold/错误控制各fresh fixture；源内容cache-content-3620\\n、chmod0444，分别建symlink/hardlink，按公开test_is_protected fixture调用remote.unprotect。",
+        "每次操作记录异常、缓存mode/字节、输出存在/链接/inode/字节/可写；修改输出后再验证缓存字节未变。",
+        "python -m pytest -rA tests/unit/remote/test_local.py tests/func/test_unprotect.py",
+        "原RH2记录2 F2P/4 P2P；额外CLI实际结果与参考保护分开；使用 dvc_install_v1c revised_install wrapper并核安装消费。"
+      ],
+      "controls": [
+        "base、gold、候选如有，各用隔离 fresh 工作树与相同实际依赖；安装、导入、收集失败单列，不冒充语义结果。",
+        "保留冻结官方参考和原奖励；额外公开检查单列诊断，逐 ID 保存实际执行/skip/缺席。",
+        "这些是选择性诊断建议，不要求全部覆盖缺口先跑完才允许有限用途。",
+        "主审与reviewer对hardlink范围判断保留差异；协调者采用更能区分评分后果的数据丢失负对照，symlink-only列替代而非第二必做门。",
+        "同一环境保留moto==1.3.14.dev464→1.3.14的setup.py预改；不得当gold业务补丁。权限判断要记录非root，is_protected(False)不证明存在/可写。"
+      ],
+      "expected_distinction": "若错误控制过六参考而真实输出缺失、额外CLI失败且原RH2仍reward1，形成具体漏收；若reward0，记录实际拒绝机制，不能沿静态预测称满分。",
+      "evidence_to_save": [
+        "源码与补丁 SHA、实际镜像/recipe和解释器身份",
+        "初态差异、导入路径与安装实际消费",
+        "每组完整输出/退出码及逐 ID 结果",
+        "原 RH2 得分与附加公开行为分开记录",
+        "运行身份、限制和清理"
+      ],
+      "depends_on": [
+        "CPU/Docker执行授权与隔离入口"
+      ],
+      "review_ref": "results/iterative__dvc-3620/review.md",
+      "reviewed_at": "2026-09-20T19:10:26.495871+00:00"
+    }
+  ],
+  "updated_at": "2026-09-20T19:10:26.495871+00:00"
+}

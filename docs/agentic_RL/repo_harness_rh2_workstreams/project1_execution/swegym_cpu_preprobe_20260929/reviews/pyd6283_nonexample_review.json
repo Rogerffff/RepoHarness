@@ -1,0 +1,126 @@
+{
+  "instance_id": "pydantic__pydantic-6283",
+  "attempt": "nonexample_v1",
+  "review_state": "independently_reviewed_private_behavior_only",
+  "public_basis": "Same valid values of a proper type must produce equal RootModel instances; TextRoot(str) with another is a valid non-42 instance, without internal-layout assertions.",
+  "actual_image_id": "sha256:24e9c51fedb7dc930796362c90f72e8e7a9c47d9362fa72414c6c6ff8a1a2882",
+  "base_commit": "a29286609e79c79b2ecd71bc7272eea43ed9fccd",
+  "core_version": "0.42.0",
+  "uid": 0,
+  "initial_modified_paths": [
+    "pdm.lock",
+    "pyproject.toml"
+  ],
+  "input_hashes_match_manifest": true,
+  "remote_mirror_inputs_match_manifest": true,
+  "helper_sha256_match_manifest": true,
+  "variants": {
+    "base": {
+      "prep_rcs": [
+        0
+      ],
+      "command": {
+        "id": "text_root_nonexample",
+        "rc": 1,
+        "seconds": 0.42902020499968785,
+        "stdout_bytes": 58,
+        "stderr_bytes": 193
+      },
+      "exact_output": "TEXT_ROOT_NONEXAMPLE {\"value\": \"another\", \"equal\": false}\nTraceback (most recent call last):\n  File \"/in/nonexample.py\", line 16, in <module>\n    assert same, 'TEXT_ROOT_NONEXAMPLE_EQUALITY_FAILED'\nAssertionError: TEXT_ROOT_NONEXAMPLE_EQUALITY_FAILED\n",
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      },
+      "status": "executed_interpret_separately"
+    },
+    "gold": {
+      "prep_rcs": [
+        0,
+        0
+      ],
+      "command": {
+        "id": "text_root_nonexample",
+        "rc": 0,
+        "seconds": 0.4085274429999117,
+        "stdout_bytes": 83,
+        "stderr_bytes": 0
+      },
+      "exact_output": "TEXT_ROOT_NONEXAMPLE {\"value\": \"another\", \"equal\": true}\nTEXT_ROOT_NONEXAMPLE_PASS\n",
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      },
+      "status": "executed_interpret_separately"
+    },
+    "validate_construct": {
+      "prep_rcs": [
+        0,
+        0
+      ],
+      "command": {
+        "id": "text_root_nonexample",
+        "rc": 0,
+        "seconds": 0.4361130299985234,
+        "stdout_bytes": 83,
+        "stderr_bytes": 0
+      },
+      "exact_output": "TEXT_ROOT_NONEXAMPLE {\"value\": \"another\", \"equal\": true}\nTEXT_ROOT_NONEXAMPLE_PASS\n",
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      },
+      "status": "executed_interpret_separately"
+    }
+  },
+  "conclusions": {
+    "nonexample_base_negative_gold_positive_control_confirmed": true,
+    "validate_construct_not_distinguished_by_this_control": true,
+    "actor_proof": false,
+    "new_formal_grading": false,
+    "D6_implemented": false,
+    "S1_T2c_discharged": false
+  },
+  "limitations": [
+    "No post-apply whole-source SHA or source export captured in this supplement; do not equate apply rc0 with whole-file byte attestation.",
+    "Existing no-validation violations and formal 0/1/0 remain applicable; not rerun here.",
+    "No autonomous model, prompt delivery, training eligibility or full-lifecycle resource evidence added."
+  ],
+  "evidence_sha256": {
+    "runs/swegym_cpu_preprobe_20260929/inputs_extra/6283_nonexample_v1/spec.json": "7409b61ad097cdff07f86c59f22976358ee027f4d087b7130184463dae0ae4a0",
+    "runs/swegym_cpu_preprobe_20260929/inputs_extra/6283_nonexample_v1/gold.patch": "cf1db83c2966404d60f40d33ddee5aa197fe1e12f5a8147fb76076a4f541c64c",
+    "runs/swegym_cpu_preprobe_20260929/inputs_extra/6283_nonexample_v1/nonexample.py": "5f96fdb6753be5926b2592b62f4ceaa3295bde3be5369762bc56b3b66ab1e77e",
+    "runs/swegym_cpu_preprobe_20260929/inputs_extra/6283_nonexample_v1/README.md": "4e5834dad509b11b9750631ca779f9fbf3194acf5002ff1bb64c133ea36ade2c",
+    "runs/swegym_cpu_preprobe_20260929/inputs_extra/6283_nonexample_v1/validate_construct.patch": "a3ee895dc358cda2b3be2c1e43e09fd9cf163f29b30799cc2ab6223621bef60d",
+    "runs/swegym_cpu_preprobe_20260929/inputs_extra/6283_nonexample_v1/manifest.json": "f6d859ba87530b8f27b2674dd19682d7d6e2478b025939534040cb78e42ecb67",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-6283/nonexample_v1/summary.json": "032cebc0caa470081345020eb45ab103e6f99edca1eb84c708cd635981460e86",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-6283/nonexample_v1/validate_construct/prep_0.out": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-6283/nonexample_v1/validate_construct/prep_1.out": "882db6f3f854cb37d95c4e81a2c2826465ea020c070e6d9855d0553b511e16cb",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-6283/nonexample_v1/validate_construct/initial.txt": "a88c9e57dc0ab0c99e8dd1c39ab9abafeb03df521532f5c92da8b6ea73057873",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-6283/nonexample_v1/validate_construct/text_root_nonexample.out": "1f0f89d07e397bd29c4881965a791a8e5e4c00e22a684a9b77350215397b5c0a",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-6283/nonexample_v1/gold/prep_0.out": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-6283/nonexample_v1/gold/prep_1.out": "882db6f3f854cb37d95c4e81a2c2826465ea020c070e6d9855d0553b511e16cb",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-6283/nonexample_v1/gold/initial.txt": "a88c9e57dc0ab0c99e8dd1c39ab9abafeb03df521532f5c92da8b6ea73057873",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-6283/nonexample_v1/gold/text_root_nonexample.out": "1f0f89d07e397bd29c4881965a791a8e5e4c00e22a684a9b77350215397b5c0a",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-6283/nonexample_v1/base/prep_0.out": "882db6f3f854cb37d95c4e81a2c2826465ea020c070e6d9855d0553b511e16cb",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-6283/nonexample_v1/base/initial.txt": "a88c9e57dc0ab0c99e8dd1c39ab9abafeb03df521532f5c92da8b6ea73057873",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-6283/nonexample_v1/base/text_root_nonexample.out": "cb98aa43e81b2dce4f36a9e228a7db5d7672776dc37992a70a145c5f6554900c",
+    "runs/swegym_cpu_preprobe_20260929/analysis/evidence_manifest_6283_nonexample_v1.json": "7cc8148364c20b73668377e90fb2d8ce2394872693a47339b99de59ae8a8d43d",
+    "runs/swegym_cpu_preprobe_20260929/analysis/6283_nonexample_actual_v1.json": "5587d14776258a2662c6f0f36c4fd9ae9353bec9daefd8f232834dc0d3e9ae5c"
+  },
+  "root_closeout": {
+    "manifest": "runs/swegym_cpu_preprobe_20260929/analysis/evidence_manifest_6283_nonexample_v1.json",
+    "actual_analysis": "runs/swegym_cpu_preprobe_20260929/analysis/6283_nonexample_actual_v1.json",
+    "files": 12,
+    "bytes": 5249,
+    "remote_local_sha_match": true,
+    "actual_containers": [],
+    "unit_exec_status": 0,
+    "unit_state": "inactive/dead"
+  }
+}

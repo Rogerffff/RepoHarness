@@ -1,0 +1,545 @@
+{
+  "a_probe_recheck": {
+    "source_replay": {
+      "official_archive_sha256": "b928139eb0e9b4da9ca5d0ad927e17cf32727a6d18bc444ed57d63ca1a273bed",
+      "official_regex_repr": "'\\x1b\\\\[\\\\d+m'",
+      "ansi_example": {
+        "test_sanity": "PASSED"
+      },
+      "plan_input_count": 24,
+      "merged_input_count": 48,
+      "manifest_count": 48,
+      "merged_keys_equal_manifest": true,
+      "logs_replayed": 336,
+      "reward_counts": {
+        "noop_reward_0": 168,
+        "gold_reward_1": 164,
+        "gold_reward_0": 4
+      },
+      "official_vs_runner_reward_differences": [],
+      "pillow_ansi_gold_unique_tasks": 6,
+      "pillow_ansi_gold_runs": 24,
+      "pillow_ansi_gold_all_official_reward_1": true
+    },
+    "manager_seams": {
+      "partial_reference_present": {
+        "trigger": "reference_all_missing",
+        "decision": "unattributed",
+        "expected_source_reward": 0,
+        "current_override_reward": null
+      },
+      "reports": [
+        {
+          "case": "resolved",
+          "outcome": "resolved",
+          "reward": 1.0,
+          "grading_semantics": "r2e_expected_map",
+          "failure": null
+        },
+        {
+          "case": "tests_failed",
+          "outcome": "unresolved",
+          "reward": 0.0,
+          "grading_semantics": "r2e_expected_map",
+          "failure": "tests_failed"
+        },
+        {
+          "case": "candidate_execution_failed",
+          "outcome": "unresolved",
+          "reward": 0.0,
+          "grading_semantics": "swe_f2p_p2p",
+          "failure": "candidate_execution_failed"
+        },
+        {
+          "case": "infra_before_parser",
+          "outcome": "failed_to_grade",
+          "reward": null,
+          "grading_semantics": "swe_f2p_p2p",
+          "failure": "infra_failure"
+        },
+        {
+          "case": "patch_apply_failed",
+          "outcome": "unresolved",
+          "reward": 0.0,
+          "grading_semantics": "swe_f2p_p2p",
+          "failure": "patch_apply_failed"
+        }
+      ]
+    },
+    "runtime_ownership": {
+      "rollout_uid": 54321,
+      "grader_uid": 54322,
+      "rollout_workdir_chown": [
+        "if [ -d /testbed ]; then chown -R 54321:54321 /testbed || { echo \"RH2_INIT_ERROR=chown_workdir_failed\"; exit 4; }; echo \"WORKDIR_PRESENT=1\"; else echo \"WORKDIR_PRESENT=0\"; fi"
+      ],
+      "grader_workdir_chown": [
+        "chown -R \"$UIDV:$UIDV\" \"$TB\" || { echo \"RH2_PROTECT_ERROR=chown_candidate_failed\"; exit 4; }",
+        "    chown -R \"$UIDV:$UIDV\" -- \"$p\" || { echo \"RH2_PROTECT_ERROR=prefix_chown_failed:$p\"; exit 4; }"
+      ]
+    }
+  },
+  "b_material_comparison": {
+    "logs_compared": 336,
+    "normalized_expected_and_observed_map_differences": [],
+    "gold_tasks": 48,
+    "gold_patch_bytes_equal": 0,
+    "gold_selected_paths_and_applied_files_equal": 48,
+    "gold_details": [
+      {
+        "task": "coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "coverage/inorout.py": "14197bfeb9f64ba0aa1fbadeb696390a1e98e35b36bfd964940b65227a07e2cf"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "datalad__16c1ffc349df566151db0beb6d355ca27266bb8c",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "datalad/interface/utils.py": "7a835396275462a01744303e65d8b720a07c33f0b8b2df71515e528216f17a52"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "numpy/lib/polynomial.py": "a40340e2b2ef9e0b7d9ced7c6c95e424968af3ed503a1c54f8589045f1cba8e5"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "pandas/core/indexing.py": "d9a2b8be6c5686700871d9abcdf9226f15350034e85c6f5daa8ed77d6a53b9de"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "datalad/cli/main.py": "1b26dc1f4c2b1858f30e7adf6dcacbce9b7a7440c0e1c1d469fdcec52a73ce93"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "aiohttp/web.py": "b81a3a85d5ce19c71d1a9241a90110b6bbe0d30c63be93c55351bacb38e8d7a8"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "aiohttp/connector.py": "935695199731a091080b6eb4b0eb0d1fc3ec237171c50223c8271804b37aa771"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "Orange/widgets/data/owcreateclass.py": "ed94270b282c8a4dc78c4f08f1797be17a2f182aff7ea706ff495ba672972712"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "aiohttp__240da100151933883d7dea0528d45877df025b92",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "aiohttp/connector.py": "2ffaec131fa5919df677354249917ab89a08633df459183a3873475ff6ac3485"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "pandas/io/formats/info.py": "02a527c9007a4f4c99aad4bedf6f0cdc13b2db1e0862ff16ddf50ecb239d25f9"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "src/PIL/Image.py": "ad59d8e1e3d7cdb81463f6fd0765f59dafb832c9bff249175e2dc0fe850cfc48"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "src/PIL/TiffImagePlugin.py": "0fe7b77c205734c455358a76c77267369d1d68005dcd43ab4ccf675c4a5afdb8"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "numpy__2f4a965019722c3c56f43433bfa4a99c4c083138",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "numpy/lib/npyio.py": "c9acae6ae07ea8a190eed0c45485e8c14ec3161246facf215be9a49232b93c73"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "pandas/core/frame.py": "06387ed2058b712091c1781ef1d52a732d62dc506ca93e5a4e37195bc26057da"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "src/PIL/Image.py": "d4f6f561869f537ddf89b4a7334c5edcc152d8db10c9dc16c4ba88ebb0568b86"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "PIL/TiffImagePlugin.py": "6d1fe658318cf5e31fb88f54ffc31374b4ef89876d8b470867b07500576fa83c",
+          "PIL/TiffTags.py": "9d4465b23b5866a4e2fe4fe585fd81ce4c503eb88a74bfd02479332d1274df53"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "orange3__4014f2483e3bab0621c9ae0f994947c008183253",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "Orange/preprocess/discretize.py": "733be796ddb059a29d95e787e9173e13abc573a7c71ba6ffea6fa89fc2dc7d96"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "aiohttp/http_parser.py": "0e89855d52b29a78c94d5a1b391ea75898d2984deb9617b8c892ab0c46228fa1"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "numpy/ma/extras.py": "97a0f3e57c9cd28add46f07560b9e7ead555c55ff51a4b0c801d337e731c3c9c"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "pillow__4bc6483564ae1a254911e98280b9a501f047a2e0",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "src/PIL/ImageOps.py": "f8c04d47f933b6b74de880304d55d71cbdafbdd3bc6646632bebcc5d5a66bf9c"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "pandas/core/groupby/groupby.py": "0c8d08186dc982cfbf207fa01e0c0b762b38961551b91304e6672f1778b39557"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "Orange/widgets/data/owcolor.py": "14fcfc1c0e7ca3364a37f88f53072b6abab35b0d28f0e62e8a7a3cd69b6521ed"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "datalad__58ba5165234cb16de0e8463ee75097362099835f",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "datalad/cli/interface.py": "e94be05da5d8e41612c9853c2279c039adfa95b86804caa242af6c9f08337ba3",
+          "datalad/interface/base.py": "bc30cd679ad4011d8fdbf086c8c8714da9d4ab25bf67f79d95bf696dbc2eaa0d"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "coverage/control.py": "b75e979214faa35d741b95976977e246951e0e1601acd79439e269c66f134655"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "numpy/core/einsumfunc.py": "da2ccc512a97ec7968c50f26b7c95a300dc0794d21211db9d8e915e6828b0038"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "aiohttp/protocol.py": "e0355c1371c275b56b8079636939e688a7a8c3cd017cec1e6b9242fa25a9bc6e"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "datalad/support/network.py": "6fd616448f71bc0d28ef925cd18bf35215ba59482ed453c494d2a2e4a420cc26"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "scrapy/shell.py": "f078239ea35785da193e79969d6e608ff8f4df89cc89f715498f6e743017d43e",
+          "scrapy/utils/reactor.py": "f48a191e43476a054d2791163f7392fd9b914a9192ebeb00a9ac16b0bed74ea7"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "pandas/core/indexes/range.py": "5ec32aeca048f4daa5ac3b326c0424c68c610edc3e94ab55ada7f3612a109ab7"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "pandas/core/indexes/base.py": "9022c67961cbd7dfba69bde0362a4488733ee33db5d962d320b3641e89e3f474"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "coverage/config.py": "17a64770e2b9e1d3dd79a176a19ed767f8abd94681df075ea6a87cdf50e059a0"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "scrapy__9a15fcf89a151811de8ac783419df0512c863d5e",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "scrapy/responsetypes.py": "3ddfc30a6d7ab2c58d1890b606a50de245680cbc21fba3399f5adbfd41feb53b"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "orange3__9b5494e26f407b75e79699c9d40be6df1d80a040",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "Orange/classification/logistic_regression.py": "65ec3be63c075185362a97734c82d23ed1343eaef2e4aa694be2943aa0da1922"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "datalad__9ba5de094ea326e6fd5773f21c7de1776ec0fa69",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "datalad/interface/utils.py": "e0da2196ddb4bb21fda5c69c46559c198dd8a0ec5ec32528e2cecbe754cccbd7"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "numpy/lib/shape_base.py": "76e38c4463fe6638d0149b1c2d7f27ec2de4e219c0f4e89330cd2915a154a2a9"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "pillow__a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "src/PIL/GifImagePlugin.py": "e450f570fb60801850acec1352e89907bf0edf6e2d90a0329f6420f43dec5efe"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "scrapy__a95a338eeada7275a5289cf036136610ebaf07eb",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "scrapy/utils/misc.py": "3e0af09a325b89e4fa75ddeb04960239f68e0b5572131ce4855a10a73f444fc3"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "orange3__c3fb72ba464880e0354cf33f8b3d3773865c2bf6",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "Orange/widgets/visualize/owlinearprojection.py": "22d48eb862ee76355937d3ea915a5ec8c2f8f6d356e557b0f27144d693e15199"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "scrapy__cfed9b6659c90e0799361911b1d72ed127edf471",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "scrapy/middleware.py": "aafe43df848d164cf62af210abfffed064cfed2767fc7e884db4fe078c2bb13e",
+          "scrapy/utils/misc.py": "0aedacc985e501c2f19851c434c58d505d992970d08a4ece14447282b41440e4"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "numpy__d805e9b66228e68a0eb14d901cd350159c49af18",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "numpy/ma/core.py": "a5ebeeeb32882694c2a3f18b80429b9704f22f4ec9225e5285665bd1a3c56f99"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "numpy/lib/histograms.py": "b5b46c1b17b16dfe640caea5497cf5ba25e41412fb51a8f5faa68bbb9b7e0a22",
+          "numpy/lib/twodim_base.py": "c7aa777e815243ffed01751b16b0685ea081dfe75ecf97364dd21919a60d3f92"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "scrapy/exporters.py": "f10e94f59d6b6a773cbda938f776e6fead66bbc393586f1f51556e072b2708ea"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "coverage/html.py": "6eabea917da35d39b0ffe366ec2bce7c7b4dd8d6c2e44cffc5eac345097375bf"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "orange3__f237f9688e06ae46fe98d195b134d01f5b38b2e0",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "Orange/widgets/data/owselectrows.py": "8c4cb2b9f56eb5546732a855e3578688a1b2e810888e60774548be5b1727805e"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "orange3__f5026689551be7f0a43ad5f0d129e5bcfff7999c",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "Orange/widgets/data/owdatasets.py": "3c6da73069d15fa6893cf08ea34393ffecca71fb1e82f3ca0006c839a8b1c984"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "coverage/jsonreport.py": "c9bfca18f6a70f17f84a431d8651839da9eb63516539f90254a031a90ffbcf93"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "pandas__f656217a06b31e48474702036e0a5c49f664186c",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "pandas/core/reshape/merge.py": "6ca90de55eba0b3c01ec46cb5065d8a30ff056374bea2114e04ac219e0ad640e"
+        },
+        "applied_files_equal": true
+      },
+      {
+        "task": "pillow__f9d3ee0f4888f7618071c0a5315c916062e78854",
+        "patch_bytes_equal": false,
+        "selected_paths_equal": true,
+        "applied_file_sha256": {
+          "src/PIL/ImageOps.py": "8af5306c435cccc0b7b5b7b43396454f6cca5c3e7e92ec9c64b6a3a0157b2d31"
+        },
+        "applied_files_equal": true
+      }
+    ]
+  },
+  "excluded_namespace_boundary": {
+    "reachability": "conditional_future; actual R2E cold-image behavior unverified",
+    "scoreable_entries_equal": true,
+    "manifest_digest_equal": false,
+    "excluded_walk": [
+      "find './.git' -type f -print 2>/dev/null | LC_ALL=C sort | while IFS= read -r p; do printf 'EXCL\\t%s\\n' \"${p#./}\"; done ; find './.harness' -type f -print 2>/dev/null | LC_ALL=C sort | while IFS= read -r p; do printf 'EXCL\\t%s\\n' \"${p#./}\"; done ; find './.venv' -type f -print 2>/dev/null | LC_ALL=C sort | while IFS= read -r p; do printf 'EXCL\\t%s\\n' \"${p#./}\"; done"
+    ]
+  },
+  "source_sha256": {
+    "runs/env_overnight_20260916/M3/probe_data/r2e_candidates_full.jsonl": "dc90e8c1485ae5401f8ec9c60c74a2f9d631805ccb482719aced33d84c817adb",
+    "runs/env_probe_20260909_codex_backup/analysis/prime_taskset.py": "b928139eb0e9b4da9ca5d0ad927e17cf32727a6d18bc444ed57d63ca1a273bed",
+    "rh2/experiments/env_probe_20260909/r2e_probe.py": "8b23746c74b41dc26d94f393bff2f9c9a7d3ddf32210efc31e50a034a9e558c2",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_grading_wiring_review_20260920/probe_b_materials.py": "939692b572e575e10746c0f18950420604dd1d491da14a3c3a49f2927f126310",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_grading_wiring_review_20260920/probe_plan_seams.py": "0fa6d7ae7389c2fdecc5ed60b10dc3c3646496712ceddde0d6a971d3a6f12b5b",
+    "rh2/src/repoharness2/grading/manager.py": "eadaa64acc2e9dc358ad4c7c4f9ad3bb60d81a1c72298a41dabbdf6397ad6342",
+    "rh2/src/repoharness2/adapters/slime/baseline_census.py": "7867a90ee2bd159af213f6c9948cb19b9130cebb9533f8942dac2f108d68d487",
+    "rh2/src/repoharness2/contracts/baseline_manifest.py": "c73a54c7833a260a52faaa01ce28f46f2ff2f88d85cf19de128dec3ab921d795"
+  }
+}

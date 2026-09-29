@@ -1,0 +1,30 @@
+Fix the following issue from the `orange3` repository (checked out at /testbed, commit 96fda39bb0dc):
+
+[ISSUE]
+
+**Title:** Incorrect Mapping in `unique_in_order_mapping` Function
+
+**Description:**
+The `unique_in_order_mapping` function is intended to return a list of unique elements from the input while preserving their order of first appearance, along with a mapping that associates each original element to its corresponding unique element index.
+
+However, when provided with the input `[2, 3, 1]`, the function incorrectly assigns the mapping indices.
+
+**Example Code:**
+```python
+from Orange.widgets.data.owcreateclass import unique_in_order_mapping
+
+print(unique_in_order_mapping([2, 3, 1]))
+```
+
+**Expected Behavior:**
+For the input `[2, 3, 1]`, the function should return the unique elements `[2, 3, 1]` and the mapping `[0, 1, 2]`.
+This mapping correctly associates each element in the original list to its index in the list of unique elements.
+
+**Actual Behavior:**
+With the current implementation, the example prints:
+```
+(array([2, 3, 1]), array([2, 0, 1]))
+```
+The unique elements are correct, but the mapping `[2, 0, 1]` does not accurately represent the association between the original elements and their unique indices.
+
+[/ISSUE]

@@ -1,0 +1,230 @@
+{
+ "task_id": "swe_gym_lite::Project-MONAI__MONAI-5908",
+ "instance_id": "Project-MONAI__MONAI-5908",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_monai_2 (Claude Opus 5, 静态审查)",
+ "materials_refs": {
+  "base_commit": "8a5a55093aebdf631b2fec14b2111a3c980ef584",
+  "version": "1.1",
+  "python_version": "3.8",
+  "eval_cmd": "pytest -rA  tests/test_ssim_loss.py（整文件跑）",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/Project-MONAI__MONAI-5908/{gold,empty}/offline/a1/",
+  "created_at": "2023-01-27"
+ },
+ "public_view": {
+  "目标行为": "`SSIMLoss` 在 batch size > 1 时报错；题面给出 batch=4 的 6 行复现，期望打印 1。",
+  "约束": "只说『报错』，没给具体异常类型与栈。",
+  "公开材料无法确定的点": [
+   "具体是哪一行报错（题面没贴 traceback）",
+   "batch=2 是否也坏（实际不坏，只有 batch>2 才坏）",
+   "修好后各 batch 的数值语义（逐样本平均还是全局平均）"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.test_patch tests/test_ssim_loss.py",
+    "validation.golden_patch monai/losses/ssim_loss.py:98"
+   ],
+   "note": "同一 PR，目标文件 base 存在。无二进制/LFS/子模块材料。",
+   "by": "L1_monai_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base 8a5a5509 monai/losses/ssim_loss.py:98 `ssim_value = torch.cat((ssim_value.view(1), ssim_val.view(1)), dim=0)`",
+    "stage1 empty: 10 条 F2P 全 FAILED"
+   ],
+   "note": "初态确实含缺陷。逐轮追踪：i=1 时 ssim_value 只有 1 个元素，`.view(1)` 正常；i=2 时它已有 2 个元素，`.view(1)` 抛 RuntimeError。所以 **batch=1、2 在 base 上是好的，只有 batch≥3 才炸**——F2P 的 10 条正好全是 batch_size=16 的用例（test2d_04/05/10/11、test3d_04/05/10/11、test_grad_2/5），与这个推理一致。",
+   "by": "L1_monai_2"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "public.problem_statement 739 字符，含可运行复现"
+   ],
+   "note": "渲染完整、无外链无图片。hints_text（137 字符）只是维护者之间的排期寒暄，无技术信息，不构成信息差。缺点：题面**没贴 traceback**，只写『got error』。",
+   "by": "L1_monai_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.test_patch 只触碰 tests/test_ssim_loss.py"
+   ],
+   "note": "纯测试文件；gold 只碰 monai/losses/ssim_loss.py。additional_exclusions 保持空。",
+   "by": "L1_monai_2"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh setup 段"
+   ],
+   "note": "恢复清单只有一个纯测试文件。",
+   "by": "L1_monai_2"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "scan/monai_cross_index.txt",
+    "5686 的 gold 已在本题 base 中"
+   ],
+   "note": "P2：与 **MONAI-5686** 同 gold 文件同测试文件，且本题 base 已含 5686 的修复（`._compute_tensor`）；本题 P2P 里的 `test_grad_0/1/3/4` 正是 5686 新增的用例。两题构成顺序依赖，必须同侧划分。本题实际上是补上了 5686 留下的 batch>1 覆盖缺口。",
+   "by": "L1_monai_2"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "public.problem_statement 的 batch=4 复现",
+    "test_patch 把 batch_size ∈ {1,2,16} 织进三组参数表"
+   ],
+   "note": "要求可由公开材料推出：题面说 batch>1 崩，测试就在 batch=1/2/16 三档上验数值与梯度。",
+   "by": "L1_monai_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只断言数值（|res-result|<0.001）与 requires_grad"
+   ],
+   "note": "不锁实现。gold 用的 `.view(i)` 其实是个巧合成立的写法（依赖 ssim_value 恰好有 i 个元素），更干净的 `torch.cat((ssim_value.view(-1), ssim_val.view(1)))` 同样通过。",
+   "by": "L1_monai_2"
+  },
+  "25": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.fail_to_pass 10 条覆盖 2D/3D/梯度三类 × batch=16",
+    "grading.pass_to_pass 20 条覆盖 batch=1/2 全部组合"
+   ],
+   "note": "评分面同时含『必须修好』与『不能弄坏』两侧，且数值断言（1.0 与 0.0 两个方向）挡得住返回常量的假修复。本包里评分设计最健康的一题。",
+   "by": "L1_monai_2"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.pass_to_pass 20 条 = 整文件通过集减 F2P"
+   ],
+   "note": "P2P 等于整文件其余用例，含 5686 引入的梯度用例，能挡住『为了修 batch 把梯度又弄丢』这类回归。",
+   "by": "L1_monai_2"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "validation.golden_patch 只改一处 `.view(1)`→`.view(i)`"
+   ],
+   "note": "P3：gold 正确且最小，但写法脆弱——它依赖循环变量 `i` 恰等于已累积元素数。语义上应是 `.view(-1)`。另外 gold 没有修 `ssim_value` 在 i=0 时的形状假设，也没动 docstring 里仍写 batch=1 的示例。属于 gold 可改进，不影响判分。",
+   "by": "L1_monai_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "public.problem_statement 与 raw.hints_text 全文"
+   ],
+   "note": "都不含修复代码与 PR/commit 链接。",
+   "by": "L1_monai_2"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 install rc=0（两侧）"
+   ],
+   "note": "离线镜像内 rc=0。",
+   "by": "L1_monai_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "scan/envscan.txt"
+   ],
+   "note": "数据现场构造，无权重、无外部数据。",
+   "by": "L1_monai_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "scan/envscan.txt"
+   ],
+   "note": "不需要网络。",
+   "by": "L1_monai_2"
+  },
+  "13": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 gold test 段 11.5s / 30 passed"
+   ],
+   "note": "最大张量 [16,1,10,10,10]（16 万元素），且 batch 分支里是 Python 循环逐样本算 SSIM，耗时比 5686 高一倍但仍很轻；无多进程、无 shm 需求。",
+   "by": "L1_monai_2"
+  },
+  "14": {
+   "status": "issue",
+   "evidence_refs": [
+    "test_patch 的 `for device in [None, \"cpu\", \"cuda\"] if torch.cuda.is_available() else [None, \"cpu\"]`",
+    "F2P ID 形如 `test2d_04`（两位零填充）"
+   ],
+   "note": "P2（跨题机制）：参数表长度随 CUDA 可见性从 12 变 18。本题**不会跨 10 的位数边界**（12 与 18 都是两位），且 device 在外层循环，所以 ID 0–11 的含义在两类机器上一致——这是运气好，不是设计保证。`test2d_04` 的两位零填充本身就是 `parameterized` 按 `len(str(n-1))` 决定位宽的直接证据（对比 5686 只有 4 个参数时是 `test2d_0`）。",
+   "by": "L1_monai_2"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 gold status_map.json 30 条，与 F2P+P2P 一一对应"
+   ],
+   "note": "无 SKIPPED，无伪键。",
+   "by": "L1_monai_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "跨题顺序依赖",
+   "severity": "P2",
+   "evidence_refs": [
+    "本题 base 含 5686 的 gold；P2P 含 5686 新增用例"
+   ],
+   "proposed_action": "5686 与 5908 绑为同一划分单元。",
+   "next_experiment": "无。"
+  },
+  {
+   "category": "gold 写法脆弱",
+   "severity": "P3",
+   "evidence_refs": [
+    "`.view(i)` 依赖循环变量与元素数相等"
+   ],
+   "proposed_action": "记入 check 27；修订版可改成 `.view(-1)`。",
+   "next_experiment": "无。"
+  },
+  {
+   "category": "参数表随 CUDA 可见性变长",
+   "severity": "P2",
+   "evidence_refs": [
+    "device 列表推导"
+   ],
+   "proposed_action": "把『参考清单生成条件 = 无 CUDA』写进题级 facts。本题恰好不跨位数边界，但同机制在 4676/6523 上会直接炸（见 summary 仓库级第 2 条）。",
+   "next_experiment": "同镜像 CUDA 可见/不可见各收集一次 ID 列表。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰纯测试文件；gold 不碰测试样路径。",
+  "evidence_refs": [
+   "grading.test_patch",
+   "validation.golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/test_ssim_metric.py",
+   "reason": "SSIMLoss 依赖 SSIMMetric._compute_tensor，metric 侧行为需同时保持。"
+  },
+  {
+   "id": "新增：batch=3 的边界用例",
+   "reason": "base 的缺陷从 batch=3 起才出现，3 是最小失败点，比 16 更能定位。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "题面自带复现、F2P 覆盖 2D/3D/梯度三类且与 batch 档位对应、P2P 含反向数值断言；只需与 5686 同侧划分，并把机器画像条件记入 facts。"
+ },
+ "costs": {
+  "minutes": 17
+ }
+}

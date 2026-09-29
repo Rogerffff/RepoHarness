@@ -1,0 +1,27 @@
+[ISSUE]
+**Title:** `GroupBy.quantile` fails with `pd.NA` values, raising TypeError
+
+**Description:**
+When using `GroupBy.quantile` on a DataFrame containing `pd.NA` values, a `TypeError` is raised.
+
+**Example Code:**
+```python
+import pandas as pd
+
+df = pd.DataFrame({
+    'group': [1, 1],
+    'values': [2.5, pd.NA]
+}, dtype='Float64')
+
+result = df.groupby('group')['values'].quantile(0.5)
+```
+
+**Expected Behavior:**
+The median value for group `1` should be `2.5`, correctly handling and ignoring the `pd.NA` value.
+
+**Actual Behavior:**
+A `TypeError` is raised with the message:
+```
+TypeError: float() argument must be a string or a number, not 'NAType'
+```
+[/ISSUE]

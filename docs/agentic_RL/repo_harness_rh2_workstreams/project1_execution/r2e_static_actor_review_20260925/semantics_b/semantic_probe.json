@@ -1,0 +1,159 @@
+{
+  "scope": "只读本机CPU；aiohttp重读已有正文；Scrapy原件AST节点+响应类型标记/six桩；不构成真实RH2评分",
+  "python_version": "3.12.13",
+  "aiohttp_C3": {
+    "gold": {
+      "body": "b'6\\r\\nKI,I\\x04\\x00\\r\\n0\\r\\n\\r\\n'",
+      "existing_C3_prefix_check_passes": true,
+      "semantic_check": {
+        "ok": true,
+        "chunk_sizes": [
+          6,
+          0
+        ],
+        "decoded": "b'data'"
+      }
+    },
+    "AP1": {
+      "body": "b'0\\r\\n\\r\\n6\\r\\nKI,I\\x04\\x00\\r\\n0\\r\\n\\r\\n'",
+      "existing_C3_prefix_check_passes": false,
+      "semantic_check": {
+        "ok": false,
+        "chunk_sizes": [
+          0
+        ],
+        "error": "bytes remain after terminating chunk"
+      }
+    },
+    "AP2": {
+      "body": "b'6\\r\\nKI,I\\x04\\x00\\r\\n0\\r\\n\\r\\n'",
+      "existing_C3_prefix_check_passes": true,
+      "semantic_check": {
+        "ok": true,
+        "chunk_sizes": [
+          6,
+          0
+        ],
+        "decoded": "b'data'"
+      }
+    },
+    "synthetic_empty": {
+      "body": "b''",
+      "existing_C3_prefix_check_passes": true,
+      "semantic_check": {
+        "ok": false,
+        "chunk_sizes": [],
+        "error": "subsection not found"
+      }
+    },
+    "synthetic_wrong_data": {
+      "body": "b'1\\r\\nx\\r\\n0\\r\\n\\r\\n'",
+      "existing_C3_prefix_check_passes": true,
+      "semantic_check": {
+        "ok": false,
+        "chunk_sizes": [
+          1,
+          0
+        ],
+        "error": "incomplete deflate stream"
+      }
+    },
+    "synthetic_missing_terminator": {
+      "body": "b'6\\r\\nKI,I\\x04\\x00\\r\\n'",
+      "existing_C3_prefix_check_passes": true,
+      "semantic_check": {
+        "ok": false,
+        "chunk_sizes": [
+          6
+        ],
+        "error": "subsection not found"
+      }
+    },
+    "synthetic_valid_reframing": {
+      "body": "b'2\\r\\nKI\\r\\n4\\r\\n,I\\x04\\x00\\r\\n0\\r\\n\\r\\n'",
+      "existing_C3_prefix_check_passes": true,
+      "semantic_check": {
+        "ok": true,
+        "chunk_sizes": [
+          2,
+          4,
+          0
+        ],
+        "decoded": "b'data'"
+      }
+    }
+  },
+  "aiohttp_literal_mock_assertion": {
+    "all_mock_calls": true,
+    "all_write_arguments": false
+  },
+  "scrapy_A_prime_counterexample": {
+    "base": {
+      "isolated_hidden_statuses": {
+        "test_custom_mime_types_loaded": "PASSED",
+        "test_from_args": "FAILED",
+        "test_from_body": "PASSED",
+        "test_from_content_disposition": "PASSED",
+        "test_from_content_type": "FAILED",
+        "test_from_filename": "PASSED",
+        "test_from_headers": "FAILED"
+      },
+      "errors": {
+        "test_from_args": "TypeError: a bytes-like object is required, not 'str'",
+        "test_from_content_type": "AssertionError: application/x-json; encoding=UTF8;charset=UTF-8 ==> <class '__main__.Response'> != <class '__main__.TextResponse'>",
+        "test_from_headers": "TypeError: a bytes-like object is required, not 'str'"
+      },
+      "public_header_test_single_value": "PASSED",
+      "header_value": "b'text/html'",
+      "header_value_type": "bytes"
+    },
+    "gold": {
+      "isolated_hidden_statuses": {
+        "test_custom_mime_types_loaded": "PASSED",
+        "test_from_args": "FAILED",
+        "test_from_body": "PASSED",
+        "test_from_content_disposition": "PASSED",
+        "test_from_content_type": "PASSED",
+        "test_from_filename": "PASSED",
+        "test_from_headers": "FAILED"
+      },
+      "errors": {
+        "test_from_args": "TypeError: a bytes-like object is required, not 'str'",
+        "test_from_headers": "TypeError: a bytes-like object is required, not 'str'"
+      },
+      "public_header_test_single_value": "PASSED",
+      "header_value": "b'text/html'",
+      "header_value_type": "bytes"
+    },
+    "p4_decode_bytes": {
+      "isolated_hidden_statuses": {
+        "test_custom_mime_types_loaded": "PASSED",
+        "test_from_args": "PASSED",
+        "test_from_body": "PASSED",
+        "test_from_content_disposition": "PASSED",
+        "test_from_content_type": "PASSED",
+        "test_from_filename": "PASSED",
+        "test_from_headers": "PASSED"
+      },
+      "errors": {},
+      "public_header_test_single_value": "PASSED",
+      "header_value": "b'text/html'",
+      "header_value_type": "bytes"
+    },
+    "bad_headers_str": {
+      "isolated_hidden_statuses": {
+        "test_custom_mime_types_loaded": "PASSED",
+        "test_from_args": "PASSED",
+        "test_from_body": "PASSED",
+        "test_from_content_disposition": "PASSED",
+        "test_from_content_type": "PASSED",
+        "test_from_filename": "PASSED",
+        "test_from_headers": "PASSED"
+      },
+      "errors": {},
+      "public_header_test_single_value": "FAILED: 'text/html' != b'text/html'",
+      "header_value": "'text/html'",
+      "header_value_type": "str"
+    }
+  }
+}

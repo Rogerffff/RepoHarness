@@ -1,0 +1,101 @@
+{
+ "task_id": "getmoto__moto-4833",
+ "source": "swe_gym_lite_full_f70b1a29",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "s2/ingest/public_bundles_v0.jsonl#getmoto__moto-4833",
+  "grading": "s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-4833",
+  "validation": "s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-4833",
+  "base_commit": "bb6fb1200f8db61e0d39c9a4da5954469a403fb8",
+  "version": "3.0",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-4833/"
+ },
+ "public_view": {
+  "goal": "题面：moto 3.0.2 下，用 pytest 风格的小写 `setup()`（非 unittest.TestCase）在类里建表，测试方法内重新取 boto3 resource 时报 ResourceNotFound；2.3.2 正常。期望 pytest 的 setup 建立的资源在测试方法里仍可见。",
+  "constraints": [
+   "复现类 Test_from_dynamo 不继承 unittest.TestCase，用 pytest 的 setup/teardown 约定",
+   "题面明确指出“注意测试内部重新创建了 boto3 resource”",
+   "题面提到已知的 teardown workaround 但不适用"
+  ],
+  "unknowns_from_public_only": [
+   "题面只提 `setup`，没提 `setup_method`；但 F2P 同时要求 `setup_method` 也被识别（pytest 的正式名）",
+   "题面没说 `setUp`（大写 U）在非 TestCase 类上是否还应被识别——gold 把它收紧为“只有继承 unittest.TestCase 才算”，这是题面推不出的行为改变",
+   "题面没说不识别的名字（如 setupmethod）应保持原语义"
+  ],
+  "base_code_located": [
+   "bb6fb120:moto/core/models.py:129-144 decorate_class：base 已含 4799 的 MRO 修复，has_setup_method = 'setUp' in supermethods，仅识别大写 setUp",
+   "bb6fb120:moto/core/models.py:177 elif not has_setup_method and is_test_method: should_reset = True"
+  ],
+  "public_view_conclusion": "只看公开材料可定位到“moto 只认 setUp，不认 pytest 的 setup”，但推不出还要认 setup_method、也推不出要给 setUp 加 TestCase 限制。"
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 只改 tests/test_core/test_decorator_calls.py（base 存在）", "gold 只改 moto/core/models.py（base 存在）"], "note": "目标文件均在 base 存在；与题面同一问题；无二进制/LFS/子模块材料。", "by": "L1_moto_1"},
+  "2": {"status": "pass", "evidence_refs": ["bb6fb120:moto/core/models.py:144 has_setup_method = 'setUp' in supermethods", "stage1:4833/empty 两条 F2P 均 FAILED"], "note": "base 确有题面缺陷：只识别 setUp，pytest 的 setup/setup_method 不算，导致测试方法开头 reset 掉 setup 建的资源。", "by": "L1_moto_1"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 含完整可读代码块，无外链、无图片", "raw.hints_text 见 check 29"], "note": "题面自足到能定位模块；但对 setup_method 与 setUp 收紧两点不充分（见 check 23）。", "by": "L1_moto_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch paths = [tests/test_core/test_decorator_calls.py]", "gold paths = [moto/core/models.py]"], "note": "test_patch 只触碰纯测试文件；gold 不触碰测试样路径。additional_exclusions 保持默认空。", "by": "L1_moto_1"},
+  "5": {"status": "issue", "evidence_refs": ["git log fc1ef55a..bb6fb120 -- moto/core/models.py 含 `010d525de Class decorator - allow possibility of setUp in parent class (#4799)`", "4833 的 P2P 含 tests/test_core/test_decorator_calls.py::TestSetUpInBaseClass::test_a_thing（正是 4799 的 F2P）", "4799 与 4833 的 P2P 交集 17/23"], "note": "4833 的 base 已经包含 4799 的 gold，两题是同一函数 decorate_class 的连续两次修补，材料高度重叠。见 issues。", "by": "L1_moto_1"},
+  "6": {"status": "issue", "evidence_refs": ["bb6fb120:tests/test_core/test_decorator_calls.py 中 test_context_manager / test_decorator_start_and_stop 带 @pytest.mark.network", "bb6fb120:setup.cfg markers = network"], "note": "同 4799：P2P 含需要真实外网的用例。", "by": "L1_moto_1"},
+  "7": {"status": "issue", "evidence_refs": ["stage1:4833/gold/offline/a1/status_map.json 中 test_context_manager=FAILED, test_decorator_start_and_stop=FAILED"], "note": "同 4799，访问 https://ec2.us-west-1.amazonaws.com/。", "by": "L1_moto_1"},
+  "11": {"status": "pass", "evidence_refs": ["无权重/数据集下载"], "note": "", "by": "L1_moto_1"},
+  "17": {"status": "issue", "evidence_refs": ["test_patch 把 `class TestWithSetup(unittest.TestCase)` 重命名为 `class TestWithSetup_UppercaseU(unittest.TestCase)`"], "note": "test_patch 含类重命名。本题的 P2P 常量已用新名（TestWithSetup_UppercaseU），自洽；但这类重命名说明“测试文件在 test_patch 里被整体重写”是常态，任何按旧名写死的 P2P/排除规则都会失配。文件边界本身仍干净，additional_exclusions = []。", "by": "L1_moto_1"},
+  "23": {"status": "issue", "evidence_refs": ["problem_statement 只出现小写 `setup`", "grading.fail_to_pass 含 tests/test_core/test_decorator_calls.py::TestWithSetupMethod::test_should_find_bucket（要求识别 setup_method）", "validation.golden_patch 的 `(\"setUp\" in supermethods and unittest.TestCase in klass.__mro__)`"], "note": "两处公开材料推不出：(a) 必须同时识别 pytest 的 setup_method（题面未提，但属 pytest 常识，可接受）；(b) gold 把 setUp 收紧为“仅 unittest.TestCase 子类”，这是与题面无关的额外行为改变，公开材料完全无从得知。", "by": "L1_moto_1"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 只断言 s3.head_bucket(Bucket='mybucket') is not None"], "note": "断言对外行为，不绑定 helper 名。替代实现（例如 `any(n in supermethods for n in ('setUp','setup','setup_method'))`，不加 TestCase 限制）也能通过 F2P 与全部 P2P —— 见 check 25。", "by": "L1_moto_1"},
+  "25": {"status": "issue", "evidence_refs": ["P2P 含 TestWithInvalidSetupMethod::test_should_not_find_bucket（名字 setupmethod 不应被识别）", "P2P 不含任何“非 TestCase 类定义大写 setUp”的用例"], "note": "反向覆盖只到“无法识别的名字”。gold 新增的 `and unittest.TestCase in klass.__mro__` 限制没有任何 F2P/P2P 检验：去掉它同样全绿。因此一个不含该限制的合理修法会被接受，而 gold 的这部分语义对模型是不可见也不可学的。反过来说，若模型写出 gold 的收紧版本而上游本意不同，也无从区分。", "by": "L1_moto_1"},
+  "26": {"status": "pass", "evidence_refs": ["见 proposed_regression_tests"], "note": "", "by": "L1_moto_1"},
+  "27": {"status": "pass", "evidence_refs": ["validation.golden_patch 只改 has_setup_method 的计算（含把 itertools.chain 结果物化为 list）"], "note": "gold 相关且最小，不依赖未交付改动。把 chain 物化为 list 是必要的（原生成器被多次 `in` 消费会误判），属真实 bug 修复的一部分。", "by": "L1_moto_1"},
+  "29": {"status": "pass", "evidence_refs": ["problem_statement 无修复代码、无 PR 链接"], "note": "无静态泄漏。", "by": "L1_moto_1"}
+ },
+ "issues": [
+  {
+   "category": "grading_materials/offline_incompatible_p2p",
+   "severity": "P1",
+   "evidence_refs": [
+    "bb6fb1200f8db61e0d39c9a4da5954469a403fb8:tests/test_core/test_decorator_calls.py 中 `@pytest.mark.network` 装饰 test_context_manager 与 test_decorator_start_and_stop",
+    "grading.pass_to_pass 含这两条",
+    "stage1:4833/gold/offline/a1/status_map.json 两条均 FAILED",
+    "task_signals_swegym.json getmoto__moto-4833 stage1.gold.verdict = RESOLVED_NO（p2p_missing=0，即不是找不到而是真失败）"
+   ],
+   "proposed_action": "与 4799 完全同因：离线沙箱里这两条按设计要连真实 AWS。剔除被 `@pytest.mark.network` 标记的 P2P（首选，纯材料修复），或在 eval_cmd 加 `-m 'not network'`。这是 4833 gold=RESOLVED_NO 的唯一原因。",
+   "next_experiment": "与 4799 同批实验：重跑 gold，比较剔除 network 用例前后的 verdict。"
+  },
+  {
+   "category": "task_duplication",
+   "severity": "P2",
+   "evidence_refs": [
+    "git -C repos/moto log --oneline fc1ef55a..bb6fb120 -- moto/core/models.py → `010d525de Class decorator - allow possibility of setUp in parent class (#4799)`",
+    "4833 base 的 moto/core/models.py:130/136/141/144 已含 4799 gold 引入的 get_direct_methods_of / superclasses / supermethods",
+    "4833 的 P2P 含 4799 的 F2P：tests/test_core/test_decorator_calls.py::TestSetUpInBaseClass::test_a_thing",
+    "两题 P2P 交集 17/23"
+   ],
+   "proposed_action": "4833 是 4799 的直接续作：同一文件、同一函数、同一测试文件、材料高度重叠，且 4833 的 base 已包含 4799 的答案。同时入训练集等于让模型在 decorate_class 上连练两次，且存在“先做 4833 就等于看过 4799 的解法”的顺序泄漏。建议只保留一题（4833 更完整，覆盖 setup/setup_method/无效名三种情形），或明确按 `moto/core/models.py::decorate_class` 做主题去重。",
+   "next_experiment": "对全 216 题做一次 (repo, gold 触碰文件, gold 触碰函数) 三元组聚类，统计还有多少组这样的“续作对”。"
+  },
+  {
+   "category": "untested_gold_behavior",
+   "severity": "P3",
+   "evidence_refs": [
+    "validation.golden_patch 新增 `and unittest.TestCase in klass.__mro__`",
+    "grading.fail_to_pass / pass_to_pass 中没有任何“非 TestCase 类 + 大写 setUp”的用例"
+   ],
+   "proposed_action": "gold 的这一收紧完全没有测试覆盖，既不可从题面推出也不被判分检验。对训练而言它是噪声：模型写出不含该限制的版本同样满分。若要保留本题，建议在扩展回归里补一条断言把这条语义固化，或在题面里说明。",
+   "next_experiment": "写一个 `@mock_s3 class Foo:` 且定义 `setUp` 的用例，在 gold 下跑一次，确认行为（应为“仍然 reset，桶不可见”），据此决定是补测试还是承认其为未定义行为。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 tests/test_core/test_decorator_calls.py（纯测试文件，含一次类重命名），gold 只触碰 moto/core/models.py，二者不重叠。按第四组 B 默认空即可。",
+  "evidence_refs": ["grading.test_patch", "validation.golden_patch", "docs/.../batch4_scoring_20260910/README.md §0/§6.5"]
+ },
+ "proposed_regression_tests": [
+  {"id": "tests/test_core/test_decorator_calls.py::TestWithInvalidSetupMethod::test_should_not_find_bucket", "reason": "反向语义：无法识别的名字必须保持 reset；防止把修法写成“只要有任何 setup* 方法就不 reset”"},
+  {"id": "tests/test_core/test_decorator_calls.py::TestWithSetup_UppercaseU::test_should_not_find_unknown_bucket", "reason": "unittest 路径不能被本次改动破坏"},
+  {"id": "tests/test_core/test_decorator_calls.py::TestSetUpInBaseClass::test_a_thing", "reason": "4799 引入的父类 setUp 语义是本改动的直接前置，必须不回归"},
+  {"id": "tests/test_core/test_decorator_calls.py::TestWithNestedClasses::TestWithSetup::test_should_not_find_bucket_from_test_method", "reason": "嵌套类是 decorate_class 的另一条分支，has_setup_method 计算改动最易波及"},
+  {"id": "建议新增：非 TestCase 类定义大写 setUp", "reason": "覆盖 gold 新增的 `unittest.TestCase in klass.__mro__` 限制，目前完全无覆盖"}
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "与 4799 同因：P2P 的两条 network 用例让 gold 在离线环境判为 RESOLVED_NO。剔除后题目本身可用。但需先做 4799/4833 的去重裁定——4833 的 base 已含 4799 的答案，两题不宜同时入集。"
+ },
+ "costs": {"minutes": 22}
+}

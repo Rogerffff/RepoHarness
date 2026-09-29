@@ -1,0 +1,69 @@
+{
+ "task_id": "Project-MONAI__MONAI-3715",
+ "source": "SWE-Gym lite / Project-MONAI/MONAI PR 3715 (created_at 2022-01-26)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "d36b835b226ab95ffae5780629a5304d8df5883e",
+  "version": "0.8", "python_version": "3.8",
+  "eval_cmd": "pytest -rA ", "actual_test_cmd": "pytest -rA  tests/test_prepare_batch_default.py",
+  "f2p": ["tests/test_prepare_batch_default.py::TestPrepareBatchDefault::test_content"],
+  "p2p": ["tests/test_prepare_batch_default.py::TestPrepareBatchDefault::test_empty_data"],
+  "test_patch_paths": ["tests/test_prepare_batch_default.py"],
+  "gold_paths": ["monai/engines/evaluator.py"],
+  "stage1": "gold=RESOLVED_FULL（2/2 PASSED，4.75s）/ empty=RESOLVED_NO（1 PASSED + 1 FAILED），rc_install=0"
+ },
+ "public_view": {
+  "goal": "`SupervisedEvaluator(mode='train')` 这样传字符串会抛 `ValueError: unsupported mode: train, should be 'eval' or 'train'.`。题面附完整 traceback，指到 monai/engines/evaluator.py:123。要求 `mode` 支持 str 输入。",
+  "constraints": ["题面 745 字符，含 traceback 与出错行号，定位信息充分", "题面的实际诉求是**让 mode='train' 能用**（用于 SaliencyInferer）"],
+  "unknowns_from_public_only": [
+   "修法有多种：把 ForwardMode 改成 str-Enum、在比较前转换、或直接比较 `mode` 的 value。题面不指定",
+   "题面没说 `self.mode` 最终应该是什么（gold 里它最后被赋成 eval_mode/train_mode 这两个上下文管理器）"
+  ],
+  "base_code_evidence": [
+   "d36b835b2:monai/engines/evaluator.py:117 `self.mode = look_up_option(mode, ForwardMode)`（结果存进 self.mode，局部变量 mode 仍是原始字符串）",
+   "d36b835b2:monai/engines/evaluator.py:118-123 `if mode == ForwardMode.EVAL: ... elif mode == ForwardMode.TRAIN: ... else: raise ValueError(...)`",
+   "d36b835b2:monai/utils/enums.py:207-213 `class ForwardMode(Enum): TRAIN='train'; EVAL='eval'` —— 普通 Enum 而非 str-Enum，所以 `'eval' == ForwardMode.EVAL` 为 False，字符串输入必然落到 else 分支"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["tests/test_prepare_batch_default.py 在 base 存在", "gold 目标 monai/engines/evaluator.py:117 上下文匹配"], "note": "无二进制/LFS/子模块。", "by": "L1_monai_1"},
+  "2": {"status": "pass", "evidence_refs": ["d36b835b2:monai/engines/evaluator.py:117-123 与 enums.py:207-213 的普通 Enum 定义", "stage1 empty 侧 test_content FAILED"], "note": "base 确含题面所述缺陷，根因可从 base 代码直接读出。", "by": "L1_monai_1"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 745 字符，含完整 traceback 与行号", "raw hints_text 为空"], "note": "无外链/图片/截断。题面质量好。", "by": "L1_monai_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 只改 tests/test_prepare_batch_default.py 的一行（给 test_content 的构造加 `mode=\"eval\"`）"], "note": "无非测试源码。additional_exclusions 保持空。", "by": "L1_monai_1"},
+  "17": {"status": "pass", "evidence_refs": ["该文件在 base 存在"], "note": "恢复步骤可正常工作。", "by": "L1_monai_1"},
+  "5": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["dupidx.txt：tests/test_prepare_batch_default.py 同时被 MONAI-3690 与本题触碰", "本题的唯一 P2P `test_empty_data` 正是 MONAI-3690 的 test_patch 新增的用例", "本题 base（2022-01-26）晚于 3690（2022-01-20），因此 base 已含 3690 的 gold（workflow.py 的 epoch_length==0 提前返回）"], "note": "**与 MONAI-3690 紧邻**：本题 base 里就能直接读到 3690 的参考解与其新增用例。两题同在本包内，划分必须同侧。不是重复题（gold 文件不同）。", "by": "L1_monai_1"},
+  "23": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["题面的诉求是让 `mode='train'` 可用（为了 SaliencyInferer）", "test_patch 给 test_content 加的却是 `mode=\"eval\"`", "F2P/P2P 里没有任何一条传 `mode='train'`"], "note": "**评分覆盖的不是题面的用例**：报告者要的是 train 模式，测试只验证了 eval 模式。要求本身能推出（『字符串 mode 应被接受』），但被验证的那一半恰好是报告者不需要的那一半。", "by": "L1_monai_1"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 只断言 evaluator 能构造成功并跑出正确 output"], "note": "不强制唯一实现：改 Enum 基类、先转换再比较、比较 `.value`，都能过。", "by": "L1_monai_1"},
+  "25": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["F2P 只用 `mode='eval'`；P2P 的 test_empty_data 不传 mode（走默认 ForwardMode.EVAL）", "d36b835b2:monai/engines/evaluator.py:118-123"], "note": "**明确可被放过的错误修复**：把整段分支换成 `self.mode = eval_mode`（无条件用 eval），F2P 与 P2P 全过——而这正好让题面抱怨的 `mode='train'` 静默失效（不再报错，但也不是 train 模式，比原来更糟：原来至少会报错）。同理，只把 `elif mode == ForwardMode.TRAIN` 那一支删掉也满分。整份评分只有 2 条用例，且都不覆盖 train 分支。", "by": "L1_monai_1"},
+  "26": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["P2P 只有 1 条"], "note": "必须补 train 分支的用例，见 proposed_regression_tests。", "by": "L1_monai_1"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 只改一行：`self.mode = look_up_option(...)` → `mode = look_up_option(...)`"], "note": "改动最小、精确对应、不依赖未交付改动。这是本包里 gold 最小的一题（单行）。", "by": "L1_monai_1"},
+  "29": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["题面 traceback 精确给出 evaluator.py:123 与 evaluator.py:208 两个行号，以及报错文本"], "note": "题面把出错位置指到行，定位几乎免除。不算泄漏修复代码（还需要看懂 look_up_option 的返回值没被用于比较），但难度被显著拉低。", "by": "L1_monai_1"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 rc_install=0"], "note": "安装离线可完成。", "by": "L1_monai_1"},
+  "7": {"status": "pass", "evidence_refs": ["测试用内存 tensor，不读盘不下载"], "note": "无外部资产。", "by": "L1_monai_1"},
+  "11": {"status": "pass", "evidence_refs": ["stage1 离线 2/2 通过，4.75s"], "note": "不需要网络。本题的测试文件不含 dist 用例（那在 3690 的新建文件里），所以也不需要多进程。", "by": "L1_monai_1"},
+  "10": {"status": "pass", "evidence_refs": ["2 条用例都是单进程 CPU，无随机、无计时"], "note": "无 GPU/多进程/共享内存需求。", "by": "L1_monai_1"},
+  "20": {"status": "pass", "evidence_refs": ["gold 2/2 PASSED、empty 1 PASSED + 1 FAILED"], "note": "分差干净、无噪声失败、4.75s。", "by": "L1_monai_1"}
+ },
+ "issues": [
+  {"category": "reward_hacking_surface", "severity": "P1",
+   "evidence_refs": ["F2P 只有 mode='eval'，P2P 不传 mode", "evaluator.py:118-123 的三分支结构"],
+   "proposed_action": "必须补 `mode='train'` 与 `mode=ForwardMode.TRAIN` 两条用例（断言 evaluator 在 train 模式下网络处于 training 状态），以及非法字符串仍抛异常的用例。否则『无条件 eval_mode』一行假修复满分，且恰好毁掉题面的诉求。",
+   "next_experiment": "把 evaluator.py:117-123 替换成单行 `self.mode = eval_mode` 跑当前 F2P+P2P，预期 RESOLVED_FULL —— 这是本包里最干净的一个反例。"},
+  {"category": "test_not_covering_statement", "severity": "P2",
+   "evidence_refs": ["题面为 SaliencyInferer 要 train 模式", "test_patch 加的是 mode='eval'"],
+   "proposed_action": "题面要求与被验证行为错位。补上 train 分支后即可对齐；不需要改题面。",
+   "next_experiment": "在 gold 上跑 `SupervisedEvaluator(mode='train')` 并断言 network.training 为 True，确认 gold 确实满足题面诉求。"},
+  {"category": "cross_task_adjacency", "severity": "P2",
+   "evidence_refs": ["本题 P2P = MONAI-3690 新增的用例；本题 base 晚于 3690 的合并"],
+   "proposed_action": "与 MONAI-3690 同侧划分。见 3690 记录里的同名条目。",
+   "next_experiment": "无需实验。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只碰测试文件，gold 只碰 monai/engines/evaluator.py。", "evidence_refs": ["grading_bundles_v2_v0:Project-MONAI__MONAI-3715 test_patch", "validation_bundles_v0:Project-MONAI__MONAI-3715 golden_patch"]},
+ "proposed_regression_tests": [
+  {"id": "新增：mode='train' 与 mode=ForwardMode.TRAIN 下 evaluator 可构造，且 forward 时 network.training 为 True", "reason": "题面的真实诉求，也是唯一能挡住『无条件 eval_mode』假修复的断言。"},
+  {"id": "新增：mode='bad' 仍抛 ValueError", "reason": "gold 保留了 look_up_option 的校验，但没有测试；候选把校验删掉也满分。"},
+  {"id": "tests/test_integration_workflows.py（该版本存在时）", "reason": "Evaluator.__init__ 是所有评估工作流的入口。"}
+ ],
+ "disposition_hint": {"state": "needs_repair", "reason": "环境完全干净（离线 4.75s、分差精确、题面有 traceback），但整份评分只有 2 条用例且都不覆盖 train 分支，一行『无条件 eval_mode』即可满分并恰好破坏题面诉求。补 2 条用例后是很好的低成本训练题。另需与 3690 同侧划分。"},
+ "costs": {"minutes": 20}
+}

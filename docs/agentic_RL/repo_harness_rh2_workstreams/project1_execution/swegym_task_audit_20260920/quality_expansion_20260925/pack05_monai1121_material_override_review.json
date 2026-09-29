@@ -1,0 +1,30 @@
+{
+  "task_id": "Project-MONAI__MONAI-1121",
+  "by": "/root",
+  "method": "stdlib-only exact unified diff application in memory; no files modified or project code executed",
+  "original_test_patch_sha256": "d82fc5d7df743e2b694e098cc59bb9d03d27d1f94111c490698ed69a92b7d678",
+  "revised_test_patch_sha256": "928e345a3f5f89887542d82f5c9e1e189873cb3d45ee5e4b52a1de614c96f241",
+  "original_and_revised_paths_equal": true,
+  "changed_materialized_files": {
+    "tests/utils.py": "--- original/tests/utils.py\n+++ materials-v1/tests/utils.py\n@@ -130,3 +130,6 @@\n \n if __name__ == \"__main__\":\n     print(query_memory())\n+\n+# RepoHarness materials-v1: imported helper remains callable; not a standalone pytest test.\n+test_script_save.__test__ = False\n"
+  },
+  "sources": [
+    {
+      "kind": "noop",
+      "file": "runs/env_recipe_repair_20260919/materials_v1/runs/Project-MONAI__MONAI-1121-noop/materials/materials.json",
+      "sha256": "57e4dd0d2e447726477a1bad5aacc755f76585e5be5b94ce04ee630fd3f85a0d",
+      "original_grading_digest": "sha256:abe5416b1174a06e1bd60a39f47f75386b1d823d5fb738396d03cd69486e6276",
+      "revised_grading_digest": "sha256:71ebb22db1929f173492d50d66d4f6488e453ae5336ace307a791e1a91a9f976",
+      "scope": "versioned diagnostic GradingEnvSpec; source prepared package preserved; refreeze before production"
+    },
+    {
+      "kind": "gold",
+      "file": "runs/env_recipe_repair_20260919/materials_v1/runs/Project-MONAI__MONAI-1121-gold/materials/materials.json",
+      "sha256": "57e4dd0d2e447726477a1bad5aacc755f76585e5be5b94ce04ee630fd3f85a0d",
+      "original_grading_digest": "sha256:abe5416b1174a06e1bd60a39f47f75386b1d823d5fb738396d03cd69486e6276",
+      "revised_grading_digest": "sha256:71ebb22db1929f173492d50d66d4f6488e453ae5336ace307a791e1a91a9f976",
+      "scope": "versioned diagnostic GradingEnvSpec; source prepared package preserved; refreeze before production"
+    }
+  ],
+  "conclusion": "Historical materials-v1 selected runs used revised private test material adding test_script_save.__test__ = False. All five target helpers/callers and assertions remain identical after exact materialization. Original frozen test.patch remains unchanged. No-helper-error historical result is not an unmodified-upstream-pytest result. No actor/production qualification."
+}

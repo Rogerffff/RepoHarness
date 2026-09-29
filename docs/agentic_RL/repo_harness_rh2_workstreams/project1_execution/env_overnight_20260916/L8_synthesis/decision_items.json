@@ -1,0 +1,1446 @@
+{
+ "schema_id": "rh2.l8.decision_items.v0",
+ "generated_at_local": "2026-09-16 凌晨（本机）",
+ "scope": "合并 13 个 L1 包 + L0/L2/L3/L4/L5 + M2/M3 的“最值得用户裁定的问题”，去重后按“影响题数 × 阻断程度”排序。",
+ "caveats": [
+  "全部为建议，不是决定。",
+  "**C18 前提（L6 实测，影响面最大）**：阶段一 181 份 gold 日志一份都没有 `>>>>> Start/End Test Output` 标记，status_map 是整份日志解析出来的（混进 pip 的 ERROR: 行伪键 54 种 / 148 条 / 涉及 54 题）；而当前 rh2 v2 入口（scoring.py:233-238）缺标记会直接空映射 + apply_ok=False、判成 patch_apply_failed 而不是 FULL/NO。因此各包“gold 全 FULL / empty 全 NO / p2p_missing=…”以及 fragile_reference_id 信号本身，都是**阶段一离线口径**的结论，不能直接当作生产 v2 路径的结论。",
+  "tasks_affected.count 多为下界：静态审查只覆盖各包分配范围，跨包统计口径不完全一致。",
+  "L6 复核了 20 条 rh2 代码断言（成立 14 / 部分 3 / 不成立 3），本文件已按其结论修订；行号请按符号引用，C13/C19 显示各包给的行号偏 0–4 行。",
+  "机器 1 的 e2、M2 剩余项、M3 第二片、L7 假修复套件在本文件生成时仍未收齐，见 SYNTHESIS.md 文末“未纳入”。"
+ ],
+ "items": [
+  {
+   "id": "D01",
+   "question": "**根因族：评分信号直接来自候选进程的 stdout，且 parser 不校验键、后写覆盖先写 ⇒ 候选控制测试进程 = 候选控制评分输入。**已知注入向量四条（其中两条已在真实 RH2 链上拿到 reward=1.0）。要不要改用不经候选 stdout 的结构化结果通道，并/或在安装段之后由 root 复原校验控制面？",
+   "tier": "T0 公共契约 + T0 评分语义",
+   "tasks_affected": {
+    "count": 216,
+    "scope": "全池（SWE-Gym 216 题结构性可用；R2E 48 题同型，见 D14）",
+    "confirmed": [
+     "Project-MONAI__MONAI-2061（新建 conftest）",
+     "iterative__dvc-1661（新建 conftest）",
+     "pydantic__pydantic-8500（追加到 base 已有的 conftest）",
+     "Project-MONAI__MONAI-2061（只改 setup.py，观测字段全空）"
+    ],
+    "sub_scopes": {
+     "base 无 conftest.py（新建即生效）": "MONAI 26/26、dvc 4/35",
+     "仓库级 conftest 承载判分 fixture": "pydantic 13/20",
+     "被参考测试 import 但不恢复的支撑文件": "MONAI 9 题 tests/utils.py、mypy 40 题 mypy/test/* 与 test-data/*、conan 12 题 conans/test/conftest_user.py"
+    },
+    "note": "结构性影响全池 216 题（R2E 48 题同型）。已实测：MONAI-2061、dvc-1661（新建 conftest）、pydantic-8500（追加到已有 conftest）、MONAI-2061（只改 setup.py）四例真实链 reward=1.0；合成日志复现：标记段内先打印 `PASSED <参考ID>`、pytest 只收集并通过另一条 → RESOLVED_FULL、参考缺席 0（另一会话 v2 入口本机复现）。意外污染面：54/181 题的 status_map 已经含伪条目（本轮为阶段一整份日志口径，见 C18）。"
+   },
+   "repos": [
+    "Project-MONAI/MONAI",
+    "iterative/dvc",
+    "pydantic/pydantic",
+    "python/mypy",
+    "conan-io/conan",
+    "dask/dask",
+    "getmoto/moto"
+   ],
+   "evidence": [
+    {
+     "pkg": "M2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M2/M2_report.md §7.2/§7.5/§7.6 + M2_conftest_probe.json",
+     "note": "真实 RH2 链（replay_grade prepare/export-gold/run + 正式 grader profile：deny_all / user=rh2grader / uid=54322 / cpus=2.0 / memory 4 GiB / pids 512 / shm 1 GiB / tmpfs 1 GiB / grader_profile_digest sha256:76f0e3e6ce55…）三条路径全部 reward=1.0 / RESOLVED_FULL；第三条（只改 setup.py）的 candidate_test_like_paths 与 candidate_touched_conftest_or_fixture 都为空。共同机理：受信投影原样投入（ignored_paths=[]）、hygiene.test_globs=()、可信 setup 只恢复 official test_patch 触碰的路径。"
+    },
+    {
+     "pkg": "另一会话（A/grading）",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/batch4_scoring_20260910/impl_plan_20260915.md §9.6 第 5 条",
+     "note": "**根因表述（09-16 05:xx 用真实 pytest 输出复核后修正）**：状态映射来自候选进程的 stdout；候选代码能直接打印 `PASSED <参考ID>` / `SKIPPED <参考ID>` 行，parser 后写覆盖即改写判定。本机 v2 入口合成复现：标记段内先打印 `PASSED tests/test_thing.py::test_feature`、pytest 只收集并通过 test_stable → RESOLVED_FULL、参考缺席 0。同条并给出两档修法：(i) 便宜的纵深防御——F2P 桶为空不判 resolved（归 tests_failed，sidecar 记 f2p_bucket_empty），并把“参考 ID 出现在非 pytest 摘要位置 / 出现多次且状态不一致”记为可疑观测；(ii) 根治靠控制面复原 + “结果不经候选 stdout”的通道（root 注入只写 junit-xml 的插件，写到候选不可写的位置）。"
+    },
+    {
+     "pkg": "另一会话（A/grading）",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/batch4_scoring_20260910/impl_plan_20260915.md §9.6 第 6 条",
+     "note": "对 M2 实测的处置选项（都需用户决定）：(a) 恢复 conftest / pytest 配置类路径的剔除（回到 P-B 前）；(b) 候选新增或改动 conftest.py / pytest.ini / setup.cfg·pyproject 的 pytest 段 / tests/**/__init__.py 时判 unsafe（永久拒绝，走既有整组 DROP）；(c) 安装段之后、测试命令之前由 root 再做一次控制面复原与校验。**(a)/(b) 挡不住 setup.py 变体，(c) 才能。**"
+    },
+    {
+     "pkg": "L1_monai_1",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_monai_1/summary.md 仓库级 2 与 §7",
+     "note": "同一根因的静态发现：parser 对任意以 FAILED/PASSED/SKIPPED/ERROR/XFAIL 开头的行都记一条状态且不校验键，54/181 题已产生伪条目；并给出 conftest 通道的代码定位（manager.py 的 test_globs=()、prepared_task_face.py 的恢复清单、trusted_projection.py 的“登记不修”）。"
+    },
+    {
+     "pkg": "L6",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L6_rh2_code_check/claims.json C03 / C18",
+     "note": "C03 成立：swegym_parsers.py:48 是 startswith 前缀匹配、键与值都不校验；实测 `PASSEDX not-a-test-line abc` → {\"not-a-test-line\":\"PASSEDX\"}。C18 成立：阶段一 181 份 gold 日志 0 份带 Start/End 标记、整份被解析，伪键 54 种 / 148 条 / 54 题；生产 v2 入口 scoring.py:233-238 缺标记 → 空映射 + apply_ok=False。"
+    },
+    {
+     "pkg": "L1_modin_pandas",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_modin_pandas/repo_level_findings.md#P3",
+     "note": "现成载体：pandas 4 题的 base addopts 含 --capture=no，测试期 stdout 直通日志；本包阶段一日志里测试段内伪状态行实测为 0（未被利用）。"
+    },
+    {
+     "pkg": "L6",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L6_rh2_code_check/claims.json C04/C05/C15",
+     "note": "控制面代码事实：test_globs=()（v1/v2 同形）、恢复对象只有 test_patch 触碰路径、trusted_projection.py 原文登记“conftest / pytest 配置 / 插件 / 启动脚本不在规则内”；**additional_exclusions 在 rh2/src 全树零命中，是废字段**。"
+    },
+    {
+     "pkg": "L1_conan",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/repo_level_findings.md §5",
+     "note": "另一条 git-ignore 的代码入口：conans/test/conftest_user.py 被官方 conftest 无条件 import 并 merge tools_locations / default_profiles，不在任何 test_patch 路径内，恢复步骤与不带 -x 的 git clean 都不删。"
+    },
+    {
+     "pkg": "M3",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M3/M3_report.md §2.5",
+     "note": "R2E 同型：35/48 题的隐藏测试 import 仓库自带测试支撑模块，评分 setup 只恢复 /r2e_tests。"
+    },
+    {
+     "pkg": "M3（第二片）",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M3/M3_uid_fix_probe.json",
+     "note": "R2E 上的同族形态：即使 run_tests.sh 是 root:root 755，候选也能因为 /testbed 目录可写而 unlink 后替换（`unlink_and_replace=OK`）；三种候选身份布置都没堵住这条。"
+    }
+   ],
+   "options": [
+    {
+     "label": "A 维持现状（只观测）",
+     "cost": "0",
+     "side_effects": "四条向量里两条已实测满分、一条已合成复现；setup.py 那条在账本里不可区分，事后无法从证据侧识别。一旦策略发现它，整条 reward 信号作废。"
+    },
+    {
+     "label": "B 便宜的纵深防御：F2P 桶为空不判 resolved（归 tests_failed + sidecar 记 f2p_bucket_empty）；把“参考 ID 出现在非 pytest 摘要位置 / 同一 ID 多次且状态不一致”记为可疑观测",
+     "cost": "小（manager 一处判定 + 两个诊断字段）。",
+     "side_effects": "只提高伪造成本、不根治；须在 e1/e2 语料上回放确认没有题依赖“空桶判 FULL”这条分支。"
+    },
+    {
+     "label": "C 控制面剔除/拒绝：恢复 conftest 与 pytest 配置类路径的剔除（回到 P-B 前），或候选触碰这些路径即判 unsafe 永久拒绝",
+     "cost": "小到中",
+     "side_effects": "**挡不住 setup.py 变体**（安装段本来就执行候选代码）；且会让 agent 在这些路径下写临时文件直接失效或整份提交作废。"
+    },
+    {
+     "label": "D 安装段之后、测试命令之前由 root 再做一次控制面复原与校验（删除候选新增的 conftest / 插件入口、恢复基线版本）",
+     "cost": "中",
+     "side_effects": "是唯一能覆盖 setup.py 变体的路径级修法；需要先枚举控制面清单（各层级 conftest、pytest.ini/setup.cfg/tox.ini 的 addopts、sitecustomize.py、插件 entry point——这些本轮都是 not_checked）。"
+    },
+    {
+     "label": "E 结果不经候选 stdout：root 注入只写 junit-xml 的 pytest 插件，写到候选不可写的位置；评分只读该结构化结果",
+     "cost": "高（新设计，需排期；与 D03/D04 的“换逐 ID 通道”方向合流，可一并解决截断塌缩与 SKIPPED 丢身份）。",
+     "side_effects": "根治向量一与向量四；但仍不防“候选让 runner 本身说谎”（需与 D 组合）；改变与来源 runner 的一致性（检查 22），需全池重验。"
+    },
+    {
+     "label": "F 补一个真正生效的题级/仓库级排除或恢复机制（file_rules 目前是废字段）",
+     "cost": "小到中",
+     "side_effects": "不做这一步，任何“按题排除”的方案都落不了地。"
+    }
+   ],
+   "coordinator_view": "**今晚唯一一条“已证明能让 RL 直接作废”的发现，建议排在所有决策之前。** 两个会话从不同方向收敛到同一根因：B 线（本会话）的 M2 在真实链上跑出三条 conftest/setup.py 满分通道，A 线用真实 pytest 输出复核后把根因表述订正为“状态映射来自候选进程的 stdout”，并合成复现了纯 stdout 伪造。L1_monai_1 的静态发现（parser 不校验键、54/181 题已有伪条目）与 L6 的 C03/C18 是同一根因的另一面。各包无分歧。协调者建议的组合：B（便宜、立刻可做）+ D（覆盖 setup.py 变体）+ E（根治，与 D03/D04 合并立项）；C 单独做不够，F 是 B/C/D 的前置。定规则前需补一轮未测入口：pytest.ini / setup.cfg / tox.ini 的 addopts、sitecustomize.py、其它目录层级的 conftest、插件 entry point。",
+   "rank": 1,
+   "why_ranked": "216 题结构性可用 × 四条注入向量（两条已在真实链实测满分、一条已合成复现）——影响的是整条 reward 信号是否有效",
+   "injection_vectors": [
+    {
+     "vector": "候选进程 stdout 直接打印状态行",
+     "how": "候选代码（被判分源码的 import 期、conftest、插件）在标记段内打印 `PASSED <参考ID>` / `FAILED <参考ID>`；parser 是后写覆盖的字典，只要参考测试未被真正收集（缺席）或伪行在真实结果之后打印，伪行即生效",
+     "status": "另一会话用 v2 入口合成日志复现 RESOLVED_FULL；真实镜像上未实测",
+     "trace": "无专门观测字段；pandas 的 addopts 含 --capture=no 使 stdout 直通日志，是现成载体"
+    },
+    {
+     "vector": "conftest hook 改写 report 对象",
+     "how": "新建或追加 `tests/conftest.py` 的 `pytest_runtest_makereport` hookwrapper，把 `report.outcome` 改成 \"passed\"",
+     "status": "**真实 RH2 链实测 reward=1.0**（MONAI-2061、dvc-1661、pydantic-8500）",
+     "trace": "`candidate_test_like_paths` 与 `candidate_touched_conftest_or_fixture` 会记下，但只观测、不进判据"
+    },
+    {
+     "vector": "安装段执行候选代码写出 conftest",
+     "how": "只改 `setup.py`（合法源文件），由来源 install 串的 `python setup.py develop` 在评分容器里以候选身份运行时写出 `tests/conftest.py`",
+     "status": "**真实 RH2 链实测 reward=1.0**（MONAI-2061）",
+     "trace": "**账本里与正常 gold 提交不可区分**：projection.included_paths=[\"setup.py\"]、两个观测字段都为空、runner_integrity_changed=false、install_rc=0、test.rc=0"
+    },
+    {
+     "vector": "非候选来源的意外污染",
+     "how": "pip 的 `ERROR: Could not find a version…`、被测程序自己的 `ERROR: …` 行、捕获日志里顶格的 `ERROR <logger>:<file>:<line>`、`SKIPPED [N]` 摘要行",
+     "status": "已发生：阶段一 181 题里 54 题产生伪条目（54 种 / 148 条）",
+     "trace": "当前无诊断字段；生产 v2 只解析标记段，把安装段噪声挡在外面，但段内噪声仍成立"
+    },
+    {
+     "vector": "替换评分入口脚本（R2E）",
+     "how": "`/testbed` 目录对候选可写，候选可把 `root:root 755` 的 `run_tests.sh` unlink 后换成自己的脚本；`venv/bin` 同样可替换",
+     "status": "**机器 3 实测**：a/b/c 三种候选身份布置下 `run_tests_replaceable_by_agent` 全为 true",
+     "trace": "无观测字段；M3 建议把评分入口搬出候选可写区或每次用镜像内原文覆盖并校验 sha256"
+    }
+   ]
+  },
+  {
+   "id": "D08",
+   "question": "安装 rc 与测试 rc 已经接在 P-A 归因上，但判据过宽（rc=0 不代表安装成功）：要不要把“安装成功判据”从段末退出码改成逐子命令 + 关键产物校验，并新增“参考集外失败数/原因”“eval_cmd flag 指纹”两项诊断？",
+   "tier": "T0 公共契约（P-A 输入边界）",
+   "tasks_affected": {
+    "count": 216,
+    "note": "安装 rc 假通过/假失败：mypy 40 题、moto 4.1 段 20+ 题、dvc 多题；测试 rc 假失败：已实测 getmoto__moto-6121/6157/5980、Project-MONAI__MONAI-1121/6775、iterative__dvc-1661；eval_cmd flag：pydantic 20 题（去掉 -vv 即全部参考缺席）、mypy 6 题缺 -n0。"
+   },
+   "repos": [
+    "python/mypy",
+    "getmoto/moto",
+    "iterative/dvc",
+    "Project-MONAI/MONAI",
+    "pydantic/pydantic"
+   ],
+   "evidence": [
+    {
+     "pkg": "L6",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L6_rh2_code_check/claims.json C11（不成立）",
+     "note": "**否证了“rc 未接入”这一前提**：manager.py:2939-2948 用 test_rc>=128 判 signal_exit → 直接决定是否判 resource（进而 infra、reward None）；manager.py:2968-2972 用 install_rc_last_command 与资格账本基线比较，不等即 missing 非空 → 落回 unattributed/infra，阻断候选归因。只有 classify_execution_failure_shape(:1083-1085) 不用 rc、只把它当证据行。所以 L1_moto_2 问题 3 的提法（“禁止 rc 接入”）方向反了：rc 已经接入，真问题是**放行过宽**。"
+    },
+    {
+     "pkg": "L6",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L6_rh2_code_check/claims.json C08",
+     "note": "放行过宽的机理：采集点 prepared_task_face.py:137-141 的 docstring 原文就写明“RH2_INSTALL_RC = 安装串最后一个命令的退出码（多命令 a; b 只反映 b）；它不单独证明安装成功或失败”。vendor 串实测：dvc 2.0/2.9 串里有三处字面 `|| true`、段末是 pip install \"pytest<8\"；mypy 0.820/1.8 段末是 `hash -r`（恒 rc=0）；moto 4.1 是单命令 make init（rc 有意义）。因此 install_rc == baseline 的判据会放过安装失败的运行。"
+    },
+    {
+     "pkg": "M2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M2/M2_report.md §1.2",
+     "note": "两个方向的实测：mypy-12741 断网时 pip install -e . 退出 1 而 RH2_INSTALL_RC=0（假通过）；moto-6913 断网 make init 退出 2 但测试段仍从 /testbed import moto 4.2.6.dev（假失败）。建议逐子命令退出码进诊断。"
+    },
+    {
+     "pkg": "L1_moto_2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_moto_2/repo_level_findings.md#R9",
+     "note": "测试 rc 的对应问题：6121/6157 的测试阶段 rc=1（testcors.localhost 解析失败，不在参考集内）却判 RESOLVED_FULL；5980 同型。这类“参考集外的确定性失败”完全不进账，应单列诊断字段。"
+    },
+    {
+     "pkg": "M2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M2/M2_conftest_probe.json",
+     "note": "dvc-1661 与 MONAI-2061 的 noop 运行 test_rc=1 但判定正确（unresolved）——test_rc 与判定无关这一点在真实链上成立。"
+    },
+    {
+     "pkg": "L0",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L0_facts_tool/L0_report.md §4.2 发现 2",
+     "note": "dvc-5822 安装段 4 条 ERROR:，段末是 pip install \"pytest<8\" 所以 rc=0；4 题里 3 题的 install_rc_last_command 反映的是收尾命令。"
+    },
+    {
+     "pkg": "M2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M2/M2_report.md §3.4 第 1 条",
+     "note": "eval_cmd flag 不可改：pydantic 镜像装了 pytest-pretty，把 -rA 的 short summary 换成 Rich 表格；官方 eval_cmd 可解析完全靠 -vv。去掉 -vv 的任何变体 → 全部参考测试缺席 → RESOLVED_NO，且不报错（L3 的 run_matrix.sh 已踩中）。"
+    },
+    {
+     "pkg": "L6",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L6_rh2_code_check/claims.json C16",
+     "note": "xdist：mypy 40 题里 6 题 eval_cmd 无 -n0（16555/16869/16905/16963/16966/17071，全部 version≥1.8），而 20/20 题的 pytest 配置含 addopts=-nauto。"
+    },
+    {
+     "pkg": "L0",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L0_facts_tool/L0_report.md §4.2 发现 1",
+     "note": "账本 schema 漂移：L6 的 C09 复核把漂移键数订正为 10 个（L0 报 9 个行级键 + projection.unsupported_shape_reasons），schema_id 仍是 rh2.replay_grade_ledger.v1。"
+    }
+   ],
+   "options": [
+    {
+     "label": "A 改判据：安装成功 = 逐子命令退出码 + 关键产物校验（如 import 目标包并核对 __file__ 落在 /testbed），rc 只作证据；同时新增“参考集外失败数/原因”“eval_cmd flag 指纹”诊断字段",
+     "cost": "中（改采集与归因两处，需升 schema_id）。",
+     "side_effects": "会让一部分现在“归因到候选”的运行改判 infra；须先在 e1/e2 语料上回放确认影响面。"
+    },
+    {
+     "label": "B 只加诊断不改判据",
+     "cost": "小",
+     "side_effects": "保持现有 reward 分布，但 install_rc==baseline 的放行漏洞继续存在。"
+    },
+    {
+     "label": "C 维持现状",
+     "cost": "0",
+     "side_effects": "换配方/换镜像时参考集外失败会突然变成“新回归”；安装失败的运行会被当作候选责任。"
+    }
+   ],
+   "coordinator_view": "本项由 L6 的 C11 直接推翻了原提法（L1_moto_2 问题 3 说“禁止 rc 接入归因”，实际 rc 已接入）。四个来源（L6、M2、L0、L1_moto_2）对“rc=0 不等于安装成功”一致。建议 A，并把“衍生跑法必须保留官方 eval_cmd 原 flag，加诊断用 -p no:pretty 显式关插件”写成硬性约定。",
+   "rank": 2,
+   "why_ranked": "216 题 × 归因判据：rc 已接入 P-A 且放行过宽，错判方向是“把 infra 失败算成候选责任”或反之"
+  },
+  {
+   "id": "D09",
+   "question": "镜像出厂就带 HEAD 之后的可达提交（SWE-Gym 15/15、R2E 48/48），按题号 grep 或一条 git rev-list --children 即可直取 gold；SWE-Gym 已有每 attempt 的 sanitize（7.5–43 s/次），R2E 没有——是继续每次付代价，还是一次性清理派生镜像？训练期出网怎么定？",
+   "tier": "T0 公共契约 / T1 环境修复",
+   "tasks_affected": {
+    "count": 216,
+    "note": "SWE-Gym：M2 扫的 15 个镜像 15/15 有 HEAD 之后的可达提交（tag 94–320 个全留着），pandas-48106 还带可用的 upstream remote；R2E：48/48 修复提交是 HEAD 的直接子提交，一条 git rev-list --children 即列出（排前 4）。出网：24 条 DeepSeek 轨迹里 3 题取到 gold 补丁全文、1 题下到被测项目后续版本 sdist。"
+   },
+   "repos": [
+    "全部 9 个 SWE-Gym 仓库",
+    "R2E 8 个仓库"
+   ],
+   "evidence": [
+    {
+     "pkg": "M2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M2/M2_report.md §5.1/§5.2",
+     "note": "15/15 镜像的 /testbed 存在 HEAD 之后的可达提交（refs/heads 指在 base，但 tag 全留着）；pandas-48106 的 git remote -v 带 upstream https://github.com/pandas-dev/pandas.git。"
+    },
+    {
+     "pkg": "M2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M2/M2_report.md §5.4/§5.5",
+     "note": "按题号 grep 能定位上游修复提交，conan-13326（golden 新增行 9/9 命中）与 moto-6913（1/1）已逐行核对。逐字执行 production 的 git_sanitize_script 后 15/15 的 git rev-list --all --not HEAD --count=0、dangling=0、remote=0、reflog=0，HEAD 可达历史不变；耗时 7.5–43.0 s/次，是每个 attempt 的固定开销。generate.py:4698 显示它在 profile 非 None 时无条件执行。"
+    },
+    {
+     "pkg": "M2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M2/M2_report.md §6.1 第 5 条",
+     "note": "待确认项：现有 git_sanitize_script 能清干净且在每 attempt 执行（generate.py:4698，profile 非 None 时无条件），需要确认的是**是否存在 profile is None 的运行路径**，以及是否把 sanitize 的自证值纳入准入。"
+    },
+    {
+     "pkg": "M3",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M3/M3_report.md §2.2/§2.3",
+     "note": "R2E 泄漏比 L4 记的重一档：不依赖哈希、不依赖分支名、不依赖网络。清理方案（分离 HEAD→删 ref/tag/remote→expire reflog→gc）在 48/48 实测：修复对象被删除、.git 6.3→3.2 GB、noop 键集逐键不变、gold reward 与未清理完全一致（46 个 1、2 个 0）。"
+    },
+    {
+     "pkg": "L3",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L3_trajectories/L3_report.md §A.3",
+     "note": "出网通道实测：moto-5701 用 urllib 取到 github.com/getmoto/moto/pull/5701.diff 全文；conan-14296 用 api.github.com/.../pulls/14296/files；pydantic-8500 下 8500.diff 并额外 pip download pydantic==2.6.0 --no-binary :all:（sdist 里就含已修的 model_construct 与官方新增测试）。gh CLI 不存在，本地 git 通道是关闭的（13 题的 git log --all 里没有一个 sha 是 base 的后代）。"
+    },
+    {
+     "pkg": "L3",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L3_trajectories/L3_report.md §E.1",
+     "note": "断网的副作用：14/24 题靠 pip install 才把环境凑齐，直接断网会让相当一部分题装不起来（与 D12 的 wheel 预置方案对冲）。"
+    }
+   ],
+   "options": [
+    {
+     "label": "A 维持现状：靠 rollout 可信初始化里的 git_sanitize_script + grader 的 deny_all",
+     "cost": "0",
+     "side_effects": "需确认不存在 profile is None 的运行配置（该路径不跑 sanitize）；sanitize 成本进吞吐核算（pandas 43 s/attempt）。R2E 侧目前没有等价机制。"
+    },
+    {
+     "label": "B 一次性清理派生镜像（M3 已在 48/48 R2E 上实测 reward 逐键不变；SWE-Gym 侧同法未验），rollout 期省掉每次 sanitize 的 7.5–43 s",
+     "cost": "中（一次性派生 + 重验 noop/gold）。",
+     "side_effects": "R2E 侧已验证 reward 逐键不变；SWE-Gym 侧未做同样实验。会改变镜像 digest，需重记 image_identity。"
+    },
+    {
+     "label": "C 训练/评测期切断出网或改白名单（只放 PyPI 的 base 版本依赖）",
+     "cost": "中",
+     "side_effects": "14/24 题的环境靠 pip install 凑齐，直接断网会让部分题装不起来；需先落地 D12 的 wheel 预置。"
+    }
+   ],
+   "coordinator_view": "M2 与 M3 从两个方向给出一致证据与一致的可行清理方案，无分歧。A 的现有防线在 SWE-Gym 上已核验有效（15/15），主要待办是确认 profile is None 路径不存在、并把 sanitize 成本写进吞吐核算；R2E 侧建议采 B（M3 已实测）。C 与 D12 要一起定。",
+   "rank": 3,
+   "why_ranked": "216 + 48 题 × 答案在容器内可直接读到；现有防线有效但覆盖面与成本需确认"
+  },
+  {
+   "id": "D07",
+   "question": "跨题答案泄漏 80 对 / 95 题（44%）：数据划分是否按“(仓库, 被改文件) 同族整体划分”，以及去重判据是否从 base_commit 扩到 problem_statement_sha256？",
+   "tier": "T1 数据处理",
+   "tasks_affected": {
+    "count": 95,
+    "note": "crossleak 80 对涉及 95 题（下界，只比对同一文件、只比 gold 新增行）；若把“共用 gold 文件 / 共用 test_patch 文件”也算进同族约束，受约束题数升到 140，且 mypy 塌成 24+8 两个大组、pydantic 20 题里 18 题进同一组。 modin/pandas 侧另有 18 对实证命中（L1_modin_pandas），而 crossleak_216 在这两个仓库上报 0 对——说明 crossleak 的“同文件逐行”判据漏检跨文件/重构过的泄漏，80 对确实是下界。",
+    "duplicate_ps_sha": [
+     [
+      "getmoto__moto-6121",
+      "getmoto__moto-6157"
+     ],
+     [
+      "getmoto__moto-7331",
+      "getmoto__moto-7335"
+     ]
+    ],
+    "duplicate_base_commit": [
+     [
+      "getmoto__moto-6469",
+      "getmoto__moto-6470"
+     ],
+     [
+      "python__mypy-11824",
+      "python__mypy-11857"
+     ]
+    ]
+   },
+   "repos": [
+    "python/mypy",
+    "getmoto/moto",
+    "pydantic/pydantic",
+    "iterative/dvc",
+    "Project-MONAI/MONAI",
+    "dask/dask"
+   ],
+   "evidence": [
+    {
+     "pkg": "L1_pydantic",
+     "path": "runs/env_overnight_20260916/L1_pydantic/crossleak_216.txt",
+     "note": "216 题全量扫描：80 对 / 95 题；mypy 24 对、moto 23、pydantic 20、dvc 7、MONAI 3、dask 3，conan/modin/pandas 为 0。逐行全中的极端例子：mypy-9909→11420 与 →11945（mypy/checker.py 32/32 行）、MONAI-4676→6523（28/28）、pydantic-5386→5662（10/10）。"
+    },
+    {
+     "pkg": "L1_moto_3",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_moto_3/contamination_pairs.json",
+     "note": "moto 59 题里 35 对共用至少一个 gold 文件且 A 的 base 是 B 的祖先；抽样 11 对做 git apply -R --check，6 对逐字命中（6585→7111、6355→7584、7331→7335、5699→6387、5737→6508、4833→6317）。"
+    },
+    {
+     "pkg": "L1_moto_3",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_moto_3/summary.md",
+     "note": "7331/7335 与 6121/6157 的 problem_statement_sha256 逐字相同，而现有 s2/ingest/duplicate_clusters_v0.json 只按 base_commit 聚类，两组都没收录。"
+    },
+    {
+     "pkg": "L8_synthesis",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L8_synthesis/split_constraints.json",
+     "note": "本包用同一份材料重算：全池 problem_statement_sha256 重复恰好 2 组、同 base_commit 重复恰好 2 组（另含 moto-6469/6470、mypy-11824/11857）；合并全部边后 140 题 / 35 组，仅按“强证据边”（逐行泄漏 + 题面 sha + 同 base + 实证 apply -R）则是 100 题 / 38 组。"
+    },
+    {
+     "pkg": "L1_mypy_1",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_1/summary.md 仓库级 5",
+     "note": "三组紧邻必须同侧：10392 的上游修复 commit == 10401 的 base_commit；16963 的修复 commit == 16966 的 base；11824 与 11857 共用同一 base。"
+    },
+    {
+     "pkg": "L1_dvc_2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_2/summary.md 仓库级 7",
+     "note": "dvcignore 三连 4066→4125→4166，4166 的 P2P 里直接含 4066 的 F2P（test_ignore_blank_line），因此 4166 不能当作对 4066 的独立泛化评测。"
+    },
+    {
+     "pkg": "L6",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L6_rh2_code_check/claims.json C12",
+     "note": "生成代码定位：ingest_swegym_lite.py:198-217 build_duplicate_clusters 的分组键是 (repo_key_lower, base_commit)，>1 成员才成簇，成簇后才用五重内容 digest 判 suspected_duplicate；duplicate_clusters_v0.json 只有 2 个簇且 classification 全是 distinct_tasks_shared_environment，moto-6121/6157 与 7331/7335 四题全部不在其中。"
+    },
+    {
+     "pkg": "L1_modin_pandas",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_modin_pandas/contamination_pairs.json",
+     "note": "第三个独立实证来源：pandas+modin 同仓库 40 对做 git apply -R --check，18 对命中（pandas 7 对、modin 11 对），全部时间正向；未命中的 22 对只是上下文漂移，记 unknown 不判为“不含”。"
+    }
+   ],
+   "options": [
+    {
+     "label": "A 只按“强证据边”成组（逐行泄漏 + 题面 sha 相同 + 同 base_commit + 实证 apply -R）",
+     "cost": "低（清单已生成）。",
+     "side_effects": "100 题受约束、38 组；漏掉跨文件/被重构过的泄漏（crossleak 自述是下界）。"
+    },
+    {
+     "label": "B 扩到“(仓库, 被改文件) 同族”，含共用 gold 文件与共用 test_patch 文件",
+     "cost": "低（清单已生成）。",
+     "side_effects": "140 题受约束、35 组；mypy 会塌成 24 题 + 8 题两大组、pydantic 18/20 一组，仓库内训练/评测切分基本不可行，只能改成按仓库切分。"
+    },
+    {
+     "label": "C 整仓库切分（一个仓库整体进训练或整体进评测）",
+     "cost": "低",
+     "side_effects": "彻底消除同仓库泄漏，但可用评测题数骤减且泛化口径变成“跨仓库泛化”。"
+    }
+   ],
+   "coordinator_view": "各包一致要求“成组划分”，无分歧；分歧只在粒度。去重判据扩到 problem_statement_sha256 是零成本、无副作用的确定动作（L1_moto_3 与本包独立算出同样的 2 组），建议先做。粒度上建议 A 作为硬约束、B 作为告警，并明确 mypy/pydantic 在 B 下无法仓库内切分这一事实。",
+   "rank": 4,
+   "why_ranked": "95 题（强证据）/ 140 题（含共用文件）× 划分正确性；去重判据漏检 2 组重复题"
+  },
+  {
+   "id": "D06",
+   "question": "题面与验收要求不一致（方向相反 / 要求不可推断 / 错误被固化成验收标准）的题约占三成；是补写 public_view、放宽断言、剔除，还是保留但只作评测？",
+   "tier": "T1 数据处理（补题面/剔除）；若选择放宽断言则升为任务修订",
+   "tasks_affected": {
+    "count": 60,
+    "note": "各包点名合计约 60 题（下界，口径不完全一致）。按仓库：conan 7/12（4 题照题面做必 0 分）、dvc 13/35、mypy 13/40、moto 10/59、MONAI 6/26、dask 4/14、pydantic 6/20、pandas 2/5。",
+    "subtypes": {
+     "方向相反": [
+      "python__mypy-11707",
+      "python__mypy-12741",
+      "python__mypy-10658",
+      "python__mypy-11241",
+      "Project-MONAI__MONAI-3566",
+      "Project-MONAI__MONAI-4159",
+      "dask__dask-8792",
+      "dask__dask-10972",
+      "conan-io__conan-11560",
+      "conan-io__conan-14177",
+      "conan-io__conan-13788",
+      "conan-io__conan-13610",
+      "iterative__dvc-3576",
+      "iterative__dvc-2141",
+      "iterative__dvc-3794",
+      "iterative__dvc-9212",
+      "iterative__dvc-4785",
+      "getmoto__moto-6470",
+      "getmoto__moto-6317",
+      "getmoto__moto-7331",
+      "pandas-dev__pandas-48106",
+      "pandas-dev__pandas-50319"
+     ],
+     "猜措辞/逐字文案": [
+      "python__mypy-15131",
+      "python__mypy-15876",
+      "python__mypy-12222",
+      "python__mypy-9909",
+      "getmoto__moto-7348",
+      "getmoto__moto-7584",
+      "Project-MONAI__MONAI-4925",
+      "dask__dask-8801",
+      "pandas-dev__pandas-56849"
+     ],
+     "错误固化成验收标准": [
+      "getmoto__moto-6022",
+      "getmoto__moto-5737"
+     ],
+     "题面即答案（反向问题）": [
+      "getmoto__moto-6913",
+      "getmoto__moto-5321",
+      "getmoto__moto-5545",
+      "python__mypy-5617",
+      "pydantic__pydantic-5662",
+      "dask__dask-7138",
+      "dask__dask-9212",
+      "pandas-dev__pandas-53958",
+      "modin-project__modin-6937"
+     ]
+    }
+   },
+   "repos": [
+    "conan-io/conan",
+    "iterative/dvc",
+    "python/mypy",
+    "getmoto/moto",
+    "Project-MONAI/MONAI",
+    "dask/dask",
+    "pydantic/pydantic",
+    "pandas-dev/pandas",
+    "modin-project/modin"
+   ],
+   "evidence": [
+    {
+     "pkg": "L1_moto_2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_moto_2/summary.md（6022 行）",
+     "note": "moto-6022 的 F2P 要求默认策略键名逐字等于 \"Statement \"（带尾随空格，是上游错字，master:moto/ec2/models/vpcs.py:328-333 已改回 \"Statement\"）——写出正确 IAM 默认策略的解答必然被判错。同族 moto-5737 要求 OriginShieldRegion == \"None\"（Jinja 渲染出来的字符串）。"
+    },
+    {
+     "pkg": "L1_conan",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/repo_level_findings.md §8",
+     "note": "conan 12 题里 7 题题面与判分脱节，其中 4 题（11560 / 14177 / 13788 / 13610）照题面做必然 0 分；11560 的题面 ## Solution 明确要求 alwayslink = True，gold 只加一个逗号和一行注释，F2P 逐字符比对该注释文本与 8 空格缩进。"
+    },
+    {
+     "pkg": "L1_mypy_1",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_1/summary.md 待裁定 2",
+     "note": "4 道方向相反；决定方向的依据只在不可见 hints 里（11707 的维护者 PEP 484 裁定）。"
+    },
+    {
+     "pkg": "L1_dvc_1",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_1/summary.md 仓库级 5",
+     "note": "7/17 题 F2P 无法从公开材料推出，并给出唯一有实测反例的一题：dvc-9395 的 DeepSeek 候选实现了题面字面要求，挂在题面从未提及的 run-cache 断言与 mock_checkout.call_count==3 上 → RESOLVED_PARTIAL（cc_candidate_grading.jsonl）。"
+    },
+    {
+     "pkg": "M2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M2/M2_report.md §4.2 第 1 条",
+     "note": "已实测：pydantic-8500 题面那个“construct 后再赋值”的原例在 gold 上同样 FAIL（2 failed / 8 passed），官方 F2P 测的是另一个场景——题面与验收面不是同一件事。"
+    },
+    {
+     "pkg": "L1_dask",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dask/summary.md",
+     "note": "dask-8792 题面逐字给出的“应有实现”与 F2P 要求的行为不一致（照题面做必判 0）；7305 的唯一 F2P 是修法副作用，维护者自己倾向的另一种正确修法也判 0。"
+    },
+    {
+     "pkg": "L1_mypy_1",
+     "path": "runs/env_overnight_20260916/L1_mypy_1/dup_problem_statements.txt",
+     "note": "材料卫生：216 题里 6 题的 problem_statement 前后半逐字重复（mypy-11352/17071、MONAI-4775/6523/6975、dvc-4785）；2 题半句截断（mypy-12741、conan-13610）。"
+    }
+   ],
+   "options": [
+    {
+     "label": "A 补写 public_view（把缺失要求/维护者裁定写进题面），保留原题",
+     "cost": "高（逐题人工）；约 60 题。",
+     "side_effects": "改变“真实 GitHub issue”的分布与难度；产出的是修订版任务，不能冒充原 benchmark。"
+    },
+    {
+     "label": "B 放宽 F2P 断言（改上游测试）",
+     "cost": "高（改测试 + 双侧重验 gold）。",
+     "side_effects": "同上不可比；且对“错字固化”类（6022/5737）是唯一可行修法。"
+    },
+    {
+     "label": "C 剔除",
+     "cost": "低",
+     "side_effects": "可用题量从 216 降到约 155；conan 从 12 降到 8。"
+    },
+    {
+     "label": "D 保留原样，只作评测/难度分层，不进训练",
+     "cost": "低",
+     "side_effects": "评测上这些题测的是“猜上游实现”而不是解题能力；作为训练信号是噪声。"
+    }
+   ],
+   "coordinator_view": "各包结论一致（这是全池最普遍的质量问题），但处置建议不一致：L1_mypy_1 建议 11241/11707 剔除、12741/10658 补题面；L1_conan 建议“(b) 用于训练、(a) 用于评测”；L1_dvc_1 建议“能补题面就补题面、补不了才改断言”；L1_pydantic 把它列成三选一不给倾向。建议按子类分开定：错字固化类（6022/5737）只能 B 或 C；方向相反类优先 A；猜措辞类优先 C 或 D。这属于数据集取舍，需用户拍板。",
+   "rank": 5,
+   "why_ranked": "约 60 题 × 题目对诚实求解者是否可完成；含 2 题“写对必判错”"
+  },
+  {
+   "id": "D15",
+   "question": "R2E 48 题接入方案 A 之前，L4 的 Q1–Q6 与 M3 的实测结论怎么定？（期望里的 FAILED/ERROR 在我们条件下变 PASSED 算什么、ANSI 口径、泄漏清理程度、run_tests.sh 搬运边界、仓库测试模块恢复、只有 1 个有效键）——其中 Q3 泄漏清理、执行身份、gold 重复稳定性三项 M3 已实测给出答案",
+   "tier": "T0 评分语义 + T1 环境修复",
+   "tasks_affected": {
+    "count": 48,
+    "note": "R2E 全部 48 题。分项：期望含非 PASSED 键 20 题（93 个键 / 总 2650）、ANSI 口径 6 题（pillow）、入口不可归一化 13 题（pillow 3ac9396e + aiohttp 5 + numpy 7）、控制面 35 题、只有 1 个有效判别键 34 题、候选身份跑不动 48/48。"
+   },
+   "repos": [
+    "numpy",
+    "orange3",
+    "pandas",
+    "pillow",
+    "aiohttp",
+    "coveragepy",
+    "datalad",
+    "scrapy"
+   ],
+   "evidence": [
+    {
+     "pkg": "M3",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M3/M3_report.md §2.1",
+     "note": "候选身份 uid 54322 在 48/48 镜像跑不动：.venv/bin/python 链到 /root（mode 700）下的解释器、sys.path 三条在 /root 下、/testbed 与 /r2e_tests 不可写、git dubious ownership、27/48 venv 无 pip。方案 A 若用非 root 身份跑 agent，这 48 个镜像一个都不能直接用。"
+    },
+    {
+     "pkg": "M3（第二片）",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M3/M3_uid_fix_probe.json",
+     "note": "**候选身份修法已实测可行**：5 个代表镜像 × 3 种布置（a/b/c）× gold+noop 共 30 次运行，**30/30 满足 reward(agent) == 基线 root 的 reward、且同容器内 agent 与 root 结果一致**；三种布置下 python 与 git 都能以候选身份运行。布置 c（收紧版）把 `/r2e_tests` 与隐藏测试改成候选不可写（DENIED），a/b 则可写。chown 规模：改动路径数 3,090–34,414 个。**但三种布置都有一条未堵的控制面**：`run_tests_replaceable_by_agent` 在 a/b/c 全为 true——即使 `run_tests.sh` 是 `root:root 755`，候选也能因为 `/testbed` 目录可写而把它 unlink 后换成自己的脚本（`unlink_and_replace=OK`，a/c 各 2/2）；`venv/bin` 同样可替换。这是 D01 根因族在 R2E 上的对应形态。"
+    },
+    {
+     "pkg": "M3（第二片）",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M3/M3_gold_repeat.json",
+     "note": "**gold 重复稳定性已补齐**：48 题各跑两次 gold（各自从原镜像起一次性容器、`--network none`、同一 `r2e_probe/0.3` 副本，a1 用 3 workers、a2 用 4 workers），**48/48 `reward_same=true`、`map_identical=true`、category=identical、状态翻转 0、键差 0**；`log_sha_same` 全为 false（时间戳等非确定性文本），`fixture_digest_same` 与 `image_digest_same` 全为 true。"
+    },
+    {
+     "pkg": "M3",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M3/M3_report.md §2.3",
+     "note": "直接回答 L4 的 Q3：清理方案在 48/48 实测可用（修复对象删除、.git 6.3→3.2 GB、noop 键集逐键不变、清理后 gold apply_rc 48/48=0 且 reward 与未清理完全一致）。"
+    },
+    {
+     "pkg": "M3",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M3/M3_report.md §2.4",
+     "note": "入口不能归一化：pillow 3ac9396e 在统一 pytest 入口下收集 0 个用例（绝对 import from helper）；aiohttp 5 + numpy 7 的目标包没装进 venv，cd /tmp 即 ModuleNotFoundError，评分必须 cwd=/testbed + 相对路径 r2e_tests，否则静默归零。"
+    },
+    {
+     "pkg": "M3",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M3/M3_report.md §2.7",
+     "note": "gold gate 46/48 reward=1；2 个 0 正是 L4 的 T1 前两题且判别键逐字相同（coveragepy 016af5f6 期望 FAILED 实测 PASSED、datalad 58ba5165 期望 PASSED 实测 FAILED），在两台机器复现，属来源数据缺陷。L4 的 T1 第三题 pillow 3ac9396e 在忠实执行 run_tests.sh 时 reward=1，应从“来源信号缺陷”改判为“入口不可归一化”。"
+    },
+    {
+     "pkg": "L4",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L4_r2e/L4_report.md §4 Q1",
+     "note": "20/48 题受影响；58 个 ERROR 键全部是 fixture not found（测试被抽到 /testbed/r2e_tests 后仓库 conftest.py 不再生效），补上 conftest 就会全部翻转；14 题的 SKIPPED/XFAIL 两侧都不在映射里，补齐环境会让 len(parsed)!=len(expected) 直接判 0。支持“剔除非 PASSED 期望键”的证据：20 题里 19 题的 noop 判别键期望值都是 PASSED，唯一例外正是 coveragepy 016af5f6。"
+    },
+    {
+     "pkg": "L4",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L4_r2e/L4_report.md §4 Q2",
+     "note": "pillow 6 题在 Prime 原版 parser 下 reward 恒 0（期望键带 ESC 字节而 Prime 的 _decolor 只删 [数字m）；r2e_probe/0.3 的对称去色拿到 1，M3 复现。这是与来源的口径分歧，必须显式定 normalization_version。"
+    },
+    {
+     "pkg": "M3",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M3/M3_report.md §5",
+     "note": "补齐 L4 三类 unknown：隐藏测试 import 仓库测试支撑模块 35/48、初态脏树逐文件（aiohttp 5/5 + pandas 7/7 有已跟踪改动）、Prime 折键 48/48 无碰撞；同容器连跑两次 noop 48/48 逐键一致。"
+    }
+   ],
+   "options": [
+    {
+     "label": "A 按来源原样判（严格精确匹配）",
+     "cost": "0",
+     "side_effects": "训练信号里混进“不要修好环境”的反向激励；升级镜像/依赖会让 reward 分布整体漂。"
+    },
+    {
+     "label": "B 剔除非 PASSED 期望键，只对 PASSED 键做精确匹配",
+     "cost": "小",
+     "side_effects": "属任务修订，不能冒充原版分数；datalad 16c1ffc3 剔完只剩 3 个键；但 19/20 题不削掉有效信号。"
+    },
+    {
+     "label": "C 本地重验证生成修订版 expected（我们的条件下跑 noop+gold 各 N 次取稳定态）",
+     "cost": "高（要先定 N 与稳定判据）。",
+     "side_effects": "最准，与 P4“本地重验证参考集”一致。"
+    }
+   ],
+   "coordinator_view": "L4 与 M3 无分歧，M3 只在 pillow 3ac9396e 的归类上修正了 L4（改判为入口不可归一化）。M3 已把 Q3（泄漏清理）实测到可以直接拍板；Q1 建议按 L4 的判断顺序：先在机器上把 20 题的非 PASSED 键逐个归因再决定，归因完成前不要把这 20 题放进训练题单。硬前置是 §2.1 的执行身份与 §2.4 的 cwd 断言——不处理不是分数偏差而是“起不来 / 静默归零”。 【M3 第二片】执行身份的修法已在 5 个代表镜像上实测：三种布置 30/30 的 reward 与 root 基线一致，且 gold 重复稳定性 48/48 完全一致（这两项原为 unknown）。新增一条必须处理的事实：**`run_tests.sh` 在三种布置下都能被候选 unlink 后替换**（`/testbed` 目录可写），因此 L4 的 Q4“搬运边界”不是可选项而是必需项——评分入口必须搬出候选可写区或每次用镜像内原文覆盖并校验 sha256。",
+   "rank": 6,
+   "why_ranked": "48 题 × 整个 R2E 来源能否接入；含 48/48 的执行身份阻断"
+  },
+  {
+   "id": "D16",
+   "question": "mypy 的 F2P/P2P 是 -k 子串闭包的副产物而非设计出来的回归集（14/40 题 P2P 为空，115 个被改 case 里 67 个不评分）；是整体重建、只对高风险题补、还是把 mypy 限定为评测集不进训练？",
+   "tier": "T0 评分语义（重建）/ T1 数据处理（定位）",
+   "tasks_affected": {
+    "count": 40,
+    "note": "python/mypy 全部 40 题。P2P 为空 14 题；eval_cmd 缺 -n0 的 6 题；-k 选择器含失效名字 3 例（16966 的 -skip 后缀、10308 同型、5617 拼进已删除的 case）；10308 丢了上游 fixture object_hashable.pyi，改成整文件跑会立刻炸。"
+   },
+   "repos": [
+    "python/mypy"
+   ],
+   "evidence": [
+    {
+     "pkg": "L1_mypy_1",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_1/summary.md 仓库级 1",
+     "note": "40/40 题验证：F2P∪P2P 100% 落在“test_patch 里出现过的 case 名 + -k 子串闭包”内；14/40 题 P2P 为空；11420 的九条 testNewReturnType1~9 就在插入点上方一条没选、选进去的是下方无关的 testGenericOverride 系列。"
+    },
+    {
+     "pkg": "L1_mypy_2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_2/summary.md 仓库级 1",
+     "note": "代码依据 spec_vendor.py:183-191 derive_test_command（逐字对齐上游 fork 的 make_test_command，mypy 分支不带测试文件路径）；本包 20 题 test_patch 改动 115 个 case，67 个（58%）既不在 F2P 也不在 P2P；最严重 11857（45 改 → 33 未评分）。"
+    },
+    {
+     "pkg": "L1_mypy_1",
+     "path": "runs/env_overnight_20260916/L1_mypy_1/fixture_check.txt",
+     "note": "10308 丢了上游 commit c0490b4c2 新增的 test-data/unit/fixtures/object_hashable.pyi；当前不影响判分（依赖它的 testHashable 不在 F2P/P2P），但整文件跑会 FileNotFoundError。"
+    },
+    {
+     "pkg": "L1_mypy_1",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_1/summary.md 待裁定 3",
+     "note": "结构性判断：mypy 的测试全部是逐字比对期望输出的数据驱动用例，“强制唯一实现”是结构性而非个别题的毛病（11236 选了作者自己更看好的修法就判 0；11420 换了比较对象就判 0）。"
+    },
+    {
+     "pkg": "M2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M2/M2_report.md §4.2 第 4 条",
+     "note": "对照证据：mypy-11352 的 11 个诊断 case 逐一对比，gold 与 candidate 的 semantic_signature（退出码 + 每条诊断的行号与消息头）全部相同，只有两条 reveal_type 显示串不同——失分确实只在展示层，属 oracle 过严而非语义缺陷。"
+    },
+    {
+     "pkg": "L6",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L6_rh2_code_check/claims.json C06",
+     "note": "代码确认成立：spec_vendor.py:137 的 _MYPY_CASE_PATTERN = r\"\\[case ([^\\]]+)\\]\"，:183-191 derive_test_command 的 mypy 分支只拼 -k 表达式、不拼测试文件路径；实测 mypy-16966 的 -k 里确实含 testMatchLiteralPatternEnumCustomEquals-skip；15876 与 16966 的全部参考 ID 都被某个 key 作为子串覆盖（未覆盖数 0）。"
+    }
+   ],
+   "options": [
+    {
+     "label": "A 维持现状",
+     "cost": "0",
+     "side_effects": "已有具体反例（10424 / 10174 一行满分）；40 题占全池 18.5%。"
+    },
+    {
+     "label": "B 按 test_patch 触碰的 .test 文件整文件重建 F2P/P2P",
+     "cost": "高（单题要跑成百上千个 case，须先测时间；10308 要先补 fixture）。",
+     "side_effects": "脱离与上游 fork make_test_command 的逐字对齐关系，需要先定“是否允许偏离 vendor 口径”。"
+    },
+    {
+     "label": "C 只对已举出反例的高风险题补 P2P",
+     "cost": "中",
+     "side_effects": "覆盖不全，但成本可控。"
+    },
+    {
+     "label": "D 把 mypy 限定为评测集不进训练",
+     "cost": "0",
+     "side_effects": "丢 40 题训练量；但 mypy 的优点（判分确定、无网络、无外部资产、单题秒级）在评测上仍然有用。"
+    }
+   ],
+   "coordinator_view": "L1_mypy_1 与 L1_mypy_2 结论一致、机制定位到同一行代码，无分歧；两包都把“是否允许偏离 vendor 口径”列为前置问题。M2 的 11352 实测支持“mypy 的 oracle 过严是结构性的”。建议把 D（定位）与 C（少数题补 P2P）组合，B 留到确定要偏离 vendor 口径之后再评估。",
+   "rank": 7,
+   "why_ranked": "40 题（18.5%）× 参考集是否有效；已有一行满分反例"
+  },
+  {
+   "id": "D03",
+   "question": "pytest 参数化 ID 里的空格被 parser 按 line.split() 截断，多条真实用例塌缩成同一个参考键（最大 108:1）：只做观测标注、改 parser 并重建参考集、还是改用 --junitxml 逐 ID 结果？塌缩的方向是保守（假阴性）还是可被利用（假阳性），需要一并定性。",
+   "tier": "T0 评分语义",
+   "tasks_affected": {
+    "count": 35,
+    "note": "35/216 题的 F2P/P2P 含“有 [ 但不以 ] 结尾”的截断 ID（moto 20、dvc 5、modin 4、pandas 3、dask 2、conan 1）；另有 72 题 / 505 个日志侧碰撞截断键，388 个参考 ID 字面上就是一个碰撞键（modin-5940/6937 各 127、modin-6780 102，其中一个键折叠 108 条用例）。",
+    "confirmed_collisions": [
+     "getmoto__moto-6178",
+     "getmoto__moto-7273",
+     "getmoto__moto-5620",
+     "getmoto__moto-5960",
+     "getmoto__moto-6185",
+     "iterative__dvc-4166",
+     "iterative__dvc-6954",
+     "conan-io__conan-11594",
+     "pandas-dev__pandas-48106",
+     "modin-project__modin-6937"
+    ],
+    "fold_ratio": {
+     "modin-project__modin-6937": "2355 个常量对应 3060 个实际测试，127 个折叠键吞掉 705 个 ID，最大一组 test_to_csv[None-New = 108 个运行时测试",
+     "modin-project__modin-5940": "1935 常量 / 2640 实际 / 127 折叠键 / 705 被吞",
+     "modin-project__modin-6780": "2837 / 3196 / 102 / 362，最大一组 25",
+     "modin-project__modin-6400": "692 / 702 / 10 / 10",
+     "getmoto__moto-6178": "32 条结果行压成 21 个键，F2P 键吞 2 条"
+    }
+   },
+   "repos": [
+    "getmoto/moto",
+    "iterative/dvc",
+    "modin-project/modin",
+    "pandas-dev/pandas",
+    "dask/dask",
+    "conan-io/conan"
+   ],
+   "evidence": [
+    {
+     "pkg": "L1_moto_2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_moto_2/repo_level_findings.md#R8",
+     "note": "机制在上游 parser（swegym_log_parsers_242429c1.py:16-25）与 RH2 的逐字移植（swegym_parsers.py:52-55）里一致：line.split() 取 [1] 当 nodeid、同键后写覆盖先写。moto-6178 一个 F2P 键 …TestHashAndRangeKey::test_brackets[(job_id 对应 2 条真实用例，32 条结果行压成 21 个键。全池统计 35/216 题。"
+    },
+    {
+     "pkg": "L1_moto_3",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_moto_3/truncated_test_ids.json",
+     "note": "截断 F2P 15 个分布在 9 题；moto-7273 两条参数化用例塌成一个键（collected 162 vs graded 161）；7348、7484 同型。"
+    },
+    {
+     "pkg": "L1_dvc_2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_2/summary.md 仓库级 3",
+     "note": "dvc-4166 是可证的一对多：P2P 键 test_match_ignore_from_file[ 同时对应 [ to_ignore-patterns5-False] 与 [ to_ignore-patterns6-True]，后写覆盖，判别“尾随空格是否生效”的相反对被合并、判别力归零。dvc-6954 13/13 全截断，适合做 parser 回归语料。"
+    },
+    {
+     "pkg": "L2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L2_reference_ids/truncation_collisions_summary.json",
+     "note": "全池 72 题 / 505 个碰撞键逐题计数；逐条含行号在 runs/env_overnight_20260916/L2_reference_ids/truncation_collisions_full.json。"
+    },
+    {
+     "pkg": "L1_conan",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/repo_level_findings.md §4",
+     "note": "conan-11594 唯一碰撞题；并给出方向性实测：pytest 6.2.5 的 -rA 展开为 PpsxXEf，摘要块顺序 PASSED → SKIPPED → FAILED，所以碰撞组内任一失败即整键 FAILED（保守）。task_signals 把 11594 的 fragile_reference_id 标成 false，与证据不符。"
+    },
+    {
+     "pkg": "L1_moto_1",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_moto_1/summary.md A",
+     "note": "关键约束：参考集与 parser 是“两边一致地错”，单独修 parser 而不同步重算常量会把现在能跑的题打坏。"
+    },
+    {
+     "pkg": "L1_modin_pandas",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_modin_pandas/repo_level_findings.md#M5",
+     "note": "折叠倍率这一量化维度：modin 的测试大量用含空格的参数 id，一个 P2P 键最多代表 108 个运行时测试；P2P 的实际保护力远低于名义条数（6937 名义 2355 条常量、实际 3060 个测试）。"
+    },
+    {
+     "pkg": "L6",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L6_rh2_code_check/claims.json C01",
+     "note": "代码与实测双确认：swegym_parsers.py:52-55 的 test_case=line.split() / test_status_map[test_case[1]]=test_case[0]；实测喂入 `PASSED …[my key with spaces-a]` 与 `FAILED …-b] - AssertionError` 两行 → 只剩一个键、值为**后写的 FAILED**。同缺陷存在于 parse_log_pytest_pydantic(:73-76)。数据面 35/216 与 L1_moto_2 一致。"
+    },
+    {
+     "pkg": "L1_conan",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/repo_level_findings.md §4",
+     "note": "方向性实测：pytest 6.2.5 的 -rA 展开为 PpsxXEf，摘要块顺序 PASSED → SKIPPED → FAILED，字典后写覆盖先写 ⇒ 碰撞组内任一失败即整键 FAILED（保守）。"
+    }
+   ],
+   "options": [
+    {
+     "label": "A 只观测：facts 里记“日志真实结果行数 vs 参考键数”的差，塌缩时标 collapsed_ids，不改 reward",
+     "cost": "小",
+     "side_effects": "欠验证继续存在（被吞用例的结果不进账）；但不动分数、不破坏与上游的可比性。"
+    },
+    {
+     "label": "B 改 parser 为按完整行取 nodeid，并同步重建全部参考集",
+     "cost": "高（等于对 35+ 题做任务修订，须逐题重跑 gold/empty 取基线）。",
+     "side_effects": "一旦只改 parser 不重建常量，35 题的截断 ID 会全部变成 reference_missing → 修 parser 反而全红；重建后分数与原 benchmark 不可比。"
+    },
+    {
+     "label": "C 改用 --junitxml / CTRF 之类逐 ID 输出作权威，参考集做一次带版本的 ID 映射修订",
+     "cost": "高（改执行入口 + 全池重采）。",
+     "side_effects": "一次性解决截断、SKIPPED 丢身份、伪键三个问题（与 D04 共用同一修法）；但改变执行命令会影响与来源 runner 的一致性（检查 22）。"
+    }
+   ],
+   "coordinator_view": "各包对“存在塌缩、覆盖 35 题、最大 108:1”一致。对**方向**存在分歧：L1_moto_2（moto-6178）与 L1_modin_pandas 称“留最后一条通过即整键 PASSED”是 reward 假阳性通道；L1_conan 实测 -rA 的摘要块顺序是 PASSED→SKIPPED→FAILED，L6 的 C01 探针按同一顺序喂入也得到 FAILED。协调者判断：在纯 -rA 摘要区内，塌缩的方向是**保守**的（组内任一失败 ⇒ 整键 FAILED），因此它制造的是**欠验证与假阴性**，不是假阳性；能翻转方向的只有“摘要之后还出现以 PASSED 开头的行”，而 pandas 的 addopts 含 --capture=no + 候选 print 恰好是这样一条通道（L1_modin_pandas P3）——那属于 D01 控制面族，不是截断族。这条判断建议由一次 moto-6178 实跑坐实再写进结论。方向建议不变：先做 A，把 B/C 与 D04 合并成同一个“评分结果通道”决策一起定。",
+   "rank": 8,
+   "why_ranked": "35 题参考集含截断 ID + 72 题日志侧碰撞 × 欠验证（最大 108:1）"
+  },
+  {
+   "id": "D05",
+   "question": "判分面远小于改动面：一行破坏性改动即可拿满分的题至少 20 道，且已有实测反例；是接受上游判分原样、由 RH2 为高风险题挂附加回归，还是逐题补断言（任务修订）？",
+   "tier": "T0 评分语义（挂附加回归）/ T1 数据处理（补断言）",
+   "tasks_affected": {
+    "count": 24,
+    "tasks": [
+     "iterative__dvc-4778",
+     "iterative__dvc-9391",
+     "iterative__dvc-4719",
+     "iterative__dvc-5336",
+     "iterative__dvc-5188",
+     "iterative__dvc-2126",
+     "Project-MONAI__MONAI-3715",
+     "Project-MONAI__MONAI-3403",
+     "Project-MONAI__MONAI-6975",
+     "getmoto__moto-7331",
+     "getmoto__moto-7335",
+     "getmoto__moto-6701",
+     "getmoto__moto-6387",
+     "getmoto__moto-5885",
+     "getmoto__moto-6408",
+     "python__mypy-10424",
+     "python__mypy-10174",
+     "python__mypy-11966",
+     "python__mypy-9625",
+     "python__mypy-15139",
+     "python__mypy-15208",
+     "python__mypy-11945",
+     "pydantic__pydantic-8500",
+     "pydantic__pydantic-6043",
+     "pydantic__pydantic-8793",
+     "pydantic__pydantic-8567",
+     "dask__dask-7656"
+    ],
+    "note": "这是各包点名的下界；mypy 40 题里 14 题 P2P 为空、dvc 4778/4719 P2P=0、conan-13403 P2P 为空，结构上都属同族。"
+   },
+   "repos": [
+    "iterative/dvc",
+    "Project-MONAI/MONAI",
+    "getmoto/moto",
+    "python/mypy",
+    "pydantic/pydantic",
+    "dask/dask",
+    "conan-io/conan"
+   ],
+   "evidence": [
+    {
+     "pkg": "M2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M2/M2_report.md §4.2 第 2 条",
+     "note": "已实测：pydantic-5706 的 DeepSeek 候选让官方 F2P 2/2 通过、tests/test_json_schema.py 277 条全绿，同时把 Sequence[tuple]/deque 转成 list；同一 commit 下 base 自带的 tests/test_types.py -k sequence 抓到 6 failed / 10 passed，而它不在 F2P/P2P 里。"
+    },
+    {
+     "pkg": "M2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M2/M2_report.md §4.2 第 3 条",
+     "note": "moto-6470 的候选删掉 “At least 1 security group must be provided” 校验，tests/test_batch/* 的 13 条既有测试三态全绿——该回退在仓库自身测试里也没有覆盖。"
+    },
+    {
+     "pkg": "L1_dvc_2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_2/summary.md 仓库级 5",
+     "note": "四题可复现的一行奖励漏洞并给出机理：4778 resolve_paths 开头 raise（4 条 F2P 全是 pytest.raises）、9391 --rev 加 type=lambda s:[s]（5 条 F2P 没有一条传两个 --rev）、4719 StageCache.save 开头 return（另两条 assert 是永远为真的空断言）、5336 except BaseException: pass。"
+    },
+    {
+     "pkg": "L1_moto_3",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_moto_3/summary.md",
+     "note": "7331/7335：把 _authenticate_and_authorize_action 改成无条件 return（关闭整个 IAM 访问控制）即 4 F2P + 191 P2P 全过，因为判分集合里没有任何鉴权仍生效的断言、tests/test_core/test_auth.py 不跑。"
+    },
+    {
+     "pkg": "L1_mypy_1",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_1/summary.md 仓库级 1",
+     "note": "40/40 题的 F2P∪P2P 落在“test_patch 里出现的 case 名 + -k 子串闭包”内，14/40 题 P2P 为空；10424 在 meet.narrow_declared_type 开头写 return declared 即满分（代价是整个 isinstance 窄化失效）。"
+    },
+    {
+     "pkg": "L1_pydantic",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_pydantic/summary.md 静态复核补强",
+     "note": "断言级扫描确认 5 题：8500 字母序 sorted(__dict__) 满分、6043 只排顶层 properties 满分（判分面实质只有 1 条断言）、8793 判分文件里 .default/PydanticUndefined 命中 0、8004 default_factory 路径不在判分面、8567 序列化改变不可见。"
+    },
+    {
+     "pkg": "L1_monai_1",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_monai_1/summary.md",
+     "note": "3715 把 evaluator.py:117-123 换成单行 self.mode = eval_mode 即满分，而那恰好让 mode=\"train\" 静默失效（比原 bug 更糟）。"
+    }
+   ],
+   "options": [
+    {
+     "label": "A 接受上游判分原样，只在题级记录里标注“低判别力”，用于难度分层",
+     "cost": "0",
+     "side_effects": "RL 会直接学到这些捷径；已有 M2 的可执行反例说明这不是理论风险。"
+    },
+    {
+     "label": "B RH2 为点名的高风险题挂附加回归（如 moto-7331 挂 tests/test_core/test_auth.py、pydantic-5706 挂 tests/test_types.py -k sequence）",
+     "cost": "中（逐题选回归 + 在 base/gold 双侧验证全绿）。",
+     "side_effects": "分数与上游 SWE-Gym 口径不可比；增加每题运行时间；选错回归会把合法解判 0。"
+    },
+    {
+     "label": "C 逐题补断言（修改上游 test_patch），形成带版本的任务修订",
+     "cost": "高（人工写断言 + 重验 gold）。",
+     "side_effects": "同 B 的不可比性，且改动面更大。"
+    },
+    {
+     "label": "D 先跑 L7 的假修复套件把“会不会满分”从推断变成实测，再据此决定投入规模",
+     "cost": "低（套件已在做，需机器执行）。",
+     "side_effects": "只是排序手段，不是终局决定。"
+    }
+   ],
+   "coordinator_view": "各包一致认为这是数据集侧的系统性问题而非环境问题，且一致建议“先做反例实测再定投入规模”（D 选项）。L1_dvc_2 明确写“这四题在修好前不应进训练集”。建议：D 先行（L7 套件 + M2/机器执行），把 B 限定在少数几道“破坏性改动仍满分”的题上，C 不做。",
+   "rank": 9,
+   "why_ranked": "24+ 题 × reward 有效性；已有两条真实链实测反例"
+  },
+  {
+   "id": "D11",
+   "question": "镜像依赖未按历史锁定，已静默削掉大量回归保护；要不要重建镜像并重算参考集（等于任务修订），还是维持现状并接受这些题几乎没有回归保护？",
+   "tier": "T1 环境修复；重算参考集则升为任务修订",
+   "tasks_affected": {
+    "count": 30,
+    "note": "dvc：pathspec 太新命中 8 题（4066/4125/4166/4719/4778/5004/5148/5822）、networkx 命中 4 题（3794/4066/4166/4185）、pygit2 命中 1 题（9395）；dask：pytest 8.3.2 配 2020–2022 年 dask，7138 一题 92/561 条（16%）恒失败，6626/8597 各自最相关的回归被排除；MONAI：np.int（1121）、nibabel int64（2446，有效 P2P 7→2）、itk（3566）；moto：一刀切 python 3.12（18/19 题跑在上游未声明支持的版本上）。"
+   },
+   "repos": [
+    "iterative/dvc",
+    "dask/dask",
+    "Project-MONAI/MONAI",
+    "getmoto/moto"
+   ],
+   "evidence": [
+    {
+     "pkg": "L1_dvc_2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_2/summary.md 仓库级 2",
+     "note": "pathspec 无上界 → dvc/ignore.py 拼接多条 GitWildMatchPattern 时 re.error: redefinition of group name \"ps_d\"；扫全部 35 道 dvc 题，8 题命中、gold 侧 169 条失败里至少 80 条是这一条原因；4778 是 55 条里 51 条红且 P2P=0；4125 被排除的 test_ignore_blank_line 正是 dvc-4066 的 F2P。本包 534 条收集里 gold 侧仍失败 94 条（17%）。"
+    },
+    {
+     "pkg": "L1_dvc_1",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_1/summary.md 仓库级 1",
+     "note": "三个方向各不相同并各有实测日志：pathspec 太新（5822）、networkx 太旧（4185，fractions.gcd 在 3.9 被移除）、networkx 太新（2231，≥2.4 删 G.node）。安装失败被 || true 吞掉、rc_install 仍 0。"
+    },
+    {
+     "pkg": "L1_dask",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dask/repo_level_findings.md#R3",
+     "note": "镜像统一 pytest-8.3.2，pytest.warns(None) 已被移除，大批既有用例恒失败并被自动排除出参考集；SPECS_DASK 连 python 都没声明。"
+    },
+    {
+     "pkg": "L1_monai_1",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_monai_1/summary.md 仓库级 5",
+     "note": "三题被依赖漂移削掉 P2P（都是两侧一致失败因而被排除，不影响判分、只影响回归强度）；并给出现成体检工具：用 gold/empty 整文件跑两遍重算 P2P 与官方名单对拍，差集就是当前镜像跑不动的用例（MONAI 24/26 逐条一致）。"
+    },
+    {
+     "pkg": "L1_moto_2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_moto_2/repo_level_findings.md#R1/#R10",
+     "note": "SPECS_MOTO 对 0.4…5.0 全部 14 个版本用同一字典 python=3.12；5980 的两条 DeprecationWarning 失败已坐实风险（恰好不在参考集内）。"
+    }
+   ],
+   "options": [
+    {
+     "label": "A 维持现状",
+     "cost": "0",
+     "side_effects": "P2P 是在坏环境下筛出的通过集，回归保护被静默削掉（dvc-4719/4778 直接 P2P=0）；换镜像时这些失败会突然变成“新回归”。"
+    },
+    {
+     "label": "B 只为 P2P=0 或回归覆盖被严重削掉的少数题重建",
+     "cost": "中",
+     "side_effects": "受影响题的 P2P/F2P 都要重算，等于修订这些题；重算后 5148 的两条功能级验收、4778 的 test_add_symlink_file 可能从“坏死”变成合格 F2P。"
+    },
+    {
+     "label": "C 按 base 时间点的 pip freeze 快照整仓重建（dvc 钉 pathspec<0.9.0 + 可用 networkx，dask 钉 pytest<7，MONAI 钉 numpy/nibabel/itk）",
+     "cost": "高（重建镜像 + 按检查 39 重验全部受影响题）。",
+     "side_effects": "保护面最完整，但全部受影响题的参考集都变，分数与原 benchmark 不可比。"
+    }
+   ],
+   "coordinator_view": "各包一致认为这是“回归保护被静默削掉”而非“判错分”，且一致把它列为需要用户拍板的投入决策；没有分歧。L1_dask 建议“在决定之前先把参考集外恒失败数落进 facts”（与 D08 的 A 同一动作），这是零争议的前置步骤，建议先做。",
+   "rank": 10,
+   "why_ranked": "30 题 × 回归保护被静默削掉（dvc 8+4、dask、MONAI 3、moto 全仓）"
+  },
+  {
+   "id": "D10",
+   "question": "评分机的资源与身份画像（CUDA / shm / /tmp tmpfs / 非 root / 网络例外 / 预置资产）要不要写成硬约束？其中 tmpfs 与 CUDA 两项已有“不改就一定判错”的实测。",
+   "tier": "T1 环境修复（tmpfs 与 memory 档位属 T0 公共契约的资源边界）",
+   "tasks_affected": {
+    "count": 30,
+    "note": "tmpfs：modin-6937 实测 1 GiB→401 条 P2P FAILED / p2p_rate 0.8297，16 GiB→0 FAILED / 1.0；CUDA：MONAI-4676、MONAI-6523 各 72 条参考 ID 在有 GPU 的机器上 MISSING、gold 也拿 0；shm：MONAI-763、4676、6523；非 root：dvc-1877/2254/3620（7 条用例）+ dask-8801；网络例外：moto-4799/4833（各 2 条 network P2P）、modin-5940（19 条 s3 P2P）；预置资产：MONAI-1121、MONAI-3205。 另：modin 5 题需要显式 --shm-size（当前 64 MB）；pandas 三道 setuptools 题每次评分重编 13–14 分钟。"
+   },
+   "repos": [
+    "modin-project/modin",
+    "Project-MONAI/MONAI",
+    "iterative/dvc",
+    "getmoto/moto",
+    "dask/dask"
+   ],
+   "evidence": [
+    {
+     "pkg": "M2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M2/M2_report.md §3.2/§3.3",
+     "note": "同镜像同 base 态只改 --tmpfs /tmp:size：1 GiB（grader 默认，sandbox_profile.py:501）→ 401 条 P2P FAILED（271 条 OSError: [Errno 28] No space left on device，写在 /tmp/pytest-of-rh2grader/）、RH2 正式 parser 的 p2p_rate=0.8297；**4 GiB → 2354/2354 全过、p2p_rate=1.0，逐测试状态与 16 GiB 一致**（§3.5）。1–4 GiB 之间的最小值未测。提醒：tmpfs 计进容器 cgroup 内存，memory_bytes 默认 4 GiB，必须与 tmpfs 一起定档。"
+    },
+    {
+     "pkg": "L1_monai_2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_monai_2/summary.md 仓库级 2",
+     "note": "parameterized.expand 的序号位宽 = len(str(n-1))，tests/utils.py:730-732 的 TEST_DEVICES 在有 CUDA 时 1→2 项，4676/6523 的 TESTS 从 6 项变 12 项、test_add_0 变 test_add_00，各 72 条参考 ID MISSING、gold 拿 0。另 tests/utils.py:716-719 在有 CUDA 时整体重赋值 TEST_NDARRAYS，把 np.array 挤掉，4583/4775 的 numpy 分支在 GPU 机上完全不跑。"
+    },
+    {
+     "pkg": "M2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M2/M2_report.md §2.1/§2.2",
+     "note": "资产预置已实测可行：MONAI-1121 需 resnet50-0676ba61.pth（102,530,333 B，sha256 0676ba61…fb8a）放 /home/rh2grader/.cache/torch/hub/checkpoints/，不需要环境变量；deny_all + 官方 eval_cmd + RH2 正式 parser 判为 RESOLVED_FULL（F2P 1.0 / P2P 1.0）。MONAI-3205 需 Task04_Hippocampus.tar（28,425,216 B，sha256 282d808a…771）解压到 /testbed/tests/testing_data/，deny_all 下 F2P PASSED。"
+    },
+    {
+     "pkg": "M2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M2/M2_report.md §3.1",
+     "note": "moto-4799 的两条 @pytest.mark.network P2P 在 deny_all 下必 FAIL、gold 上限 17/19。桩方案 A（AWS_ENDPOINT_URL）已证伪（P2P 掉到 2 passed/17 failed）；桩方案 B（/etc/hosts 重定向 + 本地 HTTPS 桩 + 自签 CA + AWS_CA_BUNDLE）实测 P2P 19/19 PASSED。坑：docker cp 不能写进 tmpfs 挂载点。"
+    },
+    {
+     "pkg": "L1_dvc_1",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_1/summary.md 待裁定 2",
+     "note": "非 root 的量化结论：全语料只有 3 题 7 条用例受影响（1877/2254/3620），因此不建议为此改整条链路，但 dvc-3620 的题目主题就是 unprotect、唯一的功能测试正好被剔掉。"
+    },
+    {
+     "pkg": "L1_modin_pandas",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_modin_pandas/records/modin-project__modin-5940.json",
+     "note": "modin-5940 的 P2P 里 19 条 s3 用例依赖真实 AWS 或本地 moto server，其中 1 条离线必挂，直接导致 gold 恒判 RESOLVED_NO。"
+    },
+    {
+     "pkg": "L1_modin_pandas",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_modin_pandas/repo_level_findings.md#M1",
+     "note": "modin 的引擎由运行时探测决定（实测是 PandasOnRay），而容器 /dev/shm 只有 64 MB，日志自述“需要至少内存的一半 = 24.6 GB”；容器必须显式加 --shm-size，否则 Ray 对象存储退化到磁盘溢写，是 modin 题动辄 7–23 分钟的部分原因。另：agent 若在 rollout 里动 ray/dask 的 pip 环境，引擎会静默切换、P2P 结果整体改变，目前无任何准入检查。"
+    },
+    {
+     "pkg": "L1_modin_pandas",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_modin_pandas/repo_level_findings.md#P1",
+     "note": "评分成本按构建后端劈成两类：pandas 的 setuptools 后端（48106/50319/51605）每次评分重编 Cython，install 779/825/830 秒而测试只要 4–13 秒；meson-python 后端（53958/56849）靠镜像里的 ninja 缓存，install 7.7/49.7 秒。10 题一次 gold 评分墙钟合计约 99 分钟。选题单时这条比题目难度更影响预算。"
+    }
+   ],
+   "options": [
+    {
+     "label": "A 把画像写成硬约束：评分容器一律 CUDA_VISIBLE_DEVICES=\"\"、按题声明 shm/tmpfs/memory 档位（modin 至少 4 GiB tmpfs + 显式 --shm-size）、按题预置资产、网络按题开桩",
+     "cost": "中（逐题配方字段 + 一次重验）。",
+     "side_effects": "配方复杂度上升；tmpfs 提档必须同时提 memory，否则先 OOM。"
+    },
+    {
+     "label": "B 只加校验不改画像：评分前 pytest --collect-only 对一次参考 ID 一致性，不一致判 environment 而不是判 0",
+     "cost": "小",
+     "side_effects": "能把 CUDA 类失配从“判 0”变成“判环境异常”，但不恢复可用性；对 tmpfs 类容量问题无效（那是真失败）。"
+    },
+    {
+     "label": "C 把受影响的题剔除或降级为评测",
+     "cost": "低",
+     "side_effects": "丢 modin-6937（2354 条 P2P 的题）、MONAI-4676/6523/1121/3205、moto-4799/4833 等。"
+    }
+   ],
+   "coordinator_view": "L1_monai_2 建议 A+B 都做；L1_dvc_1 在非 root 这一项上明确建议“不为此改整条链路，只给 3 题做题级例外”；M2 给出 tmpfs 与资产两项的可执行参数但明确说 16 GiB 不是推荐值。建议：tmpfs/memory 档位与 CUDA 屏蔽按 A 定（成本低、收益确定），--collect-only 一致性校验按 B 加，非 root 按 dvc 的建议做题级例外，网络桩只用于“期待任意 AWS 错误”这一类用例（M2 已写明桩的适用边界）。",
+   "rank": 11,
+   "why_ranked": "30 题 × 资源与画像；其中 modin-6937 与 MONAI-4676/6523 是“不改就判错”"
+  },
+  {
+   "id": "D04",
+   "question": "合法被跳过的参考测试在两种 pytest 输出形态下都拿不到真实 ID，因而按缺席计失败（22 题带 skip 装饰器、5 题 F2P 直接受影响）：要不要把“被跳过”与“缺席”分开、并改用能拿逐 nodeid 结果的通道？（注：“F2P 桶全 SKIPPED → FULL”不是独立漏洞，见下）",
+   "tier": "T0 评分语义（保真度与归因，不是可利用面）",
+   "tasks_affected": {
+    "count": 22,
+    "note": "22 题的 F2P/P2P 用例带 skip 类装饰器，其中 5 题的 F2P 直接受影响（getmoto__moto-7105 @requires_docker、Project-MONAI__MONAI-4925 @SkipIfNoModule、MONAI-4159 @skip_if_windows、MONAI-3205 @skip_if_quick、conan-io__conan-12397 py2 skipif）；另 MONAI-6756 的唯一 F2P 被 @skipUnless(has_tv) 守卫。已实测丢身份：19 题 41 条（dvc-5822 一题丢 24 条）。 另：走“桶全 SKIPPED → FULL”分支的现实条件只在 pydantic 的 6 题（eval_cmd 带 -vv）上成立，其余 8 个仓库走“缺席 → 失败”分支——这同时意味着 pydantic 题上存在一条控制面利用路径：让 F2P 被 skip 即可判 FULL（与 D01 合流，未实测）。",
+    "f2p_at_risk": [
+     "getmoto__moto-7105",
+     "Project-MONAI__MONAI-4925",
+     "Project-MONAI__MONAI-4159",
+     "Project-MONAI__MONAI-3205",
+     "Project-MONAI__MONAI-6756",
+     "conan-io__conan-12397",
+     "Project-MONAI__MONAI-4109"
+    ]
+   },
+   "repos": [
+    "Project-MONAI/MONAI",
+    "getmoto/moto",
+    "iterative/dvc",
+    "dask/dask",
+    "conan-io/conan",
+    "modin-project/modin"
+   ],
+   "evidence": [
+    {
+     "pkg": "另一会话（A/grading）",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/batch4_scoring_20260910/impl_plan_20260915.md §9.6 第 5 条",
+     "note": "**订正**：本机用真实 pytest 实跑 `-rA` 与 pydantic 配方的 `-rA -vv -o console_output_style=classic`，被跳过测试只出现两种形态——`tests/x.py::test_a SKIPPED (dep missing)`（尾带原因，pydantic parser 的 endswith 分支不认）与摘要行 `SKIPPED [1] tests/x.py:4: dep missing`（startswith 分支取成伪键 `[1]`）；**两种 parser 下真实 ID 都不进 status_map ⇒ 按缺席计失败**。因此“让参考测试被 skip”得到的是 reward 0：合法 skip 会被误伤，但**不可被候选利用**。“F2P 桶全为 SKIPPED → FULL”只在**合成**的 `SKIPPED <id>` 行下可达，自然运行到不了，它是 D01 根因族（候选可伪造 stdout 状态行）的一个特例，不应单列为漏洞。"
+    },
+    {
+     "pkg": "L6",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L6_rh2_code_check/claims.json C02",
+     "note": "代码依据：rh2 注释 scoring.py:24 / :201 原文“SKIPPED 不进成功/失败任何一桶——清单全部 SKIPPED 时 report 可得 FULL”；swebench 4.1.0 grading.py:31-35 的 test_failed = `case not in sm` 让缺席落进失败桶。语料统计：181 份 gold status_map 里值为 SKIPPED 的条目，键形如 [N] 的 41 条来自 8 个仓库；键为真实 nodeid 的 69 条全部来自 pydantic（-vv 尾状态分支）——但按上条订正，pydantic 的**进度行**形态是 `<id> SKIPPED (reason)`，尾带原因时 endswith 分支同样不认，这 69 条的具体来源形态需早上核一次。"
+    },
+    {
+     "pkg": "L1_dvc_1",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_1/summary.md 仓库级 3",
+     "note": "SKIPPED 行格式 SKIPPED [N] path:line: reason，parser 取 split()[1] 得到 [N]；181 题里 19 题 41 条全部丢失身份，dvc-5822 一题 24 条（两组 [6] 还互相覆盖）。唯一保留 nodeid 的是 6 道 pydantic 题（eval_cmd 带 -vv，走 parse_log_pytest_pydantic 的行尾分支）。181 题里 reference_skipped 实际非空的条数是 0——scoring.py:24 / 199-201 声明的“SKIPPED 不进桶”对其余 8 个仓库不可达。"
+    },
+    {
+     "pkg": "L1_monai_1",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_monai_1/summary.md 仓库级 3",
+     "note": "216 题静态扫描：22 题 F2P/P2P 带 skip 装饰器、5 题 F2P 受影响；风险形态是“换一台缺 GPU / 缺可选依赖 / 无 Docker 的机器，gold 被判 RESOLVED_NO，而日志里看不出是 skip 还是 fail”。"
+    },
+    {
+     "pkg": "L1_monai_2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_monai_2/summary.md 仓库级 3",
+     "note": "4676/6523 的 gold 日志摘要写 8 skipped，status_map 只多出伪键 [1] 与 [6]，8 条 nodeid 全部消失。"
+    },
+    {
+     "pkg": "L1_dask",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dask/repo_level_findings.md#R2",
+     "note": "第四次独立确认；并指出 dask 现有参考集恰好没落在跳过用例上，问题被掩盖，换镜像或改可选依赖即触发。"
+    },
+    {
+     "pkg": "L1_conan",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/repo_level_findings.md §2",
+     "note": "conan-14296 / 15422 的 gold status_map 出现键 \"[1]\": \"SKIPPED\"，对应 3 行 SKIPPED [1] …: Only OSX / Only Windows。"
+    },
+    {
+     "pkg": "L4",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L4_r2e/L4_report.md §3.5",
+     "note": "R2E 侧同型：14/48 题、单次运行 38 个用例的 SKIPPED/XFAIL 被 parser 静默丢弃；补齐环境会让键数变化、len(parsed)!=len(expected) 直接判 0。"
+    },
+    {
+     "pkg": "L6",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L6_rh2_code_check/claims.json C02",
+     "note": "代码 + 全量语料确认：scoring.py:231 的 parse_eval_log_v2 用同一组 parser、无额外处理，:269 reference_skipped=[c for c in reference if status_map.get(c)==\"SKIPPED\"]；swebench 4.1.0 grading.py:31-35 的 test_failed = case not in sm → 参考 ID 缺席即计失败。181 份 gold status_map 里值为 SKIPPED 的条目：键形如 [N] 的 41 条（dask 19 / modin 9 / MONAI 5 / dvc 5 / conan 2 / moto 1），键为真实 nodeid 的 69 条**全部来自 pydantic**（-vv 尾状态分支）。"
+    },
+    {
+     "pkg": "L1_modin_pandas",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_modin_pandas/repo_level_findings.md#M6",
+     "note": "排障形态的直接后果：modin-6937 的 124 个被跳过用例在 status_map 里没有任何条目，只多出 [48]/[64]/[4]/[2]/[1] 五个垃圾键；若某个 F2P/P2P 因缺可选依赖被 skip，它表现为 missing 而不是 SKIPPED，容易被误判成“ID 写错”。"
+    }
+   ],
+   "options": [
+    {
+     "label": "A0 便宜的纵深防御：F2P 桶为空不判 resolved（归 tests_failed + sidecar 记 f2p_bucket_empty）",
+     "cost": "小",
+     "side_effects": "与 D01 的选项 B 是同一动作；须在 e1/e2 语料上回放确认没有题依赖这条分支。"
+    },
+    {
+     "label": "A 维持“缺席 = 失败”，只在诊断里记录跳过摘要行数",
+     "cost": "0",
+     "side_effects": "环境漂移会静默把 gold 判 0，归因指向“候选弄坏了东西”，误导训练。"
+    },
+    {
+     "label": "B 换成能拿逐 nodeid 结果的结构化通道（junit-xml / CTRF），把 SKIPPED 与缺席分开，缺席按 infra 异常处理",
+     "cost": "中到高（改执行与结果通道）。",
+     "side_effects": "与 D01 选项 E、D03 选项 C 是同一件事，可一次解决截断塌缩、SKIPPED 丢身份、stdout 伪造三个问题；改 eval_cmd flag 有实测风险（pydantic 去掉 -vv 即全部缺席）。"
+    },
+    {
+     "label": "C 按题处理：把带 skip 装饰器的参考用例提前剔除，或预置依赖让它不跳过",
+     "cost": "中（22 题逐题）。",
+     "side_effects": "剔除等于任务修订；预置依赖见 D12。"
+    }
+   ],
+   "coordinator_view": "五个 L1 包 + L6 确认“合法 skip → 缺席 → 计失败”这一半；另一会话用真实 pytest 输出复核后**订正**了自己先前“桶全 SKIPPED → FULL 是独立漏洞”的说法——自然运行到不了那条路，它属于 D01 根因族的特例。因此本项的性质是**保真度与归因**（换机器 / 缺可选依赖时 gold 被静默判 0 且日志不可归因），不是可利用面。建议 A0 立刻做，B 与 D01-E、D03-C 合并立项。",
+   "rank": 12,
+   "why_ranked": "22 题（5 题 F2P）× 换机器即静默判 0 且日志不可归因；不是可利用面"
+  },
+  {
+   "id": "D12",
+   "question": "离线安装的最小预置：六题实测证明离线失败的唯一原因是 PEP 517 构建隔离去 PyPI 取 setuptools，一份 setuptools+wheel wheelhouse 即可全部修好；要不要把它固化为 declared_readonly_binds 的标准挂载？另外 pydantic 的 install 配方在任何网络条件下都失败，怎么处置？",
+   "tier": "T1 环境修复（pydantic install 的口径属 T0 准入判据）",
+   "tasks_affected": {
+    "count": 20,
+    "note": "PEP 517 类：mypy（40 题同配方）、moto 4.1 段（12 题 rc=2）；--no-build-isolation 或旧路径的 pandas/dask/conan 不受影响。pydantic install 恒失败：pydantic 20 题同配方。"
+   },
+   "repos": [
+    "python/mypy",
+    "getmoto/moto",
+    "pydantic/pydantic"
+   ],
+   "evidence": [
+    {
+     "pkg": "M2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M2/M2_report.md §1.1/§1.5",
+     "note": "离线失败的唯一根因只有两行 ERROR: Could not find a version that satisfies the requirement setuptools>=40.6.x；联网日志里 Downloading 一条都没有——所有运行期依赖在镜像里已装好。预置验证：3 个 wheel（setuptools-84.0.0、wheel-0.48.0、packaging-26.3，文件级 sha256 已记）以 -v <wh>:/opt/rh2wheels:ro + PIP_NO_INDEX=1 PIP_FIND_LINKS 挂进 --network none 容器，mypy-12741 与 moto-6913 的全部子命令 rc=0。落点 sandbox_profile.py:577 的 declared_readonly_binds，不必改镜像。注：版本是本次解析到的当前最新，正式使用必须 pin 并记 sha256。"
+    },
+    {
+     "pkg": "M2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M2/M2_report.md §1.3/§1.7/§6.1 第 4 条",
+     "note": "pydantic-8500 的 install 串在任何条件下都失败，且有**两个独立原因**。实测矩阵：root+联网=全 0（官方条件）、root+断网=pdm add 退出 1、候选用户(54322)+联网=127、候选用户+断网=127。原因 (a) 镜像里的 pdm 装在 /root/.local/bin，install 串靠 $HOME/.local/bin 定位它，换非 root 身份就找不到；(b) pdm add pre-commit 需要联网。这正是筛查清单第 8 项说的“root 的成功不证明非 root 可用”。补 pre_install 已被证伪。"
+    },
+    {
+     "pkg": "M2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/M2/M2_report.md §1.6",
+     "note": "conan-13326 镜像自带 root 属主的 /tmp/constraint.txt；不挂 tmpfs /tmp 的任何路径（本地复现脚本、legacy root 路径）在这道题上行为不同。"
+    }
+   ],
+   "options": [
+    {
+     "label": "A 固化 wheelhouse 挂载（pin 版本 + 记 sha256），并为 pydantic 把 install 标为可选/skip",
+     "cost": "小",
+     "side_effects": "需要为每个镜像 Python 版本各准备一份 wheel；install 标 skip 会让“安装成功”不再是准入判据（与 D08 的 rc 结论一致）。"
+    },
+    {
+     "label": "B 接受 RH2_INSTALL_RC≠0 并把安装段整体当可选步骤",
+     "cost": "0",
+     "side_effects": "真正的安装失败会被这层噪声淹没。"
+    },
+    {
+     "label": "C 把 pre_install 一并纳入正式链",
+     "cost": "中",
+     "side_effects": "已被 M2 §1.7 证伪（对 pydantic 无效），且会引入更多联网步骤。"
+    }
+   ],
+   "coordinator_view": "M2 单包给出，无跨包分歧。A 是低成本确定动作；C 已有证伪证据，不建议。",
+   "rank": 13,
+   "why_ranked": "20 题 × 离线可跑性；修法已实测且成本极小"
+  },
+  {
+   "id": "D02",
+   "question": "参考 ID 与运行时 nodeid 的 ASCII 转义层级不一致，让 10 题 gold 恒判 RESOLVED_NO（纯假阴性）；是在对账层加“缺席→unicode_escape 回退→唯一命中才采用”，还是按镜像重采参考清单？",
+   "tier": "T0 评分语义",
+   "tasks_affected": {
+    "count": 10,
+    "tasks": [
+     "getmoto__moto-5417",
+     "getmoto__moto-5545",
+     "getmoto__moto-5562",
+     "getmoto__moto-5701",
+     "getmoto__moto-6308",
+     "iterative__dvc-4185",
+     "modin-project__modin-6780",
+     "pandas-dev__pandas-48106",
+     "pandas-dev__pandas-50319",
+     "pydantic__pydantic-8977"
+    ],
+    "note": "占 181 个有 stage1 gold 日志的题的 5.5%；其中 moto-5701、pandas-48106、pandas-50319 已在 e2 的 A/B 组里。"
+   },
+   "repos": [
+    "getmoto/moto",
+    "iterative/dvc",
+    "modin-project/modin",
+    "pandas-dev/pandas",
+    "pydantic/pydantic"
+   ],
+   "evidence": [
+    {
+     "pkg": "L2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L2_reference_ids/id_mapping_proposals.json",
+     "note": "10 题 18 个缺席参考 ID 全部可证明一一映射，歧义 0；规则 ref == log_nodeid.encode(\"latin-1\",\"backslashreplace\").decode(\"unicode_escape\")，与 pytest _pytest.compat.ascii_escaped 行为一致。181 份 gold 日志 20379 个参考 ID 直接命中，回退只在 18 个缺席项触发；全池假别名正/反向都是 0。"
+    },
+    {
+     "pkg": "L2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L2_reference_ids/fallback_simulation.json",
+     "note": "离线模拟：加回退后 10 题 gold 全部由 RESOLVED_NO 变 RESOLVED_FULL，且 empty 侧 10 题仍全部 RESOLVED_NO（不会把 no-op 洗成通过）。"
+    },
+    {
+     "pkg": "L1_pydantic",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_pydantic/summary.md 附-1",
+     "note": "独立实现（先精确匹配、失败再 id.encode(\"unicode_escape\").decode(\"ascii\") 重试）在 181 题上 missing 18→0、碰撞 0；并给出必须条件性应用的反例：pydantic-8977 另有 2 条 [\\u26c4…] 参考 ID 本来就精确匹配，无条件变换会二次转义改坏。"
+    },
+    {
+     "pkg": "L1_dvc_1",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_1/summary.md 仓库级 2",
+     "note": "第三方独立复核：反斜杠 ID 280 条覆盖 9 题、非 ASCII 9 条覆盖 6 题；这 10 题 f2p_missing=0 而 p2p_missing≥1，题目与 gold 本身没问题。"
+    },
+    {
+     "pkg": "L2",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L2_reference_ids/L2_reference_ids.md §5",
+     "note": "真机交叉印证：pandas-48106 在 e1 生产 v2 路径（日志带 Start/End 标记）复现同样 3 个缺席 ID，num_parsed_tests=1037、RESOLVED_NO，证据 runs/swe_grading_wiring_20260915/e1/eval_logs/evallog_replay-replay-e1-pandas-_de414139.diagnostics.json。"
+    },
+    {
+     "pkg": "L1_dvc_1",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_1/summary.md 仓库级 2",
+     "note": "另有独立第三种形态：iterative__dvc-3665 的 test_to_relpath[/testbed-/testbed] 参数取 os.getcwd()，全池唯一一例；回退规则救不了，需要固定 workdir 或给 parametrize 加 ids=。"
+    },
+    {
+     "pkg": "L6",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L6_rh2_code_check/claims.json C10a",
+     "note": "代码侧核实：rh2/src 里没有任何 ID 归一化（unicode_escape / ascii_escaped / backslashreplace / latin-1 / reference_remapped 全树零命中）；匹配是纯字符串相等（scoring.py:270 reference_missing=[c for c in reference if c not in status_map]），桶划分由 swebench grading.py:27-35 的 case in sm 决定。所以选项 A 是“新增行为”而不是“修 bug”。"
+    },
+    {
+     "pkg": "L1_modin_pandas",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_modin_pandas/repo_level_findings.md#P5/#X2",
+     "note": "独立复核并给出对照口径：转义族的表现是“两边不一致 → 永久 missing → gold 恒 RESOLVED_NO”，与截断族的“两边一致地错 → 不 missing 但被压缩”方向相反，修法也不同（前者可直接按运行时重写常量，后者要换 ID 来源）。逐条清单 L1_modin_pandas/truncated_test_ids.json 的 escape_mismatch。"
+    },
+    {
+     "pkg": "L6",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L6_rh2_code_check/claims.json C10b",
+     "note": "fragile_reference_id 不由任何 rh2 源码产生（全仓只出现在 task_signals_swegym.json 与读取它的脚本）；判据可从数据反推为**结果派生**：216 行里 fragile=True 恰好 10 条，且这 10 条 stage1 全部满足 gold=RESOLVED_NO ∧ f2p_missing=0 ∧ p2p_missing≥1。截断族天然不会让 gold 失败，所以天然全 false。另外 216 题里 stage1 为 null 的 34 题（全是 mypy）无论 ID 多脆弱都不可能被这个信号标出。"
+    }
+   ],
+   "options": [
+    {
+     "label": "A 在 parse_eval_log_v2 的参考匹配层加“缺席→回退→唯一命中才采用”，并把采用次数写进诊断（如 reference_remapped），reward 口径不变",
+     "cost": "小（L2 已给出落点：status_map=parser(segment) 与 get_eval_tests_report 之间）。",
+     "side_effects": "改变“参考 ID 如何与日志对账”，属评分语义；必须是缺席后回退而不是预处理，否则改坏 pydantic-8977 的 2 条。与上游 SWE-Gym 的对账口径分家。"
+    },
+    {
+     "label": "B 按镜像实际 nodeid 为这 10 题重采参考清单，形成带版本的任务修订",
+     "cost": "高（每题跑一次 collect + 重验 gold）。",
+     "side_effects": "更准，但生成的是修订版任务，不能冒充原 benchmark 分数。"
+    },
+    {
+     "label": "C 剔除这 10 题",
+     "cost": "0",
+     "side_effects": "丢 10 题（5.5%），且同类问题在新 ingest 里会复发。"
+    },
+    {
+     "label": "D 把 fragile_reference_id 从“结果派生”改成“形状派生”：判据改为参考 ID 含 [ 但不以 ] 结尾（L6 实测圈出 35/216）∪ 含反斜杠（9 题）∪ 参数取 os.getcwd()（1 题）",
+     "cost": "小（一次性重算信号）。",
+     "side_effects": "当前信号只在有 stage1 结果的题上有效、且只检出转义族；改成形状派生后覆盖截断族，但会把“形状脆弱但当前判分正常”的题也标出来，需要同时保留两个字段而不是替换。"
+    }
+   ],
+   "coordinator_view": "三个包（L2、L1_pydantic、L1_dvc_1）独立得到同一结论、同一修法方向，无分歧，且都强调“只能缺席后回退、不能无条件变换”。dvc-3665 是这条规则救不了的第三种形态，要单独处理。建议 A，同时把 dvc-3665 单列。注意与 L5 的口径差：L5 统计的“gold 在 oracle 口径下从未 RESOLVED_FULL”是 11 题，比这 10 题多 modin-project__modin-5940——该题是真实 P2P 失败（离线 s3 用例），不属本族，见 SYNTHESIS §c。 【L6 修订】代码侧确认目前零归一化，且 fragile_reference_id 是结果派生信号、不检出截断族——选项 D（补形状派生判据）是零争议的配套动作。",
+   "rank": 14,
+   "why_ranked": "10 题 × **完全阻断**（gold 恒判 RESOLVED_NO）；三包独立给出同一修法，最容易拍板"
+  },
+  {
+   "id": "D13",
+   "question": "test_patch 新建测试文件时，候选在同路径写文件会让官方 test_patch 打不上、整题判 0；正式链已改成逐文件守卫（但守卫是“跳过不存在的路径”而非“删除”），要不要显式 rm -f，并处置 legacy 单脚本路径？",
+   "tier": "T0 公共契约",
+   "tasks_affected": {
+    "count": 8,
+    "tasks": [
+     "Project-MONAI__MONAI-2454",
+     "Project-MONAI__MONAI-3690",
+     "conan-io__conan-11594",
+     "getmoto__moto-5885",
+     "getmoto__moto-7607",
+     "iterative__dvc-3665",
+     "iterative__dvc-6954",
+     "python__mypy-15184"
+    ],
+    "note": "216 题里 test_patch 含 new file mode 的共 8 题，删除/改名 0 题。17/24 条 DeepSeek 轨迹改的正是官方 test_patch 要碰的文件，所以撞名不是小概率事件。"
+   },
+   "repos": [
+    "Project-MONAI/MONAI",
+    "conan-io/conan",
+    "getmoto/moto",
+    "iterative/dvc",
+    "python/mypy"
+   ],
+   "evidence": [
+    {
+     "pkg": "L1_monai_1",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_monai_1/summary.md 仓库级 4",
+     "note": "prepared_task_face.py:199-210 的恢复步骤是 if git cat-file -e <base>:\"$f\"; then git checkout <base> -- \"$f\"; fi——base 里不存在的 official test 路径直接跳过；随后 git apply official test_patch 的 new file mode hunk 冲突失败，sandbox_profile.py:1289 exit 3，整题按 official_test_patch_apply_failed 判 0。建议修法：对这类路径显式 rm -f 再 apply。"
+    },
+    {
+     "pkg": "L3",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L3_trajectories/L3_report.md §A.4",
+     "note": "已真实发生：Project-MONAI__MONAI-2454 的候选给 tests/test_to_tensor.py 加了 58 行，gate=candidate 记 infra_failed:test_patch_not_applied / official_verdict UNPARSED；同题 gate=candidate_projected（丢弃该路径）正常得到 unresolved。"
+    },
+    {
+     "pkg": "L1_moto_3",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_moto_3/summary.md",
+     "note": "eval.sh 的恢复 checkout 不含 test_patch 新建路径；对“test_patch 全是新文件”的三题（moto-5885、dvc-6954、MONAI-2454）checkout 后干脆没有 pathspec。"
+    },
+    {
+     "pkg": "L1_conan",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/evidence_new_test_files.json",
+     "note": "conan-11594 是 conan 唯一一例：stage1 eval.sh 在 L18 与 L76 都退化成无 pathspec 的整树 checkout；若候选改变了 HEAD（提交、切分支），这条会把工作树整体拉回 base。"
+    },
+    {
+     "pkg": "L6",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L6_rh2_code_check/claims.json C07（部分成立）",
+     "note": "**正式链已修**：当前代码渲染 moto-5885 实测，profile 路径 render_v2_trusted_setup_script 是逐文件 `git cat-file -e` 守卫（prepared_task_face.py:200-206），legacy 单脚本 render_v2_eval_script 仍是一次性 checkout（含新建路径，整条会失败且静默不恢复）；manager.py:2636-2637 只有 profile is None 时才执行整份 eval_script。另订正：阶段一 eval.sh 里“无 pathspec”的实测是 **4 题**（MONAI-2454、conan-11594、moto-5885、dvc-6954），不是 3 题。"
+    },
+    {
+     "pkg": "e2（另一会话）",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swe_grading_wiring_20260915/e2_report_20260916.md",
+     "note": "投影 oracle 一致性的正面证据：e2 lane B 已完成，24 题里 15 题可比且**全部与投影 oracle 一致**；7 题 apply 失败是已知 fuzz 题，2 题 modin 零解析属环境问题。lane A 与 P-A 回归仍在跑。"
+    }
+   ],
+   "options": [
+    {
+     "label": "A 把逐文件守卫从“跳过”改成“base 不存在即 rm -f 该路径”，再 apply",
+     "cost": "小",
+     "side_effects": "语义上就是“恢复到 base 的不存在状态”，apply 成功后 RH2_SETUP_ABSENT_TEST_FILES 仍为 0，不与 §10.2 的“缺失即拒”冲突。"
+    },
+    {
+     "label": "B 把“丢弃 test_patch_paths”的投影设为默认（现有 candidate_projected）",
+     "cost": "小",
+     "side_effects": "L3 在 24/24 题上验证过它覆盖了全部评分面；但只挡住撞名，不解决 legacy 路径的无 pathspec checkout。"
+    },
+    {
+     "label": "C 维持现状",
+     "cost": "0",
+     "side_effects": "8 题上候选写复现测试就可能被判 infra_failed，而“先写一个复现测试”正是 agent 最自然的行为之一。"
+    }
+   ],
+   "coordinator_view": "L1_monai_1 给出代码定位与修法、L3 给出真实事故、L1_moto_3 与 L1_conan 给出第二三个形态，无分歧。A+B 都是小改动，建议一起做。 【L6 修订】正式链的 profile 路径已有逐文件守卫（C07 部分成立），所以 MONAI-2454 那种整条 checkout 失败的形态在生产上已不会发生；仍待处置的是“跳过而非删除”导致的 apply 冲突，以及 legacy 单脚本路径。",
+   "rank": 15,
+   "why_ranked": "8 题 × infra 事故（1 题已真实发生）；正式链已部分修复"
+  },
+  {
+   "id": "D14",
+   "question": "候选模型对部分题存在记忆污染（逐字复现不可见的官方测试），这些题的 RESOLVED_FULL 不能计为解题能力；要不要把静态污染探针固化成入池闸门，阈值怎么定？",
+   "tier": "T1 数据处理（若用于评测准入则涉及 T0 的评测有效性口径）",
+   "tasks_affected": {
+    "count": 4,
+    "tasks": [
+     "conan-io__conan-14296",
+     "getmoto__moto-5701",
+     "pydantic__pydantic-8500",
+     "getmoto__moto-6913"
+    ],
+    "note": "只在有 DeepSeek 轨迹的 24 题上跑过探针，所以 4/24 是这批轨迹的下界，不是全池比例；conan-13326 判为弱线索不作结论。其中 conan-14296、moto-5701、pydantic-8500 同时是 L3 记录的“取到上游 PR diff”题，两条通道会混淆归因。"
+   },
+   "repos": [
+    "conan-io/conan",
+    "getmoto/moto",
+    "pydantic/pydantic"
+   ],
+   "evidence": [
+    {
+     "pkg": "L1_conan",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/evidence_contamination.json",
+     "note": "conan-14296：候选与 gold 的源码改动 7/7 行逐字符相同（含不地道的 if len(conan_inherits): 与 list(set(...))）；候选复现不可见的官方测试 test_cmake_presets_shared_preset 的 60/61 行（实质行 19/20），唯一差异是注释里一个空格。该测试是一段 60 行全新 fixture，同文件没有可抄的样板。"
+    },
+    {
+     "pkg": "L1_conan",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/repo_level_findings.md §9",
+     "note": "同一探针（scripts/memcheck.py，判据=候选复现不可见 test_patch 实质行比例 ≥0.5）在 24 条轨迹里另点亮 moto-5701（13/13）、pydantic-8500（4/4）、moto-6913（4/5）；阈值由该包临时定，未校准。"
+    },
+    {
+     "pkg": "L3",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L3_trajectories/L3_report.md §A.3",
+     "note": "moto-5701 与 pydantic-8500 同时有“从网络取到 gold 补丁全文”的记录，conan-14296 取的是 api.github.com 的逐文件 patch——同一题上记忆污染与运行期取答案两条通道并存，单看候选 diff 无法区分。"
+    },
+    {
+     "pkg": "L1_conan",
+     "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/summary.md",
+     "note": "moto-6913 另有题面泄漏：题面直接写出 moto/sesv2/responses.py line 45-50 并贴出与 gold 唯一新增行一字不差的代码（L1_moto_1 §E 独立命中），所以它的高重合可能只是“照抄题面”。"
+    }
+   ],
+   "options": [
+    {
+     "label": "A 把探针固化成入池闸门：候选/基座复现不可见 test_patch 实质行比例超阈值即剔出评测集",
+     "cost": "小（脚本已有），但阈值需要校准。",
+     "side_effects": "阈值 0.5 是临时值；moto-6913 这类“题面本身泄漏”的会被误判成记忆污染，需要先扣掉题面可解释的部分。"
+    },
+    {
+     "label": "B 只作标注：在评测报告里对这些题单列，不改入池",
+     "cost": "0",
+     "side_effects": "DeepSeek oracle 与 e2 B 组在这些题上的对照仍然会被高估，读者需自行打折。"
+    },
+    {
+     "label": "C 用 no-context 探针直接测基座记忆（只给 PR 标题，看能否写出该 PR 的测试函数名与断言）",
+     "cost": "中（要调模型 API）。",
+     "side_effects": "结论最直接，但需要按每个候选基座各跑一次，且只能测已知题。"
+    }
+   ],
+   "coordinator_view": "L1_conan 单包提出，L3 提供了“同题另有网络通道”的交叉证据。建议 B 立刻做（零成本、避免误读今晚的 oracle 对照），A/C 待阈值校准后再定；校准时必须先扣掉题面泄漏可解释的部分（moto-6913 是现成的对照）。",
+   "rank": 16,
+   "why_ranked": "4/24 题 × 评测有效性（这是有轨迹的 24 题里的下界，不是全池比例）"
+  }
+ ],
+ "ordering": "按“影响题数 × 阻断程度”排序；每项的 why_ranked 写明依据。低成本且各包意见一致、可当场拍的三项是 D02、D12、D13。"
+}

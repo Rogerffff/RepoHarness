@@ -1,0 +1,25 @@
+{
+ "sample": "E4_bytes_param_byte_escape",
+ "note": "bytes 参数逐字节 \\xNN 转义；参考 ID 侧是这些字节按 latin-1 解出的 mojibake。同时演示 pydantic 变体的行尾状态词形态。",
+ "source_instance_id": "pydantic__pydantic-8977",
+ "repo_key_lower": "pydantic/pydantic",
+ "parser": "parse_log_pytest_pydantic",
+ "parser_version_tag": "swegym_parsers@242429c1",
+ "source_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pydantic__pydantic-8977/gold/offline/a1/test_output.txt",
+ "lines": 4,
+ "expected_status_map": {
+  "tests/test_types.py::test_constrained_bytes_too_long[this": "is",
+  "tests/test_types.py::test_constrained_bytes_too_long[\\xe2\\xaa\\xb6\\xe2\\x93\\xb2\\xe2\\xbd\\xb701-False]": "PASSED",
+  "tests/test_types.py::test_constrained_bytes_too_long[not": "long90-True]",
+  "tests/test_types.py::test_constrained_bytes_too_long[\\xe2\\xaa\\xb6\\xe2\\x93\\xb2\\xe2\\xbd\\xb70-True]": "PASSED"
+ },
+ "reference_ids_of_interest": [
+  "tests/test_types.py::test_constrained_bytes_too_long[âª¶â²â½·01-False]",
+  "tests/test_types.py::test_constrained_bytes_too_long[âª¶â²â½·0-True]"
+ ],
+ "reference_ids_hit_directly": [],
+ "reference_ids_missing": [
+  "tests/test_types.py::test_constrained_bytes_too_long[âª¶â²â½·01-False]",
+  "tests/test_types.py::test_constrained_bytes_too_long[âª¶â²â½·0-True]"
+ ]
+}

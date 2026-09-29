@@ -1,0 +1,150 @@
+.........................FF..................................FFF.F.FF..F [ 98%]
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______ test_default_sources_stay_swe_only_and_r2e_is_an_explicit_opt_in _______
+tests/envpack/test_ingest_r2e_subset.py:389: in test_default_sources_stay_swe_only_and_r2e_is_an_explicit_opt_in
+    default = TrustedTaskController.from_repo_root(REPO_ROOT)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/repoharness2/envpack/training_view.py:334: in from_repo_root
+    trusted = load_trusted_ingest_outputs(repo_root)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/repoharness2/envpack/ingest_swegym_lite.py:568: in load_trusted_ingest_outputs
+    pins = load_and_verify_t1_pins(repo_root)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/repoharness2/envpack/t1_pins.py:66: in load_and_verify_t1_pins
+    raise T1PinsError(f"T1 pins 记录缺失: {T1_PINS_RELPATH}")
+E   repoharness2.envpack.t1_pins.T1PinsError: T1 pins 记录缺失: docs/agentic_RL/repo_harness_rh2_workstreams/s2/t1_input_pins_v1.json
+___________ test_swe_ingest_artifacts_reserialize_to_identical_bytes ___________
+tests/envpack/test_ingest_r2e_subset.py:404: in test_swe_ingest_artifacts_reserialize_to_identical_bytes
+    trusted = swe.load_trusted_ingest_outputs(REPO_ROOT)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/repoharness2/envpack/ingest_swegym_lite.py:568: in load_trusted_ingest_outputs
+    pins = load_and_verify_t1_pins(repo_root)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/repoharness2/envpack/t1_pins.py:66: in load_and_verify_t1_pins
+    raise T1PinsError(f"T1 pins 记录缺失: {T1_PINS_RELPATH}")
+E   repoharness2.envpack.t1_pins.T1PinsError: T1 pins 记录缺失: docs/agentic_RL/repo_harness_rh2_workstreams/s2/t1_input_pins_v1.json
+_________ test_dockerfile_and_recipe_identity_use_the_v2_material_step _________
+tests/envpack/test_build_r2e_derived_material.py:56: in test_dockerfile_and_recipe_identity_use_the_v2_material_step
+    assert build.MATERIAL_STEP == "material_v2.sh" and build.MATERIAL_PATH.is_file()
+E   AssertionError: assert ('material_v2.sh' == 'material_v2.sh'
+E     
+E       material_v2.sh and False)
+E    +  where False = is_file()
+E    +    where is_file = PosixPath('/Users/roger/Desktop/claude-code-verl-stage0h/runs/category2_repair_20260929/frozen_r2e_statement_v1/rh2/scripts/r2e_derive/material_v2.sh').is_file
+E    +      where PosixPath('/Users/roger/Desktop/claude-code-verl-stage0h/runs/category2_repair_20260929/frozen_r2e_statement_v1/rh2/scripts/r2e_derive/material_v2.sh') = <module 'build_r2e_derived_under_test' from '/Users/roger/Desktop/claude-code-verl-stage0h/runs/category2_repair_20260929/frozen_r2e_statement_v1/rh2/scripts/build_r2e_derived.py'>.MATERIAL_PATH
+______ test_env_v1_dockerfile_and_identity_match_the_existing_numpy_image ______
+tests/envpack/test_build_r2e_derived_env.py:52: in test_env_v1_dockerfile_and_identity_match_the_existing_numpy_image
+    digest = build.composite_recipe_digest(material_manifest_bytes=None, env_manifest_bytes=build.env_manifest(NUMPY_ENTRY))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/build_r2e_derived.py:232: in composite_recipe_digest
+    doc = {"recipe_v1.sh": _sha256_file(RECIPE_PATH)}
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/build_r2e_derived.py:356: in _sha256_file
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+                          ^^^^^^^^^^^^^^^^^
+/Users/roger/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/pathlib.py:1019: in read_bytes
+    with self.open(mode='rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+/Users/roger/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/pathlib.py:1013: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/Users/roger/Desktop/claude-code-verl-stage0h/runs/category2_repair_20260929/frozen_r2e_statement_v1/rh2/scripts/r2e_derive/recipe_v1.sh'
+__________ test_env_v2_uses_its_own_script_in_dockerfile_and_identity __________
+tests/envpack/test_build_r2e_derived_env.py:62: in test_env_v2_uses_its_own_script_in_dockerfile_and_identity
+    v1 = build.composite_recipe_digest(material_manifest_bytes=None, env_manifest_bytes=env_bytes)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/build_r2e_derived.py:232: in composite_recipe_digest
+    doc = {"recipe_v1.sh": _sha256_file(RECIPE_PATH)}
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/build_r2e_derived.py:356: in _sha256_file
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+                          ^^^^^^^^^^^^^^^^^
+/Users/roger/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/pathlib.py:1019: in read_bytes
+    with self.open(mode='rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+/Users/roger/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/pathlib.py:1013: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/Users/roger/Desktop/claude-code-verl-stage0h/runs/category2_repair_20260929/frozen_r2e_statement_v1/rh2/scripts/r2e_derive/recipe_v1.sh'
+_________ test_env_v2_script_embeds_exactly_the_probe_used_after_build _________
+tests/envpack/test_build_r2e_derived_env.py:85: in test_env_v2_script_embeds_exactly_the_probe_used_after_build
+    text = (build.ENV_STEP_DIR / "env_v2.sh").read_text(encoding="utf-8")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Users/roger/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/pathlib.py:1027: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Users/roger/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/pathlib.py:1013: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/Users/roger/Desktop/claude-code-verl-stage0h/runs/category2_repair_20260929/frozen_r2e_statement_v1/rh2/scripts/r2e_derive/env_v2.sh'
+_________ test_material_that_needs_an_env_step_is_not_built_without_it _________
+tests/envpack/test_build_r2e_derived_env.py:136: in test_material_that_needs_an_env_step_is_not_built_without_it
+    res = build.build_one(NoDocker(), out=tmp_path, public=public, grading=grading, tag_prefix="t", skip_pull=True,
+scripts/build_r2e_derived.py:517: in build_one
+    recipe_id, recipe_sha, tag_suffix = RECIPE_ID, "sha256:" + _sha256_file(RECIPE_PATH), RECIPE_ID
+                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/build_r2e_derived.py:356: in _sha256_file
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+                          ^^^^^^^^^^^^^^^^^
+/Users/roger/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/pathlib.py:1019: in read_bytes
+    with self.open(mode='rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+/Users/roger/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/pathlib.py:1013: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/Users/roger/Desktop/claude-code-verl-stage0h/runs/category2_repair_20260929/frozen_r2e_statement_v1/rh2/scripts/r2e_derive/recipe_v1.sh'
+_ test_orange3_revision_is_bound_to_the_approved_scipy_recipe_not_the_step_name _
+tests/envpack/test_build_r2e_derived_env.py:177: in test_orange3_revision_is_bound_to_the_approved_scipy_recipe_not_the_step_name
+    approved = build.load_env_pins(REPO_ENV_PINS_V2)[iid]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/build_r2e_derived.py:203: in load_env_pins
+    doc = json.loads(Path(path).read_text(encoding="utf-8"))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Users/roger/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/pathlib.py:1027: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Users/roger/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/pathlib.py:1013: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/Users/roger/Desktop/claude-code-verl-stage0h/runs/category2_repair_20260929/frozen_r2e_statement_v1/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/recipes/env_pins_v2.json'
+_________________ test_identity_is_layered_on_the_base_recipe __________________
+tests/envpack/test_build_r2e_derived_sysconfig.py:34: in test_identity_is_layered_on_the_base_recipe
+    rid, sha, tag = bd.with_sysconfig_step(bd.RECIPE_ID, "sha256:" + "0" * 64, bd.RECIPE_ID)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/build_r2e_derived.py:247: in with_sysconfig_step
+    doc = {"base_recipe_sha256": recipe_sha256, SYSCONFIG_STEP: _sha256_file(ENV_STEP_DIR / SYSCONFIG_STEP)}
+                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/build_r2e_derived.py:356: in _sha256_file
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+                          ^^^^^^^^^^^^^^^^^
+/Users/roger/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/pathlib.py:1019: in read_bytes
+    with self.open(mode='rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+/Users/roger/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/pathlib.py:1013: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/Users/roger/Desktop/claude-code-verl-stage0h/runs/category2_repair_20260929/frozen_r2e_statement_v1/rh2/scripts/r2e_derive/sysconfig_v1.sh'
+_______________ test_step_script_exists_and_only_touches_opt_py ________________
+tests/envpack/test_build_r2e_derived_sysconfig.py:44: in test_step_script_exists_and_only_touches_opt_py
+    body = (bd.ENV_STEP_DIR / bd.SYSCONFIG_STEP).read_text()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Users/roger/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/pathlib.py:1027: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Users/roger/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/pathlib.py:1013: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/Users/roger/Desktop/claude-code-verl-stage0h/runs/category2_repair_20260929/frozen_r2e_statement_v1/rh2/scripts/r2e_derive/sysconfig_v1.sh'
+=========================== short test summary info ============================
+FAILED tests/envpack/test_ingest_r2e_subset.py::test_default_sources_stay_swe_only_and_r2e_is_an_explicit_opt_in
+FAILED tests/envpack/test_ingest_r2e_subset.py::test_swe_ingest_artifacts_reserialize_to_identical_bytes
+FAILED tests/envpack/test_build_r2e_derived_material.py::test_dockerfile_and_recipe_identity_use_the_v2_material_step
+FAILED tests/envpack/test_build_r2e_derived_env.py::test_env_v1_dockerfile_and_identity_match_the_existing_numpy_image
+FAILED tests/envpack/test_build_r2e_derived_env.py::test_env_v2_uses_its_own_script_in_dockerfile_and_identity
+FAILED tests/envpack/test_build_r2e_derived_env.py::test_env_v2_script_embeds_exactly_the_probe_used_after_build
+FAILED tests/envpack/test_build_r2e_derived_env.py::test_material_that_needs_an_env_step_is_not_built_without_it
+FAILED tests/envpack/test_build_r2e_derived_env.py::test_orange3_revision_is_bound_to_the_approved_scipy_recipe_not_the_step_name
+FAILED tests/envpack/test_build_r2e_derived_sysconfig.py::test_identity_is_layered_on_the_base_recipe
+FAILED tests/envpack/test_build_r2e_derived_sysconfig.py::test_step_script_exists_and_only_touches_opt_py
+10 failed, 63 passed in 2.64s

@@ -1,0 +1,50 @@
+{
+ "task_id": "getmoto__moto-6585",
+ "source": "SWE-Gym lite (swe_gym_lite_full_f70b1a29)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "s2/ingest/public_bundles_v0.jsonl#getmoto__moto-6585",
+  "grading": "s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-6585",
+  "validation": "s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-6585",
+  "base_commit": "6843eb4c86ee0abad140d02930af95050120a0ef",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-6585/gold/offline/a1/"
+ },
+ "public_view": {
+  "goal": "Lambda get_function() 对创建时未提供 WorkingDirectory 的镜像型函数，响应里多返回了 'WorkingDirectory': ''；真实 AWS 不返回该键。要求空时不出现在响应里。",
+  "constraints": ["提供了 WorkingDirectory 的函数必须继续正常返回", "题面点明 4.1.12 有更严重的问题（完全不返回 ImageConfigResponse），说明 ImageConfigResponse 本身要保留"],
+  "unknowns_from_public_only": [
+   "题面写的是“如果 WorkingDirectory 为空就不包含”，但没区分“创建时未提供”与“显式传空串”两种情形",
+   "题面没说 Command / EntryPoint 为空时是否也该省略"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 只碰 tests/test_awslambda/test_lambda.py（base 已存在）", "golden_patch 只碰 moto/awslambda/models.py:200-213 的 ImageConfig"], "note": "无二进制/LFS/子模块，与题面同一问题。", "by": "L1_moto_3"},
+  "2": {"status": "pass", "evidence_refs": ["base moto/awslambda/models.py:204 `self.working_directory = config.get('WorkingDirectory', '')`", "base models.py:206-213 response() 无条件塞 'WorkingDirectory': self.working_directory", "base models.py:652-655 package_type == 'Image' 时无条件输出 ImageConfigResponse"], "note": "base 确有缺陷，现象与题面一致。", "by": "L1_moto_3"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 1149 字符，含真实 AWS 与 moto 的对照输出，无外链/图片/截断", "hints_text 为空"], "note": "题面自足。", "by": "L1_moto_3"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 触碰路径全集：tests/test_awslambda/test_lambda.py"], "note": "无非测试源码路径；gold 触碰 moto/awslambda/models.py，非测试样路径。", "by": "L1_moto_3"},
+  "17": {"status": "pass", "evidence_refs": ["同 4"], "note": "additional_exclusions 空。", "by": "L1_moto_3"},
+  "5": {"status": "issue", "evidence_refs": ["全局索引：同测试文件 tests/test_awslambda/test_lambda.py + 同 gold 文件 moto/awslambda/models.py 的另一题是 getmoto__moto-7111，**7111 也在本包**"], "note": "两题文件完全重合，需交叉确认。见本包 getmoto__moto-7111.json 的检查 5：7111 的 base 是 90850bc573（4.2，2024 年），本题是 6843eb4c86（4.1，2023-08），gold 改的区域不同（本题 ImageConfig.response，7111 在别处），不是同一 PR、不是派生；但它们共用同一个测试文件，若两题同时进训练集，模型会两次看到几乎相同的 test_lambda.py 上下文。", "by": "L1_moto_3"},
+  "23": {"status": "pass", "evidence_refs": ["F2P 断言 ImageConfig == {'EntryPoint': ['python'], 'Command': ['/opt/app.py']}（不含 WorkingDirectory）"], "note": "与题面 'I expect that if WorkingDirectory is empty, it is not included in the response' 一致。", "by": "L1_moto_3"},
+  "24": {"status": "pass", "evidence_refs": ["gold 用 `config.get('WorkingDirectory', None)` + `if self.working_directory is not None`", "另一种按题面字面写法 `if self.working_directory:`（保留默认 ''）在 F2P 下同样通过：未提供 → '' → falsy → 省略"], "note": "两种读法都能过，不强制唯一实现。二者只在“显式传空串”时行为不同（gold 会保留空串，字面写法会省略），而该情形没有任何用例覆盖。", "by": "L1_moto_3"},
+  "25": {"status": "pass", "evidence_refs": ["P2P tests/test_awslambda/test_lambda.py::test_create_function_from_image（base 200-228 行）用 image_config 含 'WorkingDirectory': '/opt' 并断言完全相等"], "note": "'永远不输出 WorkingDirectory' 的偷懒修复会被这条 P2P 拒。判分够紧。", "by": "L1_moto_3"},
+  "26": {"status": "pass", "evidence_refs": ["collected 48 items = F2P 1 + P2P 47，全过"], "note": "见 proposed_regression_tests。", "by": "L1_moto_3"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 只改 ImageConfig.__init__ 与 response()"], "note": "无无关改动、不依赖其它改动。", "by": "L1_moto_3"},
+  "29": {"status": "pass", "evidence_refs": ["hints_text 为空；题面无 PR/commit 链接、无修复代码"], "note": "无静态泄漏。", "by": "L1_moto_3"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold 48 passed"], "note": "纯 mock。", "by": "L1_moto_3"},
+  "7": {"status": "issue", "evidence_refs": ["本包共性 install rc=2"], "note": "见包级 issue。", "by": "L1_moto_3"},
+  "11": {"status": "pass", "evidence_refs": ["测试用 fake ECR image uri 字符串，不拉镜像"], "note": "无外部服务；注意 test_lambda.py 整体 12.9s、376 warnings。", "by": "L1_moto_3"}
+ },
+ "issues": [
+  {"category": "shared_test_file_with_another_task", "severity": "P3", "evidence_refs": ["本题与 getmoto__moto-7111 共用 tests/test_awslambda/test_lambda.py 与 moto/awslambda/models.py"], "proposed_action": "在数据划分时，把共用同一测试文件的题放到同一侧（同为 train 或同为 eval），避免评测集的测试文件在训练集里出现过。", "next_experiment": "对 216 题跑一次“测试文件 → 题目”的分组，作为划分约束（本包已生成 runs/env_overnight_20260916/L1_moto_3/gidx_rev.json 可直接复用）。"},
+  {"category": "uncovered_behavior_boundary", "severity": "P3", "evidence_refs": ["显式传 WorkingDirectory='' 的情形无任何用例"], "proposed_action": "纳入扩展回归建议。", "next_experiment": "无。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只含测试文件；沿用默认空排除。", "evidence_refs": ["test_patch 路径全集 = tests/test_awslambda/test_lambda.py"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_awslambda/test_lambda.py::test_create_function_from_image", "reason": "已在 P2P，是防止“永远省略 WorkingDirectory”的关键对照组。"},
+  {"id": "新增：显式 ImageConfig={'WorkingDirectory': ''} 的 create_function", "reason": "gold 与“按题面字面实现”在这一点上行为不同（保留空串 vs 省略），当前无用例固定语义（见检查 24）。"},
+  {"id": "新增：PackageType='Image' 但完全不传 ImageConfig", "reason": "models.py:462 `ImageConfig(spec.get('ImageConfig', {}))` + :652 无条件输出 ImageConfigResponse，gold 之后会返回 {'Command': [], 'EntryPoint': []}；这是改动直接影响、却无人覆盖的边界。"},
+  {"id": "tests/test_awslambda/test_lambda_invoke.py、test_awslambda/test_lambda_function_urls.py 等同包文件", "reason": "get_function 的响应组装（models.py:620-660）是 awslambda 全模块共用，改动传播面在这些文件里。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "题面自足、base 缺陷明确、gold 最小、F2P 与 P2P 形成有效对照（对照组用 WorkingDirectory='/opt'）、文件边界干净。唯一需要在数据划分时注意的是它与 7111 共用测试文件。"},
+ "costs": {"minutes": 12}
+}

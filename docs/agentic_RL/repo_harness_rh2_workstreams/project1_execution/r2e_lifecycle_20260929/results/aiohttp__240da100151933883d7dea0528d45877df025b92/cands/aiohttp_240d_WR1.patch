@@ -1,0 +1,12 @@
+diff --git a/aiohttp/client.py b/aiohttp/client.py
+--- a/aiohttp/client.py
++++ b/aiohttp/client.py
+@@ -248,7 +248,7 @@ class ClientRequest:
+                 self.port = HTTP_PORT
+ 
+         self.scheme = scheme
+-        self.host = netloc
++        self.host = self.netloc
+ 
+     def update_version(self, version):
+         """Convert request version to two elements tuple.

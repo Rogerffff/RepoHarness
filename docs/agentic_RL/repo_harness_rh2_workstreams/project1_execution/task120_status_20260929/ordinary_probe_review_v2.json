@@ -1,0 +1,581 @@
+{
+  "schema": "ordinary_probe_classification_review_v2",
+  "as_of": "2026-09-29T13:41:27.599260+08:00",
+  "scope": "Re-review of all 38 former category-1 tasks against user clarification; document/evidence read only, no new experiment or source-task edit.",
+  "policy": {
+    "category1": "在声明题目范围内，没有必须先修的已知题级缺陷，影响结论的具体疑点已处置；共用运行前提另核。",
+    "category2": "公开依据与修订/验收方向明确，先修并验证；缺共用实现也仍归此类，不靠事后审计放行。",
+    "category3": "要求、影响、正确对照或调查证据尚不足，先做题卡上的具体辨别工作。",
+    "historical_permissions": "旧受限比较许可与作者probe_ready保留为历史事实，不作为当前普通探针分类豁免。",
+    "coverage_boundary": "不要求穷尽输入、消除全仓旧bug或跑通全部公开测试；保留第1类必须逐题解释为何剩余项不是本题必须先修的缺陷。",
+    "training": "第1类仅是进入下一轮普通探针的题级建议，不授予训练/留出资格。",
+    "diagnostic_runs": "第2/3类如需真实模型诊断，使用单独诊断题单；不更改分类，也不并入普通能力比较分母。"
+  },
+  "tasks": [
+    {
+      "source": "SWE",
+      "key": "conan-15422",
+      "old_category": 1,
+      "new_category": 2,
+      "reason": "已有真实满分候选漏掉公开要求的默认 jobs 与多配置路径，不能再以事后审计豁免。",
+      "why_no_required_repair": null,
+      "next_action": "补默认 jobs、多配置生成器及所用 CMake/schema 兼容验收；正确修法通过、已存漏修候选被拒后再进普通探针。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-15422/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/dvc_conan_dask.md"
+      ]
+    },
+    {
+      "source": "SWE",
+      "key": "dask-8597",
+      "old_category": 1,
+      "new_category": 3,
+      "reason": "split=True 空轴及默认警告有已定位的部分修复疑点，现有模型成功不能证明评分能排除此类候选。",
+      "why_no_required_repair": null,
+      "next_action": "运行已设计的 split=True 部分修复与默认警告对照，核正式得分和实际数组；同时确认已验数组开发路径，不能靠候选池身份跳过。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/dask__dask-8597/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/dvc_conan_dask.md"
+      ]
+    },
+    {
+      "source": "SWE",
+      "key": "dvc-1681",
+      "old_category": 1,
+      "new_category": 3,
+      "reason": "旧 md5 兼容的公开目标与内部 dumpd 断言之间，有尚未消解的合理替代解误拒疑点。",
+      "why_no_required_repair": null,
+      "next_action": "用固定旧格式样本及真实非默认目录，对照仅在校验输入规范化的解与 gold；决定保留内部断言还是改为外部兼容行为验收。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/iterative__dvc-1681/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/dvc_conan_dask.md"
+      ]
+    },
+    {
+      "source": "SWE",
+      "key": "dvc-4166",
+      "old_category": 1,
+      "new_category": 2,
+      "reason": "目录规则已有明确公开依据，但已验日志存在参数节点合键，文件／目录成对判据也未完整保护。",
+      "why_no_required_repair": null,
+      "next_action": "固定已验 pathspec/networkx 配方，核当前材料的节点身份；消除合键并补同名文件／目录对照，复验 gold 和只裁尾斜杠的部分修法。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/iterative__dvc-4166/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/dvc_conan_dask.md"
+      ]
+    },
+    {
+      "source": "SWE",
+      "key": "dvc-5839",
+      "old_category": 1,
+      "new_category": 2,
+      "reason": "CLI 的任意 precision 和默认值是明确要求；现有 F2P 只验实参8，helper 的 P2P 不等于 CLI 值传递已受保护。",
+      "why_no_required_repair": null,
+      "next_action": "把已跑的默认／4／8 CLI 实际数值断言纳入验收；核 gold、真实成功候选与硬编码8候选。硬编码候选得分仍未实测，不预填。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-5839/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/dvc_conan_dask.md"
+      ]
+    },
+    {
+      "source": "SWE",
+      "key": "dvc-6954",
+      "old_category": 1,
+      "new_category": 2,
+      "reason": "负数参数公开要求不限于负整数；现有正式目标只覆盖整数，同一通路的负 float 已有可复用行为证据。",
+      "why_no_required_repair": null,
+      "next_action": "加入已验证的负 float／容器负值及必要 lock 行为验收，复验 gold 和 int-only 候选；保留非法表达式不扩题的决定。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-6954/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/dvc_conan_dask.md"
+      ]
+    },
+    {
+      "source": "SWE",
+      "key": "mypy-10174",
+      "old_category": 1,
+      "new_category": 2,
+      "reason": "停止误报仍须保留真正不重叠比较的诊断；具体公开负例已定位，但不在冻结参考内。",
+      "why_no_required_repair": null,
+      "next_action": "补同开关下真实不重叠比较的公开负例，验证 gold 保留诊断、关闭全部比较的候选被拒；不把尚未跑的错误候选写成已误奖。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-10174/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/mypy_pydantic.md"
+      ]
+    },
+    {
+      "source": "SWE",
+      "key": "mypy-10308",
+      "old_category": 1,
+      "new_category": 1,
+      "reason": "核心 F2P 已含非题面实例及正负类型行为，缺失 fixture 已修；P2P 为空本身不证明反馈失效，尚无具体未处置误判。",
+      "why_no_required_repair": "核心 F2P 已含非题面实例及正负类型行为，缺失 fixture 已修；P2P 为空本身不证明反馈失效，尚无具体未处置误判。",
+      "next_action": "固定 materials_v2 与已验开发入口衔接普通探针；记录未覆盖的其它递归／变型组合，不把缺少全仓覆盖当作当前已知缺陷。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-10308/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/mypy_pydantic.md"
+      ]
+    },
+    {
+      "source": "SWE",
+      "key": "mypy-10424",
+      "old_category": 1,
+      "new_category": 2,
+      "reason": "关闭收窄的错误候选已得1且破坏四项公开旧行为，修法已明确。",
+      "why_no_required_repair": null,
+      "next_action": "将现成普通收窄测试接入版本化 P2P，并收口候选安装子命令失败；正确解与已知错解对照通过后进入普通探针。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-10424/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/mypy_pydantic.md"
+      ]
+    },
+    {
+      "source": "SWE",
+      "key": "mypy-15184",
+      "old_category": 1,
+      "new_category": 2,
+      "reason": "题面原例在当前 base 不复现，公开替代复现已验证；继续让模型自行发现原例失配不是对该缺陷的处理。",
+      "why_no_required_repair": null,
+      "next_action": "以有公开依据且已验证的同名类例中性修订复现说明，保持限定名目标，补新公开读者及正确／错误行为核对。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/mypy_pydantic.md"
+      ]
+    },
+    {
+      "source": "SWE",
+      "key": "mypy-16869",
+      "old_category": 1,
+      "new_category": 3,
+      "reason": "合法 Unpack 输出是否被逐行字符串验收误拒尚未确定，不能靠后审替代。",
+      "why_no_required_repair": null,
+      "next_action": "构造导入与语义都正确的 Unpack 修法，核 CLI 生成桩及正式六参考，再决定需要修验收还是消除疑点。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/results/python__mypy-16869/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/mypy_pydantic.md"
+      ]
+    },
+    {
+      "source": "SWE",
+      "key": "mypy-17071",
+      "old_category": 1,
+      "new_category": 2,
+      "reason": "禁用 unbound 检查的错误候选已得1，普通未绑定类型必须仍被拒。",
+      "why_no_required_repair": null,
+      "next_action": "把已有真正 unbound 负例接入正式参考，同时核候选安装；成功修法通过、禁用检查候选被拒后再探针。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-17071/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/mypy_pydantic.md"
+      ]
+    },
+    {
+      "source": "SWE",
+      "key": "moto-5134",
+      "old_category": 1,
+      "new_category": 1,
+      "reason": "核心 null／缺键及实际投递有直接断言；8个成功候选的14种行为与103回归已核，未找到尚未处置的具体误判。",
+      "why_no_required_repair": "核心 null／缺键及实际投递有直接断言；8个成功候选的14种行为与103回归已核，未找到尚未处置的具体误判。",
+      "next_action": "固定已验 SDK 配方和公开开发条件衔接普通探针；Archive／Replay 等未覆盖接口留作范围说明，出现具体关联问题再回流。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/getmoto__moto-5134/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/moto_pandas.md"
+      ]
+    },
+    {
+      "source": "SWE",
+      "key": "moto-5960",
+      "old_category": 1,
+      "new_category": 2,
+      "reason": "公开核心 GSI KEYS_ONLY 路径缺决定性断言，已有 actor/gold 行为对照，不能只安排成功补丁后检。",
+      "why_no_required_repair": null,
+      "next_action": "补 INCLUDE／KEYS_ONLY 的字段集合验收，核引用节点身份，运行 gold 与漏修 KEYS_ONLY 候选后再进入普通探针。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-5960/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/moto_pandas.md"
+      ]
+    },
+    {
+      "source": "SWE",
+      "key": "moto-6408",
+      "old_category": 1,
+      "new_category": 2,
+      "reason": "当前原序列首项正确不证明标签唯一归属及其它标签保留，这属于明确任务要求的覆盖缺口。",
+      "why_no_required_repair": null,
+      "next_action": "补现有两镜像完整标签集合与对象归属断言，核正确解、只改返回排序和误删其它标签的候选；新目的镜像的邻接旧缺陷另定范围。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/moto_pandas.md"
+      ]
+    },
+    {
+      "source": "SWE",
+      "key": "pandas-48106",
+      "old_category": 1,
+      "new_category": 2,
+      "reason": "三组 Period 修订未处理剩余两组 tz 节点合键；当前都PASS不能消除未来混合状态被覆盖的风险。",
+      "why_no_required_repair": null,
+      "next_action": "核当前版本两组 tz 引用绑定，补独立身份／混合状态对照并完成版本验收；不将历史0/1追溯改分。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-48106/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/moto_pandas.md"
+      ]
+    },
+    {
+      "source": "SWE",
+      "key": "pandas-56849",
+      "old_category": 1,
+      "new_category": 3,
+      "reason": "同义 warning 的合理候选接受性和参数合键的实际影响仍待辨别，开发重编通过不能消掉它们。",
+      "why_no_required_repair": null,
+      "next_action": "先验证合理 warning 变体与20期／倍数／freq行为，核逐节点混合状态；确定是修文案验收、引用身份还是保留现规则。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/moto_pandas.md"
+      ]
+    },
+    {
+      "source": "SWE",
+      "key": "pydantic-8511",
+      "old_category": 1,
+      "new_category": 2,
+      "reason": "gold 及满分候选的继承 TypeError 已实证，窄修正对照也已可用，既有审计许可不能替代修复。",
+      "why_no_required_repair": null,
+      "next_action": "以已核窄修作正对照，将三类继承保护接入正式验收，收口安装失败并复验；保留原 gold 失败事实。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/pydantic__pydantic-8511/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/mypy_pydantic.md"
+      ]
+    },
+    {
+      "source": "SWE",
+      "key": "dask-6626",
+      "old_category": 1,
+      "new_category": 1,
+      "reason": "pytest与runner差异已处理；公开两条路径和非示例dtype对照完成，所测错误候选由原参考正确拒绝，最终独立复核已完成。",
+      "why_no_required_repair": "pytest与runner差异已处理；公开两条路径和非示例dtype对照完成，所测错误候选由原参考正确拒绝，最终独立复核已完成。",
+      "next_action": "固定已验 actor/grader 配方和准备预算衔接普通探针；不为已被拒的 object dtype 候选重做评分规则，保留无关依赖及邻接Index范围说明。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/dask__dask-6626/result.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-6626/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-6626/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-6626/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/root_progress_review.md"
+      ]
+    },
+    {
+      "source": "R2E",
+      "key": "aiohttp__1c1c0ea3",
+      "old_category": 1,
+      "new_category": 2,
+      "reason": "C3静默丢失cleanup错误已实证；原例修好不应豁免已经定位的错误保留行为，只登记S2不足以消除此项。",
+      "why_no_required_repair": null,
+      "next_action": "复用公开旧行为及现成后检，补cleanup错误被抛出或被报告的行为断言，允许gold与C1两条路线、拒绝C3；正式复验后再探针。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/results/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/card.md"
+      ]
+    },
+    {
+      "source": "R2E",
+      "key": "aiohttp__22a12cc2",
+      "old_category": 1,
+      "new_category": 3,
+      "reason": "题面直连和非法fingerprint示例与真正代理TLS缺陷不一致；上移校验到connect的合理性也未核，影响解题目标及接受性。",
+      "why_no_required_repair": null,
+      "next_action": "先用公开构造契约和CONNECT行为确定中性题面，核上层校验实现是否合理；随后一起完成题面与行为验收修订。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ]
+    },
+    {
+      "source": "R2E",
+      "key": "aiohttp__61833518",
+      "old_category": 1,
+      "new_category": 2,
+      "reason": "示例断言恒真且路径描述不准，真实客户端／服务端又有旧asyncio兼容故障；mock开发通过未修好这些已知路径。",
+      "why_no_required_repair": null,
+      "next_action": "修订可追溯的公开复现说明，恢复相关客户端／服务端开发兼容或给出并验证等效公开路径；保持压缩/chunked目标与核心修订不变。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ]
+    },
+    {
+      "source": "R2E",
+      "key": "coveragepy__97997d2c",
+      "old_category": 1,
+      "new_category": 3,
+      "reason": "仅转发并始终给插件Coverage的路线被拒是否有公开依据，原卡仍请求核对且无明确结论。",
+      "why_no_required_repair": null,
+      "next_action": "独立核插件公开契约，构造该替代路线并对照配置与combine行为；合理就修验收，否则以依据关闭误拒疑点。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ]
+    },
+    {
+      "source": "R2E",
+      "key": "coveragepy__ea6906b0",
+      "old_category": 1,
+      "new_category": 2,
+      "reason": "生成报告时覆盖用户已有.gitignore是已经定位的破坏性行为，不能以边缘路径登记代替处理。",
+      "why_no_required_repair": null,
+      "next_action": "加入已有.gitignore内容保留与忽略效果对照，验证安全合并或其它合理修法；核公开open替身是否误拒encoding写法，一并窄收口。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ]
+    },
+    {
+      "source": "R2E",
+      "key": "datalad__19f5b450",
+      "old_category": 1,
+      "new_category": 3,
+      "reason": "stderr的公开依据两边都有，文档会导向评分拒绝的路线；题目预算和HOME git身份也未在目标入口收口。",
+      "why_no_required_repair": null,
+      "next_action": "先确定允许的退出码／stderr行为并消解文档冲突；随后修公开说明，固定git身份与已验预算，再复验合理与错误候选。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ]
+    },
+    {
+      "source": "R2E",
+      "key": "numpy__18b7cd9d",
+      "old_category": 1,
+      "new_category": 1,
+      "reason": "None以外的比较及按值相等核心缺口已补并正式验收；剩余list/ndarray等未约定输入不强加新要求，修法提示是难度属性。",
+      "why_no_required_repair": "None以外的比较及按值相等核心缺口已补并正式验收；剩余list/ndarray等未约定输入不强加新要求，修法提示是难度属性。",
+      "next_action": "用已验修订版衔接普通探针，报告题面提示程度；不同长度等边界未穷尽不等于已有错误解被允许，出现具体失效再回流。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ]
+    },
+    {
+      "source": "R2E",
+      "key": "numpy__5e8301c2",
+      "old_category": 1,
+      "new_category": 1,
+      "reason": "核心广播与求和维已有修订及有效C-A正对照；多操作数/路径优化器已明确属本题范围外，原gold缺陷已用替代对照处置。",
+      "why_no_required_repair": "核心广播与求和维已有修订及有效C-A正对照；多操作数/路径优化器已明确属本题范围外，原gold缺陷已用替代对照处置。",
+      "next_action": "固定C-A及修订材料衔接普通探针；保留优化策略等未覆盖范围，不能把未构造的猜测写成已证漏判。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ]
+    },
+    {
+      "source": "R2E",
+      "key": "numpy__a5ea773e",
+      "old_category": 1,
+      "new_category": 1,
+      "reason": "整数及元组reps核心断言已补；已知错误候选均被拒，子类/空reps未约定；无关ctypeslib错误不阻断相关开发。",
+      "why_no_required_repair": "整数及元组reps核心断言已补；已知错误候选均被拒，子类/空reps未约定；无关ctypeslib错误不阻断相关开发。",
+      "next_action": "使用已验相关命令与修订版衔接普通探针；记录其它reps形式，避免为无关公开测试扩题。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ]
+    },
+    {
+      "source": "R2E",
+      "key": "orange3__4014f248",
+      "old_category": 1,
+      "new_category": 2,
+      "reason": "容差合并候选满分却破坏有公开依据的小量级分割，属于已知可修缺陷；还有编译题入口和准备预算待验收。",
+      "why_no_required_repair": null,
+      "next_action": "纳入已有小量级分割回归控制，核gold及C3，再按最终入口复验build/pyx_only与准备预算；不再仅把C3列为后检。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__4014f2483e3bab0621c9ae0f994947c008183253/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__4014f2483e3bab0621c9ae0f994947c008183253/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ]
+    },
+    {
+      "source": "R2E",
+      "key": "pandas__32dd55cb",
+      "old_category": 1,
+      "new_category": 1,
+      "reason": "核心mean/sum及合理替代解接受性已修；公开旧Period文案冲突已按两种合理文案处置，numeric_only=False的既存限制属于题外范围。",
+      "why_no_required_repair": "核心mean/sum及合理替代解接受性已修；公开旧Period文案冲突已按两种合理文案处置，numeric_only=False的既存限制属于题外范围。",
+      "next_action": "使用已验修订版衔接普通探针；保留原gold题外局限与公开旧名单式断言说明，允许候选保持或更新合理文案。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ]
+    },
+    {
+      "source": "R2E",
+      "key": "pillow__3a61c9e9",
+      "old_category": 1,
+      "new_category": 3,
+      "reason": "GIF palette分支mode/字节格式不一致的具体gold风险仍只有源码推断，可能涉及同一调色板要求，不能只写S2放行。",
+      "why_no_required_repair": null,
+      "next_action": "对GIF palette分支核实际mode、字节及保存读回，区分真实回归与无依据格式扩张；有问题再补有效正对照和验收。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ]
+    },
+    {
+      "source": "R2E",
+      "key": "pillow__3ac9396e",
+      "old_category": 1,
+      "new_category": 1,
+      "reason": "核心混合有理数及非示例tag已补；unittest等效开发路径已验，非零分母未登记tag是base已有、已明确不扩的邻接问题。",
+      "why_no_required_repair": "核心混合有理数及非示例tag已补；unittest等效开发路径已验，非零分母未登记tag是base已有、已明确不扩的邻接问题。",
+      "next_action": "沿已验unittest及修订版衔接普通探针；准确说明pytest兼容限制，不强制LONG/SHORT宽度或无依据扩展其它插件。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ]
+    },
+    {
+      "source": "R2E",
+      "key": "scrapy__75450e75",
+      "old_category": 1,
+      "new_category": 1,
+      "reason": "异步执行与二次fetch已验，K1替代挂起gold后问题已处置；措辞偏差已有公开行为解释，未新增题面矛盾。",
+      "why_no_required_repair": "异步执行与二次fetch已验，K1替代挂起gold后问题已处置；措辞偏差已有公开行为解释，未新增题面矛盾。",
+      "next_action": "固定K1和已验shell开发入口衔接普通探针；自定义事件循环与无关Twisted旧测作为明确未覆盖范围。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ]
+    },
+    {
+      "source": "R2E",
+      "key": "scrapy__9a15fcf8",
+      "old_category": 1,
+      "new_category": 1,
+      "reason": "核心MIME别名与死键已修；旧header故障是邻接既有问题，新验收已允许修复它，未发现仍排斥正确目标修法。",
+      "why_no_required_repair": "核心MIME别名与死键已修；旧header故障是邻接既有问题，新验收已允许修复它，未发现仍排斥正确目标修法。",
+      "next_action": "用修订版及相关公开命令衔接普通探针；不要求先修全部抓取/header旧故障，也不把这些失败计为候选引入回归。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ]
+    },
+    {
+      "source": "R2E",
+      "key": "scrapy__e9387529",
+      "old_category": 1,
+      "new_category": 1,
+      "reason": "dict/serializer核心缺口已修并使用有效C1；非文本值依公开文档保留，未规定的分支不选边，相关开发已验。",
+      "why_no_required_repair": "dict/serializer核心缺口已修并使用有效C1；非文本值依公开文档保留，未规定的分支不选边，相关开发已验。",
+      "next_action": "固定C1与修订材料衔接普通探针；嵌套非文本键等未约定边界保留中立，不以无关Twisted错误阻断。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ]
+    },
+    {
+      "source": "R2E",
+      "key": "aiohttp__240da100",
+      "old_category": 1,
+      "new_category": 2,
+      "reason": "原例顶层导入及协程调用不能运行，且期望FAILED的兼容死键仍在，不能只等模型偶然翻转再处理。",
+      "why_no_required_repair": null,
+      "next_action": "按已核mock等效复现修订公开说明，并核两死键的移除或恢复方案；用已有正确/错误候选及SC1复验，不扩大默认端口/Host等未定范围。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/public_read.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ]
+    },
+    {
+      "source": "R2E",
+      "key": "numpy__d805e9b6",
+      "old_category": 1,
+      "new_category": 2,
+      "reason": "同一一维打印目标的n>threshold>=1500已有具体静态丢值路线和清楚断言，题面Actual也已证不符；无需等模型撞出才修。",
+      "why_no_required_repair": null,
+      "next_action": "补n=3000/threshold=2000的保值摘要对照，核K-A5b与混合截断候选；中性修订Actual说明并复验，不扩题外二维。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/public_read.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ]
+    },
+    {
+      "source": "R2E",
+      "key": "numpy__d89bc4bb",
+      "old_category": 1,
+      "new_category": 1,
+      "reason": "三处核心漏判及浮点误拒已修并正式验收；剩余精确比较经过多种运算顺序检查，尚无具体未处理误拒。",
+      "why_no_required_repair": "三处核心漏判及浮点误拒已修并正式验收；剩余精确比较经过多种运算顺序检查，尚无具体未处理误拒。",
+      "next_action": "使用已验84键修订版衔接普通探针；density/normed同传等无公开唯一约定的范围保持中立。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd/public_read.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ]
+    }
+  ],
+  "label_changes": [
+    {
+      "source": "SWE",
+      "keys": [
+        "dvc-5839",
+        "dvc-6954",
+        "mypy-10174"
+      ],
+      "change": "以已有需求—断言映射确认核心/常用行为覆盖缺口；错误候选得1仍未实测。"
+    },
+    {
+      "source": "SWE",
+      "keys": [
+        "dvc-4166"
+      ],
+      "change": "已有源码与逐节点日志确认合键，将评分身份问题由疑点改为事实；不追溯断言历史分数错误。"
+    }
+  ]
+}

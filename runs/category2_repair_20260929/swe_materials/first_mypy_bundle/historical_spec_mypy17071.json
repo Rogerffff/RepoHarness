@@ -1,0 +1,71 @@
+{
+ "image": "xingyaoww/sweb.eval.x86_64.python_s_mypy-17071:latest",
+ "files": {
+  "gold.patch": "/work/task2/gold/python__mypy-17071.gold.patch",
+  "deepse_a1.diff": "/work/task2/cands/python__mypy-17071/deepse_a1.diff",
+  "deepse_a2.diff": "/work/task2/cands/python__mypy-17071/deepse_a2.diff",
+  "qwen3-_a1.diff": "/work/task2/cands/python__mypy-17071/qwen3-_a1.diff",
+  "qwen3-_a2.diff": "/work/task2/cands/python__mypy-17071/qwen3-_a2.diff",
+  "qwen3._a1.diff": "/work/task2/cands/python__mypy-17071/qwen3._a1.diff",
+  "qwen3._a2.diff": "/work/task2/cands/python__mypy-17071/qwen3._a2.diff"
+ },
+ "variants": {
+  "base": [],
+  "gold": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/gold.patch"
+  ],
+  "ds_a1": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/deepse_a1.diff"
+  ],
+  "ds_a2": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/deepse_a2.diff"
+  ],
+  "coder_a1": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/qwen3-_a1.diff"
+  ],
+  "coder_a2": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/qwen3-_a2.diff"
+  ],
+  "q36_a1": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/qwen3._a1.diff"
+  ],
+  "q36_a2": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/qwen3._a2.diff"
+  ],
+  "C1_disable_check": [
+   "python - <<'PY'\nimport pathlib\np=pathlib.Path('mypy/checker.py'); s=p.read_text()\ni=s.index('    def check_unbound_return_typevar(')\nj=s.index('\"\"\"', s.index('\"\"\"', i)+3)+3\ns=s[:j]+'\\n        return  # C1: disable the check entirely'+s[j:]\np.write_text(s); print('C1 inserted')\nPY"
+  ]
+ },
+ "commands": [
+  {
+   "id": "issue_typeguard",
+   "timeout_s": 300,
+   "cmd": "D=$(mktemp -d); cat > $D/t.py <<'PY'\nfrom typing import Any, Callable, TypeVar\nfrom typing_extensions import TypeGuard\nT = TypeVar('T')\ndef tg(x: Any, f: Callable[[Any], TypeGuard[T]]) -> T:\n    return x\ndef is_str(x: Any) -> TypeGuard[str]:\n    return isinstance(x, str)\nreveal_type(tg('a', is_str))\nPY\npython -m mypy --cache-dir=$D/c  $D/t.py; echo rc=$?"
+  },
+  {
+   "id": "issue_typeis",
+   "timeout_s": 300,
+   "cmd": "D=$(mktemp -d); cat > $D/t.py <<'PY'\nfrom typing import Any, Callable, TypeVar\nfrom typing_extensions import TypeIs\nT = TypeVar('T')\ndef ti(x: Any, f: Callable[[Any], TypeIs[T]]) -> T:\n    return x\nPY\npython -m mypy --cache-dir=$D/c  $D/t.py; echo rc=$?"
+  },
+  {
+   "id": "neg_unbound_T",
+   "timeout_s": 300,
+   "cmd": "D=$(mktemp -d); cat > $D/t.py <<'PY'\nfrom typing import Any, Callable, TypeVar\nT = TypeVar('T')\nU = TypeVar('U')\ndef bad(x: Any, f: Callable[[U], U]) -> T:\n    return x\ndef bad2() -> T:\n    ...\nPY\npython -m mypy --cache-dir=$D/c  $D/t.py; echo rc=$?"
+  },
+  {
+   "id": "neg_guard_only_U",
+   "timeout_s": 300,
+   "cmd": "D=$(mktemp -d); cat > $D/t.py <<'PY'\nfrom typing import Any, Callable, TypeVar\nfrom typing_extensions import TypeGuard\nT = TypeVar('T')\nU = TypeVar('U')\ndef bad(x: Any, f: Callable[[Any], TypeGuard[U]]) -> T:\n    return x\nPY\npython -m mypy --cache-dir=$D/c  $D/t.py; echo rc=$?"
+  },
+  {
+   "id": "nested_callback",
+   "timeout_s": 300,
+   "cmd": "D=$(mktemp -d); cat > $D/t.py <<'PY'\nfrom typing import Any, Callable, TypeVar\nfrom typing_extensions import TypeGuard\nT = TypeVar('T')\ndef ok(x: Any, f: Callable[[Callable[[Any], TypeGuard[T]]], None]) -> T:\n    return x\nPY\npython -m mypy --cache-dir=$D/c  $D/t.py; echo rc=$?"
+  },
+  {
+   "id": "public_tests",
+   "timeout_s": 1200,
+   "cmd": "python -m pytest -n 2 -q -p no:cacheprovider mypy/test/testcheck.py -k 'Unbound or TypeGuard or TypeIs' 2>&1 | tail -4"
+  }
+ ]
+}

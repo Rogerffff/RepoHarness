@@ -1,0 +1,1012 @@
+{
+  "task": "Project-MONAI__MONAI-4583",
+  "run": "reserve6-v1",
+  "scope": "actor/private only; formal unreviewed",
+  "actor": {
+    "image": "sha256:8305e1f5f6f13226ef30941433ed794fc294acc62fef85a28bc82131c6f6e0c4",
+    "base_commit": "9c4710199b80178ad11f7dd74925eee3ae921863",
+    "commands_result": [
+      {
+        "id": "identity",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 308,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "确认CPU profile、实际源码/依赖、base及初态；不把预存requirements改动冒称干净"
+      },
+      {
+        "id": "mask_2d",
+        "rc": 1,
+        "status": "nonzero",
+        "expect": "nonzero",
+        "matches_expect": true,
+        "output_bytes": 1280,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "公开同通道真实前景标签机制的2D稀疏数组；同时核box/label值、NumPy/Torch CPU容器、默认及显式dtype/device。非零须精确目标断言"
+      },
+      {
+        "id": "mask_3d",
+        "rc": 1,
+        "status": "nonzero",
+        "expect": "nonzero",
+        "matches_expect": true,
+        "output_bytes": 1360,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "公开同通道真实前景标签机制的3D稀疏数组；同时核box/label值、NumPy/Torch CPU容器、默认及显式dtype/device。非零须精确目标断言"
+      },
+      {
+        "id": "public_regression",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 4262,
+        "output_truncated_to": 200000,
+        "pytest": {
+          "passed": 5,
+          "warning": 22
+        },
+        "purpose": "只运行公开base已有5项矩形往返与box转换用例，不注入隐藏fixture"
+      }
+    ],
+    "cleanup": {
+      "container_rm": 0,
+      "network_failures": [],
+      "relay_failures": [],
+      "stub_rc": 0,
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "residual_after_force": []
+    },
+    "checks": {
+      "interpreter_in_tool_result": false,
+      "host_log_present": true,
+      "no_harness_dir_in_container": true,
+      "no_launcher_or_done_marker": true,
+      "message_start_matches_stub_requests": true,
+      "exit_code_zero": true,
+      "result_event_present": true,
+      "log_complete": true,
+      "bashenv_denied_for_agent": false,
+      "all_commands_ran": true,
+      "all_match_expect": true
+    }
+  },
+  "private": {
+    "base": {
+      "image": "sha256:8305e1f5f6f13226ef30941433ed794fc294acc62fef85a28bc82131c6f6e0c4",
+      "preparation_rc": [
+        0,
+        0,
+        0
+      ],
+      "commands": [
+        {
+          "id": "mask_2d",
+          "rc": 1,
+          "seconds": 5.8150599880009395,
+          "stdout_bytes": 1146,
+          "stderr_bytes": 134
+        },
+        {
+          "id": "mask_3d",
+          "rc": 1,
+          "seconds": 5.1860103650014935,
+          "stdout_bytes": 1226,
+          "stderr_bytes": 134
+        },
+        {
+          "id": "public_regression",
+          "rc": 0,
+          "seconds": 9.792927042000883,
+          "stdout_bytes": 4262,
+          "stderr_bytes": 0
+        }
+      ],
+      "source_sha256": "a439e2cf0de7ac19d715e0fefb5224e96e933d7001b4e554f4fbc5f6090c4f5c",
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      },
+      "actual_observations": {
+        "mask_2d": {
+          "dims": 2,
+          "rows": [
+            {
+              "backend": "numpy",
+              "custom": false,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                -1,
+                -1
+              ],
+              "box_dtype": "float32",
+              "label_dtype": "int64",
+              "device": "numpy/cpu",
+              "ok_box": true,
+              "ok_label": false,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "numpy",
+              "custom": true,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                -1,
+                -1
+              ],
+              "box_dtype": "float64",
+              "label_dtype": "int32",
+              "device": "numpy/cpu",
+              "ok_box": true,
+              "ok_label": false,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "torch",
+              "custom": false,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                -1,
+                -1
+              ],
+              "box_dtype": "torch.float32",
+              "label_dtype": "torch.int64",
+              "device": "cpu",
+              "ok_box": true,
+              "ok_label": false,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "torch",
+              "custom": true,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                -1,
+                -1
+              ],
+              "box_dtype": "torch.float64",
+              "label_dtype": "torch.int32",
+              "device": "cpu",
+              "ok_box": true,
+              "ok_label": false,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            }
+          ]
+        },
+        "mask_3d": {
+          "dims": 3,
+          "rows": [
+            {
+              "backend": "numpy",
+              "custom": false,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                -1,
+                -1
+              ],
+              "box_dtype": "float32",
+              "label_dtype": "int64",
+              "device": "numpy/cpu",
+              "ok_box": true,
+              "ok_label": false,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "numpy",
+              "custom": true,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                -1,
+                -1
+              ],
+              "box_dtype": "float64",
+              "label_dtype": "int32",
+              "device": "numpy/cpu",
+              "ok_box": true,
+              "ok_label": false,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "torch",
+              "custom": false,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                -1,
+                -1
+              ],
+              "box_dtype": "torch.float32",
+              "label_dtype": "torch.int64",
+              "device": "cpu",
+              "ok_box": true,
+              "ok_label": false,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "torch",
+              "custom": true,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                -1,
+                -1
+              ],
+              "box_dtype": "torch.float64",
+              "label_dtype": "torch.int32",
+              "device": "cpu",
+              "ok_box": true,
+              "ok_label": false,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            }
+          ]
+        }
+      }
+    },
+    "gold": {
+      "image": "sha256:8305e1f5f6f13226ef30941433ed794fc294acc62fef85a28bc82131c6f6e0c4",
+      "preparation_rc": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "commands": [
+        {
+          "id": "mask_2d",
+          "rc": 0,
+          "seconds": 5.279444362999129,
+          "stdout_bytes": 1155,
+          "stderr_bytes": 0
+        },
+        {
+          "id": "mask_3d",
+          "rc": 0,
+          "seconds": 5.588921163998748,
+          "stdout_bytes": 1235,
+          "stderr_bytes": 0
+        },
+        {
+          "id": "public_regression",
+          "rc": 0,
+          "seconds": 9.221764050000274,
+          "stdout_bytes": 4262,
+          "stderr_bytes": 0
+        }
+      ],
+      "source_sha256": "ad4fd4db54ee21ce6d2da4e5e707a91f2e3b8e16ca269eaa03b72d3b1460539a",
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      },
+      "actual_observations": {
+        "mask_2d": {
+          "dims": 2,
+          "rows": [
+            {
+              "backend": "numpy",
+              "custom": false,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                0,
+                7
+              ],
+              "box_dtype": "float32",
+              "label_dtype": "int64",
+              "device": "numpy/cpu",
+              "ok_box": true,
+              "ok_label": true,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "numpy",
+              "custom": true,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                0,
+                7
+              ],
+              "box_dtype": "float64",
+              "label_dtype": "int32",
+              "device": "numpy/cpu",
+              "ok_box": true,
+              "ok_label": true,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "torch",
+              "custom": false,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                0,
+                7
+              ],
+              "box_dtype": "torch.float32",
+              "label_dtype": "torch.int64",
+              "device": "cpu",
+              "ok_box": true,
+              "ok_label": true,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "torch",
+              "custom": true,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                0,
+                7
+              ],
+              "box_dtype": "torch.float64",
+              "label_dtype": "torch.int32",
+              "device": "cpu",
+              "ok_box": true,
+              "ok_label": true,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            }
+          ]
+        },
+        "mask_3d": {
+          "dims": 3,
+          "rows": [
+            {
+              "backend": "numpy",
+              "custom": false,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                0,
+                7
+              ],
+              "box_dtype": "float32",
+              "label_dtype": "int64",
+              "device": "numpy/cpu",
+              "ok_box": true,
+              "ok_label": true,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "numpy",
+              "custom": true,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                0,
+                7
+              ],
+              "box_dtype": "float64",
+              "label_dtype": "int32",
+              "device": "numpy/cpu",
+              "ok_box": true,
+              "ok_label": true,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "torch",
+              "custom": false,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                0,
+                7
+              ],
+              "box_dtype": "torch.float32",
+              "label_dtype": "torch.int64",
+              "device": "cpu",
+              "ok_box": true,
+              "ok_label": true,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "torch",
+              "custom": true,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                0,
+                7
+              ],
+              "box_dtype": "torch.float64",
+              "label_dtype": "torch.int32",
+              "device": "cpu",
+              "ok_box": true,
+              "ok_label": true,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            }
+          ]
+        }
+      }
+    },
+    "degenerate": {
+      "image": "sha256:8305e1f5f6f13226ef30941433ed794fc294acc62fef85a28bc82131c6f6e0c4",
+      "preparation_rc": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "commands": [
+        {
+          "id": "mask_2d",
+          "rc": 0,
+          "seconds": 5.08158655599982,
+          "stdout_bytes": 1155,
+          "stderr_bytes": 0
+        },
+        {
+          "id": "mask_3d",
+          "rc": 1,
+          "seconds": 5.353634133000014,
+          "stdout_bytes": 1226,
+          "stderr_bytes": 134
+        },
+        {
+          "id": "public_regression",
+          "rc": 0,
+          "seconds": 10.278326095998636,
+          "stdout_bytes": 4262,
+          "stderr_bytes": 0
+        }
+      ],
+      "source_sha256": "ff73733407f3f1d096331da2c90b289a98fe68b7bd28293f1c4cb9754db700ac",
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      },
+      "actual_observations": {
+        "mask_2d": {
+          "dims": 2,
+          "rows": [
+            {
+              "backend": "numpy",
+              "custom": false,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                0,
+                7
+              ],
+              "box_dtype": "float32",
+              "label_dtype": "int64",
+              "device": "numpy/cpu",
+              "ok_box": true,
+              "ok_label": true,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "numpy",
+              "custom": true,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                0,
+                7
+              ],
+              "box_dtype": "float64",
+              "label_dtype": "int32",
+              "device": "numpy/cpu",
+              "ok_box": true,
+              "ok_label": true,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "torch",
+              "custom": false,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                0,
+                7
+              ],
+              "box_dtype": "torch.float32",
+              "label_dtype": "torch.int64",
+              "device": "cpu",
+              "ok_box": true,
+              "ok_label": true,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "torch",
+              "custom": true,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                0,
+                7
+              ],
+              "box_dtype": "torch.float64",
+              "label_dtype": "torch.int32",
+              "device": "cpu",
+              "ok_box": true,
+              "ok_label": true,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            }
+          ]
+        },
+        "mask_3d": {
+          "dims": 3,
+          "rows": [
+            {
+              "backend": "numpy",
+              "custom": false,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                -1,
+                -1
+              ],
+              "box_dtype": "float32",
+              "label_dtype": "int64",
+              "device": "numpy/cpu",
+              "ok_box": true,
+              "ok_label": false,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "numpy",
+              "custom": true,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                -1,
+                -1
+              ],
+              "box_dtype": "float64",
+              "label_dtype": "int32",
+              "device": "numpy/cpu",
+              "ok_box": true,
+              "ok_label": false,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "torch",
+              "custom": false,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                -1,
+                -1
+              ],
+              "box_dtype": "torch.float32",
+              "label_dtype": "torch.int64",
+              "device": "cpu",
+              "ok_box": true,
+              "ok_label": false,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "torch",
+              "custom": true,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                -1,
+                -1
+              ],
+              "box_dtype": "torch.float64",
+              "label_dtype": "torch.int32",
+              "device": "cpu",
+              "ok_box": true,
+              "ok_label": false,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            }
+          ]
+        }
+      }
+    }
+  },
+  "formal": null,
+  "remaining": [
+    "完整正式评分、逐参考、安装、frozen导出和两层cleanup",
+    "跨包独立复核",
+    "用途及D6另按标准；本卡不授予训练资格"
+  ]
+}

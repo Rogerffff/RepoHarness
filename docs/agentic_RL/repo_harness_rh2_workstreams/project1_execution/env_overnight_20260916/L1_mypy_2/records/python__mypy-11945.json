@@ -1,0 +1,261 @@
+{
+ "task_id": "python__mypy-11945",
+ "source": "SWE-Gym lite / python/mypy PR 11945（修 issue 11820，是 issue 11699 那次修复的后续）",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "public_bundles_v0.jsonl:python__mypy-11945",
+  "grading": "grading_bundles_v2_v0.jsonl:python__mypy-11945",
+  "validation": "validation_bundles_v0.jsonl:python__mypy-11945",
+  "base_commit": "378119fb0ce7cb6133eeccd4de236a330cc8e10e",
+  "version": "0.940",
+  "python_version": "3.10",
+  "eval_cmd": "pytest -n0 -rA -k",
+  "f2p": [
+   "mypy/test/testcheck.py::TypeCheckSuite::check-enum.test::testEnumFinalSpecialProps"
+  ],
+  "p2p": [],
+  "gold_paths": [
+   "mypy/checker.py"
+  ],
+  "test_patch_paths": [
+   "test-data/unit/check-enum.test"
+  ],
+  "runtime_evidence": "无（不在 stage1 样本、in_e2 空、无 DeepSeek 候选）"
+ },
+ "public_view": {
+  "goal": "mypy 0.930 起，`class PyFormat(str, Enum): __module__ = 'psycopg.adapt'` 被报 'Cannot override writable attribute \"__module__\" with a final one [misc]'；要求这段代码不再报错。",
+  "constraints": [
+   "题面给完整最小复现与逐字错误文本，无外链正文（只有一条 mypy 命令输出）、无图片、无截断",
+   "题面说这是 0.930 的回归，暗示 0.929 的行为是对的"
+  ],
+  "unknowns_from_public_only": [
+   "是把 `__module__` 之类 object 特殊属性整体豁免，还是只在 Enum 继承链上豁免？题面只给了 Enum 场景",
+   "非 Enum 类里同样的写法要不要继续报错，题面没说",
+   "'writable attribute' 与 'final' 的判定在哪一层（semanal 还是 checker），题面无线索"
+  ],
+  "base_code_evidence": [
+   "378119fb0:mypy/checker.py:2519-2522 check_compatibility_final_super：`if node.is_final: if base.fullname in ENUM_BASES and node.name in ENUM_SPECIAL_PROPS: return True` —— 用 and，所以基类是 builtins.str/object 时豁免不生效，落到 check_if_final_var_override_writable 报错",
+   "378119fb0:mypy/semanal_enum.py:20-27 ENUM_BASES 只含 enum.{Enum,IntEnum,Flag,IntFlag}；ENUM_SPECIAL_PROPS 含 __module__/__doc__/__slots__/__dict__/__annotations__ 等 object 属性",
+   "378119fb0:test-data/unit/check-enum.test:1713-1744 已有 case testEnumFinalSpecialProps（上一轮 issue 11699 的修复带进来的），只覆盖 `class E(Enum)` 自身"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 目标 test-data/unit/check-enum.test 在 base 存在（case 起于 1713 行）",
+    "gold 目标 mypy/checker.py:2520 在 base 逐字一致"
+   ],
+   "note": "无二进制/LFS/子模块；test_patch 与 gold 同属 PR 11945。",
+   "by": "L1_mypy_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "378119fb0:mypy/checker.py:2520 的 `and`"
+   ],
+   "note": "静态确认 base 含题面缺陷。",
+   "by": "L1_mypy_2"
+  },
+  "3": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "problem_statement 581 字符，自足",
+    "raw hints_text 825 字符，是 issue 下的对话：'Fix is on its way'、'The commit made it in, but I don't think it actually fixed the issue'"
+   ],
+   "note": "hints 透露了关键背景——**上一次修复没修好，本题是第二次修**；题面没有这条信息，agent 看到的 base 里已经有一个看似专门处理该场景的分支（ENUM_BASES and ENUM_SPECIAL_PROPS），容易误以为该分支正确而去别处改。hints 不可见，属信息不对称而非泄漏。",
+   "by": "L1_mypy_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只碰 test-data/unit/check-enum.test"
+   ],
+   "note": "无非测试源码；gold 不碰测试样路径。",
+   "by": "L1_mypy_2"
+  },
+  "17": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "同 file_rules"
+   ],
+   "note": "mypy/test/*.py 与 test-data/unit/fixtures/* 不受保护（仓库级）。",
+   "by": "L1_mypy_2"
+  },
+  "5": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "base 已含 case testEnumFinalSpecialProps（issue 11699 的产物）",
+    "hints 明说上一次修复无效"
+   ],
+   "note": "本题与上游 issue 11699 的修复是同一处代码的连续两次改动。40 题里没有另一题是 11699（已核对 40 题 gold 路径），所以不构成题目重复；但它说明 base 自带一个'半成品修复'，静态判 initial-state 时不能只看'有没有相关代码'。",
+   "by": "L1_mypy_2"
+  },
+  "23": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "F2P 用新写的 `class BaseWithSpecials` + `class E(BaseWithSpecials, Enum)`，而题面复现是 `class PyFormat(str, Enum)`"
+   ],
+   "note": "题面原例（str 作基类）不在 F2P 里；F2P 换成了自定义基类。两者机制相同（基类 fullname 不在 ENUM_BASES），但 '要不要对任意基类豁免' 这条关键设计决定，公开材料推不出来——题面只说 Enum 场景。",
+   "by": "L1_mypy_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P case 全是 `# E:` 行内断言，未断言实现细节"
+   ],
+   "note": "不强制唯一实现：把 `and` 改 `or`、或单独加一条 `if node.name in ENUM_SPECIAL_PROPS: return True`、或在 check_if_final_var_override_writable 里加白名单，都能过。",
+   "by": "L1_mypy_2"
+  },
+  "25": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "F2P 只有 1 条、P2P 为空（grading_bundles_v2_v0:python__mypy-11945）",
+    "本题 F2P case 里保留的两条正向断言（`E._order_ = 'a'  # E: Cannot assign to final attribute`、`EI.value = 2  # E: ...`）来自 check_final()，与 gold 改的 check_compatibility_final_super 不是同一条路径",
+    "同文件 check-enum.test:1746 起的 testEnumNotFinalWithMethodsAndUninitializedValues 断言 `x = 1  # E: Cannot override writable attribute \"x\" with a final one`，正是被 gold 放宽的那条错误，却不在 P2P"
+   ],
+   "note": "漏放通道很直接：在 check_compatibility_final_super 的 `if node.is_final:` 分支里无条件 `return True`（等价于删掉这条检查），F2P 满分、P2P 无约束，而 testEnumNotFinalWithMethodsAndUninitializedValues 会挂——它不参与评分。",
+   "by": "L1_mypy_2"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "P2P 为空"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_mypy_2"
+  },
+  "27": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "golden_patch 把 `and` 改成 `or`（mypy/checker.py:2520）"
+   ],
+   "note": "gold 与题对应、不依赖未交付改动，但语义偏宽：改成 `or` 之后，(a) 任何类的任何 ENUM_SPECIAL_PROPS 同名属性都可以用 Final 覆盖可写属性；(b) 基类是 enum.Enum 时**任何**属性名都豁免。上游选了最省事的写法，不是最小正确修复。这也解释了为什么一个'更保守'的正确实现同样能过 F2P。",
+   "by": "L1_mypy_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 无 PR/commit 链接、无修复代码"
+   ],
+   "note": "题面无泄漏。test_patch 里新增了一行注释 `# https://github.com/python/mypy/issues/11820`，但那属于私有半区。",
+   "by": "L1_mypy_2"
+  },
+  "6": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "未实跑安装。",
+   "by": "L1_mypy_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P case 只用 `[builtins fixtures/dict.pyi]`，该 fixture 在仓库内"
+   ],
+   "note": "无外部权重/数据依赖。",
+   "by": "L1_mypy_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "case 正文无 URL、无 requests/boto3/torch.hub"
+   ],
+   "note": "纯离线数据驱动测试。",
+   "by": "L1_mypy_2"
+  },
+  "18": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/.../L1_mypy_2/kscan.json:python__mypy-11945 over_select=[]"
+   ],
+   "note": "-k 'testEnumFinalSpecialProps' 在 base 的 test-data/ 下唯一匹配，无过选、无同名冲突。",
+   "by": "L1_mypy_2"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P nodeid 4 段；378119fb0:mypy/test/data.py 含 DataFileCollector"
+   ],
+   "note": "nodeid 形状与运行时一致。",
+   "by": "L1_mypy_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "grading_coverage",
+   "severity": "P1",
+   "evidence_refs": [
+    "F2P=1、P2P=0",
+    "check-enum.test:1746 testEnumNotFinalWithMethodsAndUninitializedValues"
+   ],
+   "proposed_action": "补 P2P：至少纳入 testEnumNotFinalWithMethodsAndUninitializedValues、testFinalEnumWithClassDef 与 check-final.test 里覆盖 'Cannot override writable attribute ... with a final one' 的既有用例。",
+   "next_experiment": "写一个假修复（check_compatibility_final_super 的 `if node.is_final:` 分支直接 return True）跑当前 F2P，预期 RESOLVED_FULL；再跑 testEnumNotFinalWithMethodsAndUninitializedValues，预期 FAILED。"
+  },
+  {
+   "category": "requirement_underspecified",
+   "severity": "P2",
+   "evidence_refs": [
+    "题面只给 Enum 场景，F2P 要求任意基类都豁免"
+   ],
+   "proposed_action": "若保留本题，把题面补一句'该豁免应与基类是否为 Enum 无关'，或把 F2P 换回 str 基类的原例。",
+   "next_experiment": "只把豁免限制在'继承链上存在 Enum'的实现（比 gold 保守）跑 F2P，确认是否仍通过（预期通过，因为 E 仍继承 Enum）。"
+  },
+  {
+   "category": "gold_overbroad",
+   "severity": "P2",
+   "evidence_refs": [
+    "gold 把 and 改成 or"
+   ],
+   "proposed_action": "记录 gold 属于过宽修复；若把本题用作 SFT/蒸馏目标，不要把 gold 当作'正确答案'样本。",
+   "next_experiment": "在 gold 上跑 check-final.test 与 check-enum.test 全文件，统计被放宽后不再报错的既有断言数。"
+  },
+  {
+   "category": "file_boundary",
+   "severity": "P1",
+   "evidence_refs": [
+    "rh2/src/repoharness2/grading/manager.py:656/672/581"
+   ],
+   "proposed_action": "同 11857：建议把 mypy/test/* 与 test-data/* 纳入 hygiene 保护。",
+   "next_experiment": "构造只改 mypy/test/helpers.py 的候选 patch 走一次评分，确认当前会判满分。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 test-data/unit/ 下的 .test 数据文件，gold 只碰 mypy/ 源码，两者无交集，按第四组 B 默认保持空。仓库级建议（需用户裁定、对 40 题统一生效）：把 'mypy/test/*' 与 'test-data/*' 加入 hygiene.test_globs——40 题 gold 无一触碰这两处（已对 validation_bundles 全量核对），而当前 agent 改 mypy/test/helpers.py、mypy/test/data.py 或 test-data/unit/fixtures/*.pyi 既不被 eval 的 git checkout 还原，也不被判 rejected_test_tampering。副作用：agent 在 test-data/ 下建临时文件会让整份提交作废，需一并决定。",
+  "evidence_refs": [
+   "rh2/src/repoharness2/grading/manager.py:656（test_files=patch_touched_paths）、:672（test_globs=()）、:581（DEFAULT_SWE_FORBIDDEN_GLOBS=('.rh2*','rh2/*')）",
+   "rh2/src/repoharness2/contracts/grading.py:118-121"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "mypy/test/testcheck.py::TypeCheckSuite::check-enum.test::testEnumNotFinalWithMethodsAndUninitializedValues",
+   "reason": "直接断言被 gold 放宽的那条错误信息，是最短的反向护栏。"
+  },
+  {
+   "id": "mypy/test/testcheck.py::TypeCheckSuite::check-final.test 全文件",
+   "reason": "gold 改的 check_compatibility_final_super 是所有 Final 覆盖检查的入口。"
+  },
+  {
+   "id": "mypy/test/testcheck.py::TypeCheckSuite::check-enum.test 全文件",
+   "reason": "ENUM_BASES/ENUM_SPECIAL_PROPS 的语义主场。"
+  },
+  {
+   "id": "新增：非 Enum 类里用 Final 覆盖可写的普通属性仍应报错",
+   "reason": "gold 的 `or` 把豁免扩到任意基类，需要一条用例钉住'只对特殊属性名豁免'的边界。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "F2P=1 且为放宽型（去掉错误即可通过）、P2P=0，同文件三行之外就有现成的反向用例没被选进来；补 P2P 成本极低，补完是一道好题。"
+ },
+ "costs": {
+  "minutes": 26
+ }
+}

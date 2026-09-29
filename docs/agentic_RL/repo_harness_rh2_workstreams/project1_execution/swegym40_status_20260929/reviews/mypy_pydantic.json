@@ -1,0 +1,745 @@
+[
+  {
+    "instance_id": "pydantic__pydantic-8511",
+    "goal": "修复继承 pydantic dataclass 的 repr 不显示子类新增字段，并保持继承字段、默认工厂和 repr=False 行为。",
+    "static_findings": [
+      "正式 F2P 1 / P2P 168；静态继承风险已被后续 R4 实测替代。"
+    ],
+    "development_evidence": {
+      "date": "2026-09-25",
+      "actor": {
+        "base_commit": "e4fa099d5adde70acc80238ff810c87a5cec7ebf",
+        "image": "xingyaoww/sweb.eval.x86_64.pydantic_s_pydantic-8511:latest",
+        "image_identity": "sha256:b331c8fa2b55168dbce5d57753265c02d9aa2a3525761d202f3802684681b9a0 [\"xingyaoww/sweb.eval.x86_64.pydantic_s_pydantic-8511@sha256:bfb85a33f105b41c42c88805c45bd7d823c3884dadc000dbfc040401d8be4a73\"]",
+        "runtime": "正式 Claude Code 2.1.205 / UID 54321 / /testbed / conda testbed；2 CPU, 4 GiB",
+        "versions": "Python 3.8.19 / pydantic_core 2.14.5 / pytest 7.4.3",
+        "observed": "原例继承 dataclass repr 不含新增字段；166 passed, 11 skipped；pdm.lock/pyproject.toml 初始有改动",
+        "checks": "读取实际 captures，目标非零按异常/输出解释；不以所有非零为通过。该次 devcheck 完整，container/stub 移除 0、标签容器/网络无残留。"
+      },
+      "private_gold": "原例和相关公开回归已有 base/gold 私有行为对照。私有 helper 默认用户和无正式资源 profile，不能等同 actor 条件。",
+      "scope": "验证公共开发命令和来源身份，不是完整模型作答或最新生产链验收。"
+    },
+    "model_evidence": {
+      "status": "not_run_in_reviewed_evidence",
+      "scope": "本批索引未见该题实际模型作答；确定性 devcheck、gold 与退化候选不是模型成绩。"
+    },
+    "verified_repairs": [
+      "R4 原例与继承矩阵已完成；窄修候选原例和继承控制均通过，正式 reward 1。"
+    ],
+    "confirmed_open_issues": [
+      "gold 修复原例，却在 required/repr=False/default_factory 继承情形类构建报 TypeError（字段无注解）；base 与窄修通过。gold 本身有兼容回归，不能因此断言任务无正确解。",
+      "R4 gold/窄修原参考均 reward 1，gold 回归未被识别。",
+      "R4 安装 pdm add pre-commit rc 127、make install rc 2（末命令亦 2）；测试实际完整，但不是无安装故障的控制。"
+    ],
+    "unexecuted_questions": [
+      "公共修订验收的正式接入和干净安装条件下的同版本控制未执行。"
+    ],
+    "current_use": {
+      "diagnostic": "yes",
+      "comparison": "conditional",
+      "training": "no",
+      "holdout": "no"
+    },
+    "conditions": {
+      "comparison": "原 19 条件性探针池成员；固定共同公开条件、题单、有效预算和有效尝试分母，并审计实际补丁。不是正式训练合格名单。 可辨认正确窄修与 gold 式继承回归；保持同条件且显式保留安装边界。",
+      "training": "未具备当前 v1 全部准入证据；SWE 的 D6 正式修订接入未实施，不能以私有后检替代。",
+      "holdout": "本题已用于调查/控制或模型诊断，未证明独立未暴露留出及仓库切分。",
+      "evidence_boundary": "既有上下文复核，不是 fresh 盲审。历史正面对照仅支持记录的代码/材料/安装条件，不能背书最新生产整链；本次不执行实验。"
+    },
+    "next_action": "按现决保留条件性探针，审计继承回归；勿将 gold 唯一实现或原分数当正确性判据。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/pydantic__pydantic-8511/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/pydantic__pydantic-8511/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/pydantic__pydantic-8511/screening_record.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+      "runs/task2_swegym_dev_20260925/runs/pydantic8511/orig/attempt.json",
+      "runs/task2_swegym_dev_20260925/runs/pydantic8511/orig/captures",
+      "runs/task2_swegym_dev_20260925/runs/private/pydantic__pydantic-8511_gold.json",
+      "runs/task2_swegym_dev_20260925/runs/semantic/pydantic8511"
+    ]
+  },
+  {
+    "instance_id": "pydantic__pydantic-5706",
+    "goal": "澄清 Sequence 的 JSON 支持/拒绝目标，修复 schema/JSON 异常，同时保留 Python range/tuple/deque 等输入行为。",
+    "static_findings": [
+      "题面 core 0.25 的异常与固定镜像 core 0.31 不同；支持还是拒绝 JSON 存在 P5 争议。"
+    ],
+    "development_evidence": {
+      "date": "2026-09-29 CPU 实证（UTC 路径为 09-28）",
+      "scope": "已完成正式 actor、独立 root 私有行为以及正式 noop/gold/退化三方；本次复用题级最终原件审核、独立 review 和 root parser/SHA 回执，不重做。",
+      "formal": "noop 0 / gold 1 / 退化 1；安装和测试完整、参考逐条匹配、实际导出源码已核，actor/private/grader 双层清理已核。 2 F2P + 273 P2P = 275 参考；278 全测试节点。矩阵总 rc 0 不表示其中每条行为通过。",
+      "boundary": "私有 root 行为不是 actor；CPU 确定性候选不是模型作答；后检未接入 D6 正式评分。",
+      "identity": "base 70e7e99ca1861ad71520cc8fcf1a2fb913abbc10；原 image sha256:3e3b78ae4098882290d0d7b6d544e81816337295d3a7f0245db7ea58355985d4；Python 3.8.19 / core 0.31.0；UID 54321。"
+    },
+    "model_evidence": {
+      "status": "not_run_in_reviewed_evidence",
+      "scope": "本批索引未见该题实际模型作答；确定性 devcheck、gold 与退化候选不是模型成绩。"
+    },
+    "verified_repairs": [
+      "原实验症状匹配器误期望异常而停；symptom_v2 仅精确接受 core 0.31 的 NotImplementedError 文本。保留旧失败，复用旧身份及两条回归，仅新跑修正症状命令；不是项目/环境修复。",
+      "八轮包离线 grader 配方及三方正式安装/评分已完成。"
+    ],
+    "confirmed_open_issues": [
+      "sequence_list 正式 reward 1，却破坏 Python Sequence 保持类型等旧能力；私有 6 项旧测 4 fail/2 pass，S1/T2b。",
+      "JSON 支持/拒绝方向未决；不能因 gold 1 或私有后检存在就进入比较。"
+    ],
+    "unexecuted_questions": [
+      "公开 JSON 范围定案、正式兼容性护栏和 D6 接入未实施。"
+    ],
+    "current_use": {
+      "diagnostic": "yes",
+      "comparison": "no",
+      "training": "no",
+      "holdout": "no"
+    },
+    "conditions": {
+      "comparison": "no：S1/T2b 实证与 P5 目标争议同时存在；只能诊断，不能用私有后检绕过未定目标。",
+      "training": "未具备当前 v1 全部准入证据；SWE 的 D6 正式修订接入未实施，不能以私有后检替代。",
+      "holdout": "本题已用于调查/控制或模型诊断，未证明独立未暴露留出及仓库切分。",
+      "evidence_boundary": "既有上下文复核，不是 fresh 盲审。历史正面对照仅支持记录的代码/材料/安装条件，不能背书最新生产整链；本次不执行实验。"
+    },
+    "next_action": "仅诊断，保留版本精确症状和已实测误奖；待目标明确后实施正式修订及闭环。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/pydantic__pydantic-5706/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/pydantic__pydantic-5706/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/pydantic__pydantic-5706/screening_record.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/pydantic__pydantic-5706/result.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/pydantic__pydantic-5706/result.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/pyd5706_result_review.md",
+      "runs/swegym_cpu_preprobe_20260929/analysis/pyd5706_final_v2.json"
+    ]
+  },
+  {
+    "instance_id": "python__mypy-10424",
+    "goal": "修复 type(t) is/is not 元类检查对 Type[C] 的错误收窄，同时保留普通实例类型收窄。",
+    "static_findings": [
+      "F2P 1 项含分支/合流的 5 次 reveal，P2P 0；普通实例收窄未受正式参考保护。"
+    ],
+    "development_evidence": {
+      "date": "2026-09-25",
+      "actor": {
+        "base_commit": "4518b55663bc689646280a0ab2247c4a724bf3c0",
+        "image": "xingyaoww/sweb.eval.x86_64.python_s_mypy-10424:latest",
+        "image_identity": "sha256:079d2d9feb30ced220f840379cb9bd647aa592e21a20701b3a430e894de580d6 [\"xingyaoww/sweb.eval.x86_64.python_s_mypy-10424@sha256:d1cfbdb0f70ccb1acbf0f412197a34d491b83dfdb50b09eb09b441e9032dae41\"]",
+        "runtime": "正式 Claude Code 2.1.205 / UID 54321 / /testbed / conda testbed；2 CPU, 4 GiB",
+        "versions": "pytest 6.1.2；本条 env 未打印 Python 版本",
+        "observed": "原例 reveal 为 <nothing>；133 passed, 1 skipped；test-requirements.txt 初始有改动",
+        "checks": "读取实际 captures，目标非零按异常/输出解释；不以所有非零为通过。该次 devcheck 完整，container/stub 移除 0、标签容器/网络无残留。"
+      },
+      "private_gold": "原例和相关公开回归已有 base/gold 私有行为对照。私有 helper 默认用户和无正式资源 profile，不能等同 actor 条件。",
+      "scope": "验证公共开发命令和来源身份，不是完整模型作答或最新生产链验收。"
+    },
+    "model_evidence": {
+      "status": "not_run_in_reviewed_evidence",
+      "scope": "本批索引未见该题实际模型作答；确定性 devcheck、gold 与退化候选不是模型成绩。"
+    },
+    "verified_repairs": [
+      "历史离线安装配方和 gold/noop 控制已完成；R4 语义实验现已完成，不能继续标为未做。"
+    ],
+    "confirmed_open_issues": [
+      "C1 关闭收窄令原例通过却把普通 int 分支保持为 Union，旧 TypeEquals 测试 4 项失败；正式原参考仍 reward 1：实证 S1。",
+      "R4 gold/C1 ledger 的 pip install -e . 子命令 rc 1，末命令为 0；测试实际执行，但不能写安装全通过。",
+      "决定补普通收窄 P2P，D6 正式接入尚未实施。"
+    ],
+    "unexecuted_questions": [
+      "修订正式参考后的当前 noop/正确/退化候选闭环尚未执行。"
+    ],
+    "current_use": {
+      "diagnostic": "yes",
+      "comparison": "conditional",
+      "training": "no",
+      "holdout": "no"
+    },
+    "conditions": {
+      "comparison": "原 19 条件性探针池成员；固定共同公开条件、题单、有效预算和有效尝试分母，并审计实际补丁。不是正式训练合格名单。 已知 S1 必须逐补丁审计，不能按原分数直接比较。",
+      "training": "未具备当前 v1 全部准入证据；SWE 的 D6 正式修订接入未实施，不能以私有后检替代。",
+      "holdout": "本题已用于调查/控制或模型诊断，未证明独立未暴露留出及仓库切分。",
+      "evidence_boundary": "既有上下文复核，不是 fresh 盲审。历史正面对照仅支持记录的代码/材料/安装条件，不能背书最新生产整链；本次不执行实验。"
+    },
+    "next_action": "保留条件性探针；reward 1 后审计普通收窄，训练前按已决方向实施 D6 并复验。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-10424/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-10424/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-10424/screening_record.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+      "runs/task2_swegym_dev_20260925/runs/mypy10424/orig/attempt.json",
+      "runs/task2_swegym_dev_20260925/runs/mypy10424/orig/captures",
+      "runs/task2_swegym_dev_20260925/runs/private/python__mypy-10424_gold.json",
+      "runs/task2_swegym_dev_20260925/runs/semantic/mypy10424"
+    ]
+  },
+  {
+    "instance_id": "python__mypy-10308",
+    "goal": "消除递归泛型 Vector/Matrix Protocol 推断触发的内部断言，保留协议兼容性检查。",
+    "static_findings": [
+      "F2P 1 含递归协议正负赋值，P2P 0；正式例比原例简化，不能只以不崩溃判断全部类型语义。"
+    ],
+    "development_evidence": {
+      "date": "2026-09-25",
+      "actor": {
+        "base_commit": "1567e36165b00d532f232cb3d33d1faf04aaf63d",
+        "image": "xingyaoww/sweb.eval.x86_64.python_s_mypy-10308:latest",
+        "image_identity": "sha256:594e6750e110f7675fd6d49c3d6dd3c7018c6b276eeab9c9d95b31d8607f1f40 [\"xingyaoww/sweb.eval.x86_64.python_s_mypy-10308@sha256:8204090027b336ea9218901ad8a83c34436f128a41041673243c25ff5fcc69c3\"]",
+        "runtime": "正式 Claude Code 2.1.205 / UID 54321 / /testbed / conda testbed；2 CPU, 4 GiB",
+        "versions": "Python 3.9.19 / pytest 6.1.2",
+        "observed": "原例 constraints.py:437 AssertionError；15 passed, 1 skipped；test-requirements.txt 初始有改动",
+        "checks": "读取实际 captures，目标非零按异常/输出解释；不以所有非零为通过。该次 devcheck 完整，container/stub 移除 0、标签容器/网络无残留。"
+      },
+      "private_gold": "原例和相关公开回归已有 base/gold 私有行为对照。私有 helper 默认用户和无正式资源 profile，不能等同 actor 条件。",
+      "scope": "验证公共开发命令和来源身份，不是完整模型作答或最新生产链验收。"
+    },
+    "model_evidence": {
+      "status": "not_run_in_reviewed_evidence",
+      "scope": "本批索引未见该题实际模型作答；确定性 devcheck、gold 与退化候选不是模型成绩。"
+    },
+    "verified_repairs": [
+      "materials_v2 补回两份缺失 Hashable fixture，保持测试断言、参考和 stub pin；历史 v2 gold/noop 1/0。",
+      "任务二 actor 精确复现原例，私有 gold 原例及相关测试通过；旧未完成原例对照已消项。"
+    ],
+    "confirmed_open_issues": [
+      "须绑定 materials_v2 的独立材料摘要，不能混用旧缺 fixture 的失败环境。"
+    ],
+    "unexecuted_questions": [
+      "过度放宽约束的退化对照、非示例及更广回归未完成。"
+    ],
+    "current_use": {
+      "diagnostic": "yes",
+      "comparison": "conditional",
+      "training": "no",
+      "holdout": "no"
+    },
+    "conditions": {
+      "comparison": "原 19 条件性探针池成员；固定共同公开条件、题单、有效预算和有效尝试分母，并审计实际补丁。不是正式训练合格名单。",
+      "training": "未具备当前 v1 全部准入证据；SWE 的 D6 正式修订接入未实施，不能以私有后检替代。",
+      "holdout": "本题已用于调查/控制或模型诊断，未证明独立未暴露留出及仓库切分。",
+      "evidence_boundary": "既有上下文复核，不是 fresh 盲审。历史正面对照仅支持记录的代码/材料/安装条件，不能背书最新生产整链；本次不执行实验。"
+    },
+    "next_action": "保留条件性探针并固定 materials_v2；训练前补必要非示例和有针对性的过宽候选控制。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-10308/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-10308/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-10308/screening_record.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+      "runs/task2_swegym_dev_20260925/runs/mypy10308/orig/attempt.json",
+      "runs/task2_swegym_dev_20260925/runs/mypy10308/orig/captures",
+      "runs/task2_swegym_dev_20260925/runs/private/python__mypy-10308_gold.json"
+    ]
+  },
+  {
+    "instance_id": "python__mypy-17071",
+    "goal": "允许回调 Protocol 的 TypeGuard[T]/TypeIs[T] 返回绑定类型变量，同时继续拒绝真正未绑定变量。",
+    "static_findings": [
+      "F2P 2 / P2P 2；缺少真正 unbound 的负例，TypeIs 扩展有公开语义来源。"
+    ],
+    "development_evidence": {
+      "date": "2026-09-25",
+      "actor": {
+        "base_commit": "4310586460e0af07fa8994a0b4f03cb323e352f0",
+        "image": "xingyaoww/sweb.eval.x86_64.python_s_mypy-17071:latest",
+        "image_identity": "sha256:de8e2c4bf1c31507ed2ea5d0312e7b8e43d2a70b03a6a2698d7d2059f046ca35 [\"xingyaoww/sweb.eval.x86_64.python_s_mypy-17071@sha256:ffc5cb69679917b638305b44d91ad941f22934fbb49acb20eac12f2fdae3ed99\"]",
+        "runtime": "正式 Claude Code 2.1.205 / UID 54321 / /testbed / conda testbed；2 CPU, 4 GiB",
+        "versions": "Python 3.12.4 / pytest 8.1.1",
+        "observed": "原例 TypeGuard 返回类型变量误报 unbound；135 passed, 1 xfailed；初始 clean",
+        "checks": "读取实际 captures，目标非零按异常/输出解释；不以所有非零为通过。该次 devcheck 完整，container/stub 移除 0、标签容器/网络无残留。"
+      },
+      "private_gold": "原例和相关公开回归已有 base/gold 私有行为对照。私有 helper 默认用户和无正式资源 profile，不能等同 actor 条件。",
+      "scope": "验证公共开发命令和来源身份，不是完整模型作答或最新生产链验收。"
+    },
+    "model_evidence": {
+      "status": "executed_historical",
+      "conditions": "2026-09-22，原公共镜像 + bash_env_v1、out_of_tree；历史 install_wave1 rebuilt grader，不是最新生产链。",
+      "valid_attempts": 6,
+      "scores": {
+        "deepseek-v4-pro": "2/2",
+        "qwen3.6-35b-a3b": "2/2",
+        "qwen3-coder": "0/2"
+      },
+      "interpretation": "四份成功补丁均处理 TypeGuard/TypeIs 且后续负例/135 项旧测通过；Coder 未保留有效修复。5/6 达 60-turn 上限不能单因归因预算；DS a1 保留 DEBUG stderr 如实记录。"
+    },
+    "verified_repairs": [
+      "任务二开发复现和 4 份成功模型补丁的公开回归/负例核验已完成。"
+    ],
+    "confirmed_open_issues": [
+      "C1 禁用真实 unbound 检查获 reward 1，却错误接受仅返回位置的 U；旧回归 1 fail/134 pass/1 xfail，实证 S1。",
+      "C1 formal 安装 pip install -e . rc 1 被末命令 0 掩盖；目标参考确已执行，不称安装全通过。",
+      "新增负向 P2P 方向已决，D6 尚未实施。"
+    ],
+    "unexecuted_questions": [
+      "修订正式参考的完整控制尚未执行；后续当前链模型比较未执行。"
+    ],
+    "current_use": {
+      "diagnostic": "yes",
+      "comparison": "conditional",
+      "training": "no",
+      "holdout": "no"
+    },
+    "conditions": {
+      "comparison": "原 19 条件性探针池成员；固定共同公开条件、题单、有效预算和有效尝试分母，并审计实际补丁。不是正式训练合格名单。 S1 原 reward 不能独立判胜负；已核四个成功样本不等于所有后续候选免审。",
+      "training": "未具备当前 v1 全部准入证据；SWE 的 D6 正式修订接入未实施，不能以私有后检替代。",
+      "holdout": "本题已用于调查/控制或模型诊断，未证明独立未暴露留出及仓库切分。",
+      "evidence_boundary": "既有上下文复核，不是 fresh 盲审。历史正面对照仅支持记录的代码/材料/安装条件，不能背书最新生产整链；本次不执行实验。"
+    },
+    "next_action": "保留 §10 允许的审计后比较；对所有成功补丁查真正 unbound 负例，训练前接入已决负向参考。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-17071/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-17071/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-17071/screening_record.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+      "runs/task2_swegym_dev_20260925/runs/mypy17071/orig/attempt.json",
+      "runs/task2_swegym_dev_20260925/runs/mypy17071/orig/captures",
+      "runs/task2_swegym_dev_20260925/runs/private/python__mypy-17071_gold.json",
+      "runs/task2_swegym_dev_20260925/runs/behavior/mypy17071",
+      "runs/base_probe_20260922/analysis/python__mypy-17071",
+      "runs/base_probe_20260922/remote/runs/matrix/attempts/python__mypy-17071"
+    ]
+  },
+  {
+    "instance_id": "python__mypy-11236",
+    "goal": "使 Tuple[str] 与 Tuple[Literal[1]] 的 union 接受正确的字符串/字面量元组，保留非法分支诊断。",
+    "static_findings": [
+      "F2P 1 含正例及六个负例，P2P 0；Final 和精确报错文本存在目标/验收范围争议。"
+    ],
+    "development_evidence": {
+      "date": "2026-09-25",
+      "actor": {
+        "base_commit": "209a7193feb4bbfa38d09232b0a5a916e9d2e605",
+        "image": "xingyaoww/sweb.eval.x86_64.python_s_mypy-11236:latest",
+        "image_identity": "sha256:d64f775bd6258407d6fe847af333afd1f8666c69f38751eef7d6b2b4eb34aa37 [\"xingyaoww/sweb.eval.x86_64.python_s_mypy-11236@sha256:6b6a59ea714d1d4e1bf5c09d2e576aed035532099c8634a750ab738e33d9cc9e\"]",
+        "runtime": "正式 Claude Code 2.1.205 / UID 54321 / /testbed / conda testbed；2 CPU, 4 GiB",
+        "versions": "Python 3.9.19 / pytest 6.2.5；mypy 目标 Python 3.7",
+        "observed": "原例 Tuple[int] 返回错误；18 passed；test-requirements.txt 初始有改动；复用 first_round bash_env",
+        "checks": "读取实际 captures，目标非零按异常/输出解释；不以所有非零为通过。该次 devcheck 完整，container/stub 移除 0、标签容器/网络无残留。"
+      },
+      "private_gold": "原例和相关公开回归已有 base/gold 私有行为对照。私有 helper 默认用户和无正式资源 profile，不能等同 actor 条件。",
+      "scope": "验证公共开发命令和来源身份，不是完整模型作答或最新生产链验收。"
+    },
+    "model_evidence": {
+      "status": "executed_historical",
+      "conditions": "09-22 bash_env_v1、旧固定材料；以最终 grading/grading_v2 有效回执计，不混 candidate_v1 apply 失败。",
+      "valid_attempts": 6,
+      "scores": "三个模型各 0/2；六个有效最终结果均 0。",
+      "interpretation": "DS 两份及 Qwen3.6 a2 有实质修复但未全过；另三份无有效修复。09-25 A/B 补证推翻“三份全属误拒”的概括，仅 DS a1 通过两个原意分支。"
+    },
+    "verified_repairs": [
+      "历史脏依赖文件造成的 candidate_v1 apply 失败已用独立 candidate_v2/grading_v2 纠正，旧失败保留；不能把废弃失败纳入模型分母。",
+      "09-25 A/B/Final 语义对照已完成，纠正早期“3 份均误拒”的过度结论。"
+    ],
+    "confirmed_open_issues": [
+      "只有 DS a1 在 A/B 上与 gold 一致；DS a2 的 A/B 都失败，Qwen3.6 a2 的 B 失败，后二者是不完整修复。",
+      "三份有效改动均被 Final/诊断文本参考拒绝，是否全部是题面必要验收仍未定；不能以私有后检直接恢复比较。"
+    ],
+    "unexecuted_questions": [
+      "Final 与报错文本正式目标范围及修订参考尚未定案/实施；长度过度接受候选未执行。"
+    ],
+    "current_use": {
+      "diagnostic": "yes",
+      "comparison": "no",
+      "training": "no",
+      "holdout": "no"
+    },
+    "conditions": {
+      "comparison": "no：已决仅诊断；争议评分方向不可用后检强行准入。",
+      "training": "未具备当前 v1 全部准入证据；SWE 的 D6 正式修订接入未实施，不能以私有后检替代。",
+      "holdout": "本题已用于调查/控制或模型诊断，未证明独立未暴露留出及仓库切分。",
+      "evidence_boundary": "既有上下文复核，不是 fresh 盲审。历史正面对照仅支持记录的代码/材料/安装条件，不能背书最新生产整链；本次不执行实验。"
+    },
+    "next_action": "按既有决定仅诊断；先解决验收范围争议，再讨论正式接入和比较。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/screening_record.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+      "runs/task2_swegym_dev_20260925/runs/mypy11236/orig/attempt.json",
+      "runs/task2_swegym_dev_20260925/runs/mypy11236/orig/captures",
+      "runs/task2_swegym_dev_20260925/runs/private/python__mypy-11236_gold.json",
+      "runs/task2_swegym_dev_20260925/runs/behavior/mypy11236",
+      "runs/base_probe_20260922/analysis/python__mypy-11236",
+      "runs/base_probe_20260922/remote/runs/matrix/attempts/python__mypy-11236"
+    ]
+  },
+  {
+    "instance_id": "python__mypy-15184",
+    "goal": "assert_type 遇到不同模块的同短名类型时使用可区分的限定名，普通无歧义类型保持简洁。",
+    "static_findings": [
+      "F2P 2/P2P 1 均是错误诊断；未覆盖有效 assert_type 正例。",
+      "题面 SupportsIndex 示例可能等价，不是实际歧义错误。"
+    ],
+    "development_evidence": {
+      "date": "2026-09-25",
+      "actor": {
+        "base_commit": "13f35ad0915e70c2c299e2eb308968c86117132d",
+        "image": "xingyaoww/sweb.eval.x86_64.python_s_mypy-15184:latest",
+        "image_identity": "sha256:b56fd4805c0f45b0df3c68e4c12fd12bc492c52c268048038122344589e13118 [\"xingyaoww/sweb.eval.x86_64.python_s_mypy-15184@sha256:affb925329f2dfb2173482c64a1b65648b250777b66b0d7417ee5340fce74835\"]",
+        "runtime": "正式 Claude Code 2.1.205 / UID 54321 / /testbed / conda testbed；2 CPU, 4 GiB",
+        "versions": "pytest 8.3.2 / typing_extensions 4.12.2；本条 env 未打印 Python 版本",
+        "observed": "题面 SupportsIndex 原例 Success；可追溯替代例报 C/not C；6 passed；初始 clean",
+        "checks": "读取实际 captures，目标非零按异常/输出解释；不以所有非零为通过。该次 devcheck 完整，container/stub 移除 0、标签容器/网络无残留。"
+      },
+      "private_gold": "原例和相关公开回归已有 base/gold 私有行为对照。私有 helper 默认用户和无正式资源 profile，不能等同 actor 条件。",
+      "scope": "验证公共开发命令和来源身份，不是完整模型作答或最新生产链验收。"
+    },
+    "model_evidence": {
+      "status": "not_run_in_reviewed_evidence",
+      "scope": "本批索引未见该题实际模型作答；确定性 devcheck、gold 与退化候选不是模型成绩。"
+    },
+    "verified_repairs": [
+      "任务二原例默认/目标 3.8/3.11 实测 Success；目标 3.7 为 SupportsIndex 缺失，不能当目标复现。",
+      "公开可追溯 a.C/b.C 替代例 base 报 C/not C、gold 报限定名，6 项旧测通过。"
+    ],
+    "confirmed_open_issues": [
+      "题面原例本身不能复现所称问题；已决保留题面，让模型自行找出有效例，不把该限制改写为 gold 缺陷。"
+    ],
+    "unexecuted_questions": [
+      "有效 assert_type 正例与相关过度格式化候选控制未执行。"
+    ],
+    "current_use": {
+      "diagnostic": "yes",
+      "comparison": "conditional",
+      "training": "no",
+      "holdout": "no"
+    },
+    "conditions": {
+      "comparison": "原 19 条件性探针池成员；固定共同公开条件、题单、有效预算和有效尝试分母，并审计实际补丁。不是正式训练合格名单。",
+      "training": "未具备当前 v1 全部准入证据；SWE 的 D6 正式修订接入未实施，不能以私有后检替代。",
+      "holdout": "本题已用于调查/控制或模型诊断，未证明独立未暴露留出及仓库切分。",
+      "evidence_boundary": "既有上下文复核，不是 fresh 盲审。历史正面对照仅支持记录的代码/材料/安装条件，不能背书最新生产整链；本次不执行实验。"
+    },
+    "next_action": "保持现题面及条件性探针定位，作答评估记录能否自行构造有效复现；训练前补正例保护。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/screening_record.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+      "runs/task2_swegym_dev_20260925/runs/mypy15184/orig/attempt.json",
+      "runs/task2_swegym_dev_20260925/runs/mypy15184/orig/captures",
+      "runs/task2_swegym_dev_20260925/runs/private/python__mypy-15184_gold.json"
+    ]
+  },
+  {
+    "instance_id": "python__mypy-10174",
+    "goal": "修复 no-strict-optional 与 strict-equality 同用时 Optional[Any] 成员检查的假阳性，保留真正不重叠比较的错误。",
+    "static_findings": [
+      "F2P 1、P2P 2 主要是缺 Any 导入保护；真实不重叠比较未形成充分护栏。"
+    ],
+    "development_evidence": {
+      "date": "2026-09-25",
+      "actor": {
+        "base_commit": "c8bae06919674b9846e3ff864b0a44592db888eb",
+        "image": "xingyaoww/sweb.eval.x86_64.python_s_mypy-10174:latest",
+        "image_identity": "sha256:af234002540dfbf1fdb9ed98ea29925a059978253bd9f90ceb3de5f6b8c6892a [\"xingyaoww/sweb.eval.x86_64.python_s_mypy-10174@sha256:ede92a3c5637b159fa7bbcf7f2ea29e44bd774435fcefd6b5845fdce81f691a6\"]",
+        "runtime": "正式 Claude Code 2.1.205 / UID 54321 / /testbed / conda testbed；2 CPU, 4 GiB",
+        "versions": "pytest 6.1.2；本条 env 未打印 Python 版本",
+        "observed": "原例 Non-overlapping container check；32 passed；test-requirements.txt 初始有改动",
+        "checks": "读取实际 captures，目标非零按异常/输出解释；不以所有非零为通过。该次 devcheck 完整，container/stub 移除 0、标签容器/网络无残留。"
+      },
+      "private_gold": "原例和相关公开回归已有 base/gold 私有行为对照。私有 helper 默认用户和无正式资源 profile，不能等同 actor 条件。",
+      "scope": "验证公共开发命令和来源身份，不是完整模型作答或最新生产链验收。"
+    },
+    "model_evidence": {
+      "status": "not_run_in_reviewed_evidence",
+      "scope": "本批索引未见该题实际模型作答；确定性 devcheck、gold 与退化候选不是模型成绩。"
+    },
+    "verified_repairs": [
+      "任务二正式 actor 原例和 32 项相关回归、私有 gold 原例已验，旧原例待验消项。"
+    ],
+    "confirmed_open_issues": [],
+    "unexecuted_questions": [
+      "在非 strict optional 下关闭 dangerous_comparison 的退化候选尚未运行；只是静态风险，不能声称已误奖。",
+      "非示例和真实不重叠负例正式覆盖待补。"
+    ],
+    "current_use": {
+      "diagnostic": "yes",
+      "comparison": "conditional",
+      "training": "no",
+      "holdout": "no"
+    },
+    "conditions": {
+      "comparison": "原 19 条件性探针池成员；固定共同公开条件、题单、有效预算和有效尝试分母，并审计实际补丁。不是正式训练合格名单。",
+      "training": "未具备当前 v1 全部准入证据；SWE 的 D6 正式修订接入未实施，不能以私有后检替代。",
+      "holdout": "本题已用于调查/控制或模型诊断，未证明独立未暴露留出及仓库切分。",
+      "evidence_boundary": "既有上下文复核，不是 fresh 盲审。历史正面对照仅支持记录的代码/材料/安装条件，不能背书最新生产整链；本次不执行实验。"
+    },
+    "next_action": "保留条件性探针；下一步用公开真正不重叠比较辨别过宽修法，再决定训练资格。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-10174/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-10174/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-10174/screening_record.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+      "runs/task2_swegym_dev_20260925/runs/mypy10174/orig/attempt.json",
+      "runs/task2_swegym_dev_20260925/runs/mypy10174/orig/captures",
+      "runs/task2_swegym_dev_20260925/runs/private/python__mypy-10174_gold.json"
+    ]
+  },
+  {
+    "instance_id": "python__mypy-16869",
+    "goal": "stubgen 处理 Generic[*_Ts] 时不因私有 TypeVarTuple 名称过滤而崩溃，并输出合法类型参数语义。",
+    "static_findings": [
+      "F2P 2 覆盖 parse/analyze，P2P 4 覆盖 Unpack/object；新参考写死 *Ts 字面输出。"
+    ],
+    "development_evidence": {
+      "date": "2026-09-25",
+      "actor": {
+        "base_commit": "8c2ef9dde8aa803e04038427ad84f09664d9d93f",
+        "image": "xingyaoww/sweb.eval.x86_64.python_s_mypy-16869:latest",
+        "image_identity": "sha256:ded6f54daf8f09bdc4fedee5c4b851ec8eb7f9be96e3e608383f6fee5a6681db [\"xingyaoww/sweb.eval.x86_64.python_s_mypy-16869@sha256:37fb1870cc8802ad1f6d3f87ff294181c9dcd86f4d13a7533ea76a875f9a6a02\"]",
+        "runtime": "正式 Claude Code 2.1.205 / UID 54321 / /testbed / conda testbed；2 CPU, 4 GiB",
+        "versions": "pytest 7.4.2 / typing_extensions 4.8.0；本条 env 未打印 Python 版本",
+        "observed": "原例 stubgen.py:323 TypeError；29 passed, 1 xfailed；初始 clean",
+        "checks": "读取实际 captures，目标非零按异常/输出解释；不以所有非零为通过。该次 devcheck 完整，container/stub 移除 0、标签容器/网络无残留。"
+      },
+      "private_gold": "原例和相关公开回归已有 base/gold 私有行为对照。私有 helper 默认用户和无正式资源 profile，不能等同 actor 条件。",
+      "scope": "验证公共开发命令和来源身份，不是完整模型作答或最新生产链验收。"
+    },
+    "model_evidence": {
+      "status": "not_run_in_reviewed_evidence",
+      "scope": "本批索引未见该题实际模型作答；确定性 devcheck、gold 与退化候选不是模型成绩。"
+    },
+    "verified_repairs": [
+      "任务二 actor 精确复现 stubgen TypeError，29 passed/1 xfailed；私有 gold 原 CLI 生成完成。",
+      "既有 grader Python 3.12.4 的六参考已执行；actor 的 xfail 与 grader 条件不可混为同一个结果。"
+    ],
+    "confirmed_open_issues": [
+      "原 _Ts 受既有私有名过滤，gold CLI 生成 Generic[*_Ts] 时未声明该变量；当前不能无依据把既有过滤行为断言为新回归。"
+    ],
+    "unexecuted_questions": [
+      "合法 Unpack 等价输出候选是否被参考误拒未执行，只是静态疑问。",
+      "输出桩的非示例语义完整性控制未完成。"
+    ],
+    "current_use": {
+      "diagnostic": "yes",
+      "comparison": "conditional",
+      "training": "no",
+      "holdout": "no"
+    },
+    "conditions": {
+      "comparison": "原 19 条件性探针池成员；固定共同公开条件、题单、有效预算和有效尝试分母，并审计实际补丁。不是正式训练合格名单。",
+      "training": "未具备当前 v1 全部准入证据；SWE 的 D6 正式修订接入未实施，不能以私有后检替代。",
+      "holdout": "本题已用于调查/控制或模型诊断，未证明独立未暴露留出及仓库切分。",
+      "evidence_boundary": "既有上下文复核，不是 fresh 盲审。历史正面对照仅支持记录的代码/材料/安装条件，不能背书最新生产整链；本次不执行实验。"
+    },
+    "next_action": "保留条件性探针，审查实际桩语义；有等价输出候选时再核精确文本参考，不预判误拒。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/results/python__mypy-16869/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/results/python__mypy-16869/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/results/python__mypy-16869/screening_record.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+      "runs/task2_swegym_dev_20260925/runs/mypy16869/orig/attempt.json",
+      "runs/task2_swegym_dev_20260925/runs/mypy16869/orig/captures",
+      "runs/task2_swegym_dev_20260925/runs/private/python__mypy-16869_gold.json"
+    ]
+  },
+  {
+    "instance_id": "python__mypy-16963",
+    "goal": "支持把 TypedDict 类型及其 union 作为构造器参数传递，并保留参数校验和构造结果类型。",
+    "static_findings": [
+      "F2P 1/P2P 0：有效关键字、位置参数和缺失/多余键负例；未断言返回精度、union 和完整 Car/Boat/Truck 原例。"
+    ],
+    "development_evidence": {
+      "scope": "静态卡记录历史固定 grader 的 noop 0/gold 1 与离线安装恢复；本次固定索引未见该题新增正式 actor 或模型实证，不能由 grader 外推公共开发可用。",
+      "identity": "具体 base、历史镜像/依赖/日志指针以所链 card 和 screening_record 为准；本轮没有重新准备或执行。"
+    },
+    "model_evidence": {
+      "status": "not_run_in_reviewed_evidence",
+      "scope": "本批索引未见该题实际模型作答；确定性 devcheck、gold 与退化候选不是模型成绩。"
+    },
+    "verified_repairs": [],
+    "confirmed_open_issues": [
+      "正式覆盖边界已确认，但具体宽松候选误奖尚未实测；不能混称行为已失败。"
+    ],
+    "unexecuted_questions": [
+      "base/gold 完整多类原例尤其 Boat 分支；返回 Any 退化和可接受诊断变体；required/optional 边界是否为新支持缺口。"
+    ],
+    "current_use": {
+      "diagnostic": "yes",
+      "comparison": "pending",
+      "training": "no",
+      "holdout": "no"
+    },
+    "conditions": {
+      "comparison": "当前未进入原探针池；关键正向需求/验收覆盖尚待澄清。开发未验证本身不是质量失败。",
+      "training": "未具备当前 v1 全部准入证据；SWE 的 D6 正式修订接入未实施，不能以私有后检替代。",
+      "holdout": "本题已用于调查/控制或模型诊断，未证明独立未暴露留出及仓库切分。",
+      "evidence_boundary": "既有上下文复核，不是 fresh 盲审。历史正面对照仅支持记录的代码/材料/安装条件，不能背书最新生产整链；本次不执行实验。"
+    },
+    "next_action": "先准备公开完整原例/返回精度控制和正式 actor 证据；完成范围判断后再决定是否加入共同比较名单。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-16963/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-16963/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-16963/screening_record.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md"
+    ]
+  },
+  {
+    "instance_id": "python__mypy-12417",
+    "goal": "未定义的 match 类模式应给正常名称错误，避免内部断言，并保留合理错误恢复。",
+    "static_findings": [
+      "F2P 1 还绑定捕获变量恢复为 Any 及后续附带错误；3 个 P2P 有 dataclass 捕获保护。"
+    ],
+    "development_evidence": {
+      "scope": "静态卡记录历史固定 grader 的 noop 0/gold 1 与离线安装恢复；本次固定索引未见该题新增正式 actor 或模型实证，不能由 grader 外推公共开发可用。",
+      "identity": "具体 base、历史镜像/依赖/日志指针以所链 card 和 screening_record 为准；本轮没有重新准备或执行。"
+    },
+    "model_evidence": {
+      "status": "not_run_in_reviewed_evidence",
+      "scope": "本批索引未见该题实际模型作答；确定性 devcheck、gold 与退化候选不是模型成绩。"
+    },
+    "verified_repairs": [],
+    "confirmed_open_issues": [],
+    "unexecuted_questions": [
+      "更早停止未匹配分支或保留当前类型的合理恢复候选未运行；不能宣称已误拒。",
+      "原例 base/gold 的公共 actor 复现和验收所需恢复范围待核。"
+    ],
+    "current_use": {
+      "diagnostic": "yes",
+      "comparison": "pending",
+      "training": "no",
+      "holdout": "no"
+    },
+    "conditions": {
+      "comparison": "当前未进入原探针池；静态恢复语义疑问尚待验，不能视为已证实不可比较。",
+      "training": "未具备当前 v1 全部准入证据；SWE 的 D6 正式修订接入未实施，不能以私有后检替代。",
+      "holdout": "本题已用于调查/控制或模型诊断，未证明独立未暴露留出及仓库切分。",
+      "evidence_boundary": "既有上下文复核，不是 fresh 盲审。历史正面对照仅支持记录的代码/材料/安装条件，不能背书最新生产整链；本次不执行实验。"
+    },
+    "next_action": "先核可接受错误恢复边界与原例 actor，再按成本安排控制；不把尚未运行判为不通过。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-12417/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-12417/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-12417/screening_record.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md"
+    ]
+  },
+  {
+    "instance_id": "python__mypy-15139",
+    "goal": "澄清诊断和 reveal_type 中 type/Type 的显示范围，并保留旧 Python 目标及强制大写格式化能力。",
+    "static_findings": [
+      "正式 F2P 1/P2P 0 只保护现代诊断；题面 reveal 目标与 gold 实际范围不一致。"
+    ],
+    "development_evidence": {
+      "date": "2026-09-29 CPU 实证（UTC 路径为 09-28）",
+      "scope": "已完成正式 actor、独立 root 私有行为以及正式 noop/gold/退化三方；本次复用题级最终原件审核、独立 review 和 root parser/SHA 回执，不重做。",
+      "formal": "noop 0 / gold 1 / 退化 1；安装和测试完整、参考逐条匹配、实际导出源码已核，actor/private/grader 双层清理已核。 正式只有 1 个 F2P；冻结 messages.py 与 base+patch 核同，旧 private 未采整文件 SHA，不夸称该项三方整字节同一。",
+      "boundary": "私有 root 行为不是 actor；CPU 确定性候选不是模型作答；后检未接入 D6 正式评分。",
+      "identity": "base 16b936c15b074db858729ed218248ef623070e03；原 actor Python 3.11.9 / UID 54321 / Claude Code 2.1.205；原镜像 d086e512…，派生 actor 6f59c19…，COPY-only grader cd4daa300…，完整 ID 见题卡。"
+    },
+    "model_evidence": {
+      "status": "not_run_in_reviewed_evidence",
+      "scope": "本批索引未见该题实际模型作答；确定性 devcheck、gold 与退化候选不是模型成绩。"
+    },
+    "verified_repairs": [
+      "原 actor 已正常；派生环境九轮包恢复配方及冻结依赖验证完成，是配方恢复证据，不能冒称修复已观测环境故障。"
+    ],
+    "confirmed_open_issues": [
+      "gold 修正相关 type[type] 错误文本仍 reveal Type[builtins.type]；P5 范围未决。",
+      "always_lowercase 正式 reward 1，却破坏公开旧版本/force-uppercase 控制：6 项旧测 1 fail/5 pass；S1/T2b。"
+    ],
+    "unexecuted_questions": [
+      "公开显示范围定案、修订验收的正确/错误控制以及 D6 接入尚未实施。"
+    ],
+    "current_use": {
+      "diagnostic": "yes",
+      "comparison": "no",
+      "training": "no",
+      "holdout": "no"
+    },
+    "conditions": {
+      "comparison": "no：S1/T2b 实证与 P5 目标争议同时存在；只能诊断，不能用私有后检绕过未定目标。",
+      "training": "未具备当前 v1 全部准入证据；SWE 的 D6 正式修订接入未实施，不能以私有后检替代。",
+      "holdout": "本题已用于调查/控制或模型诊断，未证明独立未暴露留出及仓库切分。",
+      "evidence_boundary": "既有上下文复核，不是 fresh 盲审。历史正面对照仅支持记录的代码/材料/安装条件，不能背书最新生产整链；本次不执行实验。"
+    },
+    "next_action": "保留诊断用途；先定显示范围，再把已有公开旧行为控制接入正式机制并复验。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15139/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15139/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15139/screening_record.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/python__mypy-15139/result.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/python__mypy-15139/result.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/mypy15139_result_review.md",
+      "runs/swegym_cpu_preprobe_20260929/analysis/mypy15139_final_v1.json"
+    ]
+  },
+  {
+    "instance_id": "python__mypy-11707",
+    "goal": "澄清同一模块对象的别名导入在 no-implicit-reexport 下是否应导出，并使子模块/导出行为一致。",
+    "static_findings": [
+      "题面倾向两种导入均成功，gold 则两种均拒绝；与 no-implicit-reexport 的公开要求存在 P5 目标冲突。",
+      "F2P 1/P2P 1 为 stub 身份/隐藏出口；未覆盖真实子模块导入正例。"
+    ],
+    "development_evidence": {
+      "scope": "静态卡记录历史固定 grader 的 noop 0/gold 1 与离线安装恢复；本次固定索引未见该题新增正式 actor 或模型实证，不能由 grader 外推公共开发可用。",
+      "identity": "具体 base、历史镜像/依赖/日志指针以所链 card 和 screening_record 为准；本轮没有重新准备或执行。"
+    },
+    "model_evidence": {
+      "status": "not_run_in_reviewed_evidence",
+      "scope": "本批索引未见该题实际模型作答；确定性 devcheck、gold 与退化候选不是模型成绩。"
+    },
+    "verified_repairs": [],
+    "confirmed_open_issues": [
+      "公开目标方向未定：不能凭 gold 行为代替题面；也不能静态断言所有字面正确解必被拒，参考均在 .pyi 有可区分条件。"
+    ],
+    "unexecuted_questions": [
+      "四文件 Y/X 的 base/gold 矩阵和真实子模块正例；移除模块例外的过宽候选尚未运行。"
+    ],
+    "current_use": {
+      "diagnostic": "yes",
+      "comparison": "no",
+      "training": "no",
+      "holdout": "no"
+    },
+    "conditions": {
+      "comparison": "no：P5 目标方向未定，不是单纯环境或运行成本暂停。",
+      "training": "未具备当前 v1 全部准入证据；SWE 的 D6 正式修订接入未实施，不能以私有后检替代。",
+      "holdout": "本题已用于调查/控制或模型诊断，未证明独立未暴露留出及仓库切分。",
+      "evidence_boundary": "既有上下文复核，不是 fresh 盲审。历史正面对照仅支持记录的代码/材料/安装条件，不能背书最新生产整链；本次不执行实验。"
+    },
+    "next_action": "仅诊断，先确定两种导入和真实子模块的公开目标；再准备复现与候选控制。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/python__mypy-11707/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/python__mypy-11707/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/python__mypy-11707/screening_record.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md"
+    ]
+  }
+]

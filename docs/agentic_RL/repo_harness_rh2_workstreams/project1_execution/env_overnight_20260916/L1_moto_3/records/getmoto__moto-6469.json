@@ -1,0 +1,49 @@
+{
+ "task_id": "getmoto__moto-6469",
+ "source": "SWE-Gym lite (swe_gym_lite_full_f70b1a29)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "s2/ingest/public_bundles_v0.jsonl#getmoto__moto-6469",
+  "grading": "s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-6469",
+  "validation": "s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-6469",
+  "base_commit": "3e11578a7288122e7f2c2a0238c3338f56f8582f",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-6469/gold/offline/a1/"
+ },
+ "public_view": {
+  "goal": "secretsmanager delete_secret 对 RecoveryWindowInDays=0 不校验就放行，而真实 AWS 报 InvalidParameterException（RecoveryWindowInDays 必须在 7–30 之间）。要求 moto 也拒绝。",
+  "constraints": ["题面给出的调用同时带 RecoveryWindowInDays=0 与 ForceDeleteWithoutRecovery=True，并给出 AWS 的确切错误文案"],
+  "unknowns_from_public_only": [
+   "题面只举了 0 这一个值，没说其它非法值（2/6/31/100）的期望，不过 base 代码里的 7–30 区间已写明",
+   "当 0 与 ForceDeleteWithoutRecovery=True 同时出现时，应该报区间错误还是报“两者不能同时使用”——题面引用的 AWS 报文是区间错误，可以推出"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 只碰 tests/test_secretsmanager/test_secretsmanager.py（base 已存在）", "golden_patch 只碰 moto/secretsmanager/models.py:726"], "note": "无二进制/LFS/子模块，与题面同一问题。test_patch 把 base 的 test_delete_secret_recovery_window_too_short/too_long 两个测试合并改写为 test_delete_secret_recovery_window_invalid_values（F2P 之一），并重写了 test_delete_secret_force_no_such_secret_with_invalid_recovery_window（F2P 之二，base 已存在同名测试）。", "by": "L1_moto_3"},
+  "2": {"status": "pass", "evidence_refs": ["base moto/secretsmanager/models.py:726-728 `if recovery_window_in_days and (recovery_window_in_days < 7 or > 30)`"], "note": "0 是 falsy，`and` 短路，校验被跳过 —— 与题面完全一致。同函数 734 行的第二个校验 `if recovery_window_in_days and force_delete_without_recovery` 有同样的 0 短路问题。", "by": "L1_moto_3"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 601 字符，含调用片段与 AWS 错误文案，无外链/图片/截断"], "note": "hints_text 里另一位用户复述了同一段复现并贴了 AWS 的实际报错，没有题面之外的关键信息。", "by": "L1_moto_3"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 触碰路径全集：tests/test_secretsmanager/test_secretsmanager.py"], "note": "无非测试源码路径；gold 触碰 moto/secretsmanager/models.py，非测试样路径。", "by": "L1_moto_3"},
+  "17": {"status": "pass", "evidence_refs": ["同 4"], "note": "additional_exclusions 空。", "by": "L1_moto_3"},
+  "5": {"status": "pass", "evidence_refs": ["全局索引：该测试文件与该 gold 文件在 216 题里只被本题使用"], "note": "无重复/派生。", "by": "L1_moto_3"},
+  "23": {"status": "pass", "evidence_refs": ["F2P 断言 Code == 'InvalidParameterException' 且 Message 含 'RecoveryWindowInDays value must be between 7 and 30 days (inclusive)'", "base models.py:729-732 的 InvalidParameterException 文案里就有这句（虽然中间因续行符夹了一串空格，断言用的是 `in`，不受影响）"], "note": "要求可从题面 + base 代码推出；扩展到 [0,2,6,31,100] 五个值也在区间语义内。", "by": "L1_moto_3"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 只断言异常类型与消息子串"], "note": "`is not None`、`!= None`、`not in range(7,31)` 等写法都能过；不强制唯一实现。", "by": "L1_moto_3"},
+  "25": {"status": "pass", "evidence_refs": ["两条 F2P 分别覆盖 '不带 force' 与 '带 force' 两条路径，且都断言必须是区间错误消息"], "note": "只把第二个校验（models.py:734）改成 `is not None` 的错误修复会在 force 情形下报出 “can't use ForceDeleteWithoutRecovery in conjunction with RecoveryWindowInDays”，消息断言会拒绝；只改一处或漏改都能被区分开。判分较紧。", "by": "L1_moto_3"},
+  "26": {"status": "pass", "evidence_refs": ["collected 91 items = F2P 2 + P2P 88 + 1 skipped（stage1 日志 1548 行：'rotation requires a server to be running'）"], "note": "唯一未判分的用例是环境性跳过（server mode），不构成覆盖漏洞。", "by": "L1_moto_3"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 单行 `if recovery_window_in_days` → `if recovery_window_in_days is not None`", "moto/secretsmanager/responses.py:162 用 `self._get_param(\"RecoveryWindowInDays\")`，参数缺省时返回 None（不是 0）"], "note": "已核对关键前提：改成 `is not None` 不会误伤“不传该参数”的调用，因为 responses 层缺省给的是 None。gold 没有同步修 models.py:734 的同类 0 短路，但因为第一个校验已先对 0 抛错，734 行对 0 不可达，行为上与 AWS 一致（AWS 对 0+force 也报区间错误，见 hints 的实测）。无无关改动。", "by": "L1_moto_3"},
+  "29": {"status": "pass", "evidence_refs": ["hints_text 是另一位用户在真实 AWS 上的复现结果，不含 moto 修复代码，无 PR/commit 链接"], "note": "无静态泄漏。", "by": "L1_moto_3"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold 90 passed / 1 skipped"], "note": "纯 mock。", "by": "L1_moto_3"},
+  "7": {"status": "issue", "evidence_refs": ["本包共性 install rc=2"], "note": "见包级 issue。", "by": "L1_moto_3"},
+  "11": {"status": "pass", "evidence_refs": ["跳过的那条是 rotation 测试，需要 moto server；其余全部进程内 mock"], "note": "无外部服务依赖；rotation 测试自带 skip 保护。", "by": "L1_moto_3"}
+ },
+ "issues": [
+  {"category": "residual_same_class_bug", "severity": "P3", "evidence_refs": ["base/gold 之后 models.py:734 仍是 `if recovery_window_in_days and force_delete_without_recovery`"], "proposed_action": "仅记录：同类 0 短路在第二个校验里没修，当前被第一个校验挡住而不可达；若将来调整校验顺序会复现。不改判分。", "next_experiment": "无（静态可判定）。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只含测试文件；沿用默认空排除。", "evidence_refs": ["test_patch 路径全集 = tests/test_secretsmanager/test_secretsmanager.py"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_secretsmanager/test_secretsmanager.py::test_delete_secret（不带 RecoveryWindowInDays）", "reason": "已在 P2P，直接钉住 `is not None` 不会误伤缺省调用——这是本题最容易改错的方向。"},
+  {"id": "tests/test_secretsmanager/test_secretsmanager.py::test_delete_secret_fails_with_both_force_delete_flag_and_recovery_window_flag", "reason": "已在 P2P，覆盖 models.py:734 的第二个校验，保证解题者不会把两个校验的优先级改反。"},
+  {"id": "新增：RecoveryWindowInDays=7 与 30（边界合法值）", "reason": "区间端点没有任何用例覆盖，改成 `range(8,30)` 之类的错误边界目前不会被发现。"},
+  {"id": "tests/test_secretsmanager/test_secretsmanager.py 里 restore_secret / describe_secret 系列", "reason": "delete_secret 的 deletion_date 计算（models.py:763 `days=recovery_window_in_days or 30`）是同一条路径的下游观察点。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "题面自足、base 缺陷明确、gold 单行且已核对不会误伤缺省调用、判分较紧、文件边界干净。唯一保留是区间端点无用例覆盖，属扩展回归建议。"},
+ "costs": {"minutes": 14}
+}

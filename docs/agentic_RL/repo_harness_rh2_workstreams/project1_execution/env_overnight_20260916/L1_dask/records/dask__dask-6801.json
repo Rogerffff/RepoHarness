@@ -1,0 +1,227 @@
+{
+ "task_id": "dask__dask-6801",
+ "source": "SWE-Gym lite (dask/dask 2.30)",
+ "task_revision": "upstream",
+ "materials_refs": [
+  "s2/ingest/public_bundles_v0.jsonl (problem_statement 2350 字符)",
+  "s2/ingest/grading_bundles_v2_v0.jsonl (test_patch; F2P=4; P2P=169; eval_cmd 'pytest -n0 -rA  --color=no'; version 2.30)",
+  "s2/ingest/validation_bundles_v0.jsonl (golden_patch 3072 字符)",
+  "s2/raw/swe_gym_lite_full_f70b1a29.jsonl (hints_text 2418 字符)",
+  "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/dask__dask-6801/{gold,empty}/offline/a1/"
+ ],
+ "public_view": {
+  "goal": "题面字面要求：`df.to_parquet(compute=False)` 会让上游 delayed 代码被多跑一遍（2x），加上 `schema='infer'` 再翻一倍（4x）；期望“每个 delayed 对象只执行一次”。",
+  "constraints": [
+   "题面给出完整 MCVE 与逐行 WARNING 输出，可复现。",
+   "题面自己给出两条猜测：to_parquet 让 dask.compute 无法复用上游公共任务；schema=infer 造成又一层重复。"
+  ],
+  "unknown_from_public": [
+   "题面完全没提 read_parquet 的列投影优化（getitem optimization）、HighLevelGraph 层、BlockwiseParquet —— 而 F2P 检查的正是这些。",
+   "题面把 4x 当成一个缺陷，但 hints 里维护者的结论是 schema='infer' 的分区采样是**预期行为**（'This is the reason schema=\"infer\" is not the default'），即题面一半诉求是 WONTFIX；公开材料里没有任何线索指向这一点。",
+   "题面没说要保持 to_parquet 的返回值仍是 Delayed、也没说要保留层结构。"
+  ],
+  "by": "L1_dask"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "5589bfddb5982777d29e424fa438f1667a74a60a:dask/dataframe/io/parquet/core.py:556-580",
+    "5589bfddb5982777d29e424fa438f1667a74a60a:dask/dataframe/io/tests/test_parquet.py:2256-2275"
+   ],
+   "note": "test_patch 只改 dask/dataframe/io/tests/test_parquet.py，gold 只改 dask/dataframe/io/parquet/core.py，base 均存在。无二进制/LFS/子模块。但两者与题面主诉的对应是间接的（见检查 23）。",
+   "by": "L1_dask"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "5589bfddb5982777d29e424fa438f1667a74a60a:dask/dataframe/io/parquet/core.py:556-583（dwrite = delayed(engine.write_partition) / df.to_delayed()）"
+   ],
+   "note": "base 的 to_parquet 用 `delayed(...)` + `df.to_delayed()` 构图，to_delayed 默认会 optimize，图层被压平；缺陷确实存在（empty 侧 4 条 F2P FAILED）。",
+   "by": "L1_dask"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "s2/raw/swe_gym_lite_full_f70b1a29.jsonl:dask__dask-6801.hints_text"
+   ],
+   "note": "题面无截断、无图片。但 hints（2418 字符，不可见）含**诊断结论 + 可用修法 + 上游定位**三样：指向 issue #6758、给出 `to_delayed(optimize_graph=False)` 这条候选修法、贴出 arrow.py#L859-L862 的 permalink、并给出 4x 是预期行为的裁定。题面这些全无。",
+   "by": "L1_dask"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-6801.test_patch"
+   ],
+   "note": "test_patch 仅碰测试文件；gold 仅碰源码。",
+   "by": "L1_dask"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "同上"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "L1_dask"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dask/prescan.json"
+   ],
+   "note": "本包内唯一改 parquet 代码与 test_parquet.py 的题。",
+   "by": "L1_dask"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-6801.problem_statement",
+    "grading_bundles_v2_v0.jsonl:dask__dask-6801.test_patch"
+   ],
+   "note": "**要求与判据之间隔着一整条推理链**：题面说“我的代码被跑了 4 次”，F2P 却断言“`ddf.to_frame().to_parquet(compute=False)` 之后，`optimize_read_parquet_getitem` 仍能在图里找到 `BlockwiseParquet` 层且 `columns == ['B']`”。从公开材料推不出这条断言；能推出的最直接动作反而是 hints 里那条 `to_delayed(optimize_graph=False)`。另外题面主诉的一半（schema='infer' 的 4x）按维护者裁定不该改，题面没有任何反向线索。",
+   "by": "L1_dask"
+  },
+  "24": {
+   "status": "unknown",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-6801.test_patch",
+    "s2/raw/...:dask__dask-6801.hints_text"
+   ],
+   "note": "断言不锁 helper 名，但锁住“图里必须留有名字以 read-parquet 开头的 Blockwise 层”。合理替代实现 = 保留 `delayed(...)` 写法但改用 `df.to_delayed(optimize_graph=False)`（hints 里维护者建议的那条）。静态分析倾向于它也能通过（Delayed 的 HLG 合并保留 layer），但未实跑，记 unknown。",
+   "by": "L1_dask"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-6801/gold/offline/a1/test_output.txt（72 条 'fastparquet not found'）"
+   ],
+   "note": "**判分只覆盖 pyarrow 引擎**：F2P 4 条全是 `[pyarrow-...]`，`engine` fixture 的 fastparquet 一半在镜像里因缺 fastparquet 全部 SKIPPED（72 条），而 gold 重写的 `to_parquet` 是两个引擎共用的写路径。也就是说，候选可以把 fastparquet 写路径彻底改坏而仍拿满分。题面 MCVE 的“执行次数”也没有任何断言覆盖（没有计数类测试）。",
+   "by": "L1_dask"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "5589bfddb5982777d29e424fa438f1667a74a60a:dask/dataframe/io/tests/test_parquet.py"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_dask"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "validation_bundles_v0.jsonl:dask__dask-6801.golden_patch"
+   ],
+   "note": "gold 是本包最大的一次改动（3072 字符），把 to_parquet 从 delayed 组合改成手写 HighLevelGraph，并顺带删掉函数内的 `from dask import delayed`、改 import 行。改动都服务于同一目标，不含与题无关的内容，也不依赖未交付改动。但它**只解决题面主诉的一半**（2x 的图重算），4x 的 schema='infer' 采样按维护者裁定不改 —— gold 与题面不是完全对应。次要：`kwargs_pass[...] = ...` 就地修改调用方传入的字典。",
+   "by": "L1_dask"
+  },
+  "29": {
+   "status": "issue",
+   "evidence_refs": [
+    "s2/raw/swe_gym_lite_full_f70b1a29.jsonl:dask__dask-6801.hints_text"
+   ],
+   "note": "hints 直接指向上游 issue #6758 与 GitHub permalink（f937c06a2ee1:dask/dataframe/io/parquet/arrow.py#L859-L862）。题面本身不泄漏。",
+   "by": "L1_dask"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-6801/gold/offline/a1/test_output.txt:994-1012 (RH2_PHASE_END install rc=0)"
+   ],
+   "note": "安装 rc=0。工具链仍是 pytest-8.3.2 + Python 3.8.15（见 repo_level_findings.md#R3），本题有 7 条既有用例因 pandas `_mgr` 内部 API 漂移恒 FAILED（全部不在参考集内）。",
+   "by": "L1_dask"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "5589bfddb5982777d29e424fa438f1667a74a60a:dask/dataframe/io/tests/test_parquet.py"
+   ],
+   "note": "无 mark.network、无真实 s3/http 端点；`pytest.importorskip` 命中 fastparquet / snappy / pyarrow，均为本地包。",
+   "by": "L1_dask"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-6801/gold/offline/a1/test_output.txt:1726-1729",
+    "runs/env_overnight_20260916/L1_dask/scripts/extrakeys.py 输出"
+   ],
+   "note": "**本包跳过规模最大的一题**：gold 侧 255 条结果行里 74 条 SKIPPED（72 条 `fastparquet not found` + `snappy`/ArrowEngine 统计各 1），按 repo_level_findings.md#R2 塌进 9 个伪键（`[1][2][3][4][6][7][8][18][22]`），另有 1 个来自捕获日志的伪键 `dask.dataframe.shuffle:shuffle.py:1205`（#R4）。status_map 191 个键里有 10 个不是测试。F2P/P2P 无一条落在被跳过用例上。",
+   "by": "L1_dask"
+  },
+  "9": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-6801/{gold,empty}/offline/a1/status_map.json"
+   ],
+   "note": "empty→4 条 F2P 全 FAILED，gold→全 PASSED，169 条 P2P 两侧全 PASSED。",
+   "by": "L1_dask"
+  }
+ },
+ "issues": [
+  {
+   "category": "要求不充分",
+   "severity": "P1",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-6801.problem_statement",
+    "grading_bundles_v2_v0.jsonl:dask__dask-6801.test_patch"
+   ],
+   "proposed_action": "若保留本题，题面需补上“to_parquet 应保留高层图结构，使 read_parquet 的列投影优化在写回后仍生效”这一目标，并删掉/标注 schema='infer' 4x 那一半（维护者裁定为预期行为）。否则按 needs_repair 处理。",
+   "next_experiment": "把题面原样给基座跑 3 次，统计有几次改到 dask/dataframe/io/parquet/core.py 的构图部分（预期低）。"
+  },
+  {
+   "category": "引擎覆盖缺失",
+   "severity": "P1",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-6801/gold/offline/a1/test_output.txt（72 条 fastparquet not found）"
+   ],
+   "proposed_action": "要么在镜像里补 fastparquet 让 engine 矩阵完整，要么在题级记录标注“判分只覆盖 pyarrow 写路径”。",
+   "next_experiment": "装上 fastparquet 后重跑 gold，看新增多少条可用 P2P、以及 gold 在 fastparquet 侧是否仍全绿。"
+  },
+  {
+   "category": "替代实现是否被接受未知",
+   "severity": "P2",
+   "evidence_refs": [
+    "s2/raw/...:dask__dask-6801.hints_text（to_delayed(optimize_graph=False)）"
+   ],
+   "proposed_action": "实跑确认；若替代实现也通过，说明本题对实现宽容度尚可，可下调 P1 的严重度。",
+   "next_experiment": "在 base 上只把 `df.to_delayed()` 改成 `df.to_delayed(optimize_graph=False)`，跑 4 条 F2P。"
+  },
+  {
+   "category": "gold 只解决一半主诉",
+   "severity": "P3",
+   "evidence_refs": [
+    "validation_bundles_v0.jsonl:dask__dask-6801.golden_patch",
+    "s2/raw/...:hints_text"
+   ],
+   "proposed_action": "仅记录，用于难度/可解性标注。",
+   "next_experiment": "在 gold 树上跑题面 MCVE，记录 WARNING 行数（预期从 4/8 降到 2/若干，但 schema='infer' 仍多次）。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰 dask/dataframe/io/tests/test_parquet.py，gold 只碰源码；按第四组 B 默认保持空。",
+  "evidence_refs": [
+   "grading_bundles_v2_v0.jsonl:dask__dask-6801.test_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "dask/dataframe/io/tests/test_parquet.py::test_to_parquet_with_get",
+   "reason": "直接断言 to_parquet 用自定义 scheduler 时任务被调度的次数/图形状，是题面“执行次数”诉求最接近的既有断言。"
+  },
+  {
+   "id": "dask/dataframe/io/tests/test_parquet.py::test_writing_parquet_with_compression / test_roundtrip*",
+   "reason": "gold 重写的是所有引擎共用的写路径；这些 roundtrip 用例（尤其 fastparquet 参数）应在补齐依赖后进 P2P。"
+  },
+  {
+   "id": "dask/dataframe/io/tests/test_parquet.py::test_graph_size_pyarrow",
+   "reason": "就在被改用例的上方，直接检查 to_parquet 产生的图大小，对手写 HLG 的实现是天然回归。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "链路健康（rc=0、判据可区分），但（a）公开题面推不出 F2P 检查的行为，（b）题面主诉的一半是 WONTFIX 且无公开线索，（c）判分只覆盖 pyarrow 一半引擎矩阵。需要改题面并补引擎覆盖才适合做训练/评测。"
+ },
+ "costs": {
+  "minutes": 25
+ }
+}

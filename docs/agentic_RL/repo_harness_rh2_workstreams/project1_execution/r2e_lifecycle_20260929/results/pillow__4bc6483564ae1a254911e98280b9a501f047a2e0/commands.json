@@ -1,0 +1,44 @@
+[
+  {
+    "id": "env_pil_import",
+    "timeout_s": 60,
+    "expect": "zero",
+    "purpose": "导入与版本：确认解释器与 Pillow 的来源。预计 python 为 /testbed/.venv/bin/python、3.9.21，PIL 为 9.1.0.dev0。关键看 PIL 与 ImageOps 的 __file__：若在 /testbed/src/PIL 下，说明是可编辑安装，改 src/PIL/*.py 立即生效；若在 .venv 的 site-packages 下，改 src 不会影响 import 与测试，需要上报。core 行给出已编译 _imaging 扩展的路径；codecs 行显示 jpg/zlib/libtiff 是否编入（Tests/test_imageops.py 里有依赖 .jpg 的用例）；最后一行确认 Tests/helper.py 需要的 pytest、packaging 可导入。修复前后输出应相同。",
+    "cmd": "PYTHONDONTWRITEBYTECODE=1 python -c 'import sys, PIL\nfrom PIL import Image, ImageOps, features\nprint(\"python\", sys.executable, sys.version.split()[0])\nprint(\"PIL\", PIL.__version__, PIL.__file__)\nprint(\"ImageOps\", ImageOps.__file__)\nprint(\"core\", Image.core.__file__)\nprint(\"codecs\", {k: features.check(k) for k in (\"jpg\", \"zlib\", \"libtiff\")})\nimport pytest, packaging\nprint(\"pytest\", pytest.__version__, \"packaging\", getattr(packaging, \"__version__\", \"?\"))'"
+  },
+  {
+    "id": "repro_issue_example",
+    "timeout_s": 60,
+    "expect": "nonzero",
+    "purpose": "按题面示例原样复现（只用公开 API）。修复前：先打印 input: 1 (128, 128) raw getpixel: 1 extrema: (1, 1)（静态推断：base 里 color=1 按字节 1 存储，不是 255），然后抛出 Traceback，最后一行是 OSError: not supported for this image mode，退出码 1。修复后：退出码 0，output 为 mode 1、尺寸 (128, 128)。后面几行只供参考，不做断言：若实现按 255-v 或按位取反，raw 值为 254、extrema (254, 254)、equals all-black 为 False、L extrema 为 (255, 255)，也就是按 1-bit 语义仍是全白；若实现把非零当白并输出 0/255，则分别为 0、(0, 0)、True、(0, 0)。题面没有规定这一点，见 public_read.md 的 R8。",
+    "cmd": "PYTHONDONTWRITEBYTECODE=1 python -c 'from PIL import Image, ImageOps\nim = Image.new(\"1\", (128, 128), color=1)\nprint(\"input:\", im.mode, im.size, \"raw getpixel:\", im.getpixel((0, 0)), \"extrema:\", im.getextrema())\nout = ImageOps.invert(im)\nprint(\"output:\", out.mode, out.size, \"raw getpixel:\", out.getpixel((0, 0)), \"extrema:\", out.getextrema())\nprint(\"output equals all-black (tobytes):\", out.tobytes() == Image.new(\"1\", (128, 128), 0).tobytes())\nprint(\"output as L extrema:\", out.convert(\"L\").getextrema())'"
+  },
+  {
+    "id": "check_mode1_invert_canonical",
+    "timeout_s": 60,
+    "expect": "nonzero",
+    "purpose": "检查不依赖实现取舍的 1-bit 反相语义：输入只含规范值 0/255，一张 8x1 位图 0xA5，另一张是 hopper.ppm 转成的 1 模式图。修复前：先打印 in: [255, 0, 255, 0, 0, 255, 0, 255]，然后在 ImageOps.invert 处抛 OSError: not supported for this image mode，退出码 1。修复后：退出码 0，打印 out: 1 (8, 1) [0, 255, 0, 255, 255, 0, 255, 0] 和 OK。断言内容：输出 mode 为 1、尺寸不变；打包后逐位取反（0xA5 变 0x5A，hopper 每字节异或 0xFF）；反相两次复原；输入图未被原地修改。输出原始值是否只含 0/255 只打印（canonical 0/255 这一项），不做断言。",
+    "cmd": "PYTHONDONTWRITEBYTECODE=1 python -c 'from PIL import Image, ImageOps\nim = Image.frombytes(\"1\", (8, 1), bytes([0xA5]))\nprint(\"in:\", [im.getpixel((x, 0)) for x in range(8)])\nout = ImageOps.invert(im)\nvals = [out.getpixel((x, 0)) for x in range(8)]\nprint(\"out:\", out.mode, out.size, vals, \"canonical 0/255:\", set(vals) <= {0, 255})\nassert out.mode == \"1\" and out.size == (8, 1)\nassert out.tobytes() == bytes([0x5A]), out.tobytes()\nassert im.tobytes() == bytes([0xA5])\nsrc = Image.open(\"Tests/images/hopper.ppm\").convert(\"1\")\ninv = ImageOps.invert(src)\nassert inv.mode == \"1\" and inv.size == src.size == (128, 128)\nassert inv.tobytes() == bytes(b ^ 0xFF for b in src.tobytes())\nassert ImageOps.invert(inv).tobytes() == src.tobytes()\nprint(\"OK: canonical 0/255 mode 1 images invert bit-for-bit, input untouched\")'"
+  },
+  {
+    "id": "check_l_rgb_unchanged",
+    "timeout_s": 60,
+    "expect": "zero",
+    "purpose": "确认需要保留的旧行为：L 与 RGB 反相仍是逐通道 255-v，且输出模式不变。修复前后都应打印 OK: L/RGB invert unchanged，退出码 0；修复后若失败，说明改动波及了 L/RGB 路径。",
+    "cmd": "PYTHONDONTWRITEBYTECODE=1 python -c 'from PIL import Image, ImageOps\nassert ImageOps.invert(Image.new(\"L\", (2, 2), 10)).getpixel((0, 0)) == 245\nassert ImageOps.invert(Image.new(\"RGB\", (2, 2), (10, 20, 30))).getpixel((0, 0)) == (245, 235, 225)\nh = Image.open(\"Tests/images/hopper.ppm\")\nh.load()\nhl = h.convert(\"L\")\nassert ImageOps.invert(hl).mode == \"L\" and ImageOps.invert(h).mode == \"RGB\"\nassert ImageOps.invert(hl).tobytes() == bytes(255 - b for b in hl.tobytes())\nassert ImageOps.invert(h).tobytes() == bytes(255 - b for b in h.tobytes())\nprint(\"OK: L/RGB invert unchanged\")'"
+  },
+  {
+    "id": "pytest_imageops",
+    "timeout_s": 600,
+    "expect": "zero",
+    "purpose": "运行 ImageOps 的公开测试模块。按静态计数共 24 个用例，修复前预计 24 passed。修复后仍应 24 passed：这些公开用例不覆盖 1 模式反相，不能区分修复前后，只用来防回归。若修复前就有失败，而且和 jpeg 解码有关（test_pad、test_exif_transpose、test_autocontrast_mask_real_input 会读 .jpg），属于环境限制，与本题无关。-p no:cacheprovider 用来避免在 /testbed 写 .pytest_cache。",
+    "cmd": "PYTHONDONTWRITEBYTECODE=1 python -m pytest -q -p no:cacheprovider Tests/test_imageops.py"
+  },
+  {
+    "id": "pytest_tiff_photometric",
+    "timeout_s": 300,
+    "expect": "zero",
+    "purpose": "TIFF 调用方的回归检查：TiffImagePlugin.py:1664-1675 在 photometric=0 时，对 1 模式图手写逐像素反相，对 L 模式图调用 ImageOps.invert。修复前预计 2 passed（参数 1 和 L）。修复后若改动了这段调用方，仍应 2 passed；没改则结果不变。临时文件由 pytest tmp_path 写到 /tmp。",
+    "cmd": "PYTHONDONTWRITEBYTECODE=1 python -m pytest -q -p no:cacheprovider \"Tests/test_file_tiff.py::TestFileTiff::test_photometric\""
+  }
+]

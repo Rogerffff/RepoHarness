@@ -1,0 +1,136 @@
+{
+ "task": "numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb",
+ "image": "sha256:df792ef10616bb4d8f173695b0d4ac7c6c19107dd799be778ed13f5083a6e867",
+ "recipe_id": "r2e_derive_v1+sysconfig_v1",
+ "patch": "/work/r2e/trials/numpy/5e8301c2/gold.patch",
+ "edits": "/work/r2e/trials/numpy/5e8301c2/draft_trial.json",
+ "expected": "current",
+ "kind": "trial_not_formal_grading",
+ "apply": "Checking patch numpy/core/einsumfunc.py...\nApplied patch numpy/core/einsumfunc.py cleanly.\nRH2_APPLY_RC=0\n",
+ "edits_apply": "RH2_TRIAL_EDITS_APPLIED=1\n",
+ "test_seconds": 6.1,
+ "markers": true,
+ "observed": {
+  "TestEinSum.test_collapse": "PASSED",
+  "TestEinSum.test_complex": "PASSED",
+  "TestEinSum.test_edge_cases": "PASSED",
+  "TestEinSum.test_einsum_all_contig_non_contig_output": "PASSED",
+  "TestEinSum.test_einsum_broadcast": "PASSED",
+  "TestEinSum.test_einsum_errors": "PASSED",
+  "TestEinSum.test_einsum_fixed_collapsingbug": "PASSED",
+  "TestEinSum.test_einsum_fixedstridebug": "PASSED",
+  "TestEinSum.test_einsum_misc": "PASSED",
+  "TestEinSum.test_einsum_sums_cfloat128": "FAILED",
+  "TestEinSum.test_einsum_sums_cfloat64": "FAILED",
+  "TestEinSum.test_einsum_sums_clongdouble": "FAILED",
+  "TestEinSum.test_einsum_sums_float16": "FAILED",
+  "TestEinSum.test_einsum_sums_float32": "FAILED",
+  "TestEinSum.test_einsum_sums_float64": "FAILED",
+  "TestEinSum.test_einsum_sums_int16": "FAILED",
+  "TestEinSum.test_einsum_sums_int32": "FAILED",
+  "TestEinSum.test_einsum_sums_int64": "FAILED",
+  "TestEinSum.test_einsum_sums_int8": "FAILED",
+  "TestEinSum.test_einsum_sums_longdouble": "FAILED",
+  "TestEinSum.test_einsum_sums_uint16": "FAILED",
+  "TestEinSum.test_einsum_sums_uint32": "FAILED",
+  "TestEinSum.test_einsum_sums_uint64": "FAILED",
+  "TestEinSum.test_einsum_sums_uint8": "FAILED",
+  "TestEinSum.test_einsum_views": "PASSED",
+  "TestEinSum.test_expand": "PASSED",
+  "TestEinSum.test_hadamard_like_products": "PASSED",
+  "TestEinSum.test_index_transformations": "PASSED",
+  "TestEinSum.test_inner_product": "PASSED",
+  "TestEinSum.test_random_cases": "PASSED",
+  "TestEinSum.test_small_boolean_arrays": "PASSED",
+  "TestEinSumPath.test_edge_paths": "PASSED",
+  "TestEinSumPath.test_long_paths": "PASSED",
+  "TestEinSumPath.test_memory_contraints": "PASSED",
+  "TestEinSumPath.test_path_type_input": "PASSED"
+ },
+ "n_observed": 35,
+ "log_tail": "ive\n        integer_like scalar, ``N``; if it is such, then the last ``N``\n        dimensions of `a` and the first ``N`` dimensions of `b` are summed\n        over.\n    \n        Parameters\n        ----------\n        a, b : array_like, len(shape) >= 1\n            Tensors to \"dot\".\n    \n        axes : int or (2,) array_like\n            * integer_like\n              If an int N, sum over the last N axes of `a` and the first N axes\n              of `b` in order. The sizes of the corresponding axes must match.\n            * (2,) array_like\n              Or, a list of axes to be summed over, first sequence applying to `a`,\n              second to `b`. Both elements array_like must be of the same length.\n    \n        See Also\n        --------\n        dot, einsum\n    \n        Notes\n        -----\n        Three common use cases are:\n            * ``axes = 0`` : tensor product :math:`a\\\\otimes b`\n            * ``axes = 1`` : tensor dot product :math:`a\\\\cdot b`\n            * ``axes = 2`` : (default) tensor double contraction :math:`a:b`\n    \n        When `axes` is integer_like, the sequence for evaluation will be: first\n        the -Nth axis in `a` and 0th axis in `b`, and the -1th axis in `a` and\n        Nth axis in `b` last.\n    \n        When there is more than one axis to sum over - and they are not the last\n        (first) axes of `a` (`b`) - the argument `axes` should consist of\n        two sequences of the same length, with the first axis to sum over given\n        first in both sequences, the second axis second, and so forth.\n    \n        Examples\n        --------\n        A \"traditional\" example:\n    \n        >>> a = np.arange(60.).reshape(3,4,5)\n        >>> b = np.arange(24.).reshape(4,3,2)\n        >>> c = np.tensordot(a,b, axes=([1,0],[0,1]))\n        >>> c.shape\n        (5, 2)\n        >>> c\n        array([[ 4400.,  4730.],\n               [ 4532.,  4874.],\n               [ 4664.,  5018.],\n               [ 4796.,  5162.],\n               [ 4928.,  5306.]])\n        >>> # A slower but equivalent way of computing the same...\n        >>> d = np.zeros((5,2))\n        >>> for i in range(5):\n        ...   for j in range(2):\n        ...     for k in range(3):\n        ...       for n in range(4):\n        ...         d[i,j] += a[k,n,i] * b[n,k,j]\n        >>> c == d\n        array([[ True,  True],\n               [ True,  True],\n               [ True,  True],\n               [ True,  True],\n               [ True,  True]])\n    \n        An extended example taking advantage of the overloading of + and \\\\*:\n    \n        >>> a = np.array(range(1, 9))\n        >>> a.shape = (2, 2, 2)\n        >>> A = np.array(('a', 'b', 'c', 'd'), dtype=object)\n        >>> A.shape = (2, 2)\n        >>> a; A\n        array([[[1, 2],\n                [3, 4]],\n               [[5, 6],\n                [7, 8]]])\n        array([[a, b],\n               [c, d]], dtype=object)\n    \n        >>> np.tensordot(a, A) # third argument default is 2 for double-contraction\n        array([abbcccdddd, aaaaabbbbbbcccccccdddddddd], dtype=object)\n    \n        >>> np.tensordot(a, A, 1)\n        array([[[acc, bdd],\n                [aaacccc, bbbdddd]],\n               [[aaaaacccccc, bbbbbdddddd],\n                [aaaaaaacccccccc, bbbbbbbdddddddd]]], dtype=object)\n    \n        >>> np.tensordot(a, A, 0) # tensor product (result too long to incl.)\n        array([[[[[a, b],\n                  [c, d]],\n                  ...\n    \n        >>> np.tensordot(a, A, (0, 1))\n        array([[[abbbbb, cddddd],\n                [aabbbbbb, ccdddddd]],\n               [[aaabbbbbbb, cccddddddd],\n                [aaaabbbbbbbb, ccccdddddddd]]], dtype=object)\n    \n        >>> np.tensordot(a, A, (2, 1))\n        array([[[abb, cdd],\n                [aaabbbb, cccdddd]],\n               [[aaaaabbbbbb, cccccdddddd],\n                [aaaaaaabbbbbbbb, cccccccdddddddd]]], dtype=object)\n    \n        >>> np.tensordot(a, A, ((0, 1), (0, 1)))\n        array([abbbcccccddddddd, aabbbbccccccdddddddd], dtype=object)\n    \n        >>> np.tensordot(a, A, ((2, 1), (1, 0)))\n        array([acccbbdddd, aaaaacccccccbbbbbbdddddddd], dtype=object)\n    \n        \"\"\"\n        try:\n            iter(axes)\n        except Exception:\n            axes_a = list(range(-axes, 0))\n            axes_b = list(range(0, axes))\n        else:\n            axes_a, axes_b = axes\n        try:\n            na = len(axes_a)\n            axes_a = list(axes_a)\n        except TypeError:\n            axes_a = [axes_a]\n            na = 1\n        try:\n            nb = len(axes_b)\n            axes_b = list(axes_b)\n        except TypeError:\n            axes_b = [axes_b]\n            nb = 1\n    \n        a, b = asarray(a), asarray(b)\n        as_ = a.shape\n        nda = a.ndim\n        bs = b.shape\n        ndb = b.ndim\n        equal = True\n        if na != nb:\n            equal = False\n        else:\n            for k in range(na):\n                if as_[axes_a[k]] != bs[axes_b[k]]:\n                    equal = False\n                    break\n                if axes_a[k] < 0:\n                    axes_a[k] += nda\n                if axes_b[k] < 0:\n                    axes_b[k] += ndb\n        if not equal:\n>           raise ValueError(\"shape-mismatch for sum\")\nE           ValueError: shape-mismatch for sum\n\nnumpy/core/numeric.py:1289: ValueError\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED r2e_tests/test_1.py::TestEinSum::test_einsum_errors\nPASSED r2e_tests/test_1.py::TestEinSum::test_einsum_views\nPASSED r2e_tests/test_1.py::TestEinSum::test_einsum_misc\nPASSED r2e_tests/test_1.py::TestEinSum::test_einsum_broadcast\nPASSED r2e_tests/test_1.py::TestEinSum::test_einsum_fixedstridebug\nPASSED r2e_tests/test_1.py::TestEinSum::test_einsum_fixed_collapsingbug\nPASSED r2e_tests/test_1.py::TestEinSum::test_einsum_all_contig_non_contig_output\nPASSED r2e_tests/test_1.py::TestEinSum::test_small_boolean_arrays\nPASSED r2e_tests/test_1.py::TestEinSum::test_hadamard_like_products\nPASSED r2e_tests/test_1.py::TestEinSum::test_index_transformations\nPASSED r2e_tests/test_1.py::TestEinSum::test_complex\nPASSED r2e_tests/test_1.py::TestEinSum::test_collapse\nPASSED r2e_tests/test_1.py::TestEinSum::test_expand\nPASSED r2e_tests/test_1.py::TestEinSum::test_edge_cases\nPASSED r2e_tests/test_1.py::TestEinSum::test_inner_product\nPASSED r2e_tests/test_1.py::TestEinSum::test_random_cases\nPASSED r2e_tests/test_1.py::TestEinSumPath::test_memory_contraints\nPASSED r2e_tests/test_1.py::TestEinSumPath::test_long_paths\nPASSED r2e_tests/test_1.py::TestEinSumPath::test_edge_paths\nPASSED r2e_tests/test_1.py::TestEinSumPath::test_path_type_input\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_int8 - ValueError: s...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_uint8 - ValueError: ...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_int16 - ValueError: ...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_uint16 - ValueError:...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_int32 - ValueError: ...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_uint32 - ValueError:...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_int64 - ValueError: ...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_uint64 - ValueError:...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_float16 - ValueError...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_float32 - ValueError...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_float64 - ValueError...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_longdouble - ValueEr...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_cfloat64 - ValueErro...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_cfloat128 - ValueErr...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_clongdouble - ValueE...\n======================== 15 failed, 20 passed in 4.63s =========================\n>>>>> End Test Output\nRH2_TEST_RC=1\n",
+ "stderr_tail": "",
+ "expected_n": 35,
+ "missing": [],
+ "extra": [],
+ "status_diff": [
+  [
+   "TestEinSum.test_einsum_sums_cfloat128",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_cfloat64",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_clongdouble",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_float16",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_float32",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_float64",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_int16",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_int32",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_int64",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_int8",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_longdouble",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_uint16",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_uint32",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_uint64",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_uint8",
+   "PASSED",
+   "FAILED"
+  ]
+ ],
+ "match": false,
+ "verdict": "mismatch",
+ "seconds": 71.4
+}

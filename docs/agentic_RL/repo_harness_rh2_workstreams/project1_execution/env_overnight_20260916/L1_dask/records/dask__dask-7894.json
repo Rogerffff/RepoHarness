@@ -1,0 +1,226 @@
+{
+ "task_id": "dask__dask-7894",
+ "source": "SWE-Gym lite (dask/dask 2021.07)",
+ "task_revision": "upstream",
+ "materials_refs": [
+  "s2/ingest/public_bundles_v0.jsonl (problem_statement; image xingyaoww/sweb.eval.x86_64.dask_s_dask-7894:latest; workdir /testbed)",
+  "s2/ingest/grading_bundles_v2_v0.jsonl (test_patch; F2P=5; P2P=75; eval_cmd 'pytest -n0 -rA  --color=no'; version 2021.07)",
+  "s2/ingest/validation_bundles_v0.jsonl (golden_patch)",
+  "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/dask__dask-7894/{gold,empty}/offline/a1/",
+  "runs/env_probe_20260909_final_sync/ledger/logs_cc/dask__dask-7894/candidate.diff",
+  "docs/.../swe_grading_wiring_20260915/precheck_after_pb.md:12,39"
+ ],
+ "public_view": {
+  "goal": "map_overlap(trim=True) 在 drop_axis 非空时，trim 阶段仍按输入数组的轴顺序取 depth/boundary，没有剔除被丢弃的轴，导致按错误的 depth 裁剪。要求丢轴后 depth/boundary 同步重排。",
+  "constraints": [
+   "题面给了 MCVE：da.ones((5,10))、depth=(0,2)、drop_axis=(0,)，断言 y.shape==(10,)。",
+   "题面明确说明期望：'the corresponding entries should also be dropped from depth and boundary'。"
+  ],
+  "unknown_from_public": [
+   "题面只谈 drop_axis，没提 new_axis（同一段 trim 代码对 new_axis 同样不处理）。",
+   "题面没说 drop_axis 允许标量/负数索引，但 F2P 参数化里含标量 1。",
+   "题面 MCVE 的 chunks=(0,) 参数是噪声（真实测试不传 chunks），公开材料无法确定它是否是复现必需。"
+  ],
+  "by": "L1_dask"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "bf4bc7dd8dc96021b171e0941abde7a5f60ce89f:dask/array/overlap.py:694-700",
+    "bf4bc7dd8dc96021b171e0941abde7a5f60ce89f:dask/array/tests/test_overlap.py"
+   ],
+   "note": "test_patch 只改 dask/array/tests/test_overlap.py，gold 只改 dask/array/overlap.py，base 均存在；与题面同一问题（trim_internal(x, depth[i], boundary[i])）。无二进制/LFS/子模块。",
+   "by": "L1_dask"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "bf4bc7dd8dc96021b171e0941abde7a5f60ce89f:dask/array/overlap.py:697"
+   ],
+   "note": "base 的 `return trim_internal(x, depth[i], boundary[i])` 直接用输入轴的 depth/boundary，确有题面缺陷；empty 侧 5 条 F2P 全 FAILED。",
+   "by": "L1_dask"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-7894.problem_statement"
+   ],
+   "note": "题面含完整 MCVE 与预期，无图片/外链代码；无截断。hints_text 为空，不存在 hints 独有信息。唯一软线索是作者自述 'I have a solution and will make a PR with it now'（无代码、无 PR 号）。",
+   "by": "L1_dask"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-7894.test_patch"
+   ],
+   "note": "test_patch 触碰路径仅 dask/array/tests/test_overlap.py（纯测试）；gold 仅 dask/array/overlap.py（纯源码）。无混合职责。",
+   "by": "L1_dask"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "同上"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "L1_dask"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dask/prescan.json"
+   ],
+   "note": "本包 14 题中唯一改 dask/array/overlap.py 的题；与其它题无共用 PR / 测试文件。",
+   "by": "L1_dask"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-7894.test_patch"
+   ],
+   "note": "F2P 断言 assert_array_almost_equal(_mean(x), map_overlap(...))，即题面所述“丢轴后 trim 正确”；公开材料足以推出。唯一超出题面的是 drop_axis 允许标量（参数 1）——但 base 的 coerce_depth 已支持标量语义，属可推断。",
+   "by": "L1_dask"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_20260909_final_sync/ledger/logs_cc/dask__dask-7894/candidate.diff",
+    "docs/.../task_signals_swegym.json:dask__dask-7894.deepseek_candidate_oracle=RESOLVED_FULL"
+   ],
+   "note": "不强制唯一实现：DeepSeek 候选用 kwargs.get + 同时处理 new_axis 的另一套映射（与 gold 的 kwargs.pop + kept_axes 写法不同），仍判 RESOLVED_FULL。断言只看数值结果，不看 helper 名或调用顺序。",
+   "by": "L1_dask"
+  },
+  "25": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-7894.test_patch（boundary=(0,'reflect','nearest')、depth=(1,3,2)）"
+   ],
+   "note": "本包判别力最好的一题：7 个参数点覆盖单轴/双轴/标量 drop_axis，且 depth 与 boundary 逐轴不同 —— 只重排 depth 不重排 boundary 会在边界值上失配而失败。硬编码 shape 无法通过（断言是逐元素数值比较）。",
+   "by": "L1_dask"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "bf4bc7dd8dc96021b171e0941abde7a5f60ce89f:dask/array/overlap.py:694-700"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_dask"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "validation_bundles_v0.jsonl:dask__dask-7894.golden_patch"
+   ],
+   "note": "gold 与题对应、不依赖未交付改动。但两点需注意：(a) 只处理 drop_axis，不处理 new_axis —— 同一段 trim 代码在 new_axis 下仍按错轴取 depth；(b) gold 用 `kwargs.pop('drop_axis', None)` 就地修改调用者传入的 kwargs 字典（pop 发生在 map_blocks 调用之后，本文件内无害，但对复用同一 kwargs 的外部调用者是副作用）。DeepSeek 候选改用 .get 并额外处理 new_axis，比 gold 覆盖更广。",
+   "by": "L1_dask"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-7894.problem_statement"
+   ],
+   "note": "题面不含修复代码，也没有 PR/commit 号；hints_text 为空。",
+   "by": "L1_dask"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-7894/gold/offline/a1/test_output.txt (RH2_PHASE_END install rc=0)"
+   ],
+   "note": "2021.07 的 `pip install --no-deps -e .` 离线 rc=0。",
+   "by": "L1_dask"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "bf4bc7dd8dc96021b171e0941abde7a5f60ce89f:dask/array/tests/test_overlap.py"
+   ],
+   "note": "全文件无 mark.network / requests / boto3 / s3fs / URL 下载；模块级只有 pytest.importorskip('numpy')。",
+   "by": "L1_dask"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-7894/gold/offline/a1/test_output.txt:684-690",
+    "grading_bundles_v2_v0.jsonl:dask__dask-7894.test_patch（da.random.standard_normal，无 seed）"
+   ],
+   "note": "gold 侧 80 条结果行、0 SKIPPED、0 XFAIL，参考集 80 条全 PASSED —— 依赖齐备。但 F2P 用 `da.random.standard_normal((5,10,8))` **不设随机种子**，每次运行输入不同；断言是 assert_array_almost_equal（默认 6 位小数）。对完全正确/完全错误的实现无影响，但对“边界处略有偏差”的候选可能表现为跑一次过、跑一次挂。这是本包唯一的随机输入题。",
+   "by": "L1_dask"
+  },
+  "9": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-7894/{gold,empty}/offline/a1/status_map.json"
+   ],
+   "note": "empty→5 条 F2P 全 FAILED，gold→全 PASSED，75 条 P2P 两侧全 PASSED。判据可区分。",
+   "by": "L1_dask"
+  },
+  "8": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-7894.{fail_to_pass,pass_to_pass}"
+   ],
+   "note": "参考集划分正确且有判别力：新增参数化 7 个点里，drop_axis2=(2,) 与 drop_axis4=(1,2) 在 base 本来就通过（depth 在被丢轴上恰好不影响结果），自动进了 P2P，构成对“过度修正”的反向保护。这是本包唯一一处 P2P 含新增用例的题。",
+   "by": "L1_dask"
+  }
+ },
+ "issues": [
+  {
+   "category": "测试非确定性输入",
+   "severity": "P2",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-7894.test_patch"
+   ],
+   "proposed_action": "若把本题放入 e2/评测集，建议在题级记录标注“输入无种子”，或在重复判分时用同一容器多跑一次核对稳定性。不改上游测试。",
+   "next_experiment": "gold 树上把该 5+2 个参数点连跑 20 次，统计是否全稳定 PASSED。"
+  },
+  {
+   "category": "gold 覆盖窄于问题类",
+   "severity": "P3",
+   "evidence_refs": [
+    "validation_bundles_v0.jsonl:dask__dask-7894.golden_patch",
+    "runs/env_probe_20260909_final_sync/ledger/logs_cc/dask__dask-7894/candidate.diff"
+   ],
+   "proposed_action": "记为已知缺口：new_axis 下的 trim 仍错。不影响本题判分。",
+   "next_experiment": "gold 树上跑 map_overlap(..., new_axis=0, depth=(1,3), trim=True)，确认 trim 轴错位。"
+  },
+  {
+   "category": "gold 副作用",
+   "severity": "P3",
+   "evidence_refs": [
+    "validation_bundles_v0.jsonl:dask__dask-7894.golden_patch（kwargs.pop）"
+   ],
+   "proposed_action": "仅记录；不建议以此判候选优劣。",
+   "next_experiment": "无。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰 dask/array/tests/test_overlap.py，纯测试侧；gold 不碰测试路径。按第四组 B 默认保持空。",
+  "evidence_refs": [
+   "grading_bundles_v2_v0.jsonl:dask__dask-7894.test_patch",
+   "docs/.../precheck_after_pb.md:12,39"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "dask/array/tests/test_overlap.py::test_map_overlap_multiarray_variadic",
+   "reason": "覆盖 map_overlap 多数组/不同 ndim 分支（gold 改的正是 `i = sorted(enumerate(args), ...)` 之后的代码），已在 P2P，保留。"
+  },
+  {
+   "id": "dask/array/tests/test_overlap.py::test_map_overlap_new_axis（需新增）",
+   "reason": "gold 未处理 new_axis；补一条可把这段 trim 代码的另一半纳入保护，同时防止候选用 drop_axis 专用 hack 破坏 new_axis 路径。"
+  },
+  {
+   "id": "dask/array/tests/test_overlap.py::test_trim_internal / test_trim_boundary",
+   "reason": "trim_internal 是 gold 唯一下游；已在 P2P，保留。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "材料一致、gold 干净、参考集 80 条全通过且含 2 条同族反向 P2P，判别力是本包最好的；唯一保留是测试输入无随机种子，应在 e2 复跑里观察稳定性。"
+ },
+ "costs": {
+  "minutes": 24
+ }
+}

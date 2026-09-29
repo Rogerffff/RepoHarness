@@ -1,0 +1,216 @@
+{
+ "task_id": "pydantic__pydantic-9193",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_pydantic (Claude Opus 5, 2026-09-16 夜)",
+ "materials_refs": [
+  "s2/ingest/*_bundles_v0.jsonl (pydantic__pydantic-9193)",
+  "repos/pydantic@8aeac1a4(见 grading.base_commit)",
+  "runs/env_probe_stage1_20260910/.../pydantic__pydantic-9193/"
+ ],
+ "public_view": {
+  "目标行为": "定义泛型且 extra='allow' 的模型（`class M(BaseModel, Generic[T], extra='allow')`）不应抛 `AttributeError: type object 'Generic' has no attribute '__annotations__'`。",
+  "约束": "extra='allow' 的 __pydantic_extra__ 注解解析逻辑不变。",
+  "公开材料无法确定的点": [
+   "题面的复现依赖 **openai SDK**（镜像里没装、且需要网络），题面既没给 traceback 也没给最小复现；只有一行错误消息",
+   "题面完全没提 extra='allow'、没提泛型；从 `type object 'Generic' has no attribute '__annotations__'` 反推到 `class M(BaseModel, Generic[T], extra='allow')` 需要读 pydantic 源码里遍历 __mro__ 的那段",
+   "hints 里维护者提到“切到 Python 3.9 才复现”，题面没有"
+  ],
+  "base 定位": "pydantic/_internal/_generate_schema.py:536-539 `_model_schema`：`for candidate_cls in cls.__mro__[:-1]: extras_annotation = candidate_cls.__annotations__.get(...)` —— `typing.Generic` 在部分 Python 版本上没有 `__annotations__` 属性。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "tests/test_generics.py、pydantic/_internal/_generate_schema.py 在 base 均存在"
+   ],
+   "note": "对应同一问题。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "_generate_schema.py:536-539",
+    "stage1 empty：test_generic_with_allow_extra FAILED"
+   ],
+   "note": "base 确有缺陷，且在判分环境（Python 3.8）上可复现。",
+   "by": "static+stage1log"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement 1051 字符：Example Code 是 `from openai import OpenAI; client = OpenAI(api_key='NONE'); client.chat.completions.create(...)`",
+    "题面只有一行错误消息，无 traceback",
+    "hints_text 里维护者先说“复现不出来”，再说“切到 Python 3.9 才复现”"
+   ],
+   "note": "**P1**：题面给的复现路径在判分镜像里根本走不通——openai SDK 未安装（测试只 import pytest/pydantic_core/dirty_equals），且该调用需要网络。agent 只能靠一行错误消息在源码里 grep `__annotations__` 反推。这是本包实际输入最不可用的一题。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只碰 tests/test_generics.py；F2P+P2P 106 条全在该文件；gold 只碰生产代码"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "static"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "R8 扫描：5706 的 gold 5/11 行、6104 的 gold 5/5 行出现在 9193 的 base:pydantic/_internal/_generate_schema.py"
+   ],
+   "note": "P2 跨题答案泄漏：9193 的 base 含 6104 的完整 gold 与 5706 的大部分 gold。",
+   "by": "static"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "install rc=2。",
+   "by": "stage1log"
+  },
+  "7": {
+   "status": "issue",
+   "evidence_refs": [
+    "题面复现需要 openai SDK；grading 侧 tests/test_generics.py 只需 pytest / pydantic_core / dirty_equals"
+   ],
+   "note": "P2：题面所需的外部依赖不在环境里，且属于付费 API 客户端；判分本身不需要它。处置是把题面换成最小复现，不是装 openai。",
+   "by": "static"
+  },
+  "8": {
+   "status": "pass",
+   "evidence_refs": [
+    "gold status_map：PASSED 106 + XFAIL 1 + SKIPPED 1"
+   ],
+   "note": "与 Python 3.8 判分环境一致。",
+   "by": "stage1log"
+  },
+  "10": {
+   "status": "issue",
+   "evidence_refs": [
+    "同 check 3 与 R3"
+   ],
+   "note": "P1：agent 既装不了 openai、又（按 R3）跑不了 pytest，本题几乎没有本地验证路径。",
+   "by": "static+trajectory(R3)"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2",
+    "题面复现需要访问 OpenAI API"
+   ],
+   "note": "install 需要网络；题面复现名义上也需要网络（虽然报错发生在用到 api_key 之前）。",
+   "by": "static+stage1log"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "同 check 3"
+   ],
+   "note": "P1 要求几乎不可由公开材料推断：题面没有提到泛型、没有提到 extra='allow'，而 F2P 恰恰是这两者的组合。可解性依赖 agent 从错误字符串 grep 源码并猜到触发组合。",
+   "by": "static"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 只是定义一个类，不抛异常即通过（无 assert）"
+   ],
+   "note": "不强制唯一实现。注意该测试体没有任何断言，只靠“定义类不抛错”作为判据。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "F2P 测试体无断言，仅定义 `class AllowExtraGeneric(BaseModel, Generic[T], extra='allow'): data: T`"
+   ],
+   "note": "P2：`try/except: pass` 式的吞异常修复、或在 `_model_schema` 里整段 try/except 包住 mro 遍历，都能通过；没有任何断言检查 `__pydantic_extra__` 注解仍被正确解析。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "gold 改的是 extra='allow' 的注解解析路径"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "static"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 只把 `candidate_cls.__annotations__` 换成 `getattr(candidate_cls, '__annotations__', {})`"
+   ],
+   "note": "gold 最小且对应根因，无题外改动。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak 扫描 0 命中；题面无 URL"
+   ],
+   "note": "无泄漏；问题是信息严重不足。",
+   "by": "static"
+  },
+  "31": {
+   "status": "issue",
+   "evidence_refs": [
+    "R4"
+   ],
+   "note": "静态残余面。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "problem_statement_unreproducible",
+   "severity": "P1",
+   "evidence_refs": [
+    "check 3",
+    "check 7",
+    "check 23"
+   ],
+   "proposed_action": "把题面的 openai SDK 复现换成最小复现（泛型 + extra='allow'），或至少补上完整 traceback；否则本题考的是“从一行错误消息猜触发组合”",
+   "next_experiment": "在镜像里确认 `import openai` 失败，并确认题面例子无法执行"
+  },
+  {
+   "category": "oracle_no_assertion",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 25"
+   ],
+   "proposed_action": "给 F2P 补上 `Model(data=1, other=2).__pydantic_extra__ == {'other': 2}` 一类断言，排除吞异常式修复",
+   "next_experiment": "实现吞异常版本跑官方 107 条"
+  },
+  {
+   "category": "cross_task_answer_leak",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 5",
+    "R8"
+   ],
+   "proposed_action": "9193 与 5706/6104 同侧划分",
+   "next_experiment": "无"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 仅纯测试文件、gold 仅生产代码、判分面与恢复面一致。",
+  "evidence_refs": [
+   "grading.json.test_patch",
+   "validation.json.golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  "`AllowExtraGeneric[int](data=1, other=2).__pydantic_extra__ == {'other': 2}` — 选择依据：F2P 没有任何断言，需要一条检查功能而非只检查不抛错的用例",
+  "父类用字符串注解 `__pydantic_extra__: 'dict[str, int]'` 时仍能 eval — 选择依据：gold 改的那行紧接着就是 `if isinstance(extras_annotation, str)` 分支",
+  "非泛型的 extra='allow' 模型行为不变 — 选择依据：getattr 默认值 {} 的反面",
+  "tests/test_config.py / tests/test_main.py 里 extra='allow' 的条目 — 选择依据：跨文件调用者，不在判分面"
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "gold 与根因对应且最小，但题面的唯一复现依赖未安装的 openai SDK、没有 traceback、也没提到泛型或 extra='allow'，而 F2P 恰是这两者的组合；F2P 本身又没有断言。题面不重写就是在考猜谜。"
+ },
+ "costs": {
+  "minutes": 15
+ }
+}

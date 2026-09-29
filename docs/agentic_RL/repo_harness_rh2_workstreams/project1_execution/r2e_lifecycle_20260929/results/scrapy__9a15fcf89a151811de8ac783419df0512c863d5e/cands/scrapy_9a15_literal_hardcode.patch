@@ -1,0 +1,13 @@
+diff --git a/scrapy/responsetypes.py b/scrapy/responsetypes.py
+index 4603854..19edc70 100644
+--- a/scrapy/responsetypes.py
++++ b/scrapy/responsetypes.py
+@@ -53,6 +53,8 @@ class ResponseTypes(object):
+         header """
+         if content_encoding:
+             return Response
++        if content_type == 'application/x-json; encoding=UTF8;charset=UTF-8':
++            return self.from_mimetype('application/json')
+         mimetype = content_type.split(';')[0].strip().lower()
+         return self.from_mimetype(mimetype)
+ 

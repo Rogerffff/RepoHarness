@@ -1,0 +1,59 @@
+{
+ "task_id": "python__mypy-11420",
+ "source": "SWE-Gym lite / python/mypy PR 11420（上游 commit bddc8bf2d4，refs issue 11398）",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "28d57b13ab5ea765728bde534eda2877f8d92b4b", "version": "0.920", "python_version": "3.9",
+  "eval_cmd": "pytest -n0 -rA -k",
+  "f2p": ["testNewReturnType10", "testNewReturnType11", "testNewReturnType12"],
+  "p2p": ["testGenericOverride", "testGenericOverrideGeneric", "testGenericOverrideGenericChained", "testGenericOverridePreciseValid", "testGenericOverridePreciseInvalid"],
+  "test_patch_paths": ["test-data/unit/check-classes.test"], "gold_paths": ["mypy/checker.py"],
+  "stage1": "无 stage1 记录（signals.stage1 = null）"
+ },
+ "public_view": {
+  "goal": "metaclass 的 `__new__` 标注返回 `Type[SomeClass]` 时，mypy 报 `\"__new__\" must return a class instance (got \"Type[MyAbstractClass]\")`。要求接受这种标注。",
+  "constraints": ["题面是功能请求，给出完整示例与当前错误文本", "题面只覆盖返回 `Type[X]` 这一种情形"],
+  "unknowns_from_public_only": [
+   "返回 `type` 本身该不该接受？题面未提（F2P 要求接受）",
+   "返回 `int` 这类非 type 子类时该报什么？题面未提（F2P 要求报 `Incompatible return type for \"__new__\" (returns \"int\", but must return a subtype of \"type\")`）",
+   "非 metaclass 的 __new__ 检查是否保持原样？题面未提"
+  ],
+  "base_code_evidence": [
+   "28d57b13a:mypy/checker.py:1102-1122 check___new___signature：先判 ret_type 是否属于 (AnyType, Instance, TupleType)，否则报 NON_INSTANCE_NEW_TYPE；是则 check_subtype(ret, self_type, ..., INVALID_NEW_TYPE, 'returns', 'but must return a subtype of')",
+   "28d57b13a:mypy/message_registry.py:57-58 NON_INSTANCE_NEW_TYPE 与 INVALID_NEW_TYPE 在 base 都已存在；:5031 self.type_type() 也已存在 → gold 不依赖任何未交付改动",
+   "28d57b13a:test-data/unit/check-classes.test:6309-6418 已有 testNewReturnType1 ~ testNewReturnType9 九个既有用例，紧挨在新增用例的插入点之前"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 目标 check-classes.test 在 base 存在（486 个 case）；gold 目标 mypy/checker.py 上下文匹配", "upstream_filelist_check.txt：本题未出现在 dropped 列表，gold ∪ test_patch == 上游 PR 文件集"], "note": "无二进制/LFS/子模块。", "by": "L1_mypy_1"},
+  "2": {"status": "pass", "evidence_refs": ["base check___new___signature 无 metaclass 分支：`Type[X]` 属 TypeType，不在 (AnyType, Instance, TupleType) 里，因此报题面所述错误"], "note": "静态确认；无 stage1 实跑佐证。", "by": "L1_mypy_1"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 933 字符，含完整示例与当前错误文本；无外链无截断"], "note": "题面完整。", "by": "L1_mypy_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 只触碰 test-data/unit/check-classes.test"], "note": "无非测试源码。additional_exclusions 保持空。", "by": "L1_mypy_1"},
+  "17": {"status": "pass", "evidence_refs": ["同上；gold 只改 mypy/checker.py"], "note": "无覆盖风险。", "by": "L1_mypy_1"},
+  "5": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["dupidx.txt：check-classes.test 只被本题触碰；mypy/checker.py 是本题、10284、11945、15413、16905、9909 六题的 gold 路径（本包内还有 10284）"], "note": "同文件不同函数，非重复题。", "by": "L1_mypy_1"},
+  "23": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["F2P testNewReturnType11（返回 `type` 应当通过）与 testNewReturnType12（返回 `int` 应当报特定文本）在题面里都没有依据"], "note": "题面只要求接受 `Type[X]`。F2P 额外要求：接受裸 `type`、对非 type 子类报出把比较对象从 self_type 换成 `type` 之后的消息。后者的精确文本是既有模板套用（`Incompatible return type for \"__new__\" (returns \"X\", but must return a subtype of \"Y\"）`），推出 Y 应当是 \"type\" 需要先猜到实现方式。属于'要求超出题面但尚可推理'。", "by": "L1_mypy_1"},
+  "24": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["testNewReturnType12 断言 `but must return a subtype of \"type\"`"], "note": "一个更小的替代实现（把 TypeType 加进 `(AnyType, Instance, TupleType)` 白名单）能让 case 10、11 通过，但 case 12 仍会报 `subtype of \"MyMetaClass\"` 而失败。测试实际上把'比较对象必须换成 type'这一具体设计钉死了。有一定依据（语义上确实该和 type 比），但不是题面给的。", "by": "L1_mypy_1"},
+  "25": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["base 的 check-classes.test:6309-6418 已有 testNewReturnType1 ~ testNewReturnType9 九个既有用例，与本次改动直接相关", "P2P 却是 testGenericOverride 系列 5 条（方法重写兼容性），与 __new__ 无关"], "note": "**P2P 选错了对象的最清楚例子**：九条直接相关的既有用例就在插入点正上方，一条都没进 P2P；进 P2P 的是插入点**下方**紧邻的 testGenericOverride 及其 4 个子串过选。结果是：候选把非 metaclass 的 __new__ 检查改坏（例如误删 else 分支），F2P 三条仍可能通过、P2P 五条也不受影响。", "by": "L1_mypy_1"},
+  "26": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["同上"], "note": "补回归成本极低，见 proposed_regression_tests。", "by": "L1_mypy_1"},
+  "27": {"status": "pass", "evidence_refs": ["gold 依赖的 message_registry.INVALID_NEW_TYPE（message_registry.py:58）与 self.type_type()（checker.py:5031）在 base 都已存在"], "note": "gold 完整、与本题对应、无题外改动。", "by": "L1_mypy_1"},
+  "29": {"status": "pass", "evidence_refs": ["problem_statement 无 PR/commit 链接、无修复代码"], "note": "题面无泄漏。注意三条新 case 的正文第一行都是 `# https://github.com/python/mypy/issues/11398`，但在私有材料里。", "by": "L1_mypy_1"},
+  "6": {"status": "not_checked", "evidence_refs": [], "note": "无 stage1 记录。", "by": "L1_mypy_1"},
+  "7": {"status": "pass", "evidence_refs": ["三条新 case 不声明 fixture"], "note": "无外部资产。", "by": "L1_mypy_1"},
+  "11": {"status": "pass", "evidence_refs": ["case 正文的 URL 是注释，不发起请求"], "note": "不需要网络。", "by": "L1_mypy_1"},
+  "18": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["kcheck_all.txt：selector testGenericOverride 子串命中 testGenericOverrideGeneric / GenericChained / PreciseInvalid / PreciseValid；testGenericOverrideGeneric 再命中 GenericChained"], "note": "过选良性（5 条全部在 P2P）。同时再次印证 P2P = diff 邻接 + 子串过选。", "by": "L1_mypy_1"},
+  "20": {"status": "not_checked", "evidence_refs": [], "note": "无 stage1。", "by": "L1_mypy_1"}
+ },
+ "issues": [
+  {"category": "p2p_picked_wrong_neighbors", "severity": "P1", "evidence_refs": ["testNewReturnType1~9 在 base 存在且紧邻插入点上方，全部未入 P2P；P2P 是插入点下方的 testGenericOverride 系列"], "proposed_action": "把 testNewReturnType1 ~ testNewReturnType9 补进 P2P（它们在 base 与 gold 上都应通过，需实跑确认）。这是本包里补回归性价比最高的一条。", "next_experiment": "base 与 gold 各跑一次 `-k \"testNewReturnType1 or testNewReturnType2 or ... or testNewReturnType9\"`，确认两侧都 PASSED 后入 P2P；再用一个删掉 else 分支的候选验证能被拦下。"},
+  {"category": "requirement_beyond_statement", "severity": "P2", "evidence_refs": ["F2P 11/12 在题面无依据"], "proposed_action": "题面补一句'metaclass 的 __new__ 返回值只需是 type 的子类型'，即可让 11/12 变成可推断。", "next_experiment": "把 TypeType 加进白名单的最小替代解跑三条 F2P，确认 10/11 过、12 挂。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只触碰纯测试数据文件 test-data/unit/check-classes.test。", "evidence_refs": ["grading_bundles_v2_v0:python__mypy-11420 test_patch"]},
+ "proposed_regression_tests": [
+  {"id": "mypy/test/testcheck.py::TypeCheckSuite::testNewReturnType1 ~ testNewReturnType9", "reason": "与被改函数一一对应的既有用例，就在插入点上方，当前全部未被评分。"},
+  {"id": "test-data/unit/check-classes.test 中所有 metaclass 相关 case", "reason": "gold 新增的分支以 fdef.info.is_metaclass() 为条件。"},
+  {"id": "test-data/unit/check-abstract.test、check-selftype.test", "reason": "__new__ 与 bind_self 的交互面；gold 调用 bind_self 后的结果被用于新的 check_subtype。"},
+  {"id": "test-data/unit/check-errorcodes.test 中 __new__ 相关 case", "reason": "错误码归属不应因换比较对象而改变。"}
+ ],
+ "disposition_hint": {"state": "needs_repair", "reason": "题面/gold/F2P 本身站得住（gold 完整、F2P 断言对外行为），但 P2P 选了插入点下方五条无关的 testGenericOverride，而九条直接相关的 testNewReturnType1~9 就在上方却一条没选。补 P2P 后即可用。"},
+ "costs": {"minutes": 18}
+}

@@ -1,0 +1,85 @@
+{
+  "instance_id": "dask__dask-8801",
+  "review_date": "2026-09-20",
+  "reviewer": "Codex / B root",
+  "old_record": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dask/records/dask__dask-8801.json",
+  "environment": {
+    "status": "baseline_pair_no_known_environment_issue",
+    "evidence": "runs/env_recipe_repair_20260919/scope_reconciliation_20260920.json",
+    "task_key": "dask__dask-8801",
+    "limit": "Each original noop=0 with observed target failure and no installation failure in zero audit; original gold=1 and full test command rc=0. No new quality/stability certification."
+  },
+  "base_commit": "9634da11a5a6e5eb64cf941d2088aabffe504adb",
+  "public_requirements": "公开题面报告 import dask 在配置合并时因 str 无 items 而失败，包含定位到 config.py 的完整调用栈。希望库如何处理无效配置尚有歧义，但不是毫无线索的文本。",
+  "public_boundary": "仅以 public bundle 的 problem_statement 与通用 public_hints 判定可见性；raw hints 是私有来源背景，不据此认定 agent 已知。",
+  "old_claim_reviews": [
+    {
+      "claim": "题面不含任何任务或定位线索，所以只能reject。",
+      "status": "refuted",
+      "reason": "这是可识别的import/config缺陷报告；公开traceback已指向config合并，base collect_yaml确实接受任意YAML顶层类型。可调查性与验收规则是否充分是两件事。",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl#dask__dask-8801",
+        "9634da11a5a6e5eb64cf941d2088aabffe504adb:dask/config.py:150-188"
+      ]
+    },
+    {
+      "claim": "测试强制题面未说明的英文报错措辞。",
+      "status": "confirmed",
+      "reason": "两个来源测试要求is malformed、original error message或must have a dict。局部执行来源函数/测试：gold 2/2通过；只改同义措辞的版本2/2 AssertionError，仍抛ValueError并含文件路径、原因，正常mapping输入不变。此为函数级反例，不是本轮RH2复跑。",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl#dask__dask-8801",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/dask_pilot/probe_8801_wording.json"
+      ]
+    },
+    {
+      "claim": "权限测试在当前评分中因root恒失败。",
+      "status": "superseded_env",
+      "reason": "09-19真实RH2使用候选身份，两侧directory/file权限用例均PASSED，gold完整45passed；旧root脚本结果不能描述现有链路。",
+      "evidence": [
+        "run_evidence"
+      ]
+    },
+    {
+      "claim": "这两个权限测试在冻结参考集之外。",
+      "status": "confirmed",
+      "reason": "来源P2P仍不含directory/file两条，因此“当前完整执行通过”不等于二值reward会惩罚未来破坏该行为的候选；不以安装/root问题重复修复。",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl#dask__dask-8801",
+        "run_evidence"
+      ]
+    },
+    {
+      "claim": "必须删去长conda输出后才可用。",
+      "status": "unresolved",
+      "reason": "精简公开噪声是可选的材料修订，不是已证明的可解性前置；改写不得把gold方案或私有测试措辞直接变成提示。",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dask/records/dask__dask-8801.json#issues"
+      ]
+    }
+  ],
+  "recommendation": "needs_revision",
+  "next_action": "建议独立新版本明确无效YAML/非mapping配置应提供可定位的诊断；测试按异常类型、路径与含义核验，避免任意同义措辞拒绝。是否保留/补充权限回归需明确参考集版本。正式修改前用真实RH2复放同义候选，原题和原评分并存。",
+  "evidence_level": "精确 base 源码和来源补丁静态核对；回读既有 RH2 noop/gold 日志并核对摘要；未重跑远端或模型。8801 另有本地抽取函数反例。",
+  "run_evidence": [
+    {
+      "kind": "noop",
+      "path": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-2/eval_logs/evallog_replay-f216-baseline01-w_8d250d15.eval.log",
+      "sha256": "5c2b2bd07968c2e61bcf7b76defd24ce2b4caaab7162e3bcea7e42a20d6640c1",
+      "reward": 0.0,
+      "ledger": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-2/ledger.jsonl",
+      "grading_uid": 54322
+    },
+    {
+      "kind": "gold",
+      "path": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-2/eval_logs/evallog_replay-f216-baseline01-w_61ac6118.eval.log",
+      "sha256": "c63cd0b478be55060cd79691a32c56e22033ff4cb4e832d56afbf2359f28bcdb",
+      "reward": 1.0,
+      "ledger": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-2/ledger.jsonl",
+      "grading_uid": 54322
+    }
+  ],
+  "unknowns": [
+    "未复放完整RH2同义候选；忽略非法配置还是抛可定位异常的产品选择应体现在修订说明；本轮不改原测试或题面。"
+  ],
+  "admission": false
+}

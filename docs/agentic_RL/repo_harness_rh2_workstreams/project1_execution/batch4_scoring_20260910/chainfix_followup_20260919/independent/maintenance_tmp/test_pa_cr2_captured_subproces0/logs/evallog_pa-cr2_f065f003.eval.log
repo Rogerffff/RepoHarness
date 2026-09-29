@@ -1,0 +1,33 @@
++ git checkout base -- tests/
+RH2_SETUP_RAN=1
++ echo RH2_PHASE_START=install
+RH2_PHASE_START=install
+RH2_TS_INSTALL_START=100.0
+RH2_INSTALL_RC=0
+RH2_TS_INSTALL_END=103.5
+RH2_PHASE_END=install
+RH2_TS_TEST_START=104.0
++ : '>>>>> Start Test Output'
+F.                                                                       [100%]
+=================================== FAILURES ===================================
+_____________________________ test_feature[after] ______________________________
+
+case = 'after'
+
+    def test_feature(case):
+        if case == "after":
+>           subprocess.run([sys.executable, "-c", "import rh2_missing_child_module"], check=True)
+
+tests/test_thing.py:8: 
+E           subprocess.CalledProcessError: Command '[...]' returned non-zero exit status 1.
+----------------------------- Captured stderr call -----------------------------
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+ModuleNotFoundError: No module named 'rh2_missing_child_module'
+=========================== short test summary info ============================
+FAILED tests/test_thing.py::test_feature[after] - subprocess.CalledProcessError
+PASSED tests/test_thing.py::test_stable[after]
+========================= 1 failed, 1 passed in 0.12s ==========================
++ : '>>>>> End Test Output'
+RH2_TEST_RC=1
+RH2_TS_TEST_END=110.25

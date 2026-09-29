@@ -1,0 +1,136 @@
+{
+  "scope": "local token replay and installed capture function; no new real CC/GPU run",
+  "input_facts": {
+    "dp_t10_base": {
+      "tool_names": [
+        "Bash",
+        "CronCreate",
+        "CronDelete",
+        "CronList",
+        "Edit",
+        "EnterWorktree",
+        "ExitWorktree",
+        "NotebookEdit",
+        "Read",
+        "ReportFindings",
+        "ScheduleWakeup",
+        "SendMessage",
+        "Skill",
+        "TaskCreate",
+        "TaskGet",
+        "TaskList",
+        "TaskOutput",
+        "TaskStop",
+        "TaskUpdate",
+        "Workflow",
+        "Write"
+      ],
+      "has_memory_section": true,
+      "has_skill_listing": true
+    },
+    "dp_t10_toolscore": {
+      "tool_names": [
+        "Bash",
+        "Edit",
+        "NotebookEdit",
+        "Read",
+        "Write"
+      ],
+      "has_memory_section": true,
+      "has_skill_listing": false
+    },
+    "dp_t10_denyskill": {
+      "tool_names": [
+        "Bash",
+        "CronCreate",
+        "CronDelete",
+        "CronList",
+        "Edit",
+        "EnterWorktree",
+        "ExitWorktree",
+        "NotebookEdit",
+        "Read",
+        "ReportFindings",
+        "ScheduleWakeup",
+        "SendMessage",
+        "TaskCreate",
+        "TaskGet",
+        "TaskList",
+        "TaskOutput",
+        "TaskStop",
+        "TaskUpdate",
+        "Workflow",
+        "Write"
+      ],
+      "has_memory_section": true,
+      "has_skill_listing": false
+    },
+    "dp_m9_env": {
+      "tool_names": [
+        "Bash",
+        "CronCreate",
+        "CronDelete",
+        "CronList",
+        "Edit",
+        "EnterWorktree",
+        "ExitWorktree",
+        "NotebookEdit",
+        "Read",
+        "ReportFindings",
+        "ScheduleWakeup",
+        "SendMessage",
+        "Skill",
+        "TaskCreate",
+        "TaskGet",
+        "TaskList",
+        "TaskOutput",
+        "TaskStop",
+        "TaskUpdate",
+        "Workflow",
+        "Write"
+      ],
+      "has_memory_section": false,
+      "has_skill_listing": true
+    }
+  },
+  "counts": {
+    "Qwen3-30B-A3B_proxy": {
+      "template_sha256": "a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8",
+      "first_requests": {
+        "dp_t10_base": 18190,
+        "dp_t10_toolscore": 3636,
+        "dp_t10_denyskill": 16278,
+        "dp_m9_env": 17726
+      },
+      "reactive_probe": {
+        "rejected_prompt_tokens": 18272,
+        "compact_prompt_tokens": 19529,
+        "claimed_error": "prompt is too long: 40000 tokens > 32768 maximum",
+        "actual_guard_limit_used_by_stub": null
+      }
+    },
+    "Qwen3.6-35B-A3B_pinned": {
+      "template_sha256": "e84f32a23fdda27689f868aa4a1a5621f41133e51a48d7f3efcbea2839574259",
+      "first_requests": {
+        "dp_t10_base": 18358,
+        "dp_t10_toolscore": 3795,
+        "dp_t10_denyskill": 16432,
+        "dp_m9_env": 17883
+      },
+      "reactive_probe": {
+        "rejected_prompt_tokens": 18460,
+        "compact_prompt_tokens": 19772,
+        "claimed_error": "prompt is too long: 40000 tokens > 32768 maximum",
+        "actual_guard_limit_used_by_stub": null
+      }
+    }
+  },
+  "production_overflow": {
+    "callable_module": "repoharness2.adapters.slime.capture_wire",
+    "callable_qualname": "install_capture_wire.<locals>.rh2_call_sglang_generate",
+    "scope": "actual installed function; 33 prompt tokens / 32 limit; no engine network call",
+    "finish_reason": "length",
+    "output_ids": [],
+    "registry_pending": 0
+  }
+}

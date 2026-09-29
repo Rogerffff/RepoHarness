@@ -1,0 +1,138 @@
+{
+ "instance_id": "coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9",
+ "status": "pending_user_decision (P5: both readings have public grounding; this is option A of the decision package in revision_plan.md)",
+ "template": "R-f + R-c (option A)",
+ "statement_edits": [
+  {
+   "old": "Warnings marked with `once=True` should be displayed only once each, preventing duplicate warnings from appearing.",
+   "new": "Warnings marked with `once=True` should be displayed only once each, preventing duplicate warnings from appearing. As with `disable_warnings`, a warning is identified by its `slug` (the short name shown in parentheses after the message): once a `once=True` warning has been displayed, later `once=True` warnings with the same slug are not displayed, even if their message text is different. `once=True` warnings with different slugs are each still displayed once."
+  }
+ ],
+ "basis": "Paths relative to the public package runs/r2e_static_prep_20260924/v3/public/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/ (worktree/ = /testbed). Slug reading: worktree/coverage/control.py:339 ('For warning suppression, use `slug` as the shorthand.'), worktree/coverage/control.py:341 (disable_warnings keyed by slug), worktree/doc/config.rst:156-158 (the slug is 'the name of the warning'), worktree/doc/cmd.rst:134-187 (each warning = message template with variable XXX + (slug); 'Individual warnings can be disabled' by slug), user_prompt.txt:13-14 (example: same slug, different messages). Message reading also has public grounding (user_prompt.txt:18 'duplicate warnings'; worktree/coverage/inorout.py:345-360 per-file dedupe under one slug; stdlib warnings 'once', worktree/tests/conftest.py:26), so choosing the slug reading is a task-goal choice (v1 §3 P5, §5 R-f boundary) and needs the user's decision. The last sentence ('different slugs each still displayed once') restates 'only once each' (user_prompt.txt:18) and holds under both readings. Source intent (not public to the solver): gold docstring 'only show this warning once (determined by the slug.)'.",
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "        self.assertIn(\"Warning, warning 1!\", err)\n        self.assertNotIn(\"Warning, warning 2!\", err)\n",
+     "new": "        self.assertIn(\"Warning, warning 1!\", err)\n        self.assertNotIn(\"Warning, warning 2!\", err)\n\n    def test_warn_once_each_slug(self):\n        # R2E revision (2026-09-29): \"displayed only once each\" -- once=True\n        # warnings with different slugs (and different messages) are each shown.\n        cov = coverage.Coverage()\n        cov.load()\n        cov._warn(\"Hello from the first warning\", slug=\"first-slug\", once=True)\n        cov._warn(\"Hello from the second warning\", slug=\"second-slug\", once=True)\n        err = self.stderr()\n        self.assertIn(\"Hello from the first warning\", err)\n        self.assertIn(\"Hello from the second warning\", err)\n"
+    }
+   ]
+  }
+ ],
+ "expected_after": {
+  "ApiTest.test_combining_corrupt_data": "PASSED",
+  "ApiTest.test_config_crash": "PASSED",
+  "ApiTest.test_combining_with_a_used_coverage": "PASSED",
+  "ApiTest.test_cov4_data_file": "PASSED",
+  "ApiTest.test_datafile_and_suffix_specified": "PASSED",
+  "ApiTest.test_datafile_from_rcfile": "PASSED",
+  "ApiTest.test_deep_datafile": "PASSED",
+  "ApiTest.test_exclude_list": "PASSED",
+  "ApiTest.test_datafile_none": "PASSED",
+  "ApiTest.test_empty_reporting": "PASSED",
+  "ApiTest.test_exclude_partial_list": "PASSED",
+  "ApiTest.test_combining_twice": "PASSED",
+  "ApiTest.test_ignore_stdlib": "PASSED",
+  "ApiTest.test_include_can_measure_stdlib": "PASSED",
+  "ApiTest.test_config_crash_no_crash": "PASSED",
+  "ApiTest.test_switch_context_testrunner": "PASSED",
+  "ApiTest.test_datafile_default": "PASSED",
+  "ApiTest.test_ordered_combine": "PASSED",
+  "ApiTest.test_switch_context_unstarted": "PASSED",
+  "ApiTest.test_datafile_specified": "PASSED",
+  "ApiTest.test_source_and_include_dont_conflict": "PASSED",
+  "ApiTest.test_switch_context_with_static": "PASSED",
+  "ApiTest.test_exclude_and_partial_are_separate_lists": "PASSED",
+  "ApiTest.test_two_getdata_only_warn_once": "PASSED",
+  "ApiTest.test_start_save_nostop": "PASSED",
+  "ApiTest.test_filenames": "PASSED",
+  "ApiTest.test_two_getdata_warn_twice": "PASSED",
+  "ApiTest.test_start_save_stop": "PASSED",
+  "ApiTest.test_unexecuted_file": "PASSED",
+  "ApiTest.test_warn_once": "PASSED",
+  "NamespaceModuleTest.test_bug_572": "PASSED",
+  "ApiTest.test_start_stop_start_stop": "PASSED",
+  "ApiTest.test_warnings": "PASSED",
+  "NamespaceModuleTest.test_explicit_namespace_module": "PASSED",
+  "ApiTest.test_warnings_suppressed": "PASSED",
+  "SourceIncludeOmitTest.test_include_as_string": "PASSED",
+  "SourceIncludeOmitTest.test_include": "PASSED",
+  "CurrentInstanceTest.test_current": "PASSED",
+  "SourceIncludeOmitTest.test_omit_and_include": "PASSED",
+  "SourceIncludeOmitTest.test_nothing_specified": "PASSED",
+  "SourceIncludeOmitTest.test_include_2": "PASSED",
+  "SourceIncludeOmitTest.test_source_package_as_package": "PASSED",
+  "SourceIncludeOmitTest.test_omit_as_string": "PASSED",
+  "SourceIncludeOmitTest.test_omit": "PASSED",
+  "SourceIncludeOmitTest.test_source_include_exclusive": "PASSED",
+  "SourceIncludeOmitTest.test_source_package_as_package_part_omitted": "PASSED",
+  "SourceIncludeOmitTest.test_omit_2": "PASSED",
+  "SourceIncludeOmitTest.test_source_package_as_dir": "PASSED",
+  "SourceIncludeOmitTest.test_source_package_dotted": "PASSED",
+  "ReportIncludeOmitTest.test_include_as_string": "PASSED",
+  "SourceIncludeOmitTest.test_source_package_part_omitted": "PASSED",
+  "ReportIncludeOmitTest.test_include": "PASSED",
+  "ReportIncludeOmitTest.test_include_2": "PASSED",
+  "XmlIncludeOmitTest.test_include": "PASSED",
+  "XmlIncludeOmitTest.test_include_2": "PASSED",
+  "ReportIncludeOmitTest.test_omit": "PASSED",
+  "ReportIncludeOmitTest.test_nothing_specified": "PASSED",
+  "XmlIncludeOmitTest.test_include_as_string": "PASSED",
+  "ReportIncludeOmitTest.test_omit_and_include": "PASSED",
+  "ReportIncludeOmitTest.test_omit_2": "PASSED",
+  "ReportIncludeOmitTest.test_omit_as_string": "PASSED",
+  "XmlIncludeOmitTest.test_nothing_specified": "PASSED",
+  "XmlIncludeOmitTest.test_omit_and_include": "PASSED",
+  "AnalysisTest.test_many_missing_branches": "PASSED",
+  "TestRunnerPluginTest.test_nose_plugin_with_erase": "PASSED",
+  "TestRunnerPluginTest.test_pytestcov_parallel": "PASSED",
+  "XmlIncludeOmitTest.test_omit": "PASSED",
+  "TestRunnerPluginTest.test_pytestcov_parallel_append": "PASSED",
+  "XmlIncludeOmitTest.test_omit_2": "PASSED",
+  "TestRunnerPluginTest.test_nose_plugin": "PASSED",
+  "ImmutableConfigTest.test_config_doesnt_change": "PASSED",
+  "RelativePathTest.test_moving_stuff": "PASSED",
+  "RelativePathTest.test_moving_stuff_with_relative": "PASSED",
+  "XmlIncludeOmitTest.test_omit_as_string": "PASSED",
+  "RelativePathTest.test_combine_relative": "PASSED",
+  "ApiTest.test_warn_once_each_slug": "PASSED"
+ },
+ "positive_control": "gold",
+ "acceptance": {
+  "gold": {
+   "expected_score": 1,
+   "candidate_patch": "gold.patch (private)",
+   "trial": "trials/rev_gold.json",
+   "trial_verdict": "match (76 observed / 76 expected)"
+  },
+  "noop": {
+   "expected_score": 0,
+   "candidate_patch": "none",
+   "trial": "trials/rev_noop.json",
+   "trial_verdict": "mismatch (76 observed / 76 expected; status_diff: ApiTest.test_warn_once PASSED->FAILED, ApiTest.test_warn_once_each_slug PASSED->FAILED)"
+  },
+  "CE3_dedupe_by_slug": {
+   "expected_score": 1,
+   "candidate_patch": "runs/r2e_actor_20260925/grader_cands/coveragepy_5dbb_CE3_dedupe_by_slug.patch",
+   "trial": "trials/rev_CE3.json",
+   "trial_verdict": "match (76 observed / 76 expected)",
+   "note": "alternative slug implementation (separate set): must not be misrejected"
+  },
+  "CE4_first_once_silences_all": {
+   "expected_score": 0,
+   "candidate_patch": "runs/r2e_actor_20260925/grader_cands/coveragepy_5dbb_CE4_first_once_silences_all.patch",
+   "trial": "trials/rev_CE4.json",
+   "trial_verdict": "mismatch (76 observed / 76 expected; status_diff: ApiTest.test_warn_once_each_slug PASSED->FAILED)",
+   "note": "was 1 on current materials (ledger_cov_CE4.jsonl); must fail only the new each-slug key"
+  },
+  "CE1_dedupe_by_message": {
+   "expected_score": 0,
+   "candidate_patch": "runs/r2e_actor_20260925/grader_cands/coveragepy_5dbb_CE1_dedupe_by_message.patch",
+   "trial": "trials/rev_CE1.json",
+   "trial_verdict": "mismatch (76 observed / 76 expected; status_diff: ApiTest.test_warn_once PASSED->FAILED)",
+   "note": "P5 control: 0 before and after the R-c, only on the original ApiTest.test_warn_once. Option A: correct rejection (violates the revised statement); option B: would become the positive control; option C: stays the disputed case"
+  }
+ }
+}

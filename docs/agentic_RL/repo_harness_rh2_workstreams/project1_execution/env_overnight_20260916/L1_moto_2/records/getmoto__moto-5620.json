@@ -1,0 +1,56 @@
+{
+ "task_id": "getmoto__moto-5620",
+ "source": "SWE-Gym lite (s2 ingest v0)",
+ "task_revision": "upstream",
+ "by": "L1_moto_2 (Opus 5, 静态审查, 2026-09-16)",
+ "materials_refs": {
+  "snapshot": "runs/env_overnight_20260916/L1_moto_2/mat/getmoto__moto-5620/",
+  "base_commit": "80db33cb44c77331b3b53bc7cba2caf56e61c5fb",
+  "version": "4.0",
+  "eval_cmd": "pytest -n0 -rA",
+  "repo_level": "docs/.../env_overnight_20260916/L1_moto_2/repo_level_findings.md",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5620/{empty,gold}/offline/a1/"
+ },
+ "public_view": {
+  "目标行为": "DynamoDB update_item 在试图修改分区键（或排序键）时抛 ValidationException，Message 为 \"One or more parameter values were invalid: Cannot update attribute <attr>. This attribute is part of the key\"。",
+  "约束": "只改 moto/ 源码。",
+  "公开材料可推断": "base 已经有 UpdateHashRangeKeyValidator（80db33cb44:moto/dynamodb/parsing/validators.py:343-356）并在 UpdateExpressionValidator.get_ast_processors 里第一个执行（同文件 403 行），但它拿的是 UpdateExpression 里的**原始 token**；题面复现用 ExpressionAttributeNames={'#attr1': 'pk'} 走别名，token 是 '#attr1' 而不是 'pk'，因此不在 table_key_attrs 里，检查落空。异常类 UpdateHashRangeKeyException 和消息格式在 base 已存在，公开可查。",
+  "公开材料无法确定的点": [
+   "题面把问题说成\"update_item 不抛 ValidationException\"，但 base 在**不使用别名**时是会抛的（validator 已存在）。题面没有点明缺陷只在别名路径；求解者必须自己读 validator 才能定位，容易误以为整块校验缺失而重写。",
+   "题面只给 HASH-only 表，没说带 RANGE key 的表也在范围内（F2P 有一条专门测 sortkey 表）。",
+   "题面没说抛错时必须用解析后的真实属性名（pk）而不是别名（#attr1）；F2P 的 Message 断言隐含了这一点。"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5620/test.patch", "mat/getmoto__moto-5620/gold.patch"], "note": "test_patch 只碰 tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py（base 存在，纯追加两个新测试），gold 只碰 moto/dynamodb/parsing/validators.py（base 存在）。无二进制材料。", "by": "static"},
+  "2": {"status": "pass", "evidence_refs": ["80db33cb44:moto/dynamodb/parsing/validators.py:343-356,400-407"], "note": "base 的 check_for_hash_or_range_key 直接用 node.children[0].children[0] 作比较，未做 ExpressionAttributeNames 解析；别名路径确实漏检。stage1 empty=RESOLVED_NO 印证。", "by": "static+stage1"},
+  "3": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5620/problem_statement.txt"], "note": "题面 1847 字符，含完整复现与期望异常消息原文，无外链/截断。", "by": "static"},
+  "4": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5620/test.patch"], "note": "合法解在 moto/dynamodb/parsing/validators.py，不在恢复范围。", "by": "static"},
+  "5": {"status": "issue", "evidence_refs": ["本包 getmoto__moto-6185 也以 tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py 为判分文件"], "note": "与 6185 共用同一个判分测试文件、P2P 大量重叠（5620 的 29 个 P2P 与 6185 的 P2P 同源）。gold 改的源文件不同（validators.py vs models/table.py），不是同一修复；但同族相关性高。", "by": "static"},
+  "11": {"status": "pass", "evidence_refs": ["80db33cb44:tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py:622"], "note": "文件里唯一的外部条件是 `if settings.TEST_SERVER_MODE:`（本地进程内开关，不是网络），且该行所在测试不在 F2P/P2P 中。无 network marker、无真实端点。", "by": "static"},
+  "17": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5620/test.patch"], "note": "只恢复 1 个纯测试文件。", "by": "static"},
+  "19": {"status": "issue", "evidence_refs": ["repo_level_findings.md#R8", "runs/env_probe_stage1_20260910/.../getmoto__moto-5620/gold/offline/a1/test_output.txt:885-886", "runs/env_probe_stage1_20260910/.../getmoto__moto-5620/gold/offline/a1/status_map.json"], "note": "P2P 里 `...::test_update_item_with_duplicate_expressions[set` 是被空格截断的参数化 ID，日志中对应 2 条真实用例（参数化定义 80db33cb44:tests/.../test_dynamodb_exceptions.py:582-589），status_map 只留 1 个键、后写覆盖先写。本题两条都 PASSED，暂无实际误判，但机制已在位。task_signals 标 fragile_reference_id=false，属检测漏报。", "by": "static+stage1"},
+  "23": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-5620/problem_statement.txt", "80db33cb44:moto/dynamodb/parsing/validators.py:343-356"], "note": "见 public_view 未确定项：题面把缺陷范围说宽了（base 非别名路径已抛），且没提 sortkey 表与\"用解析后属性名报错\"。F2P 检查的行为仍可由公开材料＋读代码推出，属表述不足而非缺信息。", "by": "static"},
+  "24": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5620/test.patch", "80db33cb44:moto/dynamodb/parsing/validators.py:403"], "note": "F2P 只断言 ClientError 的 Code/Message 和事后 get_item 的内容，不触碰 UpdateHashRangeKeyValidator 的构造签名。gold 改了该类的 __init__ 签名，但 base 全仓只有 1 处实例化（80db33cb44:moto/dynamodb/parsing/validators.py:403），没有测试直接构造它，所以不强制走 gold 的实现路线：在 ExpressionAttributeResolvingProcessor 之后再校验、或在 validator 内部自己查表，都能通过。", "by": "static"},
+  "25": {"status": "pass", "evidence_refs": ["80db33cb44:tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py:670-693", "mat/getmoto__moto-5620/test.patch"], "note": "判分集合对两类错误修复都有防护：(a) 只报别名而不解析真实名 → F2P 的 Message 断言含 'Cannot update attribute pk' 会挂；(b) 只要出现 ExpressionAttributeNames 就报错的过度实现 → P2P 的 test_update_expression_with_trailing_comma 用 ExpressionAttributeNames={'#attr1':'attr1','#attr2':'attr2'} 更新非键属性并期望另一条语法错误消息（80db33cb44:tests/.../test_dynamodb_exceptions.py:686），会挂。两个 F2P 分别覆盖有/无 sortkey。防护相对充分。", "by": "static"},
+  "26": {"status": "issue", "evidence_refs": ["80db33cb44:moto/dynamodb/parsing/validators.py:400-412"], "note": "改动位于所有 UpdateExpression 的公共校验入口，回归面远大于当前 29 个同文件 P2P（都在 exceptions 目录）。见 proposed_regression_tests。", "by": "static"},
+  "27": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5620/gold.patch"], "note": "gold 三处改动全部服务同一目的（传入并使用 expression_attribute_names），无夹带、不依赖未交付改动；`self.expression_attribute_names or {}` 处理了 None。", "by": "static"},
+  "29": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5620/hints.txt"], "note": "hints 只有维护者致谢，无代码/PR 指向；题面无泄漏。", "by": "static"},
+  "6": {"status": "pass", "evidence_refs": ["repo_level_findings.md#R2"], "note": "4.0，离线 rc=0。", "by": "static+stage1"},
+  "7": {"status": "not_applicable", "evidence_refs": [], "note": "无外部资产。", "by": "static"},
+  "9": {"status": "pass", "evidence_refs": ["repo_level_findings.md#R3"], "note": "仓库级共性证据。", "by": "static+stage1"}
+ },
+ "issues": [
+  {"category": "参考 ID 身份", "severity": "P2", "evidence_refs": ["repo_level_findings.md#R8"], "proposed_action": "见 R8 的三档建议；本题层面先在 facts 里标 collapsed_ids=1，不改 reward。", "next_experiment": "在真实 grader 上跑一次 gold，核对逐 ID 状态表条数与日志 PASSED 行数是否相等（预期 31 vs 32）。"},
+  {"category": "题面表述", "severity": "P3", "evidence_refs": ["mat/getmoto__moto-5620/problem_statement.txt"], "proposed_action": "保留原题；若做修订，补一句\"不带 ExpressionAttributeNames 时已能正确报错\"。", "next_experiment": "无。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只碰 1 个纯测试文件，且是纯追加。", "evidence_refs": ["mat/getmoto__moto-5620/test.patch"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_dynamodb/test_dynamodb_update_expressions.py", "reason": "UpdateExpression 的主力正向用例文件；gold 改的是所有 update 的公共校验入口，必须确认正常更新（含别名更新非键属性）不被误拦。"},
+  {"id": "tests/test_dynamodb/test_dynamodb_executor.py", "reason": "直接驱动 UpdateExpressionValidator/executor 的单元测试，能最快暴露构造签名或 AST 处理顺序改动的问题。"},
+  {"id": "tests/test_dynamodb/test_dynamodb_transact.py", "reason": "TransactWriteItems 的 Update 分支复用同一 validator，是本改动的调用者之一。"},
+  {"id": "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_item_range_key_set", "reason": "既有的\"直接写排序键名\"路径（不走别名），确认新解析逻辑没有破坏原有检出。该 ID 已在 P2P 内，列此是为了强调它是关键对照。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "材料一致、初态含问题、gold 正确且最小、测试对两类错误修复都有防护；未决项是 R8 的参考 ID 塌缩（观测层面，本题未造成误判）。"},
+ "costs": {"minutes": 30, "note": "含 R8 跨题机制调查与全池 35/216 统计的一次性成本。"}
+}

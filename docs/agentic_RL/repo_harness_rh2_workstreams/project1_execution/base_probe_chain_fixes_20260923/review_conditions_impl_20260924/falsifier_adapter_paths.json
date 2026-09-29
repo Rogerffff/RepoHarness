@@ -1,0 +1,86 @@
+{
+  "test_max_context_tokens": 1,
+  "cases": {
+    "real_file_reminder": {
+      "preprocess_idempotent": true,
+      "count_status": 200,
+      "count_tokens": 28767,
+      "generation_render_tokens": 28767,
+      "accepted_after_count": null,
+      "generation_status": 400,
+      "generation_content_type": "application/json",
+      "generation_error": {
+        "type": "error",
+        "error": {
+          "type": "invalid_request_error",
+          "message": "prompt is too long: 28767 tokens > 1 maximum"
+        }
+      },
+      "compaction_instruction_roles": []
+    },
+    "real_compaction_instruction": {
+      "preprocess_idempotent": true,
+      "count_status": 200,
+      "count_tokens": 19772,
+      "generation_render_tokens": 19772,
+      "accepted_after_count": 1,
+      "generation_status": 400,
+      "generation_content_type": "application/json",
+      "generation_error": {
+        "type": "error",
+        "error": {
+          "type": "invalid_request_error",
+          "message": "prompt is too long: 19772 tokens > 1 maximum"
+        }
+      },
+      "compaction_instruction_roles": [
+        "user"
+      ]
+    }
+  },
+  "capture_records": 0,
+  "poisoned": false,
+  "overflow_count": 2,
+  "final_turn_budget": {
+    "cap": 10,
+    "accepted": 2,
+    "exhausted": false,
+    "refused_count": 0,
+    "refused_at_monotonic": null
+  },
+  "drain": {
+    "pending_turns": 0,
+    "unfinalized_drafts": 0,
+    "inflight_zero_confirmed": true,
+    "poison_clean": true
+  },
+  "acceptance_denominators": {
+    "reported_pairs": 597,
+    "reported_attempts": 23,
+    "body_rows": 620,
+    "non_generation_rows": [
+      {
+        "attempt": "bp22-qwen3-6-35b-a3b-dask-8597-a2",
+        "rows": 21,
+        "non_generation_paths": [
+          "/v1/messages/count_tokens?beta=true"
+        ]
+      },
+      {
+        "attempt": "bp22-qwen3-6-35b-a3b-mypy-11236-a2",
+        "rows": 61,
+        "non_generation_paths": [
+          "/v1/messages/count_tokens?beta=true"
+        ]
+      }
+    ],
+    "single_row_files": [
+      {
+        "attempt": "wire-test-q36-01",
+        "rows": 1,
+        "non_generation_paths": []
+      }
+    ],
+    "note": "Acceptance compares prompt prefixes; it does not export training identity spans."
+  }
+}

@@ -1,0 +1,18 @@
+{
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "class UtilsMiscPy3TestCase(unittest.TestCase):\n\n    def test_generators_return_something(self):\n",
+     "new": "class UtilsMiscPy3TestCase(unittest.TestCase):\n\n    def setUp(self):\n        # run_tests.sh runs pytest with `-W ignore` and PYTHONWARNINGS=ignore::UserWarning,\n        # so the UserWarnings recorded below were never visible; re-enable them per test.\n        catcher = warnings.catch_warnings()\n        catcher.__enter__()\n        self.addCleanup(catcher.__exit__, None, None, None)\n        warnings.simplefilter(\"always\", UserWarning)\n\n    def test_generators_return_something(self):\n"
+    },
+    {
+     "old": "        partial_cb = partial(cb, arg1=42)\n        assert not is_generator_with_return_value(partial_cb)\n",
+     "new": "        partial_cb = partial(cb, arg1=42)\n        assert not is_generator_with_return_value(partial_cb)\n\n        def cb_with_return(arg1, arg2):\n            yield {}\n            return 1\n\n        assert is_generator_with_return_value(partial(cb_with_return, 1))\n        assert is_generator_with_return_value(partial(cb_with_return, arg1=42))\n\n        class Callbacks:\n            def method_with_return(self, arg1, arg2):\n                yield {}\n                return 1\n\n        assert is_generator_with_return_value(partial(Callbacks().method_with_return, 1))\n"
+    }
+   ]
+  }
+ ]
+}

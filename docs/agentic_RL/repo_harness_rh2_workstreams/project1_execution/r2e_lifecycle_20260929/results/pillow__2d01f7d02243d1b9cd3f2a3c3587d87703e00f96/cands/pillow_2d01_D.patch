@@ -1,0 +1,32 @@
+diff --git a/src/PIL/TiffImagePlugin.py b/src/PIL/TiffImagePlugin.py
+--- a/src/PIL/TiffImagePlugin.py
++++ b/src/PIL/TiffImagePlugin.py
+@@ -48,7 +48,7 @@ from collections.abc import MutableMapping
+ from fractions import Fraction
+ from numbers import Number, Rational
+ 
+-from . import Image, ImageFile, ImagePalette, TiffTags
++from . import Image, ImageFile, ImageOps, ImagePalette, TiffTags
+ from ._binary import o8
+ from .TiffTags import TYPES
+ 
+@@ -1568,7 +1568,18 @@ def _save(im, fp, filename):
+     if format != 1:
+         ifd[SAMPLEFORMAT] = format
+ 
+-    ifd[PHOTOMETRIC_INTERPRETATION] = photo
++    if im.mode in ("1", "L"):
++        # always store bilevel / greyscale images as WhiteIsZero
++        ifd[PHOTOMETRIC_INTERPRETATION] = 0
++        if im.mode == "1":
++            rawmode = "1;I"
++        else:
++            inverted = ImageOps.invert(im)
++            inverted.encoderinfo = im.encoderinfo
++            inverted.encoderconfig = im.encoderconfig
++            im = inverted
++    else:
++        ifd[PHOTOMETRIC_INTERPRETATION] = photo
+ 
+     if im.mode in ["P", "PA"]:
+         lut = im.im.getpalette("RGB", "RGB;L")

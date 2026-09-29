@@ -1,0 +1,214 @@
+{
+ "instance_id": "scrapy__a95a338eeada7275a5289cf036136610ebaf07eb",
+ "template": "R-c + R-a（恢复型）",
+ "items": [
+  {
+   "id": "R1",
+   "template": "R-c",
+   "fixes": "T2c + T2b：唯一目标断言只用题面示例字面值（无返回值、arg1=42）；退化候选 D 在当前材料正式评分 1.0。另按 Codex 复核（第 4 步）补 partial 包装带返回值绑定方法的已知漏判：gold 对它返回 False",
+   "keys": [
+    "UtilsMiscPy3TestCase.test_partial"
+   ],
+   "expected_change": "无（断言并入已有键 test_partial）"
+  },
+  {
+   "id": "R2",
+   "template": "R-a（恢复型：只恢复测试支撑，断言原文不改；Codex 复核确认属现行预授权 R-a）",
+   "fixes": "v1 §4 第 4 步 S1：runner 的 -W ignore 与 PYTHONWARNINGS 使两个键在任何候选下都在 :79、:256 报 0 != 1（T5 死键），True 路径与警告功能失去保护；C2、C3 在当前材料正式评分 1.0",
+   "keys": [
+    "UtilsMiscPy3TestCase.test_generators_return_something",
+    "UtilsMiscPy3TestCase.test_indentation_error"
+   ],
+   "expected_change": "FAILED → PASSED"
+  }
+ ],
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "class UtilsMiscPy3TestCase(unittest.TestCase):\n\n    def test_generators_return_something(self):\n",
+     "new": "class UtilsMiscPy3TestCase(unittest.TestCase):\n\n    def setUp(self):\n        # run_tests.sh runs pytest with `-W ignore` and PYTHONWARNINGS=ignore::UserWarning,\n        # so the UserWarnings recorded below were never visible; re-enable them per test.\n        catcher = warnings.catch_warnings()\n        catcher.__enter__()\n        self.addCleanup(catcher.__exit__, None, None, None)\n        warnings.simplefilter(\"always\", UserWarning)\n\n    def test_generators_return_something(self):\n"
+    },
+    {
+     "old": "        partial_cb = partial(cb, arg1=42)\n        assert not is_generator_with_return_value(partial_cb)\n",
+     "new": "        partial_cb = partial(cb, arg1=42)\n        assert not is_generator_with_return_value(partial_cb)\n\n        def cb_with_return(arg1, arg2):\n            yield {}\n            return 1\n\n        assert is_generator_with_return_value(partial(cb_with_return, 1))\n        assert is_generator_with_return_value(partial(cb_with_return, arg1=42))\n\n        class Callbacks:\n            def method_with_return(self, arg1, arg2):\n                yield {}\n                return 1\n\n        assert is_generator_with_return_value(partial(Callbacks().method_with_return, 1))\n"
+    }
+   ]
+  }
+ ],
+ "expected_after": {
+  "UtilsMiscPy3TestCase.test_generators_return_none": "PASSED",
+  "UtilsMiscPy3TestCase.test_generators_return_none_with_decorator": "PASSED",
+  "UtilsMiscPy3TestCase.test_partial": "PASSED",
+  "UtilsMiscPy3TestCase.test_generators_return_something": "PASSED",
+  "UtilsMiscPy3TestCase.test_indentation_error": "PASSED"
+ },
+ "expected_change": {
+  "changed": {
+   "UtilsMiscPy3TestCase.test_generators_return_something": [
+    "FAILED",
+    "PASSED"
+   ],
+   "UtilsMiscPy3TestCase.test_indentation_error": [
+    "FAILED",
+    "PASSED"
+   ]
+  },
+  "added": {},
+  "removed": []
+ },
+ "positive_control": "C1",
+ "positive_control_basis": "C1 先逐层展开 partial，再对展开后的对象做 isgeneratorfunction 与 getsource，非 partial 输入与 base 走同一路径；警告名字取展开后函数的 __name__。核实：主审与复核两个独立会话各自给出同一做法（analysis_before_history.md 附录 A-2、reviewer_initial.md §6 ALT-1）；私有语义对照 True False True / 1（INV/pcheck_semantics_C1.json）；当前材料正式评分 1.0（INV/ledger_C1.jsonl:1）；本版试跑两次 5/5（trials/rev2_C1_1.json、rev2_C1_2.json），含复活的公开测试原文与绑定方法断言。见 revision_plan.md §5.2",
+ "gold_on_revised": {
+  "expected_score": 0,
+  "failing_key": "UtilsMiscPy3TestCase.test_partial",
+  "failing_line": "r2e_tests/test_1.py:286（assert is_generator_with_return_value(partial(Callbacks().method_with_return, 1))）",
+  "passes": [
+   "test_1.py:272（题面示例）",
+   "test_1.py:278、:279（partial 包装普通生成器函数）",
+   "其余 4 键"
+  ],
+  "reason": "gold 先对 partial 本身调用 inspect.isgeneratorfunction，再展开 partial。Python 3.9.21 下 partial 包装绑定方法时该调用返回 False，gold 不分析源码、直接缓存 False（DC/private_control.json 的 diag_partial_variants 诊断 F；trials/rev2_gold.json）",
+  "trial": "trials/rev2_gold.json"
+ },
+ "env_reverify_positive_control": {
+  "candidate": "C1",
+  "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/cands/scrapy_a95a_C1.patch",
+  "sha256": "sha256:3345719910836649b43592970e37cb11b778690807b13d5fe4de5aac253a04d6",
+  "expected_score": 1,
+  "note": "修订版上 gold 为 0（只在 test_partial 的绑定方法断言失败），以后批量环境复验本题的正对照改用 C1"
+ },
+ "acceptance": {
+  "C1": {
+   "expected_score": 1,
+   "expected_fail_keys": [],
+   "trial": "trials/rev2_C1_1.json（第 2 次：trials/rev2_C1_2.json）",
+   "trial_verdict": "match 5/5，两次相同；两个复活键与绑定方法断言都通过",
+   "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/cands/scrapy_a95a_C1.patch"
+  },
+  "gold": {
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "UtilsMiscPy3TestCase.test_partial"
+   ],
+   "trial": "trials/rev2_gold.json",
+   "trial_verdict": "mismatch 5 键，只差 test_partial（AssertionError，test_1.py:286 绑定方法断言）；:272、:278、:279 与其余 4 键都通过",
+   "patch": "runs/r2e_static_prep_20260924/v3/private/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/gold.patch"
+  },
+  "noop": {
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "UtilsMiscPy3TestCase.test_partial"
+   ],
+   "trial": "trials/rev2_noop_1.json（第 2 次：trials/rev2_noop_2.json）",
+   "trial_verdict": "mismatch 5 键，只差 test_partial（题面 TypeError，test_1.py:272）；两个复活键 PASSED；两次相同",
+   "patch": "none"
+  },
+  "D": {
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "UtilsMiscPy3TestCase.test_partial"
+   ],
+   "trial": "trials/rev2_D.json",
+   "trial_verdict": "mismatch 5 键，只差 test_partial（AssertionError，test_1.py:278）",
+   "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/cands/scrapy_a95a_D.patch"
+  },
+  "C2": {
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "UtilsMiscPy3TestCase.test_generators_return_something",
+    "UtilsMiscPy3TestCase.test_indentation_error",
+    "UtilsMiscPy3TestCase.test_partial"
+   ],
+   "trial": "trials/rev2_C2.json",
+   "trial_verdict": "mismatch 5 键，两个复活键（0 != 1，test_1.py:87、:264）与 test_partial（:286，C2 以 gold 为底）",
+   "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/cands/scrapy_a95a_C2.patch"
+  },
+  "C2b": {
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "UtilsMiscPy3TestCase.test_generators_return_something",
+    "UtilsMiscPy3TestCase.test_indentation_error"
+   ],
+   "trial": "trials/rev2_C2b.json",
+   "trial_verdict": "mismatch 5 键，恰好两个复活键（0 != 1，test_1.py:87、:264）；test_partial PASSED",
+   "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/cands/scrapy_a95a_C2b.patch"
+  },
+  "C3": {
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "UtilsMiscPy3TestCase.test_generators_return_something",
+    "UtilsMiscPy3TestCase.test_partial"
+   ],
+   "trial": "trials/rev2_C3.json",
+   "trial_verdict": "mismatch 5 键，test_generators_return_something 在 test_1.py:79（原文件 :71）失败，test_partial 在 :278 失败",
+   "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/cands/scrapy_a95a_C3.patch"
+  }
+ },
+ "paths_note": "trial 字段相对本题目录，（ 之后是同一候选的第 2 次试跑；patch、parent_material 与 env_reverify_positive_control 的路径相对仓库根。acceptance 只含本版（v2 草案）试跑；当前材料上的对照与第一版草案的试跑见 revision_plan.md §5.1、§5.3",
+ "candidate_patch_sha256": {
+  "gold": "sha256:59a59f254e5f6b3351035fe7bb483904d488ea4ec5adfc2dea87153e2478d613",
+  "C1": "sha256:3345719910836649b43592970e37cb11b778690807b13d5fe4de5aac253a04d6",
+  "D": "sha256:7e6ad777d534a235e28119992fd2100f3ab6885a6005ee69f2ce66b6eefbb650",
+  "C2": "sha256:8a653568d3f1fd915c8f9d98832e1e45f7f5a8fc2220609634e6be06be74b682",
+  "C2b": "sha256:60771ab4dbe5d5cb09932772d35e6c23ed6d23f896a0eddadbedf7ac2f9e9dde",
+  "C3": "sha256:f5dfc8e2eeb1353e96ff29e902d6bd5fde7712018d2a768b51bbf45ccf489892"
+ },
+ "parent_material": {
+  "hidden_test_file": "runs/r2e_static_prep_20260924/v3/private/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/hidden_tests/test_1.py",
+  "hidden_test_file_sha256": "sha256:baf73412e45b12e88bc5383d6ba11a64112d01d9b343fd85db5304b248111896",
+  "hidden_tests_tree_sha256": "sha256:63928e22fc359d645cdd4af1a1a14d00cde84a3c8bf4f90811db12f40ce359b7",
+  "expected_output_sha256": "sha256:2c5d045cd0d33191f62a962df28fd04f7f95ae954adb3b8d91881b48b8a29dd0",
+  "expected_n": 5,
+  "run_tests_sh_sha256": "sha256:8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+  "material_revisions": [],
+  "formal_row": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl:46"
+ },
+ "revised_hidden_test_sha256": "sha256:9ce38e4618acc39e683dad4ffb44bf737ed9bbdd2ab05df5a13d62a73f64ba05",
+ "revised_hidden_tests_tree_sha256": "sha256:33628b690ef8c60a78a79b47aab493ae2fc61bfe532f9f07a37dca912281b623",
+ "trigger_counterexamples": {
+  "D": "runs/r2e_lifecycle_20260929/inv/scrapy_a95a/ledger_D.jsonl:1（当前材料正式评分 1.0）",
+  "C2": "runs/r2e_lifecycle_20260929/inv/scrapy_a95a/ledger_C2.jsonl:1（当前材料正式评分 1.0）",
+  "C3": "runs/r2e_lifecycle_20260929/inv/scrapy_a95a/ledger_C3.jsonl:1（当前材料正式评分 1.0）",
+  "gold_bound_method": "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/private_control.json 的 diag_partial_variants 诊断 F（gold 对 partial(Holder().meth_ret, 1) 返回 False）"
+ },
+ "trial_image": {
+  "image_id": "sha256:d7f8d826ef87da4804790cd08ff8746bf2ee7df6b02bdecff878bf9d190012ac",
+  "recipe_id": "r2e_derive_v1+sysconfig_v1"
+ },
+ "trial_inputs": {
+  "trials/inputs/draft_a95a_r1r2_v2.json": "sha256:85d755d1fea92ccc90f30b33775cf9d4ccf82eb6c933284f46a2959f1a2f52e4",
+  "trials/inputs/expected_after_a95a.json": "sha256:95f7d31faf0fa9838958db3a8121edc60a6181b7194f4801d674ef41802fe8e9"
+ },
+ "trial_sha256": {
+  "trials/env_noop_current.json": "sha256:c1bb4cabd38429a7f685c553b7f8d84a5d7ac96b55b2ac3b61dc5718b63320aa",
+  "trials/env_gold_current.json": "sha256:7fe0a9fbc21f9bd89792f9690d4e673e755356054dfac6a1ae1b282892b6df39",
+  "trials/rev2_C1_1.json": "sha256:0bb52d7842cbd6f9ed2f6b923b506551cdbc1ae14a92bc7d1e050252aa873c47",
+  "trials/rev2_C1_2.json": "sha256:ad0c2c70c85aa7e4970e5dd593ea347b00a20c2658559d7d03da9be05866b077",
+  "trials/rev2_gold.json": "sha256:89fe4733023eccae42950669d8c444e83331fbd00276f58061910452f8e41067",
+  "trials/rev2_noop_1.json": "sha256:3130befa5fe80728c4ee838625153596e720a8e4c725a8b6fa37302d31c9df25",
+  "trials/rev2_noop_2.json": "sha256:18cd1f4361165c5b392c3f4f2b190f3977cc4889a55f649e1a7642f1995ffb52",
+  "trials/rev2_D.json": "sha256:1d6013f343e4b41d3f3fb191d686ac0ff3ad91dc94fd87c6c3a0a999c67ab4f0",
+  "trials/rev2_C2.json": "sha256:f6b583ec90e72d9f6d21d6c307e18b65c1b8dfcc6742ce9821a3817e235df36d",
+  "trials/rev2_C2b.json": "sha256:eda649ffbf94a7684795a09319a1b735e4eb5f1d838ec969f780f10368d643b3",
+  "trials/rev2_C3.json": "sha256:5d7b0a17e091932d4345a5bb8f2cf7e185907bd2f78371d48204238979307aa1"
+ },
+ "superseded_first_draft": {
+  "why": "Codex 复核（codex_reviews/review_revision_scrapy_a95a.md）需小改：R1 未覆盖 partial 包装带返回值绑定方法这一已知漏判；R2 不变",
+  "draft": "trials/inputs/draft_a95a_r1r2.json",
+  "draft_sha256": "sha256:d9ff9044c0a4a4f63a577f6962cf66376d0b60f6f4a918f4d5bd5b850a818105",
+  "revised_hidden_test_sha256": "sha256:e9ec1c060a650849a7a5e460b36dc7ba46a6eebf18cd235b36e5f7d3d43f7bad",
+  "trial_sha256": {
+   "trials/rev_gold_1.json": "sha256:b65eb7ecee5ae2d57dcae5372daad9cc5a50dad5f02c5951033a87c690acc16f",
+   "trials/rev_gold_2.json": "sha256:a2c75368b3a4336f3345e4b413320cccb254a5a8bd4e5d4880588c357e353034",
+   "trials/rev_noop_1.json": "sha256:166b17582e594fd123e45ded8f3c6f09741f19a585f3384b7620274ad034e582",
+   "trials/rev_noop_2.json": "sha256:3a49f0ab878e86d2953e8e4a7d74585df608e7d128c0911c7036771fe7063d67",
+   "trials/rev_D.json": "sha256:3c70eef73d90e866590d7ca3f861603ecb2b483e5ff10ff25e1156217e5888e2",
+   "trials/rev_C1.json": "sha256:84d4d53d256be76ddcd5f392ad0ff471cb3bdae0fdb9196e19508022b8546a06",
+   "trials/rev_C2.json": "sha256:e0f909d754bb8a7813fc807732ee36edcd50a132ac3b5f73733a974c2b759203",
+   "trials/rev_C3.json": "sha256:5c52d5bf6ae3116c92411b6b12149dfae39e8bbc466084e398a7a1c5f1d35096"
+  }
+ }
+}

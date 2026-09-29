@@ -1,0 +1,160 @@
+{
+  "scope": "Real RH2 HTTP adapter/capture/parser + local Qwen3.6 tokenizer; fixed-ID engine stub; six concurrent sessions",
+  "eos_id": 248046,
+  "cases": {
+    "true_eos": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Finished."
+        }
+      ],
+      "stop_reason": "end_turn",
+      "captured_records": 1,
+      "manager_message": {
+        "role": "assistant",
+        "content": "Finished."
+      },
+      "ill_formed": false,
+      "output_ids_preserved": true,
+      "output_logprobs_preserved": true
+    },
+    "ordinary_literal_length": {
+      "content": [
+        {
+          "type": "text",
+          "text": "The token is <|im_end|>"
+        }
+      ],
+      "stop_reason": "max_tokens",
+      "captured_records": 1,
+      "manager_message": {
+        "role": "assistant",
+        "content": "The token is <|im_end|>"
+      },
+      "ill_formed": false,
+      "output_ids_preserved": true,
+      "output_logprobs_preserved": true
+    },
+    "normal_text_with_tag": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Use the literal tag <tool_call> in a parser test."
+        }
+      ],
+      "stop_reason": "end_turn",
+      "captured_records": 1,
+      "manager_message": {
+        "role": "assistant",
+        "content": "Use the literal tag <tool_call> in a parser test."
+      },
+      "ill_formed": false,
+      "output_ids_preserved": true,
+      "output_logprobs_preserved": true
+    },
+    "one_good_one_dangling": {
+      "content": [
+        {
+          "type": "text",
+          "text": "<tool_call>"
+        },
+        {
+          "type": "tool_use",
+          "id": "toolu_8b58527d9584f298",
+          "name": "Bash",
+          "input": {
+            "command": "echo ok"
+          }
+        }
+      ],
+      "stop_reason": "tool_use",
+      "captured_records": 1,
+      "manager_message": {
+        "role": "assistant",
+        "content": "<tool_call>",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "Bash",
+              "arguments": {
+                "command": "echo ok"
+              }
+            }
+          }
+        ]
+      },
+      "ill_formed": true,
+      "output_ids_preserved": true,
+      "output_logprobs_preserved": true
+    },
+    "dangling_only": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Starting a tool: <tool_call>"
+        }
+      ],
+      "stop_reason": "end_turn",
+      "captured_records": 1,
+      "manager_message": {
+        "role": "assistant",
+        "content": "Starting a tool: <tool_call>"
+      },
+      "ill_formed": true,
+      "output_ids_preserved": true,
+      "output_logprobs_preserved": true
+    },
+    "normal_tool": {
+      "content": [
+        {
+          "type": "tool_use",
+          "id": "toolu_50ef2ce07cc0787c",
+          "name": "Bash",
+          "input": {
+            "command": "echo ok"
+          }
+        }
+      ],
+      "stop_reason": "tool_use",
+      "captured_records": 1,
+      "manager_message": {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+          {
+            "type": "function",
+            "function": {
+              "name": "Bash",
+              "arguments": {
+                "command": "echo ok"
+              }
+            }
+          }
+        ]
+      },
+      "ill_formed": false,
+      "output_ids_preserved": true,
+      "output_logprobs_preserved": true
+    }
+  },
+  "stats": {
+    "eos_stripped": 5,
+    "eos_literal_kept": 1,
+    "eos_fact_missing": 0,
+    "dangling_tool_call": 2
+  },
+  "checks": {
+    "real_eos_removed": true,
+    "ordinary_literal_preserved": true,
+    "prose_not_ill_formed": true,
+    "mixed_dangling_detected": true,
+    "single_dangling_detected": true,
+    "normal_tool_not_ill_formed": true,
+    "all_ids_and_logprobs_preserved": true,
+    "all_capture_records_committed_once": true,
+    "production_publisher_present": true
+  },
+  "all_checks_pass": true
+}

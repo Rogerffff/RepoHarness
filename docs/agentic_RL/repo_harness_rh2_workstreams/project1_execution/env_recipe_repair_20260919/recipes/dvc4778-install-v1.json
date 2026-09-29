@@ -1,0 +1,18 @@
+{
+  "instance_id": "iterative__dvc-4778",
+  "version": "1.9",
+  "owner_approval": "2026-09-19 用户同意保留原版、按实际文件修订安装配方；测试和参考集合不变",
+  "original_install": "python -m pip install --upgrade pip wheel GitPython; python -m pip install \"cython<3.0.0\" && python -m pip install --no-build-isolation pyyaml==5.4.1; python -m pip install git+https://github.com/iterative/mock-ssh-server.git || true; python -m pip install -r tests/requirements.txt || true; python -m pip install -r test-requirements.txt || true; python -m pip install -e \".[tests,dev,all_remotes,all,testing]\"; python -m pip install \"numpy<=1.20\"; python -m pip install \"pytest<8\";",
+  "revised_install": "rh2_recipe_install() {\n  for req in tests/requirements.txt test-requirements.txt; do\n    if [ -f \"$req\" ]; then\n      python -m pip install -r \"$req\" || return $?\n    else\n      echo \"RH2_RECIPE_OPTIONAL_REQUIREMENTS_ABSENT=$req\"\n    fi\n  done\n  python -m pip install -e \".[tests,all]\"\n}\nrh2_recipe_install",
+  "rationale": [
+    "不存在的可选requirements文件不尝试安装；若候选提供了文件则读取并传播其安装失败。",
+    "setup.py实际提供tests和all extras；移除不存在的dev/all_remotes/testing extra名。",
+    "基础镜像已含工具链和兼容运行依赖；评分不再无界升级pip/wheel/GitPython或从Git远端重新安装mock-ssh-server。",
+    "离线构建wheel只作为资产；保留依赖解析，不使用--no-deps掩盖候选的新依赖。"
+  ],
+  "verification_required": [
+    "noop/gold原目标对照",
+    "新的候选依赖从安装前absent变为安装后存在",
+    "完整安装日志无未解释失败；剩余依赖冲突另修，不按reward单独认定安装通过"
+  ]
+}

@@ -1,0 +1,223 @@
+{
+ "task_id": "iterative__dvc-1808",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "docs/.../s2/ingest/public_bundles_v0.jsonl#iterative__dvc-1808",
+  "grading": "docs/.../s2/ingest/grading_bundles_v2_v0.jsonl#iterative__dvc-1808",
+  "validation": "docs/.../s2/ingest/validation_bundles_v0.jsonl#iterative__dvc-1808",
+  "raw": "docs/.../s2/raw/swe_gym_lite_full_f70b1a29.jsonl#iterative__dvc-1808",
+  "base_commit": "b3addbd2832ffda1a4ec9a9ac3958ed9a43437dd",
+  "version": "0.33",
+  "python_version": "3.8",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-1808:latest",
+  "eval_cmd": "pytest -rA",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1808/{gold,empty}/offline/a1/",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc"
+ },
+ "public_view": {
+  "目标行为": "`dvc remote add <name> <url>` 遇到同名 remote 时报错并非零退出（题面原话：should fail with the `Remote with name \"s3\" already exists` message），不再静默覆盖。",
+  "约束": "base `dvc/command/remote.py::CmdRemoteAdd.run`（第 39-42 行附近）直接 `self._set(section, ...)`，没有存在性检查；`self.configobj` 由 `CmdConfig.__init__`（dvc/command/config.py:27-37）按 --system/--global/--local 选出。",
+  "公开材料无法确定的点": [
+   "**题面完全没提要新增覆盖开关**：只说第二次应该失败，没有任何字句要求 `-f/--force`，也没说\"要保留一种强制覆盖的方式\"；",
+   "错误信息的确切措辞（题面给的是带引号的 `Remote with name \"s3\" already exists`，gold 写的是不带引号并追加 \"Use -f (--force) to overwrite remote with new value\"）；",
+   "同名检查应针对哪个 config 层级（system/global/local/repo）——题面没说。",
+   "（本题 `hints_text` 为空，所以这些信息在任何地方都没有。）"
+  ],
+  "相关模块": "dvc/command/remote.py（CmdRemoteAdd.run / add_parser）、dvc/command/config.py（CmdConfig.configobj/_set）。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-1808/grading.json#test_patch",
+    "mat/iterative__dvc-1808/validation.json#golden_patch",
+    "git show b3addbd283:dvc/command/remote.py"
+   ],
+   "note": "test_patch 只动 tests/test_remote.py（base 存在，6 个类）；gold 只动 dvc/command/remote.py。同一问题。无二进制/LFS/子模块。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show b3addbd283:dvc/command/remote.py:39-42",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1808/empty/offline/a1/status_map.json"
+   ],
+   "note": "base 的 `CmdRemoteAdd.run` 没有任何同名检查，直接 `_set`；empty 侧 F2P FAILED。初态确有该缺陷。",
+   "by": "static"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-1808/public.json#problem_statement"
+   ],
+   "note": "题面 591 字符，含版本、两行复现命令、期望行为、当前行为（.dvc/config 内容），代码块完整、无截断、无外链。题面本身的\"实际输入\"没有缺失。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-1808/grading.json#test_patch"
+   ],
+   "note": "test_patch 只触碰 tests/test_remote.py；gold 不触碰测试样路径。",
+   "by": "static"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-1808/grading.json#test_patch"
+   ],
+   "note": "恢复清单 = {tests/test_remote.py}，官方测试文件。",
+   "by": "static"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dvc_1/prescan.json"
+   ],
+   "note": "本包唯一 version=0.33、唯一改 dvc/command/remote.py 的题。",
+   "by": "static"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-1808/grading.json#fail_to_pass",
+    "mat/iterative__dvc-1808/grading.json#test_patch（第三行 `main([\"remote\",\"add\",\"-f\",name,url]) == 0`）",
+    "mat/iterative__dvc-1808/raw.json#hints_text（为空）"
+   ],
+   "note": "**本包\"要求缺失\"最干净的一例**：F2P 的三段断言里第三段要求 `dvc remote add -f` 必须存在且返回 0，而 `-f/--force` 这个开关在题面里一个字都没有，`hints_text` 也是空的——这条需求在任何可见或不可见材料里都不存在。只按题面实现（同名即报错）的求解者，第三段会因为 argparse \"unrecognized arguments: -f\" 而非零退出，F2P 判 0。",
+   "by": "static"
+  },
+  "24": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-1808/grading.json#test_patch"
+   ],
+   "note": "F2P 只看 `main()` 的退出码（0/1/0），不锁错误信息措辞、不锁内部方法名——这部分设计是好的。问题不在\"锁实现\"，而在\"多要了一个题面没写的功能\"（见 check 23）。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-1808/grading.json#test_patch"
+   ],
+   "note": "F2P 不检查错误信息内容，也不检查\"报错后 config 未被修改\"。一个\"先覆盖再返回 1\"的错误实现（配置已经被改坏但退出码对）同样满分；题面明确关心的是 `.dvc/config` 里的 url 不能被悄悄改掉。",
+   "by": "static"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1808/gold/offline/a1/test_output.txt（8 passed, 12 warnings in 25.51s）",
+    "mat/iterative__dvc-1808/grading.json#pass_to_pass"
+   ],
+   "note": "P2P 7 条 = tests/test_remote.py 在 base 通过的全部用例（TestRemote 三条 + default/remove/remove_default/uppercase），环境干净、无失败无跳过。覆盖 remote 增删改查主路径。",
+   "by": "static"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-1808/validation.json#golden_patch"
+   ],
+   "note": "gold 的功能改动正确且自洽（检查 + `-f` 开关 + 非零返回）。两点附带：(a) 顺手把 import 重排成 isort 顺序，与题目无关；(b) 错误信息与题面给的措辞不一致（题面 `Remote with name \"s3\" already exists`，gold `Remote with name a already exists. Use -f (--force) to overwrite remote with new value`）。都不影响判分。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-1808/public.json#problem_statement",
+    "mat/iterative__dvc-1808/raw.json#hints_text"
+   ],
+   "note": "题面无修复代码、无 PR/commit 链接；hints_text 为空。无泄漏。",
+   "by": "static"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1808/gold/offline/a1/test_output.txt（8 passed）"
+   ],
+   "note": "安装与测试正常，无依赖漂移症状。",
+   "by": "static"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1808/gold/offline/a1/test_output.txt（无 SKIPPED）"
+   ],
+   "note": "测试里的 `s3://bucket/name` 只写进配置文件、不发起请求；`TestRemote::test` 用本地目录。无网络需求。",
+   "by": "static"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1808/gold/offline/a1/status_map.json（键 `dvc:logger.py:77` 值 ERROR）"
+   ],
+   "note": "caplog 行被 parser 记进 status_map（见跨题发现 B），未与 F2P/P2P 冲突。",
+   "by": "static"
+  },
+  "7": {
+   "status": "not_applicable",
+   "evidence_refs": [],
+   "note": "test_patch 不带外部资产。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "要求缺失(23)",
+   "severity": "P1",
+   "evidence_refs": [
+    "mat/iterative__dvc-1808/public.json#problem_statement（全文无 force/flag/overwrite option 字样）",
+    "mat/iterative__dvc-1808/grading.json#test_patch（`main([\"remote\",\"add\",\"-f\",remote_name,remote_url]) == 0`）",
+    "mat/iterative__dvc-1808/raw.json#hints_text（空）"
+   ],
+   "note": "F2P 要求实现题面从未提及的 `-f/--force` CLI 开关，且 hints 为空，信息在任何渠道都不可得。这是\"公开材料推不出 F2P\"的纯粹案例——不同于 mypy 那类\"信息藏在 hints 里\"，这里是信息根本不存在。",
+   "proposed_action": "在题面的 Expected behavior 里补一句：\"并提供 `-f/--force` 以显式覆盖已存在的 remote\"。这是维护者在 PR 里自行追加的需求，补进题面即可，不必改测试。",
+   "next_experiment": "只实现\"同名报错\"（不加 `-f`）跑 F2P，预期第三段断言失败、整条 F2P 判 0，形成\"按题面实现被判 0\"的反例。"
+  },
+  {
+   "category": "测试放过错误修复(25)",
+   "severity": "P3",
+   "evidence_refs": [
+    "mat/iterative__dvc-1808/grading.json#test_patch（只断言 main 的返回码）",
+    "mat/iterative__dvc-1808/public.json#problem_statement（Current behavior 展示的是 .dvc/config 被改掉）"
+   ],
+   "note": "F2P 不断言报错时配置未被修改，而题面关心的正是 url 被静默覆盖。\"先写后返回 1\" 的实现能满分。",
+   "proposed_action": "在 `test_overwrite` 里补：第二次 add 之后 `configobj['remote \"a\"'][\"url\"]` 仍等于第一次的 url。",
+   "next_experiment": "写\"先 _set 再返回 1\"的假修复跑 F2P+P2P，预期全过。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 tests/test_remote.py；gold 不触碰测试样路径。按第四组 B 保持为空。",
+  "evidence_refs": [
+   "mat/iterative__dvc-1808/grading.json#test_patch",
+   "mat/iterative__dvc-1808/validation.json#golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/test_remote.py::TestRemoteDefault::test",
+   "reason": "已在 P2P；`remote add -d` 与新增的 `-f` 共享同一 parser，能挡住加参数时破坏既有开关。"
+  },
+  {
+   "id": "tests/test_config.py",
+   "reason": "gold 走的是 `CmdConfig._set`/`self.configobj`，config 命令的功能测试是同一层的直接回归。"
+  },
+  {
+   "id": "tests/test_remote.py::TestRemoteShouldHandleUppercaseRemoteName::test",
+   "reason": "已在 P2P；section 名大小写与 `section in self.configobj.keys()` 这个新判断直接相关，是最可能被新检查误伤的用例。"
+  },
+  {
+   "id": "（新增）tests/test_remote.py::TestRemote::test_overwrite_keeps_config",
+   "reason": "针对 check 25 的缺口：第二次 add 失败后配置内容必须保持不变。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "环境干净、gold 正确、P2P 取满同文件；但 F2P 第三段要求题面与 hints 都未提及的 `-f/--force` 开关，按题面实现的合法解会被判 0。补一句题面即可转为可用。"
+ },
+ "costs": {
+  "minutes": 18
+ },
+ "by": "L1_dvc_1 (Claude Opus 5, 静态审查)"
+}

@@ -1,0 +1,14 @@
+{
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "    def sadfilter(res, **kwargs):\n        assert_not_in('dataset', kwargs)\n",
+     "new": "    def sadfilter(res, **kwargs):\n        # no dataset was given in the call: the filter must not be handed\n        # one (the argument may be absent or None)\n        assert_equal(kwargs.get('dataset'), None)\n"
+    }
+   ]
+  }
+ ]
+}

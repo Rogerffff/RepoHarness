@@ -1,0 +1,402 @@
+{
+  "task_id": "getmoto__moto-6408",
+  "task_revision": "upstream@1dfbeed5a72a4bd57361e44441d0d06af6a2e58a; B3 static review 2026-09-21",
+  "source_adapter_ref": {
+    "grading_bundle": "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6408/grading.json",
+    "spec_vendor_id": "swegym_constants_242429c1",
+    "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+    "frozen_archive": "runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz",
+    "member_hashes_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/analysis_before_history.md"
+  },
+  "recipe_ref": {
+    "family": "install_wave1",
+    "image_audit": "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6408/image.json",
+    "image_id": "sha256:9ea5a5f571d9feda40bda0d0be2c1242c409a457c7ff38827deb9b937a4e85c4",
+    "install": "make init",
+    "test_command": "pytest -n0 -rA tests/test_ecr/test_ecr_boto3.py",
+    "overrides": {
+      "recipe": null,
+      "materials": null,
+      "reference_bindings": null
+    },
+    "scope": "历史grader；COPY离线wheels/ENV增层后真实原spec安装测试。目标机资产及actor未验。"
+  },
+  "code_snapshot_ref": {
+    "base_commit": "1dfbeed5a72a4bd57361e44441d0d06af6a2e58a",
+    "base_tree": "4d46b90dfbe69f5b7468a662b4dc237fbe9f513b",
+    "identity": "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/base_identity.json",
+    "gold_sha256": "fa6d9adadc553b4eb713ca3749a90efe7adb572348c837fd2bbf48a3dd95d7dd"
+  },
+  "facts_ref": [
+    {
+      "path": "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6408/gold/ledger.jsonl",
+      "line": 1,
+      "run_id": "er19-iw1-getmoto__moto-6408-gold",
+      "candidate": "gold",
+      "attempt": 1,
+      "evidence_level": "historical_rh2",
+      "observed": {
+        "f2p_pass": 1,
+        "f2p_total": 1,
+        "p2p_fail": 0,
+        "p2p_total": 95,
+        "reward": 1,
+        "test_rc": 0,
+        "pytest_nodes": 96,
+        "parsed_keys": 96
+      },
+      "condition": "install-wave1; rh2grader/54322; deny_all; 2 CPU; 4 GiB; env_qualification absent"
+    },
+    {
+      "path": "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6408/noop/ledger.jsonl",
+      "line": 1,
+      "run_id": "er19-iw1-getmoto__moto-6408-noop",
+      "candidate": "noop",
+      "attempt": 1,
+      "evidence_level": "historical_rh2",
+      "observed": {
+        "f2p_pass": 0,
+        "f2p_total": 1,
+        "p2p_fail": 0,
+        "p2p_total": 95,
+        "reward": 0,
+        "test_rc": 1,
+        "pytest_nodes": 96,
+        "parsed_keys": 96
+      },
+      "condition": "same historical derived image and grader profile"
+    },
+    {
+      "path": "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6408/environment_record.json",
+      "evidence_level": "frozen_environment_summary",
+      "note": "初稿前实际看到结果摘要，已披露；未读其旧聚合引用。"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/analysis_before_history.md",
+      "sha256": "311307bcbf032de5a88850b16563c48b54b903b55889a4393f7a37a6ef0aaa87",
+      "evidence_level": "static_analysis",
+      "sealed_file_mtime_utc": "2026-09-20T21:39:16.637966Z"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/old_findings_delta.md",
+      "evidence_level": "post_release_history_comparison",
+      "history_release_utc": "2026-09-20T21:39:36.113180Z"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/review.md",
+      "sha256": "b0e36f536f1834a72b68b8dc8ee7489e5c6ffe124c2b9e9a261042da564d67f1",
+      "role": "independent_review_after_package_seal"
+    }
+  ],
+  "checks": {
+    "1": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/base_identity.json",
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6408/grading.json",
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6408/validation.json"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "base/tree/patch与本题原ledger一致；全库blob复用协调者核验。"
+    },
+    "2": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/base/moto/ecr/models.py:608",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6408/noop/eval_logs/evallog_replay-er19-iw1-getmoto__0fdceeeb.eval.log:719"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "初态在新增迁移后manifest断言失败，有源码与原日志双证据。"
+    },
+    "3": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/public_bundle.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/public_read.md"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "公开helper可补全；静态输入可读，实际消息未捕获。"
+    },
+    "4": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6408/gold/ledger.jsonl:1"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "历史gold仅moto/ecr/models.py成功投影；正式actor权限未验。"
+    },
+    "5": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/gold.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/base/moto/dynamodb/models/table.py:846",
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/gold.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/base/moto/dynamodb/models/table.py:487",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/base/moto/dynamodb/models/table.py:839",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/review.md"
+      ],
+      "by": "coordinator /root after independent reviewer package seal",
+      "note": "同包源码关系已核：5960的scan复制/投影核心原样存在于6185 base；6185类型校验核心原样存在于6408 base，6408 scan另有返回值式演变。仅为公开源码包含/演变，不证明Git祖先、重复题或实际solver泄漏。 广泛重复/留出划分未核。"
+    },
+    "6": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6408/image.json",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6408/gold/eval_logs/evallog_replay-er19-iw1-getmoto__8717daf0.eval.log:517"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "仅历史install_wave1真实make init完成；当前镜像/wheel重建资产未验。"
+    },
+    "8": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6408/gold/ledger.jsonl:1"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "grader和apply身份不代替正式actor。"
+    },
+    "9": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6408/gold/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6408/noop/ledger.jsonl:1"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "历史源码投影、editable安装、/testbed导入及目标F2P分差相互支持。"
+    },
+    "10": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/public_read.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/analysis_before_history.md"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "公开开发入口明确；actor解释器/导入/mock/工具待实测。"
+    },
+    "11": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/base/tests/test_ecr/test_ecr_helpers.py",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6408/gold/ledger.jsonl:1"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "所查进程内mock和stdlib manifest不需真实ECR/Docker服务；历史grader deny_all完成。准备阶段资产另计。"
+    },
+    "14": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6408/gold/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6408/noop/ledger.jsonl:1"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "各一轮历史记录；未验证重复稳定性。"
+    },
+    "17": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6408/test.patch",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/analysis_before_history.md"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "精确官方恢复仅test_ecr_boto3.py，test_globs为空。"
+    },
+    "18": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6408/gold/eval_logs/evallog_replay-er19-iw1-getmoto__8717daf0.eval.log:689",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6408/noop/eval_logs/evallog_replay-er19-iw1-getmoto__0fdceeeb.eval.log:659"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "历史同模块96执行节点完整结束，gold96通过，noop1失败95通过。"
+    },
+    "19": {
+      "status": "pass",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/analysis_before_history.md"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "本题96执行节点/96原日志解析键/96冻结参考逐字符串对账一致，无缺席、额外或碰撞；未泛化其他运行。"
+    },
+    "20": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6408/gold/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6408/noop/ledger.jsonl:1"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "同镜像同spec，分差来自新增目标manifest断言；不把rc1自动当reward0。"
+    },
+    "23": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/public_bundle.json",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/base/moto/ecr/models.py:601",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/base/tests/test_ecr/test_ecr_boto3.py:465"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "目标manifest、唯一归属和其它tag保留由公开例子/旧代码/测试支持。"
+    },
+    "24": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6408/test.patch",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/analysis_before_history.md"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "无内部写法强制，先摘旧归属的合理非gold路线尚未运行。"
+    },
+    "25": {
+      "status": "issue",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6408/test.patch",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/analysis_before_history.md"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "first,*_忽略额外结果且不核原标签；排序/删来源部分实现只作静态反例，未证得分。"
+    },
+    "26": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/base/moto/ecr/models.py:591",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/base/moto/ecr/models.py:716",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/analysis_before_history.md"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "已展开关键P2P；邻接新目的分支在base亦错误，不能称gold新增回归；未作扩展运行。"
+    },
+    "27": {
+      "status": "issue",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6408/gold.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/base/moto/ecr/models.py:591",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/base/moto/ecr/models.py:745"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "gold修复精确原序列；多tag来源→新manifest目的的append/delete路径仍可能删除新图，为邻接未修旧缺陷。"
+    },
+    "29": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/old_findings_delta.md"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "当前bundle不含旧维护者修法hints；实际镜像/Git/消息泄漏未核。"
+    },
+    "31": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/analysis_before_history.md"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "只核精确恢复边界及helper依赖，无运行控制面实验；不新增排除。"
+    },
+    "33": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/analysis_before_history.md"
+      ],
+      "by": "B3 fresh private investigator",
+      "note": "没有正式actor/真实模型验证。"
+    }
+  },
+  "issues": [
+    {
+      "category": "tag_ownership_and_surviving_tags_not_asserted",
+      "scope": "exact public reproduction / test adequacy",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6408/test.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/base/moto/ecr/models.py:601",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/base/tests/test_ecr/test_ecr_boto3.py:465",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/analysis_before_history.md"
+      ],
+      "proposed_action": "另版诊断断言完整images数量、来源/目的其它tag和唯一归属；排序或删除整个来源的部分实现只列候选，尚未执行RH2证明得分。",
+      "status": "needs_review",
+      "evidence_level": "static_assertion_mapping"
+    },
+    {
+      "category": "new_destination_image_can_be_deleted",
+      "scope": "adjacent publicly motivated boundary / retained old defect",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6408/gold.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/base/moto/ecr/models.py:591",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/base/moto/ecr/models.py:716",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/analysis_before_history.md"
+      ],
+      "proposed_action": "唯一优先下一步：只用base/gold作目的manifest已存在/未存在的受控对照，核完整结果数、标签集合及来源其它tag。先查moving为代表tag；必要时扩展非代表tag以解释新旧错误模式。合理先摘tag实现留作可选延伸；所有CPU/修订均未执行。",
+      "status": "needs_review",
+      "evidence_level": "strong_static_inference",
+      "limitation": "base该邻接组合也错；不称gold新增回归，不冒充题面精确预创建目的复现。"
+    },
+    {
+      "category": "formal_actor_and_current_assets_unverified",
+      "scope": "development environment",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/environment_brief.md",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6408/image.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/analysis_before_history.md"
+      ],
+      "proposed_action": "固定grader诊断核自身运行条件；正式actor身份、真实消息和模型工具链在模型开发前另验。",
+      "status": "needs_review",
+      "evidence_level": "historical_grader_only"
+    },
+    {
+      "category": "cross_task_public_source_containment",
+      "scope": "same-package exposure and task relationship boundary",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/gold.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/base/moto/dynamodb/models/table.py:846",
+        "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/gold.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/base/moto/dynamodb/models/table.py:487",
+        "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408/base/moto/dynamodb/models/table.py:839",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/review.md"
+      ],
+      "proposed_action": "保留有方向的源码关系与求解上下文暴露记录；不按同仓一刀切，不将本审查上下文复用为blind solver。",
+      "status": "static_relationship_confirmed_actual_solver_exposure_unknown",
+      "evidence_level": "direct static original gold/source comparison",
+      "detail": "同包源码关系已核：5960的scan复制/投影核心原样存在于6185 base；6185类型校验核心原样存在于6408 base，6408 scan另有返回值式演变。仅为公开源码包含/演变，不证明Git祖先、重复题或实际solver泄漏。"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "源码修复可交付；官方恢复tests/test_ecr/test_ecr_boto3.py，test_globs为空；无证据扩大排除helper或其它测试名路径。",
+    "evidence_refs": [
+      "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6408/test.patch",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/analysis_before_history.md"
+    ],
+    "applied_version": null
+  },
+  "revision_refs": [],
+  "disposition": {
+    "state": "needs_review",
+    "scope": "static_review",
+    "reason": "受限静态开发诊断候选：gold修复题面两个已存在manifest的迁移，新增断言有公开依据。唯一归属漏测及新目的manifest的旧缺陷限制外推，不据邻接既有错误直接判本题失效；优先base/gold完整状态对照。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/analysis_before_history.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/old_findings_delta.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/review.md"
+    ],
+    "reviewer": "/root/b3_review_moto; coordinator /root adjudication",
+    "reviewed_at_utc": "2026-09-20T22:11:49.417478+00:00",
+    "static_recommendation": "limited_static_candidate",
+    "priority_next_step": "唯一优先下一步：只用base/gold作目的manifest已存在/未存在的受控对照，核完整结果数、标签集合及来源其它tag。先查moving为代表tag；必要时扩展非代表tag以解释新旧错误模式。合理先摘tag实现留作可选延伸；所有CPU/修订均未执行。"
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "exposure_notes": [
+      "公开阅读稿后读本题test/gold/grading/validation及环境结果摘要；不是无结果暴露盲审。",
+      "初稿封存且放行后仅读history/refs指定唯一L1_moto_3单题旧记录，不读旧包总结、他题/reviewer或聚合。",
+      "仅静态文本及已有日志stdlib对账；无项目导入/测试/安装/网络/Docker/SSH/付费模型/配额。所有CPU和修订未执行。"
+    ],
+    "coordinator_review_note": "整包三份reviewer initial封存后才放行结论；root仅收束最终card/record。独立复核完成；初判的-rA混合状态遮蔽推断已在review撤回，未观察当前错分。"
+  },
+  "costs": {
+    "container_wall_seconds": null,
+    "agent_tokens": null,
+    "human_decisions": null,
+    "source_refs": [
+      "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6408/gold/ledger.jsonl:1",
+      "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-6408/noop/ledger.jsonl:1"
+    ],
+    "note": "旧记录17分钟不是本轮成本；历史时长不冒充本轮执行费用。"
+  }
+}

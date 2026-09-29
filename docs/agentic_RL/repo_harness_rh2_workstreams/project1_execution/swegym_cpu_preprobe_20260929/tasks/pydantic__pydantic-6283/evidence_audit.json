@@ -1,0 +1,737 @@
+{
+  "task": "pydantic__pydantic-6283",
+  "run": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-6283/followup_20260928T184018Z-6ec4ba",
+  "status": "cpu_completed_pending_independent_review",
+  "actor": {
+    "tool_ids": [
+      "toolu_cb3d9d76719d15f5",
+      "toolu_af10cc693a118ee3",
+      "toolu_5f7b5ed11041c773",
+      "toolu_bdac6734114e95fa"
+    ],
+    "paired": true,
+    "commands": [
+      {
+        "id": "public_identity",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 473,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "核公开 base、actor 解释器与 checkout 来源、精确 core；不是题面报告者旧 core 版本。"
+      },
+      {
+        "id": "public_root_original",
+        "rc": 1,
+        "status": "nonzero",
+        "expect": "nonzero",
+        "matches_expect": true,
+        "output_bytes": 244,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "公开显式 RootModel 子类与 BaseModel 对照；base 预期 ROOT_EQUAL False 后精确断言失败，修复后0。"
+      },
+      {
+        "id": "public_existing_root_tests",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 134,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "公开现有 root 构造、private 和 equality；3项已知 extra xfail 不是本题新失败。"
+      },
+      {
+        "id": "public_shared_construct",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 115,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "候选触及共享 BaseModel 构造，公开旧测试验证默认值、extra、fields_set、无验证。"
+      }
+    ],
+    "cleanup": {
+      "container_rm": 0,
+      "network_failures": [],
+      "relay_failures": [],
+      "stub_rc": 0,
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "residual_after_force": []
+    },
+    "image": "sha256:24e9c51fedb7dc930796362c90f72e8e7a9c47d9362fa72414c6c6ff8a1a2882",
+    "base": "a29286609e79c79b2ecd71bc7272eea43ed9fccd",
+    "profile": {
+      "cpus": 2.0,
+      "memory_bytes": 4294967296,
+      "tmp_tmpfs_bytes": 1073741824,
+      "home_tmpfs_bytes": 268435456,
+      "writable_layer_quota_bytes": 8589934592,
+      "pids_limit": 512
+    },
+    "initial_worktree": "HEAD=a29286609e79c79b2ecd71bc7272eea43ed9fccd\nPORCELAIN_BEGIN\n M pdm.lock\n M pyproject.toml\nPORCELAIN_RC=0\n",
+    "sha256": "155c863c68b43c24f5bb6f4e60626c1dfd1bb4669cbadfb286c50cdd5fbfcf74"
+  },
+  "private": {
+    "gold": {
+      "spec_sha256": "4c4939c6a634a47517c5604f63ab40ec313f76913d97c28a84cef06413dd7d37",
+      "matrix": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-6283/followup_20260928T184018Z-6ec4ba/private_gold/gold/private_matrix.out",
+      "matrix_sha256": "fb741d74da04971900958389d768fd1c503b339f0d70440e0b64b03891395440",
+      "command_results": [
+        [
+          "public_root_original",
+          "0"
+        ],
+        [
+          "public_existing_root_tests",
+          "0"
+        ],
+        [
+          "public_shared_construct",
+          "0"
+        ],
+        [
+          "private_no_validation",
+          "0"
+        ]
+      ],
+      "prep_rc": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      },
+      "summary_sha256": "a2bbb71514994ce2b0f850b54fa287544cded30586cb0b226403a87e8450b242"
+    },
+    "validate_construct": {
+      "spec_sha256": "3e7e6de20e2157aa627ebacb23dfa3f23f701b95522699b1a542f5b326130393",
+      "matrix": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-6283/followup_20260928T184018Z-6ec4ba/private_validate_construct/validate_construct/private_matrix.out",
+      "matrix_sha256": "8a93132b7a68a6ec64ff932a70bd5605135f4ac79e747b39a3202a2bd086d212",
+      "command_results": [
+        [
+          "public_root_original",
+          "0"
+        ],
+        [
+          "public_existing_root_tests",
+          "1"
+        ],
+        [
+          "public_shared_construct",
+          "0"
+        ],
+        [
+          "private_no_validation",
+          "1"
+        ]
+      ],
+      "prep_rc": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      },
+      "summary_sha256": "cb3dc53caab724a20ae236291a984a330b481ff75246ba86f70938874ee44867"
+    },
+    "base": {
+      "spec_sha256": "6bf65b9f84431770408fe41c5b4c4c57601268eaf4201e6549ac02a208f775c2",
+      "matrix": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-6283/followup_20260928T184018Z-6ec4ba/private_base/base/private_matrix.out",
+      "matrix_sha256": "8256194b83bd118b3a6ad5a661c3b69ad243b4414c00bea2c71ad825d983eea9",
+      "command_results": [
+        [
+          "public_root_original",
+          "1"
+        ],
+        [
+          "public_existing_root_tests",
+          "0"
+        ],
+        [
+          "public_shared_construct",
+          "0"
+        ],
+        [
+          "private_no_validation",
+          "0"
+        ]
+      ],
+      "prep_rc": [
+        0,
+        0,
+        0
+      ],
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      },
+      "summary_sha256": "b3fa5fa3c3d0485bbc0d97d4b042fd21305bec9df2c8a76ae87a9e7970a3a8f8"
+    }
+  },
+  "formal": {
+    "grade_noop": {
+      "status": "completed_raw_verified",
+      "ledger": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-6283/followup_20260928T184018Z-6ec4ba/grade_noop/ledger.jsonl",
+      "ledger_sha256": "74d5ccb3a813bbf9da9d891d96b18218f705bf25f6c4f3ffa3365192e5ed8866",
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 0,
+        "f2p_total": 1,
+        "failure_category": "tests_failed",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": 0,
+        "p2p_total": 38,
+        "report_id": "rpt_grading_2605ecb0",
+        "reward": 0.0
+      },
+      "references": {
+        "tests/test_root_model.py::test_root_model_equality": "FAILED",
+        "tests/test_root_model.py::test_root_model_specialized[list[int]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_base_model_equality": "PASSED",
+        "tests/test_root_model.py::test_construct": "PASSED",
+        "tests/test_root_model.py::test_assignment": "PASSED",
+        "tests/test_root_model.py::test_validate_assignment_false": "PASSED",
+        "tests/test_root_model.py::test_validate_assignment_true": "PASSED",
+        "tests/test_root_model.py::test_root_model_nested": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[InnerModel]": "PASSED",
+        "tests/test_root_model.py::test_root_model_in_root_model_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_wrong_default_value_without_validate_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_as_attr_with_validate_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_nested_equality": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value": "PASSED",
+        "tests/test_root_model.py::test_root_model_repr": "PASSED",
+        "tests/test_root_model.py::test_construct_nested": "PASSED",
+        "tests/test_root_model.py::test_v1_compatibility_serializer": "PASSED",
+        "tests/test_root_model.py::test_root_model_as_field": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[str]": "PASSED",
+        "tests/test_root_model.py::test_root_model_with_private_attrs_equality": "PASSED",
+        "tests/test_root_model.py::test_model_validator_before": "PASSED",
+        "tests/test_root_model.py::test_root_model_literal": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[list[int]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_dump_with_base_model[RB]": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[int]": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value_with_validate_default": "PASSED",
+        "tests/test_root_model.py::test_private_attr": "PASSED",
+        "tests/test_root_model.py::test_nested_root_model_naive_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_json_schema_meta": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[str]": "PASSED",
+        "tests/test_root_model.py::test_root_model_recursive": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[InnerModel]": "PASSED",
+        "tests/test_root_model.py::test_root_model_validation_error": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[int]": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_factory": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value_with_validate_default_on_field": "PASSED",
+        "tests/test_root_model.py::test_model_validator_after": "PASSED",
+        "tests/test_root_model.py::test_nested_root_model_proper_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_dump_with_base_model[BR]": "PASSED"
+      },
+      "raw_failed": [
+        "tests/test_root_model.py::test_root_model_equality"
+      ],
+      "raw_summary": [
+        "         1 failed",
+        "        40 passed",
+        "         3 xfailed"
+      ],
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 4.732,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 1.849
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 1.849,
+        "segment_completed": true
+      },
+      "observations": {
+        "RH2_OBS_CPU29_CORE": "0.42.0",
+        "RH2_OBS_IMPORT_PATH": "/testbed/pydantic/__init__.py",
+        "RH2_OBS_INSTALL_PROBE": "absent",
+        "RH2_OBS_INSTALL_PROBE_PRE": "absent",
+        "RH2_OBS_PKG_VERSION": "2.0b3",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "2bfbb9d16631f38c1e36d934aaaaaa37b2d310bff1f5d9c6428146574acbd6b0",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "2bfbb9d16631f38c1e36d934aaaaaa37b2d310bff1f5d9c6428146574acbd6b0"
+      },
+      "runner_integrity_changed": false,
+      "phases": {
+        "delta_apply": 0.1776,
+        "grader_baseline_rebuild": 0.421397,
+        "grader_cleanup": 2.139981,
+        "grader_start_and_verify": 1.848961,
+        "grader_trusted_setup": 222.464753,
+        "parser_and_report": 1.840994,
+        "test": 8.289428
+      },
+      "resource": {
+        "mem_peak_mb": 687.758,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "resource_facts": null,
+      "policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "manager_close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "supply_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0,
+        "containers_created_total": 1,
+        "containers_removed_total": 1,
+        "container_history_retained": 1,
+        "leases_total": 1
+      },
+      "budget": {
+        "instance_id": "pydantic__pydantic-6283",
+        "before": 300.0,
+        "after": 900.0,
+        "test_seconds_unchanged": 1800.0,
+        "scope": "CPU host preparation/reset/observation budget only; whole-grading CLI deadline independent",
+        "reason": "observed overlay2 metacopy=N prefix chown preparation timeout; no kernel or permission change"
+      },
+      "candidate": {
+        "apply_method": "noop",
+        "apply_stderr_tail": null,
+        "apply_user": "agent/54321",
+        "kind": "noop",
+        "origin": "noop",
+        "patch_sha256": null
+      },
+      "exports": [],
+      "frozen_patch": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-6283/followup_20260928T184018Z-6ec4ba/grade_noop/artifacts/swe_gym_lite--pydantic__pydantic-6283/a1-cc06e784/frozen_patch.json",
+      "frozen_patch_sha256": "6b996b00058fdc980859bf0bd85661a3c4802d3f7c5feff8886533292852376b",
+      "export_exact_base_plus_input_patch": true,
+      "log": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-6283/followup_20260928T184018Z-6ec4ba/grade_noop/eval_logs/evallog_replay-cpu29-follow-6283_2605ecb0.eval.log",
+      "log_sha256": "f2d72a15ee4067250316382126c1268034df395096f4f4836180e01026636776"
+    },
+    "grade_gold": {
+      "status": "completed_raw_verified",
+      "ledger": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-6283/followup_20260928T184018Z-6ec4ba/grade_gold/ledger.jsonl",
+      "ledger_sha256": "4e0ce97717a90fb4bfd4e155b299c8c3ba6a1d4da3d451ab652352b450fbb535",
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 1,
+        "f2p_total": 1,
+        "failure_category": null,
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "resolved",
+        "p2p_fail": 0,
+        "p2p_total": 38,
+        "report_id": "rpt_grading_9c22fd5d",
+        "reward": 1.0
+      },
+      "references": {
+        "tests/test_root_model.py::test_root_model_equality": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[list[int]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_base_model_equality": "PASSED",
+        "tests/test_root_model.py::test_construct": "PASSED",
+        "tests/test_root_model.py::test_assignment": "PASSED",
+        "tests/test_root_model.py::test_validate_assignment_false": "PASSED",
+        "tests/test_root_model.py::test_validate_assignment_true": "PASSED",
+        "tests/test_root_model.py::test_root_model_nested": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[InnerModel]": "PASSED",
+        "tests/test_root_model.py::test_root_model_in_root_model_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_wrong_default_value_without_validate_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_as_attr_with_validate_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_nested_equality": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value": "PASSED",
+        "tests/test_root_model.py::test_root_model_repr": "PASSED",
+        "tests/test_root_model.py::test_construct_nested": "PASSED",
+        "tests/test_root_model.py::test_v1_compatibility_serializer": "PASSED",
+        "tests/test_root_model.py::test_root_model_as_field": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[str]": "PASSED",
+        "tests/test_root_model.py::test_root_model_with_private_attrs_equality": "PASSED",
+        "tests/test_root_model.py::test_model_validator_before": "PASSED",
+        "tests/test_root_model.py::test_root_model_literal": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[list[int]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_dump_with_base_model[RB]": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[int]": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value_with_validate_default": "PASSED",
+        "tests/test_root_model.py::test_private_attr": "PASSED",
+        "tests/test_root_model.py::test_nested_root_model_naive_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_json_schema_meta": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[str]": "PASSED",
+        "tests/test_root_model.py::test_root_model_recursive": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[InnerModel]": "PASSED",
+        "tests/test_root_model.py::test_root_model_validation_error": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[int]": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_factory": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value_with_validate_default_on_field": "PASSED",
+        "tests/test_root_model.py::test_model_validator_after": "PASSED",
+        "tests/test_root_model.py::test_nested_root_model_proper_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_dump_with_base_model[BR]": "PASSED"
+      },
+      "raw_failed": [],
+      "raw_summary": [
+        "        41 passed",
+        "         3 xfailed"
+      ],
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 4.525,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 1.85
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 1.85,
+        "segment_completed": true
+      },
+      "observations": {
+        "RH2_OBS_CPU29_CORE": "0.42.0",
+        "RH2_OBS_IMPORT_PATH": "/testbed/pydantic/__init__.py",
+        "RH2_OBS_INSTALL_PROBE": "absent",
+        "RH2_OBS_INSTALL_PROBE_PRE": "absent",
+        "RH2_OBS_PKG_VERSION": "2.0b3",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "2bfbb9d16631f38c1e36d934aaaaaa37b2d310bff1f5d9c6428146574acbd6b0",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "2bfbb9d16631f38c1e36d934aaaaaa37b2d310bff1f5d9c6428146574acbd6b0"
+      },
+      "runner_integrity_changed": false,
+      "phases": {
+        "delta_apply": 0.381614,
+        "grader_baseline_rebuild": 0.450313,
+        "grader_cleanup": 1.744973,
+        "grader_start_and_verify": 1.657726,
+        "grader_trusted_setup": 167.382918,
+        "parser_and_report": 1.74416,
+        "test": 8.03264
+      },
+      "resource": {
+        "mem_peak_mb": 681.199,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "resource_facts": null,
+      "policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "manager_close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "supply_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0,
+        "containers_created_total": 1,
+        "containers_removed_total": 1,
+        "container_history_retained": 1,
+        "leases_total": 1
+      },
+      "budget": {
+        "instance_id": "pydantic__pydantic-6283",
+        "before": 300.0,
+        "after": 900.0,
+        "test_seconds_unchanged": 1800.0,
+        "scope": "CPU host preparation/reset/observation budget only; whole-grading CLI deadline independent",
+        "reason": "observed overlay2 metacopy=N prefix chown preparation timeout; no kernel or permission change"
+      },
+      "candidate": {
+        "apply_method": "git_apply",
+        "apply_stderr_tail": null,
+        "apply_user": "agent/54321",
+        "kind": "gold",
+        "origin": "/work/swegym_cpu_preprobe_20260929/gold/v1/pydantic__pydantic-6283.gold.patch",
+        "patch_sha256": "sha256:cf1db83c2966404d60f40d33ddee5aa197fe1e12f5a8147fb76076a4f541c64c"
+      },
+      "exports": [
+        {
+          "path": "pydantic/main.py",
+          "sha256": "2a6ba2b34275a9b41065e958e62762160ba675be037e77211a1319bd3e624c3f"
+        }
+      ],
+      "frozen_patch": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-6283/followup_20260928T184018Z-6ec4ba/grade_gold/artifacts/swe_gym_lite--pydantic__pydantic-6283/a1-6d643f81/frozen_patch.json",
+      "frozen_patch_sha256": "e51fd723a99f0dd74008989336d322bbe2ba8225a0c7d2fa0ad4398837d1fb76",
+      "export_exact_base_plus_input_patch": true,
+      "log": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-6283/followup_20260928T184018Z-6ec4ba/grade_gold/eval_logs/evallog_replay-cpu29-follow-6283_9c22fd5d.eval.log",
+      "log_sha256": "94a22685d5d123e3ee0786899e0972452ab1bc61af1aaaa740b0e98610fbc9dc"
+    },
+    "grade_validate_construct": {
+      "status": "completed_raw_verified",
+      "ledger": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-6283/followup_20260928T184018Z-6ec4ba/grade_validate_construct/ledger.jsonl",
+      "ledger_sha256": "84069f87ca125693ebfa78707ed8f6ccbf5b3383ca26240a7dd1c84851bd54d6",
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 1,
+        "f2p_total": 1,
+        "failure_category": "tests_failed",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": 2,
+        "p2p_total": 38,
+        "report_id": "rpt_grading_f0e6f8d9",
+        "reward": 0.0
+      },
+      "references": {
+        "tests/test_root_model.py::test_root_model_equality": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[list[int]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_base_model_equality": "PASSED",
+        "tests/test_root_model.py::test_construct": "FAILED",
+        "tests/test_root_model.py::test_assignment": "PASSED",
+        "tests/test_root_model.py::test_validate_assignment_false": "PASSED",
+        "tests/test_root_model.py::test_validate_assignment_true": "PASSED",
+        "tests/test_root_model.py::test_root_model_nested": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[InnerModel]": "PASSED",
+        "tests/test_root_model.py::test_root_model_in_root_model_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_wrong_default_value_without_validate_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_as_attr_with_validate_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_nested_equality": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value": "PASSED",
+        "tests/test_root_model.py::test_root_model_repr": "PASSED",
+        "tests/test_root_model.py::test_construct_nested": "FAILED",
+        "tests/test_root_model.py::test_v1_compatibility_serializer": "PASSED",
+        "tests/test_root_model.py::test_root_model_as_field": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[str]": "PASSED",
+        "tests/test_root_model.py::test_root_model_with_private_attrs_equality": "PASSED",
+        "tests/test_root_model.py::test_model_validator_before": "PASSED",
+        "tests/test_root_model.py::test_root_model_literal": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[list[int]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_dump_with_base_model[RB]": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[int]": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value_with_validate_default": "PASSED",
+        "tests/test_root_model.py::test_private_attr": "PASSED",
+        "tests/test_root_model.py::test_nested_root_model_naive_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_json_schema_meta": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[str]": "PASSED",
+        "tests/test_root_model.py::test_root_model_recursive": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[InnerModel]": "PASSED",
+        "tests/test_root_model.py::test_root_model_validation_error": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[int]": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_factory": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value_with_validate_default_on_field": "PASSED",
+        "tests/test_root_model.py::test_model_validator_after": "PASSED",
+        "tests/test_root_model.py::test_nested_root_model_proper_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_dump_with_base_model[BR]": "PASSED"
+      },
+      "raw_failed": [
+        "tests/test_root_model.py::test_construct",
+        "tests/test_root_model.py::test_construct_nested"
+      ],
+      "raw_summary": [
+        "         2 failed",
+        "        39 passed",
+        "         3 xfailed"
+      ],
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 4.548,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 1.885
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 1.885,
+        "segment_completed": true
+      },
+      "observations": {
+        "RH2_OBS_CPU29_CORE": "0.42.0",
+        "RH2_OBS_IMPORT_PATH": "/testbed/pydantic/__init__.py",
+        "RH2_OBS_INSTALL_PROBE": "absent",
+        "RH2_OBS_INSTALL_PROBE_PRE": "absent",
+        "RH2_OBS_PKG_VERSION": "2.0b3",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "2bfbb9d16631f38c1e36d934aaaaaa37b2d310bff1f5d9c6428146574acbd6b0",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "2bfbb9d16631f38c1e36d934aaaaaa37b2d310bff1f5d9c6428146574acbd6b0"
+      },
+      "runner_integrity_changed": false,
+      "phases": {
+        "delta_apply": 0.374035,
+        "grader_baseline_rebuild": 0.443285,
+        "grader_cleanup": 1.555957,
+        "grader_start_and_verify": 1.647038,
+        "grader_trusted_setup": 196.993065,
+        "parser_and_report": 1.798004,
+        "test": 8.009214
+      },
+      "resource": {
+        "mem_peak_mb": 679.707,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "resource_facts": null,
+      "policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "manager_close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "supply_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0,
+        "containers_created_total": 1,
+        "containers_removed_total": 1,
+        "container_history_retained": 1,
+        "leases_total": 1
+      },
+      "budget": {
+        "instance_id": "pydantic__pydantic-6283",
+        "before": 300.0,
+        "after": 900.0,
+        "test_seconds_unchanged": 1800.0,
+        "scope": "CPU host preparation/reset/observation budget only; whole-grading CLI deadline independent",
+        "reason": "observed overlay2 metacopy=N prefix chown preparation timeout; no kernel or permission change"
+      },
+      "candidate": {
+        "apply_method": "git_apply",
+        "apply_stderr_tail": null,
+        "apply_user": "agent/54321",
+        "kind": "cc",
+        "origin": "/work/swegym_cpu_preprobe_20260929/inputs_v1/pydantic__pydantic-6283/private_degenerate_validate_construct.patch",
+        "patch_sha256": "sha256:a3ee895dc358cda2b3be2c1e43e09fd9cf163f29b30799cc2ab6223621bef60d"
+      },
+      "exports": [
+        {
+          "path": "pydantic/main.py",
+          "sha256": "709ba1bfe57c25dedf580245afbd2b10dad41f84b9e1db56424e8239fdc3ba3f"
+        }
+      ],
+      "frozen_patch": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-6283/followup_20260928T184018Z-6ec4ba/grade_validate_construct/artifacts/swe_gym_lite--pydantic__pydantic-6283/a1-e326f93c/frozen_patch.json",
+      "frozen_patch_sha256": "e0fa579a103ae015adfed7155165983f72b0ad1c8f324bc3700c743d4d38a023",
+      "export_exact_base_plus_input_patch": true,
+      "log": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-6283/followup_20260928T184018Z-6ec4ba/grade_validate_construct/eval_logs/evallog_replay-cpu29-follow-6283_f0e6f8d9.eval.log",
+      "log_sha256": "21b1db8b6c176407e3c2d9120dcd2a3d1538f65b92bd37a94f6496053c3e1ecb"
+    }
+  }
+}
