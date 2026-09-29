@@ -1,0 +1,22 @@
+diff --git a/dask/config.py b/dask/config.py
+--- a/dask/config.py
++++ b/dask/config.py
+@@ -184,6 +184,18 @@
+         except OSError:
+             # Ignore permission errors
+             pass
++        except Exception as exc:
++            raise ValueError(
++                f"A dask config file at {path!r} is malformed, original error "
++                f"message:\n\n{exc}"
++            ) from None
++
++    for config in configs:
++        if not isinstance(config, dict):
++            raise ValueError(
++                f"A dask config file at {path!r} is malformed - config files must have "
++                f"a dict as the top level object, got a {type(config).__name__} instead"
++            )
+ 
+     return configs
+ 

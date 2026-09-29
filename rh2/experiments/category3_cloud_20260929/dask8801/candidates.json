@@ -1,0 +1,75 @@
+{
+ "syn_repr": {
+  "sha256": "63e69ecd225d817b6fce705db2a85cbe29dcaee1d82f6ed0535b3548a8313ec7",
+  "what": "只改措辞：保留 ValueError、{path!r}、解析器原文与类型名，去掉三个英文词组"
+ },
+ "gold_plain": {
+  "sha256": "f4747aafaedb25f1232f84b2ed830052d304a90238ce7665cb927b6ed04aa6ac",
+  "what": "gold 措辞不变，只把 {path!r} 改成 {path}（路径不带引号）"
+ },
+ "syn_plain": {
+  "sha256": "e195ebd13593b2cd58db60af964cc1bef59735e5b6a80ea4cf9846fb901e54a2",
+  "what": "措辞与路径格式都改（2x2 因子设计的第四格）"
+ },
+ "typeerror": {
+  "sha256": "42bcc96663616da108a1766975a637b507857c275e9b659e3e1b3b4fa310e393",
+  "what": "gold 措辞与 {path!r} 不变；顶层非映射改抛 TypeError，语法错误仍抛 ValueError"
+ },
+ "chain_cause": {
+  "sha256": "fc29001f253287d322bcede4e646902b7ad0a5239d6c7f918a8321563e04efda",
+  "what": "语法错误用 raise ... from exc 显式链接解析器原异常（原因在 __cause__ 中显示）；类型错误换措辞"
+ },
+ "stream_load": {
+  "sha256": "3fd4550bcb7647d61ca09e2374afabc34c739ee429f92250c54ef9ee9beda4cc",
+  "what": "语法错误不包装：改为 yaml.safe_load(f)，让 PyYAML 的原异常自带文件名与行列；类型检查同 gold"
+ },
+ "warn_skip": {
+  "sha256": "fe55486bb3046ffe98058d2f9b7986c18fc51763ebd64da6b8da8064853e1cf0",
+  "what": "警告并跳过坏文件（警告含路径与原因），其余配置照常加载、import 成功"
+ },
+ "silent_skip": {
+  "sha256": "5025d1d374c534148a57c7932e2d4d0e70ff3bb8d1590f41b38a7e0ef9f4a1bd",
+  "what": "吞掉错误：坏文件一律静默跳过，没有任何诊断"
+ },
+ "lists_only": {
+  "sha256": "5836819d386e3e930a2bc09ac8a73b44db358e49975ba15f28fdd0883b7a1075",
+  "what": "只拒 list：题面原例的顶层 str 仍进入 merge"
+ },
+ "str_only": {
+  "sha256": "7082b2c2190bc46481a5f8d4ff719634c65e2f13f3518f2a80d4fb053242162a",
+  "what": "只拒 str（只处理题面原例的类型）"
+ },
+ "list_str_only": {
+  "sha256": "b1fd568ca39493584d9267608754e8d0a2726df45fa76bbe1be94dd7f3a075a8",
+  "what": "只拒 list 与 str：顶层数字等其它标量仍进入 merge"
+ },
+ "none_raises": {
+  "sha256": "f5435db5b1f15323437980b457975a925767b8f5c523584f9a1c94975c48fa2b",
+  "what": "去掉 None 例外：空文件与全注释文件（ensure_file(comment=True) 的产物）也报错"
+ },
+ "oserr_fatal": {
+  "sha256": "f5da83fe23d875bc803521d959651e008d02f316e17a4a9df1ebf435ba83892a",
+  "what": "去掉 OSError 例外：不可读文件也被包装成 ValueError"
+ },
+ "typeonly": {
+  "sha256": "a5f408df0ea4f7f85ce0786b8d6835f7b46e3c01c3e370245bd5820f12bd2c5b",
+  "what": "只加顶层类型检查（gold 措辞），不包装 YAML 语法错误"
+ },
+ "noreason": {
+  "sha256": "9672b13db7a5f2a77001be50f048a1221184e670589dd04c4294cb9a3c35e810",
+  "what": "报错只给路径不给原因：语法错误用 from None 隐去解析器信息，类型错误不说期望什么、得到什么"
+ },
+ "parsererror_only": {
+  "sha256": "551097656544d7bd61ad556f9781919bd514ae766b774f05f25f80e386ec6d26",
+  "what": "只包装 yaml.parser.ParserError：制表符缩进、'a: b: c' 等 ScannerError 仍以原异常抛出、不含文件名"
+ },
+ "import_swallow": {
+  "sha256": "50a50eecee8ac05fc55cf141d119f7f868f29f7072a3543a085a9cf28971ba20",
+  "what": "collect_yaml 同 gold 抛错，但模块导入时的 refresh() 捕获并警告：import dask 照常成功，用户配置全部丢弃"
+ },
+ "wrong_file": {
+  "sha256": "45651c7ba304976d3e1e885672b3bcc3818b90f609d7fb9c9925a7784c3f3f77",
+  "what": "读完所有文件后再检查类型，报错用循环变量 path（即最后一个文件），坏文件不是最后一个时指错文件"
+ },
+ "_gold_inmemory_sha256": "ad89a85473ae4b099f58e0d489337ddbad7d2136dc1d410760098c7b89b5d08b"
+}

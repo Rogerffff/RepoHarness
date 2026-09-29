@@ -1,0 +1,123 @@
+{
+ "image": "c3keep/dask8801:src",
+ "python_prefix": "/opt/miniconda3/envs/testbed",
+ "variants": {
+  "base": [],
+  "gold": [
+   "git apply /in/gold.patch"
+  ],
+  "syn_repr": [
+   "git apply /in/syn_repr.patch"
+  ],
+  "gold_plain": [
+   "git apply /in/gold_plain.patch"
+  ],
+  "syn_plain": [
+   "git apply /in/syn_plain.patch"
+  ],
+  "typeerror": [
+   "git apply /in/typeerror.patch"
+  ],
+  "chain_cause": [
+   "git apply /in/chain_cause.patch"
+  ],
+  "stream_load": [
+   "git apply /in/stream_load.patch"
+  ],
+  "warn_skip": [
+   "git apply /in/warn_skip.patch"
+  ],
+  "silent_skip": [
+   "git apply /in/silent_skip.patch"
+  ],
+  "lists_only": [
+   "git apply /in/lists_only.patch"
+  ],
+  "str_only": [
+   "git apply /in/str_only.patch"
+  ],
+  "list_str_only": [
+   "git apply /in/list_str_only.patch"
+  ],
+  "none_raises": [
+   "git apply /in/none_raises.patch"
+  ],
+  "oserr_fatal": [
+   "git apply /in/oserr_fatal.patch"
+  ],
+  "typeonly": [
+   "git apply /in/typeonly.patch"
+  ],
+  "noreason": [
+   "git apply /in/noreason.patch"
+  ],
+  "wrong_file": [
+   "git apply /in/wrong_file.patch"
+  ],
+  "parsererror_only": [
+   "git apply /in/parsererror_only.patch"
+  ],
+  "import_swallow": [
+   "git apply /in/import_swallow.patch"
+  ]
+ },
+ "files": {
+  "gold.patch": "/home/user/RepoHarness/runs/category3_cloud_20260929/dask8801/gold/dask__dask-8801.gold.patch",
+  "behavior.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8801/behavior.py",
+  "test_config_base.py": "/home/user/RepoHarness/runs/category3_cloud_20260929/dask8801/testfiles/test_config_base.py",
+  "test_config_orig.py": "/home/user/RepoHarness/runs/category3_cloud_20260929/dask8801/testfiles/test_config_orig.py",
+  "syn_repr.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8801/syn_repr.patch",
+  "gold_plain.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8801/gold_plain.patch",
+  "syn_plain.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8801/syn_plain.patch",
+  "typeerror.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8801/typeerror.patch",
+  "chain_cause.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8801/chain_cause.patch",
+  "stream_load.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8801/stream_load.patch",
+  "warn_skip.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8801/warn_skip.patch",
+  "silent_skip.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8801/silent_skip.patch",
+  "lists_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8801/lists_only.patch",
+  "str_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8801/str_only.patch",
+  "list_str_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8801/list_str_only.patch",
+  "none_raises.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8801/none_raises.patch",
+  "oserr_fatal.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8801/oserr_fatal.patch",
+  "typeonly.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8801/typeonly.patch",
+  "noreason.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8801/noreason.patch",
+  "wrong_file.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8801/wrong_file.patch",
+  "parsererror_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8801/parsererror_only.patch",
+  "test_config_revised_v1.py": "/home/user/RepoHarness/runs/category3_cloud_20260929/dask8801/testfiles/test_config_revised_v1.py",
+  "import_swallow.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8801/import_swallow.patch",
+  "test_config_revised_v2.py": "/home/user/RepoHarness/runs/category3_cloud_20260929/dask8801/testfiles/test_config_revised_v2.py",
+  "test_config_revised_v3.py": "/home/user/RepoHarness/runs/category3_cloud_20260929/dask8801/testfiles/test_config_revised_v3.py"
+ },
+ "commands": [
+  {
+   "id": "b1_behavior",
+   "cmd": "python /in/behavior.py",
+   "timeout_s": 600
+  },
+  {
+   "id": "b2_public_base_tests_nobody",
+   "cmd": "cp /in/test_config_base.py dask/tests/test_config.py && setpriv --reuid=65534 --regid=65534 --clear-groups env HOME=/tmp PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider -n0 -rA --color=no dask/tests/test_config.py",
+   "timeout_s": 600
+  },
+  {
+   "id": "b3_original_hidden_tests_nobody",
+   "cmd": "cp /in/test_config_orig.py dask/tests/test_config.py && setpriv --reuid=65534 --regid=65534 --clear-groups env HOME=/tmp PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider -n0 -rA --color=no dask/tests/test_config.py",
+   "timeout_s": 600
+  },
+  {
+   "id": "b4_revised_v1_tests_nobody",
+   "cmd": "cp /in/test_config_revised_v1.py dask/tests/test_config.py && setpriv --reuid=65534 --regid=65534 --clear-groups env HOME=/tmp PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider -n0 -rA --color=no dask/tests/test_config.py",
+   "timeout_s": 600
+  },
+  {
+   "id": "b5_revised_v2_tests_nobody",
+   "cmd": "cp /in/test_config_revised_v2.py dask/tests/test_config.py && setpriv --reuid=65534 --regid=65534 --clear-groups env HOME=/tmp PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider -n0 -rA --color=no dask/tests/test_config.py",
+   "timeout_s": 600
+  },
+  {
+   "id": "b6_revised_v3_tests_nobody",
+   "cmd": "cp /in/test_config_revised_v3.py dask/tests/test_config.py && setpriv --reuid=65534 --regid=65534 --clear-groups env HOME=/tmp PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider -n0 -rA --color=no dask/tests/test_config.py",
+   "timeout_s": 600
+  }
+ ]
+}
