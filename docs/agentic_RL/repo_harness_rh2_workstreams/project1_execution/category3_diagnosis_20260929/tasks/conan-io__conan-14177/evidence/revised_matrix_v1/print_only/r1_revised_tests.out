@@ -1,0 +1,96 @@
+============================= test session starts ==============================
+platform linux -- Python 3.10.14, pytest-6.2.5, py-1.11.0, pluggy-1.5.0
+rootdir: /testbed, configfile: pytest.ini
+plugins: xdist-3.5.0
+collected 13 items
+
+conans/test/unittests/tools/files/test_patches.py ...........FF          [100%]
+
+=================================== FAILURES ===================================
+___________________________ test_multiple_no_version ___________________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f477dc429b0>
+
+    def test_multiple_no_version(monkeypatch):
+        calls = _record_patch_ng(monkeypatch)
+        # Omitted argument and explicit verbose=False: the previous output, no list of patch files
+        for kwargs in ({}, {"verbose": False}):
+            output = RedirectedTestOutput()
+            with redirect_output(output):
+                apply_conandata_patches(_conanfile(_two_patches()), **kwargs)
+            assert _BACKPORT_LINE == output.getvalue()
+        # verbose=True (keyword and positional): every applied patch file is identifiable in the output, in order
+        for args, kwargs in (((), {"verbose": True}), ((True,), {})):
+            output = RedirectedTestOutput()
+            with redirect_output(output):
+                apply_conandata_patches(_conanfile(_two_patches()), *args, **kwargs)
+            log = output.getvalue()
+            positions = _verbose_log_positions(log)
+            assert positions == sorted(positions), log
+>           assert _BACKPORT_LINE in log
+E           AssertionError: assert 'mocked/ref: Apply patch (backport): Needed to build with modern clang compilers.\n' in 'mocked/ref: Applying: patches/0001-buildflatbuffers-cmake.patch\nmocked/ref: Applying: patches/0002-implicit-copy-constructor.patch\n'
+
+conans/test/unittests/tools/files/test_patches.py:252: AssertionError
+__________________________ test_multiple_with_version __________________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f477dd50ee0>
+
+    def test_multiple_with_version(monkeypatch):
+        calls = _record_patch_ng(monkeypatch)
+        output = RedirectedTestOutput()
+        with redirect_output(output):
+            conandata_contents = {'patches': {
+                "1.11.0": [
+                    {'patch_file': _FIRST,
+                     'base_path': 'source_subfolder', },
+                    {'patch_file': _SECOND,
+                     'base_path': 'source_subfolder',
+                     'patch_type': 'backport',
+                     'patch_source': 'https://github.com/google/flatbuffers/pull/5650',
+                     'patch_description': 'Needed to build with modern clang compilers.'}
+                ],
+                "1.12.0": [
+                    {'patch_file': 'patches/0003-only-for-1.12.patch',
+                     'base_path': 'source_subfolder', },
+                ]}}
+            conanfile = _conanfile(copy.deepcopy(conandata_contents))
+    
+            with pytest.raises(AssertionError) as excinfo:
+                apply_conandata_patches(conanfile, verbose=True)
+            assert 'Can only be applied if conanfile.version is already defined' == str(excinfo.value)
+    
+            conanfile.version = "1.2.11"
+            apply_conandata_patches(conanfile, verbose=True)
+            assert len(str(output.getvalue())) == 0
+    
+            conanfile.version = "1.11.0"
+            apply_conandata_patches(conanfile)
+            assert _BACKPORT_LINE == output.getvalue()
+    
+        output = RedirectedTestOutput()
+        with redirect_output(output):
+            apply_conandata_patches(conanfile, verbose=True)
+        log = output.getvalue()
+        positions = _verbose_log_positions(log)
+        assert positions == sorted(positions), log
+        assert 'patches/0003-only-for-1.12.patch' not in log
+>       assert _BACKPORT_LINE in log
+E       AssertionError: assert 'mocked/ref: Apply patch (backport): Needed to build with modern clang compilers.\n' in 'mocked/ref: Applying: patches/0001-buildflatbuffers-cmake.patch\nmocked/ref: Applying: patches/0002-implicit-copy-constructor.patch\n'
+
+conans/test/unittests/tools/files/test_patches.py:296: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED conans/test/unittests/tools/files/test_patches.py::test_single_patch_file
+PASSED conans/test/unittests/tools/files/test_patches.py::test_single_patch_file_from_forced_build
+PASSED conans/test/unittests/tools/files/test_patches.py::test_base_path
+PASSED conans/test/unittests/tools/files/test_patches.py::test_apply_in_build_from_patch_in_source
+PASSED conans/test/unittests/tools/files/test_patches.py::test_single_patch_string
+PASSED conans/test/unittests/tools/files/test_patches.py::test_single_patch_arguments
+PASSED conans/test/unittests/tools/files/test_patches.py::test_single_patch_type
+PASSED conans/test/unittests/tools/files/test_patches.py::test_single_patch_extra_fields
+PASSED conans/test/unittests/tools/files/test_patches.py::test_single_no_patchset
+PASSED conans/test/unittests/tools/files/test_patches.py::test_single_apply_fail
+PASSED conans/test/unittests/tools/files/test_patches.py::test_single_patch_description
+FAILED conans/test/unittests/tools/files/test_patches.py::test_multiple_no_version
+FAILED conans/test/unittests/tools/files/test_patches.py::test_multiple_with_version
+========================= 2 failed, 11 passed in 0.55s =========================

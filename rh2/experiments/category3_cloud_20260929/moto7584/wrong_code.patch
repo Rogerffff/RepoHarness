@@ -1,0 +1,14 @@
+diff --git a/moto/sns/models.py b/moto/sns/models.py
+index 25b1bf93d..6bee3121f 100644
+--- a/moto/sns/models.py
++++ b/moto/sns/models.py
+@@ -511,6 +511,9 @@ class SNSBackend(BaseBackend):
+             if not is_e164(reduced_endpoint):
+                 raise SNSInvalidParameter(f"Invalid SMS endpoint: {endpoint}")
+ 
++        if protocol == "application":
++            self.get_endpoint(endpoint)
++
+         # AWS doesn't create duplicates
+         old_subscription = self._find_subscription(topic_arn, endpoint, protocol)
+         if old_subscription:

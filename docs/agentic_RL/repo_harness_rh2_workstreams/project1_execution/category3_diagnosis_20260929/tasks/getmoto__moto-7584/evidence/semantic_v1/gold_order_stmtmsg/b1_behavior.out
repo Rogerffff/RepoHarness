@@ -1,0 +1,51 @@
+{
+ "statement_example": {
+  "endpoint": "arn:aws:sns:us-east-1:123456789012:endpoint/GCM/test/20e26b59-ba1a-4379-bbee-68ee2b107d3a",
+  "first": {
+   "raised": false,
+   "value": "arn:aws:sns:us-east-1:123456789012:test-topic:cebf6d5d-1c57-496c-bf5c-cef9600aa82e"
+  },
+  "second_after_delete": {
+   "raised": false,
+   "value": "arn:aws:sns:us-east-1:123456789012:test-topic:cebf6d5d-1c57-496c-bf5c-cef9600aa82e"
+  }
+ },
+ "deleted_never_subscribed": {
+  "endpoint": "arn:aws:sns:us-east-1:123456789012:endpoint/GCM/test/1466d600-dd36-40a9-935e-cfdfa4e657d0",
+  "subscribe": {
+   "raised": true,
+   "code": "InvalidParameter",
+   "message": "Invalid parameter: Endpoint Reason: Endpoint does not exist for endpoint arn:aws:sns:us-east-1:123456789012:endpoint/GCM/test/1466d600-dd36-40a9-935e-cfdfa4e657d0"
+  }
+ },
+ "never_created_endpoint": {
+  "endpoint": "arn:aws:sns:us-east-1:123456789012:endpoint/GCM/test/00000000-0000-0000-0000-000000000000",
+  "subscribe": {
+   "raised": true,
+   "code": "InvalidParameter",
+   "message": "Invalid parameter: Endpoint Reason: Endpoint does not exist for endpoint arn:aws:sns:us-east-1:123456789012:endpoint/GCM/test/00000000-0000-0000-0000-000000000000"
+  }
+ },
+ "valid_twice": {
+  "first": {
+   "raised": false,
+   "value": "arn:aws:sns:us-east-1:123456789012:test-topic:09f4f47f-24b0-4926-86fd-e84dac79b536"
+  },
+  "second": {
+   "raised": false,
+   "value": "arn:aws:sns:us-east-1:123456789012:test-topic:09f4f47f-24b0-4926-86fd-e84dac79b536"
+  },
+  "same_arn": true,
+  "listed": 1
+ },
+ "other_protocols": {
+  "sqs": {
+   "raised": false,
+   "value": "arn:aws:sns:us-east-1:123456789012:t2:45f86f91-d9d2-4c79-b26e-ae445033663c"
+  },
+  "email": {
+   "raised": false,
+   "value": "arn:aws:sns:us-east-1:123456789012:t2:f174063e-5890-48bc-9157-5e188447af4b"
+  }
+ }
+}

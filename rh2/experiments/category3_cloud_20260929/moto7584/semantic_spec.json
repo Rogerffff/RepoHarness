@@ -1,0 +1,38 @@
+{
+ "image": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7584:latest",
+ "python_prefix": "/opt/miniconda3/envs/testbed",
+ "variants": {
+  "base": [],
+  "gold": [
+   "git apply /in/gold.patch"
+  ],
+  "stmt": [
+   "git apply /in/stmt.patch"
+  ],
+  "stmt_arnmsg": [
+   "git apply /in/stmt_arnmsg.patch"
+  ],
+  "gold_order_stmtmsg": [
+   "git apply /in/gold_order_stmtmsg.patch"
+  ]
+ },
+ "files": {
+  "gold.patch": "/home/user/RepoHarness/runs/category3_cloud_20260929/moto7584/gold/getmoto__moto-7584.gold.patch",
+  "behavior.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/moto7584/behavior.py",
+  "stmt.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/moto7584/stmt.patch",
+  "stmt_arnmsg.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/moto7584/stmt_arnmsg.patch",
+  "gold_order_stmtmsg.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/moto7584/gold_order_stmtmsg.patch"
+ },
+ "commands": [
+  {
+   "id": "b1_behavior",
+   "cmd": "python -c 'import runpy; runpy.run_path(\"/in/behavior.py\", run_name=\"__main__\")'",
+   "timeout_s": 600
+  },
+  {
+   "id": "b2_public_tests",
+   "cmd": "python -m pytest -p no:cacheprovider -n0 -q tests/test_sns/test_application_boto3.py tests/test_sns/test_subscriptions_boto3.py",
+   "timeout_s": 1200
+  }
+ ]
+}

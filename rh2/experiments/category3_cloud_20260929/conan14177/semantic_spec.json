@@ -1,0 +1,35 @@
+{
+ "image": "xingyaoww/sweb.eval.x86_64.conan-io_s_conan-14177:latest",
+ "python_prefix": "/opt/miniconda3/envs/testbed",
+ "variants": {
+  "base": [],
+  "gold": [
+   "git apply /in/gold.patch"
+  ],
+  "pubcand": [
+   "git apply /in/pubcand.patch"
+  ]
+ },
+ "files": {
+  "gold.patch": "/home/user/RepoHarness/runs/category3_cloud_20260929/calib_conan14177/gold/conan-io__conan-14177.gold.patch",
+  "pubcand.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/conan14177/pubcand.patch",
+  "matrix.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/conan14177/matrix.py"
+ },
+ "commands": [
+  {
+   "id": "c1_matrix",
+   "cmd": "python -c 'import runpy; runpy.run_path(\"/in/matrix.py\", run_name=\"__main__\")'",
+   "timeout_s": 300
+  },
+  {
+   "id": "c2_public_unit",
+   "cmd": "python -m pytest -p no:cacheprovider -q conans/test/unittests/tools/files/test_patches.py",
+   "timeout_s": 600
+  },
+  {
+   "id": "c3_public_functional",
+   "cmd": "python -m pytest -p no:cacheprovider -q conans/test/functional/tools/test_files.py -k 'apply_conandata_patches or no_patch_file_entry or patch_string_entry or relate_base_path_all_versions or patch_real'",
+   "timeout_s": 900
+  }
+ ]
+}

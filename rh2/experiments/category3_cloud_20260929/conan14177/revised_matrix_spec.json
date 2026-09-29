@@ -1,0 +1,49 @@
+{
+ "image": "xingyaoww/sweb.eval.x86_64.conan-io_s_conan-14177:latest",
+ "python_prefix": "/opt/miniconda3/envs/testbed",
+ "variants": {
+  "base": [
+   "git apply /in/revised_test_v1.patch"
+  ],
+  "gold": [
+   "git apply /in/gold.patch",
+   "git apply /in/revised_test_v1.patch"
+  ],
+  "pubcand": [
+   "git apply /in/pubcand.patch",
+   "git apply /in/revised_test_v1.patch"
+  ],
+  "always_log": [
+   "git apply /in/always_log.patch",
+   "git apply /in/revised_test_v1.patch"
+  ],
+  "never_log": [
+   "git apply /in/never_log.patch",
+   "git apply /in/revised_test_v1.patch"
+  ],
+  "print_only": [
+   "git apply /in/print_only.patch",
+   "git apply /in/revised_test_v1.patch"
+  ],
+  "output_verbose": [
+   "git apply /in/output_verbose.patch",
+   "git apply /in/revised_test_v1.patch"
+  ]
+ },
+ "files": {
+  "gold.patch": "/home/user/RepoHarness/runs/category3_cloud_20260929/calib_conan14177/gold/conan-io__conan-14177.gold.patch",
+  "revised_test_v1.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/conan14177/revised_test_v1.patch",
+  "pubcand.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/conan14177/pubcand.patch",
+  "always_log.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/conan14177/always_log.patch",
+  "never_log.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/conan14177/never_log.patch",
+  "print_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/conan14177/print_only.patch",
+  "output_verbose.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/conan14177/output_verbose.patch"
+ },
+ "commands": [
+  {
+   "id": "r1_revised_tests",
+   "cmd": "python -m pytest -p no:cacheprovider -n0 -rA conans/test/unittests/tools/files/test_patches.py",
+   "timeout_s": 600
+  }
+ ]
+}
