@@ -39,8 +39,7 @@
 
 题目按四种缺口与两个来源选取，并优先选能在云端完整取证的题。8 题的结论如下：
 
-- 7 题转第2类；
-- 1 题待用户决定（P5）；
+- 8 题均转第2类。其中 coveragepy__5dbbe143 原本待用户决定（P5），用户 09-29 选定 A（按 slug）；
 - dvc-9395 经两轮复核改为 v4；同一题连续两轮出现新阻断，触及协作协议的修复循环熔断，按最小充分原则收口，交 Codex 确认。
 
 pillow 首轮的结论是“可转第1类”，被独立复核推翻，改判为转第2类。
@@ -53,7 +52,7 @@ pillow 首轮的结论是“可转第1类”，被独立复核推翻，改判为
 | [SWE pydantic-9066](tasks/pydantic__pydantic-9066/result.md) | 缺正确对照 | **转第2类** | 替代正对照 `fallback` 与上游式 `upstream271` 在原材料和修订版上都是 1，gold 在修订版上为 0 | 同意，无阻断 |
 | [SWE dvc-9395](tasks/iterative__dvc-9395/result.md) | 辨别实验 | **转第2类** | T1：计数断言误拒；N1：“吞掉错误”的退化候选在原测试得 1；N2：用户改过的数据源在 `--pull` 下被覆盖或报错（S1）；N7：只测了 `dvc add` 数据源，补 `dvc import`。R-b＋R-c v4 下 16 个候选中 3 个为 1，gold 等 13 个为 0；正对照改为 `c3_frozenfix`，第二正对照为上游 3.51 移植版。只有私有模拟 | 两轮复核共 4 项阻断，已按 v4 处理；触及熔断，v4 交 Codex 确认 |
 | [R2E pillow__3a61c9e9](tasks/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/result.md) | 辨别实验 | **转第2类**（首轮“可转第1类”被推翻） | N1：RGBA 调色板加整数透明索引时，gold 的 `remap_palette` 抛 `ValueError`，上游 11.0 才修好，判 S1。R-c v2 新增一键，14 个候选中 6 个合理实现为 1，noop、gold 与 6 个错误候选为 0；正对照改为 C1，上游式 U11 作第二正对照 | 复核不同意首轮，已改判；v2 聚焦复核 1 项阻断（G_small），已按其补法修为 R-c v2 |
-| [R2E coveragepy__5dbbe143](tasks/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/result.md) | 公开目标核定（P5） | **待用户决定** | slug 与消息两种读法都有公开依据。可选：A 按 slug（推荐）、B 按消息、C 不修订。与读法无关的 R-c 已由 R2E 线落地 | 沿用多方已有的 P5 判定 |
+| [R2E coveragepy__5dbbe143](tasks/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/result.md) | 公开目标核定（P5） | **转第2类**（用户 09-29 选定 A） | 按 slug 识别警告：R-f 题面补一句，隐藏测试沿用材料 v5。私有核对：gold、CE3 为 1，CE1、CE4、noop 为 0 | P5 沿用多方已有判定；修订题面由新公开读者验收中 |
 | [R2E coveragepy__016af5f6](tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/result.md) | 质量调查 | **转第2类** | P4：题面原例不复现，走 R-f。原测试下 6 个错误候选得 1。R-c v2 下 6 个合理实现得 1，noop 与 7 个错误候选得 0 | 复核部分同意，B1 已按 v2 处理；v2 聚焦复核无阻断 |
 
 独立复核：每题由不继承本会话上下文的新子代理进行，先读原件形成初判，再核对本目录的结论，只针对关键判断寻找反证（v1 §7.3）。复核发现阻断项时，主审修改后再请同一复核者做聚焦复核。
@@ -74,6 +73,27 @@ pillow 首轮的结论是“可转第1类”，被独立复核推翻，改判为
 | dvc-9395 | D6 测试补丁替换 | dvc_tail_v1 的 compat-wheels，需在本地正式复验 |
 | pillow__3a61c9e9 | R2E `hidden_test_text_replace`＋`expected_file_replace`，接在 v5 之后 | 需用正式评分过的原 C1 补丁复验，它只在本地 `runs/` 中 |
 | coveragepy__016af5f6 | R2E `hidden_test_text_replace`＋`statement_text_replace` | 需新公开读者验收修订题面 |
+
+## 第二批（进行中，09-29 起）
+
+用户授权由负责人选题。第二批从 README 下一批建议中选出 10 题，全部可在云端完成主要取证：
+- 8 道 SWE 题可走正式评分链；
+- 2 道 R2E 题做私有模拟。
+
+作者诊断由子代理并行完成，统一要求见 [batch2_author_brief.md](batch2_author_brief.md)；每题再由不继承上下文的独立复核把关。
+
+| 波次 | 题目 | 缺口 | 评分条件 |
+| --- | --- | --- | --- |
+| 1 | SWE dask-8801 | 辨别实验（同义措辞是否被误拒） | 直接评分 |
+| 1 | SWE conan-13403 | 辨别实验（cwd、命令与恢复） | 直接评分 |
+| 1 | SWE pydantic-8567 | 缺正确对照 | pydantic_v1 等效派生镜像 |
+| 2 | SWE dask-7305 | 辨别实验（大整数分位点） | 直接评分 |
+| 2 | SWE moto-6185 | 辨别实验（合法嵌套值） | install_wave1 重建 |
+| 2 | SWE pydantic-8316 | 辨别实验（alias 与数字边界） | pydantic_v1 等效派生镜像 |
+| 3 | SWE dask-8597 | 辨别实验（split 部分修复） | compat_v1 重建 |
+| 3 | SWE dask-9212 | 辨别实验（pure delayed 的 token） | compat_v2b 重建 |
+| 3 | R2E coveragepy__f5eb5f21 | 公开目标核定 | 私有模拟 |
+| 3 | R2E pillow__a682ceaf | 质量调查未完成 | 私有模拟 |
 
 ## 试点校准（供下一批使用）
 
@@ -144,4 +164,5 @@ pillow 首轮的结论是“可转第1类”，被独立复核推翻，改判为
 | 09-29 | coveragepy016 复核阻断项 B1：吞错类候选在 v1 下得 1。改为 v2，14 个候选私有评分符合预期 |
 | 09-29 | pydantic 按复核建议补跑上游式第二正对照 `upstream271`：正式链原材料 1、修订版 1 |
 | 09-29 | dvc-9395 聚焦复核又有 2 项阻断：交互路径未保护；正对照的范围不清。已改为 v4：采纳复核的 v3 断言，补 `dvc import` 非示例实例，冻结命令 stage 登记 T3；正对照改为 `c3_frozenfix`，第二正对照为 `up351_port`。触及熔断，交 Codex 确认 |
+| 09-29 | 用户选定 coveragepy__5dbbe143 按 A（按 slug）处理，并授权按负责人选题推进第二批 |
 | 09-29 | 云端教训：`docker image prune` 曾删掉按摘要拉取、未打标签、复核者正在使用的镜像。之后按摘要拉取的镜像一律打 `c3keep/*` 标签，复核进行期间不做 prune（见 environment.md §1） |

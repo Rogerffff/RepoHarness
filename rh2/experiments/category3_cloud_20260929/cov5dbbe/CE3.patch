@@ -1,0 +1,32 @@
+diff --git a/coverage/control.py b/coverage/control.py
+index 6e59078c..9ba97bb6 100644
+--- a/coverage/control.py
++++ b/coverage/control.py
+@@ -333,7 +333,7 @@ class Coverage(object):
+ 
+         return not reason
+ 
+-    def _warn(self, msg, slug=None):
++    def _warn(self, msg, slug=None, once=False):
+         """Use `msg` as a warning.
+ 
+         For warning suppression, use `slug` as the shorthand.
+@@ -341,6 +341,9 @@ class Coverage(object):
+         if slug in self.config.disable_warnings:
+             # Don't issue the warning
+             return
++        shown = self.__dict__.setdefault("_c3_once_shown", set())
++        if once and slug in shown:
++            return
+ 
+         self._warnings.append(msg)
+         if slug:
+@@ -348,6 +351,8 @@ class Coverage(object):
+         if self._debug.should('pid'):
+             msg = "[%d] %s" % (os.getpid(), msg)
+         sys.stderr.write("Coverage.py warning: %s\n" % msg)
++        if once:
++            shown.add(slug)
+ 
+     def get_option(self, option_name):
+         """Get an option from the configuration.

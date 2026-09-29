@@ -2,7 +2,7 @@
 
 2026-09-29 / Claude（云端，第3类负责人）。原分类为第3类“公开目标与验收关系需核定”。当前任务：核对公开依据，明确采用一种读法或允许的范围，完成对应的题面／验收版本，不重复已验证的 R-c。
 
-**结论：公开材料无法消解这个目标选择，需要用户决定（P5），推荐选 A。** 本次补查没有找到能推翻 P5 的新公开依据。决定包沿用 R2E 线已备好的 A/B/C 三个选项。与读法无关的 R-c 已由 R2E 线落地，并通过正式评分验收（材料 v5）。选定后就能进入对应的修订验收。
+**结论（09-29 更新）：用户已选定 A（按 slug），问题和修法已明确，转第2类。** 原结论为“公开材料无法消解这个目标选择，需要用户决定（P5），推荐选 A”。选定后的落实见 §6。 本次补查没有找到能推翻 P5 的新公开依据。决定包沿用 R2E 线已备好的 A/B/C 三个选项。与读法无关的 R-c 已由 R2E 线落地，并通过正式评分验收（材料 v5）。选定后就能进入对应的修订验收。
 
 ## 1．争议点
 
@@ -50,3 +50,37 @@ R2E 线已确认，“题面文本替换”修订类已实现并经 Codex 复核
 - 本次没有新运行；R2E 正式评分和派生镜像没有在云端重建。
 - 选定后才能进入 R-f 题面验收流程。
 - 独立复核：本题结论沿用多方已有的 P5 判定，本次只补查了一条公开依据，不另起复核。
+
+## 6．用户选定 A 之后（09-29）
+
+**已决定**：用户 09-29 在对话中选定选项 A，即以 slug 识别一条警告。
+
+**已实施（草案）**：R-f 题面修订 [`revised_statement_A.txt`](../../../../../../../rh2/experiments/category3_cloud_20260929/cov5dbbe/revised_statement_A.txt)。
+- 父版本 sha256 `439be36d…`，与 public bundle 的 `problem_statement_sha256` 一致；修订后为 `b2a7f5fb…`。
+- 修订句取自 R2E 线已备好的 [`revision_draft.json`](../../../r2e_lifecycle_20260929/results/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/revision_draft.json) 中的 `statement_edits`，一字未改：在 Expected Behavior 后补一句“与 `disable_warnings` 一样按 slug 识别警告：显示过一条 `once=True` 警告后，同 slug 的后续 `once=True` 警告即使消息不同也不再显示；不同 slug 的各显示一次”。
+- 隐藏测试不改，沿用材料 v5，即已落地的 `r2e-mr-038/039`，共 76 键。
+
+**已验证（私有模拟）**：
+- 环境：原镜像 `namanjain12/coveragepy_final@sha256:66747908…3105`，root、断网、一次性容器。
+- 对照候选：CE1、CE3、CE4 的原补丁在本地 `runs/`，这里按 R2E 线修订计划的描述重建（`_edit_ce.py`），不是原补丁。
+- 修订句的三条断言（`statement_probe.py`），以及 v5 隐藏测试的逐键评分（`grade_r2e.py`，76 键）：
+
+| 候选 | 同 slug、不同消息：只显示第一条 | 不同 slug：各显示一次 | 同消息重复：只显示一次 | v5 隐藏测试 |
+| --- | --- | --- | --- | --- |
+| base | `TypeError`（题面缺陷） | 同左 | 同左 | 0 |
+| gold | 是 | 是 | 是 | **1** |
+| CE3：按 slug，独立集合 | 是 | 是 | 是 | **1** |
+| CE1：按消息去重 | **否**，两条都显示 | 是 | 是 | 0，只错 `test_warn_once`；选 A 后这是正确拒绝 |
+| CE4：第一次 once 后全部静默 | 是 | **否** | 是 | 0，只错 `test_warn_once_each_slug` |
+
+结果与 R2E 线 v5 正式评分一致：gold 1、CE3 1、noop 0、CE4 0、CE1 0。
+
+**验收进行中**：一位没看过隐藏测试和 gold 的新公开读者正在复读修订后的题面，报告写入同目录 `public_read_revised_A.md`。
+
+**交接给第2类**：
+1. 在 R2E 修订单中登记 `statement_text_replace`，接在 v5 之后；
+2. 在新材料版本上重跑预检与正式评分，至少覆盖 gold、noop、CE4、CE1，建议加 CE3；CE 系列要用原补丁；
+3. Codex 复核；
+4. 准入卡注明：题面改版后，本题只能作“标明版本的自建题”。
+
+**证据**：[evidence/decision_A/](evidence/decision_A/)（五个候选的核对输出与隐藏测试日志）、`evidence/evidence_manifest.json`。
