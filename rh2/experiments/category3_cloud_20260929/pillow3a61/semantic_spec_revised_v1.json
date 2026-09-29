@@ -1,0 +1,55 @@
+{
+ "image": "namanjain12/pillow_final@sha256:bdd3d96728209c98e23507a55d2c086fe0a89a106c0d23bfb4854663d8f48813",
+ "python_prefix": "/testbed/.venv",
+ "variants": {
+  "base": [],
+  "gold": [
+   "git apply /in/gold.patch"
+  ],
+  "C1": [
+   "git apply /in/C1.patch"
+  ],
+  "A1u": [
+   "git apply --ignore-whitespace /in/A1u.patch"
+  ],
+  "U11_trns": [
+   "git apply /in/U11_trns.patch"
+  ]
+ },
+ "files": {
+  "gold.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/gold.patch",
+  "C1.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/C1.patch",
+  "A1u.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/A1u.patch",
+  "U11_trns.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/U11_trns.patch",
+  "hidden_test_1_v4.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/hidden_test_1_v4.py",
+  "hidden_test_1_revised_v1.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/hidden_test_1_revised_v1.py",
+  "n1_probe.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/n1_probe.py"
+ },
+ "commands": [
+  {
+   "id": "h0_env",
+   "cmd": "sha256sum run_tests.sh /r2e_tests/test_1.py; cat run_tests.sh; ls /r2e_tests",
+   "timeout_s": 60
+  },
+  {
+   "id": "h1_v4",
+   "cmd": "rm -rf r2e_tests && cp -r /r2e_tests r2e_tests && cp /in/hidden_test_1_v4.py r2e_tests/test_1.py && bash run_tests.sh; rm -rf r2e_tests",
+   "timeout_s": 600
+  },
+  {
+   "id": "h2_rev1",
+   "cmd": "rm -rf r2e_tests && cp -r /r2e_tests r2e_tests && cp /in/hidden_test_1_revised_v1.py r2e_tests/test_1.py && bash run_tests.sh; rm -rf r2e_tests",
+   "timeout_s": 600
+  },
+  {
+   "id": "n1_probe",
+   "cmd": "python -c 'import runpy; runpy.run_path(\"/in/n1_probe.py\", run_name=\"__main__\")'",
+   "timeout_s": 300
+  },
+  {
+   "id": "pub_tests",
+   "cmd": "python -m pytest -p no:cacheprovider --color=no -q -rfE Tests/test_image.py Tests/test_file_gif.py Tests/test_image_convert.py Tests/test_image_putpalette.py Tests/test_imagepalette.py Tests/test_image_quantize.py",
+   "timeout_s": 1200
+  }
+ ]
+}

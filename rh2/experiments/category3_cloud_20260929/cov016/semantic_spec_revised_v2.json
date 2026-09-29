@@ -1,0 +1,81 @@
+{
+ "image": "namanjain12/coveragepy_final@sha256:71895ed487c4080a40879049ec72d6eb53daf5356c6a7abb321ba46105a05a39",
+ "python_prefix": "/testbed/.venv",
+ "variants": {
+  "base": [],
+  "gold": [
+   "git apply /in/gold.patch"
+  ],
+  "skip_write": [
+   "git apply /in/skip_write.patch"
+  ],
+  "convert": [
+   "git apply /in/convert.patch"
+  ],
+  "lines_only": [
+   "git apply /in/lines_only.patch"
+  ],
+  "ascii_only": [
+   "git apply /in/ascii_only.patch"
+  ],
+  "catch_save": [
+   "git apply /in/catch_save.patch"
+  ],
+  "wr_swallow_flush": [
+   "git apply /in/wr_swallow_flush.patch"
+  ],
+  "wr_loop_abort": [
+   "git apply /in/wr_loop_abort.patch"
+  ],
+  "wr_latin1": [
+   "git apply /in/wr_latin1.patch"
+  ],
+  "wr_hardcode": [
+   "git apply /in/wr_hardcode.patch"
+  ],
+  "rv_skip_write": [
+   "git apply /in/rv_skip_write.patch"
+  ],
+  "rv_convert": [
+   "git apply /in/rv_convert.patch"
+  ],
+  "rv_collector_warn": [
+   "git apply /in/rv_collector_warn.patch"
+  ]
+ },
+ "files": {
+  "gold.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/gold.patch",
+  "skip_write.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/skip_write.patch",
+  "convert.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/convert.patch",
+  "lines_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/lines_only.patch",
+  "ascii_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/ascii_only.patch",
+  "catch_save.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/catch_save.patch",
+  "wr_swallow_flush.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/wr_swallow_flush.patch",
+  "wr_loop_abort.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/wr_loop_abort.patch",
+  "wr_latin1.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/wr_latin1.patch",
+  "wr_hardcode.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/wr_hardcode.patch",
+  "rv_skip_write.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/rv_skip_write.patch",
+  "rv_convert.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/rv_convert.patch",
+  "rv_collector_warn.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/rv_collector_warn.patch",
+  "run_tests.sh": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/run_tests.sh",
+  "hidden_test_1_revised_v1.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/hidden_test_1_revised_v1.py",
+  "hidden_test_1_revised_v2.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/hidden_test_1_revised_v2.py"
+ },
+ "commands": [
+  {
+   "id": "h0_original",
+   "cmd": "rm -rf /testbed/r2e_tests && cp -r /r2e_tests /testbed/r2e_tests && bash /in/run_tests.sh 2>&1; rm -rf /testbed/r2e_tests",
+   "timeout_s": 900
+  },
+  {
+   "id": "h1_rev1",
+   "cmd": "rm -rf /testbed/r2e_tests && cp -r /r2e_tests /testbed/r2e_tests && cp /in/hidden_test_1_revised_v1.py /testbed/r2e_tests/test_1.py && bash /in/run_tests.sh 2>&1; rm -rf /testbed/r2e_tests",
+   "timeout_s": 900
+  },
+  {
+   "id": "h2_rev2",
+   "cmd": "rm -rf /testbed/r2e_tests && cp -r /r2e_tests /testbed/r2e_tests && cp /in/hidden_test_1_revised_v2.py /testbed/r2e_tests/test_1.py && bash /in/run_tests.sh 2>&1; rm -rf /testbed/r2e_tests",
+   "timeout_s": 900
+  }
+ ]
+}

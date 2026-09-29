@@ -1,0 +1,17 @@
+diff --git a/coverage/collector.py b/coverage/collector.py
+index a042357f..17ec2574 100644
+--- a/coverage/collector.py
++++ b/coverage/collector.py
+@@ -419,6 +419,12 @@ class Collector(object):
+         if not self._activity():
+             return False
+ 
++        for fname in list(self.data):
++            try:
++                self.file_mapper(fname).encode("utf-8")
++            except UnicodeEncodeError:
++                self.warn("Couldn't record data for file name that can't be encoded: %r" % (fname,), slug="non-encodable-file")
++                del self.data[fname]
+         if self.branch:
+             self.covdata.add_arcs(self.mapped_file_dict(self.data))
+         else:

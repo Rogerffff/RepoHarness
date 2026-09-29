@@ -1,0 +1,21 @@
+{
+ "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-9395:latest",
+ "python_prefix": "/opt/miniconda3/envs/testbed",
+ "variants": {
+  "base": [],
+  "gold": [
+   "git apply /in/gold.patch"
+  ]
+ },
+ "files": {
+  "gold.patch": "/home/user/RepoHarness/runs/category3_cloud_20260929/dvc9395/gold/iterative__dvc-9395.gold.patch",
+  "behavior.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dvc9395/behavior.py"
+ },
+ "commands": [
+  {
+   "id": "d1_behavior",
+   "cmd": "cd /tmp && python /in/behavior.py",
+   "timeout_s": 900
+  }
+ ]
+}

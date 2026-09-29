@@ -1,0 +1,32 @@
+{
+ "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-9395:latest",
+ "python_prefix": "/opt/miniconda3/envs/testbed",
+ "variants": {
+  "gold_guarded": [
+   "python -m pip install --no-index --no-deps /in/pygit2-1.14.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl -q",
+   "git apply /in/gold_guarded.patch"
+  ]
+ },
+ "files": {
+  "pygit2-1.14.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl": "/home/user/RepoHarness/runs/category3_cloud_20260929/dvc9395/wheels/pygit2-1.14.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+  "gold.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dvc9395/gold.patch",
+  "test.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dvc9395/test.patch",
+  "refs.json": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dvc9395/refs.json",
+  "grade_refs.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dvc9395/grade_refs.py",
+  "behavior.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dvc9395/behavior.py",
+  "alt_ds_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dvc9395/alt_ds_only.patch",
+  "gold_guarded.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dvc9395/gold_guarded.patch"
+ },
+ "commands": [
+  {
+   "id": "t1_hidden_refs",
+   "cmd": "git apply /in/test.patch && python -m pytest -rA -p no:cacheprovider tests/func/test_run_cache.py tests/func/test_repro_multistage.py > /tmp/t.out 2>&1; python /in/grade_refs.py /tmp/t.out /in/refs.json; grep -E '^E  ' /tmp/t.out | head -4; git checkout -q -- tests",
+   "timeout_s": 1800
+  },
+  {
+   "id": "t2_behavior",
+   "cmd": "cd /tmp && python /in/behavior.py 2>/dev/null",
+   "timeout_s": 900
+  }
+ ]
+}

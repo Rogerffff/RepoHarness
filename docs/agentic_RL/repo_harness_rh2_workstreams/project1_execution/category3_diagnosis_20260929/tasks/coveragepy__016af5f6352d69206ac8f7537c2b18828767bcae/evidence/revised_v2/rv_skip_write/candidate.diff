@@ -1,0 +1,56 @@
+diff --git a/coverage/sqldata.py b/coverage/sqldata.py
+index 613a280c..1dae26be 100644
+--- a/coverage/sqldata.py
++++ b/coverage/sqldata.py
+@@ -23,6 +23,15 @@ from coverage.misc import CoverageException, contract, file_be_gone, filename_su
+ from coverage.numbits import numbits_to_nums, numbits_union, nums_to_numbits
+ from coverage.version import __version__
+ 
++
++def _encodable(filename):
++    """Can `filename` be stored in the UTF-8 SQLite database?"""
++    try:
++        filename.encode("utf-8")
++    except UnicodeEncodeError:
++        return False
++    return True
++
+ os = isolate_module(os)
+ 
+ # If you change the schema, increment the SCHEMA_VERSION, and update the
+@@ -439,6 +448,8 @@ class CoverageData(SimpleReprMixin):
+         with self._connect() as con:
+             self._set_context_id()
+             for filename, linenos in iitems(line_data):
++                if not _encodable(filename):
++                    continue
+                 linemap = nums_to_numbits(linenos)
+                 file_id = self._file_id(filename, add=True)
+                 query = "select numbits from line_bits where file_id = ? and context_id = ?"
+@@ -471,6 +482,8 @@ class CoverageData(SimpleReprMixin):
+         with self._connect() as con:
+             self._set_context_id()
+             for filename, arcs in iitems(arc_data):
++                if not _encodable(filename):
++                    continue
+                 file_id = self._file_id(filename, add=True)
+                 data = [(file_id, self._current_context_id, fromno, tono) for fromno, tono in arcs]
+                 con.executemany(
+@@ -509,6 +522,8 @@ class CoverageData(SimpleReprMixin):
+         self._start_using()
+         with self._connect() as con:
+             for filename, plugin_name in iitems(file_tracers):
++                if not _encodable(filename):
++                    continue
+                 file_id = self._file_id(filename)
+                 if file_id is None:
+                     raise CoverageException(
+@@ -541,6 +556,8 @@ class CoverageData(SimpleReprMixin):
+         if not self._has_arcs and not self._has_lines:
+             raise CoverageException("Can't touch files in an empty CoverageData")
+ 
++        if not _encodable(filename):
++            return
+         self._file_id(filename, add=True)
+         if plugin_name:
+             # Set the tracer for this file

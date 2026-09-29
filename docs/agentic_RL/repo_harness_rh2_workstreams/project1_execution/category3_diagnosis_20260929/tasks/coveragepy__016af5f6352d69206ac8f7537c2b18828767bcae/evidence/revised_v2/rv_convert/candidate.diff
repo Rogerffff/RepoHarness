@@ -1,0 +1,18 @@
+diff --git a/coverage/sqldata.py b/coverage/sqldata.py
+index 613a280c..69fa41e6 100644
+--- a/coverage/sqldata.py
++++ b/coverage/sqldata.py
+@@ -364,7 +364,12 @@ class CoverageData(SimpleReprMixin):
+         if filename not in self._file_map:
+             if add:
+                 with self._connect() as con:
+-                    cur = con.execute("insert or replace into file (path) values (?)", (filename,))
++                    try:
++                        db_name = filename
++                        db_name.encode("utf-8")
++                    except UnicodeEncodeError:
++                        db_name = filename.encode("utf-8", "backslashreplace").decode("utf-8")
++                    cur = con.execute("insert or replace into file (path) values (?)", (db_name,))
+                     self._file_map[filename] = cur.lastrowid
+         return self._file_map.get(filename)
+ 
