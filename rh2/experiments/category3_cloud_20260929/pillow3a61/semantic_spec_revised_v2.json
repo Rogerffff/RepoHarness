@@ -1,0 +1,92 @@
+{
+ "image": "namanjain12/pillow_final@sha256:bdd3d96728209c98e23507a55d2c086fe0a89a106c0d23bfb4854663d8f48813",
+ "python_prefix": "/testbed/.venv",
+ "variants": {
+  "base": [],
+  "gold": [
+   "git apply --ignore-whitespace /in/gold.patch"
+  ],
+  "A1u": [
+   "git apply --ignore-whitespace /in/A1u.patch"
+  ],
+  "C1": [
+   "git apply --ignore-whitespace /in/C1.patch"
+  ],
+  "U11_trns": [
+   "git apply --ignore-whitespace /in/U11_trns.patch"
+  ],
+  "G_del": [
+   "git apply --ignore-whitespace /in/G_del.patch"
+  ],
+  "G_cim": [
+   "git apply --ignore-whitespace /in/G_cim.patch"
+  ],
+  "HYB": [
+   "git apply --ignore-whitespace /in/HYB.patch"
+  ],
+  "G_gif": [
+   "git apply --ignore-whitespace /in/G_gif.patch"
+  ],
+  "A0K": [
+   "git apply --ignore-whitespace /in/A0K.patch"
+  ],
+  "A0D": [
+   "git apply --ignore-whitespace /in/A0D.patch"
+  ],
+  "FB": [
+   "git apply --ignore-whitespace /in/FB.patch"
+  ],
+  "DROP": [
+   "git apply --ignore-whitespace /in/DROP.patch"
+  ],
+  "G_small": [
+   "git apply --ignore-whitespace /in/G_small.patch"
+  ]
+ },
+ "files": {
+  "gold.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/gold.patch",
+  "A1u.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/A1u.patch",
+  "C1.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/C1.patch",
+  "U11_trns.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/U11_trns.patch",
+  "G_del.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/G_del.patch",
+  "G_cim.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/G_cim.patch",
+  "HYB.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/HYB.patch",
+  "G_gif.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/G_gif.patch",
+  "A0K.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/A0K.patch",
+  "A0D.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/A0D.patch",
+  "FB.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/FB.patch",
+  "DROP.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/DROP.patch",
+  "G_small.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/G_small.patch",
+  "hidden_test_1_v4.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/hidden_test_1_v4.py",
+  "hidden_test_1_revised_v1.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/hidden_test_1_revised_v1.py",
+  "hidden_test_1_revised_v2.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/hidden_test_1_revised_v2.py",
+  "n1_probe.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/n1_probe.py"
+ },
+ "commands": [
+  {
+   "id": "h1_v4",
+   "cmd": "rm -rf r2e_tests && cp -r /r2e_tests r2e_tests && cp /in/hidden_test_1_v4.py r2e_tests/test_1.py && bash run_tests.sh; rm -rf r2e_tests",
+   "timeout_s": 600
+  },
+  {
+   "id": "h2_rev1",
+   "cmd": "rm -rf r2e_tests && cp -r /r2e_tests r2e_tests && cp /in/hidden_test_1_revised_v1.py r2e_tests/test_1.py && bash run_tests.sh; rm -rf r2e_tests",
+   "timeout_s": 600
+  },
+  {
+   "id": "h3_rev2",
+   "cmd": "rm -rf r2e_tests && cp -r /r2e_tests r2e_tests && cp /in/hidden_test_1_revised_v2.py r2e_tests/test_1.py && bash run_tests.sh; rm -rf r2e_tests",
+   "timeout_s": 600
+  },
+  {
+   "id": "n1_probe",
+   "cmd": "python -c 'import runpy; runpy.run_path(\"/in/n1_probe.py\", run_name=\"__main__\")'",
+   "timeout_s": 300
+  },
+  {
+   "id": "pub_tests",
+   "cmd": "python -m pytest -p no:cacheprovider --color=no -q -rfE Tests/test_image.py Tests/test_file_gif.py Tests/test_image_convert.py Tests/test_image_putpalette.py Tests/test_imagepalette.py Tests/test_image_quantize.py",
+   "timeout_s": 1200
+  }
+ ]
+}

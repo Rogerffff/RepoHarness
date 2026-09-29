@@ -118,3 +118,171 @@ im.remap_palette([0, 1, 2, 3])     # base: 正常返回；gold: ValueError('inva
 - 正式评分，以及 C1、A1u 的公开测试。
 - PNG、WebP 等其它插件保存 RGBA 调色板的路径。
 - `LoadingStrategy` 非默认值下的 GIF 回读。
+
+## v2 聚焦复核（2026-09-29）
+
+同一复核者。对象是主审 v2 的 `result.md` 和 `rh2/experiments/category3_cloud_20260929/pillow3a61/` 下的新增材料，以及证据 `evidence/{revised_v1,gif_bg_v1,upstream_check}/`。
+
+- `result.md`：13138 字节，读时与 `e87f92d` 提交版相同。
+- 新增材料：`U11_trns.patch`（`1d48f9ad…`）、`hidden_test_1_revised_v1.py`（`87172901…`）、`expected_output_revised_v1.json`（`af126a3c…`）、`n1_probe.py`、`gif_bg_probe.py`、`grade_r2e.py`。复制前后已逐字比对，与仓库一致。
+
+### 总判断：部分同意
+
+**同意**：
+- N1 判 S1；
+- 新断言有公开依据，不误拒合理实现；
+- 私有评分逐项复现；
+- U11 可作第二正对照；
+- N2–N4 判 T3；
+- 转第2类。
+
+**不同意**把 R-c v1 按原样交第2类落地。新测试只用 2 项调色板。我构造的错误候选 G_small 只按源调色板长度截取映射调色板，它在 v4 和修订 v1 上都得 1。但对超过 192 项的 RGBA 调色板加整数透明索引，它仍抛同一个 `ValueError`，包括题面示例加 `transparency=0`、RGBA 图用 `palette=` 保存 GIF 这两种情况。§5 要求“已知相关的错误候选仍为 0”，因此需要在同一测试里补一个 256 项用例。补法已私测，见第 6 条。
+
+**阻断项**：1 条（B-v2-1）。
+
+### 方法
+
+- **运行方式**：全部在一次性、断网容器中执行，镜像为原镜像 `bdd3d967…`。gold、C1、A1u、U11 用 `git apply`；自造候选用脚本在 gold 或 U11 上改。没有跑正式评分，没有改仓库其它文件，没有提交。
+- **私有评分**：做法与主审相同：把 `/r2e_tests` 复制到 `/testbed/r2e_tests`，替换 `test_1.py`，执行 `bash run_tests.sh`。日志用 rh2 的 `parse_log_pytest`、`normalize_status_map`、`prime_calculate_reward` 解析，另外做一次键集严格相等比对，两种判法结果一致。
+- **候选**：共 13 个。主审材料 5 个：base、gold、A1u、C1、U11。自造 8 个：
+
+  | 候选 | 做法 |
+  | --- | --- |
+  | G_del | gold；内部 `convert("L")` 之前去掉 `m_im` 的透明键，最后仍按原逻辑恢复 |
+  | G_cim | gold；映射那一步改用 C 层 `m_im.im.convert("L")` |
+  | HYB | 协调者例 1：有透明索引时走 C1 算法，否则走 gold |
+  | A0K | 协调者例 2：把透明索引项的 alpha 写成 0，保留透明键 |
+  | A0D | 同 A0K，但删除透明键 |
+  | FB | 遇到 `ValueError` 时改用 RGB 源调色板重做，得到的就是 base 的结果 |
+  | DROP | RGBA 调色板时丢弃透明键 |
+  | G_small | 映射调色板只取源调色板的长度 |
+  | G_gif | U11 加 4 行 GifImagePlugin 改动：在 `palette=` 分支为 RGB 字节配 RGB mode |
+
+- **脚本**：都在会话 scratchpad 的 `p3a61/v2/`，不入库；sha256 前 12 位为 `mkcand.py 5537f5675a81`、`run_cand.sh 15dbd9ba1363`、`run_ext.sh 9b7669073eb5`、`big_trns.py 9a039fc6380b`、`ps_exact.py 433565e8b200`、`hidden_test_1_proposed_ext.py db12fa71dee6`。
+
+### 逐条核对
+
+**1. N1 判 S1 的理由：同意。**
+
+三条依据逐一核实：
+
+- **公开测试**：`Tests/test_image.py:612-624` 正是 `test_remap_palette_transparency`，断言 `[1,0]` 映射后透明索引 0→1，未用到的透明索引被删除。
+- **base 代码**：`remap_palette` 对透明度的重映射位于 base `Image.py` 第 1922–1927 行，主审写的“约 1924–1928”基本对。
+- **文档**：GIF 的 `image-file-formats.rst:143-145`、`229-230` 写明 transparency 是 “Transparency color index”；PNG 的 `597-599` 写的是 “the palette index for full transparent pixels”。这些是插件对 `info["transparency"]` 的定义，`remap_palette` 的 docstring 没有提到透明度，所以文档依据是间接的。
+
+另外三条也属实：
+- `_normalize_mode` 会给 RGBA 图补透明索引，因此文档化的 `palette=` 保存对 RGBA 图会抛异常（第一轮已测）。
+- 上游 N1 用完整 wheel 复测：9.2.0、9.3.0、9.4.0、9.5.0、10.0.0、10.1.0、10.2.0、10.3.0、10.4.0 共 9 个版本都抛 `ValueError`，只有 11.0.0 正确。其中 9.2.0、10.4.0、11.0.0 的 `n1`、`gif_bg` 输出与主审证据 JSON 逐字相同，wheel 的 sha256 与 `wheels_sha256.txt` 一致。证据目录只存了这三个版本，正文提到的 9.3.0 没有存档，但复测一致。
+- scrapy `e9387529` 的先例在其准入卡第 26 行可查。
+
+D1 严格版也覆盖第 4 步的“已有构造候选的主路径违反”，引用成立。标准 §10 的 numpy `5e8301c2` 是更贴近的成文先例：同样是第 4 步，gold 在同一要求的另一实例上失败，按 D4 改用替代正对照。建议一并引用。反方理由已如实登记。
+
+**2. 新断言的依据与宽严：同意，不过严。**
+
+- **依据**：
+  - 题面要求恒等映射后调色板相同；
+  - 公开测试与 base 代码要求透明索引随映射移动；
+  - base `convert` 在 P→RGBA 时对整数透明索引执行 `putpalettealpha(t, 0)`（base `Image.py` 第 1000–1009 行），公开测试 `test_trns_p_transparency[RGBA]` 走的就是这条分支，只是只断言了 info 键。
+- **没有误拒合理实现**：6 个合理写法全部为 1，包括 C1、U11、G_del、G_cim、HYB 和改了 GIF 插件的 G_gif。
+- **被拒的都违反公开要求**：
+
+  | 候选 | 问题 | 失败位置 |
+  | --- | --- | --- |
+  | gold、A1u | 崩溃 | `im.remap_palette([0, 1])` 抛异常 |
+  | A0K、A0D | 恒等映射改了 alpha | 前 8 字节断言 |
+  | FB | 丢 alpha | 前 8 字节断言 |
+  | DROP | 丢透明键 | `im_same.info["transparency"] == 0` |
+
+- **`info["transparency"] == 1` 合理**：与公开测试语义相同，所有修法都没有改这段代码。
+- **渲染期望 `[(10,20,30,0),(50,60,70,80)]` 与修法无关**：
+  - `(10,20,30,0)` 来自 `convert` 的既有透明语义，所有候选包括 U11 都没改这条分支；U11 只改了目标为 L/RGB/P 的那条分支。
+  - `(50,60,70,80)` 检查的是 C 层是否保留 alpha，这正是要测的性质，可拒绝 W2 这类只在 C 层写 RGB 的实现。
+  - 注意：`convert("RGBA")` 会就地改 `im_remapped` 的 C 调色板，但它是最后一条断言，没有影响。
+- 透明项 alpha 取 40 而不是 0，是为了区分 A0K 这类“把透明烘进 alpha”的写法，以题面“恒等映射调色板不变”为依据。
+- **唯一的缺口是调色板只有 2 项**，见第 6 条。
+
+**3. 私有评分：逐项复现。**
+
+v4 列的 base 0、gold 1、A1u 1、C1 1，与准入卡上的正式评分一致。键数为 73/73 与 74/74，没有 unexpected 键。
+
+| 候选 | v4（73 键） | 修订 v1（74 键） | v1 失败键与位置 | 6 个公开文件 |
+| --- | --- | --- | --- | --- |
+| base | 0（`test_remap_palette`、`…_rgba_reorder`） | 0 | 另加新键：前 8 字节断言 | 199 passed / 4 skipped |
+| gold | 1 | **0** | 只有新键：`ValueError: invalid palette size` | 同上 |
+| A1u | 1 | **0** | 只有新键，原因同 gold | 同上 |
+| C1 | 1 | 1 | — | 同上 |
+| U11 | 1 | 1 | — | 同上 |
+| G_del、G_cim、HYB、G_gif | 1 | 1 | — | 同上 |
+| A0K、A0D、FB、DROP | 1 | 0 | 只有新键 | 同上 |
+| **G_small** | 1 | **1** | — | 同上 |
+
+**4. U11 作第二正对照：同意。**
+
+- **满足题面**：题面代码原样运行输出 `True`；256 项反转映射后 RGBA 渲染与原图相同。C1 同样满足。
+- **不破坏公开测试**：
+  - 6 个公开文件为 199 passed / 4 skipped，与主审一致；
+  - 另外跑了全量 `Tests/`：gold、C1、U11、G_gif 与 base 逐测试结果相同（各 2607 行结果，0 处差异）；
+  - base 的 43 个失败全部相同，都是 `_imagingft C module is not installed` 这一环境原因（`test_fuzzers.py` 31 个、`test_pickle.py` 12 个）。
+- **隐藏测试**：v4 为 1，修订 v1 为 1，第 6 条的扩展版也为 1；256 项调色板加透明索引的恒等与交换都正确。
+- **来源措辞需要小修（不阻断）**：U11 的 `putpalette` 与 11.0.0 逐行一致，但其中 `self.palette.mode = "RGBA" if "A" in rawmode else "RGB"` 一行在 10.4.0 已有（10.0.0–10.3.0 没有）；`rawmode is not None` 分支和 `convert` 的 `self.palette.mode` 参数才是 11.0.0 新增的。U11 的 `remap_palette` 是 gold 版；11.0.0 的版本不补齐到 256 项，并多了 `elif len(source_palette) > 768` 分支。
+- **仍待落实**（主审已列）：正式评分；正式评分过的原版 C1 补丁与本页重建的 C1 是否逐字相同，我未核。
+
+**5. N2–N4 判 T3：同意，措辞需收窄。**
+
+- **只改 `Image.py` 的写法表现完全相同**：gold、A1u、C1、U11、G_del、G_cim、HYB、G_small、A0K、FB、DROP 的 `gif_bg` 输出逐字相同；主审 `gif_bg_v1` 中的 base、gold、A1u、C1、U11 与我复测逐字相同。
+- **但同时改 GIF 插件的 G_gif 能消除 N2–N4**：它在 `gif_bg` 与 R3–R5 上都与 base 一致，在 v4、修订 v1 和扩展版上都为 1，全量公开测试不变。
+- 因此“所有保留 RGBA 调色板的修法表现相同”应改为“所有只改 `Image.py` 的修法表现相同”。G_gif 的结果也说明修订材料不惩罚更完整的修法，支持 T3。
+- **上游核对**：10.4.0 与 gold 相同；11.0.0 在该路径另有错误，与证据一致：
+  - 四个小例的像素都错乱；
+  - 原序加元组背景时背景索引为 4，超出 4 项色表；
+  - R5 的像素为 `(0,0,0)`。
+- 元组背景没有写进 GIF 文档，判罕见路径成立。
+
+**6. 修订后仍能拿 1 的错误候选：有一个，G_small（阻断 B-v2-1）。**
+
+- HYB 得 1，但在 N1 各输入上都正确（2、192、193、256 项加透明索引，题面示例，RGBA 图用 `palette=` 保存 GIF），是正确实现，不算错误候选。
+- A0K、A0D、FB、DROP 都为 0。
+- **G_small**：在 gold 上只改一处：
+
+  ```python
+  n_src = max(1, min(256, len(source_palette) // bands))
+  m_im.palette = ImagePalette.ImagePalette(palette_mode, palette=mapping_palette[:n_src] * bands)
+  ```
+
+  - 192 项及以下加透明索引时正常，193 项起抛 `ValueError`，因为 4×n 字节超过 768。
+  - 因此题面示例加 `transparency=0` 或 `3`、RGBA 图用 `palette=` 保存 GIF（R2 与 hopper）、`quantize()` 后加透明索引，都仍然崩溃。
+  - 它在 v4 与修订 v1 上都为 1，6 个公开文件 199 passed / 4 skipped。
+- **补法**：在 `test_remap_palette_rgba_transparency` 的末尾追加以下内容。测试函数不变，期望文件仍是 74 键。
+
+  ```python
+          # Same with a full 256-entry RGBA palette (more than 192 entries)
+          im = Image.new("P", (256, 1))
+          for x in range(256):
+              im.putpixel((x, 0), x)
+          im.putpalette(list(range(256)) * 4, "RGBA")
+          im.info["transparency"] = 0
+          im_same = im.remap_palette(list(range(256)))
+          assert bytes(im_same.palette.palette[:1024]) == bytes(im.palette.palette[:1024])
+          assert im_same.info["transparency"] == 0
+          im_remapped = im.remap_palette([1, 0] + list(range(2, 256)))
+          assert im_remapped.info["transparency"] == 1
+  ```
+
+- **扩展版私测结果**（`hidden_test_1_proposed_ext.py` 加 `expected_output_revised_v1.json`）：
+  - 为 0：base、gold、A1u、G_small、A0K、FB、DROP；除 base 外都只错新键。
+  - 为 1：C1、U11、G_del、G_cim、HYB、G_gif。
+- **W1–W5**：补丁不在云端，未查。修订只新增一个键，它们在 v4 失败的键不变，按构造应仍为 0，需要正式复验。
+
+### 其它非阻断建议
+
+- **准入卡要同时改 A1u 的期望**：A1u 在 v4 准入卡中是“合理替代解，期望 1”，修订后因 N1 变为 0。除了 gold，A1u 的期望也要改，并写明原因。
+- **训练价值**：修订后，gold 式的自然写法得 0。公开透明度测试用的是 RGB 调色板，暴露不了 N1，解题者要么自己想到透明度组合，要么发现 `convert` 的潜在缺陷。依据成立，但通过率会下降，建议记入训练价值与难度备注。
+- **上游复测的做法要写清**：`up/x*` 目录只放了 3 个源文件，把 `PYTHONPATH` 指向它不会生效，会被可编辑安装的 `/testbed/src` 抢先；必须把完整 wheel 解压后再加载。我第一次复测就踩了这个坑，已改正。建议在证据说明中写明做法。
+
+### 未查（v2）
+
+- 正式评分与派生镜像。
+- W1–W5。
+- 原版 C1 补丁的逐字核对。
+- GitHub PR #8366 的逐行对应（主审的 `pr8366.diff` 下载失败，内容是权限错误）。
+- 其它 GIF 解码器。
