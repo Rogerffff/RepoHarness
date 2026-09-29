@@ -93,7 +93,7 @@
 
 ### 交接给第2类
 
-1. D6 落地 R-c 需要“测试补丁替换”切片，R-f 需要 `statement_replace` 切片，两者都在首片之后（`category2_repair_20260929/d6/implementation_brief.md`）。
+1. D6 落地 R-c 需要“测试补丁替换”切片，R-f 需要 `statement_replace` 切片，两者都不在首片内：测试补丁替换计划随 MONAI5932 切片引入，`statement_replace` 随 mypy15184 切片引入（`category2_repair_20260929/d6/implementation_brief.md`）。
 2. 请一名新公开读者读修订后的题面，确认推出的接口与断言一致。
 3. 复验：修订版下 noop 0、gold 1，两个 mask 退化候选为 0。
 4. Codex 复核。

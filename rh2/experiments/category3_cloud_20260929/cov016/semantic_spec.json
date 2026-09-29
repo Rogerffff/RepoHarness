@@ -1,0 +1,60 @@
+{
+ "image": "namanjain12/coveragepy_final@sha256:71895ed487c4080a40879049ec72d6eb53daf5356c6a7abb321ba46105a05a39",
+ "python_prefix": "/testbed/.venv",
+ "variants": {
+  "base": [],
+  "gold": [
+   "git apply /in/gold.patch"
+  ],
+  "skip_write": [
+   "git apply /in/skip_write.patch"
+  ],
+  "lines_only": [
+   "git apply /in/lines_only.patch"
+  ],
+  "convert": [
+   "git apply /in/convert.patch"
+  ],
+  "catch_save": [
+   "git apply /in/catch_save.patch"
+  ],
+  "ascii_only": [
+   "git apply /in/ascii_only.patch"
+  ]
+ },
+ "files": {
+  "literal_example.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/literal_example.py",
+  "repro_both_modes.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/repro_both_modes.py",
+  "grade_hidden.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/grade_hidden.py",
+  "expected_output.json": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/expected_output.json",
+  "run_tests.sh": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/run_tests.sh",
+  "gold.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/gold.patch",
+  "skip_write.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/skip_write.patch",
+  "lines_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/lines_only.patch",
+  "convert.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/convert.patch",
+  "catch_save.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/catch_save.patch",
+  "ascii_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/ascii_only.patch"
+ },
+ "commands": [
+  {
+   "id": "e1_literal_example",
+   "cmd": "python /in/literal_example.py",
+   "timeout_s": 300
+  },
+  {
+   "id": "e2_repro_both_modes",
+   "cmd": "python /in/repro_both_modes.py",
+   "timeout_s": 300
+  },
+  {
+   "id": "e3_hidden_tests",
+   "cmd": "cp -r /r2e_tests /testbed/r2e_tests && bash /in/run_tests.sh > /tmp/hidden.out 2>&1; python /in/grade_hidden.py /tmp/hidden.out /in/expected_output.json; tail -3 /tmp/hidden.out",
+   "timeout_s": 1800
+  },
+  {
+   "id": "e4_public_tests",
+   "cmd": "rm -rf /testbed/r2e_tests; python -m pytest -p no:cacheprovider -n 0 -q tests/test_data.py tests/test_api.py tests/test_oddball.py::ExecTest tests/test_files.py 2>&1 | tail -3",
+   "timeout_s": 1800
+  }
+ ]
+}

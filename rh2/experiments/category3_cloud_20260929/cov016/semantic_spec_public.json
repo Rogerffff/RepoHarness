@@ -1,0 +1,40 @@
+{
+ "image": "namanjain12/coveragepy_final@sha256:71895ed487c4080a40879049ec72d6eb53daf5356c6a7abb321ba46105a05a39",
+ "python_prefix": "/testbed/.venv",
+ "variants": {
+  "base": [],
+  "gold": [
+   "git apply /in/gold.patch"
+  ],
+  "skip_write": [
+   "git apply /in/skip_write.patch"
+  ],
+  "lines_only": [
+   "git apply /in/lines_only.patch"
+  ],
+  "convert": [
+   "git apply /in/convert.patch"
+  ],
+  "catch_save": [
+   "git apply /in/catch_save.patch"
+  ],
+  "ascii_only": [
+   "git apply /in/ascii_only.patch"
+  ]
+ },
+ "files": {
+  "gold.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/gold.patch",
+  "skip_write.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/skip_write.patch",
+  "lines_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/lines_only.patch",
+  "convert.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/convert.patch",
+  "catch_save.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/catch_save.patch",
+  "ascii_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov016/ascii_only.patch"
+ },
+ "commands": [
+  {
+   "id": "p1_public_tests",
+   "cmd": "python -m pytest -p no:cacheprovider -o addopts='' -q tests/test_data.py tests/test_api.py tests/test_oddball.py::ExecTest tests/test_files.py 2>&1 | tail -4",
+   "timeout_s": 1800
+  }
+ ]
+}

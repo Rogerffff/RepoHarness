@@ -10,7 +10,7 @@
 4. “对所有协议都校验端点”的退化候选得满分；
 5. 从未创建过的端点没有断言。
 
-第 4、5 项由独立复核发现。当前修订草案 **v2** 已通过 10 个候选的正式诊断评分。实施依赖 D6 的“测试补丁替换”切片。
+第 4、5 项由独立复核发现。当前修订草案 **v3**（v2 聚焦复核后补 SQS 正例）已通过 11 个候选的正式诊断评分，独立复核已确认无阻断。实施依赖 D6 的“测试补丁替换”切片。
 
 ## 1．公开要求
 
@@ -72,9 +72,9 @@
   两者的根因相同：P2P 只有 `test_application_boto3.py`，这个文件里没有任何 `subscribe` 调用。
 - **T2c（S1，§4 第 2 步，D1 严格版）**：所有“不存在”的实例都是“先创建后删除”，与题面示例同一种输入形态；从未创建过的 ARN 没有断言。
 
-## 5．修法（交第2类）：修订版测试草案 v2
+## 5．修法（交第2类）：修订版测试草案 v3
 
-**草案文件**：[`revised_test_v2.patch`](../../../../../../../rh2/experiments/category3_cloud_20260929/moto7584/revised_test_v2.patch)，sha256 `5da7fefb…db9f`；父版本 v1 为 `a4dbe106…f598`。
+**草案文件**：[`revised_test_v3.patch`](../../../../../../../rh2/experiments/category3_cloud_20260929/moto7584/revised_test_v3.patch)，sha256 `58875207…4fd3`；父版本 v2 为 `5da7fefb…db9f`，v1 为 `a4dbe106…f598`。
 
 原 F2P `test_publish_to_deleted_platform_endpoint` 编号保留，不改测试命令，不新增 P2P 文件。
 
@@ -83,9 +83,9 @@
 | 从未订阅的已删端点：错误码 `InvalidParameter`，正文含 `Endpoint does not exist` 和该端点 ARN；不锁定 `arn` 与 ARN 之间是否有空格（R-b） | 题面错误码与正文模板 | noop、`wrong_code` |
 | 题面原例：有效端点先订阅成功，删除后再订阅报同样的错（R-c） | 题面示例与 Expected result | gold、`gold_order_stmtmsg`、两个 `reject_all_*`（有效端点首次订阅失败） |
 | 从未创建过的端点 ARN 同样报错（R-c，非示例实例） | 标题“when the endpoint does not exist”、正文“subscribing a non-existing endpoint” | `deleted_set` |
-| 非 application 协议（email）照常订阅成功（R-c） | 题面限定“using `application` protocol”；公开旧测试 `test_subscriptions_boto3.py` | `all_protocols` |
+| 非 application 协议照常订阅成功：email，以及以 SQS 队列 ARN 为端点的 sqs 订阅（R-c） | 题面限定“using `application` protocol”；公开旧测试 `test_subscriptions_boto3.py` | `all_protocols`（在 email 处）、`arn_form`（在 SQS 处） |
 
-**v2 正式诊断评分**：`--materials`，grader 后缀 `+c3-moto7584-issue-example-v2`，同一派生镜像。
+**v3 正式诊断评分**：`--materials`，grader 后缀 `+c3-moto7584-issue-example-v3`，同一派生镜像。
 
 | 候选 | reward | 失败位置 |
 | --- | --- | --- |
@@ -99,12 +99,13 @@
 | `wrong_code` | 0 | `'NotFound' == 'InvalidParameter'` |
 | `all_protocols`（去掉协议条件；等同复核的 `db_pre_*`） | 0 | email 订阅被拒 |
 | `deleted_set`（只拒删除过的 ARN） | 0 | 从未创建的 ARN 未报错 |
+| `arn_form`（凡 ARN 形式的端点都按 platform endpoint 校验，不论协议） | 0 | SQS 队列 ARN 订阅被拒 |
 
-所有评分参考缺席 0，清理成功。v1 的 8 个候选结果保留在 `evidence/formal_revised_v1/`，仅作历史。
+所有评分参考缺席 0，清理成功。v1（8 个候选）与 v2（10 个候选，除 `arn_form` 外结果与上表相同）保留在 `evidence/formal_revised_v1/`、`formal_revised_v2/`，仅作历史。
 
 **交接给第2类：**
 
-1. 经 D6 的“测试补丁替换”切片形成正式材料版本。首片不支持，排在 MONAI5932 之后。
+1. 经 D6 的“测试补丁替换”切片形成正式材料版本。首片不支持；该类型计划随后续的 MONAI5932 切片引入。
 2. 替代正对照 `stmt` 已由独立复核在私有层面核实：题面原例报错、从未创建的 ARN 报错、重复订阅返回同一 ARN、http/sms 订阅正常，`tests/test_sns` 184 项通过。
 3. 正式版本复验上表。
 4. Codex 复核。
@@ -112,7 +113,7 @@
 
 **非阻断建议**（留给第2类决定）：
 
-- 修订后的 F2P 仍带 `@pytest.mark.aws_verified`，新增断言没有在 AWS 上验证过。建议去掉该标记，或把原例拆成不带标记的测试。评分走 mock，不影响分数。
+- 修订后的 F2P 仍带 `@pytest.mark.aws_verified`，新增断言没有在 AWS 上验证过；email、SQS 正例在真实 AWS 上会发确认或留下队列。建议去掉该标记，或把新增部分拆成不带标记的测试。评分走 mock，不影响分数。
 - 可以把正文检查收紧为正则 `Endpoint does not exist for endpoint (arn)?<ARN>`。
 - 可以补一条“有效端点重复订阅返回同一 ARN”。
 
@@ -133,6 +134,7 @@
 - **阻断项及处理**：
   - N1（所有协议都校验）与 N2（从未创建的 ARN）：已在 v2 修正，正式评分为 0；
   - `result.md` 需更新：已更新。
+- **v2 聚焦复核**（review.md 末尾“六、v2 聚焦复核”）：阻断项 1–3 已落实，无阻断；`db_pre_arn` 与 `all_protocols` 等价；提出非阻断建议“email 正例拦不住凡 ARN 都校验的候选”，已在 v3 补 SQS 正例落实，`arn_form` 正式评分为 0。
 - **非阻断项及处理**：
   - S1 措辞：已改；
   - S3 派生镜像出处：已补；
@@ -152,4 +154,4 @@
 - 代码与运行环境：见 [环境说明](../../environment.md)。
 - 派生镜像配方：`rh2/experiments/category3_cloud_20260929/rebuild_install_wave1.py`。
 - 候选补丁：`rh2/experiments/category3_cloud_20260929/moto7584/`。
-- 原始证据：[evidence/](evidence/)，其中 `formal/` 为原材料评分，`formal_revised_v1/` 与 `formal_revised_v2/` 为修订版评分，`semantic_v1/` 为私有对照；全部文件的 SHA256 见 `evidence_manifest.json`。
+- 原始证据：[evidence/](evidence/)，其中 `formal/` 为原材料评分，`formal_revised_v1/`、`formal_revised_v2/`、`formal_revised_v3/` 为修订版评分，`semantic_v1/` 为私有对照；全部文件的 SHA256 见 `evidence_manifest.json`。

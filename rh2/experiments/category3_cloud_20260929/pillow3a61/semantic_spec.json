@@ -1,0 +1,39 @@
+{
+ "image": "namanjain12/pillow_final@sha256:bdd3d96728209c98e23507a55d2c086fe0a89a106c0d23bfb4854663d8f48813",
+ "python_prefix": "/testbed/.venv",
+ "variants": {
+  "base": [],
+  "gold": [
+   "git apply /in/gold.patch"
+  ],
+  "C1": [
+   "git apply /in/C1.patch"
+  ],
+  "A1u": [
+   "git apply /in/A1u.patch"
+  ]
+ },
+ "files": {
+  "gif_behavior.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/gif_behavior.py",
+  "gold.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/gold.patch",
+  "C1.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/C1.patch",
+  "A1u.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow3a61/A1u.patch"
+ },
+ "commands": [
+  {
+   "id": "g1_gif_palette",
+   "cmd": "python -c 'import runpy; runpy.run_path(\"/in/gif_behavior.py\", run_name=\"__main__\")'",
+   "timeout_s": 600
+  },
+  {
+   "id": "g2_public_gif",
+   "cmd": "python -m pytest -p no:cacheprovider --color=no -q -rfE Tests/test_file_gif.py",
+   "timeout_s": 1200
+  },
+  {
+   "id": "g3_public_image",
+   "cmd": "python -m pytest -p no:cacheprovider --color=no -q -rfE Tests/test_image.py",
+   "timeout_s": 1200
+  }
+ ]
+}

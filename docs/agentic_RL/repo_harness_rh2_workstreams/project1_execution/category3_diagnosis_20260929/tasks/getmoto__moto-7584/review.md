@@ -101,3 +101,47 @@
 - 没有验证真实 actor（UID 54321）的开发条件，也没有模型求解证据。
 - 没有读到 09-19 本题的逐题派生镜像记录和历史 `assets_manifest.json`（不在仓库内）；历史 wheel 摘要只能通过 09-29 的登记间接对照。
 - 没有核对 conan-14177、dask-9378 等其它题，也没有核对 `semantic_control.py`、`replay_with_install_recipe.py` 的实现。
+
+## 六、v2 聚焦复核（2026-09-29）
+
+**结论：阻断项 1–3 都已落实，不再有阻断。** 范围只限于上文的阻断项 1–3、S1–S7，以及 v2 是否引入了过严或过宽的断言，不重审其它部分。
+
+另有一条新的非阻断意见：v2 新加的 email 正例覆盖面偏窄，“凡形如 ARN 的 endpoint 都按 platform endpoint 校验”的候选仍能在 v2 上 20/20 通过，见 Q5。
+
+核对的材料：
+- `revised_test_v2.patch`：sha256 `5da7fefb7608e2a04b8a7ac9916112da08df434dc736f856b6a7b1af9d3ddb9f`。与 v1 相比，只在同一个 F2P 末尾追加两段（新文件第 502-513 行）。
+- `materials_revised_v2.json`：内嵌补丁的 sha256 相同，`parent` 指向 v1。
+- `all_protocols.patch`、`deleted_set.patch`。
+- `evidence/formal_revised_v2/` 的 10 行账本和 10 份日志：日志 sha256 与账本一致；`evidence_manifest.json` 中 50 个 v2 归档文件的 sha256 全部相符。
+- 更新后的 `result.md`。
+
+私有检查的条件与前文相同：原镜像、root、`--network none`；没有跑正式评分。
+
+| 项 | 结论 | 依据 |
+| --- | --- | --- |
+| **Q1 阻断 1**：`all_protocols` 在 v2 上为 0；`db_pre_arn` 是否等价、是否要补跑 | **已落实。两者等价，不需要补正式评分** | ① 正式诊断：`ledger_all_protocols.jsonl` 为 `reward 0.0`、`f2p 0/1`、`p2p_fail 0/19`、参考缺席 0、清理 `rm:ok`、安装 rc 0。失败点在 `rev2-_0377c3c1.eval.log:684-687`（测试第 513 行的 email 订阅），报文为 `…Endpoint does not exist for endpoint someone@example.com`（`:780`）。<br>② `all_protocols.patch` 与我的 `db_pre_stmt` 逐行相同。`db_pre_arn` 只是正文多了 `arn`，而 v2 的 `_assert_endpoint_does_not_exist` 对两种正文一视同仁，所以两者在 application 部分的表现相同，都会在 email 处失败。<br>③ 私有检查：v2 上 `db_pre_arn` 与 `db_pre_stmt` 都是 `1 failed, 19 passed`，失败都在第 513 行；gold 位置的变体 `db_post_arn` 在原例（第 494 行）失败。 |
+| **Q2 阻断 2**：`deleted_set` 在 v2 上为 0 | **已落实** | `ledger_deleted_set.jsonl` 为 `reward 0.0`，其余字段同上；失败点在 `rev2-_848a47df.eval.log:683-687`（第 504 行，从未创建的 ARN `DID NOT RAISE`）。正对照 `stmt`、`stmt_arnmsg` 得 1（`rev2-_805b2183`、`_da86d30b` 第 645 行，20 passed）。gold 的正文 `arnarn` 也能通过新增的“从未创建”断言：`stmt_arnmsg` 与 gold 正文相同，而且得 1。 |
+| **Q3 阻断 3**：`result.md` 已更新 | **已落实，另有三处措辞问题（非阻断）** | 已落实的内容：§4 补了 T2b/T6 与 T2c（L68-73）；结论改为 v2 通过 10 个候选的诊断评分（L13、L88-103），v1 结果保留为历史；交接清单含配方（L111）；正对照已由复核核实（L108）。<br>措辞问题：<br>① L155 写“全部文件的 SHA256 见 `evidence_manifest.json`”，但 `derived_image.json` 和 `derived_image_build.log` 仍未登记进 manifest，我实查 manifest 里没有这两项；<br>② L22 说在“base 中的 moto 代码、文档与 CHANGELOG 里都找不到”，而我实际检索的只是 `moto/sns`、`tests/test_sns`、`docs/docs/services/sns.rst`、`CHANGELOG.md` 中的指定关键词，建议写明检索范围；<br>③ L100 的“等同复核的 `db_pre_*`”，准确说法是“等同 `db_pre_stmt`；`db_pre_arn` 只差正文，私有检查同样在 email 处失败”。 |
+| **Q4** email/http 正例在真实 AWS 上会触发确认；`aws_verified` 标记列为交接建议 | **可以接受（非阻断）** | 评分不会连到 AWS：`sns_aws_verified` 只有在 `MOTO_TEST_ALLOW_AWS_REQUEST=true` 时才访问 AWS，否则走 mock（base `tests/test_sns/__init__.py:22-47`）；grader 的网络策略又是 deny_all。所以这只是来源标注的问题，`result.md` §8（L147）也已写明修订版只按 moto 行为验收。建议第2类在 D6 落地时直接处理，不必退回第3类：去掉标记或拆分测试。如果保留标记，正例改用在测试内创建的 SQS 队列（同账号订阅不需要确认），这与 Q5 的修法可以合并。 |
+| **Q5** 有没有新引入的过严或过宽断言 | **过严：未发现。过宽：一处残余（非阻断）** | **过严**：两种不照抄 gold 的合理实现在 v2 上都能通过，私有检查均为 20 passed，并且整个 base `tests/test_sns` 都是 184 passed：<br>• `cleanup_route`：删除 endpoint 时一并删除其 application 订阅，检查放在 gold 的位置；<br>• `response_layer`：在 `responses.py` 的 Subscribe 入口校验。<br>新增的两段断言都有公开依据：从未创建的 ARN 对应标题与正文的一般表述；email 订阅是 base 已有的公开行为（`test_subscriptions_boto3.py` 的 `test_subscription_paging` 用的就是 email）。<br>**过宽**：候选 `arn_shape` 在查重前加 `if protocol == "application" or endpoint.startswith("arn:")` 校验。它在 v2 上私有检查 **20 passed**，但会让 base 的 `tests/test_sns` 失败 97 项（共 184），例如 `test_publishing_boto3.py::test_publish_to_sqs`，因为 SQS/Lambda 这类 ARN 形式的 endpoint 被误伤；email 正例覆盖不到这一点。我不把它列为阻断，理由有三：一是原阻断项 1 要求的代表候选（去掉协议条件）已经被拦下；二是这种“按 ARN 前缀扩大校验”既不是题面或 gold 修改位置的自然产物，也属于 §7.1 第 4 步提醒不要为凑数去造的候选；三是修起来只要一行。**建议**第2类在 D6 落地时，把 email 正例换成或加上一个 ARN 形式的 SQS 订阅，例如在测试内创建队列后订阅其 ARN，公开依据是 `test_subscriptions_boto3.py::test_double_subscription`。这一处可以同时兜住 `all_protocols` 与 `arn_shape`，之后把 `arn_shape` 加入复验的负例。 |
+
+S1–S7 的落实情况：
+
+| 项 | 状态 |
+| --- | --- |
+| S1 措辞 | 已改（L19-24）。只剩 Q3② 的检索范围表述 |
+| S2 `aws_verified` | 列为交接建议（L115），可以接受，见 Q4 |
+| S3 派生镜像出处 | **部分落实**：`result.md` §2 已补期望摘要出处、下载参数差异，并说明历史 `image.json` 不在库内（L32-34）；manifest 登记未做，见 Q3① |
+| S4 用途 | 已写（§6，L119-126） |
+| S5 T2a 说法 | 已精确化（L66） |
+| S6 配方 | 已写（L111，§2） |
+| S7 正则、幂等 | 列为交接建议（L116-117） |
+
+**是否仍有阻断：无。**
+
+建议（非阻断）：
+- 在 D6 落地时补一个 SQS-ARN 正例，理由见 Q5；
+- 修正 Q3 列出的三处措辞；
+- 把 `derived_image.json` 与 `derived_image_build.log` 登记进 manifest。
+
+本节的私有检查脚本只在会话 scratchpad 中（不入库），关键改动已在上表写出。
