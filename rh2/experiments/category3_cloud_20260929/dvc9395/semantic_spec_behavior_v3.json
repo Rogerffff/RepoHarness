@@ -1,0 +1,45 @@
+{
+ "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-9395:latest",
+ "python_prefix": "/opt/miniconda3/envs/testbed",
+ "variants": {
+  "base": [
+   "python -m pip install --no-index --no-deps /in/pygit2-1.14.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl -q"
+  ],
+  "gold": [
+   "python -m pip install --no-index --no-deps /in/pygit2-1.14.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl -q",
+   "git apply /in/gold.patch"
+  ],
+  "c3_missing_only": [
+   "python -m pip install --no-index --no-deps /in/pygit2-1.14.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl -q",
+   "git apply /in/c3_missing_only.patch"
+  ],
+  "c3_frozenfix": [
+   "python -m pip install --no-index --no-deps /in/pygit2-1.14.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl -q",
+   "git apply /in/c3_frozenfix.patch"
+  ],
+  "mine_ondemand": [
+   "python -m pip install --no-index --no-deps /in/pygit2-1.14.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl -q",
+   "git apply /in/mine_ondemand.patch"
+  ],
+  "up351_port": [
+   "python -m pip install --no-index --no-deps /in/pygit2-1.14.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl -q",
+   "git apply /in/up351_port.patch"
+  ]
+ },
+ "files": {
+  "pygit2-1.14.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl": "/home/user/RepoHarness/runs/category3_cloud_20260929/dvc9395/wheels/pygit2-1.14.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+  "behavior_v3.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dvc9395/behavior_v3.py",
+  "gold.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dvc9395/gold.patch",
+  "c3_missing_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dvc9395/c3_missing_only.patch",
+  "c3_frozenfix.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dvc9395/reviewer_cands/c3_frozenfix.patch",
+  "mine_ondemand.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dvc9395/reviewer_cands/mine_ondemand.patch",
+  "up351_port.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dvc9395/reviewer_cands/up351_port.patch"
+ },
+ "commands": [
+  {
+   "id": "d3_behavior",
+   "cmd": "cd /tmp && git config --global user.name r && git config --global user.email r@l && python /in/behavior_v3.py 2>/dev/null",
+   "timeout_s": 900
+  }
+ ]
+}

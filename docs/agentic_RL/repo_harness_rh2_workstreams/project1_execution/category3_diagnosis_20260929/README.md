@@ -41,7 +41,7 @@
 
 - 7 题转第2类；
 - 1 题待用户决定（P5）；
-- dvc-9395 已按独立复核改为 v2，聚焦复核进行中。
+- dvc-9395 经两轮复核改为 v4；同一题连续两轮出现新阻断，触及协作协议的修复循环熔断，按最小充分原则收口，交 Codex 确认。
 
 pillow 首轮的结论是“可转第1类”，被独立复核推翻，改判为转第2类。
 
@@ -51,7 +51,7 @@ pillow 首轮的结论是“可转第1类”，被独立复核推翻，改判为
 | [SWE moto-7584](tasks/getmoto__moto-7584/result.md) | 辨别实验 | **转第2类** | gold 未修题面原例；报错正文超出题面模板导致误拒；两类退化候选得 1。修订 v3 以 `stmt` 作正对照，11 个候选的正式诊断评分符合预期 | 复核＋v2 聚焦复核，无阻断 |
 | [SWE dask-9378](tasks/dask__dask-9378/result.md) | 辨别实验 | **转第2类** | 只错 mask 的退化候选得 1。R-c 逐元素比较 mask；“只修顶层”的设计按 P5 第一分支走 R-f，补一句 | 同意，无阻断 |
 | [SWE pydantic-9066](tasks/pydantic__pydantic-9066/result.md) | 缺正确对照 | **转第2类** | 替代正对照 `fallback` 与上游式 `upstream271` 在原材料和修订版上都是 1，gold 在修订版上为 0 | 同意，无阻断 |
-| [SWE dvc-9395](tasks/iterative__dvc-9395/result.md) | 辨别实验 | **转第2类** | T1：计数断言误拒；N1：“吞掉错误”的退化候选在原测试得 1；N2：用户改过的数据源在 `--pull` 下被覆盖或报错，主审判 S1。R-b＋R-c v2 下 3 个替代实现为 1，gold 等 6 个候选与 noop 为 0；正对照改为 `mine_ondemand`。只有私有模拟 | 复核部分同意（2 项阻断，已按 v2 处理）；v2 聚焦复核进行中 |
+| [SWE dvc-9395](tasks/iterative__dvc-9395/result.md) | 辨别实验 | **转第2类** | T1：计数断言误拒；N1：“吞掉错误”的退化候选在原测试得 1；N2：用户改过的数据源在 `--pull` 下被覆盖或报错（S1）；N7：只测了 `dvc add` 数据源，补 `dvc import`。R-b＋R-c v4 下 16 个候选中 3 个为 1，gold 等 13 个为 0；正对照改为 `c3_frozenfix`，第二正对照为上游 3.51 移植版。只有私有模拟 | 两轮复核共 4 项阻断，已按 v4 处理；触及熔断，v4 交 Codex 确认 |
 | [R2E pillow__3a61c9e9](tasks/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/result.md) | 辨别实验 | **转第2类**（首轮“可转第1类”被推翻） | N1：RGBA 调色板加整数透明索引时，gold 的 `remap_palette` 抛 `ValueError`，上游 11.0 才修好，判 S1。R-c v2 新增一键，14 个候选中 6 个合理实现为 1，noop、gold 与 6 个错误候选为 0；正对照改为 C1，上游式 U11 作第二正对照 | 复核不同意首轮，已改判；v2 聚焦复核 1 项阻断（G_small），已按其补法修为 R-c v2 |
 | [R2E coveragepy__5dbbe143](tasks/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/result.md) | 公开目标核定（P5） | **待用户决定** | slug 与消息两种读法都有公开依据。可选：A 按 slug（推荐）、B 按消息、C 不修订。与读法无关的 R-c 已由 R2E 线落地 | 沿用多方已有的 P5 判定 |
 | [R2E coveragepy__016af5f6](tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/result.md) | 质量调查 | **转第2类** | P4：题面原例不复现，走 R-f。原测试下 6 个错误候选得 1。R-c v2 下 6 个合理实现得 1，noop 与 7 个错误候选得 0 | 复核部分同意，B1 已按 v2 处理；v2 聚焦复核无阻断 |
@@ -77,13 +77,14 @@ pillow 首轮的结论是“可转第1类”，被独立复核推翻，改判为
 
 ## 试点校准（供下一批使用）
 
-**复核发现问题的频率**：7 题做了独立复核（coveragepy__5dbbe143 沿用已有的 P5 判定，未另复核），其中 5 题首轮复核有阻断项：conan、moto、pillow、coveragepy016、dvc。修订后的聚焦复核又在 pillow 上发现 1 项。主审单独下的结论大约一半需要返工，所以独立复核必须保留。
+**复核发现问题的频率**：7 题做了独立复核（coveragepy__5dbbe143 沿用已有的 P5 判定，未另复核），其中 5 题首轮复核有阻断项：conan、moto、pillow、coveragepy016、dvc。修订后的聚焦复核又在 pillow（1 项）和 dvc（2 项）上发现新问题。主审单独下的结论大约一半需要返工，所以独立复核必须保留。dvc 连续两轮出现新阻断，触及修复循环熔断，最后按最小充分原则收口。
 
 **最常见的漏洞：修订测试仍放过错误候选。** 本批每一处都是复核者另造候选才找到的：
 
 | 题目 | 放过修订测试的错误候选 |
 | --- | --- |
 | pillow | G_small：受调色板大小限制 |
+| dvc（v2） | `w_gold_catch`、`w_gold_swallow`：只在交互路径覆盖用户修改；`w_mine_swallow`：拿不到数据仍报告成功 |
 | coveragepy016 | `wr_swallow_flush`、`wr_loop_abort`：吞掉错误 |
 | dvc | `w_swallow`、`w_swallow3`：吞掉错误 |
 
@@ -142,4 +143,5 @@ pillow 首轮的结论是“可转第1类”，被独立复核推翻，改判为
 | 09-29 | pillow 独立复核推翻首轮“可转第1类”：发现 gold 的 N1（透明索引下抛 `ValueError`），并证明 I5 有可见后果。已亲自复现，并对照上游 9.2.0–11.0.0，改判 S1，起草 R-c v1 |
 | 09-29 | coveragepy016 复核阻断项 B1：吞错类候选在 v1 下得 1。改为 v2，14 个候选私有评分符合预期 |
 | 09-29 | pydantic 按复核建议补跑上游式第二正对照 `upstream271`：正式链原材料 1、修订版 1 |
+| 09-29 | dvc-9395 聚焦复核又有 2 项阻断：交互路径未保护；正对照的范围不清。已改为 v4：采纳复核的 v3 断言，补 `dvc import` 非示例实例，冻结命令 stage 登记 T3；正对照改为 `c3_frozenfix`，第二正对照为 `up351_port`。触及熔断，交 Codex 确认 |
 | 09-29 | 云端教训：`docker image prune` 曾删掉按摘要拉取、未打标签、复核者正在使用的镜像。之后按摘要拉取的镜像一律打 `c3keep/*` 标签，复核进行期间不做 prune（见 environment.md §1） |

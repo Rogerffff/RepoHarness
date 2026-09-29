@@ -1,0 +1,26 @@
+{
+ "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-9395:latest",
+ "python_prefix": "/opt/miniconda3/envs/testbed",
+ "variants": {
+  "c3_frozenfix": [
+   "python -m pip install --no-index --no-deps /in/pygit2-1.14.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl -q",
+   "git apply /in/c3_frozenfix.patch"
+  ],
+  "up351_port": [
+   "python -m pip install --no-index --no-deps /in/pygit2-1.14.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl -q",
+   "git apply /in/up351_port.patch"
+  ]
+ },
+ "files": {
+  "pygit2-1.14.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl": "/home/user/RepoHarness/runs/category3_cloud_20260929/dvc9395/wheels/pygit2-1.14.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+  "c3_frozenfix.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dvc9395/reviewer_cands/c3_frozenfix.patch",
+  "up351_port.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dvc9395/reviewer_cands/up351_port.patch"
+ },
+ "commands": [
+  {
+   "id": "pub_regression",
+   "cmd": "python -m pytest -rA -p no:cacheprovider -q tests/func/test_repro.py tests/func/test_repro_multistage.py tests/func/test_run_cache.py tests/unit/repo/test_reproduce.py tests/func/test_data_cloud.py tests/unit/command/test_repro.py tests/func/test_import.py tests/unit/stage/test_cache.py > /tmp/p.out 2>&1; tail -3 /tmp/p.out; grep -E '^(PASSED|FAILED|ERROR|SKIPPED|XFAIL|XPASS) ' /tmp/p.out | sort",
+   "timeout_s": 2400
+  }
+ ]
+}

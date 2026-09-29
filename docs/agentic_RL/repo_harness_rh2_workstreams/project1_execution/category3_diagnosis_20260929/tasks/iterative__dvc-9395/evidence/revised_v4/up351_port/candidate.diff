@@ -1,0 +1,110 @@
+diff --git a/dvc/repo/reproduce.py b/dvc/repo/reproduce.py
+index 0c3321010..298faf28c 100644
+--- a/dvc/repo/reproduce.py
++++ b/dvc/repo/reproduce.py
+@@ -125,6 +125,15 @@ def reproduce(  # noqa: C901
+                 )
+             )
+ 
++    if kwargs.get("pull", False) and kwargs.get("run_cache", True):
++        from dvc.stage.cache import RunCacheNotSupported
++
++        logger.debug("Pulling run cache")
++        try:
++            self.stage_cache.pull(None)
++        except RunCacheNotSupported as e:
++            logger.warning("Failed to pull run cache: %s", e)
++
+     return _reproduce_stages(self.index.graph, list(stages), **kwargs)
+ 
+ 
+diff --git a/dvc/stage/__init__.py b/dvc/stage/__init__.py
+index d98285949..b03f864ab 100644
+--- a/dvc/stage/__init__.py
++++ b/dvc/stage/__init__.py
+@@ -319,20 +319,22 @@ class Stage(params.StageParams):
+             env.update(current)
+         return env
+ 
+-    def changed_deps(self) -> bool:
++    def changed_deps(self, allow_missing: bool = False) -> bool:
+         if self.frozen:
+             return False
+ 
+         if self.is_callback or self.always_changed or self.is_checkpoint:
+             return True
+ 
+-        return self._changed_deps()
++        return self._changed_deps(allow_missing=allow_missing)
+ 
+     @rwlocked(read=["deps"])
+-    def _changed_deps(self) -> bool:
++    def _changed_deps(self, allow_missing: bool = False) -> bool:
+         for dep in self.deps:
+             status = dep.status()
+             if status:
++                if allow_missing and status[str(dep)] == "deleted":
++                    continue
+                 logger.debug(
+                     "Dependency '%s' of %s changed because it is '%s'.",
+                     dep,
+@@ -343,10 +345,12 @@ class Stage(params.StageParams):
+         return False
+ 
+     @rwlocked(read=["outs"])
+-    def changed_outs(self) -> bool:
++    def changed_outs(self, allow_missing: bool = False) -> bool:
+         for out in self.outs:
+             status = out.status()
+             if status:
++                if allow_missing and status[str(out)] in ["not in cache", "deleted"]:
++                    continue
+                 logger.debug(
+                     "Output '%s' of %s changed because it is '%s'.",
+                     out,
+@@ -364,13 +368,13 @@ class Stage(params.StageParams):
+         return changed
+ 
+     @rwlocked(read=["deps", "outs"])
+-    def changed(self) -> bool:
++    def changed(self, allow_missing: bool = False) -> bool:
+         is_changed = (
+             # Short-circuit order: stage md5 is fast,
+             # deps are expected to change
+             self.changed_stage()
+-            or self.changed_deps()
+-            or self.changed_outs()
++            or self.changed_deps(allow_missing=allow_missing)
++            or self.changed_outs(allow_missing=allow_missing)
+         )
+         if is_changed:
+             logger.debug("%s changed.", self)
+@@ -421,12 +425,27 @@ class Stage(params.StageParams):
+ 
+     @rwlocked(read=["deps"], write=["outs"])
+     def reproduce(self, interactive=False, **kwargs) -> Optional["Stage"]:
+-        if not (kwargs.get("force", False) or self.changed()):
++        force = kwargs.get("force", False)
++        allow_missing = kwargs.get("allow_missing", False)
++        pull = kwargs.get("pull", False)
++        if force:
++            pass
++        # Skip stages with missing data if otherwise unchanged
++        elif not self.changed(allow_missing):
+             if not isinstance(self, PipelineStage) and self.is_data_source:
+                 logger.info("'%s' didn't change, skipping", self.addressing)
+             else:
+                 logger.info("Stage '%s' didn't change, skipping", self.addressing)
+             return None
++        # Pull stages with missing data if otherwise unchanged
++        elif not self.changed(True) and pull:
++            try:
++                logger.info("Pulling data for %s", self)
++                self.repo.pull(self.addressing, jobs=kwargs.get("jobs", None))
++                self.checkout()
++                return None
++            except CheckoutError:
++                logger.info("Unable to pull data for %s", self)
+ 
+         msg = "Going to reproduce {stage}. Are you sure you want to continue?".format(
+             stage=self

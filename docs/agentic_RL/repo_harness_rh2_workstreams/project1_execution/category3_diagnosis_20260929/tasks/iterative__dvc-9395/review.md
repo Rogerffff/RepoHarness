@@ -170,3 +170,169 @@ python3 grade.py out/<name>.log   # 逐 ID 对照 2 个 F2P、27 个 P2P
 ```
 
 每次容器运行的墙钟时间在 10 到 60 秒之间。
+
+## v2 聚焦复核（2026-09-29）
+
+**总判断：部分同意。** 主审 v2 对首轮两项阻断的处理方向正确：N1、N2 都补了断言，N3、N4 登记为 S2；v2 的私有评分我逐项复现，完全一致。`c3_missing_only` 按 D4 独立核实**有条件通过**。交接前还有两处要改：
+
+1. v2 仍让三个新构造的错误候选得 1。其中两个在交互终端里依旧会覆盖用户的修改，这正是 N2 判 S1 的第三条理由。
+2. 两个正对照各漏一类数据源，result.md 对它们的描述需要更正，范围也需要裁定：`c3_missing_only` 不拉取冻结的命令 stage 的缺失输出，`mine_ondemand` 不处理 `dvc import`。
+
+### 0．核对范围与方法
+
+- **读过的材料**：
+  - result.md v2（提交 02bcc80）、`revised_test_v2.patch`（`93cfea5d…`）、`c3_missing_only.patch`（`ac0a90ac…`）及两个生成脚本、`behavior_v2.py`；
+  - `evidence/` 下的 `revised_v2/grades.json`、`behav_v2/diff_vs_base.json`、`semantic_v2/*/d2_behavior.out`、`public_v2/regression_vs_base.json`、`refs_v1/summary.json`；
+  - `reviewer_cands/` 的 8 个文件，sha256 与我本地原件逐一相同。
+- **跑过的实验**：全部是私有模拟（root、断网、一次性容器、pygit2 1.14.1），没有正式评分。
+  - 主审 v2 测试：主审的 10 个候选，加上本轮新写的 5 个；
+  - 我的首轮行为场景 `behav.py`：对 c3 跑全部 17 个；
+  - 新写的 `behav2.py`（C1–C11，真实 CLI）：对 base、gold、c3、`mine_ondemand`、`up351_port`、`w_gold_catch`、`w_mine_swallow` 各跑一遍，另对 `w_gold_swallow` 补跑 B3、B3t、B7、C8、C9、C10；
+  - 公开回归：base 与 c3，用主审列出的 8 个测试文件；
+  - 我的加强版测试草案 v3：16 个候选。
+- **本轮新候选**：
+
+  | 候选 | 做法 |
+  | --- | --- |
+  | `up351_port` | 按上游 3.51.0 的 `Stage.reproduce` 与 `changed(allow_missing)` 移植到 2.56：只有“除缺失数据外无其它变化”的 stage 才执行 pull 加 checkout |
+  | `up257_port` | 按上游 2.57.0 移植：`Stage.run` 里对无命令或冻结的 stage 执行 `repo.pull` 加 `checkout`，顶层 run-cache 拉取不加保护 |
+  | `w_gold_catch` | gold，但逐 stage 预拉取包在 `try/except DvcException` 里 |
+  | `w_gold_swallow` | gold，加 `pull=True` 时的 stage 级吞错误 |
+  | `w_mine_swallow` | `mine_ondemand`，加同样的吞错误 |
+  | `c3_frozenfix` | c3 只改一行：`if stage.cmd and not stage.frozen: return` |
+
+### 1．逐问核对
+
+**问 1　`c3_missing_only` 的 D4 独立核实：有条件通过。**
+
+| 核对项 | 结果 | 依据 |
+| --- | --- | --- |
+| 评分 | 原测试 0（`2 == 3`），v1 为 1，v2 为 1，v3 为 1；P2P 全过；不计分的 import 测试也通过 | 我的 `av2_c3_missing_only`、`v3_c3_missing_only`，与 `grades.json` 一致 |
+| 首轮 17 个场景 | 只有 B4（HTTP 下拉回 foo）、B7（题面场景修好）与 base 不同，两处都是改进；其余 15 个与 base 完全相同 | 我自己跑的结果与 base 逐项比较，与主审的 `diff_vs_base.json` 一致 |
+| 公开回归 | base 与 c3 都是 195 passed、3 xpassed，198 个结果逐测试相同 | 与主审 `public_v2` 一致 |
+| 新场景中正确的 | C3（无冻结 stage 的全新克隆）、C4（子目录）、C5（整个目录缺失）、C7（一个缺失、一个被改）、C8（remote 上也没有，仍报错）、C9（命令失败仍报错）、C10（TTY 下不提示，修改保留）、C11（import） | `behav2` |
+| **缺口** | C1（冻结的命令 stage 输出缺失）与 C2（含冻结 stage 的全新克隆，正是题面“一条命令拉齐”的场景）都与 base 一样失败：`failed to reproduce 'download': missing data 'source': raw`。gold、`mine_ondemand`、`up351_port` 在这两个场景都成功 | 原因是 `_pull_missing_data` 的 `if stage.cmd: return` 把冻结的命令 stage 排除在外。改成 `c3_frozenfix` 那一行后，C1、C2、C10、C11 全部正确，v2、v3 都得 1 |
+| 设计 | 合理：只拉取缺失的输出，不碰已存在或被修改的文件；dry 时不拉取；遵守 `run_cache` 参数；未配置 remote 或 remote 为 HTTP 时只警告；传给 `repo.pull` 的是绝对路径，C4 表明从子目录运行也可用 | 源码与场景结果 |
+
+**结论**：c3 满足修订测试的全部断言，也满足题面的显式例子（`dvc add` 数据源）、import 和 N2，可以作 v2 的第二正对照。但它不是完整实现，因此：
+
+- result.md 说它“按上游 3.51 的语义”不准确。上游 3.51 对任何“只缺数据”的 stage 都会拉取，冻结的命令 stage 也包括在内；`up351_port` 能通过 C1、C2。
+- 准入卡必须写明这个局限，或改用 `c3_frozenfix`。那一行改动是我写的，按 D4 需要主审另行核实。
+
+**问 2　N2 断言：有公开依据，不过严。**
+
+- **依据**：题面只要求拉取 “missing” 的文件；base 的行为是保留修改、提交新 hash；公开旧测试 `test_repro_data_source` 就断言数据源更新为新 hash。
+- **不误拒 3.51 式写法**：`up351_port` 在 v2、v3 下都得 1。c3、`mine_ondemand`、`mine_retry`、`c3_frozenfix` 也都通过。
+- **会拒绝的写法**：会弹删除提示或覆盖修改的写法，即 gold、`alt_ds_only`、`gold_guarded`、`up257_port`，这与裁定一致。
+- **v2 没测的歧义**：目录里删掉一部分文件（C6），gold 会拉回缺的文件；c3、mine、`up351_port` 和 base 都当作修改，把 `d.dvc` 改写成只含剩余文件的目录。v2 不测这一点，所以谈不上过严。但以后若要补目录断言，得先裁定两种读法，这属于 P5 类问题。
+
+**问 3　v2 结果：完全复现。**
+
+- 主审的 10 个候选在 v2 下的得分与 `grades.json` 逐项一致：
+  - 得 1：`c3_missing_only`、`mine_ondemand`、`mine_retry`；
+  - 得 0：noop、gold、`alt_ds_only`、`gold_guarded`、`w_nort`、`w_swallow`、`w_swallow3`。
+- 所有候选的 P2P 都是 27/27。
+- 失败位置与主审表格相同：gold 类都失败在 N2 的 `ConfirmRemoveError`；`w_swallow` 类都失败在 foo 内容断言。
+- 我的 `w_*`、`mine_*` 与主审用的是同一批文件，sha256 相同，结果一致。
+- `mine_ondemand` 与 `mine_retry` 的 pytest 返回码是 1，原因是不计分的 import 测试失败；参考 ID 全过，所以私有评分仍为 1。
+
+**问 4　N2 判 S1：同意，但记录要补两点。**
+
+1. **反证现在已实测**。按 2.57.0 做法移植的 `up257_port` 在 v2 的 N2 断言处报 `ConfirmRemoveError`，得 0。result.md §5 里“只看了源码，未实跑”应改为已实测。这不推翻 S1：上游从 3.51 起改为只拉取缺失数据，与裁定一致。但代价要明写：上游 PR 的写法（gold）和它首个发布版（2.57.0，一直用到 3.50.x，约一年）的写法，在修订后都得 0。
+2. **第三条理由“交互覆盖”v2 没有保护住**，见问 5。
+
+**问 5　修订后仍能拿 1 的错误候选：有三个。**
+
+| 候选 | 原测试 | v2 | v3 草案 | 错在哪里（均实测） |
+| --- | --- | --- | --- | --- |
+| `w_gold_catch` | — | **1** | 0 | 非交互时正确；TTY 下回答 y 后，foo 被还原成旧内容，bar 也是旧的，并输出 “up to date”（C10） |
+| `w_gold_swallow` | — | **1** | 0 | 非交互时 foo、bar 看起来都对，但 foo.dvc 没有更新成新 hash（B3，`foo_dvc_md5_is_new=false`）；TTY 下同样被还原；数据拿不到（C8）或命令失败（C9）时 rc 仍为 0 |
+| `w_mine_swallow` | — | **1** | 0 | C8、C9 下 rc 为 0，报告成功 |
+
+我的 v3 草案（`revised_test_v3_probe.patch`）只在 v2 的 F2P 数据源测试里加了三处，共 8 行：
+
+1. 第二次 `reproduce(pull=True)` 之前加 `mocker.patch("dvc.prompt.confirm", return_value=True)`，模拟一个对任何提示都回答“是”的用户，修改仍必须保留；
+2. 第二次 repro 之后加 `assert not dvc.status()`，要求修改已被提交；
+3. 加一个反例：从未 push 的数据源 baz 被删掉，要求 `reproduce("baz.dvc", pull=True)` 抛出 `ReproductionError`。
+
+三处的依据分别是：base 在这个场景不会弹提示；`test_repro_data_source` 要求提交新 hash；拿不到数据时 base 报 `MissingDataSource`。
+
+v3 下 16 个候选的结果：
+
+- 得 1：`c3_missing_only`、`c3_frozenfix`、`mine_ondemand`、`mine_retry`、`up351_port`；
+- 得 0：noop、gold、`alt_ds_only`、`gold_guarded`、`up257_port` 和 6 个 `w_*`；
+- P2P 在全部 32 次运行（v2、v3 各 16 次，含 `c3_frozenfix`）中都是 27/27。
+
+此外，c3（冻结 stage）和 `mine_ondemand`（import）在修订测试下都得 1，但各在一类数据源上不完整。它们算不算“错误候选”，取决于下面阻断 2 的范围裁定。
+
+**问 6　result.md 对首轮意见的处理：基本准确，四处要更正。**
+
+准确的部分：
+- 阻断 1 已处理，`w_swallow`、`w_swallow3` 在 v2 下为 0，已复现；
+- 阻断 2 已裁定，N3、N4 登记为 S2；
+- N5 已放宽；
+- 两句过宽的表述已删；
+- `gold_guarded` 不再作通用正对照；
+- `refs_v1/summary.json` 已重建，4 个候选齐全；
+- pygit2 的说明已改；
+- §8 对首轮复核的概括准确。
+
+需要更正的四处：
+1. §2、§6 说 c3 “按上游 3.51 的语义”——不准确，见问 1。
+2. §6 说 `mine_ondemand` “满足题面”——要补上局限：它不处理 `dvc import` 数据源，C11 和不计分的 `test_repro_pulls_mising_import` 都失败。这是我作为它的作者在首轮没有指出的，在此更正。
+3. §5 的反证描述改为“已实测”，见问 4。
+4. §6 的交接清单补上正式评分组合：`w_gold_catch`、`w_gold_swallow`、`w_mine_swallow`、`up351_port`、`up257_port`，并在最终测试版本上重跑。
+
+### 2．阻断项
+
+1. **v2 的 N2 断言只保护了非交互路径。**
+   - `w_gold_catch`、`w_gold_swallow` 在 v2 下得 1，但交互时仍会覆盖用户修改；`w_gold_swallow` 还会留下与工作区不一致的 `.dvc`；`w_mine_swallow` 拿不到数据时仍报告成功。R-b/R-c 的验收要求“已知相关错误候选仍为 0”。
+   - 建议按 v3 草案补三处断言。我已私有验证：正对照全部为 1，gold 式和吞错误式全部为 0。
+2. **正对照的描述要更正，范围要裁定。**
+   - 交接前至少要做到：按问 6 的第 1、2 条更正描述，并在准入卡里写明两个正对照各自的局限。
+   - 同时要裁定：`dvc import` 数据源和冻结 stage 的输出算不算核心要求的实例。支持算的依据有：DVC 的 `is_data_source` 定义本身包含 import；上游的 test_patch 就有 import 测试；冻结输出属于“缺失且本次 repro 需要”、又无法重算的文件。
+     - 若算：按 R-c 补非示例实例（import 可直接复用 test_patch 里已有的测试体，评分环境需要 pygit2 1.14.1）；正对照改用两类都覆盖的实现，例如经主审核实后的 `c3_frozenfix`。
+     - 若不算：两处都登记为 T3 覆盖缺口。
+
+### 3．非阻断建议
+
+- `up351_port` 最接近上游最终语义，可作补充对照。它保留了上游在 dry 下的副作用和无 remote 时的报错，这两项本题已登记为 S2。它由我写成，若要作正对照，需要他人核实。
+- C6（目录中部分文件缺失）的两种读法登记为歧义，暂不补断言。
+- pytest 无法直接测交互路径，v3 用 `prompt.confirm` 的 mock 代替。正式评分时建议把 CLI 形式的 C10 作为私有行为证据一并保存。
+
+### 4．未查
+
+正式评分；S3、SSH 等其它 remote；`exp run --pull`；上游 3.51 那次修改的 PR 动机；`c3_frozenfix` 在 behav.py 全部 17 个场景上的表现（本轮只跑了 C1、C2、C10、C11 和 v2、v3 两版测试）；真实 actor 的开发条件。
+
+### 附录：本轮新增文件
+
+文件都在 `/tmp/rev9395_indep/`，没有入库。
+
+| 文件 | sha256 前 12 位 |
+| --- | --- |
+| `up351_port.patch` | `ca53ee797f31` |
+| `up257_port.patch` | `b2b8e508ca6a` |
+| `w_gold_catch.patch` | `d922493e550f` |
+| `w_gold_swallow.patch` | `9140dbf30eb5` |
+| `w_mine_swallow.patch` | `04cf64f4279b` |
+| `c3_frozenfix.patch` | `94d448480d67` |
+| `revised_test_v3_probe.patch` | `a85cf11aad58` |
+| `behav2.py`（C1–C11） | `4f2b5d6b9680` |
+
+v3 草案相对 v2 的全部改动，都在 `test_repro_pulls_mising_data_source` 的第二次 repro 附近：
+
+```python
+    (tmp_dir / "foo").write_text("modified")
+    mocker.patch("dvc.prompt.confirm", return_value=True)   # 新增
+    assert dvc.reproduce(pull=True)
+    assert (tmp_dir / "foo").read_text() == "modified"
+    assert (tmp_dir / "bar").read_text() == "modified"
+    assert not dvc.status()                                   # 新增
+
+    # Missing data that cannot be pulled is still an error    # 新增
+    (baz,) = tmp_dir.dvc_gen("baz", "baz")
+    remove("baz")
+    remove(baz.outs[0].cache_path)
+    with pytest.raises(ReproductionError):
+        dvc.reproduce("baz.dvc", pull=True)
+```

@@ -1,0 +1,68 @@
+diff --git a/dvc/stage/__init__.py b/dvc/stage/__init__.py
+index d98285949..ef0bd3573 100644
+--- a/dvc/stage/__init__.py
++++ b/dvc/stage/__init__.py
+@@ -581,6 +581,8 @@ class Stage(params.StageParams):
+             args = ("outputs", "frozen ") if self.frozen else ("data sources", "")
+             logger.info("Verifying %s in %s%s", *args, self)
+             if not dry:
++                if kwargs.get("pull"):
++                    self._pull_missing_outputs(jobs=kwargs.get("jobs"))
+                 self._check_missing_outputs()
+ 
+         if not dry:
+@@ -614,6 +616,16 @@ class Stage(params.StageParams):
+     def _check_missing_outputs(self) -> None:
+         check_missing_outputs(self)
+ 
++    def _pull_missing_outputs(self, jobs=None) -> None:
++        """Download and checkout outputs that are missing from the workspace."""
++        missing = [out for out in self.outs if out.use_cache and not out.exists]
++        for out in missing:
++            logger.info("Pulling missing output '%s' of %s", out, self)
++            for odb, objs in out.get_used_objs().items():
++                if objs:
++                    self.repo.cloud.pull(objs, jobs=jobs, odb=odb)
++            out.checkout(allow_missing=True)
++
+     def filter_outs(self, fs_path) -> Iterable["Output"]:
+         def _func(o):
+             return o.fs.path.isin_or_eq(fs_path, o.fs_path)
+diff --git a/dvc/stage/run.py b/dvc/stage/run.py
+index 3ae7d12b1..3fe814a11 100644
+--- a/dvc/stage/run.py
++++ b/dvc/stage/run.py
+@@ -133,6 +133,18 @@ def cmd_run(stage, dry=False, checkpoint_func=None, run_env=None):
+         _run(stage, executable, cmd, checkpoint_func=checkpoint_func, **kwargs)
+ 
+ 
++def _pull_run_cache(stage) -> bool:
++    from dvc.config import NoRemoteError
++
++    from .cache import RunCacheNotSupported
++
++    try:
++        return bool(stage.repo.stage_cache.pull(None))
++    except (NoRemoteError, RunCacheNotSupported) as exc:
++        logger.debug("Unable to pull run-cache: %s", exc)
++        return False
++
++
+ def run_stage(
+     stage, dry=False, force=False, checkpoint_func=None, run_env=None, **kwargs
+ ):
+@@ -140,7 +152,13 @@ def run_stage(
+         from .cache import RunCacheNotFoundError
+ 
+         try:
+-            stage.repo.stage_cache.restore(stage, dry=dry, **kwargs)
++            try:
++                stage.repo.stage_cache.restore(stage, dry=dry, **kwargs)
++            except RunCacheNotFoundError:
++                if not (kwargs.get("pull") and not dry and _pull_run_cache(stage)):
++                    raise
++                # run-cache fetched from remote: try restoring once more
++                stage.repo.stage_cache.restore(stage, dry=dry, **kwargs)
+             if not dry:
+                 return
+         except RunCacheNotFoundError:

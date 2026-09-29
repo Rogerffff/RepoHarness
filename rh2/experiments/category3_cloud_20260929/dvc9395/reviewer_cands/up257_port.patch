@@ -1,0 +1,44 @@
+diff --git a/dvc/repo/reproduce.py b/dvc/repo/reproduce.py
+index 0c33210..3906c1a 100644
+--- a/dvc/repo/reproduce.py
++++ b/dvc/repo/reproduce.py
+@@ -125,6 +125,10 @@ def reproduce(  # noqa: C901
+                 )
+             )
+ 
++    if kwargs.get("pull", False):
++        logger.debug("Pulling run cache")
++        self.stage_cache.pull(None)
++
+     return _reproduce_stages(self.index.graph, list(stages), **kwargs)
+ 
+ 
+diff --git a/dvc/stage/__init__.py b/dvc/stage/__init__.py
+index d982859..88b1c42 100644
+--- a/dvc/stage/__init__.py
++++ b/dvc/stage/__init__.py
+@@ -573,15 +573,20 @@ class Stage(params.StageParams):
+         if (self.cmd or self.is_import) and not self.frozen and not dry:
+             self.remove_outs(ignore_remove=False, force=False)
+ 
+-        if (not self.frozen and self.is_import) or self.is_partial_import:
++        if (
++            self.is_import and (not self.frozen or kwargs.get("pull"))
++        ) or self.is_partial_import:
+             self._sync_import(dry, force, kwargs.get("jobs", None), no_download)
+         elif not self.frozen and self.cmd:
+             self._run_stage(dry, force, **kwargs)
+-        else:
++        elif kwargs.get("pull"):
++            logger.info("Pulling data for %s", self)
++            self.repo.pull(self.addressing, jobs=kwargs.get("jobs", None))
++            self.checkout()
++        elif not dry:
+             args = ("outputs", "frozen ") if self.frozen else ("data sources", "")
+             logger.info("Verifying %s in %s%s", *args, self)
+-            if not dry:
+-                self._check_missing_outputs()
++            self._check_missing_outputs()
+ 
+         if not dry:
+             if kwargs.get("checkpoint_func", None) or no_download:
