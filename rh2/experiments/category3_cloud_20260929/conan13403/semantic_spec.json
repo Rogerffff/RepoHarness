@@ -1,0 +1,93 @@
+{
+ "image": "xingyaoww/sweb.eval.x86_64.conan-io_s_conan-13403:latest",
+ "python_prefix": "/opt/miniconda3/envs/testbed",
+ "variants": {
+  "base": [],
+  "gold": [
+   "git apply /in/gold.patch"
+  ],
+  "argsfirst": [
+   "CAND=argsfirst python /in/_edit.py"
+  ],
+  "conanfile_chdir": [
+   "CAND=conanfile_chdir python /in/_edit.py"
+  ],
+  "runcwd": [
+   "CAND=runcwd python /in/_edit.py"
+  ],
+  "oschdir": [
+   "CAND=oschdir python /in/_edit.py"
+  ],
+  "noenter": [
+   "CAND=noenter python /in/_edit.py"
+  ],
+  "relonly": [
+   "CAND=relonly python /in/_edit.py"
+  ],
+  "norestore": [
+   "CAND=norestore python /in/_edit.py"
+  ],
+  "fallback": [
+   "CAND=fallback python /in/_edit.py"
+  ],
+  "swallow_all": [
+   "CAND=swallow_all python /in/_edit.py"
+  ],
+  "swallow_run": [
+   "CAND=swallow_run python /in/_edit.py"
+  ],
+  "mutate_source": [
+   "CAND=mutate_source python /in/_edit.py"
+  ],
+  "cwd_default": [
+   "CAND=cwd_default python /in/_edit.py"
+  ],
+  "named": [
+   "CAND=named python /in/_edit.py"
+  ],
+  "rel_build": [
+   "CAND=rel_build python /in/_edit.py"
+  ],
+  "buildlit": [
+   "CAND=buildlit python /in/_edit.py"
+  ],
+  "nofinally": [
+   "CAND=nofinally python /in/_edit.py"
+  ]
+ },
+ "files": {
+  "gold.patch": "/home/user/RepoHarness/runs/category3_cloud_20260929/conan13403/gold/conan-io__conan-13403.gold.patch",
+  "_edit.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/conan13403/_edit.py",
+  "matrix.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/conan13403/matrix.py",
+  "test.patch": "/home/user/RepoHarness/runs/category3_cloud_20260929/conan13403/materials/original_test.patch",
+  "revised_v1.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/conan13403/revised_autotools_test_v1.py",
+  "revised_v2.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/conan13403/revised_autotools_test_v2.py"
+ },
+ "commands": [
+  {
+   "id": "c1_matrix",
+   "cmd": "python -c 'import runpy; runpy.run_path(\"/in/matrix.py\", run_name=\"__main__\")'",
+   "timeout_s": 300
+  },
+  {
+   "id": "c2_public_gnu_unit",
+   "cmd": "python -m pytest -p no:cacheprovider -q conans/test/unittests/tools/gnu",
+   "timeout_s": 600
+  },
+  {
+   "id": "c3_f2p_original",
+   "cmd": "git apply /in/test.patch && python -m pytest -p no:cacheprovider -n0 -rA conans/test/unittests/tools/gnu/autotools_test.py; rc=$?; git checkout -- conans/test/unittests/tools/gnu/autotools_test.py; exit $rc",
+   "timeout_s": 600
+  },
+  {
+   "id": "c4_f2p_revised_v1",
+   "cmd": "cp /in/revised_v1.py conans/test/unittests/tools/gnu/autotools_test.py && python -m pytest -p no:cacheprovider -n0 -rA conans/test/unittests/tools/gnu/autotools_test.py; rc=$?; git checkout -- conans/test/unittests/tools/gnu/autotools_test.py; exit $rc",
+   "timeout_s": 600
+  },
+  {
+   "id": "c5_f2p_revised_v2",
+   "cmd": "cp /in/revised_v2.py conans/test/unittests/tools/gnu/autotools_test.py && python -m pytest -p no:cacheprovider -n0 -rA conans/test/unittests/tools/gnu/autotools_test.py; rc=$?; git checkout -- conans/test/unittests/tools/gnu/autotools_test.py; exit $rc",
+   "timeout_s": 600
+  }
+ ]
+}

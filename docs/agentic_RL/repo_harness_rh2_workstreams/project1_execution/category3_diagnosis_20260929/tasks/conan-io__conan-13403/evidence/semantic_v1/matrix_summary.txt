@@ -1,0 +1,179 @@
+===== base  rc={"c1_matrix": 0, "c2_public_gnu_unit": 0, "c3_f2p_original": 1, "c4_f2p_revised_v1": 1}
+  default                    runs=[SRC :: autoreconf --verbose] exc=- cwd=restored
+  args_kw                    runs=[SRC :: autoreconf --verbose --install] exc=- cwd=restored
+  args_positional            runs=[SRC :: autoreconf --verbose --install] exc=- cwd=restored
+  rel_sub                    runs=[(none)] exc=TypeError: Autotools.autoreconf() got an unexpected keyword … cwd=restored
+  abs_build                  runs=[(none)] exc=TypeError: Autotools.autoreconf() got an unexpected keyword … cwd=restored
+  abs_build_args             runs=[(none)] exc=TypeError: Autotools.autoreconf() got an unexpected keyword … cwd=restored
+  abs_sub                    runs=[(none)] exc=TypeError: Autotools.autoreconf() got an unexpected keyword … cwd=restored
+  missing                    runs=[(none)] exc=TypeError: Autotools.autoreconf() got an unexpected keyword … cwd=restored
+  run_fails_sub              runs=[(none)] exc=TypeError: Autotools.autoreconf() got an unexpected keyword … cwd=restored
+  sequence_sub_then_default  runs=[(none)] exc=TypeError: Autotools.autoreconf() got an unexpected keyword … cwd=restored
+===== gold  rc={"c1_matrix": 0, "c2_public_gnu_unit": 0, "c3_f2p_original": 0, "c4_f2p_revised_v1": 0}
+  default                    runs=[SRC :: autoreconf --verbose] exc=- cwd=restored
+  args_kw                    runs=[SRC :: autoreconf --verbose --install] exc=- cwd=restored
+  args_positional            runs=[(none)] exc=TypeError: join() argument must be str, bytes, or os.PathLik… cwd=restored
+  rel_sub                    runs=[SRC/sub :: autoreconf --verbose] exc=- cwd=restored
+  abs_build                  runs=[BUILD :: autoreconf --verbose] exc=- cwd=restored
+  abs_build_args             runs=[BUILD :: autoreconf --verbose --install] exc=- cwd=restored
+  abs_sub                    runs=[SRC/sub :: autoreconf --verbose] exc=- cwd=restored
+  missing                    runs=[(none)] exc=FileNotFoundError: [Errno 2] No such file or directory: '/tm… cwd=restored
+  run_fails_sub              runs=[SRC/sub :: autoreconf --verbose] exc=ConanException: simulated autoreconf failure cwd=restored
+  sequence_sub_then_default  runs=[SRC/sub :: autoreconf --verbose; SRC :: autoreconf --verbose] exc=- cwd=restored
+===== argsfirst  rc={"c1_matrix": 0, "c2_public_gnu_unit": 0, "c3_f2p_original": 0, "c4_f2p_revised_v1": 0}
+  default                    runs=[SRC :: autoreconf --verbose] exc=- cwd=restored
+  args_kw                    runs=[SRC :: autoreconf --verbose --install] exc=- cwd=restored
+  args_positional            runs=[SRC :: autoreconf --verbose --install] exc=- cwd=restored
+  rel_sub                    runs=[SRC/sub :: autoreconf --verbose] exc=- cwd=restored
+  abs_build                  runs=[BUILD :: autoreconf --verbose] exc=- cwd=restored
+  abs_build_args             runs=[BUILD :: autoreconf --verbose --install] exc=- cwd=restored
+  abs_sub                    runs=[SRC/sub :: autoreconf --verbose] exc=- cwd=restored
+  missing                    runs=[(none)] exc=FileNotFoundError: [Errno 2] No such file or directory: '/tm… cwd=restored
+  run_fails_sub              runs=[SRC/sub :: autoreconf --verbose] exc=ConanException: simulated autoreconf failure cwd=restored
+  sequence_sub_then_default  runs=[SRC/sub :: autoreconf --verbose; SRC :: autoreconf --verbose] exc=- cwd=restored
+===== conanfile_chdir  rc={"c1_matrix": 0, "c2_public_gnu_unit": 0, "c3_f2p_original": 1, "c4_f2p_revised_v1": 0}
+  default                    runs=[SRC :: autoreconf --verbose] exc=- cwd=restored
+  args_kw                    runs=[SRC :: autoreconf --verbose --install] exc=- cwd=restored
+  args_positional            runs=[SRC :: autoreconf --verbose --install] exc=- cwd=restored
+  rel_sub                    runs=[SRC/sub :: autoreconf --verbose] exc=- cwd=restored
+  abs_build                  runs=[BUILD :: autoreconf --verbose] exc=- cwd=restored
+  abs_build_args             runs=[BUILD :: autoreconf --verbose --install] exc=- cwd=restored
+  abs_sub                    runs=[SRC/sub :: autoreconf --verbose] exc=- cwd=restored
+  missing                    runs=[(none)] exc=FileNotFoundError: [Errno 2] No such file or directory: '/tm… cwd=restored
+  run_fails_sub              runs=[SRC/sub :: autoreconf --verbose] exc=ConanException: simulated autoreconf failure cwd=restored
+  sequence_sub_then_default  runs=[SRC/sub :: autoreconf --verbose; SRC :: autoreconf --verbose] exc=- cwd=restored
+===== runcwd  rc={"c1_matrix": 0, "c2_public_gnu_unit": 0, "c3_f2p_original": 1, "c4_f2p_revised_v1": 0}
+  default                    runs=[SRC :: autoreconf --verbose] exc=- cwd=restored
+  args_kw                    runs=[SRC :: autoreconf --verbose --install] exc=- cwd=restored
+  args_positional            runs=[SRC :: autoreconf --verbose --install] exc=- cwd=restored
+  rel_sub                    runs=[SRC/sub :: autoreconf --verbose] exc=- cwd=restored
+  abs_build                  runs=[BUILD :: autoreconf --verbose] exc=- cwd=restored
+  abs_build_args             runs=[BUILD :: autoreconf --verbose --install] exc=- cwd=restored
+  abs_sub                    runs=[SRC/sub :: autoreconf --verbose] exc=- cwd=restored
+  missing                    runs=[(none)] exc=FileNotFoundError: /tmp/tmpkumhju2u/src/missing cwd=restored
+  run_fails_sub              runs=[SRC/sub :: autoreconf --verbose] exc=ConanException: simulated autoreconf failure cwd=restored
+  sequence_sub_then_default  runs=[SRC/sub :: autoreconf --verbose; SRC :: autoreconf --verbose] exc=- cwd=restored
+===== oschdir  rc={"c1_matrix": 0, "c2_public_gnu_unit": 0, "c3_f2p_original": 1, "c4_f2p_revised_v1": 0}
+  default                    runs=[SRC :: autoreconf --verbose] exc=- cwd=restored
+  args_kw                    runs=[SRC :: autoreconf --verbose --install] exc=- cwd=restored
+  args_positional            runs=[SRC :: autoreconf --verbose --install] exc=- cwd=restored
+  rel_sub                    runs=[SRC/sub :: autoreconf --verbose] exc=- cwd=restored
+  abs_build                  runs=[BUILD :: autoreconf --verbose] exc=- cwd=restored
+  abs_build_args             runs=[BUILD :: autoreconf --verbose --install] exc=- cwd=restored
+  abs_sub                    runs=[SRC/sub :: autoreconf --verbose] exc=- cwd=restored
+  missing                    runs=[(none)] exc=FileNotFoundError: [Errno 2] No such file or directory: '/tm… cwd=restored
+  run_fails_sub              runs=[SRC/sub :: autoreconf --verbose] exc=ConanException: simulated autoreconf failure cwd=restored
+  sequence_sub_then_default  runs=[SRC/sub :: autoreconf --verbose; SRC :: autoreconf --verbose] exc=- cwd=restored
+===== noenter  rc={"c1_matrix": 0, "c2_public_gnu_unit": 0, "c3_f2p_original": 0, "c4_f2p_revised_v1": 1}
+  default                    runs=[BUILD :: autoreconf --verbose] exc=- cwd=restored
+  args_kw                    runs=[BUILD :: autoreconf --verbose --install] exc=- cwd=restored
+  args_positional            runs=[(none)] exc=TypeError: join() argument must be str, bytes, or os.PathLik… cwd=restored
+  rel_sub                    runs=[BUILD :: autoreconf --verbose] exc=- cwd=restored
+  abs_build                  runs=[BUILD :: autoreconf --verbose] exc=- cwd=restored
+  abs_build_args             runs=[BUILD :: autoreconf --verbose --install] exc=- cwd=restored
+  abs_sub                    runs=[BUILD :: autoreconf --verbose] exc=- cwd=restored
+  missing                    runs=[BUILD :: autoreconf --verbose] exc=- cwd=restored
+  run_fails_sub              runs=[BUILD :: autoreconf --verbose] exc=ConanException: simulated autoreconf failure cwd=restored
+  sequence_sub_then_default  runs=[BUILD :: autoreconf --verbose; BUILD :: autoreconf --verbose] exc=- cwd=restored
+===== relonly  rc={"c1_matrix": 0, "c2_public_gnu_unit": 0, "c3_f2p_original": 0, "c4_f2p_revised_v1": 1}
+  default                    runs=[SRC :: autoreconf --verbose] exc=- cwd=restored
+  args_kw                    runs=[SRC :: autoreconf --verbose --install] exc=- cwd=restored
+  args_positional            runs=[SRC :: autoreconf --verbose --install] exc=- cwd=restored
+  rel_sub                    runs=[SRC/sub :: autoreconf --verbose] exc=- cwd=restored
+  abs_build                  runs=[(none)] exc=FileNotFoundError: [Errno 2] No such file or directory: '/tm… cwd=restored
+  abs_build_args             runs=[(none)] exc=FileNotFoundError: [Errno 2] No such file or directory: '/tm… cwd=restored
+  abs_sub                    runs=[(none)] exc=FileNotFoundError: [Errno 2] No such file or directory: '/tm… cwd=restored
+  missing                    runs=[(none)] exc=FileNotFoundError: [Errno 2] No such file or directory: '/tm… cwd=restored
+  run_fails_sub              runs=[SRC/sub :: autoreconf --verbose] exc=ConanException: simulated autoreconf failure cwd=restored
+  sequence_sub_then_default  runs=[SRC/sub :: autoreconf --verbose; SRC :: autoreconf --verbose] exc=- cwd=restored
+===== norestore  rc={"c1_matrix": 0, "c2_public_gnu_unit": 0, "c3_f2p_original": 1, "c4_f2p_revised_v1": 1}
+  default                    runs=[SRC :: autoreconf --verbose] exc=- cwd=LEAKED->SRC
+  args_kw                    runs=[SRC :: autoreconf --verbose --install] exc=- cwd=LEAKED->SRC
+  args_positional            runs=[SRC :: autoreconf --verbose --install] exc=- cwd=LEAKED->SRC
+  rel_sub                    runs=[SRC/sub :: autoreconf --verbose] exc=- cwd=LEAKED->SRC/sub
+  abs_build                  runs=[BUILD :: autoreconf --verbose] exc=- cwd=restored
+  abs_build_args             runs=[BUILD :: autoreconf --verbose --install] exc=- cwd=restored
+  abs_sub                    runs=[SRC/sub :: autoreconf --verbose] exc=- cwd=LEAKED->SRC/sub
+  missing                    runs=[(none)] exc=FileNotFoundError: [Errno 2] No such file or directory: '/tm… cwd=restored
+  run_fails_sub              runs=[SRC/sub :: autoreconf --verbose] exc=ConanException: simulated autoreconf failure cwd=LEAKED->SRC/sub
+  sequence_sub_then_default  runs=[SRC/sub :: autoreconf --verbose; SRC :: autoreconf --verbose] exc=- cwd=LEAKED->SRC
+===== fallback  rc={"c1_matrix": 0, "c2_public_gnu_unit": 0, "c3_f2p_original": 1, "c4_f2p_revised_v1": 1}
+  [other output] WARN: autoreconf folder /tmp/tmp0_ii992x/src/missing not found, using /tmp/tmp0_ii992x/src
+  default                    runs=[SRC :: autoreconf --verbose] exc=- cwd=restored
+  args_kw                    runs=[SRC :: autoreconf --verbose --install] exc=- cwd=restored
+  args_positional            runs=[SRC :: autoreconf --verbose --install] exc=- cwd=restored
+  rel_sub                    runs=[SRC/sub :: autoreconf --verbose] exc=- cwd=restored
+  abs_build                  runs=[BUILD :: autoreconf --verbose] exc=- cwd=restored
+  abs_build_args             runs=[BUILD :: autoreconf --verbose --install] exc=- cwd=restored
+  abs_sub                    runs=[SRC/sub :: autoreconf --verbose] exc=- cwd=restored
+  missing                    runs=[SRC :: autoreconf --verbose] exc=- cwd=restored
+  run_fails_sub              runs=[SRC/sub :: autoreconf --verbose] exc=ConanException: simulated autoreconf failure cwd=restored
+  sequence_sub_then_default  runs=[SRC/sub :: autoreconf --verbose; SRC :: autoreconf --verbose] exc=- cwd=restored
+===== swallow_all  rc={"c1_matrix": 0, "c2_public_gnu_unit": 0, "c3_f2p_original": 0, "c4_f2p_revised_v1": 1}
+  [other output] WARN: autoreconf failed: [Errno 2] No such file or directory: '/tmp/tmp2nduu5k4/src/missing' | WARN: autoreconf failed: simulated autoreconf failure
+  default                    runs=[SRC :: autoreconf --verbose] exc=- cwd=restored
+  args_kw                    runs=[SRC :: autoreconf --verbose --install] exc=- cwd=restored
+  args_positional            runs=[SRC :: autoreconf --verbose --install] exc=- cwd=restored
+  rel_sub                    runs=[SRC/sub :: autoreconf --verbose] exc=- cwd=restored
+  abs_build                  runs=[BUILD :: autoreconf --verbose] exc=- cwd=restored
+  abs_build_args             runs=[BUILD :: autoreconf --verbose --install] exc=- cwd=restored
+  abs_sub                    runs=[SRC/sub :: autoreconf --verbose] exc=- cwd=restored
+  missing                    runs=[(none)] exc=- cwd=restored
+  run_fails_sub              runs=[SRC/sub :: autoreconf --verbose] exc=- cwd=restored
+  sequence_sub_then_default  runs=[SRC/sub :: autoreconf --verbose; SRC :: autoreconf --verbose] exc=- cwd=restored
+===== swallow_run  rc={"c1_matrix": 0, "c2_public_gnu_unit": 0, "c3_f2p_original": 0, "c4_f2p_revised_v1": 1}
+  [other output] WARN: autoreconf failed: simulated autoreconf failure
+  default                    runs=[SRC :: autoreconf --verbose] exc=- cwd=restored
+  args_kw                    runs=[SRC :: autoreconf --verbose --install] exc=- cwd=restored
+  args_positional            runs=[SRC :: autoreconf --verbose --install] exc=- cwd=restored
+  rel_sub                    runs=[SRC/sub :: autoreconf --verbose] exc=- cwd=restored
+  abs_build                  runs=[BUILD :: autoreconf --verbose] exc=- cwd=restored
+  abs_build_args             runs=[BUILD :: autoreconf --verbose --install] exc=- cwd=restored
+  abs_sub                    runs=[SRC/sub :: autoreconf --verbose] exc=- cwd=restored
+  missing                    runs=[(none)] exc=FileNotFoundError: [Errno 2] No such file or directory: '/tm… cwd=restored
+  run_fails_sub              runs=[SRC/sub :: autoreconf --verbose] exc=- cwd=restored
+  sequence_sub_then_default  runs=[SRC/sub :: autoreconf --verbose; SRC :: autoreconf --verbose] exc=- cwd=restored
+===== mutate_source  rc={"c1_matrix": 0, "c2_public_gnu_unit": 0, "c3_f2p_original": 1, "c4_f2p_revised_v1": 1}
+  default                    runs=[SRC :: autoreconf --verbose] exc=- cwd=restored
+  args_kw                    runs=[SRC :: autoreconf --verbose --install] exc=- cwd=restored
+  args_positional            runs=[SRC :: autoreconf --verbose --install] exc=- cwd=restored
+  rel_sub                    runs=[SRC/sub :: autoreconf --verbose] exc=- cwd=restored SOURCE_FOLDER_CHANGED
+  abs_build                  runs=[BUILD :: autoreconf --verbose] exc=- cwd=restored SOURCE_FOLDER_CHANGED
+  abs_build_args             runs=[BUILD :: autoreconf --verbose --install] exc=- cwd=restored SOURCE_FOLDER_CHANGED
+  abs_sub                    runs=[SRC/sub :: autoreconf --verbose] exc=- cwd=restored SOURCE_FOLDER_CHANGED
+  missing                    runs=[(none)] exc=FileNotFoundError: [Errno 2] No such file or directory: '/tm… cwd=restored SOURCE_FOLDER_CHANGED
+  run_fails_sub              runs=[SRC/sub :: autoreconf --verbose] exc=ConanException: simulated autoreconf failure cwd=restored SOURCE_FOLDER_CHANGED
+  sequence_sub_then_default  runs=[SRC/sub :: autoreconf --verbose; SRC/sub :: autoreconf --verbose] exc=- cwd=restored SOURCE_FOLDER_CHANGED
+===== cwd_default  rc={"c1_matrix": 0, "c2_public_gnu_unit": 0, "c3_f2p_original": 1, "c4_f2p_revised_v1": 1}
+  default                    runs=[BUILD :: autoreconf --verbose] exc=- cwd=restored
+  args_kw                    runs=[BUILD :: autoreconf --verbose --install] exc=- cwd=restored
+  args_positional            runs=[BUILD :: autoreconf --verbose --install] exc=- cwd=restored
+  rel_sub                    runs=[SRC/sub :: autoreconf --verbose] exc=- cwd=restored
+  abs_build                  runs=[BUILD :: autoreconf --verbose] exc=- cwd=restored
+  abs_build_args             runs=[BUILD :: autoreconf --verbose --install] exc=- cwd=restored
+  abs_sub                    runs=[SRC/sub :: autoreconf --verbose] exc=- cwd=restored
+  missing                    runs=[(none)] exc=FileNotFoundError: [Errno 2] No such file or directory: '/tm… cwd=restored
+  run_fails_sub              runs=[SRC/sub :: autoreconf --verbose] exc=ConanException: simulated autoreconf failure cwd=restored
+  sequence_sub_then_default  runs=[SRC/sub :: autoreconf --verbose; BUILD :: autoreconf --verbose] exc=- cwd=restored
+===== named  rc={"c1_matrix": 0, "c2_public_gnu_unit": 0, "c3_f2p_original": 1, "c4_f2p_revised_v1": 1}
+  default                    runs=[SRC :: autoreconf --verbose] exc=- cwd=restored
+  args_kw                    runs=[SRC :: autoreconf --verbose --install] exc=- cwd=restored
+  args_positional            runs=[SRC :: autoreconf --verbose --install] exc=- cwd=restored
+  rel_sub                    runs=[(none)] exc=TypeError: Autotools.autoreconf() got an unexpected keyword … cwd=restored
+  abs_build                  runs=[(none)] exc=TypeError: Autotools.autoreconf() got an unexpected keyword … cwd=restored
+  abs_build_args             runs=[(none)] exc=TypeError: Autotools.autoreconf() got an unexpected keyword … cwd=restored
+  abs_sub                    runs=[(none)] exc=TypeError: Autotools.autoreconf() got an unexpected keyword … cwd=restored
+  missing                    runs=[(none)] exc=TypeError: Autotools.autoreconf() got an unexpected keyword … cwd=restored
+  run_fails_sub              runs=[(none)] exc=TypeError: Autotools.autoreconf() got an unexpected keyword … cwd=restored
+  sequence_sub_then_default  runs=[(none)] exc=TypeError: Autotools.autoreconf() got an unexpected keyword … cwd=restored
+===== rel_build  rc={"c1_matrix": 0, "c2_public_gnu_unit": 0, "c3_f2p_original": 1, "c4_f2p_revised_v1": 1}
+  default                    runs=[SRC :: autoreconf --verbose] exc=- cwd=restored
+  args_kw                    runs=[SRC :: autoreconf --verbose --install] exc=- cwd=restored
+  args_positional            runs=[SRC :: autoreconf --verbose --install] exc=- cwd=restored
+  rel_sub                    runs=[(none)] exc=FileNotFoundError: [Errno 2] No such file or directory: '/tm… cwd=restored
+  abs_build                  runs=[BUILD :: autoreconf --verbose] exc=- cwd=restored
+  abs_build_args             runs=[BUILD :: autoreconf --verbose --install] exc=- cwd=restored
+  abs_sub                    runs=[SRC/sub :: autoreconf --verbose] exc=- cwd=restored
+  missing                    runs=[(none)] exc=FileNotFoundError: [Errno 2] No such file or directory: '/tm… cwd=restored
+  run_fails_sub              runs=[(none)] exc=FileNotFoundError: [Errno 2] No such file or directory: '/tm… cwd=restored
+  sequence_sub_then_default  runs=[(none)] exc=FileNotFoundError: [Errno 2] No such file or directory: '/tm… cwd=restored

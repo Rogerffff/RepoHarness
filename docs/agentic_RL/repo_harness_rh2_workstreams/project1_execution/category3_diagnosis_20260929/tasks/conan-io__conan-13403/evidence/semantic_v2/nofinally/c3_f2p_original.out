@@ -1,0 +1,68 @@
+============================= test session starts ==============================
+platform linux -- Python 3.10.14, pytest-6.2.5, py-1.11.0, pluggy-1.5.0
+rootdir: /testbed, configfile: pytest.ini
+plugins: xdist-3.5.0
+collected 1 item
+
+conans/test/unittests/tools/gnu/autotools_test.py F                      [100%]
+
+=================================== FAILURES ===================================
+___________________________ test_source_folder_works ___________________________
+
+chdir_mock = <MagicMock name='chdir' id='140258984874032'>
+
+    @patch('conan.tools.gnu.autotools.chdir')
+    def test_source_folder_works(chdir_mock):
+        folder = temp_folder()
+        os.chdir(folder)
+        save_toolchain_args({
+            "configure_args": "-foo bar",
+            "make_args": "",
+            "autoreconf_args": "-bar foo"}
+        )
+        conanfile = ConanFileMock()
+        sources = "/path/to/sources"
+        conanfile.folders.set_base_source(sources)
+        autotools = Autotools(conanfile)
+        autotools.configure(build_script_folder="subfolder")
+        assert conanfile.command.replace("\\", "/") == '"/path/to/sources/subfolder/configure" -foo bar '
+    
+        autotools = Autotools(conanfile)
+        autotools.configure()
+        assert conanfile.command.replace("\\", "/") == '"/path/to/sources/configure" -foo bar '
+    
+>       autotools.autoreconf(build_script_folder="subfolder")
+
+/testbed/conans/test/unittests/tools/gnu/autotools_test.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <conan.tools.gnu.autotools.Autotools object at 0x7f9096aeb6a0>, args = []
+build_script_folder = 'subfolder'
+
+    def autoreconf(self, args=None, build_script_folder=None):
+        """
+        Call ``autoreconf``
+    
+        :param args: (Optional, Defaulted to ``None``): List of arguments to use for the
+                     ``autoreconf`` call.
+        :param build_script_folder: Folder where the ``configure.ac`` file is located. A relative
+                                    path is relative to conanfile.source_folder. If not specified
+                                    conanfile.source_folder is used.
+        """
+        script_folder = os.path.join(self._conanfile.source_folder, build_script_folder) \
+            if build_script_folder else self._conanfile.source_folder
+        args = args or []
+        command = join_arguments(["autoreconf", self._autoreconf_args, cmd_args_to_string(args)])
+        old_folder = os.getcwd()
+>       os.chdir(script_folder)
+E       FileNotFoundError: [Errno 2] No such file or directory: '/path/to/sources/subfolder'
+
+/testbed/conan/tools/gnu/autotools.py:116: FileNotFoundError
+----------------------------- Captured stderr call -----------------------------
+Calling:
+ > "/path/to/sources/subfolder/configure" -foo bar 
+Calling:
+ > "/path/to/sources/configure" -foo bar 
+=========================== short test summary info ============================
+FAILED conans/test/unittests/tools/gnu/autotools_test.py::test_source_folder_works
+============================== 1 failed in 0.15s ===============================

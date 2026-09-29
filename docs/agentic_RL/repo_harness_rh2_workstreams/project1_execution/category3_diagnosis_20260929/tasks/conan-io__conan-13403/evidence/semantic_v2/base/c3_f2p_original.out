@@ -1,0 +1,45 @@
+============================= test session starts ==============================
+platform linux -- Python 3.10.14, pytest-6.2.5, py-1.11.0, pluggy-1.5.0
+rootdir: /testbed, configfile: pytest.ini
+plugins: xdist-3.5.0
+collected 1 item
+
+conans/test/unittests/tools/gnu/autotools_test.py F                      [100%]
+
+=================================== FAILURES ===================================
+___________________________ test_source_folder_works ___________________________
+
+chdir_mock = <MagicMock name='chdir' id='140352113211472'>
+
+    @patch('conan.tools.gnu.autotools.chdir')
+    def test_source_folder_works(chdir_mock):
+        folder = temp_folder()
+        os.chdir(folder)
+        save_toolchain_args({
+            "configure_args": "-foo bar",
+            "make_args": "",
+            "autoreconf_args": "-bar foo"}
+        )
+        conanfile = ConanFileMock()
+        sources = "/path/to/sources"
+        conanfile.folders.set_base_source(sources)
+        autotools = Autotools(conanfile)
+        autotools.configure(build_script_folder="subfolder")
+        assert conanfile.command.replace("\\", "/") == '"/path/to/sources/subfolder/configure" -foo bar '
+    
+        autotools = Autotools(conanfile)
+        autotools.configure()
+        assert conanfile.command.replace("\\", "/") == '"/path/to/sources/configure" -foo bar '
+    
+>       autotools.autoreconf(build_script_folder="subfolder")
+E       TypeError: Autotools.autoreconf() got an unexpected keyword argument 'build_script_folder'
+
+/testbed/conans/test/unittests/tools/gnu/autotools_test.py:30: TypeError
+----------------------------- Captured stderr call -----------------------------
+Calling:
+ > "/path/to/sources/subfolder/configure" -foo bar 
+Calling:
+ > "/path/to/sources/configure" -foo bar 
+=========================== short test summary info ============================
+FAILED conans/test/unittests/tools/gnu/autotools_test.py::test_source_folder_works
+============================== 1 failed in 0.15s ===============================
