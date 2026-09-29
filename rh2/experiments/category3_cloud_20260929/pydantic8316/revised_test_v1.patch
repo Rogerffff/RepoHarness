@@ -1,0 +1,24 @@
+diff --git a/tests/test_utils.py b/tests/test_utils.py
+--- a/tests/test_utils.py
++++ b/tests/test_utils.py
+@@ -529,6 +529,7 @@
+         ('Camel2Snake', 'camel_2_snake'),
+         ('_CamelToSnake', '_camel_to_snake'),
+         ('CamelToSnake_', 'camel_to_snake_'),
++        ('CAMELToSnake', 'camel_to_snake'),
+         ('__CamelToSnake__', '__camel_to_snake__'),
+         ('Camel2', 'camel_2'),
+         ('Camel2_', 'camel_2_'),
+@@ -540,6 +541,12 @@
+ )
+ def test_camel2snake(value: str, result: str) -> None:
+     assert to_snake(value) == result
++    if value == 'CAMELToSnake':
++        # an acronym followed by a capitalized word is split wherever it appears, not only at the start
++        assert to_snake('HTTPResponse') == 'http_response'
++        assert to_snake('getHTTPResponseCode') == 'get_http_response_code'
++        assert to_snake('userIDToken') == 'user_id_token'
++        assert to_snake('XMLToJSONConverter') == 'xml_to_json_converter'
+ 
+ 
+ @pytest.mark.parametrize(

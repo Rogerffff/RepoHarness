@@ -6,14 +6,16 @@
 候选说明：
 - ctx：结构化校验。属性名层与 AttributeValue 层分开，M 的成员重新当属性名；保留 S/N 的旧错误。合理实现，与 gold 不同。
 - ctx_list：ctx，并对 L 的元素做同样的 AttributeValue 校验。合理实现。
+- list_as_names：ctx，但把 L 的元素当作属性名映射（而不是 AttributeValue）来校验。容器形态出错（list 内 map 的 S 被误拒）。
 - parity：按深度奇偶区分（偶数层是属性名，奇数层是类型标签）。合理实现，与 gold 不同。
+- skip_s_subtree：parity 的写法，但遇到名为 S 的属性直接跳过、不再校验它的值。吞掉错误（S 属性下的类型错误不再报）。
 - top_only：只放过顶层属性名 S（题面例 1），嵌套仍报错。部分修复。
 - siblings：认为“只有一个键的 dict 才是 AttributeValue”，有兄弟键时 S 才算属性名。数据形态子集。
 - depth2：只把顶层和第一层 map 的键当属性名，更深的 map 仍按类型标签处理。规模子集。
 - null_only：只在属性 S 的值为 NULL（题面示例字面值）时放过。示例字面值。
 - shape：S 的值“看起来像 AttributeValue”（单键且键是类型标签）时当作属性名。数据形态启发式。
 - rootkey：只在顶层属性是表主键时检查 S→dict（gold 递归参数若传根属性名的写法）。非主键的 S 类型错误被放过。
-- swallow：put_item 里捕获 SerializationException，改为只校验主键属性后继续。吞掉错误。
+- swallow：put_item 里捕获 SerializationException，改为只校验主键属性后继续。吞掉错误；属性 S 排在前面时，后面属性的类型错误也被一起放过（依赖顺序）。
 """
 import argparse
 import difflib
@@ -74,8 +76,15 @@ CTX_TAIL = '''            elif type_tag == "N" and type(value) == int:
             elif type_tag == "S":
 ''' + S_CHECKS
 
+CTX_LIST_AS_NAMES = '''            elif type_tag == "L" and type(value) == list:
+                for element in value:
+                    if type(element) == dict:
+                        self._validate_item_types(element)
+'''
+
 CANDIDATES = {
     "ctx": CTX_HEAD + CTX_TAIL,
+    "list_as_names": CTX_HEAD + CTX_LIST_AS_NAMES + CTX_TAIL,
     "ctx_list": CTX_HEAD + CTX_LIST + CTX_TAIL,
     "parity": '''    def _validate_item_types(self, item_attrs: Dict[str, Any], depth: int = 0) -> None:
         # Even depths hold attribute names (the item itself and the members of every map),
@@ -87,6 +96,19 @@ CANDIDATES = {
             elif type(value) == int and key == "N":
                 raise InvalidConversion
             if key == "S" and is_type_level:
+''' + S_CHECKS,
+    "skip_s_subtree": '''    def _validate_item_types(self, item_attrs: Dict[str, Any], depth: int = 0) -> None:
+        # Even depths hold attribute names, odd depths hold type descriptors
+        is_type_level = depth % 2 == 1
+        for key, value in item_attrs.items():
+            if key == "S" and not is_type_level:
+                # An attribute that happens to be called "S" - nothing to check
+                continue
+            if type(value) == dict:
+                self._validate_item_types(value, depth + 1)
+            elif type(value) == int and key == "N":
+                raise InvalidConversion
+            if key == "S":
 ''' + S_CHECKS,
     "top_only": '''    def _validate_item_types(
         self, item_attrs: Dict[str, Any], top_level: bool = True

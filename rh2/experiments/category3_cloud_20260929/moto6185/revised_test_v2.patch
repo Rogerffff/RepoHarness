@@ -1,0 +1,53 @@
+diff --git a/tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py b/tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py
+--- a/tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py
++++ b/tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py
+@@ -933,12 +933,49 @@ def test_put_item__string_as_integer_value():
+     err["Code"].should.equal("SerializationException")
+     err["Message"].should.equal("NUMBER_VALUE cannot be converted to String")
+ 
++    # A primary key cannot be of type S, but then point to a dictionary
+     with pytest.raises(ClientError) as exc:
+         client.put_item(TableName="without_sk", Item={"pk": {"S": {"S": "asdf"}}})
+     err = exc.value.response["Error"]
+     err["Code"].should.equal("SerializationException")
+     err["Message"].should.equal("Start of structure or map found where not expected")
+ 
++    # Note that a normal attribute name can be an 'S', which follows the same pattern
++    # Nested 'S'-s like this are allowed for non-key attributes
++    client.put_item(
++        TableName="without_sk", Item={"pk": {"S": "val"}, "S": {"S": "asdf"}}
++    )
++    item = client.get_item(TableName="without_sk", Key={"pk": {"S": "val"}})["Item"]
++    assert item == {"pk": {"S": "val"}, "S": {"S": "asdf"}}
++
++    # The issue's examples: an attribute called 'S' holding None, at the top level and
++    # nested inside a map. 'S' is a valid attribute name anywhere in the item, however
++    # deeply nested, and the item is stored as given
++    for pk, attributes in [
++        ("issue_top_level", {"S": {"NULL": True}}),
++        ("issue_nested", {"A": {"M": {"S": {"NULL": True}}}}),
++        ("deeply_nested", {"A": {"M": {"B": {"M": {"S": {"S": "asdf"}}}}}}),
++        ("nested_in_list", {"A": {"L": [{"M": {"S": {"N": "1"}}}]}}),
++    ]:
++        item = {"pk": {"S": pk}, **attributes}
++        client.put_item(TableName="without_sk", Item=item)
++        stored = client.get_item(TableName="without_sk", Key={"pk": {"S": pk}})["Item"]
++        assert stored == item
++
++    # An attribute called 'S' is validated like any other attribute, and does not switch
++    # off the validation of the other attributes (see test_put_item_wrong_datatype)
++    for attributes in [
++        {"S": {"M": {"sth": {"N": 5}}}},
++        {"S": {"S": "asdf"}, "nested": {"M": {"sth": {"N": 5}}}},
++    ]:
++        with pytest.raises(ClientError) as exc:
++            client.put_item(
++                TableName="without_sk", Item={"pk": {"S": "invalid"}, **attributes}
++            )
++        err = exc.value.response["Error"]
++        assert err["Code"] == "SerializationException"
++        assert err["Message"] == "NUMBER_VALUE cannot be converted to String"
++
+ 
+ @mock_dynamodb
+ def test_gsi_key_cannot_be_empty():

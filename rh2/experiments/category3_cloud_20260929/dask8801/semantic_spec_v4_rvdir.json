@@ -1,0 +1,43 @@
+{
+ "image": "c3keep/dask8801:src",
+ "python_prefix": "/opt/miniconda3/envs/testbed",
+ "variants": {
+  "rv_dir_only": [
+   "git apply /in/rv_dir_only.patch"
+  ]
+ },
+ "files": {
+  "behavior_v4.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8801/behavior_v4.py",
+  "rv_dir_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8801/rv_dir_only.patch",
+  "test_config_orig.py": "/home/user/RepoHarness/runs/category3_cloud_20260929/dask8801/testfiles/test_config_orig.py",
+  "test_config_revised_v3.py": "/home/user/RepoHarness/runs/category3_cloud_20260929/dask8801/testfiles/test_config_revised_v3.py",
+  "test_config_revised_v4.py": "/home/user/RepoHarness/runs/category3_cloud_20260929/dask8801/testfiles/test_config_revised_v4.py"
+ },
+ "commands": [
+  {
+   "id": "b1_behavior",
+   "cmd": "python /in/behavior_v4.py",
+   "timeout_s": 600
+  },
+  {
+   "id": "b3_original_hidden_tests_nobody",
+   "cmd": "cp /in/test_config_orig.py dask/tests/test_config.py && setpriv --reuid=65534 --regid=65534 --clear-groups env HOME=/tmp PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider -n0 -rA --color=no dask/tests/test_config.py",
+   "timeout_s": 600
+  },
+  {
+   "id": "b6_revised_v3_tests_nobody",
+   "cmd": "cp /in/test_config_revised_v3.py dask/tests/test_config.py && setpriv --reuid=65534 --regid=65534 --clear-groups env HOME=/tmp PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider -n0 -rA --color=no dask/tests/test_config.py",
+   "timeout_s": 600
+  },
+  {
+   "id": "b7_revised_v4_tests_nobody",
+   "cmd": "cp /in/test_config_revised_v4.py dask/tests/test_config.py && setpriv --reuid=65534 --regid=65534 --clear-groups env HOME=/tmp PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider -n0 -rA --color=no dask/tests/test_config.py",
+   "timeout_s": 600
+  },
+  {
+   "id": "b8_revised_v4_tests_root",
+   "cmd": "cp /in/test_config_revised_v4.py dask/tests/test_config.py && PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider -n0 -rA --color=no dask/tests/test_config.py",
+   "timeout_s": 600
+  }
+ ]
+}

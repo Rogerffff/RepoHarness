@@ -67,6 +67,22 @@
   "sha256": "50a50eecee8ac05fc55cf141d119f7f868f29f7072a3543a085a9cf28971ba20",
   "what": "collect_yaml 同 gold 抛错，但模块导入时的 refresh() 捕获并警告：import dask 照常成功，用户配置全部丢弃"
  },
+ "rv_kv_pairs": {
+  "sha256": "98fa9e8c00bf84cfd0dfbeeb20d55eb37cd8fdc92e30a86ebddb93c4070177da",
+  "what": "复核者的合理实现：自定义 ConfigFileError(ValueError)，消息说 'must contain key: value pairs' 并给出实际内容，语法错误用 from exc 保留原因（按 review.md 附录重建）"
+ },
+ "rv_dir_only": {
+  "sha256": "dcb3bea83b1c772bad5e39a8ed00186adc1cf146a37c6d17d564311e42c941a4",
+  "what": "复核者的错误候选：gold 的校验只用于目录里枚举到的文件，直接给出的文件路径仍走 base 的 `safe_load(...) or {}`（按附录重建）"
+ },
+ "rv_import_warn": {
+  "sha256": "785a7f376c3156254e29c8aeb937b547ad9e006a4a730860ebac3cfd1716debd",
+  "what": "复核者的另一政策候选：API（collect_yaml/collect/refresh）默认抛错；模块导入时 on_error='warn'，对坏文件发出点名文件的警告并只跳过该文件（按附录重建）"
+ },
+ "rv_enum_types": {
+  "sha256": "5b03ae4cc66550e39f6f41cfbb9bfd927f59f0d10d7376c26312239605e23ba2",
+  "what": "复核者的错误候选：只拒 list、str、int，顶层 float／日期仍进入 merge（已登记 T3，只做私有对照）"
+ },
  "wrong_file": {
   "sha256": "45651c7ba304976d3e1e885672b3bcc3818b90f609d7fb9c9925a7784c3f3f77",
   "what": "读完所有文件后再检查类型，报错用循环变量 path（即最后一个文件），坏文件不是最后一个时指错文件"

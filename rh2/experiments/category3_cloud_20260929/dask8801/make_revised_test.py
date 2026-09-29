@@ -1,6 +1,6 @@
-"""生成 dask__dask-8801 修订版测试草案（v1–v3）（私有诊断材料，不交给求解者）。
+"""生成 dask__dask-8801 修订版测试草案（v1–v4）（私有诊断材料，不交给求解者）。
 
-用法：python make_revised_test.py <base test_config.py> <原 test.patch> <输出目录> <v1|v2|v3>
+用法：python make_revised_test.py <base test_config.py> <原 test.patch> <输出目录> <v1|v2|v3|v4>
 输出：revised_test_<v>.patch（相对 base 的完整 test_patch，测试编号不变）、test_config_revised_<v>.py、
 materials_revised_<v>.json（replay_with_install_recipe.py --materials 的输入）。
 
@@ -10,6 +10,11 @@ filterwarnings = error:::dask[.*] 会把 dask 发出的警告升级为异常，v
 v3 相对 v2 再多一处：在 test_collect_yaml_no_top_level_dict 末尾用新进程执行题面场景 import dask（DASK_CONFIG 指向
 含顶层 str 的目录，隔离 HOME 与 DASK_ROOT_CONFIG），要求导入失败且报错点名该文件；拦下“collect_yaml 抛错、
 模块导入时捕获并警告”的 import_swallow。
+v4（按独立复核 review.md 与负责人决定）相对 v3：
+- 阻断 B1：在 test_collect_yaml_no_top_level_dict 函数体内放一个名为 c.yaml 的子目录，open() 抛 IsADirectoryError（与 root 无关），
+  断言它被跳过、其余配置照常加载，拦下 oserr_fatal；不再追加 P2P 权限测试；
+- 非阻断 N2：每个实例再以文件路径直接调用一次 collect_yaml(paths=[fil_path])，拦下 rv_dir_only；
+- 非阻断 N3：判断“原因”的词表加 "key"，接受 rv_kv_pairs（"must contain key: value pairs"）。
 
 改动（每条对应一个有公开依据的窄问题）：
 - R-b：去掉三个英文词组、repr 引号与 ValueError 类型的约束，改为行为断言——报错点名出问题的文件
@@ -26,7 +31,7 @@ from pathlib import Path
 
 base_path, orig_patch_path, out_dir = map(Path, sys.argv[1:4])
 VERSION = sys.argv[4]
-assert VERSION in ("v1", "v2", "v3")
+assert VERSION in ("v1", "v2", "v3", "v4")
 BASE = base_path.read_text()
 ORIG_PATCH = orig_patch_path.read_text()
 
@@ -117,7 +122,80 @@ IMPORT_CHECK = '''
 '''
 NEW_TESTS = NEW_TESTS.replace("@@IMPORT_CHECK@@\n", (IMPORT_CHECK if VERSION == "v3" else "") + "\n")
 
-if VERSION == "v1":
+NEW_TESTS_V4 = '''        config = merge(*collect_yaml(paths=[dir_path]))
+        assert config == expected
+
+
+def _displayed_error(exc):
+    """The text Python shows for ``exc``, including any displayed exception chain."""
+    return "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
+
+
+def _collect_yaml_error(paths):
+    """The error raised while loading ``paths``; a warning is not a failure to load"""
+    with pytest.raises(Exception) as rec:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            collect_yaml(paths=paths)
+    return rec.value
+
+
+def test_collect_yaml_malformed_file(tmpdir):
+    dir_path = str(tmpdir)
+    fil_path = os.path.join(dir_path, "a.yaml")
+
+    for content in [b"{", b"a: 1\\n\\tb: 2\\n"]:
+        with open(fil_path, mode="wb") as f:
+            f.write(content)
+        with pytest.raises(yaml.YAMLError) as parse_error:
+            yaml.safe_load(content.decode())
+
+        # Loading fails with an error that names the offending file, and the
+        # parser's reason stays visible (in the message or the shown chain),
+        # whether the file is found in a directory or given directly
+        for paths in ([dir_path], [fil_path]):
+            err = _collect_yaml_error(paths)
+            assert fil_path in str(err)
+            assert parse_error.value.problem in _displayed_error(err)
+
+
+def test_collect_yaml_no_top_level_dict(tmpdir):
+    dir_path = str(tmpdir)
+    fil_path = os.path.join(dir_path, "a.yaml")
+
+    # Entries that cannot be read are still skipped (here a directory named like
+    # a config file, which ``open`` cannot read), and files that load as nothing
+    # (empty, or fully commented out as written by ``ensure_file(...,
+    # comment=True)``) are valid and contribute nothing
+    os.mkdir(os.path.join(dir_path, "c.yaml"))
+    with open(os.path.join(dir_path, "b.yaml"), mode="wb") as f:
+        f.write(b"x: 1\\n")
+    for content in [b"", b"# x: 1\\n"]:
+        with open(fil_path, mode="wb") as f:
+            f.write(content)
+        assert merge(*collect_yaml(paths=[dir_path])) == {"x": 1}
+
+    for content, type_name in [(b"[1234]", "list"), (b"hello", "str"), (b"1234", "int")]:
+        with open(fil_path, mode="wb") as f:
+            f.write(content)
+
+        # Loading fails with an error that names the offending file (not another
+        # file read after it) and says that a mapping of keys to values was
+        # expected (or what was found instead), whether the file is found in a
+        # directory or given directly
+        for paths in ([dir_path], [fil_path]):
+            msg = str(_collect_yaml_error(paths))
+            assert fil_path in msg
+            rest = msg.replace(fil_path, "").lower()
+            assert any(w in rest for w in ("dict", "mapping", "key", type_name))
+''' + IMPORT_CHECK + '''
+
+def test_env():
+'''
+if VERSION == "v4":
+    NEW_TESTS = NEW_TESTS_V4
+    IMPORTS = "import subprocess\nimport sys\nimport traceback\nimport warnings\n"
+elif VERSION == "v1":
     NEW_TESTS = NEW_TESTS.replace("@@LOAD@@", "collect_yaml(paths=[dir_path])")
     IMPORTS = "import sys\nimport traceback\n"
 else:
@@ -163,9 +241,13 @@ materials = {
                 "reason shown). S1: issue's own str top level, ScannerError, error naming a later file, and "
                 "empty/commented-out files were not asserted (R-c)."
                 + (" v2: warnings are ignored while checking that loading fails (setup.cfg escalates dask warnings)."
-                   if VERSION in ("v2", "v3") else "")
+                   if VERSION in ("v2", "v3", "v4") else "")
                 + (" v3: a fresh `import dask` reading such a file must fail and name it (the reported scenario)."
-                   if VERSION == "v3" else "")
+                   if VERSION in ("v3", "v4") else "")
+                + (" v4 (after independent review): a directory named c.yaml inside the config dir must be skipped "
+                   "(root-independent OSError check replacing the proposed P2P addition); every instance is also "
+                   "loaded by direct file path; the reason word list also accepts 'key'."
+                   if VERSION == "v4" else "")
             ),
             "positive_control": "gold",
         }

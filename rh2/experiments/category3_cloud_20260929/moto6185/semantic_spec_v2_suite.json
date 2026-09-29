@@ -1,0 +1,19 @@
+{
+ "image": "c3keep/moto6185:src",
+ "python_prefix": "/opt/miniconda3/envs/testbed",
+ "variants": {
+  "skip_s_subtree": [
+   "git apply /in/skip_s_subtree.patch"
+  ]
+ },
+ "files": {
+  "skip_s_subtree.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/moto6185/skip_s_subtree.patch"
+ },
+ "commands": [
+  {
+   "id": "b5_dynamodb_suite",
+   "cmd": "TEST_SERVER_MODE=false python -m pytest -p no:cacheprovider -n0 -q -rf tests/test_dynamodb",
+   "timeout_s": 1800
+  }
+ ]
+}

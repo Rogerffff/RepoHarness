@@ -200,6 +200,109 @@ _initialize()
     ),
     "collect_yaml 同 gold 抛错，但模块导入时的 refresh() 捕获并警告：import dask 照常成功，用户配置全部丢弃",
 )
+# ---- 独立复核提出的候选（review.md 附录），按其文字描述重建，不是复核者补丁的逐字节副本 ----
+GOLD_HELPER_BODY_START = '''def _load_config_file(path: str) -> dict | None:'''
+KV_HELPER = '''class ConfigFileError(ValueError):
+    """Raised when a Dask config file cannot be used as configuration."""
+
+
+def _load_config_file(path: str) -> dict | None:
+    """Load one config file; unreadable files are skipped."""
+    try:
+        with open(path) as f:
+            config = yaml.safe_load(f.read())
+    except OSError:
+        return None
+    except yaml.YAMLError as exc:
+        raise ConfigFileError(f"Could not parse Dask config file {path}") from exc
+    if config is not None and not isinstance(config, Mapping):
+        raise ConfigFileError(
+            f"Dask config file {path} must contain key: value pairs at the top level, "
+            f"found {config!r}"
+        )
+    return config
+'''
+_gold_helper_block = GOLD_HELPER[: GOLD_HELPER.index("\n\ndef collect_yaml(")] + "\n"
+variants["rv_kv_pairs"] = (
+    sub(GOLD, _gold_helper_block, KV_HELPER),
+    "复核者的合理实现：自定义 ConfigFileError(ValueError)，消息说 'must contain key: value pairs' 并给出实际内容，"
+    "语法错误用 from exc 保留原因（按 review.md 附录重建）",
+)
+DIR_ONLY_LIST = """                try:
+                    file_paths.extend(
+                        sorted(
+                            os.path.join(path, p)
+                            for p in os.listdir(path)
+                            if os.path.splitext(p)[1].lower()
+                            in (".json", ".yaml", ".yml")
+                        )
+                    )
+"""
+DIR_ONLY_LIST_NEW = """                try:
+                    found = sorted(
+                        os.path.join(path, p)
+                        for p in os.listdir(path)
+                        if os.path.splitext(p)[1].lower() in (".json", ".yaml", ".yml")
+                    )
+                    file_paths.extend(found)
+                    from_dirs.update(found)
+"""
+v = sub(GOLD, DIR_ONLY_LIST, DIR_ONLY_LIST_NEW)
+v = sub(v, "    # Find all paths\n    file_paths = []\n", "    # Find all paths\n    file_paths = []\n    from_dirs = builtins.set()  # dask.config shadows set\n")
+v = sub(
+    v,
+    GOLD_LOOP,
+    """    for path in file_paths:
+        if path in from_dirs:
+            config = _load_config_file(path)
+            if config is not None:
+                configs.append(config)
+        else:
+            try:
+                with open(path) as f:
+                    data = yaml.safe_load(f.read()) or {}
+                    configs.append(data)
+            except OSError:
+                # Ignore permission errors
+                pass
+""",
+)
+variants["rv_dir_only"] = (
+    v,
+    "复核者的错误候选：gold 的校验只用于目录里枚举到的文件，直接给出的文件路径仍走 base 的 `safe_load(...) or {}`（按附录重建）",
+)
+v = sub(GOLD, "def collect_yaml(paths: Sequence[str] = paths) -> list[dict]:", 'def collect_yaml(paths: Sequence[str] = paths, on_error: str = "raise") -> list[dict]:')
+v = sub(
+    v,
+    GOLD_LOOP,
+    """    for path in file_paths:
+        try:
+            config = _load_config_file(path)
+        except ValueError as exc:
+            if on_error != "warn":
+                raise
+            warnings.warn(f"{exc}\\n\\nThis file is ignored.")
+            continue
+        if config is not None:
+            configs.append(config)
+""",
+)
+v = sub(
+    v,
+    "def collect(paths: list[str] = paths, env: Mapping[str, str] = None) -> dict:",
+    'def collect(\n    paths: list[str] = paths, env: Mapping[str, str] = None, on_error: str = "raise"\n) -> dict:',
+)
+v = sub(v, "    configs = collect_yaml(paths=paths)\n", "    configs = collect_yaml(paths=paths, on_error=on_error)\n")
+v = sub(v, "\n\nrefresh()\n_initialize()\n", '\n\nrefresh(on_error="warn")\n_initialize()\n')
+variants["rv_import_warn"] = (
+    v,
+    "复核者的另一政策候选：API（collect_yaml/collect/refresh）默认抛错；模块导入时 on_error='warn'，"
+    "对坏文件发出点名文件的警告并只跳过该文件（按附录重建）",
+)
+variants["rv_enum_types"] = (
+    sub(GOLD, PRED, "    if isinstance(config, (list, str, int)):\n"),
+    "复核者的错误候选：只拒 list、str、int，顶层 float／日期仍进入 merge（已登记 T3，只做私有对照）",
+)
 WRONG_FILE_LOOP = """    for path in file_paths:
         try:
             with open(path) as f:

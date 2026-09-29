@@ -1,0 +1,53 @@
+{
+ "image": "xingyaoww/sweb.eval.x86_64.pydantic_s_pydantic-8316:latest",
+ "python_prefix": "/opt/miniconda3/envs/testbed",
+ "variants": {
+  "normalize": [
+   "git apply /in/normalize.patch"
+  ],
+  "lower_or_start": [
+   "git apply /in/lower_or_start.patch"
+  ],
+  "no_lower_upper": [
+   "git apply /in/no_lower_upper.patch"
+  ],
+  "acr_max4": [
+   "git apply /in/acr_max4.patch"
+  ],
+  "only_if_no_us": [
+   "git apply /in/only_if_no_us.patch"
+  ]
+ },
+ "files": {
+  "behavior.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/behavior.py",
+  "original_test.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/original_test.patch",
+  "revised_test_v1.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/revised_test_v1.patch",
+  "normalize.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/normalize.patch",
+  "lower_or_start.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/lower_or_start.patch",
+  "no_lower_upper.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/no_lower_upper.patch",
+  "acr_max4.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/acr_max4.patch",
+  "only_if_no_us.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/only_if_no_us.patch"
+ },
+ "commands": [
+  {
+   "id": "b1_behavior",
+   "cmd": "python /in/behavior.py",
+   "timeout_s": 300
+  },
+  {
+   "id": "b2_public_related",
+   "cmd": "python -m pytest -p no:cacheprovider -q -rf tests/test_utils.py tests/test_aliases.py tests/test_config.py",
+   "timeout_s": 900
+  },
+  {
+   "id": "b3_orig_testpatch_test_utils",
+   "cmd": "git apply /in/original_test.patch && python -m pytest -p no:cacheprovider -q -rf tests/test_utils.py; rc=$?; git apply -R /in/original_test.patch; exit $rc",
+   "timeout_s": 600
+  },
+  {
+   "id": "r1_revised_v1_test_utils",
+   "cmd": "git apply /in/revised_test_v1.patch && python -m pytest -p no:cacheprovider -q -rf tests/test_utils.py",
+   "timeout_s": 600
+  }
+ ]
+}

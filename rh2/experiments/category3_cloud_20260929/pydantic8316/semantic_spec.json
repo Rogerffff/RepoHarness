@@ -1,0 +1,64 @@
+{
+ "image": "xingyaoww/sweb.eval.x86_64.pydantic_s_pydantic-8316:latest",
+ "python_prefix": "/opt/miniconda3/envs/testbed",
+ "variants": {
+  "base": [],
+  "gold": [
+   "git apply /in/gold.patch"
+  ],
+  "keep_digit": [
+   "git apply /in/keep_digit.patch"
+  ],
+  "lookaround": [
+   "git apply /in/lookaround.patch"
+  ],
+  "scan": [
+   "git apply /in/scan.patch"
+  ],
+  "upstream_main": [
+   "git apply /in/upstream_main.patch"
+  ],
+  "lead_only": [
+   "git apply /in/lead_only.patch"
+  ],
+  "first_only": [
+   "git apply /in/first_only.patch"
+  ],
+  "acr3": [
+   "git apply /in/acr3.patch"
+  ],
+  "literal": [
+   "git apply /in/literal.patch"
+  ]
+ },
+ "files": {
+  "gold.patch": "/home/user/RepoHarness/runs/category3_cloud_20260929/pydantic8316/gold/pydantic__pydantic-8316.gold.patch",
+  "behavior.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/behavior.py",
+  "original_test.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/original_test.patch",
+  "keep_digit.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/keep_digit.patch",
+  "lookaround.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/lookaround.patch",
+  "scan.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/scan.patch",
+  "upstream_main.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/upstream_main.patch",
+  "lead_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/lead_only.patch",
+  "first_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/first_only.patch",
+  "acr3.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/acr3.patch",
+  "literal.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/literal.patch"
+ },
+ "commands": [
+  {
+   "id": "b1_behavior",
+   "cmd": "python /in/behavior.py",
+   "timeout_s": 300
+  },
+  {
+   "id": "b2_public_related",
+   "cmd": "python -m pytest -p no:cacheprovider -q -rf tests/test_utils.py tests/test_aliases.py tests/test_config.py",
+   "timeout_s": 900
+  },
+  {
+   "id": "b3_orig_testpatch_camel2snake",
+   "cmd": "git apply /in/original_test.patch && python -m pytest -p no:cacheprovider -q -rf tests/test_utils.py -k 'camel2snake or snake2camel or lower_camel'",
+   "timeout_s": 600
+  }
+ ]
+}

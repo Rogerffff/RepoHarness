@@ -1,0 +1,27 @@
+{
+ "image": "xingyaoww/sweb.eval.x86_64.pydantic_s_pydantic-8567:latest",
+ "python_prefix": "/opt/miniconda3/envs/testbed",
+ "variants": {
+  "rv_pv_first": [
+   "git apply /in/rv_pv_first.patch"
+  ],
+  "rv_ser_to_end": [
+   "git apply /in/rv_ser_to_end.patch"
+  ],
+  "rv_condwrap": [
+   "git apply /in/rv_condwrap.patch"
+  ]
+ },
+ "files": {
+  "rv_pv_first.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8567/rv_pv_first.patch",
+  "rv_ser_to_end.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8567/rv_ser_to_end.patch",
+  "rv_condwrap.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8567/rv_condwrap.patch"
+ },
+ "commands": [
+  {
+   "id": "f1_full_tests",
+   "cmd": "python -m pytest -p no:cacheprovider -q -rA --tb=line tests/",
+   "timeout_s": 3600
+  }
+ ]
+}

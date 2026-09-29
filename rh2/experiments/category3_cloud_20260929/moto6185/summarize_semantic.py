@@ -1,7 +1,7 @@
 """把 semantic_control 的输出汇总成矩阵（私有对照 + 私有模拟评分）。
 
 用法：python summarize_semantic.py <semantic 输出目录> [--json 输出文件]
-私有模拟评分：在 b2/b3/b4 的 pytest -rA 摘要里按参考名单（F2P 1 项、P2P 34 项，含合并键 `[set`）逐项判定，
+私有模拟评分：在各 b*_hidden_<版本>.out 的 pytest -rA 摘要里按参考名单（F2P 1 项、P2P 34 项，含合并键 `[set`）逐项判定，
 reward=1 当且仅当 F2P 与全部 P2P 都是 PASSED。只是私有模拟，不是正式评分。
 """
 import json
@@ -52,10 +52,8 @@ for vd in sorted(p for p in d.iterdir() if p.is_dir()):
     beh = (vd / "b1_behavior.out").read_text() if (vd / "b1_behavior.out").exists() else ""
     summ = beh.split("=== SUMMARY\n", 1)[1] if "=== SUMMARY\n" in beh else ""
     row["behavior"] = dict(line.split(": ", 1) for line in summ.strip().splitlines() if ": " in line)
-    for cid, key in [("b2_hidden_orig", "orig"), ("b3_hidden_v1", "v1"), ("b4_hidden_v1s", "v1s")]:
-        p = vd / f"{cid}.out"
-        if p.exists():
-            row[key] = sim(p.read_text())
+    for p in sorted(vd.glob("b*_hidden_*.out")):
+        row[p.stem.split("_hidden_", 1)[1]] = sim(p.read_text())
     p = vd / "b5_dynamodb_suite.out"
     if p.exists():
         t = p.read_text().strip().splitlines()
@@ -91,7 +89,12 @@ print("| 行 | " + " | ".join(variants) + " |")
 print("|---" * (len(variants) + 1) + "|")
 for k in keys:
     print(f"| {k} | " + " | ".join(cell(out[v]["behavior"].get(k)) for v in variants) + " |")
-for key in ("orig", "v1", "v1s"):
+hidden_keys = []
+for v in variants:
+    for k in out[v]:
+        if k not in hidden_keys and isinstance(out[v][k], dict) and "reward" in out[v][k]:
+            hidden_keys.append(k)
+for key in hidden_keys:
     print(f"| 私有模拟 {key} | " + " | ".join(
         (str(out[v][key]["reward"]) + ("@" + out[v][key]["f2p_fail_at"] if out[v][key]["f2p_fail_at"] else "")
          + ("" if not out[v][key]["p2p_not_passed"] else f"(P2P×{len(out[v][key]['p2p_not_passed'])})"))

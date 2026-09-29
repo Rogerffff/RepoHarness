@@ -471,6 +471,63 @@ def B17_callable_source_type():
     return {"same": m.f is fn, "dump_same": m.model_dump()["f"] is fn}
 
 
+# ---------------- v3 追加（09-29 独立复核之后）：PV 左侧元数据、TypedDict ----------------
+@case
+def A19_replaced_left_validator():
+    # 修订 v3 第 5 项的形态：PV 左侧的 AfterValidator 不运行，serializer 仍生效
+    ser = PlainSerializer(lambda x: str(int(x)), return_type=str)
+
+    class Replaced(BaseModel):
+        z: Annotated[bool, AfterValidator(lambda v: 1 / 0), ser, PlainValidator(lambda x: bool(int(x)))]
+
+    r = Replaced(z="1")
+    return {"internal": r.z, "python": r.model_dump(), "json": r.model_dump_json()}
+
+
+@case
+def B18_strictbool_source_pv():
+    from pydantic import StrictBool
+
+    class M(BaseModel):
+        b: Annotated[StrictBool, PlainValidator(lambda v: bool(int(v)))]
+
+    return {"internal": M(b="1").b}
+
+
+@case
+def B19_positiveint_source_pv():
+    from pydantic import PositiveInt
+
+    class M(BaseModel):
+        n: Annotated[PositiveInt, PlainValidator(lambda v: int(v))]
+
+    return {"internal": M(n=-5).n}
+
+
+@case
+def B20_gt_constraint_left_of_pv():
+    class M(BaseModel):
+        n: Annotated[int, annotated_types.Gt(0), PlainValidator(lambda v: int(v))]
+
+    return {"internal": M(n="-5").n}
+
+
+@case
+def B21_typing_typeddict_source_pv():
+    import typing
+
+    if not hasattr(typing, "TypedDict"):
+        return {"skipped": "no typing.TypedDict"}
+
+    class TD(typing.TypedDict):
+        a: int
+
+    class M(BaseModel):
+        t: Annotated[TD, PlainValidator(lambda v: v)]
+
+    return {"internal": M(t={"a": 1}).t}
+
+
 if __name__ == "__main__":
     print("pydantic", pydantic.VERSION, "file", pydantic.__file__)
     names = sys.argv[1:] or list(CASES)
