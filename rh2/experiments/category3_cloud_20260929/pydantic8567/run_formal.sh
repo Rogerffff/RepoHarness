@@ -7,7 +7,7 @@ ROOT=/home/user/RepoHarness
 E=$ROOT/rh2/experiments/category3_cloud_20260929/pydantic8567
 W=$ROOT/runs/category3_cloud_20260929/pydantic8567
 RECIPE=$ROOT/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/pydantic_v1/pydantic__pydantic-8567.json
-DERIVED=$(python3 -c "import json;print(json.load(open('$W/derived/image.json'))['derived_id'])")
+DERIVED=$(python3 -c "import json;print(json.load(open('$W/derived_image.json'))['derived_id'])")
 case $MODE in
   orig) OUT=$W/formal; EXTRA=() ;;
   rev1) OUT=$W/formal_revised_v1; EXTRA=(--materials "$E/materials_revised_v1.json") ;;

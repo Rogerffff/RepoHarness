@@ -89,7 +89,11 @@ def main():
         after = os.path.realpath(os.getcwd())
         rec["cwd_after"] = names.get(after, after)
         rec["cwd_restored"] = after == os.path.realpath(build)
-        rec["source_folder_unchanged"] = cf.source_folder == source
+        try:
+            rec["source_folder_unchanged"] = cf.source_folder == source
+        except Exception as e:  # noqa  候选可能把 folders.source 改成非字符串
+            rec["source_folder_unchanged"] = False
+            rec["source_folder_error"] = "{}: {}".format(type(e).__name__, str(e)[:80])
         result[name] = rec
     os.chdir(original)
     print(json.dumps(result, indent=1, ensure_ascii=False))

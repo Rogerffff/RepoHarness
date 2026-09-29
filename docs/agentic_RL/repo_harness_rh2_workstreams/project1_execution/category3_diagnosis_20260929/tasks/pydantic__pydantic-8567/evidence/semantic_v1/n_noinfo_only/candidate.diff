@@ -1,0 +1,16 @@
+diff --git a/pydantic/functional_validators.py b/pydantic/functional_validators.py
+index 091452846..b1e587536 100644
+--- a/pydantic/functional_validators.py
++++ b/pydantic/functional_validators.py
+@@ -158,8 +158,10 @@ class PlainValidator:
+             func = cast(core_schema.WithInfoValidatorFunction, self.func)
+             return core_schema.with_info_plain_validator_function(func, field_name=handler.field_name)
+         else:
++            schema = handler(source_type)
++            serialization = core_schema.wrap_serializer_function_ser_schema(function=lambda v, h: h(v), schema=schema)
+             func = cast(core_schema.NoInfoValidatorFunction, self.func)
+-            return core_schema.no_info_plain_validator_function(func)
++            return core_schema.no_info_plain_validator_function(func, serialization=serialization)
+ 
+ 
+ @dataclasses.dataclass(frozen=True, **_internal_dataclass.slots_true)

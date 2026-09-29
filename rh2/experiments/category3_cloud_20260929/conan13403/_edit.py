@@ -136,6 +136,74 @@ CANDS = {
         with chdir(self, script_folder):
             self._conanfile.run(command)
 ''',
+    # ---- 以下按独立复核 review.md §1 的描述重建（复核者文件不在仓库），另加 rv_retcode ----
+    # 合理：args 在首位；目录不存在时先抛 ConanException
+    "rv_check": SIG_ARGS_FIRST + DOC + JOIN + '''        if not os.path.isdir(script_folder):
+            from conans.errors import ConanException
+            raise ConanException("autoreconf folder '{}' does not exist".format(script_folder))
+        with chdir(self, script_folder):
+            self._conanfile.run(command)
+''',
+    # 合理：目录参数只能用关键字传；chdir 传 recipe、newdir 用关键字
+    "rv_kw": "    def autoreconf(self, args=None, *, build_script_folder=None):\n" + DOC + JOIN + '''        with chdir(self._conanfile, newdir=script_folder):
+            self._conanfile.run(command)
+''',
+    # 合理（边界）：失败时抛出带目录信息的新 ConanException，并 from e 保留原异常
+    "rv_wrap": SIG_ARGS_FIRST + DOC + JOIN + '''        from conans.errors import ConanException
+        with chdir(self, script_folder):
+            try:
+                self._conanfile.run(command)
+            except ConanException as e:
+                raise ConanException("Error running autoreconf in '{}'".format(script_folder)) from e
+''',
+    # 合理（作者补充）：run(ignore_errors=True) 取返回码，非零时自己抛 ConanException
+    "rv_retcode": SIG_ARGS_FIRST + DOC + JOIN + '''        from conans.errors import ConanException
+        with chdir(self, script_folder):
+            ret = self._conanfile.run(command, ignore_errors=True)
+        if ret:
+            raise ConanException("autoreconf in '{}' failed with code {}".format(script_folder, ret))
+''',
+    # 错误：指定目录时命令只剩 autoreconf，丢掉 toolchain 参数与用户 args
+    "w_argsdrop": "    def autoreconf(self, build_script_folder=None, args=None):\n" + DOC + JOIN + '''        if build_script_folder:
+            command = "autoreconf"
+        with chdir(self, script_folder):
+            self._conanfile.run(command)
+''',
+    # 错误：总是先在 source 执行一次，再在指定目录执行一次
+    "w_twice": "    def autoreconf(self, build_script_folder=None, args=None):\n" + DOC + JOIN + '''        with chdir(self, self._conanfile.source_folder):
+            self._conanfile.run(command)
+        with chdir(self, script_folder):
+            self._conanfile.run(command)
+''',
+    # 错误：改写 recipe 的 folders.source，再在 source_folder 执行（传 None 时回落，原测试看不出）
+    "w_mutate_src2": "    def autoreconf(self, build_script_folder=None, args=None):\n" + DOC + '''        self._conanfile.folders.source = build_script_folder
+        args = args or []
+        command = join_arguments(["autoreconf", self._autoreconf_args, cmd_args_to_string(args)])
+        with chdir(self, self._conanfile.source_folder):
+            self._conanfile.run(command)
+''',
+    # 错误：与 gold 相同，只是 run(..., ignore_errors=True)，吞掉 autoreconf 失败
+    "w_ignore_errors": "    def autoreconf(self, build_script_folder=None, args=None):\n" + DOC + JOIN + '''        with chdir(self, script_folder):
+            self._conanfile.run(command, ignore_errors=True)
+''',
+    # 错误：结束后切到 build_folder，而不是回到调用者原目录（os.chdir + finally）
+    "w_restore_build": "    def autoreconf(self, build_script_folder=None, args=None):\n" + DOC + JOIN + '''        os.chdir(script_folder)
+        try:
+            self._conanfile.run(command)
+        finally:
+            os.chdir(self._conanfile.build_folder)
+''',
+    # 错误：同上，chdir 上下文之后再切到 build_folder
+    "w_restore_build_ctx": "    def autoreconf(self, build_script_folder=None, args=None):\n" + DOC + JOIN + '''        with chdir(self, script_folder):
+            self._conanfile.run(command)
+        os.chdir(self._conanfile.build_folder)
+''',
+    # 边界（复核者判为不合理）：目录不存在时先创建
+    "w_mkdir": SIG_ARGS_FIRST + DOC + JOIN + '''        if not os.path.isdir(script_folder):
+            os.makedirs(script_folder)
+        with chdir(self, script_folder):
+            self._conanfile.run(command)
+''',
     # 另一种相对基准（边界检查）：相对路径以 build_folder 为基准
     "rel_build": SIG_ARGS_FIRST + DOC + '''        script_folder = os.path.join(self._conanfile.build_folder, build_script_folder) \\
             if build_script_folder else self._conanfile.source_folder

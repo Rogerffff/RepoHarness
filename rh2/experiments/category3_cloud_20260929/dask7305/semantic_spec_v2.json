@@ -1,0 +1,90 @@
+{
+ "image": "c3keep/dask7305:src",
+ "python_prefix": "/opt/miniconda3/envs/testbed",
+ "variants": {
+  "base": [],
+  "gold": [
+   "git apply /in/gold.patch"
+  ],
+  "exact_ends": [
+   "git apply /in/exact_ends.patch"
+  ],
+  "higher_int": [
+   "git apply /in/higher_int.patch"
+  ],
+  "nearest_via_float": [
+   "git apply /in/nearest_via_float.patch"
+  ],
+  "uint_only": [
+   "git apply /in/uint_only.patch"
+  ],
+  "first_last": [
+   "git apply /in/first_last.patch"
+  ],
+  "k1_only": [
+   "git apply /in/k1_only.patch"
+  ],
+  "clip_partition": [
+   "git apply /in/clip_partition.patch"
+  ],
+  "gold_full": [
+   "git apply /in/gold_full.patch"
+  ],
+  "exact_full": [
+   "git apply /in/exact_full.patch"
+  ],
+  "pvw_only": [
+   "git apply /in/pvw_only.patch"
+  ],
+  "higher_full": [
+   "git apply /in/higher_full.patch"
+  ],
+  "gold_pin_only": [
+   "git apply /in/gold_pin_only.patch"
+  ],
+  "gold_typed_only": [
+   "git apply /in/gold_typed_only.patch"
+  ]
+ },
+ "files": {
+  "gold.patch": "/home/user/RepoHarness/runs/category3_cloud_20260929/dask7305/gold/dask__dask-7305.gold.patch",
+  "behavior.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask7305/behavior.py",
+  "orig_test.patch": "/home/user/RepoHarness/runs/category3_cloud_20260929/dask7305/orig_test.patch",
+  "revised_test_v1.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask7305/revised_test_v1.patch",
+  "exact_ends.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask7305/candidates/exact_ends.patch",
+  "higher_int.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask7305/candidates/higher_int.patch",
+  "nearest_via_float.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask7305/candidates/nearest_via_float.patch",
+  "uint_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask7305/candidates/uint_only.patch",
+  "first_last.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask7305/candidates/first_last.patch",
+  "k1_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask7305/candidates/k1_only.patch",
+  "clip_partition.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask7305/candidates/clip_partition.patch",
+  "gold_full.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask7305/candidates/gold_full.patch",
+  "exact_full.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask7305/candidates/exact_full.patch",
+  "pvw_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask7305/candidates/pvw_only.patch",
+  "higher_full.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask7305/candidates/higher_full.patch",
+  "gold_pin_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask7305/candidates/gold_pin_only.patch",
+  "gold_typed_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask7305/candidates/gold_typed_only.patch"
+ },
+ "commands": [
+  {
+   "id": "b1_behavior",
+   "cmd": "python /in/behavior.py",
+   "timeout_s": 600
+  },
+  {
+   "id": "b3_hidden_orig_interp",
+   "cmd": "git apply /in/orig_test.patch && python -m pytest -p no:cacheprovider -n0 -rA --color=no dask/dataframe/tests/test_shuffle.py -k interpolate; rc=$?; git checkout -q dask/dataframe/tests/test_shuffle.py; exit $rc",
+   "timeout_s": 600
+  },
+  {
+   "id": "b5_hidden_rev1_interp",
+   "cmd": "git apply /in/revised_test_v1.patch && python -m pytest -p no:cacheprovider -n0 -rA --color=no dask/dataframe/tests/test_shuffle.py -k interpolate; rc=$?; git checkout -q dask/dataframe/tests/test_shuffle.py; exit $rc",
+   "timeout_s": 600
+  },
+  {
+   "id": "b4_public_shuffle_full",
+   "cmd": "python -m pytest -p no:cacheprovider -n0 -q --color=no dask/dataframe/tests/test_shuffle.py",
+   "timeout_s": 1200
+  }
+ ]
+}

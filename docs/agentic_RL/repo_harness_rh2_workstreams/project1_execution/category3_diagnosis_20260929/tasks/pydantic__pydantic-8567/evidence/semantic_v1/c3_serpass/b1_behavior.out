@@ -1,0 +1,36 @@
+pydantic 2.6.0a1 file /testbed/pydantic/__init__.py
+CASE A01_issue_example {"ok": {"internal": [false, true], "json": "{\"x\":\"0\",\"y\":\"1\"}", "json_mode": {"x": "0", "y": "1"}, "python": {"x": "0", "y": "1"}}, "warnings": []}
+CASE A02_test_patch_shape {"ok": {"internal": [false, true], "json": "{\"foo\":\"0\",\"bar\":\"1\"}", "python": {"bar": "1", "foo": "0"}}, "warnings": []}
+CASE A03_type_adapter_wrong_order {"ok": {"internal": true, "json": "\"1\"", "python": "1"}, "warnings": []}
+CASE A04_fancyint_info_wrong_order {"ok": {"internal": 1234, "json": "{\"x\":\"1,234\"}", "python": {"x": 1234}}, "warnings": []}
+CASE A05_int_noinfo_wrong_order_single_field {"ok": {"internal": 5, "json": "{\"n\":10}", "python": {"n": 10}}, "warnings": []}
+CASE A06_info_field_name_wrong_order {"ok": {"internal": "f:a", "json": "{\"f\":\"F:A\"}", "python": {"f": "F:A"}}, "warnings": []}
+CASE A07_three_items_withjsonschema_between {"ok": {"internal": 7, "json": "{\"n\":\"#7\"}", "python": {"n": "#7"}}, "warnings": []}
+CASE A08_three_items_validator_between {"ok": {"internal": 7, "json": "{\"n\":7}", "python": {"n": 7}}, "warnings": []}
+CASE A09_wrap_serializer_before {"ok": {"internal": 3, "json": "{\"n\":\"<3>\"}", "python": {"n": "<3>"}}, "warnings": []}
+CASE A10_unless_none_optional {"ok": {"json": "{\"a\":null,\"b\":10}", "python": {"a": null, "b": 10}}, "warnings": []}
+CASE A11_serializer_after_overrides {"ok": {"json": "{\"n\":\"outer\"}", "python": {"n": "outer"}}, "warnings": []}
+CASE A12_return_type_int_from_str {"ok": {"json": "{\"s\":4}", "python": {"s": 4}}, "warnings": []}
+CASE A13_model_source_with_serializer {"ok": {"json": "{\"s\":30}", "python": {"s": 30}}, "warnings": []}
+CASE A14_serializer_call_count {"ok": {"calls": 1, "python": {"foo": true}}, "warnings": []}
+CASE A15_list_of_wrong_order_items {"ok": {"json": "{\"xs\":[\"0\",\"1\"]}", "python": {"xs": ["0", "1"]}}, "warnings": []}
+CASE A16_serializer_inside_type_argument {"ok": {"json": "{\"xs\":[1,2]}", "python": {"xs": [1, 2]}}, "warnings": []}
+CASE A17_source_type_own_serializer {"ok": {"json": "{\"t\":\"21.0C\"}", "python": {"t": "21.0C"}}, "warnings": []}
+CASE A18_json_schema_issue_model {"ok": {"serialization": {"properties": {"x": {"title": "X", "type": "string"}, "y": {"title": "Y", "type": "string"}}, "required": ["x", "y"], "title": "Blah", "type": "object"}, "validation": {"code": "invalid-for-json-schema", "exc": "PydanticInvalidForJsonSchema", "msg": "Cannot generate a JsonSchema for core_schema.PlainValidatorFunctionSchema ({'type': 'no-info', 'function': <function A18_json_schema_issue_model.<locals>.Blah.<lambda> at 0x7f53ba518670>})"}}, "warnings": []}
+CASE B01_custom_plain_validator_default_config {"ok": {"built": true, "dump_same_obj": true, "same_obj": true}, "warnings": []}
+CASE B02_upstream_test_shape_unsupported {"ok": {"dump_instance": true, "validated_instance": true}, "warnings": []}
+CASE B03_custom_with_serializer_before_default_config {"code": null, "exc": "PydanticSerializationError", "msg": "Unable to serialize unknown type: <class '__main__.Custom'>", "warnings": [], "where": "model_dump_json"}
+CASE B04_custom_arbitrary_types_allowed {"ok": {"dump_is_custom": true, "is_custom": true}, "warnings": []}
+CASE B05_custom_serializer_before_arbitrary_types {"ok": {"json": "{\"c\":\"custom!\"}", "python": {"c": "custom!"}}, "warnings": []}
+CASE B06_unresolved_forward_ref {"ok": {"complete": false, "instantiate": {"code": "class-not-fully-defined", "exc": "PydanticUserError", "msg": "`M` is not fully defined; you should define `NotDefinedAnywhere8567`, then call `M.model_rebuild()`."}}, "warnings": []}
+CASE B07_validator_returns_other_type_no_serializer {"ok": {"internal": "5", "json": "{\"n\":\"5\"}", "python": {"n": "5"}}, "warnings": []}
+CASE B08_validator_returns_subclass_model {"ok": {"json": "{\"s\":{\"a\":1,\"b\":2}}", "python": {"s": {"a": 1, "b": 2}}}, "warnings": []}
+CASE B09_plain_int_docstring_example {"ok": {"internal": 2, "json": "{\"a\":2}", "python": {"a": 2}}, "warnings": []}
+CASE B10_with_info_field_name_no_serializer {"ok": {"internal": "g"}, "warnings": []}
+CASE B11_decorator_plain_field_validator_with_annotated_serializer {"ok": {"internal": true, "json": "{\"x\":true}", "python": {"x": true}}, "warnings": []}
+CASE B12_docs_validator_ordering {"ok": {"logs": ["wrap-3: pre", "before-3", "plain", "after-3", "wrap-3: post"], "python": {"y": "def"}}, "warnings": []}
+CASE B13_inner_constraint_replaced {"ok": {"internal": "abcdef", "json": "{\"s\":\"abcdef\"}", "python": {"s": "abcdef"}}, "warnings": []}
+CASE B14_docs_json_schema_withjsonschema {"ok": {"schema": {"properties": {"a": {"examples": [1, 0, -1], "title": "A", "type": "integer"}}, "required": ["a"], "title": "Model", "type": "object"}, "ser_schema": {"properties": {"a": {"examples": [1, 0, -1], "title": "A", "type": "integer"}}, "required": ["a"], "title": "Model", "type": "object"}, "value": 2}, "warnings": []}
+CASE B15_json_schema_plain_int_no_withjsonschema {"ok": {"serialization": {"code": "invalid-for-json-schema", "exc": "PydanticInvalidForJsonSchema", "msg": "Cannot generate a JsonSchema for core_schema.PlainValidatorFunctionSchema ({'type': 'no-info', 'function': <function B15_json_schema_plain_int_no_withjsonschema.<locals>.Model.<lambda> at 0x7f53b9e05b"}, "validation": {"code": "invalid-for-json-schema", "exc": "PydanticInvalidForJsonSchema", "msg": "Cannot generate a JsonSchema for core_schema.PlainValidatorFunctionSchema ({'type': 'no-info', 'function': <function B15_json_schema_plain_int_no_withjsonschema.<locals>.Model.<lambda> at 0x7f53b9e05b"}}, "warnings": []}
+CASE B16_custom_json_dump_default_config {"code": null, "exc": "PydanticSerializationError", "msg": "Unable to serialize unknown type: <class '__main__.Custom'>", "warnings": [], "where": "model_dump_json"}
+CASE B17_callable_source_type {"ok": {"dump_same": true, "same": true}, "warnings": []}

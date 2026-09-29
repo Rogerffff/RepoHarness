@@ -53,6 +53,39 @@
   ],
   "nofinally": [
    "CAND=nofinally python /in/_edit.py"
+  ],
+  "rv_check": [
+   "CAND=rv_check python /in/_edit.py"
+  ],
+  "rv_kw": [
+   "CAND=rv_kw python /in/_edit.py"
+  ],
+  "rv_wrap": [
+   "CAND=rv_wrap python /in/_edit.py"
+  ],
+  "rv_retcode": [
+   "CAND=rv_retcode python /in/_edit.py"
+  ],
+  "w_argsdrop": [
+   "CAND=w_argsdrop python /in/_edit.py"
+  ],
+  "w_twice": [
+   "CAND=w_twice python /in/_edit.py"
+  ],
+  "w_mutate_src2": [
+   "CAND=w_mutate_src2 python /in/_edit.py"
+  ],
+  "w_ignore_errors": [
+   "CAND=w_ignore_errors python /in/_edit.py"
+  ],
+  "w_restore_build": [
+   "CAND=w_restore_build python /in/_edit.py"
+  ],
+  "w_restore_build_ctx": [
+   "CAND=w_restore_build_ctx python /in/_edit.py"
+  ],
+  "w_mkdir": [
+   "CAND=w_mkdir python /in/_edit.py"
   ]
  },
  "files": {
@@ -61,7 +94,8 @@
   "matrix.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/conan13403/matrix.py",
   "test.patch": "/home/user/RepoHarness/runs/category3_cloud_20260929/conan13403/materials/original_test.patch",
   "revised_v1.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/conan13403/revised_autotools_test_v1.py",
-  "revised_v2.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/conan13403/revised_autotools_test_v2.py"
+  "revised_v2.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/conan13403/revised_autotools_test_v2.py",
+  "revised_v3.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/conan13403/revised_autotools_test_v3.py"
  },
  "commands": [
   {
@@ -87,6 +121,11 @@
   {
    "id": "c5_f2p_revised_v2",
    "cmd": "cp /in/revised_v2.py conans/test/unittests/tools/gnu/autotools_test.py && python -m pytest -p no:cacheprovider -n0 -rA conans/test/unittests/tools/gnu/autotools_test.py; rc=$?; git checkout -- conans/test/unittests/tools/gnu/autotools_test.py; exit $rc",
+   "timeout_s": 600
+  },
+  {
+   "id": "c6_f2p_revised_v3",
+   "cmd": "cp /in/revised_v3.py conans/test/unittests/tools/gnu/autotools_test.py && python -m pytest -p no:cacheprovider -n0 -rA conans/test/unittests/tools/gnu/autotools_test.py; rc=$?; git checkout -- conans/test/unittests/tools/gnu/autotools_test.py; exit $rc",
    "timeout_s": 600
   }
  ]
