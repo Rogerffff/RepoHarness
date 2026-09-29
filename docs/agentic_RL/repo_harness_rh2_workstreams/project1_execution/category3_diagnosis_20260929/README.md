@@ -52,7 +52,7 @@ pillow 首轮的结论是“可转第1类”，被独立复核推翻，改判为
 | [SWE pydantic-9066](tasks/pydantic__pydantic-9066/result.md) | 缺正确对照 | **转第2类** | 替代正对照 `fallback` 与上游式 `upstream271` 在原材料和修订版上都是 1，gold 在修订版上为 0 | 同意，无阻断 |
 | [SWE dvc-9395](tasks/iterative__dvc-9395/result.md) | 辨别实验 | **转第2类** | T1：计数断言误拒；N1：“吞掉错误”的退化候选在原测试得 1；N2：用户改过的数据源在 `--pull` 下被覆盖或报错（S1）；N7：只测了 `dvc add` 数据源，补 `dvc import`。R-b＋R-c v4 下 16 个候选中 3 个为 1，gold 等 13 个为 0；正对照改为 `c3_frozenfix`，第二正对照为上游 3.51 移植版。只有私有模拟 | 两轮复核共 4 项阻断，已按 v4 处理；触及熔断，v4 交 Codex 确认 |
 | [R2E pillow__3a61c9e9](tasks/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/result.md) | 辨别实验 | **转第2类**（首轮“可转第1类”被推翻） | N1：RGBA 调色板加整数透明索引时，gold 的 `remap_palette` 抛 `ValueError`，上游 11.0 才修好，判 S1。R-c v2 新增一键，14 个候选中 6 个合理实现为 1，noop、gold 与 6 个错误候选为 0；正对照改为 C1，上游式 U11 作第二正对照 | 复核不同意首轮，已改判；v2 聚焦复核 1 项阻断（G_small），已按其补法修为 R-c v2 |
-| [R2E coveragepy__5dbbe143](tasks/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/result.md) | 公开目标核定（P5） | **转第2类**（用户 09-29 选定 A） | 按 slug 识别警告：R-f 题面补一句，隐藏测试沿用材料 v5。私有核对：gold、CE3 为 1，CE1、CE4、noop 为 0 | P5 沿用多方已有判定；修订题面由新公开读者验收中 |
+| [R2E coveragepy__5dbbe143](tasks/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/result.md) | 公开目标核定（P5） | **转第2类**（用户 09-29 选定 A） | 按 slug 识别警告：R-f 题面补一句，隐藏测试沿用材料 v5。私有核对：gold、CE3 为 1，CE1、CE4、noop 为 0 | P5 沿用多方已有判定；修订题面已通过新公开读者验收 |
 | [R2E coveragepy__016af5f6](tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/result.md) | 质量调查 | **转第2类** | P4：题面原例不复现，走 R-f。原测试下 6 个错误候选得 1。R-c v2 下 6 个合理实现得 1，noop 与 7 个错误候选得 0 | 复核部分同意，B1 已按 v2 处理；v2 聚焦复核无阻断 |
 
 独立复核：每题由不继承本会话上下文的新子代理进行，先读原件形成初判，再核对本目录的结论，只针对关键判断寻找反证（v1 §7.3）。复核发现阻断项时，主审修改后再请同一复核者做聚焦复核。
