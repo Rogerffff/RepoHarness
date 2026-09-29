@@ -74,10 +74,49 @@ P2P 27 项在所有候选、三版测试下全部通过。
 
 ## 4．行为对照
 
-行为对照正在运行，结果与公开回归见后续提交。已有部分如下：
+**（1）复核者的 17 个行为场景**（`behav_v2/`）
 
-- **主审自写的 8 个场景**（`semantic_v2/`，API 调用）：`c3_missing_only`、`mine_ondemand`、`mine_retry` 修好了题面场景；在“修改过的数据源”“`--dry`”“无 remote”“`--no-run-cache`”“run-cache 恢复”各场景下与 base 一致。gold 在“修改过的数据源”下失败，并忽略 `--no-run-cache`。
-- **公开回归**（base 测试文件，198 个结果）：`c3_missing_only`、`mine_ondemand` 与 base 逐测试相同。gold 只有一处不同：公开旧测试 `test_restore_pull`（`== 2`）失败，这印证了 T1。
+- 用复核者的 `behav.py`（原样复制在 `reviewer_cands/`），经真实 CLI、非 TTY 运行。每个场景新建临时 git+dvc 仓库和本地目录 remote；HTTP 场景在容器 loopback 上起只读 `http.server`。
+- 7 个候选由主审重跑，比较场景结果与 base 是否相同（去掉日志尾部）。汇总见 `behav_v2/diff_vs_base.json`。
+
+| 候选 | 与 base 不同的场景数 | 不同之处 |
+| --- | --- | --- |
+| **`c3_missing_only`** | 2 | B7：题面场景修好，foo、bar、dvc.lock 齐全；B4：HTTP remote 下也能拉回缺失的数据源（base 与 gold 都失败）。两处都是改进 |
+| **`mine_ondemand`** | 2 | 同上 |
+| **`mine_retry`** | 2 | 同上 |
+| gold | 13 | 修好 B7；以下 12 个场景出现回归或副作用，见下表 |
+| `alt_ds_only` | 11 | 与 gold 相比，B5、B9 不出错，其余相同 |
+| `gold_guarded` | 8 | dry 与“无 remote、已是最新”两处正常，其余与 gold 相同 |
+
+gold 与 base 的主要差别：
+
+| 场景 | base | gold |
+| --- | --- | --- |
+| B3：foo 被用户修改，非 TTY，`repro --pull` | rc 0，foo.dvc 更新，bar 为新内容 | rc 255，`ConfirmRemoveError`，foo.dvc 与 bar 未更新 |
+| B3t：同上，但在 TTY 中回答 y | 无提示，结果正确 | 出现删除提示；回答 y 后 **foo 被还原为旧内容**，bar 也是旧的，rc 0 |
+| B1、B1b、B1c：`--pull --dry` | 工作区与缓存不变 | 写回文件，下载缓存与 runs |
+| B2、B2b：未配置 remote | 正常 | rc 251，`no remote specified` |
+| B4b：HTTP remote 下从 run-cache 恢复 | 恢复成功 | rc 255，`run-cache is not supported` |
+| B5：已存在但无 hash 的输出 | 正常 | rc 255，`ConfirmRemoveError` |
+| B6：`--no-run-cache --pull` | 不下载 runs | 下载 runs |
+| B9：依赖已变、旧输出不可得 | 重新计算 | rc 255 |
+
+B2c（无 remote，且要从 run-cache 恢复）在 base 上本来就失败（rc 255）；三个替代实现相同，gold 改为 rc 251。
+
+**（2）主审自写的 8 个场景**（`semantic_v2/`，API 调用，脚本 `behavior_v2.py` 由主审独立编写）
+
+- `c3_missing_only`、`mine_ondemand`、`mine_retry`：修好了缺失数据源的场景；在修改过的数据源、`--dry`、无 remote（普通与 dry）、`--no-run-cache`、run-cache 恢复（普通与 dry）各场景下，结果与 base 一致。
+- gold 在“修改过的数据源”下抛 `ReproductionError`，bar 仍是旧值；它还忽略 `--no-run-cache`，dry 下有副作用，无 remote 时抛 `NoRemoteError`。
+
+**（3）公开回归**（`public_v2/`）
+
+- 范围：用 base 自带的测试文件（不应用 test_patch），运行 `tests/func/test_repro.py`、`test_repro_multistage.py`、`test_run_cache.py`、`test_data_cloud.py`、`test_import.py`、`tests/unit/repo/test_reproduce.py`、`tests/unit/command/test_repro.py`、`tests/unit/stage/test_cache.py`，共 198 个结果。
+- 结果：
+  - base：195 passed、3 xpassed；
+  - `c3_missing_only`、`mine_ondemand`、`mine_retry`：与 base 逐测试相同；
+  - gold：只有一处不同，公开旧测试 `test_restore_pull`（`== 2`）失败。这印证了 T1：gold 改变了 checkout 次数，隐藏版于是把计数改成 3。
+
+逐测试比较见 `public_v2/regression_vs_base.json`。
 
 ## 5．判定
 
@@ -127,7 +166,7 @@ P2P 27 项在所有候选、三版测试下全部通过。
 
 - **`mine_ondemand`（主正对照）**：由复核者编写，主审独立核实，满足 D4 “经他人独立核实”：
   - 满足题面：F2P 两个场景都通过；行为对照中缺失的数据源被拉回，run-cache 恢复正常；
-  - 不破坏旧行为：§4 各场景与 base 一致；公开回归结果见 §4；
+  - 不破坏旧行为：在复核者的 17 个场景和主审的 8 个场景中，除修好题面场景与 HTTP 缺失数据源外，都与 base 一致；公开回归与 base 逐测试相同；
   - 设计合理：与上游 3.51.0 的“只拉取缺失数据”语义一致，改动局部。
 - **`c3_missing_only`（第二正对照）**：由主审编写，**需要他人独立核实**，交复核者聚焦复核。
 - `mine_retry` 在 v2 上也得 1，可作补充对照。

@@ -39,9 +39,9 @@
 
 题目按四种缺口与两个来源选取，并优先选能在云端完整取证的题。8 题的结论如下：
 
-- 6 题转第2类；
+- 7 题转第2类；
 - 1 题待用户决定（P5）；
-- 1 题（dvc-9395）主审结论同样是转第2类，独立复核进行中。
+- dvc-9395 已按独立复核改为 v2，聚焦复核进行中。
 
 pillow 首轮的结论是“可转第1类”，被独立复核推翻，改判为转第2类。
 
@@ -51,7 +51,7 @@ pillow 首轮的结论是“可转第1类”，被独立复核推翻，改判为
 | [SWE moto-7584](tasks/getmoto__moto-7584/result.md) | 辨别实验 | **转第2类** | gold 未修题面原例；报错正文超出题面模板导致误拒；两类退化候选得 1。修订 v3 以 `stmt` 作正对照，11 个候选的正式诊断评分符合预期 | 复核＋v2 聚焦复核，无阻断 |
 | [SWE dask-9378](tasks/dask__dask-9378/result.md) | 辨别实验 | **转第2类** | 只错 mask 的退化候选得 1。R-c 逐元素比较 mask；“只修顶层”的设计按 P5 第一分支走 R-f，补一句 | 同意，无阻断 |
 | [SWE pydantic-9066](tasks/pydantic__pydantic-9066/result.md) | 缺正确对照 | **转第2类** | 替代正对照 `fallback` 与上游式 `upstream271` 在原材料和修订版上都是 1，gold 在修订版上为 0 | 同意，无阻断 |
-| [SWE dvc-9395](tasks/iterative__dvc-9395/result.md) | 辨别实验 | **转第2类**（主审） | T1：精确断言 `checkout` 调用次数，误拒合理实现，R-b 删除该断言；gold 的 `--dry`／无 remote 回归登记 S2。只有私有模拟，dvc_tail_v1 配方在云端无法完整重建 | 进行中 |
+| [SWE dvc-9395](tasks/iterative__dvc-9395/result.md) | 辨别实验 | **转第2类** | T1：计数断言误拒；N1：“吞掉错误”的退化候选在原测试得 1；N2：用户改过的数据源在 `--pull` 下被覆盖或报错，主审判 S1。R-b＋R-c v2 下 3 个替代实现为 1，gold 等 6 个候选与 noop 为 0；正对照改为 `mine_ondemand`。只有私有模拟 | 复核部分同意（2 项阻断，已按 v2 处理）；v2 聚焦复核进行中 |
 | [R2E pillow__3a61c9e9](tasks/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/result.md) | 辨别实验 | **转第2类**（首轮“可转第1类”被推翻） | N1：RGBA 调色板加整数透明索引时，gold 的 `remap_palette` 抛 `ValueError`，上游 11.0 才修好，判 S1。R-c v2 新增一键，14 个候选中 6 个合理实现为 1，noop、gold 与 6 个错误候选为 0；正对照改为 C1，上游式 U11 作第二正对照 | 复核不同意首轮，已改判；v2 聚焦复核 1 项阻断（G_small），已按其补法修为 R-c v2 |
 | [R2E coveragepy__5dbbe143](tasks/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/result.md) | 公开目标核定（P5） | **待用户决定** | slug 与消息两种读法都有公开依据。可选：A 按 slug（推荐）、B 按消息、C 不修订。与读法无关的 R-c 已由 R2E 线落地 | 沿用多方已有的 P5 判定 |
 | [R2E coveragepy__016af5f6](tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/result.md) | 质量调查 | **转第2类** | P4：题面原例不复现，走 R-f。原测试下 6 个错误候选得 1。R-c v2 下 6 个合理实现得 1，noop 与 7 个错误候选得 0 | 复核部分同意，B1 已按 v2 处理；v2 聚焦复核无阻断 |
