@@ -19,8 +19,10 @@ class Recorder(ConanFileMock):
         super().__init__()
         self.runs = []
         self.fail_next = False
+        self.failure_returned = False
 
-    def run(self, command, stdout=None, cwd=None, **kwargs):
+    def run(self, command, stdout=None, cwd=None, ignore_errors=False, **kwargs):
+        # 09-29 v3 轮：按真实 ConanFile.run 处理 ignore_errors（失败时返回非零、不抛）
         where = cwd if cwd else os.getcwd()
         if not os.path.isdir(where):
             raise FileNotFoundError(where)
@@ -28,6 +30,9 @@ class Recorder(ConanFileMock):
         self.runs.append((os.path.realpath(where), command))
         if self.fail_next:
             self.fail_next = False
+            if ignore_errors:
+                self.failure_returned = True
+                return 1
             raise ConanException("simulated autoreconf failure")
         return 0
 
@@ -45,7 +50,7 @@ def main():
         save(os.path.join(d, "configure.ac"), "AC_INIT([x], [1])\n")
     os.chdir(gen)
     save_toolchain_args({"configure_args": "", "make_args": "", "autoreconf_args": "--verbose"})
-    names = {source: "SRC", sub: "SRC/sub", build: "BUILD"}
+    names = {source: "SRC", sub: "SRC/sub", build: "BUILD", root: "ROOT"}
 
     def fresh():
         cf = Recorder()
@@ -65,11 +70,13 @@ def main():
         ("missing", lambda at, cf: at.autoreconf(build_script_folder="missing")),
         ("run_fails_sub", None),
         ("sequence_sub_then_default", None),
+        ("rel_sub_called_from_root", lambda at, cf: at.autoreconf(build_script_folder="sub")),
     ]
     result = {}
     for name, fn in scenarios:
         cf, at = fresh()
-        os.chdir(build)
+        start = root if name == "rel_sub_called_from_root" else build
+        os.chdir(start)
         rec = {}
         try:
             if name == "run_fails_sub":
@@ -88,7 +95,9 @@ def main():
         rec["runs"] = [[names.get(w, w), c] for w, c in cf.runs]
         after = os.path.realpath(os.getcwd())
         rec["cwd_after"] = names.get(after, after)
-        rec["cwd_restored"] = after == os.path.realpath(build)
+        rec["cwd_restored"] = after == os.path.realpath(start)
+        if cf.failure_returned:
+            rec["failure_code_returned_to_candidate"] = True
         try:
             rec["source_folder_unchanged"] = cf.source_folder == source
         except Exception as e:  # noqa  候选可能把 folders.source 改成非字符串

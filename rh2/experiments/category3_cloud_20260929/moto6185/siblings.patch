@@ -1,0 +1,14 @@
+diff --git a/moto/dynamodb/models/table.py b/moto/dynamodb/models/table.py
+--- a/moto/dynamodb/models/table.py
++++ b/moto/dynamodb/models/table.py
+@@ -490,7 +490,9 @@
+                 self._validate_item_types(value)
+             elif type(value) == int and key == "N":
+                 raise InvalidConversion
+-            if key == "S":
++            # An AttributeValue has exactly one type key; in a dict with several keys,
++            # "S" is just an attribute name
++            if key == "S" and len(item_attrs) == 1:
+                 # This scenario is usually caught by boto3, but the user can disable parameter validation
+                 # Which is why we need to catch it 'server-side' as well
+                 if type(value) == int:

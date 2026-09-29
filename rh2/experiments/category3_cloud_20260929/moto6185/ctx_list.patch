@@ -1,0 +1,32 @@
+diff --git a/moto/dynamodb/models/table.py b/moto/dynamodb/models/table.py
+--- a/moto/dynamodb/models/table.py
++++ b/moto/dynamodb/models/table.py
+@@ -485,12 +485,24 @@
+                     raise RangeKeyTooLong
+ 
+     def _validate_item_types(self, item_attrs: Dict[str, Any]) -> None:
+-        for key, value in item_attrs.items():
+-            if type(value) == dict:
++        # item_attrs maps attribute *names* to AttributeValues. A name can be anything,
++        # including "S", so only the AttributeValues themselves are type-checked.
++        for attr_value in item_attrs.values():
++            if type(attr_value) == dict:
++                self._validate_attribute_value(attr_value)
++
++    def _validate_attribute_value(self, attr_value: Dict[str, Any]) -> None:
++        for type_tag, value in attr_value.items():
++            if type_tag == "M" and type(value) == dict:
++                # The members of a map are attribute names again
+                 self._validate_item_types(value)
+-            elif type(value) == int and key == "N":
++            elif type_tag == "L" and type(value) == list:
++                for element in value:
++                    if type(element) == dict:
++                        self._validate_attribute_value(element)
++            elif type_tag == "N" and type(value) == int:
+                 raise InvalidConversion
+-            if key == "S":
++            elif type_tag == "S":
+                 # This scenario is usually caught by boto3, but the user can disable parameter validation
+                 # Which is why we need to catch it 'server-side' as well
+                 if type(value) == int:

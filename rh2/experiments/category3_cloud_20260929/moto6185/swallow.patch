@@ -1,0 +1,19 @@
+diff --git a/moto/dynamodb/models/table.py b/moto/dynamodb/models/table.py
+--- a/moto/dynamodb/models/table.py
++++ b/moto/dynamodb/models/table.py
+@@ -540,7 +540,14 @@
+                 actual_type=range_value.type,
+             )
+ 
+-        self._validate_item_types(item_attrs)
++        try:
++            self._validate_item_types(item_attrs)
++        except SerializationException:
++            # "S" may be an attribute name rather than a type descriptor;
++            # only insist on well-formed key attributes
++            self._validate_item_types(
++                {k: v for k, v in item_attrs.items() if k in self.table_key_attrs}
++            )
+         self._validate_key_sizes(item_attrs)
+ 
+         if expected is None:

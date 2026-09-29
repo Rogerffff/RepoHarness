@@ -1,0 +1,13 @@
+diff --git a/moto/dynamodb/models/table.py b/moto/dynamodb/models/table.py
+--- a/moto/dynamodb/models/table.py
++++ b/moto/dynamodb/models/table.py
+@@ -491,6 +491,9 @@
+             elif type(value) == int and key == "N":
+                 raise InvalidConversion
+             if key == "S":
++                if value == {"NULL": True}:
++                    # An attribute that is called "S" and holds None
++                    continue
+                 # This scenario is usually caught by boto3, but the user can disable parameter validation
+                 # Which is why we need to catch it 'server-side' as well
+                 if type(value) == int:

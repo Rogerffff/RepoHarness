@@ -1,0 +1,84 @@
+{
+ "image": "c3keep/moto6185:src",
+ "python_prefix": "/opt/miniconda3/envs/testbed",
+ "variants": {
+  "base": [],
+  "gold": [
+   "git apply /in/gold.patch"
+  ],
+  "ctx": [
+   "git apply /in/ctx.patch"
+  ],
+  "ctx_list": [
+   "git apply /in/ctx_list.patch"
+  ],
+  "parity": [
+   "git apply /in/parity.patch"
+  ],
+  "top_only": [
+   "git apply /in/top_only.patch"
+  ],
+  "siblings": [
+   "git apply /in/siblings.patch"
+  ],
+  "depth2": [
+   "git apply /in/depth2.patch"
+  ],
+  "null_only": [
+   "git apply /in/null_only.patch"
+  ],
+  "shape": [
+   "git apply /in/shape.patch"
+  ],
+  "rootkey": [
+   "git apply /in/rootkey.patch"
+  ],
+  "swallow": [
+   "git apply /in/swallow.patch"
+  ]
+ },
+ "files": {
+  "gold.patch": "/home/user/RepoHarness/runs/category3_cloud_20260929/moto6185/gold/getmoto__moto-6185.gold.patch",
+  "behavior.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/moto6185/behavior.py",
+  "test_orig.patch": "/home/user/RepoHarness/runs/category3_cloud_20260929/moto6185/test_orig.patch",
+  "revised_test_v1.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/moto6185/revised_test_v1.patch",
+  "revised_test_v1s.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/moto6185/revised_test_v1s.patch",
+  "ctx.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/moto6185/ctx.patch",
+  "ctx_list.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/moto6185/ctx_list.patch",
+  "parity.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/moto6185/parity.patch",
+  "top_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/moto6185/top_only.patch",
+  "siblings.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/moto6185/siblings.patch",
+  "depth2.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/moto6185/depth2.patch",
+  "null_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/moto6185/null_only.patch",
+  "shape.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/moto6185/shape.patch",
+  "rootkey.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/moto6185/rootkey.patch",
+  "swallow.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/moto6185/swallow.patch"
+ },
+ "commands": [
+  {
+   "id": "b1_behavior",
+   "cmd": "python /in/behavior.py",
+   "timeout_s": 600
+  },
+  {
+   "id": "b2_hidden_orig",
+   "cmd": "git apply /in/test_orig.patch && TEST_SERVER_MODE=false python -m pytest -p no:cacheprovider -n0 -rA --tb=short tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py; rc=$?; git checkout -q -- tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py; exit $rc",
+   "timeout_s": 900
+  },
+  {
+   "id": "b3_hidden_v1",
+   "cmd": "git apply /in/revised_test_v1.patch && TEST_SERVER_MODE=false python -m pytest -p no:cacheprovider -n0 -rA --tb=short tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py; rc=$?; git checkout -q -- tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py; exit $rc",
+   "timeout_s": 900
+  },
+  {
+   "id": "b4_hidden_v1s",
+   "cmd": "git apply /in/revised_test_v1s.patch && TEST_SERVER_MODE=false python -m pytest -p no:cacheprovider -n0 -rA --tb=short tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py; rc=$?; git checkout -q -- tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py; exit $rc",
+   "timeout_s": 900
+  },
+  {
+   "id": "b5_dynamodb_suite",
+   "cmd": "TEST_SERVER_MODE=false python -m pytest -p no:cacheprovider -n0 -q -rf tests/test_dynamodb",
+   "timeout_s": 1800
+  }
+ ]
+}
