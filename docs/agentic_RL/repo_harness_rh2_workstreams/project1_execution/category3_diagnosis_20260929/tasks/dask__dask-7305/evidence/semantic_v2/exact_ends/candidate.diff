@@ -1,0 +1,21 @@
+diff --git a/dask/dataframe/partitionquantiles.py b/dask/dataframe/partitionquantiles.py
+index d25f4d638..af1632394 100644
+--- a/dask/dataframe/partitionquantiles.py
++++ b/dask/dataframe/partitionquantiles.py
+@@ -416,6 +416,16 @@ def percentiles_summary(df, num_old, num_new, upsample, state):
+     vals, n = _percentile(data, qs, interpolation=interpolation)
+     if interpolation == "linear" and np.issubdtype(data.dtype, np.integer):
+         vals = np.round(vals).astype(data.dtype)
++        # Linear interpolation goes through float64, which cannot represent
++        # every large integer exactly (e.g. uint64 above 2**53), so the
++        # interpolated extremes may drift.  Keep the exact minimum and maximum
++        # of the data (compare dask/dask#6864 for datetimes).
++        lo, hi = data.min(), data.max()
++        np.clip(vals, lo, hi, out=vals)
++        if qs[0] == 0:
++            vals[0] = lo
++        if qs[-1] == 100:
++            vals[-1] = hi
+     vals_and_weights = percentiles_to_weights(qs, vals, length)
+     return vals_and_weights
+ 

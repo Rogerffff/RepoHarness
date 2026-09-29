@@ -1,0 +1,15 @@
+diff --git a/dask/dataframe/partitionquantiles.py b/dask/dataframe/partitionquantiles.py
+index d25f4d638..e83093bc4 100644
+--- a/dask/dataframe/partitionquantiles.py
++++ b/dask/dataframe/partitionquantiles.py
+@@ -413,6 +413,10 @@ def percentiles_summary(df, num_old, num_new, upsample, state):
+     if is_categorical_dtype(data):
+         data = data.codes
+         interpolation = "nearest"
++    elif np.issubdtype(data.dtype, np.integer):
++        # Pick existing values: linear interpolation goes through float64,
++        # which cannot represent large integers exactly.
++        interpolation = "higher"
+     vals, n = _percentile(data, qs, interpolation=interpolation)
+     if interpolation == "linear" and np.issubdtype(data.dtype, np.integer):
+         vals = np.round(vals).astype(data.dtype)

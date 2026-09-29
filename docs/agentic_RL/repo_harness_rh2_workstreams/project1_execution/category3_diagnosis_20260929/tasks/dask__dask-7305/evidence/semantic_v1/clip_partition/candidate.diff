@@ -1,0 +1,13 @@
+diff --git a/dask/dataframe/shuffle.py b/dask/dataframe/shuffle.py
+index 99147e17c..5183b2a79 100644
+--- a/dask/dataframe/shuffle.py
++++ b/dask/dataframe/shuffle.py
+@@ -1090,6 +1090,8 @@ def collect(p, part, meta, barrier_token):
+ def set_partitions_pre(s, divisions):
+     partitions = divisions.searchsorted(s, side="right") - 1
+     partitions[(s >= divisions.iloc[-1]).values] = len(divisions) - 2
++    # values below the first division belong to the first partition
++    partitions[(s < divisions.iloc[0]).values] = 0
+     return partitions
+ 
+ 

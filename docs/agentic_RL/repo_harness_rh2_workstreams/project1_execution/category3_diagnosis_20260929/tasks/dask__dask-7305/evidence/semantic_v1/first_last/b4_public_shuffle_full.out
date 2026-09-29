@@ -1,0 +1,161 @@
+.................s.....................s.........FF...............F.s... [ 67%]
+...................................                                      [100%]
+=================================== FAILURES ===================================
+________________________________ test_set_index ________________________________
+
+    def test_set_index():
+        dsk = {
+            ("x", 0): pd.DataFrame({"a": [1, 2, 3], "b": [4, 2, 6]}, index=[0, 1, 3]),
+            ("x", 1): pd.DataFrame({"a": [4, 5, 6], "b": [3, 5, 8]}, index=[5, 6, 8]),
+            ("x", 2): pd.DataFrame({"a": [7, 8, 9], "b": [9, 1, 8]}, index=[9, 9, 9]),
+        }
+        d = dd.DataFrame(dsk, "x", meta, [0, 4, 9, 9])
+        full = d.compute()
+    
+        d2 = d.set_index("b", npartitions=3)
+        assert d2.npartitions == 3
+        assert d2.index.name == "b"
+>       assert_eq(d2, full.set_index("b"))
+
+dask/dataframe/tests/test_shuffle.py:592: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/dataframe/utils.py:813: in assert_eq
+    assert_divisions(a)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+ddf = Dask DataFrame Structure:
+                   a
+npartitions=3       
+3              int64
+4                ...
+8                ...
+8                ...
+Dask Name: sort_index, 26 tasks
+
+    def assert_divisions(ddf):
+        if not hasattr(ddf, "divisions"):
+            return
+        if not getattr(ddf, "known_divisions", False):
+            return
+    
+        def index(x):
+            if is_index_like(x):
+                return x
+            try:
+                return x.index.get_level_values(0)
+            except AttributeError:
+                return x.index
+    
+        results = get_sync(ddf.dask, ddf.__dask_keys__())
+        for i, df in enumerate(results[:-1]):
+            if len(df):
+                assert index(df).min() >= ddf.divisions[i]
+                assert index(df).max() < ddf.divisions[i + 1]
+    
+        if len(results[-1]):
+            assert index(results[-1]).min() >= ddf.divisions[-2]
+>           assert index(results[-1]).max() <= ddf.divisions[-1]
+E           AssertionError
+
+dask/dataframe/utils.py:887: AssertionError
+__________________________ test_set_index_interpolate __________________________
+
+    def test_set_index_interpolate():
+        df = pd.DataFrame({"x": [4, 1, 1, 3, 3], "y": [1.0, 1, 1, 1, 2]})
+        d = dd.from_pandas(df, 2)
+    
+        d1 = d.set_index("x", npartitions=3)
+        assert d1.npartitions == 3
+>       assert set(d1.divisions) == set([1, 2, 3, 4])
+E       assert {1, 3, 4} == {1, 2, 3, 4}
+E         
+E         Extra items in the right set:
+E         2
+E         Use -v to get more diff
+
+dask/dataframe/tests/test_shuffle.py:614: AssertionError
+____________________________ test_empty_partitions _____________________________
+
+    def test_empty_partitions():
+        # See https://github.com/dask/dask/issues/2408
+        df = pd.DataFrame({"a": list(range(10))})
+        df["b"] = df["a"] % 3
+        df["c"] = df["b"].astype(str)
+    
+        ddf = dd.from_pandas(df, npartitions=3)
+        ddf = ddf.set_index("b")
+        ddf = ddf.repartition(npartitions=3)
+        ddf.get_partition(0).compute()
+>       assert_eq(ddf, df.set_index("b"))
+
+dask/dataframe/tests/test_shuffle.py:862: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/dataframe/utils.py:813: in assert_eq
+    assert_divisions(a)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+ddf = Dask DataFrame Structure:
+                   a       c
+npartitions=3               
+0              int64  object
+0                ...     ...
+0                ...     ...
+1                ...     ...
+Dask Name: sort_index, 26 tasks
+
+    def assert_divisions(ddf):
+        if not hasattr(ddf, "divisions"):
+            return
+        if not getattr(ddf, "known_divisions", False):
+            return
+    
+        def index(x):
+            if is_index_like(x):
+                return x
+            try:
+                return x.index.get_level_values(0)
+            except AttributeError:
+                return x.index
+    
+        results = get_sync(ddf.dask, ddf.__dask_keys__())
+        for i, df in enumerate(results[:-1]):
+            if len(df):
+                assert index(df).min() >= ddf.divisions[i]
+                assert index(df).max() < ddf.divisions[i + 1]
+    
+        if len(results[-1]):
+            assert index(results[-1]).min() >= ddf.divisions[-2]
+>           assert index(results[-1]).max() <= ddf.divisions[-1]
+E           AssertionError
+
+dask/dataframe/utils.py:887: AssertionError
+=============================== warnings summary ===============================
+../opt/miniconda3/envs/testbed/lib/python3.8/site-packages/chest/core.py:1
+  /opt/miniconda3/envs/testbed/lib/python3.8/site-packages/chest/core.py:1: DeprecationWarning: Using or importing the ABCs from 'collections' instead of from 'collections.abc' is deprecated since Python 3.3, and in 3.10 it will stop working
+    from collections import MutableMapping
+
+dask/dataframe/tests/test_shuffle.py::test_disk_shuffle_check_actual_compression
+  /opt/miniconda3/envs/testbed/lib/python3.8/site-packages/_pytest/unraisableexception.py:85: PytestUnraisableExceptionWarning: Exception ignored in: <_io.FileIO [closed]>
+  
+  Traceback (most recent call last):
+    File "/testbed/dask/dataframe/tests/test_shuffle.py", line 1000, in generate_raw_partd_file
+      return open(filename, "rb").read()
+  ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmp9r6ok6mi.partd/x'>
+  
+    warnings.warn(pytest.PytestUnraisableExceptionWarning(msg))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================= slowest 10 durations =============================
+3.38s call     dask/dataframe/tests/test_shuffle.py::test_rearrange[processes-tasks]
+2.81s call     dask/dataframe/tests/test_shuffle.py::test_rearrange[processes-disk]
+1.52s call     dask/dataframe/tests/test_shuffle.py::test_rearrange_cleanup
+1.52s call     dask/dataframe/tests/test_shuffle.py::test_rearrange_disk_cleanup_with_exception
+1.20s call     dask/dataframe/tests/test_shuffle.py::test_set_index_tasks_2[disk]
+0.71s call     dask/dataframe/tests/test_shuffle.py::test_set_index_tasks_2[tasks]
+0.70s call     dask/dataframe/tests/test_shuffle.py::test_set_index_tasks[7]
+0.42s call     dask/dataframe/tests/test_shuffle.py::test_set_index_tasks[4]
+0.40s call     dask/dataframe/tests/test_shuffle.py::test_set_index_drop[False]
+0.39s call     dask/dataframe/tests/test_shuffle.py::test_set_index_drop[True]
+=========================== short test summary info ============================
+SKIPPED [3] conftest.py:36: need --runslow option to run
+3 failed, 101 passed, 3 skipped, 2 warnings in 23.94s

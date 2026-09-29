@@ -11,7 +11,7 @@
   - uint64 值跨越 2**63 时，`process_val_weights` 用不带 dtype 的 `np.array(vals)` 转成了 float64。
 
   这两种情况下端点都偏移，`set_index` 还会静默丢行，例如 3 个不同值、300 行、5 个输出分区时丢掉 100 行。
-- **修法**：R-b 放宽内部分界；R-c 补 5 个大整数实例，同时检查端点和行的归属。修订版 v1 正式诊断评分（15 个变体）：<!-- REV_SUMMARY -->
+- **修法**：R-b 放宽内部分界；R-c 补 5 个大整数实例，同时检查端点和行的归属。修订版 v1 正式诊断评分（15 个变体）：noop 0；gold 0；`gold_full`、`exact_full`、`higher_full` 为 1；其余 10 个错误或不完整候选全为 0。
 - gold 在修订版上为 0，因此按 D4 改用替代正对照 `gold_full`（gold 加两处最小修补），`exact_full`、`higher_full` 作第二、第三正对照。三者都是本主审所写，**待他人核实**。
 - 实施依赖 D6 的“测试补丁替换”切片。测试 ID 与 F2P／P2P 分组不变，不需要 `statement_replace`。
 
@@ -184,7 +184,27 @@ P5 不适用：没有“两种读法”，内部分界本就允许不同。
 
 修订版正式诊断评分（`--materials`，F2P／P2P 名单与命令不变）：
 
-<!-- REV_TABLE -->
+所有行：grader `swebench-4.1.0+swegym_parsers@242429c1+c3-dask7305-exact-ends-v1`，参考缺席 0，安装 rc 0，清理成功。修订后的 grading 摘要为 `sha256:7609d1e0…c798`（原为 `b94a8bce…8eb2`）。
+
+| 候选 | 原材料 | 修订版 v1 | 修订版失败位置（F2P 中第一处失败的实例） |
+| --- | --- | --- | --- |
+| noop | 0 | 0 | `issue_1to1` |
+| gold | 1 | **0** | `issue_1to3`（G1） |
+| `gold_full`（正对照） | 1 | **1** | — |
+| `exact_full` | **0** | **1** | —（T1 已纠正） |
+| `higher_full` | **0** | **1** | —（T1 已纠正） |
+| `nearest_via_float`（退化） | **1** | **0** | `issue_1to1`（T2b 已纠正） |
+| `exact_ends` | 0 | 0 | `issue_1to3` |
+| `higher_int` | 私有 0 | 0 | `issue_1to3` |
+| `gold_pin_only` | 私有 1 | 0 | `span63_200_4to4` |
+| `gold_typed_only` | 私有 1 | 0 | `issue_1to3` |
+| `uint_only` | 私有 0 | 0 | `issue_1to3` |
+| `first_last` | 私有 0 | 0 | `issue_1to3`；另有 2 项 P2P 失败（`test_set_index`、`test_empty_partitions`） |
+| `k1_only` | 私有 0 | 0 | `issue_1to3` |
+| `clip_partition` | 私有 0 | 0 | `issue_1to1` |
+| `pvw_only` | 私有 0 | 0 | `issue_1to1` |
+
+“私有”指该候选在原材料上只做了私有模拟（应用原 test_patch 后跑 `-k interpolate` 的 3 项），未做正式评分。修订版一列全部是正式诊断评分。
 
 修订后仍受保护的公开要求：
 - 大整数的精确 min/max，覆盖不同输出分区数、多分区乱序输入、有符号、跨 2**63 的情形；

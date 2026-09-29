@@ -1,0 +1,30 @@
+diff --git a/dask/dataframe/partitionquantiles.py b/dask/dataframe/partitionquantiles.py
+index d25f4d638..663776b48 100644
+--- a/dask/dataframe/partitionquantiles.py
++++ b/dask/dataframe/partitionquantiles.py
+@@ -317,7 +317,12 @@ def process_val_weights(vals_and_weights, npartitions, dtype_info):
+             return np.array(None, dtype=np.float_)
+ 
+     vals, weights = vals_and_weights
+-    vals = np.array(vals)
++    if isinstance(dtype, np.dtype) and np.issubdtype(dtype, np.integer):
++        # Keep integer summaries in their own dtype: e.g. a mix of uint64
++        # values below and above 2**63 would otherwise become float64.
++        vals = np.array(vals, dtype=dtype)
++    else:
++        vals = np.array(vals)
+     weights = np.array(weights)
+ 
+     # We want to create exactly `npartition` number of groups of `vals` that
+@@ -413,9 +418,9 @@ def percentiles_summary(df, num_old, num_new, upsample, state):
+     if is_categorical_dtype(data):
+         data = data.codes
+         interpolation = "nearest"
++    elif np.issubdtype(data.dtype, np.integer):
++        interpolation = "nearest"
+     vals, n = _percentile(data, qs, interpolation=interpolation)
+-    if interpolation == "linear" and np.issubdtype(data.dtype, np.integer):
+-        vals = np.round(vals).astype(data.dtype)
+     vals_and_weights = percentiles_to_weights(qs, vals, length)
+     return vals_and_weights
+ 

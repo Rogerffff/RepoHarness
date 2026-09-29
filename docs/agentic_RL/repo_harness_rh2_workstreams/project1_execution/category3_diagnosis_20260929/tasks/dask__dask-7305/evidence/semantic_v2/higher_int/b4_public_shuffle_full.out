@@ -1,0 +1,32 @@
+.................s.....................s............................s... [ 67%]
+...................................                                      [100%]
+=============================== warnings summary ===============================
+../opt/miniconda3/envs/testbed/lib/python3.8/site-packages/chest/core.py:1
+  /opt/miniconda3/envs/testbed/lib/python3.8/site-packages/chest/core.py:1: DeprecationWarning: Using or importing the ABCs from 'collections' instead of from 'collections.abc' is deprecated since Python 3.3, and in 3.10 it will stop working
+    from collections import MutableMapping
+
+dask/dataframe/tests/test_shuffle.py::test_disk_shuffle_check_actual_compression
+  /opt/miniconda3/envs/testbed/lib/python3.8/site-packages/_pytest/unraisableexception.py:85: PytestUnraisableExceptionWarning: Exception ignored in: <_io.FileIO [closed]>
+  
+  Traceback (most recent call last):
+    File "/testbed/dask/dataframe/tests/test_shuffle.py", line 1000, in generate_raw_partd_file
+      return open(filename, "rb").read()
+  ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmp8f10rn0f.partd/x'>
+  
+    warnings.warn(pytest.PytestUnraisableExceptionWarning(msg))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================= slowest 10 durations =============================
+2.92s call     dask/dataframe/tests/test_shuffle.py::test_rearrange[processes-tasks]
+2.42s call     dask/dataframe/tests/test_shuffle.py::test_rearrange[processes-disk]
+1.18s call     dask/dataframe/tests/test_shuffle.py::test_set_index_tasks_2[disk]
+1.10s call     dask/dataframe/tests/test_shuffle.py::test_rearrange_cleanup
+1.09s call     dask/dataframe/tests/test_shuffle.py::test_rearrange_disk_cleanup_with_exception
+0.70s call     dask/dataframe/tests/test_shuffle.py::test_set_index_tasks_2[tasks]
+0.61s call     dask/dataframe/tests/test_shuffle.py::test_set_index_tasks[7]
+0.46s call     dask/dataframe/tests/test_shuffle.py::test_set_index_drop[False]
+0.43s call     dask/dataframe/tests/test_shuffle.py::test_set_index_drop[True]
+0.39s call     dask/dataframe/tests/test_shuffle.py::test_set_index_tasks[4]
+=========================== short test summary info ============================
+SKIPPED [3] conftest.py:36: need --runslow option to run
+104 passed, 3 skipped, 2 warnings in 21.73s
