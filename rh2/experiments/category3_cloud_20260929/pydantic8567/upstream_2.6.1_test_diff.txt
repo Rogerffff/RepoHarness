@@ -1,0 +1,18 @@
+# 上游佐证：raw.githubusercontent.com/pydantic/pydantic 的 tests/test_validators.py，v2.6.0 -> v2.6.1 的差异（#8710 新增回归测试）
+2825a2826,2841
+> 
+> 
+> def test_plain_validator_with_unsupported_type() -> None:
+>     class UnsupportedClass:
+>         pass
+> 
+>     PreviouslySupportedType = Annotated[
+>         UnsupportedClass,
+>         PlainValidator(lambda _: UnsupportedClass()),
+>     ]
+> 
+>     type_adapter = TypeAdapter(PreviouslySupportedType)
+> 
+>     model = type_adapter.validate_python('abcdefg')
+>     assert isinstance(model, UnsupportedClass)
+>     assert isinstance(type_adapter.dump_python(model), UnsupportedClass)

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # pydantic-8567 正式评分（09-19 pydantic_v1 安装配方 + 云端等效派生镜像）；可选 --materials 修订版诊断评分。
-# 用法：run_formal.sh <orig|rev1> <候选名...>    候选名：noop | gold | <补丁名，不含 .patch>
+# 用法：run_formal.sh <orig|rev1|rev2> <候选名...>    候选名：noop | gold | <补丁名，不含 .patch>
 set -euo pipefail
 MODE=$1; shift
 ROOT=/home/user/RepoHarness
@@ -11,6 +11,7 @@ DERIVED=$(python3 -c "import json;print(json.load(open('$W/derived/image.json'))
 case $MODE in
   orig) OUT=$W/formal; EXTRA=() ;;
   rev1) OUT=$W/formal_revised_v1; EXTRA=(--materials "$E/materials_revised_v1.json") ;;
+  rev2) OUT=$W/formal_revised_v2; EXTRA=(--materials "$E/materials_revised_v2.json") ;;
   *) echo "bad mode $MODE"; exit 2 ;;
 esac
 mkdir -p "$OUT"

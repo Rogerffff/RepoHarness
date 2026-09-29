@@ -1,0 +1,94 @@
+{
+ "image": "xingyaoww/sweb.eval.x86_64.pydantic_s_pydantic-8567:latest",
+ "python_prefix": "/opt/miniconda3/envs/testbed",
+ "variants": {
+  "noop__rev2": [
+   "git apply /in/revised_test_v2.patch"
+  ],
+  "gold__rev2": [
+   "git apply /in/gold.patch",
+   "git apply /in/revised_test_v2.patch"
+  ],
+  "c3_serpass__rev2": [
+   "git apply /in/c3_serpass.patch",
+   "git apply /in/revised_test_v2.patch"
+  ],
+  "upstream261__rev2": [
+   "git apply /in/upstream261.patch",
+   "git apply /in/revised_test_v2.patch"
+  ],
+  "c3_reorder__rev2": [
+   "git apply /in/c3_reorder.patch",
+   "git apply /in/revised_test_v2.patch"
+  ],
+  "n_const_str__rev2": [
+   "git apply /in/n_const_str.patch",
+   "git apply /in/revised_test_v2.patch"
+  ],
+  "n_python_only__rev2": [
+   "git apply /in/n_python_only.patch",
+   "git apply /in/revised_test_v2.patch"
+  ],
+  "n_bool_only__rev2": [
+   "git apply /in/n_bool_only.patch",
+   "git apply /in/revised_test_v2.patch"
+  ],
+  "n_noinfo_only__rev2": [
+   "git apply /in/n_noinfo_only.patch",
+   "git apply /in/revised_test_v2.patch"
+  ],
+  "n_swallow_to_any__rev2": [
+   "git apply /in/n_swallow_to_any.patch",
+   "git apply /in/revised_test_v2.patch"
+  ],
+  "n_when_used_lost__rev2": [
+   "git apply /in/n_when_used_lost.patch",
+   "git apply /in/revised_test_v2.patch"
+  ],
+  "n_order_registry__rev2": [
+   "git apply /in/n_order_registry.patch",
+   "git apply /in/revised_test_v2.patch"
+  ],
+  "n_two_items__rev2": [
+   "git apply /in/n_two_items.patch",
+   "git apply /in/revised_test_v2.patch"
+  ],
+  "n_field_only__rev2": [
+   "git apply /in/n_field_only.patch",
+   "git apply /in/revised_test_v2.patch"
+  ],
+  "n_field_only__orig": [
+   "git apply /in/n_field_only.patch",
+   "git apply /in/original_test.patch"
+  ],
+  "n_field_only__rev1": [
+   "git apply /in/n_field_only.patch",
+   "git apply /in/revised_test_v1.patch"
+  ]
+ },
+ "files": {
+  "gold.patch": "/home/user/RepoHarness/runs/category3_cloud_20260929/pydantic8567/gold/pydantic__pydantic-8567.gold.patch",
+  "original_test.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8567/original_test.patch",
+  "revised_test_v1.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8567/revised_test_v1.patch",
+  "revised_test_v2.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8567/revised_test_v2.patch",
+  "c3_serpass.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8567/c3_serpass.patch",
+  "upstream261.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8567/upstream261.patch",
+  "c3_reorder.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8567/c3_reorder.patch",
+  "n_const_str.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8567/n_const_str.patch",
+  "n_python_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8567/n_python_only.patch",
+  "n_bool_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8567/n_bool_only.patch",
+  "n_noinfo_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8567/n_noinfo_only.patch",
+  "n_swallow_to_any.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8567/n_swallow_to_any.patch",
+  "n_when_used_lost.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8567/n_when_used_lost.patch",
+  "n_order_registry.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8567/n_order_registry.patch",
+  "n_two_items.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8567/n_two_items.patch",
+  "n_field_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8567/n_field_only.patch"
+ },
+ "commands": [
+  {
+   "id": "t1_test_validators",
+   "cmd": "python -m pytest -p no:cacheprovider -rA --tb=short -vv -o console_output_style=classic --no-header tests/test_validators.py",
+   "timeout_s": 900
+  }
+ ]
+}

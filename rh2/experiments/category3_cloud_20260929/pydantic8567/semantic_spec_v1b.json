@@ -1,0 +1,30 @@
+{
+ "image": "xingyaoww/sweb.eval.x86_64.pydantic_s_pydantic-8567:latest",
+ "python_prefix": "/opt/miniconda3/envs/testbed",
+ "variants": {
+  "n_field_only": [
+   "git apply /in/n_field_only.patch"
+  ]
+ },
+ "files": {
+  "n_field_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8567/n_field_only.patch",
+  "behavior.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8567/behavior.py"
+ },
+ "commands": [
+  {
+   "id": "b1_behavior",
+   "cmd": "python /in/behavior.py",
+   "timeout_s": 600
+  },
+  {
+   "id": "b2_fresh_single_wrong_order",
+   "cmd": "python /in/behavior.py A05_int_noinfo_wrong_order_single_field A04_fancyint_info_wrong_order",
+   "timeout_s": 300
+  },
+  {
+   "id": "b3_related_public_tests",
+   "cmd": "python -m pytest -p no:cacheprovider -q -rfE tests/test_validators.py tests/test_serialize.py tests/test_json_schema.py tests/test_annotated.py tests/test_types.py",
+   "timeout_s": 2400
+  }
+ ]
+}

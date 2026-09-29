@@ -188,6 +188,14 @@ class WrapSerializer:''', '''            return_schema=return_schema,
 
 @dataclasses.dataclass(**_internal_dataclass.slots_true, frozen=True)
 class WrapSerializer:''')
+elif name == "n_field_only":
+    # 路径子集：只在模型字段的元数据上换序；TypeAdapter、List[...] 等嵌套用法不经过这里
+    sub(GS, "        source_type, annotations = field_info.annotation, field_info.metadata\n",
+        "        source_type, annotations = field_info.annotation, _move_serializers_after_plain_validator(field_info.metadata)\n")
+    s = GS.read_text()
+    anchor = "\n\ndef apply_validators("
+    assert s.count(anchor) == 1
+    GS.write_text(s.replace(anchor, REORDER_HELPER + anchor))
 elif name in REORDER_CALL:
     sub(GS, "            source_type, annotations = res\n\n        pydantic_js_annotation_functions: list[GetJsonSchemaFunction] = []\n",
         REORDER_CALL[name] + "\n        pydantic_js_annotation_functions: list[GetJsonSchemaFunction] = []\n")
