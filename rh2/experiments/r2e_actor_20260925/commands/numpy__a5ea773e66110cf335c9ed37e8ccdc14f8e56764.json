@@ -1,0 +1,37 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 240,
+  "expect": "zero",
+  "purpose": "解释器、包来源、pip / pytest 版本、激活文件、工作区初态",
+  "cmd": "id; echo VIRTUAL_ENV=$VIRTUAL_ENV; echo RH2_BASHENV_WRITE=$( ( : >> /rh2/bash_env ) 2>/dev/null && echo WRITABLE || echo DENIED ); python -c 'import sys; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable)'; python -c 'import numpy; print(\"numpy\", numpy.__version__, numpy.__file__)'; python -m pip --version 2>&1 | head -1; python -m pytest --version 2>&1 | head -1; git status --porcelain=v1; echo PORCELAIN_RC=$?"
+ },
+ {
+  "id": "pr1_1_cmd",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 1 个命令块）",
+  "cmd": "python -c \"import numpy as np; a = np.arange(5); b = np.tile(a, 1); b += 2; print(a, np.may_share_memory(a, b))\""
+ },
+ {
+  "id": "pr2_2_cmd",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 2 个命令块）",
+  "cmd": "python -c \"\nimport numpy as np\na = np.arange(5)\na2 = np.arange(6).reshape(2, 3)\nm = np.matrix([[1, 2], [3, 4]])\ncases = [('a,1', a, 1), ('a,(1,)', a, (1,)), ('a,[1]', a, [1]), ('a,(1,1)', a, (1, 1)),\n         ('a,()', a, ()), ('a[::2],1', a[::2], 1), ('a2,1', a2, 1),\n         ('a2,(1,1,1)', a2, (1, 1, 1)), ('0d,1', np.array(7), 1),\n         ('matrix,1', m, 1), ('a,2', a, 2), ('a2,(2,1)', a2, (2, 1))]\nfor name, x, r in cases:\n    t = np.tile(x, r)\n    print(name, t.shape, type(t).__name__, np.may_share_memory(x, t))\n\""
+ },
+ {
+  "id": "pr4_3_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 4 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE numpy/lib/tests/test_shape_base.py -k Tile"
+ },
+ {
+  "id": "pr5_4_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 5 个命令块）",
+  "cmd": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' python -W ignore -m pytest -rA numpy/lib/tests/test_shape_base.py"
+ }
+]

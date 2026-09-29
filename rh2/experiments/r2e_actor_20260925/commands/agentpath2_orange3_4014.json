@@ -1,0 +1,30 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 240,
+  "expect": "zero",
+  "purpose": "解释器、包来源、pip / pytest 版本、激活文件、工作区初态",
+  "cmd": "id; echo VIRTUAL_ENV=$VIRTUAL_ENV; echo RH2_BASHENV_WRITE=$( ( : >> /rh2/bash_env ) 2>/dev/null && echo WRITABLE || echo DENIED ); python -c 'import sys; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable)'; python -c 'import numpy, Orange; import Orange.preprocess._discretize as d; print(\"Orange\", Orange.__file__, \"numpy\", numpy.__version__, \"ext\", d.__file__)'; command -v xvfb-run gcc cc; python -m pip --version 2>&1 | head -1; python -m pytest --version 2>&1 | head -1; git status --porcelain=v1; echo PORCELAIN_RC=$?"
+ },
+ {
+  "id": "edit_pyx",
+  "timeout_s": 120,
+  "expect": "zero",
+  "purpose": "以 agent 身份只改 _discretize.pyx（与评分候选 C2 相同的两处替换）",
+  "cmd": "python - <<'PY'\nfrom pathlib import Path\np = Path(\"Orange/preprocess/_discretize.pyx\"); s = p.read_text()\na = \"        return [(v1+v2)/2 for v1,v2 in zip(dist[0], dist[0][1:])]\\n\"\nb = \"                inone = N/toGo\\n    return points\\n\"\nassert s.count(a) == 1 and s.count(b) == 1\ns = s.replace(a, \"        return sorted(set([(v1+v2)/2 for v1,v2 in zip(dist[0], dist[0][1:])]))\\n\")\ns = s.replace(b, \"                inone = N/toGo\\n    return sorted(set(points))\\n\")\np.write_text(s); print(\"EDITED\")\nPY"
+ },
+ {
+  "id": "linker_facts",
+  "timeout_s": 120,
+  "expect": "any",
+  "purpose": "agent 身份下编译扩展要用的 sysconfig 路径与可访问性",
+  "cmd": "python -c \"import sysconfig as s; print('LIBDIR', s.get_config_var('LIBDIR')); print('LDLIBRARY', s.get_config_var('LDLIBRARY')); print('BLDLIBRARY', s.get_config_var('BLDLIBRARY'))\"; ls -ld /root 2>&1; ls -ld /root/.local/share/uv/python/cpython-3.7.9-linux-x86_64-gnu/lib 2>&1; ls /opt/py/cpython-3.7.9-linux-x86_64-gnu/lib 2>&1 | grep -i libpython"
+ },
+ {
+  "id": "build_full_error",
+  "timeout_s": 1800,
+  "expect": "any",
+  "purpose": "agent 身份重建扩展，打印链接失败的上下文",
+  "cmd": "python setup.py build_ext --inplace > /tmp/rh2_build.log 2>&1; echo BUILD_RC=$?; grep -n -B3 -A3 'ld returned\\|cannot find\\|undefined reference\\|Permission denied' /tmp/rh2_build.log | tail -30"
+ }
+]

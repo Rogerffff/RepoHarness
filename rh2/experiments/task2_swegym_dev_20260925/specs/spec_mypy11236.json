@@ -1,0 +1,69 @@
+{
+ "image": "xingyaoww/sweb.eval.x86_64.python_s_mypy-11236:latest",
+ "files": {
+  "gold.patch": "/work/task2/gold/python__mypy-11236.gold.patch",
+  "deepse_a1.diff": "/work/task2/cands/python__mypy-11236/deepse_a1.diff",
+  "deepse_a2.diff": "/work/task2/cands/python__mypy-11236/deepse_a2.diff",
+  "qwen3-_a1.diff": "/work/task2/cands/python__mypy-11236/qwen3-_a1.diff",
+  "qwen3-_a2.diff": "/work/task2/cands/python__mypy-11236/qwen3-_a2.diff",
+  "qwen3._a2.diff": "/work/task2/cands/python__mypy-11236/qwen3._a2.diff"
+ },
+ "variants": {
+  "base": [],
+  "gold": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/gold.patch"
+  ],
+  "ds_a1": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/deepse_a1.diff"
+  ],
+  "ds_a2": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/deepse_a2.diff"
+  ],
+  "coder_a1": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/qwen3-_a1.diff"
+  ],
+  "coder_a2": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/qwen3-_a2.diff"
+  ],
+  "q36_a2": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/qwen3._a2.diff"
+  ]
+ },
+ "commands": [
+  {
+   "id": "issue_mwe",
+   "timeout_s": 300,
+   "cmd": "D=$(mktemp -d); cat > $D/t.py <<'PY'\nfrom __future__ import annotations\nfrom typing import Union, Tuple\nfrom typing_extensions import Literal, Final\ndef f(arg: int) -> Union[Tuple[str], Tuple[Literal[1]]]:\n    if arg > 5:\n        return ('a',)\n    return (1,)\nPY\npython -m mypy --cache-dir=$D/c --strict --python-version 3.7 $D/t.py; echo rc=$?"
+  },
+  {
+   "id": "neg_2",
+   "timeout_s": 300,
+   "cmd": "D=$(mktemp -d); cat > $D/t.py <<'PY'\nfrom __future__ import annotations\nfrom typing import Union, Tuple\nfrom typing_extensions import Literal, Final\ndef f() -> Union[Tuple[str], Tuple[Literal[1]]]:\n    return (2,)\nPY\npython -m mypy --cache-dir=$D/c --strict --python-version 3.7 $D/t.py; echo rc=$?"
+  },
+  {
+   "id": "neg_arity",
+   "timeout_s": 300,
+   "cmd": "D=$(mktemp -d); cat > $D/t.py <<'PY'\nfrom __future__ import annotations\nfrom typing import Union, Tuple\nfrom typing_extensions import Literal, Final\ndef f() -> Union[Tuple[str], Tuple[Literal[1]]]:\n    return (1, 999)\nPY\npython -m mypy --cache-dir=$D/c --strict --python-version 3.7 $D/t.py; echo rc=$?"
+  },
+  {
+   "id": "final_var",
+   "timeout_s": 300,
+   "cmd": "D=$(mktemp -d); cat > $D/t.py <<'PY'\nfrom __future__ import annotations\nfrom typing import Union, Tuple\nfrom typing_extensions import Literal, Final\nx: Final = (1,)\ndef f() -> Union[Tuple[str], Tuple[Literal[1]]]:\n    return x\nPY\npython -m mypy --cache-dir=$D/c --strict --python-version 3.7 $D/t.py; echo rc=$?"
+  },
+  {
+   "id": "input_A",
+   "timeout_s": 300,
+   "cmd": "D=$(mktemp -d); cat > $D/t.py <<'PY'\nfrom __future__ import annotations\nfrom typing import Union, Tuple\nfrom typing_extensions import Literal, Final\ndef f() -> Union[Tuple[int, str], Tuple[Literal[1], int]]:\n    return (1, 5)\nPY\npython -m mypy --cache-dir=$D/c --strict --python-version 3.7 $D/t.py; echo rc=$?"
+  },
+  {
+   "id": "input_B",
+   "timeout_s": 300,
+   "cmd": "D=$(mktemp -d); cat > $D/t.py <<'PY'\nfrom __future__ import annotations\nfrom typing import Union, Tuple\nfrom typing_extensions import Literal, Final\ndef f() -> Union[Tuple[Literal[1], int], Tuple[str, Literal[2]]]:\n    return ('a', 2)\nPY\npython -m mypy --cache-dir=$D/c --strict --python-version 3.7 $D/t.py; echo rc=$?"
+  },
+  {
+   "id": "mismatch_message",
+   "timeout_s": 300,
+   "cmd": "D=$(mktemp -d); cat > $D/t.py <<'PY'\nfrom __future__ import annotations\nfrom typing import Union, Tuple\nfrom typing_extensions import Literal, Final\ndef f() -> Union[Tuple[str], Tuple[Literal[1]]]:\n    return (False, 5)\nPY\npython -m mypy --cache-dir=$D/c --strict --python-version 3.7 $D/t.py; echo rc=$?"
+  }
+ ]
+}

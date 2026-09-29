@@ -1,0 +1,37 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 240,
+  "expect": "zero",
+  "purpose": "解释器、包来源、pip / pytest 版本、激活文件、工作区初态",
+  "cmd": "id; echo VIRTUAL_ENV=$VIRTUAL_ENV; echo RH2_BASHENV_WRITE=$( ( : >> /rh2/bash_env ) 2>/dev/null && echo WRITABLE || echo DENIED ); python -c 'import sys; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable)'; python -c 'import numpy; print(\"numpy\", numpy.__version__, numpy.__file__)'; python -m pip --version 2>&1 | head -1; python -m pytest --version 2>&1 | head -1; git status --porcelain=v1; echo PORCELAIN_RC=$?"
+ },
+ {
+  "id": "pr1_1_cmd",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 1 个命令块）",
+  "cmd": "python -c \"import numpy as np; p = np.ones((10, 2)); q = np.ones((1, 2)); r = np.einsum('ti,ti->i', p, q, optimize=True); print(r, r.shape)\""
+ },
+ {
+  "id": "pr2_2_cmd",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 2 个命令块）",
+  "cmd": "python -c \"import numpy as np; print(np.einsum('ti,ti->i', np.ones((10, 2)), np.ones((1, 2)), optimize=False))\""
+ },
+ {
+  "id": "pr3_3_cmd",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 3 个命令块）",
+  "cmd": "python - <<'EOF'\nimport numpy as np\nnp.random.seed(0)\ncases = [\n    ('ti,ti->i',     [(10, 2), (1, 2)]),          # 1 题面示例\n    ('ti,ti->i',     [(1, 2), (10, 2)]),          # 2 交换操作数顺序\n    ('ij,jk->ik',    [(2, 3), (1, 4)]),           # 3 被求和的 j 一侧为 1，这一步会选 tensordot\n    ('ij,jk,kl->il', [(2, 3), (1, 4), (4, 5)]),   # 4 三个操作数，经过中间收缩\n]\nfor sub, shapes in cases:\n    ops = [np.random.rand(*s) for s in shapes]\n    try:\n        ref = np.einsum(sub, *ops, optimize=False)\n    except Exception as e:\n        print('REF-ERR', sub, shapes, type(e).__name__, e)\n        continue\n    for opt in (True, 'greedy', 'optimal'):\n        try:\n            res = np.einsum(sub, *ops, optimize=opt)\n            print('OK ' if np.allclose(res, ref) else 'BAD', sub, shapes, opt, res.shape)\n        except Exception as e:\n            print('ERR', sub, shapes, opt, type(e).__name__, e)\n# 5 真正不兼容的尺寸：修复前后都应报 ValueError\nfor opt in (False, True):\n    try:\n        np.einsum('ti,ti->i', np.ones((10, 2)), np.ones((3, 2)), optimize=opt)\n        print('NO-ERROR', opt)\n    except ValueError as e:\n        print('ValueError', opt, e)\nEOF"
+ },
+ {
+  "id": "pr4_4_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 4 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE numpy/core/tests/test_einsum.py -q"
+ }
+]

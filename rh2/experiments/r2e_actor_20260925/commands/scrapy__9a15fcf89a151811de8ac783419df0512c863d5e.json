@@ -1,0 +1,30 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 240,
+  "expect": "zero",
+  "purpose": "解释器、scrapy 与 responsetypes 的来源（/testbed）、pytest、pip、激活文件、工作区初态",
+  "cmd": "id; echo VIRTUAL_ENV=$VIRTUAL_ENV; echo RH2_BASHENV_WRITE=$( ( : >> /rh2/bash_env ) 2>/dev/null && echo WRITABLE || echo DENIED ); python -c 'import sys; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable)'; python -c 'import scrapy, scrapy.responsetypes as m; print(\"scrapy\", scrapy.__version__, scrapy.__file__, m.__file__)'; python -m pip --version 2>&1 | head -1; python -m pytest --version 2>&1 | head -1; git status --porcelain=v1; echo PORCELAIN_RC=$?"
+ },
+ {
+  "id": "mcve_statement",
+  "timeout_s": 300,
+  "expect": "zero",
+  "purpose": "题面原例（补 import 后）：打印 base 返回的类；base 应为 Response（目标缺陷，rc 为 0，看输出）",
+  "cmd": "python - <<'PY'\nfrom scrapy.responsetypes import responsetypes\ncontent_type = 'application/x-json; encoding=UTF8;charset=UTF-8'\nresponse_class = responsetypes.from_content_type(content_type)\nprint(response_class)\nPY\n"
+ },
+ {
+  "id": "mcve_assert",
+  "timeout_s": 300,
+  "expect": "nonzero",
+  "purpose": "同一例改成断言：期望 TextResponse；base 应失败",
+  "cmd": "python -c \"from scrapy.responsetypes import responsetypes as r; from scrapy.http import TextResponse; c = r.from_content_type('application/x-json; encoding=UTF8;charset=UTF-8'); print(c); assert issubclass(c, TextResponse), c\""
+ },
+ {
+  "id": "test_responsetypes",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "相关公开测试（必须显式给文件路径，否则被 collect_ignore 跳过）；看执行数量与失败原因",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rA tests/test_responsetypes.py"
+ }
+]

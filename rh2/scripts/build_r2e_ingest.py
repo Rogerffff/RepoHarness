@@ -45,7 +45,7 @@ def seal_pins(repo_root: Path) -> int:
         return 2
     doc = {
         "schema_id": r2e.R2E_PINS_SCHEMA_ID,
-        "purpose": "R2E-Gym-Subset 48 题 ingestion 的封板输入（v4：v1 四项 + 用户批准的材料修订单 v3；v1 / v2 / v3 记录保留为历史）；封板后不可追加、不可修改",
+        "purpose": "R2E-Gym-Subset 48 题 ingestion 的封板输入（v12：v1 四项 + 材料修订单 v11（v1 §9 D4 模板授权修订经 Codex 复核）；v1–v11 记录保留为历史）；封板后不可追加、不可修改",
         "pins": {
             key: {"kind": "repo_file", "path": rel, "sha256": _sha256_file(repo_root / rel)}
             for key, rel in sorted(_PIN_PATHS.items())

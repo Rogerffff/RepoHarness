@@ -1,0 +1,9 @@
+[
+ {
+  "id": "two",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "诊断：两项仅 agent 身份失败的功能测试的完整报错",
+  "cmd": "df -h /tmp $HOME /testbed | cat; python -m pytest -q --color=no -p no:cacheprovider conans/test/functional/toolchains/cmake/test_cmake_toolchain.py -k 'test_cmake_presets_with_conanfile_txt or test_add_env_to_presets' 2>&1 | grep -v '^  ' | grep -E -i 'error|denied|fail|No space|E  ' | head -40"
+ }
+]

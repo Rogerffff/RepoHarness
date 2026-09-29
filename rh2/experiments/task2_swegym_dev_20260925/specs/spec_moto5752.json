@@ -1,0 +1,49 @@
+{
+ "image": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5752:latest",
+ "files": {
+  "gold.patch": "/work/task2/gold/getmoto__moto-5752.gold.patch",
+  "deepse_a1.diff": "/work/task2/cands/getmoto__moto-5752/deepse_a1.diff",
+  "deepse_a2.diff": "/work/task2/cands/getmoto__moto-5752/deepse_a2.diff",
+  "qwen3-_a1.diff": "/work/task2/cands/getmoto__moto-5752/qwen3-_a1.diff",
+  "qwen3-_a2.diff": "/work/task2/cands/getmoto__moto-5752/qwen3-_a2.diff",
+  "qwen3._a1.diff": "/work/task2/cands/getmoto__moto-5752/qwen3._a1.diff",
+  "qwen3._a2.diff": "/work/task2/cands/getmoto__moto-5752/qwen3._a2.diff",
+  "check.py": "/work/code/rh2/experiments/base_probe_20260922/checks/moto5752.py"
+ },
+ "variants": {
+  "base": [],
+  "gold": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/gold.patch"
+  ],
+  "ds_a1": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/deepse_a1.diff"
+  ],
+  "ds_a2": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/deepse_a2.diff"
+  ],
+  "coder_a1": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/qwen3-_a1.diff"
+  ],
+  "coder_a2": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/qwen3-_a2.diff"
+  ],
+  "q36_a1": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/qwen3._a1.diff"
+  ],
+  "q36_a2": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/qwen3._a2.diff"
+  ]
+ },
+ "commands": [
+  {
+   "id": "issue_mwe",
+   "timeout_s": 300,
+   "cmd": "export AWS_DEFAULT_REGION=us-east-1 AWS_ACCESS_KEY_ID=x AWS_SECRET_ACCESS_KEY=x\npython - <<'PY'\nimport boto3\nfrom moto import mock_ssm\nwith mock_ssm():\n    client = boto3.client('ssm')\n    for x in 'ab':\n        client.put_parameter(Name=f'test_my_param_01_{x}', Value=f'Contents of param {x}', Type='String',\n                             Tags=[{'Key': 'hello', 'Value': 'world'}, {'Key': 'x', 'Value': x}])\n    r1 = client.describe_parameters(ParameterFilters=[{'Key': 'tag:x', 'Option': 'Equals', 'Values': ['b']}, {'Key': 'tag:hello', 'Option': 'Equals', 'Values': ['world']}])\n    r2 = client.describe_parameters(ParameterFilters=[{'Key': 'tag:hello', 'Option': 'Equals', 'Values': ['world']}, {'Key': 'tag:x', 'Option': 'Equals', 'Values': ['b']}])\n    print('hello_second', len(r1['Parameters']), 'hello_first', len(r2['Parameters']))\n    assert len(r1['Parameters']) == 1 and len(r2['Parameters']) == 1\nPY"
+  },
+  {
+   "id": "check",
+   "timeout_s": 1800,
+   "cmd": "export AWS_DEFAULT_REGION=us-east-1 AWS_ACCESS_KEY_ID=x AWS_SECRET_ACCESS_KEY=x; python /in/check.py"
+  }
+ ]
+}

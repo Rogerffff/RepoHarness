@@ -1,0 +1,65 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 240,
+  "expect": "zero",
+  "purpose": "解释器、包来源、pip / pytest 版本、激活文件、工作区初态",
+  "cmd": "id; echo VIRTUAL_ENV=$VIRTUAL_ENV; echo RH2_BASHENV_WRITE=$( ( : >> /rh2/bash_env ) 2>/dev/null && echo WRITABLE || echo DENIED ); python -c 'import sys; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable)'; python -c 'import numpy, Orange; import Orange.preprocess._discretize as d; print(\"Orange\", Orange.__file__, \"numpy\", numpy.__version__, \"ext\", d.__file__)'; command -v xvfb-run gcc cc; python -m pip --version 2>&1 | head -1; python -m pytest --version 2>&1 | head -1; git status --porcelain=v1; echo PORCELAIN_RC=$?"
+ },
+ {
+  "id": "pr1_1_cmd",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 1 个命令块）",
+  "cmd": "python - <<'EOF'\nimport traceback\nimport numpy as np\nfrom Orange.data import Table\nfrom Orange.preprocess import discretize\n\neps = np.finfo(float).eps\nfor m in (4, 5):\n    X = np.array([[1 + i * eps] for i in range(m)])\n    table = Table.from_numpy(None, X)\n    try:\n        var = discretize.EqualFreq(n=4)(table, table.domain[0])\n    except AssertionError as exc:\n        last = traceback.extract_tb(exc.__traceback__)[-1]\n        print(\"m=%d: AssertionError at %s:%d in %s\" % (\n            m, last.filename.split(\"/testbed/\")[-1], last.lineno, last.name))\n        continue\n    pts = var.compute_value.points\n    fl = [float(p) for p in pts]\n    print(\"m=%d: type=%s points=%s unique=%s increasing=%s values=%s\" % (\n        m, type(pts).__name__, [p.hex() for p in fl],\n        len(set(fl)) == len(fl), all(a < b for a, b in zip(fl, fl[1:])),\n        ascii(var.values)))\nEOF"
+ },
+ {
+  "id": "pr3_2_cmd",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 3 个命令块）",
+  "cmd": "python - <<'EOF'\nimport numpy as np\nfrom Orange.data import Table\nfrom Orange.preprocess import discretize\n\neps = np.finfo(float).eps\ntable = Table.from_numpy(None, np.array([[1 + i * eps] for i in range(4)]))\ntry:\n    pts = discretize.EqualWidth(n=4)(table, table.domain[0]).compute_value.points\n    print(\"EqualWidth points:\", [float(p).hex() for p in pts])\nexcept AssertionError:\n    print(\"EqualWidth: AssertionError\")\nEOF"
+ },
+ {
+  "id": "pr4_3_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 4 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE Orange/tests/test_discretize.py"
+ },
+ {
+  "id": "pr5_4_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 5 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE Orange/preprocess/tests/test_discretize.py"
+ },
+ {
+  "id": "pr6_5_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 6 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE Orange/tests/test_remove.py -k test_remove_mapping_after_compute_value"
+ },
+ {
+  "id": "pr7_6_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 7 个命令块）",
+  "cmd": "QT_QPA_PLATFORM=minimal xvfb-run --auto-servernum python -m pytest -p no:cacheprovider --color=no -rfE Orange/widgets/data/tests/test_owdiscretize.py"
+ },
+ {
+  "id": "pr8_7_cmd",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 8 个命令块）",
+  "cmd": "python -c \"import Cython, numpy; print(Cython.__version__, numpy.get_include())\"; command -v gcc cc"
+ },
+ {
+  "id": "pr9_8_cmd",
+  "timeout_s": 560,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 9 个命令块）",
+  "cmd": "python setup.py build_ext --inplace"
+ }
+]

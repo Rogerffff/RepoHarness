@@ -1,0 +1,48 @@
+{
+ "image": "xingyaoww/sweb.eval.x86_64.pydantic_s_pydantic-8511:latest",
+ "files": {
+  "gold.patch": "/work/task2/gold/pydantic__pydantic-8511.gold.patch"
+ },
+ "variants": {
+  "base": [],
+  "gold": [
+   "git apply /in/gold.patch"
+  ],
+  "narrow": [
+   "git apply /in/gold.patch",
+   "sed -i \"s/getattr(cls, '__annotations__', \\[\\])/cls.__dict__.get('__annotations__', {})/\" pydantic/dataclasses.py && grep -n \"__annotations__\" pydantic/dataclasses.py | head -3"
+  ]
+ },
+ "commands": [
+  {
+   "id": "issue_repr",
+   "timeout_s": 180,
+   "cmd": "python - <<'PY'\nimport dataclasses, pydantic.dataclasses\n@pydantic.dataclasses.dataclass\nclass x:\n    y: int\n    z: int = dataclasses.field(repr=False)\n@pydantic.dataclasses.dataclass\nclass a:\n    b: int\n    c: int = pydantic.dataclasses.Field(repr=False)\nprint(x(3, 4), a(1, 2))\nassert f'{x(3, 4)} {a(1, 2)}' == 'x(y=3) a(b=1)'\nPY"
+  },
+  {
+   "id": "inherit_required",
+   "timeout_s": 180,
+   "cmd": "python - <<'PY'\nfrom pydantic import Field\nfrom pydantic.dataclasses import dataclass\n@dataclass\nclass Parent:\n    x: int = Field()\n@dataclass\nclass Child(Parent):\n    pass\nc = Child(**{'x': '3'})\nprint('Child', repr(c), 'x=', c.x)\nassert c.x == 3\nPY"
+  },
+  {
+   "id": "inherit_repr_false",
+   "timeout_s": 180,
+   "cmd": "python - <<'PY'\nfrom pydantic import Field\nfrom pydantic.dataclasses import dataclass\n@dataclass\nclass Parent:\n    x: int = Field(repr=False)\n@dataclass\nclass Child(Parent):\n    pass\nc = Child(**{'x': '3'})\nprint('Child', repr(c), 'x=', c.x)\nassert c.x == 3\nPY"
+  },
+  {
+   "id": "inherit_default_factory",
+   "timeout_s": 180,
+   "cmd": "python - <<'PY'\nfrom pydantic import Field\nfrom pydantic.dataclasses import dataclass\n@dataclass\nclass Parent:\n    x: int = Field(default_factory=lambda: 3)\n@dataclass\nclass Child(Parent):\n    pass\nc = Child(**{})\nprint('Child', repr(c), 'x=', c.x)\nassert c.x == 3\nPY"
+  },
+  {
+   "id": "inherit_default_control",
+   "timeout_s": 180,
+   "cmd": "python - <<'PY'\nfrom pydantic import Field\nfrom pydantic.dataclasses import dataclass\n@dataclass\nclass Parent:\n    x: int = Field(default=3)\n@dataclass\nclass Child(Parent):\n    pass\nc = Child(**{})\nprint('Child', repr(c), 'x=', c.x)\nassert c.x == 3\nPY"
+  },
+  {
+   "id": "dataclasses_tests",
+   "timeout_s": 900,
+   "cmd": "python -m pytest -q -p no:cacheprovider tests/test_dataclasses.py 2>&1 | tail -5; exit ${PIPESTATUS[0]}"
+  }
+ ]
+}

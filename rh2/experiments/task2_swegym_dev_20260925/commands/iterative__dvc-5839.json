@@ -1,0 +1,23 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 120,
+  "expect": "zero",
+  "purpose": "解释器、dvc 来源、身份",
+  "cmd": "id; python --version; python -c 'import sys,dvc; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable); print(\"dvc\",dvc.__file__)'; python -m pip list 2>/dev/null | grep -i -E '^(pytest|pathspec|boto3|botocore) '"
+ },
+ {
+  "id": "first_round_devsh",
+  "timeout_s": 1800,
+  "expect": "any",
+  "purpose": "首轮在 bash_env_v1 下用过的同一份开发检查脚本（原样复用），在正式入口下重跑以核对结论能否迁移",
+  "cmd": "# 公开开发检查（来源：quality_batch01 cpu_queue.json 的 actor-dvc5839 command_draft；只含公开内容）。\n# 先记不注入 PYTHONPATH 时的导入来源，再按草案显式 PYTHONPATH=/testbed 跑 CLI。\nstep() { echo \"=== STEP $1\"; shift; \"$@\"; echo \"=== RC $?\"; }\nstep import_plain python -c 'import sys,dvc; from dvc.command.metrics import _show_metrics; print(sys.executable,sys.version,dvc.__file__)'\nstep import_from_tmp bash -c 'cd /tmp && python -c \"import dvc; print(dvc.__file__)\"'\ncli() {\n  d=$(mktemp -d)\n  printf 'mae: 1.4832495253358502e-05\\nmse: 5.0172572763074186e-09\\n' > \"$d/metrics.yaml\"\n  ( cd \"$d\"\n    for extra in \"\" \"--precision 4\" \"--precision 8\" \"--precision 8 --show-md\" \"--precision 8 --show-json\"; do\n      echo \"--- dvc metrics show metrics.yaml $extra\"\n      DVC_TEST=true PYTHONPATH=/testbed python -m dvc metrics show metrics.yaml $extra; echo \"--- rc=$?\"\n    done )\n  rm -rf \"$d\"\n}\nstep cli_matrix cli\nstep narrow_tests env DVC_TEST=true python -m pytest -q tests/unit/command/test_metrics.py::test_metrics_show_precision tests/unit/command/test_metrics.py::test_metrics_diff_precision\nstep git_status git status --porcelain\n"
+ },
+ {
+  "id": "tree",
+  "timeout_s": 60,
+  "expect": "zero",
+  "purpose": "运行后工作区改动",
+  "cmd": "git status --porcelain; git rev-parse HEAD"
+ }
+]

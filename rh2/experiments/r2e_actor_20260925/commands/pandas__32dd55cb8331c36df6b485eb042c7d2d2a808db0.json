@@ -1,0 +1,37 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 180,
+  "expect": "zero",
+  "purpose": "解释器与包来源：python 应落在 /testbed/.venv，pandas 从 /testbed 导入；pip 是否可用；工作区初态",
+  "cmd": "id; echo VIRTUAL_ENV=$VIRTUAL_ENV; python -c 'import sys, pandas; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable); print(\"pandas\", pandas.__file__, pandas.__version__)'; python -m pip --version 2>&1 | head -1; git status --porcelain=v1; echo PORCELAIN_RC=$?"
+ },
+ {
+  "id": "mcve_statement",
+  "timeout_s": 300,
+  "expect": "nonzero",
+  "purpose": "题面原例（逐字）：base 应报题面所说的 sum() 不支持 dtype 参数的 ValueError（目标缺陷）",
+  "cmd": "python - <<'PY'\nimport pandas as pd\nimport numpy as np\n\n# Create a DataFrame with an integer ExtensionArray column\ndf = pd.DataFrame({\n    'A': np.random.randint(0, 100, size=10),\n    'B': pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], dtype='Int64')\n})\n\n# Attempt to compute the mean with numeric_only=True\nresult = df.mean(numeric_only=True)\nprint(result)\nPY\n"
+ },
+ {
+  "id": "mcve_sum",
+  "timeout_s": 300,
+  "expect": "any",
+  "purpose": "同一路径的另一个归约（题面写 reduction operations e.g. mean）：sum(numeric_only=True)，记录 base 行为",
+  "cmd": "python - <<'PY'\nimport pandas as pd\nimport numpy as np\ndf = pd.DataFrame({'A': np.arange(10), 'B': pd.Series(range(1, 11), dtype='Int64')})\nprint(df.sum(numeric_only=True))\nPY\n"
+ },
+ {
+  "id": "test_analytics",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "相关公开测试：DataFrame 归约（frame/test_analytics.py），看实际执行数量与失败分布",
+  "cmd": "python -m pytest -q --color=no -p no:cacheprovider pandas/tests/frame/test_analytics.py"
+ },
+ {
+  "id": "test_integer_function",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "相关公开测试：IntegerArray 归约（arrays/integer/test_function.py），改 EA 归约路径时的回归面",
+  "cmd": "python -m pytest -q --color=no -p no:cacheprovider pandas/tests/arrays/integer/test_function.py"
+ }
+]

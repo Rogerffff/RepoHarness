@@ -1,0 +1,44 @@
+{
+ "image": "rh2-task2/actor_dvc6954_v1:20260925",
+ "files": {
+  "gold.patch": "/work/task2/gold/iterative__dvc-6954.gold.patch",
+  "deepse_a2.diff": "/work/task2/cands/iterative__dvc-6954/deepse_a2.diff",
+  "deepse_a3.diff": "/work/task2/cands/iterative__dvc-6954/deepse_a3.diff",
+  "qwen3-_a1.diff": "/work/task2/cands/iterative__dvc-6954/qwen3-_a1.diff",
+  "qwen3-_a2.diff": "/work/task2/cands/iterative__dvc-6954/qwen3-_a2.diff",
+  "qwen3._a1.diff": "/work/task2/cands/iterative__dvc-6954/qwen3._a1.diff",
+  "qwen3._a2.diff": "/work/task2/cands/iterative__dvc-6954/qwen3._a2.diff",
+  "check.py": "/work/code/rh2/experiments/base_probe_20260922/checks/dvc6954.py"
+ },
+ "variants": {
+  "base": [],
+  "gold": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/gold.patch"
+  ],
+  "ds_a2": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/deepse_a2.diff"
+  ],
+  "ds_a3": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/deepse_a3.diff"
+  ],
+  "coder_a1": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/qwen3-_a1.diff"
+  ],
+  "coder_a2": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/qwen3-_a2.diff"
+  ],
+  "q36_a1": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/qwen3._a1.diff"
+  ],
+  "q36_a2": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/qwen3._a2.diff"
+  ]
+ },
+ "commands": [
+  {
+   "id": "check",
+   "timeout_s": 1800,
+   "cmd": "python /in/check.py"
+  }
+ ]
+}

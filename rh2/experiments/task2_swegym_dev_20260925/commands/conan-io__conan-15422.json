@@ -1,0 +1,44 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 120,
+  "expect": "zero",
+  "purpose": "解释器、conan 来源、cmake / 编译器位置与版本、Conan 测试约定路径是否存在",
+  "cmd": "id; python -c 'import sys,conans,conan; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable); print(\"conans\",conans.__file__)'; which conan cmake ninja gcc; cmake --version | head -1; ls -d /usr/share/cmake-* 2>&1"
+ },
+ {
+  "id": "mcve_cli",
+  "timeout_s": 300,
+  "expect": "nonzero",
+  "purpose": "题面公开 CLI：配置 tools.build:jobs=42 后 CMakePresets.json 的 buildPresets 应带 jobs；base 应暴露缺陷",
+  "cmd": "set -eo pipefail\nexport CONAN_HOME=$(mktemp -d /tmp/ch.XXXX); W=$(mktemp -d /tmp/c15422.XXXX); cd $W\nconan profile detect >/dev/null 2>&1 || true\ncat > conanfile.py <<'PY'\nfrom conan import ConanFile\nclass Pkg(ConanFile):\n    settings = \"os\", \"arch\", \"compiler\", \"build_type\"\n    generators = \"CMakeToolchain\"\nPY\nconan install . -s build_type=Release -c tools.build:jobs=42 2>&1 | tail -3\npython - <<'PY'\nimport json, glob\nf = glob.glob('**/CMakePresets.json', recursive=True)[0]\np = json.load(open(f))\nbp = [(b.get('name'), b.get('jobs')) for b in p.get('buildPresets', [])]\nprint('buildPresets', bp)\nassert bp and all(j == 42 for _, j in bp), bp\nPY\n"
+ },
+ {
+  "id": "consume",
+  "timeout_s": 900,
+  "expect": "zero",
+  "purpose": "生成的预设能否被真实 CMake 消费（configure + build）",
+  "cmd": "set -eo pipefail\nexport CONAN_HOME=$(mktemp -d /tmp/ch.XXXX); W=$(mktemp -d /tmp/c15422b.XXXX); cd $W\nconan profile detect >/dev/null 2>&1 || true\nconan new cmake_lib -d name=pkg -d version=0.1 >/dev/null\nconan install . -s build_type=Release 2>&1 | tail -2\ncmake --version | head -1\ncmake --preset conan-release 2>&1 | tail -3\ncmake --build --preset conan-release 2>&1 | tail -3\n"
+ },
+ {
+  "id": "integ_presets",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "相关公开集成测试（CMakeToolchain / presets）",
+  "cmd": "python -m pytest -q --color=no -p no:cacheprovider conans/test/integration/toolchains/cmake/test_cmaketoolchain.py -k 'preset'"
+ },
+ {
+  "id": "func_cmake",
+  "timeout_s": 1800,
+  "expect": "any",
+  "purpose": "相关公开功能测试（含 @tool(cmake,3.23) 与默认 3.15 用例），看执行 / 跳过 / 错误分布",
+  "cmd": "python -m pytest -rA --color=no -p no:cacheprovider conans/test/functional/toolchains/cmake/test_cmake_toolchain.py -k 'preset or jobs' 2>&1 | grep -E '^(PASSED|FAILED|ERROR|SKIPPED)|Permission denied|passed|failed' | sort | uniq -c | head -60"
+ },
+ {
+  "id": "tree",
+  "timeout_s": 60,
+  "expect": "zero",
+  "purpose": "运行后工作区改动",
+  "cmd": "git status --porcelain; git rev-parse HEAD"
+ }
+]

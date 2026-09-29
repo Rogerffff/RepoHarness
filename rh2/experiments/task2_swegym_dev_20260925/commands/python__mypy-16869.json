@@ -1,0 +1,30 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 120,
+  "expect": "zero",
+  "purpose": "解释器、mypy 来源（须为 /testbed）、版本、身份",
+  "cmd": "id; python -c 'import sys,mypy; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable); print(\"mypy\",mypy.__file__)'; python -m pip list 2>/dev/null | grep -i -E '^(pytest|pytest-xdist|boto3|botocore|typing.extensions|mypy.extensions) ' "
+ },
+ {
+  "id": "mcve",
+  "timeout_s": 300,
+  "expect": "nonzero",
+  "purpose": "题面原例（公开 CLI stubgen）：Generic[*_Ts] 使 stubgen 崩溃（base 应崩）",
+  "cmd": "D=$(mktemp -d /tmp/mwe.XXXX); cd $D\ncat > t.py <<'PY'\nfrom typing import Generic, TypeVarTuple\n_Ts = TypeVarTuple(\"_Ts\")\nclass ClassName(Generic[*_Ts]):\n    pass\nPY\n(command -v stubgen && stubgen -o out t.py) || python -m mypy.stubgen -o out t.py; rc=$?; cat out/t.pyi 2>/dev/null; exit $rc"
+ },
+ {
+  "id": "stubgen",
+  "timeout_s": 1200,
+  "expect": "zero",
+  "purpose": "相关公开测试：stubgen",
+  "cmd": "python -m pytest -n 2 -q --color=no -p no:cacheprovider mypy/test/teststubgen.py -k 'Generic or TypeVar or Tuple' 2>&1 | tail -25; exit ${PIPESTATUS[0]}"
+ },
+ {
+  "id": "tree",
+  "timeout_s": 60,
+  "expect": "zero",
+  "purpose": "运行后工作区改动",
+  "cmd": "git status --porcelain; git rev-parse HEAD"
+ }
+]

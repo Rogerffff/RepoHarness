@@ -27,6 +27,11 @@
 sha256，ingest 从来源原文出发重放或读取，摘要与声明都对上才用修订后的内容，评分面的 `material_revisions`
 字段记下修订编号。来源原件与原摘要不丢：原始行、镜像事实表都不改，修订单里就有原摘要。逐条内容与批准出处
 见修订单本身（T0-1 / T0-2 / T0-5 / T0-6 / T0-7）。
+
+**第五类：题面文本替换**（2026-09-29 实现，统一标准 v1 §5 R-f / §9 D6；经 Codex 复核后才用于正式材料）：
+`statement_text_replace` 在构建公开面之前把 `edits` 作用在来源题面上，公开面的题面与题面摘要都是修订后的；
+评分材料不变。修订编号走同一条记录路径（评分面 `material_revisions`、提交记录、pins 里的修订单摘要），
+修订后的题由此可识别为标明版本的自建题。
 """
 
 from __future__ import annotations
@@ -228,15 +233,20 @@ R2E_PUBLIC_HINTS = (
 # v3（2026-09-24 夜，用户批准 T0-6 第二步与 T0-7 方案 B）：格式与 v2 相同（schema_id 不变），r2e-mr-001…007 逐字不变，
 #   新增 r2e-mr-008…020（pandas 另 6 题的私有 conftest 与期望核定；orange3 9b5494e2 两个恢复键的期望，
 #   只在 +env_v2 环境配方镜像上成立）。v2 保留为历史。
-R2E_MATERIAL_REVISIONS_RELPATH = f"{_DOCS}/s2_r2e/revisions/material_revisions_v3.json"
+R2E_MATERIAL_REVISIONS_RELPATH = f"{_DOCS}/s2_r2e/revisions/material_revisions_v11.json"
 R2E_MATERIAL_REVISIONS_SCHEMA_ID = "rh2.s2_r2e.material_revisions.v2"
 REVISION_KIND_EXPECTED = "expected_text_replace"
 REVISION_KIND_EXPECTED_FILE = "expected_file_replace"
 REVISION_KIND_HIDDEN_TEST = "hidden_test_text_replace"
 REVISION_KIND_HIDDEN_ADD = "hidden_test_file_add"
+# 第五类（2026-09-29，统一标准 v1 §5 R-f / §9 D6；经 Codex 复核后才用于正式材料）：题面文本替换。`target` 固定为
+#   `problem_statement`，`edits` 语义与 `hidden_test_text_replace` 相同，`revised_file` / `expected_change` 为 null；
+#   只改公开面的题面，评分材料不动。修订单格式与 schema_id 不变（v3 里没有这一类，解析结果不变）。
+REVISION_KIND_STATEMENT = "statement_text_replace"
+STATEMENT_REVISION_TARGET = "problem_statement"
 EXPECTED_REVISION_KINDS = frozenset({REVISION_KIND_EXPECTED, REVISION_KIND_EXPECTED_FILE})
 HIDDEN_REVISION_KINDS = frozenset({REVISION_KIND_HIDDEN_TEST, REVISION_KIND_HIDDEN_ADD})
-_REVISION_KINDS = EXPECTED_REVISION_KINDS | HIDDEN_REVISION_KINDS
+_REVISION_KINDS = EXPECTED_REVISION_KINDS | HIDDEN_REVISION_KINDS | frozenset({REVISION_KIND_STATEMENT})
 # 期望映射允许的状态词：上游解析器只为这三种结果产出键（SKIPPED / XFAIL 不产出键）。
 R2E_EXPECTED_STATUSES = frozenset({"PASSED", "FAILED", "ERROR"})
 _REVISION_ID_RE = re.compile(r"^r2e-mr-[0-9]{3}$")
@@ -292,7 +302,7 @@ class R2EExpectedChange:
 
 @dataclass(frozen=True)
 class R2EMaterialRevision:
-    """一条已批准的材料修订。四类：
+    """一条已批准的材料修订。五类（前四类改评分材料，第五类只改公开面题面）：
 
     - `expected_text_replace`：`target=expected_output_json`；在来源期望原文上依次做 `edits`（每条恰好一处
       old→new）；只许改状态值，键集合与顺序不变；`expected_change` 必须与实际变化逐键相同。
@@ -303,6 +313,8 @@ class R2EMaterialRevision:
       修订后全文另存在 `revised_file`（派生镜像构建时原样放进私有目录）。
     - `hidden_test_file_add`：在 `r2e_tests/` 下新增来源里没有的文件，内容就是 `revised_file`（可为二进制）；
       `sha256_before` 为 None，目标原本不得存在。
+    - `statement_text_replace`：`target=problem_statement`；在来源行 `problem_statement` 上依次做 `edits`，结果进公开面；
+      `revised_file` 与 `expected_change` 为 None。
     `sha256_*` 是整段内容修订前后的摘要（`sha256:` 前缀）；重放或读取结果对不上即拒。`revised_content`
     由 `load_r2e_material_revisions` 附上（已核对 `sha256_after`）。
     """
@@ -373,14 +385,14 @@ def parse_r2e_material_revisions(doc: dict) -> dict[str, tuple[R2EMaterialRevisi
         elif not isinstance(before, str) or not _SHA256_RE.match(before):
             raise R2EIngestError(f"{rid}: sha256_before 不是 sha256: 前缀摘要")
         edits: tuple[tuple[str, str], ...] = ()
-        if kind in (REVISION_KIND_EXPECTED, REVISION_KIND_HIDDEN_TEST):
+        if kind in (REVISION_KIND_EXPECTED, REVISION_KIND_HIDDEN_TEST, REVISION_KIND_STATEMENT):
             edits = _parse_edits(ent["edits"], who=rid)
         elif ent["edits"] is not None:
             raise R2EIngestError(f"{rid}: {kind} 不用 edits（必须为 null）")
         revised = ent["revised_file"]
-        if kind == REVISION_KIND_EXPECTED:
+        if kind in (REVISION_KIND_EXPECTED, REVISION_KIND_STATEMENT):
             if revised is not None:
-                raise R2EIngestError(f"{rid}: expected_text_replace 的 revised_file 必须为 null")
+                raise R2EIngestError(f"{rid}: {kind} 的 revised_file 必须为 null")
         elif not isinstance(revised, str) or not revised.startswith(f"{_DOCS}/s2_r2e/revisions/") or ".." in revised.split("/"):
             raise R2EIngestError(f"{rid}: revised_file 必须位于 s2_r2e/revisions/ 下")
         change: R2EExpectedChange | None = None
@@ -390,6 +402,11 @@ def parse_r2e_material_revisions(doc: dict) -> dict[str, tuple[R2EMaterialRevisi
             change = R2EExpectedChange.from_doc(ent["expected_change"], who=rid)
             if kind == REVISION_KIND_EXPECTED and (change.added or change.removed):
                 raise R2EIngestError(f"{rid}: expected_text_replace 只许改状态值；增删键用 expected_file_replace")
+        elif kind == REVISION_KIND_STATEMENT:
+            if ent["target"] != STATEMENT_REVISION_TARGET:
+                raise R2EIngestError(f"{rid}: 题面修订的 target 必须是 {STATEMENT_REVISION_TARGET}")
+            if ent["expected_change"] is not None:
+                raise R2EIngestError(f"{rid}: 题面修订的 expected_change 必须为 null")
         else:
             if not _safe_hidden_rel(ent["target"]):
                 raise R2EIngestError(f"{rid}: 隐藏测试路径不安全: {ent['target']!r}")
@@ -527,6 +544,32 @@ def apply_hidden_test_revisions(iid: str, hidden_files: tuple[tuple[str, str], .
     return tuple(sorted(files.items()))
 
 
+def apply_statement_revisions(iid: str, statement: str, revisions: tuple[R2EMaterialRevision, ...]) -> str:
+    """把题面修订作用在来源题面原文上，返回修订后的题面（R-f：统一标准 v1 §5、§9 D6）。
+
+    从来源行 `problem_statement` 出发依次做 `edits`（每条在当前文本里恰好出现一次）；`sha256_before` 必须等于题面原文
+    的摘要、`sha256_after` 必须等于做完全部 edits 后的摘要，对不上即拒；修订后的题面不许为空、不许与原文相同。
+    只作用于公开面：期望映射、隐藏测试等评分材料不经过这里。解析层已保证每题至多一条题面修订（同一题同一目标只许一条）。"""
+
+    for rev in revisions:
+        if rev.kind != REVISION_KIND_STATEMENT:
+            continue
+        who = f"{iid}/{rev.revision_id}"
+        if rev.target != STATEMENT_REVISION_TARGET:
+            raise R2EIngestError(f"{who}: 题面修订的 target 必须是 {STATEMENT_REVISION_TARGET}")
+        if _sha256_text(statement) != rev.sha256_before:
+            raise R2EIngestError(f"{who}: 题面原文摘要与修订单的 sha256_before 不符")
+        revised = _apply_edits(statement, rev.edits, who=who)
+        if _sha256_text(revised) != rev.sha256_after:
+            raise R2EIngestError(f"{who}: 修订后的题面摘要与 sha256_after 不符")
+        if not revised.strip():
+            raise R2EIngestError(f"{who}: 修订后的题面为空")
+        if revised == statement:
+            raise R2EIngestError(f"{who}: 题面修订没有改变题面")
+        statement = revised
+    return statement
+
+
 def effective_hidden_files(fact: "R2EImageFact", revisions: tuple[R2EMaterialRevision, ...]) -> tuple[tuple[str, str], ...]:
     """消费期用：镜像事实的隐藏测试清单，套上已批准修订的 sha256_after（不需要原文）。"""
 
@@ -600,7 +643,11 @@ def build_r2e_task(row: dict, fact: R2EImageFact, *, raw_archive_sha256: str,
             f"（new={commit_doc.get('new_commit_hash')!r}, old={commit_doc.get('old_commit_hash')!r}）"
         )
 
-    statement = row["problem_statement"]
+    if any(rev.instance_id != iid for rev in revisions):
+        raise R2EIngestError(f"{iid}: 传入了别的题的材料修订")
+    # 题面修订（R-f）在构建公开面之前作用：公开面的 problem_statement / problem_statement_sha256 都是修订后的。修订编号
+    # 与其余修订走同一条记录路径（评分面 `material_revisions`、提交记录 `material_revisions`、pins 里的修订单摘要）。
+    statement = apply_statement_revisions(iid, row["problem_statement"], revisions)
     public = PublicTaskBundle(
         instance_id=iid,
         repo=repo,
@@ -614,8 +661,6 @@ def build_r2e_task(row: dict, fact: R2EImageFact, *, raw_archive_sha256: str,
     )
     scan_public_bundle(public)
 
-    if any(rev.instance_id != iid for rev in revisions):
-        raise R2EIngestError(f"{iid}: 传入了别的题的材料修订")
     expected_text = apply_expected_revisions(iid, row["expected_output_json"], revisions)
     hidden_files = apply_hidden_test_revisions(iid, fact.hidden_files, _source_test_codes(row), revisions)
     grading = PrivateGradingBundleR2E(
@@ -760,7 +805,8 @@ def verify_r2e_package_relations(package, public, grading, validation, *,
                                  pins: "R2EInputPins", image_facts: dict[str, R2EImageFact],
                                  revisions: dict[str, tuple[R2EMaterialRevision, ...]] | None = None) -> None:
     """strict 消费期重验：四方 digest / 身份关系、镜像身份与入口 / 隐藏测试摘要对事实表（套上已批准修订）、
-    评分面的修订标记与修订单一致、provenance 三 digest 对封板 pins 与规则源注册表、public 面消费期泄漏扫描。
+    评分面的修订标记与修订单一致（期望修订 → 评分面期望摘要、题面修订 → 公开面题面摘要都等于 `sha256_after`）、
+    provenance 三 digest 对封板 pins 与规则源注册表、public 面消费期泄漏扫描。
     pins 与事实表都是必传；`revisions` 不传 = 没有修订（修订过的评分面在这种调用下必然被拒）。"""
 
     errs = _r2e_relation_errors(package, public, grading, validation)
@@ -790,6 +836,8 @@ def verify_r2e_package_relations(package, public, grading, validation, *,
             for rev in revs:
                 if rev.kind in EXPECTED_REVISION_KINDS and grading.expected_output_json_sha256 != rev.sha256_after:
                     errs.append(f"{rev.revision_id}: 期望原文摘要不是修订后的摘要")
+                if rev.kind == REVISION_KIND_STATEMENT and public.problem_statement_sha256 != rev.sha256_after:
+                    errs.append(f"{rev.revision_id}: 公开面的题面摘要不是修订后的摘要")
         if package.raw_archive_sha256 != "sha256:" + pins.raw_archive:
             errs.append("raw_archive_sha256 与封板 pin 不符")
         if package.image_manifest_keyed_sha256 != "sha256:" + pins.image_facts:
@@ -808,17 +856,25 @@ def verify_r2e_package_relations(package, public, grading, validation, *,
 # v1（t1_input_pins_r2e_v1.json，四项输入）与 v2（加第五项"材料修订单" v1，2026-09-24，用户批准 T0-1 / T0-2）
 # 都保留为历史记录；v3（2026-09-24 晚）只把第五项换成修订单 v2（新增 T0-5 / T0-6 的修订与两类修订类型），键集合不变；
 # v4（2026-09-24 夜）只把第五项换成修订单 v3（T0-6 第二步、T0-7 的 13 条修订），键集合不变，v3 保留为历史。
-R2E_PINS_RELPATH = f"{_DOCS}/s2_r2e/t1_input_pins_r2e_v4.json"
-R2E_PINS_SCHEMA_ID = "rh2.s2_r2e.t1_input_pins.v4"
+# v5（2026-09-29，单题闭环试行）只把第五项换成修订单 v4（统一标准 v1 §9 D4 模板授权、Codex 复核通过的修订），键集合不变。
+# v6（2026-09-29，单题闭环试行）只把第五项换成修订单 v5（统一标准 v1 §9 D4 模板授权、Codex 复核通过的修订），键集合不变。
+# v7（2026-09-29，单题闭环试行）只把第五项换成修订单 v6（统一标准 v1 §9 D4 模板授权、Codex 复核通过的修订），键集合不变。
+# v8（2026-09-29，单题闭环试行）只把第五项换成修订单 v7（统一标准 v1 §9 D4 模板授权、Codex 复核通过的修订），键集合不变。
+# v9（2026-09-29，单题闭环试行）只把第五项换成修订单 v8（统一标准 v1 §9 D4 模板授权、Codex 复核通过的修订），键集合不变。
+# v10（2026-09-29，单题闭环试行）只把第五项换成修订单 v9（统一标准 v1 §9 D4 模板授权、Codex 复核通过的修订），键集合不变。
+# v11（2026-09-29，单题闭环试行）只把第五项换成修订单 v10（统一标准 v1 §9 D4 模板授权、Codex 复核通过的修订），键集合不变。
+# v12（2026-09-29，单题闭环试行）只把第五项换成修订单 v11（统一标准 v1 §9 D4 模板授权、Codex 复核通过的修订），键集合不变。
+R2E_PINS_RELPATH = f"{_DOCS}/s2_r2e/t1_input_pins_r2e_v12.json"
+R2E_PINS_SCHEMA_ID = "rh2.s2_r2e.t1_input_pins.v12"
 # pins 记录自身的 sha256（封板后不许变；变更 = 显式新版本 + 评审，不是改常量）。
-R2E_PINS_SHA256 = "91bcf90c7ba8b7bb5d1012715e3b01d5a12c529684d0b7a95d7de562156d48f4"
+R2E_PINS_SHA256 = "64d45468b421cd93b97bbe7618b9c9f54ec01fdf3b3cd76fce856a8b332a9fb0"
 
 R2E_EXPECTED_PIN_KEYS = frozenset({
     "raw_archive",        # s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl（48 行来源原始行）
     "source_revision",    # s2_r2e/raw/r2e_subset.revision（数据集 revision 记录）
     "image_facts",        # s2_r2e/raw/r2e_image_facts_m3_48.json（M3 镜像实测事实表的逐字节副本）
     "rule_source",        # s2_r2e/vendor/prime_envs_r2e_gym_taskset_c4d04dfe.py（固定版本的上游规则源）
-    "material_revisions",  # s2_r2e/revisions/material_revisions_v3.json（用户逐项批准的材料修订单）
+    "material_revisions",  # s2_r2e/revisions/material_revisions_v11.json（用户逐项批准的材料修订单）
 })
 
 
@@ -907,7 +963,7 @@ _R2E_DATA_FILES = (
     "validation_bundles_v0.jsonl",
 )
 # 真实 48 题产物提交记录（s2_r2e/ingest/ingest_manifest_v0.json）的 sha256 pin。重新生成产物 = 修改本常量。
-R2E_INGEST_MANIFEST_SHA256_PIN = "781363b090de18bd354177c20c78903b17eac89eb3e20c4f07413df05e2b7285"
+R2E_INGEST_MANIFEST_SHA256_PIN = "6209850e5f0115fd330bfd3e3d7ea2dd3dab821991d61f2566a30c7a1d733536"
 
 
 def _atomic_write(path: Path, payload: bytes) -> None:

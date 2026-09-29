@@ -1,0 +1,30 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 120,
+  "expect": "zero",
+  "purpose": "解释器、moto 来源（须为 /testbed）、版本、身份",
+  "cmd": "id; python -c 'import sys,moto; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable); print(\"moto\",moto.__file__)'; python -m pip list 2>/dev/null | grep -i -E '^(pytest|pytest-xdist|boto3|botocore|typing.extensions|mypy.extensions) ' "
+ },
+ {
+  "id": "mcve",
+  "timeout_s": 300,
+  "expect": "nonzero",
+  "purpose": "题面原例（本地 mock ECR）：已存在的 tag 移到另一镜像后 batch_get_image 应返回新镜像（base 应失败）",
+  "cmd": "D=$(mktemp -d /tmp/mwe.XXXX); cat > $D/test_mwe.py <<'PY'\nimport json, boto3\nfrom moto import mock_ecr\nfrom tests.test_ecr.test_ecr_helpers import _create_image_manifest\n\n@mock_ecr\ndef test_4111_move_image_tag_regression():\n    repo_name = 'testrepo'; tag_to_move = 'mock-tag'\n    m = {'image_001': json.dumps(_create_image_manifest()), 'image_002': json.dumps(_create_image_manifest())}\n    c = boto3.client('ecr', 'us-east-1'); c.create_repository(repositoryName=repo_name)\n    for name, manifest in m.items():\n        c.put_image(repositoryName=repo_name, imageTag=name, imageManifest=manifest)\n    c.put_image(repositoryName=repo_name, imageTag=tag_to_move, imageManifest=m['image_001'])\n    a, *_ = c.batch_get_image(repositoryName=repo_name, imageIds=[{'imageTag': tag_to_move}])['images']\n    c.put_image(repositoryName=repo_name, imageTag=tag_to_move, imageManifest=m['image_002'])\n    b, *_ = c.batch_get_image(repositoryName=repo_name, imageIds=[{'imageTag': tag_to_move}])['images']\n    assert a != b\nPY\ncd /testbed && (ls tests/test_ecr/; python -m pytest -q -p no:cacheprovider -n0 --rootdir=/testbed $D/test_mwe.py 2>&1 | tail -8; exit ${PIPESTATUS[0]})"
+ },
+ {
+  "id": "ecr",
+  "timeout_s": 1200,
+  "expect": "zero",
+  "purpose": "相关公开测试：ECR put_image / tag",
+  "cmd": "python -m pytest -n 2 -q --color=no -p no:cacheprovider tests/test_ecr/test_ecr_boto3.py -k 'put_image or tag' 2>&1 | tail -25; exit ${PIPESTATUS[0]}"
+ },
+ {
+  "id": "tree",
+  "timeout_s": 60,
+  "expect": "zero",
+  "purpose": "运行后工作区改动",
+  "cmd": "git status --porcelain; git rev-parse HEAD"
+ }
+]

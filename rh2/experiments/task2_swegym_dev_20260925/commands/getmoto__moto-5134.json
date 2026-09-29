@@ -1,0 +1,15 @@
+[
+ {"id": "env", "timeout_s": 120, "expect": "zero", "purpose": "解释器、moto 来源（须为 /testbed）、boto3/botocore 版本、身份与区域变量",
+  "cmd": "id; echo AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-unset}; python -c 'import sys,moto,boto3,botocore; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable); print(\"moto\",moto.__file__); print(\"boto3\",boto3.__version__,\"botocore\",botocore.__version__)'"},
+ {"id": "mcve_api", "timeout_s": 120, "expect": "nonzero", "purpose": "题面行为（公开 API）：exists:true 应匹配值为 null 的字段；base 应暴露缺陷",
+  "cmd": "python -c 'import json; from moto.events.models import EventPattern; p = EventPattern.load(json.dumps({\"detail\": {\"foo\": [{\"exists\": True}]}})); r = [p.matches_event({\"detail\": {\"foo\": None}}), p.matches_event({\"detail\": {\"foo\": \"bar\"}}), p.matches_event({\"detail\": {}})]; print(\"null,value,missing =\", r); assert r == [True, True, False], r'"},
+ {"id": "mcve_e2e", "timeout_s": 180, "expect": "nonzero", "purpose": "题面端到端（本地 mock，不联网）：Events 规则 → CloudWatch Logs，detail 含 null 的事件应投递",
+  "cmd": "AWS_DEFAULT_REGION=us-east-1 AWS_ACCESS_KEY_ID=x AWS_SECRET_ACCESS_KEY=x python - <<'PY'\nimport json, boto3\nfrom moto import mock_events, mock_logs\n@mock_events\n@mock_logs\ndef run():\n    ev, lg = boto3.client('events'), boto3.client('logs')\n    lg.create_log_group(logGroupName='/test')\n    arn = lg.describe_log_groups()['logGroups'][0]['arn']\n    ev.put_rule(Name='r', EventPattern=json.dumps({'detail': {'foo': [{'exists': True}]}}))\n    ev.put_targets(Rule='r', Targets=[{'Id': 't', 'Arn': arn}])\n    ev.put_events(Entries=[{'Source': 's', 'DetailType': 'd', 'Detail': json.dumps({'foo': None})}])\n    n = sum(len(s.get('events', [])) for s in [lg.filter_log_events(logGroupName='/test')])\n    print('delivered', n)\n    assert n == 1, n\nrun()\nPY"},
+ {"id": "integration", "timeout_s": 600, "expect": "zero", "purpose": "相关公开测试（评分执行文件之一，含 3 个 SQS 用例；首轮 actor 下 SQS 失败）",
+  "cmd": "python -m pytest -n0 -rA --color=no -p no:cacheprovider tests/test_events/test_events_integration.py"},
+ {"id": "pattern", "timeout_s": 600, "expect": "any", "purpose": "相关公开测试：事件模式（base 上 exists 相关用例预期只因目标缺陷失败）",
+  "cmd": "python -m pytest -n0 -rA --color=no -p no:cacheprovider tests/test_events/test_event_pattern.py"},
+ {"id": "events_file", "timeout_s": 900, "expect": "zero", "purpose": "评分选集外的 archive / replay 回归面（首轮 Coder 候选在此引入回归）",
+  "cmd": "python -m pytest -n0 -q --color=no -p no:cacheprovider tests/test_events/test_events.py"},
+ {"id": "tree", "timeout_s": 60, "expect": "zero", "purpose": "运行后工作区改动", "cmd": "git status --porcelain; git rev-parse HEAD"}
+]

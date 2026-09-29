@@ -1,0 +1,37 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 240,
+  "expect": "zero",
+  "purpose": "解释器、Orange 与 numpy 来源、Cython 扩展已构建、xvfb-run、pip、激活文件、工作区初态",
+  "cmd": "id; echo VIRTUAL_ENV=$VIRTUAL_ENV; echo RH2_BASHENV_WRITE=$( ( : >> /rh2/bash_env ) 2>/dev/null && echo WRITABLE || echo DENIED ); python -c 'import sys; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable)'; python -c 'import Orange, numpy; from Orange.data import _valuecount; print(\"Orange\", Orange.__file__); print(\"numpy\", numpy.__version__); print(\"_valuecount\", _valuecount.__file__)'; command -v xvfb-run; python -m pip --version 2>&1 | head -1; python -m pytest --version 2>&1 | head -1; git status --porcelain=v1; echo PORCELAIN_RC=$?"
+ },
+ {
+  "id": "mcve_repo_function",
+  "timeout_s": 300,
+  "expect": "any",
+  "purpose": "题面函数的仓库实现（导入 widget 模块，带 Qt 前缀）：打印 [2,3,1] 与 ('b','c','a') 的结果；base 预计 mapping 为 [2,0,1]",
+  "cmd": "QT_QPA_PLATFORM=minimal xvfb-run --auto-servernum python -c \"from Orange.widgets.data.owcreateclass import unique_in_order_mapping as f; print(f([2, 3, 1])); print(f(('b', 'c', 'a')))\""
+ },
+ {
+  "id": "mcve_statement_code",
+  "timeout_s": 120,
+  "expect": "zero",
+  "purpose": "题面里标为 Example Buggy Code 的代码逐字运行（不导入仓库）：记录它实际输出什么",
+  "cmd": "python - <<'PY'\ndef unique_in_order_mapping(a):\n    first_position = {}\n    unique_in_order = []\n    mapping = []\n    for e in a:\n        if e not in first_position:\n            first_position[e] = len(unique_in_order)\n            unique_in_order.append(e)\n        mapping.append(first_position[e])\n    return unique_in_order, mapping\n\n# Example usage\nunique_elements, mapping = unique_in_order_mapping([2, 3, 1])\nprint(\"Unique Elements:\", unique_elements)\nprint(\"Mapping:\", mapping)\nPY\n"
+ },
+ {
+  "id": "test_helper",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开单测：只跑 helper 用例（带 Qt 前缀）",
+  "cmd": "QT_QPA_PLATFORM=minimal xvfb-run --auto-servernum python -m pytest -p no:cacheprovider --color=no -rfE Orange/widgets/data/tests/test_owcreateclass.py -k unique_in_order_mapping"
+ },
+ {
+  "id": "test_widget_file",
+  "timeout_s": 1500,
+  "expect": "any",
+  "purpose": "公开单测整个文件（widget 回归，Qt）：验证 actor 身份下 GUI 测试可执行",
+  "cmd": "QT_QPA_PLATFORM=minimal xvfb-run --auto-servernum python -m pytest -p no:cacheprovider --color=no -rfE Orange/widgets/data/tests/test_owcreateclass.py"
+ }
+]

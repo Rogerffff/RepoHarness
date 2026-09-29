@@ -1,0 +1,30 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 120,
+  "expect": "zero",
+  "purpose": "解释器、moto 来源（须为 /testbed）、版本、身份",
+  "cmd": "id; python -c 'import sys,moto; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable); print(\"moto\",moto.__file__)'; python -m pip list 2>/dev/null | grep -i -E '^(pytest|pytest-xdist|boto3|botocore|typing.extensions|mypy.extensions) ' "
+ },
+ {
+  "id": "mcve",
+  "timeout_s": 300,
+  "expect": "nonzero",
+  "purpose": "题面原例（pytest 用例，本地 mock）：GSI INCLUDE / KEYS_ONLY 投影下 scan 只返回投影属性（base 应失败）",
+  "cmd": "D=$(mktemp -d /tmp/mwe.XXXX); cat > $D/test_mwe.py <<'PY'\nimport boto3\nfrom moto import mock_dynamodb\n\ndef _table(ddb, name, proj):\n    ddb.create_table(AttributeDefinitions=[{'AttributeName':'id','AttributeType':'S'}], TableName=name,\n        KeySchema=[{'AttributeName':'id','KeyType':'HASH'}],\n        GlobalSecondaryIndexes=[{'IndexName':'gsi','KeySchema':[{'AttributeName':'id','KeyType':'HASH'}],'Projection':proj,\n            'ProvisionedThroughput':{'ReadCapacityUnits':10,'WriteCapacityUnits':10}}],\n        BillingMode='PROVISIONED', ProvisionedThroughput={'ReadCapacityUnits':10,'WriteCapacityUnits':10})\n    t = ddb.Table(name)\n    for i in 'ABC':\n        t.put_item(Item=dict(id=i, attr1=f'attr1_{i}', attr2=f'attr2_{i}'))\n    return t\n\n@mock_dynamodb\ndef test_include():\n    t = _table(boto3.resource('dynamodb', region_name='us-east-1'), 't1', {'ProjectionType':'INCLUDE','NonKeyAttributes':['attr2']})\n    assert sorted(t.scan(IndexName='gsi')['Items'][0].keys()) == ['attr2', 'id']\n\n@mock_dynamodb\ndef test_keys_only():\n    t = _table(boto3.resource('dynamodb', region_name='us-east-1'), 't2', {'ProjectionType':'KEYS_ONLY'})\n    assert sorted(t.scan(IndexName='gsi')['Items'][0].keys()) == ['id']\nPY\ncd /testbed && python -m pytest -q -p no:cacheprovider -n0 $D/test_mwe.py 2>&1 | tail -8; exit ${PIPESTATUS[0]}"
+ },
+ {
+  "id": "ddb",
+  "timeout_s": 1200,
+  "expect": "zero",
+  "purpose": "相关公开测试：DynamoDB GSI / scan",
+  "cmd": "python -m pytest -n 2 -q --color=no -p no:cacheprovider tests/test_dynamodb/test_dynamodb.py -k 'gsi or scan or projection' 2>&1 | tail -25; exit ${PIPESTATUS[0]}"
+ },
+ {
+  "id": "tree",
+  "timeout_s": 60,
+  "expect": "zero",
+  "purpose": "运行后工作区改动",
+  "cmd": "git status --porcelain; git rev-parse HEAD"
+ }
+]

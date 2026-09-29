@@ -1,0 +1,72 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 240,
+  "expect": "zero",
+  "purpose": "解释器、包来源、pip / pytest 版本、激活文件、工作区初态",
+  "cmd": "id; echo VIRTUAL_ENV=$VIRTUAL_ENV; echo RH2_BASHENV_WRITE=$( ( : >> /rh2/bash_env ) 2>/dev/null && echo WRITABLE || echo DENIED ); python -c 'import sys; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable)'; python -c 'import scrapy, twisted; print(\"scrapy\", scrapy.__version__, scrapy.__file__, \"twisted\", twisted.__version__)'; python -m pip --version 2>&1 | head -1; python -m pytest --version 2>&1 | head -1; git status --porcelain=v1; echo PORCELAIN_RC=$?"
+ },
+ {
+  "id": "pr0_1_cmd",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 0 个命令块）",
+  "cmd": "python -c \"import sys, twisted, scrapy; from twisted.internet import asyncioreactor; print(sys.version.split()[0], twisted.__version__, scrapy.__version__, scrapy.__file__)\""
+ },
+ {
+  "id": "pr1_2_cmd",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 1 个命令块）",
+  "cmd": "python -m scrapy.cmdline shell -c \"fetch('file:///testbed/tests/sample_data/test_site/index.html') or __import__('time').sleep(1)\" --set TWISTED_REACTOR=twisted.internet.asyncioreactor.AsyncioSelectorReactor >/tmp/r2e_c1.out 2>/tmp/r2e_c1.err; echo \"exit=$?\"; cat /tmp/r2e_c1.out; grep -E \"Using reactor|Using asyncio event loop|Crawled \\(|Spider error processing|RuntimeError\" /tmp/r2e_c1.err"
+ },
+ {
+  "id": "pr2_3_cmd",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 2 个命令块）",
+  "cmd": "python -m scrapy.cmdline shell -c \"(fetch('file:///testbed/tests/sample_data/test_site/index.html'), __import__('time').sleep(1), crawler.engine.scraper.slot.is_idle())\" --set TWISTED_REACTOR=twisted.internet.asyncioreactor.AsyncioSelectorReactor >/tmp/r2e_c2.out 2>/tmp/r2e_c2.err; echo \"exit=$?\"; cat /tmp/r2e_c2.out; grep -c \"There is no current event loop\" /tmp/r2e_c2.err"
+ },
+ {
+  "id": "pr3_4_cmd",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 3 个命令块）",
+  "cmd": "python -m scrapy.cmdline shell -c \"fetch('file:///testbed/tests/sample_data/test_site/index.html') or __import__('time').sleep(1)\" >/tmp/r2e_c3.out 2>/tmp/r2e_c3.err; echo \"exit=$?\"; grep -E \"Using reactor|Crawled \\(|Spider error processing|RuntimeError\" /tmp/r2e_c3.err"
+ },
+ {
+  "id": "pr4_5_cmd",
+  "timeout_s": 300,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 4 个命令块）",
+  "cmd": "cd /testbed; python -u -m scrapy.utils.testsite >/tmp/r2e_site.txt 2>&1 & SITE_PID=$!; sleep 3; BASE=$(head -n1 /tmp/r2e_site.txt); echo \"site=$BASE\"; python -m scrapy.cmdline shell -c \"fetch('${BASE}html') or __import__('time').sleep(1)\" --set TWISTED_REACTOR=twisted.internet.asyncioreactor.AsyncioSelectorReactor 2>&1 | grep -E \"Crawled \\(|Spider error processing|RuntimeError\"; kill $SITE_PID"
+ },
+ {
+  "id": "pr5_6_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 5 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE tests/test_command_shell.py -q"
+ },
+ {
+  "id": "pr6_7_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 6 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE tests/test_utils_defer.py --reactor=asyncio -q"
+ },
+ {
+  "id": "pr6_8_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 6 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE tests/test_utils_asyncio.py --reactor=asyncio -q"
+ },
+ {
+  "id": "pr6_9_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 6 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE tests/test_crawler.py -k test_default_loop_asyncio_deferred_signal -q"
+ }
+]

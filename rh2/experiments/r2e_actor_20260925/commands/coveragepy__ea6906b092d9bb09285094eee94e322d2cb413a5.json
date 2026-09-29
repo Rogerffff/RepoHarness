@@ -1,0 +1,58 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 240,
+  "expect": "zero",
+  "purpose": "解释器、包来源、pip / pytest 版本、激活文件、工作区初态",
+  "cmd": "id; echo VIRTUAL_ENV=$VIRTUAL_ENV; echo RH2_BASHENV_WRITE=$( ( : >> /rh2/bash_env ) 2>/dev/null && echo WRITABLE || echo DENIED ); python -c 'import sys; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable)'; python -c 'import coverage, coverage.html; print(\"coverage\", coverage.__version__, coverage.__file__)'; (cd / && python -c 'import coverage; print(\"cwd=/ coverage\", coverage.__file__)'); command -v git coverage || true; python -m pip --version 2>&1 | head -1; python -m pytest --version 2>&1 | head -1; git status --porcelain=v1; echo PORCELAIN_RC=$?"
+ },
+ {
+  "id": "pr1_1_cmd",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 1 个命令块）",
+  "cmd": "python - <<'EOF'\nimport os, sys, tempfile\nsys.path.insert(0, \"/testbed\")\nimport coverage\nprint(\"coverage from:\", coverage.__file__)\nwork = tempfile.mkdtemp()\nos.chdir(work)\nwith open(\"demo.py\", \"w\") as f:\n    f.write(\"def f(x):\\n    if x:\\n        return 1\\n    return 2\\n\\nf(1)\\n\")\nsys.path.insert(0, work)\ncov = coverage.Coverage()\ncov.start()\nimport demo\ncov.stop()\ncov.html_report(directory=\"htmlcov\")\nprint(sorted(os.listdir(\"htmlcov\")))\ngi = os.path.join(\"htmlcov\", \".gitignore\")\nprint(\".gitignore exists:\", os.path.exists(gi))\nif os.path.exists(gi):\n    with open(gi) as f:\n        print(repr(f.read()))\nEOF"
+ },
+ {
+  "id": "pr2_2_cmd",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 2 个命令块）",
+  "cmd": "D=$(mktemp -d) && printf 'def f(x):\\n    return x + 1\\n\\nf(1)\\n' > \"$D/demo.py\" && ( cd \"$D\" && export PYTHONPATH=/testbed && python -m coverage run demo.py && python -m coverage html -d htmlcov && ls -A htmlcov && echo '--- htmlcov/.gitignore:' && { cat htmlcov/.gitignore || true; } && if command -v git >/dev/null 2>&1; then git init -q . && echo '--- git status (htmlcov only):' && git status --porcelain --untracked-files=all -- htmlcov; else echo '(git not found; skipped)'; fi )"
+ },
+ {
+  "id": "pr3_3_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 3 个命令块）",
+  "cmd": "python -c \"import pytest, xdist, flaky; print('pytest', pytest.__version__)\"; command -v coverage || echo \"no coverage console script on PATH\""
+ },
+ {
+  "id": "pr4_4_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 4 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE tests/test_html.py -k HtmlDeltaTest -q"
+ },
+ {
+  "id": "pr4_5_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 4 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE tests/test_html.py -q"
+ },
+ {
+  "id": "pr5_6_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 5 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE -o addopts=\"\" tests/test_html.py -q"
+ },
+ {
+  "id": "pr6_7_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 6 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE tests/test_process.py -k UnicodeFilePathsTest -q && python -m pytest -p no:cacheprovider --color=no -rfE tests/test_plugins.py -k test_local_files_are_importable -q"
+ }
+]

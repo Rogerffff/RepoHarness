@@ -37,14 +37,14 @@ class _Exec:
         self.scripts.append(script)
         if "rev-parse" in script:  # B1 baseline 锚
             return SimpleNamespace(exit_code=0, stdout="a" * 40 + "\n", stderr="")
-        if "find ." in script:  # B1 census（空树 = 零 entries 合法基线）
+        if "find ." in script and "RH2_QUIESCENCE_CENSUS" not in script:  # B1 census（空树）
             return SimpleNamespace(exit_code=0, stdout="", stderr="")
         if "pkill" in script:
             return SimpleNamespace(exit_code=0, stdout="", stderr="")
         if "ps -o pid=" in script:
             count = self.ps_counts.pop(0) if self.ps_counts else "0"
             return SimpleNamespace(exit_code=0, stdout=count + "\n", stderr="")
-        if "git status" in script:
+        if "RH2_QUIESCENCE_CENSUS" in script:
             body = self.digests.pop(0) if self.digests else "D1"
             code = self.digest_exits.pop(0) if self.digest_exits else 0
             return SimpleNamespace(exit_code=code, stdout=body, stderr="")

@@ -1,0 +1,41 @@
+{
+ "name": "orange3_4014_pyx_build",
+ "task": "orange3__4014f2483e3bab0621c9ae0f994947c008183253",
+ "purpose": "编译题端到端（R-d 验收第 2 点）：CC 以 agent 身份依次执行 agentpath 命令清单的 edit_pyx（改 _discretize.pyx）与 build（setup.py build_ext --inplace 重编扩展）→ census 冻结导出应含重建的 _discretize*.so → 全新 grader 评分",
+ "steps": [
+  {
+   "kind": "bash_r2e_preflight"
+  },
+  {
+   "kind": "bash",
+   "id": "so_before",
+   "command": "ls -l --time-style=+%s Orange/preprocess/_discretize* 2>&1; sha256sum Orange/preprocess/_discretize*.so; git status --porcelain --ignored -- Orange/preprocess build 2>/dev/null | head -20"
+  },
+  {
+   "kind": "bash_from_commands",
+   "file": "experiments/r2e_actor_20260925/commands/agentpath_orange3_4014.json",
+   "id": "edit_pyx"
+  },
+  {
+   "kind": "bash_from_commands",
+   "file": "experiments/r2e_actor_20260925/commands/agentpath_orange3_4014.json",
+   "id": "build"
+  },
+  {
+   "kind": "bash",
+   "id": "so_after",
+   "command": "ls -l --time-style=+%s Orange/preprocess/_discretize* 2>&1; sha256sum Orange/preprocess/_discretize*.so; git status --porcelain --ignored -- Orange/preprocess build 2>/dev/null | head -20; python -c 'import Orange.preprocess._discretize as d; print(\"RH2_EXT=\" + d.__file__)'"
+  },
+  {
+   "kind": "bash_from_commands",
+   "file": "experiments/r2e_actor_20260925/commands/agentpath_orange3_4014.json",
+   "id": "repro_after"
+  }
+ ],
+ "solve": {
+  "wall_seconds": 1800,
+  "max_context_len": 32768,
+  "max_new_tokens": 4096
+ },
+ "legacy_gitdiff_compare": true
+}

@@ -1,0 +1,37 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 120,
+  "expect": "zero",
+  "purpose": "解释器、mypy 来源（须为 /testbed）、版本、身份",
+  "cmd": "id; python -c 'import sys,mypy; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable); print(\"mypy\",mypy.__file__)'; python -m pip list 2>/dev/null | grep -i -E '^(pytest|pytest-xdist|boto3|botocore|typing.extensions|mypy.extensions) ' "
+ },
+ {
+  "id": "mcve",
+  "timeout_s": 300,
+  "expect": "any",
+  "purpose": "题面原例原样（记录事实：该 base 默认条件下是否复现）",
+  "cmd": "set -o pipefail\nD=$(mktemp -d /tmp/mwe.XXXX)\ncat > $D/t.py <<'PY'\nfrom typing import TypeVar\nimport typing\nimport typing_extensions\nU = TypeVar('U', int, typing_extensions.SupportsIndex)\ndef f(si: U) -> U:\n    return si\ndef caller(si: typing.SupportsIndex):\n    typing_extensions.assert_type(f(si), typing.SupportsIndex)\nPY\npython -m mypy --cache-dir=$D/cache --show-traceback  $D/t.py 2>&1 | tee $D/out.txt\n! grep -q -E \"of type \\\"SupportsIndex\\\", not \\\"SupportsIndex\\\"\" $D/out.txt"
+ },
+ {
+  "id": "mcve_ambiguous",
+  "timeout_s": 300,
+  "expect": "nonzero",
+  "purpose": "公开替代复现：两个模块各有同名类 C，assert_type 的消息是否出现同名歧义（base 应输出 \"C\", not \"C\"）",
+  "cmd": "set -o pipefail\nD=$(mktemp -d /tmp/mwe.XXXX); cd $D\nprintf 'class C: ...\\n' > a.py; printf 'class C: ...\\n' > b.py\ncat > t.py <<'PY'\nimport a, b\nfrom typing_extensions import assert_type\ndef g(x: a.C) -> None:\n    assert_type(x, b.C)\nPY\npython -m mypy --cache-dir=$D/cache t.py 2>&1 | tee out.txt\n! grep -q 'of type \"C\", not \"C\"' out.txt"
+ },
+ {
+  "id": "assert_type",
+  "timeout_s": 1200,
+  "expect": "zero",
+  "purpose": "相关公开测试：assert_type",
+  "cmd": "python -m pytest -n 2 -q --color=no -p no:cacheprovider mypy/test/testcheck.py -k 'AssertType' 2>&1 | tail -25; exit ${PIPESTATUS[0]}"
+ },
+ {
+  "id": "tree",
+  "timeout_s": 60,
+  "expect": "zero",
+  "purpose": "运行后工作区改动",
+  "cmd": "git status --porcelain; git rev-parse HEAD"
+ }
+]

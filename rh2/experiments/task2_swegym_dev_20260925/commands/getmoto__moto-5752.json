@@ -1,0 +1,37 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 120,
+  "expect": "zero",
+  "purpose": "解释器、moto 来源、身份",
+  "cmd": "id; python --version; python -c 'import sys,moto; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable); print(\"moto\",moto.__file__)'; python -m pip list 2>/dev/null | grep -i -E '^(pytest|pathspec|boto3|botocore) '"
+ },
+ {
+  "id": "first_round_devsh",
+  "timeout_s": 1800,
+  "expect": "any",
+  "purpose": "首轮在 bash_env_v1 下用过的同一份开发检查脚本（原样复用），在正式入口下重跑以核对结论能否迁移",
+  "cmd": "step() { echo \"=== STEP $1\"; shift; \"$@\"; echo \"=== RC $?\"; }\nstep import python -c 'import sys, moto; print(sys.executable, sys.version.split()[0], moto.__file__)'\nstep import_from_tmp bash -c 'cd /tmp && python -c \"import moto; print(moto.__file__)\"'\nstep pytest_version python -m pytest --version\nstep pip_head bash -c 'python -m pip list 2>/dev/null | head -5'\nstep git_status git status --porcelain\n"
+ },
+ {
+  "id": "mcve",
+  "timeout_s": 300,
+  "expect": "nonzero",
+  "purpose": "题面 MWE 原样（本地 mock SSM，自设区域与假凭据）：两种过滤器顺序都应只返回 1 条",
+  "cmd": "export AWS_DEFAULT_REGION=us-east-1 AWS_ACCESS_KEY_ID=x AWS_SECRET_ACCESS_KEY=x\npython - <<'PY'\nimport boto3\nfrom moto import mock_ssm\nwith mock_ssm():\n    client = boto3.client('ssm')\n    for x in 'ab':\n        client.put_parameter(Name=f'test_my_param_01_{x}', Value=f'Contents of param {x}', Type='String',\n                             Tags=[{'Key': 'hello', 'Value': 'world'}, {'Key': 'x', 'Value': x}])\n    r1 = client.describe_parameters(ParameterFilters=[{'Key': 'tag:x', 'Option': 'Equals', 'Values': ['b']}, {'Key': 'tag:hello', 'Option': 'Equals', 'Values': ['world']}])\n    r2 = client.describe_parameters(ParameterFilters=[{'Key': 'tag:hello', 'Option': 'Equals', 'Values': ['world']}, {'Key': 'tag:x', 'Option': 'Equals', 'Values': ['b']}])\n    print('hello_second', len(r1['Parameters']), 'hello_first', len(r2['Parameters']))\n    assert len(r1['Parameters']) == 1 and len(r2['Parameters']) == 1\nPY"
+ },
+ {
+  "id": "ssm",
+  "timeout_s": 1200,
+  "expect": "zero",
+  "purpose": "相关公开测试：SSM describe_parameters（首轮 Coder 选错过测试文件）",
+  "cmd": "python -m pytest -n0 -q --color=no -p no:cacheprovider tests/test_ssm/test_ssm_boto3.py -k 'describe_parameters or filter' 2>&1 | tail -15; exit ${PIPESTATUS[0]}"
+ },
+ {
+  "id": "tree",
+  "timeout_s": 60,
+  "expect": "zero",
+  "purpose": "运行后工作区改动",
+  "cmd": "git status --porcelain; git rev-parse HEAD"
+ }
+]

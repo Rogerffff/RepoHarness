@@ -1,0 +1,16 @@
+# 本机 Docker（macOS Docker Desktop，2026-09-24）；镜像 python:3.12-slim；网络 = `docker network create --internal -o com.docker.network.bridge.gateway_mode_ipv4=isolated`
+# net_probe.sh
+A1 connect_before_disconnect=ok
+A2 disconnect_last_network=ok
+A3 connect_after_disconnect=refused: gaierror [Errno -3] Temporary failure in name resolution
+A4 ip_connect_after_disconnect=refused: OSError [Errno 101] Network is unreachable
+A5 networks_after={}
+B1 reconnect=ok
+B2 connect_after_reconnect=ok
+C1 connect_none_container: Error response from daemon: container cannot be connected to multiple networks with one of the networks in private (none) mode
+# net_probe_d.sh（echo 服务器，排除 HTTP 缓冲）
+D0 before_disconnect=b'echo:one\n'
+D2 disconnect_with_open_conn=ok (t=+1s)
+D3 after_disconnect_roundtrip=broken: TimeoutError timed out
+D4 new_conn_after_disconnect=refused: OSError
+# 首版 net_probe.sh 的 D3 "survives=True" 是 HTTP/1.0 首个响应的缓冲字节，已由 net_probe_d.sh 否定

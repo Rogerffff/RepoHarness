@@ -1,0 +1,37 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 240,
+  "expect": "zero",
+  "purpose": "解释器、包来源、pip / pytest 版本、激活文件、工作区初态",
+  "cmd": "id; echo VIRTUAL_ENV=$VIRTUAL_ENV; echo RH2_BASHENV_WRITE=$( ( : >> /rh2/bash_env ) 2>/dev/null && echo WRITABLE || echo DENIED ); python -c 'import sys; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable)'; python -c 'import scrapy; from scrapy.exporters import PythonItemExporter; print(\"scrapy\", scrapy.__version__, scrapy.__file__)'; python -m pip --version 2>&1 | head -1; python -m pytest --version 2>&1 | head -1; git status --porcelain=v1; echo PORCELAIN_RC=$?"
+ },
+ {
+  "id": "pr1_1_cmd",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 1 个命令块）",
+  "cmd": "python - <<'PY'\nfrom scrapy.item import Item, Field\nfrom scrapy.exporters import PythonItemExporter\n\nclass TestItem(Item):\n    name = Field()\n    age = Field()\n\nout = PythonItemExporter(binary=True).export_item(TestItem(name=u'John\\xa3', age=u'22'))\nprint(out)\nprint(sorted(type(k).__name__ for k in out))\nprint(out == {b'name': b'John\\xc2\\xa3', b'age': b'22'})\nPY"
+ },
+ {
+  "id": "pr2_2_cmd",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 2 个命令块）",
+  "cmd": "python - <<'PY'\nfrom scrapy.item import Item, Field\nfrom scrapy.exporters import PythonItemExporter\n\nclass TestItem(Item):\n    name = Field()\n    age = Field()\n\ni1 = TestItem(name=u'Joseph', age=u'22')\ni2 = dict(name=u'Maria', age=i1)\ni3 = TestItem(name=u'Jesus', age=i2)\nprint(1, PythonItemExporter(binary=True).export_item(i3))\nprint(2, PythonItemExporter(binary=False).export_item(i3))\nprint(3, PythonItemExporter(binary=True).export_item({'name': u'John\\xa3', 'age': u'22'}))\nprint(4, PythonItemExporter(binary=True, fields_to_export=['name']).export_item(TestItem(name=u'x', age=u'1')))\nPY"
+ },
+ {
+  "id": "pr3_3_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 3 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE tests/test_exporters.py -q"
+ },
+ {
+  "id": "pr3_4_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 3 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE tests/test_exporters.py -q -k PythonItemExporterTest"
+ }
+]

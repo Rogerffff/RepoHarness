@@ -1,0 +1,165 @@
+{
+ "platform": "macOS-26.3.1-arm64-arm-64bit",
+ "python": "3.12.13",
+ "tree": "new:e3",
+ "turns": 25,
+ "rows_max": 32768,
+ "leaves": 2,
+ "layers": 48,
+ "topk": 8,
+ "torch": "2.13.0",
+ "phase_a_capture": {
+  "per_turn": [
+   {
+    "rows": 1310,
+    "ms": 8.7,
+    "heartbeat_max_delay_ms": 1.1
+   },
+   {
+    "rows": 2621,
+    "ms": 17.2,
+    "heartbeat_max_delay_ms": 25.5
+   },
+   {
+    "rows": 3932,
+    "ms": 25.7,
+    "heartbeat_max_delay_ms": 40.1
+   },
+   {
+    "rows": 5242,
+    "ms": 31.4,
+    "heartbeat_max_delay_ms": 50.4
+   },
+   {
+    "rows": 6553,
+    "ms": 69.9,
+    "heartbeat_max_delay_ms": 92.0
+   },
+   {
+    "rows": 7864,
+    "ms": 49.3,
+    "heartbeat_max_delay_ms": 93.3
+   },
+   {
+    "rows": 9175,
+    "ms": 64.5,
+    "heartbeat_max_delay_ms": 96.5
+   },
+   {
+    "rows": 10485,
+    "ms": 83.6,
+    "heartbeat_max_delay_ms": 138.9
+   },
+   {
+    "rows": 11796,
+    "ms": 79.6,
+    "heartbeat_max_delay_ms": 127.6
+   },
+   {
+    "rows": 13107,
+    "ms": 83.6,
+    "heartbeat_max_delay_ms": 127.7
+   },
+   {
+    "rows": 14417,
+    "ms": 82.2,
+    "heartbeat_max_delay_ms": 129.8
+   },
+   {
+    "rows": 15728,
+    "ms": 97.3,
+    "heartbeat_max_delay_ms": 152.6
+   },
+   {
+    "rows": 17039,
+    "ms": 114.7,
+    "heartbeat_max_delay_ms": 188.0
+   },
+   {
+    "rows": 18350,
+    "ms": 115.3,
+    "heartbeat_max_delay_ms": 105.6
+   },
+   {
+    "rows": 19660,
+    "ms": 109.8,
+    "heartbeat_max_delay_ms": 177.8
+   },
+   {
+    "rows": 20971,
+    "ms": 119.4,
+    "heartbeat_max_delay_ms": 109.5
+   },
+   {
+    "rows": 22282,
+    "ms": 131.2,
+    "heartbeat_max_delay_ms": 205.5
+   },
+   {
+    "rows": 23592,
+    "ms": 136.1,
+    "heartbeat_max_delay_ms": 126.2
+   },
+   {
+    "rows": 24903,
+    "ms": 147.0,
+    "heartbeat_max_delay_ms": 228.7
+   },
+   {
+    "rows": 26214,
+    "ms": 159.3,
+    "heartbeat_max_delay_ms": 242.0
+   },
+   {
+    "rows": 27525,
+    "ms": 151.8,
+    "heartbeat_max_delay_ms": 240.6
+   },
+   {
+    "rows": 28835,
+    "ms": 167.5,
+    "heartbeat_max_delay_ms": 260.8
+   },
+   {
+    "rows": 30146,
+    "ms": 181.6,
+    "heartbeat_max_delay_ms": 274.3
+   },
+   {
+    "rows": 31457,
+    "ms": 181.3,
+    "heartbeat_max_delay_ms": 171.4
+   },
+   {
+    "rows": 32768,
+    "ms": 193.8,
+    "heartbeat_max_delay_ms": 295.7
+   }
+  ],
+  "total_ms": 2601.8,
+  "heartbeat_max_delay_ms": 295.7,
+  "tracemalloc_current_mib": 627.4,
+  "tracemalloc_peak_mib": 835.7,
+  "maxrss_mib": 2644.1
+ },
+ "phase_b_leaves": {
+  "per_leaf": [
+   {
+    "backfill_ms": 1.2,
+    "backfill_heartbeat_max_delay_ms": 1.9,
+    "projection_ms": 16.7,
+    "projection_heartbeat_max_delay_ms": 6.8
+   },
+   {
+    "backfill_ms": 2.4,
+    "backfill_heartbeat_max_delay_ms": 2.4,
+    "projection_ms": 16.7,
+    "projection_heartbeat_max_delay_ms": 16.5
+   }
+  ],
+  "tracemalloc_current_mib": 820.2,
+  "tracemalloc_peak_mib": 835.7,
+  "maxrss_mib": 2644.1
+ },
+ "note": "tracemalloc 只计 Python 分配器可见的内存（torch 张量存储不在其中）；maxrss 是整个进程累计峰值。本脚本保留 hook 的记录 / tape / store 与各叶张量、分支工件，与一个 session 的生产保留对象一致；不外推到多并发。"
+}

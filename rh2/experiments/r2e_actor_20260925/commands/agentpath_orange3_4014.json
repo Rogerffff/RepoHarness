@@ -1,0 +1,51 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 240,
+  "expect": "zero",
+  "purpose": "解释器、包来源、pip / pytest 版本、激活文件、工作区初态",
+  "cmd": "id; echo VIRTUAL_ENV=$VIRTUAL_ENV; echo RH2_BASHENV_WRITE=$( ( : >> /rh2/bash_env ) 2>/dev/null && echo WRITABLE || echo DENIED ); python -c 'import sys; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable)'; python -c 'import numpy, Orange; import Orange.preprocess._discretize as d; print(\"Orange\", Orange.__file__, \"numpy\", numpy.__version__, \"ext\", d.__file__)'; command -v xvfb-run gcc cc; python -m pip --version 2>&1 | head -1; python -m pytest --version 2>&1 | head -1; git status --porcelain=v1; echo PORCELAIN_RC=$?"
+ },
+ {
+  "id": "repro_before",
+  "timeout_s": 600,
+  "expect": "any",
+  "purpose": "改动前：公开读者的题面复现（pr1_1_cmd 原文）",
+  "cmd": "python - <<'EOF'\nimport traceback\nimport numpy as np\nfrom Orange.data import Table\nfrom Orange.preprocess import discretize\n\neps = np.finfo(float).eps\nfor m in (4, 5):\n    X = np.array([[1 + i * eps] for i in range(m)])\n    table = Table.from_numpy(None, X)\n    try:\n        var = discretize.EqualFreq(n=4)(table, table.domain[0])\n    except AssertionError as exc:\n        last = traceback.extract_tb(exc.__traceback__)[-1]\n        print(\"m=%d: AssertionError at %s:%d in %s\" % (\n            m, last.filename.split(\"/testbed/\")[-1], last.lineno, last.name))\n        continue\n    pts = var.compute_value.points\n    fl = [float(p) for p in pts]\n    print(\"m=%d: type=%s points=%s unique=%s increasing=%s values=%s\" % (\n        m, type(pts).__name__, [p.hex() for p in fl],\n        len(set(fl)) == len(fl), all(a < b for a, b in zip(fl, fl[1:])),\n        ascii(var.values)))\nEOF"
+ },
+ {
+  "id": "edit_pyx",
+  "timeout_s": 120,
+  "expect": "zero",
+  "purpose": "以 agent 身份只改 _discretize.pyx（与评分候选 C2 相同的两处替换）",
+  "cmd": "python - <<'PY'\nfrom pathlib import Path\np = Path(\"Orange/preprocess/_discretize.pyx\"); s = p.read_text()\na = \"        return [(v1+v2)/2 for v1,v2 in zip(dist[0], dist[0][1:])]\\n\"\nb = \"                inone = N/toGo\\n    return points\\n\"\nassert s.count(a) == 1 and s.count(b) == 1\ns = s.replace(a, \"        return sorted(set([(v1+v2)/2 for v1,v2 in zip(dist[0], dist[0][1:])]))\\n\")\ns = s.replace(b, \"                inone = N/toGo\\n    return sorted(set(points))\\n\")\np.write_text(s); print(\"EDITED\")\nPY"
+ },
+ {
+  "id": "build",
+  "timeout_s": 1800,
+  "expect": "any",
+  "purpose": "以 agent 身份重建扩展",
+  "cmd": "python setup.py build_ext --inplace > /tmp/rh2_build.log 2>&1; echo BUILD_RC=$?; grep -E 'Cythonizing|_discretize|rror' /tmp/rh2_build.log | tail -8"
+ },
+ {
+  "id": "repro_after",
+  "timeout_s": 600,
+  "expect": "any",
+  "purpose": "重建后：同一复现命令",
+  "cmd": "python - <<'EOF'\nimport traceback\nimport numpy as np\nfrom Orange.data import Table\nfrom Orange.preprocess import discretize\n\neps = np.finfo(float).eps\nfor m in (4, 5):\n    X = np.array([[1 + i * eps] for i in range(m)])\n    table = Table.from_numpy(None, X)\n    try:\n        var = discretize.EqualFreq(n=4)(table, table.domain[0])\n    except AssertionError as exc:\n        last = traceback.extract_tb(exc.__traceback__)[-1]\n        print(\"m=%d: AssertionError at %s:%d in %s\" % (\n            m, last.filename.split(\"/testbed/\")[-1], last.lineno, last.name))\n        continue\n    pts = var.compute_value.points\n    fl = [float(p) for p in pts]\n    print(\"m=%d: type=%s points=%s unique=%s increasing=%s values=%s\" % (\n        m, type(pts).__name__, [p.hex() for p in fl],\n        len(set(fl)) == len(fl), all(a < b for a, b in zip(fl, fl[1:])),\n        ascii(var.values)))\nEOF"
+ },
+ {
+  "id": "would_export",
+  "timeout_s": 120,
+  "expect": "any",
+  "purpose": "只读：按正式导出的取数口径（未忽略的未跟踪文件 + 已跟踪改动）列出会进补丁的文件",
+  "cmd": "echo TRACKED_CHANGED; git diff --name-only HEAD; echo UNTRACKED_NOT_IGNORED; git ls-files --others --exclude-standard; echo IGNORED_DISCRETIZE_AND_BUILD; git status --porcelain --ignored | grep -E '_discretize|^!! build' | head -5"
+ },
+ {
+  "id": "official_export",
+  "timeout_s": 120,
+  "expect": "any",
+  "purpose": "正式导出脚本原文（manager.EXPORT_PATCH_SCRIPT），只列出补丁里的文件与字节数；以 agent 身份运行，失败也记录",
+  "cmd": "(git add -N . 1>&2 && excl=() && if [ -f /rh2/base_untracked.txt ]; then while IFS= read -r p; do [ -n \"$p\" ] && excl+=(\":(exclude,literal)$p\"); done < /rh2/base_untracked.txt; fi && git -c core.fileMode=false diff --binary HEAD -- . \"${excl[@]}\") > /tmp/rh2_export.patch 2>/tmp/rh2_export.err; echo EXPORT_RC=$?; grep '^diff --git' /tmp/rh2_export.patch; wc -c < /tmp/rh2_export.patch; tail -3 /tmp/rh2_export.err"
+ }
+]

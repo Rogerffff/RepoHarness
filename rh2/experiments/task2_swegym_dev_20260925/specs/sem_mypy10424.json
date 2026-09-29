@@ -1,0 +1,32 @@
+{
+ "image": "xingyaoww/sweb.eval.x86_64.python_s_mypy-10424:latest",
+ "files": {
+  "gold.patch": "/work/task2/gold/python__mypy-10424.gold.patch"
+ },
+ "variants": {
+  "base": [],
+  "gold": [
+   "git apply /in/gold.patch"
+  ],
+  "C1_disable_narrowing": [
+   "python - <<'PY'\nimport re, pathlib\np = pathlib.Path('mypy/checker.py'); s = p.read_text()\ni = s.index('    def find_type_equals_check(')\nj = s.index('\"\"\"', s.index('\"\"\"', i) + 3) + 3\ns = s[:j] + '\\n        return {}, {}  # C1: disable type(x)== narrowing entirely' + s[j:]\np.write_text(s)\nprint('inserted at', j)\nPY"
+  ]
+ },
+ "commands": [
+  {
+   "id": "issue_metaclass",
+   "timeout_s": 300,
+   "cmd": "cat > /tmp/t.py <<'PY'\nfrom typing import Type\nclass M(type):\n    pass\nclass C: pass\nclass D(C, metaclass=M): pass\ndef f(t: Type[C]) -> None:\n    if type(t) is not M:\n        return\n    reveal_type(t)\nf(D)\nPY\npython -m mypy --cache-dir=/tmp/mc1 /tmp/t.py"
+  },
+  {
+   "id": "ordinary_narrowing",
+   "timeout_s": 300,
+   "cmd": "cat > /tmp/u.py <<'PY'\nfrom typing import Union\ndef f(x: Union[int, str]) -> None:\n    if type(x) is int:\n        reveal_type(x)\n    else:\n        reveal_type(x)\nPY\npython -m mypy --cache-dir=/tmp/mc2 /tmp/u.py"
+  },
+  {
+   "id": "public_typeequals_tests",
+   "timeout_s": 900,
+   "cmd": "python -m pytest -n0 -q -p no:cacheprovider mypy/test/testcheck.py -k 'TypeEquals' 2>&1 | tail -8; exit ${PIPESTATUS[0]}"
+  }
+ ]
+}

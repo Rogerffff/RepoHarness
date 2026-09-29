@@ -1,0 +1,37 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 240,
+  "expect": "zero",
+  "purpose": "解释器与包来源（Orange 从 /testbed 导入）、sklearn/scipy 版本、pip、xvfb-run 位置、激活文件对 agent 不可写、工作区初态",
+  "cmd": "id; echo VIRTUAL_ENV=$VIRTUAL_ENV; echo RH2_BASHENV_WRITE=$( ( : >> /rh2/bash_env ) 2>/dev/null && echo WRITABLE || echo DENIED ); python -c 'import sys; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable)'; python -c 'import Orange, sklearn, scipy; print(\"Orange\", Orange.__file__); print(\"sklearn\", sklearn.__version__, \"scipy\", scipy.__version__)'; command -v xvfb-run; python -m pip --version 2>&1 | head -1; git status --porcelain=v1; echo PORCELAIN_RC=$?"
+ },
+ {
+  "id": "mcve_statement",
+  "timeout_s": 300,
+  "expect": "nonzero",
+  "purpose": "题面原例（iris + penalty='l1'）：base 应报题面所说的 lbfgs 不支持 l1 的 ValueError（目标缺陷）；命令取自公开读者建议",
+  "cmd": "python -c \"from Orange.data import Table; from Orange.classification import LogisticRegressionLearner as L; m = L(penalty='l1')(Table('iris')); print(m.skl_model)\""
+ },
+ {
+  "id": "test_lr",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "直接覆盖本 bug 的公开单测（test_logistic_regression.py，含 test_probability 的 l1 路径）；base 预期 test_probability 失败",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE Orange/tests/test_logistic_regression.py"
+ },
+ {
+  "id": "test_regress",
+  "timeout_s": 1200,
+  "expect": "any",
+  "purpose": "回归面（repr、SklTest、LearnerReprs）；修复前后都应通过",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE Orange/tests/test_util.py::TestUtil::test_reprable Orange/tests/test_classification.py::SklTest Orange/tests/test_classification.py::LearnerReprs"
+ },
+ {
+  "id": "test_widget",
+  "timeout_s": 1200,
+  "expect": "any",
+  "purpose": "控件测试（Qt，需 xvfb-run 与 QT_QPA_PLATFORM=minimal）：验证 actor 身份下 GUI 测试能否执行；不区分修复前后",
+  "cmd": "QT_QPA_PLATFORM=minimal xvfb-run --auto-servernum python -m pytest -p no:cacheprovider --color=no -rfE Orange/widgets/model/tests/test_owlogisticregression.py"
+ }
+]

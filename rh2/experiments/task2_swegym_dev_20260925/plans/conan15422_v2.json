@@ -1,0 +1,22 @@
+[
+ {
+  "name": "actor_conan15422_v2",
+  "instance_id": "conan-io__conan-15422",
+  "image": "xingyaoww/sweb.eval.x86_64.conan-io_s_conan-15422:latest",
+  "python": "/opt/miniconda3/envs/testbed/bin/python",
+  "pins": [],
+  "files": [
+   {
+    "url": "https://github.com/Kitware/CMake/releases/download/v3.23.5/cmake-3.23.5-linux-x86_64.tar.gz",
+    "sha256": "bbd7ad93d2a14ed3608021a9466ae63db76a24efd1fae7a5f7798c1de7ab9344",
+    "name": "cmake-3.23.5-linux-x86_64.tar.gz"
+   }
+  ],
+  "run": [
+   "tar -C /usr/share -xzf /opt/rh2/actor-files/cmake-3.23.5-linux-x86_64.tar.gz && mv /usr/share/cmake-3.23.5-linux-x86_64 /usr/share/cmake-3.23.5 && /usr/share/cmake-3.23.5/bin/cmake --version | head -1",
+   "printf '%s\\n' '#!/opt/miniconda3/envs/testbed/bin/python' 'import sys' 'sys.path.insert(0, \"/testbed\")' 'from conans.conan import run' 'sys.exit(run())' > /opt/miniconda3/envs/testbed/bin/conan && chmod 755 /opt/miniconda3/envs/testbed/bin/conan",
+   "ln -s /usr/share/cmake-3.23.5/bin/cmake /usr/local/bin/cmake && ln -s /usr/share/cmake-3.23.5/bin/ctest /usr/local/bin/ctest"
+  ],
+  "basis": "(1) setup.py 声明 console_scripts conan=conans.conan:run，镜像 testbed 未安装该包、agent 无 conan 命令；入口脚本等价于可编辑安装的入口且不写 /testbed。(2) 仓库 conans/test/conftest.py 约定 Linux 上 cmake 3.23 位于 /usr/share/cmake-3.23.5/bin；取 Kitware 官方 3.23.5 发行包（sha256 来自官方 SHA-256.txt）。系统 /usr/bin/cmake 3.22.1 不变。(3) v2 另让 PATH 上的 cmake 默认为 3.23.5（/usr/local/bin 先于 /usr/bin）：Conan 生成的预设用 include（CMakePresets version 4），CMake 3.22 报 Unrecognized version，真实消费需 ≥3.23"
+ }
+]

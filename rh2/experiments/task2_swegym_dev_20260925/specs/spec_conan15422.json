@@ -1,0 +1,68 @@
+{
+ "image": "rh2-task2/actor_conan15422_v2:20260925",
+ "files": {
+  "gold.patch": "/work/task2/gold/conan-io__conan-15422.gold.patch",
+  "deepse_a1.diff": "/work/task2/cands/conan-io__conan-15422/deepse_a1.diff",
+  "deepse_a2.diff": "/work/task2/cands/conan-io__conan-15422/deepse_a2.diff",
+  "deepse_a3.diff": "/work/task2/cands/conan-io__conan-15422/deepse_a3.diff",
+  "deepse_a4.diff": "/work/task2/cands/conan-io__conan-15422/deepse_a4.diff",
+  "qwen3-_a1.diff": "/work/task2/cands/conan-io__conan-15422/qwen3-_a1.diff",
+  "qwen3-_a2.diff": "/work/task2/cands/conan-io__conan-15422/qwen3-_a2.diff",
+  "qwen3-_a3.diff": "/work/task2/cands/conan-io__conan-15422/qwen3-_a3.diff",
+  "qwen3-_a4.diff": "/work/task2/cands/conan-io__conan-15422/qwen3-_a4.diff",
+  "qwen3._a1.diff": "/work/task2/cands/conan-io__conan-15422/qwen3._a1.diff",
+  "qwen3._a2.diff": "/work/task2/cands/conan-io__conan-15422/qwen3._a2.diff",
+  "qwen3._a3.diff": "/work/task2/cands/conan-io__conan-15422/qwen3._a3.diff",
+  "qwen3._a4.diff": "/work/task2/cands/conan-io__conan-15422/qwen3._a4.diff",
+  "check.py": "/work/code/rh2/experiments/base_probe_20260922/checks/conan15422.py"
+ },
+ "variants": {
+  "base": [],
+  "gold": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/gold.patch"
+  ],
+  "ds_a1": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/deepse_a1.diff"
+  ],
+  "ds_a2": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/deepse_a2.diff"
+  ],
+  "ds_a3": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/deepse_a3.diff"
+  ],
+  "ds_a4": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/deepse_a4.diff"
+  ],
+  "coder_a1": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/qwen3-_a1.diff"
+  ],
+  "coder_a2": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/qwen3-_a2.diff"
+  ],
+  "coder_a3": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/qwen3-_a3.diff"
+  ],
+  "coder_a4": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/qwen3-_a4.diff"
+  ],
+  "q36_a1": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/qwen3._a1.diff"
+  ],
+  "q36_a2": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/qwen3._a2.diff"
+  ],
+  "q36_a3": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/qwen3._a3.diff"
+  ],
+  "q36_a4": [
+   "git apply --exclude='tests/*' --exclude='*/tests/*' --exclude='*/test/*' --exclude='test-data/*' /in/qwen3._a4.diff"
+  ]
+ },
+ "commands": [
+  {
+   "id": "check",
+   "timeout_s": 1800,
+   "cmd": "python /in/check.py"
+  }
+ ]
+}

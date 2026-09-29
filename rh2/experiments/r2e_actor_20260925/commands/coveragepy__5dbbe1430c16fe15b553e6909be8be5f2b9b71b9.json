@@ -1,0 +1,30 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 240,
+  "expect": "zero",
+  "purpose": "解释器、coverage 的来源：在 /testbed 与临时目录各导入一次（工作区改动是否生效）、pytest、pip、激活文件、工作区初态",
+  "cmd": "id; echo VIRTUAL_ENV=$VIRTUAL_ENV; echo RH2_BASHENV_WRITE=$( ( : >> /rh2/bash_env ) 2>/dev/null && echo WRITABLE || echo DENIED ); python -c 'import sys; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable)'; python -c 'import coverage; print(\"cwd=testbed coverage\", coverage.__file__, coverage.__version__)'; (cd /tmp && python -c 'import coverage; print(\"cwd=tmp coverage\", coverage.__file__)'); python -m pip --version 2>&1 | head -1; python -m pytest --version 2>&1 | head -1; git status --porcelain=v1; echo PORCELAIN_RC=$?"
+ },
+ {
+  "id": "mcve_statement",
+  "timeout_s": 300,
+  "expect": "nonzero",
+  "purpose": "题面原例（补 import，在临时目录运行以免 load() 写工作区）：base 应报 _warn() 不认 once 的 TypeError（目标缺陷）",
+  "cmd": "cd \"$(mktemp -d)\" && python - <<'PY'\nimport coverage\ncov = coverage.Coverage()\ncov.load()\ncov._warn(\"Warning, warning 1!\", slug=\"bot\", once=True)\ncov._warn(\"Warning, warning 2!\", slug=\"bot\", once=True)\nPY\n"
+ },
+ {
+  "id": "mcve_statement_pythonpath",
+  "timeout_s": 300,
+  "expect": "nonzero",
+  "purpose": "同上但显式 PYTHONPATH=/testbed（对照：若上一条从 site-packages 导入，这一条才走工作区代码）",
+  "cmd": "cd \"$(mktemp -d)\" && PYTHONPATH=/testbed python -c 'import coverage; print(coverage.__file__); cov = coverage.Coverage(); cov.load(); cov._warn(\"Warning, warning 1!\", slug=\"bot\", once=True)'"
+ },
+ {
+  "id": "test_warn",
+  "timeout_s": 1200,
+  "expect": "any",
+  "purpose": "相关公开测试（warn 相关）；看执行数量与失败原因",
+  "cmd": "python -m pytest -o addopts=\"\" -p no:cacheprovider --color=no -rfE tests/test_api.py tests/test_testing.py -k warn"
+ }
+]

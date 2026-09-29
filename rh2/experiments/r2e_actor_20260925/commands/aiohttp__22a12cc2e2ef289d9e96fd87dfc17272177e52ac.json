@@ -1,0 +1,58 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 240,
+  "expect": "zero",
+  "purpose": "解释器、包来源、pip / pytest 版本、激活文件、工作区初态",
+  "cmd": "id; echo VIRTUAL_ENV=$VIRTUAL_ENV; echo RH2_BASHENV_WRITE=$( ( : >> /rh2/bash_env ) 2>/dev/null && echo WRITABLE || echo DENIED ); python -c 'import sys; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable)'; python -c 'import aiohttp; print(\"aiohttp\", aiohttp.__version__, aiohttp.__file__)'; python -m pip --version 2>&1 | head -1; python -m pytest --version 2>&1 | head -1; git status --porcelain=v1; echo PORCELAIN_RC=$?"
+ },
+ {
+  "id": "pr0_1_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 0 个命令块）",
+  "cmd": "python -c \"import importlib.util as u; print({m: bool(u.find_spec(m)) for m in ('trustme', 'proxy', 'pytest_cov', 'aiohappyeyeballs')})\""
+ },
+ {
+  "id": "pr2_2_cmd",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 2 个命令块）",
+  "cmd": "PYTHONPATH=/testbed python - <<'EOF'\nimport asyncio, aiohttp\nasync def f():\n    try:\n        aiohttp.TCPConnector(fingerprint=\"incorrect_fingerprint\")\n    except Exception as e:\n        print(\"RAISED\", type(e).__name__, e)\n    else:\n        print(\"NO EXCEPTION at construction\")\nasyncio.run(f())\nEOF"
+ },
+ {
+  "id": "pr3_3_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 3 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE tests/test_client_fingerprint.py -q"
+ },
+ {
+  "id": "pr3_4_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 3 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE tests/test_connector.py -q -k \"fingerprint or multiple_hosts_errors or get_ssl_context\""
+ },
+ {
+  "id": "pr3_5_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 3 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE tests/test_proxy.py -q"
+ },
+ {
+  "id": "pr3_6_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 3 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE tests/test_client_functional.py -q -k fingerprint"
+ },
+ {
+  "id": "pr4_7_cmd",
+  "timeout_s": 300,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 4 个命令块）",
+  "cmd": "PYTHONPATH=/testbed python - <<'EOF'\nimport asyncio, hashlib, ssl, sys\nimport aiohttp\n\nCERT, KEY = \"/testbed/examples/server.crt\", \"/testbed/examples/server.key\"\n\n\nasync def origin_handler(reader, writer):\n    # tiny HTTPS origin: read the request head, answer 200 \"ok\"\n    try:\n        await reader.readuntil(b\"\\r\\n\\r\\n\")\n        writer.write(b\"HTTP/1.1 200 OK\\r\\nContent-Length: 2\\r\\nConnection: close\\r\\n\\r\\nok\")\n        await writer.drain()\n    except Exception:\n        pass\n    finally:\n        writer.close()\n\n\nasync def pipe(src, dst):\n    try:\n        while True:\n            data = await src.read(65536)\n            if not data:\n                break\n            dst.write(data)\n            await dst.drain()\n    except Exception:\n        pass\n    finally:\n        dst.close()\n\n\nasync def proxy_handler(reader, writer):\n    # tiny HTTP CONNECT proxy: answer 200, then relay raw bytes both ways (no TLS here)\n    try:\n        head = await reader.readuntil(b\"\\r\\n\\r\\n\")\n        method, target, _ = head.split(b\"\\r\\n\", 1)[0].decode().split(\" \", 2)\n        if method != \"CONNECT\":\n            writer.close()\n            return\n        host, port = target.rsplit(\":\", 1)\n        up_r, up_w = await asyncio.open_connection(host, int(port))\n        writer.write(b\"HTTP/1.1 200 Connection established\\r\\n\\r\\n\")\n        await writer.drain()\n        await asyncio.gather(pipe(reader, up_w), pipe(up_r, writer))\n    except Exception:\n        writer.close()\n\n\nasync def main():\n    sctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)\n    sctx.load_cert_chain(CERT, KEY)\n    with open(CERT) as f:\n        good = hashlib.sha256(ssl.PEM_cert_to_DER_cert(f.read())).digest()\n    bad = b\"\\x00\" * 32\n    origin = await asyncio.start_server(origin_handler, \"127.0.0.1\", 0, ssl=sctx)\n    proxy = await asyncio.start_server(proxy_handler, \"127.0.0.1\", 0)\n    url = \"https://127.0.0.1:%d/\" % origin.sockets[0].getsockname()[1]\n    proxy_url = \"http://127.0.0.1:%d\" % proxy.sockets[0].getsockname()[1]\n    print(\"python\", sys.version.split()[0], \"aiohttp\", aiohttp.__version__, \"cert_sha256\", good.hex())\n    print(\"origin\", url, \"proxy\", proxy_url)\n    cases = (\n        # (name, connector-level fingerprint, request-level fingerprint, proxy)\n        (\"direct+bad_fp\", bad, None, None),\n        (\"proxy+good_fp\", good, None, proxy_url),\n        (\"proxy+bad_fp\", bad, None, proxy_url),\n        (\"proxy+bad_fp_per_request\", None, bad, proxy_url),\n    )\n    for name, conn_fp, req_fp, px in cases:\n        conn_ssl = aiohttp.Fingerprint(conn_fp) if conn_fp else True\n        kwargs = {\"proxy\": px}\n        if req_fp:\n            kwargs[\"ssl\"] = aiohttp.Fingerprint(req_fp)\n        try:\n            async with aiohttp.ClientSession(\n                connector=aiohttp.TCPConnector(ssl=conn_ssl),\n                timeout=aiohttp.ClientTimeout(total=15),\n            ) as session:\n                async with session.get(url, **kwargs) as resp:\n                    print(name, \"-> CONNECTED status=%s body=%r\" % (resp.status, await resp.text()))\n        except aiohttp.ServerFingerprintMismatch as e:\n            print(name, \"-> ServerFingerprintMismatch got_is_cert=%s host=%s port=%s\" % (e.got == good, e.host, e.port))\n        except Exception as e:\n            print(name, \"-> OTHER %s: %r\" % (type(e).__name__, e))\n    origin.close()\n    proxy.close()\n    await asyncio.sleep(0.2)\n\n\nasyncio.run(asyncio.wait_for(main(), 120))\nEOF"
+ }
+]

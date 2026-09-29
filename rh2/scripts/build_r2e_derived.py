@@ -40,6 +40,13 @@ wheel 由宿主侧按配方的 url 下载并核 sha256，放进构建上下文�
 配方下成立的修订（orange3 `9b5494e2` 的 `r2e-mr-020` 需要 `+env_v2`）；这类题缺对应环境步骤（没给 `--env-pins` 或步骤不对）
 时构建直接失败，不产出覆盖条目。
 
+**构建配置步骤（2026-09-29，`--sysconfig-fix`）**：recipe_v1 搬迁解释器后，解释器自带的构建配置（`_sysconfigdata_*.py`、
+`pkgconfig/*.pc`）仍写着 /root 下的原前缀，解题身份编译扩展时链接不到 libpython（orange3 `4014f248`）。带这个开关时，
+本次构建的每道题在 recipe_v1 之后多跑 `scripts/r2e_derive/sysconfig_v1.sh`，把 /opt/py 内文本文件里的旧前缀改到新位置；
+配方身份追加 `+sysconfig_v1`、tag 后缀加 `s`，`recipe_sha256` 是 `{"base_recipe_sha256": 原配方摘要, "sysconfig_v1.sh": 脚本摘要}`
+的规范 JSON 再取 sha256；复核多一项 `sysconfig_paths_relocated`（以 agent 身份读构建配置，不得再含 /root 下的 uv 前缀）。
+不带开关时 Dockerfile、配方身份与复核项都与之前逐字节相同。
+
 **同一输出目录同一时刻只允许一个构建进程**（Codex closeout F2）：覆盖表与 results.json 都是"读目录 → 整文件写回"，
 两个进程交错会互相丢条目。工具用 `<out>/.build.lock` 锁住输出目录，锁在场就拒绝启动；要并行就各用独立输出目录，
 结束后由单一进程 `--regenerate-overlays` 逐目录汇总（或把 facts.json 收到一个目录再汇总）。串行多次调用同一目录是安全的。
@@ -95,6 +102,15 @@ ENV_STEPS = {"env_v1.sh": ("+env_v1", "e"), "env_v2.sh": ("+env_v2", "e2")}   # 
 DEFAULT_ENV_STEP = "env_v1.sh"
 ENV_PINS_SCHEMA_ID = "rh2.r2e_env_pins.v1"
 UVROOT = "/root/.local/share/uv/python"
+# 构建配置步骤（2026-09-29）：见文档串"构建配置步骤"一段
+SYSCONFIG_STEP = "sysconfig_v1.sh"
+SYSCONFIG_ID_SUFFIX = "+sysconfig_v1"
+SYSCONFIG_TAG_SUFFIX = "s"
+SYSCONFIG_CHECK_PY = (
+    "import json, sysconfig as s; v = s.get_config_vars(); "
+    "bad = sorted(k for k, x in v.items() if isinstance(x, str) and '/root/.local/share/uv' in x); "
+    "print(json.dumps({'bad': bad, 'LIBDIR': v.get('LIBDIR'), 'INCLUDEPY': v.get('INCLUDEPY')}))"
+)
 
 # 读包版本（只用标准库，Python 3.x 通用；importlib.metadata 要 3.8 起才有）：按 sys.path 逐项找 *.dist-info/METADATA
 # 与 *.egg-info 的 Name/Version，每个参数打印一行 "<分发名>=<版本,…|absent>"；同名多份时按 sys.path 顺序逗号分隔，
@@ -155,21 +171,26 @@ RUN bash /rh2_build/recipe_v1.sh "$FIX_COMMIT" && bash /rh2_build/material_v2.sh
 """
 
 
-def render_dockerfile(*, material: bool, env: bool, env_step: str = DEFAULT_ENV_STEP) -> str:
+def render_dockerfile(*, material: bool, env: bool, env_step: str = DEFAULT_ENV_STEP, sysconfig: bool = False) -> str:
     """按步骤拼 Dockerfile。只有 recipe_v1 / 只加材料步骤时与既有 DOCKERFILE / DOCKERFILE_MATERIAL 逐字节相同；
-    环境步骤取 `env_v1.sh` 时与引入 `env_step` 之前逐字节相同。"""
+    环境步骤取 `env_v1.sh` 时与引入 `env_step` 之前逐字节相同；不带构建配置步骤时与引入它之前逐字节相同。
+    构建配置步骤紧跟 recipe_v1（它只改搬迁后的解释器目录，与材料、环境步骤互不依赖）。"""
 
-    if not env:
+    if not env and not sysconfig:
         return DOCKERFILE_MATERIAL if material else DOCKERFILE
     copies = ["COPY recipe_v1.sh /rh2_build/recipe_v1.sh"]
     runs = ['bash /rh2_build/recipe_v1.sh "$FIX_COMMIT"']
+    if sysconfig:
+        copies.append(f"COPY {SYSCONFIG_STEP} /rh2_build/{SYSCONFIG_STEP}")
+        runs.append(f"bash /rh2_build/{SYSCONFIG_STEP}")
     if material:
         copies += [f"COPY {MATERIAL_STEP} /rh2_build/{MATERIAL_STEP}", "COPY material /rh2_build/material"]
         runs.append(f"bash /rh2_build/{MATERIAL_STEP} /rh2_build/material")
-    if env_step not in ENV_STEPS:
-        raise ValueError(f"未知环境步骤: {env_step!r}")
-    copies += [f"COPY {env_step} /rh2_build/{env_step}", "COPY env /rh2_build/env"]
-    runs.append(f"bash /rh2_build/{env_step} /rh2_build/env")
+    if env:
+        if env_step not in ENV_STEPS:
+            raise ValueError(f"未知环境步骤: {env_step!r}")
+        copies += [f"COPY {env_step} /rh2_build/{env_step}", "COPY env /rh2_build/env"]
+        runs.append(f"bash /rh2_build/{env_step} /rh2_build/env")
     return ("ARG BASE_IMAGE\nFROM ${BASE_IMAGE}\nARG FIX_COMMIT\n" + "\n".join(copies)
             + "\nRUN " + " && ".join(runs) + " && rm -rf /rh2_build\n")
 
@@ -218,6 +239,14 @@ def composite_recipe_digest(*, material_manifest_bytes: bytes | None, env_manife
         doc[env_step] = _sha256_file(ENV_STEP_DIR / env_step)
         doc["env_manifest.tsv"] = hashlib.sha256(env_manifest_bytes).hexdigest()
     return "sha256:" + hashlib.sha256(json.dumps(doc, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+
+
+def with_sysconfig_step(recipe_id: str, recipe_sha256: str, tag_suffix: str) -> tuple[str, str, str]:
+    """在已有配方身份上叠加构建配置步骤：身份追加 `+sysconfig_v1`、tag 后缀加 `s`，摘要把原配方摘要与脚本摘要一并纳入。"""
+
+    doc = {"base_recipe_sha256": recipe_sha256, SYSCONFIG_STEP: _sha256_file(ENV_STEP_DIR / SYSCONFIG_STEP)}
+    digest = "sha256:" + hashlib.sha256(json.dumps(doc, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+    return recipe_id + SYSCONFIG_ID_SUFFIX, digest, tag_suffix + SYSCONFIG_TAG_SUFFIX
 
 
 def _fetch_wheel(pin: dict, dst: Path, cache: Path) -> None:
@@ -462,7 +491,7 @@ def compare_integrity(base: str, derived: str, *, pydir: str, env_globs: tuple[s
 
 def build_one(docker: Docker, *, out: Path, public, grading, tag_prefix: str, skip_pull: bool, timeouts: dict,
               repo_root: Path | None = None, revisions: tuple[R2EMaterialRevision, ...] = (),
-              env_entry: dict | None = None) -> dict:
+              env_entry: dict | None = None, sysconfig: bool = False) -> dict:
     iid = grading.instance_id
     tdir = out / iid
     ctx = tdir / "context"
@@ -486,17 +515,23 @@ def build_one(docker: Docker, *, out: Path, public, grading, tag_prefix: str, sk
         recipe_id, recipe_sha, tag_suffix = MATERIAL_RECIPE_ID, material_recipe_digest(manifest), MATERIAL_TAG_SUFFIX
     else:
         recipe_id, recipe_sha, tag_suffix = RECIPE_ID, "sha256:" + _sha256_file(RECIPE_PATH), RECIPE_ID
+    # 环境要求（REVISION_ENV_REQUIREMENTS）批准的是环境步骤所在的原配方身份与摘要；构建配置步骤只改搬迁后解释器的
+    # 构建配置、不动依赖，所以要求按叠加前的原配方核对，原配方身份与摘要都记进 facts
+    base_recipe_id, base_recipe_sha = recipe_id, recipe_sha
+    if sysconfig:
+        recipe_id, recipe_sha, tag_suffix = with_sysconfig_step(recipe_id, recipe_sha, tag_suffix)
     tag = f"{tag_prefix}/{grading.repo_key_lower}:{grading.source_commit_hash[:12]}-{tag_suffix}"
     result: dict = {
         "instance_id": iid, "task_id": f"r2e_gym_subset::{iid}", "base_image_ref": public.image,
         "base_image_manifest_digest": public.image_manifest_digest, "base_ref_by_digest": base_ref, "tag": tag,
         "recipe_id": recipe_id, "recipe_sha256": recipe_sha, "ok": False, "failures": [],
+        "base_recipe_id": base_recipe_id, "base_recipe_sha256": base_recipe_sha,
         "material_revisions": [r.revision_id for r in hidden_revs],
         "env_pins": [f"{p['dist']}=={p['version']}" for p in (env_entry or {}).get("pins", [])],
     }
     # Codex 批次三复核 F1：本题修订若只在特定环境配方下成立（例 orange3 的 r2e-mr-020 需要 +env_v2），缺这一步的构建
     # 不能产出可用于该材料版本的覆盖条目——直接判失败，不起构建，也不写 overlays.jsonl
-    env_error = env_requirement_mismatch(recipe_id, [r.revision_id for r in revisions], recipe_sha256=recipe_sha)
+    env_error = env_requirement_mismatch(base_recipe_id, [r.revision_id for r in revisions], recipe_sha256=base_recipe_sha)
     if env_error is not None:
         result["failures"].append(env_error)
         return result
@@ -511,8 +546,10 @@ def build_one(docker: Docker, *, out: Path, public, grading, tag_prefix: str, sk
                 result["failures"].append("base_repo_digest_mismatch")
                 return result
             (ctx / "recipe_v1.sh").write_bytes(RECIPE_PATH.read_bytes())
-            (ctx / "Dockerfile").write_text(render_dockerfile(material=bool(hidden_revs), env=bool(env_entry), env_step=env_step),
-                                            encoding="utf-8")
+            (ctx / "Dockerfile").write_text(render_dockerfile(material=bool(hidden_revs), env=bool(env_entry), env_step=env_step,
+                                                              sysconfig=sysconfig), encoding="utf-8")
+            if sysconfig:
+                (ctx / SYSCONFIG_STEP).write_bytes((ENV_STEP_DIR / SYSCONFIG_STEP).read_bytes())
             if env_entry:
                 (ctx / env_step).write_bytes((ENV_STEP_DIR / env_step).read_bytes())
                 (ctx / "env" / "wheels").mkdir(parents=True, exist_ok=True)
@@ -592,6 +629,17 @@ def build_one(docker: Docker, *, out: Path, public, grading, tag_prefix: str, sk
                 checks[f"interpreter_executable_as_{label}"] = {"ok": facts.get("interp_isolated") == "ok" and facts.get("interp_normal") == "ok" and facts.get("interp_exe", "").startswith("/testbed/.venv/")}
                 checks[f"hidden_tests_unreadable_as_{label}"] = {"ok": facts.get("private_ls") == "denied" and facts.get("private_cat") == "denied"}
                 checks[f"git_readable_as_{label}"] = {"ok": facts.get("git_head") == grading.base_commit}
+            if sysconfig:
+                # ---- 复核：构建配置已指向搬迁后的解释器（agent 身份读 sysconfig，不得再含 /root 下的 uv 前缀）
+                rc_s, out_s, err_s = docker.bash(derived_id, f"/testbed/.venv/bin/python -c {shlex.quote(SYSCONFIG_CHECK_PY)}",
+                                                 user=f"{AGENT_UID}:{AGENT_UID}", timeout=timeouts["check"])
+                try:
+                    sc = json.loads(out_s.strip().splitlines()[-1]) if rc_s == 0 and out_s.strip() else {}
+                except json.JSONDecodeError:
+                    sc = {}
+                result["sysconfig_facts"] = sc or {"rc": rc_s, "stderr": err_s[-300:]}
+                checks["sysconfig_paths_relocated"] = {"ok": bool(sc) and not sc.get("bad") and str(sc.get("LIBDIR", "")).startswith("/opt/py/")
+                                                       and str(sc.get("INCLUDEPY", "")).startswith("/opt/py/")}
             # ---- 复核：driver 的 rollout 预检（agent 身份、同一评估函数）
             rc, out_pf, err = docker.bash(derived_id, render_r2e_rollout_preflight_script(), user=f"{AGENT_UID}:{AGENT_UID}", timeout=timeouts["check"])
             pf_failures = evaluate_r2e_rollout_preflight(out_pf)
@@ -653,6 +701,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--build-timeout", type=int, default=3600)
     ap.add_argument("--check-timeout", type=int, default=1800)
     ap.add_argument("--regenerate-overlays", action="store_true", help="不构建，只按输出目录下的 facts.json 重写 overlays.jsonl")
+    ap.add_argument("--sysconfig-fix", action="store_true",
+                    help="本次构建的每道题都加构建配置步骤 sysconfig_v1.sh（配方身份 +sysconfig_v1，tag 后缀加 s）")
     ap.add_argument("--env-pins", default=None, help="环境配方 env_pins_v*.json（逐题依赖固定；只对其中登记的题生效；条目的 env_step 选环境步骤脚本）")
     ns = ap.parse_args(argv)
     out = Path(ns.out_dir).resolve()
@@ -699,12 +749,14 @@ def _main_locked(ns: argparse.Namespace, ap: argparse.ArgumentParser, out: Path)
     results = json.loads(results_path.read_text(encoding="utf-8")) if results_path.exists() else {}
     results.update({"schema_id": "rh2.r2e_derived_build_results.v1", "recipe_id": RECIPE_ID,
                     "recipe_sha256": "sha256:" + _sha256_file(RECIPE_PATH), "host": host_facts(docker)})
+    if ns.sysconfig_fix:
+        results["sysconfig_step"] = {"script": SYSCONFIG_STEP, "sha256": _sha256_file(ENV_STEP_DIR / SYSCONFIG_STEP)}
     results.setdefault("tasks", {})  # 同一输出目录多次调用：逐题合并，不丢先前的题
     built_ok = 0
     for iid in wanted:
         res = build_one(docker, out=out, public=publics[iid], grading=gradings[iid], tag_prefix=ns.tag_prefix,
                         skip_pull=ns.skip_pull, timeouts=timeouts, repo_root=repo_root,
-                        revisions=trusted.revisions.get(iid, ()), env_entry=env_pins.get(iid))
+                        revisions=trusted.revisions.get(iid, ()), env_entry=env_pins.get(iid), sysconfig=ns.sysconfig_fix)
         results["tasks"][iid] = {k: res.get(k) for k in ("ok", "failures", "derived_image_id", "recipe_id", "material_revisions", "env_pins",
                                                            "build_seconds", "seconds_total", "base_size_bytes", "derived_size_bytes")}
         built_ok += bool(res.get("ok"))

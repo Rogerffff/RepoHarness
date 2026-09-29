@@ -1,0 +1,30 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 120,
+  "expect": "zero",
+  "purpose": "解释器、mypy 来源（须为 /testbed）、关键依赖版本、身份",
+  "cmd": "id; python --version; python -c 'import sys,mypy; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable); print(\"mypy\",mypy.__file__)'; python -m pip list 2>/dev/null | grep -i -E '^(pytest|pytest-xdist|pathspec|gitpython|pygit2|pydantic.core|dulwich|typing.extensions) '"
+ },
+ {
+  "id": "mcve",
+  "timeout_s": 300,
+  "expect": "nonzero",
+  "purpose": "题面原例：两个相关 Protocol 定义 __add__ 时 INTERNAL ERROR（按公开阅读建议固定 --python-version 3.8）",
+  "cmd": "set -o pipefail\nD=$(mktemp -d /tmp/mwe.XXXX)\ncat > $D/t.py <<'PY'\nfrom typing import Protocol, TypeVar, Union\nT1 = TypeVar(\"T1\", bound=float)\nT2 = TypeVar(\"T2\", bound=float)\nclass Vector(Protocol[T1]):\n    def __len__(self) -> int:\n        ...\n    def __add__(self: \"Vector[T1]\", other: Union[T2, \"Vector[T2]\"]) -> \"Vector[Union[T1, T2]]\":\n        ...\nclass Matrix(Protocol[T1]):\n    def __add__(self: \"Matrix[T1]\", other: Union[T2, Vector[T2], \"Matrix[T2]\"]) -> \"Matrix[Union[T1, T2]]\":\n        ...\nPY\npython -m mypy --cache-dir=$D/cache --show-traceback --python-version 3.8 $D/t.py > $D/out.txt 2>&1; tail -8 $D/out.txt\n! grep -q -E 'INTERNAL ERROR|Traceback' $D/out.txt"
+ },
+ {
+  "id": "protocols",
+  "timeout_s": 1200,
+  "expect": "zero",
+  "purpose": "相关公开测试：协议相关",
+  "cmd": "python -m pytest -n 2 -q --color=no -p no:cacheprovider mypy/test/testcheck.py -k 'Protocol and (Variance or Self or Recursive)' 2>&1 | tail -25; exit ${PIPESTATUS[0]}"
+ },
+ {
+  "id": "tree",
+  "timeout_s": 60,
+  "expect": "zero",
+  "purpose": "运行后工作区改动",
+  "cmd": "git status --porcelain; git rev-parse HEAD"
+ }
+]

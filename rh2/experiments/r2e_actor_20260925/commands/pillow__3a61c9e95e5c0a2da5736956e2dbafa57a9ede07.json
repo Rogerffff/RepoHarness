@@ -1,0 +1,58 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 240,
+  "expect": "zero",
+  "purpose": "解释器、包来源、pip / pytest 版本、激活文件、工作区初态",
+  "cmd": "id; echo VIRTUAL_ENV=$VIRTUAL_ENV; echo RH2_BASHENV_WRITE=$( ( : >> /rh2/bash_env ) 2>/dev/null && echo WRITABLE || echo DENIED ); python -c 'import sys; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable)'; python -c 'import PIL, PIL._imaging as c; print(\"PIL\", PIL.__version__, PIL.__file__, c.__file__)'; python -m pip --version 2>&1 | head -1; python -m pytest --version 2>&1 | head -1; git status --porcelain=v1; echo PORCELAIN_RC=$?"
+ },
+ {
+  "id": "pr1_1_cmd",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 1 个命令块）",
+  "cmd": "python - <<'EOF'\nfrom PIL import Image\nim = Image.new(\"P\", (256, 1))\nfor x in range(256):\n    im.putpixel((x, 0), x)\nim.putpalette(list(range(256)) * 4, \"RGBA\")\nr = im.remap_palette(list(range(256)))\nprint(\"same_palette_bytes:\", im.palette.palette == r.palette.palette)\nprint(\"palette_mode:\", im.palette.mode, r.palette.mode)\nprint(\"palette_len:\", len(im.palette.palette), len(r.palette.palette))\nprint(\"getpalette_None_len:\", len(im.getpalette(None)), len(r.getpalette(None)))\nprint(\"rgba_render_equal:\", im.convert(\"RGBA\").tobytes() == r.convert(\"RGBA\").tobytes())\nprint(\"indices_equal:\", im.tobytes() == r.tobytes())\nEOF"
+ },
+ {
+  "id": "pr3_2_cmd",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 3 个命令块）",
+  "cmd": "python - <<'EOF'\nfrom PIL import Image\nim = Image.new(\"P\", (2, 1))\nim.putpixel((1, 0), 1)\nim.putpalette((10, 20, 30, 40, 50, 60, 70, 80), \"RGBA\")\ns = im.remap_palette([1, 0])\nprint(\"swap_mode:\", s.palette.mode)\nprint(\"swap_first_bytes:\", list(s.palette.palette)[:8])\nprint(\"swap_indices:\", list(s.getdata()))\nprint(\"swap_render_equal:\", list(im.convert(\"RGBA\").getdata()) == list(s.convert(\"RGBA\").getdata()))\nEOF"
+ },
+ {
+  "id": "pr4_3_cmd",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 4 个命令块）",
+  "cmd": "python - <<'EOF'\nfrom io import BytesIO\nfrom PIL import Image\nim = Image.new(\"P\", (4, 1))\nfor x, v in enumerate((10, 20, 30, 40)):\n    im.putpixel((x, 0), v)\nim.putpalette([c for i in range(256) for c in (i, 255 - i, i // 2, 128)], \"RGBA\")\nbuf = BytesIO()\nim.save(buf, \"GIF\")\nbuf.seek(0)\nwith Image.open(buf) as reloaded:\n    print(\"gif_rgb_equal:\", list(reloaded.convert(\"RGB\").getdata()) == list(im.convert(\"RGB\").getdata()))\nEOF"
+ },
+ {
+  "id": "pr5_4_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 5 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE Tests/test_image.py -k remap_palette"
+ },
+ {
+  "id": "pr5_5_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 5 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE Tests/test_file_gif.py"
+ },
+ {
+  "id": "pr5_6_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 5 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE Tests/test_image_putpalette.py"
+ },
+ {
+  "id": "pr5_7_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 5 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE Tests/test_image_getpalette.py"
+ }
+]

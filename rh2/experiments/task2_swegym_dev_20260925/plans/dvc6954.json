@@ -1,0 +1,12 @@
+[
+ {
+  "name": "actor_dvc6954_v1",
+  "instance_id": "iterative__dvc-6954",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-6954:latest",
+  "python": "/opt/miniconda3/envs/testbed/bin/python",
+  "pins": [
+   "pygit2==1.14.1"
+  ],
+  "basis": "base 源码 dvc/scm/git/backend/pygit2.py:112 导入 GIT_OBJ_COMMIT，pygit2 1.15 起移除；setup.cfg 只要求 >=1.5.0。1.14.1 是保留该常量的最后系列，同仓 DVC9395 grader 配方用过；本题待实测验证"
+ }
+]

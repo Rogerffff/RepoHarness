@@ -128,6 +128,7 @@ from repoharness2.contracts import (
     canonical_json_digest,
 )
 from repoharness2.contracts.fa_runtime import RolloutAttemptOutcomeV2
+from repoharness2.contracts.baseline_manifest import BASELINE_MANIFEST_POLICY_V1, BaselineManifestPolicy
 from repoharness2.contracts.finalization import (
     CleanupFailureFact,
     CleanupResultAppendV1,
@@ -2422,7 +2423,7 @@ class _MaterializedSandbox:
 # `/testbed/.venv/bin` 开头，运行后 census、内容抓取、停止合同的 `pkill` / `ps`、静止指纹的 `git` 都可能执行候选放进去的
 # 同名程序（假 `pkill` + 假 `ps` 能让停止合同误判已停）。这里用 `env -i` 清空继承的环境、只给可信工具目录，bash 不读启动
 # 文件（`BASH_ENV` 也随 `-i` 清掉）。本机 R2E 三张派生镜像与验证机 SWE-Gym 三张镜像实测：所需工具全在 /usr/bin，
-# 且 root 的 `git rev-parse` / `git status` 照常（safe.directory 在 /etc/gitconfig）。agent 自己的激活不经过这条通道。
+# agent 自己的激活不经过这条通道。可信 PATH 不会禁用仓库 Git 的 filter/hook；模型结束后的正式屏障/导出不得调用 Git。
 # 前缀定义在 grading.manager（评分容器的 root 执行共用同一份），这里 re-export 给既有 import。
 
 
@@ -2437,6 +2438,7 @@ class RolloutContainerWorkspace:
     docker: DockerRunner
     container_name: str
     testbed_path: str = "/testbed"
+    census_policy: BaselineManifestPolicy = BASELINE_MANIFEST_POLICY_V1
 
     async def run_bash(self, script: str) -> ExecResult:
         return await self.docker(
@@ -3896,7 +3898,6 @@ class RolloutOrchestrator:
         # 仅 FA 模式（s1_compat 零改动）；失败走既有异常收口（missing）。
         if self._mode != "s1_compat":
             from repoharness2.adapters.slime.baseline_census import (
-                baseline_policy_for_task_id,
                 generate_baseline_manifest,
             )
             from repoharness2.contracts.baseline_manifest import (
@@ -3923,7 +3924,7 @@ class RolloutOrchestrator:
                 runtime_image_digest=sandbox.lease.image_digest,
                 materialized_head=head.stdout.strip(),
                 task_base_commit=task.base_commit,
-                policy=baseline_policy_for_task_id(task.task_id),  # 第四组 P-C：SWE 来源用政策 v2
+                policy=sandbox.workspace.census_policy,  # 与运行后的静止屏障使用同一政策
                 omitted_sink=audit.omitted_cache_counts.setdefault("baseline", {}),
             )
             audit.lifecycle_timing.set("baseline_census", time.monotonic() - census_started)
@@ -4888,8 +4889,11 @@ class RolloutOrchestrator:
         if profile is not None:
             setup["container_start_seconds"] = round(time.monotonic() - start_started, 4)
             audit.lifecycle_timing.set("sandbox_container_start", setup["container_start_seconds"])
+        from repoharness2.adapters.slime.baseline_census import baseline_policy_for_task_id
+
         workspace = RolloutContainerWorkspace(
-            docker=self._docker, container_name=name, testbed_path=task.workdir
+            docker=self._docker, container_name=name, testbed_path=task.workdir,
+            census_policy=baseline_policy_for_task_id(task.task_id),
         )
         if owner is not None:
             # Codex 复核 3 F1：容器已起 → 回收所有权立刻交给调用方 finally（临时形态，handle 稍后补）。

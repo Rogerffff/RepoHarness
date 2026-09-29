@@ -1,0 +1,44 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 240,
+  "expect": "zero",
+  "purpose": "解释器、PIL 与已编译 _imaging 的来源（是否 /testbed/src）、pytest 版本、pip、激活文件、工作区初态",
+  "cmd": "id; echo VIRTUAL_ENV=$VIRTUAL_ENV; echo RH2_BASHENV_WRITE=$( ( : >> /rh2/bash_env ) 2>/dev/null && echo WRITABLE || echo DENIED ); python -c 'import sys; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable)'; python -c 'import PIL, PIL.Image; from PIL import _imaging; print(\"PIL\", PIL.__file__, PIL.__version__); print(\"_imaging\", _imaging.__file__)'; python -m pip --version 2>&1 | head -1; python -m pytest --version 2>&1 | head -1; git status --porcelain=v1; echo PORCELAIN_RC=$?"
+ },
+ {
+  "id": "mcve_statement",
+  "timeout_s": 300,
+  "expect": "any",
+  "purpose": "题面原例逐字（在临时目录，hopper.png 取自 Tests/images）：记录 base 实际报错",
+  "cmd": "W=$(mktemp -d); cp Tests/images/hopper.png $W/; cd $W && python - <<'PY'\nfrom PIL import Image\n\n# Open an image with restricted formats\nimage = Image.open('hopper.png', formats=['JPEG'])\n\n# Attempt to save the image\nimage.save('output.jpg')\n\n# Attempt to use a deprecated method\nimage.show()\nPY\n"
+ },
+ {
+  "id": "mcve_formats_jpeg",
+  "timeout_s": 300,
+  "expect": "nonzero",
+  "purpose": "公开 API 区分修复前后：JPEG 文件配 formats=['JPEG'] 应能打开；base 缺 formats 参数（TypeError）",
+  "cmd": "python -c \"from PIL import Image; print(Image.open('Tests/images/hopper.jpg', formats=['JPEG']).format)\""
+ },
+ {
+  "id": "test_warns_none",
+  "timeout_s": 600,
+  "expect": "nonzero",
+  "purpose": "题面所说的 TypeError（pytest.warns(None) 在本 pytest 下被拒）出现在哪两条公开测试",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE Tests/test_image.py -k 'no_resource_warning_on_save or show_deprecation'"
+ },
+ {
+  "id": "test_image",
+  "timeout_s": 1200,
+  "expect": "any",
+  "purpose": "相关公开测试文件整体（Image.open 相关回归面），看执行数量与预存失败",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE Tests/test_image.py"
+ },
+ {
+  "id": "viewers",
+  "timeout_s": 120,
+  "expect": "zero",
+  "purpose": "show() 依赖的查看器：容器里是否有可用 viewer",
+  "cmd": "python -c 'from PIL import ImageShow; print(ImageShow._viewers)'"
+ }
+]

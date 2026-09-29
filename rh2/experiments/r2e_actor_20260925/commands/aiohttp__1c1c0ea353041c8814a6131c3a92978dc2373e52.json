@@ -1,0 +1,44 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 240,
+  "expect": "zero",
+  "purpose": "解释器、包来源、pip / pytest 版本、激活文件、工作区初态",
+  "cmd": "id; echo VIRTUAL_ENV=$VIRTUAL_ENV; echo RH2_BASHENV_WRITE=$( ( : >> /rh2/bash_env ) 2>/dev/null && echo WRITABLE || echo DENIED ); python -c 'import sys; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable)'; python -c 'import aiohttp, aiohttp.web as w; print(\"aiohttp\", aiohttp.__version__, aiohttp.__file__, w.__file__)'; python -m pip --version 2>&1 | head -1; python -m pytest --version 2>&1 | head -1; git status --porcelain=v1; echo PORCELAIN_RC=$?"
+ },
+ {
+  "id": "pr1_1_cmd",
+  "timeout_s": 300,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 1 个命令块）",
+  "cmd": "python - <<'EOF'\nimport logging\nfrom aiohttp import web\n\nrecords = []\n\nclass Collect(logging.Handler):\n    def emit(self, record):\n        records.append(record)\n\nlogging.getLogger().addHandler(Collect())\n\nasync def context(app):\n    raise RuntimeError(\"Unexpected error occurred\")\n    yield\n\napp = web.Application()\napp.cleanup_ctx.append(context)\ntry:\n    web.run_app(app, print=None)\nexcept RuntimeError as exc:\n    print(\"raised:\", repr(exc))\nelse:\n    print(\"raised: nothing\")\nhits = [\n    r for r in records\n    if (r.exc_info and isinstance(r.exc_info[1], RuntimeError))\n    or \"Unexpected error occurred\" in r.getMessage()\n]\nprint(\"log records about the error:\", len(hits),\n      [r.name + \": \" + r.getMessage().splitlines()[0] for r in hits])\nEOF"
+ },
+ {
+  "id": "pr2_2_cmd",
+  "timeout_s": 300,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 2 个命令块）",
+  "cmd": "python - <<'EOF'\nimport asyncio\nfrom aiohttp import web\n\nasync def context(app):\n    raise RuntimeError(\"Unexpected error occurred\")\n    yield\n\napp = web.Application()\napp.cleanup_ctx.append(context)\nloop = asyncio.new_event_loop()\ncalls = []\nloop.set_exception_handler(lambda lp, ctx: calls.append(ctx))\ntry:\n    web.run_app(app, loop=loop, print=None)\nexcept RuntimeError as exc:\n    print(\"raised:\", repr(exc))\nelse:\n    print(\"raised: nothing\")\nprint(\"exception handler calls:\", len(calls), [c.get(\"message\") for c in calls])\nEOF"
+ },
+ {
+  "id": "pr3_3_cmd",
+  "timeout_s": 300,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 3 个命令块）",
+  "cmd": "python - 2>&1 <<'EOF' | grep -c '^RuntimeError: Unexpected error occurred'\nimport asyncio\nfrom aiohttp import web\n\nasync def context(app: web.Application):\n    raise RuntimeError(\"Unexpected error occurred\")\n    yield\n\napp = web.Application()\napp.cleanup_ctx.append(context)\n\nweb.run_app(app)\nEOF"
+ },
+ {
+  "id": "pr4_4_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 4 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE tests/test_run_app.py -k \"cancels or even_on_failure\""
+ },
+ {
+  "id": "pr4_5_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 4 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE tests/test_run_app.py"
+ }
+]

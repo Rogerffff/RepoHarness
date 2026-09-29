@@ -1,0 +1,30 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 120,
+  "expect": "zero",
+  "purpose": "解释器、pydantic 来源（须为 /testbed）、关键依赖版本、身份",
+  "cmd": "id; python --version; python -c 'import sys,pydantic; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable); print(\"pydantic\",pydantic.__file__)'; python -m pip list 2>/dev/null | grep -i -E '^(pytest|pytest-xdist|pathspec|gitpython|pygit2|pydantic.core|dulwich|typing.extensions) '"
+ },
+ {
+  "id": "mcve",
+  "timeout_s": 180,
+  "expect": "nonzero",
+  "purpose": "题面原例：pydantic.dataclasses.Field(repr=False) 应与 dataclasses.field(repr=False) 一样不出现在 repr",
+  "cmd": "python - <<'PY'\nimport dataclasses\nimport pydantic.dataclasses\n@pydantic.dataclasses.dataclass\nclass x:\n    y: int\n    z: int = dataclasses.field(repr=False)\n@pydantic.dataclasses.dataclass\nclass a:\n    b: int\n    c: int = pydantic.dataclasses.Field(repr=False)\nout = f'{x(3, 4)} {a(1, 2)}'\nprint(out)\nassert out == 'x(y=3) a(b=1)', out\nPY"
+ },
+ {
+  "id": "dataclasses",
+  "timeout_s": 1200,
+  "expect": "zero",
+  "purpose": "相关公开测试：dataclasses（首批候选前提：继承 / G1 语义对照另做）",
+  "cmd": "python -m pytest -q --color=no -p no:cacheprovider tests/test_dataclasses.py 2>&1 | tail -25; exit ${PIPESTATUS[0]}"
+ },
+ {
+  "id": "tree",
+  "timeout_s": 60,
+  "expect": "zero",
+  "purpose": "运行后工作区改动",
+  "cmd": "git status --porcelain; git rev-parse HEAD"
+ }
+]

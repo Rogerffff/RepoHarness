@@ -876,7 +876,7 @@ def _stop_chain(monkeypatch, *, kind: str, stop_timeout: float = 30.0):
             if kind.endswith("digest_late") and facts["kills"] == 4:
                 now[0] = 899.5  # 屏障 ① 的归零确认在墙前
             facts["confirmation_at"].append((now[0], 0))
-        if (args[0] == "exec" and "git status --porcelain" in args[-1] and kind.endswith("digest_late")
+        if (args[0] == "exec" and "RH2_QUIESCENCE_CENSUS" in args[-1] and kind.endswith("digest_late")
                 and facts["stop_entered"].is_set()):
             now[0] = 901.0  # 只有屏障的指纹读取跨墙（Codex 复核 2 §3.2）；物化期的 census 不受影响
             facts["digest_at"].append(now[0])

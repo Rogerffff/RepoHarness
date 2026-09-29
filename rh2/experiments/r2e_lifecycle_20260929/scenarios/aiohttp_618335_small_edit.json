@@ -1,0 +1,53 @@
+{
+ "name": "aiohttp_618335_small_edit",
+ "task": "aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2",
+ "purpose": "普通 R2E 题（初态带 4 个已跟踪改动与 3 个未跟踪文件）：桩让 CC 以 Edit 改一个干净的已跟踪文件、以 Bash 给一个初态已被改动的已跟踪文件追加一行、以 Write 新建一个文件；正式导出 → 回放评分（这些改动不修题，预期与 noop 同为 0）",
+ "steps": [
+  {
+   "kind": "bash_r2e_preflight"
+  },
+  {
+   "kind": "tool_use",
+   "id": "read_init",
+   "name": "Read",
+   "input": {
+    "file_path": "/testbed/aiohttp/__init__.py"
+   }
+  },
+  {
+   "kind": "tool_use",
+   "id": "edit_init",
+   "name": "Edit",
+   "input": {
+    "file_path": "/testbed/aiohttp/__init__.py",
+    "old_string": "__version__ = '0.17.0a0'",
+    "new_string": "__version__ = '0.17.0a0'  # rh2 probe_proto: edited via the CC Edit tool"
+   }
+  },
+  {
+   "kind": "bash",
+   "id": "append_dirty",
+   "command": "printf '\\n# rh2 probe_proto: appended to a tracked file that the image already modified\\n' >> aiohttp/worker.py && tail -2 aiohttp/worker.py"
+  },
+  {
+   "kind": "tool_use",
+   "id": "write_new",
+   "name": "Write",
+   "input": {
+    "file_path": "/testbed/rh2_probe_proto_note.txt",
+    "content": "rh2 probe_proto: new untracked file written via the CC Write tool\n"
+   }
+  },
+  {
+   "kind": "bash",
+   "id": "status",
+   "command": "git status --porcelain; git diff --stat"
+  }
+ ],
+ "solve": {
+  "wall_seconds": 900,
+  "max_context_len": 32768,
+  "max_new_tokens": 4096
+ },
+ "legacy_gitdiff_compare": true
+}

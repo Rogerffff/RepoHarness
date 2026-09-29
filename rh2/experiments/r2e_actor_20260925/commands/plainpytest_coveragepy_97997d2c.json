@@ -1,0 +1,30 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 240,
+  "expect": "zero",
+  "purpose": "解释器、包来源、pip / pytest 版本、激活文件、工作区初态",
+  "cmd": "id; echo VIRTUAL_ENV=$VIRTUAL_ENV; echo RH2_BASHENV_WRITE=$( ( : >> /rh2/bash_env ) 2>/dev/null && echo WRITABLE || echo DENIED ); python -c 'import sys; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable)'; python -c 'import coverage; print(\"coverage\", coverage.__file__, coverage.__version__)'; (cd / && python -c 'import coverage; print(\"cwd=/ coverage\", coverage.__file__)'); python -m pip --version 2>&1 | head -1; python -m pytest --version 2>&1 | head -1; git status --porcelain=v1; echo PORCELAIN_RC=$?"
+ },
+ {
+  "id": "pr5_3_pytest_plain",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者原命令（去掉协调者插入的 -p no:cacheprovider），以 agent 身份重跑",
+  "cmd": "python -m pytest --color=no -rfE tests/test_config.py"
+ },
+ {
+  "id": "pr5_4_pytest_plain",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者原命令（去掉协调者插入的 -p no:cacheprovider），以 agent 身份重跑",
+  "cmd": "python -m pytest --color=no -rfE tests/test_plugins.py -k ConfigurerPluginTest"
+ },
+ {
+  "id": "pr5_5_pytest_plain",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者原命令（去掉协调者插入的 -p no:cacheprovider），以 agent 身份重跑",
+  "cmd": "python -m pytest --color=no -rfE tests/test_api.py -k test_ordered_combine"
+ }
+]

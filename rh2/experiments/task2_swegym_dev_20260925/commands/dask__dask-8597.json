@@ -1,0 +1,12 @@
+[
+ {"id": "env", "timeout_s": 120, "expect": "zero", "purpose": "解释器、包来源（须为 /testbed）、pytest/numpy 版本、身份",
+  "cmd": "id; echo HOME=$HOME; python -c 'import sys,dask,numpy,pytest; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable); print(\"dask\",dask.__file__); print(\"numpy\",numpy.__version__,\"pytest\",pytest.__version__)'"},
+ {"id": "mcve", "timeout_s": 180, "expect": "nonzero", "purpose": "题面原例（公开 API）：零宽数组整数列表索引，base 应暴露目标缺陷",
+  "cmd": "python -c 'import numpy as np, dask.array as da; x = da.from_array(np.zeros((3, 0))); print(x[[0]].compute().shape)'"},
+ {"id": "narrow", "timeout_s": 600, "expect": "zero", "purpose": "相关公开窄测试：两项默认警告旧测试（首轮在 pytest 8.3.2 下因 warns(None) 抛 TypeError）",
+  "cmd": "python -m pytest -n0 -rA --color=no -p no:cacheprovider dask/array/tests/test_slicing.py -k 'slicing_integer_no_warnings or getitem_avoids_large_chunks'"},
+ {"id": "file", "timeout_s": 900, "expect": "any", "purpose": "整份 test_slicing.py（评分同文件），看执行数量与失败分布",
+  "cmd": "python -m pytest -n0 -rA --color=no -p no:cacheprovider dask/array/tests/test_slicing.py -q"},
+ {"id": "tree", "timeout_s": 60, "expect": "zero", "purpose": "运行后工作区改动（开发命令不应写业务文件）",
+  "cmd": "git status --porcelain; git rev-parse HEAD"}
+]

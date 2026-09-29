@@ -1,0 +1,58 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 240,
+  "expect": "zero",
+  "purpose": "解释器、包来源、pip / pytest 版本、激活文件、工作区初态",
+  "cmd": "id; echo VIRTUAL_ENV=$VIRTUAL_ENV; echo RH2_BASHENV_WRITE=$( ( : >> /rh2/bash_env ) 2>/dev/null && echo WRITABLE || echo DENIED ); python -c 'import sys; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable)'; python -c 'import coverage; print(\"coverage\", coverage.__file__, coverage.__version__)'; (cd / && python -c 'import coverage; print(\"cwd=/ coverage\", coverage.__file__)'); python -m pip --version 2>&1 | head -1; python -m pytest --version 2>&1 | head -1; git status --porcelain=v1; echo PORCELAIN_RC=$?"
+ },
+ {
+  "id": "pr1_1_cmd",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 1 个命令块）",
+  "cmd": "python - <<'EOF'\nfrom collections import OrderedDict\nimport coverage\nprint(\"coverage from:\", coverage.__file__)\nfor label, obj in [(\"Coverage\", coverage.Coverage()), (\"CoverageConfig\", coverage.Coverage().config)]:\n    try:\n        print(label, \"before:\", repr(obj.get_option(\"paths\")))\n        new_paths = OrderedDict()\n        new_paths[\"magic\"] = [\"src\", \"ok\"]\n        obj.set_option(\"paths\", new_paths)\n        print(label, \"after:\", repr(obj.get_option(\"paths\")))\n    except Exception as exc:\n        print(label, \"ERROR:\", type(exc).__module__ + \".\" + type(exc).__name__ + \":\", exc)\nEOF"
+ },
+ {
+  "id": "pr4_2_cmd",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 4 个命令块）",
+  "cmd": "python - <<'EOF'\nimport os, sys, tempfile, textwrap\nimport coverage\nplugin_dir = tempfile.mkdtemp()\nwith open(os.path.join(plugin_dir, \"paths_configurer.py\"), \"w\") as f:\n    f.write(textwrap.dedent(\"\"\"\n        from collections import OrderedDict\n        import coverage\n\n        class Plugin(coverage.CoveragePlugin):\n            def configure(self, config):\n                print(\"configure() got:\", type(config).__name__)\n                paths = OrderedDict(config.get_option(\"paths\"))\n                paths[\"magic\"] = [\"src\", \"ok\"]\n                config.set_option(\"paths\", paths)\n\n        def coverage_init(reg, options):\n            reg.add_configurer(Plugin())\n        \"\"\"))\nsys.path.insert(0, plugin_dir)\ncov = coverage.Coverage(data_file=None)\ncov.set_option(\"run:plugins\", [\"paths_configurer\"])\ncov.start()\ncov.stop()\nprint(\"paths after start:\", repr(cov.get_option(\"paths\")))\nEOF"
+ },
+ {
+  "id": "pr5_3_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 5 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE tests/test_config.py"
+ },
+ {
+  "id": "pr5_4_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 5 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE tests/test_plugins.py -k ConfigurerPluginTest"
+ },
+ {
+  "id": "pr5_5_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 5 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE tests/test_api.py -k test_ordered_combine"
+ },
+ {
+  "id": "pr6_6_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 6 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE -o addopts=\"\" -rfe tests/test_config.py"
+ },
+ {
+  "id": "pr7_7_cmd",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 7 个命令块）",
+  "cmd": "python - <<'EOF'\nimport os, sys, tempfile\nsys.path.insert(0, \"/testbed\")\nfrom collections import OrderedDict\nimport coverage\nos.chdir(tempfile.mkdtemp())\ndata = coverage.CoverageData(\".coverage.1\")\ndata.add_lines({os.path.abspath(\"ci/girder/g1.py\"): dict.fromkeys(range(10))})\ndata.write()\ncov = coverage.Coverage(config_file=False)\nnew_paths = OrderedDict()\nnew_paths[\"girder\"] = [\"girder/\", \"ci/girder/\"]\ntry:\n    cov.set_option(\"paths\", new_paths)\nexcept Exception as exc:\n    print(\"set_option ERROR:\", exc)\ncov.combine()\nprint(sorted(os.path.relpath(f) for f in cov.get_data().measured_files()))\nEOF"
+ }
+]

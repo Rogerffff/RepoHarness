@@ -1,0 +1,37 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 120,
+  "expect": "zero",
+  "purpose": "解释器、mypy 来源、身份",
+  "cmd": "id; python --version; python -c 'import sys,mypy; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable); print(\"mypy\",mypy.__file__)'; python -m pip list 2>/dev/null | grep -i -E '^(pytest|pathspec|boto3|botocore) '"
+ },
+ {
+  "id": "first_round_devsh",
+  "timeout_s": 1800,
+  "expect": "any",
+  "purpose": "首轮在 bash_env_v1 下用过的同一份开发检查脚本（原样复用），在正式入口下重跑以核对结论能否迁移",
+  "cmd": "step() { echo \"=== STEP $1\"; shift; \"$@\"; echo \"=== RC $?\"; }\nstep import python -c 'import sys, mypy; print(sys.executable, sys.version.split()[0], mypy.__file__)'\nstep import_from_tmp bash -c 'cd /tmp && python -c \"import mypy; print(mypy.__file__)\"'\nstep pytest_version python -m pytest --version\nstep pip_head bash -c 'python -m pip list 2>/dev/null | head -5'\nstep git_status git status --porcelain\n"
+ },
+ {
+  "id": "mcve",
+  "timeout_s": 300,
+  "expect": "nonzero",
+  "purpose": "题面原例（题面原 flags：--strict、python 3.7）：Union[Tuple[Literal]] 返回值误报",
+  "cmd": "D=$(mktemp -d /tmp/mwe.XXXX)\ncat > $D/t.py <<'PY'\nfrom __future__ import annotations\nfrom typing import Union, Tuple\nfrom typing_extensions import Literal\ndef does_not_work(arg: int) -> Union[Tuple[str], Tuple[Literal[1]]]:\n    if arg > 5:\n        return ('a',)\n    else:\n        return (1,)\nPY\npython -m mypy --cache-dir=$D/cache --show-traceback --strict --python-version 3.7 $D/t.py > $D/out.txt 2>&1; cat $D/out.txt\n! grep -q -i -E \"Incompatible return value type\" $D/out.txt"
+ },
+ {
+  "id": "literal",
+  "timeout_s": 1200,
+  "expect": "zero",
+  "purpose": "相关公开测试：Literal / Tuple / Union",
+  "cmd": "python -m pytest -n 2 -q --color=no -p no:cacheprovider mypy/test/testcheck.py -k 'Literal and (Tuple or Union)' 2>&1 | tail -15; exit ${PIPESTATUS[0]}"
+ },
+ {
+  "id": "tree",
+  "timeout_s": 60,
+  "expect": "zero",
+  "purpose": "运行后工作区改动",
+  "cmd": "git status --porcelain; git rev-parse HEAD"
+ }
+]

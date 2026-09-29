@@ -1,0 +1,37 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 300,
+  "expect": "zero",
+  "purpose": "解释器、pandas 来源（须为 /testbed）与版本、构建目录属主、身份",
+  "cmd": "id; python --version; python -c 'import sys,pandas; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable); print(\"pandas\",pandas.__file__, pandas.__version__)'; stat -c '%U %a %n' /testbed/build /testbed/build/* 2>/dev/null | head -3; python -m pip list 2>/dev/null | grep -i -E '^(pytest|pytest-xdist|hypothesis|numpy|cython|meson|meson-python) '"
+ },
+ {
+  "id": "mcve",
+  "timeout_s": 600,
+  "expect": "nonzero",
+  "purpose": "题面原例：freq=\"m\"（已弃用的 \"M\" 的小写别名）不应报错",
+  "cmd": "python -W default -c 'import pandas as pd; x = pd.date_range(\"2010-01-01\", periods=3, freq=\"m\"); print(x)'"
+ },
+ {
+  "id": "rebuild",
+  "timeout_s": 1800,
+  "expect": "zero",
+  "purpose": "开发路径：改 Cython 源后 meson 可编辑安装能否由 agent 增量重编（触碰 offsets.pyx → import，记录重编输出与耗时）",
+  "cmd": "set -o pipefail; SO=$(ls build/cp*/pandas/_libs/tslibs/offsets*.so | head -1); stat -c '%Y %n' $SO; touch pandas/_libs/tslibs/offsets.pyx; start=$(date +%s); MESONPY_EDITABLE_VERBOSE=1 python -c 'import pandas; print(\"import_ok\")' 2>&1 | tail -15; echo seconds=$(( $(date +%s) - start )); stat -c '%Y %n' $SO"
+ },
+ {
+  "id": "date_range",
+  "timeout_s": 1800,
+  "expect": "zero",
+  "purpose": "相关公开测试：date_range / 频率别名",
+  "cmd": "python -m pytest -q --color=no -p no:cacheprovider pandas/tests/indexes/datetimes/test_date_range.py -k 'freq or deprecated' 2>&1 | tail -25; exit ${PIPESTATUS[0]}"
+ },
+ {
+  "id": "tree",
+  "timeout_s": 60,
+  "expect": "zero",
+  "purpose": "运行后工作区改动",
+  "cmd": "git status --porcelain | head -20; git rev-parse HEAD"
+ }
+]

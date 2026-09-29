@@ -1,0 +1,30 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 120,
+  "expect": "zero",
+  "purpose": "解释器、mypy 来源（须为 /testbed）、版本、身份",
+  "cmd": "id; python -c 'import sys,mypy; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable); print(\"mypy\",mypy.__file__)'; python -m pip list 2>/dev/null | grep -i -E '^(pytest|pytest-xdist|boto3|botocore|typing.extensions|mypy.extensions) ' "
+ },
+ {
+  "id": "mcve",
+  "timeout_s": 300,
+  "expect": "nonzero",
+  "purpose": "题面原例：type(t) is not M 不应把 t 收窄成 <nothing>",
+  "cmd": "set -o pipefail\nD=$(mktemp -d /tmp/mwe.XXXX)\ncat > $D/t.py <<'PY'\nfrom typing import Type\nclass M(type):\n    pass\nclass C: pass\nclass D(C, metaclass=M): pass\ndef f(t: Type[C]) -> None:\n    if type(t) is not M:\n        return\n    reveal_type(t)\nf(D)\nPY\npython -m mypy --cache-dir=$D/cache --show-traceback  $D/t.py 2>&1 | tee $D/out.txt\n! grep -q -E \"<nothing>|Never\" $D/out.txt"
+ },
+ {
+  "id": "narrowing",
+  "timeout_s": 1200,
+  "expect": "zero",
+  "purpose": "相关公开测试：type(x) is / 收窄",
+  "cmd": "python -m pytest -n 2 -q --color=no -p no:cacheprovider mypy/test/testcheck.py -k 'TypeEquals or NarrowingEqual or IsInstance and Type' 2>&1 | tail -25; exit ${PIPESTATUS[0]}"
+ },
+ {
+  "id": "tree",
+  "timeout_s": 60,
+  "expect": "zero",
+  "purpose": "运行后工作区改动",
+  "cmd": "git status --porcelain; git rev-parse HEAD"
+ }
+]

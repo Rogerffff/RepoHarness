@@ -1,0 +1,37 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 240,
+  "expect": "zero",
+  "purpose": "解释器、aiohttp 来源（/testbed）、chardet 等导入链、pytest、pip、激活文件、工作区初态（来源镜像兼容改写）",
+  "cmd": "id; echo VIRTUAL_ENV=$VIRTUAL_ENV; echo RH2_BASHENV_WRITE=$( ( : >> /rh2/bash_env ) 2>/dev/null && echo WRITABLE || echo DENIED ); python -c 'import sys; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable)'; python -c 'import aiohttp, aiohttp.protocol as p; print(\"aiohttp\", aiohttp.__version__, p.__file__)'; python -m pip --version 2>&1 | head -1; python -m pytest --version 2>&1 | head -1; git status --porcelain=v1; echo PORCELAIN_RC=$?"
+ },
+ {
+  "id": "mcve_c2_writes",
+  "timeout_s": 300,
+  "expect": "nonzero",
+  "purpose": "题面示例配置（Content-Length 写出器）逐次检查 transport.write 参数；base 预期有空写入（断言失败）；公开读者 C2 加断言",
+  "cmd": "python - <<'PY'\nimport unittest.mock, zlib\nfrom aiohttp import protocol\nc = zlib.compressobj(wbits=-zlib.MAX_WBITS)\ncomp = c.compress(b'data') + c.flush()\nt = unittest.mock.Mock(); w = t.write = unittest.mock.Mock()\nm = protocol.Response(t, 200)\nm.add_headers(('content-length', str(len(comp))))\nm.add_chunking_filter(2)\nm.add_compression_filter('deflate')\nm.send_headers(); m.write(b'data'); m.write_eof()\nargs = [x[1][0] for x in w.mock_calls]\nprint(args[1:], all(args), b''.join(args[1:]) == comp)\nassert all(args), 'empty transport.write'\nPY\n"
+ },
+ {
+  "id": "mcve_c3_chunked",
+  "timeout_s": 300,
+  "expect": "nonzero",
+  "purpose": "标题所说的提前 EOF（无 Content-Length → chunked 写出器 + deflate）；base 预期正文以 0\\r\\n\\r\\n 开头；公开读者 C3 加断言",
+  "cmd": "python - <<'PY'\nimport unittest.mock\nfrom aiohttp import protocol\nt = unittest.mock.Mock(); w = t.write = unittest.mock.Mock()\nm = protocol.Response(t, 200)\nm.add_compression_filter('deflate')\nm.send_headers(); m.write(b'data'); m.write_eof()\nraw = b''.join(x[1][0] for x in w.mock_calls)\nbody = raw.split(b'\\r\\n\\r\\n', 1)[1]\nprint(body)\nassert not body.startswith(b'0\\r\\n\\r\\n'), 'premature terminating chunk'\nPY\n"
+ },
+ {
+  "id": "test_http_protocol",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "相关公开测试（tests/test_http_protocol.py，含 deflate 与分块用例）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE tests/test_http_protocol.py"
+ },
+ {
+  "id": "test_wsgi_web_response",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "邻近回归（tests/test_wsgi.py、tests/test_web_response.py）基线",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE tests/test_wsgi.py tests/test_web_response.py"
+ }
+]

@@ -1,0 +1,58 @@
+[
+ {
+  "id": "env",
+  "timeout_s": 240,
+  "expect": "zero",
+  "purpose": "解释器、包来源、pip / pytest 版本、激活文件、工作区初态",
+  "cmd": "id; echo VIRTUAL_ENV=$VIRTUAL_ENV; echo RH2_BASHENV_WRITE=$( ( : >> /rh2/bash_env ) 2>/dev/null && echo WRITABLE || echo DENIED ); python -c 'import sys; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable)'; (cd /tmp && python -c 'import PIL; print(\"cwd=/tmp PIL\", PIL.__file__)'); python -m pip --version 2>&1 | head -1; python -m pytest --version 2>&1 | head -1; git status --porcelain=v1; echo PORCELAIN_RC=$?"
+ },
+ {
+  "id": "pr0_1_cmd",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 0 个命令块）",
+  "cmd": "python - <<'PY'\nimport sys, PIL\nfrom PIL import Image\nprint(sys.version.split()[0], PIL.__file__, PIL.PILLOW_VERSION, getattr(Image.core, \"__file__\", None))\nprint(\"zip_decoder\" in dir(Image.core), \"libtiff_encoder\" in dir(Image.core))\nPY"
+ },
+ {
+  "id": "pr3_2_cmd",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 3 个命令块）",
+  "cmd": "python - <<'PY'\nfrom PIL import Image, TiffImagePlugin\nfrom PIL.TiffImagePlugin import IFDRational\ncases = [(41988, IFDRational(0, 0)), (41988, IFDRational(1, 2)), (282, IFDRational(0, 0))]\nfor i, (tag, val) in enumerate(cases):\n    info = TiffImagePlugin.ImageFileDirectory_v2()\n    info[tag] = val\n    label = \"tag=%d %d/%d tagtype_before_save=%s\" % (tag, val.numerator, val.denominator, info.tagtype[tag])\n    out = \"/tmp/rh2_ifdr_%d.tiff\" % i\n    try:\n        Image.open(\"Tests/images/hopper.ppm\").save(out, tiffinfo=info, compression=\"raw\")\n        r = Image.open(out)\n        v = r.tag_v2[tag]\n        first = v[0] if isinstance(v, tuple) else v\n        print(label, \"-> OK\", type(v).__name__, \"filetype=%s\" % r.tag_v2.tagtype[tag], first.numerator, first.denominator)\n    except Exception as e:\n        print(label, \"-> FAIL\", type(e).__module__ + \".\" + type(e).__name__, e)\nPY"
+ },
+ {
+  "id": "pr6_3_cmd",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 6 个命令块）",
+  "cmd": "python - <<'PY'\nfrom PIL import Image, TiffImagePlugin\nim = Image.open(\"Tests/images/hopper.png\")\ninfo = TiffImagePlugin.ImageFileDirectory_v2()\ninfo[41988] = TiffImagePlugin.IFDRational(0, 0)\nim.save(\"/tmp/rh2_issue_temp.tiff\", tiffinfo=info, compression=\"raw\")\nreloaded = Image.open(\"/tmp/rh2_issue_temp.tiff\")\nprint(reloaded.tag_v2[41988][0].numerator, reloaded.tag_v2[41988][0].denominator)\nPY"
+ },
+ {
+  "id": "pr7_4_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 7 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE Tests/test_file_tiff_metadata.py Tests/test_tiff_ifdrational.py Tests/test_file_tiff.py"
+ },
+ {
+  "id": "pr8_5_cmd",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 8 个命令块）",
+  "cmd": "PYTHONPATH=Tests python -m unittest test_file_tiff_metadata test_tiff_ifdrational test_file_tiff"
+ },
+ {
+  "id": "pr9_6_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 9 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE Tests/test_file_jpeg.py Tests/test_file_mpo.py -k exif"
+ },
+ {
+  "id": "pr9_7_pytest",
+  "timeout_s": 900,
+  "expect": "any",
+  "purpose": "公开读者建议命令（public_read.md 第 9 个命令块）",
+  "cmd": "python -m pytest -p no:cacheprovider --color=no -rfE Tests/test_file_libtiff.py"
+ }
+]

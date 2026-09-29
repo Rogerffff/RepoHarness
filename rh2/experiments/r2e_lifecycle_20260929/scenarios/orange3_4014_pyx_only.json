@@ -1,0 +1,31 @@
+{
+ "name": "orange3_4014_pyx_only",
+ "task": "orange3__4014f2483e3bab0621c9ae0f994947c008183253",
+ "purpose": "编译题对照：同一 edit_pyx，但不重编扩展（等同 09-25 的 C2 候选）→ 冻结补丁只含 .pyx → grader 仍加载旧 .so，预期与 noop 同为 0；与 pyx_build 的差别只在构建产物",
+ "steps": [
+  {
+   "kind": "bash_r2e_preflight"
+  },
+  {
+   "kind": "bash",
+   "id": "so_before",
+   "command": "ls -l --time-style=+%s Orange/preprocess/_discretize* 2>&1; sha256sum Orange/preprocess/_discretize*.so; git status --porcelain --ignored -- Orange/preprocess build 2>/dev/null | head -20"
+  },
+  {
+   "kind": "bash_from_commands",
+   "file": "experiments/r2e_actor_20260925/commands/agentpath_orange3_4014.json",
+   "id": "edit_pyx"
+  },
+  {
+   "kind": "bash",
+   "id": "so_after",
+   "command": "ls -l --time-style=+%s Orange/preprocess/_discretize* 2>&1; sha256sum Orange/preprocess/_discretize*.so; git status --porcelain --ignored -- Orange/preprocess build 2>/dev/null | head -20; python -c 'import Orange.preprocess._discretize as d; print(\"RH2_EXT=\" + d.__file__)'"
+  }
+ ],
+ "solve": {
+  "wall_seconds": 1200,
+  "max_context_len": 32768,
+  "max_new_tokens": 4096
+ },
+ "legacy_gitdiff_compare": true
+}

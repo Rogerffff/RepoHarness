@@ -1,0 +1,23 @@
+[
+ {
+  "name": "actor_dvc4166_v1",
+  "instance_id": "iterative__dvc-4166",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-4166:latest",
+  "python": "/opt/miniconda3/envs/testbed/bin/python",
+  "pins": [
+   "pathspec==0.8.1"
+  ],
+  "run": [
+   "/opt/miniconda3/envs/testbed/bin/python -m pip install --no-index --no-deps --no-build-isolation /opt/rh2/actor-files/networkx-2.3.zip",
+   "/opt/miniconda3/envs/testbed/bin/python -c \"import base64,pathlib,sysconfig;p=pathlib.Path(sysconfig.get_paths()['purelib'])/'networkx/algorithms/dag.py';s=p.read_text();assert s.count('from fractions import gcd')==1;p.write_text(s.replace('from fractions import gcd',base64.b64decode('ZnJvbSBtYXRoIGltcG9ydCBnY2QgYXMgX21hdGhfZ2NkCgoKZGVmIGdjZChhLCBiKToKICAgIGlmIHR5cGUoYSkgaXMgaW50IGlzIHR5cGUoYik6CiAgICAgICAgcmV0dXJuIC1fbWF0aF9nY2QoYSwgYikgaWYgKGIgb3IgYSkgPCAwIGVsc2UgX21hdGhfZ2NkKGEsIGIpCiAgICB3aGlsZSBiOgogICAgICAgIGEsIGIgPSBiLCBhICUgYgogICAgcmV0dXJuIGEK').decode(),1))\" && /opt/miniconda3/envs/testbed/bin/python -c 'import networkx; from networkx.algorithms.dag import gcd; print(networkx.__version__, gcd(-4, 6), gcd(4, -6))'"
+  ],
+  "basis": "对齐 grader dvc_install_v1c（E13）的 compat：pathspec==0.8.1；networkx 2.3 在 Python 3.9 导入失败（fractions.gcd 已移除），按 networkx_backport.json 的同一处源码修改（dag.py 的 gcd，保留 Python3.8 负号语义）。grader 用的是重打包 wheel 2.3+rh2.1（sha a1e1691d…），actor 侧为上游 PyPI 源码包（networkx-2.3.zip，sha256 8311ddef…，PyPI 无 2.3 wheel）安装后同一文本替换，代码等价、包元数据版本仍为 2.3",
+  "files": [
+   {
+    "url": "https://files.pythonhosted.org/packages/85/08/f20aef11d4c343b557e5de6b9548761811eb16e438cee3d32b1c66c8566b/networkx-2.3.zip",
+    "sha256": "8311ddef63cf5c5c5e7c1d0212dd141d9a1fe3f474915281b73597ed5f1d4e3d",
+    "name": "networkx-2.3.zip"
+   }
+  ]
+ }
+]
