@@ -1,53 +1,351 @@
-# pydantic__pydantic-8316：第3类诊断状态（未完成）
+# pydantic__pydantic-8316：第3类诊断结果
 
-2026-09-30 / Claude（云端，第3类负责人）。原分类：第3类“已有具体疑点，缺辨别实验”（alias 与数字边界）。第二批波次 2。
+2026-09-30 / Claude（云端，第3类第二批主审作者）。原分类：第3类“已有具体疑点，缺辨别实验”（alias 与数字边界）。工作清单登记的下一步：“对照 HTTPResponse、数字边界及 alias 模型填充／导出，明确实际影响。”
 
-**状态：作者诊断未完成，还没有结论。** 按三种结论，本题目前属于“仍有具体问题”：缺全部运行证据，下一步命令见下文。
+前一位作者留下 13 个候选和修订草案 v1，运行输出随容器重置丢失。本页核对并沿用这些材料，另补 7 个候选和修订草案 v2，全部运行重做并归档。
 
-09-30 云端额度不足、第二批暂停时，作者子代理已完成两件事：构造候选、起草修订测试。它的私有矩阵与正式评分输出只在被 git 忽略的 `runs/` 中，容器重置后丢失，**没有归档**。本目录因此没有 `evidence/`，也没有可核对的分数。
+> **收口状态（09-30）**
+>
+> - **作者诊断已完成，证据已归档**：原材料正式评分 22 次、修订 v1 与 v2 诊断评分各 22 次、私有行为矩阵 22 个变体，见 [evidence/](evidence/)。本页分数都有账本支持。
+> - **还没做**：独立复核（v1 §7.3）。
+> - **下一步**：请不继承上下文的复核者做独立复核。重点：
+>   - 原版判 S1 的依据：第 2 步“同一输入形态”的认定，以及第 4 步用到的 10 个得 1 的错误候选是否属于主路径；
+>   - 数字边界不断言、只登记 T3 是否妥当（§3）；
+>   - v2 的 7 条断言是否过严，是否还有能通过 v2 的错误候选。已知 `acr_max5` 能通过，本页记为 T3。
+>
+>   复核用原镜像 `xingyaoww/sweb.eval.x86_64.pydantic_s_pydantic-8316`（本机标签 `c3keep/pydantic8316:src`）即可做私有对照；正式评分还需要派生镜像，见 §2。
 
-## 已入库的材料
+**结论：问题和修法已明确，建议转第2类。**（独立复核尚未进行。）
 
-材料都在 `rh2/experiments/category3_cloud_20260929/pydantic8316/`。
+- **原测试只测了一种缩写形态（S1：v1 §4 第 2 步 T2c、第 4 步）。** 唯一 F2P 是 `CAMELToSnake → camel_to_snake`，与题面原例 `HTTPResponse` 同一形态：缩写在串首、只有一个、3 个以上字母。本页 15 个错误候选中有 **10 个在原材料正式评分得 1**，例如：
+  - `lead_only` 只拆串首的缩写，`getHTTPResponseCode` 得到 `get_httpresponse_code`；
+  - `acr3` 只认 3 个及以上字母的缩写，`userIDToken` 得到 `user_idtoken`；
+  - `no_trailing_upper` 丢掉了 base 已有的 `userID → user_id`。
 
-| 文件 | 内容 |
+  noop 为 0，gold 为 1。
+- **没有误拒。** 5 个与 gold 写法不同的合理实现，在原材料、v1、v2 上都得 1。其中 4 个保留 base 的数字规则，1 个是上游现行写法。
+- **数字边界：gold 顺带改了一条旧行为。登记为 T3，不断言。**
+  - base 在字母与数字之间一律断开，gold 只在小写字母与数字之间断开。例如 `A1` 从 `a_1` 变为 `a1`，`snakeV2` 从 `snake_v_2` 变为 `snake_v2`，`S3Bucket` 从 `s_3_bucket` 变为 `s3_bucket`；
+  - 题面没有提数字，base 的文档与公开测试也没有这类输入；
+  - 上游来回改过（只作佐证）：2.6.0 起采用 gold 读法；2.8.0 恢复断开；2.8.1 以“Fix breaking change in `to_snake` from v2.7 -> v2.8”撤回，并新增测试钉住 `snakeV2 → snake_v2`；
+  - 两种读法都有依据，所以原测试与修订版都不断言。小写字母与数字之间、数字与大写字母之间的断开，两种读法一致，由 17 个旧参数保护。
+- **alias 的实际影响（私有矩阵）。** 在 `alias_generator=to_snake` 的模型上，`to_snake` 的输出就是字段的 alias：
+  - **缩写字段**（`HTTPResponse`、`userIDToken`）：alias 从 `httpresponse`、`user_idtoken` 变为 `http_response`、`user_id_token`，所有合理实现一致。这是题面要的修复，副作用是按旧 key 发来的数据报 `missing`；
+  - **大写字母后接数字的字段**（`fieldV2`、`S3Bucket`、`A1` 等）：只在 gold 读法下改变，例如 `field_v_2 → field_v2`。旧 key 报 `missing`，按别名导出与 JSON schema 也改用新 key。这部分不是题面要求的；
+  - `populate_by_name` 与 `AliasGenerator` 路径没有额外差异。
+- **题面附注的 `to_camel` 例子不是本题缺陷（P4）。** 22 个变体的行为完全相同：`HTTPResponseCode` 报 `missing`，`httpResponseCode` 与字段名都能填充。按 `populate_by_name` 的公开说明，这是预期行为。
+- **修法：R-c 修订版 v2。** 在唯一 F2P 的测试体里追加 7 条断言，测试 ID 不变：
+  - 前 4 条来自前一位作者的 v1：题面原例、非开头缩写、两字母缩写、两个缩写；
+  - 本页补 3 条：缩写挨着下划线、缩写挨着数字、末尾缩写。
+
+  正式诊断评分：noop 0；gold 与 5 个合理实现 1；15 个错误候选中 14 个为 0。只有 `acr_max5`（只认 1–5 个字母的缩写）仍为 1，记为 T3。前一位作者的 v1 会放过其中 4 个：`skip_if_underscore`、`lower_or_start_la`、`skip_if_digit`、`no_trailing_upper`。
+- **gold 仍作正对照**，不需要 D4 替代正对照。
+- **实施依赖 D6 的“测试补丁替换”切片。** 派生镜像是云端等效重建。
+
+## 1．公开要求
+
+**题面**（标题“`to_snake` alias generator bug”）：
+- `to_snake` 把 CamelCase 串直接转小写，词与词之间没有下划线；
+- 期望 `to_snake("HTTPResponse")` 返回 `"http_response"`，“maintaining the standard snake_case convention where words are separated by underscores”，实际返回 `"httpresponse"`；
+- 附注：`to_camel` 作 alias 生成器、`populate_by_name=True` 的模型上，`Foo.model_validate({"HTTPResponseCode": "200"})` 报 `Field required`，报告者认为是“同一个问题”。
+
+**核心要求**（按题面的一般性理解，v1 §4）：连续大写字母组成的缩写后面接首字母大写的单词时，`to_snake` 要在缩写与单词之间断开。这一要求不限于题面原例的形态：
+- 不限于串首：例如 `getHTTPResponseCode` 中间的 `HTTP`；
+- 不限于 3 个及以上字母：例如 `userIDToken` 的 `ID`；
+- 不限于一个缩写：例如 `XMLToJSONConverter`；
+- 不限于题面的 `HTTP`。
+
+**需要保留的已有公开行为**：
+- `tests/test_utils.py::test_camel2snake` 的 17 个旧参数：小写字母与大写字母之间断开，小写字母与数字之间、数字与大写字母之间都断开（`camel2Snake → camel_2_snake`），前后的单、双下划线原样保留（`__CamelToSnake__ → __camel_to_snake__`）；
+- base 的 `([a-z0-9])([A-Z])` 规则对末尾缩写的拆分：`parseURL → parse_url`、`userID → user_id`；
+- `to_camel`、`to_pascal` 不受影响（P2P 中有 21 项）。
+
+**不属于核心要求**，题面没有提，而且有两种以上说得通的读法：
+- **大写字母与数字之间是否断开**：base 断开（`A1 → a_1`，`snakeV2 → snake_v_2`）；gold 不断开（`a1`，`snake_v2`）。base 的 docstring 只写“Convert a PascalCase or camelCase string to snake_case”，公开测试里没有这种输入。
+- **单个大写字母后接单词**：例如 `XAxis → x_axis` 或 `xaxis`；`OAuth` 按缩写规则会变成 `o_auth`。
+- **两个缩写直接相连**：例如 `XMLHTTPRequest`，没有小写字母提示边界。
+- **其它**：6 个及以上字母的缩写、Unicode 字母、kebab-case。上游到 2.8 才支持 kebab-case。
+
+**附注的 to_camel 例子不是本题要修的缺陷**，公开材料能消解：
+- base `ConfigDict.populate_by_name` 的说明是，字段可以用字段名或 alias 填充；
+- alias 由生成器从字段名生成，`to_camel('http_response_code')` 是 `httpResponseCode`（由 base 源码可推出，私有矩阵实测）；
+- `HTTPResponseCode` 既不是字段名也不是 alias，报错符合契约。
+
+## 2．实测
+
+### 环境与材料
+
+| 项 | 值 |
 | --- | --- |
-| `make_candidates.py` 与 13 个候选补丁 | 每个候选只替换 base `pydantic/alias_generators.py` 中 `to_snake` 的函数体 |
-| `behavior.py`、`semantic_spec*.json` | 私有行为矩阵脚本与规格 |
-| `original_test.patch` | 原 test_patch，sha256 `9d47a611…fc18` |
-| `revised_test_v1.patch`、`materials_revised_v1.json` | 修订草案 v1（`f98096e9…d1e3`），由 `_edit_revised_test.py` 生成 |
-| `run_formal.sh`、`run_all.sh`、`run_extra.sh`、`summarize_formal.py` | 正式评分驱动与汇总 |
+| 镜像 | `xingyaoww/sweb.eval.x86_64.pydantic_s_pydantic-8316:latest`，本机标签 `c3keep/pydantic8316:src`；RepoDigests `sha256:3cbc02f3…9e0c`，与 ingest 冻结摘要一致；image ID `sha256:add19c29…cac4` |
+| 派生镜像 | 负责人按作者须知 §4 重建的 pydantic_v1 等效派生镜像 `sha256:a764474e…3dfe`（标签 `rh2-envrepair/pydantic__pydantic-8316:c3cloud-install-v1-equiv`）：保留 base 的 13 层，只加 1 层离线 wheel（8 个，固定版本与 pydantic-9066 相同，清单与 sha256 见 [evidence/derived_image.json](evidence/derived_image.json)）。**这是等效重建，不是 09-19 原版的逐字节重建** |
+| 安装配方 | 09-19 `pydantic_v1` 修订 [`pydantic__pydantic-8316.json`](../../../env_recipe_repair_20260919/pydantic_v1/pydantic__pydantic-8316.json)，sha256 `a6fe422e…620c` |
+| 运行时 | Python 3.8.19、pydantic 2.6.0a1（`/testbed` 可编辑安装）、pydantic-core 2.14.5；Docker 29.3.1、overlay2、cgroup v1 |
+| 材料 | 题面 sha256 `d7f27663…7eb4`；gold `290e4011…35d7`（与 ingest 一致）；原 test_patch `9d47a611…fc18`；F2P 1 项、P2P 143 项，全部在 `tests/test_utils.py` |
+| 评分 | grader `swebench-4.1.0+swegym_parsers@242429c1`；profile `sha256:3ec1bfa8…`：UID 54322、`deny_all`、2 CPU／4 GiB；候选以 UID 54321 `git apply`，投影只含 `pydantic/alias_generators.py` |
+| 代码 | 分支 `claude/category3-20260929`。评分路径与 `a31cdcd` 逐字相同（`git diff` 为空），诊断包装同 [环境说明](../../environment.md) §2 |
 
-原测试只在 `test_camel2snake` 的参数表里加了一条：`('CAMELToSnake', 'camel_to_snake')`。
+### 候选
 
-候选分组（取自 `make_candidates.py` 的说明）：
+全部候选由 [`make_candidates.py`](../../../../../../../rh2/experiments/category3_cloud_20260929/pydantic8316/make_candidates.py) 在 base `to_snake` 函数体上做逐字替换生成。前 13 个是前一位作者的，重新生成后与已提交的补丁逐字节相同；后 7 个是本页补的。按公开要求判对错，不以 gold 为答案。
 
-| 类别 | 候选 |
-| --- | --- |
-| 合理的替代实现，用来查误拒 | `keep_digit`、`lookaround`、`scan`、`upstream_main`、`normalize` |
-| 错误候选，用来查漏判 | `lead_only`（只拆开头的缩写）、`first_only`（只替换第一处）、`acr3`（只认 3 个及以上大写字母）、`literal`（只认一张缩写表）、`lower_or_start`、`no_lower_upper`、`acr_max4`、`only_if_no_us` |
+**（a）合理实现（查误拒 T1）**
 
-修订草案 v1 在同一个 F2P 测试体里追加非示例实例，测试 ID 不变：`HTTPResponse`、`getHTTPResponseCode`、`userIDToken`、`XMLToJSONConverter`。
+| 候选 | sha256 前缀 | 做法 | 数字读法 |
+| --- | --- | --- | --- |
+| gold | `290e4011` | 四条正则：缩写＋单词、小写→大写、数字→大写、小写→数字；替换后的文件与上游 2.6.0 逐字相同 | 大写字母→数字不断开 |
+| `keep_digit` | `2c6f4518` | 在 base 两条规则前加一条“缩写＋单词”规则 | 保留 base（断开） |
+| `lookaround` | `2be37fd6` | 上游 2.8.0 的单条环视正则，去掉 kebab 分支 | 保留 base |
+| `scan` | `6b0be169` | 逐字符扫描，不用正则，用 `str.isupper` 等判断 | 保留 base |
+| `upstream_main` | `c7906241` | 上游 2.8.1–2.11.0 的函数体：gold 的四条正则，另把 `-` 换成 `_` | 同 gold |
+| `normalize` | `a2154e26` | 先把后接单词的缩写改成首字母大写（`HTTPResponse → HttpResponse`），再走 base 两条规则 | 保留 base |
 
-## 作者起草时的判断（未经核对）
+**（b）错误候选（查漏判）**，类别对应作者须知 §2.3：
 
-`materials_revised_v1.json` 的 `reason` 字段记录了作者当时的判断：
-- 原 F2P 只断言了一个位于开头、3 个及以上字母的缩写，输入形态与题面示例相同；
-- `lead_only`、`first_only`、`acr3` 这类部分修复会得 1（S1／T2，v1 §4 第 2、4 步）；
-- v1 加入非开头、两字母和重复出现的缩写实例；
-- 大写字母与数字之间是否断开，两种读法都有依据，所以 v1 不做断言。
+| 候选 | sha256 前缀 | 构造 | 类别 | 违反公开要求的输入（私有矩阵实测） |
+| --- | --- | --- | --- | --- |
+| `lead_only` | `f8c19970` | 只拆串首的缩写（允许前导下划线） | 位置子集 | `getHTTPResponseCode → get_httpresponse_code`，`myHTTPResponse → my_httpresponse` |
+| `first_only` | `24f8262b` | 缩写规则只替换第一处（`count=1`） | 依赖出现次序 | `XMLToJSONConverter → xml_to_jsonconverter` |
+| `acr3` | `85341b09` | 只认 3 个及以上字母的缩写 | 阈值 | `userIDToken → user_idtoken`，`IOError → ioerror` |
+| `lower_or_start` | `f3e7f4d9` | 缩写只在串首或小写字母之后才拆，匹配时吞掉前一个字符 | 位置子集 | `XMLToJSONConverter → xml_to_jsonconverter`，`_HTTPResponse → _httpresponse` |
+| `lower_or_start_la` | `59b6af87` | 同上，但用零宽断言，不吞字符 | 位置子集 | `__HTTPResponse__ → __httpresponse__`，`base64URLEncode → base_64_urlencode` |
+| `skip_if_underscore` | `9f1efdca` | 输入含下划线就沿用 base 算法 | 数据形态子集 | `_HTTPResponse`、`__HTTPResponse__`、`get_HTTPResponse` 都不拆 |
+| `skip_if_digit` | `961d39e3` | 输入含数字就沿用 base 算法 | 数据形态子集 | `base64URLEncode → base_64_urlencode`，`sha256HMACKey → sha_256_hmackey` |
+| `no_lower_upper` | `2516d519` | 只在“大写字母＋小写字母”之前断开，删掉 base 的“小写／数字→大写”规则 | 丢旧规则 | `getHTTPResponseCode → gethttp_response_code`，`userIDToken → userid_token` |
+| `no_trailing_upper` | `cade993b` | 只在“后面还跟着小写字母的大写字母串”之前断开，末尾的缩写与单个大写字母不再拆 | 丢旧规则 | `parseURL → parseurl`，`userID → userid`（base 为 `parse_url`、`user_id`） |
+| `acr_max5` | `62b5cdf3` | 只认 1–5 个字母的缩写 | 上限阈值 | `NASDAQTicker → nasdaqticker`（6 个字母） |
+| `acr_max4` | `e809eb14` | 只认 2–4 个字母的缩写 | 上限阈值 | `CAMELToSnake → camelto_snake` |
+| `literal` | `40f4362c` | 只认一张固定缩写表（HTTP、URL、ID 等） | 示例字面值，退化 | `CAMELToSnake`、`IOError` 不拆 |
+| `only_if_no_us` | `7df58192` | 旧结果里完全没有下划线时才用缩写规则 | 只在症状出现时修，退化 | `CAMELToSnake → camelto_snake` |
+| `no_digit_split` | `8024590e` | 修了缩写，但字母与数字之间都不再断开 | 丢旧的数字规则 | `camel2 → camel2`（P2P 期望 `camel_2`） |
+| `no_digit_upper` | `aea90402` | 修了缩写，但数字与大写字母之间不再断开 | 丢旧的数字规则 | `Camel2Snake → camel_2snake` |
 
-这些判断依据的运行结果已丢失。**在重跑之前，它们只是待验证的假设**，不能作为结论引用。
+“吞掉错误”一类在本题不适用：`to_snake` 是纯字符串函数，没有异常可吞。最接近的构造是“只在症状出现时修”（`only_if_no_us`）和“对旧测试覆盖的输入形态保留旧行为”（`skip_if_underscore`、`skip_if_digit`）。
 
-## 下一步
+### （1）私有行为矩阵
 
-1. 按[作者须知](../../batch2_author_brief.md) §4 用 `rebuild_wheel_layer.py --kind build` 重建 pydantic_v1 等效派生镜像。`run_formal.sh` 从 `runs/…/pydantic8316/derived_image.json` 读派生 ID。
-2. 重做 `prepare` 与 `export-gold`。
-3. 用 `behavior.py` 跑私有矩阵，确认 base 与 gold 在题面示例、非开头缩写、两字母缩写和数字边界上的行为。
-4. 跑原材料与修订 v1 的正式评分：先 `run_all.sh`（noop、gold 与第一组 8 个候选），再 `run_extra.sh`（第二组中的 `normalize`、`lower_or_start`、`no_lower_upper`）。`acr_max4`、`only_if_no_us` 只在私有矩阵规格 `semantic_spec_group2.json` 中，需要时另跑正式评分。
-5. 用 `archive_evidence.py` 归档，写出完整结论页，再请独立复核。
+条件：root 身份、断网、一次性容器，原镜像（不是派生镜像）。用 [`semantic_control.py`](../../../../../../../rh2/experiments/task2_swegym_dev_20260925/semantic_control.py) 跑 [`semantic_spec_full.json`](../../../../../../../rh2/experiments/category3_cloud_20260929/pydantic8316/semantic_spec_full.json)，22 个变体（base、gold、20 个候选）。每个变体执行：
+- [`behavior.py`](../../../../../../../rh2/experiments/category3_cloud_20260929/pydantic8316/behavior.py)：`to_snake` 在 79 个输入上的输出、alias 生成器下的模型行为、`to_camel` 附注；
+- 相关公开测试 `tests/test_utils.py tests/test_aliases.py tests/test_config.py`（未应用 test_patch）；
+- 私有模拟评分：分别应用原 test_patch、修订 v1、修订 v2，跑 `tests/test_utils.py`，按参考名单（F2P 1 项、P2P 143 项）逐项计分。
 
-## 未做
+**（a）`to_snake` 的输出**。“gold 读法”指 gold 与 `upstream_main`；“base 读法”指 `keep_digit`、`lookaround`、`scan`、`normalize`，它们保留 base 的数字规则。
 
-- 公开要求整理、私有矩阵、正式评分、判定、修法验收：结果都未归档，等于未做。
-- 独立复核、真实 actor 开发条件、模型求解：未做。
+| 输入 | base | gold 读法 | base 读法 | 说明 |
+| --- | --- | --- | --- | --- |
+| `HTTPResponse`（题面原例） | `httpresponse` | `http_response` | `http_response` | 题面要求 |
+| `CAMELToSnake`（原 F2P） | `camelto_snake` | `camel_to_snake` | `camel_to_snake` | |
+| `getHTTPResponseCode`、`userIDToken`、`XMLToJSONConverter`、`IOError` | 缩写未拆 | 拆开 | 拆开 | 非开头、两字母、两个缩写 |
+| `__HTTPResponse__`、`get_HTTPResponse`、`base64URLEncode` | 缩写未拆 | `__http_response__`、`get_http_response`、`base_64_url_encode` | 同左 | 缩写挨着下划线或数字 |
+| `parseURL`、`userID`、`getX` | `parse_url`、`user_id`、`get_x` | 同 base | 同 base | base 已有行为 |
+| `A1`、`API2`、`HTTP2`、`snakeV2` | `a_1`、`api_2`、`http_2`、`snake_v_2` | `a1`、`api2`、`http2`、`snake_v2` | 同 base | **大写字母→数字** |
+| `S3Bucket`、`EC2Instance`、`ipV4Address`、`HTTP2Response` | `s_3_bucket`、`ec_2_instance`、`ip_v_4_address`、`http_2_response` | `s3_bucket`、`ec2_instance`、`ip_v4_address`、`http2_response` | 同 base | **大写字母→数字** |
+| `camel2Snake`、`Camel2`、`sha256Hash` | `camel_2_snake`、`camel_2`、`sha_256_hash` | 同 base | 同 base | 小写→数字、数字→大写：两种读法一致，P2P 保护 |
+| `XAxis`、`ATest`、`OAuth2Token` | `xaxis`、`atest`、`oauth_2_token` | `x_axis`、`a_test`、`o_auth_2_token` | `normalize` 同 base，其余同 gold 读法 | 单字母缩写，有歧义 |
+| `getÄnderung` | `getänderung` | 同 base | `scan` 为 `get_änderung`，其余同 base | 非 ASCII 字母，题面未要求 |
+| `kebab-case` | `kebab-case` | gold 不变；`upstream_main` 为 `kebab_case` | 不变 | 题面未要求 |
+
+在 79 个输入上逐一比对，5 个合理实现与 gold 的差别只在四类输入：大写字母→数字、单字母缩写（`normalize`）、非 ASCII 字母（`scan`）、kebab-case（`upstream_main`）。四类都是题面没有规定的地方。15 个错误候选的违例见上面候选表的最后一列：每个都在某个“缩写＋单词”实例或 base 已有行为上与 gold、base 两种读法都不同。
+
+**（b）alias 生成器下的实际影响**。模型 `ConfigDict(alias_generator=to_snake)`，字段名是 camelCase。`to_snake` 的输出直接成为字段的 `alias`、`validation_alias` 与 `serialization_alias`：base `_generate_schema.py` 的 `_apply_alias_generator_to_field_info` 把字段名传给生成器。
+
+| 字段 | base alias | gold 读法 | base 读法 | 按 base 旧 key 验证 | 性质 |
+| --- | --- | --- | --- | --- | --- |
+| `HTTPResponse` | `httpresponse` | `http_response` | `http_response` | 两种读法都报 `missing` | 题面要求的变化 |
+| `userIDToken`、`myHTTPResponse`、`XMLToJSONConverter` | `user_idtoken`、`my_httpresponse`、`xmlto_jsonconverter` | `user_id_token`、`my_http_response`、`xml_to_json_converter` | 同 gold 读法 | 两种读法都报 `missing` | 题面要求的变化 |
+| `fieldV2` | `field_v_2` | `field_v2` | `field_v_2` | gold 读法报 `missing`，base 读法通过 | **题面未要求** |
+| `S3Bucket`、`A1`、`API2`、`EC2Instance`、`ipV4Address`、`HTTP2Response` | `s_3_bucket` 等 | `s3_bucket` 等 | 同 base | gold 读法报 `missing`，base 读法通过 | **题面未要求** |
+| `camelToSnake`、`Camel2Snake`、`parseURL`、`userID` | 不变 | 不变 | 不变 | 都通过 | 无变化 |
+
+其余核对项，所有变体都与上表一致：
+- 按新 alias 验证都通过；
+- `model_dump(by_alias=True)` 与 JSON schema 的属性名都用新 alias；
+- 不开 `populate_by_name` 时字段名不被接受，开了则接受（与 base 相同）；
+- `AliasGenerator(validation_alias=to_snake, serialization_alias=to_snake)` 与直接传函数结果相同。
+
+组合模型 `Resp`（字段 `HTTPResponse`、`userIDToken`、`fieldV2`、`camelToSnake`）收到按 base alias 组织的旧数据时：
+- base：通过；
+- base 读法：2 个 `missing`（两个缩写字段）；
+- gold 读法：3 个 `missing`，多出的一个是 `fieldV2`。
+
+`model_dump_json(by_alias=True)` 对应输出：
+- gold：`{"http_response":0,"user_id_token":1,"field_v2":2,"camel_to_snake":3}`；
+- base 读法：`field_v_2`。
+
+**（c）题面附注**：22 个变体的 `to_camel`、`to_pascal` 输出与附注模型的行为完全相同：
+- 字段 `http_response_code` 的 alias 是 `httpResponseCode`；
+- 用 `httpResponseCode` 或字段名 `http_response_code` 都能验证；
+- 用 `HTTPResponseCode` 报 `missing`。
+
+即 gold 与所有候选都没有改变附注里的现象，隐藏测试也不涉及。
+
+**（d）相关公开测试**（未应用 test_patch）：20 个变体都是 274 passed、17 skipped，`no_digit_split`、`no_digit_upper` 分别有 8、2 项失败，都是 `test_camel2snake` 的数字参数。公开测试对缩写问题**没有任何区分力**，base 与 10 个在原测试上得 1 的错误候选结果相同。
+
+### （2）原材料正式评分
+
+`replay_grade.py run` 经 `replay_with_install_recipe.py --recipe`，共 22 次。所有行：派生镜像 `a764474e…`，grader `swebench-4.1.0+swegym_parsers@242429c1`，安装 rc 0，参考缺席 0，清理成功，投影只含 `pydantic/alias_generators.py`。每次约 25 秒。
+
+| 候选 | sha256 前缀 | reward | F2P | P2P | 日志 passed／failed／skipped | 失败原因（评分日志逐字） |
+| --- | --- | --- | --- | --- | --- | --- |
+| `noop` | — | 0 | 0/1 | 143/143 | 158／1／14 | `assert 'camelto_snake' == 'camel_to_snake'` |
+| `gold` | `290e4011` | 1 | 1/1 | 143/143 | 159／0／14 |  |
+| `keep_digit` | `2c6f4518` | 1 | 1/1 | 143/143 | 159／0／14 |  |
+| `lookaround` | `2be37fd6` | 1 | 1/1 | 143/143 | 159／0／14 |  |
+| `scan` | `6b0be169` | 1 | 1/1 | 143/143 | 159／0／14 |  |
+| `upstream_main` | `c7906241` | 1 | 1/1 | 143/143 | 159／0／14 |  |
+| `normalize` | `a2154e26` | 1 | 1/1 | 143/143 | 159／0／14 |  |
+| `lead_only` | `f8c19970` | **1** | 1/1 | 143/143 | 159／0／14 |  |
+| `first_only` | `24f8262b` | **1** | 1/1 | 143/143 | 159／0／14 |  |
+| `acr3` | `85341b09` | **1** | 1/1 | 143/143 | 159／0／14 |  |
+| `lower_or_start` | `f3e7f4d9` | **1** | 1/1 | 143/143 | 159／0／14 |  |
+| `lower_or_start_la` | `59b6af87` | **1** | 1/1 | 143/143 | 159／0／14 |  |
+| `skip_if_underscore` | `9f1efdca` | **1** | 1/1 | 143/143 | 159／0／14 |  |
+| `skip_if_digit` | `961d39e3` | **1** | 1/1 | 143/143 | 159／0／14 |  |
+| `no_lower_upper` | `2516d519` | **1** | 1/1 | 143/143 | 159／0／14 |  |
+| `no_trailing_upper` | `cade993b` | **1** | 1/1 | 143/143 | 159／0／14 |  |
+| `acr_max5` | `62b5cdf3` | **1** | 1/1 | 143/143 | 159／0／14 |  |
+| `literal` | `40f4362c` | 0 | 0/1 | 143/143 | 158／1／14 | `assert 'camelto_snake' == 'camel_to_snake'` |
+| `acr_max4` | `e809eb14` | 0 | 0/1 | 143/143 | 158／1／14 | `assert 'camelto_snake' == 'camel_to_snake'` |
+| `only_if_no_us` | `7df58192` | 0 | 0/1 | 143/143 | 158／1／14 | `assert 'camelto_snake' == 'camel_to_snake'` |
+| `no_digit_split` | `8024590e` | 0 | 1/1 | 135/143 | 151／8／14 | `assert 'camel2_snake' == 'camel_2_snake'` |
+| `no_digit_upper` | `aea90402` | 0 | 1/1 | 141/143 | 157／2／14 | `assert 'camel_2snake' == 'camel_2_snake'` |
+
+noop 与 gold 的日志计数与旧题卡记录的 09-19 历史一致：noop 为 158 passed、1 failed、14 skipped，gold 为 159 passed、14 skipped。
+
+## 3．判定（v1 §4）
+
+**原版：S1。** 命中第 2 步与第 4 步；第 1、3 步不命中，也没有误拒。
+
+| 步 | 结果 | 依据 |
+| --- | --- | --- |
+| 1 核心要求有无直接断言 | 有 | 唯一 F2P `CAMELToSnake → camel_to_snake` 直接断言“缩写＋单词”要断开。题面原例 `HTTPResponse` 本身没有断言，但形态相同 |
+| 2 是否只用了题面示例的形态 | **是 → S1（T2c）** | F2P 换了字面值（`CAMEL` 而不是 `HTTP`），所以只认固定缩写表的 `literal` 得 0；但它与题面原例是同一输入形态：缩写在串首，只有一个，3 个以上字母，没有下划线或数字。只处理这一形态的部分修复都能得 1 |
+| 3 退化探测 | 不命中 | 在 gold 的修改位置构造了两个退化候选，正式评分都是 0：与输入无关的固定缩写表 `literal`；只在症状出现时修的 `only_if_no_us` |
+| 4 已有得 1 的候选是否在同一核心要求的其它实例上违例 | **是 → S1** | 10 个错误候选原材料正式得 1，详见 §2（2）。其中非开头缩写（`lead_only`）、两字母缩写（`acr3`）、一串里的第二个缩写（`first_only`）、末尾缩写（`no_trailing_upper`，破坏 base 已有的 `userID → user_id`）都是常见的 camelCase 标识符形态，不是罕见路径 |
+| T1 | 不命中 | 5 个合理实现原材料都得 1，其中 4 个保留 base 的数字规则，1 个是上游现行写法 |
+
+**登记，不判 S1：**
+- **G1 → T3：gold 改变了“大写字母→数字”的旧行为**，例如 `A1`、`snakeV2`、`S3Bucket`。经 alias 生成器，这会改变这类字段的 alias，按旧 key 发来的数据报 `missing`，按别名导出的 key 与 JSON schema 也随之改变，见 §2（1）（b）。不判 S1 的理由：
+  - 题面没有提数字；base 的 docstring 与公开测试都没有这种输入，不属于 v1 §4 第 4 步所说“有文档、常用的公开行为”；
+  - 上游的处理也来回改过（只作佐证）：2.6.0 起采用 gold 读法，changelog 只写“Fix `to_snake` conversion”，没有当作兼容性变化；2.8.0（#9747 提速）改回断开；2.8.1（#9812，changelog 原文“Fix breaking change in `to_snake` from v2.7 -> v2.8”）又改回 gold 读法，并新增测试 `('snakeV2', 'snake_v2')`，此后到 2.11.0 不变。即上游后来把 gold 读法当作已有行为来保护，而不是 base 的断开。PR 页面读不到，当时是否讨论过 base 读法，未知；
+  - 因此两种读法都有依据：原测试与修订版都不断言，gold 读法与 base 读法都得 1。“小写字母→数字”“数字→大写字母”两处两种读法一致，由 17 个旧参数保护：`no_digit_split`、`no_digit_upper` 被 P2P 判 0。
+- **P4：附注的 to_camel 例子是报告者对 `populate_by_name` 的误解**，公开的 `ConfigDict` 说明能消解，见 §1。gold 与所有候选都不改变它，隐藏测试也不涉及。不需要 R-f。探针分析时，若模型据附注去改 `to_camel` 或 alias 匹配，应看作对题意的误读，不算题目缺陷。
+- **T3：修订版 v2 仍不覆盖的边缘输入**：
+  - 6 个及以上字母的缩写：`acr_max5` 在 v2 下仍得 1，只在 `NASDAQTicker` 这类输入上出错；
+  - 单字母缩写（`XAxis`、`OAuth`）、两个缩写相连（`XMLHTTPRequest`）：有歧义；
+  - Unicode 字母与 kebab-case：题面未要求。
+
+P5 不适用：任务目标只有一种读法；有两种读法的只是题面没有提到的数字细节，修订版对它不作要求。
+
+## 4．修法：R-c 修订版 v2 与诊断评分
+
+**草案**：[`revised_test_v2.patch`](../../../../../../../rh2/experiments/category3_cloud_20260929/pydantic8316/revised_test_v2.patch)，sha256 `f0b7b090…e917`，由 `_edit_revised_test_v2.py` 从 base 测试文件生成。材料 JSON 为 [`materials_revised_v2.json`](../../../../../../../rh2/experiments/category3_cloud_20260929/pydantic8316/materials_revised_v2.json)，grader 后缀 `+c3-pyd8316-acronym-position-v2`。父版本是 v1（`f98096e9…d1e3`），原 test_patch 为 `9d47a611…fc18`。
+
+**改法**：保留原 test_patch 新增的参数 `('CAMELToSnake', 'camel_to_snake')`，只在 `test_camel2snake` 的测试体里加一段 `if value == 'CAMELToSnake':`。这段只在 F2P 参数下执行，17 个 P2P 参数的语义不变，测试 ID 与 F2P／P2P 名单都不变。段内 7 条断言：
+
+| # | 断言 | 针对的缺口 | 公开依据 | 来源 |
+| --- | --- | --- | --- | --- |
+| 1 | `to_snake('HTTPResponse') == 'http_response'` | 题面原例本身没有断言 | 题面的 Expected Result | v1 |
+| 2 | `to_snake('getHTTPResponseCode') == 'get_http_response_code'` | 非开头的缩写 | 题面的一般表述：词与词之间要有下划线 | v1 |
+| 3 | `to_snake('userIDToken') == 'user_id_token'` | 两字母缩写 | 同上 | v1 |
+| 4 | `to_snake('XMLToJSONConverter') == 'xml_to_json_converter'` | 一串里有两个缩写 | 同上 | v1 |
+| 5 | `to_snake('__HTTPResponse__') == '__http_response__'` | 缩写挨着下划线 | 同上；另有 P2P `__CamelToSnake__ → __camel_to_snake__`：下划线原样保留 | v2 |
+| 6 | `to_snake('base64URLEncode') == 'base_64_url_encode'` | 缩写所在的串含数字 | 同上；另有 P2P `camel2Snake → camel_2_snake`：小写字母→数字、数字→大写字母都断开。两种数字读法在此一致，base 也只差缩写这一处（`base_64_urlencode`） | v2 |
+| 7 | `to_snake('parseURL') == 'parse_url'` | 末尾缩写，base 已有行为 | base 的 `([a-z0-9])([A-Z])` 规则；gold 保留 | v2 |
+
+**有意不断言**：
+- 大写字母与数字之间是否断开（§3 G1 → T3）；
+- 单字母缩写、两个缩写相连、6 个及以上字母的缩写、Unicode、kebab-case。
+
+**v1 到 v2 的过程（留档）**：
+- v1 是前一位作者的草案，只有 1–4 条；
+- v1 的正式诊断评分见下表：`lead_only` 等 5 个候选被纠正；但本页补的 `skip_if_underscore`、`lower_or_start_la`、`skip_if_digit`、`no_trailing_upper` 在 v1 下仍得 1。按它们的违例补了 5–7 条，形成 v2；`acr_max5` 在 v1、v2 下都得 1，见 §3 T3；
+- v2 起草时先加了第 5、7 两条；运行前自查构造 `skip_if_digit`，宿主机预检发现它能通过，又补了第 6 条。此后 v2 没有改动，私有矩阵与正式评分用的都是同一份补丁 `f0b7b090…`。
+
+**修订版正式诊断评分**：`--recipe` 加 `--materials`。所有行：派生镜像 `a764474e…`，安装 rc 0，参考缺席 0，清理成功。v1、v2 的 grader 后缀分别为 `+c3-pyd8316-acronym-position-v1`、`-v2`。
+
+| 候选 | 原材料 | v1 | v2 | v2 的首条失败断言（正式评分日志） |
+| --- | --- | --- | --- | --- |
+| `noop` | 0 | 0 | 0 | `'camelto_snake' == 'camel_to_snake'` |
+| `gold` | 1 | 1 | 1 |  |
+| `keep_digit` | 1 | 1 | 1 |  |
+| `lookaround` | 1 | 1 | 1 |  |
+| `scan` | 1 | 1 | 1 |  |
+| `upstream_main` | 1 | 1 | 1 |  |
+| `normalize` | 1 | 1 | 1 |  |
+| `lead_only` | 1 | 0 | 0 | `'get_httpresponse_code' == 'get_http_response_code'` |
+| `first_only` | 1 | 0 | 0 | `'xml_to_jsonconverter' == 'xml_to_json_converter'` |
+| `acr3` | 1 | 0 | 0 | `'user_idtoken' == 'user_id_token'` |
+| `lower_or_start` | 1 | 0 | 0 | `'xml_to_jsonconverter' == 'xml_to_json_converter'` |
+| `lower_or_start_la` | 1 | 1 | 0 | `'__httpresponse__' == '__http_response__'` |
+| `skip_if_underscore` | 1 | 1 | 0 | `'__httpresponse__' == '__http_response__'` |
+| `skip_if_digit` | 1 | 1 | 0 | `'base_64_urlencode' == 'base_64_url_encode'` |
+| `no_lower_upper` | 1 | 0 | 0 | `'gethttp_response_code' == 'get_http_response_code'` |
+| `no_trailing_upper` | 1 | 1 | 0 | `'parseurl' == 'parse_url'` |
+| `acr_max5` | 1 | 1 | 1 |  |
+| `literal` | 0 | 0 | 0 | `'camelto_snake' == 'camel_to_snake'` |
+| `acr_max4` | 0 | 0 | 0 | `'camelto_snake' == 'camel_to_snake'` |
+| `only_if_no_us` | 0 | 0 | 0 | `'camelto_snake' == 'camel_to_snake'` |
+| `no_digit_split` | 0（P2P 135/143） | 0（P2P 135/143） | 0（P2P 135/143） | `'camel2_snake' == 'camel_2_snake'` |
+| `no_digit_upper` | 0（P2P 141/143） | 0（P2P 141/143） | 0（P2P 141/143） | `'camel_2snake' == 'camel_2_snake'` |
+
+- **私有模拟与正式评分**：root 身份的私有模拟评分与正式评分在 66 组（22 个候选 × 原材料、v1、v2）上的 reward 逐一相同。
+- **验收要点（v1 §5）**：
+  - 正对照 gold 为 1，noop 为 0；
+  - 原版的漏判已纠正：10 个原版得 1 的错误候选中 9 个在 v2 为 0；
+  - 已知相关的错误候选都为 0；唯一例外是 `acr_max5`，它只在 6 个及以上字母的缩写上出错，记为 T3；
+  - 5 个合理实现仍为 1，没有引入新的误拒。
+- **修订后仍受保护的公开要求**：
+  - 缩写与后面单词之间的拆分，覆盖串首、串中、两字母、两个缩写、挨着下划线、挨着数字、末尾缩写；
+  - 17 个旧参数：大小写、数字、下划线的旧行为；
+  - 21 项 `to_camel`／`to_pascal` 的 P2P；
+  - `tests/test_utils.py` 的其余 P2P。
+- **R-f**：不需要。修订测试的每项要求都能从题面的一般表述、base 行为与公开旧测试推出；附注的误解由公开文档消解（§3 P4）。
+
+## 5．交接给第2类
+
+1. **落地**：经 D6 的“测试补丁替换”形成正式版本，使用 R-c 草案 v2（`f0b7b090…e917`）。测试 ID、F2P／P2P 名单与测试命令都不变，不需要改参考分组。
+2. **正对照**：gold（`290e4011…`）在修订版上为 1，不需要 D4 替代正对照。`keep_digit`（base 数字读法）与 `upstream_main`（上游 2.8.1 起的函数体）可作第二、第三正对照，用来确认两种数字读法都能通过。
+3. **复验**：落地后复验 §4 的 22 个候选：noop 0；gold 与 5 个合理实现 1；除 `acr_max5` 外的 14 个错误候选 0。
+4. **登记**：§3 的 G1 → T3（gold 的数字边界变化，不断言）、P4（附注）与 T3 各项，写进题卡的已知缺口。
+5. **镜像**：正式入库时固定一份 wheel 清单并登记来源，因为本页派生镜像是等效重建。
+6. **复核**：独立复核（尚未做）与 Codex 复核。
+
+## 6．当前用途（v1 §2）
+
+| 版本 | 问题定位 | 能力比较 | 训练候选 | 留出评测 |
+| --- | --- | --- | --- | --- |
+| 原版 | 是 | conditional：S1 未修，10 个错误候选能得 1。若要用，须预先写明事后审计，即用 v2 的 7 条断言复核得 1 的补丁，原始 reward 与语义结果分列（v1 §11） | 否 | 否 |
+| 修订版 v2（草案） | 是 | conditional：D6 落地并复验，独立复核通过 | conditional：同左，另加 Codex 复核；T3 各项登记 | 否（修订题只能作标明版本的自建题） |
+
+## 7．未做与剩余事项
+
+- **独立复核**：尚未进行。
+- **真实 actor 开发条件**：未验。私有矩阵以 root 身份跑；正式评分以 grader UID 54322 跑，候选以 UID 54321 应用。`to_snake` 是纯字符串函数，两种身份下 66 组结果逐一一致，未见身份影响。
+- **模型求解**：没有模型求解证据。
+- **全量公开测试**：只跑了 `tests/test_utils.py`、`tests/test_aliases.py`、`tests/test_config.py` 三个相关模块。
+- **§3 的 T3 项**：只登记，没有设计断言。
+- **修订版进训练前的条件**：还需要 v1 §2 的其它正面证据，本页未做。
+- **派生镜像**：是等效重建，不是 09-19 原版。
+- **上游资料来源**：只来自 raw.githubusercontent.com 上各 tag 的源码、测试与 HISTORY.md；PR 页面（#8316、#9747、#9812）在本容器读不到，未读。
+
+## 8．版本与证据
+
+- **代码与运行环境**：见[环境说明](../../environment.md)。
+- **既有材料**：
+  - [题卡](../../../swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8316/card.md)
+  - [复核](../../../swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8316/review.md)
+- **实验文件**：`rh2/experiments/category3_cloud_20260929/pydantic8316/`
+  - 候选：`make_candidates.py` 与 20 个候选补丁；
+  - 私有矩阵：`behavior.py`、`semantic_spec_full.json`（旧的 `semantic_spec*.json` 是前一位作者的，未再使用）、`summarize_semantic.py`；
+  - 修订测试：`original_test.patch`；v1 为 `_edit_revised_test.py`、`revised_test_v1.patch`、`materials_revised_v1.json`；v2 为 `_edit_revised_test_v2.py`、`revised_test_v2.patch`、`materials_revised_v2.json`；
+  - 正式评分：`run_formal.sh`、`run_batch.sh`、`run_chain.sh`、`summarize_formal.py`；`run_all.sh`、`run_extra.sh` 是前一位作者的驱动，本页未用；
+  - 上游佐证：`upstream/upstream_to_snake_history.txt`，包含 2.5.3–2.11.0 各 tag 的 `to_snake`、2.6.0／2.8.0／2.8.1／2.8.2／2.11.0 的相关测试，以及 changelog 相关行，并附各文件 sha256。
+- **原始证据**：[evidence/](evidence/)
+  - `formal/`：原材料评分，22 次；
+  - `formal_revised_v1/`、`formal_revised_v2/`：修订版诊断评分，各 22 次；
+  - 以上三个目录各含账本、评分日志、审计与 `summary.json`，`summary.json` 为逐项摘要；
+  - `semantic_full/`：私有矩阵，每个变体一个目录，`semantic_summary.json` 为汇总；`semantic_full_summary.md` 为汇总表；
+  - `derived_image.json`、`derived/`：派生镜像的 wheel 清单与重建记录；
+  - `evidence_manifest.json`：全部文件的 SHA256。
+- **归档前扫描**：已扫描凭据字样与本机私有路径，未命中。

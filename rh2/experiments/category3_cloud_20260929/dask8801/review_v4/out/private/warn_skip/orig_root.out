@@ -1,0 +1,426 @@
+============================= test session starts ==============================
+platform linux -- Python 3.9.19, pytest-8.3.2, pluggy-1.5.0 -- /opt/miniconda3/envs/testbed/bin/python
+rootdir: /testbed
+configfile: setup.cfg
+plugins: rerunfailures-14.0, xdist-3.6.1, cov-5.0.0
+collecting ... collected 45 items
+
+dask/tests/test_config.py::test_canonical_name PASSED                    [  2%]
+dask/tests/test_config.py::test_update PASSED                            [  4%]
+dask/tests/test_config.py::test_merge PASSED                             [  6%]
+dask/tests/test_config.py::test_collect_yaml_paths PASSED                [  8%]
+dask/tests/test_config.py::test_collect_yaml_dir PASSED                  [ 11%]
+dask/tests/test_config.py::test_collect_yaml_permission_errors[directory] FAILED [ 13%]
+dask/tests/test_config.py::test_collect_yaml_permission_errors[file] FAILED [ 15%]
+dask/tests/test_config.py::test_collect_yaml_malformed_file FAILED       [ 17%]
+dask/tests/test_config.py::test_collect_yaml_no_top_level_dict FAILED    [ 20%]
+dask/tests/test_config.py::test_env PASSED                               [ 22%]
+dask/tests/test_config.py::test_collect PASSED                           [ 24%]
+dask/tests/test_config.py::test_collect_env_none PASSED                  [ 26%]
+dask/tests/test_config.py::test_get PASSED                               [ 28%]
+dask/tests/test_config.py::test_ensure_file PASSED                       [ 31%]
+dask/tests/test_config.py::test_set PASSED                               [ 33%]
+dask/tests/test_config.py::test_set_kwargs PASSED                        [ 35%]
+dask/tests/test_config.py::test_set_nested PASSED                        [ 37%]
+dask/tests/test_config.py::test_set_hard_to_copyables PASSED             [ 40%]
+dask/tests/test_config.py::test_ensure_file_directory[True] PASSED       [ 42%]
+dask/tests/test_config.py::test_ensure_file_directory[False] PASSED      [ 44%]
+dask/tests/test_config.py::test_ensure_file_defaults_to_DASK_CONFIG_directory PASSED [ 46%]
+dask/tests/test_config.py::test_rename PASSED                            [ 48%]
+dask/tests/test_config.py::test_refresh PASSED                           [ 51%]
+dask/tests/test_config.py::test_expand_environment_variables[1-1_0] PASSED [ 53%]
+dask/tests/test_config.py::test_expand_environment_variables[1-1_1] PASSED [ 55%]
+dask/tests/test_config.py::test_expand_environment_variables[$FOO-foo] PASSED [ 57%]
+dask/tests/test_config.py::test_expand_environment_variables[inp3-out3] PASSED [ 60%]
+dask/tests/test_config.py::test_expand_environment_variables[inp4-out4] PASSED [ 62%]
+dask/tests/test_config.py::test_expand_environment_variables[inp5-out5] PASSED [ 64%]
+dask/tests/test_config.py::test_expand_environment_variables[inp6-out6] PASSED [ 66%]
+dask/tests/test_config.py::test_expand_environment_variables[inp7-out7] PASSED [ 68%]
+dask/tests/test_config.py::test_env_var_canonical_name PASSED            [ 71%]
+dask/tests/test_config.py::test_get_set_canonical_name PASSED            [ 73%]
+dask/tests/test_config.py::test_get_set_roundtrip[custom_key] PASSED     [ 75%]
+dask/tests/test_config.py::test_get_set_roundtrip[custom-key] PASSED     [ 77%]
+dask/tests/test_config.py::test_merge_None_to_dict PASSED                [ 80%]
+dask/tests/test_config.py::test_core_file PASSED                         [ 82%]
+dask/tests/test_config.py::test_schema PASSED                            [ 84%]
+dask/tests/test_config.py::test_schema_is_complete PASSED                [ 86%]
+dask/tests/test_config.py::test_deprecations PASSED                      [ 88%]
+dask/tests/test_config.py::test_get_override_with PASSED                 [ 91%]
+dask/tests/test_config.py::test_config_serialization PASSED              [ 93%]
+dask/tests/test_config.py::test_config_inheritance PASSED                [ 95%]
+dask/tests/test_config.py::test__get_paths PASSED                        [ 97%]
+dask/tests/test_config.py::test_default_search_paths PASSED              [100%]
+
+=================================== FAILURES ===================================
+________________ test_collect_yaml_permission_errors[directory] ________________
+
+tmpdir = local('/tmp/pytest-of-root/pytest-36/test_collect_yaml_permission_e0')
+kind = 'directory'
+
+    @pytest.mark.skipif(
+        sys.platform == "win32", reason="Can't make writeonly file on windows"
+    )
+    @pytest.mark.parametrize("kind", ["directory", "file"])
+    def test_collect_yaml_permission_errors(tmpdir, kind):
+        a = {"x": 1, "y": 2}
+        b = {"y": 3, "z": 4}
+    
+        dir_path = str(tmpdir)
+        a_path = os.path.join(dir_path, "a.yaml")
+        b_path = os.path.join(dir_path, "b.yaml")
+    
+        with open(a_path, mode="w") as f:
+            yaml.dump(a, f)
+        with open(b_path, mode="w") as f:
+            yaml.dump(b, f)
+    
+        if kind == "directory":
+            cant_read = dir_path
+            expected = {}
+        else:
+            cant_read = a_path
+            expected = b
+    
+        with no_read_permissions(cant_read):
+            config = merge(*collect_yaml(paths=[dir_path]))
+>           assert config == expected
+E           AssertionError: assert {'x': 1, 'y': 3, 'z': 4} == {}
+E             
+E             Left contains 3 more items:
+E             {'x': 1, 'y': 3, 'z': 4}
+E             
+E             Full diff:
+E             - {}
+E             + {...
+E             
+E             ...Full output truncated (4 lines hidden), use '-vv' to show
+
+dask/tests/test_config.py:136: AssertionError
+__________________ test_collect_yaml_permission_errors[file] ___________________
+
+tmpdir = local('/tmp/pytest-of-root/pytest-36/test_collect_yaml_permission_e1')
+kind = 'file'
+
+    @pytest.mark.skipif(
+        sys.platform == "win32", reason="Can't make writeonly file on windows"
+    )
+    @pytest.mark.parametrize("kind", ["directory", "file"])
+    def test_collect_yaml_permission_errors(tmpdir, kind):
+        a = {"x": 1, "y": 2}
+        b = {"y": 3, "z": 4}
+    
+        dir_path = str(tmpdir)
+        a_path = os.path.join(dir_path, "a.yaml")
+        b_path = os.path.join(dir_path, "b.yaml")
+    
+        with open(a_path, mode="w") as f:
+            yaml.dump(a, f)
+        with open(b_path, mode="w") as f:
+            yaml.dump(b, f)
+    
+        if kind == "directory":
+            cant_read = dir_path
+            expected = {}
+        else:
+            cant_read = a_path
+            expected = b
+    
+        with no_read_permissions(cant_read):
+            config = merge(*collect_yaml(paths=[dir_path]))
+>           assert config == expected
+E           AssertionError: assert {'x': 1, 'y': 3, 'z': 4} == {'y': 3, 'z': 4}
+E             
+E             Omitting 2 identical items, use -vv to show
+E             Left contains 1 more item:
+E             {'x': 1}
+E             
+E             Full diff:
+E               {...
+E             
+E             ...Full output truncated (4 lines hidden), use '-vv' to show
+
+dask/tests/test_config.py:136: AssertionError
+_______________________ test_collect_yaml_malformed_file _______________________
+
+path = '/tmp/pytest-of-root/pytest-36/test_collect_yaml_malformed_fi0/a.yaml'
+
+    def _load_config_file(path: str) -> dict | None:
+        """A helper for loading a config file from a path, and erroring
+        appropriately if the file is malformed."""
+        try:
+            with open(path) as f:
+>               config = yaml.safe_load(f.read())
+
+dask/config.py:155: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/yaml/__init__.py:125: in safe_load
+    return load(stream, SafeLoader)
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/yaml/__init__.py:81: in load
+    return loader.get_single_data()
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/yaml/constructor.py:49: in get_single_data
+    node = self.get_single_node()
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/yaml/composer.py:36: in get_single_node
+    document = self.compose_document()
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/yaml/composer.py:55: in compose_document
+    node = self.compose_node(None, None)
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/yaml/composer.py:84: in compose_node
+    node = self.compose_mapping_node(anchor)
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/yaml/composer.py:127: in compose_mapping_node
+    while not self.check_event(MappingEndEvent):
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/yaml/parser.py:98: in check_event
+    self.current_event = self.state()
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/yaml/parser.py:540: in parse_flow_mapping_first_key
+    return self.parse_flow_mapping_key(first=True)
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/yaml/parser.py:562: in parse_flow_mapping_key
+    return self.parse_flow_node()
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/yaml/parser.py:268: in parse_flow_node
+    return self.parse_node()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <yaml.loader.SafeLoader object at 0x7f8162e83c10>, block = False
+indentless_sequence = False
+
+    def parse_node(self, block=False, indentless_sequence=False):
+        if self.check_token(AliasToken):
+            token = self.get_token()
+            event = AliasEvent(token.value, token.start_mark, token.end_mark)
+            self.state = self.states.pop()
+        else:
+            anchor = None
+            tag = None
+            start_mark = end_mark = tag_mark = None
+            if self.check_token(AnchorToken):
+                token = self.get_token()
+                start_mark = token.start_mark
+                end_mark = token.end_mark
+                anchor = token.value
+                if self.check_token(TagToken):
+                    token = self.get_token()
+                    tag_mark = token.start_mark
+                    end_mark = token.end_mark
+                    tag = token.value
+            elif self.check_token(TagToken):
+                token = self.get_token()
+                start_mark = tag_mark = token.start_mark
+                end_mark = token.end_mark
+                tag = token.value
+                if self.check_token(AnchorToken):
+                    token = self.get_token()
+                    end_mark = token.end_mark
+                    anchor = token.value
+            if tag is not None:
+                handle, suffix = tag
+                if handle is not None:
+                    if handle not in self.tag_handles:
+                        raise ParserError("while parsing a node", start_mark,
+                                "found undefined tag handle %r" % handle,
+                                tag_mark)
+                    tag = self.tag_handles[handle]+suffix
+                else:
+                    tag = suffix
+            #if tag == '!':
+            #    raise ParserError("while parsing a node", start_mark,
+            #            "found non-specific tag '!'", tag_mark,
+            #            "Please check 'http://pyyaml.org/wiki/YAMLNonSpecificTag' and share your opinion.")
+            if start_mark is None:
+                start_mark = end_mark = self.peek_token().start_mark
+            event = None
+            implicit = (tag is None or tag == '!')
+            if indentless_sequence and self.check_token(BlockEntryToken):
+                end_mark = self.peek_token().end_mark
+                event = SequenceStartEvent(anchor, tag, implicit,
+                        start_mark, end_mark)
+                self.state = self.parse_indentless_sequence_entry
+            else:
+                if self.check_token(ScalarToken):
+                    token = self.get_token()
+                    end_mark = token.end_mark
+                    if (token.plain and tag is None) or tag == '!':
+                        implicit = (True, False)
+                    elif tag is None:
+                        implicit = (False, True)
+                    else:
+                        implicit = (False, False)
+                    event = ScalarEvent(anchor, tag, implicit, token.value,
+                            start_mark, end_mark, style=token.style)
+                    self.state = self.states.pop()
+                elif self.check_token(FlowSequenceStartToken):
+                    end_mark = self.peek_token().end_mark
+                    event = SequenceStartEvent(anchor, tag, implicit,
+                            start_mark, end_mark, flow_style=True)
+                    self.state = self.parse_flow_sequence_first_entry
+                elif self.check_token(FlowMappingStartToken):
+                    end_mark = self.peek_token().end_mark
+                    event = MappingStartEvent(anchor, tag, implicit,
+                            start_mark, end_mark, flow_style=True)
+                    self.state = self.parse_flow_mapping_first_key
+                elif block and self.check_token(BlockSequenceStartToken):
+                    end_mark = self.peek_token().start_mark
+                    event = SequenceStartEvent(anchor, tag, implicit,
+                            start_mark, end_mark, flow_style=False)
+                    self.state = self.parse_block_sequence_first_entry
+                elif block and self.check_token(BlockMappingStartToken):
+                    end_mark = self.peek_token().start_mark
+                    event = MappingStartEvent(anchor, tag, implicit,
+                            start_mark, end_mark, flow_style=False)
+                    self.state = self.parse_block_mapping_first_key
+                elif anchor is not None or tag is not None:
+                    # Empty scalars are allowed even if a tag or an anchor is
+                    # specified.
+                    event = ScalarEvent(anchor, tag, (implicit, False), '',
+                            start_mark, end_mark)
+                    self.state = self.states.pop()
+                else:
+                    if block:
+                        node = 'block'
+                    else:
+                        node = 'flow'
+                    token = self.peek_token()
+>                   raise ParserError("while parsing a %s node" % node, start_mark,
+                            "expected the node content, but found %r" % token.id,
+                            token.start_mark)
+E                   yaml.parser.ParserError: while parsing a flow node
+E                   expected the node content, but found '<stream end>'
+E                     in "<unicode string>", line 1, column 2:
+E                       {
+E                        ^
+
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/yaml/parser.py:369: ParserError
+
+During handling of the above exception, another exception occurred:
+
+tmpdir = local('/tmp/pytest-of-root/pytest-36/test_collect_yaml_malformed_fi0')
+
+    def test_collect_yaml_malformed_file(tmpdir):
+        dir_path = str(tmpdir)
+        fil_path = os.path.join(dir_path, "a.yaml")
+    
+        with open(fil_path, mode="wb") as f:
+            f.write(b"{")
+    
+        with pytest.raises(ValueError) as rec:
+>           collect_yaml(paths=[dir_path])
+
+dask/tests/test_config.py:147: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/config.py:201: in collect_yaml
+    config = _load_config_file(path)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = '/tmp/pytest-of-root/pytest-36/test_collect_yaml_malformed_fi0/a.yaml'
+
+    def _load_config_file(path: str) -> dict | None:
+        """A helper for loading a config file from a path, and erroring
+        appropriately if the file is malformed."""
+        try:
+            with open(path) as f:
+                config = yaml.safe_load(f.read())
+        except OSError:
+            # Ignore permission errors
+            return None
+        except Exception as exc:
+>           warnings.warn(f"Skipping malformed Dask config file {path!r}: {exc}")
+E           UserWarning: Skipping malformed Dask config file '/tmp/pytest-of-root/pytest-36/test_collect_yaml_malformed_fi0/a.yaml': while parsing a flow node
+E           expected the node content, but found '<stream end>'
+E             in "<unicode string>", line 1, column 2:
+E               {
+E                ^
+
+dask/config.py:160: UserWarning
+_____________________ test_collect_yaml_no_top_level_dict ______________________
+
+tmpdir = local('/tmp/pytest-of-root/pytest-36/test_collect_yaml_no_top_level0')
+
+    def test_collect_yaml_no_top_level_dict(tmpdir):
+        dir_path = str(tmpdir)
+        fil_path = os.path.join(dir_path, "a.yaml")
+    
+        with open(fil_path, mode="wb") as f:
+            f.write(b"[1234]")
+    
+        with pytest.raises(ValueError) as rec:
+>           collect_yaml(paths=[dir_path])
+
+dask/tests/test_config.py:161: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/config.py:201: in collect_yaml
+    config = _load_config_file(path)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = '/tmp/pytest-of-root/pytest-36/test_collect_yaml_no_top_level0/a.yaml'
+
+    def _load_config_file(path: str) -> dict | None:
+        """A helper for loading a config file from a path, and erroring
+        appropriately if the file is malformed."""
+        try:
+            with open(path) as f:
+                config = yaml.safe_load(f.read())
+        except OSError:
+            # Ignore permission errors
+            return None
+        except Exception as exc:
+            warnings.warn(f"Skipping malformed Dask config file {path!r}: {exc}")
+            return None
+        if config is not None and not isinstance(config, dict):
+>           warnings.warn(
+                f"Skipping Dask config file {path!r}: the top level must be a mapping, "
+                f"got a {type(config).__name__}"
+            )
+E           UserWarning: Skipping Dask config file '/tmp/pytest-of-root/pytest-36/test_collect_yaml_no_top_level0/a.yaml': the top level must be a mapping, got a list
+
+dask/config.py:163: UserWarning
+==================================== PASSES ====================================
+============================= slowest 10 durations =============================
+0.06s call     dask/tests/test_config.py::test_schema
+0.01s call     dask/tests/test_config.py::test_schema_is_complete
+
+(8 durations < 0.005s hidden.  Use -vv to show these durations.)
+=========================== short test summary info ============================
+PASSED dask/tests/test_config.py::test_canonical_name
+PASSED dask/tests/test_config.py::test_update
+PASSED dask/tests/test_config.py::test_merge
+PASSED dask/tests/test_config.py::test_collect_yaml_paths
+PASSED dask/tests/test_config.py::test_collect_yaml_dir
+PASSED dask/tests/test_config.py::test_env
+PASSED dask/tests/test_config.py::test_collect
+PASSED dask/tests/test_config.py::test_collect_env_none
+PASSED dask/tests/test_config.py::test_get
+PASSED dask/tests/test_config.py::test_ensure_file
+PASSED dask/tests/test_config.py::test_set
+PASSED dask/tests/test_config.py::test_set_kwargs
+PASSED dask/tests/test_config.py::test_set_nested
+PASSED dask/tests/test_config.py::test_set_hard_to_copyables
+PASSED dask/tests/test_config.py::test_ensure_file_directory[True]
+PASSED dask/tests/test_config.py::test_ensure_file_directory[False]
+PASSED dask/tests/test_config.py::test_ensure_file_defaults_to_DASK_CONFIG_directory
+PASSED dask/tests/test_config.py::test_rename
+PASSED dask/tests/test_config.py::test_refresh
+PASSED dask/tests/test_config.py::test_expand_environment_variables[1-1_0]
+PASSED dask/tests/test_config.py::test_expand_environment_variables[1-1_1]
+PASSED dask/tests/test_config.py::test_expand_environment_variables[$FOO-foo]
+PASSED dask/tests/test_config.py::test_expand_environment_variables[inp3-out3]
+PASSED dask/tests/test_config.py::test_expand_environment_variables[inp4-out4]
+PASSED dask/tests/test_config.py::test_expand_environment_variables[inp5-out5]
+PASSED dask/tests/test_config.py::test_expand_environment_variables[inp6-out6]
+PASSED dask/tests/test_config.py::test_expand_environment_variables[inp7-out7]
+PASSED dask/tests/test_config.py::test_env_var_canonical_name
+PASSED dask/tests/test_config.py::test_get_set_canonical_name
+PASSED dask/tests/test_config.py::test_get_set_roundtrip[custom_key]
+PASSED dask/tests/test_config.py::test_get_set_roundtrip[custom-key]
+PASSED dask/tests/test_config.py::test_merge_None_to_dict
+PASSED dask/tests/test_config.py::test_core_file
+PASSED dask/tests/test_config.py::test_schema
+PASSED dask/tests/test_config.py::test_schema_is_complete
+PASSED dask/tests/test_config.py::test_deprecations
+PASSED dask/tests/test_config.py::test_get_override_with
+PASSED dask/tests/test_config.py::test_config_serialization
+PASSED dask/tests/test_config.py::test_config_inheritance
+PASSED dask/tests/test_config.py::test__get_paths
+PASSED dask/tests/test_config.py::test_default_search_paths
+FAILED dask/tests/test_config.py::test_collect_yaml_permission_errors[directory]
+FAILED dask/tests/test_config.py::test_collect_yaml_permission_errors[file]
+FAILED dask/tests/test_config.py::test_collect_yaml_malformed_file - UserWarn...
+FAILED dask/tests/test_config.py::test_collect_yaml_no_top_level_dict - UserW...
+========================= 4 failed, 41 passed in 0.35s =========================
+
+#RC=1

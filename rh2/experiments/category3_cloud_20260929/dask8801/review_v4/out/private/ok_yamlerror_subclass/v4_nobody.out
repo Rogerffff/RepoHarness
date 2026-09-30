@@ -1,0 +1,110 @@
+============================= test session starts ==============================
+platform linux -- Python 3.9.19, pytest-8.3.2, pluggy-1.5.0 -- /opt/miniconda3/envs/testbed/bin/python
+rootdir: /testbed
+configfile: setup.cfg
+plugins: rerunfailures-14.0, xdist-3.6.1, cov-5.0.0
+collecting ... collected 45 items
+
+dask/tests/test_config.py::test_canonical_name PASSED                    [  2%]
+dask/tests/test_config.py::test_update PASSED                            [  4%]
+dask/tests/test_config.py::test_merge PASSED                             [  6%]
+dask/tests/test_config.py::test_collect_yaml_paths PASSED                [  8%]
+dask/tests/test_config.py::test_collect_yaml_dir PASSED                  [ 11%]
+dask/tests/test_config.py::test_collect_yaml_permission_errors[directory] PASSED [ 13%]
+dask/tests/test_config.py::test_collect_yaml_permission_errors[file] PASSED [ 15%]
+dask/tests/test_config.py::test_collect_yaml_malformed_file PASSED       [ 17%]
+dask/tests/test_config.py::test_collect_yaml_no_top_level_dict PASSED    [ 20%]
+dask/tests/test_config.py::test_env PASSED                               [ 22%]
+dask/tests/test_config.py::test_collect PASSED                           [ 24%]
+dask/tests/test_config.py::test_collect_env_none PASSED                  [ 26%]
+dask/tests/test_config.py::test_get PASSED                               [ 28%]
+dask/tests/test_config.py::test_ensure_file PASSED                       [ 31%]
+dask/tests/test_config.py::test_set PASSED                               [ 33%]
+dask/tests/test_config.py::test_set_kwargs PASSED                        [ 35%]
+dask/tests/test_config.py::test_set_nested PASSED                        [ 37%]
+dask/tests/test_config.py::test_set_hard_to_copyables PASSED             [ 40%]
+dask/tests/test_config.py::test_ensure_file_directory[True] PASSED       [ 42%]
+dask/tests/test_config.py::test_ensure_file_directory[False] PASSED      [ 44%]
+dask/tests/test_config.py::test_ensure_file_defaults_to_DASK_CONFIG_directory PASSED [ 46%]
+dask/tests/test_config.py::test_rename PASSED                            [ 48%]
+dask/tests/test_config.py::test_refresh PASSED                           [ 51%]
+dask/tests/test_config.py::test_expand_environment_variables[1-1_0] PASSED [ 53%]
+dask/tests/test_config.py::test_expand_environment_variables[1-1_1] PASSED [ 55%]
+dask/tests/test_config.py::test_expand_environment_variables[$FOO-foo] PASSED [ 57%]
+dask/tests/test_config.py::test_expand_environment_variables[inp3-out3] PASSED [ 60%]
+dask/tests/test_config.py::test_expand_environment_variables[inp4-out4] PASSED [ 62%]
+dask/tests/test_config.py::test_expand_environment_variables[inp5-out5] PASSED [ 64%]
+dask/tests/test_config.py::test_expand_environment_variables[inp6-out6] PASSED [ 66%]
+dask/tests/test_config.py::test_expand_environment_variables[inp7-out7] PASSED [ 68%]
+dask/tests/test_config.py::test_env_var_canonical_name PASSED            [ 71%]
+dask/tests/test_config.py::test_get_set_canonical_name PASSED            [ 73%]
+dask/tests/test_config.py::test_get_set_roundtrip[custom_key] PASSED     [ 75%]
+dask/tests/test_config.py::test_get_set_roundtrip[custom-key] PASSED     [ 77%]
+dask/tests/test_config.py::test_merge_None_to_dict PASSED                [ 80%]
+dask/tests/test_config.py::test_core_file PASSED                         [ 82%]
+dask/tests/test_config.py::test_schema PASSED                            [ 84%]
+dask/tests/test_config.py::test_schema_is_complete PASSED                [ 86%]
+dask/tests/test_config.py::test_deprecations PASSED                      [ 88%]
+dask/tests/test_config.py::test_get_override_with PASSED                 [ 91%]
+dask/tests/test_config.py::test_config_serialization PASSED              [ 93%]
+dask/tests/test_config.py::test_config_inheritance PASSED                [ 95%]
+dask/tests/test_config.py::test__get_paths PASSED                        [ 97%]
+dask/tests/test_config.py::test_default_search_paths PASSED              [100%]
+
+==================================== PASSES ====================================
+============================= slowest 10 durations =============================
+0.07s call     dask/tests/test_config.py::test_schema
+0.06s call     dask/tests/test_config.py::test_collect_yaml_no_top_level_dict
+0.04s call     dask/tests/test_config.py::test_expand_environment_variables[inp5-out5]
+0.01s call     dask/tests/test_config.py::test_schema_is_complete
+
+(6 durations < 0.005s hidden.  Use -vv to show these durations.)
+=========================== short test summary info ============================
+PASSED dask/tests/test_config.py::test_canonical_name
+PASSED dask/tests/test_config.py::test_update
+PASSED dask/tests/test_config.py::test_merge
+PASSED dask/tests/test_config.py::test_collect_yaml_paths
+PASSED dask/tests/test_config.py::test_collect_yaml_dir
+PASSED dask/tests/test_config.py::test_collect_yaml_permission_errors[directory]
+PASSED dask/tests/test_config.py::test_collect_yaml_permission_errors[file]
+PASSED dask/tests/test_config.py::test_collect_yaml_malformed_file
+PASSED dask/tests/test_config.py::test_collect_yaml_no_top_level_dict
+PASSED dask/tests/test_config.py::test_env
+PASSED dask/tests/test_config.py::test_collect
+PASSED dask/tests/test_config.py::test_collect_env_none
+PASSED dask/tests/test_config.py::test_get
+PASSED dask/tests/test_config.py::test_ensure_file
+PASSED dask/tests/test_config.py::test_set
+PASSED dask/tests/test_config.py::test_set_kwargs
+PASSED dask/tests/test_config.py::test_set_nested
+PASSED dask/tests/test_config.py::test_set_hard_to_copyables
+PASSED dask/tests/test_config.py::test_ensure_file_directory[True]
+PASSED dask/tests/test_config.py::test_ensure_file_directory[False]
+PASSED dask/tests/test_config.py::test_ensure_file_defaults_to_DASK_CONFIG_directory
+PASSED dask/tests/test_config.py::test_rename
+PASSED dask/tests/test_config.py::test_refresh
+PASSED dask/tests/test_config.py::test_expand_environment_variables[1-1_0]
+PASSED dask/tests/test_config.py::test_expand_environment_variables[1-1_1]
+PASSED dask/tests/test_config.py::test_expand_environment_variables[$FOO-foo]
+PASSED dask/tests/test_config.py::test_expand_environment_variables[inp3-out3]
+PASSED dask/tests/test_config.py::test_expand_environment_variables[inp4-out4]
+PASSED dask/tests/test_config.py::test_expand_environment_variables[inp5-out5]
+PASSED dask/tests/test_config.py::test_expand_environment_variables[inp6-out6]
+PASSED dask/tests/test_config.py::test_expand_environment_variables[inp7-out7]
+PASSED dask/tests/test_config.py::test_env_var_canonical_name
+PASSED dask/tests/test_config.py::test_get_set_canonical_name
+PASSED dask/tests/test_config.py::test_get_set_roundtrip[custom_key]
+PASSED dask/tests/test_config.py::test_get_set_roundtrip[custom-key]
+PASSED dask/tests/test_config.py::test_merge_None_to_dict
+PASSED dask/tests/test_config.py::test_core_file
+PASSED dask/tests/test_config.py::test_schema
+PASSED dask/tests/test_config.py::test_schema_is_complete
+PASSED dask/tests/test_config.py::test_deprecations
+PASSED dask/tests/test_config.py::test_get_override_with
+PASSED dask/tests/test_config.py::test_config_serialization
+PASSED dask/tests/test_config.py::test_config_inheritance
+PASSED dask/tests/test_config.py::test__get_paths
+PASSED dask/tests/test_config.py::test_default_search_paths
+============================== 45 passed in 0.33s ==============================
+
+#RC=0
