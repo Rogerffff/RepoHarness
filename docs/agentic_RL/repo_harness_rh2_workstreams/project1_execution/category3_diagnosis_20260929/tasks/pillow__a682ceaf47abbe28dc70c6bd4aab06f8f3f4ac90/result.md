@@ -118,7 +118,7 @@ v1 下各错误候选失败的位置（v1 行号，见 `evidence/revised_v1*/<�
 | S09 用 `save()` 关键字传元组 | `TypeError` | gold、`alt_frame`、`alt_prestrip_warn` 抛 `TypeError`；`alt_typeerror`、`alt_integral` 为无 | 不作要求（§3.3） |
 | S13 旧接口 `getdata`，P 图 `info` 里有整数透明度 | 写出透明标志 | gold、`alt_prestrip_warn` 不写；`alt_typeerror`、`alt_frame`、`alt_integral` 写 | 不作要求（§3.3） |
 | S14 RGB 图放整数 0（非标准），且分配失败 | 写出透明索引 0 | gold、`alt_frame`、`alt_prestrip_warn` 为无；`alt_typeerror`、`alt_integral` 同 base | 不作要求（§3.3） |
-| S19／S20 RGBA 图带元组 | 不报错：`_normalize_mode` 用调色板里 alpha 为 0 的项覆盖了元组。S19 中这一项是没有像素使用的 `(0, 0, 0, 0)`（另行核对） | 同 base | — |
+| S19／S20 RGBA 图带元组 | 不报错：`_normalize_mode` 用调色板里 alpha 为 0 的项覆盖了元组。S19 中这一项是没有像素使用的 `(0, 0, 0, 0)`（`evidence/rgba_check/`） | 同 base | — |
 
 ### 2.4 上游对照（只作佐证）
 
@@ -148,7 +148,7 @@ v1 下各错误候选失败的位置（v1 行号，见 `evidence/revised_v1*/<�
 ### 3.3 测试不作要求、也不补断言的几处（负责人原则 2：逐条写明为什么不违反公开要求）
 
 - **关键字传元组（S09，公开读者 R7）**：文档把 GIF 保存选项 `transparency` 定义为 “Transparency color index”（`image-file-formats.rst:246-247`）。题面说的是图像 `info` 里的元组，示例写的是 `im.info["transparency"] = …`。关键字传元组属于文档外用法，报错与静默忽略都不违反公开要求。gold 与上游 10.1.0–11.3.0 都仍抛 `TypeError`。原测试与 v1 都不断言，两类实现都能通过。
-- **旧接口 `getdata`（S13，gold 的旁支变化）**：`getdata` 标为 “Legacy Method”，手册没有写它。它的 docstring 说 `**params` 就是 encoder info，透明度应作参数传入；两类实现对 `getdata(im, transparency=1)` 都写出透明度。GIF 文档里“未传入时取 `info` 值”指的是 `save()`。上游从 10.1.0 到 11.3.0 都保持 gold 的行为。所以这不是 gold 的缺陷，也不要求替代实现跟随，不补断言。
+- **旧接口 `getdata`（S13，gold 的旁支变化）**：`getdata` 标为 “Legacy Method”，手册没有写它。它的 docstring 说 `**params` 就是 encoder info，透明度应作参数传入；以参数传入 `getdata(im, transparency=1)` 时，base、gold、`alt_typeerror`、`alt_frame` 都写出透明度（`evidence/getdata_check/`）。GIF 文档里“未传入时取 `info` 值”指的是 `save()`。上游从 10.1.0 到 11.3.0 都保持 gold 的行为。所以这不是 gold 的缺陷，也不要求替代实现跟随，不补断言。
 - **RGB 图放整数透明度且分配失败（S14）**：base 与 `alt_typeerror`、`alt_integral` 会把原图的整数当作透明索引写出，于是另一种颜色变透明；gold、`alt_frame` 与上游不写。但文档里 RGB 图的透明度是颜色（`image-file-formats.rst:670-671`），题面只谈元组。Pillow 自己产生这种组合的途径只有把 “1”“I” 模式直接转成 RGB（整数没有被换算成颜色），属于非标准表示。这是 base 在非标准输入上的旧问题，与本题无关。把它写进测试，等于把 gold 的附带行为升格为要求（负责人原则 1），所以不补。`alt_typeerror`、`alt_integral` 在题面范围内的全部场景都正确，属于合理实现。
 - **`save_all=True` 只有一帧（S02）**：与 S01 走同一个单帧写入函数，全部候选在 S02 与 S01 的结果相同，没有已知候选利用这一点。可选加固：在示例部分再存一次 `im.save(out, save_all=True)`。本页不建议加。
 - **警告（R4）**：见 §4“对照变体”。
@@ -161,6 +161,8 @@ v1 下各错误候选失败的位置（v1 行号，见 `evidence/revised_v1*/<�
 - **E／D 类**：无。修改点是纯 Python，没有网络或装包需求（解题环境没有 pip）。公开测试两个文件合计约 2 秒。
 
 ## 4．修法：R-c v1（交第2类）
+
+状态：草案已写成文件，并做了私有模拟验证；未入库，未经正式评分，未经复核。
 
 **修订文件**：[`hidden_test_1_revised_v1.py`](../../../../../../../rh2/experiments/category3_cloud_20260929/pillow_a682/hidden_test_1_revised_v1.py)
 - sha256：父版本 `ff7a439c…` → `7f247bf4…`；
@@ -252,7 +254,9 @@ v1 下各错误候选失败的位置（v1 行号，见 `evidence/revised_v1*/<�
 - `probe_v2_check/`：纯色条场景的可行性检查（base、gold、`w_drop_full`、`w_drop_big`）；
 - `revised_v1/`：17 个候选，4 组材料（原测试、v1、v1 无 warns、v1 UID 54322），外加公开测试与 `probe_matrix_v2.py`；
 - `revised_v1_extra/`：补充的 3 个候选加 base、gold，同样 4 组材料，`probe_matrix_v3.py` 含 RGBA 场景；
-- `upstream_check/`：上游 10.0.0、10.1.0、10.4.0、11.3.0，wheel 的 sha256 与 CHANGES 10.1.0 摘录。
+- `upstream_check/`：上游 10.0.0、10.1.0、10.4.0、11.3.0，wheel 的 sha256 与 CHANGES 10.1.0 摘录；
+- `getdata_check/`：旧接口 `getdata` 以 `info` 或参数给出透明度时的对照（base、gold、`alt_typeerror`、`alt_frame`）；
+- `rgba_check/`：RGBA 图带元组时 `_normalize_mode` 的处理（base、gold）。
 
 脚本、补丁与修订草案都在 [`rh2/experiments/category3_cloud_20260929/pillow_a682/`](../../../../../../../rh2/experiments/category3_cloud_20260929/pillow_a682/)。`runs/…/pillow_a682/public/`（公开包的工作树副本）与 `materials/`（从镜像取出的评分材料，已按 sha256 核对，内容与实验目录中的 `hidden_test_1_orig.py`、`run_tests.sh` 相同）没有归档。
 
