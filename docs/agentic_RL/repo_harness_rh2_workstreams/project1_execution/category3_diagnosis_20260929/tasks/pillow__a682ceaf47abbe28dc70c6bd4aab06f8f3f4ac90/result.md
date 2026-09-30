@@ -1,6 +1,6 @@
 # R2E pillow__a682ceaf：第3类质量调查结果（主审，待独立复核）
 
-2026-09-30 / Claude（第3类第二批主审子代理）。原分类为第3类“题目质量调查未完成”（未审题）。前序步骤：公开读者稿 [public_read.md](public_read.md)、[commands.json](commands.json)；负责人开发核对 [evidence/devcheck/](evidence/devcheck/)。读历史前的初判已封存在 [initial_judgment.md](initial_judgment.md)，本页结论与初判一致，另补了初判没想到的两类错误候选。**本页所有分数都是私有模拟**，不是 R2E 正式评分。
+2026-09-30 / Claude（第3类第二批主审子代理）。原分类为第3类“题目质量调查未完成”（未审题）。前序步骤：公开读者稿 [public_read.md](public_read.md)、[commands.json](commands.json)；负责人开发核对 [evidence/devcheck/](evidence/devcheck/)。读历史前的初判已封存在 [initial_judgment.md](initial_judgment.md)。本页的去向（R-c 后转第2类）与初判一致；初判列出的错误写法都已实测，另补了初判没列的 `w_notin_image`、`w_drop_big`、`w_convert_mutate`，修订也因此比初判多了 (b)、(b′)、(c) 三段。历史记录只有 09-24 环境审查与 09-23 正式评分，没有旧的质量结论可推翻。**本页所有分数都是私有模拟**，不是 R2E 正式评分。
 
 **结论：问题和修法已明确，建议转第2类。** 本页结论尚待独立复核（v1 §7.3）。
 
@@ -118,7 +118,7 @@ v1 下各错误候选失败的位置（v1 行号，见 `evidence/revised_v1*/<�
 | S09 用 `save()` 关键字传元组 | `TypeError` | gold、`alt_frame`、`alt_prestrip_warn` 抛 `TypeError`；`alt_typeerror`、`alt_integral` 为无 | 不作要求（§3.3） |
 | S13 旧接口 `getdata`，P 图 `info` 里有整数透明度 | 写出透明标志 | gold、`alt_prestrip_warn` 不写；`alt_typeerror`、`alt_frame`、`alt_integral` 写 | 不作要求（§3.3） |
 | S14 RGB 图放整数 0（非标准），且分配失败 | 写出透明索引 0 | gold、`alt_frame`、`alt_prestrip_warn` 为无；`alt_typeerror`、`alt_integral` 同 base | 不作要求（§3.3） |
-| S19／S20 RGBA 图带元组 | 不报错（`_normalize_mode` 用调色板里 alpha 为 0 的项覆盖元组） | 同 base | — |
+| S19／S20 RGBA 图带元组 | 不报错：`_normalize_mode` 用调色板里 alpha 为 0 的项覆盖了元组。S19 中这一项是没有像素使用的 `(0, 0, 0, 0)`（另行核对） | 同 base | — |
 
 ### 2.4 上游对照（只作佐证）
 
@@ -141,7 +141,7 @@ v1 下各错误候选失败的位置（v1 行号，见 `evidence/revised_v1*/<�
 
 ### 3.2 为什么第 4 步的候选不算“边缘”
 
-- **`w_drop_full`、`w_drop_big` 丢掉本来能用的透明色**：RGB 图带 tRNS 时，透明色通常就是图里的一大片背景色，S17 正是这种情况。这时透明色必然落进调色板，base 与 gold 都保留透明度。过度丢弃会让这类最常见的图存成 GIF 后失去透明背景。公开测试 `test_rgb_transparency` 只测了 1×1 图，挡不住它们。
+- **`w_drop_full`、`w_drop_big` 丢掉本来能用的透明色**：RGB 图带 tRNS 时，透明色通常就是图里的一大片背景色，S17 正是这种情况。这时透明色通常能精确落进调色板（S17 中正是如此），base 与 gold 都保留透明度。过度丢弃会让这类最常见的图存成 GIF 后失去透明背景。公开测试 `test_rgb_transparency` 只测了 1×1 图，挡不住它们。
 - **`w_mutate`、`w_convert_mutate` 改写调用者的图**：一次 GIF 保存之后，这张图的透明色就没了。接着另存 PNG（文档里 RGB 图透明色的标准用法），PNG 也丢了 tRNS（S12c）。题面示例本身就是在内存里给图设 `info["transparency"]`，这种副作用正落在核心场景上。
 - **`w_count256`、`w_notin_image` 仍会崩溃**：多于 256 色的照片带 tRNS 是这个报错的现实来源之一；hopper＋像素颜色也是公开测试 `test_trns_RGB` 的原输入。
 
@@ -229,14 +229,12 @@ v1 下各错误候选失败的位置（v1 行号，见 `evidence/revised_v1*/<�
 
 如果复核认为这属于没有依据的要求（T1），改用此变体即可，不影响其它结论。
 
-## 5．当前用途
+## 5．当前用途（v1 §2）
 
-| 用途 | 结论 |
-| --- | --- |
-| 问题定位 | yes |
-| 能力比较 | conditional。原版 v0 的评分会放过示例特判、只修部分情形、过度丢弃、改坏调用者的图这四类错误写法。在 v0 上比较时，得 1 的补丁要按这四类做事后审计。R-c v1 落地并正式验收后，可按标明的版本作比较 |
-| 训练候选 | **no**：有未处理的 S1。要等 R-c v1 落地、完成正式评分与复核 |
-| 留出评测 | 随训练结论；修订后的题只能作“标明版本的自建题” |
+| 版本 | 问题定位 | 能力比较 | 训练候选 | 留出评测 |
+| --- | --- | --- | --- | --- |
+| 原版 v0 | 是 | 否：原版有已证的 S1 未修，7 个错误候选能得 1。按 09-30 Codex 复核后的统一口径，不能靠事后审计进入普通能力比较；特殊诊断试解另列调查目的，不与原分数混用 | 否（S1 未处理） | 否 |
+| R-c v1（草案） | 是 | 经独立复核、Codex 复核、入库和正式评分验收后重新评估 | | 修订后的题只能作“标明版本的自建题” |
 
 ## 6．未做与证据
 

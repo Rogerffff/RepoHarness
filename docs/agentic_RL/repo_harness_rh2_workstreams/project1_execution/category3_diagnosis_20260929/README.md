@@ -56,8 +56,8 @@
 | [SWE dask-8801](tasks/dask__dask-8801/result.md) | 交第2类（带修复清单） | v4 23 次诊断评分；v5 进行中 | 余项：`1.5` 实例、原因判定设计、显式 `null`、权限错误 |
 | [SWE dask-7305](tasks/dask__dask-7305/result.md) | 交第2类（带修复清单） | 独立复核（2 项阻断）已由 v2 处理；v2 诊断评分进行中 | v2 聚焦复核由第2类承接 |
 | [SWE moto-6185](tasks/getmoto__moto-6185/result.md) | **交第2类**（09-30 追加） | 独立复核 3 项阻断，采纳复核草案 v3（v2s 路线：gold 两处缺口须断言，正对照 `ctx`／`parity` 已核实）；v3 私有模拟 22 个版本符合预期 | 第2类落地后一次正式诊断评分，与复核 v3 列逐格一致即完成 |
-| [SWE pydantic-8316](tasks/pydantic__pydantic-8316/result.md) | 第3类 | 作者诊断完成：66 次正式评分；独立复核进行中 | 复核后判定 |
-| [R2E coveragepy__f5eb5f21](tasks/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/result.md) | 第3类 | 作者判 P5 并建议 A；Codex 在其快照上倾向视为 R-b；独立复核进行中 | 复核后确定是否需要用户选择 |
+| [SWE pydantic-8316](tasks/pydantic__pydantic-8316/result.md) | 第3类（待收口转第2类） | 独立复核 1 项阻断（v2 放过 7 个“缩写上限”类错误候选），采纳复核草案 v3；34 格诊断评分进行中 | 34 格与复核预期一致即转第2类 |
+| [R2E coveragepy__f5eb5f21](tasks/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/result.md) | **暂留第3类（等用户选择）** | 独立复核：P5 归类成立（第二分支），另有 2 项阻断（NB、`wr_alldata_proj`），已采纳复核 v3 草案（R-c v3／R-b v3，8 键，私有模拟符合预期） | **用户决定** P5：A（R-b v3，建议）／B（R-f 题面）／C（维持）；不裁定时 R-c v3 可先落地 |
 | [R2E pillow__a682ceaf](tasks/pillow__a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90/public_read.md) | 第3类 | 公开阅读与 5 条公开命令核对完成；作者诊断进行中 | — |
 | SWE dask-8597 | 第3类 | compat_v1 派生镜像已重建；作者诊断进行中 | — |
 | SWE dask-9212 | 第3类 | 未开始 | 等并发位 |
