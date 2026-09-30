@@ -21,7 +21,7 @@ PYTEST = f"python -m pytest -n0 -rA --color=no -p no:cacheprovider {TESTFILE}"
 CANDS = [
     "clamp1", "lazy_threshold", "errstate_catch", "eager_empty",
     "split_only", "split_only_zero", "last_axis_only", "axis0_only", "swallow_warn", "swallow_self",
-    "warn_zero", "cap_one", "single_block", "float_blocks", "float_blocks_dep", "return_numpy",
+    "warn_zero", "cap_one", "single_block", "float_blocks", "float_blocks_dep", "return_numpy", "dedup_slice",
 ]
 
 

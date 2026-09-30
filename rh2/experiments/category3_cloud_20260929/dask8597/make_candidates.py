@@ -222,6 +222,21 @@ EAGER_EMPTY = '''        index2 = normalize_index(index, self.shape)
         dependencies = {self.name}
 '''
 
+# 只处理示例字面值（单个下标）：空数组里把整数列表换成它覆盖的切片。对 [0] 这类单个或连续不重复的下标正确，
+# 重复、乱序的下标会得到错误的长度（例如 [0, 1, 2] * 40 得到 3 行而不是 120 行）。
+DEDUP_SLICE = '''        index2 = normalize_index(index, self.shape)
+        # An empty array has no data to gather: replace integer lists by the
+        # slice they span, which avoids the fancy-indexing machinery.
+        if 0 in self.shape:
+            index2 = tuple(
+                slice(int(i.min()), int(i.max()) + 1)
+                if isinstance(i, np.ndarray) and i.dtype.kind in "iu" and i.size
+                else i
+                for i in index2
+            )
+        dependencies = {self.name}
+'''
+
 CANDIDATES = {
     "gold_regen": {SL: [(BASE, GOLD)]},
     "clamp1": {SL: [(BASE, CLAMP1)]},
@@ -240,6 +255,7 @@ CANDIDATES = {
     "float_blocks": {SL: [(ANCHOR, FLOAT_BLOCKS)]},
     "float_blocks_dep": {SL: [(ANCHOR, FLOAT_BLOCKS_DEP)]},
     "return_numpy": {CORE: [(GI_ANCHOR, RETURN_NUMPY)]},
+    "dedup_slice": {CORE: [(GI_ANCHOR, DEDUP_SLICE)]},
 }
 
 
