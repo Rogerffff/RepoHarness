@@ -107,6 +107,11 @@ def normalize_object(o):
         (IMPORT_BASE, IMPORT_ENUM),
         (ANCHOR, registered("    return e.name")),
     ],
+    # §4 第 3 步退化探测：与输入无关的固定结果
+    "w_const": [
+        (IMPORT_BASE, IMPORT_ENUM),
+        (ANCHOR, registered("    return \"enum\"")),
+    ],
     # 边界：str(e) 形如 "Color.RED"，与同内容的字符串参数相撞
     "w_str": [
         (IMPORT_BASE, IMPORT_ENUM),

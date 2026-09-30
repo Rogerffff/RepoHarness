@@ -15,9 +15,9 @@
 > - **还没做**：独立复核（v1 §7.3）。正对照仍是 gold，不需要 D4 的替代正对照。4 个非 gold 合理实现只用来查误拒，由本主审编写，复核时请一并核对。
 > - **下一步**：请不继承上下文的复核者做独立复核。重点：
 >   1. `split_only_zero` 零宽数组全对，只丢默认大块警告。本页据此判 S1，并在修订测试里加了默认警告断言。请核对这条行为是否属于“有文档、常用的公开行为”（§3）。
->   2. 两个“多发警告”的候选被判 0：`swallow_warn` 在每次零宽索引时都发除零 `RuntimeWarning`；`eager_empty` 在结果超过约 5000 行时，经 `from_array` 自动分块发 `RuntimeWarning`，这是 base 既有的缺陷。本页按同一标准判两者不合格（§3）。若复核认为由既有缺陷引出的警告不应计入，可把 c4 的下标数降到 5000 以下，例如 1200：这样 `cap_one`、`cap_hundred` 仍为 0，`eager_empty` 变为 1。
+>   2. 两个“多发警告”的候选被判 0：`swallow_warn` 在每次零宽索引时都发除零 `RuntimeWarning`；`eager_empty` 在结果超过约 5000 行时，经 `from_array` 自动分块发 `RuntimeWarning`，这是 base 既有的缺陷。本页按同一标准判两者不合格（§3）。若复核认为由既有缺陷引出的警告不应计入，可把 c4 的下标数降到 4000 以下，例如 1200。按本页的探针推算（未实跑），这样 `cap_one`、`cap_hundred` 仍为 0，`eager_empty` 变为 1。探针结果是 `from_array(np.zeros((n, 0)))` 在 n=4000 时不告警、n=5000 时告警，`cap_hundred` 在超过 500 个下标时告警。
 >   3. `clamp1` 只在极端规模或极小 `array.chunk-size` 下误发警告，本页判为合理实现，登记 T3。
->   4. 修订 v2 是否还有能通过的错误候选。已知边界：零宽时把每块固定封顶在 2400 行以上的写法能通过 v2，见 §3。
+>   4. 修订 v2 是否还有能通过的错误候选。已知边界：零宽时把每块固定封顶在 2400 行及以上的写法能通过 v2，见 §3。
 >
 >   复核用原镜像 `xingyaoww/sweb.eval.x86_64.dask_s_dask-8597`（本机标签 `c3keep/dask8597:src`）即可做私有对照；正式评分要用 compat_v1 派生镜像，见 §2。
 
@@ -86,7 +86,7 @@
 - **极端规模或极小 `array.chunk-size` 下的阈值**：见 `clamp1`。
 - **非 NumPy 后端**（cupy、sparse）的 meta 类型：未查。
 - **用 dask 数组作下标**（`x[da.from_array(...)]`）：走另一条路径，base 上就不出错（矩阵 Z9）。
-- **相邻的既有缺陷，本题范围外**：用自动分块创建较大的零大小数组时，`auto_chunks` 自身会除零。例如 `da.from_array(np.zeros((n, 0)))`、`da.zeros((n, 0))`，在 base 上 n=4000 不告警，n=5000 起发 `RuntimeWarning: divide by zero encountered in divide`，gold 也不修它。修订测试的输入都很小，不会碰到它；第2类加实例时要避开“自动分块的大零大小输入”。
+- **相邻的既有缺陷，本题范围外**：用自动分块创建较大的零大小数组时，`auto_chunks` 自身会除零。例如 `da.from_array(np.zeros((n, 0)))`、`da.zeros((n, 0))`，在 base 上 n=4000 不告警，n=5000 起发 `RuntimeWarning: divide by zero encountered in divide`；显式 `chunks=-1` 不告警。gold 也不修它。探针见 `evidence/probes/auto_chunks_threshold.txt`（`probe_auto_chunks.sh`）。修订测试的输入都很小，不会碰到它；第2类加实例时要避开“自动分块的大零大小输入”。
 
 ## 2．实测
 
@@ -307,7 +307,7 @@ wheel sha256：2022.2.0 为 `feaf838f…`，2023.12.1 为 `55f316f3…`，2024.1
 - 两者都是罕见路径，结果始终正确，按 §4 第 4 步属于 T3。
 - 修订测试不断言这种规模：用少见配置去拒绝一个常见的防除零写法，不合理。
 
-**v2 的已知边界**：零宽时把每块固定封顶的写法（`cap_*`），在 c4 有 12000 个下标、默认配置下，只有封顶不超过 2400 行（告警线 12000）才会被拦住。
+**v2 的已知边界**：零宽时把每块固定封顶的写法（`cap_*`），在 c4 有 12000 个下标、默认配置下，只有封顶小于 2400 行（告警线为封顶的 5 倍，低于 12000）才会被拦住。
 - 自然出现的有限阈值有两类：
   - 很小的常数，如 `cap_one`、`cap_hundred`，v2 能拦住；
   - 由 `array.chunk-size` 推出的公式，如 `clamp1` 约 1600 万行，属于罕见路径。
@@ -440,18 +440,20 @@ gold 通过全部新断言，仍作正对照，不需要 D4。4 个合理实现�
 | 修订草案 | `make_revised_test.py`、`original_test.patch`、`revised_test_v1.patch`、`revised_test_v2.patch`、`revised_test_v*.py.tail`、`materials_revised_v1.json`、`materials_revised_v2.json` |
 | 正式评分 | `run_formal.sh`、`summarize_formal.py` |
 | 开发路径核对 | `devpath_check.sh` |
+| 既有缺陷探针 | `probe_auto_chunks.sh` |
 
 **原始证据**，在 [evidence/](evidence/)，全部文件的 SHA256 见 `evidence_manifest.json`：
 
 | 目录 | 内容 |
 | --- | --- |
-| `formal/` | 原材料正式评分 21 次；`cap_hundred`、`eager_single_chunk` 两次的驱动日志在证据根目录的 `formal_*_orig.log` |
-| `formal_revised_v1/` | 修订 v1 诊断评分 21 次 |
-| `formal_revised_v2/` | 修订 v2 诊断评分 21 次 |
+| `formal/` | 原材料正式评分 21 次。每次运行都有 `ledger_<候选>.jsonl`、`run_<候选>.out`、评分日志与 `audit_<候选>/`；批量摘要见 `formal/batch_orig.log`，后补运行见证据根目录的 `formal_cap_hundred_*.log`、`formal_eager_single_chunk_*.log` |
+| `formal_revised_v1/` | 修订 v1 诊断评分 21 次；批量驱动日志为根目录的 `formal_revised_v1_batch.log` |
+| `formal_revised_v2/` | 修订 v2 诊断评分 21 次；批量驱动日志为根目录的 `formal_revised_v2_batch.log` |
 | `semantic_v1/` | 私有矩阵，以及按原测试的私有模拟评分 |
 | `semantic_v2/`、`semantic_rev2/` | 修订 v1、v2 的私有模拟评分与逐实例核对 |
 | `semantic_v3_pytest8/`、`semantic_rev2_pytest8/` | 原镜像 pytest 8.3.2 下对修订 v1、v2 的核对 |
 | `devpath/` | 开发路径等效核对 |
+| `probes/` | `auto_chunks` 既有缺陷探针与 `array.chunk-size` 默认值 |
 | `derived/` | 派生镜像记录；wheel 副本已删除，sha256 见 `image.json` |
 
 **过程说明**：`run_semantic.sh` 的早期版本会把 specs 目录里已有的变体一并重跑，现已改为只跑请求的变体。私有矩阵是确定性的，重跑只会用相同结果覆盖同一输出目录；归档的是最后一次运行。正式评分每个候选、每个版本只跑一次。
