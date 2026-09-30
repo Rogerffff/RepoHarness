@@ -2,7 +2,21 @@
 
 2026-09-29 / Claude（云端，第3类第二批主审作者）。原分类：第3类“参考修复不可靠，缺正确对照”。09-29 CPU 批次已实测并复核：gold 修好了题面两种顺序的序列化，但让“普通类 + `PlainValidator`”在类定义阶段报错；原测试只查 `isinstance(str)`，不查精确值和 JSON（S1／T2a）。那时缺的是一份能保住这项能力的正对照。
 
-**结论：问题和修法已明确，建议转第2类。替代正对照待他人独立核实。**
+> **收口状态（09-30，云端额度不足，第二批暂停）**
+>
+> - **已完成并归档**：作者诊断；原材料、v1、v2 的正式评分（14、13、14 次）；私有矩阵与模拟评分。见 [evidence/](evidence/)，本页分数都有账本支持。
+> - **独立复核已完成**，全文见 [review.md](review.md)：
+>   - **两份替代正对照 `upstream261`、`c3_reorder` 经复核者独立核实，可以作正对照**，D4 要求的“他人核实”已满足。两者各有已登记的范围差异，不影响 v2 判分；
+>   - 同意原版 S1、gold 失败记录、v2 四组断言的依据与不过严、`c3_serpass` 记 T3；
+>   - **唯一阻断**：复核者构造的错误候选 `rv_pv_first` 在 v2 下得 1。它把 `PlainValidator` 挪到元数据最内层，使按文档应被 PV 取代的验证器和约束仍然运行。
+> - **修订 v3 已起草，未验证**：[`revised_test_v3.patch`](../../../../../../../rh2/experiments/category3_cloud_20260929/pydantic8567/revised_test_v3.patch)（`4600867b…0eba`）与 `materials_revised_v3.json`。它在 F2P 测试体末尾加一段：`Annotated[bool, AfterValidator(lambda v: 1 / 0), serializer, validator]` 下，PV 之前的验证器不运行，serializer 仍生效。复核者的候选 `rv_pv_first`、`rv_condwrap`、`rv_ser_to_end` 已放入实验目录。v3 正式评分计划 17 次，只跑完 2 次就中断，输出〔未归档〕。
+> - **下一步**：
+>   1. 确认 pydantic_v1 等效派生镜像仍在，不在就按 [作者须知](../../batch2_author_brief.md) §4 重建；
+>   2. 重做 `prepare` 与 `export-gold`；
+>   3. 对 noop、gold、两份正对照、`c3_serpass`、作者 9 个 `n_*` 与复核者 3 个候选跑 v3 诊断评分；
+>   4. 归档后改写 §4，请同一复核者做聚焦复核。
+
+**结论：问题已明确；两份替代正对照已由独立复核核实；修法 v2 有 1 项阻断，v3 已起草但尚未验证。v3 评分归档并通过聚焦复核后，建议转第2类。**
 
 - **gold 的回归已复现，上游有佐证。** 普通类 `Unsupported` 加 `PlainValidator`，在默认配置下 base 能建类、能验证；gold 在类定义阶段抛 `PydanticSchemaGenerationError`（`schema-for-unknown-type`）。上游在下一个补丁版 2.6.1 修了同一问题（#8710）。
 - **原测试很弱。** 本次在 gold 修改位置附近构造了 9 个错误候选，分别只做固定输出、只修 Python 模式、只修 bool 等。**9 个在原材料正式评分全部得 1**；noop 为 0，gold 为 1。
@@ -25,7 +39,7 @@
   - `upstream261`：gold 加上游 2.6.1 的一处异常捕获，方法体与 2.6.1 wheel 逐字相同。
   - `c3_reorder`：本页自写，不改 `PlainValidator`，而是在注解排序处把 serializer 移到它后面。
 
-  修订断言对两种设计都成立，说明它们不是照着 gold 的机制写的。两份都由本页构造，**待他人核实**。
+  修订断言对两种设计都成立，说明它们不是照着 gold 的机制写的。两份都由本页构造，**已由独立复核核实**（review.md §2）。
 - **v1 到 v2 的变化是自查发现的。** 自查时构造的 `n_field_only` 只修模型字段，它在 v1 下得 1。v2 因此多加了一行 `TypeAdapter(List[...])` 检查，见 §4。
 - **实施依赖 D6 的“测试补丁替换”切片。** 派生镜像是云端等效重建，不是 09-19 原版的逐字节重建。
 
@@ -166,8 +180,8 @@ noop 与 gold 的结果和 09-29 CPU 批次一致。每次运行约 25 秒，其
 | --- | --- | --- |
 | noop | 0 | `isinstance(data['bar'], ser_type)` |
 | gold | **0** | `class WithUnsupported` 定义处抛 `PydanticSchemaGenerationError`，按 D4 记录 gold 失败 |
-| `upstream261`（替代正对照，待他人核实） | **1** | |
-| `c3_reorder`（第二正对照，待他人核实） | **1** | |
+| `upstream261`（替代正对照，已由复核核实） | **1** | |
+| `c3_reorder`（第二正对照，已由复核核实） | **1** | |
 | `c3_serpass`（不作正对照，见 §5 T3） | 1 | |
 | `n_const_str` | 0 | `data == {'foo':'0','bar':'1'}`，实得 `'True'` |
 | `n_python_only` | 0 | `model_dump_json()`，实得 `"bar":true` |
@@ -213,7 +227,7 @@ noop 与 gold 的结果和 09-29 CPU 批次一致。每次运行约 25 秒，其
 
 ## 6．交接给第2类
 
-1. **正对照**：`upstream261` 作替代正对照，`c3_reorder` 作第二正对照，**两者都待他人独立核实**。
+1. **正对照**：`upstream261` 作替代正对照，`c3_reorder` 作第二正对照，两者都**已由独立复核核实**（review.md §2）。
 2. **落地**：经 D6 的测试补丁替换形成正式版本，用 R-c 草案 v2（`6cff9609…`）。测试 ID、F2P／P2P 名单与测试命令不变。
 3. **复验**：落地后复验 §4 的表（14 个候选）。
 4. **可选拆分**：如果 D6 支持新增参考，建议把第 4 项未知类型回归拆成独立 P2P。可沿用上游测试名 `test_plain_validator_with_unsupported_type`，形态相同。第 1–3 项留在 F2P。
@@ -232,7 +246,7 @@ noop 与 gold 的结果和 09-29 CPU 批次一致。每次运行约 25 秒，其
 
 ## 8．未做与剩余事项
 
-- **独立复核**：未做，由后续复核完成。正对照 `upstream261`、`c3_reorder` 都未经他人核实。
+- **独立复核**：已完成，两份正对照已核实；v2 有 1 项阻断，v3 草案尚未评分。见开头收口状态。
 - **真实 actor 开发条件**：本次未验。09-29 CPU 批次在原版上做过 actor 核对。
 - **模型求解**：没有模型求解证据。
 - **v1 修订的正式评分**：不含 `n_field_only`，它只有私有模拟结果。

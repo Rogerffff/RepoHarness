@@ -2,9 +2,22 @@
 
 2026-09-29 / Claude（云端，第3类第二批主审子代理）。原分类：第3类“已有具体疑点，缺辨别实验”。登记的下一步是：只把报错文字换成同义措辞，保留路径、异常类型和原因，运行公开行为检查与正式评分，核实隐藏测试会不会误拒（T1）。
 
-**结论：问题和修法已明确，建议转第2类。** 独立复核的意见是“部分同意”：诊断成立，P5 按第一分支处理也成立，另有 1 项阻断和 5 条非阻断意见。本页已按负责人的决定改为修订版 **v4**，v3 留档。v4 尚待复核者做聚焦复核。
+> **收口状态（09-30，云端额度不足，第二批暂停）**
+>
+> - **进度**：原版诊断与独立复核已完成；v4 修订做到一半。v4 草案文件已入库（`revised_test_v4.patch` `91baa55d…b440`、`materials_revised_v4.json`、`behavior_v4.py`、`semantic_spec_v4*.json`），但 **v4 的私有对照与正式诊断评分都没有归档**：输出只存在被 git 忽略的 `runs/` 中，容器重置后丢失。
+> - **可以核对的证据**：原材料正式评分 20 次（noop、gold、18 个作者候选）、v3 诊断评分 20 次、私有对照 v1–v3、root 下的权限测试与 v3 测试，都在 [evidence/](evidence/)。独立复核已逐一核对这 40 份账本。
+> - **目前不能核对的陈述**：本页所有 v4 分数（正式与私有），以及复核者 3 个候选 `rv_kv_pairs`、`rv_dir_only`、`rv_import_warn` 的原材料正式评分，文中标〔未归档〕。它们是待重跑确认的预期，不是已验证结果。复核者本人的私有对照结果见 [review.md](review.md) §3。
+> - **对结论的影响**：原版的 T1 与 S1 只依赖已归档证据和复核，成立。v4 能否验收，要等重跑。
+> - **下一步**：
+>   1. 按 [作者须知](../../batch2_author_brief.md) §4 重做 `prepare` 与 `export-gold`；
+>   2. `run_formal.sh original rv_kv_pairs rv_dir_only rv_import_warn` 补原材料评分；
+>   3. `run_formal.sh v4 noop gold` 加 21 个候选，跑 v4 诊断评分。候选名单取 `candidates.json` 中除 `rv_enum_types` 和元数据键 `_gold_inmemory_sha256` 外的全部名字，`rv_enum_types` 只做私有对照；
+>   4. 用 `behavior_v4.py` 与 `semantic_spec_v4*.json` 重跑私有对照；
+>   5. 归档后填 §4 汇总表的 v4 列，再请复核者做 v4 聚焦复核。
 
-- **T1 已坐实（正式评分）**：7 个合理实现在原材料上都得 0，在 v4 上都得 1。
+**结论：问题已明确，修法 v4 已起草但尚未验证；v4 评分归档并通过聚焦复核后，建议转第2类。** 独立复核的意见是“部分同意”：诊断成立，P5 按第一分支处理也成立，另有 1 项阻断和 5 条非阻断意见。本页已按负责人的决定改为修订版 **v4**，v3 留档。v4 尚待重跑评分和复核者的聚焦复核。
+
+- **T1 已坐实（正式评分）**：6 个作者写的合理实现在原材料上都正式得 0，在 v3 上都正式得 1（已归档）。复核者的 `rv_kv_pairs` 在原材料上的正式评分，以及 7 个合理实现在 v4 上的分数，都〔未归档〕。
   - 只改措辞的 `syn_repr`：消息里有带引号的路径、解析器原因和类型名，异常仍是 `ValueError`，失败在 `assert "is malformed" in ...`。
   - 措辞与 gold 逐字相同、只去掉路径引号的 `gold_plain`：失败在 `assert repr(fil_path) in ...`。
   - 其余 5 个：换成 `TypeError`；显式异常链；让 PyYAML 自带文件名；措辞与引号都改；复核者的 `rv_kv_pairs`（自定义 `ValueError` 子类，消息写 “must contain key: value pairs”）。
@@ -17,13 +30,13 @@
   - 模块导入时吞掉错误；
   - 不可读的条目变成致命错误。
 
-  另有复核者构造的 `rv_dir_only`（直接给出的文件路径不校验）在原材料上也得 1，属边缘情形，本轮一并修。
+  另有复核者构造的 `rv_dir_only`（直接给出的文件路径不校验）在原材料上也得 1（复核者私有对照；作者的正式评分〔未归档〕），属边缘情形，本轮一并修。
 - **P5 按第一分支处理，不交用户（复核同意）**：出错时报错还是警告后跳过，测试采用的“报错”读法有公开依据（§3 依据 1、2），走 R-f 补一句说明。
 - **v4 修法**：
   - R-b＋R-c 测试补丁，测试编号不变；
   - R-f 在题面末尾补一句；
   - **不再追加 P2P**，落地只需 D6 的“测试补丁替换”和 `statement_replace`。
-- **v4 诊断评分（正式链，23 个候选）**：@@V4_SUMMARY@@
+- **v4 诊断评分（正式链，计划 23 次：noop、gold 与 21 个候选）**：**未完成，〔未归档〕**。已归档的是 v3：gold 与 6 个作者合理实现为 1，noop、`warn_skip` 与 10 个错误候选为 0，只漏过 `oserr_fatal`（为 1）。v4 针对 `oserr_fatal`、`rv_dir_only`、`rv_kv_pairs` 做了修改，预期结果见 §4 交接清单第 3 条，要重跑确认。
 
 ## 1．公开要求
 
@@ -64,7 +77,7 @@
 - **复核者的候选**：复核者的补丁未入库，本页的 `rv_*` 按 review.md 附录的文字描述重建。
   - `rv_enum_types` 与复核者的补丁逐字节相同（`5b03ae4c…`）。
   - `rv_kv_pairs`、`rv_dir_only`、`rv_import_warn` 是等效重建，哈希与复核者的不同。
-  - `rv_dir_only` 首次重建（`c23637bc…`）用了 `set()`，而 `dask.config` 里的 `set` 被同名上下文管理器遮蔽，结果连 P2P 都通不过，已作废。改用 `builtins.set()` 后重建为 `dcb3bea8…`，所有分数都用重建版重跑；作废的运行留作 `*_setbug`。
+  - `rv_dir_only` 首次重建（`c23637bc…`）用了 `set()`，而 `dask.config` 里的 `set` 被同名上下文管理器遮蔽，结果连 P2P 都通不过，已作废。改用 `builtins.set()` 后重建为 `dcb3bea8…`，所有分数都用重建版重跑；作废的运行留作 `*_setbug`。这些运行都〔未归档〕。
 
 ### （1）私有行为对照
 
@@ -73,6 +86,8 @@
 - v4 使用 [`behavior_v4.py`](../../../../../../../rh2/experiments/category3_cloud_20260929/dask8801/behavior_v4.py)，比前者多两项：配置目录里有一个名为 `c.yaml` 的子目录；新进程 `import dask` 时 `DASK_CONFIG` 直接指向坏文件。
 
 pytest 以 nobody（UID 65534）运行；v4 测试另以 root 再跑一遍。
+
+**证据范围**：v1–v3 的运行已归档在 `evidence/semantic_v1/`–`semantic_v3/`，其中 `semantic_v3/` 覆盖 base、gold 与 18 个作者候选。下表中“目录里的 `c.yaml` 子目录”“import：`DASK_CONFIG` 直指坏文件”两列，以及 4 个复核者候选的行，来自 `behavior_v4.py` 的运行，〔未归档〕。复核者候选的行为另见 review.md §3 中复核者本人的私有探针。
 
 表中“无路径”指异常消息不含该文件的路径。“新进程 import”在隔离 `HOME` 与 `DASK_ROOT_CONFIG` 后，让 `DASK_CONFIG` 指向对应目录或文件。
 
@@ -114,7 +129,7 @@ pytest 以 nobody（UID 65534）运行；v4 测试另以 root 再跑一遍。
 
 ### （2）原材料正式评分
 
-`replay_grade.py run`，原材料：F2P 2 项，P2P 41 项。23 次有效评分（noop、gold 与 21 个候选）的共同情况：
+`replay_grade.py run`，原材料：F2P 2 项，P2P 41 项。计划 23 次有效评分（noop、gold 与 21 个候选），已归档 20 次（noop、gold 与 18 个作者候选）；复核者 3 个候选的运行〔未归档〕。已归档运行的共同情况：
 - 参考缺席 0；
 - 安装 rc=0；
 - 测试段完整，解析出 45 项；
@@ -154,7 +169,7 @@ pytest 以 nobody（UID 65534）运行；v4 测试另以 root 再跑一遍。
 **导入断言与 P5 同进同退（复核 N1，登记）**：
 
 - v4 的新进程导入断言（`assert proc.returncode != 0`）只能靠 P5 第一分支立足。它与 R-f 中的 “including `import dask`” 同进同退：要撤就一起撤。
-- 复核者的 `rv_import_warn`（API 抛错，导入时警告并只跳过坏文件、其余配置生效）在原材料上得 1，在 v3、v4 上因这条断言得 0。它属于“另一种政策”，不是错误实现，被拒是 P5 裁定的直接结果。
+- 复核者的 `rv_import_warn`（API 抛错，导入时警告并只跳过坏文件、其余配置生效）在原材料上得 1，在 v3 上因这条断言得 0（复核者私有对照），v4 上预期同样为 0〔未归档〕。它属于“另一种政策”，不是错误实现，被拒是 P5 裁定的直接结果。
 - 作者的 `import_swallow` 另有与 P5 无关的缺陷：`refresh()` 整体失败后，全部 YAML 与环境变量配置都被丢弃。
 
 **P3**：原测试要求语法错误也点名文件，超出了题面示例。它符合标题的一般理解，base 下语法错误同样中止导入却不点名文件，所以不判 T1，由 R-f 写明。
@@ -174,7 +189,7 @@ pytest 以 nobody（UID 65534）运行；v4 测试另以 root 再跑一遍。
 
 **不判问题的部分**：
 
-- **G1**：gold 通过 v4 的全部断言，可以继续作正对照。
+- **G1**：gold 在 v3 上正式得 1（已归档），可以继续作正对照。v4 上预期同样为 1，〔未归档〕，重跑时须首先确认。
 - gold 相对 base 有两处行为变化，公开材料都没有承诺，登记为 T3，不作处置依据：
   - 顶层假值（`0`、`false`、`[]`、`''`）由原来的静默当作空配置改为报错；
   - 空文件时 `collect_yaml` 的返回值由 `[{}]` 变为 `[]`，合并结果不变。
@@ -206,22 +221,37 @@ pytest 以 nobody（UID 65534）运行；v4 测试另以 root 再跑一遍。
 
 **`c.yaml` 检查的边界（复核 N4）**：它断言“`OSError` 一律忽略”，与 base 的 `except OSError` 一致，但比注释写的 “permission errors” 宽。只捕获 `PermissionError` 的实现会被拒，这本身是对 base 边缘行为的回归，可以接受。
 
-**草案演进**（v1、v2 只做私有模拟；v3、v4 做了正式诊断评分）：
+**草案演进**（v1、v2 只做私有模拟；v3 做了正式诊断评分并已归档；v4 的评分〔未归档〕）：
 
 | 版本 | sha256 | 漏过的候选 | 原因与处理 |
 | --- | --- | --- | --- |
 | v1 | `20a52243…` | `warn_skip`（私有模拟得 1） | setup.cfg 把 dask 发出的 `UserWarning` 升级为异常，被 `pytest.raises(Exception)` 接住。v2 加入忽略警告 |
 | v2 | `1101172e…` | `import_swallow`（私有模拟得 1） | 只测 `collect_yaml`，没测导入路径。v3 补新进程 `import dask` |
 | v3（留档） | `bf9ff681…` | `oserr_fatal`、`rv_dir_only` 为 1；`rv_kv_pairs` 被误拒为 0 | 原拟追加 P2P 权限测试，但那两项在 root 下连 gold 都会失败（复核阻断 B1）；只测目录形态（N2）；词表没有 `key`（N3） |
-| **v4** | `91baa55d…` | 无（已知候选范围内） | 改用 `c.yaml` 子目录检查并撤掉 P2P 追加；每个实例另按文件路径加载；词表加 `key` |
+| **v4** | `91baa55d…` | 预期无（已知候选范围内），〔未归档〕，待重跑确认 | 改用 `c.yaml` 子目录检查并撤掉 P2P 追加；每个实例另按文件路径加载；词表加 `key` |
 
 ### 诊断评分汇总（正式链）
 
 - **原材料**：`replay_grade.py run`。
 - **v3 与 v4**：`replay_with_install_recipe.py --materials materials_revised_v{3,4}.json`，评分器版本分别带后缀 `+c3-dask8801-diagnosis-semantics-v3`、`-v4`，F2P／P2P 名单与测试命令不变。
 - 复核者的 3 个候选没有在 v3 上正式评分，表中 v3 列用私有模拟结果并标 *。
+- 原材料与 v3 两列取自 `evidence/formal*/formal_summary.json`（已归档）。复核者候选的原材料一列同样来自复核者的私有对照（review.md §3），也标 *；作者对它们的正式评分〔未归档〕。
+- v4 列全部〔未归档〕，待重跑后填入。
 
-@@V4_TABLE@@
+| 候选 | 性质 | 原材料 | v3 | v4 |
+| --- | --- | --- | --- | --- |
+| noop | — | 0 | 0 | 〔未归档〕 |
+| gold | 正对照 | 1 | 1 | 〔未归档〕 |
+| `syn_repr`、`gold_plain`、`syn_plain`、`typeerror`、`chain_cause`、`stream_load` | 合理（作者） | 全 0 | 全 1 | 〔未归档〕 |
+| `rv_kv_pairs` | 合理（复核者） | 0* | 0* | 〔未归档〕 |
+| `warn_skip` | 另一政策 | 0 | 0 | 〔未归档〕 |
+| `rv_import_warn` | 另一政策（复核者） | 1* | 0* | 〔未归档〕 |
+| `lists_only`、`list_str_only`、`none_raises`、`parsererror_only`、`wrong_file`、`import_swallow` | 错误 | 全 **1** | 全 0 | 〔未归档〕 |
+| `oserr_fatal` | 错误 | **1** | **1** | 〔未归档〕 |
+| `silent_skip`、`str_only`、`typeonly`、`noreason` | 错误 | 全 0 | 全 0 | 〔未归档〕 |
+| `rv_dir_only` | 错误，边缘（复核者） | 1* | 1* | 〔未归档〕 |
+
+原材料与 v3 各 20 次正式运行都是：参考缺席 0，安装 rc=0，测试段完整、解析出 45 项，清理成功；P2P 全部 41/41。
 
 ### R-f：修订题面草案 v1（未变；尚未由新公开读者验收）
 
@@ -277,21 +307,21 @@ pytest 以 nobody（UID 65534）运行；v4 测试另以 root 再跑一遍。
 
 | 项 | 内容 | 决定 | 处理 |
 | --- | --- | --- | --- |
-| B1（阻断） | 拦下 `oserr_fatal` 依赖三个条件：非 root 评分、尚未实现的改参考分组、只有推算。root 下 gold 在“41＋权限两项”口径下为 0 | 采用复核的方案 1 | v4 在 `test_collect_yaml_no_top_level_dict` 函数体内加 `c.yaml` 子目录检查，撤掉 P2P 追加。`oserr_fatal` 在 v4 正式得 0；私有对照中 v4 以 root 运行，gold 与合理实现为 1、`oserr_fatal` 为 0 |
+| B1（阻断） | 拦下 `oserr_fatal` 依赖三个条件：非 root 评分、尚未实现的改参考分组、只有推算。root 下 gold 在“41＋权限两项”口径下为 0 | 采用复核的方案 1 | v4 在 `test_collect_yaml_no_top_level_dict` 函数体内加 `c.yaml` 子目录检查，撤掉 P2P 追加。预期 `oserr_fatal` 在 v4 为 0，root 下 gold 与合理实现为 1，〔未归档〕，待重跑。复核者在改法相近的私有草案 v3rv 上已得到：`oserr_fatal` 为 0，root 下 gold 与抽查的 `syn_repr` 为 1 |
 | N1 | 导入断言只靠 P5 第一分支立足 | 登记 | §3 已写明它与 R-f 的 “including `import dask`” 同进同退，`rv_import_warn` 按第一分支被拒 |
-| N2 | 没测直接文件路径，`rv_dir_only` 在 v3 得 1 | 采纳 | 每个实例另按文件路径加载一次，`rv_dir_only` 在 v4 正式得 0 |
-| N3 | 按词判断“原因”会误拒 `rv_kv_pairs` | 采纳 | 词表加 `key`，`rv_kv_pairs` 在 v4 正式得 1；已知错误候选仍为 0 |
+| N2 | 没测直接文件路径，`rv_dir_only` 在 v3 得 1 | 采纳 | 每个实例另按文件路径加载一次，预期 `rv_dir_only` 在 v4 为 0〔未归档〕 |
+| N3 | 按词判断“原因”会误拒 `rv_kv_pairs` | 采纳 | 词表加 `key`，预期 `rv_kv_pairs` 在 v4 为 1、已知错误候选仍为 0〔未归档〕 |
 | N4 | `c.yaml` 检查比 “permission errors” 宽 | 随 B1 | 已写入 §4 的边界说明 |
-| N5 | `rv_enum_types`（只拒 list、str、int）在 v3、v4 都得 1 | 不补 `1.5`，维持 T3 | 私有对照确认它在 v4 仍为 1；顶层 `1.5` 导入时报 `AttributeError: 'float'…` 且不点名文件。见 §7 |
+| N5 | `rv_enum_types`（只拒 list、str、int）在 v3、v4 都得 1 | 不补 `1.5`，维持 T3 | 复核者的私有对照：它在 v3 与 v3rv 都为 1，顶层 `1.5` 导入时报 `AttributeError: 'float'…` 且不点名文件。作者的 v4 私有对照〔未归档〕。见 §7 |
 | N6 | `lists_only` 应记第 4 步；R-f 的 CRLF／LF；stderr 中的 `dubious ownership` 提示 | 采纳 | 步号已改；落地按字节保留；该提示不影响断言 |
 | 建议 4 | P5 只用依据 1、2 | 采纳 | §3 已改，依据 3 注明两边都能解读 |
 
-v4 尚待复核者做聚焦复核。
+v4 尚待重跑评分（现有 v4 结果〔未归档〕）和复核者的聚焦复核。
 
 ## 7．登记的缺口（T3，按 §8 抽查，本轮不修）
 
 - **顶层假值**（`0`、`false`、`[]`、`''`）：gold 拒绝，base 当作空配置。公开材料没有承诺，修订版不做断言。
-- **其它标量类型**（`float`、`bool`、日期等）：修订版只测 `int`。`rv_enum_types` 在 v4 仍为 1（N5，负责人决定不补）。自然写法是 `not isinstance(x, dict)`，只有针对测试凑类型才会恰好枚举这三种。
+- **其它标量类型**（`float`、`bool`、日期等）：修订版只测 `int`。`rv_enum_types` 在 v3 与复核者的 v3rv 上为 1，v4 上预期仍为 1〔未归档〕（N5，负责人决定不补）。自然写法是 `not isinstance(x, dict)`，只有针对测试凑类型才会恰好枚举这三种。
 - **非 UTF-8 或二进制配置文件**：会抛 `UnicodeDecodeError`，不做断言。
 - **按词判断原因**：词表是 `dict`、`mapping`、`key` 或类型名，仍是词法检查。例如只写 “expected an object／got a sequence” 的消息会被拒，这是残余的 T1 风险。
 - **`c.yaml` 检查要求一切 `OSError` 都被忽略**：只捕获 `PermissionError` 的实现会被拒，见 §4。
@@ -300,20 +330,23 @@ v4 尚待复核者做聚焦复核。
 ## 8．未做与证据
 
 **未做**：
+- v4 的私有对照与正式诊断评分：曾在云端运行，输出〔未归档〕，需重跑（命令见开头收口状态）；
+- 复核者 3 个候选的原材料正式评分：同上；
 - v4 的聚焦复核；
 - 真实 actor 开发条件；
 - 模型求解；
 - R-f 的新公开读者验收；
-- root 身份下的正式评分。正式评分器固定以 UID 54322 运行；root 下只有私有对照：v4 全部 24 个版本都跑过，v3 只跑了 gold 与 noop。
+- root 身份下的正式评分。正式评分器固定以 UID 54322 运行；root 下只有私有对照：v3 只跑了 gold 与 noop（已归档）；v4 的 24 个版本曾跑过，〔未归档〕。
 
 **证据**：
 - 代码与运行环境：见 [环境说明](../../environment.md)。
-- 候选补丁、生成脚本、修订草案：`rh2/experiments/category3_cloud_20260929/dask8801/`。
+- 候选补丁、生成脚本、修订草案：`rh2/experiments/category3_cloud_20260929/dask8801/`。v4 的测试文件是其中的 `test_config_revised_v4.py`。
 - 原始证据：[evidence/](evidence/)。
-  - `formal/`：原材料评分，含作废的 `rv_dir_only_setbug`；
-  - `formal_revised_v3/`、`formal_revised_v4/`：诊断评分；
-  - `semantic_v1/`–`semantic_v4/`、`semantic_v4_rvdir/`：私有对照，v4 覆盖 24 个版本以及原版、v3、v4（nobody）、v4（root）四组测试；
+  - `formal/`：原材料评分 20 次（noop、gold、18 个作者候选）；
+  - `formal_revised_v3/`：v3 诊断评分 20 次；
+  - `semantic_v1/`–`semantic_v3/`：私有对照；
   - `semantic_root_perm/`、`semantic_root_v3/`：root 下的权限测试与 v3 测试；
-  - `testfiles/`：各版本 `test_config.py`；
-  - `result_v3_snapshot.md`：v3 结论页留档；
+  - `testfiles/`：base、原版与 v1–v3 的 `test_config.py`；
   - 全部文件的 sha256 见 `evidence_manifest.json`。
+- 〔未归档〕：`formal_revised_v4/`、`semantic_v4/`、`semantic_v4_rvdir/`，复核者 3 个候选的原材料评分，以及作废的 `rv_dir_only_setbug` 运行。
+- v3 结论页留档：见提交 `d7afdce` 中的本文件。
