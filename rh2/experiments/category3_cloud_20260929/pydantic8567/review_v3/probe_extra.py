@@ -62,5 +62,40 @@ def _():
     return TypeAdapter(Annotated[int, PlainValidator(lambda v: int(v))]).json_schema()
 
 
+@case('S28_two_serializers_no_pv')
+def _():
+    class M(BaseModel):
+        z: Annotated[bool, PlainSerializer(lambda v: 'inner'), PlainSerializer(lambda v: 'outer')]
+
+    return M(z=True).model_dump()
+
+
+@case('S29_two_serializers_both_before_pv')
+def _():
+    class M(BaseModel):
+        z: Annotated[bool, PlainSerializer(lambda v: 'inner'), PlainSerializer(lambda v: 'outer'), PlainValidator(lambda v: bool(int(v)))]
+
+    return M(z='1').model_dump()
+
+
+@case('S30_both_sides_pv')
+def _():
+    class M(BaseModel):
+        z: Annotated[bool, PlainSerializer(lambda v: 'inner'), PlainValidator(lambda v: bool(int(v))), PlainSerializer(lambda v: 'outer')]
+
+    return M(z='1').model_dump()
+
+
+@case('S31_between_int_x10')
+def _():
+    from pydantic.functional_validators import AfterValidator
+
+    class M(BaseModel):
+        w: Annotated[int, PlainSerializer(lambda v: v * 10), AfterValidator(lambda v: 1 / 0), PlainValidator(lambda v: int(v))]
+
+    m = M(w='7')
+    return [m.w, m.model_dump(), m.model_dump_json()]
+
+
 for r in RESULTS:
     print('RH2PROBE ' + json.dumps(r, default=repr, ensure_ascii=False))

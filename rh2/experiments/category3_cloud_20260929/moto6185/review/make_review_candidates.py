@@ -11,8 +11,10 @@ base 文件可从原镜像取出：docker cp <容器>:/testbed/moto/dynamodb/mod
 - rv_scalar_s       错误：gold 写法，再把“S 的值里还有结构”当畸形而报错；名为 S、值为 map 的属性仍被拒。
 - rv_top_or_null    错误（示例字面值）：只放过顶层的 S 与值为 NULL 的 S。
 - rv_break_after_s  错误（依赖顺序）：奇偶写法，遇到名为 S 的属性校验完就 break，同层后面的属性不再校验。
-- rv_shape_key      合理（与 gold、ctx、parity 机制都不同）：按根属性名判断是否主键；非主键处 S 的值
-                    “像 AttributeValue”（单键且为已知类型标签）时当属性名。罕见路径缺口与 gold 同类。
+- rv_tagparent      错误：gold 思路的修正版，“父键不是类型标签”时才当 AttributeValue 层；属性名恰为
+                    类型标签（如名为 S 的属性）时，其畸形的 S→dict 值不再报 SerializationException。
+- rv_shape_key      与 gold 同类（主路径正确，gold 缺口 2 同样存在）：按根属性名判断是否主键；非主键处 S 的值
+                    “像 AttributeValue”（单键且为已知类型标签）时当属性名。用来查 v2 是否误拒 gold 式写法。
 - rv_dynamotype     合理（与 gold、ctx、parity 机制都不同）：用 moto 自己的 DynamoType 解析每个属性值，
                     再按类型递归（含 M 与 L）；S 的值不是字符串即报 SerializationException。
 """
@@ -143,7 +145,25 @@ CANDIDATES["rv_break_after_s"] = [(BASE_METHOD, '''    def _validate_item_types(
             if key == "S":
 ''' + S_CHECKS)]
 
-# 6. 合理：根属性名 + 值形态启发式（完整类型标签集）
+# 5b. gold 思路的“修正版”：父键不是类型标签时，这一层才是 AttributeValue
+#     属性名恰好等于类型标签（S、M、N…）时，它的值被误当成属性名层，畸形的 S→dict 不再报错
+CANDIDATES["rv_tagparent"] = [(BASE_METHOD, '''    TYPE_DESCRIPTORS = {"S", "N", "B", "SS", "NS", "BS", "M", "L", "NULL", "BOOL"}
+
+    def _validate_item_types(
+        self, item_attrs: Dict[str, Any], parent: Optional[str] = None
+    ) -> None:
+        # A dictionary directly below an attribute name is an AttributeValue, whose keys are type
+        # descriptors. The item itself, and the value of a map ('M'), hold attribute names instead
+        type_level = parent is not None and parent not in self.TYPE_DESCRIPTORS
+        for key, value in item_attrs.items():
+            if type(value) == dict:
+                self._validate_item_types(value, parent=key)
+            elif type(value) == int and key == "N":
+                raise InvalidConversion
+            if key == "S" and type_level:
+''' + S_CHECKS)]
+
+# 6. 与 gold 同类：根属性名 + 值形态启发式（完整类型标签集）
 CANDIDATES["rv_shape_key"] = [(BASE_METHOD, '''    ATTRIBUTE_VALUE_TYPES = {"S", "N", "B", "SS", "NS", "BS", "M", "L", "NULL", "BOOL"}
 
     def _validate_item_types(

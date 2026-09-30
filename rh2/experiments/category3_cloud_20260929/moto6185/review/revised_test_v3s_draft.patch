@@ -1,7 +1,7 @@
 diff --git a/tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py b/tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py
 --- a/tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py
 +++ b/tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py
-@@ -933,12 +933,83 @@ def test_put_item__string_as_integer_value():
+@@ -933,12 +933,81 @@ def test_put_item__string_as_integer_value():
      err["Code"].should.equal("SerializationException")
      err["Message"].should.equal("NUMBER_VALUE cannot be converted to String")
  
@@ -26,14 +26,13 @@ diff --git a/tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py b/tests/
 +
 +    # The issue's examples: an attribute called 'S' holding None, at the top level and
 +    # nested inside a map. 'S' is a valid attribute name anywhere in the item, however
-+    # deeply nested and whatever it holds, and the item is stored as given
++    # deeply nested, and the item is stored as given
 +    for pk, attributes in [
 +        ("issue_top_level", {"S": {"NULL": True}}),
 +        ("issue_nested", {"A": {"M": {"S": {"NULL": True}}}}),
 +        ("deeply_nested", {"A": {"M": {"B": {"M": {"S": {"S": "asdf"}}}}}}),
 +        ("nested_in_list", {"A": {"L": [{"M": {"S": {"N": "1"}}}]}}),
 +        ("five_levels_deep", five_levels_deep),
-+        ("S_holding_a_map", {"S": {"M": {"S": {"S": "asdf"}}}}),
 +    ]:
 +        item = {"pk": {"S": pk}, **attributes}
 +        client.put_item(TableName="without_sk", Item=item)
@@ -41,11 +40,10 @@ diff --git a/tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py b/tests/
 +        assert stored == item
 +
 +    # An attribute called 'S' is validated like any other attribute, and does not switch
-+    # off the validation of the other attributes or map members (see test_put_item_wrong_datatype)
++    # off the validation of the other attributes (see test_put_item_wrong_datatype)
 +    for attributes in [
 +        {"S": {"M": {"sth": {"N": 5}}}},
 +        {"S": {"S": "asdf"}, "nested": {"M": {"sth": {"N": 5}}}},
-+        {"nested": {"M": {"S": {"S": "asdf"}, "sth": {"N": 5}}}},
 +    ]:
 +        with pytest.raises(ClientError) as exc:
 +            client.put_item(

@@ -2,7 +2,7 @@
 
 每个变体：一次性容器（原镜像 c3keep/moto6185:src、--network none、root）→ git apply 候选 →
   1) probe_review.py 行为探针；
-  2) 依次套用各测试版本（原材料、v2、v2s、复核者 v3 草案），运行评分包的测试命令
+  2) 依次套用各测试版本（原材料、作者 v2、作者 v2s、复核者草案 v3），运行评分包的测试命令
      `pytest -n0 -rA` 跑 tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py，
      按 SWE 解析规则（状态词 + 节点名取到第一个空白为止，两个带空格的 `[set …]` 节点因此合并为一个键）
      逐项核对参考名单：F2P 1 项、P2P 34 项，全部 PASSED 记 1；
@@ -24,7 +24,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 EXP = HERE.parent
-REPO = HERE.parents[3]
+REPO = HERE.parents[4]
 INGEST = REPO / "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest"
 IID = "getmoto__moto-6185"
 IMAGE = "c3keep/moto6185:src"
@@ -48,7 +48,7 @@ TESTS = {
     "orig": GRADING["test_patch"],
     "v2": (EXP / "revised_test_v2.patch").read_text(),
     "v2s": (EXP / "revised_test_v2s.patch").read_text(),
-    "v3d": (HERE / "revised_test_v3_draft.patch").read_text(),
+    "v3": (HERE / "revised_test_v3_draft.patch").read_text(),
 }
 
 

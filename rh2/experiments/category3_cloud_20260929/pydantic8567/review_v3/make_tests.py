@@ -11,6 +11,9 @@
   `Annotated[bool, serializer, AfterValidator(1/0), validator]` 只查 `is True`（不把 A08 的序列化升为断言）。
 - t_v2：作者 v2 原样（父版本，用于看 v3 新拒了哪些候选）。
 - t_v3f：与 t_v3s 等价、不改 import 的写法：第 5 项字段加默认值 `= Field(strict=True)`（元数据为 [Strict, After, ser, PV]）。
+- t_v4：本复核建议的合并修订（交第2类时一并修）：t_v3s 的 StrictBool 第 5 项，加 `Between`
+  （`[PlainSerializer(v*10), AfterValidator(1/0), PV]`，验证值与 dump 都断言）与 `Both`（PV 两侧都有 serializer 时外层生效）。
+- t_v4b03：t_v4 再加 B03（未知类型、serializer 在 PV 前）一项，只作决策数据，不建议采用。
 - t_v3sx：t_v3s 再加一个单独模型，serializer 与 PV 之间夹一个不包层的约束：
   `Annotated[bool, serializer, Field(strict=True), validator]`，验证值与 dump 都断言。
 """
@@ -93,6 +96,8 @@ NEW_BLOCKS = {
     assert replaced.z is True
     assert replaced.model_dump() == {'z': '1'}
 """,
+    't_v4': "    # Metadata placed before the plain validator is still replaced by it (documented ordering of validators):\n    # neither the inner constraint (`StrictBool`) nor an inner validator applies, while the serializer is still used.\n    class Replaced(BaseModel):\n        z: Annotated[StrictBool, AfterValidator(lambda v: 1 / 0), serializer, validator]\n\n    replaced = Replaced(z='1')\n    assert replaced.z is True\n    assert replaced.model_dump() == {'z': '1'}\n\n    # The serializer is also used when other metadata sits between it and the plain validator.\n    class Between(BaseModel):\n        w: Annotated[\n            int, PlainSerializer(lambda v: v * 10), AfterValidator(lambda v: 1 / 0), PlainValidator(lambda v: int(v))\n        ]\n\n    between = Between(w='7')\n    assert between.w == 7\n    assert between.model_dump() == {'w': 70}\n\n    # With serializers on both sides of the plain validator, the outer one is used, as without the plain validator.\n    class Both(BaseModel):\n        b: Annotated[bool, PlainSerializer(lambda v: 'inner'), validator, PlainSerializer(lambda v: 'outer')]\n\n    assert Both(b='1').model_dump() == {'b': 'outer'}\n",
+    't_v4b03': "    # Metadata placed before the plain validator is still replaced by it (documented ordering of validators):\n    # neither the inner constraint (`StrictBool`) nor an inner validator applies, while the serializer is still used.\n    class Replaced(BaseModel):\n        z: Annotated[StrictBool, AfterValidator(lambda v: 1 / 0), serializer, validator]\n\n    replaced = Replaced(z='1')\n    assert replaced.z is True\n    assert replaced.model_dump() == {'z': '1'}\n\n    # The serializer is also used when other metadata sits between it and the plain validator.\n    class Between(BaseModel):\n        w: Annotated[\n            int, PlainSerializer(lambda v: v * 10), AfterValidator(lambda v: 1 / 0), PlainValidator(lambda v: int(v))\n        ]\n\n    between = Between(w='7')\n    assert between.w == 7\n    assert between.model_dump() == {'w': 70}\n\n    # With serializers on both sides of the plain validator, the outer one is used, as without the plain validator.\n    class Both(BaseModel):\n        b: Annotated[bool, PlainSerializer(lambda v: 'inner'), validator, PlainSerializer(lambda v: 'outer')]\n\n    assert Both(b='1').model_dump() == {'b': 'outer'}\n\n    # (decision data only) A serializer placed before the plain validator of a type without a pydantic schema.\n    class Custom(BaseModel):\n        c: Annotated[Unsupported, PlainSerializer(lambda v: 'custom'), PlainValidator(lambda v: Unsupported())]\n\n    assert Custom(c='x').model_dump() == {'c': 'custom'}\n",
 }
 
 IMPORT_OLD = """    PydanticUserError,

@@ -1,0 +1,27 @@
+diff --git a/moto/dynamodb/models/table.py b/moto/dynamodb/models/table.py
+--- a/moto/dynamodb/models/table.py
++++ b/moto/dynamodb/models/table.py
+@@ -484,13 +484,20 @@
+                 if DynamoType(range_value).size() > RANGE_KEY_MAX_LENGTH:
+                     raise RangeKeyTooLong
+ 
+-    def _validate_item_types(self, item_attrs: Dict[str, Any]) -> None:
++    TYPE_DESCRIPTORS = {"S", "N", "B", "SS", "NS", "BS", "M", "L", "NULL", "BOOL"}
++
++    def _validate_item_types(
++        self, item_attrs: Dict[str, Any], parent: Optional[str] = None
++    ) -> None:
++        # A dictionary directly below an attribute name is an AttributeValue, whose keys are type
++        # descriptors. The item itself, and the value of a map ('M'), hold attribute names instead
++        type_level = parent is not None and parent not in self.TYPE_DESCRIPTORS
+         for key, value in item_attrs.items():
+             if type(value) == dict:
+-                self._validate_item_types(value)
++                self._validate_item_types(value, parent=key)
+             elif type(value) == int and key == "N":
+                 raise InvalidConversion
+-            if key == "S":
++            if key == "S" and type_level:
+                 # This scenario is usually caught by boto3, but the user can disable parameter validation
+                 # Which is why we need to catch it 'server-side' as well
+                 if type(value) == int:

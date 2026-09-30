@@ -14,6 +14,9 @@
 - ok_post_attach：在 `_apply_annotations` 生成完整 schema 后，若最后一个 PV 左侧有 PlainSerializer/WrapSerializer、
   且外层（沿 function-before/after/wrap 往里看）没有 `serialization`，再把这些 serializer 依次套到最外层。
 
+首轮复核候选的重建：
+- rv_before_sem_rebuilt：按首轮 review.md §1 的描述重建：内层 schema 能生成时 PV 退化为 before 语义（先跑函数再跑内层验证）。
+
 错误候选（bad_*）：
 - bad_swap_adjacent：只在 serializer 紧挨 PV 左侧时两者互换（非紧挨时不处理）。
 - bad_swap_nearest：把最后一个 PV 与其左侧最近的 serializer 互换（两者之间的元数据被换到 PV 外层）。
@@ -121,6 +124,29 @@ PV_NEW = {
             serialization = None
 """
     + PV_TAIL_WITH_SER,
+    'rv_before_sem_rebuilt': """    def __get_pydantic_core_schema__(self, source_type: Any, handler: _GetCoreSchemaHandler) -> core_schema.CoreSchema:
+        # (rebuild of the first review's rv_before_sem) when the inner schema can be generated, run the function
+        # first and then the inner validation (before-validator semantics); otherwise keep the plain validator.
+        from .errors import PydanticSchemaGenerationError
+
+        try:
+            inner = handler(source_type)
+        except PydanticSchemaGenerationError:
+            inner = None
+        info_arg = _inspect_validator(self.func, 'plain')
+        if inner is not None:
+            if info_arg:
+                with_info = cast(core_schema.WithInfoValidatorFunction, self.func)
+                return core_schema.with_info_before_validator_function(with_info, inner, field_name=handler.field_name)
+            no_info = cast(core_schema.NoInfoValidatorFunction, self.func)
+            return core_schema.no_info_before_validator_function(no_info, inner)
+        if info_arg:
+            func = cast(core_schema.WithInfoValidatorFunction, self.func)
+            return core_schema.with_info_plain_validator_function(func, field_name=handler.field_name)
+        else:
+            func = cast(core_schema.NoInfoValidatorFunction, self.func)
+            return core_schema.no_info_plain_validator_function(func)
+""",
 }
 
 GS_ANCHOR = """        res = self._get_prepare_pydantic_annotations_for_known_type(source_type, tuple(annotations))
