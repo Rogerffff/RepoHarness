@@ -1,0 +1,150 @@
+7f247bf448ad46d40f1a665fd28551a49204a6ae2eb274c4614e12584c38bf3b  /testbed/r2e_tests/test_1.py
+[1m============================= test session starts ==============================[0m
+platform linux -- Python 3.9.21, pytest-8.3.4, pluggy-1.5.0
+rootdir: /testbed
+configfile: setup.cfg
+plugins: cov-6.0.0
+collected 95 items
+
+r2e_tests/test_1.py [32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[33ms[0m[33ms[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m [ 54%]
+[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31mF[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[32m.[0m[31m                              [100%][0m
+
+=================================== FAILURES ===================================
+[31m[1m__________________________ test_removed_transparency ___________________________[0m
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-1/test_removed_transparency0')
+
+    def test_removed_transparency(tmp_path):
+        out = str(tmp_path / "temp.gif")
+        im = Image.new("RGB", (256, 1))
+    
+        for x in range(256):
+            im.putpixel((x, 0), (x, 0, 0))
+    
+        im.info["transparency"] = (255, 255, 255)
+        with pytest.warns(UserWarning):
+>           im.save(out)
+
+[1m[31mr2e_tests/test_1.py[0m:1098: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+[1m[31msrc/PIL/Image.py[0m:2413: in save
+    save_handler(self, fp, filename)
+[1m[31msrc/PIL/GifImagePlugin.py[0m:665: in _save
+    _write_single_frame(im, fp, palette)
+[1m[31msrc/PIL/GifImagePlugin.py[0m:559: in _write_single_frame
+    _write_local_header(fp, im, (0, 0), flags)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+fp = <_io.BufferedRandom name='/tmp/pytest-of-root/pytest-1/test_removed_transparency0/temp.gif'>
+im = <PIL.Image.Image image mode=RGB size=256x1 at 0x7FD7E2950BE0>
+offset = (0, 0), flags = 0
+
+    def _write_local_header(fp, im, offset, flags):
+        transparent_color_exists = False
+        try:
+            if "transparency" in im.encoderinfo:
+                transparency = im.encoderinfo["transparency"]
+            else:
+                transparency = im.info["transparency"]
+>           transparency = int(transparency)
+[1m[31mE           TypeError: int() argument must be a string, a bytes-like object or a number, not 'tuple'[0m
+
+[1m[31msrc/PIL/GifImagePlugin.py[0m:690: TypeError
+==================================== PASSES ====================================
+[36m[1m=========================== short test summary info ============================[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_sanity[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_unclosed_file[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_closed_file[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_seek_after_close[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_context_manager[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_invalid_file[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_l_mode_transparency[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_l_mode_after_rgb[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_palette_not_needed_for_second_frame[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_strategy[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_optimize[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_optimize_correctness[256-511-256][0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_optimize_correctness[255-511-255][0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_optimize_correctness[129-511-129][0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_optimize_correctness[128-511-128][0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_optimize_correctness[64-511-64][0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_optimize_correctness[4-511-4][0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_optimize_correctness[128-513-256][0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_optimize_correctness[64-513-256][0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_optimize_correctness[4-513-256][0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_optimize_full_l[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_optimize_if_palette_can_be_reduced_by_half[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_roundtrip[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_roundtrip2[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_roundtrip_save_all[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_roundtrip_save_all_1[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_loading_multiple_palettes[Tests/images/dispose_bgnd.gif-RGB][0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_loading_multiple_palettes[Tests/images/dispose_bgnd_rgba.gif-RGBA][0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_headers_saving_for_animated_gifs[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_palette_handling[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_palette_434[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_seek[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_seek_info[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_seek_rewind[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_n_frames[Tests/images/hopper.gif-1][0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_n_frames[Tests/images/comment_after_last_frame.gif-2][0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_n_frames[Tests/images/iss634.gif-42][0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_no_change[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_eoferror[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_first_frame_transparency[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_dispose_none[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_dispose_none_load_end[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_dispose_background[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_dispose_background_transparency[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_transparent_dispose[LoadingStrategy.RGB_AFTER_FIRST-expected_colors0][0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_transparent_dispose[LoadingStrategy.RGB_AFTER_DIFFERENT_PALETTE_ONLY-expected_colors1][0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_dispose_previous[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_dispose_previous_first_frame[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_previous_frame_loaded[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_save_dispose[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_dispose2_palette[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_dispose2_diff[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_dispose2_background[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_dispose2_background_frame[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_transparency_in_second_frame[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_no_transparency_in_second_frame[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_remapped_transparency[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_duration[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_multiple_duration[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_roundtrip_info_duration[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_roundtrip_info_duration_combined[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_identical_frames[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_identical_frames_to_single_frame[duration0][0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_identical_frames_to_single_frame[duration1][0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_identical_frames_to_single_frame[8500][0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_number_of_loops[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_background[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_webp_background[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_comment[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_comment_over_255[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_zero_comment_subblocks[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_read_multiple_comment_blocks[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_empty_string_comment[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_retain_comment_in_subsequent_frames[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_version[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_append_images[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_transparent_optimize[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_rgb_transparency[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_rgba_transparency[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_bbox[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_bbox_alpha[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_palette_save_L[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_palette_save_P[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_palette_save_duplicate_entries[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_palette_save_all_P[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_palette_save_ImagePalette[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_save_I[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_getdata[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_lzw_bits[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_extents[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_missing_background[0m
+[32mPASSED[0m r2e_tests/test_1.py::[1mtest_saving_rgba[0m
+[33mSKIPPED[0m [1] r2e_tests/test_1.py:347: Netpbm not available
+[33mSKIPPED[0m [1] r2e_tests/test_1.py:358: Netpbm not available
+[31mFAILED[0m r2e_tests/test_1.py::[1mtest_removed_transparency[0m - TypeError: int() argument must be a string, a bytes-like object or a number...
+[31m=================== [31m[1m1 failed[0m, [32m92 passed[0m, [33m2 skipped[0m[31m in 0.95s[0m[31m ====================[0m
