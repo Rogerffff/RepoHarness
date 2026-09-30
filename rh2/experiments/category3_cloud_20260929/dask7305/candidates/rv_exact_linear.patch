@@ -1,0 +1,61 @@
+diff --git a/dask/dataframe/partitionquantiles.py b/dask/dataframe/partitionquantiles.py
+--- a/dask/dataframe/partitionquantiles.py
++++ b/dask/dataframe/partitionquantiles.py
+@@ -317,7 +317,10 @@
+             return np.array(None, dtype=np.float_)
+ 
+     vals, weights = vals_and_weights
+-    vals = np.array(vals)
++    if isinstance(dtype, np.dtype) and np.issubdtype(dtype, np.integer):
++        vals = np.array(vals, dtype=dtype)
++    else:
++        vals = np.array(vals)
+     weights = np.array(weights)
+ 
+     # We want to create exactly `npartition` number of groups of `vals` that
+@@ -340,7 +343,23 @@
+             # Interpolate extra divisions
+             q_weights = np.cumsum(weights)
+             q_target = np.linspace(q_weights[0], q_weights[-1], npartitions + 1)
+-            rv = np.interp(q_target, q_weights, vals)
++            if np.issubdtype(vals.dtype, np.integer):
++                # exact integer interpolation between neighbouring summary values
++                idx = np.searchsorted(q_weights, q_target, side="right") - 1
++                idx = np.clip(idx, 0, len(vals) - 1)
++                out = []
++                for t, i in zip(q_target.tolist(), idx.tolist()):
++                    if i >= len(vals) - 1:
++                        out.append(int(vals[-1]))
++                        continue
++                    a, b = int(vals[i]), int(vals[i + 1])
++                    wa, wb = float(q_weights[i]), float(q_weights[i + 1])
++                    f = 0.0 if wb == wa else (t - wa) / (wb - wa)
++                    w = int(round(min(max(f, 0.0), 1.0) * (1 << 32)))
++                    out.append(a + ((b - a) * w + (1 << 31)) // (1 << 32))
++                rv = np.array(out, dtype=vals.dtype)
++            else:
++                rv = np.interp(q_target, q_weights, vals)
+         else:
+             # Distribute the empty partitions
+             duplicated_index = np.linspace(
+@@ -413,6 +432,20 @@
+     if is_categorical_dtype(data):
+         data = data.codes
+         interpolation = "nearest"
++    elif np.issubdtype(data.dtype, np.integer):
++        # Linear interpolation computed with Python integers: float64 cannot
++        # hold every large integer.
++        s = np.sort(np.asarray(data))
++        pos = np.asarray(qs, dtype=float) / 100.0 * (len(s) - 1)
++        lo_i = np.floor(pos).astype(np.intp)
++        hi_i = np.minimum(lo_i + 1, len(s) - 1)
++        out = []
++        for i, j, f in zip(lo_i.tolist(), hi_i.tolist(), (pos - lo_i).tolist()):
++            a, b = int(s[i]), int(s[j])
++            w = int(round(min(max(f, 0.0), 1.0) * (1 << 32)))
++            out.append(a + ((b - a) * w + (1 << 31)) // (1 << 32))
++        vals = np.array(out, dtype=s.dtype)
++        return percentiles_to_weights(qs, vals, length)
+     vals, n = _percentile(data, qs, interpolation=interpolation)
+     if interpolation == "linear" and np.issubdtype(data.dtype, np.integer):
+         vals = np.round(vals).astype(data.dtype)

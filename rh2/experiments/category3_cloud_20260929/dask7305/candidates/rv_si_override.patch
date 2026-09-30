@@ -1,0 +1,22 @@
+diff --git a/dask/dataframe/shuffle.py b/dask/dataframe/shuffle.py
+--- a/dask/dataframe/shuffle.py
++++ b/dask/dataframe/shuffle.py
+@@ -496,6 +496,18 @@
+         mins = methods.tolist(mins)
+         maxes = methods.tolist(maxes)
+ 
++        if (
++            pd.api.types.is_integer_dtype(index2.dtype)
++            and len(divisions)
++            and not pd.isnull(divisions).any()
++        ):
++            # use the exact minimum and maximum for the outer divisions
++            known_mins = [m for m in mins if not pd.isnull(m)]
++            known_maxes = [m for m in maxes if not pd.isnull(m)]
++            if known_mins and known_maxes:
++                divisions[0] = min(known_mins)
++                divisions[-1] = max(known_maxes)
++
+         empty_dataframe_detected = pd.isnull(divisions).all()
+         if repartition or empty_dataframe_detected:
+             total = sum(sizes)
