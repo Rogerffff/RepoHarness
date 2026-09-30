@@ -1,0 +1,34 @@
+# 复核者私有模拟评分汇总（root 一次性断网容器；h1u/h4u 为 UID 54322 私有近似）
+# 材料：h0=原测试 ff7a439c；h1=作者 v1 7f247bf4；h2=作者 v1 无 warns 7ca12079；h4=复核 v2 3573f459；h5=复核 v2 无 warns 6fd35e4b
+# 每格：reward（上游口径；RH2 生产口径逐格一致）。T=目标键 test_removed_transparency 失败；+n=另有 n 个回归键失败
+candidate         h0       h1       h2nw     h4       h5nw     h1u      h4u      
+base              0T       0T       0T       0T       0T       0T       0T       
+gold              1        1        1        1        1        1        1        
+alt_typeerror     1        1        1        1        1        1        1        
+alt_frame         1        1        1        1        1        -        -        
+alt_integral      1        1        1        1        1        -        -        
+alt_prestrip_warn 1        1        1        1        1        -        -        
+r_retry           1        1        1        1        1        1        1        
+r_none_marker     1        1        1        1        1        -        -        
+r_kwtuple         1        1        1        1        1        1        1        
+q_prestrip        0T       0T       1        0T       1        0T       0T       
+w_literal         1        0T       0T       0T       0T       0T       0T       
+w_count256        1        0T       0T       0T       0T       -        -        
+w_notin_image     1        0T       0T       0T       0T       -        -        
+w_drop_full       1        0T       0T       0T       0T       -        -        
+w_drop_big        1        0T       0T       0T       0T       -        -        
+w_mutate          1        0T       0T       0T       0T       0T       0T       
+w_convert_mutate  1        0T       0T       0T       0T       -        -        
+deg_off           0+7      0T+7     0T+7     0T+7     0T+7     -        -        
+w_silent          0T+1     0T+1     0+1      0T+1     0+1      -        -        
+w_swallow_save    0T       0T       0T       0T       0T       -        -        
+w_keep_trns       0T       0T       0T       0T       0T       -        -        
+w_nearest         0T       0T       0T       0T       0T       -        -        
+w_imout           0+1      0+1      0+1      0+1      0+1      -        -        
+w_getcolors256    1        0T       0T       0T       0T       -        -        
+w_mutate_kept     1        1        1        0T       0T       1        0T       
+w_nosaveall       1        1        1        0T       0T       1        0T       
+w_order_cache     1        1        1        0T       0T       1        0T       
+w_filter_leak     0T       0T       1        0T       1        0T       0T       
+# 回归键：deg_off +7（dispose2_diff、remapped_transparency、rgb_transparency、rgba_transparency、saving_rgba、transparency_in_second_frame、transparent_optimize）；w_silent +1（rgb_transparency）；w_imout +1（transparent_optimize）
+# cells=164，上游口径与 RH2 生产口径逐格一致=True；每格均解析到 93 键且无 unexpected=True

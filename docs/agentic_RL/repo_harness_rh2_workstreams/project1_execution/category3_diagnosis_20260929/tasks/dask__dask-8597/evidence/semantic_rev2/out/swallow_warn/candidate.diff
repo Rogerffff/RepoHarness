@@ -1,0 +1,16 @@
+diff --git a/dask/array/slicing.py b/dask/array/slicing.py
+index 3b614c67c..8345e0651 100644
+--- a/dask/array/slicing.py
++++ b/dask/array/slicing.py
+@@ -644,7 +644,10 @@ def take(outname, inname, chunks, index, itemsize, axis=0):
+     if math.isnan(other_numel):
+         warnsize = maxsize = math.inf
+     else:
+-        maxsize = math.ceil(nbytes / (other_numel * itemsize))
++        try:
++            maxsize = math.ceil(nbytes / (other_numel * itemsize))
++        except OverflowError:
++            maxsize = math.inf
+         warnsize = maxsize * 5
+ 
+     split = config.get("array.slicing.split-large-chunks", None)

@@ -1,0 +1,24 @@
+diff --git a/src/PIL/GifImagePlugin.py b/src/PIL/GifImagePlugin.py
+index cf2993e38..503a2c643 100644
+--- a/src/PIL/GifImagePlugin.py
++++ b/src/PIL/GifImagePlugin.py
+@@ -661,6 +661,10 @@ def _save(im, fp, filename, save_all=False):
+         palette = None
+         im.encoderinfo["optimize"] = im.encoderinfo.get("optimize", True)
+ 
++    if not save_all and isinstance(im.info.get("transparency"), tuple):
++        # frames written by _write_multiple_frames are normalized already;
++        # only the single image path looks at the original RGB colour
++        im.encoderinfo["_rgb_transparency"] = True
+     if not save_all or not _write_multiple_frames(im, fp, palette):
+         _write_single_frame(im, fp, palette)
+ 
+@@ -685,6 +689,8 @@ def _write_local_header(fp, im, offset, flags):
+     try:
+         if "transparency" in im.encoderinfo:
+             transparency = im.encoderinfo["transparency"]
++        elif im.encoderinfo.get("_rgb_transparency"):
++            raise KeyError("transparency")
+         else:
+             transparency = im.info["transparency"]
+         transparency = int(transparency)

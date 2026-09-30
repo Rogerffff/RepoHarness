@@ -1,0 +1,16 @@
+        out = str(tmp_path / "temp.gif")
+        im.save(out, transparency=im.getpixel((252, 0)))
+    
+        with Image.open(out) as reloaded:
+>           assert reloaded.info["transparency"] == reloaded.getpixel((252, 0))
+E           assert 253 == 252
+E            +  where 252 = getpixel((252, 0))
+E            +    where getpixel = <PIL.GifImagePlugin.GifImageFile image mode=P size=253x1 at 0x7FD4093114C0>.getpixel
+
+Tests/test_file_gif.py:1086: AssertionError
+=========================== short test summary info ============================
+SKIPPED [1] Tests/test_file_gif.py:347: Netpbm not available
+SKIPPED [1] Tests/test_file_gif.py:358: Netpbm not available
+FAILED Tests/test_file_gif.py::test_transparent_optimize - assert 253 == 252
+1 failed, 118 passed, 2 skipped in 0.98s
+pytest_rc=1

@@ -1,0 +1,33 @@
+diff --git a/src/PIL/GifImagePlugin.py b/src/PIL/GifImagePlugin.py
+index cf2993e38..a24672fd7 100644
+--- a/src/PIL/GifImagePlugin.py
++++ b/src/PIL/GifImagePlugin.py
+@@ -547,6 +547,10 @@ def _write_single_frame(im, fp, palette):
+     im_out = _normalize_mode(im)
+     for k, v in im_out.info.items():
+         im.encoderinfo.setdefault(k, v)
++    if "transparency" not in im.encoderinfo and "transparency" in im.info:
++        # normalizing the mode removed the transparency (e.g. an RGB colour
++        # with no palette entry left); do not pick it up from im.info again
++        im.encoderinfo["transparency"] = None
+     im_out = _normalize_palette(im_out, palette, im.encoderinfo)
+ 
+     for s in _get_global_header(im_out, im.encoderinfo):
+@@ -687,6 +691,8 @@ def _write_local_header(fp, im, offset, flags):
+             transparency = im.encoderinfo["transparency"]
+         else:
+             transparency = im.info["transparency"]
++        if transparency is None:
++            raise KeyError("transparency")
+         transparency = int(transparency)
+     except (KeyError, ValueError):
+         pass
+@@ -915,7 +921,7 @@ def _get_global_header(im, info):
+     if im.info.get("version") == b"89a" or (
+         info
+         and (
+-            "transparency" in info
++            info.get("transparency") is not None
+             or "loop" in info
+             or info.get("duration")
+             or info.get("comment")

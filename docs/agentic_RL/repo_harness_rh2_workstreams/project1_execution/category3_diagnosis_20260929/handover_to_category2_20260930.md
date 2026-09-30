@@ -31,12 +31,13 @@
 | SWE dask-8801 | v5 `59293680…`（v4＋B2 修正＋词表调整；41 次诊断评分与复核预期一致） | gold | **须处理**：`rv_enum_types`（`1.5` 实例）、原因判定的设计、`wr_null_raises`、`wr_perm_fatal`（v5 下仍为 1）；R-f 新公开读者验收 |
 | SWE dask-7305 | R-b/R-c v2 `6e96caa7…`（27 次诊断评分符合预期） | `gold_full`（主）、`exact_full`、`higher_full`（独立核实，限公开大整数范围） | `npartitions="auto"` 路径三份正对照都丢 1 行（范围外，须登记处置）；v2 聚焦复核由第2类承接 |
 
-**09-30 续接后追加**（Codex 复核时列为“继续完成诊断”，之后完成独立复核）：
+**09-30 续接后追加**（Codex 复核时列为“继续完成诊断”，之后完成作者诊断与独立复核）：
 
 | 题目 | 采用版本 | 可信正对照 | 重要余项（修好后才能按用途验收） |
 | --- | --- | --- | --- |
 | SWE moto-6185 | R-c v3 `fc65a527…332d`（v2s 路线＋复核 B2、B3 实例；只有私有模拟） | `ctx`（主）、`parity`（独立核实）；gold 失败按 D4 留档 | 第2类落地后做一次正式诊断评分，与复核 v3 列逐格一致即完成；登记项见条目 |
 | SWE pydantic-8316 | R-c v3 `b248daa2…81e0`（复核草案；34 格诊断评分与复核预期逐格一致） | gold；`keep_digit`、`upstream_main`（两种数字读法） | 数字边界登记为 gold 的范围外行为变化（新旧都接受，不属 P5）；T3 阈值余量只登记 |
+| R2E pillow__a682ceaf | R-c v2 编辑块 `21581578…`（复核草案，隐藏测试 `3573f459…`，93 键不变；只有私有模拟） | gold；`alt_typeerror`、`r_kwtuple` 等合理实现 | 第2类在 R2E 正式评分链上跑一轮，与复核 h4 列一致即完成；`pytest.warns` 保留 |
 
 首批中 **dask-9378 暂不交第2类**：`da.ma` 新 API 是否为唯一目标仍需选择，见[题页](tasks/dask__dask-9378/result.md)。
 
@@ -214,3 +215,18 @@
   - 复验时建议把复核者的 12 个候选一并纳入（`rv_tokens`、`rv_scan_gold` 能同时检查两类未规定行为没有被误拒）；
   - 固定等效派生镜像的 wheel 清单；actor 条件未验；Codex 复核。
 - **正式落地前置**：D6 测试补丁替换；pydantic_v1 派生镜像（云端等效重建）。
+
+### R2E pillow__a682ceaf（09-30 追加）
+
+- **公开目标**：`info["transparency"]` 是元组、分配不到调色板项时，保存 GIF 不抛异常且不带透明度（任何这类图与颜色，含 `save_all=True`）；元组能用时仍保留透明度（与之前保存过什么图无关）；保存不改被保存的图的 `info`；保存时发出 UserWarning（base 行为与公开测试 `test_trns_RGB`、`test_rgb_transparency` 支持，不限文案）。
+- **采用版本**：复核者合并草案 v2，编辑块 [`revision_draft_review_v2.json`](../../../../../rh2/experiments/category3_cloud_20260929/pillow_a682/review/materials/revision_draft_review_v2.json)（`21581578…`），修订后测试文件 `hidden_test_1_review_v2.py`（`3573f459…`）；期望映射不变（`a465b6c9…`，93 键）。父版本为作者 v1（`ff7a439c…` → `7f247bf4…`）。
+- **证据层级**：R2E 在云端没有正式评分链，全部是私有模拟（运行评分包 `run_tests.sh`，逐键对照期望映射；上游口径与 RH2 生产口径 164 格逐格一致；关键候选以 UID 54322 复跑）。
+- **v2 私有模拟**：gold、作者 4 个与复核者 3 个合理实现为 1；上游 10.1.0、10.4.0、11.3.0 通过；noop、作者 13 个与复核者 5 个错误候选、`q_prestrip` 为 0。
+- **已证错误候选**：原测试放过作者 7 个触发反例（`w_literal`、`w_count256`、`w_notin_image`、`w_drop_full`、`w_drop_big`、`w_mutate`、`w_convert_mutate`）与复核者的 4 个；作者 v1 放过复核者的 `w_mutate_kept`、`w_nosaveall`、`w_order_cache`。
+- **重要余项**：
+  - 第2类在 R2E 正式评分链上跑一轮，与复核 review.md §3.2 表的 h4 列一致即完成，不再需要聚焦复核；最少跑 gold、`alt_typeerror`、`r_kwtuple`（期望 1）与 noop、作者 7 个触发反例、`w_mutate_kept`、`w_nosaveall`、`w_order_cache`、`w_filter_leak`、`q_prestrip`（期望 0）；
+  - `pytest.warns` 保留；有意去掉警告的写法得 0，写进题卡的训练价值备注；
+  - 只登记、不再阻断：只在多于 256 色的图上改调用者 `info`；只在示例以外的路径去掉警告；关键字元组、`getdata`、RGB 整数透明度、RGBA 或 P 图带元组；GIF 版本号；其它解码器；
+  - X1（同仓 6 道 R2E pillow 题的修复都在本题工作树的祖先里）、E3（来源镜像 `.git` 含修复提交对象，派生镜像已清理）；
+  - Codex 复核修订条目。
+- **正式落地前置**：R2E 材料修订一条（`hidden_test_text_replace`），出新 pins、重建派生镜像。

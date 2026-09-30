@@ -1,0 +1,50 @@
+============================= test session starts ==============================
+platform linux -- Python 3.9.19, pytest-7.4.4, pluggy-1.5.0
+rootdir: /testbed
+configfile: setup.cfg
+plugins: rerunfailures-14.0, xdist-3.6.1, cov-5.0.0
+collected 17 items
+
+dask/array/tests/test_c3_rev_cases_tmp.py ................F              [100%]
+
+=================================== FAILURES ===================================
+_____________________________ test_default_warning _____________________________
+
+    def test_default_warning():
+        with dask.config.set({"array.chunk-size": "0.1Mb"}):
+            a = np.arange(2 * 128 * 128, dtype="int64").reshape(2, 128, 128)
+            arr = da.from_array(a, chunks=(1, 128, 128))
+            with pytest.warns(da.PerformanceWarning):
+>               arr[[0] + [1] * 11]
+E               Failed: DID NOT WARN. No warnings of type (<class 'dask.array.core.PerformanceWarning'>,) were emitted.
+E               The list of emitted warnings is: [].
+
+dask/array/tests/test_c3_rev_cases_tmp.py:39: Failed
+==================================== PASSES ====================================
+============================= slowest 10 durations =============================
+0.01s call     dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c4_index12000-None]
+0.01s call     dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c4_index12000-True]
+0.01s call     dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c4_index12000-False]
+
+(7 durations < 0.005s hidden.  Use -vv to show these durations.)
+=========================== short test summary info ============================
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_orig
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c1_issue-None]
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c1_issue-False]
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c1_issue-True]
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c2_zero_first_axis1-None]
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c2_zero_first_axis1-False]
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c2_zero_first_axis1-True]
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c3_mid_zero_i4_multichunk-None]
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c3_mid_zero_i4_multichunk-False]
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c3_mid_zero_i4_multichunk-True]
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c4_index120-None]
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c4_index120-False]
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c4_index120-True]
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c4_index12000-None]
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c4_index12000-False]
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c4_index12000-True]
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_default_warning - Fail...
+========================= 1 failed, 16 passed in 0.50s =========================
+
+

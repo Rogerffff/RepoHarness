@@ -1,0 +1,23 @@
+--- a/src/PIL/GifImagePlugin.py
++++ b/src/PIL/GifImagePlugin.py
+@@ -556,7 +556,19 @@
+     flags = 0
+     if get_interlace(im):
+         flags = flags | 64
+-    _write_local_header(fp, im, (0, 0), flags)
++    try:
++        _write_local_header(fp, im, (0, 0), flags)
++    except TypeError:
++        if "transparency" in im.encoderinfo or not isinstance(
++            im.info.get("transparency"), tuple
++        ):
++            raise
++        # the RGB colour could not be given a palette entry when the mode was
++        # normalized, so write the header as if there were no transparency
++        header_im = im.copy()
++        del header_im.info["transparency"]
++        header_im.encoderinfo = im.encoderinfo
++        _write_local_header(fp, header_im, (0, 0), flags)
+ 
+     im_out.encoderconfig = (8, get_interlace(im))
+     ImageFile._save(im_out, fp, [("gif", (0, 0) + im.size, 0, RAWMODE[im_out.mode])])

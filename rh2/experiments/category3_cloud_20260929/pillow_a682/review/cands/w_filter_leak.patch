@@ -1,0 +1,34 @@
+--- a/src/PIL/GifImagePlugin.py
++++ b/src/PIL/GifImagePlugin.py
+@@ -28,6 +28,7 @@
+ import math
+ import os
+ import subprocess
++import warnings
+ from enum import IntEnum
+ 
+ from . import Image, ImageChops, ImageFile, ImagePalette, ImageSequence
+@@ -481,6 +482,10 @@
+         im.load()
+         return im
+     if Image.getmodebase(im.mode) == "RGB":
++        # a colour that cannot be kept is simply not saved; no need to warn
++        warnings.filterwarnings(
++            "ignore", message="Couldn't allocate palette entry for transparency"
++        )
+         im = im.convert("P", palette=Image.Palette.ADAPTIVE)
+         if im.palette.mode == "RGBA":
+             for rgba in im.palette.colors:
+@@ -683,11 +688,7 @@
+ def _write_local_header(fp, im, offset, flags):
+     transparent_color_exists = False
+     try:
+-        if "transparency" in im.encoderinfo:
+-            transparency = im.encoderinfo["transparency"]
+-        else:
+-            transparency = im.info["transparency"]
+-        transparency = int(transparency)
++        transparency = int(im.encoderinfo["transparency"])
+     except (KeyError, ValueError):
+         pass
+     else:

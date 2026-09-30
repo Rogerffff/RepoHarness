@@ -1,0 +1,22 @@
+{
+ "revision_id": "（待第2类分配，接在 material_revisions_v11 之后；替代作者草案 v1）",
+ "instance_id": "pillow__a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90",
+ "kind": "hidden_test_text_replace",
+ "target": "test_1.py",
+ "edits": [
+  {
+   "old": "    with Image.open(out) as reloaded:\n        assert \"transparency\" not in reloaded.info\n\n\ndef test_rgb_transparency(tmp_path):\n",
+   "new": "    with Image.open(out) as reloaded:\n        assert \"transparency\" not in reloaded.info\n\n    # Saving does not change the image that was saved\n    assert im.info[\"transparency\"] == (255, 255, 255)\n\n    # The same image saved with save_all=True, as a single frame\n    im.save(out, save_all=True)\n\n    with Image.open(out) as reloaded:\n        assert \"transparency\" not in reloaded.info\n\n    # The same colour is still used for an image with a free palette entry\n    im = Image.new(\"RGB\", (1, 1))\n    im.info[\"transparency\"] = (255, 255, 255)\n    im.save(out)\n\n    with Image.open(out) as reloaded:\n        assert \"transparency\" in reloaded.info\n\n    # An RGB image with more than 256 colours, where the transparent colour\n    # cannot be allocated in the palette either\n    im = hopper(\"RGB\")\n    im.info[\"transparency\"] = im.getpixel((0, 0))\n    im.save(out)\n\n    with Image.open(out) as reloaded:\n        assert \"transparency\" not in reloaded.info\n    assert im.info[\"transparency\"] == im.getpixel((0, 0))\n\n    # A transparent colour that is already in the full palette is still used\n    im = Image.new(\"RGB\", (256, 1))\n    for x in range(256):\n        im.putpixel((x, 0), (x, 0, 0))\n    im.info[\"transparency\"] = (255, 0, 0)\n    im.save(out)\n\n    with Image.open(out) as reloaded:\n        assert reloaded.info[\"transparency\"] == reloaded.getpixel((255, 0))\n    assert im.info[\"transparency\"] == (255, 0, 0)\n\n    # Also when the image has more than 256 colours\n    im = hopper(\"RGB\")\n    im.paste((0, 255, 0), (0, 0, 128, 32))\n    im.info[\"transparency\"] = (0, 255, 0)\n    im.save(out)\n\n    with Image.open(out) as reloaded:\n        assert reloaded.info[\"transparency\"] == reloaded.getpixel((0, 0))\n\n\ndef test_rgb_transparency(tmp_path):\n"
+  }
+ ],
+ "sha256_before": "sha256:ff7a439c78692859c69b257f6a50b8ecc4a0386f87b9ed57dfbc32c9fd6efb5c",
+ "sha256_after": "sha256:3573f459d7e313f7b3ca14ae691fccc9268d82ba079de8c7cdb870abf466274a",
+ "revised_file": "rh2/experiments/category3_cloud_20260929/pillow_a682/review/materials/hidden_test_1_review_v2.py（草案位置）",
+ "expected_change": null,
+ "decision_ref": "统一标准 v1 §5 / §9 D4（R-c，Claude 执行、Codex 复核）",
+ "reason": "独立复核（09-30）：在作者 R-c v1 之上补三处窄检查，键集与期望映射不变（93 键），正对照 gold。B1 透明色能用时保存也不改调用者 im.info（(b) 后断言，触发反例 w_mutate_kept）；B2 save_all=True 单帧同样不抛异常、不带透明度（触发反例 w_nosaveall）；B3 示例之后，同一颜色在调色板有空位的 1x1 图上仍保留透明度（触发反例 w_order_cache）。父草案：rh2/experiments/category3_cloud_20260929/pillow_a682/revision_draft_v1.json（作者 R-c v1，sha256_after 7f247bf4…）",
+ "evidence": [
+  "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category3_diagnosis_20260929/tasks/pillow__a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90/review.md",
+  "rh2/experiments/category3_cloud_20260929/pillow_a682/review/evidence/"
+ ]
+}

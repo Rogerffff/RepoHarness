@@ -1,0 +1,28 @@
+{
+ "image": "c3keep/pillow_a682:src",
+ "python_prefix": "/testbed/.venv",
+ "variants": {
+  "r_kwtuple": [
+   "git apply /in/r_kwtuple.patch && git diff --stat"
+  ]
+ },
+ "files": {
+  "run_tests.sh": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow_a682/run_tests.sh",
+  "probe_review.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow_a682/review/probe_review.py",
+  "hidden_test_1_revised_v1.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow_a682/hidden_test_1_revised_v1.py",
+  "hidden_test_1_review_v2.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow_a682/review/materials/hidden_test_1_review_v2.py",
+  "r_kwtuple.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow_a682/review/cands/r_kwtuple.patch"
+ },
+ "commands": [
+  {
+   "id": "h1u_rev1",
+   "cmd": "rm -rf /testbed/r2e_tests && cp -r /r2e_tests /testbed/r2e_tests && cp /in/hidden_test_1_revised_v1.py /testbed/r2e_tests/test_1.py && sha256sum /testbed/r2e_tests/test_1.py && chmod 755 /root && chown -R 54322:54322 /testbed && rm -rf /tmp/u54322 && mkdir -p /tmp/u54322 && chown 54322:54322 /tmp/u54322 && HOME=/tmp/u54322 TMPDIR=/tmp/u54322 setpriv --reuid=54322 --regid=54322 --clear-groups bash /in/run_tests.sh 2>&1; rm -rf /testbed/r2e_tests",
+   "timeout_s": 900
+  },
+  {
+   "id": "h4u_rv2",
+   "cmd": "rm -rf /testbed/r2e_tests && cp -r /r2e_tests /testbed/r2e_tests && cp /in/hidden_test_1_review_v2.py /testbed/r2e_tests/test_1.py && sha256sum /testbed/r2e_tests/test_1.py && chmod 755 /root && chown -R 54322:54322 /testbed && rm -rf /tmp/u54322 && mkdir -p /tmp/u54322 && chown 54322:54322 /tmp/u54322 && HOME=/tmp/u54322 TMPDIR=/tmp/u54322 setpriv --reuid=54322 --regid=54322 --clear-groups bash /in/run_tests.sh 2>&1; rm -rf /testbed/r2e_tests",
+   "timeout_s": 900
+  }
+ ]
+}

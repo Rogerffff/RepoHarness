@@ -4,7 +4,8 @@
 - 镜像：compat_v1 云端等效派生镜像（base + /opt/rh2/compat-wheels/pytest-7.4.4），每个变体先离线装 pytest 7.4.4，
   与 compat_v1 配方的 revised_install 相同，使公开旧测试里的 pytest.warns(None) 可以运行；
 - v1：env、behavior（私有矩阵）、orig_file（应用原 test_patch 后跑整份 test_slicing.py，即私有模拟评分）；
-- v2：env、rev_file（应用修订测试草案后跑整份 test_slicing.py）、rev_cases（修订测试逐实例核对）。
+- v2：env、rev_file（应用修订测试草案 v1 后跑整份 test_slicing.py）、rev_cases（逐实例核对）；
+- rev2：同 v2，但应用修订测试草案 v2。
 """
 import json
 import sys
@@ -19,9 +20,9 @@ TESTFILE = "dask/array/tests/test_slicing.py"
 PYTEST = f"python -m pytest -n0 -rA --color=no -p no:cacheprovider {TESTFILE}"
 
 CANDS = [
-    "clamp1", "lazy_threshold", "errstate_catch", "eager_empty",
+    "clamp1", "lazy_threshold", "errstate_catch", "eager_empty", "eager_single_chunk",
     "split_only", "split_only_zero", "last_axis_only", "axis0_only", "swallow_warn", "swallow_self",
-    "warn_zero", "cap_one", "single_block", "float_blocks", "float_blocks_dep", "return_numpy", "dedup_slice",
+    "warn_zero", "cap_one", "cap_hundred", "single_block", "float_blocks", "float_blocks_dep", "return_numpy", "dedup_slice",
 ]
 
 
@@ -39,8 +40,9 @@ def main():
              "gold.patch": str(W / "gold/dask__dask-8597.gold.patch")}
     for c in CANDS:
         files[f"{c}.patch"] = str(E / f"candidates/{c}.patch")
-    if version == "v2":
-        files["test_rev.patch"] = str(E / "revised_test_v1.patch")
+    if version in ("v2", "rev2"):
+        # v2 = 修订测试草案 v1；rev2 = 修订测试草案 v2（c4 由 120 个下标改为 12000 个）
+        files["test_rev.patch"] = str(E / ("revised_test_v1.patch" if version == "v2" else "revised_test_v2.patch"))
         files["rev_cases.py"] = str(E / "rev_cases.py")
     env = {"id": "env", "timeout_s": 120,
            "cmd": "id -u; python -c 'import sys,numpy,dask,pytest; print(sys.version.split()[0], numpy.__version__, "

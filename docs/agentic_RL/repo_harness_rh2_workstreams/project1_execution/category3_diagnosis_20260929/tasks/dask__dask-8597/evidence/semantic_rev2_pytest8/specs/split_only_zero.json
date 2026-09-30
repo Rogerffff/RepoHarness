@@ -1,0 +1,33 @@
+{
+ "image": "c3keep/dask8597:src",
+ "python_prefix": "/opt/miniconda3/envs/testbed",
+ "variants": {
+  "split_only_zero": [
+   "git apply /in/split_only_zero.patch"
+  ]
+ },
+ "files": {
+  "test_rev.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8597/revised_test_v2.patch",
+  "gold.patch": "/home/user/RepoHarness/runs/category3_cloud_20260929/dask8597/gold/dask__dask-8597.gold.patch",
+  "split_only_zero.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8597/candidates/split_only_zero.patch",
+  "cap_hundred.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8597/candidates/cap_hundred.patch",
+  "rev_cases.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8597/rev_cases.py"
+ },
+ "commands": [
+  {
+   "id": "env",
+   "timeout_s": 120,
+   "cmd": "python -c 'import pytest,numpy; print(pytest.__version__, numpy.__version__)'"
+  },
+  {
+   "id": "rev_file",
+   "timeout_s": 1200,
+   "cmd": "git apply /in/test_rev.patch && python -m pytest -n0 -rA --color=no -p no:cacheprovider dask/array/tests/test_slicing.py > /tmp/t.txt 2>&1; rc=$?; git checkout -- dask/array/tests/test_slicing.py; cat /tmp/t.txt; exit $rc"
+  },
+  {
+   "id": "rev_cases",
+   "timeout_s": 600,
+   "cmd": "python /in/rev_cases.py"
+  }
+ ]
+}

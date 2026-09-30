@@ -1,0 +1,1367 @@
+!= axis]
+        other_numel = np.prod([sum(x) for x in other_chunks])
+    
+        if math.isnan(other_numel):
+            warnsize = maxsize = math.inf
+        else:
+            try:
+>               maxsize = math.ceil(nbytes / (other_numel * itemsize))
+E               RuntimeWarning: divide by zero encountered in scalar divide
+
+dask/array/slicing.py:648: RuntimeWarning
+__________________________ test_case[c1_issue-False] ___________________________
+
+case = 'c1_issue', split = False
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+>           result = da.from_array(x, chunks=chunks)[index]
+
+dask/array/tests/test_c3_rev_cases_tmp.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/core.py:1847: in __getitem__
+    dsk, chunks = slice_array(out, self.name, self.chunks, index2, self.itemsize)
+dask/array/slicing.py:174: in slice_array
+    dsk_out, bd_out = slice_with_newaxes(out_name, in_name, blockdims, index, itemsize)
+dask/array/slicing.py:196: in slice_with_newaxes
+    dsk, blockdims2 = slice_wrap_lists(out_name, in_name, blockdims, index2, itemsize)
+dask/array/slicing.py:262: in slice_wrap_lists
+    blockdims2, dsk3 = take(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+outname = 'getitem-699560f8818a91e0d5306373fc04406d'
+inname = 'array-87be02fd370f73dc8948a00205af12c0', chunks = ((3,), (0,))
+index = array([0]), itemsize = 8, axis = 0
+
+    def take(outname, inname, chunks, index, itemsize, axis=0):
+        """Index array with an iterable of index
+    
+        Handles a single index by a single list
+    
+        Mimics ``np.take``
+    
+        >>> from pprint import pprint
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [5, 1, 47, 3], 8, axis=0)
+        >>> chunks
+        ((2, 1, 1),)
+        >>> pprint(dsk)   # doctest: +ELLIPSIS
+        {('y', 0): (<function getitem at ...>, ('x', 0), (array([5, 1]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),)),
+         ('y', 2): (<function getitem at ...>, ('x', 0), (array([3]),))}
+    
+        When list is sorted we retain original block structure
+    
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [1, 3, 5, 47], 8, axis=0)
+        >>> chunks
+        ((3, 1),)
+        >>> pprint(dsk)     # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+        {('y', 0): (<function getitem at ...>,
+                    ('x', 0),
+                    (array([1, 3, 5]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),))}
+    
+        When any indexed blocks would otherwise grow larger than
+        dask.config.array.chunk-size, we might split them,
+        depending on the value of ``dask.config.slicing.split-large-chunks``.
+    
+        >>> import dask
+        >>> with dask.config.set({"array.slicing.split-large-chunks": True}):
+        ...      chunks, dsk = take('y', 'x', [(1, 1, 1), (1000, 1000), (1000, 1000)],
+        ...                        [0] + [1] * 6 + [2], axis=0, itemsize=8)
+        >>> chunks
+        ((1, 3, 3, 1), (1000, 1000), (1000, 1000))
+        """
+        from .core import PerformanceWarning
+    
+        plan = slicing_plan(chunks[axis], index)
+        if len(plan) >= len(chunks[axis]) * 10:
+            factor = math.ceil(len(plan) / len(chunks[axis]))
+    
+            warnings.warn(
+                "Slicing with an out-of-order index is generating %d "
+                "times more chunks" % factor,
+                PerformanceWarning,
+                stacklevel=6,
+            )
+        if not is_arraylike(index):
+            index = np.asarray(index)
+    
+        # Check for chunks from the plan that would violate the user's
+        # configured chunk size.
+        nbytes = utils.parse_bytes(config.get("array.chunk-size"))
+        other_chunks = [chunks[i] for i in range(len(chunks)) if i != axis]
+        other_numel = np.prod([sum(x) for x in other_chunks])
+    
+        if math.isnan(other_numel):
+            warnsize = maxsize = math.inf
+        else:
+            try:
+>               maxsize = math.ceil(nbytes / (other_numel * itemsize))
+E               RuntimeWarning: divide by zero encountered in scalar divide
+
+dask/array/slicing.py:648: RuntimeWarning
+___________________________ test_case[c1_issue-True] ___________________________
+
+case = 'c1_issue', split = True
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+>           result = da.from_array(x, chunks=chunks)[index]
+
+dask/array/tests/test_c3_rev_cases_tmp.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/core.py:1847: in __getitem__
+    dsk, chunks = slice_array(out, self.name, self.chunks, index2, self.itemsize)
+dask/array/slicing.py:174: in slice_array
+    dsk_out, bd_out = slice_with_newaxes(out_name, in_name, blockdims, index, itemsize)
+dask/array/slicing.py:196: in slice_with_newaxes
+    dsk, blockdims2 = slice_wrap_lists(out_name, in_name, blockdims, index2, itemsize)
+dask/array/slicing.py:262: in slice_wrap_lists
+    blockdims2, dsk3 = take(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+outname = 'getitem-699560f8818a91e0d5306373fc04406d'
+inname = 'array-87be02fd370f73dc8948a00205af12c0', chunks = ((3,), (0,))
+index = array([0]), itemsize = 8, axis = 0
+
+    def take(outname, inname, chunks, index, itemsize, axis=0):
+        """Index array with an iterable of index
+    
+        Handles a single index by a single list
+    
+        Mimics ``np.take``
+    
+        >>> from pprint import pprint
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [5, 1, 47, 3], 8, axis=0)
+        >>> chunks
+        ((2, 1, 1),)
+        >>> pprint(dsk)   # doctest: +ELLIPSIS
+        {('y', 0): (<function getitem at ...>, ('x', 0), (array([5, 1]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),)),
+         ('y', 2): (<function getitem at ...>, ('x', 0), (array([3]),))}
+    
+        When list is sorted we retain original block structure
+    
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [1, 3, 5, 47], 8, axis=0)
+        >>> chunks
+        ((3, 1),)
+        >>> pprint(dsk)     # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+        {('y', 0): (<function getitem at ...>,
+                    ('x', 0),
+                    (array([1, 3, 5]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),))}
+    
+        When any indexed blocks would otherwise grow larger than
+        dask.config.array.chunk-size, we might split them,
+        depending on the value of ``dask.config.slicing.split-large-chunks``.
+    
+        >>> import dask
+        >>> with dask.config.set({"array.slicing.split-large-chunks": True}):
+        ...      chunks, dsk = take('y', 'x', [(1, 1, 1), (1000, 1000), (1000, 1000)],
+        ...                        [0] + [1] * 6 + [2], axis=0, itemsize=8)
+        >>> chunks
+        ((1, 3, 3, 1), (1000, 1000), (1000, 1000))
+        """
+        from .core import PerformanceWarning
+    
+        plan = slicing_plan(chunks[axis], index)
+        if len(plan) >= len(chunks[axis]) * 10:
+            factor = math.ceil(len(plan) / len(chunks[axis]))
+    
+            warnings.warn(
+                "Slicing with an out-of-order index is generating %d "
+                "times more chunks" % factor,
+                PerformanceWarning,
+                stacklevel=6,
+            )
+        if not is_arraylike(index):
+            index = np.asarray(index)
+    
+        # Check for chunks from the plan that would violate the user's
+        # configured chunk size.
+        nbytes = utils.parse_bytes(config.get("array.chunk-size"))
+        other_chunks = [chunks[i] for i in range(len(chunks)) if i != axis]
+        other_numel = np.prod([sum(x) for x in other_chunks])
+    
+        if math.isnan(other_numel):
+            warnsize = maxsize = math.inf
+        else:
+            try:
+>               maxsize = math.ceil(nbytes / (other_numel * itemsize))
+E               RuntimeWarning: divide by zero encountered in scalar divide
+
+dask/array/slicing.py:648: RuntimeWarning
+_____________________ test_case[c2_zero_first_axis1-None] ______________________
+
+case = 'c2_zero_first_axis1', split = None
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+>           result = da.from_array(x, chunks=chunks)[index]
+
+dask/array/tests/test_c3_rev_cases_tmp.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/core.py:1847: in __getitem__
+    dsk, chunks = slice_array(out, self.name, self.chunks, index2, self.itemsize)
+dask/array/slicing.py:174: in slice_array
+    dsk_out, bd_out = slice_with_newaxes(out_name, in_name, blockdims, index, itemsize)
+dask/array/slicing.py:196: in slice_with_newaxes
+    dsk, blockdims2 = slice_wrap_lists(out_name, in_name, blockdims, index2, itemsize)
+dask/array/slicing.py:262: in slice_wrap_lists
+    blockdims2, dsk3 = take(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+outname = 'getitem-9f3e7aa276b2cd217eca9fc2084942a0'
+inname = 'array-031599d2de7c2c0739df1348f76e881b', chunks = ((0,), (3,))
+index = array([2, 0, 2]), itemsize = 8, axis = 1
+
+    def take(outname, inname, chunks, index, itemsize, axis=0):
+        """Index array with an iterable of index
+    
+        Handles a single index by a single list
+    
+        Mimics ``np.take``
+    
+        >>> from pprint import pprint
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [5, 1, 47, 3], 8, axis=0)
+        >>> chunks
+        ((2, 1, 1),)
+        >>> pprint(dsk)   # doctest: +ELLIPSIS
+        {('y', 0): (<function getitem at ...>, ('x', 0), (array([5, 1]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),)),
+         ('y', 2): (<function getitem at ...>, ('x', 0), (array([3]),))}
+    
+        When list is sorted we retain original block structure
+    
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [1, 3, 5, 47], 8, axis=0)
+        >>> chunks
+        ((3, 1),)
+        >>> pprint(dsk)     # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+        {('y', 0): (<function getitem at ...>,
+                    ('x', 0),
+                    (array([1, 3, 5]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),))}
+    
+        When any indexed blocks would otherwise grow larger than
+        dask.config.array.chunk-size, we might split them,
+        depending on the value of ``dask.config.slicing.split-large-chunks``.
+    
+        >>> import dask
+        >>> with dask.config.set({"array.slicing.split-large-chunks": True}):
+        ...      chunks, dsk = take('y', 'x', [(1, 1, 1), (1000, 1000), (1000, 1000)],
+        ...                        [0] + [1] * 6 + [2], axis=0, itemsize=8)
+        >>> chunks
+        ((1, 3, 3, 1), (1000, 1000), (1000, 1000))
+        """
+        from .core import PerformanceWarning
+    
+        plan = slicing_plan(chunks[axis], index)
+        if len(plan) >= len(chunks[axis]) * 10:
+            factor = math.ceil(len(plan) / len(chunks[axis]))
+    
+            warnings.warn(
+                "Slicing with an out-of-order index is generating %d "
+                "times more chunks" % factor,
+                PerformanceWarning,
+                stacklevel=6,
+            )
+        if not is_arraylike(index):
+            index = np.asarray(index)
+    
+        # Check for chunks from the plan that would violate the user's
+        # configured chunk size.
+        nbytes = utils.parse_bytes(config.get("array.chunk-size"))
+        other_chunks = [chunks[i] for i in range(len(chunks)) if i != axis]
+        other_numel = np.prod([sum(x) for x in other_chunks])
+    
+        if math.isnan(other_numel):
+            warnsize = maxsize = math.inf
+        else:
+            try:
+>               maxsize = math.ceil(nbytes / (other_numel * itemsize))
+E               RuntimeWarning: divide by zero encountered in scalar divide
+
+dask/array/slicing.py:648: RuntimeWarning
+_____________________ test_case[c2_zero_first_axis1-False] _____________________
+
+case = 'c2_zero_first_axis1', split = False
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+>           result = da.from_array(x, chunks=chunks)[index]
+
+dask/array/tests/test_c3_rev_cases_tmp.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/core.py:1847: in __getitem__
+    dsk, chunks = slice_array(out, self.name, self.chunks, index2, self.itemsize)
+dask/array/slicing.py:174: in slice_array
+    dsk_out, bd_out = slice_with_newaxes(out_name, in_name, blockdims, index, itemsize)
+dask/array/slicing.py:196: in slice_with_newaxes
+    dsk, blockdims2 = slice_wrap_lists(out_name, in_name, blockdims, index2, itemsize)
+dask/array/slicing.py:262: in slice_wrap_lists
+    blockdims2, dsk3 = take(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+outname = 'getitem-9f3e7aa276b2cd217eca9fc2084942a0'
+inname = 'array-031599d2de7c2c0739df1348f76e881b', chunks = ((0,), (3,))
+index = array([2, 0, 2]), itemsize = 8, axis = 1
+
+    def take(outname, inname, chunks, index, itemsize, axis=0):
+        """Index array with an iterable of index
+    
+        Handles a single index by a single list
+    
+        Mimics ``np.take``
+    
+        >>> from pprint import pprint
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [5, 1, 47, 3], 8, axis=0)
+        >>> chunks
+        ((2, 1, 1),)
+        >>> pprint(dsk)   # doctest: +ELLIPSIS
+        {('y', 0): (<function getitem at ...>, ('x', 0), (array([5, 1]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),)),
+         ('y', 2): (<function getitem at ...>, ('x', 0), (array([3]),))}
+    
+        When list is sorted we retain original block structure
+    
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [1, 3, 5, 47], 8, axis=0)
+        >>> chunks
+        ((3, 1),)
+        >>> pprint(dsk)     # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+        {('y', 0): (<function getitem at ...>,
+                    ('x', 0),
+                    (array([1, 3, 5]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),))}
+    
+        When any indexed blocks would otherwise grow larger than
+        dask.config.array.chunk-size, we might split them,
+        depending on the value of ``dask.config.slicing.split-large-chunks``.
+    
+        >>> import dask
+        >>> with dask.config.set({"array.slicing.split-large-chunks": True}):
+        ...      chunks, dsk = take('y', 'x', [(1, 1, 1), (1000, 1000), (1000, 1000)],
+        ...                        [0] + [1] * 6 + [2], axis=0, itemsize=8)
+        >>> chunks
+        ((1, 3, 3, 1), (1000, 1000), (1000, 1000))
+        """
+        from .core import PerformanceWarning
+    
+        plan = slicing_plan(chunks[axis], index)
+        if len(plan) >= len(chunks[axis]) * 10:
+            factor = math.ceil(len(plan) / len(chunks[axis]))
+    
+            warnings.warn(
+                "Slicing with an out-of-order index is generating %d "
+                "times more chunks" % factor,
+                PerformanceWarning,
+                stacklevel=6,
+            )
+        if not is_arraylike(index):
+            index = np.asarray(index)
+    
+        # Check for chunks from the plan that would violate the user's
+        # configured chunk size.
+        nbytes = utils.parse_bytes(config.get("array.chunk-size"))
+        other_chunks = [chunks[i] for i in range(len(chunks)) if i != axis]
+        other_numel = np.prod([sum(x) for x in other_chunks])
+    
+        if math.isnan(other_numel):
+            warnsize = maxsize = math.inf
+        else:
+            try:
+>               maxsize = math.ceil(nbytes / (other_numel * itemsize))
+E               RuntimeWarning: divide by zero encountered in scalar divide
+
+dask/array/slicing.py:648: RuntimeWarning
+_____________________ test_case[c2_zero_first_axis1-True] ______________________
+
+case = 'c2_zero_first_axis1', split = True
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+>           result = da.from_array(x, chunks=chunks)[index]
+
+dask/array/tests/test_c3_rev_cases_tmp.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/core.py:1847: in __getitem__
+    dsk, chunks = slice_array(out, self.name, self.chunks, index2, self.itemsize)
+dask/array/slicing.py:174: in slice_array
+    dsk_out, bd_out = slice_with_newaxes(out_name, in_name, blockdims, index, itemsize)
+dask/array/slicing.py:196: in slice_with_newaxes
+    dsk, blockdims2 = slice_wrap_lists(out_name, in_name, blockdims, index2, itemsize)
+dask/array/slicing.py:262: in slice_wrap_lists
+    blockdims2, dsk3 = take(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+outname = 'getitem-9f3e7aa276b2cd217eca9fc2084942a0'
+inname = 'array-031599d2de7c2c0739df1348f76e881b', chunks = ((0,), (3,))
+index = array([2, 0, 2]), itemsize = 8, axis = 1
+
+    def take(outname, inname, chunks, index, itemsize, axis=0):
+        """Index array with an iterable of index
+    
+        Handles a single index by a single list
+    
+        Mimics ``np.take``
+    
+        >>> from pprint import pprint
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [5, 1, 47, 3], 8, axis=0)
+        >>> chunks
+        ((2, 1, 1),)
+        >>> pprint(dsk)   # doctest: +ELLIPSIS
+        {('y', 0): (<function getitem at ...>, ('x', 0), (array([5, 1]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),)),
+         ('y', 2): (<function getitem at ...>, ('x', 0), (array([3]),))}
+    
+        When list is sorted we retain original block structure
+    
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [1, 3, 5, 47], 8, axis=0)
+        >>> chunks
+        ((3, 1),)
+        >>> pprint(dsk)     # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+        {('y', 0): (<function getitem at ...>,
+                    ('x', 0),
+                    (array([1, 3, 5]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),))}
+    
+        When any indexed blocks would otherwise grow larger than
+        dask.config.array.chunk-size, we might split them,
+        depending on the value of ``dask.config.slicing.split-large-chunks``.
+    
+        >>> import dask
+        >>> with dask.config.set({"array.slicing.split-large-chunks": True}):
+        ...      chunks, dsk = take('y', 'x', [(1, 1, 1), (1000, 1000), (1000, 1000)],
+        ...                        [0] + [1] * 6 + [2], axis=0, itemsize=8)
+        >>> chunks
+        ((1, 3, 3, 1), (1000, 1000), (1000, 1000))
+        """
+        from .core import PerformanceWarning
+    
+        plan = slicing_plan(chunks[axis], index)
+        if len(plan) >= len(chunks[axis]) * 10:
+            factor = math.ceil(len(plan) / len(chunks[axis]))
+    
+            warnings.warn(
+                "Slicing with an out-of-order index is generating %d "
+                "times more chunks" % factor,
+                PerformanceWarning,
+                stacklevel=6,
+            )
+        if not is_arraylike(index):
+            index = np.asarray(index)
+    
+        # Check for chunks from the plan that would violate the user's
+        # configured chunk size.
+        nbytes = utils.parse_bytes(config.get("array.chunk-size"))
+        other_chunks = [chunks[i] for i in range(len(chunks)) if i != axis]
+        other_numel = np.prod([sum(x) for x in other_chunks])
+    
+        if math.isnan(other_numel):
+            warnsize = maxsize = math.inf
+        else:
+            try:
+>               maxsize = math.ceil(nbytes / (other_numel * itemsize))
+E               RuntimeWarning: divide by zero encountered in scalar divide
+
+dask/array/slicing.py:648: RuntimeWarning
+__________________ test_case[c3_mid_zero_i4_multichunk-None] ___________________
+
+case = 'c3_mid_zero_i4_multichunk', split = None
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+>           result = da.from_array(x, chunks=chunks)[index]
+
+dask/array/tests/test_c3_rev_cases_tmp.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/core.py:1847: in __getitem__
+    dsk, chunks = slice_array(out, self.name, self.chunks, index2, self.itemsize)
+dask/array/slicing.py:174: in slice_array
+    dsk_out, bd_out = slice_with_newaxes(out_name, in_name, blockdims, index, itemsize)
+dask/array/slicing.py:196: in slice_with_newaxes
+    dsk, blockdims2 = slice_wrap_lists(out_name, in_name, blockdims, index2, itemsize)
+dask/array/slicing.py:262: in slice_wrap_lists
+    blockdims2, dsk3 = take(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+outname = 'getitem-ee6aede5b47008e5c1c0ca9eee957570'
+inname = 'array-e362def2d56a2b5e35d1c68c1c84ea95'
+chunks = ((2, 2, 2), (0,), (2, 2)), index = array([5, 0, 5, 5, 3]), itemsize = 4
+axis = 0
+
+    def take(outname, inname, chunks, index, itemsize, axis=0):
+        """Index array with an iterable of index
+    
+        Handles a single index by a single list
+    
+        Mimics ``np.take``
+    
+        >>> from pprint import pprint
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [5, 1, 47, 3], 8, axis=0)
+        >>> chunks
+        ((2, 1, 1),)
+        >>> pprint(dsk)   # doctest: +ELLIPSIS
+        {('y', 0): (<function getitem at ...>, ('x', 0), (array([5, 1]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),)),
+         ('y', 2): (<function getitem at ...>, ('x', 0), (array([3]),))}
+    
+        When list is sorted we retain original block structure
+    
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [1, 3, 5, 47], 8, axis=0)
+        >>> chunks
+        ((3, 1),)
+        >>> pprint(dsk)     # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+        {('y', 0): (<function getitem at ...>,
+                    ('x', 0),
+                    (array([1, 3, 5]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),))}
+    
+        When any indexed blocks would otherwise grow larger than
+        dask.config.array.chunk-size, we might split them,
+        depending on the value of ``dask.config.slicing.split-large-chunks``.
+    
+        >>> import dask
+        >>> with dask.config.set({"array.slicing.split-large-chunks": True}):
+        ...      chunks, dsk = take('y', 'x', [(1, 1, 1), (1000, 1000), (1000, 1000)],
+        ...                        [0] + [1] * 6 + [2], axis=0, itemsize=8)
+        >>> chunks
+        ((1, 3, 3, 1), (1000, 1000), (1000, 1000))
+        """
+        from .core import PerformanceWarning
+    
+        plan = slicing_plan(chunks[axis], index)
+        if len(plan) >= len(chunks[axis]) * 10:
+            factor = math.ceil(len(plan) / len(chunks[axis]))
+    
+            warnings.warn(
+                "Slicing with an out-of-order index is generating %d "
+                "times more chunks" % factor,
+                PerformanceWarning,
+                stacklevel=6,
+            )
+        if not is_arraylike(index):
+            index = np.asarray(index)
+    
+        # Check for chunks from the plan that would violate the user's
+        # configured chunk size.
+        nbytes = utils.parse_bytes(config.get("array.chunk-size"))
+        other_chunks = [chunks[i] for i in range(len(chunks)) if i != axis]
+        other_numel = np.prod([sum(x) for x in other_chunks])
+    
+        if math.isnan(other_numel):
+            warnsize = maxsize = math.inf
+        else:
+            try:
+>               maxsize = math.ceil(nbytes / (other_numel * itemsize))
+E               RuntimeWarning: divide by zero encountered in scalar divide
+
+dask/array/slicing.py:648: RuntimeWarning
+__________________ test_case[c3_mid_zero_i4_multichunk-False] __________________
+
+case = 'c3_mid_zero_i4_multichunk', split = False
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+>           result = da.from_array(x, chunks=chunks)[index]
+
+dask/array/tests/test_c3_rev_cases_tmp.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/core.py:1847: in __getitem__
+    dsk, chunks = slice_array(out, self.name, self.chunks, index2, self.itemsize)
+dask/array/slicing.py:174: in slice_array
+    dsk_out, bd_out = slice_with_newaxes(out_name, in_name, blockdims, index, itemsize)
+dask/array/slicing.py:196: in slice_with_newaxes
+    dsk, blockdims2 = slice_wrap_lists(out_name, in_name, blockdims, index2, itemsize)
+dask/array/slicing.py:262: in slice_wrap_lists
+    blockdims2, dsk3 = take(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+outname = 'getitem-ee6aede5b47008e5c1c0ca9eee957570'
+inname = 'array-e362def2d56a2b5e35d1c68c1c84ea95'
+chunks = ((2, 2, 2), (0,), (2, 2)), index = array([5, 0, 5, 5, 3]), itemsize = 4
+axis = 0
+
+    def take(outname, inname, chunks, index, itemsize, axis=0):
+        """Index array with an iterable of index
+    
+        Handles a single index by a single list
+    
+        Mimics ``np.take``
+    
+        >>> from pprint import pprint
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [5, 1, 47, 3], 8, axis=0)
+        >>> chunks
+        ((2, 1, 1),)
+        >>> pprint(dsk)   # doctest: +ELLIPSIS
+        {('y', 0): (<function getitem at ...>, ('x', 0), (array([5, 1]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),)),
+         ('y', 2): (<function getitem at ...>, ('x', 0), (array([3]),))}
+    
+        When list is sorted we retain original block structure
+    
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [1, 3, 5, 47], 8, axis=0)
+        >>> chunks
+        ((3, 1),)
+        >>> pprint(dsk)     # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+        {('y', 0): (<function getitem at ...>,
+                    ('x', 0),
+                    (array([1, 3, 5]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),))}
+    
+        When any indexed blocks would otherwise grow larger than
+        dask.config.array.chunk-size, we might split them,
+        depending on the value of ``dask.config.slicing.split-large-chunks``.
+    
+        >>> import dask
+        >>> with dask.config.set({"array.slicing.split-large-chunks": True}):
+        ...      chunks, dsk = take('y', 'x', [(1, 1, 1), (1000, 1000), (1000, 1000)],
+        ...                        [0] + [1] * 6 + [2], axis=0, itemsize=8)
+        >>> chunks
+        ((1, 3, 3, 1), (1000, 1000), (1000, 1000))
+        """
+        from .core import PerformanceWarning
+    
+        plan = slicing_plan(chunks[axis], index)
+        if len(plan) >= len(chunks[axis]) * 10:
+            factor = math.ceil(len(plan) / len(chunks[axis]))
+    
+            warnings.warn(
+                "Slicing with an out-of-order index is generating %d "
+                "times more chunks" % factor,
+                PerformanceWarning,
+                stacklevel=6,
+            )
+        if not is_arraylike(index):
+            index = np.asarray(index)
+    
+        # Check for chunks from the plan that would violate the user's
+        # configured chunk size.
+        nbytes = utils.parse_bytes(config.get("array.chunk-size"))
+        other_chunks = [chunks[i] for i in range(len(chunks)) if i != axis]
+        other_numel = np.prod([sum(x) for x in other_chunks])
+    
+        if math.isnan(other_numel):
+            warnsize = maxsize = math.inf
+        else:
+            try:
+>               maxsize = math.ceil(nbytes / (other_numel * itemsize))
+E               RuntimeWarning: divide by zero encountered in scalar divide
+
+dask/array/slicing.py:648: RuntimeWarning
+__________________ test_case[c3_mid_zero_i4_multichunk-True] ___________________
+
+case = 'c3_mid_zero_i4_multichunk', split = True
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+>           result = da.from_array(x, chunks=chunks)[index]
+
+dask/array/tests/test_c3_rev_cases_tmp.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/core.py:1847: in __getitem__
+    dsk, chunks = slice_array(out, self.name, self.chunks, index2, self.itemsize)
+dask/array/slicing.py:174: in slice_array
+    dsk_out, bd_out = slice_with_newaxes(out_name, in_name, blockdims, index, itemsize)
+dask/array/slicing.py:196: in slice_with_newaxes
+    dsk, blockdims2 = slice_wrap_lists(out_name, in_name, blockdims, index2, itemsize)
+dask/array/slicing.py:262: in slice_wrap_lists
+    blockdims2, dsk3 = take(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+outname = 'getitem-ee6aede5b47008e5c1c0ca9eee957570'
+inname = 'array-e362def2d56a2b5e35d1c68c1c84ea95'
+chunks = ((2, 2, 2), (0,), (2, 2)), index = array([5, 0, 5, 5, 3]), itemsize = 4
+axis = 0
+
+    def take(outname, inname, chunks, index, itemsize, axis=0):
+        """Index array with an iterable of index
+    
+        Handles a single index by a single list
+    
+        Mimics ``np.take``
+    
+        >>> from pprint import pprint
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [5, 1, 47, 3], 8, axis=0)
+        >>> chunks
+        ((2, 1, 1),)
+        >>> pprint(dsk)   # doctest: +ELLIPSIS
+        {('y', 0): (<function getitem at ...>, ('x', 0), (array([5, 1]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),)),
+         ('y', 2): (<function getitem at ...>, ('x', 0), (array([3]),))}
+    
+        When list is sorted we retain original block structure
+    
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [1, 3, 5, 47], 8, axis=0)
+        >>> chunks
+        ((3, 1),)
+        >>> pprint(dsk)     # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+        {('y', 0): (<function getitem at ...>,
+                    ('x', 0),
+                    (array([1, 3, 5]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),))}
+    
+        When any indexed blocks would otherwise grow larger than
+        dask.config.array.chunk-size, we might split them,
+        depending on the value of ``dask.config.slicing.split-large-chunks``.
+    
+        >>> import dask
+        >>> with dask.config.set({"array.slicing.split-large-chunks": True}):
+        ...      chunks, dsk = take('y', 'x', [(1, 1, 1), (1000, 1000), (1000, 1000)],
+        ...                        [0] + [1] * 6 + [2], axis=0, itemsize=8)
+        >>> chunks
+        ((1, 3, 3, 1), (1000, 1000), (1000, 1000))
+        """
+        from .core import PerformanceWarning
+    
+        plan = slicing_plan(chunks[axis], index)
+        if len(plan) >= len(chunks[axis]) * 10:
+            factor = math.ceil(len(plan) / len(chunks[axis]))
+    
+            warnings.warn(
+                "Slicing with an out-of-order index is generating %d "
+                "times more chunks" % factor,
+                PerformanceWarning,
+                stacklevel=6,
+            )
+        if not is_arraylike(index):
+            index = np.asarray(index)
+    
+        # Check for chunks from the plan that would violate the user's
+        # configured chunk size.
+        nbytes = utils.parse_bytes(config.get("array.chunk-size"))
+        other_chunks = [chunks[i] for i in range(len(chunks)) if i != axis]
+        other_numel = np.prod([sum(x) for x in other_chunks])
+    
+        if math.isnan(other_numel):
+            warnsize = maxsize = math.inf
+        else:
+            try:
+>               maxsize = math.ceil(nbytes / (other_numel * itemsize))
+E               RuntimeWarning: divide by zero encountered in scalar divide
+
+dask/array/slicing.py:648: RuntimeWarning
+_________________________ test_case[c4_index120-None] __________________________
+
+case = 'c4_index120', split = None
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+>           result = da.from_array(x, chunks=chunks)[index]
+
+dask/array/tests/test_c3_rev_cases_tmp.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/core.py:1847: in __getitem__
+    dsk, chunks = slice_array(out, self.name, self.chunks, index2, self.itemsize)
+dask/array/slicing.py:174: in slice_array
+    dsk_out, bd_out = slice_with_newaxes(out_name, in_name, blockdims, index, itemsize)
+dask/array/slicing.py:196: in slice_with_newaxes
+    dsk, blockdims2 = slice_wrap_lists(out_name, in_name, blockdims, index2, itemsize)
+dask/array/slicing.py:262: in slice_wrap_lists
+    blockdims2, dsk3 = take(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+outname = 'getitem-a69000d82ee656f45b82b92584760eb8'
+inname = 'array-87be02fd370f73dc8948a00205af12c0', chunks = ((3,), (0,))
+index = array([0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0,
+       1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1,...1, 2, 0,
+       1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1,
+       2, 0, 1, 2, 0, 1, 2, 0, 1, 2])
+itemsize = 8, axis = 0
+
+    def take(outname, inname, chunks, index, itemsize, axis=0):
+        """Index array with an iterable of index
+    
+        Handles a single index by a single list
+    
+        Mimics ``np.take``
+    
+        >>> from pprint import pprint
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [5, 1, 47, 3], 8, axis=0)
+        >>> chunks
+        ((2, 1, 1),)
+        >>> pprint(dsk)   # doctest: +ELLIPSIS
+        {('y', 0): (<function getitem at ...>, ('x', 0), (array([5, 1]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),)),
+         ('y', 2): (<function getitem at ...>, ('x', 0), (array([3]),))}
+    
+        When list is sorted we retain original block structure
+    
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [1, 3, 5, 47], 8, axis=0)
+        >>> chunks
+        ((3, 1),)
+        >>> pprint(dsk)     # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+        {('y', 0): (<function getitem at ...>,
+                    ('x', 0),
+                    (array([1, 3, 5]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),))}
+    
+        When any indexed blocks would otherwise grow larger than
+        dask.config.array.chunk-size, we might split them,
+        depending on the value of ``dask.config.slicing.split-large-chunks``.
+    
+        >>> import dask
+        >>> with dask.config.set({"array.slicing.split-large-chunks": True}):
+        ...      chunks, dsk = take('y', 'x', [(1, 1, 1), (1000, 1000), (1000, 1000)],
+        ...                        [0] + [1] * 6 + [2], axis=0, itemsize=8)
+        >>> chunks
+        ((1, 3, 3, 1), (1000, 1000), (1000, 1000))
+        """
+        from .core import PerformanceWarning
+    
+        plan = slicing_plan(chunks[axis], index)
+        if len(plan) >= len(chunks[axis]) * 10:
+            factor = math.ceil(len(plan) / len(chunks[axis]))
+    
+            warnings.warn(
+                "Slicing with an out-of-order index is generating %d "
+                "times more chunks" % factor,
+                PerformanceWarning,
+                stacklevel=6,
+            )
+        if not is_arraylike(index):
+            index = np.asarray(index)
+    
+        # Check for chunks from the plan that would violate the user's
+        # configured chunk size.
+        nbytes = utils.parse_bytes(config.get("array.chunk-size"))
+        other_chunks = [chunks[i] for i in range(len(chunks)) if i != axis]
+        other_numel = np.prod([sum(x) for x in other_chunks])
+    
+        if math.isnan(other_numel):
+            warnsize = maxsize = math.inf
+        else:
+            try:
+>               maxsize = math.ceil(nbytes / (other_numel * itemsize))
+E               RuntimeWarning: divide by zero encountered in scalar divide
+
+dask/array/slicing.py:648: RuntimeWarning
+_________________________ test_case[c4_index120-False] _________________________
+
+case = 'c4_index120', split = False
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+>           result = da.from_array(x, chunks=chunks)[index]
+
+dask/array/tests/test_c3_rev_cases_tmp.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/core.py:1847: in __getitem__
+    dsk, chunks = slice_array(out, self.name, self.chunks, index2, self.itemsize)
+dask/array/slicing.py:174: in slice_array
+    dsk_out, bd_out = slice_with_newaxes(out_name, in_name, blockdims, index, itemsize)
+dask/array/slicing.py:196: in slice_with_newaxes
+    dsk, blockdims2 = slice_wrap_lists(out_name, in_name, blockdims, index2, itemsize)
+dask/array/slicing.py:262: in slice_wrap_lists
+    blockdims2, dsk3 = take(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+outname = 'getitem-a69000d82ee656f45b82b92584760eb8'
+inname = 'array-87be02fd370f73dc8948a00205af12c0', chunks = ((3,), (0,))
+index = array([0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0,
+       1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1,...1, 2, 0,
+       1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1,
+       2, 0, 1, 2, 0, 1, 2, 0, 1, 2])
+itemsize = 8, axis = 0
+
+    def take(outname, inname, chunks, index, itemsize, axis=0):
+        """Index array with an iterable of index
+    
+        Handles a single index by a single list
+    
+        Mimics ``np.take``
+    
+        >>> from pprint import pprint
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [5, 1, 47, 3], 8, axis=0)
+        >>> chunks
+        ((2, 1, 1),)
+        >>> pprint(dsk)   # doctest: +ELLIPSIS
+        {('y', 0): (<function getitem at ...>, ('x', 0), (array([5, 1]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),)),
+         ('y', 2): (<function getitem at ...>, ('x', 0), (array([3]),))}
+    
+        When list is sorted we retain original block structure
+    
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [1, 3, 5, 47], 8, axis=0)
+        >>> chunks
+        ((3, 1),)
+        >>> pprint(dsk)     # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+        {('y', 0): (<function getitem at ...>,
+                    ('x', 0),
+                    (array([1, 3, 5]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),))}
+    
+        When any indexed blocks would otherwise grow larger than
+        dask.config.array.chunk-size, we might split them,
+        depending on the value of ``dask.config.slicing.split-large-chunks``.
+    
+        >>> import dask
+        >>> with dask.config.set({"array.slicing.split-large-chunks": True}):
+        ...      chunks, dsk = take('y', 'x', [(1, 1, 1), (1000, 1000), (1000, 1000)],
+        ...                        [0] + [1] * 6 + [2], axis=0, itemsize=8)
+        >>> chunks
+        ((1, 3, 3, 1), (1000, 1000), (1000, 1000))
+        """
+        from .core import PerformanceWarning
+    
+        plan = slicing_plan(chunks[axis], index)
+        if len(plan) >= len(chunks[axis]) * 10:
+            factor = math.ceil(len(plan) / len(chunks[axis]))
+    
+            warnings.warn(
+                "Slicing with an out-of-order index is generating %d "
+                "times more chunks" % factor,
+                PerformanceWarning,
+                stacklevel=6,
+            )
+        if not is_arraylike(index):
+            index = np.asarray(index)
+    
+        # Check for chunks from the plan that would violate the user's
+        # configured chunk size.
+        nbytes = utils.parse_bytes(config.get("array.chunk-size"))
+        other_chunks = [chunks[i] for i in range(len(chunks)) if i != axis]
+        other_numel = np.prod([sum(x) for x in other_chunks])
+    
+        if math.isnan(other_numel):
+            warnsize = maxsize = math.inf
+        else:
+            try:
+>               maxsize = math.ceil(nbytes / (other_numel * itemsize))
+E               RuntimeWarning: divide by zero encountered in scalar divide
+
+dask/array/slicing.py:648: RuntimeWarning
+_________________________ test_case[c4_index120-True] __________________________
+
+case = 'c4_index120', split = True
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+>           result = da.from_array(x, chunks=chunks)[index]
+
+dask/array/tests/test_c3_rev_cases_tmp.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/core.py:1847: in __getitem__
+    dsk, chunks = slice_array(out, self.name, self.chunks, index2, self.itemsize)
+dask/array/slicing.py:174: in slice_array
+    dsk_out, bd_out = slice_with_newaxes(out_name, in_name, blockdims, index, itemsize)
+dask/array/slicing.py:196: in slice_with_newaxes
+    dsk, blockdims2 = slice_wrap_lists(out_name, in_name, blockdims, index2, itemsize)
+dask/array/slicing.py:262: in slice_wrap_lists
+    blockdims2, dsk3 = take(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+outname = 'getitem-a69000d82ee656f45b82b92584760eb8'
+inname = 'array-87be02fd370f73dc8948a00205af12c0', chunks = ((3,), (0,))
+index = array([0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0,
+       1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1,...1, 2, 0,
+       1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1,
+       2, 0, 1, 2, 0, 1, 2, 0, 1, 2])
+itemsize = 8, axis = 0
+
+    def take(outname, inname, chunks, index, itemsize, axis=0):
+        """Index array with an iterable of index
+    
+        Handles a single index by a single list
+    
+        Mimics ``np.take``
+    
+        >>> from pprint import pprint
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [5, 1, 47, 3], 8, axis=0)
+        >>> chunks
+        ((2, 1, 1),)
+        >>> pprint(dsk)   # doctest: +ELLIPSIS
+        {('y', 0): (<function getitem at ...>, ('x', 0), (array([5, 1]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),)),
+         ('y', 2): (<function getitem at ...>, ('x', 0), (array([3]),))}
+    
+        When list is sorted we retain original block structure
+    
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [1, 3, 5, 47], 8, axis=0)
+        >>> chunks
+        ((3, 1),)
+        >>> pprint(dsk)     # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+        {('y', 0): (<function getitem at ...>,
+                    ('x', 0),
+                    (array([1, 3, 5]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),))}
+    
+        When any indexed blocks would otherwise grow larger than
+        dask.config.array.chunk-size, we might split them,
+        depending on the value of ``dask.config.slicing.split-large-chunks``.
+    
+        >>> import dask
+        >>> with dask.config.set({"array.slicing.split-large-chunks": True}):
+        ...      chunks, dsk = take('y', 'x', [(1, 1, 1), (1000, 1000), (1000, 1000)],
+        ...                        [0] + [1] * 6 + [2], axis=0, itemsize=8)
+        >>> chunks
+        ((1, 3, 3, 1), (1000, 1000), (1000, 1000))
+        """
+        from .core import PerformanceWarning
+    
+        plan = slicing_plan(chunks[axis], index)
+        if len(plan) >= len(chunks[axis]) * 10:
+            factor = math.ceil(len(plan) / len(chunks[axis]))
+    
+            warnings.warn(
+                "Slicing with an out-of-order index is generating %d "
+                "times more chunks" % factor,
+                PerformanceWarning,
+                stacklevel=6,
+            )
+        if not is_arraylike(index):
+            index = np.asarray(index)
+    
+        # Check for chunks from the plan that would violate the user's
+        # configured chunk size.
+        nbytes = utils.parse_bytes(config.get("array.chunk-size"))
+        other_chunks = [chunks[i] for i in range(len(chunks)) if i != axis]
+        other_numel = np.prod([sum(x) for x in other_chunks])
+    
+        if math.isnan(other_numel):
+            warnsize = maxsize = math.inf
+        else:
+            try:
+>               maxsize = math.ceil(nbytes / (other_numel * itemsize))
+E               RuntimeWarning: divide by zero encountered in scalar divide
+
+dask/array/slicing.py:648: RuntimeWarning
+________________________ test_case[c4_index12000-None] _________________________
+
+case = 'c4_index12000', split = None
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+>           result = da.from_array(x, chunks=chunks)[index]
+
+dask/array/tests/test_c3_rev_cases_tmp.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/core.py:1847: in __getitem__
+    dsk, chunks = slice_array(out, self.name, self.chunks, index2, self.itemsize)
+dask/array/slicing.py:174: in slice_array
+    dsk_out, bd_out = slice_with_newaxes(out_name, in_name, blockdims, index, itemsize)
+dask/array/slicing.py:196: in slice_with_newaxes
+    dsk, blockdims2 = slice_wrap_lists(out_name, in_name, blockdims, index2, itemsize)
+dask/array/slicing.py:262: in slice_wrap_lists
+    blockdims2, dsk3 = take(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+outname = 'getitem-c9b5354724bb9a3ec4ace7d8b91b7a30'
+inname = 'array-87be02fd370f73dc8948a00205af12c0', chunks = ((3,), (0,))
+index = array([0, 1, 2, ..., 0, 1, 2]), itemsize = 8, axis = 0
+
+    def take(outname, inname, chunks, index, itemsize, axis=0):
+        """Index array with an iterable of index
+    
+        Handles a single index by a single list
+    
+        Mimics ``np.take``
+    
+        >>> from pprint import pprint
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [5, 1, 47, 3], 8, axis=0)
+        >>> chunks
+        ((2, 1, 1),)
+        >>> pprint(dsk)   # doctest: +ELLIPSIS
+        {('y', 0): (<function getitem at ...>, ('x', 0), (array([5, 1]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),)),
+         ('y', 2): (<function getitem at ...>, ('x', 0), (array([3]),))}
+    
+        When list is sorted we retain original block structure
+    
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [1, 3, 5, 47], 8, axis=0)
+        >>> chunks
+        ((3, 1),)
+        >>> pprint(dsk)     # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+        {('y', 0): (<function getitem at ...>,
+                    ('x', 0),
+                    (array([1, 3, 5]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),))}
+    
+        When any indexed blocks would otherwise grow larger than
+        dask.config.array.chunk-size, we might split them,
+        depending on the value of ``dask.config.slicing.split-large-chunks``.
+    
+        >>> import dask
+        >>> with dask.config.set({"array.slicing.split-large-chunks": True}):
+        ...      chunks, dsk = take('y', 'x', [(1, 1, 1), (1000, 1000), (1000, 1000)],
+        ...                        [0] + [1] * 6 + [2], axis=0, itemsize=8)
+        >>> chunks
+        ((1, 3, 3, 1), (1000, 1000), (1000, 1000))
+        """
+        from .core import PerformanceWarning
+    
+        plan = slicing_plan(chunks[axis], index)
+        if len(plan) >= len(chunks[axis]) * 10:
+            factor = math.ceil(len(plan) / len(chunks[axis]))
+    
+            warnings.warn(
+                "Slicing with an out-of-order index is generating %d "
+                "times more chunks" % factor,
+                PerformanceWarning,
+                stacklevel=6,
+            )
+        if not is_arraylike(index):
+            index = np.asarray(index)
+    
+        # Check for chunks from the plan that would violate the user's
+        # configured chunk size.
+        nbytes = utils.parse_bytes(config.get("array.chunk-size"))
+        other_chunks = [chunks[i] for i in range(len(chunks)) if i != axis]
+        other_numel = np.prod([sum(x) for x in other_chunks])
+    
+        if math.isnan(other_numel):
+            warnsize = maxsize = math.inf
+        else:
+            try:
+>               maxsize = math.ceil(nbytes / (other_numel * itemsize))
+E               RuntimeWarning: divide by zero encountered in scalar divide
+
+dask/array/slicing.py:648: RuntimeWarning
+________________________ test_case[c4_index12000-False] ________________________
+
+case = 'c4_index12000', split = False
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+>           result = da.from_array(x, chunks=chunks)[index]
+
+dask/array/tests/test_c3_rev_cases_tmp.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/core.py:1847: in __getitem__
+    dsk, chunks = slice_array(out, self.name, self.chunks, index2, self.itemsize)
+dask/array/slicing.py:174: in slice_array
+    dsk_out, bd_out = slice_with_newaxes(out_name, in_name, blockdims, index, itemsize)
+dask/array/slicing.py:196: in slice_with_newaxes
+    dsk, blockdims2 = slice_wrap_lists(out_name, in_name, blockdims, index2, itemsize)
+dask/array/slicing.py:262: in slice_wrap_lists
+    blockdims2, dsk3 = take(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+outname = 'getitem-c9b5354724bb9a3ec4ace7d8b91b7a30'
+inname = 'array-87be02fd370f73dc8948a00205af12c0', chunks = ((3,), (0,))
+index = array([0, 1, 2, ..., 0, 1, 2]), itemsize = 8, axis = 0
+
+    def take(outname, inname, chunks, index, itemsize, axis=0):
+        """Index array with an iterable of index
+    
+        Handles a single index by a single list
+    
+        Mimics ``np.take``
+    
+        >>> from pprint import pprint
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [5, 1, 47, 3], 8, axis=0)
+        >>> chunks
+        ((2, 1, 1),)
+        >>> pprint(dsk)   # doctest: +ELLIPSIS
+        {('y', 0): (<function getitem at ...>, ('x', 0), (array([5, 1]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),)),
+         ('y', 2): (<function getitem at ...>, ('x', 0), (array([3]),))}
+    
+        When list is sorted we retain original block structure
+    
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [1, 3, 5, 47], 8, axis=0)
+        >>> chunks
+        ((3, 1),)
+        >>> pprint(dsk)     # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+        {('y', 0): (<function getitem at ...>,
+                    ('x', 0),
+                    (array([1, 3, 5]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),))}
+    
+        When any indexed blocks would otherwise grow larger than
+        dask.config.array.chunk-size, we might split them,
+        depending on the value of ``dask.config.slicing.split-large-chunks``.
+    
+        >>> import dask
+        >>> with dask.config.set({"array.slicing.split-large-chunks": True}):
+        ...      chunks, dsk = take('y', 'x', [(1, 1, 1), (1000, 1000), (1000, 1000)],
+        ...                        [0] + [1] * 6 + [2], axis=0, itemsize=8)
+        >>> chunks
+        ((1, 3, 3, 1), (1000, 1000), (1000, 1000))
+        """
+        from .core import PerformanceWarning
+    
+        plan = slicing_plan(chunks[axis], index)
+        if len(plan) >= len(chunks[axis]) * 10:
+            factor = math.ceil(len(plan) / len(chunks[axis]))
+    
+            warnings.warn(
+                "Slicing with an out-of-order index is generating %d "
+                "times more chunks" % factor,
+                PerformanceWarning,
+                stacklevel=6,
+            )
+        if not is_arraylike(index):
+            index = np.asarray(index)
+    
+        # Check for chunks from the plan that would violate the user's
+        # configured chunk size.
+        nbytes = utils.parse_bytes(config.get("array.chunk-size"))
+        other_chunks = [chunks[i] for i in range(len(chunks)) if i != axis]
+        other_numel = np.prod([sum(x) for x in other_chunks])
+    
+        if math.isnan(other_numel):
+            warnsize = maxsize = math.inf
+        else:
+            try:
+>               maxsize = math.ceil(nbytes / (other_numel * itemsize))
+E               RuntimeWarning: divide by zero encountered in scalar divide
+
+dask/array/slicing.py:648: RuntimeWarning
+________________________ test_case[c4_index12000-True] _________________________
+
+case = 'c4_index12000', split = True
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+>           result = da.from_array(x, chunks=chunks)[index]
+
+dask/array/tests/test_c3_rev_cases_tmp.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/core.py:1847: in __getitem__
+    dsk, chunks = slice_array(out, self.name, self.chunks, index2, self.itemsize)
+dask/array/slicing.py:174: in slice_array
+    dsk_out, bd_out = slice_with_newaxes(out_name, in_name, blockdims, index, itemsize)
+dask/array/slicing.py:196: in slice_with_newaxes
+    dsk, blockdims2 = slice_wrap_lists(out_name, in_name, blockdims, index2, itemsize)
+dask/array/slicing.py:262: in slice_wrap_lists
+    blockdims2, dsk3 = take(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+outname = 'getitem-c9b5354724bb9a3ec4ace7d8b91b7a30'
+inname = 'array-87be02fd370f73dc8948a00205af12c0', chunks = ((3,), (0,))
+index = array([0, 1, 2, ..., 0, 1, 2]), itemsize = 8, axis = 0
+
+    def take(outname, inname, chunks, index, itemsize, axis=0):
+        """Index array with an iterable of index
+    
+        Handles a single index by a single list
+    
+        Mimics ``np.take``
+    
+        >>> from pprint import pprint
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [5, 1, 47, 3], 8, axis=0)
+        >>> chunks
+        ((2, 1, 1),)
+        >>> pprint(dsk)   # doctest: +ELLIPSIS
+        {('y', 0): (<function getitem at ...>, ('x', 0), (array([5, 1]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),)),
+         ('y', 2): (<function getitem at ...>, ('x', 0), (array([3]),))}
+    
+        When list is sorted we retain original block structure
+    
+        >>> chunks, dsk = take('y', 'x', [(20, 20, 20, 20)], [1, 3, 5, 47], 8, axis=0)
+        >>> chunks
+        ((3, 1),)
+        >>> pprint(dsk)     # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+        {('y', 0): (<function getitem at ...>,
+                    ('x', 0),
+                    (array([1, 3, 5]),)),
+         ('y', 1): (<function getitem at ...>, ('x', 2), (array([7]),))}
+    
+        When any indexed blocks would otherwise grow larger than
+        dask.config.array.chunk-size, we might split them,
+        depending on the value of ``dask.config.slicing.split-large-chunks``.
+    
+        >>> import dask
+        >>> with dask.config.set({"array.slicing.split-large-chunks": True}):
+        ...      chunks, dsk = take('y', 'x', [(1, 1, 1), (1000, 1000), (1000, 1000)],
+        ...                        [0] + [1] * 6 + [2], axis=0, itemsize=8)
+        >>> chunks
+        ((1, 3, 3, 1), (1000, 1000), (1000, 1000))
+        """
+        from .core import PerformanceWarning
+    
+        plan = slicing_plan(chunks[axis], index)
+        if len(plan) >= len(chunks[axis]) * 10:
+            factor = math.ceil(len(plan) / len(chunks[axis]))
+    
+            warnings.warn(
+                "Slicing with an out-of-order index is generating %d "
+                "times more chunks" % factor,
+                PerformanceWarning,
+                stacklevel=6,
+            )
+        if not is_arraylike(index):
+            index = np.asarray(index)
+    
+        # Check for chunks from the plan that would violate the user's
+        # configured chunk size.
+        nbytes = utils.parse_bytes(config.get("array.chunk-size"))
+        other_chunks = [chunks[i] for i in range(len(chunks)) if i != axis]
+        other_numel = np.prod([sum(x) for x in other_chunks])
+    
+        if math.isnan(other_numel):
+            warnsize = maxsize = math.inf
+        else:
+            try:
+>               maxsize = math.ceil(nbytes / (other_numel * itemsize))
+E               RuntimeWarning: divide by zero encountered in scalar divide
+
+dask/array/slicing.py:648: RuntimeWarning
+==================================== PASSES ====================================
+============================= slowest 10 durations =============================
+
+(10 durations < 0.005s hidden.  Use -vv to show these durations.)
+=========================== short test summary info ============================
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_default_warning
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_orig - RuntimeWarning:...
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c1_issue-None] - ...
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c1_issue-False]
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c1_issue-True] - ...
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c2_zero_first_axis1-None]
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c2_zero_first_axis1-False]
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c2_zero_first_axis1-True]
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c3_mid_zero_i4_multichunk-None]
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c3_mid_zero_i4_multichunk-False]
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c3_mid_zero_i4_multichunk-True]
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c4_index120-None]
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c4_index120-False]
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c4_index120-True]
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c4_index12000-None]
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c4_index12000-False]
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c4_index12000-True]
+========================= 16 failed, 1 passed in 2.07s =========================
+
+

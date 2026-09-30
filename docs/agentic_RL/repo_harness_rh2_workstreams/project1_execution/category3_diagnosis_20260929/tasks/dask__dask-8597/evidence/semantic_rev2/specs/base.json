@@ -1,0 +1,51 @@
+{
+ "image": "rh2-envrepair/compat-v1-dask__dask-8597:c3cloud",
+ "python_prefix": "/opt/miniconda3/envs/testbed",
+ "variants": {
+  "base": [
+   "python -m pip install -q --no-index --find-links=/opt/rh2/compat-wheels --no-deps pytest==7.4.4"
+  ]
+ },
+ "files": {
+  "behavior.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8597/behavior.py",
+  "test_orig.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8597/original_test.patch",
+  "gold.patch": "/home/user/RepoHarness/runs/category3_cloud_20260929/dask8597/gold/dask__dask-8597.gold.patch",
+  "clamp1.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8597/candidates/clamp1.patch",
+  "lazy_threshold.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8597/candidates/lazy_threshold.patch",
+  "errstate_catch.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8597/candidates/errstate_catch.patch",
+  "eager_empty.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8597/candidates/eager_empty.patch",
+  "split_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8597/candidates/split_only.patch",
+  "split_only_zero.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8597/candidates/split_only_zero.patch",
+  "last_axis_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8597/candidates/last_axis_only.patch",
+  "axis0_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8597/candidates/axis0_only.patch",
+  "swallow_warn.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8597/candidates/swallow_warn.patch",
+  "swallow_self.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8597/candidates/swallow_self.patch",
+  "warn_zero.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8597/candidates/warn_zero.patch",
+  "cap_one.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8597/candidates/cap_one.patch",
+  "cap_hundred.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8597/candidates/cap_hundred.patch",
+  "single_block.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8597/candidates/single_block.patch",
+  "float_blocks.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8597/candidates/float_blocks.patch",
+  "float_blocks_dep.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8597/candidates/float_blocks_dep.patch",
+  "return_numpy.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8597/candidates/return_numpy.patch",
+  "dedup_slice.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8597/candidates/dedup_slice.patch",
+  "test_rev.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8597/revised_test_v2.patch",
+  "rev_cases.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask8597/rev_cases.py"
+ },
+ "commands": [
+  {
+   "id": "env",
+   "timeout_s": 120,
+   "cmd": "id -u; python -c 'import sys,numpy,dask,pytest; print(sys.version.split()[0], numpy.__version__, dask.__version__, pytest.__version__, dask.__file__)'; git status --porcelain"
+  },
+  {
+   "id": "rev_file",
+   "timeout_s": 1200,
+   "cmd": "git apply /in/test_rev.patch && python -m pytest -n0 -rA --color=no -p no:cacheprovider dask/array/tests/test_slicing.py > /tmp/t.txt 2>&1; rc=$?; git checkout -- dask/array/tests/test_slicing.py; cat /tmp/t.txt; exit $rc"
+  },
+  {
+   "id": "rev_cases",
+   "timeout_s": 600,
+   "cmd": "python /in/rev_cases.py"
+  }
+ ]
+}

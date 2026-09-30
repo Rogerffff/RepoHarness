@@ -1,0 +1,25 @@
+--- a/src/PIL/GifImagePlugin.py
++++ b/src/PIL/GifImagePlugin.py
+@@ -545,6 +545,9 @@
+ 
+ def _write_single_frame(im, fp, palette):
+     im_out = _normalize_mode(im)
++    if isinstance(im.info.get("transparency"), tuple) and "transparency" in im_out.info:
++        # keep the image in step with the palette index that is actually saved
++        im.info["transparency"] = im_out.info["transparency"]
+     for k, v in im_out.info.items():
+         im.encoderinfo.setdefault(k, v)
+     im_out = _normalize_palette(im_out, palette, im.encoderinfo)
+@@ -683,11 +686,7 @@
+ def _write_local_header(fp, im, offset, flags):
+     transparent_color_exists = False
+     try:
+-        if "transparency" in im.encoderinfo:
+-            transparency = im.encoderinfo["transparency"]
+-        else:
+-            transparency = im.info["transparency"]
+-        transparency = int(transparency)
++        transparency = int(im.encoderinfo["transparency"])
+     except (KeyError, ValueError):
+         pass
+     else:

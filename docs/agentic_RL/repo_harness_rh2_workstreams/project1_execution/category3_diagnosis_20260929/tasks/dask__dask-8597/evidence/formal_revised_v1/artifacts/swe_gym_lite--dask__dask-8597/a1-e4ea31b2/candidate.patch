@@ -1,0 +1,18 @@
+diff --git a/dask/array/slicing.py b/dask/array/slicing.py
+--- a/dask/array/slicing.py
++++ b/dask/array/slicing.py
+@@ -644,7 +644,13 @@
+     if math.isnan(other_numel):
+         warnsize = maxsize = math.inf
+     else:
+-        maxsize = math.ceil(nbytes / (other_numel * itemsize))
++        with np.errstate(divide="ignore"):
++            rows = nbytes / (other_numel * itemsize)
++        try:
++            maxsize = math.ceil(rows)
++        except OverflowError:
++            # zero-sized rows: any number of them fits into one chunk
++            maxsize = math.inf
+         warnsize = maxsize * 5
+ 
+     split = config.get("array.slicing.split-large-chunks", None)

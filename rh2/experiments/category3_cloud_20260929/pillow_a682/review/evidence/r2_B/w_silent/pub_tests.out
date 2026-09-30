@@ -1,0 +1,16 @@
+        # Multiple frames
+        im = Image.new("RGB", (1, 1))
+        im.info["transparency"] = b""
+        ims = [Image.new("RGB", (1, 1))]
+        with pytest.warns(UserWarning):
+>           im.save(out, save_all=True, append_images=ims)
+E           Failed: DID NOT WARN. No warnings of type (<class 'UserWarning'>,) were emitted.
+E            Emitted warnings: [].
+
+Tests/test_file_gif.py:1105: Failed
+=========================== short test summary info ============================
+SKIPPED [1] Tests/test_file_gif.py:347: Netpbm not available
+SKIPPED [1] Tests/test_file_gif.py:358: Netpbm not available
+FAILED Tests/test_file_gif.py::test_rgb_transparency - Failed: DID NOT WARN. ...
+1 failed, 118 passed, 2 skipped in 1.05s
+pytest_rc=1

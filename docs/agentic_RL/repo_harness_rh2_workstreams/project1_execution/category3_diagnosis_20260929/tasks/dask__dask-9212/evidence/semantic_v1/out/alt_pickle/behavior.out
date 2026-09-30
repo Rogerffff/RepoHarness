@@ -1,0 +1,74 @@
+{"case": "stable:Enum_int", "group": "R1", "norm": "b'\\x80\\x04\\x95\\x1e\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x8c\\naudit_core\\x94\\x8c\\x05Color\\x94\\x93\\x94K\\x01\\x85\\x94R\\x94.'", "ok": true}
+{"case": "distinct:Enum_int", "group": "R2", "ok": true}
+{"case": "strict:Enum_int", "group": "R1", "ok": true}
+{"case": "stable:Flag_single", "group": "R1", "norm": "b'\\x80\\x04\\x95\\x1d\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x8c\\naudit_core\\x94\\x8c\\x04Perm\\x94\\x93\\x94K\\x01\\x85\\x94R\\x94.'", "ok": true}
+{"case": "distinct:Flag_single", "group": "R2", "ok": true}
+{"case": "strict:Flag_single", "group": "R1", "ok": true}
+{"case": "stable:IntEnum", "group": "R1", "norm": "<IColor.RED: 1>", "ok": true}
+{"case": "distinct:IntEnum", "group": "R2", "ok": true}
+{"case": "strict:IntEnum", "group": "R1", "ok": true}
+{"case": "stable:IntFlag_single", "group": "R1", "norm": "<IPerm.R: 1>", "ok": true}
+{"case": "distinct:IntFlag_single", "group": "R2", "ok": true}
+{"case": "strict:IntFlag_single", "group": "R1", "ok": true}
+{"case": "stable:str_mixin", "group": "R1", "norm": "<SColor.RED: 'red'>", "ok": true}
+{"case": "distinct:str_mixin", "group": "R2", "ok": true}
+{"case": "strict:str_mixin", "group": "R1", "ok": true}
+{"case": "stable:tuple_value", "group": "R1", "norm": "b'\\x80\\x04\\x951\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x8c\\naudit_core\\x94\\x8c\\x06Planet\\x94\\x93\\x94GE\\x13\\xc5\\xdeo\\xc2\\x0c\\x14GAXT\\xa7\\x00\\x00\\x00\\x00\\x86\\x94\\x85\\x94R\\x9", "ok": true}
+{"case": "distinct:tuple_value", "group": "R2", "ok": true}
+{"case": "strict:tuple_value", "group": "R1", "ok": true}
+{"case": "stable:dict_value", "group": "R1", "norm": "b'\\x80\\x04\\x95*\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x8c\\naudit_core\\x94\\x8c\\x04Conf\\x94\\x93\\x94}\\x94\\x8c\\x01k\\x94]\\x94(K\\x01K\\x02es\\x85\\x94R\\x94.'", "ok": true}
+{"case": "distinct:dict_value", "group": "R2", "ok": true}
+{"case": "strict:dict_value", "group": "R1", "ok": true}
+{"case": "stable:frozenset_value", "group": "R1", "norm": "b'\\x80\\x04\\x95G\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x8c\\naudit_core\\x94\\x8c\\x04Tags\\x94\\x93\\x94(\\x8c\\x05gamma\\x94\\x8c\\x07epsilon\\x94\\x8c\\x04beta\\x94\\x8c\\x05alpha\\x94\\x8", "ok": true}
+{"case": "distinct:frozenset_value", "group": "R2", "ok": true}
+{"case": "strict:frozenset_value", "group": "R1", "ok": true}
+{"case": "stable:object_value", "group": "R1", "norm": "b'\\x80\\x04\\x95,\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x8c\\naudit_core\\x94\\x8c\\x08Sentinel\\x94\\x93\\x94h\\x00\\x8c\\x03Obj\\x94\\x93\\x94)\\x81\\x94\\x85\\x94R\\x94.'", "ok": true}
+{"case": "distinct:object_value", "group": "R2", "ok": false}
+{"case": "strict:object_value", "group": "R1", "ok": false}
+{"case": "stable:container", "group": "R1", "ok": true}
+{"case": "alias:same_member", "group": "R1", "ok": true}
+{"case": "xclass:same_name_value(Color.RED~Light.RED)", "group": "R2", "norm": ["b'\\x80\\x04\\x95\\x1e\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x8c\\naudit_core\\x94\\x8c\\x05Color\\x94\\x93\\x94K\\x01\\x85\\x94R\\x94.'", "b'\\x80\\x04\\x95\\x1e\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x8c\\naudit_core\\x94\\x8c\\x05Light\\x94\\x93\\x94K\\x01\\x85\\x94R\\x94.'"], "ok": true}
+{"case": "xclass:same_value(Color.RED~Shape.CIRCLE)", "group": "R2", "ok": true}
+{"case": "xclass:IntEnum(IColor.RED~Color.RED)", "group": "R2", "ok": true}
+{"case": "raw:Color.RED~1", "group": "R2", "ok": true}
+{"case": "raw:Color.RED~'RED'", "group": "R2", "ok": true}
+{"case": "raw:Color.RED~'Color.RED'", "group": "R2-edge", "ok": true}
+{"case": "flag:combo~combo(R|W~R|X)", "group": "R2", "norm": ["b'\\x80\\x04\\x95\\x1d\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x8c\\naudit_core\\x94\\x8c\\x04Perm\\x94\\x93\\x94K\\x03\\x85\\x94R\\x94.'", "b'\\x80\\x04\\x95\\x1d\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x8c\\naudit_core\\x94\\x8c\\x04Perm\\x94\\x93\\x94K\\x05\\x85\\x94R\\x94.'"], "ok": true}
+{"case": "flag:combo~empty(R|W~Perm(0))", "group": "R2", "norm": "b'\\x80\\x04\\x95\\x1d\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x8c\\naudit_core\\x94\\x8c\\x04Perm\\x94\\x93\\x94K\\x00\\x85\\x94R\\x94.'", "ok": true}
+{"case": "flag:combo_stable", "group": "R1", "ok": true}
+{"case": "intflag:combo~combo", "group": "R2", "ok": true}
+{"case": "consequence:xclass type_name(Color.RED, Light.RED)", "got": ["Color", "Light"], "group": "R2", "keys_equal": false, "ok": true}
+{"case": "consequence:xclass type_name(Color.RED, Shape.CIRCLE)", "got": ["Color", "Shape"], "group": "R2", "keys_equal": false, "ok": true}
+{"case": "consequence:raw type_name(Color.RED, 1)", "got": ["Color", "int"], "group": "R2", "keys_equal": false, "ok": true}
+{"case": "consequence:flag value_of(R|W, R|X)", "got": [3, 5], "group": "R2", "keys_equal": false, "ok": true}
+{"case": "consequence:flag value_of(R|W, Perm(0))", "got": [3, 0], "group": "R2", "keys_equal": false, "ok": true}
+{"case": "crossproc:Color.RED", "group": "R1-crossproc", "ok": true}
+{"case": "crossproc:Perm.R | Perm.W", "group": "R1-crossproc", "ok": true}
+{"case": "crossproc:IColor.RED", "group": "R1-crossproc", "ok": true}
+{"case": "crossproc:SColor.RED", "group": "R1-crossproc", "ok": true}
+{"case": "crossproc:Planet.EARTH", "group": "R1-crossproc", "ok": true}
+{"case": "crossproc:Conf.A", "group": "R1-crossproc", "ok": true}
+{"case": "crossproc:Tags.A", "group": "R1-crossproc", "ok": false}
+{"case": "crossproc:Sentinel.MISSING", "group": "R1-crossproc", "ok": true}
+{"case": "crossproc:Hooked.A", "group": "R1-crossproc", "ok": true}
+{"case": "hook:__dask_tokenize__ honored", "group": "hook", "honored": false, "norm": "b'\\x80\\x04\\x95\\x1f\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x8c\\naudit_core\\x94\\x8c\\x06Hooked\\x94\\x93\\x94K\\x01\\x85\\x94R\\x94.'", "ok": null}
+{"case": "register:user normalize_token.register(MyEnum) wins", "group": "hook", "norm": "('registered', 'A')", "ok": true}
+{"IColor.RED": "<IColor.RED: 1>", "IPerm.R|W": "<IPerm.W|R: 3>", "SColor.RED": "<SColor.RED: 'red'>", "case": "mixin:IntEnum/IntFlag/str normalized text", "group": "info", "ok": null, "tok_IColor.RED": "39298ae74c114eecc86e951b47cd8000"}
+{"case": "class:Enum class objects A.Color~B.Color (pre-existing)", "equal": true, "group": "info", "norm": "<enum 'Color'>", "ok": null}
+{"case": "class:plain class objects A.Plain~B.Plain", "equal": false, "group": "info", "norm": "<class 'audit_a.Plain'>", "ok": null}
+{"A": "b'\\x80\\x04\\x95\\x1b\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x8c\\x07audit_a\\x94\\x8c\\x05Color\\x94\\x93\\x94K\\x01\\x85\\x94R\\x94.'", "B": "b'\\x80\\x04\\x95\\x1b\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x8c\\x07audit_b\\x94\\x8c\\x05Color\\x94\\x93\\x94K\\x01\\x85\\x94R\\x94.'", "case": "norm:gold-like representation of A.Color.RED", "group": "info", "ok": null}
+{"case": "samename:token A.Color.RED~B.Color.RED", "group": "samename", "ok": null, "stable_a": true, "tokens_equal": false}
+{"case": "samename:pure delayed which() compute together sync", "got": ["audit_a", "audit_b"], "group": "samename", "key": "which-677bfb8334f4a12b881ffdc484a844a7", "keys_equal": false, "ok": true}
+{"case": "samename:pure delayed which() compute together threads", "got": ["audit_a", "audit_b"], "group": "samename", "key": "which-677bfb8334f4a12b881ffdc484a844a7", "keys_equal": false, "ok": true}
+{"case": "samename:pure delayed computed separately", "got": ["audit_a", "audit_b"], "group": "samename", "ok": true}
+{"case": "samename:pure delayed e.describe() compute together", "got": ["audit_a", "audit_b"], "group": "samename", "keys_equal": false, "ok": true}
+{"case": "samename:default (impure) delayed", "got": ["audit_a", "audit_b"], "group": "samename", "keys_equal": false, "ok": true}
+{"case": "samename:Delayed == operator (always pure)", "got": [true, false], "group": "samename", "keys_equal": false, "ok": true}
+{"case": "samename:Delayed [] getitem (always pure)", "got": ["from audit_a", "from audit_b"], "group": "samename", "keys_equal": false, "ok": true}
+{"case": "samename:map_blocks(color=...) names and results", "group": "samename", "names_equal": false, "ok": true, "r1": [100, 101, 102, 103], "r2": [200, 201, 202, 203], "x1_minus_x2": [-100, -100, -100, -100]}
+{"case": "samename:IntEnum IColor.RED (base path unchanged)", "got": ["audit_a", "audit_a"], "group": "samename", "keys_equal": true, "norm": "<IColor.RED: 1>", "ok": false, "tokens_equal": true}
+{"case": "samename:Flag Perm.R", "got": ["audit_a", "audit_b"], "group": "samename", "keys_equal": false, "norm": "b'\\x80\\x04\\x95\\x1a\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x8c\\x07audit_a\\x94\\x8c\\x04Perm\\x94\\x93\\x94K\\x01\\x85\\x94R\\x94.'", "ok": true, "tokens_equal": false}
+{"case": "samename:user __dask_tokenize__ hook Hook.A", "got": ["audit_a", "audit_b"], "group": "samename", "keys_equal": false, "norm": "b'\\x80\\x04\\x95\\x1a\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x8c\\x07audit_a\\x94\\x8c\\x04Hook\\x94\\x93\\x94K\\x01\\x85\\x94R\\x94.'", "ok": true, "tokens_equal": false}
+{"case": "samename:nested Reader.Mode.FAST~Writer.Mode.FAST (same module)", "group": "samename-info", "norm": ["b'\\x80\\x04\\x95&\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x8c\\x0caudit_nested\\x94\\x8c\\x0bReader.Mode\\x94\\x93\\x94K\\x01\\x85\\x94R\\x94.'", "b'\\x80\\x04\\x95&\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x8c\\x0caudit_nested\\x94\\x8c\\x0bWriter.Mode\\x94\\x93\\x94K\\x01\\x85\\x94R\\x94.'"], "ok": null, "tokens_equal": false}
+{"case": "samename:local classes from the same function (like the test)", "enum_enum_equal": false, "enum_flag_equal": false, "group": "samename-info", "norm": "b\"\\x80\\x04\\x95'\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x8c\\x17cloudpickle.cloudpickle\\x94\\x8c\\x13_make_skeleton_enum\\x94\\x93\\x94(\\x8c\\x04enum\\x94\\x8c\\x04Enum\\x94\\x93\\x94\\x", "ok": null}
+{"case": "_env", "dask": "2022.6.0+16.gaa801de0f.dirty", "dask_file": "/testbed/dask/__init__.py", "group": "info", "numpy": "1.24.4", "ok": null, "python": "3.10.14"}

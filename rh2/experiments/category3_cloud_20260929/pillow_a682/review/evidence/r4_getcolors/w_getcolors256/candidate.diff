@@ -1,0 +1,35 @@
+diff --git a/src/PIL/GifImagePlugin.py b/src/PIL/GifImagePlugin.py
+index cf2993e38..6d0f160c3 100644
+--- a/src/PIL/GifImagePlugin.py
++++ b/src/PIL/GifImagePlugin.py
+@@ -545,6 +545,17 @@ def _normalize_palette(im, palette, info):
+ 
+ def _write_single_frame(im, fp, palette):
+     im_out = _normalize_mode(im)
++    trns = im.info.get("transparency")
++    if (
++        isinstance(trns, tuple)
++        and "transparency" not in im.encoderinfo
++        and im.getcolors(255) is None
++    ):
++        # all palette entries are needed for the image itself, so the colour
++        # can only be kept if the image already uses it
++        colors = im.getcolors()
++        if colors is None or trns not in [c for _, c in colors]:
++            im_out.info.pop("transparency", None)
+     for k, v in im_out.info.items():
+         im.encoderinfo.setdefault(k, v)
+     im_out = _normalize_palette(im_out, palette, im.encoderinfo)
+@@ -683,11 +694,7 @@ def get_interlace(im):
+ def _write_local_header(fp, im, offset, flags):
+     transparent_color_exists = False
+     try:
+-        if "transparency" in im.encoderinfo:
+-            transparency = im.encoderinfo["transparency"]
+-        else:
+-            transparency = im.info["transparency"]
+-        transparency = int(transparency)
++        transparency = int(im.encoderinfo["transparency"])
+     except (KeyError, ValueError):
+         pass
+     else:

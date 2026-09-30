@@ -1,7 +1,9 @@
 """生成 dask__dask-8597 修订版测试补丁草案（R-c），并写出 --materials JSON。
 
-用法：python make_revised_test.py <base test_slicing.py> <原 test_patch 文件> <输出目录>
+用法：python make_revised_test.py <base test_slicing.py> <原 test_patch 文件> <输出目录> [v1|v2]
 测试 ID 与 F2P／P2P 分组不变：只改 F2P test_slice_array_null_dimension 的函数体（原来的 3 行原样保留在最前面）。
+v2 与 v1 只差 c4 的下标个数：v1 为 [0, 1, 2] * 40（120 个），v2 为 [0, 1, 2] * 4000（12000 个）。
+v1 会放过“零宽时每块 100 行”一类阈值候选（cap_hundred：默认配置下超过 500 个下标才误发警告）。
 """
 import difflib
 import hashlib
@@ -11,7 +13,7 @@ from pathlib import Path
 
 REL = "dask/array/tests/test_slicing.py"
 IID = "dask__dask-8597"
-VERSION = "c3-dask8597-rc-v1"
+VERSIONS = {"v1": "c3-dask8597-rc-v1", "v2": "c3-dask8597-rc-v2"}
 
 ORIG_F2P = '''
 
@@ -72,33 +74,38 @@ REASON = (
 
 def main():
     base_path, orig_patch_path, out_dir = map(Path, sys.argv[1:4])
+    ver = sys.argv[4] if len(sys.argv) > 4 else "v1"
+    new_f2p = NEW_F2P if ver == "v1" else NEW_F2P.replace("([0, 1, 2] * 40,)", "([0, 1, 2] * 4000,)")
+    assert new_f2p.count("[0, 1, 2] * 4000") == (ver == "v2")
     out_dir.mkdir(parents=True, exist_ok=True)
     base = base_path.read_text()
     assert base.endswith("    assert_eq(actual, expected)\n")
     orig_patch = orig_patch_path.read_text()
     # 原补丁只在文件末尾追加 F2P；逐字核对，保证修订版与原版只差在函数体
     orig_new = base + ORIG_F2P
-    new = base + NEW_F2P
+    new = base + new_f2p
     for line in ORIG_F2P.splitlines():
         if line:
             assert ("+" + line) in orig_patch.splitlines(), line
     diff = difflib.unified_diff(base.splitlines(keepends=True), new.splitlines(keepends=True), f"a/{REL}", f"b/{REL}", n=3)
     patch = f"diff --git a/{REL} b/{REL}\n" + "".join(diff)
-    (out_dir / "revised_test_v1.patch").write_text(patch)
-    (out_dir / "revised_test_v1.py.tail").write_text(NEW_F2P)
+    (out_dir / f"revised_test_{ver}.patch").write_text(patch)
+    (out_dir / f"revised_test_{ver}.py.tail").write_text(new_f2p)
     rev_sha = hashlib.sha256(patch.encode()).hexdigest()
     materials = {
-        "version": VERSION,
+        "version": VERSIONS[ver],
         "tasks": {IID: {
             "original_patch_sha256": hashlib.sha256(orig_patch.encode()).hexdigest(),
             "test_patch": patch,
             "revised_patch_sha256": rev_sha,
-            "reason": REASON,
+            "reason": REASON if ver == "v1" else REASON.replace("120-row index", "12000-row index").replace(
+                "R-c: same F2P id", "Draft v2 (c4 enlarged from 120 to 12000 indices; v1 let a 100-rows-per-chunk "
+                "threshold candidate through). R-c: same F2P id"),
             "positive_control": "gold (unchanged upstream fix); reasonable non-gold controls clamp1, lazy_threshold, "
                                 "errstate_catch, eager_empty (author-written, to be verified by others)",
         }},
     }
-    (out_dir / "materials_revised_v1.json").write_text(json.dumps(materials, ensure_ascii=False, indent=1) + "\n")
+    (out_dir / f"materials_revised_{ver}.json").write_text(json.dumps(materials, ensure_ascii=False, indent=1) + "\n")
     print(json.dumps({"revised_patch_sha256": rev_sha, "orig_new_equals_patch_tail": orig_new.endswith(ORIG_F2P)}))
 
 

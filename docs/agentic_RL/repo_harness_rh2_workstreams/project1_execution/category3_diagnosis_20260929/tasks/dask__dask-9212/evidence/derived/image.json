@@ -1,0 +1,23 @@
+{
+  "base_image": "xingyaoww/sweb.eval.x86_64.dask_s_dask-9212:latest",
+  "base_id": "sha256:974b8bd9b5daca1e307d8e8b933e432ca8622b039487fcf958d3d017b92bd982",
+  "base_digest": "xingyaoww/sweb.eval.x86_64.dask_s_dask-9212@sha256:1ebd15608be434ffca4d9b89287b8d7a43662682675fdd7e73c16cf19e43ed60",
+  "derived_tag": "rh2-envrepair/compat-v2b-dask__dask-9212:c3cloud",
+  "derived_id": "sha256:df4c9ec898619c145176b325d152e6d6003962ea0b23b6fa2348d7c92192a103",
+  "recipe": "ARG BASE_IMAGE\nFROM ${BASE_IMAGE}\nCOPY wheels/ /opt/rh2/compat-wheels/\n",
+  "python": "3.10",
+  "wheels": [
+    {
+      "name": "pandas-1.4.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "sha256": "d0022fe6a313df1c4869b5edc012d734c6519a6fffa3cf70930f32e6a1078e49",
+      "bytes": 11598917
+    },
+    {
+      "name": "numpy-1.24.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "sha256": "7ffe43c74893dbf38c2b0a1f5428760a1a9c98285553c89e12d70a96a7f3a4d6",
+      "bytes": 17282357
+    }
+  ],
+  "base_layers_preserved": true,
+  "derived_layers": 14
+}

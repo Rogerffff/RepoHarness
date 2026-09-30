@@ -1,0 +1,54 @@
+?? install.sh
+?? run_tests.sh
+7a1e28404 Merge pull request #7272 from radarhere/harfbuzz
+/usr/bin/git
+10.1.0.dev0 /testbed/src/PIL/__init__.py 3.9.21 (main, Jan 14 2025, 22:48:24) 
+[Clang 19.1.6 ]
+BASE
+{"case": "S0_example", "ok": false, "exc": "TypeError: int() argument must be a string, a bytes-like object or a number, not 'tuple'", "warnings": ["UserWarning: Couldn't allocate palette entry for transparency"]}
+{"case": "S1_other_tuple_0_255_0", "ok": false, "exc": "TypeError: int() argument must be a string, a bytes-like object or a number, not 'tuple'", "warnings": ["UserWarning: Couldn't allocate palette entry for transparency"]}
+{"case": "S1b_other_tuple_1_2_3", "ok": false, "exc": "TypeError: int() argument must be a string, a bytes-like object or a number, not 'tuple'", "warnings": ["UserWarning: Couldn't allocate palette entry for transparency"]}
+{"case": "S2_gray256_1_2_3", "ok": false, "exc": "TypeError: int() argument must be a string, a bytes-like object or a number, not 'tuple'", "warnings": ["UserWarning: Couldn't allocate palette entry for transparency"]}
+{"case": "S3_hopper_px00", "ok": false, "exc": "TypeError: int() argument must be a string, a bytes-like object or a number, not 'tuple'", "warnings": ["UserWarning: Couldn't allocate palette entry for transparency"]}
+{"case": "S4_example_trns_in_palette_255_0_0", "ok": true, "reloaded_trns": 0, "n_frames": 1, "trns_color": [255, 0, 0], "info_changed": false, "warnings": []}
+{"case": "S4b_example_trns_in_palette_7_0_0", "ok": true, "reloaded_trns": 248, "n_frames": 1, "trns_color": [7, 0, 0], "info_changed": false, "warnings": []}
+{"case": "S5_small_room", "ok": true, "reloaded_trns": 255, "n_frames": 1, "trns_color": [], "info_changed": false, "warnings": []}
+{"case": "S6_example_save_all_single", "ok": false, "exc": "TypeError: int() argument must be a string, a bytes-like object or a number, not 'tuple'", "warnings": ["UserWarning: Couldn't allocate palette entry for transparency", "UserWarning: Couldn't allocate palette entry for transparency"]}
+{"case": "S7_example_save_all_2frames", "ok": false, "exc": "TypeError: int() argument must be a string, a bytes-like object or a number, not 'tuple'", "warnings": ["UserWarning: Couldn't allocate palette entry for transparency", "UserWarning: Couldn't allocate palette entry for transparency", "UserWarning: Couldn't allocate palette entry for transparency"]}
+{"case": "S7b_example_2frames_disposal2", "ok": true, "reloaded_trns": null, "n_frames": 2, "info_changed": false, "warnings": ["UserWarning: Couldn't allocate palette entry for transparency"]}
+{"case": "S8a_example_optimize_false", "ok": false, "exc": "TypeError: int() argument must be a string, a bytes-like object or a number, not 'tuple'", "warnings": ["UserWarning: Couldn't allocate palette entry for transparency"]}
+{"case": "S8b_example_palette_kw", "ok": false, "exc": "TypeError: int() argument must be a string, a bytes-like object or a number, not 'tuple'", "warnings": ["UserWarning: Couldn't allocate palette entry for transparency"]}
+{"case": "S9_png_roundtrip_hopper", "ok": false, "exc": "TypeError: int() argument must be a string, a bytes-like object or a number, not 'tuple'", "warnings": ["UserWarning: Couldn't allocate palette entry for transparency"]}
+{"case": "S11_kw_tuple_full", "ok": false, "exc": "TypeError: int() argument must be a string, a bytes-like object or a number, not 'tuple'", "warnings": []}
+{"case": "S11b_kw_tuple_example_full", "ok": false, "exc": "TypeError: int() argument must be a string, a bytes-like object or a number, not 'tuple'", "warnings": []}
+{"case": "S12_rgb_int_trns_5", "ok": true, "reloaded_trns": 250, "n_frames": 1, "trns_color": [5, 0, 0], "info_changed": false, "warnings": []}
+{"case": "S13_legacy_getdata_info_trns", "ok": true, "gce": ["21f9040100000300"], "warnings": []}
+{"case": "S14_300colors", "ok": false, "exc": "TypeError: int() argument must be a string, a bytes-like object or a number, not 'tuple'", "warnings": ["UserWarning: Couldn't allocate palette entry for transparency"]}
+{"case": "S15_save_twice", "ok": false, "exc": "TypeError: int() argument must be a string, a bytes-like object or a number, not 'tuple'", "warnings": ["UserWarning: Couldn't allocate palette entry for transparency"]}
+{"case": "S16_rgba_tuple", "ok": true, "reloaded_trns": 8, "n_frames": 1, "trns_color": [], "info_changed": false, "warnings": []}
+{"case": "S17_P_tuple", "ok": false, "exc": "TypeError: int() argument must be a string, a bytes-like object or a number, not 'tuple'", "warnings": []}
+ src/PIL/GifImagePlugin.py | 6 +-----
+ 1 file changed, 1 insertion(+), 5 deletions(-)
+GOLD
+{"case": "S0_example", "ok": true, "reloaded_trns": null, "n_frames": 1, "info_changed": false, "warnings": ["UserWarning: Couldn't allocate palette entry for transparency"]}
+{"case": "S1_other_tuple_0_255_0", "ok": true, "reloaded_trns": null, "n_frames": 1, "info_changed": false, "warnings": ["UserWarning: Couldn't allocate palette entry for transparency"]}
+{"case": "S1b_other_tuple_1_2_3", "ok": true, "reloaded_trns": null, "n_frames": 1, "info_changed": false, "warnings": ["UserWarning: Couldn't allocate palette entry for transparency"]}
+{"case": "S2_gray256_1_2_3", "ok": true, "reloaded_trns": null, "n_frames": 1, "info_changed": false, "warnings": ["UserWarning: Couldn't allocate palette entry for transparency"]}
+{"case": "S3_hopper_px00", "ok": true, "reloaded_trns": null, "n_frames": 1, "info_changed": false, "warnings": ["UserWarning: Couldn't allocate palette entry for transparency"]}
+{"case": "S4_example_trns_in_palette_255_0_0", "ok": true, "reloaded_trns": 0, "n_frames": 1, "trns_color": [255, 0, 0], "info_changed": false, "warnings": []}
+{"case": "S4b_example_trns_in_palette_7_0_0", "ok": true, "reloaded_trns": 248, "n_frames": 1, "trns_color": [7, 0, 0], "info_changed": false, "warnings": []}
+{"case": "S5_small_room", "ok": true, "reloaded_trns": 255, "n_frames": 1, "trns_color": [], "info_changed": false, "warnings": []}
+{"case": "S6_example_save_all_single", "ok": true, "reloaded_trns": null, "n_frames": 1, "info_changed": false, "warnings": ["UserWarning: Couldn't allocate palette entry for transparency", "UserWarning: Couldn't allocate palette entry for transparency"]}
+{"case": "S7_example_save_all_2frames", "ok": true, "reloaded_trns": null, "n_frames": 1, "info_changed": false, "warnings": ["UserWarning: Couldn't allocate palette entry for transparency", "UserWarning: Couldn't allocate palette entry for transparency", "UserWarning: Couldn't allocate palette entry for transparency"]}
+{"case": "S7b_example_2frames_disposal2", "ok": true, "reloaded_trns": null, "n_frames": 2, "info_changed": false, "warnings": ["UserWarning: Couldn't allocate palette entry for transparency"]}
+{"case": "S8a_example_optimize_false", "ok": true, "reloaded_trns": null, "n_frames": 1, "info_changed": false, "warnings": ["UserWarning: Couldn't allocate palette entry for transparency"]}
+{"case": "S8b_example_palette_kw", "ok": true, "reloaded_trns": null, "n_frames": 1, "info_changed": false, "warnings": ["UserWarning: Couldn't allocate palette entry for transparency"]}
+{"case": "S9_png_roundtrip_hopper", "ok": true, "reloaded_trns": null, "n_frames": 1, "info_changed": false, "png_info_trns": "(20, 20, 70)", "warnings": ["UserWarning: Couldn't allocate palette entry for transparency"]}
+{"case": "S11_kw_tuple_full", "ok": false, "exc": "TypeError: int() argument must be a string, a bytes-like object or a number, not 'tuple'", "warnings": []}
+{"case": "S11b_kw_tuple_example_full", "ok": false, "exc": "TypeError: int() argument must be a string, a bytes-like object or a number, not 'tuple'", "warnings": []}
+{"case": "S12_rgb_int_trns_5", "ok": true, "reloaded_trns": 250, "n_frames": 1, "trns_color": [5, 0, 0], "info_changed": false, "warnings": []}
+{"case": "S13_legacy_getdata_info_trns", "ok": true, "gce": [], "warnings": []}
+{"case": "S14_300colors", "ok": true, "reloaded_trns": null, "n_frames": 1, "info_changed": false, "warnings": ["UserWarning: Couldn't allocate palette entry for transparency"]}
+{"case": "S15_save_twice", "ok": true, "first": {"reloaded_trns": null, "n_frames": 1, "info_changed": false}, "second": {"reloaded_trns": null, "n_frames": 1, "info_changed": false}, "info_after": "(255, 255, 255)", "warnings": ["UserWarning: Couldn't allocate palette entry for transparency", "UserWarning: Couldn't allocate palette entry for transparency"]}
+{"case": "S16_rgba_tuple", "ok": true, "reloaded_trns": 8, "n_frames": 1, "trns_color": [], "info_changed": false, "warnings": []}
+{"case": "S17_P_tuple", "ok": false, "exc": "TypeError: int() argument must be a string, a bytes-like object or a number, not 'tuple'", "warnings": []}

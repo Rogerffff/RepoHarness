@@ -1,0 +1,39 @@
+683:def _write_local_header(fp, im, offset, flags):
+684-    transparent_color_exists = False
+685-    try:
+686-        transparency = int(im.encoderinfo["transparency"])
+687-    except (KeyError, ValueError):
+688-        pass
+689-    else:
+1097:def test_removed_transparency(tmp_path):
+1098-    out = str(tmp_path / "temp.gif")
+1099-    im = Image.new("RGB", (256, 1))
+1100-
+1101-    for x in range(256):
+1102-        im.putpixel((x, 0), (x, 0, 0))
+1103-
+1104-    im.info["transparency"] = (255, 255, 255)
+1105-    with pytest.warns(UserWarning):
+1106-        im.save(out)
+1107-
+1108-    with Image.open(out) as reloaded:
+1109-        assert "transparency" not in reloaded.info
+1110-
+104:- Do not use transparency when saving GIF if it has been removed when normalizing mode #7284
+1239:def test_removed_transparency(tmp_path: Path) -> None:
+1240-    out = tmp_path / "temp.gif"
+1241-    im = Image.new("RGB", (256, 1))
+1242-
+1243-    for x in range(256):
+1244-        im.putpixel((x, 0), (x, 0, 0))
+1245-
+1246-    im.info["transparency"] = (255, 255, 255)
+1247-    with pytest.warns(
+1248-        UserWarning, match="Couldn't allocate palette entry for transparency"
+1249-    ):
+1250-        im.save(out)
+1251-
+1252-    with Image.open(out) as reloaded:
+1253-        assert "transparency" not in reloaded.info
+1254-
+1255-

@@ -1,8 +1,20 @@
-# R2E pillow__a682ceaf：第3类质量调查结果（主审，待独立复核）
+# R2E pillow__a682ceaf：第3类质量调查结果
 
 2026-09-30 / Claude（第3类第二批主审子代理）。原分类为第3类“题目质量调查未完成”（未审题）。前序步骤：公开读者稿 [public_read.md](public_read.md)、[commands.json](commands.json)；负责人开发核对 [evidence/devcheck/](evidence/devcheck/)。读历史前的初判已封存在 [initial_judgment.md](initial_judgment.md)。本页的去向（R-c 后转第2类）与初判一致；初判列出的错误写法都已实测，另补了初判没列的 `w_notin_image`、`w_drop_big`、`w_convert_mutate`，修订也因此比初判多了 (b)、(b′)、(c) 三段。历史记录只有 09-24 环境审查与 09-23 正式评分，没有旧的质量结论可推翻。**本页所有分数都是私有模拟**，不是 R2E 正式评分。
 
-**结论：问题和修法已明确，建议转第2类。** 本页结论尚待独立复核（v1 §7.3）。
+> **当前状态（09-30 更新：独立复核完成，采用复核者 v2，转第2类）**
+>
+> - **独立复核**结论“部分同意，阻断 3 项”，全文见 [review.md](review.md)（初判封存稿 [review_initial.md](review_initial.md)）：
+>   - 同意原版 S1（T2c＋T2b，另 6 个错误候选在主路径上）；作者 20 个候选在原测试、v1、v1 无 warns 三版上的 60 格逐格复现；v1 的四段检查都有公开依据、不过严（复核者另写的 3 个合理实现与上游 10.1.0、10.4.0、11.3.0 都通过）；gold 仍可作正对照；
+>   - **B1 `w_mutate_kept`**：透明色能用时，把调用者 `im.info` 里的元组改成调色板索引；v1 的 (c) 只在丢弃透明度的两种情形后检查。后果是这张图接着存 PNG 会抛 `TypeError`；
+>   - **B2 `w_nosaveall`**：只修了 `save_all=False` 的入口；`save_all=True` 只有一帧或两帧完全相同时仍抛 `TypeError`（作者原把 S02 登记为“没有已知候选利用”）；
+>   - **B3 `w_order_cache`**：用模块缓存记住分配失败过的颜色，之后同色在调色板有空位的图上也被丢弃，且不再警告；
+>   - **`pytest.warns` 保留**：不属于没有依据的实现约束，也不满足 P5 第二分支，不交用户；去掉它还会放过 `w_filter_leak`（留下全局警告过滤器，整个进程里 `Image.convert` 的这条公开警告都不再出现）。
+> - **负责人决定**：采纳复核者的合并草案 **v2**（v1 加三处，修法都已私测）。私有模拟下 gold 与 7 个合理实现为 1；noop、作者 13 个与复核者 5 个错误候选、`q_prestrip` 为 0。
+> - **停止条件**（review.md §7）：第2类在正式评分链上跑一轮，与复核 §3.2 表的 h4 列一致即完成，不再需要聚焦复核。R2E 在云端没有正式评分链，本页全部是私有模拟。
+> - 交接见[交接清单](../../handover_to_category2_20260930.md)。
+
+**结论：问题和修法已明确，转第2类（采用复核者 v2）。**
 
 - **环境**：无问题。09-24 环境审查已合格；09-30 负责人照跑公开读者的 5 条命令，全部符合预期，最小公开验证约 3 秒。本题材料修订单 v1–v11 中没有本题条目，当前生效的是原始材料 v0。
 - **测试问题（S1）**：唯一目标键 `test_removed_transparency` 的输入与题面示例逐字相同：256×1 红色渐变图，透明色 `(255, 255, 255)`。这是 §4 第 2 步的示例拟合（T2c）。在原测试下，下列 7 个错误候选也得 1：
@@ -231,18 +243,44 @@ v1 下各错误候选失败的位置（v1 行号，见 `evidence/revised_v1*/<�
 
 如果复核认为这属于没有依据的要求（T1），改用此变体即可，不影响其它结论。
 
+### 4.x v2：独立复核后的采用版本
+
+**草案**（复核者，`rh2/experiments/category3_cloud_20260929/pillow_a682/review/materials/`）：`hidden_test_1_review_v2.py`（`3573f459…`）、编辑块 `revision_draft_review_v2.json`（`21581578…`，已用 RH2 的 `_apply_edits` 重放、字段合规）；对照变体 `hidden_test_1_review_v2_nowarn.py`（`6fd35e4b…`）。键集与期望映射（93 键）不变。相对 v1 加三处：
+
+| 新增检查 | 依据 | 拦下 |
+| --- | --- | --- |
+| (b) 之后 `assert im.info["transparency"] == (255, 0, 0)` | 保存不改被保存的图（R3，同 (c) 的依据），透明色能用时同样适用 | B1 `w_mutate_kept` |
+| 示例部分另存一次 `im.save(out, save_all=True)`，断言读回无透明度 | 题面的一般表述：保存不抛异常，与 `save_all` 选项无关 | B2 `w_nosaveall` |
+| 示例之后加一张 1×1 图，透明色同为 `(255,255,255)`，断言保留透明度 | R2：元组能用时仍保留透明度；与之前保存过什么图无关 | B3 `w_order_cache` |
+
+**私有模拟（复核者，全部 164 格，上游口径与 RH2 生产口径逐格一致，每格都解析到 93 键；关键候选另以 UID 54322 复跑）**：
+
+| 候选 | 原测试 | v1 | **v2** |
+| --- | --- | --- | --- |
+| gold、`alt_typeerror`、`alt_frame`、`alt_integral`、`alt_prestrip_warn` | 1 | 1 | **1** |
+| `r_retry`、`r_none_marker`、`r_kwtuple`（复核者的合理实现） | 1 | 1 | **1** |
+| noop | 0 | 0 | 0 |
+| 作者的 7 个触发反例 | 1 | 0 | 0 |
+| 作者其余 6 个错误候选 | 0 | 0 | 0 |
+| `w_getcolors256`（复核者；`getcolors()` 默认只数 256 色） | 1 | 0 | 0 |
+| `w_mutate_kept`、`w_nosaveall`、`w_order_cache`（B1–B3） | 1 | **1** | **0** |
+| `w_filter_leak`（只靠 `pytest.warns` 拦下） | 0 | 0 | 0（无 warns 变体下为 1） |
+| `q_prestrip`（只比 gold 少了警告） | 0 | 0 | 0（无 warns 变体下为 1） |
+
+B1–B3 与 `w_filter_leak` 在全部公开测试上都通过，只能靠隐藏测试拦下。
+
 ## 5．当前用途（v1 §2）
 
 | 版本 | 问题定位 | 能力比较 | 训练候选 | 留出评测 |
 | --- | --- | --- | --- | --- |
 | 原版 v0 | 是 | 否：原版有已证的 S1 未修，7 个错误候选能得 1。按 09-30 Codex 复核后的统一口径，不能靠事后审计进入普通能力比较；特殊诊断试解另列调查目的，不与原分数混用 | 否（S1 未处理） | 否 |
-| R-c v1（草案） | 是 | 经独立复核、Codex 复核、入库和正式评分验收后重新评估 | | 修订后的题只能作“标明版本的自建题” |
+| R-c v2（复核草案） | 是 | 经 Codex 复核、入库和正式评分验收后重新评估 | | 修订后的题只能作“标明版本的自建题” |
 
 ## 6．未做与证据
 
 **未做**：
 - R2E 正式评分链与派生镜像没有在云端重建，本页分数都是私有模拟；
-- 独立复核（v1 §7.3）与 Codex 复核都未做；
+- 独立复核已完成（review.md）；Codex 复核未做；复核未查：正式评分链与派生镜像、UID 54321 的开发条件、上游 10.0.0 重跑、16 位 PNG 的 tRNS、其它平台上的量化结果（review.md §8）；
 - 没有真实模型候选，全部候选由主审构造；
 - 解题身份（UID 54321）的开发条件：沿用 09-24 环境审查的 agent 探针与 09-30 负责人 devcheck，本页未重做；
 - 上游 PR #7284 页面未读（云端读不到 GitHub PR）；
@@ -264,28 +302,13 @@ v1 下各错误候选失败的位置（v1 行号，见 `evidence/revised_v1*/<�
 
 1. **落地版本**：R2E 材料修订一条，接在 `material_revisions_v11`（最后一条为 r2e-mr-063）之后，编号由第2类分配。
    - 类型：`hidden_test_text_replace`，目标 `test_1.py`；
-   - sha256：`ff7a439c78692859c69b257f6a50b8ecc4a0386f87b9ed57dfbc32c9fd6efb5c` → `7f247bf448ad46d40f1a665fd28551a49204a6ae2eb274c4614e12584c38bf3b`；
-   - 编辑块见 `revision_draft_v1.json`；
+   - 采用复核者 v2：编辑块 `review/materials/revision_draft_review_v2.json`（`21581578…`），修订后测试文件 `hidden_test_1_review_v2.py`（`3573f459…`）；也可以对作者 v1（`revision_draft_v1.json`，`ff7a439c…` → `7f247bf4…`）做逐字等价的三处改动；
    - 期望映射不变：`a465b6c9…`，93 键。
-2. **补丁与哈希**：19 个候选补丁与 gold 都在实验目录。完整 sha256 见 `candidates_and_materials_sha256.txt`，生成方法见 `make_candidates.py`，其中 `w_convert_mutate` 另需 base 的 `Image.py`。
-3. **正式评分时的预期分数**（原材料 → v1）：
-
-   | 候选 | 预期（原材料 → v1） |
-   | --- | --- |
-   | noop | 0 → 0 |
-   | gold、`alt_typeerror`、`alt_frame`、`alt_integral`、`alt_prestrip_warn` | 1 → 1 |
-   | `w_literal`、`w_count256`、`w_notin_image`、`w_drop_full`、`w_drop_big`、`w_mutate`、`w_convert_mutate`（触发反例） | 1 → 0 |
-   | `deg_off`、`w_silent`、`w_swallow_save`、`w_keep_trns`、`w_nearest`、`w_imout` | 0 → 0 |
-   | `q_prestrip` | 0 → 0；如采用无 warns 变体则为 1 |
-
-   至少跑 noop、gold、1 个合理替代（建议 `alt_typeerror`）和 7 个触发反例。
-4. **剩余已知问题及处理**：
-   - 警告断言：建议保留；替代方案是无 warns 变体，影响见 §4；
-   - S09（关键字传元组）、S13（`getdata`）、S14（RGB 图放整数）：不补断言，理由见 §3.3；
-   - S02（`save_all` 只有一帧）：可选加固一行，不建议；
-   - X1：登记同仓关系。
-5. **前置条件**：
-   - 本页的独立复核（v1 §7.3）；
-   - 修订的 Codex 复核；
-   - 在本地的 R2E 正式评分链上，用派生镜像加修订材料跑第 3 条；
-   - 环境与题面都没有改动，不需要重做 actor 开发核对或公开读者验收。
+2. **补丁与哈希**：作者 19 个候选补丁与 gold 在实验目录（`candidates_and_materials_sha256.txt`、`make_candidates.py`，其中 `w_convert_mutate` 另需 base 的 `Image.py`）；复核者 8 个候选在 `review/cands/`（`make_review_candidates.py`）。
+3. **正式评分时的预期分数**：与复核 §3.2 表的 h4 列一致即完成，不再需要聚焦复核。最少要跑：
+   - 期望为 1：gold、`alt_typeerror`、`r_kwtuple`；
+   - 期望为 0：noop、作者 7 个触发反例、`w_mutate_kept`、`w_nosaveall`、`w_order_cache`、`w_filter_leak`、`q_prestrip`。
+4. **只登记、不再阻断**（review.md §7）：只在多于 256 色的图上改调用者 `info`（可选在 (b′) 后再加一行）；只在示例以外的路径去掉警告；关键字元组、`getdata`、RGB 整数透明度、RGBA 或 P 图带元组；GIF 版本号；其它解码器。新反例要阻断，必须落在复核 §7 列出的主路径上，并能指出违反哪条公开要求。
+5. **`pytest.warns`**：保留（复核 §4）。代价是有意去掉警告的写法（`q_prestrip` 一类）得 0，建议在题卡的训练价值备注里写明。
+6. **登记**：X1（本题工作树含同仓其余 6 道 R2E pillow 题的修复，复核已实核）；E3（来源镜像的 `.git` 里有修复提交对象，派生镜像已清理，属 A 线范围）。
+7. **前置条件**：修订的 Codex 复核；在本地的 R2E 正式评分链上，用派生镜像加修订材料跑第 3 条；环境与题面都没有改动，不需要重做 actor 开发核对或公开读者验收。

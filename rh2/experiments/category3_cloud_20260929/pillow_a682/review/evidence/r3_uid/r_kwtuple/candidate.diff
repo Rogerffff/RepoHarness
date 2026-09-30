@@ -1,0 +1,43 @@
+diff --git a/src/PIL/GifImagePlugin.py b/src/PIL/GifImagePlugin.py
+index cf2993e38..3c4ae5f91 100644
+--- a/src/PIL/GifImagePlugin.py
++++ b/src/PIL/GifImagePlugin.py
+@@ -28,6 +28,7 @@ import itertools
+ import math
+ import os
+ import subprocess
++import warnings
+ from enum import IntEnum
+ 
+ from . import Image, ImageChops, ImageFile, ImagePalette, ImageSequence
+@@ -547,6 +548,17 @@ def _write_single_frame(im, fp, palette):
+     im_out = _normalize_mode(im)
+     for k, v in im_out.info.items():
+         im.encoderinfo.setdefault(k, v)
++    trns = im.encoderinfo.get("transparency")
++    if isinstance(trns, tuple):
++        # an RGB colour passed to save(): look it up in the normalized palette
++        index = None
++        if im_out.mode == "P" and im_out.palette:
++            index = im_out.palette.colors.get(tuple(trns[:3]))
++        if index is None:
++            del im.encoderinfo["transparency"]
++            warnings.warn("Couldn't allocate palette entry for transparency")
++        else:
++            im.encoderinfo["transparency"] = index
+     im_out = _normalize_palette(im_out, palette, im.encoderinfo)
+ 
+     for s in _get_global_header(im_out, im.encoderinfo):
+@@ -683,11 +695,7 @@ def get_interlace(im):
+ def _write_local_header(fp, im, offset, flags):
+     transparent_color_exists = False
+     try:
+-        if "transparency" in im.encoderinfo:
+-            transparency = im.encoderinfo["transparency"]
+-        else:
+-            transparency = im.info["transparency"]
+-        transparency = int(transparency)
++        transparency = int(im.encoderinfo["transparency"])
+     except (KeyError, ValueError):
+         pass
+     else:

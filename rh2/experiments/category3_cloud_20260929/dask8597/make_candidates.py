@@ -147,6 +147,15 @@ CAP_ONE = '''    if math.isnan(other_numel):
         warnsize = maxsize * 5
 '''
 
+# 同类、阈值更高：零宽时每块 100 行（默认配置下超过 500 个下标才误发警告）。用来检验修订测试的规模实例是否够大
+# （v1 的 c4 只有 120 个下标，放过它；v2 改为 12000 个）。
+CAP_HUNDRED = '''    if math.isnan(other_numel):
+        warnsize = maxsize = math.inf
+    else:
+        maxsize = math.ceil(nbytes / (other_numel * itemsize)) if other_numel else 100
+        warnsize = maxsize * 5
+'''
+
 # ---- 在 take 里提前返回的两种写法（插在 other_numel 计算之后） ----
 ANCHOR = '''    other_numel = np.prod([sum(x) for x in other_chunks])
 '''
@@ -211,9 +220,10 @@ RETURN_NUMPY = '''        index2 = normalize_index(index, self.shape)
         dependencies = {self.name}
 '''
 
-# 合理但与 gold 位置不同：没有元素的数组用 NumPy 在空替身上求结果形状，再包成 dask Array。
-# 结果仍是 dask Array、dtype 与 NumPy 一致；代价是结果图不再引用输入（空数组没有数据），
-# 非 NumPy 后端（cupy 等）的 meta 类型会变成 NumPy（登记为边缘差异）。
+# 原设计为“合理但与 gold 位置不同”：没有元素的数组用 NumPy 在空替身上求结果，再用 from_array（自动分块）包成 dask Array。
+# 09-30 修订 v2 实测后改判为只对部分规模有效：结果在 5000 行左右以上时，from_array 的自动分块（base 既有缺陷）
+# 发除零 RuntimeWarning，与 swallow_warn 同类。合理的同位置实现见 eager_single_chunk。
+# 另：结果图不再引用输入（空数组没有数据）；非 NumPy 后端（cupy 等）的 meta 类型会变成 NumPy（登记为边缘差异）。
 EAGER_EMPTY = '''        index2 = normalize_index(index, self.shape)
         # An array without elements holds no data: compute NumPy's result on an
         # empty stand-in of the same shape and wrap it as a dask array.
@@ -237,12 +247,25 @@ DEDUP_SLICE = '''        index2 = normalize_index(index, self.shape)
         dependencies = {self.name}
 '''
 
+# 与 eager_empty 相同，但结果用单块（chunks=-1）包装，不走 from_array 的自动分块。
+# 09-30 修订 v2 发现：base 里 da.from_array(np.zeros((n, 0))) 在 n 约 5000 以上时，auto_chunks 自身会除零并发
+# RuntimeWarning（与本题无关的既有缺陷）；eager_empty 把结果交给自动分块，于是对 5000 行以上的零宽结果误发警告。
+# 本候选避开该路径，作为“修改位置与 gold 不同”的合理实现。
+EAGER_SINGLE_CHUNK = '''        index2 = normalize_index(index, self.shape)
+        # An array without elements holds no data: compute NumPy's result on an
+        # empty stand-in of the same shape and wrap it as a single-chunk dask array.
+        if 0 in self.shape and not any(isinstance(i, Array) for i in index2):
+            return from_array(np.empty(self.shape, dtype=self.dtype)[index2], chunks=-1)
+        dependencies = {self.name}
+'''
+
 CANDIDATES = {
     "gold_regen": {SL: [(BASE, GOLD)]},
     "clamp1": {SL: [(BASE, CLAMP1)]},
     "lazy_threshold": {SL: [(BASE, LAZY)]},
     "errstate_catch": {SL: [(BASE, ERRSTATE)]},
     "eager_empty": {CORE: [(GI_ANCHOR, EAGER_EMPTY)]},
+    "eager_single_chunk": {CORE: [(GI_ANCHOR, EAGER_SINGLE_CHUNK)]},
     "split_only": {SL: [(BASE, SPLIT_ONLY)]},
     "split_only_zero": {SL: [(BASE, SPLIT_ONLY_ZERO)]},
     "last_axis_only": {SL: [(BASE, LAST_AXIS)]},
@@ -251,6 +274,7 @@ CANDIDATES = {
     "swallow_self": {SL: [(BASE, SWALLOW_SELF)]},
     "warn_zero": {SL: [(BASE, WARN_ZERO)]},
     "cap_one": {SL: [(BASE, CAP_ONE)]},
+    "cap_hundred": {SL: [(BASE, CAP_HUNDRED)]},
     "single_block": {SL: [(ANCHOR, SINGLE_BLOCK)]},
     "float_blocks": {SL: [(ANCHOR, FLOAT_BLOCKS)]},
     "float_blocks_dep": {SL: [(ANCHOR, FLOAT_BLOCKS_DEP)]},

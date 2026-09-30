@@ -1,10 +1,10 @@
-"""修订测试草案 v1 的逐实例核对（容器内执行；不交给求解者）。
+"""修订测试草案 v1／v2 的逐实例核对（容器内执行；不交给求解者）。
 
 把修订版 F2P 的每个实例拆成独立的 pytest 用例，写到 /testbed/dask/array/tests/ 下的临时模块里再跑，
 这样仓库 setup.cfg 的 filterwarnings（dask 等模块归属的警告即错误）与修订版 F2P 完全相同；跑完删除临时文件。
-实例与 revised_test_v1.patch 中的字面值逐一对应：
+实例与 revised_test_v1.patch／revised_test_v2.patch 中的字面值逐一对应（两版只差 c4 的下标个数）：
 - orig：原 F2P 的 3 行（题面原例、默认配置）；
-- c1_issue／c2_zero_first_axis1／c3_mid_zero_i4_multichunk／c4_index120：四个实例 × split None/False/True；
+- c1_issue／c2_zero_first_axis1／c3_mid_zero_i4_multichunk／c4_index120（草案 v1）／c4_index12000（草案 v2）：实例 × split None/False/True；
 - default_warning：非空数组真正的大块在默认配置下仍发 PerformanceWarning。
 """
 import subprocess
@@ -24,6 +24,7 @@ CASES = {
     "c2_zero_first_axis1": lambda: (np.zeros((0, 3)), "auto", (slice(None), [2, 0, 2])),
     "c3_mid_zero_i4_multichunk": lambda: (np.zeros((6, 0, 4), dtype="i4"), (2, -1, 2), ([5, 0, 5, -1, 3],)),
     "c4_index120": lambda: (np.zeros((3, 0)), "auto", ([0, 1, 2] * 40,)),
+    "c4_index12000": lambda: (np.zeros((3, 0)), "auto", ([0, 1, 2] * 4000,)),
 }
 
 
