@@ -2,20 +2,16 @@
 
 2026-09-29 / Claude（云端，第3类第二批主审）。原分类：第3类“已有具体疑点，缺辨别实验”。登记的下一步是：先对合法嵌套值做 base／gold 的 Put/Get 对照，再处理实际失败。
 
-> **收口状态（09-30，云端额度不足，第二批暂停）**
+> **当前状态（09-30 更新）**
 >
-> - **本页的分数目前都不能核对**。作者诊断基本写完，但私有行为矩阵、原材料正式评分、v2／v2s 诊断评分的输出都**没有归档**：它们只存在被 git 忽略的 `runs/` 中，容器重置后丢失。本目录没有 `evidence/`。§3.2 与 §5 的正式评分表没有填写。
-> - **已入库、可以复用的**：实验目录 `rh2/experiments/category3_cloud_20260929/moto6185/` 中的候选生成器与 12 个候选补丁、`behavior.py`／`behavior_extra.py`、修订草案 v2（`7bbae287…c3a9`）与严格备选 v2s（`4122cced…25e4`）、对应的 materials、`run_formal.sh` 与汇总脚本。
-> - **因此**：下面的判断（S1：T2a＋T2b；gold 两处缺口判 S2／T3；未发现误拒）是作者依据已丢失的运行结果写的，**在重跑并归档之前只能当作待验证的假设**。独立复核尚未进行。
-> - **下一步**：
->   1. 按 [作者须知](../../batch2_author_brief.md) §4 用 `rebuild_install_wave1.py` 重建派生镜像，核对三个 wheel 的 SHA256；
->   2. 重做 `prepare` 与 `export-gold`；
->   3. 重跑私有矩阵；
->   4. 用 `run_formal.sh` 跑原材料、v2、v2s 的正式评分；
->   5. 用 `archive_evidence.py` 归档，填 §3.2 与 §5 的表；
->   6. 请独立复核。
+> - **全部运行已在云端重做并归档**（证据在 [evidence/](evidence/)）：
+>   - 派生镜像按 install_wave1 配方重建，三个 wheel 的 SHA256 与登记值逐一相同；
+>   - 私有行为矩阵 14 个版本 × 44 个场景：§3.1 行为表 154 格与重跑结果逐格一致；
+>   - 正式评分 42 次（原材料、v2、v2s 各 14 次）：与私有模拟评分逐项一致，见 §3.2 与 §5。
+> - **作者结论经重跑证实**：原版 S1（6 个错误或部分修复候选正式得 1）、没有误拒、v2 下 gold 与两份附加正对照为 1、错误候选为 0。
+> - **还差**：独立复核（重点见 §7），以及 `ctx`、`parity` 作附加正对照的他人核实。
 
-**结论（作者，证据待重跑）：问题和修法已明确，建议转第2类。** 独立复核尚未进行。
+**结论：问题和修法已明确，建议转第2类。** 独立复核尚未进行。
 
 1. **辨别实验的结果：原先怀疑的“gold 漏修深层合法值”，在普通主键名下不成立。** gold 对题面两例（顶层、嵌套 `None`）、字符串值、两层嵌套、list 内 map、batch／transact 入口都能写入并等值读回。旧题卡的两条静态推断都已实测坐实，但只在少见路径上出现，登记为 T3／S2（§4）：
    - 主键（HASH 或 RANGE）**名为 `M`** 的表上，嵌套属性 `S` 仍报 `SerializationException`；
@@ -28,7 +24,7 @@
 
    判 S1（T2a＋T2b）。
 3. **修法 R-c v2**：在原 F2P 函数内追加断言，测试 ID 与命令都不变。gold 仍作正对照；另有两份与 gold 写法不同的合理实现 `ctx`、`parity` 在原材料和 v2 上都得 1（本人所写，待他人核实）。
-4. **严格备选 v2s**：在 v2 之外再断言上述两个 gold 缺口，gold 因此为 0，正对照改用 `ctx`。只有复核把这两个缺口判为 S1 时才用。它的评分数据〔未归档〕，需重跑。
+4. **严格备选 v2s**：在 v2 之外再断言上述两个 gold 缺口，gold 因此为 0，正对照改用 `ctx`。只有复核把这两个缺口判为 S1 时才用，评分数据已备好（§5）。
 5. 没有发现误拒：三份与 gold 写法不同的合理实现在原材料正式评分下都得 1。
 
 ## 1．公开要求
@@ -62,7 +58,7 @@
 ## 2．环境
 
 - **原镜像**：`xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6185`，RepoDigest `sha256:ade7d85a…4eda`，image ID `sha256:47443b04…9325`，与 ingest 及 09-19 配方一致；已打 `c3keep/moto6185:src` 标签。镜像内 Python 3.12.4、boto3／botocore 1.35.9，`moto` 从 `/testbed` 导入。
-- **派生镜像**：按 09-19 install_wave1 配方在云端重建（`rebuild_install_wave1.py`），派生 ID `sha256:89f45ee2…e950`（本机构建，历史 ID `03d0313e…` 不适用）。原 13 层保留，新增 1 层。三个 wheel（`setuptools 72.1.0`、`wheel 0.43.0`、`packaging 24.1`）的 SHA256 用 `--expect` 与 moto-7584 试点登记的值逐一核对，全部相同。重建记录原应归档在 `evidence/derived/`，〔未归档〕。
+- **派生镜像**：按 09-19 install_wave1 配方在云端重建（`rebuild_install_wave1.py`），本机派生 ID `sha256:22138934…07d8`（本机构建 ID 每次不同，09-29 那次为 `89f45ee2…`，历史 ID `03d0313e…` 不适用）。原 13 层保留，新增 1 层。三个 wheel（`setuptools 72.1.0`、`wheel 0.43.0`、`packaging 24.1`）的 SHA256 用 `--expect` 与 moto-7584 试点登记的值逐一核对，全部相同。重建记录见 `evidence/derived/getmoto__moto-6185/image.json`。
 - **评分代码**：分支 `claude/category3-20260929`，正式评分路径与 `a31cdcd` 逐字相同（`git diff a31cdcd HEAD` 为空）。账本里的 `scripts_digest`（`2b42e653…`）与 grader profile 摘要（`3ec1bfa8…`）是当前代码版本的值，与 09-19 历史（`80f2f995…`、`1bb8e0cf…`）不同。推断原因是 09-19 用的是冻结 baseline 代码，而不是镜像或题目变化；未逐项核对。profile 摘要与本批 moto-7584 的正式评分相同。
 - **与历史一致**：noop 与 09-19 逐项相同：安装阶段 `make init` 两次 editable 构建完成，`RH2_INSTALL_RC=0`；36 个节点、1 失败 35 通过；两个带空格的 `test_update_item_with_duplicate_expressions[set …]` 节点合并为 35 个解析键；F2P 失败在新增的顶层 put（第 945 行）。
 - 私有对照用原镜像（root、断网、一次性容器）。
@@ -71,7 +67,7 @@
 
 ### 3.1 私有行为对照（辨别实验）
 
-脚本 [`behavior.py`](../../../../../../../rh2/experiments/category3_cloud_20260929/moto6185/behavior.py) 与 [`behavior_extra.py`](../../../../../../../rh2/experiments/category3_cloud_20260929/moto6185/behavior_extra.py)。合法值用资源层 API、正常 SDK 校验，put 后再 get 比较；错误值用关闭参数校验的低层 client，与 F2P 同一入口。完整 40 余行原应归档在 `evidence/semantic_v2_matrix.md`，〔未归档〕；下表是作者当时的摘录，现无法与原始输出核对。
+脚本 [`behavior.py`](../../../../../../../rh2/experiments/category3_cloud_20260929/moto6185/behavior.py) 与 [`behavior_extra.py`](../../../../../../../rh2/experiments/category3_cloud_20260929/moto6185/behavior_extra.py)。合法值用资源层 API、正常 SDK 校验，put 后再 get 比较；错误值用关闭参数校验的低层 client，与 F2P 同一入口。完整 44 行见 [evidence/semantic_v2_matrix.md](evidence/semantic_v2_matrix.md)（09-30 重跑，14 个版本）。下表是摘录，154 格已与重跑结果逐格核对一致。
 
 | 候选 | 例 1 顶层 None | 例 2 嵌套 None | 顶层 S 字符串值 | 两层 map | list 内 map | 主键名 M＋嵌套 S | 主键名 S | 非主键 S→dict | S 在前＋非主键 N 整数 | S 之下 N 整数 | tests/test_dynamodb 全套 |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -118,13 +114,30 @@
 
 ### 3.2 原材料正式评分
 
-F2P 1 项，P2P 34 项；派生镜像 `89f45ee2…`；标签 `install-wave1:getmoto__moto-6185:c3cloud-rebuild`。
+F2P 1 项，P2P 34 项；09-30 重建的派生镜像 `22138934…`；标签 `install-wave1:getmoto__moto-6185:c3cloud-rebuild`。全部 14 次运行：参考缺席 0、`apply_ok`、安装末命令 RC 0、P2P 34/34、清理成功。
 
-（未完成：评分曾在云端运行，输出〔未归档〕，随容器重置丢失。重跑并归档后填入。）
+| 候选 | sha256 | 性质 | reward | F2P 失败原因 |
+| --- | --- | --- | --- | --- |
+| noop | — | — | 0 | 新增的顶层 put 报 `SerializationException` |
+| gold | `868fd2d1…` | 参考解 | **1** | — |
+| `ctx` | `139572e8…` | 合理（附加正对照） | **1** | — |
+| `ctx_list` | `9169306d…` | 合理 | **1** | — |
+| `parity` | `d7ca0fd9…` | 合理（附加正对照） | **1** | — |
+| `top_only` | `1d82e10d…` | 部分修复 | **1** | —（漏判） |
+| `siblings` | `c39acf3b…` | 部分修复 | **1** | —（漏判） |
+| `depth2` | `2bdf47a6…` | 部分修复 | **1** | —（漏判） |
+| `list_as_names` | `f4a791b5…` | 部分修复 | **1** | —（漏判） |
+| `swallow` | `35a765d8…` | 吞掉错误 | **1** | —（漏判） |
+| `skip_s_subtree` | `c273d7e3…` | 吞掉错误 | **1** | —（漏判） |
+| `rootkey` | `0232a04f…` | 放宽非主键校验（T3 同类） | 1 | — |
+| `null_only` | `23b58b21…` | 示例字面值 | 0 | 顶层 `S` 字符串值报 `SerializationException` |
+| `shape` | `36f1b5d7…` | 值形态启发式 | 0 | 主键 `{"S": {"S": …}}` 抛内部 `AttributeError` |
+
+noop 与 09-19 历史一致（F2P 失败在新增的顶层 put）。
 
 ### 3.3 私有模拟评分（补充）
 
-在私有对照里对原材料、v2、v2s 按参考名单逐项计分，结果原应归档在 `evidence/semantic_v2_matrix.md` 末尾各行，〔未归档〕。作者当时记录它与正式评分逐项一致，现无法核对。v1／v1s 是中间草稿，只有私有模拟（`semantic_v1/`）。
+在私有对照里对原材料、v2、v2s 按参考名单逐项计分，结果见 [evidence/semantic_v2_matrix.md](evidence/semantic_v2_matrix.md) 末尾各行，与正式评分 42 格逐项一致（§3.2、§5）。v1／v1s 是 09-29 的中间草稿，只有私有模拟，其输出已随容器重置丢失，09-30 没有重跑。
 
 ## 4．判定（v1 §3–§4）
 
@@ -158,9 +171,18 @@ F2P 1 项，P2P 34 项；派生镜像 `89f45ee2…`；标签 `install-wave1:getm
 
 修订后仍受保护的公开要求：原 F2P 的主键 S 错误、顶层 `S` 往返，以及 P2P 34 项。
 
-**v2 正式诊断评分**：`--materials`，grader 后缀 `+c3-moto6185-nested-s-v2`，同一派生镜像。
+**v2 正式诊断评分**：`--materials`（`materials_revised_v2.json`，版本 `c3-moto6185-nested-s-v2`），grader 后缀 `+c3-moto6185-nested-s-v2`，同一派生镜像。14 次运行健康项同上。失败行号取自私有模拟（修订测试文件），正式评分日志中的异常类型一致。
 
-（未完成：同上，〔未归档〕，重跑后填入。）
+| 候选 | reward | 失败位置 |
+| --- | --- | --- |
+| gold（正对照） | **1** | — |
+| `ctx`、`ctx_list`、`parity` | **1** | — |
+| noop | 0 | 945：顶层 put 报 `SerializationException` |
+| `top_only`、`siblings`、`depth2`、`list_as_names` | 0 | 961：嵌套、深层或 list 内实例的 put 报 `SerializationException` |
+| `swallow`、`skip_s_subtree` | 0 | 971：含属性 `S` 的条目里，非主键 `{"N": 5}` 没有报错（`DID NOT RAISE`） |
+| `null_only` | 0 | 945：顶层 `S` 字符串值报错 |
+| `shape` | 0 | 938：原 F2P 部分，主键 `{"S": {"S": …}}` 抛内部 `AttributeError` |
+| `rootkey` | 1 | —（T3 同类，v2 不断言） |
 
 **严格备选 v2s**（不作默认）：[`revised_test_v2s.patch`](../../../../../../../rh2/experiments/category3_cloud_20260929/moto6185/revised_test_v2s.patch)，sha256 `4122cced…25e4`。在 v2 之外追加两项：
 - HASH 主键名为 `M` 的表上，嵌套属性 `S` 可写入并读回；
@@ -168,7 +190,17 @@ F2P 1 项，P2P 34 项；派生镜像 `89f45ee2…`；标签 `install-wave1:getm
 
 同时删去隐藏测试里与第二项矛盾的注释“Nested 'S'-s like this are allowed for non-key attributes”。v2s 下 gold 为 0，按 D4 改用 `ctx` 作正对照（`parity` 为第二正对照），两者都是本人所写，**待他人核实**。
 
-（v2s 正式评分：未完成，〔未归档〕，重跑后填入。）
+**v2s 正式诊断评分**（`materials_revised_v2s.json`，版本 `c3-moto6185-nested-s-v2s`）：
+
+| 候选 | reward | 失败位置（私有模拟行号） |
+| --- | --- | --- |
+| `ctx`（v2s 正对照）、`parity`（第二正对照）、`ctx_list` | **1** | — |
+| gold | **0** | 986：HASH 主键名为 `M` 的表上，嵌套 `S` 报 `SerializationException` |
+| `rootkey` | 0 | 993：非主键 `{"S": {"S": …}}` 抛内部 `AttributeError` |
+| noop、`null_only` | 0 | 944 |
+| `top_only`、`siblings`、`depth2`、`list_as_names` | 0 | 960 |
+| `swallow`、`skip_s_subtree` | 0 | 970 |
+| `shape` | 0 | 938 |
 
 **交接给第2类**：
 
@@ -177,7 +209,7 @@ F2P 1 项，P2P 34 项；派生镜像 `89f45ee2…`；标签 `install-wave1:getm
 3. 正式版本复验 §5 表中全部候选。
 4. Codex 复核。
 5. 评分使用重建的 install_wave1 配方，见 §2。
-6. 独立复核若判定 §4 中的 G1／T3 两项为 S1，改用 v2s；它的评分需重跑（〔未归档〕）。
+6. 独立复核若判定 §4 中的 G1／T3 两项为 S1，改用 v2s，评分数据已在上面。
 
 **非阻断建议**：
 - v2 的断言放在一个循环里，失败时只报到循环内的 put 行。若希望失败信息直接指出是哪个实例，可以把各实例拆成独立语句，或在 put 外包一层带实例名的断言；这不影响分数。
@@ -209,5 +241,8 @@ F2P 1 项，P2P 34 项；派生镜像 `89f45ee2…`；标签 `install-wave1:getm
 ## 9．版本与证据
 
 - 候选补丁、生成器、行为脚本、修订草案与 materials：`rh2/experiments/category3_cloud_20260929/moto6185/`。
-- 运行产物：原在 `runs/category3_cloud_20260929/moto6185/`（git 忽略），容器重置前**没有归档**，已丢失。计划中的归档目录 `formal/`、`formal_revised_v2/`、`formal_revised_v2s/`、`semantic_v1/`、`semantic_v2/`、`derived/` 都不存在，重跑后再用 `archive_evidence.py` 归档到本目录 `evidence/`。
+- 运行产物：`runs/category3_cloud_20260929/moto6185/`（git 忽略）。09-29 的运行输出随容器重置丢失；09-30 全部重跑，小型原件已归档到 [evidence/](evidence/)，全部文件的 SHA256 见 `evidence_manifest.json`：
+  - `formal/`、`formal_revised_v2/`、`formal_revised_v2s/`：正式评分与诊断评分，各含 `failure_reasons.txt`；
+  - `semantic_v2/`、`semantic_v2_matrix.md`、`semantic_v2_matrix.json`：私有对照与私有模拟（14 个版本）；规格为实验目录中的 `semantic_spec_v2_full.json`（合并了原 v2、`list_as_names` 与全套测试三份规格）；
+  - `derived/`：派生镜像重建记录；`test_orig.patch`：原 test_patch 副本（sha256 `506b3670…`）。
 - 官方材料：gold sha256 `868fd2d1…79e1`；test_patch sha256 `506b3670…fc52`；base `dc460a32…`。
