@@ -1,0 +1,37 @@
+[
+  {
+    "id": "env_import_version",
+    "timeout_s": 60,
+    "expect": "zero",
+    "purpose": "导入与版本（修复前后相同）：确认 python 为 /testbed/.venv 下的 CPython 3.9.21，PIL 为 10.1.0.dev0 且来自 /testbed/src/PIL/__init__.py，C 扩展 _imaging 已加载、gif_encoder 为 True，GifImagePlugin 来自 /testbed/src/PIL/GifImagePlugin.py。本题相关代码（GifImagePlugin.py、Image.py）都是纯 Python，只改它们无需重建 C 扩展。前两段顺带打印 pip / uv 是否可用，仅作信息，不影响退出码（退出码取最后的 python -c）。",
+    "cmd": "python -m pip --version 2>&1 || echo \"pip: unavailable\"; command -v uv || echo \"uv: not on PATH\"; python -c 'import sys, PIL; from PIL import Image, GifImagePlugin; print(\"python\", sys.version.split()[0], sys.executable); print(\"PIL\", PIL.__version__, PIL.__file__); print(\"core\", Image.core.__file__); print(\"gif_encoder\", hasattr(Image.core, \"gif_encoder\")); print(\"GifImagePlugin\", GifImagePlugin.__file__)'"
+  },
+  {
+    "id": "repro_issue_example",
+    "timeout_s": 120,
+    "expect": "nonzero",
+    "purpose": "题面复现（经公开 API Image.save / Image.open；输出写 /tmp 的新临时目录，并补上题面例子缺少的调用）。修复前预计：退出码 1，打印 'BASE BUG REPRODUCED: TypeError: int() argument must be a string, a bytes-like object or a number, not 'tuple''，raised at 指向 /testbed/src/PIL/GifImagePlugin.py 第 690 行 _write_local_header（transparency = int(transparency)），warnings 里应有 Image.convert 发出的 \"Couldn't allocate palette entry for transparency\"。修复后预计：退出码 0，saved OK: GIF P (256, 1) ...，'transparency in reloaded info: False'；warnings 是否仍含上述警告取决于实现（题面未约定）；distinct colors / pixel 两项只作信息，不参与判定。退出码 2 表示保存成功但重新打开后仍带透明度（与题面期望不符，或本环境量化没有占满 256 个索引、前提不成立）；退出码 3 表示出现了 TypeError 以外的异常。",
+    "cmd": "python -c '\nimport os, sys, tempfile, traceback, warnings\nfrom PIL import Image\nout = os.path.join(tempfile.mkdtemp(dir=\"/tmp\"), \"temp.gif\")\nim = Image.new(\"RGB\", (256, 1))\nfor x in range(256):\n    im.putpixel((x, 0), (x, 0, 0))\nim.info[\"transparency\"] = (255, 255, 255)\nwith warnings.catch_warnings(record=True) as caught:\n    warnings.simplefilter(\"always\")\n    try:\n        im.save(out)\n    except TypeError as exc:\n        fr = traceback.extract_tb(exc.__traceback__)[-1]\n        print(\"BASE BUG REPRODUCED: TypeError:\", exc)\n        print(\"raised at:\", fr.filename, fr.lineno, fr.name, \"|\", fr.line)\n        print(\"warnings:\", [str(w.message) for w in caught])\n        sys.exit(1)\n    except Exception as exc:\n        print(\"OTHER EXCEPTION:\", type(exc).__name__, exc)\n        traceback.print_exc()\n        sys.exit(3)\nprint(\"warnings:\", [str(w.message) for w in caught])\nwith Image.open(out) as re:\n    re.load()\n    print(\"saved OK:\", re.format, re.mode, re.size, re.info.get(\"version\"))\n    print(\"transparency in reloaded info:\", \"transparency\" in re.info)\n    rgb = re.convert(\"RGB\")\n    print(\"info only: distinct colors =\", len(rgb.getcolors(256) or []), \"; pixel(200,0) =\", rgb.getpixel((200, 0)))\n    ok = \"transparency\" not in re.info\nsys.exit(0 if ok else 2)\n'"
+  },
+  {
+    "id": "probe_tuple_transparency_boundaries",
+    "timeout_s": 180,
+    "expect": "any",
+    "purpose": "边界探针，只看输出（每个用例单独 try，互不影响；文件写 /tmp）。A：题面例子加 save_all=True（只有一帧，回落单帧写入）——修复前预计 RAISED TypeError @ GifImagePlugin.py:690，修复后预计 saved 且 transparency=<absent>。B：Tests/images/hopper.ppm（RGB 照片）以像素 (0,0) 的颜色元组作 info 透明色——同一调用链，修复前预计 RAISED TypeError，修复后预计 saved、<absent>。C：1x1 RGB、info 透明色 (255,0,0)，调色板有空位——修复前后都应 saved 且 reloaded transparency 为一个整数索引（公开测试 test_rgb_transparency 的同类情形，必须保持）。D：元组作为 save() 关键字 transparency=(255,255,255) 传入——修复前预计 RAISED TypeError；修复后题面未约定（不报错或报错都可能是合理实现），仅记录。E：题面例子再追加一帧（两帧 save_all）——多帧路径使用归一化后的帧，修复前后都预计 saved、n_frames=2、<absent>。F：Tests/images/rgb_trns.png（带 tRNS 的真实 PNG）另存 GIF——修复前结果取决于量化后调色板是否占满，未推断；修复后不应抛异常。",
+    "cmd": "python -c '\nimport os, sys, tempfile, traceback, warnings\nfrom PIL import Image\nd = tempfile.mkdtemp(dir=\"/tmp\")\n\ndef red_ramp():\n    im = Image.new(\"RGB\", (256, 1))\n    for x in range(256):\n        im.putpixel((x, 0), (x, 0, 0))\n    return im\n\ndef attempt(label, im, **kw):\n    out = os.path.join(d, label + \".gif\")\n    err = None\n    with warnings.catch_warnings(record=True) as caught:\n        warnings.simplefilter(\"always\")\n        try:\n            im.save(out, **kw)\n        except Exception as exc:\n            fr = traceback.extract_tb(exc.__traceback__)[-1]\n            err = \"%s: %s @ %s:%s %s\" % (type(exc).__name__, exc, os.path.basename(fr.filename), fr.lineno, fr.name)\n    ws = [str(w.message) for w in caught]\n    if err:\n        print(\"[%s] RAISED %s | warnings=%s\" % (label, err, ws))\n        return\n    with Image.open(out) as re:\n        print(\"[%s] saved | n_frames=%s | reloaded transparency=%s | warnings=%s\" % (label, getattr(re, \"n_frames\", 1), re.info.get(\"transparency\", \"<absent>\"), ws))\n\na = red_ramp()\na.info[\"transparency\"] = (255, 255, 255)\nattempt(\"A_example_save_all_single_frame\", a, save_all=True)\n\nb = Image.open(\"Tests/images/hopper.ppm\").convert(\"RGB\")\nb.info[\"transparency\"] = b.getpixel((0, 0))\nattempt(\"B_hopper_rgb_tuple\", b)\n\nc = Image.new(\"RGB\", (1, 1))\nc.info[\"transparency\"] = (255, 0, 0)\nattempt(\"C_small_rgb_tuple_allocatable\", c)\n\nattempt(\"D_example_tuple_as_save_kwarg\", red_ramp(), transparency=(255, 255, 255))\n\ne2 = red_ramp()\ne2.info[\"transparency\"] = (255, 255, 255)\nattempt(\"E_example_two_frames\", e2, save_all=True, append_images=[Image.new(\"RGB\", (256, 1))])\n\nwith Image.open(\"Tests/images/rgb_trns.png\") as f:\n    f.load()\n    print(\"[F] source mode=%s size=%s transparency=%r\" % (f.mode, f.size, f.info.get(\"transparency\")))\n    attempt(\"F_rgb_trns_png\", f)\n'"
+  },
+  {
+    "id": "pytest_gif_file",
+    "timeout_s": 600,
+    "expect": "zero",
+    "purpose": "相关公开测试（单个文件）：Tests/test_file_gif.py 全部。修复前预计全部通过（2 个 netpbm 测试在缺少 ppmquant/ppmtogif 时 skip）；修复后仍应全部通过。与本题约束最直接的是 test_rgb_transparency（元组透明色可分配时保留；bytes 透明色多帧时告警并丢弃）、test_transparent_optimize（显式整数透明色在调色板优化后重映射）、test_version（info 整数透明色触发 GIF89a）、test_saving_rgba、test_remapped_transparency、test_dispose2_*。仓库里没有覆盖“调色板已满 + 元组透明色 + 保存 GIF”的现成测试，所以本命令只能发现回归，不能证明题面问题已修好。-p no:cacheprovider 与 PYTHONDONTWRITEBYTECODE=1 只为不在 /testbed 留缓存文件。",
+    "cmd": "PYTHONDONTWRITEBYTECODE=1 python -m pytest Tests/test_file_gif.py -p no:cacheprovider -q --color=no"
+  },
+  {
+    "id": "pytest_image_convert_file",
+    "timeout_s": 300,
+    "expect": "zero",
+    "purpose": "相关公开测试（单个文件）：Tests/test_image_convert.py 全部。修复前预计全部通过，修复后仍应全部通过。其中 test_trns_RGB（第 190-192 行）断言 RGB 照片带元组透明色 convert(\"P\", palette=ADAPTIVE) 时发 UserWarning 且结果不含透明度；若修复改动了 Image.convert 的透明度处理或警告，这里会暴露。只改 GifImagePlugin.py 的修复不应影响本文件。",
+    "cmd": "PYTHONDONTWRITEBYTECODE=1 python -m pytest Tests/test_image_convert.py -p no:cacheprovider -q --color=no"
+  }
+]
