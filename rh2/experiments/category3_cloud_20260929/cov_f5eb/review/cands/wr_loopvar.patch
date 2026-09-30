@@ -1,0 +1,19 @@
+--- /tmp/claude-0/-home-user-RepoHarness/0bbcbfec-7fb0-5667-af19-3d3fdd0aea69/scratchpad/base/coverage/jsonreport.py	2025-01-17 16:54:11.000000000 +0000
++++ wr_loopvar/files/coverage/jsonreport.py	2026-09-30 06:58:36.551809773 +0000
+@@ -40,6 +40,7 @@
+         }
+ 
+         measured_files = {}
++        analysis = None
+         for file_reporter, analysis in get_analysis_to_report(self.coverage, morfs):
+             measured_files[file_reporter.relative_filename()] = self.report_one_file(
+                 coverage_data,
+@@ -60,6 +61,8 @@
+             self.report_data["totals"].update({
+                 'num_branches': self.total.n_branches,
+                 'num_partial_branches': self.total.n_partial_branches,
++                'covered_branches': analysis.numbers.n_executed_branches,
++                'missing_branches': analysis.numbers.n_missing_branches,
+             })
+ 
+         json.dump(
