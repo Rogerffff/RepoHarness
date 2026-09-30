@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 out = Path(sys.argv[1])
-names = sys.argv[2:] or sorted(p.stem for p in out.glob("*.jsonl"))
+names = [a for a in sys.argv[2:] if not a.startswith("--")] or sorted(p.stem for p in out.glob("*.jsonl"))
 for name in names:
     p = out / f"{name}.jsonl"
     if not p.exists():
@@ -17,10 +17,13 @@ for name in names:
     for line in p.read_text().splitlines():
         if line.startswith("{"):
             recs.append(json.loads(line))
-    fails, small = [], None
+    fails, small, ext = [], None, None
     for r in recs:
         if r["case"] == "small_int":
             small = r.get("divisions", r.get("error"))
+            continue
+        if r["case"] == "ext_dtype":
+            ext = {k: v for k, v in r.items() if k != "case"}
             continue
         if not r.get("ok"):
             why = r.get("error") or ",".join(sorted(r.get("detail", {})))
@@ -30,6 +33,8 @@ for name in names:
             if r.get("lost"):
                 extra += f" lost={r['lost']}"
             fails.append(f"{r['case']}[{why}{extra}]")
-    print(f"{name}: {len(recs) - 1} cases, {len(fails)} fail; small_int={small}")
+    print(f"{name}: {len(recs) - 2} cases, {len(fails)} fail; small_int={small}")
+    if "--ext" in sys.argv:
+        print(f"    ext_dtype={ext}")
     for f in fails:
         print("    " + f)

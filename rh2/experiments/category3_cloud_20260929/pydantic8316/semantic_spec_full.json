@@ -1,0 +1,125 @@
+{
+ "image": "xingyaoww/sweb.eval.x86_64.pydantic_s_pydantic-8316:latest",
+ "python_prefix": "/opt/miniconda3/envs/testbed",
+ "variants": {
+  "base": [],
+  "gold": [
+   "git apply /in/gold.patch"
+  ],
+  "keep_digit": [
+   "git apply /in/keep_digit.patch"
+  ],
+  "lookaround": [
+   "git apply /in/lookaround.patch"
+  ],
+  "scan": [
+   "git apply /in/scan.patch"
+  ],
+  "upstream_main": [
+   "git apply /in/upstream_main.patch"
+  ],
+  "normalize": [
+   "git apply /in/normalize.patch"
+  ],
+  "lead_only": [
+   "git apply /in/lead_only.patch"
+  ],
+  "first_only": [
+   "git apply /in/first_only.patch"
+  ],
+  "acr3": [
+   "git apply /in/acr3.patch"
+  ],
+  "literal": [
+   "git apply /in/literal.patch"
+  ],
+  "lower_or_start": [
+   "git apply /in/lower_or_start.patch"
+  ],
+  "no_lower_upper": [
+   "git apply /in/no_lower_upper.patch"
+  ],
+  "acr_max4": [
+   "git apply /in/acr_max4.patch"
+  ],
+  "only_if_no_us": [
+   "git apply /in/only_if_no_us.patch"
+  ],
+  "skip_if_underscore": [
+   "git apply /in/skip_if_underscore.patch"
+  ],
+  "lower_or_start_la": [
+   "git apply /in/lower_or_start_la.patch"
+  ],
+  "acr_max5": [
+   "git apply /in/acr_max5.patch"
+  ],
+  "no_trailing_upper": [
+   "git apply /in/no_trailing_upper.patch"
+  ],
+  "no_digit_split": [
+   "git apply /in/no_digit_split.patch"
+  ],
+  "no_digit_upper": [
+   "git apply /in/no_digit_upper.patch"
+  ]
+ },
+ "files": {
+  "gold.patch": "/home/user/RepoHarness/runs/category3_cloud_20260929/pydantic8316/gold/pydantic__pydantic-8316.gold.patch",
+  "behavior.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/behavior.py",
+  "original_test.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/original_test.patch",
+  "revised_test_v1.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/revised_test_v1.patch",
+  "revised_test_v2.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/revised_test_v2.patch",
+  "keep_digit.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/keep_digit.patch",
+  "lookaround.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/lookaround.patch",
+  "scan.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/scan.patch",
+  "upstream_main.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/upstream_main.patch",
+  "normalize.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/normalize.patch",
+  "lead_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/lead_only.patch",
+  "first_only.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/first_only.patch",
+  "acr3.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/acr3.patch",
+  "literal.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/literal.patch",
+  "lower_or_start.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/lower_or_start.patch",
+  "no_lower_upper.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/no_lower_upper.patch",
+  "acr_max4.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/acr_max4.patch",
+  "only_if_no_us.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/only_if_no_us.patch",
+  "skip_if_underscore.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/skip_if_underscore.patch",
+  "lower_or_start_la.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/lower_or_start_la.patch",
+  "acr_max5.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/acr_max5.patch",
+  "no_trailing_upper.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/no_trailing_upper.patch",
+  "no_digit_split.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/no_digit_split.patch",
+  "no_digit_upper.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pydantic8316/no_digit_upper.patch"
+ },
+ "commands": [
+  {
+   "id": "b0_env",
+   "cmd": "python -c \"import sys, pydantic, pydantic_core; print(sys.version); print(pydantic.__file__, pydantic.VERSION, pydantic_core.__version__)\"; git rev-parse HEAD; git status --short | head -20",
+   "timeout_s": 120
+  },
+  {
+   "id": "b1_behavior",
+   "cmd": "python /in/behavior.py",
+   "timeout_s": 300
+  },
+  {
+   "id": "b2_public_related",
+   "cmd": "python -m pytest -p no:cacheprovider -q -rf tests/test_utils.py tests/test_aliases.py tests/test_config.py",
+   "timeout_s": 900
+  },
+  {
+   "id": "s_orig",
+   "cmd": "git apply /in/original_test.patch && python -m pytest -p no:cacheprovider -rA --tb=short -q tests/test_utils.py; rc=$?; git apply -R /in/original_test.patch; exit $rc",
+   "timeout_s": 600
+  },
+  {
+   "id": "s_rev1",
+   "cmd": "git apply /in/revised_test_v1.patch && python -m pytest -p no:cacheprovider -rA --tb=short -q tests/test_utils.py; rc=$?; git apply -R /in/revised_test_v1.patch; exit $rc",
+   "timeout_s": 600
+  },
+  {
+   "id": "s_rev2",
+   "cmd": "git apply /in/revised_test_v2.patch && python -m pytest -p no:cacheprovider -rA --tb=short -q tests/test_utils.py; rc=$?; git apply -R /in/revised_test_v2.patch; exit $rc",
+   "timeout_s": 600
+  }
+ ]
+}

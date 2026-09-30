@@ -1,0 +1,344 @@
+上游 to_snake 与相关测试对照（只作佐证，不作公开依据）。来源：raw.githubusercontent.com/pydantic/pydantic/<tag>/...，2026-09-30 取回。
+
+===== pydantic/alias_generators.py @ v2.5.3  sha256=f7917dc7d3f56f3ccbed9df2e45d81bc417d48c504893fabebd4969496a8ff71
+def to_snake(camel: str) -> str:
+    """Convert a PascalCase or camelCase string to snake_case.
+
+    Args:
+        camel: The string to convert.
+
+    Returns:
+        The converted string in snake_case.
+    """
+    snake = re.sub(r'([a-zA-Z])([0-9])', lambda m: f'{m.group(1)}_{m.group(2)}', camel)
+    snake = re.sub(r'([a-z0-9])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    return snake.lower()
+
+
+===== pydantic/alias_generators.py @ v2.6.0  sha256=43e2fa3c4fbaeea237e59abe171dec8061489f896e0effdaad823b6f2df95d90
+def to_snake(camel: str) -> str:
+    """Convert a PascalCase or camelCase string to snake_case.
+
+    Args:
+        camel: The string to convert.
+
+    Returns:
+        The converted string in snake_case.
+    """
+    # Handle the sequence of uppercase letters followed by a lowercase letter
+    snake = re.sub(r'([A-Z]+)([A-Z][a-z])', lambda m: f'{m.group(1)}_{m.group(2)}', camel)
+    # Insert an underscore between a lowercase letter and an uppercase letter
+    snake = re.sub(r'([a-z])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    # Insert an underscore between a digit and an uppercase letter
+    snake = re.sub(r'([0-9])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    # Insert an underscore between a lowercase letter and a digit
+    snake = re.sub(r'([a-z])([0-9])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    return snake.lower()
+
+
+===== pydantic/alias_generators.py @ v2.6.4  sha256=43e2fa3c4fbaeea237e59abe171dec8061489f896e0effdaad823b6f2df95d90
+def to_snake(camel: str) -> str:
+    """Convert a PascalCase or camelCase string to snake_case.
+
+    Args:
+        camel: The string to convert.
+
+    Returns:
+        The converted string in snake_case.
+    """
+    # Handle the sequence of uppercase letters followed by a lowercase letter
+    snake = re.sub(r'([A-Z]+)([A-Z][a-z])', lambda m: f'{m.group(1)}_{m.group(2)}', camel)
+    # Insert an underscore between a lowercase letter and an uppercase letter
+    snake = re.sub(r'([a-z])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    # Insert an underscore between a digit and an uppercase letter
+    snake = re.sub(r'([0-9])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    # Insert an underscore between a lowercase letter and a digit
+    snake = re.sub(r'([a-z])([0-9])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    return snake.lower()
+
+
+===== pydantic/alias_generators.py @ v2.7.0  sha256=43e2fa3c4fbaeea237e59abe171dec8061489f896e0effdaad823b6f2df95d90
+def to_snake(camel: str) -> str:
+    """Convert a PascalCase or camelCase string to snake_case.
+
+    Args:
+        camel: The string to convert.
+
+    Returns:
+        The converted string in snake_case.
+    """
+    # Handle the sequence of uppercase letters followed by a lowercase letter
+    snake = re.sub(r'([A-Z]+)([A-Z][a-z])', lambda m: f'{m.group(1)}_{m.group(2)}', camel)
+    # Insert an underscore between a lowercase letter and an uppercase letter
+    snake = re.sub(r'([a-z])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    # Insert an underscore between a digit and an uppercase letter
+    snake = re.sub(r'([0-9])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    # Insert an underscore between a lowercase letter and a digit
+    snake = re.sub(r'([a-z])([0-9])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    return snake.lower()
+
+
+===== pydantic/alias_generators.py @ v2.7.4  sha256=43e2fa3c4fbaeea237e59abe171dec8061489f896e0effdaad823b6f2df95d90
+def to_snake(camel: str) -> str:
+    """Convert a PascalCase or camelCase string to snake_case.
+
+    Args:
+        camel: The string to convert.
+
+    Returns:
+        The converted string in snake_case.
+    """
+    # Handle the sequence of uppercase letters followed by a lowercase letter
+    snake = re.sub(r'([A-Z]+)([A-Z][a-z])', lambda m: f'{m.group(1)}_{m.group(2)}', camel)
+    # Insert an underscore between a lowercase letter and an uppercase letter
+    snake = re.sub(r'([a-z])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    # Insert an underscore between a digit and an uppercase letter
+    snake = re.sub(r'([0-9])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    # Insert an underscore between a lowercase letter and a digit
+    snake = re.sub(r'([a-z])([0-9])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    return snake.lower()
+
+
+===== pydantic/alias_generators.py @ v2.8.0  sha256=0437c395ae59c32b827c42c9e69bff4da60275ac84edd3930179f372957ef8f1
+def to_snake(camel: str) -> str:
+    """Convert a PascalCase, camelCase, or kebab-case string to snake_case.
+
+    Args:
+        camel: The string to convert.
+
+    Returns:
+        The converted string in snake_case.
+    """
+    # `(?<=[a-zA-Z])(?=[0-9])` matches the space between a letter and a digit
+    # `(?<=[a-z0-9])(?=[A-Z])` matches the space between a lowercase letter / digit and uppercase letter
+    # `(?<=[A-Z])(?=[A-Z][a-z])` matches the space between two uppercase letters when the latter is followed by a lowercase letter
+    # `-` matches a hyphen in order to convert kebab case strings
+    snake = re.sub(
+        r'(?<=[a-zA-Z])(?=[0-9])|(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|-',
+        '_',
+        camel,
+    )
+    return snake.lower()
+
+
+===== pydantic/alias_generators.py @ v2.8.2  sha256=28cd67deee097cb48197552e620de1a181f35c90fecaf82b9eaf2ed5c73087f0
+def to_snake(camel: str) -> str:
+    """Convert a PascalCase, camelCase, or kebab-case string to snake_case.
+
+    Args:
+        camel: The string to convert.
+
+    Returns:
+        The converted string in snake_case.
+    """
+    # Handle the sequence of uppercase letters followed by a lowercase letter
+    snake = re.sub(r'([A-Z]+)([A-Z][a-z])', lambda m: f'{m.group(1)}_{m.group(2)}', camel)
+    # Insert an underscore between a lowercase letter and an uppercase letter
+    snake = re.sub(r'([a-z])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    # Insert an underscore between a digit and an uppercase letter
+    snake = re.sub(r'([0-9])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    # Insert an underscore between a lowercase letter and a digit
+    snake = re.sub(r'([a-z])([0-9])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    # Replace hyphens with underscores to handle kebab-case
+    snake = snake.replace('-', '_')
+    return snake.lower()
+
+
+===== pydantic/alias_generators.py @ v2.9.0  sha256=28cd67deee097cb48197552e620de1a181f35c90fecaf82b9eaf2ed5c73087f0
+def to_snake(camel: str) -> str:
+    """Convert a PascalCase, camelCase, or kebab-case string to snake_case.
+
+    Args:
+        camel: The string to convert.
+
+    Returns:
+        The converted string in snake_case.
+    """
+    # Handle the sequence of uppercase letters followed by a lowercase letter
+    snake = re.sub(r'([A-Z]+)([A-Z][a-z])', lambda m: f'{m.group(1)}_{m.group(2)}', camel)
+    # Insert an underscore between a lowercase letter and an uppercase letter
+    snake = re.sub(r'([a-z])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    # Insert an underscore between a digit and an uppercase letter
+    snake = re.sub(r'([0-9])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    # Insert an underscore between a lowercase letter and a digit
+    snake = re.sub(r'([a-z])([0-9])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    # Replace hyphens with underscores to handle kebab-case
+    snake = snake.replace('-', '_')
+    return snake.lower()
+
+
+===== pydantic/alias_generators.py @ v2.10.0  sha256=28cd67deee097cb48197552e620de1a181f35c90fecaf82b9eaf2ed5c73087f0
+def to_snake(camel: str) -> str:
+    """Convert a PascalCase, camelCase, or kebab-case string to snake_case.
+
+    Args:
+        camel: The string to convert.
+
+    Returns:
+        The converted string in snake_case.
+    """
+    # Handle the sequence of uppercase letters followed by a lowercase letter
+    snake = re.sub(r'([A-Z]+)([A-Z][a-z])', lambda m: f'{m.group(1)}_{m.group(2)}', camel)
+    # Insert an underscore between a lowercase letter and an uppercase letter
+    snake = re.sub(r'([a-z])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    # Insert an underscore between a digit and an uppercase letter
+    snake = re.sub(r'([0-9])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    # Insert an underscore between a lowercase letter and a digit
+    snake = re.sub(r'([a-z])([0-9])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    # Replace hyphens with underscores to handle kebab-case
+    snake = snake.replace('-', '_')
+    return snake.lower()
+
+
+===== pydantic/alias_generators.py @ v2.11.0  sha256=28cd67deee097cb48197552e620de1a181f35c90fecaf82b9eaf2ed5c73087f0
+def to_snake(camel: str) -> str:
+    """Convert a PascalCase, camelCase, or kebab-case string to snake_case.
+
+    Args:
+        camel: The string to convert.
+
+    Returns:
+        The converted string in snake_case.
+    """
+    # Handle the sequence of uppercase letters followed by a lowercase letter
+    snake = re.sub(r'([A-Z]+)([A-Z][a-z])', lambda m: f'{m.group(1)}_{m.group(2)}', camel)
+    # Insert an underscore between a lowercase letter and an uppercase letter
+    snake = re.sub(r'([a-z])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    # Insert an underscore between a digit and an uppercase letter
+    snake = re.sub(r'([0-9])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    # Insert an underscore between a lowercase letter and a digit
+    snake = re.sub(r'([a-z])([0-9])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    # Replace hyphens with underscores to handle kebab-case
+    snake = snake.replace('-', '_')
+    return snake.lower()
+
+
+===== tests/test_utils.py @ v2.6.0  sha256=87c24de29582ba141a43de57a748e5cb4ba446fc99311fffd68a01f57519a707
+@pytest.mark.parametrize(
+    'value,result',
+    [
+        ('camel_to_snake', 'camel_to_snake'),
+        ('camelToSnake', 'camel_to_snake'),
+        ('camel2Snake', 'camel_2_snake'),
+        ('_camelToSnake', '_camel_to_snake'),
+        ('camelToSnake_', 'camel_to_snake_'),
+        ('__camelToSnake__', '__camel_to_snake__'),
+        ('CamelToSnake', 'camel_to_snake'),
+        ('Camel2Snake', 'camel_2_snake'),
+        ('_CamelToSnake', '_camel_to_snake'),
+        ('CamelToSnake_', 'camel_to_snake_'),
+        ('CAMELToSnake', 'camel_to_snake'),
+        ('__CamelToSnake__', '__camel_to_snake__'),
+        ('Camel2', 'camel_2'),
+        ('Camel2_', 'camel_2_'),
+        ('_Camel2', '_camel_2'),
+        ('camel2', 'camel_2'),
+        ('camel2_', 'camel_2_'),
+        ('_camel2', '_camel_2'),
+    ],
+)
+def test_camel2snake(value: str, result: str) -> None:
+    assert to_snake(value) == result
+
+===== tests/test_utils.py @ v2.8.0  sha256=92ad0c7308b0e3c713cc9fa7079925e524624039dc26ead21191958aa3d0427e
+@pytest.mark.parametrize(
+    'value,result',
+    [
+        ('camel_to_snake', 'camel_to_snake'),
+        ('camelToSnake', 'camel_to_snake'),
+        ('camel2Snake', 'camel_2_snake'),
+        ('_camelToSnake', '_camel_to_snake'),
+        ('camelToSnake_', 'camel_to_snake_'),
+        ('__camelToSnake__', '__camel_to_snake__'),
+        ('CamelToSnake', 'camel_to_snake'),
+        ('Camel2Snake', 'camel_2_snake'),
+        ('_CamelToSnake', '_camel_to_snake'),
+        ('CamelToSnake_', 'camel_to_snake_'),
+        ('CAMELToSnake', 'camel_to_snake'),
+        ('__CamelToSnake__', '__camel_to_snake__'),
+        ('Camel2', 'camel_2'),
+        ('Camel2_', 'camel_2_'),
+        ('_Camel2', '_camel_2'),
+        ('camel2', 'camel_2'),
+        ('camel2_', 'camel_2_'),
+        ('_camel2', '_camel_2'),
+        ('kebab-to-snake', 'kebab_to_snake'),
+        ('kebab-Snake', 'kebab_snake'),
+        ('Kebab-Snake', 'kebab_snake'),
+        ('PascalToSnake', 'pascal_to_snake'),
+        ('snake_to_snake', 'snake_to_snake'),
+    ],
+)
+def test_to_snake(value: str, result: str) -> None:
+    assert to_snake(value) == result
+
+===== tests/test_utils.py @ v2.8.2  sha256=ffbe5a3a25785f86bd16807c62c1786649d9732d1cc7e1caefe75f80b7a3f160
+@pytest.mark.parametrize(
+    'value,result',
+    [
+        ('camel_to_snake', 'camel_to_snake'),
+        ('camelToSnake', 'camel_to_snake'),
+        ('camel2Snake', 'camel_2_snake'),
+        ('_camelToSnake', '_camel_to_snake'),
+        ('camelToSnake_', 'camel_to_snake_'),
+        ('__camelToSnake__', '__camel_to_snake__'),
+        ('CamelToSnake', 'camel_to_snake'),
+        ('Camel2Snake', 'camel_2_snake'),
+        ('_CamelToSnake', '_camel_to_snake'),
+        ('CamelToSnake_', 'camel_to_snake_'),
+        ('CAMELToSnake', 'camel_to_snake'),
+        ('__CamelToSnake__', '__camel_to_snake__'),
+        ('Camel2', 'camel_2'),
+        ('Camel2_', 'camel_2_'),
+        ('_Camel2', '_camel_2'),
+        ('camel2', 'camel_2'),
+        ('camel2_', 'camel_2_'),
+        ('_camel2', '_camel_2'),
+        ('kebab-to-snake', 'kebab_to_snake'),
+        ('kebab-Snake', 'kebab_snake'),
+        ('Kebab-Snake', 'kebab_snake'),
+        ('PascalToSnake', 'pascal_to_snake'),
+        ('snake_to_snake', 'snake_to_snake'),
+        ('snakeV2', 'snake_v2'),
+    ],
+)
+def test_to_snake(value: str, result: str) -> None:
+    assert to_snake(value) == result
+
+===== tests/test_utils.py @ v2.11.0  sha256=f2709d7e8574556a2dc3a8caef1754cd262e599fc90679c243886e71fe2a5aa1
+@pytest.mark.parametrize(
+    'value,result',
+    [
+        ('camel_to_snake', 'camel_to_snake'),
+        ('camelToSnake', 'camel_to_snake'),
+        ('camel2Snake', 'camel_2_snake'),
+        ('_camelToSnake', '_camel_to_snake'),
+        ('camelToSnake_', 'camel_to_snake_'),
+        ('__camelToSnake__', '__camel_to_snake__'),
+        ('CamelToSnake', 'camel_to_snake'),
+        ('Camel2Snake', 'camel_2_snake'),
+        ('_CamelToSnake', '_camel_to_snake'),
+        ('CamelToSnake_', 'camel_to_snake_'),
+        ('CAMELToSnake', 'camel_to_snake'),
+        ('__CamelToSnake__', '__camel_to_snake__'),
+        ('Camel2', 'camel_2'),
+        ('Camel2_', 'camel_2_'),
+        ('_Camel2', '_camel_2'),
+        ('camel2', 'camel_2'),
+        ('camel2_', 'camel_2_'),
+        ('_camel2', '_camel_2'),
+        ('kebab-to-snake', 'kebab_to_snake'),
+        ('kebab-Snake', 'kebab_snake'),
+        ('Kebab-Snake', 'kebab_snake'),
+        ('PascalToSnake', 'pascal_to_snake'),
+        ('snake_to_snake', 'snake_to_snake'),
+        ('snakeV2', 'snake_v2'),
+    ],
+)
+def test_to_snake(value: str, result: str) -> None:
+    assert to_snake(value) == result
+
+===== HISTORY.md @ v2.11.0 (sha256=ac8f0ef9be82c60f574f102233835b056ee9e48d60743d1d6fb385a78c406ac3) 相关行
+L771 [## v2.8.1 (2024-07-03)] * Fix breaking change in `to_snake` from v2.7 -> v2.8 by @sydney-runkle in [#9812](https://github.com/pydantic/pydantic/pull/9812)
+L821 [## v2.8.0 (2024-07-01)] * ⚡️ Speed up `to_snake()` by 27% in `pydantic/alias_generators.py` by @misrasaurabh1 in [#9747](https://github.com/pydantic/pydantic/pull/9747)
+L1262 [## v2.6.0 (2024-01-23)] * Fix `to_snake` conversion by @jevins09 in [#8316](https://github.com/pydantic/pydantic/pull/8316)

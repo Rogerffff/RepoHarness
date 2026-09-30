@@ -4,7 +4,9 @@
   to_camel / to_pascal：确认未受影响；
   alias：alias_generator=to_snake 的模型上，生成的 alias、按新 key 与 base 旧 key 填充、populate_by_name、按别名导出、JSON schema 键；
          以及 AliasGenerator(validation_alias=..., serialization_alias=...) 路径；
+  workflow（09-30 补充）：一个多字段模型，旧客户端按 base 生成的 key 发数据、新客户端按当前 alias 发数据，以及按别名导出的 JSON；
   note_to_camel：题面附注的 to_camel + populate_by_name 示例。
+09-30 补充的输入组：acronym_affix、acronym_trailing、acronym_long；原有输出键不变。
 """
 import json
 import re
@@ -44,6 +46,10 @@ GROUPS = {
                        'Base64Encoder', 'sha256Hash', 'OAuth2Token', 'EC2Instance', 'version2Name', 'A1B2'],
     'ambiguous_or_other': ['XMLHTTPRequest', 'HTTPS', 'ALLCAPS', 'A', '', 'a', 'already_snake', 'kebab-case',
                            'Mixed_CaseName', 'ÜberHTTPClient', 'getÄnderung'],
+    # 09-30 主审补充：缩写前后带下划线、末尾缩写与单个大写字母、6 个及以上字母的缩写
+    'acronym_affix': ['_HTTPResponse', 'HTTPResponse_', '__HTTPResponse__', 'get_HTTPResponse', 'Camel2HTTPResponse'],
+    'acronym_trailing': ['userID', 'requestURL', 'getX', 'pointA'],
+    'acronym_long': ['HTTPSConnection', 'ASCIIString', 'NASDAQTicker', 'PDFTOHTMLConverter'],
 }
 res = {'to_snake': {g: {s: to_snake(s) for s in xs} for g, xs in GROUPS.items()}}
 res['to_snake_base_algo'] = {g: {s: base_snake(s) for s in xs} for g, xs in GROUPS.items()}
@@ -60,7 +66,8 @@ def try_validate(model, data):
 
 alias = {}
 for field in ['HTTPResponse', 'myHTTPResponse', 'userIDToken', 'XMLToJSONConverter', 'A1', 'API2', 'fieldV2',
-              'S3Bucket', 'ipV4Address', 'Camel2Snake', 'camelToSnake']:
+              'S3Bucket', 'ipV4Address', 'Camel2Snake', 'camelToSnake',
+              'EC2Instance', 'HTTP2Response', 'userID', 'parseURL']:
     rec = {}
     M = create_model('M', __config__=ConfigDict(alias_generator=to_snake), **{field: (int, ...)})
     fi = M.model_fields[field]
@@ -84,6 +91,28 @@ for field in ['HTTPResponse', 'myHTTPResponse', 'userIDToken', 'XMLToJSONConvert
                            'validate_old_key': try_validate(G, {rec['old_key']: 1})['ok']}
     alias[field] = rec
 res['alias'] = alias
+
+
+class Resp(BaseModel):
+    """一个同时含缩写字段与“大写字母→数字”字段的模型：旧客户端按 base 生成的 key 发数据，新客户端按当前 alias 发数据。"""
+    model_config = ConfigDict(alias_generator=to_snake)
+    HTTPResponse: int
+    userIDToken: int
+    fieldV2: int
+    camelToSnake: int
+
+
+wf_aliases = {n: f.alias for n, f in Resp.model_fields.items()}
+wf_old = {base_snake(n): i for i, n in enumerate(Resp.model_fields)}
+wf_new = {wf_aliases[n]: i for i, n in enumerate(Resp.model_fields)}
+res['workflow'] = {
+    'aliases': wf_aliases,
+    'old_payload_keys': sorted(wf_old),
+    'validate_old_payload': try_validate(Resp, wf_old),
+    'validate_new_payload': try_validate(Resp, wf_new),
+    'dump_json_by_alias': Resp.model_validate(wf_new).model_dump_json(by_alias=True),
+    'dump_by_name': Resp.model_validate(wf_new).model_dump(),
+}
 
 
 class CamelAliasModel(BaseModel):

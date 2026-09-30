@@ -4,6 +4,8 @@
 候选分组（按公开要求判对错，不以 gold 为答案）：
   合理替代实现（查误拒 T1）：keep_digit、lookaround、scan、upstream_main；第二组 normalize
   错误候选（查漏判）：lead_only、first_only、acr3、literal；第二组 lower_or_start、no_lower_upper、acr_max4、only_if_no_us
+  第三组（09-30 主审补充）：skip_if_underscore、lower_or_start_la、acr_max5、no_trailing_upper（查 v1 是否放过），
+    no_digit_split、no_digit_upper（查 P2P 保护了哪些数字边界）
 """
 import difflib
 import sys
@@ -112,6 +114,48 @@ BODIES = {
     snake = re.sub(r'([a-z0-9])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
     if '_' not in snake.strip('_'):
         snake = re.sub(r'([A-Z]+)([A-Z][a-z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    return snake.lower()
+""",
+    # ---- 第三组（09-30 主审补充：v1 可能放过的构造、数字边界的保护范围）----
+    # 错误 9（数据形态子集）：输入里已有下划线就当作 snake_case，沿用 base 两条规则，不做缩写拆分（_HTTPResponse 不修）
+    "skip_if_underscore": """    if '_' in camel:
+        # already (partly) snake_case: keep the old conversion
+        snake = re.sub(r'([a-zA-Z])([0-9])', lambda m: f'{m.group(1)}_{m.group(2)}', camel)
+        snake = re.sub(r'([a-z0-9])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+        return snake.lower()
+    snake = re.sub(r'([A-Z]+)([A-Z][a-z])', lambda m: f'{m.group(1)}_{m.group(2)}', camel)
+    snake = re.sub(r'([a-zA-Z])([0-9])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    snake = re.sub(r'([a-z0-9])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    return snake.lower()
+""",
+    # 错误 10（位置子集，零宽写法）：缩写只在串首或小写字母之后才拆；与 lower_or_start 不同，不吞掉前一个字符，
+    # 所以连续两个缩写（XMLToJSON）也能拆，只有下划线、数字之后的缩写不拆
+    "lower_or_start_la": """    snake = re.sub(r'(?:^|(?<=[a-z]))([A-Z]+)(?=[A-Z][a-z])', lambda m: f'{m.group(1)}_', camel)
+    snake = re.sub(r'([a-zA-Z])([0-9])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    snake = re.sub(r'([a-z0-9])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    return snake.lower()
+""",
+    # 错误 11（上限阈值，放宽到 5）：只认 1–5 个字母的缩写（CAMEL 可以，6 个及以上字母的不行）
+    "acr_max5": """    snake = re.sub(r'(?<![A-Z])([A-Z]{1,5})([A-Z][a-z])', lambda m: f'{m.group(1)}_{m.group(2)}', camel)
+    snake = re.sub(r'([a-zA-Z])([0-9])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    snake = re.sub(r'([a-z0-9])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    return snake.lower()
+""",
+    # 错误 12（整条改写成“只在单词开头的大写字母前断开”）：在“小写/数字 → 大写开头的单词或缩写”之前、
+    # “缩写 → 大写开头的单词”之前断开；丢掉 base 对末尾缩写和单个大写字母的拆分（userID -> userid、parseURL -> parseurl）
+    "no_trailing_upper": """    snake = re.sub(r'(?<=[a-z0-9])(?=[A-Z]+[a-z])|(?<=[A-Z])(?=[A-Z][a-z])', '_', camel)
+    snake = re.sub(r'([a-zA-Z])([0-9])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    return snake.lower()
+""",
+    # 错误 13（丢掉旧的字母→数字规则）：修了缩写，但字母与数字之间都不再断开（camel2 -> camel2）
+    "no_digit_split": """    snake = re.sub(r'([A-Z]+)([A-Z][a-z])', lambda m: f'{m.group(1)}_{m.group(2)}', camel)
+    snake = re.sub(r'([a-z0-9])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    return snake.lower()
+""",
+    # 错误 14（丢掉旧的数字→大写规则）：修了缩写，但数字与大写字母之间不再断开（Camel2Snake -> camel_2snake）
+    "no_digit_upper": """    snake = re.sub(r'([A-Z]+)([A-Z][a-z])', lambda m: f'{m.group(1)}_{m.group(2)}', camel)
+    snake = re.sub(r'([a-zA-Z])([0-9])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    snake = re.sub(r'([a-z])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
     return snake.lower()
 """,
 }

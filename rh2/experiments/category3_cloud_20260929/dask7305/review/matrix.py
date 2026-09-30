@@ -86,6 +86,9 @@ CASES = {
     "dense_two_k3": ([BIG, BIG + 1], U, 1, 3),
     "dense_two_rev2p_k3": ([BIG + 1, BIG], U, 2, 3),
     "few_unique_dense_k5": ([[BIG, BIG + 1, BIG + 2][(7 * j) % 3] for j in range(300)], U, 3, 5),
+    # float64 把 BIG+99..BIG+101 都舍入成 BIG+129（高于真实最大值）
+    "dense_two_hi_k3": ([BIG + 100, BIG + 101], U, 1, 3),
+    "few_unique_dense_hi_k5": ([[BIG + 99, BIG + 100, BIG + 101][j % 3] for j in range(300)], U, 3, 5),
     # 新实例：取值范围顶端（float64 会舍入到 2**64 / 2**63，再转回整数时溢出）
     "top64_dense": (perm([T64 - 200 + k for k in range(200)]), U, 4, 4),
     "top64_two_k3": ([T64 - 2, T64 - 1], U, 1, 3),
@@ -107,6 +110,26 @@ def small_int():
     return {"divisions": [int(v) for v in d1.divisions]}
 
 
+def ext_dtype():
+    """可空整数扩展类型：只作回归对照（与 base 比较是否报错、结果是否一致）。"""
+    res = {}
+    for label, vals in (("small", [4, 1, 1, 3, 3, 2, 9, 7]), ("large", ISSUE * 4)):
+        try:
+            s = pd.Series(pd.array(vals, dtype="UInt64"), name="x")
+            ds = dd.from_pandas(s, npartitions=2, sort=False)
+            r = partition_quantiles(ds, npartitions=3).compute()
+            res[label + "_pq"] = [str(v) for v in r] + [str(r.dtype)]
+        except Exception as e:  # noqa: BLE001
+            res[label + "_pq"] = f"{type(e).__name__}: {e}"[:120]
+        try:
+            df = pd.DataFrame({"x": pd.array(vals, dtype="UInt64"), "i": np.arange(len(vals))})
+            d1 = dd.from_pandas(df, npartitions=2, sort=False).set_index("x", npartitions=3)
+            res[label + "_si"] = [str(v) for v in d1.divisions] + [len(d1.compute())]
+        except Exception as e:  # noqa: BLE001
+            res[label + "_si"] = f"{type(e).__name__}: {e}"[:120]
+    return res
+
+
 def run(name, fn):
     try:
         rec = fn()
@@ -124,6 +147,7 @@ def main():
         run("pq:" + name, lambda: pq(vals, dt, nin, k))
         run("si:" + name, lambda: si(vals, dt, nin, k))
     run("small_int", small_int)
+    run("ext_dtype", ext_dtype)
 
 
 if __name__ == "__main__":

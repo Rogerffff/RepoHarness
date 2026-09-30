@@ -31,7 +31,7 @@ for C in "$@"; do
     --derived-image "$DERIVED" --derived-image-recipe pydantic-install-v1-c3cloud-equiv \
     --eval-log-dir "$OUT/eval_logs" --artifacts-dir "$OUT/artifacts" --ledger "$OUT/ledger_$C.jsonl" > "$OUT/run_$C.out" 2>&1 \
     || echo "RUN FAILED rc=$? $C"
-  python3 - "$OUT/ledger_$C.jsonl" <<'PY'
+  python3 - "$OUT/ledger_$C.jsonl" <<'PY' || echo "LEDGER READ FAILED $C"
 import json, sys
 r = json.loads(open(sys.argv[1]).readline())
 rep = r["report"] or {}
