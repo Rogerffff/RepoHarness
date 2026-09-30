@@ -1,0 +1,12 @@
+diff --git a/src/PIL/Image.py b/src/PIL/Image.py
+--- a/src/PIL/Image.py
++++ b/src/PIL/Image.py
+@@ -1031,6 +1031,8 @@
+                     # if we can't make a transparent color, don't leave the old
+                     # transparency hanging around to mess us up.
+                     del new.info["transparency"]
++                    # nor on the source image, where it would be picked up again
++                    self.info.pop("transparency", None)
+                     warnings.warn("Couldn't allocate palette entry for transparency")
+             return new
+ 

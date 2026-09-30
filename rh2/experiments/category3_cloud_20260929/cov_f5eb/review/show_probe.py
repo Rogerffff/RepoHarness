@@ -1,5 +1,6 @@
 import json, sys
-R="/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov_f5eb/review"
+from pathlib import Path
+R = str(Path(__file__).resolve().parent)
 keys=["num_branches","num_partial_branches","covered_branches","missing_branches"]
 for c in sys.argv[1:]:
     txt=open(f"{R}/logs/probe__{c}.log").read()

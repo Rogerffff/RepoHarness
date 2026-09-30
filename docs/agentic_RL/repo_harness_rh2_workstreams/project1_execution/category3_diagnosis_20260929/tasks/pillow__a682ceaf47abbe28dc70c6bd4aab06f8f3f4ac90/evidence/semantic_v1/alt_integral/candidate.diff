@@ -1,0 +1,22 @@
+diff --git a/src/PIL/GifImagePlugin.py b/src/PIL/GifImagePlugin.py
+index cf2993e38..9dcfa372e 100644
+--- a/src/PIL/GifImagePlugin.py
++++ b/src/PIL/GifImagePlugin.py
+@@ -28,6 +28,7 @@ import itertools
+ import math
+ import os
+ import subprocess
++import numbers
+ from enum import IntEnum
+ 
+ from . import Image, ImageChops, ImageFile, ImagePalette, ImageSequence
+@@ -687,6 +688,9 @@ def _write_local_header(fp, im, offset, flags):
+             transparency = im.encoderinfo["transparency"]
+         else:
+             transparency = im.info["transparency"]
++        if not isinstance(transparency, numbers.Integral):
++            # only a palette index can be written to the GIF
++            raise ValueError("transparency is not a palette index")
+         transparency = int(transparency)
+     except (KeyError, ValueError):
+         pass

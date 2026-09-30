@@ -1,0 +1,56 @@
+--- a/coverage/jsonreport.py
++++ b/coverage/jsonreport.py
+@@ -60,6 +60,8 @@
+             self.report_data["totals"].update({
+                 'num_branches': self.total.n_branches,
+                 'num_partial_branches': self.total.n_partial_branches,
++                'covered_branches': self.total.n_covered_branches,
++                'missing_branches': self.total.n_missing_branches,
+             })
+ 
+         json.dump(
+--- a/coverage/results.py
++++ b/coverage/results.py
+@@ -48,6 +48,7 @@
+             n_branches=n_branches,
+             n_partial_branches=n_partial_branches,
+             n_missing_branches=n_missing_branches,
++            n_covered_branches=n_branches - n_missing_branches,
+         )
+ 
+     def missing_formatted(self, branches=False):
+@@ -168,7 +169,8 @@
+     _near100 = 99.0
+ 
+     def __init__(self, n_files=0, n_statements=0, n_excluded=0, n_missing=0,
+-                    n_branches=0, n_partial_branches=0, n_missing_branches=0
++                    n_branches=0, n_partial_branches=0, n_missing_branches=0,
++                    n_covered_branches=0,
+                     ):
+         self.n_files = n_files
+         self.n_statements = n_statements
+@@ -177,12 +179,14 @@
+         self.n_branches = n_branches
+         self.n_partial_branches = n_partial_branches
+         self.n_missing_branches = n_missing_branches
++        self.n_covered_branches = n_covered_branches
+ 
+     def init_args(self):
+         """Return a list for __init__(*args) to recreate this object."""
+         return [
+             self.n_files, self.n_statements, self.n_excluded, self.n_missing,
+             self.n_branches, self.n_partial_branches, self.n_missing_branches,
++            self.n_covered_branches,
+         ]
+ 
+     @classmethod
+@@ -259,6 +263,9 @@
+         nums.n_missing_branches = (
+             self.n_missing_branches + other.n_missing_branches
+             )
++        nums.n_covered_branches = (
++            self.n_covered_branches + other.n_covered_branches
++            )
+         return nums
+ 
+     def __radd__(self, other):

@@ -4,5 +4,6 @@ set -u
 cand=$1
 cd /testbed
 if [ "$cand" = "gold_official" ]; then git apply /rv/materials/gold_official.patch || exit 3
+elif [ "${cand#au_}" != "$cand" ]; then git apply /au/${cand#au_}.patch || exit 3
 elif [ "$cand" != "noop" ]; then cp -r /rv/cands/$cand/files/. /testbed/ || exit 3; fi
 /testbed/.venv/bin/python /rv/probe.py 2>&1 | tail -n 5

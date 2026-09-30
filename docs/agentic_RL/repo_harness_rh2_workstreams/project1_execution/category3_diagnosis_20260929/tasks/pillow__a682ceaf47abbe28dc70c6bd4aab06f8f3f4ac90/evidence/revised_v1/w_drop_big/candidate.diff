@@ -1,0 +1,28 @@
+diff --git a/src/PIL/GifImagePlugin.py b/src/PIL/GifImagePlugin.py
+index cf2993e38..5ea2ee5ee 100644
+--- a/src/PIL/GifImagePlugin.py
++++ b/src/PIL/GifImagePlugin.py
+@@ -545,6 +545,10 @@ def _normalize_palette(im, palette, info):
+ 
+ def _write_single_frame(im, fp, palette):
+     im_out = _normalize_mode(im)
++    if isinstance(im.info.get("transparency"), tuple) and im.getcolors(256) is None:
++        # with more than 256 colours the quantized palette cannot hold
++        # the exact transparent colour, so do not use transparency
++        im_out.info.pop("transparency", None)
+     for k, v in im_out.info.items():
+         im.encoderinfo.setdefault(k, v)
+     im_out = _normalize_palette(im_out, palette, im.encoderinfo)
+@@ -683,11 +687,7 @@ def get_interlace(im):
+ def _write_local_header(fp, im, offset, flags):
+     transparent_color_exists = False
+     try:
+-        if "transparency" in im.encoderinfo:
+-            transparency = im.encoderinfo["transparency"]
+-        else:
+-            transparency = im.info["transparency"]
+-        transparency = int(transparency)
++        transparency = int(im.encoderinfo["transparency"])
+     except (KeyError, ValueError):
+         pass
+     else:

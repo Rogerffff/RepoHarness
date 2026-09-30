@@ -1,0 +1,19 @@
+--- a/coverage/jsonreport.py
++++ b/coverage/jsonreport.py
+@@ -40,6 +40,7 @@
+         }
+ 
+         measured_files = {}
++        analysis = None
+         for file_reporter, analysis in get_analysis_to_report(self.coverage, morfs):
+             measured_files[file_reporter.relative_filename()] = self.report_one_file(
+                 coverage_data,
+@@ -60,6 +61,8 @@
+             self.report_data["totals"].update({
+                 'num_branches': self.total.n_branches,
+                 'num_partial_branches': self.total.n_partial_branches,
++                'covered_branches': self.total.n_branches - analysis.numbers.n_missing_branches,
++                'missing_branches': analysis.numbers.n_missing_branches,
+             })
+ 
+         json.dump(

@@ -1,0 +1,172 @@
+=====DIFF
+ coverage/jsonreport.py | 4 ++++
+ 1 file changed, 4 insertions(+)
+=====BEGIN rc3h c58b71e3e984
+bringing up nodes...
+bringing up nodes...
+
+..F.....                                                                 [100%]
+=================================== FAILURES ===================================
+_____________________ JsonReportTest.test_branch_coverage ______________________
+[gw0] linux -- Python 3.7.9 /testbed/.venv/bin/python
+
+self = <r2e_tests.test_1.JsonReportTest testMethod=test_branch_coverage>
+
+    def test_branch_coverage(self):
+        cov = coverage.Coverage(branch=True)
+        expected_result = {
+            'meta': {
+                "version": coverage.__version__,
+                "branch_coverage": True,
+                "show_contexts": False,
+            },
+            'files': {
+                'a.py': {
+                    'executed_lines': [1, 2],
+                    'missing_lines': [3],
+                    'excluded_lines': [],
+                    'summary': {
+                        'missing_lines': 1,
+                        'covered_lines': 2,
+                        'num_statements': 3,
+                        'num_branches': 2,
+                        'excluded_lines': 0,
+                        'num_partial_branches': 1,
+                        'percent_covered': 60.0
+                    }
+                }
+            },
+            'totals': {
+                'missing_lines': 1,
+                'covered_lines': 2,
+                'num_statements': 3,
+                'num_branches': 2,
+                'excluded_lines': 0,
+                'num_partial_branches': 1,
+                'percent_covered': 60.0,
+                'covered_branches': 1,
+                'missing_branches': 1
+            }
+        }
+>       self._assert_expected_json_report(cov, expected_result)
+
+r2e_tests/test_1.py:73: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <r2e_tests.test_1.JsonReportTest testMethod=test_branch_coverage>
+cov = <coverage.control.Coverage object at 0x7f57f53cc3d0>
+expected_result = {'files': {'a.py': {'excluded_lines': [], 'executed_lines': [1, 2], 'missing_lines': [3], 'summary': {'covered_lines':...n': '5.0.5a0'}, 'totals': {'covered_branches': 1, 'covered_lines': 2, 'excluded_lines': 0, 'missing_branches': 1, ...}}
+
+    def _assert_expected_json_report(self, cov, expected_result):
+        """
+        Helper for tests that handles the common ceremony so the tests can be clearly show the
+        consequences of setting various arguments.
+        """
+        self.make_file("a.py", """\
+            a = {'b': 1}
+            if a.get('a'):
+                b = 1
+            """)
+        a = self.start_import_stop(cov, "a")
+        output_path = os.path.join(self.temp_dir, "a.json")
+        cov.json_report(a, outfile=output_path)
+        with open(output_path) as result_file:
+            parsed_result = json.load(result_file)
+        self.assert_recent_datetime(
+            datetime.strptime(parsed_result['meta']['timestamp'], "%Y-%m-%dT%H:%M:%S.%f")
+        )
+        del (parsed_result['meta']['timestamp'])
+>       assert parsed_result == expected_result
+E       AssertionError: assert {'files': {'a...hes': 1, ...}} == {'files': {'a....hes': 1, ...}}
+E         Omitting 2 identical items, use -vv to show
+E         Differing items:
+E         {'files': {'a.py': {'excluded_lines': [], 'executed_lines': [1, 2], 'missing_lines': [3], 'summary': {'covered_branches': 1, 'covered_lines': 2, 'excluded_lines': 0, 'missing_branches': 1, ...}}}} != {'files': {'a.py': {'excluded_lines': [], 'executed_lines': [1, 2], 'missing_lines': [3], 'summary': {'covered_lines': 2, 'excluded_lines': 0, 'missing_lines': 1, 'num_branches': 2, ...}}}}
+E         Full diff:
+E         {'files': {'a.py': {'excluded_lines': [],
+E         'executed_lines': [1, 2],
+E         'missing_lines': [3],...
+E         
+E         ...Full output truncated (25 lines hidden), use '-vv' to show
+
+r2e_tests/test_1.py:35: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_add_up_across_files
+PASSED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_count_branch_arcs
+PASSED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_without_branches
+PASSED r2e_tests/test_1.py::JsonReportTest::test_context_non_relative
+PASSED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_from_saved_branch_data
+PASSED r2e_tests/test_1.py::JsonReportTest::test_context_relative
+PASSED r2e_tests/test_1.py::JsonReportTest::test_simple_line_coverage
+FAILED r2e_tests/test_1.py::JsonReportTest::test_branch_coverage - AssertionE...
+1 failed, 7 passed in 0.76 seconds
+=====END rc3h rc=1
+=====BEGIN rb3h fd4d6ac9ca8e
+bringing up nodes...
+bringing up nodes...
+
+..F.....                                                                 [100%]
+=================================== FAILURES ===================================
+____________ JsonReportTest.test_branch_totals_add_up_across_files _____________
+[gw2] linux -- Python 3.7.9 /testbed/.venv/bin/python
+
+self = <r2e_tests.test_1.JsonReportTest testMethod=test_branch_totals_add_up_across_files>
+
+    def test_branch_totals_add_up_across_files(self):
+        # R2E revision (2026-09-30, R-c): like the other totals keys, the two
+        # counts add up every reported file.  branchy_sum.py is BRANCHY (6
+        # branch destinations, 4 taken, 2 never taken); branchy_sum_main.py is
+        # the issue's one-branch example after an import (2 destinations, 1
+        # taken, 1 not taken, 1 partial branch line).
+        self.make_file("branchy_sum.py", self.BRANCHY)
+        self.make_file("branchy_sum_main.py", """\
+            import branchy_sum
+            a = {'b': 1}
+            if a.get('a'):
+                b = 1
+            """)
+        cov = coverage.Coverage(branch=True)
+        main = self.start_import_stop(cov, "branchy_sum_main")
+        output_path = os.path.join(self.temp_dir, "branchy_sum.json")
+        cov.json_report([main, main.branchy_sum], outfile=output_path)
+        with open(output_path) as result_file:
+            report = json.load(result_file)
+        assert sorted(report['files']) == ['branchy_sum.py', 'branchy_sum_main.py']
+        totals = report['totals']
+        assert totals['num_branches'] == 8
+        assert totals['num_partial_branches'] == 1
+        assert totals['covered_branches'] == 5
+        assert totals['missing_branches'] == 3
+        # Reviewer draft (2026-09-30, R-c): only the reported files count.
+        # Both modules were measured; a report on branchy_sum alone must give
+        # branchy_sum's own counts.
+        only_path = os.path.join(self.temp_dir, "branchy_sum_only.json")
+        cov.json_report([main.branchy_sum], outfile=only_path)
+        with open(only_path) as result_file:
+            only = json.load(result_file)['totals']
+        assert (only['num_branches'], only['covered_branches'], only['missing_branches']) == (6, 4, 2)
+        # R2E revision (2026-09-30, R-b): a per-file summary that also carries
+        # the two counts must carry that file's own counts.
+        for filename, counts in [('branchy_sum.py', (4, 2)), ('branchy_sum_main.py', (1, 1))]:
+            summary = report['files'][filename]['summary']
+            if 'covered_branches' in summary or 'missing_branches' in summary:
+>               assert (summary.get('covered_branches'), summary.get('missing_branches')) == counts
+E               AssertionError: assert (5, 3) == (1, 1)
+E                 At index 0 diff: 5 != 1
+E                 Full diff:
+E                 - (5, 3)
+E                 + (1, 1)
+
+r2e_tests/test_1.py:277: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_count_branch_arcs
+PASSED r2e_tests/test_1.py::JsonReportTest::test_branch_coverage
+PASSED r2e_tests/test_1.py::JsonReportTest::test_context_non_relative
+PASSED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_from_saved_branch_data
+PASSED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_without_branches
+PASSED r2e_tests/test_1.py::JsonReportTest::test_context_relative
+PASSED r2e_tests/test_1.py::JsonReportTest::test_simple_line_coverage
+FAILED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_add_up_across_files
+1 failed, 7 passed in 0.73 seconds
+=====END rb3h rc=1

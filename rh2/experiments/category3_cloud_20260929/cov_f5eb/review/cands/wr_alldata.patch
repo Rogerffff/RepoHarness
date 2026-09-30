@@ -1,0 +1,13 @@
+--- a/coverage/jsonreport.py
++++ b/coverage/jsonreport.py
+@@ -60,6 +60,10 @@
+             self.report_data["totals"].update({
+                 'num_branches': self.total.n_branches,
+                 'num_partial_branches': self.total.n_partial_branches,
++                'covered_branches': sum(self.coverage._analyze(f).numbers.n_executed_branches
++                                        for f in coverage_data.measured_files()),
++                'missing_branches': sum(self.coverage._analyze(f).numbers.n_missing_branches
++                                        for f in coverage_data.measured_files()),
+             })
+ 
+         json.dump(

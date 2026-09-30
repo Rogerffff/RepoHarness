@@ -1,0 +1,163 @@
+=====DIFF
+ coverage/jsonreport.py | 2 ++
+ 1 file changed, 2 insertions(+)
+=====BEGIN rc3h c58b71e3e984
+bringing up nodes...
+bringing up nodes...
+
+F..F.F..                                                                 [100%]
+=================================== FAILURES ===================================
+_____________ JsonReportTest.test_branch_totals_count_branch_arcs ______________
+[gw1] linux -- Python 3.7.9 /testbed/.venv/bin/python
+
+self = <r2e_tests.test_1.JsonReportTest testMethod=test_branch_totals_count_branch_arcs>
+
+    def test_branch_totals_count_branch_arcs(self):
+        # 6 branch destinations (two per `if`), 4 taken, 2 never taken.  h's `if`
+        # never runs, so it is not a partial branch.
+        report = self._branchy_report("branchy")
+        totals = report['totals']
+        assert totals['num_branches'] == 6
+        assert totals['num_partial_branches'] == 0
+>       assert totals['covered_branches'] == 4
+E       AssertionError: assert 2 == 4
+
+r2e_tests/test_1.py:211: AssertionError
+____________ JsonReportTest.test_branch_totals_add_up_across_files _____________
+[gw2] linux -- Python 3.7.9 /testbed/.venv/bin/python
+
+self = <r2e_tests.test_1.JsonReportTest testMethod=test_branch_totals_add_up_across_files>
+
+    def test_branch_totals_add_up_across_files(self):
+        # R2E revision (2026-09-30, R-c): like the other totals keys, the two
+        # counts add up every reported file.  branchy_sum.py is BRANCHY (6
+        # branch destinations, 4 taken, 2 never taken); branchy_sum_main.py is
+        # the issue's one-branch example after an import (2 destinations, 1
+        # taken, 1 not taken, 1 partial branch line).
+        self.make_file("branchy_sum.py", self.BRANCHY)
+        self.make_file("branchy_sum_main.py", """\
+            import branchy_sum
+            a = {'b': 1}
+            if a.get('a'):
+                b = 1
+            """)
+        cov = coverage.Coverage(branch=True)
+        main = self.start_import_stop(cov, "branchy_sum_main")
+        output_path = os.path.join(self.temp_dir, "branchy_sum.json")
+        cov.json_report([main, main.branchy_sum], outfile=output_path)
+        with open(output_path) as result_file:
+            report = json.load(result_file)
+        assert sorted(report['files']) == ['branchy_sum.py', 'branchy_sum_main.py']
+        totals = report['totals']
+        assert totals['num_branches'] == 8
+        assert totals['num_partial_branches'] == 1
+>       assert totals['covered_branches'] == 5
+E       AssertionError: assert 3 == 5
+
+r2e_tests/test_1.py:245: AssertionError
+___________ JsonReportTest.test_branch_totals_from_saved_branch_data ___________
+[gw0] linux -- Python 3.7.9 /testbed/.venv/bin/python
+
+self = <r2e_tests.test_1.JsonReportTest testMethod=test_branch_totals_from_saved_branch_data>
+
+    def test_branch_totals_from_saved_branch_data(self):
+        # R2E revision (2026-09-29, R-c): the report follows the measured data,
+        # as the other reporters do, not the reporting object's own settings.
+        report = self._branchy_report("branchy_saved", report_from_saved_data=True)
+        assert report['meta']['branch_coverage'] is True
+>       assert report['totals']['covered_branches'] == 4
+E       AssertionError: assert 2 == 4
+
+r2e_tests/test_1.py:219: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED r2e_tests/test_1.py::JsonReportTest::test_branch_coverage
+PASSED r2e_tests/test_1.py::JsonReportTest::test_context_non_relative
+PASSED r2e_tests/test_1.py::JsonReportTest::test_context_relative
+PASSED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_without_branches
+PASSED r2e_tests/test_1.py::JsonReportTest::test_simple_line_coverage
+FAILED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_count_branch_arcs
+FAILED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_add_up_across_files
+FAILED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_from_saved_branch_data
+3 failed, 5 passed in 0.96 seconds
+=====END rc3h rc=1
+=====BEGIN rb3h fd4d6ac9ca8e
+bringing up nodes...
+bringing up nodes...
+
+FFF.....                                                                 [100%]
+=================================== FAILURES ===================================
+_____________ JsonReportTest.test_branch_totals_count_branch_arcs ______________
+[gw2] linux -- Python 3.7.9 /testbed/.venv/bin/python
+
+self = <r2e_tests.test_1.JsonReportTest testMethod=test_branch_totals_count_branch_arcs>
+
+    def test_branch_totals_count_branch_arcs(self):
+        # 6 branch destinations (two per `if`), 4 taken, 2 never taken.  h's `if`
+        # never runs, so it is not a partial branch.
+        report = self._branchy_report("branchy")
+        totals = report['totals']
+        assert totals['num_branches'] == 6
+        assert totals['num_partial_branches'] == 0
+>       assert totals['covered_branches'] == 4
+E       AssertionError: assert 2 == 4
+
+r2e_tests/test_1.py:222: AssertionError
+____________ JsonReportTest.test_branch_totals_add_up_across_files _____________
+[gw1] linux -- Python 3.7.9 /testbed/.venv/bin/python
+
+self = <r2e_tests.test_1.JsonReportTest testMethod=test_branch_totals_add_up_across_files>
+
+    def test_branch_totals_add_up_across_files(self):
+        # R2E revision (2026-09-30, R-c): like the other totals keys, the two
+        # counts add up every reported file.  branchy_sum.py is BRANCHY (6
+        # branch destinations, 4 taken, 2 never taken); branchy_sum_main.py is
+        # the issue's one-branch example after an import (2 destinations, 1
+        # taken, 1 not taken, 1 partial branch line).
+        self.make_file("branchy_sum.py", self.BRANCHY)
+        self.make_file("branchy_sum_main.py", """\
+            import branchy_sum
+            a = {'b': 1}
+            if a.get('a'):
+                b = 1
+            """)
+        cov = coverage.Coverage(branch=True)
+        main = self.start_import_stop(cov, "branchy_sum_main")
+        output_path = os.path.join(self.temp_dir, "branchy_sum.json")
+        cov.json_report([main, main.branchy_sum], outfile=output_path)
+        with open(output_path) as result_file:
+            report = json.load(result_file)
+        assert sorted(report['files']) == ['branchy_sum.py', 'branchy_sum_main.py']
+        totals = report['totals']
+        assert totals['num_branches'] == 8
+        assert totals['num_partial_branches'] == 1
+>       assert totals['covered_branches'] == 5
+E       AssertionError: assert 3 == 5
+
+r2e_tests/test_1.py:262: AssertionError
+___________ JsonReportTest.test_branch_totals_from_saved_branch_data ___________
+[gw0] linux -- Python 3.7.9 /testbed/.venv/bin/python
+
+self = <r2e_tests.test_1.JsonReportTest testMethod=test_branch_totals_from_saved_branch_data>
+
+    def test_branch_totals_from_saved_branch_data(self):
+        # R2E revision (2026-09-29, R-c): the report follows the measured data,
+        # as the other reporters do, not the reporting object's own settings.
+        report = self._branchy_report("branchy_saved", report_from_saved_data=True)
+        assert report['meta']['branch_coverage'] is True
+>       assert report['totals']['covered_branches'] == 4
+E       AssertionError: assert 2 == 4
+
+r2e_tests/test_1.py:236: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_without_branches
+PASSED r2e_tests/test_1.py::JsonReportTest::test_branch_coverage
+PASSED r2e_tests/test_1.py::JsonReportTest::test_context_non_relative
+PASSED r2e_tests/test_1.py::JsonReportTest::test_simple_line_coverage
+PASSED r2e_tests/test_1.py::JsonReportTest::test_context_relative
+FAILED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_count_branch_arcs
+FAILED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_add_up_across_files
+FAILED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_from_saved_branch_data
+3 failed, 5 passed in 0.78 seconds
+=====END rb3h rc=1

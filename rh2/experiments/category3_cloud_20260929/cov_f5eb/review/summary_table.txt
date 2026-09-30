@@ -1,0 +1,38 @@
+cand            v0               | v8               | rc2              | rb2              | rc3              | rb3              | rc3h             | rb3h            
+au_A1           1                | 1                | 1                | 1                | 1                | 1                | 1                | 1               
+au_C1           0(BC)            | 0(BC)            | 0(BC)            | 1                | 0(BC)            | 1                | 0(BC)            | 1               
+au_C1swap       0(BC)            | 0(BC)            | 0(BC)            | 0(K1,K3)         | 0(BC)            | 0(K1,K3)         | 0(BC)            | 0(K1,K3)        
+au_C2           -                | -                | -                | -                | 0(K1,K2,K3)      | 0(K1,K2,K3)      | 0(K1,K2,K3)      | 0(K1,K2,K3)     
+au_C3           -                | -                | -                | -                | 0(K2)            | 0(K2)            | 0(K2)            | 0(K2)           
+au_D0           -                | -                | -                | -                | 0(K1,K2,K3,K4)   | 0(K1,K2,K3,K4)   | 0(K1,K2,K3,K4)   | 0(K1,K2,K3,K4)  
+au_FC           0(BC)            | 0(BC)            | 0(BC)            | 0(K3)            | 0(BC)            | 0(K3)            | 0(BC)            | 0(K3)           
+au_LF           1                | 1                | 0(K3)            | 0(K3)            | 0(K3)            | 0(K3)            | 0(K3)            | 0(K3)           
+au_LM           -                | -                | -                | -                | -                | -                | 0(CTX_NR,CTX_R,LINE) | 0(CTX_NR,CTX_R,LINE)
+au_NB           1                | 1                | 1                | 1                | 0(K4)            | 0(K4)            | 0(K4)            | 0(K4)           
+au_W2           -                | -                | -                | -                | 0(K1,K2,K3)      | 0(K1,K2,K3)      | 0(K1,K2,K3)      | 0(K1,K2,K3)     
+au_XP           -                | -                | -                | -                | -                | -                | 0(BC)            | 0(BC)           
+gold_official   1                | 1                | 1                | 1                | 1                | 1                | 1                | 1               
+noop            0(BC)            | 0(BC,K1,K2)      | 0(BC,K1,K2,K3)   | 0(BC,K1,K2,K3)   | 0(BC,K1,K2,K3,K4) | 0(BC,K1,K2,K3,K4) | 0(BC,K1,K2,K3,K4) | 0(BC,K1,K2,K3,K4)
+rv_accum        1                | 1                | 1                | 1                | 1                | 1                | 1                | 1               
+rv_results      1                | 1                | 1                | 1                | 1                | 1                | 1                | 1               
+rv_sumlist      1                | 1                | 1                | 1                | 1                | 1                | 1                | 1               
+rv_sym_xml      0(BC)            | 0(BC)            | 0(BC)            | 1                | 0(BC)            | 1                | 0(BC)            | 1               
+wr_alldata      1                | 1                | 0(K3)            | 0(K3)            | 0(K3)            | 0(K3)            | 0(K3)            | 0(K3)           
+wr_alldata_proj 1                | 1                | 1                | 1                | 1                | 1                | 0(K3)            | 0(K3)           
+wr_brlines      0(BC)            | 0(BC,K1,K2)      | 0(BC,K1,K2,K3)   | 0(BC,K1,K2,K3)   | -                | -                | 0(BC,K1,K2,K3)   | 0(BC,K1,K2,K3)  
+wr_first        1                | 1                | 0(K3)            | 0(K3)            | 0(K3)            | 0(K3)            | 0(K3)            | 0(K3)           
+wr_inproc       1                | 0(K2)            | 0(K2)            | 0(K2)            | 0(K2)            | 0(K2)            | 0(K2)            | 0(K2)           
+wr_loopvar      1                | 1                | 0(K3)            | 0(K3)            | 0(K3)            | 0(K3)            | 0(K3)            | 0(K3)           
+wr_split        1                | 1                | 0(K3)            | 0(K3)            | 0(K3)            | 0(K3)            | 0(K3)            | 0(K3)           
+wr_sym_c2file   0(BC)            | 0(BC)            | 0(BC)            | 0(K1,K3)         | 0(BC)            | 0(K1,K3)         | 0(BC)            | 0(K1,K3)        
+wr_sym_last     0(BC)            | 0(BC)            | 0(BC,K3)         | 0(K3)            | 0(BC,K3)         | 0(K3)            | 0(BC,K3)         | 0(K3)           
+
+uid 54322 重跑：
+  au_C1 rc3h 0 ['BC']
+  au_C1 rb3h 1 []
+  au_NB rc3h 0 ['K4']
+  au_NB rb3h 0 ['K4']
+  gold_official rc3h 1 []
+  gold_official rb3h 1 []
+  wr_alldata_proj rc3h 0 ['K3']
+  wr_alldata_proj rb3h 0 ['K3']

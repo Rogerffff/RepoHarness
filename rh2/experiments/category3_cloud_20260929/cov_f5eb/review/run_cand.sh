@@ -6,6 +6,9 @@ cand=$1; shift
 cd /testbed
 if [ "$cand" = "gold_official" ]; then
   git apply /rv/materials/gold_official.patch || { echo "APPLY_FAIL"; exit 3; }
+elif [ "${cand#au_}" != "$cand" ]; then
+  # 作者候选：原样 git apply 作者目录（只读挂载在 /au）里的补丁
+  git apply /au/${cand#au_}.patch || { echo "APPLY_FAIL"; exit 3; }
 elif [ "$cand" != "noop" ]; then
   cp -r /rv/cands/$cand/files/. /testbed/ || { echo "COPY_FAIL"; exit 3; }
 fi

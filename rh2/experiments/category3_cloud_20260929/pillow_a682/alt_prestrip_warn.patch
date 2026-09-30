@@ -1,0 +1,41 @@
+diff --git a/src/PIL/GifImagePlugin.py b/src/PIL/GifImagePlugin.py
+--- a/src/PIL/GifImagePlugin.py
++++ b/src/PIL/GifImagePlugin.py
+@@ -28,6 +28,7 @@
+ import math
+ import os
+ import subprocess
++import warnings
+ from enum import IntEnum
+ 
+ from . import Image, ImageChops, ImageFile, ImagePalette, ImageSequence
+@@ -481,7 +482,16 @@
+         im.load()
+         return im
+     if Image.getmodebase(im.mode) == "RGB":
++        trns = im.info.get("transparency")
++        if isinstance(trns, tuple):
++            im = im.copy()
++            del im.info["transparency"]
+         im = im.convert("P", palette=Image.Palette.ADAPTIVE)
++        if isinstance(trns, tuple):
++            try:
++                im.info["transparency"] = im.palette.getcolor(trns, im)
++            except ValueError:
++                warnings.warn("The transparent colour could not be kept, saving without transparency")
+         if im.palette.mode == "RGBA":
+             for rgba in im.palette.colors:
+                 if rgba[3] == 0:
+@@ -683,11 +693,7 @@
+ def _write_local_header(fp, im, offset, flags):
+     transparent_color_exists = False
+     try:
+-        if "transparency" in im.encoderinfo:
+-            transparency = im.encoderinfo["transparency"]
+-        else:
+-            transparency = im.info["transparency"]
+-        transparency = int(transparency)
++        transparency = int(im.encoderinfo["transparency"])
+     except (KeyError, ValueError):
+         pass
+     else:

@@ -1,0 +1,14 @@
+diff --git a/src/PIL/GifImagePlugin.py b/src/PIL/GifImagePlugin.py
+--- a/src/PIL/GifImagePlugin.py
++++ b/src/PIL/GifImagePlugin.py
+@@ -687,6 +687,10 @@
+             transparency = im.encoderinfo["transparency"]
+         else:
+             transparency = im.info["transparency"]
++            colors = im.getcolors(im.width * im.height)
++            if isinstance(transparency, tuple) and colors and transparency not in [c for _, c in colors]:
++                # the colour does not occur in the image, so nothing needs to be transparent
++                raise KeyError("transparency")
+         transparency = int(transparency)
+     except (KeyError, ValueError):
+         pass

@@ -1,0 +1,15 @@
+diff --git a/dask/array/slicing.py b/dask/array/slicing.py
+index 3b614c67c..e08fbff7e 100644
+--- a/dask/array/slicing.py
++++ b/dask/array/slicing.py
+@@ -644,7 +644,9 @@ def take(outname, inname, chunks, index, itemsize, axis=0):
+     if math.isnan(other_numel):
+         warnsize = maxsize = math.inf
+     else:
+-        maxsize = math.ceil(nbytes / (other_numel * itemsize))
++        # Rows may hold no elements when another dimension has length zero;
++        # count at least one element per row so the estimate stays finite.
++        maxsize = math.ceil(nbytes / (max(other_numel, 1) * itemsize))
+         warnsize = maxsize * 5
+ 
+     split = config.get("array.slicing.split-large-chunks", None)

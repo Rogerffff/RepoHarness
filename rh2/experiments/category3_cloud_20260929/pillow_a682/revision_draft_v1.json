@@ -1,0 +1,22 @@
+{
+ "revision_id": "（待第2类分配，接在 material_revisions_v11 之后）",
+ "instance_id": "pillow__a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90",
+ "kind": "hidden_test_text_replace",
+ "target": "test_1.py",
+ "edits": [
+  {
+   "old": "    with Image.open(out) as reloaded:\n        assert \"transparency\" not in reloaded.info\n\n\ndef test_rgb_transparency(tmp_path):\n",
+   "new": "    with Image.open(out) as reloaded:\n        assert \"transparency\" not in reloaded.info\n\n    # Saving does not change the image that was saved\n    assert im.info[\"transparency\"] == (255, 255, 255)\n\n    # An RGB image with more than 256 colours, where the transparent colour\n    # cannot be allocated in the palette either\n    im = hopper(\"RGB\")\n    im.info[\"transparency\"] = im.getpixel((0, 0))\n    im.save(out)\n\n    with Image.open(out) as reloaded:\n        assert \"transparency\" not in reloaded.info\n    assert im.info[\"transparency\"] == im.getpixel((0, 0))\n\n    # A transparent colour that is already in the full palette is still used\n    im = Image.new(\"RGB\", (256, 1))\n    for x in range(256):\n        im.putpixel((x, 0), (x, 0, 0))\n    im.info[\"transparency\"] = (255, 0, 0)\n    im.save(out)\n\n    with Image.open(out) as reloaded:\n        assert reloaded.info[\"transparency\"] == reloaded.getpixel((255, 0))\n\n    # Also when the image has more than 256 colours\n    im = hopper(\"RGB\")\n    im.paste((0, 255, 0), (0, 0, 128, 32))\n    im.info[\"transparency\"] = (0, 255, 0)\n    im.save(out)\n\n    with Image.open(out) as reloaded:\n        assert reloaded.info[\"transparency\"] == reloaded.getpixel((0, 0))\n\n\ndef test_rgb_transparency(tmp_path):\n"
+  }
+ ],
+ "sha256_before": "sha256:ff7a439c78692859c69b257f6a50b8ecc4a0386f87b9ed57dfbc32c9fd6efb5c",
+ "sha256_after": "sha256:7f247bf448ad46d40f1a665fd28551a49204a6ae2eb274c4614e12584c38bf3b",
+ "revised_file": "rh2/experiments/category3_cloud_20260929/pillow_a682/hidden_test_1_revised_v1.py（草案位置；落地时按 s2_r2e/revisions/files/<iid>/r2e_tests/test_1.py 放置）",
+ "expected_change": null,
+ "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+ "reason": "R-c（第3类第二批，09-30 草案，未经复核）：在 test_removed_transparency 末尾追加 (a) 非示例实例 hopper RGB＋像素(0,0) 透明色，(b)/(b') 调色板已满但透明色本就在调色板中时仍使用透明度（256 色红色渐变、多于 256 色的照片加纯色条），(c) 保存不改调用者 im.info；键集与期望映射不变（93 键）；正对照 gold",
+ "evidence": [
+  "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category3_diagnosis_20260929/tasks/pillow__a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90/result.md",
+  "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category3_diagnosis_20260929/tasks/pillow__a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90/evidence/revised_v1/grades.jsonl"
+ ]
+}

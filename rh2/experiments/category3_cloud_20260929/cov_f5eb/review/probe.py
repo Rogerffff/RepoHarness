@@ -64,7 +64,7 @@ def api_report(mods, branch=True, reload_from_saved=False, order=None):
     sys.path.remove(d)
     return pick(json.load(open(out)))
 
-def cli_report(mods, branch_flag=True, rc_branch=False):
+def cli_report(mods, branch_flag=True, rc_branch=False, json_args=()):
     d = tempfile.mkdtemp()
     srcs = {"a": A, "branchy": BRANCHY, "nobr": NOBR}
     for m in mods:
@@ -76,7 +76,7 @@ def cli_report(mods, branch_flag=True, rc_branch=False):
     env = dict(os.environ, PYTHONPATH="/testbed")
     run = [py, "-m", "coverage", "run", "--source=."] + (["--branch"] if branch_flag else []) + ["main.py"]
     r1 = subprocess.run(run, cwd=d, env=env, capture_output=True, text=True)
-    r2 = subprocess.run([py, "-m", "coverage", "json", "-o", "cli.json"], cwd=d, env=env, capture_output=True, text=True)
+    r2 = subprocess.run([py, "-m", "coverage", "json", "-o", "cli.json"] + list(json_args), cwd=d, env=env, capture_output=True, text=True)
     res = {"run_rc": r1.returncode, "json_rc": r2.returncode, "json_err": r2.stderr[-300:]}
     try:
         rep = pick(json.load(open(os.path.join(d, "cli.json"))))
@@ -114,7 +114,17 @@ run("S4_api_two_files_rev", api_report, ["a", "branchy"], order=[1, 0])
 run("S5_api_two_saved", api_report, ["a", "branchy"], reload_from_saved=True)
 run("S6_api_line_mode", api_report, ["a", "branchy"], branch=False)
 run("S7_api_three_with_nobranch", api_report, ["a", "branchy", "nobr"])
+
+def zero_branch_report(reload_from_saved=False):
+    # 分支模式、报告的文件合计零个分支去向
+    return api_report(["nobr"], reload_from_saved=reload_from_saved)
+
+run("Z1_api_zero_branches", zero_branch_report)
+run("Z2_api_zero_branches_saved", zero_branch_report, True)
+
 run("C1_cli_branch_flag", cli_report, ["a", "branchy"], branch_flag=True)
 run("C2_cli_rc_branch", cli_report, ["a", "branchy"], branch_flag=False, rc_branch=True)
 run("C3_cli_line", cli_report, ["a", "branchy"], branch_flag=False)
+run("C4_cli_include_one_file", cli_report, ["a", "branchy"], json_args=("--include=branchy.py",))
+run("C5_cli_omit_main", cli_report, ["a", "branchy"], json_args=("--omit=main.py",))
 print("PROBE_JSON " + json.dumps(scen, sort_keys=True))

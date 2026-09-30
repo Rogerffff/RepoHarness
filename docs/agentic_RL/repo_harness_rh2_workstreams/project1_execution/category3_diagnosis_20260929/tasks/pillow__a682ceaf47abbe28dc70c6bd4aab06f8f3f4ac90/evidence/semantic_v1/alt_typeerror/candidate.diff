@@ -1,0 +1,14 @@
+diff --git a/src/PIL/GifImagePlugin.py b/src/PIL/GifImagePlugin.py
+index cf2993e38..68e64e521 100644
+--- a/src/PIL/GifImagePlugin.py
++++ b/src/PIL/GifImagePlugin.py
+@@ -688,7 +688,8 @@ def _write_local_header(fp, im, offset, flags):
+         else:
+             transparency = im.info["transparency"]
+         transparency = int(transparency)
+-    except (KeyError, ValueError):
++    except (KeyError, TypeError, ValueError):
++        # e.g. an RGB tuple that could not be turned into a palette index
+         pass
+     else:
+         # optimize the block away if transparent color is not used

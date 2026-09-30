@@ -1,0 +1,91 @@
+=====DIFF
+ coverage/jsonreport.py | 5 +++++
+ 1 file changed, 5 insertions(+)
+=====BEGIN rc3h c58b71e3e984
+bringing up nodes...
+bringing up nodes...
+
+...F....                                                                 [100%]
+=================================== FAILURES ===================================
+______________ JsonReportTest.test_branch_totals_without_branches ______________
+[gw2] linux -- Python 3.7.9 /testbed/.venv/bin/python
+
+self = <r2e_tests.test_1.JsonReportTest testMethod=test_branch_totals_without_branches>
+
+    def test_branch_totals_without_branches(self):
+        # Reviewer draft (2026-09-30, R-c): with branch coverage enabled, the two
+        # counts belong in totals even when the reported code has no branch at
+        # all, just as num_branches does (0 here).
+        self.make_file("straight.py", """\
+            a = 1
+            b = a + 1
+            """)
+        cov = coverage.Coverage(branch=True)
+        mod = self.start_import_stop(cov, "straight")
+        output_path = os.path.join(self.temp_dir, "straight.json")
+        cov.json_report(mod, outfile=output_path)
+        with open(output_path) as result_file:
+            report = json.load(result_file)
+        assert report['meta']['branch_coverage'] is True
+        totals = report['totals']
+        assert totals['num_branches'] == 0
+>       assert totals['covered_branches'] == 0
+E       KeyError: 'covered_branches'
+
+r2e_tests/test_1.py:273: KeyError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED r2e_tests/test_1.py::JsonReportTest::test_branch_coverage
+PASSED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_add_up_across_files
+PASSED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_count_branch_arcs
+PASSED r2e_tests/test_1.py::JsonReportTest::test_context_non_relative
+PASSED r2e_tests/test_1.py::JsonReportTest::test_simple_line_coverage
+PASSED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_from_saved_branch_data
+PASSED r2e_tests/test_1.py::JsonReportTest::test_context_relative
+FAILED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_without_branches
+1 failed, 7 passed in 0.81 seconds
+=====END rc3h rc=1
+=====BEGIN rb3h fd4d6ac9ca8e
+bringing up nodes...
+bringing up nodes...
+
+..F.....                                                                 [100%]
+=================================== FAILURES ===================================
+______________ JsonReportTest.test_branch_totals_without_branches ______________
+[gw0] linux -- Python 3.7.9 /testbed/.venv/bin/python
+
+self = <r2e_tests.test_1.JsonReportTest testMethod=test_branch_totals_without_branches>
+
+    def test_branch_totals_without_branches(self):
+        # Reviewer draft (2026-09-30, R-c): with branch coverage enabled, the two
+        # counts belong in totals even when the reported code has no branch at
+        # all, just as num_branches does (0 here).
+        self.make_file("straight.py", """\
+            a = 1
+            b = a + 1
+            """)
+        cov = coverage.Coverage(branch=True)
+        mod = self.start_import_stop(cov, "straight")
+        output_path = os.path.join(self.temp_dir, "straight.json")
+        cov.json_report(mod, outfile=output_path)
+        with open(output_path) as result_file:
+            report = json.load(result_file)
+        assert report['meta']['branch_coverage'] is True
+        totals = report['totals']
+        assert totals['num_branches'] == 0
+>       assert totals['covered_branches'] == 0
+E       KeyError: 'covered_branches'
+
+r2e_tests/test_1.py:296: KeyError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED r2e_tests/test_1.py::JsonReportTest::test_branch_coverage
+PASSED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_add_up_across_files
+PASSED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_from_saved_branch_data
+PASSED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_count_branch_arcs
+PASSED r2e_tests/test_1.py::JsonReportTest::test_context_non_relative
+PASSED r2e_tests/test_1.py::JsonReportTest::test_context_relative
+PASSED r2e_tests/test_1.py::JsonReportTest::test_simple_line_coverage
+FAILED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_without_branches
+1 failed, 7 passed in 0.63 seconds
+=====END rb3h rc=1

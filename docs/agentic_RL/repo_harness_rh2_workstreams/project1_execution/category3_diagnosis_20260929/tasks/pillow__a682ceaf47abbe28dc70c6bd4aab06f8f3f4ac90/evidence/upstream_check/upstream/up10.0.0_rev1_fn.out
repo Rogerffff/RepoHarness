@@ -1,0 +1,12 @@
+            else:
+                transparency = im.info["transparency"]
+>           transparency = int(transparency)
+E           TypeError: int() argument must be a string, a bytes-like object or a number, not 'tuple'
+
+/in/x10.0.0/PIL/GifImagePlugin.py:690: TypeError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED r2e_tests/test_1.py::test_transparent_optimize
+PASSED r2e_tests/test_1.py::test_rgb_transparency
+FAILED r2e_tests/test_1.py::test_removed_transparency - TypeError: int() argu...
+================== 1 failed, 2 passed, 92 deselected in 0.20s ==================

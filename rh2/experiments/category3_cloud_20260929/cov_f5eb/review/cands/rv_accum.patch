@@ -1,0 +1,29 @@
+--- a/coverage/jsonreport.py
++++ b/coverage/jsonreport.py
+@@ -20,6 +20,8 @@
+         self.config = self.coverage.config
+         self.total = Numbers()
+         self.report_data = {}
++        self.covered_branches = 0
++        self.missing_branches = 0
+ 
+     def report(self, morfs, outfile=None):
+         """Generate a json report for `morfs`.
+@@ -60,6 +62,8 @@
+             self.report_data["totals"].update({
+                 'num_branches': self.total.n_branches,
+                 'num_partial_branches': self.total.n_partial_branches,
++                'covered_branches': self.covered_branches,
++                'missing_branches': self.missing_branches,
+             })
+ 
+         json.dump(
+@@ -92,6 +96,8 @@
+                 analysis.filename,
+             )
+         if coverage_data.has_arcs():
++            self.covered_branches += nums.n_executed_branches
++            self.missing_branches += nums.n_missing_branches
+             reported_file['summary'].update({
+                 'num_branches': nums.n_branches,
+                 'num_partial_branches': nums.n_partial_branches,

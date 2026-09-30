@@ -1,0 +1,18 @@
+diff --git a/pydantic/alias_generators.py b/pydantic/alias_generators.py
+--- a/pydantic/alias_generators.py
++++ b/pydantic/alias_generators.py
+@@ -39,6 +39,11 @@
+     Returns:
+         The converted string in snake_case.
+     """
+-    snake = re.sub(r'([a-zA-Z])([0-9])', lambda m: f'{m.group(1)}_{m.group(2)}', camel)
+-    snake = re.sub(r'([a-z0-9])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+-    return snake.lower()
++    # tokenize into words (an acronym is a run of capitals not followed by a lowercase letter), then join with '_'
++    tokens = re.findall(r'_+|[A-Z]+(?![a-z])|[A-Z]?[a-z]+|[0-9]+|[^A-Za-z0-9_]+', camel)
++    out = []
++    for tok in tokens:
++        if out and re.match(r'[A-Za-z0-9]', tok) and re.search(r'[A-Za-z0-9]$', out[-1]):
++            out.append('_')
++        out.append(tok)
++    return ''.join(out).lower()
