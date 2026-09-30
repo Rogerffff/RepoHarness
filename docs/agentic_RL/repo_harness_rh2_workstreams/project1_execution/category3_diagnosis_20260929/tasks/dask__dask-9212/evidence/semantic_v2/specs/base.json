@@ -1,0 +1,38 @@
+{
+ "image": "rh2-envrepair/compat-v2b-dask__dask-9212:c3cloud",
+ "python_prefix": "/opt/miniconda3/envs/testbed",
+ "variants": {
+  "base": [
+   "python -m pip install -q --no-index --find-links=/opt/rh2/compat-wheels --no-deps pandas==1.4.4 numpy==1.24.4"
+  ]
+ },
+ "files": {
+  "behavior.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask9212/behavior.py",
+  "test_orig.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask9212/original_test.patch",
+  "gold.patch": "/home/user/RepoHarness/runs/category3_cloud_20260929/dask9212/gold/dask__dask-9212.gold.patch",
+  "alt_modqual.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask9212/candidates/alt_modqual.patch",
+  "alt_hookfirst.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask9212/candidates/alt_hookfirst.patch",
+  "alt_up2024.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask9212/candidates/alt_up2024.patch",
+  "alt_pickle.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask9212/candidates/alt_pickle.patch",
+  "alt_docs.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask9212/candidates/alt_docs.patch",
+  "w_value.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask9212/candidates/w_value.patch",
+  "w_noval.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask9212/candidates/w_noval.patch",
+  "w_hash.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask9212/candidates/w_hash.patch",
+  "w_name.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask9212/candidates/w_name.patch",
+  "w_const.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask9212/candidates/w_const.patch",
+  "w_str.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask9212/candidates/w_str.patch",
+  "test_rev.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/dask9212/revised_test_v1.patch"
+ },
+ "commands": [
+  {
+   "id": "env",
+   "timeout_s": 120,
+   "cmd": "id -u; python -c 'import sys,numpy,pandas,dask,pytest; print(sys.version.split()[0], numpy.__version__, pandas.__version__, dask.__version__, pytest.__version__, dask.__file__)'; git status --porcelain"
+  },
+  {
+   "id": "rev_file",
+   "timeout_s": 1200,
+   "cmd": "git apply /in/test_rev.patch && python -m pytest -n0 -rA --color=no -p no:cacheprovider dask/tests/test_base.py > /tmp/t.txt 2>&1; rc=$?; git checkout -- dask/tests/test_base.py; cat /tmp/t.txt; exit $rc"
+  }
+ ]
+}

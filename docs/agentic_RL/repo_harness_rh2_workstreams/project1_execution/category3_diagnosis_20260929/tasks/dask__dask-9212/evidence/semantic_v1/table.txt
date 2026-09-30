@@ -1,77 +1,77 @@
-case                                                           | base | gold | alt_modqual | alt_hookfirst | alt_up2024 | alt_pickle | alt_docs | w_value | w_noval | w_hash | w_name | w_str
-stable:Enum_int                                                | N | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-distinct:Enum_int                                              | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-strict:Enum_int                                                | N(err) | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-stable:Flag_single                                             | N | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-distinct:Flag_single                                           | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-strict:Flag_single                                             | N(err) | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-stable:IntEnum                                                 | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-distinct:IntEnum                                               | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-strict:IntEnum                                                 | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-stable:IntFlag_single                                          | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-distinct:IntFlag_single                                        | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-strict:IntFlag_single                                          | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-stable:str_mixin                                               | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-distinct:str_mixin                                             | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-strict:str_mixin                                               | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-stable:tuple_value                                             | N | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-distinct:tuple_value                                           | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-strict:tuple_value                                             | N(err) | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-stable:dict_value                                              | N | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-distinct:dict_value                                            | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-strict:dict_value                                              | N(err) | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-stable:frozenset_value                                         | N | Y | Y | Y | N | Y | Y | Y | Y | Y | Y | Y
-distinct:frozenset_value                                       | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-strict:frozenset_value                                         | N(err) | Y | Y | Y | N(err) | Y | Y | Y | Y | Y | Y | Y
-stable:object_value                                            | N | Y | Y | Y | N | Y | Y | Y | Y | Y | Y | Y
-distinct:object_value                                          | Y | Y | Y | Y | Y | N | Y | Y | Y | Y | Y | Y
-strict:object_value                                            | N(err) | Y | Y | Y | N(err) | N | Y | Y | Y | Y | Y | Y
-stable:container                                               | N | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-alias:same_member                                              | N | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-xclass:same_name_value(Color.RED~Light.RED)                    | Y | Y | Y | Y | Y | Y | Y | N | Y | N | N | Y
-xclass:same_value(Color.RED~Shape.CIRCLE)                      | Y | Y | Y | Y | Y | Y | Y | N | Y | Y | Y | Y
-xclass:IntEnum(IColor.RED~Color.RED)                           | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-raw:Color.RED~1                                                | Y | Y | Y | Y | Y | Y | Y | N | Y | Y | Y | Y
-raw:Color.RED~'RED'                                            | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | N | Y
-raw:Color.RED~'Color.RED'                                      | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | N
-flag:combo~combo(R|W~R|X)                                      | Y | Y | Y | Y | Y | Y | Y | Y | N | N | N | Y
-flag:combo~empty(R|W~Perm(0))                                  | Y | Y | Y | Y | Y | Y | Y | Y | N | N | N | Y
-flag:combo_stable                                              | N | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-intflag:combo~combo                                            | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-consequence:xclass type_name(Color.RED, Light.RED)             | Y got=Color,Light | Y got=Color,Light | Y got=Color,Light | Y got=Color,Light | Y got=Color,Light | Y got=Color,Light | Y got=Color,Light | N got=Color,Color | Y got=Color,Light | N got=Color,Color | N got=Color,Color | Y got=Color,Light
-consequence:xclass type_name(Color.RED, Shape.CIRCLE)          | Y got=Color,Shape | Y got=Color,Shape | Y got=Color,Shape | Y got=Color,Shape | Y got=Color,Shape | Y got=Color,Shape | Y got=Color,Shape | N got=Color,Color | Y got=Color,Shape | Y got=Color,Shape | Y got=Color,Shape | Y got=Color,Shape
-consequence:raw type_name(Color.RED, 1)                        | Y got=Color,int | Y got=Color,int | Y got=Color,int | Y got=Color,int | Y got=Color,int | Y got=Color,int | Y got=Color,int | N got=Color,Color | Y got=Color,int | Y got=Color,int | Y got=Color,int | Y got=Color,int
-consequence:flag value_of(R|W, R|X)                            | Y got=3,5 | Y got=3,5 | Y got=3,5 | Y got=3,5 | Y got=3,5 | Y got=3,5 | Y got=3,5 | Y got=3,5 | N got=3,3 | N got=3,3 | N got=3,3 | Y got=3,5
-consequence:flag value_of(R|W, Perm(0))                        | Y got=3,0 | Y got=3,0 | Y got=3,0 | Y got=3,0 | Y got=3,0 | Y got=3,0 | Y got=3,0 | Y got=3,0 | N got=3,3 | N got=3,3 | N got=3,3 | Y got=3,0
-crossproc:Color.RED                                            | N | Y | Y | Y | Y | Y | Y | Y | Y | N | Y | Y
-crossproc:Perm.R | Perm.W                                      | N | Y | Y | Y | Y | Y | Y | Y | Y | N | Y | Y
-crossproc:IColor.RED                                           | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-crossproc:SColor.RED                                           | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-crossproc:Planet.EARTH                                         | N | Y | Y | Y | Y | Y | Y | Y | Y | N | Y | Y
-crossproc:Conf.A                                               | N | Y | Y | Y | Y | Y | Y | Y | Y | N | Y | Y
-crossproc:Tags.A                                               | N | N | N | N | N | N | N | N | Y | N | Y | Y
-crossproc:Sentinel.MISSING                                     | N | N | N | N | N | Y | N | N | Y | N | Y | Y
-crossproc:Hooked.A                                             | Y | Y | Y | Y | Y | Y | Y | Y | Y | N | Y | Y
-hook:__dask_tokenize__ honored                                 | · hono=True | · hono=False | · hono=False | · hono=True | · hono=False | · hono=False | · hono=False | · hono=False | · hono=False | · hono=False | · hono=False | · hono=False
-register:user normalize_token.register(MyEnum) wins            | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
-mixin:IntEnum/IntFlag/str normalized text                      | · | · | · | · | · | · | · | · | · | · | · | ·
-class:Enum class objects A.Color~B.Color (pre-existing)        | · equa=True | · equa=True | · equa=True | · equa=True | · equa=True | · equa=True | · equa=True | · equa=True | · equa=True | · equa=True | · equa=True | · equa=True
-class:plain class objects A.Plain~B.Plain                      | · equa=False | · equa=False | · equa=False | · equa=False | · equa=False | · equa=False | · equa=False | · equa=False | · equa=False | · equa=False | · equa=False | · equa=False
-norm:gold-like representation of A.Color.RED                   | · | · | · | · | · | · | · | · | · | · | · | ·
-samename:token A.Color.RED~B.Color.RED                         | · toke=False | · toke=True | · toke=False | · toke=False | · toke=False | · toke=False | · toke=True | · toke=True | · toke=True | · toke=True | · toke=True | · toke=True
-samename:pure delayed which() compute together sync            | Y got=audit_a,audit_b | N got=audit_a,audit_a | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a
-samename:pure delayed which() compute together threads         | Y got=audit_a,audit_b | N got=audit_a,audit_a | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a
-samename:pure delayed computed separately                      | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b
-samename:pure delayed e.describe() compute together            | Y got=audit_a,audit_b | N got=audit_a,audit_a | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a
-samename:default (impure) delayed                              | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b
-samename:Delayed == operator (always pure)                     | Y got=True,False | N got=True,True | Y got=True,False | Y got=True,False | Y got=True,False | Y got=True,False | N got=True,True | N got=True,True | N got=True,True | N got=True,True | N got=True,True | N got=True,True
-samename:Delayed [] getitem (always pure)                      | Y got=audit_a,audit_b | N got=audit_a,audit_a | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a
-samename:map_blocks(color=...) names and results               | Y name=False | N name=True | Y name=False | Y name=False | Y name=False | Y name=False | N name=True | N name=True | N name=True | N name=True | N name=True | N name=True
-samename:IntEnum IColor.RED (base path unchanged)              | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a
-samename:Flag Perm.R                                           | Y got=audit_a,audit_b | N got=audit_a,audit_a | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a
-samename:user __dask_tokenize__ hook Hook.A                    | Y got=audit_a,audit_b | N got=audit_a,audit_a | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a
-samename:nested Reader.Mode.FAST~Writer.Mode.FAST (same module | · toke=False | · toke=True | · toke=False | · toke=False | · toke=True | · toke=False | · toke=True | · toke=True | · toke=True | · toke=True | · toke=True | · toke=True
-samename:local classes from the same function (like the test)  | · enum=False | · enum=True | · enum=True | · enum=True | · enum=True | · enum=False | · enum=True | · enum=True | · enum=True | · enum=True | · enum=True | · enum=True
+case                                                           | base | gold | alt_modqual | alt_hookfirst | alt_up2024 | alt_pickle | alt_docs | w_value | w_noval | w_hash | w_name | w_const | w_str
+stable:Enum_int                                                | N | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
+distinct:Enum_int                                              | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | N | Y
+strict:Enum_int                                                | N(err) | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | N | Y
+stable:Flag_single                                             | N | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
+distinct:Flag_single                                           | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | N | Y
+strict:Flag_single                                             | N(err) | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | N | Y
+stable:IntEnum                                                 | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
+distinct:IntEnum                                               | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
+strict:IntEnum                                                 | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
+stable:IntFlag_single                                          | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
+distinct:IntFlag_single                                        | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
+strict:IntFlag_single                                          | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
+stable:str_mixin                                               | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
+distinct:str_mixin                                             | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
+strict:str_mixin                                               | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
+stable:tuple_value                                             | N | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
+distinct:tuple_value                                           | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | N | Y
+strict:tuple_value                                             | N(err) | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | N | Y
+stable:dict_value                                              | N | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
+distinct:dict_value                                            | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | N | Y
+strict:dict_value                                              | N(err) | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | N | Y
+stable:frozenset_value                                         | N | Y | Y | Y | N | Y | Y | Y | Y | Y | Y | Y | Y
+distinct:frozenset_value                                       | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | N | Y
+strict:frozenset_value                                         | N(err) | Y | Y | Y | N(err) | Y | Y | Y | Y | Y | Y | N | Y
+stable:object_value                                            | N | Y | Y | Y | N | Y | Y | Y | Y | Y | Y | Y | Y
+distinct:object_value                                          | Y | Y | Y | Y | Y | N | Y | Y | Y | Y | Y | N | Y
+strict:object_value                                            | N(err) | Y | Y | Y | N(err) | N | Y | Y | Y | Y | Y | N | Y
+stable:container                                               | N | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | N | Y
+alias:same_member                                              | N | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
+xclass:same_name_value(Color.RED~Light.RED)                    | Y | Y | Y | Y | Y | Y | Y | N | Y | N | N | N | Y
+xclass:same_value(Color.RED~Shape.CIRCLE)                      | Y | Y | Y | Y | Y | Y | Y | N | Y | Y | Y | N | Y
+xclass:IntEnum(IColor.RED~Color.RED)                           | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
+raw:Color.RED~1                                                | Y | Y | Y | Y | Y | Y | Y | N | Y | Y | Y | Y | Y
+raw:Color.RED~'RED'                                            | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | N | Y | Y
+raw:Color.RED~'Color.RED'                                      | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | N
+flag:combo~combo(R|W~R|X)                                      | Y | Y | Y | Y | Y | Y | Y | Y | N | N | N | N | Y
+flag:combo~empty(R|W~Perm(0))                                  | Y | Y | Y | Y | Y | Y | Y | Y | N | N | N | N | Y
+flag:combo_stable                                              | N | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
+intflag:combo~combo                                            | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
+consequence:xclass type_name(Color.RED, Light.RED)             | Y got=Color,Light | Y got=Color,Light | Y got=Color,Light | Y got=Color,Light | Y got=Color,Light | Y got=Color,Light | Y got=Color,Light | N got=Color,Color | Y got=Color,Light | N got=Color,Color | N got=Color,Color | N got=Color,Color | Y got=Color,Light
+consequence:xclass type_name(Color.RED, Shape.CIRCLE)          | Y got=Color,Shape | Y got=Color,Shape | Y got=Color,Shape | Y got=Color,Shape | Y got=Color,Shape | Y got=Color,Shape | Y got=Color,Shape | N got=Color,Color | Y got=Color,Shape | Y got=Color,Shape | Y got=Color,Shape | N got=Color,Color | Y got=Color,Shape
+consequence:raw type_name(Color.RED, 1)                        | Y got=Color,int | Y got=Color,int | Y got=Color,int | Y got=Color,int | Y got=Color,int | Y got=Color,int | Y got=Color,int | N got=Color,Color | Y got=Color,int | Y got=Color,int | Y got=Color,int | Y got=Color,int | Y got=Color,int
+consequence:flag value_of(R|W, R|X)                            | Y got=3,5 | Y got=3,5 | Y got=3,5 | Y got=3,5 | Y got=3,5 | Y got=3,5 | Y got=3,5 | Y got=3,5 | N got=3,3 | N got=3,3 | N got=3,3 | N got=3,3 | Y got=3,5
+consequence:flag value_of(R|W, Perm(0))                        | Y got=3,0 | Y got=3,0 | Y got=3,0 | Y got=3,0 | Y got=3,0 | Y got=3,0 | Y got=3,0 | Y got=3,0 | N got=3,3 | N got=3,3 | N got=3,3 | N got=3,3 | Y got=3,0
+crossproc:Color.RED                                            | N | Y | Y | Y | Y | Y | Y | Y | Y | N | Y | Y | Y
+crossproc:Perm.R | Perm.W                                      | N | Y | Y | Y | Y | Y | Y | Y | Y | N | Y | Y | Y
+crossproc:IColor.RED                                           | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
+crossproc:SColor.RED                                           | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
+crossproc:Planet.EARTH                                         | N | Y | Y | Y | Y | Y | Y | Y | Y | N | Y | Y | Y
+crossproc:Conf.A                                               | N | Y | Y | Y | Y | Y | Y | Y | Y | N | Y | Y | Y
+crossproc:Tags.A                                               | N | N | N | N | N | N | N | N | Y | N | Y | Y | Y
+crossproc:Sentinel.MISSING                                     | N | N | N | N | N | Y | N | N | Y | N | Y | Y | Y
+crossproc:Hooked.A                                             | Y | Y | Y | Y | Y | Y | Y | Y | Y | N | Y | Y | Y
+hook:__dask_tokenize__ honored                                 | · hono=True | · hono=False | · hono=False | · hono=True | · hono=False | · hono=False | · hono=False | · hono=False | · hono=False | · hono=False | · hono=False | · hono=False | · hono=False
+register:user normalize_token.register(MyEnum) wins            | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y
+mixin:IntEnum/IntFlag/str normalized text                      | · | · | · | · | · | · | · | · | · | · | · | · | ·
+class:Enum class objects A.Color~B.Color (pre-existing)        | · equa=True | · equa=True | · equa=True | · equa=True | · equa=True | · equa=True | · equa=True | · equa=True | · equa=True | · equa=True | · equa=True | · equa=True | · equa=True
+class:plain class objects A.Plain~B.Plain                      | · equa=False | · equa=False | · equa=False | · equa=False | · equa=False | · equa=False | · equa=False | · equa=False | · equa=False | · equa=False | · equa=False | · equa=False | · equa=False
+norm:gold-like representation of A.Color.RED                   | · | · | · | · | · | · | · | · | · | · | · | · | ·
+samename:token A.Color.RED~B.Color.RED                         | · toke=False | · toke=True | · toke=False | · toke=False | · toke=False | · toke=False | · toke=True | · toke=True | · toke=True | · toke=True | · toke=True | · toke=True | · toke=True
+samename:pure delayed which() compute together sync            | Y got=audit_a,audit_b | N got=audit_a,audit_a | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a
+samename:pure delayed which() compute together threads         | Y got=audit_a,audit_b | N got=audit_a,audit_a | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a
+samename:pure delayed computed separately                      | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b
+samename:pure delayed e.describe() compute together            | Y got=audit_a,audit_b | N got=audit_a,audit_a | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a
+samename:default (impure) delayed                              | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b
+samename:Delayed == operator (always pure)                     | Y got=True,False | N got=True,True | Y got=True,False | Y got=True,False | Y got=True,False | Y got=True,False | N got=True,True | N got=True,True | N got=True,True | N got=True,True | N got=True,True | N got=True,True | N got=True,True
+samename:Delayed [] getitem (always pure)                      | Y got=audit_a,audit_b | N got=audit_a,audit_a | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a
+samename:map_blocks(color=...) names and results               | Y name=False | N name=True | Y name=False | Y name=False | Y name=False | Y name=False | N name=True | N name=True | N name=True | N name=True | N name=True | N name=True | N name=True
+samename:IntEnum IColor.RED (base path unchanged)              | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a
+samename:Flag Perm.R                                           | Y got=audit_a,audit_b | N got=audit_a,audit_a | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a
+samename:user __dask_tokenize__ hook Hook.A                    | Y got=audit_a,audit_b | N got=audit_a,audit_a | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | Y got=audit_a,audit_b | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a | N got=audit_a,audit_a
+samename:nested Reader.Mode.FAST~Writer.Mode.FAST (same module | · toke=False | · toke=True | · toke=False | · toke=False | · toke=True | · toke=False | · toke=True | · toke=True | · toke=True | · toke=True | · toke=True | · toke=True | · toke=True
+samename:local classes from the same function (like the test)  | · enum=False | · enum=True | · enum=True | · enum=True | · enum=True | · enum=False | · enum=True | · enum=True | · enum=True | · enum=True | · enum=True | · enum=True | · enum=True
 
 base           orig_file 2 failed, 124 passed, 3 skipped, 2 warnings in 9.17s  failed=['dask/tests/test_base.py::test_tokenize_enum[Enum]', 'dask/tests/test_base.py::test_tokenize_enum[Flag]']
 gold           orig_file 126 passed, 3 skipped, 2 warnings in 8.79s  failed=[]
@@ -84,4 +84,5 @@ w_value        orig_file 126 passed, 3 skipped, 2 warnings in 8.29s  failed=[]
 w_noval        orig_file 126 passed, 3 skipped, 2 warnings in 8.49s  failed=[]
 w_hash         orig_file 126 passed, 3 skipped, 2 warnings in 8.11s  failed=[]
 w_name         orig_file 126 passed, 3 skipped, 2 warnings in 8.33s  failed=[]
+w_const        orig_file 2 failed, 124 passed, 3 skipped, 2 warnings in 7.69s  failed=['dask/tests/test_base.py::test_tokenize_enum[Enum]', 'dask/tests/test_base.py::test_tokenize_enum[Flag]']
 w_str          orig_file 126 passed, 3 skipped, 2 warnings in 8.88s  failed=[]

@@ -1,0 +1,23 @@
+diff --git a/dask/base.py b/dask/base.py
+index 2e3e88aea..b7d4f1b33 100644
+--- a/dask/base.py
++++ b/dask/base.py
+@@ -13,6 +13,7 @@ from collections import OrderedDict
+ from collections.abc import Callable, Iterator, Mapping
+ from concurrent.futures import Executor
+ from contextlib import contextmanager
++from enum import Enum
+ from functools import partial
+ from numbers import Integral, Number
+ from operator import getitem
+@@ -1005,6 +1006,10 @@ def normalize_object(o):
+     if method is not None:
+         return method()
+ 
++    if isinstance(o, Enum):
++        cls = type(o)
++        return "enum", cls.__module__, cls.__qualname__, o.name, o.value
++
+     if callable(o):
+         return normalize_function(o)
+ 

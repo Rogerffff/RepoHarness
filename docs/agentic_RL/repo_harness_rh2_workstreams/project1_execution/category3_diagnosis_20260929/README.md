@@ -39,7 +39,9 @@
 
 依据：Codex 09-30 独立复核（[总报告](../category3_cloud_review_20260930/README.md)、[接续反馈](../category3_cloud_review_20260930/claude_feedback.md)，固定快照 `0c074dc9`），加上其后的云端新证据。下文首批、第二批两节是历史记录，结论以本表为准。
 
-**交第2类不等于修订已验收**：它只表示公开目标已明确、已证问题有可执行的修法与验收办法。正式落地、actor 核对与最终复验由第2类完成。11 题的逐题交接见 [handover_to_category2_20260930.md](handover_to_category2_20260930.md)。
+**交第2类不等于修订已验收**：它只表示公开目标已明确、已证问题有可执行的修法与验收办法。正式落地、actor 核对与最终复验由第2类完成。逐题交接见 [handover_to_category2_20260930.md](handover_to_category2_20260930.md)（最初 11 题，09-30 续接后追加 5 题）。
+
+**剩余 49 题改用[精简流程](streamlined_process_20260930.md)**（用户 09-30 要求；对照 MiMo-V2.6 §4.2；子代理改用 Sonnet 5.5）。已完成的 18 题不按新流程重做。
 
 | 题目 | 当前分类 | 状态 | 下一步 |
 | --- | --- | --- | --- |
@@ -50,14 +52,14 @@
 | [R2E pillow__3a61c9e9](tasks/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/result.md) | 交第2类 | R-c v2 私有模拟 | 按交接清单落地 |
 | [R2E coveragepy__016af5f6](tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/result.md) | 交第2类 | R-c v2＋窄 R-f 私有模拟 | 新公开读者验收修订题面 |
 | [R2E coveragepy__5dbbe143](tasks/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/result.md) | 交第2类（自建题面版本，用户 09-29 选 A） | 修订题面已通过新公开读者验收 | 按交接清单落地 |
-| [SWE dask-9378](tasks/dask__dask-9378/result.md) | **暂留第3类** | mask 漏检已证、修法成立；`da.ma` 新 API 是否为唯一目标需要选择 | **用户决定**（题页有决策包） |
+| [SWE dask-9378](tasks/dask__dask-9378/result.md) | **交第2类**（用户 09-30 选 B） | mask 漏检已证；路线不限的 mask 测试规格已定 | 第2类按规格起草补丁并验收 |
 | [SWE conan-13403](tasks/conan-io__conan-13403/result.md) | 交第2类 | v4（熔断收口）41 次诊断评分符合停止条件 | Codex 确认 v4 |
 | [SWE pydantic-8567](tasks/pydantic__pydantic-8567/result.md) | 交第2类 | v3 聚焦复核 3 项阻断，同一边界连续两轮，熔断采用复核 `t_v4`；v4 31 次诊断评分符合停止条件 | Codex 确认 v4 |
 | [SWE dask-8801](tasks/dask__dask-8801/result.md) | 交第2类（带修复清单） | v5（B2 修正＋词表调整）41 次诊断评分与复核预期一致 | 余项：`1.5` 实例、原因判定设计、显式 `null`、权限错误（后两者 v5 下仍为 1） |
 | [SWE dask-7305](tasks/dask__dask-7305/result.md) | 交第2类（带修复清单） | 独立复核（2 项阻断）已由 v2 处理；v2 27 次诊断评分符合预期 | v2 聚焦复核由第2类承接；`npartitions="auto"` 余项 |
 | [SWE moto-6185](tasks/getmoto__moto-6185/result.md) | **交第2类**（09-30 追加） | 独立复核 3 项阻断，采纳复核草案 v3（v2s 路线：gold 两处缺口须断言，正对照 `ctx`／`parity` 已核实）；v3 私有模拟 22 个版本符合预期 | 第2类落地后一次正式诊断评分，与复核 v3 列逐格一致即完成 |
 | [SWE pydantic-8316](tasks/pydantic__pydantic-8316/result.md) | **交第2类**（09-30 追加） | 独立复核 1 项阻断（v2 放过 7 个“缩写上限”类错误候选），采纳复核草案 v3；34 格诊断评分与复核预期逐格一致 | 按交接清单落地；数字边界只登记 |
-| [R2E coveragepy__f5eb5f21](tasks/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/result.md) | **暂留第3类（等用户选择）** | 独立复核：P5 归类成立（第二分支），另有 2 项阻断（NB、`wr_alldata_proj`），已采纳复核 v3 草案（R-c v3／R-b v3，8 键，私有模拟符合预期） | **用户决定** P5：A（R-b v3，建议）／B（R-f 题面）／C（维持）；不裁定时 R-c v3 可先落地 |
+| [R2E coveragepy__f5eb5f21](tasks/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/result.md) | **交第2类**（用户 09-30 选 A） | 独立复核：P5 成立；2 项阻断由复核 v3 草案处理；采用 R-b v3（8 键，私有模拟符合预期） | 按交接清单落地 R-b v3 |
 | [R2E pillow__a682ceaf](tasks/pillow__a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90/result.md) | **交第2类**（09-30 追加） | 原版 S1；独立复核 3 项阻断，采纳复核 v2 草案（私有模拟 164 格符合预期）；`pytest.warns` 保留 | 第2类在 R2E 正式评分链上跑一轮，与复核 h4 列一致即完成 |
 | [SWE dask-8597](tasks/dask__dask-8597/result.md) | 第3类 | 作者诊断完成：原版 S1（11 个错误候选原材料正式得 1，含 09-21 登记的 `split_only`），R-c v2 诊断评分 21 次符合预期，建议转第2类；独立复核进行中 | 复核后判定；作者列出 5 个待定点由复核给意见 |
 | SWE dask-9212 | 第3类 | 镜像已拉取并核对摘要，compat_v2b 派生镜像已等效重建；作者诊断进行中（登记问题：同名不同模块 Enum 的 token 碰撞在 pure delayed 上是否有用户可见后果） | — |
@@ -190,9 +192,10 @@ pillow 首轮的结论是“可转第1类”，被独立复核推翻，改判为
 
 按 Codex 09-30 建议的顺序（09-30 续接后的进展）：
 1. **11 题的交接已收口**：交接清单已补入 conan-13403 v4、pydantic-8567 v4、dask-8801 v5、dask-7305 v2 的正式诊断评分结果；moto-6185、pydantic-8316 追加为第 12、13 题；
-2. **两题待用户选择**：dask-9378（`da.ma` 新 API 是否为唯一目标；建议 B）、coveragepy__f5eb5f21（P5：A／B／C；建议 A）；
+2. **用户 09-30 已决定**：dask-9378 选 B、coveragepy__f5eb5f21 选 A，两题转第2类；
 3. **pydantic-8316、pillow__a682ceaf 已转第2类**：独立复核完成，分别采纳复核 v3、v2，追加为交接的第 13、14 题；
-4. **进行中**：dask-8597 独立复核；dask-9212 作者诊断。只补跑会改变结论、确实缺失的实验；不先扩大剩余题池。
+4. **进行中**：dask-9212 作者诊断（旧流程，已接近完成）；dask-8597 的独立复核改按精简流程做轻量核查（09-30 停掉了按旧流程启动的复核，它还没写出任何文件）。
+5. **剩余 49 题按[精简流程](streamlined_process_20260930.md)**：云端先做轻量仓库的 31 题，重型仓库 18 题建议放本地。
 
 之后再从其余 49 题中选下一批。49 题的分布：
 - SWE：诊断 13、范围 14、正对照 1；

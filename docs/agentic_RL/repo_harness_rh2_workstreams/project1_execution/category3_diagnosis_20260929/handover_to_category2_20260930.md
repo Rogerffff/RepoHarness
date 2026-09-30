@@ -39,7 +39,12 @@
 | SWE pydantic-8316 | R-c v3 `b248daa2…81e0`（复核草案；34 格诊断评分与复核预期逐格一致） | gold；`keep_digit`、`upstream_main`（两种数字读法） | 数字边界登记为 gold 的范围外行为变化（新旧都接受，不属 P5）；T3 阈值余量只登记 |
 | R2E pillow__a682ceaf | R-c v2 编辑块 `21581578…`（复核草案，隐藏测试 `3573f459…`，93 键不变；只有私有模拟） | gold；`alt_typeerror`、`r_kwtuple` 等合理实现 | 第2类在 R2E 正式评分链上跑一轮，与复核 h4 列一致即完成；`pytest.warns` 保留 |
 
-首批中 **dask-9378 暂不交第2类**：`da.ma` 新 API 是否为唯一目标仍需选择，见[题页](tasks/dask__dask-9378/result.md)。
+**09-30 用户决定后转入**：
+
+| 题目 | 采用版本 | 可信正对照 | 重要余项（修好后才能按用途验收） |
+| --- | --- | --- | --- |
+| SWE dask-9378 | 用户选 B：路线不限的 mask 测试（规格见条目；补丁由第2类起草） | gold；`toplevel_only`（只修顶层，经 B 规格应为 1） | 按规格起草并验收；题面不改，R-f 草案作废 |
+| R2E coveragepy__f5eb5f21 | 用户选 A：R-b v3（复核者 `test_1_rb3h.py`＋`expected_rc3.json`，8 键） | gold、A1；C1（上游 5.1 写法）在 R-b v3 下应为 1 | 第2类正式评分逐键与复核“R-b v3”一列一致即完成 |
 
 ## 逐题交接
 
@@ -230,3 +235,19 @@
   - X1（同仓 6 道 R2E pillow 题的修复都在本题工作树的祖先里）、E3（来源镜像 `.git` 含修复提交对象，派生镜像已清理）；
   - Codex 复核修订条目。
 - **正式落地前置**：R2E 材料修订一条（`hidden_test_text_replace`），出新 pins、重建派生镜像。
+
+### SWE dask-9378（09-30 用户选 B 后转入）
+
+- **公开目标**：`ones_like`、`zeros_like`、`empty_like` 在 masked dask 数组上按 numpy 的方式逐元素保留 mask。题面用顶层 `da.ones_like` 展示问题，新增 `dask.array.ma.*_like` 只是题面建议的路线，不是唯一要求（用户 09-30 选 B）。
+- **采用版本（规格，补丁由第2类起草）**：在 R-c v1（[`revised_test_v1.patch`](../../../../../rh2/experiments/category3_cloud_20260929/dask9378/revised_test_v1.patch)，`67393733…`）的 `test_like_funcs` 上改为：`da.ma` 下若有该函数，它必须逐元素保留 mask（`getmaskarray` 比较；ones／zeros 另保留原 `assert_eq`）；没有时，顶层 `da.<name>` 必须逐元素保留 mask。测试编号不变；题面不改。
+- **预期**：noop 0；gold 1；`toplevel_only` 1；`ma_mask_none`、`ma_mask_invert`、`invert_values7` 0；复核者自写的非 gold 正确实现 1。候选补丁在实验目录 `dask9378/`。
+- **重要余项**：起草补丁并按预期私有与正式复验；R-f 草案作废；Codex 复核。
+- **正式落地前置**：D6 测试补丁替换。
+
+### R2E coveragepy__f5eb5f21（09-30 用户选 A 后转入）
+
+- **公开目标**：开启分支覆盖时，JSON 报告的 `totals` 带 `covered_branches`、`missing_branches`，按被报告的文件汇总（多文件累加、零分支时为 0、`--include` 子集只算被报告的文件）；行模式不出现分支键、不另加其它新键；每文件 `summary` 可以带这两个计数，但必须成对且为本文件自己的值（用户 09-30 选 A）。
+- **采用版本**：R-b v3，复核者的 `rh2/experiments/category3_cloud_20260929/cov_f5eb/review/materials/test_1_rb3h.py`（`fd4d6ac9…`）与 `expected_rc3.json`（`e150a338…`，8 键）；落地时可直接用复核者文件，或在作者 `_build_materials.py` 的 v2 条目上做逐字等价的改动。
+- **证据层级**：全部为私有模拟（R2E 在云端没有正式评分链）。
+- **R-b v3 私有模拟**：gold、A1、C1、`rv_sym_xml` 与复核者 3 个合理实现为 1；noop 与全部 19 个错误候选为 0（NB 只错 K4；`wr_alldata_proj`、LF 只错 K3；C3 只错 K2）。
+- **重要余项**：第2类登记修订、出新 pins、重建派生镜像后正式评分，逐键与复核 review.md §4 表“复核 R-b v3”一列一致即完成，不再做聚焦复核；R2E 线准入卡改写（多文件、零分支改为已覆盖；LF、FC、NB、`wr_alldata_proj` 登记为负对照）；Codex 复核修订条目。
