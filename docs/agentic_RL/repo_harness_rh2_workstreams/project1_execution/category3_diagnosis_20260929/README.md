@@ -52,7 +52,7 @@
 | [R2E coveragepy__5dbbe143](tasks/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/result.md) | 交第2类（自建题面版本，用户 09-29 选 A） | 修订题面已通过新公开读者验收 | 按交接清单落地 |
 | [SWE dask-9378](tasks/dask__dask-9378/result.md) | **暂留第3类** | mask 漏检已证、修法成立；`da.ma` 新 API 是否为唯一目标需要选择 | **用户决定**（题页有决策包） |
 | [SWE conan-13403](tasks/conan-io__conan-13403/result.md) | 交第2类 | v4（熔断收口）41 次诊断评分符合停止条件 | Codex 确认 v4 |
-| [SWE pydantic-8567](tasks/pydantic__pydantic-8567/result.md) | 交第2类 | v3 17 次诊断评分；聚焦复核进行中 | 并入聚焦复核结论（两个边缘项的处置） |
+| [SWE pydantic-8567](tasks/pydantic__pydantic-8567/result.md) | 交第2类 | v3 聚焦复核 3 项阻断，同一边界连续两轮，熔断采用复核 `t_v4`；v4 31 次诊断评分符合停止条件 | Codex 确认 v4 |
 | [SWE dask-8801](tasks/dask__dask-8801/result.md) | 交第2类（带修复清单） | v5（B2 修正＋词表调整）41 次诊断评分与复核预期一致 | 余项：`1.5` 实例、原因判定设计、显式 `null`、权限错误（后两者 v5 下仍为 1） |
 | [SWE dask-7305](tasks/dask__dask-7305/result.md) | 交第2类（带修复清单） | 独立复核（2 项阻断）已由 v2 处理；v2 诊断评分进行中 | v2 聚焦复核由第2类承接 |
 | [SWE moto-6185](tasks/getmoto__moto-6185/result.md) | **交第2类**（09-30 追加） | 独立复核 3 项阻断，采纳复核草案 v3（v2s 路线：gold 两处缺口须断言，正对照 `ctx`／`parity` 已核实）；v3 私有模拟 22 个版本符合预期 | 第2类落地后一次正式诊断评分，与复核 v3 列逐格一致即完成 |

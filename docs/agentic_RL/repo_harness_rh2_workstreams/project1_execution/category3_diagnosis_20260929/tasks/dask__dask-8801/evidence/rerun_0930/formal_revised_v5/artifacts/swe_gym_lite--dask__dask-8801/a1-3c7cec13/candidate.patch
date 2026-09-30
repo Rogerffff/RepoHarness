@@ -1,0 +1,28 @@
+diff --git a/dask/config.py b/dask/config.py
+--- a/dask/config.py
++++ b/dask/config.py
+@@ -180,10 +180,22 @@
+         try:
+             with open(path) as f:
+                 data = yaml.safe_load(f.read()) or {}
+-                configs.append(data)
+         except OSError:
+             # Ignore permission errors
+-            pass
++            continue
++        except yaml.YAMLError as exc:
++            raise ValueError(
++                f"A dask config file at {path!r} is malformed, original error "
++                f"message:\n\n{exc}"
++            ) from None
++        configs.append(data)
++
++    for path, config in zip(file_paths, configs):
++        if not isinstance(config, dict):
++            raise ValueError(
++                f"A dask config file at {path!r} is malformed - config files must have "
++                f"a dict as the top level object, got a {type(config).__name__} instead"
++            )
+ 
+     return configs
+ 

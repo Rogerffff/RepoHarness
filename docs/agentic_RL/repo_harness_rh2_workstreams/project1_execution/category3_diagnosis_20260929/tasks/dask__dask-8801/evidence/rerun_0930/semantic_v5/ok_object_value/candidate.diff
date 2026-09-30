@@ -1,0 +1,51 @@
+diff --git a/dask/config.py b/dask/config.py
+index 282ef73a6..4dd474844 100644
+--- a/dask/config.py
++++ b/dask/config.py
+@@ -147,6 +147,29 @@ def merge(*dicts: Mapping) -> dict:
+     return result
+ 
+ 
++class ConfigFileError(Exception):
++    """A Dask configuration file exists but cannot be used as configuration."""
++
++
++def _read_config_file(path: str):
++    try:
++        with open(path) as f:
++            text = f.read()
++    except OSError:
++        # Ignore permission errors
++        return None
++    try:
++        data = yaml.safe_load(text)
++    except yaml.YAMLError as exc:
++        raise ConfigFileError(f"Could not parse Dask config file {path}") from exc
++    if data is not None and not isinstance(data, Mapping):
++        raise ConfigFileError(
++            f"Dask config file {path} must contain an object at the top level, "
++            f"found {data!r}"
++        )
++    return data
++
++
+ def collect_yaml(paths: Sequence[str] = paths) -> list[dict]:
+     """Collect configuration from yaml files
+ 
+@@ -177,13 +200,9 @@ def collect_yaml(paths: Sequence[str] = paths) -> list[dict]:
+ 
+     # Parse yaml files
+     for path in file_paths:
+-        try:
+-            with open(path) as f:
+-                data = yaml.safe_load(f.read()) or {}
+-                configs.append(data)
+-        except OSError:
+-            # Ignore permission errors
+-            pass
++        data = _read_config_file(path)
++        if data is not None:
++            configs.append(data)
+ 
+     return configs
+ 

@@ -27,7 +27,7 @@
 | R2E coveragepy__016af5f6 | R-c v2 隐藏测试 `ccdd7d89…`＋窄 R-f 题面 | 6 个合理实现（跳过 4、转换 2） | 修订题面须由新公开读者验收；不得追加告警、报告或其它异常约束 |
 | R2E coveragepy__5dbbe143 | 用户 09-29 选定 A：修订题面 `b2a7f5fb…`＋隐藏测试沿用 v5 | gold、CE3 | 标明自建题面版本；同步旧题卡与看板；原 CE 与重建 CE 分开复验 |
 | SWE conan-13403 | R-e/R-b/R-c v4 `2f55ba31…`（熔断收口） | gold；13 个合理实现 | v4 待 Codex 确认（熔断规则）；GNU 工具链端到端与 actor 未验 |
-| SWE pydantic-8567 | R-c v3 `4600867b…` | `upstream261`、`c3_reorder`（独立核实，范围差异见下） | 聚焦复核结论待并入；`c3_serpass`、`rv_ser_to_end` 两个边缘项须给处置 |
+| SWE pydantic-8567 | R-c v4 `7014f5fc…`（熔断收口，31 次诊断评分符合停止条件） | `upstream261`、`c3_reorder`（独立核实，范围差异见下） | v4 待 Codex 确认（熔断规则）；B03 不断言的取舍；正对照范围差异随交接保留 |
 | SWE dask-8801 | v5 `59293680…`（v4＋B2 修正＋词表调整；41 次诊断评分与复核预期一致） | gold | **须处理**：`rv_enum_types`（`1.5` 实例）、原因判定的设计、`wr_null_raises`、`wr_perm_fatal`（v5 下仍为 1）；R-f 新公开读者验收 |
 | SWE dask-7305 | R-b/R-c v2 `6e96caa7…`（正式诊断评分进行中） | `gold_full`（主）、`exact_full`、`higher_full`（独立核实，限公开大整数范围） | `npartitions="auto"` 路径三份正对照都丢 1 行（范围外，须登记处置）；v2 聚焦复核由第2类承接 |
 
@@ -139,15 +139,17 @@
 
 ### SWE pydantic-8567
 
-- **公开目标**：Annotated 中的 serializer 无论在 `PlainValidator` 前后都生效（Python 与 JSON 输出，可复用于 `TypeAdapter`）；保留“普通类＋`PlainValidator`”接管 pydantic 无 schema 类型的公开能力。
-- **采用版本**：[`revised_test_v3.patch`](../../../../../rh2/experiments/category3_cloud_20260929/pydantic8567/revised_test_v3.patch)（`4600867b…`）。
-- **诊断评分（v3，17 次）**：
-  - `upstream261`、`c3_reorder`、`rv_condwrap` 为 1；
-  - noop、gold（只在未知类型处失败，D4）、9 个作者错误候选与 `rv_pv_first` 为 0；
-  - `c3_serpass`、`rv_ser_to_end` 为 1。
+- **公开目标**：Annotated 中的 serializer 无论在 `PlainValidator` 前后、与它相隔几个元数据都生效（Python 与 JSON 输出，可复用于 `TypeAdapter`）；PV 取代它左侧的全部验证与约束；PV 两侧都有 serializer 时外层生效（base 行为）；保留“普通类＋`PlainValidator`”接管 pydantic 无 schema 类型的公开能力。
+- **采用版本**：[`revised_test_v4.patch`](../../../../../rh2/experiments/category3_cloud_20260929/pydantic8567/revised_test_v4.patch)（`7014f5fc…`），即 v3 聚焦复核的 `t_v4`（逐字节相同）。
+  - v3 聚焦复核发现 3 项阻断（B1 左侧约束被挪到 PV 外层；B2 serializer 与 PV 之间夹元数据；B3 两侧 serializer 时改用内侧）。B1 与首轮阻断 `rv_pv_first` 属同一状态边界，连续两轮新阻断，按协作协议 §5 熔断；
+  - 按熔断规则，v4 交 Codex 确认，不再开新一轮 Claude 复核。
+- **诊断评分（v4，31 次，与复核停止条件逐项一致）**：
+  - `upstream261`、`c3_reorder`、`rv_condwrap` 与复核者 5 个合理实现（含上游 2.10 写法的回移 `ok_up210`）为 1；
+  - noop、gold（只在未知类型处失败，D4）与 22 个已知错误候选为 0，reward 与失败行号全部吻合；P2P 158/158（`rv_before_sem_rebuilt` 除外，它本来就弄坏一项 P2P）。
 - **重要余项**：
-  - **两个边缘候选须给处置**：`c3_serpass` 在 A08（serializer 与 PV 之间夹验证器）上漏修；`rv_ser_to_end` 只在 PV 两侧都有 serializer 时让内侧生效。首轮复核给过覆盖 A08 的可选断言（`AfterValidator` 放在 serializer 与 validator 之间）。云端的 v3 聚焦复核正在判断它们是否违反公开要求，结论出来后补入本条；
-  - 正对照的范围差异必须随交接保留：`upstream261` 在 B06、B07、B08 上与 base 不同；`c3_reorder` 在 A16、A17 上不修；
+  - Codex 确认 v4；
+  - 正对照的范围差异必须随交接保留：`upstream261` 在 B06、B07、B08、N3 上与 base 不同（B06、N3 是它自身的已知回归，不能当参考）；`c3_reorder` 在 A16、A17 上不修；`ok_wrapshim` 不作正对照；
+  - B03（生成不了 schema 的类型、serializer 放在 PV 前）不断言，理由见题页 §5：`upstream261` 在此与 base 相同，断言会把“在注解层修”定为唯一路线；若协调者仍要求覆盖，正对照只能保留 `c3_reorder`；
   - 固定等效派生镜像的 wheel 清单；actor 条件未验。
 
 ### SWE dask-8801

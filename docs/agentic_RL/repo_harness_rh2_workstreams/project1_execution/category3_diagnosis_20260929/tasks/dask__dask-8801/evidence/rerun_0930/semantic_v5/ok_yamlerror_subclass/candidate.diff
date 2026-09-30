@@ -1,0 +1,58 @@
+diff --git a/dask/config.py b/dask/config.py
+index 282ef73a6..7b274adad 100644
+--- a/dask/config.py
++++ b/dask/config.py
+@@ -7,6 +7,7 @@ import json
+ import os
+ import site
+ import sys
++import pathlib
+ import threading
+ import warnings
+ from collections.abc import Mapping, Sequence
+@@ -147,6 +148,28 @@ def merge(*dicts: Mapping) -> dict:
+     return result
+ 
+ 
++class DaskConfigError(yaml.YAMLError):
++    """Raised when a Dask configuration file cannot be used."""
++
++
++def _load_yaml_config(path: str) -> dict | None:
++    try:
++        text = pathlib.Path(path).read_text()
++    except OSError:
++        # Ignore permission errors
++        return None
++    try:
++        data = yaml.safe_load(text)
++    except yaml.YAMLError as exc:
++        raise DaskConfigError(f"Error in Dask config file {path}:\n{exc}") from exc
++    if data is not None and not isinstance(data, Mapping):
++        raise DaskConfigError(
++            f"Dask config file {path} must contain key/value pairs at the top level, "
++            f"got {type(data).__name__}"
++        )
++    return data
++
++
+ def collect_yaml(paths: Sequence[str] = paths) -> list[dict]:
+     """Collect configuration from yaml files
+ 
+@@ -177,13 +200,9 @@ def collect_yaml(paths: Sequence[str] = paths) -> list[dict]:
+ 
+     # Parse yaml files
+     for path in file_paths:
+-        try:
+-            with open(path) as f:
+-                data = yaml.safe_load(f.read()) or {}
+-                configs.append(data)
+-        except OSError:
+-            # Ignore permission errors
+-            pass
++        data = _load_yaml_config(path)
++        if data is not None:
++            configs.append(data)
+ 
+     return configs
+ 

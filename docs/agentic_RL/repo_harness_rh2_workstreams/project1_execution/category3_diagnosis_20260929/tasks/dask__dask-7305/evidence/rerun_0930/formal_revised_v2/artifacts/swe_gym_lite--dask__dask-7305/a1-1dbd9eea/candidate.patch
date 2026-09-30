@@ -1,0 +1,16 @@
+diff --git a/dask/dataframe/partitionquantiles.py b/dask/dataframe/partitionquantiles.py
+--- a/dask/dataframe/partitionquantiles.py
++++ b/dask/dataframe/partitionquantiles.py
+@@ -413,6 +413,12 @@
+     if is_categorical_dtype(data):
+         data = data.codes
+         interpolation = "nearest"
++    elif np.issubdtype(data.dtype, np.integer):
++        # Pick existing values instead of interpolating between them
++        interpolation = "nearest"
++        vals, n = _percentile(data.astype(np.float64), qs, interpolation=interpolation)
++        vals = vals.astype(data.dtype)
++        return percentiles_to_weights(qs, vals, length)
+     vals, n = _percentile(data, qs, interpolation=interpolation)
+     if interpolation == "linear" and np.issubdtype(data.dtype, np.integer):
+         vals = np.round(vals).astype(data.dtype)

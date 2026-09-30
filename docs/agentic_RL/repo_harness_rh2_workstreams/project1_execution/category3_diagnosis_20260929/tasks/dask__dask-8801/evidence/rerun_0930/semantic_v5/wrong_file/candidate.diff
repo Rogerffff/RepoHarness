@@ -1,0 +1,23 @@
+diff --git a/dask/config.py b/dask/config.py
+index 282ef73a6..9539523f8 100644
+--- a/dask/config.py
++++ b/dask/config.py
+@@ -184,6 +184,18 @@ def collect_yaml(paths: Sequence[str] = paths) -> list[dict]:
+         except OSError:
+             # Ignore permission errors
+             pass
++        except Exception as exc:
++            raise ValueError(
++                f"A dask config file at {path!r} is malformed, original error "
++                f"message:\n\n{exc}"
++            ) from None
++
++    for config in configs:
++        if not isinstance(config, dict):
++            raise ValueError(
++                f"A dask config file at {path!r} is malformed - config files must have "
++                f"a dict as the top level object, got a {type(config).__name__} instead"
++            )
+ 
+     return configs
+ 

@@ -1,0 +1,35 @@
+diff --git a/dask/dataframe/partitionquantiles.py b/dask/dataframe/partitionquantiles.py
+--- a/dask/dataframe/partitionquantiles.py
++++ b/dask/dataframe/partitionquantiles.py
+@@ -317,7 +317,10 @@
+             return np.array(None, dtype=np.float_)
+ 
+     vals, weights = vals_and_weights
+-    vals = np.array(vals)
++    if isinstance(dtype, np.dtype) and np.issubdtype(dtype, np.integer):
++        vals = np.array(vals, dtype=dtype)
++    else:
++        vals = np.array(vals)
+     weights = np.array(weights)
+ 
+     # We want to create exactly `npartition` number of groups of `vals` that
+@@ -341,6 +344,10 @@
+             q_weights = np.cumsum(weights)
+             q_target = np.linspace(q_weights[0], q_weights[-1], npartitions + 1)
+             rv = np.interp(q_target, q_weights, vals)
++            if np.issubdtype(vals.dtype, np.integer):
++                lo, hi = int(vals[0]), int(vals[-1])
++                inner = [min(max(int(x), lo), hi) for x in rv[1:-1]]
++                rv = np.array([lo] + inner + [hi], dtype=vals.dtype)
+         else:
+             # Distribute the empty partitions
+             duplicated_index = np.linspace(
+@@ -413,6 +420,8 @@
+     if is_categorical_dtype(data):
+         data = data.codes
+         interpolation = "nearest"
++    elif np.issubdtype(data.dtype, np.integer) and len(data) <= 2:
++        interpolation = "nearest"
+     vals, n = _percentile(data, qs, interpolation=interpolation)
+     if interpolation == "linear" and np.issubdtype(data.dtype, np.integer):
+         vals = np.round(vals).astype(data.dtype)

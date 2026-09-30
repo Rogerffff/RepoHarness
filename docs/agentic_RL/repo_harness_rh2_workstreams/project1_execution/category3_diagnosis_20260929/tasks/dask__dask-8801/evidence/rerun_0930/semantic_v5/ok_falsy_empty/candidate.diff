@@ -1,0 +1,24 @@
+diff --git a/dask/config.py b/dask/config.py
+index 282ef73a6..27d3b9c9b 100644
+--- a/dask/config.py
++++ b/dask/config.py
+@@ -180,10 +180,17 @@ def collect_yaml(paths: Sequence[str] = paths) -> list[dict]:
+         try:
+             with open(path) as f:
+                 data = yaml.safe_load(f.read()) or {}
+-                configs.append(data)
+         except OSError:
+             # Ignore permission errors
+-            pass
++            continue
++        except yaml.YAMLError as exc:
++            raise ValueError(f"Could not parse Dask config file {path!r}") from exc
++        if not isinstance(data, dict):
++            raise ValueError(
++                f"Dask config file {path!r} must contain a mapping at the top level, "
++                f"got {type(data).__name__}"
++            )
++        configs.append(data)
+ 
+     return configs
+ 

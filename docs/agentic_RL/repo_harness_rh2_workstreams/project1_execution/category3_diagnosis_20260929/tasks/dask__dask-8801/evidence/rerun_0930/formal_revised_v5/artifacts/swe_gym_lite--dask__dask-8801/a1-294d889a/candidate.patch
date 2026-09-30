@@ -1,0 +1,30 @@
+diff --git a/dask/config.py b/dask/config.py
+--- a/dask/config.py
++++ b/dask/config.py
+@@ -179,11 +179,23 @@
+     for path in file_paths:
+         try:
+             with open(path) as f:
+-                data = yaml.safe_load(f.read()) or {}
+-                configs.append(data)
++                text = f.read()
+         except OSError:
+             # Ignore permission errors
+-            pass
++            continue
++        # Empty and fully commented-out files (see ``ensure_file``) hold no configuration
++        if all(not ln.strip() or ln.lstrip().startswith("#") for ln in text.splitlines()):
++            continue
++        try:
++            data = yaml.safe_load(text)
++        except yaml.YAMLError as exc:
++            raise ValueError(f"Could not parse Dask config file {path!r}") from exc
++        if not isinstance(data, dict):
++            raise ValueError(
++                f"Dask config file {path!r} must contain a mapping at the top level, "
++                f"got {type(data).__name__}"
++            )
++        configs.append(data)
+ 
+     return configs
+ 

@@ -1,0 +1,47 @@
+diff --git a/dask/dataframe/partitionquantiles.py b/dask/dataframe/partitionquantiles.py
+--- a/dask/dataframe/partitionquantiles.py
++++ b/dask/dataframe/partitionquantiles.py
+@@ -317,7 +317,12 @@
+             return np.array(None, dtype=np.float_)
+ 
+     vals, weights = vals_and_weights
+-    vals = np.array(vals)
++    if isinstance(dtype, np.dtype) and np.issubdtype(dtype, np.integer):
++        # Keep integer summaries in their own dtype: e.g. a mix of uint64
++        # values below and above 2**63 would otherwise become float64.
++        vals = np.array(vals, dtype=dtype)
++    else:
++        vals = np.array(vals)
+     weights = np.array(weights)
+ 
+     # We want to create exactly `npartition` number of groups of `vals` that
+@@ -341,6 +346,12 @@
+             q_weights = np.cumsum(weights)
+             q_target = np.linspace(q_weights[0], q_weights[-1], npartitions + 1)
+             rv = np.interp(q_target, q_weights, vals)
++            if np.issubdtype(vals.dtype, np.integer):
++                # np.interp works in float64, which cannot hold every large
++                # integer: keep the exact endpoints and stay within them.
++                lo, hi = int(vals[0]), int(vals[-1])
++                inner = [min(max(int(x), lo), hi) for x in rv[1:-1]]
++                rv = np.array([lo] + inner + [hi], dtype=vals.dtype)
+         else:
+             # Distribute the empty partitions
+             duplicated_index = np.linspace(
+@@ -416,6 +427,16 @@
+     vals, n = _percentile(data, qs, interpolation=interpolation)
+     if interpolation == "linear" and np.issubdtype(data.dtype, np.integer):
+         vals = np.round(vals).astype(data.dtype)
++        # Linear interpolation goes through float64, which cannot represent
++        # every large integer exactly (e.g. uint64 above 2**53), so the
++        # interpolated extremes may drift.  Keep the exact minimum and maximum
++        # of the data (compare dask/dask#6864 for datetimes).
++        lo, hi = data.min(), data.max()
++        np.clip(vals, lo, hi, out=vals)
++        if qs[0] == 0:
++            vals[0] = lo
++        if qs[-1] == 100:
++            vals[-1] = hi
+     vals_and_weights = percentiles_to_weights(qs, vals, length)
+     return vals_and_weights
+ 
