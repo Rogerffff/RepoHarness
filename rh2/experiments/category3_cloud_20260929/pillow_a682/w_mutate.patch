@@ -1,0 +1,13 @@
+diff --git a/src/PIL/GifImagePlugin.py b/src/PIL/GifImagePlugin.py
+--- a/src/PIL/GifImagePlugin.py
++++ b/src/PIL/GifImagePlugin.py
+@@ -545,6 +545,9 @@
+ 
+ def _write_single_frame(im, fp, palette):
+     im_out = _normalize_mode(im)
++    if "transparency" in im.info and "transparency" not in im_out.info:
++        # the transparency could not be kept when converting the mode
++        del im.info["transparency"]
+     for k, v in im_out.info.items():
+         im.encoderinfo.setdefault(k, v)
+     im_out = _normalize_palette(im_out, palette, im.encoderinfo)

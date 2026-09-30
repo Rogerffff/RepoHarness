@@ -1,0 +1,13 @@
+diff --git a/src/PIL/GifImagePlugin.py b/src/PIL/GifImagePlugin.py
+--- a/src/PIL/GifImagePlugin.py
++++ b/src/PIL/GifImagePlugin.py
+@@ -688,7 +688,8 @@
+         else:
+             transparency = im.info["transparency"]
+         transparency = int(transparency)
+-    except (KeyError, ValueError):
++    except (KeyError, TypeError, ValueError):
++        # e.g. an RGB tuple that could not be turned into a palette index
+         pass
+     else:
+         # optimize the block away if transparent color is not used

@@ -1,0 +1,15 @@
+diff --git a/src/PIL/GifImagePlugin.py b/src/PIL/GifImagePlugin.py
+--- a/src/PIL/GifImagePlugin.py
++++ b/src/PIL/GifImagePlugin.py
+@@ -687,6 +687,11 @@
+             transparency = im.encoderinfo["transparency"]
+         else:
+             transparency = im.info["transparency"]
++            colors = im.getcolors(256)
++            if isinstance(transparency, tuple) and colors and len(colors) == 256:
++                # the image already uses all 256 palette entries,
++                # so there is no room for the transparent colour
++                raise KeyError("transparency")
+         transparency = int(transparency)
+     except (KeyError, ValueError):
+         pass

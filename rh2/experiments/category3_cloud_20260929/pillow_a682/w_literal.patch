@@ -1,0 +1,13 @@
+diff --git a/src/PIL/GifImagePlugin.py b/src/PIL/GifImagePlugin.py
+--- a/src/PIL/GifImagePlugin.py
++++ b/src/PIL/GifImagePlugin.py
+@@ -687,6 +687,9 @@
+             transparency = im.encoderinfo["transparency"]
+         else:
+             transparency = im.info["transparency"]
++        if transparency == (255, 255, 255):
++            # white cannot be used as the transparent colour here
++            raise KeyError("transparency")
+         transparency = int(transparency)
+     except (KeyError, ValueError):
+         pass

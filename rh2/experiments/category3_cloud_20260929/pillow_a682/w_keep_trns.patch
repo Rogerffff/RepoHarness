@@ -1,0 +1,18 @@
+diff --git a/src/PIL/GifImagePlugin.py b/src/PIL/GifImagePlugin.py
+--- a/src/PIL/GifImagePlugin.py
++++ b/src/PIL/GifImagePlugin.py
+@@ -481,7 +481,14 @@
+         im.load()
+         return im
+     if Image.getmodebase(im.mode) == "RGB":
++        source = im
+         im = im.convert("P", palette=Image.Palette.ADAPTIVE)
++        if (
++            isinstance(source.info.get("transparency"), tuple)
++            and "transparency" not in im.info
++        ):
++            # no palette entry was left for the transparent colour: use one colour less
++            im = source.convert("P", palette=Image.Palette.ADAPTIVE, colors=255)
+         if im.palette.mode == "RGBA":
+             for rgba in im.palette.colors:
+                 if rgba[3] == 0:

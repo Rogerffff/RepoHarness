@@ -85,7 +85,7 @@ def probe(path: Path):
 rows = {}
 for d in sorted(p for p in SIM.iterdir() if p.is_dir()):
     row = {'sim': {}, 'dev': {}, 'warn': {}}
-    for tv in ('t_v2', 't_v3', 't_v3s', 't_v3f', 't_v3sx', 't_v3sv2', 't_v3b'):
+    for tv in ('t_v2', 't_v3', 't_v3s', 't_v3f', 't_v3sx', 't_v3sv2', 't_v3b', 't_v4', 't_v4b03'):
         row['sim'][tv] = simgrade(d / f'{tv}.out')
     pr = probe(d / 'probe.out')
     for cid, exp in EXPECT.items():
