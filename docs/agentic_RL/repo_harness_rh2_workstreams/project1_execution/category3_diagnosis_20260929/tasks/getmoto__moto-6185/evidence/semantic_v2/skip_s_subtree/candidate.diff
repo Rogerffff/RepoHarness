@@ -1,0 +1,22 @@
+diff --git a/moto/dynamodb/models/table.py b/moto/dynamodb/models/table.py
+index 1be961410..7b18bf485 100644
+--- a/moto/dynamodb/models/table.py
++++ b/moto/dynamodb/models/table.py
+@@ -484,10 +484,15 @@ class Table(CloudFormationModel):
+                 if DynamoType(range_value).size() > RANGE_KEY_MAX_LENGTH:
+                     raise RangeKeyTooLong
+ 
+-    def _validate_item_types(self, item_attrs: Dict[str, Any]) -> None:
++    def _validate_item_types(self, item_attrs: Dict[str, Any], depth: int = 0) -> None:
++        # Even depths hold attribute names, odd depths hold type descriptors
++        is_type_level = depth % 2 == 1
+         for key, value in item_attrs.items():
++            if key == "S" and not is_type_level:
++                # An attribute that happens to be called "S" - nothing to check
++                continue
+             if type(value) == dict:
+-                self._validate_item_types(value)
++                self._validate_item_types(value, depth + 1)
+             elif type(value) == int and key == "N":
+                 raise InvalidConversion
+             if key == "S":

@@ -1,0 +1,24 @@
+diff --git a/moto/dynamodb/models/table.py b/moto/dynamodb/models/table.py
+index 1be961410..d19ed33a5 100644
+--- a/moto/dynamodb/models/table.py
++++ b/moto/dynamodb/models/table.py
+@@ -484,13 +484,16 @@ class Table(CloudFormationModel):
+                 if DynamoType(range_value).size() > RANGE_KEY_MAX_LENGTH:
+                     raise RangeKeyTooLong
+ 
+-    def _validate_item_types(self, item_attrs: Dict[str, Any]) -> None:
++    def _validate_item_types(self, item_attrs: Dict[str, Any], depth: int = 0) -> None:
++        # Even depths hold attribute names (the item itself and the members of every map),
++        # odd depths hold the type descriptor of an AttributeValue.
++        is_type_level = depth % 2 == 1
+         for key, value in item_attrs.items():
+             if type(value) == dict:
+-                self._validate_item_types(value)
++                self._validate_item_types(value, depth + 1)
+             elif type(value) == int and key == "N":
+                 raise InvalidConversion
+-            if key == "S":
++            if key == "S" and is_type_level:
+                 # This scenario is usually caught by boto3, but the user can disable parameter validation
+                 # Which is why we need to catch it 'server-side' as well
+                 if type(value) == int:

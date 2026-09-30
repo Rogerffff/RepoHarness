@@ -1,0 +1,24 @@
+diff --git a/moto/dynamodb/models/table.py b/moto/dynamodb/models/table.py
+index 1be961410..ad49732f8 100644
+--- a/moto/dynamodb/models/table.py
++++ b/moto/dynamodb/models/table.py
+@@ -485,6 +485,7 @@ class Table(CloudFormationModel):
+                     raise RangeKeyTooLong
+ 
+     def _validate_item_types(self, item_attrs: Dict[str, Any]) -> None:
++        type_tags = {"S", "N", "B", "SS", "NS", "BS", "M", "L", "NULL", "BOOL"}
+         for key, value in item_attrs.items():
+             if type(value) == dict:
+                 self._validate_item_types(value)
+@@ -497,7 +498,10 @@ class Table(CloudFormationModel):
+                     raise SerializationException(
+                         "NUMBER_VALUE cannot be converted to String"
+                     )
+-                if type(value) == dict:
++                # If the value looks like an AttributeValue, "S" is an attribute name
++                if type(value) == dict and not (
++                    len(value) == 1 and list(value)[0] in type_tags
++                ):
+                     raise SerializationException(
+                         "Start of structure or map found where not expected"
+                     )
