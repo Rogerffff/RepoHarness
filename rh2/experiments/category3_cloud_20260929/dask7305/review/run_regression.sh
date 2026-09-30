@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# 更宽的回归对照（私有，root、断网、一次性容器）：base、gold 与候选在 dataframe 其它用到 set_index 的测试文件上的失败集合。
+# 更宽的回归对照（私有，root、断网、一次性容器）：base、gold 与候选在 dataframe 其它用到 set_index 的测试文件上
+# （-k 'set_index or divisions or quantile or repartition or sort'）的失败集合。
 # 用法：run_regression.sh <输出目录> <候选...>（候选名同 run_private.py：base | gold | 作者或复核者候选）
 set -uo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -17,6 +18,6 @@ for C in "$@"; do
   if [ -n "$P" ]; then MNT=(-v "$P:/in/cand.patch:ro"); APPLY="git apply /in/cand.patch && "; fi
   T0=$(date +%s)
   docker run --rm --network none -e PATH=/opt/miniconda3/envs/testbed/bin:/usr/local/bin:/usr/bin:/bin -w /testbed "${MNT[@]}" c3keep/dask7305:src \
-    bash -c "${APPLY} pytest -n0 -rA --color=no -p no:cacheprovider $FILES" > "$OUT/$C.log" 2>&1
+    bash -c "${APPLY} pytest -n0 -rA --color=no -p no:cacheprovider -k 'set_index or divisions or quantile or repartition or sort' $FILES" > "$OUT/$C.log" 2>&1
   echo "$C rc=$? $(( $(date +%s) - T0 ))s $(grep -E '^=+ .*(passed|failed).* =+$' "$OUT/$C.log" | tail -1)"
 done

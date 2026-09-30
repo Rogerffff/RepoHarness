@@ -1,0 +1,12 @@
+diff --git a/coverage/jsonreport.py b/coverage/jsonreport.py
+--- a/coverage/jsonreport.py
++++ b/coverage/jsonreport.py
+@@ -54,6 +54,8 @@
+             'percent_covered': self.total.pc_covered,
+             'missing_lines': self.total.n_missing,
+             'excluded_lines': self.total.n_excluded,
++            'covered_branches': self.total.n_executed_branches,
++            'missing_branches': self.total.n_missing_branches,
+         }
+ 
+         if coverage_data.has_arcs():

@@ -1,0 +1,16 @@
+diff --git a/coverage/jsonreport.py b/coverage/jsonreport.py
+--- a/coverage/jsonreport.py
++++ b/coverage/jsonreport.py
+@@ -60,6 +60,12 @@
+             self.report_data["totals"].update({
+                 'num_branches': self.total.n_branches,
+                 'num_partial_branches': self.total.n_partial_branches,
++                'covered_branches': self.total.n_executed_branches,
++                'missing_branches': self.total.n_missing_branches,
++                'percent_covered_branches': (
++                    100.0 * self.total.n_executed_branches / self.total.n_branches
++                    if self.total.n_branches else 100.0
++                ),
+             })
+ 
+         json.dump(

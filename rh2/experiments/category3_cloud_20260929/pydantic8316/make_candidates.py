@@ -4,7 +4,7 @@
 候选分组（按公开要求判对错，不以 gold 为答案）：
   合理替代实现（查误拒 T1）：keep_digit、lookaround、scan、upstream_main；第二组 normalize
   错误候选（查漏判）：lead_only、first_only、acr3、literal；第二组 lower_or_start、no_lower_upper、acr_max4、only_if_no_us
-  第三组（09-30 主审补充）：skip_if_underscore、lower_or_start_la、acr_max5、no_trailing_upper（查 v1 是否放过），
+  第三组（09-30 主审补充）：skip_if_underscore、skip_if_digit、lower_or_start_la、acr_max5、no_trailing_upper（查 v1 是否放过），
     no_digit_split、no_digit_upper（查 P2P 保护了哪些数字边界）
 """
 import difflib
@@ -145,6 +145,17 @@ BODIES = {
     # “缩写 → 大写开头的单词”之前断开；丢掉 base 对末尾缩写和单个大写字母的拆分（userID -> userid、parseURL -> parseurl）
     "no_trailing_upper": """    snake = re.sub(r'(?<=[a-z0-9])(?=[A-Z]+[a-z])|(?<=[A-Z])(?=[A-Z][a-z])', '_', camel)
     snake = re.sub(r'([a-zA-Z])([0-9])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    return snake.lower()
+""",
+    # 错误 9b（数据形态子集，同 skip_if_underscore 的“对旧测试覆盖的形态保留旧行为”）：含数字的输入沿用 base 两条规则
+    "skip_if_digit": """    if any(ch.isdigit() for ch in camel):
+        # keep the old conversion for inputs with digits
+        snake = re.sub(r'([a-zA-Z])([0-9])', lambda m: f'{m.group(1)}_{m.group(2)}', camel)
+        snake = re.sub(r'([a-z0-9])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+        return snake.lower()
+    snake = re.sub(r'([A-Z]+)([A-Z][a-z])', lambda m: f'{m.group(1)}_{m.group(2)}', camel)
+    snake = re.sub(r'([a-zA-Z])([0-9])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    snake = re.sub(r'([a-z0-9])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
     return snake.lower()
 """,
     # 错误 13（丢掉旧的字母→数字规则）：修了缩写，但字母与数字之间都不再断开（camel2 -> camel2）

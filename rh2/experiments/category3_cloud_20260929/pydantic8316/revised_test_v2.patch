@@ -9,7 +9,7 @@ diff --git a/tests/test_utils.py b/tests/test_utils.py
          ('__CamelToSnake__', '__camel_to_snake__'),
          ('Camel2', 'camel_2'),
          ('Camel2_', 'camel_2_'),
-@@ -540,6 +541,15 @@
+@@ -540,6 +541,17 @@
  )
  def test_camel2snake(value: str, result: str) -> None:
      assert to_snake(value) == result
@@ -19,8 +19,10 @@ diff --git a/tests/test_utils.py b/tests/test_utils.py
 +        assert to_snake('getHTTPResponseCode') == 'get_http_response_code'
 +        assert to_snake('userIDToken') == 'user_id_token'
 +        assert to_snake('XMLToJSONConverter') == 'xml_to_json_converter'
-+        # underscores around the name are kept as for the other inputs, and a trailing acronym stays one word
++        # ... also next to underscores and digits, which are handled as for the other inputs
 +        assert to_snake('__HTTPResponse__') == '__http_response__'
++        assert to_snake('base64URLEncode') == 'base_64_url_encode'
++        # a trailing acronym stays one word
 +        assert to_snake('parseURL') == 'parse_url'
  
  

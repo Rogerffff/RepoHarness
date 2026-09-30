@@ -47,7 +47,8 @@ GROUPS = {
     'ambiguous_or_other': ['XMLHTTPRequest', 'HTTPS', 'ALLCAPS', 'A', '', 'a', 'already_snake', 'kebab-case',
                            'Mixed_CaseName', 'ÜberHTTPClient', 'getÄnderung'],
     # 09-30 主审补充：缩写前后带下划线、末尾缩写与单个大写字母、6 个及以上字母的缩写
-    'acronym_affix': ['_HTTPResponse', 'HTTPResponse_', '__HTTPResponse__', 'get_HTTPResponse', 'Camel2HTTPResponse'],
+    'acronym_affix': ['_HTTPResponse', 'HTTPResponse_', '__HTTPResponse__', 'get_HTTPResponse', 'Camel2HTTPResponse',
+                      'base64URLEncode', 'sha256HMACKey'],
     'acronym_trailing': ['userID', 'requestURL', 'getX', 'pointA'],
     'acronym_long': ['HTTPSConnection', 'ASCIIString', 'NASDAQTicker', 'PDFTOHTMLConverter'],
 }
