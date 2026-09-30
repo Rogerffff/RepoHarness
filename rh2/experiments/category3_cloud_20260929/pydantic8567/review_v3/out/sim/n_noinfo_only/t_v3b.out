@@ -165,9 +165,26 @@ tests/test_validators.py::test_plain_validator_field_name PASSED
 tests/test_validators.py::test_wrap_validator_field_name PASSED
 tests/test_validators.py::test_validate_default_raises_for_basemodel PASSED
 tests/test_validators.py::test_validate_default_raises_for_dataclasses PASSED
-tests/test_validators.py::test_plain_validator_plain_serializer PASSED
-
+tests/test_validators.py::test_plain_validator_plain_serializer FAILED   [100%]
+tests/test_validators.py:2812 test_plain_validator_plain_serializer
+=================================== FAILURES ===================================
+____________________ test_plain_validator_plain_serializer _____________________
+tests/test_validators.py:2852: in test_plain_validator_plain_serializer
+    assert other.model_dump_json() == '{"x":"1,234"}'
+E   assert '{"x":1234}' == '{"x":"1,234"}'
+E     - {"x":"1,234"}
+E     ?      - -   -
+E     + {"x":1234}
 ==================================== PASSES ====================================
-Results (0.77s):
-       165 passed
-RC=0
+                              Summary of Failures                               
+┏━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
+┃               ┃               ┃  Function     ┃              ┃               ┃
+┃  File         ┃  Function     ┃  Line         ┃  Error Line  ┃  Error        ┃
+┡━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
+│  tests/test…  │  test_plain…  │  2813         │  2852        │  in           │
+│               │               │               │              │  test_plain…  │
+└───────────────┴───────────────┴───────────────┴──────────────┴───────────────┘
+Results (0.76s):
+         1 failed
+       164 passed
+RC=1

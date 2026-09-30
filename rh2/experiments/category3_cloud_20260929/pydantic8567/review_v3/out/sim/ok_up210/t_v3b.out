@@ -165,9 +165,26 @@ tests/test_validators.py::test_plain_validator_field_name PASSED
 tests/test_validators.py::test_wrap_validator_field_name PASSED
 tests/test_validators.py::test_validate_default_raises_for_basemodel PASSED
 tests/test_validators.py::test_validate_default_raises_for_dataclasses PASSED
-tests/test_validators.py::test_plain_validator_plain_serializer PASSED
-
+tests/test_validators.py::test_plain_validator_plain_serializer FAILED   [100%]
+tests/test_validators.py:2812 test_plain_validator_plain_serializer
+=================================== FAILURES ===================================
+____________________ test_plain_validator_plain_serializer _____________________
+tests/test_validators.py:2873: in test_plain_validator_plain_serializer
+    assert replaced.model_dump() == {'z': '1'}
+pydantic/main.py:314: in model_dump
+    return self.__pydantic_serializer__.to_python(
+E   UserWarning: Pydantic serializer warnings:
+E     Expected `bool` but got `str` - serialized value may not be as expected
 ==================================== PASSES ====================================
-Results (0.77s):
-       165 passed
-RC=0
+                              Summary of Failures                               
+┏━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
+┃               ┃               ┃  Function     ┃              ┃               ┃
+┃  File         ┃  Function     ┃  Line         ┃  Error Line  ┃  Error        ┃
+┡━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
+│  tests/test…  │  test_plain…  │  2813         │  2873        │  in           │
+│               │               │               │              │  model_dump   │
+└───────────────┴───────────────┴───────────────┴──────────────┴───────────────┘
+Results (0.75s):
+         1 failed
+       164 passed
+RC=1
