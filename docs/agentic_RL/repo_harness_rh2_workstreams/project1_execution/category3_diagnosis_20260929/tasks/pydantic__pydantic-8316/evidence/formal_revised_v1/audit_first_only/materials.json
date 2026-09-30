@@ -1,0 +1,10 @@
+{
+  "original_patch_sha256": "9d47a6111352391f16c5443931fb3c7ee7d871ad9749c1e38b083178ef8efc18",
+  "test_patch": "diff --git a/tests/test_utils.py b/tests/test_utils.py\n--- a/tests/test_utils.py\n+++ b/tests/test_utils.py\n@@ -529,6 +529,7 @@\n         ('Camel2Snake', 'camel_2_snake'),\n         ('_CamelToSnake', '_camel_to_snake'),\n         ('CamelToSnake_', 'camel_to_snake_'),\n+        ('CAMELToSnake', 'camel_to_snake'),\n         ('__CamelToSnake__', '__camel_to_snake__'),\n         ('Camel2', 'camel_2'),\n         ('Camel2_', 'camel_2_'),\n@@ -540,6 +541,12 @@\n )\n def test_camel2snake(value: str, result: str) -> None:\n     assert to_snake(value) == result\n+    if value == 'CAMELToSnake':\n+        # an acronym followed by a capitalized word is split wherever it appears, not only at the start\n+        assert to_snake('HTTPResponse') == 'http_response'\n+        assert to_snake('getHTTPResponseCode') == 'get_http_response_code'\n+        assert to_snake('userIDToken') == 'user_id_token'\n+        assert to_snake('XMLToJSONConverter') == 'xml_to_json_converter'\n \n \n @pytest.mark.parametrize(\n",
+  "revised_patch_sha256": "f98096e96a9929780c094a5d7bafa336da3ed89275261910cfd94f1b7471e1d3",
+  "reason": "S1/T2 (v1 section4 step2/4): original F2P only asserts one leading >=3-letter acronym (same input shape as the issue example); lead_only/first_only/acr3 partial fixes score 1. R-c adds the issue example plus non-leading, two-letter and repeated acronym instances inside the F2P body (IDs unchanged); no uppercase-digit assertion (both readings defensible)",
+  "positive_control": "gold (golden_patch sha256:290e4011...); second controls keep_digit.patch / upstream_main.patch",
+  "original_grading_digest": "sha256:1b33d7f84afe5dd5ffd897a785d9af22b6f39b4f36e633f272409160706c285e",
+  "revised_grading_digest": "sha256:ac54079dd1f4223e48070872a60bfa3960a60ab60c0135a7861404165048dc96",
+  "scope": "versioned diagnostic GradingEnvSpec; source prepared package preserved; refreeze before production"
+}

@@ -1,0 +1,107 @@
+diff --git a/dask/tests/test_config.py b/dask/tests/test_config.py
+--- a/dask/tests/test_config.py
++++ b/dask/tests/test_config.py
+@@ -1,7 +1,10 @@
+ import os
+ import site
+ import stat
++import subprocess
+ import sys
++import traceback
++import warnings
+ from collections import OrderedDict
+ from contextlib import contextmanager
+ 
+@@ -136,6 +139,92 @@
+         assert config == expected
+ 
+ 
++def _displayed_error(exc):
++    """The text Python shows for ``exc``, including any displayed exception chain."""
++    return "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
++
++
++def _collect_yaml_error(paths):
++    """The error raised while loading ``paths``; a warning is not a failure to load"""
++    with pytest.raises(Exception) as rec:
++        with warnings.catch_warnings():
++            warnings.simplefilter("ignore")
++            collect_yaml(paths=paths)
++    return rec.value
++
++
++def test_collect_yaml_malformed_file(tmpdir):
++    dir_path = str(tmpdir)
++    fil_path = os.path.join(dir_path, "a.yaml")
++
++    for content in [b"{", b"a: 1\n\tb: 2\n"]:
++        with open(fil_path, mode="wb") as f:
++            f.write(content)
++        with pytest.raises(yaml.YAMLError) as parse_error:
++            yaml.safe_load(content.decode())
++
++        # Loading fails with an error that names the offending file, and the
++        # parser's reason stays visible (in the message or the shown chain),
++        # whether the file is found in a directory or given directly
++        for paths in ([dir_path], [fil_path]):
++            err = _collect_yaml_error(paths)
++            assert fil_path in str(err)
++            assert parse_error.value.problem in _displayed_error(err)
++
++
++def test_collect_yaml_no_top_level_dict(tmpdir):
++    dir_path = str(tmpdir)
++    fil_path = os.path.join(dir_path, "a.yaml")
++
++    # Entries that cannot be read are still skipped (here a directory named like
++    # a config file and listed before a.yaml, which ``open`` cannot read), and files
++    # that load as nothing (empty, or fully commented out as written by
++    # ``ensure_file(..., comment=True)``) are valid and contribute nothing
++    os.mkdir(os.path.join(dir_path, "0.yaml"))
++    other_path = os.path.join(dir_path, "b.yaml")
++    with open(other_path, mode="wb") as f:
++        f.write(b"x: 1\n")
++    for content in [b"", b"# x: 1\n"]:
++        with open(fil_path, mode="wb") as f:
++            f.write(content)
++        assert merge(*collect_yaml(paths=[dir_path])) == {"x": 1}
++
++    for content, type_name in [(b"[1234]", "list"), (b"hello", "str"), (b"1234", "int")]:
++        with open(fil_path, mode="wb") as f:
++            f.write(content)
++
++        # Loading fails with an error that names the offending file (not an entry
++        # listed before it, nor a file read after it) and says that a mapping of
++        # keys to values was expected (or what was found instead), whether the file
++        # is found in a directory or given directly
++        for paths in ([dir_path], [fil_path]):
++            msg = str(_collect_yaml_error(paths))
++            assert fil_path in msg
++            assert other_path not in msg
++            rest = msg.replace(fil_path, "").lower()
++            assert any(w in rest for w in ("dict", "mapping", "key", type_name))
++
++    # The reported scenario: a fresh ``import dask`` that reads such a file
++    # fails with this error rather than an unrelated one
++    with open(fil_path, mode="wb") as f:
++        f.write(b"hello")
++    env = dict(
++        os.environ,
++        DASK_CONFIG=dir_path,
++        DASK_ROOT_CONFIG=os.path.join(dir_path, "no-such-dir"),
++        HOME=os.path.join(dir_path, "no-such-home"),
++    )
++    proc = subprocess.run(
++        [sys.executable, "-c", "import dask"],
++        env=env,
++        capture_output=True,
++        text=True,
++        timeout=120,
++    )
++    assert proc.returncode != 0
++    assert fil_path in proc.stderr
++
++
+ def test_env():
+     env = {
+         "DASK_A_B": "123",

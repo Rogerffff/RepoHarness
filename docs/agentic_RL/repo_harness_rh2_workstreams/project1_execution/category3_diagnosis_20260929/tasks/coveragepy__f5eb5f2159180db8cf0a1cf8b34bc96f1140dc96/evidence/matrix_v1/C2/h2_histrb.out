@@ -1,0 +1,45 @@
+f73a756199f116b5887c4fb4f2ca386bc13c556b9871a927ece2125ad8b91500  /testbed/r2e_tests/test_1.py
+bringing up nodes...
+bringing up nodes...
+
+.FF...                                                                   [100%]
+=================================== FAILURES ===================================
+___________ JsonReportTest.test_branch_totals_from_saved_branch_data ___________
+[gw1] linux -- Python 3.7.9 /testbed/.venv/bin/python
+
+self = <r2e_tests.test_1.JsonReportTest testMethod=test_branch_totals_from_saved_branch_data>
+
+    def test_branch_totals_from_saved_branch_data(self):
+        # R2E revision (2026-09-29, R-c): the report follows the measured data,
+        # as the other reporters do, not the reporting object's own settings.
+        report = self._branchy_report("branchy_saved", report_from_saved_data=True)
+        assert report['meta']['branch_coverage'] is True
+>       assert report['totals']['covered_branches'] == 4
+E       AssertionError: assert 6 == 4
+
+r2e_tests/test_1.py:236: AssertionError
+_____________ JsonReportTest.test_branch_totals_count_branch_arcs ______________
+[gw0] linux -- Python 3.7.9 /testbed/.venv/bin/python
+
+self = <r2e_tests.test_1.JsonReportTest testMethod=test_branch_totals_count_branch_arcs>
+
+    def test_branch_totals_count_branch_arcs(self):
+        # 6 branch destinations (two per `if`), 4 taken, 2 never taken.  h's `if`
+        # never runs, so it is not a partial branch.
+        report = self._branchy_report("branchy")
+        totals = report['totals']
+        assert totals['num_branches'] == 6
+        assert totals['num_partial_branches'] == 0
+>       assert totals['covered_branches'] == 4
+E       AssertionError: assert 6 == 4
+
+r2e_tests/test_1.py:222: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED r2e_tests/test_1.py::JsonReportTest::test_branch_coverage
+PASSED r2e_tests/test_1.py::JsonReportTest::test_simple_line_coverage
+PASSED r2e_tests/test_1.py::JsonReportTest::test_context_relative
+PASSED r2e_tests/test_1.py::JsonReportTest::test_context_non_relative
+FAILED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_from_saved_branch_data
+FAILED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_count_branch_arcs
+2 failed, 4 passed in 0.65 seconds

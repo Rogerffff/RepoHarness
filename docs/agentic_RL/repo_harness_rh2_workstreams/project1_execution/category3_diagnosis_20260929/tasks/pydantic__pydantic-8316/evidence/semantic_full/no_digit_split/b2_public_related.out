@@ -1,0 +1,303 @@
+..................sssssssssssss.s....................................... [ 24%]
+........................................................................ [ 49%]
+.....F                                                                   [ 51%]tests/test_utils.py:518 test_camel2snake[camel2Snake-camel_2_snake] [ 51%]
+....F                                                                    [ 52%]tests/test_utils.py:518 test_camel2snake[Camel2Snake-camel_2_snake] [ 53%]
+...F                                                                     [ 54%]tests/test_utils.py:518 test_camel2snake[Camel2-camel_2] - Assertion… [ 54%]
+F                                                                        [ 54%]tests/test_utils.py:518 test_camel2snake[Camel2_-camel_2_] - Asserti… [ 54%]
+F                                                                        [ 54%]tests/test_utils.py:518 test_camel2snake[_Camel2-_camel_2] - Asserti… [ 55%]
+F                                                                        [ 55%]tests/test_utils.py:518 test_camel2snake[camel2-camel_2] - Assertion… [ 55%]
+F                                                                        [ 55%]tests/test_utils.py:518 test_camel2snake[camel2_-camel_2_] - Asserti… [ 56%]
+F                                                                        [ 56%]tests/test_utils.py:518 test_camel2snake[_camel2-_camel_2] - Asserti… [ 56%]
+........................................................................ [ 81%]
+............................sss........................                  [100%]
+=================================== FAILURES ===================================
+_________________ test_camel2snake[camel2Snake-camel_2_snake] __________________
+
+value = 'camel2Snake', result = 'camel_2_snake'
+
+    @pytest.mark.parametrize(
+        'value,result',
+        [
+            ('camel_to_snake', 'camel_to_snake'),
+            ('camelToSnake', 'camel_to_snake'),
+            ('camel2Snake', 'camel_2_snake'),
+            ('_camelToSnake', '_camel_to_snake'),
+            ('camelToSnake_', 'camel_to_snake_'),
+            ('__camelToSnake__', '__camel_to_snake__'),
+            ('CamelToSnake', 'camel_to_snake'),
+            ('Camel2Snake', 'camel_2_snake'),
+            ('_CamelToSnake', '_camel_to_snake'),
+            ('CamelToSnake_', 'camel_to_snake_'),
+            ('__CamelToSnake__', '__camel_to_snake__'),
+            ('Camel2', 'camel_2'),
+            ('Camel2_', 'camel_2_'),
+            ('_Camel2', '_camel_2'),
+            ('camel2', 'camel_2'),
+            ('camel2_', 'camel_2_'),
+            ('_camel2', '_camel_2'),
+        ],
+    )
+    def test_camel2snake(value: str, result: str) -> None:
+>       assert to_snake(value) == result
+E       AssertionError: assert 'camel2_snake' == 'camel_2_snake'
+E         - camel_2_snake
+E         ?      -
+E         + camel2_snake
+
+tests/test_utils.py:542: AssertionError
+_________________ test_camel2snake[Camel2Snake-camel_2_snake] __________________
+
+value = 'Camel2Snake', result = 'camel_2_snake'
+
+    @pytest.mark.parametrize(
+        'value,result',
+        [
+            ('camel_to_snake', 'camel_to_snake'),
+            ('camelToSnake', 'camel_to_snake'),
+            ('camel2Snake', 'camel_2_snake'),
+            ('_camelToSnake', '_camel_to_snake'),
+            ('camelToSnake_', 'camel_to_snake_'),
+            ('__camelToSnake__', '__camel_to_snake__'),
+            ('CamelToSnake', 'camel_to_snake'),
+            ('Camel2Snake', 'camel_2_snake'),
+            ('_CamelToSnake', '_camel_to_snake'),
+            ('CamelToSnake_', 'camel_to_snake_'),
+            ('__CamelToSnake__', '__camel_to_snake__'),
+            ('Camel2', 'camel_2'),
+            ('Camel2_', 'camel_2_'),
+            ('_Camel2', '_camel_2'),
+            ('camel2', 'camel_2'),
+            ('camel2_', 'camel_2_'),
+            ('_camel2', '_camel_2'),
+        ],
+    )
+    def test_camel2snake(value: str, result: str) -> None:
+>       assert to_snake(value) == result
+E       AssertionError: assert 'camel2_snake' == 'camel_2_snake'
+E         - camel_2_snake
+E         ?      -
+E         + camel2_snake
+
+tests/test_utils.py:542: AssertionError
+_______________________ test_camel2snake[Camel2-camel_2] _______________________
+
+value = 'Camel2', result = 'camel_2'
+
+    @pytest.mark.parametrize(
+        'value,result',
+        [
+            ('camel_to_snake', 'camel_to_snake'),
+            ('camelToSnake', 'camel_to_snake'),
+            ('camel2Snake', 'camel_2_snake'),
+            ('_camelToSnake', '_camel_to_snake'),
+            ('camelToSnake_', 'camel_to_snake_'),
+            ('__camelToSnake__', '__camel_to_snake__'),
+            ('CamelToSnake', 'camel_to_snake'),
+            ('Camel2Snake', 'camel_2_snake'),
+            ('_CamelToSnake', '_camel_to_snake'),
+            ('CamelToSnake_', 'camel_to_snake_'),
+            ('__CamelToSnake__', '__camel_to_snake__'),
+            ('Camel2', 'camel_2'),
+            ('Camel2_', 'camel_2_'),
+            ('_Camel2', '_camel_2'),
+            ('camel2', 'camel_2'),
+            ('camel2_', 'camel_2_'),
+            ('_camel2', '_camel_2'),
+        ],
+    )
+    def test_camel2snake(value: str, result: str) -> None:
+>       assert to_snake(value) == result
+E       AssertionError: assert 'camel2' == 'camel_2'
+E         - camel_2
+E         ?      -
+E         + camel2
+
+tests/test_utils.py:542: AssertionError
+______________________ test_camel2snake[Camel2_-camel_2_] ______________________
+
+value = 'Camel2_', result = 'camel_2_'
+
+    @pytest.mark.parametrize(
+        'value,result',
+        [
+            ('camel_to_snake', 'camel_to_snake'),
+            ('camelToSnake', 'camel_to_snake'),
+            ('camel2Snake', 'camel_2_snake'),
+            ('_camelToSnake', '_camel_to_snake'),
+            ('camelToSnake_', 'camel_to_snake_'),
+            ('__camelToSnake__', '__camel_to_snake__'),
+            ('CamelToSnake', 'camel_to_snake'),
+            ('Camel2Snake', 'camel_2_snake'),
+            ('_CamelToSnake', '_camel_to_snake'),
+            ('CamelToSnake_', 'camel_to_snake_'),
+            ('__CamelToSnake__', '__camel_to_snake__'),
+            ('Camel2', 'camel_2'),
+            ('Camel2_', 'camel_2_'),
+            ('_Camel2', '_camel_2'),
+            ('camel2', 'camel_2'),
+            ('camel2_', 'camel_2_'),
+            ('_camel2', '_camel_2'),
+        ],
+    )
+    def test_camel2snake(value: str, result: str) -> None:
+>       assert to_snake(value) == result
+E       AssertionError: assert 'camel2_' == 'camel_2_'
+E         - camel_2_
+E         ?      -
+E         + camel2_
+
+tests/test_utils.py:542: AssertionError
+______________________ test_camel2snake[_Camel2-_camel_2] ______________________
+
+value = '_Camel2', result = '_camel_2'
+
+    @pytest.mark.parametrize(
+        'value,result',
+        [
+            ('camel_to_snake', 'camel_to_snake'),
+            ('camelToSnake', 'camel_to_snake'),
+            ('camel2Snake', 'camel_2_snake'),
+            ('_camelToSnake', '_camel_to_snake'),
+            ('camelToSnake_', 'camel_to_snake_'),
+            ('__camelToSnake__', '__camel_to_snake__'),
+            ('CamelToSnake', 'camel_to_snake'),
+            ('Camel2Snake', 'camel_2_snake'),
+            ('_CamelToSnake', '_camel_to_snake'),
+            ('CamelToSnake_', 'camel_to_snake_'),
+            ('__CamelToSnake__', '__camel_to_snake__'),
+            ('Camel2', 'camel_2'),
+            ('Camel2_', 'camel_2_'),
+            ('_Camel2', '_camel_2'),
+            ('camel2', 'camel_2'),
+            ('camel2_', 'camel_2_'),
+            ('_camel2', '_camel_2'),
+        ],
+    )
+    def test_camel2snake(value: str, result: str) -> None:
+>       assert to_snake(value) == result
+E       AssertionError: assert '_camel2' == '_camel_2'
+E         - _camel_2
+E         ?       -
+E         + _camel2
+
+tests/test_utils.py:542: AssertionError
+_______________________ test_camel2snake[camel2-camel_2] _______________________
+
+value = 'camel2', result = 'camel_2'
+
+    @pytest.mark.parametrize(
+        'value,result',
+        [
+            ('camel_to_snake', 'camel_to_snake'),
+            ('camelToSnake', 'camel_to_snake'),
+            ('camel2Snake', 'camel_2_snake'),
+            ('_camelToSnake', '_camel_to_snake'),
+            ('camelToSnake_', 'camel_to_snake_'),
+            ('__camelToSnake__', '__camel_to_snake__'),
+            ('CamelToSnake', 'camel_to_snake'),
+            ('Camel2Snake', 'camel_2_snake'),
+            ('_CamelToSnake', '_camel_to_snake'),
+            ('CamelToSnake_', 'camel_to_snake_'),
+            ('__CamelToSnake__', '__camel_to_snake__'),
+            ('Camel2', 'camel_2'),
+            ('Camel2_', 'camel_2_'),
+            ('_Camel2', '_camel_2'),
+            ('camel2', 'camel_2'),
+            ('camel2_', 'camel_2_'),
+            ('_camel2', '_camel_2'),
+        ],
+    )
+    def test_camel2snake(value: str, result: str) -> None:
+>       assert to_snake(value) == result
+E       AssertionError: assert 'camel2' == 'camel_2'
+E         - camel_2
+E         ?      -
+E         + camel2
+
+tests/test_utils.py:542: AssertionError
+______________________ test_camel2snake[camel2_-camel_2_] ______________________
+
+value = 'camel2_', result = 'camel_2_'
+
+    @pytest.mark.parametrize(
+        'value,result',
+        [
+            ('camel_to_snake', 'camel_to_snake'),
+            ('camelToSnake', 'camel_to_snake'),
+            ('camel2Snake', 'camel_2_snake'),
+            ('_camelToSnake', '_camel_to_snake'),
+            ('camelToSnake_', 'camel_to_snake_'),
+            ('__camelToSnake__', '__camel_to_snake__'),
+            ('CamelToSnake', 'camel_to_snake'),
+            ('Camel2Snake', 'camel_2_snake'),
+            ('_CamelToSnake', '_camel_to_snake'),
+            ('CamelToSnake_', 'camel_to_snake_'),
+            ('__CamelToSnake__', '__camel_to_snake__'),
+            ('Camel2', 'camel_2'),
+            ('Camel2_', 'camel_2_'),
+            ('_Camel2', '_camel_2'),
+            ('camel2', 'camel_2'),
+            ('camel2_', 'camel_2_'),
+            ('_camel2', '_camel_2'),
+        ],
+    )
+    def test_camel2snake(value: str, result: str) -> None:
+>       assert to_snake(value) == result
+E       AssertionError: assert 'camel2_' == 'camel_2_'
+E         - camel_2_
+E         ?      -
+E         + camel2_
+
+tests/test_utils.py:542: AssertionError
+______________________ test_camel2snake[_camel2-_camel_2] ______________________
+
+value = '_camel2', result = '_camel_2'
+
+    @pytest.mark.parametrize(
+        'value,result',
+        [
+            ('camel_to_snake', 'camel_to_snake'),
+            ('camelToSnake', 'camel_to_snake'),
+            ('camel2Snake', 'camel_2_snake'),
+            ('_camelToSnake', '_camel_to_snake'),
+            ('camelToSnake_', 'camel_to_snake_'),
+            ('__camelToSnake__', '__camel_to_snake__'),
+            ('CamelToSnake', 'camel_to_snake'),
+            ('Camel2Snake', 'camel_2_snake'),
+            ('_CamelToSnake', '_camel_to_snake'),
+            ('CamelToSnake_', 'camel_to_snake_'),
+            ('__CamelToSnake__', '__camel_to_snake__'),
+            ('Camel2', 'camel_2'),
+            ('Camel2_', 'camel_2_'),
+            ('_Camel2', '_camel_2'),
+            ('camel2', 'camel_2'),
+            ('camel2_', 'camel_2_'),
+            ('_camel2', '_camel_2'),
+        ],
+    )
+    def test_camel2snake(value: str, result: str) -> None:
+>       assert to_snake(value) == result
+E       AssertionError: assert '_camel2' == '_camel_2'
+E         - _camel_2
+E         ?       -
+E         + _camel2
+
+tests/test_utils.py:542: AssertionError
+                              Summary of Failures                               
+┏━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
+┃               ┃               ┃  Function     ┃              ┃               ┃
+┃  File         ┃  Function     ┃  Line         ┃  Error Line  ┃  Error        ┃
+┡━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
+│  tests/test…  │  test_camel…  │  519          │  542         │  AssertionE…  │
+│  tests/test…  │  test_camel…  │  519          │  542         │  AssertionE…  │
+│  tests/test…  │  test_camel…  │  519          │  542         │  AssertionE…  │
+│  tests/test…  │  test_camel…  │  519          │  542         │  AssertionE…  │
+│  tests/test…  │  test_camel…  │  519          │  542         │  AssertionE…  │
+│  tests/test…  │  test_camel…  │  519          │  542         │  AssertionE…  │
+│  tests/test…  │  test_camel…  │  519          │  542         │  AssertionE…  │
+│  tests/test…  │  test_camel…  │  519          │  542         │  AssertionE…  │
+└───────────────┴───────────────┴───────────────┴──────────────┴───────────────┘
+Results (1.34s):
+         8 failed
+       266 passed
+        17 skipped

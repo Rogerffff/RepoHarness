@@ -25,15 +25,27 @@ def statuses(text: str) -> dict:
     return st
 
 
+EXPECTED_COLLECTED = 173  # tests/test_utils.py 在 base 与补丁后的收集数（159 passed + 14 skipped 或含失败），正式日志同此
+
+
 def simgrade(text: str) -> dict:
+    """本镜像装有 pytest-pretty，-q -rA 不输出逐项 PASSED 行；因此按 FAILURES 段的失败标题 + 结果计数判定：
+    收集总数必须等于 EXPECTED_COLLECTED，参考项不在失败集合里即视为通过。若有经典 PASSED 行则优先用逐项状态。"""
     st = statuses(text)
-    f2p_ok = all(st.get(t) == "PASSED" for t in F2P)
-    p2p_fail = [t for t in P2P if st.get(t) != "PASSED"]
+    failed = set(re.findall(r"^_{3,} (\S+) _{3,}$", text, re.M))
+    counts = {k: int(v) for v, k in re.findall(r"^\s+(\d+) (passed|failed|skipped|errors?|xfailed|xpassed)\s*$", text, re.M)}
+    collected = sum(counts.values())
+    complete = collected == EXPECTED_COLLECTED and not counts.get("error") and not counts.get("errors")
+    if st:
+        ok = lambda t: st.get(t) == "PASSED"  # noqa: E731
+    else:
+        ok = lambda t: complete and t.split("::", 1)[1] not in failed  # noqa: E731
+    f2p_ok = all(ok(t) for t in F2P)
+    p2p_fail = [t for t in P2P if not ok(t)]
     first_fail = next((ln.strip() for ln in text.splitlines() if ln.startswith("E ") and "assert" in ln), None)
-    tail = next((ln.strip() for ln in reversed(text.splitlines()) if re.search(r"\d+ (passed|failed)", ln)), None)
     return {"reward": int(f2p_ok and not p2p_fail), "f2p": f"{int(f2p_ok)}/{len(F2P)}",
             "p2p_pass": f"{len(P2P) - len(p2p_fail)}/{len(P2P)}", "p2p_fail": p2p_fail[:5],
-            "first_assert": first_fail, "pytest_tail": tail}
+            "failed_tests": sorted(failed), "counts": counts, "complete": complete, "first_assert": first_fail}
 
 
 rows = {}
@@ -46,7 +58,8 @@ for vd in sorted(p for p in out_dir.iterdir() if p.is_dir()):
     b2 = vd / "b2_public_related.out"
     if b2.exists():
         t = b2.read_text()
-        rec["public_related_tail"] = next((ln.strip() for ln in reversed(t.splitlines()) if re.search(r"\d+ (passed|failed)", ln)), None)
+        c = {k: int(v) for v, k in re.findall(r"^\s+(\d+) (passed|failed|skipped|errors?|xfailed|xpassed)\s*$", t, re.M)}
+        rec["public_related_tail"] = "、".join(f"{v} {k}" for k, v in c.items()) or None
     for tag in ("s_orig", "s_rev1", "s_rev2"):
         f = vd / f"{tag}.out"
         if f.exists():

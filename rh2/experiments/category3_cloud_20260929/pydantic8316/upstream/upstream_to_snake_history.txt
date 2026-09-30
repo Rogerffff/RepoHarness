@@ -1,4 +1,5 @@
-上游 to_snake 与相关测试对照（只作佐证，不作公开依据）。来源：raw.githubusercontent.com/pydantic/pydantic/<tag>/...，2026-09-30 取回。
+上游 to_snake 与相关测试对照（只作佐证，不作公开依据）。来源：raw.githubusercontent.com/pydantic/pydantic/<tag>/...，2026-09-30 取回；PR 页面（#8316、#9747、#9812）在本容器读不到，未读。
+摘要：2.5.3 = base；2.6.0–2.7.4 = gold；2.8.0（#9747 提速）改成单条环视正则，恢复了“字母→数字”都断开；2.8.1（#9812 “Fix breaking change in to_snake from v2.7 -> v2.8”）改回 gold 的四条正则（另加 kebab `-`），并新增测试 ('snakeV2', 'snake_v2')；此后至 2.11.0 不变。
 
 ===== pydantic/alias_generators.py @ v2.5.3  sha256=f7917dc7d3f56f3ccbed9df2e45d81bc417d48c504893fabebd4969496a8ff71
 def to_snake(camel: str) -> str:
@@ -118,6 +119,29 @@ def to_snake(camel: str) -> str:
         '_',
         camel,
     )
+    return snake.lower()
+
+
+===== pydantic/alias_generators.py @ v2.8.1  sha256=28cd67deee097cb48197552e620de1a181f35c90fecaf82b9eaf2ed5c73087f0
+def to_snake(camel: str) -> str:
+    """Convert a PascalCase, camelCase, or kebab-case string to snake_case.
+
+    Args:
+        camel: The string to convert.
+
+    Returns:
+        The converted string in snake_case.
+    """
+    # Handle the sequence of uppercase letters followed by a lowercase letter
+    snake = re.sub(r'([A-Z]+)([A-Z][a-z])', lambda m: f'{m.group(1)}_{m.group(2)}', camel)
+    # Insert an underscore between a lowercase letter and an uppercase letter
+    snake = re.sub(r'([a-z])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    # Insert an underscore between a digit and an uppercase letter
+    snake = re.sub(r'([0-9])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    # Insert an underscore between a lowercase letter and a digit
+    snake = re.sub(r'([a-z])([0-9])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+    # Replace hyphens with underscores to handle kebab-case
+    snake = snake.replace('-', '_')
     return snake.lower()
 
 
@@ -267,6 +291,39 @@ def test_camel2snake(value: str, result: str) -> None:
         ('Kebab-Snake', 'kebab_snake'),
         ('PascalToSnake', 'pascal_to_snake'),
         ('snake_to_snake', 'snake_to_snake'),
+    ],
+)
+def test_to_snake(value: str, result: str) -> None:
+    assert to_snake(value) == result
+
+===== tests/test_utils.py @ v2.8.1  sha256=ffbe5a3a25785f86bd16807c62c1786649d9732d1cc7e1caefe75f80b7a3f160
+@pytest.mark.parametrize(
+    'value,result',
+    [
+        ('camel_to_snake', 'camel_to_snake'),
+        ('camelToSnake', 'camel_to_snake'),
+        ('camel2Snake', 'camel_2_snake'),
+        ('_camelToSnake', '_camel_to_snake'),
+        ('camelToSnake_', 'camel_to_snake_'),
+        ('__camelToSnake__', '__camel_to_snake__'),
+        ('CamelToSnake', 'camel_to_snake'),
+        ('Camel2Snake', 'camel_2_snake'),
+        ('_CamelToSnake', '_camel_to_snake'),
+        ('CamelToSnake_', 'camel_to_snake_'),
+        ('CAMELToSnake', 'camel_to_snake'),
+        ('__CamelToSnake__', '__camel_to_snake__'),
+        ('Camel2', 'camel_2'),
+        ('Camel2_', 'camel_2_'),
+        ('_Camel2', '_camel_2'),
+        ('camel2', 'camel_2'),
+        ('camel2_', 'camel_2_'),
+        ('_camel2', '_camel_2'),
+        ('kebab-to-snake', 'kebab_to_snake'),
+        ('kebab-Snake', 'kebab_snake'),
+        ('Kebab-Snake', 'kebab_snake'),
+        ('PascalToSnake', 'pascal_to_snake'),
+        ('snake_to_snake', 'snake_to_snake'),
+        ('snakeV2', 'snake_v2'),
     ],
 )
 def test_to_snake(value: str, result: str) -> None:

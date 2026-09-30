@@ -1,13 +1,15 @@
 {
  "instance_id": "coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96",
- "status": "草案（第3类第二批，2026-09-30）；未落正式修订单",
+ "status": "草案（第3类第二批，2026-09-30）；未落正式修订单；只在 P5 选 A 时启用",
  "supersedes": [
   "r2e-mr-053",
   "r2e-mr-054"
  ],
- "note": "同一题同一目标只许一条修订：隐藏测试条目整体替换 r2e-mr-053（第 1 处 edit 与之逐字相同），期望条目整体替换 r2e-mr-054",
+ "note": "同一题同一目标只许一条修订（ingest_r2e_subset.py:415-418）：隐藏测试条目整体取代 r2e-mr-053（第 1 处 edit 与之逐字相同），期望条目整体取代 r2e-mr-054。revision_id 与 revised_file 的版本路径由第2类定；revised_file 若沿用现有路径，会改变旧修订单引用的文件内容",
  "revisions": [
   {
+   "revision_id": "待第2类编号",
+   "instance_id": "coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96",
    "kind": "hidden_test_text_replace",
    "target": "test_1.py",
    "edits": [
@@ -38,14 +40,24 @@
    ],
    "sha256_before": "sha256:ee874f37abb9e6f5307bb02b9b6a3c760218f674d557a51f7f27f5c68298418f",
    "sha256_after": "sha256:b1d83e2b7dacf6a9f0c1d4def9bcffce6d9f0489211c14455d3f2bd3767cfd79",
-   "expected_change": null
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/<新版本目录>/r2e_tests/test_1.py",
+   "expected_change": null,
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c v2 + R-b 窄版 v2（仅在用户就 P5 选 A 时启用）：每文件 summary 可带两键，成对且值对；K3 另核每文件值（挡 FC）；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category3_diagnosis_20260929/tasks/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/result.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category3_diagnosis_20260929/tasks/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/evidence/"
+   ]
   },
   {
+   "revision_id": "待第2类编号",
+   "instance_id": "coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96",
    "kind": "expected_file_replace",
    "target": "expected_output_json",
    "edits": null,
    "sha256_before": "sha256:9e555e5145c096ac323d33fdd3d22d7b769a4b3a34c3cc9b92ba70c1949a384c",
    "sha256_after": "sha256:333b4a688adf971a60fc868723a3ac28ce75083dae1c9f9f69a1d5c290bc906d",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/<新版本目录>/expected_output.json",
    "expected_change": {
     "changed": {},
     "added": {
@@ -54,7 +66,13 @@
      "JsonReportTest.test_branch_totals_add_up_across_files": "PASSED"
     },
     "removed": []
-   }
+   },
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c v2 + R-b 窄版 v2（仅在用户就 P5 选 A 时启用）：每文件 summary 可带两键，成对且值对；K3 另核每文件值（挡 FC）；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category3_diagnosis_20260929/tasks/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/result.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category3_diagnosis_20260929/tasks/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/evidence/"
+   ]
   }
  ]
 }

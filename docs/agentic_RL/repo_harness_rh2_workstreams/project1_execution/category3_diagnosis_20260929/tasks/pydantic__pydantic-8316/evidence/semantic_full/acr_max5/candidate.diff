@@ -1,0 +1,13 @@
+diff --git a/pydantic/alias_generators.py b/pydantic/alias_generators.py
+index bbdaaaf12..30027bc3f 100644
+--- a/pydantic/alias_generators.py
++++ b/pydantic/alias_generators.py
+@@ -39,6 +39,7 @@ def to_snake(camel: str) -> str:
+     Returns:
+         The converted string in snake_case.
+     """
+-    snake = re.sub(r'([a-zA-Z])([0-9])', lambda m: f'{m.group(1)}_{m.group(2)}', camel)
++    snake = re.sub(r'(?<![A-Z])([A-Z]{1,5})([A-Z][a-z])', lambda m: f'{m.group(1)}_{m.group(2)}', camel)
++    snake = re.sub(r'([a-zA-Z])([0-9])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+     snake = re.sub(r'([a-z0-9])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+     return snake.lower()

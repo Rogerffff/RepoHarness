@@ -12,6 +12,7 @@ grade 模式对每个测试补丁：复位 → 应用候选 → 应用测试补�
 运行中的容器 >= 3 时等待（共用机器规则）。
 """
 import json
+import os
 import re
 import subprocess
 import sys
@@ -110,12 +111,20 @@ def main():
                 tp = test_patch(t)
                 apply = "git apply /in/cand.patch && " if cp else ""
                 mounts = [(tp, "/in/test.patch")] + ([(cp, "/in/cand.patch")] if cp else [])
-                script = f"set -o pipefail; git status --short; {apply} git apply /in/test.patch && echo APPLIED_OK && {TEST_CMD}"
+                cmd = TEST_CMD
+                uid = os.environ.get("RUN_UID")
+                if uid:  # 以非 root 身份运行测试（补丁仍由 root 应用），用于核对评分身份的影响
+                    cmd = f"setpriv --reuid={uid} --regid={uid} --clear-groups env HOME=/tmp {TEST_CMD}"
+                script = f"set -o pipefail; git status --short; {apply} git apply /in/test.patch && echo APPLIED_OK && {cmd}"
                 t0 = time.time()
                 rc, log = docker_run(mounts, script)
-                (out / f"{c}__{t}.log").write_text(log)
+                tag = f"__uid{os.environ['RUN_UID']}" if os.environ.get("RUN_UID") else ""
+                n = 0
+                while (out / f"{c}__{t}{tag}{'' if n == 0 else f'__r{n}'}.log").exists():
+                    n += 1
+                (out / f"{c}__{t}{tag}{'' if n == 0 else f'__r{n}'}.log").write_text(log)
                 res = judge(log) if "APPLIED_OK" in log else {"reward": None, "apply_failed": True}
-                res.update({"candidate": c, "test": t, "rc": rc, "seconds": round(time.time() - t0, 1)})
+                res.update({"candidate": c, "test": t, "rc": rc, "seconds": round(time.time() - t0, 1), "uid": os.environ.get("RUN_UID", "0")})
                 with open(out / "results.jsonl", "a") as f:
                     f.write(json.dumps(res, sort_keys=True) + "\n")
                 print(c, t, "reward", res["reward"], "rc", rc, res["seconds"], "s", time.strftime("%H:%M:%S"), flush=True)

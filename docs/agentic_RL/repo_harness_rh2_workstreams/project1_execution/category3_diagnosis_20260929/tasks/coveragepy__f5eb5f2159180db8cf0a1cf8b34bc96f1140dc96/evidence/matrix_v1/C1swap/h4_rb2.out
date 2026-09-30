@@ -1,0 +1,83 @@
+b1d83e2b7dacf6a9f0c1d4def9bcffce6d9f0489211c14455d3f2bd3767cfd79  /testbed/r2e_tests/test_1.py
+bringing up nodes...
+bringing up nodes...
+
+FF.....                                                                  [100%]
+=================================== FAILURES ===================================
+_____________ JsonReportTest.test_branch_totals_count_branch_arcs ______________
+[gw2] linux -- Python 3.7.9 /testbed/.venv/bin/python
+
+self = <r2e_tests.test_1.JsonReportTest testMethod=test_branch_totals_count_branch_arcs>
+
+    def test_branch_totals_count_branch_arcs(self):
+        # 6 branch destinations (two per `if`), 4 taken, 2 never taken.  h's `if`
+        # never runs, so it is not a partial branch.
+        report = self._branchy_report("branchy")
+        totals = report['totals']
+        assert totals['num_branches'] == 6
+        assert totals['num_partial_branches'] == 0
+        assert totals['covered_branches'] == 4
+        assert totals['missing_branches'] == 2
+        # R2E revision (2026-09-29, R-b): if the per-file summary also carries
+        # the two counts, they must be this file's counts.
+        summary = report['files']['branchy.py']['summary']
+        if 'covered_branches' in summary or 'missing_branches' in summary:
+>           assert summary.get('covered_branches') == 4
+E           AssertionError: assert 2 == 4
+E            +  where 2 = <built-in method get of dict object at 0x7f95b9d6ef50>('covered_branches')
+E            +    where <built-in method get of dict object at 0x7f95b9d6ef50> = {'covered_branches': 2, 'covered_lines': 13, 'excluded_lines': 0, 'missing_branches': 4, ...}.get
+
+r2e_tests/test_1.py:228: AssertionError
+____________ JsonReportTest.test_branch_totals_add_up_across_files _____________
+[gw1] linux -- Python 3.7.9 /testbed/.venv/bin/python
+
+self = <r2e_tests.test_1.JsonReportTest testMethod=test_branch_totals_add_up_across_files>
+
+    def test_branch_totals_add_up_across_files(self):
+        # R2E revision (2026-09-30, R-c): like the other totals keys, the two
+        # counts add up every reported file.  branchy_sum.py is BRANCHY (6
+        # branch destinations, 4 taken, 2 never taken); branchy_sum_main.py is
+        # the issue's one-branch example after an import (2 destinations, 1
+        # taken, 1 not taken, 1 partial branch line).
+        self.make_file("branchy_sum.py", self.BRANCHY)
+        self.make_file("branchy_sum_main.py", """\
+            import branchy_sum
+            a = {'b': 1}
+            if a.get('a'):
+                b = 1
+            """)
+        cov = coverage.Coverage(branch=True)
+        main = self.start_import_stop(cov, "branchy_sum_main")
+        output_path = os.path.join(self.temp_dir, "branchy_sum.json")
+        cov.json_report([main, main.branchy_sum], outfile=output_path)
+        with open(output_path) as result_file:
+            report = json.load(result_file)
+        assert sorted(report['files']) == ['branchy_sum.py', 'branchy_sum_main.py']
+        totals = report['totals']
+        assert totals['num_branches'] == 8
+        assert totals['num_partial_branches'] == 1
+        assert totals['covered_branches'] == 5
+        assert totals['missing_branches'] == 3
+        # R2E revision (2026-09-30, R-b): a per-file summary that also carries
+        # the two counts must carry that file's own counts.
+        for filename, counts in [('branchy_sum.py', (4, 2)), ('branchy_sum_main.py', (1, 1))]:
+            summary = report['files'][filename]['summary']
+            if 'covered_branches' in summary or 'missing_branches' in summary:
+>               assert (summary.get('covered_branches'), summary.get('missing_branches')) == counts
+E               AssertionError: assert (2, 4) == (4, 2)
+E                 At index 0 diff: 2 != 4
+E                 Full diff:
+E                 - (2, 4)
+E                 + (4, 2)
+
+r2e_tests/test_1.py:269: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED r2e_tests/test_1.py::JsonReportTest::test_branch_coverage
+PASSED r2e_tests/test_1.py::JsonReportTest::test_context_relative
+PASSED r2e_tests/test_1.py::JsonReportTest::test_context_non_relative
+PASSED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_from_saved_branch_data
+PASSED r2e_tests/test_1.py::JsonReportTest::test_simple_line_coverage
+FAILED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_count_branch_arcs
+FAILED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_add_up_across_files
+2 failed, 5 passed in 1.07 seconds

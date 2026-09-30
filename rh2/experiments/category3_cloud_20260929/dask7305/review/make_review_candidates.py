@@ -10,7 +10,7 @@ base 目录放镜像 c3keep/dask7305:src 中 /testbed 的两个原件（可用
 候选按公开要求（大整数下 partition_quantiles 的最小值、最大值精确，结果有序、dtype 保持；
 set_index 不丢行、每行落在自己的 divisions 区间）预先定性，不以 gold 为答案：
   错误：rv_pin_noclip、rv_interp_pin_noclip、rv_swallow_int64、rv_maxonly_threshold、
-        rv_si_override、rv_sorted_assume、rv_len2
+        rv_si_override、rv_sorted_assume、rv_len2、rv_k_le4
   合理：rv_lower_full、rv_exact_linear、rv_minmax_graph、rv_dup_branch
 """
 import difflib
@@ -173,6 +173,11 @@ SUMMARY_LEN2 = summary_with('''    elif np.issubdtype(data.dtype, np.integer) an
         interpolation = "nearest"
 ''')
 
+# 分区数阈值：只有输出分区数不超过 4 时才改用 nearest（v1 的实例都 <= 4）。
+SUMMARY_K_LE4 = summary_with('''    elif np.issubdtype(data.dtype, np.integer) and num_new <= 4:
+        interpolation = "nearest"
+''')
+
 # 抑制症状：partition_quantiles 不动，只在 set_index 里用精确的逐分区 min/max 改写 divisions 两端。
 SH_SET_INDEX_OVERRIDE = '''        mins = methods.tolist(mins)
         maxes = methods.tolist(maxes)
@@ -320,6 +325,7 @@ def build(base_pq, base_sh):
     c["rv_si_override"] = {SH: rep(base_sh, SH_SET_INDEX_BASE, SH_SET_INDEX_OVERRIDE)}
     c["rv_sorted_assume"] = {PQ: pvw_full(rep(base_pq, SUMMARY_BASE, SUMMARY_SORTED_ASSUME))}
     c["rv_len2"] = {PQ: pvw_full(rep(base_pq, SUMMARY_BASE, SUMMARY_LEN2))}
+    c["rv_k_le4"] = {PQ: pvw_full(rep(base_pq, SUMMARY_BASE, SUMMARY_K_LE4))}
 
     c["rv_lower_full"] = {PQ: pvw_full(rep(base_pq, SUMMARY_BASE, SUMMARY_LOWER))}
     c["rv_exact_linear"] = {PQ: rep(rep(rep(base_pq, SUMMARY_BASE, SUMMARY_EXACT_LINEAR), PVW_ARRAY_BASE, PVW_ARRAY_TYPED), PVW_INTERP_BASE, PVW_INTERP_EXACT)}

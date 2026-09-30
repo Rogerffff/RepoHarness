@@ -1,0 +1,26 @@
+diff --git a/dask/config.py b/dask/config.py
+--- a/dask/config.py
++++ b/dask/config.py
+@@ -179,11 +179,19 @@
+     for path in file_paths:
+         try:
+             with open(path) as f:
+-                data = yaml.safe_load(f.read()) or {}
+-                configs.append(data)
++                data = yaml.safe_load(f)
+         except OSError:
+             # Ignore permission errors
+-            pass
++            continue
++        except yaml.YAMLError as exc:
++            raise ValueError(f"{path}: {exc}") from exc
++        if data is None:
++            continue
++        if not isinstance(data, dict):
++            raise TypeError(
++                f"{path}: the top level must be a dictionary, not {type(data).__name__}"
++            )
++        configs.append(data)
+ 
+     return configs
+ 

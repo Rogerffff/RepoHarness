@@ -1,0 +1,72 @@
+{
+ "ok_object_value": {
+  "sha256": "b22af73087bff3f613d3060d81b706f7022acc88f8aaf1ad5b43e8917993b4ec",
+  "what": "自定义 ConfigFileError(Exception)（非 ValueError）；语法错误 from exc；非映射说 'must contain an object at the top level, found <值的 repr>'，不写类型名、dict、mapping、key"
+ },
+ "ok_map_settings": {
+  "sha256": "34c1e84fcc4b5b03ad4f680309e25dfb6688c7c31a77eeccae4a51c0e45e585c",
+  "what": "校验直接写在 collect_yaml 循环里；语法错误在 except 块内重新抛出（隐式异常链显示原因）；非映射抛 TypeError，说 'should be a YAML map of settings, but its top level is <值的 repr>'"
+ },
+ "ok_dictionary_typeerror": {
+  "sha256": "5636e8125636c48c8c3a989832428e5f1b737b739da820247f69e509a1987171",
+  "what": "循环内校验、流式加载；语法错误 ValueError(path: 原消息) from exc；非映射 TypeError 'must be a dictionary, not <类型>'"
+ },
+ "ok_aggregate": {
+  "sha256": "931f7d6be5d1e70f0f26ecc6833d0084e8187dfbe97438ec55f72c69bbdbc398",
+  "what": "先检查全部文件，再一次性抛出一个列出每个坏文件及原因的 ValueError（结构不同）"
+ },
+ "ok_yamlerror_subclass": {
+  "sha256": "8af55df5abe7276044cc5b8528cd545b1e6b6e1cbae7c29c1c1a2d3fc3297659",
+  "what": "异常类是 yaml.YAMLError 的子类（与 base 语法错误同一基类）；pathlib 读取；消息 'must contain key/value pairs ... got <类型>'"
+ },
+ "ok_falsy_empty": {
+  "sha256": "9ef663cc5910140395951a26a62329633c4072cb41f887a6f4d44723dddcc2d6",
+  "what": "保留 base 的 `or {}`：顶层假值（[]、''、0、false）照旧当空配置（T3，与 base 一致）；其余同 gold 语义"
+ },
+ "gr_attr_wrap": {
+  "sha256": "a90afb3b97fb579ae67c38f6fa36faf330647aa6ec65b55c368d0355798cf3db",
+  "what": "不写类型检查，只用 update({}, data) 试合并；任何异常包装成 'Could not load Dask config file <路径>: <原异常>'，非映射时原因文字就是原来的 \"'str' object has no attribute 'items'\""
+ },
+ "gr_basename_only": {
+  "sha256": "b528ccd7b1f7332dab80f10698fa2d57b4157720443d216ddc44cc2d049ede1d",
+  "what": "gold 只把消息里的完整路径换成文件名（不含目录）"
+ },
+ "gr_csafe_loader": {
+  "sha256": "a2c61a24db00178cb5aae640e214a0c43f3ade62d4d377e60751b7d740e55e8b",
+  "what": "gold 只把解析器换成 libyaml 的 CSafeLoader（原因文字随之变成 libyaml 的措辞）"
+ },
+ "wr_zip_misalign": {
+  "sha256": "d6cea0c39659dd85d52decd83cc156606916976fb237dae2e537b7d9b73b477b",
+  "what": "读完再用 zip(file_paths, configs) 检查类型；空文件、全注释文件（None）与不可读条目被跳过后两表错位，坏文件前面只要有这样的条目，报错就点名前面的另一个文件"
+ },
+ "wr_zip_misalign_orempty": {
+  "sha256": "2e2bcde58d3c928da5172af7bce5c3ebf39c0bef1515f64966dea056f8d921ff",
+  "what": "同上但保留 `or {}`：只有不可读条目会让两表错位（坏文件前有不可读条目时点名错误文件）"
+ },
+ "wr_all_files": {
+  "sha256": "9df1f92a6efca430b5775191210452f3d059ddbb12fd87a8444358ad9ed76029",
+  "what": "整个循环外包一层，报错列出所有找到的配置文件（不指出哪一个坏）"
+ },
+ "wr_dir_named": {
+  "sha256": "e0a345d4456bbaaec1bc6f5f7c4dd7d3ed7f296a93b7a9d4b147f81291e2243a",
+  "what": "报错只点名搜索路径（目录），不点名目录里的坏文件"
+ },
+ "wr_import_only": {
+  "sha256": "f09b4109b9b4f7c4fa16984992072bf7e2923553146af3ed58fddac8f25e9d6d",
+  "what": "只在导入路径报错：collect_yaml/collect/refresh 静默跳过坏文件，模块导入时另做一遍检查并抛错"
+ },
+ "wr_wrong_reason": {
+  "sha256": "3829492b810128f170813b9bcdb1dca65a6c2c121f1a0cb84e3a86c11a0daa7d",
+  "what": "报错原因写错：顶层非映射（YAML 本身合法）也说 'is not valid YAML'"
+ },
+ "wr_perm_fatal": {
+  "sha256": "201dccfb0da8016c72ff69bda956a50cab465d879280111e9bf72d1420abc9b8",
+  "what": "gold 上把权限错误改成致命错误，其它 OSError（目录、文件已删除）仍跳过：违反公开权限测试，c.yaml 检查拦不住"
+ },
+ "wr_null_raises": {
+  "sha256": "315cf3d181f07f08f7735195c3606ff273a9f5dc828c3c6fd78344454e821e82",
+  "what": "按文本判断空文件／全注释；其余解析为 None 的文件（显式 null、只有 '---' 与注释）报错"
+ },
+ "_base_sha256": "689e71ce770ee620c1e1c9ddaa72d12c1639c93d5d9c1c12f0be0e99c2d631ee",
+ "_gold_inmemory_sha256": "ad89a85473ae4b099f58e0d489337ddbad7d2136dc1d410760098c7b89b5d08b"
+}

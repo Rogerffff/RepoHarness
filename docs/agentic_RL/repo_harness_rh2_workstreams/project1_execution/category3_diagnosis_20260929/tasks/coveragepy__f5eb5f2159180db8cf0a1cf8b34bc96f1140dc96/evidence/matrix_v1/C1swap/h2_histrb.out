@@ -1,0 +1,39 @@
+f73a756199f116b5887c4fb4f2ca386bc13c556b9871a927ece2125ad8b91500  /testbed/r2e_tests/test_1.py
+bringing up nodes...
+bringing up nodes...
+
+.F....                                                                   [100%]
+=================================== FAILURES ===================================
+_____________ JsonReportTest.test_branch_totals_count_branch_arcs ______________
+[gw1] linux -- Python 3.7.9 /testbed/.venv/bin/python
+
+self = <r2e_tests.test_1.JsonReportTest testMethod=test_branch_totals_count_branch_arcs>
+
+    def test_branch_totals_count_branch_arcs(self):
+        # 6 branch destinations (two per `if`), 4 taken, 2 never taken.  h's `if`
+        # never runs, so it is not a partial branch.
+        report = self._branchy_report("branchy")
+        totals = report['totals']
+        assert totals['num_branches'] == 6
+        assert totals['num_partial_branches'] == 0
+        assert totals['covered_branches'] == 4
+        assert totals['missing_branches'] == 2
+        # R2E revision (2026-09-29, R-b): if the per-file summary also carries
+        # the two counts, they must be this file's counts.
+        summary = report['files']['branchy.py']['summary']
+        if 'covered_branches' in summary or 'missing_branches' in summary:
+>           assert summary.get('covered_branches') == 4
+E           AssertionError: assert 2 == 4
+E            +  where 2 = <built-in method get of dict object at 0x7fbfcc374050>('covered_branches')
+E            +    where <built-in method get of dict object at 0x7fbfcc374050> = {'covered_branches': 2, 'covered_lines': 13, 'excluded_lines': 0, 'missing_branches': 4, ...}.get
+
+r2e_tests/test_1.py:228: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED r2e_tests/test_1.py::JsonReportTest::test_branch_coverage
+PASSED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_from_saved_branch_data
+PASSED r2e_tests/test_1.py::JsonReportTest::test_context_non_relative
+PASSED r2e_tests/test_1.py::JsonReportTest::test_context_relative
+PASSED r2e_tests/test_1.py::JsonReportTest::test_simple_line_coverage
+FAILED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_count_branch_arcs
+1 failed, 5 passed in 0.91 seconds

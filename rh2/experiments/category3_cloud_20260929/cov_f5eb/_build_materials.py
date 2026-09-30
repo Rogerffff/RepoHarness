@@ -96,24 +96,61 @@ exp_text = json.dumps(exp, indent=4) + "\n"
 (HERE / "expected_output_rc2.json").write_text(exp_text)
 added = {k: v for k, v in exp.items() if k not in json.loads(orig_expected)}
 
+DECISION = "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）"
+FILES = f"docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/{IID}"
+EVID = [f"docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category3_diagnosis_20260929/tasks/{IID}/result.md",
+        f"docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category3_diagnosis_20260929/tasks/{IID}/evidence/"]
+REASON = {
+    "rc2": "R-c v2：在 r2e-mr-053 的两项之上补多文件 totals（K3）；触发反例 LF（逐文件赋值代替累加）在现行材料得 1；正对照 gold",
+    "rb2": "R-c v2 + R-b 窄版 v2（仅在用户就 P5 选 A 时启用）：每文件 summary 可带两键，成对且值对；K3 另核每文件值（挡 FC）；正对照 gold",
+}
 for name, edits in variants.items():
     text = apply(orig, edits)
     compile(text, f"hidden_test_1_{name}.py", "exec")
     (HERE / f"hidden_test_1_{name}.py").write_text(text)
     draft = {
         "instance_id": IID,
-        "status": "草案（第3类第二批，2026-09-30）；未落正式修订单",
+        "status": "草案（第3类第二批，2026-09-30）；未落正式修订单" + ("；只在 P5 选 A 时启用" if name == "rb2" else ""),
         "supersedes": ["r2e-mr-053", "r2e-mr-054"],
-        "note": "同一题同一目标只许一条修订：隐藏测试条目整体替换 r2e-mr-053（第 1 处 edit 与之逐字相同），期望条目整体替换 r2e-mr-054",
+        "note": ("同一题同一目标只许一条修订（ingest_r2e_subset.py:415-418）：隐藏测试条目整体取代 r2e-mr-053"
+                 "（第 1 处 edit 与之逐字相同），期望条目整体取代 r2e-mr-054。revision_id 与 revised_file 的版本路径由第2类定；"
+                 "revised_file 若沿用现有路径，会改变旧修订单引用的文件内容"),
         "revisions": [
-            {"kind": "hidden_test_text_replace", "target": "test_1.py",
+            {"revision_id": "待第2类编号", "instance_id": IID, "kind": "hidden_test_text_replace", "target": "test_1.py",
              "edits": [{"old": o, "new": n} for o, n in edits],
-             "sha256_before": sha(orig), "sha256_after": sha(text), "expected_change": None},
-            {"kind": "expected_file_replace", "target": "expected_output_json", "edits": None,
+             "sha256_before": sha(orig), "sha256_after": sha(text),
+             "revised_file": f"{FILES}/<新版本目录>/r2e_tests/test_1.py", "expected_change": None,
+             "decision_ref": DECISION, "reason": REASON[name], "evidence": EVID},
+            {"revision_id": "待第2类编号", "instance_id": IID, "kind": "expected_file_replace",
+             "target": "expected_output_json", "edits": None,
              "sha256_before": sha(orig_expected), "sha256_after": sha(exp_text),
-             "expected_change": {"changed": {}, "added": added, "removed": []}},
+             "revised_file": f"{FILES}/<新版本目录>/expected_output.json",
+             "expected_change": {"changed": {}, "added": added, "removed": []},
+             "decision_ref": DECISION, "reason": REASON[name], "evidence": EVID},
         ],
     }
     (HERE / f"revision_draft_{name}.json").write_text(json.dumps(draft, ensure_ascii=False, indent=1) + "\n")
     print(name, sha(text), len(text.splitlines()), "lines")
 print("expected", sha(exp_text), len(exp), "keys")
+
+# 选项 B（R-f）的题面草稿：句子沿用 R2E 线 revision_plan.md §6.4，未经新公开读者验收
+pub = [json.loads(line) for line in (DOCS / "s2_r2e/ingest/public_bundles_v0.jsonl").read_text().splitlines()
+       if IID in line][0]
+stmt = pub["problem_statement"]
+assert sha(stmt) == pub["problem_statement_sha256"]
+OLD = ("The `totals` section in `coverage.json` should include `covered_branches` and `missing_branches`, "
+       "providing detailed branch coverage information.")
+NEW = OLD + " The per-file `summary` entries under `files` are not part of this change and keep their current keys."
+new_stmt = apply(stmt, [(OLD, NEW)])
+(HERE / "revised_statement_B.txt").write_text(new_stmt)
+(HERE / "revision_draft_statement_B.json").write_text(json.dumps({
+    "instance_id": IID,
+    "status": "草稿，只在用户就 P5 选 B 时启用；未经新公开读者验收，未经 Codex 复核",
+    "revisions": [{"revision_id": "待第2类编号", "instance_id": IID, "kind": "statement_text_replace",
+                   "target": "problem_statement", "edits": [{"old": OLD, "new": NEW}],
+                   "sha256_before": sha(stmt), "sha256_after": sha(new_stmt), "revised_file": None,
+                   "expected_change": None, "decision_ref": "待用户就 P5 选 B（v1 §3 P5：模板外，需用户决定）",
+                   "reason": "R-f：写明每文件 summary 不在本题改动范围内（公开依据：tests/test_json.py:50-58 的旧形状）",
+                   "evidence": EVID}],
+}, ensure_ascii=False, indent=1) + "\n")
+print("statement_B", sha(new_stmt))

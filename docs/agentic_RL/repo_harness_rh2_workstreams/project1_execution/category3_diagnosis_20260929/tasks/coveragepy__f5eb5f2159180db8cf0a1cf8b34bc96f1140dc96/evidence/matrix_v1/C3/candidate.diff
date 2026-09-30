@@ -1,0 +1,17 @@
+diff --git a/coverage/jsonreport.py b/coverage/jsonreport.py
+index 0c3f313d..80a75887 100644
+--- a/coverage/jsonreport.py
++++ b/coverage/jsonreport.py
+@@ -62,6 +62,12 @@ class JsonReporter(object):
+                 'num_partial_branches': self.total.n_partial_branches,
+             })
+ 
++        if self.config.branch:
++            self.report_data["totals"].update({
++                'covered_branches': self.total.n_executed_branches,
++                'missing_branches': self.total.n_missing_branches,
++            })
++
+         json.dump(
+             self.report_data,
+             outfile,
