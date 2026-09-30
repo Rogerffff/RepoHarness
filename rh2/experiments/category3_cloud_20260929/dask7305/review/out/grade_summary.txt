@@ -1,0 +1,52 @@
+candidate             orig            v1              revised_test_v  
+base                  0               0               0               
+gold                  1               0               0               
+gold_full             1               1               1               
+exact_full            0               1               1               
+higher_full           0               1               1               
+nearest_via_float     1               0               0               
+rv_pin_noclip         0               1               0               
+rv_interp_pin_noclip  1               1               0               
+rv_maxonly_threshold  0               1               0               
+rv_lower_full         1               1               1               
+rv_exact_linear       0               1               1               
+rv_minmax_graph       0               1               1               
+rv_dup_branch         0               1               1               
+rv_swallow_int64      1               0               0               
+rv_si_override        0               0               0               
+rv_sorted_assume      0 (P2P bad 1)   0 (P2P bad 1)   0 (P2P bad 1)   
+rv_len2               0               0               0               
+rv_k_le4              1               1               0               
+
+base / orig: assert set(d1.divisions) == set([1, 2, 4]) | assert set(d1.divisions) == set([1, 2, 4]) | assert {1, 2, 3, 4} == {1, 2, 4}
+base / v1: _assert_exact_int_divisions(issue, "uint64", 1, 1) | assert got[0] == lo | assert 612509347682975744 == 612509347682975743
+base / revised_test_v2_draft: _assert_exact_int_divisions(issue, "uint64", 1, 1) | assert got[0] == lo | assert 612509347682975744 == 612509347682975743
+gold / v1: _assert_exact_int_divisions(issue, "uint64", 1, 3) | assert got[0] == lo | assert 612509347682975744 == 612509347682975743
+gold / revised_test_v2_draft: _assert_exact_int_divisions(issue, "uint64", 1, 3) | assert got[0] == lo | assert 612509347682975744 == 612509347682975743
+exact_full / orig: assert set(d1.divisions) == set([1, 2, 4]) | assert set(d1.divisions) == set([1, 2, 4]) | assert {1, 2, 3, 4} == {1, 2, 4}
+higher_full / orig: assert set(d1.divisions) == set([1, 2, 4]) | assert set(d1.divisions) == set([1, 2, 4]) | assert {1, 2, 3, 4} == {1, 2, 4}
+nearest_via_float / v1: _assert_exact_int_divisions(issue, "uint64", 1, 1) | assert got[0] == lo | assert 612509347682975744 == 612509347682975743
+nearest_via_float / revised_test_v2_draft: _assert_exact_int_divisions(issue, "uint64", 1, 1) | assert got[0] == lo | assert 612509347682975744 == 612509347682975743
+rv_pin_noclip / orig: assert set(d1.divisions) == set([1, 2, 4]) | assert set(d1.divisions) == set([1, 2, 4]) | assert {1, 2, 3, 4} == {1, 2, 4}
+rv_pin_noclip / revised_test_v2_draft: _assert_exact_int_divisions([big + 99 + j % 3 for j in range(300)], "uint64", 3, 5) | assert got[-1] == hi | assert 612509347682975872 == 612509347682975844
+rv_interp_pin_noclip / revised_test_v2_draft: _assert_exact_int_divisions([big + 99 + j % 3 for j in range(300)], "uint64", 3, 5) | assert got == sorted(got) | assert [612509347682...9347682975844] == [612509347682...9347682975872
+rv_maxonly_threshold / orig: assert set(d1.divisions) == set([1, 2, 4]) | assert set(d1.divisions) == set([1, 2, 4]) | assert {1, 2, 3, 4} == {1, 2, 4}
+rv_maxonly_threshold / revised_test_v2_draft: _assert_exact_int_divisions([-big - 997 * k for k in order], "int64", 4, 4) | assert got[0] == lo | assert -612509347683174144 == -612509347683174146
+rv_exact_linear / orig: assert set(d1.divisions) == set([1, 2, 4]) | assert set(d1.divisions) == set([1, 2, 4]) | assert {1, 2, 3, 4} == {1, 2, 4}
+rv_minmax_graph / orig: assert set(d1.divisions) == set([1, 2, 4]) | assert set(d1.divisions) == set([1, 2, 4]) | assert {1, 2, 3, 4} == {1, 2, 4}
+rv_dup_branch / orig: assert set(d1.divisions) == set([1, 2, 4]) | assert set(d1.divisions) == set([1, 2, 4]) | assert {1, 3, 4} == {1, 2, 4}
+rv_swallow_int64 / v1: _assert_exact_int_divisions([big + 89000000000000001 * k for k in order], "uint64", 4, 4) | assert got[0] == lo | assert 612509347682975744 == 612509347682975743
+rv_swallow_int64 / revised_test_v2_draft: _assert_exact_int_divisions([big + 89000000000000001 * k for k in order], "uint64", 4, 4) | assert got[0] == lo | assert 612509347682975744 == 612509347682975743
+rv_si_override / orig: assert set(d1.divisions) == set([1, 2, 4]) | assert set(d1.divisions) == set([1, 2, 4]) | assert {1, 2, 3, 4} == {1, 2, 4}
+rv_si_override / v1: _assert_exact_int_divisions(issue, "uint64", 1, 1) | assert got[0] == lo | assert 612509347682975744 == 612509347682975743
+rv_si_override / revised_test_v2_draft: _assert_exact_int_divisions(issue, "uint64", 1, 1) | assert got[0] == lo | assert 612509347682975744 == 612509347682975743
+rv_sorted_assume / orig: assert set(d1.divisions) == set([1, 2, 4]) | assert set(d1.divisions) == set([1, 2, 4]) | assert {1, 3} == {1, 2, 4}
+rv_sorted_assume / orig: P2P not passed: ['dask/dataframe/tests/test_shuffle.py::test_set_index']
+rv_sorted_assume / v1: assert d1.divisions[0] == 1 | assert d1.divisions[0] == 1 | assert 3 == 1
+rv_sorted_assume / v1: P2P not passed: ['dask/dataframe/tests/test_shuffle.py::test_set_index']
+rv_sorted_assume / revised_test_v2_draft: assert d1.divisions[0] == 1 | assert d1.divisions[0] == 1 | assert 3 == 1
+rv_sorted_assume / revised_test_v2_draft: P2P not passed: ['dask/dataframe/tests/test_shuffle.py::test_set_index']
+rv_len2 / orig: assert set(d1.divisions) == set([1, 2, 4]) | assert set(d1.divisions) == set([1, 2, 4]) | assert {1, 2, 3, 4} == {1, 2, 4}
+rv_len2 / v1: _assert_exact_int_divisions([big + 997 * k for k in order], "uint64", 4, 4) | assert got[0] == lo | assert 612509347682975744 == 612509347682975743
+rv_len2 / revised_test_v2_draft: _assert_exact_int_divisions([big + 997 * k for k in order], "uint64", 4, 4) | assert got[0] == lo | assert 612509347682975744 == 612509347682975743
+rv_k_le4 / revised_test_v2_draft: _assert_exact_int_divisions([big + 99 + j % 3 for j in range(300)], "uint64", 3, 5) | assert got[0] == lo | assert 612509347682975872 == 612509347682975842

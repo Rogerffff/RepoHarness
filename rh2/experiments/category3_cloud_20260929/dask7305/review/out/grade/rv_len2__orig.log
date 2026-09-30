@@ -1,0 +1,165 @@
+APPLIED_OK
+============================= test session starts ==============================
+platform linux -- Python 3.8.19, pytest-8.3.2, pluggy-1.5.0
+rootdir: /testbed
+configfile: setup.cfg
+plugins: xdist-3.6.1, cov-5.0.0
+collected 108 items
+
+dask/dataframe/tests/test_shuffle.py .................s................. [ 32%]
+....s..........F..................s..................................... [ 99%]
+.                                                                        [100%]
+
+=================================== FAILURES ===================================
+__________________________ test_set_index_interpolate __________________________
+
+    def test_set_index_interpolate():
+        df = pd.DataFrame({"x": [4, 1, 1, 3, 3], "y": [1.0, 1, 1, 1, 2]})
+        d = dd.from_pandas(df, 2)
+    
+        d1 = d.set_index("x", npartitions=3)
+        assert d1.npartitions == 3
+>       assert set(d1.divisions) == set([1, 2, 4])
+E       assert {1, 2, 3, 4} == {1, 2, 4}
+E         
+E         Extra items in the left set:
+E         3
+E         Use -v to get more diff
+
+dask/dataframe/tests/test_shuffle.py:614: AssertionError
+=============================== warnings summary ===============================
+../opt/miniconda3/envs/testbed/lib/python3.8/site-packages/chest/core.py:1
+  /opt/miniconda3/envs/testbed/lib/python3.8/site-packages/chest/core.py:1: DeprecationWarning: Using or importing the ABCs from 'collections' instead of from 'collections.abc' is deprecated since Python 3.3, and in 3.10 it will stop working
+    from collections import MutableMapping
+
+dask/dataframe/tests/test_shuffle.py::test_disk_shuffle_check_actual_compression
+  /opt/miniconda3/envs/testbed/lib/python3.8/site-packages/_pytest/unraisableexception.py:85: PytestUnraisableExceptionWarning: Exception ignored in: <_io.FileIO [closed]>
+  
+  Traceback (most recent call last):
+    File "/testbed/dask/dataframe/tests/test_shuffle.py", line 1012, in generate_raw_partd_file
+      return open(filename, "rb").read()
+  ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmp5wgkrgky.partd/x'>
+  
+    warnings.warn(pytest.PytestUnraisableExceptionWarning(msg))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+==================================== PASSES ====================================
+============================= slowest 10 durations =============================
+3.70s call     dask/dataframe/tests/test_shuffle.py::test_rearrange[processes-disk]
+3.35s call     dask/dataframe/tests/test_shuffle.py::test_rearrange[processes-tasks]
+2.87s call     dask/dataframe/tests/test_shuffle.py::test_rearrange_disk_cleanup_with_exception
+2.54s call     dask/dataframe/tests/test_shuffle.py::test_rearrange_cleanup
+1.07s call     dask/dataframe/tests/test_shuffle.py::test_set_index_tasks_2[disk]
+0.66s call     dask/dataframe/tests/test_shuffle.py::test_set_index_tasks_2[tasks]
+0.55s call     dask/dataframe/tests/test_shuffle.py::test_set_index_tasks[7]
+0.47s call     dask/dataframe/tests/test_shuffle.py::test_set_index_drop[True]
+0.32s call     dask/dataframe/tests/test_shuffle.py::test_set_index_drop[False]
+0.32s call     dask/dataframe/tests/test_shuffle.py::test_set_index_tasks[4]
+=========================== short test summary info ============================
+PASSED dask/dataframe/tests/test_shuffle.py::test_shuffle[disk]
+PASSED dask/dataframe/tests/test_shuffle.py::test_shuffle[tasks]
+PASSED dask/dataframe/tests/test_shuffle.py::test_default_partitions
+PASSED dask/dataframe/tests/test_shuffle.py::test_shuffle_npartitions_task
+PASSED dask/dataframe/tests/test_shuffle.py::test_index_with_non_series[disk]
+PASSED dask/dataframe/tests/test_shuffle.py::test_index_with_non_series[tasks]
+PASSED dask/dataframe/tests/test_shuffle.py::test_index_with_dataframe[disk]
+PASSED dask/dataframe/tests/test_shuffle.py::test_index_with_dataframe[tasks]
+PASSED dask/dataframe/tests/test_shuffle.py::test_shuffle_from_one_partition_to_one_other[disk]
+PASSED dask/dataframe/tests/test_shuffle.py::test_shuffle_from_one_partition_to_one_other[tasks]
+PASSED dask/dataframe/tests/test_shuffle.py::test_shuffle_empty_partitions[disk]
+PASSED dask/dataframe/tests/test_shuffle.py::test_shuffle_empty_partitions[tasks]
+PASSED dask/dataframe/tests/test_shuffle.py::test_partitioning_index
+PASSED dask/dataframe/tests/test_shuffle.py::test_partitioning_index_categorical_on_values
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_tasks[1]
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_tasks[4]
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_tasks[7]
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_self_index[disk]
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_self_index[tasks]
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_names[tasks]
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_tasks_2[disk]
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_tasks_2[tasks]
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_tasks_3[disk]
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_tasks_3[tasks]
+PASSED dask/dataframe/tests/test_shuffle.py::test_shuffle_sort[tasks]
+PASSED dask/dataframe/tests/test_shuffle.py::test_shuffle_sort[disk]
+PASSED dask/dataframe/tests/test_shuffle.py::test_rearrange[threads-tasks]
+PASSED dask/dataframe/tests/test_shuffle.py::test_rearrange[threads-disk]
+PASSED dask/dataframe/tests/test_shuffle.py::test_rearrange[processes-tasks]
+PASSED dask/dataframe/tests/test_shuffle.py::test_rearrange[processes-disk]
+PASSED dask/dataframe/tests/test_shuffle.py::test_rearrange_cleanup
+PASSED dask/dataframe/tests/test_shuffle.py::test_rearrange_disk_cleanup_with_exception
+PASSED dask/dataframe/tests/test_shuffle.py::test_rearrange_by_column_with_narrow_divisions
+PASSED dask/dataframe/tests/test_shuffle.py::test_maybe_buffered_partd
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_with_explicit_divisions
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_divisions_2
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_divisions_compute
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_divisions_sorted
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_reduces_partitions_small[disk]
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_reduces_partitions_small[tasks]
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_reduces_partitions_large[disk]
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_reduces_partitions_large[tasks]
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_doesnt_increase_partitions[disk]
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_doesnt_increase_partitions[tasks]
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_detects_sorted_data[disk]
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_detects_sorted_data[tasks]
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_sorts
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_interpolate_int
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_interpolate_large_uint
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_timezone
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_npartitions
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_datetime_precision[ns]
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_datetime_precision[us]
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_drop[True]
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_drop[False]
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_raises_error_on_bad_input
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_sorted_true
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_sorted_single_partition
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_sorted_min_max_same
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_empty_partition
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_on_empty
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_categorical
+PASSED dask/dataframe/tests/test_shuffle.py::test_compute_divisions
+PASSED dask/dataframe/tests/test_shuffle.py::test_empty_partitions
+PASSED dask/dataframe/tests/test_shuffle.py::test_remove_nans
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_does_not_repeat_work_due_to_optimizations[None]
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_does_not_repeat_work_due_to_optimizations[auto]
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_errors_with_inplace_kwarg
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_timestamp
+PASSED dask/dataframe/tests/test_shuffle.py::test_disk_shuffle_with_compression_option[None]
+PASSED dask/dataframe/tests/test_shuffle.py::test_disk_shuffle_with_compression_option[ZLib]
+PASSED dask/dataframe/tests/test_shuffle.py::test_disk_shuffle_with_unknown_compression[UNKOWN_COMPRESSION_ALGO]
+PASSED dask/dataframe/tests/test_shuffle.py::test_disk_shuffle_check_actual_compression
+PASSED dask/dataframe/tests/test_shuffle.py::test_dataframe_shuffle_on_tasks_api[None-id-None]
+PASSED dask/dataframe/tests/test_shuffle.py::test_dataframe_shuffle_on_tasks_api[None-id-True]
+PASSED dask/dataframe/tests/test_shuffle.py::test_dataframe_shuffle_on_tasks_api[None-id-False]
+PASSED dask/dataframe/tests/test_shuffle.py::test_dataframe_shuffle_on_tasks_api[None-name-None]
+PASSED dask/dataframe/tests/test_shuffle.py::test_dataframe_shuffle_on_tasks_api[None-name-True]
+PASSED dask/dataframe/tests/test_shuffle.py::test_dataframe_shuffle_on_tasks_api[None-name-False]
+PASSED dask/dataframe/tests/test_shuffle.py::test_dataframe_shuffle_on_tasks_api[None-on2-None]
+PASSED dask/dataframe/tests/test_shuffle.py::test_dataframe_shuffle_on_tasks_api[None-on2-True]
+PASSED dask/dataframe/tests/test_shuffle.py::test_dataframe_shuffle_on_tasks_api[None-on2-False]
+PASSED dask/dataframe/tests/test_shuffle.py::test_dataframe_shuffle_on_tasks_api[None-on3-None]
+PASSED dask/dataframe/tests/test_shuffle.py::test_dataframe_shuffle_on_tasks_api[None-on3-True]
+PASSED dask/dataframe/tests/test_shuffle.py::test_dataframe_shuffle_on_tasks_api[None-on3-False]
+PASSED dask/dataframe/tests/test_shuffle.py::test_dataframe_shuffle_on_tasks_api[4-id-None]
+PASSED dask/dataframe/tests/test_shuffle.py::test_dataframe_shuffle_on_tasks_api[4-id-True]
+PASSED dask/dataframe/tests/test_shuffle.py::test_dataframe_shuffle_on_tasks_api[4-id-False]
+PASSED dask/dataframe/tests/test_shuffle.py::test_dataframe_shuffle_on_tasks_api[4-name-None]
+PASSED dask/dataframe/tests/test_shuffle.py::test_dataframe_shuffle_on_tasks_api[4-name-True]
+PASSED dask/dataframe/tests/test_shuffle.py::test_dataframe_shuffle_on_tasks_api[4-name-False]
+PASSED dask/dataframe/tests/test_shuffle.py::test_dataframe_shuffle_on_tasks_api[4-on2-None]
+PASSED dask/dataframe/tests/test_shuffle.py::test_dataframe_shuffle_on_tasks_api[4-on2-True]
+PASSED dask/dataframe/tests/test_shuffle.py::test_dataframe_shuffle_on_tasks_api[4-on2-False]
+PASSED dask/dataframe/tests/test_shuffle.py::test_dataframe_shuffle_on_tasks_api[4-on3-None]
+PASSED dask/dataframe/tests/test_shuffle.py::test_dataframe_shuffle_on_tasks_api[4-on3-True]
+PASSED dask/dataframe/tests/test_shuffle.py::test_dataframe_shuffle_on_tasks_api[4-on3-False]
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_overlap
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_overlap_2
+PASSED dask/dataframe/tests/test_shuffle.py::test_shuffle_hlg_layer
+PASSED dask/dataframe/tests/test_shuffle.py::test_shuffle_hlg_layer_serialize[10]
+PASSED dask/dataframe/tests/test_shuffle.py::test_shuffle_hlg_layer_serialize[1]
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_nan_partition
+SKIPPED [3] conftest.py:36: need --runslow option to run
+FAILED dask/dataframe/tests/test_shuffle.py::test_set_index_interpolate - ass...
+============ 1 failed, 104 passed, 3 skipped, 2 warnings in 25.64s =============

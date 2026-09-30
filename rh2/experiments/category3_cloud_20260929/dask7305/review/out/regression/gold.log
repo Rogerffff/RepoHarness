@@ -1,0 +1,297 @@
+============================= test session starts ==============================
+platform linux -- Python 3.8.19, pytest-8.3.2, pluggy-1.5.0
+rootdir: /testbed
+configfile: setup.cfg
+plugins: xdist-3.6.1, cov-5.0.0
+collected 1275 items / 957 deselected / 318 selected
+
+dask/dataframe/tests/test_dataframe.py ..............s.................. [ 10%]
+........................................................................ [ 33%]
+............................................................ssssssssssss [ 55%]
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 78%]
+ssssssssssssssssssssssss.......                                          [ 88%]
+dask/dataframe/tests/test_multi.py .....F.....                           [ 91%]
+dask/dataframe/tests/test_categorical.py .............                   [ 95%]
+dask/dataframe/tests/test_rolling.py ............                        [ 99%]
+dask/dataframe/io/tests/test_io.py ..                                    [100%]
+
+=================================== FAILURES ===================================
+________________________ test_concat_unknown_divisions _________________________
+
+    def test_concat_unknown_divisions():
+        a = pd.Series([1, 2, 3, 4])
+        b = pd.Series([4, 3, 2, 1])
+        aa = dd.from_pandas(a, npartitions=2, sort=False)
+        bb = dd.from_pandas(b, npartitions=2, sort=False)
+    
+        assert not aa.known_divisions
+    
+        with pytest.warns(UserWarning):
+            assert_eq(pd.concat([a, b], axis=1), dd.concat([aa, bb], axis=1))
+    
+        cc = dd.from_pandas(b, npartitions=1, sort=False)
+        with pytest.raises(ValueError):
+            dd.concat([aa, cc], axis=1)
+    
+>       with pytest.warns(None) as record:
+
+dask/dataframe/tests/test_multi.py:1478: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = WarningsChecker(record=True), expected_warning = None, match_expr = None
+
+    def __init__(
+        self,
+        expected_warning: type[Warning] | tuple[type[Warning], ...] = Warning,
+        match_expr: str | Pattern[str] | None = None,
+        *,
+        _ispytest: bool = False,
+    ) -> None:
+        check_ispytest(_ispytest)
+        super().__init__(_ispytest=True)
+    
+        msg = "exceptions must be derived from Warning, not %s"
+        if isinstance(expected_warning, tuple):
+            for exc in expected_warning:
+                if not issubclass(exc, Warning):
+                    raise TypeError(msg % type(exc))
+            expected_warning_tup = expected_warning
+        elif isinstance(expected_warning, type) and issubclass(
+            expected_warning, Warning
+        ):
+            expected_warning_tup = (expected_warning,)
+        else:
+>           raise TypeError(msg % type(expected_warning))
+E           TypeError: exceptions must be derived from Warning, not <class 'NoneType'>
+
+/opt/miniconda3/envs/testbed/lib/python3.8/site-packages/_pytest/recwarn.py:280: TypeError
+=============================== warnings summary ===============================
+../opt/miniconda3/envs/testbed/lib/python3.8/site-packages/chest/core.py:1
+  /opt/miniconda3/envs/testbed/lib/python3.8/site-packages/chest/core.py:1: DeprecationWarning: Using or importing the ABCs from 'collections' instead of from 'collections.abc' is deprecated since Python 3.3, and in 3.10 it will stop working
+    from collections import MutableMapping
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+==================================== PASSES ====================================
+============================= slowest 10 durations =============================
+0.19s call     dask/dataframe/tests/test_dataframe.py::test_describe_for_possibly_unsorted_q
+0.10s call     dask/dataframe/tests/test_categorical.py::test_categorical_set_index[disk]
+0.09s call     dask/dataframe/tests/test_categorical.py::test_categorical_set_index[tasks]
+0.08s call     dask/dataframe/tests/test_categorical.py::test_categorical_set_index_npartitions_vs_ncategories[3-1]
+0.08s call     dask/dataframe/tests/test_multi.py::test_multi_duplicate_divisions
+0.07s call     dask/dataframe/tests/test_rolling.py::test_time_rolling_methods[3S-quantile-args10-False]
+0.06s call     dask/dataframe/tests/test_multi.py::test_merge_index_without_divisions[disk]
+0.05s call     dask/dataframe/tests/test_rolling.py::test_time_rolling_methods[2S-quantile-args10-False]
+0.05s call     dask/dataframe/tests/test_rolling.py::test_rolling_methods[False-4-quantile-args10-False]
+0.05s call     dask/dataframe/tests/test_rolling.py::test_time_rolling_methods[1S-quantile-args10-False]
+=========================== short test summary info ============================
+PASSED dask/dataframe/tests/test_dataframe.py::test_describe_for_possibly_unsorted_q
+PASSED dask/dataframe/tests/test_dataframe.py::test_value_counts_not_sorted
+PASSED dask/dataframe/tests/test_dataframe.py::test_quantile[tdigest-expected0]
+PASSED dask/dataframe/tests/test_dataframe.py::test_quantile[dask-expected1]
+PASSED dask/dataframe/tests/test_dataframe.py::test_quantile_missing[tdigest]
+PASSED dask/dataframe/tests/test_dataframe.py::test_quantile_missing[dask]
+PASSED dask/dataframe/tests/test_dataframe.py::test_empty_quantile[tdigest]
+PASSED dask/dataframe/tests/test_dataframe.py::test_empty_quantile[dask]
+PASSED dask/dataframe/tests/test_dataframe.py::test_dataframe_quantile[tdigest-expected0]
+PASSED dask/dataframe/tests/test_dataframe.py::test_dataframe_quantile[dask-expected1]
+PASSED dask/dataframe/tests/test_dataframe.py::test_quantile_for_possibly_unsorted_q
+PASSED dask/dataframe/tests/test_dataframe.py::test_quantile_tiny_partitions
+PASSED dask/dataframe/tests/test_dataframe.py::test_known_divisions
+PASSED dask/dataframe/tests/test_dataframe.py::test_unknown_divisions
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_divisions
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_on_pandas_dataframe
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-1-1-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-1-1-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-1-2-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-1-2-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-1-4-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-1-4-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-1-5-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-1-5-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-2-1-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-2-1-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-2-2-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-2-2-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-2-4-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-2-4-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-2-5-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-2-5-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-4-1-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-4-1-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-4-2-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-4-2-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-4-4-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-4-4-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-4-5-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-4-5-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-5-1-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-5-1-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-5-2-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-5-2-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-5-4-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-5-4-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-5-5-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-float-5-5-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-1-1-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-1-1-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-1-2-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-1-2-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-1-4-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-1-4-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-1-5-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-1-5-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-2-1-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-2-1-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-2-2-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-2-2-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-2-4-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-2-4-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-2-5-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-2-5-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-4-1-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-4-1-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-4-2-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-4-2-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-4-4-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-4-4-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-4-5-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-4-5-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-5-1-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-5-1-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-5-2-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-5-2-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-5-4-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-5-4-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-5-5-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>0-M8[ns]-5-5-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-1-1-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-1-1-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-1-2-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-1-2-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-1-4-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-1-4-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-1-5-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-1-5-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-2-1-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-2-1-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-2-2-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-2-2-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-2-4-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-2-4-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-2-5-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-2-5-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-4-1-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-4-1-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-4-2-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-4-2-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-4-4-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-4-4-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-4-5-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-4-5-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-5-1-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-5-1-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-5-2-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-5-2-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-5-4-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-5-4-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-5-5-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-float-5-5-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-1-1-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-1-1-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-1-2-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-1-2-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-1-4-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-1-4-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-1-5-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-1-5-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-2-1-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-2-1-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-2-2-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-2-2-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-2-4-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-2-4-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-2-5-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-2-5-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-4-1-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-4-1-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-4-2-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-4-2-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-4-4-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-4-4-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-4-5-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-4-5-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-5-1-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-5-1-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-5-2-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-5-2-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-5-4-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-5-4-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-5-5-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions[<lambda>1-M8[ns]-5-5-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_partition_size[<lambda>0-1kiB-2-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_partition_size[<lambda>0-1kiB-2-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_partition_size[<lambda>0-1kiB-5-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_partition_size[<lambda>0-1kiB-5-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_partition_size[<lambda>0-379-2-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_partition_size[<lambda>0-379-2-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_partition_size[<lambda>0-379-5-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_partition_size[<lambda>0-379-5-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_partition_size[<lambda>1-1kiB-2-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_partition_size[<lambda>1-1kiB-2-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_partition_size[<lambda>1-1kiB-5-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_partition_size[<lambda>1-1kiB-5-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_partition_size[<lambda>1-379-2-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_partition_size[<lambda>1-379-2-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_partition_size[<lambda>1-379-5-True]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_partition_size[<lambda>1-379-5-False]
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_partition_size_arg
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions_same_limits
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_npartitions_numeric_edge_case
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_object_index
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_freq_divisions
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_freq_errors
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_freq_month
+PASSED dask/dataframe/tests/test_dataframe.py::test_repartition_input_errors
+PASSED dask/dataframe/tests/test_dataframe.py::test_reset_index
+PASSED dask/dataframe/tests/test_dataframe.py::test_timeseries_sorted
+PASSED dask/dataframe/tests/test_dataframe.py::test_index_divisions
+PASSED dask/dataframe/tests/test_multi.py::test_align_partitions_unknown_divisions
+PASSED dask/dataframe/tests/test_multi.py::test_merge_asof_unsorted_raises
+PASSED dask/dataframe/tests/test_multi.py::test_cheap_single_partition_merge_divisions
+PASSED dask/dataframe/tests/test_multi.py::test_merge_index_without_divisions[disk]
+PASSED dask/dataframe/tests/test_multi.py::test_merge_index_without_divisions[tasks]
+PASSED dask/dataframe/tests/test_multi.py::test_concat_unknown_divisions_errors
+PASSED dask/dataframe/tests/test_multi.py::test_append_lose_divisions
+PASSED dask/dataframe/tests/test_multi.py::test_singleton_divisions
+PASSED dask/dataframe/tests/test_multi.py::test_repartition_repeated_divisions
+PASSED dask/dataframe/tests/test_multi.py::test_multi_duplicate_divisions
+PASSED dask/dataframe/tests/test_categorical.py::test_categorical_set_index[disk]
+PASSED dask/dataframe/tests/test_categorical.py::test_categorical_set_index[tasks]
+PASSED dask/dataframe/tests/test_categorical.py::test_categorical_set_index_npartitions_vs_ncategories[1-1]
+PASSED dask/dataframe/tests/test_categorical.py::test_categorical_set_index_npartitions_vs_ncategories[1-3]
+PASSED dask/dataframe/tests/test_categorical.py::test_categorical_set_index_npartitions_vs_ncategories[1-6]
+PASSED dask/dataframe/tests/test_categorical.py::test_categorical_set_index_npartitions_vs_ncategories[3-1]
+PASSED dask/dataframe/tests/test_categorical.py::test_categorical_set_index_npartitions_vs_ncategories[3-3]
+PASSED dask/dataframe/tests/test_categorical.py::test_categorical_set_index_npartitions_vs_ncategories[3-6]
+PASSED dask/dataframe/tests/test_categorical.py::test_categorical_set_index_npartitions_vs_ncategories[6-1]
+PASSED dask/dataframe/tests/test_categorical.py::test_categorical_set_index_npartitions_vs_ncategories[6-3]
+PASSED dask/dataframe/tests/test_categorical.py::test_categorical_set_index_npartitions_vs_ncategories[6-6]
+PASSED dask/dataframe/tests/test_categorical.py::test_repartition_on_categoricals[1]
+PASSED dask/dataframe/tests/test_categorical.py::test_repartition_on_categoricals[4]
+PASSED dask/dataframe/tests/test_rolling.py::test_rolling_methods[True-1-quantile-args10-False]
+PASSED dask/dataframe/tests/test_rolling.py::test_rolling_methods[True-2-quantile-args10-False]
+PASSED dask/dataframe/tests/test_rolling.py::test_rolling_methods[True-4-quantile-args10-False]
+PASSED dask/dataframe/tests/test_rolling.py::test_rolling_methods[True-5-quantile-args10-False]
+PASSED dask/dataframe/tests/test_rolling.py::test_rolling_methods[False-1-quantile-args10-False]
+PASSED dask/dataframe/tests/test_rolling.py::test_rolling_methods[False-2-quantile-args10-False]
+PASSED dask/dataframe/tests/test_rolling.py::test_rolling_methods[False-4-quantile-args10-False]
+PASSED dask/dataframe/tests/test_rolling.py::test_rolling_methods[False-5-quantile-args10-False]
+PASSED dask/dataframe/tests/test_rolling.py::test_time_rolling_methods[1S-quantile-args10-False]
+PASSED dask/dataframe/tests/test_rolling.py::test_time_rolling_methods[2S-quantile-args10-False]
+PASSED dask/dataframe/tests/test_rolling.py::test_time_rolling_methods[3S-quantile-args10-False]
+PASSED dask/dataframe/tests/test_rolling.py::test_time_rolling_methods[window3-quantile-args10-False]
+PASSED dask/dataframe/io/tests/test_io.py::test_from_pandas_non_sorted
+PASSED dask/dataframe/io/tests/test_io.py::test_from_delayed_sorted
+SKIPPED [109] conftest.py:36: need --runslow option to run
+FAILED dask/dataframe/tests/test_multi.py::test_concat_unknown_divisions - Ty...
+==== 1 failed, 208 passed, 109 skipped, 957 deselected, 1 warning in 5.59s =====

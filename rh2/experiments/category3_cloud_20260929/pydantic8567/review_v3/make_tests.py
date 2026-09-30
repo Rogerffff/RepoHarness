@@ -9,6 +9,8 @@
   内部值与 dump 都断言（会把 A08 从 T3 升为有断言）。
 - t_v3sv2：t_v3s 再加一个单独模型，只断言验证、不 dump 的“夹中间”字段：
   `Annotated[bool, serializer, AfterValidator(1/0), validator]` 只查 `is True`（不把 A08 的序列化升为断言）。
+- t_v2：作者 v2 原样（父版本，用于看 v3 新拒了哪些候选）。
+- t_v3f：与 t_v3s 等价、不改 import 的写法：第 5 项字段加默认值 `= Field(strict=True)`（元数据为 [Strict, After, ser, PV]）。
 - t_v3sx：t_v3s 再加一个单独模型，serializer 与 PV 之间夹一个不包层的约束：
   `Annotated[bool, serializer, Field(strict=True), validator]`，验证值与 dump 都断言。
 """
@@ -82,6 +84,15 @@ NEW_BLOCKS = {
     assert between.w is True
     assert between.model_dump() == {'w': '1'}
 """,
+    't_v3f': """    # Metadata placed before the plain validator is still replaced by it (documented ordering of validators):
+    # neither the constraint from the field default nor an inner validator applies, while the serializer is still used.
+    class Replaced(BaseModel):
+        z: Annotated[bool, AfterValidator(lambda v: 1 / 0), serializer, validator] = Field(strict=True)
+
+    replaced = Replaced(z='1')
+    assert replaced.z is True
+    assert replaced.model_dump() == {'z': '1'}
+""",
 }
 
 IMPORT_OLD = """    PydanticUserError,
@@ -98,6 +109,7 @@ def sh(cmd: str) -> str:
 
 
 shutil.copy(V3, OUT / 't_v3.patch')
+shutil.copy(V3.with_name('revised_test_v2.patch'), OUT / 't_v2.patch')
 for name, block in NEW_BLOCKS.items():
     sh('git checkout -- tests')
     sh(f'git apply {V3}')

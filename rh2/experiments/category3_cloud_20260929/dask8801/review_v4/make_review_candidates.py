@@ -488,6 +488,29 @@ variants["wr_perm_fatal"] = (
     ),
     "gold 上把权限错误改成致命错误，其它 OSError（目录、文件已删除）仍跳过：违反公开权限测试，c.yaml 检查拦不住",
 )
+variants["wr_open_unguarded"] = (
+    sub(
+        BASE,
+        OLD_LOOP,
+        """    for path in file_paths:
+        with open(path) as f:
+            text = f.read()
+        try:
+            data = yaml.safe_load(text)
+        except yaml.YAMLError as exc:
+            raise ValueError(f"Could not parse Dask config file {path}: {exc}") from exc
+        if data is None:
+            continue
+        if not isinstance(data, dict):
+            raise ValueError(
+                f"Dask config file {path} must contain a mapping at the top level, "
+                f"got {type(data).__name__}"
+            )
+        configs.append(data)
+""",
+    ),
+    "oserr_fatal 的另一种自然写法：重写循环时把 open() 移出 try，不可读条目的 OSError 原样抛出",
+)
 variants["wr_null_raises"] = (
     sub(
         BASE,

@@ -63,6 +63,10 @@
   "sha256": "201dccfb0da8016c72ff69bda956a50cab465d879280111e9bf72d1420abc9b8",
   "what": "gold 上把权限错误改成致命错误，其它 OSError（目录、文件已删除）仍跳过：违反公开权限测试，c.yaml 检查拦不住"
  },
+ "wr_open_unguarded": {
+  "sha256": "07c8edbf8d50c268cd3c77a80ec801ee929121464bfe254d2d6a9498dbd888fc",
+  "what": "oserr_fatal 的另一种自然写法：重写循环时把 open() 移出 try，不可读条目的 OSError 原样抛出"
+ },
  "wr_null_raises": {
   "sha256": "315cf3d181f07f08f7735195c3606ff273a9f5dc828c3c6fd78344454e821e82",
   "what": "按文本判断空文件／全注释；其余解析为 None 的文件（显式 null、只有 '---' 与注释）报错"
