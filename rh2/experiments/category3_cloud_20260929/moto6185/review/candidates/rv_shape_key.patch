@@ -1,0 +1,39 @@
+diff --git a/moto/dynamodb/models/table.py b/moto/dynamodb/models/table.py
+--- a/moto/dynamodb/models/table.py
++++ b/moto/dynamodb/models/table.py
+@@ -484,10 +484,16 @@
+                 if DynamoType(range_value).size() > RANGE_KEY_MAX_LENGTH:
+                     raise RangeKeyTooLong
+ 
+-    def _validate_item_types(self, item_attrs: Dict[str, Any]) -> None:
++    ATTRIBUTE_VALUE_TYPES = {"S", "N", "B", "SS", "NS", "BS", "M", "L", "NULL", "BOOL"}
++
++    def _validate_item_types(
++        self, item_attrs: Dict[str, Any], root_attr: Optional[str] = None
++    ) -> None:
+         for key, value in item_attrs.items():
+             if type(value) == dict:
+-                self._validate_item_types(value)
++                self._validate_item_types(
++                    value, root_attr=key if root_attr is None else root_attr
++                )
+             elif type(value) == int and key == "N":
+                 raise InvalidConversion
+             if key == "S":
+@@ -498,9 +504,14 @@
+                         "NUMBER_VALUE cannot be converted to String"
+                     )
+                 if type(value) == dict:
+-                    raise SerializationException(
+-                        "Start of structure or map found where not expected"
++                    # 'S' may also be the name of an attribute: then its value is an AttributeValue
++                    looks_like_attribute_value = (
++                        len(value) == 1 and list(value)[0] in self.ATTRIBUTE_VALUE_TYPES
+                     )
++                    if root_attr in self.table_key_attrs or not looks_like_attribute_value:
++                        raise SerializationException(
++                            "Start of structure or map found where not expected"
++                        )
+ 
+     def put_item(
+         self,

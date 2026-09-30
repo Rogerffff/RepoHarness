@@ -1,0 +1,19 @@
+diff --git a/moto/dynamodb/models/table.py b/moto/dynamodb/models/table.py
+--- a/moto/dynamodb/models/table.py
++++ b/moto/dynamodb/models/table.py
+@@ -540,7 +540,14 @@
+                 actual_type=range_value.type,
+             )
+ 
+-        self._validate_item_types(item_attrs)
++        for attr_name, attr_value in item_attrs.items():
++            try:
++                self._validate_item_types({attr_name: attr_value})
++            except SerializationException:
++                # 'S' can also be the name of an attribute or of a nested map member,
++                # so only a malformed key attribute is a definite error here
++                if attr_name in self.table_key_attrs:
++                    raise
+         self._validate_key_sizes(item_attrs)
+ 
+         if expected is None:

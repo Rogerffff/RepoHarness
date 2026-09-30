@@ -1,0 +1,24 @@
+diff --git a/moto/dynamodb/models/table.py b/moto/dynamodb/models/table.py
+--- a/moto/dynamodb/models/table.py
++++ b/moto/dynamodb/models/table.py
+@@ -484,13 +484,18 @@
+                 if DynamoType(range_value).size() > RANGE_KEY_MAX_LENGTH:
+                     raise RangeKeyTooLong
+ 
+-    def _validate_item_types(self, item_attrs: Dict[str, Any]) -> None:
++    def _validate_item_types(
++        self, item_attrs: Dict[str, Any], top_level: bool = True
++    ) -> None:
+         for key, value in item_attrs.items():
+             if type(value) == dict:
+-                self._validate_item_types(value)
++                self._validate_item_types(value, top_level=False)
+             elif type(value) == int and key == "N":
+                 raise InvalidConversion
+             if key == "S":
++                if top_level or value == {"NULL": True}:
++                    # An attribute that is called 'S' (at the top, or holding None)
++                    continue
+                 # This scenario is usually caught by boto3, but the user can disable parameter validation
+                 # Which is why we need to catch it 'server-side' as well
+                 if type(value) == int:

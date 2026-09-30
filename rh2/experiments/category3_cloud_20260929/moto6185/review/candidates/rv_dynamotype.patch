@@ -1,0 +1,49 @@
+diff --git a/moto/dynamodb/models/table.py b/moto/dynamodb/models/table.py
+--- a/moto/dynamodb/models/table.py
++++ b/moto/dynamodb/models/table.py
+@@ -485,22 +485,29 @@
+                     raise RangeKeyTooLong
+ 
+     def _validate_item_types(self, item_attrs: Dict[str, Any]) -> None:
+-        for key, value in item_attrs.items():
+-            if type(value) == dict:
+-                self._validate_item_types(value)
+-            elif type(value) == int and key == "N":
+-                raise InvalidConversion
+-            if key == "S":
+-                # This scenario is usually caught by boto3, but the user can disable parameter validation
+-                # Which is why we need to catch it 'server-side' as well
+-                if type(value) == int:
+-                    raise SerializationException(
+-                        "NUMBER_VALUE cannot be converted to String"
+-                    )
+-                if type(value) == dict:
+-                    raise SerializationException(
+-                        "Start of structure or map found where not expected"
+-                    )
++        # Only the attribute *values* carry types; an attribute (or map member) may be called anything,
++        # including 'S'. Parse every value the way the model stores it, and check it recursively.
++        for attribute_value in item_attrs.values():
++            if type(attribute_value) == dict:
++                self._validate_dynamo_type(DynamoType(attribute_value))
++
++    def _validate_dynamo_type(self, dynamo_type: DynamoType) -> None:
++        if dynamo_type.type == "S" and not isinstance(dynamo_type.value, str):
++            # This scenario is usually caught by boto3, but the user can disable parameter validation
++            # Which is why we need to catch it 'server-side' as well
++            if type(dynamo_type.value) == int:
++                raise SerializationException("NUMBER_VALUE cannot be converted to String")
++            raise SerializationException(
++                "Start of structure or map found where not expected"
++            )
++        if dynamo_type.type == "N" and type(dynamo_type.value) == int:
++            raise InvalidConversion
++        if dynamo_type.is_map():
++            for member in dynamo_type.value.values():
++                self._validate_dynamo_type(member)
++        elif dynamo_type.is_list():
++            for element in dynamo_type.value:
++                self._validate_dynamo_type(element)
+ 
+     def put_item(
+         self,
