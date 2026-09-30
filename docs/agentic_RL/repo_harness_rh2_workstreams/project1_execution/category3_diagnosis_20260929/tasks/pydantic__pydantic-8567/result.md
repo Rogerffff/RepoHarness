@@ -2,21 +2,13 @@
 
 2026-09-29 / Claude（云端，第3类第二批主审作者）。原分类：第3类“参考修复不可靠，缺正确对照”。09-29 CPU 批次已实测并复核：gold 修好了题面两种顺序的序列化，但让“普通类 + `PlainValidator`”在类定义阶段报错；原测试只查 `isinstance(str)`，不查精确值和 JSON（S1／T2a）。那时缺的是一份能保住这项能力的正对照。
 
-> **收口状态（09-30，云端额度不足，第二批暂停）**
+> **当前状态（09-30 更新）**
 >
-> - **已完成并归档**：作者诊断；原材料、v1、v2 的正式评分（14、13、14 次）；私有矩阵与模拟评分。见 [evidence/](evidence/)，本页分数都有账本支持。
-> - **独立复核已完成**，全文见 [review.md](review.md)：
->   - **两份替代正对照 `upstream261`、`c3_reorder` 经复核者独立核实，可以作正对照**，D4 要求的“他人核实”已满足。两者各有已登记的范围差异，不影响 v2 判分；
->   - 同意原版 S1、gold 失败记录、v2 四组断言的依据与不过严、`c3_serpass` 记 T3；
->   - **唯一阻断**：复核者构造的错误候选 `rv_pv_first` 在 v2 下得 1。它把 `PlainValidator` 挪到元数据最内层，使按文档应被 PV 取代的验证器和约束仍然运行。
-> - **修订 v3 已起草，未验证**：[`revised_test_v3.patch`](../../../../../../../rh2/experiments/category3_cloud_20260929/pydantic8567/revised_test_v3.patch)（`4600867b…0eba`）与 `materials_revised_v3.json`。它在 F2P 测试体末尾加一段：`Annotated[bool, AfterValidator(lambda v: 1 / 0), serializer, validator]` 下，PV 之前的验证器不运行，serializer 仍生效。复核者的候选 `rv_pv_first`、`rv_condwrap`、`rv_ser_to_end` 已放入实验目录。v3 正式评分计划 17 次，只跑完 2 次就中断，输出〔未归档〕。
-> - **下一步**：
->   1. 确认 pydantic_v1 等效派生镜像仍在，不在就按 [作者须知](../../batch2_author_brief.md) §4 重建；
->   2. 重做 `prepare` 与 `export-gold`；
->   3. 对 noop、gold、两份正对照、`c3_serpass`、作者 9 个 `n_*` 与复核者 3 个候选跑 v3 诊断评分；
->   4. 归档后改写 §4，请同一复核者做聚焦复核。
+> - **独立复核已完成**，全文见 [review.md](review.md)。复核核实两份替代正对照 `upstream261`、`c3_reorder` 可以作正对照，D4 要求的“他人核实”已满足；同意原版 S1、gold 失败记录、v2 四组断言的依据、`c3_serpass` 记 T3。唯一阻断是：复核者构造的错误候选 `rv_pv_first` 在 v2 下得 1。
+> - **阻断已由 v3 处理，并经正式诊断评分验证**（09-30 重跑，17 次，见 §4 的 v3 小节）：`rv_pv_first` 在原材料与 v2 上正式得 1，在 v3 上得 0；gold 仍只在未知类型断言处失败；两份正对照与复核者的合理实现 `rv_condwrap` 为 1；9 个作者错误候选全为 0。
+> - **还差**：对 v3 的聚焦复核，由新的独立复核者按 review.md 进行（原复核者的上下文已不可用）。
 
-**结论：问题已明确；两份替代正对照已由独立复核核实；修法 v2 有 1 项阻断，v3 已起草但尚未验证。v3 评分归档并通过聚焦复核后，建议转第2类。**
+**结论：问题和修法已明确；v3 正式诊断评分符合预期，待聚焦复核通过后转第2类。** 两份替代正对照已由独立复核核实。
 
 - **gold 的回归已复现，上游有佐证。** 普通类 `Unsupported` 加 `PlainValidator`，在默认配置下 base 能建类、能验证；gold 在类定义阶段抛 `PydanticSchemaGenerationError`（`schema-for-unknown-type`）。上游在下一个补丁版 2.6.1 修了同一问题（#8710）。
 - **原测试很弱。** 本次在 gold 修改位置附近构造了 9 个错误候选，分别只做固定输出、只修 Python 模式、只修 bool 等。**9 个在原材料正式评分全部得 1**；noop 为 0，gold 为 1。
@@ -41,6 +33,7 @@
 
   修订断言对两种设计都成立，说明它们不是照着 gold 的机制写的。两份都由本页构造，**已由独立复核核实**（review.md §2）。
 - **v1 到 v2 的变化是自查发现的。** 自查时构造的 `n_field_only` 只修模型字段，它在 v1 下得 1。v2 因此多加了一行 `TypeAdapter(List[...])` 检查，见 §4。
+- **v2 到 v3 的变化来自独立复核。** 复核者的 `rv_pv_first` 在 v2 下得 1。v3 在测试体末尾加一段断言：放在 `PlainValidator` 之前的验证器按文档应被取代、不能运行，serializer 仍要生效。v3 下它为 0，其余候选的结果与 v2 相同。
 - **实施依赖 D6 的“测试补丁替换”切片。** 派生镜像是云端等效重建，不是 09-19 原版的逐字节重建。
 
 ## 1．公开要求
@@ -205,7 +198,63 @@ noop 与 gold 的结果和 09-29 CPU 批次一致。每次运行约 25 秒，其
 - **`c3_reorder`**，[`c3_reorder.patch`](../../../../../../../rh2/experiments/category3_cloud_20260929/pydantic8567/c3_reorder.patch)：
   - 在 `_generate_schema._apply_annotations` 里，把位于最后一个 `PlainValidator` 之前的 `PlainSerializer`／`WrapSerializer` 移到它紧后面，保持它们之间的相对顺序；`PlainValidator` 本身不改；
   - 私有矩阵中它在 B03、B06、B07、B08 上保持或优于 base；A16、A17 不修，属于题面范围外。
-- 两者都由本页构造，**必须由他人独立核实后才能作正对照**（v1 §9 D4）。
+- 两者都由本页构造，按 v1 §9 D4 须由他人独立核实；独立复核已核实（review.md §2）。
+
+### v3：处理复核阻断项（09-30 重跑验证）
+
+**草案**：[`revised_test_v3.patch`](../../../../../../../rh2/experiments/category3_cloud_20260929/pydantic8567/revised_test_v3.patch)，sha256 `4600867b…0eba`；材料 [`materials_revised_v3.json`](../../../../../../../rh2/experiments/category3_cloud_20260929/pydantic8567/materials_revised_v3.json)，版本 `c3-pyd8567-exact-json-unsupported-v3`。父版本 v2（`6cff9609…`）留档。
+
+在 v2 的测试体末尾追加第 5 项：
+
+```python
+class Replaced(BaseModel):
+    z: Annotated[bool, AfterValidator(lambda v: 1 / 0), serializer, validator]
+
+replaced = Replaced(z='1')
+assert replaced.z is True
+assert replaced.model_dump() == {'z': '1'}
+```
+
+- **依据**：`docs/concepts/validators.md:66`：Plain validator 会立即终止验证，“no further validators are called”；`PlainValidator` 的 docstring 写明它取代内层验证。放在它之前（元数据左侧）的 `AfterValidator` 因此不应运行。
+- **拦下**：`rv_pv_first`（把 PV 挪到最内层，被取代的验证器仍然运行，抛 `ZeroDivisionError`）。
+- 测试 ID、F2P／P2P 名单、测试命令都不变。
+
+**复核者候选的来源**：复核者的补丁只在其会话临时目录，未入库。实验目录中的 `rv_pv_first.patch`（`eb842ab8…`）、`rv_condwrap.patch`（`177c3af4…`）、`rv_ser_to_end.patch`（`a8301321…`）是按 review.md §1 的描述重建的，哈希与复核者的补丁不同；它们在原材料与 v2 上的分数与复核者的私有模拟一致。
+
+**正式诊断评分（09-30 重跑）**：
+- 条件：`--recipe` 与 `--materials`，grader 后缀 `+c3-pyd8567-exact-json-unsupported-v3`；
+- 派生镜像按同一配方在云端重建：8 个 wheel 的文件名与 sha256 与此前逐一相同，保留 base 的 13 层只加 1 层；本机派生 ID 为 `sha256:b63f44d5…`（本机构建 ID 每次不同，此前为 `2b170da8…`）；
+- 全部 23 次运行（v3 17 次，另有复核者 3 个候选在原材料与 v2 上各 3 次）：参考缺席 0，P2P 158/158，安装 rc 0，清理成功。
+
+| 候选 | 性质 | 原材料 | v2 | v3 | v3 失败位置（评分日志） |
+| --- | --- | --- | --- | --- | --- |
+| noop | — | 0 | 0 | 0 | `isinstance(data['bar'], ser_type)` |
+| gold | 参考解（D4：不作正对照） | 1 | 0 | 0 | 未知类型断言：`PydanticSchemaGenerationError` |
+| `upstream261` | 替代正对照（已核实） | 1 | 1 | **1** | — |
+| `c3_reorder` | 第二正对照（已核实） | 1 | 1 | **1** | — |
+| `rv_condwrap` | 合理实现（复核者） | 1 | 1 | **1** | — |
+| `c3_serpass` | T3 边缘（§5 第 1 项） | 1 | 1 | 1 | — |
+| `rv_ser_to_end` | T3 边缘（复核 N2） | 1 | 1 | 1 | — |
+| **`rv_pv_first`** | 错误（复核阻断项） | 1 | **1** | **0** | 新增断言：`ZeroDivisionError` |
+| `n_const_str` | 错误 | 1 | 0 | 0 | `{'foo':'0','bar':'True'}` |
+| `n_python_only` | 错误 | 1 | 0 | 0 | JSON 仍为 `"bar":true` |
+| `n_field_only` | 错误 | 1 | 0 | 0 | `b'[false,true]'` |
+| `n_bool_only`、`n_noinfo_only`、`n_two_items` | 错误 | 1 | 0 | 0 | `'{"x":1234}'`，应为 `'{"x":"1,234"}'` |
+| `n_when_used_lost` | 错误 | 1 | 0 | 0 | Python 模式也输出 `'1,234'` |
+| `n_order_registry` | 错误 | 1 | 0 | 0 | 用了别处的旧 serializer，得 `'1234'` |
+| `n_swallow_to_any` | 错误 | 1 | 0 | 0 | 未知类型验证函数被丢掉 |
+
+原材料与 v2 两列中，复核者 3 个候选取自 09-30 重跑，其余取自 09-29 的归档账本。
+
+**v3 验收（v1 §5）**：
+
+| 验收项 | 结果 |
+| --- | --- |
+| 正对照为 1，noop 为 0 | 满足：`upstream261`、`c3_reorder` 为 1，noop 为 0 |
+| 已知错误候选为 0 | 满足：9 个作者错误候选与 `rv_pv_first` 都为 0，各停在针对它的断言上 |
+| 合理实现不被拒 | 满足：`rv_condwrap` 为 1；T3 登记的两个边缘候选不受影响 |
+| gold 的处理 | gold 只在未知类型回归断言处失败，按 D4 记录，改用替代正对照 |
+| 独立复核与 Codex 复核 | 复核阻断已处理；**聚焦复核待做**；Codex 复核待做 |
 
 ## 5．判定（v1 §4）
 
@@ -228,8 +277,8 @@ noop 与 gold 的结果和 09-29 CPU 批次一致。每次运行约 25 秒，其
 ## 6．交接给第2类
 
 1. **正对照**：`upstream261` 作替代正对照，`c3_reorder` 作第二正对照，两者都**已由独立复核核实**（review.md §2）。
-2. **落地**：经 D6 的测试补丁替换形成正式版本，用 R-c 草案 v2（`6cff9609…`）。测试 ID、F2P／P2P 名单与测试命令不变。
-3. **复验**：落地后复验 §4 的表（14 个候选）。
+2. **落地**：经 D6 的测试补丁替换形成正式版本，用 R-c 草案 v3（`4600867b…`）。测试 ID、F2P／P2P 名单与测试命令不变。
+3. **复验**：落地后复验 §4 v3 小节的表（17 个候选）。
 4. **可选拆分**：如果 D6 支持新增参考，建议把第 4 项未知类型回归拆成独立 P2P。可沿用上游测试名 `test_plain_validator_with_unsupported_type`，形态相同。第 1–3 项留在 F2P。
 5. **镜像**：正式入库时固定一份 wheel 清单并登记来源，因为本页派生镜像是等效重建。
 6. **复核**：Codex 复核。
@@ -242,11 +291,11 @@ noop 与 gold 的结果和 09-29 CPU 批次一致。每次运行约 25 秒，其
 | 版本 | 问题定位 | 能力比较 | 训练 | 留出 |
 | --- | --- | --- | --- | --- |
 | 原版 | 是 | conditional（沿用 09-29 条件） | 否 | 否 |
-| 修订版 v2 | 经 D6 入库、正对照经他人核实并验收后重新评估 | | | |
+| 修订版 v3 | 经聚焦复核、D6 入库并验收后重新评估 | | | |
 
 ## 8．未做与剩余事项
 
-- **独立复核**：已完成，两份正对照已核实；v2 有 1 项阻断，v3 草案尚未评分。见开头收口状态。
+- **独立复核**：已完成，两份正对照已核实；v2 的 1 项阻断已由 v3 处理并经正式诊断评分验证。**v3 的聚焦复核待做。**
 - **真实 actor 开发条件**：本次未验。09-29 CPU 批次在原版上做过 actor 核对。
 - **模型求解**：没有模型求解证据。
 - **v1 修订的正式评分**：不含 `n_field_only`，它只有私有模拟结果。
@@ -266,8 +315,9 @@ noop 与 gold 的结果和 09-29 CPU 批次一致。每次运行约 25 秒，其
 - **实验文件**：`rh2/experiments/category3_cloud_20260929/pydantic8567/`
   - 候选：`make_candidate.py`、12 个候选补丁；
   - 私有矩阵：`behavior.py`；
-  - 修订测试：`_edit_revised_test*.py`、`original_test.patch`、`revised_test_v1.patch`、`revised_test_v2.patch`；
-  - 诊断评分材料：`materials_revised_v1.json`、`materials_revised_v2.json`；
+  - 修订测试：`_edit_revised_test*.py`、`original_test.patch`、`revised_test_v1.patch`、`revised_test_v2.patch`、`revised_test_v3.patch`；
+  - 诊断评分材料：`materials_revised_v1.json`、`materials_revised_v2.json`、`materials_revised_v3.json`；
+  - 复核者候选（按 review.md 重建）：`rv_pv_first.patch`、`rv_condwrap.patch`、`rv_ser_to_end.patch`；
   - 私有对照与模拟评分：`semantic_spec*.json`、`fulltests_spec.json`、`simgrade*_spec.json`、`simgrade.py`；
   - 正式评分：`run_formal.sh`；
   - 上游佐证：`upstream_2.6.1_*`。
@@ -278,5 +328,6 @@ noop 与 gold 的结果和 09-29 CPU 批次一致。每次运行约 25 秒，其
   - `fulltests_v1/`：全量测试；
   - `simgrade_v1/`、`simgrade_v2/`：私有模拟评分；
   - `derived_image.json`：wheel 清单与镜像身份；
-  - `evidence_manifest.json`：全部文件的 SHA256。
+  - `evidence_manifest.json`：全部文件的 SHA256；
+  - `rerun_0930/`：09-30 重跑，含 `formal_revised_v3/`（17 次）、`formal/` 与 `formal_revised_v2/`（复核者 3 个候选各 3 次）、`derived/image.json`（重建记录），以及本目录自己的 `evidence_manifest.json`。
 - **归档前扫描**：已扫描凭据字样与本机私有路径，未命中。

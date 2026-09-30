@@ -2,34 +2,24 @@
 
 2026-09-29 / Claude（云端，第3类第二批主审）。原分类：第3类“已有具体疑点，缺辨别实验”。工作项：执行 base／gold／保留 args 首位的实现，核真实 cwd、命令与恢复。
 
-> **收口状态（09-30，云端额度不足，第二批暂停）**
+> **当前状态（09-30 更新）**
 >
-> - **已完成并归档**：作者诊断；原材料正式评分 11 次、v2 诊断评分 18 次；私有对照 v1、v2。见 [evidence/](evidence/)，本页 §1–§5 的分数都有账本支持。
-> - **独立复核已完成**，结论“部分同意”，全文见 [review.md](review.md)。复核同意：原版的 T1 与 S1、G1 判 S2、参数名与相对路径基准两处边界判断。但 **v2 有 2 项阻断，不能按 §5 验收**：
->   1. `w_ignore_errors`（调用 `run(..., ignore_errors=True)`，吞掉 autoreconf 失败）在 v2 下得 1。原因是 v2 的记录器不理会 `ignore_errors`，一律抛出；
->   2. 失败断言的 `match="autoreconf failed"` 锁定了异常文案，误拒合理实现 `rv_wrap`（包装成新异常并用 `from e` 保留原异常）。
-> - **修订 v3 已起草，未验证**：[`revised_test_v3.patch`](../../../../../../../rh2/experiments/category3_cloud_20260929/conan13403/revised_test_v3.patch)（`6719883b…6151`）与 `materials_revised_v3.json`。改动：
->   - 记录器在 `ignore_errors=True` 时返回非零码，不抛异常；
->   - 失败断言不再匹配文案，改为要求原异常出现在异常链中，或实现拿到失败码后自己报错；
->   - 加一次从非 build 目录发起的调用，检查调用后回到调用者原目录（复核的非阻断建议 1，拦 `w_restore_build*`）。
->
->   实验目录已有复核者各候选的补丁（`rv_check`、`rv_kw`、`rv_wrap`、`w_*`），另加作者的合理候选 `rv_retcode`：以 `ignore_errors=True` 运行，再按返回码自己报错。v3 评分曾在云端开始，输出〔未归档〕，需要重跑。
-> - **本页 §1–§5 仍是 v2 时的内容**：§4 验收表中“已知错误候选为 0：满足”已被复核推翻；§6 以本段为准。
-> - **下一步**：
->   1. 按 [作者须知](../../batch2_author_brief.md) §4 重做 `prepare` 与 `export-gold`；
->   2. 用 `run_formal.sh revised_v3` 对 noop、gold、作者 16 个候选、复核者 10 个候选与 `rv_retcode` 跑 v3 诊断评分；
->   3. 归档后改写 §4，请同一复核者做聚焦复核。
+> - **独立复核已完成**，结论“部分同意”，全文见 [review.md](review.md)。复核同意原版的 T1 与 S1、G1 判 S2、参数名与相对路径基准两处边界判断；v2 有 2 项阻断：`w_ignore_errors`（吞掉 autoreconf 失败）得 1；失败断言锁定文案，误拒合理实现 `rv_wrap`。
+> - **两项阻断都已由 v3 处理，并经正式诊断评分验证**（09-30，见 §4 的 v3 小节）：
+>   - 正式评分先在 v2 上证实了两项阻断：`w_ignore_errors` 为 1，`rv_wrap` 为 0；
+>   - v3 的 29 次评分全部符合预期：gold 与 8 个合理实现为 1，noop 与 19 个错误或边界候选为 0，每个 0 都停在针对它的断言上。
+> - **还差**：对 v3 的聚焦复核，由新的独立复核者按 review.md 进行（原复核者的上下文已不可用）。
 
-**结论：问题已明确；修法 v2 经独立复核有 2 项阻断，v3 已起草但尚未验证。v3 评分归档并通过聚焦复核后，建议转第2类。**
+**结论：问题和修法已明确；v3 正式诊断评分符合预期，待聚焦复核通过后转第2类。**
 
 - 旧题卡的三个疑点都已用实验回答：
-  - 内部 mock 误拒合理实现：**成立**。3 个行为与 gold 完全一致的实现在原材料正式评分中得 0。
+  - 内部 mock 误拒合理实现：**成立**。3 个目录行为与 gold 一致（位置参数调用还优于 gold）的实现在原材料正式评分中得 0；复核者的 `rv_check`、`rv_kw` 也得 0。
   - “调用 chdir 但不进入上下文”可以骗过测试：**成立**。该退化候选在原材料正式评分中得 1。
   - gold 破坏旧的位置参数调用：**成立**，但判为 S2 登记，不作修订依据（理由见 §3）。
 - 另有两个新发现：
   - 测试没有题面本身的 build 目录场景，只对 source 下相对子目录有效的候选得 1；
   - 吞掉错误的候选也得 1。
-- 修订草案 **v2**（R-e＋R-b＋R-c）：只替换测试补丁，测试 ID 与 F2P／P2P 名单不变。**gold 仍是正对照**。正式诊断评分中 18 个候选全部符合预期：gold 与 4 个合理实现为 1，noop 与 12 个错误候选为 0。复核随后指出 v2 仍放过 `w_ignore_errors`、误拒 `rv_wrap`，见开头收口状态。
+- 修订草案 **v3**（R-e＋R-b＋R-c）：只替换测试补丁，测试 ID 与 F2P／P2P 名单不变。**gold 仍是正对照**。v2 的 18 个候选全部符合预期，但复核另造的候选暴露了两项阻断；v3 修正后，29 个候选（含复核者的 10 个与作者新增的 `rv_retcode`）的正式诊断评分全部符合预期。
 - 落地只需要 D6 的测试补丁替换，不需要调整参考分组，也不需要派生镜像。
 
 ## 1．公开要求
@@ -127,9 +117,21 @@
 
   其中 `norestore`、`nofinally`、`fallback` 被拒，只是因为夹具的 `/path/to/sources` 不存在，不是因为测试检查了目录恢复或错误处理。
 
+**复核者候选的原材料正式评分（09-30 补跑，11 次）**。复核者的补丁只在其会话临时目录，实验目录中的 `rv_*`、`w_*` 是按 review.md 的描述重建的；`rv_retcode` 为作者新增。结果与复核者的私有对照逐项一致：
+
+| 候选 | 性质 | reward | 失败原因 |
+| --- | --- | --- | --- |
+| `rv_check` | 合理：目录不存在时先报 `ConanException` | **0** | 夹具目录 `/path/to/sources/subfolder` 不存在（T1） |
+| `rv_kw` | 合理：关键字参数调用 `chdir` | **0** | mock 断言的调用签名不符（T1） |
+| `rv_wrap` | 合理（边界）：失败时包装成新异常 | 1 | — |
+| `rv_retcode` | 合理：`ignore_errors=True` 后按返回码自己报错 | 1 | — |
+| `w_argsdrop`、`w_twice`、`w_mutate_src2`、`w_ignore_errors`、`w_restore_build_ctx` | 错误 | **1** | —（S1 漏判） |
+| `w_restore_build` | 错误 | 0 | 夹具目录不存在 |
+| `w_mkdir` | 边界 | 0 | 评分身份 UID 54322 无权创建 `/path` |
+
 ## 3．判定（v1 §3–§4）
 
-- **T1（已由正式评分确认）**：`conanfile_chdir`、`runcwd`、`oschdir` 行为与 gold 一致，却被判 0。三处被拒的原因都没有公开依据：
+- **T1（已由正式评分确认）**：`conanfile_chdir`、`runcwd`、`oschdir` 的目录行为与 gold 一致（位置参数调用还优于 gold），却被判 0；复核者的 `rv_check`、`rv_kw` 同样被判 0。被拒的原因都没有公开依据：
   - mock 断言要求 `chdir` 的首参是 `Autotools` 对象。`chdir` 的文档反而写的是“The current recipe object”；
   - `ConanFileMock.run` 不接受 `cwd`，而公开的 `ConanFile.run(command, stdout=None, cwd=None, …)` 接受；
   - `/path/to/sources` 是不存在的路径，只能配合 mock 使用。
@@ -157,9 +159,11 @@
 
   如果复核认为参数名依据不足，可按 R-f 补一句“与 `configure` 使用同名参数”，测试不用改。
 
-## 4．修法（交第2类）：修订版测试草案 v2
+## 4．修法（交第2类）：修订版测试草案 v3（v2 留档）
 
-### 草案文件
+本节先保留 v2 的内容（它的依据表仍然适用），v3 的改动与验收见本节末尾的 v3 小节。
+
+### 草案文件（v2）
 
 - 测试补丁：[`revised_test_v2.patch`](../../../../../../../rh2/experiments/category3_cloud_20260929/conan13403/revised_test_v2.patch)，sha256 `e3836c11…421c59f9`。
 - 完整测试文件：[`revised_autotools_test_v2.py`](../../../../../../../rh2/experiments/category3_cloud_20260929/conan13403/revised_autotools_test_v2.py)。
@@ -183,7 +187,7 @@
 | 指定目录不存在时报错（不限异常类型），且不在任何目录执行 | base `chdir` 对不存在的目录报错；题面“由用户决定” | `fallback`、`swallow_all` |
 | autoreconf 失败时异常照常抛出，且当前目录恢复 | `ConanFile.run` 失败时默认抛 `ConanException`（`ignore_errors=False`）；base `chdir` 的 finally | `swallow_run`、`nofinally` |
 
-**明确不锁定**：参数顺序、参数是否只能用关键字传、用 `chdir` 还是 `run(cwd=)`、`chdir` 的首参、日志输出。
+**明确不锁定**：参数顺序、参数是否只能用关键字传、用 `chdir` 还是 `run(cwd=)`、`chdir` 的首参、日志输出与异常文案。v2 的失败断言用 `match="autoreconf failed"` 锁定了文案，与这一条不符，v3 已去掉（复核阻断 2）。
 
 ### v2 正式诊断评分
 
@@ -224,21 +228,81 @@
 | 保存版本与理由 | 满足：见 `materials_revised_v2.json` |
 | Codex 复核 | **待做** |
 
+09-30 的正式补跑证实了复核的两项阻断：v2 下 `w_ignore_errors` 为 1，`rv_wrap` 为 0（失败在文案匹配处）；`w_restore_build`、`w_restore_build_ctx` 也为 1（复核的非阻断建议 1）。其余复核者候选在 v2 上：`rv_check`、`rv_kw`、`rv_retcode` 为 1，`w_argsdrop`、`w_twice`、`w_mutate_src2`、`w_mkdir` 为 0。
+
+### v3：处理两项阻断（09-30 正式诊断评分验证）
+
+**草案**：[`revised_test_v3.patch`](../../../../../../../rh2/experiments/category3_cloud_20260929/conan13403/revised_test_v3.patch)，sha256 `6719883b…6151`；完整测试文件 [`revised_autotools_test_v3.py`](../../../../../../../rh2/experiments/category3_cloud_20260929/conan13403/revised_autotools_test_v3.py)；材料 [`materials_revised_v3.json`](../../../../../../../rh2/experiments/category3_cloud_20260929/conan13403/materials_revised_v3.json)，版本 `c3-conan13403-autoreconf-folder-v3`。父版本 v2（`e3836c11…`）留档。测试 ID、F2P／P2P 名单与测试命令不变。
+
+相对 v2 的改动：
+
+| 改动 | 依据 | 处理 |
+| --- | --- | --- |
+| 记录器按 `ConanFile.run` 的语义处理 `ignore_errors`：设了失败且 `ignore_errors=True` 时返回非零码，不抛异常；`cwd` 不存在时抛 `ConanException`，与真实 `conan_run` 一致 | `ConanFile.run` 的公开签名与实现（`conans/model/conan_file.py:302`） | 阻断 1：`w_ignore_errors` 不再因替身失真而通过 |
+| 失败断言不再匹配文案：要求抛出异常，并且原异常出现在 `__cause__`／`__context__` 链中，或实现先拿到失败码再自己报错 | “命令失败时照常报错”只要求报错，不规定文案 | 阻断 2：接受 `rv_wrap`（包装后 `from e`）与 `rv_retcode`（按返回码报错）；吞错的实现仍被拒 |
+| 先 `os.chdir(root)` 再调用一次，断言调用后仍在调用者原目录 | `chdir` 的 docstring 写明是临时切换；base 行为 | 复核非阻断建议 1：拦下 `w_restore_build*` |
+
+**正式诊断评分**：grader 后缀 `+c3-conan13403-autoreconf-folder-v3`，29 次运行全部参考缺席 0、`apply_ok`、安装末命令 RC 0、清理成功，每次 11–32 秒。
+
+| 候选 | 性质 | v3 reward | 失败位置（修订测试行号或源码异常） |
+| --- | --- | --- | --- |
+| gold | 正对照 | **1** | — |
+| `argsfirst`、`conanfile_chdir`、`runcwd`、`oschdir` | 合理（作者） | **1** | — |
+| `rv_check`、`rv_kw`、`rv_wrap` | 合理（复核者） | **1** | — |
+| `rv_retcode` | 合理（作者新增） | **1** | — |
+| noop | — | 0 | 83：无此参数 |
+| `noenter`、`cwd_default`、`w_twice` | 错误 | 0 | 84：缺省调用不在 source 目录执行，或执行次数不对 |
+| `w_argsdrop` | 错误 | 0 | 84：命令丢了参数 |
+| `norestore` | 错误 | 0 | 86：目录泄漏 |
+| `mutate_source`、`w_mutate_src2` | 错误 | 0 | 87：recipe 的 source 目录被改写 |
+| `relonly`、`buildlit` | 错误 | 0 | 绝对目录下 `FileNotFoundError` |
+| `fallback`、`swallow_all` | 错误 | 0 | 92：目录不存在时没有报错 |
+| `w_mkdir` | 边界 | 0 | 92：目录不存在时没有报错 |
+| `w_restore_build`、`w_restore_build_ctx` | 错误 | 0 | 101：从非 build 目录调用后没有回到原目录 |
+| `swallow_run`、`w_ignore_errors` | 错误 | 0 | 108：autoreconf 失败被吞 |
+| `nofinally` | 错误 | 0 | 116：失败后目录泄漏 |
+| `named`、`rel_build` | 边界（§3） | 0 | 83：无此参数；`build/subfolder` 不存在 |
+
+逐次失败原因见 `evidence/rerun_0930/formal_revised_v3/failure_reasons.txt`。
+
+**v3 验收（v1 §5）**：
+
+| 验收项 | 结果 |
+| --- | --- |
+| 正对照（gold）为 1，noop 为 0 | 满足 |
+| 误拒已纠正且不新增误拒 | 满足：原版被拒的 5 个合理实现（作者 3 个、复核者 2 个）为 1；v2 误拒的 `rv_wrap` 为 1；作者新增的 `rv_retcode` 为 1 |
+| 已知错误候选为 0 | 满足：原材料或 v2 上得 1 的错误候选在 v3 上都为 0，各停在针对它的断言上。包括作者的 `noenter`、`relonly`、`buildlit`、`swallow_all`，以及只在私有对照中通过原测试的 `swallow_run`；复核者的 `w_argsdrop`、`w_twice`、`w_mutate_src2`、`w_ignore_errors`、`w_restore_build`、`w_restore_build_ctx` |
+| 核心要求有直接断言 | 满足 |
+| 保存版本与理由 | 满足：见 `materials_revised_v3.json` |
+| 独立复核 | 阻断已处理；**聚焦复核待做** |
+| Codex 复核 | **待做** |
+
 ## 5．依赖与当前用途
 
 - **落地方式**：D6 **测试补丁替换**（整段替换 test_patch）。不改参考分组，不需要派生镜像。D6 首片不接受测试替换，这项能力按计划随后续切片引入。
 - **交接给第2类的清单**：
-  1. 以 `revised_test_v2.patch`（`e3836c11…`）替换原 test_patch，F2P／P2P 名单不变；
-  2. 正式版本复验 §4 的正式诊断评分表：gold 与 4 个合理实现为 1，noop 与 12 个错误候选为 0。候选补丁都在实验目录中；
+  1. 以 `revised_test_v3.patch`（`6719883b…`）替换原 test_patch，F2P／P2P 名单不变；
+  2. 正式版本复验 §4 v3 小节的正式诊断评分表：gold 与 8 个合理实现为 1，noop 与 19 个错误或边界候选为 0。候选补丁都在实验目录中；
   3. 正对照为原 gold，不需要按 D4 另找替代正对照；
-  4. 等独立复核与 Codex 复核完成后再入库。
+  4. 等聚焦复核与 Codex 复核完成后再入库。
 - **当前用途**：
-  - **原版**：只作问题定位，不进能力比较分母，也不进训练。原因是误拒已确认：3 个合理实现得 0；另有 S1 缺口：退化候选与部分修复得 1。
-  - **v2 落地后**：可申请训练候选，已具备 noop 0／gold 1、第 2 步与第 3 步的结果。仍差：独立复核、Codex 复核、actor 开发条件核对。
+  - **原版**：只作问题定位，不进能力比较分母，也不进训练。原因是误拒已确认：5 个合理实现得 0；另有 S1 缺口：退化候选、部分修复与吞错候选得 1。
+  - **v3 落地后**：可申请训练候选，已具备 noop 0／gold 1、第 2 步与第 3 步的结果。仍差：聚焦复核、Codex 复核、actor 开发条件核对。
 
 ## 6．独立复核
 
-已完成（09-29），结论“部分同意”，全文见 [review.md](review.md)，初判封存稿见 [review_initial.md](review_initial.md)。处理状态见开头收口状态：2 项阻断由 v3 草案处理，v3 尚未评分。复核的非阻断建议中，第 1 条已并入 v3；第 2 条（两处措辞）与第 4 条（§7 补 `ignore_errors` 一项）待 v3 验证后一并改写本页；第 3 条（扩大候选集）已准备补丁，随 v3 评分一起跑。
+已完成（09-29），结论“部分同意”，全文见 [review.md](review.md)，初判封存稿见 [review_initial.md](review_initial.md)。
+
+| 项 | 内容 | 处理 |
+| --- | --- | --- |
+| 阻断 1 | 记录器不理会 `ignore_errors`，`w_ignore_errors` 在 v2 得 1 | v3 修正记录器；v3 下为 0 |
+| 阻断 2 | 失败断言锁定文案，误拒 `rv_wrap` | v3 改查异常链或失败码；v3 下为 1 |
+| 建议 1 | 加一次从非 build 目录发起的调用 | 并入 v3；`w_restore_build*` 为 0 |
+| 建议 2 | 两处措辞 | 已改：“目录行为与 gold 一致，位置参数调用优于 gold”；“明确不锁定”清单加上异常文案 |
+| 建议 3 | 把复核者候选加入正式诊断评分 | 已做：原材料、v2、v3 各跑一遍 |
+| 建议 4 | §7 补上记录器与真实 `run` 在 `ignore_errors` 上的差别 | 已改，见 §7 |
+
+**聚焦复核待做**：原复核者的上下文已不可用，由新的独立复核者按 review.md 核对 v3。
 
 ## 7．未做与剩余事项
 
@@ -247,7 +311,9 @@
 - 位置参数用法在生态中的常用程度：**未查**。
 - 跨题关系（同仓其它 Autotools 题）：**未查**。
 - 本题没有模型求解证据。
-- 记录器与真实 `ConanFile.run` 的差别：`cwd` 不存在时，记录器抛 `FileNotFoundError`，真实 `conan_run` 会包成 `ConanException`。修订测试在这一处只要求“有异常”，所以不影响结论。
+- 记录器与真实 `ConanFile.run` 的差别：
+  - v2 的记录器在 `cwd` 不存在时抛 `FileNotFoundError`（真实 `conan_run` 包成 `ConanException`），并且不理会 `ignore_errors`。后一点让吞错候选 `w_ignore_errors` 通过了 v2（复核阻断 1）；
+  - v3 的记录器两处都与真实行为一致：`cwd` 不存在时抛 `ConanException`；`ignore_errors=True` 时返回非零退出码，不抛异常。
 - 本次正式评分的 grader profile 摘要（`3ec1bfa8…`）与首批云端试点相同，`scripts_digest` 为 `8aa2dac2…`。两者都与 09-19 历史（`1bb8e0cf…`、`3552fb9b…`）不同，原因未查。noop 与 gold 的逐项结果与历史一致。
 
 ## 8．版本与证据
@@ -277,6 +343,19 @@
   | `buildlit` | `dd2f4546…` | `cwd_default` | `315844f9…` |
   | `named` | `43f869b7…` | `rel_build` | `32f1dbcc…` |
 
+- 复核者候选（按 review.md 重建）与作者新增的 `rv_retcode`：
+
+  | 候选 | sha256 | 候选 | sha256 |
+  | --- | --- | --- | --- |
+  | `rv_check` | `98b6810a…` | `w_mutate_src2` | `de854d81…` |
+  | `rv_kw` | `90305f5e…` | `w_ignore_errors` | `c2e1f3b6…` |
+  | `rv_wrap` | `b60d70f4…` | `w_restore_build` | `2657b8ed…` |
+  | `rv_retcode` | `1c667b3c…` | `w_restore_build_ctx` | `61561e66…` |
+  | `w_argsdrop` | `dc21b5c4…` | `w_mkdir` | `94f733b5…` |
+  | `w_twice` | `7e348407…` | | |
+
+- 修订草案：`revised_test_v1.patch`（私有草案）、`revised_test_v2.patch`（`e3836c11…`）、`revised_test_v3.patch`（`6719883b…`），对应的 `revised_autotools_test_v*.py` 与 `materials_revised_v2.json`、`materials_revised_v3.json`。
+
 - 原始证据在 [evidence/](evidence/)：
 
   | 目录或文件 | 内容 |
@@ -287,3 +366,4 @@
   | `semantic_v2/` | 私有对照：加入 `buildlit`、`nofinally` 与 v2 草案 |
   | `revised_patch_gen/` | 由容器导出的修订测试补丁 |
   | `evidence_manifest.json` | 全部文件的 SHA256。`prepared/`、`private/`、`artifacts/` 只登记摘要 |
+  | `rerun_0930/` | 09-30 重跑：`formal_revised_v3/`（29 次），`formal/` 与 `formal_revised_v2/`（复核者候选与 `rv_retcode` 各 11 次），各目录的 `failure_reasons.txt`，以及本目录自己的 `evidence_manifest.json` |
