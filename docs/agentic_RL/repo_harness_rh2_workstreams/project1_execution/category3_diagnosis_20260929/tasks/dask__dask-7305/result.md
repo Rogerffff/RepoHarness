@@ -2,20 +2,18 @@
 
 2026-09-29 / Claude（云端，第3类第二批主审子代理）。原分类：第3类“已有具体疑点，缺辨别实验”。登记的下一步是：直接核对大整数 `partition_quantiles` 的端点、dtype 和不同分区数。
 
-> **收口状态（09-30，云端额度不足，第二批暂停）**
+> **当前状态（09-30 更新：已按 Codex 复核转第2类，采用 v2；v2 正式诊断评分进行中）**
 >
-> - **作者诊断已完成，证据已归档**：原材料正式评分 7 次、修订 v1 诊断评分 15 次、私有对照 v1–v3，见 [evidence/](evidence/)。负责人 09-30 逐次核对了账本中的 reward，与本页一致。
-> - **还没做**：独立复核；三份替代正对照 `gold_full`、`exact_full`、`higher_full` 的他人核实（D4 要求）。
-> - **下一步**：请不继承上下文的复核者做独立复核，并同时核实三份正对照。复核重点：
->   - F2P 内部分界从 `{1,2,4}` 放宽的依据（T1，带 P6 性质）；
->   - gold 在 3 个输出分区与跨 2**63 的 uint64 上是否应判 S1；
->   - v1 的 5 个大整数实例是否过严，是否还有能通过 v1 的错误候选。
->
->   复核用原镜像即可（`xingyaoww/sweb.eval.x86_64.dask_s_dask-7305`，按原名拉取并核对摘要），不需要派生镜像。
->
-> 在复核完成前，下面的结论是作者的判断，尚未经过独立复核。
+> - **独立复核已完成**，结论“部分同意，阻断 2 项”，全文见 [review.md](review.md)（初判封存稿 [review_initial.md](review_initial.md)）：
+>   - 同意原版 S1（T2a＋T2b，另有 T2c）、T1（带 P6 性质）、gold 不完整（G1 → S1）；作者 22 条正式账本逐条核对属实；
+>   - **三份替代正对照 `gold_full`、`exact_full`、`higher_full` 都可以用**（D4 的他人核实已满足，review.md §3），核实范围是公开要求的 numpy 大整数，扩展 dtype 与 `npartitions="auto"` 路径不在范围内；
+>   - v1 依据成立、不过严（复核者 4 个合理实现在 v1 下都为 1），但 **v1 放过复核者的 4 个错误候选**：`rv_pin_noclip`、`rv_interp_pin_noclip`（相邻大整数时越界或无序，B1）、`rv_maxonly_threshold`（全为负的大 int64，B2），以及构造性较强的 `rv_k_le4`；
+>   - 修法：在 F2P 末尾追加两行实例，即草案 v2。
+> - **v2 已采用**：[`revised_test_v2.patch`](../../../../../../../rh2/experiments/category3_cloud_20260929/dask7305/revised_test_v2.patch) 与复核者的草案逐字节相同（`6e96caa7…3924`）。v1 不能当作充分验收。
+> - 复核者 12 个候选的原材料正式评分已补跑（09-30），与复核者的私有模拟逐项一致（§2（2））。
+> - **进行中**：v2 正式诊断评分（noop、gold、三份正对照、作者全部错误候选、复核者 12 个候选）。按 Codex 建议，v2 的聚焦复核由第2类承接。
 
-**结论：问题和修法已明确，建议转第2类。**（独立复核尚未进行。）
+**结论：问题和修法已明确，转第2类（采用 v2；正对照 `gold_full`，`exact_full`、`higher_full` 为第二、第三正对照，均已由独立复核核实）。**
 
 - **原测试没有检查核心要求（S1：T2a＋T2b）**：参考名单里没有一条断言检查 `partition_quantiles` 的端点。唯一涉及大整数的 P2P 走单分区 min/max 快捷路径，在 base 上就能通过。退化候选 `nearest_via_float` 在题面原例上仍返回 `…744／…248`，正式评分却得 1。
 - **原 F2P 误拒合理解（T1，带 P6 性质）**：唯一 F2P 把近似的内部分界锁成 `{1,2,4}`，和仓库里可见的旧测试 `{1,2,3,4}` 相反。两个完整、正确的替代实现 `exact_full`、`higher_full` 正式评分都得 0，失败只在这一行。
@@ -25,7 +23,7 @@
 
   这两种情况下端点都偏移，`set_index` 还会静默丢行，例如 3 个不同值、300 行、5 个输出分区时丢掉 100 行。
 - **修法**：R-b 放宽内部分界；R-c 补 5 个大整数实例，同时检查端点和行的归属。修订版 v1 正式诊断评分（15 个变体）：noop 0；gold 0；`gold_full`、`exact_full`、`higher_full` 为 1；其余 10 个错误或不完整候选全为 0。
-- gold 在修订版上为 0，因此按 D4 改用替代正对照 `gold_full`（gold 加两处最小修补），`exact_full`、`higher_full` 作第二、第三正对照。三者都是本主审所写，**待他人核实**。
+- gold 在修订版上为 0，因此按 D4 改用替代正对照 `gold_full`（gold 加两处最小修补），`exact_full`、`higher_full` 作第二、第三正对照。三者由本主审编写，**已由独立复核核实**（review.md §3）。
 - 实施依赖 D6 的“测试补丁替换”切片。测试 ID 与 F2P／P2P 分组不变，不需要 `statement_replace`。
 
 ## 1．公开要求
@@ -66,9 +64,9 @@
 | 候选 | sha256 前缀 | 做法 | 按公开要求判断 |
 | --- | --- | --- | --- |
 | gold | `aa80a49b` | 整数改用 `nearest` | 不完整：唯一值不足与跨 2**63 时仍错 |
-| `gold_full` | `9b4f7bb3` | gold；`process_val_weights` 对整数 dtype 用 `np.array(vals, dtype=dtype)`；唯一值不足分支在 `np.interp` 后钉住两端，中间值夹在两端之间 | 正确（替代正对照，**待他人核实**） |
-| `exact_full` | `17a2cd20` | 保留线性插值的内部分界，摘要两端改为精确的 `data.min()/max()`，与 #6864 同一思路；`process_val_weights` 的两处修补同 `gold_full` | 正确（第二正对照，待他人核实） |
-| `higher_full` | `ae7e5227` | 整数改用 `higher`，同样是离散取值；`process_val_weights` 的两处修补同上 | 正确（第三正对照，待他人核实） |
+| `gold_full` | `9b4f7bb3` | gold；`process_val_weights` 对整数 dtype 用 `np.array(vals, dtype=dtype)`；唯一值不足分支在 `np.interp` 后钉住两端，中间值夹在两端之间 | 正确（替代正对照，**已由独立复核核实**，review.md §3） |
+| `exact_full` | `17a2cd20` | 保留线性插值的内部分界，摘要两端改为精确的 `data.min()/max()`，与 #6864 同一思路；`process_val_weights` 的两处修补同 `gold_full` | 正确（第二正对照，已由独立复核核实） |
+| `higher_full` | `ae7e5227` | 整数改用 `higher`，同样是离散取值；`process_val_weights` 的两处修补同上 | 正确（第三正对照，已由独立复核核实） |
 | `exact_ends` | `6ebbacee` | 只做 `exact_full` 的摘要部分 | 与 gold 同样不完整 |
 | `higher_int` | `cda2b1d9` | 只做 `higher_full` 的摘要部分 | 与 gold 同样不完整 |
 | `gold_pin_only` | `b0456f64` | gold＋钉住两端 | 跨 2**63 仍错 |
@@ -109,7 +107,7 @@
 | `set_index(npartitions="auto")`，1000 个大 uint64 | 丢 1 行 | 丢 1 行 | 丢 1 行 | 丢 1 行 | 丢 1 行 |
 
 说明：
-- 本镜像的 base 上，`set_index` 不是把最小值放进最后一个分区（题面现象），而是直接丢掉该行：`set_partitions_pre` 对小于 `divisions[0]` 的值给出分区号 −1。
+- 本镜像的 base 上，`set_index` 不是把最小值放进最后一个分区（题面现象），而是直接丢掉该行：`set_partitions_pre` 对小于 `divisions[0]` 的值给出分区号 −1。这是默认 disk shuffle 下的现象；`shuffle="tasks"` 时行不丢，但会落到自己的区间之外（独立复核 `review/initial_probes/probe1.py`：题面两个值各 3 行、2→3 分区，disk 下 6 行剩 3 行，tasks 下 3 行越界，base 与 gold 相同）。两种都是错误。
 - gold 的 `nearest` 让摘要中的不同值变少，“3 个不同值”这类数据反而必定走唯一值不足分支。base 与 `exact_ends` 的线性插值会产生额外的中间值，因此 `exact_ends` 在这一例上正确，gold 不正确。
 - `npartitions="auto"` 路径另在 `shuffle.set_index` 中对 divisions 做 `np.interp`，所有候选都丢 1 行（`clip_partition` 例外，它把行塞回第 0 分区）。
 - dask 自带的 `assert_eq`／`assert_divisions` 对大 uint64 不可靠：它用 numpy 比较 uint64 索引与 Python int 的 division，会提升到 float64。实例：`exact_full` 在“3 个不同值”一例中，分区 0 的最大值 `…743` 按整数确实小于下一个 division `…744`，numpy 比较却给出 False，`assert_eq` 因此报错，而逐分区的 Python int 核对通过。所以上表与修订测试都以 Python int 判定。
@@ -134,9 +132,20 @@
 | `higher_full` | **0** | 0/1 | 0/104 | 同上 |
 | `exact_ends` | 0 | 0/1 | 0/104 | 同上 |
 
-其余候选只做了私有模拟：在容器里应用原 test_patch，运行 `-k interpolate` 的 3 项。
+其余作者候选只做了私有模拟：在容器里应用原 test_patch，运行 `-k interpolate` 的 3 项。
 - `gold_pin_only`、`gold_typed_only` 3/3 通过；
 - `higher_int`、`uint_only`、`first_last`、`k1_only`、`clip_partition`、`pvw_only` 都败在 F2P 的 `{1,2,4}` 断言上。
+
+**独立复核者的 12 个候选（09-30 补跑原材料正式评分）**：结果与复核者的私有模拟逐项一致（review.md §4.2 “原测试”一列）。参考缺席 0，安装 rc 0，清理成功。
+
+| 候选 | 复核定性 | reward | 说明 |
+| --- | --- | --- | --- |
+| `rv_lower_full` | 合理 | 1 | 内部分界与 gold 相同 |
+| `rv_exact_linear`、`rv_minmax_graph` | 合理 | **0** | 内部分界 `{1,2,3,4}`，误拒（T1） |
+| `rv_dup_branch` | 合理 | **0** | 内部分界 `{1,3,4}`，误拒（T1） |
+| `rv_interp_pin_noclip`、`rv_swallow_int64`、`rv_k_le4` | 错误 | **1** | 原测试放过（S1） |
+| `rv_pin_noclip`、`rv_maxonly_threshold`、`rv_si_override`、`rv_len2` | 错误 | 0 | 败在 `{1,2,4}` 断言 |
+| `rv_sorted_assume` | 错误 | 0 | 另有 P2P `test_set_index` 失败（103/104） |
 
 ## 3．判定（v1 §3–§4）
 
@@ -193,7 +202,7 @@ P5 不适用：没有“两种读法”，内部分界本就允许不同。
 | `int64_200_4to4` | `uint_only`、`first_last`、`k1_only` |
 | `span63_200_4to4` | gold、`exact_ends`、`higher_int`、`gold_pin_only`、`uint_only`、`first_last`、`k1_only` |
 
-每个大整数实例都至少单独拦住一个错误候选：`gold_typed_only` 只靠 `issue_1to3`，`gold_pin_only` 只靠 `span63`。只有 `gold_full`、`exact_full`、`higher_full` 六项全过。
+每个大整数实例都至少单独拦住一个错误候选：`gold_typed_only` 只靠 `issue_1to3`，`gold_pin_only` 只靠 `span63`。作者候选中只有 `gold_full`、`exact_full`、`higher_full` 六项全过；独立复核另写的 4 个合理实现与 4 个错误候选也六项全过，后者由 v2 追加的两行拦下（见 v2 小节）。
 
 修订版正式诊断评分（`--materials`，F2P／P2P 名单与命令不变）：
 
