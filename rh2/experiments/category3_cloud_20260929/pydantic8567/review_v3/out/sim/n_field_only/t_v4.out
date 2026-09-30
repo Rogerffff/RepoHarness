@@ -1,0 +1,191 @@
+============================= test session starts ==============================
+collecting ... collected 165 items
+
+tests/test_validators.py::test_annotated_validator_after PASSED
+tests/test_validators.py::test_annotated_validator_before PASSED
+tests/test_validators.py::test_annotated_validator_builtin PASSED
+tests/test_validators.py::test_annotated_validator_plain PASSED
+tests/test_validators.py::test_annotated_validator_wrap PASSED
+tests/test_validators.py::test_annotated_validator_nested PASSED
+tests/test_validators.py::test_annotated_validator_runs_before_field_validators PASSED
+tests/test_validators.py::test_annotated_validator_typing_cache[PlainValidator-<lambda>] PASSED
+tests/test_validators.py::test_annotated_validator_typing_cache[WrapValidator-<lambda>] PASSED
+tests/test_validators.py::test_annotated_validator_typing_cache[BeforeValidator-<lambda>] PASSED
+tests/test_validators.py::test_annotated_validator_typing_cache[AfterValidator-<lambda>] PASSED
+tests/test_validators.py::test_simple PASSED
+tests/test_validators.py::test_int_validation PASSED
+tests/test_validators.py::test_int_overflow_validation[inf0] PASSED
+tests/test_validators.py::test_int_overflow_validation[nan] PASSED
+tests/test_validators.py::test_int_overflow_validation[inf1] PASSED
+tests/test_validators.py::test_frozenset_validation PASSED
+tests/test_validators.py::test_deque_validation PASSED
+tests/test_validators.py::test_validate_whole PASSED
+tests/test_validators.py::test_validate_pre_error PASSED
+tests/test_validators.py::test_validating_assignment_ok PASSED
+tests/test_validators.py::test_validating_assignment_fail PASSED
+tests/test_validators.py::test_validating_assignment_value_change PASSED
+tests/test_validators.py::test_validating_assignment_extra PASSED
+tests/test_validators.py::test_validating_assignment_dict PASSED
+tests/test_validators.py::test_validating_assignment_values_dict PASSED
+tests/test_validators.py::test_validate_multiple PASSED
+tests/test_validators.py::test_classmethod PASSED
+tests/test_validators.py::test_use_bare PASSED
+tests/test_validators.py::test_use_bare_field_validator PASSED
+tests/test_validators.py::test_use_no_fields PASSED
+tests/test_validators.py::test_use_no_fields_field_validator PASSED
+tests/test_validators.py::test_validator_bad_fields_throws_configerror PASSED
+tests/test_validators.py::test_field_validator_bad_fields_throws_configerror PASSED
+tests/test_validators.py::test_validate_always PASSED
+tests/test_validators.py::test_field_validator_validate_default PASSED
+tests/test_validators.py::test_validate_always_on_inheritance PASSED
+tests/test_validators.py::test_field_validator_validate_default_on_inheritance PASSED
+tests/test_validators.py::test_validate_not_always PASSED
+tests/test_validators.py::test_wildcard_validators[validator-pytest_warns0] PASSED
+tests/test_validators.py::test_wildcard_validators[field_validator-pytest_warns1] PASSED
+tests/test_validators.py::test_wildcard_validator_error[validator-pytest_warns0] PASSED
+tests/test_validators.py::test_wildcard_validator_error[field_validator-pytest_warns1] PASSED
+tests/test_validators.py::test_invalid_field PASSED
+tests/test_validators.py::test_validate_child PASSED
+tests/test_validators.py::test_validate_child_extra PASSED
+tests/test_validators.py::test_validate_child_all PASSED
+tests/test_validators.py::test_validate_parent PASSED
+tests/test_validators.py::test_validate_parent_all PASSED
+tests/test_validators.py::test_inheritance_keep PASSED
+tests/test_validators.py::test_inheritance_replace PASSED
+tests/test_validators.py::test_inheritance_replace_root_validator PASSED
+tests/test_validators.py::test_validation_each_item PASSED
+tests/test_validators.py::test_validation_each_item_invalid_type PASSED
+tests/test_validators.py::test_validation_each_item_nullable PASSED
+tests/test_validators.py::test_validation_each_item_one_sublevel PASSED
+tests/test_validators.py::test_key_validation PASSED
+tests/test_validators.py::test_validator_always_optional PASSED
+tests/test_validators.py::test_field_validator_validate_default_optional PASSED
+tests/test_validators.py::test_validator_always_pre PASSED
+tests/test_validators.py::test_field_validator_validate_default_pre PASSED
+tests/test_validators.py::test_validator_always_post PASSED
+tests/test_validators.py::test_field_validator_validate_default_post PASSED
+tests/test_validators.py::test_validator_always_post_optional PASSED
+tests/test_validators.py::test_field_validator_validate_default_post_optional PASSED
+tests/test_validators.py::test_datetime_validator PASSED
+tests/test_validators.py::test_datetime_field_validator PASSED
+tests/test_validators.py::test_pre_called_once PASSED
+tests/test_validators.py::test_assert_raises_validation_error PASSED
+tests/test_validators.py::test_root_validator PASSED
+tests/test_validators.py::test_root_validator_subclass PASSED
+tests/test_validators.py::test_root_validator_pre PASSED
+tests/test_validators.py::test_root_validator_types PASSED
+tests/test_validators.py::test_root_validator_returns_none_exception PASSED
+tests/test_validators.py::test_model_validator_returns_ignore PASSED
+tests/test_validators.py::test_reuse_global_validators PASSED
+tests/test_validators.py::test_root_validator_classmethod[True-True] PASSED
+tests/test_validators.py::test_root_validator_classmethod[True-False] PASSED
+tests/test_validators.py::test_root_validator_classmethod[False-True] PASSED
+tests/test_validators.py::test_root_validator_classmethod[False-False] PASSED
+tests/test_validators.py::test_assignment_validator_cls PASSED
+tests/test_validators.py::test_literal_validator PASSED
+tests/test_validators.py::test_literal_validator_str_enum PASSED
+tests/test_validators.py::test_nested_literal_validator PASSED
+tests/test_validators.py::test_union_literal_with_constraints PASSED
+tests/test_validators.py::test_field_that_is_being_validated_is_excluded_from_validator_values PASSED
+tests/test_validators.py::test_exceptions_in_field_validators_restore_original_field_value PASSED
+tests/test_validators.py::test_overridden_root_validators PASSED
+tests/test_validators.py::test_validating_assignment_pre_root_validator_fail PASSED
+tests/test_validators.py::test_validating_assignment_model_validator_before_fail PASSED
+tests/test_validators.py::test_root_validator_skip_on_failure_invalid[kwargs0] PASSED
+tests/test_validators.py::test_root_validator_skip_on_failure_invalid[kwargs1] PASSED
+tests/test_validators.py::test_root_validator_skip_on_failure_invalid[kwargs2] PASSED
+tests/test_validators.py::test_root_validator_skip_on_failure_valid[kwargs0] PASSED
+tests/test_validators.py::test_root_validator_skip_on_failure_valid[kwargs1] PASSED
+tests/test_validators.py::test_root_validator_skip_on_failure_valid[kwargs2] PASSED
+tests/test_validators.py::test_root_validator_skip_on_failure_valid[kwargs3] PASSED
+tests/test_validators.py::test_model_validator_many_values_change PASSED
+tests/test_validators.py::test_v1_validator_deprecated PASSED
+tests/test_validators.py::test_info_field_name_data_before PASSED
+tests/test_validators.py::test_decorator_proxy PASSED
+tests/test_validators.py::test_root_validator_self PASSED
+tests/test_validators.py::test_validator_self PASSED
+tests/test_validators.py::test_field_validator_self PASSED
+tests/test_validators.py::test_v1_validator_signature_kwargs_not_allowed PASSED
+tests/test_validators.py::test_v1_validator_signature_kwargs1 PASSED
+tests/test_validators.py::test_v1_validator_signature_kwargs2 PASSED
+tests/test_validators.py::test_v1_validator_signature_with_values PASSED
+tests/test_validators.py::test_v1_validator_signature_with_values_kw_only PASSED
+tests/test_validators.py::test_v1_validator_signature_with_field PASSED
+tests/test_validators.py::test_v1_validator_signature_with_config PASSED
+tests/test_validators.py::test_model_config_validate_default PASSED
+tests/test_validators.py::test_functools_partial_validator_v2[partial_val_func1] PASSED
+tests/test_validators.py::test_functools_partial_validator_v2[partial_val_func2] PASSED
+tests/test_validators.py::test_functools_partial_validator_v2[partial_info_val_func] PASSED
+tests/test_validators.py::test_functools_partialmethod_validator_v2[partial_val_func1] PASSED
+tests/test_validators.py::test_functools_partialmethod_validator_v2[partial_val_func2] PASSED
+tests/test_validators.py::test_functools_partialmethod_validator_v2[partial_info_val_func] PASSED
+tests/test_validators.py::test_functools_partialmethod_validator_v2_cls_method[partial_cls_val_func1] PASSED
+tests/test_validators.py::test_functools_partialmethod_validator_v2_cls_method[partial_cls_val_func2] PASSED
+tests/test_validators.py::test_functools_partialmethod_validator_v2_cls_method[partial_cls_info_val_func] PASSED
+tests/test_validators.py::test_functools_partial_validator_v1[partial_val_func1] PASSED
+tests/test_validators.py::test_functools_partial_validator_v1[partial_val_func2] PASSED
+tests/test_validators.py::test_functools_partial_validator_v1[partial_values_val_func1] PASSED
+tests/test_validators.py::test_functools_partial_validator_v1[partial_values_val_func2] PASSED
+tests/test_validators.py::test_functools_partialmethod_validator_v1[partial_val_func1] PASSED
+tests/test_validators.py::test_functools_partialmethod_validator_v1[partial_val_func2] PASSED
+tests/test_validators.py::test_functools_partialmethod_validator_v1[partial_values_val_func1] PASSED
+tests/test_validators.py::test_functools_partialmethod_validator_v1[partial_values_val_func2] PASSED
+tests/test_validators.py::test_functools_partialmethod_validator_v1_cls_method[partial_cls_val_func1] PASSED
+tests/test_validators.py::test_functools_partialmethod_validator_v1_cls_method[partial_cls_val_func2] PASSED
+tests/test_validators.py::test_functools_partialmethod_validator_v1_cls_method[partial_cls_values_val_func1] PASSED
+tests/test_validators.py::test_functools_partialmethod_validator_v1_cls_method[partial_cls_values_val_func2] PASSED
+tests/test_validators.py::test_validator_allow_reuse_inheritance PASSED
+tests/test_validators.py::test_validator_allow_reuse_same_field PASSED
+tests/test_validators.py::test_validator_allow_reuse_different_field_1 PASSED
+tests/test_validators.py::test_validator_allow_reuse_different_field_2 PASSED
+tests/test_validators.py::test_validator_allow_reuse_different_field_3 PASSED
+tests/test_validators.py::test_validator_allow_reuse_different_field_4 PASSED
+tests/test_validators.py::test_root_validator_allow_reuse_same_field PASSED
+tests/test_validators.py::test_root_validator_allow_reuse_inheritance PASSED
+tests/test_validators.py::test_bare_root_validator PASSED
+tests/test_validators.py::test_validator_with_underscore_name PASSED
+tests/test_validators.py::test_validator_function_error_hide_input[before-config0-type=value_error, input_value='123', input_type=str] PASSED
+tests/test_validators.py::test_validator_function_error_hide_input[before-config1-type=value_error, input_value='123', input_type=str] PASSED
+tests/test_validators.py::test_validator_function_error_hide_input[before-config2-type=value_error] PASSED
+tests/test_validators.py::test_validator_function_error_hide_input[after-config3-type=value_error, input_value='123', input_type=str] PASSED
+tests/test_validators.py::test_validator_function_error_hide_input[after-config4-type=value_error, input_value='123', input_type=str] PASSED
+tests/test_validators.py::test_validator_function_error_hide_input[after-config5-type=value_error] PASSED
+tests/test_validators.py::test_validator_function_error_hide_input[plain-config6-type=value_error, input_value='123', input_type=str] PASSED
+tests/test_validators.py::test_validator_function_error_hide_input[plain-config7-type=value_error, input_value='123', input_type=str] PASSED
+tests/test_validators.py::test_validator_function_error_hide_input[plain-config8-type=value_error] PASSED
+tests/test_validators.py::test_custom_type_field_name_model PASSED
+tests/test_validators.py::test_custom_type_field_name_model_nested PASSED
+tests/test_validators.py::test_custom_type_field_name_typed_dict PASSED
+tests/test_validators.py::test_custom_type_field_name_dataclass PASSED
+tests/test_validators.py::test_custom_type_field_name_named_tuple PASSED
+tests/test_validators.py::test_custom_type_field_name_validate_call PASSED
+tests/test_validators.py::test_after_validator_field_name PASSED
+tests/test_validators.py::test_before_validator_field_name PASSED
+tests/test_validators.py::test_plain_validator_field_name PASSED
+tests/test_validators.py::test_wrap_validator_field_name PASSED
+tests/test_validators.py::test_validate_default_raises_for_basemodel PASSED
+tests/test_validators.py::test_validate_default_raises_for_dataclasses PASSED
+tests/test_validators.py::test_plain_validator_plain_serializer FAILED   [100%]
+tests/test_validators.py:2813 test_plain_validator_plain_serializer
+=================================== FAILURES ===================================
+____________________ test_plain_validator_plain_serializer _____________________
+tests/test_validators.py:2838: in test_plain_validator_plain_serializer
+    assert ta.dump_json([False, True]) == b'["0","1"]'
+E   assert b'[false,true]' == b'["0","1"]'
+E     At index 1 diff: b'f' != b'"'
+E     Full diff:
+E     - b'["0","1"]'
+E     + b'[false,true]'
+==================================== PASSES ====================================
+                              Summary of Failures                               
+┏━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
+┃               ┃               ┃  Function     ┃              ┃               ┃
+┃  File         ┃  Function     ┃  Line         ┃  Error Line  ┃  Error        ┃
+┡━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
+│  tests/test…  │  test_plain…  │  2814         │  2838        │  in           │
+│               │               │               │              │  test_plain…  │
+└───────────────┴───────────────┴───────────────┴──────────────┴───────────────┘
+Results (1.08s):
+         1 failed
+       164 passed
+RC=1

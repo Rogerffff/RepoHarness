@@ -1,0 +1,28 @@
+diff --git a/pydantic/functional_validators.py b/pydantic/functional_validators.py
+index 091452846..e6444f2f4 100644
+--- a/pydantic/functional_validators.py
++++ b/pydantic/functional_validators.py
+@@ -153,7 +153,23 @@ class PlainValidator:
+     func: core_schema.NoInfoValidatorFunction | core_schema.WithInfoValidatorFunction
+ 
+     def __get_pydantic_core_schema__(self, source_type: Any, handler: _GetCoreSchemaHandler) -> core_schema.CoreSchema:
++        # Validate with the plain function only (the inner validator is never called), while serialization
++        # follows the inner schema, so that serializers from the inner annotations are kept.
++        from .errors import PydanticSchemaGenerationError
++
++        try:
++            inner = handler(source_type)
++        except PydanticSchemaGenerationError:
++            inner = None
+         info_arg = _inspect_validator(self.func, 'plain')
++        if inner is not None:
++            if info_arg:
++                with_info = cast(core_schema.WithInfoValidatorFunction, self.func)
++                return core_schema.with_info_wrap_validator_function(
++                    lambda v, _handler, info: with_info(v, info), inner, field_name=handler.field_name
++                )
++            no_info = cast(core_schema.NoInfoValidatorFunction, self.func)
++            return core_schema.no_info_wrap_validator_function(lambda v, _handler: no_info(v), inner)
+         if info_arg:
+             func = cast(core_schema.WithInfoValidatorFunction, self.func)
+             return core_schema.with_info_plain_validator_function(func, field_name=handler.field_name)
