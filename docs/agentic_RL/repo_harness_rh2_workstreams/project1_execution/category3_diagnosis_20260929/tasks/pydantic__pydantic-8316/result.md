@@ -4,7 +4,7 @@
 
 前一位作者留下 13 个候选和修订草案 v1，运行输出随容器重置丢失。本页核对并沿用这些材料，另补 7 个候选和修订草案 v2，全部运行重做并归档。
 
-> **当前状态（09-30 更新：独立复核完成，采用复核草案 v3；v3 诊断评分进行中）**
+> **当前状态（09-30 更新：独立复核完成，采用复核草案 v3，转第2类）**
 >
 > - **作者诊断与证据**：原材料正式评分 22 次、修订 v1 与 v2 诊断评分各 22 次、私有行为矩阵 22 个变体，见 [evidence/](evidence/)。
 > - **独立复核完成**，结论“部分同意，阻断 1 项”，全文见 [review.md](review.md)（初判封存稿 [review_initial.md](review_initial.md)）：
@@ -13,9 +13,9 @@
 >   - 根因是作者 §1 把“6 个及以上字母的缩写”列为非核心、把所有非 ASCII 情形都当作未规定（复核 N2），本页已更正；
 >   - 数字边界维持 T3、不断言、不属 P5，但“两种读法都有依据”这条理由不对，已按复核 N3 改写（§3）。
 > - **负责人决定**：采纳复核草案 **v3**（v2 的 7 条断言原样保留，追加 4 条），私有模拟下这 7 个错误候选都变为 0，gold 与 9 个合理实现仍为 1。
-> - **进行中**：按复核停止条件，对 34 个变体跑一轮 `--materials` 诊断评分（base 以 noop 代替），逐格对照复核预期；一致即收口转第2类。停止条件写明聚焦复核只核对补丁 sha256 与这 34 格。
+> - **v3 诊断评分 34 格与复核预期逐格一致**（§4 v3 小节）：gold 与 9 个合理实现为 1；noop 与 23 个错误候选为 0，首条失败断言也与复核者的私有模拟相同。复核停止条件写明聚焦复核只核对补丁 sha256 与这 34 格，负责人已逐项核对（机械核对，见 §4），按停止条件收口，**转第2类**。交接见[交接清单](../../handover_to_category2_20260930.md)。
 
-**结论：问题和修法已明确；采用复核草案 v3，待 34 格诊断评分与复核预期一致后转第2类。** gold 仍作正对照。
+**结论：问题和修法已明确，转第2类（采用复核草案 v3）。** gold 仍作正对照。
 
 - **原测试只测了一种缩写形态（S1：v1 §4 第 2 步 T2c、第 4 步）。** 唯一 F2P 是 `CAMELToSnake → camel_to_snake`，与题面原例 `HTTPResponse` 同一形态：缩写在串首、只有一个、3 个以上字母。本页 15 个错误候选中有 **10 个在原材料正式评分得 1**，例如：
   - `lead_only` 只拆串首的缩写，`getHTTPResponseCode` 得到 `get_httpresponse_code`；
@@ -39,7 +39,7 @@
   - v2 补 3 条：缩写挨着下划线、缩写挨着数字、末尾缩写；
   - v3 补 4 条（复核者）：长缩写 `loadCONFIGURATIONFile`、三个缩写 `convertXMLToJSONViaHTTPRequest`、下划线后的缩写 `get_HTTPResponse`、含非 ASCII 字母的 `ÜberHTTPClient`（补丁中写作 `\u00dcberHTTPClient`，测试文件保持纯 ASCII）。
 
-  v2 正式诊断评分：noop 0；gold 与 5 个合理实现 1；15 个作者错误候选中 14 个为 0，`acr_max5` 仍为 1。复核另造的 6 个错误候选在 v2 下也为 1（私有模拟）。v3 私有模拟下这 7 个都为 0；v3 的 34 格诊断评分进行中（§4 v3 小节）。
+  v2 正式诊断评分：noop 0；gold 与 5 个合理实现 1；15 个作者错误候选中 14 个为 0，`acr_max5` 仍为 1。复核另造的 6 个错误候选在 v2 下也为 1（私有模拟）。v3 私有模拟下这 7 个都为 0，v3 的 34 格诊断评分与之逐格一致（§4 v3 小节）。
 - **gold 仍作正对照**，不需要 D4 替代正对照。
 - **实施依赖 D6 的“测试补丁替换”切片。** 派生镜像是云端等效重建。
 
@@ -328,7 +328,35 @@ P5 不适用：任务目标只有一种读法；有两种读法的只是题面�
 
 **私有模拟（复核者，root；v3 另以 UID 54322 复跑，结果相同）**：base 为 0；gold 与 9 个合理实现为 1；23 个错误候选（作者 15 个、复核者 8 个）全为 0，新增的 0 都停在为它设计的断言上。复核者的私有结果与作者正式评分在原测试和 v2 的 44 格上逐格相同。
 
-**v3 诊断评分（进行中）**：按复核停止条件，对 34 个变体跑一轮 `--materials` 诊断评分，base 以 noop 代替，逐格对照上面的预期。
+**v3 诊断评分（34 格，09-30）**：`--recipe` 与 `--materials`，grader 后缀 `+c3-pyd8316-acronym-position-v3`，派生镜像 `a764474e…`；34 次全部参考缺席 0、安装 rc 0、清理成功；P2P 除 `no_digit_split`（135/143）、`no_digit_upper`（141/143）外都是 143/143，两者与 v2 相同。逐次结果见 `evidence/formal_revised_v3/failure_reasons.txt`。
+
+| 候选 | 性质 | 原材料 | v2 | **v3** | v3 首条失败断言 |
+| --- | --- | --- | --- | --- | --- |
+| gold | 正对照 | 1 | 1 | **1** | — |
+| `keep_digit`、`lookaround`、`scan`、`upstream_main`、`normalize` | 合理（作者） | 1 | 1 | **1** | — |
+| `rv_tokens`、`rv_scan_gold`、`rv_split_join`、`rv_acr_min2` | 合理（复核者） | 1* | 1* | **1** | — |
+| noop | — | 0 | 0 | 0 | `'camelto_snake' == 'camel_to_snake'` |
+| `acr_max5` | 错误（缩写长度上限 5） | 1 | **1** | **0** | `'load_configurationfile' == 'load_configuration_file'` |
+| `w_acr_max8`、`w_len_cap` | 错误（长度上限 8；串长 > 20 退回旧算法） | 1* | **1*** | **0** | 同上 |
+| `w_count2` | 错误（缩写个数上限 2） | 1* | **1*** | **0** | `'convert_xml_to_json_via_httprequest' == …` |
+| `w_window8` | 错误（只拆起点在前 8 个字符内的缩写） | 1* | **1*** | **0** | `'convert_xml_to_jsonvia_httprequest' == …` |
+| `w_mid_underscore` | 错误（下划线后的缩写不拆） | 1* | **1*** | **0** | `'get_httpresponse' == 'get_http_response'` |
+| `w_skip_nonascii` | 错误（含非 ASCII 字符就退回旧算法） | 1* | **1*** | **0** | `'über_httpclient' == 'über_http_client'` |
+| `w_last_only` | 错误 | 1* | 0* | 0 | `'xmlto_json_converter' == 'xml_to_json_converter'` |
+| `w_example_only` | 错误（只处理题面示例） | 0* | 0* | 0 | `'camelto_snake' == 'camel_to_snake'` |
+| 作者其余 14 个错误候选 | 错误 | 见 v2 表 | 0 | 0 | 与 v2 相同（§4 v2 表） |
+
+\* 复核者候选的原材料、v2 两列是复核者的私有模拟（review.md §3.1），其余是正式评分或诊断评分。
+
+**v3 验收（v1 §5）与停止条件（review.md §4）**：
+
+| 验收项 | 结果 |
+| --- | --- |
+| 正对照为 1，noop 为 0 | 满足 |
+| 误拒已纠正且不新增误拒 | 满足：原版无误拒；9 个合理实现（两种数字读法各有）在 v3 下为 1 |
+| 已知错误候选为 0 | 满足：作者 15 个与复核者 8 个错误候选全为 0，v2 放过的 7 个停在 v3 新增的断言上 |
+| 停止条件：补丁 sha256 与 34 格结果 | 满足：补丁 `b248daa2…` 与复核草案逐字节相同；34 格 reward 与首条失败断言都与复核者的私有模拟一致（负责人机械核对） |
+| Codex 复核 | 照常 |
 
 ## 5．交接给第2类
 
@@ -348,7 +376,7 @@ P5 不适用：任务目标只有一种读法；有两种读法的只是题面�
 
 ## 7．未做与剩余事项
 
-- **独立复核**：已完成，阻断 1 项由 v3 处理；v3 的 34 格诊断评分进行中。
+- **独立复核**：已完成，阻断 1 项由 v3 处理；v3 的 34 格诊断评分与复核预期逐格一致。
 - **真实 actor 开发条件**：未验。私有矩阵以 root 身份跑；正式评分以 grader UID 54322 跑，候选以 UID 54321 应用。`to_snake` 是纯字符串函数，两种身份下 66 组结果逐一一致，未见身份影响。
 - **模型求解**：没有模型求解证据。
 - **全量公开测试**：只跑了 `tests/test_utils.py`、`tests/test_aliases.py`、`tests/test_config.py` 三个相关模块；复核只跑了 `tests/test_utils.py`。
@@ -373,7 +401,7 @@ P5 不适用：任务目标只有一种读法；有两种读法的只是题面�
   - 上游佐证：`upstream/upstream_to_snake_history.txt`，包含 2.5.3–2.11.0 各 tag 的 `to_snake`、2.6.0／2.8.0／2.8.1／2.8.2／2.11.0 的相关测试，以及 changelog 相关行，并附各文件 sha256。
 - **原始证据**：[evidence/](evidence/)
   - `formal/`：原材料评分，22 次；
-  - `formal_revised_v1/`、`formal_revised_v2/`：修订版诊断评分，各 22 次；
+  - `formal_revised_v1/`、`formal_revised_v2/`：修订版诊断评分，各 22 次；`formal_revised_v3/`：v3 诊断评分 34 次（含 `failure_reasons.txt`）；
   - 以上三个目录各含账本、评分日志、审计与 `summary.json`，`summary.json` 为逐项摘要；
   - `semantic_full/`：私有矩阵，每个变体一个目录，`semantic_summary.json` 为汇总；`semantic_full_summary.md` 为汇总表；
   - `derived_image.json`、`derived/`：派生镜像的 wheel 清单与重建记录；

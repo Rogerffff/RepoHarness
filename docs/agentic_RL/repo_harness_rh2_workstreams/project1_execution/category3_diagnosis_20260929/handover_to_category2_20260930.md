@@ -36,6 +36,7 @@
 | 题目 | 采用版本 | 可信正对照 | 重要余项（修好后才能按用途验收） |
 | --- | --- | --- | --- |
 | SWE moto-6185 | R-c v3 `fc65a527…332d`（v2s 路线＋复核 B2、B3 实例；只有私有模拟） | `ctx`（主）、`parity`（独立核实）；gold 失败按 D4 留档 | 第2类落地后做一次正式诊断评分，与复核 v3 列逐格一致即完成；登记项见条目 |
+| SWE pydantic-8316 | R-c v3 `b248daa2…81e0`（复核草案；34 格诊断评分与复核预期逐格一致） | gold；`keep_digit`、`upstream_main`（两种数字读法） | 数字边界登记为 gold 的范围外行为变化（新旧都接受，不属 P5）；T3 阈值余量只登记 |
 
 首批中 **dask-9378 暂不交第2类**：`da.ma` 新 API 是否为唯一目标仍需选择，见[题页](tasks/dask__dask-9378/result.md)。
 
@@ -201,3 +202,15 @@
   - 只登记、不再阻断：深于五层嵌套的阈值写法；除 `S` 以外“属性名恰为类型标签”的畸形组合；base 本来就不校验的输入；服务器模式的 HTTP 状态码；真实 AWS 的确切文案；
   - actor 条件、真实 AWS 行为未验；上游到 5.2.3 与 gold 写法相同（只作佐证）。
 - **正式落地前置**：D6 测试补丁替换；install_wave1 派生镜像（云端等效重建，三个 wheel 摘要已核）。
+
+### SWE pydantic-8316（09-30 追加）
+
+- **公开目标**：`to_snake` 在缩写与后接单词之间断开，不限缩写长度、个数、位置、串长，串中含非 ASCII 字母（不在断开边界上）时同样适用；保留 17 个旧参数的大小写、数字、下划线行为与末尾缩写的拆分（`parseURL → parse_url`）。
+- **采用版本**：[`revised_test_v3.patch`](../../../../../rh2/experiments/category3_cloud_20260929/pydantic8316/revised_test_v3.patch)（`b248daa2…81e0`），由独立复核起草，v2 的 7 条断言原样保留、追加 4 条；材料 [`materials_revised_v3.json`](../../../../../rh2/experiments/category3_cloud_20260929/pydantic8316/materials_revised_v3.json)（版本 `c3-pyd8316-acronym-position-v3`）。父版本 v2（`f0b7b090…`，诊断评分 22 次）留档。
+- **诊断评分（v3，34 次，与复核预期逐格一致）**：gold、作者 5 个与复核者 4 个合理实现为 1；noop、作者 15 个与复核者 8 个错误候选为 0。v2 放过的 7 个（`acr_max5`、`w_acr_max8`、`w_count2`、`w_window8`、`w_len_cap`、`w_mid_underscore`、`w_skip_nonascii`）停在 v3 新增的断言上。
+- **重要余项**：
+  - 数字边界（gold 让 `A1 → a1`、`fieldV2` 的 alias 变为 `field_v2`）：不断言、不属 P5，登记为“gold 的范围外行为变化，新旧数字行为都接受”；探针与事后审计中两种都不算错，也不算额外的语义正确；
+  - 只登记、不再阻断：缩写长度上限 ≥ 13、个数上限 ≥ 3、起点窗口 ≥ 20、串长上限 ≥ 30；单字母词、两个缩写相连、复数缩写、非 ASCII 字母处在断开边界、kebab-case；
+  - 复验时建议把复核者的 12 个候选一并纳入（`rv_tokens`、`rv_scan_gold` 能同时检查两类未规定行为没有被误拒）；
+  - 固定等效派生镜像的 wheel 清单；actor 条件未验；Codex 复核。
+- **正式落地前置**：D6 测试补丁替换；pydantic_v1 派生镜像（云端等效重建）。
