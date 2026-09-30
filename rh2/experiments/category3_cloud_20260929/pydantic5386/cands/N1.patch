@@ -1,0 +1,28 @@
+diff --git a/pydantic/main.py b/pydantic/main.py
+index 5db7fe6d7..374331d08 100644
+--- a/pydantic/main.py
++++ b/pydantic/main.py
+@@ -152,6 +152,9 @@ class ModelMetaclass(ABCMeta):
+                 types_namespace,
+                 raise_errors=False,
+             )
++            # `__init_subclass__` is run by `type.__new__` before the fields are collected, so it cannot see
++            # `model_fields`; call `__pydantic_init_subclass__` of the parent now that the class is initialised.
++            super(cls, cls).__pydantic_init_subclass__(**kwargs)  # type: ignore[misc]
+             return cls
+         else:
+             # this is the BaseModel class itself being created, no logic required
+@@ -211,6 +214,13 @@ class BaseModel(_repr.Representation, metaclass=ModelMetaclass):
+     def __get_pydantic_core_schema__(cls, source: type[BaseModel], gen_schema: GenerateSchema) -> CoreSchema:
+         return gen_schema.model_schema(cls)
+ 
++    @classmethod
++    def __pydantic_init_subclass__(cls, **kwargs: Any) -> None:
++        """
++        Like `__init_subclass__`, but called by the metaclass after the subclass is completely set up, so
++        `cls.model_fields` (and the validator and schema) are available. Receives the same class kwargs.
++        """
++
+     @classmethod
+     def model_validate(
+         cls: type[Model], obj: Any, *, strict: bool | None = None, context: dict[str, Any] | None = None
