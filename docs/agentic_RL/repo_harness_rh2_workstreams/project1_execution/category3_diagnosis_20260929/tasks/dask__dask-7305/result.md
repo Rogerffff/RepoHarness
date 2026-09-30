@@ -2,7 +2,7 @@
 
 2026-09-29 / Claude（云端，第3类第二批主审子代理）。原分类：第3类“已有具体疑点，缺辨别实验”。登记的下一步是：直接核对大整数 `partition_quantiles` 的端点、dtype 和不同分区数。
 
-> **当前状态（09-30 更新：已按 Codex 复核转第2类，采用 v2；v2 正式诊断评分进行中）**
+> **当前状态（09-30 更新：已按 Codex 复核转第2类，采用 v2）**
 >
 > - **独立复核已完成**，结论“部分同意，阻断 2 项”，全文见 [review.md](review.md)（初判封存稿 [review_initial.md](review_initial.md)）：
 >   - 同意原版 S1（T2a＋T2b，另有 T2c）、T1（带 P6 性质）、gold 不完整（G1 → S1）；作者 22 条正式账本逐条核对属实；
@@ -11,7 +11,7 @@
 >   - 修法：在 F2P 末尾追加两行实例，即草案 v2。
 > - **v2 已采用**：[`revised_test_v2.patch`](../../../../../../../rh2/experiments/category3_cloud_20260929/dask7305/revised_test_v2.patch) 与复核者的草案逐字节相同（`6e96caa7…3924`）。v1 不能当作充分验收。
 > - 复核者 12 个候选的原材料正式评分已补跑（09-30），与复核者的私有模拟逐项一致（§2（2））。
-> - **进行中**：v2 正式诊断评分（noop、gold、三份正对照、作者全部错误候选、复核者 12 个候选）。按 Codex 建议，v2 的聚焦复核由第2类承接。
+> - **v2 正式诊断评分 27 次符合预期**（§4 v2 小节）：三份正对照与复核者 4 个合理实现为 1；noop、gold、作者 10 个错误或不完整候选与复核者 8 个错误候选为 0，v1 放过的 4 个都停在 v2 新增的两行。按 Codex 建议，v2 的聚焦复核由第2类承接。交接见[交接清单](../../handover_to_category2_20260930.md)。
 
 **结论：问题和修法已明确，转第2类（采用 v2；正对照 `gold_full`，`exact_full`、`higher_full` 为第二、第三正对照，均已由独立复核核实）。**
 
@@ -22,7 +22,7 @@
   - uint64 值跨越 2**63 时，`process_val_weights` 用不带 dtype 的 `np.array(vals)` 转成了 float64。
 
   这两种情况下端点都偏移，`set_index` 还会静默丢行，例如 3 个不同值、300 行、5 个输出分区时丢掉 100 行。
-- **修法**：R-b 放宽内部分界；R-c 补 5 个大整数实例，同时检查端点和行的归属。修订版 v1 正式诊断评分（15 个变体）：noop 0；gold 0；`gold_full`、`exact_full`、`higher_full` 为 1；其余 10 个错误或不完整候选全为 0。
+- **修法**：R-b 放宽内部分界；R-c 补 5 个大整数实例（v1），同时检查端点和行的归属；v2 按独立复核再补相邻大整数与全负 int64 两例。v2 正式诊断评分（27 个变体）：noop 0；gold 0；三份正对照与复核者 4 个合理实现为 1；作者 10 个与复核者 8 个错误候选全为 0（§4 v2 小节）。
 - gold 在修订版上为 0，因此按 D4 改用替代正对照 `gold_full`（gold 加两处最小修补），`exact_full`、`higher_full` 作第二、第三正对照。三者由本主审编写，**已由独立复核核实**（review.md §3）。
 - 实施依赖 D6 的“测试补丁替换”切片。测试 ID 与 F2P／P2P 分组不变，不需要 `statement_replace`。
 
@@ -161,7 +161,9 @@
 
 P5 不适用：没有“两种读法”，内部分界本就允许不同。
 
-## 4．修法（交第2类）
+## 4．修法（交第2类）：采用 v2（v1 留档）
+
+本节先保留 v1 的内容（它的依据与逐实例核对仍然适用），采用版本 v2 见 v1 小节之后的 v2 小节。
 
 ### R-b＋R-c：修订版测试草案 v1
 
@@ -236,6 +238,53 @@ P5 不适用：没有“两种读法”，内部分界本就允许不同。
 - 浮点插值的原有三条断言；
 - `interpolate_int`、`large_uint` 以及其余 102 项 P2P。
 
+### v2：独立复核的两项阻断（09-30 正式诊断评分验证，采用版本）
+
+**草案**：[`revised_test_v2.patch`](../../../../../../../rh2/experiments/category3_cloud_20260929/dask7305/revised_test_v2.patch)，sha256 `6e96caa7…3924`，与复核者的 `review/revised_test_v2_draft.patch` 逐字节相同；材料 [`materials_revised_v2.json`](../../../../../../../rh2/experiments/category3_cloud_20260929/dask7305/materials_revised_v2.json)，版本 `c3-dask7305-exact-ends-v2`。父版本 v1（`d3f78c2c…`）留档。只在 v1 的 F2P 末尾追加两行实例（外加两行注释），测试 ID、分组和评分命令都不变。
+
+| 新增实例（F2P 行号） | 依据 | 拦下 |
+| --- | --- | --- |
+| 672：`[big + 99 + j % 3 for j in range(300)]`，uint64，3 进 5 出分区 | 题面 “correct minimum and maximum” 对任何大整数输入都成立；这 3 个相邻值经 float64 都舍入成 `big+129`，高于真实最大值，内部值不夹住就一定失败 | B1：`rv_pin_noclip`（末值越过最大值）、`rv_interp_pin_noclip`（结果无序）、`rv_k_le4`（5 个输出分区时首值偏移） |
+| 673：`[-big - 997 * k for k in order]`，int64，4 进 4 出 | 题面 “large integer inputs”，有符号大整数在核心要求内 | B2：`rv_maxonly_threshold`（只在 `data.max() > 2**53` 时走精确路径） |
+
+v2 的实例与行号：665 `issue_1to1`，666 `issue_1to3`，667 `uint_200_4to4`，668 `int64_200_4to4`，669 `span63_200_4to4`，672 相邻值（B1），673 全负 int64（B2）；各实例都进入模块级 helper `_assert_exact_int_divisions`（621 首值、622 末值、623 有序）。
+
+**正式诊断评分（27 次）**：grader 后缀 `+c3-dask7305-exact-ends-v2`；27 次全部参考缺席 0、安装 rc 0、清理成功。逐次失败原因见 `evidence/rerun_0930/formal_revised_v2/failure_reasons.txt`。
+
+| 候选 | 性质 | 原材料 | v1 | **v2** | v2 失败位置（F2P 调用行 > helper 行） |
+| --- | --- | --- | --- | --- | --- |
+| `gold_full` | 正对照（已核实） | 1 | 1 | **1** | — |
+| `exact_full`、`higher_full` | 第二、第三正对照（已核实） | 0 | 1 | **1** | — |
+| `rv_lower_full` | 合理（复核者） | 1 | 1* | **1** | — |
+| `rv_exact_linear`、`rv_minmax_graph`、`rv_dup_branch` | 合理（复核者） | 0 | 1* | **1** | — |
+| noop | — | 0 | 0 | 0 | 665 > 621 |
+| gold | 不完整（G1） | 1 | 0 | 0 | 666 > 621 |
+| `nearest_via_float`、`clip_partition`、`pvw_only` | 错误 | 1／私有 0／私有 0 | 0 | 0 | 665 > 621 |
+| `exact_ends`、`higher_int`、`uint_only`、`k1_only` | 错误或不完整 | 0／私有 0 | 0 | 0 | 666 > 621 |
+| `gold_typed_only` | 不完整 | 私有 1 | 0 | 0 | 666 > 621 |
+| `gold_pin_only` | 不完整 | 私有 1 | 0 | 0 | 669 > 621 |
+| `first_last` | 错误 | 私有 0 | 0 | 0 | P2P `test_set_index`、`test_empty_partitions` 失败（102/104） |
+| `rv_pin_noclip` | 错误（B1） | 0 | **1*** | **0** | 672 > 622：末值越过真实最大值 |
+| `rv_interp_pin_noclip` | 错误（B1） | **1** | **1*** | **0** | 672 > 623：结果无序 |
+| `rv_k_le4` | 错误（B1，构造性较强） | **1** | **1*** | **0** | 672 > 621：首值偏移 |
+| `rv_maxonly_threshold` | 错误（B2） | 0 | **1*** | **0** | 673 > 621：全负 int64 首值偏移 |
+| `rv_swallow_int64` | 错误 | **1** | 0* | 0 | 669 > 621（`span63`） |
+| `rv_si_override` | 错误 | 0 | 0* | 0 | 665 > 621 |
+| `rv_len2` | 错误 | 0 | 0* | 0 | 667 > 621 |
+| `rv_sorted_assume` | 错误 | 0 | 0* | 0 | P2P `test_set_index` 失败（103/104） |
+
+\* v1 列中复核者候选取自复核者的私有模拟（review.md §4.2），其余 v1 与原材料分数是正式评分；“私有”指作者候选在原材料上只做了私有模拟。复核者 12 个候选的原材料一列是 09-30 补跑的正式评分，与复核者的私有模拟逐项一致。
+
+**v2 验收（v1 §5）**：
+
+| 验收项 | 结果 |
+| --- | --- |
+| 正对照为 1，noop 为 0 | 满足：`gold_full`、`exact_full`、`higher_full` 为 1，noop 为 0 |
+| 误拒已纠正且不新增误拒 | 满足：原版误拒的 `exact_full`、`higher_full` 与复核者 3 个合理实现为 1；`rv_lower_full` 为 1 |
+| 已知错误候选为 0 | 满足：gold、作者 10 个错误或不完整候选与复核者 8 个错误候选全为 0；v1 放过的 4 个停在新增的两行 |
+| gold 的处理 | gold 在 `issue_1to3` 失败，按 D4 记录，改用已核实的替代正对照 |
+| 聚焦复核 | 按 Codex 09-30 建议，由第2类承接 |
+
 ### 正对照（D4）
 
 gold 通不过有依据的新断言（`issue_1to3`、`span63`），因此不能作正对照；本页不为保住 gold 而删去这两例。
@@ -244,7 +293,13 @@ gold 通不过有依据的新断言（`issue_1to3`、`span63`），因此不能�
 - 整数 dtype 下 `np.array(vals, dtype=dtype)`；
 - 唯一值不足分支钉住两端。
 
-`exact_full`、`higher_full` 作第二、第三正对照，证明放宽后的内部分界同时接受 `{1,2,4}` 与 `{1,2,3,4}`。三者都由本主审编写，**须由他人独立核实**：按公开要求核对补丁，并复跑私有矩阵。
+`exact_full`、`higher_full` 作第二、第三正对照，证明放宽后的内部分界同时接受 `{1,2,4}` 与 `{1,2,3,4}`。三者由本主审编写，**已由独立复核核实**（review.md §3）：42 项行为检查全部正确，`test_shuffle.py` 的 104 项 P2P 全过，另在 7 个相关测试文件按关键词选出的 318 项上与 base 逐项相同。
+
+核实范围与差异（交接时必须带上，review.md §3.3）：
+- 核实范围是公开要求的 numpy 大整数；可空整数 `UInt64` 等扩展 dtype（base 本来就不支持）与 `npartitions="auto"` 路径不在核实范围内；
+- 小整数 `x=[4,1,1,3,3]` 的 divisions：`gold_full` 与 gold 相同（`[1,1,2,4]`，会让可见旧测试失败，P6），`exact_full`、`higher_full` 与 base 相同（`[1,2,3,4]`）；
+- `exact_full` 在取值顶端（接近 2**64）会把溢出的内部值夹成分区最小值，分区不均衡，但端点与顺序正确；
+- 三份都不是上游写法，上游至今未修这两处（PyPI 2025.9.1 wheel 核对）。
 
 ### R-f
 
@@ -252,22 +307,25 @@ gold 通不过有依据的新断言（`issue_1to3`、`span63`），因此不能�
 
 ### 交接给第2类
 
-1. D6 “测试补丁替换”切片落地本草案。测试 ID 与分组不变，不需要改参考名单或 `statement_replace`。
-2. 独立核实 `gold_full`（及 `exact_full`、`higher_full`）确实满足公开要求，再作正对照。
-3. 复验：修订版下 noop 0、`gold_full` 1；gold 与另外 10 个错误或不完整候选为 0。
-4. Codex 复核。
+1. 以 v2（`6e96caa7…`）替换原 test_patch 形成正式版本。测试 ID 与分组不变，不需要改参考名单或 `statement_replace`。所需的 D6“测试补丁替换”是已获总体授权、尚未实现的后续实施项（D6 已验收的首片只有 `append_mypy_p2p`）；本页的 `--materials` 诊断评分不等于正式 actor 已消费修订版。v1 不能当作充分验收。
+2. 正对照：`gold_full`（主）、`exact_full`、`higher_full`，已由独立复核核实，核实范围与差异见上一小节。
+3. 复验：v2 下 noop 0；三份正对照与复核者 4 个合理实现为 1；gold、作者 10 个错误或不完整候选与复核者 8 个错误候选为 0（§4 v2 小节的表）。
+4. v2 的聚焦复核由第2类承接（Codex 09-30 建议）；复核者给出的非阻断建议 3（取值顶端的哨兵值实例）可一并考虑。
+5. 余项：`npartitions="auto"` 路径上 gold 与三份正对照都丢 1 行。它不在题面示例的调用方式内，但属于同一“行进自己的区间”要求：由第2类判断是否纳入，或写明边界理由。`shuffle="tasks"` 路径没有单独实例（它的错放可由逐分区区间检查发现）。
+6. Codex 复核。
 
 ## 5．当前用途（v1 §2，D6 落地前）
 
 | 版本 | 问题定位 | 能力比较 | 训练候选 | 留出评测 |
 | --- | --- | --- | --- | --- |
 | 原版 | 是 | 否（误拒未消解：完整正确解得 0；退化解得 1。按 v1 §11 不进比较分母） | 否 | 否 |
-| 修订版 v1（草案） | 是 | conditional：D6 落地并复验、正对照经独立核实 | conditional：同左，另加 Codex 复核 | 否（修订题只能作标明版本的自建题） |
+| 修订版 v2（草案） | 是 | conditional：D6 落地并复验（正对照已独立核实） | conditional：同左，另加聚焦复核与 Codex 复核 | 否（修订题只能作标明版本的自建题） |
 
 ## 6．未做与剩余事项
 
-- 独立复核：尚未进行。
-- 替代正对照的独立核实：尚未进行。
+- 独立复核：已完成（review.md），2 项阻断由 v2 处理，v2 正式诊断评分符合预期；v2 的聚焦复核由第2类承接。
+- 替代正对照的独立核实：已完成（review.md §3）。
+- 复核未查（review.md §6）：完整 grader profile 下的私有运行；其它平台与 numpy 版本（例如 longdouble 精度不同）；`gold_full` 等在唯一值不足分支中的 Python 级循环在大规模下的耗时。
 - 真实 actor 开发条件：未验，没有模型求解证据。
 - `npartitions="auto"` 路径（T3）：只登记，未设计修订。
 - 上游 2024.1.0 在新 numpy 下的实际行为：未运行，只读了源码。
@@ -280,12 +338,15 @@ gold 通不过有依据的新断言（`issue_1to3`、`span63`），因此不能�
   - `behavior.py`、`rev_instances.py`；
   - `semantic_spec*.json`；
   - `make_revised_test.py`、`revised_test_v1.patch`、`materials_revised_v1.json`；
-  - `run_formal.sh`、`summarize_*.py`。
+  - v2：`revised_test_v2.patch`、`materials_revised_v2.json`；
+  - 复核材料：`review/`（`make_review_candidates.py` 与 12 个候选、`make_revised_test_v2_draft.py`、`revised_test_v2_draft.patch`、探针与回归脚本、`out/` 运行输出），12 个候选已复制到 `candidates/`；
+  - `run_formal.sh`（`orig`／`rev`／`rev2` 三种模式）、`summarize_*.py`；失败位置汇总用上级目录的 `failure_reasons.py`。
 - 原始证据：[evidence/](evidence/)，其中：
   - `formal/`：原材料评分；
   - `formal_revised_v1/`：修订版诊断评分；
   - `semantic_v1/`：私有矩阵与原隐藏测试；
   - `semantic_v2/`：加修订隐藏测试；
   - `semantic_v3/`：逐实例核对；
-  - 全部文件的 SHA256 见 `evidence_manifest.json`。
+  - 全部文件的 SHA256 见 `evidence_manifest.json`；
+  - `rerun_0930/`：09-30 运行，含 `formal/`（复核者 12 个候选的原材料正式评分）、`formal_revised_v2/`（v2 诊断评分 27 次），各有 `failure_reasons.txt`，以及本目录自己的 `evidence_manifest.json`。09-29 的 `formal/`、`formal_revised_v1/` 仍在上一级目录。
 - 环境：见[环境说明](../../environment.md)。

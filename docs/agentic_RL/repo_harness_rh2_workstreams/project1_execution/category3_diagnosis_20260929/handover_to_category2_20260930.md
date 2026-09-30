@@ -29,7 +29,7 @@
 | SWE conan-13403 | R-e/R-b/R-c v4 `2f55ba31…`（熔断收口） | gold；13 个合理实现 | v4 待 Codex 确认（熔断规则）；GNU 工具链端到端与 actor 未验 |
 | SWE pydantic-8567 | R-c v4 `7014f5fc…`（熔断收口，31 次诊断评分符合停止条件） | `upstream261`、`c3_reorder`（独立核实，范围差异见下） | v4 待 Codex 确认（熔断规则）；B03 不断言的取舍；正对照范围差异随交接保留 |
 | SWE dask-8801 | v5 `59293680…`（v4＋B2 修正＋词表调整；41 次诊断评分与复核预期一致） | gold | **须处理**：`rv_enum_types`（`1.5` 实例）、原因判定的设计、`wr_null_raises`、`wr_perm_fatal`（v5 下仍为 1）；R-f 新公开读者验收 |
-| SWE dask-7305 | R-b/R-c v2 `6e96caa7…`（正式诊断评分进行中） | `gold_full`（主）、`exact_full`、`higher_full`（独立核实，限公开大整数范围） | `npartitions="auto"` 路径三份正对照都丢 1 行（范围外，须登记处置）；v2 聚焦复核由第2类承接 |
+| SWE dask-7305 | R-b/R-c v2 `6e96caa7…`（27 次诊断评分符合预期） | `gold_full`（主）、`exact_full`、`higher_full`（独立核实，限公开大整数范围） | `npartitions="auto"` 路径三份正对照都丢 1 行（范围外，须登记处置）；v2 聚焦复核由第2类承接 |
 
 **09-30 续接后追加**（Codex 复核时列为“继续完成诊断”，之后完成独立复核）：
 
@@ -174,16 +174,17 @@
 ### SWE dask-7305
 
 - **公开目标**：大整数输入下，`partition_quantiles` 返回精确的最小值与最大值，dtype 保持输入 dtype；`set_index` 把每行放进自己的 divisions 区间。不限单分区、不限 2**63 以下；有符号大整数也在内。
-- **采用版本**：R-b/R-c v2 [`revised_test_v2.patch`](../../../../../rh2/experiments/category3_cloud_20260929/dask7305/revised_test_v2.patch)（`6e96caa7…`），即独立复核的两行补充（300 行相邻大 uint64、3 进 5 出分区；全负大 int64）。v1（`d3f78c2c…`）不能当作充分验收。v2 正式诊断评分正在进行，结果出来后补入本条。
+- **采用版本**：R-b/R-c v2 [`revised_test_v2.patch`](../../../../../rh2/experiments/category3_cloud_20260929/dask7305/revised_test_v2.patch)（`6e96caa7…`），即独立复核的两行补充（300 行相邻大 uint64、3 进 5 出分区；全负大 int64）。v1（`d3f78c2c…`）不能当作充分验收。
+- **诊断评分（v2，27 次）**：`gold_full`、`exact_full`、`higher_full` 与复核者 4 个合理实现为 1；noop、gold（`issue_1to3`，D4）、作者 10 个错误或不完整候选与复核者 8 个错误候选为 0；v1 放过的 `rv_pin_noclip`、`rv_interp_pin_noclip`、`rv_k_le4` 停在相邻值一行，`rv_maxonly_threshold` 停在全负 int64 一行。
 - **正对照（D4，独立复核核实）**：`gold_full`（主）、`exact_full`、`higher_full`。核实范围是公开要求的 numpy 大整数；扩展 dtype 与 `npartitions="auto"` 路径不在核实范围内。
 - **已证错误候选**：
   - 原测试：`nearest_via_float`（正式）与 `rv_interp_pin_noclip`、`rv_swallow_int64`、`rv_k_le4`（私有模拟）得 1。合理实现被误拒：作者的 `exact_full`、`higher_full`（正式），以及复核者 4 个中的 3 个（私有模拟）；
   - v1：`rv_pin_noclip`、`rv_interp_pin_noclip`、`rv_maxonly_threshold` 为 1，另有构造性较强的 `rv_k_le4`；
-  - v2 草案下全部为 0（私有模拟）。
+  - v2 下全部为 0（正式诊断评分，09-30）。
 - **重要余项**：
   - `npartitions="auto"` 路径上，gold 与三份正对照都丢 1 行。它不在题面示例的调用方式内，但属于同一“行进自己的区间”要求：由第2类判断是否纳入，或写明边界理由；
   - v2 的聚焦复核由第2类承接（Codex 建议）；
-  - base 上“丢行”只发生在默认 disk shuffle，`shuffle="tasks"` 时行不丢但落在区间外。题页 §1 要补这一句。
+  - base 上“丢行”只发生在默认 disk shuffle，`shuffle="tasks"` 时行不丢但落在区间外（题页 §2 已补）。
 - **正式落地前置**：D6 测试补丁替换。
 
 ### SWE moto-6185（09-30 追加）
