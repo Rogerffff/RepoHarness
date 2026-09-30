@@ -1,0 +1,22 @@
+diff --git a/dask/base.py b/dask/base.py
+--- a/dask/base.py
++++ b/dask/base.py
+@@ -13,6 +13,7 @@
+ from collections.abc import Callable, Iterator, Mapping
+ from concurrent.futures import Executor
+ from contextlib import contextmanager
++from enum import Enum
+ from functools import partial
+ from numbers import Integral, Number
+ from operator import getitem
+@@ -1004,6 +1005,10 @@
+     method = getattr(o, "__dask_tokenize__", None)
+     if method is not None:
+         return method()
++
++    if isinstance(o, Enum):
++        cls = type(o)
++        return "enum", cls.__module__, cls.__qualname__, o.name, o.value
+ 
+     if callable(o):
+         return normalize_function(o)
