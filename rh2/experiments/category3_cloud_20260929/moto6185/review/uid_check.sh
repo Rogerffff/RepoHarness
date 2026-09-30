@@ -4,12 +4,13 @@
 set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
 EXP="$(dirname "$HERE")"
+REPO="$(cd "$HERE/../../../../.." && pwd)"
 OUT="$1"
 : > "$OUT"
 GOLD_TMP="$(mktemp)"
-python3 - "$GOLD_TMP" <<'PY'
+python3 - "$GOLD_TMP" "$REPO" <<'PY'
 import json, sys
-for line in open("/home/user/RepoHarness/docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl"):
+for line in open(sys.argv[2] + "/docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl"):
     d = json.loads(line)
     if d["instance_id"] == "getmoto__moto-6185":
         open(sys.argv[1], "w").write(d["golden_patch"])

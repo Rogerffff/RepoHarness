@@ -1,0 +1,333 @@
+{
+ "variant": "swallow",
+ "candidate_sha256": "35a765d8fca32558922d8e9d06ac9ec13f3849b598a065e9d5935b5002573881",
+ "apply_rc": 0,
+ "worktree_diff_sha256": "351c9221f1fffd8711d78c3f6e349a797a5b928cb2bf7c6f63f570aeee0b286b",
+ "probe": {
+  "L.ex1_top_S_null": {
+   "equal": true,
+   "put": "ok",
+   "row": "L.ex1_top_S_null",
+   "stored": true
+  },
+  "L.ex2_nested_S_null": {
+   "equal": true,
+   "put": "ok",
+   "row": "L.ex2_nested_S_null",
+   "stored": true
+  },
+  "L.deep2_S": {
+   "equal": true,
+   "put": "ok",
+   "row": "L.deep2_S",
+   "stored": true
+  },
+  "L.deep3_S": {
+   "equal": true,
+   "put": "ok",
+   "row": "L.deep3_S",
+   "stored": true
+  },
+  "L.deep4_S": {
+   "equal": true,
+   "put": "ok",
+   "row": "L.deep4_S",
+   "stored": true
+  },
+  "L.S_holding_map": {
+   "equal": true,
+   "put": "ok",
+   "row": "L.S_holding_map",
+   "stored": true
+  },
+  "L.S_holding_map_with_S": {
+   "equal": true,
+   "put": "ok",
+   "row": "L.S_holding_map_with_S",
+   "stored": true
+  },
+  "L.nested_S_holding_map": {
+   "equal": true,
+   "put": "ok",
+   "row": "L.nested_S_holding_map",
+   "stored": true
+  },
+  "L.S_holding_list": {
+   "equal": true,
+   "put": "ok",
+   "row": "L.S_holding_list",
+   "stored": true
+  },
+  "L.S_holding_bool": {
+   "equal": true,
+   "put": "ok",
+   "row": "L.S_holding_bool",
+   "stored": true
+  },
+  "L.S_holding_set": {
+   "equal": true,
+   "put": "ok",
+   "row": "L.S_holding_set",
+   "stored": true
+  },
+  "L.S_first_then_other": {
+   "equal": true,
+   "put": "ok",
+   "row": "L.S_first_then_other",
+   "stored": true
+  },
+  "L.map_S_then_sibling": {
+   "equal": true,
+   "put": "ok",
+   "row": "L.map_S_then_sibling",
+   "stored": true
+  },
+  "L.list_map_S": {
+   "equal": true,
+   "put": "ok",
+   "row": "L.list_map_S",
+   "stored": true
+  },
+  "L.list_in_map_S": {
+   "equal": true,
+   "put": "ok",
+   "row": "L.list_in_map_S",
+   "stored": true
+  },
+  "L.batch_nested_S": {
+   "equal": true,
+   "put": "ok",
+   "row": "L.batch_nested_S",
+   "stored": true
+  },
+  "L.transact_nested_S": {
+   "equal": true,
+   "put": "ok",
+   "row": "L.transact_nested_S",
+   "stored": true
+  },
+  "K.hashM_nested_S": {
+   "equal": true,
+   "put": "ok",
+   "row": "K.hashM_nested_S",
+   "stored": true
+  },
+  "K.hashS_nested_S": {
+   "equal": null,
+   "put": "SerEx:Start of structure or map found where no",
+   "row": "K.hashS_nested_S",
+   "stored": false
+  },
+  "N.bad_pk_S_int": {
+   "put": "SerEx:NUMBER_VALUE cannot be converted to Stri",
+   "row": "N.bad_pk_S_int"
+  },
+  "N.bad_pk_S_dict": {
+   "put": "SerEx:Start of structure or map found where no",
+   "row": "N.bad_pk_S_dict"
+  },
+  "N.bad_nonkey_S_dict": {
+   "put": "EXC:AttributeError",
+   "row": "N.bad_nonkey_S_dict",
+   "stored": false
+  },
+  "N.bad_nonkey_S_int": {
+   "put": "EXC:AttributeError",
+   "row": "N.bad_nonkey_S_int",
+   "stored": false
+  },
+  "N.bad_nonkey_S_bool": {
+   "put": "ok",
+   "row": "N.bad_nonkey_S_bool",
+   "stored": true,
+   "stored_value": {
+    "attr": {
+     "S": true
+    },
+    "pk": {
+     "S": "k4"
+    }
+   }
+  },
+  "N.bad_nested_N_int": {
+   "put": "SerEx:NUMBER_VALUE cannot be converted to Stri",
+   "row": "N.bad_nested_N_int",
+   "stored": false
+  },
+  "N.bad_attrS_contains_N_int": {
+   "put": "SerEx:NUMBER_VALUE cannot be converted to Stri",
+   "row": "N.bad_attrS_contains_N_int",
+   "stored": false
+  },
+  "N.bad_attrS_then_nested_N_int": {
+   "put": "ok",
+   "row": "N.bad_attrS_then_nested_N_int",
+   "stored": true,
+   "stored_value": {
+    "S": {
+     "S": "asdf"
+    },
+    "nested": {
+     "M": {
+      "sth": {
+       "N": 5
+      }
+     }
+    },
+    "pk": {
+     "S": "k7"
+    }
+   }
+  },
+  "N.bad_mapS_then_N_int": {
+   "put": "ok",
+   "row": "N.bad_mapS_then_N_int",
+   "stored": true,
+   "stored_value": {
+    "nested": {
+     "M": {
+      "S": {
+       "S": "asdf"
+      },
+      "sth": {
+       "N": 5
+      }
+     }
+    },
+    "pk": {
+     "S": "k8"
+    }
+   }
+  },
+  "N.bad_map_N_int_then_S": {
+   "put": "SerEx:NUMBER_VALUE cannot be converted to Stri",
+   "row": "N.bad_map_N_int_then_S",
+   "stored": false
+  },
+  "N.bad_mapS_then_S_int": {
+   "put": "EXC:AttributeError",
+   "row": "N.bad_mapS_then_S_int",
+   "stored": false
+  },
+  "N.bad_raw_S_int": {
+   "put": "EXC:AttributeError",
+   "row": "N.bad_raw_S_int",
+   "stored": false
+  },
+  "N.bad_raw_N_int": {
+   "put": "EXC:AttributeError",
+   "row": "N.bad_raw_N_int",
+   "stored": false
+  },
+  "N.bad_list_S_dict": {
+   "put": "EXC:AttributeError",
+   "row": "N.bad_list_S_dict",
+   "stored": false
+  },
+  "N.bad_list_N_int": {
+   "put": "ok",
+   "row": "N.bad_list_N_int",
+   "stored": true,
+   "stored_value": {
+    "A": {
+     "L": [
+      {
+       "N": 5
+      }
+     ]
+    },
+    "pk": {
+     "S": "k14"
+    }
+   }
+  },
+  "N.ok_top_S_str": {
+   "equal": true,
+   "put": "ok",
+   "row": "N.ok_top_S_str",
+   "stored": true
+  },
+  "N.ok_S_holding_map": {
+   "equal": true,
+   "put": "ok",
+   "row": "N.ok_S_holding_map",
+   "stored": true
+  },
+  "N.ok_deep3": {
+   "equal": true,
+   "put": "ok",
+   "row": "N.ok_deep3",
+   "stored": true
+  },
+  "N.ok_list_map_S": {
+   "equal": true,
+   "put": "ok",
+   "row": "N.ok_list_map_S",
+   "stored": true
+  },
+  "N.ok_S_before_pk": {
+   "equal": true,
+   "put": "ok",
+   "row": "N.ok_S_before_pk",
+   "stored": true
+  }
+ },
+ "tests": {
+  "orig": {
+   "reward": 1,
+   "f2p": "1/1",
+   "p2p": "34/34",
+   "missing": [],
+   "parsed": 35,
+   "pytest_rc": 0,
+   "tail": [
+    "======================= 36 passed, 150 warnings in 2.99s ======================="
+   ]
+  },
+  "v2": {
+   "reward": 0,
+   "f2p": "0/1",
+   "p2p": "34/34",
+   "missing": [],
+   "parsed": 35,
+   "pytest_rc": 1,
+   "tail": [
+    "================== 1 failed, 35 passed, 160 warnings in 2.57s =================="
+   ],
+   "excerpt": [
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py:971: in test_put_item__string_as_integer_value",
+    "E   Failed: DID NOT RAISE <class 'botocore.exceptions.ClientError'>"
+   ]
+  },
+  "v2s": {
+   "reward": 0,
+   "f2p": "0/1",
+   "p2p": "34/34",
+   "missing": [],
+   "parsed": 35,
+   "pytest_rc": 1,
+   "tail": [
+    "================== 1 failed, 35 passed, 160 warnings in 2.52s =================="
+   ],
+   "excerpt": [
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py:970: in test_put_item__string_as_integer_value",
+    "E   Failed: DID NOT RAISE <class 'botocore.exceptions.ClientError'>"
+   ]
+  },
+  "v3": {
+   "reward": 0,
+   "f2p": "0/1",
+   "p2p": "34/34",
+   "missing": [],
+   "parsed": 35,
+   "pytest_rc": 1,
+   "tail": [
+    "================== 1 failed, 35 passed, 164 warnings in 2.84s =================="
+   ],
+   "excerpt": [
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py:978: in test_put_item__string_as_integer_value",
+    "E   Failed: DID NOT RAISE <class 'botocore.exceptions.ClientError'>"
+   ]
+  }
+ }
+}

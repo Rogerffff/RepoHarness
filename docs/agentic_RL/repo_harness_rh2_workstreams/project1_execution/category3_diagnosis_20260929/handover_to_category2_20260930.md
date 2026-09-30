@@ -1,4 +1,4 @@
-# 第3类 → 第2类交接清单（11 题）
+# 第3类 → 第2类交接清单（11 题，09-30 续接后追加）
 
 2026-09-30 / Claude（云端，第3类负责人）。依据：各题 `tasks/<id>/result.md` 与归档证据，以及 Codex 09-30 独立复核（[总报告](../category3_cloud_review_20260930/README.md)、[接续反馈](../category3_cloud_review_20260930/claude_feedback.md)）。
 
@@ -30,6 +30,12 @@
 | SWE pydantic-8567 | R-c v3 `4600867b…` | `upstream261`、`c3_reorder`（独立核实，范围差异见下） | 聚焦复核结论待并入；`c3_serpass`、`rv_ser_to_end` 两个边缘项须给处置 |
 | SWE dask-8801 | v5（v4＋B2 修正＋词表调整，正式诊断评分进行中） | gold | **须处理**：`rv_enum_types`（`1.5` 实例）、原因判定的设计、`wr_null_raises`、`wr_perm_fatal`；R-f 新公开读者验收 |
 | SWE dask-7305 | R-b/R-c v2 `6e96caa7…`（正式诊断评分进行中） | `gold_full`（主）、`exact_full`、`higher_full`（独立核实，限公开大整数范围） | `npartitions="auto"` 路径三份正对照都丢 1 行（范围外，须登记处置）；v2 聚焦复核由第2类承接 |
+
+**09-30 续接后追加**（Codex 复核时列为“继续完成诊断”，之后完成独立复核）：
+
+| 题目 | 采用版本 | 可信正对照 | 重要余项（修好后才能按用途验收） |
+| --- | --- | --- | --- |
+| SWE moto-6185 | R-c v3 `fc65a527…332d`（v2s 路线＋复核 B2、B3 实例；只有私有模拟） | `ctx`（主）、`parity`（独立核实）；gold 失败按 D4 留档 | 第2类落地后做一次正式诊断评分，与复核 v3 列逐格一致即完成；登记项见条目 |
 
 首批中 **dask-9378 暂不交第2类**：`da.ma` 新 API 是否为唯一目标仍需选择，见[题页](tasks/dask__dask-9378/result.md)。
 
@@ -173,3 +179,18 @@
   - v2 的聚焦复核由第2类承接（Codex 建议）；
   - base 上“丢行”只发生在默认 disk shuffle，`shuffle="tasks"` 时行不丢但落在区间外。题页 §1 要补这一句。
 - **正式落地前置**：D6 测试补丁替换。
+
+### SWE moto-6185（09-30 追加）
+
+- **公开目标**：`put_item` 的条目中任何位置（顶层、任意深度的嵌套 map、list 内的 map）名为 `S` 的属性都能写入并等值读回，对表的主键名没有限制；名为 `S` 的属性不影响其它属性的类型校验；关闭 SDK 参数校验时，服务端对所有属性照旧拒绝 `S` 值为 int 或 map（base 公开旧行为，`test_put_item_wrong_datatype` 同类断言）。
+- **采用版本**：[`revised_test_v3.patch`](../../../../../rh2/experiments/category3_cloud_20260929/moto6185/revised_test_v3.patch)（`fc65a527…332d`），由独立复核起草；材料 [`materials_revised_v3.json`](../../../../../rh2/experiments/category3_cloud_20260929/moto6185/materials_revised_v3.json)（版本 `c3-moto6185-nested-s-v3`）已备好。父版本 v2s（`4122cced…`，正式诊断评分 14 次）、v2（`7bbae287…`，正式诊断评分 14 次）留档。
+- **证据层级**：v3 只有复核者的私有模拟（22 个版本，root；gold、`ctx`、`parity` 另以 UID 54322 复跑 F2P）。v3 相对 v2s 只加数据行；此前原材料、v2、v2s 的 42 格私有模拟与正式评分逐格一致。
+- **v3 私有模拟**：`ctx`、`parity`、`ctx_list`、`rv_dynamotype` 为 1；noop、gold（主键名 `M` 一例）、作者 9 个与复核者 7 个错误候选为 0，各停在预期断言。
+- **已证错误候选**：
+  - 原测试放过：`top_only`、`siblings`、`depth2`、`list_as_names`、`swallow`、`skip_s_subtree`、`rootkey`（正式），以及复核者的 7 个（私有）；
+  - v2 放过 gold 两处缺口、`rootkey`、`rv_shape_key` 等；v2s 放过 `rv_depth4`、`rv_tagparent`。
+- **重要余项**：
+  - D6 落地后做一次正式诊断评分（候选清单与预期见题页 §5 v3 小节），逐格一致即完成，不再聚焦复核；不一致只定位那一格；
+  - 只登记、不再阻断：深于五层嵌套的阈值写法；除 `S` 以外“属性名恰为类型标签”的畸形组合；base 本来就不校验的输入；服务器模式的 HTTP 状态码；真实 AWS 的确切文案；
+  - actor 条件、真实 AWS 行为未验；上游到 5.2.3 与 gold 写法相同（只作佐证）。
+- **正式落地前置**：D6 测试补丁替换；install_wave1 派生镜像（云端等效重建，三个 wheel 摘要已核）。

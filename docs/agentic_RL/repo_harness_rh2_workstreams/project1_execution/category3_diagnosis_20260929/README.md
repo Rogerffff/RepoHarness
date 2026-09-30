@@ -55,7 +55,7 @@
 | [SWE pydantic-8567](tasks/pydantic__pydantic-8567/result.md) | 交第2类 | v3 17 次诊断评分；聚焦复核进行中 | 并入聚焦复核结论（两个边缘项的处置） |
 | [SWE dask-8801](tasks/dask__dask-8801/result.md) | 交第2类（带修复清单） | v4 23 次诊断评分；v5 进行中 | 余项：`1.5` 实例、原因判定设计、显式 `null`、权限错误 |
 | [SWE dask-7305](tasks/dask__dask-7305/result.md) | 交第2类（带修复清单） | 独立复核（2 项阻断）已由 v2 处理；v2 诊断评分进行中 | v2 聚焦复核由第2类承接 |
-| [SWE moto-6185](tasks/getmoto__moto-6185/result.md) | 第3类 | 作者诊断完成：私有矩阵、42 次正式评分已归档；独立复核进行中 | 复核后判定 |
+| [SWE moto-6185](tasks/getmoto__moto-6185/result.md) | **交第2类**（09-30 追加） | 独立复核 3 项阻断，采纳复核草案 v3（v2s 路线：gold 两处缺口须断言，正对照 `ctx`／`parity` 已核实）；v3 私有模拟 22 个版本符合预期 | 第2类落地后一次正式诊断评分，与复核 v3 列逐格一致即完成 |
 | [SWE pydantic-8316](tasks/pydantic__pydantic-8316/result.md) | 第3类 | 作者诊断完成：66 次正式评分；独立复核进行中 | 复核后判定 |
 | [R2E coveragepy__f5eb5f21](tasks/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/result.md) | 第3类 | 作者判 P5 并建议 A；Codex 在其快照上倾向视为 R-b；独立复核进行中 | 复核后确定是否需要用户选择 |
 | [R2E pillow__a682ceaf](tasks/pillow__a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90/public_read.md) | 第3类 | 公开阅读与 5 条公开命令核对完成；作者诊断进行中 | — |

@@ -2,30 +2,32 @@
 
 2026-09-29 / Claude（云端，第3类第二批主审）。原分类：第3类“已有具体疑点，缺辨别实验”。登记的下一步是：先对合法嵌套值做 base／gold 的 Put/Get 对照，再处理实际失败。
 
-> **当前状态（09-30 更新）**
+> **当前状态（09-30 更新：独立复核完成，转第2类，采用 v3）**
 >
-> - **全部运行已在云端重做并归档**（证据在 [evidence/](evidence/)）：
->   - 派生镜像按 install_wave1 配方重建，三个 wheel 的 SHA256 与登记值逐一相同；
->   - 私有行为矩阵 14 个版本 × 44 个场景：§3.1 行为表 154 格与重跑结果逐格一致；
->   - 正式评分 42 次（原材料、v2、v2s 各 14 次）：与私有模拟评分逐项一致，见 §3.2 与 §5。
-> - **作者结论经重跑证实**：原版 S1（6 个错误或部分修复候选正式得 1）、没有误拒、v2 下 gold 与两份附加正对照为 1、错误候选为 0。
-> - **还差**：独立复核（重点见 §7），以及 `ctx`、`parity` 作附加正对照的他人核实。
+> - **全部运行已在云端重做并归档**（[evidence/](evidence/)）：私有行为矩阵 14 个版本 × 44 个场景，正式评分 42 次（原材料、v2、v2s 各 14 次），与私有模拟逐项一致。
+> - **独立复核完成**，结论“部分同意，阻断 3 项”，全文见 [review.md](review.md)（初判封存稿 [review_initial.md](review_initial.md)）：
+>   - 同意：原版 S1（T2a、T2b），没有 T1；v2 新增断言都有公开依据，不过严；gold 两处缺口的实测属实；
+>   - **B1**：gold 的两处缺口不能记 T3。缺口 1（主键名为 `M` 的表上嵌套 `S` 仍报错）就是题面缺陷本身，题面对主键名没有限制；缺口 2（关闭参数校验时非主键 `S`→dict 抛内部 `AttributeError`）是 base 公开服务端校验的回归。按“已知错误不因少见放过”，两处都由修订版断言，默认改走 v2s 路线：正对照 `ctx`，第二正对照 `parity`，gold 的失败留档；
+>   - **B2、B3**：v2s 仍放过复核者的 `rv_depth4`（只修到两层嵌套）与 `rv_tagparent`（名为 `S` 的属性，畸形 S 值不再报 `SerializationException`）；
+>   - `ctx`、`parity` 可以作正对照（D4 的他人核实已满足，review.md §3）。
+> - **负责人决定**：采纳复核者的草案 **v3**（v2s 加 B2、B3 的实例），私有模拟 22 个版本全部符合预期。停止条件（review.md §6）：第2类经 D6 接成正式材料后做一次正式诊断评分，与 review.md §4.2 的 v3 列逐格一致即完成，不再做本题的聚焦复核。本线未对 v3 跑正式诊断评分：它相对已正式评分的 v2s 只加数据行，断言写法与依据不变；此前 42 格私有模拟与正式评分逐格一致。
+> - 交接见[交接清单](../../handover_to_category2_20260930.md)。
 
-**结论：问题和修法已明确，建议转第2类。** 独立复核尚未进行。
+**结论：问题和修法已明确，转第2类（采用 v3；正对照 `ctx`，第二正对照 `parity`，gold 失败按 D4 留档）。**
 
-1. **辨别实验的结果：原先怀疑的“gold 漏修深层合法值”，在普通主键名下不成立。** gold 对题面两例（顶层、嵌套 `None`）、字符串值、两层嵌套、list 内 map、batch／transact 入口都能写入并等值读回。旧题卡的两条静态推断都已实测坐实，但只在少见路径上出现，登记为 T3／S2（§4）：
+1. **辨别实验的结果：原先怀疑的“gold 漏修深层合法值”，在普通主键名下不成立。** gold 对题面两例（顶层、嵌套 `None`）、字符串值、两层嵌套、list 内 map、batch／transact 入口都能写入并等值读回。旧题卡的两条静态推断都已实测坐实（§4）：
    - 主键（HASH 或 RANGE）**名为 `M`** 的表上，嵌套属性 `S` 仍报 `SerializationException`；
    - 关闭 SDK 参数校验后，非主键属性的 `S` 值为 dict 时，gold 抛内部 `AttributeError`，base 抛的是 `SerializationException`。
 
-   上游到 5.2.3 仍是 gold 的写法（PyPI 对照，仅作佐证）。
+   作者原把两处登记为 T3／S2；**独立复核按 §4 第 4 步与“已知错误不因少见放过”改判为须断言**，负责人采纳（见 §4）。上游到 5.2.3 仍是 gold 的写法（PyPI 对照，仅作佐证）。
 2. **原测试真正的问题是漏检，不是误拒。** 题面例 2（嵌套 `S`）没有任何断言，以下两类错误实现在原材料正式评分下都得 1：
    - 只修一部分的实现：`top_only`（只修顶层）、`siblings`（单键 dict 当类型标签）、`depth2`（只修一层嵌套）、`list_as_names`（修复时把 list 内 map 改坏）；
    - 吞掉错误的实现：`swallow`、`skip_s_subtree`。在含属性 `S` 的条目上，它们放过公开测试保护的“非主键 N 给整数”错误，并把错误数据存入。
 
-   判 S1（T2a＋T2b）。
-3. **修法 R-c v2**：在原 F2P 函数内追加断言，测试 ID 与命令都不变。gold 仍作正对照；另有两份与 gold 写法不同的合理实现 `ctx`、`parity` 在原材料和 v2 上都得 1（本人所写，待他人核实）。
-4. **严格备选 v2s**：在 v2 之外再断言上述两个 gold 缺口，gold 因此为 0，正对照改用 `ctx`。只有复核把这两个缺口判为 S1 时才用，评分数据已备好（§5）。
-5. 没有发现误拒：三份与 gold 写法不同的合理实现在原材料正式评分下都得 1。
+   判 S1（T2a＋T2b）。复核者另写的 7 个错误候选在原材料上也都得 1（私有模拟）。
+3. **修法 R-c v3（采用）**：在原 F2P 函数内追加断言，测试 ID 与命令都不变。它包含 v2 的全部断言、v2s 对 gold 两处缺口的断言，以及复核补的五层嵌套与“名为 `S` 的属性”两类实例。gold 在 v3 下为 0（主键名 `M` 一例），按 D4 改用 `ctx` 作正对照、`parity` 作第二正对照，两者已由独立复核核实。
+4. v2、v2s 留档：v2 放过 gold 缺口与 `rootkey`（复核 B1），v2s 放过 `rv_depth4`、`rv_tagparent`（B2、B3）。
+5. 没有发现误拒：`ctx`、`ctx_list`、`parity` 与复核者的 `rv_dynamotype` 写法都与 gold 不同，在原材料、v2、v2s、v3 上都为 1。
 
 ## 1．公开要求
 
@@ -148,17 +150,18 @@ noop 与 09-19 历史一致（F2P 失败在新增的顶层 put）。
 
   两者在原材料下正式得 1，却违反 R3／R4：条目中只要有名为 `S` 的属性，排在它后面或挂在它下面的非主键 `{"N": 5}` 就不再报错，并被存入。“非主键嵌套 N 给整数要报错”由公开 P2P 直接断言；输入是本题关心的“含属性 S 的条目”，不属于边缘输入。
 - **`list_as_names`（§4 第 4 步）**：修复时把 base 本来能写入的 list 内 map 改坏，原材料得 1。它违反的仍是 R2（“does not matter where”），归入上面的 T2a 缺口，一并由 R-c 处理。
-- **G1＋T3（§4 第 4 步，S2，登记）**：
-  - **主键名为 `M`**：gold 的递归只记父键，并用“父键是否主键名”判断类型标签；而嵌套属性的父键总是类型标签 `M`。合法输入被拒，但只发生在主键名恰为 `M` 的表上，属少见配置。
-  - **非主键 `S`→dict**：只在关闭 SDK 参数校验时出现，属罕见路径。gold 给出内部 `AttributeError`，而不是 `SerializationException`；条目不会存入，也仍然是报错。公开测试只对主键断言过这一形态。`rootkey` 与此同类。
-
-  这两点与上面 T2b 的区别在于：T2b 是**静默存入**，而且违反的是**有公开测试直接断言**的行为。上游 moto 4.1.8、4.2.14、5.0.28、5.2.3 的 `_validate_item_types` 都保留 gold 的写法，上游测试也只有顶层用例（PyPI wheel 与 raw.githubusercontent 对照，只作佐证）。
+- **G1（§4 第 4 步）：作者原判 S2 登记，独立复核改判须断言，负责人采纳。**
+  - **主键名为 `M`**：gold 的递归只记父键，并用“父键是否主键名”判断类型标签；而嵌套属性的父键总是类型标签 `M`。合法输入被拒。作者原以“只发生在主键名恰为 `M` 的表上，属少见配置”登记；复核指出这就是题面缺陷本身（题面对主键名没有任何限制），而且不是实现方式之争：修好了题面例 2 的版本里，只有沿用 gold“父键是否主键”写法的 gold 与 `rv_scalar_s` 失败。
+  - **非主键 `S`→dict**：只在关闭 SDK 参数校验时出现。gold 给出内部 `AttributeError`，而不是 `SerializationException`。作者原以“罕见路径、条目不会存入”登记；复核指出这是 base 公开服务端校验的回归：base 对所有属性做这项检查，注释写明“用户可以关闭参数校验，所以服务端也要拦”（来自 `/testbed` git 历史中可见的提交 `37845792d`，#5654），公开 P2P `test_put_item_wrong_datatype` 以 “Same thing - but with a non-key, and nested” 对非主键嵌套的 N→int 做了同类断言；调用方按 `ClientError` 处理会被内部异常打断。`rootkey`、复核者的 `rv_shape_key` 与此同类。
+  - 按“已知错误不因少见放过”与 D4（不为保住 gold 放宽需求），两处都由修订版断言：gold 在 v3 下为 0，改用 `ctx`、`parity` 作正对照。上游 moto 4.1.8、4.2.14、5.0.28、5.2.3 的 `_validate_item_types` 都保留 gold 的写法，上游测试也只有顶层用例（PyPI wheel 与 raw.githubusercontent 对照，只作佐证）。
 - **T1**：未发现。`ctx`、`ctx_list`、`parity` 与 gold 写法不同，原材料正式评分均为 1。两条精确报错文案都来自公开旧测试。
 - **§4 第 2 步**：原 F2P 正例用字符串值 `asdf`，不是题面的 `None`，不属于只测示例字面值。缺的是嵌套形态，按第 1 步处理。v2 同时用题面字面值（`None`）和非示例值（两层嵌套的字符串、list 内的 N）。
 - **T5**：36 个节点对应 35 个解析键（`[set` 合并），沿用旧登记。本批所有评分中两节点都通过，未观察到错分。
 - **X1**：与 5960、6408 的同包源码包含关系沿用旧登记，本页未重查。
 
-## 5．修法（交第2类）：修订版测试草案 v2
+## 5．修法（交第2类）：修订版测试草案 v3（v2、v2s 留档）
+
+本节先保留 v2、v2s 的内容（v2 的依据表仍然适用），采用版本 v3 见本节末尾的 v3 小节。
 
 **草案**：[`revised_test_v2.patch`](../../../../../../../rh2/experiments/category3_cloud_20260929/moto6185/revised_test_v2.patch)，sha256 `7bbae287…c3a9`，在官方 test_patch 的基础上，于同一 F2P 函数 `test_put_item__string_as_integer_value` 末尾追加断言。测试 ID、P2P、测试命令都不变。父版本 v1 为 `3595f3a3…6bce`，只含第 1 组。
 
@@ -202,45 +205,101 @@ noop 与 09-19 历史一致（F2P 失败在新增的顶层 put）。
 | `swallow`、`skip_s_subtree` | 0 | 970 |
 | `shape` | 0 | 938 |
 
+### v3：独立复核后的采用版本（私有模拟验证）
+
+**草案**：[`revised_test_v3.patch`](../../../../../../../rh2/experiments/category3_cloud_20260929/moto6185/revised_test_v3.patch)，sha256 `fc65a527…332d`，由复核者的 `review/make_v3_draft.py` 生成（原件 `review/revised_test_v3_draft.patch`，逐字节相同）；材料 [`materials_revised_v3.json`](../../../../../../../rh2/experiments/category3_cloud_20260929/moto6185/materials_revised_v3.json)，版本 `c3-moto6185-nested-s-v3`，已备好但**未跑**正式诊断评分（理由见当前状态）。父版本 v2s（`4122cced…`）留档。测试 ID、P2P、测试命令都不变。
+
+相对 v2s 的改动（只加数据行，不改断言写法）：
+
+| 新增实例 | 依据 | 拦下 |
+| --- | --- | --- |
+| 五层嵌套 map 里的属性 `S`，put 后 get 相等 | “It could be deeply nested”“It does not matter where in the payload” | `rv_depth4`（只修到两层，复核 B2） |
+| 属性 `S` 的值是含 `S` 的 map（`{"S": {"M": {"S": {"S": "asdf"}}}}`），put 后 get 相等 | 同上；属性名 `S` 与其它名字一样 | `rv_scalar_s` |
+| 嵌套 map 中 `S` 排在错误的 `{"N": 5}` 成员之前，仍报 `NUMBER_VALUE cannot be converted to String` | 公开 `test_put_item_wrong_datatype` 的非主键嵌套用例 | `rv_swallow_attr` |
+| “非主键 S 值不能是 map”改为两例：属性名 `attr` 与属性名 `S` | base 服务端校验对所有属性生效（B1 缺口 2 的同一依据） | `rv_tagparent`（复核 B3） |
+
+后两行直接断言 `rv_scalar_s`、`rv_swallow_attr` 的缺陷；它们在 v2s 下已是 0，但只是因为另有缺陷被附带拦下。
+
+**私有模拟评分**（复核者，root，按参考名单计分；v3 下 gold、`ctx`、`parity` 另以评分 UID 54322 复跑 F2P，结果与 root 相同，见 `review/uid_check.txt`）：
+
+| 候选 | 性质 | 原材料 | v2 | v2s | v3 | v3 失败行 |
+| --- | --- | --- | --- | --- | --- | --- |
+| `ctx`（正对照） | 合理，已核实 | 1 | 1 | 1 | **1** | — |
+| `parity`（第二正对照） | 合理，已核实 | 1 | 1 | 1 | **1** | — |
+| `ctx_list` | 合理 | 1 | 1 | 1 | **1** | — |
+| `rv_dynamotype` | 合理（复核者） | 1 | 1 | 1 | **1** | — |
+| noop（base） | — | 0 | 0 | 0 | 0 | 944：顶层 put |
+| gold | 参考解（D4：不作正对照） | 1 | 1 | 0 | **0** | 994：主键名 `M` 的表上嵌套 `S` 报错 |
+| `rootkey`、`rv_shape_key` | 错误（缺口 2 同类） | 1 | 1 | 0 | 0 | 1006：非主键 `S`→dict 抛内部异常 |
+| `rv_tagparent` | 错误（B3） | 1 | 1 | **1** | 0 | 1006：第二例，属性名 `S` |
+| `rv_depth4` | 错误（B2） | 1 | 1 | **1** | 0 | 967：五层嵌套报错 |
+| `rv_scalar_s` | 错误 | 1 | 1 | 0 | 0 | 967：属性 `S` 的 map 值报错 |
+| `top_only`、`siblings`、`depth2`、`list_as_names`、`rv_top_or_null` | 错误 | 1 | 0 | 0 | 0 | 967 |
+| `swallow`、`skip_s_subtree`、`rv_swallow_attr`、`rv_break_after_s` | 错误（吞错或跳过校验） | 1 | 0／1* | 0 | 0 | 978：错误的 N 没有报错 |
+| `null_only` | 错误 | 0 | 0 | 0 | 0 | 944 |
+| `shape` | 错误 | 0 | 0 | 0 | 0 | 938：原 F2P 部分 |
+
+\* `rv_swallow_attr` 在 v2 下为 1，其余三个为 0。作者 14 个版本在原材料、v2、v2s 上的 42 格与正式评分逐格一致（复核者复现）。所有运行 P2P 34/34，参考键无缺席。
+
+**v3 验收（v1 §5）**：
+
+| 验收项 | 结果 |
+| --- | --- |
+| 正对照为 1，noop 为 0 | 满足（私有模拟）：`ctx`、`parity` 为 1，noop 为 0 |
+| 误拒已纠正且不新增误拒 | 满足：原版无误拒；4 个与 gold 写法不同的合理实现在 v3 下为 1 |
+| 已知错误候选为 0 | 满足：作者 9 个与复核者 7 个错误候选，以及 gold 的两处缺口，都为 0 |
+| gold 的处理 | gold 在主键名 `M` 一例失败，按 D4 留档；去掉该行还会在第 1006 行失败 |
+| 独立复核 | 完成；三项阻断由 v3 处理，复核写明不再做聚焦复核 |
+| 正式诊断评分 | **由第2类在 D6 落地后做一次**，与上表 v3 列逐格一致即完成（review.md §6） |
+
 **交接给第2类**：
 
-1. 经 D6 的“测试补丁替换”切片形成正式材料版本，默认用 v2。
-2. v2 的正对照是 gold；另有 `ctx`、`parity` 两份附加正对照，本人所写，待他人核实。
-3. 正式版本复验 §5 表中全部候选。
-4. Codex 复核。
-5. 评分使用重建的 install_wave1 配方，见 §2。
-6. 独立复核若判定 §4 中的 G1／T3 两项为 S1，改用 v2s，评分数据已在上面。
+1. 经 D6 的“测试补丁替换”切片，以 `revised_test_v3.patch`（`fc65a527…`）形成正式材料版本；测试 ID、P2P、测试命令不变。`materials_revised_v3.json` 可供落地前的诊断评分使用。
+2. 正对照 `ctx`，第二正对照 `parity`，已由独立复核核实（review.md §3）：两者相当于“base 去掉误报”，与 base 的差异只在含 `S` 这个名字的条目上，与 gold 只差那两处缺口；P2P 34/34，`tests/test_dynamodb` 全套 434 passed。`rv_dynamotype` 不作正对照：它会存入多类型标签的畸形值 `{"S": "a", "N": 5}`，base 会拒绝。
+3. 正式诊断评分一次，至少覆盖：noop、gold、`ctx`、`parity`、`ctx_list`、`rootkey`、作者 9 个错误候选、复核者 7 个错误候选、`rv_dynamotype`；预期与上表 v3 列逐格一致。有不一致时只定位那一格。
+4. 评分使用重建的 install_wave1 配方，见 §2。
+5. Codex 复核。
+6. 以下只登记、不再作为阻断（review.md §6）：深于五层嵌套的阈值写法；除 `S` 以外“属性名恰为类型标签”的畸形组合；base 本来就不校验的输入（list 内的值、S 给布尔或列表、多类型标签）；服务器模式下的 HTTP 状态码；真实 AWS 的确切报错文案。
 
-**非阻断建议**：
-- v2 的断言放在一个循环里，失败时只报到循环内的 put 行。若希望失败信息直接指出是哪个实例，可以把各实例拆成独立语句，或在 put 外包一层带实例名的断言；这不影响分数。
-- 隐藏测试注释“Nested 'S'-s like this are allowed for non-key attributes”容易被理解为“非主键的 S 可以给 dict”，与 base 注释和真实 AWS 的服务端校验不符。v2 没有改它（评分无关），v2s 已删。
+**非阻断建议**（保留）：
+- 断言放在循环里，失败时只报到循环内的 put 行。若希望失败信息直接指出是哪个实例，可以拆成独立语句，或在 put 外包一层带实例名的断言；这不影响分数。
+- 隐藏测试注释“Nested 'S'-s like this are allowed for non-key attributes”容易被理解为“非主键的 S 可以给 dict”，与 base 注释和服务端校验不符；v2s、v3 已删。
 
 ## 6．当前用途（v1 §2）
 
 | 版本 | 问题定位 | 能力比较 | 训练候选 | 留出评测 |
 | --- | --- | --- | --- | --- |
 | 原版 | 是 | 否（09-30 按 Codex 复核更正：原版有已证的 S1 未修，不能靠事后审计进入普通能力比较；特殊诊断试解另列调查目的，不混用原分数） | 否（S1 未处理，D6 未实施） | 否 |
-| 修订版 v2 | 经 D6 入库并通过验收后重新评估 | | | |
+| 修订版 v3 | 经 D6 入库、正式诊断评分与上表一致并通过验收后重新评估 | | | |
 
 ## 7．独立复核
 
-尚未进行。建议复核重点：
-- G1／T3 两项（主键名 `M`；关闭参数校验时非主键 `S`→dict）判 S2 是否成立；
-- v2 是否仍放过其它错误候选，可另造候选；
-- `ctx`／`parity` 能否作为正对照。
+已完成（09-30），结论“部分同意，阻断 3 项”，全文见 [review.md](review.md)，初判封存稿见 [review_initial.md](review_initial.md)（sha256 `f040cfcf…8cf8`）。复核者的脚本、候选、v3 草案与运行输出在 `rh2/experiments/category3_cloud_20260929/moto6185/review/`。
+
+| 项 | 内容 | 处理 |
+| --- | --- | --- |
+| B1 | 默认 v2 放过 gold 两处缺口与 `rootkey`；两处缺口应由修订版断言 | 采纳：默认改走 v2s 路线，正对照 `ctx`、第二正对照 `parity`，gold 失败留档（§4、§5 v3 小节） |
+| B2 | v2s 放过 `rv_depth4`（只修到两层嵌套） | 采纳：v3 加五层嵌套一例 |
+| B3 | v2s 放过 `rv_tagparent`（名为 `S` 的属性，畸形 S 值不再报 `SerializationException`） | 采纳：v3 把非主键 S→map 检查改为两例 |
+| 正对照核实 | `ctx`、`parity` 可作正对照；`rv_dynamotype` 不作 | 已记入交接 |
+| 停止条件 | 第2类正式诊断评分与 v3 列逐格一致即完成，不再聚焦复核 | 已记入交接；本线不再开复核轮次 |
+
+原则说明：复核进行中，负责人转达了 Codex 09-30 的三条判断原则。复核者封存的初判原本倾向把两处缺口记 T3，按原则 2 改判，差别写在 review.md §0。
 
 ## 8．未做与剩余事项
 
+- v3 没有正式诊断评分，只有复核者的私有模拟（见当前状态与 §5）；由第2类在 D6 落地后做。
 - 未查真实 actor 开发条件：UID 54321、实际消息与 public_hints 的注入，本页只有 root 私有对照和 grader 身份的正式评分。
 - 公开读者命令清单 C1–C4 未按正式 actor 身份原样重跑。私有矩阵覆盖了 C2 的全部输入：base 上题面两例、深层均复现缺陷，list 内 map 在 base 上本来就能写入。
 - 未查真实 AWS 的行为，本项目不调用真实 AWS；修订版只按 moto 行为和公开旧测试验收。
 - 没有模型求解证据。
-- `ctx`／`parity` 作为正对照尚未经他人核实；它们在 `tests/test_dynamodb` 全套 434 项上全部通过，这是本人的私有检查。
+- `ctx`／`parity` 已由独立复核核实可作正对照（review.md §3）；核实范围是 moto 行为与公开旧测试，不含真实 AWS。
+- 复核未查（review.md §7）：没有在派生镜像上跑；09-19 历史、X1 跨题关系、上游 4.1.8 与上游测试文件未查；作者私有矩阵中与复核探针不重合的行未逐格核对；主键名为 `M` 的 RANGE 键只按源码推断。
 - 列表内 AttributeValue 的错误类型（例如 `L` 中的 `{"S": 123}`）不在 base 的校验范围内，本题不要求，没有测。
 
 ## 9．版本与证据
 
-- 候选补丁、生成器、行为脚本、修订草案与 materials：`rh2/experiments/category3_cloud_20260929/moto6185/`。
+- 候选补丁、生成器、行为脚本、修订草案与 materials：`rh2/experiments/category3_cloud_20260929/moto6185/`。v3 为 `revised_test_v3.patch`（`fc65a527…`）与 `materials_revised_v3.json`；复核材料在其下的 `review/`（候选补丁 `candidates/`、`make_v3_draft.py`、`results.md`、`extra.md`、`uid_check.txt`、运行输出 `out/`）。
 - 运行产物：`runs/category3_cloud_20260929/moto6185/`（git 忽略）。09-29 的运行输出随容器重置丢失；09-30 全部重跑，小型原件已归档到 [evidence/](evidence/)，全部文件的 SHA256 见 `evidence_manifest.json`：
   - `formal/`、`formal_revised_v2/`、`formal_revised_v2s/`：正式评分与诊断评分，各含 `failure_reasons.txt`；
   - `semantic_v2/`、`semantic_v2_matrix.md`、`semantic_v2_matrix.json`：私有对照与私有模拟（14 个版本）；规格为实验目录中的 `semantic_spec_v2_full.json`（合并了原 v2、`list_as_names` 与全套测试三份规格）；

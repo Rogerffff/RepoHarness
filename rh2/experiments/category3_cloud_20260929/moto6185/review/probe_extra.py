@@ -15,6 +15,9 @@ from botocore.exceptions import ClientError  # noqa: E402
 from moto import mock_dynamodb  # noqa: E402
 
 ROWS = [
+    # v2s／v3 的“非主键 S→dict”两例：普通名字、名为 S 的属性
+    ("attr_S_dict", {"attr": {"S": {"S": "asdf"}}}),
+    ("attrS_S_dict", {"S": {"S": {"S": "asdf"}}}),
     # map 成员的值是“裸值”而不是 AttributeValue；成员名恰为 S 或 N 时 base 会“碰巧”报错
     ("raw_member_named_S_int", {"A": {"M": {"S": 5}}}),
     ("raw_member_named_N_int", {"A": {"M": {"N": 5}}}),
