@@ -28,7 +28,7 @@
 | R2E coveragepy__5dbbe143 | 用户 09-29 选定 A：修订题面 `b2a7f5fb…`＋隐藏测试沿用 v5 | gold、CE3 | 标明自建题面版本；同步旧题卡与看板；原 CE 与重建 CE 分开复验 |
 | SWE conan-13403 | R-e/R-b/R-c v4 `2f55ba31…`（熔断收口） | gold；13 个合理实现 | v4 待 Codex 确认（熔断规则）；GNU 工具链端到端与 actor 未验 |
 | SWE pydantic-8567 | R-c v3 `4600867b…` | `upstream261`、`c3_reorder`（独立核实，范围差异见下） | 聚焦复核结论待并入；`c3_serpass`、`rv_ser_to_end` 两个边缘项须给处置 |
-| SWE dask-8801 | v5（v4＋B2 修正＋词表调整，正式诊断评分进行中） | gold | **须处理**：`rv_enum_types`（`1.5` 实例）、原因判定的设计、`wr_null_raises`、`wr_perm_fatal`；R-f 新公开读者验收 |
+| SWE dask-8801 | v5 `59293680…`（v4＋B2 修正＋词表调整；41 次诊断评分与复核预期一致） | gold | **须处理**：`rv_enum_types`（`1.5` 实例）、原因判定的设计、`wr_null_raises`、`wr_perm_fatal`（v5 下仍为 1）；R-f 新公开读者验收 |
 | SWE dask-7305 | R-b/R-c v2 `6e96caa7…`（正式诊断评分进行中） | `gold_full`（主）、`exact_full`、`higher_full`（独立核实，限公开大整数范围） | `npartitions="auto"` 路径三份正对照都丢 1 行（范围外，须登记处置）；v2 聚焦复核由第2类承接 |
 
 **09-30 续接后追加**（Codex 复核时列为“继续完成诊断”，之后完成独立复核）：
@@ -153,9 +153,13 @@
 ### SWE dask-8801
 
 - **公开目标**：顶层不是映射的配置文件，以及 YAML 语法错误的配置文件，都要在读取处报错，报错点名出问题的文件并说明原因；包括新进程 `import dask`（P5 第一分支，R-f 补明）；空文件与全注释文件照常加载；读不到的条目照常跳过。
-- **采用版本**：v5 = v4 ＋ 聚焦复核 B2 的修法 ＋ 原因词表调整。v5 正式诊断评分正在进行，结果出来后补入本条。
-  - v4：[`revised_test_v4.patch`](../../../../../rh2/experiments/category3_cloud_20260929/dask8801/revised_test_v4.patch)（`91baa55d…`），正式诊断评分 23 次符合预期；
+- **采用版本**：v5 = v4 ＋ 聚焦复核 B2 的修法 ＋ 原因词表调整，即复核者私有验证过的 v4rvb（逐字相同）。
+  - v4：[`revised_test_v4.patch`](../../../../../rh2/experiments/category3_cloud_20260929/dask8801/revised_test_v4.patch)（`91baa55d…`），正式诊断评分 23 次符合当时预期；
   - v5：[`revised_test_v5.patch`](../../../../../rh2/experiments/category3_cloud_20260929/dask8801/revised_test_v5.patch)（`59293680…`）。
+- **诊断评分（v5，41 次，与聚焦复核预期逐项一致）**：
+  - gold、作者 6 个与复核者 7 个合理实现为 1（含原被词表误拒的 `ok_object_value`、`ok_map_settings`）；灰区 `gr_attr_wrap` 为 1；
+  - noop、2 个另一政策候选、12 个作者／首轮复核错误候选、聚焦复核者 7 个错误候选（含 B2 的 `wr_zip_misalign`、`wr_zip_misalign_orempty`、`wr_all_files`）为 0；`gr_basename_only`、`gr_csafe_loader` 为 0；
+  - **`wr_null_raises`、`wr_perm_fatal` 仍为 1**，列入下面必须修的项。
 - **重要余项（Codex 09-30 与 v4 聚焦复核）**：
   1. **类型子集漏判**：`rv_enum_types` 只拒 list、str、int，v4／v5 下仍为 1；顶层 `1.5` 的文件直接作配置时，导入报 `AttributeError` 且不点名文件。修法：在非映射实例里加一个 `1.5`，预期它为 0，不必穷举全部 YAML 类型。
   2. **原因判定的设计**：v4 按 `dict/mapping/key/类型名` 词表判断；v5 放宽为 `dict/map/key/object/类型名`，放行了两个已知合理措辞。但这仍是词表，“expected an object／got a sequence” 一类合理说明仍会被拒。修法：先写明最低诊断行为（点名文件、确实失败、语法错误时解析器原因可见、已知错误仍被拒），再设计不依赖特定英文同义词的验收；用一个代表性的合理措辞检查修法。v5 只是缓解，不能写成“误拒已消除”。

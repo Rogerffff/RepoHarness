@@ -2,15 +2,15 @@
 
 2026-09-29 / Claude（云端，第3类第二批主审子代理）。原分类：第3类“已有具体疑点，缺辨别实验”。登记的下一步是：只把报错文字换成同义措辞，保留路径、异常类型和原因，运行公开行为检查与正式评分，核实隐藏测试会不会误拒（T1）。
 
-> **当前状态（09-30 更新）**
+> **当前状态（09-30 更新：已按 Codex 复核转第2类，采用 v5，另带必须修的余项）**
 >
-> - **v4 已完成正式诊断评分与私有对照，结果与预期逐项一致**（09-30 重跑，证据在 `evidence/rerun_0930/`）：
->   - 正式评分 23 次：gold 与 7 个合理实现为 1；noop、2 个另一政策候选与 12 个错误候选为 0。v3 漏过的 `oserr_fatal`、`rv_dir_only` 在 v4 为 0，v3 误拒的 `rv_kv_pairs` 在 v4 为 1；
->   - 私有对照 24 个版本（base、gold、18 个作者候选、4 个复核者候选）：以 nobody 与 root 两种身份运行 v4 测试，按参考名单计分，与正式评分一致；只做私有对照的 `rv_enum_types` 为 1，是已登记的 T3（N5）；
->   - 复核者 3 个候选的原材料正式评分已补：`rv_kv_pairs` 0、`rv_dir_only` 1、`rv_import_warn` 1，与复核者当初的私有结果一致。
-> - **还差**：v4 的聚焦复核（由新的独立复核者按 review.md 进行，原复核者的上下文已不可用）；R-f 修订题面的新公开读者验收；Codex 复核（含 P5 第一分支的判断）。
+> - **v4**：正式诊断评分 23 次与私有对照 24 个版本符合当时的预期（09-30 重跑，证据在 `evidence/rerun_0930/`）。
+> - **v4 聚焦复核**（[review_v4.md](review_v4.md)）：部分同意，阻断 1 项 B2（放过“点名错误文件”的 `wr_zip_misalign`、`wr_all_files`），另建议放宽原因词表。
+> - **v5 = 复核者私有验证过的 v4rvb**（逐字相同）。**正式诊断评分 41 次与复核预期逐项一致**（§4 v5 小节）：gold、作者 6 个与复核者 7 个合理实现为 1（含原先被词表误拒的 `ok_object_value`、`ok_map_settings`）；B2 的三个反例由 1 变 0；已知错误候选为 0；`wr_null_raises`、`wr_perm_fatal` 仍为 1。
+> - **Codex 09-30 复核**：本题转第2类，但 v4／v5 不能称验收完成。交接时必须修：`rv_enum_types`（`1.5` 实例）、原因判定的设计（词表放宽只是缓解）、`wr_null_raises`、`wr_perm_fatal`，并分开报告“按参考名单一致”与“root 全套通过”。清单见 §4 v5 小节与[交接清单](../../handover_to_category2_20260930.md)。
+> - **进行中**：v5 私有对照（42 个版本，nobody 与 root），用来复核正式评分与身份无关。
 
-**结论：问题和修法已明确；v4 正式诊断评分符合预期，待聚焦复核通过后转第2类。** 独立复核的意见是“部分同意”：诊断成立，P5 按第一分支处理也成立，另有 1 项阻断和 5 条非阻断意见。本页已按负责人的决定改为修订版 **v4**，v3 留档。
+**结论：问题和修法已明确，转第2类（采用 v5；另有必须修的余项，见 §4 v5 小节）。** 独立复核的意见是“部分同意”：诊断成立，P5 按第一分支处理也成立，另有 1 项阻断和 5 条非阻断意见。本页已按负责人的决定改为修订版 **v4**，v3 留档。
 
 - **T1 已坐实（正式评分）**：7 个合理实现在原材料上都正式得 0，在 v4 上都正式得 1。其中 6 个是作者写的，第 7 个是复核者的 `rv_kv_pairs`。
   - 只改措辞的 `syn_repr`：消息里有带引号的路径、解析器原因和类型名，异常仍是 `ValueError`，失败在 `assert "is malformed" in ...`。
@@ -225,6 +225,52 @@ pytest 以 nobody（UID 65534）运行；v4 测试另以 root 再跑一遍。
 | v3（留档） | `bf9ff681…` | `oserr_fatal`、`rv_dir_only` 为 1；`rv_kv_pairs` 被误拒为 0 | 原拟追加 P2P 权限测试，但那两项在 root 下连 gold 都会失败（复核阻断 B1）；只测目录形态（N2）；词表没有 `key`（N3） |
 | **v4** | `91baa55d…` | 无（已知候选范围内，09-30 正式评分确认） | 改用 `c.yaml` 子目录检查并撤掉 P2P 追加；每个实例另按文件路径加载；词表加 `key` |
 
+### v5：v4 聚焦复核的 B2 与词表调整（09-30 正式诊断评分验证，采用版本）
+
+**来源**：v4 聚焦复核（[review_v4.md](review_v4.md)）结论“部分同意，阻断 1 项（B2）”：v4 放过“点名错误文件”的实现 `wr_zip_misalign`（读完后用 `zip(file_paths, configs)` 检查，跳过的条目使两个列表错位）与 `wr_all_files`（报错列出全部文件）。复核另建议把原因词表放宽，放行两个合理措辞。
+
+**草案**：[`revised_test_v5.patch`](../../../../../../../rh2/experiments/category3_cloud_20260929/dask8801/revised_test_v5.patch)，sha256 `59293680…3f8c`；测试文件 [`test_config_revised_v5.py`](../../../../../../../rh2/experiments/category3_cloud_20260929/dask8801/test_config_revised_v5.py)，与复核者私有验证过的 `review_v4/test_config_v4rvb.py` 逐字相同（去掉行尾空白后 `diff` 无差别）；材料 [`materials_revised_v5.json`](../../../../../../../rh2/experiments/category3_cloud_20260929/dask8801/materials_revised_v5.json)，版本 `c3-dask8801-diagnosis-semantics-v5`。父版本 v4（`91baa55d…`）留档。两个 F2P 的编号、F2P／P2P 名单与测试命令都不变。
+
+相对 v4 只改 `test_collect_yaml_no_top_level_dict` 内三处：
+
+| 改动 | 依据 | 拦下或放行 |
+| --- | --- | --- |
+| 读不到的条目（子目录）改名为 `0.yaml`，排在坏文件 `a.yaml` 之前 | 报错必须点名出问题的文件（R-f；§1 表）；“跳过不可读条目”检查的作用不变 | 拦下 `wr_zip_misalign`、`wr_zip_misalign_orempty`（错位后点名 `0.yaml`），失败在第 202 行 `assert fil_path in msg` |
+| 新增 `assert other_path not in msg`（`other_path` 是坏文件之后读到的正常文件 `b.yaml`） | 同上：点名的是出问题的文件，不是全部文件 | 拦下 `wr_all_files`（第 203 行） |
+| 原因词表由 `dict/mapping/key/类型名` 改为 `dict/map/key/object/类型名` | JSON 把映射叫 object，仓库 `dask-schema.yaml` 用 `type: object`；题面没有规定措辞 | 放行 `ok_object_value`、`ok_map_settings`；没有任何原本为 0 的错误候选变成 1 |
+
+**正式诊断评分（41 次）**：grader 后缀 `+c3-dask8801-diagnosis-semantics-v5`；41 次全部参考缺席 0、安装 rc 0、P2P 41/41、清理成功，每次 28–52 秒。逐次失败位置见 `evidence/rerun_0930/formal_revised_v5/failure_reasons.txt`。
+
+| 候选 | 性质 | v4 | **v5** |
+| --- | --- | --- | --- |
+| gold | 正对照 | 1 | **1** |
+| `syn_repr`、`gold_plain`、`syn_plain`、`typeerror`、`chain_cause`、`stream_load` | 合理（作者） | 全 1 | 全 **1** |
+| `rv_kv_pairs` | 合理（首轮复核者） | 1 | **1** |
+| `ok_aggregate`、`ok_dictionary_typeerror`、`ok_falsy_empty`、`ok_yamlerror_subclass` | 合理（聚焦复核者） | 全 1* | 全 **1** |
+| `ok_object_value`、`ok_map_settings` | 合理（聚焦复核者） | 0*（词表误拒） | **1** |
+| `gr_attr_wrap` | 灰区，不判错 | 1* | 1 |
+| noop | — | 0 | 0 |
+| `warn_skip`、`rv_import_warn` | 另一政策 | 0 | 0 |
+| 作者 11 个错误候选与 `rv_dir_only` | 错误 | 全 0 | 全 0 |
+| `wr_zip_misalign`、`wr_zip_misalign_orempty`、`wr_all_files` | 错误（B2） | **1*** | **0**（202／202／203 行） |
+| `wr_dir_named`、`wr_import_only`、`wr_wrong_reason`、`wr_open_unguarded` | 错误 | 0* | 0 |
+| `gr_basename_only` | 只给文件名，拒绝合理（同名文件可在多个搜索目录） | 0* | 0 |
+| `gr_csafe_loader` | 边缘误拒（libyaml 的原因文字不同，T3） | 0* | 0 |
+| **`wr_null_raises`** | **错误：显式 `null`／只含 `---` 的文件报错** | 1* | **1** |
+| **`wr_perm_fatal`** | **错误：权限错误改为致命** | 1* | **1** |
+
+\* v4 列中聚焦复核者的候选是其私有模拟（nobody 与 root 相同），其余是 09-30 的正式诊断评分。`wr_perm_fatal` 的测试段退出码为 1、reward 为 1：失败的是不在参考名单内的公开权限测试。
+
+**v5 仍未处理、交第2类必须修的项**（Codex 09-30 复核与 v4 聚焦复核；本线不再开 Claude 复核轮次）：
+1. **`rv_enum_types`**（只拒 list、str、int）：私有对照 v4 为 1；顶层 `1.5` 的文件直接作配置时，导入报 `AttributeError` 且不点名文件。修法：非映射实例里加一个 `1.5`，不必穷举全部 YAML 类型。
+2. **原因判定的设计**：v5 的词表放宽只是缓解，不能写成“误拒已消除”。“expected an object／got a sequence”一类合理说明仍可能被拒。修法：先写明最低诊断行为（点名文件、确实失败、语法错误时解析器原因可见、已知错误仍被拒），再设计不依赖特定英文同义词的验收，并用一个代表性的合理措辞检查。
+3. **`wr_null_raises`**：v5 下仍为 1。base 把显式 `null`、只含 `---` 的文件当作空配置，与“空文件、全注释文件合法”同属一类公开行为。修法：在“加载结果为空”的检查里加一个显式 `null` 文件。
+4. **`wr_perm_fatal`**：v5 下仍为 1，违反公开测试 `test_collect_yaml_permission_errors`。可选修法：在非 root 的正式评分身份下加一个 `chmod 000` 文件实例；要写明身份依赖（root 下这类检查不起作用）。
+5. **身份表述**：root 下完整 pytest 是 2 失败 43 通过，失败的是不在参考名单内的两项原权限测试。写作“按参考名单一致”，不写“root 全套通过”。
+6. **R-f 新公开读者验收**；措辞建议改为 “the contents of a Dask configuration file cannot be used …”，避免把“读不到”理解为应报错。
+
+**熔断说明**：v4 聚焦复核指出 B2 不满足熔断的三条字面条件（不是 v4 修复引入的，与 B1 的状态边界不同，不跨 ownership），但本题是连续第二轮出现新阻断。按 Codex 09-30 的处理（本题转第2类，余项列为明确修复工作），本线不再做 v5 的 Claude 聚焦复核；v5 采用复核者已私有验证的写法，正式诊断评分与复核预期逐项一致。
+
 ### 诊断评分汇总（正式链）
 
 - **原材料**：`replay_grade.py run`。
@@ -269,21 +315,23 @@ pytest 以 nobody（UID 65534）运行；v4 测试另以 root 再跑一遍。
 
 ### 交接给第2类
 
-1. 落地需要 D6 的两项能力：测试补丁替换（v4 补丁）、`statement_replace`（R-f）。不需要改参考分组。两项都不在首片内，情况与 dask-9378 相同。
-2. 请一名新公开读者读修订后的题面，确认推出的需求与 v4 断言一致，并且不需要猜测隐藏细节。
-3. 复验：
+1. 落地需要 D6 的两项能力：测试补丁替换（v5 补丁，或第2类在 v5 上修完下面第 3 条后的版本）、`statement_replace`（R-f）。不需要改参考分组。两项都是已获总体授权、尚未实现的后续实施项（D6 已验收的首片只有 `append_mypy_p2p`）。
+2. 请一名新公开读者读修订后的题面，确认推出的需求与断言一致，并且不需要猜测隐藏细节；措辞建议见 §4 v5 小节第 6 条。
+3. **必须修的余项**：§4 v5 小节的第 1–5 条（`rv_enum_types`、原因判定的设计、`wr_null_raises`、`wr_perm_fatal`、身份表述）。修好后再按用途验收。
+4. 复验（在 v5 基础上）：
    - noop 0，gold 1；
-   - 7 个合理实现为 1；
-   - 2 个另一政策候选与 12 个错误候选为 0。
-4. Codex 复核，其中包括 P5 第一分支的判断。
-5. 正对照为 gold。7 个合理实现是作者或复核者自写的 T1 探针，不作正对照；若要用作正对照，须由他人独立核实。
+   - 作者 6 个、首轮复核者 1 个、聚焦复核者 6 个合理实现为 1；`gr_attr_wrap` 为 1（灰区）；
+   - 2 个另一政策候选、作者 11 个与首轮复核者 1 个错误候选、聚焦复核者 7 个错误候选（含 B2 的 3 个）为 0；
+   - `wr_null_raises`、`wr_perm_fatal` 在修完第 3 条后应为 0；`rv_enum_types` 加入候选集后应为 0。
+5. Codex 复核，其中包括 P5 第一分支的判断。
+6. 正对照为 gold。合理实现是作者或复核者自写的 T1 探针，不作正对照；若要用作正对照，须由他人独立核实。
 
 ## 5．当前用途（v1 §2，D6 落地前）
 
 | 版本 | 问题定位 | 能力比较 | 训练候选 | 留出评测 |
 | --- | --- | --- | --- | --- |
 | 原版 | 是 | 否 | 否 | 否 |
-| 修订版 | 经 D6 入库并通过验收后重新评估 | | | |
+| 修订版 v5 | 修完 §4 v5 小节的余项、经 D6 入库并通过验收后重新评估 | | | |
 
 原版不能用于能力比较或训练，原因有两个：
 - 合理实现因措辞、引号或异常类型得 0（T1）；
@@ -307,29 +355,29 @@ pytest 以 nobody（UID 65534）运行；v4 测试另以 root 再跑一遍。
 | N2 | 没测直接文件路径，`rv_dir_only` 在 v3 得 1 | 采纳 | 每个实例另按文件路径加载一次，`rv_dir_only` 在 v4 正式得 0 |
 | N3 | 按词判断“原因”会误拒 `rv_kv_pairs` | 采纳 | 词表加 `key`，`rv_kv_pairs` 在 v4 正式得 1；已知错误候选仍为 0 |
 | N4 | `c.yaml` 检查比 “permission errors” 宽 | 随 B1 | 已写入 §4 的边界说明 |
-| N5 | `rv_enum_types`（只拒 list、str、int）在 v3、v4 都得 1 | 不补 `1.5`，维持 T3 | 私有对照确认它在 v4 仍为 1；顶层 `1.5` 的文件直接给 `DASK_CONFIG` 时，导入报 `AttributeError: 'float'…` 且不点名文件。见 §7 |
+| N5 | `rv_enum_types`（只拒 list、str、int）在 v3、v4 都得 1 | 当时决定不补 `1.5`、维持 T3；**09-30 按 Codex 复核撤销**：人工构造或实现不自然不改变它违反同一加载诊断要求的事实，改列交第2类必须修的项（§4 v5 小节第 1 条） | 私有对照确认它在 v4 仍为 1；顶层 `1.5` 的文件直接给 `DASK_CONFIG` 时，导入报 `AttributeError: 'float'…` 且不点名文件 |
 | N6 | `lists_only` 应记第 4 步；R-f 的 CRLF／LF；stderr 中的 `dubious ownership` 提示 | 采纳 | 步号已改；落地按字节保留；该提示不影响断言 |
 | 建议 4 | P5 只用依据 1、2 | 采纳 | §3 已改，依据 3 注明两边都能解读 |
 
-v4 的评分已完成；尚待聚焦复核。
+**v4 聚焦复核**已完成（09-30），见 [review_v4.md](review_v4.md)：B1、N1–N6 与建议 4 的处理得当；新阻断 B2（点名错误文件）由 v5 处理；非阻断建议（放宽词表）并入 v5；`wr_perm_fatal`、`wr_null_raises` 复核建议登记 T3，按 Codex 09-30 复核改列必须修的项。v5 的正式诊断评分与复核预期逐项一致（§4 v5 小节）。
 
-## 7．登记的缺口（T3，按 §8 抽查，本轮不修）
+## 7．登记的缺口（T3；其中两项 09-30 改列必须修）
 
 - **顶层假值**（`0`、`false`、`[]`、`''`）：gold 拒绝，base 当作空配置。公开材料没有承诺，修订版不做断言。
-- **其它标量类型**（`float`、`bool`、日期等）：修订版只测 `int`。`rv_enum_types` 在 v3、v4 上仍为 1（v4 为私有对照结果；N5，负责人决定不补）。自然写法是 `not isinstance(x, dict)`，只有针对测试凑类型才会恰好枚举这三种。
+- **其它标量类型**（`float`、`bool`、日期等）：修订版只测 `int`。`rv_enum_types` 在 v3、v4 上仍为 1（v4 为私有对照结果）。**09-30 按 Codex 复核改为必须修**：补一个 `1.5` 代表实例即可，不必穷举全部 YAML 类型（§4 v5 小节第 1 条）。
 - **非 UTF-8 或二进制配置文件**：会抛 `UnicodeDecodeError`，不做断言。
-- **按词判断原因**：词表是 `dict`、`mapping`、`key` 或类型名，仍是词法检查。例如只写 “expected an object／got a sequence” 的消息会被拒，这是残余的 T1 风险。
-- **`c.yaml` 检查要求一切 `OSError` 都被忽略**：只捕获 `PermissionError` 的实现会被拒，见 §4。
+- **按词判断原因**：v5 词表是 `dict`、`map`、`key`、`object` 或类型名，仍是词法检查，合理措辞仍可能被拒。**09-30 按 Codex 复核改为必须修**：先写明最低诊断行为，再设计不依赖特定英文同义词的验收（§4 v5 小节第 2 条）。
+- **不可读条目检查要求一切 `OSError` 都被忽略**（v4 为 `c.yaml` 子目录，v5 改名为 `0.yaml`）：只捕获 `PermissionError` 的实现会被拒，见 §4。
 - **导入检查依赖运行环境**：要求评分环境的 `sys.prefix/etc/dask` 与 `site.PREFIXES` 下没有其它坏配置。本镜像中这些目录都不存在。
 
 ## 8．未做与证据
 
 **未做**：
-- v4 的聚焦复核；
+- v5 的 Claude 聚焦复核：不再做（§4 v5 小节的熔断说明）；v5 采用复核者已私有验证的写法；
 - 真实 actor 开发条件；
 - 模型求解；
 - R-f 的新公开读者验收；
-- root 身份下的正式评分。正式评分器固定以 UID 54322 运行；root 下只有私有对照：v3 只跑了 gold 与 noop；v4 的 24 个版本都跑过（`evidence/rerun_0930/semantic_v4/`）。
+- root 身份下的正式评分。正式评分器固定以 UID 54322 运行；root 下只有私有对照：v3 只跑了 gold 与 noop；v4 的 24 个版本都跑过（`evidence/rerun_0930/semantic_v4/`）；v5 的 42 个版本进行中。
 
 **证据**：
 - 代码与运行环境：见 [环境说明](../../environment.md)。
