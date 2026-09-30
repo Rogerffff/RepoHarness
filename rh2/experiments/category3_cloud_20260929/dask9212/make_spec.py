@@ -21,7 +21,7 @@ TESTFILE = "dask/tests/test_base.py"
 PYTEST = f"python -m pytest -n0 -rA --color=no -p no:cacheprovider {TESTFILE}"
 
 CANDS = ["alt_modqual", "alt_hookfirst", "alt_up2024", "alt_pickle", "alt_docs",
-         "w_value", "w_noval", "w_hash", "w_name", "w_str"]
+         "w_value", "w_noval", "w_hash", "w_name", "w_const", "w_str"]
 
 
 def run_tests(patch):

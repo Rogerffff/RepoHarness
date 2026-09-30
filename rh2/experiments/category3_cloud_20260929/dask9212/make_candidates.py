@@ -6,7 +6,7 @@ base 目录里需要镜像内 base 提交的 dask/base.py 原件（git show HEAD
 
 候选按公开要求分三组（判断见 result.md）：
 - 合理实现（与 gold 不同）：alt_modqual、alt_hookfirst、alt_up2024、alt_pickle、alt_docs；
-- 错误实现：w_value、w_noval、w_hash、w_name；
+- 错误实现：w_value、w_noval、w_hash、w_name；§4 第 3 步退化探测 w_const（固定 token）；
 - 边界实现：w_str（只与字符串 "Color.RED" 这类字面值相撞，与 gold 的同名碰撞同属边缘输入）。
 """
 import difflib

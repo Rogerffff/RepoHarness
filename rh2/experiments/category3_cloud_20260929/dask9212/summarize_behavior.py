@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 ORDER = ["base", "gold", "alt_modqual", "alt_hookfirst", "alt_up2024", "alt_pickle", "alt_docs",
-         "w_value", "w_noval", "w_hash", "w_name", "w_str"]
+         "w_value", "w_noval", "w_hash", "w_name", "w_const", "w_str"]
 
 
 def load(vdir):
