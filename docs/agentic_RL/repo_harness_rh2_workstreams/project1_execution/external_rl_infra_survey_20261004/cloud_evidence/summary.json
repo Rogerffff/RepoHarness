@@ -1,0 +1,1549 @@
+{
+ "schema": "rh2.env_pipeline_cost_analysis.v1",
+ "generated_at": "2026-10-04T08:53:55.617139+00:00",
+ "inputs": {
+  "tasks": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/dataset_status/tasks.json",
+  "attempt_index": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/experiment_artifact_index_20261004.json",
+  "evidence_root": "runs/ordinary_gpu_probe_20261002/{remote,closed_snapshots}/…/results/<job_id>/"
+ },
+ "definitions": {
+  "pre_launch_s": "agent_env_facts 阶段时刻 − attempt started_at，再加 launch_facts.bootstrap_seconds（CC CLI 安装 + agent 用户初始化）；不含未计时的求解前 pip freeze",
+  "time_to_first_model_request_s": "网关第一条请求 ts − attempt started_at（含 CC 进程启动）",
+  "actor_non_cc_overhead_s": "actor 墙钟（finished_at − started_at）− harness_log.seconds（CC 执行）；actor 侧全部非模型时间，含求解后导出与清理",
+  "grading medians": "只对候选段实际运行的评分取中位数；中途被截断（超时）的评分单列",
+  "non_model_cost_per_attempt_s": "actor_non_cc_overhead_s_med + grading_total_s_med（每次尝试的非模型开销）",
+  "compile_class": "needs compile cache = 安装段出现 C/C++/Cython 编译且安装中位数 > 60s；maybe = 有编译但较短；no = 无编译行；'no (install skipped)' = 安装段被跳过",
+  "quantiles": "先取逐题中位数，再跨题取 median/p90（线性插值）"
+ },
+ "coverage": {
+  "tasks_in_scope": 52,
+  "tasks_with_attempts_in_index": 52,
+  "attempts_total": 106,
+  "attempts_with_actor_timings": 106,
+  "attempts_with_gateway_first_request": 106,
+  "attempts_with_cc_result_duration": 106,
+  "attempts_with_grading_report": 105,
+  "gradings_candidate_ran": 101,
+  "tasks_with_actor_evidence": 52,
+  "tasks_with_any_grading": 52,
+  "tasks_with_uncensored_grading": 52,
+  "tasks_with_both_gradings_uncensored": 47,
+  "missing_or_cut_short": {
+   "dask__dask-7138": {
+    "missing": [],
+    "cut_short": [
+     "gpu1003-dask7138-coder-a1:grading_control_surface_protect_timeout_after_300s"
+    ]
+   },
+   "dask__dask-7305": {
+    "missing": [],
+    "cut_short": [
+     "gpu1003-dask7305-coder-a1:grading_control_surface_protect_timeout_after_300s"
+    ]
+   },
+   "dask__dask-8801": {
+    "missing": [],
+    "cut_short": [
+     "gpu1003-dask8801-coder-a1:grading_control_surface_protect_timeout_after_300s"
+    ]
+   },
+   "dask__dask-9378": {
+    "missing": [],
+    "cut_short": [
+     "gpu1003-dask9378-coder-a1:grading_control_surface_protect_timeout_after_300s"
+    ]
+   },
+   "iterative__dvc-9395": {
+    "missing": [
+     "gpu1003-dvc9395-coder-a1"
+    ],
+    "cut_short": []
+   }
+  },
+  "grading_permission_modes": {
+   "plain_fresh_no_template": 105
+  },
+  "gradings_on_same_image_as_actor": 83,
+  "post_quiescence_to_finish_over_30s": [
+   "gpu1003-numpyd805-qwen36-a1:73.629",
+   "gpu1003-moto7584-coder-a1:93.254",
+   "gpu1003-dvc9395-coder-a1:162.848"
+  ],
+  "grading_image_pull_s_nonzero": 4,
+  "actor_image_ready_s_max": 1.032,
+  "eval_logs_with_network_downloads": 0,
+  "overlapping_jobs_max": 0,
+  "attempts_with_any_overlap": 0
+ },
+ "aggregates_across_tasks": {
+  "all": {
+   "actor_git_sanitize_s_med": {
+    "n_tasks": 52,
+    "median": 11.02,
+    "p90": 16.227,
+    "min": 0.282,
+    "max": 73.735
+   },
+   "actor_trusted_init_s_med": {
+    "n_tasks": 52,
+    "median": 10.649,
+    "p90": 65.291,
+    "min": 2.618,
+    "max": 238.097
+   },
+   "actor_baseline_census_s_med": {
+    "n_tasks": 52,
+    "median": 0.197,
+    "p90": 0.63,
+    "min": 0.096,
+    "max": 1.469
+   },
+   "actor_network_and_container_s_med": {
+    "n_tasks": 52,
+    "median": 1.252,
+    "p90": 1.33,
+    "min": 1.186,
+    "max": 12.829
+   },
+   "actor_cc_bootstrap_s_med": {
+    "n_tasks": 52,
+    "median": 1.841,
+    "p90": 1.99,
+    "min": 1.723,
+    "max": 2.363
+   },
+   "actor_cc_cli_install_s_med": {
+    "n_tasks": 52,
+    "median": 1.776,
+    "p90": 1.921,
+    "min": 1.667,
+    "max": 2.29
+   },
+   "actor_env_facts_step_s_med": {
+    "n_tasks": 52,
+    "median": 5.506,
+    "p90": 5.692,
+    "min": 5.197,
+    "max": 6.391
+   },
+   "actor_launch_gap_s_med": {
+    "n_tasks": 52,
+    "median": 7.271,
+    "p90": 7.553,
+    "min": 6.946,
+    "max": 8.559
+   },
+   "actor_pre_launch_s_med": {
+    "n_tasks": 52,
+    "median": 33.576,
+    "p90": 104.219,
+    "min": 15.29,
+    "max": 261.6
+   },
+   "actor_time_to_first_model_request_s_med": {
+    "n_tasks": 52,
+    "median": 40.816,
+    "p90": 111.925,
+    "min": 23.649,
+    "max": 268.616
+   },
+   "actor_post_solve_approx_s_med": {
+    "n_tasks": 52,
+    "median": 6.838,
+    "p90": 11.029,
+    "min": 6.035,
+    "max": 87.541
+   },
+   "actor_post_quiescence_to_finish_s_med": {
+    "n_tasks": 52,
+    "median": 1.423,
+    "p90": 3.148,
+    "min": 0.912,
+    "max": 81.947
+   },
+   "actor_non_cc_overhead_s_med": {
+    "n_tasks": 52,
+    "median": 48.779,
+    "p90": 126.993,
+    "min": 29.947,
+    "max": 279.74
+   },
+   "actor_cc_duration_s_med": {
+    "n_tasks": 52,
+    "median": 62.099,
+    "p90": 219.363,
+    "min": 24.433,
+    "max": 346.936
+   },
+   "grading_total_s_med": {
+    "n_tasks": 52,
+    "median": 204.668,
+    "p90": 480.144,
+    "min": 10.554,
+    "max": 1220.159
+   },
+   "grader_git_sanitize_s_med": {
+    "n_tasks": 52,
+    "median": 11.065,
+    "p90": 16.178,
+    "min": 0.276,
+    "max": 74.011
+   },
+   "grader_trusted_setup_s_med": {
+    "n_tasks": 52,
+    "median": 191.387,
+    "p90": 456.725,
+    "min": 8.195,
+    "max": 816.207
+   },
+   "install_s_med": {
+    "n_tasks": 34,
+    "median": 2.549,
+    "p90": 16.246,
+    "min": 0.887,
+    "max": 321.876
+   },
+   "candidate_test_s_med": {
+    "n_tasks": 52,
+    "median": 2.168,
+    "p90": 9.087,
+    "min": 0.457,
+    "max": 29.616
+   },
+   "grader_other_s_med": {
+    "n_tasks": 52,
+    "median": 0.804,
+    "p90": 2.657,
+    "min": 0.05,
+    "max": 3.954
+   },
+   "non_model_cost_per_attempt_s": {
+    "n_tasks": 52,
+    "median": 245.834,
+    "p90": 541.754,
+    "min": 41.83,
+    "max": 1338.176
+   }
+  },
+  "SWE-Gym": {
+   "actor_git_sanitize_s_med": {
+    "n_tasks": 34,
+    "median": 12.92,
+    "p90": 16.993,
+    "min": 3.218,
+    "max": 73.735
+   },
+   "actor_trusted_init_s_med": {
+    "n_tasks": 34,
+    "median": 7.407,
+    "p90": 16.466,
+    "min": 2.618,
+    "max": 20.418
+   },
+   "actor_baseline_census_s_med": {
+    "n_tasks": 34,
+    "median": 0.16,
+    "p90": 0.332,
+    "min": 0.101,
+    "max": 0.631
+   },
+   "actor_network_and_container_s_med": {
+    "n_tasks": 34,
+    "median": 1.252,
+    "p90": 1.302,
+    "min": 1.186,
+    "max": 7.241
+   },
+   "actor_cc_bootstrap_s_med": {
+    "n_tasks": 34,
+    "median": 1.839,
+    "p90": 1.94,
+    "min": 1.764,
+    "max": 2.104
+   },
+   "actor_cc_cli_install_s_med": {
+    "n_tasks": 34,
+    "median": 1.774,
+    "p90": 1.878,
+    "min": 1.7,
+    "max": 2.034
+   },
+   "actor_env_facts_step_s_med": {
+    "n_tasks": 34,
+    "median": 5.541,
+    "p90": 5.716,
+    "min": 5.478,
+    "max": 6.391
+   },
+   "actor_launch_gap_s_med": {
+    "n_tasks": 34,
+    "median": 7.28,
+    "p90": 7.66,
+    "min": 7.162,
+    "max": 8.559
+   },
+   "actor_pre_launch_s_med": {
+    "n_tasks": 34,
+    "median": 29.648,
+    "p90": 41.441,
+    "min": 15.29,
+    "max": 104.404
+   },
+   "actor_time_to_first_model_request_s_med": {
+    "n_tasks": 34,
+    "median": 36.95,
+    "p90": 48.753,
+    "min": 23.649,
+    "max": 112.109
+   },
+   "actor_post_solve_approx_s_med": {
+    "n_tasks": 34,
+    "median": 6.482,
+    "p90": 10.18,
+    "min": 6.035,
+    "max": 87.541
+   },
+   "actor_post_quiescence_to_finish_s_med": {
+    "n_tasks": 34,
+    "median": 1.271,
+    "p90": 3.992,
+    "min": 0.915,
+    "max": 81.947
+   },
+   "actor_non_cc_overhead_s_med": {
+    "n_tasks": 34,
+    "median": 43.745,
+    "p90": 94.662,
+    "min": 29.947,
+    "max": 127.4
+   },
+   "actor_cc_duration_s_med": {
+    "n_tasks": 34,
+    "median": 62.099,
+    "p90": 231.119,
+    "min": 24.433,
+    "max": 346.936
+   },
+   "grading_total_s_med": {
+    "n_tasks": 34,
+    "median": 234.508,
+    "p90": 535.035,
+    "min": 86.266,
+    "max": 1220.159
+   },
+   "grader_git_sanitize_s_med": {
+    "n_tasks": 34,
+    "median": 13.028,
+    "p90": 16.642,
+    "min": 3.157,
+    "max": 74.011
+   },
+   "grader_trusted_setup_s_med": {
+    "n_tasks": 34,
+    "median": 207.19,
+    "p90": 496.996,
+    "min": 67.772,
+    "max": 816.207
+   },
+   "install_s_med": {
+    "n_tasks": 34,
+    "median": 2.549,
+    "p90": 16.246,
+    "min": 0.887,
+    "max": 321.876
+   },
+   "candidate_test_s_med": {
+    "n_tasks": 34,
+    "median": 2.938,
+    "p90": 12.128,
+    "min": 0.457,
+    "max": 20.199
+   },
+   "grader_other_s_med": {
+    "n_tasks": 34,
+    "median": 1.337,
+    "p90": 2.909,
+    "min": 0.68,
+    "max": 3.954
+   },
+   "non_model_cost_per_attempt_s": {
+    "n_tasks": 34,
+    "median": 286.225,
+    "p90": 580.74,
+    "min": 132.277,
+    "max": 1338.176
+   }
+  },
+  "R2E": {
+   "actor_git_sanitize_s_med": {
+    "n_tasks": 18,
+    "median": 4.614,
+    "p90": 12.995,
+    "min": 0.282,
+    "max": 16.439
+   },
+   "actor_trusted_init_s_med": {
+    "n_tasks": 18,
+    "median": 37.064,
+    "p90": 209.159,
+    "min": 8.377,
+    "max": 238.097
+   },
+   "actor_baseline_census_s_med": {
+    "n_tasks": 18,
+    "median": 0.42,
+    "p90": 1.312,
+    "min": 0.096,
+    "max": 1.469
+   },
+   "actor_network_and_container_s_med": {
+    "n_tasks": 18,
+    "median": 1.251,
+    "p90": 1.349,
+    "min": 1.191,
+    "max": 12.829
+   },
+   "actor_cc_bootstrap_s_med": {
+    "n_tasks": 18,
+    "median": 1.856,
+    "p90": 2.025,
+    "min": 1.723,
+    "max": 2.363
+   },
+   "actor_cc_cli_install_s_med": {
+    "n_tasks": 18,
+    "median": 1.793,
+    "p90": 1.957,
+    "min": 1.667,
+    "max": 2.29
+   },
+   "actor_env_facts_step_s_med": {
+    "n_tasks": 18,
+    "median": 5.207,
+    "p90": 5.222,
+    "min": 5.197,
+    "max": 5.228
+   },
+   "actor_launch_gap_s_med": {
+    "n_tasks": 18,
+    "median": 7.143,
+    "p90": 7.451,
+    "min": 6.946,
+    "max": 7.589
+   },
+   "actor_pre_launch_s_med": {
+    "n_tasks": 18,
+    "median": 56.794,
+    "p90": 233.426,
+    "min": 17.672,
+    "max": 261.6
+   },
+   "actor_time_to_first_model_request_s_med": {
+    "n_tasks": 18,
+    "median": 64.223,
+    "p90": 240.62,
+    "min": 24.618,
+    "max": 268.616
+   },
+   "actor_post_solve_approx_s_med": {
+    "n_tasks": 18,
+    "median": 7.2,
+    "p90": 10.462,
+    "min": 6.056,
+    "max": 43.024
+   },
+   "actor_post_quiescence_to_finish_s_med": {
+    "n_tasks": 18,
+    "median": 1.651,
+    "p90": 2.883,
+    "min": 0.912,
+    "max": 37.478
+   },
+   "actor_non_cc_overhead_s_med": {
+    "n_tasks": 18,
+    "median": 71.604,
+    "p90": 250.786,
+    "min": 31.276,
+    "max": 279.74
+   },
+   "actor_cc_duration_s_med": {
+    "n_tasks": 18,
+    "median": 61.123,
+    "p90": 136.523,
+    "min": 28.14,
+    "max": 220.584
+   },
+   "grading_total_s_med": {
+    "n_tasks": 18,
+    "median": 48.462,
+    "p90": 216.561,
+    "min": 10.554,
+    "max": 263.792
+   },
+   "grader_git_sanitize_s_med": {
+    "n_tasks": 18,
+    "median": 4.399,
+    "p90": 12.612,
+    "min": 0.276,
+    "max": 18.216
+   },
+   "grader_trusted_setup_s_med": {
+    "n_tasks": 18,
+    "median": 37.224,
+    "p90": 198.795,
+    "min": 8.195,
+    "max": 243.923
+   },
+   "install_s_med": {
+    "n_tasks": 0,
+    "median": null,
+    "p90": null,
+    "min": null,
+    "max": null
+   },
+   "candidate_test_s_med": {
+    "n_tasks": 18,
+    "median": 1.64,
+    "p90": 4.378,
+    "min": 0.651,
+    "max": 29.616
+   },
+   "grader_other_s_med": {
+    "n_tasks": 18,
+    "median": 0.052,
+    "p90": 0.077,
+    "min": 0.05,
+    "max": 0.113
+   },
+   "non_model_cost_per_attempt_s": {
+    "n_tasks": 18,
+    "median": 120.066,
+    "p90": 467.512,
+    "min": 41.83,
+    "max": 543.532
+   }
+  },
+  "install_s_med_where_install_ran": {
+   "n_tasks": 34,
+   "median": 2.549,
+   "p90": 16.246,
+   "min": 0.887,
+   "max": 321.876
+  }
+ },
+ "non_model_time_shares_all_complete_attempts": {
+  "n_attempts": 101,
+  "components": {
+   "actor_git_sanitize": {
+    "seconds": 1202.2,
+    "share": 0.0411
+   },
+   "actor_trusted_init": {
+    "seconds": 3214.7,
+    "share": 0.1098
+   },
+   "actor_cc_bootstrap": {
+    "seconds": 188.3,
+    "share": 0.0064
+   },
+   "actor_other_non_cc": {
+    "seconds": 2470.7,
+    "share": 0.0844
+   },
+   "grader_git_sanitize": {
+    "seconds": 1195.4,
+    "share": 0.0408
+   },
+   "grader_trusted_setup": {
+    "seconds": 18729.1,
+    "share": 0.6398
+   },
+   "grader_install": {
+    "seconds": 1521.1,
+    "share": 0.052
+   },
+   "grader_candidate_test": {
+    "seconds": 394.9,
+    "share": 0.0135
+   },
+   "grader_other": {
+    "seconds": 356.8,
+    "share": 0.0122
+   }
+  },
+  "total_non_model_s": 29273.3,
+  "cc_exec_total_s_same_attempts": 9217.1
+ },
+ "ranking_non_model_cost_per_attempt": [
+  {
+   "instance_id": "pandas-dev__pandas-48106",
+   "source": "SWE-Gym",
+   "repository": "pandas",
+   "non_model_cost_per_attempt_s": 1338.176,
+   "actor_non_cc_overhead_s_med": 118.017,
+   "actor_git_sanitize_s_med": 70.847,
+   "actor_trusted_init_s_med": 20.418,
+   "grading_total_s_med": 1220.159,
+   "grader_trusted_setup_s_med": 816.207,
+   "grader_git_sanitize_s_med": 69.323,
+   "install_s_med": 321.876,
+   "candidate_test_s_med": 7.748,
+   "actor_cc_duration_s_med": 112.212,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "pandas-dev__pandas-50319",
+   "source": "SWE-Gym",
+   "repository": "pandas",
+   "non_model_cost_per_attempt_s": 1127.625,
+   "actor_non_cc_overhead_s_med": 123.332,
+   "actor_git_sanitize_s_med": 73.735,
+   "actor_trusted_init_s_med": 19.349,
+   "grading_total_s_med": 1004.293,
+   "grader_trusted_setup_s_med": 597.832,
+   "grader_git_sanitize_s_med": 74.011,
+   "install_s_med": 321.092,
+   "candidate_test_s_med": 3.035,
+   "actor_cc_duration_s_med": 277.853,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "Project-MONAI__MONAI-6975",
+   "source": "SWE-Gym",
+   "repository": "MONAI",
+   "non_model_cost_per_attempt_s": 757.103,
+   "actor_non_cc_overhead_s_med": 42.175,
+   "actor_git_sanitize_s_med": 8.448,
+   "actor_trusted_init_s_med": 10.387,
+   "grading_total_s_med": 714.928,
+   "grader_trusted_setup_s_med": 662.39,
+   "grader_git_sanitize_s_med": 8.412,
+   "install_s_med": 17.011,
+   "candidate_test_s_med": 20.199,
+   "actor_cc_duration_s_med": 346.936,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "Project-MONAI__MONAI-3715",
+   "source": "SWE-Gym",
+   "repository": "MONAI",
+   "non_model_cost_per_attempt_s": 595.493,
+   "actor_non_cc_overhead_s_med": 48.888,
+   "actor_git_sanitize_s_med": 6.63,
+   "actor_trusted_init_s_med": 7.395,
+   "grading_total_s_med": 546.605,
+   "grader_trusted_setup_s_med": 505.173,
+   "grader_git_sanitize_s_med": 6.343,
+   "install_s_med": 17.477,
+   "candidate_test_s_med": 9.236,
+   "actor_cc_duration_s_med": 32.834,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "dask__dask-7305",
+   "source": "SWE-Gym",
+   "repository": "Dask",
+   "non_model_cost_per_attempt_s": 546.316,
+   "actor_non_cc_overhead_s_med": 38.279,
+   "actor_git_sanitize_s_med": 11.585,
+   "actor_trusted_init_s_med": 3.89,
+   "grading_total_s_med": 508.037,
+   "grader_trusted_setup_s_med": 477.917,
+   "grader_git_sanitize_s_med": 11.576,
+   "install_s_med": 0.887,
+   "candidate_test_s_med": 15.174,
+   "actor_cc_duration_s_med": 196.093,
+   "n_gradings_candidate_ran": 1
+  },
+  {
+   "instance_id": "orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e",
+   "source": "R2E",
+   "repository": "orange3",
+   "non_model_cost_per_attempt_s": 543.532,
+   "actor_non_cc_overhead_s_med": 279.74,
+   "actor_git_sanitize_s_med": 12.514,
+   "actor_trusted_init_s_med": 238.097,
+   "grading_total_s_med": 263.792,
+   "grader_trusted_setup_s_med": 243.923,
+   "grader_git_sanitize_s_med": 12.422,
+   "install_s_med": null,
+   "candidate_test_s_med": 3.793,
+   "actor_cc_duration_s_med": 74.245,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "dask__dask-7138",
+   "source": "SWE-Gym",
+   "repository": "Dask",
+   "non_model_cost_per_attempt_s": 525.75,
+   "actor_non_cc_overhead_s_med": 38.264,
+   "actor_git_sanitize_s_med": 11.503,
+   "actor_trusted_init_s_med": 3.615,
+   "grading_total_s_med": 487.486,
+   "grader_trusted_setup_s_med": 464.814,
+   "grader_git_sanitize_s_med": 11.579,
+   "install_s_med": 1.569,
+   "candidate_test_s_med": 7.222,
+   "actor_cc_duration_s_med": 33.501,
+   "n_gradings_candidate_ran": 1
+  },
+  {
+   "instance_id": "orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237",
+   "source": "R2E",
+   "repository": "orange3",
+   "non_model_cost_per_attempt_s": 468.775,
+   "actor_non_cc_overhead_s_med": 250.663,
+   "actor_git_sanitize_s_med": 13.667,
+   "actor_trusted_init_s_med": 208.691,
+   "grading_total_s_med": 218.112,
+   "grader_trusted_setup_s_med": 198.637,
+   "grader_git_sanitize_s_med": 13.056,
+   "install_s_med": null,
+   "candidate_test_s_med": 3.002,
+   "actor_cc_duration_s_med": 59.413,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "orange3__4014f2483e3bab0621c9ae0f994947c008183253",
+   "source": "R2E",
+   "repository": "orange3",
+   "non_model_cost_per_attempt_s": 466.97,
+   "actor_non_cc_overhead_s_med": 251.073,
+   "actor_git_sanitize_s_med": 12.707,
+   "actor_trusted_init_s_med": 210.252,
+   "grading_total_s_med": 215.897,
+   "grader_trusted_setup_s_med": 199.164,
+   "grader_git_sanitize_s_med": 11.696,
+   "install_s_med": null,
+   "candidate_test_s_med": 1.514,
+   "actor_cc_duration_s_med": 75.983,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "Project-MONAI__MONAI-2446",
+   "source": "SWE-Gym",
+   "repository": "MONAI",
+   "non_model_cost_per_attempt_s": 448.624,
+   "actor_non_cc_overhead_s_med": 34.561,
+   "actor_git_sanitize_s_med": 5.489,
+   "actor_trusted_init_s_med": 5.962,
+   "grading_total_s_med": 414.063,
+   "grader_trusted_setup_s_med": 381.933,
+   "grader_git_sanitize_s_med": 5.462,
+   "install_s_med": 14.46,
+   "candidate_test_s_med": 7.002,
+   "actor_cc_duration_s_med": 61.445,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "dask__dask-9378",
+   "source": "SWE-Gym",
+   "repository": "Dask",
+   "non_model_cost_per_attempt_s": 447.379,
+   "actor_non_cc_overhead_s_med": 40.86,
+   "actor_git_sanitize_s_med": 13.74,
+   "actor_trusted_init_s_med": 4.168,
+   "grading_total_s_med": 406.519,
+   "grader_trusted_setup_s_med": 383.921,
+   "grader_git_sanitize_s_med": 13.779,
+   "install_s_med": 1.0,
+   "candidate_test_s_med": 5.302,
+   "actor_cc_duration_s_med": 189.173,
+   "n_gradings_candidate_ran": 1
+  },
+  {
+   "instance_id": "dask__dask-8801",
+   "source": "SWE-Gym",
+   "repository": "Dask",
+   "non_model_cost_per_attempt_s": 427.263,
+   "actor_non_cc_overhead_s_med": 40.245,
+   "actor_git_sanitize_s_med": 13.12,
+   "actor_trusted_init_s_med": 4.249,
+   "grading_total_s_med": 387.018,
+   "grader_trusted_setup_s_med": 369.468,
+   "grader_git_sanitize_s_med": 13.101,
+   "install_s_med": 0.901,
+   "candidate_test_s_med": 1.167,
+   "actor_cc_duration_s_med": 55.562,
+   "n_gradings_candidate_ran": 1
+  },
+  {
+   "instance_id": "dask__dask-7656",
+   "source": "SWE-Gym",
+   "repository": "Dask",
+   "non_model_cost_per_attempt_s": 424.223,
+   "actor_non_cc_overhead_s_med": 38.21,
+   "actor_git_sanitize_s_med": 11.715,
+   "actor_trusted_init_s_med": 3.684,
+   "grading_total_s_med": 386.013,
+   "grader_trusted_setup_s_med": 365.862,
+   "grader_git_sanitize_s_med": 11.774,
+   "install_s_med": 3.729,
+   "candidate_test_s_med": 1.543,
+   "actor_cc_duration_s_med": 41.785,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "iterative__dvc-9395",
+   "source": "SWE-Gym",
+   "repository": "DVC",
+   "non_model_cost_per_attempt_s": 395.466,
+   "actor_non_cc_overhead_s_med": 127.4,
+   "actor_git_sanitize_s_med": 17.276,
+   "actor_trusted_init_s_med": 5.637,
+   "grading_total_s_med": 268.066,
+   "grader_trusted_setup_s_med": 228.025,
+   "grader_git_sanitize_s_med": 16.806,
+   "install_s_med": 3.933,
+   "candidate_test_s_med": 16.848,
+   "actor_cc_duration_s_med": 231.497,
+   "n_gradings_candidate_ran": 1
+  },
+  {
+   "instance_id": "getmoto__moto-7584",
+   "source": "SWE-Gym",
+   "repository": "Moto",
+   "non_model_cost_per_attempt_s": 366.061,
+   "actor_non_cc_overhead_s_med": 111.212,
+   "actor_git_sanitize_s_med": 21.104,
+   "actor_trusted_init_s_med": 19.628,
+   "grading_total_s_med": 254.849,
+   "grader_trusted_setup_s_med": 219.867,
+   "grader_git_sanitize_s_med": 21.527,
+   "install_s_med": 4.873,
+   "candidate_test_s_med": 1.004,
+   "actor_cc_duration_s_med": 58.852,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "iterative__dvc-4166",
+   "source": "SWE-Gym",
+   "repository": "DVC",
+   "non_model_cost_per_attempt_s": 311.475,
+   "actor_non_cc_overhead_s_med": 38.855,
+   "actor_git_sanitize_s_med": 12.72,
+   "actor_trusted_init_s_med": 3.12,
+   "grading_total_s_med": 272.62,
+   "grader_trusted_setup_s_med": 249.435,
+   "grader_git_sanitize_s_med": 12.955,
+   "install_s_med": 3.01,
+   "candidate_test_s_med": 3.523,
+   "actor_cc_duration_s_med": 243.741,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "getmoto__moto-5960",
+   "source": "SWE-Gym",
+   "repository": "Moto",
+   "non_model_cost_per_attempt_s": 304.203,
+   "actor_non_cc_overhead_s_med": 52.481,
+   "actor_git_sanitize_s_med": 13.314,
+   "actor_trusted_init_s_med": 15.491,
+   "grading_total_s_med": 251.722,
+   "grader_trusted_setup_s_med": 217.342,
+   "grader_git_sanitize_s_med": 13.413,
+   "install_s_med": 4.691,
+   "candidate_test_s_med": 13.367,
+   "actor_cc_duration_s_med": 62.752,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "getmoto__moto-6114",
+   "source": "SWE-Gym",
+   "repository": "Moto",
+   "non_model_cost_per_attempt_s": 301.956,
+   "actor_non_cc_overhead_s_med": 54.457,
+   "actor_git_sanitize_s_med": 13.988,
+   "actor_trusted_init_s_med": 16.016,
+   "grading_total_s_med": 247.499,
+   "grader_trusted_setup_s_med": 222.35,
+   "grader_git_sanitize_s_med": 14.126,
+   "install_s_med": 4.567,
+   "candidate_test_s_med": 3.902,
+   "actor_cc_duration_s_med": 90.184,
+   "n_gradings_candidate_ran": 3
+  },
+  {
+   "instance_id": "getmoto__moto-6408",
+   "source": "SWE-Gym",
+   "repository": "Moto",
+   "non_model_cost_per_attempt_s": 298.81,
+   "actor_non_cc_overhead_s_med": 56.045,
+   "actor_git_sanitize_s_med": 15.244,
+   "actor_trusted_init_s_med": 16.659,
+   "grading_total_s_med": 242.765,
+   "grader_trusted_setup_s_med": 212.98,
+   "grader_git_sanitize_s_med": 15.287,
+   "install_s_med": 5.106,
+   "candidate_test_s_med": 6.302,
+   "actor_cc_duration_s_med": 140.512,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "iterative__dvc-5839",
+   "source": "SWE-Gym",
+   "repository": "DVC",
+   "non_model_cost_per_attempt_s": 291.545,
+   "actor_non_cc_overhead_s_med": 43.115,
+   "actor_git_sanitize_s_med": 13.437,
+   "actor_trusted_init_s_med": 4.759,
+   "grading_total_s_med": 248.43,
+   "grader_trusted_setup_s_med": 225.716,
+   "grader_git_sanitize_s_med": 13.333,
+   "install_s_med": 3.603,
+   "candidate_test_s_med": 1.144,
+   "actor_cc_duration_s_med": 24.433,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "getmoto__moto-6185",
+   "source": "SWE-Gym",
+   "repository": "Moto",
+   "non_model_cost_per_attempt_s": 280.905,
+   "actor_non_cc_overhead_s_med": 54.653,
+   "actor_git_sanitize_s_med": 14.285,
+   "actor_trusted_init_s_med": 15.99,
+   "grading_total_s_med": 226.252,
+   "grader_trusted_setup_s_med": 199.514,
+   "grader_git_sanitize_s_med": 15.431,
+   "install_s_med": 5.037,
+   "candidate_test_s_med": 3.141,
+   "actor_cc_duration_s_med": 230.238,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "getmoto__moto-5406",
+   "source": "SWE-Gym",
+   "repository": "Moto",
+   "non_model_cost_per_attempt_s": 272.027,
+   "actor_non_cc_overhead_s_med": 48.85,
+   "actor_git_sanitize_s_med": 11.611,
+   "actor_trusted_init_s_med": 13.252,
+   "grading_total_s_med": 223.177,
+   "grader_trusted_setup_s_med": 201.016,
+   "grader_git_sanitize_s_med": 11.876,
+   "install_s_med": 2.596,
+   "candidate_test_s_med": 2.841,
+   "actor_cc_duration_s_med": 59.663,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "orange3__9b5494e26f407b75e79699c9d40be6df1d80a040",
+   "source": "R2E",
+   "repository": "orange3",
+   "non_model_cost_per_attempt_s": 271.922,
+   "actor_non_cc_overhead_s_med": 146.969,
+   "actor_git_sanitize_s_med": 10.489,
+   "actor_trusted_init_s_med": 110.15,
+   "grading_total_s_med": 124.953,
+   "grader_trusted_setup_s_med": 108.897,
+   "grader_git_sanitize_s_med": 10.534,
+   "install_s_med": null,
+   "candidate_test_s_med": 2.477,
+   "actor_cc_duration_s_med": 47.018,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "iterative__dvc-6954",
+   "source": "SWE-Gym",
+   "repository": "DVC",
+   "non_model_cost_per_attempt_s": 261.846,
+   "actor_non_cc_overhead_s_med": 42.31,
+   "actor_git_sanitize_s_med": 14.184,
+   "actor_trusted_init_s_med": 4.696,
+   "grading_total_s_med": 219.536,
+   "grader_trusted_setup_s_med": 197.552,
+   "grader_git_sanitize_s_med": 14.224,
+   "install_s_med": 3.495,
+   "candidate_test_s_med": 1.599,
+   "actor_cc_duration_s_med": 54.666,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb",
+   "source": "R2E",
+   "repository": "DataLad",
+   "non_model_cost_per_attempt_s": 251.769,
+   "actor_non_cc_overhead_s_med": 138.941,
+   "actor_git_sanitize_s_med": 0.96,
+   "actor_trusted_init_s_med": 112.29,
+   "grading_total_s_med": 112.828,
+   "grader_trusted_setup_s_med": 108.888,
+   "grader_git_sanitize_s_med": 0.891,
+   "install_s_med": null,
+   "candidate_test_s_med": 1.264,
+   "actor_cc_duration_s_med": 36.748,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "pydantic__pydantic-9066",
+   "source": "SWE-Gym",
+   "repository": "Pydantic",
+   "non_model_cost_per_attempt_s": 246.616,
+   "actor_non_cc_overhead_s_med": 33.082,
+   "actor_git_sanitize_s_med": 5.506,
+   "actor_trusted_init_s_med": 4.079,
+   "grading_total_s_med": 213.534,
+   "grader_trusted_setup_s_med": 200.079,
+   "grader_git_sanitize_s_med": 5.218,
+   "install_s_med": 2.094,
+   "candidate_test_s_med": 3.631,
+   "actor_cc_duration_s_med": 59.224,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "pydantic__pydantic-8567",
+   "source": "SWE-Gym",
+   "repository": "Pydantic",
+   "non_model_cost_per_attempt_s": 245.053,
+   "actor_non_cc_overhead_s_med": 32.182,
+   "actor_git_sanitize_s_med": 5.327,
+   "actor_trusted_init_s_med": 3.314,
+   "grading_total_s_med": 212.871,
+   "grader_trusted_setup_s_med": 197.74,
+   "grader_git_sanitize_s_med": 5.23,
+   "install_s_med": 3.125,
+   "candidate_test_s_med": 3.047,
+   "actor_cc_duration_s_med": 85.652,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "pydantic__pydantic-8316",
+   "source": "SWE-Gym",
+   "repository": "Pydantic",
+   "non_model_cost_per_attempt_s": 244.283,
+   "actor_non_cc_overhead_s_med": 32.062,
+   "actor_git_sanitize_s_med": 4.737,
+   "actor_trusted_init_s_med": 4.06,
+   "grading_total_s_med": 212.221,
+   "grader_trusted_setup_s_med": 201.399,
+   "grader_git_sanitize_s_med": 4.741,
+   "install_s_med": 2.042,
+   "candidate_test_s_med": 1.692,
+   "actor_cc_duration_s_med": 36.481,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "pydantic__pydantic-8511",
+   "source": "SWE-Gym",
+   "repository": "Pydantic",
+   "non_model_cost_per_attempt_s": 228.712,
+   "actor_non_cc_overhead_s_med": 31.596,
+   "actor_git_sanitize_s_med": 4.787,
+   "actor_trusted_init_s_med": 4.056,
+   "grading_total_s_med": 197.116,
+   "grader_trusted_setup_s_med": 185.222,
+   "grader_git_sanitize_s_med": 4.781,
+   "install_s_med": 2.268,
+   "candidate_test_s_med": 2.335,
+   "actor_cc_duration_s_med": 82.583,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "pydantic__pydantic-5662",
+   "source": "SWE-Gym",
+   "repository": "Pydantic",
+   "non_model_cost_per_attempt_s": 219.488,
+   "actor_non_cc_overhead_s_med": 29.947,
+   "actor_git_sanitize_s_med": 3.218,
+   "actor_trusted_init_s_med": 2.618,
+   "grading_total_s_med": 189.541,
+   "grader_trusted_setup_s_med": 179.185,
+   "grader_git_sanitize_s_med": 3.157,
+   "install_s_med": 1.305,
+   "candidate_test_s_med": 1.296,
+   "actor_cc_duration_s_med": 30.341,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "pydantic__pydantic-6283",
+   "source": "SWE-Gym",
+   "repository": "Pydantic",
+   "non_model_cost_per_attempt_s": 216.704,
+   "actor_non_cc_overhead_s_med": 30.104,
+   "actor_git_sanitize_s_med": 3.843,
+   "actor_trusted_init_s_med": 3.372,
+   "grading_total_s_med": 186.6,
+   "grader_trusted_setup_s_med": 176.091,
+   "grader_git_sanitize_s_med": 3.744,
+   "install_s_med": 1.295,
+   "candidate_test_s_med": 1.09,
+   "actor_cc_duration_s_med": 81.624,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52",
+   "source": "R2E",
+   "repository": "aiohttp",
+   "non_model_cost_per_attempt_s": 183.775,
+   "actor_non_cc_overhead_s_med": 89.46,
+   "actor_git_sanitize_s_med": 4.665,
+   "actor_trusted_init_s_med": 61.329,
+   "grading_total_s_med": 94.315,
+   "grader_trusted_setup_s_med": 58.61,
+   "grader_git_sanitize_s_med": 4.407,
+   "install_s_med": null,
+   "candidate_test_s_med": 29.616,
+   "actor_cc_duration_s_med": 84.204,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a",
+   "source": "R2E",
+   "repository": "aiohttp",
+   "non_model_cost_per_attempt_s": 171.825,
+   "actor_non_cc_overhead_s_med": 94.545,
+   "actor_git_sanitize_s_med": 4.562,
+   "actor_trusted_init_s_med": 65.731,
+   "grading_total_s_med": 77.28,
+   "grader_trusted_setup_s_med": 65.392,
+   "grader_git_sanitize_s_med": 4.39,
+   "install_s_med": null,
+   "candidate_test_s_med": 5.742,
+   "actor_cc_duration_s_med": 124.903,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "numpy__d805e9b66228e68a0eb14d901cd350159c49af18",
+   "source": "R2E",
+   "repository": "NumPy",
+   "non_model_cost_per_attempt_s": 162.126,
+   "actor_non_cc_overhead_s_med": 114.288,
+   "actor_git_sanitize_s_med": 16.439,
+   "actor_trusted_init_s_med": 25.271,
+   "grading_total_s_med": 47.838,
+   "grader_trusted_setup_s_med": 19.245,
+   "grader_git_sanitize_s_med": 18.216,
+   "install_s_med": null,
+   "candidate_test_s_med": 1.351,
+   "actor_cc_duration_s_med": 163.637,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "python__mypy-15184",
+   "source": "SWE-Gym",
+   "repository": "mypy",
+   "non_model_cost_per_attempt_s": 148.549,
+   "actor_non_cc_overhead_s_med": 48.707,
+   "actor_git_sanitize_s_med": 14.014,
+   "actor_trusted_init_s_med": 10.911,
+   "grading_total_s_med": 99.842,
+   "grader_trusted_setup_s_med": 76.651,
+   "grader_git_sanitize_s_med": 14.046,
+   "install_s_med": 2.502,
+   "candidate_test_s_med": 0.841,
+   "actor_cc_duration_s_med": 54.318,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "conan-io__conan-15422",
+   "source": "SWE-Gym",
+   "repository": "Conan",
+   "non_model_cost_per_attempt_s": 144.858,
+   "actor_non_cc_overhead_s_med": 47.621,
+   "actor_git_sanitize_s_med": 16.332,
+   "actor_trusted_init_s_med": 8.389,
+   "grading_total_s_med": 97.237,
+   "grader_trusted_setup_s_med": 72.909,
+   "grader_git_sanitize_s_med": 16.261,
+   "install_s_med": 1.059,
+   "candidate_test_s_med": 4.007,
+   "actor_cc_duration_s_med": 89.141,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "conan-io__conan-11594",
+   "source": "SWE-Gym",
+   "repository": "Conan",
+   "non_model_cost_per_attempt_s": 141.986,
+   "actor_non_cc_overhead_s_med": 43.793,
+   "actor_git_sanitize_s_med": 10.122,
+   "actor_trusted_init_s_med": 10.14,
+   "grading_total_s_med": 98.193,
+   "grader_trusted_setup_s_med": 81.941,
+   "grader_git_sanitize_s_med": 10.104,
+   "install_s_med": 1.119,
+   "candidate_test_s_med": 0.968,
+   "actor_cc_duration_s_med": 71.6,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "conan-io__conan-12397",
+   "source": "SWE-Gym",
+   "repository": "Conan",
+   "non_model_cost_per_attempt_s": 140.371,
+   "actor_non_cc_overhead_s_med": 45.395,
+   "actor_git_sanitize_s_med": 10.537,
+   "actor_trusted_init_s_med": 10.271,
+   "grading_total_s_med": 94.976,
+   "grader_trusted_setup_s_med": 79.3,
+   "grader_git_sanitize_s_med": 10.553,
+   "install_s_med": 1.079,
+   "candidate_test_s_med": 0.895,
+   "actor_cc_duration_s_med": 41.568,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "conan-io__conan-14177",
+   "source": "SWE-Gym",
+   "repository": "Conan",
+   "non_model_cost_per_attempt_s": 140.37,
+   "actor_non_cc_overhead_s_med": 46.626,
+   "actor_git_sanitize_s_med": 15.279,
+   "actor_trusted_init_s_med": 7.881,
+   "grading_total_s_med": 93.744,
+   "grader_trusted_setup_s_med": 73.85,
+   "grader_git_sanitize_s_med": 15.312,
+   "install_s_med": 1.079,
+   "candidate_test_s_med": 0.544,
+   "actor_cc_duration_s_med": 42.475,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "conan-io__conan-13230",
+   "source": "SWE-Gym",
+   "repository": "Conan",
+   "non_model_cost_per_attempt_s": 137.833,
+   "actor_non_cc_overhead_s_med": 46.207,
+   "actor_git_sanitize_s_med": 15.079,
+   "actor_trusted_init_s_med": 7.979,
+   "grading_total_s_med": 91.626,
+   "grader_trusted_setup_s_med": 71.912,
+   "grader_git_sanitize_s_med": 14.963,
+   "install_s_med": 1.206,
+   "candidate_test_s_med": 0.492,
+   "actor_cc_duration_s_med": 41.783,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "python__mypy-10174",
+   "source": "SWE-Gym",
+   "repository": "mypy",
+   "non_model_cost_per_attempt_s": 135.832,
+   "actor_non_cc_overhead_s_med": 43.697,
+   "actor_git_sanitize_s_med": 9.014,
+   "actor_trusted_init_s_med": 11.098,
+   "grading_total_s_med": 92.135,
+   "grader_trusted_setup_s_med": 71.32,
+   "grader_git_sanitize_s_med": 9.101,
+   "install_s_med": 2.082,
+   "candidate_test_s_med": 1.692,
+   "actor_cc_duration_s_med": 208.376,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "conan-io__conan-13403",
+   "source": "SWE-Gym",
+   "repository": "Conan",
+   "non_model_cost_per_attempt_s": 132.277,
+   "actor_non_cc_overhead_s_med": 46.011,
+   "actor_git_sanitize_s_med": 15.045,
+   "actor_trusted_init_s_med": 7.42,
+   "grading_total_s_med": 86.266,
+   "grader_trusted_setup_s_med": 67.772,
+   "grader_git_sanitize_s_med": 14.591,
+   "install_s_med": 1.095,
+   "candidate_test_s_med": 0.457,
+   "actor_cc_duration_s_med": 57.39,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+   "source": "R2E",
+   "repository": "Pillow",
+   "non_model_cost_per_attempt_s": 120.266,
+   "actor_non_cc_overhead_s_med": 71.792,
+   "actor_git_sanitize_s_med": 9.527,
+   "actor_trusted_init_s_med": 37.004,
+   "grading_total_s_med": 48.474,
+   "grader_trusted_setup_s_med": 37.406,
+   "grader_git_sanitize_s_med": 8.427,
+   "install_s_med": null,
+   "candidate_test_s_med": 0.831,
+   "actor_cc_duration_s_med": 54.856,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "pillow__a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90",
+   "source": "R2E",
+   "repository": "Pillow",
+   "non_model_cost_per_attempt_s": 119.865,
+   "actor_non_cc_overhead_s_med": 71.416,
+   "actor_git_sanitize_s_med": 10.398,
+   "actor_trusted_init_s_med": 36.198,
+   "grading_total_s_med": 48.449,
+   "grader_trusted_setup_s_med": 35.966,
+   "grader_git_sanitize_s_med": 9.793,
+   "install_s_med": null,
+   "candidate_test_s_med": 1.07,
+   "actor_cc_duration_s_med": 74.681,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07",
+   "source": "R2E",
+   "repository": "Pillow",
+   "non_model_cost_per_attempt_s": 119.381,
+   "actor_non_cc_overhead_s_med": 70.891,
+   "actor_git_sanitize_s_med": 9.357,
+   "actor_trusted_init_s_med": 37.124,
+   "grading_total_s_med": 48.49,
+   "grader_trusted_setup_s_med": 37.043,
+   "grader_git_sanitize_s_med": 8.859,
+   "install_s_med": null,
+   "candidate_test_s_med": 0.718,
+   "actor_cc_duration_s_med": 220.584,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5",
+   "source": "R2E",
+   "repository": "coveragepy",
+   "non_model_cost_per_attempt_s": 110.785,
+   "actor_non_cc_overhead_s_med": 65.562,
+   "actor_git_sanitize_s_med": 2.758,
+   "actor_trusted_init_s_med": 39.532,
+   "grading_total_s_med": 45.223,
+   "grader_trusted_setup_s_med": 39.345,
+   "grader_git_sanitize_s_med": 2.704,
+   "install_s_med": null,
+   "candidate_test_s_med": 1.766,
+   "actor_cc_duration_s_med": 50.441,
+   "n_gradings_candidate_ran": 3
+  },
+  {
+   "instance_id": "scrapy__a95a338eeada7275a5289cf036136610ebaf07eb",
+   "source": "R2E",
+   "repository": "Scrapy",
+   "non_model_cost_per_attempt_s": 83.216,
+   "actor_non_cc_overhead_s_med": 51.788,
+   "actor_git_sanitize_s_med": 3.65,
+   "actor_trusted_init_s_med": 24.468,
+   "grading_total_s_med": 31.428,
+   "grader_trusted_setup_s_med": 25.351,
+   "grader_git_sanitize_s_med": 3.454,
+   "install_s_med": null,
+   "candidate_test_s_med": 0.926,
+   "actor_cc_duration_s_med": 28.14,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae",
+   "source": "R2E",
+   "repository": "coveragepy",
+   "non_model_cost_per_attempt_s": 82.893,
+   "actor_non_cc_overhead_s_med": 51.651,
+   "actor_git_sanitize_s_med": 2.398,
+   "actor_trusted_init_s_med": 25.72,
+   "grading_total_s_med": 31.242,
+   "grader_trusted_setup_s_med": 25.036,
+   "grader_git_sanitize_s_med": 2.124,
+   "install_s_med": null,
+   "candidate_test_s_med": 2.594,
+   "actor_cc_duration_s_med": 62.834,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96",
+   "source": "R2E",
+   "repository": "coveragepy",
+   "non_model_cost_per_attempt_s": 80.021,
+   "actor_non_cc_overhead_s_med": 50.186,
+   "actor_git_sanitize_s_med": 2.273,
+   "actor_trusted_init_s_med": 24.77,
+   "grading_total_s_med": 29.835,
+   "grader_trusted_setup_s_med": 24.255,
+   "grader_git_sanitize_s_med": 2.157,
+   "install_s_med": null,
+   "candidate_test_s_med": 2.002,
+   "actor_cc_duration_s_med": 58.396,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9",
+   "source": "R2E",
+   "repository": "coveragepy",
+   "non_model_cost_per_attempt_s": 79.703,
+   "actor_non_cc_overhead_s_med": 49.567,
+   "actor_git_sanitize_s_med": 2.409,
+   "actor_trusted_init_s_med": 23.547,
+   "grading_total_s_med": 30.136,
+   "grader_trusted_setup_s_med": 22.938,
+   "grader_git_sanitize_s_med": 2.5,
+   "install_s_med": null,
+   "candidate_test_s_med": 3.213,
+   "actor_cc_duration_s_med": 50.43,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2",
+   "source": "R2E",
+   "repository": "aiohttp",
+   "non_model_cost_per_attempt_s": 43.006,
+   "actor_non_cc_overhead_s_med": 31.648,
+   "actor_git_sanitize_s_med": 0.689,
+   "actor_trusted_init_s_med": 8.608,
+   "grading_total_s_med": 11.358,
+   "grader_trusted_setup_s_med": 8.517,
+   "grader_git_sanitize_s_med": 0.639,
+   "install_s_med": null,
+   "candidate_test_s_med": 0.651,
+   "actor_cc_duration_s_med": 70.142,
+   "n_gradings_candidate_ran": 2
+  },
+  {
+   "instance_id": "aiohttp__240da100151933883d7dea0528d45877df025b92",
+   "source": "R2E",
+   "repository": "aiohttp",
+   "non_model_cost_per_attempt_s": 41.83,
+   "actor_non_cc_overhead_s_med": 31.276,
+   "actor_git_sanitize_s_med": 0.282,
+   "actor_trusted_init_s_med": 8.377,
+   "grading_total_s_med": 10.554,
+   "grader_trusted_setup_s_med": 8.195,
+   "grader_git_sanitize_s_med": 0.276,
+   "install_s_med": null,
+   "candidate_test_s_med": 0.69,
+   "actor_cc_duration_s_med": 43.65,
+   "n_gradings_candidate_ran": 2
+  }
+ ],
+ "compile_cache_candidates": [
+  {
+   "instance_id": "pandas-dev__pandas-48106",
+   "repository": "pandas",
+   "compile_class": "needs compile cache",
+   "compile_basis": "compile=64 cython=0 ext=42; install median 321.876s",
+   "install_s_med": 321.876,
+   "evl_compiler_compile_max": 64,
+   "evl_compiler_link_max": 42,
+   "evl_extensions_built_max": 42,
+   "evl_cython_steps_max": 0,
+   "evl_install_commands": [
+    "python -m pip install --no-index --find-links=/opt/rh2/compat-wheels --no-deps fastparquet==0.8.3 Fiona==1.9.6 click-plugins==1.1.1 cligj==0.7.2 fsspec==2021.9.",
+    "python -m pip install 'numpy<2'",
+    "python -m pip install -ve . --no-build-isolation -Ceditable-verbose=true"
+   ],
+   "candidates_touching_native_sources": []
+  },
+  {
+   "instance_id": "pandas-dev__pandas-50319",
+   "repository": "pandas",
+   "compile_class": "needs compile cache",
+   "compile_basis": "compile=66 cython=2 ext=43; install median 321.092s",
+   "install_s_med": 321.092,
+   "evl_compiler_compile_max": 66,
+   "evl_compiler_link_max": 43,
+   "evl_extensions_built_max": 43,
+   "evl_cython_steps_max": 2,
+   "evl_install_commands": [
+    "python -m pip install 'numpy<2'",
+    "python -m pip install -ve . --no-build-isolation -Ceditable-verbose=true"
+   ],
+   "candidates_touching_native_sources": [
+    "gpu1003-pandas50319-coder-a1",
+    "gpu1003-pandas50319-qwen36-a1"
+   ]
+  }
+ ],
+ "native_code_but_no_grading_compile": [
+  {
+   "instance_id": "coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae",
+   "repository": "coveragepy",
+   "compile_class": "no (install skipped)",
+   "intree_native_binaries": 1,
+   "intree_native_sources": 9,
+   "candidates_touching_native_sources": []
+  },
+  {
+   "instance_id": "coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9",
+   "repository": "coveragepy",
+   "compile_class": "no (install skipped)",
+   "intree_native_binaries": 1,
+   "intree_native_sources": 9,
+   "candidates_touching_native_sources": []
+  },
+  {
+   "instance_id": "coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5",
+   "repository": "coveragepy",
+   "compile_class": "no (install skipped)",
+   "intree_native_binaries": 1,
+   "intree_native_sources": 9,
+   "candidates_touching_native_sources": []
+  },
+  {
+   "instance_id": "coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96",
+   "repository": "coveragepy",
+   "compile_class": "no (install skipped)",
+   "intree_native_binaries": 1,
+   "intree_native_sources": 9,
+   "candidates_touching_native_sources": []
+  },
+  {
+   "instance_id": "numpy__d805e9b66228e68a0eb14d901cd350159c49af18",
+   "repository": "NumPy",
+   "compile_class": "no (install skipped)",
+   "intree_native_binaries": 12,
+   "intree_native_sources": 248,
+   "candidates_touching_native_sources": []
+  },
+  {
+   "instance_id": "orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237",
+   "repository": "orange3",
+   "compile_class": "no (install skipped)",
+   "intree_native_binaries": 22,
+   "intree_native_sources": 20,
+   "candidates_touching_native_sources": []
+  },
+  {
+   "instance_id": "orange3__4014f2483e3bab0621c9ae0f994947c008183253",
+   "repository": "orange3",
+   "compile_class": "no (install skipped)",
+   "intree_native_binaries": 22,
+   "intree_native_sources": 20,
+   "candidates_touching_native_sources": [
+    "gpu1003-orange4014-qwen36-a1"
+   ]
+  },
+  {
+   "instance_id": "orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e",
+   "repository": "orange3",
+   "compile_class": "no (install skipped)",
+   "intree_native_binaries": 22,
+   "intree_native_sources": 20,
+   "candidates_touching_native_sources": []
+  },
+  {
+   "instance_id": "orange3__9b5494e26f407b75e79699c9d40be6df1d80a040",
+   "repository": "orange3",
+   "compile_class": "no (install skipped)",
+   "intree_native_binaries": 11,
+   "intree_native_sources": 20,
+   "candidates_touching_native_sources": []
+  },
+  {
+   "instance_id": "pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+   "repository": "Pillow",
+   "compile_class": "no (install skipped)",
+   "intree_native_binaries": 5,
+   "intree_native_sources": 106,
+   "candidates_touching_native_sources": []
+  },
+  {
+   "instance_id": "pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07",
+   "repository": "Pillow",
+   "compile_class": "no (install skipped)",
+   "intree_native_binaries": 5,
+   "intree_native_sources": 106,
+   "candidates_touching_native_sources": []
+  },
+  {
+   "instance_id": "pillow__a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90",
+   "repository": "Pillow",
+   "compile_class": "no (install skipped)",
+   "intree_native_binaries": 5,
+   "intree_native_sources": 106,
+   "candidates_touching_native_sources": []
+  }
+ ]
+}

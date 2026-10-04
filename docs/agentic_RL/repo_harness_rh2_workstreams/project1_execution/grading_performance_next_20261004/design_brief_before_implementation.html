@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>今晚评分性能实验 · 审查后简报</title>
+<style>
+:root{--ink:#19343c;--muted:#52666d;--paper:#f5f6f2;--card:#fff;--line:#dce4df;--green:#086b5d;--tint:#e9f3ee;--amber:#8b510d;--warm:#fff5e5;--blue:#275d8e}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;font-size:16px;line-height:1.7}
+a{color:var(--green);text-underline-offset:4px}button,input{font:inherit}button{cursor:pointer}button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--blue);outline-offset:4px}
+.shell{max-width:1160px;padding:0 28px;margin:auto}.mast{border-bottom:1px solid var(--line);background:#fff}.mast .shell{display:flex;justify-content:space-between;align-items:center;gap:16px;padding-top:15px;padding-bottom:15px}.brand{font-size:14px;font-weight:750;letter-spacing:.05em}.meta{font-size:13px;color:var(--muted)}
+.hero{padding-top:30px;padding-bottom:20px}.eyebrow{font-size:13px;color:var(--green);font-weight:750;letter-spacing:.08em;margin:0 0 7px}h1{font-size:34px;line-height:1.3;letter-spacing:-.025em;margin:0 0 12px}h2{font-size:23px;line-height:1.4;margin:0 0 13px}h3{font-size:18px;line-height:1.45;margin:0 0 9px}p{margin:0 0 12px}.lead{font-size:18px;max-width:58em;margin-bottom:16px}.status{display:flex;align-items:flex-start;gap:12px;background:var(--warm);border:1px solid #eadac0;border-radius:12px;padding:12px 16px;font-size:14px}.pill{display:inline-block;flex-shrink:0;font-size:12px;line-height:1.5;font-weight:750;border-radius:5px;padding:3px 8px;background:var(--tint);color:var(--green)}.pill.pending{background:#f2e4cd;color:var(--amber)}
+.nav-wrap{border-bottom:1px solid var(--line);margin-bottom:24px}.nav{display:flex;gap:5px;flex-wrap:wrap;padding:0 0 12px}.nav button,.filter button{border:1px solid transparent;background:transparent;border-radius:8px;color:var(--muted);padding:10px 15px;min-height:44px;font-weight:600}.nav button[aria-selected="true"]{background:var(--green);color:#fff}.nav button:hover:not([aria-selected="true"]),.filter button:hover{background:#e6ebe6}
+main{padding-bottom:36px}.view[hidden]{display:none}.grid{display:grid;gap:18px}.two{grid-template-columns:1.15fr 1fr}.three{grid-template-columns:repeat(3,1fr)}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:23px}.card p:last-child{margin-bottom:0}.muted{color:var(--muted)}.small{font-size:14px}.kicker{color:var(--green);font-size:13px;font-weight:700;margin-bottom:8px}.big{font-size:34px;line-height:1.2;font-weight:750;letter-spacing:-.04em}.row{display:flex;justify-content:space-between;gap:15px;align-items:center}.bar{display:flex;height:35px;border-radius:7px;overflow:hidden;margin:17px 0 10px;background:#dce7e0}.bar .build{width:78.38%;background:var(--green)}.bar .git{width:16.03%;background:var(--blue)}.legend span:nth-child(2):before{background:var(--blue)}.legend span:nth-child(3):before{background:#dce7e0}.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted)}.legend span:before{content:"";display:inline-block;width:9px;height:9px;background:var(--green);margin-right:6px;border-radius:2px}.legend span:nth-child(2):before{background:var(--blue)}
+ul,ol{padding-left:1.3em;margin:9px 0 0}li{margin:6px 0}.note{border-left:3px solid var(--green);padding-left:13px;margin-top:14px;font-size:14px;color:var(--muted)}.section-gap{margin-top:22px}.fullnote{padding:15px 19px;border-radius:10px;background:var(--tint);font-size:15px}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}.metric{border-top:2px solid var(--line);padding-top:10px;font-size:14px}.metric strong{display:block;font-size:17px}.path{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}.step{position:relative;border:1px solid var(--line);border-radius:10px;padding:15px;background:#fff}.step .number{color:var(--green);font-size:12px;font-weight:750;display:block;margin-bottom:3px}.step p{font-size:14px;color:var(--muted);margin:6px 0 0}
+.benefit{border-top:4px solid var(--green)}.benefit:nth-child(2){border-top-color:var(--blue)}.benefit:nth-child(3){border-top-color:var(--amber)}.limit{padding-top:12px;border-top:1px solid var(--line);margin-top:16px;font-size:14px;color:var(--muted)}.compare{display:grid;grid-template-columns:1fr 1fr;gap:15px}.compare .card{padding:20px}.compare strong{color:var(--green)}
+.filter{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px}.filter button{border-color:var(--line);background:#fff;padding:7px 12px;font-size:14px}.filter button[aria-pressed="true"]{border-color:var(--green);background:var(--tint);color:var(--green)}.experiment-layout{display:grid;grid-template-columns:270px 1fr;gap:20px;align-items:start}.experiment-list{display:grid;gap:8px}.experiment-list button{border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);text-align:left;padding:12px 15px;min-height:68px}.experiment-list button[aria-pressed="true"]{border-color:var(--green);box-shadow:inset 4px 0 var(--green);background:var(--tint)}.experiment-list .code{font-size:12px;font-weight:750;color:var(--muted);margin-right:8px}.experiment-list .sub{display:block;font-size:12px;color:var(--muted);margin-top:2px}.detail-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.detail-heading h2{margin:0 0 5px;font-size:23px}.detail-block{margin-top:20px}.detail-block h3{font-size:15px;color:var(--green);margin-bottom:5px}.detail-block p{margin-bottom:0}.detail-foot{margin-top:20px;padding-top:13px;border-top:1px solid var(--line);font-size:14px}.counter{font-size:13px;color:var(--muted);margin:8px 0 14px}.empty{padding:15px}
+.stage-list{display:grid;gap:12px;margin-top:16px}.stage{display:grid;grid-template-columns:60px 1fr 220px;gap:15px;align-items:start;padding:17px 20px;border:1px solid var(--line);background:#fff;border-radius:10px}.stage strong{font-size:16px}.stage p{font-size:14px;margin:4px 0 0}.stage .tag{font-size:12px;color:var(--green);font-weight:750;padding-top:2px}.owner-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.owner{padding:18px;border:1px solid var(--line);border-radius:10px;background:#fff}.owner p{font-size:14px;margin-bottom:0}
+details{margin-top:12px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:14px 18px}summary{cursor:pointer;font-weight:650;min-height:30px}details p,details ul{font-size:14px;margin-top:10px}.price{font-size:32px;font-weight:750;color:var(--green)}.budget-label{font-size:14px;color:var(--muted)}.budget-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.sources{display:grid;gap:12px}.source{padding:18px 20px;background:#fff;border:1px solid var(--line);border-radius:10px}.source p{font-size:14px;color:var(--muted);margin:6px 0 0}.footer{padding:20px 0 26px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}.footer .shell{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:800px){.two,.three{grid-template-columns:1fr}.path{grid-template-columns:1fr 1fr}.experiment-layout{grid-template-columns:220px 1fr}.stage{grid-template-columns:40px 1fr}.stage .accept{grid-column:2}.hero{padding-top:24px}.lead{font-size:17px}}
+@media(max-width:580px){.shell{padding-left:18px;padding-right:18px}.mast .shell{align-items:flex-start}.meta{font-size:12px;max-width:150px;text-align:right}h1{font-size:28px}.hero{padding-top:22px}.lead{font-size:16px}.status{display:block;padding:12px}.status .pill{margin-bottom:6px}.nav{gap:4px}.nav button{padding:9px 11px;font-size:14px}.card{padding:19px}.metrics{grid-template-columns:1fr}.metric{padding-top:8px}.path,.compare,.budget-grid,.owner-grid{grid-template-columns:1fr}.experiment-layout{grid-template-columns:1fr}.experiment-list{grid-template-columns:1fr 1fr;gap:7px}.experiment-list button{padding:10px 12px;min-height:80px;font-size:14px}.detail-heading{display:block}.detail-heading .pill{margin:8px 0 0}.stage{padding:15px;gap:10px}.filter button{min-height:44px}.footer .shell{display:block}.footer a{display:inline-block;margin:6px 10px 0 0}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+@media print{body{background:#fff}.mast,.nav-wrap,.filter,.experiment-list{display:none}.view[hidden]{display:block}.view{break-before:page}.view:first-of-type{break-before:auto}.shell{max-width:none}.card,.stage{break-inside:avoid}.hero{padding-top:0}}
+</style>
+</head>
+<body>
+<header class="mast"><div class="shell"><div class="brand">RH2 / 项目一</div><div class="meta">审查后更新<br>2026 年 10 月 4 日</div></div></header>
+<div class="shell hero">
+<p class="eyebrow">今晚建议 · 先做评分侧提速</p>
+<h1>先省掉重复 Git 清理，再减少重复编译</h1>
+<p class="lead">Claude 的审查与 Codex 的复核已完成。今晚优先验证这两项收益和正确性，再做有限同容器对照与 Prime 接入。</p>
+<div class="status"><span class="pill pending">待实施计划</span><div><strong>页面更新不代表实验已开跑。</strong> Prime 首批 US$5 仍待确认；远端开发 agent、扩容档位及真实模型作业的后续范围待核定。</div></div>
+</div>
+<div class="shell nav-wrap"><nav class="nav" role="tablist" aria-label="简报主题">
+<button id="tab-overview" role="tab" aria-selected="true" aria-controls="view-overview" tabindex="0" data-view="overview">今晚先做</button>
+<button id="tab-benefits" role="tab" aria-selected="false" aria-controls="view-benefits" tabindex="-1" data-view="benefits">能省什么</button>
+<button id="tab-experiments" role="tab" aria-selected="false" aria-controls="view-experiments" tabindex="-1" data-view="experiments">实验细节</button>
+<button id="tab-delivery" role="tab" aria-selected="false" aria-controls="view-delivery" tabindex="-1" data-view="delivery">如何验收</button>
+<button id="tab-decisions" role="tab" aria-selected="false" aria-controls="view-decisions" tabindex="-1" data-view="decisions">预算与后续</button>
+<button id="tab-sources" role="tab" aria-selected="false" aria-controls="view-sources" tabindex="-1" data-view="sources">依据与文档</button>
+</nav></div>
+<main class="shell">
+<section class="view" id="view-overview" role="tabpanel" aria-labelledby="tab-overview">
+<div class="grid two">
+<article class="card"><p class="kicker">今晚优先完成</p><h2>两项提速，配一组正确性检查</h2>
+<ol><li><strong>确认起点：</strong>在冻结代码副本集成已审补丁，跑一次带分段计时的 Pandas。</li><li><strong>Git 预清理：</strong>把确定的清理提前到可信模板，测三题能省多少。</li><li><strong>Pandas 编译器缓存：</strong>用 ccache 复用未变化源码的编译结果，测实际命中与安装耗时。</li><li><strong>正反控：</strong>改源码、头文件、生成代码，检查失效；缓存损坏时仍按原规则构建。</li></ol>
+<p class="note">今晚核心交付：哪些阶段真的变快，最终代码是否仍被正确评分。Pandas 2–4 分钟只是待测预期。</p></article>
+<article class="card"><p class="kicker">前置通过后继续</p><h2>小范围确认复用与云端接入</h2>
+<p><strong>同容器：</strong>DVC／Coverage 各一次配对筛查，计算封存、恢复、排队与清理。值得采用或差异不清时再补测。</p>
+<p><strong>Prime：</strong>预算确认且镜像就绪后，两题各三个资格输入，共6次；最多另留2次故障检查或必要复跑。</p>
+<p class="note">Pandas 当前镜像不兼容，回退到新容器不算复用实验。今晚不预排32路扩容或完整远端开发 agent 迁移。</p></article>
+</div>
+<div class="section-gap fullnote"><strong>分工与停止点：</strong>Claude 分片实施、交原始证据，Codex 独立复核。若可信模板或缓存反控未通过，先修该项；不为赶进度进入后续阶段。是否今晚全部完成取决于前置结果。</div>
+<div class="metrics"><div class="metric"><strong>已确认瓶颈</strong>Git 重压缩＋Pandas 扩展重复构建。</div><div class="metric"><strong>仍待验证</strong>提速幅度、复用净收益、Prime 线上能力。</div><div class="metric"><strong>付费前需确认</strong>首批 US$5；旧168次计划不作今晚清单。</div></div>
+</section>
+
+<section class="view" id="view-benefits" role="tabpanel" aria-labelledby="tab-benefits" hidden>
+<h2>先解决已被日志定位的重复工作</h2>
+<div class="grid two"><article class="card"><p class="kicker">历史两次 Pandas 优化运行</p><div class="row"><h3>一次评分约 13.6 分钟</h3><span class="big">813秒</span></div>
+<div class="bar" role="img" aria-label="Pandas历史中位数：安装含编译637秒、Git清理130秒、其他46秒"><div class="build"></div><div class="git"></div></div>
+<div class="legend"><span>安装含编译 637秒</span><span>Git清理 130秒</span><span>其他 46秒</span></div>
+<p class="note">两次运行均有42个扩展、64次编译、42次链接；未见Cython重新生成。上述为历史分段中位数，不能直接相减当成新方案实测。</p></article>
+<article class="card"><p class="kicker">三题都有 Git 清理成本</p><h3>可以提前做一次的工作</h3><ul><li>DVC：约46秒，占评分约47%。</li><li>Pandas：约120–141秒，占约16%。</li><li>Coverage：约5秒，占约32%–35%。</li></ul><p class="note">新模板的内容核验也耗时；最终收益要扣除它，并计算首次准备的摊销。</p></article></div>
+<div class="grid three section-gap"><article class="card benefit"><h3>预清理＋编译器缓存</h3><p>省重复压缩与重复编译。缓存命中时仍需链接、复制、运行正式测试。</p><div class="limit">新容器也能受益；不是直接保留旧二进制。</div></article><article class="card benefit"><h3>同容器评分</h3><p>可能省第二个容器和状态运输；代价是封存、恢复检查及等待时占用资源。</p><div class="limit">预清理做好后可能收益变小，仍须按题验证。</div></article><article class="card benefit"><h3>Prime 托管评分</h3><p>按需增加评分环境，减少评分宿主机的维护工作。</p><div class="limit">不保证单价更低。开发 agent 留在本地时，开发环境维护仍由我们负责。</div></article></div>
+<details><summary>为什么基线摘要相同，还不能直接跳过 Git 清理？</summary><p>当前 Git 排除区摘要只核对路径名，不核对文件内容。可信模板还必须绑定源镜像、清理脚本、工具版本和实际内容，保留清理自证；证明缺失时走原清理。</p></details>
+<details><summary>为什么不直接保留 actor 编好的 .so？</summary><p>actor 指执行开发任务的 agent。当前 Pandas 安装命令每次在新的临时目录编译，已有 .so 没有避免这些调用。优先尝试编译器层缓存；缓存还必须对应最终源码，不能继承 actor 留下的任意私有缓存。</p></details>
+</section>
+
+<section class="view" id="view-experiments" role="tabpanel" aria-labelledby="tab-experiments" hidden>
+<h2>今晚优先、条件推进与后续安排</h2><p class="muted">沿用原实验编号以便交接，顺序与范围已按复核修订。编号不表示今晚必须跑完全部八项。</p>
+<div class="filter" role="group" aria-label="按实验主题筛选"><button data-filter="all" aria-pressed="true">全部安排</button><button data-filter="build" aria-pressed="false">今晚主线</button><button data-filter="reuse" aria-pressed="false">同容器筛查</button><button data-filter="cloud" aria-pressed="false">Prime 接入</button><button data-filter="later" aria-pressed="false">后续待定</button></div>
+<p class="counter" id="experiment-count" aria-live="polite"></p><div class="experiment-layout"><div class="experiment-list" id="experiment-list" aria-label="选择实验"></div><article class="card" id="experiment-detail" aria-live="polite" aria-atomic="true"></article></div>
+<noscript><p>实验详情请读<a href="codex_review_response_20261004.md">审查后方案</a>。</p></noscript></section>
+
+<section class="view" id="view-delivery" role="tabpanel" aria-labelledby="tab-delivery" hidden>
+<h2>按小片交付，不等整个矩阵跑完</h2>
+<div class="owner-grid"><div class="owner"><h3>Claude 实施</h3><p>在隔离副本集成，交逐次耗时、结果、失败与清理证据。</p></div><div class="owner"><h3>Codex 复核</h3><p>核版本和输入，重放关键反例，检查实际收益与代价。</p></div><div class="owner"><h3>用户决定</h3><p>确认付费额度与阶段范围，依据结果决定正式采用方式。</p></div></div>
+<div class="stage-list">
+<div class="stage"><span class="tag">先准备</span><div><strong>隔离集成＋一次确认运行</strong><p>v13可落到v9副本；发布方核最新父版，不覆盖已用冻结版本。</p></div><div class="accept small muted">版本可追溯；主要耗时有分段。</div></div>
+<div class="stage"><span class="tag">主实验</span><div><strong>逐项加入 Git 预清理与 ccache</strong><p>先量预清理，再量缓存，不把两项收益混在一起。</p></div><div class="accept small muted">逐测试结果一致；模板和缓存有可信来源。</div></div>
+<div class="stage"><span class="tag">必需</span><div><strong>最终源码与失效反控</strong><p>用Pandas真实路径；Coverage不作本次编译缓存门槛。</p></div><div class="accept small muted">错误代码不能借旧产物通过；正常补丁仍可评分。</div></div>
+<div class="stage"><span class="tag">条件推进</span><div><strong>复用筛查／Prime资格</strong><p>前置通过后推进；Prime还需明确预算与镜像就绪。</p></div><div class="accept small muted">记录完整成本、实际模式和精确资源清理。</div></div>
+</div>
+<details><summary>今晚结束时需要交什么？</summary><ul><li>每项：实际改了什么、运行了哪些输入、逐次耗时、测试结果和清理结果。</li><li>Git、安装、编译、恢复、等待分别计时；并行或嵌套区间不重复相加。</li><li>失败、缓存未命中与回退也计入；未完成项明确写原因与下一步。</li><li>镜像首次准备与运行费单列；不把估计的2–4分钟写成已实现。</li></ul></details>
+<details><summary>什么情况下先停在当前阶段？</summary><p>可信模板证明不成立、缓存反控失败、输入或判分变化时，先修当前片。资源创建状态不明、清理未收口或达到预算时停止新增资源。沿用原评分期限，不以加时或拒绝正常候选隐藏问题。</p></details>
+</section>
+
+<section class="view" id="view-decisions" role="tabpanel" aria-labelledby="tab-decisions" hidden>
+<h2>Prime 首批保持小而有界</h2><p class="muted">凭据已提供，无需再提供。以下仍是预算建议，本页不触发任何云端操作。</p>
+<div class="budget-grid"><article class="card"><p class="budget-label">首批接入资格 · 待确认</p><div class="price">US$5</div><ul><li>Pandas、DVC各三种输入一次，共6次创建。</li><li>最多另留2次故障检查或必要复跑，总计最多8次。</li><li>并发≤2；每个2 vCPU／4 GiB／40 GiB，TTL≤60分钟；评分仍用原期限。</li><li>镜像构建、转换与存储费用也计入，先核收费口径。</li></ul></article>
+<article class="card"><p class="budget-label">后续容量与真实链路</p><h3>先有资格证据，再定规模</h3><ul><li>不把原168次创建矩阵或追加US$20当成已批。</li><li>并发档由训练实际需要决定，保留同负载串行参照。</li><li>每波12输入测不到32路活动并发；提高档位要同步重算样本和费用。</li><li>真实模型验收优先搭已安排GPU作业；额外API费用另定。</li></ul></article></div>
+<div class="grid two section-gap"><article class="card"><h3>远端开发 agent 与 actor 模板</h3><p>建议首批先交评分侧。远端开发 agent 的完整接线放到后续范围决定；一次网络探针不能证明其运维收益。</p><p class="small muted">actor侧预清理启用前要核开发能力和B线环境资格。身份更新本身不自动增加审批层。</p></article><article class="card"><h3>今晚是否只需要一台 CPU 主机？</h3><p>窄验收可优先用一台已有主机，前提是所需镜像已具备。公共每机两槽限制不变，不挤占其他作业。</p><p class="small muted">今晚不据此决定缩机。模型推理／训练仍需模型服务或GPU资源。</p></article></div>
+</section>
+
+<section class="view" id="view-sources" role="tabpanel" aria-labelledby="tab-sources" hidden>
+<h2>当前依据与实施交接</h2><div class="sources">
+<div class="source"><a href="codex_review_response_20261004.md">Codex 对 Claude 审查的逐项回应</a><p>本页主要依据：当前推荐顺序、Git证明边界、缓存反控、8次首批安排及尚未决定的范围。</p></div>
+<div class="source"><a href="claude_design_review_20261004.md">Claude 设计审查</a><p>提出预清理与编译缓存优先；其中构建计数、基线证明、并发参照和范围结论按Codex回应修正。</p></div>
+<div class="source"><a href="README.md">Claude 交接入口</a> · <a href="experiment_design.md">审查前完整设计</a><p>保留原编号与历史方案供追溯。原八项矩阵不是今晚全部执行清单，正式实施范围仍需按当前决定核对。</p></div>
+<div class="source"><a href="../grading_performance_20261003/README.md">历史CPU结果</a> · <a href="../grading_performance_20261003/codex_delivery_review_20261004.md">v13交付复核</a><p>历史结果不冒充本轮新实验通过；v9已有实际运行，后续从副本形成新候选。</p></div>
+</div></section>
+</main>
+<footer class="footer"><div class="shell"><span>2026-10-04 · 审查后计划概要 · 实验状态未新增 · 可离线阅读</span><span><a href="codex_review_response_20261004.md">当前方案依据</a> · <a href="README.md">实施交接</a></span></div></footer>
+<script>
+(function(){
+"use strict";
+const experiments=[
+ {
+  "id": "E0",
+  "name": "集成与一次确认",
+  "group": "build",
+  "sub": "今晚首先",
+  "status": "优先准备",
+  "why": "已有日志已定位瓶颈，先确认当前代码和输入可复现。",
+  "how": "从发布方确认的冻结父版复制隔离树，集成v13并做相关回归；Pandas做一次带分段时间的确认。",
+  "check": "输入、版本、镜像和评分材料可追溯；旧冻结目录保持不变。",
+  "benefit": "获得后续提速的可信参照，避免从零重复归因。",
+  "remaining": "未运行本轮确认；v9已有真实运行，集成须在副本进行。"
+ },
+ {
+  "id": "E1",
+  "name": "预清理与编译缓存",
+  "group": "build",
+  "sub": "今晚主要提速实验",
+  "status": "优先实施",
+  "why": "Git清理每题反复执行；Pandas两次均重编42个扩展。",
+  "how": "L0当前v13 → L1加Git预清理（三题）→ L2加ccache（Pandas）。分别计时；确认实际C与C++编译器都使用缓存。",
+  "check": "模板绑定可信内容，不能只看Git排除区路径摘要；随机临时目录下实际命中；逐测试结果不变。",
+  "benefit": "减少重复Git压缩与未变化代码的编译，新容器也能受益。",
+  "remaining": "新收益均待实测；Pandas2–4分钟只是预测，首次准备与核验成本要计入。"
+ },
+ {
+  "id": "E2",
+  "name": "最终源码与失效反控",
+  "group": "build",
+  "sub": "采用缓存前必须完成",
+  "status": "正确性必需",
+  "why": "加速不能来自运行旧二进制或使用错误的生成代码。",
+  "how": "在Pandas真实构建路径修改源码、头文件、配置及生成输入；覆盖旧mtime、构建后再改源码、过期.c、私有缓存污染与故障回退。",
+  "check": "优化与干净构建对最终输入结果一致，共享层不可被候选污染；缺失或损坏时按原期限处理。",
+  "benefit": "证明缓存减少重复工作，同时保留正确评分。",
+  "remaining": "Coverage当前评分不编译扩展，不作为此项门槛；R2E编译型任务范围由B线确认。"
+ },
+ {
+  "id": "E3",
+  "name": "同容器有限筛查",
+  "group": "reuse",
+  "sub": "前置通过后再做",
+  "status": "条件推进",
+  "why": "预清理后，新容器可能追平原容器；现有日志尚不足以定论。",
+  "how": "DVC／Coverage在最终合格配方上各一次配对，计算封存、恢复、等待和清理。拟采用或差异不清时补至至少3对。",
+  "check": "真实复用与回退分开记录；一次只作机制筛查，不宣称稳定收益。",
+  "benefit": "判断哪些题值得继续复用，避免无收益的恢复工作。",
+  "remaining": "Pandas当前镜像不兼容，未做共同环境资格前不算复用样本；本批建议不为它专门建共同镜像。"
+ },
+ {
+  "id": "E4",
+  "name": "Prime 首批接入资格",
+  "group": "cloud",
+  "sub": "预算确认且镜像就绪后",
+  "status": "预算待确认",
+  "why": "SDK离线测试还没有证明服务商能运行我们的镜像、评分和清理。",
+  "how": "先核费用与账户，私有发布合格镜像。Pandas／DVC各空补丁、参考修复、固定候选一次，共6次；最多2次额外故障检查或必要复跑。",
+  "check": "非root、资源与网络事实、评分结果、日志完整和精确ID清理全部可核。",
+  "benefit": "建立外部评分入口；验证实际启动成本和部分运维转移。",
+  "remaining": "US$5、最多8创建／2并发仍是待确认建议。资格运行不直接充当同负载吞吐参照。"
+ },
+ {
+  "id": "E5",
+  "name": "远端开发 agent",
+  "group": "later",
+  "sub": "建议递延完整迁移",
+  "status": "后续范围待定",
+  "why": "开发环境托管可能继续减少自管工作，但需要模型通路、授权退役和真实生命周期接线。",
+  "how": "建议先交付独立评分。依据后续actor排队与维护成本，再决定完整迁移和同sandbox交接。",
+  "check": "已建立连接必须正确处理；仅测网络策略不能替代完整开发与评分证据。",
+  "benefit": "后续可能减少开发环境宿主机维护，不能由本批评分资格提前认领。",
+  "remaining": "用户确认阶段范围前不当作已取消；SDK更新网络策略不撤销既有连接，组合仍未验证。"
+ },
+ {
+  "id": "E6",
+  "name": "按需求验证扩容",
+  "group": "later",
+  "sub": "缓存与Prime资格通过后",
+  "status": "负载与额度待定",
+  "why": "需要验证训练实际所需容量，而不是只展示很大的并发数字。",
+  "how": "按到达率与峰值在飞数选档；保留同输入队列的串行参照，记录实际并发。提高档位时一并重算每波输入与总创建数。",
+  "check": "失败、回退、闲置、准备、清理和人工介入都入账；有效评分包含可信0分。",
+  "benefit": "得到有效吞吐、排队和单位成本，判断弹性是否值得。",
+  "remaining": "不预定32路；12输入不可能测到32活动评分。旧144次／168次矩阵不作为今晚承诺。"
+ },
+ {
+  "id": "E7",
+  "name": "真实模型链路验收",
+  "group": "later",
+  "sub": "配合已安排GPU或另列API作业",
+  "status": "后端与预算待定",
+  "why": "固定成果回放不能覆盖真实agent反复开发、安装和构建的全过程。",
+  "how": "先可做固定命令运输检查；真实模型验收优先搭已安排GPU作业，若需额外API则单列预算与输入。",
+  "check": "真实开发→冻结→评分→上游消费完整；与合格新容器评分核对最终成果。",
+  "benefit": "确认基础设施提速能够改善真实任务周转。",
+  "remaining": "不阻塞今晚无需模型的前置实验；固定命令检查不标成真实模型求解。"
+ }
+];
+const tabs=Array.from(document.querySelectorAll(".nav [role=tab]"));
+function activateView(name,focus){
+ const tab=tabs.find(x=>x.dataset.view===name)||tabs[0];
+ tabs.forEach(x=>{const chosen=x===tab;x.setAttribute("aria-selected",String(chosen));x.tabIndex=chosen?0:-1;document.getElementById(x.getAttribute("aria-controls")).hidden=!chosen;});
+ if(focus)tab.focus();
+ history.replaceState(null,"","#"+tab.dataset.view);
+}
+tabs.forEach((tab,i)=>{
+ tab.addEventListener("click",()=>activateView(tab.dataset.view,false));
+ tab.addEventListener("keydown",event=>{
+ let next;
+ if(event.key==="ArrowRight")next=(i+1)%tabs.length;
+ if(event.key==="ArrowLeft")next=(i+tabs.length-1)%tabs.length;
+ if(event.key==="Home")next=0;
+ if(event.key==="End")next=tabs.length-1;
+ if(next!==undefined){event.preventDefault();activateView(tabs[next].dataset.view,true);}
+ });
+});
+let active="E0";
+const list=document.getElementById("experiment-list");
+const detail=document.getElementById("experiment-detail");
+function addBlock(title,body){
+ const block=document.createElement("div");block.className="detail-block";
+ const h=document.createElement("h3");h.textContent=title;
+ const p=document.createElement("p");p.textContent=body;
+ block.append(h,p);detail.appendChild(block);
+}
+function showExperiment(id){
+ const item=experiments.find(x=>x.id===id);active=id;detail.replaceChildren();
+ list.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.id===id)));
+ const top=document.createElement("div");top.className="detail-heading";
+ const title=document.createElement("div");
+ const kicker=document.createElement("p");kicker.className="kicker";kicker.textContent=item.id+" / 实验设计";
+ const h=document.createElement("h2");h.textContent=item.name;
+ title.append(kicker,h);
+ const pill=document.createElement("span");pill.className="pill pending";pill.textContent=item.status;
+ top.append(title,pill);detail.append(top);
+ addBlock("为什么做",item.why);addBlock("如何实施",item.how);addBlock("怎样验收",item.check);addBlock("预期用途",item.benefit);addBlock("当前状态与剩余项",item.remaining);
+ const foot=document.createElement("p");foot.className="detail-foot";
+ const a=document.createElement("a");a.href="codex_review_response_20261004.md";a.textContent="查看审查后的实施建议";foot.append(a);detail.append(foot);
+}
+function renderExperiments(filter){
+ const selected=experiments.filter(x=>filter==="all"||x.group===filter);
+ list.replaceChildren();
+ selected.forEach(item=>{
+ const b=document.createElement("button");b.type="button";b.dataset.id=item.id;b.setAttribute("aria-pressed","false");
+ const code=document.createElement("span");code.className="code";code.textContent=item.id;
+ const name=document.createElement("span");name.textContent=item.name;
+ const sub=document.createElement("span");sub.className="sub";sub.textContent=item.sub;
+ b.append(code,name,sub);b.addEventListener("click",()=>showExperiment(item.id));list.append(b);
+ });
+ document.getElementById("experiment-count").textContent="共 "+selected.length+" 项安排 · 请查看各项推进条件";
+ showExperiment(selected.some(x=>x.id===active)?active:selected[0].id);
+}
+document.querySelectorAll("[data-filter]").forEach(b=>b.addEventListener("click",()=>{
+ document.querySelectorAll("[data-filter]").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));
+ renderExperiments(b.dataset.filter);
+}));
+renderExperiments("all");
+activateView(location.hash.slice(1)||"overview",false);
+window.addEventListener("hashchange",()=>activateView(location.hash.slice(1),false));
+})();
+</script>
+<noscript><style>.view[hidden]{display:block}.nav-wrap{display:none}.view{margin-top:30px}</style><p class="shell">脚本已关闭；主题顺序显示，实验详情请读当前方案依据。</p></noscript>
+</body>
+</html>

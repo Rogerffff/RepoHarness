@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light">
+<title>评分性能 · 实施复核简报</title>
+<style>
+:root{--ink:#19343c;--muted:#50676d;--paper:#f3f5f2;--line:#d5dfd9;--green:#066957;--tint:#e6f2ea;--amber:#85480d;--warm:#fff3df;--red:#994234}
+*{box-sizing:border-box}body{margin:0;color:var(--ink);background:var(--paper);font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}a{color:var(--green);text-underline-offset:4px}button{font:inherit;cursor:pointer}button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #226d9a;outline-offset:4px}.shell{max-width:1080px;margin:auto;padding:0 26px}header{background:white;border-bottom:1px solid var(--line)}header .shell{display:flex;justify-content:space-between;gap:15px;align-items:center;padding-top:13px;padding-bottom:13px;font-size:14px}.muted{color:var(--muted)}.hero{padding-top:27px}h1{font-size:32px;line-height:1.3;letter-spacing:-.02em;margin:0 0 12px}h2{font-size:23px;line-height:1.4;margin:0 0 12px}h3{font-size:18px;margin:0 0 8px}p{margin:0 0 12px}.lead{font-size:18px;max-width:56em}.status{padding:13px 17px;background:var(--warm);border:1px solid #ead4b5;border-radius:10px;margin:18px 0}.status strong{color:var(--amber)}.nav{display:flex;gap:7px;flex-wrap:wrap;margin:20px 0}.nav button{border:1px solid var(--line);border-radius:8px;padding:10px 16px;background:white;color:var(--ink);min-height:44px}.nav button[aria-selected=true]{background:var(--green);color:white;border-color:var(--green)}[hidden]{display:none!important}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card{background:white;border:1px solid var(--line);padding:20px;border-radius:12px}.metric{font-size:30px;line-height:1.4;font-weight:750;letter-spacing:-.025em;color:var(--green)}.before{font-size:15px;color:var(--muted);text-decoration:line-through;margin-right:8px}.small{font-size:14px}.tag{display:inline-block;color:var(--green);background:var(--tint);padding:2px 7px;border-radius:5px;font-size:12px;font-weight:700}.tag.warn{background:var(--warm);color:var(--amber)}.note{border-left:3px solid var(--green);padding:0 0 0 13px;margin-top:18px;color:var(--muted);font-size:14px}.spaced{margin-top:23px}.path{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}.path>div{padding:15px;border-top:3px solid var(--green);background:white}.path p{font-size:14px;margin:5px 0 0;color:var(--muted)}.issues{display:grid;gap:13px}.issue{display:grid;grid-template-columns:42px 1fr;gap:13px;border:1px solid var(--line);background:white;border-radius:12px;padding:18px}.n{width:32px;height:32px;display:grid;place-items:center;border-radius:50%;background:var(--warm);color:var(--amber);font-weight:750}.issue p:last-child{margin-bottom:0}.issue h3{margin-bottom:6px}details{background:white;border:1px solid var(--line);border-radius:10px;padding:14px 17px;margin:12px 0}summary{cursor:pointer;font-weight:650;min-height:30px}details p{margin:10px 0 0}ul{padding-left:1.25em;margin:7px 0}li{margin:7px 0}.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}.stage{display:grid;grid-template-columns:55px 1fr;gap:14px;padding:16px 0;border-bottom:1px solid var(--line)}.stage p{margin:0}.stage strong{color:var(--green)}.callout{padding:17px;background:var(--tint);border-radius:10px;margin-top:20px}.callout p:last-child{margin:0}footer{border-top:1px solid var(--line);font-size:13px;color:var(--muted);padding:20px 0;margin-top:28px}main{min-height:400px}.key{color:var(--amber);font-weight:700}
+@media(max-width:780px){.grid{grid-template-columns:1fr}.two{grid-template-columns:1fr}.metric{font-size:28px}.card{padding:17px}.path{grid-template-columns:1fr}h1{font-size:28px}.shell{padding-left:18px;padding-right:18px}.lead{font-size:16px}.nav button{padding:9px 11px;font-size:14px}header .shell{align-items:flex-start}header .muted{max-width:140px;text-align:right;font-size:12px}.hero{padding-top:22px}.issue{grid-template-columns:30px 1fr;gap:10px;padding:15px}.n{width:28px;height:28px}.small{font-size:14px}}
+</style>
+</head>
+<body>
+<header><div class="shell"><strong>RepoHarness · 评分性能</strong><span class="muted">2026-10-04 · next_v1 实施复核</span></div></header>
+<div class="shell hero">
+<h1>提速已经证实，交付还需三处修复</h1>
+<p class="lead">继续推进预构建环境＋新容器评分。Pandas 从约 12 分钟降到 1 分钟，但故障回退和实验账本尚未可靠；当前正式入口也还没有启用这些优化。</p>
+<div class="status"><strong>现在不需要你决策或提供 API。</strong> 下一步由 Claude 修复，Codex 聚焦复核。Prime 的正向资格待补；E5、E6 仍未做。</div>
+<nav class="nav" role="tablist" aria-label="选择要了解的问题">
+<button id="t-results" role="tab" aria-selected="true" aria-controls="p-results" tabindex="0">提速和已完成的工作</button>
+<button id="t-fixes" role="tab" aria-selected="false" aria-controls="p-fixes" tabindex="-1">为什么还不能通过</button>
+<button id="t-next" role="tab" aria-selected="false" aria-controls="p-next" tabindex="-1">接下来做什么</button>
+</nav>
+</div>
+<main class="shell">
+<section id="p-results" role="tabpanel" aria-labelledby="t-results">
+<div class="grid">
+<article class="card"><span class="tag">DVC · Git 预清理</span><h2 class="spaced">省下重复清理</h2><p class="metric"><span class="before">96.5 秒</span>50.6 秒</p><p class="small">约减少 48%。42 项测试状态逐项一致。</p></article>
+<article class="card"><span class="tag">Coverage · Git 预清理</span><h2 class="spaced">小任务也受益</h2><p class="metric"><span class="before">15.2 秒</span>10.4 秒</p><p class="small">约减少 31%。49 项测试状态逐项一致。</p></article>
+<article class="card"><span class="tag">Pandas · 预清理＋编译缓存</span><h2 class="spaced">省下重复编译</h2><p class="metric"><span class="before">737.9 秒</span>63.1 秒</p><p class="small">约减少 91%。1040 项测试状态逐项一致。</p></article>
+</div>
+<p class="note">同一主机交错各跑三次，取包含清理的中位数；Codex 从原始日志独立重算。Pandas 计时同时有另一项实验，数据只代表该负载。L2 三次计时用 v1 包装器；最终 v2 正常命中另有验证。</p>
+<div class="two spaced">
+<article class="card"><h3>Prime：能接住独立评分</h3><p>六次创建均有删除确认，耗时 <strong>18.9–72.3 秒</strong>，包含第一次冷启动。已有五次与本地同输入逐项一致。</p><p class="small muted">DVC 空补丁缺本地同输入参照；两题都还没跑已知正确补丁，不能称完整资格通过。没有做扩容实验。</p></article>
+<article class="card"><h3>E7：真实模型产物能跨路径评分</h3><p>五次真实 Claude Code 尝试，三次正常完成、一次失败但留下冻结补丁、一次没有补丁。四个有效工件的已跑评分路径一致。</p><p class="small muted">两个工件额外送到 Prime 复评；这证明实验链路，正式入口还不会自动选模板或 Prime。Pandas 模型只改了 Python 等文件。</p></article>
+</div>
+<details><summary>复核具体做了什么？</summary><p>独立重建 v9＋补丁，27 个改动文件摘要吻合；376 项定向回归通过，1 项因冻结快照缺历史脚本未运行。另做真实 manager 故障测试、Prime 账本反控，以及现存 CPU-c 上的断网小探针。</p><p>确认共享缓存及祖先目录不可由候选写入；冻结的 C 内容变更经真实应用路径生成新对象，和禁用缓存结果一致。所有复核容器已删除。未新增 Prime／模型调用或租机。</p></details>
+</section>
+<section id="p-fixes" role="tabpanel" aria-labelledby="t-fixes" hidden>
+<h2>三个具体缺陷；已测提速仍然有效</h2>
+<div class="issues">
+<article class="issue"><span class="n">1</span><div><h3>缓存内部出错，没有回到原编译器 <span class="tag warn">P1</span></h3><p>私有缓存里的临时目录被普通文件占用时，实际 ccache 返回失败；相同源码直接用原 GCC 能成功。</p><p class="small muted">修复目标：这类缓存环境故障自动旁路。源码本身的编译错误仍原样失败，不能对所有错误重复编译。</p></div></article>
+<article class="issue"><span class="n">2</span><div><h3>Prime 账本只在运行结束后登记 <span class="tag warn">P1</span></h3><p>两个作业都看到“已用 7 次”，可能各创建一次，合计 9 次；进程中途退出也会漏记在途资源。本批六次没有超额。</p><p class="small muted">修复目标：创建前锁定并持久占额，结束更新同一记录，中断后先对账。可用本地测试完成，不需要付费制造故障。</p></div></article>
+<article class="issue"><span class="n">3</span><div><h3>Git 核验可能吞掉读取错误 <span class="tag warn">P2</span></h3><p>枚举只完成一部分却返回失败时，脚本仍可能输出“核验成功”。独立故障注入已在 GNU/Linux 复现。</p><p class="small muted">修复目标：任何读取／哈希错误都不能形成成功证明。评分时仍按原期限回到原清理。本批正常日志没有这种故障。</p></div></article>
+</div>
+<details><summary>为什么“十组缓存反例通过”也要改口径？</summary><p>删除源码的一组在安装元数据阶段就失败，根本没有编译。两边遗留的旧二进制相同，不能证明删除后正确重建。未来 mtime 的一组还绕过了正常缓存处理；本次窄验用完整统计证实了这一机制。</p><p>已有的源码／头文件改变、缓存缺失和损坏证据仍有价值。需要分清实际覆盖范围，无需重新跑全部十组。</p></details>
+<p class="note">Pandas 安装脚本吞掉早期编译失败，是已存在的 B 线材料问题；本轮未改判分规则，也没有把它归咎于 ccache。</p>
+</section>
+<section id="p-next" role="tabpanel" aria-labelledby="t-next" hidden>
+<h2>先收口这片，再接正式入口</h2>
+<div class="path"><div><strong>① Claude 窄修</strong><p>修三项缺陷、改验收措辞，交 next_v2；保存全部旧证据。</p></div><div><strong>② Codex 聚焦复核</strong><p>只重验所修故障及正常对照。Prime 两题 gold 优先使用既定剩余两次名额。</p></div><div><strong>③ 再做正式接线</strong><p>核当前发布父版，让评分入口按题消费可信模板。actor 预清理另片验证。</p></div></div>
+<div class="card">
+<div class="stage"><strong>E5</strong><p><b>让写代码的 agent 也搬到 Prime，并在同一 sandbox 交接评分。</b><br><span class="muted">未做，继续递延；还涉及模型通路和撤网验证。Prime 独立 grader 可先成立。</span></p></div>
+<div class="stage"><strong>E6</strong><p><b>测同时跑很多评分时的吞吐、长尾和费用。</b><br><span class="muted">按你的决定未做。不能从六次串行评分推断大并发能力。</span></p></div>
+<div class="stage"><strong>E7</strong><p><b>用真实模型和 Claude Code 验证求解→冻结补丁→评分。</b><br><span class="muted">已做实验链路；它不依赖 E5，不必把 agent 先搬去 Prime。仍不等于训练系统已经接线。</span></p></div>
+</div>
+<div class="callout"><h3>后续只需一台 CPU 吗？</h3><p><strong>目前不能保证。</strong> 单次评分已明显变快，评分也能外移到 Prime；但训练到达率、并发峰值和剩余 actor 负载未测。模型仍需要 GPU 服务或 API，控制和开发环境仍有宿主需求。</p></div>
+<details><summary>当前费用、机器和决策状态</summary><p>作者报告 Prime 约 US$0.067（含镜像构建／存储）、DeepSeek 约 ¥6；Codex 本次未重新查账户。Prime 六次创建的本地删除记录均闭合，两份私有镜像仍可能有存储费。</p><p>cpu-a 据交付已暂停；cpu-c 复核容器全部删除，机器继续保留。机器去留和后续扩容不是这次修复的前提，没有替你停机或追加预算。</p></details>
+</section>
+</main>
+<footer><div class="shell"><a href="codex_implementation_review_20261004.md">完整复核与证据</a> · <a href="README.md">实施交接</a> · <a href="design_brief_before_implementation.html">设计简报存档</a><p style="margin:8px 0 0">当前状态：实验有效，交付待修后复核；生产默认未切换。可离线阅读。</p></div></footer>
+<script>
+(()=>{const tabs=[...document.querySelectorAll('[role=tab]')];function show(tab){tabs.forEach(t=>{const on=t===tab;t.setAttribute('aria-selected',String(on));t.tabIndex=on?0:-1;document.getElementById(t.getAttribute('aria-controls')).hidden=!on;});}tabs.forEach((tab,i)=>{tab.addEventListener('click',()=>show(tab));tab.addEventListener('keydown',e=>{let n;if(e.key==='ArrowRight')n=(i+1)%tabs.length;else if(e.key==='ArrowLeft')n=(i-1+tabs.length)%tabs.length;else if(e.key==='Home')n=0;else if(e.key==='End')n=tabs.length-1;else return;e.preventDefault();show(tabs[n]);tabs[n].focus();});});})();
+</script>
+</body></html>

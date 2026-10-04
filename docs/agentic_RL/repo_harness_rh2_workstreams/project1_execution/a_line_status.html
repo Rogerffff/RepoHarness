@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A 线进度历史快照 · 2026-09-28</title>
+<style>
+:root {
+  --bg: #f4f6f5;
+  --surface: #ffffff;
+  --ink: #1b2a2e;
+  --muted: #56686d;
+  --line: #d9e1df;
+  --accent: #2b6b70;
+  --accent-soft: #e2eeee;
+  --done: #33744a;
+  --done-soft: #e3f0e6;
+  --wait: #9a6412;
+  --wait-soft: #f7edd9;
+  --block: #a8432f;
+  --block-soft: #f6e3de;
+  --idle: #7d8b8f;
+  --idle-soft: #eceff0;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #111a1c;
+    --surface: #182326;
+    --ink: #e2eaea;
+    --muted: #9aacaf;
+    --line: #2a3a3e;
+    --accent: #72b6ba;
+    --accent-soft: #1c3134;
+    --done: #7cc392;
+    --done-soft: #1b2f22;
+    --wait: #e0b25f;
+    --wait-soft: #33291a;
+    --block: #e58a74;
+    --block-soft: #3a221d;
+    --idle: #8b9a9e;
+    --idle-soft: #222e31;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #111a1c;
+  --surface: #182326;
+  --ink: #e2eaea;
+  --muted: #9aacaf;
+  --line: #2a3a3e;
+  --accent: #72b6ba;
+  --accent-soft: #1c3134;
+  --done: #7cc392;
+  --done-soft: #1b2f22;
+  --wait: #e0b25f;
+  --wait-soft: #33291a;
+  --block: #e58a74;
+  --block-soft: #3a221d;
+  --idle: #8b9a9e;
+  --idle-soft: #222e31;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-size: 15px;
+  line-height: 1.75;
+  padding-inline: 16px;
+  padding-block: 28px 56px;
+}
+.page { max-width: 820px; margin: 0 auto; display: flex; flex-direction: column; gap: 36px; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.35; margin: 0; }
+h1 { font-size: 30px; font-weight: 700; letter-spacing: 0.01em; }
+h2 { font-size: 20px; font-weight: 700; }
+h3 { font-size: 16px; font-weight: 700; }
+p { margin: 0; }
+code, .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.86em; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+header { display: flex; flex-direction: column; gap: 10px; }
+.meta { color: var(--muted); font-size: 13.5px; }
+.eyebrow { color: var(--accent); font-size: 13px; font-weight: 500; letter-spacing: 0.08em; }
+
+.verdict {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 20px 22px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.verdict .lead { font-size: 17px; font-weight: 500; }
+.verdict ul { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; }
+
+.ask {
+  border-left: 4px solid var(--wait);
+  background: var(--wait-soft);
+  border-radius: 0 10px 10px 0;
+  padding: 16px 20px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.ask h2 { font-size: 17px; }
+.ask ol { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 8px; }
+.ask .none { color: var(--muted); font-size: 14px; }
+
+section { display: flex; flex-direction: column; gap: 14px; }
+.section-note { color: var(--muted); font-size: 14px; }
+
+/* 阶段条 */
+.track { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.track li {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+  padding: 12px 12px 14px; display: flex; flex-direction: column; gap: 6px; position: relative;
+}
+.track li.here { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.track .step { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.track .name { font-weight: 700; font-size: 14.5px; line-height: 1.45; }
+.track .detail { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.here-tag { font-size: 12px; color: var(--accent); font-weight: 700; }
+
+.pill {
+  display: inline-block; font-size: 12px; font-weight: 500; line-height: 1.5;
+  padding: 1px 9px; border-radius: 999px; white-space: nowrap; width: fit-content;
+}
+.pill.done { color: var(--done); background: var(--done-soft); }
+.pill.wait { color: var(--wait); background: var(--wait-soft); }
+.pill.block { color: var(--block); background: var(--block-soft); }
+.pill.idle { color: var(--idle); background: var(--idle-soft); }
+
+/* 已完成 */
+.done-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.done-list li { display: grid; grid-template-columns: 11em 1fr; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.done-list .topic { font-weight: 700; }
+.done-list .body { display: flex; flex-direction: column; gap: 4px; }
+.done-list .body .sub { color: var(--muted); font-size: 13.5px; }
+
+/* 剩余工作分组 */
+.groups { display: flex; flex-direction: column; gap: 14px; }
+.group { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.group-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; padding: 14px 18px 10px; }
+.group-head h3 { font-size: 16px; }
+.group-head .why { color: var(--muted); font-size: 13.5px; }
+.group ul { list-style: none; margin: 0; padding: 0 18px 14px; display: flex; flex-direction: column; gap: 10px; }
+.group li { display: flex; flex-direction: column; gap: 2px; padding-left: 14px; border-left: 2px solid var(--line); }
+.group li strong { font-weight: 700; }
+.group li .sub { color: var(--muted); font-size: 13.5px; }
+.group.g-now { border-top: 3px solid var(--accent); }
+.group.g-b { border-top: 3px solid var(--wait); }
+.group.g-cpu { border-top: 3px solid var(--idle); }
+.group.g-gpu { border-top: 3px solid var(--block); }
+
+/* 表格 */
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: 11px 14px; border-bottom: 1px solid var(--line); }
+th { font-size: 12.5px; color: var(--muted); font-weight: 500; letter-spacing: 0.04em; background: var(--accent-soft); }
+tr:last-child td { border-bottom: none; }
+td .sub { display: block; color: var(--muted); font-size: 13px; }
+
+.cautions { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 8px; }
+
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 0 18px; }
+summary { cursor: pointer; padding: 13px 0; font-weight: 500; }
+details[open] summary { border-bottom: 1px solid var(--line); margin-bottom: 12px; }
+details .inner { padding-bottom: 16px; display: flex; flex-direction: column; gap: 12px; font-size: 14px; }
+.commits { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.commits li { display: grid; grid-template-columns: 5.6em 4.2em 1fr; gap: 10px; }
+.commits .sha { color: var(--accent); }
+.commits .date { color: var(--muted); font-variant-numeric: tabular-nums; }
+.sources { margin: 0; padding-left: 1.2em; color: var(--muted); }
+
+footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 14px; }
+
+@media (max-width: 720px) {
+  h1 { font-size: 25px; }
+  .track { grid-template-columns: 1fr; }
+  .track li { flex-direction: row; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+  .track .detail { flex-basis: 100%; }
+  .done-list li { grid-template-columns: 1fr; gap: 4px; }
+  .commits li { grid-template-columns: 5.6em 1fr; }
+  .commits .date { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <aside aria-label="当前状态入口" style="padding:20px;border:2px solid var(--accent);border-radius:12px;background:var(--accent-soft)">
+    <p><strong>当前进度已于 2026-10-04 更新，请以 <a href="a_line_status.md">A 线最新状态与 Claude 接手清单</a>为准。</strong></p>
+    <p>52 题双模型诊断与性能实验已有新成果；共享源码与独立交付尚待集成，I18、正式接线和训练验收仍有遗留。下面保留的是 09-28 历史快照，其中“等待 B”“尚无 GPU 验证”等旧状态不再用于安排当前工作。</p>
+  </aside>
+  <header>
+    <div class="eyebrow">项目一 · A 线：链路正确性与运行效率</div>
+    <h1>A 线进度：09-28 历史快照</h1>
+    <p class="meta">更新于 2026-09-28 / Codex：提交 a31cdcd0 的同名中转、取消收尾与最终事实落盘均已通过聚焦复核，无新增阻塞项。见<a href="batch6_efficiency_20260921/review_a_remainder_fix_20260928/README.md">修后报告与证据</a>。</p>
+    <p class="meta">本页保留历史范围；<a href="a_line_status.md">当前 Markdown 入口</a>已按 10-04 证据重写，两页不再是同内容。</p>
+  </header>
+
+  <div class="verdict">
+    <p class="lead">主要链路已实施，最新修复已通过复核。可继续已授权的供应接线。</p>
+    <ul>
+      <li><strong>同名中转误删已复核收口。</strong>每次启动给中转容器打一次性标记，失败或取消时只删本次建出的；真实 Docker 上第二次同名启动失败后，第一次仍在运行。</li>
+      <li><strong>取消收尾与事实落盘已复核收口。</strong>资源可释放时最终归零；拆网持续失败时，close 明确列出未完成资源，恢复后可重试。诊断文件记录最终状态，供应仍默认关闭。</li>
+      <li><strong>本轮无需新决策或租机。</strong>还需正式供应接线、目标机对账和代表题验证，不能概括为只剩八卡。</li>
+    </ul>
+  </div>
+
+  <div class="ask">
+    <h2>本轮无需拍板；后续仍需安排</h2>
+    <ol>
+      <li><strong>八卡试运行的方案与时间。</strong>要定训练条件数值，以及 I18（MoE 路由来源）怎么处理；可以先按"试运行里写明路由假设"起步。这项不定，A 线的 GPU 验收无法开始。</li>
+      <li><strong>租 CPU 机时带上 A 的一项小任务</strong>（E2a 目标机对账，约 1–2 小时，见下方"租机"）。</li>
+    </ol>
+    <p class="none">受控依赖供应何时启用现在不用决定，还需完成接线、B 的逐题数据和代表题验证。</p>
+  </div>
+
+  <section aria-labelledby="stage-h">
+    <h2 id="stage-h">走到哪一步了</h2>
+    <ol class="track">
+      <li>
+        <span class="step">第 1 步</span>
+        <span class="name">决策与设计</span>
+        <span class="pill done">已完成</span>
+        <span class="detail">第 1–6 组已定；只剩 I18 路由来源未定。</span>
+      </li>
+      <li>
+        <span class="step">第 2 步</span>
+        <span class="name">本地实现与 CPU 验证</span>
+        <span class="pill wait">供应接线待做</span>
+        <span class="detail">已交付切片与本轮修复均已复核；供应正式接线未完成。</span>
+      </li>
+      <li class="here">
+        <span class="step">第 3 步</span>
+        <span class="here-tag">当前位置</span>
+        <span class="name">真机 CPU 验证</span>
+        <span class="pill wait">部分完成</span>
+        <span class="detail">探针链路已在真机验过；E2a 对账、依赖供应代表题未做。</span>
+      </li>
+      <li>
+        <span class="step">第 4 步</span>
+        <span class="name">八卡试运行与 GPU 验收</span>
+        <span class="pill idle">未开始</span>
+        <span class="detail">等方案与机器。</span>
+      </li>
+      <li>
+        <span class="step">第 5 步</span>
+        <span class="name">正式训练</span>
+        <span class="pill idle">未开始</span>
+        <span class="detail">与 B 的题池、资格共同决定。</span>
+      </li>
+    </ol>
+  </section>
+
+  <section aria-labelledby="done-h">
+    <h2 id="done-h">已实施分项与复核结果</h2>
+    <ul class="done-list">
+      <li>
+        <span class="topic">基座探针链路问题</span>
+        <div class="body">
+          <span>A 负责的 #1–#6、#8–#10 都已处理并经 Codex 复核（09-23 至 09-25）。其中 #4 的结论是维持 I01 B，发生率随下一轮真实流量观测。#7、#11 属 B。</span>
+          <span class="sub">包括启动环境、上游流中断、EOS 与悬空工具调用、提醒位置、计数窗口、auto-memory、工具面。</span>
+        </div>
+      </li>
+      <li>
+        <span class="topic">第六组效率优化</span>
+        <div class="body">
+          <span>E1 初始化去重、E2 批量 census、E3 路由记录紧凑化、E4a 容器历史有界、E5 诊断 / 效率两档配置（无 GPU 部分）都已实施。</span>
+          <span class="sub">E1、E3、E5、E2a 本机差分及 E4a/CR1 已复核。供应模式的退役条件也已修复并通过复核。真实 x86 镜像、持久基线与并发收益留目标机验证，本轮不报告吞吐改善数字。</span>
+        </div>
+      </li>
+      <li>
+        <span class="topic">评分安全修补</span>
+        <div class="body">
+          <span>rollout 与正式评分中，候选执行后的 root 操作使用可信前缀；/tmp 可执行（G1）；控制字符、反斜线文件名不再让整场训练停下。</span>
+          <span class="sub">评分侧可信前缀本轮通过。前置 setup 和 legacy 的例外保持既有范围，不承诺所有路径完全同形。</span>
+        </div>
+      </li>
+      <li>
+        <span class="topic">受控依赖供应</span>
+        <div class="body">
+          <span>包索引网关、供应中转、撤网核对与评分两段执行已实现；正常交接、取消收尾、失败重试与最终事实落盘均通过本机复核。</span>
+          <span class="sub">默认关闭：正式评分仍全断网、单段执行。bringup / rollout 的供应接线和逐题政策也未完成。</span>
+        </div>
+      </li>
+      <li>
+        <span class="topic">评测、恢复与报告</span>
+        <div class="body">
+          <span>训练中评测、独立 checkpoint 评测、冷恢复、run 报告的本地部分已收口。</span>
+          <span class="sub">剩下的只能在真实八卡上核，见下方第 4 组。</span>
+        </div>
+      </li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="left-h">
+    <h2 id="left-h">还差什么</h2>
+    <p class="section-note">按"卡在什么上"分组。</p>
+    <div class="groups">
+      <div class="group g-now">
+        <div class="group-head"><h3>1. 随时可做，不需要机器</h3><span class="pill done">可立即做</span></div>
+        <ul>
+          <li><strong>向 B 转达四项交接</strong><span class="sub">重放工具可复用新的可信执行前缀；评分渲染新增两段脚本；反斜线文件名现可正常导出；启用两段执行后环境资格要重取。</span></li>
+          <li><strong>可选的收尾</strong><span class="sub">队列事件索引（E4b）、audit 内存测量（E4c）、第七组维护清理。都不阻塞首训。</span></li>
+        </ul>
+      </div>
+
+      <div class="group g-b">
+        <div class="group-head"><h3>2. 等 B 先交付</h3><span class="pill wait">等待中</span></div>
+        <ul>
+          <li><strong>依赖供应的逐题数据</strong><span class="sub">评分面的 1A 字段、逐题封禁表与例外表、派生镜像里 pip / uv 是否可用、代表题。到位后 A 做启动接线（起停网关与中转、run 证据）和解题容器注入，同时消费 supply_open 并核整段关停预算。</span></li>
+          <li><strong>B 探针入口接入 A 的生产修复</strong><span class="sub">由 B 任务二负责，A 按需支持；旧探针脚本不能直接复跑。</span></li>
+        </ul>
+      </div>
+
+      <div class="group g-cpu">
+        <div class="group-head"><h3>3. 需要一台 x86 CPU 机（可与 B 共用）</h3><span class="pill idle">等机器</span></div>
+        <ul>
+          <li><strong>E2a 目标机对账</strong><span class="sub">在最大真实镜像（SWE-Gym pandas、R2E numpy）上核新旧 census，并与已落盘的基线清单摘要比对；测空闲与 4 路并发耗时。约 1–2 小时。</span></li>
+          <li><strong>依赖供应代表题的冷 / 热安装验证</strong><span class="sub">在第 2 组数据到位之后。</span></li>
+        </ul>
+      </div>
+
+      <div class="group g-gpu">
+        <div class="group-head"><h3>4. 需要八卡 GPU 和你的决定</h3><span class="pill block">未开始</span></div>
+        <ul>
+          <li><strong>GPU 验收清单</strong><span class="sub">训练中评测 11 项、独立评测 6 项、冷恢复 4 项、效率档 8 项，以及完整八卡项（CP&gt;1、多引擎、终止广播、预算拒绝下的 Claude Code 行为等）。</span></li>
+          <li><strong>目标存储模式下的初始化耗时</strong><span class="sub">E1 的收益只能在目标机测，不能用 CPU 机数字外推。</span></li>
+          <li><strong>前提</strong><span class="sub">训练条件数值与 I18 路由的处理方式（见上方"后续仍需安排"第 1 项）。</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="rent-h">
+    <h2 id="rent-h">租机：A 线的需求</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>机器</th><th>A 用来做什么</th><th>什么时候</th><th>规格</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>x86 CPU 机</strong><span class="sub">与 B 共用</span></td>
+            <td>E2a 对账；之后是依赖供应代表题</td>
+            <td>B 下次租 CPU 机时</td>
+            <td>x86_64，Docker，约 16 vCPU，盘 ≥200 GB<span class="sub">要能拉 SWE-Gym 镜像、按 B 的配方重建 R2E 派生镜像</span></td>
+          </tr>
+          <tr>
+            <td><strong>八卡 GPU 机</strong></td>
+            <td>试运行与 GPU 验收</td>
+            <td>试运行方案定了以后</td>
+            <td>按作业方案<span class="sub">不为 A 单独提前租</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="section-note">新机器需重新准备 Claude Code 安装包、镜像和派生镜像，按既有版本与配方重建。本轮未访问公共下载源，实际可用性在机器准备时核对。</p>
+  </section>
+
+  <section aria-labelledby="risk-h">
+    <h2 id="risk-h">需要留意</h2>
+    <ul class="cautions">
+      <li>修复 a31cdcd0 已通过复核；供应仍默认关闭。接线时须消费 supply_open，并核整段关停预算：当前上限约束单条清理，不是整个 manager 的总关停时限。</li>
+      <li>受控依赖供应启用后，评分改为两段执行，原有的环境资格不能直接沿用，要用代表题重新取得。</li>
+      <li>Spheron 的实例只能销毁、不能暂停。如果控制台里还有，它仍在计费。任务二 CPU 机 09-25 傍晚 SSH 报主机密钥已变，当时未登录，实例状态以控制台为准。</li>
+      <li>B 在评估第三个题目来源 MiMo-V2.6-RL-oss，目前是建议阶段。若采用，它按退出码评分，需要 A 新做评分接入。</li>
+    </ul>
+  </section>
+
+  <details>
+    <summary>证据与来源</summary>
+    <div class="inner">
+      <p>相关 A 线提交与当前复核状态：</p>
+      <ul class="commits">
+        <li><span class="sha mono">a31cdcd0</span><span class="date">09-28</span><span>同名中转、取消收尾与最终事实落盘修复；聚焦复核通过</span></li>
+        <li><span class="sha mono">23f5586d</span><span class="date">09-25</span><span>E2a 批量 census：09-28 本机正确性通过，目标机对账待做</span></li>
+        <li><span class="sha mono">8f31caee</span><span class="date">09-25</span><span>两段评分主顺序通过；取消收尾与事实落盘已随 a31cdcd0 收口</span></li>
+        <li><span class="sha mono">5b00a091</span><span class="date">09-25</span><span>可信执行、历史裁剪与日志保留通过；供应退役已随 a31cdcd0 收口</span></li>
+        <li><span class="sha mono">0adac07d</span><span class="date">09-25</span><span>原 NG1/NG2 反例通过；同名误删与取消释放已随 a31cdcd0 收口</span></li>
+        <li><span class="sha mono">83760b15</span><span class="date">09-25</span><span>G1：/tmp 与 HOME 可执行</span></li>
+        <li><span class="sha mono">69ea494f</span><span class="date">09-25</span><span>包索引网关与供应中转（默认关闭）</span></li>
+      </ul>
+      <p>本轮 Codex 独立复跑 85 项聚焦测试，含本机 Docker，全部通过；ruff 与独立 HTTP、重复启动、取消和重复 close 对照均通过。Claude 的修后全量记录为 1920 项通过、1 项跳过。本轮未重跑全库、双 lane、远端或 GPU，不将作者结果计入独立验证。</p>
+      <p>详细记录：</p>
+      <ul class="sources">
+        <li><a href="a_line_status.md">A 线状态（agent 用，条目 ID 与验收要点）</a></li>
+        <li><a href="batch6_efficiency_20260921/review_a_remainder_fix_20260928/README.md">09-28 修后聚焦复核：通过与适用边界</a></li>
+        <li><a href="batch6_efficiency_20260921/review_a_remainder_20260928/README.md">前轮独立复核与修前反例</a></li>
+        <li><a href="infra.md">A 线留言板 infra.md</a>，09-28 复核记录</li>
+        <li><a href="batch6_efficiency_20260921/README.md">第六组入口</a></li>
+        <li><a href="batch6_efficiency_20260921/e2_e4_consumers_brief_20260924.md">E2/E4 Brief</a> §7–§11；<a href="batch6_efficiency_20260921/network_supply_brief_20260924.md">网络供应 Brief</a> §12–§16</li>
+        <li><a href="batch5_launch_eval_20260919/gpu_verification_checklist_20260920.md">八卡核验清单</a></li>
+        <li><a href="decision_batches_20260908.md">分组决策入口</a></li>
+      </ul>
+    </div>
+  </details>
+
+  <footer>建议、已决定、已实施、已验证分开写：本页"已完成"指已实施且本机验证过；"已复核"指经 Codex 独立复核。GPU 相关的一律尚未验证。</footer>
+</div>
+</body>
+</html>

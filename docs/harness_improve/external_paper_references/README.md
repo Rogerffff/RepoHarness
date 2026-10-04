@@ -1,5 +1,11 @@
 # Agentic RL 外部技术报告与参考代码索引
 
+**2026-09-19 MiMo RL 续访**：[图像巡检与两次快照研究报告](live_reports/mimo_v26_rl_20260919/README.md)。对照 Pro s12→23、Flash s15→30，保存 2,077 个 tag；重点记录离线评测回填、轨迹负载增长、重启和数据干预、lag 分桶与总 KL 反向变化、Flash s30 penalty 异常，以及网页历史末值带来的口径陷阱。
+
+**2026-09-19 评分与 credit 实验候选**：[后续实验思路](../../agentic_RL/repo_harness_rh2_workstreams/project1_execution/credit_assignment_ideas_20260919.md)；[SWE judge 与 advantage 分配研究](live_reports/mimo_v26_rl_20260917/credit_assignment_followup_20260917/README.md)，含 SWE-RM、SWE-TRACE、Agentic Rubrics、DRACO、IAPO 等原文与固定源码。区分直接 SWE 训练证据、其他 agent 任务机制和推理重排；作为后续候选，不是训练定案。
+
+**2026-09-15 环境专题汇总**：[逐来源的环境处理方法、证据边界与补齐原文](environment_processing_survey_20260915/README.md)。本轮筛查全部实质精读及原有 PDF；另补 29 份原始 PDF、三份质量审计网页。新增下载不等于完成精读。E12 身份更正为 *MiniMax Sparse Attention*，不是 M3 完整技术报告。
+
 本文持续记录 RepoHarness 重定位阶段使用的外部 paper、网页短报告、技术报告和参考代码库，以及它们的本地组织方式、阅读重点和后续用途。它不是论文综述终稿，而是一个面向后续架构设计和代码实现的资料入口。
 
 **2026-09-07 精读进展**：前两批全部完成，共 **14 份笔记、12 份线程内独立审查**，均已完成主线程检查。见 [成品索引](reading_notes/README.md)、[第一批质量检查](reading_notes/BATCH1_QUALITY_REVIEW_20260907.md)、[第二批质量检查](reading_notes/BATCH2_QUALITY_REVIEW_20260907.md)。**第三批不启动**；[原准备方案](reading_notes/BATCH3_PLAN.md)保留为候选，由用户安排外部 Pro 复查、重排和继续阅读。[外部 Pro 交接入口](reading_notes/external_pro_handoff_20260907/00_HANDOFF.md)包含两批全文与审查；候选总表见 [资料目录](reading_notes/SOURCE_CATALOG.md)。
@@ -70,7 +76,7 @@ docs/harness_improve/NVIDIA-Nemotron-3-Ultra-Technical-Report.pdf
 | E9 | Qwen3.8-Flash-Next 架构报告（2026-08-26，GitHub PDF 非 arXiv） | `pdfs/E9_qwen3.8_flash_next_tech_report.pdf` | `knowledge/summary_qwen38_flash_next_architecture.md` | 125B-A6B + 51B 外置 n-gram 表；GDN 混合 + QSA 稀疏注意力 + Gated Residual + Muon。**无 post-training 配方**；对我们的价值 = 三个"预训练指标会骗人"实证（NoPE 后训练无终止生成率升高 / 稀疏 GR 读后训练退化 / n-gram loss 降但下游饱和）+ 结论自陈最紧瓶颈是"能预测 post-training 排序的廉价探针"；GDN+QSA 类底座对训推一致性（tape/logprob）的前瞻负担。 |
 | E10 | Intern-S2-Preview（上海 AI Lab，2608.13505，2026-08-20） | `pdfs/E10_intern_s2_preview_2608.13505.pdf` | `knowledge/summary_intern_s2_preview.md` | 2026-08 窗口内唯一"agentic RL + OPD 全链路"完整报告：SFT → 可扩展多任务 RL → **黑盒/白盒 agentic RL** → on-policy distillation，接多 agent 框架与沙箱环境。黑/白盒分工对口 B 线，OPD 段对口 C 线。 |
 | E11 | NVIDIA Nemotron-Cascade 2（2603.19220，v2 2026-03-22） | `pdfs/E11_nemotron_cascade2_2603.19220.pdf` | `knowledge/summary_nemotron_cascade2.md` | **30B-A3B MoE + GRPO 严格 on-policy + 多域 OPD——与本项目规模/算法/蒸馏三重精确命中**。Cascade RL 分域配方与训练预算披露。窗口外（3 月）定向补录。 |
-| E12 | MiniMax-M3 技术报告（2606.13392，2026-06-11） | `pdfs/E12_minimax_m3_2606.13392.pdf` | —（未精读） | 补录：库内此前只有 M1/M2 系。含 SWE-bench Pro 59 与 Long-Horizon-Terminal-Bench 结果。 |
+| E12 | MiniMax Sparse Attention（2606.13392v2，2026-06-12） | `pdfs/E12_minimax_m3_2606.13392.pdf`（历史文件名保留） | —（未完整精读） | 2026-09-15 更正：这是 MSA 架构/内核论文，不是 MiniMax-M3 完整报告；不提供其 SWE 环境配方。 |
 | E13 | MiMo-V2-Flash 技术报告（2601.02780，2025-12） | `pdfs/E13_mimo_v2_flash_2601.02780.pdf` | —（未精读） | 补录：**MOPD 术语出处**，此前只经 pro 分析文档与证据矩阵间接引用、PDF 未镜像。与 E7（MOPD 算法论文）配对。routing replay / partial rollout / stale-aware TIS / git hacking 能力回退。 |
 
 ## 2.1 参考代码库清单

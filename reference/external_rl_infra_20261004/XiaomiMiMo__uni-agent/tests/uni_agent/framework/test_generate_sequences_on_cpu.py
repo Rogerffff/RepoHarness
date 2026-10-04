@@ -1,0 +1,1418 @@
+from __future__ import annotations
+
+import asyncio
+import json
+import logging
+
+import numpy as np
+import pytest
+import torch
+
+from tests.uni_agent.support import logging_runner
+from uni_agent.framework.framework import (
+    OpenAICompatibleAgentFramework,
+    _align_routed_experts,
+    _normalize_repetition_detect_config,
+)
+from uni_agent.gateway.session import SessionHandle, Trajectory
+from verl.utils import tensordict_utils as tu
+
+_RUNNER_CALLS = []
+_TEST_INLINE_RUNNERS = {}
+
+
+async def _config_recording_runner(*, raw_prompt, session, sample_index, marker=None, **kwargs):
+    _RUNNER_CALLS.append(
+        {
+            "runner": marker,
+            "raw_prompt": raw_prompt,
+            "session_id": session.session_id,
+            "base_url": session.base_url,
+            "reward_info_url": session.reward_info_url,
+            "sample_index": sample_index,
+            "kwargs": dict(kwargs),
+        }
+    )
+
+
+class _ConfigRecordingClassRunner:
+    def __init__(self, marker=None):
+        self.marker = marker
+
+    async def __call__(self, *, raw_prompt, session, sample_index, tools_kwargs, **kwargs):
+        _RUNNER_CALLS.append(
+            {
+                "runner": self.marker,
+                "raw_prompt": raw_prompt,
+                "session_id": session.session_id,
+                "base_url": session.base_url,
+                "reward_info_url": session.reward_info_url,
+                "sample_index": sample_index,
+                "kwargs": {**dict(kwargs), "tools_kwargs": tools_kwargs},
+            }
+        )
+
+
+async def _async_noop_runner(**kwargs):
+    return None
+
+
+async def _inline_runner_proxy(*, runner_key, **kwargs):
+    runner = _TEST_INLINE_RUNNERS[runner_key]
+    await runner(**kwargs)
+
+
+def _inline_runner_config(
+    runner,
+    *,
+    dispatch_mode: str = "inline_async",
+    trajectory_selection: str | None = None,
+) -> dict[str, object]:
+    runner_key = f"runner-{len(_TEST_INLINE_RUNNERS)}"
+    _TEST_INLINE_RUNNERS[runner_key] = runner
+    config = {
+        "runner_fqn": f"{__name__}._inline_runner_proxy",
+        "runner_kwargs": {"runner_key": runner_key},
+        "dispatch_mode": dispatch_mode,
+    }
+    if trajectory_selection is not None:
+        config["trajectory_selection"] = trajectory_selection
+    return config
+
+
+def test_semantic_trajectory_dump_preserves_model_and_session_tools(tmp_path):
+    """Semantic dumps retain the transcript/tool boundary used by replay tools."""
+    framework = object.__new__(OpenAICompatibleAgentFramework)
+    trajectory = Trajectory(
+        prompt_ids=[1],
+        response_ids=[2],
+        response_mask=[1],
+        num_turns=2,
+        messages=[
+            {"role": "user", "content": "inspect", "tool_calls": []},
+            {"role": "assistant", "content": None, "tool_calls": [
+                {"function": {"name": "read", "arguments": "{}"}}
+            ]},
+        ],
+        model_messages=[{"role": "user", "content": "inspect"}],
+        tools=[{"type": "function", "function": {"name": "read"}}],
+        model_tools=[{"type": "function", "function": {"name": "read", "parameters": {}}}],
+    )
+
+    framework._dump_semantic_trajectory(tmp_path, "session-1", [trajectory])
+    payload = json.loads((tmp_path / "traj.json").read_text())
+
+    assert payload["trajectory_format"] == "mimoagent"
+    assert payload["trajs"]["main"]["messages"] == trajectory.messages
+    assert payload["trajs"]["main"]["model_messages"] == trajectory.model_messages
+    assert payload["trajs"]["main"]["tools"] == trajectory.tools
+    assert payload["trajs"]["main"]["model_tools"] == trajectory.model_tools
+
+
+async def _build_framework_with_agent_runners(
+    *,
+    agent_runners: dict[str, dict[str, object]],
+    gateway_manager,
+    reward_loop_worker_handles=None,
+    n: int = 1,
+    val_n: int = 1,
+    log_dir: str | None = None,
+    mask_unfinished_episode: bool = False,
+    tokenizer=None,
+):
+    from omegaconf import OmegaConf
+
+    agent_framework_cfg: dict[str, object] = {
+        "agent_runners": agent_runners,
+        "mask_unfinished_episode": mask_unfinished_episode,
+    }
+    if log_dir is not None:
+        agent_framework_cfg["log_dir"] = log_dir
+
+    config = OmegaConf.create(
+        {
+            "actor_rollout_ref": {
+                "rollout": {
+                    "n": n,
+                    "temperature": 0.7,
+                    "top_p": 0.8,
+                    "top_k": 20,
+                    "calculate_log_probs": True,
+                    "val_kwargs": {
+                        "n": val_n,
+                        "temperature": 0,
+                        "top_p": 0.95,
+                        "top_k": -1,
+                    },
+                    "custom": {"agent_framework": agent_framework_cfg},
+                }
+            }
+        }
+    )
+    return OpenAICompatibleAgentFramework.from_config(
+        config=config,
+        gateway_manager=gateway_manager,
+        tokenizer=tokenizer,
+        reward_loop_worker_handles=reward_loop_worker_handles,
+    )
+
+
+def test_session_sampling_params_include_tokenizer_eos():
+    """Unified sessions explicitly stop on the tokenizer's turn terminator."""
+    from types import SimpleNamespace
+
+    class _Tokenizer:
+        eos_token_id = 248046
+
+    config = SimpleNamespace(
+        temperature=1.0,
+        top_p=0.95,
+        top_k=20,
+        calculate_log_probs=False,
+        val_kwargs=SimpleNamespace(temperature=1.0, top_p=0.95, top_k=20),
+    )
+    framework = object.__new__(OpenAICompatibleAgentFramework)
+    framework._rollout_config = config
+    framework._tokenizer = _Tokenizer()
+
+    params = framework._build_session_sampling_params(partition_id="val", sample_fields={})
+
+    assert params["stop_token_ids"] == [248046]
+
+
+@pytest.mark.parametrize(
+    (
+        "data_config",
+        "agent_framework_config",
+        "expected_rollback",
+        "expected_cache",
+        "expected_chat_template_kwargs",
+    ),
+    [
+        ({}, {}, True, True, {}),
+        (
+            {"apply_chat_template_kwargs": {"thinking": True}},
+            {"enable_last_assistant_rollback": False},
+            False,
+            True,
+            {"thinking": True},
+        ),
+        ({}, {"enable_tool_parser_cache": False}, True, False, {}),
+    ],
+)
+def test_build_gateway_manager_wires_gateway_config_defaults(
+    monkeypatch,
+    data_config,
+    agent_framework_config,
+    expected_rollback,
+    expected_cache,
+    expected_chat_template_kwargs,
+):
+    from omegaconf import OmegaConf
+
+    from uni_agent.framework import entry as entry_module
+
+    class _ModelConfig:
+        tokenizer = object()
+        processor = None
+
+    captured = {}
+
+    class _FakeGatewayManager:
+        def __init__(self, *, llm_client, gateway_count, gateway_actor_config):
+            captured["llm_client"] = llm_client
+            captured["gateway_count"] = gateway_count
+            captured["gateway_actor_config"] = gateway_actor_config
+
+    monkeypatch.setattr(entry_module, "omega_conf_to_dataclass", lambda _config: _ModelConfig())
+    monkeypatch.setattr(entry_module, "GatewayManager", _FakeGatewayManager)
+
+    llm_client = object()
+    config = OmegaConf.create(
+        {
+            "data": data_config,
+            "actor_rollout_ref": {
+                "model": {},
+                "rollout": {
+                    "name": "vllm",
+                    "prompt_length": 128,
+                    "response_length": 64,
+                    "multi_turn": {"format": "hermes"},
+                    "custom": {
+                        "agent_framework": {
+                            "gateway_count": 2,
+                            **agent_framework_config,
+                        }
+                    },
+                },
+            },
+        }
+    )
+
+    manager = entry_module.build_gateway_manager(config=config, llm_client=llm_client)
+
+    assert isinstance(manager, _FakeGatewayManager)
+    assert captured["llm_client"] is llm_client
+    assert captured["gateway_count"] == 2
+    assert captured["gateway_actor_config"].prompt_length == 128
+    assert captured["gateway_actor_config"].response_length == 64
+    assert captured["gateway_actor_config"].tool_parser_name == "hermes"
+    assert captured["gateway_actor_config"].rollout_backend == "vllm"
+    assert captured["gateway_actor_config"].enable_last_assistant_rollback is expected_rollback
+    assert captured["gateway_actor_config"].enable_tool_parser_cache is expected_cache
+    assert isinstance(captured["gateway_actor_config"].apply_chat_template_kwargs, dict)
+    assert captured["gateway_actor_config"].apply_chat_template_kwargs == expected_chat_template_kwargs
+
+
+class _FakeTransferQueue:
+    def __init__(self):
+        self.puts = []
+        self.batch_puts = []
+
+    async def async_kv_put(self, *, key, partition_id, tag):
+        self.puts.append({"key": key, "partition_id": partition_id, "tag": dict(tag)})
+
+    async def async_kv_batch_put(self, *, keys, fields, tags, partition_id):
+        self.batch_puts.append(
+            {
+                "keys": list(keys),
+                "fields": fields,
+                "tags": [dict(tag) for tag in tags],
+                "partition_id": partition_id,
+            }
+        )
+
+
+@pytest.fixture
+def fake_tq(monkeypatch):
+    from uni_agent.framework import framework as framework_module
+
+    fake = _FakeTransferQueue()
+    monkeypatch.setattr(framework_module, "tq", fake)
+    return fake
+
+
+class _FakeGatewayManager:
+    """Fake runtime that matches session IDs by prefix (``session-sample-{sample}-rollout-{rollout}``)
+    to support the real uuid-suffixed IDs produced by the framework."""
+
+    def __init__(
+        self,
+        finalized_by_session_prefix: dict[str, list[Trajectory]],
+        aborted_by_session_prefix: dict[str, list[Trajectory]] | None = None,
+    ):
+        self._finalized_by_prefix = finalized_by_session_prefix
+        self._aborted_by_prefix = aborted_by_session_prefix or {}
+        self.created_sessions = []
+        self.created_session_kwargs = []
+        self.finalized_sessions = []
+        self.aborted_sessions = []
+
+    def _lookup(self, session_id: str) -> list[Trajectory]:
+        for prefix, trajectories in self._finalized_by_prefix.items():
+            if session_id.startswith(prefix):
+                return trajectories
+        raise KeyError(f"No prefix match for session_id={session_id}")
+
+    async def create_session(self, session_id: str, **kwargs):
+        self.created_sessions.append(session_id)
+        self.created_session_kwargs.append(dict(kwargs))
+        return SessionHandle(
+            session_id=session_id,
+            base_url=f"http://fake/{session_id}/v1",
+            reward_info_url=f"http://fake/{session_id}/reward_info",
+        )
+
+    async def finalize_session(self, session_id: str):
+        self.finalized_sessions.append(session_id)
+        return self._lookup(session_id)
+
+    async def abort_session(self, session_id: str) -> list[Trajectory]:
+        self.aborted_sessions.append(session_id)
+        for prefix, trajectories in self._aborted_by_prefix.items():
+            if session_id.startswith(prefix):
+                return trajectories
+        return []
+
+
+def _build_prompts(
+    count: int = 2,
+    *,
+    global_steps: int | None = 7,
+    validate: bool | None = None,
+    do_sample: bool | None = None,
+):
+    non_tensor_dict = {"global_steps": global_steps}
+    if validate is not None:
+        non_tensor_dict["validate"] = validate
+    tensor_dict = {
+        "raw_prompt": [[{"role": "user", "content": f"sample {i}"}] for i in range(count)],
+        "uid": [f"uid-{i}" for i in range(count)],
+        "data_source": ["deepeyes"] * count,
+        "reward_model": [{"ground_truth": f"answer-{i}"} for i in range(count)],
+        "extra_info": [{"index": i} for i in range(count)],
+        "tools_kwargs": [{"tool": i} for i in range(count)],
+        "agent_name": ["deepeyes"] * count,
+    }
+    if do_sample is not None:
+        tensor_dict["__do_sample__"] = [do_sample] * count
+    return tu.get_tensordict(
+        tensor_dict=tensor_dict,
+        non_tensor_dict=non_tensor_dict,
+    )
+
+
+def _trajectory(
+    *,
+    prompt_ids: list[int] | None = None,
+    response_ids: list[int] | None = None,
+    response_mask: list[int] | None = None,
+    response_logprobs: list[float] | None = None,
+    reward_info: dict[str, object] | None = None,
+    num_turns: int = 2,
+    routed_experts: object | None = None,
+    extra_fields: dict[str, object] | None = None,
+):
+    prompt_ids = prompt_ids or [10, 11]
+    response_ids = response_ids or [20, 21]
+    response_mask = response_mask if response_mask is not None else [1] * len(response_ids)
+    return Trajectory(
+        prompt_ids=prompt_ids,
+        response_ids=response_ids,
+        response_mask=response_mask,
+        response_logprobs=response_logprobs,
+        reward_info=dict(reward_info or {}),
+        reward_score=None,
+        num_turns=num_turns,
+        routed_experts=routed_experts,
+        multi_modal_data={"images": ["raw-image-should-not-be-written"]},
+        extra_fields=dict(extra_fields or {}),
+    )
+
+
+def _install_fake_score(monkeypatch, *, score_from_sample_fields=None, default_score=1.0):
+    """Replace OpenAICompatibleAgentFramework._score_trajectories with a fake.
+
+    Keeps ``generate_sequences`` tests focused on TQ output by returning the
+    same deterministic score for every trajectory in the session.
+    """
+    from uni_agent.framework.framework import OpenAICompatibleAgentFramework
+
+    async def fake_score(self, trajectories, sample_fields):
+        if score_from_sample_fields is not None:
+            score = float(score_from_sample_fields(sample_fields))
+        else:
+            score = float(default_score)
+        return [(score, {})] * len(trajectories)
+
+    monkeypatch.setattr(OpenAICompatibleAgentFramework, "_score_trajectories", fake_score)
+
+
+@pytest.mark.asyncio
+async def test_agent_runners_registry_materializes_runners_and_selects_by_agent_name(fake_tq):
+    """Function and class runners keep per-runner kwargs, and each prompt's
+    ``agent_name`` selects the matching runner without leaking internals."""
+    runtime = _FakeGatewayManager(
+        {
+            "session-sample-0-rollout-0": [_trajectory()],
+            "session-sample-1-rollout-0": [_trajectory()],
+        }
+    )
+    _RUNNER_CALLS.clear()
+    runner_fqn = f"{__name__}._config_recording_runner"
+    prompts = _build_prompts(count=2, global_steps=6)
+    prompts["agent_name"] = tu.get_tensordict(
+        tensor_dict={"agent_name": ["deepeyes", "swe"]},
+        non_tensor_dict={},
+    )["agent_name"]
+
+    framework = await _build_framework_with_agent_runners(
+        agent_runners={
+            "deepeyes": {
+                "runner_fqn": runner_fqn,
+                "runner_kwargs": {"marker": "deepeyes"},
+                "dispatch_mode": "inline_async",
+            },
+            "swe": {
+                "runner_fqn": f"{__name__}._ConfigRecordingClassRunner",
+                "runner_kwargs": {"marker": "swe"},
+                "dispatch_mode": "inline_async",
+            },
+        },
+        gateway_manager=runtime,
+    )
+
+    await framework.generate_sequences(prompts)
+
+    calls = sorted(_RUNNER_CALLS, key=lambda call: call["sample_index"])
+    assert [call["runner"] for call in calls] == ["deepeyes", "swe"]
+    assert [call["raw_prompt"] for call in calls] == [
+        [{"role": "user", "content": "sample 0"}],
+        [{"role": "user", "content": "sample 1"}],
+    ]
+    assert all(call["base_url"].endswith("/v1") for call in calls)
+    assert all(call["reward_info_url"].endswith("/reward_info") for call in calls)
+    assert [call["sample_index"] for call in calls] == [0, 1]
+    assert [call["kwargs"]["tools_kwargs"] for call in calls] == [{"tool": 0}, {"tool": 1}]
+    assert all("gateway_manager" not in call["kwargs"] for call in calls)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("dispatch_mode", ["inline_async", "ray_task"])
+async def test_framework_and_runner_logs_share_one_session_directory(tmp_path, fake_tq, dispatch_mode):
+    runtime = _FakeGatewayManager({"session-sample-0-rollout-0": [_trajectory()]})
+    runner_config = (
+        _inline_runner_config(logging_runner)
+        if dispatch_mode == "inline_async"
+        else {
+            "runner_fqn": "tests.uni_agent.support.logging_runner",
+            "dispatch_mode": "ray_task",
+        }
+    )
+    framework = await _build_framework_with_agent_runners(
+        agent_runners={"runner": runner_config},
+        gateway_manager=runtime,
+        log_dir=str(tmp_path),
+    )
+
+    await framework.generate_sequences(_build_prompts(count=1, global_steps=12))
+
+    step_dir = tmp_path / "step_12"
+    session_dirs = list(step_dir.iterdir())
+    assert len(session_dirs) == 1
+    assert session_dirs[0].name.startswith("session-sample-0-rollout-0-")
+
+    framework_log = session_dirs[0] / "framework.log"
+    task_log = session_dirs[0] / "task.log"
+    for _ in range(50):
+        if task_log.exists() and "runner task log" in task_log.read_text():
+            parent_log = framework_log if dispatch_mode == "ray_task" else task_log
+            if parent_log.exists() and "session session-sample-0-rollout-0-" in parent_log.read_text():
+                break
+        await asyncio.sleep(0.02)
+
+    assert "runner task log" in task_log.read_text()
+    if dispatch_mode == "ray_task":
+        assert "session session-sample-0-rollout-0-" in framework_log.read_text()
+    else:
+        assert not framework_log.exists()
+        assert "session session-sample-0-rollout-0-" in task_log.read_text()
+
+
+@pytest.mark.asyncio
+async def test_validation_logs_omit_global_step_directory(tmp_path, fake_tq):
+    runtime = _FakeGatewayManager({"session-sample-0-rollout-0": [_trajectory()]})
+    framework = await _build_framework_with_agent_runners(
+        agent_runners={"runner": _inline_runner_config(logging_runner)},
+        gateway_manager=runtime,
+        log_dir=str(tmp_path),
+    )
+
+    await framework.generate_sequences(_build_prompts(count=1, global_steps=None, validate=True))
+
+    session_dirs = list(tmp_path.iterdir())
+    assert len(session_dirs) == 1
+    assert session_dirs[0].name.startswith("session-sample-0-rollout-0-")
+    assert (session_dirs[0] / "task.log").exists()
+
+    batch = fake_tq.batch_puts[0]
+    assert batch["partition_id"] == "val"
+    assert batch["tags"][0]["global_steps"] is None
+    assert tu.get(batch["fields"], "global_steps") == [None]
+
+
+@pytest.mark.asyncio
+async def test_validation_logs_keep_provided_global_step(tmp_path, fake_tq):
+    runtime = _FakeGatewayManager({"session-sample-0-rollout-0": [_trajectory()]})
+    framework = await _build_framework_with_agent_runners(
+        agent_runners={"runner": _inline_runner_config(_async_noop_runner)},
+        gateway_manager=runtime,
+        log_dir=str(tmp_path),
+    )
+
+    await framework.generate_sequences(_build_prompts(count=1, global_steps=12, validate=True))
+
+    session_dirs = list((tmp_path / "step_12").iterdir())
+    assert len(session_dirs) == 1
+    assert session_dirs[0].name.startswith("session-sample-0-rollout-0-")
+
+    batch = fake_tq.batch_puts[0]
+    assert batch["partition_id"] == "val"
+    assert batch["tags"][0]["global_steps"] == 12
+    assert tu.get(batch["fields"], "global_steps") == [12]
+
+
+@pytest.mark.asyncio
+async def test_training_requires_global_steps(fake_tq):
+    framework = await _build_framework_with_agent_runners(
+        agent_runners={"runner": _inline_runner_config(_async_noop_runner)},
+        gateway_manager=_FakeGatewayManager({}),
+    )
+
+    with pytest.raises(ValueError, match=r"prompts\['global_steps'\] for training"):
+        await framework.generate_sequences(_build_prompts(count=1, global_steps=None))
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("validate", "do_sample", "expected_sampling_params"),
+    [
+        (
+            False,
+            None,
+            {
+                "temperature": 0.7,
+                "top_p": 0.8,
+                "top_k": 20,
+                "repetition_penalty": 1.0,
+                "logprobs": True,
+            },
+        ),
+        (
+            True,
+            None,
+            {
+                "temperature": 0,
+                "top_p": 0.95,
+                "top_k": -1,
+                "repetition_penalty": 1.0,
+                "logprobs": True,
+            },
+        ),
+        (
+            False,
+            False,
+            {
+                "temperature": 0,
+                "top_p": 1.0,
+                "top_k": -1,
+                "repetition_penalty": 1.0,
+                "logprobs": True,
+            },
+        ),
+    ],
+)
+async def test_framework_binds_sampling_defaults_to_gateway_sessions(
+    fake_tq,
+    validate,
+    do_sample,
+    expected_sampling_params,
+):
+    runtime = _FakeGatewayManager({"session-sample-0-rollout-0": [_trajectory()]})
+    framework = await _build_framework_with_agent_runners(
+        agent_runners={"runner": _inline_runner_config(_async_noop_runner)},
+        gateway_manager=runtime,
+    )
+
+    await framework.generate_sequences(
+        _build_prompts(
+            count=1,
+            validate=validate,
+            do_sample=do_sample,
+        )
+    )
+
+    assert runtime.created_session_kwargs == [{"sampling_params": expected_sampling_params}]
+
+
+@pytest.mark.asyncio
+async def test_generate_sequences_writes_tq_schema_for_each_session(monkeypatch, fake_tq):
+    """Full ``generate_sequences`` path writes one TQ batch per successful
+    session and trainer-compatible trajectory fields."""
+    runtime = _FakeGatewayManager(
+        {
+            "session-sample-0-rollout-0": [
+                _trajectory(
+                    response_logprobs=[-0.1, -0.2],
+                    routed_experts=np.array(
+                        [
+                            [[0, 1], [2, 3]],
+                            [[4, 5], [6, 7]],
+                            [[8, 9], [10, 11]],
+                        ],
+                        dtype=np.uint8,
+                    ),
+                    extra_fields={"materialization_reason": "max_trajectory_length"},
+                )
+            ],
+            "session-sample-0-rollout-1": [_trajectory(response_logprobs=[-0.3, -0.4])],
+        }
+    )
+
+    # Nonzero score proves reward_score lands on the final response token.
+    _install_fake_score(
+        monkeypatch,
+        score_from_sample_fields=lambda sf: sf["extra_info"]["index"] + 0.25,
+    )
+
+    framework = await _build_framework_with_agent_runners(
+        agent_runners={"runner": _inline_runner_config(_async_noop_runner)},
+        gateway_manager=runtime,
+        reward_loop_worker_handles=["sentinel"],
+        n=2,
+        val_n=2,
+    )
+
+    await framework.generate_sequences(_build_prompts(count=1, global_steps=7))
+
+    assert fake_tq.batch_puts[0]["keys"] == ["uid-0_0_0"]
+    assert fake_tq.batch_puts[1]["keys"] == ["uid-0_1_0"]
+    assert fake_tq.puts == [{"key": "uid-0", "partition_id": "train", "tag": {"status": "finished"}}]
+
+    first = fake_tq.batch_puts[0]
+    fields = first["fields"]
+    assert first["partition_id"] == "train"
+    tag = first["tags"][0]
+    assert {
+        key: tag[key]
+        for key in (
+            "global_steps",
+            "status",
+            "prompt_len",
+            "response_len",
+            "seq_len",
+            "uid",
+            "materialization_reason",
+        )
+    } == {
+        "global_steps": 7,
+        "status": "success",
+        "prompt_len": 2,
+        "response_len": 2,
+        "seq_len": 4,
+        "uid": "uid-0",
+        "materialization_reason": "max_trajectory_length",
+    }
+    assert "finished" not in tag
+    assert "length_truncated" not in tag
+    assert "traj_exit_reason" not in tag
+    assert "materialization_reason" not in fields
+    # No gateway-reported weight version, so both fall back to the dataloader step.
+    assert (tag["min_global_steps"], tag["max_global_steps"]) == (7, 7)
+    assert fields["input_ids"].is_nested
+    assert fields["response_mask"].is_nested
+    assert fields["position_ids"].is_nested
+    assert fields["routed_experts"].is_nested
+    assert fields["routed_experts"].dtype == torch.uint8
+    assert fields["prompts"][0].tolist() == [10, 11]
+    assert fields["responses"][0].tolist() == [20, 21]
+    assert fields["response_mask"][0].tolist() == [1, 1]
+    assert fields["loss_mask"][0].tolist() == [1, 1]
+    assert fields["input_ids"][0].tolist() == [10, 11, 20, 21]
+    assert fields["attention_mask"][0].tolist() == [1, 1, 1, 1]
+    assert fields["position_ids"][0].tolist() == [0, 1, 2, 3]
+    assert fields["routed_experts"][0].tolist() == [
+        [[0, 1], [2, 3]],
+        [[4, 5], [6, 7]],
+        [[8, 9], [10, 11]],
+        [[0, 0], [0, 0]],
+    ]
+    assert fields["rollout_log_probs"][0].tolist() == pytest.approx([-0.1, -0.2])
+    assert fields["rm_scores"][0].tolist() == [0.0, 0.25]
+    assert tu.get(fields, "multi_modal_inputs") == [{}]
+    assert tu.get(fields, "uid") == ["uid-0"]
+    assert tu.get(fields, "raw_prompt") == [[{"role": "user", "content": "sample 0"}]]
+    assert tu.get(fields, "data_source") == ["deepeyes"]
+    assert tu.get(fields, "reward_model") == [{"ground_truth": "answer-0"}]
+    assert tu.get(fields, "extra_info") == [{"index": 0}]
+    assert tu.get(fields, "tools_kwargs") == [{"tool": 0}]
+    assert tu.get(fields, "agent_name") == ["deepeyes"]
+    assert tu.get(fields, "session_id") == [0]
+    assert tu.get(fields, "global_steps") == [7]
+    assert fields["num_turns"].tolist() == [2]
+    assert "multi_modal_data" not in fields.keys()
+
+
+@pytest.mark.asyncio
+async def test_repetition_guard_zeroes_reward_and_writes_repetition_mask(monkeypatch, fake_tq):
+    """End to end: a looping generation span is masked in TQ and zeroes the reward.
+
+    The runner posted ``reward=1`` (the verifier graded the pre-loop patch, exactly the
+    soyus failure mode); with ``repetition_detect`` on, the framework overrides the
+    scalar to 0 before ``rm_scores`` is built, ships ``repetition_mask`` covering the
+    hit span only, and tags the row so the trainer can report hit rates per harness.
+    """
+    loop = [7, 7, 7] * 20
+    clean = list(range(100, 130))
+    runtime = _FakeGatewayManager(
+        {
+            "session-sample-0-rollout-0": [
+                Trajectory(
+                    prompt_ids=[10, 11],
+                    response_ids=clean + loop,
+                    response_mask=[1] * 90,
+                    generation_spans=[(0, 30), (30, 90)],
+                    reward_info={"reward": 1.0, "agent_type": "cc-agent"},
+                    num_turns=2,
+                )
+            ],
+        }
+    )
+    _install_fake_score(monkeypatch)
+
+    framework = await _build_framework_with_agent_runners(
+        agent_runners={"runner": _inline_runner_config(_async_noop_runner)},
+        gateway_manager=runtime,
+        reward_loop_worker_handles=["sentinel"],
+    )
+    framework._repetition_detect = _normalize_repetition_detect_config(
+        {"enable": True, "ngram_size": 3, "window_size": 30, "min_content_length": 0, "min_repeat": 4, "zero_reward": True}
+    )
+
+    await framework.generate_sequences(_build_prompts(count=1, global_steps=7))
+
+    put = fake_tq.batch_puts[0]
+    fields, tag = put["fields"], put["tags"][0]
+    assert fields["rm_scores"][0].tolist() == [0.0] * 90
+    assert fields["repetition_mask"][0].tolist() == [0.0] * 30 + [1.0] * 60
+    assert fields["response_mask"][0].tolist() == [1] * 90  # masking is the trainer's decision
+    assert (tag["repetition_hit"], tag["repetition_zeroed_reward"]) == (1, 1)
+    assert (tag["repetition_alignment"], tag["repetition_segment_count"]) == ("ok", 1)
+    assert tag["agent_type"] == "cc-agent"
+
+
+@pytest.mark.asyncio
+async def test_repetition_guard_disabled_leaves_rows_untouched(monkeypatch, fake_tq):
+    loop = [7, 7, 7] * 20
+    runtime = _FakeGatewayManager(
+        {
+            "session-sample-0-rollout-0": [
+                Trajectory(
+                    prompt_ids=[10, 11],
+                    response_ids=loop,
+                    response_mask=[1] * 60,
+                    generation_spans=[(0, 60)],
+                    reward_info={"reward": 1.0},
+                    num_turns=1,
+                )
+            ],
+        }
+    )
+    _install_fake_score(monkeypatch)
+    framework = await _build_framework_with_agent_runners(
+        agent_runners={"runner": _inline_runner_config(_async_noop_runner)},
+        gateway_manager=runtime,
+        reward_loop_worker_handles=["sentinel"],
+    )
+
+    await framework.generate_sequences(_build_prompts(count=1, global_steps=7))
+
+    put = fake_tq.batch_puts[0]
+    assert put["fields"]["rm_scores"][0].tolist()[-1] == 1.0
+    assert not put["fields"]["repetition_mask"][0].any()
+    assert put["tags"][0]["repetition_alignment"] == "not_detected"
+    assert put["tags"][0]["repetition_hit"] == 0
+
+
+@pytest.mark.asyncio
+async def test_tq_tag_carries_agent_type_for_per_harness_metrics(monkeypatch, fake_tq):
+    """Mixed-harness metrics read ``agent_type`` from the TQ tag, not a field.
+
+    ``_trajectory_to_tq_field_and_tag`` spreads the Gateway's ``extra_fields`` into
+    individual columns, so there is no ``extra_fields`` column for the trainer to
+    select. The tag is the delivery channel, and it must be populated on every row so
+    the trainer can group rewards per harness.
+    """
+    runtime = _FakeGatewayManager(
+        {
+            "session-sample-0-rollout-0": [_trajectory(reward_info={
+                "agent_type": "codex", "tag_data_source_with_harness": True,
+                "tool_call_error_count": 2,
+                "tool_call_error_invalid_arguments_count": 2,
+            })],
+            "session-sample-0-rollout-1": [_trajectory(reward_info={
+                "selected_harness": "claude-code", "tag_data_source_with_harness": True,
+            })],
+        }
+    )
+    _install_fake_score(monkeypatch)
+
+    framework = await _build_framework_with_agent_runners(
+        agent_runners={"runner": _inline_runner_config(_async_noop_runner)},
+        gateway_manager=runtime,
+        reward_loop_worker_handles=["sentinel"],
+        n=2,
+        val_n=2,
+    )
+
+    await framework.generate_sequences(_build_prompts(count=1, global_steps=7))
+
+    assert fake_tq.batch_puts[0]["tags"][0]["agent_type"] == "codex"
+    assert fake_tq.batch_puts[0]["tags"][0]["tool_call_error_count"] == 2
+    assert fake_tq.batch_puts[0]["tags"][0]["tool_call_error_invalid_arguments_count"] == 2
+    assert fake_tq.batch_puts[1]["tags"][0]["agent_type"] == "claude-code"
+    assert tu.get(fake_tq.batch_puts[0]["fields"], "data_source") == ["deepeyes@codex"]
+    assert tu.get(fake_tq.batch_puts[1]["fields"], "data_source") == ["deepeyes@claude-code"]
+    assert "agent_type" not in fake_tq.batch_puts[0]["fields"].keys()
+
+
+@pytest.mark.asyncio
+async def test_tq_tag_agent_type_falls_back_to_unknown(monkeypatch, fake_tq):
+    """A harness that reports no identity still yields a groupable tag value."""
+    runtime = _FakeGatewayManager({"session-sample-0-rollout-0": [_trajectory()]})
+    _install_fake_score(monkeypatch)
+
+    framework = await _build_framework_with_agent_runners(
+        agent_runners={"runner": _inline_runner_config(_async_noop_runner)},
+        gateway_manager=runtime,
+        reward_loop_worker_handles=["sentinel"],
+        n=1,
+        val_n=1,
+    )
+
+    await framework.generate_sequences(_build_prompts(count=1, global_steps=7))
+
+    assert fake_tq.batch_puts[0]["tags"][0]["agent_type"] == "unknown"
+
+
+@pytest.mark.asyncio
+async def test_generate_sequences_masks_unfinished_trajectory_without_dropping_it(fake_tq):
+    runtime = _FakeGatewayManager(
+        {
+            "session-sample-0-rollout-0": [
+                _trajectory(
+                    response_ids=[20, 21, 22],
+                    response_mask=[1, 0, 1],
+                    reward_info={"reward": 0.5, "finished": False},
+                    extra_fields={
+                        "response_mask": torch.ones(3, dtype=torch.long),
+                        "loss_mask": torch.ones(3, dtype=torch.long),
+                    },
+                )
+            ]
+        }
+    )
+    framework = await _build_framework_with_agent_runners(
+        agent_runners={"runner": _inline_runner_config(_async_noop_runner)},
+        gateway_manager=runtime,
+        mask_unfinished_episode=True,
+    )
+
+    await framework.generate_sequences(_build_prompts(count=1, global_steps=7))
+
+    batch = fake_tq.batch_puts[0]
+    assert batch["keys"] == ["uid-0_0_0"]
+    assert batch["fields"]["responses"][0].tolist() == [20, 21, 22]
+    assert batch["fields"]["response_mask"][0].tolist() == [0, 0, 0]
+    assert batch["fields"]["loss_mask"][0].tolist() == [0, 0, 0]
+    assert batch["fields"]["rm_scores"][0].tolist() == [0.0, 0.0, 0.5]
+    assert batch["tags"][0]["status"] == "success"
+    assert "finished" not in batch["tags"][0]
+    assert "finished" not in batch["fields"].keys()
+    assert tu.get(batch["fields"], "reward_extra_info") == [{}]
+    assert fake_tq.puts == [{"key": "uid-0", "partition_id": "train", "tag": {"status": "finished"}}]
+
+
+@pytest.mark.asyncio
+async def test_unfinished_trajectory_remains_trainable_when_masking_is_disabled(fake_tq):
+    runtime = _FakeGatewayManager(
+        {
+            "session-sample-0-rollout-0": [
+                _trajectory(
+                    response_ids=[20, 21],
+                    response_mask=[1, 1],
+                    reward_info={"reward": 0.5, "finished": False},
+                )
+            ]
+        }
+    )
+    framework = await _build_framework_with_agent_runners(
+        agent_runners={"runner": _inline_runner_config(_async_noop_runner)},
+        gateway_manager=runtime,
+    )
+
+    await framework.generate_sequences(_build_prompts(count=1, global_steps=7))
+
+    batch = fake_tq.batch_puts[0]
+    assert batch["fields"]["response_mask"][0].tolist() == [1, 1]
+    assert batch["fields"]["loss_mask"][0].tolist() == [1, 1]
+    assert "finished" not in batch["tags"][0]
+    assert "finished" not in batch["fields"].keys()
+
+
+@pytest.mark.asyncio
+async def test_masking_keeps_trajectory_trainable_when_completion_metadata_is_missing(fake_tq):
+    runtime = _FakeGatewayManager(
+        {
+            "session-sample-0-rollout-0": [
+                _trajectory(
+                    response_ids=[20, 21],
+                    response_mask=[1, 0],
+                    reward_info={"reward": 0.5},
+                )
+            ]
+        }
+    )
+    framework = await _build_framework_with_agent_runners(
+        agent_runners={"runner": _inline_runner_config(_async_noop_runner)},
+        gateway_manager=runtime,
+        mask_unfinished_episode=True,
+    )
+
+    await framework.generate_sequences(_build_prompts(count=1, global_steps=7))
+
+    batch = fake_tq.batch_puts[0]
+    assert batch["fields"]["response_mask"][0].tolist() == [1, 0]
+    assert batch["fields"]["loss_mask"][0].tolist() == [1, 0]
+
+
+@pytest.mark.asyncio
+async def test_generate_sequences_reports_unfinished_episode_count(fake_tq, caplog):
+    # A session materializing two trajectories is still one episode: completion is
+    # session-level metadata copied onto every trajectory it produced.
+    runtime = _FakeGatewayManager(
+        {
+            "session-sample-0-rollout-0": [
+                _trajectory(reward_info={"reward": 0.5, "finished": False}),
+                _trajectory(reward_info={"reward": 0.5, "finished": False}),
+            ]
+        }
+    )
+    framework = await _build_framework_with_agent_runners(
+        agent_runners={"runner": _inline_runner_config(_async_noop_runner)},
+        gateway_manager=runtime,
+        mask_unfinished_episode=True,
+    )
+
+    with caplog.at_level(logging.INFO, logger="uni_agent.framework.framework"):
+        await framework.generate_sequences(_build_prompts(count=1, global_steps=7))
+
+    assert "num_success_outputs=2" in caplog.text
+    assert "num_unfinished_episodes=1" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_framework_rejects_non_boolean_masking_config():
+    with pytest.raises(ValueError, match="mask_unfinished_episode must be a bool"):
+        await _build_framework_with_agent_runners(
+            agent_runners={"runner": _inline_runner_config(_async_noop_runner)},
+            gateway_manager=_FakeGatewayManager({}),
+            mask_unfinished_episode="true",  # type: ignore[arg-type]
+        )
+
+
+def test_align_routed_experts_preserves_backend_dtype():
+    aligned = _align_routed_experts(np.array([[[256, 511]]], dtype=np.uint16), seq_len=2)
+
+    assert aligned is not None
+    assert aligned.dtype == torch.uint16
+    assert aligned.tolist() == [[[256, 511]], [[0, 0]]]
+
+
+@pytest.mark.asyncio
+async def test_generate_sequences_batches_length_trajectory_before_normal_trajectory(fake_tq):
+    """Keep length metadata in tags when mixed trajectories share one TQ batch."""
+    runtime = _FakeGatewayManager(
+        {
+            "session-sample-0-rollout-0": [
+                _trajectory(
+                    response_ids=[20],
+                    extra_fields={"materialization_reason": "max_trajectory_length"},
+                ),
+                _trajectory(response_ids=[21]),
+            ]
+        }
+    )
+    framework = await _build_framework_with_agent_runners(
+        agent_runners={"runner": _inline_runner_config(_async_noop_runner)},
+        gateway_manager=runtime,
+    )
+
+    await framework.generate_sequences(_build_prompts(count=1, global_steps=8))
+
+    assert len(fake_tq.batch_puts) == 1
+    batch = fake_tq.batch_puts[0]
+    assert batch["keys"] == ["uid-0_0_0", "uid-0_0_1"]
+    assert batch["tags"][0]["materialization_reason"] == "max_trajectory_length"
+    assert "materialization_reason" not in batch["tags"][1]
+    assert "materialization_reason" not in batch["fields"].keys()
+    assert batch["fields"]["responses"][0].tolist() == [20]
+    assert batch["fields"]["responses"][1].tolist() == [21]
+
+
+@pytest.mark.asyncio
+async def test_generate_sequences_selects_longest_model_token_trajectory(fake_tq):
+    runtime = _FakeGatewayManager(
+        {
+            "session-sample-0-rollout-0": [
+                _trajectory(
+                    response_ids=[20, 21, 22, 23, 24, 25],
+                    response_mask=[1, 0, 0, 0, 0, 0],
+                    num_turns=10,
+                ),
+                _trajectory(
+                    response_ids=[30, 31, 32],
+                    response_mask=[1, 1, 1],
+                    num_turns=2,
+                ),
+            ]
+        }
+    )
+    framework = await _build_framework_with_agent_runners(
+        agent_runners={
+            "runner": _inline_runner_config(
+                _async_noop_runner,
+                trajectory_selection="longest",
+            )
+        },
+        gateway_manager=runtime,
+    )
+
+    await framework.generate_sequences(_build_prompts(count=1, global_steps=8))
+
+    assert len(fake_tq.batch_puts) == 1
+    batch = fake_tq.batch_puts[0]
+    assert batch["keys"] == ["uid-0_0_0"]
+    assert batch["fields"]["responses"][0].tolist() == [30, 31, 32]
+    assert batch["fields"]["response_mask"][0].tolist() == [1, 1, 1]
+    assert batch["fields"]["num_turns"].tolist() == [2]
+
+
+@pytest.mark.asyncio
+async def test_framework_rejects_unknown_trajectory_selection(fake_tq):
+    with pytest.raises(ValueError, match="Unknown trajectory selection"):
+        await _build_framework_with_agent_runners(
+            agent_runners={
+                "runner": _inline_runner_config(
+                    _async_noop_runner,
+                    trajectory_selection="shortest",
+                )
+            },
+            gateway_manager=_FakeGatewayManager({}),
+        )
+
+
+@pytest.mark.asyncio
+async def test_generate_sequences_keeps_successful_sessions_when_one_session_fails(fake_tq):
+    """A failed rollout session aborts only that session; other successful
+    sessions for the same prompt are still finalized and written to TQ."""
+    runtime = _FakeGatewayManager(
+        {
+            "session-sample-0-rollout-0": [_trajectory()],
+            "session-sample-0-rollout-1": [_trajectory()],
+        }
+    )
+
+    async def agent_runner(*, raw_prompt, session, sample_index, tools_kwargs, **kwargs):
+        if session.session_id.startswith("session-sample-0-rollout-1-"):
+            raise RuntimeError("gateway failed once")
+
+    framework = await _build_framework_with_agent_runners(
+        agent_runners={"runner": _inline_runner_config(agent_runner)},
+        gateway_manager=runtime,
+        n=2,
+        val_n=2,
+    )
+
+    await framework.generate_sequences(_build_prompts(count=1, global_steps=8))
+
+    assert fake_tq.batch_puts[0]["keys"] == ["uid-0_0_0"]
+    assert fake_tq.puts == [{"key": "uid-0", "partition_id": "train", "tag": {"status": "finished"}}]
+    assert len(runtime.aborted_sessions) == 1
+    assert runtime.aborted_sessions[0].startswith("session-sample-0-rollout-1-")
+
+
+@pytest.mark.asyncio
+async def test_failed_session_snapshot_is_observation_only(tmp_path, fake_tq):
+    """A failed session is dumped, but its snapshot never enters TransferQueue."""
+    runtime = _FakeGatewayManager(
+        {"session-sample-0-rollout-0": [_trajectory()]},
+        {"session-sample-0-rollout-1": [_trajectory(num_turns=7, response_ids=[20, 21, 22])]},
+    )
+
+    async def agent_runner(*, raw_prompt, session, sample_index, tools_kwargs, **kwargs):
+        if session.session_id.startswith("session-sample-0-rollout-1-"):
+            raise TimeoutError("framework deadline")
+
+    framework = await _build_framework_with_agent_runners(
+        agent_runners={"runner": _inline_runner_config(agent_runner)},
+        gateway_manager=runtime,
+        n=2,
+        val_n=2,
+        log_dir=str(tmp_path),
+    )
+
+    await framework.generate_sequences(_build_prompts(count=1, global_steps=8))
+
+    assert fake_tq.batch_puts[0]["keys"] == ["uid-0_0_0"]
+    failed_dirs = [path for path in (tmp_path / "step_8").iterdir() if path.is_dir() and "rollout-1" in path.name]
+    assert len(failed_dirs) == 1
+    failed_dir = failed_dirs[0]
+    manifest = json.loads((failed_dir / "session.json").read_text())
+    assert manifest["status"] == "timeout"
+    assert manifest["termination_kind"] == "framework_timeout"
+    assert manifest["num_turns"] == 7
+    assert manifest["has_trajectory"] is True
+    assert (failed_dir / "traj.json").exists()
+    assert (failed_dir / "trajectory.json").exists()
+    assert (failed_dir / "trajectory.npz").exists()
+
+
+@pytest.mark.asyncio
+async def test_abort_snapshot_error_does_not_replace_runner_error(tmp_path, fake_tq):
+    class AbortFailingGatewayManager(_FakeGatewayManager):
+        async def abort_session(self, session_id: str) -> list[Trajectory]:
+            self.aborted_sessions.append(session_id)
+            raise OSError("snapshot storage unavailable")
+
+    runtime = AbortFailingGatewayManager({})
+
+    async def agent_runner(**kwargs):
+        raise RuntimeError("original runner failure")
+
+    framework = await _build_framework_with_agent_runners(
+        agent_runners={"runner": _inline_runner_config(agent_runner)},
+        gateway_manager=runtime,
+        log_dir=str(tmp_path),
+    )
+    sample_fields = {
+        "raw_prompt": [{"role": "user", "content": "sample"}],
+        "tools_kwargs": {"dataset_index": 3},
+        "data_source": "swebench",
+    }
+
+    with pytest.raises(RuntimeError, match="original runner failure"):
+        await framework._run_session(
+            sample_fields=sample_fields,
+            sample_index=0,
+            session_index=0,
+            global_steps=4,
+            runner_name="runner",
+            runner_config=framework.runner_registry["runner"],
+            sampling_params={},
+        )
+
+    assert runtime.aborted_sessions
+    manifest_dirs = list((tmp_path / "step_4").glob("session-*/session.json"))
+    assert len(manifest_dirs) == 1
+    manifest = json.loads(manifest_dirs[0].read_text())
+    assert manifest["error_message"] == "original runner failure"
+    assert manifest["has_trajectory"] is False
+    assert fake_tq.batch_puts == []
+
+
+@pytest.mark.asyncio
+async def test_generate_sequences_marks_prompt_failure_when_all_sessions_fail(fake_tq):
+    """If every session for a validation prompt fails, the uid is marked
+    failed in TQ and ``generate_sequences`` raises the all-rollouts failure."""
+    runtime = _FakeGatewayManager(
+        {
+            "session-sample-0-rollout-0": [],
+            "session-sample-0-rollout-1": [],
+        }
+    )
+
+    framework = await _build_framework_with_agent_runners(
+        agent_runners={"runner": _inline_runner_config(_async_noop_runner)},
+        gateway_manager=runtime,
+        n=1,
+        val_n=2,
+    )
+
+    with pytest.raises(RuntimeError, match="All rollouts failed at global_steps=9"):
+        await framework.generate_sequences(_build_prompts(count=1, global_steps=9, validate=True))
+
+    assert fake_tq.batch_puts == []
+    assert fake_tq.puts == [{"key": "uid-0", "partition_id": "val", "tag": {"status": "failure"}}]
+
+
+@pytest.mark.asyncio
+async def test_generate_sequences_omits_missing_rollout_log_probs(fake_tq):
+    """Missing backend logprobs are omitted while reward scores remain zero-filled."""
+    runtime = _FakeGatewayManager({"session-sample-0-rollout-0": [_trajectory(response_logprobs=None)]})
+
+    framework = await _build_framework_with_agent_runners(
+        agent_runners={"runner": _inline_runner_config(_async_noop_runner)},
+        gateway_manager=runtime,
+        n=1,
+        val_n=1,
+    )
+
+    await framework.generate_sequences(_build_prompts(count=1, global_steps=10))
+
+    fields = fake_tq.batch_puts[0]["fields"]
+    assert fields["rm_scores"][0].tolist() == [0.0, 0.0]
+    assert "rollout_log_probs" not in fields
+
+
+@pytest.mark.asyncio
+async def test_generate_sequences_keeps_other_prompts_when_one_prompt_fails(fake_tq):
+    """Prompt-level failures are isolated: one uid can fail while another uid
+    in the same batch still writes successful output."""
+    runtime = _FakeGatewayManager(
+        {
+            "session-sample-1-rollout-0": [_trajectory()],
+        }
+    )
+
+    async def agent_runner(*, sample_index, **kwargs):
+        if sample_index == 0:
+            raise RuntimeError("prompt 0 exploded")
+
+    framework = await _build_framework_with_agent_runners(
+        agent_runners={"runner": _inline_runner_config(agent_runner)},
+        gateway_manager=runtime,
+        n=1,
+        val_n=1,
+    )
+
+    await framework.generate_sequences(_build_prompts(count=2, global_steps=11))
+
+    assert [put["keys"] for put in fake_tq.batch_puts] == [["uid-1_0_0"]]
+    assert sorted(fake_tq.puts, key=lambda put: put["key"]) == [
+        {"key": "uid-0", "partition_id": "train", "tag": {"status": "failure"}},
+        {"key": "uid-1", "partition_id": "train", "tag": {"status": "finished"}},
+    ]
+    assert len(runtime.aborted_sessions) == 1
+    assert runtime.aborted_sessions[0].startswith("session-sample-0-rollout-0-")
+    assert all(session_id.startswith("session-sample-1-rollout-0-") for session_id in runtime.finalized_sessions)
+
+
+# ---------------------------------------------------------------------------
+# _score_trajectories method-level tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_score_trajectories_merges_final_reward_info_into_reward_extra_info():
+    """Reward scoring dispatches only the final trajectory to the worker and
+    broadcasts that score and extra info to every trajectory in the session.
+
+    Session-level reward_info submitted by the runner is merged into reward
+    extra_info for scoring, with reward_info taking precedence on key
+    collisions.
+    """
+
+    class _ComputeScoreRemote:
+        def __init__(self):
+            self.calls = []
+
+        async def remote(self, data):
+            self.calls.append(data)
+            return {"reward_score": 0.42, "reward_extra_info": {"acc": 1.0, "format": 0.8}}
+
+    class _StubWorker:
+        def __init__(self):
+            self.compute_score = _ComputeScoreRemote()
+
+    worker = _StubWorker()
+
+    framework = await _build_framework_with_agent_runners(
+        agent_runners={"runner": _inline_runner_config(_async_noop_runner)},
+        gateway_manager=_FakeGatewayManager({}),
+        reward_loop_worker_handles=[worker],
+        n=1,
+        val_n=1,
+    )
+
+    trajectories = [
+        Trajectory(prompt_ids=[1, 2], response_ids=[3, 4], response_mask=[1, 1], num_turns=1),
+        Trajectory(prompt_ids=[5, 6], response_ids=[7, 8], response_mask=[1, 1], num_turns=2),
+        Trajectory(
+            prompt_ids=[9, 10],
+            response_ids=[11, 12],
+            response_mask=[1, 1],
+            reward_info={"reward_score": 0.9, "index": "from-reward-info"},
+            num_turns=3,
+        ),
+    ]
+    sample_fields = {
+        "data_source": "test",
+        "raw_prompt": [{"role": "user", "content": "hi"}],
+        "reward_model": {"ground_truth": "answer"},
+        "extra_info": {"index": "from-sample", "case_id": "case-1"},
+        "tools_kwargs": {"tool": "search"},
+        "agent_name": "deepeyes",
+    }
+    annotations = await framework._score_trajectories(trajectories, sample_fields)
+
+    assert len(worker.compute_score.calls) == 1
+    data = worker.compute_score.calls[0]
+    assert data.batch["prompts"].tolist() == [[9, 10]]
+    assert data.batch["responses"].tolist() == [[11, 12]]
+    assert data.batch["input_ids"].tolist() == [[9, 10, 11, 12]]
+    assert data.batch["attention_mask"].tolist() == [[1, 1, 1, 1]]
+    assert data.non_tensor_batch["data_source"].tolist() == ["test"]
+    assert data.non_tensor_batch["raw_prompt"].tolist() == [[{"role": "user", "content": "hi"}]]
+    assert data.non_tensor_batch["reward_model"].tolist() == [{"ground_truth": "answer"}]
+    assert data.non_tensor_batch["extra_info"].tolist() == [
+        {"index": "from-reward-info", "case_id": "case-1", "reward_score": 0.9}
+    ]
+    assert data.non_tensor_batch["tools_kwargs"].tolist() == [{"tool": "search"}]
+    assert data.non_tensor_batch["agent_name"].tolist() == ["deepeyes"]
+    assert data.non_tensor_batch["__num_turns__"].tolist() == [3]
+    assert annotations == [
+        (0.42, {"acc": 1.0, "format": 0.8}),
+        (0.42, {"acc": 1.0, "format": 0.8}),
+        (0.42, {"acc": 1.0, "format": 0.8}),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_session_timeout_cancels_ray_runner_task(monkeypatch, fake_tq):
+    """A timed-out ray_task session must cancel the underlying Ray task.
+
+    ``asyncio.wait_for`` only bounds the parent's await; without an explicit
+    ``ray.cancel`` the remote runner (and its sandbox) would keep running and
+    consuming a worker slot. Mirrors real Ray semantics: after a graceful
+    ``ray.cancel``, awaiting the ObjectRef raises (TaskCancelledError), so the
+    framework must not escalate to a force-kill.
+    """
+    import types as types_module
+
+    from uni_agent.framework import framework as framework_module
+
+    cancel_calls: list[dict] = []
+
+    class _TaskCancelledError(Exception):
+        """Stand-in for ray.exceptions.TaskCancelledError (an Exception, not
+        BaseException -- so it is catchable by the framework's cleanup path)."""
+
+    class _PendingRef:
+        """ObjectRef stand-in with real-Ray semantics.
+
+        Awaiting it blocks until ``ray.cancel`` marks the ref cancelled, and each
+        ``await`` observes the ref's current state (the first wait_for's local
+        task cancellation must NOT settle the ref -- with real Ray the remote
+        task keeps running until ray.cancel, which is the bug under test).
+        """
+
+        def __init__(self):
+            self._cancelled = False
+
+        def __await__(self):
+            fut: asyncio.Future = asyncio.get_event_loop().create_future()
+            if self._cancelled:
+                fut.set_exception(_TaskCancelledError("runner task cancelled"))
+            return fut.__await__()
+
+    def _fake_remote(*args, **kwargs):
+        return _PendingRef()
+
+    def _fake_cancel(ref, *, force=False):
+        cancel_calls.append({"ref": ref, "force": force})
+        ref._cancelled = True
+
+    monkeypatch.setattr(framework_module._run_agent_runner_ray_task, "remote", _fake_remote)
+    monkeypatch.setattr(framework_module, "ray", types_module.SimpleNamespace(cancel=_fake_cancel))
+
+    runtime = _FakeGatewayManager({})
+    framework = await _build_framework_with_agent_runners(
+        agent_runners={
+            "runner": {
+                "runner_fqn": "tests.uni_agent.support.logging_runner",
+                "dispatch_mode": "ray_task",
+                "session_timeout_seconds": 0.01,
+            }
+        },
+        gateway_manager=runtime,
+    )
+    framework._RUNNER_CANCEL_GRACE_SECONDS = 1.0
+
+    with pytest.raises(RuntimeError, match="All rollouts failed"):
+        await framework.generate_sequences(_build_prompts(count=1, global_steps=3))
+
+    # One graceful cancel only: the post-cancel await raised TaskCancelledError,
+    # so no force-kill escalation happened.
+    assert [call["force"] for call in cancel_calls] == [False]
+    assert runtime.aborted_sessions, "timed-out session must be aborted"
