@@ -1,0 +1,131 @@
+{
+  "as_of": "2026-10-05",
+  "status": "proposal_only_not_dispatched",
+  "scope": "12 existing-pool tasks for first model coverage; not a training admission list",
+  "source_inventory": "../dataset_status/tasks.json",
+  "total_candidates": 12,
+  "initial_coder_rollout_upper_bound": 24,
+  "selection_note": "旧6题复用具体历史对照，另6题从未探针129题中按较小已知差项选择；这是有意降低启动成本的队列，不是随机代表样本。",
+  "tasks": [
+    {
+      "order": 1,
+      "instance_id": "numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb",
+      "source": "r2e",
+      "repository": "numpy",
+      "status": "proposed_candidate_not_revalidated",
+      "selection_basis": "mr022、35键；CPU C-A/UP=1，gold/noop/C-C=0。保留多操作数、路径规划及optimize策略未覆盖范围；必须使用C-A正对照。",
+      "next_action": "保留为最清楚的历史未求解候选；若选择开跑，先绑定旧题卡修订、正对照、实际镜像与当前入口，再做所需窄核。",
+      "planned_coder_initial_rollouts": 2
+    },
+    {
+      "order": 2,
+      "instance_id": "numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764",
+      "source": "r2e",
+      "repository": "numpy",
+      "status": "proposed_candidate_not_revalidated",
+      "selection_basis": "mr023、32键；CPU gold/A=1，noop及5个错误候选=0。变异隔离和shape均有对照；其它reps形式与记忆作答风险保留。",
+      "next_action": "保留为最清楚的历史未求解候选；若选择开跑，先绑定旧题卡修订、正对照、实际镜像与当前入口，再做所需窄核。",
+      "planned_coder_initial_rollouts": 2
+    },
+    {
+      "order": 3,
+      "instance_id": "numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd",
+      "source": "r2e",
+      "repository": "numpy",
+      "status": "proposed_candidate_not_revalidated",
+      "selection_basis": "mr058/059/060、84键；正式10行符合预期，gold84/84；density/normed同传等无公开唯一约定范围保持中立。",
+      "next_action": "保留为最清楚的历史未求解候选；若选择开跑，先绑定旧题卡修订、正对照、实际镜像与当前入口，再做所需窄核。",
+      "planned_coder_initial_rollouts": 2
+    },
+    {
+      "order": 4,
+      "instance_id": "pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0",
+      "source": "r2e",
+      "repository": "pandas",
+      "status": "proposed_candidate_not_revalidated",
+      "selection_basis": "mr016/017/050、92键；正式6行符合预期。gold的题外局限和公开旧名单式断言保留，允许保持或更新合理文案。",
+      "next_action": "保留为最清楚的历史未求解候选；若选择开跑，先绑定旧题卡修订、正对照、实际镜像与当前入口，再做所需窄核。",
+      "planned_coder_initial_rollouts": 2
+    },
+    {
+      "order": 5,
+      "instance_id": "scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67",
+      "source": "r2e",
+      "repository": "scrapy",
+      "status": "proposed_candidate_not_revalidated",
+      "selection_basis": "mr028/029/030、19键；CPU K1=1、gold=0，6行符合预期。保留60秒时序风险、自定义事件循环及无关Twisted旧测范围。",
+      "next_action": "保留为最清楚的历史未求解候选；若选择开跑，先绑定旧题卡修订、正对照、实际镜像与当前入口，再做所需窄核。",
+      "planned_coder_initial_rollouts": 2
+    },
+    {
+      "order": 6,
+      "instance_id": "scrapy__9a15fcf89a151811de8ac783419df0512c863d5e",
+      "source": "r2e",
+      "repository": "scrapy",
+      "status": "proposed_candidate_not_revalidated",
+      "selection_basis": "mr031/032/033、23键；删两死键并补行为及公开header回归，CPU5行符合预期；抓取/header旧故障不算候选引入回归。",
+      "next_action": "保留为最清楚的历史未求解候选；若选择开跑，先绑定旧题卡修订、正对照、实际镜像与当前入口，再做所需窄核。",
+      "planned_coder_initial_rollouts": 2
+    },
+    {
+      "order": 7,
+      "instance_id": "getmoto__moto-4975",
+      "source": "swe",
+      "repository": "getmoto/moto",
+      "status": "proposed_candidate_not_revalidated",
+      "selection_basis": "09-16全池调查意见（历史建议，不是当前准入）：材料一致、题面自足、base 确有缺陷、gold 最小、边界干净、stage1 gold=RESOLVED_FULL 且 rc_install=0。两条保留意见（gold 的列表别名副作用、extend 分支无覆盖）都是 P3，不阻塞入集，但应在扩展回归里补上。",
+      "next_action": "先复用09-16全池调查、历史环境对照与已有模型记录，补本题公开要求—验收映射及具体疑点；选中后补缺失开发检查。",
+      "planned_coder_initial_rollouts": 2
+    },
+    {
+      "order": 8,
+      "instance_id": "getmoto__moto-4990",
+      "source": "swe",
+      "repository": "getmoto/moto",
+      "status": "proposed_candidate_not_revalidated",
+      "selection_basis": "09-16全池调查意见（历史建议，不是当前准入）：材料一致、题面可定位、base 确有缺陷、gold 单点最小、边界干净、stage1 gold=RESOLVED_FULL 且 rc_install=0。唯一保留意见是 F2P 只覆盖单资源单类型（P3），不阻塞。",
+      "next_action": "先复用09-16全池调查、历史环境对照与已有模型记录，补本题公开要求—验收映射及具体疑点；选中后补缺失开发检查。",
+      "planned_coder_initial_rollouts": 2
+    },
+    {
+      "order": 9,
+      "instance_id": "getmoto__moto-6469",
+      "source": "swe",
+      "repository": "getmoto/moto",
+      "status": "proposed_candidate_not_revalidated",
+      "selection_basis": "09-16全池调查意见（历史建议，不是当前准入）：题面自足、base 缺陷明确、gold 单行且已核对不会误伤缺省调用、判分较紧、文件边界干净。唯一保留是区间端点无用例覆盖，属扩展回归建议。",
+      "next_action": "先复用09-16全池调查、历史环境对照与已有模型记录，补本题公开要求—验收映射及具体疑点；选中后补缺失开发检查。",
+      "planned_coder_initial_rollouts": 2
+    },
+    {
+      "order": 10,
+      "instance_id": "iterative__dvc-1712",
+      "source": "swe",
+      "repository": "iterative/dvc",
+      "status": "proposed_candidate_not_revalidated",
+      "selection_basis": "09-16全池调查意见（历史建议，不是当前准入）：题面信息最完整（Debug SQL + 完整 traceback）、gold 一行且与 base 其余 6 处用法一致、F2P 的实现约束有正当理由（覆盖第二个调用点）；唯一短板是回归池只有 2 条且无内容断言，属可补不属必修。",
+      "next_action": "先复用09-16全池调查、历史环境对照与已有模型记录，补本题公开要求—验收映射及具体疑点；选中后补缺失开发检查。",
+      "planned_coder_initial_rollouts": 2
+    },
+    {
+      "order": 11,
+      "instance_id": "iterative__dvc-4124",
+      "source": "swe",
+      "repository": "iterative/dvc",
+      "status": "proposed_candidate_not_revalidated",
+      "selection_basis": "09-16全池调查意见（历史建议，不是当前准入）：判分链路本包最干净（收集集合与 F2P∪P2P 完全相等、gold 34/34 全绿、P2P 对 plain 模式有真实判别力）；唯一待办是题面范围（只写了 metrics）与题面信息量低，不阻塞探针。",
+      "next_action": "先复用09-16全池调查、历史环境对照与已有模型记录，补本题公开要求—验收映射及具体疑点；选中后补缺失开发检查。",
+      "planned_coder_initial_rollouts": 2
+    },
+    {
+      "order": 12,
+      "instance_id": "python__mypy-10392",
+      "source": "swe",
+      "repository": "python/mypy",
+      "status": "proposed_candidate_not_revalidated",
+      "selection_basis": "09-16全池调查意见（历史建议，不是当前准入）：题面是清晰的功能需求，gold 实现直接对应，F2P/P2P 构成有判别力的一对（Py2 生效 / Py3 忽略 + 父目录回退）。唯一小缺口是 MYPYPATH 分支未测；本题可作为'P2P 有意义'的正面对照样本。",
+      "next_action": "先复用09-16全池调查、历史环境对照与已有模型记录，补本题公开要求—验收映射及具体疑点；选中后补缺失开发检查。",
+      "planned_coder_initial_rollouts": 2
+    }
+  ]
+}

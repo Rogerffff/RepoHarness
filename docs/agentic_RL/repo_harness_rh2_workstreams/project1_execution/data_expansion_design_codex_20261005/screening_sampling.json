@@ -1,0 +1,913 @@
+{
+  "date": "2026-10-05",
+  "status": "design_calculation_not_model_measurement",
+  "design_summary": {
+    "status": "建议，未替换现行标准或实现",
+    "per_task": [
+      "自动事实提取",
+      "公开题义与核心断言短核对",
+      "适用版本的actor开发及noop/gold证据"
+    ],
+    "risk_or_random_only": [
+      "另造退化候选",
+      "第三人完整深审",
+      "多轮评分稳定性重跑"
+    ],
+    "probe": "主模型初始两次广覆盖，追加到4/8与新题覆盖竞争；all-same不淘汰题",
+    "baseline": "预登记初始固定样本与自适应追加样本分开报告",
+    "reward": "现有二元评分与group admission保留；rubric先shadow，不阻塞扩量",
+    "noise": "已知核心失效或可利用漏洞不能用总体低误差率豁免；未知残余风险分层抽查",
+    "stop": "一轮修订和一次聚焦复核仍不收敛则暂挂该题，继续其它题"
+  },
+  "audit_fields": [
+    "task_id",
+    "source_revision",
+    "material_revision",
+    "environment_family",
+    "sampling_stratum",
+    "selection_probability",
+    "selection_reason",
+    "model_revision",
+    "harness_revision",
+    "sampling_config",
+    "valid_attempts",
+    "raw_reward",
+    "semantic_verdict_PASS_FAIL_UNKNOWN",
+    "audit_scope",
+    "root_cause_cluster",
+    "evidence_ref",
+    "cpu_seconds",
+    "model_tokens",
+    "unverified_scope"
+  ],
+  "primary_sources": [
+    {
+      "url": "https://huggingface.co/XiaomiMiMo/MiMo-V2.6-Pro-RL/blob/73875d00b30a89ef8cc353a0b60b0e9f9561952d/MiMo_V2_6_technical_report.pdf",
+      "sections": "4.2.1 pp.10-11; 4.2.2 p.12; 4.2.6 pp.14-16; 4.3.1-4.3.2 pp.17-19",
+      "sha256": "fb81e6e083801b3358f084ed6be953dc23b0d2e434690f4541d5eae03e01e7af",
+      "limit": "四次求解/八次评分为作者设计；不是最优次数证明；<2%为确认hack比例"
+    },
+    {
+      "url": "https://github.com/XiaomiMiMo/mimoagent/blob/467f0a19016f0ac4d63b8d17a1f0da9ba07f232c/src/mimoagent/environments/rubric_judge.py",
+      "sections": "module contract, aggregate_rubric_scores, combine modes",
+      "limit": "通用rubric实现不等于报告GAR完整实现；未运行judge"
+    },
+    {
+      "url": "https://arxiv.org/html/2504.07164v1",
+      "sections": "2, Appendix A, 4.2, C.3",
+      "limit": "R2E-Gym为SFT及推理选优；生成测试和LLM判别也可错误"
+    },
+    {
+      "url": "https://www.together.ai/blog/deepswe",
+      "sections": "2.2, 2.3, 6",
+      "limit": "特定Qwen3-32B配方，不能泛化数据来源优劣或固定组大小最优"
+    },
+    {
+      "url": "https://arxiv.org/html/2504.21798v2",
+      "sections": "4.1, Appendix E/F",
+      "limit": "难度/仓库覆盖消融主要是SFT，不直接证明GRPO采样法"
+    },
+    {
+      "url": "https://github.com/verl-project/uni-agent#agent-reinforcement-learning",
+      "sections": "Agent Reinforcement Learning",
+      "limit": "当前网页声明，不能替代具体recipe和本项目运行验证"
+    }
+  ],
+  "assumptions": [
+    "同一模型/checkpoint、harness、材料版本与预算固定",
+    "题内采样条件独立且同分布；真实相关性会降低有效样本量",
+    "固定预算800按轨迹数计，未假定各题token/CPU/墙钟相同",
+    "策略停止规则只用于离线测量，不默认用于训练组构建"
+  ],
+  "formulas": {
+    "mixed": "1-p**G-(1-p)**G",
+    "adaptive_2_4_cost": "2+2*(p**2+(1-p)**2)",
+    "adaptive_2_4_8_cost": "2+2*(p**2+(1-p)**2)+4*(p**4+(1-p)**4)",
+    "zero_error_upper95": "1-0.05**(1/n)",
+    "independent_symmetric_noise": "E[R|Z]=epsilon+(1-2*epsilon)*Z"
+  },
+  "fixed_sampling": [
+    {
+      "p": 0.01,
+      "n": 1,
+      "mixed_probability": 0.0,
+      "no_success_probability": 0.99,
+      "all_success_probability": 0.01,
+      "expected_mixed_tasks_budget800": 0.0
+    },
+    {
+      "p": 0.01,
+      "n": 2,
+      "mixed_probability": 0.01980000000000004,
+      "no_success_probability": 0.9801,
+      "all_success_probability": 0.0001,
+      "expected_mixed_tasks_budget800": 7.920000000000016
+    },
+    {
+      "p": 0.01,
+      "n": 4,
+      "mixed_probability": 0.039403980000000005,
+      "no_success_probability": 0.96059601,
+      "all_success_probability": 1e-08,
+      "expected_mixed_tasks_budget800": 7.880796000000001
+    },
+    {
+      "p": 0.01,
+      "n": 8,
+      "mixed_probability": 0.07725530557207982,
+      "no_success_probability": 0.9227446944279201,
+      "all_success_probability": 1.0000000000000002e-16,
+      "expected_mixed_tasks_budget800": 7.725530557207982
+    },
+    {
+      "p": 0.05,
+      "n": 1,
+      "mixed_probability": 0.0,
+      "no_success_probability": 0.95,
+      "all_success_probability": 0.05,
+      "expected_mixed_tasks_budget800": 0.0
+    },
+    {
+      "p": 0.05,
+      "n": 2,
+      "mixed_probability": 0.09500000000000008,
+      "no_success_probability": 0.9025,
+      "all_success_probability": 0.0025000000000000005,
+      "expected_mixed_tasks_budget800": 38.000000000000036
+    },
+    {
+      "p": 0.05,
+      "n": 4,
+      "mixed_probability": 0.18548750000000014,
+      "no_success_probability": 0.8145062499999999,
+      "all_success_probability": 6.250000000000001e-06,
+      "expected_mixed_tasks_budget800": 37.097500000000025
+    },
+    {
+      "p": 0.05,
+      "n": 8,
+      "mixed_probability": 0.3365795686718752,
+      "no_success_probability": 0.6634204312890623,
+      "all_success_probability": 3.906250000000002e-11,
+      "expected_mixed_tasks_budget800": 33.65795686718752
+    },
+    {
+      "p": 0.1,
+      "n": 1,
+      "mixed_probability": 0.0,
+      "no_success_probability": 0.9,
+      "all_success_probability": 0.1,
+      "expected_mixed_tasks_budget800": 0.0
+    },
+    {
+      "p": 0.1,
+      "n": 2,
+      "mixed_probability": 0.17999999999999994,
+      "no_success_probability": 0.81,
+      "all_success_probability": 0.010000000000000002,
+      "expected_mixed_tasks_budget800": 71.99999999999997
+    },
+    {
+      "p": 0.1,
+      "n": 4,
+      "mixed_probability": 0.3438,
+      "no_success_probability": 0.6561,
+      "all_success_probability": 0.00010000000000000002,
+      "expected_mixed_tasks_budget800": 68.76
+    },
+    {
+      "p": 0.1,
+      "n": 8,
+      "mixed_probability": 0.5695327799999998,
+      "no_success_probability": 0.4304672100000001,
+      "all_success_probability": 1.0000000000000005e-08,
+      "expected_mixed_tasks_budget800": 56.95327799999998
+    },
+    {
+      "p": 0.2,
+      "n": 1,
+      "mixed_probability": 0.0,
+      "no_success_probability": 0.8,
+      "all_success_probability": 0.2,
+      "expected_mixed_tasks_budget800": 0.0
+    },
+    {
+      "p": 0.2,
+      "n": 2,
+      "mixed_probability": 0.31999999999999984,
+      "no_success_probability": 0.6400000000000001,
+      "all_success_probability": 0.04000000000000001,
+      "expected_mixed_tasks_budget800": 127.99999999999994
+    },
+    {
+      "p": 0.2,
+      "n": 4,
+      "mixed_probability": 0.5887999999999999,
+      "no_success_probability": 0.4096000000000001,
+      "all_success_probability": 0.0016000000000000003,
+      "expected_mixed_tasks_budget800": 117.75999999999998
+    },
+    {
+      "p": 0.2,
+      "n": 8,
+      "mixed_probability": 0.83222528,
+      "no_success_probability": 0.1677721600000001,
+      "all_success_probability": 2.5600000000000013e-06,
+      "expected_mixed_tasks_budget800": 83.222528
+    },
+    {
+      "p": 0.5,
+      "n": 1,
+      "mixed_probability": 0.0,
+      "no_success_probability": 0.5,
+      "all_success_probability": 0.5,
+      "expected_mixed_tasks_budget800": 0.0
+    },
+    {
+      "p": 0.5,
+      "n": 2,
+      "mixed_probability": 0.5,
+      "no_success_probability": 0.25,
+      "all_success_probability": 0.25,
+      "expected_mixed_tasks_budget800": 200.0
+    },
+    {
+      "p": 0.5,
+      "n": 4,
+      "mixed_probability": 0.875,
+      "no_success_probability": 0.0625,
+      "all_success_probability": 0.0625,
+      "expected_mixed_tasks_budget800": 175.0
+    },
+    {
+      "p": 0.5,
+      "n": 8,
+      "mixed_probability": 0.9921875,
+      "no_success_probability": 0.00390625,
+      "all_success_probability": 0.00390625,
+      "expected_mixed_tasks_budget800": 99.21875
+    },
+    {
+      "p": 0.73,
+      "n": 1,
+      "mixed_probability": 0.0,
+      "no_success_probability": 0.27,
+      "all_success_probability": 0.73,
+      "expected_mixed_tasks_budget800": 0.0
+    },
+    {
+      "p": 0.73,
+      "n": 2,
+      "mixed_probability": 0.39420000000000005,
+      "no_success_probability": 0.0729,
+      "all_success_probability": 0.5328999999999999,
+      "expected_mixed_tasks_budget800": 157.68
+    },
+    {
+      "p": 0.73,
+      "n": 4,
+      "mixed_probability": 0.7107031800000001,
+      "no_success_probability": 0.005314410000000001,
+      "all_success_probability": 0.28398240999999996,
+      "expected_mixed_tasks_budget800": 142.14063600000003
+    },
+    {
+      "p": 0.73,
+      "n": 8,
+      "mixed_probability": 0.9193257478569438,
+      "no_success_probability": 2.8242953648100014e-05,
+      "all_success_probability": 0.08064600918940809,
+      "expected_mixed_tasks_budget800": 91.93257478569437
+    },
+    {
+      "p": 0.9,
+      "n": 1,
+      "mixed_probability": 0.0,
+      "no_success_probability": 0.09999999999999998,
+      "all_success_probability": 0.9,
+      "expected_mixed_tasks_budget800": 0.0
+    },
+    {
+      "p": 0.9,
+      "n": 2,
+      "mixed_probability": 0.17999999999999994,
+      "no_success_probability": 0.009999999999999995,
+      "all_success_probability": 0.81,
+      "expected_mixed_tasks_budget800": 71.99999999999997
+    },
+    {
+      "p": 0.9,
+      "n": 4,
+      "mixed_probability": 0.3438,
+      "no_success_probability": 9.999999999999991e-05,
+      "all_success_probability": 0.6561,
+      "expected_mixed_tasks_budget800": 68.76
+    },
+    {
+      "p": 0.9,
+      "n": 8,
+      "mixed_probability": 0.5695327799999998,
+      "no_success_probability": 9.999999999999982e-09,
+      "all_success_probability": 0.4304672100000001,
+      "expected_mixed_tasks_budget800": 56.95327799999998
+    },
+    {
+      "p": 0.95,
+      "n": 1,
+      "mixed_probability": 0.0,
+      "no_success_probability": 0.050000000000000044,
+      "all_success_probability": 0.95,
+      "expected_mixed_tasks_budget800": 0.0
+    },
+    {
+      "p": 0.95,
+      "n": 2,
+      "mixed_probability": 0.09500000000000003,
+      "no_success_probability": 0.0025000000000000044,
+      "all_success_probability": 0.9025,
+      "expected_mixed_tasks_budget800": 38.000000000000014
+    },
+    {
+      "p": 0.95,
+      "n": 4,
+      "mixed_probability": 0.1854875000000001,
+      "no_success_probability": 6.250000000000022e-06,
+      "all_success_probability": 0.8145062499999999,
+      "expected_mixed_tasks_budget800": 37.097500000000025
+    },
+    {
+      "p": 0.95,
+      "n": 8,
+      "mixed_probability": 0.3365795686718753,
+      "no_success_probability": 3.906250000000028e-11,
+      "all_success_probability": 0.6634204312890623,
+      "expected_mixed_tasks_budget800": 33.65795686718753
+    }
+  ],
+  "adaptive_sampling": [
+    {
+      "p": 0.01,
+      "stages": [
+        2,
+        4
+      ],
+      "expected_n": 3.9604000000000004,
+      "mixed_probability": 0.039403980000000005,
+      "expected_naive_task_rate": 0.014850999999999996,
+      "expected_successes": 0.039604,
+      "pooled_rate_same_p_limit": 0.009999999999999998
+    },
+    {
+      "p": 0.01,
+      "stages": [
+        2,
+        4,
+        8
+      ],
+      "expected_n": 7.8027840799999835,
+      "mixed_probability": 0.07725530557207964,
+      "expected_naive_task_rate": 0.019653975099999967,
+      "expected_successes": 0.07802784079999989,
+      "pooled_rate_same_p_limit": 0.010000000000000007
+    },
+    {
+      "p": 0.05,
+      "stages": [
+        2,
+        4
+      ],
+      "expected_n": 3.809999999999999,
+      "mixed_probability": 0.18548749999999994,
+      "expected_naive_task_rate": 0.07137499999999998,
+      "expected_successes": 0.19049999999999997,
+      "pooled_rate_same_p_limit": 0.05
+    },
+    {
+      "p": 0.05,
+      "stages": [
+        2,
+        4,
+        8
+      ],
+      "expected_n": 7.068049999999986,
+      "mixed_probability": 0.3365795686718745,
+      "expected_naive_task_rate": 0.09173468749999973,
+      "expected_successes": 0.3534024999999994,
+      "pooled_rate_same_p_limit": 0.05000000000000001
+    },
+    {
+      "p": 0.1,
+      "stages": [
+        2,
+        4
+      ],
+      "expected_n": 3.6399999999999992,
+      "mixed_probability": 0.34380000000000005,
+      "expected_naive_task_rate": 0.136,
+      "expected_successes": 0.364,
+      "pooled_rate_same_p_limit": 0.10000000000000002
+    },
+    {
+      "p": 0.1,
+      "stages": [
+        2,
+        4,
+        8
+      ],
+      "expected_n": 6.264800000000021,
+      "mixed_probability": 0.5695327800000003,
+      "expected_naive_task_rate": 0.1687599999999997,
+      "expected_successes": 0.6264800000000003,
+      "pooled_rate_same_p_limit": 0.09999999999999971
+    },
+    {
+      "p": 0.2,
+      "stages": [
+        2,
+        4
+      ],
+      "expected_n": 3.360000000000001,
+      "mixed_probability": 0.5888000000000002,
+      "expected_naive_task_rate": 0.2480000000000001,
+      "expected_successes": 0.6720000000000003,
+      "pooled_rate_same_p_limit": 0.2
+    },
+    {
+      "p": 0.2,
+      "stages": [
+        2,
+        4,
+        8
+      ],
+      "expected_n": 5.004800000000006,
+      "mixed_probability": 0.8322252800000001,
+      "expected_naive_task_rate": 0.2883199999999997,
+      "expected_successes": 1.00096,
+      "pooled_rate_same_p_limit": 0.1999999999999998
+    },
+    {
+      "p": 0.5,
+      "stages": [
+        2,
+        4
+      ],
+      "expected_n": 3.0,
+      "mixed_probability": 0.875,
+      "expected_naive_task_rate": 0.5,
+      "expected_successes": 1.5,
+      "pooled_rate_same_p_limit": 0.5
+    },
+    {
+      "p": 0.5,
+      "stages": [
+        2,
+        4,
+        8
+      ],
+      "expected_n": 3.5,
+      "mixed_probability": 0.9921875,
+      "expected_naive_task_rate": 0.5,
+      "expected_successes": 1.75,
+      "pooled_rate_same_p_limit": 0.5
+    },
+    {
+      "p": 0.73,
+      "stages": [
+        2,
+        4
+      ],
+      "expected_n": 3.2116,
+      "mixed_probability": 0.7107031800000001,
+      "expected_naive_task_rate": 0.6846669999999999,
+      "expected_successes": 2.344468,
+      "pooled_rate_same_p_limit": 0.7300000000000001
+    },
+    {
+      "p": 0.73,
+      "stages": [
+        2,
+        4,
+        8
+      ],
+      "expected_n": 4.36878728,
+      "mixed_probability": 0.9193257478569447,
+      "expected_naive_task_rate": 0.6482691343000004,
+      "expected_successes": 3.189214714400001,
+      "pooled_rate_same_p_limit": 0.7300000000000002
+    },
+    {
+      "p": 0.9,
+      "stages": [
+        2,
+        4
+      ],
+      "expected_n": 3.6399999999999997,
+      "mixed_probability": 0.3437999999999999,
+      "expected_naive_task_rate": 0.864,
+      "expected_successes": 3.276,
+      "pooled_rate_same_p_limit": 0.9
+    },
+    {
+      "p": 0.9,
+      "stages": [
+        2,
+        4,
+        8
+      ],
+      "expected_n": 6.264799999999998,
+      "mixed_probability": 0.5695327799999994,
+      "expected_naive_task_rate": 0.8312399999999998,
+      "expected_successes": 5.63832,
+      "pooled_rate_same_p_limit": 0.9000000000000002
+    },
+    {
+      "p": 0.95,
+      "stages": [
+        2,
+        4
+      ],
+      "expected_n": 3.81,
+      "mixed_probability": 0.18548750000000014,
+      "expected_naive_task_rate": 0.9286249999999999,
+      "expected_successes": 3.6195,
+      "pooled_rate_same_p_limit": 0.95
+    },
+    {
+      "p": 0.95,
+      "stages": [
+        2,
+        4,
+        8
+      ],
+      "expected_n": 7.0680499999999995,
+      "mixed_probability": 0.33657956867187533,
+      "expected_naive_task_rate": 0.9082653124999999,
+      "expected_successes": 6.714647499999999,
+      "pooled_rate_same_p_limit": 0.95
+    }
+  ],
+  "same_mean_counterexample": {
+    "population_A": {
+      "task_p": 0.73,
+      "mean_pass1": 0.73,
+      "mixed_G4": 0.7107031800000001
+    },
+    "population_B": {
+      "p1_task_share": 0.73,
+      "p0_task_share": 0.27,
+      "mean_pass1": 0.73,
+      "mixed_G4": 0.0
+    },
+    "task_count_example": 200,
+    "fixed_G4_rollouts": 800,
+    "expected_mixed_A": 142.14063600000003,
+    "expected_mixed_B": 0
+  },
+  "adaptive_mixture_bias": [
+    {
+      "ps": [
+        0.1,
+        0.5
+      ],
+      "weights": [
+        0.5,
+        0.5
+      ],
+      "stages": [
+        2,
+        4
+      ],
+      "true_task_average": 0.3,
+      "naive_task_average": 0.318,
+      "naive_rollout_pooled": 0.2807228915662651
+    },
+    {
+      "ps": [
+        0.1,
+        0.5
+      ],
+      "weights": [
+        0.5,
+        0.5
+      ],
+      "stages": [
+        2,
+        4,
+        8
+      ],
+      "true_task_average": 0.3,
+      "naive_task_average": 0.33437999999999984,
+      "naive_rollout_pooled": 0.2433721120760277
+    }
+  ],
+  "zero_error_bounds": [
+    {
+      "independent_units": 2,
+      "zero_errors_one_sided_95_upper": 0.7763932022500211
+    },
+    {
+      "independent_units": 4,
+      "zero_errors_one_sided_95_upper": 0.5271291954984121
+    },
+    {
+      "independent_units": 8,
+      "zero_errors_one_sided_95_upper": 0.31234397806636793
+    },
+    {
+      "independent_units": 12,
+      "zero_errors_one_sided_95_upper": 0.22092219194555585
+    },
+    {
+      "independent_units": 24,
+      "zero_errors_one_sided_95_upper": 0.11734615615494881
+    },
+    {
+      "independent_units": 30,
+      "zero_errors_one_sided_95_upper": 0.09503385285530419
+    },
+    {
+      "independent_units": 59,
+      "zero_errors_one_sided_95_upper": 0.049507609888227
+    },
+    {
+      "independent_units": 60,
+      "zero_errors_one_sided_95_upper": 0.04870291331009746
+    },
+    {
+      "independent_units": 100,
+      "zero_errors_one_sided_95_upper": 0.029513049607039932
+    },
+    {
+      "independent_units": 149,
+      "zero_errors_one_sided_95_upper": 0.019904816220685073
+    },
+    {
+      "independent_units": 299,
+      "zero_errors_one_sided_95_upper": 0.009969146792899286
+    }
+  ],
+  "reward_noise": [
+    {
+      "independent_flip_rate": 0.01,
+      "group_size": 2,
+      "false_mixed_when_truth_homogeneous": 0.01980000000000004
+    },
+    {
+      "independent_flip_rate": 0.01,
+      "group_size": 4,
+      "false_mixed_when_truth_homogeneous": 0.039403980000000005
+    },
+    {
+      "independent_flip_rate": 0.01,
+      "group_size": 8,
+      "false_mixed_when_truth_homogeneous": 0.07725530557207982
+    },
+    {
+      "independent_flip_rate": 0.02,
+      "group_size": 2,
+      "false_mixed_when_truth_homogeneous": 0.039200000000000124
+    },
+    {
+      "independent_flip_rate": 0.02,
+      "group_size": 4,
+      "false_mixed_when_truth_homogeneous": 0.07763168000000009
+    },
+    {
+      "independent_flip_rate": 0.02,
+      "group_size": 8,
+      "false_mixed_when_truth_homogeneous": 0.14923697741818887
+    },
+    {
+      "independent_flip_rate": 0.05,
+      "group_size": 2,
+      "false_mixed_when_truth_homogeneous": 0.09500000000000008
+    },
+    {
+      "independent_flip_rate": 0.05,
+      "group_size": 4,
+      "false_mixed_when_truth_homogeneous": 0.18548750000000014
+    },
+    {
+      "independent_flip_rate": 0.05,
+      "group_size": 8,
+      "false_mixed_when_truth_homogeneous": 0.3365795686718752
+    },
+    {
+      "independent_flip_rate": 0.1,
+      "group_size": 2,
+      "false_mixed_when_truth_homogeneous": 0.17999999999999994
+    },
+    {
+      "independent_flip_rate": 0.1,
+      "group_size": 4,
+      "false_mixed_when_truth_homogeneous": 0.3438
+    },
+    {
+      "independent_flip_rate": 0.1,
+      "group_size": 8,
+      "false_mixed_when_truth_homogeneous": 0.5695327799999998
+    }
+  ],
+  "marginal_gain_examples": [
+    {
+      "p": 0.1,
+      "fixed_n": 2,
+      "extra": 2,
+      "unconditional_new_mixed_probability": 0.16380000000000006,
+      "expected_extra_rollouts_if_extend_only_homogeneous": 1.6400000000000001
+    },
+    {
+      "p": 0.1,
+      "fixed_n": 4,
+      "extra": 2,
+      "unconditional_new_mixed_probability": 0.12475799999999992,
+      "expected_extra_rollouts_if_extend_only_homogeneous": 1.3124
+    },
+    {
+      "p": 0.1,
+      "fixed_n": 6,
+      "extra": 2,
+      "unconditional_new_mixed_probability": 0.10097477999999999,
+      "expected_extra_rollouts_if_extend_only_homogeneous": 1.0628840000000002
+    },
+    {
+      "p": 0.2,
+      "fixed_n": 2,
+      "extra": 2,
+      "unconditional_new_mixed_probability": 0.2688000000000001,
+      "expected_extra_rollouts_if_extend_only_homogeneous": 1.3600000000000003
+    },
+    {
+      "p": 0.2,
+      "fixed_n": 4,
+      "extra": 2,
+      "unconditional_new_mixed_probability": 0.14899199999999996,
+      "expected_extra_rollouts_if_extend_only_homogeneous": 0.8224000000000001
+    },
+    {
+      "p": 0.2,
+      "fixed_n": 6,
+      "extra": 2,
+      "unconditional_new_mixed_probability": 0.09443328000000001,
+      "expected_extra_rollouts_if_extend_only_homogeneous": 0.5244160000000002
+    },
+    {
+      "p": 0.5,
+      "fixed_n": 2,
+      "extra": 2,
+      "unconditional_new_mixed_probability": 0.375,
+      "expected_extra_rollouts_if_extend_only_homogeneous": 1.0
+    },
+    {
+      "p": 0.5,
+      "fixed_n": 4,
+      "extra": 2,
+      "unconditional_new_mixed_probability": 0.09375,
+      "expected_extra_rollouts_if_extend_only_homogeneous": 0.25
+    },
+    {
+      "p": 0.5,
+      "fixed_n": 6,
+      "extra": 2,
+      "unconditional_new_mixed_probability": 0.0234375,
+      "expected_extra_rollouts_if_extend_only_homogeneous": 0.0625
+    }
+  ],
+  "simulation_checks": [
+    {
+      "p": 0.1,
+      "stages": [
+        2,
+        4
+      ],
+      "exact": {
+        "expected_n": 3.6399999999999992,
+        "mixed_probability": 0.34380000000000005,
+        "expected_naive_task_rate": 0.136,
+        "expected_successes": 0.364,
+        "pooled_rate_same_p_limit": 0.10000000000000002
+      },
+      "monte_carlo": {
+        "trials": 100000,
+        "seed": 20261005,
+        "expected_n": 3.63672,
+        "mixed_probability": 0.34395,
+        "expected_naive_task_rate": 0.13644
+      }
+    },
+    {
+      "p": 0.1,
+      "stages": [
+        2,
+        4,
+        8
+      ],
+      "exact": {
+        "expected_n": 6.264800000000021,
+        "mixed_probability": 0.5695327800000003,
+        "expected_naive_task_rate": 0.1687599999999997,
+        "expected_successes": 0.6264800000000003,
+        "pooled_rate_same_p_limit": 0.09999999999999971
+      },
+      "monte_carlo": {
+        "trials": 100000,
+        "seed": 20261005,
+        "expected_n": 6.25348,
+        "mixed_probability": 0.56917,
+        "expected_naive_task_rate": 0.1692225
+      }
+    },
+    {
+      "p": 0.5,
+      "stages": [
+        2,
+        4
+      ],
+      "exact": {
+        "expected_n": 3.0,
+        "mixed_probability": 0.875,
+        "expected_naive_task_rate": 0.5,
+        "expected_successes": 1.5,
+        "pooled_rate_same_p_limit": 0.5
+      },
+      "monte_carlo": {
+        "trials": 100000,
+        "seed": 20261005,
+        "expected_n": 3.00078,
+        "mixed_probability": 0.87421,
+        "expected_naive_task_rate": 0.5004525
+      }
+    },
+    {
+      "p": 0.5,
+      "stages": [
+        2,
+        4,
+        8
+      ],
+      "exact": {
+        "expected_n": 3.5,
+        "mixed_probability": 0.9921875,
+        "expected_naive_task_rate": 0.5,
+        "expected_successes": 1.75,
+        "pooled_rate_same_p_limit": 0.5
+      },
+      "monte_carlo": {
+        "trials": 100000,
+        "seed": 20261005,
+        "expected_n": 3.50588,
+        "mixed_probability": 0.99193,
+        "expected_naive_task_rate": 0.50008625
+      }
+    },
+    {
+      "p": 0.73,
+      "stages": [
+        2,
+        4
+      ],
+      "exact": {
+        "expected_n": 3.2116,
+        "mixed_probability": 0.7107031800000001,
+        "expected_naive_task_rate": 0.6846669999999999,
+        "expected_successes": 2.344468,
+        "pooled_rate_same_p_limit": 0.7300000000000001
+      },
+      "monte_carlo": {
+        "trials": 100000,
+        "seed": 20261005,
+        "expected_n": 3.20828,
+        "mixed_probability": 0.71241,
+        "expected_naive_task_rate": 0.68406
+      }
+    },
+    {
+      "p": 0.73,
+      "stages": [
+        2,
+        4,
+        8
+      ],
+      "exact": {
+        "expected_n": 4.36878728,
+        "mixed_probability": 0.9193257478569447,
+        "expected_naive_task_rate": 0.6482691343000004,
+        "expected_successes": 3.189214714400001,
+        "pooled_rate_same_p_limit": 0.7300000000000002
+      },
+      "monte_carlo": {
+        "trials": 100000,
+        "seed": 20261005,
+        "expected_n": 4.36776,
+        "mixed_probability": 0.91969,
+        "expected_naive_task_rate": 0.648485
+      }
+    }
+  ],
+  "evidence_limits": [
+    "计数不是学习收益；要用等token/GPU时的小训练对比选择组大小",
+    "0/n上界要求所抽单位独立、同分布或适当随机设计；审查者仍可能漏检",
+    "跨模型成败分歧不是某一模型的组内优势",
+    "无真实模型、GPU、Docker或grader运行"
+  ]
+}

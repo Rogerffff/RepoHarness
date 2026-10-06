@@ -1,0 +1,627 @@
+{
+  "schema_version": 1,
+  "retrieved_at": "2026-10-05",
+  "language": "zh-CN",
+  "scope": "独立一手来源优先级与RH2最小试接建议",
+  "independent_of_claude_design": true,
+  "forbidden_document_not_read": "tmp/数据扩大方案设计_claude.md",
+  "status": "建议；未批准/实施来源接入，未新增训练资格",
+  "method": [
+    "先检索reading_notes索引",
+    "联网官方卡/API/原始论文TeX/公开源码定点核查",
+    "下载小资料和元数据；不拉大镜像或模型",
+    "不运行第三方代码/容器/远程作业"
+  ],
+  "local_experiment_counts": {
+    "images_pulled": 0,
+    "containers_started": 0,
+    "model_calls": 0,
+    "rh2_runs": 0,
+    "newly_admitted_tasks": 0
+  },
+  "priority_order": [
+    "swe_gym_full",
+    "prime_swe_rebench_v2_python",
+    "prime_r2e_verified",
+    "swe_smith_python",
+    "mimo_code",
+    "openswe"
+  ],
+  "primary_recommendation": "SWE-Gym Full中可复用已验profile的小批非Lite任务",
+  "fallback_source": "prime_swe_rebench_v2_python",
+  "sources": [
+    {
+      "id": "swe_gym_full",
+      "priority": 1,
+      "priority_basis": "最快获得小批增量候选；并非质量最优的保证",
+      "dataset_id": "SWE-Gym/SWE-Gym",
+      "split": "train",
+      "revision": "bb94ed9e39bbeb96a7fcbfb533b80f25a7fd59cb",
+      "last_modified": "2025-05-10T03:27:03.000Z",
+      "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/SWE-Gym__SWE-Gym.api.json",
+      "published_rows": 2438,
+      "repositories": 11,
+      "languages": [
+        "python"
+      ],
+      "overlap": {
+        "lite_is_subset": true,
+        "lite_rows": 230,
+        "theoretical_non_lite_rows": 2208,
+        "local_seen_difference_not_computed": true,
+        "other_sources_exact_overlap_not_computed": true
+      },
+      "assets": {
+        "task": true,
+        "environment": "作者公开逐题Docker镜像；xingyaoww/sweb.eval.x86_64.*",
+        "grader": "作者SWE-Bench-Fork安装/spec/parser + F2P/P2P",
+        "reference": "patch为base_commit上的正向修复，test_patch分开",
+        "trajectories": "OpenHands/MoatlessTools公开轨迹；不是Claude Code"
+      },
+      "training_evidence": "原论文Qwen2.5-Coder/OpenHands等SFT与RFT；非Qwen3-Coder30B/Claude Code",
+      "minimum_rh2_work": [
+        "新增Full来源身份，不能冒充swe_gym_lite",
+        "固定ID差集、版本spec、镜像digest、公开/私有材料",
+        "复用SWE grader需逐题确认当前vendor支持",
+        "正式actor权限/依赖/命令和fresh grader正负控"
+      ],
+      "failure_modes": [
+        "Full重新纳入Lite排除的多文件/题意欠明/复杂参考diff/错误信息测试",
+        "安装版本与网络资产漂移",
+        "弱断言/未测需求/参考解回归"
+      ],
+      "local_execution_this_audit": 0,
+      "local_admitted_this_audit": 0,
+      "evidence": [
+        {
+          "kind": "official_dataset_card",
+          "url": "https://huggingface.co/datasets/SWE-Gym/SWE-Gym/blob/bb94ed9e39bbeb96a7fcbfb533b80f25a7fd59cb/README.md",
+          "location": "README.md",
+          "revision": "bb94ed9e39bbeb96a7fcbfb533b80f25a7fd59cb",
+          "last_modified": "2025-05-10T03:27:03.000Z",
+          "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/SWE-Gym__SWE-Gym.api.json"
+        },
+        {
+          "kind": "official_code",
+          "url": "https://github.com/SWE-Gym/SWE-Gym/blob/b681068ca20628c6987b7416cc4cf03f06b77ba5/README.md",
+          "location": "Reproducing Results",
+          "commit": "b681068ca20628c6987b7416cc4cf03f06b77ba5",
+          "commit_date": "2025-07-29T17:38:25Z",
+          "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/SWE-Gym__SWE-Gym.commit.json"
+        },
+        {
+          "kind": "paper_source",
+          "url": "https://arxiv.org/src/2412.21139v2",
+          "version": "v2",
+          "date": "2025-06-06",
+          "location": "sections/4-dataset.tex; figures/dataset-stats.tex; sections/2-intro.tex",
+          "local": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/2412.21139v2/"
+        },
+        {
+          "kind": "official_statistics",
+          "url": "https://datasets-server.huggingface.co/statistics?dataset=SWE-Gym/SWE-Gym&config=default&split=train",
+          "partial": false,
+          "local": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/SWE-Gym__SWE-Gym.statistics.json"
+        }
+      ]
+    },
+    {
+      "id": "prime_swe_rebench_v2_python",
+      "priority": 2,
+      "role": "唯一明确备用试接",
+      "dataset_id": "PrimeIntellect/SWE-rebench-V2-Filtered-Verified",
+      "split": "train",
+      "revision": "6a0d56b425a893b018616587cdb71aa499c5fc99",
+      "last_modified": "2026-10-02T20:23:42.000Z",
+      "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/PrimeIntellect__SWE-rebench-V2-Filtered-Verified.api.json",
+      "published_rows": 6272,
+      "python_rows_observed": 1952,
+      "languages_observed": 16,
+      "card_language_claim": 17,
+      "language_claim_conflict": "当前官方统计partial=false给16，卡片仍写17；生产固定行集需重算",
+      "upstream": {
+        "dataset": "nebius/SWE-rebench-V2",
+        "rows": 32079,
+        "languages": 20,
+        "python_rows": 7243,
+        "repositories": "论文3,600+；未对固定集合独立重算",
+        "revision": "10483de0f50fe5da545942705a76c6150171af7f",
+        "last_modified": "2026-10-01T17:53:16.000Z",
+        "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/nebius__SWE-rebench-V2.api.json"
+      },
+      "assets": {
+        "task": true,
+        "environment": "原始Docker Hub逐题镜像；Prime行改为prime/primeintellect/...平台镜像引用",
+        "grader": "install_config.test_cmd/log_parser + test_patch + F2P/P2P",
+        "reference": "patch正向修复，test_patch隐藏测试",
+        "quality_metadata": "meta.llm_metadata与筛选/validation sidecars"
+      },
+      "filters": [
+        "code=A/complete/no detected_issues/confidence>=0.95",
+        "排除外部URL和issue/PR引用",
+        "坏语言/镜像/仓库列表",
+        "gold两轮/no-edit",
+        "GLM-5.2 all-zero组重检移除3行"
+      ],
+      "training_evidence": "Uni-Agent官方精确Coder家族+Claude Code+SWE-reBench有正向报告；未公开锁到V2/Prime revision，不能归因该子集",
+      "minimum_rh2_work": [
+        "新source和grading面",
+        "按row锁定parser/命令/安装配置",
+        "正向gold与私有test_patch分离",
+        "回连原始ID的Docker引用并pin digest或核Prime获取方式",
+        "保持RH2 infra与正常零分区分"
+      ],
+      "failure_modes": [
+        "LLM质量判定可能漏错",
+        "隐式命名、外部信息、测试与需求脱节",
+        "合法P2P回归不能自动归坏题",
+        "Prime sandbox转换失败不等价通用镜像坏",
+        "与其他评测/来源重叠"
+      ],
+      "overlap": "只排除原SWE-bench仓库；其他benchmark必须重新按来源、PR、commit、patch/语义核对；V2-PRs126k是另一集合",
+      "local_execution_this_audit": 0,
+      "local_admitted_this_audit": 0,
+      "evidence": [
+        {
+          "kind": "official_dataset_card",
+          "url": "https://huggingface.co/datasets/PrimeIntellect/SWE-rebench-V2-Filtered-Verified/blob/6a0d56b425a893b018616587cdb71aa499c5fc99/README.md",
+          "location": "README.md",
+          "revision": "6a0d56b425a893b018616587cdb71aa499c5fc99",
+          "last_modified": "2026-10-02T20:23:42.000Z",
+          "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/PrimeIntellect__SWE-rebench-V2-Filtered-Verified.api.json"
+        },
+        {
+          "kind": "official_dataset_card",
+          "url": "https://huggingface.co/datasets/nebius/SWE-rebench-V2/blob/10483de0f50fe5da545942705a76c6150171af7f/README.md",
+          "location": "README.md",
+          "revision": "10483de0f50fe5da545942705a76c6150171af7f",
+          "last_modified": "2026-10-01T17:53:16.000Z",
+          "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/nebius__SWE-rebench-V2.api.json"
+        },
+        {
+          "kind": "official_code",
+          "url": "https://github.com/PrimeIntellect-ai/research-environments/blob/ff40b61dcf898e1cdba7a617ac158a50466797aa/environments/swe/swerebench_v2/swerebench_v2/taskset.py",
+          "location": "L183–254 grade_swe/eval/calculate_reward; L277–283 gold",
+          "commit": "ff40b61dcf898e1cdba7a617ac158a50466797aa",
+          "commit_date": "2026-10-04T00:34:58Z",
+          "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/PrimeIntellect-ai__research-environments.commit.json"
+        },
+        {
+          "kind": "paper_source",
+          "url": "https://arxiv.org/src/2602.23866v2",
+          "version": "v2",
+          "fallback_download": "https://export.arxiv.org/src/2602.23866v2",
+          "location": "experiments_details.tex Task Analysis; appendix.tex metadata enrichment",
+          "local": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/2602.23866v2/"
+        },
+        {
+          "kind": "official_statistics",
+          "url": "https://datasets-server.huggingface.co/statistics?dataset=PrimeIntellect/SWE-rebench-V2-Filtered-Verified&config=default&split=train",
+          "partial": false,
+          "local": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/PrimeIntellect__SWE-rebench-V2-Filtered-Verified.statistics.json"
+        }
+      ]
+    },
+    {
+      "id": "prime_r2e_verified",
+      "priority": 3,
+      "dataset_id": "PrimeIntellect/R2E-Gym-Subset-Verified",
+      "split": "train",
+      "revision": "b91b703c6e6d4000e609b931bafad193d226ebe0",
+      "last_modified": "2026-10-02T19:58:41.000Z",
+      "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/PrimeIntellect__R2E-Gym-Subset-Verified.api.json",
+      "published_train_rows": 4522,
+      "dropped_rows": 56,
+      "upstream_rows": 4578,
+      "upstream_repositories_viewer": 10,
+      "alias": "本次Validated URL返回Verified相同revision和card；不能重复计数",
+      "assets": {
+        "task": true,
+        "environment": "docker_image逐题引用",
+        "grader": "镜像/testbed/run_tests.sh与expected_output_json逐键状态",
+        "reference": "从parsed_commit_content重建修复"
+      },
+      "filters": [
+        "全批gold复放，失败行10次fresh retry",
+        "只有0/10被剔除，flaky保留",
+        "row/schema没有语义修订"
+      ],
+      "training_evidence": "Uni-Agent Coder30B/ReAct R2E 46.2→52.0；不是Claude Code/当前Prime行集验证",
+      "minimum_rh2_work": [
+        "固定48 loader/pins/image事实扩展",
+        "对比本地修订单与Prime drops",
+        "新增题的公开/私有面和语义审查，不覆盖旧批准修订"
+      ],
+      "failure_modes": [
+        "测试状态漂移",
+        "flaky",
+        "题面泄漏、弱断言、fixtures和编译初态问题",
+        "同仓其他题初态可能含答案"
+      ],
+      "licensing_metadata_conflict": "上游当前卡apache-2.0；Prime当前文字仍称上游无许可证，本次只记录不代替判断",
+      "local_execution_this_audit": 0,
+      "local_admitted_this_audit": 0,
+      "evidence": [
+        {
+          "kind": "official_dataset_card",
+          "url": "https://huggingface.co/datasets/PrimeIntellect/R2E-Gym-Subset-Verified/blob/b91b703c6e6d4000e609b931bafad193d226ebe0/README.md",
+          "location": "README.md",
+          "revision": "b91b703c6e6d4000e609b931bafad193d226ebe0",
+          "last_modified": "2026-10-02T19:58:41.000Z",
+          "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/PrimeIntellect__R2E-Gym-Subset-Verified.api.json"
+        },
+        {
+          "kind": "official_dataset_card",
+          "url": "https://huggingface.co/datasets/R2E-Gym/R2E-Gym-Subset/blob/2e8108ff942f24fcb5686badfaf7f9a8808566d5/README.md",
+          "location": "README.md",
+          "revision": "2e8108ff942f24fcb5686badfaf7f9a8808566d5",
+          "last_modified": "2026-07-23T22:28:07.000Z",
+          "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/R2E-Gym__R2E-Gym-Subset.api.json"
+        },
+        {
+          "kind": "official_code",
+          "url": "https://github.com/PrimeIntellect-ai/research-environments/blob/ff40b61dcf898e1cdba7a617ac158a50466797aa/environments/swe/r2e_gym/r2e_gym/taskset.py",
+          "location": "module and gold/grade methods",
+          "commit": "ff40b61dcf898e1cdba7a617ac158a50466797aa",
+          "commit_date": "2026-10-04T00:34:58Z",
+          "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/PrimeIntellect-ai__research-environments.commit.json"
+        }
+      ]
+    },
+    {
+      "id": "swe_smith_python",
+      "priority": 4,
+      "dataset_id": "SWE-bench/SWE-smith-py",
+      "split": "train",
+      "revision": "77cab9055d42ab4a5c25c89a8f937096db13558e",
+      "last_modified": "2025-12-18T21:00:02.000Z",
+      "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/SWE-bench__SWE-smith-py.api.json",
+      "published_rows": 50908,
+      "repositories": 131,
+      "images": 131,
+      "version_counts": {
+        "paper_v2_rows": 50137,
+        "paper_v2_repos": 128,
+        "stopped_monolith_current_rows": 59136,
+        "cannot_mix_or_sum": true
+      },
+      "assets": {
+        "task": "存在空problem_statement，未统计非空总数",
+        "environment": "每仓镜像+instance_id bug分支",
+        "grader": "repo profile的test command/parser/F2P/P2P",
+        "reference": "数据patch为注入bug方向；gold评估reverse应用"
+      },
+      "training_evidence": "Qwen2.5-Coder32B SFT + SWE-agent；后有SkyRL GRPO接线，非精确本底座与harness验证",
+      "minimum_rh2_work": [
+        "新source与bug分支初始化",
+        "反向gold正式资产",
+        "测试保护/独立grader和parser",
+        "清除干净base/其他任务分支/答案泄漏",
+        "过滤空题面；按repo/base/生成家族去重"
+      ],
+      "failure_modes": [
+        "空或错题面",
+        "合成模式分布窄",
+        "多bug共享函数/测试的相关性",
+        "直接公开多分支镜像泄漏参考解"
+      ],
+      "local_execution_this_audit": 0,
+      "local_admitted_this_audit": 0,
+      "evidence": [
+        {
+          "kind": "official_dataset_card",
+          "url": "https://huggingface.co/datasets/SWE-bench/SWE-smith-py/blob/77cab9055d42ab4a5c25c89a8f937096db13558e/README.md",
+          "location": "README.md",
+          "revision": "77cab9055d42ab4a5c25c89a8f937096db13558e",
+          "last_modified": "2025-12-18T21:00:02.000Z",
+          "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/SWE-bench__SWE-smith-py.api.json"
+        },
+        {
+          "kind": "official_dataset_card",
+          "url": "https://huggingface.co/datasets/SWE-bench/SWE-smith/blob/ea6d7173829c7ec8fa16c22055699ff2e9188091/README.md",
+          "location": "README.md",
+          "revision": "ea6d7173829c7ec8fa16c22055699ff2e9188091",
+          "last_modified": "2025-12-14T19:30:19.000Z",
+          "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/SWE-bench__SWE-smith.api.json"
+        },
+        {
+          "kind": "official_code",
+          "url": "https://github.com/SWE-bench/SWE-smith/blob/9b74ac08118a85c39c356802f7961893af73e07f/swesmith/profiles/base.py",
+          "location": "get_container L493–523",
+          "commit": "9b74ac08118a85c39c356802f7961893af73e07f",
+          "commit_date": "2026-03-21T23:39:59Z",
+          "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/SWE-bench__SWE-smith.commit.json"
+        },
+        {
+          "kind": "official_code",
+          "url": "https://github.com/SWE-bench/SWE-smith/blob/9b74ac08118a85c39c356802f7961893af73e07f/swesmith/harness/utils.py",
+          "location": "_apply_patch L70–83; is_gold uses --reverse",
+          "commit": "9b74ac08118a85c39c356802f7961893af73e07f",
+          "commit_date": "2026-03-21T23:39:59Z",
+          "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/SWE-bench__SWE-smith.commit.json"
+        },
+        {
+          "kind": "paper_source",
+          "url": "https://arxiv.org/src/2504.21798v2",
+          "version": "v2",
+          "location": "sections/dataset.tex; sections/experiments.tex; tables/dataset_summary.tex",
+          "local": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/2504.21798v2/"
+        }
+      ]
+    },
+    {
+      "id": "mimo_code",
+      "priority": 5,
+      "dataset_id": "XiaomiMiMo/MiMo-V2.6-RL-oss",
+      "config": "code",
+      "split": "train",
+      "revision": "639865fd3374018d6cb29b9fb82dd531406fcf5f",
+      "last_modified": "2026-09-26T01:40:41.000Z",
+      "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/XiaomiMiMo__MiMo-V2.6-RL-oss.api.json",
+      "rows_observed": 2698,
+      "code_parquet_bytes": 13314620,
+      "all_domains_image_mapping_rows": 3764,
+      "image_mapping_bytes": 495593,
+      "assets": {
+        "task": "extra_info.instance_json中题面与cwd",
+        "environment": "官方image-mapping.jsonl和DockerHub xiaomimimo/mimo-v2.6-rl-oss",
+        "grader": "私有test_patch含tests+verifier，执行test_command，exit0=1",
+        "reference": "抽样3行无gold字段，ground_truth为空；不声称穷尽无法从历史恢复"
+      },
+      "sampled_rows": 3,
+      "sampled_verifier_timeout_seconds": 1800,
+      "sample_ids": [
+        "format-code-task-001457",
+        "format-code-task-001240",
+        "format-code-task-000723"
+      ],
+      "docker_verification": "仅公开tag/digest元数据，未pull或run，不能证明所有行镜像可运行",
+      "training_evidence": "MiMo作者公开RL数据/代码，不提供这组数据对Qwen3-Coder30B的独立贡献证据",
+      "minimum_rh2_work": [
+        "嵌套JSON/真实镜像映射规范化",
+        "新source、cwd和baseline身份",
+        "私有test_patch/exit-code grader、infra归因与正式冻结评分",
+        "按当前准入规则补可信正控；无gold替代需主方案明确"
+      ],
+      "failure_modes": [
+        "参考正控缺失提高审查成本",
+        "退出码包装可能吞错误或漏测试",
+        "镜像历史截断/无遗留答案只是构建前提，仍需验",
+        "task opaque ID下repo/PR去重难"
+      ],
+      "local_execution_this_audit": 0,
+      "local_admitted_this_audit": 0,
+      "evidence": [
+        {
+          "kind": "official_dataset_card",
+          "url": "https://huggingface.co/datasets/XiaomiMiMo/MiMo-V2.6-RL-oss/blob/639865fd3374018d6cb29b9fb82dd531406fcf5f/README.md",
+          "location": "README.md",
+          "revision": "639865fd3374018d6cb29b9fb82dd531406fcf5f",
+          "last_modified": "2026-09-26T01:40:41.000Z",
+          "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/XiaomiMiMo__MiMo-V2.6-RL-oss.api.json"
+        },
+        {
+          "kind": "official_dataset_card",
+          "url": "https://huggingface.co/datasets/XiaomiMiMo/MiMo-V2.6-RL-oss/blob/639865fd3374018d6cb29b9fb82dd531406fcf5f/image-mapping.jsonl",
+          "location": "image-mapping.jsonl",
+          "revision": "639865fd3374018d6cb29b9fb82dd531406fcf5f",
+          "last_modified": "2026-09-26T01:40:41.000Z",
+          "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/XiaomiMiMo__MiMo-V2.6-RL-oss.api.json"
+        },
+        {
+          "kind": "official_code",
+          "url": "https://github.com/XiaomiMiMo/mimoagent/blob/467f0a19016f0ac4d63b8d17a1f0da9ba07f232c/src/mimoagent/environments/datasets/opensource_code.py",
+          "location": "module docstring; _do_calculate_reward; _assert_history_truncated",
+          "commit": "467f0a19016f0ac4d63b8d17a1f0da9ba07f232c",
+          "commit_date": "2026-09-21T21:01:34Z",
+          "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/XiaomiMiMo__mimoagent.commit.json"
+        },
+        {
+          "kind": "official_rows_sample",
+          "url": "https://datasets-server.huggingface.co/rows?dataset=XiaomiMiMo/MiMo-V2.6-RL-oss&config=code&split=train&offset=0&length=3",
+          "local": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/XiaomiMiMo__MiMo-V2.6-RL-oss.code.rows.json"
+        },
+        {
+          "kind": "official_image_registry_metadata",
+          "url": "https://hub.docker.com/v2/repositories/xiaomimimo/mimo-v2.6-rl-oss/tags?page_size=3",
+          "local": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/XiaomiMiMo.docker_tags.json"
+        }
+      ]
+    },
+    {
+      "id": "openswe",
+      "priority": 6,
+      "dataset_id": "GAIR/OpenSWE",
+      "revision": "a8db93af5335df2c8baac0cd1ff367e4d475d3d7",
+      "last_modified": "2026-03-17T09:51:46.000Z",
+      "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/GAIR__OpenSWE.api.json",
+      "author_claims": {
+        "environments": 45320,
+        "repositories": "12.8k",
+        "curated_environments": "about 9k",
+        "curated_trajectories": "about 13k"
+      },
+      "access": {
+        "metadata_accessible": true,
+        "gated": "auto",
+        "unauthenticated_card_file_http_status": 401,
+        "terms_not_accepted_this_audit": true
+      },
+      "assets": {
+        "task": "openswe_oss.jsonl/openswe_other.jsonl",
+        "environment": "Dockerfile与环境构建流水线，非已验证全量可pull镜像",
+        "grader": "eval script与SWE-bench fork接入",
+        "reference": "other部分作者建议自行按daVinci-Dev恢复gold"
+      },
+      "training_evidence": "Qwen2.5 32B/72B SFT；非精确本底座",
+      "minimum_rh2_work": [
+        "先获得已授权访问并pin行集",
+        "选材料齐全公开许可小样构建镜像",
+        "恢复参考解/测试命令并做新source与grader适配"
+      ],
+      "failure_modes": [
+        "访问条件",
+        "构建重现成本",
+        "任务规模与quality-curated轨迹漏斗混淆",
+        "部分gold不随发布直接供给"
+      ],
+      "local_execution_this_audit": 0,
+      "local_admitted_this_audit": 0,
+      "evidence": [
+        {
+          "kind": "official_code",
+          "url": "https://github.com/GAIR-NLP/OpenSWE/blob/c2294ce55b9eda60078ca6e69123f21705883bd4/README.md",
+          "location": "Overview; 1. Use Released Data",
+          "commit": "c2294ce55b9eda60078ca6e69123f21705883bd4",
+          "commit_date": "2026-03-16T12:52:31Z",
+          "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/GAIR-NLP__OpenSWE.commit.json"
+        },
+        {
+          "kind": "official_access_page",
+          "url": "https://huggingface.co/datasets/GAIR/OpenSWE",
+          "location": "Access conditions; metadata gated=auto"
+        }
+      ]
+    }
+  ],
+  "additional_candidates": [
+    {
+      "id": "prime_scaleswe",
+      "rows": 17202,
+      "upstream_rows": 20181,
+      "purpose": "备选大池；本次仅核卡与schema，不抢首片",
+      "dataset_id": "PrimeIntellect/Scale-SWE-Verified",
+      "evidence": {
+        "kind": "official_dataset_card",
+        "url": "https://huggingface.co/datasets/PrimeIntellect/Scale-SWE-Verified/blob/2c29b67e0ea4d7819f60d8a10d7475a7ad89ccd6/README.md",
+        "location": "README.md",
+        "revision": "2c29b67e0ea4d7819f60d8a10d7475a7ad89ccd6",
+        "last_modified": "2026-10-02T19:58:45.000Z",
+        "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/PrimeIntellect__Scale-SWE-Verified.api.json"
+      }
+    },
+    {
+      "id": "prime_swelego",
+      "resolved_rows": 4323,
+      "selected_parent_rows": 4432,
+      "split": "resolved",
+      "flaky_retained": true,
+      "purpose": "带OpenHands轨迹储备，非真实CC on-policy",
+      "dataset_id": "PrimeIntellect/SWE-Lego-Real-Data-Verified",
+      "evidence": {
+        "kind": "official_dataset_card",
+        "url": "https://huggingface.co/datasets/PrimeIntellect/SWE-Lego-Real-Data-Verified/blob/0a1b227ec41f0e96cb8f5c7a1c225258a80edb8d/README.md",
+        "location": "README.md",
+        "revision": "0a1b227ec41f0e96cb8f5c7a1c225258a80edb8d",
+        "last_modified": "2026-10-02T20:23:41.000Z",
+        "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/PrimeIntellect__SWE-Lego-Real-Data-Verified.api.json"
+      }
+    },
+    {
+      "id": "nebius_openhands_trajectories",
+      "trajectories": 67074,
+      "successful_trajectories": 32161,
+      "resolved_issues": 3792,
+      "repositories": 1823,
+      "model_correction": "RFT基于Qwen3-30B-A3B-Instruct-2507；Coder30B只是baseline",
+      "task_version_correction": "普通SWE-rebench，非V2",
+      "url": "https://huggingface.co/datasets/nebius/SWE-rebench-openhands-trajectories"
+    }
+  ],
+  "target_model_training_evidence": {
+    "source": "verl-project/uni-agent",
+    "version": {
+      "commit": "00b20d72d35816a3d66e6137c424a5b60e92d062",
+      "commit_date": "2026-10-01T15:35:40Z",
+      "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/verl-project__uni-agent.commit.json"
+    },
+    "evidence": {
+      "kind": "official_code",
+      "url": "https://github.com/verl-project/uni-agent/blob/00b20d72d35816a3d66e6137c424a5b60e92d062/README.md",
+      "location": "RL table L73–79",
+      "commit": "00b20d72d35816a3d66e6137c424a5b60e92d062",
+      "commit_date": "2026-10-01T15:35:40Z",
+      "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/verl-project__uni-agent.commit.json"
+    },
+    "companion": {
+      "kind": "official_code",
+      "url": "https://github.com/verl-project/uni-agent/blob/00b20d72d35816a3d66e6137c424a5b60e92d062/docs/source/benchmark/rl-training.md",
+      "location": "L7–14; named task validation metric",
+      "commit": "00b20d72d35816a3d66e6137c424a5b60e92d062",
+      "commit_date": "2026-10-01T15:35:40Z",
+      "metadata_snapshot": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/verl-project__uni-agent.commit.json"
+    },
+    "rows": [
+      {
+        "model_label": "Qwen3-Coder-30B-A3B",
+        "actor": "Claude Code",
+        "dataset_label": "SWE-reBench",
+        "setting": "Colocate Async, 200 turns, 128K",
+        "base": 40.2,
+        "rl": 46.2
+      },
+      {
+        "model_label": "Qwen3-Coder-30B-A3B",
+        "actor": "ReAct",
+        "dataset_label": "SWE-reBench",
+        "setting": "Colocate Async, 200 turns, 128K",
+        "base": 47.4,
+        "rl": 54.2
+      },
+      {
+        "model_label": "Qwen3-Coder-30B-A3B",
+        "actor": "ReAct",
+        "dataset_label": "R2E-Gym",
+        "setting": "Fully Async, 100 turns, 128K",
+        "base": 46.2,
+        "rl": 52.0
+      }
+    ],
+    "limitations": [
+      "作者官方报告，非本地复现",
+      "配套文档给Instruct全名；未核Claude Code该行实际checkpoint hash",
+      "SWE-reBench版本/行集未明确，不能归因V2/Prime",
+      "validation metric不能无依据改写为统一SWE-bench Verified协议",
+      "未证明RH2/用户GPU预算可复现增益",
+      "本轮无Qwen3.6同条件独立数据贡献证据"
+    ]
+  },
+  "proposed_fallback_pilot": {
+    "status": "建议，不是新增审批或既有政策",
+    "candidate_pool_python_rows": 1952,
+    "tasks": 12,
+    "minimum_repositories": 4,
+    "selection": [
+      "先去除已用/held-out/同PR同patch",
+      "非空明确题面、标准Python parser、无大编译/服务依赖",
+      "固定选择seed并保留完整分母"
+    ],
+    "verification": [
+      "正式actor初态与privileged资料隔离",
+      "noop和reference各2次fresh grader",
+      "针对核心需求的错误/漏修候选",
+      "infra/parser/reward分类与CPU/安装/测试时间"
+    ],
+    "stop_conditions": [
+      "12题中少于8题可不改题意/测试完成正负控，暂停扩大",
+      "至少3题需逐题语义重写，暂停扩大",
+      "泄漏/不可追溯镜像/运行故障记正常0分，先停受影响模板",
+      "共享适配超出一来源一种Python评分小片时交付缺口，不迁移运行框架"
+    ],
+    "threshold_caveat": "操作性成本门槛，不是缺陷率统计推断"
+  },
+  "counterclaims": {
+    "same_source_low_cost": "同来源仅减少一次性接入，仍有环境/语义/去重/actor合规成本；比较合格独立题数除总成本",
+    "no_gold_unusable": "reward可来自可执行verifier；无gold提高正控成本，可用经独立审查解等补齐，仍服从当前准入决定"
+  },
+  "known_conflicts": [
+    "Prime R2E Verified旧名Validated相同revision",
+    "Prime R2E卡声称上游无license，但上游当前metadata为apache-2.0",
+    "SWE-Gym README Lite234与论文/数据230不一致",
+    "SWE-smith历史50137、停更monolith59136、py50908不是同一集合",
+    "Prime V2 card17语言与current full stats16不一致",
+    "Uni-Agent README Claude Code和ReAct分行；companion尚未列Claude Code行"
+  ],
+  "statistics_revision_caveat": "datasets-server快照为检索当日current；生产固定行集还须重新计数",
+  "manifest": "../../../../../runs/data_expansion_design_codex_20261005/sources_external/fetch_manifest.json"
+}

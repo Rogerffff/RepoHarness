@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>接下来先处理哪些数据</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: one reading column; sources as an ordered queue, per-task handling as a numbered step grid, decisions last. */
+:root {
+  color-scheme: light;
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --ink: #15202a;
+  --muted: #586572;
+  --line: #dbe2e8;
+  --accent: #1d5a88;
+  --accent-soft: #e3edf5;
+  --warn: #9a5b06;
+  --warn-soft: #fbf0de;
+  --font-display: "Noto Serif SC", "Songti SC", "STSong", serif;
+  --font-body: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  --step-0: 15px;
+  --step-1: 17px;
+  --step-2: 21px;
+  --step-3: clamp(26px, 4.4vw, 34px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #10161c;
+    --surface: #171f27;
+    --ink: #e2e8ed;
+    --muted: #9aa7b3;
+    --line: #283440;
+    --accent: #79afd9;
+    --accent-soft: #1a2b3a;
+    --warn: #e2a54c;
+    --warn-soft: #2d2415;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #10161c;
+  --surface: #171f27;
+  --ink: #e2e8ed;
+  --muted: #9aa7b3;
+  --line: #283440;
+  --accent: #79afd9;
+  --accent-soft: #1a2b3a;
+  --warn: #e2a54c;
+  --warn-soft: #2d2415;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  line-height: 1.7;
+  padding-inline: 20px;
+  padding-block: 40px 56px;
+}
+.wrap { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 44px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+h1 { font-family: var(--font-display); font-size: var(--step-3); line-height: 1.3; font-weight: 700; }
+h2 { font-family: var(--font-display); font-size: var(--step-2); font-weight: 700; }
+h3 { font-size: var(--step-1); font-weight: 700; line-height: 1.45; }
+p { margin: 0; }
+.mono { font-family: var(--font-mono); font-size: 0.86em; }
+.eyebrow { font-size: 13px; letter-spacing: 0.06em; color: var(--muted); }
+.chip {
+  display: inline-block; font-size: 12.5px; line-height: 1.5; padding: 2px 9px;
+  border-radius: 999px; border: 1px solid var(--line); color: var(--muted); background: var(--surface);
+  white-space: nowrap;
+}
+.chip.warn { color: var(--warn); border-color: transparent; background: var(--warn-soft); }
+.chip.acc { color: var(--accent); border-color: transparent; background: var(--accent-soft); }
+
+/* header */
+header { display: flex; flex-direction: column; gap: 14px; }
+.lead { font-size: var(--step-1); max-width: 40em; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* facts */
+.facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.fact { background: var(--surface); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
+.fact b { font-family: var(--font-mono); font-size: 22px; font-weight: 500; color: var(--accent); font-variant-numeric: tabular-nums; line-height: 1.3; }
+.fact span { font-size: 13.5px; color: var(--muted); line-height: 1.55; }
+
+section { display: flex; flex-direction: column; gap: 18px; }
+.sec-head { display: flex; flex-direction: column; gap: 6px; }
+.sec-head p { color: var(--muted); max-width: 42em; }
+
+/* sources queue */
+.queue { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.src { display: grid; grid-template-columns: 44px 1fr; gap: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+.src .n { font-family: var(--font-mono); font-size: 22px; color: var(--accent); line-height: 1.35; }
+.src .body { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.src .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+.src .count { font-family: var(--font-mono); font-size: 13.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.row { display: grid; grid-template-columns: 3.2em 1fr; gap: 8px; }
+.row .k { font-size: 13px; color: var(--muted); padding-top: 1px; }
+.src.later { background: transparent; border-style: dashed; }
+
+/* steps */
+.steps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.step { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+.step .head { display: flex; align-items: baseline; gap: 10px; }
+.step .num { font-family: var(--font-mono); color: var(--accent); font-size: 14px; }
+.step .who { margin-left: auto; }
+.why { border-top: 1px solid var(--line); padding-top: 10px; color: var(--muted); font-size: 14px; }
+.why b { color: var(--ink); font-weight: 500; }
+
+/* rules */
+.rules { background: var(--accent-soft); border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; }
+.rules ul { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; }
+
+/* timeline + decisions */
+.plan { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+.tl { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.tl li { display: grid; grid-template-columns: 6.6em 1fr; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+.tl li:last-child { border-bottom: 0; }
+.tl .d { font-family: var(--font-mono); font-size: 13px; color: var(--muted); padding-top: 2px; font-variant-numeric: tabular-nums; }
+.box { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+.dec { display: flex; flex-direction: column; gap: 4px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.dec:last-child { border-bottom: 0; padding-bottom: 0; }
+.dec .when { font-size: 12.5px; color: var(--warn); }
+.note { font-size: 13px; color: var(--muted); }
+
+footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; display: flex; flex-direction: column; gap: 4px; }
+
+@media (max-width: 720px) {
+  .facts { grid-template-columns: repeat(2, 1fr); }
+  .steps, .plan { grid-template-columns: 1fr; }
+}
+@media (max-width: 420px) {
+  body { padding-block: 28px 40px; }
+  .facts { grid-template-columns: 1fr; }
+  .src { grid-template-columns: 1fr; gap: 6px; }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+<header>
+  <div class="eyebrow">项目一 · B 线数据处理 · 2026-10-06</div>
+  <h1>接下来先处理哪些数据</h1>
+  <p class="lead">第一轮按 Qwen3-Coder-30B-A3B 挑训练题。先用手上的 264 题跑通新流程，再按“环境能复用、成本最低”的顺序扩到 SWE-Gym Full 和 R2E。每道题先过脚本检查，再采样 4–8 次，最后只审需要审的题。</p>
+  <div class="chips">
+    <span class="chip warn">建议稿，未批准</span>
+    <span class="chip">尚未运行任何新实验</span>
+    <span class="chip acc">评分链路效率由链路线程负责</span>
+  </div>
+</header>
+
+<div class="facts" aria-label="为什么要改流程">
+  <div class="fact"><b>0 / 264</b><span>四周后获得训练准入的题数；慢在逐题前置审查</span></div>
+  <div class="fact"><b>33 / 45</b><span>Coder 单次就得 1 的比例；采一次分不出难易</span></div>
+  <div class="fact"><b>≈ 8%</b><span>原始得 1 事后被推翻（78 次中至少 6 次），都是读真实答案才发现</span></div>
+  <div class="fact"><b>5,600+</b><span>已接入的同类题里还没处理的；题不缺，缺快的流程</span></div>
+</div>
+
+<section aria-labelledby="s-order">
+  <div class="sec-head">
+    <h2 id="s-order">数据集的处理顺序</h2>
+    <p>越靠前，环境越现成、单题成本越低。后一项不必等前一项全部做完。</p>
+  </div>
+  <ol class="queue">
+    <li class="src">
+      <div class="n">1</div>
+      <div class="body">
+        <div class="top"><h3>已有的 264 题</h3><span class="count">SWE-Gym 216 + R2E 48</span><span class="chip acc">10-08 起</span></div>
+        <div class="row"><span class="k">怎么做</span><p>已经跑过两个模型的 52 题，每题补到 4 个 Coder 样本；其余 212 题从脚本检查重新开始；Modin 两题继续隔离。</p></div>
+        <div class="row"><span class="k">为什么</span><p>环境和 noop/gold 对照都已经有了，成本最低。顺便校准新工具和审计员的耗时，并检验新流程能否找回已知的 5 次误奖。</p></div>
+      </div>
+    </li>
+    <li class="src">
+      <div class="n">2</div>
+      <div class="body">
+        <div class="top"><h3>SWE-Gym Full，同仓库同版本</h3><span class="count">先做 892 题（不含 pandas、modin）</span><span class="chip warn">需批准新增来源</span></div>
+        <div class="row"><span class="k">为什么</span><p>已修过的 164 题里，有 140 题的问题是同一仓库同一版本共有的，修法可以直接复用。Full 也比 Lite 难：参考修复平均改 69.8 行、2.5 个文件，Lite 只改 10.6 行、1 个文件。Coder 需要更难的题。</p></div>
+      </div>
+    </li>
+    <li class="src">
+      <div class="n">3</div>
+      <div class="body">
+        <div class="top"><h3>R2E，同 8 个仓库按仓库分批</h3><span class="count">先做 2,643 道非 pandas 题</span></div>
+        <div class="row"><span class="k">怎么做</span><p>先做 numpy、pillow、scrapy、orange3、coveragepy、datalad。pandas 的 1,437 题等编译缓存上线后再做，aiohttp 等预置兼容层的问题修好后再做。</p></div>
+        <div class="row"><span class="k">为什么</span><p>评分接线和镜像派生配方都已经有了。同一个 Coder 在 R2E 上做 RL 有外部正面结果（Uni-Agent 验证分 46.2→52.0，作者报告）。</p></div>
+      </div>
+    </li>
+    <li class="src later">
+      <div class="n">4</div>
+      <div class="body">
+        <div class="top"><h3>SWE-Gym 同仓库的其他版本</h3><span class="count">560 题</span></div>
+        <div class="row"><span class="k">为什么</span><p>修法要先按仓库、版本重新验证，所以排在后面。</p></div>
+      </div>
+    </li>
+    <li class="src later">
+      <div class="n">5</div>
+      <div class="body">
+        <div class="top"><h3>外部来源，只做小试点</h3><span class="count">SWE-rebench V2 Python 子集、Uni 1150 各 6 题</span></div>
+        <div class="row"><span class="k">为什么</span><p>先确认镜像能拉取、评分能和上游对上，再决定要不要扩量。SWE-smith、MiMo（缺参考修复和基础版本）、OpenSWE（访问未解决）不进第一轮。</p></div>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<section aria-labelledby="s-steps">
+  <div class="sec-head">
+    <h2 id="s-steps">每道题怎么处理</h2>
+    <p>旧流程是“先审后测”，每题要三个会话审查。新流程反过来：先用脚本和模型采样把信息拿到，只审真正需要审的题。</p>
+  </div>
+  <div class="steps">
+    <article class="step">
+      <div class="head"><span class="num">1</span><h3>脚本检查</h3><span class="chip who">脚本</span></div>
+      <p>空补丁应得 0，参考修复跑两次都得 1；扫描题面有没有泄漏答案；排除留出仓库、去掉重复题；确认以 agent 身份能跑公开测试。新来源的题没通过就直接换下一道。</p>
+      <p class="why"><b>为什么：</b>这些检查全部可以批量跑，432 次评分 4.7 小时就能完成。后面的题有几千道，单独修一道题不划算。</p>
+    </article>
+    <article class="step">
+      <div class="head"><span class="num">2</span><h3>Coder 采样 4 次，全对再加 4 次</h3><span class="chip who">链路执行器</span></div>
+      <p>按结果分层：成败混合的进入审计；8 次全对的作储备；全错的在批末让 Qwen3.6 跑 2 次，用来判断是题太难，还是评分有问题。</p>
+      <p class="why"><b>为什么：</b>采一次分不出难易。训练时全对或全错的组会被在线丢掉并补采，所以离线只需要粗分，不必精确估计每题的成功率。</p>
+    </article>
+    <article class="step">
+      <div class="head"><span class="num">3</span><h3>自动后检，只打标记</h3><span class="chip who">脚本</span></div>
+      <p>逐条检查每次尝试：附近的测试有没有被改坏，有没有改测试文件，有没有用 git fetch 或访问上游 issue 去取答案，候选有没有把环境弄坏。</p>
+      <p class="why"><b>为什么：</b>已推翻的误奖多是“主路径修好了，旁边的行为被改坏”，脚本可以先筛一遍。只打标记、不改分，留给审计判断。</p>
+    </article>
+    <article class="step">
+      <div class="head"><span class="num">4</span><h3>一次审计：静态审查和轨迹审查合并</h3><span class="chip who">审计 agent</span></div>
+      <p>只审成败混合的题和被标记的题。步骤固定：列出要求，查测试覆盖，逐个判断真实答案，给出结论。每题不超过 45 分钟。</p>
+      <p class="why"><b>为什么：</b>已发现的误奖都是读真实答案才发现的。MiMo 也是先跑 4 次，再按固定步骤审计。这样一次就能看清题和测试两方面的问题。</p>
+    </article>
+    <article class="step">
+      <div class="head"><span class="num">5</span><h3>按仓库成批修订</h3><span class="chip who">修订 agent + 脚本验收</span></div>
+      <p>只修被真实错误答案证明存在的漏洞。每题最多加 3 个检查，只改 1 轮，外加 1 次小修。修完后，判为正确的答案必须仍然得 1，否则撤回修订。</p>
+      <p class="why"><b>为什么：</b>防止越修越严：外部实验中加固测试后，正常解的通过率从 76% 降到 65%。每批只升一次材料版本，以前曾 5 小时连升 7 版。</p>
+    </article>
+    <article class="step">
+      <div class="head"><span class="num">6</span><h3>Codex 按批复核，随机抽查后准入</h3><span class="chip who">Codex</span></div>
+      <p>每批复核一次：全部修订、推翻原结论的判断，以及 15% 的准入题。另外随机盲抽得 1 和得 0 的尝试，估计噪声水平。</p>
+      <p class="why"><b>为什么：</b>允许有噪声，但要量出来：误奖 ≤10%，误拒 ≤5%。同一根因如果集中出现在一个仓库，就按仓库整体处理。</p>
+    </article>
+  </div>
+
+  <div class="rules">
+    <h3>给审查 agent 的四条硬规则，防止无限发挥</h3>
+    <ul>
+      <li>反例只认四种来源：模型的真实答案、每题至多 1 个退化补丁、历史上正式评过分的错误补丁，以及 gold 与 noop。不允许自己再造。</li>
+      <li>每加一个检查，都要能拒绝一个已经观察到的错误答案，并且有公开依据。</li>
+      <li>预算用完就按默认去向处理：淘汰，或只作诊断。超时永远不会变成准入。</li>
+      <li>复核只能通过、驳回或改措辞，不能新增反例，也不能要求重审。</li>
+    </ul>
+  </div>
+</section>
+
+<section aria-labelledby="s-plan">
+  <div class="sec-head">
+    <h2 id="s-plan">时间与需要你定的事</h2>
+  </div>
+  <div class="plan">
+    <div class="box">
+      <ol class="tl">
+        <li><span class="d">10-06～07</span><span>搭批量工具，和链路线程约定接口，实测并发吞吐</span></li>
+        <li><span class="d">10-08～09</span><span>已有的 264 题：补采样、跑检查、校准审计</span></li>
+        <li><span class="d">10-10～14</span><span>已有题审计完毕，加入 SWE-Gym Full 同版本约 300 题</span></li>
+        <li><span class="d">10-13～20</span><span>R2E 约 300 题按仓库分批，外部来源小试点</span></li>
+      </ol>
+      <p class="note">目标：约 10-14 拿到 100 道以上可训练题，约 10-20 达到 300 道。这是推算，取决于机器和链路吞吐，10-09 实测后重算。</p>
+    </div>
+    <div class="box">
+      <div class="dec"><span class="when">现在</span><p>用新流程替换 v1 的三条：严格示例拟合、每批 12 题不设预算、每题三会话审查。同时确认噪声预算。</p></div>
+      <div class="dec"><span class="when">现在</span><p>机器：GPU 方案、CPU 评分机、镜像存储。单卡最多约 8 个 32K 会话并发。</p></div>
+      <div class="dec"><span class="when">接入 Full 之前</span><p>批准新增 <span class="mono">swe_gym_full</span> 来源，以及 SWE 正式修订通道的扩展。</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>细节、字段和依据见同目录的 <span class="mono">README.md</span>（主方案）与 <span class="mono">detailed_draft.md</span>（完整稿与核查记录）。</p>
+  <p>数字来自 52 题探针、环境修复目录、Full216 评分账本，以及外部精读笔记；外部结果由作者报告，不等于本项目可复现。</p>
+</footer>
+
+</main>
+</body>
+</html>
