@@ -1,0 +1,31 @@
+{
+  "revisions": [
+    {
+      "added_pass_to_pass": [
+        "tests/test_config_parser.py::TestConfigParser::test_substring_reference_long_first"
+      ],
+      "base_commit": "3c8f6c6b94ba26f8c9df5b7c96089494de6f69cb",
+      "effective_test_patch": "diff --git a/tests/test_config_parser.py b/tests/test_config_parser.py\n--- a/tests/test_config_parser.py\n+++ b/tests/test_config_parser.py\n@@ -107,6 +107,8 @@\n \n TEST_CASE_4 = [{\"A\": 1, \"B\": \"@A\", \"C\": \"@D\", \"E\": \"$'test' + '@F'\"}]\n \n+TEST_CASE_5 = [{\"training\": {\"A\": 1, \"A_B\": 2}, \"total\": \"$@training#A + @training#A_B + 1\"}, 4]\n+\n \n class TestConfigParser(unittest.TestCase):\n     def test_config_content(self):\n@@ -296,6 +298,19 @@\n         config = {\"import statements\": \"$import math\", \"calc\": {\"_target_\": \"math.isclose\", \"a\": 0.001, \"b\": 0.001}}\n         self.assertEqual(ConfigParser(config).calc, True)\n \n+    @parameterized.expand([TEST_CASE_5])\n+    def test_substring_reference(self, config, expected):\n+        parser = ConfigParser(config=config)\n+        self.assertEqual(parser.get_parsed_content(\"total\"), expected)\n+\n+    def test_substring_reference_long_first(self):\n+        config = {\n+            \"training\": {\"num_epochs\": 1, \"num_epochs_per_validation\": 2},\n+            \"total_iters\": \"$@training#num_epochs_per_validation + @training#num_epochs + 1\",\n+        }\n+        parser = ConfigParser(config=config)\n+        self.assertEqual(parser.get_parsed_content(\"total_iters\"), 4)\n+\n \n if __name__ == \"__main__\":\n     unittest.main()\n",
+      "effective_test_patch_sha256": "sha256:89e5866d51767720bac55dbacc80cebdfb5f2f82edd29445a6ff468d9bd1dbd5",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/swe_materials/monai5932_next/README.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/monai5932_result_review.md"
+      ],
+      "instance_id": "Project-MONAI__MONAI-5932",
+      "operation": "replace_test_patch_append_p2p",
+      "original_test_patch": "diff --git a/tests/test_config_parser.py b/tests/test_config_parser.py\n--- a/tests/test_config_parser.py\n+++ b/tests/test_config_parser.py\n@@ -107,6 +107,8 @@ def __call__(self, a, b):\n \n TEST_CASE_4 = [{\"A\": 1, \"B\": \"@A\", \"C\": \"@D\", \"E\": \"$'test' + '@F'\"}]\n \n+TEST_CASE_5 = [{\"training\": {\"A\": 1, \"A_B\": 2}, \"total\": \"$@training#A + @training#A_B + 1\"}, 4]\n+\n \n class TestConfigParser(unittest.TestCase):\n     def test_config_content(self):\n@@ -296,6 +298,11 @@ def test_builtin(self):\n         config = {\"import statements\": \"$import math\", \"calc\": {\"_target_\": \"math.isclose\", \"a\": 0.001, \"b\": 0.001}}\n         self.assertEqual(ConfigParser(config).calc, True)\n \n+    @parameterized.expand([TEST_CASE_5])\n+    def test_substring_reference(self, config, expected):\n+        parser = ConfigParser(config=config)\n+        self.assertEqual(parser.get_parsed_content(\"total\"), expected)\n+\n \n if __name__ == \"__main__\":\n     unittest.main()\n",
+      "parent_grading_digest": "sha256:508b6df307c19f490e821ee64bdf8d91c4395515dd9e42aa3255a4b09f56cddc",
+      "public_bundle_digest": "sha256:7d5c7b60d95cd817adc0cf8930c0ee99ab6d542ac6a7f6642db8b9518e066958",
+      "repo": "Project-MONAI/MONAI",
+      "revision_id": "monai5932-long-first-v1",
+      "test_files": [
+        {
+          "base_sha256": "sha256:6caaa9aed02125194c104f90747c1d75b5e5d85195e5185e61e25e01bdeea746",
+          "path": "tests/test_config_parser.py"
+        }
+      ],
+      "test_patch_sha256": "sha256:02d19ce0af297aa91a325ae216fcff1a1929f7a10a65ce7af79668141047d006"
+    }
+  ],
+  "schema_id": "rh2.swe_material_revision_registry.v1"
+}

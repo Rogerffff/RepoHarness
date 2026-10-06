@@ -1,0 +1,20 @@
+--- a/r2e_tests/test_2.py
++++ b/r2e_tests/test_2.py
+@@ -48,7 +48,7 @@
+ 
+     @classmethod
+     def _get_mwlist_from_settings(cls, settings):
+-        return ['tests.test_middleware.%s' % x for x in ['M1', 'MOff', 'M3']]
++        return ['r2e_tests.test_2.%s' % x for x in ['M1', 'MOff', 'M3']]
+ 
+     def _add_middleware(self, mw):
+         super(TestMiddlewareManager, self)._add_middleware(mw)
+@@ -98,7 +98,7 @@
+         class InstanceTestMiddlewareManager(MiddlewareManager):
+             @classmethod
+             def _get_mwlist_from_settings(cls, settings):
+-                return [ 'tests.test_middleware.M1', M2, myM3 ]
++                return [ 'r2e_tests.test_2.M1', M2, myM3 ]
+         mwman = InstanceTestMiddlewareManager.from_settings(settings)
+         self.assertIsInstance(mwman.middlewares[0], M1)
+         self.assertIsInstance(mwman.middlewares[1], M2)

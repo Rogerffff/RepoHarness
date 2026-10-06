@@ -1,0 +1,15 @@
+{
+ "artifact": "prime_envs_r2e_gym_taskset_c4d04dfe.py",
+ "purpose": "R2E 接线 R-a/R-b（2026-09-20，用户决定 DR1=A、DR2 撤回）：R2E-Gym-Subset 的判定规则来源——日志 parser（parse_log_pytest）、键归一化（_decolor 与 calculate_reward 内的 ' - ' 截断）、gold 重建（extract_gold_patch）。数据集 revision 不能替代代码版本，所以单独固定这份源码",
+ "source_url": "https://raw.githubusercontent.com/PrimeIntellect-ai/prime-envs/c4d04dfe212c153a587ea4ce072ae6753e74d6e9/environments/swe/r2e_gym/r2e_gym/taskset.py",
+ "source_repo": "PrimeIntellect-ai/prime-envs",
+ "source_commit_sha": "c4d04dfe212c153a587ea4ce072ae6753e74d6e9",
+ "source_path": "environments/swe/r2e_gym/r2e_gym/taskset.py",
+ "fetched_at": "2026-09-22",
+ "sha256": "b928139eb0e9b4da9ca5d0ad927e17cf32727a6d18bc444ed57d63ca1a273bed",
+ "identity_checks": "2026-09-22 从 source_url 重新下载，与 2026-09-09 的本地归档（runs/env_probe_20260909_codex_backup/analysis/prime_taskset.py，git-ignore）逐字节相同",
+ "license_note": "上游为 Apache-2.0（Copyright 2025 Prime Intellect，全文见旁置 prime_envs_LICENSE）。本文件原样逐字节保存、不作修改，也**不被 import**（它依赖 verifiers.v1）：可执行版本是 rh2/src/repoharness2/envpack/r2e_parsers.py 的手工移植，只移植 parse_log_pytest / _decolor / calculate_reward 的键归一化 / extract_gold_patch 四处纯函数逻辑，移植差异在该模块头部逐条列出；测试按 AST 从本文件取出同名函数，与移植版对拍",
+ "note_invisible_byte": "_decolor 的正则在源文件里含一个不可见的 ESC 字节（0x1b）：实际模式是 \\x1b\\[\\d+m，不是 \\[\\d+m。用不显示控制字符的工具读这行会误读（2026-09-09 与 2026-09-20 两次误读均已撤回）",
+ "upstream_license_file": {"path": "s2_r2e/vendor/prime_envs_LICENSE", "sha256": "b4bf39e46ede435d42a102ad864486ef4295c19e599c144fde77607548915397"},
+ "ported_module": {"path": "rh2/src/repoharness2/envpack/r2e_parsers.py"}
+}

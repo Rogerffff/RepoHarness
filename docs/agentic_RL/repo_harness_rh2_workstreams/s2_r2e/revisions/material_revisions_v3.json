@@ -1,0 +1,814 @@
+{
+ "schema_id": "rh2.s2_r2e.material_revisions.v2",
+ "purpose": "R2E-Gym-Subset 48 题的材料修订单 v3：每条都经用户逐项批准，ingest 从来源原文重放或读取修订后文件，并核对前后摘要与逐键变化声明。来源原件（原始行、镜像事实表）不改。格式（schema）同 v2；r2e-mr-001…007 与 v2 逐字相同，新增 r2e-mr-008…020（T0-6 第二步 pandas 另 6 题、T0-7 orange3 9b5494e2）。v1 / v2 保留为历史。",
+ "revisions": [
+  {
+   "revision_id": "r2e-mr-001",
+   "instance_id": "coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae",
+   "kind": "expected_text_replace",
+   "target": "expected_output_json",
+   "sha256_before": "sha256:effd25a22106cba51f1c6486eb24854cc7d1c3baa984fd47e612c2da6cbfa212",
+   "sha256_after": "sha256:f353157ec8e86a79e172920a44f6cbbdc8d1bb049c77f8292f7bd70dfc713e3e",
+   "revised_file": null,
+   "decision_ref": "T0-1：用户 2026-09-24 批准方案 A（修订版期望，只改这一个键）",
+   "reason": "该键在来源记录里是 FAILED，原因是来源方宿主机检出环境里测试子进程缺 mock（ModuleNotFoundError）；发布镜像的 venv 装有 mock 3.0.5，RH2 4 次 + M3 9 次实测全部 PASSED，gold 按原期望恒为 14/15、永远拿不到 1。改为 PASSED 后预计 gold 15/15、noop 只剩目标键 ExecTest.test_unencodable_filename 不符。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl（该题 execution_result_content 的 new/old_commit_res_stdout）",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-c_2c95f1f9.eval.log",
+    "runs/env_overnight_20260916/M3/facts/016af5f6352d/"
+   ],
+   "edits": [
+    {
+     "old": "\"MockingProtectionTest.test_os_path_exists\": \"FAILED\"",
+     "new": "\"MockingProtectionTest.test_os_path_exists\": \"PASSED\""
+    }
+   ],
+   "expected_change": {
+    "changed": {
+     "MockingProtectionTest.test_os_path_exists": [
+      "FAILED",
+      "PASSED"
+     ]
+    },
+    "added": {},
+    "removed": []
+   }
+  },
+  {
+   "revision_id": "r2e-mr-002",
+   "instance_id": "datalad__58ba5165234cb16de0e8463ee75097362099835f",
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "sha256_before": "sha256:6b6cf385b043da6815a4cef0b07386a8460422d46043bb62bb537a7fa1f0bda5",
+   "sha256_after": "sha256:c06d1682256c135df3c23c5bf935c794e8fff23ebbbcb2f42ec339d24508aa9d",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/datalad__58ba5165234cb16de0e8463ee75097362099835f/r2e_tests/test_1.py",
+   "decision_ref": "T0-2：用户 2026-09-24 批准方案 B1（隐藏测试一行导入改为同目录 test_2，expected 不变）",
+   "reason": "隐藏 test_1.py 从仓库内 datalad.interface.tests.test_docs 导入 demo_doc 等常量；上游修复提交同时改了该模块，但 gold 按规则不含测试路径，工作区里是修复前的常量，导致 test_alter_interface_docs_for_cmdline 在任何源码修复下都 FAILED（gold 3/4）。隐藏测试目录里的 test_2.py 与上游修复后的 test_docs.py 逐字节相同（sha256 2a3a29f7…），改为从它导入即恢复修复后的支撑材料。沙盒 dry-run：noop 2/4、gold 4/4。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/datalad__58ba5165234cb16de0e8463ee75097362099835f.md",
+    "runs/r2e_env_repair_20260924/p2/dryrun_58ba/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/datalad__58ba5165234cb16de0e8463ee75097362099835f/r2e_tests/test_1.py.diff"
+   ],
+   "edits": [
+    {
+     "old": "from datalad.interface.tests.test_docs import (\n",
+     "new": "from .test_2 import (\n"
+    }
+   ],
+   "expected_change": null
+  },
+  {
+   "revision_id": "r2e-mr-003",
+   "instance_id": "scrapy__cfed9b6659c90e0799361911b1d72ed127edf471",
+   "kind": "hidden_test_file_add",
+   "target": "test.egg",
+   "edits": null,
+   "sha256_before": null,
+   "sha256_after": "sha256:4b1ddd46f6768d2c41f5ccb5cee26e7e833c1139273d83a36a3bbe5801897676",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/r2e_tests/test.egg",
+   "expected_change": null,
+   "decision_ref": "T0-5：用户 2026-09-24 晚批准修复搬迁支撑（方案 B：补回夹具、改正自引用、按修复后 gold 重新核定期望）",
+   "reason": "隐藏 test_1.py 的 test_walk_modules_egg 按 os.path.dirname(__file__) 找 test.egg；R2E 把测试搬进 r2e_tests/ 时没带上这个夹具，用例恒 FAILED（ModuleNotFoundError: testegg）。内容取自 base 提交 54216d7a 的 tests/test_utils_misc/test.egg（git blob 238517694b30，镜像里与索引一致，2231 字节），原样放回隐藏测试目录。试跑：只加 egg 时该键在 gold 下变 PASSED。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471.md",
+    "runs/r2e_t0_batch2_20260924/dryrun_b2/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch2_20260924/drafts_src/scrapy_test_54216d7a.egg"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-004",
+   "instance_id": "scrapy__cfed9b6659c90e0799361911b1d72ed127edf471",
+   "kind": "hidden_test_text_replace",
+   "target": "test_2.py",
+   "edits": [
+    {
+     "old": "'tests.test_middleware.%s'",
+     "new": "'r2e_tests.test_2.%s'"
+    },
+    {
+     "old": "'tests.test_middleware.M1'",
+     "new": "'r2e_tests.test_2.M1'"
+    }
+   ],
+   "sha256_before": "sha256:6575ec0baafa4e6033fed017eb1eda70536b31a09760877e108c3025e0080af2",
+   "sha256_after": "sha256:7135f2f4b94eeb00235713812e3ef38fbf4a2dd40b22439f9c268f5274451019",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/r2e_tests/test_2.py",
+   "expected_change": null,
+   "decision_ref": "T0-5：用户 2026-09-24 晚批准修复搬迁支撑（方案 B：补回夹具、改正自引用、按修复后 gold 重新核定期望）",
+   "reason": "隐藏 test_2.py 用字符串 'tests.test_middleware.<类名>' 自引用测试模块里的中间件类；搬到 r2e_tests/ 后这些字符串指向公开旧模块里的另一组类对象，test_enabled_from_settings 与 test_instances_from_settings 恒 FAILED（类身份错位）。两处字符串改为 r2e_tests.test_2（r2e_tests 带 __init__.py，是包）。试跑：只改路径时这两键在 gold 下变 PASSED；test_instances_from_settings 在 noop 下仍 FAILED（落在 base 的 load_object 对类调 .rindex），成为中间件实例修复的活键。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471.md",
+    "runs/r2e_t0_batch2_20260924/dryrun_b2/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/r2e_tests/test_2.py.diff"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-005",
+   "instance_id": "scrapy__cfed9b6659c90e0799361911b1d72ed127edf471",
+   "kind": "expected_text_replace",
+   "target": "expected_output_json",
+   "edits": [
+    {
+     "old": "\"UtilsMiscTestCase.test_walk_modules_egg\": \"FAILED\"",
+     "new": "\"UtilsMiscTestCase.test_walk_modules_egg\": \"PASSED\""
+    },
+    {
+     "old": "\"MiddlewareManagerTest.test_enabled_from_settings\": \"FAILED\"",
+     "new": "\"MiddlewareManagerTest.test_enabled_from_settings\": \"PASSED\""
+    },
+    {
+     "old": "\"MiddlewareManagerTest.test_instances_from_settings\": \"FAILED\"",
+     "new": "\"MiddlewareManagerTest.test_instances_from_settings\": \"PASSED\""
+    }
+   ],
+   "sha256_before": "sha256:f0cb9466235d30d9251bad5a293e37ace31fb8ba4a3b50f28ea61b6d3acc17d1",
+   "sha256_after": "sha256:76cfa17162771f2c56bbe13f6c70b22ebfd1992e12955906b0e573d5c89a8528",
+   "revised_file": null,
+   "expected_change": {
+    "changed": {
+     "UtilsMiscTestCase.test_walk_modules_egg": [
+      "FAILED",
+      "PASSED"
+     ],
+     "MiddlewareManagerTest.test_enabled_from_settings": [
+      "FAILED",
+      "PASSED"
+     ],
+     "MiddlewareManagerTest.test_instances_from_settings": [
+      "FAILED",
+      "PASSED"
+     ]
+    },
+    "added": {},
+    "removed": []
+   },
+   "decision_ref": "T0-5：用户 2026-09-24 晚批准修复搬迁支撑（方案 B：补回夹具、改正自引用、按修复后 gold 重新核定期望）",
+   "reason": "来源期望里这 3 个键是 FAILED，全部来自上面两处搬迁伪影。修好支撑后按修复后 gold 重新核定：两次试跑 9 键全 PASSED，与修订后期望逐键相同；noop 两次都只差 test_load_object 与 test_instances_from_settings 两个键。键集合与顺序不变。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471.md",
+    "runs/r2e_t0_batch2_20260924/dryrun_b2/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-006",
+   "instance_id": "pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199",
+   "kind": "hidden_test_file_add",
+   "target": "conftest.py",
+   "edits": null,
+   "sha256_before": null,
+   "sha256_after": "sha256:632b5ee3769b3615c8bffd93070b6eac1375ddde14fcc964d138fa44454528e4",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/r2e_tests/conftest.py",
+   "expected_change": null,
+   "decision_ref": "T0-6：用户 2026-09-24 晚批准先在 pandas 4ec87eb9 上做私有 fixture 的代表修复（方案 B），再决定是否扩到 7 题",
+   "reason": "隐藏测试从 pandas/tests/groupby/test_quantile.py 搬到 r2e_tests/ 后，pytest 不再加载 pandas/conftest.py，test_groupby_quantile_NA_float / _NA_int 用到的 any_float_dtype、any_int_ea_dtype 两个 fixture 不可达，两用例恒 ERROR——被掩盖的正是题面场景。新增私有 r2e_tests/conftest.py，从 base 提交 baa10328 的 pandas/conftest.py（git blob 46975aa039b1）原样摘出这两个 fixture；不加其它 fixture、autouse 或 hook，不从工作区的 conftest 导入。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199.md",
+    "runs/r2e_t0_batch2_20260924/dryrun_b2/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch2_20260924/drafts_src/pandas_conftest_base_baa10328.py"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-007",
+   "instance_id": "pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199",
+   "kind": "expected_file_replace",
+   "target": "expected_output_json",
+   "edits": null,
+   "sha256_before": "sha256:19f481a294bdbfaed7e72858fb5e5fa3215c1ba9479cb0e600585d7ca3b69336",
+   "sha256_after": "sha256:bdf1ddf52be5d557f6454f264d068c661cad404cc471ef3315af0a0e0f482a30",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/expected_output.json",
+   "expected_change": {
+    "changed": {},
+    "added": {
+     "test_groupby_quantile_NA_float[float]": "PASSED",
+     "test_groupby_quantile_NA_float[float32]": "PASSED",
+     "test_groupby_quantile_NA_float[float64]": "PASSED",
+     "test_groupby_quantile_NA_float[Float32]": "PASSED",
+     "test_groupby_quantile_NA_float[Float64]": "PASSED",
+     "test_groupby_quantile_NA_int[UInt8]": "PASSED",
+     "test_groupby_quantile_NA_int[UInt16]": "PASSED",
+     "test_groupby_quantile_NA_int[UInt32]": "PASSED",
+     "test_groupby_quantile_NA_int[UInt64]": "PASSED",
+     "test_groupby_quantile_NA_int[Int8]": "PASSED",
+     "test_groupby_quantile_NA_int[Int16]": "PASSED",
+     "test_groupby_quantile_NA_int[Int32]": "PASSED",
+     "test_groupby_quantile_NA_int[Int64]": "PASSED"
+    },
+    "removed": [
+     "test_groupby_quantile_NA_float",
+     "test_groupby_quantile_NA_int"
+    ]
+   },
+   "decision_ref": "T0-6：用户 2026-09-24 晚批准先在 pandas 4ec87eb9 上做私有 fixture 的代表修复（方案 B），再决定是否扩到 7 题",
+   "reason": "fixture 可达后两个用例按参数展开成 13 个键（浮点 5 个、可空整数 8 个），原来的 2 个 ERROR 键不再出现。按修复后 gold 重新核定：两次试跑 237 键全 PASSED，其余 224 键与来源期望逐键相同；noop 两次都是 4 个 FAILED（原有 allNA 两键 + 新增 NA_float[Float32] / [Float64]，即题面场景）。修订后文件 = 来源原文把最后两行换成 13 个新键，其余逐字不变。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199.md",
+    "runs/r2e_t0_batch2_20260924/dryrun_b2/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/expected_output.json.diff"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-008",
+   "instance_id": "pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf",
+   "kind": "hidden_test_file_add",
+   "target": "conftest.py",
+   "edits": null,
+   "sha256_before": null,
+   "sha256_after": "sha256:29f48f174e4267c00face05063dd88bc28955bb29baac620305bf507c7ee7207",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf/r2e_tests/conftest.py",
+   "expected_change": null,
+   "decision_ref": "T0-6 第二步：用户 2026-09-24 夜按 Claude / Codex 一致建议批准把 pandas 4ec87eb9 的代表修复扩到另 6 道 pandas 题（逐题从 base 提取实际依赖的最小 fixture，解释展开键变化，只复验受影响题）",
+   "reason": "隐藏测试从 pandas/tests/indexing/test_loc.py 搬到 r2e_tests/ 后，原目录上各层 conftest 不再生效，17 个期望键因 fixture 不可达恒 ERROR。新增私有 r2e_tests/conftest.py，从 base 提交 5abc06fbb9b9 的 pandas/conftest.py（git blob a0ec6f96042f） 原样摘出隐藏测试实际请求的 fixture ['datetime_series', 'float_frame', 'frame_or_series', 'multiindex_year_month_day_dataframe_random_data', 'ordered', 'string_series']（按隐藏测试原文静态算出请求清单，同名取最内层，fixture 依赖一并摘出；extract_fixtures.py 生成，逐行未改）；不加 autouse fixture 或 hook，不从工作区的 conftest 导入。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf.md",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "runs/r2e_t0_batch3_20260924/conftest_sources/pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf/"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-009",
+   "instance_id": "pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf",
+   "kind": "expected_file_replace",
+   "target": "expected_output_json",
+   "edits": null,
+   "sha256_before": "sha256:d22264ec558d3a33e8f542360c04afaaa1f8e022fe95e105778ff721f8240a6c",
+   "sha256_after": "sha256:1baddeda6944b9f306498f4f5d5378072aa92754e04ffa6018be0cf013d24117",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf/expected_output.json",
+   "expected_change": {
+    "changed": {
+     "TestLoc2.test_loc_getitem_iterable[iter]": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestLoc2.test_loc_getitem_iterable[array]": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestLoc2.test_loc_getitem_iterable[Series]": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestLoc2.test_loc_getitem_iterable[Index]": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestLocWithMultiIndex.test_loc_preserve_names": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestLocSeries.test_loc_getitem": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestLocSeries.test_loc_getitem_not_monotonic": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestLocSeries.test_loc_getitem_iterator": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestLocSeries.test_loc_setitem_boolean": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestLocSeries.test_loc_setitem_corner": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestLocSeries.test_basic_setitem_with_labels": [
+      "ERROR",
+      "PASSED"
+     ]
+    },
+    "added": {
+     "TestLoc2.test_loc_getitem_time_object[DataFrame]": "PASSED",
+     "TestLoc2.test_loc_getitem_time_object[Series]": "PASSED",
+     "TestLocSetitemWithExpansion.test_loc_setitem_categorical_column_retains_dtype[True]": "PASSED",
+     "TestLocSetitemWithExpansion.test_loc_setitem_categorical_column_retains_dtype[False]": "PASSED",
+     "TestLocSetitemWithExpansion.test_loc_setitem_categorical_column_retains_dtype[None]": "PASSED",
+     "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[DataFrame-2018]": "PASSED",
+     "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[DataFrame-2020]": "PASSED",
+     "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[Series-2018]": "PASSED",
+     "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[Series-2020]": "PASSED",
+     "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[DataFrame-1]": "PASSED",
+     "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[DataFrame-1.5]": "PASSED",
+     "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[Series-1]": "PASSED",
+     "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[Series-1.5]": "PASSED"
+    },
+    "removed": [
+     "TestLoc2.test_loc_getitem_time_object",
+     "TestLocSetitemWithExpansion.test_loc_setitem_categorical_column_retains_dtype",
+     "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[2018]",
+     "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[2020]",
+     "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[1]",
+     "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[1.5]"
+    ]
+   },
+   "decision_ref": "T0-6 第二步：用户 2026-09-24 夜按 Claude / Codex 一致建议批准把 pandas 4ec87eb9 的代表修复扩到另 6 道 pandas 题（逐题从 base 提取实际依赖的最小 fixture，解释展开键变化，只复验受影响题）",
+   "reason": "fixture 可达后，带参数的 fixture 让 6 个 ERROR 键按参数展开成 13 个新键（键名里多出 fixture 的参数 ID，原来的键不再出现），另有 11 个 ERROR 键只改状态为 PASSED。按修复后 gold 重新核定：两次试跑 162 键全 PASSED，其余 138 键与来源期望逐键相同；noop 两次只在原有目标键 ['TestLoc2.test_loc_setitem_empty_append_expands_rows_mixed_dtype'] 上 FAILED，与修复前相同，新增键在 noop 下都 PASSED（回归信号）。修订后文件 = 来源原文逐行保留，删除键原位换成展开键，其余逐字不变。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf.md",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf/expected_output.json.diff"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-010",
+   "instance_id": "pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b",
+   "kind": "hidden_test_file_add",
+   "target": "conftest.py",
+   "edits": null,
+   "sha256_before": null,
+   "sha256_after": "sha256:61b16c6a2f03467919cde95d0d73ad16facbeb56d5e96cd99adcf70255452b0f",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b/r2e_tests/conftest.py",
+   "expected_change": null,
+   "decision_ref": "T0-6 第二步：用户 2026-09-24 夜按 Claude / Codex 一致建议批准把 pandas 4ec87eb9 的代表修复扩到另 6 道 pandas 题（逐题从 base 提取实际依赖的最小 fixture，解释展开键变化，只复验受影响题）",
+   "reason": "隐藏测试从 pandas/tests/io/formats/test_info.py 搬到 r2e_tests/ 后，原目录上各层 conftest 不再生效，1 个期望键因 fixture 不可达恒 ERROR。新增私有 r2e_tests/conftest.py，从 base 提交 13df3ec070e8 的 pandas/conftest.py（git blob ebb24c184d9a） 原样摘出隐藏测试实际请求的 fixture ['float_frame']（按隐藏测试原文静态算出请求清单，同名取最内层，fixture 依赖一并摘出；extract_fixtures.py 生成，逐行未改）；不加 autouse fixture 或 hook，不从工作区的 conftest 导入。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b.md",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "runs/r2e_t0_batch3_20260924/conftest_sources/pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b/"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-011",
+   "instance_id": "pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b",
+   "kind": "expected_text_replace",
+   "target": "expected_output_json",
+   "edits": [
+    {
+     "old": "\"test_info\": \"ERROR\"",
+     "new": "\"test_info\": \"PASSED\""
+    }
+   ],
+   "sha256_before": "sha256:8db9a02d1baf5fe0e8e3a85600f1dbdf45582536b21817d3404c46d86ac44154",
+   "sha256_after": "sha256:44315607960543be044b3fb3a3668e2d338908829afb8096afd27ec411f81a2e",
+   "revised_file": null,
+   "expected_change": {
+    "changed": {
+     "test_info": [
+      "ERROR",
+      "PASSED"
+     ]
+    },
+    "added": {},
+    "removed": []
+   },
+   "decision_ref": "T0-6 第二步：用户 2026-09-24 夜按 Claude / Codex 一致建议批准把 pandas 4ec87eb9 的代表修复扩到另 6 道 pandas 题（逐题从 base 提取实际依赖的最小 fixture，解释展开键变化，只复验受影响题）",
+   "reason": "fixture 可达后，来源期望里 1 个 ERROR 键在修复后 gold 下都是 PASSED，键集合与顺序不变（这些用例的 fixture 不带参数，不展开）。按修复后 gold 重新核定：两次试跑 21 键全 PASSED，其余 20 键与来源期望逐键相同；noop 两次只在原有目标键 ['test_info_int_columns'] 上 FAILED，与修复前相同。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b.md",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-012",
+   "instance_id": "pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d",
+   "kind": "hidden_test_file_add",
+   "target": "conftest.py",
+   "edits": null,
+   "sha256_before": null,
+   "sha256_after": "sha256:807e86e88d6d98166eb7cd2f09b7e377837d20b71833f31efc82e5ac4aa594eb",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d/r2e_tests/conftest.py",
+   "expected_change": null,
+   "decision_ref": "T0-6 第二步：用户 2026-09-24 夜按 Claude / Codex 一致建议批准把 pandas 4ec87eb9 的代表修复扩到另 6 道 pandas 题（逐题从 base 提取实际依赖的最小 fixture，解释展开键变化，只复验受影响题）",
+   "reason": "隐藏测试从 pandas/tests/reshape/merge/test_multi.py、pandas/tests/indexes/multi/test_join.py 搬到 r2e_tests/ 后，原目录上各层 conftest 不再生效，9 个期望键因 fixture 不可达恒 ERROR。新增私有 r2e_tests/conftest.py，从 base 提交 0be573ee5dc0 的 pandas/conftest.py（git blob 0a3bf31cf966）、pandas/tests/indexes/multi/conftest.py（git blob acaea4ff96ff） 原样摘出隐藏测试实际请求的 fixture ['idx', 'join_type']（按隐藏测试原文静态算出请求清单，同名取最内层，fixture 依赖一并摘出；extract_fixtures.py 生成，逐行未改）；不加 autouse fixture 或 hook，不从工作区的 conftest 导入。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d.md",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "runs/r2e_t0_batch3_20260924/conftest_sources/pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d/"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-013",
+   "instance_id": "pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d",
+   "kind": "expected_file_replace",
+   "target": "expected_output_json",
+   "edits": null,
+   "sha256_before": "sha256:70dfe34653cd2963f6cc3ba0ad9e38d3e357b94e8ab9356a2db0680205528479",
+   "sha256_after": "sha256:77464514522d0ad21b778c2f58c416cedace56762bc8cea51954a3291f084b30",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d/expected_output.json",
+   "expected_change": {
+    "changed": {
+     "test_join_level_corner_case": [
+      "ERROR",
+      "PASSED"
+     ]
+    },
+    "added": {
+     "TestMergeMulti.test_merge_on_multikey[inner]": "PASSED",
+     "TestMergeMulti.test_merge_on_multikey[outer]": "PASSED",
+     "TestMergeMulti.test_merge_on_multikey[left]": "PASSED",
+     "TestMergeMulti.test_merge_on_multikey[right]": "PASSED",
+     "TestJoinMultiMulti.test_join_multi_multi[inner]": "PASSED",
+     "TestJoinMultiMulti.test_join_multi_multi[outer]": "PASSED",
+     "TestJoinMultiMulti.test_join_multi_multi[left]": "PASSED",
+     "TestJoinMultiMulti.test_join_multi_multi[right]": "PASSED",
+     "TestJoinMultiMulti.test_join_multi_empty_frames[inner]": "PASSED",
+     "TestJoinMultiMulti.test_join_multi_empty_frames[outer]": "PASSED",
+     "TestJoinMultiMulti.test_join_multi_empty_frames[left]": "PASSED",
+     "TestJoinMultiMulti.test_join_multi_empty_frames[right]": "PASSED",
+     "test_join_level[inner-other0]": "PASSED",
+     "test_join_level[inner-other1]": "PASSED",
+     "test_join_level[inner-other2]": "PASSED",
+     "test_join_level[outer-other0]": "PASSED",
+     "test_join_level[outer-other1]": "PASSED",
+     "test_join_level[outer-other2]": "PASSED",
+     "test_join_level[left-other0]": "PASSED",
+     "test_join_level[left-other1]": "PASSED",
+     "test_join_level[left-other2]": "PASSED",
+     "test_join_level[right-other0]": "PASSED",
+     "test_join_level[right-other1]": "PASSED",
+     "test_join_level[right-other2]": "PASSED",
+     "test_join_self[inner]": "PASSED",
+     "test_join_self[outer]": "PASSED",
+     "test_join_self[left]": "PASSED",
+     "test_join_self[right]": "PASSED",
+     "test_join_self_unique[inner]": "PASSED",
+     "test_join_self_unique[outer]": "PASSED",
+     "test_join_self_unique[left]": "PASSED",
+     "test_join_self_unique[right]": "PASSED"
+    },
+    "removed": [
+     "TestMergeMulti.test_merge_on_multikey",
+     "TestJoinMultiMulti.test_join_multi_multi",
+     "TestJoinMultiMulti.test_join_multi_empty_frames",
+     "test_join_level[other0]",
+     "test_join_level[other1]",
+     "test_join_level[other2]",
+     "test_join_self",
+     "test_join_self_unique"
+    ]
+   },
+   "decision_ref": "T0-6 第二步：用户 2026-09-24 夜按 Claude / Codex 一致建议批准把 pandas 4ec87eb9 的代表修复扩到另 6 道 pandas 题（逐题从 base 提取实际依赖的最小 fixture，解释展开键变化，只复验受影响题）",
+   "reason": "fixture 可达后，带参数的 fixture 让 8 个 ERROR 键按参数展开成 32 个新键（键名里多出 fixture 的参数 ID，原来的键不再出现），另有 1 个 ERROR 键只改状态为 PASSED。按修复后 gold 重新核定：两次试跑 58 键全 PASSED，其余 25 键与来源期望逐键相同；noop 两次只在原有目标键 ['TestJoinMultiMulti.test_join_multi_wrong_order', 'test_join_multi_wrong_order'] 上 FAILED，与修复前相同，新增键在 noop 下都 PASSED（回归信号）。修订后文件 = 来源原文逐行保留，删除键原位换成展开键，其余逐字不变。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d.md",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d/expected_output.json.diff"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-014",
+   "instance_id": "pandas__f656217a06b31e48474702036e0a5c49f664186c",
+   "kind": "hidden_test_file_add",
+   "target": "conftest.py",
+   "edits": null,
+   "sha256_before": null,
+   "sha256_after": "sha256:69d4ff968a3b5b73b1aa52e9bd1d6dc8465c346999e51fa8397338d21c8f6c20",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__f656217a06b31e48474702036e0a5c49f664186c/r2e_tests/conftest.py",
+   "expected_change": null,
+   "decision_ref": "T0-6 第二步：用户 2026-09-24 夜按 Claude / Codex 一致建议批准把 pandas 4ec87eb9 的代表修复扩到另 6 道 pandas 题（逐题从 base 提取实际依赖的最小 fixture，解释展开键变化，只复验受影响题）",
+   "reason": "隐藏测试从 pandas/tests/reshape/merge/test_merge.py、pandas/tests/reshape/merge/test_join.py 搬到 r2e_tests/ 后，原目录上各层 conftest 不再生效，12 个期望键因 fixture 不可达恒 ERROR。新增私有 r2e_tests/conftest.py，从 base 提交 059c8bac51e4 的 pandas/conftest.py（git blob 35affa62ccf6） 原样摘出隐藏测试实际请求的 fixture ['join_type', 'using_array_manager']（按隐藏测试原文静态算出请求清单，同名取最内层，fixture 依赖一并摘出；extract_fixtures.py 生成，逐行未改）；不加 autouse fixture 或 hook，不从工作区的 conftest 导入。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__f656217a06b31e48474702036e0a5c49f664186c.md",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "runs/r2e_t0_batch3_20260924/conftest_sources/pandas__f656217a06b31e48474702036e0a5c49f664186c/"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-015",
+   "instance_id": "pandas__f656217a06b31e48474702036e0a5c49f664186c",
+   "kind": "expected_file_replace",
+   "target": "expected_output_json",
+   "edits": null,
+   "sha256_before": "sha256:913e2feea6725657764f18216fb774088e678e5c64508ade553d5660ca727454",
+   "sha256_after": "sha256:c6f35af9dcf088ae047e48cd884475bc665566babdd1f51fee6b20bab9366897",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__f656217a06b31e48474702036e0a5c49f664186c/expected_output.json",
+   "expected_change": {
+    "changed": {
+     "TestMerge.test_merge_nocopy": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestMerge.test_join_append_timedeltas": [
+      "ERROR",
+      "PASSED"
+     ]
+    },
+    "added": {
+     "TestMerge.test_merge_left_empty_right_empty[inner-kwarg0]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[inner-kwarg1]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[inner-kwarg2]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[inner-kwarg3]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[outer-kwarg0]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[outer-kwarg1]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[outer-kwarg2]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[outer-kwarg3]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[left-kwarg0]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[left-kwarg1]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[left-kwarg2]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[left-kwarg3]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[right-kwarg0]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[right-kwarg1]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[right-kwarg2]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[right-kwarg3]": "PASSED",
+     "TestMergeCategorical.test_dtype_on_merged_different[inner-<lambda>0]": "PASSED",
+     "TestMergeCategorical.test_dtype_on_merged_different[inner-<lambda>1]": "PASSED",
+     "TestMergeCategorical.test_dtype_on_merged_different[inner-<lambda>2]": "PASSED",
+     "TestMergeCategorical.test_dtype_on_merged_different[outer-<lambda>0]": "PASSED",
+     "TestMergeCategorical.test_dtype_on_merged_different[outer-<lambda>1]": "PASSED",
+     "TestMergeCategorical.test_dtype_on_merged_different[outer-<lambda>2]": "PASSED",
+     "TestMergeCategorical.test_dtype_on_merged_different[left-<lambda>0]": "PASSED",
+     "TestMergeCategorical.test_dtype_on_merged_different[left-<lambda>1]": "PASSED",
+     "TestMergeCategorical.test_dtype_on_merged_different[left-<lambda>2]": "PASSED",
+     "TestMergeCategorical.test_dtype_on_merged_different[right-<lambda>0]": "PASSED",
+     "TestMergeCategorical.test_dtype_on_merged_different[right-<lambda>1]": "PASSED",
+     "TestMergeCategorical.test_dtype_on_merged_different[right-<lambda>2]": "PASSED",
+     "TestJoin.test_join_index_mixed[inner]": "PASSED",
+     "TestJoin.test_join_index_mixed[outer]": "PASSED",
+     "TestJoin.test_join_index_mixed[left]": "PASSED",
+     "TestJoin.test_join_index_mixed[right]": "PASSED",
+     "TestJoin.test_join_multi_to_multi[inner]": "PASSED",
+     "TestJoin.test_join_multi_to_multi[outer]": "PASSED",
+     "TestJoin.test_join_multi_to_multi[left]": "PASSED",
+     "TestJoin.test_join_multi_to_multi[right]": "PASSED",
+     "test_join_multiindex_one_level[inner]": "PASSED",
+     "test_join_multiindex_one_level[outer]": "PASSED",
+     "test_join_multiindex_one_level[left]": "PASSED",
+     "test_join_multiindex_one_level[right]": "PASSED"
+    },
+    "removed": [
+     "TestMerge.test_merge_left_empty_right_empty[kwarg0]",
+     "TestMerge.test_merge_left_empty_right_empty[kwarg1]",
+     "TestMerge.test_merge_left_empty_right_empty[kwarg2]",
+     "TestMerge.test_merge_left_empty_right_empty[kwarg3]",
+     "TestMergeCategorical.test_dtype_on_merged_different[<lambda>0]",
+     "TestMergeCategorical.test_dtype_on_merged_different[<lambda>1]",
+     "TestMergeCategorical.test_dtype_on_merged_different[<lambda>2]",
+     "TestJoin.test_join_index_mixed",
+     "TestJoin.test_join_multi_to_multi",
+     "test_join_multiindex_one_level"
+    ]
+   },
+   "decision_ref": "T0-6 第二步：用户 2026-09-24 夜按 Claude / Codex 一致建议批准把 pandas 4ec87eb9 的代表修复扩到另 6 道 pandas 题（逐题从 base 提取实际依赖的最小 fixture，解释展开键变化，只复验受影响题）",
+   "reason": "fixture 可达后，带参数的 fixture 让 10 个 ERROR 键按参数展开成 40 个新键（键名里多出 fixture 的参数 ID，原来的键不再出现），另有 2 个 ERROR 键只改状态为 PASSED。按修复后 gold 重新核定：两次试跑 353 键全 PASSED，其余 311 键与来源期望逐键相同；noop 两次只在原有目标键 ['TestJoin.test_join_dups', 'test_merge_duplicate_columns_with_suffix_causing_another_duplicate', 'test_merge_suffixes_produce_dup_columns_warns'] 上 FAILED，与修复前相同，新增键在 noop 下都 PASSED（回归信号）。修订后文件 = 来源原文逐行保留，删除键原位换成展开键，其余逐字不变。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__f656217a06b31e48474702036e0a5c49f664186c.md",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__f656217a06b31e48474702036e0a5c49f664186c/expected_output.json.diff"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-016",
+   "instance_id": "pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0",
+   "kind": "hidden_test_file_add",
+   "target": "conftest.py",
+   "edits": null,
+   "sha256_before": null,
+   "sha256_after": "sha256:053ce35970a24eb9f8310b972e911f503ddb27eed9aefd14bb60ba7fa6905061",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/r2e_tests/conftest.py",
+   "expected_change": null,
+   "decision_ref": "T0-6 第二步：用户 2026-09-24 夜按 Claude / Codex 一致建议批准把 pandas 4ec87eb9 的代表修复扩到另 6 道 pandas 题（逐题从 base 提取实际依赖的最小 fixture，解释展开键变化，只复验受影响题）",
+   "reason": "隐藏测试从 pandas/tests/frame/test_analytics.py 搬到 r2e_tests/ 后，原目录上各层 conftest 不再生效，13 个期望键因 fixture 不可达恒 ERROR。新增私有 r2e_tests/conftest.py，从 base 提交 b7f061c3d24d 的 pandas/conftest.py（git blob 11bb16fc0a3a）、pandas/tests/frame/conftest.py（git blob 486d14084915） 原样摘出隐藏测试实际请求的 fixture ['bool_frame_with_na', 'datetime_frame', 'float_frame', 'float_frame_with_na', 'float_string_frame', 'int_frame', 'mixed_float_frame']（按隐藏测试原文静态算出请求清单，同名取最内层，fixture 依赖一并摘出；extract_fixtures.py 生成，逐行未改）；不加 autouse fixture 或 hook，不从工作区的 conftest 导入。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0.md",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3r2/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "runs/r2e_t0_batch3_20260924/conftest_sources/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-017",
+   "instance_id": "pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0",
+   "kind": "expected_text_replace",
+   "target": "expected_output_json",
+   "edits": [
+    {
+     "old": "\"TestDataFrameAnalytics.test_stat_op_api\": \"ERROR\"",
+     "new": "\"TestDataFrameAnalytics.test_stat_op_api\": \"PASSED\""
+    },
+    {
+     "old": "\"TestDataFrameAnalytics.test_stat_op_calc\": \"ERROR\"",
+     "new": "\"TestDataFrameAnalytics.test_stat_op_calc\": \"PASSED\""
+    },
+    {
+     "old": "\"TestDataFrameAnalytics.test_median\": \"ERROR\"",
+     "new": "\"TestDataFrameAnalytics.test_median\": \"PASSED\""
+    },
+    {
+     "old": "\"TestDataFrameAnalytics.test_var_std\": \"ERROR\"",
+     "new": "\"TestDataFrameAnalytics.test_var_std\": \"PASSED\""
+    },
+    {
+     "old": "\"TestDataFrameAnalytics.test_sem\": \"ERROR\"",
+     "new": "\"TestDataFrameAnalytics.test_sem\": \"PASSED\""
+    },
+    {
+     "old": "\"TestDataFrameAnalytics.test_sum_object\": \"ERROR\"",
+     "new": "\"TestDataFrameAnalytics.test_sum_object\": \"PASSED\""
+    },
+    {
+     "old": "\"TestDataFrameAnalytics.test_sum_bool\": \"ERROR\"",
+     "new": "\"TestDataFrameAnalytics.test_sum_bool\": \"PASSED\""
+    },
+    {
+     "old": "\"TestDataFrameAnalytics.test_mean_corner\": \"ERROR\"",
+     "new": "\"TestDataFrameAnalytics.test_mean_corner\": \"PASSED\""
+    },
+    {
+     "old": "\"TestDataFrameAnalytics.test_stats_mixed_type\": \"ERROR\"",
+     "new": "\"TestDataFrameAnalytics.test_stats_mixed_type\": \"PASSED\""
+    },
+    {
+     "old": "\"TestDataFrameAnalytics.test_idxmin\": \"ERROR\"",
+     "new": "\"TestDataFrameAnalytics.test_idxmin\": \"PASSED\""
+    },
+    {
+     "old": "\"TestDataFrameAnalytics.test_idxmax\": \"ERROR\"",
+     "new": "\"TestDataFrameAnalytics.test_idxmax\": \"PASSED\""
+    },
+    {
+     "old": "\"TestDataFrameAnalytics.test_any_all[any]\": \"ERROR\"",
+     "new": "\"TestDataFrameAnalytics.test_any_all[any]\": \"PASSED\""
+    },
+    {
+     "old": "\"TestDataFrameAnalytics.test_any_all[all]\": \"ERROR\"",
+     "new": "\"TestDataFrameAnalytics.test_any_all[all]\": \"PASSED\""
+    }
+   ],
+   "sha256_before": "sha256:b115c1cc79b92b1ab14e90d36c3b5a9bf2d333f8bec18ed7bdecd4fd61f7d95b",
+   "sha256_after": "sha256:9771cde591cfc03943ad96243769be99e38d34c68946db660cd5cd5578a6c73c",
+   "revised_file": null,
+   "expected_change": {
+    "changed": {
+     "TestDataFrameAnalytics.test_stat_op_api": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestDataFrameAnalytics.test_stat_op_calc": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestDataFrameAnalytics.test_median": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestDataFrameAnalytics.test_var_std": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestDataFrameAnalytics.test_sem": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestDataFrameAnalytics.test_sum_object": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestDataFrameAnalytics.test_sum_bool": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestDataFrameAnalytics.test_mean_corner": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestDataFrameAnalytics.test_stats_mixed_type": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestDataFrameAnalytics.test_idxmin": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestDataFrameAnalytics.test_idxmax": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestDataFrameAnalytics.test_any_all[any]": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestDataFrameAnalytics.test_any_all[all]": [
+      "ERROR",
+      "PASSED"
+     ]
+    },
+    "added": {},
+    "removed": []
+   },
+   "decision_ref": "T0-6 第二步：用户 2026-09-24 夜按 Claude / Codex 一致建议批准把 pandas 4ec87eb9 的代表修复扩到另 6 道 pandas 题（逐题从 base 提取实际依赖的最小 fixture，解释展开键变化，只复验受影响题）",
+   "reason": "fixture 可达后，来源期望里 13 个 ERROR 键在修复后 gold 下都是 PASSED，键集合与顺序不变（这些用例的 fixture 不带参数，不展开）。按修复后 gold 重新核定：两次试跑 92 键全 PASSED，其余 79 键与来源期望逐键相同；noop 两次只在原有目标键 ['TestDataFrameAnalytics.test_mean_datetimelike_numeric_only_false', 'TestDataFrameAnalytics.test_mean_extensionarray_numeric_only_true'] 上 FAILED，与修复前相同。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0.md",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3r2/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-018",
+   "instance_id": "pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af",
+   "kind": "hidden_test_file_add",
+   "target": "conftest.py",
+   "edits": null,
+   "sha256_before": null,
+   "sha256_after": "sha256:13879fd7eae2c25c28125a440e8be64d2fe0e4372b3f79b4ef5a1e7e4952d5f1",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af/r2e_tests/conftest.py",
+   "expected_change": null,
+   "decision_ref": "T0-6 第二步：用户 2026-09-24 夜按 Claude / Codex 一致建议批准把 pandas 4ec87eb9 的代表修复扩到另 6 道 pandas 题（逐题从 base 提取实际依赖的最小 fixture，解释展开键变化，只复验受影响题）",
+   "reason": "隐藏测试从 pandas/tests/indexes/ranges/test_setops.py 搬到 r2e_tests/ 后，原目录上各层 conftest 不再生效，4 个期望键因 fixture 不可达恒 ERROR。新增私有 r2e_tests/conftest.py，从 base 提交 f5c224215ad0 的 pandas/conftest.py（git blob 75711b19dfcf）、pandas/tests/indexes/conftest.py（git blob 2eae51c62aa0） 原样摘出隐藏测试实际请求的 fixture ['names', 'sort']（按隐藏测试原文静态算出请求清单，同名取最内层，fixture 依赖一并摘出；extract_fixtures.py 生成，逐行未改）；不加 autouse fixture 或 hook，不从工作区的 conftest 导入。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af.md",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3r2/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "runs/r2e_t0_batch3_20260924/conftest_sources/pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af/"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-019",
+   "instance_id": "pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af",
+   "kind": "expected_file_replace",
+   "target": "expected_output_json",
+   "edits": null,
+   "sha256_before": "sha256:3310e7d5f646217e1aab1a51cfdf0fde1acb26c2b153ee5640c0995260bb4f6b",
+   "sha256_after": "sha256:cc54d19ff8501f9328c5f1ef26d2fe68ea8f647830437e880e9daa4525d69397",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af/expected_output.json",
+   "expected_change": {
+    "changed": {},
+    "added": {
+     "TestRangeIndexSetOps.test_intersection_empty[None-names0]": "PASSED",
+     "TestRangeIndexSetOps.test_intersection_empty[None-names1]": "PASSED",
+     "TestRangeIndexSetOps.test_intersection_empty[None-names2]": "PASSED",
+     "TestRangeIndexSetOps.test_intersection_empty[False-names0]": "PASSED",
+     "TestRangeIndexSetOps.test_intersection_empty[False-names1]": "PASSED",
+     "TestRangeIndexSetOps.test_intersection_empty[False-names2]": "PASSED",
+     "TestRangeIndexSetOps.test_intersection[None]": "PASSED",
+     "TestRangeIndexSetOps.test_intersection[False]": "PASSED",
+     "TestRangeIndexSetOps.test_intersection_non_overlapping_gcd[None-names0]": "PASSED",
+     "TestRangeIndexSetOps.test_intersection_non_overlapping_gcd[None-names1]": "PASSED",
+     "TestRangeIndexSetOps.test_intersection_non_overlapping_gcd[None-names2]": "PASSED",
+     "TestRangeIndexSetOps.test_intersection_non_overlapping_gcd[False-names0]": "PASSED",
+     "TestRangeIndexSetOps.test_intersection_non_overlapping_gcd[False-names1]": "PASSED",
+     "TestRangeIndexSetOps.test_intersection_non_overlapping_gcd[False-names2]": "PASSED",
+     "TestRangeIndexSetOps.test_union_noncomparable[None]": "PASSED",
+     "TestRangeIndexSetOps.test_union_noncomparable[False]": "PASSED"
+    },
+    "removed": [
+     "TestRangeIndexSetOps.test_intersection_empty",
+     "TestRangeIndexSetOps.test_intersection",
+     "TestRangeIndexSetOps.test_intersection_non_overlapping_gcd",
+     "TestRangeIndexSetOps.test_union_noncomparable"
+    ]
+   },
+   "decision_ref": "T0-6 第二步：用户 2026-09-24 夜按 Claude / Codex 一致建议批准把 pandas 4ec87eb9 的代表修复扩到另 6 道 pandas 题（逐题从 base 提取实际依赖的最小 fixture，解释展开键变化，只复验受影响题）",
+   "reason": "fixture 可达后，带参数的 fixture 让 4 个 ERROR 键按参数展开成 16 个新键（键名里多出 fixture 的参数 ID，原来的键不再出现），另有 0 个 ERROR 键只改状态为 PASSED。按修复后 gold 重新核定：两次试跑 46 键全 PASSED，其余 30 键与来源期望逐键相同；noop 两次只在原有目标键 ['TestRangeIndexSetOps.test_difference', 'TestRangeIndexSetOps.test_difference_sort'] 上 FAILED，与修复前相同，新增键在 noop 下都 PASSED（回归信号）。修订后文件 = 来源原文逐行保留，删除键原位换成展开键，其余逐字不变。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af.md",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3r2/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af/expected_output.json.diff"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-020",
+   "instance_id": "orange3__9b5494e26f407b75e79699c9d40be6df1d80a040",
+   "kind": "expected_text_replace",
+   "target": "expected_output_json",
+   "edits": [
+    {
+     "old": "\"TestLogisticRegressionLearner.test_LogisticRegression\": \"FAILED\"",
+     "new": "\"TestLogisticRegressionLearner.test_LogisticRegression\": \"PASSED\""
+    },
+    {
+     "old": "\"TestLogisticRegressionLearner.test_coefficients\": \"FAILED\"",
+     "new": "\"TestLogisticRegressionLearner.test_coefficients\": \"PASSED\""
+    }
+   ],
+   "sha256_before": "sha256:9645a5c3480a6a460da556fbeda8f76c61b9198f4813516ab26ecb847a861358",
+   "sha256_after": "sha256:cd034086c160e69a531b6d1d74dc5b00734a672e364575c273877515518ff240",
+   "revised_file": null,
+   "expected_change": {
+    "changed": {
+     "TestLogisticRegressionLearner.test_LogisticRegression": [
+      "FAILED",
+      "PASSED"
+     ],
+     "TestLogisticRegressionLearner.test_coefficients": [
+      "FAILED",
+      "PASSED"
+     ]
+    },
+    "added": {},
+    "removed": []
+   },
+   "decision_ref": "T0-7：用户 2026-09-24 夜按 Claude / Codex 一致建议批准方案 B（SciPy 1.5.4 环境配方 + 两个恢复键的期望修订；两个 scorer 键保持未完成项）",
+   "reason": "来源镜像的 SciPy 1.7.3 把 L-BFGS-B 的 message 解码成 str，scikit-learn 0.22.2.post1 在 lbfgs 未收敛时仍对它调 .decode，这两个键因此 FAILED 并被写进来源期望（E17 诊断）。本批环境配方 +env_v2 把 SciPy 固定为 1.5.4（env_pins_v2），派生镜像上原样材料 gold 三次逐键相同：这两键 PASSED，其余 11 键与来源期望相同（两个 scorer 键仍 FAILED，原因未定位，保持未完成项）；noop 三次逐键相同，FAILED 键为 ['TestLogisticRegressionLearner.test_auto_solver', 'TestLogisticRegressionLearner.test_learner_scorer', 'TestLogisticRegressionLearner.test_learner_scorer_multiclass', 'TestLogisticRegressionLearner.test_probability']。键集合与顺序不变。本修订只在 +env_v2 镜像上成立：没有该环境配方的镜像上这两键仍会 FAILED。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/orange3__9b5494e26f407b75e79699c9d40be6df1d80a040.md",
+    "runs/r2e_t0_batch2_20260924/diag_orange3/",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3o/（+env_v2 派生镜像上的原样材料试跑，noop / gold 各 3 次）",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/recipes/env_pins_v2.json"
+   ]
+  }
+ ]
+}

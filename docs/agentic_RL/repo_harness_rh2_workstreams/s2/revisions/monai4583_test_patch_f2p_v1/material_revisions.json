@@ -1,0 +1,31 @@
+{
+  "revisions": [
+    {
+      "added_fail_to_pass": [
+        "tests/test_box_transform.py::TestBoxTransform::test_sparse_3d_mask_preserves_foreground_labels_cpu"
+      ],
+      "base_commit": "9c4710199b80178ad11f7dd74925eee3ae921863",
+      "effective_test_patch": "diff --git a/tests/test_box_transform.py b/tests/test_box_transform.py\n--- a/tests/test_box_transform.py\n+++ b/tests/test_box_transform.py\n@@ -15,6 +15,7 @@\n import torch\n from parameterized import parameterized\n \n+from monai.apps.detection.transforms.box_ops import convert_mask_to_box\n from monai.apps.detection.transforms.dictionary import (\n     AffineBoxToImageCoordinated,\n     AffineBoxToWorldCoordinated,\n@@ -64,8 +65,49 @@\n         [{\"boxes\": p(boxes), \"image\": p(image), \"labels\": p(labels)}, p([[[0, 2], [0, 2]], [[1, 0], [0, 0]]])]\n     )\n \n+TESTS_2D_mask = []\n+boxes_mask = [[[-1, 0], [0, -1]]]\n+for p in TEST_NDARRAYS:\n+    TESTS_2D_mask.append([p(boxes_mask), (p([[0.0, 0.0, 2.0, 2.0]]), p([0]))])\n+boxes_mask = [[[-1, 0], [0, -1]], [[-1, 1], [1, -1]]]\n+for p in TEST_NDARRAYS:\n+    TESTS_2D_mask.append([p(boxes_mask), (p([[0.0, 0.0, 2.0, 2.0], [0.0, 0.0, 2.0, 2.0]]), p([0, 1]))])\n+\n \n class TestBoxTransform(unittest.TestCase):\n+    def test_sparse_3d_mask_preserves_foreground_labels_cpu(self):\n+        mask = np.full((2, 2, 2, 2), -1, dtype=np.int16)\n+        for channel, label in enumerate((0, 7)):\n+            for point in ((0, 1, 0), (1, 0, 1)):\n+                mask[(channel,) + point] = label\n+        for backend in (\"numpy\", \"torch\"):\n+            for custom_dtype in (False, True):\n+                with self.subTest(backend=backend, custom_dtype=custom_dtype):\n+                    value = mask.copy() if backend == \"numpy\" else torch.from_numpy(mask.copy())\n+                    kwargs = dict(box_dtype=torch.float64, label_dtype=torch.int32) if custom_dtype else {}\n+                    boxes, labels = convert_mask_to_box(value, **kwargs)\n+                    self.assertIs(type(boxes), type(value))\n+                    self.assertIs(type(labels), type(value))\n+                    if backend == \"torch\":\n+                        self.assertEqual(value.device.type, \"cpu\")\n+                        self.assertEqual(boxes.device, value.device)\n+                        self.assertEqual(labels.device, value.device)\n+                        self.assertEqual(boxes.dtype, torch.float64 if custom_dtype else torch.float32)\n+                        self.assertEqual(labels.dtype, torch.int32 if custom_dtype else torch.int64)\n+                        boxes_np, labels_np = boxes.cpu().numpy(), labels.cpu().numpy()\n+                    else:\n+                        self.assertEqual(boxes.dtype, np.dtype(\"float64\" if custom_dtype else \"float32\"))\n+                        self.assertEqual(labels.dtype, np.dtype(\"int32\" if custom_dtype else \"int64\"))\n+                        boxes_np, labels_np = boxes, labels\n+                    self.assertEqual(boxes_np.tolist(), [[0.0, 0.0, 0.0, 2.0, 2.0, 2.0]] * 2)\n+                    self.assertEqual(labels_np.tolist(), [0, 7])\n+\n+    @parameterized.expand(TESTS_2D_mask)\n+    def test_value_2d_mask(self, mask, expected_box_label):\n+        box_label = convert_mask_to_box(mask)\n+        assert_allclose(box_label[0], expected_box_label[0], type_test=True, device_test=True, atol=1e-3)\n+        assert_allclose(box_label[1], expected_box_label[1], type_test=True, device_test=True, atol=1e-3)\n+\n     @parameterized.expand(TESTS_2D)\n     def test_value_2d(self, data, expected_mask):\n         test_dtype = [torch.float32, torch.float16]\n",
+      "effective_test_patch_sha256": "sha256:83e31b5c48df7940fb699768b39205cb41216fa5ead955979b83795d8a74233b",
+      "evidence_refs": [
+        "category2_repair_20260929/swe_materials/monai4583_next/materials_manifest.json",
+        "category2_repair_20260929/d6/monai4583_implementation_brief_20260930.md"
+      ],
+      "instance_id": "Project-MONAI__MONAI-4583",
+      "operation": "replace_test_patch_append_f2p",
+      "original_test_patch": "diff --git a/tests/test_box_transform.py b/tests/test_box_transform.py\n--- a/tests/test_box_transform.py\n+++ b/tests/test_box_transform.py\n@@ -15,6 +15,7 @@\n import torch\n from parameterized import parameterized\n \n+from monai.apps.detection.transforms.box_ops import convert_mask_to_box\n from monai.apps.detection.transforms.dictionary import (\n     AffineBoxToImageCoordinated,\n     AffineBoxToWorldCoordinated,\n@@ -64,8 +65,22 @@\n         [{\"boxes\": p(boxes), \"image\": p(image), \"labels\": p(labels)}, p([[[0, 2], [0, 2]], [[1, 0], [0, 0]]])]\n     )\n \n+TESTS_2D_mask = []\n+boxes_mask = [[[-1, 0], [0, -1]]]\n+for p in TEST_NDARRAYS:\n+    TESTS_2D_mask.append([p(boxes_mask), (p([[0.0, 0.0, 2.0, 2.0]]), p([0]))])\n+boxes_mask = [[[-1, 0], [0, -1]], [[-1, 1], [1, -1]]]\n+for p in TEST_NDARRAYS:\n+    TESTS_2D_mask.append([p(boxes_mask), (p([[0.0, 0.0, 2.0, 2.0], [0.0, 0.0, 2.0, 2.0]]), p([0, 1]))])\n+\n \n class TestBoxTransform(unittest.TestCase):\n+    @parameterized.expand(TESTS_2D_mask)\n+    def test_value_2d_mask(self, mask, expected_box_label):\n+        box_label = convert_mask_to_box(mask)\n+        assert_allclose(box_label[0], expected_box_label[0], type_test=True, device_test=True, atol=1e-3)\n+        assert_allclose(box_label[1], expected_box_label[1], type_test=True, device_test=True, atol=1e-3)\n+\n     @parameterized.expand(TESTS_2D)\n     def test_value_2d(self, data, expected_mask):\n         test_dtype = [torch.float32, torch.float16]\n",
+      "parent_grading_digest": "sha256:56f52f4bebe7bd2db4c31cf46976e3267c0bd1ec019b63bf85f9a5489a5d2f36",
+      "public_bundle_digest": "sha256:c1d76edfb73f1a0a2a1c91765952b43f5d1f82b964ab4851eccea17c3494e164",
+      "repo": "Project-MONAI/MONAI",
+      "revision_id": "monai4583-sparse-3d-cpu-v1",
+      "test_files": [
+        {
+          "base_sha256": "sha256:f9e0cf78b5117f34d7151f859fce8e1700633d1f39fbba8fb89aadfdb0f88cfe",
+          "path": "tests/test_box_transform.py"
+        }
+      ],
+      "test_patch_sha256": "sha256:e8fd6d4ba88a8ef9b5adcfd16fd6e7099244568d24bccbdf848298d2156fa306"
+    }
+  ],
+  "schema_id": "rh2.swe_material_revision_registry.v1"
+}

@@ -1,0 +1,1776 @@
+{
+ "schema_id": "rh2.s2_r2e.material_revisions.v2",
+ "purpose": "R2E 材料修订单 v9：v8 全部 56 条逐字保留，追加单题闭环试行（2026-09-29）第 6 轮 1 条（orange3 4014：v1 §4 第 3 步退化候选正式评分得 1 之后的 R-c，新断言并进已有目标测试、期望映射不变；统一标准 v1 §5 / §9 D4 模板授权，Claude 执行、Codex 复核通过）",
+ "revisions": [
+  {
+   "revision_id": "r2e-mr-001",
+   "instance_id": "coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae",
+   "kind": "expected_text_replace",
+   "target": "expected_output_json",
+   "sha256_before": "sha256:effd25a22106cba51f1c6486eb24854cc7d1c3baa984fd47e612c2da6cbfa212",
+   "sha256_after": "sha256:f353157ec8e86a79e172920a44f6cbbdc8d1bb049c77f8292f7bd70dfc713e3e",
+   "revised_file": null,
+   "decision_ref": "T0-1：用户 2026-09-24 批准方案 A（修订版期望，只改这一个键）",
+   "reason": "该键在来源记录里是 FAILED，原因是来源方宿主机检出环境里测试子进程缺 mock（ModuleNotFoundError）；发布镜像的 venv 装有 mock 3.0.5，RH2 4 次 + M3 9 次实测全部 PASSED，gold 按原期望恒为 14/15、永远拿不到 1。改为 PASSED 后预计 gold 15/15、noop 只剩目标键 ExecTest.test_unencodable_filename 不符。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl（该题 execution_result_content 的 new/old_commit_res_stdout）",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-c_2c95f1f9.eval.log",
+    "runs/env_overnight_20260916/M3/facts/016af5f6352d/"
+   ],
+   "edits": [
+    {
+     "old": "\"MockingProtectionTest.test_os_path_exists\": \"FAILED\"",
+     "new": "\"MockingProtectionTest.test_os_path_exists\": \"PASSED\""
+    }
+   ],
+   "expected_change": {
+    "changed": {
+     "MockingProtectionTest.test_os_path_exists": [
+      "FAILED",
+      "PASSED"
+     ]
+    },
+    "added": {},
+    "removed": []
+   }
+  },
+  {
+   "revision_id": "r2e-mr-002",
+   "instance_id": "datalad__58ba5165234cb16de0e8463ee75097362099835f",
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "sha256_before": "sha256:6b6cf385b043da6815a4cef0b07386a8460422d46043bb62bb537a7fa1f0bda5",
+   "sha256_after": "sha256:c06d1682256c135df3c23c5bf935c794e8fff23ebbbcb2f42ec339d24508aa9d",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/datalad__58ba5165234cb16de0e8463ee75097362099835f/r2e_tests/test_1.py",
+   "decision_ref": "T0-2：用户 2026-09-24 批准方案 B1（隐藏测试一行导入改为同目录 test_2，expected 不变）",
+   "reason": "隐藏 test_1.py 从仓库内 datalad.interface.tests.test_docs 导入 demo_doc 等常量；上游修复提交同时改了该模块，但 gold 按规则不含测试路径，工作区里是修复前的常量，导致 test_alter_interface_docs_for_cmdline 在任何源码修复下都 FAILED（gold 3/4）。隐藏测试目录里的 test_2.py 与上游修复后的 test_docs.py 逐字节相同（sha256 2a3a29f7…），改为从它导入即恢复修复后的支撑材料。沙盒 dry-run：noop 2/4、gold 4/4。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/datalad__58ba5165234cb16de0e8463ee75097362099835f.md",
+    "runs/r2e_env_repair_20260924/p2/dryrun_58ba/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/datalad__58ba5165234cb16de0e8463ee75097362099835f/r2e_tests/test_1.py.diff"
+   ],
+   "edits": [
+    {
+     "old": "from datalad.interface.tests.test_docs import (\n",
+     "new": "from .test_2 import (\n"
+    }
+   ],
+   "expected_change": null
+  },
+  {
+   "revision_id": "r2e-mr-003",
+   "instance_id": "scrapy__cfed9b6659c90e0799361911b1d72ed127edf471",
+   "kind": "hidden_test_file_add",
+   "target": "test.egg",
+   "edits": null,
+   "sha256_before": null,
+   "sha256_after": "sha256:4b1ddd46f6768d2c41f5ccb5cee26e7e833c1139273d83a36a3bbe5801897676",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/r2e_tests/test.egg",
+   "expected_change": null,
+   "decision_ref": "T0-5：用户 2026-09-24 晚批准修复搬迁支撑（方案 B：补回夹具、改正自引用、按修复后 gold 重新核定期望）",
+   "reason": "隐藏 test_1.py 的 test_walk_modules_egg 按 os.path.dirname(__file__) 找 test.egg；R2E 把测试搬进 r2e_tests/ 时没带上这个夹具，用例恒 FAILED（ModuleNotFoundError: testegg）。内容取自 base 提交 54216d7a 的 tests/test_utils_misc/test.egg（git blob 238517694b30，镜像里与索引一致，2231 字节），原样放回隐藏测试目录。试跑：只加 egg 时该键在 gold 下变 PASSED。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471.md",
+    "runs/r2e_t0_batch2_20260924/dryrun_b2/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch2_20260924/drafts_src/scrapy_test_54216d7a.egg"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-004",
+   "instance_id": "scrapy__cfed9b6659c90e0799361911b1d72ed127edf471",
+   "kind": "hidden_test_text_replace",
+   "target": "test_2.py",
+   "edits": [
+    {
+     "old": "'tests.test_middleware.%s'",
+     "new": "'r2e_tests.test_2.%s'"
+    },
+    {
+     "old": "'tests.test_middleware.M1'",
+     "new": "'r2e_tests.test_2.M1'"
+    }
+   ],
+   "sha256_before": "sha256:6575ec0baafa4e6033fed017eb1eda70536b31a09760877e108c3025e0080af2",
+   "sha256_after": "sha256:7135f2f4b94eeb00235713812e3ef38fbf4a2dd40b22439f9c268f5274451019",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/r2e_tests/test_2.py",
+   "expected_change": null,
+   "decision_ref": "T0-5：用户 2026-09-24 晚批准修复搬迁支撑（方案 B：补回夹具、改正自引用、按修复后 gold 重新核定期望）",
+   "reason": "隐藏 test_2.py 用字符串 'tests.test_middleware.<类名>' 自引用测试模块里的中间件类；搬到 r2e_tests/ 后这些字符串指向公开旧模块里的另一组类对象，test_enabled_from_settings 与 test_instances_from_settings 恒 FAILED（类身份错位）。两处字符串改为 r2e_tests.test_2（r2e_tests 带 __init__.py，是包）。试跑：只改路径时这两键在 gold 下变 PASSED；test_instances_from_settings 在 noop 下仍 FAILED（落在 base 的 load_object 对类调 .rindex），成为中间件实例修复的活键。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471.md",
+    "runs/r2e_t0_batch2_20260924/dryrun_b2/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/r2e_tests/test_2.py.diff"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-005",
+   "instance_id": "scrapy__cfed9b6659c90e0799361911b1d72ed127edf471",
+   "kind": "expected_text_replace",
+   "target": "expected_output_json",
+   "edits": [
+    {
+     "old": "\"UtilsMiscTestCase.test_walk_modules_egg\": \"FAILED\"",
+     "new": "\"UtilsMiscTestCase.test_walk_modules_egg\": \"PASSED\""
+    },
+    {
+     "old": "\"MiddlewareManagerTest.test_enabled_from_settings\": \"FAILED\"",
+     "new": "\"MiddlewareManagerTest.test_enabled_from_settings\": \"PASSED\""
+    },
+    {
+     "old": "\"MiddlewareManagerTest.test_instances_from_settings\": \"FAILED\"",
+     "new": "\"MiddlewareManagerTest.test_instances_from_settings\": \"PASSED\""
+    }
+   ],
+   "sha256_before": "sha256:f0cb9466235d30d9251bad5a293e37ace31fb8ba4a3b50f28ea61b6d3acc17d1",
+   "sha256_after": "sha256:76cfa17162771f2c56bbe13f6c70b22ebfd1992e12955906b0e573d5c89a8528",
+   "revised_file": null,
+   "expected_change": {
+    "changed": {
+     "UtilsMiscTestCase.test_walk_modules_egg": [
+      "FAILED",
+      "PASSED"
+     ],
+     "MiddlewareManagerTest.test_enabled_from_settings": [
+      "FAILED",
+      "PASSED"
+     ],
+     "MiddlewareManagerTest.test_instances_from_settings": [
+      "FAILED",
+      "PASSED"
+     ]
+    },
+    "added": {},
+    "removed": []
+   },
+   "decision_ref": "T0-5：用户 2026-09-24 晚批准修复搬迁支撑（方案 B：补回夹具、改正自引用、按修复后 gold 重新核定期望）",
+   "reason": "来源期望里这 3 个键是 FAILED，全部来自上面两处搬迁伪影。修好支撑后按修复后 gold 重新核定：两次试跑 9 键全 PASSED，与修订后期望逐键相同；noop 两次都只差 test_load_object 与 test_instances_from_settings 两个键。键集合与顺序不变。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471.md",
+    "runs/r2e_t0_batch2_20260924/dryrun_b2/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-006",
+   "instance_id": "pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199",
+   "kind": "hidden_test_file_add",
+   "target": "conftest.py",
+   "edits": null,
+   "sha256_before": null,
+   "sha256_after": "sha256:632b5ee3769b3615c8bffd93070b6eac1375ddde14fcc964d138fa44454528e4",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/r2e_tests/conftest.py",
+   "expected_change": null,
+   "decision_ref": "T0-6：用户 2026-09-24 晚批准先在 pandas 4ec87eb9 上做私有 fixture 的代表修复（方案 B），再决定是否扩到 7 题",
+   "reason": "隐藏测试从 pandas/tests/groupby/test_quantile.py 搬到 r2e_tests/ 后，pytest 不再加载 pandas/conftest.py，test_groupby_quantile_NA_float / _NA_int 用到的 any_float_dtype、any_int_ea_dtype 两个 fixture 不可达，两用例恒 ERROR——被掩盖的正是题面场景。新增私有 r2e_tests/conftest.py，从 base 提交 baa10328 的 pandas/conftest.py（git blob 46975aa039b1）原样摘出这两个 fixture；不加其它 fixture、autouse 或 hook，不从工作区的 conftest 导入。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199.md",
+    "runs/r2e_t0_batch2_20260924/dryrun_b2/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch2_20260924/drafts_src/pandas_conftest_base_baa10328.py"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-007",
+   "instance_id": "pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199",
+   "kind": "expected_file_replace",
+   "target": "expected_output_json",
+   "edits": null,
+   "sha256_before": "sha256:19f481a294bdbfaed7e72858fb5e5fa3215c1ba9479cb0e600585d7ca3b69336",
+   "sha256_after": "sha256:bdf1ddf52be5d557f6454f264d068c661cad404cc471ef3315af0a0e0f482a30",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/expected_output.json",
+   "expected_change": {
+    "changed": {},
+    "added": {
+     "test_groupby_quantile_NA_float[float]": "PASSED",
+     "test_groupby_quantile_NA_float[float32]": "PASSED",
+     "test_groupby_quantile_NA_float[float64]": "PASSED",
+     "test_groupby_quantile_NA_float[Float32]": "PASSED",
+     "test_groupby_quantile_NA_float[Float64]": "PASSED",
+     "test_groupby_quantile_NA_int[UInt8]": "PASSED",
+     "test_groupby_quantile_NA_int[UInt16]": "PASSED",
+     "test_groupby_quantile_NA_int[UInt32]": "PASSED",
+     "test_groupby_quantile_NA_int[UInt64]": "PASSED",
+     "test_groupby_quantile_NA_int[Int8]": "PASSED",
+     "test_groupby_quantile_NA_int[Int16]": "PASSED",
+     "test_groupby_quantile_NA_int[Int32]": "PASSED",
+     "test_groupby_quantile_NA_int[Int64]": "PASSED"
+    },
+    "removed": [
+     "test_groupby_quantile_NA_float",
+     "test_groupby_quantile_NA_int"
+    ]
+   },
+   "decision_ref": "T0-6：用户 2026-09-24 晚批准先在 pandas 4ec87eb9 上做私有 fixture 的代表修复（方案 B），再决定是否扩到 7 题",
+   "reason": "fixture 可达后两个用例按参数展开成 13 个键（浮点 5 个、可空整数 8 个），原来的 2 个 ERROR 键不再出现。按修复后 gold 重新核定：两次试跑 237 键全 PASSED，其余 224 键与来源期望逐键相同；noop 两次都是 4 个 FAILED（原有 allNA 两键 + 新增 NA_float[Float32] / [Float64]，即题面场景）。修订后文件 = 来源原文把最后两行换成 13 个新键，其余逐字不变。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199.md",
+    "runs/r2e_t0_batch2_20260924/dryrun_b2/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/expected_output.json.diff"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-008",
+   "instance_id": "pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf",
+   "kind": "hidden_test_file_add",
+   "target": "conftest.py",
+   "edits": null,
+   "sha256_before": null,
+   "sha256_after": "sha256:29f48f174e4267c00face05063dd88bc28955bb29baac620305bf507c7ee7207",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf/r2e_tests/conftest.py",
+   "expected_change": null,
+   "decision_ref": "T0-6 第二步：用户 2026-09-24 夜按 Claude / Codex 一致建议批准把 pandas 4ec87eb9 的代表修复扩到另 6 道 pandas 题（逐题从 base 提取实际依赖的最小 fixture，解释展开键变化，只复验受影响题）",
+   "reason": "隐藏测试从 pandas/tests/indexing/test_loc.py 搬到 r2e_tests/ 后，原目录上各层 conftest 不再生效，17 个期望键因 fixture 不可达恒 ERROR。新增私有 r2e_tests/conftest.py，从 base 提交 5abc06fbb9b9 的 pandas/conftest.py（git blob a0ec6f96042f） 原样摘出隐藏测试实际请求的 fixture ['datetime_series', 'float_frame', 'frame_or_series', 'multiindex_year_month_day_dataframe_random_data', 'ordered', 'string_series']（按隐藏测试原文静态算出请求清单，同名取最内层，fixture 依赖一并摘出；extract_fixtures.py 生成，逐行未改）；不加 autouse fixture 或 hook，不从工作区的 conftest 导入。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf.md",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "runs/r2e_t0_batch3_20260924/conftest_sources/pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf/"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-009",
+   "instance_id": "pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf",
+   "kind": "expected_file_replace",
+   "target": "expected_output_json",
+   "edits": null,
+   "sha256_before": "sha256:d22264ec558d3a33e8f542360c04afaaa1f8e022fe95e105778ff721f8240a6c",
+   "sha256_after": "sha256:1baddeda6944b9f306498f4f5d5378072aa92754e04ffa6018be0cf013d24117",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf/expected_output.json",
+   "expected_change": {
+    "changed": {
+     "TestLoc2.test_loc_getitem_iterable[iter]": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestLoc2.test_loc_getitem_iterable[array]": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestLoc2.test_loc_getitem_iterable[Series]": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestLoc2.test_loc_getitem_iterable[Index]": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestLocWithMultiIndex.test_loc_preserve_names": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestLocSeries.test_loc_getitem": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestLocSeries.test_loc_getitem_not_monotonic": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestLocSeries.test_loc_getitem_iterator": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestLocSeries.test_loc_setitem_boolean": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestLocSeries.test_loc_setitem_corner": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestLocSeries.test_basic_setitem_with_labels": [
+      "ERROR",
+      "PASSED"
+     ]
+    },
+    "added": {
+     "TestLoc2.test_loc_getitem_time_object[DataFrame]": "PASSED",
+     "TestLoc2.test_loc_getitem_time_object[Series]": "PASSED",
+     "TestLocSetitemWithExpansion.test_loc_setitem_categorical_column_retains_dtype[True]": "PASSED",
+     "TestLocSetitemWithExpansion.test_loc_setitem_categorical_column_retains_dtype[False]": "PASSED",
+     "TestLocSetitemWithExpansion.test_loc_setitem_categorical_column_retains_dtype[None]": "PASSED",
+     "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[DataFrame-2018]": "PASSED",
+     "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[DataFrame-2020]": "PASSED",
+     "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[Series-2018]": "PASSED",
+     "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[Series-2020]": "PASSED",
+     "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[DataFrame-1]": "PASSED",
+     "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[DataFrame-1.5]": "PASSED",
+     "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[Series-1]": "PASSED",
+     "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[Series-1.5]": "PASSED"
+    },
+    "removed": [
+     "TestLoc2.test_loc_getitem_time_object",
+     "TestLocSetitemWithExpansion.test_loc_setitem_categorical_column_retains_dtype",
+     "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[2018]",
+     "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[2020]",
+     "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[1]",
+     "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[1.5]"
+    ]
+   },
+   "decision_ref": "T0-6 第二步：用户 2026-09-24 夜按 Claude / Codex 一致建议批准把 pandas 4ec87eb9 的代表修复扩到另 6 道 pandas 题（逐题从 base 提取实际依赖的最小 fixture，解释展开键变化，只复验受影响题）",
+   "reason": "fixture 可达后，带参数的 fixture 让 6 个 ERROR 键按参数展开成 13 个新键（键名里多出 fixture 的参数 ID，原来的键不再出现），另有 11 个 ERROR 键只改状态为 PASSED。按修复后 gold 重新核定：两次试跑 162 键全 PASSED，其余 138 键与来源期望逐键相同；noop 两次只在原有目标键 ['TestLoc2.test_loc_setitem_empty_append_expands_rows_mixed_dtype'] 上 FAILED，与修复前相同，新增键在 noop 下都 PASSED（回归信号）。修订后文件 = 来源原文逐行保留，删除键原位换成展开键，其余逐字不变。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf.md",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf/expected_output.json.diff"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-010",
+   "instance_id": "pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b",
+   "kind": "hidden_test_file_add",
+   "target": "conftest.py",
+   "edits": null,
+   "sha256_before": null,
+   "sha256_after": "sha256:61b16c6a2f03467919cde95d0d73ad16facbeb56d5e96cd99adcf70255452b0f",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b/r2e_tests/conftest.py",
+   "expected_change": null,
+   "decision_ref": "T0-6 第二步：用户 2026-09-24 夜按 Claude / Codex 一致建议批准把 pandas 4ec87eb9 的代表修复扩到另 6 道 pandas 题（逐题从 base 提取实际依赖的最小 fixture，解释展开键变化，只复验受影响题）",
+   "reason": "隐藏测试从 pandas/tests/io/formats/test_info.py 搬到 r2e_tests/ 后，原目录上各层 conftest 不再生效，1 个期望键因 fixture 不可达恒 ERROR。新增私有 r2e_tests/conftest.py，从 base 提交 13df3ec070e8 的 pandas/conftest.py（git blob ebb24c184d9a） 原样摘出隐藏测试实际请求的 fixture ['float_frame']（按隐藏测试原文静态算出请求清单，同名取最内层，fixture 依赖一并摘出；extract_fixtures.py 生成，逐行未改）；不加 autouse fixture 或 hook，不从工作区的 conftest 导入。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b.md",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "runs/r2e_t0_batch3_20260924/conftest_sources/pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b/"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-011",
+   "instance_id": "pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b",
+   "kind": "expected_text_replace",
+   "target": "expected_output_json",
+   "edits": [
+    {
+     "old": "\"test_info\": \"ERROR\"",
+     "new": "\"test_info\": \"PASSED\""
+    }
+   ],
+   "sha256_before": "sha256:8db9a02d1baf5fe0e8e3a85600f1dbdf45582536b21817d3404c46d86ac44154",
+   "sha256_after": "sha256:44315607960543be044b3fb3a3668e2d338908829afb8096afd27ec411f81a2e",
+   "revised_file": null,
+   "expected_change": {
+    "changed": {
+     "test_info": [
+      "ERROR",
+      "PASSED"
+     ]
+    },
+    "added": {},
+    "removed": []
+   },
+   "decision_ref": "T0-6 第二步：用户 2026-09-24 夜按 Claude / Codex 一致建议批准把 pandas 4ec87eb9 的代表修复扩到另 6 道 pandas 题（逐题从 base 提取实际依赖的最小 fixture，解释展开键变化，只复验受影响题）",
+   "reason": "fixture 可达后，来源期望里 1 个 ERROR 键在修复后 gold 下都是 PASSED，键集合与顺序不变（这些用例的 fixture 不带参数，不展开）。按修复后 gold 重新核定：两次试跑 21 键全 PASSED，其余 20 键与来源期望逐键相同；noop 两次只在原有目标键 ['test_info_int_columns'] 上 FAILED，与修复前相同。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b.md",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-012",
+   "instance_id": "pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d",
+   "kind": "hidden_test_file_add",
+   "target": "conftest.py",
+   "edits": null,
+   "sha256_before": null,
+   "sha256_after": "sha256:807e86e88d6d98166eb7cd2f09b7e377837d20b71833f31efc82e5ac4aa594eb",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d/r2e_tests/conftest.py",
+   "expected_change": null,
+   "decision_ref": "T0-6 第二步：用户 2026-09-24 夜按 Claude / Codex 一致建议批准把 pandas 4ec87eb9 的代表修复扩到另 6 道 pandas 题（逐题从 base 提取实际依赖的最小 fixture，解释展开键变化，只复验受影响题）",
+   "reason": "隐藏测试从 pandas/tests/reshape/merge/test_multi.py、pandas/tests/indexes/multi/test_join.py 搬到 r2e_tests/ 后，原目录上各层 conftest 不再生效，9 个期望键因 fixture 不可达恒 ERROR。新增私有 r2e_tests/conftest.py，从 base 提交 0be573ee5dc0 的 pandas/conftest.py（git blob 0a3bf31cf966）、pandas/tests/indexes/multi/conftest.py（git blob acaea4ff96ff） 原样摘出隐藏测试实际请求的 fixture ['idx', 'join_type']（按隐藏测试原文静态算出请求清单，同名取最内层，fixture 依赖一并摘出；extract_fixtures.py 生成，逐行未改）；不加 autouse fixture 或 hook，不从工作区的 conftest 导入。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d.md",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "runs/r2e_t0_batch3_20260924/conftest_sources/pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d/"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-013",
+   "instance_id": "pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d",
+   "kind": "expected_file_replace",
+   "target": "expected_output_json",
+   "edits": null,
+   "sha256_before": "sha256:70dfe34653cd2963f6cc3ba0ad9e38d3e357b94e8ab9356a2db0680205528479",
+   "sha256_after": "sha256:77464514522d0ad21b778c2f58c416cedace56762bc8cea51954a3291f084b30",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d/expected_output.json",
+   "expected_change": {
+    "changed": {
+     "test_join_level_corner_case": [
+      "ERROR",
+      "PASSED"
+     ]
+    },
+    "added": {
+     "TestMergeMulti.test_merge_on_multikey[inner]": "PASSED",
+     "TestMergeMulti.test_merge_on_multikey[outer]": "PASSED",
+     "TestMergeMulti.test_merge_on_multikey[left]": "PASSED",
+     "TestMergeMulti.test_merge_on_multikey[right]": "PASSED",
+     "TestJoinMultiMulti.test_join_multi_multi[inner]": "PASSED",
+     "TestJoinMultiMulti.test_join_multi_multi[outer]": "PASSED",
+     "TestJoinMultiMulti.test_join_multi_multi[left]": "PASSED",
+     "TestJoinMultiMulti.test_join_multi_multi[right]": "PASSED",
+     "TestJoinMultiMulti.test_join_multi_empty_frames[inner]": "PASSED",
+     "TestJoinMultiMulti.test_join_multi_empty_frames[outer]": "PASSED",
+     "TestJoinMultiMulti.test_join_multi_empty_frames[left]": "PASSED",
+     "TestJoinMultiMulti.test_join_multi_empty_frames[right]": "PASSED",
+     "test_join_level[inner-other0]": "PASSED",
+     "test_join_level[inner-other1]": "PASSED",
+     "test_join_level[inner-other2]": "PASSED",
+     "test_join_level[outer-other0]": "PASSED",
+     "test_join_level[outer-other1]": "PASSED",
+     "test_join_level[outer-other2]": "PASSED",
+     "test_join_level[left-other0]": "PASSED",
+     "test_join_level[left-other1]": "PASSED",
+     "test_join_level[left-other2]": "PASSED",
+     "test_join_level[right-other0]": "PASSED",
+     "test_join_level[right-other1]": "PASSED",
+     "test_join_level[right-other2]": "PASSED",
+     "test_join_self[inner]": "PASSED",
+     "test_join_self[outer]": "PASSED",
+     "test_join_self[left]": "PASSED",
+     "test_join_self[right]": "PASSED",
+     "test_join_self_unique[inner]": "PASSED",
+     "test_join_self_unique[outer]": "PASSED",
+     "test_join_self_unique[left]": "PASSED",
+     "test_join_self_unique[right]": "PASSED"
+    },
+    "removed": [
+     "TestMergeMulti.test_merge_on_multikey",
+     "TestJoinMultiMulti.test_join_multi_multi",
+     "TestJoinMultiMulti.test_join_multi_empty_frames",
+     "test_join_level[other0]",
+     "test_join_level[other1]",
+     "test_join_level[other2]",
+     "test_join_self",
+     "test_join_self_unique"
+    ]
+   },
+   "decision_ref": "T0-6 第二步：用户 2026-09-24 夜按 Claude / Codex 一致建议批准把 pandas 4ec87eb9 的代表修复扩到另 6 道 pandas 题（逐题从 base 提取实际依赖的最小 fixture，解释展开键变化，只复验受影响题）",
+   "reason": "fixture 可达后，带参数的 fixture 让 8 个 ERROR 键按参数展开成 32 个新键（键名里多出 fixture 的参数 ID，原来的键不再出现），另有 1 个 ERROR 键只改状态为 PASSED。按修复后 gold 重新核定：两次试跑 58 键全 PASSED，其余 25 键与来源期望逐键相同；noop 两次只在原有目标键 ['TestJoinMultiMulti.test_join_multi_wrong_order', 'test_join_multi_wrong_order'] 上 FAILED，与修复前相同，新增键在 noop 下都 PASSED（回归信号）。修订后文件 = 来源原文逐行保留，删除键原位换成展开键，其余逐字不变。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d.md",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d/expected_output.json.diff"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-014",
+   "instance_id": "pandas__f656217a06b31e48474702036e0a5c49f664186c",
+   "kind": "hidden_test_file_add",
+   "target": "conftest.py",
+   "edits": null,
+   "sha256_before": null,
+   "sha256_after": "sha256:69d4ff968a3b5b73b1aa52e9bd1d6dc8465c346999e51fa8397338d21c8f6c20",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__f656217a06b31e48474702036e0a5c49f664186c/r2e_tests/conftest.py",
+   "expected_change": null,
+   "decision_ref": "T0-6 第二步：用户 2026-09-24 夜按 Claude / Codex 一致建议批准把 pandas 4ec87eb9 的代表修复扩到另 6 道 pandas 题（逐题从 base 提取实际依赖的最小 fixture，解释展开键变化，只复验受影响题）",
+   "reason": "隐藏测试从 pandas/tests/reshape/merge/test_merge.py、pandas/tests/reshape/merge/test_join.py 搬到 r2e_tests/ 后，原目录上各层 conftest 不再生效，12 个期望键因 fixture 不可达恒 ERROR。新增私有 r2e_tests/conftest.py，从 base 提交 059c8bac51e4 的 pandas/conftest.py（git blob 35affa62ccf6） 原样摘出隐藏测试实际请求的 fixture ['join_type', 'using_array_manager']（按隐藏测试原文静态算出请求清单，同名取最内层，fixture 依赖一并摘出；extract_fixtures.py 生成，逐行未改）；不加 autouse fixture 或 hook，不从工作区的 conftest 导入。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__f656217a06b31e48474702036e0a5c49f664186c.md",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "runs/r2e_t0_batch3_20260924/conftest_sources/pandas__f656217a06b31e48474702036e0a5c49f664186c/"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-015",
+   "instance_id": "pandas__f656217a06b31e48474702036e0a5c49f664186c",
+   "kind": "expected_file_replace",
+   "target": "expected_output_json",
+   "edits": null,
+   "sha256_before": "sha256:913e2feea6725657764f18216fb774088e678e5c64508ade553d5660ca727454",
+   "sha256_after": "sha256:c6f35af9dcf088ae047e48cd884475bc665566babdd1f51fee6b20bab9366897",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__f656217a06b31e48474702036e0a5c49f664186c/expected_output.json",
+   "expected_change": {
+    "changed": {
+     "TestMerge.test_merge_nocopy": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestMerge.test_join_append_timedeltas": [
+      "ERROR",
+      "PASSED"
+     ]
+    },
+    "added": {
+     "TestMerge.test_merge_left_empty_right_empty[inner-kwarg0]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[inner-kwarg1]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[inner-kwarg2]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[inner-kwarg3]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[outer-kwarg0]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[outer-kwarg1]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[outer-kwarg2]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[outer-kwarg3]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[left-kwarg0]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[left-kwarg1]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[left-kwarg2]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[left-kwarg3]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[right-kwarg0]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[right-kwarg1]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[right-kwarg2]": "PASSED",
+     "TestMerge.test_merge_left_empty_right_empty[right-kwarg3]": "PASSED",
+     "TestMergeCategorical.test_dtype_on_merged_different[inner-<lambda>0]": "PASSED",
+     "TestMergeCategorical.test_dtype_on_merged_different[inner-<lambda>1]": "PASSED",
+     "TestMergeCategorical.test_dtype_on_merged_different[inner-<lambda>2]": "PASSED",
+     "TestMergeCategorical.test_dtype_on_merged_different[outer-<lambda>0]": "PASSED",
+     "TestMergeCategorical.test_dtype_on_merged_different[outer-<lambda>1]": "PASSED",
+     "TestMergeCategorical.test_dtype_on_merged_different[outer-<lambda>2]": "PASSED",
+     "TestMergeCategorical.test_dtype_on_merged_different[left-<lambda>0]": "PASSED",
+     "TestMergeCategorical.test_dtype_on_merged_different[left-<lambda>1]": "PASSED",
+     "TestMergeCategorical.test_dtype_on_merged_different[left-<lambda>2]": "PASSED",
+     "TestMergeCategorical.test_dtype_on_merged_different[right-<lambda>0]": "PASSED",
+     "TestMergeCategorical.test_dtype_on_merged_different[right-<lambda>1]": "PASSED",
+     "TestMergeCategorical.test_dtype_on_merged_different[right-<lambda>2]": "PASSED",
+     "TestJoin.test_join_index_mixed[inner]": "PASSED",
+     "TestJoin.test_join_index_mixed[outer]": "PASSED",
+     "TestJoin.test_join_index_mixed[left]": "PASSED",
+     "TestJoin.test_join_index_mixed[right]": "PASSED",
+     "TestJoin.test_join_multi_to_multi[inner]": "PASSED",
+     "TestJoin.test_join_multi_to_multi[outer]": "PASSED",
+     "TestJoin.test_join_multi_to_multi[left]": "PASSED",
+     "TestJoin.test_join_multi_to_multi[right]": "PASSED",
+     "test_join_multiindex_one_level[inner]": "PASSED",
+     "test_join_multiindex_one_level[outer]": "PASSED",
+     "test_join_multiindex_one_level[left]": "PASSED",
+     "test_join_multiindex_one_level[right]": "PASSED"
+    },
+    "removed": [
+     "TestMerge.test_merge_left_empty_right_empty[kwarg0]",
+     "TestMerge.test_merge_left_empty_right_empty[kwarg1]",
+     "TestMerge.test_merge_left_empty_right_empty[kwarg2]",
+     "TestMerge.test_merge_left_empty_right_empty[kwarg3]",
+     "TestMergeCategorical.test_dtype_on_merged_different[<lambda>0]",
+     "TestMergeCategorical.test_dtype_on_merged_different[<lambda>1]",
+     "TestMergeCategorical.test_dtype_on_merged_different[<lambda>2]",
+     "TestJoin.test_join_index_mixed",
+     "TestJoin.test_join_multi_to_multi",
+     "test_join_multiindex_one_level"
+    ]
+   },
+   "decision_ref": "T0-6 第二步：用户 2026-09-24 夜按 Claude / Codex 一致建议批准把 pandas 4ec87eb9 的代表修复扩到另 6 道 pandas 题（逐题从 base 提取实际依赖的最小 fixture，解释展开键变化，只复验受影响题）",
+   "reason": "fixture 可达后，带参数的 fixture 让 10 个 ERROR 键按参数展开成 40 个新键（键名里多出 fixture 的参数 ID，原来的键不再出现），另有 2 个 ERROR 键只改状态为 PASSED。按修复后 gold 重新核定：两次试跑 353 键全 PASSED，其余 311 键与来源期望逐键相同；noop 两次只在原有目标键 ['TestJoin.test_join_dups', 'test_merge_duplicate_columns_with_suffix_causing_another_duplicate', 'test_merge_suffixes_produce_dup_columns_warns'] 上 FAILED，与修复前相同，新增键在 noop 下都 PASSED（回归信号）。修订后文件 = 来源原文逐行保留，删除键原位换成展开键，其余逐字不变。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__f656217a06b31e48474702036e0a5c49f664186c.md",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__f656217a06b31e48474702036e0a5c49f664186c/expected_output.json.diff"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-016",
+   "instance_id": "pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0",
+   "kind": "hidden_test_file_add",
+   "target": "conftest.py",
+   "edits": null,
+   "sha256_before": null,
+   "sha256_after": "sha256:053ce35970a24eb9f8310b972e911f503ddb27eed9aefd14bb60ba7fa6905061",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/r2e_tests/conftest.py",
+   "expected_change": null,
+   "decision_ref": "T0-6 第二步：用户 2026-09-24 夜按 Claude / Codex 一致建议批准把 pandas 4ec87eb9 的代表修复扩到另 6 道 pandas 题（逐题从 base 提取实际依赖的最小 fixture，解释展开键变化，只复验受影响题）",
+   "reason": "隐藏测试从 pandas/tests/frame/test_analytics.py 搬到 r2e_tests/ 后，原目录上各层 conftest 不再生效，13 个期望键因 fixture 不可达恒 ERROR。新增私有 r2e_tests/conftest.py，从 base 提交 b7f061c3d24d 的 pandas/conftest.py（git blob 11bb16fc0a3a）、pandas/tests/frame/conftest.py（git blob 486d14084915） 原样摘出隐藏测试实际请求的 fixture ['bool_frame_with_na', 'datetime_frame', 'float_frame', 'float_frame_with_na', 'float_string_frame', 'int_frame', 'mixed_float_frame']（按隐藏测试原文静态算出请求清单，同名取最内层，fixture 依赖一并摘出；extract_fixtures.py 生成，逐行未改）；不加 autouse fixture 或 hook，不从工作区的 conftest 导入。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0.md",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3r2/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "runs/r2e_t0_batch3_20260924/conftest_sources/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-017",
+   "instance_id": "pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0",
+   "kind": "expected_text_replace",
+   "target": "expected_output_json",
+   "edits": [
+    {
+     "old": "\"TestDataFrameAnalytics.test_stat_op_api\": \"ERROR\"",
+     "new": "\"TestDataFrameAnalytics.test_stat_op_api\": \"PASSED\""
+    },
+    {
+     "old": "\"TestDataFrameAnalytics.test_stat_op_calc\": \"ERROR\"",
+     "new": "\"TestDataFrameAnalytics.test_stat_op_calc\": \"PASSED\""
+    },
+    {
+     "old": "\"TestDataFrameAnalytics.test_median\": \"ERROR\"",
+     "new": "\"TestDataFrameAnalytics.test_median\": \"PASSED\""
+    },
+    {
+     "old": "\"TestDataFrameAnalytics.test_var_std\": \"ERROR\"",
+     "new": "\"TestDataFrameAnalytics.test_var_std\": \"PASSED\""
+    },
+    {
+     "old": "\"TestDataFrameAnalytics.test_sem\": \"ERROR\"",
+     "new": "\"TestDataFrameAnalytics.test_sem\": \"PASSED\""
+    },
+    {
+     "old": "\"TestDataFrameAnalytics.test_sum_object\": \"ERROR\"",
+     "new": "\"TestDataFrameAnalytics.test_sum_object\": \"PASSED\""
+    },
+    {
+     "old": "\"TestDataFrameAnalytics.test_sum_bool\": \"ERROR\"",
+     "new": "\"TestDataFrameAnalytics.test_sum_bool\": \"PASSED\""
+    },
+    {
+     "old": "\"TestDataFrameAnalytics.test_mean_corner\": \"ERROR\"",
+     "new": "\"TestDataFrameAnalytics.test_mean_corner\": \"PASSED\""
+    },
+    {
+     "old": "\"TestDataFrameAnalytics.test_stats_mixed_type\": \"ERROR\"",
+     "new": "\"TestDataFrameAnalytics.test_stats_mixed_type\": \"PASSED\""
+    },
+    {
+     "old": "\"TestDataFrameAnalytics.test_idxmin\": \"ERROR\"",
+     "new": "\"TestDataFrameAnalytics.test_idxmin\": \"PASSED\""
+    },
+    {
+     "old": "\"TestDataFrameAnalytics.test_idxmax\": \"ERROR\"",
+     "new": "\"TestDataFrameAnalytics.test_idxmax\": \"PASSED\""
+    },
+    {
+     "old": "\"TestDataFrameAnalytics.test_any_all[any]\": \"ERROR\"",
+     "new": "\"TestDataFrameAnalytics.test_any_all[any]\": \"PASSED\""
+    },
+    {
+     "old": "\"TestDataFrameAnalytics.test_any_all[all]\": \"ERROR\"",
+     "new": "\"TestDataFrameAnalytics.test_any_all[all]\": \"PASSED\""
+    }
+   ],
+   "sha256_before": "sha256:b115c1cc79b92b1ab14e90d36c3b5a9bf2d333f8bec18ed7bdecd4fd61f7d95b",
+   "sha256_after": "sha256:9771cde591cfc03943ad96243769be99e38d34c68946db660cd5cd5578a6c73c",
+   "revised_file": null,
+   "expected_change": {
+    "changed": {
+     "TestDataFrameAnalytics.test_stat_op_api": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestDataFrameAnalytics.test_stat_op_calc": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestDataFrameAnalytics.test_median": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestDataFrameAnalytics.test_var_std": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestDataFrameAnalytics.test_sem": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestDataFrameAnalytics.test_sum_object": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestDataFrameAnalytics.test_sum_bool": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestDataFrameAnalytics.test_mean_corner": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestDataFrameAnalytics.test_stats_mixed_type": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestDataFrameAnalytics.test_idxmin": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestDataFrameAnalytics.test_idxmax": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestDataFrameAnalytics.test_any_all[any]": [
+      "ERROR",
+      "PASSED"
+     ],
+     "TestDataFrameAnalytics.test_any_all[all]": [
+      "ERROR",
+      "PASSED"
+     ]
+    },
+    "added": {},
+    "removed": []
+   },
+   "decision_ref": "T0-6 第二步：用户 2026-09-24 夜按 Claude / Codex 一致建议批准把 pandas 4ec87eb9 的代表修复扩到另 6 道 pandas 题（逐题从 base 提取实际依赖的最小 fixture，解释展开键变化，只复验受影响题）",
+   "reason": "fixture 可达后，来源期望里 13 个 ERROR 键在修复后 gold 下都是 PASSED，键集合与顺序不变（这些用例的 fixture 不带参数，不展开）。按修复后 gold 重新核定：两次试跑 92 键全 PASSED，其余 79 键与来源期望逐键相同；noop 两次只在原有目标键 ['TestDataFrameAnalytics.test_mean_datetimelike_numeric_only_false', 'TestDataFrameAnalytics.test_mean_extensionarray_numeric_only_true'] 上 FAILED，与修复前相同。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0.md",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3r2/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-018",
+   "instance_id": "pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af",
+   "kind": "hidden_test_file_add",
+   "target": "conftest.py",
+   "edits": null,
+   "sha256_before": null,
+   "sha256_after": "sha256:13879fd7eae2c25c28125a440e8be64d2fe0e4372b3f79b4ef5a1e7e4952d5f1",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af/r2e_tests/conftest.py",
+   "expected_change": null,
+   "decision_ref": "T0-6 第二步：用户 2026-09-24 夜按 Claude / Codex 一致建议批准把 pandas 4ec87eb9 的代表修复扩到另 6 道 pandas 题（逐题从 base 提取实际依赖的最小 fixture，解释展开键变化，只复验受影响题）",
+   "reason": "隐藏测试从 pandas/tests/indexes/ranges/test_setops.py 搬到 r2e_tests/ 后，原目录上各层 conftest 不再生效，4 个期望键因 fixture 不可达恒 ERROR。新增私有 r2e_tests/conftest.py，从 base 提交 f5c224215ad0 的 pandas/conftest.py（git blob 75711b19dfcf）、pandas/tests/indexes/conftest.py（git blob 2eae51c62aa0） 原样摘出隐藏测试实际请求的 fixture ['names', 'sort']（按隐藏测试原文静态算出请求清单，同名取最内层，fixture 依赖一并摘出；extract_fixtures.py 生成，逐行未改）；不加 autouse fixture 或 hook，不从工作区的 conftest 导入。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af.md",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3r2/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "runs/r2e_t0_batch3_20260924/conftest_sources/pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af/"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-019",
+   "instance_id": "pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af",
+   "kind": "expected_file_replace",
+   "target": "expected_output_json",
+   "edits": null,
+   "sha256_before": "sha256:3310e7d5f646217e1aab1a51cfdf0fde1acb26c2b153ee5640c0995260bb4f6b",
+   "sha256_after": "sha256:cc54d19ff8501f9328c5f1ef26d2fe68ea8f647830437e880e9daa4525d69397",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af/expected_output.json",
+   "expected_change": {
+    "changed": {},
+    "added": {
+     "TestRangeIndexSetOps.test_intersection_empty[None-names0]": "PASSED",
+     "TestRangeIndexSetOps.test_intersection_empty[None-names1]": "PASSED",
+     "TestRangeIndexSetOps.test_intersection_empty[None-names2]": "PASSED",
+     "TestRangeIndexSetOps.test_intersection_empty[False-names0]": "PASSED",
+     "TestRangeIndexSetOps.test_intersection_empty[False-names1]": "PASSED",
+     "TestRangeIndexSetOps.test_intersection_empty[False-names2]": "PASSED",
+     "TestRangeIndexSetOps.test_intersection[None]": "PASSED",
+     "TestRangeIndexSetOps.test_intersection[False]": "PASSED",
+     "TestRangeIndexSetOps.test_intersection_non_overlapping_gcd[None-names0]": "PASSED",
+     "TestRangeIndexSetOps.test_intersection_non_overlapping_gcd[None-names1]": "PASSED",
+     "TestRangeIndexSetOps.test_intersection_non_overlapping_gcd[None-names2]": "PASSED",
+     "TestRangeIndexSetOps.test_intersection_non_overlapping_gcd[False-names0]": "PASSED",
+     "TestRangeIndexSetOps.test_intersection_non_overlapping_gcd[False-names1]": "PASSED",
+     "TestRangeIndexSetOps.test_intersection_non_overlapping_gcd[False-names2]": "PASSED",
+     "TestRangeIndexSetOps.test_union_noncomparable[None]": "PASSED",
+     "TestRangeIndexSetOps.test_union_noncomparable[False]": "PASSED"
+    },
+    "removed": [
+     "TestRangeIndexSetOps.test_intersection_empty",
+     "TestRangeIndexSetOps.test_intersection",
+     "TestRangeIndexSetOps.test_intersection_non_overlapping_gcd",
+     "TestRangeIndexSetOps.test_union_noncomparable"
+    ]
+   },
+   "decision_ref": "T0-6 第二步：用户 2026-09-24 夜按 Claude / Codex 一致建议批准把 pandas 4ec87eb9 的代表修复扩到另 6 道 pandas 题（逐题从 base 提取实际依赖的最小 fixture，解释展开键变化，只复验受影响题）",
+   "reason": "fixture 可达后，带参数的 fixture 让 4 个 ERROR 键按参数展开成 16 个新键（键名里多出 fixture 的参数 ID，原来的键不再出现），另有 0 个 ERROR 键只改状态为 PASSED。按修复后 gold 重新核定：两次试跑 46 键全 PASSED，其余 30 键与来源期望逐键相同；noop 两次只在原有目标键 ['TestRangeIndexSetOps.test_difference', 'TestRangeIndexSetOps.test_difference_sort'] 上 FAILED，与修复前相同，新增键在 noop 下都 PASSED（回归信号）。修订后文件 = 来源原文逐行保留，删除键原位换成展开键，其余逐字不变。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af.md",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3r2/（一次性容器试跑：按 grader 顺序准备隐藏测试、以评分 uid 跑来源入口；原样材料下由 gold 日志重新生成的期望与来源原文逐字相同）",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af/expected_output.json.diff"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-020",
+   "instance_id": "orange3__9b5494e26f407b75e79699c9d40be6df1d80a040",
+   "kind": "expected_text_replace",
+   "target": "expected_output_json",
+   "edits": [
+    {
+     "old": "\"TestLogisticRegressionLearner.test_LogisticRegression\": \"FAILED\"",
+     "new": "\"TestLogisticRegressionLearner.test_LogisticRegression\": \"PASSED\""
+    },
+    {
+     "old": "\"TestLogisticRegressionLearner.test_coefficients\": \"FAILED\"",
+     "new": "\"TestLogisticRegressionLearner.test_coefficients\": \"PASSED\""
+    }
+   ],
+   "sha256_before": "sha256:9645a5c3480a6a460da556fbeda8f76c61b9198f4813516ab26ecb847a861358",
+   "sha256_after": "sha256:cd034086c160e69a531b6d1d74dc5b00734a672e364575c273877515518ff240",
+   "revised_file": null,
+   "expected_change": {
+    "changed": {
+     "TestLogisticRegressionLearner.test_LogisticRegression": [
+      "FAILED",
+      "PASSED"
+     ],
+     "TestLogisticRegressionLearner.test_coefficients": [
+      "FAILED",
+      "PASSED"
+     ]
+    },
+    "added": {},
+    "removed": []
+   },
+   "decision_ref": "T0-7：用户 2026-09-24 夜按 Claude / Codex 一致建议批准方案 B（SciPy 1.5.4 环境配方 + 两个恢复键的期望修订；两个 scorer 键保持未完成项）",
+   "reason": "来源镜像的 SciPy 1.7.3 把 L-BFGS-B 的 message 解码成 str，scikit-learn 0.22.2.post1 在 lbfgs 未收敛时仍对它调 .decode，这两个键因此 FAILED 并被写进来源期望（E17 诊断）。本批环境配方 +env_v2 把 SciPy 固定为 1.5.4（env_pins_v2），派生镜像上原样材料 gold 三次逐键相同：这两键 PASSED，其余 11 键与来源期望相同（两个 scorer 键仍 FAILED，原因未定位，保持未完成项）；noop 三次逐键相同，FAILED 键为 ['TestLogisticRegressionLearner.test_auto_solver', 'TestLogisticRegressionLearner.test_learner_scorer', 'TestLogisticRegressionLearner.test_learner_scorer_multiclass', 'TestLogisticRegressionLearner.test_probability']。键集合与顺序不变。本修订只在 +env_v2 镜像上成立：没有该环境配方的镜像上这两键仍会 FAILED。",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/orange3__9b5494e26f407b75e79699c9d40be6df1d80a040.md",
+    "runs/r2e_t0_batch2_20260924/diag_orange3/",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3o/（+env_v2 派生镜像上的原样材料试跑，noop / gold 各 3 次）",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/recipes/env_pins_v2.json"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-021",
+   "instance_id": "numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9",
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "        assert_equal(p != p2, True)\n",
+     "new": "        assert_equal(p != p2, True)\n        # non-poly1d objects other than None\n        other = object()\n        assert_equal(p == other, False)\n        assert_equal(p != other, True)\n        assert_equal(p == 3, False)\n        assert_equal(p != 3, True)\n"
+    },
+    {
+     "old": "        assert_equal(p == p, True)\n",
+     "new": "        assert_equal(p == p, True)\n        # a different poly1d object with the same coefficients\n        assert_equal(p == np.poly1d([1, 2, 3]), True)\n        assert_equal(p != np.poly1d([1, 2, 3]), False)\n"
+    }
+   ],
+   "sha256_before": "sha256:4a86bd4b2d557834c384730be8594ef0dbdcd150e4eb958d09ec78f12c741c25",
+   "sha256_after": "sha256:aab99f010b8a175cf0d257bc79d02707ced2b9f51452152904243c648d77c841",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/r2e_tests/test_1.py",
+   "expected_change": null,
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_numpy.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-022",
+   "instance_id": "numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb",
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "        assert_array_equal(np.einsum('ti,ti->i', p, q, optimize=True),\n                           [10.] * 2)\n",
+     "new": "        assert_array_equal(np.einsum('ti,ti->i', p, q, optimize=True),\n                           [10.] * 2)\n        # the singleton operand may also come first\n        assert_array_equal(np.einsum('ti,ti->i', q, p, optimize=True),\n                           np.einsum('ti,ti->i', q, p, optimize=False))\n        assert_array_equal(np.einsum('ti,ti->i', q, p, optimize=True),\n                           [10.] * 2)\n"
+    },
+    {
+     "old": "    def test_einsum_sums_int8(self):\n",
+     "new": "        # a singleton label that is summed over (two operands)\n        x = np.array([1., 2., 3.])\n        y = np.array([5.])\n        assert_array_equal(np.einsum('i,i', x, y, optimize=True),\n                           np.einsum('i,i', x, y, optimize=False))\n        assert_array_equal(np.einsum('i,i', x, y, optimize=True), 30.)\n        a = np.arange(6.).reshape(2, 3)\n        b = np.arange(1., 5.).reshape(1, 4)\n        assert_array_equal(np.einsum('ij,jk->ik', a, b, optimize=True),\n                           np.einsum('ij,jk->ik', a, b, optimize=False))\n        assert_array_equal(np.einsum('ij,jk->ik', a, b, optimize=True),\n                           [[3., 6., 9., 12.], [12., 24., 36., 48.]])\n\n    def test_einsum_sums_int8(self):\n"
+    }
+   ],
+   "sha256_before": "sha256:799c5db85a3a00d89af16a0473d1464a8ebffba828dc1f5e9048db77bf18cfe8",
+   "sha256_after": "sha256:18a7570132d2f0bab3a584ecd2325f4bfe921d657bac74bfde7448ac94231897",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/r2e_tests/test_1.py",
+   "expected_change": null,
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照为经独立核实的替代解 runs/r2e_actor_20260925/grader_cands/numpy_5e83_CA_gold_plus_blas_guard.patch（v1 §5 / D4）；gold 在修订后测试下不满分，已记录，不因此收窄题意",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_numpy.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-023",
+   "instance_id": "numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764",
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "        b += 2\n        assert_equal(a, np.arange(5))\n",
+     "new": "        b += 2\n        assert_equal(a, np.arange(5))\n        # all-ones reps given as a tuple\n        for reps in [(1,), (1, 1)]:\n            a = np.arange(5)\n            b = tile(a, reps)\n            b += 2\n            assert_equal(a, np.arange(5))\n"
+    },
+    {
+     "old": "    def test_empty(self):\n",
+     "new": "        # len(reps) > A.ndim: A is promoted as documented\n        assert_equal(tile(np.arange(5), (1, 1)).shape, (1, 5))\n\n    def test_empty(self):\n"
+    }
+   ],
+   "sha256_before": "sha256:c032efe66357041e5e913a61a8b1a3a4fc432c6f54da747ea251633e0aef4120",
+   "sha256_after": "sha256:c068c691f51d651859cbeb0b61ab3bb8a412a1921c8acad29454c62fb43830e5",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764/r2e_tests/test_1.py",
+   "expected_change": null,
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_numpy.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-024",
+   "instance_id": "pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07",
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "        im.putpalette(list(range(256)) * 4, \"RGBA\")\n        im_remapped = im.remap_palette(list(range(256)))\n        assert_image_equal(im, im_remapped)\n        assert im.palette.palette == im_remapped.palette.palette\n",
+     "new": "        im.putpalette(list(range(256)) * 4, \"RGBA\")\n        # Snapshot the source palette and its RGBA rendering before the call\n        palette_before = bytes(im.palette.palette)\n        rgba_before = im.convert(\"RGBA\").tobytes()\n        im_remapped = im.remap_palette(list(range(256)))\n        assert_image_equal(im, im_remapped)\n        assert im.palette.palette == im_remapped.palette.palette\n        # The result keeps the original RGBA palette ...\n        assert im_remapped.palette.palette == palette_before\n        # ... and the palette used for rendering keeps the alpha values\n        assert im_remapped.convert(\"RGBA\").tobytes() == rgba_before\n"
+    },
+    {
+     "old": "    def test_remap_palette_transparency(self):\n",
+     "new": "    def test_remap_palette_rgba_reorder(self):\n        # Test a non-identity transform with an RGBA palette: entries move as\n        # whole RGBA entries and the image renders with the same colours\n        im = Image.new(\"P\", (2, 1))\n        im.putpixel((1, 0), 1)\n        im.putpalette((10, 20, 30, 40, 50, 60, 70, 80), \"RGBA\")\n        im_remapped = im.remap_palette([1, 0])\n        assert list(im_remapped.getdata()) == [1, 0]\n        assert bytes(im_remapped.palette.palette[:8]) == bytes(\n            (50, 60, 70, 80, 10, 20, 30, 40)\n        )\n        assert list(im_remapped.convert(\"RGBA\").getdata()) == [\n            (10, 20, 30, 40),\n            (50, 60, 70, 80),\n        ]\n\n    def test_remap_palette_rgba_gif_save(self):\n        # Saving a P image with an RGBA palette as GIF optimizes the palette\n        # through remap_palette with an RGB source_palette; colours must survive\n        im = Image.new(\"P\", (4, 1))\n        for x, v in enumerate((10, 20, 30, 40)):\n            im.putpixel((x, 0), v)\n        im.putpalette(\n            [c for i in range(256) for c in (i, 255 - i, i // 2, 128)], \"RGBA\"\n        )\n        out = io.BytesIO()\n        im.save(out, \"GIF\")\n        out.seek(0)\n        with Image.open(out) as reloaded:\n            assert list(reloaded.convert(\"RGB\").getdata()) == [\n                (10, 245, 5),\n                (20, 235, 10),\n                (30, 225, 15),\n                (40, 215, 20),\n            ]\n\n    def test_remap_palette_transparency(self):\n"
+    }
+   ],
+   "sha256_before": "sha256:17ececcd4da49d30953b7dacab62735b070e05859b954935a460d11722ef7955",
+   "sha256_after": "sha256:04f44d8a2dfba96806ebd181d7df72a8f303303d3fb69b30ae4019ca98d234db",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/r2e_tests/test_1.py",
+   "expected_change": null,
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_pillow.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-025",
+   "instance_id": "pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07",
+   "kind": "expected_file_replace",
+   "target": "expected_output_json",
+   "edits": null,
+   "sha256_before": "sha256:0421915b48d86f7e1335f001214ce2ba54c195176a2028d0ce3cb7d0e205581d",
+   "sha256_after": "sha256:3d86300f56b52128060ff6edc220dff3f3f6966709d55771325aac0b9447292e",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/expected_output.json",
+   "expected_change": {
+    "changed": {},
+    "added": {
+     "\u001b[1mTestImage.test_remap_palette_rgba_gif_save\u001b[0m": "PASSED",
+     "\u001b[1mTestImage.test_remap_palette_rgba_reorder\u001b[0m": "PASSED"
+    },
+    "removed": []
+   },
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_pillow.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-026",
+   "instance_id": "scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4",
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "    def test_export_binary(self):\n        exporter = PythonItemExporter(binary=True)\n        value = TestItem(name=u'John\\xa3', age=u'22')\n        expected = {b'name': b'John\\xc2\\xa3', b'age': b'22'}\n        self.assertEqual(expected, exporter.export_item(value))\n",
+     "new": "    def test_export_binary(self):\n        exporter = PythonItemExporter(binary=True)\n        value = TestItem(name=u'John\\xa3', age=u'22')\n        expected = {b'name': b'John\\xc2\\xa3', b'age': b'22'}\n        self.assertEqual(expected, exporter.export_item(value))\n\n    def test_export_binary_dict_item(self):\n        exporter = PythonItemExporter(binary=True)\n        value = {'title': u'Caf\\xe9', 'price': u'3'}\n        expected = {b'title': b'Caf\\xc3\\xa9', b'price': b'3'}\n        self.assertEqual(expected, exporter.export_item(value))\n\n    def test_export_binary_empty_fields(self):\n        exporter = PythonItemExporter(binary=True, export_empty_fields=True)\n        value = TestItem(name=u'Maria')\n        expected = {b'name': b'Maria', b'age': None}\n        self.assertEqual(expected, exporter.export_item(value))\n\n    def test_export_binary_serializer_output(self):\n        class CustomFieldItem(Item):\n            name = Field()\n            age = Field(serializer=lambda value: int(value) + 2)\n\n        exporter = PythonItemExporter(binary=True)\n        value = CustomFieldItem(name=u'Maria', age=u'22')\n        expected = {b'name': b'Maria', b'age': 24}\n        self.assertEqual(expected, exporter.export_item(value))\n"
+    }
+   ],
+   "sha256_before": "sha256:21ec99b12c8e8a9cf72a34c273ebe4443303eb818fdad8c5a6637046e40df169",
+   "sha256_after": "sha256:fe29720c728847dbf89da3ce2992e0dd70bbcfe33ee964779921a03189123e2d",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4/r2e_tests/test_1.py",
+   "expected_change": null,
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照为经独立核实的替代解 runs/r2e_actor_20260925/grader_cands/scrapy_e938_C1_bytes_keys_when_binary.patch（v1 §5 / D4）；gold 在修订后测试下不满分，已记录，不因此收窄题意",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_scrapy.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-027",
+   "instance_id": "scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4",
+   "kind": "expected_file_replace",
+   "target": "expected_output_json",
+   "edits": null,
+   "sha256_before": "sha256:51436068b6603499581b8d7a6a15deda94dc9742e73dfe53b8966bd7a78b1541",
+   "sha256_after": "sha256:447b5892487c5885656a5b10443d5352b04ba1f8b3706b9ea258b4d185f6fc5f",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4/expected_output.json",
+   "expected_change": {
+    "changed": {},
+    "added": {
+     "PythonItemExporterTest.test_export_binary_dict_item": "PASSED",
+     "PythonItemExporterTest.test_export_binary_empty_fields": "PASSED",
+     "PythonItemExporterTest.test_export_binary_serializer_output": "PASSED"
+    },
+    "removed": []
+   },
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照为经独立核实的替代解 runs/r2e_actor_20260925/grader_cands/scrapy_e938_C1_bytes_keys_when_binary.patch（v1 §5 / D4）；gold 在修订后测试下不满分，已记录，不因此收窄题意",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_scrapy.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-028",
+   "instance_id": "scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67",
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "    @defer.inlineCallbacks\n    def test_shell_fetch_async(self):\n        reactor_path = \"twisted.internet.asyncioreactor.AsyncioSelectorReactor\"\n        url = self.url('/html')\n        code = f\"fetch('{url}')\"\n        args = [\"-c\", code, \"--set\", f\"TWISTED_REACTOR={reactor_path}\"]\n        _, _, err = yield self.execute(args, check_code=True)\n        self.assertNotIn(\n            b\"RuntimeError: There is no current event loop in thread\", err\n        )\n",
+     "new": "    @defer.inlineCallbacks\n    def test_shell_fetch_async(self):\n        reactor_path = \"twisted.internet.asyncioreactor.AsyncioSelectorReactor\"\n        url = self.url('/html')\n        code = f\"fetch('{url}')\"\n        args = [\"-c\", code, \"--set\", f\"TWISTED_REACTOR={reactor_path}\"]\n        _, _, err = yield self.execute(args, check_code=True)\n        self.assertNotIn(\n            b\"RuntimeError: There is no current event loop in thread\", err\n        )\n\n    @defer.inlineCallbacks\n    def test_shell_fetch_async_coroutine_runs(self):\n        # With the asyncio reactor, a Scrapy coroutine that awaits asyncio (here the\n        # process_request coroutine of a downloader middleware) must run to completion.\n        reactor_path = \"twisted.internet.asyncioreactor.AsyncioSelectorReactor\"\n        mw_path = \"r2e_tests.shell_asyncio_mw.AsyncioSleepDownloaderMiddleware\"\n        url = self.url('/html')\n        code = (\n            \"(__import__('signal').alarm(60), \"\n            f\"fetch('{url}'), \"\n            \"print('R2E_MW_DONE', request.meta.get('r2e_asyncio_mw_done'), response.status, flush=True))\"\n        )\n        args = [\n            \"-c\", code,\n            \"--set\", f\"TWISTED_REACTOR={reactor_path}\",\n            \"--set\", 'DOWNLOADER_MIDDLEWARES={\"%s\": 543}' % mw_path,\n        ]\n        _, out, _ = yield self.execute(args, check_code=True)\n        self.assertIn(b\"R2E_MW_DONE True 200\", out)\n\n    @defer.inlineCallbacks\n    def test_shell_fetch_async_twice(self):\n        # With the asyncio reactor, processing of a fetched response must finish, so a second\n        # fetch is not held back by the SCRAPER_SLOT_MAX_ACTIVE_SIZE soft limit.\n        reactor_path = \"twisted.internet.asyncioreactor.AsyncioSelectorReactor\"\n        url = self.url('/html')\n        code = (\n            \"(__import__('signal').alarm(60), \"\n            f\"fetch('{url}'), print('R2E_FETCH_1', response.status, flush=True), \"\n            f\"fetch('{url}'), print('R2E_FETCH_2', response.status, flush=True))\"\n        )\n        args = [\n            \"-c\", code,\n            \"--set\", f\"TWISTED_REACTOR={reactor_path}\",\n            \"--set\", \"SCRAPER_SLOT_MAX_ACTIVE_SIZE=1000\",\n        ]\n        _, out, _ = yield self.execute(args, check_code=True)\n        self.assertIn(b\"R2E_FETCH_1 200\", out)\n        self.assertIn(b\"R2E_FETCH_2 200\", out)\n"
+    }
+   ],
+   "sha256_before": "sha256:aee512f73b0c266621c9a414e94ae3dbc060f8687f4255eeee61f8810c77d9f0",
+   "sha256_after": "sha256:36178735fd29685ec6459b362df45a6172802031c23449f9aa0ecd3f05212974",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67/r2e_tests/test_1.py",
+   "expected_change": null,
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照为经独立核实的替代解 runs/r2e_actor_20260925/grader_cands/scrapy_7545_K1_reuse_reactor_loop.patch（v1 §5 / D4）；gold 在修订后测试下不满分，已记录，不因此收窄题意",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_scrapy.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-029",
+   "instance_id": "scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67",
+   "kind": "hidden_test_file_add",
+   "target": "shell_asyncio_mw.py",
+   "edits": null,
+   "sha256_before": null,
+   "sha256_after": "sha256:3691d21c38ecef9d61927621c2fd6bf1abf7066297806efa4891258237a26dfe",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67/r2e_tests/shell_asyncio_mw.py",
+   "expected_change": null,
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照为经独立核实的替代解 runs/r2e_actor_20260925/grader_cands/scrapy_7545_K1_reuse_reactor_loop.patch（v1 §5 / D4）；gold 在修订后测试下不满分，已记录，不因此收窄题意",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_scrapy.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-030",
+   "instance_id": "scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67",
+   "kind": "expected_file_replace",
+   "target": "expected_output_json",
+   "edits": null,
+   "sha256_before": "sha256:3fea4d14e16cd6cddc9c036ef37362fb92059d8f193759ba29ba4977736c3b6d",
+   "sha256_after": "sha256:95d7565ce75ca5469456c350e2ae907d7e6eda016d70f25cfef949a840133c78",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67/expected_output.json",
+   "expected_change": {
+    "changed": {},
+    "added": {
+     "ShellTest.test_shell_fetch_async_coroutine_runs": "PASSED",
+     "ShellTest.test_shell_fetch_async_twice": "PASSED"
+    },
+    "removed": []
+   },
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照为经独立核实的替代解 runs/r2e_actor_20260925/grader_cands/scrapy_7545_K1_reuse_reactor_loop.patch（v1 §5 / D4）；gold 在修订后测试下不满分，已记录，不因此收窄题意",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_scrapy.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-031",
+   "instance_id": "scrapy__9a15fcf89a151811de8ac783419df0512c863d5e",
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "    def test_from_headers(self):\n        mappings = [\n            ({'Content-Type': ['text/html; charset=utf-8']}, HtmlResponse),\n            ({'Content-Type': ['application/octet-stream'], 'Content-Disposition': ['attachment; filename=data.txt']}, TextResponse),\n            ({'Content-Type': ['text/html; charset=utf-8'], 'Content-Encoding': ['gzip']}, Response),\n        ]\n        for source, cls in mappings:\n            source = Headers(source)\n            retcls = responsetypes.from_headers(source)\n            assert retcls is cls, \"%s ==> %s != %s\" % (source, retcls, cls)\n\n",
+     "new": ""
+    },
+    {
+     "old": "    def test_from_args(self):\n        # TODO: add more tests that check precedence between the different arguments\n        mappings = [\n            ({'url': 'http://www.example.com/data.csv'}, TextResponse),\n            # headers takes precedence over url\n            ({'headers': Headers({'Content-Type': ['text/html; charset=utf-8']}), 'url': 'http://www.example.com/item/'}, HtmlResponse),\n            ({'headers': Headers({'Content-Disposition': ['attachment; filename=\"data.xml.gz\"']}), 'url': 'http://www.example.com/page/'}, Response),\n\n\n        ]\n        for source, cls in mappings:\n            retcls = responsetypes.from_args(**source)\n            assert retcls is cls, \"%s ==> %s != %s\" % (source, retcls, cls)\n\n",
+     "new": ""
+    },
+    {
+     "old": "    def test_from_body(self):\n",
+     "new": "    def test_from_content_type_x_json(self):\n        mappings = [\n            ('application/x-json', TextResponse),\n            ('application/x-json; charset=latin-1', TextResponse),\n        ]\n        for source, cls in mappings:\n            retcls = responsetypes.from_content_type(source)\n            assert retcls is cls, \"%s ==> %s != %s\" % (source, retcls, cls)\n\n    def test_from_body(self):\n"
+    }
+   ],
+   "sha256_before": "sha256:5a84fa9f7508ec7fee0640bcb2886b34842d32243608e95778bcb8bf2e8ee74f",
+   "sha256_after": "sha256:bb261b3d19e1dbf70cc8e02946de657101c0fa6c852a3a864408f9bbe54be5aa",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/r2e_tests/test_1.py",
+   "expected_change": null,
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-a+R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_scrapy.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-032",
+   "instance_id": "scrapy__9a15fcf89a151811de8ac783419df0512c863d5e",
+   "kind": "hidden_test_file_add",
+   "target": "test_2.py",
+   "edits": null,
+   "sha256_before": null,
+   "sha256_after": "sha256:686d5738fd76fa95e1b0dcab620aff3530f79c30a2dc88223986d4187f915116",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/r2e_tests/test_2.py",
+   "expected_change": null,
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-a+R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_scrapy.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-033",
+   "instance_id": "scrapy__9a15fcf89a151811de8ac783419df0512c863d5e",
+   "kind": "expected_file_replace",
+   "target": "expected_output_json",
+   "edits": null,
+   "sha256_before": "sha256:2fefa8a5287028e9c4f3b428fa82308f457794887fc8e98a78ded9c9be420f6b",
+   "sha256_after": "sha256:759f98e074f9ed54aee22bbcfe216a1ed57be1e205c5b895e0912d30df0957a8",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/expected_output.json",
+   "expected_change": {
+    "changed": {},
+    "added": {
+     "HeadersTest.test_basics": "PASSED",
+     "HeadersTest.test_single_value": "PASSED",
+     "HeadersTest.test_multivalue": "PASSED",
+     "HeadersTest.test_encode_utf8": "PASSED",
+     "HeadersTest.test_encode_latin1": "PASSED",
+     "HeadersTest.test_encode_multiple": "PASSED",
+     "HeadersTest.test_delete_and_contains": "PASSED",
+     "HeadersTest.test_setdefault": "PASSED",
+     "HeadersTest.test_iterables": "PASSED",
+     "HeadersTest.test_update": "PASSED",
+     "HeadersTest.test_copy": "PASSED",
+     "HeadersTest.test_appendlist": "PASSED",
+     "HeadersTest.test_setlist": "PASSED",
+     "HeadersTest.test_setlistdefault": "PASSED",
+     "HeadersTest.test_none_value": "PASSED",
+     "HeadersTest.test_int_value": "PASSED",
+     "HeadersTest.test_invalid_value": "PASSED",
+     "ResponseTypesTest.test_from_content_type_x_json": "PASSED"
+    },
+    "removed": [
+     "ResponseTypesTest.test_from_args",
+     "ResponseTypesTest.test_from_headers"
+    ]
+   },
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-a+R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_scrapy.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-034",
+   "instance_id": "coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266",
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "        self.assertEqual(cov.get_option(\"paths\"), new_paths)\n\n    def test_tweak_error_checking(self):\n",
+     "new": "        self.assertEqual(cov.get_option(\"paths\"), new_paths)\n\n    def test_tweaks_paths_on_config_object(self):\n        # R2E revision (2026-09-29): configurer plugins may be handed the\n        # CoverageConfig object instead of the Coverage object, so \"paths\"\n        # must be readable and settable there too.\n        cov = coverage.Coverage()\n        config = cov.config\n        self.assertEqual(config.get_option(\"paths\"), OrderedDict())\n\n        new_paths = OrderedDict()\n        new_paths['remote'] = ['/local/src/', '/remote/src/']\n        config.set_option(\"paths\", new_paths)\n\n        self.assertEqual(config.get_option(\"paths\"), new_paths)\n        self.assertEqual(cov.get_option(\"paths\"), new_paths)\n\n    def test_tweaks_paths_used_by_combine(self):\n        # R2E revision (2026-09-29): a [paths] value set with set_option is\n        # used when combining data, like the [paths] section of a config file.\n        data = coverage.CoverageData(\".coverage.machine1\")\n        data.add_lines({\"/remote/src/pkg/mod.py\": dict.fromkeys(range(10))})\n        data.write()\n\n        cov = coverage.Coverage()\n        new_paths = OrderedDict()\n        new_paths['source'] = ['/local/src/', '/remote/src/']\n        cov.set_option(\"paths\", new_paths)\n        cov.combine()\n\n        self.assertEqual(sorted(cov.get_data().measured_files()), [\"/local/src/pkg/mod.py\"])\n\n    def test_tweaks_paths_replaces_config_file_paths(self):\n        # R2E revision (2026-09-29): get_option(\"paths\") retrieves the current\n        # [paths] configuration, and set_option(\"paths\", new_paths) makes\n        # new_paths the new value of the option.\n        self.make_file(\".coveragerc\", \"\"\"\\\n            [paths]\n            first =\n                /first/1\n                /first/2\n            second =\n                /second/a\n                /second/b\n            \"\"\")\n        old_paths = OrderedDict()\n        old_paths['first'] = ['/first/1', '/first/2']\n        old_paths['second'] = ['/second/a', '/second/b']\n        cov = coverage.Coverage()\n        self.assertEqual(cov.get_option(\"paths\"), old_paths)\n\n        new_paths = OrderedDict()\n        new_paths['magic'] = ['src', 'ok']\n        cov.set_option(\"paths\", new_paths)\n\n        self.assertEqual(cov.get_option(\"paths\"), new_paths)\n\n    def test_tweak_error_checking(self):\n"
+    }
+   ],
+   "sha256_before": "sha256:acae864f6508b8e4da9393f16d9641d7576b07066c97ea7a65348f72131e91ac",
+   "sha256_after": "sha256:b4824fe1b08cfc806ec1c04cdc4c97dc6e8970fc08d17ebcb66fac208103c020",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266/r2e_tests/test_1.py",
+   "expected_change": null,
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_coveragepy.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-035",
+   "instance_id": "coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266",
+   "kind": "expected_file_replace",
+   "target": "expected_output_json",
+   "edits": null,
+   "sha256_before": "sha256:2388143c5142b42bf2ae3a204347e7be37dac6cfda35e22fccc072dc52e6c176",
+   "sha256_after": "sha256:747ed597107c52f70796ded00649386e873d84f75f81385d831bea82ab021c82",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266/expected_output.json",
+   "expected_change": {
+    "changed": {},
+    "added": {
+     "ConfigTest.test_tweaks_paths_on_config_object": "PASSED",
+     "ConfigTest.test_tweaks_paths_used_by_combine": "PASSED",
+     "ConfigTest.test_tweaks_paths_replaces_config_file_paths": "PASSED"
+    },
+    "removed": []
+   },
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_coveragepy.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-036",
+   "instance_id": "coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5",
+   "kind": "hidden_test_file_add",
+   "target": "test_2.py",
+   "edits": null,
+   "sha256_before": null,
+   "sha256_after": "sha256:f29c049780500cb2b981d279cd6e75679232b218133817bf5a7ddea2687452a2",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/r2e_tests/test_2.py",
+   "expected_change": null,
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_coveragepy.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-037",
+   "instance_id": "coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5",
+   "kind": "expected_file_replace",
+   "target": "expected_output_json",
+   "edits": null,
+   "sha256_before": "sha256:7ab459689c472cc3949e4d41281a91d913f5ce17f83c4c971e16e9da288d574d",
+   "sha256_after": "sha256:6d252beebe343650d22fd34d29a7d8ef9a84572c8f6dbe499a36967c0009b6a7",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/expected_output.json",
+   "expected_change": {
+    "changed": {},
+    "added": {
+     "HtmlGitignoreTest.test_html_report_is_ignored_by_git": "PASSED",
+     "ReportingTest.test_no_data_to_report_on_html": "PASSED"
+    },
+    "removed": []
+   },
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_coveragepy.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-038",
+   "instance_id": "coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9",
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "        self.assertIn(\"Warning, warning 1!\", err)\n        self.assertNotIn(\"Warning, warning 2!\", err)\n",
+     "new": "        self.assertIn(\"Warning, warning 1!\", err)\n        self.assertNotIn(\"Warning, warning 2!\", err)\n\n    def test_warn_once_each_slug(self):\n        # R2E revision (2026-09-29): \"displayed only once each\" -- once=True\n        # warnings with different slugs (and different messages) are each shown.\n        cov = coverage.Coverage()\n        cov.load()\n        cov._warn(\"Hello from the first warning\", slug=\"first-slug\", once=True)\n        cov._warn(\"Hello from the second warning\", slug=\"second-slug\", once=True)\n        err = self.stderr()\n        self.assertIn(\"Hello from the first warning\", err)\n        self.assertIn(\"Hello from the second warning\", err)\n"
+    }
+   ],
+   "sha256_before": "sha256:b95edf2e0b164834a8f472507a0545dc87edb96a36845dc42be9c3b5c8d3ad17",
+   "sha256_after": "sha256:05bcd4891846016e194d2fea16bcfdf026feb62787ebd3a8f936ca1cbeb994d7",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/r2e_tests/test_1.py",
+   "expected_change": null,
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（只落与读法无关的测试修订；题面修订待用户决定，未落）（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_coveragepy.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-039",
+   "instance_id": "coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9",
+   "kind": "expected_file_replace",
+   "target": "expected_output_json",
+   "edits": null,
+   "sha256_before": "sha256:c65a3c083094cfe085f5a657ff1a286581fab381d627af8a2f70fd966df07f4e",
+   "sha256_after": "sha256:fc64a1db6ec518a4088067d2571ad93b90acc6aca21847a3c1f54d06960e316a",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/expected_output.json",
+   "expected_change": {
+    "changed": {},
+    "added": {
+     "ApiTest.test_warn_once_each_slug": "PASSED"
+    },
+    "removed": []
+   },
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（只落与读法无关的测试修订；题面修订待用户决定，未落）（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_coveragepy.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-040",
+   "instance_id": "aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52",
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "\n\nclass TestShutdown:\n",
+     "new": "\n\ndef test_run_app_raises_exception_on_server_start_failure(\n    patched_loop: asyncio.AbstractEventLoop,\n) -> None:\n    # Not the issue's example: the error comes from starting the server\n    # (e.g. the port is already in use) instead of a cleanup context, and it\n    # is an OSError.  run_app() raises it, so it must not also report it.\n    patched_loop.create_server = mock.Mock(\n        side_effect=OSError(\"Address already in use\")\n    )\n    app = web.Application()\n\n    with mock.patch.object(\n        patched_loop, \"call_exception_handler\", autospec=True, spec_set=True\n    ) as m:\n        with pytest.raises(OSError, match=\"Address already in use\"):\n            web.run_app(app, print=stopper(patched_loop), loop=patched_loop)\n\n    assert not m.called\n\n\nclass TestShutdown:\n"
+    }
+   ],
+   "sha256_before": "sha256:26317e3d9f2ad5ee29ac899b6a807117151eedb628350bde61f148dabe51500a",
+   "sha256_after": "sha256:abd5a5277cd340e09b736f76612acff6dddfe243621dd2e882314e91978fbba2",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/r2e_tests/test_1.py",
+   "expected_change": null,
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_aiohttp.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-041",
+   "instance_id": "aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52",
+   "kind": "expected_file_replace",
+   "target": "expected_output_json",
+   "edits": null,
+   "sha256_before": "sha256:a7341a36e1da6740bc37e591b636e69425528aa5fa420a24553c34d3eb29c489",
+   "sha256_after": "sha256:4dc7bde24d5ebee6101a64f57355fc036905b5a50fd2eb63b402400f8d0ba275",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/expected_output.json",
+   "expected_change": {
+    "changed": {},
+    "added": {
+     "test_run_app_raises_exception_on_server_start_failure[pyloop]": "PASSED"
+    },
+    "removed": []
+   },
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_aiohttp.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-042",
+   "instance_id": "aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac",
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "import gc\n",
+     "new": "import gc\nimport hashlib\n"
+    },
+    {
+     "old": "\n\nclass TestProxy(unittest.TestCase):\n",
+     "new": "\n\n_PEER_CERT_DER = b\"DER-encoded certificate presented by the server\"\n_PEER_FINGERPRINT = hashlib.sha256(_PEER_CERT_DER).digest()\n_OTHER_FINGERPRINT = hashlib.sha256(b\"some other certificate\").digest()\n\n\nclass _SSLObjectStub:\n    \"\"\"``ssl_object`` of a TLS connection: only the peer certificate is used.\"\"\"\n\n    def getpeercert(self, binary_form: bool = False) -> Any:\n        return _PEER_CERT_DER if binary_form else {}\n\n\nclass _TransportStub(asyncio.Transport):\n    \"\"\"In-memory transport that serves ``get_extra_info()`` and records closing.\n\n    The connection to the proxy is plain TCP (no ``sslcontext``); the transport\n    returned by ``loop.start_tls()`` exposes ``sslcontext``, ``ssl_object`` and\n    ``peername`` the way a real TLS transport does.\n    \"\"\"\n\n    _start_tls_compatible = True\n\n    def __init__(self, extra: Any = None) -> None:\n        super().__init__(extra)\n        self.closed = False\n\n    def close(self) -> None:\n        self.closed = True\n\n    def abort(self) -> None:\n        self.closed = True\n\n    def is_closing(self) -> bool:\n        return self.closed\n\n\nclass TestProxy(unittest.TestCase):\n"
+    },
+    {
+     "old": "    @mock.patch(\"aiohttp.connector.ClientRequest\")\n    @mock.patch(\n        \"aiohttp.connector.aiohappyeyeballs.start_connection\",\n        autospec=True,\n        spec_set=True,\n    )\n    def test_https_connect_fingerprint_mismatch(\n        self, start_connection: mock.Mock, ClientRequestMock: mock.Mock\n    ) -> None:\n        async def make_conn() -> aiohttp.TCPConnector:\n            return aiohttp.TCPConnector(enable_cleanup_closed=cleanup)\n\n        for cleanup in (True, False):\n            with self.subTest(cleanup=cleanup):\n                proxy_req = ClientRequest(\n                    \"GET\", URL(\"http://proxy.example.com\"), loop=self.loop\n                )\n                ClientRequestMock.return_value = proxy_req\n\n                class TransportMock(asyncio.Transport):\n                    def close(self) -> None:\n                        pass\n\n                proxy_resp = ClientResponse(\n                    \"get\",\n                    URL(\"http://proxy.example.com\"),\n                    request_info=mock.Mock(),\n                    writer=mock.Mock(),\n                    continue100=None,\n                    timer=TimerNoop(),\n                    traces=[],\n                    loop=self.loop,\n                    session=mock.Mock(),\n                )\n                fingerprint_mock = mock.Mock(spec=Fingerprint, auto_spec=True)\n                fingerprint_mock.check.side_effect = aiohttp.ServerFingerprintMismatch(\n                    b\"exp\", b\"got\", \"example.com\", 8080\n                )\n                with mock.patch.object(\n                    proxy_req,\n                    \"send\",\n                    autospec=True,\n                    spec_set=True,\n                    return_value=proxy_resp,\n                ), mock.patch.object(\n                    proxy_resp,\n                    \"start\",\n                    autospec=True,\n                    spec_set=True,\n                    return_value=mock.Mock(status=200),\n                ):\n                    connector = self.loop.run_until_complete(make_conn())\n                    host = [\n                        {\n                            \"hostname\": \"hostname\",\n                            \"host\": \"127.0.0.1\",\n                            \"port\": 80,\n                            \"family\": socket.AF_INET,\n                            \"proto\": 0,\n                            \"flags\": 0,\n                        }\n                    ]\n                    with mock.patch.object(\n                        connector,\n                        \"_resolve_host\",\n                        autospec=True,\n                        spec_set=True,\n                        return_value=host,\n                    ), mock.patch.object(\n                        connector,\n                        \"_get_fingerprint\",\n                        autospec=True,\n                        spec_set=True,\n                        return_value=fingerprint_mock,\n                    ), mock.patch.object(  # Called on connection to http://proxy.example.com\n                        self.loop,\n                        \"create_connection\",\n                        autospec=True,\n                        spec_set=True,\n                        return_value=(mock.Mock(), mock.Mock()),\n                    ), mock.patch.object(  # Called on connection to https://www.python.org\n                        self.loop,\n                        \"start_tls\",\n                        autospec=True,\n                        spec_set=True,\n                        return_value=TransportMock(),\n                    ):\n                        req = ClientRequest(\n                            \"GET\",\n                            URL(\"https://www.python.org\"),\n                            proxy=URL(\"http://proxy.example.com\"),\n                            loop=self.loop,\n                        )\n                        with self.assertRaises(aiohttp.ServerFingerprintMismatch):\n                            self.loop.run_until_complete(\n                                connector._create_connection(\n                                    req, [], aiohttp.ClientTimeout()\n                                )\n                            )\n\n",
+     "new": "    def _connect_via_proxy(\n        self, connector_ssl: Any, request_ssl: Any = True, cleanup: bool = False\n    ) -> Any:\n        \"\"\"``connector._create_connection()`` for https://www.python.org through\n        the HTTP proxy http://proxy.example.com (CONNECT, then TLS upgrade).\n\n        The fingerprint is configured only through the public ``ssl=``\n        parameters and checked by the real ``Fingerprint``; only the network is\n        replaced (see ``_TransportStub``).  Returns the protocol of the new\n        connection.\n        \"\"\"\n\n        async def start_tls(\n            transport: Any, protocol: Any, sslcontext: Any, **kwargs: Any\n        ) -> _TransportStub:\n            return _TransportStub(\n                {\n                    \"sslcontext\": sslcontext,\n                    \"ssl_object\": _SSLObjectStub(),\n                    \"peername\": (\"127.0.0.1\", 80),\n                }\n            )\n\n        async def make_conn() -> aiohttp.TCPConnector:\n            return aiohttp.TCPConnector(\n                ssl=connector_ssl, enable_cleanup_closed=cleanup\n            )\n\n        proxy_req = ClientRequest(\n            \"GET\", URL(\"http://proxy.example.com\"), loop=self.loop\n        )\n        proxy_resp = ClientResponse(\n            \"get\",\n            URL(\"http://proxy.example.com\"),\n            request_info=mock.Mock(),\n            writer=None,\n            continue100=None,\n            timer=TimerNoop(),\n            traces=[],\n            loop=self.loop,\n            session=mock.Mock(),\n        )\n        host = [\n            {\n                \"hostname\": \"hostname\",\n                \"host\": \"127.0.0.1\",\n                \"port\": 80,\n                \"family\": socket.AF_INET,\n                \"proto\": 0,\n                \"flags\": 0,\n            }\n        ]\n        with mock.patch(\n            \"aiohttp.connector.ClientRequest\", return_value=proxy_req\n        ), mock.patch(\n            \"aiohttp.connector.aiohappyeyeballs.start_connection\",\n            autospec=True,\n            spec_set=True,\n        ), mock.patch.object(\n            proxy_req,\n            \"send\",\n            autospec=True,\n            spec_set=True,\n            return_value=proxy_resp,\n        ), mock.patch.object(\n            proxy_resp,\n            \"start\",\n            autospec=True,\n            spec_set=True,\n            return_value=mock.Mock(status=200),\n        ):\n            connector = self.loop.run_until_complete(make_conn())\n            with mock.patch.object(\n                connector,\n                \"_resolve_host\",\n                autospec=True,\n                spec_set=True,\n                return_value=host,\n            ), mock.patch.object(  # Called on connection to http://proxy.example.com\n                self.loop,\n                \"create_connection\",\n                autospec=True,\n                spec_set=True,\n                return_value=(\n                    _TransportStub({\"peername\": (\"127.0.0.1\", 80)}),\n                    mock.Mock(),\n                ),\n            ), mock.patch.object(  # TLS upgrade for https://www.python.org\n                self.loop, \"start_tls\", start_tls\n            ):\n                req = ClientRequest(\n                    \"GET\",\n                    URL(\"https://www.python.org\"),\n                    proxy=URL(\"http://proxy.example.com\"),\n                    loop=self.loop,\n                    ssl=request_ssl,\n                )\n                return self.loop.run_until_complete(\n                    connector._create_connection(req, [], aiohttp.ClientTimeout())\n                )\n\n    def test_https_connect_fingerprint_mismatch(self) -> None:\n        # Connector-level pin that does not match the server certificate.\n        for cleanup in (True, False):\n            with self.subTest(cleanup=cleanup):\n                with self.assertRaises(aiohttp.ServerFingerprintMismatch) as ctx:\n                    self._connect_via_proxy(\n                        Fingerprint(_OTHER_FINGERPRINT), cleanup=cleanup\n                    )\n                self.assertEqual(ctx.exception.expected, _OTHER_FINGERPRINT)\n                self.assertEqual(ctx.exception.got, _PEER_FINGERPRINT)\n\n    def test_https_connect_fingerprint_match(self) -> None:\n        # Connector-level pin that matches: the connection is established.\n        proto = self._connect_via_proxy(Fingerprint(_PEER_FINGERPRINT))\n        self.assertTrue(proto.is_connected())\n\n    def test_https_connect_fingerprint_mismatch_request_ssl(self) -> None:\n        # ssl= given with the request overrides the connector's default.\n        with self.assertRaises(aiohttp.ServerFingerprintMismatch) as ctx:\n            self._connect_via_proxy(\n                Fingerprint(_PEER_FINGERPRINT),\n                request_ssl=Fingerprint(_OTHER_FINGERPRINT),\n            )\n        self.assertEqual(ctx.exception.expected, _OTHER_FINGERPRINT)\n        self.assertEqual(ctx.exception.got, _PEER_FINGERPRINT)\n\n    def test_https_connect_fingerprint_match_request_ssl(self) -> None:\n        # ssl= given with the request overrides the connector's default.\n        proto = self._connect_via_proxy(\n            Fingerprint(_OTHER_FINGERPRINT),\n            request_ssl=Fingerprint(_PEER_FINGERPRINT),\n        )\n        self.assertTrue(proto.is_connected())\n\n"
+    }
+   ],
+   "sha256_before": "sha256:987f91186bc9e1b9ee8bbe81c18583b45db087cbb8e767775237fe4048441ea5",
+   "sha256_after": "sha256:ff4bf0d81c8d9bccaa9548162565f98f009fc897ab859a7d9f1a11d1de361b88",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac/r2e_tests/test_1.py",
+   "expected_change": null,
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-e（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_aiohttp.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-043",
+   "instance_id": "aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac",
+   "kind": "expected_file_replace",
+   "target": "expected_output_json",
+   "edits": null,
+   "sha256_before": "sha256:351982fca712bba1e2043f739f4ab4395908eeaae0c02d44264f137baa23622a",
+   "sha256_after": "sha256:13eaeeea93bbb45c20ded057195a61b05adbd951561c7ab91346a91ab9aa37b5",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac/expected_output.json",
+   "expected_change": {
+    "changed": {},
+    "added": {
+     "TestProxy.test_https_connect_fingerprint_match": "PASSED",
+     "TestProxy.test_https_connect_fingerprint_match_request_ssl": "PASSED",
+     "TestProxy.test_https_connect_fingerprint_mismatch_request_ssl": "PASSED"
+    },
+    "removed": []
+   },
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-e（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_aiohttp.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-044",
+   "instance_id": "aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2",
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "    def test_write_drain(self):\n",
+     "new": "    def _chunked_body_payload(self, body):\n        \"\"\"Payload carried by an HTTP/1.1 chunked body.\n\n        The zero-size chunk ends the body, so it must come last and appear\n        exactly once; a zero-size chunk before the data is a premature EOF.\n        \"\"\"\n        payload = b''\n        pos = 0\n        while True:\n            eol = body.find(b'\\r\\n', pos)\n            self.assertNotEqual(-1, eol, 'chunk size line is missing')\n            size = int(body[pos:eol], 16)\n            pos = eol + 2\n            if size == 0:\n                self.assertEqual(b'\\r\\n', body[pos:],\n                                 'data after the terminating chunk')\n                return payload\n            self.assertEqual(b'\\r\\n', body[pos + size:pos + size + 2])\n            payload += body[pos:pos + size]\n            pos += size + 2\n\n    def test_write_payload_deflate_chunked_encoding(self):\n        # chunked transfer encoding + deflate, no chunking filter\n        write = self.transport.write = unittest.mock.Mock()\n        msg = protocol.Response(self.transport, 200)\n        msg.enable_chunked_encoding()\n        msg.add_compression_filter('deflate')\n        msg.send_headers()\n\n        msg.write(b'data')\n        msg.write_eof()\n\n        chunks = [c[1][0] for c in list(write.mock_calls)]\n        self.assertTrue(all(chunks))\n        content = b''.join(chunks)\n        payload = self._chunked_body_payload(\n            content.split(b'\\r\\n\\r\\n', 1)[-1])\n        self.assertEqual(b'data', zlib.decompress(payload, -zlib.MAX_WBITS))\n\n    def test_write_payload_deflate_chunked_encoding_multiple_writes(self):\n        # HTTP/1.1 without Content-Length selects chunked transfer encoding\n        write = self.transport.write = unittest.mock.Mock()\n        msg = protocol.Response(self.transport, 200)\n        msg.add_compression_filter('deflate')\n        msg.send_headers()\n\n        msg.write(b'data1')\n        msg.write(b'data2')\n        msg.write_eof()\n\n        chunks = [c[1][0] for c in list(write.mock_calls)]\n        self.assertTrue(all(chunks))\n        content = b''.join(chunks)\n        payload = self._chunked_body_payload(\n            content.split(b'\\r\\n\\r\\n', 1)[-1])\n        self.assertEqual(b'data1data2',\n                         zlib.decompress(payload, -zlib.MAX_WBITS))\n\n    def test_write_drain(self):\n"
+    }
+   ],
+   "sha256_before": "sha256:89f3cf5e75a01ab7a58f1c3655b3e5b0b57871f789354e3ed3df1c2151a7d10b",
+   "sha256_after": "sha256:89702c7cfc631e25064909832a8a7e344675c0937c64b48dc032a259f58f1eba",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/r2e_tests/test_1.py",
+   "expected_change": null,
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_aiohttp.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-045",
+   "instance_id": "aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2",
+   "kind": "expected_file_replace",
+   "target": "expected_output_json",
+   "edits": null,
+   "sha256_before": "sha256:f0423107d3ac110a22186706dc57fc21361db65a5d7d457da010531f1dcabc53",
+   "sha256_after": "sha256:3390e85fe2f0807791b3def432def784f6da255b28b8d9e63c9af052218ace3f",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/expected_output.json",
+   "expected_change": {
+    "changed": {},
+    "added": {
+     "TestHttpMessage.test_write_payload_deflate_chunked_encoding": "PASSED",
+     "TestHttpMessage.test_write_payload_deflate_chunked_encoding_multiple_writes": "PASSED"
+    },
+    "removed": []
+   },
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_aiohttp.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-046",
+   "instance_id": "pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605",
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "        reloaded = Image.open(out)\n        self.assertEqual(0, reloaded.tag_v2[41988][0].numerator)\n        self.assertEqual(0, reloaded.tag_v2[41988][0].denominator)\n",
+     "new": "        reloaded = Image.open(out)\n        self.assertEqual(0, reloaded.tag_v2[41988][0].numerator)\n        self.assertEqual(0, reloaded.tag_v2[41988][0].denominator)\n\n    def test_div_zero_other_unregistered_tag(self):\n        # Same zero-denominator round trip on another tag that has no\n        # TAGS_V2 entry (private tag 65000), not only the example tag.\n        im = hopper()\n        info = TiffImagePlugin.ImageFileDirectory_v2()\n        info[65000] = TiffImagePlugin.IFDRational(0,0)\n\n        out = self.tempfile('temp.tiff')\n        im.save(out, tiffinfo=info, compression='raw')\n\n        reloaded = Image.open(out)\n        self.assertEqual(0, reloaded.tag_v2[65000][0].numerator)\n        self.assertEqual(0, reloaded.tag_v2[65000][0].denominator)\n\n    def test_div_zero_in_rational_sequence(self):\n        # A zero-denominator value inside a sequence of rationals on one\n        # tag with no TAGS_V2 entry; every value must round trip.\n        # 0/0 never compares equal, so numerator and denominator are\n        # compared.\n        im = hopper()\n        info = TiffImagePlugin.ImageFileDirectory_v2()\n        info[65000] = (TiffImagePlugin.IFDRational(0,0),\n                       TiffImagePlugin.IFDRational(1,2))\n\n        out = self.tempfile('temp.tiff')\n        im.save(out, tiffinfo=info, compression='raw')\n\n        reloaded = Image.open(out)\n        self.assertEqual([(0, 0), (1, 2)],\n                         [(v.numerator, v.denominator)\n                          for v in reloaded.tag_v2[65000]])\n\n    def test_unregistered_int_tag_type(self):\n        # Integer values on a tag with no TAGS_V2 entry are still detected\n        # as integers and read back as int. IFDRational(5, 1) == 5, so the\n        # value type is checked, not only equality.\n        im = hopper()\n        info = TiffImagePlugin.ImageFileDirectory_v2()\n        info[65000] = 5\n\n        out = self.tempfile('temp.tiff')\n        im.save(out, tiffinfo=info, compression='raw')\n\n        reloaded = Image.open(out)\n        value = reloaded.tag_v2[65000][0]\n        self.assertEqual(5, value)\n        self.assertIsInstance(value, int)\n"
+    }
+   ],
+   "sha256_before": "sha256:887ed0de8fbbc9740f09a312628675f6cd1e638f46f0b573b60063e71d5c91f8",
+   "sha256_after": "sha256:974e5bccdada9504cd98066f3f8826f76f877002490c357f75dcbb0616b0250a",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/r2e_tests/test_1.py",
+   "expected_change": null,
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_pillow.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_pillow_3ac9_r2.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-047",
+   "instance_id": "pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605",
+   "kind": "expected_file_replace",
+   "target": "expected_output_json",
+   "edits": null,
+   "sha256_before": "sha256:11a665803be78c9c0d5c5668725c6570914449e6d9b6145dfc4f2bb661fd7d67",
+   "sha256_after": "sha256:ec40ba6cd630cd879090b4ac5c7145d7d49309d683cf01131ce5a7dd2541f16f",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/expected_output.json",
+   "expected_change": {
+    "changed": {},
+    "added": {
+     "TestFileTiffMetadata.test_div_zero_in_rational_sequence": "PASSED",
+     "TestFileTiffMetadata.test_div_zero_other_unregistered_tag": "PASSED",
+     "TestFileTiffMetadata.test_unregistered_int_tag_type": "PASSED"
+    },
+    "removed": []
+   },
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_pillow.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_pillow_3ac9_r2.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-048",
+   "instance_id": "datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb",
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "# https://github.com/datalad/datalad/issues/6814\n",
+     "new": "# R2E material revision (R-c): the exit-code relay must hold beyond the\n# example literal (another code, plain call without --explicit), and the\n# documented exit codes of non-command failures and of '--on-failure ignore'\n# must be preserved. Only the exit code is asserted in these three tests.\n@with_tempfile(mkdir=True)\ndef test_run_exit_code_other_value(tempdir=None):\n    create(dataset=tempdir, annex=False)\n    with chpwd(tempdir):\n        run_main(['run', 'exit 5'], exit_code=5, expect_stderr=True)\n\n\n@with_tempfile(mkdir=True)\ndef test_run_missing_input_exit_code(tempdir=None):\n    # input preparation fails, the command is never executed:\n    # \"Incomplete results (exit code 1)\"\n    create(dataset=tempdir, annex=False)\n    with chpwd(tempdir):\n        run_main(['run', '--explicit', '-i', 'does-not-exist', 'exit 3'],\n                 exit_code=1, expect_stderr=True)\n\n\n@with_tempfile(mkdir=True)\ndef test_run_on_failure_ignore_exit_code(tempdir=None):\n    # 'ignore': the error is logged but does not lead to a non-zero exit code\n    create(dataset=tempdir, annex=False)\n    with chpwd(tempdir):\n        run_main(['--on-failure', 'ignore', 'run', '--explicit', 'exit 3'],\n                 exit_code=0, expect_stderr=True)\n\n\n# https://github.com/datalad/datalad/issues/6814\n"
+    }
+   ],
+   "sha256_before": "sha256:b2c90c1b48789330875141a734bd619f502a9649e86155472285ec7934bb084f",
+   "sha256_after": "sha256:6f1d831dea1f254513c6f0cc4f2efdc45883af7cb14742708b325363b58b2f61",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/r2e_tests/test_1.py",
+   "expected_change": null,
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_misc.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-049",
+   "instance_id": "datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb",
+   "kind": "expected_file_replace",
+   "target": "expected_output_json",
+   "edits": null,
+   "sha256_before": "sha256:42b8016a185a44e753aab46db7f2fc96d81f110605eb0bd3cb8172baa1079a77",
+   "sha256_after": "sha256:e51fad3d22361d137155025b1e58cfc4bdcd632b87d96b8ab5fb1e34e3936f0b",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/expected_output.json",
+   "expected_change": {
+    "changed": {},
+    "added": {
+     "test_run_exit_code_other_value": "PASSED",
+     "test_run_missing_input_exit_code": "PASSED",
+     "test_run_on_failure_ignore_exit_code": "PASSED"
+    },
+    "removed": []
+   },
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_misc.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-050",
+   "instance_id": "pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0",
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "        with pytest.raises(TypeError, match=\"mean is not implemented for Period\"):\n            df.mean(numeric_only=False)\n",
+     "new": "        # either documented TypeError text is acceptable: the PeriodArray.mean\n        # one or the nanops one (reduction operation ... not allowed)\n        msg = \"|\".join(\n            [\n                \"mean is not implemented for Period\",\n                \"reduction operation 'mean' not allowed for this dtype\",\n            ]\n        )\n        with pytest.raises(TypeError, match=msg):\n            df.mean(numeric_only=False)\n"
+    },
+    {
+     "old": "        expected = pd.DataFrame(arr).mean()\n        tm.assert_series_equal(result, expected)\n",
+     "new": "        expected = pd.DataFrame(arr).mean()\n        tm.assert_series_equal(result, expected)\n\n        # mixed frame as in the issue example, with a missing value in the\n        # EA column: skipna=True (default) excludes it\n        df = pd.DataFrame(\n            {\"A\": [1, 2, 3], \"B\": pd.array([1, None, 3], dtype=\"Int64\")}\n        )\n        result = df.mean(numeric_only=True)\n        expected = pd.Series({\"A\": 2.0, \"B\": 2.0})\n        tm.assert_series_equal(result, expected)\n\n        # a reduction other than mean on the same frame (the result dtype\n        # of sum is not prescribed, only the values)\n        result = df.sum(numeric_only=True)\n        expected = pd.Series({\"A\": 6, \"B\": 4})\n        tm.assert_series_equal(result, expected, check_dtype=False)\n"
+    }
+   ],
+   "sha256_before": "sha256:4a153a37884f47bbfe1525d1285ad5ab78bc85a17eac2fac7ffcedf6b598bb96",
+   "sha256_after": "sha256:3ad05d5c3934d40a499665a0cdedb9dc2d2c84e4cf28578d8ff0a00e30c314e3",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/r2e_tests/test_1.py",
+   "expected_change": null,
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-b+R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_misc.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-051",
+   "instance_id": "aiohttp__240da100151933883d7dea0528d45877df025b92",
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "        self.assertEqual(req.path, 'http://localhost:1234/path')\n",
+     "new": "        self.assertEqual(req.path, 'http://localhost:1234/path')\n\n    @unittest.mock.patch('aiohttp.connector.ClientRequest')\n    def test_request_port_other_url(self, ClientRequestMock):\n        # Not the issue's example: another host, port and path, through the\n        # public connect() entry.  The explicit port must stay in req.path.\n        proxy_req = ClientRequest('GET', 'http://proxy.example.com')\n        ClientRequestMock.return_value = proxy_req\n\n        loop_mock = unittest.mock.Mock()\n        connector = aiohttp.ProxyConnector('http://proxy.example.com',\n                                           loop=loop_mock)\n\n        tr, proto = unittest.mock.Mock(), unittest.mock.Mock()\n        self._fake_coroutine(loop_mock.create_connection, (tr, proto))\n\n        req = ClientRequest('GET', 'http://www.python.org:8080/some/path')\n        self.loop.run_until_complete(connector.connect(req))\n        self.assertEqual(req.path, 'http://www.python.org:8080/some/path')\n\n    @unittest.mock.patch('aiohttp.connector.ClientRequest')\n    def test_https_connect_port(self, ClientRequestMock):\n        # Same as test_https_connect but with an explicit non-default port:\n        # the CONNECT target is still host:port, with the port given once.\n        loop_mock = unittest.mock.Mock()\n        proxy_req = ClientRequest('GET', 'http://proxy.example.com',\n                                  loop=loop_mock)\n        ClientRequestMock.return_value = proxy_req\n\n        proxy_resp = ClientResponse('get', 'http://proxy.example.com')\n        proxy_req.send = send_mock = unittest.mock.Mock()\n        send_mock.return_value = proxy_resp\n        proxy_resp.start = start_mock = unittest.mock.Mock()\n        self._fake_coroutine(start_mock, unittest.mock.Mock(status=200))\n\n        connector = aiohttp.ProxyConnector(\n            'http://proxy.example.com', loop=loop_mock)\n\n        tr, proto = unittest.mock.Mock(), unittest.mock.Mock()\n        self._fake_coroutine(loop_mock.create_connection, (tr, proto))\n\n        req = ClientRequest('GET', 'https://www.python.org:8443')\n        self.loop.run_until_complete(connector._create_connection(req))\n\n        self.assertEqual(proxy_req.method, 'CONNECT')\n        self.assertEqual(proxy_req.path, 'www.python.org:8443')\n"
+    }
+   ],
+   "sha256_before": "sha256:530b4631b50acb55a1f3cdc4db0330479299a4913f0bcabaaffd928b68e90c8d",
+   "sha256_after": "sha256:5ad37c35056ed5b91c814514ae96489c1526e81751240531fd80ad1e7fbf0895",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/aiohttp__240da100151933883d7dea0528d45877df025b92/r2e_tests/test_1.py",
+   "expected_change": null,
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_aiohttp_240d.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-052",
+   "instance_id": "aiohttp__240da100151933883d7dea0528d45877df025b92",
+   "kind": "expected_file_replace",
+   "target": "expected_output_json",
+   "edits": null,
+   "sha256_before": "sha256:5444ee2acbf99088cb932eaf1daf171855dfb3feba081b7b25fa04290bedec31",
+   "sha256_after": "sha256:28da8c15839bda64649ee0d888b4ac86993bce8f3e2052b8e78a9bac5155ccdd",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/aiohttp__240da100151933883d7dea0528d45877df025b92/expected_output.json",
+   "expected_change": {
+    "changed": {},
+    "added": {
+     "ProxyConnectorTests.test_request_port_other_url": "PASSED",
+     "ProxyConnectorTests.test_https_connect_port": "PASSED"
+    },
+    "removed": []
+   },
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_aiohttp_240d.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-053",
+   "instance_id": "coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96",
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "    def test_context_relative(self):\n        self.run_context_test(relative_files=True)\n",
+     "new": "    def test_context_relative(self):\n        self.run_context_test(relative_files=True)\n\n    # R2E revision (2026-09-29, R-c): the issue asks for totals that give\n    # \"detailed branch coverage information\", so the counts are checked on a\n    # program other than the issue's one-branch example.  In BRANCHY, f and g\n    # take both branches of their `if`, and h never runs.\n    BRANCHY = \"\"\"\\\n        def f(x):\n            if x:\n                return 1\n            return 2\n\n        def g(x):\n            if x:\n                return 1\n            return 2\n\n        def h(x):\n            if x:\n                return 1\n            return 2\n\n        f(0)\n        f(1)\n        g(0)\n        g(1)\n        \"\"\"\n\n    def _branchy_report(self, modname, report_from_saved_data=False):\n        \"\"\"Measure BRANCHY with branch=True and return the parsed JSON report.\"\"\"\n        self.make_file(modname + \".py\", self.BRANCHY)\n        data_file = os.path.join(self.temp_dir, modname + \".coverage\")\n        cov = coverage.Coverage(branch=True, data_file=data_file)\n        mod = self.start_import_stop(cov, modname)\n        if report_from_saved_data:\n            # Like `coverage run --branch` followed by a separate `coverage json`:\n            # the reporting object's own config does not set branch.\n            cov.save()\n            cov = coverage.Coverage(data_file=data_file)\n            cov.load()\n        output_path = os.path.join(self.temp_dir, modname + \".json\")\n        cov.json_report(mod, outfile=output_path)\n        with open(output_path) as result_file:\n            return json.load(result_file)\n\n    def test_branch_totals_count_branch_arcs(self):\n        # 6 branch destinations (two per `if`), 4 taken, 2 never taken.  h's `if`\n        # never runs, so it is not a partial branch.\n        report = self._branchy_report(\"branchy\")\n        totals = report['totals']\n        assert totals['num_branches'] == 6\n        assert totals['num_partial_branches'] == 0\n        assert totals['covered_branches'] == 4\n        assert totals['missing_branches'] == 2\n\n    def test_branch_totals_from_saved_branch_data(self):\n        # R2E revision (2026-09-29, R-c): the report follows the measured data,\n        # as the other reporters do, not the reporting object's own settings.\n        report = self._branchy_report(\"branchy_saved\", report_from_saved_data=True)\n        assert report['meta']['branch_coverage'] is True\n        assert report['totals']['covered_branches'] == 4\n        assert report['totals']['missing_branches'] == 2\n"
+    }
+   ],
+   "sha256_before": "sha256:ee874f37abb9e6f5307bb02b9b6a3c760218f674d557a51f7f27f5c68298418f",
+   "sha256_after": "sha256:73ad2f277dea8a447d1f3da58016937ea47d3bf7d3523cbe39394313f8c05d3d",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/r2e_tests/test_1.py",
+   "expected_change": null,
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_coveragepy_f5eb.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-054",
+   "instance_id": "coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96",
+   "kind": "expected_file_replace",
+   "target": "expected_output_json",
+   "edits": null,
+   "sha256_before": "sha256:9e555e5145c096ac323d33fdd3d22d7b769a4b3a34c3cc9b92ba70c1949a384c",
+   "sha256_after": "sha256:755e53ba7108af3950837fd3876ec5e9d6bff561402fd1bacfbf14ccffc6622e",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/expected_output.json",
+   "expected_change": {
+    "changed": {},
+    "added": {
+     "JsonReportTest.test_branch_totals_count_branch_arcs": "PASSED",
+     "JsonReportTest.test_branch_totals_from_saved_branch_data": "PASSED"
+    },
+    "removed": []
+   },
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_coveragepy_f5eb.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-055",
+   "instance_id": "pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199",
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "    tm.assert_series_equal(result, expected)\n\n\ndef test_groupby_quantile_NA_int(any_int_ea_dtype):\n",
+     "new": "    tm.assert_series_equal(result, expected)\n\n    # Missing is decided by the mask alone, whatever the underlying data holds\n    # there. Int64 -> float dtype: for the masked Float dtypes the masked slot\n    # keeps the integer array's filler (1.0) instead of NaN.\n    ser = pd.Series(pd.array([1, None, 3], dtype=\"Int64\").astype(any_float_dtype))\n    result = ser.groupby([0, 0, 0]).quantile(0.5)\n    tm.assert_series_equal(result, pd.Series([2.0], index=[0]), check_dtype=False)\n\n    # NA introduced by reindex: for the masked Float dtypes 0.0 sits under the\n    # mask. Two groups, one of them with two valid values.\n    ser = pd.Series([2.5, 3.5, 4.0], dtype=any_float_dtype).reindex([0, 1, 2, 3])\n    result = ser.groupby([\"a\", \"a\", \"b\", \"b\"]).quantile(0.5)\n    tm.assert_series_equal(\n        result, pd.Series([3.0, 4.0], index=[\"a\", \"b\"]), check_dtype=False\n    )\n\n\ndef test_groupby_quantile_NA_int(any_int_ea_dtype):\n"
+    }
+   ],
+   "sha256_before": "sha256:5a4d2be40d57ad2e9fd70891be7eb9f2f176e4a9cdd36f1540126aebb4ca4876",
+   "sha256_after": "sha256:719e63aee5ec56f0bbc2ed18aacdd640195965c992db9b6060cac9591e1fcc66",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/r2e_tests/test_1.py",
+   "expected_change": null,
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_pandas_4ec8.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-056",
+   "instance_id": "numpy__d805e9b66228e68a0eb14d901cd350159c49af18",
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "        assert_equal(\n            repr(a),\n            'masked_array(data = [0 -- -- ..., 1997 1998 1999],\\n'\n            '             mask = [False  True  True ..., False False False],\\n'\n            '       fill_value = 999999)\\n'\n        )\n",
+     "new": "        assert_equal(\n            repr(a),\n            'masked_array(data = [0 -- -- ..., 1997 1998 1999],\\n'\n            '             mask = [False  True  True ..., False False False],\\n'\n            '       fill_value = 999999)\\n'\n        )\n\n        # A large 1d array other than the issue example is summarized too:\n        # the data shows the leading/trailing items with an ellipsis, and\n        # masked values at the end are shown as `--`.\n        a = np.ma.arange(100000)\n        a[-2:] = np.ma.masked\n        assert_equal(str(a), '[0 1 2 ..., 99997 -- --]')\n\n        # Below the default summarization threshold (1000 items) a 1d masked\n        # array is printed in full: no ellipsis, and no value is dropped or\n        # repeated.\n        a = np.ma.arange(500)\n        a[1:50] = np.ma.masked\n        s = str(a)\n        assert_('...' not in s)\n        assert_equal(s.replace('[', ' ').replace(']', ' ').split(),\n                     ['0'] + ['--'] * 49 + [str(i) for i in range(50, 500)])\n\n        # The printing options can be changed to force NumPy to print the\n        # entire array.  As long as the threshold is not exceeded, every item\n        # of a 1d masked array is shown: no ellipsis, and no value is dropped.\n        opts = np.get_printoptions()\n        try:\n            np.set_printoptions(threshold=2000)\n            a = np.ma.arange(2000)\n            a[1:50] = np.ma.masked\n            s = str(a)\n            assert_('...' not in s)\n            expected = ['0'] + ['--'] * 49 + [str(i) for i in range(50, 2000)]\n            assert_equal(s.replace('[', ' ').replace(']', ' ').split(),\n                         expected)\n        finally:\n            np.set_printoptions(**opts)\n"
+    }
+   ],
+   "sha256_before": "sha256:72f865c42fba15679442951d772b9213dc4fc5d4ad16170f486ed6aac7e8deb1",
+   "sha256_after": "sha256:14d78a1c74be07bf5e62a81c5383b3d408dbf597f6a54d3bfe48ac5e6d9516c7",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/r2e_tests/test_1.py",
+   "expected_change": null,
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照为经独立核实的替代解 cands/numpy_d805_KA5b.patch（v1 §5 / D4）；gold 在修订后测试下不满分，已记录，不因此收窄题意",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_numpy_d805.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_numpy_d805_r2.md"
+   ]
+  },
+  {
+   "revision_id": "r2e-mr-057",
+   "instance_id": "orange3__4014f2483e3bab0621c9ae0f994947c008183253",
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "        var = discretize.EqualFreq(n=8)(table, table.domain[0])\n        points = var.compute_value.points\n        self.assertEqual(len(np.unique(points)), len(points))\n",
+     "new": "        var = discretize.EqualFreq(n=8)(table, table.domain[0])\n        points = var.compute_value.points\n        self.assertEqual(len(np.unique(points)), len(points))\n\n        # Test with near-duplicate values among clearly distinct values\n        # (n >= number of distinct values): making the points unique must\n        # not drop the thresholds between the distinct values, so 0 and 2\n        # still fall into intervals below and above all values around 1\n        X = np.array([[0], [1], [1 + eps], [1 + 2 * eps], [1 + 3 * eps], [2]])\n        # Test the test: check that these are indeed distinct values\n        assert len(np.unique(X).flatten()) == 6\n        table = data.Table.from_numpy(None, X)\n        var = discretize.EqualFreq(n=6)(table, table.domain[0])\n        points = var.compute_value.points\n        self.assertEqual(len(np.unique(points)), len(points))\n        bins = var.compute_value.transform(X.flatten())\n        self.assertLess(bins[0], min(bins[1:5]))\n        self.assertGreater(bins[5], max(bins[1:5]))\n"
+    }
+   ],
+   "sha256_before": "sha256:4321647a12f141f56c4e32d6d4c544ce85d2cf343f541fd9f5a0998386b47168",
+   "sha256_after": "sha256:477e4252d38c780cab7edbc5e0ddfe40d236a9b06fecde9de5123692fb57ad6c",
+   "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/orange3__4014f2483e3bab0621c9ae0f994947c008183253/r2e_tests/test_1.py",
+   "expected_change": null,
+   "decision_ref": "统一标准 v1 §5 / §9 D4（R-a 至 R-f 一次性授权：Claude 执行、Codex 复核）",
+   "reason": "R-c（单题闭环试行 09-29）：见 revision_plan.md；正对照 gold",
+   "evidence": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__4014f2483e3bab0621c9ae0f994947c008183253/revision_plan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__4014f2483e3bab0621c9ae0f994947c008183253/revision_draft.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__4014f2483e3bab0621c9ae0f994947c008183253/trials/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_orange3_4014.md"
+   ]
+  }
+ ]
+}
